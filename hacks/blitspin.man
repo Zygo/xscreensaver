@@ -1,0 +1,106 @@
+.TH XScreenSaver 1 "24-Nov-97" "X Version 11"
+.SH NAME
+blitspin - rotate a bitmap in an interesting way
+.SH SYNOPSIS
+.B blitspin
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-bitmap \fIfilename\fP] [\-delay \fIusecs\fP] [\-delay2 \fIusecs\fP]
+.SH DESCRIPTION
+The \fIblitspin\fP program repeatedly rotates a bitmap by 90 degrees by
+using logical operations: the bitmap is divided into quadrants, and the
+quadrants are shifted clockwise.  Then the same thing is done again with
+progressively smaller quadrants, except that all sub-quadrants of a 
+given size are rotated in parallel.  So this takes \fBO(16*log2(N))\fP 
+blits of size NxN, with the limitation that the image must be square,
+and the size must be a power of 2.
+.SH OPTIONS
+.I blitspin
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-bitmap \fIfilename\fP
+The file name of a bitmap to rotate.  It need not be square: it 
+will be padded with the background color.  If unspecified or the
+string \fI(default)\fP, a builtin bitmap is used.
+
+If support for the \fIXPM\fP library was enabled at compile-time, 
+the specified file may be in \fIXPM\fP format as well as \fIXBM\fP, and 
+thus may be a color image.
+
+The \fB*bitmapFilePath\fP resource will be searched if the bitmap
+name is not a fully-qualified pathname.
+.TP 8
+.B \-grab\-screen
+If this option is specified, then the image which is spun will be grabbed
+from the portion of the screen underlying the blitspin window.  (Or, it
+may come from an external video source: see below.)
+.PP
+.TP 8
+.B \-delay \fImicroseconds\fP
+How long to delay between steps of the rotation process, in microseconds.
+Default is 500000, one-half second.
+.PP
+.TP 8
+.B \-delay2 \fImicroseconds\fP
+How long to delay between each 90-degree rotation, in microseconds.
+Default is 500000, one-half second.
+.B DISPLAY
+to get the default host and display number.
+.SH RESOURCES
+On some systems (currently, only SGIs), this program can, instead of grabbing
+a desktop image, grab a frame of video from an external camera and manipulate
+that instead.  The following resources control that.
+.PP
+.TP 8
+.B grabVideoProbability \fR(Float)\fP
+What portion of the time to grab video rather than a screen image, 
+between 0.0 and 1.0.  Defaults to 0.5, or half the time.
+.TP 8
+.B videoDevice \fR(Integer)\fP
+The number of the default video input device to check first.  If unspecified, 
+the default camera (from videopanel(1)) will be checked first.  After that, all
+other available video input devices will be checked in order.  
+
+The first one which produces a non-black image will be used.  If all images
+are black, the others will be re-checked a few times before giving up and
+falling back to simply grabbing a desktop image (but note that this takes a
+few seconds, so if you don't actually have any video sources hooked up, you
+should consider turning off video grabbing by setting
+\fBgrabVideoProbability\fP to 0.0.)
+.TP 8
+.B videoGain \fR(Float)\fP
+The amount by which to brighten the grabbed image.  This defaults to 2.2.
+.SH ENVIRONMENT
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992, 1993, 1997 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.  No
+representations are made about the suitability of this software for any
+purpose.  It is provided "as is" without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 17-aug-92.
+
+Based on SmallTalk code which appeared in the August 1981 issue of Byte
+magazine.

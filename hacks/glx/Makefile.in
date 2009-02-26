@@ -1,0 +1,556 @@
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# the `../../configure' script generates `hacks/glx/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+mansuffix	= 1
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= -DSTANDALONE -DUSE_GL @DEFS@
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+HACKDIR		= @HACKDIR@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+
+# Note: see comment in ../../driver/Makefile.in for explanation of X_LIBS, etc.
+#
+HACK_PRE	= $(LIBS) $(X_LIBS)
+HACK_POST	= $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
+HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_LIBS	= $(HACK_PRE)                       $(HACK_POST2)
+XPM_LIBS	= $(HACK_PRE)            @XPM_LIBS@ $(HACK_POST2)
+GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @XPM_LIBS@ $(HACK_POST2)
+
+HACK_SRC	= $(srcdir)/..
+HACK_BIN	= ..
+UTILS_SRC	= $(HACK_SRC)/../utils
+UTILS_BIN	= $(HACK_BIN)/../utils
+
+INCLUDES	= -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../.. @INCLUDES@
+
+UTIL_SRCS	= $(UTILS_SRC)/colors.c $(UTILS_SRC)/hsv.c \
+		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/visual-gl.c \
+		  $(UTILS_SRC)/yarandom.c
+UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
+		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
+		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
+		   $(UTILS_SRC)/yarandom.o
+
+SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
+		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
+		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
+		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
+		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
+		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c \
+		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
+		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
+		  extrusion-taper.c extrusion-twistoid.c
+
+OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
+		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
+		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
+		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
+		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
+		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o \
+		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
+		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+		  extrusion-taper.o extrusion-twistoid.o
+
+GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
+		  morph3d rubik atlantis lament bubble3d glplanet pulsar
+GLE_EXES	= extrusion
+EXES		= @GL_EXES@ @GLE_EXES@
+
+HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
+		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o
+
+HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h
+GL_MEN		= lament.man
+MEN		= @GL_MEN@
+EXTRAS		= README Makefile.in
+
+TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
+
+
+default: all
+all: $(EXES)
+
+install:   install-program   install-man
+uninstall: uninstall-program uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+install-program: $(EXES)
+	@exes="$(EXES)" ;						\
+	if [ ! -d $(HACKDIR) ]; then $(INSTALL_DIRS) $(HACKDIR) ; fi ;	\
+	for program in $$exes; do					\
+	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
+	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
+	done
+
+install-man: $(MEN)
+	@men="$(MEN)" ;							\
+	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	done
+
+uninstall-program:
+	@for program in $(EXES); do					\
+	  echo rm -f $(HACKDIR)/$$program ;				\
+	  rm -f $(HACKDIR)/$$program ;					\
+	done
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(man1dir)/$$instname ;				\
+	  rm -f $(man1dir)/$$instname ;					\
+	done
+
+clean:
+	-rm -f *.o a.out core $(EXES)
+
+distclean: clean
+	-rm -f Makefile TAGS *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend:
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend::
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS) | 							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./\.\./utils@$$(UTILS_SRC)@g'			    \
+	      -e 's@\.\./glx/@@g'					    \
+	      -e 's@ \.\./@ $$(HACK_SRC)/@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
+	      -e 's@ $$(HACK_SRC)/\(.*config.h\)@ ../\1@g' ;		    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
+$(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+
+$(UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(HACK_BIN)/xlockmore.o: $(HACK_SRC)/xlockmore.c
+	cd $(HACK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+# These hacks use a slightly-differently-compiled variant of screenhack.c.
+# This is how to make the the other .o file from it.
+#
+screenhack-gl.o: $(HACK_SRC)/screenhack.c
+	$(CC) -o $@ -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  -DXLOCKMORE  -DUSE_GL $(HACK_SRC)/screenhack.c
+
+CC_HACK		= $(CC) $(LDFLAGS)
+
+atlantis:	atlantis.o	$(HACK_OBJS) dolphin.o shark.o swim.o whale.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) dolphin.o shark.o swim.o whale.o \
+				$(HACK_LIBS)
+
+cage:		cage.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+gears:		gears.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+moebius:	moebius.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+pipes:		pipes.o		$(HACK_OBJS) pipeobjs.o buildlwo.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) pipeobjs.o buildlwo.o \
+	  $(HACK_LIBS)
+
+superquadrics:	superquadrics.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+morph3d:	morph3d.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+rubik:		rubik.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+stairs:		stairs.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+SPROINGIES = sproingiewrap.o buildlwo.o \
+	     s1_1.o s1_2.o s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o
+sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
+
+lament:		lament.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+B3D = b_sphere.o b_draw.o b_lockglue.o
+bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(B3D) $(HACK_LIBS)
+
+glplanet:	glplanet.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+pulsar:		pulsar.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
+
+EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
+	extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+	extrusion-taper.o extrusion-twistoid.o
+extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(EXTRUSION_OBJS) $(HACK_OBJS) $(GLE_LIBS)
+
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
+
+atlantis.o: $(HACK_SRC)/xlockmore.h
+atlantis.o: ../../config.h
+atlantis.o: $(HACK_SRC)/xlockmoreI.h
+atlantis.o: $(HACK_SRC)/screenhack.h
+atlantis.o: $(UTILS_SRC)/yarandom.h
+atlantis.o: $(UTILS_SRC)/usleep.h
+atlantis.o: $(UTILS_SRC)/resources.h
+atlantis.o: $(UTILS_SRC)/hsv.h
+atlantis.o: $(UTILS_SRC)/colors.h
+atlantis.o: $(UTILS_SRC)/grabscreen.h
+atlantis.o: $(UTILS_SRC)/visual.h
+atlantis.o: $(UTILS_SRC)/xshm.h
+atlantis.o: $(srcdir)/atlantis.h
+b_draw.o: $(srcdir)/bubble3d.h
+b_draw.o: $(HACK_SRC)/xlockmoreI.h
+b_draw.o: $(HACK_SRC)/screenhack.h
+b_draw.o: ../../config.h
+b_draw.o: $(UTILS_SRC)/yarandom.h
+b_draw.o: $(UTILS_SRC)/usleep.h
+b_draw.o: $(UTILS_SRC)/resources.h
+b_draw.o: $(UTILS_SRC)/hsv.h
+b_draw.o: $(UTILS_SRC)/colors.h
+b_draw.o: $(UTILS_SRC)/grabscreen.h
+b_draw.o: $(UTILS_SRC)/visual.h
+b_draw.o: $(UTILS_SRC)/xshm.h
+b_lockglue.o: $(srcdir)/bubble3d.h
+b_lockglue.o: $(HACK_SRC)/xlockmoreI.h
+b_lockglue.o: $(HACK_SRC)/screenhack.h
+b_lockglue.o: ../../config.h
+b_lockglue.o: $(UTILS_SRC)/yarandom.h
+b_lockglue.o: $(UTILS_SRC)/usleep.h
+b_lockglue.o: $(UTILS_SRC)/resources.h
+b_lockglue.o: $(UTILS_SRC)/hsv.h
+b_lockglue.o: $(UTILS_SRC)/colors.h
+b_lockglue.o: $(UTILS_SRC)/grabscreen.h
+b_lockglue.o: $(UTILS_SRC)/visual.h
+b_lockglue.o: $(UTILS_SRC)/xshm.h
+b_lockglue.o: $(HACK_SRC)/xlockmore.h
+b_sphere.o: $(srcdir)/bubble3d.h
+b_sphere.o: $(HACK_SRC)/xlockmoreI.h
+b_sphere.o: $(HACK_SRC)/screenhack.h
+b_sphere.o: ../../config.h
+b_sphere.o: $(UTILS_SRC)/yarandom.h
+b_sphere.o: $(UTILS_SRC)/usleep.h
+b_sphere.o: $(UTILS_SRC)/resources.h
+b_sphere.o: $(UTILS_SRC)/hsv.h
+b_sphere.o: $(UTILS_SRC)/colors.h
+b_sphere.o: $(UTILS_SRC)/grabscreen.h
+b_sphere.o: $(UTILS_SRC)/visual.h
+b_sphere.o: $(UTILS_SRC)/xshm.h
+bubble3d.o: $(srcdir)/bubble3d.h
+bubble3d.o: $(HACK_SRC)/xlockmoreI.h
+bubble3d.o: $(HACK_SRC)/screenhack.h
+bubble3d.o: ../../config.h
+bubble3d.o: $(UTILS_SRC)/yarandom.h
+bubble3d.o: $(UTILS_SRC)/usleep.h
+bubble3d.o: $(UTILS_SRC)/resources.h
+bubble3d.o: $(UTILS_SRC)/hsv.h
+bubble3d.o: $(UTILS_SRC)/colors.h
+bubble3d.o: $(UTILS_SRC)/grabscreen.h
+bubble3d.o: $(UTILS_SRC)/visual.h
+bubble3d.o: $(UTILS_SRC)/xshm.h
+buildlwo.o: $(srcdir)/buildlwo.h
+cage.o: $(HACK_SRC)/xlockmore.h
+cage.o: ../../config.h
+cage.o: $(HACK_SRC)/xlockmoreI.h
+cage.o: $(HACK_SRC)/screenhack.h
+cage.o: $(UTILS_SRC)/yarandom.h
+cage.o: $(UTILS_SRC)/usleep.h
+cage.o: $(UTILS_SRC)/resources.h
+cage.o: $(UTILS_SRC)/hsv.h
+cage.o: $(UTILS_SRC)/colors.h
+cage.o: $(UTILS_SRC)/grabscreen.h
+cage.o: $(UTILS_SRC)/visual.h
+cage.o: $(UTILS_SRC)/xshm.h
+cage.o: $(srcdir)/e_textures.h
+dolphin.o: $(srcdir)/atlantis.h
+gears.o: $(HACK_SRC)/xlockmore.h
+gears.o: ../../config.h
+gears.o: $(HACK_SRC)/xlockmoreI.h
+gears.o: $(HACK_SRC)/screenhack.h
+gears.o: $(UTILS_SRC)/yarandom.h
+gears.o: $(UTILS_SRC)/usleep.h
+gears.o: $(UTILS_SRC)/resources.h
+gears.o: $(UTILS_SRC)/hsv.h
+gears.o: $(UTILS_SRC)/colors.h
+gears.o: $(UTILS_SRC)/grabscreen.h
+gears.o: $(UTILS_SRC)/visual.h
+gears.o: $(UTILS_SRC)/xshm.h
+lament.o: $(HACK_SRC)/xlockmore.h
+lament.o: ../../config.h
+lament.o: $(HACK_SRC)/xlockmoreI.h
+lament.o: $(HACK_SRC)/screenhack.h
+lament.o: $(UTILS_SRC)/yarandom.h
+lament.o: $(UTILS_SRC)/usleep.h
+lament.o: $(UTILS_SRC)/resources.h
+lament.o: $(UTILS_SRC)/hsv.h
+lament.o: $(UTILS_SRC)/colors.h
+lament.o: $(UTILS_SRC)/grabscreen.h
+lament.o: $(UTILS_SRC)/visual.h
+lament.o: $(UTILS_SRC)/xshm.h
+lament.o: $(srcdir)/xpm-ximage.h
+lament.o: $(HACK_SRC)/images/lament.xpm
+moebius.o: $(HACK_SRC)/xlockmore.h
+moebius.o: ../../config.h
+moebius.o: $(HACK_SRC)/xlockmoreI.h
+moebius.o: $(HACK_SRC)/screenhack.h
+moebius.o: $(UTILS_SRC)/yarandom.h
+moebius.o: $(UTILS_SRC)/usleep.h
+moebius.o: $(UTILS_SRC)/resources.h
+moebius.o: $(UTILS_SRC)/hsv.h
+moebius.o: $(UTILS_SRC)/colors.h
+moebius.o: $(UTILS_SRC)/grabscreen.h
+moebius.o: $(UTILS_SRC)/visual.h
+moebius.o: $(UTILS_SRC)/xshm.h
+moebius.o: $(srcdir)/e_textures.h
+morph3d.o: $(HACK_SRC)/xlockmore.h
+morph3d.o: ../../config.h
+morph3d.o: $(HACK_SRC)/xlockmoreI.h
+morph3d.o: $(HACK_SRC)/screenhack.h
+morph3d.o: $(UTILS_SRC)/yarandom.h
+morph3d.o: $(UTILS_SRC)/usleep.h
+morph3d.o: $(UTILS_SRC)/resources.h
+morph3d.o: $(UTILS_SRC)/hsv.h
+morph3d.o: $(UTILS_SRC)/colors.h
+morph3d.o: $(UTILS_SRC)/grabscreen.h
+morph3d.o: $(UTILS_SRC)/visual.h
+morph3d.o: $(UTILS_SRC)/xshm.h
+pipeobjs.o: $(srcdir)/buildlwo.h
+pipes.o: $(HACK_SRC)/xlockmore.h
+pipes.o: ../../config.h
+pipes.o: $(HACK_SRC)/xlockmoreI.h
+pipes.o: $(HACK_SRC)/screenhack.h
+pipes.o: $(UTILS_SRC)/yarandom.h
+pipes.o: $(UTILS_SRC)/usleep.h
+pipes.o: $(UTILS_SRC)/resources.h
+pipes.o: $(UTILS_SRC)/hsv.h
+pipes.o: $(UTILS_SRC)/colors.h
+pipes.o: $(UTILS_SRC)/grabscreen.h
+pipes.o: $(UTILS_SRC)/visual.h
+pipes.o: $(UTILS_SRC)/xshm.h
+pipes.o: $(srcdir)/buildlwo.h
+rubik.o: $(HACK_SRC)/xlockmore.h
+rubik.o: ../../config.h
+rubik.o: $(HACK_SRC)/xlockmoreI.h
+rubik.o: $(HACK_SRC)/screenhack.h
+rubik.o: $(UTILS_SRC)/yarandom.h
+rubik.o: $(UTILS_SRC)/usleep.h
+rubik.o: $(UTILS_SRC)/resources.h
+rubik.o: $(UTILS_SRC)/hsv.h
+rubik.o: $(UTILS_SRC)/colors.h
+rubik.o: $(UTILS_SRC)/grabscreen.h
+rubik.o: $(UTILS_SRC)/visual.h
+rubik.o: $(UTILS_SRC)/xshm.h
+s1_1.o: $(srcdir)/buildlwo.h
+s1_2.o: $(srcdir)/buildlwo.h
+s1_3.o: $(srcdir)/buildlwo.h
+s1_4.o: $(srcdir)/buildlwo.h
+s1_5.o: $(srcdir)/buildlwo.h
+s1_6.o: $(srcdir)/buildlwo.h
+s1_b.o: $(srcdir)/buildlwo.h
+shark.o: $(srcdir)/atlantis.h
+sproingies.o: $(HACK_SRC)/xlockmoreI.h
+sproingies.o: $(HACK_SRC)/screenhack.h
+sproingies.o: ../../config.h
+sproingies.o: $(UTILS_SRC)/yarandom.h
+sproingies.o: $(UTILS_SRC)/usleep.h
+sproingies.o: $(UTILS_SRC)/resources.h
+sproingies.o: $(UTILS_SRC)/hsv.h
+sproingies.o: $(UTILS_SRC)/colors.h
+sproingies.o: $(UTILS_SRC)/grabscreen.h
+sproingies.o: $(UTILS_SRC)/visual.h
+sproingies.o: $(UTILS_SRC)/xshm.h
+sproingies.o: $(srcdir)/buildlwo.h
+sproingiewrap.o: $(HACK_SRC)/xlockmore.h
+sproingiewrap.o: ../../config.h
+sproingiewrap.o: $(HACK_SRC)/xlockmoreI.h
+sproingiewrap.o: $(HACK_SRC)/screenhack.h
+sproingiewrap.o: $(UTILS_SRC)/yarandom.h
+sproingiewrap.o: $(UTILS_SRC)/usleep.h
+sproingiewrap.o: $(UTILS_SRC)/resources.h
+sproingiewrap.o: $(UTILS_SRC)/hsv.h
+sproingiewrap.o: $(UTILS_SRC)/colors.h
+sproingiewrap.o: $(UTILS_SRC)/grabscreen.h
+sproingiewrap.o: $(UTILS_SRC)/visual.h
+sproingiewrap.o: $(UTILS_SRC)/xshm.h
+stairs.o: $(HACK_SRC)/xlockmore.h
+stairs.o: ../../config.h
+stairs.o: $(HACK_SRC)/xlockmoreI.h
+stairs.o: $(HACK_SRC)/screenhack.h
+stairs.o: $(UTILS_SRC)/yarandom.h
+stairs.o: $(UTILS_SRC)/usleep.h
+stairs.o: $(UTILS_SRC)/resources.h
+stairs.o: $(UTILS_SRC)/hsv.h
+stairs.o: $(UTILS_SRC)/colors.h
+stairs.o: $(UTILS_SRC)/grabscreen.h
+stairs.o: $(UTILS_SRC)/visual.h
+stairs.o: $(UTILS_SRC)/xshm.h
+stairs.o: $(srcdir)/e_textures.h
+superquadrics.o: $(HACK_SRC)/xlockmore.h
+superquadrics.o: ../../config.h
+superquadrics.o: $(HACK_SRC)/xlockmoreI.h
+superquadrics.o: $(HACK_SRC)/screenhack.h
+superquadrics.o: $(UTILS_SRC)/yarandom.h
+superquadrics.o: $(UTILS_SRC)/usleep.h
+superquadrics.o: $(UTILS_SRC)/resources.h
+superquadrics.o: $(UTILS_SRC)/hsv.h
+superquadrics.o: $(UTILS_SRC)/colors.h
+superquadrics.o: $(UTILS_SRC)/grabscreen.h
+superquadrics.o: $(UTILS_SRC)/visual.h
+superquadrics.o: $(UTILS_SRC)/xshm.h
+swim.o: $(HACK_SRC)/xlockmoreI.h
+swim.o: $(HACK_SRC)/screenhack.h
+swim.o: ../../config.h
+swim.o: $(UTILS_SRC)/yarandom.h
+swim.o: $(UTILS_SRC)/usleep.h
+swim.o: $(UTILS_SRC)/resources.h
+swim.o: $(UTILS_SRC)/hsv.h
+swim.o: $(UTILS_SRC)/colors.h
+swim.o: $(UTILS_SRC)/grabscreen.h
+swim.o: $(UTILS_SRC)/visual.h
+swim.o: $(UTILS_SRC)/xshm.h
+swim.o: $(srcdir)/atlantis.h
+whale.o: $(srcdir)/atlantis.h
+xlock-gl.o: $(HACK_SRC)/screenhack.h
+xlock-gl.o: ../../config.h
+xlock-gl.o: $(UTILS_SRC)/yarandom.h
+xlock-gl.o: $(UTILS_SRC)/usleep.h
+xlock-gl.o: $(UTILS_SRC)/resources.h
+xlock-gl.o: $(UTILS_SRC)/hsv.h
+xlock-gl.o: $(UTILS_SRC)/colors.h
+xlock-gl.o: $(UTILS_SRC)/grabscreen.h
+xlock-gl.o: $(UTILS_SRC)/visual.h
+xlock-gl.o: $(HACK_SRC)/xlockmoreI.h
+xlock-gl.o: $(UTILS_SRC)/xshm.h
+xpm-ximage.o: ../../config.h
+glplanet.o: $(HACK_SRC)/xlockmore.h
+glplanet.o: ../../config.h
+glplanet.o: $(HACK_SRC)/xlockmoreI.h
+glplanet.o: $(HACK_SRC)/screenhack.h
+glplanet.o: $(UTILS_SRC)/yarandom.h
+glplanet.o: $(UTILS_SRC)/usleep.h
+glplanet.o: $(UTILS_SRC)/resources.h
+glplanet.o: $(UTILS_SRC)/hsv.h
+glplanet.o: $(UTILS_SRC)/colors.h
+glplanet.o: $(UTILS_SRC)/grabscreen.h
+glplanet.o: $(UTILS_SRC)/visual.h
+glplanet.o: $(UTILS_SRC)/xshm.h
+glplanet.o: $(HACK_SRC)/images/earth.xbm
+glplanet.o: $(srcdir)/xpm-ximage.h
+pulsar.o: $(HACK_SRC)/xlockmore.h
+pulsar.o: ../../config.h
+pulsar.o: $(HACK_SRC)/xlockmoreI.h
+pulsar.o: $(HACK_SRC)/screenhack.h
+pulsar.o: $(UTILS_SRC)/yarandom.h
+pulsar.o: $(UTILS_SRC)/usleep.h
+pulsar.o: $(UTILS_SRC)/resources.h
+pulsar.o: $(UTILS_SRC)/hsv.h
+pulsar.o: $(UTILS_SRC)/colors.h
+pulsar.o: $(UTILS_SRC)/grabscreen.h
+pulsar.o: $(UTILS_SRC)/visual.h
+pulsar.o: $(UTILS_SRC)/xshm.h
+extrusion.o: $(HACK_SRC)/xlockmore.h
+extrusion.o: ../../config.h
+extrusion.o: $(HACK_SRC)/xlockmoreI.h
+extrusion.o: $(HACK_SRC)/screenhack.h
+extrusion.o: $(UTILS_SRC)/yarandom.h
+extrusion.o: $(UTILS_SRC)/usleep.h
+extrusion.o: $(UTILS_SRC)/resources.h
+extrusion.o: $(UTILS_SRC)/hsv.h
+extrusion.o: $(UTILS_SRC)/colors.h
+extrusion.o: $(UTILS_SRC)/grabscreen.h
+extrusion.o: $(UTILS_SRC)/visual.h
+extrusion.o: $(UTILS_SRC)/xshm.h
+
