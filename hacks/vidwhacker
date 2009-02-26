@@ -1,0 +1,330 @@
+#!/bin/sh
+#
+# vidwhacker, for xscreensaver.  Copyright (c) 1998 Jamie Zawinski.
+#
+# This script grabs a frame of video, then uses various pbm filters to
+# munge the image in random nefarious ways, then uses xv to put it on
+# the root window.  This works out really nicely if you just feed some
+# random TV station into it...
+#
+# The video grabbing part is SGI-specific -- if you want to use this on
+# another system, add a new clause to the grab() procedure.
+
+
+# Process command-line args...
+
+onroot=false
+verbose=false
+delay=3
+use_stdin=false
+
+pid=""
+tmp=/tmp/vd$$
+tmp_rgb=$tmp-00000.rgb
+tmp_ppm0=$tmp-0.ppm
+tmp_ppm1=$tmp-1.ppm
+tmp_ppm2=$tmp-2.ppm
+tmp_ppm3=$tmp-3.ppm
+tmp_ppm4=$tmp-4.ppm
+
+
+getargs() {
+
+  while [ $# != 0 ]; do
+    case "$1" in
+    -root )
+      onroot=true
+      ;;
+    -verbose )
+      verbose=true
+      ;;
+    -stdin )
+      use_stdin=true
+      ;;
+    * )
+      echo "usage: $0 [ -root | -verbose | -stdin ]" >&2
+      exit 1
+      ;;
+    esac
+    shift
+  done
+
+  xvargs="-quick24"
+
+  if [ "$onroot" = true ]; then
+    xvargs="$xvargs -root -rmode 5 -noresetroot -rfg black -rbg black -viewonly"
+  else
+    xvargs="$xvargs -geom +0+0"
+  fi
+
+  screen_width=`xdpyinfo | sed -n 's/.* dimensions: *\([0-9]*\).*/\1/p'`
+}
+
+
+clean() {
+  rm -f $tmp_rgb $tmp_ppm1 $tmp_ppm2 $tmp_ppm3 $tmp_ppm4
+}
+
+clean2() {
+  clean
+  rm -f $tmp_ppm0
+}
+
+
+# Grab a frame of video.
+#
+grab() {
+  uname=`uname`
+  if [ $uname = IRIX ]; then
+    #
+    # SGI's "vidtomem" returns an SGI RGB image of the default video input,
+    # and has stupid non-overridable ouput-file-naming conventions.  So, let 
+    # it write its file; and then convert it to a pgm.
+    #
+    
+    vidtomem -f $tmp
+    sgitopnm $tmp_rgb > $tmp_ppm1
+
+    # Cut off the close-captioning blips in the NTSC overscan region.  YMMV.
+    #  | pnmcut 12 7 695 477 
+
+  elif [ $uname = Linux ]; then
+
+    # Marcus Herbert says the following works with his Connectix Qcam.
+    # Don't have qcam?  Well, do something else then...  and send me a patch.
+
+    qcam > $tmp_ppm1
+
+  else
+    echo "$0: don't know how to grab video on this OS." >&2
+    clean2
+    exit 1
+  fi
+}
+
+
+# Use perl to pick a random foreground/background color in pbm's syntax.
+#
+randcolor() {
+  perl -e 'srand; 
+	   printf("#%02x%02x%02x-#%02x%02x%02x",
+		  int(rand()*60),
+		  int(rand()*60),
+		  int(rand()*60),
+		  120+int(rand()*135),
+		  120+int(rand()*135),
+		  120+int(rand()*135))'
+}
+
+# Frobnicate the image in some random way.
+#
+frob() {
+
+  w_h=`head -2 $tmp_ppm1 | tail -1`
+  width=`echo $w_h | awk '{print $1}'`
+  height=`echo $w_h | awk '{print $2}'`
+
+  N=`perl -e 'srand; print int(rand() * 17)'`
+
+  if [ "$verbose" = true ]; then
+    echo "mode $N..." >&2
+  fi
+
+  if   [ $N = 0 ]; then
+    ppmtopgm $tmp_ppm1 | pgmedge | pgmtoppm `randcolor` | ppmnorm
+
+  elif [ $N = 1 ]; then
+    ppmtopgm $tmp_ppm1 | 
+    pgmenhance | 
+    pgmtoppm `randcolor`
+
+  elif [ $N = 2 ]; then
+    ppmtopgm $tmp_ppm1 | pgmoil | pgmtoppm `randcolor`
+
+  elif [ $N = 3 ]; then 
+    ppmrelief $tmp_ppm1 | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |
+      pgmedge | pnminvert | pgmtoppm `randcolor`
+
+  elif [ $N = 4 ]; then
+    ppmspread 71 $tmp_ppm1 > $tmp_ppm2
+    pnmarith -add $tmp_ppm1 $tmp_ppm2
+
+  elif [ $N = 5 ]; then
+    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
+    pnmflip -tb $tmp_ppm3 | ppmnorm > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
+
+  elif [ $N = 6 ]; then
+    N2=`perl -e 'srand; print int(rand() * 3)'`
+    if [ $N2 = 0 ]; then
+      pnmflip -lr $tmp_ppm1 > $tmp_ppm2
+    elif [ $N2 = 1 ]; then
+      pnmflip -tb $tmp_ppm1 > $tmp_ppm2
+    else
+      pnmflip -lr $tmp_ppm1 > $tmp_ppm2
+      pnmflip -tb $tmp_ppm2 > $tmp_ppm3
+      cp $tmp_ppm3 $tmp_ppm2
+    fi
+
+    pnmarith -difference $tmp_ppm1 $tmp_ppm2
+
+  elif [ $N = 7 ]; then
+
+    for i in 1 2 3 ; do
+      ppmtopgm $tmp_ppm1 | pgmedge > $tmp_ppm2
+      pnmarith -difference $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
+      cp $tmp_ppm3 $tmp_ppm1
+    done
+    ppmnorm < $tmp_ppm1
+
+  elif [ $N = 8 ]; then
+    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm1 $tmp_ppm2 | ppmrelief | ppmnorm | pnminvert
+
+  elif [ $N = 9 ]; then
+    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
+    pnmarith -subtract $tmp_ppm1 $tmp_ppm2 | ppmrelief | ppmtopgm | pgmedge
+
+  elif [ $N = 10 ]; then
+    ppmtopgm $tmp_ppm1 | pgmbentley | pgmtoppm `randcolor`
+
+  elif [ $N = 11 ]; then
+    pgmcrater -number 20000 -height $height -width $width | pgmtoppm `randcolor` > $tmp_ppm2
+    pnmarith -difference $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
+    pnmflip -tb $tmp_ppm3 | ppmnorm > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
+
+  elif [ $N = 12 ]; then
+    ppmshift 30 $tmp_ppm1 | ppmtopgm | pgmoil | pgmedge |  pgmtoppm `randcolor` > $tmp_ppm2
+    pnmarith -difference $tmp_ppm1 $tmp_ppm2 
+
+ elif [ $N = 13 ]; then
+    ppmpat -madras $width $height | pnmdepth 255 > $tmp_ppm2
+    pnmarith -difference $tmp_ppm1 $tmp_ppm2
+ 
+  elif [ $N = 14 ]; then
+    ppmpat -tartan $width $height | pnmdepth 255 > $tmp_ppm2
+    pnmarith -difference  $tmp_ppm1 $tmp_ppm2 
+  
+  elif [ $N = 15 ]; then
+    ppmpat -camo $width $height | pnmdepth 255 | ppmshift 50 > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
+  
+  elif [ $N = 16 ]; then
+    pgmnoise $width $height | pgmedge | pgmtoppm `randcolor` > $tmp_ppm2
+    pnmarith -difference $tmp_ppm1 $tmp_ppm2 | pnmdepth 255 | pnmsmooth
+
+  else cat $tmp_ppm1
+  fi
+}
+
+
+# Grab a frame and frob it.  leave it in $tmp_ppm3.
+#
+whack() {
+  clean
+
+  while [ ! -f $tmp_ppm1 ]; do
+    if [ "$use_stdin" != true ]; then
+      grab
+    else
+      cp $tmp_ppm0 $tmp_ppm1
+    fi
+  done
+
+  rm -f $tmp_rgb
+  frob | pnmscale -width $screen_width > $tmp_ppm3
+  rm -f $tmp_ppm1 $tmp_ppm2
+}
+
+
+# Kill off the xv subprocess, if it's running
+#
+kill_pid() {
+  if [ "$pid" != "" ]; then
+
+    if [ "$verbose" = true ]; then
+      echo "killing pid $pid..." >&2
+    fi
+
+    # need to do this to avoid "6898 Terminated" messages!
+    # apparently one can't redirect the output of the builtin `kill' command.
+#    ( sh -c "kill $pid" ) >/dev/null 2>/dev/null </dev/null
+
+    # wtf?  that doesn't work either.  Is it writing to /dev/tty??
+    kill $pid >&- >&-
+
+    pid=""
+  fi
+}
+
+# called when this process is signalled (for cleanup)
+#
+my_trap() {
+  if [ "$verbose" = true ]; then
+    echo "trapped signal!" >&2
+  fi
+  kill_pid
+  clean2
+  exit 1
+}
+
+main() {
+
+  getargs $@
+
+  trap my_trap 0 1 2 3 6 9 13
+
+  if [ "$use_stdin" = true ]; then
+   cat > $tmp_ppm0
+  fi
+
+  while true; do
+
+    # Loop grabbing and frobbing images.
+    #
+    # If we're running on the root, run xv in the foreground (with -exit)
+    # and then wait.
+    #
+    # If we're running in a window, spawn xv in the background; then when
+    # it's time to put up the new image, kill off the currently-running xv.
+
+    if [ "$verbose" = true ]; then
+      whack
+    else
+      whack >&- 2>&-
+    fi
+
+    kill_pid
+
+    if [ ! -s $tmp_ppm3 ]; then
+      echo "$0: no image grabbed" >&2
+    else
+
+      pnmtosgi < $tmp_ppm3 > $tmp_ppm2
+      rm -f $tmp_ppm3
+
+      if [ -s $tmp_ppm2 ]; then
+        if [ "$verbose" = true ]; then
+          echo "launching xv $xvargs $tmp_ppm2" >&2
+	  ls -lF $tmp_ppm2
+        fi
+
+	# cat the file so that we can nuke it without racing against xv.
+        cat $tmp_ppm2 | xv $xvargs - &
+        pid=$!
+      fi
+    fi
+
+    clean
+    sleep $delay
+
+  done
+  exit 1
+}
+
+main $@
+
+# to find stray xv data:
+# xwininfo -root -children|grep 'xv image comments' | awk '{print "xkill -id ", $1}'
