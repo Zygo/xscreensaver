@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gltext" _label="GLText">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="30000" default="20000"
+          convert="invert"/>
+
+  <boolean id="wander" _label="Wander" arg-unset="-no-wander"/>
+
+  <select id="rotation">
+    <option id="no"  _label="Don't Rotate" arg-set="-no-spin"/>
+    <option id="x"   _label="Rotate around X axis" arg-set="-spin X"/>
+    <option id="y"   _label="Rotate around Y axis" arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis" arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="xyz" _label="Rotate around all three axes"/>
+  </select>
+
+  <select id="facing">
+    <option id="front"   _label="Always face front" arg-set="-front"/>
+    <option id="nofront" _label="Spin all the way around"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <string id="text"    _label="Text"    arg="-text %"/>
+  <file   id="program" _label="Program" arg="-program %"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Displays a few lines of text spinning around in a solid 3D font.
+Written by Jamie Zawinski.
+  </_description>
+</screensaver>

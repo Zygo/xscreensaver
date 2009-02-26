@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ifs" _label="IFS">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+    _label="Speed" _low-label="Slow" _high-label="Fast"
+    low="0" high="40000" default="10000"
+    convert="invert"/>
+
+  <number id="functions" type="spinbutton" arg="-functions %"
+    _label="Functions" low="2" high="6" default="3"/>
+
+  <number id="detail" type="spinbutton" arg="-detail %"
+    _label="Detail" low="2" high="30" default="9"/>
+    
+  <boolean id="translate" _label="Translate" arg-unset="-notranslate"/>
+  <boolean id="scale" _label="Scale" arg-unset="-noscale"/>
+  <boolean id="rotate" _label="Rotate" arg-unset="-norotate"/>
+    
+  <select id="colour mode">
+    <option id="blend"    _label="Blend"    arg-set="-mode 0"/>
+    <option id="function" _label="Function" arg-set="-mode 1"/>
+    <option id="single"   _label="Single" arg-set="-mode 2"/>
+  </select>
+  
+  <number id="colors" type="slider" arg="-colors %"
+    _label="Number of Colours" _low-label="2" _high-label="Many"
+    low="2" high="255" default="200" />
+
+  <_description>
+
+This one draws spinning, colliding iterated-function-system images.
+
+Note that the "quality" parameter is exponential.  Number of points
+drawn is functions^detail.
+
+The number of colours is only used in Blend mode to provide a palette
+to create the base colours.  These are then blended together in a
+non-colourmap friendly fashion.
+
+Written by Chris Le Sueur.
+  </_description>
+</screensaver>

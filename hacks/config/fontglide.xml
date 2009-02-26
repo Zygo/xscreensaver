@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fontglide" _label="FontGlide">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="10000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Motion Speed" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="10" default="1"/>
+
+  <number id="linger" type="slider" arg="-linger %"
+          _label="Text Linger" _low-label="Brief" _high-label="Long"
+          low="0.1" high="10" default="1"/>
+
+  <number id="bw" type="spinbutton" arg="-bw %"
+           _label="Font Border Thickness" low="0" high="8" default="2"/>
+
+ <hgroup>
+  <select id="mode">
+   <option id="random" _label="Random"/>
+   <option id="page"   _label="Pages of text"  arg-set="-page"/>
+   <option id="scroll" _label="Horizontally scrolling text" arg-set="-scroll"/>
+  </select>
+
+   <boolean id="trails" _label="Vapor Trails"    arg-set="-trails"/>
+ </hgroup>
+
+  <boolean id="db"     _label="Double Buffer" arg-unset="-no-dbuf"/>
+
+  <file id="program" _label="Text Program" arg="-program %"/>
+
+  <_description>
+Puts text on the screen using large characters that glide in from the
+edges, assemble, then disperse.  Alternately, it can simply scroll whole 
+sentences from right to left.  
+
+The text can be the output of a program or the contents of a file
+or URL, as configured on the "Advanced" tab of the main Screensaver
+Preferences window.
+
+Written Jamie Zawinski.
+  </_description>
+</screensaver>

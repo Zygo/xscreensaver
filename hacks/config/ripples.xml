@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ripples" _label="Ripples">
+
+  <command arg="-root"/>
+
+  <!-- #### -box [0] -->
+
+  <number id="delay" type="slider" arg="-delay %"
+          _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="50000"
+          convert="invert"/>
+
+  <number id="rate" type="slider" arg="-rate %"
+          _low-label="Drizzle" _high-label="Storm"
+          low="1" high="100" default="5"
+          convert="invert"/>
+
+  <number id="fluidity" type="slider" arg="-fluidity %"
+          _low-label="Small Drops" _high-label="Big Drops"
+          low="0" high="16" default="6"
+          convert="invert"/>
+
+  <number id="light" type="spinbutton" arg="-light %"
+          _label="Lighting Effect" low="0" high="8" default="0"/>
+
+  <boolean id="grab" _label="Grab Screen Image" arg-set="-water"/>
+
+  <boolean id="stir" _label="Moving Splashes" arg-set="-stir"/>
+
+  <boolean id="oily" _label="Psychedelic Colors" arg-set="-oily"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _low-label="Colors    Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+
+  <_description>
+This draws rippling interference patterns like splashing water.
+With the -water option, it manipulates your desktop image to look
+like something is dripping into it.  Written by Tom Hammersley.
+  </_description>
+</screensaver>

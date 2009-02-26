@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fireworkx" _label="Fireworkx">
+
+  <command arg="-root"/>
+
+  <number id="Delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <number id="maxlife" type="slider" arg="-maxlife %"
+          _label="Activity" _low-label="Dense" _high-label="Sparse"
+          low="250" high="5000" default="1200"/>
+
+  <boolean id="light" _label="Light effect" arg-unset="-nolight"/>
+  <boolean id="fade"  _label="Fast Fade (more realistic)" arg-set="-fade"/>
+  <boolean id="shoot" _label="Shoot" arg-set="-shoot"/>
+
+  <_description>
+Pyrotechnics simulation eye-candy. Written by Rony B. Chandran.
+  </_description>
+</screensaver>

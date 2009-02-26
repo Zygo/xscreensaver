@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="decayscreen" _label="DecayScreen">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <select id="mode">
+    <option id="random" _label="Random Melt Style"/>
+    <option id="random" _label="Shuffle Melt" arg-set="-mode shuffle"/>
+    <option id="random" _label="Melt Up"    arg-set="-mode up"/>
+    <option id="random" _label="Melt Down"  arg-set="-mode down"/>
+    <option id="random" _label="Melt Left"  arg-set="-mode left"/>
+    <option id="random" _label="Melt Right" arg-set="-mode right"/>
+    <option id="random" _label="Melt Up, Left"    arg-set="-mode upleft"/>
+    <option id="random" _label="Melt Up, Right"   arg-set="-mode upright"/>
+    <option id="random" _label="Melt Down, Left"  arg-set="-mode downleft"/>
+    <option id="random" _label="Melt Down, Right" arg-set="-mode downright"/>
+    <option id="random" _label="Melt Towards Center" arg-set="-mode in"/>
+    <option id="random" _label="Melt Away From Center" arg-set="-mode out"/>
+    <option id="random" _label="Melty Melt" arg-set="-mode melt"/>
+    <option id="random" _label="Stretchy Melt" arg-set="-mode stretch"/>
+    <option id="random" _label="Fuzzy Melt" arg-set="-mode fuzz"/>
+  </select>
+
+  <_description>
+This takes an image and makes it melt.  You've no doubt seen this
+effect before, but no screensaver would really be complete without it.
+It works best if there's something colorful visible.  Warning, if the
+effect continues after the screen saver is off, seek medical attention.
+Written by David Wald, Vivek Khera, Jamie Zawinski, and Vince Levey.
+  </_description>
+</screensaver>

@@ -1,0 +1,120 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "25-Jul-98" "X Version 11"
+.SH NAME
+gltext - draws text spinning around in 3D
+.SH SYNOPSIS
+.B gltext
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-text \fIstring\fP]
+[\-program \fIcommand\fP]
+[\-wander] [\-no-wander]
+[\-spin \fIaxes\fP]
+[\-no-spin]
+[\-front] [\-no\-front]
+.SH DESCRIPTION
+The \fIgltext\fP program draws some text spinning around in 3D, using
+a font that appears to be made of solid tubes.  
+.SH OPTIONS
+.I gltext
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-text \fIstring\fP
+The text to display.  This may contain newlines, but it shouldn't be
+very long.  The default is to display the machine name and OS version.
+
+This may also be a format string acceptable to
+.BR date (1)
+and
+.BR strftime (3) ,
+in which case, it will be updated once a second.  So to make this
+program display a spinning digital clock, you could do this:
+.EX
+gltext -text "%A%n%d %b %Y%n%l:%M:%S %p"
+.EE
+To include a literal `%', you must double it: `%%'.
+
+See the man page for
+.BR strftime (3)
+for more details.
+.TP 8
+.B \-program \fIcommand\fP
+The given program is run, and its output is displayed.
+If specified, this overrides \fI\-text\fP.
+The program will be re-run every 5 seconds to re-generate the text.
+It should run quickly, and shouldn't generate too much text.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
+.TP 8
+.B \-wander
+Move the text around the screen.  This is the default.
+.TP 8
+.B \-no\-wander
+Keep the text centered on the screen.
+.TP 8
+.B \-spin
+Which axes around which the text should spin.  The default is "XYZ",
+meaning rotate it freely in space.  "\fB\-spin Z\fP" would rotate the
+text in the plane of the screen while not rotating it into or out
+of the screen; etc.
+.TP 8
+.B \-no\-spin
+Don't spin the text at all: the same as \fB\-spin ""\fP.
+.TP 8
+.B \-front
+When spinning, never spin all the way around or upside down:
+always face mostly forward so that the text is easily readable.
+.TP 8
+.B \-no\-front
+Allow spins to go all the way around or upside down.  This is the default.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2001-2005 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>
