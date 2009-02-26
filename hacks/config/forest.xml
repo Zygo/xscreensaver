@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="forest" _label="Forest">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="800000" default="500000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="20" default="20"/>
+
+  <_description>
+This draws fractal trees.  Written by Peter Baumung.  Everybody loves
+fractals, right?
+  </_description>
+</screensaver>

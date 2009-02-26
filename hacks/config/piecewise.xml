@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="piecewise" _label="Piecewise">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="5000"
+          convert="invert"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="4" high="100" default="32"/>
+
+  <number id="colorspeed" type="slider" arg="-colorspeed %"
+          _label="Color shifting speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="100" default="10"/>
+
+  <number id="minradius" type="slider" arg="-minradius %"
+          _label="Minimum radius" _low-label="Small" _high-label="Large"
+          low="0.01" high="0.5" default="0.05"/>
+
+  <number id="maxradius" type="slider" arg="-maxradius %"
+          _label="Maximum radius" _low-label="Small" _high-label="Large"
+          low="0.01" high="0.5" default="0.2"/>
+
+  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/>
+
+  <_description>
+This draws a bunch of moving circles which switch from visibility to
+invisibility at intersection points.  Written by Geoffrey Irving.
+  </_description>
+</screensaver>

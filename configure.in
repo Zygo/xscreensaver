@@ -1,0 +1,4084 @@
+# configure.in --- xscreensaver, Copyright (c) 1997-2003 Jamie Zawinski.
+#
+
+AC_PREREQ(2.52)
+AC_INIT(driver/subprocs.c)
+AC_CONFIG_HEADER(config.h)
+
+echo "current directory: `pwd`"
+echo "command line was: $0 $@"
+
+
+# After checking to see that --srcdir is correct (which AC_INIT does)
+# check for some random other files that come later in the tar file,
+# to make sure everything is here.
+#
+for d in driver utils hacks hacks/glx ; do
+  f=$srcdir/$d/Makefile.in
+  if test \! -r $f ; then
+    echo ""
+    echo "ERROR: The package is incomplete: $f does not exist."
+    echo "       This probably means that your download was truncated."
+    echo ""
+    exit 1
+  fi
+done
+
+###############################################################################
+#
+#       Function to figure out how to run the compiler.
+#
+###############################################################################
+
+AC_DEFUN(AC_PROG_CC_ANSI,
+ [AC_PROG_CC
+
+  if test -z "$GCC"; then
+    AC_MSG_CHECKING(how to request ANSI compilation)
+    case "$host" in
+      *-hpux* )
+        AC_MSG_RESULT(HPUX: adding -Ae)
+        CC="$CC -Ae"
+      ;;
+      *-aix* )
+        AC_MSG_RESULT(AIX: adding -qlanglvl=ansi -qhalt=e)
+        CC="$CC -qlanglvl=ansi -qhalt=e"
+      ;;
+
+      *-dec-* )
+        AC_MSG_RESULT(DEC: adding -std1 -ieee)
+        CC="$CC -std1"
+      ;;
+
+      *)
+        AC_MSG_RESULT(no idea)
+      ;;
+    esac
+  fi
+
+  AC_MSG_CHECKING([whether the compiler works on ANSI C])
+  AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
+     AC_MSG_RESULT(yes),
+     AC_MSG_RESULT(no)
+     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.),
+     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.))
+
+  if test -n "$GCC"; then
+    AC_MSG_RESULT(Turning on gcc compiler warnings.)
+    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs"
+  else
+    case "$host" in
+      *-irix5* |*-irix6.[0-3]* )
+        AC_MSG_RESULT(Turning on SGI compiler warnings.)
+        CC="$CC -fullwarn -use_readonly_const -rdata_shared -g3"
+      ;;
+#     *-dec-osf* )
+#       if test -z "$GCC"; then
+#         AC_MSG_RESULT(Turning on DEC C compiler warnings.)
+#         CC="$CC -migrate -w0 -verbose -warnprotos"
+#       fi
+#     ;;
+    esac
+  fi
+])
+
+
+###############################################################################
+#
+#       Functions to figure out how to disable // comments in ANSI C code.
+#
+#       (With recent gcc, this is done with "-std=c89".  With older gcc, this
+#       is done by passing "-lang-c89" to cpp, by passing "-Wp,-lang-c89" to
+#       gcc.  Old gcc doesn't support -std, and new gcc doesn't support -lang.
+#       so much for compatibility!)
+#
+###############################################################################
+
+AC_DEFUN(AC_GCC_ACCEPTS_STD,
+ [if test -n "$GCC"; then
+   AC_CACHE_CHECK([whether gcc accepts -std],
+     ac_cv_gcc_accepts_std,
+    [if ( ( gcc -E -std=c89 - </dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_std=no
+     else
+       ac_cv_gcc_accepts_std=yes
+     fi])
+   ac_gcc_accepts_std="$ac_cv_gcc_accepts_std"
+  fi
+])
+
+AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
+ [if test -n "$GCC"; then
+   AC_GCC_ACCEPTS_STD
+   AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
+   #
+   # The reason that // comments are banned from xscreensaver is that gcc is
+   # basically the only compiler in the world that supports them in C code.
+   # All other vendors support them only in their C++ compilers, not in their
+   # ANSI C compilers.  This means that it's a portability problem: every time
+   # these comments have snuck into the xscreensaver source code, I've gotten
+   # complaints about it the next day.  So we turn off support for them in gcc
+   # as well to prevent them from accidentially slipping in.
+   #
+   if test "$ac_gcc_accepts_std" = yes ; then
+     #
+     # -std=c89 defines __STRICT_ANSI__, which we don't want.
+     # (That appears to be the only additional preprocessor symbol
+     # it defines, in addition to the syntax changes it makes.)
+     #
+     # -std=gnu89 is no good, because // comments were a GNU extension
+     # before they were in the ANSI C 99 spec...  (gcc 2.96 permits //
+     # with -std=gnu89 but not with -std=c89.)
+     #
+     CC="$CC -std=c89 -U__STRICT_ANSI__"
+   else
+     # The old way:
+     CC="$CC -Wp,-lang-c89"
+   fi
+  fi
+])
+
+
+###############################################################################
+#
+#       Function to figure out how to turn off Objective C on MacOS X.
+#       (We have to do this to work around an Apple-specific gcc bug.)
+#
+###############################################################################
+
+AC_DEFUN(AC_GCC_ACCEPTS_NO_CPP_PRECOMP,
+ [if test -n "$GCC"; then
+   AC_CACHE_CHECK([whether gcc accepts -no-cpp-precomp],
+     ac_cv_gcc_accepts_no_cpp_precomp,
+    [if ( ( gcc -E -no-cpp-precomp - </dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_cpp_precomp=no
+     else
+       ac_cv_gcc_accepts_no_cpp_precomp=yes
+     fi])
+   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
+  fi
+])
+
+AC_DEFUN(AC_NO_OBJECTIVE_C,
+ [if test -n "$GCC"; then
+   AC_GCC_ACCEPTS_NO_CPP_PRECOMP
+   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
+     AC_MSG_RESULT(Disabling Objective C extensions in ANSI C code.)
+     CC="$CC -no-cpp-precomp"
+   fi
+  fi
+])
+
+
+###############################################################################
+#
+#       Function to figure out how to create directory trees.
+#
+###############################################################################
+
+AC_DEFUN(AC_PROG_INSTALL_DIRS,
+ [AC_CACHE_CHECK([whether \"\${INSTALL} -d\" creates intermediate directories],
+    ac_cv_install_d_creates_dirs,
+    [ac_cv_install_d_creates_dirs=no
+     rm -rf conftestdir
+     if mkdir conftestdir; then
+       cd conftestdir 2>/dev/null
+       ${INSTALL} -d `pwd`/dir1/dir2 >/dev/null 2>&1
+       if test -d dir1/dir2/. ; then
+         ac_cv_install_d_creates_dirs=yes
+       fi
+       cd .. 2>/dev/null
+       rm -rf conftestdir
+     fi
+    ])
+
+  if test "$ac_cv_install_d_creates_dirs" = no ; then
+    AC_CACHE_CHECK([whether \"mkdir -p\" creates intermediate directories],
+      ac_cv_mkdir_p_creates_dirs,
+      [ac_cv_mkdir_p_creates_dirs=no
+       rm -rf conftestdir
+       if mkdir conftestdir; then
+         cd conftestdir 2>/dev/null
+         mkdir -p dir1/dir2 >/dev/null 2>&1
+         if test -d dir1/dir2/. ; then
+           ac_cv_mkdir_p_creates_dirs=yes
+         fi
+         cd .. 2>/dev/null
+         rm -rf conftestdir
+       fi
+      ])
+  fi
+
+  if test "$ac_cv_install_d_creates_dirs" = yes ; then
+    INSTALL_DIRS='${INSTALL} -d'
+  elif test "$ac_cv_mkdir_p_creates_dirs" = yes ; then
+    INSTALL_DIRS='mkdir -p'
+  else
+    # any other ideas?
+    INSTALL_DIRS='${INSTALL} -d'
+  fi
+])
+
+
+###############################################################################
+#
+#       Function to check whether gettimeofday() exists, and how to call it.
+#	This may define HAVE_GETTIMEOFDAY and GETTIMEOFDAY_TWO_ARGS.
+#
+###############################################################################
+
+AC_DEFUN(AC_GETTIMEOFDAY_ARGS,
+ [AC_MSG_CHECKING(how to call gettimeofday)
+  AC_CACHE_VAL(ac_cv_gettimeofday_args,
+   [AC_TRY_COMPILE([#include <stdlib.h>
+                    #include <sys/time.h>],
+                   [struct timeval tv; struct timezone tzp;
+                    gettimeofday(&tv, &tzp);],
+                   [ac_gettimeofday_args=2],
+                   [AC_TRY_COMPILE([#include <stdlib.h>
+                                    #include <sys/time.h>],
+                                   [struct timeval tv; gettimeofday(&tv);],
+                                   [ac_gettimeofday_args=1],
+                                   [ac_gettimeofday_args=0])])
+    ac_cv_gettimeofday_args=$ac_gettimeofday_args])
+  ac_gettimeofday_args=$ac_cv_gettimeofday_args
+  if test "$ac_gettimeofday_args" = 1 ; then
+    AC_DEFINE(HAVE_GETTIMEOFDAY)
+    AC_MSG_RESULT(one argument)
+  elif test "$ac_gettimeofday_args" = 2 ; then
+    AC_DEFINE(HAVE_GETTIMEOFDAY)
+    AC_DEFINE(GETTIMEOFDAY_TWO_ARGS)
+    AC_MSG_RESULT(two arguments)
+  else
+    AC_MSG_RESULT(unknown)
+  fi
+])
+
+
+###############################################################################
+#
+#       Function to find perl5 (defines PERL and PERL_VERSION.)
+#
+###############################################################################
+
+# M4 sucks!!  perl sucks too!!
+changequote(X,Y)
+perl_version_cmd='print $]'
+changequote([,])
+
+AC_DEFUN(AC_PROG_PERL,
+ [AC_PATH_PROGS(PERL, [perl5 perl],,)
+  if test -z "$PERL" ; then
+    PERL_VERSION=0
+  else
+    AC_CACHE_CHECK([perl version], ac_cv_perl_version,
+                   [ac_cv_perl_version=`$PERL -e "$perl_version_cmd"`])
+    PERL_VERSION=$ac_cv_perl_version
+  fi
+ ])
+
+
+###############################################################################
+#
+#       Function to demand "bc".  Losers.
+#
+###############################################################################
+
+AC_DEFUN(AC_DEMAND_BC,
+ [ac_bc_result=`echo 6+9 | bc 2>/dev/null`
+  AC_MSG_CHECKING([for bc])
+  if test "$ac_bc_result" = "15" ; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+    echo ''
+    AC_MSG_ERROR([Your system doesn't have \"bc\", which has been a standard
+                  part of Unix since the 1970s.  Come back when your vendor
+                  has grown a clue.])
+  fi
+ ])
+
+###############################################################################
+#
+#       Functions to check how to do ICMP PING requests.
+#
+###############################################################################
+
+AC_DEFUN(AC_CHECK_ICMP,
+ [AC_CACHE_CHECK([for struct icmp], ac_cv_have_icmp,
+  [AC_TRY_COMPILE([#include <stdlib.h>
+                   #include <stdio.h>
+                   #include <math.h>
+                   #include <unistd.h>
+                   #include <limits.h>
+                   #include <signal.h>
+                   #include <fcntl.h>
+                   #include <sys/types.h>
+                   #include <sys/time.h>
+                   #include <sys/ipc.h>
+                   #include <sys/shm.h>
+                   #include <sys/socket.h>
+                   #include <netinet/in_systm.h>
+                   #include <netinet/in.h>
+                   #include <netinet/ip.h>
+                   #include <netinet/ip_icmp.h>
+                   #include <netinet/udp.h>
+                   #include <arpa/inet.h>
+                   #include <netdb.h>],
+                  [struct icmp i;
+                   struct sockaddr s;
+                   struct sockaddr_in si;
+                   struct ip ip;
+                   i.icmp_type = ICMP_ECHO;
+                   i.icmp_code = 0;
+                   i.icmp_cksum = 0;
+                   i.icmp_id = 0;
+                   i.icmp_seq = 0;
+                   si.sin_family = AF_INET;
+                   #if defined(__DECC) || defined(_IP_VHL)
+                   ip.ip_vhl = 0;
+                   #else
+                   ip.ip_hl = 0;
+                   #endif
+                   ],
+                  [ac_cv_have_icmp=yes],
+                  [ac_cv_have_icmp=no])])
+ if test "$ac_cv_have_icmp" = yes ; then
+   AC_DEFINE(HAVE_ICMP)
+ fi])
+
+AC_DEFUN(AC_CHECK_ICMPHDR,
+ [AC_CACHE_CHECK([for struct icmphdr], ac_cv_have_icmphdr,
+  [AC_TRY_COMPILE([#include <stdlib.h>
+                   #include <stdio.h>
+                   #include <math.h>
+                   #include <unistd.h>
+                   #include <limits.h>
+                   #include <signal.h>
+                   #include <fcntl.h>
+                   #include <sys/types.h>
+                   #include <sys/time.h>
+                   #include <sys/ipc.h>
+                   #include <sys/shm.h>
+                   #include <sys/socket.h>
+                   #include <netinet/in_systm.h>
+                   #include <netinet/in.h>
+                   #include <netinet/ip.h>
+                   #include <netinet/ip_icmp.h>
+                   #include <netinet/udp.h>
+                   #include <arpa/inet.h>
+                   #include <netdb.h>],
+                  [struct icmphdr i;
+                   struct sockaddr s;
+                   struct sockaddr_in si;
+                   struct ip ip;
+                   i.type = ICMP_ECHO;
+                   i.code = 0;
+                   i.checksum = 0;
+                   i.un.echo.id = 0;
+                   i.un.echo.sequence = 0;
+                   si.sin_family = AF_INET;
+                   ip.ip_hl = 0;],
+                  [ac_cv_have_icmphdr=yes],
+                  [ac_cv_have_icmphdr=no])])
+ if test "$ac_cv_have_icmphdr" = yes ; then
+   AC_DEFINE(HAVE_ICMPHDR)
+ fi])
+
+
+###############################################################################
+#
+#       Functions to check for various X11 crap.
+#
+###############################################################################
+
+# Try and find the app-defaults directory.
+# It sucks that autoconf doesn't do this already...
+#
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS_XMKMF,[
+  rm -fr conftestdir
+  if mkdir conftestdir; then
+    cd conftestdir 2>/dev/null
+    # Make sure to not put "make" in the Imakefile rules, since we grep it out.
+    cat > Imakefile <<'EOF'
+acfindx:
+	@echo 'ac_x_app_defaults="${XAPPLOADDIR}"'
+EOF
+    if (xmkmf) >/dev/null 2>&1 && test -f Makefile; then
+      # GNU make sometimes prints "make[1]: Entering...", which'd confuse us.
+      eval `${MAKE-make} acfindx 2>/dev/null | grep -v make`
+    fi
+    cd .. 2>/dev/null
+    rm -fr conftestdir
+  fi])
+
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS_DIRECT,[
+  # Look for the directory under a standard set of common directories.
+  # Check X11 before X11Rn because it's often a symlink to the current release.
+  for ac_dir in                                 \
+    /usr/X11/lib/app-defaults                   \
+    /usr/X11R6/lib/app-defaults                 \
+    /usr/X11R6/lib/X11/app-defaults             \
+    /usr/X11R5/lib/app-defaults                 \
+    /usr/X11R5/lib/X11/app-defaults             \
+    /usr/X11R4/lib/app-defaults                 \
+    /usr/X11R4/lib/X11/app-defaults             \
+                                                \
+    /usr/lib/X11/app-defaults                   \
+    /usr/lib/X11R6/app-defaults                 \
+    /usr/lib/X11R5/app-defaults                 \
+    /usr/lib/X11R4/app-defaults                 \
+                                                \
+    /usr/local/X11/lib/app-defaults             \
+    /usr/local/X11R6/lib/app-defaults           \
+    /usr/local/X11R5/lib/app-defaults           \
+    /usr/local/X11R4/lib/app-defaults           \
+                                                \
+    /usr/local/lib/X11/app-defaults             \
+    /usr/local/lib/X11R6/app-defaults           \
+    /usr/local/lib/X11R6/X11/app-defaults       \
+    /usr/local/lib/X11R5/app-defaults           \
+    /usr/local/lib/X11R5/X11/app-defaults       \
+    /usr/local/lib/X11R4/app-defaults           \
+    /usr/local/lib/X11R4/X11/app-defaults       \
+                                                \
+    /usr/X386/lib/X11/app-defaults              \
+    /usr/x386/lib/X11/app-defaults              \
+    /usr/XFree86/lib/X11/app-defaults           \
+                                                \
+    /usr/lib/X11/app-defaults                   \
+    /usr/local/lib/X11/app-defaults             \
+    /usr/unsupported/lib/X11/app-defaults       \
+    /usr/athena/lib/X11/app-defaults            \
+    /usr/local/x11r5/lib/X11/app-defaults       \
+    /usr/lpp/Xamples/lib/X11/app-defaults       \
+    /lib/usr/lib/X11/app-defaults               \
+                                                \
+    /usr/openwin/lib/app-defaults               \
+    /usr/openwin/lib/X11/app-defaults           \
+    /usr/openwin/share/lib/app-defaults         \
+    /usr/openwin/share/lib/X11/app-defaults     \
+                                                \
+    /X11R6/lib/app-defaults                     \
+    /X11R5/lib/app-defaults                     \
+    /X11R4/lib/app-defaults                     \
+    ; \
+  do
+    if test -d "$ac_dir"; then
+      ac_x_app_defaults=$ac_dir
+      break
+    fi
+  done
+])
+
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS,
+  [AC_REQUIRE_CPP()
+    AC_CACHE_CHECK([for X app-defaults directory], ac_cv_x_app_defaults,
+     [AC_PATH_X_APP_DEFAULTS_XMKMF
+      if test x"$ac_x_app_defaults" = x; then
+        AC_PATH_X_APP_DEFAULTS_DIRECT
+      fi
+      if test x"$ac_x_app_defaults" = x; then
+        ac_cv_x_app_defaults="/usr/lib/X11/app-defaults"
+      else
+        # Record where we found app-defaults for the cache.
+        ac_cv_x_app_defaults="$ac_x_app_defaults"
+      fi])
+    eval ac_x_app_defaults="$ac_cv_x_app_defaults"])
+
+
+AC_DEFUN(AC_XPOINTER,
+ [AC_CACHE_CHECK([for XPointer], ac_cv_xpointer,
+                 [AC_TRY_X_COMPILE([#include <X11/Xlib.h>],
+                                   [XPointer foo = (XPointer) 0;],
+                                   [ac_cv_xpointer=yes],
+                                   [ac_cv_xpointer=no])])
+  if test "$ac_cv_xpointer" != yes; then
+   AC_DEFINE(XPointer,[char*])
+  fi])
+
+
+# Random special-cases for X on certain pathological OSes.
+# You know who you are.
+#
+AC_DEFUN(AC_X_RANDOM_PATHS,
+ [case "$host" in
+    *-hpux*)
+
+      # The following arcana was gleaned from conversations with
+      # Eric Schwartz <erics@col.hp.com>:
+      #
+      # On HPUX 10.x, the parts of X that HP considers "standard" live in
+      # /usr/{include,lib}/X11R6/.  The parts that HP doesn't consider
+      # "standard", notably, Xaw and Xmu, live in /usr/contrib/X11R6/.
+      # Yet /usr/contrib/X11R6/ comes preinstalled on all HPUX systems.
+      # Also, there are symlinks from /usr/include/ and /usr/lib/ into
+      # /usr/{include,lib}/X11R6/, so that (if you don't use Xmu at all)
+      # you don't need any -I or -L arguments.
+      #
+      # On HPUX 9.x, /usr/{include,lib}/X11R5/ and /usr/contrib/X11R5/
+      # are the same division as 10.x.  However, there are no symlinks to
+      # the X stuff from /usr/include/ and /usr/lib/, so -I and -L
+      # arguments are always necessary.
+      #
+      # However, X11R6 was available on HPUX 9.x as a patch: if that
+      # patch was installed, then all of X11R6 went in to
+      # /usr/contrib/X11R6/ (there was no /usr/{include,lib}/X11R6/.)
+      #
+      # HPUX 8.x was the same as 9.x, but was X11R4 instead (I don't know
+      # whether R5 was available as a patch; R6 undoubtedly was not.)
+      #
+      # So.  We try and use the highest numbered pair of
+      # /usr/{include,lib}/X11R?/ and /usr/contrib/X11R?/{include,lib}/
+      # that are available.  We do not mix and match different versions
+      # of X.
+      #
+      # Question I still don't know the answer to: (do you?)
+      #
+      #   * On HPUX 9.x, where /usr/include/X11R5/ was standard, and
+      #     /usr/contrib/X11R6/ could be installed as a patch, what was in
+      #     that contrib directory?  Did it contain so-called "standard"
+      #     X11R6, or did it include Xaw and Xmu as well?  If the former,
+      #     where did one find Xaw and Xmu on 9.x R6 systems?  Would this
+      #     be a situation where one had to reach into the R5 headers and
+      #     libs to find Xmu?  That is, must both R6 and R5 directories
+      #     be on the -I and -L lists in that case?
+      #
+      for version in X11R6 X11R5 X11R4 ; do
+        # if either pair of directories exists...
+        if test -d /usr/include/$version || test -d /usr/contrib/$version/include
+        then
+           # if contrib exists, use it...
+           if test -d /usr/contrib/$version/include ; then
+             X_CFLAGS="$X_CFLAGS -I/usr/contrib/$version/include"
+             X_LIBS="$X_LIBS -L/usr/contrib/$version/lib"
+           fi
+           # if the "standard" one exists, use it.
+           if test -d /usr/include/$version ; then
+             X_CFLAGS="$X_CFLAGS -I/usr/include/$version"
+             X_LIBS="$X_LIBS -L/usr/lib/$version"
+           fi
+           # since at least one of the pair exists, go no farther.
+           break
+        fi
+      done
+
+      # Now find Motif.  Thanks for not making xmkmf find this by
+      # default, you losers.
+      #
+      if test -d /usr/include/Motif2.1 ; then
+        X_CFLAGS="$X_CFLAGS -I/usr/include/Motif2.1"
+        X_LIBS="$X_LIBS -L/usr/lib/Motif2.1"
+      elif test -d /usr/include/Motif1.2 ; then
+        X_CFLAGS="$X_CFLAGS -I/usr/include/Motif1.2"
+        X_LIBS="$X_LIBS -L/usr/lib/Motif1.2"
+      elif test -d /usr/include/Motif1.1 ; then
+        X_CFLAGS="$X_CFLAGS -I/usr/include/Motif1.1"
+        X_LIBS="$X_LIBS -L/usr/lib/Motif1.1"
+      fi
+
+      # Now let's check for the pseudo-standard locations for OpenGL and XPM.
+      #
+      if test -d /opt/graphics/OpenGL/include ; then
+        # HP-UX 10.20 puts it here
+        X_CFLAGS="-I/opt/graphics/OpenGL/include $X_CFLAGS"
+        X_LIBS="-L/opt/graphics/OpenGL/lib $X_LIBS"
+      elif test -d /opt/Mesa/lib ; then
+        X_CFLAGS="-I/opt/Mesa/include $X_CFLAGS"
+        X_LIBS="-L/opt/Mesa/lib $X_LIBS"
+      fi
+
+
+      if test -d /opt/xpm/lib/X11 ; then
+        X_CFLAGS="-I/opt/xpm/include $X_CFLAGS"
+        X_LIBS="-L/opt/xpm/lib/X11 $X_LIBS"
+      fi
+
+      # On HPUX, default to installing in /opt/xscreensaver/ instead of
+      # in /usr/local/, unless there is already an xscreensaver in
+      # /usr/local/bin/.  This can be overridden with the --prefix arg
+      # to configure.  I'm not sure this is the right thing to do, but
+      # Richard Lloyd says so...
+      #
+      if test \! -x /usr/local/bin/xscreensaver ; then
+        ac_default_prefix=/opt/xscreensaver
+      fi
+
+    ;;
+    *-solaris*)
+
+      # Thanks for not making xmkmf find this by default, pinheads.
+      # And thanks for moving things around again, too.  Is this
+      # really the standard location now?  What happened to the
+      # joke that this kind of thing went in /opt?
+      # cthomp says "answer: CDE (Common Disorganized Environment)"
+      #
+      if test -f /usr/dt/include/Xm/Xm.h ; then
+        X_CFLAGS="$X_CFLAGS -I/usr/dt/include"
+        X_LIBS="$X_LIBS -L/usr/dt/lib -R:/usr/dt/lib"
+
+        # Some versions of Slowlaris Motif require -lgen.  But not all.  Why?
+        AC_CHECK_LIB(gen, regcmp, [X_LIBS="$X_LIBS -lgen"])
+      fi
+
+    ;;
+    *-darwin*)
+
+      # On MacOS X (10.x with "fink"), many things are under /sw/.
+      #
+      if test -d /sw/include ; then
+        X_CFLAGS="-I/sw/include $X_CFLAGS"
+        X_LIBS="-L/sw/lib $X_LIBS"
+      fi
+    ;;
+  esac])
+
+
+
+###############################################################################
+#
+#       Some utility functions to make checking for X things easier.
+#
+###############################################################################
+
+# Like AC_CHECK_HEADER, but it uses the already-computed -I directories.
+#
+AC_DEFUN(AC_CHECK_X_HEADER, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_CHECK_HEADER([$1],[$2],[$3],[$4])
+  CPPFLAGS="$ac_save_CPPFLAGS"])
+
+# Like AC_EGREP_HEADER, but it uses the already-computed -I directories.
+#
+AC_DEFUN(AC_EGREP_X_HEADER, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_EGREP_HEADER([$1], [$2], [$3], [$4])
+  CPPFLAGS="$ac_save_CPPFLAGS"])
+
+# Like AC_TRY_COMPILE, but it uses the already-computed -I directories.
+#
+AC_DEFUN(AC_TRY_X_COMPILE, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_TRY_COMPILE([$1], [$2], [$3], [$4])
+  CPPFLAGS="$ac_save_CPPFLAGS"])
+
+
+# Like AC_CHECK_LIB, but it uses the already-computed -I and -L directories.
+# Use this sparingly; it probably doesn't work very well on X programs.
+#
+AC_DEFUN(AC_CHECK_X_LIB, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  AC_CHECK_LIB([$1], [$2], [$3], [$4], [$5])
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+  ])
+
+# Like AC_TRY_RUN, but it uses the already-computed -I directories.
+# (But not the -L directories!)
+#
+AC_DEFUN(AC_TRY_X_RUN, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_TRY_RUN([$1], [$2], [$3], [$4])
+  CPPFLAGS="$ac_save_CPPFLAGS"])
+
+
+
+# Usage: HANDLE_X_PATH_ARG([variable_name],
+#                          [--command-line-option],
+#                          [descriptive string])
+#
+# All of the --with options take three forms:
+#
+#   --with-foo (or --with-foo=yes)
+#   --without-foo (or --with-foo=no)
+#   --with-foo=/DIR
+#
+# This function, HANDLE_X_PATH_ARG, deals with the /DIR case.  When it sees
+# a directory (string beginning with a slash) it checks to see whether
+# /DIR/include and /DIR/lib exist, and adds them to $X_CFLAGS and $X_LIBS
+# as appropriate.
+#
+AC_DEFUN(HANDLE_X_PATH_ARG, [
+   case "$[$1]" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     AC_MSG_CHECKING([for [$3] headers])
+     d=$[$1]/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       AC_MSG_RESULT($d)
+     else
+       AC_MSG_RESULT(not found ($d: no such directory))
+     fi
+
+     AC_MSG_CHECKING([for [$3] libs])
+     d=$[$1]/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       AC_MSG_RESULT($d)
+     else
+       AC_MSG_RESULT(not found ($d: no such directory))
+     fi
+
+     # replace the directory string with "yes".
+     [$1]_req="yes"
+     [$1]=$[$1]_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to [$2] must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+  ])
+
+
+
+###############################################################################
+###############################################################################
+#
+#       End of function definitions.  Now start actually executing stuff.
+#
+###############################################################################
+###############################################################################
+
+# random compiler setup
+AC_CANONICAL_HOST
+AC_PROG_CC_ANSI
+AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
+AC_NO_OBJECTIVE_C
+AC_PROG_CPP
+AC_C_CONST
+AC_C_INLINE
+AC_EXEEXT
+AC_DEMAND_BC
+
+# stuff for Makefiles
+AC_PROG_INSTALL
+AC_PROG_INSTALL_DIRS
+AC_PROG_MAKE_SET
+
+# By default, autoconf sets INSTALL_SCRIPT to '${INSTALL_PROGRAM}'.
+# That's wrong: it should be set to '${INSTALL}', so that one can
+# implement the "install-strip" target properly (strip executables,
+# but do not try to strip scripts.)
+#
+INSTALL_SCRIPT='${INSTALL}'
+
+# random libc stuff
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h)
+AC_TYPE_MODE_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SIGNAL
+AC_HEADER_TIME
+AC_HEADER_SYS_WAIT
+AC_HEADER_DIRENT
+AC_GETTIMEOFDAY_ARGS
+AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
+
+AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
+AC_CHECK_ICMP
+AC_CHECK_ICMPHDR
+AC_CHECK_HEADERS(crypt.h sys/select.h)
+AC_PROG_PERL
+
+if test -z "$PERL" ; then
+  # don't let it be blank...
+  PERL=/usr/bin/perl
+fi
+
+AC_PATH_XTRA
+
+if test "$have_x" != yes; then
+  AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try \`$0 --help'.)
+fi
+
+AC_PATH_X_APP_DEFAULTS
+AC_X_RANDOM_PATHS
+AC_XPOINTER
+
+
+###############################################################################
+#
+#       Gettext support
+#
+###############################################################################
+
+AC_PROG_INTLTOOL
+GETTEXT_PACKAGE=xscreensaver
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
+AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE")
+AC_SUBST(GETTEXT_PACKAGE)
+
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+AM_GLIB_GNU_GETTEXT
+
+
+###############################################################################
+#
+#       Check for -lXmu (some fucked up vendors don't ship it...)
+#
+###############################################################################
+
+have_xmu=no
+AC_CHECK_X_HEADER(X11/Xmu/Error.h, [have_xmu=yes],,
+                  [#include <stdlib.h>
+                   #include <stdio.h>
+                   #include <X11/Intrinsic.h>])
+if test "$have_xmu" = no ; then
+  XMU_SRCS='$(UTILS_SRC)/xmu.c'
+  XMU_OBJS='$(UTILS_BIN)/xmu.o'
+  XMU_LIBS=''
+else
+  XMU_SRCS=''
+  XMU_OBJS=''
+  XMU_LIBS='-lXmu'
+  AC_DEFINE(HAVE_XMU)
+fi
+
+
+###############################################################################
+#
+#       Check for the SunOS 4.1.x _get_wmShellWidgetClass bug.
+#       See comp.windows.x FAQ question 124.  The right fix is to
+#       get OpenWindows 3.0 patches 100512-02 and 100573-03.
+#
+###############################################################################
+
+if test "$have_xmu" = yes ; then
+  case "$host" in
+    *-sunos4*)
+    AC_CACHE_CHECK([for the SunOS 4.1.x _get_wmShellWidgetClass bug],
+                   ac_cv_sunos_xmu_bug,
+                   [ac_save_LDFLAGS="$LDFLAGS"
+                    if test \! -z "$x_libraries" ; then
+                      LDFLAGS="$LDFLAGS -L$x_libraries"
+                    fi
+                    # Note: this trick never works!  (Generally.)
+                    # We're only getting away with using AC_TRY_LINK
+                    # with X libraries because we know it's SunOS.
+                    LDFLAGS="$LDFLAGS -lXmu -lXt -lX11 -lXext -lm"
+                    AC_TRY_LINK(,,
+                                [ac_cv_sunos_xmu_bug=no],
+                                [ac_cv_sunos_xmu_bug=yes])
+                    LDFLAGS="$ac_save_LDFLAGS"])
+    if test "$ac_cv_sunos_xmu_bug" = yes ; then
+      AC_CACHE_CHECK([whether the compiler understands -static], 
+                     ac_cv_ld_static,
+                     [ac_save_LDFLAGS="$LDFLAGS"
+                      LDFLAGS="$LDFLAGS -static"
+                      AC_TRY_LINK(,,[ac_cv_ld_static=yes],[ac_cv_ld_static=no])
+                    LDFLAGS="$ac_save_LDFLAGS"])
+      if test "$ac_cv_ld_static" = yes ; then
+        LDFLAGS="$LDFLAGS -static"
+      else
+        LDFLAGS="$LDFLAGS -Bstatic"
+      fi
+    fi
+    ;;
+  esac
+fi
+
+
+###############################################################################
+#
+#       Handle the --with-hackdir option
+#
+###############################################################################
+
+have_hackdir=yes
+with_hackdir_req=unspecified
+AC_ARG_WITH(hackdir,[
+Installation options:
+
+  --with-hackdir=DIR      Where to install the hundreds of demo executables.
+                          Default: \`PREFIX/lib/xscreensaver/'],
+  [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
+
+if test x"$with_hackdir" = xyes; then
+  HACKDIR='${exec_prefix}/lib/xscreensaver'
+elif test x"$with_hackdir" = xno; then
+  HACKDIR='${bindir}'
+else
+  # there must be a better way than this...
+  if test -z "`echo $with_hackdir | sed 's@^/.*@@'`" ; then
+    # absolute path
+    HACKDIR=$with_hackdir
+  else
+    # relative path
+    HACKDIR="\${exec_prefix}$with_hackdir"
+  fi
+fi
+
+# canonicalize slashes.
+HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
+
+# This option used to be called --enable-subdir; make sure that is no longer
+# used, since configure brain-damagedly ignores unknown --enable options.
+
+obsolete_enable=
+AC_ARG_ENABLE(subdir,,[obsolete_enable=yes])
+if test -n "$obsolete_enable"; then
+  echo "error: the --enable-subdir option has been replaced with"
+  echo "       the new --with-hackdir option; see \`configure --help'"
+  echo "       for more information."
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Handle the --with-configdir option
+#
+###############################################################################
+
+have_configdir=yes
+with_configdir_req=unspecified
+AC_ARG_WITH(configdir,
+[  --with-configdir=DIR    Where to install the data files that describe each
+                          of the display modes to the GUI.
+                          Default: \`GNOMEPREFIX/control-center/screensavers/'
+                          or \`PREFIX/lib/xscreensaver/config/', depending on
+                          whether GNOME is available.
+],
+  [with_configdir="$withval"; with_configdir_req="$withval"],
+  [with_configdir=yes])
+
+if test x"$with_configdir" = xyes; then
+  # filled in later...
+  HACK_CONF_DIR=''
+elif test x"$with_configdir" = xno; then
+  echo "error: must be yes, or a pathname: --with-configdir=$with_configdir"
+  exit 1
+else
+  # there must be a better way than this...
+  if test -z "`echo $with_configdir | sed 's@^/.*@@'`" ; then
+    # absolute path
+    HACK_CONF_DIR=$with_configdir
+  else
+    # relative path
+    HACK_CONF_DIR="\${exec_prefix}$with_configdir"
+  fi
+fi
+
+
+
+
+###############################################################################
+#
+#       Check for the SGI SCREEN_SAVER server extension.
+#
+###############################################################################
+
+have_sgi=no
+with_sgi_req=unspecified
+AC_ARG_WITH(sgi-ext,
+[Except where noted, all of the --with options below can also take a
+directory argument: for example, \`--with-motif=/opt/Motif'.  That would
+cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
+to be added to the -L list, assuming those directories exist.  
+
+By default, support for each of these options will be built in, if the
+relevant library routines exist.  At run time, they will then be used
+only if the X server being used supports them.  Each --with option has
+a corresponding --without option, to override building support for them
+at all.
+
+Screen blanking and idle-detection options:
+
+  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.],
+  [with_sgi="$withval"; with_sgi_req="$withval"],[with_sgi=yes])
+
+HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
+
+if test "$with_sgi" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
+                    [have_sgi=yes
+                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
+
+elif test "$with_sgi" != no; then
+  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the MIT-SCREEN-SAVER server extension.
+#
+###############################################################################
+
+have_mit=no
+with_mit_req=unspecified
+AC_ARG_WITH(mit-ext,
+[  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.],
+  [with_mit="$withval"; with_mit_req="$withval"],[with_mit=yes])
+
+HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
+
+if test "$with_mit" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # Now check to see if it's really in the library; XF86Free-3.3 ships
+  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
+  #
+  if test "$have_mit" = yes; then
+    AC_CHECK_X_LIB(Xext, XScreenSaverRegister, [true], [have_mit=no], -lm)
+
+    if test "$have_mit" = no; then
+      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
+      # of in Xext.  Thank you master, may I have another.
+      AC_CHECK_X_LIB(XExExt, XScreenSaverRegister,
+                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"],
+                     [true], -lX11 -lXext -lm)
+    fi
+
+    if test "$have_mit" = no; then
+      # Double fuck!  Looks like some versions of XFree86 (whichever version
+      # it is that comes with RedHat Linux 2.0 -- I can't find a version 
+      # number) put this garbage in Xss instead of Xext.  Thank you master,
+      #  may I have another.
+      AC_CHECK_X_LIB(Xss, XScreenSaverRegister,
+                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"],
+                     [true], -lX11 -lXext -lm)
+    fi
+
+  if test "$have_mit" = yes; then
+    AC_DEFINE(HAVE_MIT_SAVER_EXTENSION)
+  fi
+
+  fi
+
+elif test "$with_mit" != no; then
+  echo "error: must be yes or no: --with-mit-ext=$with_mit"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XIDLE server extension.
+#
+###############################################################################
+
+have_xidle=no
+with_xidle_req=unspecified
+AC_ARG_WITH(xidle-ext,
+[  --with-xidle-ext        Include support for the XIDLE extension.],
+  [with_xidle="$withval"; with_xidle_req="$withval"],[with_xidle=yes])
+
+HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
+
+if test "$with_xidle" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/xidle.h,
+                    [have_xidle=yes
+                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
+elif test "$with_xidle" != no; then
+  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the SGI-VIDEO-CONTROL server extension.
+#
+###############################################################################
+
+have_sgivc=no
+with_sgivc_req=unspecified
+AC_ARG_WITH(sgivc-ext,
+[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.],
+  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=yes])
+
+HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
+
+if test "$with_sgivc" = yes; then
+
+  # first check for XSGIvc.h
+  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the -lXsgivc
+  if test "$have_sgivc" = yes; then
+    have_sgivc=no
+    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
+                  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [true],
+                  -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_sgivc" = yes; then
+    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
+  fi
+
+elif test "$with_sgivc" != no; then
+  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the DPMS server extension.
+#
+###############################################################################
+
+have_dpms=no
+with_dpms_req=unspecified
+AC_ARG_WITH(dpms-ext,
+[  --with-dpms-ext         Include support for the DPMS extension.],
+  [with_dpms="$withval"; with_dpms_req="$withval"],[with_dpms=yes])
+
+HANDLE_X_PATH_ARG(with_dpms, --with-dpms-ext, DPMS)
+
+if test "$with_dpms" = yes; then
+
+  # first check for dpms.h
+  AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the DPMS code in the libraries
+  if test "$have_dpms" = yes; then
+
+    # first look in -lXext (this is where it is with XFree86 4.0)
+    have_dpms=no
+    AC_CHECK_X_LIB(Xext, DPMSInfo, [have_dpms=yes], [true], -lXext -lX11)
+
+    # if that failed, look in -lXdpms (this is where it was in XFree86 3.x)
+    if test "$have_dpms" = no; then
+      AC_CHECK_X_LIB(Xdpms, DPMSInfo,
+                    [have_dpms=yes; XDPMS_LIBS="-lXdpms"], [true],
+                    -lXext -lX11)
+    fi
+  fi
+
+
+  # if that succeeded, then we've really got it.
+  if test "$have_dpms" = yes; then
+    AC_DEFINE(HAVE_DPMS_EXTENSION)
+  fi
+
+elif test "$with_dpms" != no; then
+  echo "error: must be yes or no: --with-dpms-ext=$with_dpms"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XINERAMA server extension.
+#
+###############################################################################
+
+have_xinerama=no
+with_xinerama_req=unspecified
+AC_ARG_WITH(xinerama-ext,
+[  --with-xinerama-ext     Include support for the XINERAMA extension.],
+  [with_xinerama="$withval"; with_xinerama_req="$withval"],[with_xinerama=yes])
+
+HANDLE_X_PATH_ARG(with_xinerama, --with-xinerama-ext, XINERAMA)
+
+if test "$with_xinerama" = yes; then
+
+  # first check for Xinerama.h
+  AC_CHECK_X_HEADER(X11/extensions/Xinerama.h, [have_xinerama=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the XINERAMA code in the libraries
+  if test "$have_xinerama" = yes; then
+
+    # first look in -lXext
+    have_xinerama=no
+    AC_CHECK_X_LIB(Xext, XineramaQueryExtension, [have_xinerama=yes], [true],
+                  -lXext -lX11)
+
+    # if that failed, look in -lXinerama (this is where it is in XFree86 4.1.)
+    if test "$have_xinerama" = no; then
+      AC_CHECK_X_LIB(Xinerama, XineramaQueryExtension,
+                     [have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"],
+                     [true], -lXext -lX11)
+    fi
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xinerama" = yes; then
+    AC_DEFINE(HAVE_XINERAMA)
+  fi
+
+elif test "$with_xinerama" != no; then
+  echo "error: must be yes or no: --with-xinerama-ext=$with_xinerama"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XF86VMODE server extension (for virtual screens.)
+#
+###############################################################################
+
+have_xf86vmode=no
+with_xf86vmode_req=unspecified
+AC_ARG_WITH(xf86vmode-ext,
+[  --with-xf86vmode-ext    Include support for XFree86 virtual screens.],
+  [with_xf86vmode="$withval"; with_xf86vmode_req="$withval"],
+  [with_xf86vmode=yes])
+
+HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
+
+if test "$with_xf86vmode" = yes; then
+
+  # first check for xf86vmode.h
+  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86vmode" = yes; then
+    have_xf86vmode=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
+                  [have_xf86vmode=yes; SAVER_LIBS="$SAVER_LIBS -lXxf86vm"],
+                   [true], -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xf86vmode" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE)
+  fi
+
+elif test "$with_xf86vmode" != no; then
+  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XF86VMODE server extension (for gamma fading.)
+#
+###############################################################################
+
+have_xf86gamma=no
+have_xf86gamma_ramp=no
+with_xf86gamma_req=unspecified
+AC_ARG_WITH(xf86gamma-ext,
+[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
+  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
+  [with_xf86gamma=yes])
+
+HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
+
+if test "$with_xf86gamma" = yes; then
+
+  # first check for xf86vmode.h, if we haven't already
+  if test "$have_xf86vmode" = yes; then
+    have_xf86gamma=yes
+  else
+    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
+                      [#include <X11/Xlib.h>])
+  fi
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
+                  [have_xf86gamma=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # check for the Ramp versions of the functions too.
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma_ramp=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
+                  [have_xf86gamma_ramp=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # if those tests succeeded, then we've really got the functions.
+  if test "$have_xf86gamma" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+  fi
+
+  if test "$have_xf86gamma_ramp" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
+  fi
+
+  # pull in the lib, if we haven't already
+  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
+  fi
+
+elif test "$with_xf86gamma" != no; then
+  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for XF86MiscSetGrabKeysState (but only bother if we are already
+#	using other XF86 stuff.)
+#
+###############################################################################
+
+have_xf86miscsetgrabkeysstate=no
+if test "$have_xf86gamma" = yes -o "$have_xf86vmode" = yes; then
+  AC_CHECK_X_LIB(Xxf86misc, XF86MiscSetGrabKeysState,
+                [have_xf86miscsetgrabkeysstate=yes],
+                [true], -lXext -lX11)
+  if test "$have_xf86miscsetgrabkeysstate" = yes ; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86misc"
+    AC_DEFINE(HAVE_XF86MISCSETGRABKEYSSTATE)
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for HP XHPDisableReset and XHPEnableReset.
+#
+###############################################################################
+
+AC_MSG_CHECKING([for XHPDisableReset in X11/XHPlib.h])
+AC_EGREP_X_HEADER(XHPDisableReset, X11/XHPlib.h,
+                  [AC_DEFINE(HAVE_XHPDISABLERESET)
+                   SAVER_LIBS="-lXhp11 $SAVER_LIBS"
+                   AC_MSG_RESULT(yes)],
+                  [AC_MSG_RESULT(no)])
+
+
+###############################################################################
+#
+#       Check for /proc/interrupts.
+#
+###############################################################################
+
+have_proc_interrupts=no
+with_proc_interrupts_req=unspecified
+AC_ARG_WITH(proc-interrupts,
+[  --with-proc-interrupts  Include support for consulting the /proc/interrupts
+                          file to notice keyboard activity.],
+  [with_proc_interrupts="$withval"; with_proc_interrupts_req="$withval"],
+  [with_proc_interrupts=yes])
+
+if test "$with_proc_interrupts" = yes; then
+
+   AC_CACHE_CHECK([whether /proc/interrupts contains keyboard data],
+    ac_cv_have_proc_interrupts,
+    [ac_cv_have_proc_interrupts=no
+     if grep keyboard /proc/interrupts >/dev/null 2>&1 ; then
+       ac_cv_have_proc_interrupts=yes
+     fi
+    ])
+   have_proc_interrupts=$ac_cv_have_proc_interrupts
+
+  if test "$have_proc_interrupts" = yes; then
+    AC_DEFINE(HAVE_PROC_INTERRUPTS)
+  fi
+
+elif test "$with_proc_interrupts" != no; then
+  echo "error: must be yes or no: --with-proc-interrupts=$with_proc_interrupts"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       The --enable-locking option
+#
+###############################################################################
+
+AC_ARG_ENABLE(locking,[
+Screen locking options:
+
+  --enable-locking        Compile in support for locking the display.
+  --disable-locking       Do not allow locking at all.],
+  [enable_locking="$enableval"],[enable_locking=yes])
+if test "$enable_locking" = yes; then
+  true
+elif test "$enable_locking" = no; then
+  AC_DEFINE(NO_LOCKING)
+else
+  echo "error: must be yes or no: --enable-locking=$enable_locking"
+  exit 1
+fi
+
+
+
+###############################################################################
+#
+#       The --enable-vt-locking option
+#
+###############################################################################
+
+#ac_vt_lockswitch=no
+#AC_ARG_ENABLE(vt-locking,[
+#  --enable-vt-locking     Compile in support for locking Virtual Terminals.
+#                          This is the default if the system supports it, and
+#                          if locking support is included (--enable-locking.)
+#  --disable-vt-locking    Do not allow locking of VTs, even if locking is
+#                          enabled.],
+#  [enable_vt_locking="$enableval"],[enable_vt_locking=yes])
+#if test "$enable_vt_locking" = yes; then
+#
+#  AC_CACHE_CHECK([for the VT_LOCKSWITCH ioctl], ac_cv_vt_lockswitch,
+#   [AC_TRY_COMPILE([#include <fcntl.h>
+#                   #include <sys/ioctl.h>
+#                   #include <sys/vt.h>],
+#                  [int x = VT_LOCKSWITCH; int y = VT_UNLOCKSWITCH;],
+#                  [ac_cv_vt_lockswitch=yes],
+#                  [ac_cv_vt_lockswitch=no])])
+#  ac_vt_lockswitch=$ac_cv_vt_lockswitch
+#
+#elif test "$enable_vt_locking" = no; then
+#  true
+#else
+#  echo "error: must be yes or no: --enable-vt-locking=$enable_vt_locking"
+#  exit 1
+#fi
+#
+#if test "$ac_vt_lockswitch" = yes; then
+#  AC_DEFINE(HAVE_VT_LOCKSWITCH)
+#  # the VT_LOCKSWITCH ioctl can only be used when running as root.
+#  # #### but it doesn't work yet, so don't worry about that for now.
+##  need_setuid=yes
+#fi
+
+
+###############################################################################
+#
+#       Check for PAM.
+#
+###############################################################################
+
+case "$host" in
+  *-solaris*)
+   # Solaris systems tend to come with PAM misconfigured.
+   #  Don't build it by default, even if the headers exist.
+   with_pam_default=no
+   ;;
+  *)
+   # Default to building PAM support on all other systems, if it exists.
+   with_pam_default=yes
+  ;;
+esac
+
+have_pam=no
+with_pam_req=unspecified
+
+AC_ARG_WITH(pam,
+[  --with-pam              Include support for PAM (Pluggable Auth Modules.)],
+  [with_pam="$withval"; with_pam_req="$withval"],[with_pam=$with_pam_default])
+
+HANDLE_X_PATH_ARG(with_pam, --with-pam, PAM)
+
+if test "$enable_locking" = yes -a "$with_pam" = yes; then
+  AC_CACHE_CHECK([for PAM], ac_cv_pam,
+                 [AC_TRY_X_COMPILE([#include <security/pam_appl.h>],,
+                                   [ac_cv_pam=yes],
+                                   [ac_cv_pam=no])])
+  if test "$ac_cv_pam" = yes ; then
+    have_pam=yes
+    AC_DEFINE(HAVE_PAM)
+    PASSWD_LIBS="${PASSWD_LIBS} -lpam"
+
+    # libpam typically requires dlopen and dlsym.  On FreeBSD,
+    # those are in libc.  On Linux and Solaris, they're in libdl.
+    AC_CHECK_LIB(dl, dlopen, [PASSWD_LIBS="${PASSWD_LIBS} -ldl"])
+
+    AC_MSG_CHECKING(how to call pam_strerror)
+    AC_CACHE_VAL(ac_cv_pam_strerror_args,
+     [AC_TRY_COMPILE([#include <stdio.h>
+                      #include <stdlib.h>
+                      #include <security/pam_appl.h>],
+                     [pam_handle_t *pamh = 0;
+                      char *s = pam_strerror(pamh, PAM_SUCCESS);],
+                     [ac_pam_strerror_args=2],
+                     [AC_TRY_COMPILE([#include <stdio.h>
+                                      #include <stdlib.h>
+                                      #include <security/pam_appl.h>],
+                                     [char *s =
+                                       pam_strerror(PAM_SUCCESS);],
+                                     [ac_pam_strerror_args=1],
+                                     [ac_pam_strerror_args=0])])
+      ac_cv_pam_strerror_args=$ac_pam_strerror_args])
+    ac_pam_strerror_args=$ac_cv_pam_strerror_args
+    if test "$ac_pam_strerror_args" = 1 ; then
+      AC_MSG_RESULT(one argument)
+    elif test "$ac_pam_strerror_args" = 2 ; then
+      AC_DEFINE(PAM_STRERROR_TWO_ARGS)
+      AC_MSG_RESULT(two arguments)
+    else
+      AC_MSG_RESULT(unknown)
+    fi
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for Kerberos.
+#
+###############################################################################
+
+have_kerberos=no
+have_kerberos5=no
+with_kerberos_req=unspecified
+
+AC_ARG_WITH(kerberos, 
+[  --with-kerberos         Include support for Kerberos authentication.],
+  [with_kerberos="$withval"; with_kerberos_req="$withval"],[with_kerberos=yes])
+
+HANDLE_X_PATH_ARG(with_kerberos, --with-kerberos, Kerberos)
+
+if test "$enable_locking" = yes -a "$with_kerberos" = yes; then
+  AC_CACHE_CHECK([for Kerberos 4], ac_cv_kerberos,
+                 [AC_TRY_X_COMPILE([#include <krb.h>],,
+                                   [ac_cv_kerberos=yes],
+                                   [ac_cv_kerberos=no])])
+  AC_CACHE_CHECK([for Kerberos 5], ac_cv_kerberos5,
+                 [AC_TRY_X_COMPILE([#include <kerberosIV/krb.h>],,
+                                   [ac_cv_kerberos5=yes],
+                                   [ac_cv_kerberos5=no])])
+
+  if test "$ac_cv_kerberos" = yes ; then
+    have_kerberos=yes
+    AC_DEFINE(HAVE_KERBEROS)
+  fi
+
+  if test "$ac_cv_kerberos5" = yes ; then
+    have_kerberos=yes
+    have_kerberos5=yes
+    AC_DEFINE(HAVE_KERBEROS)
+    AC_DEFINE(HAVE_KERBEROS5)
+  fi
+
+  if test "$have_kerberos5" = yes ; then
+    # from Matt Knopp <mhat@infocalypse.netlag.com>
+    # (who got it from amu@mit.edu)
+
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcom_err"
+
+    # jwz: MacOS X uses -lkrb5, but not -lcrypt
+    AC_CHECK_X_LIB(crypt, crypt, [PASSWD_LIBS="$PASSWD_LIBS -lcrypt"])
+
+  elif test "$have_kerberos" = yes ; then
+    # from Tim Showalter <tjs@psaux.com> for FreeBSD 4.2
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes -lcom_err"
+  fi
+
+  if test "$have_kerberos" = yes ; then
+    AC_CHECK_FUNC(res_search,,
+      AC_CHECK_LIB(resolv,res_search,PASSWD_LIBS="${PASSWD_LIBS} -lresolv",
+        AC_MSG_WARN([Can't find DNS resolver libraries needed for Kerberos])
+      ))
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for the nine billion variants of shadow passwords...
+#
+###############################################################################
+
+need_setuid=no
+
+have_shadow=no
+with_shadow_req=unspecified
+
+AC_ARG_WITH(shadow,
+[  --with-shadow           Include support for shadow password authentication.],
+  [with_shadow="$withval"; with_shadow_req="$withval"],[with_shadow=yes])
+
+HANDLE_X_PATH_ARG(with_shadow, --with-shadow, shadow password)
+
+if test "$enable_locking" = no ; then
+  with_shadow_req=no
+  with_shadow=no
+fi
+
+
+###############################################################################
+#
+#       Check for Sun "adjunct" passwords.
+#
+###############################################################################
+
+if test "$with_shadow" = yes ; then
+  AC_CACHE_CHECK([for Sun-style shadow passwords], ac_cv_sun_adjunct,
+                 [AC_TRY_X_COMPILE([#include <stdlib.h>
+                                    #include <unistd.h>
+                                    #include <sys/types.h>
+                                    #include <sys/label.h>
+                                    #include <sys/audit.h>
+                                    #include <pwdadj.h>],
+                      [struct passwd_adjunct *p = getpwanam("nobody");
+                       const char *pw = p->pwa_passwd;],
+                      [ac_cv_sun_adjunct=yes],
+                      [ac_cv_sun_adjunct=no])])
+  if test "$ac_cv_sun_adjunct" = yes; then
+    have_shadow_adjunct=yes
+    have_shadow=yes
+    need_setuid=yes
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for DEC and SCO so-called "enhanced" security.
+#
+###############################################################################
+
+if test "$with_shadow" = yes ; then
+  AC_CACHE_CHECK([for DEC-style shadow passwords], ac_cv_enhanced_passwd,
+                 [AC_TRY_X_COMPILE([#include <stdlib.h>
+                                    #include <unistd.h>
+                                    #include <sys/types.h>
+                                    #include <pwd.h>
+                                    #include <sys/security.h>
+                                    #include <prot.h>],
+                      [struct pr_passwd *p;
+                       const char *pw;
+                       set_auth_parameters(0, 0);
+                       check_auth_parameters();
+                       p = getprpwnam("nobody");
+                       pw = p->ufld.fd_encrypt;],
+                      [ac_cv_enhanced_passwd=yes],
+                      [ac_cv_enhanced_passwd=no])])
+  if test $ac_cv_enhanced_passwd = yes; then
+    have_shadow_enhanced=yes
+    have_shadow=yes
+    need_setuid=yes
+
+    # On SCO, getprpwnam() is in -lprot (which uses nap() from -lx)
+    # (I'm told it needs -lcurses too, but I don't understand why.)
+    # But on DEC, it's in -lsecurity.
+    #
+    AC_CHECK_LIB(prot, getprpwnam, 
+                 [PASSWD_LIBS="$PASSWD_LIBS -lprot -lcurses -lx"],
+                 [AC_CHECK_LIB(security, getprpwnam, 
+                               [PASSWD_LIBS="$PASSWD_LIBS -lsecurity"])],
+                 [-lx])
+  fi
+fi
+
+###############################################################################
+#
+#       Check for HP's entry in the "Not Invented Here" Sweepstakes.
+#
+###############################################################################
+
+if test "$with_shadow" = yes ; then
+  AC_CACHE_CHECK([for HP-style shadow passwords], ac_cv_hpux_passwd,
+                 [AC_TRY_X_COMPILE([#include <stdlib.h>
+                                    #include <unistd.h>
+                                    #include <sys/types.h>
+                                    #include <pwd.h>
+                                    #include <hpsecurity.h>
+                                    #include <prot.h>],
+                      [struct s_passwd *p = getspwnam("nobody");
+                       const char *pw = p->pw_passwd;],
+                      [ac_cv_hpux_passwd=yes],
+                      [ac_cv_hpux_passwd=no])])
+  if test "$ac_cv_hpux_passwd" = yes; then
+    have_shadow_hpux=yes
+    have_shadow=yes
+    need_setuid=yes
+
+    # on HPUX, bigcrypt is in -lsec
+    AC_CHECK_LIB(sec, bigcrypt, [PASSWD_LIBS="$PASSWD_LIBS -lsec"])
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for FreeBSD-style shadow passwords.
+#
+#       On FreeBSD, getpwnam() and friends work just like on non-shadow-
+#       password systems -- except you only get stuff in the pw_passwd field
+#       if the running program is setuid.  So, guess that we've got this
+#       lossage to contend with if /etc/master.passwd exists, and default to
+#       a setuid installation.
+#
+###############################################################################
+
+if test "$with_shadow" = yes ; then
+  AC_CACHE_CHECK([for FreeBSD-style shadow passwords], ac_cv_master_passwd,
+                 [if test -f /etc/master.passwd ; then
+                    ac_cv_master_passwd=yes
+                  else
+                    ac_cv_master_passwd=no
+                  fi])
+  if test "$ac_cv_master_passwd" = yes; then
+    need_setuid=yes
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for traditional (ha!) shadow passwords.
+#
+###############################################################################
+
+if test "$with_shadow" = yes ; then
+  AC_CACHE_CHECK([for generic shadow passwords], ac_cv_shadow,
+                 [AC_TRY_X_COMPILE([#include <stdlib.h>
+                                    #include <unistd.h>
+                                    #include <sys/types.h>
+                                    #include <pwd.h>
+                                    #include <shadow.h>],
+                      [struct spwd *p = getspnam("nobody");
+                       const char *pw = p->sp_pwdp;],
+                      [ac_cv_shadow=yes],
+                      [ac_cv_shadow=no])])
+  if test "$ac_cv_shadow" = yes; then
+    have_shadow=yes
+    need_setuid=yes
+
+    # On some systems (UnixWare 2.1), getspnam() is in -lgen instead of -lc.
+    have_getspnam=no
+    AC_CHECK_LIB(c, getspnam, [have_getspnam=yes])
+    if test "$have_getspnam" = no ; then
+      AC_CHECK_LIB(gen, getspnam,
+                   [have_getspnam=yes; PASSWD_LIBS="$PASSWD_LIBS -lgen"])
+    fi
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for other libraries needed for non-shadow passwords.
+#
+###############################################################################
+
+if test "$enable_locking" = yes ; then
+
+  # On some systems (UnixWare 2.1), crypt() is in -lcrypt instead of -lc.
+  have_crypt=no
+  AC_CHECK_LIB(c, crypt, [have_crypt=yes])
+  if test "$have_crypt" = no ; then
+    AC_CHECK_LIB(crypt, crypt,
+                 [have_crypt=yes; PASSWD_LIBS="$PASSWD_LIBS -lcrypt"])
+  fi
+fi
+
+
+# Most of the above shadow mechanisms will have set need_setuid to yes,
+# if they were found.  But, on some systems, we need setuid even when
+# using plain old vanilla passwords.
+#
+if test "$enable_locking" = yes ; then
+  case "$host" in
+    *-hpux* | *-aix* | *-netbsd* | *-freebsd* | *-openbsd* )
+      need_setuid=yes
+    ;;
+  esac
+fi
+
+
+if test "$have_shadow_adjunct" = yes ; then
+  AC_DEFINE(HAVE_ADJUNCT_PASSWD)
+elif test "$have_shadow_enhanced" = yes ; then
+  AC_DEFINE(HAVE_ENHANCED_PASSWD)
+elif test "$have_shadow_hpux" = yes ; then
+  AC_DEFINE(HAVE_HPUX_PASSWD)
+elif test "$have_shadow" = yes ; then
+  AC_DEFINE(HAVE_SHADOW_PASSWD)
+fi
+
+
+###############################################################################
+#
+#       Check for -lXm.
+#
+###############################################################################
+
+have_motif=no
+with_motif_req=unspecified
+AC_ARG_WITH(motif,[
+User interface options:
+
+  --with-motif            Use the Motif toolkit for the user interface
+                          (not recommended.)],
+  [with_motif="$withval"; with_motif_req="$withval"],[with_motif=yes])
+
+HANDLE_X_PATH_ARG(with_motif, --with-motif, Motif)
+
+if test "$with_motif" != yes -a "$with_motif" != no ; then
+  echo "error: must be yes or no: --with-motif=$with_motif"
+  exit 1
+fi
+
+if test "$with_motif" = yes; then
+  have_motif=no
+  AC_CHECK_X_HEADER(Xm/Xm.h,
+                    [have_motif=yes
+                     AC_DEFINE(HAVE_MOTIF)
+                     MOTIF_LIBS="$MOTIF_LIBS -lXm"],,
+                    [#include <stdlib.h>
+                     #include <stdio.h>
+                     #include <X11/Intrinsic.h>])
+fi
+
+
+if test "$have_motif" = yes; then
+  AC_CHECK_X_HEADER(Xm/ComboBox.h, [AC_DEFINE(HAVE_XMCOMBOBOX)],,
+                    [#include <stdlib.h>
+                     #include <stdio.h>
+                     #include <X11/Intrinsic.h>])
+fi
+
+
+###############################################################################
+#
+#       Check for -lgtk (and Gnome stuff)
+#
+###############################################################################
+
+have_gtk=no
+have_gtk2=no
+with_gtk_req=unspecified
+AC_ARG_WITH(gtk,
+[  --with-gtk              Use the Gtk toolkit for the user interface.],
+  [with_gtk="$withval"; with_gtk_req="$withval"],[with_gtk=yes])
+
+# if --with-gtk=/directory/ was specified, remember that directory so that
+# we can also look for the `gtk-config' program in that directory.
+case "$with_gtk" in
+  /*)
+    gtk_dir="$with_gtk"
+    ;;
+  *)
+    gtk_dir=""
+    ;;
+esac
+
+HANDLE_X_PATH_ARG(with_gtk, --with-gtk, Gtk)
+
+if test "$with_gtk" != yes -a "$with_gtk" != no ; then
+  echo "error: must be yes or no: --with-gtk=$with_gtk"
+  exit 1
+fi
+
+have_gnome=no
+with_gnome_req=unspecified
+AC_ARG_WITH(gnome,
+[  --with-gnome            Include support for the Gnome 1.x Control Center.
+                          (This option is not needed with GTK 2.x / Gnome 2.x.)
+],
+  [with_gnome="$withval"; with_gnome_req="$withval"],[with_gnome=yes])
+
+# if --with-gnome=/directory/ was specified, remember that directory so that
+# we can also look for the `gnome-config' program in that directory.
+case "$with_gnome" in
+  /*)
+    gnome_dir="$with_gnome"
+    ;;
+  *)
+    gnome_dir=""
+    ;;
+esac
+
+HANDLE_X_PATH_ARG(with_gnome, --with-gnome, Gnome)
+
+if test "$with_gnome" != yes -a "$with_gnome" != no ; then
+  echo "error: must be yes or no: --with-gnome=$with_gnome"
+  exit 1
+fi
+
+parse_gtk_version_string() {
+  # M4 sucks!!
+  changequote(X,Y)
+  maj=`echo $ac_gtk_version_string | sed -n 's/\..*//p'`
+  min=`echo $ac_gtk_version_string | sed -n 's/[^.]*\.\([^.]*\).*/\1/p'`
+  changequote([,])
+  ac_gtk_version=`echo "$maj * 1000 + $min" | bc`
+  if test -z "$ac_gtk_version"; then
+    ac_gtk_version=unknown
+    ac_gtk_version_string=unknown
+  fi
+}
+
+
+jurassic_gtk=no
+gtk2_halfassed=no
+
+if test "$with_gtk" = yes; then
+  have_gtk=no
+  
+  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+  # look in /foo/bin/ for glib-config, gtk-config, and gnome-config.
+  #
+  gtk_path="$PATH"
+
+  if test ! -z "$gtk_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+    gtk_path="$foo:$gtk_path"
+  fi
+
+  if test ! -z "$gnome_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    gtk_path="$foo:$gtk_path"
+  fi
+
+  AC_PATH_PROGS(pkg_config, pkg-config,, $gtk_path)
+
+  if test -n "$pkg_config" ; then
+    #
+    # the new way...
+    # run pkg-config based tests.
+    #
+
+    pkgs=''
+    pkg_check_version() {
+      if test "$ok" = yes ; then
+        req="$1"
+        min="$2"
+        AC_MSG_CHECKING(for $req)
+        if $pkg_config --exists "$req" ; then
+          vers=`$pkg_config --modversion "$req"`
+          if $pkg_config --exists "$req >= $min" ; then
+            AC_MSG_RESULT($vers)
+            pkgs="$pkgs $req"
+            return 1
+          else
+            AC_MSG_RESULT($vers (wanted >= $min))
+            ok=no
+            return 0
+          fi
+        else
+          AC_MSG_RESULT(no)
+          ok=no
+          return 0
+        fi
+      fi
+    }
+
+    ok="yes"
+    pkg_check_version     gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
+    pkg_check_version  gmodule-2.0  2.0.0
+    pkg_check_version   libxml-2.0  2.4.6
+    pkg_check_version libglade-2.0  1.99.0
+    have_gtk="$ok"
+
+    if test "$have_gtk" = yes; then
+      have_gtk2=yes
+      AC_DEFINE(HAVE_GTK2)
+    else
+      if test -n "$ac_gtk_version_string" ; then
+        gtk2_halfassed="$ac_gtk_version_string"
+        gtk2_halfassed_lib="$req"
+      fi
+    fi
+
+    if test "$have_gtk" = no; then
+      #
+      # we don't have GTK 2.  Let's look for GTK 1.
+      #
+      pkgs=''
+      ok="yes"
+      pkg_check_version gtk+ 1.2           ; ac_gtk_version_string="$vers"
+      pkg_check_version glib 1.0
+      have_gtk="$ok"
+
+      # Now check for Gnome...
+      #
+      if test "$have_gtk" = yes -a "$with_gnome" = yes; then
+        old_pkgs="$pkgs"
+        ok=yes
+        pkg_check_version capplet    1.0
+        pkg_check_version gnomeui    1.0
+        pkg_check_version gdk_pixbuf 0.1
+        have_gnome="$ok"
+
+        if test "$have_gnome" = no; then
+          pkgs="$old_pkgs"
+        else
+          AC_DEFINE(HAVE_CRAPPLET)
+        fi
+      fi
+    fi
+
+    if test "$have_gtk" = yes; then
+      parse_gtk_version_string
+      jurassic_gtk=no
+    else
+      have_gnome=no
+    fi
+
+    if test "$have_gtk" = yes; then
+      AC_CACHE_CHECK([for Gtk includes], ac_cv_gtk_config_cflags,
+                     [ac_cv_gtk_config_cflags=`$pkg_config --cflags $pkgs`])
+      AC_CACHE_CHECK([for Gtk libs], ac_cv_gtk_config_libs,
+                     [ac_cv_gtk_config_libs=`$pkg_config --libs $pkgs`])
+    fi
+    ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
+    ac_gtk_config_libs=$ac_cv_gtk_config_libs
+
+    ac_gnome_config_cflags=$ac_gtk_config_cflags
+    ac_gnome_config_libs=$ac_gtk_config_libs
+
+  else
+    #
+    # the old way...
+    # run {gnome,gtk}-config based tests.
+    #
+
+    AC_PATH_PROGS(glib_config,  glib12-config glib-config,,  $gtk_path)
+    AC_PATH_PROGS(gtk_config,   gtk12-config  gtk-config,,   $gtk_path)
+
+    if test "$with_gnome" = yes; then
+      AC_PATH_PROGS(gnome_config, gnome-config,, $gtk_path)
+    fi
+
+    if test -n "$glib_config" -a  -n "$gtk_config" ; then
+      have_gtk=yes
+      if test "$with_gnome" = yes -a -n "$gnome_config" ; then
+        have_gnome=yes
+      fi
+    fi
+
+    if test "$have_gtk" = yes; then
+      AC_CACHE_CHECK([Gtk version number], ac_cv_gtk_version_string,
+                     [ac_cv_gtk_version_string=`$gtk_config --version`])
+      ac_gtk_version_string=$ac_cv_gtk_version_string
+      parse_gtk_version_string
+    fi
+
+    if test "$have_gtk" = yes; then
+      if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
+      then
+        have_gtk=no
+        have_gnome=no
+        jurassic_gtk=yes
+      fi
+    fi
+
+    if test "$have_gtk" = yes; then
+      AC_CACHE_CHECK([for Gtk includes], ac_cv_gtk_config_cflags,
+                     [ac_cv_gtk_config_cflags=`$gtk_config --cflags`])
+      AC_CACHE_CHECK([for Gtk libs], ac_cv_gtk_config_libs,
+                     [ac_cv_gtk_config_libs=`$gtk_config --libs`])
+    fi
+    ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
+    ac_gtk_config_libs=$ac_cv_gtk_config_libs
+
+    # Check for Gnome Capplet support.
+    # Note that this is only needed with Gnome 1.x, not Gnome 2.x.
+    # In a Gnome 2.x world, libcapplet will not exist.
+    # (In fact, this likely won't even be checked, since in a Gnome 2.x
+    # world, we will probably be up in the "$pkg_config" branch instead
+    # of here in the "$gnome_config" branch.)
+    #
+    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+      gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
+      AC_MSG_CHECKING(for Gnome capplet includes)
+      AC_CACHE_VAL(ac_cv_gnome_config_cflags,
+        [if ( $gnome_config --cflags $gnome_config_libs 2>&1 | \
+              grep Unknown >/dev/null ) ; then
+           ac_cv_gnome_config_cflags=''
+         else
+          ac_cv_gnome_config_cflags=`$gnome_config --cflags $gnome_config_libs`
+         fi])
+      ac_gnome_config_cflags=$ac_cv_gnome_config_cflags
+      if test "$ac_gnome_config_cflags" = "" ; then
+        have_gnome=no
+        AC_MSG_RESULT(no)
+      else
+        AC_MSG_RESULT($ac_gnome_config_cflags)
+      fi
+    fi
+
+    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+      AC_MSG_CHECKING(for Gnome capplet libs)
+      AC_CACHE_VAL(ac_cv_gnome_config_libs,
+        [if ( $gnome_config --libs $gnome_config_libs 2>&1 |
+              grep Unknown >/dev/null ) ; then
+           ac_cv_gnome_config_libs=''
+         else
+           ac_cv_gnome_config_libs=`$gnome_config --libs $gnome_config_libs`
+         fi])
+      ac_gnome_config_libs=$ac_cv_gnome_config_libs
+      if test "$ac_gnome_config_libs" = "" ; then
+        have_gnome=no
+        AC_MSG_RESULT(no)
+      else
+        AC_MSG_RESULT($ac_gnome_config_libs)
+      fi
+    fi
+
+    # If we have Gnome, then override the gtk-config values with 
+    # the gnome-config values.
+    #
+    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+      ac_gtk_config_cflags=$ac_gnome_config_cflags
+      ac_gtk_config_libs=$ac_gnome_config_libs
+      AC_DEFINE(HAVE_CRAPPLET)
+    fi
+
+  fi   # end of {gnome,gtk}-config based tests
+
+  if test "$have_gtk" = yes -a "$have_gtk2" = no; then
+    # check for this function that was not in libcapplet 1.2.
+    # (only needed in Gnome/Gtk 1.x, not Gnome/Gtk 2.x)
+    AC_CHECK_X_LIB(capplet, capplet_widget_changes_are_immediate,
+                   [AC_DEFINE(HAVE_CRAPPLET_IMMEDIATE)], [true],
+                   $ac_gnome_config_libs)
+  fi
+
+
+  GNOME_DATADIR=""
+  if test "$have_gtk" = yes; then
+    if test -n "$pkg_config"; then
+      if test "$have_gtk2" = yes; then
+        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+      else
+        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+`
+      fi
+    else
+      GNOME_DATADIR=`$gtk_config --prefix`
+    fi
+    GNOME_DATADIR="$GNOME_DATADIR/share"
+  fi
+
+  # .desktop files go in different places in Gnome 1.x and Gnome 2.x...
+  if test "$have_gtk2" = yes; then
+    GNOME_PANELDIR='$(GNOME_PANELDIR2)'
+  else
+    GNOME_PANELDIR='$(GNOME_PANELDIR1)'
+  fi
+
+
+  if test "$have_gtk" = yes; then
+    INCLUDES="$INCLUDES $ac_gtk_config_cflags"
+    GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
+    AC_DEFINE(HAVE_GTK)
+
+    if test "$have_gtk2" = yes; then
+      GTK_EXTRA_OBJS=""
+    else
+      GTK_EXTRA_OBJS="\$(GTK_EXTRA_OBJS)"
+    fi
+  fi
+
+fi
+
+
+# Check for the Gnome Help Browser.
+#
+if test "$have_gtk" = yes; then
+  AC_CHECK_PROGS(have_gnome_help, yelp gnome-help-browser, no)
+  if test "$have_gnome_help" != no; then
+    have_gnome_help=yes
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for -lxml
+#
+###############################################################################
+
+have_xml=no
+with_xml_req=unspecified
+xml_halfassed=no
+AC_ARG_WITH(xml,
+[  --with-xml              The XML toolkit is needed for some parts of
+                          the Gtk interface.  Without it, the configuration
+                          interface will be much less featureful.],
+[with_xml="$withval"; with_xml_req="$withval"],[with_xml=yes])
+
+# if --with-xml=/directory/ was specified, remember that directory so that
+# we can also look for the `xml-config' program in that directory.
+case "$with_xml" in
+  /*)
+    xml_dir="$with_xml"
+    ;;
+  *)
+    xml_dir=""
+    ;;
+esac
+
+HANDLE_X_PATH_ARG(with_xml, --with-xml, XML)
+
+if test "$with_xml" != yes -a "$with_xml" != no ; then
+  echo "error: must be yes or no: --with-xml=$with_xml"
+  exit 1
+fi
+
+if test "$with_xml" = yes; then
+  have_xml=no
+  have_old_xml=no
+
+  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+  # look in /foo/bin/ for for xml-config.
+  #
+  xml_path="$PATH"
+
+  if test ! -z "$gtk_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+    xml_path="$foo:$xml_path"
+  fi
+
+  if test ! -z "$gnome_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    xml_path="$foo:$xml_path"
+  fi
+
+  if test -n "$pkg_config" ; then
+    #
+    # the new way...
+    # run pkg-config based tests.
+    #
+    pkgs=""
+    ok="yes"
+
+    # If we have Gtk 2.x, then *only* XML 2.x will work.
+    # If we have Gtk 1.x, or don't have Gtk at all, then
+    # either XML 1.x or 2.x will work.
+
+    # First check for XML 2.x.
+    #
+    pkg_check_version libxml-2.0 2.4.6
+
+    # If that didn't work (we don't have XML 2.x) and we *don't* have
+    # Gtk 2.x, then check to see if we have XML 1.x
+    #
+    if test "$ok" = no -a "$have_gtk2" = no; then
+      ok=yes
+      pkg_check_version libxml 1.0
+    fi
+
+    have_xml="$ok"
+
+    if test "$have_xml" = yes; then
+      AC_CACHE_CHECK([for XML includes], ac_cv_xml_config_cflags,
+                     [ac_cv_xml_config_cflags=`$pkg_config --cflags $pkgs`])
+      AC_CACHE_CHECK([for XML libs], ac_cv_xml_config_libs,
+                     [ac_cv_xml_config_libs=`$pkg_config --libs $pkgs`])
+      ac_xml_config_cflags=$ac_cv_xml_config_cflags
+      ac_xml_config_libs=$ac_cv_xml_config_libs
+    fi
+
+  else
+    #
+    # the old way...
+    # run {xml2,xml}-config based tests.
+    #
+
+    AC_PATH_PROGS(xml_config, xml2-config xml-config,, $xml_path)
+
+    # If we found the xml-config program, run it to get flags.
+    #
+    if test -n "$xml_config" ; then
+      AC_CACHE_CHECK([for XML includes], ac_cv_xml_config_cflags,
+                     [ac_cv_xml_config_cflags=`$xml_config --cflags`])
+      AC_CACHE_CHECK([for XML libs], ac_cv_xml_config_libs,
+                     [ac_cv_xml_config_libs=`$xml_config --libs`])
+      ac_xml_config_cflags=$ac_cv_xml_config_cflags
+      ac_xml_config_libs=$ac_cv_xml_config_libs
+    fi
+
+    ac_save_xml_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_xml_config_cflags"
+
+    # first try <libxml/parser.h> which is the new way...
+    #
+    AC_CHECK_X_HEADER(libxml/xmlIO.h, [have_xml=yes],,
+                      [#include <libxml/parser.h>])
+
+    # if that didn't work, then try just <parser.h> which is the old way...
+    #
+    if test "$have_xml" = no; then
+      AC_CHECK_X_HEADER(xmlIO.h, [have_xml=yes; have_old_xml=yes],,
+                        [#include <parser.h>])
+    fi
+
+    CPPFLAGS="$ac_save_xml_CPPFLAGS"
+  fi
+
+
+  have_zlib=no
+  if test "$have_xml" = yes; then
+    # we have the XML headers; now make sure zlib is around.
+    # yes, it's stupid we have to do this too, but there is
+    # dependency screwage in Gnome.
+    AC_CHECK_X_LIB(z, zlibVersion, [have_zlib=yes])
+    if test "$have_zlib" = no; then
+      xml_halfassed=yes
+      have_xml=no
+    fi
+  fi
+
+  if test "$have_xml" = yes; then
+    # we have the header, now check for the library
+    have_xml=no
+    xml_halfassed=yes
+    AC_CHECK_X_LIB(c, xmlParseChunk,
+                   [have_xml=yes
+                    xml_halfassed=no
+                    XML_LIBS="$ac_xml_config_libs"
+                    AC_DEFINE(HAVE_XML)],
+                   [true],
+                   $ac_xml_config_libs)
+  fi
+
+  if test "$have_xml" = yes; then
+    INCLUDES="$INCLUDES $ac_xml_config_cflags"
+    GTK_LIBS="$GTK_LIBS $ac_xml_config_libs"
+    AC_DEFINE(HAVE_XML)
+    if test "$have_old_xml" = yes; then
+      AC_DEFINE(HAVE_OLD_XML_HEADERS)
+    fi
+  fi
+
+fi
+
+
+###############################################################################
+#
+#       Checking whether Motif is really Lesstif.
+#
+###############################################################################
+
+have_lesstif=no
+if test "$have_motif" = yes ; then
+  AC_CACHE_CHECK([whether Motif is really LessTif], 
+                 ac_cv_have_lesstif,
+                 [AC_TRY_X_COMPILE([#include <Xm/Xm.h>],
+                                   [long vers = LesstifVersion;],
+                                   [ac_cv_have_lesstif=yes],
+                                   [ac_cv_have_lesstif=no])])
+  have_lesstif=$ac_cv_have_lesstif
+fi
+
+
+lesstif_version=unknown
+lesstif_version_string=unknown
+
+if test "$have_lesstif" = yes ; then
+  ltv=unknown
+  echo unknown > conftest-lt
+  AC_CACHE_CHECK([LessTif version number],
+                 ac_cv_lesstif_version_string,
+      [AC_TRY_X_RUN([#include <stdio.h>
+                     #include <Xm/Xm.h>
+                     int main() {
+                       FILE *f = fopen("conftest-lt", "w");
+                       if (!f) exit(1);
+                       fprintf(f, "%d %d.%d\n", LesstifVersion,
+                          LESSTIF_VERSION, LESSTIF_REVISION);
+                       fclose(f);
+                       exit(0);
+                     }],
+                    [ltv=`cat conftest-lt`
+                     ac_cv_lesstif_version=`echo $ltv | sed 's/ .*//'`
+                     ac_cv_lesstif_version_string=`echo $ltv | sed 's/.* //'`],
+                    [ac_cv_lesstif_version=unknown
+                     ac_cv_lesstif_version_string=unknown],
+                    [ac_cv_lesstif_version=unknown
+                     ac_cv_lesstif_version_string=unknown])])
+  rm -f conftest-lt
+  lesstif_version=$ac_cv_lesstif_version
+  lesstif_version_string=$ac_cv_lesstif_version_string
+
+fi
+
+
+if test "$have_motif" = yes ; then
+  mtv=unknown
+  echo unknown > conftest-mt
+  AC_CACHE_CHECK([Motif version number],
+                 ac_cv_motif_version_string,
+      [AC_TRY_X_RUN([#include <stdio.h>
+                     #include <Xm/Xm.h>
+                     int main() {
+                       FILE *f = fopen("conftest-mt", "w");
+                       if (!f) exit(1);
+                       fprintf(f, "%d %d.%d\n", XmVersion,
+                          XmVERSION, XmREVISION);
+                       fclose(f);
+                       exit(0);
+                     }],
+                    [mtv=`cat conftest-mt`
+                     ac_cv_motif_version=`echo $mtv | sed 's/ .*//'`
+                     ac_cv_motif_version_string=`echo $mtv | sed 's/.* //'`],
+                    [ac_cv_motif_version=unknown
+                     ac_cv_motif_version_string=unknown],
+                    [ac_cv_motif_version=unknown
+                     ac_cv_motif_version_string=unknown])])
+  rm -f conftest-mt
+  motif_version=$ac_cv_motif_version
+  motif_version_string=$ac_cv_motif_version_string
+
+fi
+
+
+###############################################################################
+#
+#       Checking whether Motif requires -lXpm.
+#
+#       If this is Motif 2.x, and we have XPM, then link against XPM as well.
+#       The deal is, Motif 2.x requires XPM -- but it's a compilation option
+#       of the library whether to build the XPM code into libXm, or whether
+#       to rely on an external libXm.  So the only way to tell whether XPM is
+#       a link-time requirement is to examine libXm.a, which is very
+#       difficult to do in an autoconf script.  So... if it's Motif 2.x, we
+#       always link against XPM if the XPM lib exists (and this will be a
+#       no-op if libXm happens to already have the XPM code in it.)
+#
+###############################################################################
+
+motif_requires_xpm=no
+if test "$have_motif" = yes ; then
+   AC_MSG_CHECKING(whether Motif requires XPM)
+   if test "$motif_version" = "unknown" || test "$motif_version" -ge 2000
+   then
+     motif_requires_xpm=yes
+     AC_MSG_RESULT(maybe)
+   else
+     AC_MSG_RESULT(no)
+   fi
+fi
+
+
+###############################################################################
+#
+#       Checking whether Motif requires -lXp.
+#
+#       Some versions of Motif (2.1.0, at least) require -lXp, the "X Printing
+#       Extension".   Why this extension isn't in -lXext with all the others,
+#       I have no idea.
+#
+###############################################################################
+
+have_xp_ext=no
+if test "$have_motif" = yes ; then
+   have_xp_ext=no
+   AC_CHECK_X_LIB(Xp, XpQueryExtension,
+                  [have_xp_ext=yes; MOTIF_LIBS="$MOTIF_LIBS -lXp"],
+                  [true], -lX11 -lXext -lm)
+fi
+
+
+###############################################################################
+#
+#       Checking whether Motif requires -lXintl (for _Xsetlocale.)
+#
+###############################################################################
+
+have_xintl=no
+if test "$have_motif" = yes ; then
+  AC_CHECK_X_LIB(Xintl, _Xsetlocale, [have_xintl=yes], [have_xintl=no],
+                 -lX11 -lXext -lm)
+  if test "$have_xintl" = yes; then
+    MOTIF_LIBS="$MOTIF_LIBS -lXintl"
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for -lGL or -lMesaGL.
+#
+###############################################################################
+
+have_gl=no
+ac_have_mesa_gl=no
+with_gl_req=unspecified
+gl_halfassed=no
+AC_ARG_WITH(gl,[
+Graphics options:
+
+  --with-gl               Build those demos which depend on OpenGL.],
+  [with_gl="$withval"; with_gl_req="$withval"],[with_gl=yes])
+
+HANDLE_X_PATH_ARG(with_gl, --with-gl, GL)
+
+ac_mesagl_version=unknown
+ac_mesagl_version_string=unknown
+
+if test "$with_gl" = yes; then
+  AC_CHECK_X_HEADER(GL/gl.h, have_gl=yes, have_gl=no)
+  if test "$have_gl" = yes ; then
+    AC_CHECK_X_HEADER(GL/glx.h, have_gl=yes, have_gl=no,
+                      [#include <GL/gl.h>])
+  fi
+
+  # If we have the headers, try and figure out which vendor it's from.
+  #
+  if test "$have_gl" = yes ; then
+
+    # We need to know whether it's MesaGL so that we know which libraries
+    # to link against.
+    #
+    AC_CACHE_CHECK([whether GL is really MesaGL], ac_cv_have_mesa_gl,
+      [ac_cv_have_mesa_gl=no
+       AC_EGREP_X_HEADER(Mesa|MESA, GL/glx.h, [ac_cv_have_mesa_gl=yes])
+      ])
+    ac_have_mesa_gl=$ac_cv_have_mesa_gl
+ 
+
+    gl_lib_1=""
+    GL_LIBS=""
+
+
+    # Some versions of MesaGL are compiled to require -lpthread.
+    # So if the Mesa headers exist, and -lpthread exists, then always
+    # link -lpthread after the Mesa libs (be they named -lGL or -lMesaGL.)
+    #
+    if test "$ac_have_mesa_gl" = yes; then
+      AC_CHECK_LIB(pthread, pthread_create, [GL_LIBS="-lpthread"], [],)
+    fi
+
+
+    # If we have Mesa headers, check to see if we can link against -lMesaGL.
+    # If we don't have Mesa headers, or we don't have -lMesaGL, try -lGL.
+    # Else, warn that GL is busted.  (We have the headers, but no libs.)
+    #
+
+    if test "$ac_have_mesa_gl" = yes ; then
+      AC_CHECK_X_LIB(MesaGL, glXCreateContext, 
+                     [gl_lib_1="MesaGL"
+                      GL_LIBS="-lMesaGL -lMesaGLU $GL_LIBS"],
+                     [], -lMesaGLU $GL_LIBS -lX11 -lXext -lm)
+    fi
+
+    if test "$gl_lib_1" = "" ; then
+      AC_CHECK_X_LIB(GL, glXCreateContext, 
+                     [gl_lib_1="GL"
+                      GL_LIBS="-lGL -lGLU $GL_LIBS"],
+                     [], -lGLU $GL_LIBS -lX11 -lXext -lm)
+    fi
+
+    if test "$gl_lib_1" = "" ; then
+      # we have headers, but no libs -- bail.
+      have_gl=no
+      ac_have_mesa_gl=no
+      gl_halfassed=yes
+    else
+      # linking works -- we can build the GL hacks.
+      AC_DEFINE(HAVE_GL)
+      if test "$ac_have_mesa_gl" = yes ; then
+        AC_DEFINE(HAVE_MESA_GL)
+      fi
+    fi
+  fi
+
+
+  # Now that we know we have GL headers and libs, do some more GL testing.
+  #
+
+  if test "$have_gl" = yes ; then
+    # If it's MesaGL, we'd like to issue a warning if the version number
+    # is less than or equal to 2.6, because that version had a security bug.
+    #
+    if test "$ac_have_mesa_gl" = yes; then
+
+      AC_CACHE_CHECK([MesaGL version number], ac_cv_mesagl_version_string,
+        [cat > conftest.$ac_ext <<EOF
+#line __oline__ "configure"
+#include "confdefs.h"
+#include <GL/gl.h>
+#ifndef MESA_MAJOR_VERSION
+# include <GL/xmesa.h>
+# ifdef XMESA_MAJOR_VERSION
+   /* Around Mesa 3.2, they took out the Mesa version number, so instead,
+      we have to check the XMesa version number (the number of the X protocol
+      support, which seems to be the same as the Mesa version number.)
+    */
+#  define MESA_MAJOR_VERSION XMESA_MAJOR_VERSION
+#  define MESA_MINOR_VERSION XMESA_MINOR_VERSION
+# else
+   /* Oh great.  Some time after 3.4, they took out the xmesa.h header file,
+      so we have no way of telling what version of Mesa this is at all.
+      So, we'll guess that the osmesa version (the "offscreen protocol")
+      is less than or equal to the real mesa version number.  Except that
+      if OSmesa is 3.3, assume at least Mesa 3.4, since OSmesa was 3.3 in
+      Mesa 3.4.  And Mesa 3.3 had xmesa.h.  What a complete load of shit!
+    */
+# include <GL/osmesa.h>
+#  define MESA_MAJOR_VERSION OSMESA_MAJOR_VERSION
+#  define MESA_MINOR_VERSION OSMESA_MINOR_VERSION or newer, probably?
+#  if OSMESA_MAJOR_VERSION == 3 && OSMESA_MINOR_VERSION == 3
+#   undef MESA_MINOR_VERSION
+#   define MESA_MINOR_VERSION 4 or newer, probably?
+#  endif
+# endif
+#endif
+configure: MESA_MAJOR_VERSION MESA_MINOR_VERSION
+EOF
+
+         ac_save_CPPFLAGS="$CPPFLAGS"
+         if test \! -z "$includedir" ; then 
+           CPPFLAGS="$CPPFLAGS -I$includedir"
+         fi
+         CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+         mglv=`(eval "$ac_cpp conftest.$ac_ext") 2>&AC_FD_CC | grep configure:`
+
+         # M4 sucks!!
+         changequote(X,Y)
+          mglv=`echo "$mglv" | sed -n \
+             's/^configure: *\([0-9][0-9]*\)  *\([0-9].*\)$/\1.\2/p'`
+         changequote([,])
+
+         rm -f conftest.$ac_ext
+
+         CPPFLAGS="$ac_save_CPPFLAGS"
+
+         if test "$mglv" = ""; then
+           ac_mesagl_version=unknown
+           ac_mesagl_version_string=unknown
+         else
+           ac_mesagl_version_string="$mglv"
+           # M4 sucks!!
+           changequote(X,Y)
+           maj=`echo "$mglv" | sed -n 's/^\([0-9][0-9]*\)\..*$/\1/p'`
+           min=`echo "$mglv" | sed -n 's/^.*\.\([0-9][0-9]*\).*$/\1/p'`
+           changequote([,])
+           ac_mesagl_version=`echo "$maj * 1000 + $min" | bc`
+           if test -z "$ac_mesagl_version"; then
+             ac_mesagl_version=unknown
+             ac_mesagl_version_string=unknown
+           fi
+         fi
+         ac_cv_mesagl_version=$ac_mesagl_version
+         ac_cv_mesagl_version_string=$ac_mesagl_version_string
+      ])
+      ac_mesagl_version=$ac_cv_mesagl_version
+      ac_mesagl_version_string=$ac_cv_mesagl_version_string
+    fi
+
+
+    # Check for OpenGL 1.1 features.
+    #
+    AC_CHECK_X_LIB($gl_lib_1, glBindTexture, [AC_DEFINE(HAVE_GLBINDTEXTURE)],
+                   [true], $GL_LIBS -lX11 -lXext -lm)
+  fi
+
+elif test "$with_gl" != no; then
+  echo "error: must be yes or no: --with-gl=$with_gl"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for -lgle.
+#
+###############################################################################
+
+have_gle=no
+with_gle_req=unspecified
+gle_halfassed=no
+AC_ARG_WITH(gle,
+[  --with-gle              Build those demos which depend on GLE
+                          (the OpenGL "extrusion" library.)],
+  [with_gle="$withval"; with_gle_req="$withval"],[with_gle=yes])
+
+HANDLE_X_PATH_ARG(with_gle, --with-gle, GLE)
+
+GLE_LIBS=""
+
+if test "$have_gl" = no ; then
+ true
+elif test "$with_gle" = yes; then
+
+  AC_CHECK_X_HEADER(GL/gle.h, have_gle3=yes, have_gle3=no,
+                    [#include <GL/gl.h>])
+  if test "$have_gle3" = yes ; then
+    have_gle=yes;
+  else
+    AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no,
+                    [#include <GL/gl.h>])
+    if test "$have_gle" = yes ; then
+      AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no,
+                        [#include <GL/gl.h>])
+    fi
+  fi
+
+  if test "$have_gle" = yes ; then
+    have_gle=no
+    gle_halfassed=yes
+    AC_CHECK_X_LIB(gle, gleCreateGC, 
+                   [have_gle=yes; gle_halfassed=no; GLE_LIBS="-lgle"],
+                   [], $GL_LIBS -lX11 -lXext -lm)
+  fi
+  if test "$have_gle" = yes ; then
+    have_gle=no
+    gle_halfassed=yes
+
+    # sometimes the libmatrix stuff is included in libgle.  look there first.
+#
+# I don't get it.  For some reason, this test passes on SGI, as if
+# uview_direction_d() was in libgle -- but it's not, it's in libmatrix.
+# Yet the link is succeeding.  Why???
+#
+#    AC_CHECK_X_LIB(gle, uview_direction_d, 
+#                   [have_gle=yes; gle_halfassed=no],
+#                   [], $GL_LIBS -lX11 -lXext -lm)
+
+    # As of GLE 3 this is in libgle, and has changed name to uview_direction!
+    # *sigh*
+    if test "$have_gle3" = yes ; then
+      AC_CHECK_X_LIB(gle, uview_direction, 
+                     [have_gle=yes; gle_halfassed=no],
+                    [], $GL_LIBS -lX11 -lXext -lm)
+    fi
+    # if it wasn't in libgle, then look in libmatrix.
+    if test "$have_gle" = no ; then
+      AC_CHECK_X_LIB(matrix, uview_direction_d, 
+                     [have_gle=yes; gle_halfassed=no;
+                      GLE_LIBS="$GLE_LIBS -lmatrix"],
+                    [], $GL_LIBS -lX11 -lXext -lm)
+    fi
+  fi
+
+  if test "$have_gle" = yes ; then
+    AC_DEFINE(HAVE_GLE)
+    if test "$have_gle3" = yes ; then
+      AC_DEFINE(HAVE_GLE3)
+    fi
+  fi
+
+elif test "$with_gle" != no; then
+  echo "error: must be yes or no: --with-gle=$with_gle"
+  exit 1
+
+fi
+
+
+
+###############################################################################
+#
+#       Check for -lXpm.
+#
+###############################################################################
+
+have_xpm=no
+with_xpm_req=unspecified
+AC_ARG_WITH(xpm,
+[  --with-xpm              Include support for XPM files in some demos.
+                          (Not needed if Pixbuf is used.)],
+  [with_xpm="$withval"; with_xpm_req="$withval"],[with_xpm=yes])
+
+HANDLE_X_PATH_ARG(with_xpm, --with-xpm, XPM)
+
+if test "$with_xpm" = yes; then
+  AC_CHECK_X_HEADER(X11/xpm.h,
+                   [have_xpm=yes
+                    AC_DEFINE(HAVE_XPM)
+                    XPM_LIBS="-lXpm"],,
+                    [#include <X11/Xlib.h>])
+elif test "$with_xpm" != no; then
+  echo "error: must be yes or no: --with-xpm=$with_xpm"
+  exit 1
+fi
+
+# See comment near $motif_requires_xpm, above.
+# Need to do this here, after both Motif and XPM have been checked for.
+#
+if test "$have_motif" = yes -a "$have_xpm" = yes ; then
+  if test "$motif_requires_xpm" = yes ; then
+    MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
+  fi
+fi
+
+###############################################################################
+#
+#       Check for -lgdk_pixbuf.
+#
+###############################################################################
+
+have_gdk_pixbuf=no
+with_gdk_pixbuf_req=unspecified
+AC_ARG_WITH(pixbuf,
+[  --with-pixbuf           Include support for the GDK-Pixbuf library in some
+                          demos, which will make it possible for them to read
+                          GIF, JPEG, and PNG files as well.  (The path here is
+			  ignored if GTK 2.x is being used.)],
+  [with_gdk_pixbuf="$withval"; with_gdk_pixbuf_req="$withval"],
+  [with_gdk_pixbuf=yes])
+
+# if --with-pixbuf=/directory/ was specified, remember that directory so that
+# we can also look for the `gdk-pixbuf-config' program in that directory.
+case "$with_gdk_pixbuf" in
+  /*)
+    gdk_pixbuf_dir="$with_gdk_pixbuf"
+    ;;
+  *)
+    gdk_pixbuf_dir=""
+    ;;
+esac
+
+HANDLE_X_PATH_ARG(with_gdk_pixbuf, --with-pixbuf, GDK_PIXBUF)
+
+if test "$with_gdk_pixbuf" != yes -a "$with_gdk_pixbuf" != no ; then
+  echo "error: must be yes or no: --with-pixbuf=$with_gdk_pixbuf"
+  exit 1
+fi
+
+if test "$with_gdk_pixbuf" = yes; then
+  have_gdk_pixbuf=no
+  have_gdk_pixbuf2=no
+
+  if test -n "$pkg_config" ; then
+    #
+    # the new way...
+    # run pkg-config based tests.
+    #
+    pkgs=''
+    ok="yes"
+
+    # If we have Gtk 2.x, then *only* gdk-pixbuf 2.x will work.
+    # If we have Gtk 1.x, then *only* gdk-pixbuf 1.x will work.
+    # If we don't have Gtk at all, then either will work.
+
+    if test "$have_gtk" = no -o "$have_gtk2" = yes; then
+      #
+      # we don't have Gtk; or we have Gtk 2.x.  Check for pixbuf 2.x.
+      #
+      pkg_check_version gdk-pixbuf-2.0      2.0.0
+      pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+      have_gdk_pixbuf="$ok"
+      have_gdk_pixbuf2="$ok"
+    fi
+
+    if test "$have_gtk" = no -o "$have_gtk2" = no; then
+      #
+      # we don't have Gtk; or we have Gtk 1.x.
+      # If we don't have pixbuf 2.x, then check for pixbuf 1.x.
+      #
+      if test "$have_gdk_pixbuf2" = no; then
+        pkgs=''
+        ok="yes"
+        pkg_check_version gdk-pixbuf      0.0
+        pkg_check_version gdk-pixbuf-xlib 0.0
+        have_gdk_pixbuf="$ok"
+      fi
+    fi
+
+    if test "$have_gdk_pixbuf" = yes; then
+      AC_CACHE_CHECK([for gdk-pixbuf includes], ac_cv_gdk_pixbuf_config_cflags,
+                 [ac_cv_gdk_pixbuf_config_cflags=`$pkg_config --cflags $pkgs`])
+      AC_CACHE_CHECK([for gdk-pixbuf libs], ac_cv_gdk_pixbuf_config_libs,
+                 [ac_cv_gdk_pixbuf_config_libs=`$pkg_config --libs $pkgs`])
+    fi
+    ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
+    ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
+  fi
+
+
+  if test "$have_gdk_pixbuf" = no; then
+    #
+    # the old way...
+    # run gdk-pixbuf-config based tests.
+    # note that we can't assume that the existence of "pkg-config" means
+    # that we don't have to look for gdk-pixbuf-config -- in Gnome 1.4,
+    # pkg-config exists, but doesn't know about pixbuf.
+    #
+
+    # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+    # look in /foo/bin/ for for gdk-pixbuf-config.
+    #
+    gdk_pixbuf_path="$PATH"
+
+    if test ! -z "$gtk_dir"; then
+      # canonicalize slashes.
+      foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+      gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
+    fi
+
+    if test ! -z "$gnome_dir"; then
+      # canonicalize slashes.
+      foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+      gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
+    fi
+
+    AC_PATH_PROGS(gdk_pixbuf_config, gdk-pixbuf-config,, $gdk_pixbuf_path)
+
+    # If we found the gdk-pixbuf-config program, run it to get flags.
+    #
+    if test -n "$gdk_pixbuf_config" ; then
+      AC_CACHE_CHECK([for gdk-pixbuf includes], ac_cv_gdk_pixbuf_config_cflags,
+                [ac_cv_gdk_pixbuf_config_cflags=`$gdk_pixbuf_config --cflags`])
+      AC_CACHE_CHECK([for gdk-pixbuf libs], ac_cv_gdk_pixbuf_config_libs,
+                [ac_cv_gdk_pixbuf_config_libs=`$gdk_pixbuf_config --libs`])
+
+      # note that "gdk-pixbuf-config --libs" produces a link line including
+      # -lgdk_pixbuf, but there's no way to get it to produce one that also
+      # includes -lgdk_pixbuf_xlib.  Since we don't know *exactly* what the
+      # name of the library will be, construct it with sed...
+      # M4 sucks!!
+      changequote(X,Y)
+      ac_cv_gdk_pixbuf_config_libs=`echo $ac_cv_gdk_pixbuf_config_libs | \
+       sed 's@ \(-lgdk_pixbuf\([-_a-zA-Z0-9.]*\)\) @ \1 -lgdk_pixbuf_xlib\2 @'`
+      changequote([,])
+
+      ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
+      ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
+    fi
+  fi
+
+  ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
+
+  if test "$have_gdk_pixbuf" = no; then
+    #
+    # we appear to have pixbuf; check for headers/libs to be sure.
+    #
+
+    have_gdk_pixbuf=no
+
+    # check for header A...
+    AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf.h, [have_gdk_pixbuf=yes])
+
+    # if that worked, check for header B...
+    if test "$have_gdk_pixbuf" = yes; then
+      have_gdk_pixbuf=no
+      gdk_pixbuf_halfassed=yes
+      AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf-xlib.h,
+                        [have_gdk_pixbuf=yes
+                         gdk_pixbuf_halfassed=no])
+
+      # yay, it has a new name in Gtk 2.x...
+      if test "$have_gdk_pixbuf" = no; then
+        have_gdk_pixbuf=no
+        gdk_pixbuf_halfassed=yes
+        AC_CHECK_X_HEADER(gdk-pixbuf-xlib/gdk-pixbuf-xlib.h,
+                          [have_gdk_pixbuf=yes
+                           gdk_pixbuf_halfassed=no])
+      fi
+    fi
+  fi
+
+  CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
+
+  if test "$have_gdk_pixbuf" = yes; then
+    # we have the headers, now check for the libraries
+    have_gdk_pixbuf=no
+    gdk_pixbuf_halfassed=yes
+
+    # library A...
+    AC_CHECK_X_LIB(c, gdk_pixbuf_new_from_file, [have_gdk_pixbuf=yes],,
+                   $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
+    # library B...
+    if test "$have_gdk_pixbuf" = yes; then
+      have_gdk_pixbuf=no
+      AC_CHECK_X_LIB(c, gdk_pixbuf_xlib_init,
+                     [have_gdk_pixbuf=yes
+                      gdk_pixbuf_halfassed=no],,
+                     $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
+    fi
+  fi
+
+  if test "$have_gdk_pixbuf" = yes; then
+    INCLUDES="$INCLUDES $ac_gdk_pixbuf_config_cflags"
+    XPM_LIBS="$ac_gdk_pixbuf_config_libs"
+    AC_DEFINE(HAVE_GDK_PIXBUF)
+  else
+    have_gdk_pixbuf2=no
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for -ljpeg
+#
+###############################################################################
+
+have_jpeg=no
+with_jpeg_req=unspecified
+jpeg_halfassed=no
+AC_ARG_WITH(jpeg,
+[  --with-jpeg             Include support for the JPEG library.],
+  [with_jpeg="$withval"; with_jpeg_req="$withval"],
+  [with_jpeg=yes])
+
+HANDLE_X_PATH_ARG(with_jpeg, --with-jpeg, JPEG)
+
+if test "$with_jpeg" != yes -a "$with_jpeg" != no ; then
+  echo "error: must be yes or no: --with-jpeg=$with_jpeg"
+  exit 1
+fi
+
+if test "$with_jpeg" = yes; then
+
+  have_jpeg=no
+  AC_CHECK_X_HEADER(jpeglib.h, [have_jpeg=yes])
+
+  if test "$have_jpeg" = yes; then
+    # we have the header, now check for the library
+    have_jpeg=no
+    jpeg_halfassed=yes
+    AC_CHECK_X_LIB(jpeg, jpeg_start_compress,
+                   [have_jpeg=yes
+                    jpeg_halfassed=no
+                    JPEG_LIBS="-ljpeg"
+                    AC_DEFINE(HAVE_JPEGLIB)])
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for the XSHM server extension.
+#
+###############################################################################
+
+have_xshm=no
+with_xshm_req=unspecified
+AC_ARG_WITH(xshm-ext,
+[  --with-xshm-ext         Include support for the Shared Memory extension.],
+  [with_xshm="$withval"; with_xshm_req="$withval"],[with_xshm=yes])
+
+HANDLE_X_PATH_ARG(with_xshm, --with-xshm-ext, XSHM)
+
+if test "$with_xshm" = yes; then
+
+  # first check for Xshm.h.
+  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for sys/ipc.h.
+  if test "$have_xshm" = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/ipc.h, [have_xshm=yes])
+  fi
+
+  # if that succeeded, then check for sys/shm.h.
+  if test "$have_xshm" = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/shm.h, [have_xshm=yes])
+  fi
+
+  # AIX is pathological, as usual: apparently it's normal for the Xshm headers
+  # to exist, but the library code to not exist.  And even better, the library
+  # code is in its own library: libXextSam.a.  So, if we're on AIX, and that
+  # lib doesn't exist, give up.  (This lib gets added to X_EXTRA_LIBS, and
+  # that's not quite right, but close enough.)
+  #
+  case "$host" in
+    *-aix*)
+      if [ `uname -v` -eq 3 ]; then
+        have_xshm=no
+        AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
+                       [have_xshm=yes; X_EXTRA_LIBS="$X_EXTRA_LIBS -lXextSam"],
+                       [true], -lX11 -lXext -lm)
+      fi
+    ;;
+  esac
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xshm" = yes; then
+    AC_DEFINE(HAVE_XSHM_EXTENSION)
+  fi
+
+elif test "$with_xshm" != no; then
+  echo "error: must be yes or no: --with-xshm-ext=$with_xshm"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the DOUBLE-BUFFER server extension.
+#
+###############################################################################
+
+have_xdbe=no
+with_xdbe_req=unspecified
+AC_ARG_WITH(xdbe-ext,
+[  --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.],
+  [with_xdbe="$withval"; with_xdbe_req="$withval"],[with_xdbe=yes])
+
+HANDLE_X_PATH_ARG(with_xdbe, --with-xdbe-ext, DOUBLE-BUFFER)
+
+if test "$with_xdbe" = yes; then
+
+  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes],,
+                    [#include <X11/Xlib.h>])
+  if test "$have_xdbe" = yes; then
+    AC_DEFINE(HAVE_DOUBLE_BUFFER_EXTENSION)    
+  fi
+
+elif test "$with_xdbe" != no; then
+  echo "error: must be yes or no: --with-xdbe-ext=$with_xshm"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the SGI XReadDisplay server extension.
+#
+#       Note: this has to be down here, rather than up with the other server
+#       extension tests, so that the output of `configure --help' is in the
+#       right order.  Arrgh!
+#
+###############################################################################
+
+have_readdisplay=no
+with_readdisplay_req=unspecified
+AC_ARG_WITH(readdisplay,
+[  --with-readdisplay      Include support for the XReadDisplay extension.],
+  [with_readdisplay="$withval"; with_readdisplay_req="$withval"],
+  [with_readdisplay=yes])
+
+HANDLE_X_PATH_ARG(with_readdisplay, --with-readdisplay, XReadDisplay)
+
+if test "$with_readdisplay" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/readdisplay.h,
+                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION),,
+                    [#include <X11/Xlib.h>])
+elif test "$with_readdisplay" != no; then
+  echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for a program to generate random text.
+#
+#       Zippy is funnier than the idiocy generally spat out by `fortune',
+#       so first see if "fortune zippy" works.  Else, use plain "fortune".
+#
+#       We used to dig around in Emacs to look for the "yow" program, but
+#       most people who have Emacs also have "fortune zippy", so nevermind.
+#
+###############################################################################
+
+with_fortune_req=""
+AC_ARG_WITH(fortune,[
+  --with-fortune=PROGRAM  Some demos are able to run an external program and
+                          display its text; this names the program to use by
+                          default (though it can be overridden with X
+                          resources.)  Default is \"/usr/games/fortune\".],
+  [with_fortune_req="$withval"; with_fortune="$withval"],[with_fortune=yes])
+
+if test "$with_fortune" = no || test "$with_fortune" = yes ; then
+  with_fortune=""
+  with_fortune_req=""
+fi
+
+if test -n "$with_fortune_req" ; then
+  ac_cv_fortune_program=""
+  case "$with_fortune_req" in
+    /*)
+
+      set dummy $with_fortune_req ; fortune_tmp=$2
+      AC_MSG_CHECKING([for $fortune_tmp])
+      if test -x "$fortune_tmp" ; then
+        AC_MSG_RESULT(yes)
+      else
+        AC_MSG_RESULT(no)
+        with_fortune=""
+      fi
+    ;;
+    *)
+      set dummy $with_fortune_req ; fortune_tmp=$2
+      # don't cache
+      unset ac_cv_path_fortune_tmp
+      AC_PATH_PROG(fortune_tmp, $fortune_tmp, [])
+      if test -z "$fortune_tmp" ; then
+        with_fortune=""
+      fi
+    ;;
+  esac
+  ac_cv_fortune_program="$with_fortune"
+
+elif test -n "$ac_cv_fortune_program"; then
+  AC_MSG_RESULT([checking for fortune... (cached) $ac_cv_fortune_program])
+fi
+
+unset ac_cv_path_fortune_tmp
+unset fortune_tmp
+
+if test -z "$ac_cv_fortune_program" ; then
+
+  # first look for fortune in /usr/games/ (and use absolute path)
+  AC_PATH_PROGS(fortune_tmp, fortune,, "/usr/games")
+
+  # if it's not there, look on $PATH (and don't use absolute path)
+  if test -z "$fortune_tmp" ; then
+     AC_CHECK_PROGS(fortune_tmp, fortune)
+  fi
+
+  # if we didn't find anything, then just assume /usr/games/
+  if test -z "$fortune_tmp" ; then
+     fortune_tmp="/usr/games/fortune"
+  fi
+
+  ac_cv_fortune_program="$fortune_tmp"
+
+  # now check to see whether "fortune zippy" works.
+  #
+  fortune_tmp="$fortune_tmp zippy"
+  AC_MSG_CHECKING([for zippy quotes])
+  if ( $fortune_tmp >/dev/null 2>&1 ); then
+    ac_cv_fortune_program="$fortune_tmp"
+    AC_MSG_RESULT($fortune_tmp)
+  else
+    AC_MSG_RESULT(no)
+  fi
+
+fi
+
+unset ac_cv_path_fortune_tmp
+unset fortune_tmp
+
+AC_DEFINE_UNQUOTED(FORTUNE_PROGRAM, "$ac_cv_fortune_program")
+
+
+###############################################################################
+#
+#       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
+#       This should be safe, but let's give people the option.
+#
+###############################################################################
+
+setuid_hacks_default=no
+setuid_hacks="$setuid_hacks_default"
+AC_ARG_WITH(setuid-hacks,
+[  --with-setuid-hacks     Allow some demos to be installed \`setuid root'
+                          (which is needed in order to ping other hosts.)
+],
+  [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
+
+HANDLE_X_PATH_ARG(setuid_hacks, --with-setuid-hacks, setuid hacks)
+
+if test "$setuid_hacks" = yes; then
+  true
+elif test "$setuid_hacks" != no; then
+  echo "error: must be yes or no: --with-setuid-hacks=$setuid_hacks"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Done testing.  Now, set up the various -I and -L variables,
+#       and decide which GUI program to build by default.
+#
+###############################################################################
+
+DEPEND=makedepend
+DEPEND_FLAGS=
+DEPEND_DEFINES=
+
+
+if test \! -z "$includedir" ; then 
+  INCLUDES="$INCLUDES -I$includedir"
+fi
+
+if test \! -z "$libdir" ; then
+  LDFLAGS="$LDFLAGS -L$libdir"
+fi
+
+
+PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
+ALL_DEMO_PROGRAMS=
+if test "$have_motif" = yes; then
+  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
+  ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
+fi
+if test "$have_gtk" = yes; then
+  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Gtk
+  ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
+fi
+
+
+if test "$have_kerberos" = yes; then
+  PASSWD_SRCS="$PASSWD_SRCS \$(KERBEROS_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(KERBEROS_OBJS)"
+fi
+if test "$have_pam" = yes; then
+  PASSWD_SRCS="$PASSWD_SRCS \$(PAM_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
+  INSTALL_PAM="install-pam"
+fi
+  PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
+
+
+if test "$enable_locking" = yes; then
+  LOCK_SRCS='$(LOCK_SRCS_1) $(PASSWD_SRCS)'
+  LOCK_OBJS='$(LOCK_OBJS_1) $(PASSWD_OBJS)'
+else
+  LOCK_SRCS='$(NOLOCK_SRCS_1)'
+  LOCK_OBJS='$(NOLOCK_OBJS_1)'
+fi
+
+INSTALL_SETUID='$(INSTALL_PROGRAM) $(SUID_FLAGS)'
+
+if test "$need_setuid" = yes; then
+  NEED_SETUID=yes
+else
+  NEED_SETUID=no
+fi
+
+if test "$setuid_hacks" = yes; then
+  SETUID_HACKS=yes
+else
+  SETUID_HACKS=no
+fi
+
+tab='	'
+if test "$have_gl" = yes; then
+  GL_EXES='$(GL_EXES)'
+  GL_UTIL_EXES='$(GL_UTIL_EXES)'
+  GL_MEN='$(GL_MEN)'
+  GL_KLUDGE="${tab}  "
+else
+  GL_KLUDGE="-${tab}  "
+fi
+
+if test "$have_gle" = yes; then
+  GLE_EXES='$(GLE_EXES)'
+  GLE_KLUDGE="${tab}   "
+else
+  GLE_KLUDGE="-${tab}   "
+fi
+
+if test "$have_jpeg" = yes -a "$have_gdk_pixbuf" = yes; then
+ JPEG_EXES='$(JPEG_EXES)'
+fi
+
+
+# Another substitution in the XScreenSaver.ad.in file:
+#
+if test "$have_gnome_help" = yes; then
+  GNOMEHELP_Y=''
+  GNOMEHELP_N='!    '
+else
+  GNOMEHELP_Y='!    '
+  GNOMEHELP_N=''
+fi
+
+
+# Now that we know whether we have Gnome, we can decide where the XML
+# config files get installed.
+#
+if test -z "$HACK_CONF_DIR" ; then
+  if test -n "$GNOME_DATADIR" ; then
+    HACK_CONF_DIR='${GNOME_DATADIR}/control-center/screensavers'
+  else
+    HACK_CONF_DIR='${prefix}/lib/xscreensaver/config'
+  fi
+fi
+
+
+
+# After computing $HACK_CONF_DIR, make sure $GLADE_DATADIR has a value
+# so that we know where to install the Gtk pixmaps.
+#
+# It should usually be "/usr/share/pixmaps/", but we can't just use
+# "$(prefix)/share/pixmaps" because that would usually result in
+# "/usr/X11R6/share/pixmaps/", which is wrong.  It needs to be the
+# Gnome/Gtk prefix, not the overall prefix.
+#
+if test -n "$GNOME_DATADIR" ; then
+  GLADE_DATADIR='$(GNOME_DATADIR)/xscreensaver'
+elif test "$have_gtk" = yes; then
+  if test -n "$pkg_config"; then
+    if test "$have_gtk2" = yes; then
+      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    else
+      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+`
+    fi
+  else
+    GLADE_DATADIR=`$gtk_config --prefix`
+  fi
+  GLADE_DATADIR="$GLADE_DATADIR/share/xscreensaver"
+else
+  GLADE_DATADIR=''
+fi
+
+
+# Set PO_DATADIR to something sensible.
+#
+AC_MSG_CHECKING([for locale directory])
+if test -n "$GNOME_DATADIR" ; then
+  PO_DATADIR="$GNOME_DATADIR"
+elif test "$have_gtk" = yes; then
+  if test -n "$pkg_config"; then
+    if test "$have_gtk2" = yes; then
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    else
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+`
+    fi
+  else
+    PO_DATADIR=`$gtk_config --prefix`
+  fi
+  PO_DATADIR="$PO_DATADIR/share"
+fi
+
+if test -z "$PO_DATADIR" ; then
+  #
+  # #### Total fucking kludge --
+  # Map /build/prefix/usr/X11R6/share/ to /build/prefix/usr/share/
+  # but of course we need to expand all the nested variables to do that...
+  #
+  dd=$datadir
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  PO_DATADIR=`echo $dd | sed 's@/X11R6/@/@'`
+fi
+
+AC_MSG_RESULT($PO_DATADIR/locale)
+
+
+# canonicalize slashes.
+HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
+
+# gcc 3.0 likes to issue this warning for every file:
+#
+# cc1: warning: changing search order for system directory "/usr/local/include"
+# cc1: warning:   as it has already been specified as a non-system directory
+#
+# Yay.  We can only avoid that by deleting "-I${prefix}/include" from the list.
+# Which *should* be totally redundant, and thus an ok thing to delete?
+#
+INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
+
+
+###############################################################################
+#
+#       Perform substitutions and write Makefiles.
+#
+###############################################################################
+
+AC_SUBST(INCLUDES)
+
+AC_SUBST(PREFERRED_DEMO_PROGRAM)
+AC_SUBST(ALL_DEMO_PROGRAMS)
+AC_SUBST(SAVER_LIBS)
+AC_SUBST(MOTIF_LIBS)
+AC_SUBST(GTK_LIBS)
+AC_SUBST(XML_LIBS)
+AC_SUBST(JPEG_LIBS)
+AC_SUBST(HACK_LIBS)
+AC_SUBST(XPM_LIBS)
+AC_SUBST(GL_LIBS)
+AC_SUBST(GLE_LIBS)
+AC_SUBST(XDPMS_LIBS)
+AC_SUBST(PASSWD_LIBS)
+AC_SUBST(INSTALL_SETUID)
+AC_SUBST(SETUID_HACKS)
+AC_SUBST(INSTALL_DIRS)
+AC_SUBST(NEED_SETUID)
+AC_SUBST(INSTALL_PAM)
+
+AC_SUBST(PASSWD_SRCS)
+AC_SUBST(PASSWD_OBJS)
+AC_SUBST(XMU_SRCS)
+AC_SUBST(XMU_OBJS)
+AC_SUBST(XMU_LIBS)
+AC_SUBST(SAVER_GL_SRCS)
+AC_SUBST(SAVER_GL_OBJS)
+AC_SUBST(SAVER_GL_LIBS)
+AC_SUBST(LOCK_SRCS)
+AC_SUBST(LOCK_OBJS)
+AC_SUBST(JPEG_EXES)
+AC_SUBST(GL_EXES)
+AC_SUBST(GL_UTIL_EXES)
+AC_SUBST(GL_MEN)
+AC_SUBST(GL_KLUDGE)
+AC_SUBST(GLE_EXES)
+AC_SUBST(GLE_KLUDGE)
+AC_SUBST(GNOMEHELP_Y)
+AC_SUBST(GNOMEHELP_N)
+AC_SUBST(HACKDIR)
+AC_SUBST(GNOME_DATADIR)
+AC_SUBST(GLADE_DATADIR)
+AC_SUBST(PO_DATADIR)
+AC_SUBST(GNOME_PANELDIR)
+AC_SUBST(HACK_CONF_DIR)
+AC_SUBST(GTK_EXTRA_OBJS)
+
+APPDEFAULTS=$ac_x_app_defaults
+AC_SUBST(APPDEFAULTS)
+
+AC_SUBST(DEPEND)
+AC_SUBST(DEPEND_FLAGS)
+AC_SUBST(DEPEND_DEFINES)
+AC_SUBST(PERL)
+
+AC_OUTPUT(Makefile
+          utils/Makefile
+          driver/Makefile
+          hacks/Makefile
+          hacks/glx/Makefile
+          po/Makefile.in
+          driver/XScreenSaver.ad
+          driver/xscreensaver.kss)
+
+###############################################################################
+#
+#       Print some warnings at the end.
+#
+###############################################################################
+
+warn_prefix_1="    Warning:"
+warn_prefix_2="       Note:"
+warn_prefix="$warn_prefix_1"
+
+warning=no
+warnsep='    #################################################################'
+
+warnpre() {
+  if test "$warning" = no ; then
+    echo '' ; echo "$warnsep" ; echo ''
+    warning=yes
+  fi
+}
+
+warn() {
+  warnpre
+  if test "$warning" = long ; then echo '' ; fi
+  warning=yes
+  rest="$@"
+  echo "$warn_prefix $rest"
+}
+
+warnL() {
+  was=$warning
+  warnpre
+  warning=yes
+  if test "$was" != no ; then echo '' ; fi
+  rest="$@"
+  echo "$warn_prefix $rest"
+}
+
+warn2() {
+  rest="$@"
+  echo "             $rest"
+  warning=long
+}
+
+note() {
+  warn_prefix="$warn_prefix_2"
+  warn $@
+  warn_prefix="$warn_prefix_1"
+}
+
+noteL() {
+  warn_prefix="$warn_prefix_2"
+  warnL $@
+  warn_prefix="$warn_prefix_1"
+}
+
+
+if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
+  warn 'The SGI saver extension was requested, but was not found.'
+fi
+
+if test "$with_mit_req" = yes -a "$have_mit" = no ; then
+  warn 'The MIT saver extension was requested, but was not found.'
+fi
+
+if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
+  warn 'The XIdle extension was requested, but was not found.'
+fi
+
+if test "$with_xshm_req" = yes -a "$have_xshm" = no ; then
+  warn 'The XSHM extension was requested, but was not found.'
+fi
+
+if test "$with_xdbe_req" = yes -a "$have_xdbe" = no ; then
+  warn 'The DOUBLE-BUFFER extension was requested, but was not found.'
+fi
+
+if test "$with_sgivc_req" = yes -a "$have_sgivc" = no ; then
+  warn 'The SGI-VIDEO-CONTROL extension was requested, but was not found.'
+fi
+
+if test "$with_dpms_req" = yes -a "$have_dpms" = no ; then
+  warn 'The DPMS extension was requested, but was not found.'
+fi
+
+if test "$with_xinerama_req" = yes -a "$have_xinerama" = no ; then
+  warn 'The Xinerama extension was requested, but was not found.'
+fi
+
+if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
+  warn 'The XF86VMODE extension was requested, but was not found.'
+fi
+
+if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
+  warn "Checking of /proc/interrupts was requested, but it's bogus."
+fi
+
+
+if test "$have_motif" = no -a "$have_gtk" = no; then
+  warnL "Neither Motif nor Gtk seem to be available;"
+  warn2 "the \`xscreensaver-demo' program requires one of these."
+
+elif test "$with_motif_req" = yes -a "$have_motif" = no ; then
+  warnL "Use of Motif was requested, but it wasn't found;"
+  warn2 "Gtk will be used instead."
+
+elif test "$jurassic_gtk" = yes ; then
+
+  pref_gtk=1.2
+
+  v="$ac_gtk_version_string"
+  if test "$with_gtk_req" = yes -a "$ac_gtk_version" = "unknown" ; then
+    warnL "Use of Gtk was requested, but its version number is unknown;"
+  elif test "$with_gtk_req" = yes ; then
+    warnL "Use of Gtk was requested, but it is version $v;"
+  else
+    warnL "Gtk was found on this system, but it is version $v;"
+  fi
+
+  warn2 "Gtk $pref_gtk or newer is required.  Motif will be used instead."
+
+elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
+  warnL "Use of Gtk was requested, but it wasn't found."
+  if test "$have_motif" = yes; then
+    warn2 "Motif will be used instead."
+  fi
+fi
+
+if test "$gtk2_halfassed" != no ; then
+  warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
+  warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
+  v="$ac_gtk_version_string"
+  warn2 "GTK $v is also installed, so it will be used instead."
+  warn2 "Please read the above output and the \`config.log' file"
+  warn2 "for more details."
+fi
+
+
+if test "$with_gnome_req" = yes -a "$have_gnome" = no \
+        -a "$have_gtk2" = no; then
+  # don't issue this warning if we have GTK2 -- in that case, the
+  # Gnome-specific code isn't needed.
+  warn  'Use of the Gnome Control Panel was requested, but the necessary'
+  warn2 'headers and/or libraries were not found.'
+fi
+
+if test "$have_gtk" = yes ; then
+  if test "$have_xml" = no ; then
+    if test "$with_xml_req" = yes ; then
+      warn  'Use of the XML library was requested, but the necessary'
+      warn2 'headers and/or libraries were not found.'
+    else
+      warn  'GTK is being used, but the XML library was not found.'
+    fi
+
+    if test "$xml_halfassed" = yes ; then
+
+      if test "$have_zlib" = yes ; then
+        which="XML libraries"
+      else
+        which="\`zlib' library"
+      fi
+
+      echo ''
+      warn2 'More specifically, we found the headers, but not the'
+      warn2 "$which; so either XML is half-installed on this"
+      warn2 "system, or something else went wrong.  The \`config.log'"
+      warn2 'file might contain some clues.'
+    fi
+
+    echo ''
+    warn2 "Without XML, the per-display-mode \`Settings' dialogs"
+    warn2 'will not be available.  Specify the location of the XML'
+    warn2 'library through the --with-xml option to configure.'
+  fi
+fi
+
+if test "$have_gtk" = yes -a "$have_gdk_pixbuf" = no ; then
+  warn  "GTK is being used, but the GDK-Pixbuf library and/or"
+  warn2 "headers were not found.  That can't be good.  Please"
+  warn2 "install the GDK-Pixbuf development kit and re-configure."
+fi
+
+if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
+
+  preferred_lesstif=0.92
+
+  if test "$lesstif_version" = unknown; then
+    warnL "Unable to determine the LessTif version number!"
+    warn2 "Make sure you are using version $preferred_lesstif or newer."
+    warn2 "See <http://www.lesstif.org/>."
+
+  elif test \! $lesstif_version -gt 82; then
+    warnL "LessTif version $lesstif_version_string is being used."
+    warn2 "LessTif versions 0.82 and earlier are too buggy to"
+    warn2 "use with XScreenSaver; it is strongly recommended"
+    warn2 "that you upgrade to at least version $preferred_lesstif!"
+    warn2 "See <http://www.lesstif.org/>."
+  fi
+fi
+
+
+if test "$have_motif" = yes -a "$have_gtk" = no ; then
+  warn  'Motif is being used, and GTK is not.'
+  echo  ''
+  warn2 'Though the Motif front-end to xscreensaver is still'
+  warn2 'maintained, it is no longer being updated with new'
+  warn2 'features: all new development on the xscreensaver-demo'
+  warn2 'program is happening in the GTK version, and not in the'
+  warn2 'Motif version.  It is recommended that you build against'
+  warn2 'GTK instead of Motif.  See <http://www.gtk.org/>.'
+fi
+
+
+if test "$with_xpm_req" = yes -a "$have_xpm" = no; then
+  warnL 'Use of XPM was requested, but it was not found.'
+fi
+
+if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
+  warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
+fi
+
+if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no || \
+   test "$gdk_pixbuf_halfassed" = yes; then
+
+  if test "$with_xpm_req" = yes -o "$have_xpm" = yes ; then
+    true
+  elif test "$with_xpm_req" = no ; then
+    warnL 'The XPM library is not being used.'
+  else
+    warnL 'The XPM library was not found.'
+  fi
+
+  if test "$with_gdk_pixbuf_req" = yes ; then
+    true
+  elif test "$with_gdk_pixbuf_req" = no ; then
+    warnL 'The GDK-Pixbuf library is not being used.'
+  else
+    warnL 'The GDK-Pixbuf library was not found.'
+  fi
+
+  if test "$gdk_pixbuf_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GDK-Pixbuf is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+  fi
+
+  echo ''
+  warn2 'Some of the demos will not be as colorful as they'
+  warn2 'could be.  You should consider installing Pixbuf or'
+  warn2 'XPM and re-running configure.  The Pixbuf library is'
+  warn2 'a part of GNOME.  The XPM library comes with most'
+  warn2 'X11 installations; you can also find it at the X11'
+  warn2 'archive sites, such as <http://sunsite.unc.edu/>.'
+  echo  ''
+  warn2 'GDK-Pixbuf is recommended over XPM, as it provides'
+  warn2 'support for more image formats.'
+fi
+
+
+if test "$have_jpeg" = no ; then
+  if test "$with_jpeg_req" = yes ; then
+    warnL 'Use of libjpeg was requested, but it was not found.'
+  elif test "$with_jpeg_req" = no ; then
+    noteL 'The JPEG library is not being used.'
+  else
+    noteL 'The JPEG library was not found.'
+  fi
+
+  if test "$jpeg_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'library; so either JPEG is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  if test "$have_gdk_pixbuf" = no ; then
+    warn2 "This means that it won't be possible for the image-manipulating"
+    warn2 "display modes to load files from disk; and it also means that"
+    warn2 "the \`webcollage' program will be much slower."
+  else
+    warn2 "This means the \`webcollage' program will be much slower."
+  fi
+fi
+
+
+if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
+  preferred_mesagl=3.4
+  mgv="$ac_mesagl_version_string"
+  pgl="$preferred_mesagl"
+
+  if test "$ac_mesagl_version" = unknown; then
+    warnL "Unable to determine the MesaGL version number!"
+    warn2 "Make sure you are using version $preferred_mesagl or newer."
+
+  elif test \! "$ac_mesagl_version" -gt 2006; then
+    warnL "MesaGL version number is $mgv --"
+    warn2 "MesaGL 2.6 and earlier have a security bug.  It is strongly"
+    warn2 "recommended that you upgrade to at least version $preferred_mesagl."
+
+  elif test \! "$ac_mesagl_version" -gt 3003; then
+    warnL "MesaGL version number is $mgv --"
+    warn2 "MesaGL 3.3 and earlier have some bugs; it is recommended"
+    warn2 "that you upgrade to $pgl or newer."
+  fi
+fi
+
+if test "$have_gl" = no ; then
+  if test "$with_gl_req" = yes ; then
+    warnL 'Use of GL was requested, but it was not found.'
+  elif test "$with_gl_req" = no ; then
+    noteL 'The OpenGL 3D library is not being used.'
+  else
+    noteL 'The OpenGL 3D library was not found.'
+  fi
+
+  if test "$gl_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GL is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+  fi
+
+  echo ''
+  warn2 'Those demos which use 3D will not be built or installed.'
+  warn2 'You might want to consider installing OpenGL and'
+  warn2 "re-running configure.  If your vendor doesn't ship"
+  warn2 'their own implementation of OpenGL, you can get a free'
+  warn2 'version at <http://www.mesa3d.org/>.  For general OpenGL'
+  warn2 'info, see <http://www.opengl.org/>.'
+
+fi
+
+
+if test "$have_gl" = yes -a "$have_gle" = no ; then
+
+ # nobody cares about this; don't print the warning unless it was
+ # requested and not found, or halfway-found.
+ if test "$with_gle_req" = yes -o "$gle_halfassed" = yes ; then
+
+  if test "$with_gle_req" = yes ; then
+    noteL 'Use of the GLE (GL Extrusion) library was requested, but'
+    warn2 'it was not found (though the OpenGL library was found, and'
+    warn2 'is being used.)'
+  elif test "$with_gle_req" = no ; then
+    noteL 'The OpenGL Library is being used, but the GLE (GL Extrusion)'
+    warn2 'library is not.'
+  else
+    noteL 'The OpenGL Library was found, but the GLE (GL Extrusion)'
+    warn2 'was not.'
+  fi
+
+  if test "$gle_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GLE is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+  fi
+
+  echo ''
+  warn2 'Some of the OpenGL (3D) demos (those that depend on GLE)'
+  warn2 'will not be built or installed.  You might want to consider'
+  warn2 'installing GLE and re-running configure.  You can find the'
+  warn2 'GLE library at <http://www.linas.org/gle/>.  For general'
+  warn2 'OpenGL info, see <http://www.opengl.org/>.'
+
+ fi
+fi
+
+
+if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
+  warn 'Use of XReadDisplay was requested, but it was not found.'
+fi
+
+if test -n "$with_fortune_req"; then
+  if test "$with_fortune_req" != "$ac_cv_fortune_program" ; then
+    warnL "$with_fortune_req was requested as the Fortune program,"
+    warn2 "but was not found.  The default will be used instead."
+  fi
+fi
+
+if test "$with_kerberos_req" = yes -a "$have_kerberos" = no ; then
+  warn 'Use of Kerberos was requested, but it was not found.'
+fi
+
+if test "$with_pam_req" = yes -a "$have_pam" = no ; then
+  warn 'Use of PAM was requested, but it was not found.'
+fi
+
+if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
+  warn 'Use of shadow passwords was requested, but they were not found.'
+fi
+
+
+# You are in a twisty maze of namespaces and syntaxes, all alike.
+# Fuck the skull of Unix.
+#
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+
+# canonicalize slashes.
+bindir=`echo  "${bindir}"              | sed 's@/$@@;s@//*@/@g'`
+HACKDIR=`echo "${HACKDIR}"             | sed 's@/$@@;s@//*@/@g'`
+HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
+
+
+# Sanity check the hackdir
+for bad_choice in xscreensaver xscreensaver-demo xscreensaver-command ; do
+  if test "${HACKDIR}" = "${bindir}/${bad_choice}" ; then
+    echo ""
+    AC_MSG_ERROR([\"--with-hackdir=${bindir}/${bad_choice}\" won't work.
+                   There will be an executable installed with that name, so
+                   that can't be the name of a directory as well.  Please
+                   re-configure with a different directory name.])
+  fi
+done
+
+
+do_dir_warning=no
+
+# Now let's see if there's a previous RPM version already installed.  Blargh!
+
+# M4 sucks!!
+changequote(X,Y)
+rpmv=`(rpm -qv xscreensaver) 2>/dev/null | \
+      sed -n 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/p'`
+changequote([,])
+
+if test \! -z "$rpmv" ; then
+  rpmbdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
+  rpmhdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/attraction$@\1@p'`
+
+  warning=no
+  warnL "There is already an installed RPM of xscreensaver $rpmv"
+  warn2 "on this system.  You might want to remove it (with"
+  warn2 '"rpm -ve xscreensaver") before running "make install"'
+  warn2 "from this directory."
+  echo ""
+  warn2 "Alternately, you could build this version of xscreensaver"
+  warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
+  warn2 "file is included.  See the RPM documentation for more info."
+  echo ""
+
+  if test "$rpmbdir" = "$rpmhdir" ; then
+    warn2 "The RPM version was installed in $rpmbdir/."
+  else
+    warn2 "The RPM version was installed in $rpmbdir/,"
+    warn2 "with demos in $rpmhdir/."
+  fi
+
+  do_dir_warning=yes
+fi
+
+
+if test "${bindir}" = "${HACKDIR}" ; then
+  do_dir_warning=yes
+fi
+
+if test "$do_dir_warning" = yes; then
+  echo ""
+  echo "$warnsep"
+  echo ""
+  echo '      When you run "make install", the "xscreensaver",'
+  echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
+  echo "      will be installed in ${bindir}/."
+  echo ""
+  echo "      The various graphics demos (150+ different executables) will"
+  echo "      be installed in ${HACKDIR}/."
+  echo ""
+  echo "      If you would prefer the demos to be installed elsewhere,"
+  echo "      you should re-run configure with the --with-hackdir=DIR"
+  echo "      option.  For more information, run \`./configure --help'."
+  warning=yes
+fi
+
+if test "$warning" != no; then
+  echo '' ; echo "$warnsep" ; echo ''
+fi
+
+if test "$do_dir_warning" = no; then
+  if test "$warning" = no; then
+    echo ''
+  fi
+  echo "User programs will be installed in ${bindir}/"
+  echo "Screen savers will be installed in ${HACKDIR}/"
+  echo "Configuration will be installed in ${HACK_CONF_DIR}/"
+  echo ''
+fi

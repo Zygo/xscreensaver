@@ -1,0 +1,7 @@
+#%PAM-1.0
+
+# Red Hat says this is right for them, as of 7.3:
+auth       required	/lib/security/pam_stack.so service=system-auth
+
+# This is what we were using before:
+# auth       required	/lib/security/pam_pwdb.so shadow nullok

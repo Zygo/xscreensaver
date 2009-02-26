@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pulsar" _label="Pulsar">
+
+  <command arg="-root"/>
+
+  <hgroup>
+    <select id="render">
+      <option id="flat"  _label="Use Flat Coloring" arg-set="-no-light"/>
+      <option id="light" _label="Directional Lighting"/>
+    </select>
+
+    <select id="render">
+      <option id="wire"  _label="Wireframe" arg-set="-wire"/>
+      <option id="solid" _label="Solid Surface"/>
+    </select>
+  </hgroup>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="quads" type="slider" arg="-quads %"
+          _label="Quad Count" low="1" high="50" default="5"/>
+
+  <hgroup>
+   <vgroup>
+     <boolean id="light"     _label="Enable Lighting" arg-set="-light"/>
+     <boolean id="fog"       _label="Enable Fog" arg-set="-fog"/>
+     <boolean id="texture"   _label="Enable Texturing" arg-set="-texture"/>
+     <boolean id="mipmap" _label="Enable Texture Mipmaps" arg-set="-mipmap"/>
+   </vgroup>
+   <vgroup>
+     <boolean id="no-blend"  _label="Enable Blending" arg-unset="-no-blend"/>
+     <boolean id="antialias" _label="Anti-alias Lines" arg-set="-antialias"/>
+     <boolean id="texture_quality" _label="Enable Texture Filtering"
+                              arg-set="-texture_quality"/>
+     <boolean id="do_depth" _label="Enable Depth Buffer" arg-set="-do_depth"/>
+   </vgroup>
+ </hgroup>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <file id="bitmap" _label="Texture PPM File" arg="-bitmap %"/>
+
+  <_description>
+Draws some intersecting planes, making use of alpha blending, fog,
+textures, and mipmaps, plus a ``frames per second'' meter so that you
+can tell how fast your graphics card is...  Requires OpenGL.  Written
+by David Konerding.
+  </_description>
+</screensaver>
