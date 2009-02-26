@@ -1,0 +1,58 @@
+.TH XScreenSaver 1 "31-Mar-01" "X Version 11"
+.SH NAME
+whirlygig -- zooming chains of sinusoidal spots
+.SH SYNOPSIS
+.B whirlygig
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-background] [\-foreground] [\-xspeed] [\-yspeed] [\-whirlies] [\-nlines]
+.SH DESCRIPTION
+The \flwhirlygig\fP program draws a series of circles on your screen.
+They then move about in a cyclic pattern
+.SH OPTIONS
+.I whirlygig
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-xspeed \flspeed\fP
+Specify how fast the dots should cycle horizontally.
+Try out values from .01 to 4000
+.TP 8
+.B \-yspeed \flspeed\fP
+Specify how fast the dots should cycle vertically.
+Try out values from .01 to 4000
+.TP 8
+.B \-whirlies \fla number\fP
+Specify how many whilrlies you want
+.TP 8
+.B \-nlines \flnumber of lines\fP
+Specify how many lines of whirlies you want
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Ashton Trey Belew.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Ashton Trey Belew <trey@veggie.wesleyan.edu>, 31-Mar-01
