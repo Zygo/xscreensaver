@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="penrose" _label="Penrose">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Size" low="0" high="100" default="40"/>
+
+  <boolean id="ammann" _label="Draw Ammann Lines" arg-set="-ammann"/>
+
+  <_description>
+Draws quasiperiodic tilings; think of the implications on modern
+formica technology.  Written by Timo Korvola.
+
+In April 1997, Sir Roger Penrose, a British math professor who has
+worked with Stephen Hawking on such topics as relativity, black
+holes, and whether time has a beginning, filed a
+copyright-infringement lawsuit against the Kimberly-Clark
+Corporation, which Penrose said copied a pattern he created (a
+pattern demonstrating that ``a nonrepeating pattern could exist in
+nature'') for its Kleenex quilted toilet paper.  Penrose said he
+doesn't like litigation but, ``When it comes to the population of
+Great Britain being invited by a multinational to wipe their bottoms
+on what appears to be the work of a Knight of the Realm, then a last
+stand must be taken.''
+
+As reported by News of the Weird #491, 4-jul-1997.
+  </_description>
+</screensaver>

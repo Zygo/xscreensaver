@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="celtic" _label="Celtic">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <number id="delay" type="slider" arg="-delay2 %"
+          _label="Pause" _low-label="Short" _high-label="Long"
+          low="0" high="10" default="5"/>
+
+  <boolean id="graph" _label="Draw Graph" arg-set="-graph"/>
+
+  <_description>
+Repeatedly draws random Celtic cross-stitch patterns.
+By Max Froumentin.
+  </_description>
+</screensaver>

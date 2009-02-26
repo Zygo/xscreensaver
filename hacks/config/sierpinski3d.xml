@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="sierpinski3d" _label="Sierpinski3D">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+  <number id="descent" type="slider" arg="-speed %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="2" high="500" default="150"
+          convert="invert"/>
+
+  <number id="depth" type="spinbutton" arg="-depth %"
+          _label="Max Depth" low="1" high="6" default="5"/>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This draws the three-dimensional variant of the recursive Sierpinski
+triangle fractal, using GL.  Written by Tim Robinson and Jamie Zawinski.
+  </_description>
+</screensaver>

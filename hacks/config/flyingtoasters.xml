@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flyingtoasters" _label="Flying Toasters">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Air Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="8.0" default="1.0"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="30000"
+          convert="invert"/>
+
+  <number id="ntoasters" type="slider" arg="-ntoasters %"
+          _label="Number of Toasters" _low-label="None" _high-label="Swarm"
+          low="0" high="50" default="20"/>
+
+  <number id="nslices" type="slider" arg="-nslices %"
+          _label="Number of Slices" _low-label="None" _high-label="Swarm"
+          low="0" high="50" default="25"/>
+
+  <select id="render">
+    <option id="solid"    _label="Chrome Toasters"/>
+    <option id="solid"    _label="Solid Colors" arg-set="-no-texture"/>
+    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+A fleet of 3d space-age jet-powered flying toasters (and toast!)
+Inspired by the ancient Berkeley Systems After Dark flying toasters.
+By Jamie Zawinski and Baconmonkey.
+  </_description>
+</screensaver>
