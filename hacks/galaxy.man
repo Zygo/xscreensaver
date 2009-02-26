@@ -1,0 +1,83 @@
+.TH XScreenSaver 1 "10-May-97" "X Version 11"
+.SH NAME
+galaxy - draws spinning galaxies
+.SH SYNOPSIS
+.B galaxy
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-trail] [\-no\-trail]
+
+.SH DESCRIPTION
+The \fIgalaxy\fP program draws spinning galaxies.
+.SH OPTIONS
+.I galaxy
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-ncolors \fIinteger\fP
+How many colors should be used (if possible).  Default 64.
+The colors used cycle through the hue, making N stops around
+the color wheel.
+.TP 8
+.B \-cycles \fIinteger\fP
+
+.TP 8
+.B \-count \fIinteger\fP
+
+.TP 8
+.B \-size \fIinteger\fP
+
+.TP 8
+.B \-trail
+.TP 8
+.B \-no\-trail
+
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xlock (1)
+.SH COPYRIGHT
+Copyright \(co 1994 by Hubert Feyrer.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+.SH AUTHOR
+Original Amiga version by Uli Siegmund <uli@wombat.okapi.sub.org>
+ for EGS in Cluster.
+
+Ported from Cluster/EGS to C/Intuition by Harald Backert.
+
+Ported to X11 and xlockmore by 
+Hubert Feyrer <hubert.feyrer@rz.uni-regensburg.de>, 30-Sep-94.
+
+Modified by David Bagley <bagleyd@bigfoot.com>, 23-Oct-94.
+
+Modified by Dave Mitchell <davem@magnet.com>, 7-Apr-97.
+
+Ability to run standalone or with \fIxscreensaver\fP added by 
+Jamie Zawinski <jwz@netscape.com>, 10-May-97.

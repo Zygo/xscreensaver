@@ -1,0 +1,74 @@
+.TH XScreenSaver 1 "25-Nov-97" "X Version 11"
+.SH NAME
+jigsaw - permute the screen image like a jigsaw puzzle
+.SH SYNOPSIS
+.B jigsaw
+[\-display \fIhost:display.screen\fP] [\-background \fIcolor\fP] [\-delay \fIusecs\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+.SH DESCRIPTION
+The \fIjigsaw\fP program takes an image of the screen, carves it up into
+a jigsaw puzzle, shuffles it, and then solves it.
+.SH OPTIONS
+.I jigsaw
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How long to wait between shuffling pieces; default 700000, or 0.7 seconds.
+.SH RESOURCES
+On some systems (currently, only SGIs), this program can, instead of grabbing
+a desktop image, grab a frame of video from an external camera and manipulate
+that instead.  The following resources control that.
+.PP
+.TP 8
+.B grabVideoProbability \fR(Float)\fP
+What portion of the time to grab video rather than a screen image, 
+between 0.0 and 1.0.  Defaults to 0.5, or half the time.
+.TP 8
+.B videoDevice \fR(Integer)\fP
+The number of the default video input device to check first.  If unspecified, 
+the default camera (from videopanel(1)) will be checked first.  After that, all
+other available video input devices will be checked in order.  
+
+The first one which produces a non-black image will be used.  If all images
+are black, the others will be re-checked a few times before giving up and
+falling back to simply grabbing a desktop image (but note that this takes a
+few seconds, so if you don't actually have any video sources hooked up, you
+should consider turning off video grabbing by setting
+\fBgrabVideoProbability\fP to 0.0.)
+.TP 8
+.B videoGain \fR(Float)\fP
+The amount by which to brighten the grabbed image.  This defaults to 2.2.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1997 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 25-Nov-97.
