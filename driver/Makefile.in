@@ -1,0 +1,506 @@
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# the `../configure' script generates `driver/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+mansuffix	= 1
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= @DEFS@
+DEFS2		= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SETUID  = @INSTALL_SETUID@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+
+# Note:
+#
+# X_LIBS would more properly be called X_LDFLAGS (it contains the -L args.)
+# X_PRE_LIBS contains extra libraries you have to link against on some systems,
+#         and that must come before -lX11.  (e.g., -lSM and -lICE.)
+# X_EXTRA_LIBS contains extra libraries needed by X that aren't a part of X.
+#         (e.g., -lsocket, -lnsl, etc.)
+#
+# I think (but am not totally sure) that LIBS is also really "LDFLAGS".
+#
+# SAVER_LIBS is the link line for "xscreensaver", and
+# CMD_LIBS is the link line for "xscreensaver-command".
+
+
+AD_DIR		= @APPDEFAULTS@
+PAM_DIR		= /etc/pam.d
+PAM_CONF	= /etc/pam.conf
+
+UTILS_SRC	= $(srcdir)/../utils
+UTILS_BIN	= ../utils
+
+INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
+
+MOTIF_SRCS	= dialogs-Xm.c
+MOTIF_OBJS	= dialogs-Xm.o
+
+ATHENA_SRCS	= dialogs-Xaw.c
+ATHENA_OBJS	= dialogs-Xaw.o
+
+PWENT_SRCS	= passwd-pwent.c
+PWENT_OBJS	= passwd-pwent.o
+
+KERBEROS_SRCS	= passwd-kerberos.c
+KERBEROS_OBJS	= passwd-kerberos.o
+
+PAM_SRCS	= passwd-pam.c
+PAM_OBJS	= passwd-pam.o
+
+LOCK_SRCS_1	= lock.c passwd.c
+LOCK_OBJS_1	= lock.o passwd.o
+
+TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c
+
+TOOLKIT_SRCS	= @TOOLKIT_SRCS@
+TOOLKIT_OBJS	= @TOOLKIT_OBJS@
+TOOLKIT_LIBS	= @TOOLKIT_LIBS@
+
+PASSWD_SRCS	= @PASSWD_SRCS@
+PASSWD_OBJS	= @PASSWD_OBJS@
+PASSWD_LIBS	= @PASSWD_LIBS@
+
+LOCK_SRCS	= @LOCK_SRCS@
+LOCK_OBJS	= @LOCK_OBJS@
+
+DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c
+DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/visual.o
+
+SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
+		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/spline.c \
+		  $(UTILS_SRC)/yarandom.c \
+		  $(DEMO_UTIL_SRCS)
+SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
+		  $(UTILS_BIN)/xroger.o $(UTILS_BIN)/spline.o \
+		  $(UTILS_BIN)/yarandom.o \
+		  $(DEMO_UTIL_OBJS)
+
+SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c \
+		  xset.c splash.c setuid.c stderr.c
+SAVER_OBJS_1	= xscreensaver.o windows.o timers.o subprocs.o \
+		  xset.o splash.o setuid.o stderr.o
+
+SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c $(LOCK_SRCS) \
+		  $(SAVER_UTIL_SRCS) @XMU_SRCS@
+SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o $(LOCK_OBJS) \
+		  $(SAVER_UTIL_OBJS) @XMU_OBJS@
+
+CMD_SRCS	= remote.c xscreensaver-command.c
+CMD_OBJS	= remote.o xscreensaver-command.o
+
+DEMO_SRCS_1	= demo.c prefs.c
+DEMO_OBJS_1	= demo.o prefs.o
+
+DEMO_SRCS	= $(DEMO_SRCS_1) remote.c \
+		  $(TOOLKIT_SRCS) $(DEMO_UTIL_SRCS)
+DEMO_OBJS	= $(DEMO_OBJS_1) remote.o \
+		  $(TOOLKIT_OBJS) $(DEMO_UTIL_OBJS)
+
+SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ \
+		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
+		  $(PASSWD_LIBS)
+
+CMD_LIBS	= $(LIBS) $(X_LIBS) \
+		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
+
+DEMO_LIBS	= $(LIBS) $(X_LIBS) $(TOOLKIT_LIBS) \
+		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+EXES		= xscreensaver xscreensaver-command xscreensaver-demo
+
+HDRS		= XScreenSaver_ad.h xscreensaver.h prefs.h remote.h
+MEN		= xscreensaver.man xscreensaver-demo.man \
+		  xscreensaver-command.man
+EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
+		  .gdbinit
+VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
+		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
+		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
+
+TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
+		  $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS) \
+		  $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) \
+		  $(HDRS) $(TEST_SRCS) $(MEN)
+
+
+all: $(EXES)
+
+install:   install-program   install-ad   install-man   @INSTALL_PAM@
+uninstall: uninstall-program uninstall-ad uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
+		INSTALL_SETUID='$(INSTALL_SETUID) -s' \
+		install
+
+install-program: $(EXES)
+	@if [ ! -d $(bindir) ]; then $(INSTALL_DIRS) $(bindir) ; fi
+	@inst="$(INSTALL_PROGRAM)" ;					\
+	if [ @NEED_SETUID@ = yes ]; then				\
+	   me="`whoami`" ;						\
+	   if [ "$$me" = root ]; then					\
+	     inst="$(INSTALL_SETUID)" ;					\
+	   else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for shadow"     ;\
+ $$e "           passwords.  If your system actually uses shadow passwords," ;\
+ $$e "           then xscreensaver must be installed as a setuid root"	     ;\
+ $$e "           program in order for locking to work.  To do this, you"     ;\
+ $$e "           must run 'make install' as 'root', not as '$$me'."	     ;\
+ $$e ""									     ;\
+ $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
+ $$e "           means that locking might not work.  (Try it and see.)"	     ;\
+ $$e ""									     ;\
+	   fi ; 							\
+	fi ;								\
+	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
+	$$inst xscreensaver $(bindir)/xscreensaver
+	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
+	$(INSTALL_PROGRAM) xscreensaver-demo $(bindir)/xscreensaver-demo
+
+install-ad: XScreenSaver.ad
+	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi
+	$(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver
+
+install-man: $(MEN)
+	@men="$(MEN)" ;							\
+	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	done
+
+uninstall-program:
+	@for program in $(EXES); do					\
+	  echo rm -f $(bindir)/$$program ;				\
+	  rm -f $(bindir)/$$program ;					\
+	done
+
+uninstall-ad:
+	rm -f $(AD_DIR)/XScreenSaver
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(man1dir)/$$instname ;				\
+	  rm -f $(man1dir)/$$instname ;					\
+	done
+
+install-pam:
+	@src="$(srcdir)/xscreensaver.pam" ;				\
+	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
+	   < ../config.h` ;						\
+	dir="$(PAM_DIR)" ;						\
+	conf="$(PAM_CONF)" ;						\
+									\
+	if [ -d $$dir ] ; then						\
+	  echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	  $(INSTALL_DATA) $$src $$dir/$$dest ;				\
+	  if [ ! -f $$dir/$$dest ]; then				\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  However, we were unable to"  ;\
+ $$e "           install the file $$dir/$$dest.  PAM is unlikely to work"    ;\
+ $$e "           without this file (and old-style password authentication"   ;\
+ $$e "           will be used instead, which may or may not work.)"	     ;\
+ $$e ""									     ;\
+	  fi ;								\
+	elif [ -f $$conf ]; then					\
+	  if ( grep $$dest $$conf >/dev/null ); then			\
+	   true ;							\
+	  else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  To complete the installation";\
+ $$e "           of PAM support, you must add this to the file $$conf:"	     ;\
+ $$e ""									     ;\
+	    cat $$src | grep -v '#%' | sed "s/^/	$$dest	/" ;	\
+	    echo "";							\
+	  fi ;								\
+	fi
+
+
+clean:
+	-rm -f *.o a.out core $(EXES) XScreenSaver_ad.h
+
+distclean: clean
+	-rm -f Makefile XScreenSaver.ad TAGS *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend: XScreenSaver_ad.h
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SAVER_SRCS) $(CMD_SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend: update_ad_version update_man_version XScreenSaver_ad.h
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS)	    \
+	$(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) $(TEST_SRCS) |	    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@$$.*\(XScreenSaver_ad\)@\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config\.h\)@ \1@g' ;		    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+# Updates the version number in the app-defaults file to be in sync with 
+# the version number in version.h.  This is so people can tell when they
+# have a version skew between the app-defaults file and the executable.
+update_ad_version::
+	@S=XScreenSaver.ad.in ;						    \
+	U=$(UTILS_SRC)/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	D=`date '+%d-%b-%y'` ;						    \
+	echo -n "Updating version number in $$S to $$V $$D... " ;	    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
+	    -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9]\)/$$D/"	    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T
+
+update_man_version::
+	@for S in $(MEN); do						    \
+	U=$(UTILS_SRC)/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	V="`date '+%d-%b-%y'` ($$V)" ;					    \
+	echo -n "Updating footer in $$S to \"$$V\"... " ;		    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/^\(\.TH[^\"]*\)\"[^\"]*\"\(.*\)/\1\"$$V\"\2/"		    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T ;							    \
+	done
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@$(MAKE) XScreenSaver_ad.h 2>&1 >&- /dev/null
+	@echo $(TARFILES)
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/fade.o:		$(UTILS_SRC)/fade.c
+$(UTILS_BIN)/overlay.o:		$(UTILS_SRC)/overlay.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+
+$(SAVER_UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS)  $(CFLAGS) $(X_CFLAGS) $<
+
+# subprocs is the only one that takes an extra -D option.
+subprocs.o: subprocs.c
+	$(CC) -c $(INCLUDES) $(DEFS2) $(CFLAGS) $(X_CFLAGS) $<
+
+
+# How we build the default app-defaults file into the program.
+#
+XScreenSaver_ad.h: XScreenSaver.ad
+	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > XScreenSaver_ad.h
+
+# The executables linked in this directory.
+#
+xscreensaver: $(SAVER_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(SAVER_OBJS) $(SAVER_LIBS)
+
+xscreensaver-command: $(CMD_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(CMD_OBJS) $(CMD_LIBS)
+
+xscreensaver-demo: $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(DEMO_LIBS)
+
+
+
+TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PASSWD_OBJS) \
+	 subprocs.o setuid.o splash.o prefs.o \
+	$(SAVER_UTIL_OBJS)
+test-passwd.o: XScreenSaver_ad.h
+
+test-passwd: $(TEST_PASSWD_OBJS) XScreenSaver_ad.h
+	$(CC) $(LDFLAGS) -o $@ $(TEST_PASSWD_OBJS) $(SAVER_LIBS)
+
+test-uid: test-uid.o
+	$(CC) $(LDFLAGS) -o $@ test-uid.o
+
+test-xdpms: test-xdpms.o
+	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(SAVER_LIBS)
+
+test-grab: test-grab.o
+	$(CC) $(LDFLAGS) -o $@ test-grab.o $(SAVER_LIBS)
+
+
+# This kludge is so that I can build/test the Athena version of the
+# xscreensaver-demo program without having to re-run configure.
+# Normally it builds it with Motif if possible; this lets me build
+# both.
+#
+xscreensaver-demo-Xaw: $(ATHENA_OBJS) demo-Xaw.o $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ demo-Xaw.o prefs.o remote.o \
+		$(ATHENA_OBJS) $(DEMO_UTIL_OBJS) \
+		$(LIBS) $(X_LIBS) -lXaw \
+		$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+xscreensaver-demo-Xaw3d: $(ATHENA_OBJS) demo-Xaw.o $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ demo-Xaw.o prefs.o remote.o \
+		$(ATHENA_OBJS) $(DEMO_UTIL_OBJS) \
+		$(LIBS) $(X_LIBS) -lXaw3d \
+		$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+demo-Xaw.o: demo.c XScreenSaver_ad.h
+	$(CC) -o $@ -c -DHAVE_ATHENA_KLUDGE \
+	$(INCLUDES) $(DEFS2) $(CFLAGS) $(X_CFLAGS) $<
+
+
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
+
+xscreensaver.o: ../config.h
+xscreensaver.o: $(srcdir)/xscreensaver.h
+xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: $(UTILS_SRC)/version.h
+xscreensaver.o: $(UTILS_SRC)/yarandom.h
+xscreensaver.o: $(UTILS_SRC)/resources.h
+xscreensaver.o: $(UTILS_SRC)/visual.h
+xscreensaver.o: $(UTILS_SRC)/usleep.h
+xscreensaver.o: XScreenSaver_ad.h
+windows.o: ../config.h
+windows.o: $(srcdir)/xscreensaver.h
+windows.o: $(srcdir)/prefs.h
+windows.o: $(UTILS_SRC)/visual.h
+windows.o: $(UTILS_SRC)/fade.h
+timers.o: ../config.h
+timers.o: $(srcdir)/xscreensaver.h
+timers.o: $(srcdir)/prefs.h
+subprocs.o: ../config.h
+subprocs.o: $(srcdir)/xscreensaver.h
+subprocs.o: $(srcdir)/prefs.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
+xset.o: ../config.h
+xset.o: $(srcdir)/xscreensaver.h
+xset.o: $(srcdir)/prefs.h
+splash.o: ../config.h
+splash.o: $(srcdir)/xscreensaver.h
+splash.o: $(srcdir)/prefs.h
+splash.o: $(UTILS_SRC)/resources.h
+setuid.o: ../config.h
+setuid.o: $(srcdir)/xscreensaver.h
+setuid.o: $(srcdir)/prefs.h
+stderr.o: ../config.h
+stderr.o: $(srcdir)/xscreensaver.h
+stderr.o: $(srcdir)/prefs.h
+stderr.o: $(UTILS_SRC)/resources.h
+stderr.o: $(UTILS_SRC)/visual.h
+dialogs-Xm.o: ../config.h
+dialogs-Xm.o: $(UTILS_SRC)/visual.h
+dialogs-Xaw.o: ../config.h
+dialogs-Xaw.o: $(UTILS_SRC)/visual.h
+passwd-pwent.o: ../config.h
+lock.o: ../config.h
+lock.o: $(srcdir)/xscreensaver.h
+lock.o: $(srcdir)/prefs.h
+lock.o: $(UTILS_SRC)/resources.h
+passwd.o: ../config.h
+demo.o: ../config.h
+demo.o: $(UTILS_SRC)/version.h
+demo.o: $(srcdir)/prefs.h
+demo.o: $(UTILS_SRC)/resources.h
+demo.o: $(UTILS_SRC)/visual.h
+demo.o: $(srcdir)/remote.h
+demo.o: $(UTILS_SRC)/usleep.h
+demo.o: XScreenSaver_ad.h
+prefs.o: ../config.h
+prefs.o: $(srcdir)/prefs.h
+prefs.o: $(UTILS_SRC)/resources.h
+remote.o: ../config.h
+remote.o: $(srcdir)/remote.h
+xscreensaver-command.o: ../config.h
+xscreensaver-command.o: $(srcdir)/remote.h
+xscreensaver-command.o: $(UTILS_SRC)/version.h
+test-passwd.o: ../config.h
+test-passwd.o: $(srcdir)/xscreensaver.h
+test-passwd.o: $(srcdir)/prefs.h
+test-passwd.o: $(UTILS_SRC)/resources.h
+test-passwd.o: $(UTILS_SRC)/version.h
+test-passwd.o: $(UTILS_SRC)/visual.h
+test-passwd.o: XScreenSaver_ad.h
+test-uid.o: ../config.h
+test-xdpms.o: ../config.h
+test-grab.o: ../config.h
+

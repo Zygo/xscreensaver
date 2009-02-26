@@ -1,0 +1,208 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "11-Apr-99 (3.09)" "X Version 11"
+.SH NAME
+xscreensaver-demo - interactively control the background xscreensaver daemon
+.SH SYNOPSIS
+.B xscreensaver\-demo
+[\-display \fIhost:display.screen\fP] [\-prefs] [\-xrm \fIresources\fP]
+.SH DESCRIPTION
+The \fIxscreensaver\-demo\fP program is a graphical front-end for 
+setting the parameters used by the background
+.BR xscreensaver (1)
+daemon.
+It is essentially two things: a tool for editing the \fI~/.xscreensaver\fP
+file; and a tool for demoing the various graphics hacks that 
+the \fIxscreensaver\fP daemon will launch.
+
+The main dialog box contains a scrolling list, a text field, and a number 
+of buttons.  
+
+Double-clicking on one of the programs in the list will run it.  The screen
+will go black, and the program will run in full-screen mode, just as it would
+if the \fIxscreensaver\fP daemon had launched it.  Clicking the mouse again
+will stop the demo and un-blank the screen, making the dialog box visible 
+again.
+
+Single-clicking in the list will place the indicated program and its args
+in the text field to be edited.  Edit the arguments and hit return to run
+the program with the parameters you have specified.  This will also save
+your changes to your \fI~/.xscreensaver\fP file: so any changes you make
+in this way are persistent.
+
+If one of the lines in the scrolling list begins with the character "-",
+then that means that the program is disabled: \fIxscreensaver\fP will not
+select it to be run (though you can still try it out by clicking on it.)
+Rather than just deleting the programs you don't want to run, you might
+want to disable them in this way instead, so that you can more easily change
+your mind later.
+
+If the line begins with the name of a visual, followed by a colon, then
+that program will only be run on that kind of visual.  For example, you can
+specify that a particular program should only be run if color is available,
+and another should only be run in monochrome.  See the discussion of 
+the \fIprograms\fP parameter in the \fIConfiguration\fP section of the
+.BR xscreensaver (1)
+manual.
+
+The buttons are:
+.TP 8
+.B Run Next
+Clicking this button will run the next program in the list after the 
+currently-selected one, and will wrap around to the top when it reaches
+the bottom.
+.TP 8
+.B Run Previous
+Opposite of Run Next; at the top, it wraps around to the bottom.
+.TP 8
+.B Preferences
+This pops up a second dialog box, in which you have the option to 
+interactively change most of the screensaver's operational parameters,
+such as its timeouts, and whether it should lock the screen.  When you
+click OK, your chosen settings will take effect immediately, and will
+also be saved to the \fI~/.xscreensaver\fP file in your home directory,
+so that the settings will persist next time.
+.TP 8
+.B Quit
+Exits the \fIxscreensaver-demo\fP program.  The background \fIxscreensaver\fP
+daemon will continue running as before.
+.P
+The Preferences dialog box lets you change the following settings.
+
+(There are more settings available, but these are the most commonly used
+ones; see the manual for
+.BR xscreensaver (1)
+for other parameters that can be set by editing the \fI~/.xscreensaver\fP
+file, or the X resource database.)
+.TP 8
+.B Saver Timeout
+After the user has been idle this long, the \fIxscreensaver\fP daemon
+will blank the screen.
+.TP 8
+.B Cycle Timeout
+After the screensaver has been running for this long, the currently
+running graphics demo will be killed, and a new one started.  
+If this is 0, then the graphics demo will never be changed:
+only one demo will run until the screensaver is deactivated by user 
+activity.
+.TP 8
+.B Verbose\ 
+Whether to print lots of debugging information.
+.TP 8
+.B Install Colormap
+Whether to install a private colormap while the screensaver is active, so
+that the graphics hacks can get as many colors as possible.  (This only
+applies when the screen's default visual is being used, since non-default
+visuals get their own colormaps automatically.)  This can also be overridden
+on a per-demo basis.
+.TP 8
+.B Fade Colormap
+If selected, then when the screensaver activates, the current contents
+of the screen will fade to black instead of simply winking out.  This only
+works on displays with writable colormaps, that is, if the screen's default
+visual is a PseudoColor visual.  A fade will also be done when
+switching graphics hacks (when the \fICycle Timeout\fP expires.)
+.TP 8
+.B Unfade Colormap
+The complement to \fIFade Colormap\fP: if selected, then when the screensaver
+deactivates, the original contents of the screen will fade in from black
+instead of appearing immediately.  This only works on displays with writable
+colormaps, and when \fIFade Colormap\fP is also selected.
+.TP 8
+.B Fade Duration
+When fading or unfading are selected, this controls how long the fade will
+take.
+.TP 8
+.B Fade Ticks
+This controls how many times a second the colormap will be changed to 
+effect a fade.  Higher numbers yield smoother fades, but may make the
+fades take longer than the specified number of seconds, if your server
+isn't fast enough to keep up.
+.TP 8
+.B Require Password
+Whether the screen saver should lock the screen when it activates.
+.TP 8
+.B Lock Timeout
+If \fIRequire Password\fP is selected, this controls the length of 
+the ``grace period'' between when the screensaver activates, and when the
+screen becomes locked.  For example, if this is 0:05:00, 
+and \fISaver Timeout\fP is 0:10:00, then after 10 minutes, the screen 
+would blank.  If there was user  activity at 12 minutes, no password
+would be required to un-blank the screen.  But, if there was user activity
+at 15 minutes or later (that is, \fILock Timeout\fP minutes after 
+activation) then a password would be required.  The default is 0, meaning
+that if locking is enabled, then a password will be required as soon as the 
+screen blanks.
+.TP 8
+.B Password Timeout
+When the screensaver is prompting for a password, the prompt dialog box will
+stay on the screen for this long before giving up, and reverting to 
+screen-saving mode.
+.SH COMMAND-LINE OPTIONS
+.I xscreensaver\-demo
+accepts the following command line options.
+.TP 8
+.B \-display \fIhost:display.screen\fP
+The X display to use.  The \fIxscreensaver\-demo\fP program will open its
+window on that display, and also control the \fIxscreensaver\fP daemon that
+is managing that same display.
+.TP 8
+.B \-prefs
+Start up in Preferences mode: this is just like launching the program with
+no arguments, and then pressing the \fIPreferences\fP button.
+.P
+It is important that the \fIxscreensaver\fP and \fIxscreensaver\-demo\fP
+processes be running on the same machine, or at least, on two machines
+that share a file system.  When \fIxscreensaver\-demo\fP writes a new version
+of the \fI~/.xscreensaver\fP file, it's important that the \fIxscreensaver\fP
+see that same file.  If the two processes are seeing 
+different \fI~/.xscreensaver\fP files, things will malfunction.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B PATH
+to find the sub-programs to run.  However, note that the sub-programs 
+are actually launched by the \fIxscreensaver\fP daemon, not 
+by \fIxscreensaver-demo\fP itself.  So, what matters is what \fB$PATH\fP
+the \fIxscreensaver\fP program sees.
+.TP 8
+.B HOME
+for the directory in which to read and write the \fI.xscreensaver\fP file.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH UPGRADES
+The latest version can always be found at 
+http://www.jwz.org/xscreensaver/
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-command (1)
+.SH COPYRIGHT
+Copyright \(co 1992, 1993, 1997, 1998, 1999
+by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted without
+fee, provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+Please let me know if you find any bugs or make any improvements.
