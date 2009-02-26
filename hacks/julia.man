@@ -1,0 +1,83 @@
+.TH XScreenSaver 1 "28-May-97" "X Version 11"
+.SH NAME
+julia - draws spinning, animating julia-set fractals
+.SH SYNOPSIS
+.B julia
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-mouse] [\-nomouse]
+
+.SH DESCRIPTION
+The \fIjulia\fP program draws spinning, animating julia-set fractals.
+
+It uses ifs {w0 = sqrt(x-c), w1 = -sqrt(x-c)} with random iteration 
+to plot the julia set, and sinusoidially varied parameters for the set,
+and plots parameters with a circle.
+
+One thing to note is that count is the \fIdepth\fP of the search tree,
+so the number of points computed is (2^count)-1.  I use 8 or 9 on a
+dx266 and it looks okay.  The sinusoidal variation of the parameter
+might not be as interesting as it could, but it still gives an idea 
+of the effect of the parameter.
+
+.SH OPTIONS
+.I julia
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-ncolors \fIinteger\fP
+How many colors should be used (if possible).  Default 200.
+The colors used cycle through the hue, making N stops around
+the color wheel.
+.TP 8
+.B \-cycles \fIinteger\fP
+
+.TP 8
+.B \-count \fIinteger\fP
+
+.TP 8
+.B \-mouse
+.TP 8
+.B \-nomouse
+If \fI\-mouse\fP is specified, the control point of the Julia set will
+be derived from the position of the mouse in the window.  When the mouse
+is not in the window, the control point is chosen the normal way.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xlock (1)
+.SH COPYRIGHT
+Copyright \(co 1995 by Sean McCullough.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+.SH AUTHOR
+Sean McCullough <bankshot@mailhost.nmt.edu>, 1995.
+
+Ability to run standalone or with \fIxscreensaver\fP added by 
+Jamie Zawinski <jwz@netscape.com>, 10-May-97.

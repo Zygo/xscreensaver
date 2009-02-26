@@ -1,0 +1,264 @@
+#!/bin/sh
+#
+# vidwhacker, for xscreensaver.  Copyright (c) 1998 Jamie Zawinski.
+#
+# This script grabs a frame of video, then uses various pbm filters to
+# munge the image in random nefarious ways, then uses xv to put it on
+# the root window.  This works out really nicely if you just feed some
+# random TV station into it...
+#
+# The video grabbing part is SGI-specific -- if you want to use this on
+# another system, add a new clause to the grab() procedure.
+
+
+# Process command-line args...
+
+onroot=false
+verbose=false
+delay=3
+
+if [ "$1" = "-root" ]; then
+  onroot=true
+  shift
+fi
+
+if [ "$1" = "-verbose" ]; then
+  verbose=true
+  shift
+fi
+
+if [ "$1" != "" ]; then
+  echo "usage: $0 [-root] [-verbose]" >&2
+  exit 1
+fi
+
+
+xvargs="-quick24"
+
+if [ "$onroot" = true ]; then
+  xvargs="$xvargs -root -rmode 5 -quit"
+else
+  xvargs="$xvargs -geom +0+0"
+fi
+
+screen_width=`xdpyinfo | sed -n 's/.* dimensions: *\([0-9]*\).*/\1/p'`
+
+# global vars...
+
+tmp=/tmp/vd$$
+tmp_rgb=$tmp-00000.rgb
+tmp_ppm=$tmp.ppm
+tmp_ppm2=$tmp-2.ppm
+tmp_ppm3=$tmp-3.ppm
+
+clean() {
+  rm -f $tmp_rgb $tmp_ppm $tmp_ppm2 $tmp_ppm3
+}
+
+
+# Grab a frame of video.
+#
+grab() {
+  if [ `uname` = IRIX ]; then
+    #
+    # SGI's "vidtomem" returns an SGI RGB image of the default video input,
+    # and has stupid non-overridable ouput-file-naming conventions.  So, let 
+    # it write its file; and then convert it to a pgm.
+    #
+    vidtomem -f $tmp
+    sgitopnm $tmp_rgb > $tmp_ppm
+    # Cut off the close-captioning blips in the NTSC overscan region.  YMMV.
+    #  | pnmcut 12 7 695 477 
+
+  else
+    echo "$0: don't know how to grab video on this OS." >&2
+    clean
+    exit 1
+  fi
+
+
+  # I got this message from Marcus Herbert <rhoenie@chillout.org>.
+  # I'm not sure of the best way to make the presence of qcam be
+  #  auto-detected, but here's what he said, FYI...
+  #
+  #    i am using a black/white Connectix Qcam on linux and its very simple
+  #    to adept the script:
+  #
+  #    # qcam: Version 0.91
+  #    #   Options:
+  #    #   O  -x width   Set width
+  #    #   O  y height   Setheight
+  #    #   O  B bpp      Setbits per pixel
+  #    #   O  W         Auto-set white balance
+  #    #   O  E "vals"  Autoexposure mode, parameters required
+  #    #   O  D         Remove dark speckling
+  #    #   O  s val     Set scaling factor (1, 2, or 4)
+  #    #
+  #    qcam -x 320 -y 240 -B 6 -W -E 1 -D -s 1 > $tmp_ppm
+  #
+  #   You dont really need the parameters for qcam as it reads out a system
+  #   config file where you store the values for brightnes, contrast and
+  #   white balance.  But with this parameters you are independant of the
+  #   light ratios at the place the cam is set up.
+  #
+  #   Other versions of qcam (0.7, 0.96..) don't support the autoexposure and
+  #   auto- whitebalance commandline parameters. On such systems (and on
+  #   color-qcam systems) a simple qcam > $tmp_ppm (or cqcam > $tmp_ppm) is
+  #   enough.
+  #
+  #   I dont know about other systems but afaik fBSD uses the Qcam in this way:
+  #
+  #     qcamcontrol -bla -foo -bar > picture.pgm    
+  #
+}
+
+
+# Use perl to pick a random foreground/background color in pbm's syntax.
+#
+randcolor() {
+  perl -e 'srand; 
+	   printf("#%02x%02x%02x-#%02x%02x%02x",
+		  int(rand()*60),
+		  int(rand()*60),
+		  int(rand()*60),
+		  120+int(rand()*135),
+		  120+int(rand()*135),
+		  120+int(rand()*135))'
+}
+
+# Frobnicate the image in some random way.
+#
+frob() {
+
+  N=`perl -e 'srand; print int(rand() * 10)'`
+
+  if [ "$verbose" = true ]; then
+    echo "mode $N..." >&2
+  fi
+
+  if   [ $N = 0 ]; then
+    ppmtopgm $tmp_ppm | pgmedge | pgmtoppm `randcolor` | ppmnorm
+
+  elif [ $N = 1 ]; then
+    ppmtopgm $tmp_ppm | 
+    pgmenhance | 
+    pgmtoppm `randcolor`
+
+  elif [ $N = 2 ]; then
+    ppmtopgm $tmp_ppm | pgmoil | pgmtoppm `randcolor`
+
+  elif [ $N = 3 ]; then 
+    ppmrelief $tmp_ppm | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |
+      pgmedge | pnminvert | pgmtoppm `randcolor`
+
+  elif [ $N = 4 ]; then
+    ppmspread 71 $tmp_ppm > $tmp_ppm2
+    pnmarith -add $tmp_ppm $tmp_ppm2
+
+  elif [ $N = 5 ]; then
+    pnmflip -lr $tmp_ppm > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm $tmp_ppm2 > $tmp_ppm3
+    pnmflip -tb $tmp_ppm3 | ppmnorm > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm $tmp_ppm2
+
+  elif [ $N = 6 ]; then
+    N2=`perl -e 'srand; print int(rand() * 3)'`
+    if [ $N2 = 0 ]; then
+      pnmflip -lr $tmp_ppm > $tmp_ppm2
+    elif [ $N2 = 1 ]; then
+      pnmflip -tb $tmp_ppm > $tmp_ppm2
+    else
+      pnmflip -lr $tmp_ppm > $tmp_ppm2
+      pnmflip -tb $tmp_ppm2 > $tmp_ppm3
+      cp $tmp_ppm3 $tmp_ppm2
+    fi
+
+    pnmarith -difference $tmp_ppm $tmp_ppm2
+
+  elif [ $N = 7 ]; then
+
+    for i in 1 2 3 ; do
+      ppmtopgm $tmp_ppm | pgmedge > $tmp_ppm2
+      pnmarith -difference $tmp_ppm $tmp_ppm2 > $tmp_ppm3
+      cp $tmp_ppm3 $tmp_ppm
+    done
+    ppmnorm < $tmp_ppm
+
+  elif [ $N = 8 ]; then
+    pnmflip -lr $tmp_ppm > $tmp_ppm2
+    pnmarith -multiply $tmp_ppm $tmp_ppm2 | ppmrelief | ppmnorm | pnminvert
+
+  elif [ $N = 9 ]; then
+    pnmflip -lr $tmp_ppm > $tmp_ppm2
+    pnmarith -subtract $tmp_ppm $tmp_ppm2 | ppmrelief | ppmtopgm | pgmedge
+
+  else cat $tmp_ppm
+  fi
+}
+
+
+
+# Grab a frame and frob it.  leave it in $tmp_ppm3.
+#
+whack() {
+  clean
+
+  while [ ! -f $tmp_ppm ]; do
+   grab
+  done
+
+  rm -f $tmp_rgb
+  frob | pnmscale -width $screen_width > $tmp_ppm3
+  rm -f $tmp_ppm $tmp_ppm2
+}
+
+
+pid=""
+
+if [ "$onroot" != true ]; then
+  trap "kill \$pid; clean; exit 1" 2 15
+fi
+
+while true; do
+
+  # Loop grabbing and frobbing images.
+  #
+  # If we're running on the root, run xv in the foreground (with -exit)
+  # and then wait.
+  #
+  # If we're running in a window, spawn xv in the background; then when
+  # it's time to put up the new image, kill off the currently-running xv.
+
+  if [ "$verbose" = true ]; then
+    whack
+  else
+    whack >&- 2>&-
+  fi
+
+  if [ "$pid" != "" ]; then
+    kill $pid
+    pid=""
+  fi
+
+  if [ ! -s $tmp_ppm3 ]; then
+    echo "$0: no image grabbed" >&2
+  else
+
+    pnmtosgi < $tmp_ppm3 > $tmp_ppm2
+    rm -f $tmp_ppm3
+
+    if [ "$onroot" = true ]; then
+      xv $xvargs $tmp_ppm2
+    else
+      xv $xvargs $tmp_ppm2 &
+      pid=$!
+    fi
+
+    #xv -geom =320x220 $tmp_ppm3 &
+    #pid=
+  fi
+
+  clean
+  sleep $delay
+
+done
