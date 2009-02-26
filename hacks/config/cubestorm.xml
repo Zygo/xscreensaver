@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cubestorm" _label="CubeStorm">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="30000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Motion Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="5.0" default="1.0"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Number of Cubes" low="1" high="20" default="4"/>
+
+  <number id="thickness" type="slider" arg="-thickness %"
+          _label="Strut Thickness" _low-label="Thin" _high-label="Thick"
+          low="0.01" high="1.0" default="0.06"/>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
+   <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a series of rotating 3D boxes that intersect each other and
+eventually fill space.
+
+Written by Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lcdscrub" _label="LCDscrub">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="1500000" default="1000000"
+          convert="invert"/>
+
+  <hgroup>
+  <number id="spread" type="spinbutton" arg="-spread %"
+          _label="Spread" low="2" high="64" default="8"/>
+
+  <number id="cycles" type="spinbutton" arg="-cycles %"
+          _label="Cycles" low="1" high="600" default="60"/>
+  </hgroup>
+
+  <_description>
+This screen saver is not meant to look pretty, but rather, to
+repair burn-in on LCD monitors.
+
+Believe it or not, screen burn is not a thing of the past.
+It can happen to LCD screens pretty easily, even in this modern age.
+However, leaving the screen on and displaying high contrast images
+can often repair the damage.  That's what this screen saver does.
+
+See also:
+
+	http://docs.info.apple.com/article.html?artnum=88343
+
+	http://toastycode.com/blog/2008/02/05/lcd-scrub/
+
+Inspired by the like-named program by Daniel Sandler.
+
+Written by Jamie Zawinski; 2008.
+  </_description>
+</screensaver>

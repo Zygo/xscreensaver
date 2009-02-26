@@ -1,0 +1,68 @@
+.TH XScreenSaver 1 "May 2004"
+.SH NAME
+providence - eye in glory screenhack
+.SH SYNOPSIS
+.B providence
+[\-display \fIhost:display.screen\fP]
+[\-window]
+[\-root]
+ [\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fImicroseconds\fP]
+[\-wireframe]
+[\-fps]
+.SH DESCRIPTION
+The \fIprovidence\fP code displays an eye, shrouded in glory, set upon the
+base of a pyramid.
+.SH OPTIONS
+.I providence
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-eye
+Draw an eye/$.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-wireframe
+Render in wireframe (with hidden line removal) instead of as textured solids.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright \(co 2004 by Blair Tennessy.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Blair Tennessy <tennessy@cs.ubc.ca>, 11-May-2004.
+ 

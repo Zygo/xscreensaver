@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fireworkx" _label="Fireworkx">
+
+  <command arg="-root"/>
+
+  <number id="Delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="maxlife" type="slider" arg="-maxlife %"
+          _label="Activity" _low-label="Dense" _high-label="Sparse"
+          low="250" high="5000" default="2000"/>
+
+  <boolean id="flash" _label="Light Flash" arg-unset="-no-flash"/>
+  <boolean id="glow"  _label="Self Glowing Smoke!" arg-unset="-no-glow"/>
+  <boolean id="shoot" _label="Shoot the Shells Up" arg-set="-shoot"/>
+
+  <_description>
+Exploding fireworks.
+
+Written by Rony B Chandran; 2004.
+  </_description>
+</screensaver>

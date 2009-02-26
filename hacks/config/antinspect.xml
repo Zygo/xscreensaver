@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="antinspect" _label="AntInspect">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <boolean id="shadows" _label="Draw Shadows" arg-set="-shadows"/>
+
+  <_description>
+Draws a trio of ants moving their spheres around a circle.
+
+Written by Blair Tennessy; 2004.
+  </_description>
+</screensaver>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="crystal" _label="Crystal">
+
+  <command arg="-root"/>
+
+  <!-- #### -maxsize -->
+  <!-- #### -shift (color cycling) -->
+
+  <boolean id="grid" _label="Draw Grid" arg-set="-grid"/>
+
+  <boolean id="cells" _label="Draw Cell" arg-unset="-no-cell"/>
+
+  <boolean id="centre" _label="Center on Screen" arg-set="-centre"/>
+
+  <number id="nx" type="spinbutton" arg="-nx %"
+          _label="Horizontal Symmetries" low="-10" high="10" default="-3"/>
+
+  <number id="ny" type="spinbutton" arg="-ny %"
+          _label="Vertical Symmetries" low="-10" high="10" default="-3"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="-5000" high="5000" default="-500"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="60000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <_description>
+Moving polygons, similar to a kaleidescope (more like a kaleidescope
+than the one called `kaleid,' actually).
+
+Written by Jouk Jansen; 1998.
+  </_description>
+</screensaver>
