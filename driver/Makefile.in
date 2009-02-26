@@ -1,0 +1,305 @@
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# the `../configure' script generates `driver/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+mansuffix	= 1
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= @DEFS@
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SETUID  = @INSTALL_SETUID@
+INSTALL_DATA	= @INSTALL_DATA@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+
+XLIBS		= $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
+
+AD_DIR		= @APPDEFAULTS@
+
+UTILS_SRC	= $(srcdir)/../utils
+UTILS_BIN	= ../utils
+
+INCLUDES	= -I. -I$(srcdir) -I$(srcdir)/.. -I$(UTILS_SRC) -I.. @INCLUDES@
+
+PASSWD_LIBS	= @PASSWD_LIBS@
+MOTIF_SRCS	= dialogs-Xm.c
+MOTIF_OBJS	= dialogs-Xm.o
+
+ATHENA_SRCS	= dialogs-Xaw.c
+ATHENA_OBJS	= dialogs-Xaw.o
+
+PWENT_SRCS	= passwd.c
+PWENT_OBJS	= passwd.o
+
+KERBEROS_SRCS	= kpasswd.c
+KERBEROS_OBJS	= kpasswd.o
+
+LOCK_SRCS_1	= lock.c
+LOCK_OBJS_1	= lock.o
+
+DIALOG_SRCS	= @DIALOG_SRCS@
+DIALOG_OBJS	= @DIALOG_OBJS@
+PASSWD_SRCS	= @PASSWD_SRCS@
+PASSWD_OBJS	= @PASSWD_OBJS@
+LOCK_SRCS	= @LOCK_SRCS@
+LOCK_OBJS	= @LOCK_OBJS@
+
+UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
+		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/xroger.c \
+		  $(UTILS_SRC)/spline.c \
+		  $(UTILS_SRC)/yarandom.c @XMU_SRCS@
+UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
+		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/xroger.o \
+		  $(UTILS_BIN)/spline.o \
+		  $(UTILS_BIN)/yarandom.o @XMU_OBJS@
+
+SAVER_SRCS_1	= demo.c stderr.c subprocs.c timers.c windows.c \
+		  xscreensaver.c xset.c
+SAVER_OBJS_1	= demo.o stderr.o subprocs.o timers.o windows.o \
+		  xscreensaver.o xset.o
+
+SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
+SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
+SAVER_LIBS	= $(X_LIBS) @SAVER_LIBS@ -lXt $(XLIBS) $(PASSWD_LIBS) $(LIBS)
+
+CMD_SRCS	= xscreensaver-command.c
+CMD_OBJS	= xscreensaver-command.o
+CMD_LIBS	= $(X_LIBS) $(XLIBS) $(LIBS)
+
+EXES		= xscreensaver xscreensaver-command
+
+HDRS		= XScreenSaver_ad.h xscreensaver.h
+MEN		= xscreensaver.man xscreensaver-command.man
+EXTRAS		= README Makefile.in XScreenSaver.ad.in dialogs.xd .gdbinit
+VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
+		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
+		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
+
+TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
+		  $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS) \
+		  $(LOCK_SRCS_1) $(CMD_SRCS) $(HDRS) $(MEN)
+
+
+all: $(EXES)
+
+install:   install-program   install-ad   install-man
+uninstall: uninstall-program uninstall-ad uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
+		INSTALL_SETUID='$(INSTALL_SETUID) -s' \
+		install
+
+install-program:
+	@inst="$(INSTALL_PROGRAM)" ;					\
+	if [ @NEED_SETUID@ = yes ]; then				\
+	   me="`whoami`" ;						\
+	   if [ "$$me" = root ]; then					\
+	     inst="$(INSTALL_SETUID)" ;					\
+	   else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for shadow"     ;\
+ $$e "           passwords.  If your system actually uses shadow passwords," ;\
+ $$e "           then xscreensaver must be installed as a setuid root"	     ;\
+ $$e "           program in order for locking to work.  To do this, you"     ;\
+ $$e "           must run 'make install' as 'root', not as '$$me'."	     ;\
+ $$e ""									     ;\
+ $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
+ $$e "           means that locking might not work."			     ;\
+ $$e ""									     ;\
+	   fi ; 							\
+	fi ;								\
+	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
+	$$inst xscreensaver $(bindir)/xscreensaver
+	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
+
+install-ad:
+	$(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver
+
+install-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	done
+
+uninstall-program:
+	@for program in $(EXES); do					\
+	  echo rm -f $(bindir)/$$program ;				\
+	  rm -f $(bindir)/$$program ;					\
+	done
+
+uninstall-ad:
+	rm -f $(AD_DIR)/XScreenSaver
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(man1dir)/$$instname ;				\
+	  rm -f $(man1dir)/$$instname ;					\
+	done
+
+clean:
+	-rm -f *.o a.out core $(EXES) XScreenSaver_ad.h
+
+distclean: clean
+	-rm -f Makefile XScreenSaver.ad *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend: XScreenSaver_ad.h
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SAVER_SRCS_1) $(CMD_SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend: update_ad_version XScreenSaver_ad.h
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SAVER_SRCS_1) $(CMD_SRCS) |					    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@$$.*\(XScreenSaver_ad\)@\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config\.h\)@ \1@g' ;		    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+# Updates the version number in the app-defaults file to be in sync with 
+# the version number in version.h.  This is so people can tell when they
+# have a version skew between the app-defaults file and the executable.
+update_ad_version::
+	@S=XScreenSaver.ad.in ;						    \
+	U=$(UTILS_SRC)/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	echo -n "Updating version number in $$S to $$V... " ;		    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T
+
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@$(MAKE) XScreenSaver_ad.h 2>&1 >&- /dev/null
+	@echo $(TARFILES)
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/fade.o:		$(UTILS_SRC)/fade.c
+$(UTILS_BIN)/overlay.o:		$(UTILS_SRC)/overlay.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+
+$(UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+
+# How we build the default app-defaults file into the program.
+#
+XScreenSaver_ad.h: XScreenSaver.ad
+	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > $@
+
+# The executables linked in this directory.
+#
+xscreensaver: $(SAVER_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(SAVER_OBJS) $(SAVER_LIBS)
+
+xscreensaver-command: $(CMD_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(CMD_OBJS) $(CMD_LIBS)
+
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+demo.o: ../config.h
+demo.o: $(srcdir)/xscreensaver.h
+demo.o: $(UTILS_SRC)/resources.h
+stderr.o: ../config.h
+stderr.o: $(srcdir)/xscreensaver.h
+stderr.o: $(UTILS_SRC)/resources.h
+stderr.o: $(UTILS_SRC)/visual.h
+subprocs.o: ../config.h
+subprocs.o: $(srcdir)/xscreensaver.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
+timers.o: ../config.h
+timers.o: $(srcdir)/xscreensaver.h
+windows.o: ../config.h
+windows.o: $(srcdir)/xscreensaver.h
+windows.o: $(UTILS_SRC)/visual.h
+windows.o: $(UTILS_SRC)/fade.h
+xscreensaver.o: ../config.h
+xscreensaver.o: $(srcdir)/xscreensaver.h
+xscreensaver.o: $(UTILS_SRC)/version.h
+xscreensaver.o: $(UTILS_SRC)/yarandom.h
+xscreensaver.o: $(UTILS_SRC)/resources.h
+xscreensaver.o: $(UTILS_SRC)/visual.h
+xscreensaver.o: XScreenSaver_ad.h
+xset.o: ../config.h
+xset.o: $(srcdir)/xscreensaver.h
+xscreensaver-command.o: ../config.h
+xscreensaver-command.o: $(UTILS_SRC)/version.h
+
