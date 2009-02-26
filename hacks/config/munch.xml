@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="munch" _label="Munch">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-clear %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="1" high="200" default="50"/>
+
+  <select id="mode">
+    <option id="xor"   _label="XOR"/>
+    <option id="solid" _label="Solid" arg-set="-no-xor"/>
+  </select>
+
+  <!-- #### -no-shift -->
+  <!-- #### -hold [100000] -->
+  <!-- #### -logminwidth [7] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+        DATAI 2
+        ADDB 1,2
+        ROTC 2,-22
+        XOR 1,2
+        JRST .-4
+
+As reported by HAKMEM, in 1962, Jackson Wright wrote the above PDP-1
+code. That code still lives on here, some 46 years later.  The number
+of lines of enclosing code has increased substantially, however.
+
+http://en.wikipedia.org/wiki/HAKMEM
+http://en.wikipedia.org/wiki/Munching_square
+
+Written by Jackson Wright and Tim Showalter; 1997.
+  </_description>
+</screensaver>

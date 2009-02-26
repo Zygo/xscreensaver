@@ -1,0 +1,73 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+flurry
+.SH SYNOPSIS
+.B flurry
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-preset <arg>]
+[\-fps]
+.SH DESCRIPTION
+This is a port of the OSX screensaver flurry.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-preset <arg>
+Select a preset (classic, fire, water, psychedelic, rgb, binary, random, insane)
+
+(Insane will never be selected at random, because it requires lots of CPU/GPU
+power)
+
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH AUTHORS
+OSX screensaver by Calum Robinson <calumr@mac.com>
+
+http://homepage.mac.com/calumr
+
+xscreensaver port by Tobias Sargeant <tobias.sargeant@bigpond.com>
+
+.SH POSTCARDS
+
+If you really like it, send me a postcard (after all, you're getting this for
+free!). Please check this address by downloading the latest version of Flurry
+just before you send me a postcard - I may have moved. 
+
+.PD 0
+Calum Robinson
+.P
+133 Sydenham Avenue
+.P
+Belfast
+.P
+Northern Ireland
+.P
+BT4 2DQ
+.PD 0
+
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT

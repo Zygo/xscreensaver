@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ripples" _label="Ripples">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="50000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="-duration %"
+            _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+            low="10" high="600" default="120"/>
+
+    <number id="rate" type="slider" arg="-rate %"
+            _label="Drippiness" _low-label="Drizzle" _high-label="Storm"
+            low="1" high="100" default="5"
+            convert="invert"/>
+
+    <number id="fluidity" type="slider" arg="-fluidity %"
+            _label="Fluidity" _low-label="Small drops" _high-label="Big drops"
+            low="0" high="16" default="6"
+            convert="invert"/>
+   </vgroup>
+   <vgroup>
+
+    <hgroup>
+     <boolean id="stir" _label="Moving splashes" arg-set="-stir"/>
+     <boolean id="oily" _label="Psychedelic colors" arg-set="-oily"/>
+     <boolean id="gray" _label="Grayscale" arg-set="-grayscale"/>
+    </hgroup>
+
+    <xscreensaver-image />
+
+    <number id="light" type="spinbutton" arg="-light %"
+            _label="Magic lighting effect" low="0" high="8" default="4"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+This draws rippling interference patterns like splashing water.
+With the -water option, it manipulates your desktop image to look
+like something is dripping into it.
+
+Written by Tom Hammersley; 1999.
+  </_description>
+</screensaver>

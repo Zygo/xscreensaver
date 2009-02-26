@@ -1,0 +1,10 @@
+
+This directory contains the MacOS-specific code for building a Cocoa
+version of xscreensaver without using X11.
+
+To build it, just type "make", or use the included XCode project.  The
+executables will show up in the "build/Release/" and/or "build/Debug/"
+directories.
+
+To build these programs, XCode 2.2 or later is required.
+To run them, MacOS 10.4.0 or later is required.

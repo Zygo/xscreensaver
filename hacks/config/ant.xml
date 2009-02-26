@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ant" _label="Ant">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="40000"/>
+
+  <hgroup>
+   <boolean id="sharpturn" _label="Sharp turns" arg-set="-sharpturn"/>
+   <boolean id="truchet" _label="Truchet lines" arg-set="-truchet"/>
+   <boolean id="eyes" _label="Draw eyes" arg-set="-eyes"/>
+  </hgroup>
+
+  <hgroup>
+   <number id="count" type="spinbutton" arg="-count %"
+           _label="Ants count" low="-20" high="20" default="-3"/>
+   <number id="size" type="spinbutton" arg="-size %"
+            _label="Ant size" low="-18" high="18" default="-12"/>
+  </hgroup>
+
+  <select id="neighbors">
+    <option id="rand" _label="Random cell shape"/>
+    <option id="three" _label="Three sided cells"
+            arg-set="-neighbors 3"/>
+    <option id="four" _label="Four sided cells"
+            arg-set="-neighbors 4"/>
+    <option id="six" _label="Six sided cells"
+            arg-set="-neighbors 6"/>
+    <option id="nine" _label="Nine sided cells"
+            arg-set="-neighbors 9"/>
+    <option id="twelve" _label="Twelve sided cells"
+            arg-set="-neighbors 12"/>
+  </select>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Three" _high-label="Many"
+            low="3" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+A cellular automaton that is really a two-dimensional Turing machine:
+as the heads ("ants") walk along the screen, they change pixel
+values in their path.  Then, as they pass over changed pixels, their
+behavior is influenced.
+
+http://en.wikipedia.org/wiki/Langton%27s_ant
+http://en.wikipedia.org/wiki/Turing_machine
+
+Written by David Bagley; 1997.
+  </_description>
+</screensaver>
