@@ -1,0 +1,508 @@
+!
+!                              XScreenSaver
+!
+!            a screen saver and locker for the X window system
+!                            by Jamie Zawinski
+!
+!                              version 3.06
+!                                22-Nov-98
+!
+! See "man xscreensaver" for more info.  The latest version is always
+! available at http://www.jwz.org/xscreensaver/
+
+
+! These resources, when placed in the system-wide app-defaults directory
+! (e.g., /usr/lib/X11/app-defaults/XScreenSaver) will provide the default
+! settings for new users.  However, if you have a ".xscreensaver" file in
+! your home directory, the settings in that file take precedence.
+
+
+*timeout:		10
+*cycle:			10
+*lockTimeout:		0
+*passwdTimeout:		30
+*nice:			10
+*lock:			False
+*lockVTs:		True
+*verbose:		False
+*timestamp:		False
+*fade:			True
+*unfade:		False
+*fadeSeconds:		3
+*fadeTicks:		20
+*splash:		True
+*splashDuration:	5
+
+*captureStderr: 	True
+*overlayTextForeground:	#FFFF00
+*overlayTextBackground:	#000000
+*overlayStderr:		True
+*font:			*-medium-r-*-140-*-m-*
+
+! This is what the "Demo" button on the splash screen runs (/bin/sh syntax.)
+*demoCommand: xscreensaver-demo
+
+! This is what the "Prefs" button on the splash screen runs (/bin/sh syntax.)
+*prefsCommand: xscreensaver-demo -prefs
+
+! This is the URL that the "Help" button on the splash screen loads.
+*helpURL: http://www.jwz.org/xscreensaver/man.html
+
+! This is how the "Help" button loads URLs (/bin/sh syntax.)
+! The "helpURL" will be substituted for up to two occurrences of "%s".
+*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'
+
+
+! Turning on "installColormap" interacts erratically with twm and tvtwm,
+! but seems to work fine with mwm and olwm.  Try it and see.  If your
+! screen turns some color other than black, the window manager is buggy,
+! and you need to set this resource to False (or get a WM that works.)
+!
+*installColormap:	True
+
+
+! Any program which can draw on the root window will work as a screensaver.
+! The following resource enumerates them.
+!
+! Programs are separated by newlines (specified in resource files with \n).
+! Lines may be continued with a lone \ at the end of the line.
+!
+! Each line is an `sh' command.
+!
+! If the first (non-blank) character on the line is "-", then that means
+! that this command is disabled: it's still in the list, but it won't ever
+! be used.  (This is just to make it easy to disable and then re-enable 
+! them later.)
+!
+! If the first word on the line is the name of a visual followed by a
+! colon, then that visual will be used for the program, if it is available.
+! If no such visual is available, then the program will be skipped.  In
+! this way, you can specify that you want certain programs to run only
+! on color screens, and others only on mono screens, by making use of the
+! magic visual names "color" and "mono".  Likewise, if some hacks prefer
+! colormaps, but others prefer 24-bit windows, that also can be arranged
+! (in this case, by using "PseudoColor:" versus "TrueColor:".)
+!
+! All programs must be launched in such a way that they draw on the root
+! window; they should not be spawned in the background with "&".  If shell
+! metacharacters are used, they must be understandable to `sh', not `csh'
+! (the $SHELL variable is not consulted, for unfortunate but good reasons.)
+!
+! Be sure to check out Demo Mode: run the command `xscreensaver-command -demo'
+! and it will cause the running XScreenSaver program to pop up a dialog box
+! that lets you try out the following programs interactively.  See the man
+! pages for details.
+!
+*programs:	qix -root -solid -delay 0 -segments 100			\n\
+		attraction -root -mode balls				\n\
+		attraction -root -mode lines -points 3 -segments 200	\n\
+		attraction -root -mode splines -segments 300		\n\
+		attraction -root -mode lines -radius 300		  \
+			-orbit -vmult 0.5				\n\
+		pyro -root						\n\
+		helix -root						\n\
+		pedal -root						\n\
+		rorschach -root -offset 7				\n\
+		hopalong -root						\n\
+		greynetic -root						\n\
+		xroger -root						\n\
+		imsmap -root						\n\
+		slidescreen -root					\n\
+		decayscreen -root					\n\
+		jigsaw -root						\n\
+		blitspin -root -grab					\n\
+		slip -root						\n\
+		distort -root						\n\
+		hypercube -root						\n\
+		halo -root						\n\
+		maze -root						\n\
+		noseguy -root						\n\
+		flame -root						\n\
+		lmorph -root						\n\
+		deco -root						\n\
+		moire -root						\n\
+		moire2 -root						\n\
+		lightning -root						\n\
+		strange -root						\n\
+		spiral -root						\n\
+		laser -root						\n\
+		grav -root						\n\
+		grav -root -trail -decay				\n\
+		drift -root						\n\
+		ifs -root						\n\
+		julia -root						\n\
+		penrose -root						\n\
+		sierpinski -root					\n\
+		braid -root						\n\
+		galaxy -root						\n\
+		bouboule -root						\n\
+		swirl -root						\n\
+		flag -root						\n\
+		sphere -root						\n\
+		forest -root						\n\
+		lisa -root						\n\
+		lissie -root						\n\
+		goop -root						\n\
+		starfish -root						\n\
+		starfish -root -blob					\n\
+		munch -root						\n\
+		fadeplot -root						\n\
+		coral -root						\n\
+		mountain -root						\n\
+		triangle -root						\n\
+		worm -root						\n\
+		rotor -root						\n\
+		ant -root						\n\
+		vines -root						\n\
+		kaleidescope -root					\n\
+		xjack -root						\n\
+  -		xlyap -root -randomize					\n\
+		cynosure -root						\n\
+		flow -root						\n\
+		epicycle -root						\n\
+		interference -root					\n\
+		truchet -root -randomize				\n\
+		bsod -root						\n\
+		crystal -root						\n\
+		discrete -root						\n\
+		kumppa -root						\n\
+		rd-bomb -root						\n\
+		rd-bomb -root -speed 1 -size 0.1			\n\
+		sonar -root						\n\
+									  \
+	mono:	rocks -root						\n\
+	color:	rocks -root -fg darksalmon				\n\
+									  \
+	mono:	qix -root -linear -count 5 -size 200 -spread 30		  \
+			-segments 75 -solid -xor			\n\
+									  \
+	color:	attraction -root -mode polygons				\n\
+	color:	attraction -root -mode filled-splines -segments 0	\n\
+	color:	attraction -root -glow -points 10			\n\
+	color:	bubbles -root						\n\
+									  \
+  PseudoColor:	qix -root -count 4 -solid -transparent			\n\
+  PseudoColor:	qix -root -count 5 -solid -transparent -linear		  \
+			-segments 250 -size 100				\n\
+									  \
+@GL_KLUDGE@	gears -root					  	\n\
+@GL_KLUDGE@	superquadrics -root				  	\n\
+@GL_KLUDGE@	morph3d -root					  	\n\
+@GL_KLUDGE@	cage -root					  	\n\
+@GL_KLUDGE@	moebius -root					  	\n\
+@GL_KLUDGE@	stairs -root					  	\n\
+@GL_KLUDGE@	pipes -root					  	\n\
+@GL_KLUDGE@	sproingies -root				  	\n\
+@GL_KLUDGE@	rubik -root					  	\n\
+@GL_KLUDGE@	atlantis -root					  	\n\
+@GL_KLUDGE@	lament -root					  	\n\
+@GL_KLUDGE@	bubble3d -root					  	\n\
+@GL_KLUDGE@	glplanet -root					  	\n
+ 
+
+! A few of the hacks require OpenGL, and will only be built if you have it.
+! If your vendor doesn't provide real OpenGL, you might want to consider
+! building MesaGL, which is a free implementation -- GL is way cool.
+!
+! Note that those hacks (gears, superquadratics, morph3d, cage, moebius,
+! stairs, pipes, sproingies, and rubik) tend to work best on a visual *half*
+! as deep as the depth of the screen, since that way, they can do
+! double-buffering -- try it and see, but you will probably find that you
+! should specify the deepest visual that is half as deep as the screen.
+!
+! For example, on a screen that supports both 24-bit TrueColor and 12-bit
+! PseudoColor, the 12-bit visual will probably work best (this is true of
+! base-model SGI Indys: the 0x29 visual is the one you want.)  Oddly, on SGI
+! O2s, (machines that have serious hardware support for GL) the 12-bit
+! PseudoColor visual looks awful (you get a black and white, flickery image.)
+! On these machines, the visual you want turns out to be 0x31 -- this is but
+! one of the eight 15-bit TrueColor visuals (yes, 8, and yes, 15) that O2s
+! provide.  This is the only visual that works properly -- as far as xdpyinfo
+! is concerned, all of the 15-bit TrueColor visuals are identical, but some
+! flicker like mad, and some have deeply weird artifacts (hidden surfaces
+! show through!)  I suppose these other visuals must be tied to some arcane
+! hardware feature...  Your mileage, therefore, may vary dramatically.
+!
+! Some other programs that you might want to track down (these work as
+! XScreenSaver helpers, but are not distributed with it):
+!
+!		xdaliclock -root -builtin2				\n\
+!		xswarm -r 2>&-						\n\
+!		xwave -root						\n\
+!		xbouncebits ...						\n\
+!		ico -r -faces -sleep 1 -obj ico				\n\
+!		xsplinefun						\n\
+!		xmountains -b -M					\n\
+!	color:	xfishtank -c black -d -r 2				\n\
+!
+! xtacy is ok, but it only works on the default visual.  We can satisfy
+! that constraint like so:
+!
+!     default:	xtacy -root -delay 100 -funky -number 3			\n\
+!     default:	xtacy -root -delay 100 -gravity				\n\
+!     default:	xtacy -root -delay 100 -mixer				\n\
+!     default:	xtacy -root -delay 100 -taffy -pal 4			\n\
+! 
+! To display a randomized slideshow of images, you can do something like this:
+!
+!     default-n: xv -root -rmode 5  image-1.gif  -quit
+!     default-n: xv -root -rmode 5  image-2.gif  -quit
+!     default-n: xv -root -rmode 5  image-3.gif  -quit
+!		...and so on...
+!
+! Note that we've used "default-n" as the visual name, rather than just
+! "default": this means "default visual, no install", that is, it's like
+! specifying the command-line arguments "-visual default -no-install".
+! This is necessary because, when XV is running in "-root" mode, it always
+! assumes that the default visual and colormap are being used, rather than 
+! examining the window it is drawing on to see what visual and colormap it 
+! has.  If we didn't force the default visual to be used, xv would get an
+! X error.  If we didn't force the default colormap to be installed, the
+! colors would be all wrong.  "default-i" may also be used as a visual name
+! (meaning, "-visual default -install") but you probably won't ever need
+! to use that.
+!
+! XEarth is nice, too:
+!
+!     default-n: xearth -nostars -wait 0 -timewarp 400 -pos sunrel/38/-30
+!
+!
+! Some of the GL demos that SGI ships work with XScreenSaver; most don't.
+! XScreenSaver includes a program (not built or installed by default)
+! called "xscreensaver-sgigl".  To use the SGI demos with XScreenSaver,
+! build that program, and use it to launch the SGI demos.  For example,
+! on Irix 6.2, you can do this:
+!
+!     xscreensaver-sgigl /usr/demos/bin/ep -S
+!     xscreensaver-sgigl /usr/demos/bin/bongo
+!
+! On Irix 6.3, things have moved, so you need to do it like this:
+!
+!     xscreensaver-sgigl /usr/sbin/ep -S
+!
+! You can also use the "ant" demo, but first you need to wrap a shell script
+! around it that cds to its home directory, so that it can find its files;
+! and also pass it the -S argument, to prevent it from forking.
+!
+!
+! Also, since these actually end up mapping their own windows instead of
+! drawing on the XScreenSaver-provided root, when they are being run from
+! demo-mode, you can't pop up the demo-mode dialog just by clicking the
+! mouse: you must first type ESC to make the SGI programs exit.  This sucks.
+! Things should work properly when they are being run by xscreensaver in
+! non-demo-mode, however.
+!
+! Basically, the SGI demo writers went out of their way to make my life hell.
+
+
+
+!=============================================================================
+!
+!      You probably don't want to change anything after this point.
+!
+!=============================================================================
+
+
+XScreenSaver.pointerPollTime:		5
+XScreenSaver.initialDelay:		0
+XScreenSaver.windowCreationTimeout:	30
+XScreenSaver.bourneShell:		/bin/sh
+
+
+! Resources for the password and splash-screen dialog boxes of
+! the "xscreensaver" daemon.
+!
+*Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1
+*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.foreground:		#000000
+*Dialog.background:		#BFBFBF
+*Dialog.Button.foreground:	#000000
+*Dialog.Button.background:	#D0D0D0
+*Dialog.text.foreground:	#000000
+*Dialog.text.background:	#FFFFFF
+*Dialog.logo.foreground:	#FF0000
+*Dialog.logo.background:	#FFFFFF
+*Dialog.topShadowColor:		#E7E7E7
+*Dialog.bottomShadowColor:	#737373
+*Dialog.logo.width:		200
+*Dialog.logo.height:		200
+*Dialog.internalBorderWidth:	30
+*Dialog.borderWidth:		1
+*Dialog.shadowThickness:	4
+
+*passwd.heading.label:		XScreenSaver %s
+*passwd.body.label:		This display is locked.
+*passwd.user.label:		User:
+*passwd.passwd.label:		Password:
+*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
+*passwd.thermometer.width:	8
+
+*splash.heading.label:		XScreenSaver %s
+*splash.body.label:		Copyright © 1991-1998 by
+*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
+*splash.demo.label:		Demo
+*splash.prefs.label:		Prefs
+*splash.help.label:		Help
+
+
+! Resources for the Motif dialog boxes of the "xscreensaver-demo" program.
+! 
+*fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1
+*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
+*XmTextField.fontList:             *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
+*label0.fontList:                  *-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
+! Need to fully-qualify the preceeding in the case of of *sgiMode.
+
+*XmDialogShell*foreground:		#000000
+*XmDialogShell*background:		#E5E5E5
+*XmDialogShell*XmTextField.foreground:	#000000
+*XmDialogShell*XmTextField.background:	#FFFFFF
+*XmDialogShell*demoList.foreground:	#000000
+*XmDialogShell*demoList.background:	#FFFFFF
+
+*XmDialogShell.title:		XScreenSaver
+*versionWarning_popup.title:	XScreenSaver Warning
+*demoForm_popup.title:		XScreenSaver Demo
+*preferencesForm_popup.title:	XScreenSaver Preferences
+*allowShellResize:		True
+*autoUnmanage:			False
+
+! This doesn't work.  Motif ignores it if there is a scroll-list!
+*demoDialog.maxWidth:		600
+
+*label1.labelString:		XScreenSaver %s
+*label1.label:			XScreenSaver %s
+*label2.labelString: Copyright © 1991-1998 by Jamie Zawinski <jwz@jwz.org>
+*label2.label:	     Copyright © 1991-1998 by Jamie Zawinski <jwz@jwz.org>
+*demoList.visibleItemCount:	10
+*demoList.automaticSelection:	True
+*next.labelString:		Run Next
+*prev.labelString:		Run Previous
+*edit.labelString:		Preferences
+*restart.labelString:		Reinitialize
+*done.labelString:		Quit
+
+*preferencesLabel.labelString:	XScreenSaver Parameters
+
+*timeoutLabel.labelString:	Saver Timeout
+*cycleLabel.labelString:	Cycle Timeout
+*fadeSecondsLabel.labelString:	Fade Duration
+*fadeTicksLabel.labelString:	Fade Ticks
+*lockLabel.labelString:		Lock Timeout
+*passwdLabel.labelString:	Password Timeout
+*preferencesForm*XmTextField.columns:	8
+
+*verboseToggle.labelString:	Verbose
+*cmapToggle.labelString:	Install Colormap
+*fadeToggle.labelString:	Fade Colormap
+*unfadeToggle.labelString:	Unfade Colormap
+*lockToggle.labelString:	Require Password
+*preferencesDone.labelString:	OK
+*preferencesCancel.labelString:	Cancel
+
+
+! Disable Motif drag-and-drop in dialog boxes.  This is kind of pathetic, but
+! in some older versions of Motif, most any attempt to drag cause immediate
+! flaming death from above.  This *should* rip the legs off that bug.
+! (But sadly, Lesstif 0.86 and earlier ignore these resources *and* have
+! buggy drag-and-drop.)
+!
+XScreenSaver*dragInitiatorProtocolStyle: DRAG_NONE
+XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE
+
+
+
+! Resources for the Athena dialog boxes of the "xscreensaver-demo" program.
+! 
+*demo_dialog.title:		XScreenSaver Demo
+*preferences_dialog.title:	XScreenSaver Preferences
+*warning_dialog.title:		XScreenSaver Warning
+
+! For some reason, it doesn't size correctly by itself.
+*demo_dialog.geometry:		=640x400
+
+*demo_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
+*preferences_dialog*font:	*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
+*demo_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*preferences_dialog*label1.font:*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*label0.font:	\
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*Label.font:	\
+				*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*Command.font: \
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver.demo_dialog*List.font:	\
+				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
+XScreenSaver.demo_dialog*Text*font:	\
+				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
+
+XScreenSaver.demo_dialog*foreground:			#000000
+XScreenSaver.demo_dialog*background:			#E5E5E5
+XScreenSaver.demo_dialog*List.background:		#FFFFFF
+XScreenSaver.demo_dialog*Scrollbar.background:		#D9D9D9
+XScreenSaver.demo_dialog*Command.background:		#D9D9D9
+XScreenSaver.demo_dialog*Text*background:		#FFFFFF
+
+XScreenSaver.preferences_dialog*foreground:		#000000
+XScreenSaver.preferences_dialog*background:		#E5E5E5
+XScreenSaver.preferences_dialog*Command.background:	#D9D9D9
+XScreenSaver.preferences_dialog*Toggle.background:	#D9D9D9
+XScreenSaver.preferences_dialog*Text*background:	#FFFFFF
+
+XScreenSaver.warning_dialog*foreground:			#000000
+XScreenSaver.warning_dialog*background:			#E5E5E5
+XScreenSaver.warning_dialog*Command.background:		#D9D9D9
+
+*preferences_dialog*Dialog.value.translations: #override\n\
+	<Key>Return: beginning-of-line()\n
+
+*demo_dialog*viewport.height:			200
+*Form.borderWidth:				0
+*Box.borderWidth:				0
+*Label.borderWidth:				0
+*preferences_dialog*Dialog.borderWidth:		0
+
+*demo_dialog*next.label:			Run Next
+*demo_dialog*prev.label:			Run Previous
+*demo_dialog*edit.label:			Preferences
+*demo_dialog*restart.label:			Reinitialize
+*demo_dialog*done.label:			Quit
+XScreenSaver.demo_dialog*Command.internalWidth:  10
+XScreenSaver.demo_dialog*Command.internalHeight: 4
+
+*preferences_dialog*timeout.label:		Saver Timeout:
+*preferences_dialog*cycle.label:		Cycle Timeout:
+*preferences_dialog*fade.label:			Fade Duration:
+*preferences_dialog*ticks.label:		Fade Ticks:
+*preferences_dialog*lockTime.label:		Lock Timeout:
+*preferences_dialog*passwdTime.label:		Password Timeout:
+XScreenSaver.preferences_dialog*Command.internalWidth:  10
+XScreenSaver.preferences_dialog*Command.internalHeight: 4
+
+*preferences_dialog*label1.label:		XScreenSaver Parameters
+*preferences_dialog*buttonbox.verbose.label:	Verbose
+*preferences_dialog*buttonbox.cmap.label:	Install Colormap
+*preferences_dialog*buttonbox.fade.label:	Fade Colormap
+*preferences_dialog*buttonbox.unfade.label:	Unfade Colormap
+*preferences_dialog*buttonbox.lock.label:	Require Password
+*preferences_dialog*done.label:			Ok
+*preferences_dialog*cancel.label:		Cancel
+
+*warning_dialog*ok.label:			Ok
+
+*warning_dialog*horizDistance:			30
+*warning_dialog*vertDistance:			0
+
+*warning_dialog*Label.internalWidth:		1
+*warning_dialog*Label.internalHeight:		0
+
+*warning_dialog*label0.horizDistance:		80
+*warning_dialog*label0.vertDistance:		20
+
+*warning_dialog*Command.horizDistance:		160
+*warning_dialog*Command.vertDistance:		20
+*warning_dialog*Command.internalWidth:		20
+*warning_dialog*Command.internalHeight:		5
