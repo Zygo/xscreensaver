@@ -1,0 +1,58 @@
+.TH LMORPH 1 "xscreensaver hack"
+.SH NAME
+lmorph \- morphing lines
+.SH SYNOPSIS
+.B lmorph
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP] [\-figtype \fItype\fP]
+.SH DESCRIPTION
+The \fIlmorph\fP program morphs between simple linedrawings using bilinear
+interpolation.
+.SH OPTIONS
+.I lmorph
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window. This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use. Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-points \fIinteger\fP
+Number of points in each line drawing. Default is 150 points.
+.TP 8
+.B \-steps \fIinteger\fP
+Interpolation steps from one drawing to the next. Default is 0, which
+means a random number between 100 and 500.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 50000.
+.TP 8
+.B \-figtype \fItype\fP
+Limit the figures to only open or closed figures. Possible types are
+"all" (default), "open" and "closed".
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH AUTHOR
+Sverre H. Huseby <sverrehu@online.no> and Glenn T. Lines <gtl@si.sintef.no>,
+built on top of the screen saver routines by Jamie Zawinski <jwz@jwz.org>.
