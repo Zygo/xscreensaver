@@ -1,0 +1,2 @@
+#%PAM-1.0
+auth       required	/lib/security/pam_pwdb.so shadow nullok
