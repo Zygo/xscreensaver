@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="crackberg" _label="Crackberg">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="visibility" type="slider" arg="-visibility %"
+          _label="Visibility" _low-label="Mouse hole" _high-label="Eagle nest"
+          low="0.2" high="1.0" default="0.6" />
+  <number id="nsubdivs" type="slider" arg="-nsubdivs %"
+          _label="Subdivisions" _low-label="Few" _high-label="Hurt me"
+          low="2" high="9" default="4" />
+
+  <hgroup>
+   <vgroup>
+    <boolean id="flat" _label="Flat shading" arg-unset="-no-flat"/>
+    <boolean id="lit" _label="Lighting" arg-unset="-no-lit"/>
+    <boolean id="water" _label="Water" arg-unset="-no-water"/>
+    <boolean id="crack" _label="Confused" arg-unset="-no-crack"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="boring" _label="Immediate"   arg-set="-boring"/>
+    <boolean id="letter" _label="Letterbox"   arg-set="-letterbox"/>
+    <boolean id="wire"   _label="Wireframe"   arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <select id="color">
+    <option id="random" _label="Random coloration"/>
+    <option id="plain" _label="Earthy coloration" arg-set="-color plain"/>
+    <option id="ice" _label="Icy coloration" arg-set="-color ice"/>
+    <option id="magma" _label="Swampy coloration" arg-set="-color magma"/>
+    <option id="vomit" _label="Vomitous coloration" arg-set="-color vomit"/>
+  </select>  
+
+  <_description>
+Flies through height maps, optionally animating the creation and
+destruction of generated tiles; tiles `grow' into place.
+
+Written by Matus Telgarsky; 2005.
+  </_description>
+</screensaver>

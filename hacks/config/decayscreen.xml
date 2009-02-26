@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="decayscreen" _label="DecayScreen">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
+  <select id="mode">
+    <option id="random" _label="Random melt style"/>
+    <option id="random" _label="Shuffle melt" arg-set="-mode shuffle"/>
+    <option id="random" _label="Melt up"    arg-set="-mode up"/>
+    <option id="random" _label="Melt down"  arg-set="-mode down"/>
+    <option id="random" _label="Melt left"  arg-set="-mode left"/>
+    <option id="random" _label="Melt right" arg-set="-mode right"/>
+    <option id="random" _label="Melt up, left"    arg-set="-mode upleft"/>
+    <option id="random" _label="Melt up, right"   arg-set="-mode upright"/>
+    <option id="random" _label="Melt down, left"  arg-set="-mode downleft"/>
+    <option id="random" _label="Melt down, right" arg-set="-mode downright"/>
+    <option id="random" _label="Melt towards center" arg-set="-mode in"/>
+    <option id="random" _label="Melt away from center" arg-set="-mode out"/>
+    <option id="random" _label="Melty melt" arg-set="-mode melt"/>
+    <option id="random" _label="Stretchy melt" arg-set="-mode stretch"/>
+    <option id="random" _label="Fuzzy melt" arg-set="-mode fuzz"/>
+  </select>
+
+  <xscreensaver-image />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+This takes an image and makes it melt.  You've no doubt seen this
+effect before, but no screensaver would really be complete without it.
+It works best if there's something colorful visible.  Warning, if the
+effect continues after the screen saver is off, seek medical attention.
+
+Written by David Wald, Vivek Khera, Jamie Zawinski, and Vince Levey; 1993.
+  </_description>
+</screensaver>

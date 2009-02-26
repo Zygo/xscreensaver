@@ -1,0 +1,59 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+klein - A Klein Bottle (and other parametric surfaces) visualization.
+.SH SYNOPSIS
+.B klein
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-speed \fInumber\fP]
+[\-rand]
+[\-spin]
+[\-wander]
+[\-fps]
+.SH DESCRIPTION
+This draws a three dimensional visualization of a Klein Bottle parametric 
+surface (the three dimensional equivalent of the Moebious strip).
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+.TP 8
+.B \-speed \fInumber\fP
+Number of frames before changing shape.  Default: 150.
+.TP 8
+.B \-rand
+Randomize the parametric surfaces displayed. Use random OpenGL primitives
+too.
+.B \-wander | \-no-wander
+Whether to wander around the screen.
+.B \-spin | \no-spin
+Whether to rotate around the centre of the figure.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH AUTHOR
+Andrey Mirtchovski.
