@@ -1,0 +1,14 @@
+Changes made to the original distribution:
+
+XLock.ad - default mode is now "pyro" - *much* better than "life" :-)
+usleep.c - Bad #ifdef for HP-UX machines (which usually use -DSYSV), so
+           modified to fix the problem.
+worm.c   - Added a rint() function because HP-UX isn't supplied with one.
+xlock.h  - Fixed some bad assumptions about SYSV systems (well, bad w.r.t.
+           HP-UX anyway !).
+
+Recommendation:
+
+Get xautolock at the same time as this - the combination of the two together
+(xautolock running xlock -nolock) makes for an excellent screen saver
+replacement.

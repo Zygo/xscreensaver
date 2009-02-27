@@ -1,0 +1,10 @@
+Package name:   xlock
+Version number: 2.3
+Report bugs to: ftp@csc.liv.ac.uk
+Tested on:      HP 9000/720 running HP-UX 8.07
+Purpose:        Locks the local X display until a password is entered. During the locking, one
+                of several graphics demos can be shown, including fractal generation, fireworks
+                or a swarm of lines. Best used in combination with xautolock as a screen saver
+                replacement.
+Date archived:  Thu 9 Jul 1992
+Special notes:  Please, please, please read HPUX.Install

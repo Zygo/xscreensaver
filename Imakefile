@@ -1,0 +1,18 @@
+# @(#)Imakefile	23.9 91/09/27
+# Imakefile - xlock
+#
+        DEFINES = -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\" -DSTARSIZE=2
+        DEPLIBS = $(DEPXLIB)
+LOCAL_LIBRARIES = $(XLIB)
+       LINTLIBS = $(LINTXLIB)
+  SYS_LIBRARIES = -lm
+           SRCS = xlock.c hsbramp.c usleep.c resource.c \
+		hopalong.c qix.c life.c image.c blank.c \
+		swarm.c rotor.c pyro.c flame.c worm.c
+           OBJS = xlock.o hsbramp.o usleep.o resource.o \
+		hopalong.o qix.o life.o image.o blank.o \
+		swarm.o rotor.o pyro.o flame.o worm.o
+
+ComplexProgramTarget(xlock)
+InstallAppDefaults(XLock)
+
