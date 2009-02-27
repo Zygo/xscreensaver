@@ -1,0 +1,163 @@
+XCOMM @(#)Imakefile	23.9 91/09/27
+XCOMM Imakefile - xlock
+XCOMM
+
+      BITMAPDIR = ./bitmaps
+
+#ifndef __QNX__
+#ifndef MathLibrary
+#define MathLibrary -lm
+#endif
+#else
+#define MathLibrary
+      CCOPTIONS += -DHAS_SHADOW -Dlinux
+      SHADOWLIB = -l/src/util/Lib/util
+#endif
+
+XCOMM Add your system to the list if you have lrand48 and srand48
+#if (defined SunArchitecture) || (defined LinuxArchitecture) || (defined HPArchitecture)
+      CCOPTIONS += -DHAS_RAND48
+#else
+#if (!defined SGIArchitecture) && (SystemV || SystemV4)
+      CCOPTIONS += -DHAS_RAND
+#else
+      CCOPTIONS += -DHAS_RANDOM
+#endif
+#endif
+
+#ifdef UltrixArchitecture
+EXTRA_LIBRARIES = -lauth
+#endif
+
+#ifdef SunArchitecture
+#if SystemV4
+      CCOPTIONS += -DSOLARIS_SHADOW
+XCOMM If Solaris 2.3 or greater, use nanosleep, less cpu overhead
+XCOMM       CCOPTIONS += -DHAS_NANOSLEEP
+XCOMM EXTRA_LIBRARIES = -lnsl -lposix4
+#else
+#if HasShadowPasswd
+      CCOPTIONS += -DHAS_SHADOW
+#endif
+#endif
+       ICONTYPE = sun
+#else 
+
+#if HasShadowPasswd
+      CCOPTIONS += -DHAS_SHADOW
+      SHADOWLIB = -lshadow
+#endif
+#if defined(HPArchitecture) || defined(ApolloArchitecture)
+#ifdef HPArchitecture
+XCOMM If your site is using Secured Passwords,
+XCOMM  add -DHPUX_SECURE_PASSWD to CCOPTIONS
+XCOMM If your site is using Passwd Etc, add -DHP_PASSWDETC to CCOPTIONS
+      CCOPTIONS += -Aa -D_HPUX_SOURCE -DSYSV
+#else
+      CCOPTIONS += -DHAS_USLEEP
+#endif
+EXTRA_LIBRARIES = -lXhp11
+XCOMM Use this one instead if your site is using Passwd Etc:
+XCOMM EXTRA_LIBRARIES = -lrgy -lnck -lndbm -lXhp11
+       ICONTYPE = hp
+#else
+#ifdef SparcArchitecture
+       ICONTYPE = sun
+#else
+XCOMM      CCOPTIONS += -DOFS1_ENH_SEC
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture) || defined(i386BsdArchitecture)
+      CCOPTIONS += -DHAS_USLEEP
+       ICONTYPE = bsd
+#else
+#ifdef LinuxArchitecture
+      CCOPTIONS += -DHAS_USLEEP
+       ICONTYPE = linux
+#else
+#ifdef SGIArchitecture
+       ICONTYPE = sgi
+#else
+       ICONTYPE = x11
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+
+XCOMM For labs you may want to consider:
+XCOMM  -DFORCE_BOMB         only allow bomb mode
+XCOMM  -DAUTO_LOGOUT        enable auto-logout code
+XCOMM  -DLOGOUT_BUTTON      enable logout button
+XCOMM  -DLO_BUTTON_TIME=5   minutes until logout button appears
+XCOMM  -DALWAYS_ALLOW_ROOT  users can't turn off allowroot
+XCOMM  -DSTAFF_FILE=\"/etc/xlock.staff\"  file of staff who are exempt
+
+XCOMM      CCOPTIONS += -DAUTO_LOGOUT
+XCOMM      CCOPTIONS += -DLOGOUT_BUTTON -DLO_BUTTON_TIME=5
+XCOMM      CCOPTIONS += -DSTAFF_FILE=\"/etc/xlock.staff\"
+      CCOPTIONS += -DALWAYS_ALLOW_ROOT
+
+XCOMM Here is your chance to override the default icon:
+       LIFEICON = $(ICONTYPE)
+       MAZEICON = $(ICONTYPE)
+      IMAGEICON = $(ICONTYPE)
+
+XCOMM You may want to concatenate this to the following the DEFINES statement
+XCOMM             -DFORCE_BOMB -DSTAFF_FILE=\"/etc/xlock.staff\"
+        DEFINES = -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\" -DUSE_VROOT
+        DEPLIBS = $(DEPXLIB)
+LOCAL_LIBRARIES = $(XLIB)
+       LINTLIBS = $(LINTXLIB)
+#if HasLibCrypt
+       CRYPTLIB = -lcrypt
+#endif
+  SYS_LIBRARIES = MathLibrary $(CRYPTLIB) $(SHADOWLIB)
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
+   INSTPGMFLAGS = -s -m 4751
+#endif
+           HDRS = xlock.h
+           SRCS = xlock.c hsbramp.c resource.c usleep.c logout.c\
+		hopalong.c qix.c life.c\
+		swarm.c rotor.c pyro.c flame.c worm.c\
+		spline.c maze.c sphere.c hyper.c\
+		helix.c rock.c blot.c\
+		grav.c bounce.c world.c rect.c bat.c\
+		galaxy.c kaleid.c wator.c life3d.c swirl.c\
+		image.c bomb.c blank.c
+           OBJS = xlock.o hsbramp.o resource.o usleep.o logout.o\
+		hopalong.o qix.o life.o\
+		swarm.o rotor.o pyro.o flame.o worm.o\
+		spline.o maze.o sphere.o hyper.o\
+		helix.o rock.o blot.o\
+		grav.o bounce.o world.o rect.o bat.o\
+		galaxy.o kaleid.o wator.o life3d.o swirl.o\
+		image.o bomb.o blank.o
+
+AllTarget(xlock)
+depend:: life.xbm maze.xbm image.xbm
+ComplexProgramTarget(xlock)
+InstallAppDefaults(XLock)
+
+clean::
+	$(RM) life.xbm image.xbm maze.xbm
+
+clean.all::	clean
+	$(RM) Makefile
+
+#if ProjectX < 6
+life.c: life.xbm
+maze.c: maze.xbm
+image.c: image.xbm
+#endif
+
+life.xbm:
+	$(RM) life.xbm
+	$(LN) ${BITMAPDIR}/life-$(LIFEICON).xbm life.xbm
+
+maze.xbm:
+	$(RM) maze.xbm
+	$(LN) ${BITMAPDIR}/maze-$(MAZEICON).xbm maze.xbm
+
+image.xbm:
+	$(RM) image.xbm
+	$(LN) ${BITMAPDIR}/image-$(IMAGEICON).xbm image.xbm

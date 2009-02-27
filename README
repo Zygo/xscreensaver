@@ -1,0 +1,319 @@
+xlockmore: the UNofficial version of xlock, see Revisions for version #
+Primary site: ftp.x.org in /contrib/applications
+Maintainer: David A. Bagley <bagleyd@source.asset.com>
+Adapted from Patrick J. Naughton's original (and official) xlock.
+
+How to build?
+
+  Check below to see if your machine is one mentioned that causes
+  problems, otherwise it should be easy.
+
+    Only if your using X11R6 then:
+        xmkmf
+	make depend
+        make
+	./xlock -mode spline
+
+    If your using X11R5 then:
+        xmkmf
+        make
+	./xlock -mode spline
+
+    If your using X11R4 then:
+        mv Imakefile Imakefile.r5
+        sed 's/^XCOMM/\/\*\*\/#/' > Imakefile < Imakefile.r5
+        xmkmf
+        make
+        ./xlock -mode spline
+ 
+    Note: if you don't have 'xmkmf' or the "Makefile" it generates
+    doesn't work well, edit Makefile.std for appropriate settings for
+    XINCLUDEPATH and XLIBPATH, then try:
+	make -f Makefile.std
+        ./xlock -mode spline
+
+Likely problems:
+
+  Solaris2.x users:
+    The logout features (see Public Lab Administrators) do not give
+        the login prompt back after a user is logged out.
+    Imake will compile with the -DSOLARIS_SHADOW switch.
+    -allowroot does not work, but otherwise xlock should work
+      for both local, NIS and NIS+ passwords.
+      Is it possible to handle the root case for all configurations?
+    With Gnu's gcc, get rid of the "-ansi" during compilation.
+    With Sun's unbundled cc, compile with a "-DSVR4" and link with
+      "-lnsl -lsocket".
+
+    Solaris2.3 and greater users:
+      The logout features (see Public Lab Administrators) do not give
+        the prompt back.
+      Adjust the Imakefile to compile with HAS_NANOSLEEP.  Also need to
+        link with -lnsl -lposix4.  With this, less CPU cycles are
+        wasted and usleep is a lot more accurate (!).
+    Solaris2.4 users:
+      xlock will dump core if xlock is not setuid root.
+
+  ESIX users:
+    Similar to Solaris2.x.  You will need a -DSVR4 to compile.
+    chmod 440 /etc/shadow
+    if you get libX11.so.xxx not found
+      link with the static versions of the X libraries 
+    random() may be buggy use the one from GNU.
+    chmod 2755 xlock
+
+  XFree86 users:
+    Control-Alt-Backspace will defeat locking mechanism and return your
+      console back unless you put "DontZap" in your XF86Config file.
+      (In X11R5, that would be a "dontzap" in your Xconfig file).
+    Control-Alt-F1 (among others) will defeat locking mechanism with
+      virtual terminals. This is not too good, right?  If your using
+      Linux, try vlock on tsx-11.mit.edu in /pub/linux/sources/usr.bin .
+      I hear that XFree86 3.2 when it comes out MAY have a server
+      extension for catching or disabling VT switching.  Any ideas in the
+      meanwhile?
+
+  Linux users:
+    If you are using shadow passwords make sure you:
+        chown root.shadow xlock
+        chmod 2755 xlock
+    Also check that the following was done:
+        chown root.shadow /etc/shadow
+        chmod 440 /etc/shadow
+    So far, Slackware (a major Linux distribution) does NOT come with shadow
+      passwords standard.  If you want to install shadow passwords (be
+      careful, it can be tricky) it's on sunsite.unc.edu in
+      /pub/Linux/system/Admin .
+
+  FreeBSD users:
+    One may have to make xlock setuid root (are there any objections?).
+
+  Alpha-OSF/1 enhanced security users:
+    Compile with -DOFS1_ENH_SEC see Imakefile
+        chown auth.auth xlock
+        chmod 2755 xlock
+
+  HP users:
+    Shift-Control-Break is caught.
+
+    HP-UX with Secured Passwords:
+      Compile with -DHPUX_SECURE_PASSWD and have xlock setuid to root.
+    HP-UX with Passwd Etc:
+      Compile with -DHP_PASSWDETC .
+      Link with -lrgy -lnck -lndbm .
+
+  X-Terminal users (my heart bleeds for you):
+    To get xlock to run, run with -remote option or set XLock.remote on
+      in XLock.ad.
+  
+  VAX/VMS users:
+    All you should need to do to build the executable is type @make
+      To run xlock a symbol needs to be defined, for example:
+          XLOCK:==$H268SYSEXE:XLOCK
+      where H268SYSEXE is a logical name pointing to the directory where
+      XLOCK.EXE resides. The '$' after == means this is a foreign command
+      and VMS makes the command line available to the program.
+
+    worm may look a bit strange, since the scaling is wrong.
+    -allowroot only works if you have SYSPRV enabled which is a bit limiting.
+ 
+    The XLock file normally in /usr/lib/X11/app-defaults needs to be in the
+      directory DECW$SYSTEM_DEFAULTS on VMS systems and be called
+      'DECW$XLOCK.DAT'.
+
+  tvtwm users:
+    One used to get following error when running xlock (+nolock) with
+    tvtwm.
+
+    X Error of failed request:  BadWindow (invalid Window parameter)
+
+    What happens is that RootWindow(dsp, screen) fails when tvtwm is
+    running.  There is a kludge fix, but multiscreens will not work
+    right with tvtwm and xlock. (grep on TVTWM in xlock.c).
+    Another option, don't compile with -DUSE_VROOT .  If you debug it
+    mail ME -OR- both the author of tvtwm and ME the patch. 
+
+    StickyAbove problems:
+      Windows in a tvtwm that have "StickyAbove" set to true are still
+      visible when xlock (+inroot) is running. If this bothers you,
+      don't compile with -DUSE_VROOT .  Is it possible to have
+      "StickyAbove" xlock set to true too?
+  
+  fvwm users:
+    -install does not work right.  fvwm will not allow an application
+    to install its own colormap.
+
+  swirl:
+    I hear it LOCKS UP on i386BsdArchitecture and tvtwm.
+    With twm (and possibly fvwm on machines with FreeBSD) the colormap
+    does change.
+
+  Public Lab Administrators:
+    The auto logout feature, when enabled, will log out a user after
+    30 minutes (by default).  The timeout can be changed or disabled
+    with a command-line option (or x resource -- this is allowed because
+    the logout button can always be used; see below).  The time
+    remaining before auto-logout is displayed on the password entry
+    screen.
+ 
+    The logout button, when enabled, is a button that appears on the
+    password entry screen after 5 minutes (configurable at
+    compile-time) that, when clicked, logs out the user.  The rationale
+    for this thing is that in a lab environment, we wanted a way for
+    users to be able to reliably lock their display for short periods
+    of time, but still be allowed to have the display locked for longer
+    than that if the lab isn't busy.  If the lab IS busy, and there is
+    a need for workstations, the logout button can be used to logout
+    someone who's been gone for more than 5 minutes.
+ 
+    "bomb.c" contains a simple hack to provide a time-limited lock mode,
+    at the end of which the user will be logged out. One can force the
+    use of this when the screen is locked.  This is probably no longer
+    useful, since have the above method and will probably disappear in
+    the next release.
+
+    Of course, the auto-logout, the logout button, and the forcing of
+    bomb are enabled/disabled by compile-time defines.  All these are
+    OFF by default.  One can also force use these features with a local
+    policy of exemptions (e.g. username or group). See the Imakefile or
+    a Makefile file for an example.  Edit your /etc/xlock.staff file to
+    reflect your policy.
+
+    Don't PANIC, random will not run bomb, image, or blank, unless forcing
+    is used, then of course, bomb will always run.  The auto-logout,
+    the logout button, and bomb will not run if you are root.  Otherwise,
+    it will kill all of root's processes, not a good idea.
+
+    I noticed with Solaris2.3 when logged out through the use of a button,
+    auto-logout, or now bomb, one does not get a login prompt back.
+    Therefore, this is quite useless. (I get it back by remotely logging
+    in as root and running X and then killing it.) Any fixes or work
+    arounds for this would be great.
+
+    If bomb is forced, you can still run the other locks in -inwindow or
+    -nolock. In bomb, you can not increase the delay for longer than
+    1 second.
+
+  xlock still does not work  :-( :
+    If all that does not work you may need to adjust xlock.h, usleep.c,
+    xlock.c, and resource.c since these files are highly implementation
+    dependent.  If you have to make this kind of change to get it working,
+    let me know.
+
+All done and xlock works :-) :
+  You may want to compile xlock.c using -DMOUSEMOTION, then xlock will
+    respond to (you guessed it) the motion of the mouse.  This is not
+    recommended if your using a virtual desktop; a default root window that
+    may be larger than the physical displayed resolution on your screen.
+  You may want to change the 1st line of XLock.ad "blank" to "random",
+    "life", or whatever your favorite is and copy it to
+    /usr/lib/X11/app-defaults or $HOME (or wherever your application
+    defaults files are) and rename to XLock .
+  You may want to move xlock into /usr/bin/X11 (or wherever your X
+    binaries are). 
+  You may also want to move xlock.man to /usr/man/mann/xlock.n .
+  You may want to try xautolock.  It runs xlock after a user defined
+    idle time.  Its at ftp.x.org in /R5contrib, but I do not maintain it.
+
+Operation: (Blurb taken from Darren Senn's xlock)
+ 
+  Under X, run xlock.  The screen will clear, and some pretty animated
+    picture (exactly which depends on which module is active) will appear
+    on the screen.  If you hit a key, then the screen will clear, and
+    (unless you've changed the application defaults file that I packaged
+    with this) you'll get a white screen with some graphics in the top
+    center.  These graphics consist of a reduced size image of the module
+    you were viewing, the name of the user who executed xlock, and
+    password prompt field, and some short instructions.
+ 
+  At this point, you can either click on the graphic to return to xlock,
+    or you can type a password.  If the password is verifiable as the
+    root password, or the password of the user listed above, then xlock
+    will terminate.  THIS IS THE ONLY WAY TO STOP XLOCK WITHOUT SHUTTING
+    DOWN THE X SERVER.  That's what makes it a lock.
+ 
+Resources: (Also taken from Darren Senn's xlock)
+ 
+  There are two sets of resources for XLock.  The first set are (what I
+    call) global XLock resources, while the second set consists of
+    module-specific resources.  I'll get more into modules a little further
+    below.
+ 
+  The global resources are:
+        XLock.mode: This sets the module.  More about this later.
+        XLock.font: This is the font used on the password entry screen.
+        XLock.background: The background color for the password entry screen.
+        XLock.foreground: The foreground color for the password entry screen.
+        XLock.username: The label for the field indicating the user name.
+        XLock.password: The label for the password prompt.
+        XLock.info: The "short instructions" to print.
+        XLock.validate: A message to display while checking the password
+        XLock.invalid: A message to display if the password is incorrect
+        XLock.nice: How much XLock should nice itself.
+        XLock.timeout: How long to wait idle at the password prompt.
+        XLock.timeelapsed: Message to see how long lock running (yes or no)
+        XLock.mono: Monochrome mode (yes or no)
+        XLock.nolock: disable the lock mechanism (yes or no)
+        XLock.remote: allow remote locking (meaningless under linux)
+        XLock.allowroot: allow the root password to unlock (yes or no)
+        XLock.enablesaver: allow the system screensaver to work (yes or no)
+        XLock.allowaccess: allow other clients to connect while active
+        XLock.echokeys: Echo "?" for each password keypress (yes or no)
+        XLock.usefirst: Ignore the first character typed (yes or no)
+        XLock.verbose: Verbose mode. (yes or no)
+        XLock.inwindow: allow the xlock to run in a window (yes or no)
+        XLock.inroot: allow the xlock to run in the root window (yes or no)
+        XLock.grabmouse: Grab the keyboard and mouse (yes or no)
+ 
+  Xlock has a number of modules which it can display.  (See the man page
+    for a complete list).  It turns out that each module is characterized
+    by a number of initializations, separated by a number of "draws".
+    Each module has the following resources defined:
+
+        XLock.<module>.delay: How long to wait between draws (usec)
+        XLock.<module>.batchcount: May mean various things (see man page).
+        XLock.<module>.saturation: Saturation (as in HSV) of colors to use.
+ 
+Acknowledgments:
+
+  I did not write the original algorithms in any of the lock screens
+    (except wator), although I did convert many of the new ones to run
+    with xlock.  I tried to follow the original style of Patrick Naughton.
+    Updates are made at ftp.x.org in directory /contrib/applications.
+    Many of the additions were "borrowed" from xscreensaver (Jamie Zawinski
+    jwz@lucid.com). At the time, I had trouble with getting it to compile so
+    I moved the "interesting" algorithms to xlock. Many of the others were
+    "borrowed" from old demos from Sun.  My favorite of this new bunch is
+    "spline", "borrowed" from Jef Poskanzer (jef@netcom.com ||
+    jef@well.sf.ca.us).
+
+  I will consider putting new ones in if (1) they are more or less public
+    domain, (2) they are neat (I am biased towards mathematically based
+    programs), and (3) I have the time.
+
+Some open problems:  (Suggestions for this would be nice)
+
+  Xlock should check first to make sure it can have access to the
+    password before locking the screen.  If it does not have access
+    it should suggest something like ...
+    "Have your administrator setuid xlock to root".
+
+  Some windows (like swirl) should be informed about window movement with
+   -inroot and -inwindow.
+ 
+  It would be nice to have an option -idletime time.  Where xlock would
+    run after a certain idle time.  (Here xautolock may help you, see
+    above).
+
+  Penrose tiling lockscreen needed.  Anyone have an algorithm out there?
+
+  "swirl" cycles its colors, except black and white.
+  This is easily seen when on a color monitor one enters:
+       ./xlock -mode swirl -inwindow
+  now move the mouse in the window.
+  If you find this annoying compile swirl.c with -DFORCEFIXEDCOLORS.
+
+  In "bounce" sometimes a ball does not roll off another ball.
+
+  "life3d" draws invisible cubes when it does not have to.  The original
+    PC code weeded this out, but it did not port to X.

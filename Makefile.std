@@ -1,0 +1,129 @@
+# @(#)Makefile	1.9 91/09/27 XLOCK
+
+ICONTYPE	= x11
+LIFEICON	= ${ICONTYPE}
+MAZEICON	= ${ICONTYPE}
+IMAGEICON	= ${ICONTYPE}
+
+# Set your C compiler
+#CC		= gcc
+CC		= cc
+
+# X include files
+XINCLUDEPATH	= /usr/local/include
+#XINCLUDEPATH	= /usr/include/X11R4
+#XINCLUDEPATH	= /usr/include/X11R5
+#XINCLUDEPATH	= ${OPENWINHOME}/include
+#XINCLUDEPATH	= ${MOTIFHOME}/include
+
+# X libraries
+XLIBPATH	= /usr/local/lib
+#XLIBPATH	= /usr/lib/X11R4
+#XLIBPATH	= /usr/lib/X11R5
+#XLIBPATH	= ${OPENWINHOME}/lib
+#XLIBPATH	= ${MOTIFHOME}/lib
+
+BITMAPDIR       = ./bitmaps
+##############################################################
+
+# The directory where your app-defaults directory is:
+LIBDIR		= /usr/local/lib/X11
+ 
+INCLUDES	= -I${XINCLUDEPATH} -I.
+LIBRARIES	= -L${XLIBPATH}
+
+# Use -DHAS_SHADOW if you are using shadow passwords
+#
+# For labs you may want to consider:
+#  -DFORCE_BOMB		only allow bomb mode
+#  -DAUTO_LOGOUT	enable auto-logout code
+#  -DLOGOUT_BUTTON	enable logout button
+#  -DLO_BUTTON_TIME=5	minutes until logout button appears
+#  -DALWAYS_ALLOW_ROOT	users can't turn off allowroot
+#  -DSTAFF_FILE=\"/etc/xlock.staff\"	file of staff who are exempt
+
+DEFINES		= -DUSE_VROOT -DALWAYS_ALLOW_ROOT\
+	 -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\"
+#	-DAUTO_LOGOUT -DLOGOUT_BUTTON -DLO_BUTTON_TIME=5\
+#	-DSTAFF_FILE=\"/etc/xlock.staff\"
+#	-HAS_RAND\
+#	-HAS_RANDOM\
+#	-HAS_RAND48\
+#	-DHAS_SHADOW\
+
+COPT		= -O
+CFLAGS		= ${COPT} ${DEFINES} ${INCLUDES}
+
+# Use -lcrypt if using special encryption
+# Use -lshadow if you are using shadow passwords
+LIBS		= ${LIBRARIES} -lX11 -lm
+#LIBS		= ${LIBRARIES} -lX11 -lm -lcrypt -lshadow
+
+HDRS		= xlock.h
+SRCS		= xlock.c hsbramp.c usleep.c resource.c logout.c\
+	hopalong.c qix.c life.c\
+	swarm.c rotor.c pyro.c flame.c worm.c\
+	spline.c maze.c sphere.c hyper.c\
+	helix.c rock.c blot.c\
+	grav.c bounce.c world.c rect.c bat.c\
+	galaxy.c kaleid.c wator.c life3d.c\
+	swirl.c image.c bomb.c blank.c
+OBJS		=${SRCS:.c=.o}
+PROGRAM         = xlock
+VER             = ${PROGRAM}more
+
+
+all:		${OBJS}
+		${CC} ${COPT} -o ${PROGRAM} ${OBJS} ${LIBS}
+
+debug:	xlock
+#debug:=COPT=-g -DDEBUG
+
+#resource.o:=DEFINES=-DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\"
+
+life.c:	life.xbm
+maze.c:	maze.xbm
+image.c:	image.xbm
+ 
+life.xbm:
+	rm -f life.xbm
+	ln -s ${BITMAPDIR}/life-$(LIFEICON).xbm life.xbm
+
+maze.xbm:
+	rm -f maze.xbm
+	ln -s ${BITMAPDIR}/maze-$(MAZEICON).xbm maze.xbm
+ 
+image.xbm:
+	rm -f image.xbm
+	ln -s ${BITMAPDIR}/image-$(IMAGEICON).xbm image.xbm
+
+tar:	clean.all
+	cd .. ; tar cvf ${VER}.tar ${VER}/*
+
+compress:	tar
+	cd .. ; compress -f ${VER}.tar
+
+gzip:	tar
+	cd .. ; gzip -f ${VER}.tar
+
+tgz:	tar
+	cd .. ; gzip -c ${VER}.tar > `echo ${VER} | cut -c1-8`.tgz ;\
+		rm -f ${VER}.tar
+
+man:
+	nroff -man ${PROGRAM}.man | more
+
+read:
+	more README
+
+lint:
+	lint -ax -DLINT ${DEFINES} ${INCLUDES} ${SRCS}
+
+clean:
+	rm -f *.o ${PROGRAM} core *~ *% *.bak life.xbm maze.xbm image.xbm
+
+clean.all:	clean
+	rm -f Makefile
+
+install:	${PROGRAM}
+	install ${PROGRAM} /usr/local/bin
