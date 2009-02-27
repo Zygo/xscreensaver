@@ -1,0 +1,330 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       xscreensaver-demo  -  interactively control the background
+       xscreensaver daemon
+
+SSYYNNOOPPSSIISS
+       xxssccrreeeennssaavveerr--ddeemmoo [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]  [-prefs]
+       [-xrm _r_e_s_o_u_r_c_e_s]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o program is a graphical front-end for
+       setting the parameters used  by  the  background  xxssccrreeeenn--
+       ssaavveerr(1) daemon.  It is essentially two things: a tool for
+       editing the _~_/_._x_s_c_r_e_e_n_s_a_v_e_r file; and a tool  for  demoing
+       the  various  graphics  hacks that the _x_s_c_r_e_e_n_s_a_v_e_r daemon
+       will launch.
+
+       The main dialog box contains  a  scrolling  list,  a  text
+       field, and a number of buttons.
+
+       Double-clicking  on  one  of the programs in the list will
+       run it.  The screen will go black, and  the  program  will
+       run  in full-screen mode, just as it would if the _x_s_c_r_e_e_n_-
+       _s_a_v_e_r daemon had launched it.  Clicking  the  mouse  again
+       will  stop  the  demo  and un-blank the screen, making the
+       dialog box visible again.
+
+       Single-clicking in the list will place the indicated  pro-
+       gram  and  its  args in the text field to be edited.  Edit
+       the arguments and hit return to run the program  with  the
+       parameters  you  have specified.  This will also save your
+       changes to your _~_/_._x_s_c_r_e_e_n_s_a_v_e_r file: so any  changes  you
+       make in this way are persistent.
+
+       If  one of the lines in the scrolling list begins with the
+       character "-", then that means that the  program  is  dis-
+       abled:  _x_s_c_r_e_e_n_s_a_v_e_r  will not select it to be run (though
+       you can still try it out by clicking on it.)  Rather  than
+       just  deleting  the  programs  you  don't want to run, you
+       might want to disable them in this way  instead,  so  that
+       you can more easily change your mind later.
+
+       If  the line begins with the name of a visual, followed by
+       a colon, then that program will only be run on  that  kind
+       of visual.  For example, you can specify that a particular
+       program should only be run  if  color  is  available,  and
+       another should only be run in monochrome.  See the discus-
+       sion of the _p_r_o_g_r_a_m_s parameter in the  _C_o_n_f_i_g_u_r_a_t_i_o_n  sec-
+       tion of the xxssccrreeeennssaavveerr(1) manual.
+
+       The buttons are:
+
+       RRuunn NNeexxtt
+               Clicking  this button will run the next program in
+               the list after  the  currently-selected  one,  and
+
+
+
+X Version 11             20-Jun-99 (3.15)                       1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               will  wrap  around  to the top when it reaches the
+               bottom.
+
+       RRuunn PPrreevviioouuss
+               Opposite of Run Next; at the top, it wraps  around
+               to the bottom.
+
+       PPrreeffeerreenncceess
+               This  pops  up  a  second dialog box, in which you
+               have the option to interactively  change  most  of
+               the  screensaver's operational parameters, such as
+               its timeouts,  and  whether  it  should  lock  the
+               screen.   When  you click OK, your chosen settings
+               will take effect immediately,  and  will  also  be
+               saved  to  the  _~_/_._x_s_c_r_e_e_n_s_a_v_e_r  file in your home
+               directory, so that the settings will persist  next
+               time.
+
+       QQuuiitt    Exits  the  _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o  program.  The back-
+               ground _x_s_c_r_e_e_n_s_a_v_e_r daemon will  continue  running
+               as before.
+
+       The  Preferences  dialog box lets you change the following
+       settings.
+
+       (There are more settings available, but these are the most
+       commonly used ones; see the manual for xxssccrreeeennssaavveerr(1) for
+       other  parameters  that  can  be  set   by   editing   the
+       _~_/_._x_s_c_r_e_e_n_s_a_v_e_r file, or the X resource database.)
+
+       SSaavveerr TTiimmeeoouutt
+               After  the  user  has  been  idle  this  long, the
+               _x_s_c_r_e_e_n_s_a_v_e_r daemon will blank the screen.
+
+       CCyyccllee TTiimmeeoouutt
+               After the screensaver has been  running  for  this
+               long,  the currently running graphics demo will be
+               killed, and a new one started.  If this is 0, then
+               the  graphics demo will never be changed: only one
+               demo will run until the screensaver is deactivated
+               by user activity.
+
+       VVeerrbboossee
+               Whether to print lots of debugging information.
+
+       IInnssttaallll CCoolloorrmmaapp
+               Whether  to  install  a private colormap while the
+               screensaver is active, so that the graphics  hacks
+               can  get  as  many colors as possible.  (This only
+               applies when the screen's default visual is  being
+               used, since non-default visuals get their own col-
+               ormaps automatically.)  This can also be  overrid-
+               den on a per-demo basis.
+
+
+
+
+X Version 11             20-Jun-99 (3.15)                       2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       FFaaddee CCoolloorrmmaapp
+               If  selected, then when the screensaver activates,
+               the current contents of the screen  will  fade  to
+               black  instead  of  simply winking out.  This only
+               works on displays with  writable  colormaps,  that
+               is,  if  the  screen's default visual is a Pseudo-
+               Color visual.  A  fade  will  also  be  done  when
+               switching  graphics  hacks (when the _C_y_c_l_e _T_i_m_e_o_u_t
+               expires.)
+
+       UUnnffaaddee CCoolloorrmmaapp
+               The complement to _F_a_d_e _C_o_l_o_r_m_a_p: if selected, then
+               when  the  screensaver  deactivates,  the original
+               contents of the screen will  fade  in  from  black
+               instead of appearing immediately.  This only works
+               on displays with writable colormaps, and when _F_a_d_e
+               _C_o_l_o_r_m_a_p is also selected.
+
+       FFaaddee DDuurraattiioonn
+               When  fading  or  unfading are selected, this con-
+               trols how long the fade will take.
+
+       FFaaddee TTiicckkss
+               This controls how many times a second the colormap
+               will  be changed to effect a fade.  Higher numbers
+               yield smoother fades, but may make the fades  take
+               longer  than  the  specified number of seconds, if
+               your server isn't fast enough to keep up.
+
+       RReeqquuiirree PPaasssswwoorrdd
+               Whether the screen saver should  lock  the  screen
+               when it activates.
+
+       LLoocckk TTiimmeeoouutt
+               If _R_e_q_u_i_r_e _P_a_s_s_w_o_r_d is selected, this controls the
+               length of the ``grace period''  between  when  the
+               screensaver activates, and when the screen becomes
+               locked.  For example,  if  this  is  0:05:00,  and
+               _S_a_v_e_r  _T_i_m_e_o_u_t  is 0:10:00, then after 10 minutes,
+               the screen would blank.  If there was user  activ-
+               ity  at  12 minutes, no password would be required
+               to un-blank the screen.  But, if  there  was  user
+               activity  at  15  minutes  or later (that is, _L_o_c_k
+               _T_i_m_e_o_u_t minutes after activation) then a  password
+               would be required.  The default is 0, meaning that
+               if locking is enabled, then  a  password  will  be
+               required as soon as the screen blanks.
+
+       PPaasssswwoorrdd TTiimmeeoouutt
+               When  the screensaver is prompting for a password,
+               the prompt dialog box will stay on the screen  for
+               this  long  before  giving  up,  and  reverting to
+               screen-saving mode.
+
+
+
+
+X Version 11             20-Jun-99 (3.15)                       3
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+CCOOMMMMAANNDD--LLIINNEE OOPPTTIIOONNSS
+       _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o  accepts  the  following  command   line
+       options.
+
+       --ddiissppllaayy _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n
+               The  X display to use.  The _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o pro-
+               gram will open its window  on  that  display,  and
+               also  control the _x_s_c_r_e_e_n_s_a_v_e_r daemon that is man-
+               aging that same display.
+
+       --pprreeffss  Start up in Preferences mode: this  is  just  like
+               launching  the program with no arguments, and then
+               pressing the _P_r_e_f_e_r_e_n_c_e_s button.
+
+       It  is  important  that  the  _x_s_c_r_e_e_n_s_a_v_e_r  and   _x_s_c_r_e_e_n_-
+       _s_a_v_e_r_-_d_e_m_o processes be running on the same machine, or at
+       least, on two machines that share  a  file  system.   When
+       _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o  writes a new version of the _~_/_._x_s_c_r_e_e_n_-
+       _s_a_v_e_r file, it's important that the _x_s_c_r_e_e_n_s_a_v_e_r see  that
+       same  file.   If  the  two  processes are seeing different
+       _~_/_._x_s_c_r_e_e_n_s_a_v_e_r files, things will malfunction.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       PPAATTHH    to find the sub-programs to  run.   However,  note
+               that the sub-programs are actually launched by the
+               _x_s_c_r_e_e_n_s_a_v_e_r  daemon,  not  by   _x_s_c_r_e_e_n_s_a_v_e_r_-_d_e_m_o
+               itself.   So,  what  matters  is  what  $$PPAATTHH  the
+               _x_s_c_r_e_e_n_s_a_v_e_r program sees.
+
+       HHOOMMEE    for the directory in which to read and  write  the
+               _._x_s_c_r_e_e_n_s_a_v_e_r file.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to  get the name of a resource file that overrides
+               the global resources stored in  the  RESOURCE_MAN-
+               AGER property.
+
+UUPPGGRRAADDEESS
+       The    latest    version    can   always   be   found   at
+       http://www.jwz.org/xscreensaver/
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1), xxssccrreeeennssaavveerr--ccoommmmaanndd(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1992, 1993, 1997, 1998, 1999 by Jamie Zawin-
+       ski.   Permission  to  use,  copy, modify, distribute, and
+       sell this software and its documentation for  any  purpose
+       is  hereby  granted  without  fee, provided that the above
+       copyright notice appear in all copies and that  both  that
+       copyright notice and this permission notice appear in sup-
+       porting documentation.  No representations are made  about
+
+
+
+X Version 11             20-Jun-99 (3.15)                       4
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       the  suitability  of this software for any purpose.  It is
+       provided "as is" without express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+       Please let me know if  you  find  any  bugs  or  make  any
+       improvements.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11             20-Jun-99 (3.15)                       5
+
+

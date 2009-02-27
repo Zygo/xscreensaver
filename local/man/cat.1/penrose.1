@@ -1,0 +1,198 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       penrose - draws quasiperiodic tilings
+
+SSYYNNOOPPSSIISS
+       ppeennrroossee [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root]  [-mono]  [-install]
+       [-visual  _v_i_s_u_a_l] [-ncolors _i_n_t_e_g_e_r] [-delay _m_i_c_r_o_s_e_c_o_n_d_s]
+       [-redoDelay    _s_e_c_o_n_d_s]    [-size    _i_n_t_e_g_e_r]    [-ammann]
+       [-no-ammann]
+
+
+DDEESSCCRRIIPPTTIIOONN
+       The _p_e_n_r_o_s_e program draws quasiperiodic tilings.
+
+       See  Onoda,  Steinhardt,  DiVincenzo  and Socolar in Phys.
+       Rev. Lett. 60, #25, 1988 or  Strandburg  in  Computers  in
+       Physics, Sep/Oct 1991.
+
+       This implementation uses the simpler version of the growth
+       algorithm, i.e., if there are no forced vertices,  a  ran-
+       domly chosen tile is added to a randomly chosen vertex (no
+       preference for those 108 degree angles).
+
+       There are two essential differences to the algorithm  pre-
+       sented  in  the  literature:  First,  we  do not allow the
+       tiling to enclose an untiled area.  Whenever  this  is  in
+       danger  of  happening, we just do not add the tile, hoping
+       for a better random choice the next  time.   Second,  when
+       choosing  a  vertex  randomly,  we will take one that lies
+       withing the viewport if available.  If this seems to cause
+       enclosures  in the forced rule case, we will allow invisi-
+       ble vertices to be chosen.
+
+       Tiling is restarted whenever one of the following happens:
+       there  are  no  incomplete vertices within the viewport or
+       the tiling has extended a window's length beyond the  edge
+       of  the  window  horizontally or vertically or forced rule
+       choice has failed 100 times due to areas about  to  become
+       enclosed.
+
+       Although  quasiperiodic  tilings  are  produced, the tiles
+       themselves are not penrose tiles  (darts  and  kites).  In
+       contrast  to penrose tiles, these tiles can be arranged to
+       form a periodic tiling.
+
+
+OOPPTTIIOONNSS
+       _p_e_n_r_o_s_e accepts the following options:
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+
+
+
+X Version 11                10-May-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --mmoonnoo   If   on  a  color  display,  pretend  we're  on  a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name  of a visual class, or the id number (decimal
+               or hex) of a specific visual.
+
+       --nnccoolloorrss _i_n_t_e_g_e_r
+               How many colors  should  be  used  (if  possible).
+               Default 64.  The colors are chosen randomly.
+
+       --ssiizzee _i_n_t_e_g_e_r
+               How big the tiles should be.  Default 40 pixels.
+
+
+       --ddeellaayy _m_i_l_l_i_s_e_c_o_n_d_s
+               How  long (in 1/1,000,000'ths of a second) to wait
+               between drawing each tile.  Default 10,000 or  .01
+               seconds.
+
+
+       --rreeddooDDeellaayy _s_e_c_o_n_d_s
+               How long to wait between starting a completely new
+               tiling.  Default 3 seconds.
+
+
+       --aammmmaannnn _i_n_t_e_g_e_r
+
+       --nnoo--aammmmaannnn _i_n_t_e_g_e_r
+               Whether Ammann lines should be added.
+
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1), xxlloocckk(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1996 by Timo Korvola.
+
+       Permission to use, copy, modify, and distribute this soft-
+       ware and its documentation for any purpose and without fee
+       is hereby  granted,  provided  that  the  above  copyright
+       notice  appear  in all copies and that both that copyright
+
+
+
+X Version 11                10-May-97                           2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       notice and this permission  notice  appear  in  supporting
+       documentation.
+
+AAUUTTHHOORR
+       Timo Korvola <tkorvola@dopey.hut.fi>, 1996.
+
+       Ability  to  run  standalone or with _x_s_c_r_e_e_n_s_a_v_e_r added by
+       Jamie Zawinski <jwz@jwz.org>, 10-May-97.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                10-May-97                           3
+
+

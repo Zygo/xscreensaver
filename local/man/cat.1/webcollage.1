@@ -1,0 +1,198 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       webcollage  -  decorate the screen with random images from
+       the web
+
+SSYYNNOOPPSSIISS
+       wweebbccoollllaaggee [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]  [-root]  [-ver-
+       bose]  [-delay  _s_e_c_s]  [-timeout  _s_e_c_s]  [-background  _b_g]
+       [-filter _c_o_m_m_a_n_d] [-filter2 _c_o_m_m_a_n_d]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _w_e_b_c_o_l_l_a_g_e program pulls random image off of the World
+       Wide  Web  and scatters them on the root window.  It finds
+       these images by doing random web searches, and  extracting
+       images  from  the returned pages.  It places the images on
+       the root window  by  using  the  xxvv(1),  ggiiffttooppnnmm(1),  and
+       ddjjppeegg(1) tools.
+
+       _w_e_b_c_o_l_l_a_g_e also works as a CGI program: simply make a sym-
+       bolic link to the _w_e_b_c_o_l_l_a_g_e executable called _n_p_h_-_w_e_b_c_o_l_-
+       _l_a_g_e_._c_g_i.   If this program sees that it is being run as a
+       CGI, then it will behave  appropriately.   (The  generated
+       web  page  will  list the images one after another, rather
+       than tiling them together.)
+
+       _w_e_b_c_o_l_l_a_g_e is written in ppeerrll(1) and requires Perl 5.
+
+OOPPTTIIOONNSS
+       _w_e_b_c_o_l_l_a_g_e accepts the following options:
+
+       --rroooott   Draw on the root window.  This  option  is  mandi-
+               tory: drawing to a window other than the root win-
+               dow is not yet supported.
+
+       --vveerrbboossee or --vv
+               Print diagnostics to stderr.  Multiple _-_v switches
+               increase  the amount of output.  _-_v will print out
+               only the URLs of the images; _-_v_v  will  print  all
+               the  commands  being run; and _-_v_v_v will print more
+               than you care about.
+
+       --ddeellaayy _s_e_c_o_n_d_s
+               How long to sleep between images.  Default 1  sec-
+               ond.   (Remember that this program probably spends
+               a lot of time waiting for the network.)
+
+       --bbaacckkggrroouunndd _c_o_l_o_r_-_o_r_-_p_p_m
+               What to use for the background onto  which  images
+               are pasted.  This may be a color name, a hexadeci-
+               mal RGB specification in the  form  '#rrggbb',  or
+               the name of a PPM file.
+
+       --ttiimmeeoouutt _s_e_c_o_n_d_s
+               How long to wait for a URL to complete before giv-
+               ing up on it  and  moving  on  to  the  next  one.
+
+
+
+X Version 11                17-Jun-99                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               Default 30 seconds.
+
+       --ffiilltteerr _c_o_m_m_a_n_d
+               Filter  all  source  images  through this command.
+               The command must take a PPM  file  on  stdin,  and
+               write  a  new PPM file to stdout.  One good choice
+               for a filter would be:
+
+                    webcollage -root -filter 'vidwhacker -stdin -stdout'
+
+
+       --ffiilltteerr22 _c_o_m_m_a_n_d
+               Filter the _c_o_m_p_o_s_i_t_e image through  this  command.
+               The  _-_f_i_l_t_e_r option applies to the sub-images; the
+               _-_f_i_l_t_e_r_2 applies to the final, full-screen  image.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to  get the name of a resource file that overrides
+               the global resources stored in  the  RESOURCE_MAN-
+               AGER property.
+
+FFIILLEESS AANNDD UURRLLSS
+       _/_u_s_r_/_d_i_c_t_/_w_o_r_d_s or _/_u_s_r_/_s_h_a_r_e_/_l_i_b_/_d_i_c_t_/_w_o_r_d_s
+              To find the random words to feed to search engines.
+
+       _h_t_t_p_:_/_/_r_a_n_d_o_m_._y_a_h_o_o_._c_o_m_/_b_i_n_/_r_y_l_,
+       _h_t_t_p_:_/_/_i_m_a_g_e_._a_l_t_a_v_i_s_t_a_._c_o_m_/ To find random web pages.
+
+BBUUGGSS
+       When  drawing  on  the  root  window,  it  always uses the
+       default colormap.  This is actually a  limitation  of  xv.
+       But regardless, when using this program with xscreensaver,
+       it must be given the ddeeffaauulltt--nn visual  specification  (see
+       the xxssccrreeeennssaavveerr(1) manual for more details.)
+
+       Only the GIF and JPEG image formats are supported.
+
+       Transparent and animating GIFs are not supported.
+
+       It's slow.
+
+SSEEEE AALLSSOO
+       XX(1),  xxssccrreeeennssaavveerr(1), xxvv(1), ggiiffttooppnnmm(1), ddjjppeegg(1), vviidd--
+       wwhhaacckkeerr(1), ppeerrll(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1998, 1999 by Jamie Zawinski.  Permission to
+       use,  copy, modify, distribute, and sell this software and
+       its documentation for any purpose is hereby granted  with-
+       out  fee,  provided that the above copyright notice appear
+       in all copies and that both that copyright notice and this
+
+
+
+X Version 11                17-Jun-99                           2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       permission  notice appear in supporting documentation.  No
+       representations are made about  the  suitability  of  this
+       software  for any purpose.  It is provided "as is" without
+       express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 24-May-98.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                17-Jun-99                           3
+
+

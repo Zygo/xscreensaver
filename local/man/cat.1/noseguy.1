@@ -1,0 +1,132 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       noseguy  -  a  little  guy  with a big nose wanders around
+       being witty
+
+SSYYNNOOPPSSIISS
+       nnoosseegguuyy [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground _c_o_l_o_r]
+       [-background  _c_o_l_o_r] [-text-foreground _c_o_l_o_r] [-text-back-
+       ground _c_o_l_o_r] [-font _f_o_n_t]  [-window]  [-root]  [-install]
+       [-visual  _v_i_s_u_a_l]  [-mode _m_o_d_e] [-program _p_r_o_g_r_a_m] [-file-
+       name le_] _[_-_t_e_x_t _t_e_x_t_]
+
+DDEESSCCRRIIPPTTIIOONN
+       A little man with a big nose and a hat runs around spewing
+       out  messages  to the screen.  This code (and its bitmaps)
+       were extracted from the _x_n_l_o_c_k program.
+
+OOPPTTIIOONNSS
+       _n_o_s_e_g_u_y accepts the following options:
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name of a visual class, or the id number  (decimal
+               or hex) of a specific visual.
+
+       --ffoonntt _f_o_n_t
+               The font used for the messages.
+
+       --mmooddee [[ pprrooggrraamm || ffiillee || ssttrriinngg ]]
+               In  _p_r_o_g_r_a_m  mode, the messages are gotten by run-
+               ning a program.  The program used is controlled by
+               the _-_p_r_o_g_r_a_m option, and the _._p_r_o_g_r_a_m resource.
+
+               In _f_i_l_e_n_a_m_e mode, the message used is the contents
+               of a file.  The file used  is  controlled  by  the
+               _-_f_i_l_e option, and the _._f_i_l_e_n_a_m_e resource.
+
+               In _s_t_r_i_n_g mode, the message is whatever was speci-
+               fied on the command line as the _-_t_e_x_t  option,  or
+               in the resource database as the _._t_e_x_t resource.
+
+       --pprrooggrraamm _p_r_o_g_r_a_m
+               If  _m_o_d_e  is _p_r_o_g_r_a_m (the default), then this pro-
+               gram will be run periodically, and its output will
+               be  the text of the messages.  The default program
+               is _"_f_o_r_t_u_n_e _-_s_", but _y_o_w is also a good choice.
+
+
+
+
+X Version 11                13-aug-92                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --ffiilleennaammee _f_i_l_e
+               If _m_o_d_e is _f_i_l_e, then the contents  of  this  file
+               will be used for all messages.
+
+       --tteexxtt _s_t_r_i_n_g
+               If _m_o_d_e is _s_t_r_i_n_g, then this text will be used for
+               all messages.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1), xxnnlloocckk(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright 1985, 1990 by Dan Heller <argv@sun.com>.
+
+AAUUTTHHOORR
+       Dan Heller <argv@sun.com>, 1985.
+
+       Ability to run standalone or with  _x_s_c_r_e_e_n_s_a_v_e_r  added  by
+       Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                13-aug-92                           2
+
+

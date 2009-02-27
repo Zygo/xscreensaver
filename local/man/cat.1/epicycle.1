@@ -1,0 +1,264 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       epicycle  -  draws  a  point  moving around a circle which
+       moves around a cicle which...
+
+SSYYNNOOPPSSIISS
+       eeppiiccyyccllee [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-root]  [-window]
+       [-mono]  [-install] [-noinstall] [-visual _v_i_z] [-colors _N]
+       [-foreground _n_a_m_e] [-color-shift _N] [-delay  _m_i_c_r_o_s_e_c_o_n_d_s]
+       [-holdtime   _s_e_c_o_n_d_s]   [-linewidth  _N]  [-min_circles  _N]
+       [-max_circles _N] [-min_speed _n_u_m_b_e_r]  [-max_speed  _n_u_m_b_e_r]
+       [-harmonics _N] [-timestep _n_u_m_b_e_r] [-divisor_poisson _p_r_o_b_a_-
+       _b_i_l_i_t_y] [-size_factor_min _n_u_m_b_e_r]  [-size_factor_max  _n_u_m_-
+       _b_e_r]
+
+DDEESSCCRRIIPPTTIIOONN
+       The  epicycle program draws the path traced out by a point
+       on the edge of a circle.  That  circle  rotates  around  a
+       point  on  the  rim  of another circle, and so on, several
+       times.  The random curves produced can be simple  or  com-
+       plex, convex or concave, but they are always closed curves
+       (they never go in indefinitely).
+
+       You can configure both the way the curves  are  drawn  and
+       the  way in which the random sequence of circles is gener-
+       ated, either with command-line options or X resources.
+
+OOPPTTIIOONNSS
+       --ddiissppllaayy _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n
+               Specifies which X display we should use  (see  the
+               section DISPLAY NAMES in XX(1) for more information
+               about this option).
+
+       --rroooott   Draw on the root window.
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --mmoonnoo   If   on  a  color  display,  pretend  we're  on  a
+               monochrome display.  If we're on a  mono  display,
+               we have no choice.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --nnooiinnssttaallll
+               Don't install a private colormap for the window.
+
+       --vviissuuaall _v_i_z
+               Specify which visual to use.  Legal values are the
+               name of a visual class, or the id number  (decimal
+               or  hex)  of  a specific visual.  Possible choices
+               include
+
+               default,  best,  mono,  monochrome,  gray,   grey,
+
+
+
+X Version 11                27-Apr-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               color,    staticgray,    staticcolor,   truecolor,
+               grayscale,  greyscale,  pseudocolor,  directcolor,
+               _n_u_m_b_e_r
+
+               If  a  decimal  or  hexadecimal  number  is  used,
+               XXGGeettVViissuuaallIInnffoo(3X)  is  consulted  to  obtain  the
+               required visual.
+
+       --ccoolloorrss _N
+               How many colors should be used (if possible).  The
+               colors are chosen randomly.
+
+       --ffoorreeggrroouunndd _n_a_m_e
+               With --mmoonnoo, this  option  selects  the  foreground
+               colour.
+
+       --ddeellaayy _m_i_c_r_o_s_e_c_o_n_d_s
+               Specifies  the  delay  between  drawing successive
+               line segments of the path.   If you do not specify
+               --ssyynncc, some X servers may batch up several drawing
+               operations  together,  producing  a  less   smooth
+               effect.     This  is  more  likely  to  happen  in
+               monochrome mode (on  monochrome  servers  or  when
+               --mmoonnoo is specified).
+
+       --hhoollddttiimmee _s_e_c_o_n_d_s
+               When  the figure is complete, _e_p_i_c_y_c_l_e pauses this
+               number of seconds.
+
+       --lliinneewwiiddtthh _N
+               Width in pixels of the body's track.    Specifying
+               values  greater than one may cause slower drawing.
+               The fastest value is  usually  zero,  meaning  one
+               pixel.
+
+       --mmiinn__cciirrcclleess _N
+               Smallest number of epicycles in the figure.
+
+       --mmaaxx__cciirrcclleess _N
+               Largest number of epicycles in the figure.
+
+       --mmiinn__ssppeeeedd _n_u_m_b_e_r
+               Smallest possible value for the base speed of rev-
+               olution of the epicycles.  The  actual  speeds  of
+               the  epicycles  vary from this down to _m_i_n___s_p_e_e_d _/
+               _h_a_r_m_o_n_i_c_s..
+
+       --mmaaxx__ssppeeeedd _n_u_m_b_e_r
+               Smallest possible value for the base speed of rev-
+               olution of the epicycles.
+
+       --hhaarrmmoonniiccss _N
+               Number  of  possible  harmonics;  the  larger this
+               value is, the  greater  the  possible  variety  of
+
+
+
+X Version 11                27-Apr-97                           2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               possible speeds of epicycle.
+
+       --ttiimmeesstteepp _n_u_m_b_e_r
+               Decreasing this value will reduce the distance the
+               body moves for each line segment, possibly produc-
+               ing  a smoother figure.  Increasing it may produce
+               faster results.
+
+       --ddiivviissoorr__ppooiissssoonn _p_r_o_b_a_b_i_l_i_t_y
+               Each epicycle rotates at a rate which is a  factor
+               of  the base speed.  The speed of each epicycle is
+               the base speed divided by some integer  between  1
+               and  the  value  of  the  --hhaarrmmoonniiccss option.  This
+               integer is decided by starting at 1 and tossing  a
+               biased coin.  For each consecutive head, the value
+               is incremented by one.  The integer  will  not  be
+               incremented  above  the  value  of  the --hhaarrmmoonniiccss
+               option.  The argument of this option  decides  the
+               bias  of the coin; it is the probability that that
+               coin will produce a head at any given toss.
+
+       --ssiizzee__ffaaccttoorr__mmiinn _n_u_m_b_e_r
+               Epicycles are always at least this factor  smaller
+               than their parents.
+
+       --ssiizzee__ffaaccttoorr__mmaaxx _n_u_m_b_e_r
+               Epicycles  are never more than this factor smaller
+               than their parents.
+
+RREESSOOUURRCCEESS
+            Option            Resource               Default Value
+            ------            --------               -------------
+            -colors           .colors                100
+            -delay            .delay                 1000
+            -holdtime         .holdtime              2
+            -linewidth        .lineWidth             4
+            -min_circles      .minCircles            2
+            -max_circles      .maxCircles            10
+            -min_speed        .minSpeed              0.003
+            -max_speed        .maxSpeed              0.005
+            -harmonics        .harmonics             8
+            -timestep         .timestep              1.0
+            -divisor_poisson  .divisorPoisson        0.4
+            -size_factor_min  .sizeFactorMin         1.05
+            -size_factor_max  .sizeFactorMax         2.05
+                              .timestepCoarseFactor  1.0
+
+       Before the drawing of the figure is begun,  a  preliminary
+       calculation  of  the  path  is  done in order to scale the
+       radii of the epicycles so as to  fit  the  figure  on  the
+       screen or window.  For the sake of speed, This calculation
+       is done with a larger timestep than  the  actual  drawing.
+       The  time-step  used  is the value of the --ttiimmeesstteepp option
+       multiplied  by  the  timestepCoarseFactor  resource.   The
+
+
+
+X Version 11                27-Apr-97                           3
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       default value of 1 will almost always work fast enough and
+       so this  resource  is  not  available  as  a  command-line
+       option.
+
+UUSSEERR IINNTTEERRFFAACCEE
+       The  program  runs  mostly without user interaction.  When
+       running on the root window, no input  is  accepted.   When
+       running  in its own window, the program will exit if mouse
+       button 3  is  pressed.   If  any  other  mouse  button  is
+       pressed,  the current figure will be abandoned and another
+       will be started.
+
+HHIISSTTOORRYY
+       The geometry of epicycles was perfected by  Hipparchus  of
+       Rhodes  at  some time around 125 B.C., 185 years after the
+       birth of Aristarchus of Samos, the inventor of the  helio-
+       centric  universe  model.  Hipparchus applied epicycles to
+       the Sun and the Moon.  Ptolemy of Alexandria  went  on  to
+       apply  them to what was then the known universe, at around
+       150 A.D.  Copernicus went on to apply them to  the  helio-
+       centric  model  at the beginning of the sixteenth century.
+       Johannes Kepler discovered that the planets actually  move
+       in  elliptical  orbits  in about 1602.  The inverse-square
+       law of gravity was suggested by Boulliau in  1645.   Isaac
+       Newton's  _P_r_i_n_c_i_p_i_a _M_a_t_h_e_m_a_t_i_c_a was published in 1687, and
+       proved that Kepler's laws derived from Newtonian  gravita-
+       tion.
+
+BBUUGGSS
+       The  colour  selection  is re-done for every figure.  This
+       may generate too much network traffic for this program  to
+       work well over slow or long links.
+
+CCOOPPYYRRIIGGHHTT
+       Copyright  (C)  1998,  James Youngman.  Permission to use,
+       copy, modify, distribute, and sell this software  and  its
+       documentation  for  any  purpose is hereby granted without
+       fee, provided that the above copyright  notice  appear  in
+       all  copies  and  that both that copyright notice and this
+       permission notice appear in supporting documentation.   No
+       representations  are  made  about  the suitability of this
+       software for any purpose.  It is provided "as is"  without
+       express or implied warranty.
+
+AAUUTTHHOORR
+       James Youngman <jay@gnu.org>, April 1998.
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                27-Apr-97                           4
+
+

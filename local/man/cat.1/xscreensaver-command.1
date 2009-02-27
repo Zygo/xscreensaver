@@ -1,0 +1,264 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       xscreensaver-command - control a running xscreensaver pro-
+       cess
+
+SSYYNNOOPPSSIISS
+       xxssccrreeeennssaavveerr--ccoommmmaanndd [-help] [-demo] [-prefs]  [-activate]
+       [-deactivate] [-cycle] [-next] [-prev] [-select _n] [-exit]
+       [-restart] [-lock]  [-throttle]  [-unthrottle]  [-version]
+       [-time]
+
+DDEESSCCRRIIPPTTIIOONN
+       The   _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d   program  controls  a  running
+       _x_s_c_r_e_e_n_s_a_v_e_r process by sending it client-messages.
+
+       xxssccrreeeennssaavveerr(1) has a client-server  model:  the  xscreen-
+       saver  process is a daemon that runs in the background; it
+       is  controlled  by  other  foreground  programs  such   as
+       _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d and xxssccrreeeennssaavveerr--ddeemmoo(1).
+
+       This program, _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d, is a command-line-ori-
+       ented tool; the xxssccrreeeennssaavveerr--ddeemmoo(1).  program is a graph-
+       ical tool.
+
+OOPPTTIIOONNSS
+       _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d  accepts  the  following command-line
+       options:
+
+       --hheellpp   Prints a brief summary of command-line options.
+
+       --ddeemmoo   This just launches the  xxssccrreeeennssaavveerr--ddeemmoo(1)  pro-
+               gram, in which one can experiment with the various
+               graphics hacks available, and edit parameters.
+
+       --ddeemmoo _n_u_m_b_e_r
+               When the _-_d_e_m_o option is followed by  an  integer,
+               it  instructs  the _x_s_c_r_e_e_n_s_a_v_e_r daemon to run that
+               hack, and wait for the user  to  click  the  mouse
+               before  deactivating  (i.e., mouse motion does not
+               deactivate.)   This  is  the  mechanism  by  which
+               xxssccrreeeennssaavveerr--ddeemmoo(1)    communicates    with   the
+               xxssccrreeeennssaavveerr(1) daemon.  (The first  hack  in  the
+               list is numbered 1, not 0.)
+
+       --pprreeffss  Like  the no-argument form of _-_d_e_m_o, but brings up
+               that program's Preferences panel by default.
+
+       --aaccttiivvaattee
+               Tell xscreensaver to turn on immediately (that is,
+               blank the screen, as if the user had been idle for
+               long enough.)  The screensaver will deactivate  as
+               soon as there is any user activity, as usual.
+
+               It is useful to run this from a menu; you may wish
+
+
+
+
+X Version 11             20-Jun-99 (3.15)                       1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               to run it as
+
+                    sleep 5 ; xscreensaver-command -activate
+
+               to be sure that you have time to  take  your  hand
+               off  the  mouse  before  the screensaver comes on.
+               (Because if you  jiggle  the  mouse,  xscreensaver
+               will notice, and deactivate.)
+
+       --ddeeaaccttiivvaattee
+               If  the  screensaver  is  active  (the  screen  is
+               blanked), this command will deactivate it just  as
+               if  there had been keyboard or mouse activity.  If
+               locking is  enabled,  then  the  screensaver  will
+               prompt for a password as usual.
+
+       --ccyyccllee  If  the  screensaver  is  active  (the  screen  is
+               blanked), then stop the current graphics demo  and
+               run a new one (chosen randomly.)
+
+       --nneexxtt   This is like either _-_a_c_t_i_v_a_t_e or _-_c_y_c_l_e, depending
+               on which is  more  appropriate,  except  that  the
+               graphics  hack that will be run is the next one in
+               the list, instead of a  randomly-chosen  one.   In
+               other words, repeatedly executing -next will cause
+               the xscreensaver process to invoke  each  graphics
+               demo sequentially.  (Though using the _-_d_e_m_o option
+               is probably an easier way to accomplish that.)
+
+       --pprreevv   This is like _-_n_e_x_t, but cycles in the other direc-
+               tion.
+
+       --sseelleecctt _n_u_m_b_e_r
+               Like  _-_a_c_t_i_v_a_t_e,  but  runs the _Nth element in the
+               list of hacks.  By knowing what is in the _p_r_o_g_r_a_m_s
+               list, and in what order, you can use this to acti-
+               vate the screensaver with  a  particular  graphics
+               demo.   (The first element in the list is numbered
+               1, not 0.)
+
+       --eexxiitt   Causes the xscreensaver  process  to  exit  grace-
+               fully.   This  is  roughly the same as killing the
+               process with kkiillll(1), but it is easier, since  you
+               don't need to first figure out the pid.
+
+               WWaarrnniinngg:: never use _k_i_l_l _-_9 with _x_s_c_r_e_e_n_s_a_v_e_r while
+               the screensaver is active.  If  you  are  using  a
+               virtual root window manager, that can leave things
+               in an inconsistent state,  and  you  may  need  to
+               restart  your window manager to repair the damage.
+
+       --lloocckk   Tells the running xscreensaver process to lock the
+               screen  immediately.   This is like _-_a_c_t_i_v_a_t_e, but
+               forces locking as well, even if locking is not the
+
+
+
+X Version 11             20-Jun-99 (3.15)                       2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               default  (that  is,  even  if  xscreensaver's _l_o_c_k
+               resource is false, and  even  if  the  _l_o_c_k_T_i_m_e_o_u_t
+               resource is non-zero.)
+
+               Note that locking doesn't work unless the _x_s_c_r_e_e_n_-
+               _s_a_v_e_r process is running  as  you.   See  xxssccrreeeenn--
+               ssaavveerr(1) for details.
+
+       --tthhrroottttllee
+               Temporarily  switch  to ``blank screen'' mode, and
+               don't run any display  modes  at  all,  until  the
+               screensaver  is next de-activated.  This is useful
+               if you're using a machine remotely, and  you  find
+               that some display modes are using too much CPU.
+
+               (If  you want to do this _p_e_r_m_a_n_e_n_t_l_y, that is, you
+               want the screen saver to only blank the screen and
+               not  run  demos  at  all,  then  set  the _p_r_o_g_r_a_m_s
+               resource to an empty  list:   See  xxssccrreeeennssaavveerr(1)
+               for details.)
+
+       --uunntthhrroottttllee
+               Turn `-throttle' mode off and resume normal behav-
+               ior.
+
+       --vveerrssiioonn
+               Prints the version of xscreensaver  that  is  cur-
+               rently running on the display: that is, the actual
+               version number of the running  xscreensaver  back-
+               ground  process, rather than the version number of
+               xscreensaver-command.  (To see the version  number
+               of  _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d  itself,  use  the  _-_h_e_l_p
+               option.)
+
+       --ttiimmee   Prints the time  at  which  the  screensaver  last
+               activated  or  deactivated  (roughly, how long the
+               user has been idle or  non-idle:  but  not  quite,
+               since  it  only  tells  you when the screen became
+               blanked or un-blanked.)
+
+       --rreessttaarrtt
+               Causes the screensaver process to  exit  and  then
+               restart  with  the  same command line arguments as
+               last time.   Do  this  after  you've  changed  the
+               resource database, to cause xscreensaver to notice
+               the changes.
+
+               WWaarrnniinngg:: if you have a  _._x_s_c_r_e_e_n_s_a_v_e_r  file,  this
+               might  not  do  what  you expect.  You're probably
+               better off killing the existing xscreensaver (with
+               _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d  _-_e_x_i_t) and then launching it
+               again.
+
+               The important point is, you need to make sure that
+
+
+
+X Version 11             20-Jun-99 (3.15)                       3
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               the  xscreensaver  process  is running as you.  If
+               it's not, it won't be reading the right  _._x_s_c_r_e_e_n_-
+               _s_a_v_e_r file.
+
+DDIIAAGGNNOOSSTTIICCSS
+       If  an  error occurs while communicating with the _x_s_c_r_e_e_n_-
+       _s_a_v_e_r daemon, or if the daemon reports an error,  a  diag-
+       nostic  message  will  be  printed to stderr, and _x_s_c_r_e_e_n_-
+       _s_a_v_e_r_-_c_o_m_m_a_n_d will exit with a  non-zero  value.   If  the
+       command is accepted, an indication of this will be printed
+       to stdout, and the exit value will be zero.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the host and display number of  the  screen
+               whose saver is to be manipulated.
+
+       PPAATTHH    to   find  the  executable  to  restart  (for  the
+               _-_r_e_s_t_a_r_t command).  Note  that  this  variable  is
+               consulted  in  the environment of the _x_s_c_r_e_e_n_s_a_v_e_r
+               process, not the _x_s_c_r_e_e_n_s_a_v_e_r_-_c_o_m_m_a_n_d process.
+
+UUPPGGRRAADDEESS
+       The latest version of xxssccrreeeennssaavveerr(1)  and  related  tools
+       can always be found at http://www.jwz.org/xscreensaver/
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1) xxssccrreeeennssaavveerr--ddeemmoo(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1992, 1993, 1997, 1998, 1999 by Jamie Zawin-
+       ski.  Permission to use,  copy,  modify,  distribute,  and
+       sell  this  software and its documentation for any purpose
+       is hereby granted without fee,  provided  that  the  above
+       copyright  notice  appear in all copies and that both that
+       copyright notice and this permission notice appear in sup-
+       porting  documentation.  No representations are made about
+       the suitability of this software for any purpose.   It  is
+       provided "as is" without express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+       Please  let  me  know  if  you  find  any bugs or make any
+       improvements.
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11             20-Jun-99 (3.15)                       4
+
+

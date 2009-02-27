@@ -1,0 +1,132 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       flag - draws a waving flag, containing text or an image
+
+SSYYNNOOPPSSIISS
+       ffllaagg  [-display  _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]  [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root]  [-mono]  [-install]
+       [-visual  _v_i_s_u_a_l] [-ncolors _i_n_t_e_g_e_r] [-delay _m_i_c_r_o_s_e_c_o_n_d_s]
+       [-cycles _i_n_t_e_g_e_r] [-size _i_n_t_e_g_e_r]  [-text  _s_t_r_i_n_g]  [-font
+       _f_o_n_t] [-bitmap _x_b_m_-_f_i_l_e]
+
+
+DDEESSCCRRIIPPTTIIOONN
+       The _f_l_a_g program draws a waving flag that contains text or
+       a bitmap.
+
+OOPPTTIIOONNSS
+       _f_l_a_g accepts the following options:
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If   on  a  color  display,  pretend  we're  on  a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name  of a visual class, or the id number (decimal
+               or hex) of a specific visual.
+
+       --nnccoolloorrss _i_n_t_e_g_e_r
+               How many colors  should  be  used  (if  possible).
+               Default 200.
+
+       --ccyycclleess _i_n_t_e_g_e_r
+
+
+       --ccoouunntt _i_n_t_e_g_e_r
+
+
+       --ssiizzee _i_n_t_e_g_e_r
+               How large the pixels in the flag should be, from 1
+               to 8.  If this is a  negative  number,  the  pixel
+               size is chosen randomly from the range 1 to -size.
+               Default -7.
+
+       --tteexxtt _t_e_x_t
+               The text to display in the flag.   Multiple  lines
+               of  text  are allowed; the lines will be displayed
+               centered atop one another.  Default: none.  If the
+
+
+
+X Version 11                24-May-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               text  is  the  magic  string _"_(_d_e_f_a_u_l_t_)_", then the
+               text used will be the local machine name;  a  new-
+               line; and the local OS version.
+
+       --bbiittmmaapp _x_b_m_-_f_i_l_e
+               The bitmap to display in the flag; this must be an
+               XBM file (color XPMs are not  allowed.)   Default:
+               none.    If   the   bitmap  is  the  magic  string
+               _"_(_d_e_f_a_u_l_t_)_", then the bitmap used will be a charm-
+               ing little picture of J. R. "Bob" Dobbs.
+
+               If  neither  _-_t_e_x_t nor _-_b_i_t_m_a_p are specified, then
+               either the builtin text or the builtin bitmap will
+               be chosen randomly.
+
+       --ffoonntt _f_o_n_t
+               The font in which to draw the text; the default is
+               "-*-helvetica-bold-r-*-240-*".
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1), xxlloocckk(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1996 Charles Vidal.
+
+       Permission to use, copy, modify, and distribute this soft-
+       ware and its documentation for any purpose and without fee
+       is hereby  granted,  provided  that  the  above  copyright
+       notice  appear  in all copies and that both that copyright
+       notice and this permission  notice  appear  in  supporting
+       documentation.
+
+
+AAUUTTHHOORR
+       Charles Vidal <vidalc@univ-mlv.fr>, 1996.
+
+       Ability  to  run  standalone or with _x_s_c_r_e_e_n_s_a_v_e_r, and the
+       -text  and  -bitmap  options,  added  by  Jamie   Zawinski
+       <jwz@jwz.org>, 24-May-97.
+
+
+
+
+
+
+
+
+
+
+X Version 11                24-May-97                           2
+
+

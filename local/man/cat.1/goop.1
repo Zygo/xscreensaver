@@ -1,0 +1,132 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       goop - squishy transparent oil and bubble screenhack
+
+SSYYNNOOPPSSIISS
+       ggoooopp  [-display  _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]  [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root]  [-mono]  [-install]
+       [-visual _v_i_s_u_a_l] [-transparent] [-non-transparent] [-addi-
+       tive] [-subtractive] [-xor] [-no-xor]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _g_o_o_p program draws a simulation of bubbles  in  layers
+       of overlapping multicolored translucent fluid.
+
+OOPPTTIIOONNSS
+       _g_o_o_p accepts the following options:
+
+       --wwiinnddooww Draw  on  a  newly-created  window.   This  is the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If  on  a  color  display,  pretend  we're  on   a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name of a visual class, or the id number  (decimal
+               or hex) of a specific visual.
+
+       --ccoouunntt _i_n_t_e_g_e_r
+               How many bubbles to draw per layer.  Default: ran-
+               dom.
+
+       --llaayyeerrss _i_n_t_e_g_e_r
+               How many layers to draw.  Default:  random,  based
+               on screen depth.
+
+       --ddeellaayy _m_i_c_r_o_s_e_c_o_n_d_s
+               How  much  of a delay should be introduced between
+               steps of the animation.  Default 100000, or  about
+               1/10th second.
+
+       --ttrraannssppaarreenntt
+               If _-_l_a_y_e_r_s is greater than 1, then each layer will
+               be drawn in one color, and when they overlap,  the
+               colors will be mixed. This is the default.
+
+       --nnoonn--ttrraannssppaarreenntt
+               Turns off _-_t_r_a_n_s_p_a_r_e_n_t.
+
+
+
+
+
+X Version 11                11-Jun-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --aaddddiittiivvee
+               If  _-_t_r_a_n_s_p_a_r_e_n_t  is  specified,  then this option
+               means that the colors will be mixed using an addi-
+               tive  color  model, as if the blobs were projected
+               light.  This is the default.
+
+       --ssuubbttrraaccttiivvee
+               If _-_t_r_a_n_s_p_a_r_e_n_t is  specified,  then  this  option
+               means  that  the colors will be mixed using a sub-
+               tractive  color  model,  as  if  the  blobs   were
+               translucent filters.
+
+       --xxoorr    Draw with xor instead of the other color tricks.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to  get the name of a resource file that overrides
+               the global resources stored in  the  RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright  (C) 1997 by Jamie Zawinski.  Permission to use,
+       copy, modify, distribute, and sell this software  and  its
+       documentation  for  any  purpose is hereby granted without
+       fee, provided that the above copyright  notice  appear  in
+       all  copies  and  that both that copyright notice and this
+       permission notice appear in supporting documentation.   No
+       representations  are  made  about  the suitability of this
+       software for any purpose.  It is provided "as is"  without
+       express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 11-Jun-97.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                11-Jun-97                           2
+
+
