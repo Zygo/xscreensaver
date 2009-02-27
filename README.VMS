@@ -1,0 +1,16 @@
+All you should need to do to build the executable is type @make
+
+To run xlock a symbol needs to be defined, for example:
+ 
+XLOCK:==$H268SYSEXE:XLOCK
+ 
+where H268SYSEXE is a logical name pointing to the directory where XLOCK.EXE
+resides. The '$' after == means this is a foreign command and VMS makes the
+command line available to the program.
+
+worm may look a bit strange, since the scaling is wrong.
+
+-allowroot only works if you have SYSPRV enabled which is a bit limiting.
+
+The XLock file normally in /usr/lib/X11/app-defaults needs to be in the
+directory DECW$SYSTEM_DEFAULTS on VMS systems and be called 'DECW$XLOCK.DAT'.

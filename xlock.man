@@ -1,0 +1,434 @@
+.\" @(#)xlock.man	1.11 91/09/27; Copyright (c) 1991 - Patrick J. Naughton
+.\" xlockmore updates from David A. Bagley
+.TH XLOCK 1 "2 Sep 1994" "X11R6 Contrib"
+.SH NAME
+xlock \- Locks the local X display until a password is entered.
+
+.IX xlock#(1) "" "\fLxlock\fP(1)"
+.SH SYNOPSIS
+.B xlock
+[
+.BI \-display " dsp"
+]
+[
+.BI \-help
+]
+[
+.BI \-name "resource-name"
+]
+[
+.BI \-resources
+]
+[
+.BI -/+remote
+]
+[
+.BI -/+mono
+]
+[
+.BI -/+nolock
+]
+[
+.BI -/+allowroot
+]
+[
+.BI -/+enablesaver
+]
+[
+.BI -/+allowaccess
+]
+[
+.BI -/+echokeys
+]
+[
+.BI -/+usefirst
+]
+[
+.BI -/+v
+]
+[
+.BI -/+inwindow
+]
+[
+.BI \-delay " usecs"
+]
+[
+.BI \-batchcount " num"
+]
+[
+.BI \-nice " level"
+]
+[
+.BI \-timeout " seconds"
+]
+[
+.BI \-saturation " value"
+]
+[
+.BI \-font " fontname"
+]
+[
+.BI \-bg " color"
+]
+[
+.BI \-fg " color"
+]
+[
+.BI \-mode " mode"
+]
+[
+.BI \-username " textstring"
+]
+[
+.BI \-password " textstring"
+]
+[
+.BI \-info " textstring"
+]
+[
+.BI \-validate " textstring"
+]
+[
+.BI \-invalid " textstring"
+]
+
+.SH DESCRIPTION
+.B xlock
+locks the X server till the user enters their password at the keyboard.
+While
+.B xlock
+is running,
+all new server connections are refused.
+The screen saver is disabled.
+The mouse cursor is turned off.
+The screen is blanked and a changing pattern is put on the screen.
+If a key or a mouse button is pressed then the user is prompted for the
+password of the user who started
+.B xlock.
+
+If the correct password is typed, then the screen is unlocked and the X
+server is restored.  When typing the password Control-U and Control-H are
+active as kill and erase respectively.  To return to the locked screen,
+click in the small icon version of the changing pattern.
+
+.SH "NOTE ON ETIQUETTE"
+.I Xlock
+should not be used on public terminals when there is a high demand for them.
+
+If you find a public terminal that has been locked by another user and
+there are no other terminals available, and the terminal appears to have
+been left idle for a while (normally more than 15 minutes), it's fair to
+try to reset the session in some manner.
+
+.SH OPTIONS
+.TP 5
+.B \-display " dsp"
+The
+.I display
+option sets the X11 display to lock.
+.B xlock
+locks all available screens on a given server,
+and restricts you to locking only a local server such as
+.BI unix:0,
+.BI localhost:0,
+or
+.BI :0
+unless you set the
+.B \-remote
+option.
+.TP 5
+.B \-name " resource-name"
+.I resource-name
+is used instead of
+.B XLock
+when looking for resources to configure xlock.
+.TP 5
+.B \-mode " modename"
+As of this writing there are eight display modes supported
+(plus one more for random selection of one of the eight).
+.TP 8
+.B hop
+Hop mode shows the "real plane fractals" from the September 1986 issue of
+Scientific American.
+.TP 8
+.B life
+Life mode shows Conway's game of life.
+.TP 8
+.B qix
+Qix mode shows the spinning lines similar to the old video game
+by the same name.
+.TP 8
+.B swarm
+Swarm mode shows a swarm of bees following a wasp.
+.TP 8
+.B rotor
+Rotor mode shows a swirling rotorlike thing.
+.TP 8
+.B pyro
+Pyro mode shows fireworks.
+.TP 8
+.B flame
+Flame mode shows weird but cool cosmic flame fractals.
+.TP 8
+.B worm
+Worm mode shows wiggly worms...
+.TP 8
+.B spline
+Spline mode shows colorful moving splines, from spline fun #3.
+.TP 8
+.B maze
+Maze mode shows a random maze and a depth first search solution.
+.TP 8
+.B sphere
+Sphere mode draws a bunch of shaded spheres.
+.TP 8
+.B hyper
+Hyper mode draws a spinning tesseract in 4D space.
+.TP 8
+.B helix
+Helix mode shows string art.
+.TP 8
+.B rock
+Rock mode shows asteroid field with a twist.
+.TP 8
+.B blot
+Blot mode shows Rorschach's in blot test. (I always see a daemon,
+what does that mean?)
+.TP 8
+.B grav
+Grav mode shows orbiting planets.
+.TP 8
+.B bounce
+Bounce mode shows bouncing footballs.
+.TP 8
+.B world
+World mode makes the Earth spin.
+.TP 8
+.B rect
+Rect mode makes the stippled rectangles.
+.TP 8
+.B blank
+Blank mode shows nothing but a black screen.
+.TP 8
+.B random
+Random mode picks a random mode from all of the above except blank mode.
+
+.TP 5
+.B \-delay " usecs"
+The
+.I delay
+option sets the speed at which a mode will operate.  It simply sets the
+number of microseconds to delay between batches of "hopalong pixels",
+"qix lines", "life generations", "world blits", "swarm motions", etc.  In
+blank mode, it is important to set this to some small number of seconds,
+because the keyboard and mouse are only checked after each delay, so you
+cannot set the delay too high, but a delay of zero would needlessly
+consume cpu checking for mouse and keyboard input in a tight loop, since
+blank mode has no work to do.
+.TP 5
+.B \-batchcount " num"
+The
+.I batchcount
+option sets number of
+.I things
+to do per batch to
+.I num .
+In hop mode this refers to the number of pixels rendered in the same color.
+In life mode it is the number of generations to let each species live.
+In qix mode it is the number of lines rendered in the same color.
+In swarm mode it is the number of bees.
+In rotor mode it is the number of rotor thingys which whirr...
+In pyro mode it is the maximum number flying rockets at one time.
+In flame mode it is the number of levels to recurse (larger = more complex).
+In worm mode it is the number of worms.
+In spline mode it is the upper bound on the of points "splined".
+In maze mode it is the upper bound on the of size of the maze.
+In sphere mode it means nothing.
+In hyper mode it means nothing.
+In helix mode it means nothing.
+In rock mode it is the number of asteroids on the screen at once.
+In blot mode this refers to the number of pixels rendered in the same color.
+In grav mode it is the number of planets.
+In world mode it is the number of worlds.
+In rect mode it means nothing.
+In blank mode it means nothing.
+.TP 5
+.B \-nice " nicelevel"
+The
+.I nice
+option sets system nicelevel of the xlock process to
+.I nicelevel .
+.TP 5
+.B \-timeout " seconds"
+The
+.I timeout
+option sets the number of
+.I seconds
+before the password screen will time out.
+.TP 5
+.B \-saturation " value"
+The
+.I saturation
+option sets saturation of the color ramp used to
+.I value .
+0 is grayscale and 1 is very rich color.  0.4 is a nice pastel.
+.TP 5
+.B \-font " fontname"
+The
+.I font
+option sets the font to be used on the prompt screen.
+.TP 5
+.B \-fg " color"
+The
+.I fg
+option sets the color of the text on the password screen to
+.I color .
+.TP 5
+.B \-bg " color"
+The
+.I bg
+option sets the color of the background on the password screen to
+.I color .
+.TP 5
+.B \-username " textstring"
+.I textstring
+is shown in front of user name, defaults to "Name: ".
+.TP 5
+.B \-password " textstring"
+.I textstring
+is the password prompt string, defaults to "Password: ".
+.TP 5
+.B \-info " textstring"
+.I textstring
+is an informational message to tell the user what to do, defaults to
+"Enter password to unlock; select icon to lock.".
+.TP 5
+.BI \-validate " textstring"
+.I textstring
+.BI \-validate " message shown while validating the password, defaults to
+"Validating login..."
+.TP 5
+.BI \-invalid " textstring"
+.I textstring
+.BI \-invalid " message shown when password is invalid, defaults to
+"Invalid login."
+
+.TP 5
+.B \-resources
+The
+.I resources
+option prints the default resource file for xlock to standard output.
+.TP 5
+.B -/+remote
+The
+.I remote
+option tells xlock to not stop you from locking remote X11 servers.  This
+option should be used with care and is intended mainly to lock X11 terminals
+which cannot run
+.I xlock
+locally.  If you lock someone else's workstation, they will have to know
+.B your
+password to unlock it.
+.TP 5
+.B -/+mono
+The
+.I mono
+option causes xlock to display monochrome, (black and white) pixels rather
+than the default colored ones on color displays
+.TP 5
+.B +/-nolock
+The
+.I nolock
+option causes xlock to only draw the patterns and not lock the display.
+A keypress or a mouse click will terminate the screen saver.
+.TP 5
+.B -/+allowroot
+The
+.I allowroot
+option allows the root password to unlock the server as well as the user
+who started xlock.
+.TP 5
+.B -/+enablesaver
+By default xlock will disable the normal X server's screen saver since
+it is in effect a replacement for it.  Since it is possible to set delay
+parameters long enough to cause phosphor burn on some displays, this
+option will turn back on the default screensaver which is very careful
+to keep most of the screen black.
+.TP 5
+.B -/+allowaccess
+This option is required for servers which do not allow clients to modify
+the host access control list.  It is also useful if you need to run x
+clients on a server which is locked for some reason...  When allowaccess
+is true, the X11 server is left open for clients to attach and thus
+lowers the inherent security of this lockscreen.  A side effect of using
+this option is that if xlock is killed -KILL, the access control list is
+not lost.
+.TP 5
+.B -/+echokeys
+The
+.I echokeys
+option causes xlock to echo '?' characters for each key typed into the
+password prompt.  Some consider this a security risk, so the default is
+to not echo anything. 
+.TP 5
+.B -/+usefirst
+The
+.I usefirst
+option causes xlock to use the keystroke which got you to the password screen
+as the first character in the password.  The default is to ignore the first
+key pressed.
+.TP 5
+.B \-v
+Verbose mode, tells what options it is going to use.
+.TP 5
+.B \-inwindow
+Runs xlock in a window, so that you can inconify, move, or resize it and
+still use your screen for other stuff.  When running in a window, xlock no
+longer locks your screen, it just looks good.  It means you can now run
+multiple xlocks in different parts of your screen, but that would not be
+particularly 'nice'.
+
+.SH BUGS
+"kill -KILL
+.B xlock
+" causes the server that was locked to be unusable, since all hosts
+(including localhost) were removed from the access control list
+to lock out new X clients, and since xlock couldn't catch SIGKILL,
+it terminated before restoring the access control list.  This will
+leave the X server in a state where
+\fI"you can no longer connect to that server,
+and this operation cannot be reversed unless you reset the server."\fP
+		-From the X11R4 Xlib Documentation, Chapter 7.
+
+NCD terminals do not allow xlock to remove all the hosts from the access
+control list.  Therefore you will need to use the "-remote" and
+"-noaccess" switches.  If you happen to run without "-noaccess" on an
+NCD terminal,
+.B xlock
+won't work and you will need to reboot the terminal, or simply go into
+the SETUP menus, under 'Network Parameters', and turn off TCP/IP access
+control. 
+
+.SH SEE ALSO
+X(1), Xlib Documentation.
+.SH AUTHOR
+Maintained by:
+ David A. Bagley      (bagleyd@source.asset.com)
+ The latest version is currently at:
+ ftp.x.org in /contrib/applications/xlockmore-x.xx.tar.gz
+
+Original Author: 
+ Patrick J. Naughton	 (naughton@eng.sun.com)
+ Mailstop 21-14
+ Sun Microsystems Laboratories, Inc.
+ Mountain View, CA  94043
+ 415/336-1080
+
+.SH COPYRIGHT
+Copyright (c) 1988-91 by Patrick J. Naughton
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 

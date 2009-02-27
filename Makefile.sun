@@ -1,0 +1,83 @@
+# @(#)Makefile	1.9 91/09/27 XLOCK
+
+ICONTYPE	= sun
+
+# Set your C compiler
+#CC		= gcc
+CC		= cc
+
+# X include files
+#XINCLUDEPATH	= /usr/local/include
+#XINCLUDEPATH	= /usr/include/X11R4
+#XINCLUDEPATH	= /usr/include/X11R5
+XINCLUDEPATH	= ${OPENWINHOME}/include
+#XINCLUDEPATH	= ${MOTIFHOME}/include
+
+# X libraries
+#XLIBPATH	= /usr/local/lib
+#XLIBPATH	= /usr/lib/X11R4
+#XLIBPATH	= /usr/lib/X11R5
+XLIBPATH	= ${OPENWINHOME}/lib
+#XLIBPATH	= ${MOTIFHOME}/lib
+
+##############################################################
+ 
+INCLUDES	= -I${XINCLUDEPATH} -I.
+LIBRARIES	= -L${XLIBPATH}
+#DEFINES	= -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\" -DSTARSIZE=2
+COPT		= -O
+CFLAGS		= ${COPT} ${DEFINES} ${INCLUDES}
+LIBS		= ${LIBRARIES} -lX11 -lm
+#LIBS		= ${LIBRARIES} -lX11 -lm -lcrypt
+HDRS		= xlock.h
+SRCS		= xlock.c hsbramp.c usleep.c resource.c\
+	hopalong.c qix.c life.c blank.c\
+	swarm.c rotor.c pyro.c flame.c worm.c\
+	spline.c maze.c sphere.c hyper.c\
+	helix.c rock.c blot.c\
+	grav.c bounce.c world.c rect.c
+OBJS		=${SRCS:.c=.o}
+PROGRAM         = xlock
+VER             = ${PROGRAM}more
+
+
+all:		${OBJS}
+		${CC} -o ${PROGRAM} ${OBJS} ${LIBS}
+
+debug:	xlock
+debug:=COPT=-g -DDEBUG
+
+resource.o:=DEFINES=-DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\"
+pyro.o:=DEFINES=-DSTARSIZE=2
+
+maze.c:	mazeicon.bit
+life.c:	lifeicon.bit
+ 
+mazeicon.bit:
+	rm -f mazeicon.bit
+	ln -s mazeicon.$(ICONTYPE) mazeicon.bit
+ 
+lifeicon.bit:
+	rm -f lifeicon.bit
+	ln -s lifeicon.$(ICONTYPE) lifeicon.bit
+
+tar:
+	cd .. ; tar cvf ${VER}.tar ${VER}/* ; compress ${VER}.tar
+
+gtar:
+	cd .. ; tar cvf ${VER}.tar ${VER}/* ; gzip ${VER}.tar
+
+man:
+	nroff -man ${PROGRAM}.man | more
+
+read:
+	more README
+
+lint:
+	lint ${SRCS} -I${XINCLUDEPATH} | more
+
+clean:
+	rm -f *.o ${PROGRAM} mazeicon.bit lifeicon.bit core
+
+install:	${PROGRAM}
+	install ${PROGRAM} /usr/local/bin
