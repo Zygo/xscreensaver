@@ -1,0 +1,264 @@
+/* config.h.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+ *
+ *  The best way to set these parameters is by running the included `configure'
+ *  script.  That examines your system, and generates `config.h' from 
+ *  `config.h.in'.
+ *
+ *  If something goes very wrong, you can edit `config.h' directly, but beware
+ *  that your changes will be lost if you ever run `configure' again.
+ */
+
+
+/* *************************************************************************
+                          CONFIGURING SERVER EXTENSIONS
+   ************************************************************************* */
+
+/* Define this if you have the XReadDisplay extension (I think this is an
+   SGI-only thing; it's in <X11/extensions/readdisplay.h>.)  A few of the
+   screenhacks will take advantage of this if it's available.
+ */
+#undef HAVE_READ_DISPLAY_EXTENSION
+
+/* Define this if you have the Iris Video Library (dmedia/vl.h on SGI.)
+   A few of the screenhacks will take advantage of this if it's available.
+ */
+#undef HAVE_SGI_VIDEO
+
+/* Define this if you have the XHPDisableReset function (an HP only thing.)
+ */
+#undef HAVE_XHPDISABLERESET
+
+/*  First, some background: there are three distinct server extensions which
+ *  are useful to a screen saver program: they are XIDLE, MIT-SCREEN-SAVER, 
+ *  and SCREEN_SAVER.
+ *
+ *  The XIDLE extension resides in .../contrib/extensions/xidle/ on the X11R5
+ *  contrib tape.  This extension lets the client get accurate idle-time 
+ *  information from the X server in a potentially more reliable way than by
+ *  simply watching for keyboard and mouse activity.  However, the XIDLE 
+ *  extension has apparently not been ported to X11R6.
+ *
+ *  The SCREEN_SAVER extension is found (as far as I know) only in the SGI
+ *  X server, and it exists in all releases since (at least) Irix 5.  The
+ *  relevant header file is /usr/include/X11/extensions/XScreenSaver.h.
+ *
+ *  The similarly-named MIT-SCREEN-SAVER extension came into existence long
+ *  after the SGI SCREEN_SAVER extension was already in use, and resides in
+ *  .../contrib/extensions/screensaver/ on the X11R6 contrib tape.  It is
+ *  also found in certain recent X servers built in to NCD X terminals.
+ *
+ *     The MIT extension does basically the same thing that the XIDLE extension
+ *     does, but there are two things wrong with it: first, because of the way
+ *     the extension was designed, the `fade' option to XScreenSaver will be
+ *     uglier: just before the screen fades out, there will be an unattractive
+ *     flicker to black, because this extension blanks the screen *before*
+ *     telling us that it is time to do so.  Second, this extension is known to
+ *     be buggy; on the systems I use, it works, but some people have reported
+ *     X server crashes as a result of using it.  XScreenSaver uses this
+ *     extension rather conservatively, because when I tried to use any of its
+ *     more complicated features, I could get it to crash the server at the
+ *     drop of a hat.
+ *
+ *     In short, the MIT-SCREEN-SAVER extension is a piece of junk.  The older
+ *     SGI SCREEN_SAVER extension works great, as does XIDLE.  It would be nice
+ *     If those two existed on more systems, that is, would be adopted by the
+ *     X Consortium in favor of their inferior "not-invented-here" entry.
+ */
+
+/*  Define this if you have the XIDLE extension installed. If you have the
+ *  XIDLE extension, this is recommended.  (You have this extension if the
+ *  file /usr/include/X11/extensions/xidle.h exists.)  Turning on this flag
+ *  lets XScreenSaver work better with servers which support this extension; 
+ *  but it will still work with servers which do not suport it, so it's a good
+ *  idea to compile in support for it if you can.
+ */
+#undef HAVE_XIDLE_EXTENSION
+
+/*  Define this if you have the MIT-SCREEN-SAVER extension installed.  See the
+ *  caveats about this extension, above.  (It's available if the file
+ *  /usr/include/X11/extensions/scrnsaver.h exists.)
+ */
+#undef HAVE_MIT_SAVER_EXTENSION
+
+/*  Define this if you have the SGI SCREEN_SAVER extension.  This is standard
+ *  on Irix systems, and not available elsewhere.
+ */
+#undef HAVE_SGI_SAVER_EXTENSION
+
+/*  Define this if you have the SGI-VIDEO-CONTROL extension.  This is standard
+ *  on Irix systems, and not available elsewhere.
+ */
+#undef HAVE_SGI_VC_EXTENSION
+
+
+/* *************************************************************************
+                          CONFIGURING GRAPHICS TOOLKITS
+   ************************************************************************* */
+
+/*  Define this if you have Motif.
+ */
+#undef HAVE_MOTIF
+
+/*  Define this if you don't have Motif, but you have Athena (-Xaw).
+ */
+#undef HAVE_ATHENA
+
+/*  Define this if you have Athena, and the version you have includes the
+ *  XawViewportSetCoordinates function in Viewport.h (some old versions of
+ *  the library didn't have this function.)
+ */
+#undef HAVE_XawViewportSetCoordinates
+
+/*  Define this if you have the XPM library installed.  Some of the demos can
+ *  make use of this if it is available.
+ */
+#undef HAVE_XPM
+
+/*  Define this if you have the Xmu library.  This is standard part of X, and
+ *  if your vendor doesn't ship it, you should report that as a bug.
+ */
+#undef HAVE_XMU
+
+/*  Define this if you have OpenGL.  Some of the demos require it, so if you
+ *  don't have it, then those particular demos won't be built.  (This won't
+ *  affect the screen saver as a whole.)
+ */
+#undef HAVE_GL
+
+/*  Define this if you have GL, but it's the MesaGL variant.  (The libraries
+    have different names.)  (HAVE_GL should be defined too.)
+ */
+#undef HAVE_MESA_GL
+
+/*  Define this if you have the X Shared Memory Extension.
+ */
+#undef HAVE_XSHM_EXTENSION
+
+/*  Some screenhacks like to run an external program to generate random pieces
+    of text; set this to the one you like ("yow" and "fortune" are the most
+    likely prospects.)  Note that this is just the default; X resources can
+    be used to override it.
+ */
+#define ZIPPY_PROGRAM "fortune"
+
+
+
+/* *************************************************************************
+                       CONFIGURING PASSWORD AUTHENTICATION
+   ************************************************************************* */
+
+/* Define this to remove the option of locking the screen at all.
+ */
+#undef NO_LOCKING
+
+/*  Define this if you want to use Kerberos authentication to lock/unlock the
+ *  screen instead of your local password.  This currently uses Kerberos V4, 
+ *  but a V5 server with V4 compatibility will work.  WARNING: DO NOT USE AFS
+ *  string-to-key passwords with this option. This option currently *only* 
+ *  works with standard Kerberos des_string_to_key.  If your password is an
+ *  AFS password and not a kerberos password, it will not authenticate 
+ *  properly. See the comments in driver/kpasswd.c for more information if you
+ *  need it. 
+ */
+#undef HAVE_KERBEROS
+
+
+/*  Define this if your system uses `shadow' passwords, that is, the passwords
+ *  live in /etc/shadow instead of /etc/passwd, and one reads them with
+ *  getspnam() instead of getpwnam().  (Note that SCO systems do some random
+ *  other thing; others might as well.  See the ifdefs in driver/passwd.c if
+ *  you're having trouble related to reading passwords.)
+ */
+#undef HAVE_SHADOW_PASSWD
+
+/*  Define this if your system is Digital or SCO Unix with so-called ``Enhanced
+    Security'', that is, the passwords live in /tcb/files/auth/<x>/<xyz> 
+    instead of in /etc/passwd, and one reads them with getprpwnam() instead 
+    of getpwnam().
+ */
+#undef HAVE_ENHANCED_PASSWD
+
+/*  Define this if your system is Solaris with ``adjunct'' passwords (this is
+    the version where one gets at the passwords with getpwanam() instead of
+    getpwnam().)  I haven't tested this one, let me know if it works.
+ */
+#undef HAVE_ADJUNCT_PASSWD
+
+/*  Define this if you are running HPUX with so-called ``Secure Passwords'' 
+    (if you have /usr/include/hpsecurity.h, you probably have this.)  I
+    haven't tested this one, let me know if it works.
+ */
+#undef HAVE_HPUX_PASSWD
+
+
+/* *************************************************************************
+                            OTHER C ENVIRONMENT JUNK
+   ************************************************************************* */
+
+/* Define this to void* if you're using X11R4 or earlier.  */
+#undef XPointer
+
+/* Define if you have the nice function.  */
+#undef HAVE_NICE
+
+/* Define if you have the setpriority function.  */
+#undef HAVE_SETPRIORITY
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define as __inline if that's what the C compiler calls it.  */
+#undef inline
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef mode_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if you have the gettimeofday function.  */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define if gettimeofday requires two arguments.  */
+#undef GETTIMEOFDAY_TWO_ARGS
+
+/* Define if you have the putenv function.  */
+#undef HAVE_PUTENV
+
+/* Define if you have the select function.  */
+#undef HAVE_SELECT
+
+/* Define if you have the getcwd function.  */
+#undef HAVE_GETCWD
+
+/* Define if you have the getcwd function.  */
+#undef HAVE_GETWD
+
+/* Define if you have the uname function.  */
+#undef HAVE_UNAME
+
+/* Define if you have the fcntl function.  */
+#undef HAVE_FCNTL
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define to use sigaction() instead of signal() for SIGCHLD-related activity.
+   This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
+ */
+#undef USE_SIGACTION
