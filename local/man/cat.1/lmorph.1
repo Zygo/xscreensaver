@@ -1,0 +1,132 @@
+
+
+
+LMORPH(1)                                               LMORPH(1)
+
+
+NNAAMMEE
+       lmorph - morphing lines
+
+SSYYNNOOPPSSIISS
+       llmmoorrpphh  [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root]  [-mono]  [-install]
+       [-visual _v_i_s_u_a_l] [-points _i_n_t] [-steps _i_n_t] [-delay _u_s_e_c_s]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _l_m_o_r_p_h  program  morphs  between  simple  linedrawings
+       using bilinear interpolation.
+
+OOPPTTIIOONNSS
+       _l_m_o_r_p_h accepts the following options:
+
+       --wwiinnddooww Draw  on  a  newly-created  window.  This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If  on  a  color  display,  pretend  we're  on   a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify  which visual to use. Legal values are the
+               name of a visual class, or the id number  (decimal
+               or hex) of a specific visual.
+
+       --ppooiinnttss _i_n_t_e_g_e_r
+               Number  of points in each line drawing. Default is
+               150 points.
+
+       --sstteeppss _i_n_t_e_g_e_r
+               Interpolation steps from one drawing to the  next.
+               Default  is 0, which means a random number between
+               100 and 500.
+
+       --ddeellaayy _m_i_c_r_o_s_e_c_o_n_d_s
+               How much of a delay should be  introduced  between
+               steps of the animation.  Default 50000.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to  get the name of a resource file that overrides
+               the global resources stored in  the  RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+
+
+                        xscreensaver hack                       1
+
+
+
+
+
+LMORPH(1)                                               LMORPH(1)
+
+
+AAUUTTHHOORR
+       Sverre  H. Huseby <sverrehu@ifi.uio.no> and Glenn T. Lines
+       <gtl@si.sintef.no>, built on top of the screen saver  rou-
+       tines by Jamie Zawinski <jwz@netscape.com>.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        xscreensaver hack                       2
+
+

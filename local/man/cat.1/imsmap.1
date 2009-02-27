@@ -1,0 +1,132 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       imsmap - generate fractal maps
+
+SSYYNNOOPPSSIISS
+       iimmssmmaapp  [-display _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root]  [-mono]  [-install]
+       [-visual  _v_i_s_u_a_l] [-ncolors _i_n_t] [-delay _s_e_c_o_n_d_s] [-itera-
+       tions _i_n_t] [-mode h|s|v|random] [-cycle] [-no-cycle]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _i_m_s_m_a_p program generates map or  cloud-like  patterns.
+       It looks quite different in monochrome and color.
+
+OOPPTTIIOONNSS
+       _i_m_s_m_a_p accepts the following options:
+
+       --wwiinnddooww Draw  on  a  newly-created  window.   This  is the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If  on  a  color  display,  pretend  we're  on   a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name of a visual class, or the id number  (decimal
+               or hex) of a specific visual.
+
+       --nnccoolloorrss _i_n_t_e_g_e_r
+               How many colors to use.  Default 50.
+
+       --ddeellaayy _i_n_t_e_g_e_r
+               How long to delay between images.  Default 10 sec-
+               onds.
+
+       --iitteerraattiioonnss _i_n_t_e_g_e_r
+               A measure  of  the  resolution  of  the  resultant
+               image, from 0 to 7.  Default 7.
+
+       --mmooddee [[ hhuuee || ssaattuurraattiioonn || vvaalluuee || rraannddoomm ]]
+               The  axis upon which colors should be interpolated
+               between  the  foreground  and  background   color.
+               Default random.
+
+       --ccyyccllee
+
+       --nnoo--ccyyccllee
+               Whether  to  do  colormap  cycling.  Default is to
+               cycle.
+
+
+
+
+X Version 11                17-May-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --ccyyccllee--ddeellaayy
+               Number of microseconds between shifts of the  col-
+               ormap; default 100000, or 1/10th second.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to  get the name of a resource file that overrides
+               the global resources stored in  the  RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+AAUUTTHHOORR
+       Juergen Nickelsen <nickel@cs.tu-berlin.de>, 23-aug-92.
+
+       Hacked on by Jamie Zawinski <jwz@netscape.com>, 24-aug-92,
+       17-May-97.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                17-May-97                           2
+
+
