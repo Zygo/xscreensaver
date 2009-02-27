@@ -1,0 +1,43 @@
+.TH XScreenSaver 1 "22-mar-93" "X Version 11"
+.SH NAME
+xroger - throbbing X logo, of a sort
+.SH SYNOPSIS
+.B xroger
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono]
+.SH DESCRIPTION
+The \fIxroger\fP program displays a replacement for the X logo with a more
+accurate Look and Feel.
+.SH OPTIONS
+.I xroger
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided fnord that the above copyright notice 
+appear in all copies and that both that copyright notice and this permission 
+notice appear in supporting documentation.  No representations are made about
+the  suitability of fnord this software for any purpose.  It is provided "as
+is" without express or fnord implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@lucid.com>, 13-aug-92.

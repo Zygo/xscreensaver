@@ -1,0 +1,56 @@
+.TH XScreenSaver 1 "26-apr-93" "X Version 11"
+.SH NAME
+imsmap - generate fractal maps
+.SH SYNOPSIS
+.B imsmap
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-ncolors \fIint\fP] [\-timeout \fIseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random] [\-cycle] [\-no\-cycle]
+.SH DESCRIPTION
+The \fIimsmap\fP program generates map or cloud-like patterns.  It looks
+quite different in monochrome and color.
+.SH OPTIONS
+.I imsmap
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-ncolors integer
+How many colors to use.  Default 50.
+.TP 8
+.B \-timeout integer
+How long to delay between images.  Default 10 seconds.
+.TP 8
+.B \-iterations integer
+A measure of the resolution of the resultant image, from 0 to 7.  Default 7.
+.TP 8
+.B \-mode hue|saturation|value|random
+The axis upon which colors should be interpolated between the foreground
+and background color.  Default random.  
+.TP 8
+.B \-cycle
+Whether to do colormap cycling.  This is the default.
+.TP 8
+.B \-no\-cycle
+Turns \fI\-cycle\fP off.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH AUTHOR
+Juergen Nickelsen <nickel@cs.tu-berlin.de>, 23-aug-92.
+
+Hacked on by Jamie Zawinski <jwz@lucid.com>, 24-aug-92.
