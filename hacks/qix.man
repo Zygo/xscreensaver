@@ -1,0 +1,114 @@
+.TH XScreenSaver 1 "9-dec-92" "X Version 11"
+.SH NAME
+qix - bounce colored lines around a window
+.SH SYNOPSIS
+.B qix
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-segments \fIint\fP] [\-spread \fIpixels\fP] [\-size \fIpixels\fP] [\-count \fIint\fP] [\-color-shift \fIdegrees\fP] [\-delay \fIusecs\fP] [\-random] [\-linear] [\-solid] [\-hollow] [\-xor] [\-no\-xor] [\-transparent] [\-non\-transparent] [\-additive] [\-subtractive]
+.SH DESCRIPTION
+The \fIqix\fP program bounces a series of line segments around its window.
+This is truly the swiss army chainsaw of qix programs.  If you know of one
+with more display modes, I want to know about it.
+.SH OPTIONS
+.I qix
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-segments \fIinteger\fP
+How many line segments should be drawn.  Default 50.
+.TP 8
+.B \-spread \fIinteger\fP
+How far apart the endpoints of one segment should be from the next.
+Default 8.
+.TP 8
+.B \-size \fIinteger\fP
+The maximum distance one endpoint of a segment is allowed to be from
+the opposite end of that segment.  Default 0, meaning unlimited.
+.TP 8
+.B \-count \fIinteger\fP
+How many qixes to draw.  Default 1.
+.TP 8
+.B \-color\-shift \fIdegrees\fP
+If on a color display, the color of the line segments will cycle through
+the spectrum.  This specifies how far the hue of each segment should be
+from the next, in degrees on the HSV wheel.  Default 3.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 25000, or about 0.025 seconds.
+.TP 8
+.B \-random
+The \fIqix\fP will wander around the screen semi-randomly.  This is the
+default.
+.TP 8
+.B \-linear
+The opposite of \fI\-random\fP: the \fIqix\fP will travel in straight lines
+until it reaches a wall, and then it will bounce.
+.TP 8
+.B \-solid
+If this is specified, then the area between the line segments will be filled
+in with the appropriate color, instead of the \fIqix\fP simply being composed
+of one-pixel-wide line segments.  This option looks really good in color.
+.TP 8
+.B \-hollow
+The opposite of \fI\-solid\fP; this is the default.
+.TP 8
+.B \-xor
+If this is specified, then qix segments will be drawn and erased with xor,
+instead of being drawn in some color and erased in the background color.
+This implies \fI\-mono\fP, in that only two colors can be used.
+.TP 8
+.B \-transparent
+If this is specified, and \fI\-count\fP is greater than 1, then each qix
+will be drawn in one color, and when they overlap, the colors will be mixed.
+This only works on \fBPseudoColor\fP displays.  This looks best in
+conjuction with \fI\-solid\fP.
+.TP 8
+.B \-non\-transparent
+Turns off \fI\-transparent\fP.
+.TP 8
+.B \-additive
+If \fI\-transparent\fP is specified, then this option means that the colors
+will be mixed using an additive color model, as if the qixes were projected
+light.  This is the default.
+.TP 8
+.B \-subtractive
+If \fI\-transparent\fP is specified, then this option means that the
+colors will be mixed using a subtractive color model, as if the qixes were
+translucent filters.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.

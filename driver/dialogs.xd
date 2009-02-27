@@ -1,0 +1,569 @@
+module 'XScreenSaver'
+applicationName = 'XScreenSaver';
+generateNameC = 'dialogs.c';
+generateNameUIL = '';
+generateNameResDB = 'dialogs.ad';
+generateUidFile = '';
+generateMask = 1507557;
+useMask = 1;
+value
+object 'passwd_dialog' : XmDialogShell {
+	arguments {
+	name = 'passwdDialog';
+	XmNtitle= 'XScreenSaver';
+	XmNallowShellResize= true;
+	};
+object 'passwd_form' : XmForm {
+	arguments {
+	name = 'passwdForm';
+	XmNautoUnmanage= false;
+	};
+object 'roger_label' : XmDrawnButton {
+	arguments {
+	name = 'rogerLabel';
+	XmNwidth= 150;
+	};
+};
+object 'passwd_label1' : XmLabel {
+	arguments {
+	name = 'passwdLabel1';
+	XmNlabelString= 'XScreenSaver %s';
+	XmNalignment= 0;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'passwdLabel2';
+	XmNlabelString= 'This display is locked.';
+	XmNalignment= 0;
+	};
+};
+object 'passwd_label3' : XmLabel {
+	arguments {
+	name = 'passwdLabel3';
+	XmNlabelString= 'Please type %s\'s password to unlock it.';
+	XmNalignment= 0;
+	};
+};
+object 'passwd_text' : XmTextField {
+	arguments {
+	name = 'passwdText';
+	};
+};
+object '' : XmSeparator {
+	arguments {
+	};
+};
+object 'passwd_done' : XmPushButton {
+	arguments {
+	name = 'passwdDone';
+	XmNlabelString= 'Done';
+	};
+};
+object 'passwd_cancel' : XmPushButton {
+	arguments {
+	name = 'passwdCancel';
+	XmNlabelString= 'Cancel';
+	};
+};
+    attachments {
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 1 0 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 3 1 4;
+	XmNbottomAttachment = 3 3 4;
+	XmNtopAttachment = 1 0 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 3 1 4;
+	XmNbottomAttachment = 3 4 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 30;
+	XmNleftAttachment = 3 1 4;
+	XmNbottomAttachment = 3 5 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 3 1 4;
+	XmNbottomAttachment = 3 6 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 0;
+	XmNleftAttachment = 3 1 0;
+	XmNbottomAttachment = 3 7 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 1 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 7 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    };
+};
+};
+object 'resources_dialog' : XmDialogShell {
+	arguments {
+	name = 'resourcesDialog';
+	XmNtitle= 'XScreenSaver';
+	XmNallowShellResize= true;
+	};
+object 'resources_form' : XmForm {
+	arguments {
+	name = 'resourcesForm';
+	XmNautoUnmanage= false;
+	};
+object '' : XmLabel {
+	arguments {
+	name = 'resourcesLabel';
+	XmNlabelString= 'XScreenSaver Parameters';
+	};
+};
+object '' : XmSeparator {
+	arguments {
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'timeoutLabel';
+	XmNlabelString= 'Timeout Minutes';
+	XmNalignment= * 2;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'cycleLabel';
+	XmNlabelString= 'Cycle Seconds';
+	XmNalignment= * 2;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'fadeSecondsLabel';
+	XmNlabelString= 'Fade Seconds';
+	XmNalignment= * 2;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'fadeTicksLabel';
+	XmNlabelString= 'Fade Ticks';
+	XmNalignment= * 2;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'lockLabel';
+	XmNlabelString= 'Lock Timeout';
+	XmNalignment= * 2;
+	};
+};
+object '' : XmLabel {
+	arguments {
+	name = 'passwdLabel';
+	XmNlabelString= 'Password Timeout';
+	XmNalignment= * 2;
+	};
+};
+object 'timeout_text' : XmTextField {
+	arguments {
+	name = 'timeoutText';
+	XmNcolumns= 5;
+	};
+};
+object 'cycle_text' : XmTextField {
+	arguments {
+	name = 'cycleText';
+	XmNcolumns= 5;
+	};
+};
+object 'fade_text' : XmTextField {
+	arguments {
+	name = 'fadeSecondsText';
+	XmNcolumns= 5;
+	};
+};
+object 'ticks_text' : XmTextField {
+	arguments {
+	name = 'fadeTicksText';
+	XmNcolumns= 5;
+	};
+};
+object 'lock_time_text' : XmTextField {
+	arguments {
+	name = 'passwdText';
+	XmNcolumns= 5;
+	};
+};
+object 'passwd_time_text' : XmTextField {
+	arguments {
+	name = 'lockText';
+	XmNcolumns= 5;
+	};
+};
+object 'verbose_toggle' : XmToggleButton {
+	arguments {
+	name = 'verboseToggle';
+	XmNlabelString= 'Verbose';
+	XmNalignment= * 0;
+	};
+};
+object 'cmap_toggle' : XmToggleButton {
+	arguments {
+	name = 'cmapToggle';
+	XmNlabelString= 'Install Colormap';
+	XmNalignment= * 0;
+	};
+};
+object 'fade_toggle' : XmToggleButton {
+	arguments {
+	name = 'fadeToggle';
+	XmNlabelString= 'Fade Colormap';
+	XmNalignment= * 0;
+	};
+};
+object 'unfade_toggle' : XmToggleButton {
+	arguments {
+	name = 'unfadeToggle';
+	XmNlabelString= 'Unfade Colormap';
+	XmNalignment= * 0;
+	};
+};
+object 'lock_toggle' : XmToggleButton {
+	arguments {
+	name = 'lockToggle';
+	XmNlabelString= 'Require Password';
+	XmNalignment= * 0;
+	};
+};
+object '' : XmSeparator {
+	arguments {
+	};
+};
+object 'res_done' : XmPushButton {
+	arguments {
+	name = 'resourcesDone';
+	XmNlabelString= 'Done';
+	};
+};
+object 'res_cancel' : XmPushButton {
+	arguments {
+	name = 'resourcesCancel';
+	XmNlabelString= 'Cancel';
+	};
+};
+    attachments {
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNtopAttachment = 1 0 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 0;
+	XmNleftAttachment = 1 0 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 1 4;
+    };
+    attachment {
+	XmNrightAttachment = 3 9 4;
+	XmNleftAttachment = 1 0 20;
+	XmNbottomAttachment = 4 9;
+	XmNtopAttachment = 3 2 4;
+    };
+    attachment {
+	XmNrightAttachment = 3 10 4;
+	XmNleftAttachment = 1 0 20;
+	XmNbottomAttachment = 4 10 0;
+	XmNtopAttachment = 4 10 0;
+    };
+    attachment {
+	XmNrightAttachment = 3 11 4;
+	XmNleftAttachment = 1 0 20;
+	XmNbottomAttachment = 4 11 0;
+	XmNtopAttachment = 4 11 0;
+    };
+    attachment {
+	XmNrightAttachment = 3 12 4;
+	XmNleftAttachment = 1 0 20;
+	XmNbottomAttachment = 4 12 0;
+	XmNtopAttachment = 4 12 0;
+    };
+    attachment {
+	XmNrightAttachment = 3 13 4;
+	XmNleftAttachment = 1 0 19;
+	XmNbottomAttachment = 4 13 0;
+	XmNtopAttachment = 4 13 0;
+    };
+    attachment {
+	XmNrightAttachment = 3 14 4;
+	XmNleftAttachment = 1 0 14;
+	XmNbottomAttachment = 4 14 0;
+	XmNtopAttachment = 4 14 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 1 0 141;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 2 4;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 4 9 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 9 2;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 4 10 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 10 2;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 4 11 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 11 2;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 4 12 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 12 2;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 4 13 0;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 13 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 20;
+	XmNleftAttachment = 3 9 20;
+	XmNbottomAttachment = 4 9 0;
+	XmNtopAttachment = 3 2 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 20;
+	XmNleftAttachment = 4 15 0;
+	XmNbottomAttachment = 4 10 0;
+	XmNtopAttachment = 4 10 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 20;
+	XmNleftAttachment = 4 16 0;
+	XmNbottomAttachment = 4 11 0;
+	XmNtopAttachment = 4 11 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 20;
+	XmNleftAttachment = 4 17 0;
+	XmNbottomAttachment = 4 12 0;
+	XmNtopAttachment = 4 12 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 20;
+	XmNleftAttachment = 4 18 0;
+	XmNbottomAttachment = 4 13 0;
+	XmNtopAttachment = 4 13 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0;
+	XmNleftAttachment = 1 0;
+	XmNbottomAttachment = 3 21 4;
+	XmNtopAttachment = 3 14 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 21 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    };
+};
+};
+object 'demo_dialog' : XmDialogShell {
+	arguments {
+	name = 'demoDialog';
+	XmNtitle= 'XScreenSaver';
+	XmNmaxWidth= 500;
+	XmNallowShellResize= true;
+	};
+object 'demo_form' : XmForm {
+	arguments {
+	name = 'demoForm';
+	XmNautoUnmanage= false;
+	};
+object 'label1' : XmLabel {
+	arguments {
+	name = 'label1';
+	XmNlabelString= 'XScreenSaver %s';
+	};
+};
+object 'label2' : XmLabel {
+	arguments {
+	name = 'label2';
+	XmNlabelString= 'Copyright © 1991-1994 by Jamie Zawinski <jwz@mcom.com>';
+	};
+};
+object 'text_area' : XmScrolledList {
+	arguments {
+	name = 'textArea';
+	};
+object '' : XmScrollBar {
+	arguments {
+	name = 'ListhScrollBar';
+	};
+};
+object '' : XmScrollBar {
+	arguments {
+	name = 'ListvScrollBar';
+	};
+};
+object 'demo_list' : XmList {
+	arguments {
+	name = 'demoList';
+	XmNvisibleItemCount= 10;
+	XmNautomaticSelection= true;
+	XmNlistSizePolicy= 2;
+	};
+};
+};
+object 'text_line' : XmTextField {
+	arguments {
+	name = 'textLine';
+	};
+};
+object 'vline' : XmSeparator {
+	arguments {
+	name = 'vline';
+	};
+};
+object 'next' : XmPushButton {
+	arguments {
+	name = 'next';
+	XmNlabelString= 'Run Next';
+	};
+};
+object 'prev' : XmPushButton {
+	arguments {
+	name = 'prev';
+	XmNlabelString= 'Run Previous';
+	};
+};
+object 'edit' : XmPushButton {
+	arguments {
+	name = 'edit';
+	XmNlabelString= 'Edit Parameters';
+	};
+};
+object 'done' : XmPushButton {
+	arguments {
+	name = 'done';
+	XmNlabelString= 'Exit Demo Mode';
+	};
+};
+object 'restart' : XmPushButton {
+	arguments {
+	name = 'restart';
+	XmNlabelString= 'Restart Screen Saver';
+	};
+};
+object 'spacer' : XmLabel {
+	arguments {
+	name = 'spacer';
+	XmNlabelString= * ' ';
+	};
+};
+    attachments {
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 1 0 5;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 0 0 0;
+	XmNtopAttachment = 3 1 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 3 4 4;
+	XmNtopAttachment = 3 2 4;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 3 5 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 1 0 4;
+	XmNbottomAttachment = 3 6 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 1 0 3;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 0 0 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 6 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 4 6 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 7 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 4 7 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 8 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 4 8 0;
+    };
+    attachment {
+	XmNrightAttachment = 0 0 0;
+	XmNleftAttachment = 3 9 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 4 9 0;
+    };
+    attachment {
+	XmNrightAttachment = 1 0 4;
+	XmNleftAttachment = 3 10 4;
+	XmNbottomAttachment = 1 0 4;
+	XmNtopAttachment = 4 10 0;
+    };
+    };
+};
+};
+end module;

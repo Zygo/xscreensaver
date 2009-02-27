@@ -1,0 +1,24 @@
+/*
+ * Imakefile file for xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski.
+ *
+ * You should not need to edit this file; edit ../config.h instead.
+ *
+ */
+
+#include "../config.h"
+
+#ifdef NO_SELECT
+    DEFINES = R5ISMS -DNO_SELECT
+#else
+    DEFINES = R5ISMS
+#endif
+       SRCS = fade.c hsv.c resources.c spline.c usleep.c xroger.c \
+              grabscreen.c visual.c
+       OBJS = fade.o hsv.o resources.o spline.o usleep.o xroger.o \
+              grabscreen.o visual.o
+   TARFILES = README Imakefile ad2c $(SRCS) spline.h version.h
+
+all:: $(OBJS)
+
+echo_tarfiles:
+	@echo $(TARFILES)
