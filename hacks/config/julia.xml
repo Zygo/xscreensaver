@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="julia" _label="Julia">
+
+  <command arg="-root"/>
+
+  <!-- #### -mouse -->
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="20000" default="1000"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Iterations" _low-label="Small" _high-label="Large"
+          low="1" high="100" default="20"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <_description>
+This one draws spinning, animating (are you detecting a pattern here
+yet?)  explorations of the Julia set. You've probably seen static
+images of this fractal form before, but it's a lot of fun to watch in
+motion as well.  One interesting thing is that there is a small
+swinging dot passing in front of the image, which indicates the
+control point from which the rest of the image was generated.
+Written by Sean McCullough.
+  </_description>
+</screensaver>

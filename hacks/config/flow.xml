@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flow" _label="Flow">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="1000" default="500"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="3000"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="1000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <boolean id="rotate" _label="Rotate Around Attractor" arg-unset="-rotate false"/>
+  <boolean id="ride"   _label="Ride a Trained Bee" arg-unset="-ride false"/>
+  <boolean id="zoom"   _label="Zoom In and Out" arg-unset="-zoom false"/>
+  <boolean id="box"    _label="Show Bounding Box"  arg-unset="-box false"/>
+  <boolean id="freeze" _label="Freeze Some Bees" arg-unset="-freeze false"/>
+  <boolean id="allow2d" _label="Allow 2D Attractors" arg-unset="-allow2d false"/>
+  <boolean id="slow"   _label="Slow Bees with Antifreeze" arg-unset="-slow false"/>
+
+  <!-- #### -slow [True] -->
+
+
+  <_description>
+Another series of strange attractors: a flowing series of points,
+making strange rotational shapes.  Written by Tim Auckland.
+  </_description>
+</screensaver>

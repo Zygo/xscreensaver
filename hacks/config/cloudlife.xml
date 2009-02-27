@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cloudlife" _label="CloudLife">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-cycle-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="25000"
+          convert="invert"/>
+
+  <number id="maxage" type="slider" arg="-max-age %"
+          _label="Max Age" _low-label="Young" _high-label="Old"
+          low="2" high="200" default="64"/>
+
+  <number id="density" type="slider" arg="-initial-density %"
+          _label="Initial Density" _low-label="Low" _high-label="High"
+          low="1" high="300" default="160"/>
+
+  <number id="cellsize" type="slider" arg="-cell-size %"
+          _label="Cell Size" _low-label="Small" _high-label="Large"
+          low="1" high="20" default="3"/>
+
+  <_description>
+
+Generates cloud-like formations based on a variant of Conway's Life. The
+difference is that cells have a maximum age, after which they count as
+3 for populating the next generation.  This makes long-lived formations
+explode instead of just sitting there burning a hole in your screen.
+Written by Don Marti.
+  </_description>
+</screensaver>

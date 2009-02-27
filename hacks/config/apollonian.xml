@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="apollonian" _label="Apollonian">
+
+  <command arg="-root"/>
+
+  <boolean id="label" _label="Draw Labels" arg-unset="-no-label"/>
+
+  <boolean id="altgeom" _label="Include Alternate Geometries"
+           arg-unset="-no-altgeom"/>
+
+<!-- don't know what -count does -->
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Depth" _low-label="Shallow" _high-label="Deep"
+          low="1" high="20" default="20"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="64"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="1000000" default="1000000"
+          convert="invert"/>
+
+  <_description>
+Packs a large circle with smaller circles, demonstrating the 
+Descartes Circle Theorem.  Written by Allan R. Wilks and David Bagley.
+  </_description>
+</screensaver>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="menger" _label="Menger">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="30000"
+          convert="invert"/>
+
+  <number id="descent" type="slider" arg="-speed %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="2" high="500" default="150"
+          convert="invert"/>
+
+  <number id="depth" type="spinbutton" arg="-depth %"
+          _label="Max Depth" low="1" high="6" default="3"/>
+
+  <!-- #### -no-optimize -->
+
+  <boolean id="wander" _label="Wander" arg-unset="-no-wander"/>
+
+  <select id="rotation">
+    <option id="no"  _label="Don't Rotate" arg-set="-no-spin"/>
+    <option id="x"   _label="Rotate around X axis" arg-set="-spin X"/>
+    <option id="y"   _label="Rotate around Y axis" arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis" arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="xyz" _label="Rotate around all three axes"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This draws the three-dimensional variant of the recursive Menger
+Gasket, a cube-based fractal object analagous to the Sierpinski
+Tetrahedron.  Written by Jamie Zawinski.
+  </_description>
+</screensaver>

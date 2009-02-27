@@ -1,0 +1,19 @@
+#!/bin/sh
+# screensaver-properties-capplet --- interface to gnome-session.
+# xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+# The existence of this script in /usr/bin/ forces Gnome to use the
+# xscreensaver-demo program (instead of the lame Gnome code) to launch,
+# initialize, and configure xscreensaver.  When running in crapplet mode,
+# xscreensaver-demo accepts the same arguments that Gnome's capplet does,
+# except that "--capplet" must be the first argument.
+
+exec xscreensaver-demo --crapplet "$@"
