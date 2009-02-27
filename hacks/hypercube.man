@@ -1,0 +1,86 @@
+.TH XScreenSaver 1 "6-dec-92" "X Version 11"
+.SH NAME
+hypercube - 2d projection of a 4d object
+.SH SYNOPSIS
+.B hypercube
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-color[0-7] \fIcolor\fP] [\-xy \fIfloat\fP] [\-xz \fIfloat\fP] [\-yz \fIfloat\fP] [\-xw \fIfloat\fP] [\-yw \fIfloat\fP] [\-zw \fIfloat\fP] [\-observer-z \fIint\fP] [\-window] [\-root] [\-mono] [\-delay \fIusecs\fP]
+.SH DESCRIPTION
+The \fIhypercube\fP program displays a wireframe projection of a hypercube
+which is rotating at user-specified rates around any or all of its four axes.
+.SH OPTIONS
+.I hypercube
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 100000, or about 1/10th second.
+.TP 8
+.B \-observer-z int
+How far away the observer is from the center of the cube (the cube is one
+unit per side.)  Default 5.
+.TP 8
+.B \-color0 color
+.TP 8
+.B \-color1 color
+.TP 8
+.B \-color2 color
+.TP 8
+.B \-color3 color
+.TP 8
+.B \-color4 color
+.TP 8
+.B \-color5 color
+.TP 8
+.B \-color6 color
+.TP 8
+.B \-color7 color
+The colors used to draw the line segments bordering the eight faces of
+the cube.  Some of the faces have only two of their border-lines drawn in
+the specified color, and some have all four.
+.TP 8
+.B \-xw float
+.TP 8
+.B \-xy float
+.TP 8
+.B \-xz float
+.TP 8
+.B \-yw float
+.TP 8
+.B \-yz float
+.TP 8
+.B \-zw float
+The amount that the cube should be rotated around the specified axis at
+each frame of the animation, expressed in radians.  These should be small
+floating-point values (less than 0.05 works best.)  Default: xy=0.01,
+xz=0.005, yw=0.01.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@lucid.com>, 6-dec-92.

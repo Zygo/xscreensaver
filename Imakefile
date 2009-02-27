@@ -1,0 +1,53 @@
+/*
+ * Imakefile file for xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski.
+ *
+ * You should not need to edit this file; edit config.h instead.
+ *
+ */
+
+#include "config.h"
+
+       TARFILES = README Imakefile config.h screenblank.txt
+            TAR = gnutar
+       COMPRESS = compress
+   COMPRESS_EXT = Z
+#      COMPRESS = gzip --verbose --best
+#  COMPRESS_EXT = gz
+
+all:: utils/Makefile driver/Makefile hacks/Makefile
+	cd utils  ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
+	cd driver ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
+	cd hacks  ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+clean install install.man:: utils/Makefile driver/Makefile hacks/Makefile
+	cd utils  ; $(MAKE) $@
+	cd driver ; $(MAKE) $@
+	cd hacks  ; $(MAKE) $@
+
+Makefiles:: utils/Makefile driver/Makefile hacks/Makefile
+
+utils/Makefile: utils/Imakefile config.h
+	cd utils  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/utils
+driver/Makefile: driver/Imakefile config.h
+	cd driver ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/driver
+hacks/Makefile: hacks/Imakefile config.h
+	cd hacks  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/hacks
+
+# This really makes me sick...
+tar: utils/Makefile driver/Makefile hacks/Makefile
+	@NAME=`sed -n							    \
+  's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;  \
+  rm -f $$NAME ; ln -s . $$NAME ;					    \
+  FILES= ;								    \
+  for subdir in driver utils hacks ; do					    \
+    cd $$subdir ;							    \
+    FILES="$$FILES `make echo_tarfiles					    \
+      | grep -v '^make\['						    \
+      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
+      ` ";								    \
+    cd .. ; done ;							    \
+  echo creating tar file $${NAME}.tar.$(COMPRESS_EXT)... ;		    \
+  $(TAR) -vchf -							    \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `	    \
+   | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;			    \
+  rm $$NAME
