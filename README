@@ -1,0 +1,317 @@
+xlockmore-1.14 as of 29 September 1994, the  UNofficial version of xlock
+David A. Bagley <bagleyd@source.asset.com>
+
+
+How to build?
+
+  Check below to see if your machine is one mentioned that causes
+  problems, otherwise it should be easy.
+
+    Only if your using X11R6 then:
+        xmkmf
+	make depend
+        make
+	./xlock -mode spline
+
+    If your using X11R5 then:
+        xmkmf
+        make
+	./xlock -mode spline
+
+    If your using X11R4 then:
+        mv Imakefile Imakefile.r5
+        sed 's/^XCOMM/\/\*\*\/#/' > Imakefile < Imakefile.r5
+        xmkmf
+        make
+        ./xlock -mode spline
+ 
+    Note: if you don't have 'xmkmf' or the "Makefile" it generates
+    doesn't work well, edit Makefile.std for appropriate settings for
+    XINCLUDEPATH and XLIBPATH, then try:
+	make -f Makefile.std
+        ./xlock -mode spline
+
+
+Likely problems:
+
+  Solaris2.3 users:
+    You have a choice of
+      (1) Not using the -DSOLARIS_SHADOW switch, then NIS passwords will
+          work, but local and root passwords will not work (default).
+      (2) Using the -DSOLARIS_SHADOW switch, then local and root passwords
+          will work, but NIS passwords will not work.
+      (3) Figuring out how you can have local and NIS passwords at the
+          same time. Mail me the patches.
+  Solaris2.2 users:
+    I hear that xlock does not work?
+  Other Solaris problems:
+    With Gnu's gcc, get rid of the "-ansi" during compilation.
+    With Sun's unbundled cc, compile with a "-DSVR4" and link with
+    "-lnsl -lsocket".
+
+  ESIX users:
+    Similar to Solaris2.3.  You will need a -DSVR4 to compile.
+    chmod 440 /etc/shadow
+    if you get libX11.so.xxx not found
+      link with the static versions of the X libraries 
+    random() may be buggy use the one from GNU.
+    chmod 2755 xlock
+
+  XFree86 users:
+    Control-Alt-Backspace will defeat locking mechanism and return your
+    console back unless you put "dontzap" in your Xconfig file.
+    Control-Alt-F1 (among others) will defeat locking mechanism with
+    virtual terminals. This ain't too good, right?  If your using Linux,
+    try vlock on tsx-11.mit.edu /pub/linux/sources/usr.bin.  I hear that
+    XFree86 3.2 when it comes out MAY have a server extension for catching
+    or disabling VT switching. Any ideas in the meanwhile?
+
+  Linux users:
+    If you are using shadow passwords make sure you:
+        chown root.shadow xlock
+        chmod 2755 xlock
+    Also check that the following was done:
+        chown root.shadow /etc/shadow
+        chmod 440 /etc/shadow
+    So far, Slackware (a major Linux distribution) does NOT come with shadow
+    passwords standard.
+    If you want to install shadow passwords (be careful, it can be tricky)
+    it's on sunsite.unc.edu /pub/Linux/system/Admin.
+
+  FreeBSD users:
+    One may have to make xlock setuid root (are there any objections?).
+
+  Alpha-OSF/1 enhanced security users:
+    Compile with -DOFS1_ENH_SEC see Imakefile
+    chown auth.auth xlock
+    chmod 2755 xlock
+
+  HP users:
+    Shift-Control-Break is caught.
+
+    xlock may bomb after 1 hour (or less) when the keyboard is pressed.
+    This has been known to happen on HPUX 9.0x with HP 7xx.
+    XIO:  fatal IO error 0 (Error 0) on X server "tybalt:0.0"
+        after 269074 requests (6928 known processed) with 1 events remaining.
+
+  X-Terminals users (my heart bleeds for you):
+    To get xlock to run, run with -remote option or set XLock.remote on
+    in XLock.ad.
+  
+  VAX/VMS users:
+    All you should need to do to build the executable is type @make
+    To run xlock a symbol needs to be defined, for example:
+      XLOCK:==$H268SYSEXE:XLOCK
+    where H268SYSEXE is a logical name pointing to the directory where
+    XLOCK.EXE resides. The '$' after == means this is a foreign command and
+    VMS makes the command line available to the program.
+
+    worm may look a bit strange, since the scaling is wrong.
+    -allowroot only works if you have SYSPRV enabled which is a bit limiting.
+ 
+    The XLock file normally in /usr/lib/X11/app-defaults needs to be in the
+    directory DECW$SYSTEM_DEFAULTS on VMS systems and be called
+    'DECW$XLOCK.DAT'.
+
+  
+  If all that does not work you may need to adjust xlock.h or usleep.c
+  (and possibly xlock.c and resource.c) since these files are highly
+  implementation dependent.  If you have to make this kind of change to
+  get it working, let me know.
+
+  You may want to change the 1st line of XLock.ad "blank" to "random",
+  "life", or whatever your favorite is.
+
+
+Acknowledgements:
+
+  I did not write the original algorithms in any of the lockscreens,
+  although I did convert the new ones to run with xlock. I tried to follow
+  the original style of Patrick Naughton. Updates will just overwrite the
+  old file at ftp.x.org in directory /contrib/applications.
+  Most of the additions were "borrowed" from xscreensaver (Jamie Zawinski
+  jwz@lucid.com). At the time, I had trouble with getting it to compile so
+  I moved the "interesting" algorithms to xlock. Many of the others were
+  "borrowed" from old demos from Sun.  My favorite of this new bunch is
+  "spline", "borrowed" from Jef Poskanzer (jef@netcom.com ||
+  jef@well.sf.ca.us).
+
+  I will consider putting new ones in if (1) they are more or less public
+  domain, (2) they are neat (I am biased towards mathematically based
+  programs), and (3) I have the time.
+
+
+Recent Improvements:
+
+1.14
+  Multidisplay bug fix for rect, thanks to <epstein_caleb@jpmorgan.com>.
+  Now works on IRIX on the SGI. Thanks to <reggers@julian.uwo.ca>.
+  Now works on a NetBSD/SPARC. Thanks to Greg Earle
+    <earle@isolar.Tujunga.CA.US>.
+  Now works on a Alpha 3000/400 OSF/1 V2.0. Thanks to Udo Linauer
+    <ul@eacpc4.tuwien.ac.at>
+  "galaxy" mode was added, thanks to Hubert Feyrer
+    <hubert.feyrer@rz.uni-regensburg.de>.
+  "kaleid" mode was added, taken from the Linux version of xkaleid.
+  Removed many gcc -Wall warnings.
+  
+1.13
+  "timeelapsed" option was added.  Allows you to find out how long a
+    machine is locked so you can complain to an administrator.
+  Now may work on IRIX on the SGI. Thanks to Thomas Runge
+    <runge@egd.igd.fhg.de>
+  "bat" mode was added, thanks to Lorenzo Patocchi <patol@info.isbiel.ch>.
+  Reorganized the xlockmore directory.
+
+1.12
+  xlock now works on Linux with shadow passwords.  Special thanks to
+    H. J. Dihu <macgyver@mcs.com>
+  Reorganized the Imakefile yet again.
+
+1.11
+  Shadow passwords and DES encryption are now detected by the Imakefile.
+    Victor Langeveld <vic@mbfys.kun.nl> reorganized the Imakefile for 
+    shadow passwords and crypt.  Now should compile "right out of the
+    box" (although there are still problems on Solaris 2.3).
+  Patch to fix sudden rotation changes in rock from Yoshiaki Kasahara
+    <kasahara@csce.kyushu-u.ac.jp>.
+  Slowed down rock and rotor a little.
+
+1.10
+  R.K.Lloyd@csc.liv.ac.uk reorganized the Imakefile yet again.
+  Fixed a bug in rect.c.
+  Ditched bzero and bcopy since both are more generally available as
+    memset and memcpy.  Also removed some lint warnings.
+
+1.9
+  "rect" mode was added from xscreensaver's greynetic.
+  "helix" bug fixed.  It is now more interesting.
+  bounce.c divide by zero fixed and grav.c improvements.  Thanks to Greg
+    Bowering <greg@cs.adelaide.edu.au>.
+  grav.c, rock.c, world.c fixed so no black objects.
+
+1.8
+  Imakefile did not work with R6.  Also Solaris2.3 may use SVR4
+    instead of SYSV.  Thanks to Chris P. Ross <cross@eng.umd.edu>
+  "grav" mode was added.  Its a simplistic gravitational simulation,
+    with (currently a constant 16) solid spheres (non-renderd) of equal
+    size and mass orbiting a fixed central mass.  The sphere's orbit in
+    3 dimensions, their position and size being projected with simple
+    perspective.  Thanks to Greg Bowering <greg@cs.adelaide.edu.au>.
+  "inwindow" option was added.  Allows you to do what xlock already
+    did when DEBUG was defined.  It no longer locks your screen, but
+    allows you to run xlock as a (somewhat distracting) decoration.
+    Thanks to Greg Bowering <greg@cs.adelaide.edu.au>.
+  "bounce" mode (football) is back.
+  "world" mode was added.  Thanks to Matthew Moyle-Croft
+    <mmc@cs.adelaide.edu.au>
+  "image" mode was removed. It was very similar to world anyway.
+
+1.7
+  Added a GENeric icon (its supposed to be 2 tetrahedrons superimposed or
+    a stellated octahedron).
+  cuserid() is needed by Solaris2.3 with shadow passwords in xlock.c.
+    Thanks to Bill <benedett@gentire.com>.
+
+1.6
+  R.K.Lloyd@csc.liv.ac.uk pointed out again that gray_bits in maze.c needs
+    a type cast.
+  xlock.c defaults to "blank" to minimize cpu usage on a network.
+
+1.5
+  xlock works again on VMS (see README.VMS) thanks to Anthony Clarke
+    <Anthony.D.Clarke@Support.Hatfield.Raytheon.bae.eurokom.ie>.
+  memcpy and memset definitions for SYSV. Also there now is a switch
+    for shadow passwords thanks to <reggers@julian.uwo.ca>.
+
+1.4
+  Now works on BSD. Thanks to Victor Langeveld <vic@mbfys.kun.nl>
+  Both Victor and Alexandre Miguel <miguel@natacha.ens-cachan.fr>
+    suggested taking out the cuserid() call in xlock.c.  It seems to be
+    fine on Linux 1.0, FreeBSD, SunOS 4.1.3, and HP-UX 9.0.  For FreeBSD
+    its a necessity and the old way is is a security hole in SunOS.
+
+1.3
+  Linux port from Darren Senn's (sinster@scintilla.capitola.ca.us) xlock.
+  Fixed drand to random in helix.c
+  Fixed a memory leak in rock.c.
+
+1.2
+  SHIFT - CONTROL - BREAK on the HP is trapped. Thanks to
+  R.K.Lloyd@csc.liv.ac.uk who pointed out that this was done in xscreensaver.
+  AIXV3 and HP bugs fixed, again due to R. K. Lloyd. (My fault as usual).
+
+1.1 & 1.0
+  cp mazeicon.hp mazeicon.bit  if you prefer the hp icon for "maze".
+  cp lifeicon.hp lifeicon.bit   if you prefer the hp icon for "life"
+  took out "rint" from "worm.c" since HP's have trouble with it
+  added spline, maze, sphere, hyper, helix, rock, & blot modes.
+  fixed "xlock.h" and "usleep" for the HP.
+  got some lint warnings out of "flame".
+  changed border so it varies with size of screen on "swarm" so the
+    wasp would not be stuck in a corner when the password is entered.
+
+
+Some open problems:  (Suggestions for this would be nice)
+
+  Penrose tiling lockscreen needed.  Anyone have an algorithm out there?
+
+  Sometimes xlock runs out of colors (for example, it might happen if you
+    run xfishtank and run xlock at the same time).  A possible solution
+    seems to be to have a private colormap for each screen, then xlock
+    will not have any problem allocating new colors. Unfortunately, it
+    appears that window manager still uses the default colormap,
+    although the window uses another colormap.
+
+  For "bounce" see bounce.c
+
+  "maze" and "helix" are a bit of a kludge, they need better interrupt
+    mechanisms.  Essentially you can't stop them until they are done
+    drawing. Fortunately this is not (usually) a long time.
+
+  "sphere" is too slow (but its neat if you let it run for a while).
+
+-------------------------------------------------------------------------------
+
+Patrick J. Naughton
+
+This was the latest version of xlock (sccs version 23.21) patchlevel = 2.3
+CHANGES:
+    o added worm mode.
+    o old -name and .name changed to -username and .username.
+    o lint cast.
+    o change color allocation to allow "#ffaabb" style color names.
+    o portability bug in flame mode fixed plus some other nits.
+    o white on black on monochrome screens fixed.
+    o added -name to allow different resource files to be used.
+    o added -usefirst to allow first keystroke to be used in password.
+    o made changes to life mode to allow wraparound.
+    o made old life cells stay blue.
+    o added -resources to get default resource file.
+    o added random mode
+    o added pyro mode
+    o added flame mode.
+    o made passwords a little more secure.
+    o use effective uid to find current user.
+    o make main window managed by the wm in debug mode.
+    o some more SVR4 portability changes.
+    o resource code now looks at XUSERFILESEARCHPATH and XAPPLRESDIR.
+    o removed verbose copyright info from each file.
+
+ Copyright (c) 1988-91 by Patrick J. Naughton.
+
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose and without fee is hereby granted,
+ provided that the above copyright notice appear in all copies and that
+ both that copyright notice and this permission notice appear in
+ supporting documentation.
+
+ This file is provided AS IS with no warranties of any kind.  The author
+ shall have no liability with respect to the infringement of copyrights,
+ trade secrets or any patents by this file or any part thereof.  In no
+ event will the author be liable for any lost revenue or profits or
+ other special, indirect and consequential damages.
+
+    ______________________________________________________________________
+    Patrick J. Naughton				   email: naughton@sun.com
+    Sun Microsystems Laboratories, Inc.		   voice: (415) 336 - 1080

@@ -1,0 +1,103 @@
+I got this great blurb from the Linux version, it has been slightly edited.
+------------------------------------------------------------------------------
+Installation:
+
+Move xlock into /usr/bin/X11 (or wherever your X binaries are).
+Move XLock.ad into /usr/lib/X11/app-defaults (or wherever your application
+	defaults files are) and rename to XLock. (without the dot)
+You might want to edit the XLock application defaults file to suit your
+	personal preferences.
+Move xlock.man to /usr/man/mann/xlock.n
+
+Operation:
+
+Under X, run xlock.  The screen will clear, and some pretty animated picture
+(exactly which depends on which module is active) will appear on the screen.
+If you hit a key, then the screen will clear, and (unless you've changed
+the application defaults file that I packaged with this) you'll get a
+white screen with some graphics in the top center.  These graphics
+consist of a reduced size image of the module you were viewing, the
+name of the user who executed xlock, and password prompt field, and
+some short instructions.
+
+At this point, you can either click on the graphic to return to xlock,
+or you can type a password.  If the password is verifiable as the
+root password, or the password of the user listed above, then xlock
+will terminate.  THIS IS THE ONLY WAY TO STOP XLOCK WITHOUT SHUTTING
+DOWN THE X SERVER.  That's what makes it a lock.
+
+XLock is by no means a passive program...  It uses quite a bit of
+CPU, so don't expect to be able to do a compile in the background.
+XLock is able to nice itself to relieve this problem a bit, but it
+can only help so much.
+
+Resources:
+
+There are two sets of resources for XLock.  The first set are (what I call)
+global XLock resources, while the second set consists of module-specific
+resources.  I'll get more into modules a little further below.
+
+The global resources are:
+	XLock.mode: This sets the module.  More about this later.
+	XLock.font: This is the font used on the password entry screen.
+	XLock.background: The background color for the password entry screen.
+	XLock.foreground: The foreground color for the password entry screen.
+	XLock.username: The label for the field indicating the user name.
+	XLock.password: The label for the password prompt.
+	XLock.info: The "short instructions" to print.
+	XLock.validate: A message to display while checking the password
+	XLock.invalid: A message to display if the password is incorrect
+	XLock.nice: How much XLock should nice itself.
+	XLock.timeout: How long to wait idle at the password prompt.
+	XLock.mono: Monochrome mode (yes or no)
+	XLock.nolock: disable the lock mechanism (yes or no)
+	XLock.remote: allow remote locking (meaningless under linux)
+	XLock.allowroot: allow the root password to unlock (yes or no)
+	XLock.enablesaver: allow the system screensaver to work (yes or no)
+	XLock.allowaccess: allow other clients to connect while active
+		(meaningless under linux)
+	XLock.echokeys: Echo "?" for each password keypress (yes or no)
+	XLock.usefirst: Ignore the first character typed (yes or no)
+	XLock.verbose: Verbose mode. (yes or no)
+
+Xlock has a number of modules which it can display.  Currently, the
+modules are: hop (hopalong fractals), QIX (as in the arcade game),
+world (spining Earths), life (Conway's game of life), swarm (a wasp
+tries to escape some bees), rotor (truly strange), pyro (fireworks),
+flame (cosmic flame fractals -- my favorite), worm (crawling multi-colored
+worms), blank (just a screen blanker).  Each module has the following
+resources defined:
+
+	XLock.<module>.delay: How long to wait between draws (usec)
+	XLock.<module>.batchcount: How many draws between initializations
+	XLock.<module>.saturation: Saturation (as in HSV) of colors to use.
+
+It turns out that each module is characterized by a number of inializations,
+separated by a number of "draws".  It's a little hard to describe exactly
+what these are without showing you the source code, but let me give you
+a concrete example:
+
+	The life module initializes by clearing the screen and initializing
+	the playing field.  It then draws the playing field on the screen.
+	In each draw phase, one generation is calculated, and then drawn
+	on the screen.  After a certain number of generations, the current
+	game is thrown away, and a fresh one is started.
+
+Do-it-Yourselfers:
+
+If you want to build your own xlock, you've got two choices.
+	a) Link xlock.a against libX11.a and libm.a:
+		gcc -o xlock xlock.a -lX11 -lm
+	   This will give you a good xlock whenever you change your
+	   compiler or libraries.
+	b) Get the sources and compile them yourself.  You should use
+	   the sources that I've uploaded, because the original sources
+	   can't compiler under Linux.
+To build your own xlock.a, just make the object files, then run:
+	ar c xlock.a xlock.o hsbramp.o usleep.o resource.o hopalong.o \
+		qix.o life.o image.o blank.o swarm.o rotor.o pyro.o \
+		flame.o worm.o
+
+					Darren Senn
+					sinster@scintilla.capitola.ca.us
+					5/12/92

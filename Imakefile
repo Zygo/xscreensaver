@@ -1,0 +1,88 @@
+XCOMM @(#)Imakefile	23.9 91/09/27
+XCOMM Imakefile - xlock
+XCOMM
+
+#ifndef MathLibrary
+#define MathLibrary -lm
+#endif
+
+      BITMAPDIR = ./bitmaps
+#ifdef SunArchitecture
+XCOMM read the README
+XCOMM #if HasShadowPasswd
+XCOMM	      CCOPTIONS = -DHAS_SHADOW
+XCOMM	      CCOPTIONS = -DSOLARIS_SHADOW
+XCOMM #endif
+       ICONTYPE = sun
+#else
+#if HasShadowPasswd
+      CCOPTIONS = -DHAS_SHADOW
+      SHADOWLIB = -lshadow
+#endif
+#ifdef HPArchitecture
+      CCOPTIONS = -Aa -D_HPUX_SOURCE
+EXTRA_LIBRARIES = -lXhp11
+       ICONTYPE = hp
+#else
+#ifdef SparcArchitecture
+       ICONTYPE = sun
+#else
+XCOMM      CCOPTIONS = -DOFS1_ENH_SEC
+       ICONTYPE = gen
+XCOMM May not need this, what a great guess for a compiler flag!
+XCOMM #ifdef SGIArchitecture
+XCOMM      CCOPTIONS = -D_SGI_SOURCE
+XCOMM #endif
+#endif
+#endif
+#endif
+
+        DEFINES = -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\"
+        DEPLIBS = $(DEPXLIB)
+LOCAL_LIBRARIES = $(XLIB)
+       LINTLIBS = $(LINTXLIB)
+#if HasLibCrypt
+       CRYPTLIB = -lcrypt
+#endif
+  SYS_LIBRARIES = MathLibrary $(CRYPTLIB) $(SHADOWLIB)
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
+   INSTPGMFLAGS = -s -m 4751
+#endif
+           HDRS = xlock.h
+           SRCS = xlock.c hsbramp.c resource.c usleep.c\
+		hopalong.c qix.c life.c blank.c\
+		swarm.c rotor.c pyro.c flame.c worm.c\
+		spline.c maze.c sphere.c hyper.c\
+		helix.c rock.c blot.c\
+		grav.c bounce.c world.c rect.c\
+		bat.c galaxy.c kaleid.c
+           OBJS = xlock.o hsbramp.o resource.o usleep.o\
+		hopalong.o qix.o life.o blank.o\
+		swarm.o rotor.o pyro.o flame.o worm.o\
+		spline.o maze.o sphere.o hyper.o\
+		helix.o rock.o blot.o\
+		grav.o bounce.o world.o rect.o\
+		bat.o galaxy.o kaleid.o
+
+AllTarget(xlock)
+#if ProjectX > 5
+depend:: mazeicon.bit lifeicon.bit
+#endif
+ComplexProgramTarget(xlock)
+InstallAppDefaults(XLock)
+
+clean::
+	$(RM) mazeicon.bit lifeicon.bit
+
+#if ProjectX < 6
+maze.c: mazeicon.bit
+life.c: lifeicon.bit
+#endif
+
+mazeicon.bit:
+	$(RM) mazeicon.bit
+	$(LN) ${BITMAPDIR}/mazeicon.$(ICONTYPE) mazeicon.bit
+ 
+lifeicon.bit:
+	$(RM) lifeicon.bit
+	$(LN) ${BITMAPDIR}/lifeicon.$(ICONTYPE) lifeicon.bit
