@@ -1,0 +1,153 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "25-Jul-98" "X Version 11"
+.SH NAME
+starwars - draws a perspective text crawl, like at the beginning of the movie
+.SH SYNOPSIS
+.B starwars
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-program \fIcommand\fP]
+[\-size \fIinteger\fP ]
+[\-columns \fIinteger\fP]
+[\-wrap | \-no\-wrap]
+[\-left | \-center | \-right]
+[\-lines \fIinteger\fP]
+[\-spin \fIfloat\fP]
+[\-steps \fIinteger\fP]
+[\-delay \fIusecs\fP]
+[\-no-smooth]
+[\-no-thick]
+.SH DESCRIPTION
+The \fIstarwars\fP program runs another program to generate a stream of
+text, then animates that text receeding into the background at an angle,
+in front of a star field.
+.SH OPTIONS
+.I starwars
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-program \fIsh-command\fP
+The command to run to generate the text to display.  This option may be
+any string acceptable to /bin/sh.  The program will be run at the end of
+a pipe, and any characters that it prints to \fIstdout\fP will be printed
+on the starwars window.  If the program exits, it will be launched again
+after we have processed all the text it produced.
+
+Note that starwars is \fInot\fP a terminal emulator: programs that try to
+directly address the screen will not do what you might expect.  This
+program merely draws the characters on the screen left to right, top 
+to bottom, in perspective.  Lines (may) wrap when they reach the right 
+edge.
+
+In other words, programs like
+.BR fortune (1)
+will work, but programs like
+.BR top (1)
+won't.
+
+Some examples:
+.EX
+starwars -columns 30 -program \\
+  'wget -qO- http://webcrawler.com/cgi-bin/SearchTicker'
+starwars -columns 76 -program 'cat /usr/src/linux/README'
+starwars -program 'ping www.starwars.com'
+starwars -no-wrap -left -program 'finger @gnu.org'
+starwars -no-wrap -left -program 'ps -ef'
+.EE
+.TP 8
+.B \-size \fIinteger\fP
+How large a font to use, in points.  (Well, in some arbitrary unit 
+we're calling "points" for the sake of argument.)  The \fB\-columns\fP
+option overrides this.
+.TP 8
+.B \-columns \fIinteger\fP
+How many columns of text should be visible on the bottom line of the
+screen.  The default is 80.  This option overrides the \fB\-size\fP
+option: if you specify a number of columns, the font will be scaled
+as needed to fit.
+.TP 8
+.B \-wrap
+Word-wrap lines when they reach the rightmost column.  This is the default.
+.TP 8
+.B \-no\-wrap
+Do not word-wrap: just let the lines go off the right side of the screen.
+.TP 8
+.B \-left | \-center | \-right
+Whether to align the text flush left, centered, or flush right.
+The default is centered.
+.TP 8
+.B \-lines \fIinteger\fP
+How many lines should be allowed to be on the screen before they fall off
+the end.  The default is 125.
+.TP 8
+.B \-spin \fIfloat\fP
+The star field on the background slowly rotates.  This is how fast.
+The default is 0.03.
+.TP 8
+.B \-steps \fIinteger\fP
+How many steps should be used to scroll a single line.  The default is 35.
+If the animation looks jerky to you, increase this number.
+.TP 8
+.B \-delay \fIusecs\fP
+The delay between steps of the animation; default is 40000 (1/25th second.)
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
+.TP 8
+.B \-no\-smooth
+Turn off anti-aliasing of the lines used to draw the font.
+This will make the text blockier, but may improve performance.
+.TP 8
+.B \-no\-thick
+Turn off use of thick lines for the characters that are close to the
+foreground.  This will make the text appear unnaturally skinny, but 
+may improve performance.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1998-2001 by Jamie Zawinski and Claudio Matsuoka.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org> and Claudio Matauoka <claudio@helllabs.org>

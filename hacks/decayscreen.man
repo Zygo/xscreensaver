@@ -1,0 +1,76 @@
+.TH XScreenSaver 1 "05-Apr-1999" "X Version 11"
+.SH NAME
+decayscreen - make a screen meltdown.
+.SH SYNOPSIS
+.B decayscreen
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-mode \fImode\fP]
+.SH DESCRIPTION
+The \fIdecayscreen\fP program creates a melting effect by randomly
+shifting rectangles around the screen.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input, 
+or from a random file on disk, as indicated by 
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP, 
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
+.SH OPTIONS
+.I decayscreen
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+Slow it down.
+.TP 8
+.B \-mode \fImode\fP
+The direction in which the image should tend to slide.  Legal values are
+\fIrandom\fP (meaning pick one), \fIup\fP, \fIleft\fP, \fIright\fP, 
+\fIdown\fP, \fIupleft\fP, \fIdownleft\fP, \fIupright\fP, \fIdownright\fP, 
+\fIshuffle\fP (meaning perfer no particular direction), \fIin\fP (meaning
+move things toward the center), \fIout\fP (meaning move things away
+from the center), \fImelt\fP (meaning melt straight downward), 
+and \fIstretch\fP (meaning stretch the screen downward).
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH "SEE ALSO"
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright 1992 by Vivek Khera.  Permission to use, copy, modify, distribute, 
+and sell this software and its documentation for any purpose is hereby granted
+without fee, provided that the above copyright notice appear in all copies and
+that both that copyright notice and this permission notice appear in 
+supporting documentation.  No representations are made about the suitability
+of this software for any purpose.  It is provided "as is" without express or
+implied warranty.
+.SH AUTHOR
+Vivek Khera <khera@cs.duke.edu>, 05-Aug-93; based on code by David Wald, 1988.
+Modified by jwz, 28-Nov-97.  
+Modified by Rick Schultz <rick@skapunx.net> 05-Apr-1999.
