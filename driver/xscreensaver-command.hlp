@@ -1,0 +1,105 @@
+1 XSCREENCOMMAND 
+Control a running xscreensaver process
+
+SYNOPSIS
+
+  $ xscreencommand [-activate] [-deactivate] [-cycle] [-next] [-prev] 
+                   [-exit] [-restart] [-demo] [-lock]
+
+2 DESCRIPTION
+The xscreensaver-command program controls a running xscreensaver
+process by sending it client-messages.
+
+2 OPTIONS
+xscreencommand accepts the following options:
+
+   -activate
+Tell the screensaver to turn on immediately (that is, pretend that the 
+user been idle for long enough.)  It will turn off as soon as there is
+any user activity, as usual.
+
+It is useful to run this from a menu; you may wish to run it as
+
+  $ wait 0:00:05
+  $ xscreencommand -activate
+
+to be sure that you have time to remove your hand from the mouse before
+the screensaver comes on.
+
+   -deactivate
+Tell the screensaver to turn off, as if there had been user activity.
+If locking is enabled, then the screensaver will prompt for a password
+as usual.
+
+   -cycle
+Tell the screensaver to change which graphics hack it is running, just
+as if the ``cycle'' timer had expired.
+
+   -next
+This is like either -activate or -cycle, depending on which is
+more appropriate, except that the screenhack that will be run is the next
+one in the list of programs, instead of a randomly-chosen one.  This option
+is good for looking at a demo of each of the screensavers currently available.
+You might want to put this on a menu.
+
+   -prev
+This is like -next, but cycles in the other direction.
+
+   -demo
+Cause the screensaver to enter its interactive demo mode, if it has been
+compiled with support for it.
+
+   -lock
+Like -activate, but a password will be required before the screensaver
+turns off, even if the screensaver's lock resource is false.  The 
+display will be locked immediately even if the screensaver's lockTimeout
+resource is non-zero.
+
+   -exit
+Causes the screensaver process to exit gracefully.  This is a slightly
+safer way to kill the screensaver than by using kill.  
+
+Never use kill -9 with xscreensaver while the screensaver is
+active.  If you are using a virtual root window manager, that can leave
+things in an inconsistent state, and you may need to restart your window
+manager to repair the damage.
+
+   -restart
+Causes the screensaver process to exit and then restart with the same command
+line arguments.  This is a good way of causing the screensaver to re-read the
+resource database.
+
+If the screensaver is run from xdm(1) (that is, it is already running
+before you log in) then you may want to issue the ``restart'' command from 
+one of your startup scripts, so that the screensaver gets your resource
+settings instead of the default ones.
+
+2 ENVIRONMENT
+
+   DISPLAY
+to get the default host and display number.
+
+   PATH
+to find the executable to restart.
+
+2 BUGS
+Diagnostics are reported on the stderr of the xscreensaver
+process, not this process, so the caller of xscreencommand
+may not see the error messages.
+
+2 COPYRIGHT
+Copyright (co 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.
+
+2 VMS_PORT
+
+Patrick MOREAU - CENA/Athis-Mons - FRANCE (pmoreau@cena.dgac.fr)
+
