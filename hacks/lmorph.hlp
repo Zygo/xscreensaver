@@ -1,0 +1,54 @@
+1 LMORPH 
+Morphing lines
+
+SYNOPSIS
+
+ $ lmorph [-display host:display.screen] [-foreground color] 
+          [-background color] [-window] [-root] [-mono] [-install] 
+          [-visual visual] [-points int] [-steps int] [-delay usecs]
+
+2 DESCRIPTION
+The lmorph program morphs between simple linedrawings using bilinear
+interpolation.
+
+2 OPTIONS
+Lmorph accepts the following options:
+
+   -window
+Draw on a newly-created window. This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -install
+Install a private colormap for the window.
+
+   -visual visual
+Specify which visual to use. Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+
+   -points integer
+Number of points in each line drawing. Default is 150 points.
+
+   -steps integer
+Interpolation steps from one drawing to the next. Default is 0, which
+means a random number between 100 and 500.
+
+   -delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 50000.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 AUTHOR
+Sverre H. Huseby <sverrehu@ifi.uio.no> and Glenn T. Lines <gtl@si.sintef.no>,
+built on top of the screen saver routines by Jamie Zawinski <jwz@netscape.com>.

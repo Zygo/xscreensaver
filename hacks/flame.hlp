@@ -1,0 +1,73 @@
+1 FLAME 
+Draw weird cosmic fractals
+
+SYNOPSIS
+
+  $ flame [-display host:display.screen] [-foreground color] 
+          [-background color] [-window] [-root] [-mono] [-install] 
+          [-visual visual] [-ncolors integer] [-iterations integer] 
+          [-points integer] [-delay microseconds] [-delay2 microseconds]
+
+2 DESCRIPTION
+The flame program generates colorful fractal displays.
+
+2 OPTIONS
+Flame accepts the following options:
+ 
+   -window
+Draw on a newly-created window.  This is the default.
+ 
+   -root
+Draw on the root window.
+ 
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+ 
+   -install
+Install a private colormap for the window.
+ 
+   -visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+ 
+   -ncolors integer
+How many colors should be used (if possible).  Default 128.
+The colors used cycle through the hue, making N stops around 
+the color wheel.
+ 
+   -iterations integer
+How many fractals to generate.  Default 25.
+ 
+   -points integer
+How many pixels to draw for each fractal.  Default 10000.
+ 
+   -delay microseconds
+How long we should wait between drawing each fractal.  Default 50000,
+or about 1/20th second.
+ 
+   -delay2 microseconds
+How long we should wait before clearing the screen when each run ends.
+Default 2000000, or two seconds.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+ 
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1991 by Patrick J. Naughton
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+
+2 AUTHOR
+Scott Graves <spot@cs.cmu.edu>, 06-Jun-91.n
+
+Ability to run standalone or with xscreensaver added by 
+Jamie Zawinski <jwz@netscape.com>, 18-Oct-93.

@@ -1,0 +1,71 @@
+OpenVMS port of Xscreensavser version 1.26     December 1995
+==========================================
+
+Xscreensaver distribution can be found in 3 subdirectories:
+
+[.DRIVER]   The Xscreensaver and Xscreensaver-command programs.
+[.HACKS]    Graphic demos ,can be run either through the xscreensaver program 
+            or standalone.
+[.UTILS]    A small libraries of various utilities.
+
+All objets, libraries and exes files in [.UTILS] and [.HACKS] directories are 
+provided for VAX VMS 5.5-2 (compiled with VAX C 3.2 / Motif 1.1) or 
+VAX VMS 6.1 (compiled with DEC C 5.0/ Motif 1.2) and Alpha VMS 6.1 
+(compiled  with DEC C 5.0 / Motif 1.2). But the code in [.DRIVER] directory
+cannot compile with Motif 1.1; objs and exe files are provided for VAX VMS 6.1
+/ Motif 1.2 (compiled with VAX C 3.2 & DEC C 5.0).
+
+XSCREENSAVER 1.26 needs at least DECW/Motif 1.2 either on VAX and Alphas (to 
+have X11R5 libraries). The only module needing X11R5 is [.DRIVER]LOCK.C , if
+somebody can remove this restriction, go on !!
+
+If you wan to rebuild, you need to rebuild [.UTILS] directory first and
+re-create the object library (look at the end of COMPILE*.COM procedure).
+
+You can now rebuild the [.HACKS] directory and the [.DRIVER] directory.
+
+WARNING : before rebuilding [.HACKS], you need to correct some of DECwindows 
+bitmap files. Some files are bogus !! (they have a long line of null chars 
+at the end). These files are under SYS$COMMON:[DECW$INCLUDE.BITMAPS] directory:
+
+STIPPLE.XBM
+HLINES2.XBM
+LIGHT_GRAY.XBM
+ROOT_WEAVES.XBM
+VLINES2.XBM
+
+These files are all used by Greynetic demo.
+
+Nota: link procedure automagically select appropriate X and Motif Libraries
+(X11R4/Motif 1.1 - X11R4/Motif 1.2). Really usefull only for graphic hacks
+however ...
+
+The SETUP.COM procedure gives you a definition of all DCL foreign command
+symbols needed to run Xscreensaver and all the graphic hacks. You need to
+modify this procedure if you install these programs in another directory tree.
+
+VMS .HLP files are provied for all programms of this distribution.
+
+You can easily add new graphic demos without recompiling Xscreensaver. You just
+need to add them in resource file XSCREENSAVER.DAT. This file (originally
+present in [.DRIVER] directory ) can be installed under your SYS$LOGIN 
+directory for a per-user customization basis. You can also install it under 
+the system-wide user resource directory SYS$COMMON:[DECW$DEFAULT.USER] 
+(with (W:RE) protections). The new graphics hack must be run in root-window 
+mode to be accepted by Xscreensaver.
+
+The graphic demos are spawn into subprocess created by the system() call (in
+the Unix version the execve() call is used).
+
+The VMS passord checking programs were picked up in the Xlock distribution.
+
+Many thanks to Martin P.J. Zinser for many portability improvements to this
+port (look at XSCREEN_MARTIN.TXT for a list of changes).
+
+Thanks to Grégoire Sandré (sandre@clamart.wireline.slb.com) for a patch
+concerning FileVue X Messages.
+
+Enjoy,
+
+Patrick MOREAU - CENA/Athis-Mons - FRANCE  (pmoreau@cena.dgac.fr)
+                                           (moreau_p@decus.decus.fr)

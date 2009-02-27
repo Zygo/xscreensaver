@@ -1,0 +1,152 @@
+/*
+ * Imakefile file for xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski.
+ *
+ * You should not need to edit this file; edit ../config.h instead.
+ *
+ */
+
+#include "../config.h"
+
+/* #### If anyone ever finishes the Athena locking code, remove this. */
+#if defined(NO_MOTIF) && !defined(NO_LOCKING)
+# define NO_LOCKING
+#endif
+
+#ifdef NO_LOCKING
+# undef INSTALL_SETUID
+#endif
+
+#ifdef HAVE_XIDLE_EXTENSION
+# define XIDLE_DEF -DHAVE_XIDLE_EXTENSION
+#else
+# define XIDLE_DEF
+#endif
+
+#ifdef HAVE_SAVER_EXTENSION
+# define SAVER_DEF -DHAVE_SAVER_EXTENSION
+#else
+# define SAVER_DEF
+#endif
+
+#ifdef NO_LOCKING
+# define LOCKING_DEF -DNO_LOCKING
+#else
+# define LOCKING_DEF
+#endif
+
+#ifdef NO_SETUID
+# define SETUID_DEF -DNO_SETUID
+#else
+# define SETUID_DEF
+#endif
+
+#ifdef HAVE_SHADOW
+# define SHADOW_DEF -DHAVE_SHADOW
+#else
+# define SHADOW_DEF
+#endif
+
+#ifdef NO_MOTIF
+# define MOTIF_DEF -DNO_MOTIF
+# define MOTIF_SRC
+# define MOTIF_OBJ
+# define MOTIF_LIB
+# define MOTIF_INC
+#else
+# define MOTIF_DEF
+# define MOTIF_SRC $(DBOX_SRCS) $(UTILS)/xroger.c
+# define MOTIF_OBJ $(DBOX_OBJS) $(UTILS)/xroger.o
+# define MOTIF_LIB $(MOTIFLDOPTIONS) $(MOTIFLIBS)
+# define MOTIF_INC $(MOTIFINCLUDES)
+#endif
+
+         UTILS = ../utils
+      INCLUDES = -I$(UTILS) MOTIF_INC
+       DEFINES = SETUID_DEF XIDLE_DEF SAVER_DEF MOTIF_DEF LOCKING_DEF SHADOW_DEF R5ISMS
+     SAVERLIBS = $(XMULIB) $(XTOOLLIB) $(EXTENSIONLIB) $(XLIB) -lm
+      COMMLIBS = $(XLIB) -lm
+     UTIL_SRCS = $(UTILS)/resources.c $(UTILS)/fade.c $(UTILS)/visual.c $(UTILS)/usleep.c $(UTILS)/yarandom.c
+     UTIL_OBJS = $(UTILS)/resources.o $(UTILS)/fade.o $(UTILS)/visual.o $(UTILS)/usleep.o $(UTILS)/yarandom.o
+     DBOX_SRCS = dialogs.c demo.c
+     DBOX_OBJS = dialogs.o demo.o
+     LOCK_SRCS = lock.c
+     LOCK_OBJS = lock.o
+     SAVERSRCS = xscreensaver.c timers.c subprocs.c windows.c stderr.c
+     SAVEROBJS = xscreensaver.o timers.o subprocs.o windows.o stderr.o
+         SRCS1 = $(SAVERSRCS) MOTIF_SRC $(LOCK_SRCS) $(UTIL_SRCS)
+         OBJS1 = $(SAVEROBJS) MOTIF_OBJ $(LOCK_OBJS) $(UTIL_OBJS)
+      COMMSRCS = xscreensaver-command.c
+      COMMOBJS = xscreensaver-command.o
+         SRCS2 = $(COMMSRCS)
+         OBJS2 = $(COMMOBJS)
+           MEN = xscreensaver.man xscreensaver-command.man
+      TARFILES = README Imakefile $(SAVERSRCS) $(DBOX_SRCS) $(LOCK_SRCS) \
+                 $(COMMSRCS) xscreensaver.h XScreenSaver.ad dialogs.xd \
+                 $(MEN) .gdbinit
+
+#if defined(HPArchitecture) && !defined(NO_LOCKING)
+EXTRA_LIBRARIES = -lXhp11	/* for XHPDisableReset() */
+#endif
+
+#if defined(i386ScoArchitecture)
+        SCOLIBS = -lintl -lprot -lx -lcrypt_i
+#endif
+
+all:: xscreensaver xscreensaver-command
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+PROGRAMS = xscreensaver xscreensaver-command
+
+#ifdef INSTALL_SETUID
+#undef  InstallProgram
+#define InstallProgram(p,d) InstallProgramWithFlags(p,d,$(INSTUIDFLAGS))
+#endif
+
+ComplexProgramTarget_1(xscreensaver,MOTIF_LIB $(SAVERLIBS),$(SCOLIBS) $(HP_NULL_STR))
+
+#ifdef INSTALL_SETUID
+#undef  InstallProgram
+#define InstallProgram(p,d) InstallProgramWithFlags(p,d,$(HP_NULL_STR))
+#endif
+
+ComplexProgramTarget_2(xscreensaver-command,$(COMMLIBS),$(HP_NULL_STR))
+
+InstallAppDefaults(XScreenSaver)
+
+xscreensaver.o: XScreenSaver.ad.h $(UTILS)/version.h
+xscreensaver-command.o: $(UTILS)/version.h
+
+demo.o: $(UTILS)/version.h
+lock.o: $(UTILS)/version.h
+
+/* build this before calling makedepend */
+depend:: XScreenSaver.ad.h
+
+XScreenSaver.ad.h: XScreenSaver.ad
+	$(UTILS)/ad2c XScreenSaver.ad > XScreenSaver.ad.h
+
+clean::
+	$(RM) XScreenSaver.ad.h
+
+
+#if defined(SparcArchitecture) || defined(SGIArchitecture)
+# undef  UsePurify
+# define UsePurify
+#endif
+
+#ifdef UsePurify
+        PURIFY = purify
+ PURIFYOPTIONS = 
+
+# undef  PurifyProgramTarget
+# define PurifyProgramTarget(program,deplist,linklist)			@@\
+program.pure: deplist							@@\
+	RemoveTargetProgram($@)						@@\
+	$(CCENVSETUP) $(PURIFY) $(PURIFYOPTIONS) $(CC)			  \
+	  -o $@ $(LDOPTIONS) linklist $(EXTRA_LOAD_FLAGS)
+
+PurifyProgramTarget(xscreensaver,$(OBJS1),$(OBJS1) MOTIF_LIB $(SAVERLIBS))
+
+#endif /* Purify */

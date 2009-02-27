@@ -1,0 +1,118 @@
+1 QIX 
+Bounce colored lines around a window
+
+SYNOPSIS
+
+ $ qix [-display host:display.screen] [-foreground color] 
+       [-background color] [-window] [-root] [-mono] [-install] 
+       [-visual visual] [-segments int] [-spread pixels] [-size pixels] 
+       [-count int] [-color-shift degrees] [-delay usecs] [-random] 
+       [-linear] [-solid] [-hollow] [-xor] [-no-xor] [-transparent] 
+       [-non-transparent] [-additive] [-subtractive]
+
+2 DESCRIPTION
+The qix program bounces a series of line segments around its window.
+This is truly the swiss army chainsaw of qix programs.  If you know of one
+with more display modes, I want to know about it.
+
+2 OPTIONS
+Qix accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -install
+Install a private colormap for the window.
+
+   -visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+
+   -segments integer
+How many line segments should be drawn.  Default 50.
+
+   -spread integer
+How far apart the endpoints of one segment should be from the next.
+Default 8.
+
+   -size integer
+The maximum distance one endpoint of a segment is allowed to be from
+the opposite end of that segment.  Default 0, meaning unlimited.
+
+   -count integer
+How many qixes to draw.  Default 1.
+
+   -color-shift degrees
+If on a color display, the color of the line segments will cycle through
+the spectrum.  This specifies how far the hue of each segment should be
+from the next, in degrees on the HSV wheel.  Default 3.
+
+   -delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 25000, or about 0.025 seconds.
+
+   -random
+The qix will wander around the screen semi-randomly.  This is the
+default.
+
+   -linear
+The opposite of -random: the qix will travel in straight lines
+until it reaches a wall, and then it will bounce.
+
+   -solid
+If this is specified, then the area between the line segments will be filled
+in with the appropriate color, instead of the qix simply being composed
+of one-pixel-wide line segments.  This option looks really good in color.
+
+   -hollow
+The opposite of -solid; this is the default.
+
+   -xor
+If this is specified, then qix segments will be drawn and erased with xor,
+instead of being drawn in some color and erased in the background color.
+This implies -mono, in that only two colors can be used.
+
+   -transparent
+If this is specified, and -count is greater than 1, then each qix
+will be drawn in one color, and when they overlap, the colors will be mixed.
+This only works on \fBPseudoColor displays.  This looks best in
+conjuction with -solid.
+
+   -non-transparent
+Turns off -transparent.
+
+   -additive
+If -transparent is specified, then this option means that the colors
+will be mixed using an additive color model, as if the qixes were projected
+light.  This is the default.
+
+   -subtractive
+If -transparent is specified, then this option means that the
+colors will be mixed using a subtractive color model, as if the qixes were
+translucent filters.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 13-aug-92.

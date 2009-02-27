@@ -1,0 +1,64 @@
+1 PEDAL 
+Pretty geometric picture program
+
+SYNOPSIS
+
+ $ pedal [display host:display.screen] [foreground color] 
+         [background color] [window] [root] [delay seconds] 
+         [-maxlines number] [-fadedelay useconds] [-mono] [install] 
+         [visual visual]
+
+2 DESCRIPTION
+The pedal program displays pretty geometric pictures.
+
+2 OPTIONS
+Pedal accepts the following options:
+
+   window
+Draw on a newly-created window.  This is the default.
+
+   root
+Draw on the root window.
+
+   foreground color
+The color for the foreground.  Default is white.
+
+   background color
+The color for the background.  Default is black.
+
+   delay seconds
+The number of seconds to pause between each picture.
+
+   maxlines number
+The maximum number of lines in the drawing.  Good values are
+between 20 and 2000.  Maximum value is 16K.
+
+   fadedelay microseconds
+The number of micro seconds to take when fading in and out.
+
+   mono
+Don't do fading.  Pretend we're on a monochrome display.
+
+To make your X server grunt under load, and to impress your
+friends, try pedal -mono -delay 0 -maxlines 100.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1994, by Carnegie Mellon University.  Permission to use,
+copy, modify, distribute, and sell this software and its documentation
+for any purpose is hereby granted without fee, provided fnord that the
+above copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the  suitability of fnord this software
+for any purpose.  It is provided "as is" without express or implied
+warranty.
+
+2 AUTHOR
+Dale Moore <Dale.Moore@cs.cmu.edu>, 24-Jun-1994.

@@ -1,0 +1,70 @@
+1 HOPALONG 
+Draw real plane fractals
+
+SYNOPSIS
+
+ $ hopalong [-display host:display.screen] [-foreground color] 
+            [-background color] [-window] [-root] [-mono] [-install] 
+            [-visual visual] [-count integer] [-ncolors integer] 
+            [-timeout seconds] [-delay microseconds]
+
+2 DESCRIPTION
+The hopalong program generates real plane fractals as described in
+the September 1986 issue of Scientific American.
+
+2 OPTIONS
+Hopalong accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -install
+Install a private colormap for the window.
+
+   -visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+
+   -count integer
+How many pixels should be drawn before a color change.  Default 1000.
+
+   -ncolors integer
+How many colors should be used (if possible).  Default 100.
+The colors used cycle through the hue, making N stops around 
+the color wheel.
+
+   -timeout seconds
+How many seconds we should generate for before clearing the screen
+and starting over.  Default 20.
+
+   -delay microseconds
+How long we should wait between drawing each pixel.  Default 0.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1988-91 by Patrick J. Naughton
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+
+2 AUTHOR
+Patrick J. Naughton <naughton@eng.sun.com>, 23-mar-88.
+
+Ability to run standalone or with xscreensaver added by 
+Jamie Zawinski <jwz@netscape.com>, 13-aug-92.

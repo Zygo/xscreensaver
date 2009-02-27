@@ -1,0 +1,169 @@
+Hello Patrick!
+
+	Just looked at the Xscreensaver-program you ported
+
+
+In the utils-subdir:
+
+ grabscreen.c 
+
+Add a 
+
+#ifdef VMS
+# include <signal.h>
+#endif
+
+at the beginning of the file to get the function prototype for sleep.
+
+ strings.c
+
+Add a 
+
+#include <string.h>  
+
+at the beginning of the file to get various function prototypes right.
+
+In the driver subdirectory:
+
+Remove all the defines from the compile*.com files.
+VMS gets defined anyhow and the redefinition of the macros already defined in config.h
+produce nasty messages during compilation.
+
+ demo.c 
+
+add at line  539     
+ 
+ void (*notice_events_timer_ptr)() = notice_events_timer;
+
+and change line 561 to 
+
+         XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer_ptr,
+
+ lock.c 
+
+Change to
+ 
+#ifndef VMS
+#include <pwd.h>
+#else
+#include "pwd.h"
+extern char *getenv();
+extern int validate_user(char *name, char *password);
+extern void ungrab_keyboard_and_mouse P((void));
+#endif
+
+ to get the function prototypes for validate_user and ungrab_keyboard_and_mouse.
+
+ subprocs.c
+
+#include "config.h"
+
+to pick up the no_setuid macro.
+
+
+
+In the ifndef VMS-part add 
+
+#include <unixio.h>  /* to pickup close */
+#include <unixlib.h>  /* to pickup getpid */
+
+remove there  
+
+#include "resource.h"
+
+since this only causes troubles with undefined structures.
+
+ 
+ visual.c
+
+#ifdef VMS
+#include <string.h> /*to pick up strcmp*/
+#endif 
+
+ windows.c
+
+#ifdef VMS
+#include <unixlib.h> /*to pick up getpid*/
+#endif
+
+ xscreensaver.c 
+
+add
+
+#ifdef VMS
+#include <signal.h>     /*for sleep*/
+#include <unixlib.h>    /*for getpid*/
+#endif
+
+add 
+  void (*notice_events_timer_ptr)() = notice_events_timer;
+  void (*activate_lock_timer_ptr)() = activate_lock_timer;
+ 
+at the beginning of the demo_mode function and change the subsequent 
+XtAppAddTimeOut invocations to use the pointer instead of the function
+
+	    cycle_id = XtAppAddTimeOut (app, cycle, cycle_timer_ptr, 0);
+
+	    lock_id = XtAppAddTimeOut (app,lock_timeout,
+				       activate_lock_timer_ptr,0);
+
+
+chane the definition of now in timestring to
+ 
+  const time_t now = time ((time_t *) 0);
+
+to keep the subseqent ctime happy.
+
+ getpwnam.c 
+
+#include <string.h>
+#include <stdlib.h>
+#include <starlet.h>
+
+ make explicit casts to unsigned long in ItemList structure.
+
+ hpwd.c
+
+Add 
+
+#include <starlet.h>
+#include <string.h>
+
+ to get the sys$... and strlen function prototypes.
+Change sys$getsyiw to lowercase.
+make VMS_VERSION a static char
+
+ validate.c
+
+Add a 
+
+#ifdef VMS
+#include <string.h>  
+#include "vmsutil.h"
+int hash_vms_password(char *output_buf,char *input_buf,int input_length,
+                      char *username,int encryption_type,unsigned short salt);
+#endif
+
+at the beginning of the file to get strlen, bcmp and hash_vms_password 
+function prototypes right.
+
+In the hacks subdir:
+
+screenhack.h
+
+add
+
+#include <math.h>
+#include <signal.h> 
+#include <unixlib.h>
+char *index(char *string, char *c);
+
+to the VMS specific part (it is needed e.g. for sin, sleep, getpid)
+
+Change '\n' to (char *)'\n' to stick to the function prototype.
+
+ In noseguy.c
+
+#ifndef VMS'd the from_program case since this uses popen and pclose and 
+if we ever enter there the program will bomb anyhow.
+

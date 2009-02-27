@@ -1,0 +1,68 @@
+.TH XScreenSaver 1 "3-dec-92" "X Version 11"
+.SH NAME
+slidescreen - permute the screen image like an 8-puzzle
+.SH SYNOPSIS
+.B slidescreen
+[\-display \fIhost:display.screen\fP] [\-background \fIcolor\fP] [\-grid-size \fIpixels\fP] [\-ibw \fIpixels\fP] [\-increment \fIpixels\fP] [\-delay \fIusecs\fP] [\-delay2 \fIusecs\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+.SH DESCRIPTION
+The \fIslidescreen\fP program takes an image of the screen, divides it into
+a grid, deletes a random square of that grid, and then randomly slides 
+one of the neighbors of this "hole" into the hole (and repeat.)
+.SH OPTIONS
+.I slidescreen
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-grid-size \fIpixels\fP
+The size of the grid cells.  Default 70 pixels.
+.TP 8
+.B \-ibw \fIpixels\fP
+The size of the "gutter" between grid cells.  Default 1 pixel.
+.TP 8
+.B \-increment \fIpixels\fP
+How many pixels by which a piece should be moved when sliding to a new 
+location.  Default 10 pixels.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation of
+the motion of each segment.  Default 50000, which is 0.05 seconds.  This
+is closely related to the \fI\-increment\fP parameter.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between the end of the motion of
+one segment and the beginning of the motion of another.  Default 1000000,
+which isone second.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 3-dec-92.

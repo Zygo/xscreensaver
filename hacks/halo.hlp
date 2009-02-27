@@ -1,0 +1,70 @@
+1 HALO 
+Draw circular patterns
+
+SYNOPSIS
+
+ $ halo [-display host:display.screen] [-foreground color] 
+        [-background color] [-window] [-root] [-mono] [-install] 
+        [-visual visual] [-count int] [-delay usecs] 
+        [-mode seuss | ramp | random ] [-animate]
+
+2 DESCRIPTION
+The halo program draws cool patterns based on circles.
+
+2 OPTIONS
+Halo accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -install
+Install a private colormap for the window.
+
+   -visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+
+   -count integer
+How many circles to draw.  Default 0, meaning random.
+
+   -mode "seuss | ramp | random"
+In seuss mode, alternating striped curves will be drawn.
+
+In ramp mode, a color ramp will be drawn.
+
+random means pick the mode randomly.
+
+   -delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 100000, or about 0.1 second.
+
+   -animate
+If specified, then the centerpoints of the circles will bounce around.
+Otherwise, the circles will be drawn once, erased, and a new set of
+circles will be drawn.
+
+2 ENVIRONMENT
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 6-jul-93.

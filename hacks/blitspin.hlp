@@ -1,0 +1,80 @@
+1 BLITSPIN 
+Rotate a bitmap in an interesting way
+
+SYNOPSIS
+
+  $ blitspin [-display host:display.screen] [-foreground color] 
+             [-background color] [-window] [-root] [-mono] [-install] 
+             [-visual visual] [-bitmap filename] [-delay usecs] 
+             [-delay2 usecs]
+
+2 DESCRIPTION
+The blitspin program repeatedly rotates a bitmap by 90 degrees by
+using logical operations: the bitmap is divided into quadrants, and the
+quadrants are shifted clockwise.  Then the same thing is done again with
+progressively smaller quadrants, except that all sub-quadrants of a 
+given size are rotated in parallel.  So this takes O(16*log2(N)) 
+blits of size NxN, with the limitation that the image must be square,
+and the size must be a power of 2.
+
+2 OPTIONS
+Blitspin accepts the following options:
+ 
+   -window
+Draw on a newly-created window.  This is the default.
+ 
+   -root
+Draw on the root window.
+ 
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+ 
+   -install
+Install a private colormap for the window.
+ 
+   -visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+ 
+   -bitmap filename
+The file name of a bitmap to rotate.  It need not be square: it 
+will be padded with the background color.  If unspecified or the
+string (default), a builtin bitmap is used.
+
+If support for the XPM library was enabled at compile-time, 
+the specified file may be in XPM format as well as XBM, and 
+thus may be a color image.
+
+The *bitmapFilePath resource will be searched if the bitmap
+name is not a fully-qualified pathname.
+ 
+   -delay microseconds
+How long to delay between steps of the rotation process, in microseconds.
+Default is 500000, one-half second.
+ 
+   -delay2 microseconds
+How long to delay between each 90-degree rotation, in microseconds.
+Default is 500000, one-half second.
+
+    DISPLAY
+to get the default host and display number.
+
+2 ENVIRONMENT
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (c) 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 17-aug-92.
+
+Based on SmallTalk code which appeared in the August 1981 issue of Byte
+magazine.
