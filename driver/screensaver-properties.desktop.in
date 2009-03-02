@@ -1,7 +1,9 @@
 [Desktop Entry]
 Exec=xscreensaver-demo --crapplet
+TryExec=xscreensaver-demo
 Icon=xscreensaver.xpm
 Terminal=0
 _Name=Screensaver
 _Comment=Configure the settings of the screensaver.
 Type=Application
+Categories=Applications;Settings;

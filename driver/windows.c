@@ -1518,7 +1518,7 @@ mouse_screen (saver_info *si)
                              &root_x, &root_y, &win_x, &win_y, &mask))
             {
               if (p->verbose_p)
-                fprintf (stderr, "%s: mouse is on screen %d\n",
+                fprintf (stderr, "%s: mouse is on screen %d of %d\n",
                          blurb(), i, si->nscreens);
               return i;
             }

@@ -47,6 +47,8 @@
 # define HACK_INIT						init_planet
 # define HACK_DRAW						draw_planet
 # define HACK_RESHAPE					reshape_planet
+# define HACK_HANDLE_EVENT				planet_handle_event
+# define EVENT_MASK						PointerMotionMask
 # define planet_opts					xlockmore_opts
 #define DEFAULTS	"*delay:			15000   \n"	\
 					"*showFPS:			False   \n" \
@@ -87,6 +89,7 @@
 #define DEF_TEXTURE "True"
 #define DEF_STARS   "True"
 #define DEF_LIGHT   "True"
+#define DEF_RESOLUTION "64"
 #define DEF_IMAGE   "BUILTIN"
 
 #undef countof
@@ -99,6 +102,8 @@ static int do_texture;
 static int do_stars;
 static int do_light;
 static char *which_image;
+static int resolution;
+
 static XrmOptionDescRec opts[] = {
   {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "true" },
   {"+rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "false" },
@@ -113,6 +118,7 @@ static XrmOptionDescRec opts[] = {
   {"-light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "true" },
   {"+light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "false" },
   {"-image",   ".glplanet.image",  XrmoptionSepArg, (caddr_t) 0 },
+  {"-resolution", ".glplanet.resolution", XrmoptionSepArg, (caddr_t) 0 },
 };
 
 static argtype vars[] = {
@@ -123,6 +129,7 @@ static argtype vars[] = {
   {(caddr_t *) &do_stars,  "stars", "Stars", DEF_STARS, t_Bool},
   {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
   {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {(caddr_t *) &resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
 };
 
 ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -137,6 +144,8 @@ ModStruct   planet_description =
 
 #include "../images/earth.xpm"
 #include "xpm-ximage.h"
+#include "rotator.h"
+#include "gltrackball.h"
 
 
 /*-
@@ -146,8 +155,6 @@ ModStruct   planet_description =
  */
 
 #define NUM_STARS 1000
-#define SLICES 32
-#define STACKS 32
 
 /* radius of the sphere- fairly arbitrary */
 #define RADIUS 4
@@ -164,17 +171,12 @@ typedef struct {
   int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
-
   XColor fg, bg;
-
-  GLfloat tx, ty, tz;
-  GLfloat dtx, dty, dtz;
-  GLfloat xpos, ypos, zpos;
-  GLfloat dx, dy, dz;
-  GLfloat box_width, box_height, box_depth;
-
   GLfloat sunpos[4];
-
+  double z;
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
 } planetstruct;
 
 
@@ -206,11 +208,13 @@ setup_xpm_texture (ModeInfo *mi, char **xpm_data)
 {
   XImage *image = xpm_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
                                   MI_COLORMAP (mi), xpm_data);
+  char buf[1024];
   clear_gl_error();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                image->width, image->height, 0,
                GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-  check_gl_error("texture");
+  sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
+  check_gl_error(buf);
 
   /* setup parameters for texturing */
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -227,6 +231,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
 {
   Display *dpy = mi->dpy;
   Visual *visual = mi->xgwa.visual;
+  char buf[1024];
 
   Colormap cmap = mi->xgwa.colormap;
   XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
@@ -235,7 +240,9 @@ setup_file_texture (ModeInfo *mi, char *filename)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                image->width, image->height, 0,
                GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-  check_gl_error("texture");
+  sprintf (buf, "texture: %.100s (%dx%d)",
+           filename, image->width, image->height);
+  check_gl_error(buf);
 
   /* setup parameters for texturing */
   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
@@ -264,6 +271,11 @@ setup_texture(ModeInfo * mi)
 	setup_file_texture (mi, which_image);
 
   check_gl_error("texture initialization");
+
+  /* Need to flip the texture top for bottom for some reason. */
+  glMatrixMode (GL_TEXTURE);
+  glScalef (1, -1, 1);
+  glMatrixMode (GL_MODELVIEW);
 }
 
 
@@ -380,7 +392,7 @@ init_sun (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-  GLfloat lamb[4] = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat lamb[4] = { 0.1, 0.1, 0.1, 1.0 };
   GLfloat ldif[4] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat spec[4] = { 1.0, 1.0, 1.0, 1.0 };
 
@@ -389,10 +401,18 @@ init_sun (ModeInfo * mi)
   GLfloat mpec[4] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat shiny = .4;
 
-  gp->sunpos[0] =  1.00 - frand(2.00);
-  gp->sunpos[1] =  0.25 - frand(0.50);
-  gp->sunpos[2] = -1.00;
-  gp->sunpos[3] =  0.00;
+  {
+    double h =  0.1 + frand(0.8);   /* east-west position - screen-side. */
+    double v = -0.3 + frand(0.6);   /* north-south position */
+
+    if (h > 0.3 && h < 0.8)         /* avoid having the sun at the camera */
+      h += (h > 0.5 ? 0.2 : -0.2);
+
+    gp->sunpos[0] = cos(h * M_PI);
+    gp->sunpos[1] = sin(h * M_PI);
+    gp->sunpos[2] = sin(v * M_PI);
+    gp->sunpos[3] =  0.00;
+  }
 
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -421,6 +441,7 @@ init_sun (ModeInfo * mi)
 static void
 pick_velocity (ModeInfo * mi)
 {
+#if 0
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
   gp->box_width =  15.0;
@@ -438,42 +459,7 @@ pick_velocity (ModeInfo * mi)
   gp->dx = (frand(0.2) + frand(0.2)) * RANDSIGN();
   gp->dy = (frand(0.2) + frand(0.2)) * RANDSIGN();
   gp->dz = (frand(0.2) + frand(0.2)) * RANDSIGN();
-}
-
-
-static void
-rotate_and_move (ModeInfo * mi)
-{
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
-
-  if (do_roll)
-	{
-	  gp->tx += gp->dtx;
-	  while (gp->tx < 0)   gp->tx += 360;
-	  while (gp->tx > 360) gp->tx -= 360;
-
-	  gp->ty += gp->dty;
-	  while (gp->ty < 0)   gp->ty += 360;
-	  while (gp->ty > 360) gp->ty -= 360;
-	}
-
-  if (do_rotate)
-	{
-	  gp->tz += gp->dtz;
-	  while (gp->tz < 0)   gp->tz += 360;
-	  while (gp->tz > 360) gp->tz -= 360;
-	}
-
-  if (do_wander)
-	{
-      static int frame = 0;
-#     define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-      gp->xpos = SINOID(0.031, gp->box_width);
-      gp->ypos = SINOID(0.023, gp->box_height);
-      gp->zpos = SINOID(0.017, gp->box_depth);
-      frame++;
-	}
+#endif
 }
 
 
@@ -491,6 +477,39 @@ reshape_planet (ModeInfo *mi, int width, int height)
   glTranslatef(0.0, 0.0, -DIST);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+
+Bool
+planet_handle_event (ModeInfo *mi, XEvent *event)
+{
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      gp->button_down_p = True;
+      gltrackball_start (gp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      gp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           gp->button_down_p)
+    {
+      gltrackball_track (gp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
 }
 
 
@@ -543,6 +562,18 @@ init_planet (ModeInfo * mi)
 	free (b);
   }
 
+  {
+    double spin_speed   = 1.0;
+    double wander_speed = 0.05;
+    gp->rot = make_rotator (do_roll ? spin_speed : 0,
+                            do_roll ? spin_speed : 0,
+                            0, 1,
+                            do_wander ? wander_speed : 0,
+                            True);
+    gp->z = frand (1.0);
+    gp->trackball = gltrackball_init ();
+  }
+
   if (wire)
     {
       do_texture = False;
@@ -568,7 +599,18 @@ init_planet (ModeInfo * mi)
   glColor3f (1,1,1);
   glPushMatrix ();
   glScalef (RADIUS, RADIUS, RADIUS);
-  unit_sphere (STACKS, SLICES, wire);
+  glRotatef (90, 1, 0, 0);
+  unit_sphere (resolution, resolution, wire);
+  mi->polygon_count += resolution*resolution;
+#if 0
+  if (!wire)
+    {
+      glDisable(GL_LIGHTING);
+      glScalef(1.01,1.01,1.01);
+      unit_sphere (12, 24, 1);
+      glEnable(GL_LIGHTING);
+    }
+#endif
   glPopMatrix ();
   glEndList();
 }
@@ -579,6 +621,7 @@ draw_planet (ModeInfo * mi)
   planetstruct *gp = &planets[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
   Window      window = MI_WINDOW(mi);
+  double x, y, z;
 
   if (!gp->glx_context)
 	return;
@@ -592,14 +635,31 @@ draw_planet (ModeInfo * mi)
     draw_stars (mi);
 
   glPushMatrix();
-  glRotatef (90,1,0,0);
-  glTranslatef (gp->xpos, gp->ypos, gp->zpos);
 
-  glRotatef (gp->tx, 1, 0, 0);
-  glRotatef (gp->ty, 0, 1, 0);
-  glRotatef (gp->tz, 0, 0, 1);
+  get_position (gp->rot, &x, &y, &z, !gp->button_down_p);
+  glTranslatef((x - 0.5) * 15,
+               (y - 0.5) * 15,
+               (z - 0.5) * 8);
+
+  gltrackball_rotate (gp->trackball);
+
+  glRotatef (90,1,0,0);
+
+  if (do_roll)
+    {
+      get_rotation (gp->rot, &x, &y, 0, !gp->button_down_p);
+      glRotatef (x * 360, 1.0, 0.0, 0.0);
+      glRotatef (y * 360, 0.0, 1.0, 0.0);
+    }
 
   glLightfv (GL_LIGHT0, GL_POSITION, gp->sunpos);
+
+  glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
+  if (do_rotate && !gp->button_down_p)
+    {
+      gp->z += 0.01;
+      if (gp->z > 1) gp->z -= 1;
+    }
 
   glCallList (gp->platelist);
   glPopMatrix();
@@ -607,8 +667,6 @@ draw_planet (ModeInfo * mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(display, window);
-
-  rotate_and_move (mi);
 }
 
 

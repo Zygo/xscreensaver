@@ -35,6 +35,7 @@
  * 21 July 2000 : cleaned up code from bug hunts, manpage written
  * 24 November 2000 : fixed x co-ord calculation in solid - textured
  * 05 March 2001 : put back non pnmlib code with #ifdefs
+ * 11 May 2002 : fixed image problems with large images
  */
 
 
@@ -576,18 +577,21 @@ grabTexture(void)
   int real_height = gflux->modeinfo->xgwa.height;
   XImage *ximage = screen_to_ximage (gflux->modeinfo->xgwa.screen,
                                      gflux->window);
+  Bool bigimage = False;
+  int size = 0;
 
   if (ximage->width > 1280 ||   /* that's too damned big... */
       ximage->height > 1280)
     {
       Display *dpy = gflux->modeinfo->dpy;
       Visual *v = gflux->modeinfo->xgwa.visual;
-      int size = (ximage->width < ximage->height ?
-                  ximage->width : ximage->height);
       int real_size = (ximage->width < ximage->height ?
                        real_width : real_height);
       XImage *x2;
       int x, y, xoff, yoff;
+      size = (ximage->width < ximage->height ?
+              ximage->width : ximage->height);
+      bigimage = True;
 
       if (size > 1024) size = 1024;
 
@@ -614,16 +618,18 @@ grabTexture(void)
   /* Add a border. */
   {
     unsigned long gray = 0xAAAAAAAAL;  /* so shoot me */
+    int width  = (bigimage ? size : real_width);
+    int height = (bigimage ? size : real_height);
     int i;
     for (i = 0; i < real_height; i++)
       {
         XPutPixel (ximage, 0, i, gray);
-        XPutPixel (ximage, real_width-1, i, gray);
+        XPutPixel (ximage, width-1, i, gray);
       }
     for (i = 0; i < real_width; i++)
       {
         XPutPixel (ximage, i, 0, gray);
-        XPutPixel (ximage, i, real_height-1, gray);
+        XPutPixel (ximage, i, height-1, gray);
       }
   }
 
@@ -631,8 +637,16 @@ grabTexture(void)
   gflux->imageHeight = ximage->height;
   gflux->image = ximage->data;
 
-  gflux->tex_xscale = ((GLfloat) real_width  / (GLfloat) ximage->width);
-  gflux->tex_yscale = ((GLfloat) real_height / (GLfloat) ximage->height);
+  if (bigimage)  /* don't scale really large images */
+    {
+      gflux->tex_xscale = 1;
+      gflux->tex_yscale = 1;
+    }
+  else
+    {
+      gflux->tex_xscale = ((GLfloat) real_width  / (GLfloat) ximage->width);
+      gflux->tex_yscale = ((GLfloat) real_height / (GLfloat) ximage->height);
+    }
 
   ximage->data = 0;
   XDestroyImage (ximage);

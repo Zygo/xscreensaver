@@ -184,6 +184,7 @@
  	                	polyominoes -root			    \\n\
 - 	                	thornbird -root				    \\n\
  	                	fluidballs -root			    \\n\
+ 	                	anemone -root				    \\n\
   color: 			bubbles -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
@@ -230,6 +231,8 @@
 	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
 	   GL:			spheremonics -root			    \\n\
+	   GL:			lavalite -root				    \\n\
+	   GL:			queens -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \

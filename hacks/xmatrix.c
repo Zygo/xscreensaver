@@ -111,6 +111,8 @@ static unsigned char char_map[256] = {
   176,177,178,195,180,181,182,183,184,185,186,187,188,189,190,191   /* 240 */
 };
 
+#define CURSOR_GLYPH 97
+
 typedef enum { TRACE0, TRACE1, TRACE2,
                KNOCK0, KNOCK1, KNOCK2, KNOCK3,
                KNOCK4, KNOCK5, KNOCK6, KNOCK7,
@@ -124,6 +126,7 @@ typedef struct {
   int grid_width, grid_height;
   int char_width, char_height;
   m_cell *cells;
+  m_cell *cursor;
   m_feeder *feeders;
   int nspinners;
   Bool small_p;
@@ -331,6 +334,7 @@ init_matrix (Display *dpy, Window window)
 
   state->cells = (m_cell *)
     calloc (sizeof(m_cell), state->grid_width * state->grid_height);
+  state->cursor = NULL;
   state->feeders = (m_feeder *) calloc (sizeof(m_feeder), state->grid_width);
 
   state->density = get_integer_resource ("density", "Integer");
@@ -500,6 +504,97 @@ feed_matrix (m_state *state)
     }
 }
 
+
+static void
+redraw_cells (m_state *state, Bool active)
+{
+  int x, y;
+  int count = 0;
+
+  for (y = 0; y < state->grid_height; y++)
+    for (x = 0; x < state->grid_width; x++)
+      {
+        m_cell *cell = &state->cells[state->grid_width * y + x];
+
+        if (cell->glyph)
+          count++;
+
+        if (state->mode == TRACE2 && active)
+          {
+            int xx = x % strlen(state->tracing);
+            Bool dead_p = state->tracing[xx] > 0;
+
+            if (y == 0 && x == xx)
+              cell->glyph = (dead_p
+                             ? state->glyph_map[state->tracing[xx]-'0'] + 1
+                             : 0);
+            else if (y == 0)
+              cell->glyph = 0;
+            else
+              cell->glyph = (dead_p ? 0 :
+                             (state->glyph_map[(random()%state->nglyphs)]
+                              + 1));
+
+            cell->changed = 1;
+          }
+
+        if (!cell->changed)
+          continue;
+
+        if (cell->glyph == 0 && cell != state->cursor)
+          XFillRectangle (state->dpy, state->window, state->erase_gc,
+                          x * state->char_width,
+                          y * state->char_height,
+                          state->char_width,
+                          state->char_height);
+        else
+          {
+            int g = (cell == state->cursor ? CURSOR_GLYPH : cell->glyph);
+            int cx = (g - 1) % CHAR_COLS;
+            int cy = (g - 1) / CHAR_COLS;
+            int map = ((cell->glow > 0 || cell->spinner) ? GLOW_MAP :
+                       (cell->glow < 0) ? FADE_MAP :
+                       PLAIN_MAP);
+
+            XCopyArea (state->dpy, state->images[map],
+                       state->window, state->draw_gc,
+                       cx * state->char_width,
+                       cy * state->char_height,
+                       state->char_width,
+                       state->char_height,
+                       x * state->char_width,
+                       y * state->char_height);
+          }
+
+        cell->changed = 0;
+
+        if (cell->glow > 0)
+          {
+            cell->glow--;
+            cell->changed = 1;
+          }
+        else if (cell->glow < 0)
+          {
+            cell->glow++;
+            if (cell->glow == 0)
+              cell->glyph = 0;
+            cell->changed = 1;
+          }
+
+        if (cell->spinner && active)
+          {
+            cell->glyph = (state->glyph_map[(random()%state->nglyphs)] + 1);
+            cell->changed = 1;
+          }
+      }
+
+  if (state->cursor)
+    {
+      state->cursor->changed = 1;
+    }
+}
+
+
 static int
 densitizer (m_state *state)
 {
@@ -528,19 +623,29 @@ hack_text (m_state *state)
   int i;
   int x = 0;
   const char *s;
+  Bool typing_delay = False;
+  Bool transmit_delay = False;
+  Bool visible_cursor = False;
   switch (state->mode)
     {
-    case TRACE0: s = "Call trans opt: received.\n"
-                     "2-19-98 13:24:18 REC:Log>_"; break;
-    case TRACE1: s = "Trace program: running_"; break;
-
+    case TRACE0: if (state->grid_width >= 52)
+                   s = "Call trans opt: received. 2-19-98 13:24:18 REC:Log>";
+                 else
+                   s = "Call trans opt: received.\n2-19-98 13:24:18 REC:Log>";
+                 transmit_delay = True;
+                 visible_cursor = True;
+                 break;
+    case TRACE1: s = "Trace program: running";
+                 transmit_delay = True;
+                 visible_cursor = True;
+                 break;
     case KNOCK0: s = "Wake up, Neo..."; break;
     case KNOCK1: s = ""; break;
-    case KNOCK2: s = "The Matrix has you..."; break;
+    case KNOCK2: s = "The Matrix has you..."; typing_delay = True; break;
     case KNOCK3: s = ""; break;
-    case KNOCK4: s = "Follow the white rabbit..."; break;
+    case KNOCK4: s = "Follow the white rabbit."; typing_delay = True; break;
     case KNOCK5: s = ""; break;
-    case KNOCK6: s = "Knock knock, Neo."; break;
+    case KNOCK6: s = "Knock, knock, Neo."; break;
     case KNOCK7: s = ""; break;
 
     default: abort(); break;
@@ -580,11 +685,31 @@ hack_text (m_state *state)
               cell->glyph = char_map[(unsigned char) *s] + 1;
               if (*s == ' ' || *s == '\t') cell->glyph = 0;
               cell->changed = 1;
+              if (visible_cursor)
+                {
+                  m_cell *next = &state->cells[i + 1];
+                  next->changed = 1;
+                  state->cursor = next;
+                }
               i++;
             }
           x++;
         }
       s++;
+      if (typing_delay || transmit_delay)
+        {
+          redraw_cells (state, False);
+          XSync (state->dpy, False);
+          screenhack_handle_events (state->dpy);
+          if (typing_delay)
+            {
+              usleep (50000);
+              if (typing_delay && 0 == random() % 3)
+                usleep (0xFFFFFF & ((random() % 250000) + 1));
+            }
+          else
+            usleep (20000);
+        }
     }
 }
 
@@ -663,9 +788,38 @@ roll_state (m_state *state)
 
   if (delay)
     {
-      XSync (state->dpy, False);
-      sleep (delay);
+      if (state->cursor)
+        {
+          int blink_delay = 333000;
+          int tot_delay = 0;
+          m_cell *cursor = state->cursor;
+          while (tot_delay < delay * 1000000)
+            {
+              if (state->cursor)
+                {
+                  usleep (blink_delay * 2);
+                  tot_delay += (2 * blink_delay);
+                  state->cursor = NULL;
+                }
+              else
+                {
+                  usleep (blink_delay);
+                  tot_delay += blink_delay;
+                  state->cursor = cursor;
+                }
+              cursor->changed = 1;
+              redraw_cells (state, False);
+              XSync (state->dpy, False);
+              screenhack_handle_events (state->dpy);
+            }
+        }
+      else
+        {
+          XSync (state->dpy, False);
+          sleep (delay);
+        }
     }
+  state->cursor = NULL;
 }
 
 
@@ -744,88 +898,9 @@ hack_matrix (m_state *state)
 static void
 draw_matrix (m_state *state)
 {
-  int x, y;
-  int count = 0;
-
   feed_matrix (state);
   hack_matrix (state);
-
-  for (y = 0; y < state->grid_height; y++)
-    for (x = 0; x < state->grid_width; x++)
-      {
-        m_cell *cell = &state->cells[state->grid_width * y + x];
-
-        if (cell->glyph)
-          count++;
-
-        if (state->mode == TRACE2)
-          {
-            int xx = x % strlen(state->tracing);
-            Bool dead_p = state->tracing[xx] > 0;
-
-            if (y == 0 && x == xx)
-              cell->glyph = (dead_p
-                             ? state->glyph_map[state->tracing[xx]-'0'] + 1
-                             : 0);
-            else if (y == 0)
-              cell->glyph = 0;
-            else
-              cell->glyph = (dead_p ? 0 :
-                             (state->glyph_map[(random()%state->nglyphs)]
-                              + 1));
-
-            cell->changed = 1;
-          }
-
-        if (!cell->changed)
-          continue;
-
-        if (cell->glyph == 0)
-          XFillRectangle (state->dpy, state->window, state->erase_gc,
-                          x * state->char_width,
-                          y * state->char_height,
-                          state->char_width,
-                          state->char_height);
-        else
-          {
-            int cx = (cell->glyph - 1) % CHAR_COLS;
-            int cy = (cell->glyph - 1) / CHAR_COLS;
-            int map = ((cell->glow > 0 || cell->spinner) ? GLOW_MAP :
-                       (cell->glow == 0) ? PLAIN_MAP :
-                       GLOW_MAP);
-
-            XCopyArea (state->dpy, state->images[map],
-                       state->window, state->draw_gc,
-                       cx * state->char_width,
-                       cy * state->char_height,
-                       state->char_width,
-                       state->char_height,
-                       x * state->char_width,
-                       y * state->char_height);
-          }
-
-        cell->changed = 0;
-
-        if (cell->glow > 0)
-          {
-            cell->glow--;
-            cell->changed = 1;
-          }
-        else if (cell->glow < 0)
-          {
-            cell->glow++;
-            if (cell->glow == 0)
-              cell->glyph = 0;
-            cell->changed = 1;
-          }
-
-        if (cell->spinner)
-          {
-            cell->glyph = (state->glyph_map[(random()%state->nglyphs)] + 1);
-            cell->changed = 1;
-          }
-      }
-
+  redraw_cells (state, True);
   roll_state (state);
 
 #if 0
@@ -854,7 +929,7 @@ char *progclass = "XMatrix";
 
 char *defaults [] = {
   ".background:		   black",
-  ".foreground:		   green",
+  ".foreground:		   #00AA00",
   "*small:		   ",
   "*delay:		   10000",
   "*insert:		   both",

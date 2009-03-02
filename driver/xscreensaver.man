@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "11-May-2002 (4.03)" "X Version 11"
+.TH XScreenSaver 1 "31-May-2002 (4.04)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -854,8 +854,13 @@ Open the ``\fIControl Center\fP'' and
 select the ``\fILook and Feel / Screensaver\fP'' page.
 Turn off the ``\fIEnable Screensaver\fP'' checkbox.
 .TP 3
-\fB2: Add xscreensaver to your startup programs.\fP
-Create a file in your \fI~/.kde2/Autostart/\fP directory
+\fB2: Find your Autostart directory.\fP
+Open the ``\fILook and Feel / Desktop / Paths\fP'' page,
+and see what your ``Autostart'' directory is set to: it will
+probably be \fI~/.kde3/Autostart/\fP or something similar.
+.TP 3
+\fB3: Add xscreensaver to your startup programs.\fP
+Create a file in your autostart directory
 called \fIlaunch-xscreensaver\fP.  Make that file be executable,
 and contain a single line: \fI``xscreensaver\fP''.
 .RE
@@ -1261,10 +1266,6 @@ in the X protocol.
 
 In all these years, I've not heard of even a single case of this happening,
 but it is theoretically possible, so I'm mentioning it for completeness...
-.TP 8
-.B Red Hot Lava
-There need to be a lot more graphics hacks.  In particular, there should be
-a simulation of a Lavalite (tm).
 .SH ENVIRONMENT
 .PP
 .TP 8

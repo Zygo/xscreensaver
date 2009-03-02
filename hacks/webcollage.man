@@ -16,10 +16,20 @@
 webcollage - decorate the screen with random images from the web
 .SH SYNOPSIS
 .B webcollage
-[\-display \fIhost:display.screen\fP] [\-root] [\-verbose]
-[\-delay \fIsecs\fP] [\-timeout \fIsecs\fP] [\-background \fIbg\fP]
-[\-filter \fIcommand\fP] [\-filter2 \fIcommand\fP]
+[\-display \fIhost:display.screen\fP]
+[\-root]
+[\-verbose]
+[\-timeout \fIsecs\fP]
+[\-delay \fIsecs\fP]
+[\-background \fIbg\fP]
+[\-no-output]
+[\-urls-only]
+[\-size \fIWxH\fP]
+[\-filter \fIcommand\fP]
+[\-filter2 \fIcommand\fP]
 [\-http\-proxy host[:port]]
+[\-dictionary \fIdictionary-file\fP]
+[\-driftnet [\fIcmd\fP]]
 .SH DESCRIPTION
 The \fIwebcollage\fP program pulls random image off of the World Wide Web
 and scatters them on the root window.  One satisfied customer described it
@@ -38,22 +48,33 @@ tools.
 \fIwebcollage\fP is written in
 .BR perl (1)
 and requires Perl 5.
+
+It will be an order of magnitude faster if you also have
+the \fIwebcollage-helper\fP program installed (a GDK/JPEG image
+compositor), but \fIwebcollage\fP works without it as well.
 .SH OPTIONS
 .I webcollage
 accepts the following options:
 .TP 8
 .B \-root
-Draw on the root window.  This option is manditory: drawing to a window
-other than the root window is not yet supported.
+Draw on the root window.  This option is manditory, if output is being
+produced: drawing to a window other than the root window is not yet
+supported.
 .TP 8
 .B \-verbose \fRor\fP \-v
 Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
-amount of output.  \fI-v\fP will print out only the URLs of the 
-images; \fI-vv\fP will print all the commands being run; and \fI-vvv\fP
-will print more than you care about.
+amount of output.  \fI-v\fP will print out the URLs of the images,
+and where they were placed; \fI-vv\fP will print out any warnings,
+and all URLs being loaded; \fI-vvv\fP will print information on
+what URLs were rejected; and so on.
+.TP 8
+.B \-timeout \fIseconds\fP
+How long to wait for a URL to complete before giving up on it and
+moving on to the next one.
+Default 30 seconds.
 .TP 8
 .B \-delay \fIseconds\fP
-How long to sleep between images.  Default 1 second.  (Remember that
+How long to sleep between images.  Default 2 seconds.  (Remember that
 this program probably spends a lot of time waiting for the network.)
 .TP 8
 .B \-background \fIcolor-or-ppm\fP
@@ -61,10 +82,18 @@ What to use for the background onto which images are pasted.  This may be
 a color name, a hexadecimal RGB specification in the form '#rrggbb', or 
 the name of a PPM file.
 .TP 8
-.B \-timeout \fIseconds\fP
-How long to wait for a URL to complete before giving up on it and
-moving on to the next one.
-Default 30 seconds.
+.B \-size \fIWxH\fP
+Normally, the output image will be made to be the size of the screen.
+This lets you specify the desired size.
+.TP 8
+.B \-no-output
+If this option is specified, then no composite output image will be
+generated.  This is only useful when used in conjunction 
+with \fB\-verbose\fP.
+.TP 8
+.B \-urls-only
+If this option is specified, then no composite output image will be
+generated: instead, a list of image URLs will be printed on stdout.
 .TP 8
 .B \-filter \fIcommand\fP
 Filter all source images through this command.  The command must take
@@ -83,6 +112,32 @@ final, full-screen image.
 If you must go through a proxy to connect to the web, you can specify it 
 with this option, or with the \fB$http_proxy\fP or \fB$HTTP_PROXY\fP 
 environment variables.
+.TP 8
+.B \-dictionary \fIfile\fP
+Webcollage normally looks at the system's default spell-check dictionary
+to generate words to feed into the search engines.  You can specify an
+alternate dictionary with this option.
+.TP 8
+.B \-driftnet \fI[ args ]\fP
+.BR driftnet (1)
+is a program that snoops your local ethernet for packets that look
+like they might be image files.  It can be used in conjunction 
+with \fIwebcollage\fP to generate a collage of what other people on
+your network are looking at, instead of a search-engine collage.
+If you have \fIdriftnet\fP installed on your $PATH, just use 
+the \fI\-driftnet\fP option.  You can also specify the location
+of the program like this:
+.EX
+-driftnet /path/to/driftnet
+.EE
+or, you can provide extra arguments like this:
+.EX
+-driftnet '/path/to/driftnet -extra -args'
+.EE
+Driftnet version 0.1.5 or later is required.  Note that 
+the \fIdriftnet\fP program requires root access, so you'll have
+to make \fIdriftnet\fP be setuid-root for this to work.
+Please exercise caution.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -110,11 +165,7 @@ visual specification (see the
 .BR xscreensaver (1)
 manual for more details.)
 
-Only the GIF and JPEG image formats are supported.
-
-Transparent and animating GIFs are not supported.
-
-It's slow.
+Animating GIFs are not supported.
 
 Too many of the images that it finds are text, not pictures.  This is 
 because most of the web is pictures of text.  Which is pretty sad.
@@ -133,9 +184,10 @@ because most of the web is pictures of text.  Which is pretty sad.
 .BR xdpyinfo (1),
 .BR perl (1),
 .BR vidwhacker (1),
-.BR dadadodo (1)
+.BR dadadodo (1),
+.BR driftnet (1)
 .SH COPYRIGHT
-Copyright \(co 1998, 1999 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 1998-2002 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

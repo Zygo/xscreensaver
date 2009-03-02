@@ -67,13 +67,6 @@
 
      *  Needs music.  ("Hellraiser Themes" by Coil: TORSO CD161; also
         duplicated on the "Unnatural History 2" compilation, WORLN M04699.)
-
-     *  I'm not totally happy with the spinning motion; I like the
-        acceleration and deceleration, but it often feels like it's going too
-        fast, or not naturally enough, or something.
-
-     *  However, the motion is better than that used by gears, superquadrics,
-        etc.; so maybe I should make them all share the same motion code.
  */
 
 #include <X11/Intrinsic.h>
@@ -82,6 +75,8 @@
 #define HACK_INIT	init_lament
 #define HACK_DRAW	draw_lament
 #define HACK_RESHAPE	reshape_lament
+#define HACK_HANDLE_EVENT lament_handle_event
+#define EVENT_MASK	PointerMotionMask
 #define lament_opts	xlockmore_opts
 #define DEFAULTS	"*delay:	10000   \n"	\
 			"*showFPS:      False   \n"     \
@@ -109,7 +104,8 @@ static argtype vars[] = {
 ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #include "xpm-ximage.h"
-
+#include "rotator.h"
+#include "gltrackball.h"
 #include "../images/lament.xpm"
 
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
@@ -155,6 +151,10 @@ static GLfloat interior_color[] = { 0.20, 0.20, 0.15, 1.00,  /* ambient    */
 
 typedef struct {
   GLXContext *glx_context;
+  rotator *rot;
+  double rotx, roty, rotz;
+  trackball_state *trackball;
+  Bool button_down_p;
 
   GLuint box;			   /* display list IDs */
   GLuint star1, star2;
@@ -162,10 +162,6 @@ typedef struct {
   GLuint lid_0, lid_1, lid_2, lid_3, lid_4;
   GLuint taser_base, taser_lifter, taser_slider;
 
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;		   /* max velocity */
   XImage *texture;		   /* image bits */
   GLuint texids[6];		   /* texture map IDs */
   lament_type type;		   /* which mode of the object is current */
@@ -1404,6 +1400,39 @@ taser(ModeInfo *mi, Bool wire)
 /* Rendering and animating object models
  */
 
+Bool
+lament_handle_event (ModeInfo *mi, XEvent *event)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      lc->button_down_p = True;
+      gltrackball_start (lc->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      lc->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           lc->button_down_p)
+    {
+      gltrackball_track (lc->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
 static void
 draw(ModeInfo *mi)
 {
@@ -1416,24 +1445,14 @@ draw(ModeInfo *mi)
     glClear(GL_COLOR_BUFFER_BIT);
 
   glPushMatrix();
-  {
-    GLfloat x = lc->rotx;
-    GLfloat y = lc->roty;
-    GLfloat z = lc->rotz;
 
-#if 0
- x=0.75; y=0; z=0; 
-#endif
+  gltrackball_rotate (lc->trackball);
 
-    if (x < 0) x = 1 - (x + 1);
-    if (y < 0) y = 1 - (y + 1);
-    if (z < 0) z = 1 - (z + 1);
+  /* Make into the screen be +Y right be +X, and up be +Z. */
+  glRotatef(-90.0, 1.0, 0.0, 0.0);
 
-    /* Make into the screen be +Y right be +X, and up be +Z. */
-    glRotatef(-90.0, 1.0, 0.0, 0.0);
-
-    /* Scale it up. */
-    glScalef(4.0, 4.0, 4.0);
+  /* Scale it up. */
+  glScalef(4.0, 4.0, 4.0);
 
 #ifdef DEBUG
     glPushMatrix();
@@ -1459,9 +1478,12 @@ draw(ModeInfo *mi)
     glPushMatrix();
     {
       /* Apply rotation to the object. */
-      glRotatef(x * 360, 1.0, 0.0, 0.0);
-      glRotatef(y * 360, 0.0, 1.0, 0.0);
-      glRotatef(z * 360, 0.0, 0.0, 1.0);
+      if (lc->type != LAMENT_LID_ZOOM)
+        get_rotation (lc->rot, &lc->rotx, &lc->roty, &lc->rotz,
+                      !lc->button_down_p);
+      glRotatef (lc->rotx * 360, 1.0, 0.0, 0.0);
+      glRotatef (lc->roty * 360, 0.0, 1.0, 0.0);
+      glRotatef (lc->rotz * 360, 0.0, 0.0, 1.0);
 
       switch (lc->type)
 	{
@@ -1571,7 +1593,6 @@ draw(ModeInfo *mi)
     }
     glPopMatrix();
 
-  }
   glPopMatrix();
 }
 
@@ -1765,9 +1786,6 @@ animate(ModeInfo *mi)
 	{
 	  lc->anim_r = 0.0;
 	  lc->anim_z = 0.0;
-	  lc->rotx = frand(1.0) * RANDSIGN();
-	  lc->roty = frand(1.0) * RANDSIGN();
-	  lc->rotz = frand(1.0) * RANDSIGN();
 	  lc->type = LAMENT_BOX;
 	}
       break;
@@ -1817,73 +1835,6 @@ animate(ModeInfo *mi)
     default:
       abort();
       break;
-    }
-}
-
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
     }
 }
 
@@ -2100,20 +2051,11 @@ init_lament(ModeInfo *mi)
 
   lc = &lcs[MI_SCREEN(mi)];
 
-  lc->rotx = frand(1.0) * RANDSIGN();
-  lc->roty = frand(1.0) * RANDSIGN();
-  lc->rotz = frand(1.0) * RANDSIGN();
-
-  /* bell curve from 0-1.5 degrees, avg 0.75 */
-  lc->dx = (frand(1) + frand(1) + frand(1)) / (360*2);
-  lc->dy = (frand(1) + frand(1) + frand(1)) / (360*2);
-  lc->dz = (frand(1) + frand(1) + frand(1)) / (360*2);
-
-  lc->d_max = lc->dx * 2;
-
-  lc->ddx = 0.00006 + frand(0.00003);
-  lc->ddy = 0.00006 + frand(0.00003);
-  lc->ddz = 0.00006 + frand(0.00003);
+  {
+    double rot_speed = 0.5;
+    lc->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
+    lc->trackball = gltrackball_init ();
+  }
 
   lc->type = LAMENT_BOX;
   lc->anim_pause = 300 + (random() % 100);
@@ -2148,13 +2090,6 @@ draw_lament(ModeInfo *mi)
 
   glFinish();
   glXSwapBuffers(dpy, window);
-
-  if (lc->type != LAMENT_LID_ZOOM)
-    {
-      rotate(&lc->rotx, &lc->dx, &lc->ddx, lc->d_max);
-      rotate(&lc->roty, &lc->dy, &lc->ddy, lc->d_max);
-      rotate(&lc->rotz, &lc->dz, &lc->ddz, lc->d_max);
-    }
 
   if (lc->anim_pause)
     lc->anim_pause--;

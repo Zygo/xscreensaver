@@ -19,6 +19,10 @@
 #include <ctype.h>
 #include <errno.h>
 
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
+
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Error.h>
@@ -36,6 +40,17 @@
 #include "visual.h"
 #include "prefs.h"
 #include "vroot.h"
+
+#ifdef HAVE_GDK_PIXBUF
+
+# ifdef HAVE_GTK2
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# else  /* !HAVE_GTK2 */
+#  include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+# endif /* !HAVE_GTK2 */
+
+# define HAVE_BUILTIN_IMAGE_LOADER
+#endif /* HAVE_GDK_PIXBUF */
 
 
 static char *defaults[] = {
@@ -103,7 +118,7 @@ exec_error (char **av)
       fprintf (stderr, "\n");
     }
 
-  exit (1);
+  exit (-1);
 }
 
 static int
@@ -115,6 +130,14 @@ x_ehandler (Display *dpy, XErrorEvent *error)
   return 0;
 }
 
+
+
+#ifdef HAVE_BUILTIN_IMAGE_LOADER
+static void load_image_internal (Screen *screen, Window window,
+                                 int win_width, int win_height,
+                                 Bool verbose_p,
+                                 int ac, char **av);
+#endif /* HAVE_BUILTIN_IMAGE_LOADER */
 
 
 static void
@@ -172,23 +195,28 @@ get_image (Screen *screen, Window window, Bool verbose_p)
   if ((desk_p || video_p || image_p) &&
       !top_level_window_p (screen, window))
     {
-      desk_p  = False;
-      video_p = False;
-      image_p = False;
-      if (verbose_p)
+      Bool changed_p = False;
+      if (desk_p)  desk_p  = False, changed_p = True;
+      if (video_p) video_p = False, changed_p = True;
+# ifndef HAVE_BUILTIN_IMAGE_LOADER
+      if (image_p) image_p = False, changed_p = True;
+      if (changed_p && verbose_p)
         fprintf (stderr, "%s: not a top-level window: using colorbars.\n",
                  progname);
+# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
     }
   else if (window != VirtualRootWindowOfScreen (screen))
     {
       Bool changed_p = False;
-      if (!desk_p) desk_p  = True,  changed_p = True;
       if (video_p) video_p = False, changed_p = True;
+# ifndef HAVE_BUILTIN_IMAGE_LOADER
+      if (!desk_p) desk_p  = True,  changed_p = True;
       if (image_p) image_p = False, changed_p = True;
       if (changed_p && verbose_p)
         fprintf (stderr,
                  "%s: not running on root window: grabbing desktop.\n",
                  progname);
+# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
     }
 
   count = 0;
@@ -231,19 +259,24 @@ get_image (Screen *screen, Window window, Bool verbose_p)
   else
     {
       char *av[10];
+      int ac = 0;
       memset (av, 0, sizeof(av));
       switch (which)
         {
         case do_video:
           if (verbose_p)
             fprintf (stderr, "%s: grabbing video\n", progname);
-          av[0] = GETIMAGE_VIDEO_PROGRAM;
+          av[ac++] = GETIMAGE_VIDEO_PROGRAM;
           break;
         case do_image:
           if (verbose_p)
             fprintf (stderr, "%s: loading random image file\n", progname);
-          av[0] = GETIMAGE_FILE_PROGRAM;
-          av[1] = dir;
+          av[ac++] = GETIMAGE_FILE_PROGRAM;
+
+# ifdef HAVE_BUILTIN_IMAGE_LOADER
+          av[ac++] = "--name";
+# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
+          av[ac++] = dir;
           break;
         default:
           abort();
@@ -253,9 +286,10 @@ get_image (Screen *screen, Window window, Bool verbose_p)
       if (verbose_p)
         {
           int i;
-          for (i = (sizeof(av)/sizeof(*av))-1; i > 1; i--)
+          for (i = ac; i > 1; i--)
             av[i] = av[i-1];
           av[1] = strdup ("--verbose");
+          ac++;
         }
 
       if (verbose_p)
@@ -302,12 +336,215 @@ get_image (Screen *screen, Window window, Bool verbose_p)
       }
 # endif /* HAVE_PUTENV */
 
+# ifdef HAVE_BUILTIN_IMAGE_LOADER
+      if (which == do_image)
+        {
+          load_image_internal (screen, window, xgwa.width, xgwa.height,
+                               verbose_p, ac, av);
+          return;
+        }
+# endif /* HAVE_BUILTIN_IMAGE_LOADER */
+
+
       close (ConnectionNumber (dpy));	/* close display fd */
 
       execvp (av[0], av);		/* shouldn't return */
       exec_error (av);
     }
 }
+
+
+#ifdef HAVE_BUILTIN_IMAGE_LOADER
+
+/* Reads a filename from "GETIMAGE_FILE_PROGRAM --name /DIR"
+ */
+static char *
+get_filename (Display *dpy, int ac, char **av)
+{
+  pid_t forked;
+  int fds [2];
+  int in, out;
+  char buf[1024];
+
+  if (pipe (fds))
+    {
+      sprintf (buf, "%s: error creating pipe", progname);
+      perror (buf);
+      return 0;
+    }
+
+  in = fds [0];
+  out = fds [1];
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        sprintf (buf, "%s: couldn't fork", progname);
+        perror (buf);
+        return 0;
+      }
+    case 0:
+      {
+        int stdout_fd = 1;
+
+        close (in);  /* don't need this one */
+        close (ConnectionNumber (dpy));		/* close display fd */
+
+        if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
+          {
+            sprintf (buf, "%s: could not dup() a new stdout", progname);
+            exit (-1);                          /* exits fork */
+          }
+
+        execvp (av[0], av);			/* shouldn't return. */
+        exit (-1);                              /* exits fork */
+        break;
+      }
+    default:
+      {
+        int wait_status = 0;
+        FILE *f = fdopen (in, "r");
+        int L;
+
+        close (out);  /* don't need this one */
+        *buf = 0;
+        fgets (buf, sizeof(buf)-1, f);
+        fclose (f);
+
+        /* Wait for the child to die. */
+        waitpid (-1, &wait_status, 0);
+
+        L = strlen (buf);
+        while (L && buf[L-1] == '\n')
+          buf[--L] = 0;
+          
+        return strdup (buf);
+      }
+    }
+
+  abort();
+}
+
+
+
+static void
+load_image_internal (Screen *screen, Window window,
+                     int win_width, int win_height,
+                     Bool verbose_p,
+                     int ac, char **av)
+{
+  GdkPixbuf *pb;
+  Display *dpy = DisplayOfScreen (screen);
+  char *filename = get_filename (dpy, ac, av);
+
+  if (!filename)
+    {
+      fprintf (stderr, "%s: no file name returned by %s\n",
+               progname, av[0]);
+      goto FAIL;
+    }
+  else if (verbose_p)
+    fprintf (stderr, "%s: loading \"%s\"\n", progname, filename);
+
+  gdk_pixbuf_xlib_init (dpy, screen_number (screen));
+  xlib_rgb_init (dpy, screen);
+
+  pb = gdk_pixbuf_new_from_file (filename
+#ifdef HAVE_GTK2
+				 , NULL
+#endif /* HAVE_GTK2 */
+	  );
+
+  if (pb)
+    {
+      int w = gdk_pixbuf_get_width (pb);
+      int h = gdk_pixbuf_get_height (pb);
+      int srcx, srcy, destx, desty;
+
+      Bool exact_fit_p = ((w == win_width  && h <= win_height) ||
+                          (h == win_height && w <= win_width));
+
+      if (!exact_fit_p)  /* scale the image up or down */
+        {
+          float rw = (float) win_width  / w;
+          float rh = (float) win_height / h;
+          float r = (rw < rh ? rw : rh);
+          int tw = w * r;
+          int th = h * r;
+          int pct = (r * 100);
+
+          if (pct < 95 || pct > 105)  /* don't scale if it's close */
+            {
+              GdkPixbuf *pb2;
+              if (verbose_p)
+                fprintf (stderr,
+                         "%s: scaling image by %d%% (%dx%d -> %dx%d)\n",
+                         progname, pct, w, h, tw, th);
+
+              pb2 = gdk_pixbuf_scale_simple (pb, tw, th, GDK_INTERP_BILINEAR);
+              if (pb2)
+                {
+                  gdk_pixbuf_unref (pb);
+                  pb = pb2;
+                  w = tw;
+                  h = th;
+                }
+              else
+                fprintf (stderr, "%s: out of memory when scaling?\n",
+                         progname);
+            }
+        }
+
+      /* Center the image on the window. */
+      srcx = 0;
+      srcy = 0;
+      destx = (win_width  - w) / 2;
+      desty = (win_height - h) / 2;
+      if (destx < 0) srcx = -destx, destx = 0;
+      if (desty < 0) srcy = -desty, desty = 0;
+
+      if (win_width  < w) w = win_width;
+      if (win_height < h) h = win_height;
+
+      /* #### Note that this always uses the default colormap!  Morons!
+              Owen says that in Gnome 2.0, I should try using
+              gdk_pixbuf_render_pixmap_and_mask_for_colormap() instead.
+              But I don't have Gnome 2.0 yet.
+       */
+      XClearWindow (dpy, window);
+      gdk_pixbuf_xlib_render_to_drawable_alpha (pb, window,
+                                                srcx, srcy, destx, desty, w, h,
+                                                GDK_PIXBUF_ALPHA_FULL, 127,
+                                                XLIB_RGB_DITHER_NORMAL, 0, 0);
+      XSync (dpy, False);
+
+      if (verbose_p)
+        fprintf (stderr, "%s: displayed %dx%d image at %d,%d.\n",
+                 progname, w, h, destx, desty);
+    }
+  else if (filename)
+    {
+      fprintf (stderr, "%s: unable to load %s\n", progname, filename);
+      goto FAIL;
+    }
+  else
+    {
+      fprintf (stderr, "%s: unable to initialize built-in images\n", progname);
+      goto FAIL;
+    }
+
+  return;
+
+ FAIL:
+  if (verbose_p)
+    fprintf (stderr, "%s: drawing colorbars\n", progname);
+  draw_colorbars (dpy, window, 0, 0, win_width, win_height);
+  XSync (dpy, False);
+}
+
+#endif /* HAVE_BUILTIN_IMAGE_LOADER */
+
 
 
 #if 0

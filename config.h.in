@@ -139,12 +139,17 @@
  */
 #undef HAVE_XMCOMBOBOX
 
-/*  Define this if you have Gtk.
+/*  Define this if you have Gtk (any version.)
  */
 #undef HAVE_GTK
 
+/* Define this if you have Gtk 2.x.
+ */
+#undef HAVE_GTK2
+
 /*  Define this if you have Gnome and want to build support for the 
     xscreensaver control panel in the Gnome Control Center (gnomecc).
+    (This is needed only with Gtk 1.x.)
  */
 #undef HAVE_CRAPPLET
 

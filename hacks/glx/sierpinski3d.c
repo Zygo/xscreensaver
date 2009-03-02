@@ -39,12 +39,24 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define HACK_INIT					init_gasket
 # define HACK_DRAW					draw_gasket
 # define HACK_RESHAPE				reshape_gasket
+# define HACK_HANDLE_EVENT			gasket_handle_event
+# define EVENT_MASK					PointerMotionMask
 # define gasket_opts				xlockmore_opts
+
+
+#define DEF_SPIN			        "True"
+#define DEF_WANDER			        "True"
+#define DEF_SPEED			        "150"
+#define DEF_MAXDEPTH		        "5"
+
 # define DEFAULTS					"*delay:		20000   \n"			\
-									"*maxDepth:		5       \n"			\
-									"*speed:		150     \n"			\
 									"*showFPS:      False   \n"			\
-									"*wireframe:	False	\n"
+									"*wireframe:	False	\n"			\
+									"*maxDepth:	   " DEF_MAXDEPTH  "\n"	\
+									"*speed:	   " DEF_SPEED     "\n"	\
+									"*spin:        " DEF_SPIN      "\n" \
+									"*wander:      " DEF_WANDER    "\n" \
+
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -52,19 +64,32 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 
 #ifdef USE_GL
 
+#include <GL/glu.h>
+#include "rotator.h"
+#include "gltrackball.h"
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static int max_depth;
 static int speed;
+static Bool do_spin;
+static Bool do_wander;
+
 static XrmOptionDescRec opts[] = {
   {"-depth", ".sierpinski3d.maxDepth", XrmoptionSepArg, (caddr_t) 0 },
-  {"-speed", ".sierpinski3d.speed",    XrmoptionSepArg, (caddr_t) 0 }
+  {"-speed", ".sierpinski3d.speed",    XrmoptionSepArg, (caddr_t) 0 },
+  { "-spin",   ".spin",   XrmoptionNoArg, "True" },
+  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
+  { "-wander", ".wander", XrmoptionNoArg, "True" },
+  { "+wander", ".wander", XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &max_depth, "maxDepth", "MaxDepth", "5", t_Int},
-  {(caddr_t *) &speed,     "speed",    "Speed",   "150", t_Int},
+  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
+  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {(caddr_t *) &speed,     "speed",  "Speed",  DEF_SPEED,  t_Int},
+  {(caddr_t *) &max_depth, "maxDepth", "MaxDepth", DEF_MAXDEPTH, t_Int},
 };
 
 
@@ -86,15 +111,12 @@ typedef struct{
 } GL_VECTOR;
 
 typedef struct {
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;			   /* max velocity */
-
-  GLfloat     angle;
   GLuint      gasket0, gasket1, gasket2, gasket3;
   GLXContext *glx_context;
   Window      window;
+  rotator    *rot;
+  trackball_state *trackball;
+  Bool		  button_down_p;
 
   int current_depth;
 
@@ -108,8 +130,6 @@ typedef struct {
 } gasketstruct;
 
 static gasketstruct *gasket = NULL;
-
-#include <GL/glu.h>
 
 static GLfloat normals[4][3];
 
@@ -351,26 +371,18 @@ draw(ModeInfo *mi)
   glPushMatrix();
 
   {
-    static int frame = 0;
-    GLfloat x, y, z;
+    double x, y, z;
+    get_position (gp->rot, &x, &y, &z, !gp->button_down_p);
+    glTranslatef((x - 0.5) * 10,
+                 (y - 0.5) * 10,
+                 (z - 0.5) * 20);
 
-#   define SINOID(SCALE,SIZE) \
-      ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-    x = SINOID(0.0071, 8.0);
-    y = SINOID(0.0053, 6.0);
-    z = SINOID(0.0037, 15.0);
-    frame++;
-    glTranslatef(x, y, z);
+    gltrackball_rotate (gp->trackball);
 
-    x = gp->rotx;
-    y = gp->roty;
-    z = gp->rotz;
-    if (x < 0) x = 1 - (x + 1);
-    if (y < 0) y = 1 - (y + 1);
-    if (z < 0) z = 1 - (z + 1);
-    glRotatef(x * 360, 1.0, 0.0, 0.0);
-    glRotatef(y * 360, 0.0, 1.0, 0.0);
-    glRotatef(z * 360, 0.0, 0.0, 1.0);
+    get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
   glScalef( 8.0, 8.0, 8.0 );
@@ -423,14 +435,13 @@ reshape_gasket(ModeInfo *mi, int width, int height)
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
-  gluLookAt( 0.0, 0.0, 15.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -15.0);
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
   
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -449,75 +460,36 @@ pinit(ModeInfo *mi)
 }
 
 
-
-/* lifted from lament.c */
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
+Bool
+gasket_handle_event (ModeInfo *mi, XEvent *event)
 {
-  double ppos = *pos;
+  gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
     {
-      *dv = -*dv;
+      gp->button_down_p = True;
+      gltrackball_start (gp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
     }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
     {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
+      gp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           gp->button_down_p)
+    {
+      gltrackball_track (gp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
     }
 
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
+  return False;
 }
 
 
@@ -537,20 +509,17 @@ init_gasket(ModeInfo *mi)
 
   gp->window = MI_WINDOW(mi);
 
-  gp->rotx = frand(1.0) * RANDSIGN();
-  gp->roty = frand(1.0) * RANDSIGN();
-  gp->rotz = frand(1.0) * RANDSIGN();
-
-  /* bell curve from 0-1.5 degrees, avg 0.75 */
-  gp->dx = (frand(1) + frand(1) + frand(1)) / (360*2);
-  gp->dy = (frand(1) + frand(1) + frand(1)) / (360*2);
-  gp->dz = (frand(1) + frand(1) + frand(1)) / (360*2);
-
-  gp->d_max = gp->dx * 2;
-
-  gp->ddx = 0.00006 + frand(0.00003);
-  gp->ddy = 0.00006 + frand(0.00003);
-  gp->ddz = 0.00006 + frand(0.00003);
+  {
+    double spin_speed   = 1.0;
+    double wander_speed = 0.03;
+    gp->rot = make_rotator (do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            1.0,
+                            do_wander ? wander_speed : 0,
+                            True);
+    gp->trackball = gltrackball_init ();
+  }
 
   gp->ncolors = 255;
   gp->colors = (XColor *) calloc(gp->ncolors, sizeof(XColor));
@@ -579,7 +548,6 @@ draw_gasket(ModeInfo * mi)
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
   Display      *display = MI_DISPLAY(mi);
   Window        window = MI_WINDOW(mi);
-  int           angle_incr = 1;
 
   if (!gp->glx_context) return;
 
@@ -590,14 +558,6 @@ draw_gasket(ModeInfo * mi)
 
   glXMakeCurrent(display, window, *(gp->glx_context));
   draw(mi);
-
-  /* rotate */
-  gp->angle = (int) (gp->angle + angle_incr) % 360;
-
-  rotate(&gp->rotx, &gp->dx, &gp->ddx, gp->d_max);
-  rotate(&gp->roty, &gp->dy, &gp->ddy, gp->d_max);
-  rotate(&gp->rotz, &gp->dz, &gp->ddz, gp->d_max);
-
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(display, window);

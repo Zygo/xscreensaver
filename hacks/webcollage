@@ -35,7 +35,7 @@ use POSIX qw(strftime);
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.90 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.93 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -141,6 +141,8 @@ my %warningless_sites = (
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
                                    # hits this every time.
+
+  "driftnet"                => 1,  # builtin...
 );
 
 
@@ -181,6 +183,12 @@ my $min_gif_area = (120 * 120);
 
 my $no_output_p = 0;
 my $urls_only_p = 0;
+
+my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
+
+my $driftnet_magic = 'driftnet';
+my $driftnet_dir = undef;
+my $default_driftnet_cmd = "driftnet -a -m 100";
 
 my $wordlist;
 
@@ -351,6 +359,10 @@ sub get_document_1 {
 sub get_document {
   my ( $url, $referer, $timeout ) = @_;
   my $start = time;
+
+  if (defined($referer) && $referer eq $driftnet_magic) {
+    return get_driftnet_file ($url);
+  }
 
   my $orig_url = $url;
   my $loop_count = 0;
@@ -1013,9 +1025,8 @@ sub pick_from_alta_vista_images {
   foreach my $u (@subpages) {
 
     # altavista is encoding their URLs now.
-    next unless ($u =~
-    m@^/r\?ck_sm=[a-zA-Z0-9]+\&ref=[a-zA-Z0-9]+(\&uid=[a-zA-Z0-9]+)?\&r=(.*)@);
-    $u = url_unquote($2);
+    next unless ($u =~ m@^/r.*\&r=([^&]+).*@);
+    $u = url_unquote($1);
 
     next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
@@ -1182,8 +1193,7 @@ sub pick_from_alta_vista_text {
     # onMouseOver to make it look like they're not!  Well, it makes it
     # easier for us to identify search results...
     #
-    next unless ($u =~
-      m@^/r\?ck_sm=[a-zA-Z0-9]+\&ref=[a-zA-Z0-9]+\&uid=[a-zA-Z0-9]+\&r=(.*)@);
+    next unless ($u =~ m@^/r.*\&r=([^&]+).*@);
     $u = url_unquote($1);
 
     LOG ($verbose_filter, "  candidate: $u");
@@ -1267,7 +1277,13 @@ sub pick_from_lycos_text {
     # Lycos plays exact the same redirection game as hotbot.
     # Note that "id=0" is used for internal advertising links,
     # and 1+ are used for  search results.
-    next unless ($u =~ m@^http://click.hotbot.com/director.asp\?id=[1-9]\d*&target=([^&]+)@);
+    next unless ($u =~ m@^http://click.hotbot.com/director.asp
+                         .*
+                         [?&]id=[1-9]\d*
+                         .*
+                         \&target=([^&]+)
+                         .*
+                        @x);
     $u = url_decode($1);
 
     LOG ($verbose_filter, "  candidate: $u");
@@ -1318,6 +1334,113 @@ sub pick_from_yahoo_news_text {
 
 ############################################################################
 #
+# Pick images by waiting for driftnet to populate a temp dir with files.
+# Requires driftnet version 0.1.5 or later.
+# (Driftnet is a program by Chris Lightfoot that sniffs your local ethernet
+# for images being downloaded by others.)
+# Driftnet/webcollage integration by jwz.
+#
+############################################################################
+
+# driftnet
+sub pick_from_driftnet {
+  my ( $timeout ) = @_;
+
+  my $id = $driftnet_magic;
+  my $dir = $driftnet_dir;
+  my $start = time;
+  my $now;
+
+  error ("\$driftnet_dir unset?") unless ($dir);
+  $dir =~ s@/+$@@;
+
+  error ("$dir unreadable") unless (-d "$dir/.");
+
+  $timeout = $http_timeout unless ($timeout);
+  $last_search = $id;
+
+  while ($now = time, $now < $start + $timeout) {
+    local *DIR;
+    opendir (DIR, $dir) || error ("$dir: $!");
+    while (my $file = readdir(DIR)) {
+      next if ($file =~ m/^\./);
+      $file = "$dir/$file";
+      closedir DIR;
+      LOG ($verbose_load, "picked file $file ($id)");
+      return ($id, $file);
+    }
+    closedir DIR;
+  }
+  LOG (($verbose_net || $verbose_load), "timed out for $id");
+  return ();
+}
+
+
+sub get_driftnet_file {
+  my ($file) = @_;
+
+  error ("\$driftnet_dir unset?") unless ($driftnet_dir);
+
+  my $id = $driftnet_magic;
+  my $re = qr/$driftnet_dir/;
+  error ("$id: $file not in $driftnet_dir?")
+    unless ($file =~ m@^$re@o);
+
+  local *IN;
+  open (IN, $file) || error ("$id: $file: $!");
+  my $body = '';
+  while (<IN>) { $body .= $_; }
+  close IN;
+  unlink ($file);
+  return ($id, $body);
+}
+
+
+sub spawn_driftnet {
+  my ($cmd) = @_;
+
+  # make a directory to use.
+  while (1) {
+    my $tmp = $ENV{TEMPDIR} || "/tmp";
+    $driftnet_dir = sprintf ("$tmp/driftcollage-%08x", rand(0xffffffff));
+    LOG ($verbose_exec, "mkdir $driftnet_dir");
+    last if mkdir ($driftnet_dir, 0700);
+  }
+
+  if (! ($cmd =~ m/\s/)) {
+    # if the command didn't have any arguments in it, then it must be just
+    # a pointer to the executable.  Append the default args to it.
+    my $dargs = $default_driftnet_cmd;
+    $dargs =~ s/^[^\s]+//;
+    $cmd .= $dargs;
+  }
+
+  # point the driftnet command at our newly-minted private directory.
+  #
+  $cmd .= " -d $driftnet_dir";
+  $cmd .= ">/dev/null" unless ($verbose_exec);
+
+  my $pid = fork();
+  if ($pid < 0) { error ("fork: $!\n"); }
+  if ($pid) {
+    # parent fork
+    push @pids_to_kill, $pid;
+    LOG ($verbose_exec, "forked for \"$cmd\"");
+  } else {
+    # child fork
+    nontrapping_system ($cmd) || error ("exec: $!");
+  }
+
+  # wait a bit, then make sure the process actually started up.
+  #
+  sleep (1);
+  error ("pid $pid failed to start \"$cmd\"")
+    unless (1 == kill (0, $pid));
+}
+
+
+############################################################################
+#
 # Pick a random image in a random way
 #
 ############################################################################
@@ -1326,7 +1449,6 @@ sub pick_from_yahoo_news_text {
 # Picks a random image on a random page, and returns two URLs:
 # the page containing the image, and the image.
 # Returns () if nothing found this time.
-# Uses the url-randomizer 1 time in 5, else the image randomizer.
 #
 
 sub pick_image {
@@ -1551,6 +1673,11 @@ sub save_recent_url {
   $_ = $url;
   my ($site) = m@^http://([^ \t\n\r/:]+)@;
 
+  if ($base eq $driftnet_magic) {
+    $site = $driftnet_magic;
+    @recent_images = ();
+  }
+
   my $done = 0;
   foreach (@recent_images) {
     if ($_ eq $url) {
@@ -1703,6 +1830,24 @@ sub bellrand {
 }
 
 
+sub signal_cleanup {
+  my ($sig) = @_;
+  print STDERR blurb() . (defined($sig)
+                          ? "caught signal $sig."
+                          : "exiting.")
+                       . "\n"
+    if ($verbose_exec);
+
+  x_cleanup();
+
+  if (@pids_to_kill) {
+    print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
+    kill ('TERM', @pids_to_kill);
+  }
+
+  exit 1;
+}
+
 ##############################################################################
 #
 # Generating a list of urls only
@@ -1739,12 +1884,8 @@ my $img_height;
 
 my $delay = 2;
 
-
 sub x_cleanup {
-  my ($sig) = @_;
-  print STDERR blurb() . "caught signal $sig.\n" if ($verbose_exec);
   unlink $image_ppm, $image_tmp1, $image_tmp2;
-  exit 1;
 }
 
 
@@ -1922,17 +2063,6 @@ sub x_or_pbm_output {
   # find a root-window displayer program.
   #
   $ppm_to_root_window_cmd = pick_root_displayer();
-
-
-  $SIG{HUP}  = \&x_cleanup;
-  $SIG{INT}  = \&x_cleanup;
-  $SIG{QUIT} = \&x_cleanup;
-  $SIG{ABRT} = \&x_cleanup;
-  $SIG{KILL} = \&x_cleanup;
-  $SIG{TERM} = \&x_cleanup;
-
-  # Need this so that if giftopnm dies, we don't die.
-  $SIG{PIPE} = 'IGNORE';
 
   if (!$img_width || !$img_height) {
     $_ = "xdpyinfo";
@@ -2342,12 +2472,29 @@ sub paste_image {
 }
 
 
+sub init_signals {
+
+  $SIG{HUP}  = \&signal_cleanup;
+  $SIG{INT}  = \&signal_cleanup;
+  $SIG{QUIT} = \&signal_cleanup;
+  $SIG{ABRT} = \&signal_cleanup;
+  $SIG{KILL} = \&signal_cleanup;
+  $SIG{TERM} = \&signal_cleanup;
+
+  # Need this so that if giftopnm dies, we don't die.
+  $SIG{PIPE} = 'IGNORE';
+}
+
+END { signal_cleanup(); }
+
+
 sub main {
   $| = 1;
   srand(time ^ $$);
 
   my $verbose = 0;
   my $dict;
+  my $driftnet_cmd = 0;
 
   $current_state = "init";
   $load_method = "none";
@@ -2399,6 +2546,13 @@ sub main {
       $http_proxy = shift @ARGV;
     } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
       $dict = shift @ARGV;
+    } elsif ($_ eq "-driftnet" || $_ eq "--driftnet") {
+      @search_methods = ( 100, "driftnet", \&pick_from_driftnet );
+      if (! ($ARGV[0] =~ m/^-/)) {
+        $driftnet_cmd = shift @ARGV;
+      } else {
+        $driftnet_cmd = $default_driftnet_cmd;
+      }
     } elsif ($_ eq "-debug" || $_ eq "--debug") {
       my $which = shift @ARGV;
       my @rest = @search_methods;
@@ -2418,11 +2572,13 @@ sub main {
       LOG (1, "DEBUG: using only \"$which\"");
 
     } else {
-      print STDERR "$copyright\nusage: $progname [-root]" .
-                 " [-display dpy] [-root] [-verbose] [-timeout secs]\n" .
-                 "\t\t  [-delay secs] [-filter cmd] [-filter2 cmd]\n" .
-                 "\t\t  [-dictionary dictionary-file]\n" .
-                 "\t\t  [-http-proxy host[:port]]\n";
+      print STDERR "$copyright\nusage: $progname " .
+              "[-root] [-display dpy] [-verbose] [-debug which]\n" .
+        "\t\t  [-timeout secs] [-delay secs] [-filter cmd] [-filter2 cmd]\n" .
+        "\t\t  [-no-output] [-urls-only] [-background color] [-size WxH]\n" .
+        "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
+        "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
+        "\n";
       exit 1;
     }
   }
@@ -2501,6 +2657,10 @@ sub main {
   } else {
     pick_dictionary();
   }
+
+  init_signals();
+
+  spawn_driftnet ($driftnet_cmd) if ($driftnet_cmd);
 
   if ($urls_only_p) {
     url_only_output;

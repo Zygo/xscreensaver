@@ -1,15 +1,11 @@
 %define	name		xscreensaver
-%define	version		4.03
+%define	version		4.04
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
 %define	gnome_prefix	/usr
 %define	kde_prefix	/usr
-
 %define gnome_datadir	%{gnome_prefix}/share
-%define gnome_ccdir	%{gnome_datadir}/control-center/Desktop
-%define gnome_paneldir	%{gnome_datadir}/gnome/apps/Settings/Desktop
-%define gnome_icondir	%{gnome_datadir}/pixmaps
 
 # By default, builds the basic, non-GL package.
 # To build both the basic and GL-add-on packages:
@@ -60,11 +56,6 @@ More than 140 display modes are included in this package.
 %build
 RPMOPTS=""
 
-# Is this really needed?  If so, why?
-# %ifarch alpha
-#  RPMOPTS="$RPMOPTS --without-xshm-ext"
-# %endif
-
 # On Solaris, build without PAM and with Shadow.
 # On other systems, build with PAM and without Shadow.
 #
@@ -90,22 +81,12 @@ make
 
 archdir=`./config.guess`
 
-# Most xscreensaver executables go in the X bin directory (/usr/X11R6/bin/)
-# but some of them (e.g., the control panel capplet) go in the GNOME bin
-# directory instead (/usr/bin/).
-#
-mkdir -p $RPM_BUILD_ROOT%{gnome_prefix}/bin
-mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir}
-mkdir -p $RPM_BUILD_ROOT%{gnome_paneldir}
-
-# Likewise for KDE: the .kss file goes in the KDE bin directory (/usr/bin/).
+# We have to make sure these directories exist,
+# or nothing will be installed into them.
 #
 export KDEDIR=%{kde_prefix}
 mkdir -p $RPM_BUILD_ROOT$KDEDIR/bin
-
-# This is a directory that "make install" won't make as needed
-# (since Linux uses /etc/pam.d/* and Solaris uses /etc/pam.conf).
-#
+mkdir -p $RPM_BUILD_ROOT%{gnome_datadir}
 mkdir -p $RPM_BUILD_ROOT/etc/pam.d
 
 cd $archdir
@@ -114,28 +95,38 @@ make  install_prefix=$RPM_BUILD_ROOT \
       GNOME_BINDIR=%{gnome_prefix}/bin \
       install-strip
 
-# Make a pair of lists, of the GL and non-GL executables.
-# Do this by parsing the output of a dummy run of "make install"
-# in the driver/, hacks/ and hacks/glx/ directories.
+# This function prints a list of things that get installed.
+# It does this by parsing the output of a dummy run of "make install".
 #
 list_files() {
   make -s install_prefix=$RPM_BUILD_ROOT INSTALL=true           \
           GNOME_BINDIR=%{gnome_prefix}/bin                      \
           "$@"                                                  |
-    sed -n -e 's@.* /\([^ ]*\)$@/\1@p'                          |
+    sed -n -e 's@.* \(/[^ ]*\)$@\1@p'                           |
     sed    -e "s@^$RPM_BUILD_ROOT@@"                            \
-           -e "s@/bin/\.\./@/@"                                 |
+           -e "s@/[a-z][a-z]*/\.\./@/@"                         |
     sed    -e 's@\(.*/man/.*\)@\1\*@'                           |
     sort
 }
 
-( cd hacks ; list_files install ; \
-  cd ../driver; list_files install-program install-scripts ) \
-   > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
+# Collect the names of the non-GL executables and scripts...
+# (Including the names of all of the Gnome, KDE, and L10N-related files,
+# whereever they might have gotten installed...)
+# For the translation catalogs, prepend an appropriate %lang(..) tag.
+#
+(  cd    hacks ; list_files install ; \
+   cd ../driver; list_files install-program install-scripts \
+                            install-gnome install-kde ; \
+ ( cd ../po;     list_files install | grep '\.' \
+    | sed 's@^\(.*/\([^/]*\)/LC.*\)$@%lang(\2) \1@' ) \
+) > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
+
+
+# Collect the names of the GL-only executables...
+#
 ( cd hacks/glx ; list_files install ) \
    | grep -v man1/xscreensaver-gl-helper \
    > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-gl
-
 
 # This line is redundant, except that it causes the "xscreensaver"
 # executable to be installed unstripped (while all others are stripped.)
@@ -166,26 +157,18 @@ fi
 if [ -d $RPM_BUILD_ROOT    ]; then rm -r $RPM_BUILD_ROOT    ; fi
 if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
 
+# Files for the "xscreensaver" package:
+#
 %files -f exes-non-gl
 %defattr(-,root,root)
 
-# Files for the "xscreensaver" package:
-#
-%doc                README README.debugging
-%dir                %{x11_prefix}/lib/xscreensaver
-%config             %{x11_prefix}/lib/X11/app-defaults/*
-                    %{x11_prefix}/man/man1/xscreensaver*
-                    /etc/pam.d/*
-
-%config(missingok)  %{kde_prefix}/bin/*.kss
-
-%config(missingok)  %{gnome_prefix}/bin/*-capplet
-%config(missingok)  %{gnome_ccdir}/*.desktop
-%config(missingok)  %{gnome_paneldir}/*.desktop
-%config(missingok)  %{gnome_icondir}/*
-
-%config(missingok)  %{gnome_prefix}/share/locale/
+%doc    README README.debugging
+%dir    %{x11_prefix}/lib/xscreensaver
+%config %{x11_prefix}/lib/X11/app-defaults/*
+        %{x11_prefix}/man/man1/xscreensaver*
+%config /etc/pam.d/*
 
 # Files for the "xscreensaver-gl" package:
 #
 %{?USE_GL:%files -f exes-gl gl}
+%{?USE_GL:%defattr(-,root,root)}

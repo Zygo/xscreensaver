@@ -3,6 +3,7 @@ $ set NOON
 $ set def [.HACKS]
 $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
+$ anemone	:== $'mydir'anemone
 $ ant		:== $'mydir'ant
 $ apollonian	:== $'mydir'apollonian
 $ attraction	:== $'mydir'attraction

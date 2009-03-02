@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.19 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.20 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -54,6 +54,10 @@ my @displayer_programs = (
 # "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
 );
 
+# apparently some versions of netpbm call it "pamoil" instead of "pgmoil"...
+#
+my $pgmoil = (which("pamoil") ? "pamoil" : "pgmoil");
+
 
 # List of interesting PPM filter pipelines.
 # In this list, the following magic words may be used:
@@ -68,7 +72,7 @@ my @displayer_programs = (
 my @filters = (
   "ppmtopgm FILE1 | pgmedge | pgmtoppm COLORS | ppmnorm",
   "ppmtopgm FILE1 | pgmenhance | pgmtoppm COLORS",
-  "ppmtopgm FILE1 | pgmoil | pgmtoppm COLORS",
+  "ppmtopgm FILE1 | $pgmoil | pgmtoppm COLORS",
   "ppmtopgm FILE1 | pgmbentley | pgmtoppm COLORS",
 
   "ppmrelief FILE1 | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |" .
@@ -110,7 +114,7 @@ my @filters = (
   " pnmflip -tb FILE3 | ppmnorm > FILE2 ; " .
   " pnmarith -multiply FILE1 FILE2",
 
-  "ppmshift 30 FILE1 | ppmtopgm | pgmoil | pgmedge | " .
+  "ppmshift 30 FILE1 | ppmtopgm | $pgmoil | pgmedge | " .
   "   pgmtoppm COLORS > FILE2 ; " .
   " pnmarith -difference FILE1 FILE2",
 
@@ -154,6 +158,19 @@ sub pick_displayer {
   printf STDERR "$progname: none of: " . join (", ", @names) .
                 " were found on \$PATH.\n";
   exit 1;
+}
+
+
+# returns the full path of the named program, or undef.
+#
+sub which {
+  my ($prog) = @_;
+  foreach (split (/:/, $ENV{PATH})) {
+    if (-x "$_/$prog") {
+      return $prog;
+    }
+  }
+  return undef;
 }
 
 

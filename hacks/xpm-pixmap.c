@@ -26,7 +26,12 @@ extern char *progname;
 #if defined(HAVE_GDK_PIXBUF)
 
 # include <gdk-pixbuf/gdk-pixbuf.h>
-# include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+
+# ifdef HAVE_GTK2
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# else  /* !HAVE_GTK2 */
+#  include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+# endif /* !HAVE_GTK2 */
 
 
 /* Returns a Pixmap structure containing the bits of the given XPM image.
@@ -42,17 +47,27 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
   GdkPixbuf *pb;
   static int initted = 0;
   XWindowAttributes xgwa;
+#ifdef HAVE_GTK2
+  GError *gerr = NULL;
+#endif /* HAVE_GTK2 */
   XGetWindowAttributes (dpy, window, &xgwa);
 
   if (!initted)
     {
+#ifdef HAVE_GTK2
+      g_type_init ();
+#endif /* HAVE_GTK2 */
       gdk_pixbuf_xlib_init (dpy, screen_number (xgwa.screen));
       xlib_rgb_init (dpy, xgwa.screen);
       initted = 1;
     }
 
   pb = (filename
-        ? gdk_pixbuf_new_from_file (filename)
+#ifdef HAVE_GTK2
+        ? gdk_pixbuf_new_from_file (filename, &gerr)
+#else  /* !HAVE_GTK2 */
+	? gdk_pixbuf_new_from_file (filename)
+#endif /* !HAVE_GTK2 */
         : gdk_pixbuf_new_from_xpm_data ((const char **) xpm_data));
   if (pb)
     {
@@ -81,7 +96,12 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
     }
   else if (filename)
     {
+#ifdef HAVE_GTK2
+      fprintf (stderr, "%s: %s\n", progname, gerr->message);
+      g_error_free (gerr);
+#else /* !HAVE_GTK2 */
       fprintf (stderr, "%s: unable to load %s\n", progname, filename);
+#endif /* !HAVE_GTK2 */
       exit (-1);
     }
   else

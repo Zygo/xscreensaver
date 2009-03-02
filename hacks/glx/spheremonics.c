@@ -53,11 +53,11 @@
  * There tends to be a dark stripe in the colormaps.  I don't know why.
  * Perhaps utils/colors.c is at fault?
  *
- * With the hairier objects, some of the faces are inside out.  E.g.,
+ * Note that this equation sometimes generates faces that are inside out:
  *     -parameters 01210111
- * If we turn off GL_CULL_FACE, that object renders more solidly
- * (indicating wrong winding) and the altered surfaces are too dark
- * (indicating wrong normals.)
+ * To make this work, we need to render back-faces with two-sided lighting:
+ * figuring out how to correct the winding and normals on those inside out
+ * surfaces would be too hard.
  */
 
 #include <X11/Intrinsic.h>
@@ -68,6 +68,8 @@ extern XtAppContext app;
 #define HACK_INIT	init_spheremonics
 #define HACK_DRAW	draw_spheremonics
 #define HACK_RESHAPE	reshape_spheremonics
+#define HACK_HANDLE_EVENT spheremonics_handle_event
+#define EVENT_MASK      PointerMotionMask
 #define ccs_opts	xlockmore_opts
 
 #define DEF_DURATION    "100"
@@ -96,6 +98,8 @@ extern XtAppContext app;
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "rotator.h"
+#include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -108,12 +112,9 @@ typedef struct {
 
 typedef struct {
   GLXContext *glx_context;
-
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;		   /* max velocity */
-  Bool spin_x, spin_y, spin_z;
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
 
   GLuint dlist, dlist2;
   GLfloat scale;
@@ -129,6 +130,7 @@ typedef struct {
 
   int tracer;
   int mesher;
+  int polys1, polys2;  /* polygon counts */
 
   XFontStruct *font;
   GLuint font_list;
@@ -187,14 +189,13 @@ reshape_spheremonics (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
-  gluLookAt( 0.0, 0.0, 15.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -15.0);
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -213,83 +214,34 @@ gl_init (ModeInfo *mi)
   if (!wire)
     {
       glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glEnable(GL_CULL_FACE);
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
       glEnable(GL_DEPTH_TEST);
+
+      /* With objects that have proper winding and normals set up on all
+         their faces, one can cull back-faces; however, these equations
+         generate objects that are sometimes "inside out", and determining
+         whether a facet has been inverted like that is really hard.
+         So we render both front and back faces, at a probable performance
+         penalty on non-accelerated systems.
+
+         When rendering back faces, we also need to do two-sided lighting,
+         or the fact that the normals are flipped gives us too-dark surfaces
+         on the inside-out surfaces.
+
+         This isn't generally something you'd want, because you end up
+         with half the lighting dynamic range (kind of.)  So if you had
+         a sphere with correctly pointing normals, and a single light
+         source, it would be illuminated from two sides.  In this case,
+         though, it saves us from a difficult and time consuming
+         inside/outside test.  And we don't really care about a precise
+         lighting effect.
+       */
+      glDisable(GL_CULL_FACE);
+      glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, TRUE);
     }
 }
 
-
-/* lifted from lament.c */
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
-}
 
 
 /* generate the object */
@@ -549,12 +501,12 @@ do_tracer (ModeInfo *mi)
 }
 
 
-static void
+static int
 unit_spheremonics (ModeInfo *mi,
                    int resolution, Bool wire, int *m, XColor *colors)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
-
+  int polys = 0;
   int i, j;
   double du, dv;
   XYZ q[4];
@@ -571,8 +523,6 @@ unit_spheremonics (ModeInfo *mi,
 
   if (wire)
     glColor3f (1, 1, 1);
-
-/*  mi->polygon_count = 0; */
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
 
@@ -612,7 +562,7 @@ unit_spheremonics (ModeInfo *mi,
       if (!wire) do_color (i, colors);
       glVertex3f(q[3].x,q[3].y,q[3].z);
 
-/*      mi->polygon_count++; */
+      polys++;
 
 # define CHECK_BBOX(N) \
          if (q[(N)].x < cc->bbox[0].x) cc->bbox[0].x = q[(N)].x; \
@@ -650,6 +600,7 @@ unit_spheremonics (ModeInfo *mi,
         glPopMatrix();
       }
   }
+  return polys;
 }
 
 
@@ -769,7 +720,7 @@ generate_spheremonics (ModeInfo *mi)
 
   {
     glNewList(cc->dlist, GL_COMPILE);
-    unit_spheremonics (mi, cc->resolution, wire, cc->m, cc->colors);
+    cc->polys1 = unit_spheremonics (mi, cc->resolution, wire,cc->m,cc->colors);
     glEndList();
 
     glNewList(cc->dlist2, GL_COMPILE);
@@ -777,7 +728,7 @@ generate_spheremonics (ModeInfo *mi)
     glDisable (GL_LIGHTING);
     glPushMatrix();
     glScalef (1.05, 1.05, 1.05);
-    unit_spheremonics (mi, cc->resolution, 2, cc->m, cc->colors);
+    cc->polys2 = unit_spheremonics (mi, cc->resolution, 2, cc->m, cc->colors);
     glPopMatrix();
     glPopAttrib();
     glEndList();
@@ -879,12 +830,16 @@ init_spheremonics (ModeInfo *mi)
     }
 
   {
+    Bool spinx=False, spiny=False, spinz=False;
+    double spin_speed   = 1.0;
+    double wander_speed = 0.03;
+
     char *s = do_spin;
     while (*s)
       {
-        if      (*s == 'x' || *s == 'X') cc->spin_x = 1;
-        else if (*s == 'y' || *s == 'Y') cc->spin_y = 1;
-        else if (*s == 'z' || *s == 'Z') cc->spin_z = 1;
+        if      (*s == 'x' || *s == 'X') spinx = True;
+        else if (*s == 'y' || *s == 'Y') spiny = True;
+        else if (*s == 'z' || *s == 'Z') spinz = True;
         else
           {
             fprintf (stderr,
@@ -894,22 +849,16 @@ init_spheremonics (ModeInfo *mi)
           }
         s++;
       }
+
+    cc->rot = make_rotator (spinx ? spin_speed : 0,
+                            spiny ? spin_speed : 0,
+                            spinz ? spin_speed : 0,
+                            1.0,
+                            do_wander ? wander_speed : 0,
+                            True);
+    cc->trackball = gltrackball_init ();
   }
 
-  cc->rotx = frand(1.0) * RANDSIGN();
-  cc->roty = frand(1.0) * RANDSIGN();
-  cc->rotz = frand(1.0) * RANDSIGN();
-
-  /* bell curve from 0-6 degrees, avg 3 */
-  cc->dx = (frand(0.4) + frand(0.4) + frand(0.4)) / (360/2);
-  cc->dy = (frand(0.4) + frand(0.4) + frand(0.4)) / (360/2);
-  cc->dz = (frand(0.4) + frand(0.4) + frand(0.4)) / (360/2);
-
-  cc->d_max = cc->dx * 2;
-
-  cc->ddx = 0.00006 + frand(0.00003);
-  cc->ddy = 0.00006 + frand(0.00003);
-  cc->ddz = 0.00006 + frand(0.00003);
   cc->tracer = -1;
   cc->mesher = -1;
 
@@ -935,18 +884,36 @@ init_spheremonics (ModeInfo *mi)
 }
 
 
-static Bool
-mouse_down_p (ModeInfo *mi)
+Bool
+spheremonics_handle_event (ModeInfo *mi, XEvent *event)
 {
-  Window root, child;
-  int rx, ry, wx, wy;
-  unsigned int mask;
-  if (!XQueryPointer (MI_DISPLAY(mi), MI_WINDOW(mi),
-                      &root, &child, &rx, &ry, &wx, &wy, &mask))
-    return False;
-  if (! (mask & Button1Mask))
-    return False;
-  return True;
+  spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      cc->button_down_p = True;
+      gltrackball_start (cc->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      cc->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           cc->button_down_p)
+    {
+      gltrackball_track (cc->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
 }
 
 
@@ -956,12 +923,9 @@ draw_spheremonics (ModeInfo *mi)
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
-  Bool mouse_p;
 
   if (!cc->glx_context)
     return;
-
-  mouse_p = mouse_down_p (mi);
 
   glShadeModel(GL_SMOOTH);
 
@@ -972,58 +936,46 @@ draw_spheremonics (ModeInfo *mi)
   glScalef(1.1, 1.1, 1.1);
 
   {
-    GLfloat x, y, z;
+    double x, y, z;
+    get_position (cc->rot, &x, &y, &z, !cc->button_down_p);
+    glTranslatef((x - 0.5) * 8,
+                 (y - 0.5) * 6,
+                 (z - 0.5) * 8);
 
-    if (do_wander)
-      {
-        static int frame = 0;
+    gltrackball_rotate (cc->trackball);
 
-#       define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-
-        x = SINOID(0.0071, 8.0);
-        y = SINOID(0.0053, 6.0);
-        z = SINOID(0.0037, 15.0);
-        frame++;
-        glTranslatef(x, y, z);
-      }
-
-    if (cc->spin_x || cc->spin_y || cc->spin_z)
-      {
-        x = cc->rotx;
-        y = cc->roty;
-        z = cc->rotz;
-        if (x < 0) x = 1 - (x + 1);
-        if (y < 0) y = 1 - (y + 1);
-        if (z < 0) z = 1 - (z + 1);
-
-        if (cc->spin_x) glRotatef(x * 360, 1.0, 0.0, 0.0);
-        if (cc->spin_y) glRotatef(y * 360, 0.0, 1.0, 0.0);
-        if (cc->spin_z) glRotatef(z * 360, 0.0, 0.0, 1.0);
-
-        rotate(&cc->rotx, &cc->dx, &cc->ddx, cc->d_max);
-        rotate(&cc->roty, &cc->dy, &cc->ddy, cc->d_max);
-        rotate(&cc->rotz, &cc->dz, &cc->ddz, cc->d_max);
-      }
+    get_rotation (cc->rot, &x, &y, &z, !cc->button_down_p);
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
   glScalef(7,7,7);
 
+  mi->polygon_count = 0;
+
   glScalef (cc->scale, cc->scale, cc->scale);
   glCallList (cc->dlist);
+  mi->polygon_count += cc->polys1;
+
   if (cc->mesher >= 0 /* || mouse_p */)
     {
       glCallList (cc->dlist2);
+      mi->polygon_count += cc->polys2;
       if (cc->mesher >= 0)
         cc->mesher--;
     }
   do_tracer(mi);
 
 
-  if (mouse_p)
+  if (cc->button_down_p)
     {
       char buf[200];
-      sprintf (buf, "%d %d %d %d %d %d %d %d",
+      sprintf (buf,
+               ((cc->m[0]<10 && cc->m[1]<10 && cc->m[2]<10 && cc->m[3]<10 &&
+                 cc->m[4]<10 && cc->m[5]<10 && cc->m[6]<10 && cc->m[7]<10)
+                ? "%d%d%d%d%d%d%d%d"
+                : "%d %d %d %d %d %d %d %d"),
                cc->m[0], cc->m[1], cc->m[2], cc->m[3],
                cc->m[4], cc->m[5], cc->m[6], cc->m[7]);
       draw_label (mi, buf);
@@ -1032,7 +984,7 @@ draw_spheremonics (ModeInfo *mi)
   if (!static_parms)
     {
       static int tick = 0;
-      if (tick++ == duration)
+      if (tick++ >= duration && !cc->button_down_p)
         {
           generate_spheremonics(mi);
           tick = 0;

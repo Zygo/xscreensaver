@@ -13,7 +13,6 @@
 #define __XSCREENSAVER_INTL_H__
 
 #ifdef ENABLE_NLS
-
 # include <libintl.h>
 # define _(String) dgettext(GETTEXT_PACKAGE,(String))
 # ifdef gettext_noop
@@ -33,9 +32,5 @@
 # define bindtextdomain(Domain,Directory) (Domain) 
 
 #endif /* !ENABLE_NLS */
-
-#ifndef HAVE_BINDTEXTDOMAIN_CODESET
-# define bindtextdomain_codeset(Domain,Codeset) (Domain)
-#endif
 
 #endif /* __XSCREENSAVER_INTL_H__ */

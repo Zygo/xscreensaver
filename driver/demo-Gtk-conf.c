@@ -40,9 +40,9 @@
  * workaround.
  */
 #ifdef HAVE_OLD_XML_HEADERS
-#include <parser.h>
+# include <parser.h>
 #else /* ! HAVE_OLD_XML_HEADERS */
-#include <libxml/parser.h> 
+# include <libxml/parser.h> 
 #endif /* HAVE_OLD_XML_HEADERS */
 
 /* 

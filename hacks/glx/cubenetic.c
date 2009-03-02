@@ -17,6 +17,8 @@ extern XtAppContext app;
 #define HACK_INIT	init_cube
 #define HACK_DRAW	draw_cube
 #define HACK_RESHAPE	reshape_cube
+#define HACK_HANDLE_EVENT cube_handle_event
+#define EVENT_MASK      PointerMotionMask
 #define ccs_opts	xlockmore_opts
 
 #define DEF_SPIN        "XYZ"
@@ -43,6 +45,8 @@ extern XtAppContext app;
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "rotator.h"
+#include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -74,12 +78,9 @@ typedef struct {
 
 typedef struct {
   GLXContext *glx_context;
-
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;		   /* max velocity */
-  Bool spin_x, spin_y, spin_z;
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
 
   GLuint cube_list;
   GLuint texture_id;
@@ -199,86 +200,14 @@ reshape_cube (ModeInfo *mi, int width, int height)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
-  gluLookAt( 0.0, 0.0, 15.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -15.0);
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-/* lifted from lament.c */
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
 }
 
 
@@ -414,6 +343,39 @@ shuffle_texture (ModeInfo *mi)
 }
 
 
+Bool
+cube_handle_event (ModeInfo *mi, XEvent *event)
+{
+  cube_configuration *cc = &ccs[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      cc->button_down_p = True;
+      gltrackball_start (cc->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      cc->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           cc->button_down_p)
+    {
+      gltrackball_track (cc->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
 void 
 init_cube (ModeInfo *mi)
 {
@@ -454,12 +416,16 @@ init_cube (ModeInfo *mi)
 
 
   {
+    Bool spinx=False, spiny=False, spinz=False;
+    double spin_speed   = 1.0;
+    double wander_speed = 0.05;
+
     char *s = do_spin;
     while (*s)
       {
-        if      (*s == 'x' || *s == 'X') cc->spin_x = 1;
-        else if (*s == 'y' || *s == 'Y') cc->spin_y = 1;
-        else if (*s == 'z' || *s == 'Z') cc->spin_z = 1;
+        if      (*s == 'x' || *s == 'X') spinx = True;
+        else if (*s == 'y' || *s == 'Y') spiny = True;
+        else if (*s == 'z' || *s == 'Z') spinz = True;
         else
           {
             fprintf (stderr,
@@ -469,22 +435,15 @@ init_cube (ModeInfo *mi)
           }
         s++;
       }
+
+    cc->rot = make_rotator (spinx ? spin_speed : 0,
+                            spiny ? spin_speed : 0,
+                            spinz ? spin_speed : 0,
+                            1.0,
+                            do_wander ? wander_speed : 0,
+                            True);
+    cc->trackball = gltrackball_init ();
   }
-
-  cc->rotx = frand(1.0) * RANDSIGN();
-  cc->roty = frand(1.0) * RANDSIGN();
-  cc->rotz = frand(1.0) * RANDSIGN();
-
-  /* bell curve from 0-6 degrees, avg 3 */
-  cc->dx = (frand(0.7) + frand(0.7) + frand(0.7)) / (360/2);
-  cc->dy = (frand(0.7) + frand(0.7) + frand(0.7)) / (360/2);
-  cc->dz = (frand(0.7) + frand(0.7) + frand(0.7)) / (360/2);
-
-  cc->d_max = cc->dx * 2;
-
-  cc->ddx = 0.00006 + frand(0.00003);
-  cc->ddy = 0.00006 + frand(0.00003);
-  cc->ddz = 0.00006 + frand(0.00003);
 
   cc->ncolors = 256;
   cc->texture_colors = (XColor *) calloc(cc->ncolors, sizeof(XColor));
@@ -591,39 +550,18 @@ draw_cube (ModeInfo *mi)
   glScalef(1.1, 1.1, 1.1);
 
   {
-    GLfloat x, y, z;
+    double x, y, z;
+    get_position (cc->rot, &x, &y, &z, !cc->button_down_p);
+    glTranslatef((x - 0.5) * 8,
+                 (y - 0.5) * 6,
+                 (z - 0.5) * 15);
 
-    if (do_wander)
-      {
-        static int frame = 0;
+    gltrackball_rotate (cc->trackball);
 
-#       define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-
-        x = SINOID(0.0071, 8.0);
-        y = SINOID(0.0053, 6.0);
-        z = SINOID(0.0037, 15.0);
-        frame++;
-        glTranslatef(x, y, z);
-      }
-
-    if (cc->spin_x || cc->spin_y || cc->spin_z)
-      {
-        x = cc->rotx;
-        y = cc->roty;
-        z = cc->rotz;
-        if (x < 0) x = 1 - (x + 1);
-        if (y < 0) y = 1 - (y + 1);
-        if (z < 0) z = 1 - (z + 1);
-
-        if (cc->spin_x) glRotatef(x * 360, 1.0, 0.0, 0.0);
-        if (cc->spin_y) glRotatef(y * 360, 0.0, 1.0, 0.0);
-        if (cc->spin_z) glRotatef(z * 360, 0.0, 0.0, 1.0);
-
-        rotate(&cc->rotx, &cc->dx, &cc->ddx, cc->d_max);
-        rotate(&cc->roty, &cc->dy, &cc->ddy, cc->d_max);
-        rotate(&cc->rotz, &cc->dz, &cc->ddz, cc->d_max);
-      }
+    get_rotation (cc->rot, &x, &y, &z, !cc->button_down_p);
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
   glScalef (2.5, 2.5, 2.5);

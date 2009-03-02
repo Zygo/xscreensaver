@@ -10,8 +10,7 @@ SUBDIRS		= utils driver hacks hacks/glx po
 TARFILES	= README README.VMS README.debugging INSTALL xscreensaver.lsm \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
-		  config.sub makevms.com screenblank.txt \
-		  install-sh \
+		  config.sub install-sh makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.lsm.sh xscreensaver.spec \
 
@@ -159,7 +158,7 @@ update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	echo -n "Updating version number in $$S to \"$$V\"... " ;	    \
+	echo -n "Updating $$S to \"$$V\"... " ;				    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$V/"		    \
 	  < $$S > $$T ;							    \

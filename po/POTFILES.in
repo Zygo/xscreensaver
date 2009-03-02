@@ -1,10 +1,11 @@
-# Auto-generated: Sat May 11 02:41:43 PDT 2002
+# Auto-generated: Fri May 31 20:43:52 PDT 2002
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade
+hacks/config/anemone.xml
 hacks/config/ant.xml
 hacks/config/apollonian.xml
 hacks/config/atlantis.xml
@@ -74,6 +75,7 @@ hacks/config/kaleidescope.xml
 hacks/config/kumppa.xml
 hacks/config/lament.xml
 hacks/config/laser.xml
+hacks/config/lavalite.xml
 hacks/config/lightning.xml
 hacks/config/lisa.xml
 hacks/config/lissie.xml
@@ -100,6 +102,7 @@ hacks/config/polyominoes.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
 hacks/config/qix.xml
+hacks/config/queens.xml
 hacks/config/rd-bomb.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml

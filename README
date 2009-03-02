@@ -70,6 +70,28 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.03:   * Support for GTK 2.x / GNOME 2.x.
+                      * The `configure' script will now use `pkg-config' if
+                        you have it, in preference to `gtk-config', etc.
+                      * New hacks, `lavalite', `queens', and `anemone'.
+                      * Minor updates to `spheremonics', `gltext', `xmatrix'.
+                      * You can use the mouse to manually spin most of the GL
+                        hacks now (when they are displaying in a window.)
+                      * Fixed a bug in `webcollage' (due to recent Alta Vista
+                        url changes) that was causing it to try and load 
+                        incorrect image URLs.
+                      * Made `xscreensaver-getimage' use gdk_pixbuf if it is
+                        available: this means that those hacks that load images
+                        will no longer rely on "xv", "xloadimage", etc.  This
+                        will close a race condition that could sometimes cause
+                        your desktop background to be changed; and also makes
+                        it possible for those programs to operate on image
+                        files when running in non-root mode.
+                      * `webcollage' can now be used in conjunction with
+                        `driftnet' to display images snooped from your local
+                        ethernet instead of obtained from search engines.
+                      * Added man pages for all the hacks that didn't have
+                        them.
 Changes since 4.02:   * New hack, `spheremonics'.
                       * Minor updates to `webcollage', `cage', `moebius',
                         `morph3d', `boxed', `circuit', and `helix'.

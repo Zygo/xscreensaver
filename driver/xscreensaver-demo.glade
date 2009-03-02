@@ -25,6 +25,7 @@
 <widget>
   <class>GtkWindow</class>
   <name>xscreensaver_demo</name>
+  <visible>False</visible>
   <title>XScreenSaver</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
@@ -1879,6 +1880,7 @@ Random Screen Saver
 <widget>
   <class>GtkDialog</class>
   <name>xscreensaver_settings_dialog</name>
+  <visible>False</visible>
   <title>XScreenSaver: Mode-Specific Settings</title>
   <type>GTK_WINDOW_DIALOG</type>
   <position>GTK_WIN_POS_NONE</position>

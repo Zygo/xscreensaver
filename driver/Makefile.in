@@ -24,10 +24,12 @@ INTLTOOL_MERGE	= @INTLTOOL_MERGE@
 
 GNOME_DATADIR	= @GNOME_DATADIR@
 GNOME_CCDIR	= $(GNOME_DATADIR)/control-center/Desktop
-GNOME_PANELDIR	= $(GNOME_DATADIR)/gnome/apps/Settings/Desktop
+GNOME_PANELDIR1 = $(GNOME_DATADIR)/gnome/apps/Settings/Desktop
+GNOME_PANELDIR2	= $(GNOME_DATADIR)/applications
+GNOME_PANELDIR	= @GNOME_PANELDIR@
+GLADE_DATADIR	= @GLADE_DATADIR@
 GNOME_BINDIR	= $(bindir)
 HACK_CONF_DIR	= @HACK_CONF_DIR@
-GTK_ICONDIR	= @GTK_ICONDIR@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
@@ -35,7 +37,7 @@ LDFLAGS		= @LDFLAGS@
 DEFS		= @DEFS@
 INTL_DEFS	= -DLOCALEDIR=\"$(localedir)\"
 SUBP_DEFS	= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
-GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GTK_ICONDIR)"'
+GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GLADE_DATADIR)"'
 CONF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"'
 
 LIBS		= @LIBS@
@@ -60,6 +62,7 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 XMU_LIBS	= @XMU_LIBS@
+XPM_LIBS	= @XPM_LIBS@
 
 # Note:
 #
@@ -90,8 +93,8 @@ MOTIF_OBJS	= demo-Xm.o demo-Xm-widgets.o
 
 GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c \
 		  demo-Gtk-widgets.c demo-Gtk-support.c
-GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o \
-		  demo-Gtk-widgets.o demo-Gtk-support.o
+GTK_EXTRA_OBJS  = demo-Gtk-widgets.o demo-Gtk-support.o
+GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o @GTK_EXTRA_OBJS@
 
 PWENT_SRCS	= passwd-pwent.c
 PWENT_OBJS	= passwd-pwent.o
@@ -192,7 +195,7 @@ SAVER_LIBS	= $(LIBS) $(X_LIBS) $(XMU_LIBS) @SAVER_LIBS@ \
 CMD_LIBS	= $(LIBS) $(X_LIBS) \
 		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
 
-GETIMG_LIBS	= $(LIBS) $(X_LIBS) \
+GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS)
 
 EXES		= xscreensaver xscreensaver-command xscreensaver-demo \
@@ -209,7 +212,7 @@ MEN		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-getimage-file.man \
 		  xscreensaver-getimage-video.man
 EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
-		  xscreensaver.kss xscreensaver-demo.glade \
+		  xscreensaver.kss xscreensaver-demo.glade xscreensaver-demo.glade2 \
 		  screensaver-properties.desktop.in \
 		  screensaver-properties-capplet \
 		  .gdbinit
@@ -508,33 +511,61 @@ install-gnome:: screensaver-properties-capplet
 
 # xscreensaver.xpm
 install-gnome:: $(LOGO)
-	@if [ "$(GTK_ICONDIR)" != "" ]; then                                  \
-           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+	@if [ "$(GLADE_DATADIR)" != "" ]; then                                  \
+           if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then                \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"          ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"          ;\
            fi                                                                ;\
 	   target=xscreensaver.xpm                                           ;\
 	   echo $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+	          $(install_prefix)$(GLADE_DATADIR)/$$target		     ;\
 	        $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+	          $(install_prefix)$(GLADE_DATADIR)/$$target		     ;\
         fi
 
 # ../utils/images/screensaver-*.xpm
 install-gnome::
-	@if [ "$(GTK_ICONDIR)" != "" ]; then                                  \
-           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+	@if [ "$(GLADE_DATADIR)" != "" ]; then                                \
+           if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then              \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"        ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"        ;\
            fi                                                                ;\
 	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
 	     echo $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$dest		     ;\
+	          $(install_prefix)$(GLADE_DATADIR)/$$dest		     ;\
 	          $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$dest		     ;\
+	          $(install_prefix)$(GLADE_DATADIR)/$$dest		     ;\
 	   done								     ;\
         fi
+
+# xscreensaver-demo.glade2
+install-gnome:: xscreensaver-demo.glade2
+	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
+	  if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then		      \
+	    echo $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"	     ;\
+	         $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"	     ;\
+	  fi								     ;\
+	  target=xscreensaver-demo.glade2				     ;\
+	  echo $(INSTALL_DATA) $(srcdir)/$$target                             \
+	    $(install_prefix)$(GLADE_DATADIR)/$$target                       ;\
+	  if   $(INSTALL_DATA) $(srcdir)/$$target                             \
+	    $(install_prefix)$(GLADE_DATADIR)/$$target                       ;\
+	    then true                                                        ;\
+          else                                                                \
+	    e=echo ;                                                          \
+ $$e ""                                                                      ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $$target into"			     ;\
+ $$e "           $(install_prefix)$(GLADE_DATADIR)/."                        ;\
+ $$e "           Without this file, xscreensaver-demo will not"              ;\
+ $$e "           be able to run properly."                                   ;\
+ $$e "  ####################################################################";\
+ $$e ""                                                                      ;\
+             exit 1 ;                                                         \
+	   fi ;                                                               \
+	 fi
+
 
 # screensaver-properties.desktop
 uninstall-gnome::
@@ -556,19 +587,19 @@ uninstall-gnome::
 
 # xscreensaver.xpm
 uninstall-gnome::
-	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
+	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
 	  target=xscreensaver.xpm                                            ;\
-	  echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
-	       rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
+	  echo rm -f $(install_prefix)$(GLADE_DATADIR)/$$target                ;\
+	       rm -f $(install_prefix)$(GLADE_DATADIR)/$$target                ;\
 	 fi
 
 # xscreensaver.xpm
 uninstall-gnome::
-	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
+	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
 	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
-	     echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$dest               ;\
-	          rm -f $(install_prefix)$(GTK_ICONDIR)/$$dest               ;\
+	     echo rm -f $(install_prefix)$(GLADE_DATADIR)/$$dest             ;\
+	          rm -f $(install_prefix)$(GLADE_DATADIR)/$$dest             ;\
 	   done								     ;\
         fi
 
@@ -624,7 +655,7 @@ depend: XScreenSaver_ad.h
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend: update_ad_version update_man_version XScreenSaver_ad.h
+distdepend: check_men update_ad_version update_man_version XScreenSaver_ad.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -657,7 +688,7 @@ update_ad_version::
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
 	D=`date '+%d-%b-%Y'` ;						    \
 	for S in $$files ; do						    \
-	  echo -n "Updating version number in $$S to $$V $$D... " ;	    \
+	  echo -n "Updating $$S to $$V $$D... " ;			    \
 	  T=/tmp/xs.$$$$ ;						    \
 	  sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
 	      -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"   \
@@ -676,7 +707,7 @@ update_man_version::
 	U=$(UTILS_SRC)/version.h ;					    \
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
 	V="`date '+%d-%b-%Y'` ($$V)" ;					    \
-	echo -n "Updating footer in $$S to \"$$V\"... " ;		    \
+	echo -n "Updating $$S to \"$$V\"... " ;				    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed "s/^\(\.TH[^\"]*\)\"[^\"]*\"\(.*\)/\1\"$$V\"\2/"		    \
 	  < $$S > $$T ;							    \
@@ -696,6 +727,23 @@ tags:
 echo_tarfiles:
 	@$(MAKE) XScreenSaver_ad.h 2>&1 >&- /dev/null
 	@echo $(TARFILES)
+
+check_men:
+	@badmen="" ;							\
+	 for exe in $(EXES); do						\
+	   if ! [ -f $(srcdir)/$$exe.man ]; then			\
+	     badmen="$$badmen $$exe" ;					\
+	   fi ;								\
+	 done ;								\
+	 if [ -n "$$badmen" ]; then					\
+	   echo "" ;							\
+	   echo "Warning: The following programs have no manuals:" ;	\
+	   echo "" ;							\
+	   for m in $$badmen ; do					\
+	     echo "    $$m" ;						\
+	   done ;							\
+	   echo "" ;							\
+	 fi
 
 
 # Rules for noticing when the objects from the utils directory are out of
