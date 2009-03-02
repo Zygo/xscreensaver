@@ -24,6 +24,9 @@
  *
  * Created      : Wed Apr 22 09:30:30 1998, hmallat
  * Last modified: Wed Apr 22 09:30:30 1998, hmallat
+ * Last modified: Sun Aug 31 23:40:14 2003, 
+ *              david slimp <rock808@DavidSlimp.com>
+ * 		added -hue option to specify base color hue
  *
  * TODO:
  *
@@ -74,6 +77,7 @@ char *defaults [] = {
   "*count:       3",     /* number of waves */
   "*gridsize:    4",     /* pixel size, smaller values for better resolution */
   "*ncolors:     128",   /* number of colours used */
+  "*hue:         0",     /* hue to use for base color (0-360) */
   "*speed:       30",    /* speed of wave origins moving around */
   "*delay:       30000", /* or something */
   "*color-shift: 60",    /* h in hsv space, smaller values for smaller
@@ -97,6 +101,7 @@ XrmOptionDescRec options [] = {
   { "-count",       ".count",       XrmoptionSepArg, 0 }, 
   { "-ncolors",     ".ncolors",     XrmoptionSepArg, 0 }, 
   { "-gridsize",    ".gridsize",    XrmoptionSepArg, 0 }, 
+  { "-hue",         ".hue",         XrmoptionSepArg, 0 },
   { "-speed",       ".speed",       XrmoptionSepArg, 0 },
   { "-delay",       ".delay",       XrmoptionSepArg, 0 },
   { "-color-shift", ".color-shift", XrmoptionSepArg, 0 },
@@ -149,6 +154,7 @@ struct inter_context {
   int count;
   int grid_size;
   int colors;
+  float hue;
   int speed;
   int delay;
   int shift;
@@ -234,6 +240,9 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
     if(c->colors < 2)
       c->colors = 2;
   }
+  c->hue = get_integer_resource("hue", "Float");
+  while (c->hue < 0 || c->hue >= 360)
+    c->hue = frand(360.0);
   c->speed = get_integer_resource("speed", "Integer");
   c->shift = get_float_resource("color-shift", "Float");
   while(c->shift >= 360.0)
@@ -276,7 +285,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
 
     gray = get_boolean_resource("gray", "Boolean");
     if(!gray) {
-      H[0] = frand(360.0); 
+      H[0] = c->hue;
       H[1] = H[0] + c->shift < 360.0 ? H[0]+c->shift : H[0] + c->shift-360.0; 
       H[2] = H[1] + c->shift < 360.0 ? H[1]+c->shift : H[1] + c->shift-360.0; 
       S[0] = S[1] = S[2] = 1.0;

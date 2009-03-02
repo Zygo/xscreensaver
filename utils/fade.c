@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -73,24 +73,28 @@ blacken_colormap (Screen *screen, Colormap cmap)
 
 
 static void fade_screens_1 (Display *dpy, Colormap *cmaps,
-			    Window *black_windows, int seconds, int ticks,
+			    Window *black_windows, int nwindows,
+                            int seconds, int ticks,
 			    Bool out_p, Bool clear_windows);
 
 #ifdef HAVE_SGI_VC_EXTENSION
 static int sgi_gamma_fade (Display *dpy,
-			   Window *black_windows, int seconds, int ticks,
+			   Window *black_windows, int nwindows,
+                           int seconds, int ticks,
 			   Bool out_p, Bool clear_windows);
 #endif /* HAVE_SGI_VC_EXTENSION */
 
 #ifdef HAVE_XF86VMODE_GAMMA
 static int xf86_gamma_fade (Display *dpy,
-                            Window *black_windows, int seconds, int ticks,
+                            Window *black_windows, int nwindows,
+                            int seconds, int ticks,
                             Bool out_p, Bool clear_windows);
 #endif /* HAVE_XF86VMODE_GAMMA */
 
 
 void
-fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
+fade_screens (Display *dpy, Colormap *cmaps,
+              Window *black_windows, int nwindows,
 	      int seconds, int ticks,
 	      Bool out_p, Bool clear_windows)
 {
@@ -116,7 +120,8 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
 
 #ifdef HAVE_SGI_VC_EXTENSION
   /* First try to do it by fading the gamma in an SGI-specific way... */
-  if (0 == sgi_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
+  if (0 == sgi_gamma_fade(dpy, black_windows, nwindows,
+                          seconds, ticks, out_p,
 			  clear_windows))
     ;
   else
@@ -124,7 +129,8 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
 
 #ifdef HAVE_XF86VMODE_GAMMA
   /* Then try to do it by fading the gamma in an XFree86-specific way... */
-  if (0 == xf86_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
+  if (0 == xf86_gamma_fade(dpy, black_windows, nwindows,
+                           seconds, ticks, out_p,
                            clear_windows))
     ;
   else
@@ -132,7 +138,8 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
 
     /* Else, do it the old-fashioned way, which (somewhat) loses if
        there are TrueColor windows visible. */
-    fade_screens_1 (dpy, cmaps, black_windows, seconds, ticks,
+    fade_screens_1 (dpy, cmaps, black_windows, nwindows,
+                    seconds, ticks,
 		    out_p, clear_windows);
 
   /* If we were supposed to be fading in, do so now (we just faded out,
@@ -168,7 +175,8 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
    what is implemented in sgi_gamma_fade(), so we use that if we can.
  */
 static void
-fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
+fade_screens_1 (Display *dpy, Colormap *cmaps,
+                Window *black_windows, int nwindows,
 		int seconds, int ticks,
 		Bool out_p, Bool clear_windows)
 {
@@ -286,7 +294,7 @@ fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
 	  installed = True;
 
 	  if (black_windows && !out_p)
-	    for (j = 0; j < nscreens; j++)
+	    for (j = 0; j < nwindows; j++)
 	      if (black_windows[j])
 		{
 		  XUnmapWindow (dpy, black_windows[j]);
@@ -341,7 +349,7 @@ fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
    */
   if (out_p && black_windows)
     {
-      for (i = 0; i < nscreens; i++)
+      for (i = 0; i < nwindows; i++)
 	{
 	  if (clear_windows)
 	    XClearWindow (dpy, black_windows[i]);
@@ -400,7 +408,8 @@ static void sgi_whack_gamma(Display *dpy, int screen,
 
 static int
 sgi_gamma_fade (Display *dpy,
-		Window *black_windows, int seconds, int ticks,
+		Window *black_windows, int nwindows,
+                int seconds, int ticks,
 		Bool out_p, Bool clear_windows)
 {
   int steps = seconds * ticks;
@@ -472,17 +481,18 @@ sgi_gamma_fade (Display *dpy,
      way down to 0, then take the windows off the screen.
    */
   if (!out_p)
-    for (screen = 0; screen < nscreens; screen++)
-      {
+    {
+      for (screen = 0; screen < nscreens; screen++)
 	sgi_whack_gamma(dpy, screen, &info[screen], 0.0);
+      
+      for (screen = 0; screen < nwindows; screen++)
 	if (black_windows && black_windows[screen])
 	  {
 	    XUnmapWindow (dpy, black_windows[screen]);
 	    XClearWindow (dpy, black_windows[screen]);
 	    XSync(dpy, False);
 	  }
-      }
-
+    }
 
   /* Iterate by steps of the animation... */
   for (i = (out_p ? steps : 0);
@@ -536,7 +546,7 @@ sgi_gamma_fade (Display *dpy,
 
   if (out_p && black_windows)
     {
-      for (screen = 0; screen < nscreens; screen++)
+      for (screen = 0; screen < nwindows; screen++)
 	{
 	  if (clear_windows)
 	    XClearWindow (dpy, black_windows[screen]);
@@ -618,7 +628,8 @@ static Bool xf86_whack_gamma (Display *dpy, int screen,
 
 static int
 xf86_gamma_fade (Display *dpy,
-                 Window *black_windows, int seconds, int ticks,
+                 Window *black_windows, int nwindows,
+                 int seconds, int ticks,
                  Bool out_p, Bool clear_windows)
 {
   int steps = seconds * ticks;
@@ -698,17 +709,17 @@ xf86_gamma_fade (Display *dpy,
      way down to 0, then take the windows off the screen.
    */
   if (!out_p)
-    for (screen = 0; screen < nscreens; screen++)
-      {
+    {
+      for (screen = 0; screen < nscreens; screen++)
 	xf86_whack_gamma(dpy, screen, &info[screen], 0.0);
+      for (screen = 0; screen < nwindows; screen++)
 	if (black_windows && black_windows[screen])
 	  {
 	    XUnmapWindow (dpy, black_windows[screen]);
 	    XClearWindow (dpy, black_windows[screen]);
 	    XSync(dpy, False);
 	  }
-      }
-
+    }
 
   /* Iterate by steps of the animation... */
   for (i = (out_p ? steps : 0);
@@ -762,7 +773,7 @@ xf86_gamma_fade (Display *dpy,
 
   if (out_p && black_windows)
     {
-      for (screen = 0; screen < nscreens; screen++)
+      for (screen = 0; screen < nwindows; screen++)
 	{
 	  if (clear_windows)
 	    XClearWindow (dpy, black_windows[screen]);

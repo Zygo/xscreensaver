@@ -285,6 +285,13 @@ launch_text_generator (sws_configuration *sc)
                 sprintf (cmd, "cat /usr/src/linux-%s/README", uts.release);
                 if (!stat (cmd+4, &st))
                   oprogram = cmd;
+                else
+                  {
+                    /* kernel source not installed?  try X... */
+                    strcpy (cmd, "cat /usr/X11R6/lib/X11/doc/README");
+                    if (!stat (cmd+4, &st))
+                      oprogram = cmd;
+                  }
               }
           }
       }

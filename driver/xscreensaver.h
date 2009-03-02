@@ -66,6 +66,7 @@ struct saver_info {
      server extension info
      ======================================================================= */
 
+  Bool xinerama_p;		   /* Whether Xinerama is in use.            */
   Bool using_xidle_extension;	   /* which extension is being used.         */
   Bool using_mit_saver_extension;  /* Note that `p->use_*' is the *request*, */
   Bool using_sgi_saver_extension;  /* and `si->using_*' is the *reality*.    */
@@ -188,8 +189,19 @@ struct saver_info {
 struct saver_screen_info {
   saver_info *global;
 
-  int number;
-  Screen *screen;
+  int number;			/* The internal ordinal of this screen,
+                                   counting Xinerama rectangles as separate
+                                   screens. */
+  int real_screen_number;	/* The number of the underlying X screen on
+                                   which this rectangle lies. */
+  Screen *screen;		/* The X screen in question. */
+
+  int x, y, width, height;	/* The size and position of this rectangle
+                                   on its underlying X screen. */
+
+  Bool real_screen_p;		/* This will be true of exactly one ssi per
+                                   X screen. */
+
   Widget toplevel_shell;
 
   /* =======================================================================

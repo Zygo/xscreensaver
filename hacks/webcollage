@@ -15,8 +15,8 @@
 
 # To run this as a display mode with xscreensaver, add this to `programs':
 #
-#   default-n:  webcollage -root                                        \n\
-#   default-n:  webcollage -root -filter 'vidwhacker -stdin -stdout'    \n\
+#     webcollage -root
+#     webcollage -root -filter 'vidwhacker -stdin -stdout'
 
 
 # If you have the "driftnet" program installed, webcollage can display a
@@ -27,7 +27,7 @@
 # Driftnet is available here: http://www.ex-parrot.com/~chris/driftnet/
 # Use it like so:
 #
-#   default-n:  webcollage -root -driftnet                             \n\
+#     webcollage -root -driftnet
 #
 # Driftnet is the Unix implementation of the MacOS "EtherPEG" program.
 
@@ -53,7 +53,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.104 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.107 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -92,6 +92,7 @@ my @search_methods = (  77, "altavista",  \&pick_from_alta_vista_random_link,
 # programs we can use to write to the root window (tried in ascending order.)
 #
 my @root_displayers = (
+  "xscreensaver-getimage -root -file",
   "chbg       -once -xscreensaver -max_size 100",
   "xv         -root -quit -viewonly +noresetroot -quick24 -rmode 5" .
   "           -rfg black -rbg black",
@@ -267,6 +268,7 @@ sub get_document_1 {
   my $port2 = $port;
   if ($http_proxy) {
     $serverstring = $http_proxy if $http_proxy;
+    $serverstring =~ s@^[a-z]+://@@;
     ($them2,$port2) = split(/:/, $serverstring);
     $port2 = 80 unless $port2;
   }

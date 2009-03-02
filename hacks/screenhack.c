@@ -57,6 +57,10 @@
 #include "version.h"
 #include "vroot.h"
 
+#ifndef _XSCREENSAVER_VROOT_H_
+# error Error!  You have an old version of vroot.h!  Check -I args.
+#endif /* _XSCREENSAVER_VROOT_H_ */
+
 #ifndef isupper
 # define isupper(c)  ((c) >= 'A' && (c) <= 'Z')
 #endif
@@ -547,7 +551,7 @@ main (int argc, char **argv)
   else if (root_p)
     {
       XWindowAttributes xgwa;
-      window = RootWindowOfScreen (XtScreen (toplevel));
+      window = VirtualRootWindowOfScreen (XtScreen (toplevel));
       XtDestroyWidget (toplevel);
       XGetWindowAttributes (dpy, window, &xgwa);
       cmap = xgwa.colormap;
@@ -576,7 +580,7 @@ main (int argc, char **argv)
 	  unsigned int bg, bd;
 	  Widget new;
 
-	  cmap = XCreateColormap (dpy, RootWindowOfScreen(screen),
+	  cmap = XCreateColormap (dpy, VirtualRootWindowOfScreen(screen),
 				  visual, AllocNone);
 	  bg = get_pixel_resource ("background", "Background", dpy, cmap);
 	  bd = get_pixel_resource ("borderColor", "Foreground", dpy, cmap);

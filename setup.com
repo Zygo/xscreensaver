@@ -64,8 +64,8 @@ $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
 $ maze		:== $'mydir'maze
 $ metaballs	:== $'mydir'metaballs
-$ moire		:== $'mydir'moire
 $ moire2	:== $'mydir'moire2
+$ moire		:== $'mydir'moire
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ nerverot	:== $'mydir'nerverot

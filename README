@@ -76,6 +76,15 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.12:   * On Xinerama systems, xscreensaver now runs one hack on
+                        each monitor (just like in "real" multi-head mode)
+                        instead of running one hack stretching across all the
+                        screens.  Note that for this to work with any 3rd party
+                        screensavers, they must update their "vroot.h" file.
+                      * `webcollage' and `vidwhacker' display images using
+                        `xscreensaver-getimage' now.
+                      * Added `ljlatest' script for use with `starwars' and
+                        `phosphor'.
 Changes since 4.11:   * New GL hacks, `flipflop', `antspotlight', and
                         `polytopes'.
                       * Added VMS to `bsod'.

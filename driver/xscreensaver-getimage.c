@@ -46,6 +46,10 @@
 #include "version.h"
 #include "vroot.h"
 
+#ifndef _XSCREENSAVER_VROOT_H_
+# error Error!  You have an old version of vroot.h!  Check -I args.
+#endif /* _XSCREENSAVER_VROOT_H_ */
+
 #ifdef HAVE_GDK_PIXBUF
 # undef HAVE_JPEGLIB
 # ifdef HAVE_GTK2
@@ -95,8 +99,17 @@ blurb (void)
 static int
 x_ehandler (Display *dpy, XErrorEvent *error)
 {
-  fprintf (stderr, "\nX error in %s:\n", progname);
-  XmuPrintDefaultErrorMessage (dpy, error, stderr);
+  if (error->error_code == BadWindow || error->error_code == BadDrawable)
+    {
+      fprintf (stderr, "%s: target %s 0x%lx unexpectedly deleted\n", progname,
+               (error->error_code == BadWindow ? "window" : "pixmap"),
+               (unsigned long) error->resourceid);
+    }
+  else
+    {
+      fprintf (stderr, "\nX error in %s:\n", progname);
+      XmuPrintDefaultErrorMessage (dpy, error, stderr);
+    }
   exit (-1);
   return 0;
 }
@@ -132,6 +145,35 @@ drawable_window_p (Display *dpy, Drawable d)
     return True;   /* It's a Window. */
   else
     return False;  /* It's a Pixmap, or an invalid ID. */
+}
+
+
+/* Returns true if the window is the root window, or a virtual root window,
+   but *not* the xscreensaver window.  That is, if it's a "real" desktop
+   root window of some kind.
+ */
+static Bool
+root_window_p (Screen *screen, Window window)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  Atom type;
+  int format;
+  unsigned long nitems, bytesafter;
+  char *version;
+
+  if (window != RootWindowOfScreen (screen))
+    return False;
+
+  if (XGetWindowProperty (dpy, window,
+			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
+			  0, 1, False, XA_STRING,
+			  &type, &format, &nitems, &bytesafter,
+			  (unsigned char **) &version)
+      == Success
+      && type != None)
+    return False;
+
+  return True;
 }
 
 
@@ -238,20 +280,18 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
 {
   GdkPixbuf *pb;
   Display *dpy = DisplayOfScreen (screen);
-  unsigned int win_width, win_height;
+  unsigned int win_width, win_height, win_depth;
 # ifdef HAVE_GTK2
   GError *gerr = 0;
 # endif /* HAVE_GTK2 */
 
+  /* Find the size of the Drawable. */
   {
     Window root;
     int x, y;
-    unsigned int bw, d;
-    XWindowAttributes xgwa;
-    XGetWindowAttributes (dpy, window, &xgwa);
-    screen = xgwa.screen;
+    unsigned int bw;
     XGetGeometry (dpy, drawable,
-                  &root, &x, &y, &win_width, &win_height, &bw, &d);
+                  &root, &x, &y, &win_width, &win_height, &bw, &win_depth);
   }
 
   gdk_pixbuf_xlib_init (dpy, screen_number (screen));
@@ -281,6 +321,7 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
       int w = gdk_pixbuf_get_width (pb);
       int h = gdk_pixbuf_get_height (pb);
       int srcx, srcy, destx, desty, w2, h2;
+      Bool bg_p = False;
 
       compute_image_scaling (w, h, win_width, win_height, verbose_p,
                              &srcx, &srcy, &destx, &desty, &w2, &h2);
@@ -299,7 +340,25 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
             fprintf (stderr, "%s: out of memory when scaling?\n", progname);
         }
 
-      clear_drawable (screen, drawable);
+      /* If we're rendering onto the root window (and it's not the
+         xscreensaver pseudo-root) then put the image in the window's
+         background.  Otherwise, just paint the image onto the window.
+       */
+      bg_p = (window == drawable && root_window_p (screen, window));
+
+      if (bg_p)
+        {
+          XGCValues gcv;
+          GC gc;
+          drawable = XCreatePixmap (dpy, window,
+                                    win_width, win_height, win_depth);
+          gcv.foreground = BlackPixelOfScreen (screen);
+          gc = XCreateGC (dpy, drawable, GCForeground, &gcv);
+          XFillRectangle (dpy, drawable, gc, 0, 0, win_width, win_height);
+          XFreeGC (dpy, gc);
+        }
+      else
+        clear_drawable (screen, drawable);
 
       /* #### Note that this always uses the default colormap!  Morons!
          Owen says that in Gnome 2.0, I should try using
@@ -312,9 +371,14 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
                                                 GDK_PIXBUF_ALPHA_FULL, 127,
                                                 XLIB_RGB_DITHER_NORMAL,
                                                 0, 0);
-      XSync (dpy, False);
+      if (bg_p)
+        {
+          XSetWindowBackgroundPixmap (dpy, window, drawable);
+          XClearWindow (dpy, window);
+        }
     }
 
+  XSync (dpy, False);
   return True;
 }
 
@@ -873,17 +937,15 @@ read_file_jpeglib (Screen *screen, Window window, Drawable drawable,
   unsigned int win_width, win_height, win_depth;
   int srcx, srcy, destx, desty, w2, h2;
 
+  /* Find the size of the Drawable, and the Visual/Colormap of the Window. */
   {
     Window root;
     int x, y;
     unsigned int bw;
     XWindowAttributes xgwa;
-
     XGetWindowAttributes (dpy, window, &xgwa);
-    screen = xgwa.screen;
     visual = xgwa.visual;
     cmap = xgwa.colormap;
-
     XGetGeometry (dpy, drawable,
                   &root, &x, &y, &win_width, &win_height, &bw, &win_depth);
   }
@@ -925,13 +987,34 @@ read_file_jpeglib (Screen *screen, Window window, Drawable drawable,
 
   /* Finally, put the resized image on the window.
    */
-  clear_drawable (screen, drawable);
   {
     GC gc;
     XGCValues gcv;
-    gc = XCreateGC (dpy, drawable, 0, &gcv);
-    XPutImage (dpy, drawable, gc, ximage,
-               srcx, srcy, destx, desty, ximage->width, ximage->height);
+
+    /* If we're rendering onto the root window (and it's not the xscreensaver
+       pseudo-root) then put the image in the window's background.  Otherwise,
+       just paint the image onto the window.
+     */
+    if (window == drawable && root_window_p (screen, window))
+      {
+        Pixmap bg = XCreatePixmap (dpy, window,
+                                   win_width, win_height, win_depth);
+        gcv.foreground = BlackPixelOfScreen (screen);
+        gc = XCreateGC (dpy, drawable, GCForeground, &gcv);
+        XFillRectangle (dpy, bg, gc, 0, 0, win_width, win_height);
+        XPutImage (dpy, bg, gc, ximage,
+                   srcx, srcy, destx, desty, ximage->width, ximage->height);
+        XSetWindowBackgroundPixmap (dpy, window, bg);
+        XClearWindow (dpy, window);
+      }
+    else
+      {
+        gc = XCreateGC (dpy, drawable, 0, &gcv);
+        clear_drawable (screen, drawable);
+        XPutImage (dpy, drawable, gc, ximage,
+                   srcx, srcy, destx, desty, ximage->width, ximage->height);
+      }
+
     XFreeGC (dpy, gc);
   }
 
@@ -1161,6 +1244,13 @@ get_image (Screen *screen,
       exit (1);
     }
 
+  /* Make sure the Screen and the Window correspond. */
+  {
+    XWindowAttributes xgwa;
+    XGetWindowAttributes (dpy, window, &xgwa);
+    screen = xgwa.screen;
+  }
+
   if (file && stat (file, &st))
     {
       fprintf (stderr, "%s: file \"%s\" does not exist\n", progname, file);
@@ -1214,7 +1304,6 @@ get_image (Screen *screen,
 
   /* We can grab desktop images if:
        - the window is the real root window;
-       - the window is the virtal root window;
        - the window is a toplevel window.
      We cannot grab desktop images if:
        - the window is a non-top-level window.
@@ -1465,7 +1554,7 @@ main (int argc, char **argv)
               goto LOSE;
             }
           window_str = argv[i];
-          window = (Window) RootWindowOfScreen (screen);
+          window = VirtualRootWindowOfScreen (screen);
         }
       else if ((1 == sscanf (argv[i], " 0x%lx %c", &w, &dummy) ||
                 1 == sscanf (argv[i], " %lu %c",   &w, &dummy)) &&

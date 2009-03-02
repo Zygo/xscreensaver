@@ -806,9 +806,9 @@ stonerview-move.o: ../../config.h
 stonerview-move.o: $(srcdir)/stonerview-move.h
 stonerview-move.o: $(srcdir)/stonerview-osc.h
 stonerview.o: ../../config.h
-stonerview.o: $(srcdir)/stonerview-move.h
 stonerview-osc.o: ../../config.h
 stonerview-osc.o: $(srcdir)/stonerview-osc.h
+stonerview.o: $(srcdir)/stonerview-move.h
 stonerview-view.o: ../../config.h
 stonerview-view.o: $(srcdir)/stonerview-move.h
 stonerview-view.o: $(srcdir)/stonerview-osc.h

@@ -544,16 +544,6 @@ msgstr "キャンセル"
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
 msgstr "更新情報については http://www.jwz.org/xscreensaver/ を参照して下さい。"
 
-#: driver/demo-Gtk.c:608
-#, fuzzy, c-format
-msgid "Copyright © 1991-2002 %s"
-msgstr "Copyright  1991-2002 %s"
-
-#: driver/demo-Gtk.c:610
-#, fuzzy, c-format
-msgid "Copyright  1991-2002 %s"
-msgstr "Copyright  1991-2002 %s"
-
 #: driver/demo-Gtk.c:726
 msgid ""
 "Error:\n"

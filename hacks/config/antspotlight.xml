@@ -12,7 +12,7 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Andspotlight draws an ant (with a headlight) who walks on top of an
+Antspotlight draws an ant (with a headlight) who walks on top of an
 image of your desktop or other image.  Written by Blair Tennessy.
   </_description>
 </screensaver>

@@ -107,6 +107,7 @@
 #include "usleep.h"
 #include "yarandom.h"
 #include "resources.h"
+#include "vroot.h"
 
 
 /* Globals *******************************************************************/
@@ -252,98 +253,13 @@ static int xsublim_Ss_Handler(Display* handle_Display,
 }
 static Window xsublim_Ss_GetWindow(Display* ss_Display)
 {
-	Window        win_Root;
-	Window        win_RootReturn;
-	Window        win_Parent;
-	Window*       win_Child;
-	Window        win_Win;
-	unsigned int  child_Count;
-	int           child_Index;
-	Atom          prop_Type;
-	int           prop_Format;
-	unsigned long prop_Count;
-	unsigned long prop_Bytes;
-	char*         prop_Value;
-	int           prop_Status;
-	static Atom   XA_SCREENSAVER_VERSION = -1;
-	static Atom   __SWM_VROOT;
-
-	/* Assume bad things */
-	win_Win = 0;
-	win_Child = NULL;
-
-	/* Find the atoms */
-	if (XA_SCREENSAVER_VERSION == -1)
-	{
-		XA_SCREENSAVER_VERSION = XInternAtom(ss_Display,
-		 "_SCREENSAVER_VERSION",FALSE);
-		__SWM_VROOT = XInternAtom(ss_Display,"__SWM_VROOT",FALSE);
-	}
-
-	/* Find a screensaver window */
-	win_Root = RootWindowOfScreen(DefaultScreenOfDisplay(ss_Display));
-	if (XQueryTree(ss_Display,win_Root,&win_RootReturn,&win_Parent,
-	 &win_Child,&child_Count) != FALSE)
-	{
-		if (
-		 (win_Root == win_RootReturn) &&
-		 (win_Parent == 0) &&
-		 (win_Child != NULL) &&
-		 (child_Count > 0))
-		{
-			for (child_Index = 0;child_Index < child_Count;
-			 child_Index++)
-			{
-				XSync(ss_Display,FALSE);
-				Xsublim_Ss_Status = 0;
-				Xsublim_Ss_Handler =
-				 XSetErrorHandler(xsublim_Ss_Handler);
-				prop_Value = NULL;
-				prop_Status = XGetWindowProperty(ss_Display,
-				 win_Child[child_Index],XA_SCREENSAVER_VERSION,
-				 0,200,FALSE,XA_STRING,&prop_Type,&prop_Format,
-				 &prop_Count,&prop_Bytes,
-				 (unsigned char**)&prop_Value);
-				XSync(ss_Display,FALSE);
-				XSetErrorHandler(Xsublim_Ss_Handler);
-				if (prop_Value != NULL)
-				{
-					XFree(prop_Value);
-				}
-				if (Xsublim_Ss_Status == BadWindow)
-				{
-					prop_Status = BadWindow;
-				}
-				if ((prop_Status == Success) &&
-				 (prop_Type != None))
-				{
-					/* See if it's a virtual root */
-					prop_Value = NULL;
-					prop_Status =
-					 XGetWindowProperty(ss_Display,
-					 win_Child[child_Index],__SWM_VROOT,0,
-					 1,FALSE,XA_WINDOW,&prop_Type,
-					 &prop_Format,&prop_Count,&prop_Bytes,
-					 (unsigned char**)&prop_Value);
-					if (prop_Value != NULL)
-					{
-						XFree(prop_Value);
-					}
-					if ((prop_Status == Success) &&
-					 (prop_Type != None))
-					{
-						win_Win =
-						 win_Child[child_Index];
-					}
-				}
-			}
-		}
-	}
-	if (win_Child != NULL)
-	{
-		XFree(win_Child);
-	}
-	return win_Win;
+  Screen *s = DefaultScreenOfDisplay (ss_Display);
+  Window root = XRootWindowOfScreen (s);
+  Window vroot = VirtualRootWindowOfScreen (s);
+  if (root == vroot)
+    return 0;
+  else
+    return vroot;
 }
 
 /* Main ==================================================================== */

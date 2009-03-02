@@ -14,6 +14,7 @@ interference - decaying sinusoidal waves
 [\-radius \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-color-shift \fInumber\fP]
+[\-hue \fInumber\fP]
 [\-no-db]
 .SH DESCRIPTION
 Another color-field hack, this one works by computing decaying sinusoidal
@@ -51,6 +52,9 @@ Number of Colors.  Default: 128.
 .TP 8
 .B \-color-shift \fInumber\fP
 Color Contrast.  0 - 100.  Default: 60.
+.TP 8
+.B \-hue \fInumber\fP
+Hue of the base color (0-360, as in HSV space.)  Default 0, meaning random.
 .TP 8
 .B \-db | \-no-db
 Whether to double buffer.

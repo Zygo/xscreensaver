@@ -27,11 +27,13 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="128"/>
 
-  <hgroup>
   <number id="color_contrast" type="slider" arg="-color-shift %"
           _label="Color Contrast" _low-label="Low" _high-label="High"
            low="0" high="100" default="60"/>
-  </hgroup>
+
+  <number id="hue" type="slider" arg="-hue %"
+          _label="Hue" _low-label="0" _high-label="360"
+           low="0" high="360" default="0"/>
 
   <!-- #### -gray -->
 

@@ -16,11 +16,11 @@
  *   on (nearly) all windows; or by waiting for the MIT-SCREEN-SAVER extension
  *   to send us a "you are idle" event.
  *
- *   Then, we map a full screen black window (or, in the case of the 
- *   MIT-SCREEN-SAVER extension, use the one it gave us.)
+ *   Then, we map a full screen black window.
  *
  *   We place a __SWM_VROOT property on this window, so that newly-started
- *   clients will think that this window is a "virtual root" window.
+ *   clients will think that this window is a "virtual root" window (as per
+ *   the logic in the historical "vroot.h" header.)
  *
  *   If there is an existing "virtual root" window (one that already had
  *   an __SWM_VROOT property) then we remove that property from that window.
@@ -38,10 +38,18 @@
  *   When they are, we kill the inferior process, unmap the window, and restore
  *   the __SWM_VROOT property to the real virtual root window if there was one.
  *
- *   While we are waiting, we also set up timers so that, after a certain 
- *   amount of time has passed, we can start a different screenhack.  We do
- *   this by killing the running child process with SIGTERM, and then starting
- *   a new one in the same way.
+ *   On multi-screen systems, we do the above on each screen, and start
+ *   multiple programs, each with a different value of $DISPLAY.
+ *
+ *   On Xinerama systems, we do a similar thing, but instead create multiple
+ *   windows on the (only) display, and tell the subprocess which one to use
+ *   via the $XSCREENSAVER_WINDOW environment variable -- this trick requires
+ *   a recent (Aug 2003) revision of vroot.h.
+ *
+ *   While we are waiting for user activity, we also set up timers so that,
+ *   after a certain amount of time has passed, we can start a different
+ *   screenhack.  We do this by killing the running child process with
+ *   SIGTERM, and then starting a new one in the same way.
  *
  *   If there was a real virtual root, meaning that we removed the __SWM_VROOT
  *   property from it, meaning we must (absolutely must) restore it before we
@@ -57,7 +65,7 @@
  *   can really fuck up the world by killing this process with "kill -9".
  *
  *   This program accepts ClientMessages of type SCREENSAVER; these messages
- *   may contain the atom ACTIVATE or DEACTIVATE, meaning to turn the 
+ *   may contain the atoms ACTIVATE, DEACTIVATE, etc, meaning to turn the 
  *   screensaver on or off now, regardless of the idleness of the user,
  *   and a few other things.  The included "xscreensaver-command" program
  *   sends these messsages.
@@ -92,9 +100,15 @@
  *   "client changing event mask" problem that the KeyPress events hack does.
  *   I think polling is more reliable.
  *
- *   None of this crap happens if we're using one of the extensions, so install
- *   one of them if the description above sounds just too flaky to live.  It
- *   is, but those are your choices.
+ *   On systems with /proc/interrupts (Linux) we poll that file and note when
+ *   the interrupt counter numbers on the "keyboard" and "PS/2" lines change.
+ *   (There is no reliable way, using /proc/interrupts, to detect non-PS/2
+ *   mice, so it doesn't help for serial or USB mice.)
+ *
+ *   None of this crap happens if we're using one of the extensions.  Sadly,
+ *   the XIdle extension hasn't been available for many years; the SGI
+ *   extension only exists on SGIs; and the MIT extension, while widely
+ *   deployed, is garbage in several ways.
  *
  *   A third idle-detection option could be implemented (but is not): when
  *   running on the console display ($DISPLAY is `localhost`:0) and we're on a
@@ -151,6 +165,10 @@
 #ifdef HAVE_XIDLE_EXTENSION
 # include <X11/extensions/xidle.h>
 #endif /* HAVE_XIDLE_EXTENSION */
+
+#ifdef HAVE_XINERAMA
+# include <X11/extensions/Xinerama.h>
+#endif /* HAVE_XINERAMA */
 
 #include "xscreensaver.h"
 #include "version.h"
@@ -311,11 +329,14 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 	   blurb());
 
   for (i = 0; i < si->nscreens; i++)
-    fprintf (real_stderr, "%s: screen %d: 0x%x, 0x%x, 0x%x\n",
-             blurb(), i,
-             (unsigned int) RootWindowOfScreen (si->screens[i].screen),
-             (unsigned int) si->screens[i].real_vroot,
-             (unsigned int) si->screens[i].screensaver_window);
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      fprintf (real_stderr, "%s: screen %d/%d: 0x%x, 0x%x, 0x%x\n",
+               blurb(), ssi->real_screen_number, ssi->number,
+               (unsigned int) RootWindowOfScreen (si->screens[i].screen),
+               (unsigned int) si->screens[i].real_vroot,
+               (unsigned int) si->screens[i].screensaver_window);
+    }
 
   fprintf (real_stderr, "\n"
 	   "#######################################"
@@ -769,18 +790,126 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
   Bool found_any_writable_cells = False;
   int i;
 
-  si->nscreens = ScreenCount(si->dpy);
-  si->screens = (saver_screen_info *)
-    calloc(sizeof(saver_screen_info), si->nscreens);
+# ifdef HAVE_XINERAMA
+  {
+    int event, error;
+    si->xinerama_p = (XineramaQueryExtension (si->dpy, &event, &error) &&
+                      XineramaIsActive (si->dpy));
+  }
 
-  si->default_screen = &si->screens[DefaultScreen(si->dpy)];
+  if (si->xinerama_p && ScreenCount (si->dpy) != 1)
+    {
+      si->xinerama_p = False;
+      if (si->prefs.verbose_p)
+	fprintf (stderr,
+                 "%s: Xinerama AND %d screens?  Disabling Xinerama support!\n",
+                 blurb(), ScreenCount(si->dpy));
+    }
 
+  if (si->xinerama_p)
+    {
+      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &si->nscreens);
+      if (!xsi)
+        si->xinerama_p = False;
+      else
+        {
+          si->screens = (saver_screen_info *)
+            calloc(sizeof(saver_screen_info), si->nscreens);
+          for (i = 0; i < si->nscreens; i++)
+            {
+              si->screens[i].x      = xsi[i].x_org;
+              si->screens[i].y      = xsi[i].y_org;
+              si->screens[i].width  = xsi[i].width;
+              si->screens[i].height = xsi[i].height;
+            }
+          XFree (xsi);
+        }
+      si->default_screen = &si->screens[0];
+      si->default_screen->real_screen_p = True;
+    }
+# endif /* !HAVE_XINERAMA */
+
+  if (!si->xinerama_p)
+    {
+      si->nscreens = ScreenCount(si->dpy);
+      si->screens = (saver_screen_info *)
+        calloc(sizeof(saver_screen_info), si->nscreens);
+      si->default_screen = &si->screens[DefaultScreen(si->dpy)];
+
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          ssi->width  = DisplayWidth  (si->dpy, i);
+          ssi->height = DisplayHeight (si->dpy, i);
+          ssi->real_screen_p = True;
+          ssi->real_screen_number = i;
+        }
+    }
+
+
+  /* In "quad mode", we use the Xinerama code to pretend that there are 4
+     screens for every physical screen, and run four times as many hacks...
+   */
+  if (si->prefs.quad_p)
+    {
+      int ns2 = si->nscreens * 4;
+      saver_screen_info *ssi2 = (saver_screen_info *)
+        calloc(sizeof(saver_screen_info), ns2);
+
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *old = &si->screens[i];
+
+          if (si->prefs.debug_p) old->width = old->width / 2;
+
+          ssi2[i*4  ] = *old;
+          ssi2[i*4+1] = *old;
+          ssi2[i*4+2] = *old;
+          ssi2[i*4+3] = *old;
+
+          ssi2[i*4  ].width  /= 2;
+          ssi2[i*4  ].height /= 2;
+
+          ssi2[i*4+1].x      += ssi2[i*4  ].width;
+          ssi2[i*4+1].width  -= ssi2[i*4  ].width;
+          ssi2[i*4+1].height /= 2;
+
+          ssi2[i*4+2].y      += ssi2[i*4  ].height;
+          ssi2[i*4+2].width  /= 2;
+          ssi2[i*4+2].height -= ssi2[i*4  ].height;
+
+          ssi2[i*4+3].x      += ssi2[i*4+2].width;
+          ssi2[i*4+3].y      += ssi2[i*4+2].height;
+          ssi2[i*4+3].width  -= ssi2[i*4+2].width;
+          ssi2[i*4+3].height -= ssi2[i*4+2].height;
+
+          ssi2[i*4+1].real_screen_p = False;
+          ssi2[i*4+2].real_screen_p = False;
+          ssi2[i*4+3].real_screen_p = False;
+        }
+
+      si->nscreens = ns2;
+      free (si->screens);
+      si->screens = ssi2;
+      si->default_screen = &si->screens[DefaultScreen(si->dpy) * 4];
+      si->xinerama_p = True;
+    }
+
+  /* finish initializing the screens.
+   */
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
       ssi->global = si;
-      ssi->screen = ScreenOfDisplay (si->dpy, i);
+
       ssi->number = i;
+      ssi->screen = ScreenOfDisplay (si->dpy, ssi->real_screen_number);
+
+      if (!si->xinerama_p)
+        {
+          ssi->width  = WidthOfScreen  (ssi->screen);
+          ssi->height = HeightOfScreen (ssi->screen);
+        }
 
       /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
       ssi->default_visual =
@@ -896,6 +1025,15 @@ initialize_server_extensions (saver_info *si)
 		 blurb());
     }
 
+  /* These are incompatible (or at least, our support for them is...) */
+  if (si->xinerama_p && si->using_mit_saver_extension)
+    {
+      si->using_mit_saver_extension = False;
+      if (p->verbose_p)
+        fprintf (stderr, "%s: Xinerama in use: disabling MIT-SCREEN-SAVER.\n",
+                 blurb());
+    }
+
   if (!system_has_proc_interrupts_p)
     {
       si->using_proc_interrupts = False;
@@ -960,8 +1098,12 @@ select_events (saver_info *si)
      for window creation events, so that new subwindows will be noticed.
    */
   for (i = 0; i < si->nscreens; i++)
-    start_notice_events_timer (si, RootWindowOfScreen (si->screens[i].screen),
-                               False);
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      if (ssi->real_screen_p)
+        start_notice_events_timer (si,
+           RootWindowOfScreen (si->screens[i].screen), False);
+    }
 
   if (p->verbose_p)
     fprintf (stderr, " done.\n");
@@ -1211,7 +1353,7 @@ main_loop (saver_info *si)
 
           - screen is blanked
           - hack is launched
-          - that hack tries to grab a screen image( it does this by
+          - that hack tries to grab a screen image (it does this by
             first unmapping the saver window, then remapping it.)
           - hack unmaps window
           - hack waits
@@ -1288,7 +1430,7 @@ main (int argc, char **argv)
   blurb_timestamp_p = p->timestamp_p;  /* kludge */
   initialize_per_screen_info (si, shell); /* also sets si->fading_possible_p */
 
-  /* We can only issue this warnings now. */
+  /* We can only issue this warning now. */
   if (p->verbose_p && !si->fading_possible_p && (p->fade_p || p->unfade_p))
     fprintf (stderr,
              "%s: there are no PseudoColor or GrayScale visuals.\n"
@@ -1296,8 +1438,12 @@ main (int argc, char **argv)
              blurb(), blurb());
 
   for (i = 0; i < si->nscreens; i++)
-    if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
-      exit (1);
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      if (ssi->real_screen_p)
+        if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
+          exit (1);
+    }
 
   lock_initialization (si, &argc, argv);
   print_lock_failure_banner (si);
@@ -1949,10 +2095,12 @@ analyze_display (saver_info *si)
    },
   };
 
-  fprintf (stderr, "%s: running on display \"%s\" (%d screen%s).\n",
+  fprintf (stderr, "%s: running on display \"%s\" (%d %sscreen%s).\n",
            blurb(),
 	   DisplayString(si->dpy),
-           si->nscreens, (si->nscreens == 1 ? "" : "s"));
+           si->nscreens,
+           (si->xinerama_p ? "Xinerama " : ""),
+           (si->nscreens == 1 ? "" : "s"));
   fprintf (stderr, "%s: vendor is %s, %d.\n", blurb(),
 	   ServerVendor(si->dpy), VendorRelease(si->dpy));
 
@@ -1978,11 +2126,15 @@ analyze_display (saver_info *si)
 
   for (i = 0; i < si->nscreens; i++)
     {
+      saver_screen_info *ssi = &si->screens[i];
       unsigned long colormapped_depths = 0;
       unsigned long non_mapped_depths = 0;
       XVisualInfo vi_in, *vi_out;
       int out_count;
-      vi_in.screen = i;
+
+      if (!ssi->real_screen_p) continue;
+
+      vi_in.screen = ssi->real_screen_number;
       vi_out = XGetVisualInfo (si->dpy, VisualScreenMask, &vi_in, &out_count);
       if (!vi_out) continue;
       for (j = 0; j < out_count; j++)
@@ -1994,7 +2146,8 @@ analyze_display (saver_info *si)
 
       if (colormapped_depths)
 	{
-	  fprintf (stderr, "%s: screen %d colormapped depths:", blurb(), i);
+	  fprintf (stderr, "%s: screen %d colormapped depths:", blurb(),
+                   ssi->real_screen_number);
 	  for (j = 0; j < 32; j++)
 	    if (colormapped_depths & (1 << j))
 	      fprintf (stderr, " %d", j);
@@ -2003,12 +2156,26 @@ analyze_display (saver_info *si)
       if (non_mapped_depths)
 	{
 	  fprintf (stderr, "%s: screen %d non-colormapped depths:",
-                   blurb(), i);
+                   blurb(), ssi->real_screen_number);
 	  for (j = 0; j < 32; j++)
 	    if (non_mapped_depths & (1 << j))
 	      fprintf (stderr, " %d", j);
 	  fprintf (stderr, ".\n");
 	}
+    }
+
+  if (si->xinerama_p)
+    {
+      fprintf (stderr, "%s: Xinerama layout:\n", blurb());
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          fprintf (stderr, "%s:   %c %d/%d: %dx%d+%d+%d\n",
+                   blurb(),
+                   (ssi->real_screen_p ? '+' : ' '),
+                   ssi->number, ssi->real_screen_number,
+                   ssi->width, ssi->height, ssi->x, ssi->y);
+        }
     }
 }
 

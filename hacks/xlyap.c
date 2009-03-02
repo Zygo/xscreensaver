@@ -39,7 +39,6 @@
 #include "screenhack.h"
 #include "yarandom.h"
 #include "hsv.h"
-#include "vroot.h"
 
 #include <X11/cursorfont.h> 
 #include <X11/Xutil.h> 
@@ -534,17 +533,13 @@ screenhack (Display *d, Window window)
   canvas = window;
   init_canvas();
 
-  if (window != DefaultRootWindow(dpy))
-    XSelectInput(dpy,canvas,KeyPressMask|ButtonPressMask|ButtonMotionMask|
-		 ButtonReleaseMask|ExposureMask|StructureNotifyMask);
   if (displayplanes > 1) {
     init_color();
   } else {
     XQueryColors(dpy, DefaultColormap(dpy, DefaultScreen(dpy)),
 	Colors, numcolors);
   }
-  pixmap = XCreatePixmap(dpy, DefaultRootWindow(dpy),
-			 width, height, DefaultDepth(dpy, screen));
+  pixmap = XCreatePixmap(dpy, window, width, height, xgwa.depth);
   rubber_data.band_cursor = XCreateFontCursor(dpy, XC_hand2);
   CreateXorGC();
   Clear();
@@ -816,7 +811,7 @@ init_canvas(void)
   * create default, writable, graphics contexts for the canvas.
   */
 	for (i=0; i<maxcolor; i++) {
-	    Data_GC[i] = XCreateGC(dpy, DefaultRootWindow(dpy),
+	    Data_GC[i] = XCreateGC(dpy, canvas,
 		(unsigned long) NULL, (XGCValues *) NULL);
 	    /* set the background to black */
 	    XSetBackground(dpy,Data_GC[i],BlackPixel(dpy,XDefaultScreen(dpy)));
@@ -1512,8 +1507,7 @@ resize(void)
   XClearWindow(dpy, canvas);
   if (pixmap)
     XFreePixmap(dpy, pixmap);
-  pixmap = XCreatePixmap(dpy, DefaultRootWindow(dpy),
-      width, height, DefaultDepth(dpy, screen));
+  pixmap = XCreatePixmap(dpy, canvas, width, height, d);
   a_inc = a_range / (double)width;
   b_inc = b_range / (double)height;
   point.x = -1;
@@ -1694,7 +1688,7 @@ CreateXorGC(void)
   values.foreground = foreground;
   values.line_style = LineSolid;
   values.function = GXxor;
-  RubberGC = XCreateGC(dpy, DefaultRootWindow(dpy),
+  RubberGC = XCreateGC(dpy, canvas,
 	GCForeground | GCBackground | GCFunction | GCLineStyle, &values);
 }
 

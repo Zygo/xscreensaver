@@ -518,16 +518,6 @@ msgstr "취소"
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
 msgstr "업데이트 하려면 http://www.jwz.org/xscreensaver/ 를 확인하십시오"
 
-#: driver/demo-Gtk.c:608
-#, fuzzy, c-format
-msgid "Copyright © 1991-2002 %s"
-msgstr "Copyright 1991-2002 %s"
-
-#: driver/demo-Gtk.c:610
-#, fuzzy, c-format
-msgid "Copyright  1991-2002 %s"
-msgstr "Copyright 1991-2002 %s"
-
 #: driver/demo-Gtk.c:726
 msgid ""
 "Error:\n"
@@ -5384,7 +5374,3 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
-
-#, fuzzy
-#~ msgid "Copyright  1991-2002 %s"
-#~ msgstr "Copyright 1991-2002 %s"
