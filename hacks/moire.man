@@ -4,6 +4,7 @@ moire - draw circular interference patterns
 .SH SYNOPSIS
 .B moire
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-random \fIboolean\fP] [\-ncolors \fIint\fP] [\-offset \fIint\fP] 
+[\-fps]
 .SH DESCRIPTION
 The \fImoire\fP program draws cool circular interference patterns.
 .SH OPTIONS
@@ -39,6 +40,9 @@ The maximum random radius increment to use.
 .B \-ncolors \fIinteger\fP
 How many colors should be allocated in the color ramp (note that this
 value interacts with \fIoffset\fP.)
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -34,7 +34,9 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 #define DEFAULTS	"*delay:    10000 \n" \
 					"*count:    100   \n" \
 					 "*cycles:  400   \n" \
-					 "*ncolors: 64    \n"
+					 "*ncolors: 64    \n" \
+					 "*fpsSolid: true    \n" \
+
 # define BRIGHT_COLORS
 # define reshape_thornbird 0
 # define thornbird_handle_event 0

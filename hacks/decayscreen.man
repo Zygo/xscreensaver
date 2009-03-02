@@ -12,6 +12,7 @@ decayscreen - make a screen meltdown.
 [\-delay \fIusecs\fP]
 [\-duration \fIsecs\fP]
 [\-mode \fImode\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIdecayscreen\fP program creates a melting effect by randomly
 shifting rectangles around the screen.
@@ -59,6 +60,9 @@ move things toward the center), \fIout\fP (meaning move things away
 from the center), \fImelt\fP (meaning melt straight 
 downward),  \fIstretch\fP (meaning stretch the screen downward),
 and \fIfuzz\fP (meaning go blurry instead of melty).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -51,12 +51,16 @@
 
 #ifdef USE_GL
 
-#define DEF_XYSPEED   "1.0"
-#define DEF_TSPEED    "3.0"
-#define DEF_WSPEED    "1.0"
-#define DEF_TWAIT     "40.0"
-#define DEF_SIZE      "0.7"
-#define DEF_COLMODE   "six"
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_TEXTURE     "True"
+#define DEF_RANDOMIZE   "True"
+#define DEF_SPINSPEED   "1.0"
+#define DEF_ROTSPEED    "3.0"
+#define DEF_WANDERSPEED "1.0"
+#define DEF_WAIT        "40.0"
+#define DEF_CUBESIZE    "0.7"
+#define DEF_COLORMODE   "six"
 
 #ifdef Pi
 #undef Pi
@@ -90,16 +94,16 @@ static char *colmode_s;
 static int colmode;
 
 static argtype vars[] = {
-  { &spin,      "spin",        "Spin",        "True",      t_Bool},
-  { &wander,    "wander",      "Wander",      "True",      t_Bool},
-  { &rndstart,  "randomize",   "Randomize",   "True",      t_Bool},
-  { &tex,       "texture",     "Texture",     "True",      t_Bool},
-  { &spinspeed, "spinspeed",   "SpinSpeed",   DEF_XYSPEED, t_Float},
-  { &tspeed,    "rotspeed",    "RotSpeed",    DEF_TSPEED,  t_Float},
-  { &wspeed,    "wanderspeed", "WanderSpeed", DEF_WSPEED,  t_Float},
-  { &twait,     "wait",        "Wait",        DEF_TWAIT,   t_Float},
-  { &size,      "cubesize",    "CubeSize",    DEF_SIZE,    t_Float},
-  { &colmode_s, "colormode",   "ColorMode",   DEF_COLMODE, t_String}
+  { &spin,      "spin",        "Spin",        DEF_SPIN,        t_Bool},
+  { &wander,    "wander",      "Wander",      DEF_WANDER,      t_Bool},
+  { &rndstart,  "randomize",   "Randomize",   DEF_RANDOMIZE,   t_Bool},
+  { &tex,       "texture",     "Texture",     DEF_TEXTURE,     t_Bool},
+  { &spinspeed, "spinspeed",   "SpinSpeed",   DEF_SPINSPEED,   t_Float},
+  { &tspeed,    "rotspeed",    "RotSpeed",    DEF_ROTSPEED,    t_Float},
+  { &wspeed,    "wanderspeed", "WanderSpeed", DEF_WANDERSPEED, t_Float},
+  { &twait,     "wait",        "Wait",        DEF_WAIT,        t_Float},
+  { &size,      "cubesize",    "CubeSize",    DEF_CUBESIZE,    t_Float},
+  { &colmode_s, "colormode",   "ColorMode",   DEF_COLORMODE,   t_String}
 };
 
 static XrmOptionDescRec opts[] = {
@@ -116,7 +120,7 @@ static XrmOptionDescRec opts[] = {
   { "-rotspeed",    ".rotspeed",    XrmoptionSepArg, 0 },
   { "-wait",        ".wait",        XrmoptionSepArg, 0 },
   { "-cubesize",    ".cubesize",    XrmoptionSepArg, 0 },
-  { "-colormode",   ".colormode",   XrmoptionSepArg, DEF_COLMODE }
+  { "-colormode",   ".colormode",   XrmoptionSepArg, 0 }
 };
 
 ENTRYPOINT ModeSpecOpt cube21_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -317,7 +321,7 @@ static void finish(cube21_conf *cp)
   cp->t = 0;
 }
 
-static void draw_narrow_piece(cube21_conf *cp, GLfloat s, int c1, int c2, col_t colors) 
+static void draw_narrow_piece(ModeInfo *mi, cube21_conf *cp, GLfloat s, int c1, int c2, col_t colors) 
 {
   GLfloat s1 = cp->posc[0]*s;
   glBegin(GL_TRIANGLES);
@@ -326,12 +330,14 @@ static void draw_narrow_piece(cube21_conf *cp, GLfloat s, int c1, int c2, col_t 
   glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
   glTexCoord2f(cp->texq, 0.0); glVertex3f(cp->posc[1], 0.0, s);
   glTexCoord2f(cp->texp, 0.0); glVertex3f(cp->posc[2], cp->posc[3], s);
+  mi->polygon_count++;
   glNormal3f(0.0, 0.0, -s);
   if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s1);
   glVertex3f(cp->posc[1], 0.0, s1);
   glVertex3f(cp->posc[2], cp->posc[3], s1);
+  mi->polygon_count++;
   glEnd();
   glBegin(GL_QUADS);
   glNormal3f(0.0, -1.0, 0.0);
@@ -341,12 +347,14 @@ static void draw_narrow_piece(cube21_conf *cp, GLfloat s, int c1, int c2, col_t 
   glVertex3f(cp->posc[1], 0.0, s);
   glVertex3f(cp->posc[1], 0.0, s1);
   glVertex3f(0.0, 0.0, s1);
+  mi->polygon_count++;
   glNormal3f(COS15, SIN15, 0.0);
   if(cp->cmat) glColor3fv(colors[c2]);
   glTexCoord2f(cp->texq, cp->texq); glVertex3f(cp->posc[1], 0.0, s);
   glTexCoord2f(cp->texq, cp->texp); glVertex3f(cp->posc[2], cp->posc[3], s);
   glTexCoord2f(1.0, cp->texp);  glVertex3f(cp->posc[2], cp->posc[3], s1);
   glTexCoord2f(1.0, cp->texq);  glVertex3f(cp->posc[1], 0.0, s1);
+  mi->polygon_count++;
   glNormal3f(-SIN30, COS30, 0.0);
   if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
@@ -354,11 +362,12 @@ static void draw_narrow_piece(cube21_conf *cp, GLfloat s, int c1, int c2, col_t 
   glVertex3f(cp->posc[2], cp->posc[3], s);
   glVertex3f(cp->posc[2], cp->posc[3], s1);
   glVertex3f(0.0, 0.0, s1);
+  mi->polygon_count++;
   glEnd();
   glRotatef(30.0, 0.0, 0.0, 1.0);
 }
 
-static void draw_wide_piece(cube21_conf *cp, GLfloat s, int c1, int c2, int c3, col_t colors) 
+static void draw_wide_piece(ModeInfo *mi, cube21_conf *cp, GLfloat s, int c1, int c2, int c3, col_t colors) 
 {
   GLfloat s1 = cp->posc[0]*s;
   glBegin(GL_TRIANGLES);
@@ -466,32 +475,32 @@ static void draw_middle(cube21_conf *cp)
   if(cp->hf[1]) glRotatef(180.0, 0.0, 1.0, 0.0);
 }
 
-static void draw_half_face(cube21_conf *cp, int s, int o) 
+static void draw_half_face(ModeInfo *mi, cube21_conf *cp, int s, int o) 
 {
   int i, s1 = 1-s*2, s2 = s*2;
   for(i = o; i<o+6; i++) {
     if(cp->pieces[s][i+1])
-      draw_narrow_piece(cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->colors);
+      draw_narrow_piece(mi, cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->colors);
     else {
-      draw_wide_piece(cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->cind[s2+1][i+1], cp->colors);
+      draw_wide_piece(mi, cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->cind[s2+1][i+1], cp->colors);
       i++;
     }
   }
 }
 
-static void draw_top_face(cube21_conf *cp) 
+static void draw_top_face(ModeInfo *mi, cube21_conf *cp) 
 {
-  draw_half_face(cp, 0, 0);
-  draw_half_face(cp, 0, 6);
+  draw_half_face(mi, cp, 0, 0);
+  draw_half_face(mi, cp, 0, 6);
 }
 
-static void draw_bottom_face(cube21_conf *cp) 
+static void draw_bottom_face(ModeInfo *mi, cube21_conf *cp) 
 {
-  draw_half_face(cp, 1, 0);
-  draw_half_face(cp, 1, 6);
+  draw_half_face(mi, cp, 1, 0);
+  draw_half_face(mi, cp, 1, 6);
 }
 
-static Bool draw_main(cube21_conf *cp) 
+static Bool draw_main(ModeInfo *mi, cube21_conf *cp) 
 {
   GLfloat theta = cp->ramount<0?cp->t:-cp->t;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -507,30 +516,30 @@ static Bool draw_main(cube21_conf *cp)
   switch(cp->state) {
     case CUBE21_PAUSE1:
     case CUBE21_PAUSE2:
-      draw_top_face(cp);
-      draw_bottom_face(cp);
+      draw_top_face(mi, cp);
+      draw_bottom_face(mi, cp);
       draw_middle(cp);
       break;
     case CUBE21_ROT_TOP:
       glRotatef(theta, 0.0, 0.0, 1.0);
-      draw_top_face(cp);
+      draw_top_face(mi, cp);
       glRotatef(-theta, 0.0, 0.0, 1.0);
-      draw_bottom_face(cp);
+      draw_bottom_face(mi, cp);
       draw_middle(cp);
       break;
     case CUBE21_ROT_BOTTOM:
-      draw_top_face(cp);
+      draw_top_face(mi, cp);
       glRotatef(theta, 0.0, 0.0, 1.0);
-      draw_bottom_face(cp);
+      draw_bottom_face(mi, cp);
       glRotatef(-theta, 0.0, 0.0, 1.0);
       draw_middle(cp);
       break;
     case CUBE21_HALF1:
       glRotatef(theta, 0.0, 1.0, 0.0);
     case CUBE21_HALF2:
-      draw_half_face(cp, 0, 0);
+      draw_half_face(mi, cp, 0, 0);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
-      draw_half_face(cp, 1, 0);
+      draw_half_face(mi, cp, 1, 0);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
       if(cp->hf[0]) glRotatef(180.0, 0.0, 1.0, 0.0);
       draw_middle_piece(cp, 0, cp->cind, cp->colors);
@@ -540,9 +549,9 @@ static Bool draw_main(cube21_conf *cp)
       else
         glRotatef(theta, 0.0, 1.0, 0.0);
       glRotatef(180.0, 0.0, 0.0, 1.0);
-      draw_half_face(cp, 0, 6);
+      draw_half_face(mi, cp, 0, 6);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
-      draw_half_face(cp, 1, 6);
+      draw_half_face(mi, cp, 1, 6);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
       if(cp->hf[1]) glRotatef(180.0, 0.0, 1.0, 0.0);
       draw_middle_piece(cp, 1, cp->cind, cp->colors);
@@ -873,8 +882,9 @@ ENTRYPOINT void draw_cube21(ModeInfo * mi)
   cp = &cube21[MI_SCREEN(mi)];
   MI_IS_DRAWN(mi) = True;
   if (!cp->glx_context) return;
+  mi->polygon_count = 0;
   glXMakeCurrent(display, window, *(cp->glx_context));
-  if (!draw_main(cp)) {
+  if (!draw_main(mi, cp)) {
     release_cube21(mi);
     return;
   }

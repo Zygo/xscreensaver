@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="whirlwindwarp" _label="WhirlwindWarp">
+<screensaver name="whirlwindwarp" _label="WhirlWindWarp">
 
   <command arg="-root"/>
 
@@ -9,8 +9,10 @@
           low="10" high="1000" default="400"/>
 
   <number id="tails" type="slider" arg="-tails %"
-          _label="Trail Size" _low-label="Short" _high-label="Long"
+          _label="Trail size" _low-label="Short" _high-label="Long"
           low="1" high="50" default="8"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Floating stars are acted upon by a mixture of simple 2D

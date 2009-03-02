@@ -140,8 +140,8 @@ load_texture_font (Display *dpy, char *res)
 
   texture_font_data *data = 0;
   char *font = get_string_resource (dpy, res, "Font");
-  const char *def1 = "-*-times-bold-r-normal-*-240-*";
-  const char *def2 = "-*-times-bold-r-normal-*-180-*";
+  const char *def1 = "-*-helvetica-medium-r-normal-*-240-*";
+  const char *def2 = "-*-helvetica-medium-r-normal-*-180-*";
   const char *def3 = "fixed";
   XFontStruct *f;
   int which;

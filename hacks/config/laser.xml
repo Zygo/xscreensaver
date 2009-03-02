@@ -4,6 +4,11 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="40000"
+          convert="invert"/>
+
   <number id="count" type="spinbutton" arg="-count %"
           _label="Count" low="0" high="20" default="10"/>
 
@@ -11,18 +16,15 @@
            _label="Duration" _low-label="Short" _high-label="Long"
           low="0" high="2000" default="200"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="60000" default="40000"
-          convert="invert"/>
-
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Moving radiating lines, that look vaguely like scanning laser beams.
-(Frankie say: relax.)
+(Frankie say relax.)
 
 Written by Pascal Pensa; 1997.
   </_description>

@@ -17,6 +17,7 @@ fontglide - characters float onto the screen to form words
 [\-trails]
 [\-db]
 [\-debug]
+[\-fps]
 .SH DESCRIPTION
 The \fIfontglide\fP program reads text from a subprocess and puts it on
 the screen using large characters that glide in from the edges,
@@ -86,6 +87,9 @@ Turn off double-buffering.  It may be faster, but will flicker.
 .B \-debug\fP
 Draw some boxes showing character metrics, and print the name of the
 current font to stderr.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

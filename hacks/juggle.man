@@ -2,68 +2,62 @@
 .\" ** The above line should force tbl to be used as a preprocessor **
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-juggle \- juggling man screen saver.
+juggle - juggling man screen saver.
 .SH SYNOPSIS
 .B juggle
-.RB [ \-display
-.IR host:display.screen ]
-.RB [ \-root ]
-.RB [ \-window ]
-.RB [ \-mono ]
-.RB [ \-install | \-noinstall ]
-.RB [ \-visual
-.IR visual ]
-.RB [ \-window\-id
-.IR id ]
-.RB [ \-pattern
-.IR pattern ]
-.RB [ \-tail
-.IR number ]
-.RB [ \-real | \-no\-real ]
-.RB [ \-describe | \-no\-describe ]
-.RB [ \-balls | \-no\-balls ]
-.RB [ \-clubs | \-no\-clubs ]
-.RB [ \-torches | \-no\-torches ]
-.RB [ \-knives | \-no\-knives ]
-.RB [ \-rings | \-no\-rings ]
-.RB [ \-bballs | \-no\-bballs ]
-.RB [ \-count
-.IR count ]
-.RB [ \-cycles
-.IR cycles ]
-.RB [ \-delay
-.IR delay ]
-.RB [ \-ncolors
-.IR ncolors ]
+[\-display host:display.screen ]
+[\-root ]
+[\-window ]
+[\-mono ]
+[\-install | \-noinstall ]
+[\-visual visual ]
+[\-window\-id id ]
+[\-pattern pattern ]
+[\-tail number ]
+[\-real | \-no\-real ]
+[\-describe | \-no\-describe ]
+[\-balls | \-no\-balls ]
+[\-clubs | \-no\-clubs ]
+[\-torches | \-no\-torches ]
+[\-knives | \-no\-knives ]
+[\-rings | \-no\-rings ]
+[\-bballs | \-no\-bballs ]
+[\-count count ]
+[\-cycles cycles ]
+[\-delay delay ]
+[\-ncolors ncolors ]
+[\-fps]
 .SH DESCRIPTION
 Draws a stick-man juggling various collections of objects.
 .SH OPTIONS
-.TP
-.BI \-display\  host:display.screen
+.I juggle
+accepts the following options:
+.TP 8
+.B \-display host:display.screen
 X11 display to use.  Overrides
 .B DISPLAY
 environment variable.
-.TP
+.TP 8
 .B \-root
 Draw on the root window.
-.TP
+.TP 8
 .B \-window
 Draw on a newly-created X window.  This is the default.
-.TP
+.TP 8
 .B \-mono
 Draw in monochrome.
-.TP
-.B \-install\  |\  \-noinstall
+.TP 8
+.B \-install | \-noinstall
 Turn on/off installing colormap.
-.TP
-.BI \-visual\  visual
+.TP 8
+.B \-visual visual
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
-.TP
-.BI \-window\-id\  id
+.TP 8
+.B \-window\-id id
 Draw on an already existing X window.
-.TP
-.BI \-pattern\ \(dq pattern \(dq
+.TP 8
+.B \-pattern\ \(dq pattern \(dq
 Specify juggling pattern in annotated
 .B site-swap
 notation.  In 
@@ -82,8 +76,8 @@ cb l.
 x	Cross Throw and Catch
 \&_	Bounce
 .TE
-.TP
-.BI \-pattern\ \(dq[ pattern ]\(dq
+.TP 8
+.B \-pattern\ \(dq[ pattern ]\(dq
 Specify juggling pattern in annotated
 .B Adam
 notation.  Adam notation is a little harder to visualize.  Each
@@ -109,62 +103,65 @@ For example, both of these describe a 3\-Shower:
 For further examples, see the
 .B portfolio
 list in the source code.
-.TP
-.BI \-tail\  number
+.TP 8
+.B \-tail number
 Minimum Trail Length.  0 \- 100.  Default: 1.  Objects may override
 this, for example flaming torches always leave a trail.
-.TP
-.BR \-real\  |\  \-no\-real
+.TP 8
+.BR \-real | \-no\-real
 Turn on/off real-time juggling.
 .B Deprecated.
 There should be no need to turn off real-time juggling, even on slow
 systems.  Adjust speed using
 .B \-count
 above.
-.TP
-.BR \-describe\  |\  \-no\-describe
+.TP 8
+.BR \-describe | \-no\-describe
 Turn on/off pattern descriptions.
-.TP 
-.BR \-balls\  |\  \-no\-balls
+.TP 8 
+.BR \-balls | \-no\-balls
 Turn on/off Balls.
-.TP
-.BR \-clubs\  |\  \-no\-clubs
+.TP 8
+.BR \-clubs | \-no\-clubs
 Turn on/off Clubs.
-.TP
-.BR \-torches\  |\  \-no\-torches
+.TP 8
+.BR \-torches | \-no\-torches
 Turn on/off Flaming Torches.
-.TP
-.BR \-knives\  |\  \-no\-knives
+.TP 8
+.BR \-knives | \-no\-knives
 Turn on/off Knives.
-.TP
-.BR \-rings\  |\  \-no\-rings
+.TP 8
+.BR \-rings | \-no\-rings
 Turn on/off Rings.
-.TP
-.BR \-bballs\  |\  \-no\-bballs
+.TP 8
+.BR \-bballs | \-no\-bballs
 Turn on/off Bowling Balls.
-.TP
-.BI \-count\  number
+.TP 8
+.B \-count number
 Speed. 50 \- 1000.  Default: 200.  This determines the expected time
 interval between a throw and the next catch, in milliseconds.
-.TP
-.BI \-cycles\  number
+.TP 8
+.B \-cycles number
 Performance Length. 50 \- 1000.  Default: 1000.  Setting this smaller
 will force the juggler to switch patterns (and objects) more often.
-.TP
-.BI \-delay\  delay
+.TP 8
+.B \-delay delay
 Additional delay between frames, in microseconds.  Default: 10000.
 .B Deprecated.
 Adjust speed using
 .BR \-count .
-.TP
-.BI \-ncolors\  ncolors
+.TP 8
+.B \-ncolors ncolors
 Maximum number of colors to use.  Default: 32.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
-.TP
+.TP 8
 .B DISPLAY
 to get the default host and display number.
-.TP
+.TP 8
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.

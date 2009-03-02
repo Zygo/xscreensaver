@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1998, 2000, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -76,7 +75,7 @@ static const struct line_info line_table[LINE_COUNT];
 
 static const char *hypercube_defaults[] =
 {
-  "*observer-z:	3",
+  "*observer-z:	3.0",
   "*delay: 10000",
   "*xy: 3",
   "*xz:	5",
@@ -86,6 +85,7 @@ static const char *hypercube_defaults[] =
   "*zw:	0",
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*color0:	magenta",
   "*color3:	#FF0093",
   "*color1:	yellow",

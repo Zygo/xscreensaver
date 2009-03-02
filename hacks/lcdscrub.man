@@ -10,6 +10,7 @@ lcdscrub - attempt to repair burn-in on LCD screens
 [\-delay \fInumber\fP]
 [\-spread \fInumber\fP]
 [\-cycles \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 This screen saver is not meant to look pretty, but rather, to
 repair burn-in on LCD monitors.
@@ -43,6 +44,9 @@ Distance between lines.  Default 8.
 .TP 8
 .B \-cycles \fInumber\fP
 Steps before switching display mode.  Default 60.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="800"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <boolean id="simple" _label="Draw circles instead of bubble images"
@@ -15,16 +15,15 @@
   <boolean id="broken" _label="Don't hide bubbles when they pop"
            arg-set="-broken"/>
 
-<!--  <boolean id="3d" _label="Bubbles exist in three dimensions"
-           arg-set="-3D"/> -->
+  <boolean id="trails" _label="Leave trails" arg-set="-trails"/>
 
   <select id="gravity">
-    <option id="rise"     _label="Bubbles Rise"  arg-set="-mode rise"/>
-    <option id="float"    _label="Bubbles Float"/>
-    <option id="drop"     _label="Bubbles Fall"  arg-set="-mode drop"/>
+    <option id="rise"     _label="Bubbles rise"  arg-set="-mode rise"/>
+    <option id="float"    _label="Bubbles float"/>
+    <option id="drop"     _label="Bubbles fall"  arg-set="-mode drop"/>
   </select>
 
-  <boolean id="trails" _label="Leave Trails" arg-set="-trails"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This simulates the kind of bubble formation that happens when water

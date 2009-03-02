@@ -53,7 +53,7 @@ static const char *truchet_defaults [] = {
   "*erase:                    True",
   "*eraseCount:               25",        
   "*square:                   True",
-  "*delay:                    1000",
+  "*delay:                    400000",
   "*curves:                   True",
   "*angles:                   True",
   "*scroll:                   False",
@@ -501,8 +501,7 @@ truchet_draw (Display *dpy, Window window, void *closure)
 
   XCopyArea(st->dpy,st->frame,st->window,st->agc,0,0,st->xgwa.width,st->xgwa.height,0,0);
 
-  /*printf("%d\n",st->delay);*/
-  return st->delay*1000;
+  return st->delay;
 }
 
 static void

@@ -4,6 +4,7 @@ qix - bounce colored lines around a window
 .SH SYNOPSIS
 .B qix
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-segments \fIint\fP] [\-spread \fIpixels\fP] [\-size \fIpixels\fP] [\-count \fIint\fP] [\-color-shift \fIdegrees\fP] [\-delay \fIusecs\fP] [\-random] [\-linear] [\-solid] [\-hollow] [\-xor] [\-no\-xor] [\-transparent] [\-non\-transparent] [\-additive] [\-subtractive] [\-poly \fIint\fP] [\-gravity] [\-no\-gravity]
+[\-fps]
 .SH DESCRIPTION
 The \fIqix\fP program bounces a series of line segments around its window.
 This is truly the swiss army chainsaw of qix programs.  If you know of one
@@ -102,6 +103,9 @@ options
 .B \-gravity \-linear
 will make everything move in nice smooth parabolas.
 Gravity is off by default.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

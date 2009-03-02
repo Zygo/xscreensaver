@@ -22,6 +22,7 @@ twang - pluck pieces of the screen
 [\-springiness \fIfraction\fP]
 [\-tile-size \fIinteger\fP]
 [\-transference \fIfraction\fP]
+[\-fps]
 .SH DESCRIPTION
 \fITwang\fP divides the screen into equal-sized tiles, and then plucks
 them in various ways. Tiles are affected by their neighbors, so waves
@@ -95,6 +96,9 @@ How much a tile's neighbors affect it, in the range 0..1.
 This is the fraction of an orientation of a neighbor that gets turned 
 into a velocity in the same direction Defaults to 0.025, resource 
 \fItransference\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

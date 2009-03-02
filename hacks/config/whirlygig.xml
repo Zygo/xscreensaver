@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="whirlygig" _label="WhirlyGig">
+<screensaver name="whirlygig" _label="Whirlygig">
 
   <command arg="-root"/>
 
-  <number id="whirlies" type="spinbutton" arg="-whirlies %"
-          _label="Whirlies" low="1" high="50" default="40"/>
-
-  <number id="lines" type="spinbutton" arg="-nlines %"
-          _label="Lines" low="-1" high="50" default="-1"/>
-
   <hgroup>
-    <number id="xspeed" type="spinbutton" arg="-xspeed %"
-            _label="Speed" low="0.0" high="10.0" default="1.0"/>
-    <number id="yspeed" type="spinbutton" arg="-yspeed %"
-            _label="x" low="0.0" high="10.0" default="1.0"/>
+   <number id="whirlies" type="spinbutton" arg="-whirlies %"
+           _label="Whirlies" low="-1" high="50" default="-1"/>
+
+   <number id="lines" type="spinbutton" arg="-nlines %"
+           _label="Lines" low="-1" high="50" default="-1"/>
   </hgroup>
 
   <hgroup>
-    <number id="xamplitude" type="spinbutton" arg="-xamplitude %"
-            _label="Amplitude" low="0.0" high="10.0" default="1.0"/>
-    <number id="yamplitude" type="spinbutton" arg="-yamplitude %"
-            _label="x" low="0.0" high="10.0" default="1.0"/>
+   <vgroup>
+    <number id="xspeed" type="slider" arg="-xspeed %"
+            _label="X speed" _low-label="Low" _high-label="High"
+            low="0.0" high="10.0" default="1.0"/>
+    <number id="yspeed" type="slider" arg="-yspeed %"
+            _label="Y speed" _low-label="Low" _high-label="High"
+             low="0.0" high="10.0" default="1.0"/>
+   </vgroup>
+
+   <vgroup>
+    <number id="xamplitude" type="slider" arg="-xamplitude %"
+            _label="X amplitude" _low-label="Low" _high-label="High"
+             low="0.0" high="10.0" default="1.0"/>
+    <number id="yamplitude" type="slider" arg="-yamplitude %"
+            _label="Y amplitude" _low-label="Low" _high-label="High"
+             low="0.0" high="10.0" default="1.0"/>
+   </vgroup>
   </hgroup>
 
 
@@ -29,27 +37,27 @@
 
   <hgroup>
    <select id="xmode">
-    <option id="random" _label="Random" />
-    <option id="spin" _label="Spin" arg-set="-xmode spin"/>
-    <option id="funky" _label="Funky" arg-set="-xmode funky"/>
-    <option id="circle" _label="Circle" arg-set="-xmode circle"/>
-    <option id="linear" _label="Linear" arg-set="-xmode linear"/>
-    <option id="test" _label="Test" arg-set="-xmode test"/>
-    <option id="fun" _label="Fun" arg-set="-xmode fun"/>
-    <option id="innie" _label="Innie" arg-set="-xmode innie"/>
-    <option id="lissajous" _label="Lissajous" arg-set="-xmode lissajous"/>
+    <option id="randomx"    _label="X random" />
+    <option id="spinx"      _label="X spin" arg-set="-xmode spin"/>
+    <option id="funkyx"     _label="X funky" arg-set="-xmode funky"/>
+    <option id="circlex"    _label="X circle" arg-set="-xmode circle"/>
+    <option id="linearx"    _label="X linear" arg-set="-xmode linear"/>
+    <option id="testx"      _label="X test" arg-set="-xmode test"/>
+    <option id="funx"       _label="X fun" arg-set="-xmode fun"/>
+    <option id="inniex"     _label="X innie" arg-set="-xmode innie"/>
+    <option id="lissajousx" _label="X lissajous" arg-set="-xmode lissajous"/>
    </select>
 
    <select id="ymode">
-    <option id="randomy" _label="Random" />
-    <option id="spiny" _label="Spin" arg-set="-ymode spin"/>
-    <option id="funkyy" _label="Funky" arg-set="-ymode funky"/>
-    <option id="circley" _label="Circle" arg-set="-ymode circle"/>
-    <option id="lineary" _label="Linear" arg-set="-ymode linear"/>
-    <option id="testy" _label="Test" arg-set="-ymode test"/>
-    <option id="funy" _label="Fun" arg-set="-ymode fun"/>
-    <option id="inniey" _label="Innie" arg-set="-ymode innie"/>
-    <option id="lissajousy" _label="Lissajous" arg-set="-ymode lissajous"/>
+    <option id="randomy"    _label="Y random" />
+    <option id="spiny"      _label="Y spin" arg-set="-ymode spin"/>
+    <option id="funkyy"     _label="Y funky" arg-set="-ymode funky"/>
+    <option id="circley"    _label="Y circle" arg-set="-ymode circle"/>
+    <option id="lineary"    _label="Y linear" arg-set="-ymode linear"/>
+    <option id="testy"      _label="Y test" arg-set="-ymode test"/>
+    <option id="funy"       _label="Y fun" arg-set="-ymode fun"/>
+    <option id="inniey"     _label="Y innie" arg-set="-ymode innie"/>
+    <option id="lissajousy" _label="Y lissajous" arg-set="-ymode lissajous"/>
    </select>
  </hgroup>
 
@@ -61,14 +69,10 @@
   <!-- #### -offset_period [1] -->
 
   <hgroup>
-   <vgroup>
-    <boolean id="trail" _label="Leave a trail" arg-set="-trail 1"/>
-    <boolean id="explain" _label="Explain modes" arg-set="-explain"/>
-   </vgroup>
-   <vgroup>
-    <boolean id="wrap" _label="Wrap the screen" arg-unset="-no-wrap"/>
-<!--    <boolean id="db" _label="Use Double Buffering" arg-unset="-no-db"/> -->
-   </vgroup>
+   <boolean id="trail" _label="Leave a trail" arg-set="-trail"/>
+   <boolean id="explain" _label="Explain modes" arg-set="-explain"/>
+   <boolean id="wrap" _label="Wrap the screen" arg-set="-wrap"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
   <_description>

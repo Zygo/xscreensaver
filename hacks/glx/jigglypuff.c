@@ -66,6 +66,9 @@
 #define DEF_HOLD            "800"
 #define DEF_SPHERISM        "75"
 #define DEF_DAMPING         "500"
+#define DEF_RANDOM	    "True"
+#define DEF_TETRA	    "False"
+#define DEF_SPOOKY	    "0"
 
 #ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
@@ -137,9 +140,9 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {&random_parms, "random", "Random", "True", t_Bool},
-    {&do_tetrahedron, "tetra", "Tetra", "False", t_Bool},
-    {&spooky, "spooky", "Spooky", "0", t_Int},
+    {&random_parms, "random", "Random", DEF_RANDOM, t_Bool},
+    {&do_tetrahedron, "tetra", "Tetra", DEF_TETRA, t_Bool},
+    {&spooky, "spooky", "Spooky", DEF_SPOOKY, t_Int},
     {&color, "color", "Color", DEF_COLOR, t_String},
     {&shininess, "shininess", "Shininess", DEF_SHININESS, t_Int},
     {&complexity, "complexity", "Complexity", DEF_COMPLEXITY, t_Int},
@@ -670,9 +673,10 @@ static inline void vertex_render(vertex *vtx, jigglystruct *js)
  * see what the cost is of calling glBegin/glEnd for each
  * triangle.
  */
-static inline void face_render(face *f, jigglystruct *js)
+static inline int face_render(face *f, jigglystruct *js)
 {
     hedge *h1, *h2, *hend;
+    int polys = 0;
 
     h1 = f->start;
     hend = h1->prev;
@@ -688,12 +692,15 @@ static inline void face_render(face *f, jigglystruct *js)
 	vertex_render(hend->vtx, js);
 	h1 = h2;
 	h2 = h1->next;
+        polys++;
     }
     glEnd();
+    return polys;
 }
 
-static void jigglypuff_render(jigglystruct *js) 
+static int jigglypuff_render(jigglystruct *js) 
 {
+    int polys = 0;
     face *f = js->shape->faces;
     vertex *vtx = js->shape->vertices;
 
@@ -702,9 +709,10 @@ static void jigglypuff_render(jigglystruct *js)
 	vtx = vtx->next;
     }
     while(f) {
-	face_render(f, js);
+	polys += face_render(f, js);
 	f=f->next;
     }
+    return polys;
 }
 
 /* This is the jiggling code */
@@ -991,7 +999,7 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
 	glColor4fv(js->jiggly_color);
     }
     
-    jigglypuff_render(js);
+    mi->polygon_count = jigglypuff_render(js);
     if(MI_IS_FPS(mi))
 	do_fps(mi);
     glFinish();
@@ -1061,7 +1069,7 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
 	   js->do_wireframe, js->spooky, js->color_style, js->shininess);*/
 }
 
-XSCREENSAVER_MODULE ("Jigglypuff", jigglypuff)
+XSCREENSAVER_MODULE ("JigglyPuff", jigglypuff)
 
 #endif /* USE_GL */
 

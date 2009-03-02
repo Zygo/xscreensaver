@@ -10,7 +10,7 @@ lockward - Rotating spinning color-cycling things
 [\-window-id \fIarg\fP]
 [\-delay \fIusec\fP]
 [\-pair]
-[\-fps | \-no-fps]
+[\-fps]
 [\-blink | \-no-blink]
 [\-rotateidle-min \fImsec\fP]
 [\-rotateidle-max \fImsec\fP]
@@ -42,9 +42,8 @@ Per-frame delay, in microseconds.  Default: 20000 (50 frames/sec).
 .B \-blink | \-no-blink
 Enables/disables the blinking effects.  Default: Enabled.
 .TP 8
-.B \-fps | \-no-fps
-Enables/disables display of frames per second at bottom of window.  Default:
-Disabled.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .TP 8
 .B \-rotateidle-min \fImilliseconds
 .TP 8

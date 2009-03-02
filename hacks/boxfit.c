@@ -520,6 +520,7 @@ boxfit_free (Display *dpy, Window window, void *closure)
 static const char *boxfit_defaults [] = {
   ".background:		   black",
   ".foreground:		   #444444",
+  "*fpsSolid:		   true",
   "*delay:		   20000",
   "*mode:		   random",
   "*colors:		   64",
@@ -553,4 +554,4 @@ static XrmOptionDescRec boxfit_options [] = {
 };
 
 
-XSCREENSAVER_MODULE ("Boxfit", boxfit)
+XSCREENSAVER_MODULE ("BoxFit", boxfit)

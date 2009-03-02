@@ -21,7 +21,7 @@ atunnel - hypnotic GL tunnel journey
 [\-light] [\-no-light]
 [\-wire] [\-no-wire]
 [\-texture] [\-no-texture]
-[\-fps] [\-no-fps]
+[\-fps]
 .SH DESCRIPTION
 The \fIatunnel\fP program draws an animation of a journey in a GL tunnel.
 .SH OPTIONS
@@ -42,9 +42,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .TP 8
 .B \-texture
 Show a textured tunnel. This is the default.

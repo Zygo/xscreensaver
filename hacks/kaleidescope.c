@@ -84,6 +84,7 @@ struct state {
 static const char *kaleidescope_defaults [] = {
   ".background:	     black",
   ".foreground:	     white",
+  "*fpsSolid:	     true",
   "*color_mode:      nice",
   "*symmetry:	       11",
   "*ntrails:	      100",

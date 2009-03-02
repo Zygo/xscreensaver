@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="descent" type="slider" arg="-speed %"
@@ -14,14 +14,16 @@
           low="2" high="500" default="150"
           convert="invert"/>
 
-  <boolean id="random" _label="Use Randomized Surfaces and Primitives" arg-unset="-no-random"/>
-  <boolean id="wander"  _label="Wander Around the Screen" arg-set="-wander"/>
+  <boolean id="random" _label="Use randomized surfaces and primitives" arg-unset="-no-random"/>
+  <boolean id="wander"  _label="Wander" arg-set="-wander"/>
   <boolean id="spin"    _label="Spin" arg-unset="-no-spin"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This draws a visualization of a Klein bottle or some other interesting
 parametric surfaces.
+
+http://en.wikipedia.org/wiki/Klein_bottle
 
 Written by Andrey Mirtchovski; 2003.
   </_description>

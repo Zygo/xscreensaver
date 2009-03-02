@@ -4,6 +4,7 @@ greynetic - draw random stippled/color rectangles
 .SH SYNOPSIS
 .B greynetic
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIgreynetic\fP program draws random rectangles.
 .SH OPTIONS
@@ -28,6 +29,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

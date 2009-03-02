@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,10 +12,10 @@
 #import <Cocoa/Cocoa.h>
 #import <ScreenSaver/ScreenSaver.h>
 
-@interface AppController : NSObject
+@interface SaverTester : NSObject
 {
-  ScreenSaverView *saverView0;
-  ScreenSaverView *saverView1;
+  NSArray *saverNames;
+  NSArray *windows;
 }
 
 @end

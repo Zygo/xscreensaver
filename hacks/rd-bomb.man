@@ -8,6 +8,7 @@ rd-bomb - reaction/diffusion textures
 [\-visual \fIvisual\fP] [\-width \fIn\fP] [\-height \fIn\fP]
 [\-reaction \fIn\fP] [\-diffusion \fIn\fP]
 [\-size \fIf\fP] [\-speed \fIf\fP] [\-delay \fImillisecs\fP]
+[\-fps]
 .SH DESCRIPTION
 
 The \fIrd-bomb\fP program draws reaction/diffusion textures.  The code
@@ -71,6 +72,9 @@ rate (a floating point number).  Default is zero.  Suggested value: 1.0.
 .B \-delay \fImillisecs\fP
 How many milliseconds to delay between frames; default 1, or 
 about 1/1000th of a second.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

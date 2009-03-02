@@ -59,7 +59,7 @@ class, or the id number (decimal or hex) of a specific visual.
 Delay between frames; default 20000 (1/50th of a second).
 .TP 8
 .B \-fps
-Display frame per second and polygon counts.
+Display the current frame rate, CPU load, and polygon count.
 .TP 8
 .B \-crack
 Use all possible methods to animate tile instantiation.

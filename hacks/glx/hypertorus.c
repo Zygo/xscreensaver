@@ -521,9 +521,10 @@ static void color(double angle)
    will only work correctly if numu and numv are set to 64 or any higher
    power of 2.  Similarly, the banded appearance will only work correctly
    if numu and numv are divisible by 4. */
-static void hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
+static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
                        double vmax, int numu, int numv)
 {
+  int polys = 0;
   static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
   static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
   static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
@@ -651,10 +652,13 @@ static void hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
         n[2] /= t;
         glNormal3fv(n);
         glVertex3fv(p);
+        polys++;
       }
     }
     glEnd();
   }
+  polys /= 2;
+  return polys;
 }
 
 
@@ -793,7 +797,7 @@ static void display_hypertorus(ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  hypertorus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
+  mi->polygon_count = hypertorus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
 }
 
 

@@ -76,6 +76,7 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 					"*cycles:		40      \n"			\
 					"*showFPS:      False   \n"			\
 					"*wireframe:	False	\n"
+
 # define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -344,12 +345,13 @@ inputs(superquadricsstruct * sp)
 }
 
 
-static void
+static int
 DoneScale(superquadricsstruct * sp)
 {
 	double      xx, yy, zz, xp = 0, yp = 0, zp = 0, xn, yn, zn, xnp = 0,
 	            ynp = 0, znp = 0;
 	int         ih, iv;
+    int polys = 0;
 
 	/* Hey don't knock my 2-letter variable names.  Simon's BASIC rules, man! ;-> */
 	/* Just kidding..... */
@@ -374,10 +376,12 @@ DoneScale(superquadricsstruct * sp)
 					if (ih > 1) {
 						glVertex3f(xx, yy, zz);
 						glVertex3f(sp->Prevxx[iv], sp->Prevyy[iv], sp->Prevzz[iv]);
+                        polys++;
 					}
 					if (iv > 1) {
 						glVertex3f(xx, yy, zz);
 						glVertex3f(sp->Prevxx[iv - 1], sp->Prevyy[iv - 1], sp->Prevzz[iv - 1]);
+                        polys++;
 					}
 /* PURIFY 4.0.1 reports an unitialized memory read on the next line when using
    * MesaGL 2.2 and -mono.  This has been fixed in MesaGL 2.3 and later. */
@@ -406,6 +410,7 @@ DoneScale(superquadricsstruct * sp)
 					if (!sp->flatshade)
 						glNormal3f(sp->Prevxn[iv - 1], sp->Prevyn[iv - 1], sp->Prevzn[iv - 1]);
 					glVertex3f(sp->Prevxx[iv - 1], sp->Prevyy[iv - 1], sp->Prevzz[iv - 1]);
+                    polys++;
 					glEnd();
 				}
 				if (sp->shownorms) {
@@ -415,6 +420,7 @@ DoneScale(superquadricsstruct * sp)
 					glBegin(GL_LINES);
 					glVertex3f(xx, yy, zz);
 					glVertex3f(xx + xn, yy + yn, zz + zn);
+                    polys++;
 					glEnd();
 					if (!sp->flatshade)
 						glShadeModel(GL_SMOOTH);
@@ -437,6 +443,7 @@ DoneScale(superquadricsstruct * sp)
 
 		}		/* next */
 	}			/* next */
+    return polys;
 }
 
 /**** End of really old code ****/
@@ -539,9 +546,10 @@ NextSuperquadric(superquadricsstruct * sp)
 	}
 }
 
-static void
+static int
 DisplaySuperquadrics(superquadricsstruct * sp)
 {
+    int polys = 0;
 	glDrawBuffer(GL_BACK);
 	if (sp->wireframe)
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -560,18 +568,19 @@ DisplaySuperquadrics(superquadricsstruct * sp)
 
 	SetCull(0, sp);
 
-	DoneScale(sp);
+	polys = DoneScale(sp);
 
 	glPopMatrix();
 
 	/* Remember to flush & swap the buffers after calling this function! */
+    return polys;
 }
 
-static void
+static int
 NextSuperquadricDisplay(superquadricsstruct * sp)
 {
 	NextSuperquadric(sp);
-	DisplaySuperquadrics(sp);
+	return DisplaySuperquadrics(sp);
 }
 
 #define MINSIZE 200
@@ -751,7 +760,7 @@ draw_superquadrics(ModeInfo * mi)
 
 	glXMakeCurrent(display, window, *(sp->glx_context));
 
-	NextSuperquadricDisplay(sp);
+    mi->polygon_count = NextSuperquadricDisplay(sp);
 
     if (mi->fps_p) do_fps (mi);
 	glFinish();

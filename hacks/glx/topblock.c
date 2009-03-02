@@ -67,6 +67,7 @@ typedef struct
   int plusheight;
   GLuint	carpet;
   GLuint	block;
+  int carpet_polys, block_polys;
   NODE *blockNodeRoot;
   NODE *blockNodeFollow;
   GLfloat rotation;
@@ -110,40 +111,40 @@ static XrmOptionDescRec opts[] = {
   { "-override",    ".override",    XrmoptionNoArg, "True" },
 };
 
-#define DEF_override      "False"
-#define DEF_rotate        "True"
-#define DEF_follow        "False"
-#define DEF_drawCarpet    "True"
-#define DEF_drawBlob      "False"
-#define DEF_drawNipples   "True"
-#define DEF_rotateSpeed   "10"
-#define DEF_maxFalling    "500"
-#define DEF_maxColors     "7"
-#define DEF_size          "2"
-#define DEF_spawn         "50"
-#define DEF_resolution    "4"
-#define DEF_camX          "1"
-#define DEF_camY          "20"
-#define DEF_camZ          "25"
-#define DEF_dropSpeed     "4"
+#define DEF_OVERRIDE      "False"
+#define DEF_ROTATE        "True"
+#define DEF_FOLLOW        "False"
+#define DEF_CARPET   "True"
+#define DEF_BLOB     "False"
+#define DEF_NIPPLES  "True"
+#define DEF_ROTATE_SPEED  "10"
+#define DEF_MAX_FALLING   "500"
+#define DEF_MAX_COLORS    "7"
+#define DEF_SIZE          "2"
+#define DEF_SPAWN         "50"
+#define DEF_RESOLUTION    "4"
+#define DEF_CAM_X         "1"
+#define DEF_CAM_Y         "20"
+#define DEF_CAM_Z         "25"
+#define DEF_DROP_SPEED    "4"
 
 static argtype vars[] = {
-  {&override,     "override",     "Override",     DEF_override,     t_Bool},
-  {&rotate,       "rotate",       "Rotate",       DEF_rotate,       t_Bool},
-  {&drawCarpet,   "carpet",       "Carpet",       DEF_drawCarpet,   t_Bool},
-  {&drawNipples,  "nipples",      "Nipples",      DEF_drawNipples,  t_Bool},
-  {&drawBlob,     "blob",         "Blob",         DEF_drawBlob,     t_Bool},
-  {&rotateSpeed,  "rotateSpeed",  "RotateSpeed",  DEF_rotateSpeed,  t_Float},
-  {&follow,       "follow",       "Follow",       DEF_follow,       t_Bool},
-  {&camX,         "camX",         "camX",         DEF_camX,         t_Float},
-  {&camY,         "camY",         "camY",         DEF_camY,         t_Float},
-  {&camZ,         "camZ",         "camZ",         DEF_camZ,         t_Float},
-  {&size,         "size",         "size",         DEF_size,         t_Int},
-  {&spawn,        "spawn",        "spawn",        DEF_spawn,        t_Int},
-  {&maxFalling,   "maxFalling",   "maxFalling",   DEF_maxFalling,   t_Int},
-  {&resolution,   "resolution",   "resolution",   DEF_resolution,   t_Int},
-  {&maxColors,    "maxColors",    "maxColors",    DEF_maxColors,    t_Int},
-  {&dropSpeed,    "dropSpeed",    "DropSpeed",    DEF_dropSpeed,    t_Float},
+  {&override,     "override",     "Override",     DEF_OVERRIDE,     t_Bool},
+  {&rotate,       "rotate",       "Rotate",       DEF_ROTATE,       t_Bool},
+  {&drawCarpet,   "carpet",       "Carpet",       DEF_CARPET,   t_Bool},
+  {&drawNipples,  "nipples",      "Nipples",      DEF_NIPPLES,  t_Bool},
+  {&drawBlob,     "blob",         "Blob",         DEF_BLOB,     t_Bool},
+  {&rotateSpeed,  "rotateSpeed",  "RotateSpeed",  DEF_ROTATE_SPEED,  t_Float},
+  {&follow,       "follow",       "Follow",       DEF_FOLLOW,       t_Bool},
+  {&camX,         "camX",         "camX",         DEF_CAM_X,         t_Float},
+  {&camY,         "camY",         "camY",         DEF_CAM_Y,         t_Float},
+  {&camZ,         "camZ",         "camZ",         DEF_CAM_Z,         t_Float},
+  {&size,         "size",         "size",         DEF_SIZE,         t_Int},
+  {&spawn,        "spawn",        "spawn",        DEF_SPAWN,        t_Int},
+  {&maxFalling,   "maxFalling",   "maxFalling",   DEF_MAX_FALLING,   t_Int},
+  {&resolution,   "resolution",   "resolution",   DEF_RESOLUTION,   t_Int},
+  {&maxColors,    "maxColors",    "maxColors",    DEF_MAX_COLORS,    t_Int},
+  {&dropSpeed,    "dropSpeed",    "DropSpeed",    DEF_DROP_SPEED,    t_Float},
 };
 
 static topBlockSTATE *tbs = NULL;
@@ -152,7 +153,8 @@ ModeSpecOpt topBlock_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 /* Window management, etc */
 ENTRYPOINT void
-reshape_topBlock (ModeInfo *mi, int width, int height) {
+reshape_topBlock (ModeInfo *mi, int width, int height)
+{
   GLfloat h = (GLfloat) height / (GLfloat) width;
   glViewport (0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -165,7 +167,8 @@ reshape_topBlock (ModeInfo *mi, int width, int height) {
 
 /* clean up on exit, not required ... */
 ENTRYPOINT void
-  release_topBlock(ModeInfo *mi) {
+release_topBlock(ModeInfo *mi)
+{
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
 	NODE *llCurrent, *llOld;
 	llCurrent = tb->blockNodeRoot;
@@ -293,7 +296,8 @@ init_topBlock (ModeInfo *mi)
 
 /* provides the per frame entertainment */
 ENTRYPOINT void
-draw_topBlock (ModeInfo *mi) {
+draw_topBlock (ModeInfo *mi)
+{
   	Display *dpy = MI_DISPLAY(mi);
   	Window window = MI_WINDOW(mi);
   	NODE *llCurrent;
@@ -307,6 +311,7 @@ draw_topBlock (ModeInfo *mi) {
   if (!tb->glx_context)
     return;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tb->glx_context));
+  mi->polygon_count = 0;
 
 	generateNewBlock(mi);
 
@@ -335,6 +340,7 @@ draw_topBlock (ModeInfo *mi) {
 		/* center carpet */
 		glTranslatef(0.0-(tb->carpetWidth/2),0.0-(tb->carpetLength/2),0.0);
 		glCallList(tb->carpet);
+                mi->polygon_count += tb->carpet_polys;
 		glTranslatef(0.0+(tb->carpetWidth/2),0.0+(tb->carpetLength/2),0.0);
 		glTranslatef(0.0,0.0,-0.55);
 	}
@@ -485,6 +491,7 @@ draw_topBlock (ModeInfo *mi) {
   	llCurrent = llCurrent->next;
   	/* draw   */
   	glCallList(tb->block); 
+        mi->polygon_count += tb->block_polys;
   	glPopMatrix();	/* restore state */
   } 
   if (mi->fps_p) do_fps (mi);
@@ -497,7 +504,8 @@ draw_topBlock (ModeInfo *mi) {
 
 
 /* camera is in follow mode, work out where we should be looking */
-static void followBlock(ModeInfo *mi) {
+static void followBlock(ModeInfo *mi)
+{
 	GLfloat xLen,yLen,cx,cy,rangle,xTarget,yTarget;
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
   cx=0;cy=0;
@@ -541,7 +549,8 @@ static void followBlock(ModeInfo *mi) {
 }
 
 /* each quater of the circle has to be adjusted for */
-static double quadrantCorrection(double angle,int cx,int cy,int x,int y) {
+static double quadrantCorrection(double angle,int cx,int cy,int x,int y)
+{
 	if ((x>=cx) && (y>=cy)) {
 		angle +=  (90-(angle-90) * 2); 
 	} else if ((x>=cx) && (y<=cy)) {
@@ -555,7 +564,8 @@ static double quadrantCorrection(double angle,int cx,int cy,int x,int y) {
 }
 
 /* if random chance then create a new falling block */
-static void generateNewBlock(ModeInfo *mi) {
+static void generateNewBlock(ModeInfo *mi)
+{
 	NODE *llCurrent, *llTail;
 	GLfloat startOffx, startOffy;
 	int endOffx, endOffy;
@@ -621,7 +631,8 @@ static void generateNewBlock(ModeInfo *mi) {
 }
 
 /* called at init this creates the 'carpet' display list item */
-static void buildCarpet(ModeInfo *mi) {
+static void buildCarpet(ModeInfo *mi)
+{
 	int i,c,x,y;
 	GLfloat color[4];
   	int wire = MI_IS_WIREFRAME(mi);
@@ -633,6 +644,7 @@ static void buildCarpet(ModeInfo *mi) {
 		color[3] = 1.0f;	
 	tb->carpet=glGenLists(1);	/* only one */
 	glNewList(tb->carpet,GL_COMPILE);
+        tb->carpet_polys=0;
 	glPushMatrix();	/* save state */
   	x=tb->carpetWidth;
   	y=tb->carpetLength;
@@ -646,6 +658,7 @@ static void buildCarpet(ModeInfo *mi) {
 		glVertex3f(x,0.0,0.0);
 		glVertex3f(x,y,0.0);
 		glVertex3f(0.0,y,0.0);
+                tb->carpet_polys++;
 	    if (wire) { glEnd(); } 
 		else {
 		/* add edge pieces */
@@ -655,24 +668,28 @@ static void buildCarpet(ModeInfo *mi) {
 		glVertex3f(x,0.0,0.0);
 		glVertex3f(x,0,singleThick);
 		glVertex3f(0.0,0,singleThick);
+                tb->carpet_polys++;
 		/* side 2 */
 		glNormal3f( -1, 0, 0 );
 		glVertex3f(0.0,0.0,0.0);
 		glVertex3f(0,y,0.0);
 		glVertex3f(0,y,singleThick);
 		glVertex3f(0.0,0,singleThick);
+                tb->carpet_polys++;
 		/* side 3 */
 		glNormal3f( 1, 0, 0 );
 		glVertex3f(x,0.0,0.0);
 		glVertex3f(x,y,0.0);
 		glVertex3f(x,y,singleThick);
 		glVertex3f(x,0,singleThick);
+                tb->carpet_polys++;
 		/* side 4 */
 		glNormal3f( 0, 1, 0 );
 		glVertex3f(0,y,0.0);
 		glVertex3f(x,y,0.0);
 		glVertex3f(x,y,singleThick);
 		glVertex3f(0,y,singleThick);
+                tb->carpet_polys++;
 		}
 	glEnd();
 	/* nipples */
@@ -685,8 +702,10 @@ static void buildCarpet(ModeInfo *mi) {
 			glPushMatrix();	/* save state */
 			for (i=0;i<y;i++) {
 				gluCylinder(quadratic, cylSize, cylSize, 0.25f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
+                                tb->carpet_polys += resolution*resolution;
 				glRotatef(180, 0.0f, 1.0f, 0.0f); /* they are upside down */
 				gluDisk(quadratic, 0.0f, cylSize, resolution, resolution );	 /* inner size (cd hole), outer size (radius), subdivisions radial, subdivisions circular  */
+                                tb->carpet_polys += resolution*resolution;
 				glRotatef(180, 0.0f, 1.0f, 0.0f); /* recover */
 				glTranslatef(0.0f,1.0f,0.0f);			/* move to the next cylinder center (backward) */
 			}
@@ -714,21 +733,23 @@ static void polygonPlane(int wire, int a, int b, int c , int d, int i)
 
 /* called at init this creates the 'block' display list item */
 /* the spheres came about originaly as quick way to test the directional lighting/normals */
-static void buildBlock(ModeInfo *mi) {
+static void buildBlock(ModeInfo *mi)
+{
 	int i,c;
   int wire = MI_IS_WIREFRAME(mi);
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
 	GLUquadricObj *quadratic;
 	tb->block=glGenLists(1);	/* only one */
 	glNewList(tb->block,GL_COMPILE);
+        tb->block_polys=0;
 	glPushMatrix();	/* save state */
 	glRotatef(90, 0.0f, 1.0f, 0.0f);
 	/* base */
-	polygonPlane(wire, 0,3,2,1,0);
-	polygonPlane(wire, 2,3,7,6,1);
-	polygonPlane(wire, 1,2,6,5,2); 
-	polygonPlane(wire, 4,5,6,7,3); 
-	polygonPlane(wire, 0,1,5,4,4);
+	polygonPlane(wire, 0,3,2,1,0); tb->block_polys++;
+	polygonPlane(wire, 2,3,7,6,1); tb->block_polys++;
+	polygonPlane(wire, 1,2,6,5,2); tb->block_polys++;
+	polygonPlane(wire, 4,5,6,7,3); tb->block_polys++;
+	polygonPlane(wire, 0,1,5,4,4); tb->block_polys++;
 	if (drawNipples) {
 		/* nipples */
 		/* draw 8 cylinders each with a disk cap */
@@ -739,8 +760,10 @@ static void buildBlock(ModeInfo *mi) {
 		for (c=0;c<2;c++) {
 			for (i=0;i<4;i++) {
 				gluCylinder(quadratic, cylSize, cylSize, 0.25f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
+                                tb->block_polys += resolution*resolution;
 				glTranslatef(0.0f,0.0f,0.25f);			/* move to the cylinder cap  */
 				gluDisk(quadratic, 0.0f, cylSize, resolution, resolution );	 /* inner size (cd hole), outer size (radius), subdivisions radial, subdivisions circular  */
+                                tb->block_polys += resolution*resolution;
 				glTranslatef(0.0f,0.0f,-0.25f);			/* move back from the cylinder cap  */
 				if (c==0) {	
 					glTranslatef(0.0f,-1.0f,0.0f);			/* move to the next cylinder center (forward) */
@@ -755,6 +778,7 @@ static void buildBlock(ModeInfo *mi) {
 		glTranslatef(1.5f,-2.5f,-1.5f);		/* move to the center, under the top of the brick	 */
 		for (c=0;c<3;c++) {
 			gluCylinder(quadratic, uddSize, uddSize, 1.5f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
+                        tb->block_polys += resolution*resolution;
 			glTranslatef(0.0f,-1.0f,0.0f);		/* move to the center */	
 		}
 	}
@@ -766,7 +790,8 @@ static void buildBlock(ModeInfo *mi) {
 	rip off of the builBlock() function creating the GL compilied pointer "block" but only creates two spheres.
 	spheres are created with unit_sphere from spheres.h to allow wire frame 
 */
-static void buildBlobBlock(ModeInfo *mi) {
+static void buildBlobBlock(ModeInfo *mi)
+{
   int wire = MI_IS_WIREFRAME(mi);
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
 	tb->block=glGenLists(1);	/* only one */
@@ -784,7 +809,8 @@ static void buildBlobBlock(ModeInfo *mi) {
 
 /* handle input events or not if daemon running the show */
 ENTRYPOINT Bool 
-topBlock_handle_event (ModeInfo *mi, XEvent *event) {
+topBlock_handle_event (ModeInfo *mi, XEvent *event)
+{
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
 	if (event->xany.type == KeyPress)    {
     KeySym keysym;
@@ -868,6 +894,6 @@ topBlock_handle_event (ModeInfo *mi, XEvent *event) {
 }
 
 /* this is tha main change for v5 compatability and acompanying ENTRYPOINTS */
-XSCREENSAVER_MODULE_2 ("topBlock", topblock, topBlock)
+XSCREENSAVER_MODULE_2 ("TopBlock", topblock, topBlock)
 
 #endif /* USE_GL */

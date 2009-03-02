@@ -17,6 +17,7 @@ epicycle - draws a point moving around a circle which moves around a cicle which
 .SH SYNOPSIS
 .B epicycle 
 [\-display \fIhost:display.screen\fP] [\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIviz\fP] [\-colors \fIN\fP] [\-foreground \fIname\fP] [\-color\-shift \fIN\fP] [\-delay \fImicroseconds\fP] [\-holdtime \fIseconds\fP] [\-linewidth \fIN\fP] [\-min_circles \fIN\fP] [\-max_circles \fIN\fP] [\-min_speed \fInumber\fP] [\-max_speed \fInumber\fP] [\-harmonics \fIN\fP] [\-timestep \fInumber\fP] [\-divisor_poisson \fIprobability\fP] [\-size_factor_min \fInumber\fP] [\-size_factor_max \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 The epicycle program draws the path traced out by a point on the edge
 of a circle.  That circle rotates around a point on the rim of another
@@ -136,6 +137,9 @@ parents.
 .TP 8
 .B \-size_factor_max \fInumber\fP
 Epicycles are never more than this factor smaller than their parents.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH RESOURCES
 .EX
 Option            Resource               Default Value

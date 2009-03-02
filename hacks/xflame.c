@@ -774,6 +774,8 @@ xflame_free (Display *dpy, Window window, void *closure)
 static const char *xflame_defaults [] = {
   ".background:     black",
   ".foreground:     #FFAF5F",
+  "*fpsTop:	    true",
+  "*fpsSolid:       true",
   "*bitmap:         (default)",
   "*bitmapBaseline: 20",
   "*delay:          10000",

@@ -466,8 +466,9 @@ static void setpartrain(firestruct * fs, rain * r, float dt)
 }
 
 /* draw a tree */
-static void drawtree(float x, float y, float z)
+static int drawtree(float x, float y, float z)
 {
+    int polys = 0;
     glBegin(GL_QUADS);
     glTexCoord2f(0.0,0.0);
     glVertex3f(x-1.5,y+0.0,z);
@@ -480,6 +481,7 @@ static void drawtree(float x, float y, float z)
 
     glTexCoord2f(0.0,1.0);
     glVertex3f(x-1.5,y+3.0,z);
+    polys++;
 
 
     glTexCoord2f(0.0,0.0);
@@ -493,9 +495,11 @@ static void drawtree(float x, float y, float z)
 
     glTexCoord2f(0.0,1.0);
     glVertex3f(x,y+3.0,z-1.5);
+    polys++;
 
     glEnd();
 
+    return polys;
 }
 
 /* calculate observer position : modified only if trackmouse is used */
@@ -667,6 +671,8 @@ static void DrawFire(ModeInfo * mi)
     firestruct *fs = &fire[MI_SCREEN(mi)];
     Bool wire = MI_IS_WIREFRAME(mi);
 
+    mi->polygon_count = 0;
+
     if (do_wander && !fs->button_down_p)
     {
 	GLfloat x, y, z;
@@ -728,6 +734,7 @@ static void DrawFire(ModeInfo * mi)
     glVertex3fv(q[2]);
     glTexCoord2fv(qt[3]);
     glVertex3fv(q[3]);
+    mi->polygon_count++;
     glEnd();
 
     glAlphaFunc(GL_GEQUAL, 0.9);
@@ -739,7 +746,7 @@ static void DrawFire(ModeInfo * mi)
 	glBindTexture(GL_TEXTURE_2D,fs->treeid);
 #endif /* HAVE_GLBINDTEXTURE */
 	for(j=0;j<fs->num_trees;j++)
-	    drawtree(fs->treepos[j].x ,fs->treepos[j].y ,fs->treepos[j].z );
+      mi->polygon_count += drawtree(fs->treepos[j].x ,fs->treepos[j].y ,fs->treepos[j].z );
     	glDisable(GL_ALPHA_TEST);
     }
     glDisable(GL_TEXTURE_2D);
@@ -757,6 +764,7 @@ static void DrawFire(ModeInfo * mi)
 
 	    glColor4f(black[0], black[1], black[2], fs->p[j].c[2][3]);
 	    glVertex3f(fs->p[j].p[2][0], 0.1, fs->p[j].p[2][2]);
+        mi->polygon_count++;
 	}
 	glEnd();
     }
@@ -772,6 +780,7 @@ static void DrawFire(ModeInfo * mi)
 
 	glColor4fv(fs->p[j].c[2]);
 	glVertex3fv(fs->p[j].p[2]);
+    mi->polygon_count++;
 
 	setpart(fs, &fs->p[j]);
     }
@@ -790,6 +799,7 @@ static void DrawFire(ModeInfo * mi)
 	    glColor4f(0.3f,0.7f,1.0f,1.0f);
 	    glVertex3fv(fs->r[j].pos);
 	    setpartrain(fs, &fs->r[j],timeused);
+        mi->polygon_count++;
 	}
 	glEnd();
 	glShadeModel(GL_FLAT);

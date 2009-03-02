@@ -10,6 +10,7 @@ swirl - draws swirly color-cycling patterns
 [\-delay \fImicroseconds\fP]
 [\-count \fIinteger\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIswirl\fP program draws swirly color-cycling patterns.
 .SH OPTIONS
@@ -37,6 +38,9 @@ How many colors should be used (if possible).  Default 200.
 .TP 8
 .B \-count \fIinteger\fP
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

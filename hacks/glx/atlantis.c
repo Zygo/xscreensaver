@@ -540,6 +540,7 @@ draw_atlantis(ModeInfo * mi)
 ENTRYPOINT void
 release_atlantis(ModeInfo * mi)
 {
+#if 0
 	int         screen;
 
 	if (atlantis != NULL) {
@@ -553,6 +554,7 @@ release_atlantis(ModeInfo * mi)
 		atlantis = NULL;
 	}
 	FreeAllGL(mi);
+#endif
 }
 
 ENTRYPOINT void

@@ -326,7 +326,7 @@ static void makeBrushedImage(antmazestruct *mp)
 }
 
 #if 0
-static void draw_wall(double x1, double z1, double x2, double z2) 
+static void draw_wall(ModeInfo *mi, double x1, double z1, double x2, double z2) 
 {
   float x = fabs(x2 - x1)/2.0;
 
@@ -342,6 +342,7 @@ static void draw_wall(double x1, double z1, double x2, double z2)
   glVertex3f(x2, 1.0, z2-0.25);
   glTexCoord2f(0.0, 0.25);
   glVertex3f(x1, 1.0, z1-0.25);
+  mi->polygon_count++;
 
   /* draw sides */
   glNormal3f(0.0, 0.0, 1.0);
@@ -353,6 +354,7 @@ static void draw_wall(double x1, double z1, double x2, double z2)
   glVertex3f(x2, 1.0, z2+0.25);
   glTexCoord2f(0.0, 0.5);
   glVertex3f(x1, 1.0, z1+0.25);
+  mi->polygon_count++;
 
   glNormal3f(0.0, 0.0, -1.0);
   glTexCoord2f(0.0, 0.0);
@@ -363,6 +365,7 @@ static void draw_wall(double x1, double z1, double x2, double z2)
   glVertex3f(x2, 1.0, z2-0.25);
   glTexCoord2f(0.0, 0.5);
   glVertex3f(x1, 1.0, z1-0.25);
+  mi->polygon_count++;
 
   /* draw ends */
   glNormal3f(1.0, 0.0, 0.0);
@@ -374,6 +377,7 @@ static void draw_wall(double x1, double z1, double x2, double z2)
   glVertex3f(x2, 1.0, z2-0.25);
   glTexCoord2f(0.0, 0.5);
   glVertex3f(x2, 1.0, z2+0.25);
+  mi->polygon_count++;
 
   glNormal3f(-1.0, 0.0, 0.0);
   glTexCoord2f(0.0, 0.0);
@@ -384,12 +388,13 @@ static void draw_wall(double x1, double z1, double x2, double z2)
   glVertex3f(x1, 1.0, z1+0.25);
   glTexCoord2f(0.0, 0.5);
   glVertex3f(x1, 1.0, z1-0.25);
+  mi->polygon_count++;
 
   glEnd();
 }
 #endif
 
-static void draw_board(antmazestruct *mp) 
+static void draw_board(ModeInfo *mi, antmazestruct *mp) 
 {
 
   int i, j;
@@ -425,6 +430,7 @@ static void draw_board(antmazestruct *mp)
 	glVertex3f(i+0.5, h, j-0.5);
 	glTexCoord2f(0.0 + stf, 1.0 + stf);
 	glVertex3f(i-0.5, h, j-0.5);
+        mi->polygon_count++;
 
 	/* draw south face */
 	if(j == 9 || !mp->board[mp->currentboard][j+1][i]) {
@@ -437,6 +443,7 @@ static void draw_board(antmazestruct *mp)
 	  glVertex3f(i+0.5, h, j+0.5);
 	  glTexCoord2f(0.0 + stf, h + stf);
 	  glVertex3f(i-0.5, h, j+0.5);
+          mi->polygon_count++;
 	}
 
 	/* draw north face */
@@ -450,6 +457,7 @@ static void draw_board(antmazestruct *mp)
 	  glVertex3f(i-0.5, h, j-0.5);
 	  glTexCoord2f(0.0 + stf, h + stf);
 	  glVertex3f(i+0.5, h, j-0.5);
+          mi->polygon_count++;
 	}
 
 	/* draw east face */
@@ -463,6 +471,7 @@ static void draw_board(antmazestruct *mp)
 	  glVertex3f(i+0.5, h, j-0.5);
 	  glTexCoord2f(0.0 + stf, h + stf);
 	  glVertex3f(i+0.5, h, j+0.5);
+          mi->polygon_count++;
 	}
 
 	/* draw west face */
@@ -476,6 +485,7 @@ static void draw_board(antmazestruct *mp)
 	  glVertex3f(i-0.5, h, j+0.5);
 	  glTexCoord2f(0.0 + stf, h + stf);
 	  glVertex3f(i-0.5, h, j-0.5);
+          mi->polygon_count++;
 	}
       }
       else {
@@ -489,6 +499,7 @@ static void draw_board(antmazestruct *mp)
 	glVertex3f(i+0.5, 0.0, j-0.5);
 	glTexCoord2f(0.0, tx);
 	glVertex3f(i-0.5, 0.0, j-0.5);
+        mi->polygon_count++;
       }
     }
   glEnd();
@@ -510,6 +521,7 @@ static void draw_board(antmazestruct *mp)
 /*       glVertex3f(1.5, 0.0, BOARDSIZE + 1.0 + 0.2); */
 /*       glTexCoord2f(0.0, 1.5); */
 /*       glVertex3f(0.5, 0.0, BOARDSIZE + 1.0 + 0.2); */
+/*        mi->polygon_count++; */
 /*   } */
 
 /*   /\* destination *\/ */
@@ -521,6 +533,7 @@ static void draw_board(antmazestruct *mp)
 /*   glVertex3f(BOARDSIZE - 1.5, elevator, -0.5 - 0.2); */
 /*   glTexCoord2f(0.0, 1.5); */
 /*   glVertex3f(BOARDSIZE - 2.5, elevator, -0.5 - 0.2); */
+/*   mi->polygon_count++; */
 
 /*   glEnd(); */
 
@@ -538,6 +551,7 @@ static void draw_board(antmazestruct *mp)
 /* 	glVertex3f(i+0.5 - stf, h+0.001, j-0.5 + stf); */
 /* 	glTexCoord2f(0.0 + stf, 1.0 + stf); */
 /* 	glVertex3f(i-0.5 + stf, h+0.001, j-0.5 + stf); */
+/*      mi->polygon_count++; */
 /*       } */
 /*     } */
   
@@ -626,7 +640,7 @@ static double min(double a, double b)
 }
 
 /* draw method for ant */
-static Bool draw_ant(antmazestruct *mp,
+static Bool draw_ant(ModeInfo *mi, antmazestruct *mp,
                      const float *Material, int mono, int shadow,
 	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float)) 
 {
@@ -679,17 +693,21 @@ static Bool draw_ant(antmazestruct *mp,
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, 0.40);
+  mi->polygon_count++;
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, -0.40);
+  mi->polygon_count++;
   glEnd();
 
   if(!shadow) {
     glBegin(GL_POINTS);
     glColor3fv(mono ? MaterialGray6 : MaterialRed);
     glVertex3f(0.40, 0.70, 0.40);
+    mi->polygon_count++;
     glVertex3f(0.40, 0.70, -0.40);
+    mi->polygon_count++;
     glEnd();
   }
 
@@ -698,8 +716,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos1, 0.15, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos1, 0.25 + 0.1 * sin1, 0.45);
+  mi->polygon_count++;
   glEnd();
 
   /* LEFT-CENTER ARM */
@@ -707,8 +727,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.00, 0.18);
   glVertex3f(0.35 + 0.05 * cos2, 0.00, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos2, 0.00 + 0.1 * sin2, 0.45);
+  mi->polygon_count++;
   glEnd();
 
   /* LEFT-BACK ARM */
@@ -716,8 +738,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, -0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos3, -0.15, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos3, -0.25 + 0.1 * sin3, 0.45);
+  mi->polygon_count++;
   glEnd();
 
   /* RIGHT-FRONT ARM */
@@ -725,8 +749,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin1, 0.15, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin1, 0.25 + 0.1 * cos1, -0.45);
+  mi->polygon_count++;
   glEnd();
 
   /* RIGHT-CENTER ARM */
@@ -734,8 +760,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.00, -0.18);
   glVertex3f(0.35 - 0.05 * sin2, 0.00, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin2, 0.00 + 0.1 * cos2, -0.45);
+  mi->polygon_count++;
   glEnd();
 
   /* RIGHT-BACK ARM */
@@ -743,8 +771,10 @@ static Bool draw_ant(antmazestruct *mp,
   glColor3fv(mono ? MaterialGray5 : Material);
   glVertex3f(0.00, -0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin3, -0.15, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin3, -0.25 + 0.1 * cos3, -0.45);
+  mi->polygon_count++;
   glEnd();
 
   if(!shadow) {
@@ -756,6 +786,7 @@ static Bool draw_ant(antmazestruct *mp,
     glVertex3f(-0.20 - 0.05 * sin1, 0.25 + 0.1 * cos1, -0.45);
     glVertex3f(-0.20 - 0.05 * sin2, 0.00 + 0.1 * cos2, -0.45);
     glVertex3f(-0.20 - 0.05 * sin3, -0.25 + 0.1 * cos3, -0.45);
+    mi->polygon_count += 6;
     glEnd();
   }
 
@@ -790,7 +821,7 @@ static Bool draw_antmaze_strip(ModeInfo * mi)
     glEnable(GL_TEXTURE_2D);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray6);
     glTranslatef(-(BOARDSIZE-1)/2.0, 0.0, -(BOARDSIZE-1)/2.0);
-    draw_board(mp);
+    draw_board(mi, mp);
     glTranslatef(BOARDSIZE/2.0, 0.0, BOARDSIZE/2.0);
     glDisable(GL_TEXTURE_2D);
   }
@@ -823,9 +854,9 @@ static Bool draw_antmaze_strip(ModeInfo * mi)
 
     /* slow down first ant */
     if(i == 0 && mp->part[i] == mp->antpathlength[i])
-      draw_ant(mp, MaterialGrayB, mono, 1, mp->first_ant_step, mySphere, myCone);
+      draw_ant(mi, mp, MaterialGrayB, mono, 1, mp->first_ant_step, mySphere, myCone);
     else
-      draw_ant(mp, MaterialGrayB, mono, 1, mp->ant_step, mySphere, myCone);
+      draw_ant(mi, mp, MaterialGrayB, mono, 1, mp->ant_step, mySphere, myCone);
 
     glPopMatrix();
 
@@ -851,7 +882,7 @@ static Bool draw_antmaze_strip(ModeInfo * mi)
     if(i == 0 && mp->part[i] == mp->antpathlength[i] && mp->elevator > 0.0) {
       glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
       glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-      draw_ant(mp, antmaterial[i], mono, 1, mp->first_ant_step, mySphere, myCone);
+      draw_ant(mi, mp, antmaterial[i], mono, 1, mp->first_ant_step, mySphere, myCone);
     }
     else {
 /*       glLightfv(GL_LIGHT0, GL_DIFFUSE, df); */
@@ -859,12 +890,12 @@ static Bool draw_antmaze_strip(ModeInfo * mi)
 
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, mp->brushedtexture);
-      draw_ant(mp, antmaterial[i], mono, 1, mp->ant_step, mySphereTex, myCone);
+      draw_ant(mi, mp, antmaterial[i], mono, 1, mp->ant_step, mySphereTex, myCone);
       glDisable(GL_TEXTURE_2D);
     }
 
 
-/*     draw_ant(antmaterial[i], mono, 0, ant_step, mySphereTex, myCone); */
+/*     draw_ant(mi, antmaterial[i], mono, 0, ant_step, mySphereTex, myCone); */
 /*     glDisable(GL_TEXTURE_2D); */
     glPopMatrix();
   }
@@ -904,6 +935,7 @@ static Bool draw_antmaze_strip(ModeInfo * mi)
 /* 	glVertex3f((sz*i)/BOARDSIZE, (sz*(j+1))/BOARDSIZE, 0.0); */
 /* 	glVertex3f((sz*i)/BOARDSIZE, (sz*j)/BOARDSIZE, 0.0); */
 /* 	glVertex3f((sz*(i+1))/BOARDSIZE, (sz*j)/BOARDSIZE, 0.0); */
+/*      mi->polygon_count++; */
 /*       } */
 /*   } */
 /*   glEnd(); */
@@ -1100,7 +1132,7 @@ static void update_ants(antmazestruct *mp)
 /* 	  glPushMatrix(); */
 /* 	  glTranslatef(-(-(BOARDSIZE-3.5)+(BOARDSIZE-1)/2.0), 0.0,  */
 /* 		       -(2.4+BOARDSIZE+(BOARDSIZE-1)/2.0)); */
-/* 	  draw_board(); */
+/* 	  draw_board(mi, mp); */
 /* 	  glPopMatrix(); */
 /* 	  glDisable(GL_TEXTURE_2D); */
 /* 	} */
@@ -1396,6 +1428,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   if(!mp->glx_context)
 	return;
   
+  mi->polygon_count = 0;
   glXMakeCurrent(display, window, *(mp->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1495,7 +1528,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
   glBindTexture(GL_TEXTURE_2D, mp->brushedtexture);
-  draw_ant(mp, MaterialGray35, 0, 1, mp->ant_step/2.0, mySphereTex, myCone2);
+  draw_ant(mi, mp, MaterialGray35, 0, 1, mp->ant_step/2.0, mySphereTex, myCone2);
   glDisable(GL_TEXTURE_2D);
 
   glPopMatrix();
@@ -1524,6 +1557,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 /*   glVertex3f(2.0, 3.0, 0.0); */
 /*   glVertex3f(2.0, -3.0, 0.0); */
 /*   glVertex3f(4.0, -3.0, 0.0); */
+/*   mi->polygon_count++; */
 /*   glEnd(); */
 
 /*   glEnable(GL_LIGHTING); */

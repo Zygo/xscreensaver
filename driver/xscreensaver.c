@@ -166,13 +166,51 @@
 # include "xmu.h"
 #endif /* !HAVE_XMU */
 
+#ifdef HAVE_MIT_SAVER_EXTENSION
+#include <X11/extensions/scrnsaver.h>
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
 #ifdef HAVE_XIDLE_EXTENSION
 # include <X11/extensions/xidle.h>
 #endif /* HAVE_XIDLE_EXTENSION */
 
+#ifdef HAVE_SGI_VC_EXTENSION
+# include <X11/extensions/XSGIvc.h>
+#endif /* HAVE_SGI_VC_EXTENSION */
+
+#ifdef HAVE_READ_DISPLAY_EXTENSION
+# include <X11/extensions/readdisplay.h>
+#endif /* HAVE_READ_DISPLAY_EXTENSION */
+
+#ifdef HAVE_XSHM_EXTENSION
+# include <X11/extensions/XShm.h>
+#endif /* HAVE_XSHM_EXTENSION */
+
+#ifdef HAVE_DPMS_EXTENSION
+# include <X11/extensions/dpms.h>
+#endif /* HAVE_DPMS_EXTENSION */
+
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# include <X11/extensions/Xdbe.h>
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
+#ifdef HAVE_XF86VMODE
+# include <X11/extensions/xf86vmode.h>
+#endif /* HAVE_XF86VMODE */
+
+#ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+# include <X11/extensions/xf86misc.h>
+#endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
+
 #ifdef HAVE_XINERAMA
 # include <X11/extensions/Xinerama.h>
 #endif /* HAVE_XINERAMA */
+
+#ifdef HAVE_RANDR
+# include <X11/extensions/Xrandr.h>
+#endif /* HAVE_RANDR */
+
 
 #include "xscreensaver.h"
 #include "version.h"
@@ -827,13 +865,22 @@ initialize_server_extensions (saver_info *si)
   si->using_proc_interrupts = p->use_proc_interrupts;
 
 #ifdef HAVE_XIDLE_EXTENSION
-  server_has_xidle_extension_p = query_xidle_extension (si);
+  {
+    int ev, er;
+    server_has_xidle_extension_p = XidleQueryExtension (si->dpy, &ev, &er);
+  }
 #endif
 #ifdef HAVE_SGI_SAVER_EXTENSION
-  server_has_sgi_saver_extension_p = query_sgi_saver_extension (si);
+  server_has_sgi_saver_extension_p =
+    XScreenSaverQueryExtension (si->dpy,
+                                &si->sgi_saver_ext_event_number,
+                                &si->sgi_saver_ext_error_number);
 #endif
 #ifdef HAVE_MIT_SAVER_EXTENSION
-  server_has_mit_saver_extension_p = query_mit_saver_extension (si);
+  server_has_mit_saver_extension_p =
+    XScreenSaverQueryExtension (si->dpy,
+                                &si->mit_saver_ext_event_number,
+                                &si->mit_saver_ext_error_number);
 #endif
 #ifdef HAVE_PROC_INTERRUPTS
   system_has_proc_interrupts_p = query_proc_interrupts_available (si, &piwhy);
@@ -875,8 +922,23 @@ initialize_server_extensions (saver_info *si)
     }
 
 #ifdef HAVE_RANDR
-  query_randr_extension (si);
-#endif
+  if (XRRQueryExtension (si->dpy,
+                         &si->randr_event_number, &si->randr_error_number))
+    {
+      int nscreens = ScreenCount (si->dpy);  /* number of *real* screens */
+      int i;
+
+      if (p->verbose_p)
+	fprintf (stderr, "%s: selecting RANDR events\n", blurb());
+      for (i = 0; i < nscreens; i++)
+#  ifdef RRScreenChangeNotifyMask                 /* randr.h 1.5, 2002/09/29 */
+        XRRSelectInput (si->dpy, RootWindow (si->dpy, i),
+                        RRScreenChangeNotifyMask);
+#  else  /* !RRScreenChangeNotifyMask */          /* Xrandr.h 1.4, 2001/06/07 */
+        XRRScreenChangeSelectInput (si->dpy, RootWindow (si->dpy, i), True);
+#  endif /* !RRScreenChangeNotifyMask */
+    }
+# endif /* HAVE_RANDR */
 
   if (!system_has_proc_interrupts_p)
     {
@@ -1959,91 +2021,111 @@ analyze_display (saver_info *si)
 {
   int i, j;
   static struct {
-    const char *name; const char *desc; Bool useful_p;
+    const char *name; const char *desc; 
+    Bool useful_p;
+    Status (*version_fn) (Display *, int *majP, int *minP);
   } exts[] = {
 
    { "SCREEN_SAVER", /* underscore */           "SGI Screen-Saver",
 #     ifdef HAVE_SGI_SAVER_EXTENSION
-        True
+        True,  0
 #     else
-        False
+        False, 0
 #     endif
    }, { "SCREEN-SAVER", /* dash */              "SGI Screen-Saver",
 #     ifdef HAVE_SGI_SAVER_EXTENSION
-        True
+        True,  0
 #     else
-        False
+        False, 0
 #     endif
    }, { "MIT-SCREEN-SAVER",                     "MIT Screen-Saver",
 #     ifdef HAVE_MIT_SAVER_EXTENSION
-        True
+        True,  XScreenSaverQueryVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "XIDLE",                                "XIdle",           
 #     ifdef HAVE_XIDLE_EXTENSION
-        True
+        True,  0
 #     else
-        False
+        False, 0
 #     endif
    }, { "SGI-VIDEO-CONTROL",                    "SGI Video-Control",
 #     ifdef HAVE_SGI_VC_EXTENSION
-        True
+        True,  XSGIvcQueryVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "READDISPLAY",                          "SGI Read-Display",
 #     ifdef HAVE_READ_DISPLAY_EXTENSION
-        True
+        True,  XReadDisplayQueryVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "MIT-SHM",                              "Shared Memory",   
 #     ifdef HAVE_XSHM_EXTENSION
-        True
+        True, (Status (*) (Display*,int*,int*)) XShmQueryVersion /* 4 args */
 #     else
-        False
+        False, 0
 #     endif
    }, { "DOUBLE-BUFFER",                        "Double-Buffering",
 #     ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-        True
+        True, XdbeQueryExtension
 #     else
-        False
+        False, 0
 #     endif
    }, { "DPMS",                                 "Power Management",
 #     ifdef HAVE_DPMS_EXTENSION
-        True
+        True,  DPMSGetVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "GLX",                                  "GLX",             
 #     ifdef HAVE_GL
-        True
+        True,  0
 #     else
-        False
+        False, 0
 #     endif
    }, { "XFree86-VidModeExtension",             "XF86 Video-Mode", 
 #     ifdef HAVE_XF86VMODE
-        True
+        True,  XF86VidModeQueryVersion
 #     else
-        False
+        False, 0
+#     endif
+   }, { "XC-VidModeExtension",                  "XC Video-Mode", 
+#     ifdef HAVE_XF86VMODE
+        True,  XF86VidModeQueryVersion
+#     else
+        False, 0
+#     endif
+   }, { "XFree86-MISC",                         "XF86 Misc", 
+#     ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+        True,  XF86MiscQueryVersion
+#     else
+        False, 0
+#     endif
+   }, { "XC-MISC",                              "XC Misc", 
+#     ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+        True,  XF86MiscQueryVersion
+#     else
+        False, 0
 #     endif
    }, { "XINERAMA",                             "Xinerama",
 #     ifdef HAVE_XINERAMA
-        True
+        True,  XineramaQueryVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "RANDR",                                "Resize-and-Rotate",
 #     ifdef HAVE_RANDR
-        True
+        True,  XRRQueryVersion
 #     else
-        False
+        False, 0
 #     endif
    }, { "DRI",		                        "DRI",
-        True
+        True,  0
    }, { "Apple-DRI",                            "Apple-DRI (XDarwin)",
-        True
+        True,  0
    },
   };
 
@@ -2057,12 +2139,31 @@ analyze_display (saver_info *si)
     {
       int op = 0, event = 0, error = 0;
       char buf [255];
+      int maj = 0, min = 0;
+      int dummy1, dummy2, dummy3;
       int j;
+
+      /* Most of the extension version functions take 3 args,
+         writing results into args 2 and 3, but some take more.
+         We only ever care about the first two results, but we
+         pass in three extra pointers just in case.
+       */
+      Status (*version_fn_2) (Display*,int*,int*,int*,int*,int*) =
+        (Status (*) (Display*,int*,int*,int*,int*,int*)) exts[i].version_fn;
+
       if (!XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
         continue;
       sprintf (buf, "%s:   ", blurb());
       j = strlen (buf);
       strcat (buf, exts[i].desc);
+
+      if (!version_fn_2)
+        ;
+      else if (version_fn_2 (si->dpy, &maj, &min, &dummy1, &dummy2, &dummy3))
+        sprintf (buf+strlen(buf), " (%d.%d)", maj, min);
+      else
+        strcat (buf, " (unavailable)");
+
       if (!exts[i].useful_p)
         strcat (buf, " (disabled at compile time)");
       fprintf (stderr, "%s\n", buf);

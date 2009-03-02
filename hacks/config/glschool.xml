@@ -2,33 +2,40 @@
 
 <screensaver name="glschool" _label="GLSchool">
 
-	<command arg="-root"/>
+ <command arg="-root"/>
 
-	<number id="NFish" type="slider" arg="-nfish %"
-           _label="Fish Count" _low-label="Few" _high-label="Lots"
-           low="5" high="500" default="100"/>
+  <hgroup>
+   <vgroup>
+ <number id="delay" type="slider" arg="-delay %"
+        _label="Frame rate" _low-label="Low" _high-label="High"
+         low="0" high="100000" default="20000" convert="invert"/>
 
-	<number id="delay" type="slider" arg="-delay %" _label="Speed" _low-label="Slow" _high-label="Fast" low="0" high="50000" default="20000" convert="invert"/>
+ <number id="NFish" type="slider" arg="-nfish %"
+    _label="Fish count" _low-label="Few" _high-label="Lots"
+    low="5" high="500" default="100"/>
 
-	<number id="AvoidFact" type="slider" arg="-avoidfact %" _label="Avoidance" _low-label="None" _high-label="High" low="0" high="10" default="1.5"/>
-	<number id="MatchFact" type="slider" arg="-matchfact %" _label="Velocity Matching" _low-label="None" _high-label="High" low="0" high="3" default="0.15"/>
-	<number id="CenterFact" type="slider" arg="-centerfact %" _label="Centering" _low-label="None" _high-label="High" low="0" high="1.0" default="0.1"/>
-	<number id="TargetFact" type="slider" arg="-targetfact %" _label="Goal Following" _low-label="None" _high-label="High" low="0" high="400" default="80"/>
+ <number id="AvoidFact" type="slider" arg="-avoidfact %" _label="Avoidance" _low-label="None" _high-label="High" low="0" high="10" default="1.5"/>
+   </vgroup>
+   <vgroup>
+ <number id="MatchFact" type="slider" arg="-matchfact %" _label="Velocity matching" _low-label="None" _high-label="High" low="0" high="3" default="0.15"/>
+ <number id="CenterFact" type="slider" arg="-centerfact %" _label="Centering" _low-label="None" _high-label="High" low="0" high="1.0" default="0.1"/>
+ <number id="TargetFact" type="slider" arg="-targetfact %" _label="Goal following" _low-label="None" _high-label="High" low="0" high="400" default="80"/>
+   </vgroup>
+  </hgroup>
 
-        <hgroup>
-	<boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
-	<boolean id="fog"    _label="Fog" arg-set="-fog"/>
-	<boolean id="drawgoal" _label="Draw Goal" arg-set="-drawgoal"/>
-	<boolean id="drawbbox" _label="Draw Bounding Box" arg-set="-drawbbox"/>
-        </hgroup>
-	<boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+ <hgroup>
+ <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+ <boolean id="fog"    _label="Fog" arg-set="-fog"/>
+ <boolean id="drawgoal" _label="Draw goal" arg-set="-drawgoal"/>
+ <boolean id="drawbbox" _label="Draw bounding box" arg-unset="-no-drawbbox"/>
+ <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+ </hgroup>
 
-	<_description>
-
+ <_description>
 Uses Craig Reynolds' Boids algorithm to simulate a school of fish.
-Looks best with more fish, so raise the number of fish until the
-frame rate declines to 25-30 fps.
+
+http://en.wikipedia.org/wiki/Boids
 
 Written by David C. Lambert; 2006.
-	</_description>
+ </_description>
 </screensaver>

@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 1999, 2003, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
  *  Copyright (c) 1997 Scott Draves spot@transmeta.com
@@ -33,7 +32,6 @@ struct state {
   Display *dpy;
   Window window;
 
-  int verbose;
   int ncolors;
   XColor *colors;
   Visual *visual;
@@ -141,23 +139,7 @@ pixack_frame(struct state *st, char *pix_buf)
   if (st->frame&0x100)
     sleep(1);
 #endif
-  if (st->verbose) {
-    double tm = 0;
-    struct timeval tp;
-    if (!(st->frame%100)) {
-      double tm2;
-#ifdef GETTIMEOFDAY_TWO_ARGS
-      struct timezone tzp;
-      gettimeofday(&tp, &tzp);
-#else
-      gettimeofday(&tp);
-#endif
-      tm2 = tp.tv_sec + tp.tv_usec * 1e-6;
-      if (st->frame > 0)
-	printf("fps = %2.4g\n", 100.0 / (tm2 - tm));
-      tm = tm2;
-    }
-  }
+
   if (!(st->frame%st->epoch_time)) {
     int s;
     if (0 != st->frame) {
@@ -199,10 +181,6 @@ pixack_frame(struct state *st, char *pix_buf)
       st->diffusion = (R%5) ? ((R%3)?0:1) : 2;
     if (2 == st->reaction && 2 == st->diffusion)
       st->reaction = st->diffusion = 0;
-      
-    if (st->verbose)
-      printf("reaction = %d\ndiffusion = %d\nradius = %d\n",
-	     st->reaction, st->diffusion, st->radius);
   }
   for (i = 0; i <= st->width+1; i++) {
     st->r1[i] = st->r1[i + w2 * st->height];
@@ -315,17 +293,17 @@ pixack_frame(struct state *st, char *pix_buf)
 static const char *rd_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*width:	0",                     /* tried to use -1 but it complained */
   "*height:	0",
   "*epoch:	40000",
   "*reaction:	-1",
   "*diffusion:	-1",
-  "*verbose:	off",
   "*radius:	-1",
   "*speed:	0.0",
   "*size:	1.0",
-  "*delay:	20000",
-  "*colors:	-1",
+  "*delay:	30000",
+  "*colors:	255",
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:	True",
 #else
@@ -340,7 +318,6 @@ static XrmOptionDescRec rd_options [] = {
   { "-epoch",		".epoch",	XrmoptionSepArg, 0 },
   { "-reaction",	".reaction",	XrmoptionSepArg, 0 },
   { "-diffusion",	".diffusion",	XrmoptionSepArg, 0 },
-  { "-verbose",		".verbose",	XrmoptionNoArg, "True" },
   { "-radius",		".radius",	XrmoptionSepArg, 0 },
   { "-speed",		".speed",	XrmoptionSepArg, 0 },
   { "-size",		".size",	XrmoptionSepArg, 0 },
@@ -431,7 +408,6 @@ rd_init (Display *dpy, Window win)
     if (random() & 1) st->array_dy = -st->array_dy;
 
   }
-  st->verbose = get_boolean_resource (st->dpy, "verbose", "Boolean");
   st->npix = (st->width + 2) * (st->height + 2);
   w2 = st->width + 2;
 /*  gcv.function = GXcopy;*/
@@ -484,7 +460,7 @@ rd_init (Display *dpy, Window win)
   st->cmap = st->xgwa.colormap;
   st->ncolors = get_integer_resource (st->dpy, "colors", "Integer");
 
-  if (st->ncolors <= 0) {
+  if (st->ncolors <= 0 || st->ncolors >= 255) {
     if (vdepth > 8)
       st->ncolors = 2047;
     else

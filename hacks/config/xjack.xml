@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="xjack" _label="Xjack">
+<screensaver name="xjack" _label="XJack">
 
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="50000"
+          low="0" high="200000" default="50000"
           convert="invert"/>
 
   <!-- #### -font [] -->
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-This program behaves schizophrenically and makes a lot of typos.
+This behaves schizophrenically and makes a lot of typos.
 
 Written by Jamie Zawinski; 1997.
   </_description>

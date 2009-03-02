@@ -14,6 +14,7 @@ between slowly moving circles.
 [\-base\-orbits \fIpercent\fP]
 [\-base\-on\-center]
 [\-draw\-centers]
+[\-fps]
 .SH DESCRIPTION
 The Intersection Aggregate is a fun visualization defining the relationships 
 between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
@@ -39,6 +40,9 @@ the more CPU power.
 Delay in ms between drawing cycles.  More delay, slower (but smoother 
 and less CPU intensive.)
 art.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

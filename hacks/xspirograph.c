@@ -307,6 +307,7 @@ xspirograph_free (Display *dpy, Window window, void *closure)
 static const char *xspirograph_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  "*fpsSolid:		true",
   "*delay:      	5",
   "*subdelay:   	20000",
   "*layers:     	2",
@@ -323,4 +324,4 @@ static XrmOptionDescRec xspirograph_options [] = {
   { 0, 0, 0, 0 }
 };
 
-XSCREENSAVER_MODULE ("XSpiroGraph", xspirograph)
+XSCREENSAVER_MODULE ("XSpirograph", xspirograph)

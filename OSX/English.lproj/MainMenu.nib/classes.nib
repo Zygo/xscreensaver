@@ -1,9 +1,0 @@
-{
-    IBClasses = (
-        {CLASS = AppController; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
-        {CLASS = InvertedSlider; LANGUAGE = ObjC; SUPERCLASS = NSSlider; }, 
-        {CLASS = PrefsReader; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
-    ); 
-    IBVersion = 1; 
-}

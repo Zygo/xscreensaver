@@ -47,7 +47,9 @@ static const char sccsid[] = "@(#)triangle.c	4.04 97/07/28 xlockmore";
 
 #ifdef STANDALONE
 # define DEFAULTS	"*delay: 10000 \n"	\
-					"*ncolors: 128 \n"
+					"*ncolors: 128 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_triangle 0
 # define triangle_handle_event 0

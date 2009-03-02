@@ -15,6 +15,7 @@ slidescreen - permute the screen image like an 8-puzzle
 [\-root]
 [\-install]
 [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIslidescreen\fP program takes an image, divides it into
 a grid, deletes a random square of that grid, and then randomly slides 
@@ -67,6 +68,9 @@ which is one second.
 .TP 8
 .B \-duration \fIseconds\fP
 How long to run before loading a new image.  Default 120 seconds.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

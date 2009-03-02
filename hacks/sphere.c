@@ -58,10 +58,12 @@ static const char sccsid[] = "@(#)sphere.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_sphere
-#define DEFAULTS	"*delay: 1000 \n" \
+#define DEFAULTS	"*delay: 20000 \n" \
 					"*cycles: 20 \n" \
 					"*size: 0 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define BRIGHT_COLORS
 # define reshape_sphere 0
 # define sphere_handle_event 0

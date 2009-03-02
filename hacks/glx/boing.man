@@ -78,9 +78,7 @@ The pattern of rectangles on the ball.  Default 8x16.
 Look crummy.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

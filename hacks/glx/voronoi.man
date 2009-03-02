@@ -62,8 +62,8 @@ Less than 1 for slower, greater than 1 for faster.
 .B \-zoom\-delay \fIseconds\fP
 Zoom in every this-many seconds.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

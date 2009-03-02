@@ -4,13 +4,11 @@
 
   <command arg="-root"/>
 
-  <string id="text" _label="Text for Flag" arg="-text %"/>
-
-<!--  <file id="bitmap" _label="Bitmap for Flag" arg="-bitmap %"/> -->
+  <string id="text" _label="Text for flag" arg="-text %"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="60000" default="50000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="200000" default="50000"
           convert="invert"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
@@ -18,16 +16,18 @@
           low="0" high="800000" default="1000"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
   <!-- #### -size [-7] -->
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 This draws a waving colored flag, that undulates its way around the
-screen.  The trick is the flag can contain arbitrary text and images.
-By default, it displays either the current system name and OS
-type, or a picture of "Bob".
+screen.  The flag can contain arbitrary text and images.  By default,
+it displays either the current system name and OS type, or a picture
+of "Bob".
 
 Written by Charles Vidal and Jamie Zawinski; 1997.
   </_description>

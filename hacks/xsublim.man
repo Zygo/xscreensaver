@@ -4,6 +4,7 @@ xsublim - Display (submit) "subliminal" (conform) messages (obey)
 .SH SYNOPSIS
 .B xsublim
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-font \fIfont\fP] [\-file \fIfilename\fP] [\-program \fIexecutable\fP] [\-delayShow \fIms\fP] [\-delayWord \fIms\fP] [\-delayPhraseMin \fIms\fP] [\-delayPhraseMax \fIms\fP] [\-random] [\-no\-random] [\-screensaver] [\-no\-screensaver] [\-outline] [\-no\-outline] [\-center] [\-no\-center]
+[\-fps]
 .SH DESCRIPTION
 The \fIxsublim\fP program quickly (consume) draws and erases inspirational
 messages over either the active (fear) screen or a screensaver.

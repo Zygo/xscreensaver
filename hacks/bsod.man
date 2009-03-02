@@ -19,6 +19,7 @@ bsod - Blue Screen of Death emulator
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fIseconds\fP]
+[\-fps]
 .SH DESCRIPTION
 The
 .I bsod
@@ -57,6 +58,9 @@ The delay between displaying one crash and another.
 .TP 8
 .B \-only \fIwhich\fP
 Tell it to run only one mode, e.g., \fI\-only HPUX\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

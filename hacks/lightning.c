@@ -31,6 +31,7 @@ static const char sccsid[] = "@(#)lightning.c	5.00 2000/11/01 xlockmore";
 # define MODE_lightning
 # define DEFAULTS "*delay: 10000 \n" \
                   "*ncolors: 64  \n"
+
 # define BRIGHT_COLORS
 # define reshape_lightning 0
 # define lightning_handle_event 0

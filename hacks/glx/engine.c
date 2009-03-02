@@ -24,7 +24,7 @@
 #ifdef STANDALONE
 #define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
-			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
+			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
 
 # define refresh_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
@@ -46,7 +46,7 @@
 #define DEF_ENGINE "(none)"
 #define DEF_TITLES "False"
 #define DEF_SPIN   "True"
-#define DEF_WANDER "True"
+#define DEF_MOVE   "True"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -68,7 +68,7 @@ static XrmOptionDescRec opts[] = {
 
 static argtype vars[] = {
   {&which_engine, "engine", "Engine", DEF_ENGINE, t_String},
-  {&move,         "move",   "Move",   DEF_WANDER, t_Bool},
+  {&move,         "move",   "Move",   DEF_MOVE,   t_Bool},
   {&spin,         "spin",   "Spin",   DEF_SPIN,   t_Bool},
   {&do_titles,    "titles", "Titles", DEF_TITLES, t_Bool},
 };
@@ -135,6 +135,9 @@ typedef struct {
   GLfloat ln[730], yp[730], ang[730];
   int ln_init;
   int lastPlug;
+
+  GLuint shaft_list, piston_list;
+  int shaft_polys, piston_polys;
 
 } Engine;
 
@@ -292,9 +295,10 @@ static void make_tables(Engine *e)
 /* for a tube, endcaps is 0 (none), 1 (left), 2 (right) or 3(both) */
 /* angle is how far around the axis to go (up to 360) */
 
-static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z, 
+static int cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z, 
     float length, float outer, float inner, int endcaps, int sang, int eang)
 {
+  int polys = 0;
   int a; /* current angle around cylinder */
   int b = 0; /* previous */
   int angle, norm, step, sangle;
@@ -342,6 +346,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
     glNormal3f(0, y2, z2);
     glVertex3f(xl,y2,z2);
     glVertex3f(x,y2,z2);
+    polys++;
     if (a == sangle && angle - sangle < ONEREV) {
       if (tube)
         glVertex3f(x, Y1, Z1);
@@ -353,6 +358,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
         glVertex3f(xl, Z1, Z1);
       else
         glVertex3f(xl, y, z);
+      polys++;
     }
     if (tube) {
       if (endcaps != 1) {
@@ -361,6 +367,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
         glVertex3f(x, y2, z2);
         glVertex3f(x, Y2, Z2);
         glVertex3f(x, Y1, Z1);
+        polys++;
       }
 
       glNormal3f(0, -Y1, -Z1); /* inner surface */
@@ -369,6 +376,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
       glNormal3f(0, -Y2, -Z2);
       glVertex3f(xl, Y2, Z2);
       glVertex3f(x, Y2, Z2);
+      polys++;
 
       if (endcaps != 2) {
         glNormal3f(1, 0, 0); /* right end */
@@ -376,6 +384,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
         glVertex3f(xl, y2, z2);
         glVertex3f(xl, Y2, Z2);
         glVertex3f(xl, Y1, Z1);
+        polys++;
       }
     }
 
@@ -398,6 +407,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
     glVertex3f(x, y1, z1);
     glVertex3f(xl, y1, z1);
     glVertex3f(xl, y, z);
+    polys++;
     glEnd();
   }
   if (endcaps) {
@@ -429,6 +439,7 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
           glVertex3f(x+ex,y, z);
           glVertex3f(x+ex,y1,z1);
           glVertex3f(x+ex,y2c[a],z2c[a]);
+          polys++;
         y1 = y2c[a]; z1 = z2c[a];
         b = a;
       }
@@ -437,12 +448,13 @@ static void cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
     }
   }
   glPopMatrix();
+  return polys;
 }
 
 /* this is just a convenience function to make a solid rod */
-static void rod (Engine *e, GLfloat x, GLfloat y, GLfloat z, float length, float diameter)
+static int rod (Engine *e, GLfloat x, GLfloat y, GLfloat z, float length, float diameter)
 {
-    cylinder(e, x, y, z, length, diameter, diameter, 3, 0, ONEREV);
+    return cylinder(e, x, y, z, length, diameter, diameter, 3, 0, ONEREV);
 }
 
 static GLvoid normal(GLfloat v1[], GLfloat v2[], GLfloat v3[], 
@@ -465,9 +477,10 @@ static GLvoid normal(GLfloat v1[], GLfloat v2[], GLfloat v3[],
 
 
 
-static void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
+static int Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
             GLfloat t)
 {
+  int polys = 0;
   GLfloat yh;
   GLfloat xw;
   GLfloat zt;
@@ -480,66 +493,77 @@ static void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
     glVertex3f(x, yh, z);
     glVertex3f(xw, yh, z);
     glVertex3f(xw, y, z);
+    polys++;
   /* back */
     glNormal3f(0, 0, -1);
     glVertex3f(x, y, zt);
     glVertex3f(x, yh, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, y, zt);
+    polys++;
   /* top */
     glNormal3f(0, 1, 0);
     glVertex3f(x, yh, z);
     glVertex3f(x, yh, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, yh, z);
+    polys++;
   /* bottom */
     glNormal3f(0, -1, 0);
     glVertex3f(x, y, z);
     glVertex3f(x, y, zt);
     glVertex3f(xw, y, zt);
     glVertex3f(xw, y, z);
+    polys++;
   /* left */
     glNormal3f(-1, 0, 0);
     glVertex3f(x, y, z);
     glVertex3f(x, y, zt);
     glVertex3f(x, yh, zt);
     glVertex3f(x, yh, z);
+    polys++;
   /* right */
     glNormal3f(1, 0, 0);
     glVertex3f(xw, y, z);
     glVertex3f(xw, y, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, yh, z);
+    polys++;
   glEnd();
+  return polys;
 }
 
-static void makepiston(Engine *e)
+static int makepiston(Engine *e)
 {
+  int polys = 0;
   GLfloat colour[] = {0.6, 0.6, 0.6, 1.0};
-  int i;
   
-  i = glGenLists(1);
-  glNewList(i, GL_COMPILE);
+  e->piston_list = glGenLists(1);
+  glNewList(e->piston_list, GL_COMPILE);
   glRotatef(90, 0, 0, 1);
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colour);
   glMaterialfv(GL_FRONT, GL_SPECULAR, colour);
   glMateriali(GL_FRONT, GL_SHININESS, 20);
-  cylinder(e, 0, 0, 0, 2, 1, 0.7, 2, 0, ONEREV); /* body */
+  polys += cylinder(e, 0, 0, 0, 2, 1, 0.7, 2, 0, ONEREV); /* body */
   colour[0] = colour[1] = colour[2] = 0.2;
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colour);
-  cylinder(e, 1.6, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
-  cylinder(e, 1.8, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
+  polys += cylinder(e, 1.6, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
+  polys += cylinder(e, 1.8, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
   glEndList();
+  return polys;
 }
 
-static void CrankBit(Engine *e, GLfloat x)
+static int CrankBit(Engine *e, GLfloat x)
 {
-  Rect(x, -1.4, 0.5, 0.2, 1.8, 1);
-  cylinder(e, x, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
+  int polys = 0;
+  polys += Rect(x, -1.4, 0.5, 0.2, 1.8, 1);
+  polys += cylinder(e, x, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
+  return polys;
 }
 
-static void boom(Engine *e, GLfloat x, GLfloat y, int s)
+static int boom(Engine *e, GLfloat x, GLfloat y, int s)
 {
+  int polys = 0;
   int flameOut = 720/ENG.speed/ENG.cylinders;
 
   if (e->boom_time == 0 && s) {
@@ -548,7 +572,7 @@ static void boom(Engine *e, GLfloat x, GLfloat y, int s)
     e->boom_time++;
     glEnable(GL_LIGHT1); 
   } else if (e->boom_time == 0 && !s) {
-    return;
+    return polys;
   } else if (e->boom_time >= 8 && e->boom_time < flameOut && !s) {
     e->boom_time++;
     e->boom_red[0] -= 0.2; e->boom_red[1] -= 0.1;
@@ -556,7 +580,7 @@ static void boom(Engine *e, GLfloat x, GLfloat y, int s)
   } else if (e->boom_time >= flameOut) {
     e->boom_time = 0;
     glDisable(GL_LIGHT1);
-    return;
+    return polys;
   } else {
     e->boom_red[0] += 0.2; e->boom_red[1] += 0.1;
     e->boom_d += 0.04;
@@ -575,13 +599,15 @@ static void boom(Engine *e, GLfloat x, GLfloat y, int s)
   glEnable(GL_BLEND);
   glDepthMask(GL_FALSE);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  rod(e, x, y, 0, e->boom_d, e->boom_wd);
+  polys += rod(e, x, y, 0, e->boom_d, e->boom_wd);
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
+  return polys;
 }
 
-static void display(Engine *e)
+static int display(Engine *e)
 {
+  int polys = 0;
   GLfloat zb, yb;
   float rightSide;
   int half;
@@ -619,7 +645,8 @@ static void display(Engine *e)
 /* crankshaft */
   glPushMatrix();
   glRotatef(e->display_a, 1, 0, 0);
-  glCallList(1);
+  glCallList(e->shaft_list);
+  polys += e->shaft_polys;
   glPopMatrix();
 
   /* init the ln[] matrix for speed */
@@ -648,7 +675,8 @@ static void display(Engine *e)
 	b = (e->display_a + ENG.pistonAngle[j+half]) % ONEREV;
 	glPushMatrix();
 	glTranslatef(e->crankWidth/2 + e->crankOffset*(j+half), e->yp[b]-0.3, 0);
-	glCallList(2);
+	glCallList(e->piston_list);
+        polys += e->piston_polys;
 	glPopMatrix();
       }
     /* spark plugs */
@@ -657,14 +685,14 @@ static void display(Engine *e)
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
       for (j = 0; j < ENG.cylinders; j += sides) 
       {
-	cylinder(e, 8.5, -e->crankWidth/2-e->crankOffset*(j+half), 0, 
+        polys += cylinder(e, 8.5, -e->crankWidth/2-e->crankOffset*(j+half), 0, 
 	    0.5, 0.4, 0.3, 1, 0, ONEREV); 
       }
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
       for (j = 0; j < ENG.cylinders; j += sides)
       {
-	rod(e, 8, -e->crankWidth/2-e->crankOffset*(j+half), 0, 0.5, 0.2); 
-	rod(e, 9, -e->crankWidth/2-e->crankOffset*(j+half), 0, 1, 0.15); 
+	polys += rod(e, 8, -e->crankWidth/2-e->crankOffset*(j+half), 0, 0.5, 0.2); 
+	polys += rod(e, 9, -e->crankWidth/2-e->crankOffset*(j+half), 0, 1, 0.15); 
       }   
 
      /* rod */
@@ -674,7 +702,7 @@ static void display(Engine *e)
 	  b = (e->display_a+HALFREV+ENG.pistonAngle[j+half]) % TWOREV; 
 	  glPushMatrix();
 	  glRotatef(e->ang[b], 0, 1, 0);
-	  rod(e, 
+          polys += rod(e, 
               -e->cos_table[b],
               -e->crankWidth/2-e->crankOffset*(j+half),
               -e->sin_table[b], 
@@ -690,21 +718,21 @@ static void display(Engine *e)
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       rightSide = (sides > 1) ? 0 : 1.6;
     /* left plate */
-      Rect(-e->crankWidth/2, -0.5,  1, 0.2, 9, 2);
+      polys += Rect(-e->crankWidth/2, -0.5,  1, 0.2, 9, 2);
     /* right plate */
-      Rect(0.3+e->crankOffset*ENG.cylinders-rightSide, -0.5, 1, 0.2, 9, 2);
+      polys += Rect(0.3+e->crankOffset*ENG.cylinders-rightSide, -0.5, 1, 0.2, 9, 2);
     /* head plate */
-      Rect(-e->crankWidth/2+0.2, 8.3, 1, 
+      polys += Rect(-e->crankWidth/2+0.2, 8.3, 1, 
 	    e->crankWidth/2+0.1+e->crankOffset*ENG.cylinders-rightSide, 0.2, 2);
     /* front rail */
-      Rect(-e->crankWidth/2+0.2, 3, 1, 
+      polys += Rect(-e->crankWidth/2+0.2, 3, 1, 
 	    e->crankWidth/2+0.1+e->crankOffset*ENG.cylinders-rightSide, 0.2, 0.2);
     /* back rail */
-      Rect(-e->crankWidth/2+0.2, 3, -1+0.2, 
+      polys += Rect(-e->crankWidth/2+0.2, 3, -1+0.2, 
 	    e->crankWidth/2+0.1+e->crankOffset*ENG.cylinders-rightSide, 0.2, 0.2);
     /* plates between cylinders */
       for (j=0; j < ENG.cylinders - (sides == 1); j += sides)
-	Rect(0.4+e->crankWidth+e->crankOffset*(j-half), 3, 1, 1, 5.3, 2);
+	polys += Rect(0.4+e->crankWidth+e->crankOffset*(j-half), 3, 1, 1, 5.3, 2);
       glDepthMask(GL_TRUE);
   }
   glPopMatrix();
@@ -718,7 +746,7 @@ static void display(Engine *e)
 	if (j & 1) 
 	    glRotatef(ENG.includedAngle,1,0,0);
 	glRotatef(90, 0, 0, 1); 
-	boom(e, 8, -e->crankWidth/2-e->crankOffset*j, 1); 
+	polys += boom(e, 8, -e->crankWidth/2-e->crankOffset*j, 1); 
 	e->lastPlug = j;
 	glPopMatrix();
     }
@@ -730,7 +758,7 @@ static void display(Engine *e)
     if (e->lastPlug & 1) 
       glRotatef(ENG.includedAngle, 1, 0, 0);
     glRotatef(90, 0, 0, 1); 
-    boom(e, 8, -e->crankWidth/2-e->crankOffset*e->lastPlug, 0); 
+    polys += boom(e, 8, -e->crankWidth/2-e->crankOffset*e->lastPlug, 0); 
   }
   glDisable(GL_BLEND);
 
@@ -739,29 +767,30 @@ static void display(Engine *e)
     e->display_a = 0;
   glPopMatrix();
   glFlush();
+  return polys;
 }
 
-static void makeshaft (Engine *e)
+static int makeshaft (Engine *e)
 {
-  int i;
+  int polys = 0;
   int j;
   float crankThick = 0.2;
   float crankDiam = 0.3;
 
-  i = glGenLists(1);
-  glNewList(i, GL_COMPILE);
+  e->shaft_list = glGenLists(1);
+  glNewList(e->shaft_list, GL_COMPILE);
 
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
   /* draw the flywheel */
-  cylinder(e, -2.5, 0, 0, 1, 3, 2.5, 0, 0, ONEREV);
-  Rect(-2, -0.3, 2.8, 0.5, 0.6, 5.6);
-  Rect(-2, -2.8, 0.3, 0.5, 5.6, 0.6);
+  polys += cylinder(e, -2.5, 0, 0, 1, 3, 2.5, 0, 0, ONEREV);
+  polys += Rect(-2, -0.3, 2.8, 0.5, 0.6, 5.6);
+  polys += Rect(-2, -2.8, 0.3, 0.5, 5.6, 0.6);
 
   /* now make each of the shaft bits between the cranks, 
    * starting from the flywheel end which is at X-coord 0. 
    * the first cranskhaft bit is always 2 units long 
    */
-  rod(e, -2, 0, 0, 2, crankDiam);
+  polys += rod(e, -2, 0, 0, 2, crankDiam);
 
   /* Each crank is crankWidth units wide and the total width of a
    * cylinder assembly is 3.3 units. For inline engines, there is just
@@ -774,11 +803,11 @@ static void makeshaft (Engine *e)
   if (ENG.includedAngle != 0)
     e->crankOffset /= 2;
   for (j = 0; j < ENG.cylinders - 1; j++)
-    rod(e,
+    polys += rod(e,
         e->crankWidth - crankThick + e->crankOffset*j, 0, 0, 
 	e->crankOffset - e->crankWidth + 2 * crankThick, crankDiam);
   /* the last bit connects to the engine wall on the non-flywheel end */
-  rod(e, e->crankWidth - crankThick + e->crankOffset*j, 0, 0, 0.9, crankDiam);
+  polys += rod(e, e->crankWidth - crankThick + e->crankOffset*j, 0, 0, 0.9, crankDiam);
 
 
   for (j = 0; j < ENG.cylinders; j++)
@@ -790,15 +819,16 @@ static void makeshaft (Engine *e)
         glRotatef(HALFREV+ENG.pistonAngle[j],1,0,0);
     /* draw wrist pin */
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-    rod(e, e->crankOffset*j, -1.0, 0.0, e->crankWidth, crankDiam);
+    polys += rod(e, e->crankOffset*j, -1.0, 0.0, e->crankWidth, crankDiam);
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
     /* draw right part of crank */
-    CrankBit(e, e->crankOffset*j); 
+    polys += CrankBit(e, e->crankOffset*j); 
     /* draw left part of crank */
-    CrankBit(e, e->crankWidth-crankThick+e->crankOffset*j);
+    polys += CrankBit(e, e->crankWidth-crankThick+e->crankOffset*j);
     glPopMatrix();
   }
   glEndList();
+  return polys;
 }
 
 
@@ -892,8 +922,8 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
           (engines[e->engineType].includedAngle == 0 ? " Cylinder" : "")
           );
 
- makeshaft(e);
- makepiston(e);
+ e->shaft_polys = makeshaft(e);
+ e->piston_polys = makepiston(e);
  load_font (mi->dpy, "titleFont", &e->xfont, &e->font_dlist);
 }
 
@@ -950,13 +980,13 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   glXMakeCurrent(disp, w, *(e->glx_context));
 
 
-  display(e);
+  mi->polygon_count = display(e);
 
   if (do_titles)
       print_gl_string (mi->dpy, e->xfont, e->font_dlist,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
-                       e->engine_name);
+                       e->engine_name, False);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

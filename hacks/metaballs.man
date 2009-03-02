@@ -13,6 +13,7 @@ MetaBalls.
 [\-cycles \fInumber\fP]
 [\-radius \fInumber\fP]
 [\-delta \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 This hack draws 2D metaballs to the screen by calculating the sum of the colors of all metaballs covering a pixel. 
 Ported from the demo effects collection (http://demo-effects.sourceforge.net)
@@ -45,6 +46,9 @@ MetaBall Radius.  2 - 100.  Default: 100.
 .TP 8
 .B \-delta \fInumber\fP
 MetaBall Movement.  1 - 20.  Default: 3.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

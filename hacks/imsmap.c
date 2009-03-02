@@ -161,6 +161,9 @@ init_map (struct state *st)
 
   if (mono_p)
     st->flip_xy = 0;
+  else if (st->colors)
+    free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
+  st->colors = 0;
 
   st->ncolors = get_integer_resource (st->dpy, "ncolors", "Integer");
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
@@ -183,10 +186,7 @@ init_map (struct state *st)
 
   if (!mono_p)
     {
-      if (st->colors)
-	free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
-      else
-	st->colors = (XColor *) malloc (st->ncolors * sizeof(*st->colors));
+      st->colors = (XColor *) malloc (st->ncolors * sizeof(*st->colors));
 
       make_smooth_colormap (st->dpy, st->xgwa.visual, st->cmap,
                             st->colors, &st->ncolors,
@@ -395,6 +395,7 @@ imsmap_free (Display *dpy, Window window, void *closure)
 static const char *imsmap_defaults [] = {
   ".background:	#000066",
   ".foreground:	#FF00FF",
+  "*fpsSolid:	true",
   "*mode:	random",
   "*ncolors:	50",
   "*iterations:	7",
@@ -412,4 +413,4 @@ static XrmOptionDescRec imsmap_options [] = {
   { 0, 0, 0, 0 }
 };
 
-XSCREENSAVER_MODULE ("IMSMAP", imsmap)
+XSCREENSAVER_MODULE ("IMSMap", imsmap)

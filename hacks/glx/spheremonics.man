@@ -65,8 +65,8 @@ Draw Grid.  Boolean.
 .B \-bbox | \-no-bbox
 Draw Bounding Box.  Boolean.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

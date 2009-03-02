@@ -7,6 +7,7 @@ mismunch - munches errors
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-xor] [\-noxor] 
 [\-clear \fInumber\fP] [\-simul \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 The
 .I mismunch
@@ -46,6 +47,9 @@ Number of squares to misdraw before clearing the display.  Default: 65.
 .TP 8
 .B \-simul \fInumber\fP
 Number of squares to misdraw simultaneously.  Default: 5.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

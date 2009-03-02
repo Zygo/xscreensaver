@@ -11,6 +11,7 @@ truchet - draws curved or angular Truchet patterns
 [\-no\-curves] [\-angle] [\-no\-angles] [\-scroll] [\-scroll\-overlap \fIinteger\fP] 
 [\-anim\-delay \fIinteger\fP] [\-anim\-step\-size \fIinteger\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fItruchet\fP program draws arc and line based Truchet patterns.
 .SH OPTIONS
@@ -110,6 +111,9 @@ The time to pause between each animation step. Default is 100.
 The amount of steps to skip between each animation step. Default is 3.
 
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

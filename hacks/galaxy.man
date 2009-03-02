@@ -5,6 +5,7 @@ galaxy - draws spinning galaxies
 .B galaxy
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-tracks] [\-no\-tracks] [\-spin] [\-no\-spin]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIgalaxy\fP program draws spinning galaxies.
 .SH OPTIONS
@@ -45,6 +46,9 @@ the color wheel.
 .B \-spin
 .TP 8
 .B \-no\-spin
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -13,6 +13,7 @@ fireworkx - pyrotechnics simulation eye-candy.
 [\-shoot]
 [\-delay \fInumber\fP]
 [\-maxlife \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Simulates fireworks (pyrotechnics); explodes better on faster machines.
 .SH OPTIONS
@@ -44,6 +45,9 @@ Maximum decay period for an explosion. (Default: 2000)
 .TP 8
 .B \-verbose
 for scientific purposes..!
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

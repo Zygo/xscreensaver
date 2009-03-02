@@ -9,6 +9,7 @@ compass - draws a spinning compass.
 [\-root]
 [\-delay \fInumber\fP]
 [\-no-db]
+[\-fps]
 .SH DESCRIPTION
 This draws a compass, with all elements spinning about randomly, for that
 ``lost and nauseous'' feeling.
@@ -29,6 +30,9 @@ Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
 .B \-db | \-no-db
 Double Buffer.	Boolean.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

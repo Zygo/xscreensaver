@@ -12,9 +12,9 @@
 #define DEFAULTS        "*delay:        15000              \n" \
                         "*showFPS:      False              \n" \
                         "*wireframe:    False              \n" \
-                        "*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
-                        "*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
-                        "*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
+                        "*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
+                        "*titleFont2: -*-helvetica-medium-r-normal-*-120-*\n" \
+                        "*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
 
 # define refresh_pinion 0
 # define release_pinion 0
@@ -165,7 +165,7 @@ new_label (ModeInfo *mi)
       print_gl_string (mi->dpy, f, fl,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
-                       label);
+                       label, False);
     }
   glEndList ();
 }

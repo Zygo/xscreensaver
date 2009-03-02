@@ -31,7 +31,9 @@ static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
 #define MODE_grav
 #define DEFAULTS	"*delay: 10000 \n" \
 					"*count: 12 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 #define BRIGHT_COLORS
 # define reshape_grav 0
 # define grav_handle_event 0

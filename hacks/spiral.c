@@ -38,7 +38,9 @@ static const char sccsid[] = "@(#)spiral.c	5.00 2000/11/01 xlockmore";
 #define DEFAULTS	"*delay: 50000 \n" \
 					"*count: 40 \n" \
 					"*cycles: 350 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_spiral 0
 # define spiral_handle_event 0

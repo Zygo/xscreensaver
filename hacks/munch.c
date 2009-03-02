@@ -274,7 +274,8 @@ munch_free (Display *dpy, Window window, void *closure)
 static const char *munch_defaults [] = {
     ".background:	black",
     ".foreground:	white",
-    "*delay:	        5000",
+    "*fpsSolid:		true",
+    "*delay:	        10000",
     "*hold:		100000",
     "*clear:		50",
     "*logminwidth:	7",

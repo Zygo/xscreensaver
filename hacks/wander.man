@@ -14,6 +14,7 @@ wander - colorful random-walk.
 [\-circles]
 [\-size \fInumber\fP]
 [\-advance \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Draws a colorful random-walk, in various forms.
 .SH OPTIONS
@@ -48,6 +49,9 @@ Size.  0 - 100.  Default: 1.
 .TP 8
 .B \-advance \fInumber\fP
 Color Contrast.  1 - 100.  Default: 1.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

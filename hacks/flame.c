@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1998
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -413,6 +412,7 @@ int matherr(x)
 static const char *flame_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*colors:	64",
   "*iterations:	25",
   "*delay:	50000",

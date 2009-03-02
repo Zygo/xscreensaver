@@ -34,7 +34,9 @@ static const char sccsid[] = "@(#)fiberlamp.c	5.00 2000/11/01 xlockmore";
 #define DEFAULTS	"*delay: 10000  \n" \
 					"*count: 500    \n" \
 					"*cycles: 10000 \n" \
-					"*ncolors: 64   \n"
+					"*ncolors: 64   \n" \
+					"*fpsTop: true  \n" \
+
 # define UNIFORM_COLORS
 # define fiberlamp_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */

@@ -290,6 +290,7 @@ int analogtv_handle_events (analogtv *it);
   "*Background:      Black", \
   "*use_cmap:        0",  \
   "*geometry:	     800x600", \
+  "*fpsSolid:	     True", \
   ANALOGTV_DEFAULTS_SHM
 
 #define ANALOGTV_OPTIONS \

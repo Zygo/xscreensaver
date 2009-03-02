@@ -403,7 +403,7 @@ static const char *metaballs_defaults [] = {
   "*count:    10",
   "*cycles:   1000",
   "*ncolors:  256",
-  "*delay:    5000",
+  "*delay:    10000",
   "*radius:   100",
   "*delta:   3",
   0
@@ -421,7 +421,7 @@ static XrmOptionDescRec metaballs_options [] = {
 };
 
 
-XSCREENSAVER_MODULE ("Metaballs", metaballs)
+XSCREENSAVER_MODULE ("MetaBalls", metaballs)
 
 /* End of Module - "metaballs.c" */
 

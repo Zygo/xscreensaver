@@ -10,7 +10,7 @@
  */
 
 #define DEFAULTS	"*delay:	30000       \n" \
-			"*count:        8           \n" \
+			"*count:        9           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
@@ -26,12 +26,26 @@
 #include "gltrackball.h"
 #include <ctype.h>
 
+#include "xpm-ximage.h"
+#include "../images/scales.xpm"
+
+static char *grey_texture[] = {
+  "16 1 3 1",
+  "X c #808080",
+  "x c #C0C0C0",
+  ". c #FFFFFF",
+  "XXXxxxxx........"
+};
+
 #ifdef USE_GL /* whole file */
 
 #define DEF_SPEED       "1.0"
 #define DEF_SMOOTH      "True"
-#define DEF_SLICES      "32"
-#define DEF_SEGMENTS    "32"
+#define DEF_TEXTURE     "True"
+#define DEF_CEL         "False"
+#define DEF_INTERSECT   "False"
+#define DEF_SLICES      "16"
+#define DEF_SEGMENTS    "24"
 #define DEF_WIGGLINESS  "0.35"
 #define DEF_FLEXIBILITY "0.35"
 #define DEF_THICKNESS   "1.0"
@@ -47,7 +61,7 @@ typedef struct {
   GLfloat length;     /* length of the segment coming out of this segment */
   GLfloat th;         /* vector tilt (on yz plane) from previous segment */
   GLfloat phi;	      /* vector rotation (on xy plane) from previous segment */
-  GLfloat thickness;  /* radius of tentacle at this segment */
+  GLfloat thickness;  /* radius of tentacle at the bottom of this segment */
   rotator *rot;	      /* motion modeller */
 } segment;
 
@@ -69,8 +83,15 @@ typedef struct {
   tentacle **tentacles;
   GLfloat tentacle_color[4], stripe_color[4], sucker_color[4];
 
-  GLuint sucker_list;
-  int sucker_polys;
+  int torus_polys;
+  int torus_step;
+  XYZ *torus_points;
+  XYZ *torus_normals;
+
+  GLfloat line_thickness;
+  GLfloat outline_color[4];
+  XImage *texture;
+  GLuint texid;
 
   Bool left_p;
   
@@ -82,6 +103,9 @@ static tentacles_configuration *tcs = NULL;
 static int debug_p;
 static GLfloat arg_speed;
 static int smooth_p;
+static int texture_p;
+static int cel_p;
+static int intersect_p;
 static int arg_slices;
 static int arg_segments;
 static GLfloat arg_thickness;
@@ -90,9 +114,19 @@ static GLfloat arg_wiggliness;
 static GLfloat arg_flexibility;
 static char *arg_color, *arg_stripe, *arg_sucker;
 
+/* we can only have one light when doing cel shading */
+static GLfloat light_pos[4] = {1.0, 1.0, 1.0, 0.0};
+
+
 static XrmOptionDescRec opts[] = {
   { "-speed",        ".speed",         XrmoptionSepArg, 0 },
   { "-no-smooth",    ".smooth",        XrmoptionNoArg, "False" },
+  { "-texture",      ".texture",       XrmoptionNoArg, "True" },
+  { "-no-texture",   ".texture",       XrmoptionNoArg, "False" },
+  { "-cel",          ".cel",           XrmoptionNoArg, "True" },
+  { "-no-cel",       ".cel",           XrmoptionNoArg, "False" },
+  { "-intersect",    ".intersect",     XrmoptionNoArg, "True" },
+  { "-no-intersect", ".intersect",     XrmoptionNoArg, "False" },
   { "-slices",       ".slices",        XrmoptionSepArg, 0 },
   { "-segments",     ".segments",      XrmoptionSepArg, 0 },
   { "-thickness",    ".thickness",     XrmoptionSepArg, 0 },
@@ -108,6 +142,9 @@ static XrmOptionDescRec opts[] = {
 static argtype vars[] = {
   {&arg_speed,       "speed",         "Speed",       DEF_SPEED,       t_Float},
   {&smooth_p,        "smooth",        "Smooth",      DEF_SMOOTH,      t_Bool},
+  {&texture_p,       "texture",       "Texture",     DEF_TEXTURE,     t_Bool},
+  {&cel_p,           "cel",           "Cel",         DEF_CEL,         t_Bool},
+  {&intersect_p,     "intersect",     "Intersect",   DEF_INTERSECT,   t_Bool},
   {&arg_slices,      "slices",        "Slices",      DEF_SLICES,      t_Int},
   {&arg_segments,    "segments",      "Segments",    DEF_SEGMENTS,    t_Int},
   {&arg_thickness,   "thickness",     "Thickness",   DEF_THICKNESS,   t_Float},
@@ -128,6 +165,7 @@ ENTRYPOINT ModeSpecOpt tentacles_opts = {countof(opts), opts, countof(vars), var
 ENTRYPOINT void
 reshape_tentacles (ModeInfo *mi, int width, int height)
 {
+  tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
   glViewport (0, 0, (GLint) width, (GLint) height);
@@ -143,45 +181,68 @@ reshape_tentacles (ModeInfo *mi, int width, int height)
              0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
+
+  tc->line_thickness = (MI_IS_WIREFRAME (mi) ? 1 : MAX (3, width / 200));
 }
 
 
-
-static int
-unit_torus (double ratio, int slices1, int slices2, Bool wire)
+static void
+normalize (GLfloat *x, GLfloat *y, GLfloat *z)
 {
-  int i, j, k, polys = 0;
+  GLfloat d = sqrt((*x)*(*x) + (*y)*(*y) + (*z)*(*z));
+  *x /= d;
+  *y /= d;
+  *z /= d;
+}
+
+static GLfloat
+dot (GLfloat x0, GLfloat y0, GLfloat z0,
+     GLfloat x1, GLfloat y1, GLfloat z1)
+{
+  return x0*x1 + y0*y1 + z0*z1;
+}
+
+
+static void
+compute_unit_torus (ModeInfo *mi, double ratio, int slices1, int slices2)
+{
+  tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
+  Bool wire = MI_IS_WIREFRAME (mi);
+  int i, j, k, fp;
 
   if (wire) slices1 /= 2;
   if (wire) slices2 /= 4;
   if (slices1 < 3) slices1 = 3;
   if (slices2 < 3) slices2 = 3;
 
-  glFrontFace (GL_CW);
-  glBegin (wire ? GL_LINE_STRIP : GL_QUAD_STRIP);
+  tc->torus_polys = slices1 * (slices2+1) * 2;
+  tc->torus_points  = (XYZ *) calloc (tc->torus_polys + 1,
+                                      sizeof (*tc->torus_points));
+  tc->torus_normals = (XYZ *) calloc (tc->torus_polys + 1,
+                                      sizeof (*tc->torus_normals));
+  tc->torus_step = 2 * (slices2+1);
+  fp = 0;
   for (i = 0; i < slices1; i++)
     for (j = 0; j <= slices2; j++)
       for (k = 0; k <= 1; k++)
         {
           double s = (i + k) % slices1 + 0.5;
           double t = j % slices2;
+          XYZ p;
+          p.x = cos(t*M_PI*2/slices2) * cos(s*M_PI*2/slices1);
+          p.y = sin(t*M_PI*2/slices2) * cos(s*M_PI*2/slices1);
+          p.z = sin(s*M_PI*2/slices1);
+          tc->torus_normals[fp] = p;
 
-          double x = cos(t*M_PI*2/slices2) * cos(s*M_PI*2/slices1);
-          double y = sin(t*M_PI*2/slices2) * cos(s*M_PI*2/slices1);
-          double z = sin(s*M_PI*2/slices1);
-          glNormal3f(x, y, z);
-
-          x = (1 + ratio * cos(s*M_PI*2/slices1)) * cos(t*M_PI*2/slices2) / 2;
-          y = (1 + ratio * cos(s*M_PI*2/slices1)) * sin(t*M_PI*2/slices2) / 2;
-          z = ratio * sin(s*M_PI*2/slices1) / 2;
-          glVertex3f(x, y, z);
-          polys++;
+          p.x = (1 + ratio * cos(s*M_PI*2/slices1)) * cos(t*M_PI*2/slices2) / 2;
+          p.y = (1 + ratio * cos(s*M_PI*2/slices1)) * sin(t*M_PI*2/slices2) / 2;
+          p.z = ratio * sin(s*M_PI*2/slices1) / 2;
+          tc->torus_points[fp] = p;
+          fp++;
         }
-  glEnd();
-  return polys;
+  if (fp != tc->torus_polys) abort();
+  tc->torus_polys = fp;
 }
-
-
 
 
 /* Initializes a new tentacle and stores it in the list.
@@ -203,6 +264,7 @@ make_tentacle (ModeInfo *mi, int which, int total)
     int xx = which % cols;
     int yy = which / cols;
     double spc = arg_thickness * 0.8;
+    if (!intersect_p) cols = 1, xx = 0;
     t->x = (cols * spc / 2) - (spc * (xx + 0.5));
     t->y = (rows * spc / 2) - (spc * (yy + 0.5));
     t->z = 0;
@@ -241,7 +303,7 @@ make_tentacle (ModeInfo *mi, int which, int total)
 
   if (tc->tentacles_size <= tc->ntentacles)
     {
-      tc->tentacles_size = (tc->tentacles_size * 1.2) + tc->ntentacles;
+      tc->tentacles_size = (tc->tentacles_size * 1.2) + tc->ntentacles + 2;
       tc->tentacles = (tentacle **)
         realloc (tc->tentacles, tc->tentacles_size * sizeof(*tc->tentacles));
       if (! tc->tentacles)
@@ -258,7 +320,41 @@ make_tentacle (ModeInfo *mi, int which, int total)
 
 
 static void
-draw_tentacle (tentacle *t)
+draw_sucker (tentacle *t, Bool front_p)
+{
+  tentacles_configuration *tc = &tcs[MI_SCREEN(t->mi)];
+  Bool wire = MI_IS_WIREFRAME (t->mi);
+  int i, j;
+  int strips = tc->torus_polys / tc->torus_step;
+  int points = 0;
+
+  glFrontFace (front_p ? GL_CW : GL_CCW);
+  for (i = 0; i < strips; i++)
+    {
+      int ii = i * tc->torus_step;
+
+      /* Leave off the polygons on the underside.  This reduces polygon
+         count by about 10% with the default settings. */
+      if (strips > 4 && i >= strips/2 && i < strips-1)
+        continue;
+
+      glBegin (wire ? GL_LINE_STRIP : GL_QUAD_STRIP);
+      for (j = 0; j < tc->torus_step; j++)
+        {
+          XYZ sp = tc->torus_points[ii+j];
+          XYZ sn = tc->torus_normals[ii+j];
+          glNormal3f(sn.x, sn.y, sn.z);
+          glVertex3f(sp.x, sp.y, sp.z);
+          points++;
+        }
+      glEnd();
+    }
+  t->mi->polygon_count += points/2;
+}
+
+
+static void
+draw_tentacle (tentacle *t, Bool front_p)
 {
   tentacles_configuration *tc = &tcs[MI_SCREEN(t->mi)];
   int i;
@@ -269,27 +365,76 @@ draw_tentacle (tentacle *t)
   double cth_cos  = 1, cth_sin  = 0;
   double cphi_cos = 1, cphi_sin = 0;
 
+  GLfloat light[3];	   /* vector to the light */
+
+  GLfloat t0 = 0.0;        /* texture coordinate */
+
   XYZ *ring, *oring;       /* points around the edge (this, and previous) */
   XYZ *norm, *onorm;       /* their normals */
+  XYZ *ucirc;		   /* unit circle, to save some trig */
 
-  /* Which portion of the radius the colored stripe takes up */
+  /* Which portion of the radius the indented/colored stripe takes up */
   int indented_points = arg_slices * 0.2;
 
-  /* We do rotation way to minimize number of calls to sin/cos. */
-# define ROT(P) do { \
-    XYZ _p = P; \
-    _p.y = ((P.y * cth_sin - P.x * cth_cos)); \
+  /* We do rotation this way to minimize the number of calls to sin/cos.
+     We have to hack the transformations manually instead of using
+     glRotate/glTranslate because those calls are not allowed *inside*
+     of a glBegin/glEnd block...
+   */
+# define ROT(P) do {                                                    \
+    XYZ _p = P;                                                         \
+    _p.y = ((P.y * cth_sin - P.x * cth_cos));                           \
     _p.x = ((P.y * cth_cos + P.x * cth_sin) * cphi_sin - (P.z * cphi_cos)); \
     _p.z = ((P.y * cth_cos + P.x * cth_sin) * cphi_cos + (P.z * cphi_sin)); \
-    P = _p; \
+    P = _p;                                                             \
   } while(0)
 
   ring  = (XYZ *) malloc (arg_slices * sizeof(*ring));
   norm  = (XYZ *) malloc (arg_slices * sizeof(*norm));
   oring = (XYZ *) malloc (arg_slices * sizeof(*oring));
   onorm = (XYZ *) malloc (arg_slices * sizeof(*onorm));
+  ucirc = (XYZ *) malloc (arg_slices * sizeof(*ucirc));
 
-  if (wire)
+  light[0] = light_pos[0];
+  light[1] = light_pos[1];
+  light[2] = light_pos[2];
+  normalize (&light[0], &light[1], &light[2]);
+
+  for (i = 0; i < arg_slices; i++)
+    {
+      double a = M_PI * 2 * i / arg_slices;
+      ucirc[i].x = cos(a);
+      ucirc[i].y = sin(a);
+      ucirc[i].z = 0;
+    }
+
+
+  if (cel_p)
+    glPolygonMode (GL_FRONT_AND_BACK, (front_p ? GL_FILL : GL_LINE));
+
+  glPushMatrix();
+  glTranslatef (t->x, t->y, t->z);
+
+  if (debug_p)
+    {
+      glPushAttrib (GL_ENABLE_BIT);
+      glDisable (GL_LIGHTING);
+      glDisable (GL_TEXTURE_1D);
+      glDisable (GL_TEXTURE_2D);
+      glColor3f (1, 1, 1);
+      glLineWidth (1);
+      glBegin(GL_LINE_LOOP);
+      for (i = 0; i < arg_slices; i++)
+        glVertex3f (arg_thickness / 2 * cos (M_PI * 2 * i / arg_slices),
+                    arg_thickness / 2 * sin (M_PI * 2 * i / arg_slices),
+                    0);
+      glEnd();
+      glPopAttrib();
+    }
+
+  if (!front_p)
+    glColor4fv (tc->outline_color);
+  else if (wire)
     glColor4fv (t->tentacle_color);
   else
     {
@@ -299,40 +444,24 @@ draw_tentacle (tentacle *t)
       glMateriali  (GL_FRONT, GL_SHININESS,           bshiny);
     }
 
-  glPushMatrix();
-  glTranslatef (t->x, t->y, t->z);
-
-  if (debug_p)
-    {
-      if (!wire) glDisable(GL_LIGHTING);
-      glBegin(GL_LINE_LOOP);
-      for (i = 0; i < arg_slices; i++)
-        glVertex3f (arg_thickness / 2 * cos (M_PI * 2 * i / arg_slices),
-                    arg_thickness / 2 * sin (M_PI * 2 * i / arg_slices),
-                    0);
-      glEnd();
-      if (!wire) glEnable(GL_LIGHTING);
-    }
-
   for (i = 0; i < t->nsegments; i++)
     {
       int j;
-      XYZ p;
+      GLfloat t1 = t0 + i / (t->nsegments * M_PI * 2);
 
       for (j = 0; j < arg_slices; j++)
         {
           /* Construct a vertical disc at the origin, to use as the
              base of this segment.
-           */
+          */
           double r = t->segments[i].thickness / 2;
-          double a = M_PI * 2 * j / arg_slices;
 
           if (j <= indented_points/2 || j >= arg_slices-indented_points/2)
-            r *= 0.75;
+            r *= 0.75;  /* indent the stripe */
 
-          ring[j].x = r * cos (a);
+          ring[j].x = r * ucirc[j].x;
           ring[j].y = 0;
-          ring[j].z = r * sin (a);
+          ring[j].z = r * ucirc[j].y;
 
           /* Then rotate the points by the angle of the current segment. */
           ROT(ring[j]);
@@ -348,8 +477,8 @@ draw_tentacle (tentacle *t)
          first so that the normals of the vertexes can be the average
          of the normals of the faces.
          #### Uh, except I didn't actually implement that...
-              but it would be a good idea.
-       */
+         but it would be a good idea.
+      */
       if (i > 0)
         for (j = 0; j <= arg_slices; j++)
           {
@@ -360,31 +489,62 @@ draw_tentacle (tentacle *t)
 
       /* Draw!
        */
-
       if (i > 0)
         {
           int j;
-          glFrontFace (GL_CCW);
+          glLineWidth (tc->line_thickness);
+          glFrontFace (front_p ? GL_CCW : GL_CW);
           glBegin (wire ? GL_LINES : smooth_p ? GL_QUAD_STRIP : GL_QUADS);
           for (j = 0; j <= arg_slices; j++)
             {
               int j0 = j     % arg_slices;
               int j1 = (j+1) % arg_slices;
 
-              if (j <= indented_points/2 || j >= arg_slices-indented_points/2)
-                glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
-                              t->stripe_color);
-              else
-                glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
-                              t->tentacle_color);
+              GLfloat ts = j / (double) arg_slices;
 
+              if (!front_p)
+                glColor4fv (tc->outline_color);
+              else if (j <= indented_points/2 || 
+                       j >= arg_slices-indented_points/2)
+                {
+                  glColor4fv (t->stripe_color);
+                  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
+                                t->stripe_color);
+                }
+              else
+                {
+                  glColor4fv (t->tentacle_color);
+                  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
+                                t->tentacle_color);
+                }
+
+              /* For cel shading, the 1d texture coordinate (s) is the 
+                 dot product of the lighting vector and the vertex normal.
+              */
+              if (cel_p)
+                {
+                  t0 = dot (light[0], light[1], light[2],
+                            onorm[j0].x, onorm[j0].y, onorm[j0].z);
+                  t1 = dot (light[0], light[1], light[2],
+                            norm[j0].x, norm[j0].y, norm[j0].z);
+                  if (t0 < 0) t0 = 0;
+                  if (t1 < 0) t1 = 0;
+                }
+
+              glTexCoord2f (t0, ts);
               glNormal3f (onorm[j0].x, onorm[j0].y, onorm[j0].z);
               glVertex3f (oring[j0].x, oring[j0].y, oring[j0].z);
+
+              glTexCoord2f (t1, ts);
               glNormal3f ( norm[j0].x,  norm[j0].y,  norm[j0].z);
               glVertex3f ( ring[j0].x,  ring[j0].y,  ring[j0].z);
+
               if (!smooth_p)
                 {
+                  ts = j1 / (double) arg_slices;
+                  glTexCoord2f (t1, ts);
                   glVertex3f ( ring[j1].x,  ring[j1].y,  ring[j1].z);
+                  glTexCoord2f (t0, ts);
                   glVertex3f (oring[j1].x, oring[j1].y, oring[j1].z);
                 }
               t->mi->polygon_count++;
@@ -403,13 +563,19 @@ draw_tentacle (tentacle *t)
            */
           {
             double seg_length = arg_length / t->nsegments;
-            double sucker_size = arg_thickness / 8;
-            double sucker_spacing = sucker_size * 1.5;
+            double sucker_size = arg_thickness / 5;
+            double sucker_spacing = sucker_size * 1.3;
             int nsuckers = seg_length / sucker_spacing;
             double oth  = cth  - t->segments[i-1].th;
             double ophi = cphi - t->segments[i-1].phi;
             int k;
 
+            if (!wire)
+              glLineWidth (MAX (2, tc->line_thickness / 2.0));
+            glDisable (GL_TEXTURE_2D);
+
+            /* Sometimes we have N suckers on one segment; 
+               sometimes we have one sucker every N segments. */
             if (nsuckers == 0)
               {
                 int segs_per_sucker =
@@ -417,7 +583,12 @@ draw_tentacle (tentacle *t)
                 nsuckers = (i % segs_per_sucker) ? 0 : 1;
               }
 
-            glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, t->sucker_color);
+            if (front_p)
+              {
+                glColor4fv (t->sucker_color);
+                glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, 
+                              t->sucker_color);
+              }
 
             for (k = 0; k < nsuckers; k++)
               {
@@ -447,44 +618,48 @@ draw_tentacle (tentacle *t)
                 }
 
                 scale = t->segments[i].thickness / arg_thickness;
-                scale *= 0.7;
-                glTranslatef (0, 0, -0.15 * sucker_size);
-                glScalef (scale, scale, scale*4);
-                {
-                  double off = sucker_size * 1.4;
-                  glPushMatrix();
-                  glTranslatef (off, 0, 0);
-                  glCallList (tc->sucker_list);
-                  t->mi->polygon_count += tc->sucker_polys;
-                  glPopMatrix();
+                scale *= 0.7 * sucker_size;
+                glScalef (scale, scale, scale * 4);
 
-                  glPushMatrix();
-                  glTranslatef (-off, 0, 0);
-                  glCallList (tc->sucker_list);
-                  t->mi->polygon_count += tc->sucker_polys;
-                  glPopMatrix();
-                }
+                glTranslatef (0, 0, -0.1);  /* embed */
+
+                glTranslatef (1, 0, 0);     /* left */
+                draw_sucker (t, front_p);
+
+                glTranslatef (-2, 0, 0);    /* right */
+                draw_sucker (t, front_p);
 
                 glPopMatrix();
               }
+
+            if (texture_p) glEnable (GL_TEXTURE_2D);
           }
         }
 
       /* Now draw the end caps.
        */
+      glLineWidth (tc->line_thickness);
       if (i == 0 || i == t->nsegments-1)
         {
           int j;
           GLfloat ctrz = ctr.z + ((i == 0 ? -1 : 1) *
                                   t->segments[i].thickness / 4);
-          glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, t->tentacle_color);
-          glFrontFace (i == 0 ? GL_CCW : GL_CW);
+          if (front_p)
+            {
+              glColor4fv (t->tentacle_color);
+              glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, 
+                            t->tentacle_color);
+            }
+          glFrontFace ((front_p ? i == 0 : i != 0) ? GL_CCW : GL_CW);
           glBegin (wire ? GL_LINES : GL_TRIANGLE_FAN);
           glNormal3f (0, 0, (i == 0 ? -1 : 1));
+          glTexCoord2f (t0 - 0.25, 0.5);
           glVertex3f (ctr.x, ctr.y, ctrz);
           for (j = 0; j <= arg_slices; j++)
             {
               int jj = j % arg_slices;
+              GLfloat ts = j / (double) arg_slices;
+              glTexCoord2f (t0, ts);
               glNormal3f (norm[jj].x, norm[jj].y, norm[jj].z);
               glVertex3f (ring[jj].x, ring[jj].y, ring[jj].z);
               if (wire) glVertex3f (ctr.x, ctr.y, ctrz);
@@ -497,6 +672,7 @@ draw_tentacle (tentacle *t)
        */
       if (i != t->nsegments-1)
         {
+          XYZ p;
           p.x = 0;
           p.y = t->segments[i].length;
           p.z = 0;
@@ -507,7 +683,7 @@ draw_tentacle (tentacle *t)
 
           /* Accumulate the current angle and rotation, to keep track of the
              rotation of the upcoming segment.
-           */
+          */
           cth  += t->segments[i].th;
           cphi += t->segments[i].phi;
 
@@ -519,6 +695,8 @@ draw_tentacle (tentacle *t)
           memcpy (oring, ring, arg_slices * sizeof(*ring));
           memcpy (onorm, norm, arg_slices * sizeof(*norm));
         }
+
+      t0 = t1;
     }
 
   glPopMatrix();
@@ -527,6 +705,7 @@ draw_tentacle (tentacle *t)
   free (norm);
   free (oring);
   free (onorm);
+  free (ucirc);
 }
 
 
@@ -624,6 +803,17 @@ tentacles_handle_event (ModeInfo *mi, XEvent *event)
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
     }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ')
+        {
+          gltrackball_reset (tc->trackball);
+          return True;
+        }
+    }
 
   return False;
 }
@@ -672,20 +862,19 @@ init_tentacles (ModeInfo *mi)
 
   if (!wire)
     {
-      GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
       GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
       GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
       GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
       glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
       glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
+  if (!wire && !cel_p)
+    {
+      glEnable (GL_LIGHTING);
+      glEnable (GL_LIGHT0);
     }
 
   tc->trackball = gltrackball_init ();
@@ -704,17 +893,83 @@ init_tentacles (ModeInfo *mi)
   parse_color (mi, "stripeColor",   arg_stripe, tc->stripe_color);
   parse_color (mi, "suckerColor",   arg_sucker, tc->sucker_color);
 
+  /* Black outlines for light colors, white outlines for dark colors. */
+  if (tc->tentacle_color[0] + tc->tentacle_color[1] + tc->tentacle_color[2]
+      < 0.4)
+    tc->outline_color[0] = 1;
+  tc->outline_color[1] = tc->outline_color[0];
+  tc->outline_color[2] = tc->outline_color[0];
+  tc->outline_color[3] = 1;
+
   for (i = 0; i < MI_COUNT(mi); i++)
     move_tentacle (make_tentacle (mi, i, MI_COUNT(mi)));
 
-  tc->sucker_list = glGenLists (1);
-  glNewList (tc->sucker_list, GL_COMPILE);
-  { GLfloat s = arg_thickness / 5; glScalef (s, s, s); }
-  tc->sucker_polys = unit_torus (0.5, 
-                                 MIN(8,  arg_slices/6),
-                                 MIN(12, arg_slices/3), 
-                                 MI_IS_WIREFRAME(mi));
-  glEndList();
+  if (wire) texture_p = cel_p = False;
+  if (cel_p) texture_p = False;
+
+  if (texture_p || cel_p) {
+    glGenTextures(1, &tc->texid);
+# ifdef HAVE_GLBINDTEXTURE
+    glBindTexture ((cel_p ? GL_TEXTURE_1D : GL_TEXTURE_2D), tc->texid);
+# endif
+
+    tc->texture = xpm_to_ximage (MI_DISPLAY(mi), MI_VISUAL(mi), 
+                                 MI_COLORMAP(mi), 
+                                 (cel_p ? grey_texture : scales));
+    if (!tc->texture) texture_p = cel_p = False;
+  }
+
+  if (texture_p) {
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    clear_gl_error();
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                  tc->texture->width, tc->texture->height, 0,
+                  GL_RGBA,
+                  /* GL_UNSIGNED_BYTE, */
+                  GL_UNSIGNED_INT_8_8_8_8_REV,
+                  tc->texture->data);
+    check_gl_error("texture");
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    glEnable(GL_TEXTURE_2D);
+  } else if (cel_p) {
+    clear_gl_error();
+    glTexImage1D (GL_TEXTURE_1D, 0, GL_RGBA,
+                  tc->texture->width, 0,
+                  GL_RGBA,
+                  /* GL_UNSIGNED_BYTE, */
+                  GL_UNSIGNED_INT_8_8_8_8_REV,
+                  tc->texture->data);
+    check_gl_error("texture");
+
+    glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    glEnable(GL_TEXTURE_1D);
+    glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glEnable (GL_LINE_SMOOTH);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    glEnable (GL_BLEND);
+
+    /* Dark gray instead of black, so the outlines show up */
+    glClearColor (0.08, 0.08, 0.08, 1.0);
+  }
+
+  compute_unit_torus (mi, 0.5, 
+                      MAX(5, arg_slices/6),
+                      MAX(9, arg_slices/3));
 }
 
 
@@ -722,7 +977,6 @@ ENTRYPOINT void
 draw_tentacles (ModeInfo *mi)
 {
   tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
-  int wire = MI_IS_WIREFRAME(mi);
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   int i;
@@ -746,18 +1000,22 @@ draw_tentacles (ModeInfo *mi)
 # if 1
   glScalef (3, 3, 3);
 # else
+  glPushAttrib (GL_ENABLE_BIT);
   glPushMatrix();
   { GLfloat s = 8.7/1600; glScalef(s,s,s); }
   glTranslatef(-800,-514,0);
-  if (!wire) glDisable(GL_LIGHTING);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_TEXTURE_1D);
+  glDisable(GL_TEXTURE_2D);
+  glColor3f (1, 1, 1);
   glBegin(GL_LINE_LOOP);
   glVertex3f(0,0,0);
   glVertex3f(0,1028,0);
   glVertex3f(1600,1028,0);
   glVertex3f(1600,0,0);
   glEnd();
-  if (!wire) glEnable(GL_LIGHTING);
   glPopMatrix();
+  glPopAttrib();
 # endif
 
   gltrackball_rotate (tc->trackball);
@@ -766,34 +1024,61 @@ draw_tentacles (ModeInfo *mi)
 
   if (debug_p)
     {
-      if (!wire) glDisable(GL_LIGHTING);
+      glPushAttrib (GL_ENABLE_BIT);
+      glDisable (GL_LIGHTING);
+      glDisable (GL_TEXTURE_1D);
+      glDisable (GL_TEXTURE_2D);
+      glColor3f (1, 1, 1);
+      glLineWidth (1);
       glBegin(GL_LINES);
       glVertex3f(-0.5, 0, 0); glVertex3f(0.5, 0, 0);
       glVertex3f(0, -0.5, 0); glVertex3f(0, 0.5, 0);
       glEnd();
-      if (!wire) glEnable(GL_LIGHTING);
-    }
-  else if (tc->left_p)
-    {
-      glRotatef ( 45, 0, 1, 0);		/* upper left */
-      glRotatef ( 45, 1, 0, 0);
-      glRotatef (-70, 0, 0, 1);
-      glTranslatef (0, -2, -4.5);
+      glPopAttrib();
     }
   else
     {
-      glRotatef (-45, 0, 1, 0);		/* upper right */
-      glRotatef ( 45, 1, 0, 0);
-      glRotatef ( 70, 0, 0, 1);
-      glTranslatef (0, -2, -4.5);
+      GLfloat rx =  45;
+      GLfloat ry = -45;
+      GLfloat rz =  70;
+      if (tc->left_p)
+        ry = -ry, rz = -rz;
+      glRotatef (ry, 0, 1, 0);
+      glRotatef (rx, 1, 0, 0);
+      glRotatef (rz, 0, 0, 1);
+      if (intersect_p)
+        glTranslatef (0, -2.0, -4.5);
+      else
+        glTranslatef (0, -2.5, -5.0);
     }
 
   if (!tc->button_down_p)
     for (i = 0; i < tc->ntentacles; i++)
       move_tentacle (tc->tentacles[i]);
 
+#if 1
   for (i = 0; i < tc->ntentacles; i++)
-    draw_tentacle (tc->tentacles[i]);
+    {
+      if (! intersect_p)
+        glClear(GL_DEPTH_BUFFER_BIT);
+      draw_tentacle (tc->tentacles[i], True);
+      if (cel_p)
+        draw_tentacle (tc->tentacles[i], False);
+    }
+#else
+  glScalef (3, 3, 3);
+  glScalef (1, 1, 4);
+  glColor3f(1,1,1);
+  glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+  draw_sucker (tc->tentacles[0], True);
+  if (cel_p)
+    {
+      glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+      glLineWidth (tc->line_thickness);
+      glColor4fv (tc->outline_color);
+      draw_sucker (tc->tentacles[0], False);
+    }
+#endif
 
   glPopMatrix ();
 

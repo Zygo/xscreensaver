@@ -5,6 +5,7 @@ flag - draws a waving flag, containing text or an image
 .B flag
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-size \fIinteger\fP] [\-text \fIstring\fP] [\-font \fIfont\fP] [\-bitmap \fIxbm-file\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIflag\fP program draws a waving flag that contains text or a bitmap.
 .SH OPTIONS
@@ -59,6 +60,9 @@ the builtin text or the builtin bitmap will be chosen randomly.
 .B \-font \fIfont\fP
 The font in which to draw the text; the default is
 "-*-helvetica-bold-r-*-240-*".
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

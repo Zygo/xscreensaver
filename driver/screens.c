@@ -98,6 +98,16 @@
  *      to put seperate savers on those duplicated-or-overlapping
  *      monitors, xscreensaver just ignores them (which allows them to
  *      display duplicates or overlaps).
+ *
+ *   5a) Nvidia fucks it up:
+ *
+ *      Nvidia drivers as of Aug 2008 running in "TwinView" mode
+ *      apparently report correct screen geometry via Xinerama, but
+ *      report one giant screen via RANDR.  The response from the
+ *      nvidia developers is, "we don't support RANDR, use Xinerama
+ *      instead."  Which is a seriously lame answer.  So, xscreensaver
+ *      has to query *both* extensions, and make a guess as to which
+ *      is to be believed.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -142,6 +152,9 @@ struct _monitor {
   monitor_sanity sanity;	/* I'm not crazy you're the one who's crazy */
   int enemy;			/* which monitor it overlaps or duplicates */
 };
+
+static Bool layouts_differ_p (monitor **a, monitor **b);
+
 
 static void
 free_monitors (monitor **monitors)
@@ -342,7 +355,7 @@ randr_scan_monitors (Display *dpy)
 
   for (i = 0, j = 0; i < ScreenCount (dpy); i++)
     {
-      Screen *screen = ScreenOfDisplay (dpy, j);
+      Screen *screen = ScreenOfDisplay (dpy, i);
 
       if (! new_randr_p)  /* RANDR 1.0 */
         {
@@ -358,12 +371,17 @@ randr_scan_monitors (Display *dpy)
               SizeID size = -1;
               Rotation rot = ~0;
               XRRScreenSize *rrsizes;
-              int nsizes;
+              int nsizes = 0;
 
               size = XRRConfigCurrentConfiguration (rrc, &rot);
               rrsizes = XRRConfigSizes (rrc, &nsizes);
 
-              if (rot & (RR_Rotate_90|RR_Rotate_270))
+              if (nsizes <= 0)  /* WTF?  Shouldn't happen but does. */
+                {
+                  m->width  = DisplayWidth (dpy, i);
+                  m->height = DisplayHeight (dpy, i);
+                }
+              else if (rot & (RR_Rotate_90|RR_Rotate_270))
                 {
                   m->width  = rrsizes[size].height;
                   m->height = rrsizes[size].width;
@@ -452,6 +470,66 @@ basic_scan_monitors (Display *dpy)
     }
   return monitors;
 }
+
+
+#if defined(HAVE_RANDR) && defined(HAVE_XINERAMA)
+
+/*   From: Aaron Plattner <aplattner@nvidia.com>
+     Date: August 7, 2008 10:21:25 AM PDT
+     To: linux-bugs@nvidia.com
+
+     The NVIDIA X driver does not yet support RandR 1.2.  The X server has
+     a compatibility layer in it that allows RandR 1.2 clients to talk to
+     RandR 1.1 drivers through an RandR 1.2 pseudo-output called "default".
+     This reports the total combined resolution of the TwinView display,
+     since it doesn't have any visibility into TwinView metamodes.  There
+     is no way for the driver to prevent the server from turning on this
+     compatibility layer.
+
+     The intention is for X client applications to continue to use the
+     Xinerama extension to query the screen geometry.  RandR 1.2 reports
+     its own Xinerama info for this purpose.  I would recommend against
+     modifying xscreensaver to try to get this information from RandR.
+ */
+static monitor **
+randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors)
+{
+  monitor **xinerama_monitors;
+
+  if (!randr_monitors) 
+    return 0;
+
+  xinerama_monitors = xinerama_scan_monitors (dpy);
+  if (!xinerama_monitors)
+    return randr_monitors;
+
+  if (! layouts_differ_p (randr_monitors, xinerama_monitors))
+    {
+      free_monitors (xinerama_monitors);
+      return randr_monitors;
+    }
+  else if (   randr_monitors[0] &&   !randr_monitors[1] &&  /* 1 monitor */
+           xinerama_monitors[0] && xinerama_monitors[1])    /* >1 monitor */
+    {
+      fprintf (stderr,
+               "%s: WARNING: RANDR reports 1 screen but Xinerama\n"
+               "%s:          reports multiple.  Believing Xinerama.\n",
+               blurb(), blurb());
+      free_monitors (randr_monitors);
+      return xinerama_monitors;
+    }
+  else
+    {
+      fprintf (stderr,
+               "%s: WARNING: RANDR and Xinerama report different\n"
+               "%s:          screen layouts!  Believing RANDR.\n",
+               blurb(), blurb());
+      free_monitors (xinerama_monitors);
+      return randr_monitors;
+    }
+}
+
+#endif /* HAVE_RANDR && HAVE_XINERAMA */
 
 
 #ifdef DEBUG_MULTISCREEN
@@ -557,13 +635,17 @@ scan_monitors (saver_info *si)
 # ifdef HAVE_RANDR
   if (! p->getviewport_full_of_lies_p)
     if (! monitors) monitors = randr_scan_monitors (si->dpy);
-# endif
+
+#  ifdef HAVE_XINERAMA
+   monitors = randr_versus_xinerama_fight (si->dpy, monitors);
+#  endif
+# endif /* HAVE_RANDR */
 
 # ifdef HAVE_XF86VMODE
   if (! monitors) monitors = vidmode_scan_monitors (si->dpy);
 # endif
 
-# ifdef HAVE_XF86VMODE
+# ifdef HAVE_XINERAMA
   if (! monitors) monitors = xinerama_scan_monitors (si->dpy);
 # endif
 
@@ -598,6 +680,38 @@ monitors_overlap_p (monitor *a, monitor *b)
 }
 
 
+static Bool
+plausible_aspect_ratio_p (monitor **monitors)
+{
+  /* Modern wide-screen monitors come in the following aspect ratios:
+
+            One monitor:        If you tack a 640x480 monitor
+                                onto the right, the ratio is:
+         16 x 9    --> 1.78
+        852 x 480  --> 1.77        852+640 x 480  --> 3.11      "SD 480p"
+       1280 x 720  --> 1.78       1280+640 x 720  --> 2.67      "HD 720p"
+       1280 x 920  --> 1.39       1280+640 x 920  --> 2.09
+       1366 x 768  --> 1.78       1366+640 x 768  --> 2.61      "HD 768p"
+       1440 x 900  --> 1.60       1440+640 x 900  --> 2.31
+       1680 x 1050 --> 1.60       1680+640 x 1050 --> 2.21
+       1690 x 1050 --> 1.61       1690+640 x 1050 --> 2.22
+       1920 x 1080 --> 1.78       1920+640 x 1080 --> 2.37      "HD 1080p"
+       1920 x 1200 --> 1.60       1920+640 x 1200 --> 2.13
+       2560 x 1600 --> 1.60       2560+640 x 1600 --> 2.00
+
+     So that implies that if we ever see an aspect ratio >= 2.0,
+     we can be pretty sure that the X server is lying to us, and
+     that's actually two monitors, not one.
+   */
+  if (monitors[0] && !monitors[1] &&    /* exactly 1 monitor */
+      monitors[0]->height &&
+      monitors[0]->width / (double) monitors[0]->height >= 1.9)
+    return False;
+  else
+    return True;
+}
+
+
 /* Mark the ones that overlap, etc.
  */
 static void
@@ -624,6 +738,7 @@ check_monitor_sanity (monitor **monitors)
       if (i != j &&
           monitors[i]->sanity == S_SANE &&
           monitors[j]->sanity == S_SANE &&
+          monitors[i]->screen == monitors[j]->screen &&
           X2 >= X1 &&
           Y2 >= Y1 &&
           (X2+W2) <= (X1+W1) &&
@@ -648,6 +763,7 @@ check_monitor_sanity (monitor **monitors)
       {
         if (monitors[i]->sanity != S_SANE) continue; /* already marked */
         if (monitors[j]->sanity != S_SANE) continue;
+        if (monitors[i]->screen != monitors[j]->screen) continue;
 
         if (monitors_overlap_p (monitors[i], monitors[j]))
           {
@@ -656,17 +772,15 @@ check_monitor_sanity (monitor **monitors)
           }
       }
 
-  /* Finally, make sure all monitors are enclosed by their X screen.
+  /* Finally, make sure all monitors have sane positions and sizes.
      Xinerama sometimes reports 1024x768 VPs at -1936862040, -1953705044.
    */
   for (i = 0; i < count; i++)
     {
-      int sw = WidthOfScreen (monitors[i]->screen)  * 2;
-      int sh = HeightOfScreen (monitors[i]->screen) * 2;
       if (monitors[i]->sanity != S_SANE) continue; /* already marked */
-      if (X1    <  0 || Y1    <  0 || 
-          W1    <= 0 || H1    <= 0 || 
-          X1+W1 > sw || Y1+H1 > sh)
+      if (X1    <  0      || Y1    <  0 || 
+          W1    <= 0      || H1    <= 0 || 
+          X1+W1 >= 0x7FFF || Y1+H1 >= 0x7FFF)
         {
           monitors[i]->sanity = S_OFFSCREEN;
           monitors[i]->enemy = 0;
@@ -715,6 +829,8 @@ describe_monitor_layout (saver_info *si)
   int count = 0;
   int good_count = 0;
   int bad_count = 0;
+  int implausible_p = !plausible_aspect_ratio_p (monitors);
+
   while (monitors[count])
     {
       if (monitors[count]->sanity == S_SANE)
@@ -778,6 +894,14 @@ describe_monitor_layout (saver_info *si)
                 }
             }
         }
+
+      if (implausible_p)
+        fprintf (stderr,
+                 "%s: WARNING: single screen aspect ratio is %dx%d = %.2f\n"
+                 "%s:          probable X server bug in Xinerama/RANDR!\n",
+                 blurb(), monitors[0]->width, monitors[0]->height,
+                 monitors[0]->width / (double) monitors[0]->height,
+                 blurb());
     }
 }
 

@@ -4,6 +4,7 @@ pedal - pretty geometric picture program
 .SH SYNOPSIS
 .B pedal
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIseconds\fP] [-maxlines \fInumber\fP] [-mono] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIpedal\fP program displays pretty geometric pictures.
 .SH OPTIONS
@@ -31,6 +32,9 @@ between 20 and 2000.  Maximum value is 16K.
 .PP
 To make your X server grunt under load, and to impress your
 friends, try \fIpedal -mono -delay 0 -maxlines 100\fp.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -49,9 +49,10 @@
 static const char *epicycle_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*colors:	100",
   "*color0:	red",
-  "*delay:	1000",
+  "*delay:	20000",
   "*holdtime:	2",
   "*lineWidth:	4",
   "*minCircles:  2",

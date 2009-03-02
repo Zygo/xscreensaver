@@ -4,6 +4,7 @@ helix - draw helical string-art patterns
 .SH SYNOPSIS
 .B helix
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-erase\-speed \fIusecs\fP] [\-erase\-mode \fIinteger\fP] [\-delay \fIseconds\fP] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIhelix\fP program draws interesting patterns composed of line segments
 in random colors.
@@ -32,6 +33,9 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,10 +52,10 @@
 	   PREFIX ## _reshape,					\
 	   PREFIX ## _event,					\
 	   PREFIX ## _free,					\
-           0, 0 };						\
+           0, 0, 0 };						\
   XSCREENSAVER_LINK (NAME ## _xscreensaver_function_table)
 
-#define XSCREENSAVER_MODULE(CLASS,PREFIX)				\
+#define XSCREENSAVER_MODULE(CLASS,PREFIX)			\
       XSCREENSAVER_MODULE_2(CLASS,PREFIX,PREFIX)
 
 #endif /* __SCREENHACK_H__ */

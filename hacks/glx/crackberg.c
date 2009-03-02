@@ -1,8 +1,10 @@
 /***************************
  ** crackberg; Matus Telgarsky [ catachresis@cmu.edu ] 2005 
  ** */
-#define XK_MISCELLANY
-#include <X11/keysymdef.h>
+#ifndef HAVE_COCOA
+# define XK_MISCELLANY
+# include <X11/keysymdef.h>
+#endif
 
 #define DEFAULTS    "*delay:        20000       \n" \
                     "*showFPS:      False       \n" \
@@ -20,7 +22,7 @@
 #define DEF_CRACK      "True"
 #define DEF_WATER      "True"
 #define DEF_FLAT       "True"
-#define DEF_COLOR      "plain"
+#define DEF_COLOR      "random"
 #define DEF_LIT        "True"
 #define DEF_VISIBILITY "0.6"
 #define DEF_LETTERBOX  "False"
@@ -1247,8 +1249,10 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
 
     if (ev->xany.type == KeyPress) {
         switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
+# ifndef HAVE_COCOA
             case XK_Left:   cberg->motion_state |= MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state |= MOTION_RROT;  break;
+# endif
             case '1':       cberg->motion_state |= MOTION_DEC;   break; 
             case '2':       cberg->motion_state |= MOTION_INC;   break;
             case 'a':       cberg->motion_state |= MOTION_LEFT;  break;
@@ -1273,8 +1277,10 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
 #endif
 
         switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
+# ifndef HAVE_COCOA
             case XK_Left:   cberg->motion_state &= ~MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state &= ~MOTION_RROT;  break;
+# endif
             case '1':       cberg->motion_state &= ~MOTION_DEC;   break; 
             case '2':       cberg->motion_state &= ~MOTION_INC;   break;
             case 'a':       cberg->motion_state &= ~MOTION_LEFT;  break;

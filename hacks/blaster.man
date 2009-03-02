@@ -11,6 +11,7 @@ blaster - simulation of space combat
 [\-num_lasers \fInumber\fP]
 [\-num_stars \fInumber\fP]
 [\-delay \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Draws a simulation of flying space-combat robots (cleverly disguised as
 colored circles) doing battle in front of a moving star field.
@@ -37,6 +38,9 @@ Stars.	5 - 200.  Default: 50.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

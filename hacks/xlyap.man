@@ -35,6 +35,7 @@ xlyap \- display an array of Lyapunov exponents graphically
 [-x xpos]
 [-y ypos]
 .in -8n
+[\-fps]
 .SH DESCRIPTION
 \fIxlyap\fR
 generates and graphically displays an array of Lyapunov exponents for a 

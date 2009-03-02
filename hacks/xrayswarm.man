@@ -8,6 +8,7 @@ xrayswarm - swarms with color trails.
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Draws a few swarms of critters flying around the screen, with nicely faded
 color trails behind them.

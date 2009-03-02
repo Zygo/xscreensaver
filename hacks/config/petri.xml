@@ -7,25 +7,26 @@
   <vgroup>
     <hgroup>
       <number id="delay" type="slider" arg="-delay %"
-              _label="Speed" _low-label="Slow" _high-label="Fast"
-              low="0" high="20000" default="10000"
+              _label="Frame rate" _low-label="Low" _high-label="High"
+              low="0" high="100000" default="10000"
               convert="invert"/>
+      <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
     </hgroup>
   </vgroup>
 
   <hgroup>
     <number id="size" type="spinbutton" arg="-size %"
-             _label="Cell Size" low="0" high="100" default="2"/>
+             _label="Cell size" low="0" high="100" default="2"/>
 
     <number id="count" type="spinbutton" arg="-count %"
-            _label="Mold Varieties" low="0" high="20" default="20"/>
+            _label="Mold varieties" low="0" high="20" default="20"/>
   </hgroup>
 
 <hgroup>
  <vgroup>
 
   <number id="diaglim" type="slider" arg="-diaglim %"
-          _label="Colony Shape" _low-label="Square" _high-label="Diamond"
+          _label="Colony shape" _low-label="Square" _high-label="Diamond"
           low="1.0" high="2.0" default="1.414"
           convert="invert"/>
 
@@ -38,34 +39,34 @@
           low="0.0" high="1.0" default="0.5"/>
 
   <number id="instantdeathchan" type="slider" arg="-instantdeathchan %"
-          _label="Death Comes" _low-label="Slowly" _high-label="Quickly"
+          _label="Death comes" _low-label="Slowly" _high-label="Quickly"
           low="0.0" high="1.0" default="0.2"/>
 
   <number id="minlifespeed" type="slider" arg="-minlifespeed %"
-          _label="Minimum Rate of Growth" _low-label="Slow" _high-label="Fast"
+          _label="Minimum rate of growth" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.04"/>
 
     </vgroup>
     <vgroup>
 
   <number id="maxlifespeed" type="slider" arg="-maxlifespeed %"
-          _label="Maximum Rate of Growth" _low-label="Slow" _high-label="Fast"
+          _label="Maximum rate of growth" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.13"/>
 
   <number id="mindeathspeed" type="slider" arg="-mindeathspeed %"
-          _label="Minimum Rate of Death" _low-label="Slow" _high-label="Fast"
+          _label="Minimum rate of death" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.42"/>
 
   <number id="maxdeathspeed" type="slider" arg="-maxdeathspeed %"
-          _label="Maximum Rate of Death" _low-label="Slow" _high-label="Fast"
+          _label="Maximum rate of death" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.46"/>
 
   <number id="minlifespan" type="slider" arg="-minlifespan %"
-          _label="Minimum Lifespan" _low-label="Short" _high-label="Long"
+          _label="Minimum lifespan" _low-label="Short" _high-label="Long"
           low="0" high="3000" default="500"/>
 
   <number id="maxlifespan" type="slider" arg="-maxlifespan %"
-          _label="Maximum Lifespan" _low-label="Short" _high-label="Long"
+          _label="Maximum lifespan" _low-label="Short" _high-label="Long"
           low="0" high="3000" default="1500"/>
 
     </vgroup>

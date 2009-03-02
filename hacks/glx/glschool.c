@@ -23,6 +23,23 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#define DEF_NFISH	"100"
+#define DEF_FOG		"False"
+#define DEF_DRAWBBOX	"True"
+#define DEF_DRAWGOAL	"False"
+#define DEF_GOALCHGF	"50"
+#define DEF_MAXVEL	"7.0"
+#define DEF_MINVEL	"1.0"
+#define DEF_ACCLIMIT	"8.0"
+#define DEF_DISTEXP	"2.2"
+#define DEF_AVOIDFACT	"1.5"
+#define DEF_MATCHFACT	"0.15"
+#define DEF_CENTERFACT	"0.1"
+#define DEF_TARGETFACT	"80"
+#define DEF_MINRADIUS	"30.0"
+#define DEF_MOMENTUM	"0.9"
+#define DEF_DISTCOMP	"10.0"
+
 static int			NFish;
 static Bool			DoFog;
 static Bool			DoDrawBBox;
@@ -63,22 +80,22 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-	{&NFish,		"nfish",		"NFish",		"100", t_Int},
-	{&DoFog,		"fog",			"DoFog",		"False", t_Bool},
-	{&DoDrawBBox,	"drawbbox",		"DoDrawBBox",	"True", t_Bool},
-	{&DoDrawGoal,	"drawgoal",		"DoDrawGoal",	"False", t_Bool},
-	{&GoalChgFreq,	"goalchgf",		"GoalChgFreq",	"50",  t_Int},
-	{&MaxVel,		"maxvel",		"MaxVel",		"7.0",  t_Float},
-	{&MinVel,		"minvel",		"MinVel",		"1.0",	t_Float},
-	{&AccLimit,		"acclimit",		"AccLimit",		"8.0",  t_Float},
-	{&DistExp,		"distexp",		"DistExp",		"2.2",  t_Float},
-	{&AvoidFact,	"avoidfact",	"AvoidFact",	"1.5",  t_Float},
-	{&MatchFact,	"matchfact",	"MatchFact",	"0.15",  t_Float},
-	{&CenterFact,	"centerfact",	"CenterFact",	"0.1",  t_Float},
-	{&TargetFact,	"targetfact",	"TargetFact",	"80",  t_Float},
-	{&MinRadius,	"minradius",	"MinRadius",	"30.0",  t_Float},
-	{&Momentum,		"momentum",		"Momentum",		"0.9",  t_Float},
-	{&DistComp,		"distcomp",		"DistComp",		"10.0",  t_Float},
+	{&NFish,		"nfish",		"NFish",		DEF_NFISH, t_Int},
+	{&DoFog,		"fog",			"DoFog",		DEF_FOG, t_Bool},
+	{&DoDrawBBox,	"drawbbox",		"DoDrawBBox",	DEF_DRAWBBOX, t_Bool},
+	{&DoDrawGoal,	"drawgoal",		"DoDrawGoal",	DEF_DRAWGOAL, t_Bool},
+	{&GoalChgFreq,	"goalchgf",		"GoalChgFreq",	DEF_GOALCHGF,  t_Int},
+	{&MaxVel,		"maxvel",		"MaxVel",		DEF_MAXVEL,  t_Float},
+	{&MinVel,		"minvel",		"MinVel",		DEF_MINVEL,	t_Float},
+	{&AccLimit,		"acclimit",		"AccLimit",		DEF_ACCLIMIT,  t_Float},
+	{&DistExp,		"distexp",		"DistExp",		DEF_DISTEXP,  t_Float},
+	{&AvoidFact,	"avoidfact",	"AvoidFact",	DEF_AVOIDFACT,  t_Float},
+	{&MatchFact,	"matchfact",	"MatchFact",	DEF_MATCHFACT,  t_Float},
+	{&CenterFact,	"centerfact",	"CenterFact",	DEF_CENTERFACT,  t_Float},
+	{&TargetFact,	"targetfact",	"TargetFact",	DEF_TARGETFACT,  t_Float},
+	{&MinRadius,	"minradius",	"MinRadius",	DEF_MINRADIUS,  t_Float},
+	{&Momentum,		"momentum",		"Momentum",		DEF_MOMENTUM,  t_Float},
+	{&DistComp,		"distcomp",		"DistComp",		DEF_DISTCOMP,  t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt glschool_opts = {countof(opts), opts, countof(vars), vars, NULL};

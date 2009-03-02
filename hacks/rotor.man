@@ -12,6 +12,7 @@ rotor - screen saver.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-size \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 This draws a line segment moving along a complex spiraling curve.
 .SH OPTIONS
@@ -40,6 +41,9 @@ Number of Colors.  Default: 200.
 .TP 8
 .B \-size \fInumber\fP
 Size.  -50 - 50.  Default: -6.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

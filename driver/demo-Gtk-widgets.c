@@ -1431,6 +1431,7 @@ create_xscreensaver_settings_dialog (void)
   GtkWidget *dialog_hbuttonbox;
   GtkWidget *adv_button;
   GtkWidget *std_button;
+  GtkWidget *reset_button;
   GtkWidget *ok_cancel_hbuttonbox;
   GtkWidget *ok_button;
   GtkWidget *cancel_button;
@@ -1697,6 +1698,16 @@ create_xscreensaver_settings_dialog (void)
   STFU GTK_WIDGET_SET_FLAGS (std_button, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, std_button, _("Back to the graphical configuration options."), NULL);
 
+  reset_button = gtk_button_new_with_label (_("Reset to Defaults"));
+  gtk_widget_set_name (reset_button, "reset_button");
+  gtk_widget_ref (reset_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_settings_dialog), "reset_button", reset_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (reset_button);
+  gtk_container_add (GTK_CONTAINER (dialog_hbuttonbox), reset_button);
+  STFU GTK_WIDGET_SET_FLAGS (reset_button, GTK_CAN_DEFAULT);
+  gtk_tooltips_set_tip (tooltips, reset_button, _("Reset this screen saver to the default settings."), NULL);
+
   ok_cancel_hbuttonbox = gtk_hbutton_box_new ();
   gtk_widget_set_name (ok_cancel_hbuttonbox, "ok_cancel_hbuttonbox");
   gtk_widget_ref (ok_cancel_hbuttonbox);
@@ -1735,6 +1746,9 @@ create_xscreensaver_settings_dialog (void)
                       NULL);
   gtk_signal_connect (GTK_OBJECT (std_button), "clicked",
                       GTK_SIGNAL_FUNC (settings_std_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (reset_button), "clicked",
+                      GTK_SIGNAL_FUNC (settings_reset_cb),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (ok_button), "clicked",
                       GTK_SIGNAL_FUNC (settings_ok_cb),

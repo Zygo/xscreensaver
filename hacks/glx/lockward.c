@@ -139,25 +139,34 @@ static int		g_blinkidle_min,
 static int		g_blinkdwell_min,
 			g_blinkdwell_max;
 
+#define DEF_BLINK		"True"
+#define DEF_ROTATEIDLEMIN	"1000"
+#define DEF_ROTATEIDLEMAX	"6000"
+#define DEF_BLINKIDLEMIN	"1000"
+#define DEF_BLINKIDLEMAX	"9000"
+#define DEF_BLINKDWELLMIN	"100"
+#define DEF_BLINKDWELLMAX	"600"
+
+
 static XrmOptionDescRec opts[] = {
 	{ "-blink",	".blink",  XrmoptionNoArg, "on" },
 	{ "+blink",	".blink",  XrmoptionNoArg, "off" },
-	{ "-rotateidle-min",	".rotateidle-min",	XrmoptionSepArg,	0 },
-	{ "-rotateidle-max",	".rotateidle-max",	XrmoptionSepArg,	0 },
-	{ "-blinkidle-min",	".blinkidle-min",	XrmoptionSepArg,	0 },
-	{ "-blinkidle-max",	".blinkidle-max",	XrmoptionSepArg,	0 },
-	{ "-blinkdwell-min",	".blinkdwell-min",	XrmoptionSepArg,	0 },
-	{ "-blinkdwell-max",	".blinkdwell-max",	XrmoptionSepArg,	0 },
+	{ "-rotateidle-min",	".rotateidlemin",	XrmoptionSepArg,	0 },
+	{ "-rotateidle-max",	".rotateidlemax",	XrmoptionSepArg,	0 },
+	{ "-blinkidle-min",	".blinkidlemin",	XrmoptionSepArg,	0 },
+	{ "-blinkidle-max",	".blinkidlemax",	XrmoptionSepArg,	0 },
+	{ "-blinkdwell-min",	".blinkdwellmin",	XrmoptionSepArg,	0 },
+	{ "-blinkdwell-max",	".blinkdwellmax",	XrmoptionSepArg,	0 },
 };
 
 static argtype vars[] = {
-	{ &g_blink_p, "blink",	"Blink", "True", t_Bool	},
-	{ &g_rotateidle_min, "rotateidle-min",	"Rotateidle-min", "1000", t_Int	},
-	{ &g_rotateidle_max, "rotateidle-max",	"Rotateidle-max", "6000", t_Int	},
-	{ &g_blinkidle_min, "blinkidle-min", "Blinkidle-min", "1000", t_Int },
-	{ &g_blinkidle_max, "blinkidle-max", "Blinkidle-max", "9000", t_Int },
-	{ &g_blinkdwell_min, "blinkdwell-min", "Blinkdwell-min", "100", t_Int },
-	{ &g_blinkdwell_max, "blinkdwell-max", "Blinkdwell-max", "600", t_Int },
+	{ &g_blink_p, "blink",	"Blink", DEF_BLINK, t_Bool	},
+	{ &g_rotateidle_min, "rotateidlemin",	"Rotateidlemin", DEF_ROTATEIDLEMIN, t_Int	},
+	{ &g_rotateidle_max, "rotateidlemax",	"Rotateidlemax", DEF_ROTATEIDLEMAX, t_Int	},
+	{ &g_blinkidle_min, "blinkidlemin", "Blinkidlemin", DEF_BLINKIDLEMIN, t_Int },
+	{ &g_blinkidle_max, "blinkidlemax", "Blinkidlemax", DEF_BLINKIDLEMAX, t_Int },
+	{ &g_blinkdwell_min, "blinkdwellmin", "Blinkdwellmin", DEF_BLINKDWELLMIN, t_Int },
+	{ &g_blinkdwell_max, "blinkdwellmax", "Blinkdwellmax", DEF_BLINKDWELLMAX, t_Int },
 };
 
 static OptionStruct desc[] = {

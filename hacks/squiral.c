@@ -238,13 +238,14 @@ squiral_free (Display *dpy, Window window, void *closure)
 static const char *squiral_defaults[] = {
   ".background: black",
   ".foreground: white",
+  "*fpsSolid:	true",
   "*fill:       75",
   "*count:      0",
   "*ncolors:    100",
-  "*delay:      1000",
+  "*delay:      10000",
   "*disorder:   0.005",
   "*cycle:      False",
-  "*handedness: .5",
+  "*handedness: 0.5",
   0
 };
 

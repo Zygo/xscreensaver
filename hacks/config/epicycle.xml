@@ -4,24 +4,26 @@
 
   <command arg="-root"/>
 
-  <number id="ncolors" type="slider" arg="-colors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="100"/>
-
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="200000" default="1000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <number id="holdtime" type="slider" arg="-holdtime %"
-          _label="Duration" _low-label="1 second" _high-label="1 minute"
-          low="1" high="60" default="2"/>
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
 
+  <number id="holdtime" type="slider" arg="-holdtime %"
+          _label="Linger" _low-label="1 second" _high-label="30 seconds"
+          low="1" high="30" default="2"/>
+
+  <hgroup>
   <number id="linewidth" type="spinbutton" arg="-linewidth %"
-          _label="Line Thickness" low="1" high="50" default="4"/>
+          _label="Line thickness" low="1" high="50" default="4"/>
 
   <number id="harmonics" type="spinbutton" arg="-harmonics %"
           _label="Harmonics" low="1" high="20" default="8"/>
+  </hgroup>
 
   <!-- #### -color0 [red] -->
   <!-- #### -colours [100] -->
@@ -35,11 +37,15 @@
   <!-- #### -size_factor_min [1.05] -->
   <!-- #### -size_factor_max [2.05] -->
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-This program draws the path traced out by a point on the edge of a
+This draws the path traced out by a point on the edge of a
 circle.  That circle rotates around a point on the rim of another
 circle, and so on, several times. These were the basis for the
-pre-heliocentric model of planetary motion.  
+pre-heliocentric model of planetary motion.
+
+http://en.wikipedia.org/wiki/Deferent_and_epicycle
 
 Written by James Youngman; 1998.
   </_description>

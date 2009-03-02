@@ -33,6 +33,7 @@ sonar - display a sonar scope
 [\-no\-dns] 
 [\-no\-times] 
 [\-debug] 
+[\-fps]
 .SH DESCRIPTION
 The \fIsonar\fP program displays a sonar scope on the computer's screen.
 This scope polls a sensor as the sweep goes around the scope and displays
@@ -122,6 +123,9 @@ In simulation mode, the number of bogies on team A.
 .TP 8
 .B \-team-b-count \fIint\fP
 In simulation mode, the number of bogies on team B.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH RESOURCES
 Configuration of the targets to ping is best done by setting X Resources.
 .PP

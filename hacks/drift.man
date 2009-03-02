@@ -5,6 +5,7 @@ drift - draws drifting recursive fractal cosmic flames
 .B drift
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-count \fIinteger\fP] [\-grow] [\-no\-grow] [\-liss] [\-no\-liss]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIdrift\fP program draws drifting recursive fractal cosmic flames
 .SH OPTIONS
@@ -46,6 +47,9 @@ Whether fractals should grow; otherwise, they are animated.
 .B \-no\-liss
 Whether we should use lissajous figures to get points.
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

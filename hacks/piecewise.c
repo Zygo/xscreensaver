@@ -960,7 +960,7 @@ piecewise_free (Display *dpy, Window window, void *closure)
 static const char *piecewise_defaults [] = {
   ".background:         black",
   ".foreground:         white",
-  "*delay:              5000",
+  "*delay:              10000",
   "*speed:              15",
   "*ncolors:            256",
   ".colorspeed:         10",

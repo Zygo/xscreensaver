@@ -4,6 +4,7 @@ rorschach - simulate ink-blot patterns
 .SH SYNOPSIS
 .B rorschach
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-iterations \fIinteger\fP] [\-offset \fIinteger\fP] [\-xsymmetry] [\-ysymmetry] [\-erase\-speed \fIusecs\fP] [\-delay \fIsecs\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIrorschach\fP program draws random patterns reminiscent of the
 psychological test of same name.
@@ -45,6 +46,9 @@ erasing of individual lines.)
 .TP 8
 .B \-delay \fIseconds\fP
 This sets the number of seconds that the figure will be on the screen.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

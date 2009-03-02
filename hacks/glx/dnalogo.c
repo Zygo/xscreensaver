@@ -64,6 +64,7 @@ typedef struct {
   GLuint helix_list,  helix_list_wire,  helix_list_facetted;
   GLuint gasket_list, gasket_list_wire;
   GLuint frame_list,  frame_list_wire;
+  int polys[7];
 
   int wall_facets;
   int bar_facets;
@@ -146,9 +147,10 @@ vector_angle (double ax, double ay, double az,
 /* Make the helix
  */
 
-static void
+static int
 make_helix (logo_configuration *dc, int facetted, int wire)
 {
+  int polys = 0;
   int wall_facets = dc->wall_facets / (facetted ? 10 : 1);
   GLfloat th;
   GLfloat max_th = M_PI * 2 * dc->turns;
@@ -189,6 +191,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glVertex3f( x1, y1,  z1 + h1 + h1off);
       glVertex3f(x1b, y1b, z1 + h1 + h1off);
       glVertex3f(x1b, y1b, z1 - h1 + h1off);
+      polys++;
       glEnd();
     }
 
@@ -242,6 +245,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glNormal3f(x2, y2, 0);
       glVertex3f(x2, y2, z2 + h2 + h2off);
       glVertex3f(x2, y2, z2 - h2 + h2off);
+      polys++;
       glEnd();
 
       /* inner face
@@ -254,6 +258,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glNormal3f(-x2b, -y2b, 0);
       glVertex3f( x2b,  y2b, z2 + h2 + h2off);
       glVertex3f( x2b,  y2b, z2 - h2 + h2off);
+      polys++;
       glEnd();
 
       /* top face
@@ -268,7 +273,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glVertex3f( x2b,  y2b, z2 + h2 + h2off);
       glVertex3f( x1b,  y1b, z1 + h1 + h1off);
       glVertex3f( x1,   y1,  z1 + h1 + h1off);
-
+      polys++;
       glEnd();
 
       /* bottom face
@@ -283,6 +288,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glVertex3f( x1b,  y1b, z1 - h1 + h1off);
       glVertex3f( x2b,  y2b, z2 - h2 + h2off);
       glVertex3f( x2,   y2,  z2 - h2 + h2off);
+      polys++;
       glEnd();
 
       x1 = x2;
@@ -308,14 +314,17 @@ make_helix (logo_configuration *dc, int facetted, int wire)
       glVertex3f(x2,  y2,  z1 + h2 + h2off);
       glVertex3f(x2b, y2b, z1 + h2 + h2off);
       glVertex3f(x2b, y2b, z1 - h2 + h2off);
+      polys++;
       glEnd();
     }
+  return polys;
 }
 
 
-static void
+static int
 make_ladder (logo_configuration *dc, int facetted, int wire)
 {
+  int polys = 0;
   GLfloat th;
   GLfloat max_th = dc->turns * M_PI * 2;
   GLfloat max_z  = dc->turns * dc->turn_spacing;
@@ -348,13 +357,14 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
       if (facets <= 3) facets = 3;
       x = cos (th) * (1 - dc->wall_thickness);
       y = sin (th) * (1 - dc->wall_thickness);
-      tube ( x,  y, z,
-            -x, -y, z,
-             dc->bar_thickness, 0, facets,
-             True, True, wire);
+      polys += tube ( x,  y, z,
+                     -x, -y, z,
+                      dc->bar_thickness, 0, facets,
+                      True, True, wire);
       z  += z_inc;
       th += th_inc;
     }
+  return polys;
 }
 
 
@@ -363,9 +373,10 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
  */
 
 
-static void
+static int
 make_gasket (logo_configuration *dc, int wire)
 {
+  int polys = 0;
   int i;
   int points_size;
   int npoints = 0;
@@ -523,12 +534,14 @@ make_gasket (logo_configuration *dc, int wire)
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx0[i], pointsy0[i], z);
+          polys += npoints;
           glEnd();
 
           /* outside edge */
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx1[i], pointsy1[i], z);
+          polys += npoints;
           glEnd();
 # else
           for (i = 1; i < npoints; i++)
@@ -540,6 +553,7 @@ make_gasket (logo_configuration *dc, int wire)
               glVertex3f (pointsx1[i-1], pointsy1[i-1], z);
               glEnd();
             }
+          polys += npoints;
 # endif
         }
 #if 1
@@ -553,6 +567,7 @@ make_gasket (logo_configuration *dc, int wire)
           glVertex3f (pointsx1[i], pointsy1[i], -thick2);
           glVertex3f (pointsx1[i], pointsy1[i],  thick2);
         }
+      polys += npoints;
       glEnd();
 #endif
     }
@@ -567,6 +582,7 @@ make_gasket (logo_configuration *dc, int wire)
           glVertex3f (pointsx0[i], pointsy0[i], -thick2);
           glVertex3f (pointsx1[i], pointsy1[i], -thick2);
         }
+      polys += npoints;
       glEnd();
 
       /* bottom */
@@ -578,6 +594,7 @@ make_gasket (logo_configuration *dc, int wire)
           glVertex3f (pointsx0[i], pointsy0[i], thick2);
           glVertex3f (pointsx1[i], pointsy1[i], thick2);
         }
+      polys += npoints;
       glEnd();
 
       /* inside edge */
@@ -589,6 +606,7 @@ make_gasket (logo_configuration *dc, int wire)
           glVertex3f ( pointsx0[i],  pointsy0[i],  thick2);
           glVertex3f ( pointsx0[i],  pointsy0[i], -thick2);
         }
+      polys += npoints;
       glEnd();
 
       /* outside edge */
@@ -641,6 +659,7 @@ make_gasket (logo_configuration *dc, int wire)
                 glVertex3f (xz, yz,  thick2);
               }
           }
+        polys += npoints;
       }
       glEnd();
     }
@@ -678,6 +697,7 @@ make_gasket (logo_configuration *dc, int wire)
         glVertex3f (pointsx0[3], pointsy0[3], -thick2);
         glVertex3f (pointsx0[2], pointsy0[2], -thick2);
         glEnd();
+        polys++;
 
         /* back wall */
         glNormal3f (0, 0, 1);
@@ -688,6 +708,7 @@ make_gasket (logo_configuration *dc, int wire)
         glVertex3f (pointsx0[3], pointsy0[3],  thick2);
         glVertex3f (pointsx0[2], pointsy0[2],  thick2);
         glEnd();
+        polys++;
       }
 
     /* top wall */
@@ -701,6 +722,7 @@ make_gasket (logo_configuration *dc, int wire)
     glNormal3f (pointsx0[1], pointsy0[1], 0);
     glVertex3f (pointsx0[1], pointsy0[1], -thick2);
     glEnd();
+    polys++;
 
 
     /* Now make a donut.
@@ -730,6 +752,7 @@ make_gasket (logo_configuration *dc, int wire)
           pointsx1[npoints] = r1 * cth;
           pointsy1[npoints] = r1 * sth;
           npoints++;
+          polys++;
         }
 
       pointsx0[npoints] = pointsx0[0];
@@ -743,19 +766,23 @@ make_gasket (logo_configuration *dc, int wire)
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx0[i], pointsy0[i], -thick2);
+          polys += npoints;
           glEnd();
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx0[i], pointsy0[i],  thick2);
+          polys += npoints;
           glEnd();
 # if 0
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx1[i], pointsy1[i], -thick2);
+          polys += npoints;
           glEnd();
           glBegin (GL_LINE_LOOP);
           for (i = 0; i < npoints; i++)
             glVertex3f (pointsx1[i], pointsy1[i],  thick2);
+          polys += npoints;
           glEnd();
 # endif
         }
@@ -770,6 +797,7 @@ make_gasket (logo_configuration *dc, int wire)
               glVertex3f (pointsx0[i], pointsy0[i], -thick2);
               glVertex3f (pointsx1[i], pointsy1[i], -thick2);
             }
+          polys += npoints;
           glEnd();
 
           /* bottom */
@@ -781,6 +809,7 @@ make_gasket (logo_configuration *dc, int wire)
               glVertex3f (pointsx0[i], pointsy0[i],  thick2);
               glVertex3f (pointsx1[i], pointsy1[i],  thick2);
             }
+          polys += npoints;
           glEnd();
         }
 
@@ -793,6 +822,7 @@ make_gasket (logo_configuration *dc, int wire)
           glVertex3f ( pointsx0[i],  pointsy0[i],  thick2);
           glVertex3f ( pointsx0[i],  pointsy0[i], -thick2);
         }
+      polys += npoints;
       glEnd();
 
       glPopMatrix();
@@ -828,6 +858,7 @@ make_gasket (logo_configuration *dc, int wire)
         glNormal3f (-1, 0, 0);
         glVertex3f (-w/2, -h/2,  thick2); glVertex3f (-w/2,  h/2,  thick2);
         glVertex3f (-w/2,  h/2, -thick2); glVertex3f (-w/2, -h/2, -thick2);
+        polys++;
         glEnd();
       }
 
@@ -837,6 +868,7 @@ make_gasket (logo_configuration *dc, int wire)
         pointsx0[npoints] = w/2 * cos(th);
         pointsy0[npoints] = w/2 * sin(th);
         npoints++;
+        polys++;
       }
 
     /* front inside curve */
@@ -846,6 +878,7 @@ make_gasket (logo_configuration *dc, int wire)
     if (! wire) glVertex3f (0, h/2, -thick2);
     for (i = 0; i < npoints; i++)
       glVertex3f (pointsx0[i], h/2 + pointsy0[i], -thick2);
+    polys += npoints;
     glEnd();
 
     /* front outside curve */
@@ -854,6 +887,7 @@ make_gasket (logo_configuration *dc, int wire)
     if (! wire) glVertex3f (0, -h/2, -thick2);
     for (i = 0; i < npoints; i++)
       glVertex3f (pointsx0[i], -h/2 - pointsy0[i], -thick2);
+    polys += npoints;
     glEnd();
 
     /* back inside curve */
@@ -863,6 +897,7 @@ make_gasket (logo_configuration *dc, int wire)
     if (! wire) glVertex3f (0, h/2, thick2);
     for (i = 0; i < npoints; i++)
       glVertex3f (pointsx0[i], h/2 + pointsy0[i], thick2);
+    polys += npoints;
     glEnd();
 
     /* back outside curve */
@@ -871,6 +906,7 @@ make_gasket (logo_configuration *dc, int wire)
     if (! wire) glVertex3f (0, -h/2, thick2);
     for (i = 0; i < npoints; i++)
       glVertex3f (pointsx0[i], -h/2 - pointsy0[i], thick2);
+    polys += npoints;
     glEnd();
 
     /* inside curve */
@@ -882,6 +918,7 @@ make_gasket (logo_configuration *dc, int wire)
         glVertex3f (pointsx0[i], h/2 + pointsy0[i],  thick2);
         glVertex3f (pointsx0[i], h/2 + pointsy0[i], -thick2);
       }
+    polys += npoints;
     glEnd();
 
     /* outside curve */
@@ -893,6 +930,7 @@ make_gasket (logo_configuration *dc, int wire)
         glVertex3f (pointsx0[i], -h/2 - pointsy0[i],  thick2);
         glVertex3f (pointsx0[i], -h/2 - pointsy0[i], -thick2);
       }
+    polys += npoints;
     glEnd();
   }
 
@@ -903,11 +941,13 @@ make_gasket (logo_configuration *dc, int wire)
   free (normals);
 
   glPopMatrix();
+  return polys;
 }
 
-static void
+static int
 make_frame (logo_configuration *dc, int wire)
 {
+  int polys = 0;
   int i, j;
   GLfloat x[20], y[20];
   GLfloat corner_cut = 0.5;
@@ -952,6 +992,7 @@ make_frame (logo_configuration *dc, int wire)
             glVertex3f (x[5], y[0], 0); glVertex3f (x[5], y[2], 0); 
             glVertex3f (x[7], y[0], 0); glVertex3f (x[7], y[2], 0);
             glVertex3f (x[8], y[1], 0); glVertex3f (x[8], y[2], 0);
+            polys += 6;
             glEnd ();
             glTranslatef (0.5, 0.5, 0);
             glRotatef (90, 0, 0, 1);
@@ -971,6 +1012,7 @@ make_frame (logo_configuration *dc, int wire)
       glVertex3f (x[4], y[3], 0); glVertex3f (x[4], y[3], dc->frame_depth/2); 
       glVertex3f (x[5], y[2], 0); glVertex3f (x[5], y[2], dc->frame_depth/2); 
       glVertex3f (x[6], y[2], 0); glVertex3f (x[6], y[2], dc->frame_depth/2); 
+      polys += 4;
       glEnd ();
 
       glNormal3f (0, -1, 0);
@@ -979,6 +1021,7 @@ make_frame (logo_configuration *dc, int wire)
       glVertex3f (x[7], y[0], dc->frame_depth/2); 
       glVertex3f (x[1], y[0], dc->frame_depth/2); 
       glVertex3f (x[1], y[0], 0); 
+      polys++;
       glEnd ();
 
       glNormal3f (1, -1, 0);
@@ -987,6 +1030,7 @@ make_frame (logo_configuration *dc, int wire)
       glVertex3f (x[8], y[1], dc->frame_depth/2); 
       glVertex3f (x[7], y[0], dc->frame_depth/2); 
       glVertex3f (x[7], y[0], 0); 
+      polys++;
       glEnd ();
 
       if (wire) 
@@ -1000,6 +1044,7 @@ make_frame (logo_configuration *dc, int wire)
               glVertex3f (x[4], y[3], j*dc->frame_depth/2);
               glVertex3f (x[5], y[2], j*dc->frame_depth/2);
               glVertex3f (x[6], y[2], j*dc->frame_depth/2);
+              polys += 4;
               glEnd ();
             }
         }
@@ -1010,6 +1055,7 @@ make_frame (logo_configuration *dc, int wire)
     }
 
   glPopMatrix();
+  return polys;
 }
 
 
@@ -1169,10 +1215,10 @@ init_logo (ModeInfo *mi)
   dc->helix_list = glGenLists (1);
   glNewList (dc->helix_list, GL_COMPILE);
   glRotatef(helix_rot, 0, 0, 1);
-  if (do_ladder) make_ladder (dc, 0, 0);
-  if (do_helix)  make_helix  (dc, 0, 0);
+  if (do_ladder) dc->polys[0] += make_ladder (dc, 0, 0);
+  if (do_helix)  dc->polys[0] += make_helix  (dc, 0, 0);
   glRotatef(180, 0, 0, 1);
-  if (do_helix)  make_helix  (dc, 0, 0);
+  if (do_helix)  dc->polys[0] += make_helix  (dc, 0, 0);
   glEndList ();
   glPopMatrix();
 
@@ -1180,10 +1226,10 @@ init_logo (ModeInfo *mi)
   dc->helix_list_wire = glGenLists (1);
   glNewList (dc->helix_list_wire, GL_COMPILE);
 /*  glRotatef(helix_rot, 0, 0, 1); wtf? */
-  if (do_ladder) make_ladder (dc, 1, 1);
-  if (do_helix)  make_helix  (dc, 1, 1);
+  if (do_ladder) dc->polys[1] += make_ladder (dc, 1, 1);
+  if (do_helix)  dc->polys[1] += make_helix  (dc, 1, 1);
   glRotatef(180, 0, 0, 1);
-  if (do_helix)  make_helix  (dc, 1, 1);
+  if (do_helix)  dc->polys[1] += make_helix  (dc, 1, 1);
   glEndList ();
   glPopMatrix();
 
@@ -1191,31 +1237,31 @@ init_logo (ModeInfo *mi)
   dc->helix_list_facetted = glGenLists (1);
   glNewList (dc->helix_list_facetted, GL_COMPILE);
   glRotatef(helix_rot, 0, 0, 1);
-  if (do_ladder) make_ladder (dc, 1, 0);
-  if (do_helix)  make_helix  (dc, 1, 0);
+  if (do_ladder) dc->polys[2] += make_ladder (dc, 1, 0);
+  if (do_helix)  dc->polys[2] += make_helix  (dc, 1, 0);
   glRotatef(180, 0, 0, 1);
-  if (do_helix)  make_helix  (dc, 1, 0);
+  if (do_helix)  dc->polys[2] += make_helix  (dc, 1, 0);
   glEndList ();
   glPopMatrix();
 
   dc->gasket_list = glGenLists (1);
   glNewList (dc->gasket_list, GL_COMPILE);
-  if (do_gasket) make_gasket (dc, 0);
+  if (do_gasket) dc->polys[3] += make_gasket (dc, 0);
   glEndList ();
 
   dc->gasket_list_wire = glGenLists (1);
   glNewList (dc->gasket_list_wire, GL_COMPILE);
-  if (do_gasket) make_gasket (dc, 1);
+  if (do_gasket) dc->polys[4] += make_gasket (dc, 1);
   glEndList ();
 
   dc->frame_list = glGenLists (1);
   glNewList (dc->frame_list, GL_COMPILE);
-  if (do_frame) make_frame (dc, 0);
+  if (do_frame) dc->polys[5] += make_frame (dc, 0);
   glEndList ();
 
   dc->frame_list_wire = glGenLists (1);
   glNewList (dc->frame_list_wire, GL_COMPILE);
-  if (do_frame) make_frame (dc, 1);
+  if (do_frame) dc->polys[6] += make_frame (dc, 1);
   glEndList ();
 
   /* When drawing both solid and wireframe objects,
@@ -1328,6 +1374,7 @@ draw_logo (ModeInfo *mi)
   if (!dc->glx_context)
     return;
 
+  mi->polygon_count = 0;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(dc->glx_context));
 
   if (dc->wire_overlay == 0 &&
@@ -1367,16 +1414,23 @@ draw_logo (ModeInfo *mi)
 
       glScalef (1, scale, scale);
       if (wire)
-        glCallList (dc->frame_list_wire);
+        {
+          glCallList (dc->frame_list_wire);
+          mi->polygon_count += dc->polys[6];
+        }
       else if (dc->wire_overlay != 0)
         {
           glCallList (dc->frame_list);
           glDisable (GL_LIGHTING);
           glCallList (dc->frame_list_wire);
+          mi->polygon_count += dc->polys[6];
           if (!wire) glEnable (GL_LIGHTING);
         }
       else
-        glCallList (dc->frame_list);
+        {
+          glCallList (dc->frame_list);
+          mi->polygon_count += dc->polys[5];
+        }
       glPopMatrix();
     }
 
@@ -1406,32 +1460,46 @@ draw_logo (ModeInfo *mi)
       glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 
       if (wire)
-        glCallList (dc->gasket_list_wire);
+        {
+          glCallList (dc->gasket_list_wire);
+          mi->polygon_count += dc->polys[4];
+        }
       else if (dc->wire_overlay != 0)
         {
           glCallList (dc->gasket_list);
           glDisable (GL_LIGHTING);
           glCallList (dc->gasket_list_wire);
+          mi->polygon_count += dc->polys[4];
           if (!wire) glEnable (GL_LIGHTING);
         }
       else
-        glCallList (dc->gasket_list);
+        {
+          glCallList (dc->gasket_list);
+          mi->polygon_count += dc->polys[3];
+        }
     }
     glPopMatrix();
 
     glRotatef (360 * sin (M_PI/2 * dc->helix_spinnerz.position), 0, 0, 1);
 
     if (wire)
-      glCallList (dc->helix_list_wire);
+      {
+        glCallList (dc->helix_list_wire);
+        mi->polygon_count += dc->polys[1];
+      }
     else if (dc->wire_overlay != 0)
       {
         glCallList (dc->helix_list_facetted);
         glDisable (GL_LIGHTING);
         glCallList (dc->helix_list_wire);
+        mi->polygon_count += dc->polys[2];
         if (!wire) glEnable (GL_LIGHTING);
       }
     else
-      glCallList (dc->helix_list);
+      {
+        glCallList (dc->helix_list);
+        mi->polygon_count += dc->polys[0];
+      }
   }
   glPopMatrix();
 

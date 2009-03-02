@@ -5,24 +5,26 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Fast" _high-label="Slow"
-          low="0" high="50000" default="30000"/>
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
+          convert="invert"/>
 
-  <number id="boxsize" type="spinbutton" arg="-boxsize %"
-          _label="Box Size" low="1" high="8" default="2"/>
+  <number id="boxsize" type="slider" arg="-boxsize %"
+          _label="Box size" _low-label="Small" _high-label="Large"
+          low="1" high="8" default="2"/>
 
   <hgroup>
    <boolean id="fade"      _label="Fade"        arg-unset="-no-fade"/>
-   <boolean id="blur"      _label="Motion Blur" arg-unset="-no-blur"/>
-  </hgroup>
-  <hgroup>
+   <boolean id="blur"      _label="Motion blur" arg-unset="-no-blur"/>
    <boolean id="dissolve"  _label="Dissolve"    arg-set="-dissolve"/>
    <boolean id="wire"      _label="Wireframe"   arg-set="-wireframe"/>
   </hgroup>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 Shows a ball contained inside of a bounding box.
-Colored blocks blink in when the ball hits the edges.
+Colored blocks blink in when the ball hits the sides.
 
 Written by Jeremy English; 2003.
   </_description>

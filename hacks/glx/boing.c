@@ -42,7 +42,7 @@
 #define DEF_SMOOTH      "False"
 #define DEF_SCANLINES   "True"
 #define DEF_SPEED       "1.0"
-#define DEF_SIZE        "0.5"
+#define DEF_BALL_SIZE   "0.5"
 #define DEF_ANGLE       "15"
 #define DEF_MERIDIANS   "16"
 #define DEF_PARALLELS   "8"
@@ -118,7 +118,7 @@ static argtype vars[] = {
   {&scanlines_p,"scanlines","Scanlines",  DEF_SCANLINES, t_Bool},
   {&speed,     "speed",     "Speed",      DEF_SPEED,     t_Float},
   {&angle,     "angle",     "Angle",      DEF_ANGLE,     t_Int},
-  {&ball_size, "ballSize",  "BallSize",   DEF_SIZE,      t_Float},
+  {&ball_size, "ballSize",  "BallSize",   DEF_BALL_SIZE, t_Float},
   {&meridians, "meridians", "meridians",  DEF_MERIDIANS, t_Int},
   {&parallels, "parallels", "parallels",  DEF_PARALLELS, t_Int},
   {&tiles,     "tiles",     "Tiles",      DEF_TILES,     t_Int},

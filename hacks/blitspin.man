@@ -69,6 +69,9 @@ How long to delay between each 90-degree rotation, in microseconds.
 Default is 500000, one-half second.
 .B DISPLAY
 to get the default host and display number.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources

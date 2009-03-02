@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -579,25 +578,18 @@ qix_free (Display *dpy, Window window, void *closure)
 static const char *qix_defaults [] = {
   ".background:	black",
   ".foreground:	white",
-#if 0
-  "*count:	1",
-#else
-  "*count:	5",
-#endif
-  "*segments:	50",
+  "*fpsSolid:	true",
+  "*count:	4",
+  "*segments:	250",
   "*poly:	2",
   "*spread:	8",
-  "*size:	0",
+  "*size:	200",
   "*colorShift:	3",
-  "*solid:	false",
+  "*solid:	true",
   "*delay:	10000",
-  "*random:	true",
+  "*random:	false",
   "*xor:	false",
-#if 0
-  "*transparent:false",
-#else
   "*transparent:true",
-#endif
   "*gravity:	false",
   "*additive:	true",
   0

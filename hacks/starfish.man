@@ -4,6 +4,7 @@ starfish - radially-symmetric throbbing colormap-hacking graphics demo
 .SH SYNOPSIS
 .B starfish
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-delay2 \fIsecs\fP] [\-thickness \fIpixels\fP] [\-rotation \fIdegrees\fP] [\-duration \fIseconds\fP] [\-colors \fIint\fP] [\-blob] [\-no\-blob]
+[\-fps]
 .SH DESCRIPTION
 The \fIstarfish\fP program draws radially symmetric objects, which expand,
 contract, rotate, and turn inside out.  It uses these shapes to lay down a
@@ -56,6 +57,9 @@ Default 5 seconds.
 .B \-no\-blob
 If \fIblob\fP option is specified, then the raw shapes will be shown, 
 instead of a field of colors generated from them.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -5,12 +5,12 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Fuzzy Rotation Speed" _low-label="Slow" _high-label="Fast"
+          _label="Fuzzy rotation speed" _low-label="Slow" _high-label="Fast"
           low="1" high="800000" default="500000"
           convert="invert"/>
 
   <number id="delay2" type="slider" arg="-delay2 %"
-          _label="90 deg Rotation Speed" _low-label="Slow" _high-label="Fast"
+          _label="90 degree rotation speed" _low-label="Slow" _high-label="Fast"
           low="1" high="800000" default="500000"
           convert="invert"/>
 
@@ -21,6 +21,8 @@
 <!--  <file id="bitmap" _label="Bitmap to rotate" arg="-bitmap %"/> -->
 
   <xscreensaver-image />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 

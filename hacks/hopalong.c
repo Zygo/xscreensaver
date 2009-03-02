@@ -55,7 +55,9 @@ static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
 #define DEFAULTS	"*delay: 10000 \n" \
 					"*count: 1000 \n" \
 					"*cycles: 2500 \n" \
-					"*ncolors: 200 \n"
+					"*ncolors: 200 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_hop 0
 # define hop_handle_event 0

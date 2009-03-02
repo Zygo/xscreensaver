@@ -227,6 +227,7 @@ static const char *wander_defaults [] =
 {
     ".background: black",
     ".foreground: white",
+    ".fpsSolid:	  true",
     ".advance:    1",
     ".density:    2",
     ".length:     25000",

@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="descent" type="slider" arg="-speed %"
@@ -15,14 +15,16 @@
           convert="invert"/>
 
   <number id="depth" type="spinbutton" arg="-depth %"
-          _label="Max Depth" low="1" high="6" default="5"/>
+          _label="Max depth" low="1" high="6" default="5"/>
 
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This draws the three-dimensional variant of the recursive Sierpinski
-triangle fractal, using GL.
+This draws the Sierpinski tetrahedron fractal, the three-dimensional
+variant of the recursive Sierpinski triangle.
+
+http://en.wikipedia.org/wiki/Sierpinski_triangle#Analogs_in_higher_dimension
 
 Written by Tim Robinson and Jamie Zawinski; 1999.
   </_description>

@@ -61,7 +61,8 @@ from the X Consortium.
 
 static const char *xrayswarm_defaults [] ={
 	".background:		black",
-	"*delay:		0",
+	"*delay:		20000",
+	"*fpsSolid:		true",
 	0
 };
 

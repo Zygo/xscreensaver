@@ -24,8 +24,8 @@
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*atomFont:   -*-times-bold-r-normal-*-240-*\n" \
-			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
+			"*atomFont:   -*-helvetica-medium-r-normal-*-240-*\n" \
+			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
 			"*noLabelThreshold:    30     \n" \
 			"*wireframeThreshold:  150    \n" \
 
@@ -56,7 +56,7 @@
 #define DEF_TITLES      "True"
 #define DEF_ATOMS       "True"
 #define DEF_BONDS       "True"
-#define DEF_SHELLS      "True"
+#define DEF_ESHELLS     "True"
 #define DEF_BBOX        "False"
 #define DEF_SHELL_ALPHA "0.3"
 #define DEF_MOLECULE    "(default)"
@@ -218,7 +218,7 @@ static argtype vars[] = {
   {&do_wander,	  "wander",	"Wander",	DEF_WANDER,   t_Bool},
   {&do_atoms,	  "atoms",	"Atoms",	DEF_ATOMS,    t_Bool},
   {&do_bonds,	  "bonds",	"Bonds",	DEF_BONDS,    t_Bool},
-  {&do_shells,	  "eshells",	"EShells",	DEF_SHELLS,   t_Bool},
+  {&do_shells,	  "eshells",	"EShells",	DEF_ESHELLS,  t_Bool},
   {&do_labels,	  "labels",	"Labels",	DEF_LABELS,   t_Bool},
   {&do_titles,	  "titles",	"Titles",	DEF_TITLES,   t_Bool},
   {&do_bbox,	  "bbox",	"BBox",		DEF_BBOX,     t_Bool},
@@ -1182,7 +1182,7 @@ startup_blurb (ModeInfo *mi)
   print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
                    mi->xgwa.width, mi->xgwa.height,
                    10, mi->xgwa.height - 10,
-                   s);
+                   s, False);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -1396,7 +1396,7 @@ draw_labels (ModeInfo *mi)
       /* Before drawing the string, shift the origin to center
          the text over the origin of the sphere. */
       glBitmap (0, 0, 0, 0,
-                -string_width (mc->xfont1, a->label) / 2,
+                -string_width (mc->xfont1, a->label, 0) / 2,
                 -mc->xfont1->descent,
                 NULL);
 
@@ -1600,7 +1600,7 @@ draw_molecule (ModeInfo *mi)
           print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
                            mi->xgwa.width, mi->xgwa.height,
                            10, mi->xgwa.height - 10,
-                           m->label);
+                           m->label, False);
         }
     }
   glPopMatrix();

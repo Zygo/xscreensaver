@@ -718,6 +718,7 @@ petri_free (Display *dpy, Window window, void *closure)
 static const char *petri_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  "*fpsSolid:		true",
   "*delay:		10000",
   "*count:		20",
   "*size:		2",

@@ -92,6 +92,7 @@ myrandom(float up)
 static const char *ifs_defaults [] = {
   ".background:		Black",
   "*lensnum:		3",
+  "*fpsSolid:		true",
   "*length:		9",
   "*mode:		0",
   "*colors:		200",

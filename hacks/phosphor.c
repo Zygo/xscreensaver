@@ -1512,6 +1512,7 @@ phosphor_free (Display *dpy, Window window, void *closure)
 static const char *phosphor_defaults [] = {
   ".background:		   Black",
   ".foreground:		   #00FF00",
+  "*fpsSolid:		   true",
   "*fadeForeground:	   #006400",
   "*flareForeground:	   #FFFFFF",
 #if defined(BUILTIN_FONT)

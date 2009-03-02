@@ -12,6 +12,7 @@ apollonian - Descartes Circle Theorem.
 [\-cycles \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-delay \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Packs a large circle with smaller circles, demonstrating the Descartes
 Circle Theorem.
@@ -41,6 +42,9 @@ Number of Colors.  Default: 64.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 1000000 (1.00 seconds.).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

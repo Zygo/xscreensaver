@@ -78,9 +78,7 @@ the \fI\-size\fP or \fI\-columns\fP options.
 Default: -*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

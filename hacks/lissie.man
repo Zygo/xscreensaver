@@ -12,6 +12,7 @@ lissie - lissajous figure.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-size \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Another Lissajous figure. This one draws the progress of circular shapes
 along a path.
@@ -41,6 +42,9 @@ Number of Colors.  Default: 200.
 .TP 8
 .B \-size \fInumber\fP
 Size.  -500 to +500.  Default: -200.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

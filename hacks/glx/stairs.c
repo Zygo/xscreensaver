@@ -5,8 +5,6 @@
 static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 #endif
 
-#undef DEBUG_LISTS
-
 /*-
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -60,8 +58,8 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 #ifdef STANDALONE
 # define DEFAULTS			"*delay:		20000   \n" \
 							"*showFPS:      False   \n"
+
 # define refresh_stairs 0
-# define stairs_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -71,6 +69,8 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 #ifdef USE_GL
 
 #include "e_textures.h"
+#include "sphere.h"
+#include "gltrackball.h"
 
 ENTRYPOINT ModeSpecOpt stairs_opts =
 {0, NULL, 0, NULL, NULL};
@@ -98,11 +98,13 @@ ModStruct   stairs_description =
 typedef struct {
 	GLint       WindH, WindW;
 	GLfloat     step;
-	Bool        direction;
+	int         rotating;
 	int         AreObjectsDefined[1];
 	int         sphere_position;
 	int         sphere_tick;
 	GLXContext *glx_context;
+    trackball_state *trackball;
+    Bool button_down_p;
     GLuint objects;
 } stairsstruct;
 
@@ -115,86 +117,41 @@ static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
 static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
 static const float lmodel_twoside[] = {GL_TRUE};
 
-#if 0
-static const float MaterialRed[] = {0.7, 0.0, 0.0, 1.0};
-static const float MaterialGreen[] = {0.1, 0.5, 0.2, 1.0};
-static const float MaterialBlue[] = {0.0, 0.0, 0.7, 1.0};
-static const float MaterialCyan[] = {0.2, 0.5, 0.7, 1.0};
-static const float MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
-static const float MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
-static const float MaterialGray5[] = {0.5, 0.5, 0.5, 1.0};
-static const float MaterialGray6[] = {0.6, 0.6, 0.6, 1.0};
-static const float MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
-
-#endif
 static const float MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};
 static const float MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};
 
-static const float positions[] =
-{
-	-2.5, 4.0, 0.0,		/* First one is FUDGED :) */
-	-3.0, 3.25, 1.0,
-	-3.0, 4.4, 1.5,
-	-3.0, 3.05, 2.0,
-	-3.0, 4.2, 2.5,
+static const float ball_positions[] = {
+  -3.0, 3.0, 1.0,
+  -3.0, 2.8, 2.0,
+  -3.0, 2.6, 3.0,
 
-	-3.0, 2.85, 3.0,
-	-2.5, 4.0, 3.0,
-	-2.0, 2.75, 3.0,
-	-1.5, 3.9, 3.0,
-	-1.0, 2.65, 3.0,
-	-0.5, 3.8, 3.0,
-	0.0, 2.55, 3.0,
-	0.5, 3.7, 3.0,
-	1.0, 2.45, 3.0,
-	1.5, 3.6, 3.0,
-	2.0, 2.35, 3.0,
+  -2.0, 2.4, 3.0,
+  -1.0, 2.2, 3.0,
+   0.0, 2.0, 3.0,
+   1.0, 1.8, 3.0,
+   2.0, 1.6, 3.0,
 
-	2.0, 3.5, 2.5,
-	2.0, 2.25, 2.0,
-	2.0, 3.4, 1.5,
-	2.0, 2.15, 1.0,
-	2.0, 3.3, 0.5,
-	2.0, 2.05, 0.0,
-	2.0, 3.2, -0.5,
-	2.0, 1.95, -1.0,
-	2.0, 3.1, -1.5,
-	2.0, 1.85, -2.0,
+   2.0, 1.5, 2.0,
+   2.0, 1.4, 1.0,
+   2.0, 1.3, 0.0,
+   2.0, 1.2, -1.0,
+   2.0, 1.1, -2.0,
 
-	1.5, 2.9, -2.0,
-	1.0, 1.65, -2.0,
-	0.5, 2.7, -2.0,
-	0.0, 1.55, -2.0,
-	-0.5, 2.5, -2.0,
-	-1.0, 1.45, -2.0,
+   1.0, 0.9, -2.0,
+   0.0, 0.7, -2.0,
+  -1.0, 0.5, -2.0,
 };
 
-#define NPOSITIONS ((sizeof positions) / (sizeof positions[0]))
-
-#define SPHERE_TICKS 8
+#define NPOSITIONS ((sizeof ball_positions) / (sizeof ball_positions[0]) / 3)
+#define SPHERE_TICKS 32
 
 static stairsstruct *stairs = NULL;
 
-#define ObjSphere    0
-
-#define PlankWidth      3.0
-#define PlankHeight     0.35
-#define PlankThickness  0.15
-
-static void
-mySphere(float radius)
-{
-	GLUquadricObj *quadObj;
-
-	quadObj = gluNewQuadric();
-	gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
-	gluSphere(quadObj, radius, 16, 16);
-	gluDeleteQuadric(quadObj);
-}
-
-static void
+static int
 draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 {
+    int polys = 0;
+	glFrontFace(GL_CCW);
 	glBegin(GL_QUADS);
 	glNormal3f(0, 0, 1);
 	glTexCoord2f(0, 0);
@@ -205,6 +162,7 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(width, height, thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(-width, height, thickness);
+    polys++;
 	glNormal3f(0, 0, -1);
 	glTexCoord2f(0, 0);
 	glVertex3f(-width, height, -thickness);
@@ -214,6 +172,7 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(width, -height, -thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(-width, -height, -thickness);
+    polys++;
 	glNormal3f(0, 1, 0);
 	glTexCoord2f(0, 0);
 	glVertex3f(-width, height, thickness);
@@ -223,6 +182,7 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(width, height, -thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(-width, height, -thickness);
+    polys++;
 	glNormal3f(0, -1, 0);
 	glTexCoord2f(0, 0);
 	glVertex3f(-width, -height, -thickness);
@@ -232,6 +192,7 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(width, -height, thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(-width, -height, thickness);
+    polys++;
 	glNormal3f(1, 0, 0);
 	glTexCoord2f(0, 0);
 	glVertex3f(width, -height, thickness);
@@ -241,6 +202,7 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(width, height, -thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(width, height, thickness);
+    polys++;
 	glNormal3f(-1, 0, 0);
 	glTexCoord2f(0, 0);
 	glVertex3f(-width, height, thickness);
@@ -250,20 +212,23 @@ draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 	glVertex3f(-width, -height, -thickness);
 	glTexCoord2f(0, 1);
 	glVertex3f(-width, -height, thickness);
+    polys++;
 	glEnd();
+    return polys;
 }
 
 static void
 draw_stairs_internal(ModeInfo * mi)
 {
-	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 	GLfloat     X;
+
+    mi->polygon_count = 0;
 
 	glPushMatrix();
 	glPushMatrix();
 	glTranslatef(-3.0, 0.1, 2.0);
 	for (X = 0; X < 2; X++) {
-		draw_block(0.5, 2.7 + 0.1 * X, 0.5);
+        mi->polygon_count += draw_block(0.5, 2.7 + 0.1 * X, 0.5);
 		glTranslatef(0.0, 0.1, -1.0);
 	}
 	glPopMatrix();
@@ -271,122 +236,78 @@ draw_stairs_internal(ModeInfo * mi)
 	glPushMatrix();
 
 	for (X = 0; X < 6; X++) {
-		draw_block(0.5, 2.6 - 0.1 * X, 0.5);
+		mi->polygon_count += draw_block(0.5, 2.6 - 0.1 * X, 0.5);
 		glTranslatef(1.0, -0.1, 0.0);
 	}
 	glTranslatef(-1.0, -0.9, -1.0);
 	for (X = 0; X < 5; X++) {
-		draw_block(0.5, 3.0 - 0.1 * X, 0.5);
+		mi->polygon_count += draw_block(0.5, 3.0 - 0.1 * X, 0.5);
 		glTranslatef(0.0, 0.0, -1.0);
 	}
 	glTranslatef(-1.0, -1.1, 1.0);
 	for (X = 0; X < 3; X++) {
-		draw_block(0.5, 3.5 - 0.1 * X, 0.5);
+		mi->polygon_count += draw_block(0.5, 3.5 - 0.1 * X, 0.5);
 		glTranslatef(-1.0, -0.1, 0.0);
 	}
 	glPopMatrix();
 	glPopMatrix();
+}
+
+/*#define DEBUG*/
+/*#define DEBUG_PATH*/
+
+static int
+draw_sphere(int pos, int tick)
+{
+    int pos2 = (pos+1) % NPOSITIONS;
+    GLfloat x1 = ball_positions[pos*3];
+    GLfloat y1 = ball_positions[pos*3+1];
+    GLfloat z1 = ball_positions[pos*3+2];
+    GLfloat x2 = ball_positions[pos2*3];
+    GLfloat y2 = ball_positions[pos2*3+1];
+    GLfloat z2 = ball_positions[pos2*3+2];
+    GLfloat frac = tick / (GLfloat) SPHERE_TICKS;
+    GLfloat x = x1 + (x2 - x1) * frac;
+    GLfloat y = y1 + (y2 - y1) * frac + (2 * sin (M_PI * frac));
+    GLfloat z = z1 + (z2 - z1) * frac;
+    int polys = 0;
 
 	glPushMatrix();
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
 
-    {
-      int pos  = sp->sphere_position;
-      int ppos = sp->sphere_position - 3;
-      int npos = sp->sphere_position + 3;
-      GLfloat spx, spy, spz;
-      GLfloat dx, dy, dz;
-      int div;
-
-      if (ppos < 0) ppos += NPOSITIONS;
-      if (npos >= NPOSITIONS) npos -= NPOSITIONS;
-
-      if (sp->sphere_tick < 0)
-        {
-          dx = positions[ppos]   - positions[pos];
-          dy = positions[ppos+1] - positions[pos+1];
-          dz = positions[ppos+2] - positions[pos+2];
-          div = SPHERE_TICKS + sp->sphere_tick;
-        }
-      else
-        {
-          dx = positions[npos]   - positions[pos];
-          dy = positions[npos+1] - positions[pos+1];
-          dz = positions[npos+2] - positions[ppos+2];
-          div = SPHERE_TICKS - sp->sphere_tick;
-        }
-        
-      spx = positions[pos];
-      spy = positions[pos+1];
-      spz = positions[pos+2];
-      if (div != 0)
-        {
-          spx += dx / div;
-          spy += dy / div;
-          spz += dz / div;
-        }
-
-
-      spy -= 0.5;   /* move the bottom of the ball closer to the stairs */
-
-
-#ifdef DEBUG
-      fprintf(stderr, "%3d %3d   %2.2f %2.2f %2.2f  %2.2f %2.2f %2.2f\n",
-              sp->sphere_position, sp->sphere_tick,
-              dx, dy, dz,
-              spx, spy, spz);
-
-      glBegin(GL_LINE_LOOP);   /* path 1 */
-      glVertex3f(positions[pos],  positions[pos+1],  positions[pos+2]);
-      glVertex3f(positions[npos], positions[npos+1], positions[npos+2]);
-      glEnd();
-
-      glBegin(GL_LINE_LOOP);   /* path 2 */
-      glVertex3f(positions[pos],  positions[pos+1],  positions[pos+2]);
-      glVertex3f(positions[ppos], positions[ppos+1], positions[ppos+2]);
-      glEnd();
-
-      glBegin(GL_LINE_LOOP);  /* base origin */
-      glVertex3f(positions[pos], positions[pos+1]-10, positions[pos+2]);
-      glVertex3f(positions[pos], positions[pos+1]+10, positions[pos+2]);
-      glEnd();
-
-      glBegin(GL_LINE_LOOP);  /* base origin */
-      glVertex3f(positions[pos]-10, positions[pos+1], positions[pos+2]);
-      glVertex3f(positions[pos]+10, positions[pos+1], positions[pos+2]);
-      glEnd();
-
-      glBegin(GL_LINE_LOOP);  /* base origin */
-      glVertex3f(positions[pos], positions[pos+1], positions[pos+2]-10);
-      glVertex3f(positions[pos], positions[pos+1], positions[pos+2]+10);
-      glEnd();
-#endif /* DEBUG */
-
-      glTranslatef(spx, spy, spz);
-
-#ifdef DEBUG  /* ball origin */
-      glBegin(GL_LINE_LOOP); glVertex3f(0,-2,0); glVertex3f(0,2,0); glEnd();
-      glBegin(GL_LINE_LOOP); glVertex3f(-2,0,0); glVertex3f(2,0,0); glEnd();
-      glBegin(GL_LINE_LOOP); glVertex3f(0,0,-2); glVertex3f(0,0,2); glEnd();
-#endif /* DEBUG */
+# ifdef DEBUG_PATH
+    glVertex3f(x, y, z);
+    if (tick == 0) {
+      glVertex3f(x, y-7.5, z);
+      glVertex3f(x, y, z); glVertex3f(x, y, z-0.6);
+      glVertex3f(x, y, z); glVertex3f(x, y, z+0.6);
+      glVertex3f(x, y, z); glVertex3f(x+0.6, y, z);
+      glVertex3f(x, y, z); glVertex3f(x-0.6, y, z);
+      glVertex3f(x, y, z);
     }
 
-	if (sp->sphere_position == 0)	/* FUDGE soo its not so obvious */
-		mySphere(0.48);
-	else
-		mySphere(0.5);
+# else /* !DEBUG_PATH */
+    y += 0.5;
+    glTranslatef(x, y, z);
+
+    glScalef (0.5, 0.5, 0.5);
+
+    /* make ball a little smaller on the gap to obscure distance */
+	if (pos == NPOSITIONS-1)
+      glScalef (0.95, 0.95, 0.95);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
+    glDisable (GL_TEXTURE_2D);
+	glShadeModel(GL_SMOOTH);
+    polys += unit_sphere (32, 32, False);
+	glShadeModel(GL_FLAT);
+    glEnable (GL_TEXTURE_2D);
+#endif /* !DEBUG_PATH */
+
 	glPopMatrix();
-
-    if (++sp->sphere_tick >= SPHERE_TICKS-1)
-      {
-        sp->sphere_tick = -(SPHERE_TICKS-2);
-        sp->sphere_position += 3;
-        sp->sphere_position += 3;
-      }
-
-	if (sp->sphere_position >= NPOSITIONS)
-		sp->sphere_position = 0;
+    return polys;
 }
+
+
 
 ENTRYPOINT void
 reshape_stairs (ModeInfo * mi, int width, int height)
@@ -410,6 +331,60 @@ reshape_stairs (ModeInfo * mi, int width, int height)
 	}
 }
 
+ENTRYPOINT Bool
+stairs_handle_event (ModeInfo *mi, XEvent *event)
+{
+  stairsstruct *sp = &stairs[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      sp->button_down_p = True;
+      gltrackball_start (sp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      sp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
+    {
+      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           sp->button_down_p)
+    {
+      gltrackball_track (sp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ')
+        {
+          gltrackball_reset (sp->trackball);
+          return True;
+        }
+    }
+
+  return False;
+}
+
+
 static void
 pinit(void)
 {
@@ -429,7 +404,6 @@ pinit(void)
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
 	glEnable(GL_NORMALIZE);
-	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialWhite);
@@ -476,13 +450,10 @@ init_stairs (ModeInfo * mi)
 			return;
 	}
 	sp = &stairs[screen];
+
 	sp->step = 0.0;
-
-    /* make multiple screens rotate at slightly different rates. */
-    sp->step -= frand(5.0);
-
-	sp->direction = LRAND() & 1;
-	sp->sphere_position = NRAND(NPOSITIONS / 3) * 3;
+	sp->rotating = 0;
+	sp->sphere_position = NRAND(NPOSITIONS);
 	sp->sphere_tick = 0;
 
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
@@ -495,6 +466,8 @@ init_stairs (ModeInfo * mi)
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
+
+    sp->trackball = gltrackball_init ();
 }
 
 ENTRYPOINT void
@@ -522,14 +495,62 @@ draw_stairs (ModeInfo * mi)
 		glScalef(Scale4Iconic * sp->WindH / sp->WindW, Scale4Iconic, Scale4Iconic);
 	}
 
+    gltrackball_rotate (sp->trackball);
+
+    glTranslatef(0, 0.5, 0);
 	glRotatef(44.5, 1, 0, 0);
-	glRotatef(50 + ((sp->direction) ? 1 : -1) *
-	       ((sp->step * 100 > 120) ? sp->step * 100 - 120 : 0), 0, 1, 0);
-	if (sp->step * 100 >= 360 + 120) {	/* stop showing secrets */
+    glRotatef(50, 0, 1, 0);
+
+    if (!sp->rotating) {
+      if ((LRAND() % 500) == 0)
+        sp->rotating = (LRAND() & 1) ? 1 : -1;
+    }
+
+    if (sp->rotating) {
+      glRotatef(sp->rotating * sp->step, 0, 1, 0);
+      if (sp->step >= 360) {
+        sp->rotating = 0;
 		sp->step = 0;
-		sp->direction = LRAND() & 1;
-	}
+      }
+
+# ifndef DEBUG
+      if (!sp->button_down_p)
+        sp->step += 2;
+# endif /* DEBUG */
+    }
+
 	draw_stairs_internal(mi);
+
+
+# ifdef DEBUG
+    {
+      int i, j;
+#  ifdef DEBUG_PATH
+      glDisable(GL_LIGHTING);
+      glDisable(GL_TEXTURE_2D);
+      glBegin (GL_LINE_LOOP);
+#  endif /* DEBUG_PATH */
+      for (i = 0; i < NPOSITIONS; i ++)
+        for (j = 0; j < SPHERE_TICKS; j++)
+          mi->polygon_count += draw_sphere(i, j);
+#  ifdef DEBUG_PATH
+      glEnd();
+      glEnable(GL_LIGHTING);
+      glEnable(GL_TEXTURE_2D);
+#  endif /* DEBUG_PATH */
+    }
+#else  /* !DEBUG */
+    mi->polygon_count += draw_sphere(sp->sphere_position, sp->sphere_tick);
+#endif /* !DEBUG */
+
+    if (sp->button_down_p)
+      ;
+    else if (++sp->sphere_tick >= SPHERE_TICKS)
+      {
+        sp->sphere_tick = 0;
+        if (++sp->sphere_position >= NPOSITIONS)
+          sp->sphere_position = 0;
+      }
 
 	glPopMatrix();
 
@@ -537,8 +558,6 @@ draw_stairs (ModeInfo * mi)
 	glFlush();
 
 	glXSwapBuffers(display, window);
-
-	sp->step += 0.025;
 }
 
 #ifndef STANDALONE

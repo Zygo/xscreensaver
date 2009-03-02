@@ -5,6 +5,7 @@ julia - draws spinning, animating julia-set fractals
 .B julia
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-mouse] [\-nomouse]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIjulia\fP program draws spinning, animating julia-set fractals.
 
@@ -55,6 +56,9 @@ the color wheel.
 If \fI\-mouse\fP is specified, the control point of the Julia set will
 be derived from the position of the mouse in the window.  When the mouse
 is not in the window, the control point is chosen the normal way.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

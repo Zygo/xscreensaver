@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="25000" default="2500"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <number id="duration" type="slider" arg="-clear %"
@@ -14,7 +14,7 @@
           low="1" high="200" default="65"/>
 
   <number id="simultaneous" type="slider" arg="-simul %"
-          _label="Simultaneous Squares" _low-label="One" _high-label="Many"
+          _label="Simultaneous squares" _low-label="One" _high-label="Many"
           low="1" high="20" default="5"/>
 
   <select id="mode">
@@ -22,9 +22,15 @@
     <option id="solid" _label="Solid" arg-set="-no-xor"/>
   </select>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 Munching errors!  This is a creatively broken misimplementation of the
-classic munching squares graphics hack.
+classic munching squares graphics hack.  See the "Munch" screen saver
+for the original.
+
+http://en.wikipedia.org/wiki/HAKMEM
+http://en.wikipedia.org/wiki/Munching_square
 
 Written by Steven Hazel; 2004.
   </_description>

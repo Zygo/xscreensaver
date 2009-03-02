@@ -4,6 +4,7 @@ lmorph \- morphing lines
 .SH SYNOPSIS
 .B lmorph
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP] [\-figtype \fItype\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIlmorph\fP program generates random spline-ish line drawings and
 morphs between them.
@@ -44,6 +45,9 @@ Limit the figures to only open or closed figures. Possible types are
 .TP 8
 .B \-linewidth \fIinteger\fP
 Width of lines. Default is 5 pixels.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

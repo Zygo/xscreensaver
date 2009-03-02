@@ -17,10 +17,11 @@ flow - strange attractors.
 [\-dbuf|\-no\-dbuf]
 [\-ncolors \fInumber\fP]
 [\-delay \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Strange attractors formed of flows in a 3D differential equation phase
 space.  Features the popular attractors described by \fBLorentz\fP,
-\fBRoessler\fP, \fBBirkhoff\fP and \fBDuffing\fP, and can now discover
+\fBRoessler\fP, \fBBirkhoff\fP and \fBDuffing\fP, and can discover
 entirely new attractors by itself.
 .SH OPTIONS
 .TP 8
@@ -95,6 +96,9 @@ Number of Colors.  Default: 200.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

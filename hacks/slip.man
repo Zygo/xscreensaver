@@ -8,6 +8,7 @@ slip - sucks your screen into a jet engine
 [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP]
 [\-iterations \fIinteger\fP] [\-points \fIinteger\fP]
 [\-delay \fImicroseconds\fP] [\-delay2 \fImicroseconds\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIslip\fP program does lots of blits and chews up an image.
 
@@ -53,6 +54,9 @@ How long to frobnicate.  Default 50.
 .B \-delay \fImicroseconds\fP
 How long we should wait between drawing each step.  Default 50000,
 or about 1/20th second.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

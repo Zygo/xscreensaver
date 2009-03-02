@@ -5,6 +5,7 @@ strange - draws strange attractors
 .B strange
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIstrange\fP program draws strange attractors
 .SH OPTIONS
@@ -30,6 +31,9 @@ or the id number (decimal or hex) of a specific visual.
 .B \-ncolors \fIinteger\fP
 How many colors should be used (if possible).  Default 100.
 The colors are chosen randomly.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

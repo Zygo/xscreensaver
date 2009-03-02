@@ -4,8 +4,13 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="40000"
+          convert="invert"/>
+
   <select id="object">
-   <option id="random" _label="Random Object"/>
+   <option id="random" _label="Random object"/>
    <option id="tetra"  _label="Tetrahedron"  arg-set="-count 1"/>
    <option id="cube"   _label="Cube"         arg-set="-count 2"/>
    <option id="octa"   _label="Octahedron"   arg-set="-count 3"/>
@@ -13,15 +18,12 @@
    <option id="icosa"  _label="Icosahedron"  arg-set="-count 5"/>
   </select>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="40000"
-          convert="invert"/>
-
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Platonic solids that turn inside out and get spikey.
+
+http://en.wikipedia.org/wiki/Platonic_solid
 
 Written by Marcelo Vianna; 1997.
   </_description>

@@ -1,5 +1,6 @@
 /* flipflop, Copyright (c) 2003 Kevin Ogden <kogden1@hotmail.com>
  *                     (c) 2006 Sergio Gutiérrez "Sergut" <sergut@gmail.com>
+ *                     (c) 2008 Andrew Galante <a.drew7@gmail.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,18 +16,22 @@
  *                                   from the command line: size of the board, 
  *                                   rotation speed and number of free squares; also
  *                                   added the "sticks" mode.
+ * 2008 Andrew Galante               Added -textured option: textures the board with
+ *                                   an image which gets scrambled as the tiles move
  *
  */
 
-#define DEF_FLIPFLOP_MODE  "tiles" /* Default mode (options: "tiles", "sticks") */
-#define DEF_BOARD_X_SIZE   "9"     /* Default width of the board */
-#define DEF_BOARD_Y_SIZE   "9"     /* Default length of the board */
+#define DEF_MODE  "tiles" /* Default mode (options: "tiles", "sticks") */
+#define DEF_SIZEX   "9"     /* Default width of the board */
+#define DEF_SIZEY   "9"     /* Default length of the board */
 
 #define DEF_BOARD_SIZE     "0"     /* "0" means "no value selected by user". It is changed */ 
 #define DEF_NUMSQUARES     "0"     /* in function init_flipflop() to its correct value (that */ 
 #define DEF_FREESQUARES    "0"     /* is a function of the size of the board and the mode)*/
 
 #define DEF_SPIN           "0.1"   /* Default angular velocity: PI/10 rads/s    */
+
+#define DEF_TEXTURED       "False" /* Default: do not grab an image for texturing */
 
 #define DEF_STICK_THICK   54       /* Thickness for the sticks mode (over 100)  */
 #define DEF_STICK_RATIO   80       /* Ratio of sticks/total squares (over 100)  */
@@ -57,11 +62,13 @@ static XrmOptionDescRec opts[] = {
     {"-tiles",          ".mode",            XrmoptionNoArg,  "tiles" },
     {"-mode",           ".mode",            XrmoptionSepArg, 0       },
     {"-size",           ".size",            XrmoptionSepArg, 0       },
-    {"-size-x",         ".size_x",          XrmoptionSepArg, 0       },
-    {"-size-y",         ".size_y",          XrmoptionSepArg, 0       },
+    {"-size-x",         ".sizex",           XrmoptionSepArg, 0       },
+    {"-size-y",         ".sizey",           XrmoptionSepArg, 0       },
     {"-count",          ".numsquares",      XrmoptionSepArg, 0       },
     {"-free",           ".freesquares",     XrmoptionSepArg, 0       },
     {"-spin",           ".spin",            XrmoptionSepArg, 0       },
+    {"-texture",        ".textured",        XrmoptionNoArg,  "True"  },
+    {"+texture",        ".textured",        XrmoptionNoArg,  "False" },
 };
 
 static int wire, clearbits;
@@ -70,15 +77,17 @@ static int numsquares, freesquares;
 static float half_thick;
 static float spin;
 static char* flipflopmode_str="tiles";
+static int textured;
 
 static argtype vars[] = {
-    { &flipflopmode_str, "mode",        "Mode",     DEF_FLIPFLOP_MODE,  t_String},
+    { &flipflopmode_str, "mode",        "Mode",     DEF_MODE,  t_String},
     { &board_avg_size,   "size",        "Integer",  DEF_BOARD_SIZE,     t_Int},
-    { &board_x_size,     "size_x",      "Integer",  DEF_BOARD_X_SIZE,   t_Int},
-    { &board_y_size,     "size_y",      "Integer",  DEF_BOARD_Y_SIZE,   t_Int},
+    { &board_x_size,     "sizex",       "Integer",  DEF_SIZEX,   t_Int},
+    { &board_y_size,     "sizey",       "Integer",  DEF_SIZEY,   t_Int},
     { &numsquares,       "numsquares",  "Integer",  DEF_NUMSQUARES,     t_Int},
     { &freesquares,      "freesquares", "Integer",  DEF_NUMSQUARES,     t_Int},
     { &spin,             "spin",        "Float",    DEF_SPIN,           t_Float},
+    { &textured,         "textured",    "Bool",     DEF_TEXTURED,       t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -111,7 +120,13 @@ typedef struct {
     /* eg. color[ 5*3 + 2 ] is the blue  component of square 5 */
     /*            ^-- n is the number of square */
     float *color; /* size: numsquares * 3 */
-} randsheet; 	
+    /* array of texcoords for each square */
+    /* tex[ n*4 + 0 ] is x texture coordinate of square n's left side */
+    /* tex[ n*4 + 1 ] is y texture coordinate of square n's top side */
+    /* tex[ n*4 + 2 ] is x texture coordinate of square n's right side */
+    /* tex[ n*4 + 3 ] is y texture coordinate of square n's bottom side */
+    float *tex; /* size: numsquares * 4 */
+} randsheet;
 
 typedef struct {
     GLXContext *glx_context;
@@ -119,27 +134,43 @@ typedef struct {
     trackball_state *trackball;
     Bool button_down_p;
 
-	randsheet *sheet;
+    randsheet *sheet;
 
     float theta;      /* angle of rotation of the board                */
     float flipspeed;  /* amount of flip;  1 is a entire flip           */
     float reldist;    /* relative distace of camera from center        */
     float energy;     /* likelyhood that a square will attempt to move */
 
+    /* texture rectangle */
+    float tex_x;
+    float tex_y;
+    float tex_width;
+    float tex_height;
+
+    /* id of texture in use */
+    GLuint texid;
+
+    Bool mipmap;
+    Bool got_texture;
+
+    GLfloat anisotropic;
+
 } Flipflopcreen;
 
 static Flipflopcreen *qs = NULL;
+
+#include "grab-ximage.h"
 
 static void randsheet_create( randsheet *rs );
 static void randsheet_initialize( randsheet *rs );
 static void randsheet_free( randsheet *rs );
 static int  randsheet_new_move( randsheet* rs );
 static void randsheet_move( randsheet *rs, float rot );
-static void randsheet_draw( randsheet *rs );
+static int randsheet_draw( randsheet *rs );
 static void setup_lights(void);
-static void drawBoard(Flipflopcreen *);
-static void display(Flipflopcreen *c);
-static void draw_sheet(void);
+static int drawBoard(Flipflopcreen *);
+static int display(Flipflopcreen *c);
+static int draw_sheet(float *tex);
 
 
 /* configure lighting */
@@ -205,7 +236,7 @@ flipflop_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 /* draw board */
-static void
+static int
 drawBoard(Flipflopcreen *c)
 {
     int i;
@@ -213,14 +244,15 @@ drawBoard(Flipflopcreen *c)
         randsheet_new_move( c->sheet );
 	}
     randsheet_move( c->sheet, c->flipspeed * 3.14159 );
-    randsheet_draw( c->sheet );
+    return randsheet_draw( c->sheet );
 }
 
 
-static void
+static int
 display(Flipflopcreen *c)
 {
     GLfloat amb[] = { 0.8, 0.8, 0.8, 1.0 };
+    int polys = 0;
 
 
     glClear(clearbits);
@@ -240,12 +272,17 @@ display(Flipflopcreen *c)
     glRotatef(c->theta*100, 0.0, 1.0, 0.0);
     glTranslatef(-0.5*board_x_size, 0.0, -0.5*board_y_size); /* Center the board */
 
-    drawBoard(c);
+    /* set texture */
+    if(textured)
+      glBindTexture(GL_TEXTURE_2D, c->texid);
+
+    polys = drawBoard(c);
 
     if (!c->button_down_p) {
         c->theta += .01 * spin;
-	}
+    }
 
+    return polys;
 }
 
 ENTRYPOINT void
@@ -259,44 +296,103 @@ reshape_flipflop(ModeInfo *mi, int width, int height)
     glMatrixMode(GL_MODELVIEW);
 }
 
+static void
+image_loaded_cb (const char *filename, XRectangle *geometry,
+                 int image_width, int image_height, 
+                 int texture_width, int texture_height,
+                 void *closure)
+{
+    Flipflopcreen *c = (Flipflopcreen *)closure;
+    int i, j;
+    int index = 0;
+    randsheet *rs = c->sheet;
+
+    c->tex_x = (float)geometry->x / (float)texture_width;
+    c->tex_y = (float)geometry->y / (float)texture_height;
+    c->tex_width = (float)geometry->width / (float)texture_width; 
+    c->tex_height = (float)geometry->height / (float)texture_height;
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+        (c->mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+
+    if(c->anisotropic >= 1)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, c->anisotropic);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    for(i = 0; i < board_x_size && index < numsquares; i++)
+        for(j = 0; j < board_y_size && index < numsquares; j++)
+        {
+            /* arrange squares to form loaded image */
+            rs->tex[ index*4 + 0 ] = c->tex_x + c->tex_width  / board_x_size * (i + 0);
+            rs->tex[ index*4 + 1 ] = c->tex_y + c->tex_height / board_y_size * (j + 1);
+            rs->tex[ index*4 + 2 ] = c->tex_x + c->tex_width  / board_x_size * (i + 1);
+            rs->tex[ index*4 + 3 ] = c->tex_y + c->tex_height / board_y_size * (j + 0);
+            rs->color[ index*3 + 0 ] = 1;
+            rs->color[ index*3 + 1 ] = 1;
+            rs->color[ index*3 + 2 ] = 1;
+            index++;
+        }
+
+    c->got_texture = True;
+}
+
+static void
+get_texture(ModeInfo *modeinfo)
+{
+    Flipflopcreen *c = &qs[MI_SCREEN(modeinfo)];
+
+    c->got_texture = False;
+    c->mipmap = True;
+    load_texture_async (modeinfo->xgwa.screen, modeinfo->window,
+                      *c->glx_context, 0, 0, c->mipmap, c->texid,
+                      image_loaded_cb, c);
+}
+
 ENTRYPOINT void
 init_flipflop(ModeInfo *mi)
 {
-	int screen; 
+    int screen; 
     Flipflopcreen *c;
 
-	/* Set all constants to their correct values */
-	if (board_avg_size != 0) {  /* general size specified by user */
-		board_x_size = board_avg_size;
-		board_y_size = board_avg_size;
-	} else {
-		board_avg_size = (board_x_size + board_y_size) / 2;
-	}
-	if ((numsquares == 0) && (freesquares != 0)) {
-		numsquares = board_x_size * board_y_size - freesquares; 
-	}
-	if (strcmp(flipflopmode_str, "tiles")) {
-		half_thick = 1.0 * DEF_STICK_THICK / 100.0; 
-		if (numsquares == 0) {  /* No value defined by user */
-			numsquares = board_x_size * board_y_size * DEF_STICK_RATIO / 100;
-		}
-	} else {
-		half_thick = 1.0 * DEF_TILE_THICK / 100.0; 
-		if (numsquares == 0) {  /* No value defined by user */
-			numsquares = board_x_size * board_y_size * DEF_TILE_RATIO/ 100;;
-		}
-	}
-	if (board_avg_size < 2) {
-		fprintf (stderr,"%s: the board must be at least 2x2.\n", progname);
-		exit(1);
-	}
-	if ((board_x_size < 1) || (board_y_size < 1) ||	(numsquares < 1)) {
-		fprintf (stderr,"%s: the number of elements ('-count') and the dimensions of the board ('-size-x', '-size-y') must be positive integers.\n", progname);
-		exit(1);
-	}
-	if (board_x_size * board_y_size <= numsquares) {
-		fprintf (stderr,"%s: the number of elements ('-count') that you specified is too big \n for the dimensions of the board ('-size-x', '-size-y'). Nothing will move.\n", progname);
-	}
+    if (MI_IS_WIREFRAME(mi)) textured = 0;
+
+    /* Set all constants to their correct values */
+    if (board_avg_size != 0) {  /* general size specified by user */
+        board_x_size = board_avg_size;
+        board_y_size = board_avg_size;
+    } else {
+        board_avg_size = (board_x_size + board_y_size) / 2;
+    }
+    if ((numsquares == 0) && (freesquares != 0)) {
+        numsquares = board_x_size * board_y_size - freesquares; 
+    }
+    if (strcmp(flipflopmode_str, "tiles")) {
+      textured = 0;  /* textures look dumb in stick mode */
+        half_thick = 1.0 * DEF_STICK_THICK / 100.0; 
+        if (numsquares == 0) {  /* No value defined by user */
+            numsquares = board_x_size * board_y_size * DEF_STICK_RATIO / 100;
+        }
+    } else {
+        half_thick = 1.0 * DEF_TILE_THICK / 100.0; 
+        if (numsquares == 0) {  /* No value defined by user */
+            numsquares = board_x_size * board_y_size * DEF_TILE_RATIO/ 100;;
+        }
+    }
+    if (board_avg_size < 2) {
+        fprintf (stderr,"%s: the board must be at least 2x2.\n", progname);
+        exit(1);
+    }
+    if ((board_x_size < 1) || (board_y_size < 1) ||	(numsquares < 1)) {
+        fprintf (stderr,"%s: the number of elements ('-count') and the dimensions of the board ('-size-x', '-size-y') must be positive integers.\n", progname);
+        exit(1);
+    }
+    if (board_x_size * board_y_size <= numsquares) {
+        fprintf (stderr,"%s: the number of elements ('-count') that you specified is too big \n for the dimensions of the board ('-size-x', '-size-y'). Nothing will move.\n", progname);
+    }
 
     screen = MI_SCREEN(mi);
     wire = MI_IS_WIREFRAME(mi);
@@ -335,7 +431,20 @@ init_flipflop(ModeInfo *mi)
     clearbits |= GL_DEPTH_BUFFER_BIT;
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
     randsheet_initialize( c->sheet );
+    if( textured ){
+        /* check for anisotropic filtering */
+        if(strstr((char *)glGetString(GL_EXTENSIONS),
+            "GL_EXT_texture_filter_anisotropic"))
+            glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &c->anisotropic);
+        else
+            c->anisotropic = 0;
+
+        /* allocate a new texture and get it */
+        glGenTextures(1, &c->texid);
+        get_texture(mi);
+    }
 }
 
 ENTRYPOINT void
@@ -345,12 +454,12 @@ draw_flipflop(ModeInfo *mi)
     Window w = MI_WINDOW(mi);
     Display *disp = MI_DISPLAY(mi);
 
-    if(!c->glx_context)
+    if(!c->glx_context || (textured && !c->got_texture))
         return;
 
     glXMakeCurrent(disp, w, *(c->glx_context));
 
-    display(c);
+    mi->polygon_count = display(c);
 
     if(mi->fps_p){
         do_fps(mi);
@@ -388,50 +497,83 @@ release_flipflop(ModeInfo *mi)
 
 /*** ADDED RANDSHEET FUNCTIONS ***/
 
-static void
-draw_sheet(void)
+static int
+draw_sheet(float *tex)
 {
+    int polys = 0;
     glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
 
     glNormal3f( 0, -1, 0 );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick,  -half_thick,  half_thick );
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick,   -half_thick, half_thick );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, -half_thick,  1-half_thick);
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, -half_thick, 1-half_thick );
+    polys++;
 
     if (wire) { glEnd(); glBegin (GL_LINE_LOOP); }
 
     /* back */
     glNormal3f( 0, 1, 0 );
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, half_thick, 1-half_thick );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, half_thick,  1-half_thick);
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick,   half_thick, half_thick );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick,  half_thick,  half_thick );
+    polys++;
 
-    if (wire) { glEnd(); return; }
+    if (wire) { glEnd(); return polys; }
 
     /* 4 edges!!! weee.... */
     glNormal3f( 0, 0, -1 );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick, half_thick, half_thick );
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick, half_thick, half_thick );
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick, -half_thick, half_thick );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick, -half_thick, half_thick );
+    polys++;
     glNormal3f( 0, 0, 1 );
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, half_thick, 1-half_thick );
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, -half_thick, 1-half_thick );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, -half_thick, 1-half_thick );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, half_thick, 1-half_thick );
+    polys++;
     glNormal3f( 1, 0, 0 );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, half_thick, 1-half_thick );
+    glTexCoord2f(tex[2], tex[1]);
     glVertex3f( 1-half_thick, -half_thick, 1-half_thick );
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick, -half_thick, half_thick );
+    glTexCoord2f(tex[2], tex[3]);
     glVertex3f( 1-half_thick, half_thick, half_thick );
+    polys++;
     glNormal3f( -1, 0, 0 );
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, half_thick, 1-half_thick );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick, half_thick, half_thick );
+    glTexCoord2f(tex[0], tex[3]);
     glVertex3f( half_thick, -half_thick, half_thick );
+    glTexCoord2f(tex[0], tex[1]);
     glVertex3f( half_thick, -half_thick, 1-half_thick );
+    polys++;
     glEnd();
+
+    return polys;
 }
 
 /* Reserve memory for the randsheet */
@@ -444,6 +586,7 @@ randsheet_create( randsheet *rs )
 	rs -> direction = (int*) malloc(numsquares * sizeof(int));
 	rs -> angle     = (float*) malloc(numsquares * sizeof(float));
 	rs -> color     = (float*) malloc(numsquares*3 * sizeof(float));
+	rs -> tex       = (float*) malloc(numsquares*4 * sizeof(float));
 }
 
 /* Free reserved memory for the randsheet */
@@ -456,6 +599,7 @@ randsheet_free( randsheet *rs )
 	free(rs->direction);
 	free(rs->angle);
 	free(rs->color);
+	free(rs->tex);
 }
 
 static void
@@ -474,10 +618,10 @@ randsheet_initialize( randsheet *rs )
                             rs->occupied[ i * board_y_size + j ] = index;
                             rs->xpos[ index ] = i;
                             rs->ypos[ index ] = j;
-                            /* have the square colors start out as a pattern */
-                            rs->color[ index*3 + 0 ] = ((i+j)%3 == 0)||((i+j+1)%3 == 0);
-                            rs->color[ index*3 + 1 ] = ((i+j+1)%3 == 0);
-                            rs->color[ index*3 + 2 ] = ((i+j+2)%3 == 0);
+							/* have the square colors start out as a pattern */
+							rs->color[ index*3 + 0 ] = ((i+j)%3 == 0)||((i+j+1)%3 == 0);
+							rs->color[ index*3 + 1 ] = ((i+j+1)%3 == 0);
+							rs->color[ index*3 + 2 ] = ((i+j+2)%3 == 0);
                             index++;
                         }
                     /* leave everything else empty*/
@@ -586,6 +730,7 @@ static void
 randsheet_move( randsheet *rs, float rot )
 {
     int i, j, index;
+    float tmp;
     for( index = 0 ; index < numsquares; index++ )
         {
             i = rs->xpos[ index ];
@@ -597,6 +742,12 @@ randsheet_move( randsheet *rs, float rot )
                     break;
                 case 1:
                     /* move up in x */
+                    if( textured && rs->angle[ index ] == 0 )
+                        {
+                            tmp = rs->tex[ index * 4 + 0 ];
+                            rs->tex[ index * 4 + 0 ] = rs->tex[ index * 4 + 2 ];
+                            rs->tex[ index * 4 + 2 ] = tmp;
+                        }
                     rs->angle[ index ] += rot;
                     /* check to see if we have finished moving */
                     if( rs->angle[ index ] >= M_PI  )
@@ -608,6 +759,12 @@ randsheet_move( randsheet *rs, float rot )
                     break;
                 case 2:
                     /* move up in y */
+                    if( textured && rs->angle[ index ] == 0 )
+                        {
+                            tmp = rs->tex[ index * 4 + 1 ];
+                            rs->tex[ index * 4 + 1 ] = rs->tex[ index * 4 + 3 ];
+                            rs->tex[ index * 4 + 3 ] = tmp;
+                        }
                     rs->angle[ index ] += rot;
                     /* check to see if we have finished moving */
                     if( rs->angle[ index ] >= M_PI  )
@@ -626,10 +783,16 @@ randsheet_move( randsheet *rs, float rot )
                             rs->xpos[ index ] -= 1;
                             rs->direction[ index ] = 0;
                             rs->angle[ index ] = 0;
+                            if( textured )
+                            {
+							    tmp = rs->tex[ index * 4 + 0 ];
+							    rs->tex[ index * 4 + 0 ] = rs->tex[ index * 4 + 2 ];
+							    rs->tex[ index * 4 + 2 ] = tmp;
+                            }
                         }
                     break;
                 case 4:
-                    /* up in x */
+                    /* down in y */
                     rs->angle[ index ] += rot;
                     /* check to see if we have finished moving */
                     if( rs->angle[ index ] >= M_PI  )
@@ -637,6 +800,12 @@ randsheet_move( randsheet *rs, float rot )
                             rs->ypos[ index ] -= 1;
                             rs->direction[ index ] = 0;
                             rs->angle[ index ] = 0;
+                            if( textured )
+                            {
+                                tmp = rs->tex[ index * 4 + 1 ];
+                                rs->tex[ index * 4 + 1 ] = rs->tex[ index * 4 + 3 ];
+                                rs->tex[ index * 4 + 3 ] = tmp;
+                            }
                         }
                     break;
                 default:
@@ -647,11 +816,12 @@ randsheet_move( randsheet *rs, float rot )
 
 
 /* draw all the moving squares  */
-static void
+static int
 randsheet_draw( randsheet *rs )
 {
-    int i, j;
+    int i, j, polys = 0;
     int index;
+
     /* for all moving squares ... */
     for( index = 0; index < numsquares; index++ )
         {
@@ -692,14 +862,15 @@ randsheet_draw( randsheet *rs )
                 default:
                     break;
                 }
-            draw_sheet();
+            polys += draw_sheet( rs->tex + index*4 );
             glPopMatrix();
 
         }
+    return polys;
 }
 
 /**** END RANDSHEET_BAK FUNCTIONS ***/
 
-XSCREENSAVER_MODULE ("Flipflop", flipflop)
+XSCREENSAVER_MODULE ("FlipFlop", flipflop)
 
 #endif /* USE_GL */

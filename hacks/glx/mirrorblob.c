@@ -123,15 +123,15 @@ static XrmOptionDescRec opts[] = {
     {"+texture",          ".blob.texture",          XrmoptionNoArg, "false" },
     {"-colour",           ".blob.colour",           XrmoptionNoArg, "true" },
     {"+colour",           ".blob.colour",           XrmoptionNoArg, "false" },
-    {"-offset-texture",   ".blob.offset_texture",   XrmoptionNoArg, "true" },
-    {"+offset-texture",   ".blob.offset_texture",   XrmoptionNoArg, "false" },
-    {"-paint-background", ".blob.paint_background", XrmoptionNoArg, "true" },
-    {"+paint-background", ".blob.paint_background", XrmoptionNoArg, "false" },
+    {"-offset-texture",   ".blob.offsetTexture",   XrmoptionNoArg, "true" },
+    {"+offset-texture",   ".blob.offsetTexture",   XrmoptionNoArg, "false" },
+    {"-paint-background", ".blob.paintBackground", XrmoptionNoArg, "true" },
+    {"+paint-background", ".blob.paintBackground", XrmoptionNoArg, "false" },
     {"-resolution",       ".blob.resolution",       XrmoptionSepArg, NULL },
     {"-bumps",            ".blob.bumps",            XrmoptionSepArg, NULL },
-    {"-motion-blur",      ".blob.motion_blur",      XrmoptionSepArg, 0 },
-    {"-fade-time",        ".blob.fade_time",        XrmoptionSepArg, 0 },
-    {"-hold-time",        ".blob.hold_time",        XrmoptionSepArg, 0 },
+    {"-motion-blur",      ".blob.motionBlur",       XrmoptionSepArg, 0 },
+    {"-fade-time",        ".blob.fadeTime",         XrmoptionSepArg, 0 },
+    {"-hold-time",        ".blob.holdTime",         XrmoptionSepArg, 0 },
     {"-zoom",             ".blob.zoom",             XrmoptionSepArg, 0 },
 };
 
@@ -143,13 +143,13 @@ static argtype vars[] = {
     {&do_walls,     "walls",        "Walls",     DEF_WALLS,     t_Bool},
     {&do_texture,   "texture",      "Texture",   DEF_TEXTURE,   t_Bool},
     {&do_colour,    "colour",       "Colour",    DEF_COLOUR,   t_Bool},
-    {&offset_texture, "offset_texture","Offset_Texture", DEF_OFFSET_TEXTURE, t_Bool},
-    {&do_paint_background,"paint_background","Paint_Background", DEF_PAINT_BACKGROUND, t_Bool},
+    {&offset_texture, "offsetTexture","OffsetTexture", DEF_OFFSET_TEXTURE, t_Bool},
+    {&do_paint_background,"paintBackground","PaintBackground", DEF_PAINT_BACKGROUND, t_Bool},
     {&resolution,   "resolution",   "Resolution",   DEF_RESOLUTION,   t_Int},
     {&bumps,        "bumps",        "Bump",         DEF_BUMPS, t_Int},
-    {&motion_blur,  "motion_blur",  "Motion_Blur",  DEF_MOTION_BLUR,  t_Float},
-    {&fade_time,    "fade_time",    "Fade_Time",    DEF_FADE_TIME,    t_Float},
-    {&hold_time,    "hold_time",    "Hold_Time",    DEF_HOLD_TIME,    t_Float},
+    {&motion_blur,  "motionBlur",   "MotionBlur",   DEF_MOTION_BLUR,  t_Float},
+    {&fade_time,    "fadeTime",     "FadeTime",     DEF_FADE_TIME,    t_Float},
+    {&hold_time,    "holdTime",     "HoldTime",     DEF_HOLD_TIME,    t_Float},
     {&zoom,         "zoom",         "Zoom",         DEF_ZOOM,         t_Float},
 };
 
@@ -1429,6 +1429,7 @@ draw_scene(ModeInfo * mi)
     double current_time;
     check_gl_error ("draw_scene");
 
+    mi->polygon_count = 0;
     glColor4d(1.0, 1.0, 1.0, 1.0);
 
     current_time = double_time();
@@ -1468,6 +1469,7 @@ draw_scene(ModeInfo * mi)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
         draw_background (mi);
+        mi->polygon_count++;
 
         /* When transitioning between two images paint the new image over the old
          * image with a varying alpha value to get a smooth fade.
@@ -1480,6 +1482,7 @@ draw_scene(ModeInfo * mi)
             glColor4d (1.0, 1.0, 1.0, 1.0 - fade);
 
             draw_background (mi);
+            mi->polygon_count++;
 
             /* Select the original texture to draw the blob */
             glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
@@ -1520,11 +1523,13 @@ draw_scene(ModeInfo * mi)
         /* Disable the three colour chanels so that only the depth buffer is updated */
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         draw_blob(gp);
+        mi->polygon_count += gp->num_faces;
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthFunc(GL_LEQUAL);
     }
     glDepthFunc(GL_LEQUAL);
     draw_blob(gp);
+    mi->polygon_count += gp->num_faces;
 
     /* While transitioning between images draw a second blob with a modified
      * alpha value.
@@ -1583,6 +1588,7 @@ draw_scene(ModeInfo * mi)
                 }
 
                 draw_blob (gp);
+                mi->polygon_count += gp->num_faces;
 
                 if (do_colour)
                 {

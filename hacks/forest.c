@@ -28,7 +28,9 @@
 
 #ifdef STANDALONE
 # define DEFAULTS   "*delay:            500000 \n"  \
-                    "*ncolors:          20     \n"
+                    "*ncolors:          20     \n" \
+                    "*fpsSolid:          true     \n" \
+
 # include "xlockmore.h"     /* from the xscreensaver distribution */
 # define refresh_trees 0
 # define reshape_trees 0

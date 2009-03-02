@@ -73,7 +73,7 @@
 # define DEFAULTS \
 		"*delay:		20000		\n"	\
 		"*showFPS:		False		\n"	\
-		"*size:			-1			\n"	\
+		"*size:			0			\n"	\
 		"*useSHM:		True		\n"
 
 # define refresh_gleidescope 0
@@ -117,6 +117,17 @@ static int		duration;		/* length of time to display grabbed image */
 #define ANGLE_120	(M_PI * 2 / 3)
 #define ANGLE_240	(M_PI * 4 / 3)
 
+#define DEF_GRAB	"False"
+#define DEF_MOVE	"False"
+#define DEF_NOMOVE	"False"
+#define DEF_ROTATE	"False"
+#define DEF_NOROTATE	"False"
+#define DEF_ZOOM	"False"
+#define DEF_NOZOOM	"False"
+#define DEF_IMAGE	"DEFAULT"
+#define DEF_DURATION	"30"
+
+
 static XrmOptionDescRec opts[] =
 {
 #ifdef GRAB
@@ -126,7 +137,6 @@ static XrmOptionDescRec opts[] =
 	{"-no-move",	".gleidescope.nomove",		XrmoptionNoArg,		"true"},
 	{"-rotate",		".gleidescope.rotate",		XrmoptionNoArg,		"true"},
 	{"-no-rotate",	".gleidescope.norotate",	XrmoptionNoArg,		"true"},
-	/*{"-size",		".gleidescope.size",		XrmoptionNoArg,		"-1"},*/
 	{"-zoom",		".gleidescope.zoom",		XrmoptionNoArg,		"true"},
 	{"-no-zoom",	".gleidescope.nozoom",		XrmoptionNoArg,		"true"},
 	{"-image",		".gleidescope.image",		XrmoptionSepArg,	"DEFAULT"},
@@ -136,17 +146,16 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] = {
 #ifdef GRAB
-	{&grab,			"grab",		"Grab",		"False",	t_Bool},
+	{&grab,			"grab",		"Grab",		DEF_GRAB,	t_Bool},
 #endif
-	{&move,			"move",		"Move",		"False",	t_Bool},
-	{&nomove,		"nomove",	"noMove",	"False",	t_Bool},
-	{&rotate,		"rotate",	"Rotate",	"False",	t_Bool},
-	{&norotate,		"norotate",	"noRotate",	"False",	t_Bool},
-	/*{&size,		"size",		"Size",		"-1",		t_Int},*/
-	{&zoom,			"zoom",		"Zoom",		"False",	t_Bool},
-	{&nozoom,		"nozoom",	"noZoom",	"False",	t_Bool},
-	{&image,		"image",	"Image",	"DEFAULT",	t_String},
-	{&duration,		"duration",	"Duration",	"30",		t_Int},
+	{&move,			"move",		"Move",		DEF_MOVE,	t_Bool},
+	{&nomove,		"nomove",	"noMove",	DEF_NOMOVE,	t_Bool},
+	{&rotate,		"rotate",	"Rotate",	DEF_ROTATE,	t_Bool},
+	{&norotate,		"norotate",	"noRotate",	DEF_NOROTATE,	t_Bool},
+	{&zoom,			"zoom",		"Zoom",		DEF_ZOOM,	t_Bool},
+	{&nozoom,		"nozoom",	"noZoom",	DEF_NOZOOM,	t_Bool},
+	{&image,		"image",	"Image",	DEF_IMAGE,	t_String},
+	{&duration,		"duration",	"Duration",	DEF_DURATION,		t_Int},
 };
 
 static OptionStruct desc[] = {
@@ -157,7 +166,6 @@ static OptionStruct desc[] = {
 	{"-no-move",	"camera won't move"},
 	{"-rotate",		"camera will rotate"},
 	{"-no-rotate",	"camera won't rotate"},
-	/*{"-size",		"size of the hexagons (1-10)"},*/
 	{"-zoom",		"camera will zoom"},
 	{"-no-zoom",	"camera won't zoom"},
 	{"-image",		"xpm / xbm image file to use for texture"},
@@ -1105,9 +1113,10 @@ calculate_texture_coords(ModeInfo *mi, texture *texture, vector2f t[3]) {
 }
 #endif
 
-static void
+static int
 draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 {
+    int polys = 0;
 	int		i;
 	GLfloat	col[4];
 	vector2f t[3];
@@ -1191,6 +1200,7 @@ draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 
 		glTranslatef(hex[i].x, hex[i].y, 0.0);
 		glCallList(gp->list);
+        polys += 6;
 
 		glPopMatrix();
 	}
@@ -1209,6 +1219,7 @@ draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 	glVertex3f(1.0, 1.0, -0.1);
 	glTexCoord2f(0.0, 1.0);
 	glVertex3f(0.0, 1.0, -0.1);
+    polys++;
 	glEnd();
 	/* acd debug - display texture triangle */
 	glColor4f(1.0, 0.5, 1.0, 1.0);
@@ -1216,6 +1227,7 @@ draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 	glVertex3f(t[0].x, t[0].y, -0.11);
 	glVertex3f(t[1].x, t[1].y, -0.11);
 	glVertex3f(t[2].x, t[2].y, -0.11);
+    polys++;
 	glEnd();
 	glPopMatrix();
 #endif
@@ -1223,6 +1235,7 @@ draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
+    return polys;
 }
 
 /*
@@ -1235,6 +1248,8 @@ draw(ModeInfo * mi)
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 	vectorf	v1;
 	GLfloat pos[4];
+
+    mi->polygon_count = 0;
 
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1259,10 +1274,10 @@ draw(ModeInfo * mi)
 	if (gp->size > 10) {
 		gp->size = 10;
 	}
-	if (gp->size < -1) {
-		gp->size = -1;
+	if (gp->size <= 0) {
+		gp->size = 0;
 	}
-	if (gp->size != -1) {
+	if (gp->size > 0) {
 		/* user defined size */
 		v1.z = gp->size;
 	} else if (zoom) {
@@ -1324,14 +1339,17 @@ draw(ModeInfo * mi)
 	if (gp->fade == 0)
 	{
 		/* not fading */
-		draw_hexagons(mi, MAX_FADE, &gp->textures[gp->visible]);
+      mi->polygon_count += 
+        draw_hexagons(mi, MAX_FADE, &gp->textures[gp->visible]);
 	}
 	else
 	{
 		/* fading - show both textures with alpha
 		NB first is always max alpha */
-		draw_hexagons(mi, MAX_FADE, &gp->textures[1 - gp->visible]);
-		draw_hexagons(mi, MAX_FADE - gp->fade, &gp->textures[gp->visible]);
+        mi->polygon_count += 
+          draw_hexagons(mi, MAX_FADE, &gp->textures[1 - gp->visible]);
+        mi->polygon_count += 
+		  draw_hexagons(mi, MAX_FADE - gp->fade, &gp->textures[gp->visible]);
 
 		/* fade some more */
 		gp->fade++;

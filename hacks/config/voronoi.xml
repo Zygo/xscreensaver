@@ -7,7 +7,7 @@
   <hgroup>
    <vgroup>
     <number id="delay" type="slider" arg="-delay %"
-            _label="Frame Rate" _low-label="Slow" _high-label="Fast"
+            _label="Frame rate" _low-label="Slow" _high-label="Fast"
             low="0" high="100000" default="20000"
             convert="invert"/>
 
@@ -16,28 +16,28 @@
             low="1" high="100" default="25"/>
 
     <number id="pointSize" type="slider" arg="-point-size %"
-            _label="Point Size" _low-label="0" _high-label="50 pixels"
+            _label="Point size" _low-label="0" _high-label="50 pixels"
             low="0" high="50" default="9"/>
 
-    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
    </vgroup>
 
    <vgroup>
     <number id="pointSpeed" type="slider" arg="-point-speed %"
-            _label="Wander Speed" _low-label="Slow" _high-label="Fast"
+            _label="Wander speed" _low-label="Slow" _high-label="Fast"
             low="0.0" high="10.0" default="1.0"/>
 
     <number id="pointDelay" type="slider" arg="-point-delay %"
-            _label="Insertion Speed" _low-label="Slow" _high-label="Fast"
+            _label="Insertion speed" _low-label="Slow" _high-label="Fast"
             low="0.0" high="3.0" default="0.05"
             convert="invert"/>
 
     <number id="zoomSpeed" type="slider" arg="-zoom-speed %"
-            _label="Zoom Speed" _low-label="Slow" _high-label="Fast"
+            _label="Zoom speed" _low-label="Slow" _high-label="Fast"
             low="0.1" high="10.0" default="1.0"/>
 
     <number id="zoomDelay" type="slider" arg="-zoom-delay %"
-            _label="Zoom Frequency" _low-label="0" _high-label="60 Seconds"
+            _label="Zoom frequency" _low-label="0" _high-label="60 seconds"
             low="0" high="60" default="15"/>
    </vgroup>
   </hgroup>
@@ -50,6 +50,8 @@ There are a set of control points on the plane, each at the center of
 a colored cell.  Every pixel within that cell is closer to that cell's
 control point than to any other control point.  That is what
 determines the cell's shapes.
+
+http://en.wikipedia.org/wiki/Voronoi_diagram
 
 Written by Jamie Zawinski; 2007.
   </_description>

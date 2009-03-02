@@ -267,6 +267,7 @@ void browse_text_program_cb (GtkButton *, gpointer user_data);
 void settings_cb (GtkButton *, gpointer user_data);
 void settings_adv_cb (GtkButton *, gpointer user_data);
 void settings_std_cb (GtkButton *, gpointer user_data);
+void settings_reset_cb (GtkButton *, gpointer user_data);
 void settings_switch_page_cb (GtkNotebook *, GtkNotebookPage *,
                               gint page_num, gpointer user_data);
 void settings_cancel_cb (GtkButton *, gpointer user_data);
@@ -2253,7 +2254,7 @@ settings_sync_cmd_text (state *s)
 {
 # ifdef HAVE_XML
   GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
-  char *cmd_line = get_configurator_command_line (s->cdata);
+  char *cmd_line = get_configurator_command_line (s->cdata, False);
   gtk_entry_set_text (GTK_ENTRY (cmd), cmd_line);
   gtk_entry_set_position (GTK_ENTRY (cmd), strlen (cmd_line));
   free (cmd_line);
@@ -2282,6 +2283,20 @@ settings_std_cb (GtkButton *button, gpointer user_data)
   populate_popup_window (s);
 
   gtk_notebook_set_page (notebook, 0);
+}
+
+G_MODULE_EXPORT void
+settings_reset_cb (GtkButton *button, gpointer user_data)
+{
+# ifdef HAVE_XML
+  state *s = global_state_kludge;  /* I hate C so much... */
+  GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
+  char *cmd_line = get_configurator_command_line (s->cdata, True);
+  gtk_entry_set_text (GTK_ENTRY (cmd), cmd_line);
+  gtk_entry_set_position (GTK_ENTRY (cmd), strlen (cmd_line));
+  free (cmd_line);
+  populate_popup_window (s);
+# endif /* HAVE_XML */
 }
 
 G_MODULE_EXPORT void
@@ -3223,7 +3238,7 @@ populate_demo_window (state *s, int list_elt)
   screenhack *hack;
   char *pretty_name;
   GtkFrame *frame1 = GTK_FRAME (name_to_widget (s, "preview_frame"));
-  GtkFrame *frame2 = GTK_FRAME (name_to_widget (s, "doc_frame"));
+  GtkFrame *frame2 = GTK_FRAME (name_to_widget (s, "opt_frame"));
   GtkEntry *cmd    = GTK_ENTRY (name_to_widget (s, "cmd_text"));
   GtkCombo *vis    = GTK_COMBO (name_to_widget (s, "visual_combo"));
   GtkWidget *list  = GTK_WIDGET (name_to_widget (s, "list"));
@@ -4047,6 +4062,13 @@ update_subproc_timer (gpointer data)
   return FALSE;  /* do not re-execute timer */
 }
 
+static int
+settings_timer (gpointer data)
+{
+  settings_cb (0, 0);
+  return FALSE;
+}
+
 
 /* Call this when you think you might want a preview process running.
    It will set a timer that will actually launch that program a second
@@ -4553,7 +4575,7 @@ static struct poptOption crapplet_options[] = {
 #endif /* HAVE_CRAPPLET */
 #endif /* 0 */
 
-const char *usage = "[--display dpy] [--prefs]"
+const char *usage = "[--display dpy] [--prefs | --settings]"
 # ifdef HAVE_CRAPPLET
                     " [--crapplet]"
 # endif
@@ -4654,7 +4676,8 @@ main (int argc, char **argv)
   XtAppContext app;
   state S, *s;
   saver_preferences *p;
-  Bool prefs = False;
+  Bool prefs_p = False;
+  Bool settings_p = False;
   int i;
   Display *dpy;
   Widget toplevel_shell;
@@ -4920,7 +4943,9 @@ main (int argc, char **argv)
       if (str[0] == '-' && str[1] == '-')
 	str++;
       if (!strcmp (str, "-prefs"))
-	prefs = True;
+	prefs_p = True;
+      else if (!strcmp (str, "-settings"))
+	settings_p = True;
       else if (crapplet_p)
         /* There are lots of random args that we don't care about when we're
            started as a crapplet, so just ignore unknown args in that case. */
@@ -5026,6 +5051,8 @@ main (int argc, char **argv)
     gtk_widget_set_sensitive (std, False);
     std = GTK_WIDGET (name_to_widget (s, "adv_button"));
     gtk_widget_hide (std);
+    std = GTK_WIDGET (name_to_widget (s, "reset_button"));
+    gtk_widget_hide (std);
     page = 1;
 # endif /* !HAVE_XML */
 
@@ -5090,7 +5117,7 @@ main (int argc, char **argv)
 
 
   /* Handle the -prefs command-line argument. */
-  if (prefs)
+  if (prefs_p)
     {
       GtkNotebook *notebook =
         GTK_NOTEBOOK (name_to_widget (s, "notebook"));
@@ -5178,6 +5205,11 @@ main (int argc, char **argv)
 
 
   gtk_timeout_add (60 * 1000, check_blanked_timer, s);
+
+
+  /* Handle the --settings command-line argument. */
+  if (settings_p)
+    gtk_timeout_add (500, settings_timer, 0);
 
 
   /* Issue any warnings about the running xscreensaver daemon. */

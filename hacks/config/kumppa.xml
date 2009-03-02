@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="10000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <number id="density" type="slider" arg="-speed %"
@@ -14,8 +14,10 @@
           low="0.0001" high="0.2" default="0.1"/>
 
   <boolean id="random" _label="Randomize" arg-unset="-no-random"/>
-<!--  <boolean id="db" _label="Double Buffer" arg-set="-db"/> -->
+<!--  <boolean id="db" _label="Double buffer" arg-set="-db"/> -->
 
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Spiraling, spinning, and very, very fast splashes of color rush

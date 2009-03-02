@@ -26,6 +26,7 @@ attraction - interactions of opposing forces
 [\-orbit] [\-viscosity \fIfloat\fP] [\-mouse] [\-no-mouse] [\-mouse-size]
 [\-walls] [\-nowalls] [\-maxspeed] [\-nomaxspeed]
 [\-correct-bounce] [\-fast-bounce]
+[\-fps]
 .SH DESCRIPTION
 The \fIattraction\fP program has several visually different modes of 
 operation, all of which are based on the interactions of a set of control
@@ -196,6 +197,9 @@ For "x", "y", and "both", displays the given velocities of each ball as a
 bar graph in the same window as the balls.  For "speed", displays the total
 speed of each ball.  Default is "none".
 .BR
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .B DISPLAY
 to get the default host and display number.

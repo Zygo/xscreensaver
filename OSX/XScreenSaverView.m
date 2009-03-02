@@ -126,9 +126,12 @@ add_default_options (const XrmOptionDescRec *opts,
     { "-choose-random-images",   ".chooseRandomImages",XrmoptionNoArg, "True" },
     { "-no-choose-random-images",".chooseRandomImages",XrmoptionNoArg, "False"},
     { "-image-directory",        ".imageDirectory",    XrmoptionSepArg, 0 },
+    { "-fps",                    ".doFPS",             XrmoptionNoArg, "True" },
+    { "-no-fps",                 ".doFPS",             XrmoptionNoArg, "False"},
     { 0, 0, 0, 0 }
   };
   static const char *default_defaults [] = {
+    ".doFPS:              False",
     ".textMode:           date",
  // ".textLiteral:        ",
  // ".textFile:           ",
@@ -262,6 +265,13 @@ add_default_options (const XrmOptionDescRec *opts,
 
     [self lockFocus];       // in case something tries to draw from here
     [self prepareContext];
+
+    /* I considered just not even calling the free callback at all...
+       But webcollage-cocoa needs it, to kill the inferior webcollage
+       processes (since the screen saver framework never generates a
+       SIGPIPE for them...)  Instead, I turned off the free call in
+       xlockmore.c, which is where all of the bogus calls are anyway.
+     */
     xsft->free_cb (xdpy, xwindow, xdata);
     [self unlockFocus];
 
@@ -285,6 +295,15 @@ add_default_options (const XrmOptionDescRec *opts,
 - (void) resizeContext
 {
 }
+
+
+static void
+screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
+{
+  fps_compute (fpst, 0);
+  fps_draw (fpst);
+}
+
 
 - (void) animateOneFrame
 {
@@ -333,6 +352,11 @@ add_default_options (const XrmOptionDescRec *opts,
       (void *(*) (Display *, Window, void *)) xsft->init_cb;
     
     xdata = init_cb (xdpy, xwindow, xsft->setup_arg);
+
+    if (get_boolean_resource (xdpy, "doFPS", "DoFPS")) {
+      fpst = fps_init (xdpy, xwindow);
+      if (! xsft->fps_cb) xsft->fps_cb = screenhack_do_fps;
+    }
   }
 
   /* I don't understand why we have to do this *every frame*, but we do,
@@ -340,6 +364,18 @@ add_default_options (const XrmOptionDescRec *opts,
    */
   if (![self isPreview])
     [NSCursor setHiddenUntilMouseMoves:YES];
+
+
+  if (fpst)
+    {
+      /* This is just a guess, but the -fps code wants to know how long
+         we were sleeping between frames.
+       */
+      unsigned long usecs = 1000000 * [self animationTimeInterval];
+      usecs -= 200;  // caller apparently sleeps for slightly less sometimes...
+      fps_slept (fpst, usecs);
+    }
+
 
   /* It turns out that [ScreenSaverView setAnimationTimeInterval] does nothing.
      This is bad, because some of the screen hacks want to delay for long 
@@ -386,6 +422,7 @@ add_default_options (const XrmOptionDescRec *opts,
   //
   NSDisableScreenUpdates();
   unsigned long delay = xsft->draw_cb (xdpy, xwindow, xdata);
+  if (fpst) xsft->fps_cb (xdpy, xwindow, fpst, xdata);
   XSync (xdpy, 0);
   NSEnableScreenUpdates();
 
@@ -517,7 +554,7 @@ add_default_options (const XrmOptionDescRec *opts,
     case KeyRelease:
       {
         NSString *nss = [e characters];
-        const char *s = [nss cStringUsingEncoding:NSUTF8StringEncoding];
+        const char *s = [nss cStringUsingEncoding:NSISOLatin1StringEncoding];
         xe.xkey.keycode = (s && *s ? *s : 0);
         xe.xkey.state = state;
         break;

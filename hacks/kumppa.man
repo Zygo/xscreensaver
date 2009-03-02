@@ -11,6 +11,7 @@ kumppa - spiraling, spinning, splashes of color rush toward the screen.
 [\-speed \fInumber\fP]
 [\-random]
 [\-dbuf]
+[\-fps]
 .SH DESCRIPTION
 Spiraling, spinning, and very, very fast splashes of color rush toward the
 screen.
@@ -37,6 +38,9 @@ Whether to randomize.
 .TP 8
 .B \-dbuf | \-no-dbuf
 Whether to double buffer.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -97,6 +97,7 @@
 #include "colors.h"
 #include "grabscreen.h"
 #include "visual.h"
+#include "fps.h"
 
 /* Be Posixly correct */
 #undef  bzero
@@ -125,6 +126,7 @@ struct xscreensaver_function_table {
                                 unsigned int w, unsigned int h);
   Bool           (*event_cb)   (Display *, Window, void *, XEvent *);
   void           (*free_cb)    (Display *, Window, void *);
+  void           (*fps_cb)     (Display *, Window, fps_state *, void *);
 
   Visual *       (*pick_visual_hook) (Screen *);
   Bool           (*validate_visual_hook) (Screen *, const char *, Visual *);

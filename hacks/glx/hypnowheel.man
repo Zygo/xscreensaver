@@ -54,8 +54,8 @@ rather than them all having the same origin.
 If specified, then each pair of left-wrapping and right-wrapping
 spirals will be mirror images of each other.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

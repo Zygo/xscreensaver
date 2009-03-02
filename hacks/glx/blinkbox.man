@@ -13,6 +13,7 @@ blinkbox
 [\-dissolve]
 [\-fade]
 [\-no\-blur]
+[\-fps]
 .SH DESCRIPTION
 Shows a ball contained inside of a bounding box. Colored blocks blink in
 when the ball hits the edges.
@@ -45,6 +46,9 @@ Boxes fade to transparency instead of just vanishing.
 .TP 8
 .B \-blur | \-no-blur
 Enable or disable motion blur on the ball.  Default: blurry.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

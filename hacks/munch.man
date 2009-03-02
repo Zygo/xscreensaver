@@ -20,6 +20,7 @@ munch - munching squares screen hack
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-xor] [\-noxor] [\-shift]
 [\-noshift] [\-logminwidth \fIminimum width\fP]
+[\-fps]
 .SH DESCRIPTION
 The
 .I munch
@@ -69,6 +70,9 @@ Don't shift and start drawing the square at weird starting points.
 .B \-logminwidth \fIminimum\-width\fP
 The logarithm (base 2) of the minimum with of a square (must be a power of
 2, or some parts of the square aren't.)
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

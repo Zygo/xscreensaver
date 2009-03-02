@@ -710,6 +710,7 @@ substrate_free (Display *dpy, Window window, void *closure)
 static const char *substrate_defaults[] = {
     ".background: white",
     ".foreground: black",
+    "*fpsSolid:	true",
     "*wireFrame: false",
     "*maxCycles: 10000",
     "*growthDelay: 18000",

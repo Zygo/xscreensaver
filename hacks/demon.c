@@ -56,7 +56,9 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
 					"*count:   0     \n" \
 					"*cycles:  1000  \n" \
 					"*size:    -7    \n" \
-					"*ncolors: 64    \n"
+					"*ncolors: 64    \n" \
+					"*fpsSolid: true    \n" \
+
 # define reshape_demon 0
 # define demon_handle_event 0
 # define UNIFORM_COLORS

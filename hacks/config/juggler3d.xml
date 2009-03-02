@@ -3,33 +3,52 @@
 <screensaver name="juggler3d" _label="Juggler3D">
   <command arg="-root"/>
 
-	<number id="speed" type="slider" arg="-speed %" _label="Juggling Speed"
-		_low-label="Slow" _high-label="Fast" low="0.5" high="5.0" default="2.2"/>
-		  
-	<number id="trans" type="slider" arg="-trans %" _label="Juggler Horizontal Speed"
-		_low-label="Slow" _high-label="Fast" low="0.05" high="2.0" default="0.1"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
 
-	<number id="spin" type="slider" arg="-spin %" _label="Juggler Spin Speed"
-		_low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
+    <number id="speed" type="slider" arg="-speed %" _label="Juggling speed"
+            _low-label="Slow" _high-label="Fast" low="0.5" high="5.0" default="2.2"/>
+   </vgroup>
 
-	<number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min Objects"
-          low="3" high="35" default="8"/>
+   <vgroup>
+    <number id="trans" type="slider" arg="-trans %" _label="Juggler horizontal speed"
+            _low-label="Slow" _high-label="Fast" low="0.05" high="2.0" default="0.1"/>
 
-	<number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max Objects"
-          low="3" high="35" default="8"/>		  
+    <number id="spin" type="slider" arg="-spin %" _label="Juggler spin speed"
+            _low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
+   </vgroup>
+  </hgroup>
 
-	<number id="minhinc" type="spinbutton" arg="-minhinc %" _label="Min Height"
-          low="1" high="31" default="2"/>
-		  
-	<number id="maxhinc" type="spinbutton" arg="-maxhinc %" _label="Max Height"
-          low="1" high="31" default="6"/>		  
+  <hgroup>
+   <vgroup>
+    <number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min objects"
+      low="3" high="35" default="3"/>
 
-	<boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
-	<boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+    <number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max objects"
+      low="3" high="35" default="8"/>		  
+   </vgroup>
+   <vgroup>
+    <number id="minhinc" type="spinbutton" arg="-minhinc %" _label="Min height"
+      low="1" high="31" default="2"/>
 
-	<_description>
+    <number id="maxhinc" type="spinbutton" arg="-maxhinc %" _label="Max height"
+      low="1" high="31" default="6"/>		  
+   </vgroup>
+   <vgroup>
+    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <_description>
 3D simulation of a juggler performing with balls, clubs and rings.  
 
+http://en.wikipedia.org/wiki/Siteswap
+
 Written by Brian Apps; 2005.
-	</_description>
+  </_description>
 </screensaver>

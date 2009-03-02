@@ -63,7 +63,7 @@
 #define DEFAULTS "*delay:	30000	    \n" \
 		 "*showFPS:	False	    \n" \
 		 "*wireframe:	False	    \n" \
-		 "*labelfont:   -*-times-bold-r-normal-*-180-*\n"
+		 "*labelfont:   -*-helvetica-medium-r-normal-*-180-*\n"
 
 # define refresh_spheremonics 0
 # define release_spheremonics 0
@@ -888,7 +888,7 @@ draw_spheremonics (ModeInfo *mi)
       print_gl_string (mi->dpy, cc->font, cc->font_list,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
-                       buf);
+                       buf, False);
     }
 
   if (!static_parms)

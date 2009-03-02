@@ -18,9 +18,9 @@
 
 #define DEFAULTS	"*delay:	10000		 \n" \
 			"*wireframe:    False         \n" \
-			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
-			"*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
-			"*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
+			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
+			"*titleFont2: -*-helvetica-medium-r-normal-*-120-*\n" \
+			"*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
 
 # define refresh_tangram 0
 # define release_tangram 0
@@ -115,34 +115,38 @@ typedef struct {
 static tangram_configuration *tps = NULL;
 
 #define DEF_VIEWING_TIME "5"
-#define DEF_ROTATE_CAMERA "True"
+#define DEF_ROTATE "True"
 #define DEF_X_CAMERA_ROTATE "0.2"
 #define DEF_Y_CAMERA_ROTATE "0.5"
 #define DEF_Z_CAMERA_ROTATE "0"
-
+#define DEF_LABELS "True"
 
 static GLuint viewing_time;
 static Bool do_rotate;
+static Bool do_labels;
 static GLfloat x_camera_rotate;
 static GLfloat y_camera_rotate;
 static GLfloat z_camera_rotate;
 static int wire;
 
 static XrmOptionDescRec opts[] = {
-    {"-viewing_time", ".viewing_time", XrmoptionSepArg, 0},
+    {"-viewing_time", ".viewingTime", XrmoptionSepArg, 0},
     {"-rotate", ".rotate", XrmoptionNoArg, "True"},
     {"+rotate", ".rotate", XrmoptionNoArg, "False"},
-    {"-x_camera_rotate", ".x_camera_rotate", XrmoptionSepArg, 0},
-    {"-y_camera_rotate", ".y_camera_rotate", XrmoptionSepArg, 0},
-    {"-z_camera_rotate", ".z_camera_rotate", XrmoptionSepArg, 0}
+    {"-labels", ".labels", XrmoptionNoArg, "True"},
+    {"+labels", ".labels", XrmoptionNoArg, "False"},
+    {"-x_camera_rotate", ".xCameraRotate", XrmoptionSepArg, 0},
+    {"-y_camera_rotate", ".yCameraRotate", XrmoptionSepArg, 0},
+    {"-z_camera_rotate", ".zCameraRotate", XrmoptionSepArg, 0}
 };
 
 static argtype vars[] = {
-    {&viewing_time, "viewing_time", "Viewing Time", DEF_VIEWING_TIME, t_Int},
-    {&do_rotate, "rotate", "Rotate", DEF_ROTATE_CAMERA, t_Bool},
-    {&x_camera_rotate, "x_camera_rotate", "X Camera Rotate", DEF_X_CAMERA_ROTATE, t_Float},
-    {&y_camera_rotate, "y_camera_rotate", "Y Camera Rotate", DEF_Y_CAMERA_ROTATE, t_Float},
-    {&z_camera_rotate, "z_camera_rotate", "Z Camera Rotate", DEF_Z_CAMERA_ROTATE, t_Float}
+    {&viewing_time, "viewingTime", "ViewingTime", DEF_VIEWING_TIME, t_Int},
+    {&do_rotate, "rotate", "Rotate", DEF_ROTATE, t_Bool},
+    {&do_labels, "labels", "Labels", DEF_LABELS, t_Bool},
+    {&x_camera_rotate, "xCameraRotate", "XCameraRotate", DEF_X_CAMERA_ROTATE, t_Float},
+    {&y_camera_rotate, "yCameraRotate", "YCameraRotate", DEF_Y_CAMERA_ROTATE, t_Float},
+    {&z_camera_rotate, "zCameraRotate", "ZCameraRotate", DEF_Z_CAMERA_ROTATE, t_Float}
 };
 
 ENTRYPOINT ModeSpecOpt tangram_opts = { countof(opts), opts, countof(vars), vars, NULL };
@@ -752,7 +756,7 @@ static void draw_shapes(ModeInfo * mi)
     draw_tangram_shape(tp->tlg2);
     draw_tangram_shape(tp->sq);
     draw_tangram_shape(tp->rh);
-    glCallList(tp->name_list);
+    if (do_labels) glCallList(tp->name_list);
 }
 
 static void set_perspective(void)
@@ -1025,10 +1029,11 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
     glPushMatrix();
 
     glLoadIdentity();
-    glNewList(tp->name_list, GL_COMPILE);
-    {
+    if (do_labels)
+      {
         XFontStruct *f;
         GLuint fl;
+        glNewList(tp->name_list, GL_COMPILE);
         if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
             f = tp->xfont1, fl = tp->font1_dlist;
         else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
@@ -1039,9 +1044,9 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
         glColor3f(0.8, 0.8, 0);
         print_gl_string(mi->dpy, f, fl,
                         mi->xgwa.width, mi->xgwa.height,
-                        10, mi->xgwa.height - 10, tp->pn);
-    }
-    glEndList();
+                        10, mi->xgwa.height - 10, tp->pn, False);
+        glEndList();
+      }
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
     glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 128);

@@ -5,7 +5,7 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Duration" _low-label="1 Second" _high-label="1 Minute"
+          _label="Duration" _low-label="1 second" _high-label="1 minute"
           low="1" high="60" default="5"/>
 
   <number id="lines" type="slider" arg="-maxlines %"
@@ -15,6 +15,8 @@
   <!-- #### -fadedelay [200000] -->
   <!-- #### -foreground [white] -->
   <!-- #### -background [black] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This is sort of a combination spirograph/string-art.  It generates a

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -566,8 +566,8 @@ static const char *goop_defaults [] = {
   "*delay:		12000",
   "*additive:		true",
   "*mode:		transparent",
-  "*count:		0",
-  "*planes:		0",
+  "*count:		1",
+  "*planes:		12",
   "*thickness:		5",
   "*torque:		0.0075",
   "*elasticity:		0.9",

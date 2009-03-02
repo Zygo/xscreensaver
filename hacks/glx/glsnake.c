@@ -98,7 +98,7 @@
 #define DEF_ANGVEL      1.0
 #define DEF_STATICTIME  5000
 #define DEF_ALTCOLOUR   0
-#define DEF_TITLES      1
+#define DEF_TITLES      0
 #define DEF_INTERACTIVE 0
 #define DEF_ZOOM        25.0
 #define DEF_WIREFRAME   0
@@ -111,7 +111,7 @@
 #define DEF_ANGVEL      "1.0"
 #define DEF_STATICTIME  "5000"
 #define DEF_ALTCOLOUR   "False"
-#define DEF_TITLES      "True"
+#define DEF_TITLES      "False"
 #define DEF_INTERACTIVE "False"
 #define DEF_ZOOM        "25.0"
 #define DEF_WIREFRAME   "False"
@@ -147,7 +147,7 @@ static GLfloat angvel;
 #define DEFAULTS "*delay:          30000                      \n" \
                  "*count:          30                         \n" \
                  "*showFPS:        False                      \n" \
-                 "*labelfont:   -*-times-bold-r-normal-*-180-*\n" \
+                 "*labelfont:   -*-helvetica-medium-r-normal-*-180-*\n" \
 
 
 
@@ -1706,7 +1706,7 @@ static void draw_title(
 	print_gl_string(mi->dpy, bp->font, bp->font_list,
 			mi->xgwa.width, mi->xgwa.height,
 			10.0, (float) mi->xgwa.height - 10.0,
-			s);
+			s, False);
 #endif
     }
     glPopMatrix();

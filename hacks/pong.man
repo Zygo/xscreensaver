@@ -8,6 +8,7 @@ pong - Pong Home Video Game Emulator
 [\-visual \fIvisual\fP]
 [\-clock \fIfloat\fP]
 [\-noise]
+[\-fps]
 .SH DESCRIPTION
 The
 .I pong 
@@ -38,6 +39,9 @@ The score of the game will be the current time.
 .TP 8
 .B \-noise \fIfloat\fP
 How noisy the video signal should be (between 0.0 and 4.0 or so).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -5,17 +5,20 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="solid" _label="Solid Floor" arg-set="-solidmoebius"/>
-  <boolean id="ants" _label="Draw Ants" arg-unset="-no-ants"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="solid" _label="Solid floor" arg-set="-solidmoebius"/>
+  <boolean id="ants" _label="Draw ants" arg-unset="-no-ants"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This animates a 3D rendition M.C. Escher's "Moebius Strip II",
 an image of ants walking along the surface of a moebius strip.
+
+http://en.wikipedia.org/wiki/Moebius_strip
+http://en.wikipedia.org/wiki/Maurits_Cornelis_Escher
 
 Written by Marcelo F. Vianna; 1997.
   </_description>

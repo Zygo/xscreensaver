@@ -17,6 +17,7 @@ Kaleidescope - rotating line segments
 .SH SYNOPSIS
 .B kaleidescope
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-color_mode \fImono | nice | greedy\fP] [-nsegments \fIint\fP] [\-ntrails \fIint\fP] [\-local_rotation \fIint\fP] [\-global_rotation \fIint\fP] [\-delay \fIusecs\fP] [\-redmin \fIint\fP] [\-greenmin \fIint\fP] [\-bluemin \fIint\fP] [\-redrange \fIint\fP] [\-greenrange \fIint\fP] [\-bluerange \fIint\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIkaleidescope\fP program draws line segments in a symmetric pattern
 that evolves over time. 
@@ -60,6 +61,9 @@ to 30000. The ranges default to 20000.
 .B \-delay microseconds
 How much of a delay should be introduced between steps of the animation.
 Default is 20000, or about 5 frames a second.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

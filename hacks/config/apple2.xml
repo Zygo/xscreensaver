@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="apple2" _label="Apple ][">
+<screensaver name="apple2" _label="Apple2">
 
  <command arg="-root"/>
 
@@ -8,16 +8,20 @@
   <option id="random"    _label="Choose display mode randomly"/>
   <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
   <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
-  <option id="basic"     _label="Run BASIC programs"     arg-set="-mode basic"/>
+  <option id="basic"     _label="Run basic programs"     arg-set="-mode basic"/>
  </select>
 
-<!-- <file id="program" _label="Text Program" arg="-program %"/> -->
-
- <xscreensaver-image />
- <xscreensaver-text />
+ <hgroup>
+  <vgroup>
+   <xscreensaver-text />
+  </vgroup>
+  <vgroup>
+   <xscreensaver-image />
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </vgroup>
+ </hgroup>
 
  <_description>
-
 Simulates an original Apple ][ Plus computer in all its 1979 glory.  It
 also reproduces the appearance of display on a color television set of
 the period.
@@ -27,6 +31,10 @@ and runs it.  In "Text Mode", it displays the output of a program, or
 the contents of a file or URL.  In "Slideshow Mode", it chooses random
 images and displays them within the limitations of the Apple ][
 display hardware.  (Six available colors in hi-res mode!)
+
+On X11 systems, This program is also a fully-functional VT100 emulator.
+
+http://en.wikipedia.org/wiki/Apple_II_series
 
 Written by Trevor Blackwell; 2003.
   </_description>

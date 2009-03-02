@@ -4,6 +4,7 @@ pyro - simulate fireworks
 .SH SYNOPSIS
 .B pyro
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIinteger\fP] [\-frequency \fIinteger\fP] [\-scatter \fIinteger\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIpyro\fP program simulates fireworks, in a way similar to a Macintosh
 program of the same name.
@@ -36,6 +37,9 @@ How often new missiles should launch.  Default 30.
 .B \-scatter \fIinteger\fP
 How many particles should appear when a missile explodes.  Default 100.
 The actual number used is between \fIN\fP and \fIN+(N/2)\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

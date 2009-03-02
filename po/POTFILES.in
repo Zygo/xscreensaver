@@ -1,4 +1,4 @@
-# Auto-generated: Sat Jul  5 19:27:06 PDT 2008
+# Auto-generated: Sun Aug  3 02:50:46 PDT 2008
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -40,7 +40,6 @@ hacks/config/circuit.xml
 hacks/config/cloudlife.xml
 hacks/config/compass.xml
 hacks/config/coral.xml
-hacks/config/cosmos.xml
 hacks/config/crackberg.xml
 hacks/config/critical.xml
 hacks/config/crystal.xml
@@ -59,7 +58,6 @@ hacks/config/discrete.xml
 hacks/config/distort.xml
 hacks/config/dnalogo.xml
 hacks/config/drift.xml
-hacks/config/electricsheep.xml
 hacks/config/endgame.xml
 hacks/config/engine.xml
 hacks/config/epicycle.xml
@@ -68,7 +66,6 @@ hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
 hacks/config/fiberlamp.xml
-hacks/config/fireflies.xml
 hacks/config/fireworkx.xml
 hacks/config/flag.xml
 hacks/config/flame.xml
@@ -97,7 +94,6 @@ hacks/config/glschool.xml
 hacks/config/glslideshow.xml
 hacks/config/glsnake.xml
 hacks/config/gltext.xml
-hacks/config/goban.xml
 hacks/config/goop.xml
 hacks/config/grav.xml
 hacks/config/greynetic.xml
@@ -181,12 +177,12 @@ hacks/config/sballs.xml
 hacks/config/shadebobs.xml
 hacks/config/sierpinski.xml
 hacks/config/sierpinski3d.xml
+hacks/config/skytentacles.xml
 hacks/config/slidescreen.xml
 hacks/config/slip.xml
 hacks/config/sonar.xml
 hacks/config/speedmine.xml
 hacks/config/sphere.xml
-hacks/config/sphereeversion.xml
 hacks/config/spheremonics.xml
 hacks/config/spiral.xml
 hacks/config/spotlight.xml
@@ -219,16 +215,10 @@ hacks/config/whirlygig.xml
 hacks/config/worm.xml
 hacks/config/wormhole.xml
 hacks/config/xanalogtv.xml
-hacks/config/xaos.xml
-hacks/config/xdaliclock.xml
 hacks/config/xflame.xml
 hacks/config/xjack.xml
 hacks/config/xlyap.xml
 hacks/config/xmatrix.xml
-hacks/config/xmountains.xml
-hacks/config/xplanet.xml
 hacks/config/xrayswarm.xml
-hacks/config/xsnow.xml
 hacks/config/xspirograph.xml
-hacks/config/xteevee.xml
 hacks/config/zoom.xml

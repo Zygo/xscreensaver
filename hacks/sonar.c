@@ -1,5 +1,5 @@
 /* sonar.c --- Simulate a sonar screen.
- * Copyright (C) 1998-2006 by Stephen Martin and Jamie Zawinski
+ * Copyright (C) 1998-2008 by Stephen Martin and Jamie Zawinski
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -42,7 +42,7 @@
  *   - plot the process table, by process size, cpu usage, or total time;
  *   - plot the logged on users by idle time or cpu usage.
  *
- * $Revision: 1.57 $
+ * $Revision: 1.60 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version, by Stephen Martin <smartin@vanderfleet-martin.net>
@@ -1913,7 +1913,7 @@ parse_mode (sonar_info *si, Bool ping_works_p)
       free (source);
 # ifdef HAVE_PING
       if (ping_works_p)		/* if root or setuid, ping will work. */
-        source = strdup("subnet/29,/etc/hosts");
+        source = strdup("subnet/28");
       else
 # endif
         source = strdup("simulation");
@@ -2237,6 +2237,7 @@ sonar_free (Display *dpy, Window window, void *closure)
 static const char *sonar_defaults [] = {
     ".background:      #000000",
     ".sweepColor:      #00FF00",
+    "*fpsSolid:		true",
     "*delay:	       100000",
     "*scopeColor:      #003300",
     "*gridColor:       #00AA00",
@@ -2265,6 +2266,7 @@ static const char *sonar_defaults [] = {
 
 static XrmOptionDescRec sonar_options [] = {
     {"-background",   ".background",   XrmoptionSepArg, 0 },
+    {"-delay",        ".delay",        XrmoptionSepArg, 0 },
     {"-sweep-color",  ".sweepColor",   XrmoptionSepArg, 0 },
     {"-scope-color",  ".scopeColor",   XrmoptionSepArg, 0 },
     {"-grid-color",   ".gridColor",    XrmoptionSepArg, 0 },

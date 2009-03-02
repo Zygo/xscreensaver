@@ -50,6 +50,7 @@
 static const char *xlyap_defaults [] = {
   ".background:         black",
   ".foreground:         white",
+  "*fpsSolid:		true",
   "*randomize:          true",
   "*builtin:            -1",
   "*minColor:           1",

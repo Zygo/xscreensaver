@@ -39,6 +39,13 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#define DEF_ROTATE      "True"
+#define DEF_REFLECTIONS "True"
+#define DEF_SHADOWS     "True"
+#define DEF_SMOOTH      "True"
+#define DEF_CLASSIC     "False"
+
+
 static XrmOptionDescRec opts[] = {
   {"+rotate", ".chess.rotate", XrmoptionNoArg, "false" },
   {"-rotate", ".chess.rotate", XrmoptionNoArg, "true" },
@@ -55,11 +62,11 @@ static XrmOptionDescRec opts[] = {
 static int rotate, reflections, smooth, shadows, classic;
 
 static argtype vars[] = {
-  {&rotate,      "rotate",      "Rotate",      "True", t_Bool},
-  {&reflections, "reflections", "Reflections", "True", t_Bool},
-  {&shadows, "shadows", "Shadows", "True", t_Bool},
-  {&smooth,      "smooth",      "Smooth",      "True", t_Bool},
-  {&classic,     "classic",     "Classic",     "False", t_Bool},
+  {&rotate,      "rotate",      "Rotate",      DEF_ROTATE, t_Bool},
+  {&reflections, "reflections", "Reflections", DEF_REFLECTIONS, t_Bool},
+  {&shadows,	 "shadows",	 "Shadows",    DEF_SHADOWS, t_Bool},
+  {&smooth,      "smooth",      "Smooth",      DEF_SMOOTH, t_Bool},
+  {&classic,     "classic",     "Classic",     DEF_CLASSIC, t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt chess_opts = {countof(opts), opts, countof(vars), vars, NULL};

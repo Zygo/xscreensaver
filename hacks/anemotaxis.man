@@ -11,6 +11,7 @@ anemotaxis - directional search on a plane.
 [\-distance \fInumber\fP]
 [\-sources \fInumber\fP]
 [\-searchers \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 The program demonstrates a search algorithm designed for locating a
 source of odor in turbulent atmosphere. The odor is convected by wind
@@ -50,7 +51,9 @@ Max number of sources.  Default: 25.
 .TP 8
 .B \-searchers \fInumber\fP
 Max number of searchers. Default: 25.
-
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -1,5 +1,5 @@
 /* erase.c: Erase the screen in various more or less interesting ways.
- * Copyright (c) 1997-2001, 2006 Jamie Zawinski <jwz@jwz.org>
+ * Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -513,7 +513,9 @@ slide_lines (eraser_state *st)
 
   for (y = 0; y < st->height; y += h)
     {
-      if (tick & 1)
+      if (st->width <= step)
+        ;
+      else if (tick & 1)
         {
           XCopyArea (st->dpy, st->window, st->window, st->fg_gc,
                      0, y, st->width-step, h, step, y);

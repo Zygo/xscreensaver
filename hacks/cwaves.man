@@ -14,6 +14,7 @@ cwaves - languid sinusoidal colors
 [\-delay \fIusecs\fP]
 [\-waves \fIint\fP]
 [\-colors \fIint\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIcwaves\fP program draws a languidly-scrolling vertical field
 of sinusoidal colors.
@@ -48,6 +49,9 @@ the apparent motion.
 .B \-colors \fIint\fP
 How many colors to use.  Default 800.  The more colors, the smoother the
 blending will be.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

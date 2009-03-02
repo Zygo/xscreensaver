@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.28 2006/03/13 11:41:31 jwz Exp $*/
+/*$Id: bubbles.c,v 1.30 2008/07/31 19:27:48 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -74,11 +74,11 @@
 static const char *bubbles_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  "*fpsSolid:		true",
   "*simple:		false",
   "*broken:		false",
-  "*delay:		800",
+  "*delay:		10000",
   "*quiet:		false", 
-  "*nodelay:		false",
   "*mode:		float",
   "*trails:		false",
   "*3D:			false",
@@ -91,7 +91,6 @@ static XrmOptionDescRec bubbles_options [] = {
   { "-broken",          ".broken",      XrmoptionNoArg, "true" },
 #endif
   { "-quiet",           ".quiet",       XrmoptionNoArg, "true" },
-  { "-nodelay",         ".nodelay",     XrmoptionNoArg, "true" },
   { "-3D",          ".3D",      XrmoptionNoArg, "true" },
   { "-delay",           ".delay",       XrmoptionSepArg, 0 },
   { "-mode",            ".mode",        XrmoptionSepArg, 0 },
@@ -1245,7 +1244,7 @@ static void
 get_resources(struct state *st)
 /* Get the appropriate X resources and warn about any inconsistencies. */
 {
-  Bool nodelay, rise;
+  Bool rise;
   XWindowAttributes xgwa;
   Colormap cmap;
   char *s;
@@ -1263,11 +1262,6 @@ get_resources(struct state *st)
     st->simple = True;
   }
   st->delay = get_integer_resource(st->dpy, "delay", "Integer");
-  nodelay = get_boolean_resource(st->dpy, "nodelay", "Boolean");
-  if (nodelay)
-    st->delay = 0;
-  if (st->delay < 0)
-    st->delay = 0;
 
   s = get_string_resource (st->dpy, "mode", "Mode");
   rise = False;
@@ -1406,11 +1400,13 @@ static unsigned long
 bubbles_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
-  Bubble *tmp;
-
-  tmp = new_bubble(st);
-  add_to_mesh(st, tmp);
-  insert_new_bubble(st, tmp);
+  int i;
+  for (i = 0; i < 5; i++)
+    {
+      Bubble *tmp = new_bubble(st);
+      add_to_mesh(st, tmp);
+      insert_new_bubble(st, tmp);
+    }
   return st->delay;
 }
 

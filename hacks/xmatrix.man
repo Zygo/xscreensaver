@@ -25,6 +25,7 @@ xmatrix - simulates the computer displays from the movie
 [\-trace]
 [\-mode \fImode\fP]
 [\-phone \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIxmatrix\fP program draws dropping characters similar to what
 is seen on the computer monitors in the Wachowski brothers' film,

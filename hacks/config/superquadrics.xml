@@ -5,12 +5,12 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="40000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="40000"
           convert="invert"/>
 
   <number id="spinspeed" type="slider" arg="-spinspeed %"
-          _label="Spin Speed" _low-label="Slow" _high-label="Fast"
+          _label="Spin speed" _low-label="Slow" _high-label="Fast"
           low="0.1" high="15.0" default="5.0"/>
 
   <number id="count" type="slider" arg="-count %"
@@ -22,7 +22,7 @@
           low="0" high="100" default="40"/>
 
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Morphing 3D shapes.

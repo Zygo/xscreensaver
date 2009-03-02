@@ -84,7 +84,7 @@ static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_LIGHT	"True"
-#define DEF_WIRE   	"False"
+#define DEF_WIRE    "False"
 #define DEF_TEXTURE	"True"
 
 static Bool do_light;
@@ -307,6 +307,7 @@ ENTRYPOINT void init_atunnel(ModeInfo * mi)
 /* all sorts of nice cleanup code should go here! */
 ENTRYPOINT void release_atunnel(ModeInfo * mi)
 {
+#if 0
   int screen;
   if (Atunnel != NULL) {
 	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
@@ -317,6 +318,7 @@ ENTRYPOINT void release_atunnel(ModeInfo * mi)
 	Atunnel = NULL;
   }
   FreeAllGL(mi);
+#endif
 }
 
 XSCREENSAVER_MODULE ("Atunnel", atunnel)

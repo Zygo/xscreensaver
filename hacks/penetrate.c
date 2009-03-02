@@ -366,7 +366,7 @@ penetrate_init (Display *dpy, Window window)
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
   const char *levelfont = "-*-courier-*-r-*-*-*-380-*-*-*-*-*-*";
-  const char *scorefont = "-*-times-*-r-*-*-*-180-*-*-*-*-*-*";
+  const char *scorefont = "-*-helvetica-*-r-*-*-*-180-*-*-*-*-*-*";
   XGCValues gcv;
   XWindowAttributes xgwa;
 
@@ -968,6 +968,8 @@ penetrate_free (Display *dpy, Window window, void *closure)
 static const char *penetrate_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsTop:	true",
+  "*fpsSolid:	true",
   "*bgrowth:	5",
   "*lrate:	80",
   "*smart:	False",

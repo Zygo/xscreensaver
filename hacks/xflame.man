@@ -10,6 +10,7 @@ xflame - draws animated flames
 [\-residual \fIint\fP] [\-variance \fIint\fP] [\-vartrend \fIint\fP] 
 [\-bloom \| \-no\-bloom] 
 [\-bitmap \fIxbm\-file\fP] [\-baseline \fIint\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIxflame\fP program draws animated flames across the bottom of the
 screen.  The flames occasionally flare up.  If a bitmap is specified,
@@ -41,6 +42,9 @@ If unspecified, a built-in image will be used.
 .PP
 The other options are arcane.  If someone would care to document them,
 that would be great.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

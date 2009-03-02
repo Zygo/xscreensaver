@@ -36,7 +36,9 @@ static const char sccsid[] = "@(#)polyominoes.c 5.01 2000/12/18 xlockmore";
 # define MODE_polyominoes
 #define DEFAULTS	"*delay: 10000 \n" \
 					"*cycles: 2000 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define reshape_polyominoes 0
 # define polyominoes_handle_event 0
 # define SMOOTH_COLORS

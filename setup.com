@@ -137,7 +137,6 @@ $ xlyap		:== $'mydir'xlyap
 $ xmatrix	:== $'mydir'xmatrix
 $ xrayswarm	:== $'mydir'xrayswarm
 $ xspirograph	:== $'mydir'xspirograph
-$ xsublim	:== $'mydir'xsublim
 $ zoom		:== $'mydir'zoom
 $ set def [-.DRIVER]
 $ mydir  = mydisk+f$directory()

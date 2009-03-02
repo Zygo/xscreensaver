@@ -304,6 +304,7 @@ static const char *spotlight_defaults [] = {
   ".background:			black",
   ".foreground:			white",
   "*dontClearRoot:		True",
+  "*fpsSolid:			true",
 
 #ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID:			Best",

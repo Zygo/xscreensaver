@@ -72,7 +72,7 @@
 #define DEF_LINES      "8"
 #define DEF_FONT_SIZE  "20"
 #define DEF_COLUMNS    "80"
-#define DEF_ALIGN      "random"
+#define DEF_ALIGNMENT  "random"
 #define DEF_SPEED       "1.0"
 #define TAB_WIDTH        8
 
@@ -164,7 +164,7 @@ static argtype vars[] = {
   {&max_lines,      "lines",     "Integer",    DEF_LINES,     t_Int},
   {&font_size,      "fontSize",  "Float",      DEF_FONT_SIZE, t_Float},
   {&target_columns, "columns",   "Integer",    DEF_COLUMNS,   t_Int},
-  {&alignment_str,  "alignment", "Alignment",  DEF_ALIGN,     t_String},
+  {&alignment_str,  "alignment", "Alignment",  DEF_ALIGNMENT, t_String},
   {&speed,	    "speed",     "Speed",      DEF_SPEED,     t_Float},
 };
 

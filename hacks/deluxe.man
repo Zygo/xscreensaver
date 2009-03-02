@@ -13,6 +13,7 @@ deluxe - pulsing sequence of stars, circles, and lines.
 [\-ncolors \fInumber\fP]
 [\-transparent]
 [\-no-db]
+[\-fps]
 .SH DESCRIPTION
 This draws a pulsing sequence of stars, circles, and lines.
 .SH OPTIONS
@@ -44,6 +45,9 @@ Whether to use transparency.
 .TP 8
 .B \-db | \-no-db
 Whether to double buffer.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

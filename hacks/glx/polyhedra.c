@@ -91,7 +91,7 @@ extern const char *progname;
     } while(0)
 
 #define Malloc(lvalue,n,type) do {\
-	if (!(lvalue = (type*) malloc((n) * sizeof(type)))) \
+	if (!(lvalue = (type*) calloc((n), sizeof(type)))) \
 	    Err("out of memory");\
     } while(0)
 
@@ -2418,7 +2418,7 @@ construct_polyhedra (polyhedron ***polyhedra_ret)
 
   int count = 0;
   polyhedron **result;
-  Malloc (result, last_uniform * 2 + 1, polyhedron*);
+  Malloc (result, last_uniform * 2 + 3, polyhedron*);
 
   while (index < last_uniform) {
     char sym[4];
@@ -2443,5 +2443,6 @@ construct_polyhedra (polyhedron ***polyhedra_ret)
   }
 
   *polyhedra_ret = result;
+  count++; /* leave room for teapot */
   return count;
 }

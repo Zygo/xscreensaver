@@ -718,19 +718,21 @@ sinc(struct state *st, double x)
 static void
 add_circle_drop(struct state *st, int x, int y, int radius, int dheight)
 {
-  int i, r2, cx, cy;
+  int r, r2, cx, cy;
   short *buf = (random()&1) ? st->bufferA : st->bufferB;
 
-  i = y * st->width + x;
   r2 = radius * radius;
+
 
   for (cy = -radius; cy <= radius; cy++)
     for (cx = -radius; cx <= radius; cx++) {
-      int r = cx*cx + cy*cy;
-      if (r <= r2) {
-        buf[i + cx + cy*st->width] =
-          (short)(dheight * sinc(st, sqrt(r)/radius));
-      }
+      int xx = x+cx;
+      int yy = y+cy;
+      if (xx < 0 || yy < 0 || xx >= st->width || yy >= st->height) {break;}
+      r = cx*cx + cy*cy;
+      if (r > r2) break;
+      buf[xx + yy*st->width] =
+        (short)(dheight * sinc(st, sqrt(r)/radius));
     }
 }
 
@@ -1091,11 +1093,11 @@ static const char *ripples_defaults[] =
   "*duration:		120",
   "*rate:	 	5",
   "*box:	 	0",
-  "*water: 		False",
+  "*water: 		True",
   "*oily: 		False",
   "*stir: 		False",
   "*fluidity: 		6",
-  "*light: 		0",
+  "*light: 		4",
   "*grayscale: 		False",
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM: True",

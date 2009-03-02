@@ -72,9 +72,7 @@ Instead of displaying Matrix glyphs, display genetic code
 Just draw boxes instead of textured characters.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

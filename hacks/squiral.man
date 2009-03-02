@@ -8,6 +8,7 @@ squiral - square spirals screensaver
 [\-noinstall] [\-visual \fIvisual\fP] [\-fill \fIpercent\fP] [-count
 \fInumber\fP] [-delay \fIusec\fP] [-disorder \fIfraction\fP] [-handedness
 \fIfraction\fP] [-cycle]
+[\-fps]
 .SH DESCRIPTION
 The \fIsquiral\fP program displays interacting, spiral-producing automata
 
@@ -49,6 +50,9 @@ The default is 0.005.
 The fraction of the time a squiraly will choose to enter lefthanded
 mode.  0.0 means exclusively right-handed behavior, 0.5 (the default) is
 a balance between the two, and 1.0 is exclusively left-handed behaviour.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

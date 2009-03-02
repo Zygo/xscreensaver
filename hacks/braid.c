@@ -36,7 +36,9 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 				   "*count: 15 \n" \
 				   "*cycles: 100 \n" \
 				   "*size: -7 \n" \
-				   "*ncolors: 64 \n"
+				   "*ncolors: 64 \n" \
+				   "*fpsSolid: true \n" \
+
 # define UNIFORM_COLORS
 # define reshape_braid 0
 # define braid_handle_event 0
@@ -49,8 +51,7 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 
 #ifdef MODE_braid
 
-ENTRYPOINT ModeSpecOpt braid_opts =
-{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+ENTRYPOINT ModeSpecOpt braid_opts = {0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
 ModStruct   braid_description =

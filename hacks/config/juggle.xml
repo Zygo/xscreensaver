@@ -4,37 +4,53 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="slider" arg="-count %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="50" high="1000" default="200"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
 
-  <number id="cycles" type="slider" arg="-cycles %"
-          _label="Performance Length" _low-label="Short" _high-label="Long"
-          low="50" high="1000" default="1000"/>
+    <number id="count" type="slider" arg="-count %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="50" high="1000" default="200"
+            convert="invert"/>
+   </vgroup>
+   <vgroup>
+    <number id="cycles" type="slider" arg="-cycles %"
+            _label="Performance length" _low-label="Short" _high-label="Long"
+            low="50" high="1000" default="1000"/>
 
-  <number id="tail" type="slider" arg="-tail %"
-          _label="Trail Length" _low-label="None" _high-label="Long"
-          low="0" high="100" default="1"/>
+    <number id="tail" type="slider" arg="-tail %"
+            _label="Trail length" _low-label="None" _high-label="Long"
+            low="0" high="100" default="1"/>
+   </vgroup>
+  </hgroup>
 
   <hgroup>
    <vgroup>
     <boolean id="balls" _label="Balls" arg-unset="-no-balls"/>
     <boolean id="clubs" _label="Clubs" arg-unset="-no-clubs"/>
-    <boolean id="torches" _label="Flaming Torches" arg-unset="-no-torches"/>
    </vgroup>
    <vgroup>
-    <boolean id="knives" _label="Knives" arg-unset="-no-knives"/>
     <boolean id="rings" _label="Rings" arg-unset="-no-rings"/>
-    <boolean id="bballs" _label="Bowling Balls" arg-unset="-no-bballs"/>
+    <boolean id="knives" _label="Knives" arg-unset="-no-knives"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="torches" _label="Flaming torches" arg-unset="-no-torches"/>
+    <boolean id="bballs" _label="Bowling balls" arg-unset="-no-bballs"/>
    </vgroup>
   </hgroup>
 
-  <boolean id="describe" _label="Print Cambridge Juggling Pattern Descriptions" arg-unset="-no-describe"/>
-  <string id="pattern" _label="Juggle This Pattern" arg="-pattern %" />
+  <boolean id="describe" _label="Print Cambridge juggling pattern descriptions" arg-unset="-no-describe"/>
+  <string id="pattern" _label="Juggle this pattern" arg="-pattern %" />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws a juggling stick-man.  See also "Juggler3D".
+
+http://en.wikipedia.org/wiki/Siteswap
 
 Written by Tim Auckland; 2002.
   </_description>

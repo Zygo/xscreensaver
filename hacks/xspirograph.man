@@ -9,6 +9,7 @@ xspirograph - simulates the rotation of a disk inside a circular rim
 [\-subdelay \fIuseconds\fP] 
 [\-layers \fIinteger\fP]
 [\-alwaysfinish] [\-noalwaysfinish]
+[\-fps]
 .SH DESCRIPTION
 \fIxspirograph\fP draws patterns such as those made by a
 spirograph, that is, the curve traced by a point on a circular

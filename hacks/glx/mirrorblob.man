@@ -81,8 +81,8 @@ Time taken to transition between images.
 .B \-zoom \fInumber\fP
 Size multiplier for blob.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

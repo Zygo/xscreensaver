@@ -16,6 +16,7 @@ ifs - draws spinning, colliding iterated-function-system images
 [\-no\-rotate]
 [\-no\-scale]
 [\-no\-translate]
+[\-fps]
 .SH DESCRIPTION
 The \fIifs\fP program draws spinning, colliding iterated-function-system images.
 .SH OPTIONS
@@ -68,6 +69,9 @@ Disable the varying translation component of the functions.
 .TP 8
 .B \-no-multi
 Turn off multi-coloured mode, only one colour is used to colour the whole set.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

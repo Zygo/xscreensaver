@@ -4,25 +4,30 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="10" high="10000" default="2000"/>
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="1000000" default="400000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Points" _low-label="Few" _high-label="Many"
+           low="10" high="10000" default="2000"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Timeout" _low-label="Small" _high-label="Large"
           low="0" high="1000" default="100"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="600000" default="400000"
-          convert="invert"/>
-
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This draws the two-dimensional variant of the recursive Sierpinski
-triangle fractal.
+triangle fractal.  See also the "Sierpinski3D" screen saver.
+
+http://en.wikipedia.org/wiki/Sierpinski_triangle
 
 Written by Desmond Daignault; 1997.
   </_description>

@@ -432,8 +432,8 @@ install-pam:
 	    $(INSTALL_DATA) $$src $$dir/$$dest ;			\
 	  else								\
 	    src="xscreensaver.pam.$$$$" ;				\
-	    echo "grep '^#%\|^auth' $$src2 > $$src" ;			\
-	          grep '^#%\|^auth' $$src2 > $$src ;			\
+	    echo "grep '^#%\|^auth\|^@include' $$src2 > $$src" ;	\
+	          grep '^#%\|^auth\|^@include' $$src2 > $$src  ;	\
 	    echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
 	         $(INSTALL_DATA) $$src $$dir/$$dest ;			\
 	    echo rm -f $$src ;						\

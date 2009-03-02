@@ -11,6 +11,7 @@ worm - multicolored worms that crawl around the screen.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-size \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 An ancient hack that draws multicolored worms that crawl around the screen.
 .SH OPTIONS
@@ -36,6 +37,9 @@ Number of Colors.  Default: 150.
 .TP 8
 .B \-size \fInumber\fP
 Size.  -20 - 20.  Default: -3.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

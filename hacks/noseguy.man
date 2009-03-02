@@ -17,6 +17,7 @@ noseguy - a little guy with a big nose wanders around being witty
 [\-program \fIprogram\fP]
 [\-filename \fIfile\fP]
 [\-text \fItext\fP]
+[\-fps]
 .SH DESCRIPTION
 A little man with a big nose and a hat runs around spewing out messages to
 the screen.  This code (and its bitmaps) were extracted from the \fIxnlock\fP
@@ -57,6 +58,9 @@ for all messages.
 .TP 8
 .B \-text \fIstring\fP
 If \fImode\fP is \fIstring\fP, then this text will be used for all messages.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

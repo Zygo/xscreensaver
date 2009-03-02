@@ -7,6 +7,7 @@ vermiculate - to move in a worm-like manner.
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
+[\-fps]
 .SH DESCRIPTION
 Draws squiggly worm-like paths.
 .SH OPTIONS
@@ -20,6 +21,9 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

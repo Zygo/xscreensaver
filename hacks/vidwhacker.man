@@ -6,6 +6,7 @@ vidwhacker - grab images and apply random filters to them
 [\-display \fIhost:display.screen\fP] [\-root] [\-verbose]
 [\-stdin] [\-stdout] [\-delay seconds]
 [-directory \fIdirectory\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIvidwhacker\fP program grabs an image from disk, or  from the
 system's video input, then applies random image filters to it, and
@@ -49,6 +50,9 @@ image on stdout, and exit.
 .B \-directory \fIdirectory\fP
 Use this directory instead of the \fBimageDirectory\fP specified in 
 the \fI~/.xscreensaver\fP file.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

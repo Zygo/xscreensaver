@@ -9,6 +9,7 @@ spotlight - move spotlight around desktop
 [\-delay \fIusecs\fP]
 [\-duration \fIsecs\fP]
 [\-radius \fIpixels\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIspotlight\fP program takes an image and exposes small sections
 of it as if through a wandering spotlight beam.
@@ -49,6 +50,9 @@ How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-radius \fIpixels\fP
 Radius of the spotlight in pixels.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

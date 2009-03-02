@@ -14,6 +14,7 @@ piecewise - lots of moving circles intersecting in interesting ways.
 [\-minradius \fInumber\fP]
 [\-maxradius \fInumber\fP]
 [\-no-db]
+[\-fps]
 .SH DESCRIPTION
 This draws a bunch of moving circles which switch from visibility to invisibility
 when they intersect.
@@ -49,6 +50,9 @@ Maximum circle radius (as a proportion of screen height). Default: 0.2.
 .TP 8
 .B \-db | \-no-db
 Whether to double buffer.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

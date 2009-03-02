@@ -85,7 +85,9 @@ If one of these are hit penrose will reinitialize.
 #define MODE_penrose
 #define DEFAULTS	"*delay: 10000 \n" \
 					"*size: 40 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define refresh_penrose 0
 # define reshape_penrose 0
 # define penrose_handle_event 0

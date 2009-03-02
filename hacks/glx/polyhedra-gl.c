@@ -18,9 +18,9 @@
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
-			"*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
-			"*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
+			"*titleFont:  -*-helvetica-medium-r-normal-*-140-*\n" \
+			"*titleFont2: -*-helvetica-medium-r-normal-*-100-*\n" \
+			"*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
 
 
 # define refresh_polyhedra 0
@@ -44,6 +44,12 @@
 #include "colors.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "teapot.h"
+
+#ifndef HAVE_COCOA
+# define XK_MISCELLANY
+# include <X11/keysymdef.h>
+#endif
 
 #ifdef USE_GL /* whole file */
 
@@ -165,9 +171,9 @@ startup_blurb (ModeInfo *mi)
   glColor3f (0.8, 0.8, 0);
   print_gl_string (mi->dpy, bp->xfont1, bp->font1_dlist,
                    mi->xgwa.width, mi->xgwa.height,
-                   mi->xgwa.width - (string_width (bp->xfont1, s) + 40),
+                   mi->xgwa.width - (string_width (bp->xfont1, s, 0) + 40),
                    mi->xgwa.height - 10,
-                   s);
+                   s, False);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -238,13 +244,21 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
 
+# ifdef HAVE_COCOA
+#  define XK_Right -1
+#  define XK_Left -1
+#  define XK_Up -1
+#  define XK_Down -1
+# endif
       bp->change_to = -1;
       if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
         bp->change_to = random() % bp->npolyhedra;
-      else if (c == '>' || c == '.' || c == '+' || c == '=')
+      else if (c == '>' || c == '.' || c == '+' || c == '=' ||
+               keysym == XK_Right || keysym == XK_Up)
         bp->change_to = (bp->which + 1) % bp->npolyhedra;
       else if (c == '<' || c == ',' || c == '-' || c == '_' ||
-               c == '\010' || c == '\177')
+               c == '\010' || c == '\177' ||
+               keysym == XK_Left || keysym == XK_Down)
         bp->change_to = (bp->which + bp->npolyhedra - 1) % bp->npolyhedra;
 
       if (bp->change_to != -1)
@@ -309,7 +323,7 @@ new_label (ModeInfo *mi)
         print_gl_string (mi->dpy, f, fl,
                          mi->xgwa.width, mi->xgwa.height,
                          10, mi->xgwa.height - 10,
-                         label);
+                         label, False);
       }
     }
   glEndList ();
@@ -364,40 +378,70 @@ new_polyhedron (ModeInfo *mi)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   glNewList (bp->object_list, GL_COMPILE);
-  for (i = 0; i < p->nfaces; i++)
+  if (bp->which == bp->npolyhedra-1)
     {
-      int j;
-      face *f = &p->faces[i];
-
-      if (f->color > 64 || f->color < 0) abort();
-      if (wire)
-        glColor3f (0, 1, 0);
-      else
+      glScalef (0.8, 0.8, 0.8);
+      p->nfaces = unit_teapot (6, wire);
+      p->nedges = p->nfaces * 2;           /* #### is this right? */
+      p->npoints = p->nfaces / 3;          /* #### is this right? */
+      p->logical_faces = p->nfaces;
+      p->logical_vertices = p->npoints;
+    }
+  else
+    {
+      glFrontFace (GL_CCW);
+      for (i = 0; i < p->nfaces; i++)
         {
-          GLfloat bcolor[4];
-          bcolor[0] = bp->colors[f->color].red   / 65536.0;
-          bcolor[1] = bp->colors[f->color].green / 65536.0;
-          bcolor[2] = bp->colors[f->color].blue  / 65536.0;
-          bcolor[2] = 1.0;
-          glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
-        }
+          int j;
+          face *f = &p->faces[i];
 
-      kludge_normal (f->npoints, f->points, p->points);
+          if (f->color > 64 || f->color < 0) abort();
+          if (wire)
+            glColor3f (0, 1, 0);
+          else
+            {
+              GLfloat bcolor[4];
+              bcolor[0] = bp->colors[f->color].red   / 65536.0;
+              bcolor[1] = bp->colors[f->color].green / 65536.0;
+              bcolor[2] = bp->colors[f->color].blue  / 65536.0;
+              bcolor[2] = 1.0;
+              glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
+            }
+
+          kludge_normal (f->npoints, f->points, p->points);
       
-      gluTessBeginPolygon (tobj, 0);
-      gluTessBeginContour (tobj);
-      for (j = 0; j < f->npoints; j++)
-        {
-          point *pp = &p->points[f->points[j]];
-          gluTessVertex (tobj, &pp->x, &pp->x);
+          gluTessBeginPolygon (tobj, 0);
+          gluTessBeginContour (tobj);
+          for (j = 0; j < f->npoints; j++)
+            {
+              point *pp = &p->points[f->points[j]];
+              gluTessVertex (tobj, &pp->x, &pp->x);
+            }
+          gluTessEndContour (tobj);
+          gluTessEndPolygon (tobj);
         }
-      gluTessEndContour (tobj);
-      gluTessEndPolygon (tobj);
     }
   glEndList ();
 
   mi->polygon_count += p->nfaces;
   gluDeleteTess (tobj);
+}
+
+
+static void
+construct_teapot (ModeInfo *mi)
+{
+  polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
+  int n = bp->npolyhedra-1;
+  polyhedron *p = (polyhedron *) calloc (1, sizeof(*p));
+  p->number = n;
+  p->wythoff = strdup("X00398|1984");
+  p->name = strdup("Teapot");
+  p->dual = strdup("");
+  p->config = strdup("Melitta");
+  p->group = strdup("Teapotahedral (Newell[1975])");
+  p->class = strdup("Utah Teapotahedron");
+  bp->polyhedra[n] = p;
 }
 
 
@@ -466,6 +510,7 @@ init_polyhedra (ModeInfo *mi)
   }
 
   bp->npolyhedra = construct_polyhedra (&bp->polyhedra);
+  construct_teapot (mi);
 
   bp->object_list = glGenLists (1);
   bp->title_list  = glGenLists (1);
@@ -478,7 +523,14 @@ init_polyhedra (ModeInfo *mi)
     if (!strcasecmp (do_which_str, "random"))
       ;
     else if (1 == sscanf (do_which_str, " %d %c", &x, &c))
-      do_which = x;
+      {
+        if (x >= 0 && x < bp->npolyhedra) 
+          do_which = x;
+        else
+          fprintf (stderr, 
+                   "%s: polyhedron %d does not exist: there are only %d.\n",
+                   progname, x, bp->npolyhedra-1);
+      }
     else if (*do_which_str)
       {
         char *s;
@@ -487,6 +539,7 @@ init_polyhedra (ModeInfo *mi)
 
         for (x = 0; x < bp->npolyhedra; x++)
           if (!strcasecmp (do_which_str, bp->polyhedra[x]->name) ||
+              !strcasecmp (do_which_str, bp->polyhedra[x]->class) ||
               !strcasecmp (do_which_str, bp->polyhedra[x]->wythoff) ||
               !strcasecmp (do_which_str, bp->polyhedra[x]->config))
             {

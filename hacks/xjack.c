@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -452,6 +452,7 @@ xjack_free (Display *dpy, Window window, void *closure)
 static const char *xjack_defaults [] = {
   ".background:		#FFF0B4",
   ".foreground:		#000000",
+  "*fpsSolid:		true",
 #ifdef HAVE_COCOA
   ".font:		American Typewriter 24",
 #else

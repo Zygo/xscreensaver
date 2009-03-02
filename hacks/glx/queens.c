@@ -77,6 +77,7 @@ typedef struct {
   int board[MAXBOARD][MAXBOARD];
   int steps, colorset, BOARDSIZE;
   double theta;
+  int queen_polys;
 
 } Queenscreen;
 
@@ -244,15 +245,17 @@ static GLfloat findAlpha(Queenscreen *qs)
 }
 
 /* draw pieces */
-static void drawPieces(Queenscreen *qs) 
+static int drawPieces(Queenscreen *qs) 
 {
   int i, j;
+  int polys = 0;
 
   for(i = 0; i < qs->BOARDSIZE; ++i) {
     for(j = 0; j < qs->BOARDSIZE; ++j) {
       if(qs->board[i][j]) {
     	glColor3fv(colors[qs->colorset][i%2]);
 	glCallList(QUEEN);
+        polys += qs->queen_polys;
       }
       
       glTranslatef(1.0, 0.0, 0.0);
@@ -260,12 +263,14 @@ static void drawPieces(Queenscreen *qs)
     
     glTranslatef(-1.0*qs->BOARDSIZE, 0.0, 1.0);
   }
+  return polys;
 }
 
 /** reflectionboard */
-static void draw_reflections(Queenscreen *qs) 
+static int draw_reflections(Queenscreen *qs) 
 {
   int i, j;
+  int polys = 0;
 
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, 1, 1);
@@ -283,6 +288,7 @@ static void draw_reflections(Queenscreen *qs)
       glVertex3f(i + 1.0, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j);
       glVertex3f(i, 0.0, j);
+      polys++;
     }
   }
   glEnd();
@@ -296,7 +302,7 @@ static void draw_reflections(Queenscreen *qs)
   glScalef(1.0, -1.0, 1.0);
   glTranslatef(0.5, 0.001, 0.5);
   glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
-  drawPieces(qs);
+  polys += drawPieces(qs);
   glPopMatrix();
   glDisable(GL_STENCIL_TEST);
 
@@ -306,12 +312,14 @@ static void draw_reflections(Queenscreen *qs)
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   glColorMask(1,1,1,1);
+  return polys;
 }
 
 /* draw board */
-static void drawBoard(Queenscreen *qs) 
+static int drawBoard(Queenscreen *qs) 
 {
   int i, j;
+  int polys = 0;
 
   glBegin(GL_QUADS);
 
@@ -327,13 +335,16 @@ static void drawBoard(Queenscreen *qs)
       glVertex3f(i + 1.0, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j);
       glVertex3f(i, 0.0, j);
+      polys++;
     }
 
   glEnd();
+  return polys;
 }
 
-static void display(Queenscreen *qs) 
+static int display(Queenscreen *qs) 
 {
+  int polys = 0;
   glClear(clearbits);
   
   glMatrixMode(GL_MODELVIEW);
@@ -364,17 +375,17 @@ static void display(Queenscreen *qs)
 
   /* draw reflections */
   if(!wire) {
-    draw_reflections(qs);
+    polys += draw_reflections(qs);
     glEnable(GL_BLEND);
   }
-  drawBoard(qs);
+  polys += drawBoard(qs);
   if(!wire)
     glDisable(GL_BLEND);
 
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.1);
 
   glTranslatef(0.5, 0.0, 0.5);
-  drawPieces(qs);
+  polys += drawPieces(qs);
 
   /* rotate camera */
   if(!qs->button_down_p)
@@ -388,6 +399,7 @@ static void display(Queenscreen *qs)
     qs->colorset = (qs->colorset+1)%COLORSETS;
     go(qs);
   }
+  return polys;
 }
 
 static const GLfloat spidermodel[][3] =
@@ -413,20 +425,24 @@ static const GLfloat spidermodel[][3] =
 #define EPSILON 0.001
 
 /** draws cylindermodel */
-static void draw_model(int chunks, const GLfloat model[][3], int r) 
+static int draw_model(int chunks, const GLfloat model[][3], int r) 
 {
   int i = 0;
+  int polys = 0;
   GLUquadricObj *quadric = gluNewQuadric();
   glPushMatrix();
   glRotatef(-90.0, 1.0, 0.0, 0.0);
   
   for(i = 0; i < chunks; ++i) {
-    if(model[i][0] > EPSILON || model[i][1] > EPSILON)
+    if(model[i][0] > EPSILON || model[i][1] > EPSILON) {
       gluCylinder(quadric, model[i][0], model[i][1], model[i][2], r, 1);
+      polys += r;
+    }
     glTranslatef(0.0, 0.0, model[i][2]);
   }
   
   glPopMatrix();
+  return polys;
 }
 
 ENTRYPOINT void reshape_queens(ModeInfo *mi, int width, int height) 
@@ -462,7 +478,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glNewList(QUEEN, GL_COMPILE);
-  draw_model(countof(spidermodel), spidermodel, 24);
+  qs->queen_polys = draw_model(countof(spidermodel), spidermodel, 24);
   glEndList();
 
   if(flat)
@@ -499,7 +515,7 @@ ENTRYPOINT void draw_queens(ModeInfo *mi)
 
   glXMakeCurrent(disp, w, *(qs->glx_context));
 
-  display(qs);
+  mi->polygon_count = display(qs);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

@@ -36,9 +36,11 @@
 
 <!--
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="2" high="255" default="64"/>
 -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Wiggling tentacles.

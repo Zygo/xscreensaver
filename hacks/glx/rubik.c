@@ -510,7 +510,7 @@ sizeRow(rubikstruct * rp, int face)
 }
 
 static Bool
-draw_stickerless_cubit(rubikstruct *rp)
+draw_stickerless_cubit(rubikstruct *rp, unsigned long *polysP)
 {
 	glBegin(GL_QUADS);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
@@ -520,31 +520,37 @@ draw_stickerless_cubit(rubikstruct *rp)
 	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
 	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
+    (*polysP)++;
 	glNormal3f(0.00, 0.00, -1.00);
 	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
 	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(-1.00, 0.00, 0.00);
 	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(1.00, 0.00, 0.00);
 	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+    (*polysP)++;
 	glNormal3f(0.00, -1.00, 0.00);
 	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(0.00, 1.00, 0.00);
 	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
 	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
 	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+    (*polysP)++;
 
 	/* Edges of cubit */
 	glNormal3f(-1.00, -1.00, 0.00);
@@ -552,61 +558,73 @@ draw_stickerless_cubit(rubikstruct *rp)
 	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(1.00, 1.00, 0.00);
 	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
 	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
 	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(-1.00, 1.00, 0.00);
 	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(1.00, -1.00, 0.00);
 	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(0.00, -1.00, -1.00);
 	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
 	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(0.00, 1.00, 1.00);
 	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+    (*polysP)++;
 	glNormal3f(0.00, -1.00, 1.00);
 	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
 	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
+    (*polysP)++;
 	glNormal3f(0.00, 1.00, -1.00);
 	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
 	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
 	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(-1.00, 0.00, -1.00);
 	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(1.00, 0.00, 1.00);
 	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
 	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
+    (*polysP)++;
 	glNormal3f(1.00, 0.00, -1.00);
 	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
+    (*polysP)++;
 	glNormal3f(-1.00, 0.00, 1.00);
 	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
 	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
+    (*polysP)++;
 	glEnd();
 	glBegin(GL_TRIANGLES);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
@@ -615,46 +633,55 @@ draw_stickerless_cubit(rubikstruct *rp)
 	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
 	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
+    (*polysP)++;
 	glNormal3f(-1.00, -1.00, -1.00);
 	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
 	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(-1.00, 1.00, 1.00);
 	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
 	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+    (*polysP)++;
 	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
 	glNormal3f(1.00, -1.00, -1.00);
 	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
 	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(1.00, -1.00, 1.00);
 	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
 	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
 	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+    (*polysP)++;
 	glNormal3f(-1.00, 1.00, -1.00);
 	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
 	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+    (*polysP)++;
 	glNormal3f(-1.00, -1.00, 1.00);
 	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
 	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
 	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
+    (*polysP)++;
 	glNormal3f(1.00, 1.00, -1.00);
 	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
 	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
 	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+    (*polysP)++;
 	glEnd();
 	return True;
 }
 
 static Bool
 draw_cubit(ModeInfo * mi,
-	   int back, int front, int left, int right, int bottom, int top)
+	   int back, int front, int left, int right, int bottom, int top,
+       unsigned long *polysP)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	int         mono = MI_IS_MONO(mi);
 
-	if (!draw_stickerless_cubit(rp))
+	if (!draw_stickerless_cubit(rp, polysP))
 		return False;
 	if (back != NO_FACE) {
 		glBegin(GL_POLYGON);
@@ -668,6 +695,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(-STICKERSHORT, -STICKERLONG, -STICKERDEPTH);
 		glVertex3f(-STICKERLONG, -STICKERSHORT, -STICKERDEPTH);
 		glVertex3f(-STICKERLONG, STICKERSHORT, -STICKERDEPTH);
+        (*polysP)++;
 		glEnd();
 	}
 	if (front != NO_FACE) {
@@ -682,6 +710,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(-STICKERSHORT, STICKERLONG, STICKERDEPTH);
 		glVertex3f(-STICKERLONG, STICKERSHORT, STICKERDEPTH);
 		glVertex3f(-STICKERLONG, -STICKERSHORT, STICKERDEPTH);
+        (*polysP)++;
 		glEnd();
 	}
 	if (left != NO_FACE) {
@@ -696,6 +725,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(-STICKERDEPTH, -STICKERSHORT, -STICKERLONG);
 		glVertex3f(-STICKERDEPTH, -STICKERLONG, -STICKERSHORT);
 		glVertex3f(-STICKERDEPTH, -STICKERLONG, STICKERSHORT);
+        (*polysP)++;
 		glEnd();
 	}
 	if (right != NO_FACE) {
@@ -710,6 +740,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(STICKERDEPTH, -STICKERSHORT, STICKERLONG);
 		glVertex3f(STICKERDEPTH, -STICKERLONG, STICKERSHORT);
 		glVertex3f(STICKERDEPTH, -STICKERLONG, -STICKERSHORT);
+        (*polysP)++;
 		glEnd();
 	}
 	if (bottom != NO_FACE) {
@@ -724,6 +755,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(-STICKERLONG, -STICKERDEPTH, -STICKERSHORT);
 		glVertex3f(-STICKERSHORT, -STICKERDEPTH, -STICKERLONG);
 		glVertex3f(STICKERSHORT, -STICKERDEPTH, -STICKERLONG);
+        (*polysP)++;
 		glEnd();
 	}
 	if (top != NO_FACE) {
@@ -738,6 +770,7 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(STICKERLONG, STICKERDEPTH, -STICKERSHORT);
 		glVertex3f(STICKERSHORT, STICKERDEPTH, -STICKERLONG);
 		glVertex3f(-STICKERSHORT, STICKERDEPTH, -STICKERLONG);
+        (*polysP)++;
 		glEnd();
 	}
 	return True;
@@ -789,7 +822,7 @@ draw_cube(ModeInfo * mi)
 #define MIDX(a) (((GLfloat)(2*a-MAXSIZEX+1))/2.0)
 #define MIDY(a) (((GLfloat)(2*a-MAXSIZEY+1))/2.0)
 #define MIDZ(a) (((GLfloat)(2*a-MAXSIZEZ+1))/2.0)
-#define DRAW_CUBIT(mi,b,f,l,r,bm,t) if (!draw_cubit(mi,b,f,l,r,bm,t)) return False
+#define DRAW_CUBIT(mi,b,f,l,r,bm,t) if (!draw_cubit(mi,b,f,l,r,bm,t,&mi->polygon_count)) return False
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	RubikSlice  slice;
 	GLfloat     rotatestep;
@@ -1900,6 +1933,7 @@ draw_rubik(ModeInfo * mi)
 	if (!rp->glx_context)
 		return;
 
+    mi->polygon_count = 0;
 	glXMakeCurrent(display, window, *(rp->glx_context));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

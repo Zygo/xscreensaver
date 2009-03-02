@@ -73,13 +73,13 @@ UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
 		   $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o
 
-SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
+SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl-utils.c fps.c xpm-ximage.c glplanet.c pulsar.c \
+		  xlock-gl-utils.c xpm-ximage.c glplanet.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
 		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
@@ -106,15 +106,15 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  timetunnel.c juggler3d.c topblock.c glschool.c \
 		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
 		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c \
-		  skytentacles.c
+		  skytentacles.c teapot.c
 
-OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
+OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl-utils.o fps.o xpm-ximage.o glplanet.o pulsar.o \
+		  xlock-gl-utils.o xpm-ximage.o glplanet.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
 		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
@@ -141,7 +141,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  timetunnel.o juggler3d.o topblock.o glschool.o \
 		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
 		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o \
-		  skytentacles.o
+		  skytentacles.o teapot.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -163,8 +163,8 @@ XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
-HACK_OBJS	= $(HACK_BIN)/screenhack.o \
-		  xlockmore-gl.o xlock-gl-utils.o fps.o \
+HACK_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/fps.o \
+		  xlockmore-gl.o xlock-gl-utils.o glxfonts.o fps-gl.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
@@ -178,7 +178,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  tunnel_draw.h ants.h polyhedra.h normals.h glxfonts.h \
 		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
 		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
-		  involute.h
+		  involute.h teapot.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -385,26 +385,11 @@ check_men:
 	   done ;							\
 	 fi
 
-check_xml:
-	@badxml="" ;							\
-	 for exe in $(EXES); do						\
-	   if ! [ -f $(srcdir)/../config/$$exe.xml -o			\
-		  "$$exe" = xscreensaver-gl-helper ]; then		\
-	     badxml="$$badxml $$exe" ;					\
-	   fi ;								\
-	 done ;								\
-	 if [ -n "$$badxml" ]; then					\
-	   echo "" ;							\
-	   echo "Warning: The following programs have no configurators:" ; \
-	   echo "" ;							\
-	   for m in $$badxml ; do					\
-	     echo "    $$m" ;						\
-	   done ;							\
-	   echo "" ;							\
-	 fi
+validate_xml:
+	@echo "Validating XML..." ; \
+	cd $(HACK_SRC) ; ./check-configs.pl $(EXES)
 
-distdepend:: check_men check_xml
-
+distdepend:: check_men validate_xml
 
 
 
@@ -482,8 +467,9 @@ gears:		gears.o		tube.o $(GEARS_OBJS)
 moebius:	moebius.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-pipes:		pipes.o		pipeobjs.o buildlwo.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	pipeobjs.o buildlwo.o $(HACK_OBJS) $(HACK_LIBS)
+PIPE_OBJS=pipeobjs.o buildlwo.o teapot.o
+pipes:		pipes.o		$(PIPE_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PIPE_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
 superquadrics:	superquadrics.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -494,8 +480,8 @@ morph3d:	morph3d.o	$(HACK_OBJS)
 rubik:		rubik.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-stairs:		stairs.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+stairs:		stairs.o	sphere.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 SPROINGIES = sproingiewrap.o gllist.o \
 	     s1_1.o s1_2.o s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o
@@ -548,14 +534,14 @@ circuit:	circuit.o	font-ximage.o $(HACK_OBJS)
 menger:		menger.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-engine:		engine.o	glxfonts.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+engine:		engine.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 flipscreen3d:	flipscreen3d.o	$(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-glsnake:	glsnake.o	glxfonts.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	glxfonts.o $(HACK_OBJS) $(HACK_LIBS)
+glsnake:	glsnake.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 boxed:		boxed.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -569,8 +555,8 @@ sballs:		sballs.o	xpm-ximage.o $(HACK_TRACK_OBJS)
 cubenetic:	cubenetic.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-spheremonics:	spheremonics.o	normals.o glxfonts.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	normals.o glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+spheremonics:	spheremonics.o	normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 LL_OBJS=marching.o xpm-ximage.o normals.o $(HACK_TRACK_OBJS)
 lavalite:	lavalite.o	$(LL_OBJS)
@@ -599,8 +585,8 @@ COW_OBJS=\
 bouncingcow:			$(COW_OBJS)	    
 	$(CC_HACK) -o $@	$(COW_OBJS) $(XPM_LIBS)
 
-glslideshow:	glslideshow.o	glxfonts.o $(HACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	glxfonts.o $(HACK_GRAB_OBJS) $(HACK_LIBS)
+glslideshow:	glslideshow.o	$(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
 
 jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_TRACK_OBJS) $(XPM_LIBS)
@@ -623,8 +609,8 @@ glknots:	glknots.o	tube.o $(HACK_TRACK_OBJS)
 blocktube:	blocktube.o	xpm-ximage.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
-flipflop:	flipflop.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+flipflop:	flipflop.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
 antspotlight:	antspotlight.o	$(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
@@ -642,7 +628,7 @@ molecules.h:
 	UTILS_SRC="$(UTILS_SRC)" \
 	$(srcdir)/molecules.sh molecules.h $(HACK_SRC)/images/molecules/*.pdb
 
-MOLECULE_OBJS=sphere.o tube.o glxfonts.o $(HACK_TRACK_OBJS)
+MOLECULE_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
 molecule:	molecule.o	$(MOLECULE_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(MOLECULE_OBJS) $(HACK_LIBS)
 
@@ -658,7 +644,7 @@ blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
 noof:	noof.o			$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-PH_OBJS=polyhedra-gl.o normals.o glxfonts.o $(HACK_TRACK_OBJS)
+PH_OBJS=polyhedra-gl.o normals.o teapot.o $(HACK_TRACK_OBJS)
 polyhedra:	polyhedra.o 	$(PH_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PH_OBJS) $(HACK_LIBS)
 
@@ -668,8 +654,8 @@ antinspect:	antinspect.o	$(HACK_TRACK_OBJS)
 providence:	providence.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-pinion:		pinion.o	glxfonts.o $(GEARS_OBJS)
-	$(CC_HACK) -o $@ $@.o	glxfonts.o $(GEARS_OBJS) $(HACK_LIBS)
+pinion:		pinion.o	$(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(GEARS_OBJS) $(HACK_LIBS)
 
 moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(GEARS_OBJS) $(HACK_LIBS)
@@ -686,7 +672,7 @@ fliptext:	fliptext.o	texfont.o $(HACK_OBJS)
 antmaze:	antmaze.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-TANGRAM_OBJS=tangram_shapes.o glxfonts.o $(HACK_OBJS)
+TANGRAM_OBJS=tangram_shapes.o $(HACK_OBJS)
 tangram:	tangram.o	$(TANGRAM_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TANGRAM_OBJS) $(HACK_LIBS)
 
@@ -731,14 +717,16 @@ cubicgrid:	cubicgrid.o	$(HACK_TRACK_OBJS)
 hypnowheel:	hypnowheel.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-skytentacles:	skytentacles.o normals.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o  normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+TENTACLE_OBJS=normals.o xpm-ximage.o $(HACK_TRACK_OBJS)
+skytentacles:	skytentacles.o $(TENTACLE_OBJS)
+	$(CC_HACK) -o $@ $@.o  $(TENTACLE_OBJS) $(XPM_LIBS)
 
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
 
 antinspect.o: ../../config.h
+antinspect.o: $(HACK_SRC)/fps.h
 antinspect.o: $(srcdir)/gltrackball.h
 antinspect.o: $(HACK_SRC)/screenhackI.h
 antinspect.o: $(UTILS_SRC)/colors.h
@@ -753,6 +741,7 @@ antinspect.o: $(HACK_SRC)/xlockmoreI.h
 antinspect.o: $(HACK_SRC)/xlockmore.h
 antmaze.o: $(srcdir)/ants.h
 antmaze.o: ../../config.h
+antmaze.o: $(HACK_SRC)/fps.h
 antmaze.o: $(srcdir)/gltrackball.h
 antmaze.o: $(srcdir)/rotator.h
 antmaze.o: $(HACK_SRC)/screenhackI.h
@@ -768,6 +757,7 @@ antmaze.o: $(HACK_SRC)/xlockmoreI.h
 antmaze.o: $(HACK_SRC)/xlockmore.h
 antspotlight.o: $(srcdir)/ants.h
 antspotlight.o: ../../config.h
+antspotlight.o: $(HACK_SRC)/fps.h
 antspotlight.o: $(srcdir)/gltrackball.h
 antspotlight.o: $(srcdir)/grab-ximage.h
 antspotlight.o: $(srcdir)/rotator.h
@@ -784,6 +774,7 @@ antspotlight.o: $(HACK_SRC)/xlockmoreI.h
 antspotlight.o: $(HACK_SRC)/xlockmore.h
 atlantis.o: $(srcdir)/atlantis.h
 atlantis.o: ../../config.h
+atlantis.o: $(HACK_SRC)/fps.h
 atlantis.o: $(HACK_SRC)/images/sea-texture.xpm
 atlantis.o: $(HACK_SRC)/screenhackI.h
 atlantis.o: $(UTILS_SRC)/colors.h
@@ -798,6 +789,7 @@ atlantis.o: $(HACK_SRC)/xlockmoreI.h
 atlantis.o: $(HACK_SRC)/xlockmore.h
 atlantis.o: $(srcdir)/xpm-ximage.h
 atunnel.o: ../../config.h
+atunnel.o: $(HACK_SRC)/fps.h
 atunnel.o: $(HACK_SRC)/images/tunnel0.xpm
 atunnel.o: $(HACK_SRC)/images/tunnel1.xpm
 atunnel.o: $(HACK_SRC)/images/tunnel2.xpm
@@ -819,6 +811,7 @@ atunnel.o: $(HACK_SRC)/xlockmore.h
 atunnel.o: $(srcdir)/xpm-ximage.h
 b_draw.o: $(srcdir)/bubble3d.h
 b_draw.o: ../../config.h
+b_draw.o: $(HACK_SRC)/fps.h
 b_draw.o: $(HACK_SRC)/screenhackI.h
 b_draw.o: $(UTILS_SRC)/colors.h
 b_draw.o: $(UTILS_SRC)/grabscreen.h
@@ -830,6 +823,7 @@ b_draw.o: $(UTILS_SRC)/xshm.h
 b_draw.o: $(UTILS_SRC)/yarandom.h
 b_draw.o: $(HACK_SRC)/xlockmoreI.h
 blinkbox.o: ../../config.h
+blinkbox.o: $(HACK_SRC)/fps.h
 blinkbox.o: $(HACK_SRC)/screenhackI.h
 blinkbox.o: $(srcdir)/sphere.h
 blinkbox.o: $(UTILS_SRC)/colors.h
@@ -844,6 +838,7 @@ blinkbox.o: $(HACK_SRC)/xlockmoreI.h
 blinkbox.o: $(HACK_SRC)/xlockmore.h
 b_lockglue.o: $(srcdir)/bubble3d.h
 b_lockglue.o: ../../config.h
+b_lockglue.o: $(HACK_SRC)/fps.h
 b_lockglue.o: $(HACK_SRC)/screenhackI.h
 b_lockglue.o: $(UTILS_SRC)/colors.h
 b_lockglue.o: $(UTILS_SRC)/grabscreen.h
@@ -856,6 +851,7 @@ b_lockglue.o: $(UTILS_SRC)/yarandom.h
 b_lockglue.o: $(HACK_SRC)/xlockmoreI.h
 b_lockglue.o: $(HACK_SRC)/xlockmore.h
 blocktube.o: ../../config.h
+blocktube.o: $(HACK_SRC)/fps.h
 blocktube.o: $(HACK_SRC)/images/blocktube.xpm
 blocktube.o: $(HACK_SRC)/screenhackI.h
 blocktube.o: $(UTILS_SRC)/colors.h
@@ -870,6 +866,7 @@ blocktube.o: $(HACK_SRC)/xlockmoreI.h
 blocktube.o: $(HACK_SRC)/xlockmore.h
 blocktube.o: $(srcdir)/xpm-ximage.h
 boing.o: ../../config.h
+boing.o: $(HACK_SRC)/fps.h
 boing.o: $(srcdir)/gltrackball.h
 boing.o: $(HACK_SRC)/screenhackI.h
 boing.o: $(UTILS_SRC)/colors.h
@@ -883,6 +880,7 @@ boing.o: $(UTILS_SRC)/yarandom.h
 boing.o: $(HACK_SRC)/xlockmoreI.h
 boing.o: $(HACK_SRC)/xlockmore.h
 bouncingcow.o: ../../config.h
+bouncingcow.o: $(HACK_SRC)/fps.h
 bouncingcow.o: $(srcdir)/gllist.h
 bouncingcow.o: $(srcdir)/gltrackball.h
 bouncingcow.o: $(srcdir)/rotator.h
@@ -900,6 +898,7 @@ bouncingcow.o: $(HACK_SRC)/xlockmore.h
 bouncingcow.o: $(srcdir)/xpm-ximage.h
 boxed.o: $(srcdir)/boxed.h
 boxed.o: ../../config.h
+boxed.o: $(HACK_SRC)/fps.h
 boxed.o: $(HACK_SRC)/screenhackI.h
 boxed.o: $(UTILS_SRC)/colors.h
 boxed.o: $(UTILS_SRC)/grabscreen.h
@@ -913,6 +912,7 @@ boxed.o: $(HACK_SRC)/xlockmoreI.h
 boxed.o: $(HACK_SRC)/xlockmore.h
 b_sphere.o: $(srcdir)/bubble3d.h
 b_sphere.o: ../../config.h
+b_sphere.o: $(HACK_SRC)/fps.h
 b_sphere.o: $(HACK_SRC)/screenhackI.h
 b_sphere.o: $(UTILS_SRC)/colors.h
 b_sphere.o: $(UTILS_SRC)/grabscreen.h
@@ -925,6 +925,7 @@ b_sphere.o: $(UTILS_SRC)/yarandom.h
 b_sphere.o: $(HACK_SRC)/xlockmoreI.h
 bubble3d.o: $(srcdir)/bubble3d.h
 bubble3d.o: ../../config.h
+bubble3d.o: $(HACK_SRC)/fps.h
 bubble3d.o: $(HACK_SRC)/screenhackI.h
 bubble3d.o: $(UTILS_SRC)/colors.h
 bubble3d.o: $(UTILS_SRC)/grabscreen.h
@@ -938,6 +939,7 @@ bubble3d.o: $(HACK_SRC)/xlockmoreI.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: ../../config.h
 cage.o: $(srcdir)/e_textures.h
+cage.o: $(HACK_SRC)/fps.h
 cage.o: $(HACK_SRC)/screenhackI.h
 cage.o: $(UTILS_SRC)/colors.h
 cage.o: $(UTILS_SRC)/grabscreen.h
@@ -950,6 +952,7 @@ cage.o: $(UTILS_SRC)/yarandom.h
 cage.o: $(HACK_SRC)/xlockmoreI.h
 cage.o: $(HACK_SRC)/xlockmore.h
 carousel.o: ../../config.h
+carousel.o: $(HACK_SRC)/fps.h
 carousel.o: $(srcdir)/gltrackball.h
 carousel.o: $(srcdir)/grab-ximage.h
 carousel.o: $(srcdir)/rotator.h
@@ -968,6 +971,7 @@ carousel.o: $(HACK_SRC)/xlockmore.h
 chessmodels.o: $(srcdir)/chessmodels.h
 circuit.o: ../../config.h
 circuit.o: $(srcdir)/font-ximage.h
+circuit.o: $(HACK_SRC)/fps.h
 circuit.o: $(HACK_SRC)/screenhackI.h
 circuit.o: $(UTILS_SRC)/colors.h
 circuit.o: $(UTILS_SRC)/grabscreen.h
@@ -986,6 +990,7 @@ cow_horns.o: $(srcdir)/gllist.h
 cow_tail.o: $(srcdir)/gllist.h
 cow_udder.o: $(srcdir)/gllist.h
 crackberg.o: ../../config.h
+crackberg.o: $(HACK_SRC)/fps.h
 crackberg.o: $(HACK_SRC)/screenhackI.h
 crackberg.o: $(UTILS_SRC)/colors.h
 crackberg.o: $(UTILS_SRC)/grabscreen.h
@@ -998,6 +1003,7 @@ crackberg.o: $(UTILS_SRC)/yarandom.h
 crackberg.o: $(HACK_SRC)/xlockmoreI.h
 crackberg.o: $(HACK_SRC)/xlockmore.h
 cube21.o: ../../config.h
+cube21.o: $(HACK_SRC)/fps.h
 cube21.o: $(HACK_SRC)/screenhackI.h
 cube21.o: $(UTILS_SRC)/colors.h
 cube21.o: $(UTILS_SRC)/grabscreen.h
@@ -1010,6 +1016,7 @@ cube21.o: $(UTILS_SRC)/yarandom.h
 cube21.o: $(HACK_SRC)/xlockmoreI.h
 cube21.o: $(HACK_SRC)/xlockmore.h
 cubenetic.o: ../../config.h
+cubenetic.o: $(HACK_SRC)/fps.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h
 cubenetic.o: $(HACK_SRC)/screenhackI.h
@@ -1024,6 +1031,7 @@ cubenetic.o: $(UTILS_SRC)/yarandom.h
 cubenetic.o: $(HACK_SRC)/xlockmoreI.h
 cubenetic.o: $(HACK_SRC)/xlockmore.h
 cubestorm.o: ../../config.h
+cubestorm.o: $(HACK_SRC)/fps.h
 cubestorm.o: $(srcdir)/gltrackball.h
 cubestorm.o: $(srcdir)/rotator.h
 cubestorm.o: $(HACK_SRC)/screenhackI.h
@@ -1038,6 +1046,7 @@ cubestorm.o: $(UTILS_SRC)/yarandom.h
 cubestorm.o: $(HACK_SRC)/xlockmoreI.h
 cubestorm.o: $(HACK_SRC)/xlockmore.h
 cubicgrid.o: ../../config.h
+cubicgrid.o: $(HACK_SRC)/fps.h
 cubicgrid.o: $(srcdir)/gltrackball.h
 cubicgrid.o: $(srcdir)/rotator.h
 cubicgrid.o: $(HACK_SRC)/screenhackI.h
@@ -1052,6 +1061,7 @@ cubicgrid.o: $(UTILS_SRC)/yarandom.h
 cubicgrid.o: $(HACK_SRC)/xlockmoreI.h
 cubicgrid.o: $(HACK_SRC)/xlockmore.h
 dangerball.o: ../../config.h
+dangerball.o: $(HACK_SRC)/fps.h
 dangerball.o: $(srcdir)/gltrackball.h
 dangerball.o: $(srcdir)/rotator.h
 dangerball.o: $(HACK_SRC)/screenhackI.h
@@ -1068,6 +1078,7 @@ dangerball.o: $(UTILS_SRC)/yarandom.h
 dangerball.o: $(HACK_SRC)/xlockmoreI.h
 dangerball.o: $(HACK_SRC)/xlockmore.h
 dnalogo.o: ../../config.h
+dnalogo.o: $(HACK_SRC)/fps.h
 dnalogo.o: $(srcdir)/gltrackball.h
 dnalogo.o: $(srcdir)/normals.h
 dnalogo.o: $(srcdir)/rotator.h
@@ -1085,6 +1096,7 @@ dnalogo.o: $(HACK_SRC)/xlockmoreI.h
 dnalogo.o: $(HACK_SRC)/xlockmore.h
 dolphin.o: $(srcdir)/atlantis.h
 dolphin.o: ../../config.h
+dolphin.o: $(HACK_SRC)/fps.h
 dolphin.o: $(HACK_SRC)/screenhackI.h
 dolphin.o: $(UTILS_SRC)/colors.h
 dolphin.o: $(UTILS_SRC)/grabscreen.h
@@ -1096,6 +1108,7 @@ dolphin.o: $(UTILS_SRC)/yarandom.h
 endgame.o: $(srcdir)/chessgames.h
 endgame.o: $(srcdir)/chessmodels.h
 endgame.o: ../../config.h
+endgame.o: $(HACK_SRC)/fps.h
 endgame.o: $(srcdir)/gltrackball.h
 endgame.o: $(HACK_SRC)/screenhackI.h
 endgame.o: $(UTILS_SRC)/colors.h
@@ -1109,6 +1122,7 @@ endgame.o: $(UTILS_SRC)/yarandom.h
 endgame.o: $(HACK_SRC)/xlockmoreI.h
 endgame.o: $(HACK_SRC)/xlockmore.h
 engine.o: ../../config.h
+engine.o: $(HACK_SRC)/fps.h
 engine.o: $(srcdir)/gltrackball.h
 engine.o: $(srcdir)/glxfonts.h
 engine.o: $(srcdir)/rotator.h
@@ -1133,6 +1147,7 @@ extrusion-joinoffset.o: ../../config.h
 extrusion-joinoffset.o: $(srcdir)/extrusion.h
 extrusion.o: ../../config.h
 extrusion.o: $(srcdir)/extrusion.h
+extrusion.o: $(HACK_SRC)/fps.h
 extrusion.o: $(srcdir)/gltrackball.h
 extrusion.o: $(srcdir)/rotator.h
 extrusion.o: $(HACK_SRC)/screenhackI.h
@@ -1154,7 +1169,9 @@ extrusion-taper.o: $(srcdir)/extrusion.h
 extrusion-twistoid.o: ../../config.h
 extrusion-twistoid.o: $(srcdir)/extrusion.h
 flipflop.o: ../../config.h
+flipflop.o: $(HACK_SRC)/fps.h
 flipflop.o: $(srcdir)/gltrackball.h
+flipflop.o: $(srcdir)/grab-ximage.h
 flipflop.o: $(HACK_SRC)/screenhackI.h
 flipflop.o: $(UTILS_SRC)/colors.h
 flipflop.o: $(UTILS_SRC)/grabscreen.h
@@ -1167,6 +1184,7 @@ flipflop.o: $(UTILS_SRC)/yarandom.h
 flipflop.o: $(HACK_SRC)/xlockmoreI.h
 flipflop.o: $(HACK_SRC)/xlockmore.h
 flipscreen3d.o: ../../config.h
+flipscreen3d.o: $(HACK_SRC)/fps.h
 flipscreen3d.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
 flipscreen3d.o: $(HACK_SRC)/screenhackI.h
@@ -1181,6 +1199,7 @@ flipscreen3d.o: $(UTILS_SRC)/yarandom.h
 flipscreen3d.o: $(HACK_SRC)/xlockmoreI.h
 flipscreen3d.o: $(HACK_SRC)/xlockmore.h
 fliptext.o: ../../config.h
+fliptext.o: $(HACK_SRC)/fps.h
 fliptext.o: $(HACK_SRC)/screenhackI.h
 fliptext.o: $(srcdir)/texfont.h
 fliptext.o: $(UTILS_SRC)/colors.h
@@ -1195,6 +1214,7 @@ fliptext.o: $(HACK_SRC)/xlockmoreI.h
 fliptext.o: $(HACK_SRC)/xlockmore.h
 flurry.o: ../../config.h
 flurry.o: $(srcdir)/flurry.h
+flurry.o: $(HACK_SRC)/fps.h
 flurry.o: $(srcdir)/gltrackball.h
 flurry.o: $(srcdir)/rotator.h
 flurry.o: $(HACK_SRC)/screenhackI.h
@@ -1229,6 +1249,7 @@ flurry-texture.o: $(srcdir)/gltrackball.h
 flurry-texture.o: $(srcdir)/rotator.h
 flurry-texture.o: $(UTILS_SRC)/yarandom.h
 flyingtoasters.o: ../../config.h
+flyingtoasters.o: $(HACK_SRC)/fps.h
 flyingtoasters.o: $(srcdir)/gllist.h
 flyingtoasters.o: $(srcdir)/gltrackball.h
 flyingtoasters.o: $(HACK_SRC)/images/chromesphere.xpm
@@ -1247,18 +1268,22 @@ flyingtoasters.o: $(HACK_SRC)/xlockmore.h
 flyingtoasters.o: $(srcdir)/xpm-ximage.h
 font-ximage.o: ../../config.h
 font-ximage.o: $(srcdir)/font-ximage.h
-fps.o: ../../config.h
-fps.o: $(HACK_SRC)/screenhackI.h
-fps.o: $(UTILS_SRC)/colors.h
-fps.o: $(UTILS_SRC)/grabscreen.h
-fps.o: $(UTILS_SRC)/hsv.h
-fps.o: $(UTILS_SRC)/resources.h
-fps.o: $(UTILS_SRC)/usleep.h
-fps.o: $(UTILS_SRC)/visual.h
-fps.o: $(UTILS_SRC)/xshm.h
-fps.o: $(UTILS_SRC)/yarandom.h
-fps.o: $(HACK_SRC)/xlockmoreI.h
+fps-gl.o: ../../config.h
+fps-gl.o: $(HACK_SRC)/fpsI.h
+fps-gl.o: $(HACK_SRC)/fps.h
+fps-gl.o: $(srcdir)/glxfonts.h
+fps-gl.o: $(HACK_SRC)/screenhackI.h
+fps-gl.o: $(UTILS_SRC)/colors.h
+fps-gl.o: $(UTILS_SRC)/grabscreen.h
+fps-gl.o: $(UTILS_SRC)/hsv.h
+fps-gl.o: $(UTILS_SRC)/resources.h
+fps-gl.o: $(UTILS_SRC)/usleep.h
+fps-gl.o: $(UTILS_SRC)/visual.h
+fps-gl.o: $(UTILS_SRC)/xshm.h
+fps-gl.o: $(UTILS_SRC)/yarandom.h
+fps-gl.o: $(HACK_SRC)/xlockmoreI.h
 gears.o: ../../config.h
+gears.o: $(HACK_SRC)/fps.h
 gears.o: $(srcdir)/gltrackball.h
 gears.o: $(srcdir)/involute.h
 gears.o: $(srcdir)/normals.h
@@ -1276,6 +1301,7 @@ gears.o: $(UTILS_SRC)/yarandom.h
 gears.o: $(HACK_SRC)/xlockmoreI.h
 gears.o: $(HACK_SRC)/xlockmore.h
 gflux.o: ../../config.h
+gflux.o: $(HACK_SRC)/fps.h
 gflux.o: $(srcdir)/gltrackball.h
 gflux.o: $(srcdir)/grab-ximage.h
 gflux.o: $(HACK_SRC)/screenhackI.h
@@ -1290,6 +1316,7 @@ gflux.o: $(UTILS_SRC)/yarandom.h
 gflux.o: $(HACK_SRC)/xlockmoreI.h
 gflux.o: $(HACK_SRC)/xlockmore.h
 glblur.o: ../../config.h
+glblur.o: $(HACK_SRC)/fps.h
 glblur.o: $(srcdir)/gltrackball.h
 glblur.o: $(srcdir)/rotator.h
 glblur.o: $(HACK_SRC)/screenhackI.h
@@ -1304,6 +1331,7 @@ glblur.o: $(UTILS_SRC)/yarandom.h
 glblur.o: $(HACK_SRC)/xlockmoreI.h
 glblur.o: $(HACK_SRC)/xlockmore.h
 glcells.o: ../../config.h
+glcells.o: $(HACK_SRC)/fps.h
 glcells.o: $(HACK_SRC)/screenhackI.h
 glcells.o: $(UTILS_SRC)/colors.h
 glcells.o: $(UTILS_SRC)/grabscreen.h
@@ -1316,6 +1344,7 @@ glcells.o: $(UTILS_SRC)/yarandom.h
 glcells.o: $(HACK_SRC)/xlockmoreI.h
 glcells.o: $(HACK_SRC)/xlockmore.h
 gleidescope.o: ../../config.h
+gleidescope.o: $(HACK_SRC)/fps.h
 gleidescope.o: $(srcdir)/grab-ximage.h
 gleidescope.o: $(HACK_SRC)/screenhackI.h
 gleidescope.o: $(UTILS_SRC)/colors.h
@@ -1330,6 +1359,7 @@ gleidescope.o: $(HACK_SRC)/xlockmoreI.h
 gleidescope.o: $(HACK_SRC)/xlockmore.h
 gleidescope.o: $(srcdir)/xpm-ximage.h
 glforestfire.o: ../../config.h
+glforestfire.o: $(HACK_SRC)/fps.h
 glforestfire.o: $(srcdir)/gltrackball.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm
@@ -1346,6 +1376,7 @@ glforestfire.o: $(HACK_SRC)/xlockmoreI.h
 glforestfire.o: $(HACK_SRC)/xlockmore.h
 glforestfire.o: $(srcdir)/xpm-ximage.h
 glhanoi.o: ../../config.h
+glhanoi.o: $(HACK_SRC)/fps.h
 glhanoi.o: $(srcdir)/rotator.h
 glhanoi.o: $(HACK_SRC)/screenhackI.h
 glhanoi.o: $(UTILS_SRC)/colors.h
@@ -1359,6 +1390,7 @@ glhanoi.o: $(UTILS_SRC)/yarandom.h
 glhanoi.o: $(HACK_SRC)/xlockmoreI.h
 glhanoi.o: $(HACK_SRC)/xlockmore.h
 glknots.o: ../../config.h
+glknots.o: $(HACK_SRC)/fps.h
 glknots.o: $(srcdir)/gltrackball.h
 glknots.o: $(srcdir)/rotator.h
 glknots.o: $(HACK_SRC)/screenhackI.h
@@ -1375,6 +1407,7 @@ glknots.o: $(HACK_SRC)/xlockmoreI.h
 glknots.o: $(HACK_SRC)/xlockmore.h
 gllist.o: $(srcdir)/gllist.h
 glmatrix.o: ../../config.h
+glmatrix.o: $(HACK_SRC)/fps.h
 glmatrix.o: $(srcdir)/gllist.h
 glmatrix.o: $(HACK_SRC)/images/matrix3.xpm
 glmatrix.o: $(HACK_SRC)/screenhackI.h
@@ -1390,6 +1423,7 @@ glmatrix.o: $(HACK_SRC)/xlockmoreI.h
 glmatrix.o: $(HACK_SRC)/xlockmore.h
 glmatrix.o: $(srcdir)/xpm-ximage.h
 glplanet.o: ../../config.h
+glplanet.o: $(HACK_SRC)/fps.h
 glplanet.o: $(srcdir)/gltrackball.h
 glplanet.o: $(HACK_SRC)/images/earth.xpm
 glplanet.o: $(srcdir)/rotator.h
@@ -1414,6 +1448,7 @@ glschool_gl.o: $(srcdir)/glschool_gl.h
 glschool_gl.o: $(srcdir)/sphere.h
 glschool_gl.o: $(srcdir)/tube.h
 glschool.o: ../../config.h
+glschool.o: $(HACK_SRC)/fps.h
 glschool.o: $(srcdir)/glschool_alg.h
 glschool.o: $(srcdir)/glschool_gl.h
 glschool.o: $(srcdir)/glschool.h
@@ -1429,6 +1464,7 @@ glschool.o: $(UTILS_SRC)/yarandom.h
 glschool.o: $(HACK_SRC)/xlockmoreI.h
 glschool.o: $(HACK_SRC)/xlockmore.h
 glslideshow.o: ../../config.h
+glslideshow.o: $(HACK_SRC)/fps.h
 glslideshow.o: $(srcdir)/glxfonts.h
 glslideshow.o: $(srcdir)/grab-ximage.h
 glslideshow.o: $(HACK_SRC)/screenhackI.h
@@ -1443,6 +1479,7 @@ glslideshow.o: $(UTILS_SRC)/yarandom.h
 glslideshow.o: $(HACK_SRC)/xlockmoreI.h
 glslideshow.o: $(HACK_SRC)/xlockmore.h
 glsnake.o: ../../config.h
+glsnake.o: $(HACK_SRC)/fps.h
 glsnake.o: $(srcdir)/glxfonts.h
 glsnake.o: $(HACK_SRC)/screenhackI.h
 glsnake.o: $(UTILS_SRC)/colors.h
@@ -1456,6 +1493,7 @@ glsnake.o: $(UTILS_SRC)/yarandom.h
 glsnake.o: $(HACK_SRC)/xlockmoreI.h
 glsnake.o: $(HACK_SRC)/xlockmore.h
 gltext.o: ../../config.h
+gltext.o: $(HACK_SRC)/fps.h
 gltext.o: $(srcdir)/gltrackball.h
 gltext.o: $(srcdir)/glut_roman.h
 gltext.o: $(srcdir)/glutstroke.h
@@ -1489,6 +1527,7 @@ grab-ximage.o: $(UTILS_SRC)/resources.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
 hypertorus.o: ../../config.h
+hypertorus.o: $(HACK_SRC)/fps.h
 hypertorus.o: $(srcdir)/gltrackball.h
 hypertorus.o: $(HACK_SRC)/screenhackI.h
 hypertorus.o: $(UTILS_SRC)/colors.h
@@ -1502,6 +1541,7 @@ hypertorus.o: $(UTILS_SRC)/yarandom.h
 hypertorus.o: $(HACK_SRC)/xlockmoreI.h
 hypertorus.o: $(HACK_SRC)/xlockmore.h
 hypnowheel.o: ../../config.h
+hypnowheel.o: $(HACK_SRC)/fps.h
 hypnowheel.o: $(srcdir)/rotator.h
 hypnowheel.o: $(HACK_SRC)/screenhackI.h
 hypnowheel.o: $(UTILS_SRC)/colors.h
@@ -1515,6 +1555,7 @@ hypnowheel.o: $(UTILS_SRC)/yarandom.h
 hypnowheel.o: $(HACK_SRC)/xlockmoreI.h
 hypnowheel.o: $(HACK_SRC)/xlockmore.h
 involute.o: ../../config.h
+involute.o: $(HACK_SRC)/fps.h
 involute.o: $(srcdir)/involute.h
 involute.o: $(srcdir)/normals.h
 involute.o: $(HACK_SRC)/screenhackI.h
@@ -1526,6 +1567,7 @@ involute.o: $(UTILS_SRC)/usleep.h
 involute.o: $(UTILS_SRC)/visual.h
 involute.o: $(UTILS_SRC)/yarandom.h
 jigglypuff.o: ../../config.h
+jigglypuff.o: $(HACK_SRC)/fps.h
 jigglypuff.o: $(srcdir)/gltrackball.h
 jigglypuff.o: $(HACK_SRC)/images/jigglymap.xpm
 jigglypuff.o: $(HACK_SRC)/screenhackI.h
@@ -1541,6 +1583,7 @@ jigglypuff.o: $(HACK_SRC)/xlockmoreI.h
 jigglypuff.o: $(HACK_SRC)/xlockmore.h
 jigglypuff.o: $(srcdir)/xpm-ximage.h
 juggler3d.o: ../../config.h
+juggler3d.o: $(HACK_SRC)/fps.h
 juggler3d.o: $(srcdir)/gltrackball.h
 juggler3d.o: $(HACK_SRC)/screenhackI.h
 juggler3d.o: $(UTILS_SRC)/colors.h
@@ -1554,6 +1597,7 @@ juggler3d.o: $(UTILS_SRC)/yarandom.h
 juggler3d.o: $(HACK_SRC)/xlockmoreI.h
 juggler3d.o: $(HACK_SRC)/xlockmore.h
 klein.o: ../../config.h
+klein.o: $(HACK_SRC)/fps.h
 klein.o: $(srcdir)/gltrackball.h
 klein.o: $(srcdir)/rotator.h
 klein.o: $(HACK_SRC)/screenhackI.h
@@ -1568,6 +1612,7 @@ klein.o: $(UTILS_SRC)/yarandom.h
 klein.o: $(HACK_SRC)/xlockmoreI.h
 klein.o: $(HACK_SRC)/xlockmore.h
 lament.o: ../../config.h
+lament.o: $(HACK_SRC)/fps.h
 lament.o: $(srcdir)/gltrackball.h
 lament.o: $(HACK_SRC)/images/lament.xpm
 lament.o: $(srcdir)/normals.h
@@ -1585,6 +1630,7 @@ lament.o: $(HACK_SRC)/xlockmoreI.h
 lament.o: $(HACK_SRC)/xlockmore.h
 lament.o: $(srcdir)/xpm-ximage.h
 lavalite.o: ../../config.h
+lavalite.o: $(HACK_SRC)/fps.h
 lavalite.o: $(srcdir)/gltrackball.h
 lavalite.o: $(srcdir)/marching.h
 lavalite.o: $(srcdir)/rotator.h
@@ -1601,6 +1647,7 @@ lavalite.o: $(HACK_SRC)/xlockmoreI.h
 lavalite.o: $(HACK_SRC)/xlockmore.h
 lavalite.o: $(srcdir)/xpm-ximage.h
 lockward.o: ../../config.h
+lockward.o: $(HACK_SRC)/fps.h
 lockward.o: $(HACK_SRC)/screenhackI.h
 lockward.o: $(UTILS_SRC)/colors.h
 lockward.o: $(UTILS_SRC)/grabscreen.h
@@ -1616,6 +1663,7 @@ marching.o: ../../config.h
 marching.o: $(srcdir)/marching.h
 marching.o: $(srcdir)/normals.h
 menger.o: ../../config.h
+menger.o: $(HACK_SRC)/fps.h
 menger.o: $(srcdir)/gltrackball.h
 menger.o: $(srcdir)/rotator.h
 menger.o: $(HACK_SRC)/screenhackI.h
@@ -1630,6 +1678,7 @@ menger.o: $(UTILS_SRC)/yarandom.h
 menger.o: $(HACK_SRC)/xlockmoreI.h
 menger.o: $(HACK_SRC)/xlockmore.h
 mirrorblob.o: ../../config.h
+mirrorblob.o: $(HACK_SRC)/fps.h
 mirrorblob.o: $(srcdir)/gltrackball.h
 mirrorblob.o: $(srcdir)/grab-ximage.h
 mirrorblob.o: $(HACK_SRC)/screenhackI.h
@@ -1644,6 +1693,7 @@ mirrorblob.o: $(UTILS_SRC)/yarandom.h
 mirrorblob.o: $(HACK_SRC)/xlockmoreI.h
 mirrorblob.o: $(HACK_SRC)/xlockmore.h
 moebiusgears.o: ../../config.h
+moebiusgears.o: $(HACK_SRC)/fps.h
 moebiusgears.o: $(srcdir)/gltrackball.h
 moebiusgears.o: $(srcdir)/involute.h
 moebiusgears.o: $(srcdir)/normals.h
@@ -1661,6 +1711,7 @@ moebiusgears.o: $(HACK_SRC)/xlockmoreI.h
 moebiusgears.o: $(HACK_SRC)/xlockmore.h
 moebius.o: ../../config.h
 moebius.o: $(srcdir)/e_textures.h
+moebius.o: $(HACK_SRC)/fps.h
 moebius.o: $(srcdir)/gltrackball.h
 moebius.o: $(srcdir)/rotator.h
 moebius.o: $(HACK_SRC)/screenhackI.h
@@ -1675,6 +1726,7 @@ moebius.o: $(UTILS_SRC)/yarandom.h
 moebius.o: $(HACK_SRC)/xlockmoreI.h
 moebius.o: $(HACK_SRC)/xlockmore.h
 molecule.o: ../../config.h
+molecule.o: $(HACK_SRC)/fps.h
 molecule.o: $(srcdir)/gltrackball.h
 molecule.o: $(srcdir)/glxfonts.h
 molecule.o: molecules.h
@@ -1693,6 +1745,7 @@ molecule.o: $(UTILS_SRC)/yarandom.h
 molecule.o: $(HACK_SRC)/xlockmoreI.h
 molecule.o: $(HACK_SRC)/xlockmore.h
 morph3d.o: ../../config.h
+morph3d.o: $(HACK_SRC)/fps.h
 morph3d.o: $(HACK_SRC)/screenhackI.h
 morph3d.o: $(UTILS_SRC)/colors.h
 morph3d.o: $(UTILS_SRC)/grabscreen.h
@@ -1705,6 +1758,7 @@ morph3d.o: $(UTILS_SRC)/yarandom.h
 morph3d.o: $(HACK_SRC)/xlockmoreI.h
 morph3d.o: $(HACK_SRC)/xlockmore.h
 noof.o: ../../config.h
+noof.o: $(HACK_SRC)/fps.h
 noof.o: $(HACK_SRC)/screenhackI.h
 noof.o: $(UTILS_SRC)/colors.h
 noof.o: $(UTILS_SRC)/grabscreen.h
@@ -1719,6 +1773,7 @@ noof.o: $(HACK_SRC)/xlockmore.h
 normals.o: ../../config.h
 normals.o: $(srcdir)/normals.h
 pinion.o: ../../config.h
+pinion.o: $(HACK_SRC)/fps.h
 pinion.o: $(srcdir)/gltrackball.h
 pinion.o: $(srcdir)/glxfonts.h
 pinion.o: $(srcdir)/involute.h
@@ -1737,7 +1792,9 @@ pinion.o: $(HACK_SRC)/xlockmore.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(srcdir)/buildlwo.h
 pipes.o: ../../config.h
+pipes.o: $(HACK_SRC)/fps.h
 pipes.o: $(HACK_SRC)/screenhackI.h
+pipes.o: $(srcdir)/teapot.h
 pipes.o: $(UTILS_SRC)/colors.h
 pipes.o: $(UTILS_SRC)/grabscreen.h
 pipes.o: $(UTILS_SRC)/hsv.h
@@ -1749,12 +1806,14 @@ pipes.o: $(UTILS_SRC)/yarandom.h
 pipes.o: $(HACK_SRC)/xlockmoreI.h
 pipes.o: $(HACK_SRC)/xlockmore.h
 polyhedra-gl.o: ../../config.h
+polyhedra-gl.o: $(HACK_SRC)/fps.h
 polyhedra-gl.o: $(srcdir)/gltrackball.h
 polyhedra-gl.o: $(srcdir)/glxfonts.h
 polyhedra-gl.o: $(srcdir)/normals.h
 polyhedra-gl.o: $(srcdir)/polyhedra.h
 polyhedra-gl.o: $(srcdir)/rotator.h
 polyhedra-gl.o: $(HACK_SRC)/screenhackI.h
+polyhedra-gl.o: $(srcdir)/teapot.h
 polyhedra-gl.o: $(UTILS_SRC)/colors.h
 polyhedra-gl.o: $(UTILS_SRC)/grabscreen.h
 polyhedra-gl.o: $(UTILS_SRC)/hsv.h
@@ -1768,6 +1827,7 @@ polyhedra-gl.o: $(HACK_SRC)/xlockmore.h
 polyhedra.o: ../../config.h
 polyhedra.o: $(srcdir)/polyhedra.h
 polytopes.o: ../../config.h
+polytopes.o: $(HACK_SRC)/fps.h
 polytopes.o: $(srcdir)/gltrackball.h
 polytopes.o: $(HACK_SRC)/screenhackI.h
 polytopes.o: $(UTILS_SRC)/colors.h
@@ -1781,6 +1841,7 @@ polytopes.o: $(UTILS_SRC)/yarandom.h
 polytopes.o: $(HACK_SRC)/xlockmoreI.h
 polytopes.o: $(HACK_SRC)/xlockmore.h
 providence.o: ../../config.h
+providence.o: $(HACK_SRC)/fps.h
 providence.o: $(srcdir)/gltrackball.h
 providence.o: $(HACK_SRC)/screenhackI.h
 providence.o: $(UTILS_SRC)/colors.h
@@ -1794,6 +1855,7 @@ providence.o: $(UTILS_SRC)/yarandom.h
 providence.o: $(HACK_SRC)/xlockmoreI.h
 providence.o: $(HACK_SRC)/xlockmore.h
 pulsar.o: ../../config.h
+pulsar.o: $(HACK_SRC)/fps.h
 pulsar.o: $(HACK_SRC)/screenhackI.h
 pulsar.o: $(UTILS_SRC)/colors.h
 pulsar.o: $(UTILS_SRC)/grabscreen.h
@@ -1807,6 +1869,7 @@ pulsar.o: $(HACK_SRC)/xlockmoreI.h
 pulsar.o: $(HACK_SRC)/xlockmore.h
 pulsar.o: $(srcdir)/xpm-ximage.h
 queens.o: ../../config.h
+queens.o: $(HACK_SRC)/fps.h
 queens.o: $(srcdir)/gltrackball.h
 queens.o: $(HACK_SRC)/screenhackI.h
 queens.o: $(UTILS_SRC)/colors.h
@@ -1823,6 +1886,7 @@ rotator.o: ../../config.h
 rotator.o: $(srcdir)/rotator.h
 rotator.o: $(UTILS_SRC)/yarandom.h
 rubik.o: ../../config.h
+rubik.o: $(HACK_SRC)/fps.h
 rubik.o: $(HACK_SRC)/screenhackI.h
 rubik.o: $(UTILS_SRC)/colors.h
 rubik.o: $(UTILS_SRC)/grabscreen.h
@@ -1842,6 +1906,7 @@ s1_5.o: $(srcdir)/gllist.h
 s1_6.o: $(srcdir)/gllist.h
 s1_b.o: $(srcdir)/gllist.h
 sballs.o: ../../config.h
+sballs.o: $(HACK_SRC)/fps.h
 sballs.o: $(srcdir)/gltrackball.h
 sballs.o: $(HACK_SRC)/images/sball-bg.xpm
 sballs.o: $(HACK_SRC)/images/sball.xpm
@@ -1859,6 +1924,7 @@ sballs.o: $(HACK_SRC)/xlockmore.h
 sballs.o: $(srcdir)/xpm-ximage.h
 shark.o: $(srcdir)/atlantis.h
 shark.o: ../../config.h
+shark.o: $(HACK_SRC)/fps.h
 shark.o: $(HACK_SRC)/screenhackI.h
 shark.o: $(UTILS_SRC)/colors.h
 shark.o: $(UTILS_SRC)/grabscreen.h
@@ -1868,6 +1934,7 @@ shark.o: $(UTILS_SRC)/usleep.h
 shark.o: $(UTILS_SRC)/visual.h
 shark.o: $(UTILS_SRC)/yarandom.h
 sierpinski3d.o: ../../config.h
+sierpinski3d.o: $(HACK_SRC)/fps.h
 sierpinski3d.o: $(srcdir)/gltrackball.h
 sierpinski3d.o: $(srcdir)/rotator.h
 sierpinski3d.o: $(HACK_SRC)/screenhackI.h
@@ -1882,7 +1949,9 @@ sierpinski3d.o: $(UTILS_SRC)/yarandom.h
 sierpinski3d.o: $(HACK_SRC)/xlockmoreI.h
 sierpinski3d.o: $(HACK_SRC)/xlockmore.h
 skytentacles.o: ../../config.h
+skytentacles.o: $(HACK_SRC)/fps.h
 skytentacles.o: $(srcdir)/gltrackball.h
+skytentacles.o: $(HACK_SRC)/images/scales.xpm
 skytentacles.o: $(srcdir)/normals.h
 skytentacles.o: $(srcdir)/rotator.h
 skytentacles.o: $(HACK_SRC)/screenhackI.h
@@ -1896,7 +1965,9 @@ skytentacles.o: $(UTILS_SRC)/xshm.h
 skytentacles.o: $(UTILS_SRC)/yarandom.h
 skytentacles.o: $(HACK_SRC)/xlockmoreI.h
 skytentacles.o: $(HACK_SRC)/xlockmore.h
+skytentacles.o: $(srcdir)/xpm-ximage.h
 spheremonics.o: ../../config.h
+spheremonics.o: $(HACK_SRC)/fps.h
 spheremonics.o: $(srcdir)/gltrackball.h
 spheremonics.o: $(srcdir)/glxfonts.h
 spheremonics.o: $(srcdir)/normals.h
@@ -1915,6 +1986,7 @@ spheremonics.o: $(HACK_SRC)/xlockmore.h
 sphere.o: ../../config.h
 sphere.o: $(srcdir)/sphere.h
 sproingies.o: ../../config.h
+sproingies.o: $(HACK_SRC)/fps.h
 sproingies.o: $(srcdir)/gllist.h
 sproingies.o: $(HACK_SRC)/screenhackI.h
 sproingies.o: $(srcdir)/sproingies.h
@@ -1928,6 +2000,7 @@ sproingies.o: $(UTILS_SRC)/xshm.h
 sproingies.o: $(UTILS_SRC)/yarandom.h
 sproingies.o: $(HACK_SRC)/xlockmoreI.h
 sproingiewrap.o: ../../config.h
+sproingiewrap.o: $(HACK_SRC)/fps.h
 sproingiewrap.o: $(HACK_SRC)/screenhackI.h
 sproingiewrap.o: $(srcdir)/sproingies.h
 sproingiewrap.o: $(UTILS_SRC)/colors.h
@@ -1942,7 +2015,10 @@ sproingiewrap.o: $(HACK_SRC)/xlockmoreI.h
 sproingiewrap.o: $(HACK_SRC)/xlockmore.h
 stairs.o: ../../config.h
 stairs.o: $(srcdir)/e_textures.h
+stairs.o: $(HACK_SRC)/fps.h
+stairs.o: $(srcdir)/gltrackball.h
 stairs.o: $(HACK_SRC)/screenhackI.h
+stairs.o: $(srcdir)/sphere.h
 stairs.o: $(UTILS_SRC)/colors.h
 stairs.o: $(UTILS_SRC)/grabscreen.h
 stairs.o: $(UTILS_SRC)/hsv.h
@@ -1954,6 +2030,7 @@ stairs.o: $(UTILS_SRC)/yarandom.h
 stairs.o: $(HACK_SRC)/xlockmoreI.h
 stairs.o: $(HACK_SRC)/xlockmore.h
 starwars.o: ../../config.h
+starwars.o: $(HACK_SRC)/fps.h
 starwars.o: $(srcdir)/glut_roman.h
 starwars.o: $(srcdir)/glutstroke.h
 starwars.o: $(HACK_SRC)/screenhackI.h
@@ -1974,6 +2051,7 @@ stonerview-move.o: $(srcdir)/stonerview-move.h
 stonerview-move.o: $(srcdir)/stonerview-osc.h
 stonerview-move.o: $(UTILS_SRC)/yarandom.h
 stonerview.o: ../../config.h
+stonerview.o: $(HACK_SRC)/fps.h
 stonerview.o: $(srcdir)/gltrackball.h
 stonerview.o: $(HACK_SRC)/screenhackI.h
 stonerview.o: $(srcdir)/stonerview.h
@@ -1999,6 +2077,7 @@ stonerview-view.o: $(srcdir)/stonerview.h
 stonerview-view.o: $(srcdir)/stonerview-move.h
 stonerview-view.o: $(srcdir)/stonerview-osc.h
 superquadrics.o: ../../config.h
+superquadrics.o: $(HACK_SRC)/fps.h
 superquadrics.o: $(HACK_SRC)/screenhackI.h
 superquadrics.o: $(UTILS_SRC)/colors.h
 superquadrics.o: $(UTILS_SRC)/grabscreen.h
@@ -2012,6 +2091,7 @@ superquadrics.o: $(HACK_SRC)/xlockmoreI.h
 superquadrics.o: $(HACK_SRC)/xlockmore.h
 swim.o: $(srcdir)/atlantis.h
 swim.o: ../../config.h
+swim.o: $(HACK_SRC)/fps.h
 swim.o: $(HACK_SRC)/screenhackI.h
 swim.o: $(UTILS_SRC)/colors.h
 swim.o: $(UTILS_SRC)/grabscreen.h
@@ -2023,6 +2103,7 @@ swim.o: $(UTILS_SRC)/xshm.h
 swim.o: $(UTILS_SRC)/yarandom.h
 swim.o: $(HACK_SRC)/xlockmoreI.h
 tangram.o: ../../config.h
+tangram.o: $(HACK_SRC)/fps.h
 tangram.o: $(srcdir)/glxfonts.h
 tangram.o: $(HACK_SRC)/screenhackI.h
 tangram.o: $(srcdir)/tangram_shapes.h
@@ -2037,10 +2118,13 @@ tangram.o: $(UTILS_SRC)/yarandom.h
 tangram.o: $(HACK_SRC)/xlockmoreI.h
 tangram.o: $(HACK_SRC)/xlockmore.h
 tangram_shapes.o: $(srcdir)/tangram_shapes.h
+teapot.o: ../../config.h
+teapot.o: $(srcdir)/teapot.h
 texfont.o: ../../config.h
 texfont.o: $(srcdir)/texfont.h
 texfont.o: $(UTILS_SRC)/resources.h
 timetunnel.o: ../../config.h
+timetunnel.o: $(HACK_SRC)/fps.h
 timetunnel.o: $(srcdir)/gltrackball.h
 timetunnel.o: $(HACK_SRC)/images/timetunnel0.xpm
 timetunnel.o: $(HACK_SRC)/images/timetunnel1.xpm
@@ -2071,6 +2155,7 @@ toaster_slots.o: $(srcdir)/gllist.h
 toaster_wing.o: $(srcdir)/gllist.h
 toast.o: $(srcdir)/gllist.h
 topblock.o: ../../config.h
+topblock.o: $(HACK_SRC)/fps.h
 topblock.o: $(srcdir)/gltrackball.h
 topblock.o: $(HACK_SRC)/screenhackI.h
 topblock.o: $(srcdir)/sphere.h
@@ -2090,6 +2175,7 @@ trackball.o: $(srcdir)/trackball.h
 tube.o: ../../config.h
 tube.o: $(srcdir)/tube.h
 tunnel_draw.o: ../../config.h
+tunnel_draw.o: $(HACK_SRC)/fps.h
 tunnel_draw.o: $(HACK_SRC)/screenhackI.h
 tunnel_draw.o: $(srcdir)/tunnel_draw.h
 tunnel_draw.o: $(UTILS_SRC)/colors.h
@@ -2102,6 +2188,7 @@ tunnel_draw.o: $(UTILS_SRC)/xshm.h
 tunnel_draw.o: $(UTILS_SRC)/yarandom.h
 tunnel_draw.o: $(HACK_SRC)/xlockmoreI.h
 voronoi.o: ../../config.h
+voronoi.o: $(HACK_SRC)/fps.h
 voronoi.o: $(HACK_SRC)/screenhackI.h
 voronoi.o: $(UTILS_SRC)/colors.h
 voronoi.o: $(UTILS_SRC)/grabscreen.h
@@ -2115,6 +2202,7 @@ voronoi.o: $(HACK_SRC)/xlockmoreI.h
 voronoi.o: $(HACK_SRC)/xlockmore.h
 whale.o: $(srcdir)/atlantis.h
 whale.o: ../../config.h
+whale.o: $(HACK_SRC)/fps.h
 whale.o: $(HACK_SRC)/screenhackI.h
 whale.o: $(UTILS_SRC)/colors.h
 whale.o: $(UTILS_SRC)/grabscreen.h
@@ -2124,6 +2212,8 @@ whale.o: $(UTILS_SRC)/usleep.h
 whale.o: $(UTILS_SRC)/visual.h
 whale.o: $(UTILS_SRC)/yarandom.h
 xlock-gl-utils.o: ../../config.h
+xlock-gl-utils.o: $(HACK_SRC)/fps.h
+xlock-gl-utils.o: $(srcdir)/glxfonts.h
 xlock-gl-utils.o: $(HACK_SRC)/screenhackI.h
 xlock-gl-utils.o: $(UTILS_SRC)/colors.h
 xlock-gl-utils.o: $(UTILS_SRC)/grabscreen.h

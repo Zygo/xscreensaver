@@ -447,6 +447,7 @@ slidescreen_free (Display *dpy, Window window, void *closure)
 
 static const char *slidescreen_defaults [] = {
   "*dontClearRoot:		True",
+  "*fpsSolid:			true",
 
 #ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID:			Best",
@@ -473,4 +474,4 @@ static XrmOptionDescRec slidescreen_options [] = {
   { 0, 0, 0, 0 }
 };
 
-XSCREENSAVER_MODULE ("Slidescreen", slidescreen)
+XSCREENSAVER_MODULE ("SlideScreen", slidescreen)

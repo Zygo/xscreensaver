@@ -6,36 +6,36 @@
 
   <hgroup>
    <select id="size">
-     <option id="font1" _label="Small Font"  arg-set="-small"/>
-     <option id="font2" _label="Large Font"/>
+     <option id="font1" _label="Small font"  arg-set="-small"/>
+     <option id="font2" _label="Large font"/>
    </select>
 
    <select id="mode">
-     <option id="matrix" _label="Matrix Encoding"/>
-     <option id="binary" _label="Binary Encoding"      arg-set="-mode binary"/>
-     <option id="hex"    _label="Hexadecimal Encoding" arg-set="-mode hex"/>
-     <option id="dna"    _label="Genetic Encoding"     arg-set="-mode dna"/>
-     <option id="pipe"   _label="Piped ASCII Text"     arg-set="-mode pipe"/>
+     <option id="matrix" _label="Matrix encoding"/>
+     <option id="binary" _label="Binary encoding"      arg-set="-mode binary"/>
+     <option id="hex"    _label="Hexadecimal encoding" arg-set="-mode hex"/>
+     <option id="dna"    _label="Genetic encoding"     arg-set="-mode dna"/>
+     <option id="pipe"   _label="Piped ASCII text"     arg-set="-mode pipe"/>
    </select>
 
    <select id="fill">
-     <option id="both"   _label="Synergistic Algorithm"/>
-     <option id="top"    _label="Slider Algorithm"    arg-set="-insert top"/>
-     <option id="bottom" _label="Expansion Algorithm" arg-set="-insert bottom"/>
+     <option id="both"   _label="Synergistic algorithm"/>
+     <option id="top"    _label="Slider algorithm"    arg-set="-insert top"/>
+     <option id="bottom" _label="Expansion algorithm" arg-set="-insert bottom"/>
    </select>
   </hgroup>
 
   <hgroup>
-   <boolean id="trace" _label="Run Trace Program" arg-unset="-no-trace"/>
-   <boolean id="knock" _label="Knock Knock"       arg-unset="-no-knock-knock"/>
-   <string id="phone" _label="Phone Number" arg="-phone %"/>
+   <boolean id="trace" _label="Run trace program" arg-unset="-no-trace"/>
+   <boolean id="knock" _label="Knock knock"       arg-unset="-no-knock-knock"/>
+   <string id="phone" _label="Phone number" arg="-phone %"/>
   </hgroup>
 
   <hgroup>
    <vgroup>
     <number id="delay" type="slider" arg="-delay %"
-            _label="Speed" _low-label="Slow" _high-label="Fast"
-            low="0" high="20000" default="10000"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
             convert="invert"/>
    </vgroup>
 
@@ -48,12 +48,14 @@
 
   <xscreensaver-text />
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 Draws dropping characters similar to what is seen on the computer 
 monitors in "The Matrix".
 
-See also "glmatrix" for a 3D rendering of the similar effect that
-appeared in the title sequence of the movie.
+See also "GLMatrix" for a 3D rendering of the similar effect that
+appeared in the movie's title sequence.
 
 Written by Jamie Zawinski; 1999.
   </_description>

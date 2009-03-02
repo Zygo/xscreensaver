@@ -33,6 +33,7 @@ webcollage - decorate the screen with random images from the web
 [\-http\-proxy host[:port]]
 [\-dictionary \fIdictionary-file\fP]
 [\-driftnet [\fIcmd\fP]]
+[\-fps]
 .SH DESCRIPTION
 The \fIwebcollage\fP program pulls random image off of the World Wide Web
 and scatters them on the root window.  One satisfied customer described it
@@ -169,6 +170,9 @@ Driftnet version 0.1.5 or later is required.  Note that
 the \fIdriftnet\fP program requires root access, so you'll have
 to make \fIdriftnet\fP be setuid-root for this to work.
 Please exercise caution.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

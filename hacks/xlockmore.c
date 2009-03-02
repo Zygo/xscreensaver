@@ -97,8 +97,7 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
   /* Add extra args, if they're mentioned in the defaults... */
   {
     char *args[] = { "-count", "-cycles", "-delay", "-ncolors",
-		     "-size", "-font", "-wireframe", "-use3d", "-useSHM",
-                     "-showFPS" };
+		     "-size", "-font", "-wireframe", "-use3d", "-useSHM" };
     for (j = 0; j < countof(args); j++)
       if (strstr(xlockmore_defaults, args[j]+1))
 	{
@@ -138,17 +137,6 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
-	  else if (!strcmp(new->option, "-showFPS"))
-	    {
-	      new->option = "-fps";
-	      new->argKind = XrmoptionNoArg;
-	      new->value = "True";
-	      new = &new_options[i++];
-	      new->option = "-no-fps";
-	      new->specifier = new_options[i-2].specifier;
-	      new->argKind = XrmoptionNoArg;
-	      new->value = "False";
-	    }
 	  else
 	    {
 	      new->argKind = XrmoptionSepArg;
@@ -164,7 +152,7 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
    */
   i = 0;
 
-  new_defaults = (char **) calloc (1, xlockmore_opts->numvarsdesc * 10 + 100);
+  new_defaults = (char **) calloc (1, xlockmore_opts->numvarsdesc * 10 + 1000);
 
   /* Put on the PROGCLASS.background/foreground resources. */
   s = (char *) malloc(50);
@@ -452,10 +440,10 @@ xlockmore_init (Display *dpy, Window window,
 
   mi->wireframe_p = get_boolean_resource (dpy, "wireframe", "Boolean");
   mi->root_p = root_p;
-  mi->fps_p = get_boolean_resource (dpy, "showFPS", "Boolean");
 #ifdef HAVE_XSHM_EXTENSION
   mi->use_shm = get_boolean_resource (dpy, "useSHM", "Boolean");
 #endif /* !HAVE_XSHM_EXTENSION */
+  mi->fps_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
 
   if (mi->pause < 0)
     mi->pause = 0;
@@ -470,7 +458,7 @@ xlockmore_init (Display *dpy, Window window,
     if (name)
       {
         XFontStruct *f = XLoadQueryFont (dpy, name);
-        const char *def1 = "-*-times-bold-r-normal-*-180-*";
+        const char *def1 = "-*-helvetica-bold-r-normal-*-180-*";
         const char *def2 = "fixed";
         if (!f)
           {
@@ -532,14 +520,7 @@ xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   ModeInfo *mi = (ModeInfo *) closure;
   if (mi && mi->xlmft->hack_handle_events)
-    {
-      mi->xlmft->hack_handle_events (mi, event);
-      /* Since xlockmore hacks don't tell us whether they handled the
-         event, assume they handled buttons (so we don't beep) but that
-         they didn't handle anything else (so that "q" still quits).
-       */
-      return (event->xany.type == ButtonPress);
-    }
+    return mi->xlmft->hack_handle_events (mi, event);
   else
     return False;
 }
@@ -547,15 +528,15 @@ xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 xlockmore_free (Display *dpy, Window window, void *closure)
 {
+  /* Most of the xlockmore/GL hacks don't have `free' functions, and of
+     those that do have them, they're incomplete or buggy.  So, fuck it.
+     Under X11, we're about to exit anyway, and it doesn't matter.
+     On OSX, we'll leak a little.  Beats crashing.
+   */
+#if 0
   ModeInfo *mi = (ModeInfo *) closure;
   if (mi->xlmft->hack_free)
     mi->xlmft->hack_free (mi);
-#ifdef USE_GL
-/* ####
-  if (mi->fps_state)
-    fps_free (mi);
- */
-#endif /* USE_GL */
 
   XFreeGC (dpy, mi->gc);
   free_colors (dpy, mi->xgwa.colormap, mi->colors, mi->npixels);
@@ -563,5 +544,6 @@ xlockmore_free (Display *dpy, Window window, void *closure)
   free (mi->pixels);
 
   free (mi);
+#endif
 }
 

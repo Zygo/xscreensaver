@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2001, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -251,6 +250,7 @@ moire_draw (Display *dpy, Window window, void *closure)
 static const char *moire_defaults [] = {
   ".background:		blue",
   ".foreground:		red",
+  "*fpsSolid:		true",
   "*random:		true",
   "*delay:		5",
   "*ncolors:		64",

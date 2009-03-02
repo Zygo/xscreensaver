@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* lisa --- animated full-loop lisajous figures */
+/* lisa --- animated full-loop lissajous figures */
 
 #if 0
 static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
@@ -27,7 +27,7 @@ static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
  *
  * The inspiration for this program, Lasp, was written by Adam B. Roach
  * in 1990, assisted by me, Caleb Cullen.  It was written first in C, then
- * in assembly, and used pre-calculated data tables to graph lisajous
+ * in assembly, and used pre-calculated data tables to graph lissajous
  * figures on 386 machines and lower.  This version bears only superficial
  * resemblances to the original Lasp.
  *
@@ -55,8 +55,10 @@ static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay: 17000 \n" \
 					"*count: 1 \n" \
 					"*cycles: 768 \n" \
-					"*size: -1 \n" \
-					"*ncolors: 64 \n"
+					"*size: 500 \n" \
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define UNIFORM_COLORS
 # define reshape_lisa 0
 # define lisa_handle_event 0
@@ -96,7 +98,7 @@ ModStruct   lisa_description =
 {"lisa", "init_lisa", "draw_lisa", "release_lisa",
  "refresh_lisa", "change_lisa", (char *) NULL, &lisa_opts,
  17000, 1, 768, -1, 64, 1.0, "",
- "Shows animated lisajous figures", 0, NULL};
+ "Shows animated lissajous figures", 0, NULL};
 
 #endif
 
@@ -156,8 +158,8 @@ typedef struct lisa_struct {
 } lisas;
 
 typedef struct lisacontext_struct {
-	lisas      *lisajous;
-	int         width, height, nlisajous, loopcount;
+	lisas      *lissajous;
+	int         width, height, nlissajous, loopcount;
 	int         maxcycles;
 	Bool        painted;
 } lisacons;
@@ -257,14 +259,14 @@ int xMaxLines;
 static void
 free_lisa(lisacons *lc)
 {
-	while (lc->lisajous) {
+	while (lc->lissajous) {
 		int    lctr;
 
-		for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-			(void) free((void *) lc->lisajous[lctr].lastpoint);
+		for (lctr = 0; lctr < lc->nlissajous; lctr++) {
+			(void) free((void *) lc->lissajous[lctr].lastpoint);
 		}
-		(void) free((void *) lc->lisajous);
-		lc->lisajous = (lisas *) NULL;
+		(void) free((void *) lc->lissajous);
+		lc->lissajous = (lisas *) NULL;
 	}
 }
 
@@ -607,8 +609,8 @@ refreshlisa(ModeInfo * mi)
 	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
 	int         lctr;
 
-	for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-		if (!drawlisa(mi, &lc->lisajous[lctr]))
+	for (lctr = 0; lctr < lc->nlissajous; lctr++) {
+		if (!drawlisa(mi, &lc->lissajous[lctr]))
 			return;
 	}
 }
@@ -621,7 +623,7 @@ refresh_lisa(ModeInfo * mi)
 	if (Lisa == NULL)
 		return;
 	lc = &Lisa[MI_SCREEN(mi)];
-	if (lc->lisajous == NULL)
+	if (lc->lissajous == NULL)
 		return;
 
 	if (lc->painted) {
@@ -641,12 +643,12 @@ change_lisa(ModeInfo * mi)
 	if (Lisa == NULL)
 		return;
 	lc = &Lisa[MI_SCREEN(mi)];
-	if (lc->lisajous == NULL)
+	if (lc->lissajous == NULL)
 		return;
 
 	lc->loopcount = 0;
-	for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-		loop = &lc->lisajous[lctr];       /* count through the loops we're drawing */
+	for (lctr = 0; lctr < lc->nlissajous; lctr++) {
+		loop = &lc->lissajous[lctr];       /* count through the loops we're drawing */
 	newfunc = NRAND(NUMSTDFUNCS);     /* choose a new function at random */
 #if defined FOLLOW_FUNC_ORDER
 	loop->function[1] =
@@ -688,18 +690,18 @@ init_lisa (ModeInfo * mi)
 	lc->width = MI_WIDTH(mi);
 	lc->height = MI_HEIGHT(mi);
 	lc->loopcount = 0;
-	lc->nlisajous = MI_COUNT(mi);
-	if (lc->nlisajous <= 0)
-		lc->nlisajous = 1;
+	lc->nlissajous = MI_COUNT(mi);
+	if (lc->nlissajous <= 0)
+		lc->nlissajous = 1;
 	MI_CLEARWINDOW(mi);
 	lc->painted = False;
 
-	if (lc->lisajous == NULL) {
-		if ((lc->lisajous = (lisas *) calloc(lc->nlisajous,
+	if (lc->lissajous == NULL) {
+		if ((lc->lissajous = (lisas *) calloc(lc->nlissajous,
 				sizeof (lisas))) == NULL)
 			return;
-		for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-			if (!initlisa(mi, &lc->lisajous[lctr]))
+		for (lctr = 0; lctr < lc->nlissajous; lctr++) {
+			if (!initlisa(mi, &lc->lissajous[lctr]))
 				return;
 			lc->loopcount++;
 		}
@@ -716,7 +718,7 @@ draw_lisa (ModeInfo * mi)
 	if (Lisa == NULL)
 		return;
 	lc = &Lisa[MI_SCREEN(mi)];
-	if (lc->lisajous == NULL)
+	if (lc->lissajous == NULL)
 		return;
 
 #ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */

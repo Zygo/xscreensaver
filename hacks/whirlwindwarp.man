@@ -4,6 +4,7 @@ whirlwindwarp - crazy moving stars
 .SH SYNOPSIS
 .B whirlwindwarp
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIinteger\fP] [\-tails \fIinteger\fP]
+[\-fps]
 .SH DESCRIPTION
 \fIwhirlwindwarp\fP plots stars moving according to various forcefields
 (simple 2D equations).
@@ -35,6 +36,9 @@ The number of stars plotted (default 400).
 .TP 8
 .B \-tails \fIinteger\fP
 The length of the tail of each star (default 8).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

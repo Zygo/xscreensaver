@@ -46,7 +46,7 @@
 
 #define DEF_SPIN        "XYZ"
 #define DEF_WANDER      "True"
-#define DEF_BLURSIZE    "15"
+#define DEF_BLUR_SIZE   "15"
 
 typedef struct metaball metaball;
 
@@ -99,7 +99,7 @@ static XrmOptionDescRec opts[] = {
 static argtype vars[] = {
   {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {&blursize,  "blurSize","BlurSize", DEF_BLURSIZE,  t_Int},
+  {&blursize,  "blurSize","BlurSize", DEF_BLUR_SIZE,  t_Int},
 };
 
 ENTRYPOINT ModeSpecOpt glblur_opts = {countof(opts), opts, countof(vars), vars, NULL};

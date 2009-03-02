@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -514,6 +514,7 @@ starfish_free (Display *dpy, Window window, void *closure)
 static const char *starfish_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  "*fpsSolid:		true",
   "*delay:		10000",
   "*thickness:		0",		/* pixels, 0 = random */
   "*rotation:		-1",		/* degrees, -1 = "random" */

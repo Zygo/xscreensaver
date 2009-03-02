@@ -309,6 +309,7 @@ pedal_free (Display *dpy, Window window, void *closure)
 static const char *pedal_defaults [] = {
   ".background:			black",
   ".foreground:			white",
+  "*fpsSolid:			true",
   "*delay:			5",
   "*maxlines:			1000",
   0

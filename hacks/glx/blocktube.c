@@ -71,6 +71,7 @@ typedef struct {
 
   GLfloat tunnelLength;
   GLfloat tunnelWidth;
+  int polys;
 
 } blocktube_configuration;
 
@@ -197,7 +198,7 @@ static void tick(blocktube_configuration *lp)
     }
 }
 
-static void cube_vertices(float x, float y, float z, int wire);
+static int cube_vertices(float x, float y, float z, int wire);
 
 ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height);
 
@@ -234,7 +235,7 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
 
     lp->block_dlist = glGenLists (1);
     glNewList (lp->block_dlist, GL_COMPILE);
-    cube_vertices(0.15, 1.2, 5.25, wire);
+    lp->polys = cube_vertices(0.15, 1.2, 5.25, wire);
     glEndList ();
 
 #if defined( I_HAVE_XPM )
@@ -322,8 +323,9 @@ ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
     glMatrixMode(GL_MODELVIEW);
 }
 
-static void cube_vertices(float x, float y, float z, int wire)
+static int cube_vertices(float x, float y, float z, int wire)
 {
+    int polygon_count = 0;
     float x2, y2, z2, nv = 0.7;
     x2 = x/2;
     y2 = y/2;
@@ -337,6 +339,7 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(1.0, 0.0); glVertex3f( x2,  y2,  z2);
     glTexCoord2f(1.0, 1.0); glVertex3f( x2, -y2,  z2);
     glTexCoord2f(0.0, 1.0); glVertex3f(-x2, -y2,  z2);
+    polygon_count++;
     glEnd();
 
     glNormal3f(0, 0, -nv);
@@ -345,6 +348,7 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(1.0, 1.0); glVertex3f( x2, -y2, -z2);
     glTexCoord2f(0.0, 1.0); glVertex3f( x2,  y2, -z2);
     glTexCoord2f(0.0, 0.0); glVertex3f(-x2,  y2, -z2);
+    polygon_count++;
     glEnd();
 
     glNormal3f(0, nv, 0);
@@ -353,6 +357,7 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(0.0, 0.0); glVertex3f( x2,  y2, -z2);
     glTexCoord2f(1.0, 0.0); glVertex3f( x2,  y2,  z2);
     glTexCoord2f(1.0, 1.0); glVertex3f(-x2,  y2,  z2);
+    polygon_count++;
     glEnd();
 
     glNormal3f(0, -nv, 0);
@@ -361,9 +366,10 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(0.0, 1.0); glVertex3f(-x2, -y2,  z2);
     glTexCoord2f(0.0, 0.0); glVertex3f( x2, -y2,  z2);
     glTexCoord2f(1.0, 0.0); glVertex3f( x2, -y2, -z2);
+    polygon_count++;
     glEnd();
 
-    if (wire) return;
+    if (wire) return polygon_count;
 
     glNormal3f(nv, 0, 0);
     glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
@@ -371,6 +377,7 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(1.0, 1.0); glVertex3f( x2, -y2,  z2);
     glTexCoord2f(0.0, 1.0); glVertex3f( x2,  y2,  z2);
     glTexCoord2f(0.0, 0.0); glVertex3f( x2,  y2, -z2);
+    polygon_count++;
     glEnd();
 
     glNormal3f(-nv, 0, 0);
@@ -379,13 +386,17 @@ static void cube_vertices(float x, float y, float z, int wire)
     glTexCoord2f(1.0, 0.0); glVertex3f(-x2,  y2, -z2);
     glTexCoord2f(1.0, 1.0); glVertex3f(-x2,  y2,  z2);
     glTexCoord2f(0.0, 1.0); glVertex3f(-x2, -y2,  z2);
+    polygon_count++;
     glEnd();
+
+    return polygon_count;
 }
 
 static void draw_block(ModeInfo *mi, entity *ent)
 {
     blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
     glCallList (lp->block_dlist);
+    mi->polygon_count += lp->polys;
 }
 
 ENTRYPOINT void
@@ -399,6 +410,8 @@ draw_blocktube (ModeInfo *mi)
 
     if (!lp->glx_context)
       return;
+
+    mi->polygon_count = 0;
 
     glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
 

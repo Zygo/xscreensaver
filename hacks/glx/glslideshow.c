@@ -73,7 +73,7 @@
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
 	          "*useSHM:          True                 \n" \
-		  "*titleFont:       -*-times-bold-r-normal-*-180-*\n" \
+		  "*titleFont:       -*-helvetica-medium-r-normal-*-180-*\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
@@ -531,16 +531,22 @@ randomize_sprite (ModeInfo *mi, sprite *sp)
       sp->from = swap;
     }
 
-  /* Make sure the aspect ratios are within 0.0001 of each other.
+  /* Make sure the aspect ratios are within 0.001 of each other.
    */
-  if ((int) (0.5 + (sp->from.w * 1000 / sp->from.h)) !=
-      (int) (0.5 + (sp->to.w   * 1000 / sp->to.h)))
-    {
-      fprintf (stderr, "%s: botched aspect: %f x %f vs  %f x %f: %s\n",
-               progname, sp->from.w, sp->from.h, sp->to.w, sp->to.h,
-               sp->img->title);
-      abort();
-    }
+  {
+    int r1 = 0.5 + (sp->from.w * 1000 / sp->from.h);
+    int r2 = 0.5 + (sp->to.w   * 1000 / sp->to.h);
+    if (r1 < r2-1 || r1 > r2+1)
+      {
+        fprintf (stderr,
+                 "%s: botched aspect: %f x %f (%d) vs  %f x %f (%d): %s\n",
+                 progname, 
+                 sp->from.w, sp->from.h, r1,
+                 sp->to.w, sp->to.h, r2,
+                 (sp->img->title ? sp->img->title : "[null]"));
+        abort();
+      }
+  }
 
   sp->from.x /= vp_w;
   sp->from.y /= vp_h;
@@ -810,12 +816,12 @@ draw_sprite (ModeInfo *mi, sprite *sp)
         glColor4f (0, 0, 0, sp->opacity);   /* cheap-assed dropshadow */
         print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
                          mi->xgwa.width, mi->xgwa.height, x, y,
-                         img->title);
+                         img->title, False);
         x++; y++;
         glColor4f (1, 1, 1, sp->opacity);
         print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
                          mi->xgwa.width, mi->xgwa.height, x, y,
-                         img->title);
+                         img->title, False);
       }
   }
   glPopMatrix();
@@ -1210,8 +1216,8 @@ draw_slideshow (ModeInfo *mi)
 
   draw_sprites (mi);
 
-  ss->fps = fps_1 (mi);
-  if (mi->fps_p) fps_2 (mi);
+  ss->fps = fps_compute (mi->fpst, 0);
+  if (mi->fps_p) do_fps (mi);
 
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
