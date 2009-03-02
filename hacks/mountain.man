@@ -1,0 +1,56 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+mountain - random 3D plots that look vaguely mountainous.
+.SH SYNOPSIS
+.B mountain
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-count \fInumber\fP]
+[\-delay \fInumber\fP]
+[\-ncolors \fInumber\fP]
+.SH DESCRIPTION
+Generates random 3d plots that look vaguely mountainous.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-count \fInumber\fP
+Count.	0 - 100.  Default: 30.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 0 (0.00 seconds.).
+.TP 8
+.B \-ncolors \fInumber\fP
+Number of colors.  Default: 64.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2002 by Pascal Pensa.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Pascal Pensa.

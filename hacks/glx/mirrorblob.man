@@ -1,0 +1,111 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+mirrorblob - Draws a wobbly blob that distorts the image behind it.
+.SH SYNOPSIS
+.B mirrorblob
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-wire]
+[\-delay \fInumber\fP]
+[\-fog]
+[\-walls]
+[\-colour]
+[\-texture]
+[\-bgimage]
+[\-offset_texture]
+[\-blend]
+[\-antialias]
+[\-x_res \fInumber\fP]
+[\-y_res \fInumber\fP]
+[\-field_points \fInumber\fP]
+[\-hold_frames \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+Draws a wobbling blob, making use of alpha blending, fog,
+textures, and lighting, plus a ``frames per second'' meter so that you can
+tell how fast your graphics card is... Requires OpenGL.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.B \-wire
+Render in wireframe instead of solid.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
+.TP 8
+.B \-fog | \-no-fog
+Whether to enable fog.
+.TP 8
+.B \-walls | \-no-walls
+Add walls for blob to hit.
+.TP 8
+.B \-colour | \-no-colour
+Draw coloured blob.  If also textured, the texture will have color mixed in.
+.TP 8
+.B \-texture | \-no-texture
+Whether to wrap a texture image on the blob.
+.TP 8
+.B \-bgimage | \-no-bgimage
+Whether to also draw the texture on the background.
+.TP 8
+.B \-offset_texture | \-no-offset_texture
+Whether to ofset the texture calculations to only use a region of the image
+ under the blob.  This works well when blend is enabled.
+.TP 8
+.B \-blend | \-no-blend
+Whether to enable blending. (see also offset_texture above)
+.TP 8
+.B \-antialias | \-no-antialias
+Whether to anti-alias lines.
+.TP 8
+.B \-x_res \fInumber\fP
+Number of verticies around the middle row of the blob (see also y_res).
+.TP 8
+.B \-y_res \fInumber\fP
+Number of rows of verticies used to calculatethe blob, combined with x_res to
+ indirectly determine the number of triangles used to draw blob.  Larger
+ numbers give a smoother blob but increase calculation times exponentially.
+.TP 8
+.B \-field_points \fInumber\fP
+Number of points used to distort the blob.
+.TP 8
+.B \-hold_frames \fInumber\fP
+Number of frames between changing images.
+.TP 8
+.B \-fade_speed \fInumber\fP
+Speed at which fading occurs when changing images.
+.TP 8
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by Jon Dowdall.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jon Dowdall.

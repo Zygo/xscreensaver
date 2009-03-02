@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="sonar" _label="Sonar">
+
+  <command arg="-root"/>
+
+  <select id="ping">
+   <option id="none" _label="Ping mode..."/>
+   <option id="24" _label="Ping subnet/24 (254 hosts)" arg-set="-ping subnet/24"/>
+   <option id="25" _label="Ping subnet/25 (126 hosts)" arg-set="-ping subnet/25"/>
+   <option id="26" _label="Ping subnet/26 (62 hosts)"  arg-set="-ping subnet/26"/>
+   <option id="27" _label="Ping subnet/27 (31 hosts)"  arg-set="-ping subnet/27"/>
+   <option id="28" _label="Ping subnet/28 (14 hosts)"  arg-set="-ping subnet/28"/>
+   <option id="29" _label="Ping subnet/29 (6 hosts)"   arg-set="-ping subnet/29"/>
+   <option id="30" _label="Ping subnet/30 (2 hosts)"   arg-set="-ping subnet/30"/>
+   <option id="ssh" _label="Ping known hosts"   arg-set="-ping /etc/hosts,$HOME/.ssh/known_hosts,$HOME/.ssh/known_hosts2"/>
+  </select>
+
+  <hgroup>
+    <number id="acount" type="spinbutton" arg="-team-a-count %"
+            _label="Simulation Team Members"
+            low="1" high="100" default="4"/>
+    <number id="bcount" type="spinbutton" arg="-team-b-count %"
+            _label="vs."
+            low="1" high="100" default="4"/>
+  </hgroup>
+
+  <string id="aname" _label="Team A Name" arg="-team-a-name %"/>
+  <string id="bname" _label="Team B Name" arg="-team-b-name %"/>
+
+  <boolean id="dns"   _label="Resolve Host Names" arg-unset="-no-dns"/>
+  <boolean id="times" _label="Show Ping Times"    arg-unset="-no-times"/>
+
+  <!-- #### -ping-timeout [3000] -->
+  <!-- #### -ttl [90] -->
+
+  <_description>
+This program draws a simulation of a sonar screen.  By default,
+it displays a random assortment of ``bogies'' on the screen, but if
+installed as "setuid root", it can ping (pun intended) your local
+network, and actually plot the proximity of the other hosts on your
+network to you.  Written by Stephen Martin and Jamie Zawinski.
+
+  </_description>
+</screensaver>

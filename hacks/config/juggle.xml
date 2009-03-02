@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="juggle" _label="Juggle">
+
+  <command arg="-root"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="50" high="1000" default="200"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+          _label="Performance Length" _low-label="Short" _high-label="Long"
+          low="50" high="1000" default="1000"/>
+
+  <number id="tail" type="slider" arg="-tail %"
+          _label="Trail Length" _low-label="None" _high-label="Long"
+          low="0" high="100" default="0"/>
+
+  <boolean id="describe" _label="turn on/off pattern descriptions." arg-unset="-no-describe"/>
+
+  <boolean id="balls" _label="turn on/off Balls." arg-unset="-no-balls"/>
+  <boolean id="clubs" _label="turn on/off Clubs." arg-unset="-no-clubs"/>
+  <boolean id="torches" _label="turn on/off Flaming Torches." arg-unset="-no-torches"/>
+  <boolean id="knives" _label="turn on/off Knives." arg-unset="-no-knives"/>
+  <boolean id="rings" _label="turn on/off Rings." arg-unset="-no-rings"/>
+  <boolean id="bballs" _label="turn on/off Bowling Balls." arg-unset="-no-bballs"/>
+
+  <string id="pattern" _label="Use Pattern " arg="-pattern %" />
+
+  <_description>
+Draws a juggling stick-man.  Written by Tim Auckland.
+  </_description>
+</screensaver>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="twang" _label="Twang">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <number id="event-chance" type="slider" arg="-event-chance %"
+          _label="Randomness" _low-label="Slow" _high-label="Jumpy"
+          low="0.0" high="0.1" default="0.01"/>
+
+  <number id="friction" type="slider" arg="-friction %"
+          _label="Friction" _low-label="Low" _high-label="High"
+          low="0.0" high="0.2" default="0.05"/>
+
+  <number id="springiness" type="slider" arg="-springiness %"
+          _label="Springiness" _low-label="Low" _high-label="High"
+          low="0.0" high="1.0" default="0.1"/>
+
+  <number id="transference" type="slider" arg="-transference %"
+          _label="Transference" _low-label="Low" _high-label="High"
+          low="0.0" high="0.1" default="0.025"/>
+
+  <number id="border-width" type="spinbutton" arg="-border-width %"
+         _label="Border Width" low="0" high="20" default="3"/>
+
+  <number id="tile-size" type="spinbutton" arg="-tile-size %"
+         _label="Tile Size" low="10" high="512" default="120"/>
+
+  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+
+  <_description>
+  Divides the screen into a grid, and plucks them.
+  Written by Dan Bornstein.
+  </_description>
+</screensaver>
