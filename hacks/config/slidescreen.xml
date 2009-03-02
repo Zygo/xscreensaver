@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="slidescreen" _label="SlideScreen">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="50000"
+          convert="invert"/>
+
+ <number id="delay2" type="slider" arg="-delay2 %"
+         _label="Pause" _low-label="Short" _high-label="Long"
+         low="0" high="2000000" default="1000000"/>
+
+  <number id="increment" type="slider" arg="-increment %"
+          _label="Slide Speed" _low-label="Slow" _high-label="Fast"
+          low="1" high="30" default="10"/>
+
+ <number id="grid-size" type="slider" arg="-grid-size %"
+         _label="Cell Size" _low-label="Small" _high-label="Large" 
+         low="12" high="500" default="70"/>
+
+ <number id="ibw" type="spinbutton" arg="-ibw %"
+         _label="Gutter Size" low="0" high="50" default="4"/>
+
+  <xscreensaver-image />
+
+  <_description>
+This takes an image, divides it into a grid, and then randomly shuffles
+the squares around as if it was one of those annoying "16-puzzle"
+games, where there is a grid of squares, one of which is missing.
+I hate trying to solve those puzzles, but watching one permute itself
+is more amusing.
+
+Written by Jamie Zawinski; 1994.
+  </_description>
+</screensaver>

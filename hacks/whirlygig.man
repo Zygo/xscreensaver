@@ -1,0 +1,133 @@
+.TH XScreenSaver 1 "31-Mar-01" "X Version 11"
+.SH NAME
+whirlygig -- zooming chains of sinusoidal spots
+.SH SYNOPSIS
+.B whirlygig
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono]
+[\-install] [\-noinstall] [\-visual arg] [\-window-id arg]   
+[\-xspeed arg] [\-yspeed arg] [\-whirlies arg] [\-nlines arg] 
+[\-xmode arg] [\-ymode arg] [\-speed arg] [\-trail 1|0]
+[\-color_modifier arg] [\-start_time arg] [\-explain 1|0]
+[\-wrap 1|0] [\-db] [\-no-db] 
+
+.SH DESCRIPTION
+The \fIwhirlygig\fP program draws a series of circles on your screen.
+They then move about in a cyclic pattern
+.SH OPTIONS
+.I whirlygig
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-xspeed \fIspeed\fP
+Specify how fast the dots should cycle horizontally.
+Try out values from .01 to 4000. Defaults to 1.0.
+.TP 8
+.B \-yspeed \fIspeed\fP
+Specify how fast the dots should cycle vertically.
+Try out values from .01 to 4000. Defaults to 1.0.
+.TP 8
+.B \-xamplitude \fIfactor\fP
+Specify the horizontal amplitude.
+Try out values from .01 to 10. Defaults to 1.0.
+.TP 8
+.B \-yamplitude \fIfactor\fP
+Specify the horizontal amplitude.
+Try out values from .01 to 10. Defaults to 1.0.
+.TP 8
+.B \-whirlies \fIa number\fP
+Specify how many whirlies you want (per line). Defaults
+to a random number.
+.TP 8
+.B \-nlines \fInumber of lines\fP
+Specify how many lines of whirlies you want. Defaults to a 
+random number.
+.TP 8
+.B \-xmode \fImode\fP
+.TP 8 
+.B \-ymode \fImode\fP
+Specify which mode to use for calculating the x and y positions of the
+whirlies. Can be any of spin, funky, circle, linear, test, fun, innie
+or lissajous. Defaults to 'change' mode, which randomly selects a new
+mode for x and y every now an then. Unrecognized options default to spin.
+.TP 8
+.B \-explain
+Prints some strings to the window explaining what the initially
+selected modes are, before displaying the whirlies. Off by default.
+.TP 8
+.B \-trail \fI1 or 0\fP
+Trail mode fails to erase the whirlies as they move, so they leave a
+multicoloured trail behind. Doesn't work if the doubled buffered mode
+is using the X server's double buffer extension, and the useDBEclear 
+resource is true (which it is by default).
+.TP 8
+.B \-speed \fIint\fP
+Specifies how fast to cycle through the internal time. Values 1,2 and
+3 look ok, up to 10 is not too bad, but beyond ends up
+flickery. Adjust xspeed and yspeed instead.
+.TP 8
+.B \-start_time \fIint\fP
+Where in the internal time cycle to start. Ranges from 1 to 429496729,
+Defaults to a random value.
+.TP 8
+.B \-xoffset \fIfactor\fP
+Tell the whirlies to be offset by this factor of a sin.
+Defaults to 1.0
+.TP 8
+.B \-yoffset \fIfactor\fP
+Tell the whirlies to be offset by this factor of a cos.
+Defaults to 1.0
+.TP 8
+.B \-offset_period \fIfactor\fP
+Change the period of an offset cycle
+Defaults to 1
+.TP 8
+.B \-color_modifier \fIint\fP
+How many colors away from the current should the next whirly be?
+.TP 8
+.B \-wrap \fI1|0\fP
+Causes whirlies that fall off the edge of the screen to wrap over to
+the other end of the screen. Otherwise they disappear and new ones
+to materialize on the other side of the screen. The difference is
+subtle, but it is different. Try it. On by default.
+.TP 8
+.B \-db
+.TP 8
+.B \-no-db
+Use double buffering to reduce flicker. This uses the double buffering
+extension if your X server supports it, otherwise it draws to it's own
+pixmap buffer and copies that to the window, which works almost as
+well. If the resource 'useDBEClear' is true, whirlies are not 
+individually erased, so the -trail option won't work, and running
+multiple instances on the root window will flicker. 
+
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Ashton Trey Belew.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Ashton Trey Belew <trey@veggie.wesleyan.edu>, 31-Mar-01

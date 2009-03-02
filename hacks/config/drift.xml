@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="drift" _label="Drift">
+
+  <command arg="-root"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="1" high="200" default="30"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <_description>
+Drifting recursive fractal cosmic flames.
+
+Written by Scott Draves; 1997.
+  </_description>
+</screensaver>
