@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -645,6 +645,7 @@ destroy_splash_window (saver_info *si)
   
   if (sp->heading_label) free (sp->heading_label);
   if (sp->body_label)    free (sp->body_label);
+  if (sp->body2_label)   free (sp->body2_label);
   if (sp->demo_label)    free (sp->demo_label);
 #ifdef PREFS_BUTTON
   if (sp->prefs_label)   free (sp->prefs_label);
@@ -670,14 +671,17 @@ destroy_splash_window (saver_info *si)
 
   if (sp->logo_pixmap)
     XFreePixmap (si->dpy, sp->logo_pixmap);
-  if (sp->logo_npixels && sp->logo_pixels)
-    XFreeColors (si->dpy, cmap, sp->logo_pixels, sp->logo_npixels, 0L);
   if (sp->logo_pixels)
-    free (sp->logo_pixels);
+    {
+      if (sp->logo_npixels)
+        XFreeColors (si->dpy, cmap, sp->logo_pixels, sp->logo_npixels, 0L);
+      free (sp->logo_pixels);
+      sp->logo_pixels = 0;
+      sp->logo_npixels = 0;
+    }
 
   memset (sp, 0, sizeof(*sp));
   free (sp);
-
   si->sp_data = 0;
 }
 

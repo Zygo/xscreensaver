@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,7 +55,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
 {
   int w, w8, h, ncolors, nbytes;
   char c;
-  int i;
+  int i, pixel_count;
   struct {
     char byte;
     int cr; int cg; int cb;
@@ -136,6 +136,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   if (depth == 1) transparent_color = 1;
 
   pixels = (unsigned long *) calloc (ncolors+1, sizeof(*pixels));
+  pixel_count = 0;
   for (i = 0; i < ncolors; i++)
     {
       if (cmap[i].cr == -1) /* transparent */
@@ -152,10 +153,15 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
           if (depth == 1 ||
               !XAllocColor (dpy, colormap, &color))
             {
-              color.pixel = (cmap[i].mr ? 1 : 0);
+              color.red   = (cmap[i].mr << 8) | cmap[i].mr;
+              color.green = (cmap[i].mg << 8) | cmap[i].mg;
+              color.blue  = (cmap[i].mb << 8) | cmap[i].mb;
+              if (!XAllocColor (dpy, colormap, &color))
+                abort();
             }
-          pixels[i] = color.pixel;
-          rmap[(int) cmap[i].byte] = i;
+          pixels[pixel_count] = color.pixel;
+          rmap[(int) cmap[i].byte] = pixel_count;
+          pixel_count++;
         }
     }
 
@@ -165,8 +171,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   if (ximage)
     {
       int x, y;
-      ximage->data = (char *)
-        calloc ( ximage->height, ximage->bytes_per_line);
+      ximage->data = (char *) calloc (ximage->height, ximage->bytes_per_line);
       for (y = 0; y < h; y++)
         {
           const unsigned char *line = *data++;
@@ -185,7 +190,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   *width_ret = w;
   *height_ret = h;
   *pixels_ret = pixels;
-  *npixels_ret = ncolors;
+  *npixels_ret = pixel_count;
   return ximage;
 }
 
@@ -201,8 +206,7 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
                    Pixmap *mask_ret,
                    Bool big_p)
 {
-  int npixels, iw, ih;
-  unsigned long *pixels;
+  int iw, ih;
   XImage *image;
   Pixmap p = 0;
   XWindowAttributes xgwa;
@@ -213,8 +217,9 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
   image = parse_xpm_data (dpy, xgwa.visual, xgwa.colormap, xgwa.depth,
                           background_color,
                           (big_p ? logo_180_xpm : logo_50_xpm),
-                          &iw, &ih, &pixels, &npixels,
+                          &iw, &ih, pixels_ret, npixels_ret,
                           (mask_ret ? &mask : 0));
+
   if (image)
     {
       XGCValues gcv;
@@ -222,6 +227,8 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
       p = XCreatePixmap (dpy, window, iw, ih, xgwa.depth);
       gc = XCreateGC (dpy, p, 0, &gcv);
       XPutImage (dpy, p, gc, image, 0, 0, 0, 0, iw, ih);
+      free (image->data);
+      image->data = 0;
       XDestroyImage (image);
       XFreeGC (dpy, gc);
 

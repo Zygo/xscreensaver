@@ -64,6 +64,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 	               	"*fpsSolid:     True    \n"		    \
 					"*fisheye:		True    \n"			\
 					"*tightturns:	False   \n"			\
+					"*doubleBuffer:	True    \n"			\
 					"*rotatepipes:	True    \n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -79,10 +80,12 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 #define DEF_FISHEYE     "True"
 #define DEF_TIGHTTURNS  "False"
 #define DEF_ROTATEPIPES "True"
+#define DEF_DBUF        "False"
 #define NofSysTypes     3
 
 static int  factory;
 static Bool fisheye, tightturns, rotatepipes;
+static Bool dbuf_p;
 
 static XrmOptionDescRec opts[] =
 {
@@ -92,21 +95,25 @@ static XrmOptionDescRec opts[] =
 	{"-tightturns", ".pipes.tightturns", XrmoptionNoArg, (caddr_t) "on"},
 	{"+tightturns", ".pipes.tightturns", XrmoptionNoArg, (caddr_t) "off"},
       {"-rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, (caddr_t) "on"},
-      {"+rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, (caddr_t) "off"}
+      {"+rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, (caddr_t) "off"},
+      {"-db", ".pipes.doubleBuffer", XrmoptionNoArg, (caddr_t) "on"},
+      {"+db", ".pipes.doubleBuffer", XrmoptionNoArg, (caddr_t) "off"},
 };
 static argtype vars[] =
 {
 	{(caddr_t *) & factory, "factory", "Factory", DEF_FACTORY, t_Int},
 	{(caddr_t *) & fisheye, "fisheye", "Fisheye", DEF_FISHEYE, t_Bool},
 	{(caddr_t *) & tightturns, "tightturns", "Tightturns", DEF_TIGHTTURNS, t_Bool},
-	{(caddr_t *) & rotatepipes, "rotatepipes", "Rotatepipes", DEF_ROTATEPIPES, t_Bool}
+	{(caddr_t *) & rotatepipes, "rotatepipes", "Rotatepipes", DEF_ROTATEPIPES, t_Bool},
+	{(caddr_t *) & dbuf_p, "doubleBuffer", "DoubleBuffer", DEF_DBUF, t_Bool}
 };
 static OptionStruct desc[] =
 {
 	{"-factory num", "how much extra equipment in pipes (0 for none)"},
 	{"-/+fisheye", "turn on/off zoomed-in view of pipes"},
 	{"-/+tightturns", "turn on/off tight turns"},
-	{"-/+rotatepipes", "turn on/off pipe system rotation per screenful"}
+	{"-/+rotatepipes", "turn on/off pipe system rotation per screenful"},
+	{"-/+db", "turn on/off double buffering"}
 };
 
 ModeSpecOpt pipes_opts =
@@ -534,7 +541,7 @@ pinit(ModeInfo * mi, int zera)
 
 	if (zera) {
 		pp->system_number = 1;
-		glDrawBuffer(GL_FRONT_AND_BACK);
+		glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		(void) memset(pp->Cells, 0, sizeof (pp->Cells));
 		for (X = 0; X < HCELLS; X++) {
@@ -731,7 +738,8 @@ draw_pipes(ModeInfo * mi)
 		/* If the maximum number of system was drawn, restart (clearing the screen), */
 		/* else start a new system. */
 		if (++pp->system_number > pp->number_of_systems) {
-			(void) sleep(1);
+          if (!mi->fps_p)
+            sleep(1);
 			pinit(mi, 1);
 		} else {
 			pinit(mi, 0);
@@ -961,7 +969,8 @@ draw_pipes(ModeInfo * mi)
 
 	glFlush();
 
-    glXSwapBuffers(display, window);
+    if (dbuf_p)
+      glXSwapBuffers(display, window);
 
     if (mi->fps_p) do_fps (mi);
 }

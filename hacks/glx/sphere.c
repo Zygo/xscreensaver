@@ -1,4 +1,4 @@
-/* sphere, Copyright (c) 1998 David Konerding <dek@cgl.ucsf.edu>
+/* sphere, Copyright (c) 2002 Paul Bourke <pbourke@swin.edu.au>
  * Utility function to create a unit sphere in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -9,85 +9,88 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- *  8-Oct-98: dek           Released initial version of "glplanet"
- * 21-Mar-01: jwz@jwz.org   Broke sphere routine out into its own file.
+ *  8-Oct-98: dek          Released initial version of "glplanet"
+ * 21-Mar-01: jwz@jwz.org  Broke sphere routine out into its own file.
+ * 28-Feb-02: jwz@jwz.org  New implementation from Paul Bourke:
+ *                         http://astronomy.swin.edu.au/~pbourke/opengl/sphere/
  */
 
 #include "config.h"
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glx.h>
-#include "tube.h"
 
-/* Function for determining points on the surface of the sphere */
-static void
-parametric_sphere (float theta, float rho, GLfloat *vector)
-{
-  vector[0] = -sin(theta) * sin(rho);
-  vector[1] = cos(theta) * sin(rho);
-  vector[2] = cos(rho);
-}
 
+typedef struct { GLfloat x, y, z; } XYZ;
 
 void
 unit_sphere (int stacks, int slices, Bool wire)
 {
-  int i, j;
-  float drho, dtheta;
-  float rho, theta;
-  GLfloat vector[3];
-  GLfloat ds, dt, t, s;
+  int i,j;
+  double theta1, theta2, theta3;
+  XYZ e, p;
+  XYZ la, lb;
+  XYZ c = {0, 0, 0};  /* center */
+  double r = 1.0;     /* radius */
+  int stacks2 = stacks * 2;
 
-  if (!wire)
-    glShadeModel(GL_SMOOTH);
+  if (r < 0)
+    r = -r;
+  if (slices < 0)
+    slices = -slices;
 
-  /* Generate a sphere with quadrilaterals.
-   * Quad vertices are determined using a parametric sphere function.
-   * For fun, you could generate practically any parameteric surface and
-   * map an image onto it. 
-   */
-  drho = M_PI / stacks;
-  dtheta = 2.0 * M_PI / slices;
-  ds = 1.0 / slices;
-  dt = 1.0 / stacks;
-
-  glFrontFace(GL_CCW);
-  glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
-
-  t = 0.0;
-  for (i=0; i < stacks; i++) {
-    rho = i * drho;
-    s = 0.0;
-    for (j=0; j < slices; j++) {
-      theta = j * dtheta;
-
-      glTexCoord2f (s,t);
-      parametric_sphere (theta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s,t+dt);
-      parametric_sphere (theta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds,t+dt);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds, t);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      s = s + ds;
+  if (slices < 4 || stacks < 2 || r <= 0)
+    {
+      glBegin (GL_POINTS);
+      glVertex3f (c.x, c.y, c.z);
+      glEnd();
+      return;
     }
-    t = t + dt;
-  }
-  glEnd();
+
+  glFrontFace(GL_CW);
+
+  for (j = 0; j < stacks; j++)
+    {
+      theta1 = j       * (M_PI+M_PI) / stacks2 - M_PI_2;
+      theta2 = (j + 1) * (M_PI+M_PI) / stacks2 - M_PI_2;
+
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
+      for (i = 0; i <= slices; i++)
+        {
+          theta3 = i * (M_PI+M_PI) / slices;
+
+          if (wire && i != 0)
+            {
+              glVertex3f (lb.x, lb.y, lb.z);
+              glVertex3f (la.x, la.y, la.z);
+            }
+
+          e.x = cos (theta2) * cos(theta3);
+          e.y = sin (theta2);
+          e.z = cos (theta2) * sin(theta3);
+          p.x = c.x + r * e.x;
+          p.y = c.y + r * e.y;
+          p.z = c.z + r * e.z;
+
+          glNormal3f (e.x, e.y, e.z);
+          glTexCoord2f (i       / (double)slices,
+                        2*(j+1) / (double)stacks2);
+          glVertex3f (p.x, p.y, p.z);
+          if (wire) la = p;
+
+          e.x = cos(theta1) * cos(theta3);
+          e.y = sin(theta1);
+          e.z = cos(theta1) * sin(theta3);
+          p.x = c.x + r * e.x;
+          p.y = c.y + r * e.y;
+          p.z = c.z + r * e.z;
+
+          glNormal3f (e.x, e.y, e.z);
+          glTexCoord2f (i   / (double)slices,
+                        2*j / (double)stacks2);
+          glVertex3f (p.x, p.y, p.z);
+          if (wire) lb = p;
+        }
+      glEnd();
+    }
 }

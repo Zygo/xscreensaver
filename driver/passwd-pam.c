@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -212,11 +212,12 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
      far as PAM is concerned...)
    */
   {
-    const char *tty = ":0.0";
-    status = pam_set_item (pamh, PAM_TTY, strdup(tty));
+    char *tty = strdup (":0.0");
+    status = pam_set_item (pamh, PAM_TTY, tty);
     if (verbose_p)
       fprintf (stderr, "%s:   pam_set_item (p, PAM_TTY, \"%s\") ==> %d (%s)\n",
                blurb(), tty, status, PAM_STRERROR(pamh, status));
+    free (tty);
   }
 
   /* Try to authenticate as the current user.
@@ -263,8 +264,10 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
   /* If that didn't work, set the user to root, and try to authenticate again.
    */
-  c.user = "root";
-  status = pam_set_item (pamh, PAM_USER, strdup(c.user));
+  if (user) free (user);
+  user = strdup ("root");
+  c.user = user;
+  status = pam_set_item (pamh, PAM_USER, c.user);
   if (verbose_p)
     fprintf (stderr, "%s:   pam_set_item(p, PAM_USER, \"%s\") ==> %d (%s)\n",
              blurb(), c.user, status, PAM_STRERROR(pamh, status));

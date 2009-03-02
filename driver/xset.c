@@ -1,5 +1,5 @@
 /* xset.c --- interacting with server extensions and the builtin screensaver.
- * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -223,16 +223,11 @@ disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
       desired_prefer_blank != current_prefer_blank ||
       desired_allow_exp != current_allow_exp)
     {
-      if (p->verbose_p && unblank_screen_p)
-        /* Used to print this all the time, but really, nobody cares.
-           Now only print it when verbose. */
-	fprintf (stderr,
-		 "%s disabling server builtin screensaver.\n"
-		 "%s: you can re-enable it with \"xset s on\".\n",
-		 blurb(), blurb());
-
       if (p->verbose_p)
-	fprintf (stderr, "%s: (xset s %d %d; xset s %s; xset s %s)\n", blurb(),
+	fprintf (stderr,
+                 "%s: disabling server builtin screensaver:\n"
+                 "%s:  (xset s %d %d; xset s %s; xset s %s)\n",
+                 blurb(), blurb(),
 		 desired_server_timeout, desired_server_interval,
 		 (desired_prefer_blank ? "blank" : "noblank"),
 		 (desired_allow_exp ? "expose" : "noexpose"));

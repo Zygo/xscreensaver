@@ -732,8 +732,8 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	      */
 	      if (p->verbose_p)
 		fprintf(stderr,
-			"%s: no suitable visuals for these programs.\n",
-			blurb());
+		      "%s: %d: no programs enabled, or no suitable visuals.\n",
+			blurb(), ssi->number);
 	      return;
 	    }
 	  else
@@ -885,6 +885,11 @@ hack_environment (saver_info *si)
 
       if (putenv (npath))
 	abort ();
+
+      /* don't free (npath) -- some implementations of putenv (BSD 4.4,
+         glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
+         do not.  So we must leak it (and/or the previous setting). Yay.
+       */
     }
 #endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
 }
@@ -923,6 +928,7 @@ hack_subproc_environment (saver_screen_info *ssi)
 #ifdef HAVE_PUTENV
   if (putenv (ndpy))
     abort ();
+  /* do not free(ndpy) -- see above. */
 #endif /* HAVE_PUTENV */
 }
 

@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -187,7 +187,7 @@ make_passwd_window (saver_info *si)
     pw->heading_label = s;
   }
 
-  pw->user_string = (p && p->pw_name ? p->pw_name : "???");
+  pw->user_string = strdup (p && p->pw_name ? p->pw_name : "???");
   pw->passwd_string = strdup("");
 
   f = get_string_resource ("passwd.headingFont", "Dialog.Font");
@@ -771,6 +771,9 @@ destroy_passwd_window (saver_info *si)
   Pixel white = WhitePixelOfScreen (ssi->screen);
   XEvent event;
 
+  memset (pw->typed_passwd, 0, sizeof(pw->typed_passwd));
+  memset (pw->passwd_string, 0, strlen(pw->passwd_string));
+
   if (pw->timer)
     XtRemoveTimeOut (pw->timer);
 
@@ -818,11 +821,15 @@ destroy_passwd_window (saver_info *si)
   if (pw->body_label)    free (pw->body_label);
   if (pw->user_label)    free (pw->user_label);
   if (pw->passwd_label)  free (pw->passwd_label);
+  if (pw->date_label)    free (pw->date_label);
+  if (pw->user_string)   free (pw->user_string);
+  if (pw->passwd_string) free (pw->passwd_string);
 
   if (pw->heading_font) XFreeFont (si->dpy, pw->heading_font);
   if (pw->body_font)    XFreeFont (si->dpy, pw->body_font);
   if (pw->label_font)   XFreeFont (si->dpy, pw->label_font);
   if (pw->passwd_font)  XFreeFont (si->dpy, pw->passwd_font);
+  if (pw->date_font)    XFreeFont (si->dpy, pw->date_font);
 
   if (pw->foreground != black && pw->foreground != white)
     XFreeColors (si->dpy, cmap, &pw->foreground, 1, 0L);
@@ -843,17 +850,23 @@ destroy_passwd_window (saver_info *si)
 
   if (pw->logo_pixmap)
     XFreePixmap (si->dpy, pw->logo_pixmap);
-  if (pw->logo_npixels && pw->logo_pixels)
-    XFreeColors (si->dpy, cmap, pw->logo_pixels, pw->logo_npixels, 0L);
   if (pw->logo_pixels)
-    free (pw->logo_pixels);
+    {
+      if (pw->logo_npixels)
+        XFreeColors (si->dpy, cmap, pw->logo_pixels, pw->logo_npixels, 0L);
+      free (pw->logo_pixels);
+      pw->logo_pixels = 0;
+      pw->logo_npixels = 0;
+    }
 
-  memset (pw, 0, sizeof(*pw));
-  free (pw);
+  if (pw->save_under)
+    XFreePixmap (si->dpy, pw->save_under);
 
   if (cmap)
     XInstallColormap (si->dpy, cmap);
 
+  memset (pw, 0, sizeof(*pw));
+  free (pw);
   si->pw_data = 0;
 }
 

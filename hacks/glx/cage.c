@@ -319,6 +319,7 @@ reshape_cage(ModeInfo * mi, int width, int height)
 static void
 pinit(void)
 {
+    int status;
 	glClearDepth(1.0);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -345,8 +346,20 @@ pinit(void)
 	glEnable(GL_CULL_FACE);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, WoodTextureWidth, WoodTextureHeight,
-			  GL_RGB, GL_UNSIGNED_BYTE, WoodTextureData);
+
+    clear_gl_error();
+	status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
+                               WoodTextureWidth, WoodTextureHeight,
+                               GL_RGB, GL_UNSIGNED_BYTE, WoodTextureData);
+    if (status)
+      {
+        const char *s = gluErrorString (status);
+        fprintf (stderr, "%s: error mipmapping texture: %s\n",
+                 progname, (s ? s : "(unknown)"));
+        exit (1);
+      }
+    check_gl_error("mipmapping");
+
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

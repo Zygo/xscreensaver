@@ -1,4 +1,4 @@
-/* menger, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* menger, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -186,25 +186,6 @@ reshape_sponge (ModeInfo *mi, int width, int height)
   glTranslatef(0.0, 0.0, -15.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-static void
-gl_init (ModeInfo *mi)
-{
-/*  sponge_configuration *sp = &sps[MI_SCREEN(mi)]; */
-  int wire = MI_IS_WIREFRAME(mi);
-
-  static GLfloat pos[4] = {-4.0, 3.0, 10.0, 1.0};
-
-  if (!wire)
-    {
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glEnable(GL_CULL_FACE);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-    }
 }
 
 
@@ -524,6 +505,7 @@ void
 init_sponge (ModeInfo *mi)
 {
   sponge_configuration *sp;
+  int wire = MI_IS_WIREFRAME(mi);
 
   if (!sps) {
     sps = (sponge_configuration *)
@@ -539,9 +521,28 @@ init_sponge (ModeInfo *mi)
   sp = &sps[MI_SCREEN(mi)];
 
   if ((sp->glx_context = init_GL(mi)) != NULL) {
-    gl_init(mi);
     reshape_sponge (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
+
+  if (!wire)
+    {
+      static GLfloat pos0[4] = {-1.0, -1.0, 1.0, 0.1};
+      static GLfloat pos1[4] = { 1.0, -0.2, 0.2, 0.1};
+      static GLfloat dif0[4] = {1.0, 1.0, 1.0, 1.0};
+      static GLfloat dif1[4] = {1.0, 1.0, 1.0, 1.0};
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+      glLightfv(GL_LIGHT1, GL_POSITION, pos1);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE, dif0);
+      glLightfv(GL_LIGHT1, GL_DIFFUSE, dif1);
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_LIGHT1);
+
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+    }
 
   sp->rotx = frand(1.0) * RANDSIGN();
   sp->roty = frand(1.0) * RANDSIGN();

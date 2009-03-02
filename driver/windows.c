@@ -758,7 +758,7 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
       if (bugp)
 	fprintf(real_stderr,
 		"%s: see http://www.jwz.org/xscreensaver/bugs.html\n"
-		"\t\tfor bug reporting information.\n\n",
+		"\t\t\tfor bug reporting information.\n\n",
 		blurb());
 
 # if defined(HAVE_GETCWD)
@@ -884,6 +884,7 @@ store_saver_status (saver_info *si)
                    XA_SCREENSAVER_STATUS,
                    XA_INTEGER, 32, PropModeReplace,
                    (unsigned char *) status, size);
+  free (status);
 }
 
 

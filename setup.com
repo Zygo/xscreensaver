@@ -32,6 +32,7 @@ $ fadeplot	:== $'mydir'fadeplot
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
 $ flow		:== $'mydir'flow
+$ fluidballs	:== $'mydir'fluidballs
 $ forest	:== $'mydir'forest
 $ galaxy	:== $'mydir'galaxy
 $ goop		:== $'mydir'goop
@@ -57,8 +58,8 @@ $ lissie	:== $'mydir'lissie
 $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
 $ maze		:== $'mydir'maze
-$ moire2	:== $'mydir'moire2
 $ moire		:== $'mydir'moire
+$ moire2	:== $'mydir'moire2
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ nerverot	:== $'mydir'nerverot

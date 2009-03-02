@@ -36,6 +36,8 @@
 
   <boolean id="tight"   _label="Allow Tight Turns" arg-set="-tightturns"/>
 
+  <boolean id="db"      _label="Double Buffer" arg-set="-db"/>
+
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <!-- #### -no-rotatepipes -->

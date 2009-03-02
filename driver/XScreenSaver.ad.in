@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.01
-!                              24-Feb-2002
+!                              version 4.02
+!                              18-Mar-2002
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -279,7 +279,8 @@
 				  -ncolors 230				    \n\
 - 	                	juggle -root				    \n\
  	                	polyominoes -root			    \n\
- 	                	thornbird -root				    \n\
+- 	                	thornbird -root				    \n\
+ 	                	fluidballs -root			    \n\
   color: 			bubbles -root				    \n\
   default-n:			webcollage -root			    \n\
   default-n:  "WebCollage (whacked)"					      \
@@ -324,6 +325,7 @@
 @GL_KLUDGE@ GL:			boxed -root				    \n\
 @GL_KLUDGE@ GL:			glforestfire -root			    \n\
 @GL_KLUDGE@ GL:			sballs -root				    \n\
+@GL_KLUDGE@ GL:			cubenetic -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -615,6 +617,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.xfishtank.name:      XFishTank
 *hacks.electricsheep.name:  ElectricSheep
 *hacks.sphereEversion.name: SphereEversion
+*hacks.fluidballs.name:     FluidBalls
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

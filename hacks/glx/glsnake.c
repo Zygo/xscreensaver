@@ -53,7 +53,7 @@ extern XtAppContext app;
 			"*zspin:      " DEF_ZSPIN "   \n" \
 			"*scarycolour:" DEF_SCARYCOLOUR " \n" \
 			"*labels:     " DEF_LABELS "  \n" \
-			"*labelfont:  -*-helvetica-medium-r-*-*-*-120-*\n" \
+			"*labelfont:  -*-times-bold-r-normal-*-180-*\n" \
 
 
 
@@ -65,7 +65,7 @@ extern XtAppContext app;
 #ifdef USE_GL /* whole file */
 
 #include <GL/glu.h>
-#include <sys/timeb.h>
+#include <sys/time.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -98,8 +98,8 @@ typedef struct {
 	int is_legal;
 	int last_turn;
 	int selected;
-	struct timeb last_iteration;
-	struct timeb last_morph;
+	struct timeval last_iteration;
+	struct timeval last_morph;
 	int morphing;
 	nodeang_t node[24];
 	GLfloat roty;
@@ -693,8 +693,17 @@ void glsnake_init(ModeInfo *mi) {
 	bp->dragging = 0;
 	bp->interactive = 0;
 
-	ftime(&(bp->last_iteration));
-	memcpy(&(bp->last_morph), &(bp->last_iteration), sizeof(struct timeb));
+        {
+# ifdef GETTIMEOFDAY_TWO_ARGS
+          struct timezone tzp;
+          gettimeofday(&bp->last_iteration, &tzp);
+# else
+          gettimeofday(&bp->last_iteration);
+# endif
+        }
+
+	memcpy(&bp->last_morph, &(bp->last_iteration),
+               sizeof(bp->last_morph));
 	/* srand((unsigned int) bp->last_iteration.time); */
 
 	/* load the model files */
@@ -871,7 +880,7 @@ void glsnake_idol(glsnake_configuration * bp) {
 	long morf_msec;
 	float iter_angle_max;
 	int i;
-	struct timeb current_time;
+	struct timeval current_time;
 	int still_morphing;
 
 	/* Do nothing to the model if we are paused */
@@ -880,8 +889,15 @@ void glsnake_idol(glsnake_configuration * bp) {
 		usleep(1);
 		return;
 	}
-	/* ftime is winDOS compatible */
-	ftime(&current_time);
+
+        {
+# ifdef GETTIMEOFDAY_TWO_ARGS
+          struct timezone tzp;
+          gettimeofday(&current_time, &tzp);
+# else
+          gettimeofday(&current_time);
+# endif
+        }
 
 	/* <spiv> Well, ftime gives time with millisecond resolution.
 	 * <Jaq> if current time is exactly equal to last iteration, 
@@ -892,18 +908,20 @@ void glsnake_idol(glsnake_configuration * bp) {
 	 *             it would be the same
 	 * <spiv>   b) The code will divide by zero
 	 */
-	iter_msec = (long) current_time.millitm - bp->last_iteration.millitm + 
-		    ((long) current_time.time - bp->last_iteration.time) * 1000L;
+	iter_msec = ((long) current_time.tv_usec - bp->last_iteration.tv_usec)/1000L + 
+		    ((long) current_time.tv_sec - bp->last_iteration.tv_sec) * 1000L;
 	if (iter_msec) {
 		/* save the current time */
-		memcpy(&(bp->last_iteration), &current_time, sizeof(struct timeb));
+		memcpy(&bp->last_iteration, &current_time,
+                       sizeof(bp->last_iteration));
 		
 		/* work out if we have to switch models */
-		morf_msec = bp->last_iteration.millitm - bp->last_morph.millitm +
-			((long) (bp->last_iteration.time - bp->last_morph.time) * 1000L);
+		morf_msec = (bp->last_iteration.tv_usec - bp->last_morph.tv_usec)/1000L +
+			((long) (bp->last_iteration.tv_sec - bp->last_morph.tv_sec) * 1000L);
 
 		if ((morf_msec > statictime) && !bp->interactive) {
-			memcpy(&(bp->last_morph), &(bp->last_iteration), sizeof(struct timeb));
+			memcpy(&bp->last_morph, &(bp->last_iteration),
+                               sizeof(bp->last_morph));
 			start_morph(RAND(bp->m_count), 0, bp);
 		}
 

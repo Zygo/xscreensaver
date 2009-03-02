@@ -20,16 +20,16 @@ GNOME_DATADIR	= @GNOME_DATADIR@
 GNOME_CCDIR_1	= $(GNOME_DATADIR)/control-center/Desktop
 GNOME_CCDIR_2	= $(GNOME_DATADIR)/control-center/capplets
 GNOME_PANELDIR	= $(GNOME_DATADIR)/gnome/apps/Settings/Desktop
-GNOME_ICONDIR	= $(GNOME_DATADIR)/pixmaps
 GNOME_BINDIR	= $(bindir)
 HACK_CONF_DIR	= @HACK_CONF_DIR@
+GTK_ICONDIR	= @GTK_ICONDIR@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
 DEFS		= @DEFS@
 SUBP_DEFS	= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
-GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GNOME_ICONDIR)"'
+GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GTK_ICONDIR)"'
 CONF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"'
 
 LIBS		= @LIBS@
@@ -127,7 +127,7 @@ GL_LIBS		= @SAVER_GL_LIBS@
 
 ICON_SRC        = $(UTILS_SRC)/images
 LOGO		= $(ICON_SRC)/logo-50.xpm
-GNOME_ICONS     = $(ICON_SRC)/screensaver-*.xpm
+GTK_ICONS	= $(ICON_SRC)/screensaver-*.xpm
 
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c
@@ -515,31 +515,31 @@ install-gnome:: screensaver-properties-capplet
 
 # xscreensaver.xpm
 install-gnome:: $(LOGO)
-	@if [ "$(GNOME_DATADIR)" != "" ]; then                                \
-           if [ ! -d "$(install_prefix)$(GNOME_ICONDIR)" ]; then              \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
+	@if [ "$(GTK_ICONDIR)" != "" ]; then                                  \
+           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
            fi                                                                ;\
 	   target=xscreensaver.xpm                                           ;\
 	   echo $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GNOME_ICONDIR)/$$target		     ;\
+	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
 	        $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GNOME_ICONDIR)/$$target		     ;\
+	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
         fi
 
 # ../utils/images/screensaver-*.xpm
 install-gnome::
-	@if [ "$(GNOME_DATADIR)" != "" ]; then                                \
-           if [ ! -d "$(install_prefix)$(GNOME_ICONDIR)" ]; then              \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
+	@if [ "$(GTK_ICONDIR)" != "" ]; then                                  \
+           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
            fi                                                                ;\
-	   for target in $(GNOME_ICONS) ; do				      \
+	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
 	     echo $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GNOME_ICONDIR)/$$dest		     ;\
+	          $(install_prefix)$(GTK_ICONDIR)/$$dest		     ;\
 	          $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GNOME_ICONDIR)/$$dest		     ;\
+	          $(install_prefix)$(GTK_ICONDIR)/$$dest		     ;\
 	   done								     ;\
         fi
 
@@ -563,19 +563,19 @@ uninstall-gnome::
 
 # xscreensaver.xpm
 uninstall-gnome::
-	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
+	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
 	  target=xscreensaver.xpm                                            ;\
-	  echo rm -f $(install_prefix)$(GNOME_ICONDIR)/$$target              ;\
-	       rm -f $(install_prefix)$(GNOME_ICONDIR)/$$target              ;\
+	  echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
+	       rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
 	 fi
 
 # xscreensaver.xpm
 uninstall-gnome::
-	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
-	   for target in $(GNOME_ICONS) ; do				      \
+	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
+	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
-	     echo rm -f $(install_prefix)$(GNOME_ICONDIR)/$$dest             ;\
-	          rm -f $(install_prefix)$(GNOME_ICONDIR)/$$dest             ;\
+	     echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$dest               ;\
+	          rm -f $(install_prefix)$(GTK_ICONDIR)/$$dest               ;\
 	   done								     ;\
         fi
 
@@ -762,7 +762,8 @@ xscreensaver-command: $(CMD_OBJS)
 
 
 xscreensaver-demo: @PREFERRED_DEMO_PROGRAM@
-	$(INSTALL_PROGRAM) @PREFERRED_DEMO_PROGRAM@ $@
+	cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@
+#	$(INSTALL_PROGRAM) @PREFERRED_DEMO_PROGRAM@ $@
 
 xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) \

@@ -1671,10 +1671,15 @@ load_configurator_1 (const char *program, const char *arguments,
 {
   const char *dir = HACK_CONFIGURATION_PATH;
   int L = strlen (dir);
-  char *file = (char *) malloc (L + strlen (program) + 10);
+  char *file;
   char *s;
   FILE *f;
-  conf_data *data = (conf_data *) calloc (1, sizeof(*data));
+  conf_data *data;
+
+  if (L == 0) return 0;
+
+  file = (char *) malloc (L + strlen (program) + 10);
+  data = (conf_data *) calloc (1, sizeof(*data));
 
   strcpy (file, dir);
   if (file[L-1] != '/')
@@ -1703,7 +1708,12 @@ load_configurator_1 (const char *program, const char *arguments,
         fprintf (stderr, "%s: reading %s...\n", blurb(), file);
 
       res = fread (chars, 1, 4, f);
-      if (res <= 0) return 0;
+      if (res <= 0)
+        {
+          free (data);
+          data = 0;
+          goto DONE;
+        }
 
       ctxt = xmlCreatePushParserCtxt(NULL, NULL, chars, res, file);
       while ((res = fread(chars, 1, size, f)) > 0)
@@ -1748,6 +1758,9 @@ load_configurator_1 (const char *program, const char *arguments,
     }
 
   data->progname = strdup (program);
+
+ DONE:
+  free (file);
   return data;
 }
 
@@ -1848,7 +1861,9 @@ free_conf_data (conf_data *data)
     gtk_widget_destroy (data->widget);
 
   if (data->progname)
-    free (data->progname);;
+    free (data->progname);
+  if (data->description)
+    free (data->description);
 
   memset (data, ~0, sizeof(*data));
   free (data);

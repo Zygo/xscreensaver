@@ -57,17 +57,32 @@ there's no need to recompile or reinstall anything.
                               ============
 
 Along with the xscreensaver daemon itself, this package also includes
-numerous graphics hacks for use as screensavers.  There is nothing magic
-about these: they are just programs that draw on the root window.
-
-More than 140 such programs are included.  For details, see the xscreensaver
-web page, or the enclosed manual pages.
+numerous graphics hacks for use as screensavers.  There is nothing
+magic about these: they are just programs that draw on the root window.
+More than 140 such programs are included.  For details, see the
+xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
 http://www.jwz.org/xscreensaver/.
 
+Looking for tips on writing your own screensavers?  There is an entry in
+the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
+
                               ============
 
+Changes since 4.01:   * Plugged a few minor leaks in `xscreensaver' and
+                        `xscreensaver-demo'.
+                      * New hacks, `cubenetic' and `fluidballs'.
+                      * Sped up `pipes'.
+                      * Fixed sphere projection error in `glplanet'; installed
+                        a better image of earth.
+                      * Added Win2K and MacOS 1 crashes to `bsod'.
+                      * Put back previous (better) version of `forest' that
+                        was accidentially downgraded in the last release.
+                      * New version of `bumps'.
+                      * Made FPS computation in GL hacks more efficient: it
+                        will influence the results less, thus resulting in
+                        higher (but more accurate) reported frame rates.
 Changes since 4.00:   * New hacks: `twang', `glsnake', `boxed', `sballs',
                         and `glforestfire'.
                       * New hacks `apollonian', `euler2d', `juggle',

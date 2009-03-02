@@ -389,6 +389,12 @@ void getSnapshot (ModeInfo *modeinfo)
  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
                             ximage->width, ximage->height,
                             GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+
+ if (!status && glGetError())
+   /* Some implementations of gluBuild2DMipmaps(), but set a GL error anyway.
+      We could just call check_gl_error(), but that would exit. */
+   status = -1;
+
  if (status)
    {
      const char *s = gluErrorString (status);

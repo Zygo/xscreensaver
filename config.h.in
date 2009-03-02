@@ -374,6 +374,9 @@
 /* Define this if you have the setrlimit function. */
 #undef HAVE_SETRLIMIT
 
+/* Define if you have the sbrk function.  */
+#define HAVE_SBRK 1
+
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 

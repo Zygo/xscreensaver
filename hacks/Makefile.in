@@ -94,7 +94,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
 		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
-		  euler2d.c juggle.c polyominoes.c thornbird.c
+		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -117,7 +117,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
 		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
-		  euler2d.o juggle.o polyominoes.o thornbird.o
+		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -133,7 +133,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
-		  juggle polyominoes thornbird \
+		  juggle polyominoes thornbird  fluidballs \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -280,9 +280,9 @@ install-xml:
 	 fi ;								\
 	 files=`cd $(srcdir)/config/ ; echo README $(STAR).xml` ;	\
 	 for file in $$files ; do					\
-	   echo $(INSTALL_DATA) config/$$file				\
+	   echo $(INSTALL_DATA) $(srcdir)/config/$$file			\
 	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
-	  $(INSTALL_DATA) config/$$file					\
+	  $(INSTALL_DATA) $(srcdir)/config/$$file			\
 	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
 	done
 
@@ -665,6 +665,9 @@ vermiculate:	vermiculate.o	$(HACK_OBJS) $(COL)
 twang:		twang.o		$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
 
+fluidballs:	fluidballs.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -878,8 +881,8 @@ flag.o: $(srcdir)/xpm-pixmap.h
 flag.o: $(srcdir)/images/bob.xbm
 flame.o: $(srcdir)/screenhack.h
 flame.o: ../config.h
-forest.o: $(srcdir)/xlockmore.h
 forest.o: ../config.h
+forest.o: $(srcdir)/xlockmore.h
 forest.o: $(srcdir)/xlockmoreI.h
 forest.o: $(srcdir)/screenhack.h
 vines.o: $(srcdir)/xlockmore.h
@@ -1093,6 +1096,7 @@ bsod.o: $(srcdir)/xpm-pixmap.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/atari.xbm
 bsod.o: $(srcdir)/images/mac.xbm
+bsod.o: $(srcdir)/images/macbomb.xbm
 crystal.o: $(srcdir)/xlockmore.h
 crystal.o: ../config.h
 crystal.o: $(srcdir)/xlockmoreI.h
@@ -1213,4 +1217,6 @@ thornbird.o: $(srcdir)/xlockmore.h
 thornbird.o: ../config.h
 thornbird.o: $(srcdir)/xlockmoreI.h
 thornbird.o: $(srcdir)/screenhack.h
+fluidballs.o: $(srcdir)/screenhack.h
+fluidballs.o: ../config.h
 

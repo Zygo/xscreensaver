@@ -1,4 +1,4 @@
-/* dangerball, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* dangerball, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -116,25 +116,6 @@ reshape_ball (ModeInfo *mi, int width, int height)
   glTranslatef(0.0, 0.0, -15.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-static void
-gl_init (ModeInfo *mi)
-{
-/*  ball_configuration *bp = &bps[MI_SCREEN(mi)]; */
-  int wire = MI_IS_WIREFRAME(mi);
-
-  static GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
-
-  if (!wire)
-    {
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glEnable(GL_CULL_FACE);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-    }
 }
 
 
@@ -296,10 +277,27 @@ init_ball (ModeInfo *mi)
 
   bp = &bps[MI_SCREEN(mi)];
 
-  if ((bp->glx_context = init_GL(mi)) != NULL) {
-    gl_init(mi);
-    reshape_ball (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-  }
+  bp->glx_context = init_GL(mi);
+
+  reshape_ball (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
+      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
 
   bp->rotx = frand(1.0) * RANDSIGN();
   bp->roty = frand(1.0) * RANDSIGN();
@@ -349,8 +347,16 @@ draw_ball (ModeInfo *mi)
   Window window = MI_WINDOW(mi);
   int c2;
 
-  static GLfloat color1[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color2[4] = {0.0, 0.0, 0.0, 1.0};
+  /* #### I'm not getting specular reflections on the ball,
+          and I can't figure out why.
+   */
+
+  static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
+  static GLfloat scolor[4] = {0.0, 0.0, 0.0, 1.0};
+  static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
+  static GLfloat sspec[4]  = {0.0, 0.0, 0.0, 1.0};
+  static GLfloat bshiny    = 128.0;
+  static GLfloat sshiny    = 0.0;
 
   if (!bp->glx_context)
     return;
@@ -403,14 +409,14 @@ draw_ball (ModeInfo *mi)
       }
   }
 
-  color1[0] = bp->colors[bp->ccolor].red   / 65536.0;
-  color1[1] = bp->colors[bp->ccolor].green / 65536.0;
-  color1[2] = bp->colors[bp->ccolor].blue  / 65536.0;
+  bcolor[0] = bp->colors[bp->ccolor].red   / 65536.0;
+  bcolor[1] = bp->colors[bp->ccolor].green / 65536.0;
+  bcolor[2] = bp->colors[bp->ccolor].blue  / 65536.0;
 
   c2 = (bp->ccolor + bp->color_shift) % bp->ncolors;
-  color2[0] = bp->colors[c2].red   / 65536.0;
-  color2[1] = bp->colors[c2].green / 65536.0;
-  color2[2] = bp->colors[c2].blue  / 65536.0;
+  scolor[0] = bp->colors[c2].red   / 65536.0;
+  scolor[1] = bp->colors[c2].green / 65536.0;
+  scolor[2] = bp->colors[c2].blue  / 65536.0;
 
   bp->ccolor++;
   if (bp->ccolor >= bp->ncolors) bp->ccolor = 0;
@@ -419,10 +425,14 @@ draw_ball (ModeInfo *mi)
 
   move_spikes (mi);
 
-  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color1);
+  glMaterialfv (GL_FRONT, GL_SPECULAR,            bspec);
+  glMateriali  (GL_FRONT, GL_SHININESS,           bshiny);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, bcolor);
   glCallList (bp->ball_list);
 
-  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color2);
+  glMaterialfv (GL_FRONT, GL_SPECULAR,            sspec);
+  glMaterialf  (GL_FRONT, GL_SHININESS,           sshiny);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, scolor);
   draw_spikes (mi);
   glPopMatrix ();
 

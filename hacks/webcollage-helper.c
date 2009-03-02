@@ -236,7 +236,7 @@ write_pixbuf (GdkPixbuf *pb, const char *file)
   cinfo.in_color_space = JCS_RGB;
 
   jpeg_set_defaults (&cinfo);
-  cinfo.progressive_mode = TRUE;
+  jpeg_simple_progression (&cinfo);
   jpeg_set_quality (&cinfo, jpeg_quality, TRUE);
 
   jpeg_start_compress (&cinfo, TRUE);

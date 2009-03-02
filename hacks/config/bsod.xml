@@ -10,18 +10,20 @@
 
   <hgroup>
    <vgroup>
-     <boolean id="windows"    _label="Windows"     arg-unset="-no-windows"/>
-     <boolean id="mac"        _label="MacOS"       arg-unset="-no-mac"/>
-     <boolean id="amiga"      _label="AmigaDOS"    arg-unset="-no-amiga"/>
-     <boolean id="bsd"        _label="BSD"         arg-set="-bsd"/>
-     <boolean id="sparclinux" _label="Sparc Linux" arg-set="-sparclinux"/>
+     <boolean id="windows"    _label="Windows"      arg-unset="-no-windows"/>
+     <boolean id="mac"        _label="Sad Mac"      arg-unset="-no-mac"/>
+     <boolean id="mac1"       _label="Mac Bomb"     arg-unset="-no-mac1"/>
+     <boolean id="amiga"      _label="AmigaDOS"     arg-unset="-no-amiga"/>
+     <boolean id="bsd"        _label="BSD"          arg-set="-bsd"/>
+     <boolean id="sparclinux" _label="Sparc Linux"  arg-set="-sparclinux"/>
    </vgroup>
    <vgroup>
-     <boolean id="nt"         _label="Windows NT"  arg-unset="-no-nt"/>
-     <boolean id="macsbug"    _label="MacsBug"     arg-unset="-no-macsbug"/>
-     <boolean id="atari"      _label="Atari"       arg-set="-atari"/>
-     <boolean id="sco"        _label="SCO"         arg-unset="-no-sco"/>
-     <boolean id="solaris"    _label="Solaris"     arg-unset="-no-solaris"/>
+     <boolean id="nt"         _label="Windows NT"   arg-unset="-no-nt"/>
+     <boolean id="2k"         _label="Windows 2000" arg-unset="-no-2k"/>
+     <boolean id="macsbug"    _label="MacsBug"      arg-unset="-no-macsbug"/>
+     <boolean id="atari"      _label="Atari"        arg-set="-atari"/>
+     <boolean id="sco"        _label="SCO"          arg-unset="-no-sco"/>
+     <boolean id="solaris"    _label="Solaris"      arg-unset="-no-solaris"/>
    </vgroup>
   </hgroup>
   <boolean id="blitdamage" _label="NCD X Terminal" arg-unset="-no-blitdamage"/>

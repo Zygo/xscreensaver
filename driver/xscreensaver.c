@@ -484,8 +484,6 @@ lock_initialization (saver_info *si, int *argc, char **argv)
       si->nolock_reason = "running under GDM";
     }
 #endif /* NO_LOCKING */
-
-  hack_uid (si);
 }
 
 
@@ -500,13 +498,17 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   char *d = getenv ("DISPLAY");
   if (!d || !*d)
     {
-      char ndpy[] = "DISPLAY=:0.0";
+      char *ndpy = strdup("DISPLAY=:0.0");
       /* if (si->prefs.verbose_p) */      /* sigh, too early to test this... */
         fprintf (stderr,
                  "%s: warning: $DISPLAY is not set: defaulting to \"%s\".\n",
                  blurb(), ndpy+8);
       if (putenv (ndpy))
         abort ();
+      /* don't free (ndpy) -- some implementations of putenv (BSD 4.4,
+         glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
+         do not.  So we must leak it (and/or the previous setting). Yay.
+       */
     }
 #endif /* HAVE_PUTENV */
 
@@ -953,7 +955,13 @@ main_loop (saver_info *si)
   while (1)
     {
       Bool was_locked = False;
+
+      if (p->verbose_p)
+	fprintf (stderr, "%s: awaiting idleness.\n", blurb());
+
+      check_for_leaks ("unblanked A");
       sleep_until_idle (si, True);
+      check_for_leaks ("unblanked B");
 
       if (p->verbose_p)
 	{
@@ -1059,7 +1067,10 @@ main_loop (saver_info *si)
       ok_to_unblank = True;
       do {
 
+        check_for_leaks ("blanked A");
 	sleep_until_idle (si, False);		/* until not idle */
+        check_for_leaks ("blanked B");
+
 	maybe_reload_init_file (si);
 
 #ifndef NO_LOCKING
@@ -1181,9 +1192,6 @@ main_loop (saver_info *si)
           }
         XSync (si->dpy, False);
       }
-
-      if (p->verbose_p)
-	fprintf (stderr, "%s: awaiting idleness.\n", blurb());
     }
 }
 
@@ -1953,4 +1961,21 @@ display_is_on_console_p (saver_info *si)
 	}
     }
   return !not_on_console;
+}
+
+
+/* Do a little bit of heap introspection...
+ */
+void
+check_for_leaks (const char *where)
+{
+#ifdef HAVE_SBRK
+  static unsigned long last_brk = 0;
+  int b = (unsigned long) sbrk(0);
+  if (last_brk && last_brk < b)
+    fprintf (stderr, "%s: %s: brk grew by %luK.\n",
+             blurb(), where,
+             (((b - last_brk) + 1023) / 1024));
+  last_brk = b;
+#endif /* HAVE_SBRK */
 }

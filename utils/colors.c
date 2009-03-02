@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -578,7 +578,7 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
 		  0,   S, V,
 		  359, S, V,
 		  colors, &ncolors,
-		  False, True,
+		  False, allocate_p,
                   (writable_pP && *writable_pP));
 
   /* If we tried for writable cells and got none, try for non-writable. */

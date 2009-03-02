@@ -417,6 +417,7 @@ extern Bool window_exists_p (Display *dpy, Window window);
 extern char *timestring (void);
 extern Bool display_is_on_console_p (saver_info *si);
 extern Visual *get_best_gl_visual (saver_screen_info *ssi);
+extern void check_for_leaks (const char *where);
 
 extern Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
