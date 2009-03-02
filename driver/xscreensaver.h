@@ -185,6 +185,9 @@ struct saver_screen_info {
 				   destroy and recreate it on different
 				   visuals. */
   Colormap cmap;		/* The colormap that goes with the window. */
+  Bool install_cmap_p;		/* whether we should use our own colormap.
+				   This can be overridden on a per-hack basis.
+				 */
   Visual *current_visual;	/* The visual of the window. */
   Visual *default_visual;	/* visual to use when none other specified */
   int current_depth;		/* How deep the visual (and the window) are. */
@@ -295,6 +298,11 @@ extern void pop_up_dialog_box (Widget dialog, Widget form, int where);
 extern void format_into_label (Widget label, const char *arg);
 extern void steal_focus_and_colormap (Widget dialog);
 #endif
+
+#ifdef HAVE_MOTIF
+extern void disable_motif_drag_and_drop(Widget w);
+#endif
+
 
 /* =======================================================================
    timers

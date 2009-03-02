@@ -26,12 +26,9 @@
 static double sins [360];
 static double coss [360];
 
-static GC draw_gc, erase_gc;
+static GC draw_gc;
 static unsigned int default_fg_pixel;
-static int erase_speed, sleep_time, erase_mode;
-
-void erase_window (Display *dpy, Window win, GC gc, int width, int height,
-		   int mode, int delay);
+static int sleep_time;
 
 static void
 init_helix (Display *dpy, Window window)
@@ -46,7 +43,6 @@ init_helix (Display *dpy, Window window)
     get_pixel_resource ("foreground", "Foreground", dpy, cmap);
   draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
   gcv.foreground = get_pixel_resource ("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
 
   for (i = 0; i < 360; i++)
     {
@@ -257,7 +253,6 @@ random_trig (Display *dpy, Window window, XColor *color, Bool *got_color)
 static void
 random_helix_or_trig (Display *dpy, Window window)
 {
-  int i;
   Bool free_color = False;
   XColor color;
   int width, height;
@@ -276,7 +271,7 @@ random_helix_or_trig (Display *dpy, Window window)
   XSync (dpy, True);
   sleep ( sleep_time );
 
-  erase_window(dpy, window, erase_gc, width, height, erase_mode, erase_speed);
+  erase_full_window(dpy, window);
 
   if (free_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
   XSync (dpy, True);
@@ -288,15 +283,15 @@ char *progclass = "Helix";
 
 char *defaults [] = {
   "Helix.background: black",		/* to placate SGI */
-  "Helix.eraseSpeed: 400",
-  "Helix.delay: 5",
-  "Helix.eraseMode: -1",
+  "*delay:      5",
+  "*eraseSpeed: 400",
+  "*eraseMode: -1",
   0
 };
 
 XrmOptionDescRec options [] = {   
-  { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
+  { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
   { "-erase-mode",      ".eraseMode",           XrmoptionSepArg, 0 },
   { 0 },
 };
@@ -305,9 +300,7 @@ int options_size = (sizeof (options) / sizeof (options[0]));
 void
 screenhack (Display *dpy, Window window)
 {
-  erase_speed = get_integer_resource("eraseSpeed", "Integer");
   sleep_time = get_integer_resource("delay", "Integer");
-  erase_mode = get_integer_resource("eraseMode", "Integer");
   init_helix (dpy, window);
   while (1)
     random_helix_or_trig (dpy, window);

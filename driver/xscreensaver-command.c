@@ -34,25 +34,30 @@ static char *usage = "usage: %s -<switch>\n\
   This program provides external control of a running xscreensaver process.\n\
   Version %s, copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>.\n\
 \n\
-  -demo		Enter interactive demo mode.\n\
-  -deactivate	Turns off the screensaver if it is on, as user input would.\n\
-  -activate	Turns it on as if the user had been idle for long enough.\n\
-  -cycle	Stops the current hack and runs a new one.\n\
-  -next		Like either -activate or -cycle, depending on which is more\n\
-		appropriate, except that the screenhack that will be run is\n\
-		the next one in the list of hacks, instead of a randomly-\n\
-		chosen one.  This option is good for looking at a demo of\n\
-		each of the hacks in place.\n\
-  -prev		Like -next, but goes in the other direction.\n\
-  -exit		Causes the screensaver process to exit.  It should be ok to\n\
-		just kill the process (NOT with -9!) but this is a slightly\n\
-		easier way.\n\
-  -restart	Causes the screensaver process to exit and then restart with\n\
-		the same command line arguments.  This is a good way of \n\
-		causing the screensaver to re-read the resource database.\n\
+  -demo         Enter interactive demo mode.\n\
+  -deactivate   Turns off the screensaver if it is on, as user input would.\n\
+  -activate     Turns it on as if the user had been idle for long enough.\n\
+  -cycle        Stops the current graphics hack and runs a new one.\n\
+  -next         Like either -activate or -cycle, depending on which is more\n\
+                appropriate, except that the screenhack that will be run is\n\
+                the next one in the list of hacks, instead of a randomly-\n\
+                chosen one.  This option could be used for looking at a demo\n\
+                of each of the configured hacks.\n\
+  -prev         Like -next, but goes in the other direction.\n\
+  -exit         Causes the screensaver process to exit.  This is the same as\n\
+                killing the process with `kill', but it's easier, since you\n\
+                don't need to first figure out the pid.  (Note that one\n\
+                must *never* kill xscreensaver with -9!)\n\
+  -restart      Causes the screensaver process to exit and then restart with\n\
+                the same command line arguments.  Do this after you've\n\
+                changed the resource database, to cause the screensaver to\n\
+                notice the changes.\n\
   -lock         Same as -activate, but with immediate locking.\n\
-  -version      Prints the version of XScreenSaver that is running.\n\
-  -time         Prints the time at which the screensaver turned on.\n\
+  -version      Prints the version of XScreenSaver that is currently running\n\
+                on the display.\n\
+  -time         Prints the time at which the screensaver last activated or\n\
+                deactivated (roughly, how long the user has been idle or\n\
+                non-idle.)\n\
 \n\
   See the man page for more details.\n\
   For updates, check http://people.netscape.com/jwz/xscreensaver/\n\

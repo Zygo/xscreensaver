@@ -418,8 +418,36 @@ static void describe_dead_child (saver_info *, pid_t, int wait_status);
 #endif
 
 
-/* Semaphore to temporarily turn the SIGCHLD handler into a no-op. */
+/* Semaphore to temporarily turn the SIGCHLD handler into a no-op.
+   Don't alter this directly -- use block_sigchld() / unblock_sigchld().
+ */
 static int block_sigchld_handler = 0;
+
+
+static void
+block_sigchld (void)
+{
+#ifdef USE_SIGACTION
+  sigset_t child_set;
+  sigemptyset (&child_set);
+  sigaddset (&child_set, SIGCHLD);
+  sigprocmask (SIG_BLOCK, &child_set, 0);
+#endif /* USE_SIGACTION */
+
+  block_sigchld_handler++;
+}
+
+static void
+unblock_sigchld (void)
+{
+#ifdef USE_SIGACTION
+  sigset_t child_set;
+  sigemptyset(&child_set);
+  sigaddset(&child_set, SIGCHLD);
+  sigprocmask(SIG_UNBLOCK, &child_set, 0);
+#endif /* USE_SIGACTION */
+  block_sigchld_handler--;
+}
 
 static int
 kill_job (saver_info *si, pid_t pid, int signal)
@@ -434,7 +462,7 @@ kill_job (saver_info *si, pid_t pid, int signal)
     /* This function should not be called from the signal handler. */
     abort();
 
-  block_sigchld_handler++;		/* we control the horizontal... */
+  block_sigchld();			/* we control the horizontal... */
 
   job = find_job (pid);
   if (!job ||
@@ -489,7 +517,7 @@ kill_job (saver_info *si, pid_t pid, int signal)
   await_dying_children (si);
 
  DONE:
-  block_sigchld_handler--;
+  unblock_sigchld();
   if (block_sigchld_handler < 0)
     abort();
 
@@ -514,9 +542,9 @@ sigchld_handler (int sig)
     abort();
   else if (block_sigchld_handler == 0)
     {
-      block_sigchld_handler++;
+      block_sigchld();
       await_dying_children (si);
-      block_sigchld_handler--;
+      unblock_sigchld();
     }
 
   init_sigchld();
@@ -641,12 +669,36 @@ void
 init_sigchld (void)
 {
 #ifdef SIGCHLD
+
+# ifdef USE_SIGACTION	/* Thanks to Tom Kelly <tom@ancilla.toronto.on.ca> */
+
+  static Bool sigchld_initialized_p = 0;
+  if (!sigchld_initialized_p)
+    {
+      struct sigaction action, old;
+
+      action.sa_handler = sigchld_handler;
+      sigemptyset(&action.sa_mask);
+      action.sa_flags = 0;
+
+      if (sigaction(SIGCHLD, &action, &old) < 0)
+	{
+	  char buf [255];
+	  sprintf (buf, "%s: couldn't catch SIGCHLD", progname);
+	  perror (buf);
+	}
+      sigchld_initialized_p = True;
+    }
+
+# else  /* !USE_SIGACTION */
+
   if (((long) signal (SIGCHLD, sigchld_handler)) == -1L)
     {
       char buf [255];
       sprintf (buf, "%s: couldn't catch SIGCHLD", progname);
       perror (buf);
     }
+# endif /* !USE_SIGACTION */
 #endif
 }
 

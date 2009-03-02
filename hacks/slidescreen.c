@@ -20,7 +20,7 @@ static int xoff, yoff;
 static int grid_w, grid_h;
 static int delay, delay2;
 static GC gc;
-int max_width, max_height;
+static int max_width, max_height;
 
 static void
 init_slide (Display *dpy, Window window)
@@ -28,13 +28,17 @@ init_slide (Display *dpy, Window window)
   int i;
   XGCValues gcv;
   XWindowAttributes xgwa;
+  long gcflags;
   int border;
-  unsigned long fg;
+  unsigned long fg, bg;
   Drawable d;
   Colormap cmap;
   Visual *visual;
 
   XGetWindowAttributes (dpy, window, &xgwa);
+  grab_screen_image (xgwa.screen, window);
+
+  XGetWindowAttributes (dpy, window, &xgwa);  /* re-retrieve colormap */
   cmap = xgwa.colormap;
   visual = xgwa.visual;
   max_width = xgwa.width;
@@ -45,17 +49,94 @@ init_slide (Display *dpy, Window window)
   grid_size = get_integer_resource ("gridSize", "Integer");
   pix_inc = get_integer_resource ("pixelIncrement", "Integer");
   border = get_integer_resource ("internalBorderWidth", "InternalBorderWidth");
-  fg = get_pixel_resource ("background", "Background", dpy, cmap);
 
-  grab_screen_image (xgwa.screen, window);
+  {
+    XColor fgc, bgc;
+    char *fgs = get_string_resource("background", "Background");
+    char *bgs = get_string_resource("foreground", "Foreground");
+    Bool fg_ok, bg_ok;
+    if (!XParseColor (dpy, cmap, fgs, &fgc))
+      XParseColor (dpy, cmap, "black", &bgc);
+    if (!XParseColor (dpy, cmap, bgs, &bgc))
+      XParseColor (dpy, cmap, "gray", &fgc);
 
+    fg_ok = XAllocColor (dpy, cmap, &fgc);
+    bg_ok = XAllocColor (dpy, cmap, &bgc);
 
-  /* Total kludge -- if grab_screen_image() installed a new colormap, assume
-     that pixel 0 is the one we should use.  This further assumes that the
-     pixel is black, which overrides the user's -background setting, alas.
-   */
-  XGetWindowAttributes (dpy, window, &xgwa);
-  if (cmap != xgwa.colormap) fg = 0;
+    /* If we weren't able to allocate the two colors we want from the
+       colormap (which is likely if the screen has been grabbed on an
+       8-bit SGI visual -- don't ask) then just go through the map
+       and find the closest color to the ones we wanted, and use those
+       pixels without actually allocating them.
+     */
+    if (fg_ok)
+      fg = fgc.pixel;
+    else
+      fg = 0;
+
+    if (bg_ok)
+      bg = bgc.pixel;
+    else
+      bg = 1;
+
+    if (!fg_ok || bg_ok)
+      {
+	unsigned long fgd = ~0;
+	unsigned long bgd = ~0;
+	int max = visual_cells (xgwa.screen, visual);
+	XColor *all = (XColor *) calloc(sizeof (*all), max);
+	for (i = 0; i < max; i++)
+	  {
+	    all[i].flags = DoRed|DoGreen|DoBlue;
+	    all[i].pixel = i;
+	  }
+	XQueryColors (dpy, cmap, all, max);
+	for(i = 0; i < max; i++)
+	  {
+	    long rd, gd, bd;
+	    unsigned long d;
+	    if (!fg_ok)
+	      {
+		rd = (all[i].red   >> 8) - (fgc.red   >> 8);
+		gd = (all[i].green >> 8) - (fgc.green >> 8);
+		bd = (all[i].blue  >> 8) - (fgc.blue  >> 8);
+		if (rd < 0) rd = -rd;
+		if (gd < 0) gd = -gd;
+		if (bd < 0) bd = -bd;
+		d = (rd << 1) + (gd << 2) + bd;
+		if (d < fgd)
+		  {
+		    fgd = d;
+		    fg = all[i].pixel;
+		    if (d == 0)
+		      fg_ok = True;
+		  }
+	      }
+
+	    if (!bg_ok)
+	      {
+		rd = (all[i].red   >> 8) - (bgc.red   >> 8);
+		gd = (all[i].green >> 8) - (bgc.green >> 8);
+		bd = (all[i].blue  >> 8) - (bgc.blue  >> 8);
+		if (rd < 0) rd = -rd;
+		if (gd < 0) gd = -gd;
+		if (bd < 0) bd = -bd;
+		d = (rd << 1) + (gd << 2) + bd;
+		if (d < bgd)
+		  {
+		    bgd = d;
+		    bg = all[i].pixel;
+		    if (d == 0)
+		      bg_ok = True;
+		  }
+	      }
+
+	    if (fg_ok && bg_ok)
+	      break;
+	  }
+	XFree(all);
+      }
+  }
 
 
   if (delay < 0) delay = 0;
@@ -66,8 +147,10 @@ init_slide (Display *dpy, Window window)
   gcv.foreground = fg;
   gcv.function = GXcopy;
   gcv.subwindow_mode = IncludeInferiors;
-  gc = XCreateGC (dpy, window, GCForeground |GCFunction | GCSubwindowMode,
-		  &gcv);
+  gcflags = GCForeground |GCFunction;
+  if (use_subwindow_mode_p(xgwa.screen, window)) /* see grabscreen.c */
+    gcflags |= GCSubwindowMode;
+  gc = XCreateGC (dpy, window, gcflags, &gcv);
 
   XGetWindowAttributes (dpy, window, &xgwa);
   bitmap_w = xgwa.width;
@@ -84,10 +167,23 @@ init_slide (Display *dpy, Window window)
 
   if (border)
     {
+      int half = border/2;
+      int half2 = (border & 1 ? half+1 : half);
+      XSetForeground(dpy, gc, bg);
+      for (i = 0; i < bitmap_w; i += grid_size)
+	{
+	  int j;
+	  for (j = 0; j < bitmap_h; j += grid_size)
+	    XDrawRectangle (dpy, d, gc,
+			    xoff+i+half2, yoff+j+half2,
+			    grid_size-border-1, grid_size-border-1);
+	}
+
+      XSetForeground(dpy, gc, fg);
       for (i = 0; i <= bitmap_w; i += grid_size)
-	XFillRectangle (dpy, d, gc, xoff+i-border/2, yoff, border, bitmap_h);
+	XFillRectangle (dpy, d, gc, xoff+i-half, yoff, border, bitmap_h);
       for (i = 0; i <= bitmap_h; i += grid_size)
-	XFillRectangle (dpy, d, gc, xoff, yoff+i-border/2, bitmap_w, border);
+	XFillRectangle (dpy, d, gc, xoff, yoff+i-half, bitmap_w, border);
     }
 
   if (xoff)
@@ -235,10 +331,11 @@ char *defaults [] = {
   "*visualID:			Best",
 #endif
 
-  "*background:			Black",
+  "SlidePuzzle.background:	Black",
+  "SlidePuzzle.foreground:	Gray",
   "*gridSize:			70",
   "*pixelIncrement:		10",
-  "*internalBorderWidth:	1",
+  "*internalBorderWidth:	4",
   "*delay:			50000",
   "*delay2:			1000000",
   0

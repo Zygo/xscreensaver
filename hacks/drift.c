@@ -35,9 +35,12 @@ static const char sccsid[] = "@(#)drift.c	4.02 97/04/01 xlockmore";
 # define drift_opts					xlockmore_opts
 # define DEFAULTS	"*count:		30    \n"			\
 					"*delay:		10000 \n"			\
-					"*ncolors:		200   \n"
+					"*ncolors:		200   \n"			\
+					"*eraseSpeed:   400 \n"				\
+					"*eraseMode:    -1 \n"
 # define SMOOTH_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "erase.h"
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -221,7 +224,6 @@ initmode(ModeInfo * mi, int mode)
 		dp->fractal_len = 2000000;
 	}
 	dp->fractal_len = (dp->fractal_len * MI_BATCHCOUNT(mi)) / 20;
-
 	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
@@ -581,8 +583,14 @@ draw_drift(ModeInfo * mi)
 		draw(mi, dp, window);
 		if (dp->total_points++ > dp->fractal_len) {
 			draw_flush(mi, dp, window);
-			if (0 == --dp->nfractals)
-				initmode(mi, frandom(2));
+			if (0 == --dp->nfractals) {
+#ifdef STANDALONE
+			  XSync(MI_DISPLAY(mi), False);
+			  sleep(4); /* #### make settable */
+			  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif /* STANDALONE */
+			  initmode(mi, frandom(2));
+			}
 			initfractal(mi);
 		}
 		dp->timer--;

@@ -192,22 +192,36 @@ read_screen (Display *dpy, Window window, int *widthP, int *heightP)
   *heightP = xgwa.height;
 
   grab_screen_image(xgwa.screen, window);
-  p = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+  p = XCreatePixmap(dpy, window, *widthP, *heightP, xgwa.depth);
   gcv.function = GXcopy;
   gc = XCreateGC (dpy, window, GCFunction, &gcv);
-  XCopyArea (dpy, window, p, gc, 0, 0, xgwa.width, xgwa.height, 0, 0);
-  XFreeGC (dpy, gc);
+  XCopyArea (dpy, window, p, gc, 0, 0, *widthP, *heightP, 0, 0);
 
-
-  /* Reset this... */
+  /* Reset the window's background color... */
   XSetWindowBackground (dpy, window,
 			get_pixel_resource ("background", "Background",
 					    dpy, xgwa.colormap));
-  XClearWindow (dpy, window);
+  XCopyArea (dpy, p, window, gc, 0, 0, *widthP, *heightP, 0, 0);
+  XFreeGC (dpy, gc);
 
   return p;
 }
 
+
+static int 
+to_pow2(int n, Bool up)
+{
+  /* sizeof(Dimension) == 2. */
+  int powers_of_2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
+			2048, 4096, 8192, 16384, 32768, 65536 };
+  int i = 0;
+  if (n > 65536) size = 65536;
+  while (n >= powers_of_2[i]) i++;
+  if (n == powers_of_2[i-1])
+    return n;
+  else
+    return powers_of_2[up ? i : i-1];
+}
 
 static void
 init (void)
@@ -216,9 +230,8 @@ init (void)
   Colormap cmap;
   XGCValues gcv;
   int width, height;
-  unsigned int real_size;
   char *bitmap_name;
-  int i;
+  Bool scale_up;
 
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
@@ -240,24 +253,29 @@ init (void)
       height = logo_height;
       bitmap = XCreatePixmapFromBitmapData (dpy, window, (char *) logo_bits,
 					    width, height, fg, bg, depth);
+      scale_up = True; /* definitely. */
     }
   else if (!strcmp (bitmap_name, "(screen)"))
     {
       bitmap = read_screen (dpy, window, &width, &height);
+      scale_up = True; /* maybe? */
     }
   else
     {
       read_bitmap (bitmap_name, &width, &height);
+      scale_up = True; /* probably? */
     }
 
-  real_size = (width > height) ? width : height;
+  size = (width < height) ? height : width;	/* make it square */
+  size = to_pow2(size, scale_up);		/* round up to power of 2 */
+  {						/* don't exceed screen size */
+    int s = XScreenNumberOfScreen(xgwa.screen);
+    int w = to_pow2(XDisplayWidth(dpy, s), False);
+    int h = to_pow2(XDisplayHeight(dpy, s), False);
+    if (size > w) size = w;
+    if (size > h) size = h;
+  }
 
-  size = real_size;
-  /* semi-sleazy way of doing (setq size (expt 2 (ceiling (log size 2)))). */
-  for (i = 31; i > 0; i--)
-    if (size & (1<<i)) break;
-  if (size & (~(1<<i)))
-    size = (size>>i)<<(i+1);
   self = XCreatePixmap (dpy, window, size, size, depth);
   temp = XCreatePixmap (dpy, window, size, size, depth);
   mask = XCreatePixmap (dpy, window, size, size, depth);
@@ -277,6 +295,10 @@ init (void)
 
   XCopyArea (dpy, bitmap, self, CPY, 0, 0, width, height,
 	     (size - width)>>1, (size - height)>>1);
+  XFreePixmap(dpy, bitmap);
+
+  display (self);
+  XSync(dpy, False);
 }
 
 static void
@@ -316,6 +338,7 @@ char *defaults [] = {
   "*delay:	500000",
   "*delay2:	500000",
   "*bitmap:	(default)",
+  "*geometry:	512x512",
   0
 };
 
@@ -333,6 +356,7 @@ screenhack (Display *d, Window w)
   dpy = d;
   window = w;
   init ();
+  if (delay2) usleep (delay2 * 2);
   while (1)
     {
       rotate ();

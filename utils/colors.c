@@ -50,7 +50,7 @@ allocate_writable_colors (Display *dpy, Colormap cmap,
   while (got < desired
 	 && requested > 0)
     {
-      if (desired - got > requested)
+      if (desired - got < requested)
 	requested = desired - got;
 
       if (XAllocColorCells (dpy, cmap, False, 0, 0, new_pixels, requested))
@@ -494,7 +494,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
 	  if (dh < 0) dh = -dh;
 	  if (dh > 0.5) dh = 0.5 - (dh - 0.5);
 	  distance = sqrt ((dh * dh) +
-			   ((s[j] - s[i]) * (s[j] - v[i])) +
+			   ((s[j] - s[i]) * (s[j] - s[i])) +
 			   ((v[j] - v[i]) * (v[j] - v[i])));
 	  if (distance < 0.2)
 	    goto REPICK_THIS_COLOR;

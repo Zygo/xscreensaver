@@ -1,6 +1,6 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * sierpinski --- Sierpinski's triangle fractal.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* sierpinski --- Sierpinski's triangle fractal */
+
 #if !defined( lint ) && !defined( SABER )
 static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
 #endif
@@ -32,10 +32,11 @@ static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
 # define HACK_INIT					init_sierpinski
 # define HACK_DRAW					draw_sierpinski
 # define sierpinski_opts			xlockmore_opts
-# define DEFAULTS	"*count:		2000    \n"			\
+# define DEFAULTS	"*delay:		400000  \n"			\
+					"*count:		2000    \n"			\
 					"*cycles:		100     \n"			\
-					"*delay:		400000  \n"			\
 					"*ncolors:		64   \n"
+# define BRIGHT_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -114,7 +115,10 @@ init_sierpinski(ModeInfo * mi)
 	sp->total_npoints = MI_BATCHCOUNT(mi);
 	if (sp->total_npoints < 1)
 		sp->total_npoints = 1;
-  sp->corners = (LRAND() & 1) + 3;
+  sp->corners = MI_SIZE(mi);
+	if (sp->corners < 3 || sp->corners > 4) {
+		sp->corners = (LRAND() & 1) + 3;
+	}
 	for (i = 0; i < sp->corners; i++) {
 		if (!sp->pointBuffer[i])
 			sp->pointBuffer[i] = (XPoint *) malloc(sp->total_npoints *
@@ -129,11 +133,9 @@ draw_sierpinski(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
 	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
-	XPoint     **xp;
+	XPoint     *xp[MAXCORNERS];
 	int         i = 0, v;
 
-    xp = (XPoint **) malloc (sp->corners * sizeof (XPoint *));
-    
 	if (MI_NPIXELS(mi) <= 2)
 		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
 	for (i = 0; i < sp->corners; i++)
@@ -156,8 +158,6 @@ draw_sierpinski(ModeInfo * mi)
 	}
 	if (++sp->time >= MI_CYCLES(mi))
 		startover(mi);
-
-    free (xp);
 }
 
 void

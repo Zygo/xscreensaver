@@ -185,7 +185,7 @@ depend: XScreenSaver_ad.h
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend: XScreenSaver_ad.h
+distdepend: update_ad_version XScreenSaver_ad.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -201,6 +201,26 @@ distdepend: XScreenSaver_ad.h
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv Makefile.in Makefile.in.bak &&				    \
 	mv /tmp/distdepend.$$$$ Makefile.in
+
+# Updates the version number in the app-defaults file to be in sync with 
+# the version number in version.h.  This is so people can tell when they
+# have a version skew between the app-defaults file and the executable.
+update_ad_version::
+	@S=XScreenSaver.ad.in ;						    \
+	U=$(UTILS_SRC)/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	echo -n "Updating version number in $$S to $$V... " ;		    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T
+
 
 TAGS: tags
 tags:

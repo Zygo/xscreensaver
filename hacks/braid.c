@@ -32,11 +32,15 @@ static const char sccsid[] = "@(#)braid.c	4.00 97/01/01 xlockmore";
 # define HACK_DRAW					draw_braid
 # define braid_opts					xlockmore_opts
 # define DEFAULTS	"*count:		15    \n"			\
+					"*size:		   -7     \n"			\
 					"*cycles:		100   \n"			\
 					"*delay:		1000  \n"			\
-					"*ncolors:		64    \n"
+					"*ncolors:		64    \n"			\
+					"*eraseSpeed:   400 \n"				\
+					"*eraseMode:    -1 \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "erase.h"
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -164,7 +168,6 @@ init_braid(ModeInfo * mi)
 
 	/* jwz: go in the other direction sometimes. */
 	braid->color_direction = ((LRAND() & 1) ? 1 : -1);
-
 	XClearWindow(display, MI_WINDOW(mi));
 
 	min_length = (braid->center_x > braid->center_y) ?
@@ -235,6 +238,21 @@ init_braid(ModeInfo * mi)
 			braid->components[comp] = ++c;
 		}
 	} while (count > 0);
+
+	{
+	  int line_width = MI_SIZE(mi);
+	  if (line_width == 0)
+		line_width = -8;
+	  if (line_width < 0)
+		line_width = NRAND(-line_width)+1;
+	  if (line_width == 1)
+		line_width = 0;
+	  XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), line_width,
+						 LineSolid,
+						 (line_width <= 3 ? CapButt : CapRound),
+						 JoinMiter);
+	}
+
 
 	for (i = 0; i < braid->nstrands; i++)
 		if (!(braid->components[i] & 1))
@@ -394,8 +412,12 @@ draw_braid(ModeInfo * mi)
 		}
 	}
 
-	if (++braid->age > MI_CYCLES(mi))
-		init_braid(mi);
+	if (++braid->age > MI_CYCLES(mi)) {
+#ifdef STANDALONE
+	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
+	  init_braid(mi);
+	}
 }
 
 void

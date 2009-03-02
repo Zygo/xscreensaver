@@ -42,6 +42,8 @@ HACK_POST	= -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
 HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
 XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
 XLOCK_LIBS	= $(HACK_LIBS)
+SGI_VIDEO_OBJS  = @SGI_VIDEO_OBJS@
+SGI_VIDEO_LIBS  = @SGI_VIDEO_LIBS@
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
@@ -53,65 +55,72 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/spline.c \
 		  $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
 		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
-	 	  $(UTILS_SRC)/erase.c
+	 	  $(UTILS_SRC)/erase.c $(UTILS_SRC)/sgivideo.c
 UTIL_OBJS	= $(UTILS_SRC)/alpha.o $(UTILS_SRC)/colors.o \
 		  $(UTILS_SRC)/grabscreen.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/spline.o \
 		  $(UTILS_SRC)/usleep.o $(UTILS_SRC)/visual.o \
 		  $(UTILS_SRC)/xroger.o $(UTILS_SRC)/yarandom.o \
-		  $(UTILS_SRC)/erase.o
+		  $(UTILS_SRC)/erase.o $(UTILS_SRC)/sgivideo.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles_default.c decayscreen.c deco.c drift.c flag.c \
-		  flame.c forest.c fract.c galaxy.c grav.c greynetic.c \
+		  flame.c forest.c vines.c galaxy.c grav.c greynetic.c \
 		  halo.c helix.c hopalong.c hypercube.c ifs.c imsmap.c \
 		  julia.c kaleidescope.c laser.c lightning.c lisa.c lmorph.c \
 		  maze.c moire.c noseguy.c pedal.c penrose.c pyro.c qix.c \
 		  rocks.c rorschach.c screenhack.c sierpinski.c slidescreen.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
 		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c \
-		  rd-bomb.c coral.c
+		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
+		  rotor.c ant.c xjack.c xlyap.c puzzle.c xscreensaver-sgigl.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles_default.o decayscreen.o deco.o drift.o flag.o \
-		  flame.o forest.o fract.o galaxy.o grav.o greynetic.o \
+		  flame.o forest.o vines.o galaxy.o grav.o greynetic.o \
 		  halo.o helix.o hopalong.o hypercube.o ifs.o imsmap.o \
 		  julia.o kaleidescope.o laser.o lightning.o lisa.o lmorph.o \
 		  maze.o moire.o noseguy.o pedal.o penrose.o pyro.o qix.o \
 		  rocks.o rorschach.o screenhack.o sierpinski.o slidescreen.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
 		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o \
-		  rd-bomb.o coral.o
+		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
+		  rotor.o ant.o xjack.o xlyap.o puzzle.o xscreensaver-sgigl.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
-		  drift flag flame forest fract galaxy grav greynetic halo \
+		  drift flag flame forest vines galaxy grav greynetic halo \
 		  helix hopalong hypercube ifs imsmap julia kaleidescope \
 		  laser lightning lisa lmorph maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
-		  fadeplot rd-bomb coral
+		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
+		  ant xjack xlyap puzzle
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
 XLOCK_OBJS	= screenhack-xlock.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1)
 COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
-GRAB_OBJS	= $(UTILS_BIN)/grabscreen.o $(COLOR_OBJS)
+GRAB_OBJS_1	= $(UTILS_BIN)/grabscreen.o $(SGI_VIDEO_OBJS)
+GRAB_OBJS	= $(GRAB_OBJS_1) $(COLOR_OBJS)
+GRAB_LIBS	= $(SGI_VIDEO_LIBS)
 
 HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h
 MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  bubbles.man decayscreen.man deco.man drift.man flag.man \
-		  flame.man forest.man fract.man galaxy.man grav.man \
+		  flame.man forest.man vines.man galaxy.man grav.man \
 		  greynetic.man halo.man helix.man hopalong.man hypercube.man \
 		  ifs.man imsmap.man julia.man kaleidescope.man laser.man \
 		  lightning.man lisa.man lmorph.man maze.man moire.man \
 		  noseguy.man pedal.man penrose.man pyro.man qix.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
-		  xroger.man goop.man starfish.man munch.man rd-bomb.man
+		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
+		  xjack.man xlyap.man puzzle.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock.h default.xbm bob.xbm .gdbinit \
 		  noses/nose-$(STAR).xbm noses/nose-$(STAR).xpm \
+		  pieces/$(STAR).xbm \
 		  bubbles-tools/bubbles$(STAR) \
 		  bubbles-tools/xpm$(STAR) \
 		  bubbles-sources/$(STAR).pov \
@@ -176,7 +185,7 @@ depend:
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend:
+distdepend::
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -200,6 +209,58 @@ echo_tarfiles:
 	@echo $(TARFILES)
 
 
+# Rules for generating the VMS makefiles on Unix, so that it doesn't have to
+# be done by hand...
+#
+VMS_AXP_COMPILE_1=$$ CC/DECC/PREFIX=ALL/DEFINE=(VMS,HAVE_CONFIG_H,STANDALONE
+VMS_AXP_COMPILE_2=)/INCL=([],[-],[-.UTILS])
+
+compile_axp.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( for c in $(SRCS) ; do						    \
+	   c=`echo $$c | tr a-z A-Z` ;					    \
+	   echo "$(VMS_AXP_COMPILE_1)$(VMS_AXP_COMPILE_2) $$c" ;	    \
+         done ;								    \
+	 foo="$(VMS_AXP_COMPILE_1),XLOCKMORE$(VMS_AXP_COMPILE_2)" ;	    \
+         echo $${foo}/OBJ=SCREENHACK-XLOCK.OBJ SCREENHACK.C ;		    \
+	) | sort > $@
+
+compile_decc.com: compile_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+#### TODO: generating link_axp.com is kinda tricky...
+
+link_decc.com: link_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+$(srcdir)/../setup.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( echo '$$! Xscreensaver - definition of various DCL symbols' ;     \
+	  echo '$$ set NOON' ;						    \
+	  echo '$$ set def [.HACKS]' ;					    \
+	  echo '$$ mydisk = f$$trnlmn("SYS$$DISK")' ;			    \
+	  echo '$$ mydir  = mydisk+f$$directory()' ;			    \
+	  ( for c in $(EXES) ; do					    \
+	     c2="$${c}		" ;					    \
+	     c2=`echo "$${c2}" | sed 's/^\(........*\)	$$/\1/'` ;	    \
+	     echo '$$' "$${c2}:== $$'mydir'$${c}" ;			    \
+             done ;							    \
+	  ) | sort ;							    \
+          echo '$$ set def [-.DRIVER]' ;				    \
+          echo '$$ mydir  = mydisk+f$$directory()' ;			    \
+          echo "$$ xscreensaver :== $$'mydir'xscreensaver" ;		    \
+	  echo "$$ xscreen*command :== $$'mydir'xscreensaver-command" ;     \
+	  echo '$$ set def [-]' ;					    \
+	  echo '$$ exit' ; 						    \
+          ) > $@
+
+distdepend:: compile_axp.com compile_decc.com
+distdepend:: link_axp.com link_decc.com
+distdepend:: $(srcdir)/../setup.com
+
+
 # Rules for noticing when the objects from the utils directory are out of
 # date with respect to their sources, and going and building them according
 # to the rules in their own Makefile...
@@ -207,6 +268,7 @@ echo_tarfiles:
 $(UTILS_BIN)/alpha.o:		$(UTILS_SRC)/alpha.c
 $(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
 $(UTILS_BIN)/grabscreen.o:	$(UTILS_SRC)/grabscreen.c
+$(UTILS_BIN)/sgivideo.o:	$(UTILS_SRC)/sgivideo.c
 $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
 $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
@@ -237,11 +299,15 @@ ALP		= $(HSV) $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
 XROG		= $(UTILS_BIN)/xroger.o
-GRAB		= $(UTILS_BIN)/grabscreen.o
+GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
 
 CC_HACK		= $(CC) $(LDFLAGS)
+
+xscreensaver-sgigl: xscreensaver-sgigl.c
+	$(CC) $(LDFLAGS) -o $@ $< -I$(UTILS_SRC) $(HACK_PRE) \
+		-lXmu -lX11 -lXext $(X_EXTRA_LIBS) -lm
 
 
 # The rules for those hacks which follow the `screenhack.c' API.
@@ -253,14 +319,14 @@ CC_HACK		= $(CC) $(LDFLAGS)
 attraction:		 $(HACK_OBJS) attraction.o $(COL) $(SPL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) attraction.o $(COL) $(SPL) $(HACK_LIBS)
 
-blitspin:		 $(HACK_OBJS) blitspin.o $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $(HACK_OBJS) blitspin.o $(GRAB_OBJS) $(XPM_LIBS)
+blitspin:		 $(HACK_OBJS) blitspin.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) blitspin.o $(GRAB) $(XPM_LIBS) $(GRAB_LIBS)
 
 bubbles:		 $(HACK_OBJS) bubbles.o bubbles_default.o 
 	$(CC_HACK) -o $@ $(HACK_OBJS) bubbles.o bubbles_default.o $(XPM_LIBS)
 
-decayscreen:		 $(HACK_OBJS) decayscreen.o $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $(HACK_OBJS) decayscreen.o $(GRAB_OBJS) $(HACK_LIBS)
+decayscreen:		 $(HACK_OBJS) decayscreen.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) decayscreen.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
 deco:			 $(HACK_OBJS) deco.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) deco.o $(COL) $(HACK_LIBS)
@@ -289,8 +355,8 @@ kaleidescope:		 $(HACK_OBJS) kaleidescope.o
 lmorph:			 $(HACK_OBJS) lmorph.o
 	$(CC_HACK) -o $@ $(HACK_OBJS) lmorph.o $(HACK_LIBS)
 
-maze:			 $(HACK_OBJS) maze.o $(UTILS_BIN)/xroger.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) maze.o $(UTILS_BIN)/xroger.o $(HACK_LIBS)
+maze:			 $(HACK_OBJS) maze.o $(ERASE) $(UTILS_BIN)/xroger.o
+	$(CC_HACK) -o $@ $(HACK_OBJS) maze.o $(ERASE) $(UTILS_BIN)/xroger.o $(HACK_LIBS)
 
 moire:			 $(HACK_OBJS) moire.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) moire.o $(COL) $(HACK_LIBS)
@@ -313,8 +379,8 @@ rocks:			 $(HACK_OBJS) rocks.o $(COL)
 rorschach:		 $(HACK_OBJS) rorschach.o $(HSV) $(ERASE)
 	$(CC_HACK) -o $@ $(HACK_OBJS) rorschach.o $(HSV) $(ERASE) $(HACK_LIBS)
 
-slidescreen:		 $(HACK_OBJS) slidescreen.o $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $(HACK_OBJS) slidescreen.o $(GRAB_OBJS) $(HACK_LIBS)
+slidescreen:		 $(HACK_OBJS) slidescreen.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) slidescreen.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
 xroger:			 $(HACK_OBJS) xroger-hack.o $(HSV) $(XROG)
 	$(CC_HACK) -o $@ $(HACK_OBJS) xroger-hack.o $(HSV) $(XROG) $(HACK_LIBS)
@@ -331,8 +397,17 @@ munch:			 $(HACK_OBJS) munch.o $(COL) $(SPL)
 rd-bomb:		 $(HACK_OBJS) rd-bomb.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) rd-bomb.o $(COL) $(HACK_LIBS)
 
-coral: $(HACK_OBJS) coral.o $(COLOR_OBJS)
-	$(CC_HACK) -o $@ $(HACK_OBJS) coral.o $(COLOR_OBJS) $(HACK_LIBS)
+coral: $(HACK_OBJS) coral.o $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $(HACK_OBJS) coral.o $(COL) $(ERASE) $(HACK_LIBS)
+
+xjack: $(HACK_OBJS) xjack.o
+	$(CC_HACK) -o $@ $(HACK_OBJS) xjack.o $(HACK_LIBS)
+
+xlyap: $(HACK_OBJS) xlyap.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) xlyap.o $(COL) $(HACK_LIBS)
+
+puzzle: $(HACK_OBJS) puzzle.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) puzzle.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -341,20 +416,20 @@ coral: $(HACK_OBJS) coral.o $(COLOR_OBJS)
 bouboule:	bouboule.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-braid:		braid.o		$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+braid:		braid.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
-drift:		drift.o		$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+drift:		drift.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 flag:		flag.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-forest:		forest.o	$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+forest:		forest.o	$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
-fract:		fract.o		$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+vines:		vines.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 galaxy:		galaxy.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -362,8 +437,8 @@ galaxy:		galaxy.o	$(XLOCK_OBJS)
 grav:		grav.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-hopalong:	hopalong.o	$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+hopalong:	hopalong.o	$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 ifs:		ifs.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -380,6 +455,9 @@ lightning:	lightning.o	$(XLOCK_OBJS)
 lisa:		lisa.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
+lissie:		lissie.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
 penrose:	penrose.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
@@ -387,7 +465,7 @@ sierpinski:	sierpinski.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 slip:		slip.o		$(XLOCK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(GRAB) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(GRAB_OBJS_1) $(HACK_LIBS) $(GRAB_LIBS)
 
 sphere:		sphere.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -403,6 +481,21 @@ swirl:		swirl.o		$(XLOCK_OBJS)
 
 fadeplot:	fadeplot.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+mountain:	mountain.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+triangle:	triangle.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+worm:		worm.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+rotor:		rotor.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+ant:		ant.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -451,6 +544,7 @@ braid.o: $(UTILS_SRC)/hsv.h
 braid.o: $(UTILS_SRC)/colors.h
 braid.o: $(UTILS_SRC)/grabscreen.h
 braid.o: $(UTILS_SRC)/visual.h
+braid.o: $(UTILS_SRC)/erase.h
 bubbles.o: $(srcdir)/screenhack.h
 bubbles.o: $(srcdir)/../config.h
 bubbles.o: $(UTILS_SRC)/yarandom.h
@@ -492,6 +586,7 @@ drift.o: $(UTILS_SRC)/hsv.h
 drift.o: $(UTILS_SRC)/colors.h
 drift.o: $(UTILS_SRC)/grabscreen.h
 drift.o: $(UTILS_SRC)/visual.h
+drift.o: $(UTILS_SRC)/erase.h
 flag.o: $(srcdir)/xlockmore.h
 flag.o: $(srcdir)/../config.h
 flag.o: $(srcdir)/xlockmoreI.h
@@ -524,17 +619,19 @@ forest.o: $(UTILS_SRC)/hsv.h
 forest.o: $(UTILS_SRC)/colors.h
 forest.o: $(UTILS_SRC)/grabscreen.h
 forest.o: $(UTILS_SRC)/visual.h
-fract.o: $(srcdir)/xlockmore.h
-fract.o: $(srcdir)/../config.h
-fract.o: $(srcdir)/xlockmoreI.h
-fract.o: $(srcdir)/screenhack.h
-fract.o: $(UTILS_SRC)/yarandom.h
-fract.o: $(UTILS_SRC)/usleep.h
-fract.o: $(UTILS_SRC)/resources.h
-fract.o: $(UTILS_SRC)/hsv.h
-fract.o: $(UTILS_SRC)/colors.h
-fract.o: $(UTILS_SRC)/grabscreen.h
-fract.o: $(UTILS_SRC)/visual.h
+forest.o: $(UTILS_SRC)/erase.h
+vines.o: $(srcdir)/xlockmore.h
+vines.o: $(srcdir)/../config.h
+vines.o: $(srcdir)/xlockmoreI.h
+vines.o: $(srcdir)/screenhack.h
+vines.o: $(UTILS_SRC)/yarandom.h
+vines.o: $(UTILS_SRC)/usleep.h
+vines.o: $(UTILS_SRC)/resources.h
+vines.o: $(UTILS_SRC)/hsv.h
+vines.o: $(UTILS_SRC)/colors.h
+vines.o: $(UTILS_SRC)/grabscreen.h
+vines.o: $(UTILS_SRC)/visual.h
+vines.o: $(UTILS_SRC)/erase.h
 galaxy.o: $(srcdir)/xlockmore.h
 galaxy.o: $(srcdir)/../config.h
 galaxy.o: $(srcdir)/xlockmoreI.h
@@ -596,6 +693,7 @@ hopalong.o: $(UTILS_SRC)/hsv.h
 hopalong.o: $(UTILS_SRC)/colors.h
 hopalong.o: $(UTILS_SRC)/grabscreen.h
 hopalong.o: $(UTILS_SRC)/visual.h
+hopalong.o: $(UTILS_SRC)/erase.h
 hypercube.o: $(srcdir)/screenhack.h
 hypercube.o: $(srcdir)/../config.h
 hypercube.o: $(UTILS_SRC)/yarandom.h
@@ -697,6 +795,7 @@ maze.o: $(UTILS_SRC)/hsv.h
 maze.o: $(UTILS_SRC)/colors.h
 maze.o: $(UTILS_SRC)/grabscreen.h
 maze.o: $(UTILS_SRC)/visual.h
+maze.o: $(UTILS_SRC)/erase.h
 moire.o: $(srcdir)/screenhack.h
 moire.o: $(srcdir)/../config.h
 moire.o: $(UTILS_SRC)/yarandom.h
@@ -946,4 +1045,137 @@ coral.o: $(UTILS_SRC)/hsv.h
 coral.o: $(UTILS_SRC)/colors.h
 coral.o: $(UTILS_SRC)/grabscreen.h
 coral.o: $(UTILS_SRC)/visual.h
+coral.o: $(UTILS_SRC)/erase.h
+mountain.o: $(srcdir)/xlockmore.h
+mountain.o: $(srcdir)/../config.h
+mountain.o: $(srcdir)/xlockmoreI.h
+mountain.o: $(srcdir)/screenhack.h
+mountain.o: $(UTILS_SRC)/yarandom.h
+mountain.o: $(UTILS_SRC)/usleep.h
+mountain.o: $(UTILS_SRC)/resources.h
+mountain.o: $(UTILS_SRC)/hsv.h
+mountain.o: $(UTILS_SRC)/colors.h
+mountain.o: $(UTILS_SRC)/grabscreen.h
+mountain.o: $(UTILS_SRC)/visual.h
+triangle.o: $(srcdir)/xlockmore.h
+triangle.o: $(srcdir)/../config.h
+triangle.o: $(srcdir)/xlockmoreI.h
+triangle.o: $(srcdir)/screenhack.h
+triangle.o: $(UTILS_SRC)/yarandom.h
+triangle.o: $(UTILS_SRC)/usleep.h
+triangle.o: $(UTILS_SRC)/resources.h
+triangle.o: $(UTILS_SRC)/hsv.h
+triangle.o: $(UTILS_SRC)/colors.h
+triangle.o: $(UTILS_SRC)/grabscreen.h
+triangle.o: $(UTILS_SRC)/visual.h
+lissie.o: $(srcdir)/xlockmore.h
+lissie.o: $(srcdir)/../config.h
+lissie.o: $(srcdir)/xlockmoreI.h
+lissie.o: $(srcdir)/screenhack.h
+lissie.o: $(UTILS_SRC)/yarandom.h
+lissie.o: $(UTILS_SRC)/usleep.h
+lissie.o: $(UTILS_SRC)/resources.h
+lissie.o: $(UTILS_SRC)/hsv.h
+lissie.o: $(UTILS_SRC)/colors.h
+lissie.o: $(UTILS_SRC)/grabscreen.h
+lissie.o: $(UTILS_SRC)/visual.h
+worm.o: $(srcdir)/xlockmore.h
+worm.o: $(srcdir)/../config.h
+worm.o: $(srcdir)/xlockmoreI.h
+worm.o: $(srcdir)/screenhack.h
+worm.o: $(UTILS_SRC)/yarandom.h
+worm.o: $(UTILS_SRC)/usleep.h
+worm.o: $(UTILS_SRC)/resources.h
+worm.o: $(UTILS_SRC)/hsv.h
+worm.o: $(UTILS_SRC)/colors.h
+worm.o: $(UTILS_SRC)/grabscreen.h
+worm.o: $(UTILS_SRC)/visual.h
+rotor.o: $(srcdir)/xlockmore.h
+rotor.o: $(srcdir)/../config.h
+rotor.o: $(srcdir)/xlockmoreI.h
+rotor.o: $(srcdir)/screenhack.h
+rotor.o: $(UTILS_SRC)/yarandom.h
+rotor.o: $(UTILS_SRC)/usleep.h
+rotor.o: $(UTILS_SRC)/resources.h
+rotor.o: $(UTILS_SRC)/hsv.h
+rotor.o: $(UTILS_SRC)/colors.h
+rotor.o: $(UTILS_SRC)/grabscreen.h
+rotor.o: $(UTILS_SRC)/visual.h
+ant.o: $(srcdir)/xlockmore.h
+ant.o: $(srcdir)/../config.h
+ant.o: $(srcdir)/xlockmoreI.h
+ant.o: $(srcdir)/screenhack.h
+ant.o: $(UTILS_SRC)/yarandom.h
+ant.o: $(UTILS_SRC)/usleep.h
+ant.o: $(UTILS_SRC)/resources.h
+ant.o: $(UTILS_SRC)/hsv.h
+ant.o: $(UTILS_SRC)/colors.h
+ant.o: $(UTILS_SRC)/grabscreen.h
+ant.o: $(UTILS_SRC)/visual.h
+ant.o: $(UTILS_SRC)/erase.h
+xjack.o: $(srcdir)/screenhack.h
+xjack.o: $(srcdir)/../config.h
+xjack.o: $(UTILS_SRC)/yarandom.h
+xjack.o: $(UTILS_SRC)/usleep.h
+xjack.o: $(UTILS_SRC)/resources.h
+xjack.o: $(UTILS_SRC)/hsv.h
+xjack.o: $(UTILS_SRC)/colors.h
+xjack.o: $(UTILS_SRC)/grabscreen.h
+xjack.o: $(UTILS_SRC)/visual.h
+xlyap.o: $(srcdir)/screenhack.h
+xlyap.o: $(srcdir)/../config.h
+xlyap.o: $(UTILS_SRC)/yarandom.h
+xlyap.o: $(UTILS_SRC)/usleep.h
+xlyap.o: $(UTILS_SRC)/resources.h
+xlyap.o: $(UTILS_SRC)/hsv.h
+xlyap.o: $(UTILS_SRC)/colors.h
+xlyap.o: $(UTILS_SRC)/grabscreen.h
+xlyap.o: $(UTILS_SRC)/visual.h
+xlyap.o: $(UTILS_SRC)/vroot.h
+puzzle.o: $(srcdir)/screenhack.h
+puzzle.o: $(srcdir)/../config.h
+puzzle.o: $(UTILS_SRC)/yarandom.h
+puzzle.o: $(UTILS_SRC)/usleep.h
+puzzle.o: $(UTILS_SRC)/resources.h
+puzzle.o: $(UTILS_SRC)/hsv.h
+puzzle.o: $(UTILS_SRC)/colors.h
+puzzle.o: $(UTILS_SRC)/grabscreen.h
+puzzle.o: $(UTILS_SRC)/visual.h
+puzzle.o: $(srcdir)/pieces/puzzle_a_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_n_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_ne_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_e_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_se_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_s_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_sw_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_w_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_nw_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_n_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_ne_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_e_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_se_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_s_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_sw_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_w_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_nw_h.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_n_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_ne_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_e_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_se_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_s_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_sw_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_w_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_a_nw_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_n_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_ne_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_e_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_se_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_s_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_sw_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_w_f.xbm
+puzzle.o: $(srcdir)/pieces/puzzle_b_nw_f.xbm
+xscreensaver-sgigl.o: $(UTILS_SRC)/vroot.h
 

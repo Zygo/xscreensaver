@@ -8,8 +8,9 @@
 #include "utils.h"
 #include "yarandom.h"
 #include "usleep.h"
+#include "resources.h"
 
-#define NUM_MODES 6
+#define NUM_MODES 8
 
 void
 erase_window(Display *dpy, Window window, GC gc,
@@ -30,7 +31,7 @@ erase_window(Display *dpy, Window window, GC gc,
       granularity = 25;
       switch(mode)
 	{
-	case 0:
+	case 0:				/* clear random horizontal lines */
 	  for(i = 0; i < height; i++)
 	    clear_lines[i] = i;
 	  for(i = 0; i < height; i++)
@@ -43,7 +44,8 @@ erase_window(Display *dpy, Window window, GC gc,
 	    }
 	  num_lines = height;
 	  break;
-	case 1:
+
+	case 1:				/* clear random vertical lines */
 	  for(i = 0; i < width; i++)
 	    clear_lines[i] = i+height;
 	  for(i = 0; i < width; i++)
@@ -56,7 +58,9 @@ erase_window(Display *dpy, Window window, GC gc,
 	    }
 	  num_lines = width;
 	  break;
-	case 2:
+
+	case 2:					/* 4 sequential wipes,
+						   L-R, T-B, R-L, B-T. */
 	  for(i = 0; i < width/2; i++)
 	    clear_lines[i] = i*2+height;
 	  for(i = 0; i < height/2; i++)
@@ -66,7 +70,9 @@ erase_window(Display *dpy, Window window, GC gc,
 	  num_lines = width+height/2;
 	  granularity = 4;
 	  break;
-	case 3:
+
+	case 3:					/* 4 parallel wipes,
+						   L-R, T-B, R-L, B-T. */
 	  for(i = 0; i < max_num/4; i++)
 	    {
 	      clear_lines[i*4] = i*2;
@@ -77,7 +83,8 @@ erase_window(Display *dpy, Window window, GC gc,
 	  num_lines = max_num;
 	  granularity = 4;
 	  break;
-	case 4:
+
+	case 4:					/* flutter wipe L-R */
 	  j = 0;
 	  for(i = 0; i < width*2; i++)
 	    {
@@ -91,7 +98,8 @@ erase_window(Display *dpy, Window window, GC gc,
 	  num_lines = width;
 	  granularity = 4;
 	  break;
-	case 5:
+
+	case 5:					/* flutter wipe R-L */
 	  j = 0;
 	  for(i = width*2; i >= 0; i--)
 	    {
@@ -105,7 +113,61 @@ erase_window(Display *dpy, Window window, GC gc,
 	  num_lines = width;
 	  granularity = 4;
 	  break;
+
+	case 6:					/* circle wipe */
+	  {
+	    int full = 360 * 64;
+	    int inc = full / 64;
+	    int start = random() % full;
+	    int rad = (width > height ? width : height);
+	    if (random() & 1)
+	      inc = -inc;
+	    for (i = (inc > 0 ? 0 : full);
+		 (inc > 0 ? i < full : i > 0);
+		 i += inc) {
+	      XFillArc(dpy, window, gc,
+		       (width/2)-rad, (height/2)-rad, rad*2, rad*2,
+		       (i+start) % full, inc);
+	      XFlush (dpy);
+	      usleep (delay*granularity);
+	    }
+	  num_lines = 0;
+	  }
+	  break;
+
+	case 7:					/* three-circle wipe */
+	  {
+	    int full = 360 * 64;
+	    int q = full / 3;
+	    int inc = full / 180;
+	    int start = random() % q;
+	    int rad = (width > height ? width : height);
+	    if (random() & 1)
+	      inc = -inc;
+	    for (i = (inc > 0 ? 0 : q);
+		 (inc > 0 ? i < q : i > 0);
+		 i += inc) {
+	      XFillArc(dpy, window, gc,
+		       (width/2)-rad, (height/2)-rad, rad*2, rad*2,
+		       (i+start) % full, inc);
+	      XFillArc(dpy, window, gc,
+		       (width/2)-rad, (height/2)-rad, rad*2, rad*2,
+		       (i+start+q) % full, inc);
+	      XFillArc(dpy, window, gc,
+		       (width/2)-rad, (height/2)-rad, rad*2, rad*2,
+		       (i+start+q+q) % full, inc);
+	      XFlush (dpy);
+	      usleep (delay*granularity);
+	    }
+	  num_lines = 0;
+	  }
+	  break;
+
+	default:
+	  abort();
+	  break;
 	}
+
       for (i = 0; i < num_lines; i++)
 	{ 
 	  if(clear_lines[i] < height)
@@ -125,4 +187,27 @@ erase_window(Display *dpy, Window window, GC gc,
     }
 
   XClearWindow (dpy, window);
+  XSync(dpy, False);
+}
+
+
+void
+erase_full_window(Display *dpy, Window window)
+{
+  XWindowAttributes xgwa;
+  XGCValues gcv;
+  GC erase_gc;
+  XColor black;
+  int erase_speed = get_integer_resource("eraseSpeed", "Integer");
+  int erase_mode = get_integer_resource("eraseMode", "Integer");
+  XGetWindowAttributes (dpy, window, &xgwa);
+  black.flags = DoRed|DoGreen|DoBlue;
+  black.red = black.green = black.blue = 0;
+  XAllocColor(dpy, xgwa.colormap, &black);
+  gcv.foreground = black.pixel;
+  erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+  erase_window (dpy, window, erase_gc, xgwa.width, xgwa.height,
+		erase_mode, erase_speed);
+  XFreeColors(dpy, xgwa.colormap, &black.pixel, 1, 0);
+  XFreeGC(dpy, erase_gc);
 }

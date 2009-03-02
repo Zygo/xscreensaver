@@ -10,5 +10,6 @@
 
 extern void erase_window(Display *dpy, Window window, GC gc,
 			 int width, int height, int mode, int delay);
+extern void erase_full_window(Display *dpy, Window window);
 
 #endif /* __XSCREENSAVER_ERASE_H__ */

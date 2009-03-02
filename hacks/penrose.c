@@ -1,6 +1,25 @@
 /* -*- Mode: C; tab-width: 4 -*-
  * penrose --- quasiperiodic tilings.
  */
+
+/*  As reported in News of the Weird:
+
+	  In April, Sir Roger Penrose, a British math professor who has worked
+	  with Stephen Hawking on such topics as relativity, black holes, and
+	  whether time has a beginning, filed a copyright-infringement lawsuit
+	  against the Kimberly-Clark Corporation, which Penrose said copied a
+	  pattern he created (a pattern demonstrating that "a nonrepeating
+	  pattern could exist in nature") for its Kleenex quilted toilet paper.
+	  Penrose said he doesn't like litigation but, "When it comes to the
+	  population of Great Britain being invited by a multinational to wipe
+	  their bottoms on what appears to be the work of a Knight of the
+	  Realm, then a last stand must be taken."
+
+                                NOTW #491, 4-jul-1997, by Chuck Shepherd.
+                                http://www.nine.org/notw/notw.html
+ */
+
+
 #if !defined( lint ) && !defined( SABER )
 static const char sccsid[] = "@(#)penrose.c	4.00 97/01/01 xlockmore";
 #endif
@@ -21,8 +40,7 @@ static const char sccsid[] = "@(#)penrose.c	4.00 97/01/01 xlockmore";
  *
  * Revision History:
  * 10-May-97: jwz@netscape.com: turned into a standalone program.
- * 09-Sep-96: Written.
- */
+ * 09-Sep-96: Written.  */
 
 /*-
 Be careful, this probably still has a few bugs (many of which may only

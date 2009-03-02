@@ -512,7 +512,7 @@ screenhack (Display *dpy, Window window)
 
 	      free_starfish (s);
 
-	      if (delay2 && !blob_p)
+	      if (delay2 && !blob_p && cycle_p)
 		{
 		  int i = 0;
 		  while (i < delay2)

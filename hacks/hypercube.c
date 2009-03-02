@@ -238,7 +238,7 @@ char *defaults [] = {
   "*zw:		0.000",
 
   "*observer-z:	5",
-  "*delay:	100000",
+  "*delay:	30000",
   0
 };
 

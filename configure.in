@@ -274,10 +274,25 @@ AC_DEFUN(AC_CHECK_X_LIB, [
     LDFLAGS="$LDFLAGS -L$libdir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  LDFLAGS="$LDFLAGS -L$x_libraries"
+  if test \! -z "$x_libraries" ; then
+    LDFLAGS="$LDFLAGS -L$x_libraries"
+  fi
   AC_CHECK_LIB([$1], [$2], [$3], [$4], [$5])
   CPPFLAGS="$ac_save_CPPFLAGS"
   LDFLAGS="$ac_save_LDFLAGS"])
+
+# Like AC_TRY_RUN, but it uses the already-computed -I directories.
+# (But not the -L directories!)
+#
+AC_DEFUN(AC_TRY_X_RUN, [
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then 
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  AC_TRY_RUN([$1], [$2], [$3], [$4])
+  CPPFLAGS="$ac_save_CPPFLAGS"])
+
 
 
 
@@ -519,6 +534,45 @@ elif test $with_xshm != no; then
 fi
 
 
+# Check for the SGI-VIDEO-CONTROL server extension header.
+#
+have_sgivc=no
+with_sgivc_req=unspecified
+AC_ARG_WITH(sgivc-ext,
+[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL server
+                          extension, if possible (this is the default).
+  --without-sgivc-ext     Do not compile in support for this extension.],
+  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=yes])
+if test $with_sgivc = yes; then
+
+  # first check for XSGIvc.h
+  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes])
+
+  # if that succeeded, then check for the -lXsgivc
+  if test $have_sgivc = yes; then
+    have_sgivc=no
+    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
+		  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [],
+		  -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test $have_sgivc = yes; then
+    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
+  fi
+
+elif test $with_sgivc != no; then
+  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
+  exit 1
+fi
+
+
+
+
+
+
+
+
 # Check for Motif and Athena --with and --without arguments.
 #
 have_motif=no
@@ -585,6 +639,7 @@ check_athena() {
 # If they asked for only athena, check athena then motif.
 # If they asked for neither, check motif then athena.
 
+proselytize_motif=yes
 if test $with_motif = yes; then
   # asked for both, or for motif only
   check_motif
@@ -600,6 +655,7 @@ elif test $with_athena = yes; then
   check_athena
   if test $have_athena = yes; then
     with_motif=no
+    proselytize_motif=no
   else
     check_motif
   fi
@@ -615,6 +671,9 @@ else
 
 fi
 
+if test $have_motif = yes; then
+  proselytize_motif=no
+fi
 
 # If we have Athena, check whether it's a version that includes
 # XawViewportSetCoordinates in Viewport.h (R3 (or R4?) don't.)
@@ -642,6 +701,24 @@ if test $have_motif = yes ; then
 				   [ac_cv_have_lesstif=yes],
 				   [ac_cv_have_lesstif=no])])
   have_lesstif=$ac_cv_have_lesstif
+fi
+
+# don't cache this
+unset ac_cv_good_lesstif
+
+good_lesstif=no
+if test $have_lesstif = yes ; then
+  # It must be at least "GNU Lesstif 0.82".
+  # #### If you change this, also sync the warning message lower down.
+  AC_CACHE_CHECK([whether LessTif is of a recent enough vintage],
+		 ac_cv_good_lesstif,
+		 [AC_TRY_X_RUN([#include <Xm/Xm.h>
+				int main() { exit(LesstifVersion < 82); }],
+			       [ac_cv_good_lesstif=yes],
+			       [ac_cv_good_lesstif=no],
+			       # cross compiling?  Make an ass out of umption.
+			       [ac_cv_good_lesstif=yes])])
+  good_lesstif=$ac_cv_good_lesstif
 fi
 
 
@@ -723,6 +800,33 @@ elif test $with_readdisplay != no; then
 fi
 
 
+# check for SGI's Iris Video Library header.
+#
+have_sgivideo=no
+with_sgivideo_req=unspecified
+AC_ARG_WITH(sgivideo,
+[  --with-sgivideo         Include support for SGI's Iris Video Library
+                          if possible (this is the default).
+  --without-sgivideo       Do not compile in support for this library.],
+  [with_sgivideo="$withval"; with_sgivideo_req="$withval"],
+  [with_sgivideo=yes])
+if test $with_sgivideo = yes; then
+  AC_CHECK_X_HEADER(dmedia/vl.h, have_sgivideo=yes)
+  if test $have_sgivideo = yes; then
+    have_sgivideo=no
+    AC_CHECK_LIB(vl, vlOpenVideo, have_sgivideo=yes)
+    if test $have_sgivideo = yes; then
+      SGI_VIDEO_OBJS="$(UTILS_SRC)/sgivideo.o"
+      SGI_VIDEO_LIBS="-lvl"
+      AC_DEFINE(HAVE_SGI_VIDEO)
+    fi
+  fi
+elif test $with_sgivideo != no; then
+  echo "error: must be yes or no: --with-sgivideo=$with_sgivideo"
+  exit 1
+fi
+
+
 
 # Try to find a program to generate random text.
 #
@@ -736,7 +840,7 @@ fi
 # If that doesn't work, look in /usr/games, and if it's there, use
 # the full pathname.
 #
-with_zippy=""
+with_zippy_req=""
 AC_ARG_WITH(zippy,
 [  --with-zippy=PROGRAM    Some demos are able to run an external program and
                           display its text; this names the program to use by
@@ -744,19 +848,42 @@ AC_ARG_WITH(zippy,
                           resources.)  If you don't specify this, the default
                           is to use \"yow\" from the Emacs distribution (if you
                           have it) or else to use \"fortune\".],
-  [with_zippy="$withval"])
+  [ with_zippy_req="$withval"; with_zippy="$withval" ],
+  [ with_zippy_req="$withval"; with_zippy="$withval" ])
 
 if test "$with_zippy" = no || test "$with_zippy" = yes ; then
-  $with_zippy=""
+  with_zippy=""
+  with_zippy_req=""
 fi
 
-if test -n "$with_zippy" ; then
+if test -n "$with_zippy_req" ; then
+  ac_cv_zippy_program=""
+  case "$with_zippy_req" in
+    /*)
+      AC_MSG_CHECKING([for $with_zippy_req])
+      if test -x "$with_zippy_req" ; then
+        AC_MSG_RESULT(yes)
+      else
+        AC_MSG_RESULT(no)
+        with_zippy=""
+      fi
+    ;;
+    *)
+      # don't cache
+      unset ac_cv_path_zip2
+      AC_PATH_PROG(zip2, $with_zippy_req, [])
+      if test "$zip2" = ""; then
+        with_zippy=""
+      fi
+    ;;
+  esac
   ac_cv_zippy_program="$with_zippy"
 
 elif test -n "$ac_cv_zippy_program"; then
   AC_MSG_RESULT([checking for zippy... (cached) $ac_cv_zippy_program])
+fi
 
-else
+if test ! -n "$ac_cv_zippy_program"; then
 
   AC_CHECK_PROGS(emacs_exe, emacs)
   AC_CHECK_PROGS(xemacs_exe, xemacs)
@@ -1117,6 +1244,8 @@ AC_SUBST(GL_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(NEED_SETUID)
+AC_SUBST(SGI_VIDEO_OBJS)
+AC_SUBST(SGI_VIDEO_LIBS)
 
 AC_SUBST(DIALOG_SRCS)
 AC_SUBST(DIALOG_OBJS)
@@ -1140,16 +1269,31 @@ AC_SUBST(DEPEND_DEFINES)
 #
 warning=no
 warnsep='    #################################################################'
-warn() {
+warnpre() {
   if test $warning = no ; then
     echo '' ; echo "$warnsep" ; echo ''
     warning=yes
   fi
-  echo "    Warning:" $*
+}
+
+warn() {
+  warnpre
+  if test $warning = long ; then echo '' ; fi
+  warning=yes
+  echo "    Warning: $@"
+}
+
+warnL() {
+  was=$warning
+  warnpre
+  warning=yes
+  if test $was != no ; then echo '' ; fi
+  echo "    Warning: $@"
 }
 
 warn2() {
-  echo "            " $*
+  echo "             $@"
+  warning=long
 }
 
 if test $with_sgi_req = yes -a $have_sgi = no ; then
@@ -1168,24 +1312,41 @@ if test $with_xshm_req = yes -a $have_xshm = no ; then
   warn 'The XSHM extension was requested, but was not found.'
 fi
 
+if test $with_sgivc_req = yes -a $have_sgivc = no ; then
+  warn 'The SGI-VIDEO-CONTROL extension was requested, but was not found.'
+fi
+
 if test $have_motif = no -a $have_athena = no ; then
-  warn  "Neither Motif nor Athena widgets seem to be available;"
+  warnL "Neither Motif nor Athena widgets seem to be available;"
   warn2 "one or the other is required."
+  proselytize_motif=no
 
 elif test $with_motif_req = yes -a $have_motif = no ; then
-  warn  "Use of Motif was requested, but it wasn't found;"
+  warnL "Use of Motif was requested, but it wasn't found;"
   warn2 "Athena will be used instead."
 
 elif test $with_athena_req = yes -a $have_athena = no ; then
-  warn  "Use of Athena was requested, but it wasn't found;"
+  warnL "Use of Athena was requested, but it wasn't found;"
   warn2 "Motif will be used instead."
 fi
 
 if test $have_motif = yes -a $have_lesstif = yes ; then
-  warn  "Motif is being used, but it appears to actually be LessTif."
-  warn2 "XScreenSaver has been reported to have problems with some"
-  warn2 "versions of LessTif (notably 0.79).  You might want to use"
-  warn2 "Athena instead."
+  if test $good_lesstif != yes ; then
+    warnL "Motif is being used, but it appears to actually be"
+    warn2 "LessTif, and the version number is less than 0.82!"
+    warn2 "Such old versions of LessTif are too buggy to use"
+    warn2 "with XScreenSaver; it is strongly recommended that"
+    warn2 "you upgrade!  See <http://www.lesstif.org/>."
+  fi
+fi
+
+if test $proselytize_motif = yes ; then
+    warnL "Athena widgets are being used instead of Motif."
+    warn2 "XScreenSaver looks much better with Motif, and has"
+    warn2 "a few extra features as well.  Wouldn't you rather"
+    warn2 "be using Motif?  It is shipped by every commercial"
+    warn2 "Unix vendor; and there is a free implementation"
+    warn2 "available as well: see <http://www.lesstif.org/>."
 fi
 
 if test $with_xpm_req = yes -a $have_xpm = no ; then
@@ -1200,6 +1361,10 @@ if test $with_readdisplay_req = yes -a $have_readdisplay = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
 fi
 
+if test $with_sgivideo_req = yes -a $have_sgivideo = no ; then
+  warn 'Use of the Iris Video Library was requested, but it was not found.'
+fi
+
 if test $with_kerberos_req = yes -a $have_kerberos = no ; then
   warn 'Use of Kerberos was requested, but it was not found.'
 fi
@@ -1208,7 +1373,14 @@ if test $with_shadow_req = yes -a $have_shadow = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
 fi
 
-if test $warning = yes; then
+if test -n "$with_zippy_req"; then
+  if test "$with_zippy_req" != "$ac_cv_zippy_program" ; then
+    warnL "$with_zippy_req was requested as the Zippy program,"
+    warn2 "but was not found.  The default will be used instead."
+  fi
+fi
+
+if test $warning != no; then
   echo '' ; echo "$warnsep" ; echo ''
 fi
 

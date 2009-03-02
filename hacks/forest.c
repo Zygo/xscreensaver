@@ -33,9 +33,12 @@ static const char sccsid[] = "@(#)forest.c	4.03 97/05/10 xlockmore";
 # define DEFAULTS	"*count:		100     \n"			\
 					"*cycles:		200     \n"			\
 					"*delay:		400000  \n"			\
-					"*ncolors:		100     \n"
+					"*ncolors:		100     \n"			\
+					"*eraseSpeed:   400 \n"				\
+					"*eraseMode:    -1 \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "erase.h"
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -181,8 +184,12 @@ draw_forest(ModeInfo * mi)
 
 		draw_tree(mi, x_2, y_2, (len * REDUCE) / 100, a, as, c, 1);
 	}
-	if (++fp->time > MI_CYCLES(mi))
-		init_forest(mi);
+	if (++fp->time > MI_CYCLES(mi)) {
+#ifdef STANDALONE
+	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif /* STANDALONE */
+	  init_forest(mi);
+	}
 }
 
 void

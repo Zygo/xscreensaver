@@ -49,6 +49,7 @@
  *****************************************************************************/
 
 #include "screenhack.h"
+#include "erase.h"
 
 #define XROGER
 
@@ -1338,6 +1339,8 @@ char *defaults[] = {
 #ifdef XROGER
   "*logoColor:	red3",
 #endif
+  "*eraseSpeed:   400",
+  "*eraseMode:    -1",
   0
 };
 
@@ -1498,6 +1501,7 @@ screenhack(Display *display, Window window)
       XSync (dpy, False);
       usleep (post_solve_delay);
       state = 0 ;
+      erase_full_window(display, window);
       break;
     default:
       abort ();

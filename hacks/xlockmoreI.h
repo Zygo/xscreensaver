@@ -17,6 +17,19 @@
 
 #include "screenhack.h"
 
+/* I'm told that the Sun version of OpenGL needs to have the constant
+   SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
+   (the number of arguments to the glNormal3f macro changes...)
+   Verified with gcc 2.7.2.2 and Sun cc 4.2 with OpenGL 1.1.1 dev 4
+   on Solaris 2.5.1.
+ */
+#ifndef HAVE_MESA_GL
+# if defined(__sun) && defined(__SVR4)	/* Solaris */
+#  define SUN_OGL_NO_VERTEX_MACROS 1
+# endif /* Solaris */
+#endif /* !HAVE_MESA_GL */
+
+
 /* Compatibility with the xlockmore RNG API
    (note that the xlockmore hacks never expect negative numbers.)
  */

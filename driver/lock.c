@@ -77,8 +77,7 @@ static Widget passwd_done = 0;
 
 
 static enum { pw_read, pw_ok, pw_fail, pw_cancel, pw_time } passwd_state;
-#define PASSWDLEN 80
-static char typed_passwd [PASSWDLEN];
+static char typed_passwd [80];
 
 
 #if defined(HAVE_ATHENA) || (XmVersion >= 1002)
@@ -100,7 +99,9 @@ passwd_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
 #ifndef VMS
 
 # ifdef HAVE_ATHENA
-  strncpy(typed_passwd, XawDialogGetValueString(passwd_form), PASSWDLEN);
+  strncpy(typed_passwd, XawDialogGetValueString(passwd_form),
+	  sizeof(typed_passwd)-1);
+  typed_passwd[sizeof(typed_passwd)-1] = 0;
 # endif /* HAVE_ATHENA */
   if (passwd_valid_p (typed_passwd))
     passwd_state = pw_ok;
@@ -146,8 +147,11 @@ check_passwd_cb (Widget button, XtPointer client_data, XtPointer call_data)
   else if (vcb->text->ptr != 0)
     {
       int i;
-      strncat (typed_passwd, vcb->text->ptr, vcb->text->length);
-      typed_passwd [vcb->endPos + vcb->text->length] = 0;
+      int L = vcb->text->length;
+      if (L >= sizeof(typed_passwd))
+	L = sizeof(typed_passwd)-1;
+      strncat (typed_passwd, vcb->text->ptr, L);
+      typed_passwd [vcb->endPos + L] = 0;
       for (i = 0; i < vcb->text->length; i++)
 	vcb->text->ptr [i] = '*';
     }
@@ -218,8 +222,8 @@ static void
 keypress (Widget w, XEvent *event, String *argv, Cardinal *argc)
 {
   int i, j;
-  char s [sizeof (typed_passwd)];
-  int size = XLookupString ((XKeyEvent *) event, s, sizeof (s), 0, 0);
+  char s [sizeof(typed_passwd)];
+  int size = XLookupString ((XKeyEvent *) event, s, sizeof(s)-1, 0, 0);
   if (size != 1) return;
 
   /* hack because I can't get translations to dance to my tune... */
@@ -231,6 +235,13 @@ keypress (Widget w, XEvent *event, String *argv, Cardinal *argc)
   if (*s == '\015') { done (w, event, argv, argc); return; }
 
   i = j = strlen (typed_passwd);
+
+  if (i >= (sizeof(typed_passwd)-1))
+    {
+      XBell(XtDisplay(w), 0);
+      return;
+    }
+
   typed_passwd [i] = *s;
   s [++i] = 0;
   while (i--)
@@ -242,7 +253,7 @@ keypress (Widget w, XEvent *event, String *argv, Cardinal *argc)
 static void
 backspace (Widget w, XEvent *event, String *argv, Cardinal *argc)
 {
-  char s [sizeof (typed_passwd)];
+  char s [sizeof(typed_passwd)];
   int i = strlen (typed_passwd);
   int j = i;
   if (i == 0)
@@ -258,7 +269,7 @@ backspace (Widget w, XEvent *event, String *argv, Cardinal *argc)
 static void
 kill_line (Widget w, XEvent *event, String *argv, Cardinal *argc)
 {
-  memset (typed_passwd, 0, sizeof (typed_passwd));
+  memset (typed_passwd, 0, sizeof(typed_passwd));
   text_field_set_string (passwd_text, "", 0);
 }
 
@@ -385,7 +396,7 @@ make_passwd_dialog (saver_info *si)
   format_into_label (passwd_label3, (username ? username : "???"));
 }
 
-static int passwd_idle_timer_tick;
+static int passwd_idle_timer_tick = -1;
 static XtIntervalId passwd_idle_id;
 
 static void
@@ -410,7 +421,7 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
     {
       XGCValues gcv;
 #ifdef HAVE_MOTIF
-      unsigned long fg, bg, ts, bs;
+      unsigned long fg = 0, bg = 0, ts = 0, bs = 0;
       Dimension w = 0, h = 0;
       XtVaGetValues(XtParent(passwd_done),
 		    XmNwidth, &w,
@@ -441,7 +452,7 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
 
       Arg av [100];
       int ac = 0;
-      unsigned long fg, bg;
+      unsigned long fg = 0, bg = 0;
       XtSetArg (av [ac], XtNheight, &d); ac++;
       XtGetValues (passwd_done, av, ac);
       ac = 0;
@@ -476,6 +487,7 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
       ss += s;
     }
 }
+
 
 #ifdef HAVE_ATHENA
 
@@ -651,7 +663,7 @@ pop_passwd_dialog (saver_info *si)
 	  passwd_set_label(lose,strlen(lose)+1);
 
 	  /* and clear the password line */
-	  memset(typed_passwd, 0, PASSWDLEN);
+	  memset(typed_passwd, 0, sizeof(typed_passwd));
 	  text_field_set_string (passwd_text, "", 0);
 #else
 	  text_field_set_string (passwd_text, lose, strlen (lose) + 1);
@@ -670,7 +682,7 @@ pop_passwd_dialog (saver_info *si)
 	    }
 	}
     }
-  memset (typed_passwd, 0, sizeof (typed_passwd));
+  memset (typed_passwd, 0, sizeof(typed_passwd));
   text_field_set_string (passwd_text, "", 0);
   XtSetKeyboardFocus (parent, None);
 

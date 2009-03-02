@@ -1,9 +1,9 @@
-.TH XScreenSaver 1 "05-aug-93" "X Version 11"
+.TH XScreenSaver 1 "24-Nov-97" "X Version 11"
 .SH NAME
 decayscreen - make a screen meltdown.
 .SH SYNOPSIS
 .B decayscreen
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP]
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-mode \fImode\fP]
 .SH DESCRIPTION
 The \fIdecayscreen\fP program creates a melting effect by randomly
 shifting rectangles around the screen.
@@ -29,6 +29,38 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-mode \fImode\fP
+The direction in which the image should tend to slide.  Legal values are
+\fIrandom\fP (meaning pick one), \fIup\fP, \fIleft\fP, \fIright\fP, 
+\fIdown\fP, \fIupleft\fP, \fIdownleft\fP, \fIupright\fP, \fIdownright\fP, 
+\fIshuffle\fP (meaning perfer no particular direction), \fIin\fP (meaning
+move things toward the center), and \fIout\fP (meaing move things away
+from the center).
+.SH RESOURCES
+On some systems (currently, only SGIs), this program can, instead of grabbing
+a desktop image, grab a frame of video from an external camera and manipulate
+that instead.  The following resources control that.
+.PP
+.TP 8
+.B grabVideoProbability \fR(Float)\fP
+What portion of the time to grab video rather than a screen image, 
+between 0.0 and 1.0.  Defaults to 0.5, or half the time.
+.TP 8
+.B videoDevice \fR(Integer)\fP
+The number of the default video input device to check first.  If unspecified, 
+the default camera (from videopanel(1)) will be checked first.  After that, all
+other available video input devices will be checked in order.  
+
+The first one which produces a non-black image will be used.  If all images
+are black, the others will be re-checked a few times before giving up and
+falling back to simply grabbing a desktop image (but note that this takes a
+few seconds, so if you don't actually have any video sources hooked up, you
+should consider turning off video grabbing by setting
+\fBgrabVideoProbability\fP to 0.0.)
+.TP 8
+.B videoGain \fR(Float)\fP
+The amount by which to brighten the grabbed image.  This defaults to 2.2.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -51,3 +83,4 @@ of this software for any purpose.  It is provided "as is" without express or
 implied warranty.
 .SH AUTHOR
 Vivek Khera <khera@cs.duke.edu>, 05-Aug-93; based on code by David Wald, 1988.
+Modified by jwz, 28-Nov-97.

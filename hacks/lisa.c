@@ -1,8 +1,8 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * lisa.c --- animated full-loop lisajous figures
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* lisa --- animated full-loop lisajous figures */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)lisa.c	4.03 97/05/10 xlockmore";
+static const char sccsid[] = "@(#)lisa.c	4.04 97/07/28 xlockmore";
 #endif
 
 /* Copyright (c) 1997 by Caleb Cullen.
@@ -38,28 +38,51 @@ static const char sccsid[] = "@(#)lisa.c	4.03 97/05/10 xlockmore";
 # define HACK_INIT					init_lisa
 # define HACK_DRAW					draw_lisa
 # define lisa_opts					xlockmore_opts
-# define DEFAULTS	"*count:		1       \n"			\
+# define DEFAULTS	"*delay:		25000   \n"			\
+					"*count:		1       \n"			\
 					"*cycles:		256     \n"			\
-					"*delay:		25000   \n"			\
 					"*size:			-1      \n"			\
 					"*ncolors:		200     \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+  void refresh_lisa(ModeInfo * mi);
+  void change_lisa(ModeInfo * mi);
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt lisa_opts = { 
-  0, NULL, 0, NULL, NULL };
+#define  DEF_ADDITIVE     "True"
+
+static Bool additive;
+
+static XrmOptionDescRec lisa_xrm_opts[] =
+{
+	{"-additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "True"},
+	{"+additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "False"}
+};
+
+static argtype lisa_vars[] =
+{
+	{(caddr_t *) & additive, "additive", "Additive", DEF_ADDITIVE, t_Bool}
+};
+
+static OptionStruct lisa_vars_desc[] =
+{
+	{"-/+additive", "turn on/off additive functions mode"}
+};
+
+ModeSpecOpt lisa_opts =
+{2, lisa_xrm_opts, 1, lisa_vars, lisa_vars_desc};
+
 
 #define  DRAWLINES    1
 #define  TWOLOOPS     1
-#define  ADDITIVE     "True"
 #define  XVMAX        10	/* Maximum velocities */
 #define  YVMAX        10
 #define  LISAMAXFUNCS 2
 #define  NUMSTDFUNCS  10
 #define  MAXCYCLES    3
+#define  MINLISAS 1
 #define  lisasetcolor() \
 if (MI_NPIXELS(mi) > 2) { \
   XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_PIXEL(mi, loop->color)); \
@@ -95,33 +118,6 @@ typedef struct lisacontext_struct {
 } lisacons;
 
 static lisacons *Lisa = NULL;
-static Bool additive;
-
-#ifndef STANDALONE
-static XrmOptionDescRec lisa_xrm_opts[] =
-{
-	{"-additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "True"},
-	{"+additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "False"}
-};
-
-static argtype lisa_vars[] =
-{
-	{(caddr_t *) & additive, "additive", "Additive", ADDITIVE, t_Bool}
-};
-
-static OptionStruct lisa_vars_desc[] =
-{
-	{"-/+additive", "turn on/off additive functions mode"}
-};
-
-ModeSpecOpt lisa_opts =
-{2, lisa_xrm_opts, 1, lisa_vars, lisa_vars_desc};
-#endif /* STANDALONE */
-
-
-void refresh_lisa(ModeInfo * mi);
-void change_lisa(ModeInfo * mi);
-
 
 static lisafuncs Function[NUMSTDFUNCS] =
 {
@@ -381,6 +377,16 @@ initlisa(ModeInfo * mi, lisas * loop)
 			   lp[pctr].x, lp[pctr].y);
 #endif
 	}
+
+	{
+	  int line_width = -15;  /* #### make this a resource */
+	  if (line_width == 0)
+		line_width = -8;
+	  if (line_width < 0)
+		line_width = NRAND(-line_width)+1;
+	  XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), line_width,
+						 LineSolid, CapProjecting, JoinMiter);
+	}
 }
 
 void
@@ -397,8 +403,10 @@ init_lisa(ModeInfo * mi)
 	lc = &Lisa[MI_SCREEN(mi)];
 	lc->width = MI_WIN_WIDTH(mi);
 	lc->height = MI_WIN_HEIGHT(mi);
-	lc->nlisajous = MI_BATCHCOUNT(mi);
 	lc->loopcount = 0;
+	lc->nlisajous = MI_BATCHCOUNT(mi);
+	if (lc->nlisajous <= 0)
+		lc->nlisajous = 1;
 
 	if (lc->lisajous == NULL) {
 		if ((lc->lisajous = (lisas *) calloc(lc->nlisajous, sizeof (lisas))) \

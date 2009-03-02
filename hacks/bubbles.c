@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.8 1997/07/26 19:16:33 jwz Exp $*/
+/*$Id: bubbles.c,v 1.10 1997/12/03 10:56:13 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -52,7 +52,11 @@
 #endif /* BUBBLES_IO */
 
 #include <limits.h>
+
+#ifdef SIGNAL_NONSENSE		/* what's this crap doing in here? */
 #include <signal.h>
+#endif /* SIGNAL_NONSENSE */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +94,7 @@ char *defaults [] = {
   "*foreground: white",
   "*simple:     false",
   "*broken:     false",
-  "*delay:      2000",
+  "*delay:      800",
 #ifdef BUBBLES_IO
   "*file:       (default)",
   "*directory:  (default)",
@@ -981,6 +985,7 @@ free_pixmaps (void)
   }
 }
 
+#ifdef SIGNAL_NONSENSE
 static void 
 onintr(int a)
 /* This gets called when SIGINT or SIGTERM is received */
@@ -999,6 +1004,7 @@ onsegv(int a)
   exit(1);
 }
 #endif /* DEBUG */
+#endif /* SIGNAL_NONSENSE */
 
 
 /*
@@ -1202,6 +1208,7 @@ default_to_pixmaps (void)
 
   /* Make sure pixmaps are freed when program is terminated */
   /* This is when I hit ^C */
+#ifdef SIGNAL_NONSENSE
   if (signal(SIGINT, SIG_IGN) != SIG_IGN)
     signal(SIGINT, onintr);
   /* xscreensaver sends SIGTERM */
@@ -1215,6 +1222,7 @@ default_to_pixmaps (void)
     printf("Didn't set signal hanlder for SIGSEGV\n");
   }
 #endif /* DEBUG */
+#endif /* SIGNAL_NONSENSE */
 
   for (i = 0; i < num_default_bubbles; i++) {
     pixpt = default_bubbles[i];
@@ -1485,6 +1493,7 @@ BE UNCOMPRESSED AND READY TO GO! */
     exit(1);
   }
 
+#ifdef SIGNAL_NONSENSE
   /* Make sure pixmaps are freed when program is terminated */
   /* This is when I hit ^C */
   if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -1496,6 +1505,7 @@ BE UNCOMPRESSED AND READY TO GO! */
   if (signal(SIGSEGV, SIGN_IGN) != SIG_IGN)
     signal(SIGSEGV, onsegv);
 #endif /* DEBUG */
+#endif /* SIGNAL_NONSENSE */
   
   while (1) {
     if (inxpm == 2)

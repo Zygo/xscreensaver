@@ -72,17 +72,56 @@ blacken_colormap (Screen *screen, Colormap cmap)
 }
 
 
+
+static void fade_screens_1 (Display *dpy, Colormap *cmaps,
+			    Window *black_windows, int seconds, int ticks,
+			    Bool out_p, Bool clear_windows);
+#ifdef HAVE_SGI_VC_EXTENSION
+static int sgi_gamma_fade (Display *dpy,
+			   Window *black_windows, int seconds, int ticks,
+			   Bool out_p, Bool clear_windows);
+#endif /* HAVE_SGI_VC_EXTENSION */
+
+
+
+void
+fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
+	      int seconds, int ticks,
+	      Bool out_p, Bool clear_windows)
+{
+#ifdef HAVE_SGI_VC_EXTENSION
+  /* First try to do it by fading the gamma in an SGI-specific way... */
+  if (0 != sgi_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
+			  clear_windows))
+#endif /* HAVE_SGI_VC_EXTENSION */
+    /* Else, do it the old-fashioned way, which (somewhat) loses if
+       there are TrueColor windows visible. */
+    fade_screens_1 (dpy, cmaps, black_windows, seconds, ticks,
+		    out_p, clear_windows);
+}
+
+
 /* The business with `cmaps_per_screen' is to fake out the SGI 8-bit video
    hardware, which is capable of installing multiple (4) colormaps
    simultaniously.  We have to install multiple copies of the same set of
    colors in order to fill up all the available slots in the hardware color
    lookup table, so we install an extra N colormaps per screen to make sure
-   that all screens really go black.  */
+   that all screens really go black.
 
-void
-fade_screens (Display *dpy, Colormap *cmaps,
-	      int seconds, int ticks,
-	      Bool out_p)
+   I'm told that this trick also works with XInside's AcceleratedX when using
+   the Matrox Millenium card (which also allows multiple PseudoColor and
+   TrueColor visuals to co-exist and display properly at the same time.)  
+
+   This trick works ok on the 24-bit Indy video hardware, but doesn't work at
+   all on the O2 24-bit hardware.  I guess the higher-end hardware is too
+   "good" for this to work (dammit.)  So... I figured out the "right" way to
+   do this on SGIs, which is to ramp the monitor's gamma down to 0.  That's
+   what is implemented in sgi_gamma_fade(), so we use that if we can.
+ */
+static void
+fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
+		int seconds, int ticks,
+		Bool out_p, Bool clear_windows)
 {
   int i, j, k;
   int steps = seconds * ticks;
@@ -91,7 +130,7 @@ fade_screens (Display *dpy, Colormap *cmaps,
   int cmaps_per_screen = 5;
   int nscreens = ScreenCount(dpy);
   int ncmaps = nscreens * cmaps_per_screen;
-  static Colormap *fade_cmaps = 0;
+  Colormap *fade_cmaps = 0;
   Bool installed = False;
   int total_ncolors;
   XColor *orig_colors, *current_colors, *screen_colors, *orig_screen_colors;
@@ -187,7 +226,7 @@ fade_screens (Display *dpy, Colormap *cmaps,
 	  screen_colors += ncolors;
 	}
 
-      /* Put the maps on the screens...
+      /* Put the maps on the screens, and then take the windows off the screen.
 	 (only need to do this the first time through the loop.)
        */
       if (!installed)
@@ -196,6 +235,14 @@ fade_screens (Display *dpy, Colormap *cmaps,
 	    if (fade_cmaps[j])
 	      XInstallColormap (dpy, fade_cmaps[j]);
 	  installed = True;
+
+	  if (black_windows && !out_p)
+	    for (j = 0; j < nscreens; j++)
+	      if (black_windows[j])
+		{
+		  XUnmapWindow (dpy, black_windows[j]);
+		  XClearWindow (dpy, black_windows[j]);
+		}
 	}
 
       XSync (dpy, False);
@@ -240,32 +287,254 @@ fade_screens (Display *dpy, Colormap *cmaps,
   if (orig_colors)    free (orig_colors);
   if (current_colors) free (current_colors);
 
-  /* Now put the original maps back, if we want to end up with them.
+  /* If we've been given windows to raise after blackout, raise them before
+     releasing the colormaps.
    */
-  if (!out_p)
+  if (out_p && black_windows)
+    for (i = 0; i < nscreens; i++)
+      {
+	if (clear_windows)
+	  XClearWindow (dpy, black_windows[i]);
+	XMapRaised (dpy, black_windows[i]);
+      }
+
+
+  /* Now put the target maps back.
+     If we're fading out, use the given cmap (or the default cmap, if none.)
+     If we're fading in, always use the default cmap.
+   */
+  for (i = 0; i < nscreens; i++)
     {
-      for (i = 0; i < nscreens; i++)
+      Colormap cmap = (cmaps ? cmaps[i] : 0);
+      if (!cmap || !out_p)
+	cmap = DefaultColormap(dpy, i);
+      XInstallColormap (dpy, cmap);
+    }
+
+  /* The fade (in or out) is complete, so we don't need the black maps on
+     stage any more.
+   */
+  for (i = 0; i < ncmaps; i++)
+    if (fade_cmaps[i])
+      {
+	XUninstallColormap(dpy, fade_cmaps[i]);
+	XFreeColormap(dpy, fade_cmaps[i]);
+	fade_cmaps[i] = 0;
+      }
+  free(fade_cmaps);
+  fade_cmaps = 0;
+}
+
+
+#ifdef HAVE_SGI_VC_EXTENSION
+
+# include <X11/extensions/XSGIvc.h>
+
+struct screen_gamma_info {
+  int gamma_map;  /* ??? always using 0 */
+  int nred, ngreen, nblue;
+  unsigned short *red1, *green1, *blue1;
+  unsigned short *red2, *green2, *blue2;
+  int gamma_size;
+  int gamma_precision;
+  Bool alpha_p;
+};
+
+
+static void whack_gamma(Display *dpy, int screen,
+			struct screen_gamma_info *info, float ratio);
+
+static int
+sgi_gamma_fade (Display *dpy,
+		Window *black_windows, int seconds, int ticks,
+		Bool out_p, Bool clear_windows)
+{
+  int steps = seconds * ticks;
+  long usecs_per_step = (long)(seconds * 1000000) / (long)steps;
+  XEvent dummy_event;
+  int nscreens = ScreenCount(dpy);
+  struct timeval then, now;
+#ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+#endif
+  int i, screen;
+  int status = -1;
+  struct screen_gamma_info *info = (struct screen_gamma_info *)
+    calloc(nscreens, sizeof(*info));
+
+  /* Get the current gamma maps for all screens.
+     Bug out and return -1 if we can't get them for some screen.
+   */
+  for (screen = 0; screen < nscreens; screen++)
+    {
+      if (!XSGIvcQueryGammaMap(dpy, screen, info[screen].gamma_map,
+			       &info[screen].gamma_size,
+			       &info[screen].gamma_precision,
+			       &info[screen].alpha_p))
+	goto FAIL;
+
+      if (!XSGIvcQueryGammaColors(dpy, screen, info[screen].gamma_map,
+				  XSGIVC_COMPONENT_RED,
+				  &info[screen].nred, &info[screen].red1))
+	goto FAIL;
+      if (! XSGIvcQueryGammaColors(dpy, screen, info[screen].gamma_map,
+				   XSGIVC_COMPONENT_GREEN,
+				   &info[screen].ngreen, &info[screen].green1))
+	goto FAIL;
+      if (!XSGIvcQueryGammaColors(dpy, screen, info[screen].gamma_map,
+				  XSGIVC_COMPONENT_BLUE,
+				  &info[screen].nblue, &info[screen].blue1))
+	goto FAIL;
+
+      if (info[screen].gamma_precision == 8)    /* Scale it up to 16 bits. */
 	{
-	  Colormap cmap = (cmaps ? cmaps[i] : 0);
-	  if (!cmap) cmap = DefaultColormap(dpy, i);
-	  XInstallColormap (dpy, cmap);
+	  int j;
+	  for(j = 0; j < info[screen].nred; j++)
+	    info[screen].red1[j]   =
+	      ((info[screen].red1[j]   << 8) | info[screen].red1[j]);
+	  for(j = 0; j < info[screen].ngreen; j++)
+	    info[screen].green1[j] =
+	      ((info[screen].green1[j] << 8) | info[screen].green1[j]);
+	  for(j = 0; j < info[screen].nblue; j++)
+	    info[screen].blue1[j]  =
+	      ((info[screen].blue1[j]  << 8) | info[screen].blue1[j]);
 	}
 
-      /* We've faded to the default cmaps, so we don't need the black maps
-	 on stage any more.  (We can't uninstall these maps yet if we've
-	 faded to black, because that would lead to flicker between when
-	 we uninstalled them and when the caller raised its black window.)
-       */
-      for (i = 0; i < ncmaps; i++)
-	if (fade_cmaps[i])
-	  {
-	    XFreeColormap(dpy, fade_cmaps[i]);
-	    fade_cmaps[i] = 0;
-	  }
-      free(fade_cmaps);
-      fade_cmaps = 0;
+      info[screen].red2   = (unsigned short *)
+	malloc(sizeof(*info[screen].red2)   * (info[screen].nred+1));
+      info[screen].green2 = (unsigned short *)
+	malloc(sizeof(*info[screen].green2) * (info[screen].ngreen+1));
+      info[screen].blue2  = (unsigned short *)
+	malloc(sizeof(*info[screen].blue2)  * (info[screen].nblue+1));
     }
+
+#ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday(&then, &tzp);
+#else
+  gettimeofday(&then);
+#endif
+
+  /* If we're fading in (from black), then first crank the gamma all the
+     way down to 0, then take the windows off the screen.
+   */
+  if (!out_p)
+    for (screen = 0; screen < nscreens; screen++)
+      {
+	whack_gamma(dpy, screen, &info[screen], 0.0);
+	if (black_windows && black_windows[screen])
+	  {
+	    XUnmapWindow (dpy, black_windows[screen]);
+	    XClearWindow (dpy, black_windows[screen]);
+	  }
+      }
+
+
+  /* Iterate by steps of the animation... */
+  for (i = (out_p ? steps : 0);
+       (out_p ? i > 0 : i < steps);
+       (out_p ? i-- : i++))
+    {
+      for (screen = 0; screen < nscreens; screen++)
+	{
+	  whack_gamma(dpy, screen, &info[screen],
+		      (((float)i) / ((float)steps)));
+
+	  /* If there is user activity, bug out.  (Bug out on keypresses or
+	     mouse presses, but not motion, and not release events.  Bugging
+	     out on motion made the unfade hack be totally useless, I think.)
+
+	     We put the event back so that the calling code can notice it too.
+	     It would be better to not remove it at all, but that's harder
+	     because Xlib has such a non-design for this kind of crap, and
+	     in this application it doesn't matter if the events end up out
+	     of order, so in the grand unix tradition we say "fuck it" and
+	     do something that mostly works for the time being.
+	   */
+	  if (XCheckMaskEvent (dpy, (KeyPressMask|ButtonPressMask),
+			       &dummy_event))
+	    {
+	      XPutBackEvent (dpy, &dummy_event);
+	      goto DONE;
+	    }
+
+#ifdef GETTIMEOFDAY_TWO_ARGS
+	  gettimeofday(&now, &tzp);
+#else
+	  gettimeofday(&now);
+#endif
+
+	  /* If we haven't already used up our alotted time, sleep to avoid
+	     changing the colormap too fast. */
+	  {
+	    long diff = (((now.tv_sec - then.tv_sec) * 1000000) +
+			 now.tv_usec - then.tv_usec);
+	    then.tv_sec = now.tv_sec;
+	    then.tv_usec = now.tv_usec;
+	    if (usecs_per_step > diff)
+	      usleep (usecs_per_step - diff);
+	  }
+	}
+    }
+  
+
+ DONE:
+
+  if (out_p && black_windows)
+    {
+      for (screen = 0; screen < nscreens; screen++)
+	{
+	  if (clear_windows)
+	    XClearWindow (dpy, black_windows[i]);
+	  XMapRaised (dpy, black_windows[i]);
+	}
+      XSync(dpy, False);
+    }
+
+  for (screen = 0; screen < nscreens; screen++)
+    whack_gamma(dpy, screen, &info[screen], 1.0);
+  XSync(dpy, False);
+
+  status = 0;
+
+ FAIL:
+  for (screen = 0; screen < nscreens; screen++)
+    {
+      if (info[screen].red1)   free (info[screen].red1);
+      if (info[screen].green1) free (info[screen].green1);
+      if (info[screen].blue1)  free (info[screen].blue1);
+      if (info[screen].red2)   free (info[screen].red2);
+      if (info[screen].green2) free (info[screen].green2);
+      if (info[screen].blue2)  free (info[screen].blue2);
+    }
+  free(info);
+  return status;
 }
+
+static void
+whack_gamma(Display *dpy, int screen, struct screen_gamma_info *info,
+	    float ratio)
+{
+  int k;
+  if (ratio < 0) ratio = 0;
+  if (ratio > 1) ratio = 1;
+  for (k = 0; k < info->gamma_size; k++)
+    {
+      info->red2[k]   = info->red1[k]   * ratio;
+      info->green2[k] = info->green1[k] * ratio;
+      info->blue2[k]  = info->blue1[k]  * ratio;
+    }
+  XSGIvcStoreGammaColors16(dpy, screen, info->gamma_map, info->nred,
+			   XSGIVC_MComponentRed, info->red2);
+  XSGIvcStoreGammaColors16(dpy, screen, info->gamma_map, info->ngreen,
+			   XSGIVC_MComponentGreen, info->green2);
+  XSGIvcStoreGammaColors16(dpy, screen, info->gamma_map, info->nblue,
+			   XSGIVC_MComponentBlue, info->blue2);
+  XSync(dpy, False);
+}
+
+#endif /* HAVE_SGI_VC_EXTENSION */
+
+
 
 
 #if 0

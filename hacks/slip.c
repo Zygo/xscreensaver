@@ -97,7 +97,7 @@ prepare_screen(ModeInfo * mi, slipstruct * s)
 	int         not_solid = halfrandom(10);
 
 #ifdef STANDALONE			  /* jwz -- sometimes hack the desktop image! */
-	if (halfrandom(5) == 0)
+	if (halfrandom(2) == 0)
 	  {
 		grab_screen_image(DefaultScreenOfDisplay (MI_DISPLAY(mi)),
 						  MI_WINDOW(mi));
@@ -107,7 +107,7 @@ prepare_screen(ModeInfo * mi, slipstruct * s)
 
 	s->backwards = LRAND() & 1;		/* jwz: go the other way sometimes */
 
-	if (s->first_time || !halfrandom(5)) {
+	if (s->first_time || (0 == halfrandom(10))) {
 		XClearWindow(display, MI_WINDOW(mi));
 		n = 300;
 	} else {
@@ -127,6 +127,7 @@ prepare_screen(ModeInfo * mi, slipstruct * s)
 		XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
 
 	for (i = 0; i < n; i++) {
+	  int ww = ((w/2) + halfrandom(w));
 		if (not_solid)
 			if (MI_NPIXELS(mi) > 2)
 				XSetForeground(display, gc, MI_PIXEL(mi, halfrandom(MI_NPIXELS(mi))));
@@ -135,9 +136,9 @@ prepare_screen(ModeInfo * mi, slipstruct * s)
 			else
 				XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
 		XFillRectangle(display, MI_WINDOW(mi), gc,
-			       halfrandom(s->width - w),
-			       halfrandom(s->height - w),
-			       w, w);
+			       halfrandom(s->width - ww),
+			       halfrandom(s->height - ww),
+			       ww, ww);
 	}
 	s->first_time = 0;
 }
@@ -211,7 +212,7 @@ draw_slip(ModeInfo * mi)
 
 		/* (x,y) is in biunit square */
 		switch (s->mode) {
-			case 0:
+			case 0:								/* rotor */
 				dx = x;
 				dy = y;
 
@@ -235,11 +236,11 @@ draw_slip(ModeInfo * mi)
 					dy = -dy;
 				}
 				break;
-			case 1:
+			case 1:								/* shuffle */
 				dx = erandom(3);
 				dy = erandom(3);
 				break;
-			case 2:
+			case 2:								/* explode */
 				dx = x * 3;
 				dy = y * 3;
 				break;

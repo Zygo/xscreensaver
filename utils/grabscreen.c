@@ -18,6 +18,7 @@
  */
 
 #include "utils.h"
+#include "yarandom.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -33,6 +34,9 @@
 #include "usleep.h"
 #include "colors.h"
 #include "grabscreen.h"
+#include "sgivideo.h"
+#include "visual.h"
+#include "resources.h"
 
 #include "vroot.h"
 #undef RootWindowOfScreen
@@ -41,13 +45,16 @@
 
 
 #ifdef HAVE_READ_DISPLAY_EXTENSION
-# include "visual.h"
 # include <X11/extensions/readdisplay.h>
   static Bool read_display (Screen *, Window, Pixmap, Bool);
 #endif /* HAVE_READ_DISPLAY_EXTENSION */
 
 
 static void copy_default_colormap_contents (Screen *, Colormap, Visual *);
+
+#if defined(HAVE_READ_DISPLAY_EXTENSION) || defined(HAVE_SGI_VIDEO)
+static void make_cubic_colormap (Screen *, Window, Visual *);
+#endif
 
 
 static Bool
@@ -131,6 +138,25 @@ BadWindow_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
+/* XCopyArea seems not to work right on SGI O2s if you draw in SubwindowMode
+   on a window whose depth is not the maximal depth of the screen?  Or
+   something.  Anyway, things don't work unless we: use SubwindowMode for
+   the real root window (or a legitimate virtual root window); but do not
+   use SubwindowMode for the xscreensaver window.  I make no attempt to
+   explain.
+ */
+Bool
+use_subwindow_mode_p(Screen *screen, Window window)
+{
+  if (window != VirtualRootWindowOfScreen(screen))
+    return False;
+  else if (xscreensaver_window_p(DisplayOfScreen(screen), window))
+    return False;
+  else
+    return True;
+}
+
+
 /* Install the colormaps of all visible windows, deepest first.
    This should leave the colormaps of the topmost windows installed
    (if only N colormaps can be installed at a time, then only the
@@ -174,8 +200,8 @@ install_screen_colormaps (Screen *screen)
 }
 
 
-void
-grab_screen_image (Screen *screen, Window window)
+static void
+grab_screen_image_1 (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
@@ -196,10 +222,18 @@ grab_screen_image (Screen *screen, Window window)
 
   if (!root_p)
     {
+      double unmap = 0;
       if (saver_p)
-	unmap_time = 2500000;  /* 2 1/2 seconds */
+	{
+	  unmap = get_float_resource("grabRootDelay", "Seconds");
+	  if (unmap <= 0.00001 || unmap > 20) unmap = 2.5;
+	}
       else
-	unmap_time =  660000;  /* 2/3rd second */
+	{
+	  unmap = get_float_resource("grabWindowDelay", "Seconds");
+	  if (unmap <= 0.00001 || unmap > 20) unmap = 0.66;
+	}
+      unmap_time = unmap * 100000;
     }
 
 #ifdef DEBUG
@@ -293,6 +327,42 @@ grab_screen_image (Screen *screen, Window window)
   XSync (dpy, True);
 }
 
+void
+grab_screen_image (Screen *screen, Window window)
+{
+#ifdef HAVE_SGI_VIDEO
+  char c, *s = get_string_resource("grabVideoProbability", "Float");
+  double prob = -1;
+  if (!s ||
+      (1 != sscanf (s, " %lf %c", &prob, &c)) ||
+      prob < 0 ||
+      prob > 1)
+    prob = 0.5;
+
+  if ((random() % 100) < ((int) (100 * prob)))
+    {
+      XWindowAttributes xgwa;
+      Display *dpy = DisplayOfScreen (screen);
+      XGetWindowAttributes (dpy, window, &xgwa);
+# ifdef DEBUG
+      fprintf(stderr, "%s: trying to grab from video...\n", progname);
+# endif /* DEBUG */
+      if (grab_video_frame (screen, xgwa.visual, window))
+	{
+	  if (xgwa.depth < 24)
+	    {
+	      int class = visual_class (screen, xgwa.visual);
+	      if (class == PseudoColor || class == DirectColor)
+		make_cubic_colormap (screen, window, xgwa.visual);
+	    }
+	  return;
+	}
+    }
+#endif /* HAVE_SGI_VIDEO */
+
+  grab_screen_image_1 (screen, window);
+}
+
 
 /* When we are grabbing and manipulating a screen image, it's important that
    we use the same colormap it originally had.  So, if the screensaver was
@@ -345,7 +415,35 @@ copy_default_colormap_contents (Screen *screen,
 
   got_cells = max_cells;
   allocate_writable_colors (dpy, to_cmap, pixels, &got_cells);
-  XStoreColors (dpy, to_cmap, old_colors, got_cells);
+
+#ifdef DEBUG
+  if (got_cells != max_cells)
+    fprintf(stderr, "%s: got only %d of %d cells\n", progname,
+	    got_cells, max_cells);
+#endif /* DEBUG */
+
+  if (got_cells <= 0)					 /* we're screwed */
+    ;
+  else if (got_cells == max_cells &&			 /* we're golden */
+	   from_cells == to_cells)
+    XStoreColors (dpy, to_cmap, old_colors, got_cells);
+  else							 /* try to cope... */
+    {
+      for (i = 0; i < got_cells; i++)
+	{
+	  XColor *c = old_colors + i;
+	  int j;
+	  for (j = 0; j < got_cells; j++)
+	    if (pixels[j] == c->pixel)
+	      {
+		/* only store this color value if this is one of the pixels
+		   we were able to allocate. */
+		XStoreColors (dpy, to_cmap, c, 1);
+		break;
+	      }
+	}
+    }
+
 
 #ifdef DEBUG
   fprintf(stderr, "%s: installing copy of default colormap\n", progname);
@@ -367,8 +465,6 @@ copy_default_colormap_contents (Screen *screen,
  */
 
 #ifdef HAVE_READ_DISPLAY_EXTENSION
-
-static void make_cubic_colormap (Screen *, Window, Visual *);
 
 static Bool
 read_display (Screen *screen, Window window, Pixmap into_pixmap,
@@ -430,7 +526,7 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
      If the visual is of depth 24, but the image came back as depth 32,
      hack it to be 24 lest we get a BadMatch from XPutImage.  (I presume
      I'm expected to look at the server's pixmap formats or some such
-     nonsense... but fuck it.
+     nonsense... but fuck it.)
    */
   if (xgwa.depth == 24 && image->depth == 32)
     image->depth = 24;
@@ -532,7 +628,14 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
 
   return True;
 }
+#endif /* HAVE_READ_DISPLAY_EXTENSION */
 
+
+#if defined(HAVE_READ_DISPLAY_EXTENSION) || defined(HAVE_SGI_VIDEO)
+
+/* Makes and installs a colormap that makes a PseudoColor or DirectColor
+   visual behave like a TrueColor visual of the same depth.
+ */
 static void
 make_cubic_colormap (Screen *screen, Window window, Visual *visual)
 {
@@ -606,5 +709,4 @@ make_cubic_colormap (Screen *screen, Window window, Visual *visual)
   XInstallColormap (dpy, cmap);
 }
 
-
-#endif /* HAVE_READ_DISPLAY_EXTENSION */
+#endif /* HAVE_READ_DISPLAY_EXTENSION || HAVE_SGI_VIDEO */

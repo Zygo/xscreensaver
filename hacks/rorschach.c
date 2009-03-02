@@ -21,9 +21,6 @@ static int iterations, offset;
 static Bool xsym, ysym;
 static int erase_speed, sleep_time, erase_mode;
 
-void erase_window (Display *dpy, Window win, GC gc, int width, int height,
-		   int mode, int delay);
-
 static void
 init_rorschach (Display *dpy, Window window)
 {
@@ -99,7 +96,7 @@ hurm (Display *dpy, Window window)
     }
   sleep ( sleep_time );
 
-  erase_window(dpy, window, erase_gc, xlim, ylim, erase_mode, erase_speed);
+  erase_full_window(dpy, window);
 
   XClearWindow (dpy, window);
   if (got_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
@@ -117,9 +114,9 @@ char *defaults [] = {
   "*ysymmetry:	false",
   "*iterations:	4000",
   "*offset:	4",
-  "Rorschach.eraseSpeed: 400",
-  "Rorschach.delay: 5",
-  "Rorschach.eraseMode: -1",
+  "*delay:	5",
+  "*eraseSpeed: 400",
+  "*eraseMode: -1",
   0
 };
 

@@ -423,12 +423,22 @@ static void initLMorph (void)
     gcClear = XCreateGC(dpy, window, GCForeground, &gcv);
     XClearWindow(dpy, window);
 
-    srandom(time(NULL));
     initPointArrays();
     aCurr = aWork[nWork = 0];
     aPrev = NULL;
     gam = 2.0;
     nTo = RND(cFig);
+
+    {
+      int width = random() % 10;
+      int style = LineSolid;
+      int cap   = (width > 1 ? CapRound  : CapButt);
+      int join  = (width > 1 ? JoinRound : JoinBevel);
+      if (width == 1) width = 0;
+      XSetLineAttributes(dpy, gcDraw,  width, style, cap, join);
+      XSetLineAttributes(dpy, gcClear, width, style, cap, join);
+    }
+
 }
 
 static void animateLMorph (void)

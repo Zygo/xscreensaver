@@ -1,13 +1,13 @@
-.TH XScreenSaver 1 "13-aug-92" "X Version 11"
+.TH XScreenSaver 1 "24-Nov-97" "X Version 11"
 .SH NAME
-flame - sucks your screen into a jet engine
+slip - sucks your screen into a jet engine
 .SH SYNOPSIS
-.B flame
+.B slip
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-iterations \fIinteger\fP] [\-points \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-delay2 \fImicroseconds\fP]
 .SH DESCRIPTION
 The \fIslip\fP program does lots of blits and chews up your screen image.
 .SH OPTIONS
-.I flame
+.I slip
 accepts the following options:
 .TP 8
 .B \-window
@@ -31,23 +31,40 @@ How many colors should be used (if possible).  Default 128.
 The colors used cycle through the hue, making N stops around 
 the color wheel.
 .TP 8
-.B \-iterations \fIinteger\fP
-How many fractals to generate.  Default 25.
-.TP 8
-.B \-points \fIinteger\fP
-How many pixels to draw for each fractal.  Default 10000.
-.TP 8
-.B \-delay \fImicroseconds\fP
-How long we should wait between drawing each fractal.  Default 50000,
-or about 1/20th second.
+.B \-count \fIinteger\fP
+How many whooziwhatsis to generate.  Default 35.
 .TP 8
 .B \-cycles \fIinteger\fP
 How long to frobnicate.  Default 50.
-
 .TP 8
-.B \-count \fIinteger\fP
-How many whooziwhatsis.  Default 35.
+.B \-delay \fImicroseconds\fP
+How long we should wait between drawing each step.  Default 50000,
+or about 1/20th second.
 
+.SH RESOURCES
+On some systems (currently, only SGIs), this program can, instead of grabbing
+a desktop image, grab a frame of video from an external camera and manipulate
+that instead.  The following resources control that.
+.PP
+.TP 8
+.B grabVideoProbability \fR(Float)\fP
+What portion of the time to grab video rather than a screen image, 
+between 0.0 and 1.0.  Defaults to 0.5, or half the time.
+.TP 8
+.B videoDevice \fR(Integer)\fP
+The number of the default video input device to check first.  If unspecified, 
+the default camera (from videopanel(1)) will be checked first.  After that, all
+other available video input devices will be checked in order.  
+
+The first one which produces a non-black image will be used.  If all images
+are black, the others will be re-checked a few times before giving up and
+falling back to simply grabbing a desktop image (but note that this takes a
+few seconds, so if you don't actually have any video sources hooked up, you
+should consider turning off video grabbing by setting
+\fBgrabVideoProbability\fP to 0.0.)
+.TP 8
+.B videoGain \fR(Float)\fP
+The amount by which to brighten the grabbed image.  This defaults to 2.2.
 .SH ENVIRONMENT
 .PP
 .TP 8

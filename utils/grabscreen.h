@@ -19,4 +19,9 @@
  */
 extern void grab_screen_image (Screen *, Window);
 
+/* Whether one should use GCSubwindowMode when drawing on this window
+   (assuming a screen image has been grabbed onto it.)  Yes, this is a
+   total kludge. */
+extern Bool use_subwindow_mode_p(Screen *screen, Window window);
+
 #endif /* __GRABSCREEN_H__ */

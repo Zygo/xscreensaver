@@ -25,13 +25,13 @@ INCLUDES	= -I$(srcdir) -I$(srcdir)/.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
 		  resources.c spline.c usleep.c visual.c xmu.c xroger.c \
-		  yarandom.c erase.c
+		  yarandom.c erase.c sgivideo.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o hsv.o overlay.o \
 		  resources.o spline.o usleep.o visual.o xmu.o xroger.o \
-		  yarandom.o erase.o
+		  yarandom.o erase.o sgivideo.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
-		  yarandom.h erase.h
+		  yarandom.h erase.h sgivideo.h
 EXTRAS		= README Makefile.in ad2c
 VMSFILES	= compile_axp.com compile_decc.com vms-gtod.c vms-gtod.h \
 		  vms-strdup.c
@@ -69,7 +69,7 @@ depend:
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend:
+distdepend::
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -97,6 +97,30 @@ echo_tarfiles:
 	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
 
 
+# Rules for generating the VMS makefiles on Unix, so that it doesn't have to
+# be done by hand...
+#
+VMS_AXP_COMPILE=$$ CC/DECC/PREFIX=ALL/DEFINE=(VMS,HAVE_CONFIG_H)/INCL=([],[-])
+
+compile_axp.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( ( for c in $(SRCS) vms-*.c ; do				    \
+	      c=`echo $$c | tr a-z A-Z` ;				    \
+	      echo "$(VMS_AXP_COMPILE) $$c" ;				    \
+            done ;							    \
+	  ) | sort ;							    \
+          echo '$$ lib/cre utils.olb_axp' ; 				    \
+	  echo '$$ lib utils.olb_axp *.obj' ; 				    \
+	  echo '$$! delete/noconf *.obj;' ; 				    \
+        ) > $@
+
+compile_decc.com: compile_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+distdepend:: compile_axp.com compile_decc.com
+
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
@@ -120,11 +144,14 @@ fade.o: $(srcdir)/usleep.h
 fade.o: $(srcdir)/fade.h
 grabscreen.o: $(srcdir)/utils.h
 grabscreen.o: $(srcdir)/../config.h
+grabscreen.o: $(srcdir)/yarandom.h
 grabscreen.o: $(srcdir)/usleep.h
 grabscreen.o: $(srcdir)/colors.h
 grabscreen.o: $(srcdir)/grabscreen.h
-grabscreen.o: $(srcdir)/vroot.h
+grabscreen.o: $(srcdir)/sgivideo.h
 grabscreen.o: $(srcdir)/visual.h
+grabscreen.o: $(srcdir)/resources.h
+grabscreen.o: $(srcdir)/vroot.h
 hsv.o: $(srcdir)/utils.h
 hsv.o: $(srcdir)/../config.h
 hsv.o: $(srcdir)/hsv.h
@@ -151,4 +178,10 @@ erase.o: $(srcdir)/utils.h
 erase.o: $(srcdir)/../config.h
 erase.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/usleep.h
+erase.o: $(srcdir)/resources.h
+sgivideo.o: $(srcdir)/utils.h
+sgivideo.o: $(srcdir)/../config.h
+sgivideo.o: $(srcdir)/sgivideo.h
+sgivideo.o: $(srcdir)/resources.h
+sgivideo.o: $(srcdir)/usleep.h
 

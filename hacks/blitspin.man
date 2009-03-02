@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "16-May-97" "X Version 11"
+.TH XScreenSaver 1 "24-Nov-97" "X Version 11"
 .SH NAME
 blitspin - rotate a bitmap in an interesting way
 .SH SYNOPSIS
@@ -46,19 +46,44 @@ name is not a fully-qualified pathname.
 .TP 8
 .B \-grab\-screen
 If this option is specified, then the image which is spun will be grabbed
-from the portion of the screen underlying the blitspin window.
+from the portion of the screen underlying the blitspin window.  (Or, it
+may come from an external video source: see below.)
 .PP
 .TP 8
-.B \-delay microseconds
+.B \-delay \fImicroseconds\fP
 How long to delay between steps of the rotation process, in microseconds.
 Default is 500000, one-half second.
 .PP
 .TP 8
-.B \-delay2 microseconds
+.B \-delay2 \fImicroseconds\fP
 How long to delay between each 90-degree rotation, in microseconds.
 Default is 500000, one-half second.
 .B DISPLAY
 to get the default host and display number.
+.SH RESOURCES
+On some systems (currently, only SGIs), this program can, instead of grabbing
+a desktop image, grab a frame of video from an external camera and manipulate
+that instead.  The following resources control that.
+.PP
+.TP 8
+.B grabVideoProbability \fR(Float)\fP
+What portion of the time to grab video rather than a screen image, 
+between 0.0 and 1.0.  Defaults to 0.5, or half the time.
+.TP 8
+.B videoDevice \fR(Integer)\fP
+The number of the default video input device to check first.  If unspecified, 
+the default camera (from videopanel(1)) will be checked first.  After that, all
+other available video input devices will be checked in order.  
+
+The first one which produces a non-black image will be used.  If all images
+are black, the others will be re-checked a few times before giving up and
+falling back to simply grabbing a desktop image (but note that this takes a
+few seconds, so if you don't actually have any video sources hooked up, you
+should consider turning off video grabbing by setting
+\fBgrabVideoProbability\fP to 0.0.)
+.TP 8
+.B videoGain \fR(Float)\fP
+The amount by which to brighten the grabbed image.  This defaults to 2.2.
 .SH ENVIRONMENT
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources

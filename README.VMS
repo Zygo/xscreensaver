@@ -1,4 +1,4 @@
-OpenVMS port of Xscreensavser version 2.05     July 1997
+OpenVMS port of Xscreensavser version 2.10     October 1997
 ==========================================
 
 Xscreensaver distribution can be found in 3 subdirectories:
@@ -37,8 +37,6 @@ Nota: link procedure automagically select appropriate X and Motif Libraries
 The SETUP.COM procedure gives you a definition of all DCL foreign command
 symbols needed to run Xscreensaver and all the graphic hacks. You need to
 modify this procedure if you install these programs in another directory tree.
-
-VMS .HLP files are provied for all programms of this distribution.
 
 You can easily add new graphic demos without recompiling Xscreensaver. You just
 need to add them in resource file XSCREENSAVER.DAT. This file (originally

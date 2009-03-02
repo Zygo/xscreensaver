@@ -14,10 +14,15 @@
    ************************************************************************* */
 
 /* Define this if you have the XReadDisplay extension (I think this is an
-   SGI-only thing; it's in <X11/extensions/readdisplay.h>.)  A couple of
-   the screenhacks will take advantage of this if it's available.
+   SGI-only thing; it's in <X11/extensions/readdisplay.h>.)  A few of the
+   screenhacks will take advantage of this if it's available.
  */
 #undef HAVE_READ_DISPLAY_EXTENSION
+
+/* Define this if you have the Iris Video Library (dmedia/vl.h on SGI.)
+   A few of the screenhacks will take advantage of this if it's available.
+ */
+#undef HAVE_SGI_VIDEO
 
 /* Define this if you have the XHPDisableReset function (an HP only thing.)
  */
@@ -80,6 +85,10 @@
  */
 #undef HAVE_SGI_SAVER_EXTENSION
 
+/*  Define this if you have the SGI-VIDEO-CONTROL extension.  This is standard
+ *  on Irix systems, and not available elsewhere.
+ */
+#undef HAVE_SGI_VC_EXTENSION
 
 
 /* *************************************************************************
@@ -248,3 +257,8 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
+
+/* Define to use sigaction() instead of signal() for SIGCHLD-related activity.
+   This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
+ */
+#undef USE_SIGACTION

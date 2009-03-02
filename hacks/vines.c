@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*-
- * fract --- another geometric pattern generator.
+ * vines --- another geometric pattern generator.
  */
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)fract.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)vines.c	4.02 97/04/01 xlockmore";
 #endif
 
 /* xlockmore mode written by Tracy Camp
@@ -25,18 +25,21 @@ static const char sccsid[] = "@(#)fract.c	4.02 97/04/01 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Fract"
-# define HACK_INIT					init_fract
-# define HACK_DRAW					draw_fract
-# define fract_opts					xlockmore_opts
-# define DEFAULTS		"*delay:	200000 \n"	\
-						"*ncolors:	64     \n"
+# define PROGCLASS					"Vines"
+# define HACK_INIT					init_vines
+# define HACK_DRAW					draw_vines
+# define vines_opts					xlockmore_opts
+# define DEFAULTS		"*delay:	200000 \n"			\
+						"*ncolors:	64     \n"			\
+						"*eraseSpeed:   400 \n"			\
+						"*eraseMode:    -1 \n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "erase.h"
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt fract_opts = {
+ModeSpecOpt vines_opts = {
   0, NULL, 0, NULL, NULL };
 
 typedef struct {
@@ -51,27 +54,27 @@ typedef struct {
 	int         ang;
 	int         centerx;
 	int         centery;
-} fractstruct;
+} vinestruct;
 
-static fractstruct *fracts = NULL;
+static vinestruct *vines = NULL;
 
 void
-refresh_fract(ModeInfo * mi)
+refresh_vines(ModeInfo * mi)
 {
 }
 
 void
-init_fract(ModeInfo * mi)
+init_vines(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-	fractstruct *fp;
+	vinestruct *fp;
 
-	if (fracts == NULL) {
-		if ((fracts = (fractstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (fractstruct))) == NULL) {
+	if (vines == NULL) {
+		if ((vines = (vinestruct *) calloc(MI_NUM_SCREENS(mi), sizeof (vinestruct))) == NULL) {
 			return;
 		}
 	}
-	fp = &fracts[MI_SCREEN(mi)];
+	fp = &vines[MI_SCREEN(mi)];
 
 	fp->iterations = 30 + NRAND(100);
 
@@ -79,15 +82,19 @@ init_fract(ModeInfo * mi)
 }
 
 void
-draw_fract(ModeInfo * mi)
+draw_vines(ModeInfo * mi)
 {
-	fractstruct *fp = &fracts[MI_SCREEN(mi)];
+	vinestruct *fp = &vines[MI_SCREEN(mi)];
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
 	int         i;
 
-	if (--(fp->iterations) == 0)
-		init_fract(mi);
+	if (--(fp->iterations) == 0) {
+#ifdef STANDALONE
+	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif /* STANDALONE */
+	  init_vines(mi);
+	}
 
 	fp->centerx = NRAND(MI_WIN_WIDTH(mi));
 	fp->centery = NRAND(MI_WIN_HEIGHT(mi));
@@ -126,10 +133,10 @@ draw_fract(ModeInfo * mi)
 }
 
 void
-release_fract(ModeInfo * mi)
+release_vines(ModeInfo * mi)
 {
-	if (fracts != NULL) {
-		(void) free((void *) fracts);
-		fracts = NULL;
+	if (vines != NULL) {
+		(void) free((void *) vines);
+		vines = NULL;
 	}
 }

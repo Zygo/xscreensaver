@@ -1,12 +1,15 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * galaxy --- draw spinning, colliding galaxies.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* galaxy --- spinning galaxies */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)galaxy.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)galaxy.c	4.04 97/07/28 xlockmore";
 #endif
 
-/* Originally done by Uli Siegmund (uli@wombat.okapi.sub.org) on Amiga
+/* Originally done by Uli Siegmund <uli@wombat.okapi.sub.org> on Amiga
  *   for EGS in Cluster
+ * Port from Cluster/EGS to C/Intuition by Harald Backert
+ * Port to X11 and incorporation into xlockmore by Hubert Feyrer
+ *   <hubert.feyrer@rz.uni-regensburg.de>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,8 +22,6 @@ static const char sccsid[] = "@(#)galaxy.c	4.02 97/04/01 xlockmore";
  * trade secrets or any patents by this file or any part thereof.  In no
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
- * Port to X11 and incorporation into xlockmore by Hubert Feyrer
- *   (hubert.feyrer@rz.uni-regensburg.de)
  *
  * Revision History:
  * 10-May-97: jwz@netscape.com: turned into a standalone program.
@@ -41,46 +42,16 @@ static const char sccsid[] = "@(#)galaxy.c	4.02 97/04/01 xlockmore";
 # define HACK_INIT					init_galaxy
 # define HACK_DRAW					draw_galaxy
 # define galaxy_opts				xlockmore_opts
-# define DEFAULTS	"*count:		5    \n"			\
+# define DEFAULTS	"*delay:		100  \n"			\
+					"*count:		-5   \n"			\
 					"*cycles:		250  \n"			\
-					"*delay:		100  \n"			\
-					"*size:			3    \n"			\
+					"*size:			-3   \n"			\
 					"*ncolors:		64   \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
-
-#define FLOATRAND ((double) LRAND() / ((double) MAXRAND))
-
-#if 0
-#define WRAP       1		/* Warp around edges */
-#define BOUNCE     1		/* Bounce from borders */
-#endif
-
-#define MINSIZE       1
-#define MINGALAXIES    1
-#define MAX_STARS    300
-#define MAX_IDELTAT    50
-/* These come originally from the Cluster-version */
-#define DEFAULT_GALAXIES  2
-#define DEFAULT_STARS    1000
-#define DEFAULT_HITITERATIONS  7500
-#define DEFAULT_IDELTAT    200	/* 0.02 */
-#define EPSILON 0.0000001
-
-#define GALAXYRANGESIZE  0.1
-#define GALAXYMINSIZE  0.1
-#define QCONS    0.001
-
-#define COLORBASE  8
-  /* Colors for stars start here */
-#define COLORSTEP  (NUMCOLORS/COLORBASE)	/* 8 colors per galaxy */
-
-#define drawStar(x,y,size) if(size<=1) XDrawPoint(display,window,gc,x,y);\
-  else XFillArc(display,window,gc,x,y,size,size,0,23040)
-
 
 static Bool tracks;
 
@@ -104,6 +75,48 @@ static OptionStruct desc[] =
 
 ModeSpecOpt galaxy_opts = { 2, opts, 1, vars, desc };
 
+
+#define FLOATRAND ((double) LRAND() / ((double) MAXRAND))
+
+#if 0
+#define WRAP       1		/* Warp around edges */
+#define BOUNCE     1		/* Bounce from borders */
+#endif
+
+#define MINSIZE       1
+#define MINGALAXIES    1
+#define MAX_STARS    300
+#define MAX_IDELTAT    50
+/* These come originally from the Cluster-version */
+#define DEFAULT_GALAXIES  2
+#define DEFAULT_STARS    1000
+#define DEFAULT_HITITERATIONS  7500
+#define DEFAULT_IDELTAT    200	/* 0.02 */
+#define EPSILON 0.00000001
+
+#define sqrt_EPSILON 0.0001
+
+#define DELTAT (MAX_IDELTAT * 0.0001)
+
+#define GALAXYRANGESIZE  0.1
+#define GALAXYMINSIZE  0.1
+#define QCONS    0.001
+
+/*-
+ *  The following is enabled, it does not look that good for some.
+ *  (But it looks great for me.)  Maybe velocities should be measured
+ *  relative to their galaxy-centers instead of absolute.
+ */
+#if 0
+#undef NO_VELOCITY_COLORING */	/* different colors for different speeds */
+#endif
+
+#define COLORBASE  8
+  /* Colors for stars start here */
+#define COLORSTEP  (NUMCOLORS/COLORBASE)	/* 8 colors per galaxy */
+
+#define drawStar(x,y,size) if(size<=1) XDrawPoint(display,window,gc,x,y);\
+  else XFillArc(display,window,gc,x,y,size,size,0,23040)
 
 typedef struct {
 	double      pos[3], vel[3];
@@ -135,7 +148,6 @@ typedef struct {
 	double      diff[3];	/* */
 	Galaxy     *galaxies;	/* the Whole Universe */
 	int         ngalaxies;	/* # galaxies */
-	double      f_deltat;	/* quality of calculation, calc'd by d_ideltat */
 	int         f_hititerations;	/* # iterations before restart */
 	int         step;	/* */
 } unistruct;
@@ -215,11 +227,11 @@ startover(ModeInfo * mi)
 		gt->vel[0] = FLOATRAND * 2.0 - 1.0;
 		gt->vel[1] = FLOATRAND * 2.0 - 1.0;
 		gt->vel[2] = FLOATRAND * 2.0 - 1.0;
-		gt->pos[0] = -gt->vel[0] * gp->f_deltat *
+		gt->pos[0] = -gt->vel[0] * DELTAT *
 			gp->f_hititerations + FLOATRAND - 0.5;
-		gt->pos[1] = -gt->vel[1] * gp->f_deltat *
+		gt->pos[1] = -gt->vel[1] * DELTAT *
 			gp->f_hititerations + FLOATRAND - 0.5;
-		gt->pos[2] = -gt->vel[2] * gp->f_deltat *
+		gt->pos[2] = -gt->vel[2] * DELTAT *
 			gp->f_hititerations + FLOATRAND - 0.5;
 
 		gt->mass = (int) (FLOATRAND * 1000.0) + 1;
@@ -252,6 +264,10 @@ startover(ModeInfo * mi)
 			st->vel[2] = -gp->mat[0][2] * v * sinw + gp->mat[1][2] * v * cosw +
 				gt->vel[2];
 
+			st->vel[0] *= DELTAT;
+			st->vel[1] *= DELTAT;
+			st->vel[2] *= DELTAT;
+
 			st->px = 0;
 			st->py = 0;
 
@@ -269,7 +285,7 @@ startover(ModeInfo * mi)
 #if 0
 	(void) printf("ngalaxies=%d, f_hititerations=%d\n",
 		      gp->ngalaxies, gp->f_hititerations);
-	(void) printf("f_deltat=%g\n", gp->f_deltat);
+	(void) printf("f_deltat=%g\n", DELTAT);
 	(void) printf("Screen: ");
 	(void) printf("%dx%d pixel (%d-%d, %d-%d)\n",
 	  (gp->clip.right - gp->clip.left), (gp->clip.bottom - gp->clip.top),
@@ -290,7 +306,6 @@ init_galaxy(ModeInfo * mi)
 	gp = &universes[MI_SCREEN(mi)];
 
 	gp->f_hititerations = MI_CYCLES(mi);
-	gp->f_deltat = ((double) MAX_IDELTAT) / 10000.0;
 
 	gp->clip.left = 0;
 	gp->clip.top = 0;
@@ -318,32 +333,40 @@ draw_galaxy(ModeInfo * mi)
 
 		for (j = 0; j < gp->galaxies[i].nstars; ++j) {
 			Star       *st = &gt->stars[j];
+			double      v0 = st->vel[0];
+			double      v1 = st->vel[1];
+			double      v2 = st->vel[2];
 
 			for (k = 0; k < gp->ngalaxies; ++k) {
 				Galaxy     *gtk = &gp->galaxies[k];
+				double      d0 = gtk->pos[0] - st->pos[0];
+				double      d1 = gtk->pos[1] - st->pos[1];
+				double      d2 = gtk->pos[2] - st->pos[2];
 
-				gp->diff[0] = gtk->pos[0] - st->pos[0];
-				gp->diff[1] = gtk->pos[1] - st->pos[1];
-				gp->diff[2] = gtk->pos[2] - st->pos[2];
-				d = gp->diff[0] * gp->diff[0] + gp->diff[1] * gp->diff[1] +
-					gp->diff[2] * gp->diff[2];
-				if (d < EPSILON)
-					d = EPSILON;
-				d = gt->mass / (d * sqrt(d)) * gp->f_deltat * QCONS;
-				gp->diff[0] *= d;
-				gp->diff[1] *= d;
-				gp->diff[2] *= d;
-				st->vel[0] += gp->diff[0];
-				st->vel[1] += gp->diff[1];
-				st->vel[2] += gp->diff[2];
+				d = d0 * d0 + d1 * d1 + d2 * d2;
+				if (d > EPSILON)
+					d = gt->mass / (d * sqrt(d)) * DELTAT * DELTAT * QCONS;
+				else
+					d = gt->mass / (EPSILON * sqrt_EPSILON) * DELTAT * DELTAT * QCONS;
+				v0 += d0 * d;
+				v1 += d1 * d;
+				v2 += d2 * d;
 			}
 
-			st->color = COLORSTEP * gt->galcol + ((int) ((st->vel[0] * st->vel[0] +
-				st->vel[1] * st->vel[1] + st->vel[2] * st->vel[2]) / 3.0)) % COLORSTEP;
+			st->vel[0] = v0;
+			st->vel[1] = v1;
+			st->vel[2] = v2;
 
-			st->pos[0] += st->vel[0] * gp->f_deltat;
-			st->pos[1] += st->vel[1] * gp->f_deltat;
-			st->pos[2] += st->vel[2] * gp->f_deltat;
+#ifndef NO_VELOCITY_COLORING
+			d = (v0 * v0 + v1 * v1 + v2 * v2) / (3.0 * DELTAT * DELTAT);
+			if (d > (double) COLORSTEP)
+				st->color = COLORSTEP * gt->galcol + COLORSTEP - 1;
+			else
+				st->color = COLORSTEP * gt->galcol + ((int) d) % COLORSTEP;
+#endif
+			st->pos[0] += v0;
+			st->pos[1] += v1;
+			st->pos[2] += v2;
 
 			if (st->px >= gp->clip.left &&
 			    st->px <= gp->clip.right - st->size &&
@@ -381,7 +404,11 @@ draw_galaxy(ModeInfo * mi)
 			    st->py >= gp->clip.top &&
 			    st->py <= gp->clip.bottom - st->size) {
 				if (MI_NPIXELS(mi) > 2)
+#ifdef NO_VELOCITY_COLORING
+					XSetForeground(display, gc, MI_PIXEL(mi, COLORSTEP * gt->galcol));
+#else
 					XSetForeground(display, gc, MI_PIXEL(mi, st->color));
+#endif
 				else
 					XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
 				if (tracks)
@@ -393,28 +420,28 @@ draw_galaxy(ModeInfo * mi)
 
 		for (k = i + 1; k < gp->ngalaxies; ++k) {
 			Galaxy     *gtk = &gp->galaxies[k];
+			double      d0 = gtk->pos[0] - gt->pos[0];
+			double      d1 = gtk->pos[1] - gt->pos[1];
+			double      d2 = gtk->pos[2] - gt->pos[2];
 
-			gp->diff[0] = gtk->pos[0] - gt->pos[0];
-			gp->diff[1] = gtk->pos[1] - gt->pos[1];
-			gp->diff[2] = gtk->pos[2] - gt->pos[2];
-			d = gp->diff[0] * gp->diff[0] + gp->diff[1] * gp->diff[1] +
-				gp->diff[2] * gp->diff[2];
-			if (d < EPSILON)
-				d = EPSILON;
-			d = gt->mass * gt->mass / (d * sqrt(d)) * gp->f_deltat * QCONS;
-			gp->diff[0] *= d;
-			gp->diff[1] *= d;
-			gp->diff[2] *= d;
-			gt->vel[0] += gp->diff[0] / gt->mass;
-			gt->vel[1] += gp->diff[1] / gt->mass;
-			gt->vel[2] += gp->diff[2] / gt->mass;
-			gtk->vel[0] -= gp->diff[0] / gtk->mass;
-			gtk->vel[1] -= gp->diff[1] / gtk->mass;
-			gtk->vel[2] -= gp->diff[2] / gtk->mass;
+			d = d0 * d0 + d1 * d1 + d2 * d2;
+			if (d > EPSILON)
+				d = gt->mass * gt->mass / (d * sqrt(d)) * DELTAT * QCONS;
+			else
+				d = gt->mass * gt->mass / (EPSILON * sqrt_EPSILON) * DELTAT * QCONS;
+			d0 *= d;
+			d1 *= d;
+			d2 *= d;
+			gt->vel[0] += d0 / gt->mass;
+			gt->vel[1] += d1 / gt->mass;
+			gt->vel[2] += d2 / gt->mass;
+			gtk->vel[0] -= d0 / gtk->mass;
+			gtk->vel[1] -= d1 / gtk->mass;
+			gtk->vel[2] -= d2 / gtk->mass;
 		}
-		gt->pos[0] += gt->vel[0] * gp->f_deltat;
-		gt->pos[1] += gt->vel[1] * gp->f_deltat;
-		gt->pos[2] += gt->vel[2] * gp->f_deltat;
+		gt->pos[0] += gt->vel[0] * DELTAT;
+		gt->pos[1] += gt->vel[1] * DELTAT;
+		gt->pos[2] += gt->vel[2] * DELTAT;
 	}
 
 	gp->step++;

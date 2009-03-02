@@ -11,8 +11,9 @@
 
 #include "screenhack.h"
 #include "colors.h"
+#include "erase.h"
 
-static GC draw_gc;
+static GC draw_gc, erase_gc;
 static unsigned int default_fg_pixel;
 #define NCOLORSMAX 200
 static XColor colors[NCOLORSMAX];
@@ -55,8 +56,17 @@ init_coral(Display *dpy, Window window)
     }
     gcv.foreground = default_fg_pixel = get_pixel_resource("foreground", "Foreground", dpy, cmap);
     draw_gc = XCreateGC(dpy, window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource ("background", "Background",dpy, cmap);
+    erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
     ncolors = NCOLORSMAX;
     make_uniform_colormap(dpy, xgwa.visual, cmap, colors, &ncolors, True, &writeable, False);
+    if (ncolors <= 0) {
+      ncolors = 2;
+      colors[0].red = colors[0].green = colors[0].blue = 0;
+      colors[1].red = colors[1].green = colors[1].blue = 0xFFFF;
+      XAllocColor(dpy, cmap, &colors[0]);
+      XAllocColor(dpy, cmap, &colors[1]);
+   }
     colorindex = random()%ncolors;
     
     density = get_integer_resource("density", "Integer");
@@ -221,6 +231,8 @@ char *defaults[] = {
     "*seeds: 20", /* too many for 640x480, too few for 1280x1024 */
     "*delay: 5",
     "*delay2: 1000",
+    "*eraseSpeed: 400",
+    "*eraseMode: -1",
     0
 };
 
@@ -229,6 +241,8 @@ XrmOptionDescRec options[] = {
     { "-seeds", ".seeds", XrmoptionSepArg, 0 },
     { "-delay", ".delay", XrmoptionSepArg, 0 },
     { "-delay2", ".delay2", XrmoptionSepArg, 0 },
+    { "-erase-speed", ".eraseSpeed", XrmoptionSepArg, 0 },
+    { "-erase-mode",  ".eraseMode",  XrmoptionSepArg, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -238,10 +252,10 @@ Display *dpy;
 Window window;
 {
     int delay = get_integer_resource ("delay", "Integer");
-
     while( 1 ) {
         init_coral(dpy, window);
         coral(dpy, window);
         if( delay ) sleep(delay);
+	erase_full_window(dpy, window);
     }
 }

@@ -249,7 +249,7 @@ reformat_hack(const char *hack)
   char *out = h2;
 
   while (isspace(*in)) in++;		/* skip whitespace */
-  while (!isspace(*in) && *in != ':')
+  while (*in && !isspace(*in) && *in != ':')
     *out++ = *in++;			/* snarf first token */
   while (isspace(*in)) in++;		/* skip whitespace */
 
@@ -348,8 +348,11 @@ get_screenhacks (saver_info *si)
 	      for (s2 = s+j+1; *s2 == ' ' || *s2 == '\t'; s2++)
 		k++;
 	      if (k > 0)
-		for (s2 = s + j + 1; *s2; s2++)
-		  s2 [0] = s2 [k];
+		{
+		  for (s2 = s+j+1; s2[k]; s2++)
+		    *s2 = s2[k];
+		  *s2 = 0;
+		}
 	      break;
 	    }
 	}
