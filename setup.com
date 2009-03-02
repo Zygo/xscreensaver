@@ -66,6 +66,7 @@ $ phosphor	:== $'mydir'phosphor
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
 $ rd-bomb	:== $'mydir'rd-bomb
+$ ripples	:== $'mydir'ripples
 $ rocks		:== $'mydir'rocks
 $ rorschach	:== $'mydir'rorschach
 $ rotor		:== $'mydir'rotor

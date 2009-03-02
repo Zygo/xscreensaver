@@ -87,6 +87,9 @@ struct saver_info {
   Bool fading_possible_p;	/* Whether fading to/from black is possible. */
   Bool throttled_p;             /* Whether we should temporarily just blank
                                    the screen, not run hacks. */
+  time_t blank_time;		/* The time at which the screen was blanked
+                                   (if currently blanked) or unblanked (if
+                                   not blanked.) */
 
 
   /* =======================================================================
@@ -371,6 +374,7 @@ extern void suspend_screenhack (saver_info *si, Bool suspend_p);
 extern Bool screenhack_running_p (saver_info *si);
 extern void emergency_kill_subproc (saver_info *si);
 extern Bool select_visual (saver_screen_info *ssi, const char *visual_name);
+extern void store_saver_status (saver_info *si);
 extern const char *signal_name (int signal);
 
 /* =======================================================================
@@ -401,7 +405,7 @@ extern Bool display_is_on_console_p (saver_info *si);
 
 extern Atom XA_VROOT, XA_XSETROOT_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
-extern Atom XA_SCREENSAVER_TIME;
+extern Atom XA_SCREENSAVER_STATUS, XA_LOCK, XA_BLANK;
 extern Atom XA_DEMO, XA_PREFS;
 
 #endif /* __XSCREENSAVER_H__ */

@@ -1,7 +1,7 @@
 Name: xscreensaver
 Summary: X screen saver and locker
 Vendor: Jamie Zawinski <jwz@jwz.org>
-Version: 3.19
+Version: 3.20
 Release: 1
 URL: http://www.jwz.org/xscreensaver/
 Source: xscreensaver-%{version}.tar.gz
@@ -60,10 +60,10 @@ install -m 4755 driver/xscreensaver $RPM_BUILD_ROOT/usr/X11R6/bin
       install -c -s $exe $RPM_BUILD_ROOT/usr/X11R6/bin
     done
     cd $RPM_BUILD_ROOT/usr/X11R6/bin
-    if [ -x xscreensaver-demo-Xaw3d ]; then target=Xaw3d; fi
     if [ -x xscreensaver-demo-Xaw   ]; then target=Xaw;   fi
-    if [ -x xscreensaver-demo-Gtk   ]; then target=Gtk;   fi
+    if [ -x xscreensaver-demo-Xaw3d ]; then target=Xaw3d; fi
     if [ -x xscreensaver-demo-Xm    ]; then target=Xm;    fi
+    if [ -x xscreensaver-demo-Gtk   ]; then target=Gtk;   fi
     rm -f xscreensaver-demo
     ln -s xscreensaver-demo-$target xscreensaver-demo
   fi

@@ -263,7 +263,8 @@ pick_best_visual_of_class (Screen *screen, int visual_class)
       /* choose the 'best' one, if multiple */
       int i, best;
       Visual *visual;
-      for (i = 0, best = 0; i < out_count; i++)
+/*      for (i = 0, best = 0; i < out_count; i++) */
+      for (i = out_count-1, best = i; i >= 0; i--) /* go backwards */
 	/* It's better if it's deeper, or if it's the same depth with
 	   more cells (does that ever happen?  Well, it could...) */
 	if ((vi_out [i].depth > vi_out [best].depth) ||

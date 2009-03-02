@@ -73,6 +73,7 @@ extern const char *blurb (void);
 
 
 static void get_screenhacks (saver_preferences *p);
+static char *format_command (const char *cmd, Bool wrap_p);
 
 
 static char *
@@ -410,6 +411,44 @@ tab_to (FILE *out, int from, int to)
   return from;
 }
 
+static char *
+stab_to (char *out, int from, int to)
+{
+  int tab_width = 8;
+  int to_mod = (to / tab_width) * tab_width;
+  while (from < to_mod)
+    {
+      *out++ = '\t';
+      from = (((from / tab_width) + 1) * tab_width);
+    }
+  while (from < to)
+    {
+      *out++ = ' ';
+      from++;
+    }
+  return out;
+}
+
+static int
+string_columns (const char *string, int length, int start)
+{
+  int tab_width = 8;
+  int col = start;
+  const char *end = string + length;
+  while (string < end)
+    {
+      if (*string == '\n')
+        col = 0;
+      else if (*string == '\t')
+        col = (((col / tab_width) + 1) * tab_width);
+      else
+        col++;
+      string++;
+    }
+  return col;
+}
+
+
 static void
 write_entry (FILE *out, const char *key, const char *value)
 {
@@ -417,10 +456,8 @@ write_entry (FILE *out, const char *key, const char *value)
   char *v2 = v;
   char *nl = 0;
   int col;
-  Bool do_visual_kludge = (!strcmp(key, "programs"));
-  Bool do_wrap = do_visual_kludge;
-  int tab = (do_visual_kludge ? 16 : 23);
-  int tab2 = 3;
+  Bool programs_p = (!strcmp(key, "programs"));
+  int tab = (programs_p ? 32 : 16);
   Bool first = True;
 
   fprintf(out, "%s:", key);
@@ -428,49 +465,35 @@ write_entry (FILE *out, const char *key, const char *value)
 
   while (1)
     {
-      char *s;
-      Bool disabled_p = False;
-
-      v2 = strip(v2);
+      if (!programs_p)
+        v2 = strip(v2);
       nl = strchr(v2, '\n');
       if (nl)
 	*nl = 0;
 
-      if (do_visual_kludge && *v2 == '-')
-	{
-	  disabled_p = True;
-	  v2++;
-	  v2 = strip(v2);
-	}
-
-      if (first && disabled_p)
-	first = False;
+      if (first && programs_p)
+        {
+	  col = tab_to (out, col, 77);
+	  fprintf (out, " \\\n");
+	  col = 0;
+        }
 
       if (first)
 	first = False;
       else
 	{
-	  col = tab_to(out, col, 75);
-	  fprintf(out, " \\n\\\n");
+	  col = tab_to (out, col, 75);
+	  fprintf (out, " \\n\\\n");
 	  col = 0;
 	}
 
-      if (disabled_p)
-	{
-	  fprintf(out, "-");
-	  col++;
-	}
+      if (!programs_p)
+        col = tab_to (out, col, tab);
 
-      s = (do_visual_kludge ? strpbrk(v2, " \t\n:") : 0);
-      if (s && *s == ':')
-	col = tab_to (out, col, tab2);
-      else
-	col = tab_to (out, col, tab);
-
-      if (do_wrap &&
-	  strlen(v2) + col > 75)
+      if (programs_p &&
+	  string_columns(v2, strlen (v2), col) + col > 75)
 	{
-	  int L = strlen(v2);
+	  int L = strlen (v2);
 	  int start = 0;
 	  int end = start;
 	  while (start < L)
@@ -480,7 +503,7 @@ write_entry (FILE *out, const char *key, const char *value)
 	      while (v2[end] != ' ' && v2[end] != '\t' &&
 		     v2[end] != '\n' && v2[end] != 0)
 		end++;
-	      if (col + (end - start) >= 74)
+	      if (string_columns (v2 + start, (end - start), col) >= 74)
 		{
 		  col = tab_to (out, col, 75);
 		  fprintf(out, "   \\\n");
@@ -489,17 +512,15 @@ write_entry (FILE *out, const char *key, const char *value)
 		    start++;
 		}
 
+              col = string_columns (v2 + start, (end - start), col);
 	      while (start < end)
-		{
-		  fputc(v2[start++], out);
-		  col++;
-		}
+                fputc(v2[start++], out);
 	    }
 	}
       else
 	{
 	  fprintf (out, "%s", v2);
-	  col += strlen(v2);
+	  col += string_columns(v2, strlen (v2), col);
 	}
 
       if (nl)
@@ -576,14 +597,24 @@ write_init_file (saver_preferences *p, const char *version_string)
   stderr_font = get_string_resource ("font", "Font");
 
   i = 0;
-  for (j = 0; j < p->screenhacks_count; j++)
-    i += strlen(p->screenhacks[j]) + 2;
   {
-    char *ss = programs = (char *) malloc(i + 10);
+    char *ss;
+    char **hack_strings = (char **)
+      calloc (p->screenhacks_count, sizeof(char *));
+
+    for (j = 0; j < p->screenhacks_count; j++)
+      {
+        hack_strings[j] = format_hack (p->screenhacks[j], True);
+        i += strlen (hack_strings[j]);
+        i += 2;
+      }
+
+    ss = programs = (char *) malloc(i + 10);
     *ss = 0;
     for (j = 0; j < p->screenhacks_count; j++)
       {
-	strcat(ss, p->screenhacks[j]);
+        strcat (ss, hack_strings[j]);
+        free (hack_strings[j]);
 	ss += strlen(ss);
 	*ss++ = '\n';
 	*ss = 0;
@@ -858,52 +889,73 @@ load_init_file (saver_preferences *p)
 /* Parsing the programs resource.
  */
 
-static char *
-reformat_hack (const char *hack)
+screenhack *
+parse_screenhack (const char *line)
 {
-  int i;
-  const char *in = hack;
-  int indent = 15;
-  char *h2 = (char *) malloc(strlen(in) + indent + 2);
-  char *out = h2;
-  Bool disabled_p = False;
+  screenhack *h = (screenhack *) calloc (1, sizeof(*h));
+  const char *s;
 
-  while (isspace(*in)) in++;		/* skip whitespace */
+  h->enabled_p = True;
 
-  if (*in == '-')			/* Handle a leading "-". */
+  while (isspace(*line)) line++;		/* skip whitespace */
+  if (*line == '-')				/* handle "-" */
     {
-      in++;
-      hack = in;
-      *out++ = '-';
-      *out++ = ' ';
-      disabled_p = True;
-      while (isspace(*in)) in++;
+      h->enabled_p = False;
+      line++;
+      while (isspace(*line)) line++;		/* skip whitespace */
     }
+
+  s = line;					/* handle "visual:" */
+  while (*line && *line != ':' && *line != '"' && !isspace(*line))
+    line++;
+  if (*line != ':')
+    line = s;
   else
     {
-      *out++ = ' ';
-      *out++ = ' ';
+      h->visual = (char *) malloc (line-s+1);
+      strncpy (h->visual, s, line-s);
+      h->visual[line-s] = 0;
+      if (*line == ':') line++;			/* skip ":" */
+      while (isspace(*line)) line++;		/* skip whitespace */
     }
 
-  while (*in && !isspace(*in) && *in != ':')
-    *out++ = *in++;			/* snarf first token */
-  while (isspace(*in)) in++;		/* skip whitespace */
-
-  if (*in == ':')
-    *out++ = *in++;			/* copy colon */
-  else
+  if (*line == '"')				/* handle "name" */
     {
-      in = hack;
-      out = h2 + 2;			/* reset to beginning */
+      line++;
+      s = line;
+      while (*line && *line != '"')
+        line++;
+      h->name = (char *) malloc (line-s+1);
+      strncpy (h->name, s, line-s);
+      h->name[line-s] = 0;
+      if (*line == '"') line++;			/* skip "\"" */
+      while (isspace(*line)) line++;		/* skip whitespace */
     }
 
-  *out = 0;
+  h->command = format_command (line, False);	/* handle command */
+  return h;
+}
 
-  while (isspace(*in)) in++;		/* skip whitespace */
-  for (i = strlen(h2); i < indent; i++)	/* indent */
-    *out++ = ' ';
 
-  /* copy the rest of the line. */
+void
+free_screenhack (screenhack *hack)
+{
+  if (hack->visual) free (hack->visual);
+  if (hack->name) free (hack->name);
+  free (hack->command);
+  memset (hack, 0, sizeof(*hack));
+  free (hack);
+}
+
+
+static char *
+format_command (const char *cmd, Bool wrap_p)
+{
+  int tab = 30;
+  int col = tab;
+  char *cmd2 = (char *) calloc (1, 2 * (strlen (cmd) + 1));
+  const char *in = cmd;
+  char *out = cmd2;
   while (*in)
     {
       /* shrink all whitespace to one space, for the benefit of the "demo"
@@ -913,30 +965,98 @@ reformat_hack (const char *hack)
       switch (*in)
 	{
 	case '\'': case '"': case '`': case '\\':
-	  {
-	    /* Metachars are scary.  Copy the rest of the line unchanged. */
-	    while (*in)
-	      *out++ = *in++;
-	  }
+          /* Metachars are scary.  Copy the rest of the line unchanged. */
+          while (*in)
+            *out++ = *in++, col++;
 	  break;
+
 	case ' ': case '\t':
-	  {
-	    while (*in == ' ' || *in == '\t')
-	      in++;
-	    *out++ = ' ';
-	  }
+          /* Squeeze all other whitespace down to one space. */
+          while (*in == ' ' || *in == '\t')
+            in++;
+          *out++ = ' ', col++;
 	  break;
+
 	default:
-	  *out++ = *in++;
+          /* Copy other chars unchanged. */
+	  *out++ = *in++, col++;
 	  break;
 	}
     }
+
   *out = 0;
 
-  /* strip trailing whitespace. */
-  out = out-1;
-  while (out > h2 && (*out == ' ' || *out == '\t' || *out == '\n'))
-    *out-- = 0;
+  /* Strip trailing whitespace */
+  while (out > cmd2 && isspace (out[-1]))
+    *(--out) = 0;
+
+  return cmd2;
+}
+
+
+char *
+format_hack (screenhack *hack, Bool wrap_p)
+{
+  int tab = 32;
+  int size = (2 * (strlen(hack->command) +
+                   (hack->visual ? strlen(hack->visual) : 0) +
+                   (hack->name ? strlen(hack->name) : 0) +
+                   tab));
+  char *h2 = (char *) malloc (size);
+  char *out = h2;
+  char *s;
+  int col = 0;
+
+  if (!hack->enabled_p) *out++ = '-';		/* write disabled flag */
+
+  if (hack->visual && *hack->visual)		/* write visual name */
+    {
+      if (hack->enabled_p) *out++ = ' ';
+      *out++ = ' ';
+      strcpy (out, hack->visual);
+      out += strlen (hack->visual);
+      *out++ = ':';
+      *out++ = ' ';
+    }
+
+  *out = 0;
+  col = string_columns (h2, strlen (h2), 0);
+
+  if (hack->name && *hack->name)		/* write pretty name */
+    {
+      int L = (strlen (hack->name) + 2);
+      if (L + col < tab)
+        out = stab_to (out, col, tab - L - 2);
+      else
+        *out++ = ' ';
+      *out++ = '"';
+      strcpy (out, hack->name);
+      out += strlen (hack->name);
+      *out++ = '"';
+      *out = 0;
+
+      col = string_columns (h2, strlen (h2), 0);
+      if (wrap_p && col >= tab)
+        {
+          out = stab_to (out, col, 77);
+          *out += strlen(out);
+        }
+      else
+        *out++ = ' ';
+
+      if (out >= h2+size) abort();
+    }
+
+  *out = 0;
+  col = string_columns (h2, strlen (h2), 0);
+  out = stab_to (out, col, tab);		/* indent */
+
+  if (out >= h2+size) abort();
+  s = format_command (hack->command, wrap_p);
+  strcpy (out, s);
+  out += strlen (s);
+  free (s);
+  *out = 0;
 
   return h2;
 }
@@ -971,7 +1091,7 @@ get_screenhacks (saver_preferences *p)
     {
       for (i = 0; i < p->screenhacks_count; i++)
 	if (p->screenhacks[i])
-	  free (p->screenhacks[i]);
+	  free_screenhack (p->screenhacks[i]);
       free(p->screenhacks);
       p->screenhacks = 0;
     }
@@ -995,7 +1115,7 @@ get_screenhacks (saver_preferences *p)
       i++;
   i++;
 
-  p->screenhacks = (char **) calloc (sizeof (char *), i+1);
+  p->screenhacks = (screenhack **) calloc (sizeof (screenhack *), i+1);
 
   /* Iterate over the lines in `d' (the string with newlines)
      and make new strings to stuff into the `screenhacks' array.
@@ -1015,7 +1135,7 @@ get_screenhacks (saver_preferences *p)
       /* null terminate. */
       d[end] = 0;
 
-      p->screenhacks[p->screenhacks_count++] = reformat_hack (d + start);
+      p->screenhacks[p->screenhacks_count++] = parse_screenhack (d + start);
       if (p->screenhacks_count >= i)
 	abort();
 

@@ -77,6 +77,25 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.19:   * Added new hack `ripples' and `sierpinski3d'.
+                      * Made `xscreensaver-command -exit' be silent when no
+                        screen saver was running (instead of complaining.)
+                      * Made `webcollage' and `vidwhacker' use `xloadimage'
+                        when available (in addition to `xli' and `xv'.)
+                      * Improved memory usage in `petri' and gave it a hard
+                        cap on how much memory it can allocate.
+                      * Added `-watch' option to `xscreensaver-command'.
+                      * Made `xscreensaver-demo' come up with the
+                        most-recently-run hack selected by default.
+                      * Rewrote the Gtk version of `xscreensaver-demo'.
+                        It's a lot easier to use now.
+                      * Extended the format of the programs list in the
+                        .xscreensaver file, for the benefit of the new
+                        capabilities of `xscreensaver-demo'.
+                        NOTE: you might want to delete your ~/.xscreensaver
+                        file and allow it to be re-created!  The old one
+                        should still work, but xscreensaver-demo won't be as
+                        pretty.
 Changes since 3.18:   * Fixed gcc dependencies in `bumps' and `ccurve'.
                       * New hack, `extrusion'.
                       * Some of the web sites that `webcollage' was using as

@@ -674,6 +674,7 @@ void SetupLight(void)
   glEnable (GL_LIGHTING);
 
   glColorMaterial (GL_FRONT, GL_DIFFUSE);
+  glColorMaterial (GL_BACK, GL_DIFFUSE);
   glEnable (GL_COLOR_MATERIAL);
 }
 
@@ -690,6 +691,8 @@ void resetProjection(void) {
 static void
 reshape(int width, int height)
 {
+  global_width=width;
+  global_height=height;
   glViewport( 0, 0, global_width, global_height );
   resetProjection();
 }
@@ -729,21 +732,21 @@ void initializeGL(GLsizei width, GLsizei height)
   int style;
   int mode;
 
-  global_width=width;
-  global_height=height;
-
+  reshape(width, height);
   glViewport( 0, 0, width, height ); 
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(0,0,0,0);
-  glCullFace(GL_BACK);
-  glEnable(GL_CULL_FACE);
+/*    glCullFace(GL_BACK); */
+/*    glEnable(GL_CULL_FACE); */
   glShadeModel(GL_SMOOTH);
 
   if (do_light)
 	SetupLight();
-  if (do_wire)
+  if (do_wire) {
 	glPolygonMode(GL_FRONT,GL_LINE);
+  	glPolygonMode(GL_BACK,GL_LINE);
+  }
   if (do_texture) {
 	Create_Texture(which_image, do_mipmap, do_texture_quality);
 	glEnable(GL_TEXTURE_2D);

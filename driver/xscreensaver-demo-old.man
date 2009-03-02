@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "12-Nov-99 (3.20)" "X Version 11"
+.TH XScreenSaver 1 "09-Nov-99 (3.19)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -27,167 +27,117 @@ file; and a tool for demoing the various graphics hacks that
 the \fIxscreensaver\fP daemon will launch.
 
 .B Note:
-this manual describes the Gtk version of the \fIxscreensaver\-demo\fP
-command.  The UI of the Motif and Athena versions of \fIxscreensaver\-demo\fP
-is a bit different (for now.)
+this manual describes the Motif and Athena versions of
+the \fIxscreensaver\-demo\fP command.  At this point, the Gtk 
+version of \fIxscreensaver\-demo\fP is somewhat more advanced.
 
-The main window consists of a menu bar and two tabbed pages.  The first page
-is for editing the list of demos, and the second is for editing various other
-parameters of the screensaver.
-.SH MENU COMMANDS
-All of these commands are on either the \fBFile\fP or \fBHelp\fP menus:
-.TP 4
-.B Blank Screen Now
-Activates the background \fIxscreensaver\fP daemon, which will then run
-a demo at random.  This is the same as running
-.BR xscreensaver-command (1)
-with the \fI\-activate\fP option.
-.TP 4
-.B Lock Screen Now
-Just like \fBBlank Screen Now\fP, except the screen will be locked as 
-well (even if it is not configured to lock all the time.)  This is the
-same as running
-.BR xscreensaver-command (1)
-with the \fI\-lock\fP option.
-.TP 4
-.B Kill Daemon
-If the xscreensaver daemon is running on this screen, kill it.
-This is the same as running
-.BR xscreensaver-command (1)
-with the \fI\-exit\fP option.
-.TP 4
-.B Restart Daemon
-If the xscreensaver daemon is running on this screen, kill it.
-Then launch it again.  This is the same as doing
-``\fIxscreensaver-command -exit\fP'' followed by ``\fIxscreensaver\fP''.
+The main dialog box contains a scrolling list, a text field, and a number 
+of buttons.  
 
-Note that it is \fInot\fP the same as doing
-``\fIxscreensaver-command -restart\fP''.
-.TP 4
-.B Exit
-Exits the \fIxscreensaver-demo\fP program (this program) without
-affecting the background \fIxscreensaver\fP daemon, if any.
-.TP 4
-.B About...
-Displays the version number of this program, \fIxscreensaver-demo\fP.
-.TP 4
-.B Documentation...
-Opens up a web browser looking at the XScreenSaver web page, where you
-can find online copies of the
-.BR xscreensaver (1),
-.BR xscreensaver\-demo (1),
-and
-.BR xscreensaver\-command (1)
-manuals.
-.SH GRAPHICS DEMOS TAB
-On the left is a list of the names of the various display modes, and
-on the right are some fields that let you edit their behavior.
-.TP 4
-.B Demo List
-Double-clicking in the list on the left will let you try out the indicated
-demo.  The screen will go black, and the program will run in full-screen
-mode, just as it would if the \fIxscreensaver\fP daemon had launched it.
-Clicking the mouse again will stop the demo and un-blank the screen, making
-the dialog box visible again.
+Double-clicking on one of the programs in the list will run it.  The screen
+will go black, and the program will run in full-screen mode, just as it would
+if the \fIxscreensaver\fP daemon had launched it.  Clicking the mouse again
+will stop the demo and un-blank the screen, making the dialog box visible 
+again.
 
-Single-clicking in the list will populate the fields on the right side of
-the window.
-.TP 4
-.B Arrow Buttons
-Beneath the list are a pair of up and down arrows. Clicking on the down 
-arrow will select the next item in the list, and then run it in full-screen
-mode, just as if you had double-clicked on it.  The up arrow goes the other
-way.  This is just a shortcut for trying out all of the display modes in turn.
-.TP 4
-.B Program Description
-At the top will be a brief description of the program.  Below that is a
-text field where you can edit the arguments to the program as xscreensaver
-will invoke it.  (Note that most of these programs have their own man pages
-that describe the command-line options they take.)
-.TP 4
-.B Enabled
-The \fIEnabled\fI checkbox controls whether xscreensaver will use this
-display mode at all.  This way, all the modes can remain available, but
-you can choose which ones will be automatically run.
-.TP 4
-.B Visual
-The \fIVisual\fI field is where you can select the X visual type that this
-demo will require.  If you specify one (other than \fIAny\fP) then the
-program will only be run on that kind of visual.  For example, you can
+Single-clicking in the list will place the indicated program and its args
+in the text field to be edited.  Edit the arguments and hit return to run
+the program with the parameters you have specified.  This will also save
+your changes to your \fI~/.xscreensaver\fP file: so any changes you make
+in this way are persistent.
+
+If one of the lines in the scrolling list begins with the character "-",
+then that means that the program is disabled: \fIxscreensaver\fP will not
+select it to be run (though you can still try it out by clicking on it.)
+Rather than just deleting the programs you don't want to run, you might
+want to disable them in this way instead, so that you can more easily change
+your mind later.
+
+If the line begins with the name of a visual, followed by a colon, then
+that program will only be run on that kind of visual.  For example, you can
 specify that a particular program should only be run if color is available,
-and another should only be run in monochrome.  See the discussion of the
-\fIprograms\fP parameter in the \fIConfiguration\fP section of the
+and another should only be run in monochrome.  See the discussion of 
+the \fIprograms\fP parameter in the \fIConfiguration\fP section of the
 .BR xscreensaver (1)
 manual.
 
-This is a combo-box, so you can either select an item from the popup menu,
-or type in a specific visual's hexadecimal ID.
-.TP 4
-.B Demo
-This button saves your changes and runs the demo in full-screen mode so
-that you can try it out.  Click the mouse to dismiss it.
-.TP 4
-.B Apply
-This button saves your changes to your \fI~/.xscreensaver\fP file,
-where the
+The buttons are:
+.TP 8
+.B Run Next
+Clicking this button will run the next program in the list after the 
+currently-selected one, and will wrap around to the top when it reaches
+the bottom.
+.TP 8
+.B Run Previous
+Opposite of Run Next; at the top, it wraps around to the bottom.
+.TP 8
+.B Preferences
+This pops up a second dialog box, in which you have the option to 
+interactively change most of the screensaver's operational parameters,
+such as its timeouts, and whether it should lock the screen.  When you
+click OK, your chosen settings will take effect immediately, and will
+also be saved to the \fI~/.xscreensaver\fP file in your home directory,
+so that the settings will persist next time.
+.TP 8
+.B Quit
+Exits the \fIxscreensaver-demo\fP program.  The background \fIxscreensaver\fP
+daemon will continue running as before.
+.P
+The Preferences dialog box lets you change the following settings.
+
+(There are more settings available, but these are the most commonly used
+ones; see the manual for
 .BR xscreensaver (1)
-can see them.
-.TP 4
-.B Cancel
-This button discards any unsaved changes you have made, and reverts the
-settings for the selected demo back to what they were before.  Note that
-once you hit \fIDemo\fP or \fIApply\fP, that's it!
-.SH SCREENSAVER OPTIONS TAB
-This tab lets you change various settings used by the xscreensaver daemon
-itself, rather than its sub-programs.
-.TP 4
+for other parameters that can be set by editing the \fI~/.xscreensaver\fP
+file, or the X resource database.)
+.TP 8
 .B Saver Timeout
 After the user has been idle this long, the \fIxscreensaver\fP daemon
 will blank the screen.
-.TP 4
+.TP 8
 .B Cycle Timeout
 After the screensaver has been running for this long, the currently
 running graphics demo will be killed, and a new one started.  
 If this is 0, then the graphics demo will never be changed:
 only one demo will run until the screensaver is deactivated by user 
 activity.
-.TP 4
+.TP 8
 .B Verbose\ 
 Whether to print lots of debugging information.
-.TP 4
+.TP 8
 .B Install Colormap
 Whether to install a private colormap while the screensaver is active, so
 that the graphics hacks can get as many colors as possible.  (This only
 applies when the screen's default visual is being used, since non-default
 visuals get their own colormaps automatically.)  This can also be overridden
 on a per-demo basis.
-.TP 4
+.TP 8
 .B Fade Colormap
 If selected, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  This only
 works on displays with writable colormaps, that is, if the screen's default
 visual is a PseudoColor visual.  A fade will also be done when
 switching graphics hacks (when the \fICycle Timeout\fP expires.)
-.TP 4
+.TP 8
 .B Unfade Colormap
 The complement to \fIFade Colormap\fP: if selected, then when the screensaver
 deactivates, the original contents of the screen will fade in from black
 instead of appearing immediately.  This only works on displays with writable
 colormaps, and when \fIFade Colormap\fP is also selected.
-.TP 4
+.TP 8
 .B Fade Duration
 When fading or unfading are selected, this controls how long the fade will
 take.
-.TP 4
+.TP 8
 .B Fade Ticks
 This controls how many times a second the colormap will be changed to 
 effect a fade.  Higher numbers yield smoother fades, but may make the
 fades take longer than the specified number of seconds, if your server
 isn't fast enough to keep up.
-.TP 4
+.TP 8
 .B Require Password
 Whether the screen saver should lock the screen when it activates.
-.TP 4
+.TP 8
 .B Lock Timeout
 If \fIRequire Password\fP is selected, this controls the length of 
 the ``grace period'' between when the screensaver activates, and when the
@@ -199,17 +149,11 @@ at 15 minutes or later (that is, \fILock Timeout\fP minutes after
 activation) then a password would be required.  The default is 0, meaning
 that if locking is enabled, then a password will be required as soon as the 
 screen blanks.
-.TP 4
+.TP 8
 .B Password Timeout
 When the screensaver is prompting for a password, the prompt dialog box will
 stay on the screen for this long before giving up, and reverting to 
 screen-saving mode.
-.PP
-There are more settings than these available, but these are the most 
-commonly used ones; see the manual for
-.BR xscreensaver (1)
-for other parameters that can be set by editing the \fI~/.xscreensaver\fP
-file, or the X resource database.
 .SH COMMAND-LINE OPTIONS
 .I xscreensaver\-demo
 accepts the following command line options.
@@ -220,8 +164,8 @@ window on that display, and also control the \fIxscreensaver\fP daemon that
 is managing that same display.
 .TP 8
 .B \-prefs
-Start up with the \fBScreensaver Options\fP tab selected by default
-instead of the \fBGraphics Demos\fP tab.
+Start up in Preferences mode: this is just like launching the program with
+no arguments, and then pressing the \fIPreferences\fP button.
 .P
 It is important that the \fIxscreensaver\fP and \fIxscreensaver\-demo\fP
 processes be running on the same machine, or at least, on two machines

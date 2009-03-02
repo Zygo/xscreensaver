@@ -533,9 +533,9 @@ static void plain_draw(int k)
 		XShmPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
 				2*radius+speed+2, 2*radius+speed+2, False);
 	else
-# endif
 
 	if (!use_shm)
+# endif
 		XPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
 				2*radius+speed+2, 2*radius+speed+2);
 

@@ -28,6 +28,15 @@
 */
 
 
+/* Changelog ******************************************************************
+
+	1.0.1  19990716  Assume that XGetImage()/XDestroyImage() don't leak,
+	                  which they apparently don't.  I have no idea how I
+	                  convinced myself that they did.  Huh.  (greg@eod.com)
+	1.0.0  19990716  Initial release
+*/
+
+
 /* Arguments ******************************************************************
 
 	-font font           Font to use
@@ -742,11 +751,8 @@ int main(int argc,char* argv[])
 					 image_Y,image_Width,image_Height);
 				}
 
-				/* Free the image (and it's goddamned structure
-				   -- the man page for XCreateImage() lies,
-				   lies, lies!) */
+				/* Free the image */
 				XDestroyImage(image_Image);
-				XFree(image_Image);
 			}
 
 			/* Restore the error handler, ungrab the server */

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "30-Oct-99 (3.19)" "X Version 11"
+.TH XScreenSaver 1 "12-Nov-99 (3.20)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -31,7 +31,8 @@ xscreensaver-command - control a running xscreensaver process
 [\-throttle] \
 [\-unthrottle] \
 [\-version] \
-[\-time]
+[\-time] \
+[\-watch]
 .SH DESCRIPTION
 The \fIxscreensaver\-command\fP program controls a running \fIxscreensaver\fP
 process by sending it client-messages.
@@ -177,6 +178,53 @@ launching it again.
 The important point is, you need to make sure that the xscreensaver 
 process is running as you.  If it's not, it won't be reading the 
 right \fI.xscreensaver\fP file.
+.TP 8
+.B \-watch
+Prints a line each time the screensaver changes state: when the screen
+blanks, locks, unblanks, or when the running hack is changed.  This option
+never returns; it is intended for by shell scripts that want to react to
+the screensaver in some way.  An example of its output would be:
+.EX
+BLANK Fri Nov  5 01:57:22 1999
+RUN 34
+RUN 79
+RUN 16
+LOCK Fri Nov  5 01:57:22 1999
+RUN 76
+RUN 12
+UNBLANK Fri Nov  5 02:05:59 1999
+.EE
+The above shows the screensaver activating, running three different
+hacks, then locking (perhaps because the lock-timeout went off) then
+unblanking (because the user became active, and typed the correct
+password.)  The hack numbers are their index in the `programs'
+list (starting with 1, not 0, as for the \fI\-select\fP command.)
+
+For example, suppose you want to run a program that turns down the volume
+on your machine when the screen blanks, and turns it back up when the screen
+un-blanks.  You could do that by running a Perl program like the following
+in the background.  The following program tracks the output of 
+the \fI\-watch\fP command and reacts accordingly:
+.EX
+#!/usr/bin/perl
+
+my $blanked = 0;
+open (IN, "xscreensaver-command -watch |");
+while (<IN>) {
+    if (m/^(BLANK|LOCK)/) {
+        if (!$blanked) {
+            system "sound-off";
+            $blanked = 1;
+        }
+    } elsif (m/^UNBLANK/) {
+        system "sound-on";
+        $blanked = 0;
+    }
+}
+.EE
+Note that LOCK might come either with or without a preceeding BLANK
+(depending on whether the lock-timeout is non-zero), so the above program
+is keeps track of both of them.
 .SH DIAGNOSTICS
 If an error occurs while communicating with the \fIxscreensaver\fP daemon, or
 if the daemon reports an error, a diagnostic message will be printed to

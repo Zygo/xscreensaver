@@ -28,7 +28,7 @@
  *   - plot the process table, by process size, cpu usage, or total time;
  *   - plot the logged on users by idle time or cpu usage.
  *
- * Copyright (C) 1998 by Stephen Martin (smartin@canada.com).
+ * Copyright (C) 1998 by Stephen Martin (smartin@vanderfleet-martin.net).
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -37,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -192,7 +192,7 @@ typedef struct {
 	centrex, centrey, radius; /* Parts of the scope circle */
     Bogie *visable;		/* List of visable objects */
     int current;		/* Current position of sweep */
-
+    int sweepnum;               /* The current id of the sweep */
     int delay;			/* how long between each frame of the anim */
 
 } sonar_info;
@@ -234,7 +234,6 @@ typedef struct {
 
 static int timer_expired;
 
-
 #endif /* HAVE_PING */
 
 /*
@@ -245,7 +244,7 @@ typedef struct sim_target {
     char *name;			/* The name of the target */
     int nexttick;		/* The next tick that this will be seen */
     int nextdist;		/* The distance on that tick */
-    int movedlasttick;		/* Flag to indicate we just moved this one */
+    int movedonsweep;		/* The number of the sweep this last moved */
 } sim_target;
 
 /*
@@ -587,7 +586,7 @@ readPingHostsFile(char *fname)
               addr = NULL;
             }
         }
-        printf ("\"%s\" \"%s\"\n", name, addr);
+        /*printf ("\"%s\" \"%s\"\n", name, addr);*/
 
 	/* Create a new target using first the name then the address */
 
@@ -1096,6 +1095,11 @@ static Bogie *
 ping(sonar_info *si, void *vpi) 
 {
 
+    /*
+     * This tries to distribute the targets evely around the field of the
+     * sonar.
+     */
+
     ping_info *pi = (ping_info *) vpi;
     static ping_target *ptr = NULL;
 
@@ -1184,6 +1188,7 @@ init_sim(void)
 	sprintf(si->teamA[i].name, "%s%03d", si->teamAID, i+1);
 	si->teamA[i].nexttick = (int) (90.0 * random() / RAND_MAX);
 	si->teamA[i].nextdist = (int) (100.0 * random() / RAND_MAX);
+	si->teamA[i].movedonsweep = -1;
     }
 
     /* Team B */
@@ -1206,6 +1211,7 @@ init_sim(void)
 	sprintf(si->teamB[i].name, "%s%03d", si->teamBID, i+1);
 	si->teamB[i].nexttick = (int) (90.0 * random() / RAND_MAX);
 	si->teamB[i].nextdist = (int) (100.0 * random() / RAND_MAX);
+	si->teamB[i].movedonsweep = -1;
     }
 
     /* Done */
@@ -1261,6 +1267,7 @@ init_sonar(Display *dpy, Window win)
     si->miny = si->centrey - MY_MIN(si->centrex, si->centrey) + 10;
     si->radius = si->maxx - si->centrex;
     si->current = 0;
+    si->sweepnum = 0;
 
     /* Get the font */
 
@@ -1348,7 +1355,6 @@ updateLocation(sim_target *t)
 
     int xdist, xtick;
 
-    t->movedlasttick = 1;
     xtick = (int) (3.0 * random() / RAND_MAX) - 1;
     xdist = (int) (11.0 * random() / RAND_MAX) - 5;
     if (((t->nexttick + xtick) < 90) && ((t->nexttick + xtick) >= 0))
@@ -1387,29 +1393,30 @@ simulator(sonar_info *si, void *vinfo)
 
     for (i = 0; i < info->numA; i++) {
 	t = &info->teamA[i];
-	if (!t->movedlasttick && (t->nexttick == (si->current * -1))) {
+	if ((t->movedonsweep != si->sweepnum) &&
+	    (t->nexttick == (si->current * -1))) {
 	    new = newBogie(strdup(t->name), t->nextdist, si->current, TTL);
 	    if (list != NULL)
 		new->next = list;
 	    list = new;
 	    updateLocation(t);
-	} else
-	    t->movedlasttick = 0;
+	    t->movedonsweep = si->sweepnum;
+	}
     }
 
     /* Team B */
 
     for (i = 0; i < info->numB; i++) {
 	t = &info->teamB[i];
-	if (!t->movedlasttick && (t->nexttick == (si->current * -1))) {
+	if ((t->movedonsweep != si->sweepnum) &&
+	    (t->nexttick == (si->current * -1))) {
 	    new = newBogie(strdup(t->name), t->nextdist, si->current, TTL);
 	    if (list != NULL)
 		new->next = list;
 	    list = new;
-	    t->movedlasttick = 1;
 	    updateLocation(t);
-	} else
-	    t->movedlasttick = 0;
+	    t->movedonsweep = si->sweepnum;
+	}
     }
 
     /* Done */
@@ -1743,11 +1750,14 @@ screenhack(Display *dpy, Window win)
         /* Set up and sleep for the next one */
 
 	si->current = (si->current - 1) % 90;
+	if (si->current == 0)
+	  si->sweepnum++;
 	XSync (dpy, False);
 	gettimeofday(&finish, (struct timezone *) 0);
 	sleeptime = si->delay - delta(&start, &finish);
         screenhack_handle_events (dpy);
 	if (sleeptime > 0L)
 	    usleep(sleeptime);
+
     }
 }

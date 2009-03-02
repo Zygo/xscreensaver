@@ -348,6 +348,16 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
 	else
 	  fprintf (stderr, "%s: pointer moved at %s on screen %d.\n",
 		   blurb(), timestring(), i);
+
+# if 0
+      fprintf (stderr, "%s: old: %d %d 0x%x ; new: %d %d 0x%x\n",
+               blurb(), 
+               ssi->poll_mouse_last_root_x,
+               ssi->poll_mouse_last_root_y,
+               (unsigned int) ssi->poll_mouse_last_child,
+               root_x, root_y, (unsigned int) child);
+# endif /* 0 */
+
 #endif /* DEBUG_TIMERS */
 
       si->last_activity_screen    = ssi;
@@ -456,7 +466,7 @@ swallow_unlock_typeahead_events (saver_info *si, XEvent *e)
       if (event.xany.type == KeyPress)
         {
           char s[2];
-          int size = XLookupString (&event, s, 1, 0, 0);
+          int size = XLookupString ((XKeyEvent *) &event, s, 1, 0, 0);
           if (size != 1) continue;
           switch (*s)
             {

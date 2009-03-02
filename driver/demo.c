@@ -17,16 +17,9 @@
 
 #ifdef FORCE_ATHENA
 # undef HAVE_MOTIF
-# undef HAVE_GTK
 # define HAVE_ATHENA 1
 #endif
-#ifdef FORCE_GTK
-# undef HAVE_MOTIF
-# undef HAVE_ATHENA
-# define HAVE_GTK 1
-#endif
 #ifdef FORCE_MOTIF
-# undef HAVE_GTK
 # undef HAVE_ATHENA
 # define HAVE_MOTIF 1
 #endif
@@ -34,15 +27,9 @@
 /* Only one, please. */
 #ifdef HAVE_MOTIF
 # undef HAVE_ATHENA
-# undef HAVE_GTK
-#endif
-#ifdef HAVE_GTK
-# undef HAVE_MOTIF
-# undef HAVE_ATHENA
 #endif
 #ifdef HAVE_ATHENA
 # undef HAVE_MOTIF
-# undef HAVE_GTK
 #endif
 
 
@@ -64,6 +51,8 @@
 
 #include <stdio.h>
 
+#include <X11/Xproto.h>		/* for CARD32 */
+#include <X11/Xatom.h>		/* for XA_INTEGER */
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 
@@ -106,9 +95,6 @@
 # include <X11/Xaw/Scrollbar.h>
 # include <X11/Xaw/Text.h>
 
-#elif defined(HAVE_GTK)
-# include <gtk/gtk.h>
-extern Display *gdk_display;
 #endif /* HAVE_ATHENA */
 
 #include "version.h"
@@ -122,14 +108,8 @@ extern Display *gdk_display;
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_GTK
-# define WIDGET GtkWidget *
-# define POINTER gpointer
-#else
-# define WIDGET Widget
-# define POINTER XtPointer
-#endif
-
+#define WIDGET Widget
+#define POINTER XtPointer
 
 
 char *progname = 0;
@@ -153,7 +133,8 @@ static char *short_version = 0;
 
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
-Atom XA_SCREENSAVER_TIME, XA_SCREENSAVER_ID, XA_SELECT, XA_DEMO, XA_RESTART;
+Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
+Atom XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
 
 extern void create_demo_dialog (Widget, Visual *, Colormap);
 extern void create_preferences_dialog (Widget, Visual *, Colormap);
@@ -222,29 +203,7 @@ extern WIDGET lock_toggle;
 # define widget_screen(widget) XtScreen(widget)
 # define CB_ARGS(a,b,c) (a,b,c)
 
-#elif defined(HAVE_GTK)
-
-# define set_toggle_button_state(toggle,state) \
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(toggle),(state))
-# define set_text_string(text_widget,string) \
-  gtk_entry_set_text (GTK_ENTRY (text_widget), (string))
-# define add_button_callback(button,cb,arg) \
-  gtk_signal_connect_object (GTK_OBJECT (button), "clicked", \
-                             GTK_SIGNAL_FUNC (cb), (arg))
-# define add_toggle_callback(button,cb,arg) \
-  gtk_signal_connect_object (GTK_OBJECT (button), "toggled", \
-                             GTK_SIGNAL_FUNC (cb), (arg))
-# define add_text_callback(button,cb,arg) \
-  gtk_signal_connect_object (GTK_OBJECT (button), "activate", \
-                             GTK_SIGNAL_FUNC (cb), (arg))
-# define disable_widget(widget) \
-  gtk_widget_set_sensitive (GTK_WIDGET(widget), FALSE)
-# define widget_name(widget) gtk_widget_get_name(GTK_WIDGET(widget))
-# define widget_display(widget) (gdk_display)
-# define widget_screen(widget) (DefaultScreenOfDisplay(widget_display(widget)))
-# define CB_ARGS(a,b,c) (b,a)
-
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
 
 
@@ -264,9 +223,7 @@ get_text_string (WIDGET text_widget)
     string = 0;
 
   return string;
-#elif defined(HAVE_GTK)
-  return gtk_entry_get_text (GTK_ENTRY (text_widget));
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 }
 
 
@@ -285,11 +242,7 @@ get_label_string (WIDGET label_widget)
   char *label = 0;
   XtVaGetValues (label_widget, XtNlabel, &label, 0);
   return (label ? strdup(label) : 0);
-#elif defined(HAVE_GTK)
-  char *label = 0;
-  gtk_label_get (GTK_LABEL (label_widget), &label);
-  return label;
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 }
 
 
@@ -302,9 +255,7 @@ set_label_string (WIDGET label_widget, char *string)
   XmStringFree (xm_string);
 #elif defined(HAVE_ATHENA)
   XtVaSetValues (label_widget, XtNlabel, string, 0);
-#elif defined(HAVE_GTK)
-  gtk_label_set_text (GTK_LABEL (label_widget), string);
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 }
 
 
@@ -324,10 +275,7 @@ format_into_label (WIDGET label, const char *arg)
 
     set_label_string (label, buf);
     free (buf);
-
-# ifndef HAVE_GTK
     XtFree (text);
-# endif /* HAVE_GTK */
 }
 
 
@@ -410,68 +358,33 @@ ensure_selected_item_visible (WIDGET list)
       XawViewportSetCoordinates (viewport, vp_x, current_y);
     }
 # endif /* HAVE_XawViewportSetCoordinates */
-#elif defined(HAVE_GTK)
-
-  GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (list);
-  GtkViewport *vp = GTK_VIEWPORT (GTK_BIN(scroller)->child);
-  GtkList *list_widget = GTK_LIST (GTK_BIN(vp)->child);
-  GList *kids;
-  int nkids = 0;
-  GtkWidget *selected = 0;
-  int which = -1;
-  GtkAdjustment *adj;
-  gint parent_h, child_y, child_h, children_h, ignore;
-  double ratio_t, ratio_b;
-
-  GList *slist = list_widget->selection;
-  selected = (slist ? GTK_WIDGET (slist->data) : 0);
-  if (!selected)
-    return;
-
-  which = gtk_list_child_position (list_widget, GTK_WIDGET (selected));
-
-  for (kids = gtk_container_children (GTK_CONTAINER (list_widget));
-       kids; kids = kids->next)
-    nkids++;
-
-  adj = gtk_scrolled_window_get_vadjustment (scroller);                        
-
-  gdk_window_get_geometry (GTK_WIDGET(vp)->window,
-                           &ignore, &ignore, &ignore, &parent_h, &ignore);
-  gdk_window_get_geometry (GTK_WIDGET(selected)->window,
-                           &ignore, &child_y, &ignore, &child_h, &ignore);
-  children_h = nkids * child_h;
-
-  ratio_t = ((double) child_y) / ((double) children_h);
-  ratio_b = ((double) child_y + child_h) / ((double) children_h);
-
-  if (ratio_t < (adj->value / adj->upper) ||
-      ratio_b > ((adj->value + adj->page_size) / adj->upper))
-    {
-      double target;
-
-      if (ratio_t < (adj->value / adj->upper))
-        {
-          double ratio_w = ((double) parent_h) / ((double) children_h);
-          double ratio_l = (ratio_b - ratio_t);
-          target = ((ratio_t - ratio_w + ratio_l) * adj->upper);
-        }
-      else /* if (ratio_b > ((adj->value + adj->page_size) / adj->upper))*/
-        {
-          target = ratio_t * adj->upper;
-        }
-
-      if (target > adj->upper - adj->page_size)
-        target = adj->upper - adj->page_size;
-      if (target < 0)
-        target = 0;
-
-      gtk_adjustment_set_value (adj, target);
-    }
-
-
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 }
+
+
+#ifdef HAVE_ATHENA
+static void
+set_hack_list (Widget demo_list, saver_preferences *p)
+{
+  char **strings = (char **) calloc (sizeof (char *), p->screenhacks_count);
+  int i;
+  for (i = 0; i < p->screenhacks_count; i++)
+    strings[i] = format_hack (p->screenhacks[i], False);
+  XtVaSetValues (demo_list,
+                 XtNlist, strings,
+                 XtNnumberStrings, p->screenhacks_count,
+                 0);
+# if 0
+  for (i = 0; i < p->screenhacks_count; i++)
+    {
+      free (strings[i]);
+      strings[i] = (char *) 0xDEADBEEF;
+    }
+  free (strings);
+# endif
+}
+#endif /* HAVE_ATHENA */
+
 
 
 /* Callback for the text area:
@@ -479,15 +392,9 @@ ensure_selected_item_visible (WIDGET list)
    - change the corresponding element in `screenhacks';
    - write the .xscreensaver file;
    - tell the xscreensaver daemon to run that hack.
-
-   (Note: in GTK, this one has a different arg list than the other callbacks.)
  */
 static void
-#ifdef HAVE_GTK
-text_cb (WIDGET text_widget, POINTER client_data)
-#else  /* !HAVE_GTK */
 text_cb (WIDGET text_widget, POINTER client_data, POINTER call_data)
-#endif /* !HAVE_GTK */
 {
   saver_preferences *p = (saver_preferences *) client_data;
   char *new_text = get_text_string (text_widget);
@@ -506,33 +413,21 @@ text_cb (WIDGET text_widget, POINTER client_data, POINTER call_data)
     hack_number = pos_list[0] - 1;
   if (pos_list)
     XtFree ((char *) pos_list);
-#elif defined(HAVE_GTK)
-  GList *slist =
-    GTK_LIST (GTK_BIN(GTK_BIN(demo_list)->child)->child)->selection;
-  GtkWidget *selected = (slist ? GTK_WIDGET (slist->data) : 0);
-  if (selected)
-    hack_number =
-      gtk_list_child_position (
-                         GTK_LIST (GTK_BIN(GTK_BIN(demo_list)->child)->child),
-                         GTK_WIDGET (selected));
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
   ensure_selected_item_visible (demo_list);
 
   if (hack_number < 0 || hack_number >= p->screenhacks_count)
     {
       set_text_string (text_widget, "");
-#ifdef HAVE_GTK
-      gdk_beep();
-#else  /* !HAVE_GTK */
       XBell (XtDisplay (text_widget), 0);
-#endif /* !HAVE_GTK */
     }
   else
     {
+      screenhack *new_hack = parse_screenhack (new_text);
       if (p->screenhacks [hack_number])
-	free (p->screenhacks [hack_number]);
-      p->screenhacks [hack_number] = strdup (new_text);
+	free_screenhack (p->screenhacks [hack_number]);
+      p->screenhacks [hack_number] = new_hack;
 
 #ifdef HAVE_MOTIF
 
@@ -554,34 +449,16 @@ text_cb (WIDGET text_widget, POINTER client_data, POINTER call_data)
 	float sb_top = 0;
 
 	XawListUnhighlight (demo_list);
-
 	XtVaGetValues (vp, XtNx, &vp_x, 0);
 	XtVaGetValues (sb, XtNtopOfThumb, &sb_top, 0);
 	XtVaGetValues (demo_list, XtNheight, &list_h, 0);
 	vp_y = (sb_top * list_h);
-	XtVaSetValues (demo_list,
-		       XtNlist, p->screenhacks,
-		       XtNnumberStrings, p->screenhacks_count,
-		       0);
+        set_hack_list (demo_list, p);
 	XawViewportSetCoordinates (vp, vp_x, vp_y);
 	XawListHighlight (demo_list, hack_number);
       }
 
-#elif defined(HAVE_GTK)
-      {
-        GtkList *list_widget =
-          GTK_LIST (GTK_BIN(GTK_BIN(demo_list)->child)->child);
-        GList *slist = list_widget->selection;
-        GtkWidget *selected = (slist ? GTK_WIDGET (slist->data) : 0);
-        GtkLabel *label = (selected
-                           ? GTK_LABEL (GTK_BIN (selected)->child) : 0);
-        char *old_text = 0;
-        gtk_label_get (label, &old_text);
-        save = !!strcmp (new_text, old_text);
-        if (label)
-          gtk_label_set_text (label, new_text);
-      }
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
       if (save)
         write_init_file (p, short_version);
@@ -610,49 +487,6 @@ static char translations[] = ("<Key>Return:	done()\n"
 			      "Ctrl<Key>M:	done()\n"
 			      "Ctrl<Key>J:	done()\n");
 #endif /* HAVE_ATHENA */
-
-
-#ifdef HAVE_GTK
-/* Helper for the Gtk versions of the Run Next and Run Previous buttons.
- */
-static void
-next_internal (GtkEntry *entry, gboolean next_p)
-{
-  GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (demo_list);
-  GtkList *list_widget = GTK_LIST(GTK_BIN(GTK_BIN(scroller)->child)->child);
-  GtkWidget *target = 0;
-  GList *kids;
-  int nkids = 0;
-  int n;
-
-  GList *slist = list_widget->selection;
-  target = (slist ? GTK_WIDGET (slist->data) : 0);
-
-  for (kids = gtk_container_children (GTK_CONTAINER (list_widget));
-       kids; kids = kids->next)
-    nkids++;
-
-  if (target)
-    {
-      n = gtk_list_child_position (GTK_LIST (list_widget), target);
-      n += (next_p ? 1 : -1);
-      if (n >= nkids) n = 0;
-      if (n < 0) n = nkids-1;
-    }
-  else if (next_p)
-    n = 0;
-  else
-    n = nkids-1;
-
-  gtk_list_select_item (GTK_LIST (list_widget), n);
-
-  ensure_selected_item_visible ((WIDGET) scroller);
-
-  run_hack (widget_display (scroller), n + 1);
-}
-
-#endif /* HAVE_GTK */
-
 
 
 /* Callback for the Run Next button.
@@ -703,9 +537,7 @@ next_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
   if (pos_list)
     XtFree ((char *) pos_list);
 
-#elif defined(HAVE_GTK)
-  next_internal (GTK_ENTRY (text_line), TRUE);
-#endif /* HAVE_GTK */
+#endif /* HAVE_MOTIF */
 }
 
 
@@ -757,22 +589,14 @@ prev_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
   if (pos_list)
     XtFree ((char *) pos_list);
 
-#elif defined(HAVE_GTK)
-  next_internal (GTK_ENTRY (text_line), FALSE);
-#endif /* HAVE_GTK */
+#endif /* HAVE_MOTIF */
 }
 
 
 /* Callback run when a list element is double-clicked.
-   (Note: in GTK, this one has a different arg list than the other callbacks.)
  */
-#ifdef HAVE_GTK
-static gint
-select_cb (GtkWidget *button, GdkEventButton *event, gpointer client_data)
-#else  /* !HAVE_GTK */
 static void
 select_cb (WIDGET button, POINTER client_data, POINTER call_data)
-#endif /* !HAVE_GTK */
 {
 /*  saver_preferences *p = (saver_preferences *) client_data; */
 
@@ -794,21 +618,7 @@ select_cb (WIDGET button, POINTER client_data, POINTER call_data)
   if (string)
     XtFree (string);
 
-#elif defined(HAVE_GTK)
-  char *string = 0;
-  gtk_label_get (GTK_LABEL (GTK_BIN(button)->child), &string);
-  set_text_string (text_line, (string ? string : ""));
-
-  if (event->type == GDK_2BUTTON_PRESS)
-    {
-      GtkViewport *vp = GTK_VIEWPORT (GTK_BIN(demo_list)->child);
-      GtkList *lw = GTK_LIST (GTK_BIN(vp)->child);
-      int which = gtk_list_child_position (lw, GTK_WIDGET (button));
-      run_hack (gdk_display, which + 1);
-    }
-
-  return FALSE;
-#endif /* HAVE_GTK */
+#endif /* HAVE_MOTIF */
 }
 
 
@@ -821,15 +631,11 @@ static void
 preferences_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
-#ifdef HAVE_GTK
-  Widget parent = 0;
-#else /* !HAVE_GTK */
   Widget parent = button;
 
   do {
     parent = XtParent(parent);
   } while (XtParent(parent));
-#endif /* !HAVE_GTK */
 
   if (! preferences_dialog)
     make_preferences_dialog (pair, parent);
@@ -859,6 +665,48 @@ restart_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
 }
 
 
+/* Finds the number of the last hack to run, and makes that item be
+   selected by default.
+ */
+static void
+scroll_to_current_hack (WIDGET dialog)
+{
+  Atom type;
+  int format;
+  unsigned long nitems, bytesafter;
+  CARD32 *data = 0;
+  Display *dpy = widget_display (dialog);
+  int hack = 0;
+
+  if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
+                          XA_SCREENSAVER_STATUS,
+                          0, 3, False, XA_INTEGER,
+                          &type, &format, &nitems, &bytesafter,
+                          (unsigned char **) &data)
+      == Success
+      && type == XA_INTEGER
+      && nitems >= 3
+      && data)
+    hack = (int) data[2];
+
+  if (data) free (data);
+
+  if (hack <= 0)
+    return;
+
+#ifdef HAVE_MOTIF
+  XmListDeselectAllItems (demo_list);	/* LessTif lossage */
+  XmListSelectPos (demo_list, hack, False);
+  ensure_selected_item_visible (demo_list);
+
+#elif defined(HAVE_ATHENA)
+  XawListUnhighlight (demo_list);
+  XawListHighlight (demo_list, hack - 1);
+
+#endif /* HAVE_ATHENA */
+}
+
+
 static void
 pop_up_dialog_box (WIDGET dialog, WIDGET form)
 {
@@ -868,35 +716,22 @@ pop_up_dialog_box (WIDGET dialog, WIDGET form)
 #elif defined(HAVE_MOTIF)
   XtRealizeWidget (form);
   XtManageChild (form);
+
+  /* Motif likes to make the dialog wider than the screen; throttle it. */
+  {
+    Dimension w=0, h=0, bw=0;
+    Dimension max_w;
+    Screen *screen = 0;
+    XtVaGetValues (dialog, XtNscreen, &screen, 0);
+    max_w = WidthOfScreen (screen) * 0.8;
+    XtVaGetValues(dialog, XtNwidth, &w, XtNheight, &h, XtNborderWidth, &bw, 0);
+    if (w > max_w)
+      XtResizeWidget(dialog, max_w, h, bw);
+  }
 #endif /* HAVE_MOTIF */
 
-#ifdef HAVE_GTK
-  gtk_widget_show (dialog);
-  gdk_window_show (GTK_WIDGET (dialog)->window);
-  gdk_window_raise (GTK_WIDGET (dialog)->window);
-#else /* !HAVE_GTK */
   XMapRaised (XtDisplay (dialog), XtWindow (dialog));
-#endif /* !HAVE_GTK */
 }
-
-
-#ifdef HAVE_GTK
-/* Callback for WM_DELETE_WINDOW on the main demo window.
- */
-static void
-destroy (GtkWidget *widget, gpointer data)
-{
-  gtk_main_quit ();
-}
-
-/* Callback for the "Run" button to the right of the text entry line.
- */
-static void
-select_button_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
-{
-  gtk_signal_emit_by_name (GTK_OBJECT (text_line), "activate");
-}
-#endif /* HAVE_GTK */
 
 
 static void
@@ -905,19 +740,13 @@ make_demo_dialog (Widget toplevel_shell, prefs_pair *pair)
   saver_preferences *p =  pair->a;
   /* saver_preferences *p2 = pair->b; */
   Widget parent = toplevel_shell;
-  char **hacks = p->screenhacks;
+#ifdef HAVE_MOTIF
+  screenhack **hacks = p->screenhacks;
+#endif /* HAVE_MOTIF */
 
   create_demo_dialog (parent,
                       DefaultVisualOfScreen (widget_screen (parent)),
 		      DefaultColormapOfScreen (widget_screen (parent)));
-
-#ifdef HAVE_GTK
-  gtk_window_set_title (GTK_WINDOW (demo_dialog), progclass);
-  gtk_signal_connect (GTK_OBJECT (demo_dialog), "delete_event",
-                      GTK_SIGNAL_FUNC (destroy), NULL);
-  gtk_signal_connect (GTK_OBJECT (demo_dialog), "destroy",
-                      GTK_SIGNAL_FUNC (destroy), NULL);
-#endif /* HAVE_GTK */
 
   format_into_label (label1, short_version);
   add_button_callback (next,    next_cb,        (POINTER) p);
@@ -937,9 +766,11 @@ make_demo_dialog (Widget toplevel_shell, prefs_pair *pair)
   if (hacks)
     for (; *hacks; hacks++)
       {
-	XmString xmstr = XmStringCreate (*hacks, XmSTRING_DEFAULT_CHARSET);
+        char *hs = format_hack (*hacks, False);
+	XmString xmstr = XmStringCreate (hs, XmSTRING_DEFAULT_CHARSET);
 	XmListAddItem (demo_list, xmstr, 0);
 	XmStringFree (xmstr);
+        free (hs);
       }
 
 #elif defined(HAVE_ATHENA)
@@ -956,10 +787,7 @@ make_demo_dialog (Widget toplevel_shell, prefs_pair *pair)
   */
   XtRealizeWidget (demo_dialog);
 
-  XtVaSetValues (demo_list,
-		 XtNlist, hacks,
-		 XtNnumberStrings, p->screenhacks_count,
-		 0);
+  set_hack_list (demo_list, p);
   XtAddCallback (demo_list, XtNcallback, select_cb, p);
 
   /* Now that we've populated the list, make sure that the list is as
@@ -1003,34 +831,14 @@ make_demo_dialog (Widget toplevel_shell, prefs_pair *pair)
 
   }
 
-#elif defined(HAVE_GTK)
-  {
-    GtkList *list = GTK_LIST(GTK_BIN(GTK_BIN(demo_list)->child)->child);
-    char **s;
-    for (s = hacks; *s; s++)
-      {
-        GtkWidget *line = gtk_list_item_new_with_label (*s);
-        gtk_container_add (GTK_CONTAINER (list), line);
-        gtk_signal_connect (GTK_OBJECT (line), "button_press_event",
-                            GTK_SIGNAL_FUNC (select_cb),
-                            (POINTER) line);
-        GTK_WIDGET (GTK_BIN(line)->child)->style =
-          gtk_style_copy (GTK_WIDGET (text_line)->style);
-        gtk_widget_show (line);
-      }
-    gtk_signal_connect (GTK_OBJECT (text_line), "activate",
-                        GTK_SIGNAL_FUNC (text_cb),
-                        (POINTER) p);
-    gtk_signal_connect (GTK_OBJECT (text_activate), "clicked",
-                        GTK_SIGNAL_FUNC (select_button_cb),
-                        (POINTER) p);
-  }
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
+
+  scroll_to_current_hack (demo_dialog);
 
   pop_up_dialog_box(demo_dialog, demo_form);
 
-#ifdef HAVE_ATHENA
-  /* For Athena, have to do this after the dialog is managed. */
+#if defined(HAVE_ATHENA)
+  /* For Athena and Gtk, have to do this after the dialog is managed. */
   ensure_selected_item_visible (demo_list);
 #endif /* HAVE_ATHENA */
 }
@@ -1093,11 +901,7 @@ prefs_int_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
   if (! *line)
     ;
   else if (sscanf (line, "%u%c", &value, &c) != 1)
-#ifdef HAVE_GTK
-    gdk_beep();
-#else  /* !HAVE_GTK */
     XBell (XtDisplay (button), 0);
-#endif /* !HAVE_GTK */
   else
     *store = value;
 }
@@ -1115,9 +919,7 @@ prefs_bool_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
   Boolean state = FALSE;
   XtVaGetValues (button, XtNstate, &state, 0);
   *store = state;
-#elif defined(HAVE_GTK)
-  *store = GTK_TOGGLE_BUTTON (button)->active;
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 }
 
 
@@ -1126,16 +928,9 @@ prefs_bool_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
 static void
 prefs_cancel_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
 {
-#ifdef HAVE_GTK
-  gdk_window_hide (GTK_WIDGET (preferences_dialog)->window);
-  gtk_widget_show (demo_dialog);
-  gdk_window_show (GTK_WIDGET (demo_dialog)->window);
-  gdk_window_raise (GTK_WIDGET (demo_dialog)->window);
-#else  /* !HAVE_GTK */
   XtDestroyWidget (preferences_dialog);
   preferences_dialog = 0;
   XMapRaised (XtDisplay (demo_dialog), XtWindow (demo_dialog));
-#endif /* !HAVE_GTK */
 }
 
 
@@ -1159,15 +954,7 @@ prefs_ok_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
   prefs_int_cb (fade_ticks_text,     (POINTER) &p2->fade_ticks,     0);
   prefs_min_cb (lock_timeout_text,   (POINTER) &p2->lock_timeout,   0);
   prefs_sec_cb (passwd_timeout_text, (POINTER) &p2->passwd_timeout, 0);
-#elif defined(HAVE_GTK)
-  /* Do it again anyway for GTK. */
-  prefs_min_cb ((POINTER) &p2->timeout,        timeout_text);
-  prefs_min_cb ((POINTER) &p2->cycle,          cycle_text);
-  prefs_sec_cb ((POINTER) &p2->fade_seconds,   fade_text);
-  prefs_int_cb ((POINTER) &p2->fade_ticks,     fade_ticks_text);
-  prefs_min_cb ((POINTER) &p2->lock_timeout,   lock_timeout_text);
-  prefs_sec_cb ((POINTER) &p2->passwd_timeout, passwd_timeout_text);
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
   p->timeout	    = p2->timeout;
   p->cycle	    = p2->cycle;
@@ -1185,15 +972,6 @@ prefs_ok_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
 }
 
 
-#ifdef HAVE_GTK
-static void
-close_prefs_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
-{
-  prefs_cancel_cb CB_ARGS(button, client_data, call_data);
-}
-#endif /* HAVE_GTK */
-
-
 static void
 make_preferences_dialog (prefs_pair *pair, Widget parent)
 {
@@ -1208,14 +986,6 @@ make_preferences_dialog (prefs_pair *pair, Widget parent)
   create_preferences_dialog (parent,
                              DefaultVisualOfScreen (screen),
                              DefaultColormapOfScreen (screen));
-
-#ifdef HAVE_GTK
-  gtk_window_set_title (GTK_WINDOW (preferences_dialog), progclass);
-  gtk_signal_connect (GTK_OBJECT (preferences_dialog), "delete_event",
-                      GTK_SIGNAL_FUNC (close_prefs_cb), NULL);
-  gtk_signal_connect (GTK_OBJECT (preferences_dialog), "destroy",
-                      GTK_SIGNAL_FUNC (close_prefs_cb), NULL);
-#endif /* HAVE_GTK */
 
   add_button_callback (prefs_done,   prefs_ok_cb,     (POINTER) pair);
   add_button_callback (prefs_cancel, prefs_cancel_cb, 0);
@@ -1329,11 +1099,7 @@ warning_dialog_dismiss_cb CB_ARGS(WIDGET button, POINTER client_data,
                                   POINTER ignored)
 {
   WIDGET shell = (WIDGET) client_data;
-#ifdef HAVE_GTK
-  gdk_window_hide (GTK_WIDGET (shell)->window);
-#else  /* !HAVE_GTK */
   XtDestroyWidget (shell);
-#endif /* !HAVE_GTK */
 }
 
 
@@ -1382,10 +1148,7 @@ warning_dialog (WIDGET parent, const char *message)
   dialog = XtVaCreatePopupShell("warning_dialog", transientShellWidgetClass,
 				parent, 0);
   form = XtVaCreateManagedWidget("warning_form", formWidgetClass, dialog, 0);
-
-#elif defined(HAVE_GTK)
-  dialog = gtk_dialog_new ();
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
   head = msg;
   while (head)
@@ -1414,20 +1177,7 @@ warning_dialog (WIDGET parent, const char *message)
 				       (label ? label : XtChainTop),
 				       0);
 
-#elif defined(HAVE_GTK)
-      {
-        char buf[255];
-        label = gtk_label_new (head);
-        sprintf (buf, "warning_dialog.%s.font", name);
-        GTK_WIDGET (label)->style = gtk_style_copy (GTK_WIDGET (label)->style);
-        GTK_WIDGET (label)->style->font =
-          gdk_font_load (get_string_resource (buf, "Dialog.Label.Font"));
-        /* gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5); */
-        gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
-                            label, TRUE, TRUE, 0);
-        gtk_widget_show (label);
-      }
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
       if (s)
 	head = s+1;
@@ -1451,36 +1201,7 @@ warning_dialog (WIDGET parent, const char *message)
 
   XtRealizeWidget (dialog);
   XtPopup (dialog, XtGrabNone);
-
-#elif defined(HAVE_GTK)
-  label = gtk_label_new ("");
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
-                      label, TRUE, TRUE, 0);
-  gtk_widget_show (label);
-
-  label = gtk_hbutton_box_new ();
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
-                      label, TRUE, TRUE, 0);
-
-  ok = gtk_button_new_with_label (
-                          get_string_resource ("warning_dialog.ok.label",
-                                               "warning_dialog.Button.Label"));
-  gtk_box_pack_start (GTK_BOX (label), ok, TRUE, FALSE, 0);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-  gtk_widget_show (ok);
-  gtk_widget_show (label);
-  gtk_widget_show (dialog);
-/*  gtk_window_set_default (GTK_WINDOW (dialog), ok);*/
-
-  gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
-                                GTK_WIDGET (preferences_dialog
-                                            ? preferences_dialog
-                                            : demo_dialog)->window);
-
-  gdk_window_show (GTK_WIDGET (dialog)->window);
-  gdk_window_raise (GTK_WIDGET (dialog)->window);
-#endif /* HAVE_GTK */
+#endif /* HAVE_ATHENA */
 
   add_button_callback (ok, warning_dialog_dismiss_cb, (POINTER) dialog);
 
@@ -1642,40 +1363,6 @@ demo_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
-#ifdef HAVE_GTK
-
-/* We use this error handler so that Gtk/Gdk errors are preceeded by the name
-   of the program that generated them; and also that we can ignore one
-   particular bogus error message that Gdk madly spews.
- */
-static void
-g_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
-               const gchar *message, gpointer user_data)
-{
-  /* Ignore the message "Got event for unknown window: 0x...".
-     Apparently some events are coming in for the xscreensaver window
-     (presumably reply events related to the ClientMessage) and Gdk
-     feels the need to complain about them.  So, just suppress any
-     messages that look like that one.
-   */
-  if (strstr (message, "unknown window"))
-    return;
-
-  fprintf (stderr, "%s: %s-%s: %s%s", blurb(), log_domain,
-           (log_level == G_LOG_LEVEL_ERROR    ? "error" :
-            log_level == G_LOG_LEVEL_CRITICAL ? "critical" :
-            log_level == G_LOG_LEVEL_WARNING  ? "warning" :
-            log_level == G_LOG_LEVEL_MESSAGE  ? "message" :
-            log_level == G_LOG_LEVEL_INFO     ? "info" :
-            log_level == G_LOG_LEVEL_DEBUG    ? "debug" : "???"),
-           message,
-           ((!*message || message[strlen(message)-1] != '\n')
-            ? "\n" : ""));
-}
-#endif /* HAVE_GTK */
-
-
-
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
  0
@@ -1707,30 +1394,6 @@ main (int argc, char **argv)
 
   progname = real_progname;
 
-#ifdef HAVE_GTK
-  /* Register our error message logger for every ``log domain'' known.
-     There's no way to do this globally, so I grepped the Gtk/Gdk sources
-     for all of the domains that seem to be in use.
-  */
-  {
-    const char * const domains[] = { "Gtk", "Gdk", "GLib", "GModule",
-                                     "GThread", "Gnome", "GnomeUI", 0 };
-    for (i = 0; domains[i]; i++)
-      g_log_set_handler (domains[i], G_LOG_LEVEL_MASK, g_log_handler, 0);
-  }
-
-  /* This is gross, but Gtk understands --display and not -display... */
-  for (i = 1; i < argc; i++)
-    if (argv[i][0] && argv[i][1] && 
-        !strncmp(argv[i], "-display", strlen(argv[i])))
-      argv[i] = "--display";
-
-  /* Let Gtk open the X connection, then initialize Xt to use that
-     same connection.  Doctor Frankenstein would be proud. */   
-  gtk_init (&argc, &argv);
-#endif /* HAVE_GTK */
-
-
   /* We must read exactly the same resources as xscreensaver.
      That means we must have both the same progclass *and* progname,
      at least as far as the resource database is concerned.  So,
@@ -1740,24 +1403,8 @@ main (int argc, char **argv)
   progname = argv[0];
 
 
-#ifdef HAVE_GTK
-  /* If we're using Gtk, the X connection is already open.
-     Now teach Xt about it.
-   */
-  XtToolkitInitialize ();
-  app = XtCreateApplicationContext ();
-  dpy = gdk_display;
-  XtAppSetFallbackResources (app, defaults);
-  XtDisplayInitialize (app, dpy, progname, progclass, 0, 0, &argc, argv);
-  toplevel_shell = XtAppCreateShell (progname, progclass,
-                                     applicationShellWidgetClass,
-                                     dpy, 0, 0);
-
-#else  /* !HAVE_GTK */
-  /* No Gtk -- open the X connection here. */
   toplevel_shell = XtAppInitialize (&app, progclass, 0, 0, &argc, argv,
 				    defaults, 0, 0);
-#endif /* !HAVE_GTK */
 
   dpy = XtDisplay (toplevel_shell);
   db = XtDatabase (dpy);
@@ -1819,11 +1466,14 @@ main (int argc, char **argv)
   XA_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
   XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
   XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_TIME = XInternAtom (dpy, "_SCREENSAVER_TIME", False);
+  XA_SCREENSAVER_STATUS = XInternAtom (dpy, "_SCREENSAVER_STATUS", False);
   XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
   XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
   XA_SELECT = XInternAtom (dpy, "SELECT", False);
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
+  XA_BLANK = XInternAtom (dpy, "BLANK", False);
+  XA_LOCK = XInternAtom (dpy, "LOCK", False);
+  XA_EXIT = XInternAtom (dpy, "EXIT", False);
   XA_RESTART = XInternAtom (dpy, "RESTART", False);
 
   make_demo_dialog (toplevel_shell, pair);
@@ -1838,22 +1488,7 @@ main (int argc, char **argv)
 				   ? preferences_dialog
 				   : demo_dialog);
 
-#ifdef HAVE_GTK
-
-  /* Run the Gtk event loop, and not the Xt event loop.  This means that
-     if there were Xt timers or fds registered, they would never get serviced,
-     and if there were any Xt widgets, they would never have events delivered.
-     Fortunately, we're using Gtk for all of the UI, and only initialized
-     Xt so that we could process the command line and use the X resource
-     manager.
-   */
-  gtk_main ();
-
-#else  /* !HAVE_GTK */
-
   XtAppMainLoop (app);
-
-#endif /* !HAVE_GTK */
 
   exit (0);
 }

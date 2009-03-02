@@ -167,7 +167,7 @@ get_pixel_resource (char *res_name, char *res_class,
 
 
 int
-parse_time (char *string, Bool seconds_default_p, Bool silent_p)
+parse_time (const char *string, Bool seconds_default_p, Bool silent_p)
 {
   unsigned int h, m, s;
   char c;

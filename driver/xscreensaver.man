@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "30-Oct-99 (3.19)" "X Version 11"
+.TH XScreenSaver 1 "12-Nov-99 (3.20)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -876,7 +876,48 @@ popup menu.  Alternately, you could just put the xscreensaver menu items
 directly into the root menu.
 .RE
 
-Other window managers are guaranteed to do things gratuitously differently.
+For Fvwm2, the process is similar: first create a \fI~/.fvwm2rc\fP file
+if you don't already have one, by making a copy of
+the \fI/etc/X11/fvwm2/system.fvwm2rc\fP file.  Then, add a menu definition
+to it:
+.EX
+AddToMenu XScreenSaver "XScreenSaver" Title
++ "Blank Screen Now"          Exec xscreensaver-command -activate
++ "Lock Screen Now"           Exec xscreensaver-command -lock
++ "Screen Saver Demo"         Exec xscreensaver-command -demo
++ "Screen Saver Preferences"  Exec xscreensaver-command -prefs
++ "Reinitialize Screen Saver" Exec xscreensaver-command -restart
++ "Kill Screen Saver"         Exec xscreensaver-command -exit
++ "Launch Screen Saver"       Exec xscreensaver
++ "Run Next Demo"             Exec xscreensaver-command -next
++ "Run Previous Demo"         Exec xscreensaver-command -prev
+
+# To put the XScreenSaver sub-menu at the end of the root menu:
+AddToMenu RootMenu "XScreenSaver" Popup XScreenSaver
+.EE
+The Enlightenment window manager keeps each of its menus in a separate
+file. So, you need to create a file 
+named \fI~/.enlightenment/xscreensaver.menu\fP with the contents:
+.EX
+"XScreenSaver Commands"
+ "Blank Screen Now"    NULL exec "xscreensaver-command -activate"
+ "Lock Screen Now"     NULL exec "xscreensaver-command -lock"
+ "Screen Saver Demo"   NULL exec "xscreensaver-command -demo"
+ "Screen Saver Prefs"  NULL exec "xscreensaver-command -prefs"
+ "Reinitialize Saver"  NULL exec "xscreensaver-command -restart"
+ "Kill Screen Saver"   NULL exec "xscreensaver-command -exit"
+ "Launch Screen Saver" NULL exec "xscreensaver"
+.EE
+then add
+.EX
+ "XScreenSaver"        NULL menu "xscreensaver.menu"
+.EE
+to \fI~/.enlightenment/file.menu\fP to put the XScreenSaver submenu on 
+your left-button root-window menu.
+
+As you see, every window manager does this stuff gratuitously differently,
+just to make your life difficult.  You are in a maze of twisty menu
+configuration languages, all alike.
 .SH BUGS
 Bugs?  There are no bugs.  Ok, well, maybe.  If you find one, please let
 me know.  http://www.jwz.org/xscreensaver/bugs.html explains how to

@@ -17,12 +17,12 @@
 # include "config.h"
 #endif
 
-#ifndef NO_LOCKING   /* whole file */
-
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>		/* for time() */
 #include "xscreensaver.h"
 #include "resources.h"
+
+#ifndef NO_LOCKING              /* (mostly) whole file */
 
 #ifdef HAVE_SYSLOG
 # include <syslog.h>
@@ -1234,6 +1234,8 @@ set_locked_p (saver_info *si, Bool locked_p)
 #ifdef HAVE_XF86VMODE
   xfree_lock_mode_switch (si, locked_p);        /* turn off/on C-Alt-Plus */
 #endif
+
+  store_saver_status (si);			/* store locked-p */
 }
 
 

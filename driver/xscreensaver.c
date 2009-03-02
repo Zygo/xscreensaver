@@ -163,9 +163,9 @@ XrmDatabase db = 0;
 
 static Atom XA_SCREENSAVER_RESPONSE;
 static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
-static Atom XA_EXIT, XA_RESTART, XA_LOCK, XA_SELECT;
+static Atom XA_RESTART, XA_SELECT;
 static Atom XA_THROTTLE, XA_UNTHROTTLE;
-Atom XA_DEMO, XA_PREFS;
+Atom XA_DEMO, XA_PREFS, XA_EXIT, XA_LOCK, XA_BLANK;
 
 
 static XrmOptionDescRec options [] = {
@@ -315,16 +315,17 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
                    "#######################################"
                    "#######################################\n\n");
           fprintf (real_stderr,
-   "    If at all possible, please re-run xscreensaver with the command line\n"
-   "    arguments `-sync -verbose', and reproduce this bug.  That will cause\n"
-   "    xscreensaver to dump a `core' file to the current directory.  Please\n"
-   "    include the stack trace from that core file in your bug report.\n"
-   "    Do NOT mail the core file itself!  That won't work.\n"
+   "    If at all possible, please re-run xscreensaver with the command\n"
+   "    line arguments `-sync -verbose -no-capture', and reproduce this\n"
+   "    bug.  That will cause xscreensaver to dump a `core' file to the\n"
+   "    current directory.  Please include the stack trace from that core\n"
+   "    file in your bug report.  *DO NOT* mail the core file itself!\n"
+   "    That won't work.\n"
    "\n"
-   "    http://www.jwz.org/xscreensaver/bugs.html explains how to create the\n"
-   "    most useful bug reports, and how to examine core files.\n"
+   "    http://www.jwz.org/xscreensaver/bugs.html explains how to create\n"
+   "    the most useful bug reports, and how to examine core files.\n"
    "\n"
-   "    The more information you can provide, the better.  But please report\n"
+   "    The more information you can provide, the better.  But please\n"
    "    report this bug, regardless!\n"
    "\n");
           fprintf (real_stderr,
@@ -370,12 +371,13 @@ startup_ehandler (String name, String type, String class,
 
   describe_uids (si, stderr);
   fprintf (stderr, "\n"
-           "%s: Errors at startup are usually authorization problems.\n"
-           "              Did you read the manual?  Specifically, the parts\n"
-           "              that talk about XAUTH, XDM, and root logins?\n"
-           "\n"
-           "              http://www.jwz.org/xscreensaver/man.html\n"
-           "\n",
+          "%s: Errors at startup are usually authorization problems.\n"
+          "              Did you read the manual and the FAQ?  Specifically,\n"
+          "              the parts of the manual that talk about XAUTH, XDM,\n"
+          "              and root logins?\n"
+          "\n"
+          "              http://www.jwz.org/xscreensaver/man.html\n"
+          "\n",
            blurb());
 
   fflush (stderr);
@@ -481,7 +483,7 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_SCREENSAVER = XInternAtom (si->dpy, "SCREENSAVER", False);
   XA_SCREENSAVER_VERSION = XInternAtom (si->dpy, "_SCREENSAVER_VERSION",False);
   XA_SCREENSAVER_ID = XInternAtom (si->dpy, "_SCREENSAVER_ID", False);
-  XA_SCREENSAVER_TIME = XInternAtom (si->dpy, "_SCREENSAVER_TIME", False);
+  XA_SCREENSAVER_STATUS = XInternAtom (si->dpy, "_SCREENSAVER_STATUS", False);
   XA_SCREENSAVER_RESPONSE = XInternAtom (si->dpy, "_SCREENSAVER_RESPONSE",
 					 False);
   XA_XSETROOT_ID = XInternAtom (si->dpy, "_XSETROOT_ID", False);
@@ -496,6 +498,7 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_DEMO = XInternAtom (si->dpy, "DEMO", False);
   XA_PREFS = XInternAtom (si->dpy, "PREFS", False);
   XA_LOCK = XInternAtom (si->dpy, "LOCK", False);
+  XA_BLANK = XInternAtom (si->dpy, "BLANK", False);
   XA_THROTTLE = XInternAtom (si->dpy, "THROTTLE", False);
   XA_UNTHROTTLE = XInternAtom (si->dpy, "UNTHROTTLE", False);
 
@@ -1085,7 +1088,10 @@ main (int argc, char **argv)
 
   if (p->verbose_p) analyze_display (si);
   initialize_server_extensions (si);
+
+  si->blank_time = time ((time_t) 0); /* must be before ..._window */
   initialize_screensaver_window (si);
+
   select_events (si);
   init_sigchld ();
   disable_builtin_screensaver (si, True);

@@ -12,9 +12,9 @@
 #
 #
 # This script grabs a frame of video, then uses various pbm filters to
-# munge the image in random nefarious ways, then uses xli or xv to put it
-# on the root window.  This works out really nicely if you just feed some
-# random TV station into it...
+# munge the image in random nefarious ways, then uses xloadimage, xli, or xv
+# to put it on the root window.  This works out really nicely if you just
+# feed some random TV station into it...
 #
 # The video grabbing part is SGI-specific -- if you want to use this on
 # another system, add a new clause to the grab() procedure.
@@ -42,30 +42,37 @@ tmp_ppm4=$tmp-4.ppm
 tmp_ppmS=$tmp-S.ppm
 
 
-# Figure out whether to use xli or xv.
+# Figure out whether to use xloadimage, xli, or xv.
 pick_displayer() {
-  IFS=:
-  for p in $PATH; do
-    if [ "$p" = "" ]; then p=. ; fi
-    if [ -x $p/xli ]; then
-      displayer=$p/xli
-      displayer_args="-quiet"
-      displayer_win_args=""
-      displayer_root_args="-onroot -center -border black"
-      return
-    elif [ -x $p/xv ]; then
-      displayer=$p/xv
-      displayer_args="-quick24"
-      displayer_win_args="-geom +0+0"
-      displayer_root_args="-root -rmode 5 -noresetroot -rfg black -rbg black -viewonly"
-
-      return
-    fi
+  displayer=
+  for prog in xloadimage xli xv ; do
+    IFS=:
+    for p in $PATH; do
+      IFS=
+      if [ "$p" = "" ]; then p=. ; fi
+      if [ -x $p/$prog ]; then
+        displayer=$prog
+        break 2
+      fi
+    done
   done
-  IFS=
 
-  echo "$0: neither xli nor xv found on \$PATH"
-  exit -1
+  if [ "$displayer" = "xloadimage" ]; then
+    displayer_args="-quiet"
+    displayer_win_args=""
+    displayer_root_args="-onroot"
+  elif [ "$displayer" = "xli" ]; then
+    displayer_args="-quiet"
+    displayer_win_args=""
+    displayer_root_args="-onroot -center -border black"
+  elif [ "$displayer" = "xv" ]; then
+    displayer_args="-quick24"
+    displayer_win_args="-geom +0+0"
+    displayer_root_args="-root -rmode 5 -noresetroot -rfg black -rbg black -viewonly"
+  else
+    echo "$0: neither xli nor xv found on \$PATH"
+    exit -1
+  fi
 }
 
 # Process command-line args

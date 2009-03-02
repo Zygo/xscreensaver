@@ -71,7 +71,7 @@ SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
-		  extrusion-taper.c extrusion-twistoid.c
+		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c
 
 OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
@@ -81,10 +81,11 @@ OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
-		  extrusion-taper.o extrusion-twistoid.o
+		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
-		  morph3d rubik atlantis lament bubble3d glplanet pulsar
+		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
+		  sierpinski3d
 GLE_EXES	= extrusion
 EXES		= @GL_EXES@ @GLE_EXES@
 
@@ -264,7 +265,7 @@ bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
 glplanet:	glplanet.o	$(HACK_OBJS) xpm-ximage.o
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
-pulsar:		pulsar.o		$(HACK_OBJS)
+pulsar:		pulsar.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
@@ -272,6 +273,9 @@ EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
 	extrusion-taper.o extrusion-twistoid.o
 extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $(EXTRUSION_OBJS) $(HACK_OBJS) $(GLE_LIBS)
+
+sierpinski3d:	sierpinski3d.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -553,4 +557,16 @@ extrusion.o: $(UTILS_SRC)/colors.h
 extrusion.o: $(UTILS_SRC)/grabscreen.h
 extrusion.o: $(UTILS_SRC)/visual.h
 extrusion.o: $(UTILS_SRC)/xshm.h
+sierpinski3d.o: $(HACK_SRC)/xlockmore.h
+sierpinski3d.o: ../../config.h
+sierpinski3d.o: $(HACK_SRC)/xlockmoreI.h
+sierpinski3d.o: $(HACK_SRC)/screenhack.h
+sierpinski3d.o: $(UTILS_SRC)/yarandom.h
+sierpinski3d.o: $(UTILS_SRC)/usleep.h
+sierpinski3d.o: $(UTILS_SRC)/resources.h
+sierpinski3d.o: $(UTILS_SRC)/hsv.h
+sierpinski3d.o: $(UTILS_SRC)/colors.h
+sierpinski3d.o: $(UTILS_SRC)/grabscreen.h
+sierpinski3d.o: $(UTILS_SRC)/visual.h
+sierpinski3d.o: $(UTILS_SRC)/xshm.h
 

@@ -26,10 +26,13 @@ and scatters them on the root window.  One satisfied customer described it
 as "a nonstop pop culture brainbath."  This program finds its images by
 doing random web searches, and extracting images from the returned pages.
 It places the images on the root window by using the
-.BR xv (1),
 .BR giftopnm (1),
+.BR djpeg (1),
 and
-.BR djpeg (1)
+.BR xli (1),
+.BR xv (1),
+or
+.BR xloadimage (1)
 tools.
 
 \fIwebcollage\fP is written in
@@ -118,7 +121,9 @@ because most of the web is pictures of text.  Which is pretty sad.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
+.BR xli (1),
 .BR xv (1),
+.BR xloadimage (1),
 .BR ppmmake (1),
 .BR giftopnm (1),
 .BR pnmpaste (1),

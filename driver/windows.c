@@ -63,13 +63,11 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 Atom XA_VROOT, XA_XSETROOT_ID;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
-Atom XA_SCREENSAVER_TIME;
+Atom XA_SCREENSAVER_STATUS;
 
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
-
-static void store_activate_time (saver_info *si, Bool use_last_p);
 
 #define ALL_POINTER_EVENTS \
 	(ButtonPressMask | ButtonReleaseMask | EnterWindowMask | \
@@ -654,10 +652,13 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
   vrs = restore_real_vroot_1 (si);
   emergency_kill_subproc (si);
 
-  if (vrs && (p->verbose_p || status != 0))
-    fprintf (real_stderr, "%s: vroot restored, exiting.\n", blurb());
-  else if (p->verbose_p)
-    fprintf (real_stderr, "%s: no vroot to restore; exiting.\n", blurb());
+  if (p->verbose_p)    /* nobody cares about this */
+    {
+      if (vrs)
+        fprintf (real_stderr, "%s: vroot restored, exiting.\n", blurb());
+      else if (p->verbose_p)
+        fprintf (real_stderr, "%s: no vroot to restore; exiting.\n", blurb());
+    }
 
   fflush(real_stdout);
 
@@ -731,7 +732,7 @@ store_saver_id (saver_screen_info *ssi)
   struct passwd *p = getpwuid (getuid ());
   const char *name, *host;
   char *id;
-  
+
   /* First store the name and class on the window.
    */
   class_hints.res_name = progname;
@@ -784,6 +785,35 @@ store_saver_id (saver_screen_info *ssi)
 		   (unsigned char *) id, strlen (id));
   free (id);
 }
+
+
+void
+store_saver_status (saver_info *si)
+{
+  CARD32 *status;
+  int size = si->nscreens + 2;
+  int i;
+
+  status = (CARD32 *) calloc (size, sizeof(CARD32));
+
+  status[0] = (CARD32) (si->screen_blanked_p
+                        ? (si->locked_p ? XA_LOCK : XA_BLANK)
+                        : 0);
+  status[1] = (CARD32) si->blank_time;
+
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      status [2 + i] = ssi->current_hack + 1;
+    }
+
+  XChangeProperty (si->dpy,
+                   RootWindow (si->dpy, 0),  /* always screen #0 */
+                   XA_SCREENSAVER_STATUS,
+                   XA_INTEGER, 32, PropModeReplace,
+                   (unsigned char *) status, size);
+}
+
 
 
 /* Returns the area of the screen which the xscreensaver window should cover.
@@ -1090,14 +1120,12 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 		       ssi->current_visual, attrmask, &attrs);
 
       reset_stderr (ssi);
-      store_activate_time(si, True);
       if (p->verbose_p)
 	fprintf (stderr, "%s: saver window is 0x%lx.\n",
 		 blurb(), (unsigned long) ssi->screensaver_window);
     }
 
-
-  store_saver_id (ssi);
+  store_saver_id (ssi);       /* store window name and IDs */
 
   if (!ssi->cursor)
     {
@@ -1282,14 +1310,18 @@ blank_screen (saver_info *si)
       }
 #endif /* HAVE_XF86VMODE */
     }
-  store_activate_time (si, si->screen_blanked_p);
+
   raise_window (si, False, False, False);
 
   si->screen_blanked_p = True;
+  si->blank_time = time ((time_t) 0);
   si->last_wall_clock_time = 0;
+
+  store_saver_status (si);  /* store blank time */
 
   return True;
 }
+
 
 void
 unblank_screen (saver_info *si)
@@ -1299,8 +1331,6 @@ unblank_screen (saver_info *si)
   int i;
 
   monitor_power_on (si);
-
-  store_activate_time (si, True);
   reset_watchdog_timer (si, False);
 
   if (si->demoing_p)
@@ -1394,8 +1424,7 @@ unblank_screen (saver_info *si)
       kill_xsetroot_data (si->dpy, ssi->screensaver_window, p->verbose_p);
     }
 
-  store_activate_time(si, False);  /* store unblank time */
-
+  store_saver_status (si);  /* store unblank time */
   ungrab_keyboard_and_mouse (si);
   restore_real_vroot (si);
 
@@ -1407,27 +1436,10 @@ unblank_screen (saver_info *si)
     XUnmapWindow (si->dpy, si->screens[i].screensaver_window);
 
   si->screen_blanked_p = False;
+  si->blank_time = time ((time_t) 0);
   si->last_wall_clock_time = 0;
-}
 
-
-static void
-store_activate_time (saver_info *si, Bool use_last_p)
-{
-  static time_t last_time = 0;
-  time_t now = ((use_last_p && last_time) ? last_time : time ((time_t) 0));
-  CARD32 now32 = (CARD32) now;
-  int i;
-  last_time = now;
-
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      if (!ssi->screensaver_window) continue;
-      XChangeProperty (si->dpy, ssi->screensaver_window, XA_SCREENSAVER_TIME,
-		       XA_INTEGER, 32, PropModeReplace,
-		       (unsigned char *) &now32, 1);
-    }
+  store_saver_status (si);  /* store unblank time */
 }
 
 
@@ -1443,18 +1455,24 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
   if (visual_name && *visual_name)
     {
-      if (!strcmp(visual_name, "default-i"))
+      if (!strcmp(visual_name, "default-i") ||
+          !strcmp(visual_name, "Default-i") ||
+          !strcmp(visual_name, "Default-I")
+          )
 	{
 	  visual_name = "default";
 	  install_cmap_p = True;
 	}
-      else if (!strcmp(visual_name, "default-n"))
+      else if (!strcmp(visual_name, "default-n") ||
+               !strcmp(visual_name, "Default-n") ||
+               !strcmp(visual_name, "Default-N"))
 	{
 	  visual_name = "default";
 	  install_cmap_p = False;
 	}
 #ifdef DAEMON_USE_GL
       else if (!strcmp(visual_name, "gl") ||
+               !strcmp(visual_name, "Gl") ||
                !strcmp(visual_name, "GL"))
         {
           new_v = get_gl_visual (ssi->screen);
@@ -1514,8 +1532,6 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
       raise_window (si, True, True, False);
       store_vroot_property (si->dpy,
 			    ssi->screensaver_window, ssi->screensaver_window);
-      store_activate_time (si, True);
-
 
 
       /* Transfer the grabs from the old window to the new.

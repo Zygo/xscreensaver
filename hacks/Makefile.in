@@ -85,7 +85,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
-		  blaster.c bumps.c
+		  blaster.c bumps.c ripples.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -104,7 +104,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
-		  blaster.o bumps.o
+		  blaster.o bumps.o ripples.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -117,7 +117,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
 		  xflame wander spotlight critical phosphor xmatrix petri \
-		  shadebobs xsublim ccurve blaster bumps
+		  shadebobs xsublim ccurve blaster bumps ripples
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -544,8 +544,11 @@ ccurve:		ccurve.o	$(HACK_OBJS) $(COL) $(SPL)
 blaster:	blaster.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-bumps:	bumps.o			$(HACK_OBJS) $(GRAB)
+bumps:		bumps.o		$(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+
+ripples:	ripples.o	$(HACK_OBJS) $(SHM) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1729,4 +1732,14 @@ bumps.o: $(UTILS_SRC)/hsv.h
 bumps.o: $(UTILS_SRC)/colors.h
 bumps.o: $(UTILS_SRC)/grabscreen.h
 bumps.o: $(UTILS_SRC)/visual.h
+ripples.o: $(srcdir)/screenhack.h
+ripples.o: ../config.h
+ripples.o: $(UTILS_SRC)/yarandom.h
+ripples.o: $(UTILS_SRC)/usleep.h
+ripples.o: $(UTILS_SRC)/resources.h
+ripples.o: $(UTILS_SRC)/hsv.h
+ripples.o: $(UTILS_SRC)/colors.h
+ripples.o: $(UTILS_SRC)/grabscreen.h
+ripples.o: $(UTILS_SRC)/visual.h
+ripples.o: $(UTILS_SRC)/xshm.h
 

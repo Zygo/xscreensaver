@@ -765,46 +765,25 @@ init_sigchld (void)
 
 
 static Bool
-hack_enabled_p (const char *hack)
-{
-  const char *s = hack;
-  while (isspace(*s)) s++;
-  return (*s != '-');
-}
-
-static Bool
-select_visual_of_hack (saver_screen_info *ssi, const char *hack)
+select_visual_of_hack (saver_screen_info *ssi, screenhack *hack)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
   Bool selected;
-  static char vis [1024];
-  const char *in = hack;
-  char *out = vis;
-  while (isspace(*in)) in++;		/* skip whitespace */
-  if (*in == '-') in++;			/* skip optional "-" */
-  while (isspace(*in)) in++;		/* skip whitespace */
 
-  while (!isspace(*in) && *in != ':')
-    *out++ = *in++;			/* snarf first token */
-  while (isspace(*in)) in++;		/* skip whitespace */
-  *out = 0;
-
-  if (*in == ':')
-    selected = select_visual(ssi, vis);
+  if (hack->visual && *hack->visual == ':')
+    selected = select_visual(ssi, hack->visual);
   else
     selected = select_visual(ssi, 0);
 
   if (!selected && (p->verbose_p || si->demoing_p))
-    {
-      if (*in == ':') in++;
-      while (isspace(*in)) in++;
-      fprintf (stderr,
-	       (si->demoing_p
-		? "%s: warning, no \"%s\" visual for \"%s\".\n"
-		: "%s: no \"%s\" visual; skipping \"%s\".\n"),
-	       blurb(), (*vis ? vis : "???"), in);
-    }
+    fprintf (stderr,
+             (si->demoing_p
+              ? "%s: warning, no \"%s\" visual for \"%s\".\n"
+              : "%s: no \"%s\" visual; skipping \"%s\".\n"),
+             blurb(),
+             (hack->visual && *hack->visual ? hack->visual : "???"),
+             hack->command);
 
   return selected;
 }
@@ -820,7 +799,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 
   if (p->screenhacks_count)
     {
-      char *hack;
+      screenhack *hack;
       pid_t forked;
       char buf [255];
       int new_hack;
@@ -868,7 +847,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
         select_visual_of_hack (ssi, hack);
         
       if (!force &&
-	  (!hack_enabled_p (hack) ||
+	  (!hack->enabled_p ||
 	   !select_visual_of_hack (ssi, hack)))
 	{
 	  if (++retry_count > (p->screenhacks_count*4))
@@ -894,25 +873,6 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
       if (si->selection_mode < 0)
 	si->selection_mode = 0;
 
-
-      /* If there's a visual description on the front of the command, nuke it.
-       */
-      {
-	char *in = hack;
-	while (isspace(*in)) in++;			/* skip whitespace */
-	if (*in == '-') in++;				/* skip optional "-" */
-	while (isspace(*in)) in++;			/* skip whitespace */
-	hack = in;
-	while (!isspace(*in) && *in != ':') in++;	/* snarf first token */
-	while (isspace(*in)) in++;			/* skip whitespace */
-	if (*in == ':')
-	  {
-	    in++;
-	    while (isspace(*in)) in++;
-	    hack = in;
-	  }
-      }
-
       switch ((int) (forked = fork ()))
 	{
 	case -1:
@@ -925,13 +885,13 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	  close (ConnectionNumber (si->dpy));	/* close display fd */
 	  nice_subproc (p->nice_inferior);	/* change process priority */
 	  hack_subproc_environment (ssi);	/* set $DISPLAY */
-	  exec_screenhack (si, hack);		/* this does not return */
+	  exec_screenhack (si, hack->command);	/* this does not return */
 	  abort();
 	  break;
 
 	default:
 	  ssi->pid = forked;
-	  (void) make_job (forked, hack);
+	  (void) make_job (forked, hack->command);
 	  break;
 	}
     }
@@ -941,22 +901,21 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 void
 spawn_screenhack (saver_info *si, Bool first_time_p)
 {
-  int i;
-
-  if (!monitor_powered_on_p (si))
+  if (monitor_powered_on_p (si))
     {
-      if (si->prefs.verbose_p)
-	fprintf (stderr,
-		 "%s: server reports that monitor has powered down; "
-		 "not launching a new hack.\n", blurb());
-      return;
+      int i;
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          spawn_screenhack_1 (ssi, first_time_p);
+        }
     }
+  else if (si->prefs.verbose_p)
+    fprintf (stderr,
+             "%s: server reports that monitor has powered down; "
+             "not launching a new hack.\n", blurb());
 
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      spawn_screenhack_1 (ssi, first_time_p);
-    }
+  store_saver_status (si);  /* store current hack numbers */
 }
 
 

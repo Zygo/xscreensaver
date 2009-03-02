@@ -42,9 +42,10 @@ char *progname;
 
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE;
-Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_TIME, XA_SELECT, XA_DEMO;
-static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV, XA_EXIT;
-static Atom XA_RESTART, XA_PREFS, XA_LOCK, XA_THROTTLE, XA_UNTHROTTLE;
+Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO, XA_EXIT;
+Atom XA_BLANK, XA_LOCK;
+static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
+static Atom XA_RESTART, XA_PREFS, XA_THROTTLE, XA_UNTHROTTLE;
 
 static char *screensaver_version;
 static char *usage = "\n\
@@ -122,6 +123,12 @@ usage: %s -<option>\n\
                 non-idle -- but not quite, since it only tells you when the\n\
                 screen became blanked or un-blanked.)\n\
 \n\
+  -watch        Prints a line each time the screensaver changes state: when\n\
+                the screen blanks, locks, unblanks, or when the running hack\n\
+                is changed.  This option never returns; it is intended for\n\
+                by shell scripts that want to react to the screensaver in\n\
+                some way.\n\
+\n\
   See the man page for more details.\n\
   For updates, check http://www.jwz.org/xscreensaver/\n\
 \n";
@@ -129,6 +136,8 @@ usage: %s -<option>\n\
 #define USAGE() do { \
  fprintf (stderr, usage, progname, screensaver_version); exit (1); \
  } while(0)
+
+static int watch (Display *);
 
 int
 main (int argc, char **argv)
@@ -168,7 +177,8 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-throttle", L))   cmd = &XA_THROTTLE;
       else if (!strncmp (s, "-unthrottle", L)) cmd = &XA_UNTHROTTLE;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
-      else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_TIME;
+      else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_STATUS;
+      else if (!strncmp (s, "-watch", L))      cmd = (Atom *) &watch;
       else USAGE ();
 
       if (cmd == &XA_SELECT || cmd == &XA_DEMO)
@@ -254,7 +264,7 @@ main (int argc, char **argv)
   XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
   XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
   XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_TIME = XInternAtom (dpy, "_SCREENSAVER_TIME", False);
+  XA_SCREENSAVER_STATUS = XInternAtom (dpy, "_SCREENSAVER_STATUS", False);
   XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
   XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
   XA_DEACTIVATE = XInternAtom (dpy, "DEACTIVATE", False);
@@ -267,10 +277,17 @@ main (int argc, char **argv)
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
   XA_PREFS = XInternAtom (dpy, "PREFS", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
+  XA_BLANK = XInternAtom (dpy, "BLANK", False);
   XA_THROTTLE = XInternAtom (dpy, "THROTTLE", False);
   XA_UNTHROTTLE = XInternAtom (dpy, "UNTHROTTLE", False);
 
   XSync (dpy, 0);
+
+  if (cmd == (Atom *) &watch)
+    {
+      i = watch (dpy);
+      exit (i);
+    }
 
   if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK ||
       *cmd == XA_NEXT || *cmd == XA_PREV || *cmd == XA_SELECT)
@@ -281,4 +298,116 @@ main (int argc, char **argv)
   i = xscreensaver_command (dpy, *cmd, arg, True);
   if (i < 0) exit (i);
   else exit (0);
+}
+
+
+static int
+watch (Display *dpy)
+{
+  char *v = 0;
+  Window window = RootWindow (dpy, 0);
+  XWindowAttributes xgwa;
+  XEvent event;
+  CARD32 *last = 0;
+
+  if (v) free (v);
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XSelectInput (dpy, window, xgwa.your_event_mask | PropertyChangeMask);
+
+  while (1)
+    {
+      XNextEvent (dpy, &event);
+      if (event.xany.type == PropertyNotify &&
+          event.xproperty.state == PropertyNewValue &&
+          event.xproperty.atom == XA_SCREENSAVER_STATUS)
+        {
+	  Atom type;
+	  int format;
+	  unsigned long nitems, bytesafter;
+	  CARD32 *data = 0;
+
+	  if (XGetWindowProperty (dpy,
+                                  RootWindow (dpy, 0),  /* always screen #0 */
+				  XA_SCREENSAVER_STATUS,
+				  0, 999, False, XA_INTEGER,
+				  &type, &format, &nitems, &bytesafter,
+				  (unsigned char **) &data)
+	      == Success
+	      && type
+	      && data)
+	    {
+              time_t tt;
+              char *s;
+              Bool changed = False;
+              Bool running = False;
+
+              if (type != XA_INTEGER || nitems < 3)
+                {
+                STATUS_LOSE:
+                  if (last) free (last);
+                  if (data) free (data);
+                  fprintf (stderr, "%s: bad status format on root window.\n",
+                           progname);
+                  return -1;
+                }
+                  
+              tt = (time_t) data[1];
+              if (tt <= (time_t) 666000000L) /* early 1991 */
+                goto STATUS_LOSE;
+
+              s = ctime(&tt);
+              if (s[strlen(s)-1] == '\n')
+                s[strlen(s)-1] = 0;
+
+              if (!last || data[0] != last[0])
+                {
+                  /* State changed. */
+                  if (data[0] == XA_BLANK)
+                    printf ("BLANK %s\n", s);
+                  else if (data[0] == XA_LOCK)
+                    printf ("LOCK %s\n", s);
+                  else if (data[0] == 0)
+                    printf ("UNBLANK %s\n", s);
+                  else
+                    goto STATUS_LOSE;
+                }
+
+              if (!last)
+                changed = True;
+              else
+                {
+                  int i;
+                  for (i = 2; i < nitems; i++)
+                    {
+                      if (data[i] != last[i])
+                        changed = True;
+                      if (data[i])
+                        running = True;
+                    }
+                }
+
+              if (running && changed)
+                {
+                  int i;
+                  fprintf (stdout, "RUN", s);
+                  for (i = 2; i < nitems; i++)
+                    fprintf (stdout, " %d", (int) data[i]);
+                  fprintf (stdout, "\n");
+                }
+
+              fflush (stdout);
+
+              if (last) free (last);
+              last = data;
+	    }
+	  else
+	    {
+	      if (last) free (last);
+	      if (data) free (data);
+	      fprintf (stderr, "%s: no saver status on root window.\n",
+		       progname);
+	      return -1;
+	    }
+        }
+    }
 }

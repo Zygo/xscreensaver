@@ -66,6 +66,8 @@ AC_DEFUN(AC_PROG_CC_ANSI,
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
     CC="$CC -Wall -Wstrict-prototypes -Wnested-externs -Wno-format"
+    AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
+    CC="$CC -Wp,-lang-c89"
   else
     case "$host" in
       *-irix5* |*-irix6.[0-3]* )
@@ -563,7 +565,7 @@ AC_DEFUN(AC_CHECK_X_LIB, [
     LDFLAGS="$LDFLAGS -L$libdir"
   fi
   # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS"
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
 
   AC_CHECK_LIB([$1], [$2], [$3], [$4], [$5])
   CPPFLAGS="$ac_save_CPPFLAGS"
@@ -1818,25 +1820,36 @@ if test "$with_gl" = yes; then
     ac_have_mesa_gl=$ac_cv_have_mesa_gl
  
 
+    gl_lib_1=""
+    GL_LIBS=""
+
+
+    # Some versions of MesaGL are compiled to require -lpthread.
+    # So if the Mesa headers exist, and -lpthread exists, then always
+    # link -lpthread after the Mesa libs (be they named -lGL or -lMesaGL.)
+    #
+    if test "$ac_have_mesa_gl" = yes; then
+      AC_CHECK_LIB(pthread, pthread_create, [GL_LIBS="-lpthread"], [],)
+    fi
+
+
     # If we have Mesa headers, check to see if we can link against -lMesaGL.
     # If we don't have Mesa headers, or we don't have -lMesaGL, try -lGL.
     # Else, warn that GL is busted.  (We have the headers, but no libs.)
     #
-    gl_lib_1=""
-    GL_LIBS=""
 
     if test "$ac_have_mesa_gl" = yes ; then
       AC_CHECK_X_LIB(MesaGL, glXCreateContext, 
                      [gl_lib_1="MesaGL"
-                      GL_LIBS="-lMesaGL -lMesaGLU"],
-                     [], -lMesaGLU -lX11 -lXext -lm)
+                      GL_LIBS="-lMesaGL -lMesaGLU $GL_LIBS"],
+                     [], -lMesaGLU $GL_LIBS -lX11 -lXext -lm)
     fi
 
     if test "$gl_lib_1" = "" ; then
       AC_CHECK_X_LIB(GL, glXCreateContext, 
                      [gl_lib_1="GL"
-                      GL_LIBS="-lGL -lGLU"],
-                     [], -lGLU -lX11 -lXext -lm)
+                      GL_LIBS="-lGL -lGLU $GL_LIBS"],
+                     [], -lGLU $GL_LIBS -lX11 -lXext -lm)
     fi
 
     if test "$gl_lib_1" = "" ; then
@@ -1906,24 +1919,6 @@ EOF
       ac_mesagl_version_string=$ac_cv_mesagl_version_string
     fi
 
-
-    # If it's MesaGL, check to see if it requires -lpthread.
-    #
-    have_pthread=no
-    mesa_requires_pthread=no
-    if test "$ac_have_mesa_gl" = yes; then
-
-      AC_CHECK_LIB(pthread, pthread_create, [have_pthread=yes], [],)
-      if test "$have_pthread" = yes; then
-        AC_CHECK_X_LIB($gl_lib_1, gl_get_thread_context,
-                       [mesa_requires_pthread=yes], [true],
-                       $GL_LIBS -lpthread -lX11 -lXext -lm)
-      fi
-
-      if test "$mesa_requires_pthread" = yes; then
-        GL_LIBS="$GL_LIBS -lpthread"
-      fi
-    fi
 
     # Check for OpenGL 1.1 features.
     #
@@ -2369,22 +2364,24 @@ if test \! -z "$libdir" ; then
 fi
 
 
+DEMO_MAN="xscreensaver-demo-old.man"
 ALL_DEMO_PROGRAMS=
-if test "$have_athena3d" = yes; then
-  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xaw3d
-  ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
-fi
 if test "$have_athena" = yes; then
   PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xaw
   ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
 fi
-if test "$have_gtk" = yes; then
-  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Gtk
+if test "$have_athena3d" = yes; then
+  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xaw3d
   ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
 fi
 if test "$have_motif" = yes; then
   PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
   ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
+fi
+if test "$have_gtk" = yes; then
+  PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Gtk
+  ALL_DEMO_PROGRAMS="$PREFERRED_DEMO_PROGRAM $ALL_DEMO_PROGRAMS"
+  DEMO_MAN="xscreensaver-demo.man"
 fi
 
 
@@ -2406,7 +2403,7 @@ if test "$enable_locking" = yes; then
   LOCK_OBJS='$(LOCK_OBJS_1) $(PASSWD_OBJS)'
 else
   LOCK_SRCS='$(NOLOCK_SRCS_1)'
-  LOCK_OBJS='$(NOLOCK_SRCS_1)'
+  LOCK_OBJS='$(NOLOCK_OBJS_1)'
 fi
 
 if test "$need_setuid" = yes; then
@@ -2423,15 +2420,15 @@ if test "$have_gl" = yes; then
   GL_MEN='$(GL_MEN)'
   GL_KLUDGE="${tab}  "
 else
-  GL_KLUDGE="  -${tab}  "
+  GL_KLUDGE="-${tab}  "
 fi
 
 if test "$have_gle" = yes; then
   GLE_EXES='$(GLE_EXES)'
   GLE_MEN='$(GLE_MEN)'
-  GLE_KLUDGE="${tab}  "
+  GLE_KLUDGE="${tab}   "
 else
-  GLE_KLUDGE="  -${tab}  "
+  GLE_KLUDGE="-${tab}   "
 fi
 
 
@@ -2445,6 +2442,7 @@ AC_SUBST(INCLUDES)
 
 AC_SUBST(PREFERRED_DEMO_PROGRAM)
 AC_SUBST(ALL_DEMO_PROGRAMS)
+AC_SUBST(DEMO_MAN)
 AC_SUBST(SAVER_LIBS)
 AC_SUBST(MOTIF_LIBS)
 AC_SUBST(GTK_LIBS)

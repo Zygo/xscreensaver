@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.40 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.41 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -75,10 +75,11 @@ my $http_proxy = undef;
 my $http_timeout = 30;
 my $cvt_timeout = 10;
 
-# if we have xli, use it to write to the root window.  else use xv.
-my $ppm_to_root_window_cmd_1 = "xli -quiet -onroot -center" .
+# programs we can use to write to the root window (tried in ascending order.)
+my $ppm_to_root_window_cmd_1 = "xloadimage -onroot -quiet %%PPM%%";
+my $ppm_to_root_window_cmd_2 = "xli -quiet -onroot -center" .
                                " -border black %%PPM%%";
-my $ppm_to_root_window_cmd_2 = "xv -root -rmode 5 -viewonly" .
+my $ppm_to_root_window_cmd_3 = "xv -root -rmode 5 -viewonly" .
                                " +noresetroot %%PPM%% -quit";
 
 my $ppm_to_root_window_cmd = undef;     # initialized by x_output()
@@ -1052,8 +1053,10 @@ sub x_output {
 
     my $win_cmd_1 = $ppm_to_root_window_cmd_1;
     my $win_cmd_2 = $ppm_to_root_window_cmd_2;
+    my $win_cmd_3 = $ppm_to_root_window_cmd_3;
     $win_cmd_1 =~ s/^([^ \t\r\n]+).*$/$1/;
     $win_cmd_2 =~ s/^([^ \t\r\n]+).*$/$1/;
+    $win_cmd_3 =~ s/^([^ \t\r\n]+).*$/$1/;
 
     # make sure the various programs we execute exist, right up front.
     foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale",
@@ -1065,8 +1068,10 @@ sub x_output {
         $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_1;
     } elsif (which($win_cmd_2)) {
         $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_2;
-    } else {
-        die "$progname: neither $win_cmd_1 nor $win_cmd_2 found on \$PATH.\n";
+    } elsif (which($win_cmd_3)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_3;
+     } else {
+        die "$progname: didn't find $win_cmd_1, $win_cmd_2, or $win_cmd_3 on \$PATH.\n";
     }
 
     $SIG{HUP}  = \&x_cleanup;

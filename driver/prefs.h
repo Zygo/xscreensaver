@@ -12,6 +12,14 @@
 #ifndef __XSCREENSAVER_PREFS_H__
 #define __XSCREENSAVER_PREFS_H__
 
+typedef struct screenhack screenhack;
+struct screenhack {
+  Bool enabled_p;
+  char *visual;
+  char *name;
+  char *command;
+};
+
 typedef struct saver_preferences saver_preferences;
 
 
@@ -38,13 +46,13 @@ struct saver_preferences {
 
   Bool fade_p;			/* whether to fade to black, if possible */
   Bool unfade_p;		/* whether to fade from black, if possible */
-  int fade_seconds;		/* how long that should take */
+  Time fade_seconds;		/* how long that should take */
   int fade_ticks;		/* how many ticks should be used */
 
   Bool install_cmap_p;		/* whether we should use our own colormap
 				   when using the screen's default visual. */
 
-  char **screenhacks;		/* the programs to run */
+  screenhack **screenhacks;	/* the programs to run */
   int screenhacks_count;
 
   int nice_inferior;		/* nice value for subprocs */
@@ -77,5 +85,9 @@ extern void load_init_file (saver_preferences *p);
 extern Bool init_file_changed_p (saver_preferences *p);
 extern void write_init_file (saver_preferences *p, const char *version_string);
 const char *init_file_name (void);
+
+extern screenhack *parse_screenhack (const char *line);
+extern void free_screenhack (screenhack *hack);
+extern char *format_hack (screenhack *hack, Bool wrap_p);
 
 #endif /* __XSCREENSAVER_PREFS_H__ */

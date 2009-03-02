@@ -69,19 +69,18 @@
 
 typedef struct cell_s 
 {
-    short x;                        /*  0    */
-    short y;                        /*  2    */
-    unsigned char col;              /*  4    */
-    unsigned char isnext;           /*  5    */
-    unsigned char nextcol;          /*  6    */
-                                    /*  7    */
-    struct cell_s *next;            /*  8    */
-    struct cell_s *prev;            /* 12    */
-    struct cell_s *(adj)[3][3];     /* 16    */
-    FLOAT speed;                    /* 52    */
-    FLOAT growth;                   /* 56 60 */
-    FLOAT nextspeed;                /* 60 68 */
-                                    /* 64 76 */
+    short x;                        /*  0    - */
+    short y;                        /*  2      */
+    unsigned char col;              /*  4      */
+    unsigned char isnext;           /*  5      */
+    unsigned char nextcol;          /*  6      */
+                                    /*  7      */
+    struct cell_s *next;            /*  8    - */
+    struct cell_s *prev;            /* 12      */
+    FLOAT speed;                    /* 16    - */
+    FLOAT growth;                   /* 20 24   */
+    FLOAT nextspeed;                /* 24 32 - */
+                                    /* 28 40   */
 } cell;
 
 static int arr_width;
@@ -136,7 +135,10 @@ static void setup_random_colormap (XWindowAttributes *xgwa)
     make_random_colormap (display, xgwa->visual, xgwa->colormap,
 			  colors+1, &ncolors, True, True, 0, True);
     if (ncolors < 1)
+      {
+        fprintf (stderr, "%s: couldn't allocate any colors\n", progname);
 	exit (-1);
+      }
     
     ncolors++;
     count = ncolors;
@@ -234,7 +236,36 @@ static void setup_display (void)
     Colormap cmap;
 
     int cell_size = get_integer_resource ("size", "Integer");
+    int osize, alloc_size, oalloc;
+    int mem_throttle = 0;
+    char *s;
+
     if (cell_size < 1) cell_size = 1;
+
+    osize = cell_size;
+
+    s = get_string_resource ("memThrottle", "MemThrottle");
+    if (s)
+      {
+        int n;
+        char c;
+        if (1 == sscanf (s, " %d M %c", &n, &c) ||
+            1 == sscanf (s, " %d m %c", &n, &c))
+          mem_throttle = n * (1 << 20);
+        else if (1 == sscanf (s, " %d K %c", &n, &c) ||
+                 1 == sscanf (s, " %d k %c", &n, &c))
+          mem_throttle = n * (1 << 10);
+        else if (1 == sscanf (s, " %d %c", &n, &c))
+          mem_throttle = n;
+        else
+          {
+            fprintf (stderr, "%s: invalid memThrottle \"%s\" (try \"10M\")\n",
+                     progname, s);
+            exit (1);
+          }
+        
+        free (s);
+      }
 
     XGetWindowAttributes (display, window, &xgwa);
 
@@ -358,6 +389,38 @@ static void setup_display (void)
     arr_width = windowWidth / cell_size;
     arr_height = windowHeight / cell_size;
 
+    alloc_size = sizeof(cell) * arr_width * arr_height;
+    oalloc = alloc_size;
+
+    if (mem_throttle > 0)
+      while (cell_size < windowWidth/10 &&
+             cell_size < windowHeight/10 &&
+             alloc_size > mem_throttle)
+        {
+          cell_size++;
+          arr_width = windowWidth / cell_size;
+          arr_height = windowHeight / cell_size;
+          alloc_size = sizeof(cell) * arr_width * arr_height;
+        }
+
+    if (osize != cell_size)
+      {
+        static int warned = 0;
+        if (!warned)
+          {
+            fprintf (stderr,
+             "%s: throttling cell size from %d to %d because of %dM limit.\n",
+                     progname, osize, cell_size, mem_throttle / (1 << 20));
+            fprintf (stderr, "%s: %dx%dx%d = %.1fM, %dx%dx%d = %.1fM.\n",
+                     progname,
+                     windowWidth, windowHeight, osize,
+                     ((float) oalloc) / (1 << 20),
+                     windowWidth, windowHeight, cell_size,
+                     ((float) alloc_size) / (1 << 20));
+            warned = 1;
+          }
+      }
+
     xSize = windowWidth / arr_width;
     ySize = windowHeight / arr_height;
     if (xSize > ySize)
@@ -395,8 +458,6 @@ static void drawblock (int x, int y, unsigned char c)
 static void setup_arr (void)
 {
     int x, y;
-    int i, j;
-    int a, b;
 
     if (arr != NULL)
     {
@@ -427,19 +488,6 @@ static void setup_arr (void)
 	    arr[row+x].isnext = 0;
 	    arr[row+x].next = 0;
 	    arr[row+x].prev = 0;
-	    for (i = 0; i < 3; i++) 
-	    {
-		a = x + i - 1;
-		if (a < 0) a = arr_width - 1;
-		else if (a >= arr_width) a = 0;
-		for (j = 0; j < 3; j++) 
-		{
-		    b = y + j - 1;
-		    if (b < 0) b = arr_height - 1;
-		    else if (b >= arr_height) b = 0;
-		    arr[row+x].adj[i][j] = &arr[(b * arr_width) + a];
-		}
-	    }
 	}
     }
 
@@ -548,23 +596,36 @@ static void update (void)
     
     for (a = head->next; a != tail; a = a->next) 
     {
-	if (a->speed == 0) continue;
-	a->growth += a->speed;
-	if (a->growth >= orthlim) 
-	{
-	    newcell (a->adj[0][1], a->col, a->speed);
-	    newcell (a->adj[2][1], a->col, a->speed);
-	    newcell (a->adj[1][0], a->col, a->speed);
-	    newcell (a->adj[1][2], a->col, a->speed);
-	}
+        static XPoint coords1[] = {{-1,  0}, { 1, 0}, {0, -1}, {0, 1}};
+        static XPoint coords2[] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+        XPoint *coords = 0;
+        int i;
+
+        if (a->speed == 0) continue;
+        a->growth += a->speed;
+        if (a->growth >= orthlim) 
+          coords = coords1;
+
 	if (a->growth >= diaglim) 
-	{
-	    newcell (a->adj[0][0], a->col, a->speed);
-	    newcell (a->adj[0][2], a->col, a->speed);
-	    newcell (a->adj[2][0], a->col, a->speed);
-	    newcell (a->adj[2][2], a->col, a->speed);
+          coords = coords2;
+
+        if (coords)
+          for (i = 0; i < 4; i++)
+            {
+              int x = a->x + coords[i].x;
+              int y = a->y + coords[i].y;
+
+              if (x < 0) x = arr_width - 1;
+              else if (x >= arr_width) x = 0;
+
+              if (y < 0) y = arr_height - 1;
+              else if (y >= arr_height) y = 0;
+
+              newcell (&arr[y * arr_width + x], a->col, a->speed);
+            }
+
+	if (a->growth >= diaglim) 
 	    killcell (a);
-	}
     }
     
     randblip ((head->next) == tail);
@@ -602,6 +663,8 @@ char *defaults [] = {
   "*mindeathspeed:	0.42",
   "*maxdeathspeed:	0.46",
   "*originalcolors:	false",
+  "*memThrottle:        22M",	/* don't malloc more than this much.
+                                   Scale the pixels up if necessary. */
     0
 };
 
@@ -620,6 +683,7 @@ XrmOptionDescRec options [] = {
   { "-mindeathspeed",	 ".mindeathspeed",	XrmoptionSepArg, 0 },
   { "-maxdeathspeed",	 ".maxdeathspeed",	XrmoptionSepArg, 0 },
   { "-originalcolors",	 ".originalcolors",	XrmoptionNoArg,  "true" },
+  { "-mem-throttle",	 ".memThrottle",	XrmoptionSepArg,  0 },
   { 0, 0, 0, 0 }
 };
 
@@ -642,5 +706,3 @@ void screenhack (Display *dpy, Window win)
 	usleep (delay);
     }
 }
-
-
