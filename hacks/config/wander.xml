@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="wander" _label="Wander">
+
+  <command arg="-root"/>
+
+  <number id="density" type="slider" arg="-density %"
+          _label="Density" _low-label="Low" _high-label="High"
+          low="1" high="30" default="2"
+          convert="invert"/>
+
+  <number id="reset" type="slider" arg="-reset %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="10000" high="3000000" default="2500000"/>
+
+  <number id="length" type="slider" arg="-length %"
+          _label="Length" _low-label="Short" _high-label="Long"
+          low="100" high="100000" default="25000"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Sustain" _low-label="0 Seconds" _high-label="1 Minute"
+          low="0" high="60" default="1"/>
+
+  <hgroup>
+    <boolean id="circles" _label="Draw Spots" arg-set="-circles"/>
+
+    <number id="size" type="spinbutton" arg="-size %"
+             _label="Size" low="0" high="100" default="1"/>
+  </hgroup>
+
+  <number id="advance" type="slider" arg="-advance %"
+          _label="Color Contrast" _low-label="Low" _high-label="High"
+          low="1" high="100" default="1"/>
+
+  <_description>
+Draws a colorful random-walk, in various forms.
+
+Written by Rick Campbell; 1999.
+  </_description>
+</screensaver>

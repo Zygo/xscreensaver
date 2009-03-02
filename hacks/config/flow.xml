@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flow" _label="Flow">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="3000" default="3000"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="10000"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="1000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <number id="ncolors" type="slider" arg="-size %"
+            _label="Length of trails" _low-label="Short" _high-label="Long"
+            low="-20" high="-2" default="-10" convert="invert"/>
+
+  <boolean id="rotate" _label="Rotating around attractor" arg-unset="-no-rotate"/>
+  <boolean id="ride"   _label="Ride in the flow" arg-unset="-no-ride"/>
+  <boolean id="box"    _label="Draw bounding box"  arg-unset="-no-box"/>
+  <boolean id="periodic" _label="Periodic attractors" arg-unset="-no-periodic"/>
+  <boolean id="search" _label="Search for new attractors" arg-unset="-no-search"/>
+<!--  <boolean id="dbuf" _label="Double Buffer" arg-unset="-no-dbuf"/> -->
+
+  <_description>
+Strange attractors formed of flows in a 3D differential equation phase space.
+
+Written by Tim Auckland; 1998.
+  </_description>
+</screensaver>

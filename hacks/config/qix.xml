@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="qix" _label="Qix">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="20" default="1"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="segments" type="slider" arg="-segments %"
+          _label="Segments" _low-label="Few" _high-label="Many"
+          low="10" high="500" default="50"/>
+
+  <number id="spread" type="slider" arg="-spread %"
+          _label="Density" _low-label="Sparse" _high-label="Dense"
+          low="1" high="50" default="8"
+          convert="invert"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Max Size" low="0" high="1000" default="0"/>
+
+  <number id="poly" type="spinbutton" arg="-poly %"
+           _label="Corners" low="2" high="100" default="2"/>
+
+  <select id="motion">
+    <option id="linear" _label="Linear Motion" arg-set="-linear"/>
+    <option id="random" _label="Random Motion"/>
+  </select>
+
+  <hgroup>
+    <boolean id="transparent" _label="Transparent" arg-set="-transparent"/>
+
+    <select id="color-mode">
+      <option id="additive" _label="Additive Colors"/>
+      <option id="subtractive" _label="Subtractive Colors"
+              arg-set="-subtractive"/>
+    </select>
+  </hgroup>
+
+  <hgroup>
+  <number id="color_contrast" type="slider" arg="-color-shift %"
+          _label="Color Contrast" _low-label="Low" _high-label="High"
+           low="0" high="25" default="3"/>
+  </hgroup>
+
+  <select id="fill">
+    <option id="lines" _label="Line Segments"/>
+    <option id="solid" _label="Solid Objects" arg-set="-solid"/>
+  </select>
+
+  <hgroup>
+    <boolean id="xor" _label="XOR" arg-set="-xor"/>
+    <boolean id="gravity" _label="Gravity" arg-set="-gravity"/>
+  </hgroup>
+
+  <_description>
+Bounces a series of line segments around the screen, and uses
+variations on this basic motion pattern to produce all sorts of
+different presentations: line segments, filled polygons, and
+overlapping translucent areas.
+
+Written by Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

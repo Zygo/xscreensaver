@@ -1,0 +1,185 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+hypertorus - Draws a hypertorus that rotates in 4d
+.SH SYNOPSIS
+.B hypertorus
+[\-display \fIhost:display.screen\fP]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fIusecs\fP]
+[\-fps]
+[\-wireframe]
+[\-surface]
+[\-transparent]
+[\-solid]
+[\-bands]
+[\-spirals-{1,2,4,8,16}]
+[\-twosided]
+[\-colorwheel]
+[\-perspective-3d]
+[\-orthographic-3d]
+[\-perspective-4d]
+[\-orthographic-4d]
+[\-speed-wx \fIfloat\fP]
+[\-speed-wy \fIfloat\fP]
+[\-speed-wz \fIfloat\fP]
+[\-speed-xy \fIfloat\fP]
+[\-speed-xz \fIfloat\fP]
+[\-speed-yz \fIfloat\fP]
+.SH DESCRIPTION
+The \fIhypertorus\fP program shows the Clifford torus as it rotates in
+4d.  The Clifford torus is a torus lies on the "surface" of the
+hypersphere in 4d.  The program projects the 4d torus to 3d using
+either a perspective or an orthographic projection.  Of the two
+alternatives, the perspective projection looks much more appealing.
+In orthographic projections the torus degenerates into a doubly
+covered cylinder for some angles.  The projected 3d torus can then be
+projected to the screen either perspectively or orthographically.
+There are three display modes for the torus: mesh (wireframe), solid,
+or transparent.  Furthermore, the appearance of the torus can be as a
+solid object or as a set of see-through bands or see-through spirals.
+Finally, the colors with with the torus is drawn can be set to either
+two-sided or to a color wheel.  In the first case, the torus is drawn
+with red on the outside and green on the inside.  This mode enables
+you to see that the torus turns inside-out as it rotates in 4d.  The
+second mode draws the torus with a fully saturated color wheel.  This
+gives a very nice effect when combined with the see-through bands or
+see-through spirals mode.  The rotation speed for each of the six
+planes around which the torus rotates can be chosen.  This program is
+very much inspired by Thomas Banchoff's book "Beyond the Third
+Dimension: Geometry, Computer Graphics, and Higher Dimensions",
+Scientific American Library, 1990.
+.SH OPTIONS
+.I hypertorus
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the
+animation.  Default 25000, or 1/40th second.
+.PP
+The following three options are mutually exclusive.  They determine
+how the torus is displayed.
+.TP 8
+.B \-wireframe
+Display the torus as a wireframe mesh.
+.TP 8
+.B \-surface
+Display the torus as a solid surface (default).
+.TP 8
+.B \-transparent
+Display the torus as a transparent surface.
+.PP
+The following seven options are mutually exclusive.  They determine the
+appearance of the torus.
+.TP 8
+.B \-solid
+Display the torus as a solid object.
+.TP 8
+.B \-bands
+Display the torus as see-through bands (default).
+.TP 8
+.B \-spirals-1, \-spirals-2, \-spirals-4, \-spirals-8, \-spirals-16
+Display the torus as see-through spirals with the indicated number of
+spirals.
+.PP
+The following two options are mutually exclusive.  They determine how
+to color the torus.
+.TP 8
+.B \-twosided
+Display the torus with two colors: red on the outside and green on
+the inside.
+.TP 8
+.B \-colorwheel
+Display the torus with a fully saturated color wheel (default).  If
+the torus is displayed as see-through bands each band will be
+displayed with a different color.  Likewise, if the torus is displayed
+as see-through spirals each spiral will receive a different color.
+.PP
+The following two options are mutually exclusive.  They determine how
+the torus is projected from 3d to 2d (i.e., to the screen).
+.TP 8
+.B \-perspective-3d
+Project the torus from 3d to 2d using a perspective projection
+(default).
+.TP 8
+.B \-orthographic-3d
+Project the torus from 3d to 2d using an orthographic projection.
+.PP
+The following two options are mutually exclusive.  They determine how
+the torus is projected from 4d to 3d.
+.TP 8
+.B \-perspective-4d
+Project the torus from 4d to 3d using a perspective projection
+(default).
+.TP 8
+.B \-orthographic-4d
+Project the torus from 4d to 3d using an orthographic projection.
+.PP
+The following six options determine the rotation speed of the torus
+around the six possible hyperplanes.  The rotation speed is measured
+in degrees per frame.  The speeds should be set to relatively small
+values, e.g., less than 4 in magnitude.
+.TP 8
+.B \-speed-wx \fIfloat\fP
+Rotation speed around the wx plane (default: 1.1).
+.TP 8
+.B \-speed-wy \fIfloat\fP
+Rotation speed around the wy plane (default: 1.3).
+.TP 8
+.B \-speed-wz \fIfloat\fP
+Rotation speed around the wz plane (default: 1.5).
+.TP 8
+.B \-speed-xy \fIfloat\fP
+Rotation speed around the xy plane (default: 1.7).
+.TP 8
+.B \-speed-xz \fIfloat\fP
+Rotation speed around the xz plane (default: 1.9).
+.TP 8
+.B \-speed-yz \fIfloat\fP
+Rotation speed around the yz plane (default: 2.1).
+.SH INTERACTION
+If you run this program in standalone mode you can rotate the
+hypertorus by dragging the mouse while pressing the left mouse button.
+This rotates the hypertorus in 3D, i.e., around the wx, wy, and wz
+planes.  If you press the shift key while dragging the mouse with the
+left button pressed the hypertorus is rotated in 4D, i.e., around the
+xy, xz, and yz planes.  To examine the hypertorus at your leisure, it
+is best to set all speeds to 0.  Otherwise, the hypertorus will rotate
+while the left mouse button is not pressed.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2003-2005 by Carsten Steger.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Carsten Steger <carsten@mirsanmir.org>, 28-sep-2005.

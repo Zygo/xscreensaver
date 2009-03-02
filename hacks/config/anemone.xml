@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="anemone" _label="Anemone">
+
+  <command arg="-root"/>
+
+<!--
+ -withdraw 1200
+ -turnspeed 50
+-->
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="40000"
+          convert="invert"/>
+
+  <number id="arms" type="slider" arg="-arms %"
+           _label="Arms" _low-label="Few" _high-label="Many"
+          low="2" high="500" default="128"/>
+
+  <number id="finpoints" type="slider" arg="-finpoints %"
+           _label="Tentacles" _low-label="Few" _high-label="Many"
+          low="3" high="200" default="64"/>
+
+  <number id="width" type="slider" arg="-width %"
+           _label="Thickness" _low-label="Thin" _high-label="Thick"
+          low="1" high="10" default="2"/>
+
+  <number id="withdraw" type="slider" arg="-withdraw %"
+           _label="Withdraw freqency" _low-label="Often" _high-label="Rarely"
+          low="12" high="10000" default="1200"/>
+
+  <number id="turnspeed" type="slider" arg="-turnspeed %"
+           _label="Turn speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="1000" default="50"/>
+
+<!--
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="64"/>
+-->
+
+  <_description>
+Wiggling tentacles.
+
+Written by Gabriel Finch; 2002.
+  </_description>
+</screensaver>
