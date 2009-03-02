@@ -22,6 +22,8 @@
 # define HACK_INIT                                      init_screenflip
 # define HACK_DRAW                                      draw_screenflip
 # define HACK_RESHAPE                           reshape_screenflip
+# define HACK_HANDLE_EVENT				screenflip_handle_event
+# define EVENT_MASK					PointerMotionMask
 # define screenflip_opts                                     xlockmore_opts
 /* insert defaults here */
 
@@ -97,6 +99,7 @@ static Screenflip *screenflip = NULL;
 #include <stdio.h>
 #include <stdlib.h>
 #include "grab-ximage.h"
+#include "gltrackball.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265
@@ -106,6 +109,40 @@ static GLfloat viewer[] = {0.0, 0.0, 15.0};
 
 int regrab = 0;
 int fadetime = 0; /* fade before regrab */
+
+static trackball_state *trackball;
+static Bool button_down_p = False;
+
+
+Bool
+screenflip_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      button_down_p = True;
+      gltrackball_start (trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           button_down_p)
+    {
+      gltrackball_track (trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
 
 
 /* draw the texture mapped quad (actually two back to back)*/
@@ -143,19 +180,23 @@ void showscreen(int frozen, int wire)
   if (!frozen) {
      w *= sin (stretch_val_x) + 1;
      x *= sin (stretch_val_x) + 1;
+     if (!button_down_p) {
      if (!fadetime) stretch_val_x += stretch_val_dx;
      if (stretch_val_x > 2*M_PI && !(random() % 5))
        stretch_val_dx = (float)(random() % 100) / 5000;
      else
        stretch_val_x -= 2*M_PI;
+     }
 
-     if (!fadetime) stretch_val_y += stretch_val_dy;
+     if (!button_down_p && !fadetime) stretch_val_y += stretch_val_dy;
      h *= sin (stretch_val_y) / 2 + 1;
      y *= sin (stretch_val_y) / 2 + 1;
+     if (!button_down_p) {
      if (stretch_val_y > 2*M_PI && !(random() % 5))
        stretch_val_dy = (float)(random() % 100) / 5000;
      else
        stretch_val_y -= 2*M_PI;
+     }
   }
 
   glColor4f(r, g, b, a);
@@ -299,7 +340,7 @@ void display(int wire)
     frozen = 0;
     glTranslatef(5 * sin(theta), 5 * sin(rho), 10 * cos(gamma) - 10);
 /* randomly change the speed */
-    if (!(random() % 300)) {
+    if (!button_down_p && !(random() % 300)) {
       if (random() % 2)
         drho = 1/60 - (float)(random() % 100)/3000;
       if (random() % 2)
@@ -307,9 +348,10 @@ void display(int wire)
       if (random() % 2)
         dgamma = 1/60 - (float)(random() % 100)/3000;
     }
+    gltrackball_rotate (trackball);
     if (rotate) glRotatef(rot, rx, ry, rz);
 /* update variables with each frame */
-    if (!fadetime) {
+    if(!button_down_p && !fadetime) {
       theta += dtheta;
       rho += drho;
       gamma += dgamma;
@@ -327,7 +369,7 @@ void display(int wire)
     rot = 0;
     frozen = 1;
   }
-  if (!fadetime && (rot >= 360 || rot <= -360) && !(random() % 7)) { /* rotate  change */
+  if (!button_down_p && !fadetime && (rot >= 360 || rot <= -360) && !(random() % 7)) { /* rotate  change */
     rx = (GLfloat)(random() % 100) / 100;
     ry = (GLfloat)(random() % 100) / 100;
     rz = (GLfloat)(random() % 100) / 100;
@@ -425,6 +467,8 @@ void init_screenflip(ModeInfo *mi)
  }
  c = &screenflip[screen];
  c->window = MI_WINDOW(mi);
+
+ trackball = gltrackball_init ();
 
  if ((c->glx_context = init_GL(mi)) != NULL) {
       reshape_screenflip(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

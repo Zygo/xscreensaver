@@ -315,7 +315,9 @@ void xteevee_Roll(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
 void xteevee_Bars(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
       time_t hack_Time,Pixmap hack_Pm)
 {
-  draw_colorbars (x_Disp, x_Win, 0, 0, x_WinAttr->width, x_WinAttr->height);
+  draw_colorbars (x_WinAttr->screen, x_WinAttr->visual, x_Win,
+                  x_WinAttr->colormap,
+                  0, 0, x_WinAttr->width, x_WinAttr->height);
 
   /* Go! */
   if (hack_Time > 0)
@@ -362,7 +364,7 @@ void screenhack(Display* x_Disp,Window x_Win)
 
 	/* Grab the screen to give us time to do whatever we want */
 	XGetWindowAttributes(x_Disp,x_Win,&x_WinAttr);
-	grab_screen_image(x_WinAttr.screen,x_Win);
+        load_random_image (x_WinAttr.screen, x_Win, x_Win);
 
 	x_GcVal.subwindow_mode = IncludeInferiors;
 	x_Gc = XCreateGC(x_Disp,x_Win,GCSubwindowMode,&x_GcVal);

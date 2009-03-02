@@ -29,6 +29,7 @@
 
 #include "utils.h"
 #include "resources.h"
+#include "visual.h"
 
 #include <stdio.h>
 #include <X11/Xutil.h>
@@ -196,26 +197,24 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
 
 
 
-/* Draws the logo centered in the given Drawable (presumably a Pixmap.)
-   next_frame_p means randomize the flame shape.
+/* Returns a pixmap of the xscreensaver logo.
  */
 Pixmap
-xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
+xscreensaver_logo (Screen *screen, Visual *visual,
+                   Drawable drawable, Colormap cmap,
                    unsigned long background_color,
                    unsigned long **pixels_ret, int *npixels_ret,
                    Pixmap *mask_ret,
                    Bool big_p)
 {
+  Display *dpy = DisplayOfScreen (screen);
+  int depth = visual_depth (screen, visual);
   int iw, ih;
   XImage *image;
   Pixmap p = 0;
-  XWindowAttributes xgwa;
   unsigned char *mask = 0;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-
-  image = parse_xpm_data (dpy, xgwa.visual, xgwa.colormap, xgwa.depth,
-                          background_color,
+  image = parse_xpm_data (dpy, visual, cmap, depth, background_color,
                           (big_p ? logo_180_xpm : logo_50_xpm),
                           &iw, &ih, pixels_ret, npixels_ret,
                           (mask_ret ? &mask : 0));
@@ -224,7 +223,7 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
     {
       XGCValues gcv;
       GC gc;
-      p = XCreatePixmap (dpy, window, iw, ih, xgwa.depth);
+      p = XCreatePixmap (dpy, drawable, iw, ih, depth);
       gc = XCreateGC (dpy, p, 0, &gcv);
       XPutImage (dpy, p, gc, image, 0, 0, 0, 0, iw, ih);
       free (image->data);
@@ -235,7 +234,7 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
       if (mask_ret && mask)
         {
           *mask_ret = (Pixmap)
-            XCreatePixmapFromBitmapData (dpy, window, (char *) mask,
+            XCreatePixmapFromBitmapData (dpy, drawable, (char *) mask,
                                          iw, ih, 1L, 0L, 1);
           free (mask);
         }

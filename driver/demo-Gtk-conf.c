@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -669,17 +669,17 @@ make_adjustment (const char *filename, parameter *p)
     }
 #endif /* 0 */
 
-  if (p->integer_p)
-    {
-      si = (int) (si + 0.5);
-      pi = (int) (pi + 0.5);
-      if (si < 1) si = 1;
-      if (pi < 1) pi = 1;
+  si = (int) (si + 0.5);
+  pi = (int) (pi + 0.5);
+  if (si < 1) si = 1;
+  if (pi < 1) pi = 1;
 
-      if (range <= 500) si = 1;
-    }
-  return GTK_ADJUSTMENT (gtk_adjustment_new (value, p->low, p->high,
-                                             si, pi, pi));
+  if (range <= 500) si = 1;
+
+  return GTK_ADJUSTMENT (gtk_adjustment_new (value,
+                                             p->low,
+                                             p->high + 1,
+                                             si, pi, 1));
 }
 
 
@@ -840,7 +840,7 @@ make_parameter_widget (const char *filename,
           }
 
         gtk_scale_set_value_pos (GTK_SCALE (scale), GTK_POS_BOTTOM);
-        gtk_scale_set_draw_value (GTK_SCALE (scale), FALSE);
+        gtk_scale_set_draw_value (GTK_SCALE (scale), debug_p);
         gtk_scale_set_digits (GTK_SCALE (scale), (p->integer_p ? 0 : 2));
         if (row)
           gtk_table_attach (GTK_TABLE (parent), scale, 1, 2,
@@ -906,7 +906,7 @@ make_parameter_widget (const char *filename,
       }
     case BOOLEAN:
       {
-        p->widget = gtk_check_button_new_with_label (label);
+        p->widget = gtk_check_button_new_with_label (_(label));
         if (row)
           gtk_table_attach (GTK_TABLE (parent), p->widget, 0, 3,
                             *row, *row + 1,
@@ -935,7 +935,7 @@ make_parameter_widget (const char *filename,
         for (opts = p->options; opts; opts = opts->next)
           {
             parameter *s = (parameter *) opts->data;
-            GtkWidget *i = gtk_menu_item_new_with_label (s->label);
+            GtkWidget *i = gtk_menu_item_new_with_label (_(s->label));
             gtk_widget_show (i);
             gtk_menu_append (GTK_MENU (menu), i);
           }
@@ -1186,7 +1186,7 @@ parameter_to_switch (parameter *p)
         char buf[255];
         char *s1;
         float value = (p->invert_p
-                       ? invert_range (adj->lower, adj->upper, adj->value)
+                       ? invert_range (adj->lower, adj->upper, adj->value) - 1
                        : adj->value);
 
         if (value == p->value)  /* same as default */
@@ -1544,7 +1544,7 @@ parameter_set_switch (parameter *p, gpointer value)
         if (1 == sscanf ((char *) value, "%f %c", &f, &c))
           {
             if (p->invert_p)
-              f = invert_range (adj->lower, adj->upper, f);
+              f = invert_range (adj->lower, adj->upper, f) - 1;
             gtk_adjustment_set_value (adj, f);
           }
         break;
@@ -1686,7 +1686,7 @@ get_description (GList *parms)
           d[--L] = 0;
       }
 
-      return d;
+      return _(d);
     }
 }
 
@@ -1835,6 +1835,7 @@ load_configurator (const char *full_command_line, gboolean verbose_p)
   char *prog;
   char *args;
   conf_data *cd;
+  debug_p = verbose_p;
   split_command_line (full_command_line, &prog, &args);
   cd = load_configurator_1 (prog, args, verbose_p);
   free (prog);

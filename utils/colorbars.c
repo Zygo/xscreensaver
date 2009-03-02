@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,18 +53,25 @@ static const int heights[7] = { 63, 10, 1, 5, 5, 1, 15 };   /* percentages */
 
 
 void
-draw_colorbars (Display *dpy, Window window,
+draw_colorbars (Screen *screen, Visual *visual,
+                Drawable drawable, Colormap cmap,
                 int x, int y, int width, int height)
 {
+  Display *dpy = DisplayOfScreen (screen);
   int oy = y;
   int ypct = 0;
   int j;
   XGCValues gcv;
-  GC gc = XCreateGC (dpy, window, 0, &gcv);
-  Colormap cmap;
-  XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
+  GC gc = XCreateGC (dpy, drawable, 0, &gcv);
+
+  if (width <= 0 || height <= 0)
+    {
+      Window root;
+      int xx, yy;
+      unsigned int bw, d;
+      XGetGeometry (dpy, drawable,
+                    &root, &xx, &yy, &width, &height, &bw, &d);
+    }
 
   for (j = 0; j < sizeof(colors) / sizeof(*colors); j++)
     {
@@ -88,7 +95,7 @@ draw_colorbars (Display *dpy, Window window,
           if (!XAllocColor (dpy, cmap, &xcolor))
             continue;
           XSetForeground (dpy, gc, xcolor.pixel);
-          XFillRectangle (dpy, window, gc, x1, y, w, h);
+          XFillRectangle (dpy, drawable, gc, x1, y, w, h);
           x1 = x2;
 	}
       y = y2;
@@ -102,7 +109,7 @@ draw_colorbars (Display *dpy, Window window,
     int npixels;
     unsigned long bg = ~0;
     Pixmap logo_mask = 0;
-    Pixmap logo_map = xscreensaver_logo (dpy, window, cmap, bg,
+    Pixmap logo_map = xscreensaver_logo (screen, visual, drawable, cmap, bg,
                                          &pixels, &npixels, &logo_mask,
                                          True);
     if (logo_map)
@@ -121,7 +128,7 @@ draw_colorbars (Display *dpy, Window window,
             XSetClipMask (dpy, gc, logo_mask);
             XSetClipOrigin (dpy, gc, x1, y1);
           }
-        XCopyArea (dpy, logo_map, window, gc,
+        XCopyArea (dpy, logo_map, drawable, gc,
                    0, 0, logo_width, logo_height, x1, y1);
         XFreePixmap (dpy, logo_map);
         if (logo_mask)

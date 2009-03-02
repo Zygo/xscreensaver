@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,7 +12,13 @@
 #ifndef __COLORBARS_H__
 #define __COLORBARS_H__
 
-extern void draw_colorbars (Display *dpy, Window window,
+/* Renders colorbars (plus an xscreensaver logo) onto the
+   given Window or Pixmap.  Width and height may be zero
+   (meaning "full size".)
+
+   Colors will be allocated from the cmap, and never freed.
+ */
+extern void draw_colorbars (Screen *, Visual *, Drawable, Colormap,
                             int x, int y, int width, int height);
 
 #endif /* __COLORBARS_H__ */

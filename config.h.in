@@ -19,7 +19,8 @@
  */
 #undef HAVE_READ_DISPLAY_EXTENSION
 
-/* Define this if you have the XHPDisableReset function (an HP only thing.)
+/* Define this if you have the XHPDisableReset function (an HP only thing
+   which allows the Ctrl-Sh-Reset key sequence to be temporarily disabled.)
  */
 #undef HAVE_XHPDISABLERESET
 
@@ -119,6 +120,12 @@
  *  available if the file /usr/include/X11/extensions/Xinerama.h exists.)
  */
 #undef HAVE_XINERAMA
+
+/* Define this if you have the XF86MiscSetGrabKeysState function (which allows
+   the Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash key sequences to be temporarily
+   disabled.  Sadly, it doesn't affect Ctrl-Alt-BS or Ctrl-Alt-F1.)
+ */
+#undef HAVE_XF86MISCSETGRABKEYSSTATE
 
 /*  Define this if you have a Linux-like /proc/interrupts file which can be
  *  examined to determine when keyboard activity has occurred.

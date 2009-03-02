@@ -143,7 +143,7 @@ static void grabImage (XWindowAttributes *xwa)
 	XGetImage (display, window, 0, 0, windowWidth, windowHeight,
 		   ~0L, ZPixmap);
 
-    grab_screen_image (screen, window);
+    load_random_image (screen, window, window);
     sourceImage = XGetImage (display, window, 0, 0, windowWidth, windowHeight,
 			     ~0L, ZPixmap);
 

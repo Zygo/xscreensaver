@@ -1360,13 +1360,35 @@ fi
 
 ###############################################################################
 #
+#       Check for XF86MiscSetGrabKeysState (but only bother if we are already
+#	using other XF86 stuff.)
+#
+###############################################################################
+
+have_xf86miscsetgrabkeysstate=no
+if test "$have_xf86gamma" = yes -o "$have_xf86vmode" = yes; then
+  AC_CHECK_X_LIB(Xxf86misc, XF86MiscSetGrabKeysState,
+                [have_xf86miscsetgrabkeysstate=yes],
+                [true], -lXext -lX11)
+  if test "$have_xf86miscsetgrabkeysstate" = yes ; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86misc"
+    AC_DEFINE(HAVE_XF86MISCSETGRABKEYSSTATE)
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for HP XHPDisableReset and XHPEnableReset.
 #
 ###############################################################################
 
+AC_MSG_CHECKING([for XHPDisableReset in X11/XHPlib.h])
 AC_EGREP_X_HEADER(XHPDisableReset, X11/XHPlib.h,
                   [AC_DEFINE(HAVE_XHPDISABLERESET)
-                   SAVER_LIBS="-lXhp11 $SAVER_LIBS"])
+                   SAVER_LIBS="-lXhp11 $SAVER_LIBS"
+                   AC_MSG_RESULT(yes)],
+                  [AC_MSG_RESULT(no)])
 
 
 ###############################################################################
@@ -3025,9 +3047,7 @@ have_jpeg=no
 with_jpeg_req=unspecified
 jpeg_halfassed=no
 AC_ARG_WITH(jpeg,
-[  --with-jpeg             Include support for the JPEG library in some demos.
-                          (If this library is available, webcollage will be a
-                        . lot faster.)],
+[  --with-jpeg             Include support for the JPEG library.],
   [with_jpeg="$withval"; with_jpeg_req="$withval"],
   [with_jpeg=yes])
 
@@ -3829,7 +3849,13 @@ if test "$have_jpeg" = no ; then
     echo ''
   fi
 
-  warn2 "This means the \`webcollage' program will be much slower."
+  if test "$have_gdk_pixbuf" = no ; then
+    warn2 "This means that it won't be possible for the image-manipulating"
+    warn2 "display modes to load files from disk; and it also means that"
+    warn2 "the \`webcollage' program will be much slower."
+  else
+    warn2 "This means the \`webcollage' program will be much slower."
+  fi
 fi
 
 

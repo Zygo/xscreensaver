@@ -198,6 +198,10 @@ install-strip: install
 
 install: install-exec install-data
 install-exec:
+install-program:
+install-man:
+install-strip:
+tags:
 install-data: install-data-@USE_NLS@
 install-data-no: all
 install-data-yes: all
@@ -253,6 +257,9 @@ uninstall:
 	  done; \
 	done
 
+uninstall-program:
+uninstall-man:
+
 check: all
 
 dvi info tags TAGS ID:
@@ -271,6 +278,7 @@ maintainer-clean: distclean
 	@echo "it deletes files that may require special tools to rebuild."
 	rm -f $(GMOFILES)
 
+depend:
 distdepend: generate_potfiles_in update-po $(DISTFILES)
 
 # jwz: Generates po/POTFILES.in by examining the source tree:

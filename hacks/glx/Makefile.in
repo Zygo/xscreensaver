@@ -87,7 +87,12 @@ SRCS		= xscreensaver-gl-helper.c \
 		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
 		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c \
 		  glblur.c gllist.c flurry.c flurry-smoke.c flurry-spark.c \
-		  flurry-star.c flurry-texture.c atunnel.c tunnel_draw.c
+		  flurry-star.c flurry-texture.c atunnel.c tunnel_draw.c \
+		  flyingtoasters.c toaster.c toaster_base.c toaster_handle.c \
+		  toaster_handle2.c toaster_jet.c toaster_knob.c \
+		  toaster_slots.c toaster_wing.c toast.c toast2.c \
+		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
+		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -107,14 +112,20 @@ OBJS		= xscreensaver-gl-helper.o \
 		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
 		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o \
 		  glblur.o gllist.o flurry.o flurry-smoke.o flurry-spark.o \
-		  flurry-star.o flurry-texture.o atunnel.o tunnel_draw.o
+		  flurry-star.o flurry-texture.o atunnel.o tunnel_draw.o \
+		  flyingtoasters.o toaster.o toaster_base.o toaster_handle.o \
+		  toaster_handle2.o toaster_jet.o toaster_knob.o \
+		  toaster_slots.o toaster_wing.o toast.o toast2.o \
+		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
+		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
-		  endgame glblur flurry atunnel
+		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
+		  glslideshow jigglypuff
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -140,9 +151,10 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
 		  spheremonics.man sproingies.man stairs.man starwars.man \
 		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
-		  endgame.man flurry.man glblur.man atunnel.man
+		  endgame.man flurry.man glblur.man atunnel.man \
+		  flyingtoasters.man bouncingcow.man glslideshow.man
 MEN		= @GL_MEN@
-EXTRAS		= README Makefile.in
+EXTRAS		= README Makefile.in dxf2gl.pl
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
 
@@ -422,8 +434,8 @@ extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
 sierpinski3d:	sierpinski3d.o	$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
-gflux:		gflux.o		$(HACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
+gflux:		gflux.o		$(HACK_OBJS) $(TRACK_OBJS) $(GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
 
 SW_OBJS=starwars.o glut_stroke.o glut_swidth.o
 starwars:	$(SW_OBJS) $(HACK_OBJS)
@@ -446,8 +458,8 @@ menger:		menger.o	$(HACK_OBJS) $(TRACK_OBJS)
 engine:		engine.o	$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
-flipscreen3d:	flipscreen3d.o	$(HACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
+flipscreen3d:	flipscreen3d.o	$(HACK_OBJS) $(GRAB_OBJS) $(TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
 glsnake:	glsnake.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -479,6 +491,26 @@ endgame:	endgame.o	$(CHESSOBJS)
 	$(CC_HACK) -o $@ $@.o   $(CHESSOBJS) $(HACK_LIBS)
 
 glblur:	glblur.o		$(HACK_OBJS) $(TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+
+TOASTOBJS1=\
+  toaster.o toaster_base.o toaster_handle.o toaster_handle2.o \
+  toaster_jet.o toaster_knob.o toaster_slots.o toaster_wing.o \
+  toast.o toast2.o
+TOASTOBJS=flyingtoasters.o gllist.o $(TOASTOBJS1) xpm-ximage.o
+flyingtoasters:	$(TOASTOBJS)	      $(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(TOASTOBJS) $(TRACK_OBJS) $(HACK_OBJS) $(XPM_LIBS)
+
+COWOBJS1=\
+  cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o
+COWOBJS=bouncingcow.o gllist.o $(COWOBJS1) xpm-ximage.o
+bouncingcow:	$(COWOBJS)	    $(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(COWOBJS) $(TRACK_OBJS) $(HACK_OBJS) $(XPM_LIBS)
+
+glslideshow:	glslideshow.o	$(HACK_OBJS) $(GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
+
+jigglypuff:	jigglypuff.o	$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
 
@@ -525,6 +557,11 @@ b_draw.o: $(srcdir)/bubble3d.h
 b_draw.o: ../../config.h
 b_lockglue.o: $(srcdir)/bubble3d.h
 b_lockglue.o: ../../config.h
+bouncingcow.o: ../../config.h
+bouncingcow.o: $(srcdir)/gllist.h
+bouncingcow.o: $(srcdir)/gltrackball.h
+bouncingcow.o: $(srcdir)/rotator.h
+bouncingcow.o: $(srcdir)/xpm-ximage.h
 boxed.o: $(srcdir)/boxed.h
 boxed.o: ../../config.h
 b_sphere.o: $(srcdir)/bubble3d.h
@@ -537,6 +574,12 @@ cage.o: $(srcdir)/e_textures.h
 chessmodels.o: $(srcdir)/chessmodels.h
 circuit.o: ../../config.h
 circuit.o: $(srcdir)/font-ximage.h
+cow_face.o: $(srcdir)/gllist.h
+cow_hide.o: $(srcdir)/gllist.h
+cow_hoofs.o: $(srcdir)/gllist.h
+cow_horns.o: $(srcdir)/gllist.h
+cow_tail.o: $(srcdir)/gllist.h
+cow_udder.o: $(srcdir)/gllist.h
 cubenetic.o: ../../config.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h
@@ -564,6 +607,7 @@ extrusion-screw.o: ../../config.h
 extrusion-taper.o: ../../config.h
 extrusion-twistoid.o: ../../config.h
 flipscreen3d.o: ../../config.h
+flipscreen3d.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
 flurry.o: ../../config.h
 flurry.o: $(srcdir)/flurry.h
@@ -581,12 +625,19 @@ flurry-star.o: $(srcdir)/rotator.h
 flurry-texture.o: $(srcdir)/flurry.h
 flurry-texture.o: $(srcdir)/gltrackball.h
 flurry-texture.o: $(srcdir)/rotator.h
+flyingtoasters.o: ../../config.h
+flyingtoasters.o: $(srcdir)/gllist.h
+flyingtoasters.o: $(srcdir)/gltrackball.h
+flyingtoasters.o: $(HACK_SRC)/images/chromesphere.xpm
+flyingtoasters.o: $(HACK_SRC)/images/toast.xpm
+flyingtoasters.o: $(srcdir)/xpm-ximage.h
 font-ximage.o: ../../config.h
 fps.o: ../../config.h
 gears.o: ../../config.h
 gears.o: $(srcdir)/gltrackball.h
 gears.o: $(srcdir)/rotator.h
 gflux.o: ../../config.h
+gflux.o: $(srcdir)/gltrackball.h
 gflux.o: $(srcdir)/grab-ximage.h
 glblur.o: ../../config.h
 glblur.o: $(srcdir)/gltrackball.h
@@ -602,6 +653,8 @@ glplanet.o: $(HACK_SRC)/images/earth.xpm
 glplanet.o: $(srcdir)/rotator.h
 glplanet.o: $(srcdir)/sphere.h
 glplanet.o: $(srcdir)/xpm-ximage.h
+glslideshow.o: ../../config.h
+glslideshow.o: $(srcdir)/grab-ximage.h
 glsnake.o: ../../config.h
 gltext.o: ../../config.h
 gltext.o: $(srcdir)/gltrackball.h
@@ -617,6 +670,7 @@ glut_stroke.o: $(srcdir)/glutstroke.h
 glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
 grab-ximage.o: ../../config.h
+jigglypuff.o: ../../config.h
 lament.o: ../../config.h
 lament.o: $(srcdir)/gltrackball.h
 lament.o: $(HACK_SRC)/images/lament.xpm
@@ -693,6 +747,16 @@ stonerview-view.o: $(srcdir)/stonerview-osc.h
 superquadrics.o: ../../config.h
 swim.o: $(srcdir)/atlantis.h
 swim.o: ../../config.h
+toast2.o: $(srcdir)/gllist.h
+toaster_base.o: $(srcdir)/gllist.h
+toaster_handle2.o: $(srcdir)/gllist.h
+toaster_handle.o: $(srcdir)/gllist.h
+toaster_jet.o: $(srcdir)/gllist.h
+toaster_knob.o: $(srcdir)/gllist.h
+toaster.o: $(srcdir)/gllist.h
+toaster_slots.o: $(srcdir)/gllist.h
+toaster_wing.o: $(srcdir)/gllist.h
+toast.o: $(srcdir)/gllist.h
 trackball.o: ../../config.h
 trackball.o: $(srcdir)/trackball.h
 tube.o: ../../config.h

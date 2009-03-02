@@ -7,6 +7,7 @@ engine - draws a 3D four-stroke engine.
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
+[\-engine \fIname\fP]
 [\-delay \fInumber\fP]
 [\-no-move]
 [\-no-spin]
@@ -24,6 +25,21 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
+.TP 8
+.B \-engine \fIname\fP
+What kind of engine to draw.  Default: random.
+Known models are:
+"Honda Insight" (3),
+"BMW M3" (4),
+"VW Beetle" (flat 4),
+"Audi Quattro" (5),
+"BMW M5" (6),
+"Subaru XT" (V6),
+"Porsche 911" (flat 6),
+"Corvette Z06" (V8),
+"Dodge Viper" (V10),
+and
+"Jaguar XKE" (V12).
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
