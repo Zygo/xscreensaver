@@ -116,6 +116,7 @@ static unsigned char char_map[256] = {
 typedef enum { TRACE0, TRACE1, TRACE2,
                KNOCK0, KNOCK1, KNOCK2, KNOCK3,
                KNOCK4, KNOCK5, KNOCK6, KNOCK7,
+               NMAP0, NMAP1,
                MATRIX, DNA, BINARY, HEX } m_mode;
 
 typedef struct {
@@ -329,6 +330,8 @@ init_matrix (Display *dpy, Window window)
   state->grid_height = state->xgwa.height / state->char_height;
   state->grid_width++;
   state->grid_height++;
+  if (state->grid_width  < 5) state->grid_width  = 5;
+  if (state->grid_height < 5) state->grid_height = 5;
 
   state->glyph_map = matrix_encoding;
   state->nglyphs = countof(matrix_encoding);
@@ -376,6 +379,8 @@ init_matrix (Display *dpy, Window window)
   mode = get_string_resource ("mode", "Mode");
   if (mode && !strcasecmp(mode, "trace"))
     state->mode = TRACE0;
+  else if (mode && !strcasecmp(mode, "crack"))
+    state->mode = NMAP0;
   else if (mode && !strcasecmp(mode, "dna"))
     state->mode = DNA;
   else if (mode && !strcasecmp(mode, "binary"))
@@ -415,6 +420,8 @@ init_matrix (Display *dpy, Window window)
     }
   else if (state->mode == TRACE0)
     init_trace (state);
+  else if (state->mode == NMAP0)
+    ;
   else
     {
       flip_images (state);
@@ -620,14 +627,249 @@ densitizer (m_state *state)
 }
 
 
+static void drain_matrix (m_state *);
+
+static void
+handle_events (m_state *state)
+{
+  XSync (state->dpy, False);
+  while (XPending (state->dpy))
+    {
+      XEvent event;
+      XNextEvent (state->dpy, &event);
+
+      if (event.xany.type == ConfigureNotify)
+        {
+          int ow = state->grid_width;
+          int oh = state->grid_height;
+          XGetWindowAttributes (state->dpy, state->window, &state->xgwa);
+          state->grid_width  = state->xgwa.width  / state->char_width;
+          state->grid_height = state->xgwa.height / state->char_height;
+          state->grid_width++;
+          state->grid_height++;
+          if (state->grid_width  < 5) state->grid_width  = 5;
+          if (state->grid_height < 5) state->grid_height = 5;
+
+          if (ow != state->grid_width ||
+              oh != state->grid_height)
+            {
+              m_cell *ncells = (m_cell *)
+                calloc (sizeof(m_cell),
+                        state->grid_width * state->grid_height);
+              m_feeder *nfeeders = (m_feeder *)
+                calloc (sizeof(m_feeder), state->grid_width);
+              int x, y, i;
+
+              /* fprintf(stderr, "resize: %d x %d  ==>  %d x %d\n",
+                        ow, oh, state->grid_width, state->grid_height); */
+
+              for (y = 0; y < oh; y++)
+                for (x = 0; x < ow; x++)
+                  if (x < ow && x < state->grid_width &&
+                      y < oh && y < state->grid_height)
+                    ncells[y * state->grid_width + x] =
+                      state->cells[y * ow + x];
+              free (state->cells);
+              state->cells = ncells;
+
+              x = (ow < state->grid_width ? ow : state->grid_width);
+              for (i = 0; i < x; i++)
+                nfeeders[i] = state->feeders[i];
+              free (state->feeders);
+              state->feeders = nfeeders;
+            }
+        }
+      else if (event.xany.type == KeyPress)
+        {
+          KeySym keysym;
+          char c = 0;
+          XLookupString (&event.xkey, &c, 1, &keysym, 0);
+          if (c == '0')
+            {
+              drain_matrix (state);
+              return;
+            }
+          else if (c == '+' || c == '=' || c == '>' || c == '.')
+            {
+              state->density += 10;
+              if (state->density > 100)
+                state->density = 100;
+              else
+                return;
+            }
+          else if (c == '-' || c == '_' || c == '<' || c == ',')
+            {
+              state->density -= 10;
+              if (state->density < 0)
+                state->density = 0;
+              else
+                return;
+            }
+        }
+
+      screenhack_handle_event (state->dpy, &event);
+    }
+}
+
+
+static void
+matrix_usleep (m_state *state, unsigned long delay)
+{
+  if (!delay) return;
+
+  if (state->cursor)
+    {
+      int blink_delay = 333000;
+      int tot_delay = 0;
+      m_cell *cursor = state->cursor;
+      while (tot_delay < delay)
+        {
+          if (state->cursor)
+            {
+              usleep (blink_delay * 2);
+              tot_delay += (2 * blink_delay);
+              state->cursor = NULL;
+            }
+          else
+            {
+              usleep (blink_delay);
+              tot_delay += blink_delay;
+              state->cursor = cursor;
+            }
+          cursor->changed = 1;
+          redraw_cells (state, False);
+          XSync (state->dpy, False);
+          handle_events (state);
+        }
+    }
+  else
+    {
+      XSync (state->dpy, False);
+      handle_events (state);
+      usleep (delay);
+    }
+}
+
+
+static void
+hack_text_1 (m_state *state,
+             int *xP, int *yP,
+             const char *s,
+             Bool typing_delay,
+             Bool transmit_delay,
+             Bool long_delay,
+             Bool visible_cursor,
+             Bool scroll_p)
+{
+  int x = *xP;
+  int y = *yP;
+  int i = state->grid_width * y + x;
+  Bool glow_p = False;
+
+  if (y >= state->grid_height-1) return;
+
+  while (*s)
+    {
+      m_cell *cell;
+      Bool done_p = s[1] == '\000';
+
+      long_delay = done_p;
+              
+      if (*s == '\n')
+        {
+          x = 0;
+          y++;
+          i = state->grid_width * y + x;
+
+          if (scroll_p)
+            {
+              int xx, yy;
+              for (yy = 0; yy < state->grid_height-1; yy++)
+                for (xx = 0; xx < state->grid_width; xx++)
+                  {
+                    int ii = yy     * state->grid_width + xx;
+                    int jj = (yy+1) * state->grid_width + xx;
+                    state->cells[ii] = state->cells[jj];
+                    state->cells[ii].changed = 1;
+                  }
+              /* clear bottom row */
+              for (xx = 0; xx < state->grid_width; xx++)
+                {
+                  int ii = yy * state->grid_width + xx;
+                  state->cells[ii].glyph   = 0;
+                  state->cells[ii].changed = 1;
+                }
+              y--;  /* move it back */
+              i = state->grid_width * y + x;
+            }
+
+          if (y >= state->grid_height) return;
+
+          cell = &state->cells[i];
+          if (visible_cursor)
+            {
+              cell->changed = 1;
+              state->cursor = cell;
+            }
+        }
+      else if (*s == '\010')
+        ;
+      else if (*s == '\002')
+        glow_p = True;
+      else
+        {
+          cell = &state->cells[i];
+          if (x < state->grid_width-1)
+            {
+              cell->glyph = char_map[(unsigned char) *s] + 1;
+              if (*s == ' ' || *s == '\t') cell->glyph = 0;
+              cell->changed = 1;
+              cell->glow = (glow_p ? 8 : 0);
+              if (visible_cursor)
+                {
+                  m_cell *next = &state->cells[i + 1];
+                  next->changed = 1;
+                  state->cursor = next;
+                }
+              i++;
+            }
+          x++;
+        }
+      s++;
+      if (typing_delay || transmit_delay || long_delay)
+        {
+          redraw_cells (state, False);
+          XSync (state->dpy, False);
+          handle_events (state);
+          if (typing_delay)
+            {
+              usleep (50000);
+              if (typing_delay && 0 == random() % 3)
+                usleep (0xFFFFFF & ((random() % 250000) + 1));
+            }
+          else
+            if (long_delay)
+              matrix_usleep (state, 1000000);
+            else
+              usleep (20000);
+        }
+    }
+
+  *xP = x;
+  *yP = y;
+}
+
+
 static void
 hack_text (m_state *state)
 {
   int i;
   int x = 0;
+  int y = 0;
   const char *s;
   Bool typing_delay = False;
   Bool transmit_delay = False;
+  Bool long_delay = False;
   Bool visible_cursor = False;
   switch (state->mode)
     {
@@ -649,7 +891,9 @@ hack_text (m_state *state)
     case KNOCK4: s = "Follow the white rabbit."; typing_delay = True; break;
     case KNOCK5: s = ""; break;
     case KNOCK6: s = "Knock, knock, Neo."; break;
-    case KNOCK7: s = ""; break;
+    case KNOCK7:
+    case NMAP0:
+    case NMAP1:  s = ""; break;
 
     default: abort(); break;
     }
@@ -661,60 +905,168 @@ hack_text (m_state *state)
       cell->glyph = 0;
     }
 
-  if (state->mode == TRACE0 || state->mode == TRACE1)
-    i = 0;
+  if (state->mode == NMAP0)
+    {
+      /* Note that what Trinity is using here is moderately accurate:
+         She runs nmap (http://www.insecure.org/nmap/) then breaks in
+         with a (hypothetical) program called "sshnuke" that exploits
+         the (very real) SSHv1 CRC32 compensation attack detector bug
+         (http://staff.washington.edu/dittrich/misc/ssh-analysis.txt).
+
+         The command syntax of the power grid control software looks a
+         lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
+       */
+      const char *blocks[] = {
+        "# ",
+
+        "\001nmap 10.2.2.2\n",
+        "Starting nmap V. 2.54BETA25\n"
+
+        "\010", "\010", "\010",
+
+        "Insufficient responses for TCP sequencing (3), OS detection "
+        "may be less\n"
+        "accurate\n"
+        "Interesting ports on 10.2.2.2:\n"
+        "(The 1538 ports scanned but not shown below are in state: filtered)\n"
+        "Port       state       service\n"
+        "22/tcp     open        ssh\n"
+        "\n"
+        "No exact OS matches for host\n"
+        "\n"
+        "Nmap run completed -- 1 IP address (1 host up) scanned\n"
+        "# ",
+
+        "\001sshnuke 10.2.2.2 -rootpw=\"Z1ON0101\"\n",
+
+        "Connecting to 10.2.2.2:ssh ... ",
+
+        "successful.\n"
+        "Attempting to exploit SSHv1 CRC32 ... ",
+
+        "successful.\n"
+        "Resetting root password to \"Z1ON0101\".\n",
+
+        "System open: Access Level <9>\n"
+        "# ",
+
+        "\001ssh 10.2.2.2 -l root\n",
+
+        "root@10.2.2.2's password: ",
+
+        "\001\010\010\010\010\010\010\010\010\n",
+
+        "\n"
+        "FFF-CONTROL> ",
+
+        "\001disable grid nodes 21 - 40\n",
+
+        "Warning: Disabling nodes 21-40 will disconnect sector 11 (27 nodes)\n"
+        "\n"
+        "\002         ARE YOU SURE? (y/n) ",
+
+        "\001\010\010y\n",
+        "\n"
+      };
+
+      int nblocks = countof(blocks);
+      int y = state->grid_height - 2;
+      int j;
+
+      visible_cursor = True;
+      x = 0;
+      for (j = 0; j < nblocks; j++)
+        {
+          const char *s = blocks[j];
+          typing_delay = (*s == '\001');
+          if (typing_delay) s++;
+
+          long_delay = False;
+          hack_text_1 (state, &x, &y, s,
+                       typing_delay, transmit_delay, long_delay,
+                       visible_cursor, True);
+        }
+
+      typing_delay = False;
+      long_delay = False;
+      for (j = 21; j <= 40; j++)
+        {
+          char buf[100];
+          sprintf (buf, "Grid Node %d offline...\n", j);
+          hack_text_1 (state, &x, &y, buf,
+                       typing_delay, transmit_delay, long_delay,
+                       visible_cursor, True);
+
+        }
+      hack_text_1 (state, &x, &y, "\nFFF-CONTROL> ",
+                   typing_delay, transmit_delay, long_delay,
+                   visible_cursor, True);
+      return;
+    }
   else
     {
-      int y;
-      x = ((int)state->grid_width - (int)strlen(s)) / 2;
-      y = (state->grid_height / 2) - 1;
-      if (y < 0) y = 0;
-      if (x < 0) x = 0;
-      i = (y * state->grid_width) + x;
-    }
-
-  while (*s)
-    {
-      if (*s == '\n')
-        {
-          i = ((i / state->grid_width) + 1) * state->grid_width;
-          x = 0;
-        }
+      if (state->mode == TRACE0 || state->mode == TRACE1)
+        x = y = 0;
       else
         {
-          m_cell *cell = &state->cells[i];
-          if (x < state->grid_width-1)
-            {
-              cell->glyph = char_map[(unsigned char) *s] + 1;
-              if (*s == ' ' || *s == '\t') cell->glyph = 0;
-              cell->changed = 1;
-              if (visible_cursor)
-                {
-                  m_cell *next = &state->cells[i + 1];
-                  next->changed = 1;
-                  state->cursor = next;
-                }
-              i++;
-            }
-          x++;
+          x = ((int)state->grid_width - (int)strlen(s)) / 2;
+          y = (state->grid_height / 2) - 1;
+          if (y < 0) y = 0;
+          if (x < 0) x = 0;
         }
-      s++;
-      if (typing_delay || transmit_delay)
-        {
-          redraw_cells (state, False);
-          XSync (state->dpy, False);
-          screenhack_handle_events (state->dpy);
-          if (typing_delay)
-            {
-              usleep (50000);
-              if (typing_delay && 0 == random() % 3)
-                usleep (0xFFFFFF & ((random() % 250000) + 1));
-            }
-          else
-            usleep (20000);
-        }
+
+      hack_text_1 (state, &x, &y, s,
+                   typing_delay, transmit_delay, long_delay,
+                   visible_cursor, False);
     }
 }
+
+
+static void
+drain_matrix (m_state *state)
+{
+  int delay = get_integer_resource ("delay", "Integer");
+  int i;
+
+  /* Fill the top row with empty top-feeders, to clear the screen. */
+  for (i = 0; i < state->grid_width; i++)
+    {
+      m_feeder *f = &state->feeders[i];
+      f->y = -1;
+      f->remaining = 0;
+      f->throttle = 0;
+    }
+
+  /* Turn off all the spinners, else they never go away. */
+  for (i = 0; i < state->grid_width * state->grid_height; i++)
+    if (state->cells[i].spinner)
+      {
+        state->cells[i].spinner = 0;
+        state->cells[i].changed = 1;
+      }
+
+  /* Run the machine until there are no live cells left. */
+  while (1)
+    {
+      Bool any_cells_p = False;
+      for (i = 0; i < state->grid_width * state->grid_height; i++)
+        if (state->cells[i].glyph)
+          {
+            any_cells_p = True;
+            goto FOUND;
+          }
+    FOUND:
+      if (! any_cells_p)
+        return;
+
+      feed_matrix (state);
+      redraw_cells (state, True);
+      XSync (state->dpy, False);
+      handle_events (state);
+      if (delay) usleep (delay);
+    }
+}
+
 
 static void
 roll_state (m_state *state)
@@ -742,7 +1094,7 @@ roll_state (m_state *state)
         if (!any)
           {
             XSync (state->dpy, False);
-            sleep (3);
+            matrix_usleep (state, 3000000);
             state->mode = MATRIX;
             state->glyph_map = matrix_encoding;
             state->nglyphs = countof(matrix_encoding);
@@ -766,7 +1118,12 @@ roll_state (m_state *state)
     case KNOCK4: delay = 2; state->mode++; break; /* rabbit */
     case KNOCK5: delay = 4; state->mode++; break;
     case KNOCK6: delay = 4; state->mode++; break; /* knock */
+
+    case NMAP0:  delay = 4; state->mode++; break; /* knock */
+
     case KNOCK7:
+      delay = 4;
+    case NMAP1:
       state->mode = MATRIX;
       state->glyph_map = matrix_encoding;
       state->nglyphs = countof(matrix_encoding);
@@ -774,9 +1131,14 @@ roll_state (m_state *state)
       break;
 
     case MATRIX:
-      if (state->knock_knock_p && (! (random() % 5000)))
+      if (state->knock_knock_p && (! (random() % 3500)))
         {
-          state->mode = KNOCK0;
+          drain_matrix (state);
+          if (! (random() % 5))
+            state->mode = NMAP0;
+          else
+            state->mode = KNOCK0;
+
           flip_images (state);
         }
       break;
@@ -789,39 +1151,7 @@ roll_state (m_state *state)
       break;
     }
 
-  if (delay)
-    {
-      if (state->cursor)
-        {
-          int blink_delay = 333000;
-          int tot_delay = 0;
-          m_cell *cursor = state->cursor;
-          while (tot_delay < delay * 1000000)
-            {
-              if (state->cursor)
-                {
-                  usleep (blink_delay * 2);
-                  tot_delay += (2 * blink_delay);
-                  state->cursor = NULL;
-                }
-              else
-                {
-                  usleep (blink_delay);
-                  tot_delay += blink_delay;
-                  state->cursor = cursor;
-                }
-              cursor->changed = 1;
-              redraw_cells (state, False);
-              XSync (state->dpy, False);
-              screenhack_handle_events (state->dpy);
-            }
-        }
-      else
-        {
-          XSync (state->dpy, False);
-          sleep (delay);
-        }
-    }
+  matrix_usleep (state, delay * 1000000);
   state->cursor = NULL;
 }
 
@@ -836,6 +1166,7 @@ hack_matrix (m_state *state)
     case TRACE0: case TRACE1:
     case KNOCK0: case KNOCK1: case KNOCK2: case KNOCK3:
     case KNOCK4: case KNOCK5: case KNOCK6: case KNOCK7:
+    case NMAP0:  case NMAP1:
       hack_text (state);
       return;
     case TRACE2: case MATRIX: case DNA: case BINARY: case HEX:
@@ -941,6 +1272,7 @@ char *defaults [] = {
   "*spinners:		   5",
   "*density:		   75",
   "*knockKnock:		   False",
+  "*geometry:		   800x600",
   0
 };
 
@@ -953,6 +1285,7 @@ XrmOptionDescRec options [] = {
   { "-both",		".insert",		XrmoptionNoArg, "both" },
   { "-density",		".density",		XrmoptionSepArg, 0 },
   { "-trace",		".mode",		XrmoptionNoArg, "trace" },
+  { "-crack",		".mode",		XrmoptionNoArg, "crack"},
   { "-phone",		".tracePhone",		XrmoptionSepArg, 0 },
   { "-dna",		".mode",		XrmoptionNoArg, "DNA" },
   { "-binary",		".mode",		XrmoptionNoArg, "binary" },
@@ -971,7 +1304,7 @@ screenhack (Display *dpy, Window window)
     {
       draw_matrix (state);
       XSync (dpy, False);
-      screenhack_handle_events (dpy);
+      handle_events (state);
       if (delay) usleep (delay);
     }
 }

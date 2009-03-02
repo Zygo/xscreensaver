@@ -192,6 +192,7 @@
  	                	popsquares -root			    \\n\
  	                	barcode -root				    \\n\
  	                	piecewise -root				    \\n\
+ 	                	cloudlife -root				    \\n\
   color: 			bubbles -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
@@ -247,7 +248,8 @@
 	   GL:			atunnel -root				    \\n\
 	   GL:			flyingtoasters -root			    \\n\
 	   GL:			bouncingcow -root			    \\n\
-	   GL:			jigglypuff -root			    \\n\
+	   GL:			jigglypuff -root -random		    \\n\
+	   GL:			klein -root -random			    \\n\
 -	   GL:			glslideshow -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\

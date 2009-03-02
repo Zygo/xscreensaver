@@ -807,7 +807,8 @@ draw_flow(ModeInfo * mi)
 					double A=0;
 					for(i=0; i<3; i++) A+=C[j][i]*C[j][i]; /* sum squares */
 					A=sqrt(A);
-					for(i=0; i<3; i++) C[j][i]/=A;
+                    if (A != 0) /* #### is this right? */
+                      for(i=0; i<3; i++) C[j][i]/=A;
 				}
 
 				/* Interpolate between Center and Trained Bee matrices */

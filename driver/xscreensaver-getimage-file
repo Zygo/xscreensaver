@@ -24,6 +24,7 @@
 # Created: 12-Apr-01.
 
 require 5;
+#require v5.6;
 use diagnostics;
 use strict;
 
@@ -50,7 +51,7 @@ BEGIN {
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.11 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.12 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 

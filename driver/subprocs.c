@@ -88,6 +88,12 @@ extern saver_info *global_si_kludge;	/* I hate C so much... */
 static void
 limit_subproc_memory (int address_space_limit, Bool verbose_p)
 {
+
+/* This has caused way more problems than it has solved...
+   Let's just completely ignore the "memoryLimit" option now.
+ */
+#undef HAVE_SETRLIMIT
+
 #if defined(HAVE_SETRLIMIT) && defined(RLIMIT_AS)
   struct rlimit r;
 

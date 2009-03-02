@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xscreensaver\n"
 "POT-Creation-Date: 2002-06-18 21:56+0200\n"
-"PO-Revision-Date: 2002-06-06 13:16+0300\n"
+"PO-Revision-Date: 2002-08-29 20:14+0300\n"
 "Last-Translator: Tõivo Leedjärv <toivo@linux.ee>\n"
 "Language-Team: Estonian <gnome-et@linux.ee>\n"
 "MIME-Version: 1.0\n"
@@ -517,12 +517,12 @@ msgstr "Uuendusi leiad aadressilt http://www.jwz.org/xscreensaver/"
 #: driver/demo-Gtk.c:608
 #, c-format
 msgid "Copyright © 1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
+msgstr ""
 
 #: driver/demo-Gtk.c:610
-#, fuzzy, c-format
+#, c-format
 msgid "Copyright  1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
+msgstr ""
 
 #: driver/demo-Gtk.c:726
 msgid ""
@@ -5284,9 +5284,6 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
-
-#~ msgid "Copyright  1991-2002 %s"
-#~ msgstr "Copyright  1991-2002 %s"
 
 #~ msgid "Advanced &gt;&gt;"
 #~ msgstr "Edasijõudnutele &gt;&gt;"

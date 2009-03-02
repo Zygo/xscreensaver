@@ -407,7 +407,11 @@ make_passwd_window (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
 
-  pw->logo_pixmap = xscreensaver_logo (ssi->screen, ssi->current_visual,
+  /* We use the default visual, not ssi->visual, so that the logo pixmap's
+     visual matches that of the si->passwd_dialog window. */
+  pw->logo_pixmap = xscreensaver_logo (ssi->screen,
+                                       /* ssi->current_visual, */
+                                       DefaultVisualOfScreen(screen),
                                        si->passwd_dialog, cmap,
                                        pw->background, 
                                        &pw->logo_pixels, &pw->logo_npixels,

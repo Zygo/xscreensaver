@@ -1237,7 +1237,10 @@ animate_lava (ModeInfo *mi)
 
   mi->polygon_count = 0;
   {
-    double s = 1.0/bp->grid_size;
+    double s;
+    if (bp->grid_size == 0) bp->grid_size = 1;  /* first time through */
+    s = 1.0/bp->grid_size;
+
     glPushMatrix();
     glTranslatef (-0.5, -0.5, 0);
     glScalef (s, s, s);

@@ -116,6 +116,11 @@ static double step=0.0;
 #define BACKWARDS -1
 static int direction = FORWARDS;
 
+/* Apparently AIX's math.h bogusly defines `nearest' as a function,
+   in violation of the ANSI C spec. */
+#undef nearest
+#define nearest n3arest
+
 static int pindex=0, nearest=0;
 static int flipped_at=0;
 static int xoffset=0, yoffset=0;

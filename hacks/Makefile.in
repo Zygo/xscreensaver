@@ -97,7 +97,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
-		  barcode.c piecewise.c
+		  barcode.c piecewise.c cloudlife.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -122,7 +122,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
-		  barcode.o piecewise.o
+		  barcode.o piecewise.o cloudlife.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -139,7 +139,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
-		  metaballs eruption popsquares barcode piecewise \
+		  metaballs eruption popsquares barcode piecewise cloudlife \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -622,8 +622,8 @@ interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(XPM_LIBS)
+bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(SHM) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(XPM) $(XPM_LIBS)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
@@ -745,6 +745,8 @@ barcode:	barcode.o	$(HACK_OBJS) $(HSV)
 piecewise:	piecewise.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
+cloudlife:	cloudlife.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -969,6 +971,8 @@ bumps.o: ../config.h
 bumps.o: $(srcdir)/screenhack.h
 ccurve.o: ../config.h
 ccurve.o: $(srcdir)/screenhack.h
+cloudlife.o: ../config.h
+cloudlife.o: $(srcdir)/screenhack.h
 compass.o: ../config.h
 compass.o: $(srcdir)/screenhack.h
 coral.o: ../config.h

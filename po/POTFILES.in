@@ -1,4 +1,4 @@
-# Auto-generated: Mon Mar 17 14:30:01 PST 2003
+# Auto-generated: Tue May 20 05:57:07 PDT 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -26,6 +26,7 @@ hacks/config/bumps.xml
 hacks/config/cage.xml
 hacks/config/ccurve.xml
 hacks/config/circuit.xml
+hacks/config/cloudlife.xml
 hacks/config/compass.xml
 hacks/config/coral.xml
 hacks/config/cosmos.xml
@@ -79,6 +80,7 @@ hacks/config/hypercube.xml
 hacks/config/ifs.xml
 hacks/config/imsmap.xml
 hacks/config/interference.xml
+hacks/config/jigglypuff.xml
 hacks/config/jigsaw.xml
 hacks/config/juggle.xml
 hacks/config/julia.xml

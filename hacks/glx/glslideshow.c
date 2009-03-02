@@ -301,8 +301,10 @@ getSnapshot (ModeInfo *mi, int into_texid)
 
   ximage = screen_to_ximage (mi->xgwa.screen, mi->window);
 
-  ss->tw = ximage->width;
-  ss->th = ximage->height;
+  ss->tw = mi->xgwa.width;
+  ss->th = mi->xgwa.height;
+/*  ss->tw = ximage->width; */
+/*  ss->th = ximage->height; */
   
   ss->qw *= (GLfloat) ss->tw / MI_WIDTH(mi);
   ss->qh *= (GLfloat) ss->th / MI_HEIGHT(mi);

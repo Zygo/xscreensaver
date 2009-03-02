@@ -1,18 +1,17 @@
 # XScreensaver in Vietnamese.
-# Copyright (C) 2002 Free Software Foundation, Inc.
+# Copyright (C) 1991-2002 Free Software Foundation, Inc.
 # T.M.Thanh <tmthanh@yahoo.com>, 2002.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: For Gnome 2.x\n"
+"Project-Id-Version: for Gnome 2.x\n"
 "POT-Creation-Date: 2002-06-18 21:56+0200\n"
-"PO-Revision-Date: 2002-07-12 19:07+0700\n"
+"PO-Revision-Date: 2002-09-19 18:16+0700\n"
 "Last-Translator: Trinh Minh Thanh <tmthanh@linuxmail.org>\n"
 "Language-Team: Gnome-Vi Team <Gnomevi-list@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"com>\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
@@ -47,8 +46,7 @@ msgid "_Blank Screen Now"
 msgstr "_Màn hình trống bây giờ"
 
 #: driver/demo-Gtk-widgets.c:205 driver/xscreensaver-demo.glade.h:2
-msgid ""
-"Activate the XScreenSaver daemon now (locking the screen if so configured.)"
+msgid "Activate the XScreenSaver daemon now (locking the screen if so configured.)"
 msgstr "Kích hoạt XScreenSaver daemon bây giờ (Khoá màn hình nếu đã cấu hình)"
 
 #: driver/demo-Gtk-widgets.c:209 driver/xscreensaver-demo.glade.h:97
@@ -288,8 +286,7 @@ msgstr "Cài đặt bảng màu"
 msgid ""
 "Whether the screen should slowly fade to black when the screen saver "
 "activates."
-msgstr ""
-"Nên chăng màn hình nên tối dần dần khi trình bảo vệ màn hình hoạt động."
+msgstr "Nên chăng màn hình nên tối dần dần khi trình bảo vệ màn hình hoạt động."
 
 #: driver/demo-Gtk-widgets.c:861 driver/xscreensaver-demo.glade.h:36
 msgid "Fade To Black When Blanking"
@@ -299,8 +296,7 @@ msgstr "Trở nên tối dần khi Làm trống"
 msgid ""
 "Whether the screen should slowly fade in from black when the screen saver "
 "deactivates."
-msgstr ""
-"Nên chăng màn hình sáng dần lên khi trình bảo vệ màn hình thôi hoạt động."
+msgstr "Nên chăng màn hình sáng dần lên khi trình bảo vệ màn hình thôi hoạt động."
 
 #: driver/demo-Gtk-widgets.c:878 driver/xscreensaver-demo.glade.h:35
 msgid "Fade From Black When Unblanking"
@@ -361,8 +357,7 @@ msgstr "Thao tác Ảnh"
 msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
-msgstr ""
-"Nên chăng chế độ thao tác ảnh được phép hoạt động với ảnh của màn hình nền."
+msgstr "Nên chăng chế độ thao tác ảnh được phép hoạt động với ảnh của màn hình nền."
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
@@ -539,12 +534,12 @@ msgstr "Để cập nhật, xem tại:  http://www.jwz.org/xscreensaver/"
 #: driver/demo-Gtk.c:608
 #, c-format
 msgid "Copyright © 1991-2002 %s"
-msgstr "Bản quyền © 1991-2002 %s"
+msgstr "Copyright © 1991-2002 %s"
 
 #: driver/demo-Gtk.c:610
-#, fuzzy, c-format
+#, c-format
 msgid "Copyright  1991-2002 %s"
-msgstr "Bản quyền © 1991-2002 %s"
+msgstr "Copyright (c) 1991-2002 %s"
 
 #: driver/demo-Gtk.c:726
 msgid ""
@@ -2037,8 +2032,7 @@ msgid "Seeds"
 msgstr "Hạt"
 
 #: hacks/config/coral.xml.h:11
-msgid ""
-"Simulates coral growth, albeit somewhat slowly. Written by Frederick Roeber."
+msgid "Simulates coral growth, albeit somewhat slowly. Written by Frederick Roeber."
 msgstr ""
 
 #: hacks/config/coral.xml.h:13 hacks/config/gflux.xml.h:13
@@ -3048,8 +3042,7 @@ msgid "Greynetic"
 msgstr ""
 
 #: hacks/config/greynetic.xml.h:5
-msgid ""
-"This draws random colored and stippled rectangles. Written by Jamie Zawinski."
+msgid "This draws random colored and stippled rectangles. Written by Jamie Zawinski."
 msgstr ""
 
 #: hacks/config/halo.xml.h:1
@@ -4081,8 +4074,7 @@ msgid "Pyro"
 msgstr ""
 
 #: hacks/config/pyro.xml.h:11
-msgid ""
-"Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
+msgid "Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
 msgstr ""
 
 #: hacks/config/qix.xml.h:1
@@ -4863,8 +4855,7 @@ msgid "Truchet"
 msgstr ""
 
 #: hacks/config/twang.xml.h:2
-msgid ""
-"Divides the screen into a grid, and plucks them. Written by Dan Bornstein."
+msgid "Divides the screen into a grid, and plucks them. Written by Dan Bornstein."
 msgstr ""
 
 #: hacks/config/twang.xml.h:6
@@ -4929,8 +4920,7 @@ msgid "Draw Spots"
 msgstr ""
 
 #: hacks/config/wander.xml.h:6
-msgid ""
-"Draws a colorful random-walk, in various forms. Written by Rick Campbell."
+msgid "Draws a colorful random-walk, in various forms. Written by Rick Campbell."
 msgstr ""
 
 #: hacks/config/wander.xml.h:14
@@ -5353,11 +5343,11 @@ msgstr ""
 
 #: hacks/config/zoom.xml.h:3
 msgid "Lens Offset"
-msgstr ""
+msgstr "Offset Thấu kính"
 
 #: hacks/config/zoom.xml.h:4
 msgid "Lenses"
-msgstr ""
+msgstr "Thấu kính"
 
 #: hacks/config/zoom.xml.h:9
 msgid ""
@@ -5365,7 +5355,10 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+"Phóng to một phần màn hình rồi di chuyển quanh. Với tùy chọn đa ống "
+"kính, kết quả thấy được như là nhìn qua nhiều lớp thấu kính chứ không "
+"phải qua một thấu kính đơn thuần. Do James Macnicol viết."
 
-#, fuzzy
 #~ msgid "Copyright  1991-2002 %s"
-#~ msgstr "Bản quyền © 1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"
+

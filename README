@@ -70,6 +70,12 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.09:   * New hacks, `cloudlife' and `klein'.
+                      * Added Apple ][+, HPUX, and OS/390 sessions to BSOD.
+                      * Added some Matrix Reloaded text to `xmatrix'.
+                      * Updates to `webcollage', `eruption', `jigglypuff',
+                        `metaballs', and `endgame'.
+                      * Completely ignore the `memoryLimit' setting now.
 Changes since 4.08:   * New hacks, `flyingtoasters', `bouncingcow',
                         `jigglypuff', and `glslideshow'.
                       * More models in `engine'.

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2002 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2003 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -53,7 +53,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.102 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.103 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -61,9 +61,8 @@ my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
 
 
 my @search_methods = (  77, "altavista",  \&pick_from_alta_vista_random_link,
-                        12, "yahoorand",  \&pick_from_yahoo_random_link,
-                         9, "lycos",      \&pick_from_lycos_text,
-                         2, "yahoonews",  \&pick_from_yahoo_news_text,
+                        14, "yahoorand",  \&pick_from_yahoo_random_link,
+                         9, "yahoonews",  \&pick_from_yahoo_news_text,
 
                      # Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!
@@ -85,6 +84,9 @@ my @search_methods = (  77, "altavista",  \&pick_from_alta_vista_random_link,
                      # data as Lycos.
                      #
                      #  0, "hotbot",     \&pick_from_hotbot_text,
+
+                     # Eh, Lycos sucks anyway.
+                     #   0, "lycos",      \&pick_from_lycos_text,
                       );
 
 # programs we can use to write to the root window (tried in ascending order.)
@@ -311,7 +313,8 @@ sub get_document_1 {
 
       my $user_agent = "$progname/$version";
 
-      if ($url =~ m@^http://www\.altavista\.com/@) {
+      if ($url =~ m@^http://www\.altavista\.com/@ ||
+          $url =~ m@^http://random\.yahoo\.com/@) {
         # block this, you turkeys.
         $user_agent = "Mozilla/4.76 [en] (X11; U; Linux 2.2.16-22 i686; Nav)";
       }
@@ -597,7 +600,7 @@ sub pick_image_from_body {
 
     } elsif ( m/^(img|a) .*(src|href) ?= ?\"? ?(.*?)[ >\"]/io ) {
 
-      my $was_inline = ( "$1" eq "a" || "$1" eq "A" );
+      my $was_inline = (! ( "$1" eq "a" || "$1" eq "A" ));
       my $link = $3;
       my ( $width )  = m/width ?=[ \"]*(\d+)/oi;
       my ( $height ) = m/height ?=[ \"]*(\d+)/oi;
