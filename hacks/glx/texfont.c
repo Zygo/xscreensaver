@@ -31,9 +31,13 @@ extern char *progname;
 struct texture_font_data {
   Display *dpy;
   XFontStruct *font;
-  GLuint texid;
-  int cell_width, cell_height;
-  int tex_width, tex_height;
+  int cell_width, cell_height;  /* maximal charcell */
+  int tex_width, tex_height;    /* size of each texture */
+
+  int grid_mag;			/* 1,  2,  4, or 8 */
+  int ntextures;		/* 1,  4, 16, or 64 (grid_mag ^ 2) */
+
+  GLuint texid[32];
 };
 
 
@@ -85,7 +89,7 @@ bitmap_to_texture (Display *dpy, Pixmap p, int *wP, int *hP)
 
   {
     char msg[100];
-    sprintf (msg, "%s (%d x %d)",
+    sprintf (msg, "texture font %s (%d x %d)",
              mipmap_p ? "gluBuild2DMipmaps" : "glTexImage2D",
              w2, h2);
     check_gl_error (msg);
@@ -118,6 +122,9 @@ load_texture_font (Display *dpy, char *res)
   const char *def2 = "-*-times-bold-r-normal-*-180-*";
   const char *def3 = "fixed";
   XFontStruct *f;
+  int which;
+
+  check_gl_error ("stale texture font");
 
   if (!res || !*res) abort();
   if (!font) font = def1;
@@ -158,74 +165,107 @@ load_texture_font (Display *dpy, char *res)
   data->dpy = dpy;
   data->font = f;
 
-  /* Create a pixmap big enough to fit every character in the font.
-     Make it square-ish, since GL likes dimensions to be powers of 2.
+  /* Figure out how many textures to use.
+     E.g., if we need 1024x1024 bits, use four 512x512 textures,
+     to be gentle to machines with low texture size limits.
    */
   {
-    Screen *screen = DefaultScreenOfDisplay (dpy);
-    Window root = RootWindowOfScreen (screen);
-    XGCValues gcv;
-    GC gc;
-    Pixmap p;
-    int cw = f->max_bounds.rbearing - f->min_bounds.lbearing;
-    int ch = f->max_bounds.ascent   + f->max_bounds.descent;
-    int w = cw * 16;
-    int h = ch * 16;
-    int i;
+    int w = to_pow2 (16 * (f->max_bounds.rbearing - f->min_bounds.lbearing));
+    int h = to_pow2 (16 * (f->max_bounds.ascent   + f->max_bounds.descent));
+    int i = (w > h ? w : h);
 
-    data->cell_width  = cw;
-    data->cell_height = ch;
+    if      (i <= 512)  data->grid_mag = 1;  /*  1 tex of 16x16 chars */
+    else if (i <= 1024) data->grid_mag = 2;  /*  4 tex of 8x8 chars */
+    else if (i <= 2048) data->grid_mag = 4;  /* 16 tex of 4x4 chars */
+    else                data->grid_mag = 8;  /* 32 tex of 2x2 chars */
 
-    p = XCreatePixmap (dpy, root, w, h, 1);
-    gcv.font = f->fid;
-    gcv.foreground = 0;
-    gcv.background = 0;
-    gc = XCreateGC (dpy, p, (GCFont|GCForeground|GCBackground), &gcv);
-    XFillRectangle (dpy, p, gc, 0, 0, w, h);
-    XSetForeground (dpy, gc, 1);
-    for (i = 0; i < 256; i++)
-      {
-        char c = (char) i;
-        int x = (i % 16) * cw;
-        int y = (i / 16) * ch;
+    data->ntextures = data->grid_mag * data->grid_mag;
 
-        /* See comment in print_texture_string for bit layout explanation. */
+# if 0
+    fprintf (stderr,
+             "%s: %dx%d grid of %d textures of %dx%d chars (%dx%d bits)\n",
+             progname,
+             data->grid_mag, data->grid_mag,
+             data->ntextures,
+             16 / data->grid_mag, 16 / data->grid_mag,
+             i, i);
+# endif
+  }
 
-        int lbearing = (f->per_char
-                        ? f->per_char[i - f->min_char_or_byte2].lbearing
-                        : f->min_bounds.lbearing);
-        int ascent   = (f->per_char
-                        ? f->per_char[i - f->min_char_or_byte2].ascent
-                        : f->max_bounds.ascent);
-        int width    = (f->per_char
-                        ? f->per_char[i - f->min_char_or_byte2].width
-                        : f->max_bounds.width);
+  for (which = 0; which < data->ntextures; which++)
+    {
+      /* Create a pixmap big enough to fit every character in the font.
+         (modulo the "ntextures" scaling.)
+         Make it square-ish, since GL likes dimensions to be powers of 2.
+       */
+      Screen *screen = DefaultScreenOfDisplay (dpy);
+      Window root = RootWindowOfScreen (screen);
+      XGCValues gcv;
+      GC gc;
+      Pixmap p;
+      int cw = f->max_bounds.rbearing - f->min_bounds.lbearing;
+      int ch = f->max_bounds.ascent   + f->max_bounds.descent;
+      int grid_size = (16 / data->grid_mag);
+      int w = cw * grid_size;
+      int h = ch * grid_size;
+      int i;
 
-        if (width == 0) continue;
-        XDrawString (dpy, p, gc, x - lbearing, y + ascent, &c, 1);
-      }
-    XFreeGC (dpy, gc);
+      data->cell_width  = cw;
+      data->cell_height = ch;
 
-    glGenTextures (1, &data->texid);
-    glBindTexture (GL_TEXTURE_2D, data->texid);
-    data->tex_width  = w;
-    data->tex_height = h;
+      p = XCreatePixmap (dpy, root, w, h, 1);
+      gcv.font = f->fid;
+      gcv.foreground = 0;
+      gcv.background = 0;
+      gc = XCreateGC (dpy, p, (GCFont|GCForeground|GCBackground), &gcv);
+      XFillRectangle (dpy, p, gc, 0, 0, w, h);
+      XSetForeground (dpy, gc, 1);
+      for (i = 0; i < 256 / data->ntextures; i++)
+        {
+          int ii = (i + (which * 256 / data->ntextures));
+          char c = (char) ii;
+          int x = (i % grid_size) * cw;
+          int y = (i / grid_size) * ch;
+
+          /* See comment in print_texture_string for bit layout explanation.
+           */
+          int lbearing = (f->per_char
+                          ? f->per_char[ii - f->min_char_or_byte2].lbearing
+                          : f->min_bounds.lbearing);
+          int ascent   = (f->per_char
+                          ? f->per_char[ii - f->min_char_or_byte2].ascent
+                          : f->max_bounds.ascent);
+          int width    = (f->per_char
+                          ? f->per_char[ii - f->min_char_or_byte2].width
+                          : f->max_bounds.width);
+
+          if (width == 0) continue;
+          XDrawString (dpy, p, gc, x - lbearing, y + ascent, &c, 1);
+        }
+      XFreeGC (dpy, gc);
+
+      glGenTextures (1, &data->texid[which]);
+      glBindTexture (GL_TEXTURE_2D, data->texid[which]);
+      check_gl_error ("texture font load");
+      data->tex_width  = w;
+      data->tex_height = h;
 
 #if 0  /* debugging: splat the bitmap onto the desktop root window */
-    {
-      Window win = RootWindow (dpy, 0);
-      GC gc2 = XCreateGC (dpy, win, 0, &gcv);
-      XSetForeground (dpy, gc2, BlackPixel (dpy, 0));
-      XSetBackground (dpy, gc2, WhitePixel (dpy, 0));
-      XCopyPlane (dpy, p, win, gc2, 0, 0, w, h, 0, 0, 1);
-      XFreeGC (dpy, gc2);
-      XSync(dpy, False);
-    }
+      {
+        Window win = RootWindow (dpy, 0);
+        GC gc2 = XCreateGC (dpy, win, 0, &gcv);
+        XSetForeground (dpy, gc2, BlackPixel (dpy, 0));
+        XSetBackground (dpy, gc2, WhitePixel (dpy, 0));
+        XCopyPlane (dpy, p, win, gc2, 0, 0, w, h, 0, 0, 1);
+        XFreeGC (dpy, gc2);
+        XSync(dpy, False);
+        usleep (100000);
+      }
 #endif
 
-    bitmap_to_texture (dpy, p, &data->tex_width, &data->tex_height);
-    XFreePixmap (dpy, p);
-  }
+      bitmap_to_texture (dpy, p, &data->tex_width, &data->tex_height);
+      XFreePixmap (dpy, p);
+    }
 
   return data;
 }
@@ -270,16 +310,17 @@ print_texture_string (texture_font_data *data, const char *string)
   int x, y;
   unsigned int i;
 
+  clear_gl_error ();
+
   glPushMatrix();
 
-  glBindTexture (GL_TEXTURE_2D, data->texid);
   glNormal3f (0, 0, 1);
 
   x = 0;
   y = 0;
   for (i = 0; i < strlen(string); i++)
     {
-      char c = string[i];
+      unsigned char c = string[i];
       if (c == '\n')
         {
           y -= line_height;
@@ -303,9 +344,16 @@ print_texture_string (texture_font_data *data, const char *string)
 # endif /* DO_SUBSCRIPTS */
       else
         {
-          /* The texture is divided into 16x16 rectangles whose size are
-             the max_bounds charcell of the font.  Within each rectangle,
-             the individual characters' charcells sit in the upper left.
+          /* For a small font, the texture is divided into 16x16 rectangles
+             whose size are the max_bounds charcell of the font.  Within each
+             rectangle, the individual characters' charcells sit in the upper
+             left.
+
+             For a larger font, the texture will itself be subdivided, to
+             keep the texture sizes small (in that case we deal with, e.g.,
+             4 grids of 8x8 characters instead of 1 grid of 16x16.)
+
+             Within each texture:
 
                [A]----------------------------
                 |     |           |   |      |
@@ -346,8 +394,12 @@ print_texture_string (texture_font_data *data, const char *string)
                           ? f->per_char[c - f->min_char_or_byte2].width
                           : f->max_bounds.width);
 
-          int ax = ((int) c % 16) * data->cell_width;     /* point A */
-          int ay = ((int) c / 16) * data->cell_height;
+          char cc = c % (256 / data->ntextures);
+
+          int gs = (16 / data->grid_mag);		  /* grid size */
+
+          int ax = ((int) cc % gs) * data->cell_width;    /* point A */
+          int ay = ((int) cc / gs) * data->cell_height;
 
           int bx = ax - lbearing;                         /* point B */
           int by = ay + ascent;
@@ -368,6 +420,10 @@ print_texture_string (texture_font_data *data, const char *string)
 
           if (cwidth > 0 && c != ' ')
             {
+              int which = c / (256 / data->ntextures);
+              if (which >= data->ntextures) abort();
+              glBindTexture (GL_TEXTURE_2D, data->texid[which]);
+
               glBegin (GL_QUADS);
               glTexCoord2f (tax, tay); glVertex3f (qx0, qy0, 0);
               glTexCoord2f (tcx, tay); glVertex3f (qx1, qy0, 0);
@@ -390,6 +446,8 @@ print_texture_string (texture_font_data *data, const char *string)
         }
       }
   glPopMatrix();
+
+  check_gl_error ("texture font print");
 }
 
 /* Releases the font and texture.
@@ -397,9 +455,11 @@ print_texture_string (texture_font_data *data, const char *string)
 void
 free_texture_font (texture_font_data *data)
 {
+  int i;
   if (data->font)
     XFreeFont (data->dpy, data->font);
-  if (data->texid)
-    glDeleteTextures (1, &data->texid);
+  for (i = 0; i < data->ntextures; i++)
+    if (data->texid[i])
+      glDeleteTextures (1, &data->texid[i]);
   free (data);
 }

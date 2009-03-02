@@ -46,10 +46,6 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*ntoasters:  " DEF_NTOASTERS "\n" \
-			"*nslices:    " DEF_NSLICES   "\n" \
-			"*texture:    " DEF_TEXTURE   "\n" \
 
 /* #define DEBUG */
 

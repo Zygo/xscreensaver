@@ -24,6 +24,7 @@
 #include <X11/keysymdef.h>
 
 #ifdef HAVE_FORKPTY
+# include <sys/ioctl.h>
 # ifdef HAVE_PTY_H
 #  include <pty.h>
 # endif
@@ -572,6 +573,7 @@ char *defaults [] = {
   ".foreground:		   white",
   "*mode:		   random",
   "*duration:		   20",
+  "*program:		   xscreensaver-text --cols 40",
   "*metaSendsESC:	   True",
   "*swapBSDEL:		   True",
   "*fast:		   False",
@@ -802,12 +804,7 @@ launch_text_generator (struct terminal_controller_data *mine)
 {
   char buf[255];
   char *oprogram = get_string_resource ("program", "Program");
-  char *program;
-
-  if (!oprogram || !*oprogram)
-    oprogram = FORTUNE_PROGRAM;
-
-  program = (char *) malloc (strlen (oprogram) + 10);
+  char *program = (char *) malloc (strlen (oprogram) + 10);
 
   strcpy (program, "( ");
   strcat (program, oprogram);
@@ -836,9 +833,15 @@ launch_text_generator (struct terminal_controller_data *mine)
       else if(!mine->pid)
 	{
           /* This is the child fork. */
+          char *av[10];
+          int i = 0;
 	  if (putenv("TERM=vt100"))
             abort();
-	  execl("/bin/sh", "/bin/sh", "-c", oprogram, NULL);
+          av[i++] = "/bin/sh";
+          av[i++] = "-c";
+          av[i++] = oprogram;
+          av[i] = 0;
+          execvp (av[0], av);
           sprintf (buf, "%.100s: %.100s", progname, oprogram);
 	  perror(buf);
 	  exit(1);
@@ -1863,12 +1866,23 @@ screenhack (Display *dpy, Window window)
   int duration = get_integer_resource ("duration", "Integer");
   char *s;
   void (*controller)(apple2_sim_t *sim, int *stepno, double *next_actiontime);
+  Bool random_p = False;
 
+  controller = 0;
   if (duration < 1) duration = 1;
+
+  if (!get_boolean_resource ("root", "Boolean"))
+    {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (dpy, window, &xgwa);
+      XSelectInput (dpy, window,
+                    xgwa.your_event_mask |
+                    KeyPressMask | ButtonPressMask | ExposureMask);
+    }
 
   s = get_string_resource ("mode", "Mode");
   if (!s || !*s || !strcasecmp(s, "random"))
-    controller = controllers[random() % (countof(controllers))];
+    random_p = True;
   else if (!strcasecmp(s, "text"))
      controller = terminal_controller;
   else if (!strcasecmp(s, "slideshow"))
@@ -1881,16 +1895,17 @@ screenhack (Display *dpy, Window window)
                progname, s);
       exit (1);
     }
+  if (s) free (s);
 
-  if (!get_boolean_resource ("root", "Boolean"))
+  if (controller == terminal_controller)
+    duration = 999999;  /* this one runs "forever" */
+
+  while (1)
     {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
-      XSelectInput (dpy, window,
-                    xgwa.your_event_mask |
-                    KeyPressMask | ButtonPressMask | ExposureMask);
-    }
+      if (random_p)
+        controller = controllers[random() % (countof(controllers))];
 
-  apple2 (dpy, window, duration, controller);
-  XSync (dpy, False);
+      apple2 (dpy, window, duration, controller);
+      XSync (dpy, False);
+    }
 }

@@ -51,6 +51,12 @@
   <_description>
 Draws a stream of text slowly scrolling into the distance at an
 angle, over a star field, like at the beginning of the movie of the
-same name.  Written by Jamie Zawinski and Claudio Matauoka.
+same name.  
+
+The text can be the output of a program or the contents of a file or
+URL, as configured on the "Advanced" tab of the main Screensaver
+Preferences window.
+
+Written by Jamie Zawinski and Claudio Matauoka.
   </_description>
 </screensaver>

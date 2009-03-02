@@ -26,11 +26,9 @@
 # define EVENT_MASK       PointerMotionMask
 # define chess_opts  xlockmore_opts
 
-#define DEFAULTS       "*delay:       20000       \n" \
-                       "*showFPS:       False       \n" \
-		       "*wireframe:	False     \n"	\
-		       "*reflections:	True     \n"	\
-		       "*shadows:	True     \n"	\
+#define DEFAULTS       "*delay:     20000 \n" \
+                       "*showFPS:   False \n" \
+		       "*wireframe: False \n" \
 
 # include "xlockmore.h"
 

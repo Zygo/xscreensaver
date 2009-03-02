@@ -33,12 +33,6 @@ extern XtAppContext app;
 			"*count:        5           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*texture:    " DEF_TEXTURE"\n" \
-			"*waves:      " DEF_WAVE_COUNT  "\n" \
-			"*waveSpeed:  " DEF_WAVE_SPEED  "\n" \
-			"*waveRadius: " DEF_WAVE_RADIUS "\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

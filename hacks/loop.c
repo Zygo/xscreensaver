@@ -90,7 +90,7 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
  "*cycles: 1600 \n" \
  "*size: -12 \n" \
  "*ncolors: 15 \n" \
- "*neighbors: 0 \n"
+
 #define UNIFORM_COLORS
 #include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */

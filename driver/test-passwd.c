@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -75,6 +75,8 @@ get_screen_viewport (saver_screen_info *ssi,
   *y_ret = 0;
   *w_ret = WidthOfScreen (ssi->screen);
   *h_ret = HeightOfScreen (ssi->screen);
+
+  if (*w_ret > *h_ret * 2) *w_ret /= 2;  /* xinerama kludge */
 }
 
 

@@ -29,7 +29,6 @@
 
 #define DEFAULTS "*delay:     20000 \n" \
                  "*showFPS:   False \n" \
-                 "*rotate:    True  \n" \
                  "*wireframe: False \n" \
                  "*useSHM:    True  \n"
 

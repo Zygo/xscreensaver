@@ -54,10 +54,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
 	               	"*fpsSolid:     True    \n"		    \
-					"*fisheye:		True    \n"			\
-					"*tightturns:	False   \n"			\
-					"*doubleBuffer:	True    \n"			\
-					"*rotatepipes:	True    \n"
+
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */

@@ -37,11 +37,6 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*speed:      " DEF_SPEED    "\n" \
-			"*spin:       " DEF_SPIN     "\n" \
-			"*wander:     " DEF_WANDER   "\n" \
-			"*duration:   " DEF_DURATION "\n" \
-			"*which:      " DEF_WHICH    "\n" \
 			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
 			"*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
 			"*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \

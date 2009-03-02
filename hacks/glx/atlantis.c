@@ -117,9 +117,7 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
 			 "*wireframe:  False \n" \
-			 "*texture:    " DEF_TEXTURE    " \n" \
-			 "*gradient:   " DEF_GRADIENT   " \n" \
-			 "*whalespeed: " DEF_WHALESPEED " \n"
+
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */

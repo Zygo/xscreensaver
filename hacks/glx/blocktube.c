@@ -31,11 +31,7 @@ extern XtAppContext app;
 #define DEF_FOG         "True"
 
 #define DEFAULTS        "*delay:	40000           \n" \
-                        "*holdtime:   " DEF_HOLDTIME   "\n" \
-                        "*changetime: " DEF_CHANGETIME "\n" \
-			"*wireframe:    False           \n" \
-			"*texture:    " DEF_TEXTURE    "\n" \
-			"*fog:        " DEF_FOG        "\n" \
+                        "*wireframe:    False           \n" \
 			"*showFPS:      False           \n" \
 
 #undef countof

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "23-Feb-2005 (4.20)" "X Version 11"
+.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -309,6 +309,11 @@ if an attempt is made to run the nonexistent program.  Also, the
 program will suppress the non-existent programs from the list if this
 is true.  Default: false.
 .TP 8
+.B GetViewPortIsFullOfLies\fP (class \fBBoolean\fP)
+Set this to true if the xscreensaver window doesn't cover the whole screen.
+This works around a longstanding XFree86 bug #421.  See the 
+xscreensaver FAQ for details.
+.TP 8
 .B font\fP (class \fBFont\fP)
 The font used for the stdout/stderr text, if \fBcaptureStderr\fP is true.
 Default \fB*\-medium\-r\-*\-140\-*\-m\-*\fP (a 14 point fixed-width font.)
@@ -320,6 +325,11 @@ Controls the behavior of xscreensaver.  Legal values are:
 .B random
 When blanking the screen, select a random display mode from among those
 that are enabled and applicable.  This is the default.
+.TP 8
+.B random-same
+Like \fIrandom\fP, but if there are multiple screens, each screen
+will run the \fIsame\fP random display mode, instead of each screen
+running a different one.
 .TP 8
 .B one
 When blanking the screen, only ever use one particular display mode (the
@@ -448,6 +458,12 @@ When server extensions are not in use, this controls how
 frequently \fIxscreensaver\fP checks to see if the mouse position or buttons
 have changed.  Default 5 seconds.
 .TP 8
+.B pointerHysteresis\fP (class \fBInteger\fP)
+If the mouse moves less than this-many pixels in a second, ignore it
+(do not consider that to be "activity.")  This is so that the screen
+doesn't un-blank (or fail to blank) just because you bumped the desk.
+Default: 10 pixels.
+.TP 8
 .B windowCreationTimeout\fP (class \fBTime\fP)
 When server extensions are not in use, this controls the delay between when 
 windows are created and when \fIxscreensaver\fP selects events on them.
@@ -479,7 +495,8 @@ This resource controls whether the \fBMIT\-SCREEN\-SAVER\fP server extension
 will be used to decide whether the user is idle.  However, the default for
 this resource is \fIfalse\fP, because even if this extension is available,
 it is flaky (and it also makes the \fBfade\fP option not work properly.)
-Use of this extension is not recommended.
+Use of this extension is strongly discouraged.  Support for it will
+probably be removed eventually.
 .TP 8
 .B xidleExtension\fP (class \fBBoolean\fP)
 This resource controls whether the \fBXIDLE\fP server extension will be

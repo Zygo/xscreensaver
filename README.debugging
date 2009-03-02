@@ -50,7 +50,7 @@ COMPILATION PROBLEMS:
         *  or pass $CC in the environment, like so:
 
               csh:  setenv CC cc ; ./configure
-              sh:   CC=cc ; ./configure
+              sh:   CC=cc ./configure
 
     Before doing this, you'll need to nuke `config.cache'.
 

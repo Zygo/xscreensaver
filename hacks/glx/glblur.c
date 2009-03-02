@@ -42,9 +42,6 @@ extern XtAppContext app;
 			"*showFPS:      False       \n" \
 	               	"*fpsSolid:     True	    \n" \
 			"*wireframe:    False       \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*blurSize:   " DEF_BLURSIZE "\n" \
 
 
 #undef countof

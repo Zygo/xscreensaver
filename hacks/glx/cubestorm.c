@@ -28,15 +28,10 @@ extern XtAppContext app;
 #define DEF_COUNT       "4"
 
 #define DEFAULTS	"*delay:	30000       \n" \
-			"*count:        30          \n" \
+			"*count:      " DEF_COUNT   "\n" \
 			"*showFPS:      False       \n" \
 	               	"*fpsSolid:     True        \n" \
 			"*wireframe:    False       \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*thickness:  " DEF_THICKNESS "\n" \
-			"*count:      " DEF_COUNT   "\n" \
 
 
 #undef countof

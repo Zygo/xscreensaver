@@ -67,7 +67,7 @@ a pipe, and any words that it prints to \fIstdout\fP will end up on
 the window.  (Whitespace and line breaks are ignored.)  If the program 
 exits, it will be launched again after we have processed all the text
 it produced.  Default:
-.BR fortune (1).
+.BR xscreensaver-text (1).
 .TP 8
 .B \-font\fP \fIstring\fP
 The base font pattern to use when loading fonts.  The default is to search
@@ -97,6 +97,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR xscreensaver (1),
+.BR xscreensaver-text (1),
 .BR fortune (1),
 .BR phosphor (1),
 .BR apple2 (1),

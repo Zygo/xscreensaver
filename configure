@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config gnome_open_program gnome_url_show_program fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -818,6 +818,8 @@ For better control, use the options below.
 
 Fine tuning of the installation directories:
   --bindir=DIR           user executables [EPREFIX/bin]
+  --libexecdir=DIR       program executables [EPREFIX/libexec]
+  --datadir=DIR          read-only architecture-independent data [PREFIX/share]
   --libdir=DIR           object code libraries [EPREFIX/lib]
   --includedir=DIR       C header files [PREFIX/include]
   --x-includes=DIR        X include files are in DIR
@@ -845,24 +847,20 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
 
-
 Screen locking options:
-
   --enable-locking        Compile in support for locking the display.
   --disable-locking       Do not allow locking at all.
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-Installation options:
 
+Installation options:
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: `PREFIX/lib/xscreensaver/'
+                          Default: `EPREFIX/lib/xscreensaver/'
   --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
-                          Default: `GTK_PREFIX/control-center/screensavers/'
-                          or `PREFIX/lib/xscreensaver/config/', depending on
-                          whether GTK is available.
+                          Default: `PREFIX/share/xscreensaver/config/'
 
 Except where noted, all of the --with options below can also take a
 directory argument: for example, `--with-motif=/opt/Motif'.  That would
@@ -878,7 +876,6 @@ at all.
 Screen blanking and idle-detection options:
 
   --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.
-  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.
   --with-xidle-ext        Include support for the XIDLE extension.
   --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.
   --with-dpms-ext         Include support for the DPMS extension.
@@ -893,6 +890,8 @@ Screen blanking and idle-detection options:
   --with-shadow           Include support for shadow password authentication.
   --with-passwd-helper    Include support for an external password
                           verification helper program.
+  --with-login-manager    Put a "New Login" button on the unlock dialog that
+                          runs a login manager such as gdmflexiserver.
 
 User interface options:
 
@@ -914,11 +913,8 @@ Graphics options:
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
-
-  --with-fortune=PROGRAM  Some demos are able to run an external program and
-                          display its text; this names the program to use by
-                          default (though it can be overridden with X
-                          resources.)  Default is "/usr/games/fortune".
+  --with-image-directory=DIR  By default, some screen savers may load
+                          random images out of this directory.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 
@@ -9551,18 +9547,11 @@ else
 fi;
 
 if test x"$with_hackdir" = xyes; then
-  HACKDIR='${exec_prefix}/lib/xscreensaver'
+  HACKDIR='${libexecdir}/xscreensaver'
 elif test x"$with_hackdir" = xno; then
   HACKDIR='${bindir}'
 else
-  # there must be a better way than this...
-  if test -z "`echo $with_hackdir | sed 's@^/.*@@'`" ; then
-    # absolute path
-    HACKDIR=$with_hackdir
-  else
-    # relative path
-    HACKDIR="\${exec_prefix}$with_hackdir"
-  fi
+  HACKDIR=$with_hackdir
 fi
 
 # canonicalize slashes.
@@ -9603,8 +9592,7 @@ else
 fi;
 
 if test x"$with_configdir" = xyes; then
-  # filled in later...
-  HACK_CONF_DIR=''
+  HACK_CONF_DIR='${datadir}/xscreensaver/config'
 elif test x"$with_configdir" = xno; then
   echo "error: must be yes, or a pathname: --with-configdir=$with_configdir"
   exit 1
@@ -9752,435 +9740,6 @@ fi
 
 elif test "$with_sgi" != no; then
   echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the MIT-SCREEN-SAVER server extension.
-#
-###############################################################################
-
-have_mit=no
-with_mit_req=unspecified
-
-# Check whether --with-mit-ext or --without-mit-ext was given.
-if test "${with_mit_ext+set}" = set; then
-  withval="$with_mit_ext"
-  with_mit="$withval"; with_mit_req="$withval"
-else
-  with_mit=yes
-fi;
-
-
-   case "$with_mit" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     echo "$as_me:$LINENO: checking for MIT-SCREEN-SAVER headers" >&5
-echo $ECHO_N "checking for MIT-SCREEN-SAVER headers... $ECHO_C" >&6
-     d=$with_mit/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     echo "$as_me:$LINENO: checking for MIT-SCREEN-SAVER libs" >&5
-echo $ECHO_N "checking for MIT-SCREEN-SAVER libs... $ECHO_C" >&6
-     d=$with_mit/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     # replace the directory string with "yes".
-     with_mit_req="yes"
-     with_mit=$with_mit_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-mit-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_mit" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  echo "$as_me:$LINENO: checking for X11/extensions/scrnsaver.h" >&5
-echo $ECHO_N "checking for X11/extensions/scrnsaver.h... $ECHO_C" >&6
-if test "${ac_cv_header_X11_extensions_scrnsaver_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <X11/extensions/scrnsaver.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_header_X11_extensions_scrnsaver_h=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_header_X11_extensions_scrnsaver_h=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_scrnsaver_h" >&5
-echo "${ECHO_T}$ac_cv_header_X11_extensions_scrnsaver_h" >&6
-if test $ac_cv_header_X11_extensions_scrnsaver_h = yes; then
-  have_mit=yes
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-  # Now check to see if it's really in the library; XF86Free-3.3 ships
-  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
-  #
-  if test "$have_mit" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for XScreenSaverRegister in -lXext" >&5
-echo $ECHO_N "checking for XScreenSaverRegister in -lXext... $ECHO_C" >&6
-if test "${ac_cv_lib_Xext_XScreenSaverRegister+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext -lm $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char XScreenSaverRegister ();
-int
-main ()
-{
-XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_Xext_XScreenSaverRegister=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_Xext_XScreenSaverRegister=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XScreenSaverRegister" >&5
-echo "${ECHO_T}$ac_cv_lib_Xext_XScreenSaverRegister" >&6
-if test $ac_cv_lib_Xext_XScreenSaverRegister = yes; then
-  true
-else
-  have_mit=no
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-
-    if test "$have_mit" = no; then
-      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
-      # of in Xext.  Thank you master, may I have another.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for XScreenSaverRegister in -lXExExt" >&5
-echo $ECHO_N "checking for XScreenSaverRegister in -lXExExt... $ECHO_C" >&6
-if test "${ac_cv_lib_XExExt_XScreenSaverRegister+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXExExt -lX11 -lXext -lm $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char XScreenSaverRegister ();
-int
-main ()
-{
-XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_XExExt_XScreenSaverRegister=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_XExExt_XScreenSaverRegister=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_XExExt_XScreenSaverRegister" >&5
-echo "${ECHO_T}$ac_cv_lib_XExExt_XScreenSaverRegister" >&6
-if test $ac_cv_lib_XExExt_XScreenSaverRegister = yes; then
-  have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"
-else
-  true
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    fi
-
-    if test "$have_mit" = no; then
-      # Double fuck!  Looks like some versions of XFree86 (whichever version
-      # it is that comes with RedHat Linux 2.0 -- I can't find a version
-      # number) put this garbage in Xss instead of Xext.  Thank you master,
-      #  may I have another.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for XScreenSaverRegister in -lXss" >&5
-echo $ECHO_N "checking for XScreenSaverRegister in -lXss... $ECHO_C" >&6
-if test "${ac_cv_lib_Xss_XScreenSaverRegister+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXss -lX11 -lXext -lm $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char XScreenSaverRegister ();
-int
-main ()
-{
-XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_Xss_XScreenSaverRegister=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_Xss_XScreenSaverRegister=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xss_XScreenSaverRegister" >&5
-echo "${ECHO_T}$ac_cv_lib_Xss_XScreenSaverRegister" >&6
-if test $ac_cv_lib_Xss_XScreenSaverRegister = yes; then
-  have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"
-else
-  true
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    fi
-
-  if test "$have_mit" = yes; then
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_MIT_SAVER_EXTENSION 1
-_ACEOF
-
-  fi
-
-  fi
-
-elif test "$with_mit" != no; then
-  echo "error: must be yes or no: --with-mit-ext=$with_mit"
   exit 1
 fi
 
@@ -11196,7 +10755,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_Xinerama_XineramaQueryScreens" >&5
 echo "${ECHO_T}$ac_cv_lib_Xinerama_XineramaQueryScreens" >&6
 if test $ac_cv_lib_Xinerama_XineramaQueryScreens = yes; then
-  have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"
+  have_xinerama=yes; XINERAMA_LIBS="-lXinerama"
 else
   true
 fi
@@ -14602,6 +14161,123 @@ esac
 
 ###############################################################################
 #
+#       Check for a login manager for a "New Login" button on the lock dialog.
+#	Usually this will be "/usr/bin/gdmflexiserver".
+#
+###############################################################################
+
+have_login_manager=no
+with_login_manager_req=unspecified
+default_login_manager='gdmflexiserver -l'
+
+
+# Check whether --with-login-manager or --without-login-manager was given.
+if test "${with_login_manager+set}" = set; then
+  withval="$with_login_manager"
+  with_login_manager="$withval"; with_login_manager_req="$withval"
+else
+  with_login_manager=no
+fi;
+# no HANDLE_X_PATH_ARG for this one
+
+if test "$enable_locking" = no ; then
+  with_login_manager_req=no
+  with_login_manager=no
+fi
+
+if test -n "$with_login_manager_req" ; then
+  ac_cv_login_manager_program=""
+
+ if test "$with_login_manager_req" = "yes" ; then
+   with_login_manager_req=$default_login_manager
+ fi
+
+  case "$with_login_manager_req" in
+    /*)
+      # absolute path
+      set dummy $with_login_manager_req ; login_manager_tmp=$2
+      echo "$as_me:$LINENO: checking for $login_manager_tmp" >&5
+echo $ECHO_N "checking for $login_manager_tmp... $ECHO_C" >&6
+      if test -x "$login_manager_tmp" ; then
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+        with_login_manager="$login_manager_tmp"
+      else
+        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+        with_login_manager=""
+      fi
+    ;;
+    *)
+      # relative path
+      set dummy $with_login_manager_req ; login_manager_tmp=$2
+      # don't cache
+      unset ac_cv_path_login_manager_tmp
+      # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
+set dummy $login_manager_tmp; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_login_manager_tmp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $login_manager_tmp in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_login_manager_tmp="$login_manager_tmp" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_login_manager_tmp="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+login_manager_tmp=$ac_cv_path_login_manager_tmp
+
+if test -n "$login_manager_tmp"; then
+  echo "$as_me:$LINENO: result: $login_manager_tmp" >&5
+echo "${ECHO_T}$login_manager_tmp" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+      if test -z "$login_manager_tmp" ; then
+        with_login_manager=""
+      else
+        with_login_manager="$login_manager_tmp"
+      fi
+    ;;
+  esac
+  ac_cv_login_manager_program="$with_login_manager"
+
+elif test -n "$ac_cv_login_manager_program"; then
+  echo "$as_me:$LINENO: result: checking for login_manager... (cached) $ac_cv_login_manager_program" >&5
+echo "${ECHO_T}checking for login_manager... (cached) $ac_cv_login_manager_program" >&6
+fi
+
+NEW_LOGIN_COMMAND_P=''
+NEW_LOGIN_COMMAND="$ac_cv_login_manager_program"
+
+if test -z "$NEW_LOGIN_COMMAND" ; then
+  NEW_LOGIN_COMMAND="$default_login_manager"
+  NEW_LOGIN_COMMAND_P='! '
+fi
+
+
+
+###############################################################################
+#
 #       Check for -lgtk (and Gnome stuff)
 #
 ###############################################################################
@@ -14837,11 +14513,10 @@ echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
   ac_gtk_config_libs=$ac_cv_gtk_config_libs
 
   GTK_EXTRA_OBJS=""
-  GNOME_DATADIR=""
-  GNOME_PANELDIR='$(GNOME_PANELDIR2)'
+  GTK_DATADIR=""
   if test "$have_gtk" = yes; then
-    GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-    GNOME_DATADIR="$GNOME_DATADIR/share"
+    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    GTK_DATADIR="$GTK_DATADIR/share"
   fi
 
   if test "$have_gtk" = yes; then
@@ -16251,7 +15926,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16260 "configure"
+#line 15933 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -19356,228 +19031,79 @@ fi
 
 ###############################################################################
 #
-#       Check for a program to generate random text.
-#
-#       Zippy is funnier than the idiocy generally spat out by `fortune',
-#       so first see if "fortune zippy" works.  Else, use plain "fortune".
-#
-#       We used to dig around in Emacs to look for the "yow" program, but
-#       most people who have Emacs also have "fortune zippy", so nevermind.
+#       Check for a directory full of images to use as the default value
+#	of the "imageDirectory" preference.
 #
 ###############################################################################
 
-with_fortune_req=""
+have_imagedir=no
+with_imagedir_req=unspecified
 
-# Check whether --with-fortune or --without-fortune was given.
-if test "${with_fortune+set}" = set; then
-  withval="$with_fortune"
-  with_fortune_req="$withval"; with_fortune="$withval"
+
+# Check whether --with-image-directory or --without-image-directory was given.
+if test "${with_image_directory+set}" = set; then
+  withval="$with_image_directory"
+  with_imagedir="$withval"; with_imagedir_req="$withval"
 else
-  with_fortune=yes
+  with_imagedir=yes
 fi;
+# no HANDLE_X_PATH_ARG for this one
 
-if test "$with_fortune" = no || test "$with_fortune" = yes ; then
-  with_fortune=""
-  with_fortune_req=""
-fi
-
-if test -n "$with_fortune_req" ; then
-  ac_cv_fortune_program=""
-  case "$with_fortune_req" in
-    /*)
-
-      set dummy $with_fortune_req ; fortune_tmp=$2
-      echo "$as_me:$LINENO: checking for $fortune_tmp" >&5
-echo $ECHO_N "checking for $fortune_tmp... $ECHO_C" >&6
-      if test -x "$fortune_tmp" ; then
-        echo "$as_me:$LINENO: result: yes" >&5
+case "$with_imagedir" in
+  /*)
+    # absolute path
+    echo "$as_me:$LINENO: checking for image directory $with_imagedir" >&5
+echo $ECHO_N "checking for image directory $with_imagedir... $ECHO_C" >&6
+    if test -d "$with_imagedir" ; then
+      echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-      else
-        echo "$as_me:$LINENO: result: no" >&5
+    else
+      echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-        with_fortune=""
-      fi
-    ;;
-    *)
-      set dummy $with_fortune_req ; fortune_tmp=$2
-      # don't cache
-      unset ac_cv_path_fortune_tmp
-      # Extract the first word of "$fortune_tmp", so it can be a program name with args.
-set dummy $fortune_tmp; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_fortune_tmp+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $fortune_tmp in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_fortune_tmp="$fortune_tmp" # Let the user override the test with a path.
+      with_imagedir=""
+    fi
   ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_fortune_tmp="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
+  yes)
+    with_imagedir=""
 
+    #### Could use some more defaults here...
+    for dd in \
+      "/usr/share/backgrounds/images/"          \
+      "/usr/share/wallpapers/"                  \
+      "/Library/Desktop Pictures/"              \
+    ; do
+      if test -z "$with_imagedir"; then
+        echo "$as_me:$LINENO: checking for image directory $dd" >&5
+echo $ECHO_N "checking for image directory $dd... $ECHO_C" >&6
+        if test -d "$dd" ; then
+          echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+          with_imagedir="$dd"
+        else
+          echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+        fi
+      fi
+    done
+
+  ;;
+  no)
+    with_imagedir=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-image-directory=$with_imagedir_req"
+    exit 1
   ;;
 esac
+ac_cv_imagedir="$with_imagedir"
+
+DEFAULT_IMAGES_P='True'
+DEFAULT_IMAGE_DIRECTORY="$ac_cv_imagedir"
+
+if test -z "$DEFAULT_IMAGE_DIRECTORY" ; then
+  DEFAULT_IMAGES_P='False'
 fi
-fortune_tmp=$ac_cv_path_fortune_tmp
-
-if test -n "$fortune_tmp"; then
-  echo "$as_me:$LINENO: result: $fortune_tmp" >&5
-echo "${ECHO_T}$fortune_tmp" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-      if test -z "$fortune_tmp" ; then
-        with_fortune=""
-      fi
-    ;;
-  esac
-  ac_cv_fortune_program="$with_fortune"
-
-elif test -n "$ac_cv_fortune_program"; then
-  echo "$as_me:$LINENO: result: checking for fortune... (cached) $ac_cv_fortune_program" >&5
-echo "${ECHO_T}checking for fortune... (cached) $ac_cv_fortune_program" >&6
-fi
-
-unset ac_cv_path_fortune_tmp
-unset fortune_tmp
-
-if test -z "$ac_cv_fortune_program" ; then
-
-  # first look for fortune in /usr/games/ (and use absolute path)
-  for ac_prog in fortune
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_fortune_tmp+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $fortune_tmp in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_fortune_tmp="$fortune_tmp" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in "/usr/games"
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_fortune_tmp="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-fortune_tmp=$ac_cv_path_fortune_tmp
-
-if test -n "$fortune_tmp"; then
-  echo "$as_me:$LINENO: result: $fortune_tmp" >&5
-echo "${ECHO_T}$fortune_tmp" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$fortune_tmp" && break
-done
-
-
-  # if it's not there, look on $PATH (and don't use absolute path)
-  if test -z "$fortune_tmp" ; then
-     for ac_prog in fortune
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_fortune_tmp+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$fortune_tmp"; then
-  ac_cv_prog_fortune_tmp="$fortune_tmp" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_fortune_tmp="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-fortune_tmp=$ac_cv_prog_fortune_tmp
-if test -n "$fortune_tmp"; then
-  echo "$as_me:$LINENO: result: $fortune_tmp" >&5
-echo "${ECHO_T}$fortune_tmp" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$fortune_tmp" && break
-done
-
-  fi
-
-  # if we didn't find anything, then just assume /usr/games/
-  if test -z "$fortune_tmp" ; then
-     fortune_tmp="/usr/games/fortune"
-  fi
-
-  ac_cv_fortune_program="$fortune_tmp"
-
-  # now check to see whether "fortune zippy" works.
-  #
-  fortune_tmp="$fortune_tmp zippy"
-  echo "$as_me:$LINENO: checking for zippy quotes" >&5
-echo $ECHO_N "checking for zippy quotes... $ECHO_C" >&6
-  if ( $fortune_tmp >/dev/null 2>&1 ); then
-    ac_cv_fortune_program="$fortune_tmp"
-    echo "$as_me:$LINENO: result: $fortune_tmp" >&5
-echo "${ECHO_T}$fortune_tmp" >&6
-  else
-    echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-  fi
-
-fi
-
-unset ac_cv_path_fortune_tmp
-unset fortune_tmp
-
-cat >>confdefs.h <<_ACEOF
-#define FORTUNE_PROGRAM "$ac_cv_fortune_program"
-_ACEOF
-
 
 
 ###############################################################################
@@ -19773,43 +19299,12 @@ else
 fi
 
 
-# Now that we know whether we have Gnome, we can decide where the XML
-# config files get installed.
-#
-if test -z "$HACK_CONF_DIR" ; then
-  if test -n "$GNOME_DATADIR" ; then
-    HACK_CONF_DIR='${GNOME_DATADIR}/control-center/screensavers'
-  else
-    HACK_CONF_DIR='${prefix}/lib/xscreensaver/config'
-  fi
-fi
-
-
-
-# After computing $HACK_CONF_DIR, make sure $GLADE_DATADIR has a value
-# so that we know where to install the Gtk pixmaps.
-#
-# It should usually be "/usr/share/pixmaps/", but we can't just use
-# "$(prefix)/share/pixmaps" because that would usually result in
-# "/usr/X11R6/share/pixmaps/", which is wrong.  It needs to be the
-# Gtk prefix, not the overall prefix.
-#
-if test -n "$GNOME_DATADIR" ; then
-  GLADE_DATADIR='$(GNOME_DATADIR)/xscreensaver'
-elif test "$have_gtk" = yes; then
-  GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-  GLADE_DATADIR="$GLADE_DATADIR/share/xscreensaver"
-else
-  GLADE_DATADIR=''
-fi
-
-
 # Set PO_DATADIR to something sensible.
 #
 echo "$as_me:$LINENO: checking for locale directory" >&5
 echo $ECHO_N "checking for locale directory... $ECHO_C" >&6
-if test -n "$GNOME_DATADIR" ; then
-  PO_DATADIR="$GNOME_DATADIR"
+if test -n "$GTK_DATADIR" ; then
+  PO_DATADIR="$GTK_DATADIR"
 elif test "$have_gtk" = yes; then
   PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
   PO_DATADIR="$PO_DATADIR/share"
@@ -19853,6 +19348,9 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
+
+
 
 
 
@@ -20616,10 +20114,10 @@ s,@INTLOBJS@,$INTLOBJS,;t t
 s,@POFILES@,$POFILES,;t t
 s,@POSUB@,$POSUB,;t t
 s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
+s,@login_manager_tmp@,$login_manager_tmp,;t t
 s,@pkg_config@,$pkg_config,;t t
 s,@gnome_open_program@,$gnome_open_program,;t t
 s,@gnome_url_show_program@,$gnome_url_show_program,;t t
-s,@fortune_tmp@,$fortune_tmp,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@PREFERRED_DEMO_PROGRAM@,$PREFERRED_DEMO_PROGRAM,;t t
 s,@ALL_DEMO_PROGRAMS@,$ALL_DEMO_PROGRAMS,;t t
@@ -20634,12 +20132,17 @@ s,@PTY_LIBS@,$PTY_LIBS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t
 s,@GLE_LIBS@,$GLE_LIBS,;t t
 s,@XDPMS_LIBS@,$XDPMS_LIBS,;t t
+s,@XINERAMA_LIBS@,$XINERAMA_LIBS,;t t
 s,@PASSWD_LIBS@,$PASSWD_LIBS,;t t
 s,@INSTALL_SETUID@,$INSTALL_SETUID,;t t
 s,@SETUID_HACKS@,$SETUID_HACKS,;t t
 s,@INSTALL_DIRS@,$INSTALL_DIRS,;t t
 s,@NEED_SETUID@,$NEED_SETUID,;t t
 s,@INSTALL_PAM@,$INSTALL_PAM,;t t
+s,@NEW_LOGIN_COMMAND@,$NEW_LOGIN_COMMAND,;t t
+s,@NEW_LOGIN_COMMAND_P@,$NEW_LOGIN_COMMAND_P,;t t
+s,@DEFAULT_IMAGES_P@,$DEFAULT_IMAGES_P,;t t
+s,@DEFAULT_IMAGE_DIRECTORY@,$DEFAULT_IMAGE_DIRECTORY,;t t
 s,@OBJCC@,$OBJCC,;t t
 s,@EXES_OSX@,$EXES_OSX,;t t
 s,@SCRIPTS_OSX@,$SCRIPTS_OSX,;t t
@@ -20665,10 +20168,8 @@ s,@GNOME24@,$GNOME24,;t t
 s,@GNOME22@,$GNOME22,;t t
 s,@NOGNOME@,$NOGNOME,;t t
 s,@HACKDIR@,$HACKDIR,;t t
-s,@GNOME_DATADIR@,$GNOME_DATADIR,;t t
-s,@GLADE_DATADIR@,$GLADE_DATADIR,;t t
+s,@GTK_DATADIR@,$GTK_DATADIR,;t t
 s,@PO_DATADIR@,$PO_DATADIR,;t t
-s,@GNOME_PANELDIR@,$GNOME_PANELDIR,;t t
 s,@HACK_CONF_DIR@,$HACK_CONF_DIR,;t t
 s,@GTK_EXTRA_OBJS@,$GTK_EXTRA_OBJS,;t t
 s,@APPDEFAULTS@,$APPDEFAULTS,;t t
@@ -21379,10 +20880,6 @@ if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   warn 'The SGI saver extension was requested, but was not found.'
 fi
 
-if test "$with_mit_req" = yes -a "$have_mit" = no ; then
-  warn 'The MIT saver extension was requested, but was not found.'
-fi
-
 if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
   warn 'The XIdle extension was requested, but was not found.'
 fi
@@ -21691,13 +21188,6 @@ if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
 fi
 
-if test -n "$with_fortune_req"; then
-  if test "$with_fortune_req" != "$ac_cv_fortune_program" ; then
-    warnL "$with_fortune_req was requested as the Fortune program,"
-    warn2 "but was not found.  The default will be used instead."
-  fi
-fi
-
 if test "$with_kerberos_req" = yes -a "$have_kerberos" = no ; then
   warn 'Use of Kerberos was requested, but it was not found.'
 fi
@@ -21758,39 +21248,44 @@ done
 
 do_dir_warning=no
 
-# Now let's see if there's a previous RPM version already installed.  Blargh!
+# Now let's warn if there's a previous RPM version already installed.
+# But don't bother with this test if we are currently *building* an RPM.
 
-# M4 sucks!!
+if test -z "$RPM_PACKAGE_VERSION" ; then
 
-rpmv=`(rpm -qv xscreensaver) 2>/dev/null | \
-      sed -n 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/p'`
+  rpmnames="xscreensaver xscreensaver-base xscreensaver-extras"
+
+  # M4 sucks!!
+
+  rpmv=`(rpm -qv $rpmnames) 2>/dev/null | \
+        sed -n 's/^[-a-z]*-\([0-9][0-9]*[.][0-9][0-9a-z]*\)-.*$/\1/p' | \
+        head -1`
 
 
-if test \! -z "$rpmv" ; then
-  rpmbdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
-  rpmhdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/attraction$@\1@p'`
+  if test \! -z "$rpmv" ; then
+    rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
+    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/attraction$@\1@p'`
 
-  warning=no
-  warnL "There is already an installed RPM of xscreensaver $rpmv"
-  warn2 "on this system.  You might want to remove it (with"
-  warn2 '"rpm -ve xscreensaver") before running "make install"'
-  warn2 "from this directory."
-  echo ""
-  warn2 "Alternately, you could build this version of xscreensaver"
-  warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
-  warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
-  warn2 "See the RPM documentation for more info."
-  echo ""
+    warning=no
+    warnL "There is already an installed RPM of xscreensaver $rpmv"
+    warn2 'on this system.  You might want to remove it ("rpm -ve")'
+    warn2 'before running "make install" in this directory.'
+    echo ""
+    warn2 "Alternately, you could build this version of xscreensaver"
+    warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
+    warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
+    warn2 "See the RPM documentation for more info."
+    echo ""
 
-  if test "$rpmbdir" = "$rpmhdir" ; then
-    warn2 "The RPM version was installed in $rpmbdir/."
-    do_dir_warning=yes
-  else
-    warn2 "The RPM version was installed in $rpmbdir/,"
-    warn2 "with demos in $rpmhdir/."
+    if test "$rpmbdir" = "$rpmhdir" ; then
+      warn2 "The RPM version was installed in $rpmbdir/."
+      do_dir_warning=yes
+    else
+      warn2 "The RPM version was installed in $rpmbdir/,"
+      warn2 "with demos in $rpmhdir/."
+    fi
   fi
 fi
-
 
 if test "${bindir}" = "${HACKDIR}" ; then
   do_dir_warning=yes

@@ -29,10 +29,6 @@ extern XtAppContext app;
 #define DEFAULTS        "*delay:        15000              \n" \
                         "*showFPS:      False              \n" \
                         "*wireframe:    False              \n" \
-                        "*spinSpeed:  " DEF_SPIN_SPEED   " \n" \
-                        "*scrollSpeed:" DEF_SCROLL_SPEED " \n" \
-                        "*maxRPM:     " DEF_MAX_RPM      " \n" \
-                        "*gearSize:   " DEF_GEAR_SIZE    " \n" \
                         "*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
                         "*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
                         "*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \

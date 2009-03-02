@@ -30,8 +30,6 @@ extern XtAppContext app;
 			"*count:        1           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*texture:    " DEF_TEXTURE   "\n" \
 
 /* #define DEBUG */
 

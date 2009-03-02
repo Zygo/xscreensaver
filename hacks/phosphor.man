@@ -93,7 +93,7 @@ text-to-speech system installed, you can have it read the screen as
 phosphor prints it:
 .EX
 phosphor -program \\
-         'fortune | tee /dev/stderr | festival --tts'
+    'xscreensaver-text | tee /dev/stderr | festival --tts'
 .EE
 You can also use \fIphosphor\fP as a lo-fi replacement for the
 .BR xterm (1)
@@ -144,6 +144,7 @@ stored in the RESOURCE_MANAGER property.
 to inform the sub-process of the type of terminal emulation.
 .SH SEE ALSO
 .BR xscreensaver (1),
+.BR xscreensaver-text (1),
 .BR fortune (1),
 .BR apple2 (1),
 .BR starwars (1),

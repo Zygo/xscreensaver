@@ -82,16 +82,8 @@ extern XtAppContext app;
 #define DEF_PARMS       "(default)"
 
 #define DEFAULTS	"*delay:	30000       \n" \
-			"*resolution: " DEF_RESOLUTION "\n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*duration:   " DEF_DURATION "\n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*bbox:       " DEF_BBOX   "\n" \
-			"*grid:       " DEF_GRID   "\n" \
-                        "*smooth:     " DEF_SMOOTH "\n" \
-                        "*parameters: " DEF_PARMS  "\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

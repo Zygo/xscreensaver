@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -655,6 +655,60 @@ print_path_error (const char *program)
 }
 
 
+/* Executes the command in another process.
+   Command may be any single command acceptable to /bin/sh.
+   It may include wildcards, but no semicolons.
+   If successful, the pid of the other process is returned.
+   Otherwise, -1 is returned and an error may have been
+   printed to stderr.
+ */
+pid_t
+fork_and_exec (saver_screen_info *ssi, const char *command)
+{
+  saver_info *si = ssi->global;
+  saver_preferences *p = &si->prefs;
+  pid_t forked;
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        char buf [255];
+        sprintf (buf, "%s: couldn't fork", blurb());
+        perror (buf);
+        break;
+      }
+
+    case 0:
+      close (ConnectionNumber (si->dpy));	/* close display fd */
+      limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
+      hack_subproc_environment (ssi);		/* set $DISPLAY */
+
+      if (p->verbose_p)
+        fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
+                 blurb(), ssi->number, command,
+                 (unsigned long) getpid ());
+
+      exec_command (p->shell, command, p->nice_inferior);
+
+      /* If that returned, we were unable to exec the subprocess.
+         Print an error message, if desired.
+       */
+      if (! p->ignore_uninstalled_p)
+        print_path_error (command);
+
+      exit (1);  /* exits child fork */
+      break;
+
+    default:	/* parent */
+      (void) make_job (forked, ssi->number, command);
+      break;
+    }
+
+  return forked;
+}
+
+
 static void
 spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 {
@@ -668,7 +722,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
       screenhack *hack;
       pid_t forked;
       char buf [255];
-      int new_hack;
+      int new_hack = -1;
       int retry_count = 0;
       Bool force = False;
 
@@ -715,6 +769,14 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
         {
           new_hack = -1;
         }
+      else if (p->mode == RANDOM_HACKS_SAME &&
+               ssi->number != 0)
+	{
+	  /* Use the same hack that's running on screen 0.
+             (Assumes this function was called on screen 0 first.)
+           */
+          ssi->current_hack = si->screens[0].current_hack;
+	}
       else  /* (p->mode == RANDOM_HACKS) */
 	{
 	  /* Select a random hack (but not the one we just ran.) */
@@ -769,38 +831,19 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
       if (si->selection_mode < 0)
 	si->selection_mode = 0;
 
-      switch ((int) (forked = fork ()))
+      forked = fork_and_exec (ssi, hack->command);
+      switch ((int) forked)
 	{
-	case -1:
+	case -1: /* fork failed */
+	case 0:  /* child fork (can't happen) */
 	  sprintf (buf, "%s: couldn't fork", blurb());
 	  perror (buf);
 	  restore_real_vroot (si);
-	  saver_exit (si, 1, 0);
-
-	case 0:
-	  close (ConnectionNumber (si->dpy));	/* close display fd */
-	  limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
-	  hack_subproc_environment (ssi);	/* set $DISPLAY */
-
-          if (p->verbose_p)
-            fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
-                     blurb(), ssi->number, hack->command,
-                     (unsigned long) getpid ());
-
-	  exec_command (p->shell, hack->command, p->nice_inferior);
-
-          /* If that returned, we were unable to exec the subprocess.
-             Print an error message, if desired.
-           */
-          if (! p->ignore_uninstalled_p)
-            print_path_error (hack->command);
-
-          exit (1);  /* exits child fork */
+	  saver_exit (si, 1, "couldn't fork");
 	  break;
 
 	default:
 	  ssi->pid = forked;
-	  (void) make_job (forked, ssi->number, hack->command);
 	  break;
 	}
     }

@@ -4,8 +4,6 @@
 
   <command arg="-root"/>
 
-  <string id="text" _label="Text" arg="-text %"/>
-
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="30000" default="20000"
@@ -24,10 +22,18 @@
     <option id="xyz" _label="Rotate around all three axes"/>
   </select>
 
+  <select id="facing">
+    <option id="front"   _label="Always face front" arg-set="-front"/>
+    <option id="nofront" _label="Spin all the way around"/>
+  </select>
+
   <select id="render">
     <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
     <option id="solid" _label="Solid"/>
   </select>
+
+  <string id="text"    _label="Text"    arg="-text %"/>
+  <file   id="program" _label="Program" arg="-program %"/>
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 

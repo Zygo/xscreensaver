@@ -904,6 +904,8 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
 
       ssi->number = i;
       ssi->screen = ScreenOfDisplay (si->dpy, ssi->real_screen_number);
+      ssi->poll_mouse_last_root_x = -1;
+      ssi->poll_mouse_last_root_y = -1;
 
       if (!si->xinerama_p)
         {
@@ -1190,8 +1192,13 @@ main_loop (saver_info *si)
           /* Go around the loop and wait for the next bout of idleness,
              or for the init file to change, or for a remote command to
              come in, or something.
+
+             But, if locked_p is true, go ahead.  This can only happen
+             if we're in "disabled" mode but a "lock" clientmessage came
+             in: in that case, we should go ahead and blank/lock the screen.
            */
-          continue;
+          if (!si->locked_p)
+            continue;
         }
 
       /* Since we're about to blank the screen, kill the de-race timer,
@@ -1902,11 +1909,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 			      "not compiled with support for locking.",
 			      "locking not enabled.");
 #else /* !NO_LOCKING */
-      if (p->mode == DONT_BLANK)
-        clientmessage_response(si, window, True,
-                             "LOCK ClientMessage received in DONT_BLANK mode.",
-                               "screen blanking is currently disabled.");
-      else if (si->locking_disabled_p)
+      if (si->locking_disabled_p)
 	clientmessage_response (si, window, True,
 		      "LOCK ClientMessage received, but locking is disabled.",
 			      "locking not enabled.");

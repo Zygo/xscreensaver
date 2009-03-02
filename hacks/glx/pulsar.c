@@ -48,17 +48,6 @@
 # define screensaver_opts				xlockmore_opts
 #define	DEFAULTS                       	"*delay:			10000   \n" \
 										"*showFPS:          False   \n" \
-										"*light:			False	\n" \
-                                        "*wire:				False	\n" \
-                                        "*quads:			5   	\n" \
-                                        "*blend:			True	\n" \
-                                        "*fog:				False	\n" \
-                                        "*antialias:		False	\n" \
-                                        "*texture:			False	\n" \
-                                        "*texture_quality:	False	\n" \
-                                        "*mipmap:			False	\n" \
-                                        "*doDepth:			False	\n" \
-										"*image:			BUILTIN	\n"
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */

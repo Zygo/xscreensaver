@@ -961,25 +961,18 @@ fi
 have_hackdir=yes
 with_hackdir_req=unspecified
 AC_ARG_WITH(hackdir,[
-Installation options:
 
+Installation options:
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: `PREFIX/lib/xscreensaver/'],
+                          Default: `EPREFIX/lib/xscreensaver/'],
   [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
 
 if test x"$with_hackdir" = xyes; then
-  HACKDIR='${exec_prefix}/lib/xscreensaver'
+  HACKDIR='${libexecdir}/xscreensaver'
 elif test x"$with_hackdir" = xno; then
   HACKDIR='${bindir}'
 else
-  # there must be a better way than this...
-  if test -z "`echo $with_hackdir | sed 's@^/.*@@'`" ; then
-    # absolute path
-    HACKDIR=$with_hackdir
-  else
-    # relative path
-    HACKDIR="\${exec_prefix}$with_hackdir"
-  fi
+  HACKDIR=$with_hackdir
 fi
 
 # canonicalize slashes.
@@ -1009,16 +1002,13 @@ with_configdir_req=unspecified
 AC_ARG_WITH(configdir,
 [  --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
-                          Default: `GTK_PREFIX/control-center/screensavers/'
-                          or `PREFIX/lib/xscreensaver/config/', depending on
-                          whether GTK is available.
+                          Default: `PREFIX/share/xscreensaver/config/'
 ],
   [with_configdir="$withval"; with_configdir_req="$withval"],
   [with_configdir=yes])
 
 if test x"$with_configdir" = xyes; then
-  # filled in later...
-  HACK_CONF_DIR=''
+  HACK_CONF_DIR='${datadir}/xscreensaver/config'
 elif test x"$with_configdir" = xno; then
   echo "error: must be yes, or a pathname: --with-configdir=$with_configdir"
   exit 1
@@ -1071,60 +1061,6 @@ if test "$with_sgi" = yes; then
 
 elif test "$with_sgi" != no; then
   echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the MIT-SCREEN-SAVER server extension.
-#
-###############################################################################
-
-have_mit=no
-with_mit_req=unspecified
-AC_ARG_WITH(mit-ext,
-[  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.],
-  [with_mit="$withval"; with_mit_req="$withval"],[with_mit=yes])
-
-HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
-
-if test "$with_mit" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # Now check to see if it's really in the library; XF86Free-3.3 ships
-  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
-  #
-  if test "$have_mit" = yes; then
-    AC_CHECK_X_LIB(Xext, XScreenSaverRegister, [true], [have_mit=no], -lm)
-
-    if test "$have_mit" = no; then
-      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
-      # of in Xext.  Thank you master, may I have another.
-      AC_CHECK_X_LIB(XExExt, XScreenSaverRegister,
-                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"],
-                     [true], -lX11 -lXext -lm)
-    fi
-
-    if test "$have_mit" = no; then
-      # Double fuck!  Looks like some versions of XFree86 (whichever version
-      # it is that comes with RedHat Linux 2.0 -- I can't find a version 
-      # number) put this garbage in Xss instead of Xext.  Thank you master,
-      #  may I have another.
-      AC_CHECK_X_LIB(Xss, XScreenSaverRegister,
-                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"],
-                     [true], -lX11 -lXext -lm)
-    fi
-
-  if test "$have_mit" = yes; then
-    AC_DEFINE(HAVE_MIT_SAVER_EXTENSION)
-  fi
-
-  fi
-
-elif test "$with_mit" != no; then
-  echo "error: must be yes or no: --with-mit-ext=$with_mit"
   exit 1
 fi
 
@@ -1272,7 +1208,7 @@ if test "$with_xinerama" = yes; then
     # if that failed, look in -lXinerama (this is where it is in XFree86 4.1.)
     if test "$have_xinerama" = no; then
       AC_CHECK_X_LIB(Xinerama, XineramaQueryScreens,
-                     [have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"],
+                     [have_xinerama=yes; XINERAMA_LIBS="-lXinerama"],
                      [true], -lXext -lX11)
     fi
   fi
@@ -1525,9 +1461,7 @@ fi
 #
 ###############################################################################
 
-AC_ARG_ENABLE(locking,[
-Screen locking options:
-
+AC_ARG_ENABLE(locking,[Screen locking options:
   --enable-locking        Compile in support for locking the display.
   --disable-locking       Do not allow locking at all.],
   [enable_locking="$enableval"],[enable_locking=yes])
@@ -2004,6 +1938,78 @@ esac
 
 ###############################################################################
 #
+#       Check for a login manager for a "New Login" button on the lock dialog.
+#	Usually this will be "/usr/bin/gdmflexiserver".
+#
+###############################################################################
+
+have_login_manager=no
+with_login_manager_req=unspecified
+default_login_manager='gdmflexiserver -l'
+
+AC_ARG_WITH(login-manager,
+[  --with-login-manager    Put a "New Login" button on the unlock dialog that
+                          runs a login manager such as gdmflexiserver.],
+  [with_login_manager="$withval"; with_login_manager_req="$withval"],
+  [with_login_manager=no])
+# no HANDLE_X_PATH_ARG for this one
+
+if test "$enable_locking" = no ; then
+  with_login_manager_req=no
+  with_login_manager=no
+fi
+
+if test -n "$with_login_manager_req" ; then
+  ac_cv_login_manager_program=""
+
+ if test "$with_login_manager_req" = "yes" ; then
+   with_login_manager_req=$default_login_manager
+ fi
+
+  case "$with_login_manager_req" in
+    /*)
+      # absolute path
+      set dummy $with_login_manager_req ; login_manager_tmp=$2
+      AC_MSG_CHECKING([for $login_manager_tmp])
+      if test -x "$login_manager_tmp" ; then
+        AC_MSG_RESULT(yes)
+        with_login_manager="$login_manager_tmp"
+      else
+        AC_MSG_RESULT(no)
+        with_login_manager=""
+      fi
+    ;;
+    *)
+      # relative path
+      set dummy $with_login_manager_req ; login_manager_tmp=$2
+      # don't cache
+      unset ac_cv_path_login_manager_tmp
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test -z "$login_manager_tmp" ; then
+        with_login_manager=""
+      else
+        with_login_manager="$login_manager_tmp"
+      fi
+    ;;
+  esac
+  ac_cv_login_manager_program="$with_login_manager"
+
+elif test -n "$ac_cv_login_manager_program"; then
+  AC_MSG_RESULT([checking for login_manager... (cached) $ac_cv_login_manager_program])
+fi
+
+NEW_LOGIN_COMMAND_P=''
+NEW_LOGIN_COMMAND="$ac_cv_login_manager_program"
+
+if test -z "$NEW_LOGIN_COMMAND" ; then
+  NEW_LOGIN_COMMAND="$default_login_manager"
+  NEW_LOGIN_COMMAND_P='! '
+fi
+
+
+
+###############################################################################
+#
 #       Check for -lgtk (and Gnome stuff)
 #
 ###############################################################################
@@ -2131,11 +2137,10 @@ if test "$with_gtk" = yes; then
   ac_gtk_config_libs=$ac_cv_gtk_config_libs
 
   GTK_EXTRA_OBJS=""
-  GNOME_DATADIR=""
-  GNOME_PANELDIR='$(GNOME_PANELDIR2)'
+  GTK_DATADIR=""
   if test "$have_gtk" = yes; then
-    GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-    GNOME_DATADIR="$GNOME_DATADIR/share"
+    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    GTK_DATADIR="$GTK_DATADIR/share"
   fi
 
   if test "$have_gtk" = yes; then
@@ -2936,96 +2941,70 @@ fi
 
 ###############################################################################
 #
-#       Check for a program to generate random text.
-#
-#       Zippy is funnier than the idiocy generally spat out by `fortune',
-#       so first see if "fortune zippy" works.  Else, use plain "fortune".
-#
-#       We used to dig around in Emacs to look for the "yow" program, but
-#       most people who have Emacs also have "fortune zippy", so nevermind.
+#       Check for a directory full of images to use as the default value
+#	of the "imageDirectory" preference.
 #
 ###############################################################################
 
-with_fortune_req=""
-AC_ARG_WITH(fortune,[
-  --with-fortune=PROGRAM  Some demos are able to run an external program and
-                          display its text; this names the program to use by
-                          default (though it can be overridden with X
-                          resources.)  Default is "/usr/games/fortune".],
-  [with_fortune_req="$withval"; with_fortune="$withval"],[with_fortune=yes])
+have_imagedir=no
+with_imagedir_req=unspecified
 
-if test "$with_fortune" = no || test "$with_fortune" = yes ; then
-  with_fortune=""
-  with_fortune_req=""
-fi
+AC_ARG_WITH(image-directory,
+[  --with-image-directory=DIR  By default, some screen savers may load
+                          random images out of this directory.],
+  [with_imagedir="$withval"; with_imagedir_req="$withval"],
+  [with_imagedir=yes])
+# no HANDLE_X_PATH_ARG for this one
 
-if test -n "$with_fortune_req" ; then
-  ac_cv_fortune_program=""
-  case "$with_fortune_req" in
-    /*)
+case "$with_imagedir" in
+  /*)
+    # absolute path
+    AC_MSG_CHECKING([for image directory $with_imagedir])
+    if test -d "$with_imagedir" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_imagedir=""
+    fi
+  ;;
+  yes)
+    with_imagedir=""
 
-      set dummy $with_fortune_req ; fortune_tmp=$2
-      AC_MSG_CHECKING([for $fortune_tmp])
-      if test -x "$fortune_tmp" ; then
-        AC_MSG_RESULT(yes)
-      else
-        AC_MSG_RESULT(no)
-        with_fortune=""
+    #### Could use some more defaults here...
+    for dd in \
+      "/usr/share/backgrounds/images/"          \
+      "/usr/share/wallpapers/"                  \
+      "/Library/Desktop Pictures/"              \
+    ; do
+      if test -z "$with_imagedir"; then
+        AC_MSG_CHECKING([for image directory $dd])
+        if test -d "$dd" ; then
+          AC_MSG_RESULT(yes)
+          with_imagedir="$dd"
+        else
+          AC_MSG_RESULT(no)
+        fi
       fi
-    ;;
-    *)
-      set dummy $with_fortune_req ; fortune_tmp=$2
-      # don't cache
-      unset ac_cv_path_fortune_tmp
-      AC_PATH_PROG(fortune_tmp, $fortune_tmp, [])
-      if test -z "$fortune_tmp" ; then
-        with_fortune=""
-      fi
-    ;;
-  esac
-  ac_cv_fortune_program="$with_fortune"
+    done
 
-elif test -n "$ac_cv_fortune_program"; then
-  AC_MSG_RESULT([checking for fortune... (cached) $ac_cv_fortune_program])
+  ;;
+  no)
+    with_imagedir=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-image-directory=$with_imagedir_req"
+    exit 1
+  ;;
+esac
+ac_cv_imagedir="$with_imagedir"
+
+DEFAULT_IMAGES_P='True'
+DEFAULT_IMAGE_DIRECTORY="$ac_cv_imagedir"
+
+if test -z "$DEFAULT_IMAGE_DIRECTORY" ; then
+  DEFAULT_IMAGES_P='False'
 fi
-
-unset ac_cv_path_fortune_tmp
-unset fortune_tmp
-
-if test -z "$ac_cv_fortune_program" ; then
-
-  # first look for fortune in /usr/games/ (and use absolute path)
-  AC_PATH_PROGS(fortune_tmp, fortune,, "/usr/games")
-
-  # if it's not there, look on $PATH (and don't use absolute path)
-  if test -z "$fortune_tmp" ; then
-     AC_CHECK_PROGS(fortune_tmp, fortune)
-  fi
-
-  # if we didn't find anything, then just assume /usr/games/
-  if test -z "$fortune_tmp" ; then
-     fortune_tmp="/usr/games/fortune"
-  fi
-
-  ac_cv_fortune_program="$fortune_tmp"
-
-  # now check to see whether "fortune zippy" works.
-  #
-  fortune_tmp="$fortune_tmp zippy"
-  AC_MSG_CHECKING([for zippy quotes])
-  if ( $fortune_tmp >/dev/null 2>&1 ); then
-    ac_cv_fortune_program="$fortune_tmp"
-    AC_MSG_RESULT($fortune_tmp)
-  else
-    AC_MSG_RESULT(no)
-  fi
-
-fi
-
-unset ac_cv_path_fortune_tmp
-unset fortune_tmp
-
-AC_DEFINE_UNQUOTED(FORTUNE_PROGRAM, "$ac_cv_fortune_program")
 
 
 ###############################################################################
@@ -3175,42 +3154,11 @@ else
 fi
 
 
-# Now that we know whether we have Gnome, we can decide where the XML
-# config files get installed.
-#
-if test -z "$HACK_CONF_DIR" ; then
-  if test -n "$GNOME_DATADIR" ; then
-    HACK_CONF_DIR='${GNOME_DATADIR}/control-center/screensavers'
-  else
-    HACK_CONF_DIR='${prefix}/lib/xscreensaver/config'
-  fi
-fi
-
-
-
-# After computing $HACK_CONF_DIR, make sure $GLADE_DATADIR has a value
-# so that we know where to install the Gtk pixmaps.
-#
-# It should usually be "/usr/share/pixmaps/", but we can't just use
-# "$(prefix)/share/pixmaps" because that would usually result in
-# "/usr/X11R6/share/pixmaps/", which is wrong.  It needs to be the
-# Gtk prefix, not the overall prefix.
-#
-if test -n "$GNOME_DATADIR" ; then
-  GLADE_DATADIR='$(GNOME_DATADIR)/xscreensaver'
-elif test "$have_gtk" = yes; then
-  GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-  GLADE_DATADIR="$GLADE_DATADIR/share/xscreensaver"
-else
-  GLADE_DATADIR=''
-fi
-
-
 # Set PO_DATADIR to something sensible.
 #
 AC_MSG_CHECKING([for locale directory])
-if test -n "$GNOME_DATADIR" ; then
-  PO_DATADIR="$GNOME_DATADIR"
+if test -n "$GTK_DATADIR" ; then
+  PO_DATADIR="$GTK_DATADIR"
 elif test "$have_gtk" = yes; then
   PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
   PO_DATADIR="$PO_DATADIR/share"
@@ -3269,12 +3217,17 @@ AC_SUBST(PTY_LIBS)
 AC_SUBST(GL_LIBS)
 AC_SUBST(GLE_LIBS)
 AC_SUBST(XDPMS_LIBS)
+AC_SUBST(XINERAMA_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(SETUID_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)
+AC_SUBST(NEW_LOGIN_COMMAND)
+AC_SUBST(NEW_LOGIN_COMMAND_P)
+AC_SUBST(DEFAULT_IMAGES_P)
+AC_SUBST(DEFAULT_IMAGE_DIRECTORY)
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)
@@ -3302,10 +3255,8 @@ AC_SUBST(GNOME24)
 AC_SUBST(GNOME22)
 AC_SUBST(NOGNOME)
 AC_SUBST(HACKDIR)
-AC_SUBST(GNOME_DATADIR)
-AC_SUBST(GLADE_DATADIR)
+AC_SUBST(GTK_DATADIR)
 AC_SUBST(PO_DATADIR)
-AC_SUBST(GNOME_PANELDIR)
 AC_SUBST(HACK_CONF_DIR)
 AC_SUBST(GTK_EXTRA_OBJS)
 
@@ -3383,10 +3334,6 @@ noteL() {
 
 if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   warn 'The SGI saver extension was requested, but was not found.'
-fi
-
-if test "$with_mit_req" = yes -a "$have_mit" = no ; then
-  warn 'The MIT saver extension was requested, but was not found.'
 fi
 
 if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
@@ -3697,13 +3644,6 @@ if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
 fi
 
-if test -n "$with_fortune_req"; then
-  if test "$with_fortune_req" != "$ac_cv_fortune_program" ; then
-    warnL "$with_fortune_req was requested as the Fortune program,"
-    warn2 "but was not found.  The default will be used instead."
-  fi
-fi
-
 if test "$with_kerberos_req" = yes -a "$have_kerberos" = no ; then
   warn 'Use of Kerberos was requested, but it was not found.'
 fi
@@ -3759,39 +3699,44 @@ done
 
 do_dir_warning=no
 
-# Now let's see if there's a previous RPM version already installed.  Blargh!
+# Now let's warn if there's a previous RPM version already installed.
+# But don't bother with this test if we are currently *building* an RPM.
 
-# M4 sucks!!
-changequote(X,Y)
-rpmv=`(rpm -qv xscreensaver) 2>/dev/null | \
-      sed -n 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/p'`
-changequote([,])
+if test -z "$RPM_PACKAGE_VERSION" ; then
 
-if test \! -z "$rpmv" ; then
-  rpmbdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
-  rpmhdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/attraction$@\1@p'`
+  rpmnames="xscreensaver xscreensaver-base xscreensaver-extras"
 
-  warning=no
-  warnL "There is already an installed RPM of xscreensaver $rpmv"
-  warn2 "on this system.  You might want to remove it (with"
-  warn2 '"rpm -ve xscreensaver") before running "make install"'
-  warn2 "from this directory."
-  echo ""
-  warn2 "Alternately, you could build this version of xscreensaver"
-  warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
-  warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
-  warn2 "See the RPM documentation for more info."
-  echo ""
+  # M4 sucks!!
+  changequote(X,Y)
+  rpmv=`(rpm -qv $rpmnames) 2>/dev/null | \
+        sed -n 's/^[-a-z]*-\([0-9][0-9]*[.][0-9][0-9a-z]*\)-.*$/\1/p' | \
+        head -1`
+  changequote([,])
 
-  if test "$rpmbdir" = "$rpmhdir" ; then
-    warn2 "The RPM version was installed in $rpmbdir/."
-    do_dir_warning=yes
-  else
-    warn2 "The RPM version was installed in $rpmbdir/,"
-    warn2 "with demos in $rpmhdir/."
+  if test \! -z "$rpmv" ; then
+    rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
+    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/attraction$@\1@p'`
+
+    warning=no
+    warnL "There is already an installed RPM of xscreensaver $rpmv"
+    warn2 'on this system.  You might want to remove it ("rpm -ve")'
+    warn2 'before running "make install" in this directory.'
+    echo ""
+    warn2 "Alternately, you could build this version of xscreensaver"
+    warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
+    warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
+    warn2 "See the RPM documentation for more info."
+    echo ""
+
+    if test "$rpmbdir" = "$rpmhdir" ; then
+      warn2 "The RPM version was installed in $rpmbdir/."
+      do_dir_warning=yes
+    else
+      warn2 "The RPM version was installed in $rpmbdir/,"
+      warn2 "with demos in $rpmhdir/."
+    fi
   fi
 fi
-
 
 if test "${bindir}" = "${HACKDIR}" ; then
   do_dir_warning=yes

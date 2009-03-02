@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,13 @@ struct screenhack {
   char *command;
 };
 
-typedef enum { RANDOM_HACKS, ONE_HACK, BLANK_ONLY, DONT_BLANK } saver_mode;
+typedef enum {
+  RANDOM_HACKS, ONE_HACK, BLANK_ONLY, DONT_BLANK, RANDOM_HACKS_SAME
+} saver_mode;
+
+typedef enum {
+  TEXT_DATE, TEXT_LITERAL, TEXT_FILE, TEXT_PROGRAM, TEXT_URL
+} text_mode;
 
 typedef struct saver_preferences saver_preferences;
 
@@ -78,6 +84,7 @@ struct saver_preferences {
   Time pointer_timeout;		/* how often to check mouse position */
   Time notice_events_timeout;	/* how long after window creation to select */
   Time watchdog_timeout;	/* how often to re-raise and re-blank screen */
+  int pointer_hysteresis;	/* mouse motions less than N/sec are ignored */
 
   Bool dpms_enabled_p;		/* Whether to power down the monitor */
   Time dpms_standby;		/* how long until monitor goes black */
@@ -88,6 +95,12 @@ struct saver_preferences {
   Bool grab_video_p;		/*  itself: they are used by the external */
   Bool random_image_p;		/*  "xscreensaver-getimage" program, and set */
   char *image_directory;	/*  by the "xscreensaver-demo" configurator. */
+
+  text_mode tmode;		/* How we generate text to display. */
+  char *text_literal;		/* used when tmode is TEXT_LITERAL. */
+  char *text_file;		/* used when tmode is TEXT_FILE.    */
+  char *text_program;		/* used when tmode is TEXT_PROGRAM. */
+  char *text_url;		/* used when tmode is TEXT_URL.     */
 
   Bool use_xidle_extension;	/* which extension to use, if possible */
   Bool use_mit_saver_extension;
@@ -102,6 +115,7 @@ struct saver_preferences {
   char *prefs_command;		/* How to edit preferences. */
   char *help_url;		/* Where the help document resides. */
   char *load_url_command;	/* How one loads URLs. */
+  char *new_login_command;	/* Command for the "New Login" button. */
 };
 
 

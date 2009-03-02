@@ -76,6 +76,38 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.20:   * New hack: `fliptext'.
+                      * Changed default configure installation directories:
+                        /usr/bin/ for xscreensaver, etc.;
+                        /usr/libexec/xscreensaver/ for hacks;
+                        /usr/share/xscreensaver/config/ for xml files.
+                      * All the text-manipulating screen savers can have their
+                        text source configured via `xscreensaver-demo' now.
+                      * xscreensaver.spec now builds three RPMs:
+                        base (no hacks); extras (2d hacks); and gl-extras.
+                      * Added `-program' and `-front' option to `gltext'.
+                      * Added `-shells' to `molecule'.
+                      * Fixed text-alpha glitch in `carousel'.
+                      * New `pacman': the ghosts can be killed now.
+                      * Fixed a bug in screen-grabbing GL hacks where images
+                        would be tiled instead of scaled on machines that
+                        can't do large textures.
+                      * `webcollage' can hit Flickr now.
+                      * New (rewritten) implementation of `ifs'.
+                      * The unlock dialog can be made to have a "New Login"
+                        button that will run `gdmflexiserver'.  Experimental!
+                      * Fixed non-ASCII display bug in `starwars'.
+                      * Configure finds a default for imageDirectory.
+                      * "xscreensaver-command -lock" now works even if
+                        in "screensaver disabled" mode.
+                      * If a bad password is typed while CapsLock is on, the
+                        unlock dialog says "CapsLock?" instead of "Sorry".
+                      * Mouse motion only counts as activity if the mouse moved
+                        more than 10 pixels (so the screen won't unblank every
+                        time you bump your desk.)
+                      * New mode option "random-same": if you have multiple
+                        monitors, this will run the *same* randomly chosen
+                        hack on each screen, instead of different ones on each.
 Changes since 4.19:   * New hacks, `fiberlamp', `boing', `boxfit', and
                         `carousel'.
                       * Rewrote `glslideshow' again: should be faster now.

@@ -111,17 +111,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
 # define DEFAULTS        "*delay:      25000 \n" \
                          "*showFPS:    False \n" \
                          "*wireframe:  False \n" \
-                         "*displayMode: "  DEF_DISPLAY_MODE  " \n" \
-                         "*appearance: "   DEF_APPEARANCE    " \n" \
-                         "*colors: "       DEF_COLORS        " \n" \
-                         "*projection3d: " DEF_3D_PROJECTION " \n" \
-                         "*projection4d: " DEF_4D_PROJECTION " \n" \
-                         "speedwx: "       DEF_DALPHA        " \n" \
-                         "speedwy: "       DEF_DBETA         " \n" \
-                         "speedwz: "       DEF_DDELTA        " \n" \
-                         "speedxy: "       DEF_DZETA         " \n" \
-                         "speedxz: "       DEF_DETA          " \n" \
-                         "speedyz: "       DEF_DTHETA        " \n"
+
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */

@@ -8,18 +8,22 @@
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ..
 
 install_prefix	=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+datadir		= @datadir@
 mandir		= @mandir@
+libexecdir	= @libexecdir@
 # maybe this should be 6 (games)?
 mansuffix	= 1
 manNdir		= $(mandir)/man$(mansuffix)
 
-# maybe this should be 6 (games)?
-mansuffix	= 1
+HACKDIR		= @HACKDIR@
+HACK_CONF_DIR	= @HACK_CONF_DIR@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
@@ -36,7 +40,6 @@ INSTALL		= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
-HACKDIR		= @HACKDIR@
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
@@ -97,7 +100,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
 		  antinspect.c providence.c pinion.c boing.c texfont.c \
-		  carousel.c
+		  carousel.c fliptext.c
 
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
@@ -128,7 +131,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
 		  antinspect.o providence.o pinion.o boing.o texfont.o \
-		  carousel.o
+		  carousel.o fliptext.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -139,7 +142,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
-		  antinspect providence pinion boing carousel
+		  antinspect providence pinion boing carousel fliptext
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -174,7 +177,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  antspotlight.man polytopes.man gleidescope.man \
 		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
 		  antinspect.man providence.man pinion.man boing.man \
-		  carousel.man
+		  carousel.man fliptext.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl starwars.txt
 
@@ -184,8 +187,8 @@ TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
 default: all
 all: $(EXES)
 
-install:   install-program   install-man
-uninstall: uninstall-program uninstall-man
+install:   install-program    install-xml   install-man
+uninstall: uninstall-program  uninstall-xml uninstall-man
 
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
@@ -230,6 +233,19 @@ install-man: $(MEN)
 		$(INSTALL_DATA) $(srcdir)/$$man $$idir/$$instname ;	\
 	 done
 
+install-xml:
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 if [ ! -d $$dest ]; then					\
+	   $(INSTALL_DIRS) $$dest ;					\
+	 fi ;								\
+	 src=$(srcdir)/../config ;					\
+	 for file in $(EXES) $(SCRIPTS) ; do				\
+	   if [ -f $$src/$$file.xml ]; then				\
+	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	   fi ;								\
+	done
+
 # the hacks, in $HACKDIR
 uninstall-program::
 	@exes="$(HACK_EXES)" ;						\
@@ -255,6 +271,13 @@ uninstall-man:
 	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	   echo rm -f $$idir/$$instname ;				\
 		rm -f $$idir/$$instname ;				\
+	done
+
+uninstall-xml:
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 for file in $(EXES) $(SCRIPTS) ; do				\
+	     echo rm -f $$dest/$$file.xml ;				\
+	          rm -f $$dest/$$file.xml ;				\
 	done
 
 clean:
@@ -620,6 +643,9 @@ boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
 carousel:	carousel.o	texfont.o $(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
+fliptext:	fliptext.o	texfont.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_OBJS) $(HACK_LIBS)
+
 dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
@@ -722,6 +748,8 @@ flipflop.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: ../../config.h
 flipscreen3d.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
+fliptext.o: ../../config.h
+fliptext.o: $(srcdir)/texfont.h
 flurry.o: ../../config.h
 flurry.o: $(srcdir)/flurry.h
 flurry.o: $(srcdir)/gltrackball.h

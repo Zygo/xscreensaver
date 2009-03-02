@@ -28,9 +28,6 @@ extern XtAppContext app;
 
 #define DEFAULTS	"*delay:	30000		 \n" \
 			"*wireframe:	False		 \n" \
-			"*boxsize:  "	DEF_WH		"\n" \
-			"*dissolve: "	DEF_DISSOLVE	"\n" \
-			"*fade:	"	DEF_FADE	"\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

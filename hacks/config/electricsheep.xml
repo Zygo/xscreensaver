@@ -21,13 +21,21 @@
   </hgroup>
 
   <hgroup>
-    <boolean id="hide" _label="Hide Sheep" arg-set="--display-anim 0" />
-    <boolean id="standalone" _label="Standalone" arg-set="--standalone 1" />
+    <boolean id="zoom" _label="Zoom" arg-set="--zoom 1" />
+    <boolean id="hide" _label="No Animation" arg-set="--display-anim 0" />
+    <boolean id="standalone" _label="No Network" arg-set="--standalone 1" />
   </hgroup>
 
-  <number id="maxmegs" type="spinbutton" arg="--max-megabytes %"
-          _label="Megabytes of Local Sheep Storage"
-          low="10" high="1000" default="200"/>
+  <hgroup>
+  <select id="maxmegs">
+     <option id="m100" _label="100 Mbyte cache" arg-set="--max-megabytes 100"/>
+     <option id="m300" _label="300 Mbyte cache" arg-set="--max-megabytes 300"/>
+     <option id="g1" _label="1 Gbyte cache" arg-set="--max-megabytes 1000"/>
+     <option id="g3" _label="3 Gbyte cache" arg-set="--max-megabytes 3000"/>
+     <option id="u" _label="Unlimited" arg-set="--max-megabytes 0"/>
+  </select>
+  </hgroup>
+
 
   <_description>
 

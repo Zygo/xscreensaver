@@ -258,6 +258,18 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
              blurb(), status, PAM_STRERROR(pamh, status));
   if (status == PAM_SUCCESS)  /* Win! */
     {
+      int status2;
+
+      /* We don't actually care if the account modules fail or succeed,
+       * but we need to run them anyway because certain pam modules
+       * depend on side effects of the account modules getting run.
+       */
+      status2 = pam_acct_mgmt (pamh, 0);
+
+      if (verbose_p)
+        fprintf (stderr, "%s:   pam_acct_mgmt (...) ==> %d (%s)\n",
+                 blurb(), status2, PAM_STRERROR(pamh, status2));
+
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
          failure and blunder along; it shouldn't matter.
@@ -267,7 +279,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
          says that the Linux PAM library ignores that one, and only refreshes
          credentials when using PAM_REINITIALIZE_CRED.
        */
-      int status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
+      status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
       if (verbose_p)
         fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
                  blurb(), status2, PAM_STRERROR(pamh, status2));

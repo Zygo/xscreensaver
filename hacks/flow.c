@@ -107,12 +107,7 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 					"*size:         -10 \n" \
 					"*cycles:       10000 \n" \
 					"*ncolors:      200 \n" \
-					"*rotate:       True \n" \
-					"*ride:         True \n" \
-					"*box:          True \n" \
-					"*periodic:     True \n" \
-					"*search:       True \n" \
-					"*dbuf:         True \n"
+
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # ifndef MI_DEPTH
 #  define MI_DEPTH MI_WIN_DEPTH

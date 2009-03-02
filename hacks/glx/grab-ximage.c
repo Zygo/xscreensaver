@@ -223,7 +223,7 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
    We use this when mipmapping fails on large textures.
  */
 static void
-halve_image (XImage *ximage)
+halve_image (XImage *ximage, XRectangle *geom)
 {
   int w2 = ximage->width/2;
   int h2 = ximage->height/2;
@@ -261,6 +261,14 @@ halve_image (XImage *ximage)
   *ximage = *ximage2;
   ximage2->data = 0;
   XFree (ximage2);
+
+  if (geom)
+    {
+      geom->x /= 2;
+      geom->y /= 2;
+      geom->width  /= 2;
+      geom->height /= 2;
+    }
 }
 
 
@@ -508,6 +516,7 @@ ximage_to_texture (XImage *ximage,
                    GLint type, GLint format,
                    int *width_return,
                    int *height_return,
+                   XRectangle *geometry,
                    Bool mipmap_p)
 {
   int max_reduction = 7;
@@ -595,7 +604,7 @@ ximage_to_texture (XImage *ximage,
           if (debug_p)
             fprintf (stderr, "%s: mipmap error (%dx%d): %s\n",
                      progname, ximage->width, ximage->height, s);
-          halve_image (ximage);
+          halve_image (ximage, geometry);
           goto AGAIN;
         }
     }
@@ -802,7 +811,13 @@ screen_to_texture_async_cb (Screen *screen, Window window, Drawable drawable,
         glBindTexture (GL_TEXTURE_2D, dd.texid);
 
       glPixelStorei (GL_UNPACK_ALIGNMENT, ximage->bitmap_pad / 8);
-      ok = ximage_to_texture (ximage, type, format, &tw, &th, dd.mipmap_p);
+      ok = ximage_to_texture (ximage, type, format, &tw, &th, geometry,
+                              dd.mipmap_p);
+      if (ok)
+        {
+          iw = ximage->width;	/* in case the image was shrunk */
+          ih = ximage->height;
+        }
     }
 
   if (ximage) XDestroyImage (ximage);

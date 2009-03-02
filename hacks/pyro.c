@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1994, 1996, 1998, 2001
+/* xscreensaver, Copyright (c) 1992, 1994, 1996, 1998, 2001, 2005
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -135,7 +135,7 @@ shrapnel (struct projectile *parent, Display *dpy, Colormap cmap)
   p->y = parent->y;
   v=random () % PI_2000;
   p->dx =(sin_cache[v]) + parent->dx;
-  p->dy =(cos_cache[v]) + parent->dx;
+  p->dy =(cos_cache[v]) + parent->dy;
   p->decay = (random () % 50) - 60;
   p->size = (parent->size * 2) / 3;
   p->fuse = 0;

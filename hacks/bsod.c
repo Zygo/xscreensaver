@@ -1688,7 +1688,7 @@ nvidia (Display *dpy, Window window, int delay)
     nvspatter (grid, rows, cols, ncolors, countof(bits), False);
 
 
-  /* Redisplay loop: blink 3x/second
+  /* Redisplay loop: blink 4x/second
    */
   while (1)
     {
@@ -1710,10 +1710,10 @@ nvidia (Display *dpy, Window window, int delay)
         nvspatter (grid, rows, cols, ncolors, countof(bits), False);
 
       XSync (dpy, False);
-      usleep (333333);
+      usleep (250000);
       if (bsod_sleep(dpy, 0))
         goto DONE;
-      if (tick / 3 >= delay)
+      if (tick / 4 >= delay)
         goto DONE;
       tick++;
     }
@@ -2455,7 +2455,7 @@ hppa_linux (Display *dpy, Window window, int delay)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.63 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.64 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },

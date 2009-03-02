@@ -1,163 +1,145 @@
-%define	name		xscreensaver
-%define	version		4.20
-%define	release		1
-%define	epoch		1
-%define	x11_prefix	/usr/X11R6
-%define	gnome_prefix	/usr
-%define gnome_datadir	%{gnome_prefix}/share
-
-# By default, builds the basic, non-GL package.
-# To build both the basic and GL-add-on packages:
-#   rpm --define "USE_GL yes" ...
-# or uncomment the following line.
-# %define	USE_GL		yes
+%define	name xscreensaver
+%define	version 4.21
 
 Summary:	X screen saver and locker
-Summary(fr):	Economiseur d'écran et verrouillage de terminaux X
 Name:		%{name}
 Version:	%{version}
-Release:	%{release}
-Epoch:		%{epoch}
-Group:		Amusements/Graphics
+Release:	1
+Epoch:		1
 License:	BSD
+Group:		Amusements/Graphics
 URL:		http://www.jwz.org/xscreensaver/
+Source0:	http://www.jwz.org/xscreensaver/xscreensaver-%{version}.tar.gz
 Vendor:		Jamie Zawinski <jwz@jwz.org>
-Source:		%{name}-%{version}.tar.gz
-Buildroot:	%{_tmppath}/%{name}-%{version}-root
+Buildroot:	%{_tmppath}/%{name}-root
 
-# This package really should be made to depend on
-# control-center >= 1.4.0.2 -OR- control-center >= 1.5.12
-# but there's no way to express that.
+%package base
+Summary: A minimal installation of xscreensaver.
+Group: Amusements/Graphics
+BuildPrereq: bc, pam-devel, xorg-x11-devel
+BuildPrereq: gtk2-devel libglade2-devel
+Requires: /etc/pam.d/system-auth, htmlview, desktop-backgrounds-basic
+Provides: xscreensaver
+Provides: xscreensaver-base
+Obsoletes: xscreensaver
+
+%package extras
+Summary: An enhanced set of screensavers.
+Group: Amusements/Graphics
+Requires: xscreensaver-base
+
+%package gl-extras
+Summary: An enhanced set of screensavers that require OpenGL.
+Group: Amusements/Graphics
+Requires: xscreensaver-base
+Obsoletes: xscreensaver-gl
 
 %description
 A modular screen saver and locker for the X Window System.
-Highly customizable: allows the use of any program that
-can draw on the root window as a display mode.
 More than 190 display modes are included in this package.
-%{?USE_GL:See also the xscreensaver-gl package, which}
-%{?USE_GL:includes optional OpenGL display modes.}
 
-%description -l fr
-Un économiseur d'écran et verrouillage modulaire pour X-Window.
-Hautement configurable: permet l'utilisation de n'importe quel programme
-qui peut dessiner dans la fenêtre root.
-Plus de 190 modes d'affichage sont inclus dans ce paquet.
-%{?USE_GL:Voir aussi le paquet xscreensaver-gl, qui inclut}
-%{?USE_GL:des modules optionnels OpenGL.}
+%description base
+A modular screen saver and locker for the X Window System.
+This package contains the bare minimum needed to blank and
+lock your screen.  The graphical display modes are the
+"xscreensaver-extras" and "xscreensaver-gl-extras" packages.
 
-%{?USE_GL:%package gl}
-%{?USE_GL:Group:	Amusements/Graphics}
-%{?USE_GL:Requires:     xscreensaver = %{epoch}:%{version}-%{release}}
-%{?USE_GL:Summary:	A set of GL screensavers}
-%{?USE_GL:Summary(fr):	Un ensemble d'économiseurs d'écran OpenGL}
-%{?USE_GL:%description gl}
-%{?USE_GL:The xscreensaver-gl package contains even more screensavers for your}
-%{?USE_GL:mind-numbing, ambition-eroding, time-wasting, hypnotized viewing}
-%{?USE_GL:pleasure. These screensavers require OpenGL or Mesa support.}
-%{?USE_GL: }
-%{?USE_GL:Install the xscreensaver-gl package if you need more screensavers}
-%{?USE_GL:for use with the X Window System and you have OpenGL or Mesa}
-%{?USE_GL:installed.}
-%{?USE_GL:%description -l fr gl}
-%{?USE_GL:Le paquet xscreensaver-gl contient encore plus d'économiseurs}
-%{?USE_GL:d'écran pour votre plaisir visuel.}
-%{?USE_GL: }
-%{?USE_GL:Ces économiseurs d'écran nécessitent OpenGL ou Mesa.}
-%{?USE_GL:Installez le paquet xscreensaver-gl si vous désirez plus}
-%{?USE_GL:d'économiseur d'écran et que vous avez OpenGL ou Mesa installé.}
+%description extras
+A modular screen saver and locker for the X Window System.
+This package contains a variety of graphical screen savers for
+your mind-numbing, ambition-eroding, time-wasting, hypnotized
+viewing pleasure.
+
+%description gl-extras
+A modular screen saver and locker for the X Window System.
+This package contains a variety of OpenGL-based (3D) screen
+savers for your mind-numbing, ambition-eroding, time-wasting,
+hypnotized viewing pleasure.
 
 %prep
 %setup -q
 
+if [ -x %{_datadir}/libtool/config.guess ]; then
+  # use system-wide copy
+  cp -p %{_datadir}/libtool/config.{sub,guess} .
+fi
+
 %build
-RPMOPTS=""
-
-# On Solaris, build without PAM and with Shadow.
-# On other systems, build with PAM and without Shadow.
-#
-%ifos solaris
- RPMOPTS="$RPMOPTS --without-pam"
-%else
- RPMOPTS="$RPMOPTS --with-pam --without-shadow"
-%endif
-
-%{?USE_GL:RPMOPTS="$RPMOPTS --with-gl"}
-%{!?USE_GL:RPMOPTS="$RPMOPTS --without-gl"}
-
 archdir=`./config.guess`
 mkdir $archdir
 cd $archdir
-CFLAGS="$RPM_OPT_FLAGS" \
- ../configure --prefix=%{x11_prefix} \
-              --with-setuid-hacks \
-              $RPMOPTS
+
+export CFLAGS="${CFLAGS:-${RPM_OPT_FLAGS}}"
+
+CONFIG_OPTS="--prefix=/usr --with-pam --without-shadow --without-kerberos"
+
+# Red Hat doesn't like this:
+CONFIG_OPTS="$CONFIG_OPTS --with-setuid-hacks"
+
+# This is flaky:
+# CONFIG_OPTS="$CONFIG_OPTS --with-login-manager"
+
+ln -s ../configure .
+%configure $CONFIG_OPTS
+rm -f configure
+
 make
 
 %install
-
 archdir=`./config.guess`
+cd $archdir
+
+rm -rf ${RPM_BUILD_ROOT}
 
 # We have to make sure these directories exist,
 # or nothing will be installed into them.
 #
-mkdir -p $RPM_BUILD_ROOT%{gnome_datadir}
-mkdir -p $RPM_BUILD_ROOT/etc/pam.d
+mkdir -p $RPM_BUILD_ROOT%{_bindir}                      \
+         $RPM_BUILD_ROOT%{_datadir}/xscreensaver        \
+         $RPM_BUILD_ROOT%{_libexecdir}/xscreensaver     \
+         $RPM_BUILD_ROOT%{_mandir}/man1/xscreensaver    \
+         $RPM_BUILD_ROOT/etc/pam.d
 
-cd $archdir
-make  install_prefix=$RPM_BUILD_ROOT \
-      AD_DIR=%{x11_prefix}/lib/X11/app-defaults \
-      GNOME_BINDIR=%{gnome_prefix}/bin \
-      install-strip
+make install_prefix=$RPM_BUILD_ROOT install
+
+desktop-file-install --vendor gnome --delete-original                         \
+  --dir $RPM_BUILD_ROOT%{_datadir}/applications                               \
+  $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
 
 # This function prints a list of things that get installed.
 # It does this by parsing the output of a dummy run of "make install".
 #
 list_files() {
-  make -s install_prefix=$RPM_BUILD_ROOT INSTALL=true           \
-          GNOME_BINDIR=%{gnome_prefix}/bin                      \
-          "$@"                                                  |
-    sed -n -e 's@.* \(/[^ ]*\)$@\1@p'                           |
-    sed    -e "s@^$RPM_BUILD_ROOT@@"                            \
-           -e "s@/[a-z][a-z]*/\.\./@/@"                         |
-    sed    -e 's@\(.*/man/.*\)@\1\*@'                           |
-    sort
+  make -s install_prefix=${RPM_BUILD_ROOT} INSTALL=true "$@"	\
+   | sed -n -e 's@.* \(/[^ ]*\)$@\1@p'				\
+   | sed    -e "s@^${RPM_BUILD_ROOT}@@"				\
+	    -e "s@/[a-z][a-z]*/\.\./@/@"			\
+   | sed    -e 's@\(.*/man/.*\)@\1\*@'				\
+   | sed    -e 's@\(.*/app-defaults/\)@%config \1@'		\
+	    -e 's@\(.*/pam\.d/\)@%config(missingok) \1@'	\
+   | sort
 }
 
-# Collect the names of the non-GL executables and scripts...
-# (Including the names of all of the Gnome and L10N-related files,
-# whereever they might have gotten installed...)
-# For the translation catalogs, prepend an appropriate %lang(..) tag.
+# Generate three lists of files for the three packages.
 #
-(  cd    hacks ; list_files install ; \
-   cd ../driver; list_files install-program install-scripts install-gnome ; \
- ( cd ../po;     list_files install | grep '\.' \
-    | sed 's@^\(.*/\([^/]*\)/LC.*\)$@%lang(\2) \1@' ) \
-) > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
+dd=%{_builddir}/%{name}-%{version}
+(  cd hacks     ; list_files install ) >  $dd/extras.files
+(  cd hacks/glx ; list_files install ) >  $dd/gl-extras.files
+(  cd driver    ; list_files install ) >  $dd/base.files
+(  cd po        ; list_files install ) >> $dd/base.files
 
-
-# Collect the names of the GL-only executables...
-#
-( cd hacks/glx ; list_files install ) \
-   | grep -v man1/xscreensaver-gl-helper \
-   > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-gl
-
-# This line is redundant, except that it causes the "xscreensaver"
-# executable to be installed unstripped (while all others are stripped.)
-# You should install it this way so that jwz gets useful bug reports.
-#
-install -m 4755 driver/xscreensaver $RPM_BUILD_ROOT%{x11_prefix}/bin
-
-# Even if we weren't compiled with PAM support, make sure to include
-# the PAM module file in the RPM anyway, just in case.
-#
-( cd driver ;
-  make install_prefix=$RPM_BUILD_ROOT PAM_DIR=/etc/pam.d install-pam )
+# jwz: I get "find-lang.sh: No translations found for xscreensaver" on FC3
+#%find_lang %{name}
+#cat %{name}.lang >> $dd/base.files
 
 # Make sure all files are readable by all, and writable only by owner.
 #
-chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
+chmod -R a+r,u+w,og-w ${RPM_BUILD_ROOT}
 
-%post
+%clean
+rm -rf ${RPM_BUILD_ROOT}
+
+%post base
 # This part runs on the end user's system, when the RPM is installed.
 
 pids=`/sbin/pidof xscreensaver`
@@ -166,22 +148,11 @@ if [ -n "$pids" ]; then
   kill -HUP $pids
 fi
 
-%clean
-if [ -d $RPM_BUILD_ROOT    ]; then rm -r $RPM_BUILD_ROOT    ; fi
-if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
-
-# Files for the "xscreensaver" package:
-#
-%files -f exes-non-gl
+%files -f base.files base
 %defattr(-,root,root)
 
-%doc    README README.debugging
-%dir    %{x11_prefix}/lib/xscreensaver
-%config %{x11_prefix}/lib/X11/app-defaults/*
-        %{x11_prefix}/man/man1/xscreensaver*
-%config /etc/pam.d/*
+%files -f extras.files extras
+%defattr(-,root,root)
 
-# Files for the "xscreensaver-gl" package:
-#
-%{?USE_GL:%files -f exes-gl gl}
-%{?USE_GL:%defattr(-,root,root)}
+%files -f gl-extras.files gl-extras
+%defattr(-,root,root)

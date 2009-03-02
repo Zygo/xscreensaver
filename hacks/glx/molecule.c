@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001-2004 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -39,22 +39,15 @@
 #define DEF_TITLES      "True"
 #define DEF_ATOMS       "True"
 #define DEF_BONDS       "True"
+#define DEF_SHELLS      "False"
 #define DEF_BBOX        "False"
+#define DEF_SHELL_ALPHA "0.3"
 #define DEF_MOLECULE    "(default)"
 #define DEF_VERBOSE     "False"
 
 #define DEFAULTS	"*delay:	10000         \n" \
-			"*timeout:    " DEF_TIMEOUT  "\n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-                        "*verbose:    " DEF_VERBOSE  "\n" \
-			"*molecule:   " DEF_MOLECULE "\n" \
-			"*spin:       " DEF_SPIN     "\n" \
-			"*wander:     " DEF_WANDER   "\n" \
-			"*labels:     " DEF_LABELS   "\n" \
-			"*atoms:      " DEF_ATOMS    "\n" \
-			"*bonds:      " DEF_BONDS    "\n" \
-			"*bbox:       " DEF_BBOX     "\n" \
 			"*atomFont:   -*-times-bold-r-normal-*-240-*\n" \
 			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
 			"*noLabelThreshold:    30     \n" \
@@ -173,9 +166,11 @@ typedef struct {
   int mode_tick;
 
   GLuint molecule_dlist;
+  GLuint shell_dlist;
 
   XFontStruct *xfont1, *xfont2;
   GLuint font1_dlist, font2_dlist;
+  int polygon_count;
 
 } molecule_configuration;
 
@@ -190,43 +185,52 @@ static Bool do_titles;
 static Bool do_labels;
 static Bool do_atoms;
 static Bool do_bonds;
+static Bool do_shells;
 static Bool do_bbox;
 static Bool verbose_p;
+static GLfloat shell_alpha;
 
-static Bool orig_do_labels, orig_do_bonds, orig_wire; /* saved to reset */
+/* saved to reset */
+static Bool orig_do_labels, orig_do_atoms, orig_do_bonds, orig_do_shells,
+    orig_wire;
 
 
 static XrmOptionDescRec opts[] = {
-  { "-molecule", ".molecule", XrmoptionSepArg, 0 },
-  { "-timeout",".timeout",XrmoptionSepArg, 0 },
-  { "-spin",   ".spin",   XrmoptionSepArg, 0 },
-  { "+spin",   ".spin",   XrmoptionNoArg, "" },
-  { "-wander", ".wander", XrmoptionNoArg, "True" },
-  { "+wander", ".wander", XrmoptionNoArg, "False" },
-  { "-labels", ".labels", XrmoptionNoArg, "True" },
-  { "+labels", ".labels", XrmoptionNoArg, "False" },
-  { "-titles", ".titles", XrmoptionNoArg, "True" },
-  { "+titles", ".titles", XrmoptionNoArg, "False" },
-  { "-atoms",  ".atoms",  XrmoptionNoArg, "True" },
-  { "+atoms",  ".atoms",  XrmoptionNoArg, "False" },
-  { "-bonds",  ".bonds",  XrmoptionNoArg, "True" },
-  { "+bonds",  ".bonds",  XrmoptionNoArg, "False" },
-  { "-bbox",   ".bbox",   XrmoptionNoArg, "True" },
-  { "+bbox",   ".bbox",   XrmoptionNoArg, "False" },
-  { "-verbose",".verbose",XrmoptionNoArg, "True" },
+  { "-molecule",	".molecule",	XrmoptionSepArg, 0 },
+  { "-timeout",		".timeout",	XrmoptionSepArg, 0 },
+  { "-spin",		".spin",	XrmoptionSepArg, 0 },
+  { "+spin",		".spin",	XrmoptionNoArg, "" },
+  { "-wander",		".wander",	XrmoptionNoArg, "True" },
+  { "+wander",		".wander",	XrmoptionNoArg, "False" },
+  { "-labels",		".labels",	XrmoptionNoArg, "True" },
+  { "+labels",		".labels",	XrmoptionNoArg, "False" },
+  { "-titles",		".titles",	XrmoptionNoArg, "True" },
+  { "+titles",		".titles",	XrmoptionNoArg, "False" },
+  { "-atoms",		".atoms",	XrmoptionNoArg, "True" },
+  { "+atoms",		".atoms",	XrmoptionNoArg, "False" },
+  { "-bonds",		".bonds",	XrmoptionNoArg, "True" },
+  { "+bonds",		".bonds",	XrmoptionNoArg, "False" },
+  { "-shells",		".eshells",	XrmoptionNoArg, "True" },
+  { "+shells",		".eshells",	XrmoptionNoArg, "False" },
+  { "-shell-alpha",	".shellAlpha",	XrmoptionSepArg, 0 },
+  { "-bbox",		".bbox",	XrmoptionNoArg, "True" },
+  { "+bbox",		".bbox",	XrmoptionNoArg, "False" },
+  { "-verbose",		".verbose",	XrmoptionNoArg, "True" },
 };
 
 static argtype vars[] = {
-  {&molecule_str, "molecule",   "Molecule", DEF_MOLECULE,t_String},
-  {&timeout,   "timeout","Seconds",DEF_TIMEOUT,t_Int},
-  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {&do_labels, "labels", "Labels", DEF_LABELS, t_Bool},
-  {&do_titles, "titles", "Titles", DEF_TITLES, t_Bool},
-  {&do_atoms,  "atoms",  "Atoms",  DEF_ATOMS,  t_Bool},
-  {&do_bonds,  "bonds",  "Bonds",  DEF_BONDS,  t_Bool},
-  {&do_bbox,   "bbox",   "BBox",   DEF_BBOX,   t_Bool},
-  {&verbose_p, "verbose","Verbose",DEF_VERBOSE,t_Bool},
+  {&molecule_str, "molecule",	"Molecule",	DEF_MOLECULE, t_String},
+  {&timeout,	  "timeout",	"Seconds",	DEF_TIMEOUT,  t_Int},
+  {&do_spin,	  "spin",	"Spin",		DEF_SPIN,     t_String},
+  {&do_wander,	  "wander",	"Wander",	DEF_WANDER,   t_Bool},
+  {&do_atoms,	  "atoms",	"Atoms",	DEF_ATOMS,    t_Bool},
+  {&do_bonds,	  "bonds",	"Bonds",	DEF_BONDS,    t_Bool},
+  {&do_shells,	  "eshells",	"EShells",	DEF_SHELLS,   t_Bool},
+  {&do_labels,	  "labels",	"Labels",	DEF_LABELS,   t_Bool},
+  {&do_titles,	  "titles",	"Titles",	DEF_TITLES,   t_Bool},
+  {&do_bbox,	  "bbox",	"BBox",		DEF_BBOX,     t_Bool},
+  {&shell_alpha,  "shellAlpha",	"ShellAlpha",	DEF_SHELL_ALPHA, t_Float},
+  {&verbose_p,	  "verbose",	"Verbose",	DEF_VERBOSE,  t_Bool},
 };
 
 ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -236,7 +240,7 @@ ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 /* shapes */
 
-static void
+static int
 sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
 {
   int stacks = (scale_down ? SPHERE_STACKS_2 : SPHERE_STACKS);
@@ -247,6 +251,8 @@ sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
   glScalef (diameter, diameter, diameter);
   unit_sphere (stacks, slices, wire);
   glPopMatrix ();
+
+  return stacks * slices;
 }
 
 
@@ -286,7 +292,7 @@ get_atom_data (const char *atom_name)
 
 
 static void
-set_atom_color (ModeInfo *mi, molecule_atom *a, Bool font_p)
+set_atom_color (ModeInfo *mi, molecule_atom *a, Bool font_p, GLfloat alpha)
 {
   atom_data *d;
   GLfloat *gl_color;
@@ -316,11 +322,12 @@ set_atom_color (ModeInfo *mi, molecule_atom *a, Bool font_p)
       gl_color[0] = xcolor.red   / 65536.0;
       gl_color[1] = xcolor.green / 65536.0;
       gl_color[2] = xcolor.blue  / 65536.0;
-      gl_color[3] = 1.0;
     }
   
+  gl_color[3] = alpha;
+
   if (font_p)
-    glColor3f (gl_color[0], gl_color[1], gl_color[2]);
+    glColor4f (gl_color[0], gl_color[1], gl_color[2], gl_color[3]);
   else
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gl_color);
 }
@@ -407,19 +414,19 @@ molecule_bounding_box (ModeInfo *mi,
       if (m->atoms[i].z > *z2) *z2 = m->atoms[i].z;
     }
 
-  *x1 -= 1;
-  *y1 -= 1;
-  *z1 -= 1;
-  *x2 += 1;
-  *y2 += 1;
-  *z2 += 1;
+  *x1 -= 1.5;
+  *y1 -= 1.5;
+  *z1 -= 1.5;
+  *x2 += 1.5;
+  *y2 += 1.5;
+  *z2 += 1.5;
 }
 
 
 static void
 draw_bounding_box (ModeInfo *mi)
 {
-  static GLfloat c1[4] = { 0.2, 0.2, 0.6, 1.0 };
+  static GLfloat c1[4] = { 0.2, 0.2, 0.4, 1.0 };
   static GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
   int wire = MI_IS_WIREFRAME(mi);
   GLfloat x1, y1, z1, x2, y2, z2;
@@ -521,11 +528,13 @@ ensure_bounding_box_visible (ModeInfo *mi)
 /* Constructs the GL shapes of the current molecule
  */
 static void
-build_molecule (ModeInfo *mi)
+build_molecule (ModeInfo *mi, Bool transparent_p)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   int i;
+  GLfloat alpha = transparent_p ? shell_alpha : 1.0;
+  int polys = 0;
 
   molecule *m = &mc->molecules[mc->which];
 
@@ -549,7 +558,7 @@ build_molecule (ModeInfo *mi)
     }
 
   if (!wire)
-    set_atom_color (mi, 0, False);
+    set_atom_color (mi, 0, False, alpha);
 
   if (do_bonds)
     for (i = 0; i < m->nbonds; i++)
@@ -564,6 +573,7 @@ build_molecule (ModeInfo *mi)
             glVertex3f(from->x, from->y, from->z);
             glVertex3f(to->x,   to->y,   to->z);
             glEnd();
+            polys++;
           }
         else
           {
@@ -581,7 +591,8 @@ build_molecule (ModeInfo *mi)
             tube (from->x, from->y, from->z,
                   to->x,   to->y,   to->z,
                   thickness, cap_size,
-                  faces, smooth, False, wire);
+                  faces, smooth, (!do_atoms || do_shells), wire);
+            polys += faces;
           }
       }
 
@@ -590,21 +601,17 @@ build_molecule (ModeInfo *mi)
       {
         molecule_atom *a = &m->atoms[i];
         GLfloat size = atom_size (a);
-        set_atom_color (mi, a, False);
-        sphere (a->x, a->y, a->z, size, wire);
+        set_atom_color (mi, a, False, alpha);
+        polys += sphere (a->x, a->y, a->z, size, wire);
       }
 
-  if (do_bbox)
-    draw_bounding_box (mi);
-
-  if (do_titles && m->label && *m->label)
+  if (do_bbox && !transparent_p)
     {
-      set_atom_color (mi, 0, True);
-      print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
-                       mi->xgwa.width, mi->xgwa.height,
-                       10, mi->xgwa.height - 10,
-                       m->label);
+      draw_bounding_box (mi);
+      polys += 4;
     }
+
+  mc->polygon_count += polys;
 }
 
 
@@ -951,14 +958,14 @@ generate_molecule_formula (molecule *m)
 static void
 special_case_formula (char *f)
 {
-  if      (!strcmp(f, "H(2)Be"))   strcpy(f, "BeH(2)");
-  else if (!strcmp(f, "H(3)B"))    strcpy(f, "BH(3)");
-  else if (!strcmp(f, "H(3)N"))    strcpy(f, "NH(3)");
+  if      (!strcmp(f, "H[2]Be"))   strcpy(f, "BeH[2]");
+  else if (!strcmp(f, "H[3]B"))    strcpy(f, "BH[3]");
+  else if (!strcmp(f, "H[3]N"))    strcpy(f, "NH[3]");
   else if (!strcmp(f, "CHN"))      strcpy(f, "HCN");
   else if (!strcmp(f, "CKN"))      strcpy(f, "KCN");
-  else if (!strcmp(f, "H(4)N(2)")) strcpy(f, "N(2)H(4)");
-  else if (!strcmp(f, "Cl(3)P"))   strcpy(f, "PCl(3)");
-  else if (!strcmp(f, "Cl(5)P"))   strcpy(f, "PCl(5)");
+  else if (!strcmp(f, "H[4]N[2]")) strcpy(f, "N[2]H[4]");
+  else if (!strcmp(f, "Cl[3]P"))   strcpy(f, "PCl[3]");
+  else if (!strcmp(f, "Cl[5]P"))   strcpy(f, "PCl[5]");
 }
 
 
@@ -1131,7 +1138,7 @@ reshape_molecule (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective (30.0, 1/h, 20.0, 40.0);
+  gluPerspective (30.0, 1/h, 20.0, 100.0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1154,10 +1161,6 @@ gl_init (ModeInfo *mi)
   glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
   glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
   glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-
-  orig_do_labels = do_labels;
-  orig_do_bonds = do_bonds;
-  orig_wire = MI_IS_WIREFRAME(mi);
 }
 
 
@@ -1287,7 +1290,15 @@ init_molecule (ModeInfo *mi)
     mc->trackball = gltrackball_init ();
   }
 
+  orig_do_labels = do_labels;
+  orig_do_atoms  = do_atoms;
+  orig_do_bonds  = do_bonds;
+  orig_do_shells = do_shells;
+  orig_wire = MI_IS_WIREFRAME(mi);
+
   mc->molecule_dlist = glGenLists(1);
+  if (do_shells)
+    mc->shell_dlist = glGenLists(1);
 
   load_molecules (mi);
   mc->which = random() % mc->nmolecules;
@@ -1330,7 +1341,7 @@ draw_labels (ModeInfo *mi)
       glPushMatrix();
 
       if (!wire)
-        set_atom_color (mi, a, True);
+        set_atom_color (mi, a, True, 1);
 
       /* First, we translate the origin to the center of the atom.
 
@@ -1422,11 +1433,15 @@ pick_new_molecule (ModeInfo *mi, time_t last)
       free (name);
     }
 
+  mc->polygon_count = 0;
+
   glNewList (mc->molecule_dlist, GL_COMPILE);
   ensure_bounding_box_visible (mi);
 
   do_labels = orig_do_labels;
-  do_bonds = orig_do_bonds;
+  do_atoms  = orig_do_atoms;
+  do_bonds  = orig_do_bonds;
+  do_shells = orig_do_shells;
   MI_IS_WIREFRAME(mi) = orig_wire;
 
   if (mc->molecule_size > mc->no_label_threshold)
@@ -1435,10 +1450,37 @@ pick_new_molecule (ModeInfo *mi, time_t last)
     MI_IS_WIREFRAME(mi) = 1;
 
   if (MI_IS_WIREFRAME(mi))
-    do_bonds = 1;
+    do_bonds = 1, do_shells = 0;
 
-  build_molecule (mi);
+  if (!do_bonds)
+    do_shells = 0;
+
+  if (! (do_bonds || do_atoms || do_labels))
+    {
+      /* Make sure *something* shows up! */
+      MI_IS_WIREFRAME(mi) = 1;
+      do_bonds = 1;
+    }
+
+  build_molecule (mi, False);
   glEndList();
+
+  if (do_shells)
+    {
+      glNewList (mc->shell_dlist, GL_COMPILE);
+      ensure_bounding_box_visible (mi);
+
+      do_labels = 0;
+      do_atoms  = 1;
+      do_bonds  = 0;
+
+      build_molecule (mi, True);
+
+      glEndList();
+      do_bonds  = orig_do_bonds;
+      do_atoms  = orig_do_atoms;
+      do_labels = orig_do_labels;
+    }
 }
 
 
@@ -1527,12 +1569,49 @@ draw_molecule (ModeInfo *mi)
       glScalef (s, s, s);
     }
 
+  glPushMatrix();
   glCallList (mc->molecule_dlist);
 
   if (mc->mode == 0)
-    draw_labels (mi);
+    {
+      molecule *m = &mc->molecules[mc->which];
+
+      draw_labels (mi);
+
+      /* This can't go in the display list, or the characters are spaced
+         wrongly when the window is resized. */
+      if (do_titles && m->label && *m->label)
+        {
+          set_atom_color (mi, 0, True, 1);
+          print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
+                           mi->xgwa.width, mi->xgwa.height,
+                           10, mi->xgwa.height - 10,
+                           m->label);
+        }
+    }
+  glPopMatrix();
+
+  if (do_shells)
+    {
+      glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      glPushMatrix();
+      glCallList (mc->shell_dlist);
+      glPopMatrix();
+      glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+      glDepthFunc (GL_EQUAL);
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glPushMatrix();
+      glCallList (mc->shell_dlist);
+      glPopMatrix();
+      glDepthFunc (GL_LESS);
+      glDisable (GL_BLEND);
+    }
 
   glPopMatrix ();
+
+  mi->polygon_count = mc->polygon_count;
 
   if (mi->fps_p) do_fps (mi);
   glFinish();

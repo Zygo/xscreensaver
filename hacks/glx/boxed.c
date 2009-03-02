@@ -40,9 +40,10 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 # define HACK_DRAW	draw_boxed
 # define HACK_RESHAPE	reshape_boxed
 # define boxed_opts	xlockmore_opts
+
+# define DEF_SPEED      "0.5"
 # define DEFAULTS	"*delay:   20000   \n"	\
 			"*showFPS: False   \n"	\
-			"*speed:   0.5     \n"	\
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -65,7 +66,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {&speed, "speed", "Speed", "1.0", t_Float},
+    {&speed, "speed", "Speed", DEF_SPEED, t_Float},
 };
 
 ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};

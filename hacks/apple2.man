@@ -40,8 +40,10 @@ you configured into XScreenSaver and displays them within the
 limitations of the Apple ][ display hardware. With only 6 available
 colors, you can only make out the general shape of the pictures.
 
-In text mode it displays the output of a command (by default your
-system's fortune program, but can be overridden with \fI\-program\fP).
+In text mode it displays the output of a command or the contents of
+a file or URL (via the default
+.BR xscreensaver-text (1)
+program, which can be overridden with \fI\-program\fP).
 
 In text mode, it is also a fully functional (if anachronistic)
 vt100 terminal emulator.
@@ -80,7 +82,7 @@ option may be any string acceptable to /bin/sh. The program will be
 run at the end of a pipe, and any characters that it prints to
 \fIstdout\fP will be printed on the Apple ][ display. If the program
 exits, it will be launched again after 3 seconds.  Default:
-.BR fortune (1).
+.BR xscreensaver-text (1).
 
 In text mode, \fIapple2\fP emulates a vt100 terminal running on a 40x24
 uppercase-only screen.
@@ -174,6 +176,7 @@ Apple ][ and Applesoft are trademarks of Apple Computer.
 .SH SEE ALSO
 .BR xscreensaver (1),
 .BR bsod (1),
+.BR xscreensaver-text (1),
 .BR fortune (1),
 .BR phosphor (1),
 .BR starwars (1),

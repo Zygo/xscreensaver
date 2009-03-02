@@ -29,10 +29,6 @@ extern XtAppContext app;
 			"*count:        30          \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-
 
 #define SPIKE_FACES   12  /* how densely to render spikes */
 #define SMOOTH_SPIKES True

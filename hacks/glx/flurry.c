@@ -49,10 +49,10 @@ static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 # define PROGCLASS		"Flurry"
 # define HACK_INIT		init_flurry
 # define HACK_DRAW		draw_flurry
-# define HACK_RESHAPE		reshape_flurry
-# define flurry_opts		xlockmore_opts
-# define DEFAULTS		"*showFPS:      False   \n" \
-				"*preset:	" DEF_PRESET "   \n"
+# define HACK_RESHAPE	reshape_flurry
+# define flurry_opts	xlockmore_opts
+# define DEFAULTS		"*delay:      10000 \n" \
+						"*showFPS:    False \n"
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 

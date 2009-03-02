@@ -83,14 +83,8 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 #define DEFAULTS "*delay:     10000 \n" \
 		"*count: 	800 \n" \
 		"*size:           0 \n" \
-		"*trees:          5 \n" \
 		"*showFPS:    False \n" \
-		"*trackmouse: False \n" \
-		"*wander:      True \n" \
 		"*wireframe:  False \n"	\
-		"*fog:        False \n"	\
-		"*shadows:     True \n"	\
-		"*texture:     True \n"
 
 #define MODE_fire
 #include "xlockmore.h"		/* from the xscreensaver distribution */

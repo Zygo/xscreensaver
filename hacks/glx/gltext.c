@@ -22,16 +22,14 @@ extern XtAppContext app;
 #define sws_opts	xlockmore_opts
 
 #define DEF_TEXT        "(default)"
+#define DEF_PROGRAM     "(default)"
 #define DEF_SPIN        "XYZ"
 #define DEF_WANDER      "True"
+#define DEF_FRONT       "False"
 
-#define DEFAULTS	"*delay:	20000       \n" \
-			"*showFPS:      False       \n" \
-			"*wireframe:    False       \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*text:       " DEF_TEXT   "\n"
-
+#define DEFAULTS	"*delay:	20000        \n" \
+			"*showFPS:      False        \n" \
+			"*wireframe:    False        \n" \
 
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
@@ -73,9 +71,10 @@ extern XtAppContext app;
 
 typedef struct {
   GLXContext *glx_context;
-  rotator *rot;
+  rotator *rot, *rot2;
   trackball_state *trackball;
   Bool button_down_p;
+  Bool spinx, spiny, spinz;
 
   GLuint text_list;
 
@@ -84,27 +83,35 @@ typedef struct {
   int ccolor;
 
   char *text;
+  int reload;
 
 } text_configuration;
 
 static text_configuration *tps = NULL;
 
 static char *text_fmt;
+static char *program_str;
 static char *do_spin;
 static Bool do_wander;
+static Bool face_front_p;
 
 static XrmOptionDescRec opts[] = {
-  { "-text",   ".text",   XrmoptionSepArg, 0 },
-  { "-spin",   ".spin",   XrmoptionSepArg, 0 },
-  { "+spin",   ".spin",   XrmoptionNoArg, "" },
-  { "-wander", ".wander", XrmoptionNoArg, "True" },
-  { "+wander", ".wander", XrmoptionNoArg, "False" }
+  { "-text",    ".text",      XrmoptionSepArg, 0 },
+  { "-program", ".program",   XrmoptionSepArg, 0 },
+  { "-spin",    ".spin",      XrmoptionSepArg, 0 },
+  { "+spin",    ".spin",      XrmoptionNoArg, "" },
+  { "-wander",  ".wander",    XrmoptionNoArg, "True" },
+  { "+wander",  ".wander",    XrmoptionNoArg, "False" },
+  { "-front",   ".faceFront", XrmoptionNoArg, "True" },
+  { "+front",   ".faceFront", XrmoptionNoArg, "False" }
 };
 
 static argtype vars[] = {
-  {&text_fmt,  "text",   "Text",   DEF_TEXT,   t_String},
-  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&text_fmt,     "text",      "Text",      DEF_TEXT,    t_String},
+  {&program_str,  "program",   "Program",   DEF_PROGRAM, t_String},
+  {&do_spin,      "spin",      "Spin",      DEF_SPIN,    t_String},
+  {&do_wander,    "wander",    "Wander",    DEF_WANDER,  t_Bool},
+  {&face_front_p, "faceFront", "FaceFront", DEF_FRONT,   t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -189,7 +196,42 @@ parse_text (ModeInfo *mi)
 
   if (tp->text) free (tp->text);
 
-  if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
+  if (program_str && *program_str && !!strcmp(program_str, "(default)"))
+    {
+      FILE *p;
+      int i;
+      char buf[1024];
+      sprintf (buf, "( %.900s ) 2>&1", program_str);
+      p = popen (buf, "r");
+      if (! p)
+        sprintf (buf, "error running '%.900s'", program_str);
+      else
+        {
+          char *out = buf;
+          char *end = out + sizeof(buf) - 1;
+          int n;
+          do {
+            n = fread (out, 1, end - out, p);
+            if (n > 0)
+              out += n;
+            *out = 0;
+          } while (n > 0);
+          fclose (p);
+        }
+
+      /* Truncate it to 10 lines */
+      {
+        char *s = buf;
+        for (i = 0; i < 10; i++)
+          if (s && (s = strchr (s, '\n')))
+            s++;
+        if (s) *s = 0;
+      }
+
+      tp->text = strdup (buf);
+      tp->reload = 5;
+    }
+  else if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
     {
 # ifdef HAVE_UNAME
       struct utsname uts;
@@ -240,6 +282,7 @@ parse_text (ModeInfo *mi)
       strftime (tp->text, L-1, text_fmt, tm);
       if (!*tp->text)
         sprintf (tp->text, "strftime error:\n%s", text_fmt);
+      tp->reload = 1;
     }
 
   latin1_to_ascii (tp->text);
@@ -316,17 +359,17 @@ init_text (ModeInfo *mi)
   }
 
   {
-    Bool spinx=False, spiny=False, spinz=False;
     double spin_speed   = 0.5;
     double wander_speed = 0.02;
+    double tilt_speed   = 0.03;
     double spin_accel   = 0.5;
 
     char *s = do_spin;
     while (*s)
       {
-        if      (*s == 'x' || *s == 'X') spinx = True;
-        else if (*s == 'y' || *s == 'Y') spiny = True;
-        else if (*s == 'z' || *s == 'Z') spinz = True;
+        if      (*s == 'x' || *s == 'X') tp->spinx = True;
+        else if (*s == 'y' || *s == 'Y') tp->spiny = True;
+        else if (*s == 'z' || *s == 'Z') tp->spinz = True;
         else
           {
             fprintf (stderr,
@@ -337,12 +380,15 @@ init_text (ModeInfo *mi)
         s++;
       }
 
-    tp->rot = make_rotator (spinx ? spin_speed : 0,
-                            spiny ? spin_speed : 0,
-                            spinz ? spin_speed : 0,
+    tp->rot = make_rotator (tp->spinx ? spin_speed : 0,
+                            tp->spiny ? spin_speed : 0,
+                            tp->spinz ? spin_speed : 0,
                             spin_accel,
                             do_wander ? wander_speed : 0,
                             False);
+    tp->rot2 = (face_front_p
+                ? make_rotator (0, 0, 0, 0, tilt_speed, True)
+                : 0);
     tp->trackball = gltrackball_init ();
   }
 
@@ -513,13 +559,14 @@ draw_text (ModeInfo *mi)
   if (!tp->glx_context)
     return;
 
-  if (strchr (text_fmt, '%'))
+  if (tp->reload)
     {
-      static time_t last_update = -1;
-      time_t now = time ((time_t *) 0);
-      if (now != last_update) /* do it once a second */
-        parse_text (mi);
-      last_update = now;
+      static time_t last_update = 0;
+      if (time ((time_t *) 0) >= last_update + tp->reload)
+        {
+          parse_text (mi);
+          last_update = time ((time_t *) 0);
+        }
     }
 
   glShadeModel(GL_SMOOTH);
@@ -543,10 +590,21 @@ draw_text (ModeInfo *mi)
 
     gltrackball_rotate (tp->trackball);
 
-    get_rotation (tp->rot, &x, &y, &z, !tp->button_down_p);
-    glRotatef (x * 360, 1.0, 0.0, 0.0);
-    glRotatef (y * 360, 0.0, 1.0, 0.0);
-    glRotatef (z * 360, 0.0, 0.0, 1.0);
+    if (face_front_p)
+      {
+        double max = 90;
+        get_position (tp->rot2, &x, &y, &z, !tp->button_down_p);
+        if (tp->spinx) glRotatef (max/2 - x*max, 1, 0, 0);
+        if (tp->spiny) glRotatef (max/2 - y*max, 0, 1, 0);
+        if (tp->spinz) glRotatef (max/2 - z*max, 0, 0, 1);
+      }
+    else
+      {
+        get_rotation (tp->rot, &x, &y, &z, !tp->button_down_p);
+        glRotatef (x * 360, 1, 0, 0);
+        glRotatef (y * 360, 0, 1, 0);
+        glRotatef (z * 360, 0, 0, 1);
+      }
   }
 
 

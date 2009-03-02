@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999, 2000, 2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,6 +27,7 @@
 #include <X11/keysymdef.h>
 
 #ifdef HAVE_FORKPTY
+# include <sys/ioctl.h>
 # ifdef HAVE_PTY_H
 #  include <pty.h>
 # endif
@@ -1141,6 +1142,13 @@ launch_text_generator (p_state *state)
 {
   char buf[255];
   char *oprogram = get_string_resource ("program", "Program");
+  char *program = (char *) malloc (strlen (oprogram) + 50);
+
+  /* oprogram contains a "%d" where the current number of columns goes
+   */
+  strcpy (program, "( ");
+  sprintf (program + strlen(program), oprogram, state->grid_width);
+  strcat (program, " ) 2>&1");
 
 #ifdef HAVE_FORKPTY
   if(state->mode == 1)
@@ -1163,9 +1171,15 @@ launch_text_generator (p_state *state)
       else if(!state->pid)
 	{
           /* This is the child fork. */
+          char *av[10];
+          int i = 0;
 	  if (putenv("TERM=vt100"))
             abort();
-	  execl("/bin/sh", "/bin/sh", "-c", oprogram, NULL);
+          av[i++] = "/bin/sh";
+          av[i++] = "-c";
+          av[i++] = program;
+          av[i] = 0;
+          execvp (av[0], av);
           sprintf (buf, "%.100s: %.100s", progname, oprogram);
 	  perror(buf);
 	  exit(1);
@@ -1183,12 +1197,6 @@ launch_text_generator (p_state *state)
   else
 #endif /* HAVE_FORKPTY */
     {
-      char *program = (char *) malloc (strlen (oprogram) + 10);
-      
-      strcpy (program, "( ");
-      strcat (program, oprogram);
-      strcat (program, " ) 2>&1");
-
       /* don't mess up controlling terminal if someone dumbly does
          "-pipe -program tcsh". */
       fclose (stdin);
@@ -1206,6 +1214,8 @@ launch_text_generator (p_state *state)
 	  perror (buf);
 	}
     }
+
+  free (program);
 }
 
 
@@ -1385,7 +1395,7 @@ char *defaults [] = {
   "*ticks:		   20",
   "*delay:		   50000",
   "*cursor:		   333",
-  "*program:		 " FORTUNE_PROGRAM,
+  "*program:		   xscreensaver-text --cols %d",
   "*relaunch:		   5",
   "*metaSendsESC:	   True",
   "*swapBSDEL:		   True",

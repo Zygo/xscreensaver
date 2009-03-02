@@ -50,18 +50,6 @@
 #define DEFAULTS                        "*delay:		20000   \n" \
 										"*showFPS:      False   \n" \
                                         "*mode:         light" "\n" \
-                                        "*squares:      19      \n" \
-										"*resolution:   0       \n" \
-                                        "*flat:         0       \n" \
-                                        "*speed:        0.05    \n" \
-                                        "*rotationx:    0.01    \n" \
-                                        "*rotationy:    0.0     \n" \
-                                        "*rotationz:    0.1     \n" \
-                                        "*waves:        3       \n" \
-                                        "*waveChange:   50      \n" \
-                                        "*waveHeight:  0.8      \n" \
-                                        "*waveFreq:    3.0      \n" \
-                                        "*zoom:        1.0      \n" \
                                         "*useSHM:      True     \n" 
 
 

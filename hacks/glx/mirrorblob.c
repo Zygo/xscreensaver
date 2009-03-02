@@ -63,25 +63,9 @@
 #define DEF_FADE_TIME        "5"
 
 #define DEFAULTS \
-    "*delay:             " DEF_DELAY                "\n" \
-    "*showFPS:           " DEF_FPS                  "\n" \
-    "*wire:              " DEF_WIRE                 "\n" \
-    "*blend:             " DEF_BLEND                "\n" \
-    "*fog:               " DEF_FOG                  "\n" \
-    "*antialias:         " DEF_ANTIALIAS            "\n" \
-    "*walls:             " DEF_WALLS                "\n" \
-    "*colour :           " DEF_COLOUR               "\n" \
-    "*texture:           " DEF_TEXTURE              "\n" \
-    "*offset_texture:    " DEF_OFFSET_TEXTURE       "\n" \
-    "*paint_background:  " DEF_PAINT_BACKGROUND     "\n" \
-    "*x_resolution:      " DEF_X_RES                "\n" \
-    "*y_resolution:      " DEF_Y_RES                "\n" \
-    "*field_points:      " DEF_FIELD_POINTS         "\n" \
-    "*motion_blur:       " DEF_MOTION_BLUR          "\n" \
-    "*incremental:       " DEF_INCREMENTAL          "\n" \
-    "*hold_time:         " DEF_HOLD_TIME            "\n" \
-    "*fade_time:         " DEF_FADE_TIME            "\n" \
-    "*useSHM:              True                      \n"
+    "*delay:             " DEF_DELAY "\n" \
+    "*showFPS:           " DEF_FPS   "\n" \
+    "*useSHM:              True      \n"
 
 # include "xlockmore.h"    /* from the xscreensaver distribution */
 #else /* !STANDALONE */

@@ -63,8 +63,7 @@ static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
  "*cycles: 40000 \n" \
  "*size: -12 \n" \
  "*ncolors: 64 \n" \
- "*neighbors: 0 \n" \
- "*sharpturn: False \n"
+
 #include "xlockmore.h"		/* in xscreensaver distribution */
 #include "erase.h"
 #else /* STANDALONE */
@@ -90,15 +89,13 @@ static Bool sharpturn;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, NULL},
+	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, 0},
 	{"-truchet", ".ant.truchet", XrmoptionNoArg, "on"},
 	{"+truchet", ".ant.truchet", XrmoptionNoArg, "off"},
 	{"-eyes", ".ant.eyes", XrmoptionNoArg, "on"},
 	{"+eyes", ".ant.eyes", XrmoptionNoArg, "off"},
 	{"-sharpturn", ".ant.sharpturn", XrmoptionNoArg, "on"},
 	{"+sharpturn", ".ant.sharpturn", XrmoptionNoArg, "off"},
-	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, 0},
-	{"+neighbors", ".ant.neighbors", XrmoptionSepArg, 0}
 };
 static argtype vars[] =
 {
@@ -106,7 +103,6 @@ static argtype vars[] =
 	{&truchet,   "truchet",   "Truchet",   DEF_TRUCHET,   t_Bool},
 	{&eyes,      "eyes",      "Eyes",      DEF_EYES,      t_Bool},
     {&sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
-	{&neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
 };
 static OptionStruct desc[] =
 {

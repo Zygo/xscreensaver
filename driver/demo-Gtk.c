@@ -78,6 +78,10 @@
 # include "xmu.h"
 #endif
 
+#ifdef HAVE_XINERAMA
+# include <X11/extensions/Xinerama.h>
+#endif /* HAVE_XINERAMA */
+
 #include <gtk/gtk.h>
 
 #ifdef HAVE_CRAPPLET
@@ -153,7 +157,7 @@ XrmDatabase db;
 
 /* The order of the items in the mode menu. */
 static int mode_menu_order[] = {
-  DONT_BLANK, BLANK_ONLY, ONE_HACK, RANDOM_HACKS };
+  DONT_BLANK, BLANK_ONLY, ONE_HACK, RANDOM_HACKS, RANDOM_HACKS_SAME };
 
 
 typedef struct {
@@ -193,6 +197,8 @@ typedef struct {
   int _selected_list_element;	/* don't use this: call
                                    selected_list_element() instead */
 
+  int nscreens;			/* How many X or Xinerama screens there are */
+
   saver_preferences prefs;
 
 } state;
@@ -217,6 +223,9 @@ static Bool flush_popup_changes_and_save (state *);
 
 static int maybe_reload_init_file (state *);
 static void await_xscreensaver (state *);
+static Bool xscreensaver_running_p (state *);
+static void sensitize_menu_items (state *s, Bool force_p);
+static void force_dialog_repaint (state *s);
 
 static void schedule_preview (state *, const char *cmd);
 static void kill_preview_subproc (state *, Bool reset_p);
@@ -296,7 +305,8 @@ name_to_widget (state *s, const char *name)
 #endif /* HAVE_GTK2 */
   if (w) return w;
 
-  fprintf (stderr, "%s: no widget \"%s\"\n", blurb(), name);
+  fprintf (stderr, "%s: no widget \"%s\" (wrong Glade file?)\n",
+           blurb(), name);
   abort();
 }
 
@@ -595,6 +605,9 @@ run_cmd (state *s, Atom command, int arg)
       warning_dialog (s->toplevel_widget, buf, False, 100);
     }
   if (err) free (err);
+
+  sensitize_menu_items (s, True);
+  force_dialog_repaint (s);
 }
 
 
@@ -602,20 +615,57 @@ static void
 run_hack (state *s, int list_elt, Bool report_errors_p)
 {
   int hack_number;
+  char *err = 0;
+  int status;
+
   if (list_elt < 0) return;
   hack_number = s->list_elt_to_hack_number[list_elt];
 
   flush_dialog_changes_and_save (s);
   schedule_preview (s, 0);
-  if (report_errors_p)
-    run_cmd (s, XA_DEMO, hack_number + 1);
-  else
+
+  status = xscreensaver_command (GDK_DISPLAY(), XA_DEMO, hack_number + 1,
+                                 False, &err);
+
+  if (status < 0 && report_errors_p)
     {
-      char *s = 0;
-      xscreensaver_command (GDK_DISPLAY(), XA_DEMO, hack_number + 1,
-                            False, &s);
-      if (s) free (s);
+      if (xscreensaver_running_p (s))
+        {
+          /* Kludge: ignore the spurious "window unexpectedly deleted"
+             errors... */
+          if (err && strstr (err, "unexpectedly deleted"))
+            status = 0;
+
+          if (status < 0)
+            {
+              char buf [255];
+              if (err)
+                sprintf (buf, "Error:\n\n%s", err);
+              else
+                strcpy (buf, "Unknown error!");
+              warning_dialog (s->toplevel_widget, buf, False, 100);
+            }
+          if (err) free (err);
+        }
+      else
+        {
+          /* The error is that the daemon isn't running;
+             offer to restart it.
+           */
+          const char *d = DisplayString (GDK_DISPLAY());
+          char msg [1024];
+          sprintf (msg,
+                   _("Warning:\n\n"
+                     "The XScreenSaver daemon doesn't seem to be running\n"
+                     "on display \"%s\".  Launch it now?"),
+                   d);
+          warning_dialog (s->toplevel_widget, msg, True, 1);
+        }
     }
+
+  if (err) free (err);
+
+  sensitize_menu_items (s, False);
 }
 
 
@@ -801,6 +851,14 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 
 
 G_MODULE_EXPORT void
+file_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  sensitize_menu_items (s, False);
+}
+
+
+G_MODULE_EXPORT void
 activate_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -836,33 +894,33 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
   await_xscreensaver (s);
 }
 
+static Bool
+xscreensaver_running_p (state *s)
+{
+  Display *dpy = GDK_DISPLAY();
+  char *rversion = 0;
+  server_xscreensaver_version (dpy, &rversion, 0, 0);
+  if (!rversion)
+    return False;
+  free (rversion);
+  return True;
+}
+
 static void
 await_xscreensaver (state *s)
 {
   int countdown = 5;
+  Bool ok = False;
 
-  Display *dpy = GDK_DISPLAY();
-  /*  GtkWidget *dialog = 0;*/
-  char *rversion = 0;
+  while (!ok && (--countdown > 0))
+    if (xscreensaver_running_p (s))
+      ok = True;
+    else
+      sleep (1);    /* If it's not there yet, wait a second... */
 
-  while (!rversion && (--countdown > 0))
-    {
-      /* Check for the version of the running xscreensaver... */
-      server_xscreensaver_version (dpy, &rversion, 0, 0);
+  sensitize_menu_items (s, True);
 
-      /* If it's not there yet, wait a second... */
-      if (!rversion)
-        sleep (1);
-    }
-
-/*  if (dialog) gtk_widget_destroy (dialog);*/
-
-  if (rversion)
-    {
-      /* Got it. */
-      free (rversion);
-    }
-  else
+  if (! ok)
     {
       /* Timed out, no screensaver running. */
 
@@ -902,6 +960,8 @@ await_xscreensaver (state *s)
 
       warning_dialog (s->toplevel_widget, buf, False, 1);
     }
+
+  force_dialog_repaint (s);
 }
 
 
@@ -1203,6 +1263,20 @@ directory_p (const char *path)
     return True;
 }
 
+static Bool
+file_p (const char *path)
+{
+  struct stat st;
+  if (!path || !*path)
+    return False;
+  else if (stat (path, &st))
+    return False;
+  else if (S_ISDIR (st.st_mode))
+    return False;
+  else
+    return True;
+}
+
 static char *
 normalize_directory (const char *path)
 {
@@ -1354,6 +1428,10 @@ flush_dialog_changes_and_save (state *s)
     w = name_to_widget (s, (NAME)); \
     (FIELD) = normalize_directory (gtk_entry_get_text (GTK_ENTRY (w)))
 
+# define TEXT(FIELD,NAME) \
+    w = name_to_widget (s, (NAME)); \
+    (FIELD) = (char *) gtk_entry_get_text (GTK_ENTRY (w))
+
   MINUTES  (&p2->timeout,         "timeout_spinbutton");
   MINUTES  (&p2->cycle,           "cycle_spinbutton");
   CHECKBOX (p2->lock_p,           "lock_button");
@@ -1369,9 +1447,25 @@ flush_dialog_changes_and_save (state *s)
   CHECKBOX (p2->random_image_p,   "grab_image_button");
   PATHNAME (p2->image_directory,  "image_text");
 
+#if 0
   CHECKBOX (p2->verbose_p,        "verbose_button");
   CHECKBOX (p2->capture_stderr_p, "capture_button");
   CHECKBOX (p2->splash_p,         "splash_button");
+#endif
+
+  {
+    Bool v = False;
+    CHECKBOX (v, "text_host_radio");     if (v) p2->tmode = TEXT_DATE;
+    CHECKBOX (v, "text_radio");          if (v) p2->tmode = TEXT_LITERAL;
+    CHECKBOX (v, "text_file_radio");     if (v) p2->tmode = TEXT_FILE;
+    CHECKBOX (v, "text_program_radio");  if (v) p2->tmode = TEXT_PROGRAM;
+    CHECKBOX (v, "text_url_radio");      if (v) p2->tmode = TEXT_URL;
+    TEXT     (p2->text_literal, "text_entry");
+    PATHNAME (p2->text_file,    "text_file_entry");
+    PATHNAME (p2->text_program, "text_program_entry");
+    PATHNAME (p2->text_program, "text_program_entry");
+    TEXT     (p2->text_url,     "text_url_entry");
+  }
 
   CHECKBOX (p2->install_cmap_p,   "install_button");
   CHECKBOX (p2->fade_p,           "fade_button");
@@ -1382,6 +1476,7 @@ flush_dialog_changes_and_save (state *s)
 # undef MINUTES
 # undef CHECKBOX
 # undef PATHNAME
+# undef TEXT
 
   /* Warn if the image directory doesn't exist.
    */
@@ -1436,9 +1531,13 @@ flush_dialog_changes_and_save (state *s)
   COPY(dpms_suspend,   "dpms_suspend");
   COPY(dpms_off,       "dpms_off");
 
+#if 0
   COPY(verbose_p,        "verbose_p");
   COPY(capture_stderr_p, "capture_stderr_p");
   COPY(splash_p,         "splash_p");
+#endif
+
+  COPY(tmode,            "tmode");
 
   COPY(install_cmap_p,   "install_cmap_p");
   COPY(fade_p,           "fade_p");
@@ -1451,19 +1550,26 @@ flush_dialog_changes_and_save (state *s)
 
 # undef COPY
 
-  if (!p->image_directory ||
-      !p2->image_directory ||
-      strcmp(p->image_directory, p2->image_directory))
-    {
-      changed = True;
-      if (s->debug_p)
-        fprintf (stderr, "%s: image_directory => \"%s\"\n",
-                 blurb(), p2->image_directory);
-    }
-  if (p->image_directory && p->image_directory != p2->image_directory)
-    free (p->image_directory);
-  p->image_directory = p2->image_directory;
-  p2->image_directory = 0;
+# define COPYSTR(FIELD,NAME) \
+  if (!p->FIELD || \
+      !p2->FIELD || \
+      strcmp(p->FIELD, p2->FIELD)) \
+    { \
+      changed = True; \
+      if (s->debug_p) \
+        fprintf (stderr, "%s: %s => \"%s\"\n", blurb(), NAME, p2->FIELD); \
+    } \
+  if (p->FIELD && p->FIELD != p2->FIELD) \
+    free (p->FIELD); \
+  p->FIELD = p2->FIELD; \
+  p2->FIELD = 0
+
+  COPYSTR(image_directory, "image_directory");
+  COPYSTR(text_literal,    "text_literal");
+  COPYSTR(text_file,       "text_file");
+  COPYSTR(text_program,    "text_program");
+  COPYSTR(text_url,        "text_url");
+# undef COPYSTR
 
   populate_prefs_page (s);
 
@@ -1684,6 +1790,11 @@ list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
 
   populate_demo_window (s, list_elt);
   flush_dialog_changes_and_save (s);
+
+  /* Re-populate the Settings window any time a new item is selected
+     in the list, in case both windows are currently visible.
+   */
+  populate_popup_window (s);
 }
 
 #else /* !HAVE_GTK2 */
@@ -1849,6 +1960,69 @@ store_image_directory (GtkWidget *button, gpointer user_data)
 
 
 static void
+store_text_file (GtkWidget *button, gpointer user_data)
+{
+  file_selection_data *fsd = (file_selection_data *) user_data;
+  state *s = fsd->state;
+  GtkFileSelection *selector = fsd->widget;
+  GtkWidget *top = s->toplevel_widget;
+  saver_preferences *p = &s->prefs;
+  const char *path = gtk_file_selection_get_filename (selector);
+
+  if (p->text_file && !strcmp(p->text_file, path))
+    return;  /* no change */
+
+  if (!file_p (path))
+    {
+      char b[255];
+      sprintf (b, _("Error:\n\n" "File does not exist: \"%s\"\n"), path);
+      warning_dialog (GTK_WIDGET (top), b, False, 100);
+      return;
+    }
+
+  if (p->text_file) free (p->text_file);
+  p->text_file = normalize_directory (path);
+
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_file_entry")),
+                      (p->text_file ? p->text_file : ""));
+  demo_write_init_file (s, p);
+}
+
+
+static void
+store_text_program (GtkWidget *button, gpointer user_data)
+{
+  file_selection_data *fsd = (file_selection_data *) user_data;
+  state *s = fsd->state;
+  GtkFileSelection *selector = fsd->widget;
+  /*GtkWidget *top = s->toplevel_widget;*/
+  saver_preferences *p = &s->prefs;
+  const char *path = gtk_file_selection_get_filename (selector);
+
+  if (p->text_program && !strcmp(p->text_program, path))
+    return;  /* no change */
+
+# if 0
+  if (!file_p (path))
+    {
+      char b[255];
+      sprintf (b, _("Error:\n\n" "File does not exist: \"%s\"\n"), path);
+      warning_dialog (GTK_WIDGET (top), b, False, 100);
+      return;
+    }
+# endif
+
+  if (p->text_program) free (p->text_program);
+  p->text_program = normalize_directory (path);
+
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_program_entry")),
+                      (p->text_program ? p->text_program : ""));
+  demo_write_init_file (s, p);
+}
+
+
+
+static void
 browse_image_dir_cancel (GtkWidget *button, gpointer user_data)
 {
   file_selection_data *fsd = (file_selection_data *) user_data;
@@ -1860,6 +2034,20 @@ browse_image_dir_ok (GtkWidget *button, gpointer user_data)
 {
   browse_image_dir_cancel (button, user_data);
   store_image_directory (button, user_data);
+}
+
+static void
+browse_text_file_ok (GtkWidget *button, gpointer user_data)
+{
+  browse_image_dir_cancel (button, user_data);
+  store_text_file (button, user_data);
+}
+
+static void
+browse_text_program_ok (GtkWidget *button, gpointer user_data)
+{
+  browse_image_dir_cancel (button, user_data);
+  store_text_program (button, user_data);
 }
 
 static void
@@ -1903,6 +2091,77 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
   gtk_window_set_modal (GTK_WINDOW (selector), True);
   gtk_widget_show (GTK_WIDGET (selector));
 }
+
+
+G_MODULE_EXPORT void
+browse_text_file_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  static file_selection_data *fsd = 0;
+
+  GtkFileSelection *selector = GTK_FILE_SELECTION(
+    gtk_file_selection_new ("Please select a text file."));
+
+  if (!fsd)
+    fsd = (file_selection_data *) malloc (sizeof (*fsd));  
+
+  fsd->widget = selector;
+  fsd->state = s;
+
+  if (p->text_file && *p->text_file)
+    gtk_file_selection_set_filename (selector, p->text_file);
+
+  gtk_signal_connect (GTK_OBJECT (selector->ok_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_text_file_ok),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
+                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      (gpointer *) fsd);
+
+  gtk_window_set_modal (GTK_WINDOW (selector), True);
+  gtk_widget_show (GTK_WIDGET (selector));
+}
+
+
+G_MODULE_EXPORT void
+browse_text_program_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  static file_selection_data *fsd = 0;
+
+  GtkFileSelection *selector = GTK_FILE_SELECTION(
+    gtk_file_selection_new ("Please select a text-generating program."));
+
+  if (!fsd)
+    fsd = (file_selection_data *) malloc (sizeof (*fsd));  
+
+  fsd->widget = selector;
+  fsd->state = s;
+
+  if (p->text_program && *p->text_program)
+    gtk_file_selection_set_filename (selector, p->text_program);
+
+  gtk_signal_connect (GTK_OBJECT (selector->ok_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_text_program_ok),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
+                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      (gpointer *) fsd);
+
+  gtk_window_set_modal (GTK_WINDOW (selector), True);
+  gtk_widget_show (GTK_WIDGET (selector));
+}
+
+
+
 
 
 G_MODULE_EXPORT  void
@@ -2046,19 +2305,39 @@ server_current_hack (void)
 }
 
 
-/* Finds the number of the last hack to run, and makes that item be
+/* Finds the number of the last hack that was run, and makes that item be
    selected by default.
  */
 static void
 scroll_to_current_hack (state *s)
 {
   saver_preferences *p = &s->prefs;
-  int hack_number;
+  int hack_number = -1;
 
-  if (p->mode == ONE_HACK)
+  if (p->mode == ONE_HACK)		   /* in "one" mode, use the one */
     hack_number = p->selected_hack;
-  else
+  if (hack_number < 0)			   /* otherwise, use the last-run */
     hack_number = server_current_hack ();
+  if (hack_number < 0)			   /* failing that, last "one mode" */
+    hack_number = p->selected_hack;
+  if (hack_number < 0)			   /* failing that, newest hack. */
+    {
+      /* We should only get here if the user does not have a .xscreensaver
+         file, and the screen has not been blanked with a hack since X
+         started up: in other words, this is probably a fresh install.
+
+         Instead of just defaulting to hack #0 (in either "programs" or
+         "alphabetical" order) let's try to default to the last runnable
+         hack in the "programs" list: this is probably the hack that was
+         most recently added to the xscreensaver distribution (and so
+         it's probably the currently-coolest one!)
+       */
+      hack_number = p->screenhacks_count-1;
+      while (hack_number > 0 &&
+             ! (s->hacks_available_p[hack_number] &&
+                p->screenhacks[hack_number]->enabled_p))
+        hack_number--;
+    }
 
   if (hack_number >= 0 && hack_number < p->screenhacks_count)
     {
@@ -2311,8 +2590,11 @@ static void
 update_list_sensitivity (state *s)
 {
   saver_preferences *p = &s->prefs;
-  Bool sensitive = (p->mode == RANDOM_HACKS || p->mode == ONE_HACK);
-  Bool checkable = (p->mode == RANDOM_HACKS);
+  Bool sensitive = (p->mode == RANDOM_HACKS ||
+                    p->mode == RANDOM_HACKS_SAME ||
+                    p->mode == ONE_HACK);
+  Bool checkable = (p->mode == RANDOM_HACKS ||
+                    p->mode == RANDOM_HACKS_SAME);
   Bool blankable = (p->mode != DONT_BLANK);
 
 #ifndef HAVE_GTK2
@@ -2377,6 +2659,13 @@ populate_prefs_page (state *s)
 # endif
 
 
+  /* If there is only one screen, the mode menu contains
+     "random" but not "random-same".
+   */
+  if (s->nscreens <= 1 && p->mode == RANDOM_HACKS_SAME)
+    p->mode = RANDOM_HACKS;
+
+
   /* The file supports timeouts of less than a minute, but the GUI does
      not, so throttle the values to be at least one minute (since "0" is
      a bad rounding choice...)
@@ -2409,9 +2698,11 @@ populate_prefs_page (state *s)
                                 (ACTIVEP))
 
   TOGGLE_ACTIVE ("lock_button",       p->lock_p);
+#if 0
   TOGGLE_ACTIVE ("verbose_button",    p->verbose_p);
   TOGGLE_ACTIVE ("capture_button",    p->capture_stderr_p);
   TOGGLE_ACTIVE ("splash_button",     p->splash_p);
+#endif
   TOGGLE_ACTIVE ("dpms_button",       p->dpms_enabled_p);
   TOGGLE_ACTIVE ("grab_desk_button",  p->grab_desktop_p);
   TOGGLE_ACTIVE ("grab_video_button", p->grab_video_p);
@@ -2419,6 +2710,15 @@ populate_prefs_page (state *s)
   TOGGLE_ACTIVE ("install_button",    p->install_cmap_p);
   TOGGLE_ACTIVE ("fade_button",       p->fade_p);
   TOGGLE_ACTIVE ("unfade_button",     p->unfade_p);
+
+  switch (p->tmode)
+    {
+    case TEXT_LITERAL: TOGGLE_ACTIVE ("text_radio",         True); break;
+    case TEXT_FILE:    TOGGLE_ACTIVE ("text_file_radio",    True); break;
+    case TEXT_PROGRAM: TOGGLE_ACTIVE ("text_program_radio", True); break;
+    case TEXT_URL:     TOGGLE_ACTIVE ("text_url_radio",     True); break;
+    default:           TOGGLE_ACTIVE ("text_host_radio",    True); break;
+    }
 
 # undef TOGGLE_ACTIVE
 
@@ -2428,6 +2728,29 @@ populate_prefs_page (state *s)
                             p->random_image_p);
   gtk_widget_set_sensitive (name_to_widget (s, "image_browse_button"),
                             p->random_image_p);
+
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_entry")),
+                      (p->text_literal ? p->text_literal : ""));
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_file_entry")),
+                      (p->text_file ? p->text_file : ""));
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_program_entry")),
+                      (p->text_program ? p->text_program : ""));
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_url_entry")),
+                      (p->text_url ? p->text_url : ""));
+
+  gtk_widget_set_sensitive (name_to_widget (s, "text_entry"),
+                            p->tmode == TEXT_LITERAL);
+  gtk_widget_set_sensitive (name_to_widget (s, "text_file_entry"),
+                            p->tmode == TEXT_FILE);
+  gtk_widget_set_sensitive (name_to_widget (s, "text_file_browse"),
+                            p->tmode == TEXT_FILE);
+  gtk_widget_set_sensitive (name_to_widget (s, "text_program_entry"),
+                            p->tmode == TEXT_PROGRAM);
+  gtk_widget_set_sensitive (name_to_widget (s, "text_program_browse"),
+                            p->tmode == TEXT_PROGRAM);
+  gtk_widget_set_sensitive (name_to_widget (s, "text_url_entry"),
+                            p->tmode == TEXT_URL);
+
 
   /* Map the `saver_mode' enum to mode menu to values. */
   {
@@ -2447,7 +2770,7 @@ populate_prefs_page (state *s)
     Bool dpms_supported = False;
 
     Display *dpy = GDK_DISPLAY();
-    int nscreens = ScreenCount(dpy);
+    int nscreens = ScreenCount(dpy);  /* real screens, not Xinerama */
     int i;
     for (i = 0; i < nscreens; i++)
       {
@@ -2565,20 +2888,75 @@ populate_popup_window (state *s)
 static void
 sensitize_demo_widgets (state *s, Bool sensitive_p)
 {
-  const char *names1[] = { "demo", "settings" };
-  const char *names2[] = { "cmd_label", "cmd_text", "manual",
-                           "visual", "visual_combo" };
+  const char *names[] = { "demo", "settings",
+                          "cmd_label", "cmd_text", "manual",
+                          "visual", "visual_combo" };
   int i;
-  for (i = 0; i < countof(names1); i++)
+  for (i = 0; i < countof(names); i++)
     {
-      GtkWidget *w = name_to_widget (s, names1[i]);
+      GtkWidget *w = name_to_widget (s, names[i]);
       gtk_widget_set_sensitive (GTK_WIDGET(w), sensitive_p);
     }
-  for (i = 0; i < countof(names2); i++)
+}
+
+
+static void
+sensitize_menu_items (state *s, Bool force_p)
+{
+  static Bool running_p = False;
+  static time_t last_checked = 0;
+  time_t now = time ((time_t *) 0);
+  const char *names[] = { "activate_menu", "lock_menu", "kill_menu",
+                          /* "demo" */ };
+  int i;
+
+  if (force_p || now > last_checked + 10)   /* check every 10 seconds */
     {
-      GtkWidget *w = name_to_widget (s, names2[i]);
-      gtk_widget_set_sensitive (GTK_WIDGET(w), sensitive_p);
+      running_p = xscreensaver_running_p (s);
+      last_checked = time ((time_t *) 0);
     }
+
+  for (i = 0; i < countof(names); i++)
+    {
+      GtkWidget *w = name_to_widget (s, names[i]);
+      gtk_widget_set_sensitive (GTK_WIDGET(w), running_p);
+    }
+}
+
+
+/* When the File menu is de-posted after a "Restart Daemon" command,
+   the window underneath doesn't repaint for some reason.  I guess this
+   is a bug in exposure handling in GTK or GDK.  This works around it.
+ */
+static void
+force_dialog_repaint (state *s)
+{
+#if 1
+  /* Tell GDK to invalidate and repaint the whole window.
+   */
+  GdkWindow *w = s->toplevel_widget->window;
+  GdkRegion *region = gdk_region_new ();
+  GdkRectangle rect;
+  rect.x = rect.y = 0;
+  rect.width = rect.height = 32767;
+  gdk_region_union_with_rect (region, &rect);
+  gdk_window_invalidate_region (w, region, True);
+  gdk_region_destroy (region);
+  gdk_window_process_updates (w, True);
+#else
+  /* Force the server to send an exposure event by creating and then
+     destroying a window as a child of the top level shell.
+   */
+  Display *dpy = GDK_DISPLAY();
+  Window parent = GDK_WINDOW_XWINDOW (s->toplevel_widget->window);
+  Window w;
+  XWindowAttributes xgwa;
+  XGetWindowAttributes (dpy, parent, &xgwa);
+  w = XCreateSimpleWindow (dpy, parent, 0, 0, xgwa.width, xgwa.height, 0,0,0);
+  XMapRaised (dpy, w);
+  XDestroyWindow (dpy, w);
+  XSync (dpy, False);
+#endif
 }
 
 
@@ -2763,6 +3141,7 @@ map_prev_button_cb (GtkWidget *w, gpointer user_data)
 #endif /* !HAVE_GTK2 */
 
 
+#ifndef HAVE_GTK2
 /* Work around a Gtk bug that causes label widgets to wrap text too early.
  */
 
@@ -2783,7 +3162,6 @@ you_are_not_a_unique_or_beautiful_snowflake (GtkWidget *label,
 
   gtk_widget_size_request (label, &req);
 }
-
 
 /* Feel the love.  Thanks to Nat Friedman for finding this workaround.
  */
@@ -2806,6 +3184,7 @@ eschew_gtk_lossage (GtkLabel *label)
 
   gtk_widget_queue_resize (GTK_WIDGET (label));
 }
+#endif /* !HAVE_GTK2 */
 
 
 static void
@@ -2993,7 +3372,11 @@ initialize_sort_map (state *s)
 
   /* Build inverse table */
   for (i = 0; i < p->screenhacks_count; i++)
-    s->hack_number_to_list_elt[s->list_elt_to_hack_number[i]] = i;
+    {
+      int n = s->list_elt_to_hack_number[i];
+      if (n != -1)
+        s->hack_number_to_list_elt[n] = i;
+    }
 }
 
 
@@ -3778,6 +4161,29 @@ check_blanked_timer (gpointer data)
   return True;  /* re-execute timer */
 }
 
+
+/* How many screens are there (including Xinerama.)
+ */
+static int
+screen_count (Display *dpy)
+{
+  int nscreens = ScreenCount(dpy);
+# ifdef HAVE_XINERAMA
+  if (nscreens <= 1)
+    {
+      int event_number, error_number;
+      if (XineramaQueryExtension (dpy, &event_number, &error_number) &&
+          XineramaIsActive (dpy))
+        {
+          XineramaScreenInfo *xsi = XineramaQueryScreens (dpy, &nscreens);
+          if (xsi) XFree (xsi);
+        }
+    }
+# endif /* HAVE_XINERAMA */
+
+  return nscreens;
+}
+
 
 /* Setting window manager icon
  */
@@ -4020,9 +4426,13 @@ map_popup_window_cb (GtkWidget *w, gpointer user_data)
 {
   state *s = (state *) user_data;
   Boolean oi = s->initializing_p;
+#ifndef HAVE_GTK2
   GtkLabel *label = GTK_LABEL (name_to_widget (s, "doc"));
+#endif
   s->initializing_p = True;
+#ifndef HAVE_GTK2
   eschew_gtk_lossage (label);
+#endif
   s->initializing_p = oi;
 }
 
@@ -4392,6 +4802,7 @@ main (int argc, char **argv)
      was in argv[0].
    */
   p->db = db;
+  s->nscreens = screen_count (dpy);
 
   hack_environment (s);  /* must be before initialize_sort_map() */
 
@@ -4517,10 +4928,26 @@ main (int argc, char **argv)
     GtkOptionMenu *opt = GTK_OPTION_MENU (name_to_widget (s, "mode_menu"));
     GtkMenu *menu = GTK_MENU (gtk_option_menu_get_menu (opt));
     GList *kids = gtk_container_children (GTK_CONTAINER (menu));
-    for (; kids; kids = kids->next)
-      gtk_signal_connect (GTK_OBJECT (kids->data), "activate",
-                          GTK_SIGNAL_FUNC (mode_menu_item_cb),
-                          (gpointer) s);
+    int i;
+    for (i = 0; kids; kids = kids->next, i++)
+      {
+        gtk_signal_connect (GTK_OBJECT (kids->data), "activate",
+                            GTK_SIGNAL_FUNC (mode_menu_item_cb),
+                            (gpointer) s);
+
+        /* The "random-same" mode menu item does not appear unless
+           there are multple screens.
+         */
+        if (s->nscreens <= 1 &&
+            mode_menu_order[i] == RANDOM_HACKS_SAME)
+          gtk_widget_hide (GTK_WIDGET (kids->data));
+      }
+
+    if (s->nscreens <= 1)   /* recompute option-menu size */
+      {
+        gtk_widget_unrealize (GTK_WIDGET (menu));
+        gtk_widget_realize (GTK_WIDGET (menu));
+      }
   }
 
 

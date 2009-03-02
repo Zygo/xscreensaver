@@ -54,22 +54,6 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000            \n" \
 			"*showFPS:      False            \n" \
 			"*wireframe:    False            \n" \
-			"*spin:       " DEF_SPIN        "\n" \
-			"*lighting:   " DEF_LIGHTING    "\n" \
-			"*smooth:     " DEF_SMOOTH      "\n" \
-			"*scanlines:  " DEF_SCANLINES   "\n" \
-			"*speed:      " DEF_SPEED       "\n" \
-			"*angle:      " DEF_ANGLE       "\n" \
-			"*ballSize:   " DEF_SIZE        "\n" \
-			"*meridians:  " DEF_MERIDIANS   "\n" \
-			"*parallels:  " DEF_PARALLELS   "\n" \
-			"*tiles:      " DEF_TILES       "\n" \
-			"*thickness:  " DEF_THICKNESS   "\n" \
-			"*ballColor1: " DEF_BALL_COLOR1 "\n" \
-			"*ballColor2: " DEF_BALL_COLOR2 "\n" \
-			"*gridColor:  " DEF_GRID_COLOR  "\n" \
-			"*shadowColor:" DEF_SHADOW_COLOR"\n" \
-			".background: " DEF_BACKGROUND  "\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -154,7 +138,8 @@ static argtype vars[] = {
   {&ball_color2_str, "ballColor2", "BallColor2", DEF_BALL_COLOR2, t_String},
   {&grid_color_str,  "gridColor",  "GridColor",  DEF_GRID_COLOR,  t_String},
   {&shadow_str,      "shadowColor","ShadowColor",DEF_SHADOW_COLOR,t_String},
-  {&bg_str,          "background", "Background", DEF_BACKGROUND,  t_String},
+  /* dammit, -background is too magic... */
+  {&bg_str,        "boingBackground", "Background", DEF_BACKGROUND, t_String},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

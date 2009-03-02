@@ -58,15 +58,6 @@
 # define DEFAULTS           "*delay: 20000\n" \
                             "*showFPS: False\n" \
                             "*wireframe: False\n" \
-                            "*color: cycle\n" \
-                            "*shininess: 100\n" \
-                            "*complexity: 2\n" \
-                            "*speed: 500\n" \
-                            "*distance: 100\n" \
-                            "*hold: 800\n" \
-                            "*spherism: 200\n" \
-                            "*damping: 500\n"
-
 
 # include "xlockmore.h"
 #else
