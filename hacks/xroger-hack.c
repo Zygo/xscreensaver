@@ -14,8 +14,8 @@
 char *progclass = "XRoger";
 
 char *defaults [] = {
-  "XRoger.background:	black",
-  "XRoger.foreground:	red",
+  ".background:		black",
+  ".foreground:		red",
   "*delay:		5",
   0
 };

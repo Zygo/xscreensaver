@@ -44,8 +44,8 @@
 char *progclass = "Munch";
 
 char *defaults [] = {
-    "*background:	black",
-    "*foreground:	white",
+    ".background:	black",
+    ".foreground:	white",
     "*delay:	        5000",
     "*hold:		100000",
     "*clear:		50",

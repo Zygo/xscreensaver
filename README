@@ -143,6 +143,8 @@ window, which are pointed at by the screensaver's default resource settings.
    interference	- More groovy colored fields.
    truchet	- Nonrepeating planar tilings.
    bsod		- Simulates the system crashes of various other OSes.
+   crystal	- A kaleidoscope of moving polygons.
+   discrete	- Various fractal-ish "discrete map" forms.
    gears	- Draws interlocking rotating gears (GLX only.)
    morph3d	- Draws shiny shape-changing 3d forms (GLX only.)
    superquadrics - More shiny shape-changing 3d forms (GLX only.)
@@ -185,6 +187,23 @@ http://people.netscape.com/jwz/xscreensaver/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 2.22:   * The fix for SGI's "scheme" nonsense broke things, and
+			let the user's "*background" resource show through.
+			Fixed it in a different way.
+Changes since 2.21:   * Added support for the DPMS server extension (Display
+			Power Management System.)
+		      * Made configure advertize the --enable-subdir option a
+			little more, since that seemed to cause some people
+			stress.  Also, made that directory be built into the
+			xscreensaver executable, as a hardcoded prefix to
+			$PATH.  (Might help, shouldn't hurt.)
+		      * Made configure prefer the two-arg gettimeofday to the
+			one-arg version, since AIX doesn't have any prototypes.
+		      * Made it work with Xaw3d (the 3D Athena library.)
+		      * Made "make install" create directories as necessary.
+		      * New version of lmorph from Sverre.
+		      * Added `crystal' and `discreet' hacks from xlockmore.
+		      * Added a new mode to `bsod'.
 Changes since 2.20:   * Made "xscreensaver-command -time" use different words.
 			(It now describes the two states as "screen blanked
 			since..."  and "screen non-blanked since..." instead of

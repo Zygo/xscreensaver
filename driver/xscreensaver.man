@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "15-Jun-98 (2.21)" "X Version 11"
+.TH XScreenSaver 1 "21-Jun-98 (2.23)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -546,6 +546,25 @@ For all the gory details, see the commentary at the top of xscreensaver.c.
 You can control a running screensaver process by using the
 .BR xscreensaver\-command (1)
 program (which see.)
+.SH POWER MANAGEMENT
+Modern X servers contain support to power down the monitor after an idle
+period.  If the monitor has powered down, then \fIxscreensaver\fP will
+notice this, and will not waste CPU by drawing graphics demos on a black
+screen.  An attempt will also be made to explicitly power the monitor
+back up as soon as user activity is detected.
+
+If your X server supports power management, then
+.BR xset (1)
+will accept a \fBdpms\fP option.  So, if you wanted \fIxscreensaver\fP
+to activate after 5 minutes, but you wanted your monitor to power down
+after one hour (3600 seconds) you would do this:
+.EX
+xset dpms 3600
+.EE
+See the man page for the
+.BR xset (1)
+program for details.  (Note that power management requires both software
+support in the X server, and hardware support in the monitor itself.)
 .SH USING XDM(1)
 You can run \fIxscreensaver\fP from your xdm session, so that the 
 screensaver will run even when nobody is logged in on the console.  
@@ -658,10 +677,16 @@ under VUE are similar to the above:
 .RS 4
 .TP 3
 \fB1: Switch off VUE's locker\fP
-Do this by turning off ``\fIScreen Saver and Screen Lock\fP'' in the
-Screen section of the Style Manager.
+Open the ``\fIStyle Manager\fP'' and select ``\fIScreen\fP.''
+Turn off ``\fIScreen Saver and Screen Lock\fP'' option.
 .TP 3
-\fB2: Edit vue.session\fP
+\fB2: Make sure you have a Session\fP
+Next, go to the Style Manager's, ``\fIStartup\fP'' page.
+Click on ``\fISet Home Session\fP'' to create a session, then 
+on ``\fIReturn to Home Session\fP'' to select this session each
+time you log in.
+.TP 3
+\fB3: Edit vue.session\fP
 Edit the file \fI~/.vue/sessions/home/vue.session\fP and add to it
 the line
 .EX
@@ -700,7 +725,7 @@ or (probably) any of \fItwm\fP's many descendants, you can do it like this:
 .TP 3
 \fB1. Create ~/.mwmrc (or ~/.twmrc or ...)\fP
 If you don't have a \fI~/.mwmrc\fP file (or, on SGIs, a \fI~/.4Dwmrc\fP file;
-or, with TWM, a \fI~/.twmrc\fP file) then create one by making a copy of
+or, with twm, a \fI~/.twmrc\fP file) then create one by making a copy of
 the \fI/usr/lib/X11/system.mwmrc\fP 
 file (or \fI/usr/lib/X11/twm/system.twmrc\fP, and so on.)
 .TP 3
@@ -972,6 +997,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR X (1),
 .BR xscreensaver\-command (1),
 .BR xdm (1),
+.BR xset (1),
 .BR ant (1),
 .BR atlantis (1),
 .BR attraction (1),

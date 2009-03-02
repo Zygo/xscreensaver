@@ -333,8 +333,8 @@ display (Pixmap pixmap)
 char *progclass = "BlitSpin";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*delay:	500000",
   "*delay2:	500000",
   "*bitmap:	(default)",

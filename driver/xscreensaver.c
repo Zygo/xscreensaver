@@ -659,23 +659,23 @@ initialize (saver_info *si, int argc, char **argv)
 #ifdef NO_LOCKING
   si->locking_disabled_p = True;
   si->nolock_reason = "not compiled with locking support";
-#else
+#else  /* !NO_LOCKING */
   si->locking_disabled_p = False;
 
-#ifdef SCO
+# ifdef SCO
   set_auth_parameters(argc, argv);
-#endif
+# endif /* SCO */
 
   if (! lock_init (argc, argv))	/* before hack_uid() for proper permissions */
     {
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
     }
-#endif
+#endif  /* !NO_LOCKING */
 
 #ifndef NO_SETUID
   hack_uid (si);
-#endif
+#endif /* NO_SETUID */
 
   progclass = "XScreenSaver";
 
@@ -703,6 +703,8 @@ initialize (saver_info *si, int argc, char **argv)
   for (i = 0; i < si->nscreens; i++)
     if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
       exit (1);
+
+  hack_environment (si);
 
   si->demo_mode_p = initial_demo_mode_p;
   srandom ((int) time ((time_t *) 0));

@@ -225,13 +225,13 @@ coral(Display *dpy, Window window)
 char *progclass = "Coral";
 
 char *defaults[] = {
-    "Coral.background: black",
-    "Coral.foreground: white",
-    "*density: 25",
-    "*seeds: 20", /* too many for 640x480, too few for 1280x1024 */
-    "*delay: 5",
-    "*delay2: 1000",
-    0
+  ".background:	black",
+  ".foreground:	white",
+  "*density:	25",
+  "*seeds:	20", /* too many for 640x480, too few for 1280x1024 */
+  "*delay:	5",
+  "*delay2:	1000",
+  0
 };
 
 XrmOptionDescRec options[] = {

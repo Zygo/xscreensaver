@@ -76,8 +76,8 @@ extern char **default_bubbles[];
 char *progclass = "Bubbles";
 
 char *defaults [] = {
-  "Bubbles.background:	black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*simple:		false",
   "*broken:		false",
   "*delay:		800",

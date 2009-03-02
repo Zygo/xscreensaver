@@ -488,8 +488,8 @@ run_goop (Display *dpy, Window window, struct goop *goop)
 char *progclass = "Goop";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*delay:		12000",
   "*transparent:	true",
   "*additive:		true",

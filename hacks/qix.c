@@ -454,8 +454,8 @@ qix1 (Display *dpy, Window window, struct qix *qix)
 char *progclass = "Qix";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*count:	1",
   "*segments:	50",
   "*poly:	2",

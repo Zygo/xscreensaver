@@ -604,6 +604,7 @@ pop_passwd_dialog (saver_info *si)
     XMapRaised (dpy, XtWindow (passwd_dialog));
 #endif
 
+  monitor_power_on (si);
 #ifdef HAVE_ATHENA
   pop_up_athena_dialog_box (parent, passwd_text, passwd_dialog,
 			    passwd_form, 2);

@@ -219,8 +219,8 @@ hyper (double xy, double xz, double yz, double xw, double yw, double zw)
 char *progclass = "Hypercube";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*color0:	red",
   "*color1:	orange",
   "*color2:	yellow",

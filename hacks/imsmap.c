@@ -453,8 +453,8 @@ draw_map (Display *dpy, Window window)
 char *progclass = "Imsmap";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	black",
+  ".background:	black",
+  ".foreground:	black",
   "*mode:	random",
   "*ncolors:	50",
   "*iterations:	7",

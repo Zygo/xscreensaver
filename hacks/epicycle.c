@@ -50,8 +50,8 @@ char *progclass="Epicycle";
  * to get pleasing figures.
  */
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*colors:	100",
   "*color0:	red",
   "*delay:	1000",

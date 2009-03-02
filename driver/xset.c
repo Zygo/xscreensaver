@@ -134,7 +134,7 @@ init_sgi_saver_extension (saver_info *si)
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
 
-/* Figuring out what the appropriate XSetScreenSaver() paramters are
+/* Figuring out what the appropriate XSetScreenSaver() parameters are
    (one wouldn't expect this to be rocket science.)
  */
 
@@ -234,3 +234,121 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
     /* Turn off the server builtin saver if it is now running. */
     XForceScreenSaver (si->dpy, ScreenSaverReset);
 }
+
+
+/* Display Power Management System (DPMS.)
+
+   On XFree86 systems, "man xset" reports:
+
+       -dpms    The -dpms option disables DPMS (Energy Star) features.
+       +dpms    The +dpms option enables DPMS (Energy Star) features.
+
+       dpms flags...
+                The dpms option allows the DPMS (Energy Star)
+                parameters to be set.  The option can take up to three
+                numerical values, or the `force' flag followed by a
+                DPMS state.  The `force' flags forces the server to
+                immediately switch to the DPMS state specified.  The
+                DPMS state can be one of `standby', `suspend', or
+                `off'.  When numerical values are given, they set the
+                inactivity period before the three modes are activated.
+                The first value given is for the `standby' mode, the
+                second is for the `suspend' mode, and the third is for
+                the `off' mode.  Setting these values implicitly
+                enables the DPMS features.  A value of zero disables a
+                particular mode.
+
+   However, note that the implementation is more than a little bogus,
+   in that there is code in /usr/X11R6/lib/libXdpms.a to implement all
+   the usual server-extension-querying utilities -- but there are no
+   prototypes in any header file!  Thus, the prototypes here.  (The
+   stuff in X11/extensions/dpms.h and X11/extensions/dpmsstr.h define
+   the raw X protcol, they don't define the API to libXdpms.a.)
+ */
+
+#ifdef HAVE_DPMS_EXTENSION
+
+#include <X11/Xproto.h>			/* for CARD16 */
+#include <X11/extensions/dpms.h>
+#include <X11/extensions/dpmsstr.h>
+
+extern Bool DPMSQueryExtension (Display *dpy, int *event_ret, int *error_ret);
+extern Bool DPMSCapable (Display *dpy);
+extern Status DPMSForceLevel (Display *dpy, CARD16 level);
+extern Status DPMSInfo (Display *dpy, CARD16 *power_level, BOOL *state);
+
+#if 0 /* others we don't use */
+extern Status DPMSGetVersion (Display *dpy, int *major_ret, int *minor_ret);
+extern Status DPMSSetTimeouts (Display *dpy,
+			       CARD16 standby, CARD16 suspend, CARD16 off);
+extern Bool DPMSGetTimeouts (Display *dpy,
+			     CARD16 *standby, CARD16 *suspend, CARD16 *off);
+extern Status DPMSEnable (Display *dpy);
+extern Status DPMSDisable (Display *dpy);
+#endif /* 0 */
+
+
+Bool
+monitor_powered_on_p (saver_info *si)
+{
+  Bool result;
+  int event_number, error_number;
+  BOOL onoff = False;
+  CARD16 state;
+
+  if (!DPMSQueryExtension(si->dpy, &event_number, &error_number))
+    /* Server doesn't know -- assume the monitor is on. */
+    result = True;
+
+  else if (!DPMSCapable(si->dpy))
+    /* Server says the monitor doesn't do power management -- so it's on. */
+    result = True;
+
+  else
+    {
+      DPMSInfo(si->dpy, &state, &onoff);
+      if (!onoff)
+	/* Server says DPMS is disabled -- so the monitor is on. */
+	result = True;
+      else
+	switch (state) {
+	case DPMSModeOn:      result = True;  break;  /* really on */
+	case DPMSModeStandby: result = False; break;  /* kinda off */
+	case DPMSModeSuspend: result = False; break;  /* pretty off */
+	case DPMSModeOff:     result = False; break;  /* really off */
+	default:	      result = True;  break;  /* protocol error? */
+	}
+    }
+
+  return result;
+}
+
+void
+monitor_power_on (saver_info *si)
+{
+  if (!monitor_powered_on_p (si))
+    {
+      DPMSForceLevel(si->dpy, DPMSModeOn);
+      XSync(si->dpy, False);
+      if (!monitor_powered_on_p (si))
+	fprintf (stderr,
+       "%s: DPMSForceLevel(dpy, DPMSModeOn) did not power the monitor on?\n",
+		 progname);
+    }
+}
+
+#else  /* !HAVE_DPMS_EXTENSION */
+
+Bool
+monitor_powered_on_p (saver_info *si) 
+{
+  return True; 
+}
+
+void
+monitor_power_on (saver_info *si)
+{
+  return; 
+}
+
+#endif /* !HAVE_DPMS_EXTENSION */

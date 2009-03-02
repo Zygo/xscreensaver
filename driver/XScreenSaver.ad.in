@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 2.21
-!                                15-Jun-98
+!                              version 2.23
+!                                21-Jun-98
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://people.netscape.com/jwz/xscreensaver/
@@ -24,8 +24,8 @@
 
 *captureStderr: 	True
 *captureStdout: 	True
-*overlayTextForeground:	Yellow
-*overlayTextBackground:	Black
+*overlayTextForeground:	#FFFF00
+*overlayTextBackground:	#000000
 *overlayStderr:		True
 *font:			*-medium-r-*-140-*-m-*
 
@@ -133,6 +133,8 @@
 		interference -root					\n\
 		truchet -root -randomize				\n\
 		bsod -root						\n\
+		crystal -root						\n\
+		discrete -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -277,16 +279,16 @@
 XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 ! Need to fully-qualify the preceeding in the case of of *sgiMode.
 
-*XmDialogShell*foreground:		black
-*XmDialogShell*background:		gray90
-*XmDialogShell*XmTextField.foreground:	black
-*XmDialogShell*XmTextField.background:	white
-*XmDialogShell*demoList.foreground:	black
-*XmDialogShell*demoList.background:	white
+*XmDialogShell*foreground:		#000000
+*XmDialogShell*background:		#E5E5E5
+*XmDialogShell*XmTextField.foreground:	#000000
+*XmDialogShell*XmTextField.background:	#FFFFFF
+*XmDialogShell*demoList.foreground:	#000000
+*XmDialogShell*demoList.background:	#FFFFFF
 
 ! Need to fully-qualify the following in the case of of *sgiMode.
-XScreenSaver*XmDialogShell*rogerLabel.foreground:	red3
-XScreenSaver*XmDialogShell*rogerLabel.background:	white
+XScreenSaver*XmDialogShell*rogerLabel.foreground:	#CD0000
+XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF
 
 *XmDialogShell.title:		XScreenSaver
 *allowShellResize:		True
@@ -322,14 +324,14 @@ XScreenSaver*XmDialogShell*rogerLabel.background:	white
 *fadeToggle.labelString:	Fade Colormap
 *unfadeToggle.labelString:	Unfade Colormap
 *lockToggle.labelString:	Require Password
-*resourcesDone.labelString:	Done
+*resourcesDone.labelString:	OK
 *resourcesCancel.labelString:	Cancel
 
 *passwdDialog.title:		Password
 *passwdLabel1.labelString:	XScreenSaver %s
 *passwdLabel2.labelString:	This display is locked.
 *passwdLabel3.labelString:	Please type %s's password to unlock it.
-*passwdDone.labelString:	Done
+*passwdDone.labelString:	OK
 *passwdCancel.labelString:	Cancel
 
 *passwdLabel1.alignment:	ALIGNMENT_BEGINNING
@@ -353,30 +355,34 @@ XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE
 *passwd_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
 *demo_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *resources_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-*demo_dialog*List.font:		*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
+XScreenSaver.demo_dialog*List.font: \
+				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 
 ! This is a hack to make the typed password invisible.
 ! Surely someone can do better than this...
-*passwd_dialog*passwd_form.value*font:		*nil*
+XScreenSaver.passwd_dialog*passwd_form.value*font:	*nil*
 
-*demo_dialog*foreground:			black
-*demo_dialog*background:			gray90
-*demo_dialog*List.background:			white
-*demo_dialog*Scrollbar.background:		gray85
-*demo_dialog*Command.background:		gray85
+XScreenSaver.demo_dialog*foreground:			#000000
+XScreenSaver.demo_dialog*background:			#E5E5E5
+XScreenSaver.demo_dialog*List.background:		#FFFFFF
+XScreenSaver.demo_dialog*Scrollbar.background:		#D9D9D9
+XScreenSaver.demo_dialog*Command.background:		#D9D9D9
 
-*resources_dialog*foreground:			black
-*resources_dialog*background:			gray90
-*resources_dialog*Command.background:		gray85
-*resources_dialog*Toggle.background:		gray85
-*resources_dialog*Text*background:		white
+XScreenSaver.resources_dialog*foreground:		#000000
+XScreenSaver.resources_dialog*background:		#E5E5E5
+XScreenSaver.resources_dialog*Command.background:	#D9D9D9
+XScreenSaver.resources_dialog*Toggle.background:	#D9D9D9
+XScreenSaver.resources_dialog*Text*background:		#FFFFFF
 
 *resources_dialog*Dialog.value.translations: #override\n\
 	<Key>Return: beginning-of-line()\n
 
-*passwd_dialog*foreground:			black
-*passwd_dialog*background:			gray90
-*passwd_dialog*Text*background:			white
+XScreenSaver.passwd_dialog*foreground:			#000000
+XScreenSaver.passwd_dialog*background:			#E5E5E5
+XScreenSaver.passwd_dialog*Command.background:		#D9D9D9
+XScreenSaver.passwd_dialog*Text*background:		#FFFFFF
+XScreenSaver.passwd_dialog*roger.foreground:		#CD0000
+XScreenSaver.passwd_dialog*roger.background:		#FFFFFF
 
 *demo_dialog*viewport.width:			400
 *demo_dialog*viewport.height:			200
@@ -404,21 +410,19 @@ XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE
 *resources_dialog*buttonbox.fade.label:		Fade Colormap
 *resources_dialog*buttonbox.unfade.label:	Unfade Colormap
 *resources_dialog*buttonbox.lock.label:		Require Password
-*resources_dialog*done.label:			Done
+*resources_dialog*done.label:			OK
 *resources_dialog*cancel.label:			Cancel
 
 *passwd_dialog*label1.label:			XScreenSaver %s
 *passwd_dialog*label2.label:			This display is locked.
 *passwd_dialog*label3.label:		Please type %s's password to unlock it.
-*passwd_dialog*ok.label:			Done
+*passwd_dialog*ok.label:			OK
 *passwd_dialog*cancel.label:			Cancel
 *passwd_dialog*passwd_form*label.label:		Enter password:
 *passwd_dialog*Dialog.label:			Enter password:
 *passwd_dialog*passwd_form*Text.width:		200
 *passwd_dialog*roger.width:			150
 *passwd_dialog*roger.height:			150
-*passwd_dialog*roger.foreground:		red3
-*passwd_dialog*roger.background:		white
 *passwd_dialog*roger.borderWidth:		1
 
 

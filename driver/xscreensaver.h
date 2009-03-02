@@ -267,6 +267,10 @@ extern Bool query_mit_saver_extension (saver_info *);
 extern Bool query_sgi_saver_extension (saver_info *);
 #endif
 
+/* Display Power Management System (DPMS) interface. */
+extern Bool monitor_powered_on_p (saver_info *si);
+extern void monitor_power_on (saver_info *si);
+
 
 /* =======================================================================
    blanking
@@ -335,6 +339,7 @@ extern Bool handle_clientmessage (saver_info *, XEvent *, Bool);
    subprocs
    ======================================================================= */
 
+extern void hack_environment (saver_info *si);
 extern void init_sigchld (void);
 extern void spawn_screenhack (saver_info *si, Bool first_time_p);
 extern void kill_screenhack (saver_info *si);

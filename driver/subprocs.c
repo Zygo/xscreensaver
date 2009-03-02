@@ -76,7 +76,7 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
-static void hack_environment (saver_screen_info *ssi);
+static void hack_subproc_environment (saver_screen_info *ssi);
 
 
 static void
@@ -831,7 +831,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	case 0:
 	  close (ConnectionNumber (si->dpy));	/* close display fd */
 	  nice_subproc (p->nice_inferior);	/* change process priority */
-	  hack_environment (ssi);		/* set $DISPLAY */
+	  hack_subproc_environment (ssi);	/* set $DISPLAY */
 	  exec_screenhack (si, hack);		/* this does not return */
 	  abort();
 	  break;
@@ -849,6 +849,15 @@ void
 spawn_screenhack (saver_info *si, Bool first_time_p)
 {
   int i;
+
+  if (!monitor_powered_on_p (si))
+    {
+      if (si->prefs.verbose_p)
+	printf ("%s: server reports that monitor has powered down; "
+		"not launching a new hack.\n", progname);
+      return;
+    }
+
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
@@ -968,7 +977,7 @@ demo_mode_restart_process (saver_info *si)
 }
 
 static void
-hack_environment (saver_screen_info *ssi)
+hack_subproc_environment (saver_screen_info *ssi)
 {
   /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
      the spawned processes inherit is correct.  First, it must be on the same
@@ -1008,6 +1017,28 @@ hack_environment (saver_screen_info *ssi)
     abort ();
 #endif /* HAVE_PUTENV */
 }
+
+
+void
+hack_environment (saver_info *si)
+{
+#if defined(HAVE_PUTENV) && defined(DEFAULT_PATH_PREFIX)
+  static const char *def_path = DEFAULT_PATH_PREFIX;
+  if (def_path && *def_path)
+    {
+      const char *opath = getenv("PATH");
+      char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
+      strcpy (npath, "PATH=");
+      strcat (npath, def_path);
+      strcat (npath, ":");
+      strcat (npath, opath);
+
+      if (putenv (npath))
+	abort ();
+    }
+#endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
+}
+
 
 
 /* Change the uid/gid of the screensaver process, so that it is safe for it

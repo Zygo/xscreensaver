@@ -23,8 +23,8 @@
 char *progclass = "XJack";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		#00EE00",
+  ".background:		black",
+  ".foreground:		#00EE00",
   "XJack.font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
   "*delay:		50000",
   0

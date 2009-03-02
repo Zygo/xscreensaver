@@ -35,7 +35,9 @@
 
 static void
 draw_string (Display *dpy, Window window, GC gc, XGCValues *gcv,
-	     XFontStruct *font, int win_width, int win_height,
+	     XFontStruct *font,
+	     int xoff, int yoff,
+	     int win_width, int win_height,
 	     const char *string, int delay)
 {
   int x, y;
@@ -68,8 +70,11 @@ draw_string (Display *dpy, Window window, GC gc, XGCValues *gcv,
   x = (win_width - (width * char_width)) / 2;
   y = (win_height - (height * line_height)) / 2;
 
-  if (x < char_width) x = char_width;
-  if (y < line_height) y = line_height;
+  if (x < 0) x = 2;
+  if (y < 0) y = 2;
+
+  x += xoff;
+  y += yoff;
 
   se = s = string;
   while (1)
@@ -155,7 +160,7 @@ bsod_sleep(Display *dpy, int seconds)
   XEvent event;
   int q = seconds * 4;
   int mask = KeyPressMask|ButtonPressMask;
-  while (q > 0)
+  do
     {
       XSync(dpy, False);
       if (XCheckMaskEvent(dpy, mask, &event))
@@ -164,9 +169,14 @@ bsod_sleep(Display *dpy, int seconds)
 	    ;
 	  return True;
 	}
-      q--;
-      usleep(250000);
+      if (q > 0)
+	{
+	  q--;
+	  usleep(250000);
+	}
     }
+  while (q > 0);
+
   return False; 
 }
 
@@ -273,9 +283,10 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
   if (w95p)
-    draw_string(dpy, window, gc, &gcv, font, xgwa.width, xgwa.height, w95, 0);
+    draw_string(dpy, window, gc, &gcv, font,
+		0, 0, xgwa.width, xgwa.height, w95, 0);
   else
-    draw_string(dpy, window, gc, &gcv, font, 10, 10, wnt, 750);
+    draw_string(dpy, window, gc, &gcv, font, 0, 0, 10, 10, wnt, 750);
 
   XFreeGC(dpy, gc);
   XSync(dpy, False);
@@ -387,7 +398,7 @@ amiga (Display *dpy, Window window, int delay)
     }
 
   XFillRectangle(dpy, window, gc2, 0, 0, xgwa.width, height);
-  draw_string(dpy, window, gc, &gcv, font, xgwa.width, height, string, 0);
+  draw_string(dpy, window, gc, &gcv, font, 0, 0, xgwa.width, height, string,0);
 
   {
     GC gca = gc;
@@ -459,8 +470,8 @@ mac (Display *dpy, Window window, int delay)
 				       gcv.background,
 				       xgwa.depth);
 
-  draw_string(dpy, window, gc, &gcv, font, xgwa.width, xgwa.height + offset,
-	      string, 0);
+  draw_string(dpy, window, gc, &gcv, font, 0, 0,
+	      xgwa.width, xgwa.height + offset, string, 0);
 
   for(i = 0; i < 2; i++)
     {
@@ -486,26 +497,208 @@ mac (Display *dpy, Window window, int delay)
   XFreeFont(dpy, font);
 }
 
+static void
+macsbug (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  char *fontname;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc, gc2;
+
+  int char_width, line_height;
+  int col_right, row_top, row_bottom, page_right, page_bottom, body_top;
+  int xoff, yoff;
+
+  const char *left = ("    SP     \n"
+		      " 04EB0A58  \n"
+		      "58 00010000\n"
+		      "5C 00010000\n"
+		      "   ........\n"
+		      "60 00000000\n"
+		      "64 000004EB\n"
+		      "   ........\n"
+		      "68 0000027F\n"
+		      "6C 2D980035\n"
+		      "   ....-..5\n"
+		      "70 00000054\n"
+		      "74 0173003E\n"
+		      "   ...T.s.>\n"
+		      "78 04EBDA76\n"
+		      "7C 04EBDA8E\n"
+		      "   .S.L.a.U\n"
+		      "80 00000000\n"
+		      "84 000004EB\n"
+		      "   ........\n"
+		      "88 00010000\n"
+		      "8C 00010000\n"
+		      "   ...{3..S\n"
+		      "\n"
+		      "\n"
+		      " CurApName \n"
+		      "  Finder   \n"
+		      "\n"
+		      " 32-bit VM \n"
+		      "SR Smxnzvc0\n"
+		      "D0 04EC0062\n"
+		      "D1 00000053\n"
+		      "D2 FFFF0100\n"
+		      "D3 00010000\n"
+		      "D4 00010000\n"
+		      "D5 04EBDA76\n"
+		      "D6 04EBDA8E\n"
+		      "D7 00000001\n"
+		      "\n"
+		      "A0 04EBDA76\n"
+		      "A1 04EBDA8E\n"
+		      "A2 A0A00060\n"
+		      "A3 027F2D98\n"
+		      "A4 027F2E58\n"
+		      "A5 04EC04F0\n"
+		      "A6 04EB0A86\n"
+		      "A7 04EB0A58");
+  const char *bottom = ("  _A09D\n"
+			"     +00884    40843714     #$0700,SR         "
+			"                  ; A973        | A973\n"
+			"     +00886    40843765     *+$0400           "
+			"                                | 4A1F\n"
+			"     +00888    40843718     $0004(A7),([0,A7[)"
+			"                  ; 04E8D0AE    | 66B8");
+  const char *body = ("Bus Error at 4BF6D6CC\n"
+		      "while reading word from 4BF6D6CC in User data space\n"
+		      " Unable to access that address\n"
+		      "  PC: 2A0DE3E6\n"
+		      "  Frame Type: B008");
+  const char *s;
+  int body_lines = 1;
+
+  for (s = body; *s; s++) if (*s == '\n') body_lines++;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  fontname = get_string_resource ((xgwa.height > 850
+				   ? "macsbug.font3"
+				   : (xgwa.height > 700
+				      ? "macsbug.font2"
+				      : "macsbug.font")),
+				  "MacsBug.Font");
+  if (!fontname || !*fontname) fontname = (char *)def_font;
+  font = XLoadQueryFont (dpy, fontname);
+  if (!font) font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+  if (fontname && fontname != def_font)
+    free (fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource("macsbug.foreground",
+				      "MacsBug.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("macsbug.background",
+				      "MacsBug.Background",
+				      dpy, xgwa.colormap);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  gcv.foreground = gcv.background;
+  gc2 = XCreateGC(dpy, window, GCForeground, &gcv);
+
+  XSetWindowBackground(dpy, window,
+		       get_pixel_resource("macsbug.borderColor",
+					  "MacsBug.BorderColor",
+					  dpy, xgwa.colormap));
+  XClearWindow(dpy, window);
+
+  char_width = (font->per_char
+		? font->per_char['n'-font->min_char_or_byte2].width
+		: font->min_bounds.width);
+  line_height = font->ascent + font->descent + 1;
+
+  col_right = char_width * 12;
+  page_bottom = line_height * 47;
+
+  if (page_bottom > xgwa.height) page_bottom = xgwa.height;
+
+  row_bottom = page_bottom - line_height;
+  row_top = row_bottom - (line_height * 4);
+  page_right = col_right + (char_width * 88);
+  body_top = row_top - (line_height * body_lines);
+
+  page_bottom += 2;
+  row_bottom += 2;
+  body_top -= 4;
+
+  xoff = (xgwa.width - page_right) / 2;
+  yoff = (xgwa.height - page_bottom) / 2;
+  if (xoff < 0) xoff = 0;
+  if (yoff < 0) yoff = 0;
+
+  XFillRectangle(dpy, window, gc2, xoff, yoff, page_right, page_bottom);
+
+  draw_string(dpy, window, gc, &gcv, font, xoff, yoff, 10, 10, left, 0);
+  draw_string(dpy, window, gc, &gcv, font, xoff+col_right, yoff+row_top,
+	      10, 10, bottom, 0);
+  draw_string(dpy, window, gc, &gcv, font,
+	      xoff + col_right + char_width, yoff + body_top, 10, 10, body, 0);
+
+  XFillRectangle(dpy, window, gc, xoff + col_right, yoff, 2, page_bottom);
+  XDrawLine(dpy, window, gc,
+	    xoff+col_right, yoff+row_top, xoff+page_right, yoff+row_top);
+  XDrawLine(dpy, window, gc,
+	    xoff+col_right, yoff+row_bottom, xoff+page_right, yoff+row_bottom);
+  XDrawRectangle(dpy, window, gc,  xoff, yoff, page_right, page_bottom);
+
+  while (delay > 0)
+    {
+      XDrawLine(dpy, window, gc,
+		xoff+col_right+(char_width/2)+2, yoff+row_bottom+3,
+		xoff+col_right+(char_width/2)+2, yoff+page_bottom-3);
+      XSync(dpy, False);
+      usleep(666666L);
+      XDrawLine(dpy, window, gc2,
+		xoff+col_right+(char_width/2)+2, yoff+row_bottom+3,
+		xoff+col_right+(char_width/2)+2, yoff+page_bottom-3);
+      XSync(dpy, False);
+      usleep(333333L);
+      if (bsod_sleep(dpy, 0))
+	break;
+      delay--;
+    }
+
+  XFreeGC(dpy, gc);
+  XFreeGC(dpy, gc2);
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+}
+
+
 
 char *progclass = "BSOD";
 
 char *defaults [] = {
-  "*delay:			30",
+  "*delay:		 30",
 
-  "BSOD.Windows.font:		-*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  "BSOD.Windows.font2:		-*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  "BSOD.Windows.foreground:	White",
-  "BSOD.Windows.background:	Blue",
+  ".Windows.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Windows.font2:	 -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".Windows.foreground:	 White",
+  ".Windows.background:	 Blue",
 
-  "BSOD.Amiga.font:		-*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  "BSOD.Amiga.font2:		-*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  "BSOD.Amiga.foreground:	Red",
-  "BSOD.Amiga.background:	Black",
-  "BSOD.Amiga.background2:	White",
+  ".Amiga.font:		 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Amiga.font2:	 -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".Amiga.foreground:	 Red",
+  ".Amiga.background:	 Black",
+  ".Amiga.background2:	 White",
 
-  "BSOD.Mac.font:		-*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  "BSOD.Mac.foreground:		PaleTurquoise1",
-  "BSOD.Mac.background:		Black",
+  ".Mac.font:		 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Mac.foreground:	 PaleTurquoise1",
+  ".Mac.background:	 Black",
+
+  ".MacsBug.font:	 -*-courier-medium-r-*-*-*-100-*-*-m-*-*-*",
+  ".MacsBug.font2:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".MacsBug.font3:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".MacsBug.foreground:	 Black",
+  ".MacsBug.background:	 White",
+  ".MacsBug.borderColor: #AAAAAA",
   0
 };
 
@@ -527,7 +720,7 @@ screenhack (Display *dpy, Window window)
 
   while (1)
     {
-      while (i == j) i = random() % 4;
+      while (i == j) i = random() % 5;
       j = i;
 
       switch (i)
@@ -536,6 +729,7 @@ screenhack (Display *dpy, Window window)
 	case 1: windows(dpy, window, delay, False); break;
 	case 2: amiga(dpy, window, delay); break;
 	case 3: mac(dpy, window, delay); break;
+	case 4: macsbug(dpy, window, delay); break;
 	default: abort(); break;
 	}
       XSync (dpy, True);

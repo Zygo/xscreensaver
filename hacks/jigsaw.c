@@ -533,8 +533,8 @@ done(void)
 char *progclass = "Jigsaw";
 
 char *defaults [] = {
-  "*background:		Black",
-  "*foreground:		Gray40",
+  ".background:		Black",
+  ".foreground:		Gray40",
   "*delay:		70000",
   "*delay2:		5",
   0

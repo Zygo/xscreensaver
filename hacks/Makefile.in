@@ -30,6 +30,7 @@ SHELL		= /bin/sh
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
 HACKDIR		= @HACKDIR@
 
 X_CFLAGS	= @X_CFLAGS@
@@ -37,6 +38,8 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
+# Note: see comment in ../driver/Makefile.in for explanation of X_LIBS, etc.
+#
 HACK_PRE	= $(LIBS) $(X_LIBS) $(X_PRE_LIBS)
 HACK_POST	= -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
 HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
@@ -75,7 +78,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
-		  truchet.c bsod.c
+		  truchet.c bsod.c crystal.c discrete.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -89,7 +92,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
-		  truchet.o bsod.o
+		  truchet.o bsod.o crystal.o discrete.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -99,7 +102,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
-		  interference truchet bsod
+		  interference truchet bsod crystal discrete
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -148,16 +151,16 @@ install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 install-program:
-	@if [ ! -d $(HACKDIR) ]; then mkdir $(HACKDIR) ; fi ;		\
-	for program in $(EXES); do					\
+	@exes="$(EXES)" ;						\
+	if [ ! -d $(HACKDIR) ]; then $(INSTALL_DIRS) $(HACKDIR) ; fi ;	\
+	for program in $$exes; do					\
 	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
 	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
 	done
 
 install-man:
-	@if [ ! -d $(mandir) ]; then mkdir $(mandir) ; fi ;		\
-	if [ ! -d $(man1dir) ]; then mkdir $(man1dir) ; fi ;		\
-	men="$(MEN)" ;							\
+	@men="$(MEN)" ;							\
+	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
@@ -527,6 +530,12 @@ ant:		ant.o		$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 flow:		flow.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+discrete:	discrete.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+crystal:	crystal.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 
@@ -1324,4 +1333,27 @@ bsod.o: $(UTILS_SRC)/grabscreen.h
 bsod.o: $(UTILS_SRC)/visual.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/mac.xbm
+crystal.o: $(srcdir)/xlockmore.h
+crystal.o: ../config.h
+crystal.o: $(srcdir)/xlockmoreI.h
+crystal.o: $(srcdir)/screenhack.h
+crystal.o: $(UTILS_SRC)/yarandom.h
+crystal.o: $(UTILS_SRC)/usleep.h
+crystal.o: $(UTILS_SRC)/resources.h
+crystal.o: $(UTILS_SRC)/hsv.h
+crystal.o: $(UTILS_SRC)/colors.h
+crystal.o: $(UTILS_SRC)/grabscreen.h
+crystal.o: $(UTILS_SRC)/visual.h
+discrete.o: $(srcdir)/xlockmore.h
+discrete.o: ../config.h
+discrete.o: $(srcdir)/xlockmoreI.h
+discrete.o: $(srcdir)/screenhack.h
+discrete.o: $(UTILS_SRC)/yarandom.h
+discrete.o: $(UTILS_SRC)/usleep.h
+discrete.o: $(UTILS_SRC)/resources.h
+discrete.o: $(UTILS_SRC)/hsv.h
+discrete.o: $(UTILS_SRC)/colors.h
+discrete.o: $(UTILS_SRC)/grabscreen.h
+discrete.o: $(UTILS_SRC)/visual.h
+discrete.o: $(UTILS_SRC)/erase.h
 

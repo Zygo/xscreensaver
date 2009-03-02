@@ -331,8 +331,8 @@ char *defaults [] = {
   "*visualID:			Best",
 #endif
 
-  "SlidePuzzle.background:	Black",
-  "SlidePuzzle.foreground:	Gray",
+  ".background:			Black",
+  ".foreground:			Gray",
   "*gridSize:			70",
   "*pixelIncrement:		10",
   "*internalBorderWidth:	4",

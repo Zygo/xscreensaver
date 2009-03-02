@@ -30,6 +30,7 @@ SHELL		= /bin/sh
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
 HACKDIR		= @HACKDIR@
 
 X_CFLAGS	= @X_CFLAGS@
@@ -37,6 +38,8 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
+# Note: see comment in ../driver/Makefile.in for explanation of X_LIBS, etc.
+#
 HACK_LIBS	= $(LIBS) $(X_LIBS) $(X_PRE_LIBS) @GL_LIBS@ @HACK_LIBS@ \
 		  -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
 
@@ -92,6 +95,7 @@ install-strip:
 
 install-program:
 	@exes="$(EXES)" ;						\
+	if [ ! -d $(HACKDIR) ]; then $(INSTALL_DIRS) $(HACKDIR) ; fi ;	\
 	for program in $$exes; do					\
 	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
 	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
@@ -99,6 +103,7 @@ install-program:
 
 install-man:
 	@men="$(MEN)" ;							\
+	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
@@ -136,7 +141,7 @@ depend:
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend:
+distdepend::
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \

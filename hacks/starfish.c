@@ -422,8 +422,8 @@ run_starfish (Display *dpy, Window window, struct starfish *s)
 char *progclass = "Starfish";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*delay:		10000",
   "*cycleDelay:		100000",
   "*thickness:		0",		/* pixels, 0 = random */

@@ -159,8 +159,8 @@ greynetic (Display *dpy, Window window)
 char *progclass = "Greynetic";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*delay:	0",
   0
 };

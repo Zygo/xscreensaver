@@ -82,6 +82,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_COUNT(MI)		(MI_BATCHCOUNT((MI)))
 #define MI_BLACK_PIXEL(MI)	(MI_WIN_BLACK_PIXEL(MI))
 #define MI_WHITE_PIXEL(MI)	(MI_WIN_WHITE_PIXEL(MI))
+#define MI_IS_FULLRANDOM(MI)	(MI_WIN_IS_FULLRANDOM(MI))
+#define MI_IS_VERBOSE(MI)	(MI_WIN_IS_VERBOSE(MI))
 
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
 

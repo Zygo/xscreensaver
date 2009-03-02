@@ -20,6 +20,7 @@ CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
 DEFS		= @DEFS@
+DEFS2		= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
 LIBS		= @LIBS@
 
 DEPEND		= @DEPEND@
@@ -32,13 +33,23 @@ SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
-XLIBS		= $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
+# Note:
+#
+# X_LIBS would more properly be called X_LDFLAGS (it contains the -L args.)
+# X_PRE_LIBS contains extra libraries you have to link against on some systems,
+#         and that must come before -lX11.  (e.g., -lSM and -lICE.)
+# X_EXTRA_LIBS contains extra libraries needed by X that aren't a part of X.
+#         (e.g., -lsocket, -lnsl, etc.)
+#
+XLIBS		= $(X_LIBS) $(X_PRE_LIBS)      -lX11 -lXext $(X_EXTRA_LIBS)
+XTLIBS		= $(X_LIBS) $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
 AD_DIR		= @APPDEFAULTS@
 
@@ -88,11 +99,11 @@ SAVER_OBJS_1	= demo.o stderr.o subprocs.o timers.o windows.o \
 
 SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
-SAVER_LIBS	= $(X_LIBS) @SAVER_LIBS@ -lXt $(XLIBS) $(PASSWD_LIBS) $(LIBS)
+SAVER_LIBS	= @SAVER_LIBS@ -lXt $(XTLIBS) $(PASSWD_LIBS) $(LIBS)
 
 CMD_SRCS	= xscreensaver-command.c
 CMD_OBJS	= xscreensaver-command.o
-CMD_LIBS	= $(X_LIBS) $(XLIBS) $(LIBS)
+CMD_LIBS	= $(XLIBS) $(LIBS)
 
 EXES		= xscreensaver xscreensaver-command
 
@@ -138,15 +149,18 @@ install-program:
  $$e ""									     ;\
 	   fi ; 							\
 	fi ;								\
+	if [ ! -d $(bindir) ]; then $(INSTALL_DIRS) $(bindir) ; fi ;	\
 	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
 	$$inst xscreensaver $(bindir)/xscreensaver
 	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
 
 install-ad:
+	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi ;	\
 	$(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver
 
 install-man:
 	@men="$(MEN)" ;							\
+	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
@@ -273,7 +287,11 @@ $(UTIL_OBJS):
 
 # How we build object files in this directory.
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(INCLUDES) $(DEFS)  $(CFLAGS) $(X_CFLAGS) $<
+
+# subprocs is the only one that takes an extra -D option.
+subprocs.o: subprocs.c
+	$(CC) -c $(INCLUDES) $(DEFS2) $(CFLAGS) $(X_CFLAGS) $<
 
 
 # How we build the default app-defaults file into the program.

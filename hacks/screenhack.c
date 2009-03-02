@@ -71,7 +71,7 @@ static XrmOptionDescRec default_options [] = {
 };
 
 static char *default_defaults[] = {
-  "*root:		false",
+  ".root:		false",
   "*geometry:		600x480", /* this should be .geometry, but nooooo... */
   "*mono:		false",
   "*installColormap:	false",
@@ -115,6 +115,23 @@ merge_options (void)
 	  def_defaults_size * sizeof(*defaults));
   memcpy (merged_defaults + def_defaults_size, defaults,
 	  (defaults_size + 1) * sizeof(*defaults));
+
+  /* This totally sucks.  Xt should behave like this by default.
+     If the string in `defaults' looks like ".foo", change that
+     to "Progclass.foo".
+   */
+  {
+    char **s;
+    for (s = merged_defaults; *s; s++)
+      if (**s == '.')
+	{
+	  const char *oldr = *s;
+	  char *newr = (char *) malloc(strlen(oldr) + strlen(progclass) + 3);
+	  strcpy (newr, progclass);
+	  strcat (newr, oldr);
+	  *s = newr;
+	}
+  }
 }
 
 

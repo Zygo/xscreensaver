@@ -47,8 +47,8 @@
 char *progclass = "XLyap";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*randomize:		false",
   "*builtin:		-1",
   "*minColor:		1",

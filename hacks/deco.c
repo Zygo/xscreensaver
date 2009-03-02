@@ -59,8 +59,8 @@ deco (Display *dpy,
 char *progclass = "Deco";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*maxDepth:		12",
   "*minWidth:		20",
   "*minHeight:		20",

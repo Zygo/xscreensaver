@@ -11,9 +11,11 @@ $ braid		:== $'mydir'braid
 $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
 $ coral		:== $'mydir'coral
+$ crystal	:== $'mydir'crystal
 $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
+$ discrete	:== $'mydir'discrete
 $ drift		:== $'mydir'drift
 $ epicycle	:== $'mydir'epicycle
 $ fadeplot	:== $'mydir'fadeplot

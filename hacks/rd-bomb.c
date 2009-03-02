@@ -282,8 +282,8 @@ char *progclass = "RD";
 
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*width:	0",                     /* tried to use -1 but it complained */
   "*height:	0",
   "*epoch:	40000",

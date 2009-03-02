@@ -71,13 +71,13 @@ AC_MSG_CHECKING(how to call gettimeofday)
 AC_CACHE_VAL(ac_cv_gettimeofday_args,
  [AC_TRY_COMPILE([#include <stdlib.h>
 		  #include <sys/time.h>],
-		 [struct timeval tv; gettimeofday(&tv);],
-		 [ac_gettimeofday_args=1],
+		 [struct timeval tv; struct timezone tzp;
+		  gettimeofday(&tv, &tzp);],
+		 [ac_gettimeofday_args=2],
 		 [AC_TRY_COMPILE([#include <stdlib.h>
 				  #include <sys/time.h>],
-				 [struct timeval tv; struct timezone tzp;
-				  gettimeofday(&tv, &tzp);],
-				 [ac_gettimeofday_args=2],
+				 [struct timeval tv; gettimeofday(&tv);],
+				 [ac_gettimeofday_args=1],
 				 [ac_gettimeofday_args=0])])
   ac_cv_gettimeofday_args=$ac_gettimeofday_args])
 ac_gettimeofday_args=$ac_cv_gettimeofday_args
@@ -119,12 +119,19 @@ Installation options:
 ],
   [enable_subdir="$enableval"],[enable_subdir=no])
 if test x"$enable_subdir" = xno; then
-  HACKDIR='$(bindir)'
+  HACKDIR='${bindir}'
 elif test x"$enable_subdir" = xyes -o x"$enable_subdir" = x ; then
   echo "error: must be a subdirectory name: --enable-subdir=$enable_subdir"
   exit 1
 else
-  HACKDIR='$(bindir)/'$enable_subdir
+  # there must be a better way than this...
+  if test -z "`echo $enable_subdir | sed 's@^/.*@@'`" ; then
+    # absolute path
+    HACKDIR=$enable_subdir
+  else
+    # relative path
+    HACKDIR='${bindir}/'$enable_subdir
+  fi
 fi
 
 
@@ -593,9 +600,37 @@ elif test $with_sgivc != no; then
 fi
 
 
+# Check for the DPMS server extension header.
+#
+have_dpms=no
+with_dpms_req=unspecified
+AC_ARG_WITH(dpms-ext,
+[  --with-dpms-ext         Include support for the DPMS server extension,
+                          if possible (this is the default).
+  --without-dpms-ext      Do not compile in support for this extension.],
+  [with_dpms="$withval"; with_dpms_req="$withval"],[with_dpms=yes])
+if test $with_dpms = yes; then
 
+  # first check for dpms.h
+  AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes])
 
+  # if that succeeded, then check for the -lXdpms
+  if test $have_dpms = yes; then
+    have_dpms=no
+    AC_CHECK_X_LIB(Xdpms, DPMSInfo,
+		  [have_dpms=yes; SAVER_LIBS="$SAVER_LIBS -lXdpms"], [],
+		  -lXext -lX11)
+  fi
 
+  # if that succeeded, then we've really got it.
+  if test $have_dpms = yes; then
+    AC_DEFINE(HAVE_DPMS_EXTENSION)
+  fi
+
+elif test $with_dpms != no; then
+  echo "error: must be yes or no: --with-dpms-ext=$with_dpms"
+  exit 1
+fi
 
 
 
@@ -603,6 +638,7 @@ fi
 #
 have_motif=no
 have_athena=no
+have_athena3d=no
 with_motif_req=unspecified
 with_athena_req=unspecified
 
@@ -653,10 +689,18 @@ check_motif() {
 }
 
 check_athena() {
-  AC_CHECK_X_HEADER(X11/Xaw/Dialog.h,
-	           [have_athena=yes
-		    AC_DEFINE(HAVE_ATHENA)
-		    SAVER_LIBS="-lXaw $SAVER_LIBS"])
+  have_athena=no
+  have_athena3d=no
+  AC_CHECK_X_HEADER(X11/Xaw/Dialog.h, [have_athena=yes])
+  AC_CHECK_X_LIB(Xaw3d, Xaw3dComputeTopShadowRGB,
+		 [have_athena=yes; have_athena3d=yes], [],
+		 -lXt -lXmu -lXext -lX11)
+
+  if test $have_athena3d = yes; then
+    SAVER_LIBS="-lXaw3d $SAVER_LIBS"
+  elif test $have_athena = yes; then
+    SAVER_LIBS="-lXaw $SAVER_LIBS"
+  fi
 }
 
 
@@ -1179,6 +1223,24 @@ if test $enable_locking = yes; then
     fi
   fi
 
+  # On FreeBSD, getpwnam() and friends work just like on non-shadow-password
+  # systems -- except you only get stuff in the pw_passwd field if the running
+  # program is setuid.  So, guess that we've got this lossage to contend with
+  # if /etc/master.passwd exists, and default to a setuid installation.
+  #
+  if test $passwd_cruft_done = no ; then
+    AC_CACHE_CHECK([for FreeBSD-style shadow passwords], ac_cv_master_passwd,
+		   [if test -f /etc/master.passwd ; then
+		      ac_cv_master_passwd=yes
+		    else
+		      ac_cv_master_passwd=no
+		    fi])
+    if test $ac_cv_master_passwd = yes; then
+      need_setuid=yes
+      passwd_cruft_done=yes
+    fi
+  fi
+
   # On some systems (UnixWare 2.1), crypt() is in -lcrypt instead of -lc.
   have_crypt=no
   AC_CHECK_LIB(c, crypt, [have_crypt=yes])
@@ -1224,6 +1286,8 @@ DEPEND_FLAGS=
 DEPEND_DEFINES=
 
 
+# Autoconf doesn't seem to have an INSTALL_DIRS, so let's define our own...
+INSTALL_DIRS='$(INSTALL) -d'
 
 # Done testing things -- now substitute in some stuff for the Makefiles.
 #
@@ -1282,6 +1346,7 @@ AC_SUBST(XPM_LIBS)
 AC_SUBST(GL_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
+AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(SGI_VIDEO_OBJS)
 AC_SUBST(SGI_VIDEO_LIBS)
@@ -1353,6 +1418,10 @@ fi
 
 if test $with_sgivc_req = yes -a $have_sgivc = no ; then
   warn 'The SGI-VIDEO-CONTROL extension was requested, but was not found.'
+fi
+
+if test $with_dpms_req = yes -a $have_dpms = no ; then
+  warn 'The DPMS extension was requested, but was not found.'
 fi
 
 if test $have_motif = no -a $have_athena = no ; then
@@ -1430,3 +1499,37 @@ AC_OUTPUT(Makefile
 	  hacks/Makefile
 	  hacks/glx/Makefile
 	  driver/XScreenSaver.ad)
+
+# You are in a twisty maze of namespaces and syntaxes, all alike.
+# Fuck the skull of Unix.
+#
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval bindir=${bindir}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+eval HACKDIR=${HACKDIR}
+
+echo ""
+echo "$warnsep"
+echo ""
+echo '      When you run "make install", the "xscreensaver" and'
+echo '      "xscreensaver-command" executables will be installed in'
+echo "      ${bindir}."
+echo ""
+echo "      The various graphics demos (60+ different executables) will"
+echo "      be installed in ${HACKDIR}."
+echo ""
+echo "      If you would prefer the demos to be installed elsewhere"
+echo "      (for example, in a dedicated directory) you should re-run"
+echo "      configure with the --enable-subdir=DIR option.  For more"
+echo "      information, run $0 --help."
+echo ""
+echo "$warnsep"
+echo ""

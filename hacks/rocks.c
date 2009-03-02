@@ -488,8 +488,8 @@ init_rocks (Display *d, Window w)
 char *progclass = "Rocks";
 
 char *defaults [] = {
-  "*background:	Black",
-  "*foreground:	#E9967A",
+  ".background:	Black",
+  ".foreground:	#E9967A",
   "*colors:	5",
   "*count:	100",
   "*delay:	50000",

@@ -207,8 +207,8 @@ moire2 (Display *dpy, Window window)
 char *progclass = "Moire2";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*delay:		50000",
   "*thickness:		0",
   "*colors:		150",

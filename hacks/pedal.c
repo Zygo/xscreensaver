@@ -351,8 +351,8 @@ char *progclass = "Pedal";
  * should be dark.
  */
 char *defaults [] = {
-  "*background:			black",
-  "*foreground:			white",
+  ".background:			black",
+  ".foreground:			white",
   "*delay:			5",
   "*fadedelay:			200000",
   "*maxlines:			1000",

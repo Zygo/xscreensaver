@@ -108,8 +108,8 @@ hurm (Display *dpy, Window window)
 char *progclass = "Rorschach";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  ".background:	black",
+  ".foreground:	white",
   "*xsymmetry:	true",
   "*ysymmetry:	false",
   "*iterations:	4000",

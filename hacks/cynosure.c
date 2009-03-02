@@ -119,8 +119,8 @@ static int gridSize;
 
 char *progclass = "Cynosure";
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
+  ".background:		black",
+  ".foreground:		white",
   "*delay:		500000",
   "*colors:		128",
   "*iterations:		100",

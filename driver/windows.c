@@ -1042,6 +1042,8 @@ unblank_screen (saver_info *si)
   saver_preferences *p = &si->prefs;
   int i;
 
+  monitor_power_on (si);
+
   store_activate_time (si, True);
   reset_watchdog_timer (si, False);
 

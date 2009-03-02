@@ -608,6 +608,14 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 #endif /* DEBUG_TIMERS */
 
 	  raise_window (si, True, True, running_p);
+
+	  if (!monitor_powered_on_p (si))
+	    {
+	      if (si->prefs.verbose_p)
+		printf ("%s: server reports that monitor has powered down; "
+			"killing running hacks.\n", progname);
+	      kill_screenhack (si);
+	    }
 	}
     }
 }

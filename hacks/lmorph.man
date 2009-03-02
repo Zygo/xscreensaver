@@ -3,7 +3,7 @@
 lmorph \- morphing lines
 .SH SYNOPSIS
 .B lmorph
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP] [\-figtype \fItype\fP]
 .SH DESCRIPTION
 The \fIlmorph\fP program morphs between simple linedrawings using bilinear
 interpolation.
@@ -37,6 +37,10 @@ means a random number between 100 and 500.
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 50000.
+.TP 8
+.B \-figtype \fItype\fP
+Limit the figures to only open or closed figures. Possible types are
+"all" (default), "open" and "closed".
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -50,5 +54,5 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH AUTHOR
-Sverre H. Huseby <sverrehu@ifi.uio.no> and Glenn T. Lines <gtl@si.sintef.no>,
+Sverre H. Huseby <sverrehu@online.no> and Glenn T. Lines <gtl@si.sintef.no>,
 built on top of the screen saver routines by Jamie Zawinski <jwz@netscape.com>.

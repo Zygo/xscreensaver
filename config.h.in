@@ -90,6 +90,12 @@
  */
 #undef HAVE_SGI_VC_EXTENSION
 
+/*  Define this if you have the XDPMS extension.  This is standard on
+ *  sufficiently-recent XFree86 systems, and possibly elsewhere.  (It's
+ *  available if the file /usr/include/X11/extensions/dpms.h exists.)
+ */
+#undef HAVE_DPMS_EXTENSION
+
 
 /* *************************************************************************
                           CONFIGURING GRAPHICS TOOLKITS

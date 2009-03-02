@@ -161,8 +161,8 @@ moire (Display *dpy, Window window, int offset, XColor *colors, int ncolors)
 char *progclass = "Moire";
 
 char *defaults [] = {
-  "*background:		blue",
-  "*foreground:		red",
+  ".background:		blue",
+  ".foreground:		red",
   "*random:		true",
   "*delay:		5",
   "*ncolors:		64",

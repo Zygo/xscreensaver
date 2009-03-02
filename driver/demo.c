@@ -1,5 +1,5 @@
 /* demo.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -630,6 +630,7 @@ make_screenhack_dialog (saver_info *si)
 
 #endif /* HAVE_ATHENA */
 
+  monitor_power_on (si);
   pop_up_dialog_box(demo_dialog, demo_form,
 		    /* for debugging -- don't ask */
 		    (si->prefs.debug_p ? 69 : 0) +
@@ -918,6 +919,7 @@ pop_resources_dialog (saver_info *si)
   set_toggle_button_state (unfade_toggle, res.unfade);
   set_toggle_button_state (lock_toggle, res.lock_p);
 
+  monitor_power_on (si);
   pop_up_dialog_box (resources_dialog, resources_form,
 		     /* for debugging -- don't ask */
 		     (si->prefs.debug_p ? 69 : 0) +
@@ -933,6 +935,7 @@ demo_mode (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
   si->dbox_up_p = True;
+  monitor_power_on (si);
   raise_window (si, True, False, False);
   make_screenhack_dialog (si);
   while (si->demo_mode_p)
