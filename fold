@@ -29,7 +29,6 @@ git reset --hard genesis || exit 1
 		xscreensaver-2.14 \
 		xscreensaver-2.16 \
 		xscreensaver_2.16.orig \
-		xscreensaver-2.16-src \
 		xscreensaver-2.17 \
 		xscreensaver-2.21 \
 		xscreensaver-2.23 \
@@ -47,7 +46,6 @@ git reset --hard genesis || exit 1
 		xscreensaver-3.09 \
 		xscreensaver-3.10 \
 		xscreensaver-3.12 \
-		xscreensaver-3.15 \
 		xscreensaver-3.15-dist \
 		xscreensaver-3.16 \
 		xscreensaver-3.17 \
@@ -72,7 +70,6 @@ git reset --hard genesis || exit 1
 		xscreensaver_3.34.orig \
 		xscreensaver-4.00 \
 		xscreensaver-4.01 \
-		xscreensaver-4.02 \
 		xscreensaver-4.02-packetstormsecurity.org \
 		xscreensaver-4.03 \
 		xscreensaver-4.04.2 \
