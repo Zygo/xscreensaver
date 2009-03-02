@@ -1,0 +1,110 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "22-mar-93" "X Version 11"
+.SH NAME
+xscreensaver-command - control a running xscreensaver process
+.SH SYNOPSIS
+.B xscreensaver-command
+[\-activate] [\-deactivate] [\-cycle] [\-next] [\-prev] [\-exit] [\-restart] [\-demo] [\-lock]
+.SH DESCRIPTION
+The \fIxscreensaver\-command\fP program controls a running \fIxscreensaver\fP
+process by sending it client-messages.
+.SH OPTIONS
+.I xscreensaver-command
+accepts the following options:
+.TP 8
+.B \-activate
+Tell the screensaver to turn on immediately (that is, pretend that the 
+user been idle for long enough.)  It will turn off as soon as there is
+any user activity, as usual.
+
+It is useful to run this from a menu; you may wish to run it as
+.EX
+sleep 5 ; xscreensaver-command -activate
+.EE
+to be sure that you have time to remove your hand from the mouse before
+the screensaver comes on.
+.TP 8
+.B \-deactivate
+Tell the screensaver to turn off, as if there had been user activity.
+If locking is enabled, then the screensaver will prompt for a password
+as usual.
+.TP 8
+.B \-cycle
+Tell the screensaver to change which graphics hack it is running, just
+as if the ``cycle'' timer had expired.
+.TP 8
+.B \-next
+This is like either \fI\-activate\fP or \fI\-cycle\fP, depending on which is
+more appropriate, except that the screenhack that will be run is the next
+one in the list of programs, instead of a randomly-chosen one.  This option
+is good for looking at a demo of each of the screensavers currently available.
+You might want to put this on a menu.
+.TP 8
+.B \-prev
+This is like \fI\-next\fP, but cycles in the other direction.
+.TP 8
+.B \-demo
+Cause the screensaver to enter its interactive demo mode, if it has been
+compiled with support for it.
+.TP 8
+.B \-lock
+Like \fI\-activate\fP, but a password will be required before the screensaver
+turns off, even if the screensaver's \fIlock\fP resource is false.  The 
+display will be locked immediately even if the screensaver's \fIlockTimeout\fP
+resource is non-zero.
+.TP 8
+.B \-exit
+Causes the screensaver process to exit gracefully.  This is a slightly
+safer way to kill the screensaver than by using \fIkill\fP.  
+
+Never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
+active.  If you are using a virtual root window manager, that can leave
+things in an inconsistent state, and you may need to restart your window
+manager to repair the damage.
+.TP 8
+.B \-restart
+Causes the screensaver process to exit and then restart with the same command
+line arguments.  This is a good way of causing the screensaver to re-read the
+resource database.
+
+If the screensaver is run from \fIxdm(1)\fP (that is, it is already running
+before you log in) then you may want to issue the ``restart'' command from 
+one of your startup scripts, so that the screensaver gets your resource
+settings instead of the default ones.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B PATH
+to find the executable to restart.
+.SH "SEE ALSO"
+.BR X (1),
+.BR xscreensaver (1)
+.SH BUGS
+Diagnostics are reported on the \fBstderr\fP of the \fIxscreensaver\fP
+process, not this process, so the caller of \fIxscreensaver-command\fP
+may not see the error messages.
+.SH COPYRIGHT
+Copyright \(co 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@lucid.com>, 13-aug-92.
