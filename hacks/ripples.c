@@ -84,8 +84,11 @@ static void (*draw_transparent)(short *src);
 
 /* How hard to hit the water */
 #define SPLASH 512
+#undef  MIN
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#undef  MAX
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
+#undef  DIRTY
 #define DIRTY 3 /* dirty >= 2, 1 = restore original pixel, 0 = leave alone */
 
 /* From fortune(6) */

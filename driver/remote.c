@@ -82,7 +82,7 @@ find_screensaver_window (Display *dpy, char **version)
   if (parent)
     abort ();
   if (! (kids && nkids))
-    abort ();
+    return 0;
   for (i = 0; i < nkids; i++)
     {
       Atom type;

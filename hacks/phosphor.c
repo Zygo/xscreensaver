@@ -300,7 +300,7 @@ capture_font_bits (p_state *state)
         continue;
       XDrawString (state->dpy, p, state->gc1,
                    i * safe_width, font->ascent,
-                   string + i, 1);
+                   (char *) (string + i), 1);
     }
 
   /* Draw the cursor. */

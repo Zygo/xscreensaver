@@ -66,6 +66,8 @@ ModeSpecOpt triangle_opts =
 #define MAX_SIZE  (1<<MAX_STEPS)
 #define MAX_LEVELS 1000
 
+#undef TOP  /* FTSO AIX */
+
 #define DELTA  0.4
 #define LEFT   (-0.25)
 #define RIGHT  1.25

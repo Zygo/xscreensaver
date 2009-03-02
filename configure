@@ -8683,6 +8683,7 @@ if test \! -z "$libdir" ; then
 fi
 
 
+PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
 ALL_DEMO_PROGRAMS=
 if test "$have_motif" = yes; then
   PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm

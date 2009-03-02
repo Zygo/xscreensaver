@@ -186,6 +186,9 @@ ensure_selected_item_visible (GtkWidget *widget)
   ratio_t = ((double) child_y) / ((double) children_h);
   ratio_b = ((double) child_y + child_h) / ((double) children_h);
 
+  if (adj->upper == 0.0)  /* no items in list */
+    return;
+
   if (ratio_t < (adj->value / adj->upper) ||
       ratio_b > ((adj->value + adj->page_size) / adj->upper))
     {
@@ -714,7 +717,7 @@ run_prev_cb (GtkButton *button, gpointer user_data)
    this parses the text, and does error checking.
  */
 static void 
-hack_time_text (const char *line, Time *store, Bool sec_p)
+hack_time_text (GtkWidget *widget, const char *line, Time *store, Bool sec_p)
 {
   if (*line)
     {
@@ -722,7 +725,14 @@ hack_time_text (const char *line, Time *store, Bool sec_p)
       value = parse_time ((char *) line, sec_p, True);
       value *= 1000;	/* Time measures in microseconds */
       if (value < 0)
-        /* gdk_beep () */;
+	{
+	  char b[255];
+	  sprintf (b,
+		   "Error:\n\n"
+		   "Unparsable time format: \"%s\"\n",
+		   line);
+	  warning_dialog (widget, b, 100);
+	}
       else
 	*store = value;
     }
@@ -740,13 +750,13 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
   Bool changed = False;
 
 # define SECONDS(field, name) \
-  hack_time_text (gtk_entry_get_text (\
+  hack_time_text (GTK_WIDGET(button), gtk_entry_get_text (\
                     GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))), \
                   (field), \
                   True)
 
 # define MINUTES(field, name) \
-  hack_time_text (gtk_entry_get_text (\
+  hack_time_text (GTK_WIDGET(button), gtk_entry_get_text (\
                     GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))), \
                   (field), \
                   False)
@@ -759,7 +769,11 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
     if (! *line) \
       ; \
     else if (sscanf (line, "%u%c", &value, &c) != 1) \
-     gdk_beep(); \
+      { \
+	char b[255]; \
+	sprintf (b, "Error:\n\n" "Not an integer: \"%s\"\n", line); \
+	warning_dialog (GTK_WIDGET (button), b, 100); \
+      } \
    else \
      *(field) = value; \
   } while(0)
@@ -932,6 +946,7 @@ make_pretty_name (const char *shell_command)
 static void
 scroll_to_current_hack (GtkWidget *toplevel, prefs_pair *pair)
 {
+  saver_preferences *p =  pair->a;
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
@@ -958,9 +973,12 @@ scroll_to_current_hack (GtkWidget *toplevel, prefs_pair *pair)
 
   list = GTK_LIST (name_to_widget (toplevel, "list"));
   apply_changes_and_save (toplevel);
-  gtk_list_select_item (list, which);
-  ensure_selected_item_visible (GTK_WIDGET (list));
-  populate_demo_window (toplevel, which, pair);
+  if (which < p->screenhacks_count)
+    {
+      gtk_list_select_item (list, which);
+      ensure_selected_item_visible (GTK_WIDGET (list));
+      populate_demo_window (toplevel, which, pair);
+    }
 }
 
 
@@ -973,7 +991,7 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
   screenhack **hacks = p->screenhacks;
   screenhack **h;
 
-  for (h = hacks; *h; h++)
+  for (h = hacks; h && *h; h++)
     {
       GtkWidget *line;
       char *pretty_name = (h[0]->name
@@ -1385,7 +1403,8 @@ static void
 populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
 {
   saver_preferences *p = pair->a;
-  screenhack *hack = (which >= 0 ? p->screenhacks[which] : 0);
+  screenhack *hack = (which >= 0 && which < p->screenhacks_count
+		      ? p->screenhacks[which] : 0);
   GtkFrame *frame = GTK_FRAME (name_to_widget (toplevel, "frame"));
   GtkLabel *doc = GTK_LABEL (name_to_widget (toplevel, "doc"));
   GtkEntry *cmd = GTK_ENTRY (name_to_widget (toplevel, "cmd_text"));
@@ -1779,6 +1798,7 @@ main (int argc, char **argv)
 	prefs = True;
       else
 	{
+	  fprintf (stderr, "%s: unknown option: %s\n", real_progname, argv[i]);
 	  fprintf (stderr, "usage: %s [ -display dpy-string ] [ -prefs ]\n",
 		   real_progname);
 	  exit (1);

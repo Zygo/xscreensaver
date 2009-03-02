@@ -147,6 +147,8 @@
 				ccurve -root				    \\n\
 				blaster -root				    \\n\
 				bumps -root				    \\n\
+				xteevee -root				    \\n\
+				xspirograph -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -183,7 +185,10 @@
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
 -                               xaos -root -autopilot -incoloring -1	      \
                                   -nogui -outcoloring -1	            \\n\
--				xfishtank -d                                \\n",
+-				xfishtank -d                                \\n\
+-				xsnow                                       \\n\
+-				goban -root                                 \\n\
+-				electricsheep                               \\n",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",
 "XScreenSaver.windowCreationTimeout:	30",
@@ -224,7 +229,7 @@
 "*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*cmdText.fontList:                 *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*label0.fontList:                  *-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*doc.fontList:                   *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1",
+"XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1",
 "*foreground:			#000000",
 "*background:			#C0C0C0",
 "*XmTextField.foreground:	#000000",
@@ -776,6 +781,14 @@ A bit like `Spotlight', except that instead of merely exposing part	\
 of your desktop, it creates a bump map from it.	 Basically, it		\
 3D-izes a roaming section of your desktop, based on color intensity.	\
 Written by Shane Smit.",
+"*hacks.xteevee.name: XTeeVee",
+"*hacks.xteevee.documentation:						\
+XTeeVee simulates various television problems, including static,	\
+loss of vertical hold, and a test pattern.  By Greg Knauss.",
+"*hacks.xspirograph.name: XSpiroGraph",
+"*hacks.xspirograph.documentation:					\
+Simulates that pen-in-nested-plastic-gears toy from your childhood.     \
+By Rohit Singh.",
 "*hacks.webcollage.name: WebCollage",
 "*hacks.webcollage.documentation:					\
 This program makes collages out of random images pulled off of the	\
@@ -874,7 +887,7 @@ that come with the GL Extrusion library by Linas Vepstas.",
 "*hacks.sierpinski3d.name: Sierpinski3D",
 "*hacks.sierpinski3d.documentation:					\
 This draws the three-dimensional variant of the recursive Sierpinski	\
-triangle fractal, using GL.  Written by Tim Robinson.",
+triangle fractal, using GL.  Written by Tim Robinson and Jamie Zawinski.",
 "*hacks.ripples.documentation:						\
 This draws rippling interference patterns like splashing water.		\
 With the -water option, it manipulates your desktop image to look	\
@@ -903,7 +916,10 @@ XMountains generates realistic-looking fractal terrains of snow-capped	\
 mountains near water, with either a top view or a side view.		\
 Written by Stephen Booth.  This is not included with the XScreenSaver	\
 package, but if you don't have it already, you can find it at		\
-<http://www.epcc.ed.ac.uk/~spb/xmountains/>.",
+<http://www.epcc.ed.ac.uk/~spb/xmountains/>.			        \
+								    \\n\\n\
+Be sure to compile it with -DVROOT or it won't work right when launched	\
+by the xscreensaver daemon.",
 "*hacks.xaos.name: XaoS",
 "*hacks.xaos.documentation:						\
 XaoS generates fast fly-through animations of the Mandelbrot and other	\
@@ -915,3 +931,22 @@ already, you can find it at <http://limax.paru.cas.cz/~hubicka/XaoS/>.",
 Fish!  This is not included with the XScreenSaver package, but if you	\
 don't have it already, you can find it at                               \
 <http://metalab.unc.edu/pub/Linux/X11/demos/>.",
+"*hacks.xsnow.documentation:						\
+Draws falling snow and the occasional tiny Santa.  By Rick Jansen.      \
+You can find it at <http://zoutmijn.bpa.nl/rick/Xsnow/>.",
+"*hacks.goban.documentation:						\
+Replays historical games of go (aka wei-chi and baduk) on the screen.   \
+By Scott Draves.  You can find it at <http://www.draves.org/goban/>.",
+"*hacks.electricsheep.name: ElectricSheep",
+"*hacks.electricsheep.documentation:					\
+ElectricSheep is an xscreensaver module that displays mpeg video of	\
+an animated fractal flame.  In the background, it contributes render	\
+cycles to the next animation.  Periodically it uploades completed	\
+frames to the server, where they are compressed for distribution to	\
+all clients.								\
+								    \\n\\n\
+This program is recommended only if you have a high bandwidth		\
+connection to the Internet.						\
+								    \\n\\n\
+By Scott Draves.  You can find it at <http://www.electricsheep.org/>.   \
+See that web site for configuration information.",

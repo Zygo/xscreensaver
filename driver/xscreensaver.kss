@@ -112,15 +112,8 @@ if [ -n "$Install" ] ; then
   trap "kill $!" SIGTERM                                # Set these to kill the daemon
   trap "kill $!" SIGKILL
 
-  if [ -f "/etc/shadow" ]; then
-    # xscreensaver is run as the user, which has no access to the /etc/shadow file.  Other
-    # .kss screensavers use kcheckpass, which would have to be hacked into xscreensaver to
-    # work correctly. This just activates the screensaver with no password lock.
-    trap "/usr/X11R6/bin/xscreensaver-command -activate" SIGUSR1
-  else
-    # xscreensaver can be locked, because it can read the /etc/passwd file.
-    trap "/usr/X11R6/bin/xscreensaver-command -lock" SIGUSR1
-  fi
+# KDE sends SIGUSER1 to indicate the user has hit the "lock" button.
+  trap "/usr/X11R6/bin/xscreensaver-command -lock" SIGUSR1
 
   wait $!                                               # Do not exit, just wait for signals.
 

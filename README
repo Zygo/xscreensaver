@@ -77,6 +77,14 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.22:   * Fixed some misplaced text fields in the Motif version
+                        of xscreensaver-demo; fixed a crash in the Gtk version
+                        that would happen if the programs list was empty.
+                      * Fixed a recently-introduced bug in `pulsar'.
+                      * Made `sierpinski3d' use solid tetrahedrons instead of
+                        points.
+		      * Added `-trace' option to `xmatrix'.
+                      * Added new hacks `xteevee' and `xspirograph'.
 Changes since 3.21:   * Fixed some bugs in xscreensaver-demo.
                       * Rewrote the Motif version of xscreensaver-demo to
                         match the new Gtk version.

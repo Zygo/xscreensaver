@@ -67,6 +67,13 @@
 #include <Xm/RowColumn.h>
 #include <Xm/MessageB.h>
 
+#ifdef HAVE_XMCOMBOBOX		/* a Motif 2.0 widget */
+# include <Xm/ComboBox.h>
+# ifndef XmNtextField		/* Lesstif 0.89.4 bug */
+#  undef HAVE_XMCOMBOBOX
+# endif
+#endif /* HAVE_XMCOMBOBOX */
+
 #include "version.h"
 #include "prefs.h"
 #include "resources.h"		/* for parse_time() */
@@ -461,10 +468,10 @@ apply_changes_and_save (Widget widget)
 
   Widget vis = name_to_widget (widget, "combo");
 # ifdef HAVE_XMCOMBOBOX
-  Widget text;
+  Widget text = 0;
 # else /* !HAVE_XMCOMBOBOX */
   Widget menu = 0, *kids = 0, selected_item = 0;
-  Cardinal nkids;
+  Cardinal nkids = 0;
   int i = 0;
 # endif /* !HAVE_XMCOMBOBOX */
 
@@ -479,6 +486,9 @@ apply_changes_and_save (Widget widget)
 
 # ifdef HAVE_XMCOMBOBOX
   XtVaGetValues (vis, XmNtextField, &text, 0);
+  if (!text)
+    /* If we can't get at the text field of this combo box, we're screwed. */
+    abort();
   XtVaGetValues (text, XmNvalue, &visual, 0);
 
 # else /* !HAVE_XMCOMBOBOX */
@@ -674,7 +684,7 @@ run_prev_cb (Widget button, XtPointer client_data, XtPointer ignored)
    this parses the text, and does error checking.
  */
 static void 
-hack_time_text (const char *line, Time *store, Bool sec_p)
+hack_time_text (Widget button, const char *line, Time *store, Bool sec_p)
 {
   if (*line)
     {
@@ -682,7 +692,14 @@ hack_time_text (const char *line, Time *store, Bool sec_p)
       value = parse_time ((char *) line, sec_p, True);
       value *= 1000;	/* Time measures in microseconds */
       if (value < 0)
-        /* gdk_beep () */;
+	{
+	  char b[255];
+	  sprintf (b,
+		   "Error:\n\n"
+		   "Unparsable time format: \"%s\"\n",
+		   line);
+	  warning_dialog (XtParent (button), b, 100);
+	}
       else
 	*store = value;
     }
@@ -704,12 +721,12 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
 # define SECONDS(field, name) \
   v = 0; \
   XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, 0); \
-  hack_time_text (v, (field), True)
+  hack_time_text (button, v, (field), True)
 
 # define MINUTES(field, name) \
   v = 0; \
   XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, 0); \
-  hack_time_text (v, (field), False)
+  hack_time_text (button, v, (field), False)
 
 # define INTEGER(field, name) do { \
     unsigned int value; \
@@ -718,7 +735,11 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
     if (! *v) \
       ; \
     else if (sscanf (v, "%u%c", &value, &c) != 1) \
-     XBell(XtDisplay(button), 0); \
+      { \
+	char b[255]; \
+	sprintf (b, "Error:\n\n" "Not an integer: \"%s\"\n", v); \
+	warning_dialog (XtParent (button), b, 100); \
+      } \
    else \
      *(field) = value; \
   } while(0)

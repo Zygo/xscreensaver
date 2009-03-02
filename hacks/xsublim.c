@@ -28,18 +28,10 @@
 */
 
 
-/* Changelog ******************************************************************
-
-	1.0.1  19990716  Assume that XGetImage()/XDestroyImage() don't leak,
-	                  which they apparently don't.  I have no idea how I
-	                  convinced myself that they did.  Huh.  (greg@eod.com)
-	1.0.0  19990716  Initial release
-*/
-
-
 /* Arguments ******************************************************************
 
 	-font font           Font to use
+	-file filename       New-line delimited phrase file
 	-delayShow ms        Microsecs for display of each word
 	-delayWord ms        Microsecs for blank between words
 	-delayPhraseMin ms   Microsecs for min blank between phrases
@@ -52,6 +44,16 @@
 	-no-outline          Draw words without an outline
 	-center              Draw words in the center of the screen (Default)
 	-no-center           Draw words randomly around the screen
+*/
+
+
+/* Changelog ******************************************************************
+
+	1.1.0  19991221  Added -file
+	1.0.1  19990716  Assume that XGetImage()/XDestroyImage() don't leak,
+	                  which they apparently don't.  I have no idea how I
+	                  convinced myself that they did.  Huh.  (greg@eod.com)
+	1.0.0  19990716  Initial release
 */
 
 
@@ -82,6 +84,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <X11/Intrinsic.h>
 #include <X11/IntrinsicP.h>
 #include <X11/CoreP.h>
@@ -97,8 +100,8 @@
 #include <X11/SGIScheme.h>
 #endif
 
-#include "yarandom.h"
 #include "usleep.h"
+#include "yarandom.h"
 #include "resources.h"
 
 
@@ -397,7 +400,6 @@ int main(int argc,char* argv[])
 		"-*-times-*-r-*-*-*-600-*-*-p-*-*-*",
 		"-*-*-*-r-*-sans-*-600-*-*-p-*-*-*",
 		"-*-*-*-r-*-*-*-600-*-*-m-*-*-*",
-
 		"-*-helvetica-*-r-*-*-*-240-*-*-p-*-*-*",
 		"-*-lucida-*-r-*-*-*-240-*-*-p-*-*-*",
 		"-*-times-*-r-*-*-*-240-*-*-p-*-*-*",
@@ -530,10 +532,47 @@ int main(int argc,char* argv[])
 	text_Item = 0;
 	text_Count = 0;
 	memset(text_Used,0,sizeof(text_Used));
-	arg_Text = get_string_resource(XSUBLIM_ARG_PHRASES,"Phrases");
+	arg_Text = get_string_resource(XSUBLIM_ARG_FILE,"Filename");
 	if (arg_Text != NULL)
 	{
-		arg_Text = strdup(arg_Text);
+		FILE*       file_Fs;
+		struct stat file_Stat;
+
+		file_Fs = fopen(arg_Text,"rb");
+		if (file_Fs == NULL)
+		{
+			fprintf(stderr,"%s: Could not open '%s'\n",progname,
+			 arg_Text);
+			exit(-1);
+		}
+		if (fstat(fileno(file_Fs),&file_Stat) != 0)
+		{
+			fprintf(stderr,"%s: Could not stat '%s'\n",progname,
+			 arg_Text);
+			exit(-1);
+		}
+		arg_Text = calloc(1,file_Stat.st_size+1);
+		if (arg_Text != NULL)
+		{
+			if (fread(arg_Text,file_Stat.st_size,1,file_Fs) != 1)
+			{
+				fprintf(stderr,"%s: Could not read '%s'\n",
+				 progname,arg_Text);
+				exit(-1);
+			}
+		}
+		fclose(file_Fs);
+	}
+	else
+	{
+		arg_Text = get_string_resource(XSUBLIM_ARG_PHRASES,"Phrases");
+		if (arg_Text != NULL)
+		{
+			arg_Text = strdup(arg_Text);
+		}
+	}
+	if (arg_Text != NULL)
+	{
 		while (((text_Phrase = strtok(arg_Text,"\n")) != NULL) &&
 		 (text_Count < XSUBLIM_TEXT_COUNT))
 		{
@@ -541,8 +580,8 @@ int main(int argc,char* argv[])
 			text_List[text_Count] = text_Phrase;
 			text_Count++;
 		}
+		text_List[text_Count] = NULL;
 	}
-	text_List[text_Count] = NULL;
 	if (text_Count == 0)
 	{
 		fprintf(stderr,"%s: No text to display\n",progname);
@@ -758,10 +797,10 @@ int main(int argc,char* argv[])
 			}
 
 			/* Restore the error handler, ungrab the server */
-                        XSync(disp_Display, FALSE);
+                        XSync(disp_Display,FALSE);
 			XSetErrorHandler(Xsublim_Sh_Handler);
 			XUngrabServer(disp_Display);
-                        XSync(disp_Display, FALSE);
+                        XSync(disp_Display,FALSE);
 
 			/* Pause between words */
 			if (Xsublim_Sig_Last == -1)

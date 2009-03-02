@@ -422,10 +422,10 @@ void generate_stars(int width, int height)
   glBegin(GL_POINTS);
   for(i = 0 ; i < NUM_STARS ; i++)
 	{
-/*   	  size = (drand48()+size_range[0]) * size_range[1]/2.; */
+/*   	  size = ((random()%size_range[0])) * size_range[1]/2.; */
 /*    glPointSize(size); */
-	  x = random()*width;
-	  y = random()*height;
+	  x = random() % width;
+	  y = random() % height;
 	  glVertex2f(x,y);
 	}
   glEnd();

@@ -996,6 +996,20 @@ main_loop (saver_info *si)
 	    si->dbox_up_p = False;
 	    XDefineCursor (si->dpy, ssi->screensaver_window, ssi->cursor);
 	    suspend_screenhack (si, False);	/* resume */
+
+            if (!ok_to_unblank &&
+                !screenhack_running_p (si))
+              {
+                /* If the lock dialog has been dismissed and we're not about to
+                   unlock the screen, and there is currently no hack running,
+                   then launch one.  (There might be no hack running if DPMS
+                   had kicked in.  But DPMS is off now, so bring back the hack)
+                 */
+                if (si->cycle_id)
+                  XtRemoveTimeOut (si->cycle_id);
+                si->cycle_id = 0;
+                cycle_timer ((XtPointer) si, 0);
+              }
 	  }
 #endif /* !NO_LOCKING */
 

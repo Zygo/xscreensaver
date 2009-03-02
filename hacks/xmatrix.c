@@ -15,6 +15,49 @@
  * Windows/Mac version at http://www.whatisthematrix.com/) doesn't match my
  * memory of what the screens in the movie looked like, so my `xmatrix'
  * does things differently.
+ *
+ *
+ *     ==========================================================
+ *
+ *         NOTE:
+ *
+ *         People just love to hack on this one.  I get sent
+ *         patches to this all the time saying, ``here, I made
+ *         it better!''  Mostly this hasn't been true.
+ *
+ *         If you've made changes to xmatrix, when you send me
+ *         your patch, please explain, in English, both *what*
+ *         your changes are, and *why* you think those changes
+ *         make this screensaver behave more like the displays
+ *         in the movie did.  I'd rather not have to read your
+ *         diffs to try and figure that out for myself...
+ *
+ *         In particular, note that the characters in the movie
+ *         were, in fact, low resolution and somewhat blurry/
+ *         washed out.  They also definitely scrolled a
+ *         character at a time, not a pixel at a time.
+ *
+ *     ==========================================================
+ *
+ * One thing I would like to add (to "-trace" mode) is an intro like at the
+ * beginning of the movie, where it printed
+ *
+ *        Call trans opt: received. 2-19-98 13:24:18 REC:Log>_
+ *
+ * then cleared, then
+ *
+ *        Trace program: running_
+ *
+ * then did the trace.
+ *
+ * I was also thinking of sometimes making the screen go blank and say
+ * "Knock, knock."  
+ *
+ * However, the problem with both of these ideas is, I made the number images
+ * by tooling around in GIMP until I got something that looked good (blurring
+ * and unblurring and enlarging and shrinking and blurring some more...) and I
+ * couldn't reproduce it if my life depended on it.  And to add anything other
+ * than roman digits/katakana, I'd need to matrixify a whole font...
  */
 
 #include "screenhack.h"
@@ -58,8 +101,11 @@ typedef struct {
   int char_width, char_height;
   m_cell *cells;
   m_feeder *feeders;
+  int nspinners;
   Bool small_p;
   Bool insert_top_p, insert_bottom_p;
+  Bool trace_p;
+  signed char *tracing;
   int density;
 
   Pixmap images;
@@ -134,9 +180,35 @@ load_images (m_state *state)
 
 
 static void
+flip_images (m_state *state)
+{
+  XImage *im = XGetImage (state->dpy, state->images, 0, 0,
+                          state->image_width, state->image_height,
+                          ~0L, (state->xgwa.depth > 1 ? ZPixmap : XYPixmap));
+  int x, y, i;
+  int w = state->image_width / CHAR_COLS;
+  unsigned long *row = (unsigned long *) malloc (sizeof(*row) * w);
+
+  for (y = 0; y < state->image_height; y++)
+    for (i = 0; i < CHAR_COLS; i++)
+      {
+        for (x = 0; x < w; x++)
+          row[x] = XGetPixel (im, (i * w) + x, y);
+        for (x = 0; x < w; x++)
+          XPutPixel (im, (i * w) + x, y, row[w - x - 1]);
+      }
+
+  XPutImage (state->dpy, state->images, state->draw_gc, im, 0, 0, 0, 0,
+             state->image_width, state->image_height);
+  XDestroyImage (im);
+  free (row);
+}
+
+
+static void
 init_spinners (m_state *state)
 {
-  int i = get_integer_resource ("spinners", "Integer");
+  int i = state->nspinners;
   int x, y;
   m_cell *cell;
 
@@ -154,6 +226,44 @@ init_spinners (m_state *state)
       cell = &state->cells[state->grid_width * y + x];
       cell->spinner = 1;
     }
+}
+
+
+static void
+init_trace (m_state *state)
+{
+  char *s = get_string_resource ("tracePhone", "TracePhone");
+  char *s2, *s3;
+  int i;
+  if (!s)
+    goto FAIL;
+
+  state->tracing = (char *) malloc (strlen (s) + 1);
+  s3 = state->tracing;
+
+  for (s2 = s; *s2; s2++)
+    if (*s2 >= '0' && *s2 <= '9')
+      *s3++ = *s2;
+  *s3 = 0;
+
+  if (s3 == (char *) state->tracing)
+    goto FAIL;
+
+  for (i = 0; i < strlen(state->tracing); i++)
+    state->tracing[i] = -state->tracing[i];
+  state->nglyphs = 10;
+  flip_images (state);
+
+  return;
+
+ FAIL:
+  fprintf (stderr, "%s: bad phone number: \"%s\".\n",
+           progname, s ? s : "(null)");
+
+  if (s) free (s);
+  if (state->tracing) free (state->tracing);
+  state->tracing = 0;
+  state->trace_p = False;
 }
 
 
@@ -221,10 +331,16 @@ init_matrix (Display *dpy, Window window)
       state->insert_bottom_p = True;
     }
 
+  state->nspinners = get_integer_resource ("spinners", "Integer");
+
   if (insert)
     free (insert);
 
-  init_spinners (state);
+  state->trace_p = get_boolean_resource ("trace", "Trace");
+  if (state->trace_p)
+    init_trace (state);
+  else
+    init_spinners (state);
 
   return state;
 }
@@ -366,6 +482,8 @@ hack_matrix (m_state *state)
       if ((random() % 4) != 0)
         f->remaining = 0;
 
+      if (state->trace_p)
+        bottom_feeder_p = True;
       if (state->insert_top_p && state->insert_bottom_p)
         bottom_feeder_p = (random() & 1);
       else
@@ -377,7 +495,8 @@ hack_matrix (m_state *state)
         f->y = -1;
     }
 
-  if (! (random() % 500))
+  if (!state->trace_p &&
+      ! (random() % 500))
     init_spinners (state);
 }
 
@@ -398,6 +517,21 @@ draw_matrix (m_state *state)
 
         if (cell->glyph)
           count++;
+
+        if (state->trace_p)
+          {
+            int xx = x % strlen(state->tracing);
+            Bool dead_p = state->tracing[xx] > 0;
+
+            if (y == 0 && x == xx)
+              cell->glyph = (dead_p ? (state->tracing[xx]-'0'+1) : 0);
+            else if (y == 0)
+              cell->glyph = 0;
+            else
+              cell->glyph = (dead_p ? 0 : (random() % state->nglyphs) + 1);
+
+            cell->changed = 1;
+          }
 
         if (!cell->changed)
           continue;
@@ -442,6 +576,31 @@ draw_matrix (m_state *state)
           }
       }
 
+  if (state->trace_p)
+    {
+      Bool any = False;
+      int i;
+      for (i = 0; i < strlen(state->tracing); i++)
+        if (state->tracing[i] < 0) any = True;
+
+      if (!any)
+        {
+          XSync (state->dpy, False);
+          sleep (3);
+          state->trace_p = False;
+          state->nglyphs = CHAR_ROWS;
+          flip_images (state);
+          free (state->tracing);
+          state->tracing = 0;
+        }
+      else if ((random() % 10) == 0)
+        {
+          int x = random() % strlen(state->tracing);
+          if (state->tracing[x] < 0)
+            state->tracing[x] = -state->tracing[x];
+        }
+    }
+
 #if 0
   {
     static int i = 0;
@@ -472,6 +631,8 @@ char *defaults [] = {
   "*small:		   False",
   "*delay:		   10000",
   "*insert:		   both",
+  "*trace:		   false",
+  "*tracePhone:            (212) 555-0690",
   "*spinners:		   5",
   "*density:		   75",
   0
@@ -485,6 +646,8 @@ XrmOptionDescRec options [] = {
   { "-bottom",		".insert",		XrmoptionNoArg, "bottom" },
   { "-both",		".insert",		XrmoptionNoArg, "both" },
   { "-density",		".density",		XrmoptionSepArg, 0 },
+  { "-trace",		".trace",		XrmoptionNoArg, "True" },
+  { "-phone",		".tracePhone",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 

@@ -230,8 +230,6 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   else
     {
       maybe_reload_init_file (si);
-      if (p->verbose_p)
-	fprintf (stderr, "%s: changing graphics hacks.\n", blurb());
       kill_screenhack (si);
 
       if (!si->throttled_p)
@@ -1099,11 +1097,12 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
           raise_window (si, True, True, running_p);
         }
 
-      if (!monitor_powered_on_p (si))
+      if (screenhack_running_p (si) &&
+          !monitor_powered_on_p (si))
 	{
 	  if (si->prefs.verbose_p)
 	    fprintf (stderr,
-		     "%s: server reports that monitor has powered down; "
+		     "%s: X says monitor has powered down; "
 		     "killing running hacks.\n", blurb());
 	  kill_screenhack (si);
 	}

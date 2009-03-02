@@ -266,7 +266,10 @@ new_circle_chain(void)
   
   /* There are between minCircles and maxCircles in each figure.
    */
-  n = minCircles + random() % (maxCircles - minCircles);
+  if (maxCircles == minCircles)
+    n = minCircles;            /* Avoid division by zero. */
+  else
+    n = minCircles + random() % (maxCircles - minCircles);
   
   head = NULL;
   while (n--)

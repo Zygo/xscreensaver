@@ -9,6 +9,8 @@ xmatrix - simulates the computer displays from the movie
 [\-density \fIpercentage\fP]
 [\-top | \-bottom | \-both]
 [\-small | \-large]
+[\-trace]
+[\-phone \fInumber\fP]
 .SH DESCRIPTION
 The \fIxmatrix\fP program draws dropping characters similar to the
 displays in the Wachowski brothers' film, "The Matrix".
@@ -45,8 +47,16 @@ is specified, then a mixture of both styles will be used.  The default
 is \fB\-both\fP.
 .TP 8
 .B \-small\fP | \fB\-large
-These options specify the sizes of the characters.  The default 
+These options specify the sizes of the characters.  The default
 is \fB\-large\fP.
+
+.TP 8
+.B \-trace
+Start off with a representation of a phone number being traced.  
+When the number is finally found, display The Matrix as usual.
+.TP 8
+.B \-phone\fP \fInumber\fP
+The phone number to trace, if \fB\-trace\fP is specified.
 .SH ENVIRONMENT
 .PP
 .TP 8

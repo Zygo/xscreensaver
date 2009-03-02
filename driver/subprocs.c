@@ -906,8 +906,8 @@ spawn_screenhack (saver_info *si, Bool first_time_p)
     }
   else if (si->prefs.verbose_p)
     fprintf (stderr,
-             "%s: server reports that monitor has powered down; "
-             "not launching a new hack.\n", blurb());
+             "%s: X says monitor has powered down; "
+             "not launching a hack.\n", blurb());
 
   store_saver_status (si);  /* store current hack numbers */
 }
@@ -965,15 +965,14 @@ emergency_kill_subproc (saver_info *si)
 Bool
 screenhack_running_p (saver_info *si)
 {
-  Bool result = True;
+  Bool any_running_p = False;
   int i;
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
-      if (!ssi->pid)
-	result = False;
+      if (ssi->pid) any_running_p = True;
     }
-  return result;
+  return any_running_p;
 }
 
 

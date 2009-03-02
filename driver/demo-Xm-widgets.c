@@ -33,15 +33,20 @@
 #include <Xm/TextF.h>
 #include <Xm/ToggleBG.h>
 #include <Xm/CascadeBG.h>
-#ifdef HAVE_XMCOMBOBOX
-# include <Xm/ComboBox.h>
-#endif
 #include <Xm/RowColumn.h>
 #include <Xm/LabelG.h>
 #include <Xm/SeparatoG.h>
 #include <Xm/SelectioB.h>
 
+#ifdef HAVE_XMCOMBOBOX		/* a Motif 2.0 widget */
+# include <Xm/ComboBox.h>
+# ifndef XmNtextField		/* Lesstif 0.89.4 bug */
+#  undef HAVE_XMCOMBOBOX
+# endif
+#endif /* HAVE_XMCOMBOBOX */
+
 #include <stdio.h>
+
 
 
 const char *visual_menu[] = {
@@ -504,9 +509,9 @@ create_options_page (Widget parent)
   fade_text = XmCreateTextField (preferences_form, "fadeSecondsText", av, ac);
   fade_ticks_text = XmCreateTextField (preferences_form, "fadeTicksText",
                                        av, ac);
-  lock_timeout_text = XmCreateTextField (preferences_form, "passwdText",
+  lock_timeout_text = XmCreateTextField (preferences_form, "lockText",
                                          av, ac);
-  passwd_timeout_text = XmCreateTextField (preferences_form, "lockText",
+  passwd_timeout_text = XmCreateTextField (preferences_form, "passwdText",
                                            av, ac);
   XtSetArg(av[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
   verbose_toggle = XmCreateToggleButtonGadget (preferences_form,
