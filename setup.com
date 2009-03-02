@@ -35,6 +35,7 @@ $ epicycle	:== $'mydir'epicycle
 $ eruption	:== $'mydir'eruption
 $ euler2d	:== $'mydir'euler2d
 $ fadeplot	:== $'mydir'fadeplot
+$ fireworkx	:== $'mydir'fireworkx
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
 $ flow		:== $'mydir'flow
@@ -55,6 +56,7 @@ $ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
 $ interference	:== $'mydir'interference
+$ intermomentary	:== $'mydir'intermomentary
 $ jigsaw	:== $'mydir'jigsaw
 $ juggle	:== $'mydir'juggle
 $ julia		:== $'mydir'julia
@@ -106,6 +108,7 @@ $ spotlight	:== $'mydir'spotlight
 $ squiral	:== $'mydir'squiral
 $ starfish	:== $'mydir'starfish
 $ strange	:== $'mydir'strange
+$ substrate	:== $'mydir'substrate
 $ swirl		:== $'mydir'swirl
 $ t3d		:== $'mydir't3d
 $ thornbird	:== $'mydir'thornbird

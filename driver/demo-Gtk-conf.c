@@ -1280,7 +1280,7 @@ parameter_to_switch (parameter *p)
           return 0;
 
         if (p->integer_p)
-          sprintf (buf, "%d", (int) (value + 0.5));
+          sprintf (buf, "%d", (int) (value + (value > 0 ? 0.5 : -0.5)));
         else
           sprintf (buf, "%.4f", value);
           

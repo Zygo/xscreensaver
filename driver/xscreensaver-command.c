@@ -110,14 +110,6 @@ usage: %s -<option>\n\
                 well, even if locking is not the default.  If the saver is\n\
                 already active, this causes it to be locked as well.\n\
 \n\
-  -throttle     Temporarily switch to ``blank screen'' mode, and don't run\n\
-                any display modes at all, until the screensaver is next\n\
-                de-activated.  This is useful if you're using a machine\n\
-                remotely, and you find that some display modes are using too\n\
-                much CPU.\n\
-\n\
-  -unthrottle   Turn `-throttle' off and resume normal behavior.\n\
-\n\
   -version      Prints the version of xscreensaver that is currently running\n\
                 on the display -- that is, the actual version number of the\n\
                 running xscreensaver background process, rather than the\n\
@@ -138,6 +130,13 @@ usage: %s -<option>\n\
   For updates, check http://www.jwz.org/xscreensaver/\n\
 \n";
 
+/* Note: The "-throttle" command is deprecated -- it predates the XDPMS
+   extension.  Instead of using -throttle, users should instead just
+   power off the monitor (e.g., "xset dpms force off".)  In a few
+   minutes, the xscreensaver daemon will notice that the monitor is
+   off, and cease running hacks.
+ */
+
 #define USAGE() do { \
  fprintf (stderr, usage, progname, screensaver_version); exit (1); \
  } while(0)
@@ -153,6 +152,7 @@ main (int argc, char **argv)
   Atom *cmd = 0;
   long arg = 0L;
   char *s;
+  Atom XA_WATCH = 0;  /* kludge: not really an atom */
 
   progname = argv[0];
   s = strrchr (progname, '/');
@@ -187,7 +187,7 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-unthrottle", L)) cmd = &XA_UNTHROTTLE;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_STATUS;
-      else if (!strncmp (s, "-watch", L))      cmd = (Atom *) &watch;
+      else if (!strncmp (s, "-watch", L))      cmd = &XA_WATCH;
       else USAGE ();
 
       if (cmd == &XA_SELECT || cmd == &XA_DEMO)
@@ -301,7 +301,7 @@ main (int argc, char **argv)
 
   XSync (dpy, 0);
 
-  if (cmd == (Atom *) &watch)
+  if (cmd == &XA_WATCH)
     {
       i = watch (dpy);
       exit (i);

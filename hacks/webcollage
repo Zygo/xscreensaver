@@ -60,18 +60,24 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.117 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.118 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2004" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  71, "altavista",   \&pick_from_alta_vista_random_link,
-                        10, "livejournal", \&pick_from_livejournal_images,
-                         8, "yahoorand",   \&pick_from_yahoo_random_link,
-                         6, "yahoonews",   \&pick_from_yahoo_news_text,
-                         5, "ircimages",   \&pick_from_ircimages,
+my @search_methods = (  72, "altavista",   \&pick_from_alta_vista_random_link,
+                        12, "livejournal", \&pick_from_livejournal_images,
+                         9, "yahoorand",   \&pick_from_yahoo_random_link,
+                         7, "yahoonews",   \&pick_from_yahoo_news_text,
+
+                     # The ircimages guy's server can't take the heat, so he
+                     # started banning the webcollage user agent.  I tried to
+                     # convince him to add a lighter-weight page to support
+                     # webcollage better, but he doesn't care.
+                     #
+                     #  0, "ircimages", \&pick_from_ircimages,
 
                      # Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!

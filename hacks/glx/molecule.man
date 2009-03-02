@@ -22,6 +22,7 @@ molecule - draws 3D moleclear structures
 [\-spin \fIaxes\fP]
 [\-no-spin]
 [\-wire]
+[\-verbose]
 [\-timeout \fIseconds\fP]
 [\-labels] [\-no-labels]
 [\-titles] [\-no-titles]
@@ -53,6 +54,9 @@ or the id number (decimal or hex) of a specific visual.
 Display a running tally of how many frames per second are being rendered.
 In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
 your GL performance.
+.TP 8
+.B \-verbose
+Print debugging info on stderr about files being loaded, etc.
 .TP 8
 .B \-wander
 Move the molecules around the screen.

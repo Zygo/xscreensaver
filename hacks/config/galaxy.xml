@@ -23,6 +23,8 @@
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-20" high="20" default="-3"/>
 
+  <boolean id="spin" _label="Rotate Viewpoint" arg-unset="-no-spin"/>
+
   <_description>
 This draws spinning galaxies, which then collide and scatter their
 stars to the, uh, four winds or something.  Originally an Amiga

@@ -65,10 +65,13 @@ static unsigned char **blob;
 static BLOB *blobs;
 static unsigned char **blub;
 
+#undef BELLRAND
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
+
 static void init_blob(BLOB *blob)
 {
-  blob->xpos =  (iWinWidth>> 1) - radius;
-  blob->ypos =  (iWinHeight >> 1) - radius;
+  blob->xpos = iWinWidth/4  + BELLRAND(iWinWidth/2)  - radius;
+  blob->ypos = iWinHeight/4 + BELLRAND(iWinHeight/2) - radius;
 }
 
 static void Execute( Display *pDisplay,

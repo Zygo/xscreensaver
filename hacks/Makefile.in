@@ -102,7 +102,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
 		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
-		  fuzzyflakes.c anemotaxis.c memscroller.c
+		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
+		  intermomentary.c fireworkx.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -130,7 +131,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
 		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
 		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
-		  fuzzyflakes.o anemotaxis.o memscroller.c
+		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
+		  intermomentary.o fireworkx.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -149,7 +151,8 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
-		  pacman fuzzyflakes anemotaxis memscroller \
+		  pacman fuzzyflakes anemotaxis memscroller substrate \
+		  intermomentary fireworkx \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -195,7 +198,8 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 		  barcode.man piecewise.man cloudlife.man ljlatest.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
-		  anemotaxis.man memscroller.man
+		  anemotaxis.man memscroller.man substrate.man \
+		  intermomentary.man fireworkx.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -795,6 +799,15 @@ anemotaxis:	anemotaxis.o	$(HACK_OBJS) $(DBE)
 memscroller:	memscroller.o	$(HACK_OBJS) $(SHM) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(HACK_LIBS)
 
+substrate:	substrate.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+intermomentary:	intermomentary.o $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+fireworkx:	fireworkx.o	 $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1084,6 +1097,8 @@ fadeplot.o: ../config.h
 fadeplot.o: $(srcdir)/screenhack.h
 fadeplot.o: $(srcdir)/xlockmore.h
 fadeplot.o: $(srcdir)/xlockmoreI.h
+fireworkx.o: ../config.h
+fireworkx.o: $(srcdir)/screenhack.h
 flag.o: ../config.h
 flag.o: $(srcdir)/images/bob.xbm
 flag.o: $(srcdir)/screenhack.h
@@ -1140,6 +1155,8 @@ imsmap.o: ../config.h
 imsmap.o: $(srcdir)/screenhack.h
 interference.o: ../config.h
 interference.o: $(srcdir)/screenhack.h
+intermomentary.o: ../config.h
+intermomentary.o: $(srcdir)/screenhack.h
 jigsaw.o: ../config.h
 jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_f.xbm
 jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_h.xbm
@@ -1250,11 +1267,13 @@ pacman_ai.o: $(srcdir)/pacman.h
 pacman_ai.o: $(srcdir)/pacman_level.h
 pacman_ai.o: $(srcdir)/screenhack.h
 pacman_ai.o: $(srcdir)/xlockmoreI.h
+pacman_ai.o: $(srcdir)/xpm-pixmap.h
 pacman_level.o: ../config.h
 pacman_level.o: $(srcdir)/pacman.h
 pacman_level.o: $(srcdir)/pacman_level.h
 pacman_level.o: $(srcdir)/screenhack.h
 pacman_level.o: $(srcdir)/xlockmoreI.h
+pacman_level.o: $(srcdir)/xpm-pixmap.h
 pacman.o: ../config.h
 pacman.o: $(srcdir)/images/pacman/ghost-d1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-d2.xpm
@@ -1265,6 +1284,15 @@ pacman.o: $(srcdir)/images/pacman/ghost-r1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-r2.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-u1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-u2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-0.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-d1.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-d2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-l1.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-l2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-r1.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-r2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-u1.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-u2.xpm
 pacman.o: $(srcdir)/pacman_ai.h
 pacman.o: $(srcdir)/pacman.h
 pacman.o: $(srcdir)/pacman_level.h
@@ -1349,6 +1377,8 @@ strange.o: ../config.h
 strange.o: $(srcdir)/screenhack.h
 strange.o: $(srcdir)/xlockmore.h
 strange.o: $(srcdir)/xlockmoreI.h
+substrate.o: ../config.h
+substrate.o: $(srcdir)/screenhack.h
 swirl.o: ../config.h
 swirl.o: $(srcdir)/screenhack.h
 swirl.o: $(srcdir)/xlockmore.h

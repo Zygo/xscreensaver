@@ -1,10 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* pacman --- Mr. Pacman and his ghost friends */
 
-#if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
-
-#endif
+/*static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";*/
 
 /*-
  * Copyright (c) 2002 by Edwin de Jong <mauddib@gmx.net>.
@@ -22,6 +19,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 15-Aug-2004: Added support for pixmap pacman. Jeremy English jenglish@myself.com
  * 11-Aug-2004: Added support for pixmap ghost. jenglish@myself.com
  * 13-May-2002: Added -trackmouse feature thanks to code from 'maze.c'.  
  *		splitted up code into several files.  Retouched AI code, cleaned
@@ -35,8 +33,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 
 /* TODO:
    1. add "bonus" dots
-   2. make a bit better pacman sprite (mouth should be larger)
-   3. think of a better level generation algorithm
+   2. think of a better level generation algorithm
 */
 
 #define DEF_TRACKMOUSE "False"
@@ -84,10 +81,16 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 # include "images/pacman/ghost-d1.xpm"
 # include "images/pacman/ghost-d2.xpm"
 # include "images/pacman/ghost-mask.xpm" /* Used to clean up the dust left by wag. */
+# include "images/pacman/pacman-u1.xpm"
+# include "images/pacman/pacman-u2.xpm"
+# include "images/pacman/pacman-r1.xpm"
+# include "images/pacman/pacman-r2.xpm"
+# include "images/pacman/pacman-l1.xpm"
+# include "images/pacman/pacman-l2.xpm"
+# include "images/pacman/pacman-d1.xpm"
+# include "images/pacman/pacman-d2.xpm"
+# include "images/pacman/pacman-0.xpm"
 #endif
-
-static const struct { int dx, dy; } dirvecs[DIRVECS] =
-	{ {-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
 #ifdef DISABLE_INTERACTIVE
 ModeSpecOpt pacman_opts = {
@@ -457,6 +460,121 @@ drawlevel(ModeInfo * mi)
 
 
 /* Draws the pacman sprite, removing the previous location. */
+#if defined(USE_PIXMAP)
+
+static void
+draw_pacman_sprite(ModeInfo * mi)
+{
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	pacmangamestruct *pp = &pacmangames[MI_SCREEN(mi)];
+	unsigned int dir = 0;
+	int old_mask_dir = 0;
+	int old_mask_mouth = 0;
+	static int mouth = 0;
+	static int mouth_delay = 0;
+	static int open_mouth = 0;
+
+#define MAX_MOUTH_DELAY 10
+
+	pp->pacman.cf = pp->pacman.col * pp->xs + pp->pacman.delta.x * 
+		pp->pacman.cfactor + pp->xb + pp->spritedx;
+	pp->pacman.rf = pp->pacman.row * pp->ys + pp->pacman.delta.y * 
+		pp->pacman.rfactor + pp->yb + pp->spritedy;
+
+	dir = (ABS(pp->pacman.cfactor) * (2 - pp->pacman.cfactor) +
+	       ABS(pp->pacman.rfactor) * (1 + pp->pacman.rfactor)) % 4;
+
+	if (mouth_delay == MAX_MOUTH_DELAY){
+	  if (mouth == (MAXMOUTH - 1)|| mouth == 0){
+		open_mouth = !open_mouth;
+	  }
+	  open_mouth ? mouth++ : mouth--;
+	  mouth_delay = 0;
+	}else {
+	  mouth_delay++;
+	}
+
+	XSetForeground(display, 
+				   pp->stippledGC, 
+				   MI_BLACK_PIXEL(mi));
+
+	XSetClipMask(display, pp->stippledGC, pp->pacmanMask[old_mask_dir][old_mask_mouth]);
+	XSetClipOrigin(display, pp->stippledGC, 
+				   pp->pacman.oldcf, pp->pacman.oldrf);
+	XFillRectangle(display, 
+				   window, 
+				   pp->stippledGC,
+				   pp->pacman.oldcf, 
+				   pp->pacman.oldrf, 
+				   pp->spritexs, pp->spriteys);
+	XSetClipMask(display, pp->stippledGC, pp->pacmanMask[dir][mouth]);
+	XSetClipOrigin(display, pp->stippledGC, 
+				   pp->pacman.cf, pp->pacman.rf);
+	XCopyArea(display, pp->pacmanPixmap[dir][mouth], window, 
+			  pp->stippledGC,0,0,pp->spritexs,pp->spriteys,
+			  pp->pacman.cf, pp->pacman.rf);
+	XSetClipMask(display, pp->stippledGC, None);
+	pp->pacman.oldcf = pp->pacman.cf;
+	pp->pacman.oldrf = pp->pacman.rf;
+	old_mask_dir = dir;
+	old_mask_mouth = mouth;
+}
+
+
+
+static void
+draw_ghost_sprite(ModeInfo * mi, const unsigned ghost){
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	pacmangamestruct *pp = &pacmangames[MI_SCREEN(mi)];
+	static int wag = 0;
+#define MAX_WAG_COUNT 50
+	static int wag_count = 0;
+	unsigned int dir = 0;
+	
+	dir = (ABS(pp->ghosts[ghost].cfactor) * (2 - pp->ghosts[ghost].cfactor) +
+	       ABS(pp->ghosts[ghost].rfactor) * (1 + pp->ghosts[ghost].rfactor)) % 4;
+
+	pp->ghosts[ghost].cf = 
+		pp->ghosts[ghost].col * pp->xs + pp->ghosts[ghost].delta.x * 
+		pp->ghosts[ghost].cfactor + pp->xb + pp->spritedx;
+	pp->ghosts[ghost].rf = 
+		pp->ghosts[ghost].row * pp->ys + pp->ghosts[ghost].delta.y * 
+		pp->ghosts[ghost].rfactor + pp->yb + pp->spritedy;
+	XSetForeground(display, 
+				   pp->stippledGC, 
+				   MI_BLACK_PIXEL(mi));
+
+	XSetClipMask(display, pp->stippledGC, pp->ghostMask);
+	XSetClipOrigin(display, pp->stippledGC, 
+				   pp->ghosts[ghost].oldcf, pp->ghosts[ghost].oldrf);
+	XFillRectangle(display, 
+				   window, 
+				   pp->stippledGC,
+				   pp->ghosts[ghost].oldcf, 
+				   pp->ghosts[ghost].oldrf, 
+				   pp->spritexs, pp->spriteys);
+	drawlevelblock(mi, pp, 
+				   (unsigned int)pp->ghosts[ghost].col, 
+				   (unsigned int)pp->ghosts[ghost].row);
+	XSetClipOrigin(display, pp->stippledGC, 
+				   pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
+	XCopyArea(display, pp->ghostPixmap[ghost][dir][wag], window, 
+			  pp->stippledGC,0,0,pp->spritexs,pp->spriteys,
+			  pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
+	XSetClipMask(display, pp->stippledGC, None);
+	pp->ghosts[ghost].oldcf = pp->ghosts[ghost].cf;
+	pp->ghosts[ghost].oldrf = pp->ghosts[ghost].rf;
+	if (wag_count++ == MAX_WAG_COUNT){
+	  wag = !wag;
+	  wag_count = 0;
+	}
+}
+
+#else /* USE_PIXMAP */
+
+/* Draws the pacman sprite, removing the previous location. */
 static void
 draw_pacman_sprite(ModeInfo * mi)
 {
@@ -521,58 +639,6 @@ draw_pacman_sprite(ModeInfo * mi)
 	pp->pacman.oldcf = pp->pacman.cf;
 	pp->pacman.oldrf = pp->pacman.rf;
 }
-
-#if defined(USE_PIXMAP)
-static void
-draw_ghost_sprite(ModeInfo * mi, const unsigned ghost){
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-	pacmangamestruct *pp = &pacmangames[MI_SCREEN(mi)];
-	static int wag = 0;
-#define MAX_WAG_COUNT 50
-	static int wag_count = 0;
-	unsigned int dir = 0;
-	
-	dir = (ABS(pp->ghosts[ghost].cfactor) * (2 - pp->ghosts[ghost].cfactor) +
-	       ABS(pp->ghosts[ghost].rfactor) * (1 + pp->ghosts[ghost].rfactor)) % 4;
-
-	pp->ghosts[ghost].cf = 
-		pp->ghosts[ghost].col * pp->xs + pp->ghosts[ghost].delta.x * 
-		pp->ghosts[ghost].cfactor + pp->xb + pp->spritedx;
-	pp->ghosts[ghost].rf = 
-		pp->ghosts[ghost].row * pp->ys + pp->ghosts[ghost].delta.y * 
-		pp->ghosts[ghost].rfactor + pp->yb + pp->spritedy;
-	XSetForeground(display, 
-				   pp->stippledGC, 
-				   MI_BLACK_PIXEL(mi));
-
-	XSetClipMask(display, pp->stippledGC, pp->ghostMask);
-	XSetClipOrigin(display, pp->stippledGC, 
-				   pp->ghosts[ghost].oldcf, pp->ghosts[ghost].oldrf);
-	XFillRectangle(display, 
-				   window, 
-				   pp->stippledGC,
-				   pp->ghosts[ghost].oldcf, 
-				   pp->ghosts[ghost].oldrf, 
-				   pp->spritexs, pp->spriteys);
-	XSetClipOrigin(display, pp->stippledGC, 
-				   pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
-	XCopyArea(display, pp->ghostPixmap[ghost][dir][wag], window, 
-			  pp->stippledGC,0,0,pp->spritexs,pp->spriteys,
-			  pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
-	XSetClipMask(display, pp->stippledGC, None);
-	drawlevelblock(mi, pp, 
-				   (unsigned int)pp->ghosts[ghost].col, 
-				   (unsigned int)pp->ghosts[ghost].row);
-	pp->ghosts[ghost].oldcf = pp->ghosts[ghost].cf;
-	pp->ghosts[ghost].oldrf = pp->ghosts[ghost].rf;
-	if (wag_count++ == MAX_WAG_COUNT){
-	  wag = !wag;
-	  wag_count = 0;
-	}
-}
-
-#else
 
 /* Draws a ghost sprite, removing the previous sprite and restores the level. */
 static void
@@ -656,7 +722,7 @@ draw_ghost_sprite(ModeInfo * mi, const unsigned ghost) {
 	pp->ghosts[ghost].oldcf = pp->ghosts[ghost].cf;
 	pp->ghosts[ghost].oldrf = pp->ghosts[ghost].rf;
 }
-#endif
+#endif /* USE_PIXMAP */
 
 /* Does all drawing of moving sprites in the level. */
 static void
@@ -682,7 +748,7 @@ pacman_tick(ModeInfo * mi)
  *  Changed it so that the information specific 
  *  to the source pixmap does not have to be a parameter.
  *
- *  There is probable a better way to scale pixmaps.
+ *  There is probably a better way to scale pixmaps.
  *  From: Chris Fiddyment (cxf@itd.dsto.gov.au)
  *  Subject: Scaling Pixmap Algorithm.
  *  Newsgroups: comp.graphics.algorithms
@@ -731,9 +797,15 @@ scale_pixmap( Display **dpy, GC gc, Pixmap source, int dwidth, int dheight)
    return (Pixmap) dest;
 }
 
-/* Load any needed pixmaps and their mask. */
 static void
-load_pixmaps(Display **dpy, Window window, pacmangamestruct **ps)
+pacman_fail(char *s){
+  fprintf (stderr, "%s: %s\n", progname, s);
+  exit(1);
+}  
+
+/* Load the ghost pixmaps and their mask. */
+static void
+load_ghost_pixmaps(Display **dpy, Window window, pacmangamestruct **ps)
 {
   pacmangamestruct *pp = *ps;
   Display *display = *dpy;
@@ -761,20 +833,13 @@ load_pixmaps(Display **dpy, Window window, pacmangamestruct **ps)
 		bits[m][2] = colors[i];
 		pp->ghostPixmap[i][j][k] = xpm_data_to_pixmap (display, window, bits[m],
 														   &w, &h, &pp->ghostMask);
-		if (!pp->ghostPixmap[i][j][k])
-		  {
-			fprintf (stderr, "%s: Can't load ghost images\n", progname);
-			exit(1);
-		  }
+
+		if (!pp->ghostPixmap[i][j][k]) pacman_fail("Cannot load ghost images");
 
 		pp->ghostPixmap[i][j][k] = scale_pixmap(&display, pp->stippledGC, 
 												pp->ghostPixmap[i][j][k], pp->spritexs, pp->spriteys);
-		if (!pp->ghostPixmap[i][j][k])
-		  {
-			fprintf (stderr, "%s: Can't load ghost images\n", progname);
-			exit(1);
-		  }
-		
+
+		if (!pp->ghostPixmap[i][j][k]) pacman_fail("Cannot scale ghost images");
 		m++;
 	  }
 	}
@@ -786,25 +851,61 @@ load_pixmaps(Display **dpy, Window window, pacmangamestruct **ps)
    */
   temp = xpm_data_to_pixmap (display, window, ghost_mask_xpm,
 							 &w, &h, &pp->ghostMask);
-  if (!temp)
-	{
-	  fprintf (stderr, "%s: Can't load ghost images\n", progname);
-	  exit(1);
-	}
+
+  if (!temp) pacman_fail("Cannot load temporary ghost image");
   
   temp = scale_pixmap(&display, pp->stippledGC, 
 					  temp, pp->spritexs, pp->spriteys);
-  if (!temp)
-	{
-	  fprintf (stderr, "%s: Can't load ghost images\n", progname);
-	  exit(1);
-	}
+
+  if (!temp) pacman_fail("Cannot scale temporary ghost image");
+
   gc = XCreateGC(display, pp->ghostMask, 0, 0);
+
   pp->ghostMask = scale_pixmap(&display, gc, pp->ghostMask, 
 							   pp->spritexs, pp->spriteys);
   XFreePixmap(display, temp);
 }
-#endif
+
+/* Load the pacman pixmaps and their mask. */
+static void
+load_pacman_pixmaps(Display **dpy, Window window, pacmangamestruct **ps)
+{
+  pacmangamestruct *pp = *ps;
+  Display *display = *dpy;
+
+  static char **bits[] = {
+	pacman_0_xpm,  pacman_u1_xpm, pacman_u2_xpm,
+	pacman_0_xpm,  pacman_r1_xpm, pacman_r2_xpm,
+	pacman_0_xpm,  pacman_d1_xpm, pacman_d2_xpm,
+	pacman_0_xpm,  pacman_l1_xpm, pacman_l2_xpm
+  };
+  int i, j, m;
+  int w = pp->spritexs;
+  int h = pp->spriteys;
+  GC gc = 0;
+
+  m = 0;  
+  for (i = 0; i < 4; i++){
+	for ( j = 0; j < MAXMOUTH; j++){
+	  pp->pacmanPixmap[i][j] = xpm_data_to_pixmap (display, window, bits[m++],
+													 &w, &h, &pp->pacmanMask[i][j]);
+
+	  if (!pp->pacmanPixmap[i][j]) pacman_fail("Cannot load pacman pixmap.");
+
+	  pp->pacmanPixmap[i][j] = scale_pixmap(&display, pp->stippledGC, 
+												pp->pacmanPixmap[i][j], pp->spritexs, pp->spriteys);
+
+	  if (!pp->pacmanPixmap[i][j]) pacman_fail("Cannot scale pacman pixmap.");
+
+	  if (!gc)
+		gc = XCreateGC(display, pp->pacmanMask[i][j], 0, 0);
+
+	  pp->pacmanMask[i][j] = scale_pixmap(&display, gc, pp->pacmanMask[i][j], 
+								   pp->spritexs, pp->spriteys);	
+	}
+  }
+}
+#endif /* USE_PIXMAP */
 
 /* Hook function, sets state to initial position. */
 void
@@ -815,9 +916,13 @@ init_pacman(ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	pacmangamestruct *pp;
 	XGCValues   gcv;
-	int	    dir, mouth, i, j, k;
+	int i, j, k;
+
+#if (! defined( USE_PIXMAP ))
 	GC          fg_gc, bg_gc;
-/*	XPoint	    points[9]; */
+	XPoint	    points[9];
+	int dir, mouth;
+#endif
 
 	if (pacmangames == NULL) {
 		if ((pacmangames = (pacmangamestruct *) 
@@ -884,7 +989,8 @@ init_pacman(ModeInfo * mi)
 	}
 
 #if defined(USE_PIXMAP)
-	load_pixmaps(&display,window,&pp);
+	load_ghost_pixmaps(&display,window,&pp);
+	load_pacman_pixmaps(&display,window,&pp);
 #else
 	if ((pp->ghostPixmap[0][0][0] = XCreatePixmap(display, window,
 		pp->spritexs, pp->spriteys, 1)) == None) {
@@ -930,7 +1036,6 @@ init_pacman(ModeInfo * mi)
 		points, 9, Nonconvex, CoordModeOrigin);
 	XFreeGC(display, bg_gc);
 	XFreeGC(display, fg_gc);
-#endif
 
 
 	if (pp->pacmanPixmap[0][0] != None)
@@ -985,6 +1090,7 @@ init_pacman(ModeInfo * mi)
 			XFreeGC(display, fg_gc);
 			XFreeGC(display, bg_gc);
 		}
+#endif /* USE_PIXMAP */
 
 	pp->pacman.lastbox = START;
 	pp->pacman.mouthdirection = 1;

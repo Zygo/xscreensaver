@@ -8,7 +8,7 @@ memscroller - scrolls a dump of its own RAM across the screen
 [\-font \fIfont\fP]
 [\-delay \fIint\fP]
 [\-mono | -color]
-[\-ram | -random]
+[\-ram | -random | \-filename \fIfile\fP]
 .SH DESCRIPTION
 The \fImemscroller\fP program scrolls a dump of its own process memory
 across the screen in three windows at three different rates.
@@ -40,6 +40,12 @@ Read from the process's address space.  This is the default.
 .TP 8
 .B \-random
 Instead of reading from memory, generate random numbers.
+.TP 8
+.B \-filename \fIfile\fP
+Instead of reading from memory, read from the given file until EOF, then
+re-open it.  If you have permission, /dev/mem is an interesting choice here.
+(Note that /dev/null won't ever display anything, because it returns EOF
+without ever returning any data.)
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.

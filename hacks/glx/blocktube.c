@@ -50,7 +50,7 @@ extern XtAppContext app;
 
 #include <GL/glu.h>
 
-#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( HAVE_XPM )
+#if defined(USE_XPM) || defined(USE_XPMINC) || defined(HAVE_XPM) || defined (HAVE_GDK_PIXBUF)
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
 #include "xpm-ximage.h"
 #define I_HAVE_XPM

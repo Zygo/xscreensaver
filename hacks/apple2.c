@@ -684,7 +684,7 @@ apple2(Display *dpy, Window window, int delay,
            and even bytes have different color spaces. So, pattern[0..600]
            gets the dots for one scan line. */
 
-        char *pp=&sim->inp->signal[row+ANALOGTV_TOP+4][ANALOGTV_PIC_START+100];
+        signed char *pp=&sim->inp->signal[row+ANALOGTV_TOP+4][ANALOGTV_PIC_START+100];
 
         if ((sim->st->gr_mode&A2_GR_HIRES) &&
             (row<160 || (sim->st->gr_mode&A2_GR_FULL))) {

@@ -69,7 +69,7 @@ enum {
 };
 
 typedef struct analogtv_input_s {
-  char signal[ANALOGTV_V+1][ANALOGTV_H];
+  signed char signal[ANALOGTV_V+1][ANALOGTV_H];
 
   int do_teletext;
 

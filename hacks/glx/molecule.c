@@ -41,11 +41,13 @@
 #define DEF_BONDS       "True"
 #define DEF_BBOX        "False"
 #define DEF_MOLECULE    "(default)"
+#define DEF_VERBOSE     "False"
 
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*timeout:    " DEF_TIMEOUT  "\n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
+                        "*verbose:    " DEF_VERBOSE  "\n" \
 			"*molecule:   " DEF_MOLECULE "\n" \
 			"*spin:       " DEF_SPIN     "\n" \
 			"*wander:     " DEF_WANDER   "\n" \
@@ -188,6 +190,7 @@ static Bool do_labels;
 static Bool do_atoms;
 static Bool do_bonds;
 static Bool do_bbox;
+static Bool verbose_p;
 
 static Bool orig_do_labels, orig_do_bonds, orig_wire; /* saved to reset */
 
@@ -207,8 +210,9 @@ static XrmOptionDescRec opts[] = {
   { "+atoms",  ".atoms",  XrmoptionNoArg, "False" },
   { "-bonds",  ".bonds",  XrmoptionNoArg, "True" },
   { "+bonds",  ".bonds",  XrmoptionNoArg, "False" },
-  { "-bbox",   ".bbox",  XrmoptionNoArg, "True" },
-  { "+bbox",   ".bbox",  XrmoptionNoArg, "False" },
+  { "-bbox",   ".bbox",   XrmoptionNoArg, "True" },
+  { "+bbox",   ".bbox",   XrmoptionNoArg, "False" },
+  { "-verbose",".verbose",XrmoptionNoArg, "True" },
 };
 
 static argtype vars[] = {
@@ -221,6 +225,7 @@ static argtype vars[] = {
   {&do_atoms,  "atoms",  "Atoms",  DEF_ATOMS,  t_Bool},
   {&do_bonds,  "bonds",  "Bonds",  DEF_BONDS,  t_Bool},
   {&do_bbox,   "bbox",   "BBox",   DEF_BBOX,   t_Bool},
+  {&verbose_p, "verbose","Verbose",DEF_VERBOSE,t_Bool},
 };
 
 ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -1088,7 +1093,6 @@ load_molecules (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
-  Bool verbose_p = False;
   int i;
 
   mc->nmolecules = 0;
@@ -1495,6 +1499,15 @@ pick_new_molecule (ModeInfo *mi, time_t last)
       mc->which = n;
     }
           
+  if (verbose_p)
+    {
+      char *name = strdup (mc->molecules[mc->which].label);
+      char *s = strpbrk (name, "\r\n");
+      if (s) *s = 0;
+      fprintf (stderr, "%s: drawing %s (%d)\n", progname, name, mc->which);
+      free (name);
+    }
+
   glNewList (mc->molecule_dlist, GL_COMPILE);
   ensure_bounding_box_visible (mi);
 

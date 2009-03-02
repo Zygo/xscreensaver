@@ -88,8 +88,11 @@
 #include <gdk/gdkx.h>
 
 #ifdef HAVE_GTK2
-#include <glade/glade-xml.h>
-#endif /* HAVE_GTK2 */
+# include <glade/glade-xml.h>
+# include <gmodule.h>
+#else  /* !HAVE_GTK2 */
+# define G_MODULE_EXPORT /**/
+#endif /* !HAVE_GTK2 */
 
 #if defined(DEFAULT_ICONDIR) && !defined(GLADE_DIR)
 # define GLADE_DIR DEFAULT_ICONDIR
@@ -618,9 +621,13 @@ run_hack (state *s, int list_elt, Bool report_errors_p)
 
 
 /* Button callbacks
+
+   According to Eric Lassauge, this G_MODULE_EXPORT crud is needed to make
+   libglade work on Cygwin; apparently all Glade callbacks need this magic
+   extra declaration.  I do not pretend to understand.
  */
 
-void
+G_MODULE_EXPORT void
 exit_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -639,7 +646,7 @@ wm_toplevel_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 }
 
 
-void
+G_MODULE_EXPORT void
 about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   char msg [2048];
@@ -766,7 +773,7 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -792,7 +799,7 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 activate_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -800,7 +807,7 @@ activate_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 lock_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -808,7 +815,7 @@ lock_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 kill_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -816,7 +823,7 @@ kill_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 restart_menu_cb (GtkWidget *widget, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -939,7 +946,7 @@ demo_write_init_file (state *s, saver_preferences *p)
 }
 
 
-void
+G_MODULE_EXPORT void
 run_this_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -950,7 +957,7 @@ run_this_cb (GtkButton *button, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 manual_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1023,7 +1030,7 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
 }
 
 
-void
+G_MODULE_EXPORT void
 run_next_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1052,7 +1059,7 @@ run_next_cb (GtkButton *button, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 run_prev_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1554,7 +1561,7 @@ flush_popup_changes_and_save (state *s)
 }
 
 
-void
+G_MODULE_EXPORT void
 pref_changed_cb (GtkWidget *widget, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1566,7 +1573,7 @@ pref_changed_cb (GtkWidget *widget, gpointer user_data)
     }
 }
 
-gboolean
+G_MODULE_EXPORT gboolean
 pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
   pref_changed_cb (widget, user_data);
@@ -1618,7 +1625,7 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
                 gint page_num, gpointer user_data)
 {
@@ -1861,7 +1868,7 @@ browse_image_dir_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT void
 browse_image_dir_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1897,7 +1904,7 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
 }
 
 
-void
+G_MODULE_EXPORT  void
 settings_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1920,7 +1927,7 @@ settings_sync_cmd_text (state *s)
 # endif /* HAVE_XML */
 }
 
-void
+G_MODULE_EXPORT void
 settings_adv_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1931,7 +1938,7 @@ settings_adv_cb (GtkButton *button, gpointer user_data)
   gtk_notebook_set_page (notebook, 1);
 }
 
-void
+G_MODULE_EXPORT void
 settings_std_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -1944,7 +1951,7 @@ settings_std_cb (GtkButton *button, gpointer user_data)
   gtk_notebook_set_page (notebook, 0);
 }
 
-void
+G_MODULE_EXPORT void
 settings_switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
                          gint page_num, gpointer user_data)
 {
@@ -1968,14 +1975,14 @@ settings_switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
 
 
 
-void
+G_MODULE_EXPORT void
 settings_cancel_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
   gtk_widget_hide (s->popup_widget);
 }
 
-void
+G_MODULE_EXPORT void
 settings_ok_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */

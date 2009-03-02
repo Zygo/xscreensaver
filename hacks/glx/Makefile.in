@@ -96,7 +96,7 @@ SRCS		= xscreensaver-gl-helper.c \
 		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
-		  antinspect.c providence.c
+		  antinspect.c providence.c pinion.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -125,7 +125,7 @@ OBJS		= xscreensaver-gl-helper.o \
 		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
-		  antinspect.o providence.o
+		  antinspect.o providence.o pinion.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -136,7 +136,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
-		  antinspect providence
+		  antinspect providence pinion
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -169,7 +169,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubestorm.man glknots.man blocktube.man flipflop.man \
 		  antspotlight.man polytopes.man gleidescope.man \
 		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
-		  antinspect.man providence.man
+		  antinspect.man providence.man pinion.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -601,6 +601,9 @@ antinspect:	antinspect.o	$(TRACK_OBJS) $(HACK_OBJS)
 providence:	providence.o	$(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
+pinion:		pinion.o	$(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
 dnalogo:	dnalogo.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
@@ -807,6 +810,8 @@ molecule.o: $(srcdir)/sphere.h
 molecule.o: $(srcdir)/tube.h
 morph3d.o: ../../config.h
 noof.o: ../../config.h
+pinion.o: ../../config.h
+pinion.o: $(srcdir)/gltrackball.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(srcdir)/buildlwo.h
 pipes.o: ../../config.h

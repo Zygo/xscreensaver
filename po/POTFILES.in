@@ -1,4 +1,4 @@
-# Auto-generated: Tue May 25 12:15:03 RDT 2004
+# Auto-generated: Mon Oct  4 16:24:15 RDT 2004
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -7,6 +7,7 @@ driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade
 driver/xscreensaver-demo.glade2
 hacks/config/anemone.xml
+hacks/config/anemotaxis.xml
 hacks/config/ant.xml
 hacks/config/antinspect.xml
 hacks/config/antspotlight.xml
@@ -110,6 +111,7 @@ hacks/config/lissie.xml
 hacks/config/lmorph.xml
 hacks/config/loop.xml
 hacks/config/maze.xml
+hacks/config/memscroller.xml
 hacks/config/menger.xml
 hacks/config/metaballs.xml
 hacks/config/mirrorblob.xml
@@ -158,7 +160,7 @@ hacks/config/slip.xml
 hacks/config/sonar.xml
 hacks/config/speedmine.xml
 hacks/config/sphere.xml
-hacks/config/sphereEversion.xml
+hacks/config/sphereeversion.xml
 hacks/config/spheremonics.xml
 hacks/config/spiral.xml
 hacks/config/spotlight.xml

@@ -206,6 +206,9 @@
 				fuzzyflakes -root			    \\n\
 				anemotaxis -root			    \\n\
 				memscroller -root			    \\n\
+				substrate -root				    \\n\
+				intermomentary -root			    \\n\
+				fireworkx -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -279,6 +282,11 @@
 	   GL:			blinkbox -root				    \\n\
 	   GL:			noof -root				    \\n\
 	   GL:			polyhedra -root				    \\n\
+-	   GL:                  antinspect -root                            \\n\
+	   GL:			providence -root			    \\n\
+	   GL:	\"Pinion (large gears)\"	pinion -root			    \\n\
+	   GL:	\"Pinion (small gears)\"	pinion -root -size 0.2		    \\n\
+	   GL:			pinion -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -297,9 +305,7 @@
 -				electricsheep                               \\n\
 -				cosmos -root                                \\n\
 -	   GL:                  sphereEversion --root                       \\n\
--	   GL:                  fireflies -root                             \\n\
--	   GL:                  antinspect -root                            \\n\
--	   GL:                  providence -root                            \\n",
+-	   GL:                  fireflies -root                             \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.initialDelay:		0:00:00",
 "XScreenSaver.windowCreationTimeout:	0:00:30",

@@ -30,17 +30,21 @@ extern XtAppContext app;
 
 #define DEF_SPEED       "1.0"
 #define DEF_DENSITY     "20"
+#define DEF_CLOCK       "False"
 #define DEF_FOG         "True"
 #define DEF_WAVES       "True"
 #define DEF_ROTATE      "True"
 #define DEF_TEXTURE     "True"
 #define DEF_MODE        "Matrix"
+#define DEF_TIMEFMT     " %l%M%p "
 
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
 			"*mode:       " DEF_MODE    " \n" \
 			"*speed:      " DEF_SPEED   " \n" \
+			"*clock:      " DEF_CLOCK   " \n" \
+			"*timefmt:    " DEF_TIMEFMT " \n" \
 			"*density:    " DEF_DENSITY " \n" \
 			"*fog:        " DEF_FOG     " \n" \
 			"*waves:      " DEF_WAVES   " \n" \
@@ -56,6 +60,8 @@ extern XtAppContext app;
 #include "xlockmore.h"
 #include "xpm-ximage.h"
 #include <ctype.h>
+#include <time.h>
+#include <stdio.h>
 
 #ifdef __GNUC__
   __extension__  /* don't warn about "string length is greater than the length
@@ -84,26 +90,30 @@ static int hex_encoding[]      = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
                                    33, 34, 35, 36, 37, 38 };
 static int binary_encoding[] = { 16, 17 };
 static int dna_encoding[]    = { 33, 35, 39, 52 };
-#if 0
+
 static unsigned char char_map[256] = {
-    3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /*   0 */
-    3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /*  16 */
-    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,  /*  32 */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /*   0 */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /*  16 */
+    0,  1,  2, 96,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,  /*  32 */
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,  /*  48 */
    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,  /*  64 */
    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,  /*  80 */
    64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,  /*  96 */
    80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,  /* 112 */
-    3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /* 128 */
-    3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /* 144 */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /* 128 */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /* 144 */
    96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,  /* 160 */
   112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,  /* 176 */
   128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,  /* 192 */
   144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,  /* 208 */
+#if 0
   160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,  /* 224 */
   176,177,178,195,180,181,182,183,184,185,186,187,188,189,190,191   /* 240 */
+#else /* see spank_image() */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /* 224 */
+   96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /* 240 */
+#endif
 };
-#endif /* 0 */
 
 #define CURSOR_GLYPH 97
 
@@ -150,6 +160,9 @@ typedef struct {
                              0 means no glyph; negative means "spinner".
                              If non-zero, real value is abs(G)-1. */
 
+  Bool highlight[GRID_SIZE];
+                          /* some glyphs may be highlighted */
+  
   int spin_speed;         /* Rotate all spinners every this-many frames */
   int spin_tick;          /* frame counter */
 
@@ -184,6 +197,8 @@ static GLfloat brightness_ramp[WAVE_SIZE];
 
 static GLfloat speed;
 static GLfloat density;
+static Bool do_clock;
+static char *timefmt;
 static Bool do_fog;
 static Bool do_waves;
 static Bool do_rotate;
@@ -198,6 +213,9 @@ static XrmOptionDescRec opts[] = {
   { "-hexadecimal", ".mode",      XrmoptionNoArg, "hexadecimal" },
   { "-decimal",     ".mode",      XrmoptionNoArg, "decimal"     },
   { "-dna",         ".mode",      XrmoptionNoArg, "dna"         },
+  { "-clock",       ".clock",     XrmoptionNoArg, "True"  },
+  { "+clock",       ".clock",     XrmoptionNoArg, "False" },
+  { "-timefmt",     ".timefmt",   XrmoptionSepArg, 0  },
   { "-fog",         ".fog",       XrmoptionNoArg, "True"  },
   { "+fog",         ".fog",       XrmoptionNoArg, "False" },
   { "-waves",       ".waves",     XrmoptionNoArg, "True"  },
@@ -212,6 +230,8 @@ static argtype vars[] = {
   {&mode_str,   "mode",       "Mode",    DEF_MODE,      t_String},
   {&speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
   {&density,    "density",    "Density", DEF_DENSITY,   t_Float},
+  {&do_clock,   "clock",      "Clock",   DEF_CLOCK,     t_Bool},
+  {&timefmt,    "timefmt",    "Timefmt", DEF_TIMEFMT,   t_String},
   {&do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
   {&do_waves,   "waves",      "Waves",   DEF_WAVES,     t_Bool},
   {&do_rotate,  "rotate",     "Rotate",  DEF_ROTATE,    t_Bool},
@@ -228,6 +248,7 @@ reset_strip (ModeInfo *mi, strip *s)
 {
   matrix_configuration *mp = &mps[MI_SCREEN(mi)];
   int i;
+  Bool time_displayed_p = False;  /* never display time twice in one strip */
 
   memset (s, 0, sizeof(*s));
   s->x = (GLfloat) (frand(GRID_SIZE) - (GRID_SIZE/2));
@@ -250,15 +271,38 @@ reset_strip (ModeInfo *mi, strip *s)
   s->wave_tick  = 0;
 
   for (i = 0; i < GRID_SIZE; i++)
-    {
-      int draw_p = (random() % 7);
-      int spin_p = (draw_p && !(random() % 20));
-      int g = (draw_p
-               ? mp->glyph_map[(random() % mp->nglyphs)] + 1
-               : 0);
-      if (spin_p) g = -g;
-      s->glyphs[i] = g;
-    }
+    if (do_clock &&
+        !time_displayed_p &&
+        (i < GRID_SIZE-5) &&   /* display approx. once per 5 strips */
+	!(random() % (GRID_SIZE-5)*5))
+      {
+	int j;
+	char text[80];
+        time_t now = time ((time_t *) 0);
+        struct tm *tm = localtime (&now);
+	strftime (text, sizeof(text)-1, timefmt, tm);
+
+	/* render time into the strip */
+	for (j = 0; j < strlen(text) && i < GRID_SIZE; j++, i++)
+	  {
+	    s->glyphs[i] = char_map [((unsigned char *) text)[j]] + 1;
+	    s->highlight[i] = True;
+	  }
+
+        time_displayed_p = True;	
+      }
+    else
+      {
+	int draw_p = (random() % 7);
+	int spin_p = (draw_p && !(random() % 20));
+	int g = (draw_p
+		 ? mp->glyph_map[(random() % mp->nglyphs)] + 1
+		 : 0);
+	if (spin_p) g = -g;
+	s->glyphs[i] = g;
+	s->highlight[i] = False;
+      }
+
   s->spinner_glyph = - (mp->glyph_map[(random() % mp->nglyphs)] + 1);
 }
 
@@ -330,7 +374,7 @@ tick_strip (ModeInfo *mi, strip *s)
 /* Draw a single character at the given position and brightness.
  */
 static void
-draw_glyph (ModeInfo *mi, int glyph,
+draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
             GLfloat x, GLfloat y, GLfloat z,
             GLfloat brightness)
 {
@@ -373,6 +417,10 @@ draw_glyph (ModeInfo *mi, int glyph,
 
   {
     GLfloat r, g, b, a = 1;
+
+    if (highlight)
+      brightness *= 2;
+
     if (!do_texture && !spinner_p)
       r = b = 0, g = brightness;
     else
@@ -461,12 +509,14 @@ draw_strip (ModeInfo *mi, strip *s)
               brightness = brightness_ramp[j];
             }
 
-          draw_glyph (mi, g, s->x, s->y - i, s->z, brightness);
+          draw_glyph (mi, g, s->highlight[i],
+		      s->x, s->y - i, s->z, brightness);
         }
     }
 
   if (!s->erasing_p)
-    draw_glyph (mi, s->spinner_glyph, s->x, s->y - s->spinner_y, s->z, 1.0);
+    draw_glyph (mi, s->spinner_glyph, False,
+		s->x, s->y - s->spinner_y, s->z, 1.0);
 }
 
 

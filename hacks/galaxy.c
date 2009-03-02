@@ -56,26 +56,32 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 #endif /* !STANDALONE */
 
 static Bool tracks;
+static Bool spin;
 
 #define DEF_TRACKS "True"
+#define DEF_SPIN   "True"
 
 static XrmOptionDescRec opts[] =
 {
  {"-tracks", ".galaxy.tracks", XrmoptionNoArg, "on"},
- {"+tracks", ".galaxy.tracks", XrmoptionNoArg, "off"}
+ {"+tracks", ".galaxy.tracks", XrmoptionNoArg, "off"},
+ {"-spin",   ".galaxy.spin",   XrmoptionNoArg, "on"},
+ {"+spin",   ".galaxy.spin",   XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] =
 {
- {&tracks, "tracks", "Tracks", DEF_TRACKS, t_Bool}
+ {&tracks, "tracks", "Tracks", DEF_TRACKS, t_Bool},
+ {&spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool}
 };
 
 static OptionStruct desc[] =
 {
- {"-/+tracks", "turn on/off star tracks"}
+ {"-/+tracks", "turn on/off star tracks"},
+ {"-/+spin",   "do/don't spin viewpoint"}
 };
 
-ModeSpecOpt galaxy_opts = { 2, opts, 1, vars, desc };
+ModeSpecOpt galaxy_opts = { 4, opts, 2, vars, desc };
 
 
 #define FLOATRAND ((double) LRAND() / ((double) MAXRAND))
@@ -320,8 +326,10 @@ draw_galaxy(ModeInfo * mi)
  int         i, j, k; /* more tmp */
     XPoint    *dummy = NULL;
 
-    gp->rot_y += 0.01;
- gp->rot_x += 0.004;
+ if(spin){
+  gp->rot_y += 0.01;
+  gp->rot_x += 0.004;
+ }
 
  cox = COSF(gp->rot_y);
  six = SINF(gp->rot_y);

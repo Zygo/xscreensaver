@@ -3,7 +3,7 @@
 galaxy - draws spinning galaxies
 .SH SYNOPSIS
 .B galaxy
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-tracks] [\-no\-tracks]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-tracks] [\-no\-tracks] [\-spin] [\-no\-spin]
 
 .SH DESCRIPTION
 The \fIgalaxy\fP program draws spinning galaxies.
@@ -33,18 +33,18 @@ The colors used cycle through the hue, making N stops around
 the color wheel.
 .TP 8
 .B \-cycles \fIinteger\fP
-
 .TP 8
 .B \-count \fIinteger\fP
-
 .TP 8
 .B \-size \fIinteger\fP
-
 .TP 8
 .B \-tracks
 .TP 8
 .B \-no\-tracks
-
+.TP 8
+.B \-spin
+.TP 8
+.B \-no\-spin
 .SH ENVIRONMENT
 .PP
 .TP 8

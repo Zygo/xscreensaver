@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003, 2004 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use Text::Wrap qw(wrap);
 use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.9 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -290,17 +290,23 @@ sub lj_latest {
 
   print STDOUT "\n\n" if ($verbose);
 
-#  $body = `cat /tmp/last`;
-#  if (1) {
-#    local *OUT;
-#    open OUT, ">/tmp/last";
-#    print OUT "$http\n$head\n$body\n";
-#    close OUT;
-#  }
-
   $body =~ s/(<item\b)/\001\001$1/gsi;
+  my @items = split (/\001\001/, $body);
+
+  # Let's skip forward in the stream by a random amount, so that if
+  # two copies of ljlatest are running at the same time (e.g., on a
+  # multi-headed machine), they get different text.  (Put the items
+  # that we take off the front back on the back.)
+  #
+  if ($#items > 10) {
+    my $n = int (rand ($#items - 5));
+    while ($n-- > 0) {
+      push @items, (shift @items);
+    }
+  }
+
   my $i = 0;
-  foreach (split (/\001\001/, $body)) {
+  foreach (@items) {
     next unless m/^<item\b/i;
     last if (defined ($count) && $i >= $count);
 
