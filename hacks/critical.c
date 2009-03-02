@@ -438,6 +438,7 @@ static XrmOptionDescRec critical_options[] = {
 /* Default xrm resources. */
 static const char *critical_defaults[] = {
   ".background:			black",
+  "*fpsSolid:			true",
   "*colorscheme:		smooth",
   "*delay:			10000", 
   "*ncolors:			64",

@@ -11,6 +11,7 @@ polyominoes - fill a rectangle with irregularly-shaped blocks.
 [\-cycles \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Repeatedly attempts to completely fill a rectangle with irregularly-shaped
 puzzle pieces.
@@ -37,6 +38,9 @@ Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of Colors.  Default: 64.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

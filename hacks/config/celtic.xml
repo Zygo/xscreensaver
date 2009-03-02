@@ -5,18 +5,22 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="10000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <number id="delay2" type="slider" arg="-delay2 %"
-          _label="Pause" _low-label="Short" _high-label="Long"
+          _label="Linger" _low-label="Short" _high-label="Long"
           low="0" high="10" default="5"/>
 
-  <boolean id="graph" _label="Draw Graph" arg-set="-graph"/>
+  <boolean id="graph" _label="Draw graph" arg-set="-graph"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Repeatedly draws random Celtic cross-stitch patterns.
+
+http://en.wikipedia.org/wiki/Celtic_knot
 
 Written by Max Froumentin; 2005.
   </_description>

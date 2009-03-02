@@ -83,7 +83,8 @@ static const char sccsid[] = "@(#)bouboule.c	4.00 97/01/01 xlockmore";
 					"*right3d:		red		\n"			\
 					"*left3d:		blue	\n"			\
 					"*both3d:		magenta	\n"			\
-					"*none3d:		black	\n"
+					"*none3d:		black	\n"			\
+					"*fpsSolid:		true	\n"
 
 # define SMOOTH_COLORS
 # define reshape_bouboule 0

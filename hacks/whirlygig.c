@@ -406,7 +406,7 @@ whirlygig_init (Display *dpy, Window window)
     st->info->half_width = st->xgwa.width / 2;
     st->info->half_height = st->xgwa.height / 2;
     st->info->speed = get_integer_resource(st->dpy, "speed" , "Integer");
-    st->info->trail = get_integer_resource(st->dpy, "trail", "Integer");
+    st->info->trail = get_boolean_resource(st->dpy, "trail", "Integer");
     st->info->color_modifier = get_integer_resource(st->dpy, "color_modifier", "Integer");
     st->info->xoffset = get_float_resource(st->dpy, "xoffset", "Float");
     st->info->yoffset = get_float_resource(st->dpy, "yoffset", "Float");
@@ -659,6 +659,7 @@ whirlygig_free (Display *dpy, Window window, void *closure)
 static const char *whirlygig_defaults [] = {
   ".background: black",
   ".foreground: white",
+  "*fpsSolid:	true",
   "*xspeed: 1.0",
   "*yspeed: 1.0",
   "*xamplitude: 1.0",
@@ -668,7 +669,7 @@ static const char *whirlygig_defaults [] = {
   "*xmode: change",
   "*ymode: change",
   "*speed: 1",
-  "*trail: 0",
+  "*trail: false",
   "*color_modifier: -1",
   "*start_time: -1",
   "*explain: False",
@@ -704,7 +705,7 @@ static XrmOptionDescRec whirlygig_options [] = {
   { "-ymode",       ".ymode", XrmoptionSepArg, 0 },
   { "-speed",        ".speed", XrmoptionSepArg, 0 },
       /*  This will modify how often it should draw, changing it will probably suck */
-  { "-trail",           ".trail", XrmoptionSepArg, 0 },
+  { "-trail",           ".trail", XrmoptionNoArg, "True" },
       /* Control whether or not you want the old circles to be erased */
   { "-color_modifier",          ".color_modifier", XrmoptionSepArg, 0 },
       /*  How many colors away from the current should the next whirly be? */

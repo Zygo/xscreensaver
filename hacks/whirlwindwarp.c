@@ -482,6 +482,7 @@ whirlwindwarp_free (Display *dpy, Window window, void *closure)
 static const char *whirlwindwarp_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*points:	400",
   "*tails:	8",
   "*meters:	false",
@@ -495,4 +496,4 @@ static XrmOptionDescRec whirlwindwarp_options [] = {
   { 0, 0, 0, 0 }
 };
 
-XSCREENSAVER_MODULE ("Whirlwindwarp", whirlwindwarp)
+XSCREENSAVER_MODULE ("WhirlWindWarp", whirlwindwarp)

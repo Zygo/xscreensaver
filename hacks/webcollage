@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.142 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.143 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -3263,7 +3263,7 @@ sub paste_image($$$$) {
       # the next network retrieval, which is probably a better thing
       # to do anyway.
       #
-      $cmd .= " &";
+      $cmd .= " &" unless ($cocoa_p);
 
       $rc = nontrapping_system ($cmd);
 

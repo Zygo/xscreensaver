@@ -4,29 +4,33 @@
 
   <command arg="-root"/>
 
-  <!-- #### -no-additive -->
-
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20" default="1"/>
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="50000" default="17000"
+          convert="invert"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Steps" _low-label="Few" _high-label="Many"
           low="1" high="1000" default="768"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="17000"
-          convert="invert"/>
-
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
-  <number id="size" type="spinbutton" arg="-size %"
-           _label="Size" low="-10" high="10" default="-1"/>
+  <number id="size" type="slider" arg="-size %"
+            _label="Size" _low-label="Small" _high-label="Large"
+            low="10" high="500" default="500"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Count" _low-label="1" _high-label="20"
+           low="0" high="20" default="1"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Lisajous loops.
+Lissajous loops.
+
+http://en.wikipedia.org/wiki/Lissajous_curve
 
 Written by Caleb Cullen; 1997.
   </_description>

@@ -1,5 +1,4 @@
-/*
- * starwars, Copyright (c) 1998-2007 Jamie Zawinski <jwz@jwz.org> and
+/* starwars, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -73,10 +72,10 @@
 #define DEF_LINES      "125"
 #define DEF_STEPS      "35"
 #define DEF_SPIN       "0.03"
-#define DEF_FONT_SIZE  "-1"
+#define DEF_SIZE       "-1"
 #define DEF_COLUMNS    "-1"
-#define DEF_WRAP       "True"
-#define DEF_ALIGN      "Center"
+#define DEF_LINE_WRAP  "True"
+#define DEF_ALIGNMENT  "Center"
 #define DEF_SMOOTH     "True"
 #define DEF_THICK      "True"
 #define DEF_FADE       "True"
@@ -158,7 +157,7 @@ static XrmOptionDescRec opts[] = {
   {"-lines",       ".lines",     XrmoptionSepArg, 0 },
   {"-steps",       ".steps",     XrmoptionSepArg, 0 },
   {"-spin",        ".spin",      XrmoptionSepArg, 0 },
-  {"-size",	   ".fontSize",  XrmoptionSepArg, 0 },
+  {"-size",	   ".size",      XrmoptionSepArg, 0 },
   {"-columns",	   ".columns",   XrmoptionSepArg, 0 },
 /*{"-font",        ".font",      XrmoptionSepArg, 0 },*/
   {"-fade",        ".fade",      XrmoptionNoArg,  "True"   },
@@ -184,10 +183,10 @@ static argtype vars[] = {
   {&max_lines,      "lines",     "Integer",    DEF_LINES,     t_Int},
   {&scroll_steps,   "steps",     "Integer",    DEF_STEPS,     t_Int},
   {&star_spin,      "spin",      "Float",      DEF_SPIN,      t_Float},
-  {&font_size,      "fontSize",  "Float",      DEF_FONT_SIZE, t_Float},
+  {&font_size,      "size",      "Float",      DEF_SIZE,      t_Float},
   {&target_columns, "columns",   "Integer",    DEF_COLUMNS,   t_Int},
-  {&wrap_p,         "lineWrap",  "Boolean",    DEF_WRAP,      t_Bool},
-  {&alignment_str,  "alignment", "Alignment",  DEF_ALIGN,     t_String},
+  {&wrap_p,         "lineWrap",  "Boolean",    DEF_LINE_WRAP, t_Bool},
+  {&alignment_str,  "alignment", "Alignment",  DEF_ALIGNMENT, t_String},
   {&smooth_p,       "smooth",    "Boolean",    DEF_SMOOTH,    t_Bool},
   {&thick_p,        "thick",     "Boolean",    DEF_THICK,     t_Bool},
   {&fade_p,         "fade",      "Boolean",    DEF_FADE,      t_Bool},

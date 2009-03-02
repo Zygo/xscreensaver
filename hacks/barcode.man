@@ -10,6 +10,7 @@ barcode - draws a random sequence of barcodes for the products you enjoy
 [\-delay \fInumber\fP]
 [\-clock]
 [\-clock24]
+[\-fps]
 .SH DESCRIPTION
 This draws a random sequence of colorful barcodes scrolling across your
 screen.
@@ -33,6 +34,9 @@ Instead of drawing a stream of barcodes, draw a barcode-based digital clock.
 .TP 8
 .B \-clock24
 Same as \fI\-clock\fP, but display 24-hour time instead of 12-hour time.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

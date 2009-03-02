@@ -6,6 +6,8 @@
 
   <xscreensaver-image />
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 
 XAnalogTV shows a detailed simulation of an old TV set showing various

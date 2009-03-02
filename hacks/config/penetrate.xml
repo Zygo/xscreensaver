@@ -18,8 +18,12 @@
     <option id="smart" _label="Always play well" arg-set="-smart"/>
   </select>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-Simulates the classic arcade game Missile Command.
+Simulates (something like) the classic arcade game Missile Command.
+
+http://en.wikipedia.org/wiki/Missile_Command
 
 Written by Adam Miller; 1999.
   </_description>

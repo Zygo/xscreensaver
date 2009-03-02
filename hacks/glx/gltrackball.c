@@ -12,6 +12,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -41,6 +42,15 @@ gltrackball_init (void)
   if (!ts) return 0;
   trackball (ts->q, 0, 0, 0, 0);
   return ts;
+}
+
+/* Reset the trackball to the default unrotated state.
+ */
+void
+gltrackball_reset (trackball_state *ts)
+{
+  memset (ts, 0, sizeof(*ts));
+  trackball (ts->q, 0, 0, 0, 0);
 }
 
 /* Begin tracking the mouse: Call this when the mouse button goes down.

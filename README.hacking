@@ -98,7 +98,7 @@ The XLockMore API
   hacks like "Flag".  The XLockMore ones are the ones that begin with
   "#ifdef STANDALONE" and #include "xlockmore.h".
 
-  All of the OpenGL screen savers follow the XLockMore API.
+  But, all OpenGL screen savers have to follow the XLockMore API.
 
   The XLockMore API is similar to the XScreenSaver API, in that you define
   (roughly) the same set of functions, but the naming conventions are

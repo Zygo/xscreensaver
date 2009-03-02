@@ -76,6 +76,22 @@
 
 static enum {wire=0,solid,light,checker,grab} _draw;
 
+# define DEF_SQUARES		"19"
+# define DEF_RESOLUTION 	"4"
+# define DEF_DRAW 			"2"
+# define DEF_FLAT			"0"
+# define DEF_SPEED			"0.05"
+# define DEF_ROTATIONX		"0.01"
+# define DEF_ROTATIONY		"0.0"
+# define DEF_ROTATIONZ		"0.1"
+# define DEF_WAVES			"3"
+# define DEF_WAVE_CHANGE	"50"
+# define DEF_WAVE_HEIGHT	"1.0"
+# define DEF_WAVE_FREQ		"3.0"
+# define DEF_ZOOM			"1.0"
+
+
+
 static int _squares;                        /* grid size */
 static int _resolution;                    /* wireframe resolution */
 static int _flat;
@@ -115,19 +131,19 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-    {&_squares, "squares", "Squares", "19", t_Int},
-    {&_resolution, "resolution", "Resolution", "4", t_Int},
-/*    {&_draw, "draw", "Draw", "2", t_Int},*/
-    {&_flat, "flat", "Flat", "0", t_Int},
-    {&_speed, "speed", "Speed", "0.05", t_Float},
-    {&_rotationx, "rotationx", "Rotationx", "0.01", t_Float},
-    {&_rotationy, "rotationy", "Rotationy", "0.0", t_Float},
-    {&_rotationz, "rotationz", "Rotationz", "0.1", t_Float},
-    {&_waves, "waves", "Waves", "3", t_Int},
-    {&_waveChange, "waveChange", "WaveChange", "50", t_Int},
-    {&_waveHeight, "waveHeight", "WaveHeight", "1.0", t_Float},
-    {&_waveFreq, "waveFreq", "WaveFreq", "3.0", t_Float},
-    {&_zoom, "zoom", "Zoom", "1.0", t_Float},
+    {&_squares, "squares", "Squares", DEF_SQUARES, t_Int},
+    {&_resolution, "resolution", "Resolution", DEF_RESOLUTION, t_Int},
+/*    {&_draw, "draw", "Draw", DEF_DRAW, t_Int},*/
+    {&_flat, "flat", "Flat", DEF_FLAT, t_Int},
+    {&_speed, "speed", "Speed", DEF_SPEED, t_Float},
+    {&_rotationx, "rotationx", "Rotationx", DEF_ROTATIONX, t_Float},
+    {&_rotationy, "rotationy", "Rotationy", DEF_ROTATIONY, t_Float},
+    {&_rotationz, "rotationz", "Rotationz", DEF_ROTATIONZ, t_Float},
+    {&_waves, "waves", "Waves", DEF_WAVES, t_Int},
+    {&_waveChange, "waveChange", "WaveChange", DEF_WAVE_CHANGE, t_Int},
+    {&_waveHeight, "waveHeight", "WaveHeight", DEF_WAVE_HEIGHT, t_Float},
+    {&_waveFreq, "waveFreq", "WaveFreq", DEF_WAVE_FREQ, t_Float},
+    {&_zoom, "zoom", "Zoom", DEF_ZOOM, t_Float},
 };
 
 
@@ -155,7 +171,7 @@ ModStruct   gflux_description =
 {"gflux", "init_gflux", "draw_gflux", "release_gflux",
  "draw_gflux", "init_gflux", NULL, &gflux_opts,
  1000, 1, 2, 1, 4, 1.0, "",
- "Gflux: an OpenGL gflux", 0, NULL};
+ "GFlux: an OpenGL gflux", 0, NULL};
 #endif
 
 /* structure for holding the gflux data */
@@ -176,7 +192,7 @@ typedef struct gfluxstruct {
     GLfloat tex_yscale;
     XRectangle img_geom;
     int img_width, img_height;
-    void (*drawFunc)(struct gfluxstruct *);
+    int (*drawFunc)(struct gfluxstruct *);
 
     trackball_state *trackball;
     Bool button_down_p;
@@ -199,10 +215,10 @@ static gfluxstruct *gfluxes = NULL;
 static void initLighting(void);
 static void grabTexture(gfluxstruct *);
 static void createTexture(gfluxstruct *);
-static void displaySolid(gfluxstruct *);     /* drawFunc implementations */
-static void displayLight(gfluxstruct *);
-static void displayTexture(gfluxstruct *);
-static void displayWire(gfluxstruct *);
+static int displaySolid(gfluxstruct *);     /* drawFunc implementations */
+static int displayLight(gfluxstruct *);
+static int displayTexture(gfluxstruct *);
+static int displayWire(gfluxstruct *);
 static void calcGrid(gfluxstruct *);
 static double getGrid(gfluxstruct *,double,double,double);
 
@@ -283,7 +299,7 @@ ENTRYPOINT void draw_gflux(ModeInfo * mi)
     glXMakeCurrent(display, window, *(gp->glx_context));
 
     calcGrid(gp);
-    gp->drawFunc(gp);
+    mi->polygon_count = gp->drawFunc(gp);
     if (mi->fps_p) do_fps (mi);
     glXSwapBuffers(display, window);
 }
@@ -507,8 +523,9 @@ static void initLighting(void)
 /* storing the values in an array   */
 /* is a posibility                  */
 /************************************/
-static void displayTexture(gfluxstruct *gp)
+static int displayTexture(gfluxstruct *gp)
 {
+    int polys = 0;
     double x,y,u,v;
     double z;
     double dx = 2.0/((double)_squares);
@@ -587,6 +604,7 @@ static void displayTexture(gfluxstruct *gp)
                 1
             );
             glVertex3f(x+dx,y,z);
+            polys++;
         }
         glEnd();
     }
@@ -599,18 +617,25 @@ static void displayTexture(gfluxstruct *gp)
 
     glBegin(GL_LINE_LOOP);
     y = miny;
-    for (x = minx; x <= maxx; x += dx)
+    for (x = minx; x <= maxx; x += dx) {
       glVertex3f (x, y, getGrid (gp, x, y, gp->time));
+      polys++;
+    }
     x = maxx;
-    for (y = miny; y <= maxy; y += dy)
+    for (y = miny; y <= maxy; y += dy) {
       glVertex3f (x, y, getGrid (gp, x, y, gp->time));
+      polys++;
+    }
     y = maxy;
-    for (x = maxx; x >= minx; x -= dx)
+    for (x = maxx; x >= minx; x -= dx) {
       glVertex3f (x, y, getGrid (gp, x, y, gp->time));
+      polys++;
+    }
     x = minx;
-    for (y = maxy; y >= miny; y -= dy)
+    for (y = maxy; y >= miny; y -= dy) {
       glVertex3f (x, y, getGrid (gp, x, y, gp->time));
-
+      polys++;
+    }
     glEnd();
     glEnable(GL_TEXTURE_2D);
 
@@ -620,9 +645,12 @@ static void displayTexture(gfluxstruct *gp)
       gp->angley -= _rotationy;
       gp->anglez -= _rotationz;
     }
+    return polys;
 }
-static void displaySolid(gfluxstruct *gp)
+
+static int displaySolid(gfluxstruct *gp)
 {
+    int polys = 0;
     double x,y;
     double z;
     double dx = 2.0/((double)_squares);
@@ -648,6 +676,7 @@ static void displaySolid(gfluxstruct *gp)
             genColour(z);
             glColor3fv(gp->colour);
             glVertex3f(x+dx,y,z);
+            polys++;
         }
         glEnd();
     }
@@ -659,10 +688,12 @@ static void displaySolid(gfluxstruct *gp)
       gp->anglez -= _rotationz;
     }
 
+    return polys;
 }
 
-static void displayLight(gfluxstruct *gp)
+static int displayLight(gfluxstruct *gp)
 {
+    int polys = 0;
     double x,y;
     double z;
     double dx = 2.0/((double)_squares);
@@ -698,6 +729,7 @@ static void displayLight(gfluxstruct *gp)
                 1
             );
             glVertex3f(x+dx,y,z);
+            polys++;
         }
         glEnd();
     }
@@ -708,10 +740,12 @@ static void displayLight(gfluxstruct *gp)
       gp->angley -= _rotationy;
       gp->anglez -= _rotationz;
     }
+    return polys;
 }
 
-static void displayWire(gfluxstruct *gp)
+static int displayWire(gfluxstruct *gp)
 {
+    int polys = 0;
     double x,y;
     double z;
     double dx1 = 2.0/((double)(_squares*_resolution)) - 0.00001;
@@ -734,6 +768,7 @@ static void displayWire(gfluxstruct *gp)
             genColour(z);
             glColor3fv(gp->colour);
             glVertex3f(x,y,z);
+            polys++;
         }
         glEnd();
     }
@@ -744,6 +779,7 @@ static void displayWire(gfluxstruct *gp)
             genColour(z);
             glColor3fv(gp->colour);
             glVertex3f(x,y,z);
+            polys++;
         }
         glEnd();
     }
@@ -754,6 +790,7 @@ static void displayWire(gfluxstruct *gp)
       gp->angley -= _rotationy;
       gp->anglez -= _rotationz;
     }
+    return polys;
 }
 
 /* generates new ripples */
@@ -793,6 +830,6 @@ static double getGrid(gfluxstruct *gp, double x, double y, double a)
 }
 
 
-XSCREENSAVER_MODULE ("Gflux", gflux)
+XSCREENSAVER_MODULE ("GFlux", gflux)
 
 #endif

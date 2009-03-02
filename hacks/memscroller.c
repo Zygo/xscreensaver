@@ -38,7 +38,7 @@ typedef struct {
   Window window;
   XWindowAttributes xgwa;
   GC draw_gc, erase_gc, text_gc;
-  XFontStruct *fonts[4];
+  XFontStruct *fonts[6];
   int border;
 
   enum { SEED_RAM, SEED_RANDOM, SEED_FILE } seed_mode;
@@ -483,7 +483,7 @@ draw_string (state *st)
       x = (st->xgwa.width - w) / 2;
       y = (bot - h) / 2;
 
-      if (y + h + 10 <= bot)
+      if (y + h + 10 <= bot && x > -10)
         {
           XSetFont (st->dpy, st->text_gc, st->fonts[i]->fid);
           XFillRectangle (st->dpy, st->window, st->erase_gc,
@@ -580,14 +580,27 @@ memscroller_free (Display *dpy, Window window, void *closure)
 static const char *memscroller_defaults [] = {
   ".background:		   black",
   "*drawMode:		   color",
+  "*fpsSolid:		   true",
+  "*fpsTop:		   true",
   "*filename:		   (RAM)",
   ".textColor:		   #00FF00",
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
-  ".font1:		   -*-courier-bold-r-*-*-*-1400-*-*-m-*-*-*",
-  ".font2:		   -*-courier-bold-r-*-*-*-600-*-*-m-*-*-*",
-  ".font3:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".font4:		   fixed",
+#ifdef HAVE_COCOA
+  ".font1:		   OCR A Std 192",
+  ".font2:		   OCR A Std 144",
+  ".font3:		   OCR A Std 128",
+  ".font4:		   OCR A Std 96",
+  ".font5:		   OCR A Std 48",
+  ".font6:		   OCR A Std 24",
+#else
+  ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
+  ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",
+  ".font3:		   -*-courier-bold-r-*-*-*-480-*-*-m-*-*-*",
+  ".font4:		   -*-courier-bold-r-*-*-*-320-*-*-m-*-*-*",
+  ".font5:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".font6:		   fixed",
+#endif
   "*delay:		   10000",
   "*offset:		   0",
   0

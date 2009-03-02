@@ -76,8 +76,8 @@ Whether to enable texture filtering.
 .B \-do_depth | \-no-do_depth
 Whether to enable depth buffer.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1998, 2001, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -183,6 +182,7 @@ rorschach_free (Display *dpy, Window window, void *closure)
 static const char *rorschach_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*xsymmetry:	true",
   "*ysymmetry:	false",
   "*iterations:	4000",

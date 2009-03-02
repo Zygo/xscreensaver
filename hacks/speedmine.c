@@ -881,6 +881,7 @@ render_quads (struct state *st, Drawable d, int t, int dt, int i)
 		}
 		if (st->be_wormy && st->psychedelic_flag) index += st->ncolors/4;
 
+        if (st->ncolors > MAX_COLORS) abort();
 		index = MIN (index, st->ncolors-1);
 		index = MAX (index, 0);
 
@@ -1266,6 +1267,7 @@ speedmine_color_ramp (struct state *st, GC *gcs, XColor * colors,
 	flags = GCForeground;
 	for (i=0; i < *ncolors; i++) {
 		gcv.foreground = colors[i].pixel;
+        if (gcs[i]) XFreeGC (st->dpy, gcs[i]);
 		gcs[i] = XCreateGC (st->dpy, st->dbuf, flags, &gcv);
 	}
 
@@ -1287,10 +1289,9 @@ change_colors (struct state *st)
 		free_colors (st->dpy, st->cmap, st->bonus_colors, st->nr_bonus_colors);
 		free_colors (st->dpy, st->cmap, st->wall_colors, st->nr_wall_colors);
 		free_colors (st->dpy, st->cmap, st->ground_colors, st->nr_ground_colors);
-		st->ncolors = MAX_COLORS;
-
 		s1 = 0.4; s2 = 0.9;
 
+		st->ncolors = MAX_COLORS;
   		speedmine_color_ramp (st, st->ground_gcs, st->ground_colors,
 							  &st->ncolors, 0.0, 0.8, 0.0, 0.9);
   		st->nr_ground_colors = st->ncolors;
@@ -1302,10 +1303,12 @@ change_colors (struct state *st)
 		s1 = 0.0; s2 = 0.6;
 	}
 
+    st->ncolors = MAX_COLORS;
     speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		  s1, s2, 0.0, 0.9);
     st->nr_wall_colors = st->ncolors;
 
+    st->ncolors = MAX_COLORS;
     speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		  0.6, 0.9, 0.4, 1.0);
 	st->nr_bonus_colors = st->ncolors;
@@ -1325,15 +1328,16 @@ init_psychedelic_colors (struct state *st)
   st->tunnelend_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
   st->ncolors = MAX_COLORS;
-
   speedmine_color_ramp (st, st->ground_gcs, st->ground_colors, &st->ncolors,
 				  		0.0, 0.8, 0.0, 0.9);
   st->nr_ground_colors = st->ncolors;
 
+  st->ncolors = MAX_COLORS;
   speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		0.0, 0.6, 0.0, 0.9);
   st->nr_wall_colors = st->ncolors;
 
+  st->ncolors = MAX_COLORS;
   speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		0.6, 0.9, 0.4, 1.0);
   st->nr_bonus_colors = st->ncolors;
@@ -1377,10 +1381,12 @@ init_colors (struct state *st)
 	st->ground_gcs[i] = XCreateGC (st->dpy, st->dbuf, flags, &gcv);
   }
 
+  st->ncolors = MAX_COLORS;
   speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		0.0, 0.6, 0.0, 0.9);
   st->nr_wall_colors = st->ncolors;
 
+  st->ncolors = MAX_COLORS;
   speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		0.6, 0.9, 0.4, 1.0);
   st->nr_bonus_colors = st->ncolors;
@@ -1622,7 +1628,7 @@ static XrmOptionDescRec speedmine_options [] = {
 };
 
 
-XSCREENSAVER_MODULE ("Speedmine", speedmine)
+XSCREENSAVER_MODULE ("SpeedMine", speedmine)
 
 /* vim: ts=4
  */

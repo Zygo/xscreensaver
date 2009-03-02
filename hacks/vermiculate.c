@@ -1198,6 +1198,7 @@ vermiculate_free (Display *dpy, Window window, void *closure)
 static const char *vermiculate_defaults[] = {
   ".background: Black",
   "*ticks: 20000",
+  "*fpsSolid:	true",
   "*speed: 0",
   "*instring: ",
   0

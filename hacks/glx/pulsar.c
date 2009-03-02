@@ -77,7 +77,7 @@
 #define HEIGHT 600
 
 #define NUM_QUADS 5
-#define DEF_NUM_QUADS	"5"
+#define DEF_QUADS   	"5"
 #define DEF_LIGHT	  	"False"
 #define DEF_WIRE   		"False"
 #define DEF_BLEND   	"True"
@@ -116,8 +116,8 @@ static XrmOptionDescRec opts[] = {
   {"+antialias",   ".pulsar.antialias",   XrmoptionNoArg, "false" },
   {"-texture",   ".pulsar.texture",   XrmoptionNoArg, "true" },
   {"+texture",   ".pulsar.texture",   XrmoptionNoArg, "false" },
-  {"-texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, "true" },
-  {"+texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, "false" },
+  {"-texture_quality",   ".pulsar.textureQuality",   XrmoptionNoArg, "true" },
+  {"+texture_quality",   ".pulsar.textureQuality",   XrmoptionNoArg, "false" },
   {"-mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, "true" },
   {"+mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, "false" },
   {"-do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, "true" },
@@ -127,14 +127,14 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-  {&num_quads,    "quads",     "Quads",     DEF_NUM_QUADS, t_Int},
+  {&num_quads,    "quads",     "Quads",     DEF_QUADS,     t_Int},
   {&do_light,     "light",     "Light",     DEF_LIGHT,     t_Bool},
   {&do_wire,      "wire",      "Wire",      DEF_WIRE,      t_Bool},
   {&do_blend,     "blend",     "Blend",     DEF_BLEND,     t_Bool},
   {&do_fog,       "fog",       "Fog",       DEF_FOG,       t_Bool},
   {&do_antialias, "antialias", "Antialias", DEF_ANTIALIAS, t_Bool},
   {&do_texture,   "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
-  {&do_texture_quality, "texture_quality", "Texture_quality", DEF_TEXTURE_QUALITY,   t_Bool},
+  {&do_texture_quality, "textureQuality", "TextureQuality", DEF_TEXTURE_QUALITY,   t_Bool},
   {&do_mipmap,    "mipmap",    "Mipmap",    DEF_MIPMAP,    t_Bool},
   {&do_depth,    "doDepth",    "DoDepth",   DEF_DO_DEPTH,  t_Bool},
   {&which_image, "image",      "Image",     DEF_IMAGE,     t_String},
@@ -435,6 +435,7 @@ static GLvoid drawScene(ModeInfo * mi)
   /* use XYZ scaling factors to change the size of the pulsar */
   glScalef(gp->scale_x, gp->scale_y, gp->scale_z);
   drawQuads(gp);
+  mi->polygon_count = num_quads;
 
   /* update the scaling factors- cyclic */
   gp->scale_x = cos(gp->frame/360.)*10.;

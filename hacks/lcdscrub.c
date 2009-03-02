@@ -24,6 +24,7 @@ struct state {
          DIAG_W, DIAG_B, 
          WHITE, BLACK,
          END } mode;
+  unsigned int enabled_mask;
   int count;
   GC fg, bg;
   int delay;
@@ -31,6 +32,19 @@ struct state {
   int cycles;
 };
 
+
+static void
+pick_mode (struct state *st)
+{
+  st->count = 0;
+  while (1)
+    {
+      if (++st->mode == END)
+        st->mode = 0;
+      if (st->enabled_mask & (1 << st->mode))
+        break;
+    }
+}
 
 static void *
 lcdscrub_init (Display *dpy, Window window)
@@ -55,6 +69,26 @@ lcdscrub_init (Display *dpy, Window window)
   jwxyz_XSetAntiAliasing (st->dpy, st->fg, False);
   jwxyz_XSetAntiAliasing (st->dpy, st->bg, False);
 #endif
+
+  st->enabled_mask = 0;
+# define PREF(R,F) \
+   if (get_boolean_resource (st->dpy, R, "Mode")) st->enabled_mask |= (1 << F)
+  PREF("modeHW", HORIZ_W);
+  PREF("modeHB", HORIZ_B);
+  PREF("modeVW", VERT_W);
+  PREF("modeVB", VERT_B);
+  PREF("modeDW", DIAG_W);
+  PREF("modeDB", DIAG_B);
+  PREF("modeW",  WHITE);
+  PREF("modeB",  BLACK);
+# undef PREF
+  if (! st->enabled_mask) 
+    {
+      fprintf (stderr, "%s: no modes enabled\n", progname);
+      exit (1);
+    }
+
+  pick_mode (st);
 
   return st;
 }
@@ -96,7 +130,7 @@ lcdscrub_draw (Display *dpy, Window window, void *closure)
     break;
   case WHITE:
   case BLACK:
-    XFillRectangle (st->dpy, st->window, fg, 0, 0,
+    XFillRectangle (st->dpy, st->window, bg, 0, 0,
                     st->xgwa.width, st->xgwa.height);
     break;
   default: 
@@ -107,11 +141,7 @@ lcdscrub_draw (Display *dpy, Window window, void *closure)
   st->count++;
 
   if (st->count > st->spread * st->cycles)
-    {
-      st->count = 0;
-      if (++st->mode == END)
-        st->mode = 0;
-    }
+    pick_mode (st);
 
   return st->delay;
 }
@@ -144,6 +174,14 @@ static const char *lcdscrub_defaults [] = {
   "*delay:		100000",
   "*spread:		8",
   "*cycles:		60",
+  "*modeHW:		True",
+  "*modeHB:		True",
+  "*modeVW:		True",
+  "*modeVB:		True",
+  "*modeDW:		True",
+  "*modeDB:		True",
+  "*modeW:		True",
+  "*modeB:		True",
   0
 };
 
@@ -151,6 +189,14 @@ static XrmOptionDescRec lcdscrub_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-spread",		".spread",	XrmoptionSepArg, 0 },
   { "-cycles",		".cycles",	XrmoptionSepArg, 0 },
+  { "-no-hw",		".modeHW",	XrmoptionNoArg, "False" },
+  { "-no-hb",		".modeHB",	XrmoptionNoArg, "False" },
+  { "-no-vw",		".modeVW",	XrmoptionNoArg, "False" },
+  { "-no-vb",		".modeVB",	XrmoptionNoArg, "False" },
+  { "-no-dw",		".modeDW",	XrmoptionNoArg, "False" },
+  { "-no-db",		".modeDB",	XrmoptionNoArg, "False" },
+  { "-no-w",		".modeW",	XrmoptionNoArg, "False" },
+  { "-no-b",		".modeB",	XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
 };
 

@@ -32,7 +32,7 @@
 #define DEF_WANDER      "True"
 #define DEF_TEXTURE     "True"
 
-#define DEF_WAVE_COUNT  "3"
+#define DEF_WAVES       "3"
 #define DEF_WAVE_SPEED  "80"
 #define DEF_WAVE_RADIUS "512"
 
@@ -67,6 +67,7 @@ typedef struct {
 
   GLuint cube_list;
   GLuint texture_id;
+  int cube_polys;
   int ncubes;
   cube *cubes;
   waves *waves;
@@ -107,7 +108,7 @@ static argtype vars[] = {
   {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
-  {&wave_count, "waves",     "Waves",      DEF_WAVE_COUNT, t_Int},
+  {&wave_count, "waves",     "Waves",      DEF_WAVES, t_Int},
   {&wave_speed, "waveSpeed", "WaveSpeed",  DEF_WAVE_SPEED, t_Int},
   {&wave_radius,"waveRadius","WaveRadius", DEF_WAVE_RADIUS,t_Int},
 };
@@ -115,15 +116,17 @@ static argtype vars[] = {
 ENTRYPOINT ModeSpecOpt cube_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
-static void
+static int
 unit_cube (Bool wire)
 {
+  int polys = 0;
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* front */
   glNormal3f (0, 0, 1);
   glTexCoord2f(1, 0); glVertex3f ( 0.5, -0.5,  0.5);
   glTexCoord2f(0, 0); glVertex3f ( 0.5,  0.5,  0.5);
   glTexCoord2f(0, 1); glVertex3f (-0.5,  0.5,  0.5);
   glTexCoord2f(1, 1); glVertex3f (-0.5, -0.5,  0.5);
+  polys++;
   glEnd();
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* back */
@@ -132,6 +135,7 @@ unit_cube (Bool wire)
   glTexCoord2f(0, 1); glVertex3f (-0.5,  0.5, -0.5);
   glTexCoord2f(1, 1); glVertex3f ( 0.5,  0.5, -0.5);
   glTexCoord2f(1, 0); glVertex3f ( 0.5, -0.5, -0.5);
+  polys++;
   glEnd();
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* left */
@@ -140,6 +144,7 @@ unit_cube (Bool wire)
   glTexCoord2f(1, 0); glVertex3f (-0.5,  0.5, -0.5);
   glTexCoord2f(0, 0); glVertex3f (-0.5, -0.5, -0.5);
   glTexCoord2f(0, 1); glVertex3f (-0.5, -0.5,  0.5);
+  polys++;
   glEnd();
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* right */
@@ -148,9 +153,10 @@ unit_cube (Bool wire)
   glTexCoord2f(1, 0); glVertex3f ( 0.5,  0.5, -0.5);
   glTexCoord2f(0, 0); glVertex3f ( 0.5,  0.5,  0.5);
   glTexCoord2f(0, 1); glVertex3f ( 0.5, -0.5,  0.5);
+  polys++;
   glEnd();
 
-  if (wire) return;
+  if (wire) return polys;
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* top */
   glNormal3f (0, 1, 0);
@@ -158,6 +164,7 @@ unit_cube (Bool wire)
   glTexCoord2f(0, 1); glVertex3f ( 0.5,  0.5, -0.5);
   glTexCoord2f(1, 1); glVertex3f (-0.5,  0.5, -0.5);
   glTexCoord2f(1, 0); glVertex3f (-0.5,  0.5,  0.5);
+  polys++;
   glEnd();
 
   glBegin (wire ? GL_LINE_LOOP : GL_QUADS);	/* bottom */
@@ -166,7 +173,9 @@ unit_cube (Bool wire)
   glTexCoord2f(0, 0); glVertex3f (-0.5, -0.5, -0.5);
   glTexCoord2f(0, 1); glVertex3f ( 0.5, -0.5, -0.5);
   glTexCoord2f(1, 1); glVertex3f ( 0.5, -0.5,  0.5);
+  polys++;
   glEnd();
+  return polys;
 }
 
 
@@ -492,7 +501,7 @@ init_cube (ModeInfo *mi)
 
   cc->cube_list = glGenLists (1);
   glNewList (cc->cube_list, GL_COMPILE);
-  unit_cube (wire);
+  cc->cube_polys = unit_cube (wire);
   glEndList ();
 }
 
@@ -531,6 +540,7 @@ draw_cube (ModeInfo *mi)
   if (!cc->glx_context)
     return;
 
+  mi->polygon_count = 0;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
 
   glShadeModel(GL_FLAT);
@@ -578,6 +588,7 @@ draw_cube (ModeInfo *mi)
       glScalef (cube->w, cube->h, cube->d);
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
       glCallList (cc->cube_list);
+      mi->polygon_count += cc->cube_polys;
       glPopMatrix ();
     }
 

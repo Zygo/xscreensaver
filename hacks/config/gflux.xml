@@ -4,32 +4,38 @@
 
   <command arg="-root"/>
 
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="wave" type="slider" arg="-speed %"
+            _label="Wave speed" _low-label="Slow" _high-label="Fast"
+            low="0" high="0.50" default="0.05"
+            convert="invert"/>
+   </vgroup>
+   <vgroup>
+    <number id="squares" type="slider" arg="-squares %"
+             _label="Mesh density" _low-label="Sparse" _high-label="Dense"
+            low="2" high="40" default="19"/>
+
+    <number id="waves" type="slider" arg="-waves %"
+            _label="Waves" _low-label="1" _high-label="10"
+             low="1" high="10" default="3"/>
+   </vgroup>
+  </hgroup>
+
   <select id="mode">
-   <option id="wire"    _label="Wire Mesh"           arg-set="-mode wire"/>
-   <option id="solid"   _label="Flat Lighting"       arg-set="-mode solid"/>
-   <option id="light"   _label="Directional Lighting"/>
+   <option id="wire"    _label="Wire mesh"           arg-set="-mode wire"/>
+   <option id="solid"   _label="Flat lighting"       arg-set="-mode solid"/>
+   <option id="light"   _label="Directional lighting"/>
    <option id="checker" _label="Checkerboard"        arg-set="-mode checker"/>
    <option id="grab"    _label="Picture"             arg-set="-mode grab"/>
   </select>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="20000"
-          convert="invert"/>
-
-  <number id="wave" type="slider" arg="-speed %"
-          _label="Wave Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="0.50" default="0.05"
-          convert="invert"/>
-
-  <number id="squares" type="slider" arg="-squares %"
-           _label="Mesh Density" _low-label="Sparse" _high-label="Dense"
-          low="2" high="40" default="19"/>
-
-  <number id="waves" type="spinbutton" arg="-waves %"
-          _label="Waves" low="1" high="10" default="3"/>
-
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <!-- #### -resolution [4] -->
   <!-- #### -flat [0] -->

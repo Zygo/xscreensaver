@@ -43,10 +43,16 @@
           Called when a keyboard or mouse event arrives.
           Return True if you handle it in some way, False otherwise.
 
-      static void YOURNAME_event (Display *, Window, void *closure);
+      static void YOURNAME_free (Display *, Window, void *closure);
 
            Called when you are done: free everything you've allocated,
-           including your private `state' structure.
+           including your private `state' structure.  
+
+           NOTE: this is called in windowed-mode when the user typed
+           'q' or clicks on the window's close box; but when
+           xscreensaver terminates this screenhack, it does so by
+           killing the process with SIGSTOP.  So this callback is
+           mostly useless.
 
       static char YOURNAME_defaults [] = { "...", "...", ... , 0 };
 
@@ -68,7 +74,7 @@
       - Do not use global variables: all such info must be stored in the
         private `state' structure.
 
-      - Do not static function-local variables, either.  Put it in `state'.
+      - Do not use static function-local variables, either.  Put it in `state'.
 
         Assume that there are N independent runs of this code going in the
         same address space at the same time: they must not affect each other.
@@ -77,7 +83,6 @@
         of your screen saver module.  See .../hacks/config/README for details.
  */
 
-#define DEBUG_TIMING
 #define DEBUG_PAIR
 
 #include <stdio.h>
@@ -105,6 +110,7 @@
 #include "screenhackI.h"
 #include "version.h"
 #include "vroot.h"
+#include "fps.h"
 
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.
@@ -136,6 +142,8 @@ static XrmOptionDescRec default_options [] = {
   { "-noinstall",".installColormap",	XrmoptionNoArg, "False" },
   { "-visual",	".visualID",		XrmoptionSepArg, 0 },
   { "-window-id", ".windowID",		XrmoptionSepArg, 0 },
+  { "-fps",	".doFPS",		XrmoptionNoArg, "True" },
+  { "-no-fps",  ".doFPS",		XrmoptionNoArg, "False" },
 
 # ifdef DEBUG_PAIR
   { "-pair",	".pair",		XrmoptionNoArg, "True" },
@@ -148,6 +156,7 @@ static char *default_defaults[] = {
   "*geometry:		600x480", /* this should be .geometry, but nooooo... */
   "*mono:		false",
   "*installColormap:	false",
+  "*doFPS:		false",
   "*visualID:		default",
   "*windowID:		",
   "*desktopGrabber:	xscreensaver-getimage %s",
@@ -157,6 +166,7 @@ static char *default_defaults[] = {
 static XrmOptionDescRec *merged_options;
 static int merged_options_size;
 static char **merged_defaults;
+
 
 static void
 merge_options (void)
@@ -407,65 +417,6 @@ fix_fds (void)
 }
 
 
-#ifdef DEBUG_TIMING
-
-static void
-check_timing (unsigned long delay)
-{
-  static unsigned long frame_count = 0;
-  static unsigned long delay_sum = 0;
-  static struct timeval prev1 = { 0, };
-  static struct timeval prev2 = { 0, };
-  struct timeval now;
-  double uprev1, uprev2, unow;
-
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  gettimeofday (&now, 0);
-# else
-  gettimeofday (&now);
-# endif
-
-  if (prev1.tv_sec == 0)
-    prev1 = prev2 = now;
-
-  frame_count++;
-
-  uprev1 = prev1.tv_sec + ((double) prev1.tv_usec * 0.000001);
-  uprev2 = prev2.tv_sec + ((double) prev2.tv_usec * 0.000001);
-  unow   =  now.tv_sec  + ((double)   now.tv_usec * 0.000001);
-
-  if (unow >= uprev1 + 1.5)
-    fprintf (stderr,
-             "%s: warning: blocked event processing for %.1f secs!\n",
-             progname, unow - uprev1);
-  prev1 = now;
-
-  if (unow >= uprev2 + 10.0)
-    {
-      double fps   = frame_count / (unow - uprev2);
-      double elapsed = unow - uprev2;
-      double slept = (delay_sum * 0.000001);
-      double sleep_ratio = slept / elapsed;
-
-      if (sleep_ratio < 0.10) {
-        fprintf (stderr, 
-                 "%s: warning: only %.0f%% idle over the"
-                 " last %2.0f secs (at %.1f FPS)\n",
-                 progname, 100 * sleep_ratio, elapsed, fps);
-      }
-
-      prev2 = now;
-      frame_count = 0;
-      delay_sum = 0;
-    }
-
-  delay_sum += delay;
-}
-
-#else  /* !DEBUG_TIMING */
-# define check_timing(delay) /**/
-#endif /* !DEBUG_TIMING */
-
 static Boolean
 screenhack_table_handle_events (Display *dpy,
                                 const struct xscreensaver_function_table *ft,
@@ -517,9 +468,11 @@ screenhack_table_handle_events (Display *dpy,
 static Boolean
 usleep_and_process_events (Display *dpy,
                            const struct xscreensaver_function_table *ft,
-                           Window window, void *closure, unsigned long delay
+                           Window window, fps_state *fpst, void *closure,
+                           unsigned long delay
 #ifdef DEBUG_PAIR
-                         , Window window2, void *closure2, unsigned long delay2
+                         , Window window2, fps_state *fpst2, void *closure2,
+                           unsigned long delay2
 #endif
                            )
 {
@@ -531,13 +484,13 @@ usleep_and_process_events (Display *dpy,
 
     XSync (dpy, False);
     if (quantum > 0)
-      usleep (quantum);
-
-    check_timing (quantum);
-
-    /* The above isn't quite right in pair-mode: we always run both windows
-       with the timing of window 2.  But, it's just a debugging hack, so
-       that doesn't really matter that much... */
+      {
+        usleep (quantum);
+        if (fpst) fps_slept (fpst, quantum);
+#ifdef DEBUG_PAIR
+        if (fpst2) fps_slept (fpst2, quantum);
+#endif
+      }
 
     if (! screenhack_table_handle_events (dpy, ft, window, closure
 #ifdef DEBUG_PAIR
@@ -548,6 +501,14 @@ usleep_and_process_events (Display *dpy,
   } while (delay > 0);
 
   return True;
+}
+
+
+static void
+screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
+{
+  fps_compute (fpst, 0);
+  fps_draw (fpst);
 }
 
 
@@ -567,15 +528,22 @@ run_screenhack_table (Display *dpy,
   void *(*init_cb) (Display *, Window, void *) = 
     (void *(*) (Display *, Window, void *)) ft->init_cb;
 
+  void (*fps_cb) (Display *, Window, fps_state *, void *) = ft->fps_cb;
+
   void *closure = init_cb (dpy, window, ft->setup_arg);
+  fps_state *fpst = fps_init (dpy, window);
 
 #ifdef DEBUG_PAIR
   void *closure2 = 0;
+  fps_state *fpst2 = 0;
   if (window2) closure2 = init_cb (dpy, window2, ft->setup_arg);
+  if (window2) fpst2 = fps_init (dpy, window2);
 #endif
 
   if (! closure)  /* if it returns nothing, it can't possibly be re-entrant. */
     abort();
+
+  if (! fps_cb) fps_cb = screenhack_do_fps;
 
   while (1)
     {
@@ -585,20 +553,26 @@ run_screenhack_table (Display *dpy,
       if (window2) delay2 = ft->draw_cb (dpy, window2, closure2);
 #endif
 
-      if (! usleep_and_process_events (dpy, ft,
-                                       window, closure, delay
+      if (fpst) fps_cb (dpy, window, fpst, closure);
 #ifdef DEBUG_PAIR
-                                       , window2, closure2, delay2
+      if (fpst2) fps_cb (dpy, window, fpst2, closure);
+#endif
+
+      if (! usleep_and_process_events (dpy, ft,
+                                       window, fpst, closure, delay
+#ifdef DEBUG_PAIR
+                                       , window2, fpst2, closure2, delay2
 #endif
                                        ))
         break;
     }
 
   ft->free_cb (dpy, window, closure);
+  if (fpst) fps_free (fpst);
 
 #ifdef DEBUG_PAIR
-  if (window2)
-    ft->free_cb (dpy, window2, closure2);
+  if (window2) ft->free_cb (dpy, window2, closure2);
+  if (window2) fps_free (fpst2);
 #endif
 }
 
@@ -613,11 +587,6 @@ make_shell (Screen *screen, Widget toplevel, int width, int height)
 
   if (width  <= 0) width  = 600;
   if (height <= 0) height = 480;
-
-# ifdef USE_GL
-  if (!validate_gl_visual (stderr, screen, "window", visual))
-    exit (1);
-# endif /* USE_GL */
 
   if (def_visual_p)
     {

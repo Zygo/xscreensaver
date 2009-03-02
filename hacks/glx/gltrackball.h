@@ -51,5 +51,9 @@ void gltrackball_mousewheel (trackball_state *ts,
  */
 extern void gltrackball_get_quaternion (trackball_state *ts, float q[4]);
 
+/* Reset the trackball to the default unrotated state.
+ */
+extern void gltrackball_reset (trackball_state *ts);
+
 #endif /* __GLTRACKBALL_H__ */
 

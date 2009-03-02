@@ -4,6 +4,7 @@ goop - squishy transparent oil and bubble screenhack
 .SH SYNOPSIS
 .B goop
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-transparent] [\-non\-transparent] [\-additive] [\-subtractive] [\-xor] [\-no\-xor]
+[\-fps]
 .SH DESCRIPTION
 The \fIgoop\fP program draws a simulation of bubbles in layers of 
 overlapping multicolored translucent fluid.
@@ -56,6 +57,9 @@ translucent filters.
 .TP 8
 .B \-xor
 Draw with xor instead of the other color tricks.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

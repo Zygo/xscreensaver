@@ -33,7 +33,7 @@
 #define HeightOfScreen(s) 10240
 
 #undef screen_number
-#define screen_number(s) (0)
+#define screen_number(s) ((int) s)
 
 #include "screens.c"   /* to get at static void check_monitor_sanity() */
 
@@ -57,6 +57,7 @@ failstr (monitor_sanity san)
   case S_OVERLAP:   return "OVR";
   case S_OFFSCREEN: return "OFF";
   case S_DISABLED:  return "DIS";
+  default: abort(); break;
   }
 }
 
@@ -74,8 +75,12 @@ test (int testnum, const char *screens, const char *desired)
       monitor *m = calloc (1, sizeof (monitor));
       char c;
       m->id = (testnum * 1000) + nscreens;
-      if (4 != sscanf (token, "%dx%d+%d+%d%c", 
-                      &m->width, &m->height, &m->x, &m->y, &c))
+      if (5 == sscanf (token, "%dx%d+%d+%d@%d%c", 
+                       &m->width, &m->height, &m->x, &m->y, 
+                       (int *) &m->screen, &c))
+        ;
+      else if (4 != sscanf (token, "%dx%d+%d+%d%c", 
+                            &m->width, &m->height, &m->x, &m->y, &c))
         {
           fprintf (stderr, "%s: unparsable geometry: %s\n", blurb(), token);
           exit (1);
@@ -94,7 +99,11 @@ test (int testnum, const char *screens, const char *desired)
       monitor *m = monitors[i];
       if (out != result) *out++ = ',';
       if (m->sanity == S_SANE)
-        sprintf (out, "%dx%d+%d+%d", m->width, m->height, m->x, m->y);
+        {
+          sprintf (out, "%dx%d+%d+%d", m->width, m->height, m->x, m->y);
+          if (m->screen)
+            sprintf (out + strlen(out), "@%d", (int) m->screen);
+        }
       else
         strcpy (out, failstr (m->sanity));
       out += strlen(out);
@@ -135,6 +144,7 @@ run_tests(void)
   A("1024x768+0+0,1024x768+1024+0");
   A("1024x768+0+0,1024x768+0+768");
   A("1024x768+0+0,1024x768+0+768,1024x768+1024+0");
+  A("800x600+0+0,800x600+0+0@1,800x600+10+0@2");
 
   B("1024x768+999999+0",
     "OFF");
@@ -174,6 +184,8 @@ run_tests(void)
     "800x600+0+0,DUP,800x600+800+0");
   B("1600x1200+0+0,1360x768+0+0",
     "1600x1200+0+0,ENC");
+  B("1600x1200+0+0,1360x768+0+0,1600x1200+0+0@1,1360x768+0+0@1",
+    "1600x1200+0+0,ENC,1600x1200+0+0@1,ENC");
 }
 
 

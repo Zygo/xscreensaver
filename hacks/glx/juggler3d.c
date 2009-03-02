@@ -1928,6 +1928,14 @@ typedef struct
 } JUGGLER3D_CONFIG;
 
 
+#define DEF_MAX_OBJS		"8"
+#define DEF_MIN_OBJS		"3"
+#define DEF_MAX_HINC		"6"
+#define DEF_MIN_HINC		"2"
+#define DEF_JUGGLE_SPEED	"2.2"
+#define DEF_TRANSLATE_SPEED	"0.1"
+#define DEF_SPIN_SPEED		"20.0"
+
 static JUGGLER3D_CONFIG* pConfigInfo = NULL;
 static int MaxObjects;
 static int MinObjects;
@@ -1937,31 +1945,31 @@ static float SpinSpeed;
 static float TranslateSpeed;
 static float JuggleSpeed;
 
-static XrmOptionDescRec Options[] =
+static XrmOptionDescRec opts[] =
 {
     {"-spin", ".spinSpeed", XrmoptionSepArg, 0},
     {"-trans", ".translateSpeed", XrmoptionSepArg, 0},
     {"-speed", ".juggleSpeed", XrmoptionSepArg, 0},
     {"-maxobjs", ".maxObjs", XrmoptionSepArg, 0},
     {"-minobjs", ".minObjs", XrmoptionSepArg, 0},
-    {"-maxhinc", ".maxHInc", XrmoptionSepArg, 0},
-    {"-minhinc", ".minHInc", XrmoptionSepArg, 0},
+    {"-maxhinc", ".maxHinc", XrmoptionSepArg, 0},
+    {"-minhinc", ".minHinc", XrmoptionSepArg, 0},
 };
 
 
-static argtype Vars[] = 
+static argtype vars[] = 
 {
-    {&MaxObjects, "maxObjs", "MaxObjs", "8", t_Int},
-    {&MinObjects, "minObjs", "MinObjs", "3", t_Int},
-    {&MaxHeightInc, "maxHInc", "MaxHInc", "6", t_Int},
-    {&MinHeightInc, "minHInc", "MinHInc", "2", t_Int},
-    {&JuggleSpeed, "juggleSpeed", "JuggleSpeed", "2.2", t_Float},
-    {&TranslateSpeed, "translateSpeed", "TranslateSpeed", "0.1", t_Float},
-    {&SpinSpeed, "spinSpeed", "SpinSpeed", "20.0", t_Float},
+    {&MaxObjects, "maxObjs", "MaxObjs", DEF_MAX_OBJS, t_Int},
+    {&MinObjects, "minObjs", "MinObjs", DEF_MIN_OBJS, t_Int},
+    {&MaxHeightInc, "maxHinc", "MaxHinc", DEF_MAX_HINC, t_Int},
+    {&MinHeightInc, "minHinc", "MinHinc", DEF_MIN_HINC, t_Int},
+    {&JuggleSpeed, "juggleSpeed", "JuggleSpeed", DEF_JUGGLE_SPEED, t_Float},
+    {&TranslateSpeed, "translateSpeed", "TranslateSpeed", DEF_TRANSLATE_SPEED, t_Float},
+    {&SpinSpeed, "spinSpeed", "SpinSpeed", DEF_SPIN_SPEED, t_Float},
 };
 
 
-ENTRYPOINT ModeSpecOpt juggler3d_opts = {countof(Options), Options, countof(Vars), Vars};
+ENTRYPOINT ModeSpecOpt juggler3d_opts = {countof(opts), opts, countof(vars), vars};
 
 
 ENTRYPOINT void reshape_juggler3d(ModeInfo *mi, int width, int height)

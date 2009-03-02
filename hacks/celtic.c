@@ -835,6 +835,7 @@ static void pattern_animate(struct state *st)
 static const char *celtic_defaults[] = {
     ".background: black",
     ".foreground: #333333",
+    "*fpsSolid:	true",
     "*ncolors: 20",
     "*delay: 10000",
     "*delay2: 5",

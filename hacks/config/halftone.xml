@@ -4,42 +4,51 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-           _label="Gravity points" 
-          low="1" high="50" default="10"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000" convert="invert"/>
 
-  <number id="size" type="spinbutton" arg="-spacing %"
-           _label="Dot size"
-          low="2" high="50" default="14"/>
+    <number id="count" type="slider" arg="-count %"
+             _label="Gravity points" _low-label="Few" _high-label="Many"
+            low="1" high="50" default="10"/>
 
-  <number id="dotfill" type="slider" arg="-sizefactor %"
-           _label="Dot fill factor" _low-label="Small" _high-label="Large"
-          low="0.1" high="3" default="1.5"/>
+    <number id="size" type="slider" arg="-spacing %"
+             _label="Dot size" _low-label="Small" _high-label="Big"
+            low="2" high="50" default="14"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="100000" default="10000" convert="invert"/>
+    <number id="dotfill" type="slider" arg="-sizefactor %"
+             _label="Dot fill factor" _low-label="Small" _high-label="Large"
+            low="0.1" high="3" default="1.5"/>
+   </vgroup>
+   <vgroup>
+    <number id="minspeed" type="slider" arg="-minspeed %"
+             _label="Minimum speed" _low-label="Low" _high-label="High"
+            low="0.001" high="0.09" default="0.001"/>
 
-  <number id="minspeed" type="slider" arg="-minspeed %"
-           _label="Minimum speed" _low-label="Low" _high-label="High"
-          low="0.001" high="0.09" default="0.001"/>
+    <number id="maxspeed" type="slider" arg="-maxspeed %"
+             _label="Maximum speed" _low-label="Low" _high-label="High"
+            low="0.001" high="0.09" default="0.02"/>
 
-  <number id="maxspeed" type="slider" arg="-maxspeed %"
-           _label="Maximum speed" _low-label="Low" _high-label="High"
-          low="0.001" high="0.09" default="0.02"/>
+    <number id="minmass" type="slider" arg="-minmass %"
+             _label="Minimum mass" _low-label="Small" _high-label="Large"
+            low="0.001" high="0.09" default="0.001"/>
 
-  <number id="minmass" type="slider" arg="-minmass %"
-           _label="Minimum mass" _low-label="Small" _high-label="Large"
-          low="0.001" high="0.09" default="0.001"/>
+    <number id="maxmass" type="slider" arg="-maxmass %"
+             _label="Maximum mass" _low-label="Small" _high-label="Large"
+            low="0.001" high="0.09" default="0.02"/>
+   </vgroup>
+  </hgroup>
 
-  <number id="maxmass" type="slider" arg="-maxmass %"
-           _label="Maximum mass" _low-label="Small" _high-label="Large"
-          low="0.001" high="0.09" default="0.02"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws the gravity force in each point on the screen seen through a
 halftone dot pattern. The gravity force is calculated from a set of
 moving mass points. View it from a distance for best effect.
+
+http://en.wikipedia.org/wiki/Halftone
 
 Written by Peter Jaric; 2002.
   </_description>

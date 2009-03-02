@@ -18,6 +18,7 @@ distort \- distort the content of the screen in interesting ways
 [\-blackhole]
 [\-slow]
 [\-shm] [\-no\-shm]
+[\-fps]
 .SH DESCRIPTION
 The \fIdistort\fP program takes an image and lets circular zones of
 distortion wander randomly around it, distorting what is under them.
@@ -105,6 +106,9 @@ Use shared memory extension.
 .TP 8
 .B \-no\-shm
 Don't use shared memory extension.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

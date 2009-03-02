@@ -73,6 +73,7 @@ static const char *interaggregate_defaults[] =
 {
     ".background: white",
     ".foreground: black",
+    "*fpsSolid:	true",
     "*maxCycles: 100000",
 #ifdef TIME_ME
     "*growthDelay: 0",

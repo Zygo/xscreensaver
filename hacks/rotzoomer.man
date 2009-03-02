@@ -10,6 +10,7 @@ rotzoomer - animated rotations and scalings of portions of the screen
 [\-n \fIcount\fP]
 [\-shm | \-no\-shm]
 [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIrotzoomer\fP program grabs an image, then picks
 rectangles and draws scaled and rotated animations of that 
@@ -58,6 +59,9 @@ How many rectangles to animate simultaneously.  Default 2.
 .TP 8
 .B \-no\-shm
 Disable use of the SHM extension, even if it appears to be available.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

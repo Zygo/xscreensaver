@@ -103,6 +103,7 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 					"*size:        -10   \n" \
 					"*cycles:      10000 \n" \
 					"*ncolors:     200   \n"
+
 # define reshape_flow 0
 # define flow_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */

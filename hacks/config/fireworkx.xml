@@ -5,7 +5,7 @@
   <command arg="-root"/>
 
   <number id="Delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
@@ -13,12 +13,15 @@
           _label="Activity" _low-label="Dense" _high-label="Sparse"
           low="250" high="5000" default="2000"/>
 
-  <boolean id="flash" _label="Light Flash" arg-unset="-no-flash"/>
-  <boolean id="glow"  _label="Self Glowing Smoke!" arg-unset="-no-glow"/>
-  <boolean id="shoot" _label="Shoot the Shells Up" arg-set="-shoot"/>
+  <boolean id="flash" _label="Light flash" arg-unset="-no-flash"/>
+  <boolean id="glow"  _label="Glowing smoke" arg-unset="-no-glow"/>
+  <boolean id="shoot" _label="Shells upward" arg-set="-shoot"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Exploding fireworks.
+Exploding fireworks.  See also the "Eruption", "XFlame" and "Pyro"
+screen savers.
 
 Written by Rony B Chandran; 2004.
   </_description>

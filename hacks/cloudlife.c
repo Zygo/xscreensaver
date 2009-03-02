@@ -390,6 +390,7 @@ cloudlife_free (Display *dpy, Window window, void *closure)
 static const char *cloudlife_defaults[] = {
     ".background:	black",
     ".foreground:	blue",
+    "*fpsSolid: 	true",
     "*cycleDelay:	25000",
     "*cycleColors:      2",
     "*ncolors:          64",
@@ -412,4 +413,4 @@ static XrmOptionDescRec cloudlife_options[] = {
 };
 
 
-XSCREENSAVER_MODULE ("Cloudlife", cloudlife)
+XSCREENSAVER_MODULE ("CloudLife", cloudlife)

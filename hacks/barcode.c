@@ -1911,6 +1911,7 @@ barcode_free (Display *dpy, Window window, void *closure)
 static const char *barcode_defaults [] = {
     ".background:	black",
     ".foreground:	green",
+    "*fpsSolid: 	true",
     "*delay:		10000",
     "*mode:		scroll",
     0

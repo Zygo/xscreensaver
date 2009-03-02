@@ -1,5 +1,5 @@
 /* xset.c --- interacting with server extensions and the builtin screensaver.
- * xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,14 +41,6 @@ ERROR!  You must not include vroot.h in this file.
 #ifdef HAVE_MIT_SAVER_EXTENSION
 
 # include <X11/extensions/scrnsaver.h>
-
-Bool
-query_mit_saver_extension (saver_info *si)
-{
-  return XScreenSaverQueryExtension (si->dpy,
-				     &si->mit_saver_ext_event_number,
-				     &si->mit_saver_ext_error_number);
-}
 
 static int
 ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
@@ -101,14 +93,6 @@ init_mit_saver_extension (saver_info *si)
 
 # include <X11/extensions/XScreenSaver.h>
 
-Bool
-query_sgi_saver_extension (saver_info *si)
-{
-  return XScreenSaverQueryExtension (si->dpy,
-				     &si->sgi_saver_ext_event_number,
-				     &si->sgi_saver_ext_error_number);
-}
-
 static void
 init_sgi_saver_extension (saver_info *si)
 {
@@ -136,62 +120,6 @@ init_sgi_saver_extension (saver_info *si)
 }
 
 #endif /* HAVE_SGI_SAVER_EXTENSION */
-
-
-/* XIDLE server extension hackery.
- */
-
-#ifdef HAVE_XIDLE_EXTENSION
-
-# include <X11/extensions/xidle.h>
-
-Bool
-query_xidle_extension (saver_info *si)
-{
-  int event_number;
-  int error_number;
-  return XidleQueryExtension (si->dpy, &event_number, &error_number);
-}
-
-#endif /* HAVE_XIDLE_EXTENSION */
-
-
-
-/* Resize and Rotate server extension hackery.
- */
-
-#ifdef HAVE_RANDR
-
-# include <X11/extensions/Xrandr.h>
-
-Bool
-query_randr_extension (saver_info *si)
-{
-  saver_preferences *p = &si->prefs;
-  Bool ok = XRRQueryExtension (si->dpy,
-                               &si->randr_event_number,
-                               &si->randr_error_number);
-
-  if (ok)
-    {
-      int nscreens = ScreenCount (si->dpy);  /* number of *real* screens */
-      int i;
-
-      if (p->verbose_p)
-	fprintf (stderr, "%s: selecting RANDR events\n", blurb());
-      for (i = 0; i < nscreens; i++)
-# ifdef RRScreenChangeNotifyMask                 /* randr.h 1.5, 2002/09/29 */
-        XRRSelectInput (si->dpy, RootWindow (si->dpy, i),
-                        RRScreenChangeNotifyMask);
-# else  /* !RRScreenChangeNotifyMask */          /* Xrandr.h 1.4, 2001/06/07 */
-        XRRScreenChangeSelectInput (si->dpy, RootWindow (si->dpy, i), True);
-# endif /* !RRScreenChangeNotifyMask */
-    }
-
-  return ok;
-}
-
-#endif /* HAVE_RANDR */
 
 
 

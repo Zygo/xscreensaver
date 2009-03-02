@@ -20,6 +20,7 @@ phosphor - simulates an old terminal with long-sustain phosphor
 [\-visual \fIvisual\fP] [\-font \fIfont\fP] [\-scale \fIint\fP]
 [\-ticks \fIint\fP] [\-delay \fIusecs\fP] [\-program \fIcommand\fP]
 [\-meta] [\-esc] [\-bs] [\-del]
+[\-fps]
 .SH DESCRIPTION
 The \fIphosphor\fP program draws text on the screen in a very large 
 pixelated font that looks like an old low resolution dumb tty.  The
@@ -116,6 +117,9 @@ Swap Backspace and Delete.  This is the default.
 .TP 8
 .B \-bs
 Do not swap Backspace and Delete.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH TERMINAL EMULATION
 By default, \fIphosphor\fP allocates a pseudo-tty for the sub-process to
 run under.  This has the desirable side effect that the program will be

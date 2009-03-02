@@ -40,6 +40,12 @@ extern void check_gl_error (const char *type);
 extern char *progname;
 
 
+#undef DEBUG  /* Defining this causes check_gl_error() to be called inside
+                 time-critical sections, which could slow things down (since
+                 it might result in a round-trip, and stall of the pipeline.)
+               */
+
+
 /* Loads the font named by the X resource "res".
    Returns an XFontStruct.
    Also converts the font to a set of GL lists and returns the first list.
@@ -50,7 +56,7 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
   XFontStruct *f;
 
   const char *font = get_string_resource (dpy, res, "Font");
-  const char *def1 = "-*-times-bold-r-normal-*-180-*";
+  const char *def1 = "-*-helvetica-medium-r-normal-*-180-*";
   const char *def2 = "fixed";
   Font id;
   int first, last;
@@ -128,21 +134,33 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
 }
 
 
-/* Width of the string in pixels.
+/* Width (and optionally height) of the string in pixels.
  */
 int
-string_width (XFontStruct *f, const char *c)
+string_width (XFontStruct *f, const char *c, int *height_ret)
 {
-  int w = 0;
+  int x = 0;
+  int max_w = 0;
+  int h = f->ascent + f->descent;
   while (*c)
     {
       int cc = *((unsigned char *) c);
-      w += (f->per_char
-            ? f->per_char[cc-f->min_char_or_byte2].rbearing
-            : f->min_bounds.rbearing);
+      if (*c == '\n')
+        {
+          if (x > max_w) max_w = x;
+          x = 0;
+          h += f->ascent + f->descent;
+        }
+      else
+        x += (f->per_char
+              ? f->per_char[cc-f->min_char_or_byte2].width
+              : f->min_bounds.rbearing);
       c++;
     }
-  return w;
+  if (x > max_w) max_w = x;
+  if (height_ret) *height_ret = h;
+
+  return max_w;
 }
 
 
@@ -157,37 +175,86 @@ print_gl_string (Display *dpy,
                  GLuint font_dlist,
                  int window_width, int window_height,
                  GLfloat x, GLfloat y,
-                 const char *string)
+                 const char *string,
+                 Bool clear_background_p)
 {
   GLfloat line_height = font->ascent + font->descent;
   GLfloat sub_shift = (line_height * 0.3);
-  int cw = string_width (font, "m");
+  int cw = string_width (font, "m", 0);
   int tabs = cw * 7;
 
   y -= line_height;
 
+  /* Sadly, this causes a stall of the graphics pipeline (as would the
+     equivalent calls to glGet*.)  But there's no way around this, short
+     of having each caller set up the specific display matrix we need
+     here, which would kind of defeat the purpose of centralizing this
+     code in one file.
+   */
   glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  glDisable (GL_TEXTURE_2D);
+                GL_ENABLE_BIT |     /* for various glDisable calls */
+                GL_CURRENT_BIT |    /* for glColor3f() */
+                GL_LIST_BIT);       /* for glListBase() */
   {
+# ifdef DEBUG
+    check_gl_error ("glPushAttrib");
+# endif
+
+    /* disable lighting and texturing when drawing bitmaps!
+       (glPopAttrib() restores these.)
+     */
+    glDisable (GL_TEXTURE_2D);
+    glDisable (GL_LIGHTING);
+    glDisable (GL_BLEND);
+    glDisable (GL_DEPTH_TEST);
+    glDisable (GL_CULL_FACE);
+
+    /* glPopAttrib() does not restore matrix changes, so we must
+       push/pop the matrix stacks to be non-intrusive there.
+     */
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     {
+# ifdef DEBUG
+      check_gl_error ("glPushMatrix");
+# endif
       glLoadIdentity();
 
+      /* Each matrix mode has its own stack, so we need to push/pop
+         them separately. */
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       {
         unsigned int i;
         int x2 = x;
         Bool sub_p = False;
+
+# ifdef DEBUG
+        check_gl_error ("glPushMatrix");
+# endif
+
         glLoadIdentity();
-
         gluOrtho2D (0, window_width, 0, window_height);
+# ifdef DEBUG
+        check_gl_error ("gluOrtho2D");
+# endif
 
+        if (clear_background_p)
+          {
+            int w, h;
+            int lh = font->ascent + font->descent;
+            w = string_width (font, string, &h);
+            glColor3f (0, 0, 0);
+            glRecti (x - font->descent,
+                     y + lh, 
+                     x + w + 2*font->descent,
+                     y + lh - h - font->descent);
+            glColor3f (1, 1, 1);
+          }
+
+        /* draw the text */
         glRasterPos2f (x, y);
+/*        glListBase (font_dlist);*/
         for (i = 0; i < strlen(string); i++)
           {
             unsigned char c = (unsigned char) string[i];
@@ -215,12 +282,16 @@ print_gl_string (Display *dpy,
               }
             else
               {
+/*            glCallLists (s - string, GL_UNSIGNED_BYTE, string);*/
                 glCallList (font_dlist + (int)(c));
                 x2 += (font->per_char
                        ? font->per_char[c - font->min_char_or_byte2].width
                        : font->min_bounds.width);
               }
           }
+# ifdef DEBUG
+        check_gl_error ("print_gl_string");
+# endif
       }
       glPopMatrix();
     }
@@ -228,6 +299,9 @@ print_gl_string (Display *dpy,
     glPopMatrix();
   }
   glPopAttrib();
+# ifdef DEBUG
+  check_gl_error ("glPopAttrib");
+# endif
 
   glMatrixMode(GL_MODELVIEW);
 }

@@ -42,7 +42,7 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 #define DEF_SPIN			        "True"
 #define DEF_WANDER			        "True"
 #define DEF_SPEED			        "150"
-#define DEF_MAXDEPTH		        "5"
+#define DEF_MAX_DEPTH		        "5"
 
 #include "rotator.h"
 #include "gltrackball.h"
@@ -65,10 +65,10 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&do_spin,   "spin",     "Spin",     DEF_SPIN,     t_Bool},
-  {&do_wander, "wander",   "Wander",   DEF_WANDER,   t_Bool},
-  {&speed,     "speed",    "Speed",    DEF_SPEED,    t_Int},
-  {&max_depth, "maxDepth", "MaxDepth", DEF_MAXDEPTH, t_Int},
+  {&do_spin,   "spin",     "Spin",     DEF_SPIN,      t_Bool},
+  {&do_wander, "wander",   "Wander",   DEF_WANDER,    t_Bool},
+  {&speed,     "speed",    "Speed",    DEF_SPEED,     t_Int},
+  {&max_depth, "maxDepth", "MaxDepth", DEF_MAX_DEPTH, t_Int},
 };
 
 

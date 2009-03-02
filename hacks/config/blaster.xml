@@ -4,6 +4,11 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
   <number id="num_robots" type="spinbutton" arg="-num_robots %"
           _label="Robots" low="2" high="50" default="5"/>
 
@@ -13,11 +18,6 @@
   <number id="num_stars" type="slider" arg="-num_stars %"
           _label="Stars" _low-label="Few" _high-label="Many"
           low="5" high="200" default="50"/>
-
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="10000"
-          convert="invert"/>
 
   <!-- #### -move_stars_x [2] -->
   <!-- #### -move_stars_y [1] -->
@@ -47,6 +47,8 @@
   <!-- #### -mother_ship_hits [10] -->
   <!-- #### -mother_ship_color0 [darkblue] -->
   <!-- #### -mother_ship_color1 [white] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws a simulation of flying space-combat robots (cleverly disguised

@@ -291,6 +291,9 @@ static unsigned long
 mismunch_draw (Display *dpy, Window w, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+
+  for (i = 0; i < 5; i++) {
 
   /* for (draw_i = 0; draw_i < simul; draw_i++)  */
   {
@@ -318,6 +321,8 @@ mismunch_draw (Display *dpy, Window w, void *closure)
       st->draw_n = 0;
       st->restart = 0;
     }
+  }
+
   }
 
   return st->delay;
@@ -356,7 +361,8 @@ mismunch_free (Display *dpy, Window window, void *closure)
 static const char *mismunch_defaults [] = {
   ".background:       black",
   ".foreground:       white",
-  "*delay:            2500",
+  "*fpsSolid:	      true",
+  "*delay:            10000",
   "*simul:            5",
   "*clear:            65",
   "*xor:              True",

@@ -22,6 +22,7 @@ apple2 - Apple ][ display emulator
 [\-program \fIcommand to run\fP]
 [\-basic] [\-slideshow] [\-text]
 [\-meta] [\-esc] [\-bs] [\-del] [\-fast]
+[\-fps]
 .SH DESCRIPTION
 The
 .I apple2 
@@ -134,6 +135,9 @@ Normally, characters are printed at the speed of an original Apple][
 computer; however, when using this program as a terminal emulator,
 the novelty of those 300 baud characters might wear off.  You can use
 the \fI\-fast\fP option to speed things up a bit.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH TERMINAL EMULATION
 By default, \fIapple2\fP allocates a pseudo-tty for the \fI\-text\fP-mode
 sub-process to run under.  This has the desirable side effect that the

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.06
-!                              16-Jul-2008
+!                              version 5.07
+!                              10-Aug-2008
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -150,273 +150,221 @@ GetViewPortIsFullOfLies: False
 ! screen savers interactively.
 !
 *programs:								      \
-		 "Qix (solid)" 	qix -root -solid -segments 100		    \n\
-	   "Qix (transparent)" 	qix -root -count 4 -solid -transparent	    \n\
-		"Qix (linear)" 	qix -root -count 5 -solid -transparent	      \
-				  -linear -segments 250 -size 100	    \n\
-									      \
-	  "Attraction (balls)" 	attraction -root -mode balls		    \n\
-	  "Attraction (lines)" 	attraction -root -mode lines -points 3	      \
-				  -segments 200				    \n\
--	"Attraction (splines)" 	attraction -root -mode splines -segments      \
-				  300					    \n\
--	"Attraction (orbital)" 	attraction -root -mode lines -radius 300      \
-				  -orbit -vmult 0.5			    \n\
-									      \
-				pyro -root				    \n\
-				rocks -root				    \n\
-				helix -root				    \n\
-				pedal -root				    \n\
-				rorschach -root				    \n\
-				hopalong -root				    \n\
-				greynetic -root				    \n\
-				imsmap -root				    \n\
-				slidescreen -root			    \n\
-				decayscreen -root			    \n\
-				jigsaw -root				    \n\
+-				sphere -root				    \n\
+@GL_KLUDGE@ GL: 				superquadrics -root			    \n\
+-				worm -root				    \n\
+				attraction -root			    \n\
 				blitspin -root				    \n\
-				slip -root				    \n\
-				distort -root				    \n\
-				spotlight -root				    \n\
-	      "Ripples (stir)"	ripples -root -oily -light 2 -stir	    \n\
-	   "Ripples (desktop)"	ripples -root -water -light 6		    \n\
+				greynetic -root				    \n\
+				helix -root				    \n\
+				hopalong -root				    \n\
 				hypercube -root				    \n\
--				hyperball -root				    \n\
-				halo -root				    \n\
+				imsmap -root				    \n\
 				maze -root				    \n\
 				noseguy -root				    \n\
+				pyro -root				    \n\
+				qix -root				    \n\
+				rocks -root				    \n\
+				rorschach -root				    \n\
+				decayscreen -root			    \n\
 				flame -root				    \n\
+				halo -root				    \n\
+				slidescreen -root			    \n\
 -				lmorph -root				    \n\
+				pedal -root				    \n\
+				bubbles -root				    \n\
+				bouboule -root				    \n\
+				braid -root				    \n\
+				coral -root				    \n\
 				deco -root				    \n\
-				moire -root				    \n\
-				moire2 -root				    \n\
-				lightning -root				    \n\
-				strange -root				    \n\
--				spiral -root				    \n\
-				laser -root				    \n\
-	       			grav -root				    \n\
 				drift -root				    \n\
+				fadeplot -root				    \n\
+				flag -root				    \n\
+				forest -root				    \n\
+				galaxy -root				    \n\
+				goop -root				    \n\
+				grav -root				    \n\
 				ifs -root				    \n\
 				julia -root				    \n\
-				penrose -root				    \n\
--				sierpinski -root			    \n\
-				braid -root				    \n\
-				galaxy -root				    \n\
-				bouboule -root				    \n\
-				swirl -root				    \n\
-				flag -root				    \n\
-				sphere -root				    \n\
-				forest -root				    \n\
+				kaleidescope -root			    \n\
+-				laser -root				    \n\
+-				lightning -root				    \n\
 -				lisa -root				    \n\
 -				lissie -root				    \n\
-				goop -root				    \n\
-				starfish -root				    \n\
-				munch -root				    \n\
-				mismunch -root				    \n\
-				fadeplot -root				    \n\
-				coral -root				    \n\
+@GL_KLUDGE@ GL: 				moebius -root				    \n\
+				moire -root				    \n\
+@GL_KLUDGE@ GL: 				morph3d -root				    \n\
 				mountain -root				    \n\
-				triangle -root				    \n\
--				worm -root				    \n\
+				munch -root				    \n\
+				penrose -root				    \n\
+@GL_KLUDGE@ GL: 				pipes -root				    \n\
+				rd-bomb -root				    \n\
 -				rotor -root				    \n\
--				demon -root				    \n\
--				loop -root				    \n\
+@GL_KLUDGE@ GL: 				rubik -root				    \n\
+-				sierpinski -root			    \n\
+				slip -root				    \n\
+-				spiral -root				    \n\
+@GL_KLUDGE@ GL: 				sproingies -root			    \n\
+				starfish -root				    \n\
+				strange -root				    \n\
+				swirl -root				    \n\
+				triangle -root				    \n\
 -				vines -root				    \n\
-				kaleidescope -root			    \n\
 				xjack -root				    \n\
 				xlyap -root				    \n\
-				cynosure -root				    \n\
-				flow -root				    \n\
-				epicycle -root				    \n\
-				interference -root			    \n\
-				truchet -root				    \n\
+@GL_KLUDGE@ GL: 				atlantis -root				    \n\
 				bsod -root				    \n\
+@GL_KLUDGE@ GL: 				bubble3d -root				    \n\
+@GL_KLUDGE@ GL: 				cage -root				    \n\
 				crystal -root				    \n\
+				cynosure -root				    \n\
 				discrete -root				    \n\
+				distort -root				    \n\
+				epicycle -root				    \n\
+				flow -root				    \n\
+@GL_KLUDGE@ GL: 				glplanet -root				    \n\
+				interference -root			    \n\
+				jigsaw -root				    \n\
 				kumppa -root				    \n\
-				rd-bomb -root				    \n\
-	    "RD-Bomb (mobile)" 	rd-bomb -root -speed 1 -size 0.1	    \n\
+@GL_KLUDGE@ GL: 				lament -root				    \n\
+				moire2 -root				    \n\
 				sonar -root				    \n\
-				t3d -root				    \n\
-				penetrate -root				    \n\
-				deluxe -root				    \n\
-				compass -root				    \n\
-				squiral -root				    \n\
-				xflame -root				    \n\
-				wander -root				    \n\
-	      "Wander (spots)" 	wander -root -advance 0 -size 10 -circles     \
-				  -length 10000 -reset 100000		    \n\
--				critical -root				    \n\
-				phosphor -root				    \n\
-				xmatrix -root				    \n\
-				petri -root				    \n\
-		     "Petri 2" 	petri -root -minlifespeed 0.02		      \
-				  -maxlifespeed 0.03 -minlifespan 1	      \
-				  -maxlifespan 1 -instantdeathchan 0	      \
-				  -minorchan 0 -anychan 0.3		    \n\
-				shadebobs -root				    \n\
-				ccurve -root				    \n\
+@GL_KLUDGE@ GL: 				stairs -root				    \n\
+				truchet -root				    \n\
+-				vidwhacker -root			    \n\
 				blaster -root				    \n\
 				bumps -root				    \n\
-				xanalogtv -root				    \n\
-				xspirograph -root			    \n\
+				ccurve -root				    \n\
+				compass -root				    \n\
+-				critical -root				    \n\
+				deluxe -root				    \n\
+-				demon -root				    \n\
+@GLE_KLUDGE@ GL: 				extrusion -root				    \n\
+-				loop -root				    \n\
+				penetrate -root				    \n\
+				petri -root				    \n\
+				phosphor -root				    \n\
+@GL_KLUDGE@ GL: 				pulsar -root				    \n\
+				ripples -root				    \n\
+				shadebobs -root				    \n\
+@GL_KLUDGE@ GL: 				sierpinski3d -root			    \n\
+				spotlight -root				    \n\
+				squiral -root				    \n\
+				t3d -root				    \n\
+				wander -root				    \n\
+-				webcollage -root			    \n\
+				xflame -root				    \n\
+				xmatrix -root				    \n\
+@GL_KLUDGE@ GL: 				gflux -root				    \n\
+-				hyperball -root				    \n\
 				nerverot -root				    \n\
 				xrayswarm -root				    \n\
--	       "Zoom (Fatbits)"	zoom -root				    \n\
-	       "Zoom (Lenses)"	zoom -root -lenses			    \n\
+				xspirograph -root			    \n\
+@GL_KLUDGE@ GL: 				circuit -root				    \n\
+@GL_KLUDGE@ GL: 				dangerball -root			    \n\
+- GL: 				dnalogo -root				    \n\
+@GL_KLUDGE@ GL: 				engine -root				    \n\
+@GL_KLUDGE@ GL: 				flipscreen3d -root			    \n\
+@GL_KLUDGE@ GL: 				gltext -root				    \n\
+@GL_KLUDGE@ GL: 				menger -root				    \n\
+@GL_KLUDGE@ GL: 				molecule -root				    \n\
 				rotzoomer -root				    \n\
+				speedmine -root				    \n\
+@GL_KLUDGE@ GL: 				starwars -root				    \n\
+@GL_KLUDGE@ GL: 				stonerview -root			    \n\
+				vermiculate -root			    \n\
 				whirlwindwarp -root			    \n\
- 	            		whirlygig -root				    \n\
- 	            		speedmine -root				    \n\
- 	            "SpeedWorm"	speedmine -root -worm			    \n\
- 	                	vermiculate -root			    \n\
- 	                	twang -root				    \n\
- 	                	apollonian -root			    \n\
- 	                	euler2d -root				    \n\
-	     "Euler2d (dense)"	euler2d -root -count 4000 -eulertail 400      \
-				  -ncolors 230				    \n\
-- 	                	juggle -root				    \n\
- 	                	polyominoes -root			    \n\
-- 	                	thornbird -root				    \n\
- 	                	fluidballs -root			    \n\
- 	                	anemone -root				    \n\
- 	                	halftone -root				    \n\
- 	                	metaballs -root				    \n\
- 	                	eruption -root				    \n\
- 	                	popsquares -root			    \n\
- 	                	barcode -root				    \n\
- 	                	piecewise -root				    \n\
- 	                	cloudlife -root				    \n\
-		   		fontglide -root				    \n\
+				whirlygig -root				    \n\
+				zoom -root				    \n\
+				anemone -root				    \n\
+				apollonian -root			    \n\
+@GL_KLUDGE@ GL: 				boxed -root				    \n\
+@GL_KLUDGE@ GL: 				cubenetic -root				    \n\
+@GL_KLUDGE@ GL: 				endgame -root				    \n\
+				euler2d -root				    \n\
+				fluidballs -root			    \n\
+@GL_KLUDGE@ GL: 				flurry -root				    \n\
+- GL: 				glblur -root				    \n\
+- GL: 				glforestfire -root			    \n\
+@GL_KLUDGE@ GL: 				glsnake -root				    \n\
+				halftone -root				    \n\
+-				juggle -root				    \n\
+@GL_KLUDGE@ GL: 				lavalite -root				    \n\
+				polyominoes -root			    \n\
+@GL_KLUDGE@ GL: 				queens -root				    \n\
+- GL: 				sballs -root				    \n\
+@GL_KLUDGE@ GL: 				spheremonics -root			    \n\
+-				thornbird -root				    \n\
+				twang -root				    \n\
+@GL_KLUDGE@ GL: 				antspotlight -root			    \n\
 				apple2 -root				    \n\
-                                bubbles -root				    \n\
+@GL_KLUDGE@ GL: 				atunnel -root				    \n\
+				barcode -root				    \n\
+@GL_KLUDGE@ GL: 				blinkbox -root				    \n\
+@GL_KLUDGE@ GL: 				blocktube -root				    \n\
+@GL_KLUDGE@ GL: 				bouncingcow -root			    \n\
+				cloudlife -root				    \n\
+@GL_KLUDGE@ GL: 				cubestorm -root				    \n\
+				eruption -root				    \n\
+@GL_KLUDGE@ GL: 				flipflop -root				    \n\
+@GL_KLUDGE@ GL: 				flyingtoasters -root			    \n\
+				fontglide -root				    \n\
+@GL_KLUDGE@ GL: 				gleidescope -root			    \n\
+@GL_KLUDGE@ GL: 				glknots -root				    \n\
+@GL_KLUDGE@ GL: 				glmatrix -root				    \n\
+- GL: 				glslideshow -root			    \n\
+@GL_KLUDGE@ GL: 				hypertorus -root			    \n\
+@GL_KLUDGE@ GL: 				jigglypuff -root			    \n\
+@GL_KLUDGE@ GL: 				klein -root				    \n\
+				metaballs -root				    \n\
+@GL_KLUDGE@ GL: 				mirrorblob -root			    \n\
+				piecewise -root				    \n\
+@GL_KLUDGE@ GL: 				polytopes -root				    \n\
 				pong -root				    \n\
-				wormhole -root				    \n\
-				pacman -root				    \n\
-				fuzzyflakes -root			    \n\
+				popsquares -root			    \n\
+				xanalogtv -root				    \n\
+-				abstractile -root			    \n\
 				anemotaxis -root			    \n\
-				memscroller -root			    \n\
-				substrate -root				    \n\
-				intermomentary -root			    \n\
-				interaggregate -root			    \n\
+- GL: 				antinspect -root			    \n\
 				fireworkx -root				    \n\
-				fiberlamp -root				    \n\
+				fuzzyflakes -root			    \n\
+				interaggregate -root			    \n\
+				intermomentary -root			    \n\
+				memscroller -root			    \n\
+				mismunch -root				    \n\
+@GL_KLUDGE@ GL: 				noof -root				    \n\
+				pacman -root				    \n\
+@GL_KLUDGE@ GL: 				pinion -root				    \n\
+@GL_KLUDGE@ GL: 				polyhedra -root				    \n\
+@GL_KLUDGE@ GL: 				providence -root			    \n\
+				substrate -root				    \n\
+				wormhole -root				    \n\
+- GL: 				antmaze -root				    \n\
+@GL_KLUDGE@ GL: 				boing -root				    \n\
 				boxfit -root				    \n\
+- GL: 				carousel -root				    \n\
 				celtic -root				    \n\
+@GL_KLUDGE@ GL: 				crackberg -root				    \n\
+@GL_KLUDGE@ GL: 				cube21 -root				    \n\
+				fiberlamp -root				    \n\
+@GL_KLUDGE@ GL: 				fliptext -root				    \n\
+@GL_KLUDGE@ GL: 				glhanoi -root				    \n\
+@GL_KLUDGE@ GL: 				juggler3d -root				    \n\
+@GL_KLUDGE@ GL: 				tangram -root				    \n\
+@GL_KLUDGE@ GL: 				timetunnel -root			    \n\
+@GL_KLUDGE@ GL: 				glschool -root				    \n\
+@GL_KLUDGE@ GL: 				topblock -root				    \n\
+@GL_KLUDGE@ GL: 				cubicgrid -root				    \n\
 				cwaves -root				    \n\
+@GL_KLUDGE@ GL: 				gears -root				    \n\
+@GL_KLUDGE@ GL: 				glcells -root				    \n\
+@GL_KLUDGE@ GL: 				lockward -root				    \n\
 				m6502 -root				    \n\
-				abstractile -root			    \n\
+@GL_KLUDGE@ GL: 				moebiusgears -root			    \n\
+@GL_KLUDGE@ GL: 				voronoi -root				    \n\
+@GL_KLUDGE@ GL: 				hypnowheel -root			    \n\
 -				lcdscrub -root				    \n\
-- default-n:			webcollage -root			    \n\
-- default-n:  "WebCollage (whacked)"					      \
-				webcollage -root -filter		      \
-				  'vidwhacker -stdin -stdout'		    \n\
-- default-n:			vidwhacker -root			    \n\
-									      \
-@GL_KLUDGE@ GL:			gears -root				    \n\
-@GL_KLUDGE@ GL:			superquadrics -root			    \n\
-@GL_KLUDGE@ GL:			morph3d -root				    \n\
-@GL_KLUDGE@ GL:			cage -root				    \n\
-@GL_KLUDGE@ GL:			moebius -root				    \n\
-@GL_KLUDGE@ GL:			stairs -root				    \n\
-@GL_KLUDGE@ GL:			pipes -root				    \n\
-@GL_KLUDGE@ GL:			sproingies -root			    \n\
-@GL_KLUDGE@ GL:			rubik -root				    \n\
-@GL_KLUDGE@ GL:			atlantis -root				    \n\
-@GL_KLUDGE@ GL:			lament -root				    \n\
-@GL_KLUDGE@ GL:			bubble3d -root				    \n\
-@GL_KLUDGE@ GL:			glplanet -root				    \n\
-@GL_KLUDGE@ GL:			flurry -root				    \n\
-@GL_KLUDGE@ GL:			pulsar -root				    \n\
--	   GL:	   "Pulsar (textures)"					      \
-				  pulsar -root -texture -mipmap		      \
-				  -texture_quality -light -fog		    \n\
-@GLE_KLUDGE@GL:			extrusion -root				    \n\
-@GL_KLUDGE@ GL:			sierpinski3d -root			    \n\
-@GL_KLUDGE@ GL:			menger -root				    \n\
-@GL_KLUDGE@ GL:	 		gflux -root				    \n\
-@GL_KLUDGE@ GL:	 "GFlux (grab)"	gflux -root -mode grab			    \n\
-@GL_KLUDGE@ GL:			stonerview -root			    \n\
-@GL_KLUDGE@ GL:			starwars -root				    \n\
-@GL_KLUDGE@ GL:			gltext -root				    \n\
-@GL_KLUDGE@ GL:	"GLText (clock)" gltext -text "%A%n%d %b %Y%n%r" -root	    \n\
-@GL_KLUDGE@ GL:	 		molecule -root				    \n\
-@GL_KLUDGE@ GL:			dangerball -root			    \n\
-@GL_KLUDGE@ GL:			circuit -root				    \n\
-@GL_KLUDGE@ GL:			engine -root				    \n\
-@GL_KLUDGE@ GL:			flipscreen3d -root			    \n\
-@GL_KLUDGE@ GL:			glsnake -root				    \n\
-@GL_KLUDGE@ GL:			boxed -root				    \n\
--	   GL:			glforestfire -root			    \n\
--	   GL:	"GLForestFire (rain)"	glforestfire -root -count 0	    \n\
--	   GL:			sballs -root				    \n\
-@GL_KLUDGE@ GL:			cubenetic -root				    \n\
-@GL_KLUDGE@ GL:			spheremonics -root			    \n\
-@GL_KLUDGE@ GL:			lavalite -root				    \n\
-@GL_KLUDGE@ GL:			queens -root				    \n\
-@GL_KLUDGE@ GL:			endgame -root				    \n\
--	   GL:			glblur -root				    \n\
-@GL_KLUDGE@ GL:			atunnel -root				    \n\
-@GL_KLUDGE@ GL:			flyingtoasters -root			    \n\
-@GL_KLUDGE@ GL:			bouncingcow -root			    \n\
-@GL_KLUDGE@ GL:			jigglypuff -root			    \n\
-@GL_KLUDGE@ GL:			klein -root				    \n\
-@GL_KLUDGE@ GL:			hypertorus -root			    \n\
-@GL_KLUDGE@ GL:			glmatrix -root				    \n\
-@GL_KLUDGE@ GL:			cubestorm -root				    \n\
-@GL_KLUDGE@ GL:			glknots -root				    \n\
-@GL_KLUDGE@ GL:			blocktube -root				    \n\
-@GL_KLUDGE@ GL:			flipflop -root				    \n\
-@GL_KLUDGE@ GL:			antspotlight -root			    \n\
--	   GL:			glslideshow -root			    \n\
-@GL_KLUDGE@ GL:			polytopes -root				    \n\
-@GL_KLUDGE@ GL:			gleidescope -root			    \n\
-- 	   GL:			mirrorblob -root			    \n\
-@GL_KLUDGE@ GL:	    "MirrorBlob (color only)"				      \
-                                mirrorblob -root -colour -no-texture	    \n\
-@GL_KLUDGE@ GL:			blinkbox -root				    \n\
-@GL_KLUDGE@ GL:			noof -root				    \n\
-@GL_KLUDGE@ GL:			polyhedra -root				    \n\
--	   GL:                  antinspect -root                            \n\
-@GL_KLUDGE@ GL:			providence -root			    \n\
-@GL_KLUDGE@ GL:	"Pinion (large gears)"	pinion -root			    \n\
-@GL_KLUDGE@ GL:	"Pinion (small gears)"	pinion -root -size 0.2 -scroll 0.3  \n\
-@GL_KLUDGE@ GL:			boing -root -lighting -smooth		    \n\
--	   GL:                  carousel -root                              \n\
-@GL_KLUDGE@ GL:			fliptext -root				    \n\
--	   GL:                  antmaze -root                               \n\
-@GL_KLUDGE@ GL:			tangram -root				    \n\
-@GL_KLUDGE@ GL:			crackberg -root				    \n\
-@GL_KLUDGE@ GL:			glhanoi -root				    \n\
-@GL_KLUDGE@ GL:			cube21 -root				    \n\
-@GL_KLUDGE@ GL:			timetunnel -root			    \n\
-@GL_KLUDGE@ GL:			juggler3d -root				    \n\
-@GL_KLUDGE@ GL:			topblock -root				    \n\
-@GL_KLUDGE@ GL:			glschool -root				    \n\
-@GL_KLUDGE@ GL:			glcells -root				    \n\
-@GL_KLUDGE@ GL:			voronoi -root				    \n\
-@GL_KLUDGE@ GL:			moebiusgears -root			    \n\
-@GL_KLUDGE@ GL:			lockward -root				    \n\
-@GL_KLUDGE@ GL:			cubicgrid -root				    \n\
-@GL_KLUDGE@ GL:			hypnowheel -root			    \n\
-@GL_KLUDGE@ GL:	"Hypnowheel (dense)"	hypnowheel -root -count 3 -layers 50 \n\
-@GL_KLUDGE@ GL:	"Hypnowheel (trifoil)"	hypnowheel -root -count 3 -layers 2 -speed 9 -twist 9 -wander \n\
-@GL_KLUDGE@ GL:			skytentacles -root			    \n\
-									      \
--				xdaliclock -root -font BUILTIN3		    \n\
--				xplanet -vroot -wait 1 -timewarp 90000        \
-                                  -label -origin moon			    \n\
--				xmountains -b -M -Z 0 -r 1		    \n\
--	"XMountains (top)"	xmountains -b -M -Z 0 -r 1 -m		    \n\
--                               xaos -root -autopilot -nogui -delay 10000     \
-                                  -maxframerate 30                            \
-                                  -incoloring -1 -outcoloring -1            \n\
--				xsnow -root                                 \n\
--				goban -root                                 \n\
--				electricsheep                               \n\
--				cosmos -root                                \n\
--	   GL:                  sphereEversion --root                       \n\
--	   GL:                  fireflies -root                             \n
+@GL_KLUDGE@ GL: 				skytentacles -root			    \n
 
 
 
@@ -487,69 +435,72 @@ XScreenSaver.bourneShell:		/bin/sh
 !
 !=============================================================================
 
-*hacks.imsmap.name:         IMSmap
-*hacks.slidescreen.name:    SlideScreen
-*hacks.decayscreen.name:    DecayScreen
+*hacks.antinspect.name:     AntInspect
+*hacks.antmaze.name:        AntMaze
+*hacks.antspotlight.name:   AntSpotlight
+*hacks.blinkbox.name:       BlinkBox
 *hacks.blitspin.name:       BlitSpin
-*hacks.lmorph.name:         LMorph
-*hacks.ifs.name:            IFS
-*hacks.fadeplot.name:       FadePlot
+*hacks.blocktube.name:      BlockTube
+*hacks.bouncingcow.name:    BouncingCow
+*hacks.boxfit.name:         BoxFit
 *hacks.bsod.name:           BSOD
-*hacks.rd-bomb.name:        RD-Bomb
-*hacks.t3d.name:            T3D
-*hacks.shadebobs.name:      ShadeBobs
-*hacks.ccurve.name:         C Curve
-*hacks.xanalogtv.name:      XAnalogTV
-*hacks.xspirograph.name:    XSpiroGraph
-*hacks.nerverot.name:       NerveRot
-*hacks.webcollage.name:     WebCollage
-*hacks.vidwhacker.name:     VidWhacker
-*hacks.morph3d.name:        Morph3D
 *hacks.bubble3d.name:       Bubble3D
-*hacks.sierpinski3d.name:   Sierpinski3D
-*hacks.gflux.name:          GFlux
-*hacks.xrayswarm.name:      XRaySwarm
-*hacks.whirlwindwarp.name:  WhirlwindWarp
-*hacks.rotzoomer.name:      RotZoomer
-*hacks.stonerview.name:     StonerView
-*hacks.starwars.name:       StarWars
+*hacks.ccurve.name:         CCurve
+*hacks.cloudlife.name:      CloudLife
+*hacks.cubestorm.name:      CubeStorm
+*hacks.cubicgrid.name:      CubicGrid
+*hacks.cwaves.name:         CWaves
 *hacks.dangerball.name:     DangerBall
-*hacks.whirlygig.name:      WhirlyGig
-*hacks.speedmine.name:      SpeedMine
-*hacks.glforestfire.name:   GLForestFire
-*hacks.sballs.name:         SBalls
-*hacks.xdaliclock.name:     XDaliClock
-*hacks.xplanetbg.name:      XPlanet
-*hacks.xplanet.name:        XPlanet
-*hacks.xaos.name:           XaoS
-*hacks.xfishtank.name:      XFishTank
-*hacks.electricsheep.name:  ElectricSheep
-*hacks.sphereEversion.name: SphereEversion
+*hacks.decayscreen.name:    DecayScreen
+*hacks.dnalogo.name:        DNA Logo
+*hacks.euler2d.name:        Euler2D
+*hacks.fadeplot.name:       FadePlot
+*hacks.flipflop.name:       FlipFlop
+*hacks.flipscreen3d.name:   FlipScreen3D
+*hacks.fliptext.name:       FlipText
 *hacks.fluidballs.name:     FluidBalls
 *hacks.flyingtoasters.name: FlyingToasters
-*hacks.bouncingcow.name:    BouncingCow
-*hacks.jigglypuff.name:     JigglyPuff
-*hacks.hypertorus.name:     HyperTorus
-*hacks.cubestorm.name:      CubeStorm
-*hacks.blocktube.name:      BlockTube
-*hacks.flipflop.name:       FlipFlop
-*hacks.antspotlight.name:   AntSpotlight
 *hacks.fontglide.name:      FontGlide
-*hacks.mirrorblob.name:     MirrorBlob
-*hacks.blinkbox.name:       BlinkBox
 *hacks.fuzzyflakes.name:    FuzzyFlakes
-*hacks.memscroller.name:    MemScroller
-*hacks.boxfit.name:         BoxFit
-*hacks.fliptext.name:       FlipText
-*hacks.glhanoi.name:        GLHanoi
-*hacks.topblock.name:       TopBlock
-*hacks.glschool.name:       GLSchool
-*hacks.glcells.name:        GLCells
-*hacks.moebiusgears.name:   MoebiusGears
-*hacks.cubicgrid.name:      CubicGrid
+*hacks.gflux.name:          GFlux
+*hacks.gleidescope.name:    Gleidescope
+*hacks.glforestfire.name:   GLForestFire
+*hacks.hyperball.name:      HyperBall
+*hacks.hypercube.name:      HyperCube
+*hacks.ifs.name:            IFS
+*hacks.imsmap.name:         IMSMap
+*hacks.jigglypuff.name:     JigglyPuff
+*hacks.juggler3d.name:      Juggler3D
 *hacks.lcdscrub.name:       LCDscrub
-*hacks.hypnowheel.name:     HypnoWheel
+*hacks.lmorph.name:         LMorph
+*hacks.m6502.name:          m6502
+*hacks.memscroller.name:    MemScroller
+*hacks.metaballs.name:      MetaBalls
+*hacks.mirrorblob.name:     MirrorBlob
+*hacks.moebiusgears.name:   MoebiusGears
+*hacks.morph3d.name:        Morph3D
+*hacks.nerverot.name:       NerveRot
+*hacks.noseguy.name:        NoseGuy
+*hacks.popsquares.name:     PopSquares
+*hacks.rd-bomb.name:        RDbomb
+*hacks.rdbomb.name:         RDbomb
+*hacks.rotzoomer.name:      RotZoomer
+*hacks.sballs.name:         SBalls
+*hacks.shadebobs.name:      ShadeBobs
+*hacks.sierpinski3d.name:   Sierpinski3D
 *hacks.skytentacles.name:   SkyTentacles
+*hacks.slidescreen.name:    SlideScreen
+*hacks.speedmine.name:      SpeedMine
+*hacks.starwars.name:       StarWars
+*hacks.stonerview.name:     StonerView
+*hacks.t3d.name:            T3D
+*hacks.timetunnel.name:     TimeTunnel
+*hacks.topblock.name:       TopBlock
+*hacks.vidwhacker.name:     VidWhacker
+*hacks.webcollage.name:     WebCollage
+*hacks.whirlwindwarp.name:  WhirlWindWarp
+*hacks.xanalogtv.name:      XAnalogTV
+*hacks.xrayswarm.name:      XRaySwarm
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

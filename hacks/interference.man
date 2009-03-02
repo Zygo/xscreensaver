@@ -16,6 +16,7 @@ interference - decaying sinusoidal waves
 [\-color-shift \fInumber\fP]
 [\-hue \fInumber\fP]
 [\-no-db]
+[\-fps]
 .SH DESCRIPTION
 Another color-field hack, this one works by computing decaying sinusoidal
 waves, and allowing them to interfere with each other as their origins
@@ -58,6 +59,9 @@ Hue of the base color (0-360, as in HSV space.)  Default 0, meaning random.
 .TP 8
 .B \-db | \-no-db
 Whether to double buffer.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

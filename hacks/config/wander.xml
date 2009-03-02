@@ -4,6 +4,11 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
   <number id="density" type="slider" arg="-density %"
           _label="Density" _low-label="Low" _high-label="High"
           low="1" high="30" default="2"
@@ -17,23 +22,23 @@
           _label="Length" _low-label="Short" _high-label="Long"
           low="100" high="100000" default="25000"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Sustain" _low-label="0 Seconds" _high-label="1 Minute"
-          low="0" high="60" default="1"/>
-
   <hgroup>
-    <boolean id="circles" _label="Draw Spots" arg-set="-circles"/>
+    <boolean id="circles" _label="Draw spots" arg-set="-circles"/>
 
     <number id="size" type="spinbutton" arg="-size %"
              _label="Size" low="0" high="100" default="1"/>
   </hgroup>
 
   <number id="advance" type="slider" arg="-advance %"
-          _label="Color Contrast" _low-label="Low" _high-label="High"
+          _label="Color contrast" _low-label="Low" _high-label="High"
           low="1" high="100" default="1"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws a colorful random-walk, in various forms.
+
+http://en.wikipedia.org/wiki/Random_walk
 
 Written by Rick Campbell; 1999.
   </_description>

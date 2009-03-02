@@ -12,6 +12,7 @@ demon - cellular automaton.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-size \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 A cellular automaton that starts with a random field, and organizes it into
 stripes and spirals.
@@ -41,6 +42,9 @@ Number of Colors.  Default: 64.
 .TP 8
 .B \-size \fInumber\fP
 Cell Size.  -20 - 20.  Default: -7.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -4,6 +4,7 @@ flame - draw weird cosmic fractals
 .SH SYNOPSIS
 .B flame
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-colors \fIinteger\fP] [\-iterations \fIinteger\fP] [\-points \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-delay2 \fImicroseconds\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIflame\fP program generates colorful fractal displays.
 .SH OPTIONS
@@ -42,6 +43,9 @@ or about 1/20th second.
 .B \-delay2 \fImicroseconds\fP
 How long we should wait before clearing the screen when each run ends.
 Default 2000000, or two seconds.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

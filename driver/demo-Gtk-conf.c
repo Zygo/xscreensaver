@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001, 2003, 2004, 2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -72,6 +72,11 @@ const char *hack_configuration_path = HACK_CONFIGURATION_PATH;
 static gboolean debug_p = FALSE;
 
 
+#define MIN_SLIDER_WIDTH     150
+#define MIN_SPINBUTTON_WIDTH  48
+#define MIN_LABEL_WIDTH       70
+
+
 typedef enum {
   COMMAND,
   FAKE,
@@ -127,8 +132,8 @@ typedef struct {
 
 
 static parameter *make_select_option (const char *file, xmlNodePtr);
-static void make_parameter_widget (const char *filename,
-                                   parameter *, GtkWidget *, int *);
+static void make_parameter_widget (const char *filename, 
+                                   parameter *, GtkWidget *);
 static void browse_button_cb (GtkButton *button, gpointer user_data);
 
 
@@ -668,8 +673,7 @@ sanity_check_parameters (const char *filename, GList *parms)
 /* Helper for make_parameters()
  */
 static GList *
-make_parameters_1 (const char *filename, xmlNodePtr node,
-                   GtkWidget *parent, int *row)
+make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent)
 {
   GList *list = 0;
 
@@ -684,17 +688,9 @@ make_parameters_1 (const char *filename, xmlNodePtr node,
                             : gtk_vbox_new (FALSE, 0));
           GList *list2;
           gtk_widget_show (box);
+          gtk_box_pack_start (GTK_BOX (parent), box, FALSE, FALSE, 0);
 
-          if (row)
-            gtk_table_attach (GTK_TABLE (parent), box, 0, 3, *row, *row + 1,
-                              0, 0, 0, 0);
-          else
-            gtk_box_pack_start (GTK_BOX (parent), box, FALSE, FALSE, 0);
-
-          if (row)
-            (*row)++;
-
-          list2 = make_parameters_1 (filename, node->xmlChildrenNode, box, 0);
+          list2 = make_parameters_1 (filename, node->xmlChildrenNode, box);
           if (list2)
             list = g_list_concat (list, list2);
         }
@@ -704,7 +700,7 @@ make_parameters_1 (const char *filename, xmlNodePtr node,
           if (p)
             {
               list = g_list_append (list, p);
-              make_parameter_widget (filename, p, parent, row);
+              make_parameter_widget (filename, p, parent);
             }
         }
     }
@@ -719,13 +715,11 @@ make_parameters_1 (const char *filename, xmlNodePtr node,
 static GList *
 make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent)
 {
-  int row = 0;
   for (; node; node = node->next)
     {
       if (node->type == XML_ELEMENT_NODE &&
           !strcmp ((char *) node->name, "screensaver"))
-        return make_parameters_1 (filename, node->xmlChildrenNode,
-                                  parent, &row);
+        return make_parameters_1 (filename, node->xmlChildrenNode, parent);
     }
   return 0;
 }
@@ -793,14 +787,40 @@ make_adjustment (const char *filename, parameter *p)
 
 
 
+static void
+set_widget_min_width (GtkWidget *w, int width)
+{
+  GtkRequisition req;
+  gtk_widget_size_request (GTK_WIDGET (w), &req);
+  if (req.width < width)
+    gtk_widget_set_size_request (GTK_WIDGET (w), width, -1);
+}
+
+
+/* If we're inside a vbox, we need to put an hbox in it, or labels appear 
+   on top instead of to the left, and things stretch to the full width of
+   the window.
+ */
+static GtkWidget *
+insert_fake_hbox (GtkWidget *parent)
+{
+  if (GTK_IS_VBOX (parent))
+    {
+      GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (parent), hbox, FALSE, FALSE, 4);
+      gtk_widget_show (hbox);
+      return hbox;
+    }
+  return parent;
+}
+
+
 /* Given a `parameter' struct, allocates an appropriate GtkWidget for it,
    and stores it in `p->widget'.
-   `row' is used for keeping track of our position during table layout.
-   `parent' must be a GtkTable or a GtkBox.
+   `parent' must be a GtkBox.
  */
 static void
-make_parameter_widget (const char *filename,
-                       parameter *p, GtkWidget *parent, int *row)
+make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
 {
   const char *label = (char *) p->label;
   if (p->widget) return;
@@ -809,28 +829,21 @@ make_parameter_widget (const char *filename,
     {
     case STRING:
       {
+        parent = insert_fake_hbox (parent);
         if (label)
           {
             GtkWidget *w = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
-            if (row)
-              gtk_table_attach (GTK_TABLE (parent), w, 0, 1, *row, *row + 1,
-                                GTK_FILL, 0, 0, 0);
-            else
-              gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
+            gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         p->widget = gtk_entry_new ();
         if (p->string)
           gtk_entry_set_text (GTK_ENTRY (p->widget), (char *) p->string);
-        if (row)
-          gtk_table_attach (GTK_TABLE (parent), p->widget, 1, 3,
-                            *row, *row + 1,
-                            GTK_FILL, 0, 0, 0);
-        else
-          gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
+        gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
         break;
       }
     case FILENAME:
@@ -848,29 +861,16 @@ make_parameter_widget (const char *filename,
 
         gtk_label_set_justify (GTK_LABEL (L), GTK_JUSTIFY_RIGHT);
         gtk_misc_set_alignment (GTK_MISC (L), 1.0, 0.5);
+        set_widget_min_width (GTK_WIDGET (L), MIN_LABEL_WIDTH);
         gtk_widget_show (L);
 
         if (p->string)
           gtk_entry_set_text (GTK_ENTRY (entry), (char *) p->string);
 
-        if (row)
-          {
-            gtk_table_attach (GTK_TABLE (parent), L, 0, 1,
-                              *row, *row + 1,
-                              GTK_FILL, 0, 0, 0);
-            gtk_table_attach (GTK_TABLE (parent), entry, 1, 2,
-                              *row, *row + 1,
-                              GTK_EXPAND | GTK_FILL, 0, 0, 0);
-            gtk_table_attach (GTK_TABLE (parent), button, 2, 3,
-                              *row, *row + 1,
-                              0, 0, 0, 0);
-          }
-        else
-          {
-            gtk_box_pack_start (GTK_BOX (parent), L,      FALSE, FALSE, 4);
-            gtk_box_pack_start (GTK_BOX (parent), entry,  TRUE,  TRUE,  4);
-            gtk_box_pack_start (GTK_BOX (parent), button, FALSE, FALSE, 4);
-          }
+        parent = insert_fake_hbox (parent);
+        gtk_box_pack_start (GTK_BOX (parent), L,      FALSE, FALSE, 4);
+        gtk_box_pack_start (GTK_BOX (parent), entry,  TRUE,  TRUE,  4);
+        gtk_box_pack_start (GTK_BOX (parent), button, FALSE, FALSE, 4);
         break;
       }
     case SLIDER:
@@ -884,79 +884,30 @@ make_parameter_widget (const char *filename,
             labelw = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (labelw), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (labelw), 0.0, 0.5);
+            set_widget_min_width (GTK_WIDGET (labelw), MIN_LABEL_WIDTH);
             gtk_widget_show (labelw);
+            gtk_box_pack_start (GTK_BOX (parent), labelw, FALSE, FALSE, 2);
           }
 
-        if (GTK_IS_VBOX (parent))
-          {
-            /* If we're inside a vbox, we need to put an hbox in it, to get
-               the low/high labels to be to the left/right of the slider.
-             */
-            GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
-
-            /* But if we have a label, put that above the slider's hbox. */
-            if (labelw)
-              {
-                gtk_box_pack_start (GTK_BOX (parent), labelw, FALSE, TRUE, 2);
-                labelw = 0;
-              }
-
-            gtk_box_pack_start (GTK_BOX (parent), hbox, TRUE, TRUE, 6);
-            gtk_widget_show (hbox);
-            parent = hbox;
-          }
-
-        if (labelw)
-          {
-            if (row)
-              {
-                gtk_table_attach (GTK_TABLE (parent), labelw,
-                                  0, 3, *row, *row + 1,
-                                  GTK_EXPAND | GTK_FILL, 0, 0, 0);
-                (*row)++;
-              }
-            else
-              {
-                if (GTK_IS_HBOX (parent))
-                  {
-                    GtkWidget *box = gtk_vbox_new (FALSE, 0);
-                    gtk_box_pack_start (GTK_BOX (parent), box, FALSE, TRUE, 0);
-                    gtk_widget_show (box);
-                    gtk_box_pack_start (GTK_BOX (box), labelw, FALSE, TRUE, 4);
-                    parent = box;
-                    box = gtk_hbox_new (FALSE, 0);
-                    gtk_widget_show (box);
-                    gtk_box_pack_start (GTK_BOX (parent), box, TRUE, TRUE, 0);
-                    parent = box;
-                  }
-                else
-                  gtk_box_pack_start (GTK_BOX (parent), labelw,
-                                      FALSE, TRUE, 0);
-              }
-          }
+        /* Do this after 'labelw' so that it appears above, not to left. */
+        parent = insert_fake_hbox (parent);
 
         if (p->low_label)
           {
             GtkWidget *w = gtk_label_new (_((char *) p->low_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
-            if (row)
-              gtk_table_attach (GTK_TABLE (parent), w, 0, 1, *row, *row + 1,
-                                GTK_FILL, 0, 0, 0);
-            else
-              gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
+            gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         gtk_scale_set_value_pos (GTK_SCALE (scale), GTK_POS_BOTTOM);
         gtk_scale_set_draw_value (GTK_SCALE (scale), debug_p);
         gtk_scale_set_digits (GTK_SCALE (scale), (p->integer_p ? 0 : 2));
-        if (row)
-          gtk_table_attach (GTK_TABLE (parent), scale, 1, 2,
-                            *row, *row + 1,
-                            GTK_EXPAND | GTK_FILL, 0, 0, 0);
-        else
-          gtk_box_pack_start (GTK_BOX (parent), scale, TRUE, TRUE, 4);
+        set_widget_min_width (GTK_WIDGET (scale), MIN_SLIDER_WIDTH);
+
+        gtk_box_pack_start (GTK_BOX (parent), scale, FALSE, FALSE, 4);
 
         gtk_widget_show (scale);
 
@@ -965,12 +916,9 @@ make_parameter_widget (const char *filename,
             GtkWidget *w = gtk_label_new (_((char *) p->high_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
+            set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
-            if (row)
-              gtk_table_attach (GTK_TABLE (parent), w, 2, 3, *row, *row + 1,
-                                GTK_FILL, 0, 0, 0);
-            else
-              gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
+            gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         p->widget = scale;
@@ -983,32 +931,21 @@ make_parameter_widget (const char *filename,
         gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spin), TRUE);
         gtk_spin_button_set_snap_to_ticks (GTK_SPIN_BUTTON (spin), TRUE);
         gtk_spin_button_set_value (GTK_SPIN_BUTTON (spin), adj->value);
+        set_widget_min_width (GTK_WIDGET (spin), MIN_SPINBUTTON_WIDTH);
 
         if (label)
           {
             GtkWidget *w = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
-            if (row)
-              gtk_table_attach (GTK_TABLE (parent), w, 0, 1, *row, *row + 1,
-                                GTK_FILL, 0, 0, 0);
-            else
-              gtk_box_pack_start (GTK_BOX (parent), w, TRUE, TRUE, 4);
+            parent = insert_fake_hbox (parent);
+            gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         gtk_widget_show (spin);
-        if (row)
-          {
-            GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
-            gtk_widget_show (hbox);
-            gtk_table_attach (GTK_TABLE (parent), hbox, 1, 3,
-                              *row, *row + 1,
-                              GTK_EXPAND | GTK_FILL, 0, 8, 0);
-            gtk_box_pack_start (GTK_BOX (hbox), spin, FALSE, FALSE, 0);
-          }
-        else
-          gtk_box_pack_start (GTK_BOX (parent), spin, FALSE, FALSE, 4);
+        gtk_box_pack_start (GTK_BOX (parent), spin, FALSE, FALSE, 4);
 
         p->widget = spin;
         break;
@@ -1016,12 +953,10 @@ make_parameter_widget (const char *filename,
     case BOOLEAN:
       {
         p->widget = gtk_check_button_new_with_label (_(label));
-        if (row)
-          gtk_table_attach (GTK_TABLE (parent), p->widget, 0, 3,
-                            *row, *row + 1,
-                            GTK_EXPAND | GTK_FILL, 0, 0, 0);
-        else
-          gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
+        /* Let these stretch -- doesn't hurt. 
+           parent = insert_fake_hbox (parent);
+         */
+        gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
         break;
       }
     case SELECT:
@@ -1029,17 +964,6 @@ make_parameter_widget (const char *filename,
         GtkWidget *opt = gtk_option_menu_new ();
         GtkWidget *menu = gtk_menu_new ();
         GList *opts;
-
-        if (label && row)
-          {
-            GtkWidget *w = gtk_label_new (_(label));
-            gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
-            gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-            gtk_widget_show (w);
-            gtk_table_attach (GTK_TABLE (parent), w, 0, 3, *row, *row + 1,
-                              GTK_EXPAND | GTK_FILL, 0, 0, 0);
-            (*row)++;
-          }
 
         for (opts = p->options; opts; opts = opts->next)
           {
@@ -1051,12 +975,8 @@ make_parameter_widget (const char *filename,
 
         gtk_option_menu_set_menu (GTK_OPTION_MENU (opt), menu);
         p->widget = opt;
-        if (row)
-          gtk_table_attach (GTK_TABLE (parent), p->widget, 0, 3,
-                            *row, *row + 1,
-                            GTK_EXPAND | GTK_FILL, 0, 0, 0);
-        else
-          gtk_box_pack_start (GTK_BOX (parent), p->widget, TRUE, TRUE, 4);
+        parent = insert_fake_hbox (parent);
+        gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
         break;
       }
 
@@ -1073,8 +993,6 @@ make_parameter_widget (const char *filename,
     {
       gtk_widget_set_name (p->widget, (char *) p->id);
       gtk_widget_show (p->widget);
-      if (row)
-        (*row)++;
     }
 }
 
@@ -1360,25 +1278,29 @@ parameter_to_switch (parameter *p)
    All arguments will be properly quoted.
  */
 static char *
-parameters_to_cmd_line (GList *parms)
+parameters_to_cmd_line (GList *parms, gboolean default_p)
 {
   int L = g_list_length (parms);
   int LL = 0;
   char **strs = (char **) calloc (sizeof (*parms), L);
   char *result;
   char *out;
-  int i;
+  int i, j;
 
-  for (i = 0; parms; parms = parms->next, i++)
+  for (i = 0, j = 0; parms; parms = parms->next, i++)
     {
-      char *s = parameter_to_switch ((parameter *) parms->data);
-      strs[i] = s;
-      LL += (s ? strlen(s) : 0) + 1;
+      parameter *p = (parameter *) parms->data;
+      if (!default_p || p->type == COMMAND)
+        {
+          char *s = parameter_to_switch (p);
+          strs[j++] = s;
+          LL += (s ? strlen(s) : 0) + 1;
+        }
     }
 
   result = (char *) malloc (LL + 10);
   out = result;
-  for (i = 0; i < L; i++)
+  for (i = 0; i < j; i++)
     if (strs[i])
       {
         strcpy (out, strs[i]);
@@ -1777,6 +1699,8 @@ get_description (GList *parms, gboolean verbose_p)
               s++;
             else if (s[1] == ' ' || s[1] == '\t')
               s++;                 /* next line is indented: leave newline */
+            else if (!strncmp(s+1, "http:", 5))
+              s++;                 /* next line begins a URL: leave newline */
             else
               s[0] = ' ';          /* delete newline to un-fold this line */
           }
@@ -1865,7 +1789,7 @@ load_configurator_1 (const char *program, const char *arguments,
       char chars[1024];
       xmlParserCtxtPtr ctxt;
       xmlDocPtr doc = 0;
-      GtkWidget *table;
+      GtkWidget *vbox0;
       GList *parms;
 
       if (verbose_p)
@@ -1889,13 +1813,10 @@ load_configurator_1 (const char *program, const char *arguments,
 
       /* Parsed the XML file.  Now make some widgets. */
 
-      table = gtk_table_new (1, 3, FALSE);
-      gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-      gtk_table_set_col_spacings (GTK_TABLE (table), 4);
-      gtk_container_set_border_width (GTK_CONTAINER (table), 8);
-      gtk_widget_show (table);
+      vbox0 = gtk_vbox_new (FALSE, 0);
+      gtk_widget_show (vbox0);
 
-      parms = make_parameters (file, doc->xmlRootNode, table);
+      parms = make_parameters (file, doc->xmlRootNode, vbox0);
       sanity_check_parameters (file, parms);
 
       xmlFreeDoc (doc);
@@ -1904,7 +1825,7 @@ load_configurator_1 (const char *program, const char *arguments,
       if (arguments && *arguments)
         parse_command_line_into_parameters (program, arguments, parms);
 
-      data->widget = table;
+      data->widget = vbox0;
       data->parameters = parms;
       data->description = get_description (parms, verbose_p);
     }
@@ -1982,9 +1903,9 @@ load_configurator (const char *full_command_line, gboolean verbose_p)
 
 
 char *
-get_configurator_command_line (conf_data *data)
+get_configurator_command_line (conf_data *data, gboolean default_p)
 {
-  char *args = parameters_to_cmd_line (data->parameters);
+  char *args = parameters_to_cmd_line (data->parameters, default_p);
   char *result = (char *) malloc (strlen (data->progname) +
                                   strlen (args) + 2);
   strcpy (result, data->progname);

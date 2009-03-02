@@ -48,7 +48,9 @@ static const char sccsid[] = "@(#)worm.c	4.04 97/07/28 xlockmore";
 					"*right3d: red \n"		\
 					"*left3d:  blue \n"		\
 					"*both3d:  magenta \n"	\
-					"*none3d:  black \n"
+					"*none3d:  black \n" \
+					"*fpsSolid:  true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_worm 0
 # define worm_handle_event 0

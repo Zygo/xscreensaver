@@ -938,7 +938,7 @@ static const char *t3d_defaults [] = {
   "*move:	0.5",
   "*wobble:	2.0",
   "*cycle:	10.0",
-  "*mag:	1",
+  "*mag:	1.0",
   "*minutes:	False",
   "*delay:      40000",
   "*fast:	50",

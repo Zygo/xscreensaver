@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 
 #include <math.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <signal.h>
 #import <Cocoa/Cocoa.h>
 
@@ -39,6 +40,17 @@ typedef struct {
   XtInputId pipe_id;
   Bool verbose_p;
 } state;
+
+
+/* Violating the cardinal rule of "don't use global variables",
+   but we need to get at these from the atexit() handler, and
+   the callback doesn't take a closure arg.  Because apparently
+   those hadn't been invented yet in the seventies.
+ */
+static state *all_states[50] = { 0, };
+
+static void webcollage_atexit (void);
+static void signal_handler (int sig);
 
 
 static void
@@ -76,7 +88,7 @@ display_image (state *st, const char *file)
                                           encoding: kCFStringEncodingUTF8]];
 
   if (! image) {
-    fprintf (stderr, "%s: failed to load \"%s\"\n", progname, file);
+    fprintf (stderr, "webcollage: failed to load \"%s\"\n", file);
     return;
   }
 
@@ -135,7 +147,7 @@ open_pipe (state *st)
 
 
   if (st->verbose_p) {
-    fprintf (stderr, "%s: launching:", progname);
+    fprintf (stderr, "webcollage: launching:");
     int i;
     for (i = 0; i < ac; i++)
       fprintf (stderr, " %s", av[i]);
@@ -145,7 +157,7 @@ open_pipe (state *st)
 
   if (pipe (fds))
     {
-      perror ("error creating pipe:");
+      perror ("webcollage: error creating pipe");
       exit (1);
     }
 
@@ -156,8 +168,7 @@ open_pipe (state *st)
     {
     case -1:
       {
-        sprintf (buf, "%s: couldn't fork", progname);
-        perror (buf);
+        perror ("webcollage: couldn't fork");
         exit (1);
       }
     case 0:
@@ -178,7 +189,7 @@ open_pipe (state *st)
           {
             /* Ignore "no such file or directory" errors, unless verbose.
                Issue all other exec errors, though. */
-            sprintf (buf, "%s: %s", progname, av[0]);
+            sprintf (buf, "webcollage: %s", av[0]);
             perror (buf);
           }
 
@@ -202,7 +213,7 @@ open_pipe (state *st)
                    subproc_cb, (XtPointer) st);
 
   if (st->verbose_p)
-    fprintf (stderr, "%s: subprocess pid: %d\n", progname, st->pid);
+    fprintf (stderr, "webcollage: subprocess pid: %d\n", st->pid);
 }
 
 
@@ -210,13 +221,43 @@ static void *
 webcollage_init (Display *dpy, Window window)
 {
   state *st = (state *) calloc (1, sizeof(*st));
+  int i;
   st->dpy = dpy;
   st->window = window;
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
   st->delay = 1000000;  /* check once a second */
 
+  // Log to syslog when FPS is turned on.
+  st->verbose_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
+
+
+  static int done_once = 0;
+  if (! done_once) {
+    done_once = 1;
+
+    if (atexit (webcollage_atexit)) {	// catch calls to exit()
+      perror ("webcollage: atexit");
+      exit (-1);
+    }
+
+    int sigs[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
+                   SIGFPE, SIGBUS, SIGSEGV, SIGSYS, /*SIGPIPE,*/
+                   SIGALRM, SIGTERM };
+    for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
+      if (signal (sigs[i], signal_handler)) {
+        perror ("webcollage: signal");
+        exit (1);
+      }
+    }
+  }
+
+
   open_pipe (st);
+
+  i = 0;
+  while (all_states[i]) i++;
+  all_states[i] = st;
 
   return st;
 }
@@ -245,7 +286,7 @@ webcollage_draw (Display *dpy, Window window, void *closure)
       st->pipe_fd = 0;
 
       if (st->verbose_p)
-        fprintf (stderr, "%s: subprocess has exited: bailing.\n", progname);
+        fprintf (stderr, "webcollage: subprocess has exited: bailing.\n");
 
       return st->delay * 10;
     }
@@ -279,22 +320,64 @@ webcollage_event (Display *dpy, Window window, void *closure, XEvent *event)
 
 
 static void
+webcollage_atexit (void)
+{
+  int i = 0;
+
+  if (all_states[0] && all_states[0]->verbose_p)
+    fprintf (stderr, "webcollage: atexit handler\n");
+
+  while (all_states[i]) {
+    state *st = all_states[i];
+    if (st->pid) {
+      if (st->verbose_p)
+        fprintf (stderr, "webcollage: kill %d\n", st->pid);
+      if (kill (st->pid, SIGTERM) < 0) {
+        fprintf (stderr, "webcollage: kill (%d, TERM): ", st->pid);
+        perror ("webcollage: kill");
+      }
+      st->pid = 0;
+    }
+    all_states[i] = 0;
+    i++;
+  }
+}
+
+
+static void
+signal_handler (int sig)
+{
+  if (all_states[0] && all_states[0]->verbose_p)
+    fprintf (stderr, "webcollage: signal %d\n", sig);
+  webcollage_atexit ();
+  exit (sig);
+}
+
+
+/* This is important because OSX doesn't actually kill the screen savers!
+   It just sends them a [ScreenSaverView stopAnimation] method.  Were
+   they to actually exit, the resultant SIGPIPE should reap the children,
+   but instead, we need to do it here.
+
+   On top of that, there's an atexit() handler because otherwise the
+   inferior perl script process was failing to die when SaverTester or
+   System Preferences exited.  I don't pretend to understand.
+
+   It still fails to clean up when I hit the stop button in Xcode.
+   WTF.
+ */
+static void
 webcollage_free (Display *dpy, Window window, void *closure)
 {
   state *st = (state *) closure;
 
+  if (st->verbose_p)
+    fprintf (stderr, "webcollage: free cb\n");
+
   // Dammit dammit dammit!  Why won't this shit die when we pclose it!
 //  killpg (0, SIGTERM);
 
-  if (st->pid) {
-    if (st->verbose_p)
-      fprintf (stderr, "%s: kill %d\n", progname, st->pid);
-    if (kill (st->pid, SIGTERM) < 0) {
-      fprintf (stderr, "%s: kill (%d, TERM): ", progname, st->pid);
-      perror ("kill");
-    }
-    st->pid = 0;
-  }
+  webcollage_atexit();
 
   if (st->pipe_id)
     XtRemoveInput (st->pipe_id);

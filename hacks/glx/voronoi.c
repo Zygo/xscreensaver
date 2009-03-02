@@ -28,9 +28,9 @@
 
 #define DEF_POINTS      "25"
 #define DEF_POINT_SIZE  "9"
-#define DEF_POINT_SPEED "1"
+#define DEF_POINT_SPEED "1.0"
 #define DEF_POINT_DELAY "0.05"
-#define DEF_ZOOM_SPEED  "1"
+#define DEF_ZOOM_SPEED  "1.0"
 #define DEF_ZOOM_DELAY  "15"
 
 typedef struct node {

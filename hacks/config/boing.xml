@@ -26,7 +26,7 @@
    </hgroup>
    <hgroup>
     <boolean id="wire"      _label="Wireframe" arg-set="-wireframe"/>
-    <boolean id="showfps"   _label="Show Frames-per-Second" arg-set="-fps"/>
+    <boolean id="showfps"   _label="Show frame rate" arg-set="-fps"/>
    </hgroup>
   </vgroup>
 
@@ -37,7 +37,10 @@ This bouncing ball is a clone of the first graphics demo for the Amiga
 the 1984 Consumer Electronics Show (or so the legend goes.)
 
 This looks like the original Amiga demo if you turn off "smoothing"
-and "lighting" and turn on "scanlines".
+and "lighting" and turn on "scanlines", and is somewhat more modern
+otherwise.
+
+http://en.wikipedia.org/wiki/Amiga#Boing_Ball
 
 Written by Jamie Zawinski; 2005.
   </_description>

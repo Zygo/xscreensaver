@@ -10,6 +10,7 @@ whirlygig -- zooming chains of sinusoidal spots
 [\-color_modifier arg] [\-start_time arg] [\-explain 1|0]
 [\-wrap 1|0] [\-db] [\-no-db] 
 
+[\-fps]
 .SH DESCRIPTION
 The \fIwhirlygig\fP program draws a series of circles on your screen.
 They then move about in a cyclic pattern
@@ -109,6 +110,9 @@ well. If the resource 'useDBEClear' is true, whirlies are not
 individually erased, so the -trail option won't work, and running
 multiple instances on the root window will flicker. 
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

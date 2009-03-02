@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="30000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
           convert="invert"/>
 
   <number id="descent" type="slider" arg="-speed %"
@@ -15,14 +15,14 @@
           convert="invert"/>
 
   <number id="depth" type="spinbutton" arg="-depth %"
-          _label="Max Depth" low="1" high="6" default="3"/>
+          _label="Max depth" low="1" high="6" default="3"/>
 
   <!-- #### -no-optimize -->
 
   <boolean id="wander" _label="Wander" arg-unset="-no-wander"/>
 
   <select id="rotation">
-    <option id="no"  _label="Don't Rotate"               arg-set="-spin 0"/>
+    <option id="no"  _label="Don't rotate"               arg-set="-spin 0"/>
     <option id="x"   _label="Rotate around X axis"       arg-set="-spin X"/>
     <option id="y"   _label="Rotate around Y axis"       arg-set="-spin Y"/>
     <option id="z"   _label="Rotate around Z axis"       arg-set="-spin Z"/>
@@ -33,12 +33,15 @@
   </select>
 
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This draws the three-dimensional variant of the recursive Menger
 Gasket, a cube-based fractal object analagous to the Sierpinski
 Tetrahedron.
+
+http://en.wikipedia.org/wiki/Menger_sponge
+http://en.wikipedia.org/wiki/Sierpinski_carpet
 
 Written by Jamie Zawinski; 2001.
   </_description>

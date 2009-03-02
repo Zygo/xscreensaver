@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="nsegments" type="slider" arg="-nsegments %"
@@ -26,8 +26,12 @@
   <!-- #### -global_rotation [1] -->
   <!-- #### -spring_constant [5] -->
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-A simple kaleidoscope.  See also "gleidescope".
+A simple kaleidoscope.  See also "GLeidescope".
+
+http://en.wikipedia.org/wiki/Kaleidoscope
 
 Written by Ron Tapia; 1997.
   </_description>

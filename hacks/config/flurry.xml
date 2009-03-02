@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <select id="preset">
     <option id="classic" _label="Classic"     arg-set="-preset classic"/>

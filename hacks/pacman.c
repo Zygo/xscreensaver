@@ -50,7 +50,10 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 #	define MODE_pacman
 #	define DEFAULTS "*delay:   10000 \n" \
 		 			"*size:    0     \n" \
- 					"*ncolors: 6     \n"
+ 					"*ncolors: 6     \n" \
+ 					"*fpsTop: true   \n" \
+ 					"*fpsSolid: true \n" \
+
 #	define UNIFORM_COLORS
 #	define BRIGHT_COLORS
 #   define reshape_pacman 0

@@ -73,7 +73,9 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 						 "*count:		 -500	\n" \
 						 "*cycles:		  200	\n" \
 						 "*size:		  -15	\n" \
-						 "*ncolors:		  100	\n"
+						 "*ncolors:		  100	\n" \
+						 "*fpsSolid:		  true	\n" \
+
 # define reshape_crystal 0
 # define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */

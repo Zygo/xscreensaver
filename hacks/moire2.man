@@ -10,6 +10,7 @@ moire2 - circular interference patterns.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-thickness \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Another example of the fun you can have with moire interference patterns;
 this hack generates fields of concentric circles or ovals, and combines the
@@ -35,6 +36,9 @@ Number of Colors.  Default: 150.
 .TP 8
 .B \-thickness \fInumber\fP
 Thickness of lines, in pixels.  Default: 0.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

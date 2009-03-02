@@ -62,8 +62,8 @@ Make the balls be random sizes.  Default.
 Whether to shake the box if the system seems to have settled down.
 "Shake" means "change the direction of Down."
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

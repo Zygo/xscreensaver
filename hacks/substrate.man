@@ -13,6 +13,7 @@ substrate - Grow crystal-like lines on a computational substrate
 [\-max\-cracks \fInummax\fP]
 [\-sand\-grains \fInumgrains\fP]
 [\-circle\-percent \fIcirclepercent\fP]
+[\-fps]
 .SH DESCRIPTION
 Lines like crystals grow on a computational substrate.  A simple 
 perpendicular growth rule creates intricate city-like structures.  Optionally, cracks may also be circular, producing a cityscape more familiar to places for which city planning is a distant, theoretical concern.
@@ -46,6 +47,9 @@ a denser colour but use more cpu power.
 .TP 8
 .B \-circle-percent \fIcirclepercent\fP (Default: \fI0\fP)
 The percentage of the cracks will be circular.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

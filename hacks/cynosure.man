@@ -10,6 +10,7 @@ cynosure - gentle overlapping squares screen saver.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-iterations \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 A hack similar to `greynetic', but less frenetic. The first implementation
 was by Stephen Linhart; then Ozymandias G. Desiderata wrote a Java applet
@@ -35,6 +36,9 @@ Number of Colors.  Default: 128.
 .TP 8
 .B \-iterations \fInumber\fP
 Duration.  2 - 200.  Default: 100.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

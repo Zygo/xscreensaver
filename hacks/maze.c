@@ -294,6 +294,10 @@ initialize_maze (struct state *st) /* draw the surrounding wall and start/end sq
     }
   else
     st->logo_y = st->logo_x = -1;
+
+  /* #### should mask out the cells covered by the FPS display if "doFPS"
+          is true.  But that's hard, because the "logo_x" crap that does
+          that trick for the logo is scattered all around the code... */
 }
 
 static int choose_door (struct state *st);
@@ -1573,13 +1577,14 @@ enter_square (int n)                      /* move into a neighboring square */
 static const char *maze_defaults[] = {
   ".background:	   black",
   ".foreground:	   white",
+  "*fpsSolid:	   true",
   "*gridSize:	   0",
   "*generator:     -1",
   "*maxLength:     5",
   "*bridge:        False",
   "*ignorant:      False",
 
-  "*solveDelay:	   5000",
+  "*solveDelay:	   10000",
   "*preDelay:	   2000000",
   "*postDelay:	   4000000",
 

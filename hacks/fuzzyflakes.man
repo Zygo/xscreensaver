@@ -17,6 +17,7 @@ fuzzyflakes - falling snowflakes/flower shapes
 [\-no-db]
 (\-color \fIstring\fP)
 (\-random-colors)
+[\-fps]
 .SH DESCRIPTION
 The
 .I fuzzyflakes
@@ -79,6 +80,9 @@ The default color is #efbea5
 .B \-random-colors
 This enables the random color generation.  It is disabled by default.
 It overrides anything from -color
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

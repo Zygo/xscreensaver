@@ -1570,6 +1570,7 @@ abstractile_free (Display *dpy, Window window, void *closure)
 static const char *abstractile_defaults [] = {
   ".background:    black",
   ".foreground:    white",
+  "*fpsSolid:	   true",
   "*sleep:             3",
   "*speed:             3",
   "*tile:         random",

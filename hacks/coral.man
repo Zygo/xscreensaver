@@ -11,6 +11,7 @@ coral - simulates coral growth, albeit somewhat slowly.
 [\-delay \fInumber\fP]
 [\-density \fInumber\fP]
 [\-seeds \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Simulates coral growth, albeit somewhat slowly.
 .SH OPTIONS
@@ -36,6 +37,9 @@ Density.  1 - 90.  Default: 25.
 .TP 8
 .B \-seeds \fInumber\fP
 Seeds.	1 - 100.  Default: 20.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

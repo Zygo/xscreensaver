@@ -788,4 +788,4 @@ pong_free (Display *dpy, Window window, void *closure)
   free (st);
 }
 
-XSCREENSAVER_MODULE ("pong", pong)
+XSCREENSAVER_MODULE ("Pong", pong)

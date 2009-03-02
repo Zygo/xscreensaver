@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2003, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -100,6 +99,7 @@ struct state {
   unsigned long fg, bg, pixels [512];
   int npixels;
   int xlim, ylim;
+  Bool grey_p;
   Colormap cmap;
 };
 
@@ -121,6 +121,7 @@ greynetic_init (Display *dpy, Window window)
   st->ylim = xgwa.height;
   st->cmap = xgwa.colormap;
   st->npixels = 0;
+  st->grey_p = get_boolean_resource(st->dpy, "grey", "Boolean");
   gcv.foreground= st->fg= get_pixel_resource(st->dpy, st->cmap, "foreground","Foreground");
   gcv.background= st->bg= get_pixel_resource(st->dpy, st->cmap, "background","Background");
 
@@ -199,6 +200,12 @@ greynetic_draw (Display *dpy, Window window, void *closure)
       bgc.blue = random ();
 # endif /* DO_STIPPLE */
 
+      if (st->grey_p)
+        {
+          fgc.green = fgc.blue = fgc.red;
+          bgc.green = bgc.blue = bgc.red;
+        }
+
       if (! XAllocColor (st->dpy, st->cmap, &fgc))
 	goto REUSE;
       st->pixels [st->npixels++] = fgc.pixel;
@@ -247,12 +254,15 @@ greynetic_draw (Display *dpy, Window window, void *closure)
 static const char *greynetic_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*delay:	10000",
+  "*grey:	false",
   0
 };
 
 static XrmOptionDescRec greynetic_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-grey",		".grey",	XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };
 

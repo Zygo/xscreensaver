@@ -1479,6 +1479,13 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 {
   CGRect wr = d->frame;
 
+  Assert ((w < 65535), "improbably large width");
+  Assert ((h < 65535), "improbably large height");
+  Assert ((src_x  < 65535 && src_x  > -65535), "improbably large src_x");
+  Assert ((src_y  < 65535 && src_y  > -65535), "improbably large src_y");
+  Assert ((dest_x < 65535 && dest_x > -65535), "improbably large dest_x");
+  Assert ((dest_y < 65535 && dest_y > -65535), "improbably large dest_y");
+
   // Clip width and height to the bounds of the Drawable
   //
   if (dest_x + w > wr.size.width) {
@@ -1608,6 +1615,11 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
   int depth, ibpp, ibpl;
   NSBitmapImageRep *bm = 0;
   
+  Assert ((width  < 65535), "improbably large width");
+  Assert ((height < 65535), "improbably large height");
+  Assert ((x < 65535 && x > -65535), "improbably large x");
+  Assert ((y < 65535 && y > -65535), "improbably large y");
+
   if (d->type == PIXMAP) {
     depth = d->pixmap.depth;
     ibpp = CGBitmapContextGetBitsPerPixel (d->cgc);
@@ -1628,9 +1640,10 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
     Assert (data, "NSBitmapImageRep initWithFocusedViewRect failed");
-
-    data += (y * ibpl) + (x * (ibpp/8));
   }
+  
+  // data points at (x,y) with ibpl rowstride.  ignore x,y from now on.
+  data += (y * ibpl) + (x * (ibpp/8));
   
   format = (depth == 1 ? XYPixmap : ZPixmap);
   XImage *image = XCreateImage (dpy, 0, depth, format, 0, 0, width, height,
@@ -1646,10 +1659,10 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
   int xx, yy;
   if (depth == 1) {
     const unsigned char *iline = data;
-    for (yy = y; yy < y+height; yy++) {
+    for (yy = 0; yy < height; yy++) {
 
       const unsigned char *iline2 = iline;
-      for (xx = x; xx < x+width; xx++) {
+      for (xx = 0; xx < width; xx++) {
 
         iline2++;                     // ignore b or a
         iline2++;                     // ignore g or r
@@ -1664,12 +1677,11 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     Assert (ibpp == 24 || ibpp == 32, "weird obpp");
     const unsigned char *iline = data;
     unsigned char *oline = (unsigned char *) image->data;
-    oline += (y * obpl);
-    for (yy = y; yy < y+height; yy++) {
+    for (yy = 0; yy < height; yy++) {
 
       const unsigned char *iline2 = iline;
       unsigned char *oline2 = oline;
-      for (xx = x; xx < x+width; xx++) {
+      for (xx = 0; xx < width; xx++) {
 
         unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
         unsigned char r = *iline2++;
@@ -1681,7 +1693,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
                                (b <<  0));
         *((unsigned int *) oline2) = pixel;
         oline2 += 4;
-     }
+      }
       oline += obpl;
       iline += ibpl;
     }
@@ -2014,23 +2026,44 @@ try_font (BOOL fixed, BOOL bold, BOOL ital, BOOL serif, float size,
           char **name_ret)
 {
   Assert (size > 0, "zero font size");
-  const char *prefix = (fixed ? "Monaco" : (serif ? "Times" : "Helvetica"));
-  const char *suffix = (bold && ital
-                        ? (serif ? "-BoldItalic" : "-BoldOblique")
-                        : (bold ? "-Bold" :
-                           ital ? (serif ? "-Italic" : "-Oblique") : ""));
-  char *name = (char *) malloc (strlen(prefix) + strlen(suffix) + 1);
-  strcpy (name, prefix);
-  strcat (name, suffix);
+  const char *name;
+
+  if (fixed) {
+    // 
+    // "Monaco" only exists in plain.
+    // "LucidaSansTypewriterStd" gets an AGL bad value error.
+    // 
+    if (bold && ital) name = "Courier-BoldOblique";
+    else if (bold)    name = "Courier-Bold";
+    else if (ital)    name = "Courier-Oblique";
+    else              name = "Courier";
+
+  } else if (serif) {
+    // 
+    // "Georgia" looks better than "Times".
+    // 
+    if (bold && ital) name = "Georgia-BoldItalic";
+    else if (bold)    name = "Georgia-Bold";
+    else if (ital)    name = "Georgia-Italic";
+    else              name = "Georgia";
+
+  } else {
+    // 
+    // "Geneva" only exists in plain.
+    // "LucidaSansStd-BoldItalic" gets an AGL bad value error.
+    // "Verdana" renders smoother than "Helvetica" for some reason.
+    // 
+    if (bold && ital) name = "Verdana-BoldItalic";
+    else if (bold)    name = "Verdana-Bold";
+    else if (ital)    name = "Verdana-Italic";
+    else              name = "Verdana";
+  }
 
   NSString *nsname = [NSString stringWithCString:name
                                         encoding:NSUTF8StringEncoding];
   NSFont *f = [NSFont fontWithName:nsname size:size];
-  if (f) {
-    *name_ret = name;
-  } else {
-    free (name);
-  }
+  if (f)
+    *name_ret = strdup(name);
   return f;
 }
 
@@ -2065,8 +2098,8 @@ try_native_font (const char *name, char **name_ret, float *size_ret)
 static NSFont *
 random_font (BOOL bold, BOOL ital, float size, char **name_ret)
 {
-  NSFontTraitMask mask = ((bold ? NSUnboldFontMask   : NSBoldFontMask) |
-                          (ital ? NSUnitalicFontMask : NSItalicFontMask));
+  NSFontTraitMask mask = ((bold ? NSBoldFontMask   : NSUnboldFontMask) |
+                          (ital ? NSItalicFontMask : NSUnitalicFontMask));
   NSArray *fonts = [[NSFontManager sharedFontManager]
                      availableFontNamesWithTraits:mask];
   if (!fonts) return 0;

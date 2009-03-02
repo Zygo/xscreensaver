@@ -4,20 +4,15 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
   <!-- #### -no-texture -->
   <!-- #### -no-stars -->
 
-  <select id="render">
-    <option id="flat"  _label="Use Flat Coloring" arg-set="-no-light"/>
-    <option id="light" _label="Use Lighting"/>
-  </select>
-
-  <file id="bitmap" _label="Image File" arg="-image %"/>
-
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="20000"
-          convert="invert"/>
+  <file id="bitmap" _label="Image file" arg="-image %"/>
 
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
@@ -26,8 +21,11 @@
    <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
   </hgroup>
 
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <hgroup>
+   <boolean id="light"   _label="Lighting"               arg-unset="-no-light"/>
+   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
 Draws a planet bouncing around in space.

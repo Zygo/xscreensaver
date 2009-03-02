@@ -78,6 +78,10 @@ settings_std_cb                        (GtkButton       *button,
                                         gpointer         user_data);
 
 void
+settings_reset_cb                      (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
 settings_ok_cb                         (GtkButton       *button,
                                         gpointer         user_data);
 

@@ -31,7 +31,9 @@ static const char sccsid[] = "@(#)laser.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay: 40000 \n" \
 					"*count: 10 \n" \
 					"*cycles: 200 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define BRIGHT_COLORS
 # define reshape_laser 0
 # define laser_handle_event 0

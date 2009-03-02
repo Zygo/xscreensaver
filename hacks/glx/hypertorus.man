@@ -152,6 +152,9 @@ Rotation speed around the xz plane (default: 1.9).
 .TP 8
 .B \-speed-yz \fIfloat\fP
 Rotation speed around the yz plane (default: 2.1).
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH INTERACTION
 If you run this program in standalone mode you can rotate the
 hypertorus by dragging the mouse while pressing the left mouse button.

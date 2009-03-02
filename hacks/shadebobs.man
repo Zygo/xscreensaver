@@ -11,6 +11,7 @@ shadebobs - oscillating vapor trails.
 [\-count \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-cycles \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 This draws smoothly-shaded oscillating oval patterns, that look something
 like vapor trails or neon tubes.
@@ -37,6 +38,9 @@ Per-frame delay, in microseconds.  Default: 5000 (0.005 seconds.).
 .TP 8
 .B \-cycles \fInumber\fP
 Duration.  0 - 100.  Default: 10.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

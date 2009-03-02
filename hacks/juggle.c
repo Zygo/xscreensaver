@@ -135,7 +135,9 @@ static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
 					"*count:   200   \n" \
 					"*cycles:  1000  \n" \
 					"*ncolors: 32    \n" \
-					"*font:    -*-times-bold-r-normal-*-180-*\n"
+					"*font:    -*-helvetica-bold-r-normal-*-180-*\n" \
+					"*fpsSolid: true\n" \
+
 # define refresh_juggle 0
 # define juggle_handle_event 0
 # undef SMOOTH_COLORS

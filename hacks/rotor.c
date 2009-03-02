@@ -37,7 +37,9 @@ static const char sccsid[] = "@(#)rotor.c	5.00 2000/11/01 xlockmore";
 					"*count: 4 \n" \
 					"*cycles: 20 \n" \
 					"*size: -6 \n" \
-					"*ncolors: 200 \n"
+					"*ncolors: 200 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_rotor 0
 # define rotor_handle_event 0

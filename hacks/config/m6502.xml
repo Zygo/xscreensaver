@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="m6502" _label="M6502">
+<screensaver name="m6502" _label="m6502">
 
   <command arg="-root" />
 
   <number id="displaytime" type="slider" arg="-displaytime %"
           _label="Display time for each program"
           _low-label="5 seconds" _high-label="2 minutes"
-	  low="5" high="120" default="10" />
+	  low="5" high="120" default="20" />
 
-  <file id="file" _label="Assembly File" arg="-file %"/>
+  <file id="file" _label="Assembly file" arg="-file %"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description> 
-The m6502 screensaver emulates a 6502 microprocessor.  The family
+This emulates a 6502 microprocessor.  The family
 of 6502 chips were used throughout the 70's and 80's in machines
 such as the Atari 2600, Commodore PET, VIC20 and C64, Apple ][,
 and the NES. Some example programs are included, and it can also

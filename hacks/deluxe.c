@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -120,25 +120,31 @@ draw_corners (struct state *st, Drawable w, struct throbber *t)
   int s = (t->size + t->thickness) / 2;
   XPoint points[3];
 
-  points[0].x = 0;        points[0].y = t->y - s;
-  points[1].x = t->x - s; points[1].y = t->y - s;
-  points[2].x = t->x - s; points[2].y = 0;
-  XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+  if (t->y > s)
+    {
+      points[0].x = 0;        points[0].y = t->y - s;
+      points[1].x = t->x - s; points[1].y = t->y - s;
+      points[2].x = t->x - s; points[2].y = 0;
+      XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
 
-  points[0].x = 0;        points[0].y = t->y + s;
-  points[1].x = t->x - s; points[1].y = t->y + s;
-  points[2].x = t->x - s; points[2].y = t->max_size;
-  XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+      points[0].x = t->x + s;    points[0].y = 0;
+      points[1].x = t->x + s;    points[1].y = t->y - s;
+      points[2].x = t->max_size; points[2].y = t->y - s;
+      XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+    }
 
-  points[0].x = t->x + s;    points[0].y = 0;
-  points[1].x = t->x + s;    points[1].y = t->y - s;
-  points[2].x = t->max_size; points[2].y = t->y - s;
-  XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+  if (t->x > s)
+    {
+      points[0].x = 0;        points[0].y = t->y + s;
+      points[1].x = t->x - s; points[1].y = t->y + s;
+      points[2].x = t->x - s; points[2].y = t->max_size;
+      XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
 
-  points[0].x = t->x + s;    points[0].y = t->max_size;
-  points[1].x = t->x + s;    points[1].y = t->y + s;
-  points[2].x = t->max_size; points[2].y = t->y + s;
-  XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+      points[0].x = t->x + s;    points[0].y = t->max_size;
+      points[1].x = t->x + s;    points[1].y = t->y + s;
+      points[2].x = t->max_size; points[2].y = t->y + s;
+      XDrawLines (st->dpy, w, t->gc, points, countof(points), CoordModeOrigin);
+    }
 }
 
 
@@ -158,11 +164,6 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
   if (t->speed < 0) t->speed = -t->speed;
   t->speed += (((random() % t->speed) / 2) - (t->speed / 2));
   if (t->speed > 0) t->speed = -t->speed;
-
-  if (random() % 4)
-    t->size = t->max_size;
-  else
-    t->size = t->thickness, t->speed = -t->speed;
 
   flags = GCForeground;
 # ifndef HAVE_COCOA
@@ -207,6 +208,14 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
   case 10: t->draw = draw_corners; break;
   default: abort(); break;
   }
+
+  if (t->draw == draw_circle) 
+    t->max_size *= 1.5;
+
+  if (random() % 4)
+    t->size = t->max_size;
+  else
+    t->size = t->thickness, t->speed = -t->speed;
 
   return t;
 }
@@ -411,7 +420,7 @@ deluxe_free (Display *dpy, Window window, void *closure)
 static const char *deluxe_defaults [] = {
   ".background:		black",
   ".foreground:		white",
-  "*delay:		5000",
+  "*delay:		10000",
   "*count:		5",
   "*thickness:		50",
   "*speed:		15",

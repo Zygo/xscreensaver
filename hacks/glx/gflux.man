@@ -83,9 +83,7 @@ Specifies the size of the viewport. Smaller values fill the screen with rippling
 How long to pause between frames.  Default is 20000, or 0.02 second.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

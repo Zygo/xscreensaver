@@ -5,6 +5,7 @@ hopalong - draw real plane fractals
 .B hopalong
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-jong] [\-no\-jong] [\-jong] [\-no\-sine]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIhop\fP program generates real plane fractals as described in
 the September 1986 issue of Scientific American.
@@ -50,6 +51,9 @@ Whether to use the Jong format (default is to choose randomly.)
 .B \-no\-sine \fIinteger\fP
 Whether to use the Sine format (default is to choose randomly.)
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

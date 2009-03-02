@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2002, 2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -51,14 +51,18 @@ typedef struct ModeInfo ModeInfo;
   extern void clear_gl_error (void);
   extern void check_gl_error (const char *type);
 
-  extern void do_fps (ModeInfo *);
-  extern GLfloat fps_1 (ModeInfo *);
-  extern void    fps_2 (ModeInfo *);
-
   extern Visual *xlockmore_pick_gl_visual (Screen *);
   extern Bool xlockmore_validate_gl_visual (Screen *, const char *, Visual *);
 
 #endif /* !USE_GL */
+
+/* These are only used in GL mode, but I don't understand why XCode
+   isn't seeing the prototypes for them in glx/fps-gl.c... */
+extern void do_fps (ModeInfo *);
+extern void xlockmore_gl_compute_fps (Display *, Window, fps_state *, void *);
+extern void xlockmore_gl_draw_fps (ModeInfo *);
+# define do_fps xlockmore_gl_draw_fps
+
 
 extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 
@@ -100,11 +104,11 @@ struct ModeInfo {
   long threed_delta;
   Bool wireframe_p;
   Bool is_drawn;
-  
+
+  /* Used only by OpenGL programs, since FPS is tricky there. */
+  fps_state *fpst;
   Bool fps_p;
-  struct fps_state *fps_state;  /* private data for fps.c */
-  
-  unsigned long polygon_count;  /* used only by FPS display */
+  unsigned long polygon_count;
 
 #ifdef HAVE_XSHM_EXTENSION
   Bool use_shm;

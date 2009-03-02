@@ -11,6 +11,7 @@ thornbird - Bird in a Thornbush fractal.
 [\-cycles \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Displays a view of the "Bird in a Thornbush" fractal.
 .SH OPTIONS
@@ -36,6 +37,9 @@ Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of Colors.  Default: 64.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -31,7 +31,7 @@
 #define ALPHA_AMT 0.05
 
 /* this should be between 1 and 8 */
-#define DEF_WH       "2"
+#define DEF_BOXSIZE  "2"
 #define DEF_DISSOLVE "False"
 #define DEF_FADE     "True"
 #define DEF_BLUR     "True"
@@ -121,7 +121,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&bscale_wh,   "boxsize",   "Boxsize",  DEF_WH,       t_Float},
+  {&bscale_wh,   "boxsize",   "Boxsize",  DEF_BOXSIZE,  t_Float},
   {&do_dissolve, "dissolve",  "Dissolve", DEF_DISSOLVE, t_Bool},
   {&do_fade,     "fade",      "Fade",     DEF_FADE,     t_Bool},
   {&do_blur,     "blur",      "Blur",     DEF_BLUR,     t_Bool},
@@ -440,6 +440,7 @@ draw_ball (ModeInfo *mi)
 
    if (! bp->glx_context)
      return;
+   mi->polygon_count = 0;
    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -466,6 +467,7 @@ draw_ball (ModeInfo *mi)
 
      glScalef(2,2,2);
      glCallList(bp->ballList);
+     mi->polygon_count += SPHERE_SLICES*SPHERE_STACKS;
 
    } else {
 
@@ -487,6 +489,7 @@ draw_ball (ModeInfo *mi)
 
        glScalef(2, 2, 2);
        glCallList(bp->ballList);
+       mi->polygon_count += SPHERE_SLICES*SPHERE_STACKS;
        glScalef(.5, .5, .5);
      }
      i = 0;
@@ -571,6 +574,7 @@ draw_ball (ModeInfo *mi)
         glScalef(bp->bscale.wh,bp->bscale.wh,bp->bscale.d);
       }
       glCallList(bp->boxList);
+      mi->polygon_count += 6;
       glPopMatrix();
       bp->sp->counter--;
       bp->sp->des_count++;
@@ -585,6 +589,7 @@ draw_ball (ModeInfo *mi)
 
 
    glPopMatrix();
+  if (mi->fps_p) do_fps (mi);
    glFinish();
    glXSwapBuffers(dpy, window);
 

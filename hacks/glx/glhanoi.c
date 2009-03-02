@@ -15,18 +15,14 @@
 
 #include "rotator.h"
 
-#define DEF_DELAY     "15000"
-#define DEF_DISKS     "0"         /* < 2 means 3-12 */
-#define DEF_WIRE      "False"
 #define DEF_LIGHT     "True"
-#define DEF_FPS       "False"
 #define DEF_FOG       "False"
 #define DEF_TEXTURE   "True"
 
-#define DEFAULTS "*delay:     " DEF_DELAY     "\n" \
-				 "*count:     " DEF_DISKS     "\n" \
-				 "*showFPS:   " DEF_FPS       "\n" \
-				 "*wireframe: " DEF_WIRE      "\n"
+#define DEFAULTS "*delay:     15000\n" \
+				 "*count:     0\n" \
+				 "*showFPS:   False\n" \
+				 "*wireframe: False\n"
 
 # define refresh_glhanoi 0
 
@@ -96,6 +92,7 @@ typedef struct {
 	GLfloat t1, t2;
 	GLfloat ucostheta, usintheta;
 	GLdouble rotAngle;
+    int polys;
 } Disk;
 
 typedef struct {
@@ -139,6 +136,7 @@ typedef struct {
 	GLint floorList;
 	GLint baseList;
 	GLint poleList;
+    int floorpolys, basepolys, polepolys;
 	GLfloat camera[3];
 	GLfloat centre[3];
 	rotator *the_rotator;
@@ -594,10 +592,11 @@ static void setMaterial(const GLfloat color[3], const GLfloat hlite[3], int shin
  * people's hardware supports 3D textures, so I didn't bother (xorg
  * ATI server doesn't :-( )
  */
-static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
+static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 			  GLdouble bottomThickness, GLdouble topThickness,
 			  GLdouble height, GLuint nSlice, GLuint nLoop)
 {
+    int polys = 0;
 	GLfloat y;
 	GLfloat *cosCache = malloc(sizeof(GLfloat) * nSlice);
 	GLfloat *sinCache = malloc(sizeof(GLfloat) * nSlice);
@@ -659,6 +658,7 @@ static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 		/* yTexCoord, */
 		/* midTexCoord + cosCache[slice] * outerTexCoordSize); */
 		glVertex3f(radius * sinCache[slice], y, radius * cosCache[slice]);
+        polys++;
 	}
 	glEnd();
 
@@ -684,10 +684,12 @@ static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 					   upperRadius * cosCache[slice]);
 			glVertex3f(lowerRadius * sinCache[slice], lowerY,
 					   lowerRadius * cosCache[slice]);
+            polys++;
 		}
 		glNormal3f(0.0, 0.0, 1.0);
 		glVertex3f(0.0, upperY, upperRadius);
 		glVertex3f(0.0, lowerY, lowerRadius);
+        polys++;
 		glEnd();
 
 		/* inside */
@@ -706,6 +708,7 @@ static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 					   upperRadius * cosCache[slice]);
 			glVertex3f(lowerRadius * sinCache[slice], lowerY,
 					   lowerRadius * cosCache[slice]);
+            polys++;
 		}
 		glEnd();
 	}
@@ -722,25 +725,27 @@ static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 				   innerRadius * cosCache[slice]);
 
 		glVertex3f(radius * sinCache[slice], y, radius * cosCache[slice]);
+        polys++;
 	}
 	glVertex3f(0.0, y, innerRadius);
 	glVertex3f(0.0, y, radius);
 	glEnd();
+    return polys;
 }
 
-static void drawPole(GLfloat radius, GLfloat length)
+static int drawPole(GLfloat radius, GLfloat length)
 {
-	drawTube(radius, radius, radius, radius, length, NSLICE, NLOOPS);
+  return drawTube(radius, radius, radius, radius, length, NSLICE, NLOOPS);
 }
 
-static void drawDisk3D(GLdouble inner_radius, GLdouble outer_radius,
-				GLdouble height)
+static int drawDisk3D(GLdouble inner_radius, GLdouble outer_radius,
+                      GLdouble height)
 {
-	drawTube(outer_radius, outer_radius, outer_radius - inner_radius,
-			 outer_radius - inner_radius, height, NSLICE, NLOOPS);
+  return drawTube(outer_radius, outer_radius, outer_radius - inner_radius,
+                  outer_radius - inner_radius, height, NSLICE, NLOOPS);
 }
 
-static void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
+static int drawCuboid(GLfloat length, GLfloat width, GLfloat height)
 {
 	GLfloat xmin = -length / 2.0f;
 	GLfloat xmax = length / 2.0f;
@@ -748,6 +753,7 @@ static void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
 	GLfloat zmax = width / 2.0f;
 	GLfloat ymin = 0.0f;
 	GLfloat ymax = height;
+    int polys = 0;
 
 	glBegin(GL_QUADS);
 	/* front */
@@ -756,42 +762,50 @@ static void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
 	glVertex3f(xmax, ymin, zmax);	/* 1 */
 	glVertex3f(xmax, ymax, zmax);	/* 2 */
 	glVertex3f(xmin, ymax, zmax);	/* 3 */
+    polys++;
 	/* right */
 	glNormal3fv(right);
 	glVertex3f(xmax, ymin, zmax);	/* 1 */
 	glVertex3f(xmax, ymin, zmin);	/* 5 */
 	glVertex3f(xmax, ymax, zmin);	/* 6 */
 	glVertex3f(xmax, ymax, zmax);	/* 2 */
+    polys++;
 	/* back */
 	glNormal3fv(back);
 	glVertex3f(xmax, ymin, zmin);	/* 5 */
 	glVertex3f(xmin, ymin, zmin);	/* 4 */
 	glVertex3f(xmin, ymax, zmin);	/* 7 */
 	glVertex3f(xmax, ymax, zmin);	/* 6 */
+    polys++;
 	/* left */
 	glNormal3fv(left);
 	glVertex3f(xmin, ymin, zmin);	/* 4 */
 	glVertex3f(xmin, ymin, zmax);	/* 0 */
 	glVertex3f(xmin, ymax, zmax);	/* 3 */
 	glVertex3f(xmin, ymax, zmin);	/* 7 */
+    polys++;
 	/* top */
 	glNormal3fv(up);
 	glVertex3f(xmin, ymax, zmax);	/* 3 */
 	glVertex3f(xmax, ymax, zmax);	/* 2 */
 	glVertex3f(xmax, ymax, zmin);	/* 6 */
 	glVertex3f(xmin, ymax, zmin);	/* 7 */
+    polys++;
 	/* bottom */
 	glNormal3fv(down);
 	glVertex3f(xmin, ymin, zmin);	/* 4 */
 	glVertex3f(xmax, ymin, zmin);	/* 5 */
 	glVertex3f(xmax, ymin, zmax);	/* 1 */
 	glVertex3f(xmin, ymin, zmax);	/* 0 */
+    polys++;
 	glEnd();
+    return polys;
 }
 
-static void drawDisks(glhcfg *glhanoi)
+static int drawDisks(glhcfg *glhanoi)
 {
 	int i;
+    int polys = 0;
 
 	glPushMatrix();
 	glTranslatef(0.0f, glhanoi->baseHeight, 0.0f);
@@ -808,9 +822,11 @@ static void drawDisks(glhcfg *glhanoi)
 			glTranslatef(0.0, -glhanoi->diskHeight / 2.0, 0.0);
 		}
 		glCallList(disk->displayList);
+        polys += disk->polys;
 		glPopMatrix();
 	}
 	glPopMatrix();
+    return polys;
 }
 
 static GLfloat getDiskRadius(glhcfg *glhanoi, int i)
@@ -1096,6 +1112,7 @@ static void initFloor(glhcfg *glhanoi)
 	const float *col = cWhite;
 	float texIncr = 1.0 / BOARD_SQUARES;
 
+    glhanoi->floorpolys = 0;
 	if((glhanoi->floorList = glGenLists(1)) == 0) {
 		fprintf(stderr, "can't allocate memory for floor display list\n");
 		exit(EXIT_FAILURE);
@@ -1137,6 +1154,7 @@ static void initFloor(glhcfg *glhanoi)
 
 			glTexCoord2d(tx1, tz0);
 			glVertex3f(x1, 0.0, z0);
+            glhanoi->floorpolys++;
 			glEnd();
 		}
 	}
@@ -1151,8 +1169,8 @@ static void initTowers(glhcfg *glhanoi)
 	}
 	glNewList(glhanoi->baseList, GL_COMPILE);
 	setMaterial(baseColor, cWhite, 50);
-	drawCuboid(glhanoi->baseLength, glhanoi->baseWidth,
-			   glhanoi->baseHeight);
+    glhanoi->basepolys = drawCuboid(glhanoi->baseLength, glhanoi->baseWidth,
+                                    glhanoi->baseHeight);
 	glEndList();
 
 
@@ -1164,13 +1182,13 @@ static void initTowers(glhcfg *glhanoi)
 	glPushMatrix();
 	glTranslatef(0.0f, glhanoi->baseHeight, 0.0f);
 	setMaterial(poleColor, cWhite, 50);
-	drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
+    glhanoi->polepolys = drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
 	glPushMatrix();
 	glTranslatef(-glhanoi->poleOffset, 0.0, 0.0);
-	drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
+	glhanoi->polepolys += drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
 	glPopMatrix();
 	glTranslatef(glhanoi->poleOffset, 0.0, 0.0);
-	drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
+	glhanoi->polepolys += drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
 	glPopMatrix();
 	glEndList();
 }
@@ -1216,6 +1234,7 @@ static void initDisks(glhcfg *glhanoi)
 		disk->rotation[0] = 0.0;
 		disk->rotation[1] = 0.0;
 		disk->rotation[2] = 0.0;
+		disk->polys = 0;
 
 		color[0] = diskColor;
 		color[1] = 1.0f;
@@ -1229,9 +1248,9 @@ static void initDisks(glhcfg *glhanoi)
 		}
 		glNewList(disk->displayList, GL_COMPILE);
 		setMaterial(color, cWhite, 100.0);
-		drawDisk3D(glhanoi->poleRadius, 
-                           getDiskRadius(glhanoi, i),
-                           glhanoi->diskHeight);
+		disk->polys += drawDisk3D(glhanoi->poleRadius, 
+                                  getDiskRadius(glhanoi, i),
+                                  glhanoi->diskHeight);
 		glEndList();
 	}
 	for(i = glhanoi->maxDiskIdx; i >= 0; --i) {
@@ -1263,15 +1282,17 @@ static void initLights(Bool state)
 	}
 }
 
-static void drawFloor(glhcfg *glhanoi)
+static int drawFloor(glhcfg *glhanoi)
 {
 	glCallList(glhanoi->floorList);
+    return glhanoi->floorpolys;
 }
 
-static void drawTowers(glhcfg *glhanoi)
+static int drawTowers(glhcfg *glhanoi)
 {
 	glCallList(glhanoi->baseList);
 	glCallList(glhanoi->poleList);
+    return glhanoi->basepolys + glhanoi->polepolys;
 }
 
 /* Window management, etc
@@ -1376,6 +1397,7 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	glPolygonMode(GL_FRONT, glhanoi->wire ? GL_LINE : GL_FILL);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    mi->polygon_count = 0;
 
 	glLoadIdentity();
 
@@ -1385,11 +1407,11 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	if(!glhanoi->wire && glhanoi->texture) {
 		glEnable(GL_TEXTURE_2D);
 	}
-	drawFloor(glhanoi);
+    mi->polygon_count += drawFloor(glhanoi);
 	glDisable(GL_TEXTURE_2D);
 
-	drawTowers(glhanoi);
-	drawDisks(glhanoi);
+	mi->polygon_count += drawTowers(glhanoi);
+	mi->polygon_count += drawDisks(glhanoi);
 
 	if(mi->fps_p) {
 		do_fps(mi);

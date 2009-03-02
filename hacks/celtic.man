@@ -11,6 +11,7 @@ celtic - draws celtic cross-stich patterns
 [\-delay2 \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-graph \fImode\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIceltic\fP program repeatedly draws random cross-stitch patterns.
 .SH OPTIONS
@@ -36,6 +37,9 @@ Number of colours to use. Default: 20.
 .TP 8
 .B \-graph
 Whether to render the underlying graph.  Default: no.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

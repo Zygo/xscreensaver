@@ -45,12 +45,13 @@
 static const char *shadebobs_defaults [] = {
   ".background: black",
   ".foreground: white",
+  "*fpsSolid:	true",
   "*degrees:  0",	/* default: Automatic degree calculation */
   "*color:    random",
   "*count:    4",
   "*cycles:   10",
   "*ncolors:  64",    /* changing this doesn't work particularly well */
-  "*delay:    5000",
+  "*delay:    10000",
   0
 };
 

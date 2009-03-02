@@ -89,7 +89,9 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*count:   -5     \n" \
 					"*cycles:  1600   \n" \
 					"*size:    -12    \n" \
-					"*ncolors: 15     \n"
+					"*ncolors: 15     \n" \
+					"*fpsSolid: true     \n" \
+
 # define UNIFORM_COLORS
 # define reshape_loop 0
 # define loop_handle_event 0

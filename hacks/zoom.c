@@ -237,10 +237,11 @@ static const char *zoom_defaults[] = {
   "*dontClearRoot: True",
   ".foreground: white",
   ".background: #111111",
+  "*fpsSolid:	true",
 #ifdef __sgi /* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID: Best",
 #endif
-  "*lenses:      false",
+  "*lenses:      true",
   "*delay:       10000",
   "*duration:    120",
   "*pixwidth:    10",
@@ -254,6 +255,7 @@ static const char *zoom_defaults[] = {
 
 static XrmOptionDescRec zoom_options[] = {
   { "-lenses", ".lenses", XrmoptionNoArg, "true" },
+  { "-no-lenses", ".lenses", XrmoptionNoArg, "false" },
   { "-delay", ".delay", XrmoptionSepArg, 0 },
   { "-duration",  ".duration", XrmoptionSepArg, 0 },
   { "-pixwidth", ".pixwidth", XrmoptionSepArg, 0 },

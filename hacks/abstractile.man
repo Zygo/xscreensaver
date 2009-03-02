@@ -4,6 +4,7 @@ abstractile - draw abstract mosaic patterns of interlocking tiles
 .SH SYNOPSIS
 .B abstractile
 [\-sleep \fIseconds\fP] [\-speed \fIint\fP] [\-tile \fItile_mode\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIabstractile\fP program draws chaotic grids of randomly colored
 and shaped interlocking tiles.
@@ -21,6 +22,9 @@ A value between 0 and 5 used to specify the speed at which each screen is drawn.
 The type of tile that is drawn on each screen.  Legal values are
 \fIrandom\fP, \fIflat\fP, \fIthin\fP, \fIoutline\fP, 
 \fIblock\fP, \fIneon\fP, and \fItiled\fP
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -33,7 +33,9 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 # define DEFAULTS	"*count:		5       \n"			\
 					"*delay:		10000   \n"			\
 					"*ncolors:		200     \n"			\
-					"*useSHM:		True    \n"
+					"*useSHM:		True    \n" \
+					"*fpsSolid:		true    \n" \
+
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
 # define reshape_swirl 0

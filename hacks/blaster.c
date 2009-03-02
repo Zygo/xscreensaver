@@ -1098,6 +1098,7 @@ blaster_free (Display *dpy, Window window, void *closure)
 static const char *blaster_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*r_color0:	#FF00FF",
   "*r_color1:	#FFA500",
   "*r_color2:	#FFFF00",

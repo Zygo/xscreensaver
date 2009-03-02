@@ -10,6 +10,7 @@ ccurve - self-similar linear fractals.
 [\-delay \fInumber\fP]
 [\-pause \fInumber\fP]
 [\-limit \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Generates self-similar linear fractals, including the classic ``C Curve.''
 .SH OPTIONS
@@ -32,6 +33,9 @@ Duration.  1 - 60.  Default: 3.
 .TP 8
 .B \-limit \fInumber\fP
 Density.  3 - 300000.  Default: 200000.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

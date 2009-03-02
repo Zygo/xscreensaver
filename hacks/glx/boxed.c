@@ -193,6 +193,7 @@ typedef struct {
    GLXContext     *glx_context;
    GLuint         listobjects;
    GLuint         gllists[3];
+   int            list_polys[3];
    Window         window;
    BOOL           stop;
    char           *tex1;
@@ -686,12 +687,13 @@ static void setdefaultconfig(boxed_config *config)
 /*
  * draw bottom
  */ 
-static void drawfilledbox(boxedstruct *boxed, int wire)
+static int drawfilledbox(boxedstruct *boxed, int wire)
 {   
    /* draws texture filled box, 
       top is drawn using the entire texture, 
       the sides are drawn using the edge of the texture
     */
+  int polys = 0;
    
    /* front */
    glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
@@ -703,6 +705,7 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(1.0,-1.0,1.0);
    glTexCoord2f(0,1);
    glVertex3f(-1.0,-1.0,1.0);
+   polys++;
    /* rear */
    glTexCoord2f(0,1);
    glVertex3f(1.0,1.0,-1.0);
@@ -712,6 +715,7 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(-1.0,-1.0,-1.0);
    glTexCoord2f(0,1);
    glVertex3f(1.0,-1.0,-1.0);
+   polys++;
    /* left */
    glTexCoord2f(1,1);
    glVertex3f(-1.0,1.0,1.0);
@@ -721,6 +725,7 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(-1.0,-1.0,-1.0);
    glTexCoord2f(0,1);
    glVertex3f(-1.0,1.0,-1.0);
+   polys++;
    /* right */
    glTexCoord2f(0,1);
    glVertex3f(1.0,1.0,1.0);
@@ -730,6 +735,7 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(1.0,-1.0,-1.0);
    glTexCoord2f(0,1);
    glVertex3f(1.0,-1.0,1.0);
+   polys++;
    /* top */
    glTexCoord2f(0.0,0.0);
    glVertex3f(-1.0,1.0,1.0);
@@ -739,6 +745,7 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(1.0,1.0,-1.0);
    glTexCoord2f(1.0,0.0);
    glVertex3f(1.0,1.0,1.0);
+   polys++;
    /* bottom */
    glTexCoord2f(0,0);
    glVertex3f(-1.0,-1.0,1.0);
@@ -748,42 +755,47 @@ static void drawfilledbox(boxedstruct *boxed, int wire)
    glVertex3f(1.0,-1.0,-1.0);
    glTexCoord2f(1,0);
    glVertex3f(1.0,-1.0,1.0);
+   polys++;
    glEnd();
+
+   return polys;
 }
 
 
 /*
  * Draw a box made of lines
  */ 
-static void drawbox(boxedstruct *boxed)
+static int drawbox(boxedstruct *boxed)
 {
+   int polys = 0;
    /* top */
    glBegin(GL_LINE_STRIP);
    glVertex3f(-1.0,1.0,1.0);
-   glVertex3f(-1.0,1.0,-1.0);
-   glVertex3f(1.0,1.0,-1.0);
-   glVertex3f(1.0,1.0,1.0);
-   glVertex3f(-1.0,1.0,1.0);
+   glVertex3f(-1.0,1.0,-1.0); polys++;
+   glVertex3f(1.0,1.0,-1.0); polys++;
+   glVertex3f(1.0,1.0,1.0); polys++;
+   glVertex3f(-1.0,1.0,1.0); polys++;
    glEnd();
    /* bottom */
    glBegin(GL_LINE_STRIP);
    glVertex3f(-1.0,-1.0,1.0);
-   glVertex3f(1.0,-1.0,1.0);
-   glVertex3f(1.0,-1.0,-1.0);
-   glVertex3f(-1.0,-1.0,-1.0);
-   glVertex3f(-1.0,-1.0,1.0);
+   glVertex3f(1.0,-1.0,1.0); polys++;
+   glVertex3f(1.0,-1.0,-1.0); polys++;
+   glVertex3f(-1.0,-1.0,-1.0); polys++;
+   glVertex3f(-1.0,-1.0,1.0); polys++;
    glEnd();
    /* connect top & bottom */
    glBegin(GL_LINES);
    glVertex3f(-1.0,1.0,1.0);
-   glVertex3f(-1.0,-1.0,1.0);
+   glVertex3f(-1.0,-1.0,1.0); polys++;
    glVertex3f(1.0,1.0,1.0);
-   glVertex3f(1.0,-1.0,1.0);
+   glVertex3f(1.0,-1.0,1.0); polys++;
    glVertex3f(1.0,1.0,-1.0);
-   glVertex3f(1.0,-1.0,-1.0);
+   glVertex3f(1.0,-1.0,-1.0); polys++;
    glVertex3f(-1.0,1.0,-1.0);
-   glVertex3f(-1.0,-1.0,-1.0);
+   glVertex3f(-1.0,-1.0,-1.0); polys++;
    glEnd();
+   return polys;
 }
 
 
@@ -791,8 +803,9 @@ static void drawbox(boxedstruct *boxed)
 /* 
  * Draw ball
  */
-static void drawball(boxedstruct *gp, ball *b, int wire)
+static int drawball(boxedstruct *gp, ball *b, int wire)
 {
+   int polys = 0;
    int i,pos,cnt;
    GLint *spherei = gp->spherei;
    vectorf *spherev = gp->spherev;
@@ -821,26 +834,31 @@ static void drawball(boxedstruct *gp, ball *b, int wire)
 	 glNormal3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glVertex3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glNormal3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
+         gp->list_polys[GLL_BALL]++;
 	 glVertex3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
 	 glNormal3f(spherev[spherei[pos+2]].x,spherev[spherei[pos+2]].y,spherev[spherei[pos+2]].z);
 	 glVertex3f(spherev[spherei[pos+2]].x,spherev[spherei[pos+2]].y,spherev[spherei[pos+2]].z);
+         gp->list_polys[GLL_BALL]++;
 	 glEnd();
       }
       glEndList();
       gp->gllists[GLL_BALL] = 1;
    } else {
       glCallList(gp->listobjects + GLL_BALL);
+      polys += gp->list_polys[GLL_BALL];
    }
    
    glPopMatrix();
+   return polys;
 }
 
     
 /* 
  * Draw all triangles in triman
  */
-static void drawtriman(triman *t, int wire) 
+static int drawtriman(triman *t, int wire) 
 {
+   int polys = 0;
    int i,pos;
    vectorf *spherev = t->vertices;
    GLfloat col[3];
@@ -866,66 +884,71 @@ static void drawtriman(triman *t, int wire)
       glVertex3f(spherev[pos+0].x,spherev[pos+0].y,spherev[pos+0].z);
       glVertex3f(spherev[pos+1].x,spherev[pos+1].y,spherev[pos+1].z);
       glVertex3f(spherev[pos+2].x,spherev[pos+2].y,spherev[pos+2].z);
+      polys++;
       glEnd();
       glPopMatrix();
    }   
    glPopMatrix();   
+   return polys;
 }
       
 /* 
  * draw floor pattern
  */   
-static void drawpattern(boxedstruct *gp)
+static int drawpattern(boxedstruct *gp)
 {
+   int polys = 0;
    if (!gp->gllists[GLL_PATTERN]) {
       glNewList(gp->listobjects + GLL_PATTERN, GL_COMPILE);
      
       glBegin(GL_LINE_STRIP);
       glVertex3f(-25.0f, 0.0f, 35.0f);
-      glVertex3f(-15.0f, 0.0f, 35.0f);
-      glVertex3f(-5.0f, 0.0f, 25.0f);
-      glVertex3f(5.0f, 0.0f, 25.0f);
-      glVertex3f(15.0f, 0.0f, 35.0f);
-      glVertex3f(25.0f, 0.0f, 35.0f);
-      glVertex3f(35.0f, 0.0f, 25.0f);
-      glVertex3f(35.0f, 0.0f, 15.0f);
-      glVertex3f(25.0f, 0.0f, 5.0f);
-      glVertex3f(25.0f, 0.0f, -5.0f);
-      glVertex3f(35.0f, 0.0f, -15.0f);
-      glVertex3f(35.0f, 0.0f, -25.0f);
-      glVertex3f(25.0f, 0.0f, -35.0f);
-      glVertex3f(15.0f, 0.0f,-35.0f);
-      glVertex3f(5.0f, 0.0f, -25.0f);
-      glVertex3f(-5.0f, 0.0f, -25.0f);
-      glVertex3f(-15.0f, 0.0f,-35.0f);
-      glVertex3f(-25.0f, 0.0f,-35.0f);
-      glVertex3f(-35.0f, 0.0f, -25.0f);
-      glVertex3f(-35.0f, 0.0f, -15.0f);
-      glVertex3f(-25.0f, 0.0f, -5.0f);
-      glVertex3f(-25.0f, 0.0f, 5.0f);
-      glVertex3f(-35.0f, 0.0f, 15.0f);
-      glVertex3f(-35.0f, 0.0f, 25.0f);
-      glVertex3f(-25.0f, 0.0f, 35.0f);
+      glVertex3f(-15.0f, 0.0f, 35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-5.0f, 0.0f, 25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(5.0f, 0.0f, 25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(15.0f, 0.0f, 35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(25.0f, 0.0f, 35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(35.0f, 0.0f, 25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(35.0f, 0.0f, 15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(25.0f, 0.0f, 5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(25.0f, 0.0f, -5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(35.0f, 0.0f, -15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(35.0f, 0.0f, -25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(25.0f, 0.0f, -35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(15.0f, 0.0f,-35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(5.0f, 0.0f, -25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-5.0f, 0.0f, -25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-15.0f, 0.0f,-35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-25.0f, 0.0f,-35.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-35.0f, 0.0f, -25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-35.0f, 0.0f, -15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-25.0f, 0.0f, -5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-25.0f, 0.0f, 5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-35.0f, 0.0f, 15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-35.0f, 0.0f, 25.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-25.0f, 0.0f, 35.0f); gp->list_polys[GLL_PATTERN]++;
       glEnd();
       
       glBegin(GL_LINE_STRIP);
       glVertex3f(-5.0f, 0.0f, 15.0f);
-      glVertex3f(5.0f, 0.0f, 15.0f);
-      glVertex3f(15.0f, 0.0f, 5.0f);
-      glVertex3f(15.0f, 0.0f, -5.0f);
-      glVertex3f(5.0f, 0.0f, -15.0f);
-      glVertex3f(-5.0f, 0.0f, -15.0f);
-      glVertex3f(-15.0f, 0.0f, -5.0f);
-      glVertex3f(-15.0f, 0.0f, 5.0f);
-      glVertex3f(-5.0f, 0.0f, 15.0f);
+      glVertex3f(5.0f, 0.0f, 15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(15.0f, 0.0f, 5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(15.0f, 0.0f, -5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(5.0f, 0.0f, -15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-5.0f, 0.0f, -15.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-15.0f, 0.0f, -5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-15.0f, 0.0f, 5.0f); gp->list_polys[GLL_PATTERN]++;
+      glVertex3f(-5.0f, 0.0f, 15.0f); gp->list_polys[GLL_PATTERN]++;
       glEnd();
 
       glEndList();
       gp->gllists[GLL_PATTERN] = 1;
    } else {
       glCallList(gp->listobjects + GLL_PATTERN);
-   }	
+      polys += gp->list_polys[GLL_PATTERN];
+   }
 
+   return polys;
 }
       
       
@@ -954,6 +977,8 @@ static void draw(ModeInfo * mi)
    GLfloat l1_diffuse[] =    {0.5, 0.5, 0.5, 1.0};
    GLfloat l1_position[] =  {0.0, 1.0, 0.0, 0.0}; /* w = 0 -> directional light */
    
+   mi->polygon_count = 0;
+
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glLoadIdentity();
    
@@ -1009,7 +1034,7 @@ static void draw(ModeInfo * mi)
    glColor3f(1.0,1.0,1.0);
    glScalef(20.0,0.25,20.0);
    glTranslatef(0.0,2.0,0.0);
-   drawfilledbox(gp, wire);
+   mi->polygon_count += drawfilledbox(gp, wire);
    glPopMatrix();
    glDisable(GL_TEXTURE_2D);
 
@@ -1017,28 +1042,28 @@ static void draw(ModeInfo * mi)
    glColor3f(0.2,0.5,0.2);
    glScalef(20.0,20.0,0.25);
    glTranslatef(0.0,1.0,81.0);
-   drawbox(gp);
+   mi->polygon_count += drawbox(gp);
    glPopMatrix();
 
    glPushMatrix();
    glColor3f(0.2,0.5,0.2);
    glScalef(20.0,20.0,0.25);
    glTranslatef(0.0,1.0,-81.0);
-   drawbox(gp);
+   mi->polygon_count += drawbox(gp);
    glPopMatrix();
 
    glPushMatrix();
    glColor3f(0.2,0.5,0.2);
    glScalef(.25,20.0,20.0);
    glTranslatef(-81.0,1.0,0.0);
-   drawbox(gp);
+   mi->polygon_count += drawbox(gp);
    glPopMatrix();
 
    glPushMatrix();
    glColor3f(0.2,0.5,0.2);
    glScalef(.25,20.0,20.0);
    glTranslatef(81.0,1.0,0.0);
-   drawbox(gp);
+   mi->polygon_count += drawbox(gp);
    glPopMatrix();
 
    if (!wire) {
@@ -1064,10 +1089,10 @@ static void draw(ModeInfo * mi)
 	    updatetris(&gp->tman[i]);
 	 }
 	 glDisable(GL_CULL_FACE);
-	 drawtriman(&gp->tman[i], wire);
+	 mi->polygon_count += drawtriman(&gp->tman[i], wire);
 	 if (!wire) glEnable(GL_CULL_FACE);
       } else {
-	 drawball(gp, &gp->bman.balls[i], wire);
+         mi->polygon_count += drawball(gp, &gp->bman.balls[i], wire);
       }
    }
       

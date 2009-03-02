@@ -5,6 +5,7 @@ jigsaw - permute the screen image like a jigsaw puzzle
 .B jigsaw
 [\-display \fIhost:display.screen\fP] [\-background \fIcolor\fP]
 [\-delay \fIusecs\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIjigsaw\fP program takes an image, carves it up into
 a jigsaw puzzle, shuffles it, and then solves it.
@@ -36,6 +37,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 How long to wait between shuffling pieces; default 70000, or 0.07 seconds.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

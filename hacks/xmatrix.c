@@ -1849,6 +1849,7 @@ xmatrix_free (Display *dpy, Window window, void *closure)
 static const char *xmatrix_defaults [] = {
   ".background:		   black",
   ".foreground:		   #00AA00",
+  "*fpsSolid:		   true",
   "*matrixFont:		   large",
   "*delay:		   10000",
   "*insert:		   both",

@@ -11,6 +11,7 @@ tangram - watch the computer solve tangram puzzles.
 [\-wireframe]
 [\-viewing_time \fInumber\fP]
 [\-rotate]
+[\-fps]
 .SH DESCRIPTION
 The \fItangram\fP program uses a few basic shapes to build silhouettes of recognizable objects.
 .SH OPTIONS
@@ -39,6 +40,9 @@ should be displayed. Default: 5
 .TP 8
 .B \-rotate | \-no-rotate
 Rotate the camera around the puzzle.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

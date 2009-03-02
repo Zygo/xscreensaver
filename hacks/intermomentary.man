@@ -11,6 +11,7 @@ between slowly moving circles.
 [\-draw\-delay \fIdelayms\fP]
 [\-max\-riders \fImaxr\fP]
 [\-max\-radius \fImaxradius\fP]
+[\-fps]
 .SH DESCRIPTION
 The Intersection Momentary is a fun visualization defining the relationships 
 between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
@@ -49,6 +50,9 @@ Maximum number of 'riders', single dots moving around the edge of the discs.
 .B \-max\-radius \fImaxradius\fP (Default: \fI100\fP)
 Maximum possible radius of a disc.
 .TP 8
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

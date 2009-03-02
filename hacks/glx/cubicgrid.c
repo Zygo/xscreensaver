@@ -30,7 +30,7 @@
 
 #define DEF_SPEED   "1.0"
 #define DEF_DIV     "30"
-#define DEF_SIZE    "20.0"
+#define DEF_ZOOM    "20"
 #define DEF_BIGDOTS "True"
 
 #undef countof
@@ -48,7 +48,7 @@ static Bool bigdots;
 
 static argtype vars[] = {
   { &speed,   "speed",   "Speed",   DEF_SPEED,   t_Float },
-  { &size,    "zoom",    "Zoom",    DEF_SIZE,    t_Float },
+  { &size,    "zoom",    "Zoom",    DEF_ZOOM,    t_Float },
   { &ticks,   "ticks",   "Ticks",   DEF_DIV,     t_Int },
   { &bigdots, "bigdots", "BigDots", DEF_BIGDOTS, t_Bool },
 };
@@ -80,6 +80,7 @@ typedef struct {
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
+  int npoints;
 } cubicgrid_conf;
 
 static cubicgrid_conf *cubicgrid = NULL;
@@ -148,7 +149,6 @@ static Bool draw_main(cubicgrid_conf *cp)
 
   glTranslatef(-ticks/2.0, -ticks/2.0, -ticks/2.0);
   glCallList(cp->list);
-
   return True;
 }
 
@@ -175,6 +175,7 @@ static void init_gl(ModeInfo *mi)
       for(y = 0; y < ticks; y++) {
         for(z = 0; z < ticks; z++) {
           glVertex3f(x, y, z);
+          cp->npoints++;
         }
       }
     }
@@ -188,6 +189,7 @@ static void init_gl(ModeInfo *mi)
         for(z = 0; z < ticks; z++) {
           glColor3f(x/tf, y/tf, z/tf);
           glVertex3f(x, y, z);
+          cp->npoints++;
         }
       }
     }
@@ -267,6 +269,7 @@ ENTRYPOINT void draw_cubicgrid(ModeInfo * mi)
     release_cubicgrid(mi);
     return;
   }
+  mi->polygon_count = cp->npoints;
   if (MI_IS_FPS(mi)) do_fps (mi);
   glFlush();
   glXSwapBuffers(display, window);

@@ -69,7 +69,10 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
 # define DEFAULTS	"*delay:   1000000 \n" \
 					"*count:   64      \n" \
 					"*cycles:  20      \n" \
-					"*ncolors: 64      \n"
+					"*ncolors: 64      \n" \
+					"*fpsTop: true     \n" \
+					"*fpsSolid: true   \n" \
+
 # define refresh_apollonian 0
 # define reshape_apollonian 0
 # define apollonian_handle_event 0
@@ -621,7 +624,8 @@ f(ModeInfo *mi, circle c1, circle c2, circle c3, circle c4)
         c.h = 2*(c1.h+c2.h+c3.h) - c4.h;
         c.x = 2*(c1.x+c2.x+c3.x) - c4.x;
         c.y = 2*(c1.y+c2.y+c3.y) - c4.y;
-        if (c.e > cp->size * e || c.x / c.e > BIG || c.y / c.e > BIG ||
+        if (c.e == 0 ||
+            c.e > cp->size * e || c.x / c.e > BIG || c.y / c.e > BIG ||
             c.x / c.e < -BIG || c.y / c.e < -BIG)
                 return;
         p(mi, c);

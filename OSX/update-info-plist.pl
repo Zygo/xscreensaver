@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.9 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 
@@ -113,17 +113,15 @@ sub update_saver_xml($$) {
     }
   }
 
-  my $cc = "\302\251";  # unicode "&copy;"
-
-  my $desc1 = ("$name, version $vers.\n\n" .
+  my $desc1 = ("$name, version $vers.\n\n" .		# savername.xml
                $desc . "\n" .
                "\n" . 
-               "From the XScreenSaver collection:\n" .
+               "From the XScreenSaver collection: " .
                "http://www.jwz.org/xscreensaver/\n" .
                "Copyright \251 $year by $authors.\n");
 
-  my $desc2 = ("$name $vers,\n" .
-               "$cc $year $authors.\n" .
+  my $desc2 = ("$name $vers,\n" .			# Info.plist
+               "\302\251 $year $authors.\n" .
                "From the XScreenSaver collection:\n" .
                "http://www.jwz.org/xscreensaver/\n" .
                "\n" .
@@ -216,6 +214,11 @@ sub update($) {
   my $copyright = "$1";
   $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
 
+  # Lose the Wikipedia URLs.
+  $info_str =~ s@http:.*\bwikipedia\b[^\s]+[ \t]*\n?@@gm;
+
+  $info_str =~ s/(\n\n)\n+/$1/gs;
+  $info_str =~ s/(^\s+|\s+$)//gs;
   $plist = set_plist_key ($filename, $plist, 
                           "NSHumanReadableCopyright", $copyright);
   $plist = set_plist_key ($filename, $plist,

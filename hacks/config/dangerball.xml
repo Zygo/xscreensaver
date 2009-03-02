@@ -5,16 +5,17 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="30000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
           convert="invert"/>
 
   <number id="spikespeed" type="slider" arg="-speed %"
-          _label="Spike Growth" _low-label="Slow" _high-label="Fast"
+          _label="Spike growth" _low-label="Slow" _high-label="Fast"
           low="0.0" high="0.25" default="0.05"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Spike Count" low="1" high="200" default="30"/>
+  <number id="count" type="slider" arg="-count %"
+          _label="Number of spikes" _low-label="Few" _high-label="Ouch"
+          low="1" high="100" default="30"/>
 
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
@@ -22,7 +23,7 @@
    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
   </hgroup>
 
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws a ball that periodically extrudes many random spikes.  Ouch!

@@ -42,18 +42,6 @@ extern Bool restore_real_vroot (saver_info *si);
 extern void disable_builtin_screensaver (saver_info *, Bool unblank_screen_p);
 extern Bool ensure_no_screensaver_running (Display *, Screen *);
 
-#ifdef HAVE_MIT_SAVER_EXTENSION
-extern Bool query_mit_saver_extension (saver_info *);
-#endif
-#ifdef HAVE_SGI_SAVER_EXTENSION
-extern Bool query_sgi_saver_extension (saver_info *);
-#endif
-#ifdef HAVE_XIDLE_EXTENSION
-extern Bool query_xidle_extension (saver_info *);
-#endif
-#ifdef HAVE_RANDR
-extern Bool query_randr_extension (saver_info *);
-#endif
 #ifdef HAVE_PROC_INTERRUPTS
 extern Bool query_proc_interrupts_available (saver_info *, const char **why);
 #endif

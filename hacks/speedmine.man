@@ -20,6 +20,7 @@ speedmine - simulates speeding down a rocky mineshaft, or a funky dancing worm
 [\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-wire] [\-nowire]
 [\-worm]
 [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-darkground \fIcolor\fP] [\-lightground \fIcolor\fP] [\-tunnelend \fIcolor\fP] [\-delay \fImicroseconds\fP] [\-maxspeed \fInumber\fP] [\-thrust \fInumber\fP] [\-gravity \fInumber\fP] [\-vertigo \fInumber\fP] [\-terrain] [\-noterrain] [\-smoothness \fInumber\fP] [\-curviness \fInumber\fP] [\-twistiness \fInumber\fP] [\-widening] [\-nowidening] [\-bumps] [\-nobumps] [\-bonuses] [\-crosshair] [\-nocrosshair] [\-psychedelic] [\-nopsychedelic]
+[\-fps]
 .SH DESCRIPTION
 .TP 8
 Speedmine!
@@ -196,6 +197,9 @@ rainbow of colours.
 .B -nopsychedelic
 Specifies that a normal colormap should be used, with muted walls and a
 grey road.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH RESOURCES
 .EX
 Option            Resource               Default Value

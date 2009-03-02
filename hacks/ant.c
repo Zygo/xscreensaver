@@ -53,16 +53,18 @@ static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
 */
 
 #ifndef HAVE_COCOA
-# define DO_STIPPLE
+/*# define DO_STIPPLE*/
 #endif
 
 #ifdef STANDALONE
 # define MODE_ant
-# define DEFAULTS	"*delay:   1000  \n" \
+# define DEFAULTS	"*delay:   20000 \n" \
 					"*count:   -3    \n" \
 					"*cycles:  40000 \n" \
 					"*size:    -12   \n" \
-					"*ncolors: 64    \n"
+					"*ncolors: 64    \n" \
+					"*fpsSolid: true    \n" \
+
 # define reshape_ant 0
 # define ant_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -173,7 +175,9 @@ typedef struct {
 	antstruct  *ants;
 	int         init_bits;
 	unsigned char colors[NUMSTIPPLES - 1];
+# ifdef DO_STIPPLE
 	GC          stippledGC;
+# endif /* DO_STIPPLE */
 	Pixmap      pixmaps[NUMSTIPPLES - 1];
 	union {
 		XPoint      hexagon[7];		/* Need more than 6 for truchet */
@@ -641,24 +645,20 @@ drawcell(ModeInfo * mi, int col, int row, unsigned char color)
 	if (!color) {
 		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
 		gc = MI_GC(mi);
-	} else if (MI_NPIXELS(mi) > 2) {
+# ifdef DO_STIPPLE
+	} else if (MI_NPIXELS(mi) <= 2) {
+		XGCValues   gcv;
+		gcv.foreground = MI_WHITE_PIXEL(mi);
+		gcv.background = MI_BLACK_PIXEL(mi);
+        gcv.stipple = ap->pixmaps[color - 1];
+		XChangeGC(MI_DISPLAY(mi), ap->stippledGC,
+			  GCStipple | GCForeground | GCBackground, &gcv);
+		gc = ap->stippledGC;
+# endif /* !DO_STIPPLE */
+	} else {
 		XSetForeground(MI_DISPLAY(mi), MI_GC(mi),
 			       MI_PIXEL(mi, ap->colors[color - 1]));
 		gc = MI_GC(mi);
-	} else {
-		XGCValues   gcv;
-
-#ifdef DO_STIPPLE
-          gcv.stipple = ap->pixmaps[color - 1];
-#endif /* DO_STIPPLE */
-		gcv.foreground = MI_WHITE_PIXEL(mi);
-		gcv.background = MI_BLACK_PIXEL(mi);
-		XChangeGC(MI_DISPLAY(mi), ap->stippledGC,
-#ifdef DO_STIPPLE
-			  GCStipple |
-#endif /* DO_STIPPLE */
-                          GCForeground | GCBackground, &gcv);
-		gc = ap->stippledGC;
 	}
 	fillcell(mi, gc, col, row);
 }
@@ -980,10 +980,12 @@ free_ant(Display *display, antfarmstruct *ap)
 {
 	int         shade;
 
+#ifdef DO_STIPPLE
 	if (ap->stippledGC != None) {
 		XFreeGC(display, ap->stippledGC);
 		ap->stippledGC = None;
 	}
+#endif /* DO_STIPPLE */
 	for (shade = 0; shade < ap->init_bits; shade++) {
 		XFreePixmap(display, ap->pixmaps[shade]);
 	}

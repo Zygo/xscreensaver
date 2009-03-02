@@ -4,6 +4,7 @@ nerverot - induces edginess in the viewer
 .SH SYNOPSIS
 .B nerverot
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-db] [\-no\-db] [\-colors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-count \fIinteger\fP] [\-line\-width \fIinteger\fP] [\-event\-chance \fIfraction\fP] [\-iter\-amt \fIfraction\fP] [\-nervousness \fIfraction\fP] [\-max\-nerve\-radius \fIfraction\fP] [\-min\-radius \fIinteger\fP] [\-max\-radius \fIinteger\fP] [\-min\-scale \fIfraction\fP] [\-max\-scale \fIfraction\fP]
+[\-fps]
 .SH DESCRIPTION
 The goal of \fInerverot\fP is to be interesting and compelling to
 watch, yet induce a state of nervous edginess in the viewer. This manpage
@@ -96,6 +97,9 @@ resource \fIminScale\fP.
 The maximum overall scale of drawing, as a fraction of
 \fImin(windowHeight,windowWidth)\fP, in the range 0..10. Defaults to 1.75,
 resource \fImaxScale\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

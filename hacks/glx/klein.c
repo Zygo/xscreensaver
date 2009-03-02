@@ -24,7 +24,7 @@
 
 #define DEF_SPIN			        "True"
 #define DEF_WANDER			        "False"
-#define DEF_RANDOM			        "True"
+#define DEF_RAND			        "True"
 #define DEF_SPEED			        "150"
 
 #include "rotator.h"
@@ -78,7 +78,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&rand,      "rand",   "Random", DEF_RANDOM, t_Bool},
+  {&rand,      "rand",   "Random", DEF_RAND,   t_Bool},
   {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Int},
@@ -122,6 +122,7 @@ draw(ModeInfo *mi)
 	double u, v;
 	float coord[3];
 	
+    mi->polygon_count = 0;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
@@ -159,6 +160,7 @@ draw(ModeInfo *mi)
 				coord[2] = sin(u/2)*sin(v) + cos(u/2)*sin(2*v)/2;
 				glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 				glVertex3fv(coord);
+                mi->polygon_count++;
 			}
 		}
 		break;
@@ -170,6 +172,7 @@ draw(ModeInfo *mi)
 					coord[2] = kp->a*(cos(v) + sin(tan((v/2))))+0.2*u;
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -181,6 +184,7 @@ draw(ModeInfo *mi)
 					coord[2] = u*u-v*v;
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -193,6 +197,7 @@ draw(ModeInfo *mi)
 
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -204,6 +209,7 @@ draw(ModeInfo *mi)
 					coord[2] = v*sin(u/2);
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -215,6 +221,7 @@ draw(ModeInfo *mi)
 					coord[2] = sin(kp->b+=0.00001)*v/(2*M_PI)+kp->a*(1-v/(2*M_PI))*sin(u);
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -226,6 +233,7 @@ draw(ModeInfo *mi)
 					coord[2] = u;
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -237,6 +245,7 @@ draw(ModeInfo *mi)
 					coord[2] = sin(v);
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -248,6 +257,7 @@ draw(ModeInfo *mi)
 					coord[2] = sin(u/2)*cos(v) + cos(u/2)*sin(v);
 					glColor3f(coord[0]+0.7, coord[1]+0.7, coord[2]+0.7);
 					glVertex3fv(coord);
+                    mi->polygon_count++;
 				}
 			}
 			break;
@@ -255,6 +265,8 @@ draw(ModeInfo *mi)
 	glEnd();
 	glPopMatrix();
 
+    if (kp->render == GL_LINES)
+      mi->polygon_count /= 2;
 
 	kp->a = sin(kp->draw_step+=0.01);
 	kp->b = cos(kp->draw_step+=0.01);

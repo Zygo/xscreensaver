@@ -284,7 +284,7 @@ static unsigned long
 rotzoomer_draw (Display *disp, Window win, void *closure)
 {
   struct state *st = (struct state *) closure;
-  int delay = (st->delay * 1000);
+  int delay = st->delay;
   int i;
 
   if (st->img_loader)   /* still loading */
@@ -450,6 +450,7 @@ rotzoomer_free (Display *dpy, Window window, void *closure)
 static const char *rotzoomer_defaults[] = {
   ".background: black",
   ".foreground: white",
+  "*fpsSolid:	true",
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM: True",
 #else
@@ -458,7 +459,7 @@ static const char *rotzoomer_defaults[] = {
   "*anim: True",
   "*mode: stationary",
   "*numboxes: 2",
-  "*delay: 10",
+  "*delay: 10000",
   "*duration: 120",
   0
 };
@@ -479,4 +480,4 @@ static XrmOptionDescRec rotzoomer_options[] = {
 };
 
 
-XSCREENSAVER_MODULE ("Rotzoomer", rotzoomer)
+XSCREENSAVER_MODULE ("RotZoomer", rotzoomer)

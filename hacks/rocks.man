@@ -4,6 +4,7 @@ rocks - animation of flying through an asteroid field
 .SH SYNOPSIS
 .B rocks
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-ncolors \fIn\fP] [\-install] [\-visual \fIvisual\fP] [\-count \fIinteger\fP] [\-delay \fIusecs\fP] [\-speed \fIinteger\fP] [\-norotate] [\-nomove] [\-3d]
+[\-fps]
 .SH DESCRIPTION
 The \fIrocks\fP program draws an animation of an asteroid field moving past
 the observer (or vice versa).  Sometimes the observer picks up spin on Z axis.
@@ -52,6 +53,9 @@ Don't turn the observer; just fly straight ahead through the field.
 .B \-3d
 Do red/blue 3d separations: if you look at the screen with 3d glasses,
 the rocks will be \fIjumping\fP right \fIout\fP at you.  Oooooh, scaaary!
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

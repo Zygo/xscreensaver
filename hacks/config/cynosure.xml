@@ -5,18 +5,20 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="800000" default="500000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="1000000" default="500000"
           convert="invert"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="128"/>
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="128"/>
 
   <number id="iterations" type="slider" arg="-iterations %"
           _label="Duration" _low-label="Short" _high-label="Long"
           low="2" high="200" default="100"/>
 
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Random dropshadowed rectangles pop onto the screen in lockstep.

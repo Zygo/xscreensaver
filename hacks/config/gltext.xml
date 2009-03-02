@@ -5,14 +5,26 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="30000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
+  <select id="text">
+    <option id="uname"  _label="Display system information" />
+    <option id="clock"  _label="Display date and time"
+            arg-set="-text '%A%n%d %b %Y%n%r'"/>
+  </select>
+
+  <hgroup>
+  <select id="facing">
+    <option id="front"   _label="Always face front"/>
+    <option id="nofront" _label="Spin all the way around" arg-set="-no-front"/>
+  </select>
   <boolean id="wander" _label="Wander" arg-unset="-no-wander"/>
+  </hgroup>
 
   <select id="rotation">
-    <option id="no"  _label="Don't Rotate"               arg-set="-spin 0"/>
+    <option id="no"  _label="Don't rotate"               arg-set="-spin 0"/>
     <option id="x"   _label="Rotate around X axis"       arg-set="-spin X"/>
     <option id="y"   _label="Rotate around Y axis"       arg-set="-spin Y"/>
     <option id="z"   _label="Rotate around Z axis"       arg-set="-spin Z"/>
@@ -22,19 +34,13 @@
     <option id="xyz" _label="Rotate around all three axes"/>
   </select>
 
-  <select id="facing">
-    <option id="front"   _label="Always face front"/>
-    <option id="nofront" _label="Spin all the way around" arg-set="-no-front"/>
-  </select>
-
-  <string id="text"    _label="Text"    arg="-text %"/>
-<!--  <file   id="program" _label="Program" arg="-program %"/> -->
-
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Displays a few lines of text spinning around in a solid 3D font.
+The text can use strftime() escape codes to display the current 
+date and time.
 
 Written by Jamie Zawinski; 2001.
   </_description>

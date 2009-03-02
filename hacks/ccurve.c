@@ -178,7 +178,7 @@ realign (double    x1,
     }
 }
 
-static void
+static Bool
 self_similar_normalized (struct state *st,
 			 int       iterations,
 			 double    x1,
@@ -228,24 +228,36 @@ self_similar_normalized (struct state *st,
 	assert (fabs ((replacement [segment_count - 1].x) - 1.0) < EPSILON);
 	assert (fabs (replacement [segment_count - 1].y) < EPSILON);
 	realign (x1, y1, x2, y2, segment_count, replacement);
-	assert (fabs (x2 - (replacement [segment_count - 1].x)) < EPSILON);
-	assert (fabs (y2 - (replacement [segment_count - 1].y)) < EPSILON);
+        /* jwz: I don't understand what these assertions are supposed to
+           be detecting, but let's just bail on the fractal instead of
+           crashing. */
+/*	assert (fabs (x2 - (replacement [segment_count - 1].x)) < EPSILON);
+	assert (fabs (y2 - (replacement [segment_count - 1].y)) < EPSILON);*/
+        if (fabs (x2 - (replacement [segment_count - 1].x)) >= EPSILON ||
+            fabs (y2 - (replacement [segment_count - 1].y)) >= EPSILON) {
+          free (replacement);
+          return False;
+        }
 	x = x1;
 	y = y1;
 	for (index = 0; index < segment_count; ++index)
 	{
 	    next_x = replacement [index].x;
 	    next_y = replacement [index].y;
-	    self_similar_normalized (st, 
+	    if (!self_similar_normalized (st, 
 				     iterations - 1, x, y, next_x, next_y,
 				     maximum_x, maximum_y,
 				     minimum_x, minimum_y,
-				     segment_count, points);
+				     segment_count, points)) {
+              free(replacement);
+              return False;
+            }
 	    x = next_x;
 	    y = next_y;
 	}
-        free((void*)replacement);
+        free(replacement);
     }
+    return True;
 }
 
 static void

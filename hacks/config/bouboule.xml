@@ -5,19 +5,21 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="count" type="slider" arg="-count %"
-          _label="Number of Spots" _low-label="Few" _high-label="Many"
+          _label="Number of spots" _low-label="Few" _high-label="Many"
           low="1" high="400" default="100"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
   <boolean id="3d" _label="Do Red/Blue 3D separation" arg-set="-3d"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This draws what looks like a spinning, deforming balloon with

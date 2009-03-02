@@ -33,7 +33,9 @@ static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay: 30000 \n" \
 					"*count: 10 \n" \
 					"*cycles: 1500 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
 # define reshape_fadeplot 0
@@ -229,6 +231,6 @@ release_fadeplot (ModeInfo * mi)
 	}
 }
 
-XSCREENSAVER_MODULE ("Fadeplot", fadeplot)
+XSCREENSAVER_MODULE ("FadePlot", fadeplot)
 
 #endif /* MODE_fadeplot */

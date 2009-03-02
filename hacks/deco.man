@@ -19,6 +19,7 @@ deco - draw tacky 70s basement wall panelling
 [\-smooth\-colors]
 [\-golden\-ratio]
 [\-mondrian]
+[\-fps]
 .SH DESCRIPTION
 The \fIdeco\fP program subdivides and colors rectangles randomly.
 It looks kind of like Brady-Bunch-era rec-room wall paneling.
@@ -75,6 +76,9 @@ This ratio is supposed to be more aesthetically pleasing. Default false.
 .B \-no\-mondrian
 Whether to imitiate style of some famous paintings by Piet Mondrian.
 Overrides line-width and colormap options. Default false.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="20000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <hgroup>
@@ -14,7 +14,7 @@
            _label="Boxes" low="1" high="1000" default="50"/>
 
    <number id="growby" type="spinbutton" arg="-growby %"
-           _label="Grow By" low="1" high="10" default="1"/>
+           _label="Grow by" low="1" high="10" default="1"/>
   </hgroup>
 
   <hgroup>
@@ -25,20 +25,24 @@
            _label="Border" low="1" high="10" default="1"/>
   </hgroup>
 
-  <select id="mode">
-    <option id="random"  _label="Boxes or Circles"/>
-    <option id="boxes"   _label="Boxes Only"   arg-set="-mode squares"/>
-    <option id="circles" _label="Circles Only" arg-set="-mode circles"/>
-  </select>
+  <hgroup>
+   <select id="mode">
+     <option id="random"  _label="Boxes or circles"/>
+     <option id="boxes"   _label="Boxes only"   arg-set="-mode squares"/>
+     <option id="circles" _label="Circles only" arg-set="-mode circles"/>
+   </select>
 
-  <select id="mode2">
-    <option id="gradient" _label="Color Gradient"/>
-    <option id="image"    _label="Grab Images" arg-set="-grab"/>
-  </select>
+   <select id="mode2">
+     <option id="gradient" _label="Color gradient"/>
+     <option id="image"    _label="Grab images" arg-set="-grab"/>
+   </select>
+  </hgroup>
 
   <xscreensaver-image />
 
   <boolean id="peek" _label="Peek at underlying images" arg-set="-peek"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Packs the screen with growing squares or circles, colored according to a

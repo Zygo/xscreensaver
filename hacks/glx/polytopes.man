@@ -180,6 +180,8 @@ button pressed the polytope is rotated in 4D, i.e., around the xy, xz,
 and yz planes.  To examine the polytope at your leisure, it is best to
 set all speeds to 0.  Otherwise, the polytope will rotate while the
 left mouse button is not pressed.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -303,6 +303,7 @@
 		AF083A4A099311FF00277BE9 /* atunnel.c in Sources */ = {isa = PBXBuildFile; fileRef = AF083A31099311CE00277BE9 /* atunnel.c */; };
 		AF083A4B0993120900277BE9 /* atunnel.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258720988A468000655EE /* atunnel.xml */; };
 		AF083A59099312B000277BE9 /* tunnel_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF083A58099312B000277BE9 /* tunnel_draw.c */; };
+		AF0D117D0E41566300BB14A4 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0DC7B10C4C73F600D76972 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF0DC7B20C4C73F600D76972 /* analogtv.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4CFA09B5AC94006E59CF /* analogtv.c */; };
 		AF0DC7B50C4C73F600D76972 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -349,6 +350,7 @@
 		AF0FAF2709CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2809CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2909CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF14EE310E3CEF1A004CBBD2 /* XScreenSaver.icns in Resources */ = {isa = PBXBuildFile; fileRef = AF14EE300E3CEF1A004CBBD2 /* XScreenSaver.icns */; };
 		AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF1A176B0D6D6EE3008AF328 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -688,7 +690,6 @@
 		AF480FCE09901E0400FB32B8 /* sphere.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480EBB098F649600FB32B8 /* sphere.c */; };
 		AF480FCF09901E0700FB32B8 /* trackball.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480EAD098F63BE00FB32B8 /* trackball.c */; };
 		AF480FD009901E0A00FB32B8 /* tube.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480ED2098F652A00FB32B8 /* tube.c */; };
-		AF480FD60990355300FB32B8 /* fps.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480FD50990355300FB32B8 /* fps.c */; };
 		AF4810F409909FBA00FB32B8 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF4810F509909FBA00FB32B8 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
 		AF4810F609909FBA00FB32B8 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -824,6 +825,7 @@
 		AF6427BA09A2DF09000F4CD4 /* bubbles.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258800988A468000655EE /* bubbles.xml */; };
 		AF6427BE09A2DF47000F4CD4 /* bubbles-default.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BB09A2DF47000F4CD4 /* bubbles-default.c */; };
 		AF6427BF09A2DF47000F4CD4 /* bubbles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BC09A2DF47000F4CD4 /* bubbles.c */; };
+		AF69640B0E4FE3470085DBCE /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC211930E4E30C800D87B6E /* teapot.c */; };
 		AF7776EA09B63ABF00EA3033 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF7776EF09B63ABF00EA3033 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF7776F009B63ABF00EA3033 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -1059,11 +1061,10 @@
 		AF9770780989D2F6001F8B92 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AF97707F0989D327001F8B92 /* attraction.c in Sources */ = {isa = PBXBuildFile; fileRef = AF976DFA09896BEB001F8B92 /* attraction.c */; };
 		AF9770800989D32E001F8B92 /* attraction.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258710988A468000655EE /* attraction.xml */; };
-		AF9771DF0989DC88001F8B92 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = AFE1FD400981E32E00F7970E /* AppController.m */; };
+		AF9771DF0989DC88001F8B92 /* SaverTester.m in Sources */ = {isa = PBXBuildFile; fileRef = AFE1FD400981E32E00F7970E /* SaverTester.m */; };
 		AF9772C80989DCD5001F8B92 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
-		AF9772C90989DCF8001F8B92 /* SaverTester.plist in Resources */ = {isa = PBXBuildFile; fileRef = AF9771D90989DC4A001F8B92 /* SaverTester.plist */; };
 		AF9772CB0989DCFD001F8B92 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		AF9772E30989DFC6001F8B92 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = AF9772E10989DFC6001F8B92 /* MainMenu.nib */; };
+		AF9772E30989DFC6001F8B92 /* SaverTester.nib in Resources */ = {isa = PBXBuildFile; fileRef = AF9772E10989DFC6001F8B92 /* SaverTester.nib */; };
 		AF998ED60A083A280051049D /* xscreensaver-text in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */; };
 		AF998EE10A083DB30051049D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF998EE30A083DB30051049D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -1710,6 +1711,11 @@
 		AFA563B8099398F700F3E977 /* juggler3d.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258D10988A468000655EE /* juggler3d.xml */; };
 		AFA563BA0993991300F3E977 /* juggler3d.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA563B90993991300F3E977 /* juggler3d.c */; };
 		AFAD462309D5F4DA00AB5F95 /* grabclient.c in Sources */ = {isa = PBXBuildFile; fileRef = AFAD462209D5F4DA00AB5F95 /* grabclient.c */; };
+		AFBF893E0E41D930006A2D66 /* fps.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBF893C0E41D930006A2D66 /* fps.c */; };
+		AFBF893F0E41D930006A2D66 /* fps.h in Headers */ = {isa = PBXBuildFile; fileRef = AFBF893D0E41D930006A2D66 /* fps.h */; };
+		AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBF89AE0E423FC3006A2D66 /* fps-gl.c */; };
+		AFBF89B20E424036006A2D66 /* fpsI.h in Headers */ = {isa = PBXBuildFile; fileRef = AFBF89B10E424036006A2D66 /* fpsI.h */; };
+		AFC211950E4E30C800D87B6E /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC211930E4E30C800D87B6E /* teapot.c */; };
 		AFCCCBB009BFE4B000353F4D /* rdbomb.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCCCBAD09BFE4B000353F4D /* rdbomb.xml */; };
 		AFCCCBB309BFE51900353F4D /* thornbird.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC259230988A469000655EE /* thornbird.xml */; };
 		AFCFF1D90CE4517C00C7D111 /* involute.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A16A0CDD78EA002805BF /* involute.c */; };
@@ -5031,7 +5037,7 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = OSX/main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* xscreensaver_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xscreensaver_Prefix.pch; path = OSX/xscreensaver_Prefix.pch; sourceTree = "<group>"; };
-		8D1107310486CEB800E47090 /* XScreenSaver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = XScreenSaver.plist; path = OSX/XScreenSaver.plist; sourceTree = "<group>"; };
+		8D1107310486CEB800E47090 /* XScreenSaver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = XScreenSaver.plist; path = OSX/XScreenSaver.plist; sourceTree = "<group>"; };
 		AF0839A209930B6B00277BE9 /* Atlantis.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Atlantis.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF0839A909930C4900277BE9 /* atlantis.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = atlantis.c; path = hacks/glx/atlantis.c; sourceTree = "<group>"; };
 		AF0839AA09930C4900277BE9 /* dolphin.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = dolphin.c; path = hacks/glx/dolphin.c; sourceTree = "<group>"; };
@@ -5054,6 +5060,7 @@
 		AF0DCA610C4CBB8E00D76972 /* voronoi.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = voronoi.xml; sourceTree = "<group>"; };
 		AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-text"; path = "driver/xscreensaver-text"; sourceTree = "<group>"; };
 		AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-getimage-file"; path = "driver/xscreensaver-getimage-file"; sourceTree = "<group>"; };
+		AF14EE300E3CEF1A004CBBD2 /* XScreenSaver.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = XScreenSaver.icns; path = OSX/XScreenSaver.icns; sourceTree = "<group>"; };
 		AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
 		AF1A17800D6D6F62008AF328 /* lcdscrub.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lcdscrub.xml; sourceTree = "<group>"; };
@@ -5185,7 +5192,6 @@
 		AF480EBB098F649600FB32B8 /* sphere.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = sphere.c; path = hacks/glx/sphere.c; sourceTree = "<group>"; };
 		AF480ED1098F651C00FB32B8 /* tube.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = tube.h; path = hacks/glx/tube.h; sourceTree = "<group>"; };
 		AF480ED2098F652A00FB32B8 /* tube.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = tube.c; path = hacks/glx/tube.c; sourceTree = "<group>"; };
-		AF480FD50990355300FB32B8 /* fps.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = fps.c; path = hacks/glx/fps.c; sourceTree = "<group>"; };
 		AF480FE70990375900FB32B8 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
 		AF4810FB09909FBA00FB32B8 /* DangerBall.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DangerBall.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF48112B0990A2C700FB32B8 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
@@ -5329,8 +5335,8 @@
 		AF9770400989D1E6001F8B92 /* Rorschach.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Rorschach.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF97707D0989D2F6001F8B92 /* Attraction.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Attraction.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF9771D70989DC4A001F8B92 /* SaverTester.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SaverTester.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF9771D90989DC4A001F8B92 /* SaverTester.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = SaverTester.plist; path = OSX/SaverTester.plist; sourceTree = "<group>"; };
-		AF9772E20989DFC6001F8B92 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = OSX/English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		AF9771D90989DC4A001F8B92 /* SaverTester.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = SaverTester.plist; path = OSX/SaverTester.plist; sourceTree = "<group>"; };
+		AF9772E20989DFC6001F8B92 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = OSX/English.lproj/SaverTester.nib; sourceTree = "<group>"; };
 		AF998EEE0A083DB30051049D /* TopBlock.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TopBlock.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF998EF80A083E750051049D /* topblock.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = topblock.c; path = hacks/glx/topblock.c; sourceTree = "<group>"; };
 		AF998EFA0A083E8C0051049D /* topblock.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = topblock.xml; sourceTree = "<group>"; };
@@ -5547,6 +5553,12 @@
 		AFB5A06B0981F4C600871B16 /* screenhack.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = screenhack.h; path = hacks/screenhack.h; sourceTree = "<group>"; };
 		AFB5A0ED0981FF8B00871B16 /* usleep.c */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.c; name = usleep.c; path = utils/usleep.c; sourceTree = "<group>"; };
 		AFB5A0EE0981FF8B00871B16 /* usleep.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = usleep.h; path = utils/usleep.h; sourceTree = "<group>"; };
+		AFBF893C0E41D930006A2D66 /* fps.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = fps.c; path = hacks/fps.c; sourceTree = "<group>"; };
+		AFBF893D0E41D930006A2D66 /* fps.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = fps.h; path = hacks/fps.h; sourceTree = "<group>"; };
+		AFBF89AE0E423FC3006A2D66 /* fps-gl.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "fps-gl.c"; path = "hacks/glx/fps-gl.c"; sourceTree = "<group>"; };
+		AFBF89B10E424036006A2D66 /* fpsI.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = fpsI.h; path = hacks/fpsI.h; sourceTree = "<group>"; };
+		AFC211930E4E30C800D87B6E /* teapot.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = teapot.c; path = hacks/glx/teapot.c; sourceTree = "<group>"; };
+		AFC211940E4E30C800D87B6E /* teapot.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = teapot.h; path = hacks/glx/teapot.h; sourceTree = "<group>"; };
 		AFC254B909873AF9000655EE /* screenhackI.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = screenhackI.h; path = hacks/screenhackI.h; sourceTree = "<group>"; };
 		AFC254C409882C97000655EE /* XScreenSaverView.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = XScreenSaverView.h; path = OSX/XScreenSaverView.h; sourceTree = "<group>"; };
 		AFC254C509882C97000655EE /* XScreenSaverView.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = XScreenSaverView.m; path = OSX/XScreenSaverView.m; sourceTree = "<group>"; };
@@ -5840,8 +5852,8 @@
 		AFD5730C099702C800BA26F7 /* julia.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = julia.c; path = hacks/julia.c; sourceTree = "<group>"; };
 		AFD5736D0997411200BA26F7 /* Strange.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Strange.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD57371099741A200BA26F7 /* strange.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = strange.c; path = hacks/strange.c; sourceTree = "<group>"; };
-		AFE1FD3F0981E32E00F7970E /* AppController.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = AppController.h; path = OSX/AppController.h; sourceTree = "<group>"; };
-		AFE1FD400981E32E00F7970E /* AppController.m */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.objc; name = AppController.m; path = OSX/AppController.m; sourceTree = "<group>"; };
+		AFE1FD3F0981E32E00F7970E /* SaverTester.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = SaverTester.h; path = OSX/SaverTester.h; sourceTree = "<group>"; };
+		AFE1FD400981E32E00F7970E /* SaverTester.m */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.objc; name = SaverTester.m; path = OSX/SaverTester.m; sourceTree = "<group>"; };
 		AFE1FD410981E32E00F7970E /* InvertedSlider.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = InvertedSlider.h; path = OSX/InvertedSlider.h; sourceTree = "<group>"; };
 		AFE1FD420981E32E00F7970E /* InvertedSlider.m */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.objc; name = InvertedSlider.m; path = OSX/InvertedSlider.m; sourceTree = "<group>"; };
 		AFE1FD430981E32E00F7970E /* jwxyz.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = jwxyz.h; path = OSX/jwxyz.h; sourceTree = "<group>"; };
@@ -5860,7 +5872,6 @@
 		AFE1FD5C0981E3CB00F7970E /* yarandom.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = yarandom.h; path = utils/yarandom.h; sourceTree = "<group>"; };
 		AFE1FD620981E40800F7970E /* rorschach.c */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.c; name = rorschach.c; path = hacks/rorschach.c; sourceTree = "<group>"; };
 		AFE2A46A0E2E904600ADB298 /* SkyTentacles.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SkyTentacles.saver; sourceTree = BUILT_PRODUCTS_DIR; };
-		AFE2A46D0E2E904600ADB298 /* XScreenSaver copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "XScreenSaver copy.plist"; path = "OSX/XScreenSaver copy.plist"; sourceTree = "<group>"; };
 		AFE2A4720E2E90E300ADB298 /* skytentacles.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = skytentacles.c; path = hacks/glx/skytentacles.c; sourceTree = "<group>"; };
 		AFE2A4740E2E911200ADB298 /* skytentacles.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = skytentacles.xml; sourceTree = "<group>"; };
 		AFE6A16A0CDD78EA002805BF /* involute.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = involute.c; path = hacks/glx/involute.c; sourceTree = "<group>"; };
@@ -8549,12 +8560,12 @@
 			isa = PBXGroup;
 			children = (
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
-				AF9772E10989DFC6001F8B92 /* MainMenu.nib */,
+				AF14EE300E3CEF1A004CBBD2 /* XScreenSaver.icns */,
+				AF9772E10989DFC6001F8B92 /* SaverTester.nib */,
 				AF9771D90989DC4A001F8B92 /* SaverTester.plist */,
 				8D1107310486CEB800E47090 /* XScreenSaver.plist */,
 				AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */,
 				AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */,
-				AFE2A46D0E2E904600ADB298 /* XScreenSaver copy.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -8575,8 +8586,8 @@
 		AF480AB9098C66E200FB32B8 /* SaverTester */ = {
 			isa = PBXGroup;
 			children = (
-				AFE1FD3F0981E32E00F7970E /* AppController.h */,
-				AFE1FD400981E32E00F7970E /* AppController.m */,
+				AFE1FD3F0981E32E00F7970E /* SaverTester.h */,
+				AFE1FD400981E32E00F7970E /* SaverTester.m */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 			);
 			name = SaverTester;
@@ -8673,6 +8684,7 @@
 				AF9D4DC309B5B87D006E59CF /* bsod.c */,
 				AF77770309B63B5F00EA3033 /* phosphor.c */,
 				AF9D4E0509B5BC9D006E59CF /* apple2-main.c */,
+				AFBF89B10E424036006A2D66 /* fpsI.h */,
 				AF975AEE099C6F1700B05160 /* fireworkx.c */,
 				AF975A99099C6C3500B05160 /* barcode.c */,
 				AF975A83099C6B4900B05160 /* eruption.c */,
@@ -8689,6 +8701,8 @@
 				AF480C29098E295D00FB32B8 /* halo.c */,
 				AFE1FD620981E40800F7970E /* rorschach.c */,
 				AF77789209B656C300EA3033 /* fontglide.c */,
+				AFBF893C0E41D930006A2D66 /* fps.c */,
+				AFBF893D0E41D930006A2D66 /* fps.h */,
 				AFA33C0A0B058E6B002B0E7D /* webcollage */,
 				AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */,
 			);
@@ -8786,6 +8800,7 @@
 				AFA561B409937DCC00F3E977 /* polyhedra.h */,
 				AFA5619009937D3600F3E977 /* noof.c */,
 				AFA5616D09937C9A00F3E977 /* blinkbox.c */,
+				AFBF89AE0E423FC3006A2D66 /* fps-gl.c */,
 				AFA561120993786800F3E977 /* molecule.c */,
 				AF77780109B64EC000EA3033 /* fliptext.c */,
 				AFA560C3099371D500F3E977 /* polytopes.c */,
@@ -8902,6 +8917,8 @@
 				AF083A5D099312DB00277BE9 /* tunnel_draw.h */,
 				AF083A58099312B000277BE9 /* tunnel_draw.c */,
 				AF083A31099311CE00277BE9 /* atunnel.c */,
+				AFC211930E4E30C800D87B6E /* teapot.c */,
+				AFC211940E4E30C800D87B6E /* teapot.h */,
 				AF0839A909930C4900277BE9 /* atlantis.c */,
 				AFE2A4720E2E90E300ADB298 /* skytentacles.c */,
 				AF0839AA09930C4900277BE9 /* dolphin.c */,
@@ -9210,7 +9227,6 @@
 				AF480EAF098F63CD00FB32B8 /* trackball.h */,
 				AF480ED2098F652A00FB32B8 /* tube.c */,
 				AF480ED1098F651C00FB32B8 /* tube.h */,
-				AF480FD50990355300FB32B8 /* fps.c */,
 				AF9D473609B52EE0006E59CF /* colorbars.c */,
 				AF9D473709B52EE0006E59CF /* colorbars.h */,
 				AF0839AE09930C4900277BE9 /* xpm-ximage.c */,
@@ -9243,6 +9259,8 @@
 				AF4775C1099D9E79001F091E /* resources.h in Headers */,
 				AF9D473909B52EE0006E59CF /* colorbars.h in Headers */,
 				AF7778C709B65CFE00EA3033 /* font-ximage.h in Headers */,
+				AFBF893F0E41D930006A2D66 /* fps.h in Headers */,
+				AFBF89B20E424036006A2D66 /* fpsI.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -13800,17 +13818,17 @@
 				AF7777EA09B64E3100EA3033 /* FlipText */,
 				AFA55E4E09935FF900F3E977 /* FlyingToasters */,
 				AF4812500990CE2700FB32B8 /* Gears */,
-				AF77777409B6497800EA3033 /* Gleidescope */,
 				AFA55B9109933FDA00F3E977 /* GFlux */,
 				AFA55E2F09935F8E00F3E977 /* GLBlur */,
 				AFF463580C440AEF00EE6509 /* GLCells */,
+				AF77777409B6497800EA3033 /* Gleidescope */,
 				AFA55CCC09934CE400F3E977 /* GLForestFire */,
 				AFA56331099395ED00F3E977 /* GLHanoi */,
 				AFA55FF909936C6D00F3E977 /* GLKnots */,
 				AFA55F720993643600F3E977 /* GLMatrix */,
 				AFA55B0909933E0500F3E977 /* GLPlanet */,
-				AF7777D009B64C6B00EA3033 /* GLSlideshow */,
 				AF48DEEF0A0C25E000F94CF9 /* GLSchool */,
+				AF7777D009B64C6B00EA3033 /* GLSlideshow */,
 				AFA55C77099349A600F3E977 /* GLSnake */,
 				AFD56DF10996A03800BA26F7 /* GLText */,
 				AFA55F420993629000F3E977 /* HyperTorus */,
@@ -14725,8 +14743,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AF9772E30989DFC6001F8B92 /* MainMenu.nib in Resources */,
-				AF9772C90989DCF8001F8B92 /* SaverTester.plist in Resources */,
+				AF14EE310E3CEF1A004CBBD2 /* XScreenSaver.icns in Resources */,
+				AF9772E30989DFC6001F8B92 /* SaverTester.nib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -15167,6 +15185,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF0D117D0E41566300BB14A4 /* xscreensaver-getimage-file in Resources */,
 				AFA5604609936DAB00F3E977 /* flipflop.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -20629,6 +20648,8 @@
 				AF4808C5098C3BDC00FB32B8 /* colors.c in Sources */,
 				AF4808C6098C3BDF00FB32B8 /* erase.c in Sources */,
 				AF4808C7098C3BE600FB32B8 /* hsv.c in Sources */,
+				AFBF893E0E41D930006A2D66 /* fps.c in Sources */,
+				AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */,
 				AF4808C8098C3BE800FB32B8 /* InvertedSlider.m in Sources */,
 				AF4808C9098C3BEC00FB32B8 /* jwxyz.m in Sources */,
 				AF4808CA098C3BEE00FB32B8 /* PrefsReader.m in Sources */,
@@ -20642,7 +20663,6 @@
 				AF480FCE09901E0400FB32B8 /* sphere.c in Sources */,
 				AF480FCF09901E0700FB32B8 /* trackball.c in Sources */,
 				AF480FD009901E0A00FB32B8 /* tube.c in Sources */,
-				AF480FD60990355300FB32B8 /* fps.c in Sources */,
 				AF4812FA0990D9AE00FB32B8 /* XScreenSaverGLView.m in Sources */,
 				AF083A1C099310B300277BE9 /* xpm-ximage.c in Sources */,
 				AF083A21099310CF00277BE9 /* xlockmore.c in Sources */,
@@ -20712,6 +20732,7 @@
 				AF4812CA0990D42000FB32B8 /* pipeobjs.c in Sources */,
 				AF4812CB0990D42100FB32B8 /* pipes.c in Sources */,
 				AF9CCABD09959D250075E99B /* XScreenSaverSubclass.m in Sources */,
+				AF69640B0E4FE3470085DBCE /* teapot.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21157,7 +21178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AF9771DF0989DC88001F8B92 /* AppController.m in Sources */,
+				AF9771DF0989DC88001F8B92 /* SaverTester.m in Sources */,
 				AF9772C80989DCD5001F8B92 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -21745,6 +21766,7 @@
 				AFA561B509937DCC00F3E977 /* polyhedra-gl.c in Sources */,
 				AFA561B609937DCC00F3E977 /* polyhedra.c in Sources */,
 				AF9CCAE709959DF50075E99B /* XScreenSaverSubclass.m in Sources */,
+				AFC211950E4E30C800D87B6E /* teapot.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -24387,12 +24409,12 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		AF9772E10989DFC6001F8B92 /* MainMenu.nib */ = {
+		AF9772E10989DFC6001F8B92 /* SaverTester.nib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				AF9772E20989DFC6001F8B92 /* English */,
 			);
-			name = MainMenu.nib;
+			name = SaverTester.nib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

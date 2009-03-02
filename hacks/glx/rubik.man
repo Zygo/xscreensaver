@@ -43,8 +43,8 @@ Size.  -20 - 20.  Default: -6.
 .B \-hideshuffling | \-no-hideshuffling
 Show Shuffling.  Boolean.
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

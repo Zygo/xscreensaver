@@ -36,7 +36,9 @@ static const char sccsid[] = "@(#)lissie.c	5.00 2000/11/01 xlockmore";
 					"*count: 1 \n" \
 					"*cycles: 20000 \n" \
 					"*size: -200 \n" \
-					"*ncolors: 200 \n"
+					"*ncolors: 200 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_lissie 0
 # define lissie_handle_event 0

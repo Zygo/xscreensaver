@@ -26,8 +26,6 @@
  *
  * -seven option is dedicated to all the Slarkeners
  *
- * try "-rotate -rotate-speed 0"
- *
  * This hack uses lookup tables for sin, cos and tan - it can do a lot
  */
 
@@ -45,6 +43,8 @@
 #define DEF_SPIN        "True"
 #define DEF_SEVEN       "False"
 #define DEF_PARTS       "10"
+#define DEF_ROTATESPEED "1"
+#define DEF_LIGHT       "True"
 
 /* lifted from lament.c */
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
@@ -62,7 +62,6 @@ static int maxparts;
 static char *font;
 static int rotatespeed;
 static int spin;
-static int rotate;
 static int uselight;
 static int seven;
 
@@ -70,26 +69,23 @@ static int seven;
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
-  {"-parts", ".circuit.parts", XrmoptionSepArg, "10" },
-  {"-font", ".circuit.font", XrmoptionSepArg, "fixed" },
-  {"-rotate-speed", ".circuit.rotatespeed", XrmoptionSepArg, "1" },
+  {"-parts", ".circuit.parts", XrmoptionSepArg, 0 },
+  {"-font", ".circuit.font", XrmoptionSepArg, 0 },
+  {"-rotate-speed", ".circuit.rotatespeed", XrmoptionSepArg, 0 },
   {"+spin", ".circuit.spin", XrmoptionNoArg, "false" },
   {"-spin", ".circuit.spin", XrmoptionNoArg, "true" },
   {"+light", ".circuit.light", XrmoptionNoArg, "false" },
   {"-light", ".circuit.light", XrmoptionNoArg, "true" },
   {"+seven", ".circuit.seven", XrmoptionNoArg, "false" },
   {"-seven", ".circuit.seven", XrmoptionNoArg, "true" },
-  {"+rotate", ".circuit.rotate", XrmoptionNoArg, "false" },
-  {"-rotate", ".circuit.rotate", XrmoptionNoArg, "true" },
 };
 
 static argtype vars[] = {
   {&maxparts, "parts", "Parts", DEF_PARTS, t_Int},
   {&font, "font", "Font", "fixed", t_String},
-  {&rotatespeed, "rotatespeed", "Rotatespeed", "1", t_Int},
+  {&rotatespeed, "rotatespeed", "Rotatespeed", DEF_ROTATESPEED, t_Int},
   {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
-  {&rotate, "rotate", "Rotate", "False", t_Bool},
-  {&uselight, "light", "Light", "True", t_Bool},
+  {&uselight, "light", "Light", DEF_LIGHT, t_Bool},
   {&seven, "seven", "Seven", DEF_SEVEN, t_Bool},
 };
 
@@ -342,6 +338,7 @@ typedef struct {
 
   Component *components[MAX_COMPONENTS];
   int band_list[12];
+  int band_list_polys[12];
 
   GLfloat grid_col[3], grid_col2[3];
 
@@ -362,28 +359,28 @@ typedef struct {
 static Circuit *circuit = NULL;
 
 
-static void DrawResistor(Circuit *, Resistor *);
-static void DrawDiode(Circuit *, Diode *);
-static void DrawTransistor(Circuit *, Transistor *);
-static void DrawLED(Circuit *, LED *);
-static void DrawIC(Circuit *, IC *);
-static void DrawCapacitor(Circuit *, Capacitor *);
-static void DrawDisp(Circuit *, Disp *);
-static void DrawFuse(Circuit *, Fuse *);
-static void DrawRCA(Circuit *, RCA *);
-static void DrawThreeFive(Circuit *, ThreeFive *);
-static void DrawSwitch(Circuit *, Switch *);
+static int DrawResistor(Circuit *, Resistor *);
+static int DrawDiode(Circuit *, Diode *);
+static int DrawTransistor(Circuit *, Transistor *);
+static int DrawLED(Circuit *, LED *);
+static int DrawIC(Circuit *, IC *);
+static int DrawCapacitor(Circuit *, Capacitor *);
+static int DrawDisp(Circuit *, Disp *);
+static int DrawFuse(Circuit *, Fuse *);
+static int DrawRCA(Circuit *, RCA *);
+static int DrawThreeFive(Circuit *, ThreeFive *);
+static int DrawSwitch(Circuit *, Switch *);
 
 static void freetexture(Circuit *, GLuint);
 static void reorder(Component *[]);
-static void circle(Circuit *, float, int,int);
-static void bandedCylinder(Circuit *, 
+static int circle(Circuit *, float, int,int);
+static int bandedCylinder(Circuit *, 
                            float, float , GLfloat, GLfloat , GLfloat,  
                            Band **, int);
 static TexNum *fonttexturealloc(ModeInfo *, const char *, float *, float *);
-static void Rect(GLfloat , GLfloat , GLfloat, GLfloat , GLfloat ,GLfloat);
-static void ICLeg(GLfloat, GLfloat, GLfloat, int);
-static void HoledRectangle(Circuit *ci, 
+static int Rect(GLfloat , GLfloat , GLfloat, GLfloat , GLfloat ,GLfloat);
+static int ICLeg(GLfloat, GLfloat, GLfloat, int);
+static int HoledRectangle(Circuit *ci, 
                            GLfloat, GLfloat, GLfloat, GLfloat, int);
 static Resistor *NewResistor(void);
 static Diode *NewDiode(void);
@@ -419,9 +416,10 @@ float f;
 }
 
 
-static void createCylinder (Circuit *ci,
+static int createCylinder (Circuit *ci,
                             float length, float radius, int endcaps, int half) 
 {
+  int polys = 0;
   int a; /* current angle around cylinder */
   int angle, norm;
   float z1, y1, z2, y2,ex;
@@ -446,6 +444,7 @@ static void createCylinder (Circuit *ci,
       glNormal3f(0, y2, z2);
       glVertex3f(length,y2,z2);
       glVertex3f(0,y2,z2);
+      polys++;
     z1=z2;
     y1=y2;
   }
@@ -457,6 +456,7 @@ static void createCylinder (Circuit *ci,
       glVertex3f(length, 0, radius);
       glVertex3f(length, 0, 0 - radius);
       glVertex3f(0, 0, 0 - radius);
+      polys++;
     glEnd();
   }
   if (endcaps) {
@@ -471,6 +471,7 @@ static void createCylinder (Circuit *ci,
           glVertex3f(ex,0, 0);
           glVertex3f(ex,y1,z1);
           glVertex3f(ex,y2,z2);
+          polys++;
         z1=z2;
         y1=y2;
       }
@@ -478,10 +479,12 @@ static void createCylinder (Circuit *ci,
     }
   }
   glPopMatrix();
+  return polys;
 }
 
-static void circle(Circuit *ci, float radius, int segments, int half)
+static int circle(Circuit *ci, float radius, int segments, int half)
 {
+  int polys = 0;
   float x1 = 0, x2 = 0;
   float y1 = 0, y2 = 0;
   int i, t, s;
@@ -502,14 +505,17 @@ static void circle(Circuit *ci, float radius, int segments, int half)
     glVertex3f(0,0,0);
     glVertex3f(0,y1,x1);
     glVertex3f(0,y2,x2);
+    polys++;
     x1=x2;
     y1=y2;
   }
   glEnd();
+  return polys;
 }
 
-static void wire(Circuit *ci, float len)
+static int wire(Circuit *ci, float len)
 {
+  int polys = 0;
   GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
   GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
   GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
@@ -521,14 +527,16 @@ static void wire(Circuit *ci, float len)
   glMaterialfv(GL_FRONT, GL_SHININESS, &shin);
   n = glIsEnabled(GL_NORMALIZE);
   if (!n) glEnable(GL_NORMALIZE);
-  createCylinder(ci, len, 0.05, 1, 0);
+  polys += createCylinder(ci, len, 0.05, 1, 0);
   if (!n) glDisable(GL_NORMALIZE);
   glMaterialfv(GL_FRONT, GL_SPECULAR, nospec);
+  return polys;
 }
 
 #if 0
-static void ring(GLfloat inner, GLfloat outer, int nsegs)
+static int ring(GLfloat inner, GLfloat outer, int nsegs)
 {
+  int polys = 0;
   GLfloat z1, z2, y1, y2;
   GLfloat Z1, Z2, Y1, Y2;
   int i;
@@ -548,19 +556,22 @@ static void ring(GLfloat inner, GLfloat outer, int nsegs)
     glVertex3f(0, y1, z1);
     glVertex3f(0, y2, z2);
     glVertex3f(0, Y2, Z2);
+    polys++;
     z1=z2;
     y1=y2;
     Z1=Z2;
     Y1=Y2;
   }
   glEnd();
+  return polys;
 }
 #endif
 
-static void sphere(Circuit *ci, GLfloat r, float stacks, float slices,
+static int sphere(Circuit *ci, GLfloat r, float stacks, float slices,
              int startstack, int endstack, int startslice,
              int endslice)
 {
+  int polys = 0;
   GLfloat d, d1, dr, dr1, Dr, Dr1, D, D1, z1, z2, y1, y2, Y1, Z1, Y2, Z2;
   int a, a1, b, b1, c0, c1;
   GLfloat step, sstep;
@@ -595,6 +606,7 @@ static void sphere(Circuit *ci, GLfloat r, float stacks, float slices,
         glVertex3f(Dr1,Y2,Z2);
         glNormal3f(Dr1, Y1, Z1);
         glVertex3f(Dr1,Y1,Z1);
+        polys++;
       z1=z2;
       y1=y2;
       Z1=Z2;
@@ -603,10 +615,12 @@ static void sphere(Circuit *ci, GLfloat r, float stacks, float slices,
     a1 = a;
   }
   glEnd();
+  return polys;
 }
 
-static int DrawComponent(Circuit *ci, Component *c)
+static int DrawComponent(Circuit *ci, Component *c, unsigned long *polysP)
 {
+  int polys = *polysP;
   int ret = 0; /* return 1 if component is freed */
 
    glPushMatrix();
@@ -626,32 +640,32 @@ static int DrawComponent(Circuit *ci, Component *c)
 
  /* call object draw routine here */
    if (c->type == 0) {
-     DrawResistor(ci, c->c);
+     polys += DrawResistor(ci, c->c);
    } else if (c->type == 1) {
-     DrawDiode(ci, c->c);
+     polys += DrawDiode(ci, c->c);
    } else if (c->type == 2) {
-     DrawTransistor(ci, c->c);
+     polys += DrawTransistor(ci, c->c);
    } else if (c->type == 3) {
      if (((LED *)c->c)->light && ci->light) {
        GLfloat lp[] = {0.1, 0, 0, 1};
        glEnable(GL_LIGHT1);
        glLightfv(GL_LIGHT1, GL_POSITION, lp);
      }
-     DrawLED(ci, c->c);
+     polys += DrawLED(ci, c->c);
    } else if (c->type == 4) {
-     DrawCapacitor(ci, c->c);
+     polys += DrawCapacitor(ci, c->c);
    } else if (c->type == 5) {
-     DrawIC(ci, c->c);
+     polys += DrawIC(ci, c->c);
    } else if (c->type == 6) {
-     DrawDisp(ci, c->c);
+     polys += DrawDisp(ci, c->c);
    } else if (c->type == 7) {
-     DrawFuse(ci, c->c);
+     polys += DrawFuse(ci, c->c);
    } else if (c->type == 8) {
-     DrawRCA(ci, c->c);
+     polys += DrawRCA(ci, c->c);
    } else if (c->type == 9) {
-     DrawThreeFive(ci, c->c);
+     polys += DrawThreeFive(ci, c->c);
    } else if (c->type == 10) {
-     DrawSwitch(ci, c->c);
+     polys += DrawSwitch(ci, c->c);
    }
    c->x += c->dx * MOVE_MULT;
    c->y += c->dy * MOVE_MULT;
@@ -677,37 +691,42 @@ static int DrawComponent(Circuit *ci, Component *c)
 
    glPopMatrix();
    glDisable(GL_NORMALIZE);
+   *polysP = polys;
    return ret;
 }
 
 /* draw a resistor */
 
-static void DrawResistor(Circuit *ci, Resistor *r)
+static int DrawResistor(Circuit *ci, Resistor *r)
 {
+  int polys = 0;
   int i;
   GLfloat col[] = {0.74, 0.62, 0.46, 1.0};
   GLfloat spec[] = {0.8, 0.8, 0.8, 1.0};
   GLfloat shine = 30;
 
    glTranslatef(-4, 0, 0);
-   wire(ci, 3);
+   polys += wire(ci, 3);
    glTranslatef(3, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glMaterialfv(GL_FRONT, GL_SHININESS, &shine);
-   createCylinder(ci, 1.8, 0.4, 1, 0);
+   polys += createCylinder(ci, 1.8, 0.4, 1, 0);
    glPushMatrix();
    for (i = 0 ; i < 4 ; i++) {
      glTranslatef(0.35, 0, 0);
      glCallList(ci->band_list[r->b[i]]);
+     polys += ci->band_list_polys[r->b[i]];
    }
    glPopMatrix();
    glTranslatef(1.8, 0, 0);
-   wire(ci, 3);
+   polys += wire(ci, 3);
+   return polys;
 }
 
-static void DrawRCA(Circuit *ci, RCA *rca)
+static int DrawRCA(Circuit *ci, RCA *rca)
 {
+  int polys = 0;
   GLfloat col[] = {0.6, 0.6, 0.6, 1.0}; /* metal */
   GLfloat red[] = {1.0, 0.0, 0.0, 1.0}; /* red */
   GLfloat white[] = {1.0, 1.0, 1.0, 1.0}; /* white */
@@ -718,26 +737,28 @@ static void DrawRCA(Circuit *ci, RCA *rca)
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMateriali(GL_FRONT, GL_SHININESS, 40);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-   createCylinder(ci, 0.7, 0.45, 0, 0);
+   polys += createCylinder(ci, 0.7, 0.45, 0, 0);
    glTranslatef(0.4, 0, 0);
-   createCylinder(ci, 0.9, 0.15, 1, 0);
+   polys += createCylinder(ci, 0.9, 0.15, 1, 0);
    glTranslatef(-1.9, 0, 0);
    glMateriali(GL_FRONT, GL_SHININESS, 20);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, rca->col ? white : red);
-   createCylinder(ci, 1.5, 0.6, 1, 0);
+   polys += createCylinder(ci, 1.5, 0.6, 1, 0);
    glTranslatef(-0.9, 0, 0);
-   createCylinder(ci, 0.9, 0.25, 0, 0);
+   polys += createCylinder(ci, 0.9, 0.25, 0, 0);
    glTranslatef(0.1, 0, 0);
-   createCylinder(ci, 0.2, 0.3, 0, 0);
+   polys += createCylinder(ci, 0.2, 0.3, 0, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(ci, 0.2, 0.3, 1, 0);
+   polys += createCylinder(ci, 0.2, 0.3, 1, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(ci, 0.2, 0.3, 1, 0);
+   polys += createCylinder(ci, 0.2, 0.3, 1, 0);
    glPopMatrix();
+   return polys;
 }
 
-static void DrawSwitch(Circuit *ci, Switch *f)
+static int DrawSwitch(Circuit *ci, Switch *f)
 {
+  int polys = 0;
   GLfloat col[] = {0.6, 0.6, 0.6, 0}; /* metal */
   GLfloat dark[] = {0.1, 0.1, 0.1, 1.0}; /* dark */
   GLfloat brown[] = {0.69, 0.32, 0, 1.0}; /* brown */
@@ -748,33 +769,35 @@ static void DrawSwitch(Circuit *ci, Switch *f)
    glMaterialfv(GL_FRONT, GL_AMBIENT, dark);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glMateriali(GL_FRONT, GL_SHININESS, 90);
-   Rect(-0.25, 0, 0, 1.5, 0.5, 0.75);
-/* Rect(-0.5, 0.5, 0, 2, 0.1, 0.75); */
+   polys += Rect(-0.25, 0, 0, 1.5, 0.5, 0.75);
+/* polys += Rect(-0.5, 0.5, 0, 2, 0.1, 0.75); */
    glPushMatrix();
    glRotatef(90, 1, 0, 0);
    glTranslatef(-0.5, -0.4, -0.4);
-   HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
+   polys += HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
    glTranslatef(2, 0, 0);
-   HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
+   polys += HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
    glPopMatrix();
-   Rect(0.1, -0.4, -0.25, 0.1, 0.4, 0.05);
-   Rect(0.5, -0.4, -0.25, 0.1, 0.4, 0.05);
-   Rect(0.9, -0.4, -0.25, 0.1, 0.4, 0.05);
-   Rect(0.1, -0.4, -0.5, 0.1, 0.4, 0.05);
-   Rect(0.5, -0.4, -0.5, 0.1, 0.4, 0.05);
-   Rect(0.9, -0.4, -0.5, 0.1, 0.4, 0.05);
+   polys += Rect(0.1, -0.4, -0.25, 0.1, 0.4, 0.05);
+   polys += Rect(0.5, -0.4, -0.25, 0.1, 0.4, 0.05);
+   polys += Rect(0.9, -0.4, -0.25, 0.1, 0.4, 0.05);
+   polys += Rect(0.1, -0.4, -0.5, 0.1, 0.4, 0.05);
+   polys += Rect(0.5, -0.4, -0.5, 0.1, 0.4, 0.05);
+   polys += Rect(0.9, -0.4, -0.5, 0.1, 0.4, 0.05);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, dark);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-   Rect(0, 0.5, -0.1, 1, 0.05, 0.5);
-   Rect(0, 0.6, -0.1, 0.5, 0.6, 0.5);
+   polys += Rect(0, 0.5, -0.1, 1, 0.05, 0.5);
+   polys += Rect(0, 0.6, -0.1, 0.5, 0.6, 0.5);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, brown);
-   Rect(-0.2, -0.01, -0.1, 1.4, 0.1, 0.55);
+   polys += Rect(-0.2, -0.01, -0.1, 1.4, 0.1, 0.55);
    glPopMatrix();
+   return polys;
 }
 
 
-static void DrawFuse(Circuit *ci, Fuse *f)
+static int DrawFuse(Circuit *ci, Fuse *f)
 {
+  int polys = 0;
   GLfloat col[] = {0.5, 0.5, 0.5, 1.0}; /* endcaps */
   GLfloat glass[] = {0.4, 0.4, 0.4, 0.3}; /* glass */
   GLfloat spec[] = {1, 1, 1, 1}; /* glass */
@@ -784,14 +807,14 @@ static void DrawFuse(Circuit *ci, Fuse *f)
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glMateriali(GL_FRONT, GL_SHININESS, 40);
-   createCylinder(ci, 0.8, 0.45, 1, 0);
+   polys += createCylinder(ci, 0.8, 0.45, 1, 0);
    glTranslatef(0.8, 0, 0);
    glEnable(GL_BLEND);
    glDepthMask(GL_FALSE);
    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, glass);
    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 40);
-   createCylinder(ci, 2, 0.4, 0, 0);
-   createCylinder(ci, 2, 0.3, 0, 0);
+   polys += createCylinder(ci, 2, 0.4, 0, 0);
+   polys += createCylinder(ci, 2, 0.3, 0, 0);
    glDisable(GL_BLEND);
    glDepthMask(GL_TRUE);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
@@ -801,13 +824,15 @@ static void DrawFuse(Circuit *ci, Fuse *f)
    glVertex3f(2, 0. ,0);
    glEnd();
    glTranslatef(2, 0, 0);
-   createCylinder(ci, 0.8, 0.45, 1, 0);
+   polys += createCylinder(ci, 0.8, 0.45, 1, 0);
    glPopMatrix();
+   return polys;
 }
 
 
-static void DrawCapacitor(Circuit *ci, Capacitor *c)
+static int DrawCapacitor(Circuit *ci, Capacitor *c)
 {
+  int polys = 0;
   GLfloat col[] = {0, 0, 0, 0};
   GLfloat spec[] = {0.8, 0.8, 0.8, 0};
   GLfloat brown[] = {0.84, 0.5, 0};
@@ -816,14 +841,14 @@ static void DrawCapacitor(Circuit *ci, Capacitor *c)
   glPushMatrix();
   if (c->type) {
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, brown);
-    sphere(ci, c->width, 15, 15, 0, 4 ,0, 15);
+    polys += sphere(ci, c->width, 15, 15, 0, 4 ,0, 15);
     glTranslatef(1.35*c->width, 0, 0);
-    sphere(ci, c->width, 15, 15, 11, 15, 0, 15);
+    polys += sphere(ci, c->width, 15, 15, 11, 15, 0, 15);
     glRotatef(90, 0, 0, 1);
     glTranslatef(0, 0.7*c->width, 0.3*c->width);
-    wire(ci, 3*c->width);
+    polys += wire(ci, 3*c->width);
     glTranslatef(0, 0, -0.6*c->width);
-    wire(ci, 3*c->width);
+    polys += wire(ci, 3*c->width);
   } else {
     glTranslatef(0-c->length*2, 0, 0);
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
@@ -841,29 +866,31 @@ static void DrawCapacitor(Circuit *ci, Capacitor *c)
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(1.0, 1.0);
-    createCylinder(ci, 3.0*c->length, 0.8*c->width, 1, 0);
+    polys += createCylinder(ci, 3.0*c->length, 0.8*c->width, 1, 0);
     glDisable(GL_POLYGON_OFFSET_FILL);
     col[0] = 0.7;
     col[1] = 0.7;
     col[2] = 0.7;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
-    circle(ci, 0.6*c->width, 30, 0);
+    polys += circle(ci, 0.6*c->width, 30, 0);
     col[0] = 0;
     col[1] = 0;
     col[2] = 0;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
     glTranslatef(3.0*c->length, 0.0, 0);
-    circle(ci, 0.6*c->width, 30, 0);
+    polys += circle(ci, 0.6*c->width, 30, 0);
     glTranslatef(0, 0.4*c->width, 0);
-    wire(ci, 3*c->length);
+    polys += wire(ci, 3*c->length);
     glTranslatef(0.0, -0.8*c->width, 0);
-    wire(ci, 3.3*c->length);
+    polys += wire(ci, 3.3*c->length);
   }
   glPopMatrix();
+  return polys;
 }
 
-static void DrawLED(Circuit *ci, LED *l)
+static int DrawLED(Circuit *ci, LED *l)
 {
+  int polys = 0;
   GLfloat col[] = {0, 0, 0, 0.6};
   GLfloat black[] = {0, 0, 0, 0.6};
 
@@ -893,12 +920,12 @@ static void DrawLED(Circuit *ci, LED *l)
     glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
   }
   glTranslatef(-0.9, 0, 0);
-  createCylinder(ci, 1.2, 0.3, 0, 0);
+  polys += createCylinder(ci, 1.2, 0.3, 0, 0);
   if (l->light && ci->light) {
     glDisable(GL_LIGHTING);
     glColor3fv(col);
   }
-  sphere(ci, 0.3, 7, 7, 3, 7, 0, 7);
+  polys += sphere(ci, 0.3, 7, 7, 3, 7, 0, 7);
   if (l->light && ci->light) {
     glEnable(GL_LIGHTING);
   } else {
@@ -907,11 +934,11 @@ static void DrawLED(Circuit *ci, LED *l)
   }
 
   glTranslatef(1.2, 0, 0);
-  createCylinder(ci, 0.1, 0.38, 1, 0);
+  polys += createCylinder(ci, 0.1, 0.38, 1, 0);
   glTranslatef(-0.3, 0.15, 0);
-  wire(ci, 3);
+  polys += wire(ci, 3);
   glTranslatef(0, -0.3, 0);
-  wire(ci, 3.3);
+  polys += wire(ci, 3.3);
   if (random() % 50 == 25) {
     if (l->light) {
       l->light = 0; ci->light = 0; ci->lighton = 0;
@@ -921,11 +948,13 @@ static void DrawLED(Circuit *ci, LED *l)
       ci->light = 1;
     }
   }
+  return polys;
 }
 
 
-static void DrawThreeFive(Circuit *ci, ThreeFive *d)
+static int DrawThreeFive(Circuit *ci, ThreeFive *d)
 {
+  int polys = 0;
   GLfloat shine = 40;
   GLfloat const dark[] = {0.3, 0.3, 0.3, 0};
   GLfloat const light[] = {0.6, 0.6, 0.6, 0};
@@ -938,26 +967,28 @@ static void DrawThreeFive(Circuit *ci, ThreeFive *d)
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    
    glTranslatef(-2.0, 0, 0);
-   createCylinder(ci, 0.7, 0.2, 0, 0);
+   polys += createCylinder(ci, 0.7, 0.2, 0, 0);
    glTranslatef(0.7, 0, 0);
-   createCylinder(ci, 1.3, 0.4, 1, 0);
+   polys += createCylinder(ci, 1.3, 0.4, 1, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light);
    glTranslatef(1.3, 0, 0);
-   createCylinder(ci, 1.3, 0.2, 0, 0);
+   polys += createCylinder(ci, 1.3, 0.2, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, dark);
    glTranslatef(0.65, 0, 0);
-   createCylinder(ci, 0.15, 0.21, 0, 0);
+   polys += createCylinder(ci, 0.15, 0.21, 0, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(ci, 0.15, 0.21, 0, 0);
+   polys += createCylinder(ci, 0.15, 0.21, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light);
    glTranslatef(0.4, 0, 0);
-   sphere(ci, 0.23, 7, 7, 0, 5, 0, 7);
+   polys += sphere(ci, 0.23, 7, 7, 0, 5, 0, 7);
 
    glPopMatrix();
+   return polys;
 }
 
-static void DrawDiode(Circuit *ci, Diode *d)
+static int DrawDiode(Circuit *ci, Diode *d)
 {
+  int polys = 0;
   GLfloat shine = 40;
   GLfloat col[] = {0.3, 0.3, 0.3, 0};
   GLfloat spec[] = {0.7, 0.7, 0.7, 0};
@@ -967,17 +998,19 @@ static void DrawDiode(Circuit *ci, Diode *d)
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glTranslatef(-4, 0, 0);
-   wire(ci, 3);
+   polys += wire(ci, 3);
    glTranslatef(3, 0, 0);
-   bandedCylinder(ci, 0.3, 1.5, d->r, d->g, d->b, &(d->band), 1);
+   polys += bandedCylinder(ci, 0.3, 1.5, d->r, d->g, d->b, &(d->band), 1);
    glTranslatef(1.5, 0, 0);
-   wire(ci, 3);
+   polys += wire(ci, 3);
    glPopMatrix();
+   return polys;
 }
 
-static void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
+static int Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
             GLfloat t)
 {
+  int polys = 0;
   GLfloat yh;
   GLfloat xw;
   GLfloat zt;
@@ -990,58 +1023,67 @@ static void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
     glVertex3f(x, yh, z);
     glVertex3f(xw, yh, z);
     glVertex3f(xw, y, z);
+    polys++;
   /* back */
     glNormal3f(0, 0, -1);
     glVertex3f(x, y, zt);
     glVertex3f(x, yh, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, y, zt);
+    polys++;
   /* top */
     glNormal3f(0, 1, 0);
     glVertex3f(x, yh, z);
     glVertex3f(x, yh, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, yh, z);
+    polys++;
   /* bottom */
     glNormal3f(0, -1, 0);
     glVertex3f(x, y, z);
     glVertex3f(x, y, zt);
     glVertex3f(xw, y, zt);
     glVertex3f(xw, y, z);
+    polys++;
   /* left */
     glNormal3f(-1, 0, 0);
     glVertex3f(x, y, z);
     glVertex3f(x, y, zt);
     glVertex3f(x, yh, zt);
     glVertex3f(x, yh, z);
+    polys++;
   /* right */
     glNormal3f(1, 0, 0);
     glVertex3f(xw, y, z);
     glVertex3f(xw, y, zt);
     glVertex3f(xw, yh, zt);
     glVertex3f(xw, yh, z);
+    polys++;
   glEnd();
+  return polys;
 }
 
 /* IC pins */
 
-static void ICLeg(GLfloat x, GLfloat y, GLfloat z, int dir)
+static int ICLeg(GLfloat x, GLfloat y, GLfloat z, int dir)
 {
+  int polys = 0;
   if (dir) {
-    Rect(x-0.1, y, z, 0.1, 0.1, 0.02);
-    Rect(x-0.1, y, z, 0.02, 0.1, 0.1);
-    Rect(x-0.1, y+0.03, z-0.1, 0.02, 0.05, 0.3);
+    polys += Rect(x-0.1, y, z, 0.1, 0.1, 0.02);
+    polys += Rect(x-0.1, y, z, 0.02, 0.1, 0.1);
+    polys += Rect(x-0.1, y+0.03, z-0.1, 0.02, 0.05, 0.3);
   } else {
-    Rect(x, y, z, 0.1, 0.1, 0.02);
-    Rect(x+0.8*0.1, y, z, 0.02, 0.1, 0.1);
-    Rect(x+0.8*0.1, y+0.03, z-0.1, 0.02, 0.05, 0.3);
+    polys += Rect(x, y, z, 0.1, 0.1, 0.02);
+    polys += Rect(x+0.8*0.1, y, z, 0.02, 0.1, 0.1);
+    polys += Rect(x+0.8*0.1, y+0.03, z-0.1, 0.02, 0.05, 0.3);
   }
-
+  return polys;
 }
 
 
-static void DrawIC(Circuit *ci, IC *c)
+static int DrawIC(Circuit *ci, IC *c)
 {
+  int polys = 0;
   GLfloat w, h, d;
   int z;
   GLfloat col[] = {0.1, 0.1, 0.1, 0};
@@ -1082,31 +1124,37 @@ static void DrawIC(Circuit *ci, IC *c)
       glVertex3f(w, -h, 0.1);
       glVertex3f(-w, -h, 0.1);
       glVertex3f(-w, h, 0.1);
+      polys++;
       glNormal3f(0, 0, -1);
       glVertex3f(w, h, -0.1);
       glVertex3f(w, -h, -0.1);
       glVertex3f(-w, -h, -0.1);
       glVertex3f(-w, h, -0.1);
+      polys++;
       glNormal3f(1, 0, 0);
       glVertex3f(w, h, -0.1);
       glVertex3f(w, -h, -0.1);
       glVertex3f(w, -h, 0.1);
       glVertex3f(w, h, 0.1);
+      polys++;
       glNormal3f(0, -1, 0);
       glVertex3f(w, -h, -0.1);
       glVertex3f(w, -h, 0.1);
       glVertex3f(-w, -h, 0.1);
       glVertex3f(-w, -h, -0.1);
+      polys++;
       glNormal3f(-1, 0, 0);
       glVertex3f(-w, h, -0.1);
       glVertex3f(-w, h, 0.1);
       glVertex3f(-w, -h, 0.1);
       glVertex3f(-w, -h, -0.1);
+      polys++;
       glNormal3f(0, -1, 0);
       glVertex3f(-w, h, -0.1);
       glVertex3f(w, h, -0.1);
       glVertex3f(w, h, 0.1);
       glVertex3f(-w, h, 0.1);
+      polys++;
     glEnd();
     glDisable(GL_POLYGON_OFFSET_FILL);
     if (c->tnum) glBindTexture(GL_TEXTURE_2D, c->tnum);
@@ -1129,6 +1177,7 @@ static void DrawIC(Circuit *ci, IC *c)
      glVertex3f(-th, -mult, 0.1);
      glTexCoord2f(0, 0);
      glVertex3f(-th, mult, 0.1);
+      polys++;
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
@@ -1138,20 +1187,22 @@ static void DrawIC(Circuit *ci, IC *c)
     glMaterialfv(GL_FRONT, GL_SPECULAR, lspec);
     glMaterialfv(GL_FRONT, GL_SHININESS, &lshine);
     for (z = 0 ; z < c->pins/2 ; z++) {
-      ICLeg(w, -h + z*d + d/2, 0, 0);
+      polys += ICLeg(w, -h + z*d + d/2, 0, 0);
     }
     for (z = 0 ; z < c->pins/2 ; z++) {
-      ICLeg(-w, -h + z*d + d/2, 0, 1);
+      polys += ICLeg(-w, -h + z*d + d/2, 0, 1);
     }
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col2);
     glTranslatef(-w+0.3, h-0.3, 0.1);
     glRotatef(90, 0, 1, 0);
-    circle(ci, 0.1, 7, 0);
+    polys += circle(ci, 0.1, 7, 0);
     glPopMatrix();
+    return polys;
 }
 
-static void DrawDisp(Circuit *ci, Disp *d)
+static int DrawDisp(Circuit *ci, Disp *d)
 {
+  int polys = 0;
   GLfloat col[] = {0.8, 0.8, 0.8, 1.0}; /* body colour */
   GLfloat front[] = {0.2, 0.2, 0.2, 1.0}; /* front colour */
   GLfloat on[] = {0.9, 0, 0, 1}; /* 'on' segment */
@@ -1203,13 +1254,14 @@ static void DrawDisp(Circuit *ci, Disp *d)
 
    glTranslatef(-0.9, -1.8, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
-   Rect(0, 0, -0.01, 1.8, 2.6, 0.7);
+   polys += Rect(0, 0, -0.01, 1.8, 2.6, 0.7);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, front);
    glBegin(GL_QUADS);
      glVertex2f(-0.05, -0.05);
      glVertex2f(-0.05, 2.65);
      glVertex2f(1.85, 2.65);
      glVertex2f(1.85, -0.05);
+     polys++;
    glEnd();
    glDisable(GL_LIGHTING); /* lit segments dont need light */
    if (!seven && (random() % 30) == 19) { /* randomly change value */
@@ -1234,12 +1286,14 @@ static void DrawDisp(Circuit *ci, Disp *d)
      for(i = 0 ; i < 6 ; i++) {
        glVertex3f(xx[i], yy[i], 0.01);
      }
+     polys++;
      glEnd();
    }
    glColor3fv(on);
    glPointSize(4);
    glBegin(GL_POINTS);
     glVertex3f(1.5, 0.2, 0.01);
+    polys++;
    glEnd();
    glEnable(GL_LIGHTING);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, lcol);
@@ -1247,15 +1301,17 @@ static void DrawDisp(Circuit *ci, Disp *d)
    glMaterialfv(GL_FRONT, GL_SHININESS, &shine);
    for (x = 0.35 ; x <= 1.5 ; x+= 1.15) {
      for ( y = 0.2 ; y <= 2.4 ; y += 0.3) {
-       ICLeg(x, y, -0.7, 1);
+       polys += ICLeg(x, y, -0.7, 1);
      }
    }
+   return polys;
 }
 
-static void HoledRectangle(Circuit *ci, 
+static int HoledRectangle(Circuit *ci, 
                            GLfloat w, GLfloat h, GLfloat d, GLfloat radius,
                            int p)
 {
+  int polys = 0;
   int step, a;
   GLfloat x1, y1, x2, y2;
   GLfloat yr, yr1, xr, xr1, side, side1;
@@ -1296,34 +1352,40 @@ static void HoledRectangle(Circuit *ci,
       glVertex3f(x1,y1,-d);
       glVertex3f(x2,y2,-d);
       glVertex3f(x2,y2,0);
+      polys++;
 
       glNormal3f(0, 0, 1); /* front face */
       glVertex3f(x1,y1,0);
       glVertex3f(xr1, yr1, 0);
       glVertex3f(xr, yr, 0);
       glVertex3f(x2, y2, 0);
+      polys++;
 
       glNormal3f(nx, ny, 0); /* side */
       glVertex3f(xr, yr, 0);
       glVertex3f(xr, yr, -d);
       glVertex3f(xr1, yr1, -d);
       glVertex3f(xr1, yr1, 0);
+      polys++;
 
       glNormal3f(0, 0, -1); /* back */
       glVertex3f(xr, yr, -d);
       glVertex3f(x2, y2, -d);
       glVertex3f(x1, y1, -d);
       glVertex3f(xr1, yr1, -d);
+      polys++;
 
     x1=x2;
     y1=y2;
     xr1 = xr; yr1 = yr;
   }
   glEnd();
+  return polys;
 }
 
-static void DrawTransistor(Circuit *ci, Transistor *t)
+static int DrawTransistor(Circuit *ci, Transistor *t)
 {
+  int polys = 0;
   GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
   GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
   GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
@@ -1341,8 +1403,8 @@ static void DrawTransistor(Circuit *ci, Transistor *t)
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col);
     glRotatef(90, 0, 1, 0);
     glRotatef(90, 0, 0, 1);
-    createCylinder(ci, 1.0, 0.4, 1, 1);
-    Rect(0, -0.2, 0.4, 1, 0.2, 0.8);
+    polys += createCylinder(ci, 1.0, 0.4, 1, 1);
+    polys += Rect(0, -0.2, 0.4, 1, 0.2, 0.8);
 /* Draw the markings */
     glEnable(GL_TEXTURE_2D);
     if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
@@ -1358,22 +1420,23 @@ static void DrawTransistor(Circuit *ci, Transistor *t)
      glVertex3f(y2, -0.21, -0.3);
      glTexCoord2f(0, 0);
      glVertex3f(y2, -0.21, 0.3);
+     polys++;
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glTranslatef(-2, 0, -0.2);
-    wire(ci, 2);
+    polys += wire(ci, 2);
     glTranslatef(0, 0, 0.2);
-    wire(ci, 2);
+    polys += wire(ci, 2);
     glTranslatef(0, 0, 0.2);
-    wire(ci, 2);
+    polys += wire(ci, 2);
   } else if (t->type == 0) { /* TO-220 Style */
     float mult, y1, y2;
     mult = 1.5*t->th/t->tw;
     y1 = 0.75+mult/2;
     y2 = 0.75-mult/2;
-    Rect(0, 0, 0, 1.5, 1.5, 0.5);
+    polys += Rect(0, 0, 0, 1.5, 1.5, 0.5);
     glEnable(GL_TEXTURE_2D);
     if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
     glEnable(GL_BLEND);
@@ -1395,23 +1458,23 @@ static void DrawTransistor(Circuit *ci, Transistor *t)
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
     glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
     glMaterialfv(GL_FRONT, GL_SHININESS, &shin);
-    Rect(0, 0, -0.5, 1.5, 1.5, 0.30);
+    polys += Rect(0, 0, -0.5, 1.5, 1.5, 0.30);
     if (!glIsEnabled(GL_NORMALIZE)) glEnable(GL_NORMALIZE);
     glTranslatef(0.75, 1.875, -0.55);
-    HoledRectangle(ci, 1.5, 0.75, 0.25, 0.2, 8);
+    polys += HoledRectangle(ci, 1.5, 0.75, 0.25, 0.2, 8);
     glMaterialfv(GL_FRONT, GL_SPECULAR, nospec);
     glTranslatef(-0.375, -1.875, 0);
     glRotatef(90, 0, 0, -1);
-    wire(ci, 2);
+    polys += wire(ci, 2);
     glTranslatef(0, 0.375, 0);
-    wire(ci, 2);
+    polys += wire(ci, 2);
     glTranslatef(0, 0.375, 0);
-    wire(ci, 2);
+    polys += wire(ci, 2);
   } else {              /* SMC transistor */
 /* Draw the body */
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col);
     glTranslatef(-0.5, -0.25, 0.1);
-    Rect(0, 0, 0, 1, 0.5, 0.2);
+    polys += Rect(0, 0, 0, 1, 0.5, 0.2);
 /* Draw the markings */
     glEnable(GL_TEXTURE_2D);
     if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
@@ -1427,6 +1490,7 @@ static void DrawTransistor(Circuit *ci, Transistor *t)
      glVertex3f(0.8, 0.5, 0.01);
      glTexCoord2f(0, 0);
      glVertex3f(0.2, 0.5, 0.01);
+     polys++;
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
@@ -1435,14 +1499,15 @@ static void DrawTransistor(Circuit *ci, Transistor *t)
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
     glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
     glMaterialfv(GL_FRONT, GL_SHININESS, &shin);
-    Rect(0.25, -0.1, -0.05, 0.1, 0.1, 0.2);
-    Rect(0.75, -0.1, -0.05, 0.1, 0.1, 0.2);
-    Rect(0.5, 0.5, -0.05, 0.1, 0.1, 0.2);
-    Rect(0.25, -0.2, -0.2, 0.1, 0.15, 0.1);
-    Rect(0.75, -0.2, -0.2, 0.1, 0.15, 0.1);
-    Rect(0.5, 0.5, -0.2, 0.1, 0.15, 0.1);
+    polys += Rect(0.25, -0.1, -0.05, 0.1, 0.1, 0.2);
+    polys += Rect(0.75, -0.1, -0.05, 0.1, 0.1, 0.2);
+    polys += Rect(0.5, 0.5, -0.05, 0.1, 0.1, 0.2);
+    polys += Rect(0.25, -0.2, -0.2, 0.1, 0.15, 0.1);
+    polys += Rect(0.75, -0.2, -0.2, 0.1, 0.15, 0.1);
+    polys += Rect(0.5, 0.5, -0.2, 0.1, 0.15, 0.1);
   }
   glPopMatrix();
+  return polys;
 }
 
 static Component * NewComponent(ModeInfo *mi)
@@ -1802,42 +1867,45 @@ static void makebandlist(Circuit *ci)
      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shine);
-     createCylinder(ci, 0.1, 0.42, 0, 0);
+     ci->band_list_polys[i] = createCylinder(ci, 0.1, 0.42, 0, 0);
      glEndList();
   }
 }
   
 
-static void bandedCylinder(Circuit *ci, 
+static int bandedCylinder(Circuit *ci, 
                            float radius, float l, 
                            GLfloat r, GLfloat g, GLfloat bl, 
                            Band **b, int nbands)
 {
+  int polys = 0;
   int n; /* band number */
   int p = 0; /* prev number + 1; */
   GLfloat col[] = {0,0,0,0};
 
    col[0] = r; col[1] = g; col[2] = bl;
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
-   createCylinder(ci, l, radius, 1, 0); /* body */
+   polys += createCylinder(ci, l, radius, 1, 0); /* body */
    for (n = 0 ; n < nbands ; n++) {
      glPushMatrix();
      glTranslatef(b[n]->pos*l, 0, 0);
      col[0] = b[n]->r; col[1] = b[n]->g; col[2] = b[n]->b;
      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
-     createCylinder(ci, b[n]->len*l, radius*1.05, 0, 0); /* band */
+     polys += createCylinder(ci, b[n]->len*l, radius*1.05, 0, 0); /* band */
      glPopMatrix();
      p = n+1;
    }
+   return polys;
 }
 
-static void drawgrid(Circuit *ci)
+static int drawgrid(Circuit *ci)
 {
+  int polys = 0;
   GLfloat x, y;
   GLfloat col3[] = {0, 0.8, 0};
 
   if (!ci->draw_s) {
-     if (f_rand() < ((rotate) ? 0.05 : 0.01)) {
+     if (f_rand() < ((rotatespeed > 0) ? 0.05 : 0.01)) {
        ci->draw_sdir = RAND_RANGE(0, 4);
        ci->draw_ds = RAND_RANGE(0.4, 0.8);
        switch (ci->draw_sdir) {
@@ -1860,7 +1928,7 @@ static void drawgrid(Circuit *ci)
         }
         ci->draw_s = 1;
       }
-  } else if (!rotate) {
+  } else if (rotatespeed <= 0) {
     if (ci->grid_col[1] < 0.25) {
       ci->grid_col[1] += 0.025; ci->grid_col[2] += 0.005;
       ci->grid_col2[1] += 0.015 ; ci->grid_col2[2] += 0.005;
@@ -1872,7 +1940,7 @@ static void drawgrid(Circuit *ci)
     glColor3fv(col3);
     glPushMatrix();
     glTranslatef(ci->draw_sx, ci->draw_sy, -10);
-    sphere(ci, 0.1, 10, 10, 0, 10, 0, 10);
+    polys += sphere(ci, 0.1, 10, 10, 0, 10, 0, 10);
     if (ci->draw_sdir == 0) 
       glTranslatef(-ci->draw_ds, 0, 0);
     if (ci->draw_sdir == 1) 
@@ -1881,7 +1949,7 @@ static void drawgrid(Circuit *ci)
       glTranslatef(0, ci->draw_ds, 0);
     if (ci->draw_sdir == 3) 
       glTranslatef(0, -ci->draw_ds, 0);
-    sphere(ci, 0.05, 10, 10, 0, 10, 0, 10);
+    polys += sphere(ci, 0.05, 10, 10, 0, 10, 0, 10);
     glPopMatrix();
     if (ci->draw_sdir == 0) {
        ci->draw_sx += ci->draw_ds;
@@ -1903,7 +1971,7 @@ static void drawgrid(Circuit *ci)
        if (ci->draw_sy > ci->YMAX/2)
          ci->draw_s = 0;
     }
-  } else if (!rotate) {
+  } else if (rotatespeed <= 0) {
     if (ci->grid_col[1] > 0) {
       ci->grid_col[1] -= 0.0025; ci->grid_col[2] -= 0.0005;
       ci->grid_col2[1] -= 0.0015 ; ci->grid_col2[2] -= 0.0005;
@@ -1934,6 +2002,7 @@ static void drawgrid(Circuit *ci)
     glEnd();
   }
   glEnable(GL_LIGHTING);
+  return polys;
 }
 
 static void display(ModeInfo *mi)
@@ -1942,6 +2011,8 @@ static void display(ModeInfo *mi)
   GLfloat light_sp[] = {0.8, 0.8, 0.8, 1.0};
   GLfloat black[] = {0, 0, 0, 1.0};
   int j;
+
+  mi->polygon_count = 0;
 
   if (ci->display_i == 0) {
     for (ci->display_i = 0 ; ci->display_i < maxparts ; ci->display_i++) {
@@ -1955,18 +2026,17 @@ static void display(ModeInfo *mi)
             0.0, 0.0, 0.0, 
             0.0, 1.0, 0.0);
   glPushMatrix();
-  if (rotate) {
-     glRotatef(ci->rotate_angle, 0, 0, 1);
-     ci->rotate_angle += 0.01 * (float)rotatespeed;
-     if (ci->rotate_angle >= 360) ci->rotate_angle = 0;
-  }
+  glRotatef(ci->rotate_angle, 0, 0, 1);
+  ci->rotate_angle += 0.01 * (float)rotatespeed;
+  if (ci->rotate_angle >= 360) ci->rotate_angle = 0;
+
   glLightfv(GL_LIGHT0, GL_POSITION, ci->lightpos);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_sp);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_sp);
   glLighti(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat)1); 
   glLighti(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat)0.5); 
   glLighti(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat)0); 
-  drawgrid(ci);
+  mi->polygon_count += drawgrid(ci);
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light_sp);
   if (f_rand() < 0.05) {
     for (j = 0 ; j < maxparts ; j++) {
@@ -1982,7 +2052,7 @@ static void display(ModeInfo *mi)
      glMaterialfv(GL_FRONT, GL_EMISSION, black);
      glMaterialfv(GL_FRONT, GL_SPECULAR, black);
      if (ci->components[j] != NULL) {
-       if (DrawComponent(ci, ci->components[j])) {
+       if (DrawComponent(ci, ci->components[j], &mi->polygon_count)) {
         free(ci->components[j]); ci->components[j] = NULL;
        }
      }

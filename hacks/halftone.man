@@ -15,6 +15,7 @@ halftone - simple halftone pattern of moving mass points
 [\-maxmass \fInumber\fP]
 [\-minspeed \fInumber\fP]
 [\-maxspeed \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Draws the gravity force in each point on the screen seen through a
 halftone dot pattern. The gravity force is calculated from a set of
@@ -53,6 +54,9 @@ The minimum speed of each mass point. Default: 0.001
 The maximum speed of each mass point. Default: 0.02
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

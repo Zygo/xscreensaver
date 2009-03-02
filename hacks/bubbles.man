@@ -17,6 +17,7 @@ bubbles - frying pan / soft drink simulation
 .SH SYNOPSIS
 .B bubbles
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D] [\-rise|\-drop] [-trails]
+[\-fps]
 .SH DESCRIPTION
 \fIBubbles\fP sprays lots of little random bubbles all over the window which
 then grow until they reach their maximum size and go pop.  The inspiration
@@ -85,6 +86,9 @@ were ignored.  This is disabled by default.
 .B \-rise | \-drop 
 .TP 8
 .B \-trails
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH NOTES
 If you find the pace of things too slow, remember that there is a delay
 even though you specify no \fI\-delay\fP option.  Try using \fI\-nodelay\fP

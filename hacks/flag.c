@@ -45,7 +45,9 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 					"*ncolors:		200     \n"		\
 					"*bitmap:				\n"		\
 					"*font:		" DEF_FONT	"\n"	\
-					"*text:					\n"
+					"*text:					\n" \
+					"*fpsSolid:		true    \n" \
+
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
 # define reshape_flag 0
@@ -351,7 +353,9 @@ make_flag_bits(ModeInfo *mi)
 	  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, 1L, XYPixmap);
 	  XFreePixmap(dpy, bitmap);
 	}
-  else
+
+
+  if (! fp->image)
 	{
       char *bits = (char *) malloc (sizeof(bob_bits));
       memcpy (bits, bob_bits, sizeof(bob_bits));

@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2001, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -991,6 +990,7 @@ attraction_free (Display *dpy, Window window, void *closure)
 static const char *attraction_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*mode:	balls",
   "*graphmode:  none",
   "*points:	0",
@@ -1004,7 +1004,7 @@ static const char *attraction_defaults [] = {
   "*maxspeed:	true",
   "*cbounce:	true",
   "*mouse:	false",
-  "*viscosity:	1",
+  "*viscosity:	1.0",
   "*orbit:	false",
   "*colorShift:	3",
   "*segments:	500",

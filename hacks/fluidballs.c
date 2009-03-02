@@ -94,10 +94,11 @@ static void
 draw_fps_string (b_state *state)
 {  
   XFillRectangle (state->dpy, state->b, state->erase_gc,
-		  0, state->xgwa.height - state->font_height,
-		  state->xgwa.width, state->font_height);
+		  0, state->xgwa.height - state->font_height*3 - 20,
+		  state->xgwa.width, state->font_height*3 + 20);
   XDrawImageString (state->dpy, state->b, state->font_gc,
-		    0, state->xgwa.height - state->font_baseline,
+		    10, state->xgwa.height - state->font_height*2 -
+                    state->font_baseline - 10,
 		    state->fps_str, strlen(state->fps_str));
 }
 
@@ -132,7 +133,8 @@ check_window_moved (b_state *state)
   state->xmin = wx;
   state->ymin = wy;
   state->xmax = state->xmin + state->xgwa.width;
-  state->ymax = state->ymin + state->xgwa.height - state->font_height;
+  state->ymax = state->ymin + state->xgwa.height - (state->font_height*3) -
+    (state->font_height ? 22 : 0);
 
   if (state->dbuf && (state->ba))
     {
@@ -154,8 +156,8 @@ check_window_moved (b_state *state)
 	XClearWindow (state->dpy, state->window);
       else if (state->fps_p && oymax != state->ymax)
 	XFillRectangle (state->dpy, state->b, state->erase_gc,
-			0, state->xgwa.height - state->font_height,
-			state->xgwa.width, state->font_height);
+			0, state->xgwa.height - state->font_height*3,
+			state->xgwa.width, state->font_height*3);
     }
 }
 
@@ -331,11 +333,10 @@ fluidballs_init (Display *dpy, Window window)
   if (state->fps_p)
     {
       XFontStruct *font;
-      char *fontname = get_string_resource (dpy, "font", "Font");
-      const char *def_font = "fixed";
-      if (!fontname || !*fontname) fontname = (char *)def_font;
+      char *fontname = get_string_resource (dpy, "fpsFont", "Font");
+      if (!fontname) fontname = "-*-courier-bold-r-normal-*-180-*";
       font = XLoadQueryFont (dpy, fontname);
-      if (!font) font = XLoadQueryFont (dpy, def_font);
+      if (!font) font = XLoadQueryFont (dpy, "fixed");
       if (!font) exit(-1);
       gcv.font = font->fid;
       gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
@@ -449,9 +450,8 @@ check_wall_clock (b_state *state, float max_d)
 	  float fps = state->frame_count / elapsed;
 	  float cps = state->collision_count / elapsed;
 	  
-	  sprintf (state->fps_str, 
-		   " FPS: %.2f  Collisions: %.3f/frame  Max motion: %.3f",
-		   fps, cps/fps, max_d);
+	  sprintf (state->fps_str, "Collisions: %.3f/frame  Max motion: %.3f",
+		   cps/fps, max_d);
 	  
 	  draw_fps_string(state);
 	}
@@ -763,9 +763,8 @@ fluidballs_free (Display *dpy, Window window, void *closure)
 static const char *fluidballs_defaults [] = {
   ".background:		black",
   ".foreground:		yellow",
-  ".textColor:		yellow",
+  ".textColor:		white",
   "*mouseForeground:	white",
-  ".font:		-*-helvetica-*-r-*-*-*-180-*-*-p-*-*-*",
   "*delay:		10000",
   "*count:		300",
   "*size:		25",
@@ -774,7 +773,6 @@ static const char *fluidballs_defaults [] = {
   "*wind:		0.00",
   "*elasticity:		0.97",
   "*timeScale:		1.0",
-  "*doFPS:		False",
   "*shake:		True",
   "*shakeThreshold:	0.015",
   "*doubleBuffer:	True",
@@ -793,8 +791,6 @@ static XrmOptionDescRec fluidballs_options [] = {
   { "-gravity",		".gravity",	XrmoptionSepArg, 0 },
   { "-wind",		".wind",	XrmoptionSepArg, 0 },
   { "-elasticity",	".elasticity",	XrmoptionSepArg, 0 },
-  { "-fps",		".doFPS",	XrmoptionNoArg, "True" },
-  { "-no-fps",		".doFPS",	XrmoptionNoArg, "False" },
   { "-shake",		".shake",	XrmoptionNoArg, "True" },
   { "-no-shake",	".shake",	XrmoptionNoArg, "False" },
   { "-random",		".random",	XrmoptionNoArg, "True" },
@@ -806,4 +802,4 @@ static XrmOptionDescRec fluidballs_options [] = {
 };
 
 
-XSCREENSAVER_MODULE ("Fluidballs", fluidballs)
+XSCREENSAVER_MODULE ("FluidBalls", fluidballs)

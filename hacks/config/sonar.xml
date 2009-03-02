@@ -4,38 +4,44 @@
 
   <command arg="-root"/>
 
+  <number id="delay" type="slider" arg="-delay %"
+        _label="Frame rate" _low-label="Low" _high-label="High"
+        low="0" high="1000000" default="100000"
+        convert="invert"/>
+
   <select id="ping">
-   <option id="none" _label="Ping mode..."/>
    <option id="24" _label="Ping subnet/24 (254 hosts)" arg-set="-ping subnet/24"/>
    <option id="25" _label="Ping subnet/25 (126 hosts)" arg-set="-ping subnet/25"/>
    <option id="26" _label="Ping subnet/26 (62 hosts)"  arg-set="-ping subnet/26"/>
    <option id="27" _label="Ping subnet/27 (31 hosts)"  arg-set="-ping subnet/27"/>
-   <option id="28" _label="Ping subnet/28 (14 hosts)"  arg-set="-ping subnet/28"/>
+   <option id="28" _label="Ping subnet/28 (14 hosts)"/>
    <option id="29" _label="Ping subnet/29 (6 hosts)"   arg-set="-ping subnet/29"/>
    <option id="30" _label="Ping subnet/30 (2 hosts)"   arg-set="-ping subnet/30"/>
    <option id="ssh" _label="Ping known SSH hosts"      arg-set="-ping /etc/hosts,$HOME/.ssh/known_hosts,$HOME/.ssh/known_hosts2"/>
   </select>
 
   <hgroup>
+   <string id="aname" _label="Simulation team A name" arg="-team-a-name %"/>
     <number id="acount" type="spinbutton" arg="-team-a-count %"
-            _label="Simulation Team Members"
-            low="1" high="100" default="4"/>
-    <number id="bcount" type="spinbutton" arg="-team-b-count %"
-            _label="vs."
+            _label="A count"
             low="1" high="100" default="4"/>
   </hgroup>
 
-  <string id="aname" _label="Team A Name" arg="-team-a-name %"/>
-  <string id="bname" _label="Team B Name" arg="-team-b-name %"/>
+  <hgroup>
+   <string id="bname" _label="Simulation team B name" arg="-team-b-name %"/>
+   <number id="bcount" type="spinbutton" arg="-team-b-count %"
+           _label="B count"
+           low="1" high="100" default="4"/>
+  </hgroup>
 
-  <boolean id="dns"   _label="Resolve Host Names" arg-unset="-no-dns"/>
-  <boolean id="times" _label="Show Ping Times"    arg-unset="-no-times"/>
-
-  <!-- #### -ping-timeout [3000] -->
-  <!-- #### -ttl [90] -->
+  <hgroup>
+   <boolean id="dns"   _label="Resolve host names" arg-unset="-no-dns"/>
+   <boolean id="times" _label="Show ping times"    arg-unset="-no-times"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
-This program draws a sonar screen that pings (get it?) the hosts on
+This draws a sonar screen that pings (get it?) the hosts on
 your local network, and plots their distance (response time) from you.
 The three rings represent ping times of approximately 2.5, 70 and 2,000
 milliseconds respectively.
@@ -43,6 +49,8 @@ milliseconds respectively.
 Alternately, it can run a simulation that doesn't involve hosts.
 
 (If pinging doesn't work, you may need to make the executable be setuid.)
+
+http://en.wikipedia.org/wiki/Ping#History
 
 Written by Stephen Martin and Jamie Zawinski; 1998.
   </_description>

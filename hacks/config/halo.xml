@@ -4,28 +4,34 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Number of Circles" low="0" high="20" default="0"/>
-
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="120000" default="100000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="200000" default="100000"
           convert="invert"/>
 
-  <boolean id="animate" _label="Animate Circles" arg-set="-animate"/>
-
-  <select id="mode">
-    <option id="random"   _label="Random Mode"/>
-    <option id="seuss"    _label="Seuss Mode" arg-set="-mode seuss"/>
-    <option id="ramp"     _label="Ramp Mode"  arg-set="-mode ramp"/>
-  </select>
+  <number id="count" type="slider" arg="-count %"
+          _label="Number of circles" _low-label="Few" _high-label="Many"
+           low="0" high="20" default="0"/>
 
   <number id="ncolors" type="slider" arg="-colors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="100"/>
+
+  <select id="mode">
+    <option id="random"   _label="Random mode"/>
+    <option id="seuss"    _label="Seuss mode" arg-set="-mode seuss"/>
+    <option id="ramp"     _label="Ramp mode"  arg-set="-mode ramp"/>
+  </select>
+
+  <hgroup>
+  <boolean id="animate" _label="Animate circles" arg-set="-animate"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
 Draws trippy psychedelic circular patterns that hurt to look at.
+
+http://en.wikipedia.org/wiki/Moire_pattern
 
 Written by Jamie Zawinski; 1993.
   </_description>

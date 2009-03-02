@@ -49,6 +49,7 @@ from the X Consortium.
 
 static const char *kumppa_defaults [] ={
   ".background:		black",
+  "*fpsSolid:		true",
   "*speed:		0.1",
   "*delay:		10000",
   "*random:		True",

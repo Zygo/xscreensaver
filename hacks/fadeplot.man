@@ -11,6 +11,7 @@ fadeplot - draws a waving ribbon following a sinusoidal path.
 [\-cycles \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Draws what looks like a waving ribbon following a sinusoidal path.
 .SH OPTIONS
@@ -36,6 +37,9 @@ Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of colors.  Default: 64.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

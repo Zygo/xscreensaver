@@ -47,7 +47,9 @@ static const char sccsid[] = "@(#)vines.c	5.00 2000/11/01 xlockmore";
 # define MODE_vines
 # define DEFAULTS	"*delay: 200000 \n" \
 					"*count: 0 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # define reshape_vines 0
 # define vines_handle_event 0

@@ -28,10 +28,12 @@ static const char sccsid[] = "@(#)mountain.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_mountain
-#define DEFAULTS	"*delay: 1000 \n" \
+#define DEFAULTS	"*delay: 20000 \n" \
 					"*count: 30 \n" \
 					"*cycles: 4000 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_mountain 0
 # define mountain_handle_event 0

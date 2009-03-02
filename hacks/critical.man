@@ -4,6 +4,7 @@ critical - Draw a system showing self-organizing criticality
 .SH SYNOPSIS
 .B critical
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-random \fIboolean\fP] [\-ncolors \fIint\fP] [\-offset \fIint\fP] 
+[\-fps]
 .SH DESCRIPTION
 The \fIcritical\fP program displays a self-organizing critical system
 that gradually emerges from chaos.
@@ -61,6 +62,9 @@ value interacts with \fIoffset\fP.)
 .TP 8
 .B \-trail \fIinteger\fP
 Length of the trail: between 5 and 100 is nice.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

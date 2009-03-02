@@ -19,6 +19,7 @@ penetrate - simulates a classic arcade shooting game
 [\-display \fIhost:display.screen\fP] [\-root] [\-window]
 [\-install] [\-noinstall] [\-visual \fIvisual\fP]
 [\-bgrowth \fImicroseconds\fP] [\-lrate \fInumber\fP] [\-smart \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 .PP
 \fIPenetrate\fP simulates the arcade classic with the cities and the stuff
@@ -75,6 +76,9 @@ Set the initial rate of laser fire.
 .TP 8
 .B -smart
 Have the computer player skip the learning process.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH BUGS
 The layout of the screen isn't quite the same as the game this program
 tries to emulate.  In this this program, the missiles come out of the

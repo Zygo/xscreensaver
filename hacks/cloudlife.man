@@ -5,6 +5,7 @@ cloudlife - a cellular automaton based on Conway's Life
 .B cloudlife
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-cycle-delay \fImicroseconds\fP] [\-cycle-colors \fIinteger\fP][\-cell-size \fIinteger\fP] [\-initial-density \fIinteger\fP] [\-max-age \fIinteger\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIcloudlife\fP program draws a cellular
 automaton based on Conway's Life, except that
@@ -50,8 +51,9 @@ field is repopulated.  Default 30.
 .TP 8
 .B \-max-age \fIinteger\fP
 Maximum age for a cell.  Default 64.
-
-
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

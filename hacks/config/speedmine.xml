@@ -4,32 +4,41 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="30000"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
 
-  <select id="mode">
-    <option id="speedmine" _label="Tunnel"/>
-    <option id="speedworm" _label="Worm" arg-set="-worm"/>
-  </select>
+    <number id="velocity" type="slider" arg="-maxspeed %"
+            _label="Max velocity" _low-label="Slow" _high-label="Fast"
+            low="1" high="1000" default="700"/>
 
-  <number id="velocity" type="slider" arg="-maxspeed %"
-          _label="Max Velocity" _low-label="Slow" _high-label="Fast"
-          low="1" high="1000" default="700"/>
+    <number id="thrust" type="slider" arg="-thrust %"
+            _label="Thrust" _low-label="Slow" _high-label="Fast"
+            low="0.0" high="4.0" default="1.0"/>
 
-  <number id="thrust" type="slider" arg="-thrust %"
-          _label="Thrust" _low-label="Slow" _high-label="Fast"
-          low="0.0" high="4.0" default="1.0"/>
+    <number id="gravity" type="slider" arg="-gravity %"
+            _label="Gravity" _low-label="Low" _high-label="High"
+            low="0.0" high="25.0" default="9.8"/>
+   </vgroup>
+   <vgroup>
 
-  <number id="gravity" type="slider" arg="-gravity %"
-          _label="Gravity" _low-label="Low" _high-label="High"
-          low="0.0" high="25.0" default="9.8"/>
+    <select id="mode">
+      <option id="speedmine" _label="Tunnel"/>
+      <option id="speedworm" _label="Worm" arg-set="-worm"/>
+    </select>
 
-  <boolean id="terrain" _label="Rocky Walls" arg-unset="-no-terrain"/>
-  <boolean id="bump"    _label="Allow Wall Collisions" arg-unset="-no-bumps"/>
-  <boolean id="bonus"   _label="Present Bonuses" arg-unset="-no-bonuses"/>
-  <boolean id="xhair"   _label="Display Crosshair" arg-unset="-no-crosshair"/>
+    <boolean id="terrain" _label="Rocky walls" arg-unset="-no-terrain"/>
+    <boolean id="bump"    _label="Allow wall collisions" arg-unset="-no-bumps"/>
+    <boolean id="bonus"   _label="Present bonuses" arg-unset="-no-bonuses"/>
+    <boolean id="xhair"   _label="Display crosshair" arg-unset="-no-crosshair"/>
+    <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
 
   <!-- #### -vertigo [1.0] -->
   <!-- #### -darkground [#101010] -->
@@ -40,8 +49,6 @@
   <!-- #### -twistiness [1.0] -->
   <!-- #### -no-widening -->
   <!-- #### -psychedelic -->
-
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
 
   <_description>
 Simulates speeding down a rocky mineshaft, or a funky dancing worm.

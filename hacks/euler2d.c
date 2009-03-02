@@ -45,7 +45,9 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay:   10000 \n" \
 					"*count:   1024  \n" \
 					"*cycles:  3000  \n" \
-					"*ncolors: 64    \n"
+					"*ncolors: 64    \n" \
+					"*fpsSolid: true    \n" \
+
 # define reshape_euler2d 0
 # define euler2d_handle_event 0
 # define SMOOTH_COLORS
@@ -874,6 +876,6 @@ refresh_euler2d (ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
 }
 
-XSCREENSAVER_MODULE ("Euler2d", euler2d)
+XSCREENSAVER_MODULE ("Euler2D", euler2d)
 
 #endif /* MODE_euler2d */

@@ -37,16 +37,11 @@
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_COCOA
-# define DEF_TEXT       "%A%n%d %b %Y%n%r"
-#else
-# define DEF_TEXT        "(default)"
-#endif
-
+#define DEF_TEXT        "(default)"
 #define DEF_PROGRAM     "(default)"
 #define DEF_SPIN        "XYZ"
 #define DEF_WANDER      "True"
-#define DEF_FRONT       "True"
+#define DEF_FACE_FRONT  "True"
 
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>
@@ -97,11 +92,11 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&text_fmt,     "text",      "Text",      DEF_TEXT,    t_String},
-  {&program_str,  "program",   "Program",   DEF_PROGRAM, t_String},
-  {&do_spin,      "spin",      "Spin",      DEF_SPIN,    t_String},
-  {&do_wander,    "wander",    "Wander",    DEF_WANDER,  t_Bool},
-  {&face_front_p, "faceFront", "FaceFront", DEF_FRONT,   t_Bool},
+  {&text_fmt,     "text",      "Text",      DEF_TEXT,       t_String},
+  {&program_str,  "program",   "Program",   DEF_PROGRAM,    t_String},
+  {&do_spin,      "spin",      "Spin",      DEF_SPIN,       t_String},
+  {&do_wander,    "wander",    "Wander",    DEF_WANDER,     t_Bool},
+  {&face_front_p, "faceFront", "FaceFront", DEF_FACE_FRONT, t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt text_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -243,8 +238,34 @@ parse_text (ModeInfo *mi)
           sprintf(tp->text, "%s\n%s %s.%s",
                   uts.nodename, uts.sysname, uts.version, uts.release);
 #  elif defined(__APPLE__)  /* MacOS X + XDarwin */
-          sprintf(tp->text, "%s\n%s %s\n%s",
-                  uts.nodename, uts.sysname, uts.release, uts.machine);
+          {
+            const char *file = 
+              "/System/Library/CoreServices/SystemVersion.plist";
+            FILE *f = fopen (file, "r");
+            char *pbv = 0, *pn = 0, *puvv = 0;
+            if (f) {
+              char *s, buf[255];
+
+              while (fgets (buf, sizeof(buf)-1, f)) {
+#               define GRAB(S,V)					\
+                if (strstr(buf, S)) {					\
+                  fgets (buf, sizeof(buf)-1, f);			\
+                  if ((s = strchr (buf, '>'))) V = strdup(s+1); 	\
+                  if ((s = strchr (V, '<'))) *s = 0;		 	\
+                }
+                GRAB ("ProductName", pn)
+                GRAB ("ProductBuildVersion", pbv)
+                GRAB ("ProductUserVisibleVersion", puvv)
+#               undef GRAB
+              }
+            }
+            if (pbv)
+              sprintf (tp->text, "%s\n%s\n%s\n%s", 
+                       uts.nodename, pn, puvv, uts.machine);
+            else
+              sprintf(tp->text, "%s\n%s %s\n%s",
+                      uts.nodename, uts.sysname, uts.release, uts.machine);
+          }
 #  else
           sprintf(tp->text, "%s\n%s %s",
                   uts.nodename, uts.sysname, uts.release);
@@ -401,7 +422,7 @@ init_text (ModeInfo *mi)
 
 
 static int
-fill_character (GLUTstrokeFont font, int c, Bool wire)
+fill_character (GLUTstrokeFont font, int c, Bool wire, int *polysP)
 {
   GLfloat tube_width = 10;
 
@@ -430,11 +451,11 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
             int smooth = False;
 # endif
             if (j != stroke->num_coords)
-              tube (lx,       ly,       0,
-                    coord->x, coord->y, 0,
-                    tube_width,
-                    tube_width * 0.15,
-                    TUBE_FACES, smooth, True, wire);
+              *polysP += tube (lx,       ly,       0,
+                               coord->x, coord->y, 0,
+                               tube_width,
+                               tube_width * 0.15,
+                               TUBE_FACES, smooth, True, wire);
             lx = coord->x;
             ly = coord->y;
           }
@@ -479,9 +500,10 @@ text_extents (const char *string, int *wP, int *hP)
 }
 
 
-static void
+static unsigned long
 fill_string (const char *string, Bool wire)
 {
+  int polys = 0;
   const char *s, *start;
   int line_height = GLUT_FONT->top - GLUT_FONT->bottom;
   int off;
@@ -518,7 +540,7 @@ fill_string (const char *string, Bool wire)
           {
             glPushMatrix();
             glTranslatef(x, y, 0);
-            off = fill_character (GLUT_FONT, *s2, wire);
+            off = fill_character (GLUT_FONT, *s2, wire, &polys);
             x += off;
             glPopMatrix();
           }
@@ -531,6 +553,7 @@ fill_string (const char *string, Bool wire)
       }
     else
       s++;
+  return polys;
 }
 
 
@@ -611,7 +634,7 @@ draw_text (ModeInfo *mi)
 
   glScalef(0.01, 0.01, 0.01);
 
-  fill_string(tp->text, wire);
+  mi->polygon_count = fill_string(tp->text, wire);
 
   glPopMatrix ();
 

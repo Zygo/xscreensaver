@@ -2379,6 +2379,7 @@ static const char *hyperball_defaults[] =
   "*zw: 0",
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*color00:#FF66BE",
   "*color10:#FFA300",
   "*color20:#BEDC00",

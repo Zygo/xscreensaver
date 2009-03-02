@@ -5,6 +5,7 @@ lisa - draws animated full-loop lissajous figures
 .B lisa
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIlisa\fP program draws animated full-loop lissajous figures.
 .SH OPTIONS
@@ -39,6 +40,9 @@ The colors are chosen randomly.
 .TP 8
 .B \-size \fIinteger\fP
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

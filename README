@@ -38,6 +38,23 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.06:   * Xinerama/RANDR tweaks for old-style multi-screen.
+                      * Fixed the bouncing ball in `stairs'.
+                      * `flipflop' can load images onto the tiles.
+                      * Improved layout of the preferences dialogs: they
+                        should all now be usable even on ridiculously tiny
+                        laptop screens.
+                      * MacOS preferences text fields now prevent you from
+                        entering numbers that are out of range.
+                      * Added "Reset to Defaults" button on X11.
+                      * Added relevant Wikipedia links to many of the screen
+                        saver descriptions.
+                      * All hacks support the `-fps' option, not just GL ones.
+                      * The `-fps' option now shows CPU load.
+                      * Added bumpy skin and cel shading to `skytentacles'.
+                      * Added the missing Utah Teapotahedron to `polyhedra'.
+                      * `blitspin' works with color images on OSX now.
+                      * Added transparency to `stonerview'.
 Changes since 5.05:   * Xinerama/RANDR fixes: this time for sure.  It should
                         now work to add/remove monitors or resize screens at
                         any time.

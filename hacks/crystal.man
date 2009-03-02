@@ -15,6 +15,7 @@ crystal - kaleidescope.
 [\-count \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Moving polygons, similar to a kaleidescope (more like a kaleidescope than
 the hack called `kaleid,' actually.)
@@ -53,6 +54,9 @@ Per-frame delay, in microseconds.  Default: 60000 (0.06 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of Colors.  Default: 100.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

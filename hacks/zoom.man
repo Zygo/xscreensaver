@@ -12,6 +12,7 @@ zoom - wander around magnified desktop
 [\-pixwidth \fIpixels\fP] [\-pixheight \fIpixels\fP]
 [\-pixspacex \fIpixels\fP] [\-pixspacey \fIpixels\fP]
 [\-lensoffsetx \fIpixels\fP] [\-lensoffsety \fIpixels\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIzoom\fP program takes an image, magnifies it, and scrolls around
 it, fatbits-style.

@@ -49,6 +49,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
 	               	"*fpsSolid:     True    \n"
+
 # define refresh_pipes 0
 # define pipes_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -59,6 +60,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 #ifdef USE_GL
 
 #include "buildlwo.h"
+#include "teapot.h"
 
 #define DEF_FACTORY     "2"
 #define DEF_FISHEYE     "True"
@@ -153,7 +155,8 @@ typedef struct {
 	const float *system_color;
 	GLfloat     initial_rotation;
 	GLuint      valve, bolts, betweenbolts, elbowbolts, elbowcoins;
-	GLuint      guagehead, guageface, guagedial, guageconnector;
+	GLuint      guagehead, guageface, guagedial, guageconnector, teapot;
+    int         teapot_polys;
     int         reset;
 	GLXContext *glx_context;
 } pipesstruct;
@@ -461,18 +464,60 @@ MakeGuage(ModeInfo * mi, int newdir)
 	return (1);
 }
 
+
+static GLuint
+build_teapot(ModeInfo *mi)
+{
+  pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+  GLuint list = glGenLists(1);
+  if (!list) return 0;
+  glNewList(list, GL_COMPILE);
+  pp->teapot_polys = unit_teapot (12, MI_IS_WIREFRAME(mi));
+  glEndList();
+  return list;
+}
+
+
+static void
+MakeTeapot(ModeInfo * mi, int newdir)
+{
+  pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+
+  switch (newdir) {
+  case dirUP:
+  case dirDOWN:
+    glRotatef(90.0, 1.0, 0.0, 0.0);
+    glRotatef(NRAND(3) * 90.0, 0.0, 0.0, 1.0);
+    break;
+  case dirLEFT:
+  case dirRIGHT:
+    glRotatef(90.0, 0.0, -1.0, 0.0);
+    glRotatef((NRAND(3) * 90.0) - 90.0, 0.0, 0.0, 1.0);
+    break;
+  case dirNEAR:
+  case dirFAR:
+    glRotatef(NRAND(4) * 90.0, 0.0, 0.0, 1.0);
+    break;
+  }
+
+  glCallList(pp->teapot);
+  mi->polygon_count += pp->teapot_polys;
+  glFrontFace(GL_CCW);
+}
+
+
 static void
 MakeShape(ModeInfo * mi, int newdir)
 {
-	switch (NRAND(2)) {
-		case 1:
-			if (!MakeGuage(mi, newdir))
-				MakeTube(mi, newdir);
-			break;
-		default:
-			MakeValve(mi, newdir);
-			break;
-	}
+  int n = NRAND(100);
+  if (n < 50) {
+    if (!MakeGuage(mi, newdir))
+      MakeTube(mi, newdir);
+  } else if (n < 98) {
+    MakeValve(mi, newdir);
+  } else {
+    MakeTeapot(mi,newdir);
+  }
 }
 
 static void
@@ -645,6 +690,7 @@ init_pipes (ModeInfo * mi)
 			pp->guageface = BuildLWO(MI_IS_WIREFRAME(mi), &LWO_GuageFace);
 			pp->guagedial = BuildLWO(MI_IS_WIREFRAME(mi), &LWO_GuageDial);
 			pp->guageconnector = BuildLWO(MI_IS_WIREFRAME(mi), &LWO_GuageConnector);
+			pp->teapot = build_teapot(mi);
 		}
 		/* else they are all 0, thanks to calloc(). */
 
@@ -735,7 +781,7 @@ draw_pipes (ModeInfo * mi)
 		if (++pp->system_number > pp->number_of_systems) {
           /* pause doing nothing for N seconds before clearing the screen. */
           int secs = 3;
-          pp->reset = secs * 1000000 / MI_PAUSE(mi);
+          pp->reset = secs * 1000000 / (MI_PAUSE(mi) ? MI_PAUSE(mi) : 100);
 		} else {
 			pinit(mi, 0);
 		}
@@ -964,10 +1010,10 @@ draw_pipes (ModeInfo * mi)
 
 	glFlush();
 
+    if (mi->fps_p) do_fps (mi);
+
     if (dbuf_p)
       glXSwapBuffers(display, window);
-
-    if (mi->fps_p) do_fps (mi);
 }
 
 #ifndef STANDALONE
@@ -1019,6 +1065,8 @@ release_pipes (ModeInfo * mi)
 					glDeleteLists(pp->guagedial, 1);
 				if (pp->guageconnector)
 					glDeleteLists(pp->guageconnector, 1);
+				if (pp->teapot)
+					glDeleteLists(pp->teapot, 1);
 			}
 		}
 

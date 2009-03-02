@@ -20218,16 +20218,16 @@ if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
   GL_UTIL_EXES='$(GL_UTIL_EXES)'
   GL_MEN='$(GL_MEN)'
-  GL_KLUDGE="${tab}  "
+  GL_KLUDGE=" "
 else
-  GL_KLUDGE="-${tab}  "
+  GL_KLUDGE="-"
 fi
 
 if test "$have_gle" = yes; then
   GLE_EXES='$(GLE_EXES)'
-  GLE_KLUDGE="${tab}   "
+  GLE_KLUDGE=" "
 else
-  GLE_KLUDGE="-${tab}   "
+  GLE_KLUDGE="-"
 fi
 
 if test "$have_jpeg" = yes -a "$have_gdk_pixbuf" = yes; then

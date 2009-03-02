@@ -4,6 +4,7 @@ xjack - all work and no play makes jack a dull boy
 .SH SYNOPSIS
 .B xjack
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIusecs\fP]
+[\-fps]
 .SH DESCRIPTION
 All work and no play makes jack a dull boy.  All work and no play makes jack
 a dull boy.  All work and no play makes jack a dull boy.  All work and no

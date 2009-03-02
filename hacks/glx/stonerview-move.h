@@ -24,7 +24,7 @@ extern void final_move(stonerview_state *);
 extern void move_increment(stonerview_state *);
 
 
-extern stonerview_state * init_view(int wireframe_p);
+extern stonerview_state * init_view(int wireframe_p, int transparent_p);
 extern void win_draw(stonerview_state *);
 extern void win_release(stonerview_state *);
 

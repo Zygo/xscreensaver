@@ -15,6 +15,7 @@ boxfit - fills space with a gradient of growing boxes or circles.
 [\-circles | \-squares | \-random]
 [\-grab]
 [\-peek]
+[\-fps]
 .SH DESCRIPTION
 Packs the screen with growing boxes or circles, colored according to a
 horizontal or vertical gradient.  The objects grow until they touch,
@@ -72,6 +73,9 @@ for more details.
 This option says to briefly show you the underlying image before
 beginning.  The default is not to show the unadulterated image at all.
 (This only has an effect when \fI\-grab\fP is used.)
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

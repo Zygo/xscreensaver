@@ -5,19 +5,21 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="30000" default="10000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <select id="seedMode">
-    <option id="ram"    _label="Dump Memory"/>
-    <option id="random" _label="Draw Random Numbers" arg-set="-random"/>
+    <option id="ram"    _label="Dump memory"/>
+    <option id="random" _label="Draw random numbers" arg-set="-random"/>
   </select>
 
   <select id="drawMode">
     <option id="color" _label="Draw in RGB"/>
-    <option id="mono"  _label="Draw Green" arg-set="-mono"/>
+    <option id="mono"  _label="Draw green" arg-set="-mono"/>
   </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This draws a dump of its own process memory scrolling across the screen

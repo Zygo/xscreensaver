@@ -478,6 +478,7 @@ eruption_free (Display *dpy, Window window, void *closure)
 static const char *eruption_defaults [] = {
   ".background: black",
   ".foreground: white",
+  "*fpsTop:	true",
   "*cycles:   80",
   "*ncolors:  256",
   "*delay:    10000",

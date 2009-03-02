@@ -11,6 +11,7 @@ anemone - wiggling tentacles.
 [\-arms \fInumber\fP]
 [\-finpoints \fInumber\fP]
 [\-width \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Wiggling tentacles.
 .SH OPTIONS
@@ -46,7 +47,9 @@ which are very fast indeed.  Default: 50.
 .TP 8
 .B \-width \fInumber\fP
 Thickness.  1 - 10.  Default: 2.
-
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

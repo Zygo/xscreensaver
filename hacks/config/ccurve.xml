@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="ccurve" _label="C Curve">
+<screensaver name="ccurve" _label="CCurve">
 
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Change Image Every" _low-label="0 seconds" _high-label="30 seconds"
-          low="0" high="30" default="1"/>
+          _label="Change image every" _low-label="0 seconds" _high-label="30 seconds"
+          low="0" high="30" default="3"/>
 
   <number id="pause" type="slider" arg="-pause %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          _label="Animation speed" _low-label="Slow" _high-label="Fast"
           low="0.0" high="5.0" default="0.4" convert="invert"/>
 
   <number id="limit" type="slider" arg="-limit %"
           _label="Density" _low-label="Low" _high-label="High"
           low="3" high="300000" default="200000"/>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
 Generates self-similar linear fractals, including the classic "C Curve".
+
+http://en.wikipedia.org/wiki/Levy_C_curve
 
 Written by Rick Campbell; 1999.
   </_description>

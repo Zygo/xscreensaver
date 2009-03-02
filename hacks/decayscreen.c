@@ -339,6 +339,7 @@ static const char *decayscreen_defaults [] = {
   ".background:			Black",
   ".foreground:			Yellow",
   "*dontClearRoot:		True",
+  "*fpsSolid:			True",
 
 #ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID:			Best",

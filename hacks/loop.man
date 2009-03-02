@@ -11,6 +11,7 @@ loop - cellular automaton.
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
 [\-size \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Another cellular automaton.
 This one produces loop-shaped colonies that spawn, age, and eventually die.
@@ -37,6 +38,9 @@ Number of Colors.  Default: 15.
 .TP 8
 .B \-size \fInumber\fP
 Size.  -50 - 50.  Default: -12.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

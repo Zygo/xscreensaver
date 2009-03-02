@@ -22,16 +22,17 @@
 #include <stdlib.h>
 #include "stonerview.h"
 
-static GLfloat view_rotx = -45.0, view_roty = 0.0, view_rotz = 0.0;
+static GLfloat view_rotx = -45.0, view_roty = 0.0, view_rotz = 15.0;
 static GLfloat view_scale = 4.0;
 
 
 stonerview_state *
-init_view(int wireframe_p)
+init_view(int wireframe_p, int transparent_p)
 {
   stonerview_state *st = (stonerview_state *) calloc (1, sizeof(*st));
 
   st->wireframe = wireframe_p;
+  st->transparent = transparent_p;
   st->num_els = NUM_ELS;
   st->elist = (elem_t *) calloc (st->num_els, sizeof(*st->elist));
 
@@ -40,11 +41,19 @@ init_view(int wireframe_p)
   /* for trackball, two-sided lighting and no face culling */
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
+  glEnable(GL_CULL_FACE);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   glEnable(GL_DEPTH_TEST);
 
   glEnable(GL_NORMALIZE);
+
+  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_BLEND);
+
+  if (st->transparent)
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
   return st;
 }

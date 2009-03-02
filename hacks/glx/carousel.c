@@ -12,7 +12,7 @@
  * Created: 21-Feb-2005
  */
 
-#define DEF_FONT "-*-times-bold-r-normal-*-240-*"
+#define DEF_FONT "-*-helvetica-bold-r-normal-*-240-*"
 #define DEFAULTS  "*count:           7         \n" \
 		  "*delay:           10000     \n" \
 		  "*wireframe:       False     \n" \

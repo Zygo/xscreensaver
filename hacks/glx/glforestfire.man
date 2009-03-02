@@ -27,7 +27,7 @@ glforestfire - draws a GL animation of sprinkling fire-like 3D triangles
 [\-wireframe] [\-no-wireframe]
 [\-wander] [\-no-wander]
 [\-trackmouse] [\-no-trackmouse]
-[\-fps] [\-no-fps]
+[\-fps]
 .SH DESCRIPTION
 The \fIglforestfire\fP program draws an animation of sprinkling fire-like 3D triangles in
 a landscape filled with trees.
@@ -49,9 +49,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .TP 8
 .B \-trees \fInumber_of_trees\fP\fP
 Specify how much trees are drawn in the landscape. 

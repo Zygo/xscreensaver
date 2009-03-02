@@ -5,20 +5,20 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="40000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="40000"
           convert="invert"/>
 
   <number id="move" type="slider" arg="-move %"
-          _label="Turn Side-to-Side" _low-label="0 deg" _high-label="90 deg"
-          low="0.0" high="3.0" default="2.0"/>
+          _label="Turn side-to-side" _low-label="0 deg" _high-label="90 deg"
+          low="0.0" high="3.0" default="0.5"/>
 
   <number id="wobble" type="slider" arg="-wobble %"
           _label="Wobbliness" _low-label="Low" _high-label="High"
           low="0.0" high="3.0" default="2.0"/>
 
   <number id="cycle" type="slider" arg="-cycle %"
-          _label="Cycle Seconds" _low-label="Low" _high-label="High"
+          _label="Cycle seconds" _low-label="Low" _high-label="High"
           low="0.0" high="60.0" default="10.0"/>
 
   <number id="mag" type="slider" arg="-mag %"
@@ -26,8 +26,8 @@
           low="0.1" high="4.0" default="1.0"/>
 
   <select id="mins">
-    <option id="min2" _label="Minute Tick Marks" arg-set="-minutes"/>
-    <option id="min5" _label="5 Minute Tick Marks"/>
+    <option id="min2" _label="Minute tick marks" arg-set="-minutes"/>
+    <option id="min5" _label="5 minute tick marks"/>
   </select>
 
   <!-- #### -fast [50] -->
@@ -35,6 +35,8 @@
   <!-- #### -hsvcycle [0.0] -->
   <!-- #### -rgb [?] -->
   <!-- #### -hsv [?] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws a working analog clock composed of floating, throbbing bubbles.

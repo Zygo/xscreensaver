@@ -10,6 +10,7 @@ discrete - discrete map iterative function fractal systems.
 [\-cycles \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 More ``discrete map'' systems, including new variants of Hopalong and
 Julia, and a few others.
@@ -33,6 +34,9 @@ Per-frame delay, in microseconds.  Default: 1000 (0.001 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of Colors.  Default: 100.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

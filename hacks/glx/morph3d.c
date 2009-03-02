@@ -175,6 +175,7 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
       NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                    \
       glNormal3f(VectMul(NeiAX, NeiAY, NeiAZ, NeiBX, NeiBY, NeiBZ));                                             \
       glVertex3f(VertX, VertY, VertZ);                                                                           \
+      mi->polygon_count++;                                                                                       \
                                                                                                                  \
       Xf-=Ax; Yf-=Ay; Xa-=Ax; Yb-=Ay;                                                                            \
                                                                                                                  \
@@ -186,6 +187,7 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
       NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                    \
       glNormal3f(VectMul(NeiAX, NeiAY, NeiAZ, NeiBX, NeiBY, NeiBZ));                                             \
       glVertex3f(VertX, VertY, VertZ);                                                                           \
+      mi->polygon_count++;                                                                                       \
                                                                                                                  \
       Xf-=Ax; Yf+=Ay; Xa-=Ax; Yb+=Ay;                                                                            \
     }                                                                                                            \
@@ -241,6 +243,7 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
       NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                    \
       glNormal3f(VectMul(NeiAX, NeiAY, NeiAZ, NeiBX, NeiBY, NeiBZ));                                             \
       glVertex3f(VertX, VertY, VertZ);                                                                           \
+      mi->polygon_count++;                                                                                       \
     }                                                                                                            \
     glEnd();                                                                                                     \
   }                                                                                                              \
@@ -277,18 +280,20 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
         NeiAX=Factor1*Xa-VertX; NeiAY=Factor1*Yf-VertY; NeiAZ=Factor1*Zf-VertZ;                                  \
         NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                  \
         glNormal3f(VectMul(NeiAX, NeiAY, NeiAZ, NeiBX, NeiBY, NeiBZ));                                           \
-	glVertex3f(VertX, VertY, VertZ);                                                                         \
+		glVertex3f(VertX, VertY, VertZ);                                                                         \
+	    mi->polygon_count++;                                                                                     \
                                                                                                                  \
         Xf-=x[Fi]; Yf-=y[Fi]; Xa-=x[Fi]; Yb-=y[Fi];                                                              \
                                                                                                                  \
-	Factor=1-(((Xf2=sqr(Xf))+(Yf2=sqr(Yf)))*AmpVr2);                                                         \
-	Factor1=1-((sqr(Xa)+Yf2)*AmpVr2);                                                                        \
-	Factor2=1-((Xf2+sqr(Yb))*AmpVr2);                                                                        \
+		Factor=1-(((Xf2=sqr(Xf))+(Yf2=sqr(Yf)))*AmpVr2);                                                         \
+		Factor1=1-((sqr(Xa)+Yf2)*AmpVr2);                                                                        \
+		Factor2=1-((Xf2+sqr(Yb))*AmpVr2);                                                                        \
         VertX=Factor*Xf;        VertY=Factor*Yf;        VertZ=Factor*Zf;                                         \
         NeiAX=Factor1*Xa-VertX; NeiAY=Factor1*Yf-VertY; NeiAZ=Factor1*Zf-VertZ;                                  \
         NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                  \
         glNormal3f(VectMul(NeiAX, NeiAY, NeiAZ, NeiBX, NeiBY, NeiBZ));                                           \
-	glVertex3f(VertX, VertY, VertZ);                                                                         \
+		glVertex3f(VertX, VertY, VertZ);                                                                         \
+	    mi->polygon_count++;                                                                                     \
                                                                                                                  \
       }                                                                                                          \
       Xf=(float)Ri*x[Fi+1];                                                                                      \
@@ -305,7 +310,7 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
       glEnd();                                                                                                   \
     }                                                                                                            \
   }                                                                                                              \
-  VS=(Factor<0);                                                                                             \
+  VS=(Factor<0);	                                                                                             \
 }
 
 static void
@@ -750,6 +755,7 @@ draw_morph3d(ModeInfo * mi)
 	if (!mp->glx_context)
 		return;
 
+    mi->polygon_count = 0;
 	glXMakeCurrent(display, window, *(mp->glx_context));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

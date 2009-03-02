@@ -4,9 +4,9 @@
 
   <command arg="-root"/>
 
-  <boolean id="label" _label="Draw Labels" arg-unset="-no-label"/>
+  <boolean id="label" _label="Draw labels" arg-unset="-no-label"/>
 
-  <boolean id="altgeom" _label="Include Alternate Geometries"
+  <boolean id="altgeom" _label="Include alternate geometries"
            arg-unset="-no-altgeom"/>
 
 <!-- don't know what -count does -->
@@ -16,7 +16,7 @@
           low="1" high="20" default="20"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="2" high="255" default="64"/>
 
   <number id="delay" type="slider" arg="-delay %"
@@ -24,9 +24,14 @@
           low="0" high="1000000" default="1000000"
           convert="invert"/>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-Packs a large circle with smaller circles, demonstrating the 
-Descartes Circle Theorem.
+Draws an Apollonian gasket: a fractal packing of circles with
+smaller circles, demonstrating Descartes's theorem.
+
+http://en.wikipedia.org/wiki/Apollonian_gasket
+http://en.wikipedia.org/wiki/Descartes%27_theorem
 
 Written by Allan R. Wilks and David Bagley; 2002.
   </_description>

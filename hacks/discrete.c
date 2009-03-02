@@ -33,10 +33,12 @@ static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_discrete
-#define DEFAULTS	"*delay: 1000 \n" \
-					"*count: 4096 \n" \
+#define DEFAULTS	"*delay: 20000 \n" \
+					"*count:  4096 \n" \
 					"*cycles: 2500 \n" \
-					"*ncolors: 100 \n"
+					"*ncolors: 100 \n" \
+					"*fpsSolid: true \n" \
+
 # define SMOOTH_COLORS
 # define reshape_discrete 0
 # define discrete_handle_event 0
@@ -260,8 +262,8 @@ init_discrete (ModeInfo * mi)
 }
 
 
-ENTRYPOINT void
-draw_discrete (ModeInfo * mi)
+static void
+draw_discrete_1 (ModeInfo * mi)
 {
 	Display    *dsp = MI_DISPLAY(mi);
 	Window      win = MI_WINDOW(mi);
@@ -278,11 +280,6 @@ draw_discrete (ModeInfo * mi)
 	hp = &discretes[MI_SCREEN(mi)];
 	if (hp->pointBuffer == NULL)
 		return;
-
-    if (hp->eraser) {
-      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
-      return;
-    }
 
 	k = count;
 	xp = hp->pointBuffer;
@@ -400,13 +397,31 @@ draw_discrete (ModeInfo * mi)
 		xp++;
 	}
 	XDrawPoints(dsp, win, gc, hp->pointBuffer, count, CoordModeOrigin);
-	if (++hp->count > cycles) {
-#ifdef STANDALONE
-      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
-#endif /* STANDALONE */
-		init_discrete(mi);
-	}
 }
+
+ENTRYPOINT void
+draw_discrete (ModeInfo * mi)
+{
+  discretestruct *hp = &discretes[MI_SCREEN(mi)];
+  int cycles = MI_CYCLES(mi);
+  int i;
+
+  if (hp->eraser) {
+    hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+    return;
+  }
+
+  for (i = 0; i < 10; i++) {
+    draw_discrete_1 (mi);
+    hp->count++;
+  }
+
+  if (hp->count > cycles) {
+    hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+    init_discrete(mi);
+  }
+}
+
 
 ENTRYPOINT void
 release_discrete(ModeInfo * mi)

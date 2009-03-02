@@ -78,9 +78,7 @@ blobs, at the expense of speed.  Default: 40.
 The options "-resolution 10 -no-smooth" look kind of interesting.
 .TP 8
 .B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
+Display the current frame rate, CPU load, and polygon count.
 .TP 8
 .B \-count \fIinteger\fP
 The maximum number of blobs that can be in motion at once.

@@ -4,6 +4,7 @@ hypercube - 2d projection of a 4d object
 .SH SYNOPSIS
 .B hypercube
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-color[0-7] \fIcolor\fP] [\-xy \fIfloat\fP] [\-xz \fIfloat\fP] [\-yz \fIfloat\fP] [\-xw \fIfloat\fP] [\-yw \fIfloat\fP] [\-zw \fIfloat\fP] [\-observer-z \fIint\fP] [\-delay \fIusecs\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIhypercube\fP program displays a wireframe projection of a hypercube
 which is rotating at user-specified rates around any or all of its four axes.
@@ -69,6 +70,9 @@ The amount that the cube should be rotated around the specified axis at
 each frame of the animation, expressed in 0.001 radians.  These should be small
 floating-point values (less than 50 works best.)  Default: xy=3,
 xz=5, yw=10.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

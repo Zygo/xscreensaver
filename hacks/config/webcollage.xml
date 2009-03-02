@@ -4,35 +4,45 @@
 
   <command arg="-root"/>
 
-  <number id="timeout" type="slider" arg="-timeout %"
-          _low-label="URL Timeout:     2 secs" _high-label="2 min"
-          low="2" high="120" default="30"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Delay between images" _low-label="None" _high-label="30 secs"
+            low="0" high="30" default="2"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _low-label="Delay:                    None" _high-label="30 secs"
-          low="0" high="30" default="2"/>
+    <number id="timeout" type="slider" arg="-timeout %"
+            _label="Network timeout" _low-label="2 secs" _high-label="2 min"
+            low="2" high="120" default="30"/>
+   </vgroup>
+   <vgroup>
+    <number id="opacity" type="slider" arg="-opacity %"
+            _label="Image opacity" _low-label="Transparent" _high-label="Opaque"
+            low="0.1" high="1.0" default="0.85"/>
 
-  <number id="opacity" type="slider" arg="-opacity %"
-          _low-label="Opacity:      Transparent" _high-label="Solid"
-          low="0.1" high="1.0" default="0.85"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
-  <string id="filter"  _label="Per-Image Filter Program" arg="-filter %"/>
+   </vgroup>
+  </hgroup>
 
-  <string id="filter2" _label="Overall Filter Program" arg="-filter2 %"/>
-
-<!-- <file id="dictionary" _label="Dictionary File" arg="-dictionary %"/> -->
+<!--
+  <string id="filter"  _label="Per-image filter program" arg="-filter %"/>
+  <string id="filter2" _label="Overall filter program" arg="-filter2 %"/>
+  <file id="dictionary" _label="Dictionary file" arg="-dictionary %"/>
+  <file id="dir" _label="Image directory" arg="-directory %"/>
+ -->
 
   <_description>
-This program makes collages out of random images pulled off of the
+This makes collages out of random images pulled off of the
 World Wide Web.  It finds these images by doing random web searches,
-and then extracting images from the returned pages.  It can also be
-set up to filter the images through the "VidWhacker" program.
+and then extracting images from the returned pages.
 
 WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY.
 
 The Internet being what it is, absolutely anything might show up in the
 collage including -- quite possibly -- pornography, or even nudity.
 Please act accordingly.
+
+See also http://www.jwz.org/webcollage/
 
 Written by Jamie Zawinski; 1999.
   </_description>

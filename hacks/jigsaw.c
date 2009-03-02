@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -872,6 +872,7 @@ jigsaw_free (Display *dpy, Window window, void *closure)
 static const char *jigsaw_defaults [] = {
   ".background:		Black",
   ".foreground:		#AAAAAA",
+  "*fpsSolid:		true",
   "*delay:		70000",
   "*delay2:		5",
   "*pieceBorderWidth:   -1",

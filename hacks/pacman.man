@@ -12,6 +12,7 @@ pacman - simulates a game of Pac-Man on a randomly-created level.
 [\-ncolors \fIinteger\fP]
 [\-delay \fImicroseconds\fP]
 [\-size \fIpixels\fP]
+[\-fps]
 .SH DESCRIPTION
 Simulates a game of Pac-Man on a randomly-created level.
 .SH OPTIONS
@@ -39,6 +40,9 @@ How many colors should be used (if possible).  Default 6.
 .TP 8
 .B \-size \fIinteger\fP
 How big to make Pac-Man and the ghosts.  0 means "default."
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

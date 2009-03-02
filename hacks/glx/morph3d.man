@@ -31,8 +31,8 @@ Draw on the root window.
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 40000 (0.04 seconds.).
 .TP 8
-.B \-fps | \-no-fps
-Whether to show a frames-per-second display at the bottom of the screen.
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
 .TP 8

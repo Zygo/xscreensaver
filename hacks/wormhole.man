@@ -10,6 +10,7 @@ wormhole - animation of flying through a wormhole
 [\-stars \fIn\fP]
 [\-delay \fIusecs\fP]
 [\-zspeed \fIn\fP]
+[\-fps]
 .SH DESCRIPTION
 The \fIwormhole\fP program shows an animation of flying through a tunnel surrounded by streaks of light.
 .SH OPTIONS
@@ -41,6 +42,9 @@ Speed light streaks fly by.
 .B \-delay \fImicroseconds\fP
 Number of microseconds to delay between each frame.  Default 10000, meaning
 about 1/100th second.  Compare and contrast with \fI\-zspeed\fP, above.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

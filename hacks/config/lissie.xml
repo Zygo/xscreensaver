@@ -4,27 +4,32 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20" default="1"/>
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Timeout" _low-label="Small" _high-label="Large"
           low="0" high="80000" default="20000"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="10000"
-          convert="invert"/>
-
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Count" _low-label="1" _high-label="20"
+           low="0" high="20" default="1"/>
 
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-500" high="500" default="-200"/>
 
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-This one draws the progress of circular shapes along a path.
+Lissajous loops.  This one draws the progress of circular shapes along a path.
+
+http://en.wikipedia.org/wiki/Lissajous_curve
 
 Written by Alexander Jolk; 1997.
   </_description>

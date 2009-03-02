@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -338,6 +338,7 @@ helix_free (Display *dpy, Window window, void *closure)
 static const char *helix_defaults [] = {
   ".background: black",
   ".foreground: white",
+  "*fpsSolid:	true",
   "*delay:      5",
   "*subdelay:	20000",
   0

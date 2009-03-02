@@ -383,7 +383,7 @@ static void do_inter(struct inter_context* c)
 	dx = i*g + g/2 - c->source[k].x;
 	dy = j*g + g/2 - c->source[k].y;
 	dist = sqrt(dx*dx + dy*dy); /* what's the performance penalty here? */
-	result += (dist > c->radius ? 0 : c->wave_height[dist]);
+	result += (dist >= c->radius ? 0 : c->wave_height[dist]);
       }
       result %= c->colors;
 

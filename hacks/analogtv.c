@@ -388,6 +388,7 @@ analogtv_allocate(Display *dpy, Window window)
   analogtv_init();
 
   it=(analogtv *)calloc(1,sizeof(analogtv));
+  if (!it) return 0;
   it->dpy=dpy;
   it->window=window;
 
@@ -1189,6 +1190,7 @@ analogtv_draw(analogtv *it)
   float *raw_rgb_end=raw_rgb_start+3*it->subwidth;
   float *rrp;
 
+  if (! raw_rgb_start) return;
   analogtv_setup_frame(it);
   analogtv_set_demod(it);
 

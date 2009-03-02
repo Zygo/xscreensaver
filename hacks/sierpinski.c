@@ -37,7 +37,9 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay: 400000 \n" \
 					"*count: 2000 \n" \
 					"*cycles: 100 \n" \
-					"*ncolors: 64 \n"
+					"*ncolors: 64 \n" \
+					"*fpsSolid: true \n" \
+
 # define BRIGHT_COLORS
 # define reshape_sierpinski 0
 # define sierpinski_handle_event 0

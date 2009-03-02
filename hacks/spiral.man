@@ -5,6 +5,7 @@ spiral - draws moving circular spiral patterns
 .B spiral
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-count \fIinteger\fP]
 
+[\-fps]
 .SH DESCRIPTION
 The \fIspiral\fP program draws moving circular spiral patterns
 .SH OPTIONS
@@ -37,6 +38,9 @@ Default 40.
 .B \-cycles \fIinteger\fP
 Default 350.
 
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

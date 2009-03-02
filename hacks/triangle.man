@@ -9,6 +9,7 @@ triangle - random mountains using iterative subdivision of triangles.
 [\-root]
 [\-delay \fInumber\fP]
 [\-ncolors \fInumber\fP]
+[\-fps]
 .SH DESCRIPTION
 Generates random mountain ranges using iterative subdivision of triangles.
 .SH OPTIONS
@@ -28,6 +29,9 @@ Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of Colors.  Default: 128.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -8,7 +8,9 @@
           _label="Duration" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="5"/>
 
-  <file id="directory" _label="Image Directory" arg="-directory %"/>
+  <file id="directory" _label="Image directory" arg="-directory %"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 This is a shell script that grabs a frame of video from the system's

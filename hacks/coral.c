@@ -282,6 +282,7 @@ coral_free (Display *dpy, Window window, void *closure)
 static const char *coral_defaults[] = {
   ".background:	black",
   ".foreground:	white",
+  "*fpsSolid:	true",
   "*density:	25",
   "*seeds:	20", /* too many for 640x480, too few for 1280x1024 */
   "*delay:	5",

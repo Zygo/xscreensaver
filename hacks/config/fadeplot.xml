@@ -4,21 +4,24 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20" default="10"/>
-
-  <number id="cycles" type="slider" arg="-cycles %"
-           _label="Timeout" _low-label="Small" _high-label="Large"
-          low="0" high="800000" default="1500"/>
-
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="30000"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
           convert="invert"/>
 
+  <number id="count" type="slider" arg="-count %"
+          _label="Thickness" _low-label="Thin" _high-label="Thick"
+           low="0" high="30" default="10"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Cycles" _low-label="Small" _high-label="Large"
+          low="0" high="10000" default="1500"/>
+
   <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
 Draws what looks like a waving ribbon following a sinusoidal path.

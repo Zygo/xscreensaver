@@ -180,7 +180,7 @@ static Bool myCone2(float radius)
 }
 
 /* draw an ant */
-static Bool draw_antinspect_ant(antinspectstruct * mp, 
+static Bool draw_antinspect_ant(ModeInfo *mi, antinspectstruct * mp, 
                                 const float *Material, int mono,
                                 Bool (*sphere)(float), Bool (*cone)(float)) 
 {
@@ -235,6 +235,7 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, 0.40);
+  mi->polygon_count++;
   if (mono)
     glColor3fv(MaterialGray5);
   else
@@ -242,6 +243,7 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, -0.40);
+  mi->polygon_count++;
   glEnd();
   glBegin(GL_POINTS);
   if (mono)
@@ -249,7 +251,9 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
   else
     glColor3fv(Material);
   glVertex3f(0.40, 0.70, 0.40);
+  mi->polygon_count++;
   glVertex3f(0.40, 0.70, -0.40);
+  mi->polygon_count++;
   glEnd();
   
   /* LEFT-FRONT ARM */
@@ -260,8 +264,10 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, 0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos1, 0.15, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos1, 0.25 + 0.1 * sin1, 0.45);
+  mi->polygon_count++;
   glEnd();
   
   /* LEFT-CENTER ARM */
@@ -272,9 +278,12 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, 0.00, 0.18);
   glVertex3f(0.35 + 0.05 * cos2, 0.00, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos2, 0.00 + 0.1 * sin2, 0.45);
+  mi->polygon_count++;
   glEnd();
+  mi->polygon_count++;
   
   /* LEFT-BACK ARM */
   glBegin(GL_LINE_STRIP);
@@ -284,8 +293,10 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, -0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos3, -0.15, 0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 + 0.05 * cos3, -0.25 + 0.1 * sin3, 0.45);
+  mi->polygon_count++;
   glEnd();
   
   /* RIGHT-FRONT ARM */
@@ -296,8 +307,10 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, 0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin1, 0.15, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin1, 0.25 + 0.1 * cos1, -0.45);
+  mi->polygon_count++;
   glEnd();
   
   /* RIGHT-CENTER ARM */
@@ -308,8 +321,10 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, 0.00, -0.18);
   glVertex3f(0.35 - 0.05 * sin2, 0.00, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin2, 0.00 + 0.1 * cos2, -0.45);
+  mi->polygon_count++;
   glEnd();
   
   /* RIGHT-BACK ARM */
@@ -320,8 +335,10 @@ static Bool draw_antinspect_ant(antinspectstruct * mp,
     glColor3fv(Material);
   glVertex3f(0.00, -0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin3, -0.15, -0.25);
+  mi->polygon_count++;
   glColor3fv(MaterialGray);
   glVertex3f(-0.20 - 0.05 * sin3, -0.25 + 0.1 * cos3, -0.45);
+  mi->polygon_count++;
   glEnd();
     
   glEnable(GL_LIGHTING);
@@ -377,6 +394,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi)
   glVertex3f(0.0, 0.0, -1.0);
   glVertex3f(-sqrt(3.0)/2.0, 0.0, 0.5);
   glVertex3f(sqrt(3.0)/2.0, 0.0, 0.5);
+  mi->polygon_count++;
   glEnd();
 
   /* rotate */
@@ -386,6 +404,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi)
     glVertex3f(0.0, 0.0, 1.0 + 3.0);
     glVertex3f(sqrt(3.0)/2.0, 0.0, -0.5 + 3.0);
     glVertex3f(-sqrt(3.0)/2.0, 0.0, -0.5 + 3.0);
+    mi->polygon_count++;
     glEnd();
   }
 
@@ -429,7 +448,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi)
 
       if(antposition[i] > 360.0)
 	antposition[i] = 0.0;
-      draw_antinspect_ant(mp, MaterialShadow, mono, mySphere2, myCone2);
+      draw_antinspect_ant(mi, mp, MaterialShadow, mono, mySphere2, myCone2);
 
       glDisable(GL_BLEND);
       glDisable(GL_LIGHTING);
@@ -471,7 +490,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi)
     if(antposition[i] > 360.0)
       antposition[i] = 0.0;
     glEnable(GL_BLEND);
-    draw_antinspect_ant(mp, antmaterial[i], mono, mySphere2, myCone2);
+    draw_antinspect_ant(mi, mp, antmaterial[i], mono, mySphere2, myCone2);
     glDisable(GL_BLEND);
     glPopMatrix();
 
@@ -634,6 +653,8 @@ ENTRYPOINT void draw_antinspect(ModeInfo * mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
+
+  mi->polygon_count = 0;
 
   /* position camera --- this works well, we can peer inside 
      the antbubble */

@@ -4,6 +4,7 @@ petri - simulates mold growing in a petri dish
 .SH SYNOPSIS
 .B petri
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-mem-throttle \fIamount\fP] [\-count \fIinteger\fP] [\-originalcolors] [\-diaglim \fIreal\fP] [\-anychan \fIreal\fP] [\-minorchan \fIreal\fP] [\-instantdeathchan \fIreal\fP] [\-minlifespeed \fIreal\fP] [\-maxlifespeed \fIreal\fP] [\-mindeathspeed \fIreal\fP] [\-maxdeathspeed \fIreal\fP] [\-minlifespan \fIinteger\fP] [\-maxlifespan \fIinteger\fP]
+[\-fps]
 .SH DESCRIPTION
 \fIpetri\fP simulates mold growing in a petri dish via a state-heavy grid
 of automata (vaguely like Conway's Life, only with much more state per
@@ -94,6 +95,9 @@ comes. Defaults to 500, resource \fIminlifespan\fP.
 .B \-maxlifespan \fIinteger\fP
 The maximum lifespan for a colony, in iterations, before Black Death
 comes. Defaults to 1500, resource \fImaxlifespan\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

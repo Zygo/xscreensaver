@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -188,26 +188,29 @@
            !strcmp(name, "font") ||
            !strcmp(name, "labelFont") ||  // grabclient.c
            !strcmp(name, "titleFont") ||
+           !strcmp(name, "fpsFont") ||    // fps.c
+           !strcmp(name, "foreground") || // fps.c
            !strcmp(name, "background")
            ))
       NSLog(@"warning: no preference \"%s\" [string]", name);
     return NULL;
   }
-#if 0
-  if (! [o isKindOfClass:[NSString class]]) {
-    NSAssert2(0, @"%s = \"%@\" but should have been an NSString", name, o);
-    abort();
-  }
-#else
   if (! [o isKindOfClass:[NSString class]]) {
     NSLog(@"asked for %s as a string, but it is a %@", name, [o class]);
     o = [(NSNumber *) o stringValue];
   }
-#endif
 
   NSString *os = (NSString *) o;
-  const char *result = [os cStringUsingEncoding:NSUTF8StringEncoding];
-  return strdup (result);
+  char *result = strdup ([os cStringUsingEncoding:NSUTF8StringEncoding]);
+
+  // Kludge: if the string is surrounded with single-quotes, remove them.
+  // This happens when the .xml file says things like arg="-foo 'bar baz'"
+  if (result[0] == '\'' && result[strlen(result)-1] == '\'') {
+    result[strlen(result)-1] = 0;
+    strcpy (result, result+1);
+  }
+
+  return result;
 }
 
 
@@ -227,6 +230,7 @@
            !strcmp(name, "mono") ||
            !strcmp(name, "count") ||
            !strcmp(name, "ncolors") ||
+           !strcmp(name, "doFPS") ||      // fps.c
            !strcmp(name, "eraseSeconds")  // erase.c
            ))
       NSLog(@"warning: no preference \"%s\" [float]", name);
@@ -245,7 +249,11 @@
 
 - (int) getIntegerResource: (const char *) name
 {
-  return (int) [self getFloatResource:name];
+  // Sliders might store float values for integral resources; round them.
+  float v = [self getFloatResource:name];
+  int i = (int) (v + (v < 0 ? -0.5 : 0.5)); // ignore sign or -1 rounds to 0
+  // if (i != v) NSLog(@"%s: rounded %.3f to %d", name, v, i);
+  return i;
 }
 
 

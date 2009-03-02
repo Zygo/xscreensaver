@@ -41,7 +41,9 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 # define DEFAULTS	"*count:		1000  \n"			\
 					"*cycles:		20    \n"			\
 					"*delay:		10000 \n"			\
-					"*ncolors:		200   \n"
+					"*ncolors:		200   \n" \
+					"*fpsSolid:		true   \n" \
+
 # define UNIFORM_COLORS
 # define reshape_julia 0
 # define julia_handle_event 0

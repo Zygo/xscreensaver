@@ -4,20 +4,27 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="10000"
-          convert="invert"/>
+   <hgroup>
+    <vgroup>
+     <number id="delay" type="slider" arg="-delay %"
+             _label="Frame rate" _low-label="Low" _high-label="High"
+             low="0" high="100000" default="10000"
+             convert="invert"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="64"/>
+     <number id="ncolors" type="slider" arg="-ncolors %"
+               _label="Number of colors" _low-label="Two" _high-label="Many"
+               low="1" high="255" default="64"/>
+    </vgroup>
+    <vgroup>
+     <number id="size" type="slider" arg="-size %"
+              _label="Tile size" _low-label="Small" _high-label="Large"
+              low="1" high="100" default="40"/>
 
-  <number id="size" type="slider" arg="-size %"
-           _label="Tile Size" _low-label="Small" _high-label="Large"
-           low="1" high="100" default="40"/>
-
-  <boolean id="ammann" _label="Draw Ammann Lines" arg-set="-ammann"/>
+     <boolean id="ammann" _label="Draw ammann lines" arg-set="-ammann"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+   </hgroup>
+  
 
   <_description>
 Draws quasiperiodic tilings; think of the implications on modern
@@ -35,7 +42,9 @@ Great Britain being invited by a multinational to wipe their bottoms
 on what appears to be the work of a Knight of the Realm, then a last
 stand must be taken."
 
-As reported by News of the Weird #491, 4-jul-1997.
+As reported by News of the Weird #491, 4-Jul-1997.
+
+http://en.wikipedia.org/wiki/Penrose_tiling
 
 Written by Timo Korvola; 1997.
   </_description>

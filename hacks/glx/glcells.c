@@ -20,7 +20,7 @@
  *
  * 2007: Written by Matthias Toussaint
  * 0.1 Initial version
- * 0.2 Bugfixes (threading) and code cleanup by Jamie Zavinsky
+ * 0.2 Bugfixes (threading) and code cleanup by Jamie Zawinski
  *     Window scaling bug + performance bug in tick()
  */
  
@@ -48,7 +48,7 @@
 #define DEF_MINFOOD   "5"
 #define DEF_MAXFOOD   "20"
 #define DEF_DIVIDEAGE "20"
-#define DEF_MINDIST   "1.40"
+#define DEF_MINDIST   "1.4"
 #define DEF_PAUSE     "50"
 
 #define DEFAULTS	"*delay:	30000            \n" \

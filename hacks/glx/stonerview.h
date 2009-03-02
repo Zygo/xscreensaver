@@ -27,6 +27,7 @@ typedef struct stonerview_state stonerview_state;
 struct stonerview_state {
 
   int wireframe;
+  int transparent;
 
   /* The list of polygons. This is filled in by move_increment(), and rendered
      by perform_render(). */
