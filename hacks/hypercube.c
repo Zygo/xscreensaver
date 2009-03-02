@@ -76,7 +76,7 @@ hyper (xy, xz, yz, xw, yw, zw)
   double _tmp0_, _tmp1_;
 
   struct point_state points [16];
-  bzero (points, sizeof (points));
+  memset (points, 0, sizeof (points));
 
 #define mmmm (&points[0])
 #define mmmp (&points[1])
@@ -174,7 +174,7 @@ hyper (xy, xz, yz, xw, yw, zw)
     mixing an ANSI compiler with a non-ANSI preprocessor, or vice versa.
     Regardless, your system is broken; it's not a bug in this program.
   */
-#if __STDC__ || SVR4
+#if __STDC__
 # define rotate(name,dim0,dim1,cos,sin) \
       _tmp0_ = ((name##dim0 * cos) + (name##dim1 * sin)); \
       _tmp1_ = ((name##dim1 * cos) - (name##dim0 * sin)); \
@@ -229,7 +229,7 @@ char *defaults [] = {
   "*color3:	white",
   "*color4:	green",
   "*color5:	cyan",
-  "*color6:	blue",
+  "*color6:	dodgerblue",
   "*color7:	magenta",
 
   "*xw:		0.000",

@@ -8,24 +8,24 @@
  *  Installing it is the morally superior thing to do, but xscreensaver will
  *  work without it.
  */
-/* #define HAVE_XIDLE */
+#define HAVE_XIDLE
 
 /*  Uncomment the following line if you have the XPM library installed.
  *  Some of the demos can make use of this.
  */
-#define HAVE_XPM 
+/* #define HAVE_XPM */
 
 /*  Uncomment the following line if you don't have Motif.  If you don't have
  *  Motif, then the screensaver won't have any dialog boxes, which means
  *  that it won't be compiled with support for demo-mode or display-locking.
  */
-/*#define NO_MOTIF */
+/* #define NO_MOTIF */
 
 /* Uncomment the following line if for some reason the locking code doesn't
  * work (for example, if you don't have the crypt() system call, or if you
  * don't use standard passwd files.)
  */
-#define NO_LOCKING
+/* #define NO_LOCKING */
 
 /*  Uncomment the following line if your system doesn't have the select()
  *  system call.
@@ -46,14 +46,14 @@
  *  that is, the passwords live in /etc/shadow instead of /etc/passwd,
  *  and one reads them with getspnam() instead of getpwnam().
  */
-#define HAVE_SHADOW 
+/* #define HAVE_SHADOW */
 
 /*  You may need to edit these to correspond to where Motif is installed.
  */
 #ifndef NO_MOTIF
-  MOTIFINCLUDES = -I/usr/X/include
- MOTIFLDOPTIONS = -L/usr/X/lib
-      MOTIFLIBS = -lXm 
+  MOTIFINCLUDES = /* -I... */
+ MOTIFLDOPTIONS = /* -L... */
+      MOTIFLIBS = -lXm
 #endif
 
 /*  On some systems, only programs running as root can use the getpwent()
@@ -86,5 +86,8 @@
 #else /* r5 or better */
 # define R5ISMS
 #endif
-/*EXTRA_LIBRARIES=-L/usr/ucblib -lucb -lnsl*/
-EXTRA_LIBRARIES= -lgen -L/usr/ucblib -lucb -lnsl
+
+/* It seems that some versions of Sun's dynamic X libraries are broken; if
+   you get link errors about _get_wmShellWidgetClass being undefined, try
+   adding -Bstatic to the link command.
+ */

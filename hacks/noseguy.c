@@ -449,6 +449,8 @@ init_words()
   words = get_words();	
 }
 
+static int first_time = 1;
+
 static char *
 get_words()
 {
@@ -473,6 +475,27 @@ get_words()
 	    (void) pclose(pp);
 	    if (! buf[0])
 	      sprintf (buf, "\"%s\" produced no output!", orig_program);
+	    else if (!first_time &&
+		     !strcmp (buf, "sh: fortune: not found\n"))
+	      switch (random () % 20)
+		{
+		case 1: strcat (buf, "( Get with the program, bub. )\n");
+		  break;
+		case 2: strcat (buf,
+		  "( I blow my nose at you, you silly person! ) \n"); break;
+		case 3: strcat (buf,
+		  "\nThe resource you want to\nset is `noseguy.program'\n");
+		  break;
+		case 4:
+		  strcat(buf,"\nHelp!!  Help!!\nAAAAAAGGGGHHH!!  \n\n"); break;
+		case 5: strcpy (buf, "You have new mail.\n"); break;
+		case 6:
+		  strcat(buf,"( Hello?  Are you paying attention? )\n");break;
+		case 7:
+		  strcat (buf, "sh: what kind of fool do you take me for? \n");
+		  break;
+		}
+	    first_time = 0;
 	    p = buf;
 	}
 	else

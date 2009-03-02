@@ -163,7 +163,7 @@ cycle_timer (junk1, junk2)
       kill_screenhack ();
       spawn_screenhack (False);
     }
-  cycle_id = XtAppAddTimeOut (app, how_long, (XtTimerCallbackProc)cycle_timer, 0);
+  cycle_id = XtAppAddTimeOut (app, how_long, cycle_timer, 0);
 }
 
 
@@ -189,7 +189,7 @@ reset_timers ()
 	    progname, timeout, timer_id);
 #endif
   XtRemoveTimeOut (timer_id);
-  timer_id = XtAppAddTimeOut (app, timeout, (XtTimerCallbackProc)idle_timer, 0);
+  timer_id = XtAppAddTimeOut (app, timeout, idle_timer, 0);
   if (cycle_id) abort ();
 
   last_activity_time = time ((time_t *) 0);
@@ -217,7 +217,7 @@ check_pointer_timer (closure, this_timer)
     abort ();
 #endif
 
-  *timerP = XtAppAddTimeOut (app, pointer_timeout, (XtTimerCallbackProc)check_pointer_timer,
+  *timerP = XtAppAddTimeOut (app, pointer_timeout, check_pointer_timer,
 			     closure);
 
   XQueryPointer (dpy, screensaver_window, &root, &child,
@@ -251,7 +251,7 @@ sleep_until_idle (until_idle_p)
 
   if (until_idle_p)
     {
-      timer_id = XtAppAddTimeOut (app, timeout, (XtTimerCallbackProc)idle_timer, 0);
+      timer_id = XtAppAddTimeOut (app, timeout, idle_timer, 0);
 #ifdef HAVE_XIDLE
       if (! use_xidle)
 #endif
@@ -286,7 +286,7 @@ sleep_until_idle (until_idle_p)
 	      goto DONE;
 	    else
 	      timer_id = XtAppAddTimeOut (app, timeout - idle,
-					  (XtTimerCallbackProc)idle_timer, 0);
+					  idle_timer, 0);
 	  }
 	break;
 
@@ -299,7 +299,7 @@ sleep_until_idle (until_idle_p)
 #ifdef HAVE_XIDLE
 	if (! use_xidle)
 #endif
-	  XtAppAddTimeOut (app, notice_events_timeout, (XtTimerCallbackProc)notice_events_timer,
+	  XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
 			   (XtPointer) event.xcreatewindow.window);
 	break;
 

@@ -29,6 +29,10 @@ extern Bool lock_p, demo_mode_p;
 Atom XA_VROOT, XA_XSETROOT_ID;
 Atom XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 
+#if __STDC__
+extern void describe_visual (FILE *, Display *, Visual *);
+#endif
+
 Window screensaver_window = 0;
 Cursor cursor;
 Colormap cmap, cmap2;
@@ -421,6 +425,8 @@ initialize_screensaver_window ()
   int height = HeightOfScreen (screen);
   char id [2048];
 
+  black.red = black.green = black.blue = 0;
+
   if (cmap == DefaultColormapOfScreen (screen))
     cmap = 0;
 
@@ -467,7 +473,7 @@ initialize_screensaver_window ()
   attrs.backing_store = NotUseful;
   attrs.colormap = cmap;
 
-/*  if (demo_mode_p || lock_p) width = width / 2;  #### */
+/*  if (demo_mode_p || lock_p) width = width / 2;   #### */
 
   if (screensaver_window)
     {
@@ -484,6 +490,21 @@ initialize_screensaver_window ()
     }
   else
     {
+      if (! verbose_p)
+	;
+      else if (visual == DefaultVisualOfScreen (screen))
+	{
+	  fprintf (stderr, "%s: using default visual ", progname);
+	  describe_visual (stderr, dpy, visual);
+	}
+      else
+	{
+	  fprintf (stderr, "%s: using visual:   ", progname);
+	  describe_visual (stderr, dpy, visual);
+	  fprintf (stderr, "%s: default visual: ", progname);
+	  describe_visual (stderr, dpy, DefaultVisualOfScreen (screen));
+	}
+
       screensaver_window =
 	XCreateWindow (dpy, RootWindowOfScreen (screen), 0, 0, width, height,
 		       0, visual_depth, InputOutput, visual, attrmask,
@@ -505,7 +526,6 @@ initialize_screensaver_window ()
   XChangeProperty (dpy, screensaver_window, XA_SCREENSAVER_ID, XA_STRING, 8,
 		   PropModeReplace, (unsigned char *) id, strlen (id));
 
-  black.red = black.green = black.blue = 0;
   if (!cursor)
     {
       Pixmap bit;
@@ -545,6 +565,7 @@ raise_window (inhibit_fade, between_hacks_p)
       fade_colormap (dpy, current_map, cmap2, fade_seconds, fade_ticks, True);
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
+      /* Once the saver window is up, restore the colormap. */
       XInstallColormap (dpy, cmap);
       if (grabbed == GrabSuccess)
 	XUngrabPointer (dpy, CurrentTime);

@@ -26,13 +26,16 @@ Draw on the root window.
 If on a color display, pretend we're on a monochrome display.
 .TP 8
 .B \-bitmap bitmap-name
-The bitmap to rotate.  It need not be square: it will be padded with
-the background color.  Default is \fIxlogo64\fP, but \fIescherknot\fP
-is also nice.  You really need to run this on a bigger bitmap than
-those shipped with the X distribution to do it justice.
+The file name of a bitmap to rotate.  It need not be square: it 
+will be padded with the background color.  If unspecified or the
+string \fI(default)\fP, a builtin bitmap is used.
 
-The \fB*bitmapFilePath\fP resource will be searched if the bitmap name
-is not a fully-qualified pathname.
+If support for the \fBXPM\fP library was enabled at compile-time, 
+the specified file may be in XPM format as well as XBM, and thus 
+may be a color image.
+
+The \fB*bitmapFilePath\fP resource will be searched if the bitmap
+name is not a fully-qualified pathname.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -54,7 +57,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

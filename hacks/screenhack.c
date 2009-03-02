@@ -70,17 +70,17 @@ merge_options ()
   merged_options_size = XtNumber (default_options) + options_size;
   merged_options = (XrmOptionDescRec *)
     malloc (sizeof (default_options) + options_sizeof);
-  bcopy (options, merged_options, options_sizeof);
-  bcopy (default_options, merged_options + options_size,
-	 sizeof (default_options));
+  memcpy (merged_options, options, options_sizeof);
+  memcpy (merged_options + options_size, default_options,
+	  sizeof (default_options));
 
   for (defaults_size = 0; defaults [defaults_size]; defaults_size++);
   merged_defaults = (char **)
     malloc (sizeof (default_defaults) + (defaults_size * sizeof (char *)));
-  bcopy (default_defaults, merged_defaults, sizeof (default_defaults));
-  bcopy (defaults, merged_defaults - 1 +
-	 (sizeof (default_defaults) / sizeof (default_defaults[0])),
-	 ((defaults_size + 1) * sizeof (defaults[0])));
+  memcpy (merged_defaults, default_defaults, sizeof (default_defaults));
+  memcpy ((merged_defaults - 1 +
+	   (sizeof (default_defaults) / sizeof (default_defaults[0]))),
+	  defaults, ((defaults_size + 1) * sizeof (defaults[0])));
 }
 
 

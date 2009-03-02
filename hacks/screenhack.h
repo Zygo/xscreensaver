@@ -73,10 +73,6 @@ extern int options_size;
 extern char *defaults [];
 
 #if __STDC__
-
-# define bcopy(from,to,size) memcpy((to),(from),(size))
-# define bzero(addr,size) memset((addr),0,(size))
-
 # if defined(SVR4) || defined(SYSV)
 extern int rand (void);
 extern void srand (unsigned int);

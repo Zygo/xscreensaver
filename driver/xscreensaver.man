@@ -11,12 +11,12 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "22-mar-93" "X Version 11"
+.TH XScreenSaver 1 "30-oct-93" "X Version 11"
 .SH NAME
 xscreensaver - run graphics hacks after the user has been idle for a while
 .SH SYNOPSIS
 .B xscreensaver
-[\-display \fIhost:display.screen\fP] [\-timeout \fIint\fP] [\-cycle \fIint\fP] [\-nice \fIint\fP] [\-verbose] [\-silent] [\-xidle] [\-no-xidle] [\-lock] [\-no-lock] [\-lock\-timeout \fIint\fP] [\-demo] [\-xrm \fIresources\fP]
+[\-display \fIhost:display.screen\fP] [\-timeout \fIint\fP] [\-cycle \fIint\fP] [\-nice \fIint\fP] [\-verbose] [\-silent] [\-xidle] [\-no-xidle] [\-lock] [\-no-lock] [\-lock\-timeout \fIint\fP] [\-demo] [\-visual \fIvisual\fP] [\-xrm \fIresources\fP]
 .SH DESCRIPTION
 The \fIxscreensaver\fP program waits until the keyboard and mouse have been 
 idle for a period, and then runs a graphics demo chosen at random.  It 
@@ -85,6 +85,30 @@ without requiring a password.  After 5 minutes, a password will be
 required.  The default is 0, meaning that if locking is enabled, then
 a password will be required as soon as the screensaver activates.
 .TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are:
+.RS 8
+.TP 8
+.B best
+Use the visual which supports the most writable color cells; this is
+the default.
+.TP 8
+.B default
+Use the screen's default visual (the visual of the root window.)  This is
+not necessarily the most colorful visual, which is why it is not the default.
+.TP 8
+.I class
+One of \fBStaticGray\fP, \fBStaticColor\fP, \fBTrueColor\fP, \fBGrayScale\fP, 
+\fBPseudoColor\fP, or \fBDirectColor\fP.  Selects the deepest visual of
+the given class.
+.TP 8
+.I number
+A number (decimal or hex) is interpreted as a visual id number, as reported
+by the
+.BR xdpyinfo (1)
+program; in this way you can select a shallower visual if desired.
+.RE
+.TP 8
 .B \-demo
 Enter the interactive demo mode immediately after startup.  Normally
 demo mode is invoked via the
@@ -148,6 +172,10 @@ should be left on the screen before giving up (default 30.)  This should
 not be too large: the X server is grabbed for the duration that the password
 dialog box is up (for security purposes) and leaving the server grabbed for
 too long can cause problems.
+.TP 8
+.B visualID \fR(class \fBVisualID\fP)
+Same as the \fI\-visual\fP command-line option.  Default \fBbest\fP.
+
 .TP 8
 .B programs \fR(class \fBPrograms\fP)
 The graphics hacks which \fIxscreensaver\fP runs when the user is idle.
@@ -330,6 +358,7 @@ automatically return to demo mode after restarting.
 .BR imsmap (1),
 .BR slidescreen (1),
 .BR hypercube (1),
+.BR flame (1),
 .BR maze (1),
 .BR ico (1),
 .BR xdaliclock (1),

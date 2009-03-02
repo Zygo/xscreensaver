@@ -36,6 +36,7 @@
 
 #include <X11/Xmu/Drawing.h>
 
+#include "default.xbm"
 
 static Display *dpy;
 static Window window;
@@ -46,6 +47,7 @@ static GC gc;
 static int delay, delay2;
 static Pixmap bitmap;
 static int depth;
+static unsigned int fg, bg;
 
 static void rotate(), init (), display ();
 
@@ -86,38 +88,17 @@ rotate ()
 }
 
 static void
-init ()
+read_bitmap (bitmap_name, widthP, heightP)
+     char *bitmap_name;
+     int *widthP, *heightP;
 {
-  XWindowAttributes xgwa;
-  Colormap cmap;
-  XGCValues gcv;
-  int width, height, xh, yh;
-  unsigned int real_size;
-  char *bitmap_name;
-  int i;
 #ifdef HAVE_XPM
   XpmAttributes xpmattrs;
   int result;
-#endif
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  depth = xgwa.depth;
-
-  delay = get_integer_resource ("delay", "Integer");
-  delay2 = get_integer_resource ("delay2", "Integer");
-  if (delay < 0) delay = 0;
-  if (delay2 < 0) delay2 = 0;
-  bitmap_name = get_string_resource ("bitmap", "Bitmap");
-  if (! bitmap_name)
-    {
-      fprintf (stderr, "%s: no bitmap specified\n", progname);
-      exit (1);
-    }
-#ifdef HAVE_XPM
   xpmattrs.valuemask = 0;
   bitmap = 0;
-  result = XpmReadFileToPixmap (dpy,window, bitmap_name, &bitmap, 0, &xpmattrs);
+  result = XpmReadFileToPixmap (dpy, window, bitmap_name, &bitmap, 0,
+				&xpmattrs);
   switch (result)
     {
     case XpmColorError:
@@ -125,8 +106,8 @@ init ()
 	       progname);
       /* fall through */
     case XpmSuccess:
-      width = xpmattrs.width;
-      height = xpmattrs.height;
+      *widthP = xpmattrs.width;
+      *heightP = xpmattrs.height;
       break;
     case XpmFileInvalid:
     case XpmOpenFailed:
@@ -144,12 +125,59 @@ init ()
     }
   if (! bitmap)
 #endif
-    bitmap = XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy), bitmap_name,
-				0, 0, &width, &height, &xh, &yh);
-  if (! bitmap)
     {
-      fprintf (stderr, "%s: couldn't find bitmap %s\n", progname, bitmap_name);
-      exit (1);
+      int xh, yh;
+      Pixmap b2;
+      bitmap = XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy), bitmap_name,
+				    0, 0, widthP, heightP, &xh, &yh);
+      if (! bitmap)
+	{
+	  fprintf (stderr, "%s: couldn't find bitmap %s\n", progname,
+		   bitmap_name);
+	  exit (1);
+	}
+      b2 = XmuCreatePixmapFromBitmap (dpy, window, bitmap, *widthP, *heightP,
+				      depth, fg, bg);
+      XFreePixmap (dpy, bitmap);
+      bitmap = b2;
+    }
+}
+
+static void
+init ()
+{
+  XWindowAttributes xgwa;
+  Colormap cmap;
+  XGCValues gcv;
+  int width, height;
+  unsigned int real_size;
+  char *bitmap_name;
+  int i;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  cmap = xgwa.colormap;
+  depth = xgwa.depth;
+
+  fg = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+  bg = get_pixel_resource ("background", "Background", dpy, cmap);
+  delay = get_integer_resource ("delay", "Integer");
+  delay2 = get_integer_resource ("delay2", "Integer");
+  if (delay < 0) delay = 0;
+  if (delay2 < 0) delay2 = 0;
+  bitmap_name = get_string_resource ("bitmap", "Bitmap");
+  if (! bitmap_name || !*bitmap_name)
+    bitmap_name = "(default)";
+
+  if (!strcmp (bitmap_name, "(default)"))
+    {
+      width = logo_width;
+      height = logo_height;
+      bitmap = XCreatePixmapFromBitmapData (dpy, window, (char *) logo_bits,
+					    width, height, fg, bg, depth);
+    }
+  else
+    {
+      read_bitmap (bitmap_name, &width, &height);
     }
 
   real_size = (width > height) ? width : height;
@@ -171,13 +199,14 @@ init ()
   gcv.function=GXand;  AND = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
   gcv.function=GXxor;  XOR = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
 
-  XFillRectangle (dpy, self, CLR, 0, 0, size, size);
+  gcv.foreground = gcv.background = bg;
+  gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
+  /* Clear self to the background color (not to 0, which CLR does.) */
+  XFillRectangle (dpy, self, gc, 0, 0, size, size);
+  XSetForeground (dpy, gc, fg);
+
   XCopyArea (dpy, bitmap, self, CPY, 0, 0, width, height,
 	     (size - width)>>1, (size - height)>>1);
-
-  gcv.foreground = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  gcv.background = get_pixel_resource ("background", "Background", dpy, cmap);
-  gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 }
 
 static void
@@ -217,7 +246,7 @@ char *defaults [] = {
   "*foreground:	white",
   "*delay:	500000",
   "*delay2:	500000",
-  "*bitmap:	xlogo64",	/* hey, pick something better! */
+  "*bitmap:	(default)",
   0
 };
 

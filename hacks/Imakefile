@@ -8,8 +8,10 @@
 #include "../config.h"
 
 #ifdef HAVE_XPM
+ /* Yeah, this means that all hacks link against libXpm even though only
+    one hack actually use it.  It doesn't matter: it's a library. */
 # define XPMDEFS -DHAVE_XPM
-# define XPMLIB -lXpm -L/usr/ucblib -lucb
+# define XPMLIB -lXpm
 #else
 # define XPMDEFS
 # define XPMLIB
@@ -18,17 +20,17 @@
           UTILS = ../utils
        INCLUDES = -I$(UTILS)
         DEFINES = R5ISMS XPMDEFS
-EXTRA_LIBRARIES = $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm -lnsl
+EXTRA_LIBRARIES = $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm
           HACKS = attraction.c greynetic.c helix.c hopalong.c xroger-hack.c \
                   noseguy.c pyro.c qix.c rocks.c rorschach.c blitspin.c \
                   imsmap.c slidescreen.c decayscreen.c maze.c hypercube.c \
-                  halo.c
+                  halo.c flame.c
             MEN = attraction.man greynetic.man helix.man hopalong.man \
                   noseguy.man pyro.man xroger.man qix.man rocks.man \
                   rorschach.man blitspin.man imsmap.man slidescreen.man \
-                  decayscreen.man maze.man hypercube.man halo.man
+                  decayscreen.man maze.man hypercube.man halo.man flame.man
        TARFILES = README Imakefile screenhack.c $(HACKS) screenhack.h \
-                  vroot.h xlock.h $(MEN) .gdbinit noses/\*
+                  vroot.h xlock.h default.xbm $(MEN) .gdbinit noses/\*
 
 all::
 
@@ -65,3 +67,4 @@ ScreenhackTarget (imsmap, imsmap, $(HOBJS) $(UTILS)/hsv.o)
 ScreenhackTarget (maze, maze, $(HOBJS) $(UTILS)/xroger.o)
 ScreenhackTarget (hypercube, hypercube, $(HOBJS))
 ScreenhackTarget (halo, halo, $(HOBJS) $(UTILS)/hsv.o)
+ScreenhackTarget (flame, flame, $(HOBJS) $(UTILS)/hsv.o)

@@ -8,7 +8,9 @@
 #include "../config.h"
 
 #ifdef NO_SELECT
-    DEFINES = -DNO_SELECT
+    DEFINES = R5ISMS -DNO_SELECT
+#else
+    DEFINES = R5ISMS
 #endif
        SRCS = fade.c hsv.c resources.c spline.c usleep.c xroger.c grabscreen.c
        OBJS = fade.o hsv.o resources.o spline.o usleep.o xroger.o grabscreen.o

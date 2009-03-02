@@ -1,7 +1,9 @@
 
-See config.h for configuration parameters.  To build, do the usual:
+To build:
 
-	xmkmf ; make ; make install ; make install.man
+  -  read the comments in `config.h' and edit it as appropriate
+  -  xmkmf ; make
+  -  make install install.man
 
 The xscreensaver program waits until the keyboard and mouse have been idle
 for a period, and then runs a graphics demo chosen at random.  It turns off
@@ -20,7 +22,7 @@ xautolock programs is the ease with which new graphics hacks can be
 installed: you don't need to recompile this program to add a new display
 mode, you just change some resource settings.  Any program which can be
 invoked in such a way that it draws on the root window of the screen can
-now be used as a screensaver without modification [*].  The programs that
+now be used as a screensaver without modification.  The programs that
 are being run as screensavers don't need to have any special knowledge
 about what it means to be a screensaver.
 
@@ -48,6 +50,7 @@ window, which are pointed at by the screensaver's default resource settings.
    halo		- Random circular patterns.
    pyro		- Fireworks.  Looks a lot like the version in xlock.
    hopalong	- Fractals.  I snarfed this code from xlock.
+   flame	- Fractals.  Also from xlock.
    noseguy	- A guy with a big nose wanders around the screen saying
 		  things.  I snarfed this code from xnlock.
    maze		- This is the X maze demo modified to take a -root option
@@ -68,17 +71,19 @@ Other reasonable things to use as screensavers, if you have them, are
   kaleid -root			- qix-like kaleidescope patterns
   xfishtank -c black -d -r 1	- fish (use version 2.0 or later)
 
-You can get all of these from export.lcs.mit.edu.  If you know of (or write)
-any other interesting programs that can be used as screensavers, please let
-me know!
+You can get all of these from the contrib directory on ftp.x.org.  If you
+know of (or write) any other interesting programs that can be used as
+screensavers, please let me know!
 
 	-- Jamie Zawinski <jwz@lucid.com>
 
-[*] It may be necessary to include "vroot.h" in the program, but that would
-be necessary for it to work with virtual-root window managers anyway.
-
-
 
+Changes since 1.20:	Fixed bug in color blitspin; added default image.
+			Added diagnostics to noseguy.  Fixed off-by-one
+			error in flame.  Added some missing casts.
+Changes since 1.18:	Added `flame' hack.
+			Fixed a minor Motif dialog text field bug.
+			Fixed yet another XPointer-not-defined-in-R4 bug.
 Changes since 1.17:	Added support for shadow password files.
 			Fixed some Motif-related locking bugs.
 			Added diagnostics when locking is disabled.

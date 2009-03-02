@@ -13,10 +13,6 @@
 #include <stdlib.h>
 #endif
 
-#ifdef SVR4
-#include <sys/time.h>
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xos.h>	/* lazy way out */
 

@@ -182,7 +182,9 @@ Time lock_timeout;
 
 extern Time timeout;
 extern Time cycle;
+#ifndef NO_LOCKING
 extern Time passwd_timeout;
+#endif
 extern Time pointer_timeout;
 extern Time notice_events_timeout;
 extern XtIntervalId lock_id, cycle_id;
@@ -219,7 +221,9 @@ static Atom XA_EXIT, XA_RESTART, XA_DEMO, XA_LOCK;
 #ifdef NO_MOTIF /* kludge */
 Bool demo_mode_p = 0;
 Bool dbox_up_p = 0;
+#ifndef NO_LOCKING
 Time passwd_timeout = 0;
+#endif
 #endif
 
 
@@ -233,7 +237,7 @@ static XrmOptionDescRec options [] = {
   { "-timeout",		".timeout",	XrmoptionSepArg, 0 },
   { "-idelay",		".initialDelay",XrmoptionSepArg, 0 },
   { "-cycle",		".cycle",	XrmoptionSepArg, 0 },
-  { "-visual",		".visual",	XrmoptionSepArg, 0 },
+  { "-visual",		".visualID",	XrmoptionSepArg, 0 },
   { "-lock-timeout",	".lockTimeout",	XrmoptionSepArg, 0 },
   { "-verbose",		".verbose",	XrmoptionNoArg, "on" },
   { "-silent",		".verbose",	XrmoptionNoArg, "off" },
@@ -385,7 +389,8 @@ get_screenhacks ()
 static void
 get_resources ()
 {
-  visual	  = get_visual_resource (dpy, "visual", "Visual");
+  /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
+  visual	  = get_visual_resource (dpy, "visualID", "VisualID");
   timeout         = 1000 * get_minutes_resource ("timeout", "Time");
   cycle           = 1000 * get_minutes_resource ("cycle",   "Time");
   lock_timeout	  = 1000 * get_minutes_resource ("lockTimeout", "Time");
@@ -399,13 +404,15 @@ get_resources ()
   fade_ticks	  = get_integer_resource ("fadeTicks", "Integer");
   shell           = get_string_resource ("bourneShell", "BourneShell");
   initial_delay   = get_seconds_resource ("initialDelay", "Time");
-  passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
   pointer_timeout = 1000 * get_seconds_resource ("pointerPollTime", "Time");
   notice_events_timeout = 1000 * get_seconds_resource ("windowCreationTimeout",
 						       "Time");
+#ifndef NO_LOCKING
+  passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
+  if (passwd_timeout == 0) passwd_timeout = 30000;
+#endif
   if (timeout < 10000) timeout = 10000;
   if (cycle < 2000) cycle = 2000;
-  if (passwd_timeout == 0) passwd_timeout = 30000;
   if (pointer_timeout == 0) pointer_timeout = 5000;
   if (notice_events_timeout == 0) notice_events_timeout = 10000;
   if (fade_seconds == 0 || fade_ticks == 0) fade_p = False;
@@ -569,8 +576,14 @@ initialize (argc, argv)
   }
   save_argv (argc, argv);
   initialize_connection (argc, argv);
-
   ensure_no_screensaver_running ();
+
+  if (verbose_p)
+    printf ("\
+%s %s, copyright (c) 1991-1993 by Jamie Zawinski <jwz@lucid.com>.\n\
+ pid = %d.\n", progname, screensaver_version, getpid ());
+  ensure_no_screensaver_running ();
+
   demo_mode_p = initial_demo_mode_p;
   screensaver_window = 0;
   cursor = 0;
@@ -579,6 +592,7 @@ initialize (argc, argv)
   cycle_id = 0;
   lock_id = 0;
   locked_p = False;
+
   if (use_xidle)
     {
 #ifdef HAVE_XIDLE
@@ -598,11 +612,6 @@ initialize (argc, argv)
     }
 
   init_sigchld ();
-
-  if (verbose_p)
-    printf ("\
-%s %s, copyright (c) 1991-1993 by Jamie Zawinski <jwz@lucid.com>.\n\
- pid = %d.\n", progname, screensaver_version, getpid ());
 
   disable_builtin_screensaver ();
 

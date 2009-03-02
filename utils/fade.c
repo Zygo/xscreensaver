@@ -17,14 +17,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 
-#if __STDC__
-# define bcopy(from,to,size) memcpy((to),(from),(size))
-# define bzero(addr,size) memset((addr),0,(size))
-extern void screenhack_usleep (unsigned long);
-#else
 extern void screenhack_usleep ();
-#endif
-
 #define usleep screenhack_usleep
 
 #define MAX_COLORS 4096
@@ -87,7 +80,7 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
   for (i = 0; i < ncolors; i++)
     orig_colors [i].pixel = i;
   XQueryColors (dpy, cmap, orig_colors, ncolors);
-  bcopy (orig_colors, current_colors, ncolors * sizeof (XColor));
+  memcpy (current_colors, orig_colors, ncolors * sizeof (XColor));
 
   for (i = (out_p ? steps : 0);
        (out_p ? i > 0 : i < steps);
@@ -96,9 +89,9 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
       int j;
       for (j = 0; j < ncolors; j++)
 	{
-	  current_colors[j].red   = (int)orig_colors[j].red   * i / steps;
-	  current_colors[j].green = (int)orig_colors[j].green * i / steps;
-	  current_colors[j].blue  = (int)orig_colors[j].blue  * i / steps;
+	  current_colors[j].red   = orig_colors[j].red   * i / steps;
+	  current_colors[j].green = orig_colors[j].green * i / steps;
+	  current_colors[j].blue  = orig_colors[j].blue  * i / steps;
 	}
       XStoreColors (dpy, cmap2, current_colors, ncolors);
       XSync (dpy, False);

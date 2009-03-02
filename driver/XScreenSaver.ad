@@ -37,7 +37,8 @@
 		decayscreen -root					\n\
 		hypercube -root						\n\
 		halo -root						\n\
-		maze -root						\n
+		maze -root						\n\
+		flame -root						\n
 
 ! Programs on this list are run only for monochrome screens.
 *monoPrograms:	qix -root -linear -count 5 -size 200 -spread 30		\
@@ -129,6 +130,7 @@
 *resourcesDone.labelString:	Done
 *resourcesCancel.labelString:	Cancel
 
+*passwdDialog.title:		Password
 *passwdLabel1.labelString:	XScreenSaver %s
 *passwdLabel2.labelString:	This display is locked.
 *passwdLabel3.labelString:	Please type %s's password to unlock it.

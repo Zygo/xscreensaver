@@ -9,6 +9,42 @@
  * implied warranty.
  */
 
+/* I would really like some error messages to show up on the screensaver window
+   itself when subprocs die, or when we can't launch them.  If the process
+   produces output, but does not actually die, I would like that output to go
+   to the appropriate stdout/stderr as they do now.  X and Unix conspire to
+   make this incredibly difficult.
+
+   - Not all systems have SIGIO, so we can't necessarily be signalled when a
+     process dies, so we'd have to poll it with wait() or something awful like
+     that, which would mean the main thread waking up more often than it does
+     now.
+
+   - We can't tell the difference between a process dying, and a process not
+     being launched correctly (for example, not being on $PATH) partly because
+     of the contortions we need to go through with /bin/sh in order to launch
+     it.
+
+   - We can't do X stuff from signal handlers, so we'd need to set a flag, 
+     save the error message, and notice that flag in the main thread.  The
+     problem is that the main thread is probably sleeping, waiting for the 
+     next X event, so to do this we'd have to register a pipe FD or something,
+     and write to it when something loses.
+
+   - We could assume that any output produced by a subproc indicates an error,
+     and blast that across the screen.  This means we'd need to use popen()
+     instead of forking and execing /bin/sh to run it for us.  Possibly this
+     would work, but see comment in exec_screenhack() about getting pids.
+     I think we could do the "exec " trick with popen() but would SIGIO get
+     delivered correctly?  Who knows.  (We could register the pipe-FD with
+     Xt, and handle output on it with a callback.)
+
+   - For the simple case of the programs not being on $PATH, we could just 
+     search $PATH before launching the shell, but that seems hardly worth the
+     effort...  And it's broken!!  Why should we have to duplicate half the
+     work of the shell?  (Because it's Unix, that's why!  Bend over.)
+ */
+
 #if __STDC__
 #include <stdlib.h>
 #include <unistd.h>
@@ -45,7 +81,6 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #endif
 
 # if defined(SVR4) || defined(SYSV)
-#  undef PRIO_PROCESS
 #  define random() rand()
 # else /* !totally-losing-SYSV */
 extern long random();			/* rand() is in stdlib.h... */
@@ -101,6 +136,12 @@ exec_screenhack (command)
      So, the only solution other than implementing an argument parser here
      is to force the shell to exec() its inferior.  What a fucking hack!
      We prepend "exec " to the command string.
+
+     (Actually, Clint Wong <clint@jts.com> points out that process groups
+     might be used to take care of this problem; this may be worth considering
+     some day, except that, 1: this code works now, so why fix it, and 2: from
+     what I've seen in Emacs, dealing with process groups isn't especially
+     portable.)
    */
   tmp = command;
   command = (char *) malloc (strlen (tmp) + 6);
@@ -116,7 +157,7 @@ exec_screenhack (command)
   if (verbose_p)
     printf ("%s: spawning \"%s\" in pid %d.\n", progname, command, getpid ());
 
-#if defined(SYSV) || defined(__hpux)
+#if defined(SYSV) || defined(SVR4) || defined(__hpux)
   {
     int old_nice = nice (0);
     int n = nice_inferior - old_nice;
@@ -151,7 +192,7 @@ exec_screenhack (command)
 
   sprintf (buf, "%s: %sexecve() failed", progname, (verbose_p ? "## " : ""));
   perror (buf);
-  exit (1);	/* Note this this only exits a child fork.  */
+  exit (1);	/* Note that this only exits a child fork.  */
 }
 
 /* to avoid a race between the main thread and the SIGCHLD handler */
@@ -184,9 +225,17 @@ await_child_death (killed)
 	  int exit_status = WEXITSTATUS (status);
 	  if (exit_status & 0x80)
 	    exit_status |= ~0xFF;
-	  if (exit_status != 0 && verbose_p)
-	    printf ("%s: child pid %d (%s) exited abnormally (code %d).\n",
-		    progname, pid, current_hack_name (), exit_status);
+	  /* One might assume that exiting with non-0 means something went
+	     wrong.  But that loser xswarm exits with the code that it was
+	     killed with, so it *always* exits abnormally.  Treat abnormal
+	     exits as "normal" (don't mention them) if we've just killed
+	     the subprocess.  But mention them if they happen on their own.
+	   */
+	  if (exit_status != 0 && (verbose_p || (! killed)))
+	    fprintf (stderr,
+		     "%s: %schild pid %d (%s) exited abnormally (code %d).\n",
+		    progname, (verbose_p ? "## " : ""),
+		     pid, current_hack_name (), exit_status);
 	  else if (verbose_p)
 	    printf ("%s: child pid %d (%s) exited normally.\n",
 		    progname, pid, current_hack_name ());

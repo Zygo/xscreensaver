@@ -23,7 +23,10 @@
 #include "xscreensaver.h"
 #include <stdio.h>
 
-extern Time timeout, cycle, lock_timeout, passwd_timeout;
+extern Time timeout, cycle, lock_timeout;
+#ifndef NO_LOCKING
+extern Time passwd_timeout;
+#endif
 extern int fade_seconds, fade_ticks;
 extern Bool verbose_p, install_cmap_p, fade_p, unfade_p;
 extern Bool lock_p, locking_disabled_p;
@@ -220,7 +223,7 @@ pop_up_dialog_box (dialog, form, where)
   XtSetArg (av [ac], XtNoverrideRedirect, True); ac++;
   XtSetArg (av [ac], XmNdefaultPosition, False); ac++;
   /* I wonder whether this does anything useful? */
-/* XtSetArg (av [ac], XmNdialogStyle, XmDIALOG_SYSTEM_MODAL); ac++; */
+  /*  XtSetArg (av [ac], XmNdialogStyle, XmDIALOG_SYSTEM_MODAL); ac++; */
   XtSetValues (dialog, av, ac);
   XtSetValues (form, av, ac);
   XtManageChild (form);
@@ -259,16 +262,16 @@ make_screenhack_dialog (parent, hacks)
   XtFree (label);
 
   XtAddCallback (demo_list, XmNbrowseSelectionCallback, select_cb,
-		 hacks);
+		 (XtPointer) hacks);
   XtAddCallback (demo_list, XmNdefaultActionCallback, select_cb,
-		 hacks);
+		 (XtPointer) hacks);
 
   XtAddCallback (text_line, XmNactivateCallback, text_cb, 0);
   XtAddCallback (next, XmNactivateCallback, next_cb, 0);
   XtAddCallback (prev, XmNactivateCallback, prev_cb, 0);
   XtAddCallback (done, XmNactivateCallback, done_cb, 0);
   XtAddCallback (restart, XmNactivateCallback, restart_cb, 0);
-  XtAddCallback (edit, XmNactivateCallback, edit_cb, parent);
+  XtAddCallback (edit, XmNactivateCallback, edit_cb, (XtPointer) parent);
 
   for (; *hacks; hacks++)
     {
@@ -386,7 +389,9 @@ res_done_cb (button, client_data, call_data)
   timeout = res.timeout * 1000;
   cycle = res.cycle * 1000;
   lock_timeout = res.lock_time * 1000;
+#ifndef NO_LOCKING
   passwd_timeout = res.passwd_time * 1000;
+#endif
   fade_seconds = res.secs;
   fade_ticks = res.ticks;
   verbose_p = res.verb;
@@ -410,7 +415,8 @@ make_resources_dialog (parent)
   XtAddCallback (res_cancel, XmNactivateCallback, res_cancel_cb, 0);
 
 #define CB(widget,type,slot) \
-	XtAddCallback ((widget), XmNvalueChangedCallback, (type), (slot))
+	XtAddCallback ((widget), XmNvalueChangedCallback, (type), \
+		       (XtPointer) (slot))
   CB (timeout_text,	res_min_cb,  &res.timeout);
   CB (cycle_text,	res_min_cb,  &res.cycle);
   CB (fade_text,	res_sec_cb,  &res.secs);
@@ -481,7 +487,9 @@ pop_resources_dialog ()
   res.timeout = timeout / 1000;
   res.cycle = cycle / 1000;
   res.lock_time = lock_timeout / 1000;
+#ifndef NO_LOCKING
   res.passwd_time = passwd_timeout / 1000;
+#endif
   res.secs = fade_seconds;
   res.ticks = fade_ticks;
   res.verb = verbose_p;

@@ -101,7 +101,7 @@ main (argc, argv)
   XEvent event;
   int i;
   char *message = 0, *dpyname = 0;
-  screensaver_version = malloc (5);
+  screensaver_version = (char *) malloc (5);
   memcpy (screensaver_version, screensaver_id + 17, 4);
   screensaver_version [4] = 0;
   for (i = 1; i < argc; i++)

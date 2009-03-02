@@ -38,11 +38,16 @@ tar: utils/Makefile driver/Makefile hacks/Makefile
 	@NAME=`sed -n							    \
   's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;  \
   rm -f $$NAME ; ln -s . $$NAME ;					    \
+  FILES= ;								    \
+  for subdir in driver utils hacks ; do					    \
+    cd $$subdir ;							    \
+    FILES="$$FILES `make echo_tarfiles					    \
+      | grep -v '^make\['						    \
+      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
+      ` ";								    \
+    cd .. ; done ;							    \
   echo creating tar file $${NAME}.tar.$(COMPRESS_EXT)... ;		    \
-   $(TAR) -vchf - `echo $(TARFILES)				    	    \
-   \`cd driver ; make echo_tarfiles | sed 's|^|driver/|g;s| | driver/|g'\`  \
-   \`cd utils  ; make echo_tarfiles | sed 's|^|utils/|g; s| | utils/|g'\`   \
-   \`cd hacks  ; make echo_tarfiles | sed 's|^|hacks/|g; s| | hacks/|g'\`   \
-   | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `				    \
+  $(TAR) -vchf -							    \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `	    \
    | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;			    \
   rm $$NAME

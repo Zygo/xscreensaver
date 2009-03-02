@@ -158,3 +158,28 @@ get_visual_resource (dpy, name, class)
   else
     return pick_best_visual_of_class (dpy, vclass);
 }
+
+void
+describe_visual (f, dpy, visual)
+     FILE *f;
+     Display *dpy;
+     Visual *visual;
+{
+  XVisualInfo vi_in, *vi_out;
+  int out_count, d;
+  vi_in.screen = DefaultScreen (dpy);
+  vi_in.visualid = XVisualIDFromVisual (visual);
+  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
+			   &vi_in, &out_count);
+  if (! vi_out) abort ();
+  fprintf (f, "0x%02x (%s depth: %2d, cmap: %3d @ %d)\n", vi_out->visualid,
+	   (vi_out->class == StaticGray  ? "StaticGray, " :
+	    vi_out->class == StaticColor ? "StaticColor," :
+	    vi_out->class == TrueColor   ? "TrueColor,  " :
+	    vi_out->class == GrayScale   ? "GrayScale,  " :
+	    vi_out->class == PseudoColor ? "PseudoColor," :
+	    vi_out->class == DirectColor ? "DirectColor," :
+	    "???"),
+	   vi_out->depth, vi_out->colormap_size, vi_out->bits_per_rgb);
+  XFree ((char *) vi_out);
+}

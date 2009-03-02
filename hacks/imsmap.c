@@ -369,7 +369,7 @@ static void
 cycle (dpy)
      Display *dpy;
 {
-  XColor *colors = malloc (npixels * sizeof (XColor));
+  XColor *colors = (XColor *) malloc (npixels * sizeof (XColor));
   time_t stop;
   int i;
   for (i = 0; i < npixels; i++)
