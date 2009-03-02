@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="phosphor" _label="Phosphor">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="50000"
+          convert="invert"/>
+
+  <number id="scale" type="spinbutton" arg="-scale %"
+          _label="Scale" low="1" high="100" default="6"/>
+
+  <number id="fade" type="slider" arg="-ticks %"
+          _label="Fade" _low-label="Slow" _high-label="Fast"
+          low="1" high="100" default="20"
+          convert="invert"/>
+
+  <select id="mode">
+    <option id="dumb" _label="Dump pipe"/>
+    <option id="pty"  _label="Use PTY" arg-set="-pty"/>
+  </select>
+
+  <file id="program" _label="Text Program" arg="-program %"/>
+
+  <!-- #### -font [fixed] -->
+
+  <_description>
+Draws a simulation of an old terminal, with large pixels and
+long-sustain phosphor. It can run any program as a source of the text
+it displays.  Written by Jamie Zawinski.
+  </_description>
+</screensaver>

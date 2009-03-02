@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="halo" _label="Halo">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Number of Circles" low="0" high="20" default="0"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="120000" default="100000"
+          convert="invert"/>
+
+  <boolean id="animate" _label="Animate Circles" arg-set="-animate"/>
+
+  <select id="mode">
+    <option id="random"   _label="Random Mode"/>
+    <option id="seuss"    _label="Seuss Mode" arg-set="-mode seuss"/>
+    <option id="ramp"     _label="Ramp Mode"  arg-set="-mode ramp"/>
+  </select>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <!-- #### -cycle-delay [100000] -->
+  <!-- #### -no-cycle -->
+
+  <_description>
+This draws trippy psychedelic circular patterns that hurt to look at.
+It can also animate the control-points, but that takes a lot of CPU
+and bandwidth.  Written by Jamie Zawinski.
+  </_description>
+</screensaver>

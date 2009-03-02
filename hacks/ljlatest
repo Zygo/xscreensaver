@@ -1,0 +1,409 @@
+#!/usr/bin/perl -w
+# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# Created: 30-Aug-2003.
+#
+# Spits out the text of the most recent public posts on livejournal.com.
+# This works as the "-program" argument to phosphor, starwars, etc.
+
+require 5;
+use strict;
+
+# We can't "use diagnostics" here, because that library malfunctions if
+# you signal and catch alarms: it says "Uncaught exception from user code"
+# and exits, even though I damned well AM catching it!
+#use diagnostics;
+
+use Socket;
+use Text::Wrap qw(wrap);
+use bytes;  # Larry can take Unicode and shove it up his ass sideways.
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.9 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my $verbose = 0;
+
+my $url = "http://www.livejournal.com/stats/latest-rss.bml";
+
+my $http_proxy = undef;
+my $http_timeout = 30;
+my $http_timeout2 = 5;
+
+
+# Maps HTML character entities to the corresponding Latin1 characters.
+#
+my %entity_table = (
+   "quot"   => '"', "amp"    => '&', "lt"     => '<', "gt"     => '>',
+   "nbsp"   => ' ', "iexcl"  => '¡', "cent"   => '¢', "pound"  => '£',
+   "curren" => '¤', "yen"    => '¥', "brvbar" => '¦', "sect"   => '§',
+   "uml"    => '¨', "copy"   => '©', "ordf"   => 'ª', "laquo"  => '«',
+   "not"    => '¬', "shy"    => '­', "reg"    => '®', "macr"   => '¯',
+   "deg"    => '°', "plusmn" => '±', "sup2"   => '²', "sup3"   => '³',
+   "acute"  => '´', "micro"  => 'µ', "para"   => '¶', "middot" => '·',
+   "cedil"  => '¸', "sup1"   => '¹', "ordm"   => 'º', "raquo"  => '»',
+   "frac14" => '¼', "frac12" => '½', "frac34" => '¾', "iquest" => '¿',
+   "Agrave" => 'À', "Aacute" => 'Á', "Acirc"  => 'Â', "Atilde" => 'Ã',
+   "Auml"   => 'Ä', "Aring"  => 'Å', "AElig"  => 'Æ', "Ccedil" => 'Ç',
+   "Egrave" => 'È', "Eacute" => 'É', "Ecirc"  => 'Ê', "Euml"   => 'Ë',
+   "Igrave" => 'Ì', "Iacute" => 'Í', "Icirc"  => 'Î', "Iuml"   => 'Ï',
+   "ETH"    => 'Ð', "Ntilde" => 'Ñ', "Ograve" => 'Ò', "Oacute" => 'Ó',
+   "Ocirc"  => 'Ô', "Otilde" => 'Õ', "Ouml"   => 'Ö', "times"  => '×',
+   "Oslash" => 'Ø', "Ugrave" => 'Ù', "Uacute" => 'Ú', "Ucirc"  => 'Û',
+   "Uuml"   => 'Ü', "Yacute" => 'Ý', "THORN"  => 'Þ', "szlig"  => 'ß',
+   "agrave" => 'à', "aacute" => 'á', "acirc"  => 'â', "atilde" => 'ã',
+   "auml"   => 'ä', "aring"  => 'å', "aelig"  => 'æ', "ccedil" => 'ç',
+   "egrave" => 'è', "eacute" => 'é', "ecirc"  => 'ê', "euml"   => 'ë',
+   "igrave" => 'ì', "iacute" => 'í', "icirc"  => 'î', "iuml"   => 'ï',
+   "eth"    => 'ð', "ntilde" => 'ñ', "ograve" => 'ò', "oacute" => 'ó',
+   "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
+   "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
+   "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
+   "apos"   => '\''
+);
+
+# Maps certain UTF8 characters (2 or 3 bytes) to the corresponding
+# Latin1 characters.
+#
+my %unicode_latin1_table = (
+   "\xC2\xA1" => '¡', "\xC2\xA2" => '¢', "\xC2\xA3" => '£', "\xC2\xA4" => '¤',
+   "\xC2\xA5" => '¥', "\xC2\xA6" => '¦', "\xC2\xA7" => '§', "\xC2\xA8" => '¨',
+   "\xC2\xA9" => '©', "\xC2\xAA" => 'ª', "\xC2\xAB" => '«', "\xC2\xAC" => '¬',
+   "\xC2\xAD" => '­', "\xC2\xAE" => '®', "\xC2\xAF" => '¯', "\xC2\xB0" => '°',
+   "\xC2\xB1" => '±', "\xC2\xB2" => '²', "\xC2\xB3" => '³', "\xC2\xB4" => '´',
+   "\xC2\xB5" => 'µ', "\xC2\xB6" => '¶', "\xC2\xB7" => '·', "\xC2\xB8" => '¸',
+   "\xC2\xB9" => '¹', "\xC2\xBA" => 'º', "\xC2\xBB" => '»', "\xC2\xBC" => '¼',
+   "\xC2\xBD" => '½', "\xC2\xBE" => '¾', "\xC2\xBF" => '¿', "\xC3\x80" => 'À',
+   "\xC3\x81" => 'Á', "\xC3\x82" => 'Â', "\xC3\x83" => 'Ã', "\xC3\x84" => 'Ä',
+   "\xC3\x85" => 'Å', "\xC3\x86" => 'Æ', "\xC3\x87" => 'Ç', "\xC3\x88" => 'È',
+   "\xC3\x89" => 'É', "\xC3\x8A" => 'Ê', "\xC3\x8B" => 'Ë', "\xC3\x8C" => 'Ì',
+   "\xC3\x8D" => 'Í', "\xC3\x8E" => 'Î', "\xC3\x8F" => 'Ï', "\xC3\x90" => 'Ð',
+   "\xC3\x91" => 'Ñ', "\xC3\x92" => 'Ò', "\xC3\x93" => 'Ó', "\xC3\x94" => 'Ô',
+   "\xC3\x95" => 'Õ', "\xC3\x96" => 'Ö', "\xC3\x97" => '×', "\xC3\x98" => 'Ø',
+   "\xC3\x99" => 'Ù', "\xC3\x9A" => 'Ú', "\xC3\x9B" => 'Û', "\xC3\x9C" => 'Ü',
+   "\xC3\x9D" => 'Ý', "\xC3\x9E" => 'Þ', "\xC3\x9F" => 'ß', "\xC3\xA0" => 'à',
+   "\xC3\xA1" => 'á', "\xC3\xA2" => 'â', "\xC3\xA3" => 'ã', "\xC3\xA4" => 'ä',
+   "\xC3\xA5" => 'å', "\xC3\xA6" => 'æ', "\xC3\xA7" => 'ç', "\xC3\xA8" => 'è',
+   "\xC3\xA9" => 'é', "\xC3\xAA" => 'ê', "\xC3\xAB" => 'ë', "\xC3\xAC" => 'ì',
+   "\xC3\xAD" => 'í', "\xC3\xAE" => 'î', "\xC3\xAF" => 'ï', "\xC3\xB0" => 'ð',
+   "\xC3\xB1" => 'ñ', "\xC3\xB2" => 'ò', "\xC3\xB3" => 'ó', "\xC3\xB4" => 'ô',
+   "\xC3\xB5" => 'õ', "\xC3\xB6" => 'ö', "\xC3\xB7" => '÷', "\xC3\xB8" => 'ø',
+   "\xC3\xB9" => 'ù', "\xC3\xBA" => 'ú', "\xC3\xBB" => 'û', "\xC3\xBC" => 'ü',
+   "\xC3\xBD" => 'ý', "\xC3\xBE" => 'þ', "\xC3\xBF" => 'ÿ',
+
+   "\xE2\x80\x93" => '--',  "\xE2\x80\x94" => '--',
+   "\xE2\x80\x98" => '`',   "\xE2\x80\x99" => '\'',
+   "\xE2\x80\x9C" => "``",  "\xE2\x80\x9D" => "''",
+   "\xE2\x80\xA6" => '...',
+);
+
+
+# Convert any HTML entities to Latin1 characters.
+#
+sub de_entify {
+  my ($text) = @_;
+  $text =~ s/(&(\#)?([[:alpha:]\d]+);?)/
+    {
+     my $c;
+     if ($2) {
+       $c = chr($3);  # the &#number is always decimal, right?
+     } else {
+       $c = $entity_table{$3};
+     }
+#    print STDERR "$progname: warning: unknown HTML character entity \"$1\"\n"
+#     unless $c;
+     ($c ? $c : "[$3]");
+    }
+   /gexi;
+  return $text;
+}
+
+
+# Convert any Unicode characters to Latin1 if possible.
+# Unconvertable bytes are left alone.
+#
+sub de_unicoddle {
+  my ($text) = @_;
+  foreach my $key (keys (%unicode_latin1_table)) {
+    my $val = $unicode_latin1_table{$key};
+    $text =~ s/$key/$val/gs;
+  }
+  return $text;
+}
+
+
+# returns three values: the HTTP response line; the document headers;
+# and the document body.
+#
+sub get_document {
+  my ( $url ) = @_;
+
+  my $timeout  = $http_timeout;
+  my $timeout2 = $http_timeout2;
+
+  print STDERR "$progname: loading $url\n" if ($verbose);
+
+  if (! ($url =~ m@^http://@i)) {
+    error ("not an HTTP URL: $url");
+  }
+
+  my ($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
+  $path = "" unless $path;
+
+  my ($them,$port) = split(/:/, $serverstring);
+  $port = 80 unless $port;
+
+  my $them2 = $them;
+  my $port2 = $port;
+  if ($http_proxy) {
+    $serverstring = $http_proxy if $http_proxy;
+    $serverstring =~ s@^[a-z]+://@@;
+    ($them2,$port2) = split(/:/, $serverstring);
+    $port2 = 80 unless $port2;
+  }
+
+  my ($remote, $iaddr, $paddr, $proto, $line);
+  $remote = $them2;
+  if ($port2 =~ /\D/) { $port2 = getservbyname($port2, 'tcp') }
+  if (!$port2) {
+    error ("unrecognised port in $url");
+  }
+  $iaddr   = inet_aton($remote);
+  if (!$iaddr) {
+    error ("host not found: $remote");
+  }
+  $paddr   = sockaddr_in($port2, $iaddr);
+
+
+  my $head = "";
+  my $body = "";
+
+  @_ =
+    eval {
+      local $SIG{ALRM} = sub {
+        if ($body ne '') {
+          print STDERR "$progname: timed out ($timeout) in headers for $url\n";
+        } else {
+          print STDERR "$progname: timed out ($timeout2) in body for $url\n";
+        }
+        die "alarm\n";
+      };
+      alarm $timeout;
+
+      $proto   = getprotobyname('tcp');
+      if (!socket(S, PF_INET, SOCK_STREAM, $proto)) {
+        error ("socket: $!");
+      }
+      if (!connect(S, $paddr)) {
+        error ("connect($serverstring): $!");
+      }
+
+      select(S); $| = 1; select(STDOUT);
+
+      my $user_agent = "$progname/$version";
+
+      my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
+                 "Host: $them\r\n" .
+                 "User-Agent: $user_agent\r\n";
+      $hdrs .= "\r\n";
+
+      if ($verbose > 1) {
+        foreach (split('\r?\n', $hdrs)) {
+          print STDERR "  ==> $_\n";
+        }
+      }
+
+      print S $hdrs;
+      my $http = <S> || "";
+
+      $_  = $http;
+      s/[\r\n]+$//s;
+      print STDERR "  <== $_\n" if ($verbose > 1);
+
+      while (<S>) {
+        $head .= $_;
+        s/[\r\n]+$//s;
+        last if m@^$@;
+        print STDERR "  <== $_\n" if ($verbose > 1);
+      }
+
+      my $lines = 0;
+      while (<S>) {
+        $body .= $_;
+        $lines++;
+
+        # we wait $timeout secs to get the first body line; after
+        # that, we time out if we haven't received a subsequent line
+        # in $timeout2 seconds.
+        #
+        alarm $timeout2;
+      }
+
+      print STDERR ("  <== [ body ]: $lines lines, " .
+                    length($body) . " bytes\n")
+        if ($verbose > 1);
+
+      close S;
+
+      if (!$http) {
+        print STDERR "$progname: null response: $url\n" if ($verbose);
+      }
+
+      return ( $http, $head, $body );
+    };
+  die if ($@ && $@ ne "alarm\n");       # propagate errors
+  if ($@) {
+    # timed out
+    return ();
+  } else {
+    # didn't
+    alarm 0;
+    return @_;
+  }
+}
+
+
+sub lj_latest {
+  my ($images_p, $count, $cols) = @_;
+
+  $|=1;  # unbuffer stdout
+
+  $_ = $url;
+  s@^[a-z]+:/+([^/?\#]+).*$@$1@;
+  my $host = $_;
+
+  print STDOUT "Contacting $host..." if ($verbose);
+
+  my ($http, $head, $body) = get_document ($url);
+
+  if (!$body) {
+    print STDOUT "$progname: no response from $host\n";
+    return;
+  }
+
+  print STDOUT "\n\n" if ($verbose);
+
+#  $body = `cat /tmp/last`;
+#  if (1) {
+#    local *OUT;
+#    open OUT, ">/tmp/last";
+#    print OUT "$http\n$head\n$body\n";
+#    close OUT;
+#  }
+
+  $body =~ s/(<item\b)/\001\001$1/gsi;
+  my $i = 0;
+  foreach (split (/\001\001/, $body)) {
+    next unless m/^<item\b/i;
+    last if (defined ($count) && $i >= $count);
+
+    my ($ig0, $title) = m@<(TITLE       [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi;
+    my ($ig1, $body)  = m@<(DESCRIPTION [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi;
+    my ($ig2, $url)   = m@<(LINK        [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi;
+
+    $_ = "$title\n\n$body";
+
+    s@<[^<>]*>@@gs;                 # lose all XML tags
+    $_ = de_unicoddle ($_);         # convert UTF8 to Latin1
+    $_ = de_entify ($_);            # convert entities to get HTML from XML
+
+    if ($images_p) {
+      s/</\001\001</gs;
+      foreach (split (/\001\001/, $_)) {
+        next unless m/^(<img\b[^<>]+>)/i;
+        $_ = $1;
+        my ($src) = m/\bSRC    \s*=\s*[\"\']?([^<>\"\'\s]+)/xsi;
+        next unless ($src);
+        next if ($src =~ m@^http://[^./]+\.livejournal\.com\b@); # builtins
+
+        my ($w)   = m/\bWIDTH  \s*=\s*[\"\']?(\d+)/xsi;
+        my ($h)   = m/\bHEIGHT \s*=\s*[\"\']?(\d+)/xsi;
+
+        $_ = "<A HREF=\"$url\"><IMG SRC=\"$src\"";
+        $_ .= " WIDTH=$w" if ($w);
+        $_ .= " HEIGHT=$h" if ($h);
+        $_ .= " BORDER=1 HSPACE=4 VSPACE=4></A><BR>\n";
+        print STDOUT $_;
+        $i++;
+      }
+
+    } else {  # emit text/plain
+
+      s@</?(BR|TR|TD|LI|DIV)\b[^<>]*>@\n@gsi; # line break at BR, TD, DIV, etc
+      s@</?(P|UL|OL|BLOCKQUOTE)\b[^<>]*>@\n\n@gsi; # two line breaks
+
+      s@<lj\s+user=\"?([^<>\"]+)\"?[^<>]*>?@$1@gsi;  # handle <LJ USER=>
+      s@</?[BI]>@*@gsi;               # bold, italic => asterisks
+
+      s@<[^<>]*>?@@gs;                # lose all other HTML tags
+      $_ = de_entify ($_);            # convert entities in the html too
+
+      # elide any remaining non-Latin1 binary data...
+      s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«...» /g;
+      #s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«$1» /g;
+
+      $_ .= "\n";
+
+      s/[ \t]*$//gm;                  # lose whitespace at end of line
+      s@\n\n\n+@\n\n@gs;              # compress blank lines
+
+      $Text::Wrap::columns = $cols;
+      $_ = wrap ("", "  ", $_);       # wrap the lines as a paragraph
+
+      s/[ \t]*$//gm;                  # lose whitespace at end of line again
+      s/^\s+//s;		    # de-indent first line
+      $_ .= "\n";		    # blank line at very end
+      print STDOUT $_;
+      $i++;
+    }
+  }
+}
+
+
+sub error {
+  ($_) = @_;
+  print STDERR "$progname: $_\n";
+  exit 1;
+}
+
+sub usage {
+  print STDERR "usage: $progname [--verbose] [--count N] [--columns N]" .
+    " [--images] [rss-url]\n";
+  exit 1;
+}
+
+sub main {
+  my $count = undef;
+  my $images_p = 0;
+  my $cols = 72;
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif ($_ eq "--count") { $count = 0 + shift @ARGV; }
+    elsif ($_ eq "--images") { $images_p = 1; }
+    elsif ($_ eq "--columns" ||
+           $_ eq "--column" ||
+           $_ eq "--cols" ||
+           $_ eq "--col") {
+      $cols = 0 + shift @ARGV; }
+    elsif (m/^-./) { usage; }
+    elsif (m@^http://@) { $url = $_; }
+    else { usage; }
+  }
+
+  # historical suckage: the environment variable name is lower case.
+  $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
+
+  lj_latest ($images_p, $count, $cols);
+}
+
+main;
+exit 0;

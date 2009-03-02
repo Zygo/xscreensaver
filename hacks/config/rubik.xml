@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rubik" _label="Rubik">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="-100" high="100" default="-30"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="60" default="5"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="40000"
+          convert="invert"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Size" low="-20" high="20" default="-6"/>
+
+  <boolean id="shuffle" _label="Show Shuffling" arg-unset="-hideshuffling"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a Rubik's Cube that rotates in three dimensions and repeatedly
+shuffles and solves itself.  Another fine GL hack by Marcelo Vianna.
+  </_description>
+</screensaver>

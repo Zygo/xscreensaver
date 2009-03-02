@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="stonerview" _label="StonerView">
+
+  <command arg="-root"/>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <_description>
+Chains of colorful squares dance around each other in complex spiral
+patterns.  Written by Andrew Plotkin, based on SGI's `electropaint'
+screensaver.
+  </_description>
+</screensaver>
