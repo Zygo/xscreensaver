@@ -1,0 +1,146 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../../iconfig.h"
+
+UTILDIR = $(top_srcdir)/xlock/
+MODEDIR = $(top_srcdir)/modes/
+GLDIR = $(top_srcdir)/modes/glx/
+UTILOBJDIR = ../../xlock/
+MODEOBJDIR = ../
+GLOBJDIR = ./
+
+DM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+DG = $(GLDIR)
+DOG = $(GLOBJDIR)
+OM = $(O)$(S)$(DM)
+OU = $(O)$(S)$(DOU)
+OG = $(O)$(S)$(DOG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+CXG = $(CX) $(DG)
+
+XCOMM  List of object files
+#ifdef GLLibrary
+#ifdef Unstable
+XLOCKUNSTABLEGLOBJS = $(DOG)skewb$(O)
+#endif
+#ifdef CPPCompiler
+INVERTOBJS = $(DOG)i_figureeight$(O)$(S)\
+$(DOG)i_linkage$(OG)i_sphere$(OG)i_spline$(O)$(S)\
+$(DOG)i_threejet$(OG)i_threejetvec$(O)$(S)\
+$(DOG)i_twojet$(OG)i_twojetvec$(O)
+XLOCKDEPCPPGLOBJS = $(INVERTOBJS)
+XLOCKMULTCPPGLOBJS = $(DOG)invert$(O)
+#if defined(TtfLibrary) && defined(GlttLibrary) && defined(Unstable)
+XLOCKUNSTABLETEXTGLOBJS = $(DOG)text3d$(O)
+#endif
+#endif
+SPROINGIESOBJS = $(DOG)buildlwo$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DOG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)
+ATLANTISOBJS = $(DOG)dolphin$(OG)shark$(OG)swim$(OG)whale$(O)
+GLPLANETOBJS = $(DOG)sphere$(O)
+BUBBLE3DOBJS = $(DOG)b_draw$(OG)b_sphere$(OG)b_lockglue$(O)
+MOLECULEOBJS = $(DOG)tube$(O)
+XLOCKDEPGLOBJS = $(DOG)xpm-ximage$(OG)pipeobjs$(O)$(S)\
+$(SPROINGIESOBJS)$(S)$(ATLANTISOBJS)$(S)$(GLPLANETOBJS)$(S)$(BUBBLE3DOBJS)$(S)\
+$(MOLECULEOBJS)$(S)$(XLOCKDEPCPPGLOBJS)
+XLOCKNORMGLOBJS = $(DOG)cage$(OG)gears$(O)$(S)\
+$(DOG)moebius$(OG)morph3d$(O)$(S)\
+$(DOG)rubik$(OG)sierpinski3d$(OG)stairs$(OG)superquadrics$(O)$(S)\
+$(XLOCKUNSTABLEGLOBJS)$(S)$(XLOCKUNSTABLETEXTGLOBJS)
+XLOCKMULTGLOBJS = $(DOG)fire$(OG)lament$(OG)sballs$(OG)molecule$(O)$(S)\
+$(DOG)pipes$(OG)sproingies$(OG)atlantis$(OG)bubble3d$(OG)glplanet$(O)$(S)\
+$(XLOCKMULTCPPGLOBJS)
+XLOCKGLOBJS = $(XLOCKNORMGLOBJS)$(S)\
+$(XLOCKDEPGLOBJS)$(S)$(XLOCKMULTGLOBJS)
+#endif
+XCOMM default target
+
+#ifdef Modules
+
+NORMMODULES = $(XLOCKNORMMODEOBJS:.o=.xlk)
+
+MULTMODULES = $(XLOCKMULTMODEOBJS:.o=.xlk)
+
+MODULES = $(NORMMODULES) $(MULTMODULES)
+
+EXTRA_LDOPTIONS += $(MODULEFLAGS)
+
+all:: $(XLOCKMODULES)
+
+InstallMultiple($(MODULES), $(DEF_MODULEPATH))
+
+$(CX)$(O) :
+	$(CXX) -c -o $@ $(CFLAGS) $<
+XCOMM	Sun and gcc
+XCOMM	$(CXX) -c -o $@ -isystem /usr/openwin/include $(CFLAGS) $<
+
+$(NORMMODULES) : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $<
+
+$(DOG)fire.xlk : $(DOG)xpm-ximage.o
+$(DOG)lament.xlk : $(DOG)xpm-ximage.o
+$(DOG)sballs.xlk : $(DOG)xpm-ximage.o
+
+$(DOG)fire.xlk $(DOG)lament.xlk $(DOG)sballs.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(DOG)xpm-ximage.o $<
+
+$(DOG)pipes.xlk : $(DOG)buildlwo.o $(DOG)pipeobjs.o
+
+$(DOG)pipes.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(DOG)buildlwo.o $(DOG)pipeobjs.o $<
+
+$(DOG)sproingies.xlk : $(SPROINGIESOBJS)
+
+$(DOG)sproingies.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(SPROINGIESOBJS) $<
+
+$(DOG)atlantis.xlk : $(ATLANTISOBJS)
+
+$(DOG)atlantis.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(ATLANTISOBJS) $<
+
+
+$(DOG)bubble3d.xlk : $(BUBBLE3DOBJS)
+
+$(DOG)bubble3d.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(BUBBLE3DOBJS) $<
+
+#ifdef CPPCompiler
+
+$(DOG)invert.xlk : $(INVERTOBJS)
+
+$(DOG)invert.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(INVERTOBJS) $<
+#endif
+
+clean::
+	$(RM) *.xlk .pure
+
+#else
+all:: $(XLOCKGLOBJS)
+#endif
+
+XLOCKINC = -I. -I../.. -I../../xlock
+
+DependTarget()
+LintTarget()
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean

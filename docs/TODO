@@ -1,0 +1,495 @@
+General problems:
+  o For security (Theo de Raadt <deraadt@cvs.openbsd.org>)
+    - in initpasswd()
+
+    - create two pipes
+    - fork a child
+        - read a password from the pipe
+        - do a check
+        - write a 1 or a 0
+        loop
+
+    - have the parent revoke it's uid's completely.
+        - use one pipe to send passwords to the child
+        - read for 0 or 1
+        - use SIGCHLD to detect child exit
+
+  o Switching consoles using XFree-4.0, the X server sends a fully-obscured
+   event to all its clients, and when I switch back to the graphical
+   terminal, it sends fully-visible or partially-obscured event to its
+   clients.  xlock doesn't handle these event, it still can consume 99% of
+   CPU time in several lock-modes. It would be really good if xlock, when
+   receiving an obscure-event, stopped doing anything CPU-consuming stuff.
+
+   The three messages (fully visible, partially visible and fully obscured)
+   exist in X11 for a long time. Launch the utility 'xev' and move another
+   window over it, and see what it prints. This is useful so that
+   applications (such as fractal animators or Spectrum/C64 emulators or
+   really anything) know if its window is not visible and therefore can save
+   a lot of cpu time if it doesn't even want to draw (update) its contents.
+   For example there's a spectrum emulator at
+   http://www.inf.bme.hu/~mszeredi/spectemu/spectemu.html, if you launch this
+   and switch to full speed mode, you'll see that it runs much faster if its
+   window is obscured by another window or windows.
+
+   Using the XFree-3.3 servers if you switched back to the linux console, no
+   events were sent to the applications, so they couldn't realize that thier
+   contents is not visible to the user in this case. In XFree-4.0 the windows
+   get the fully-obscured event when you switch to linux console, so for
+   example a Spectrum emulator can save really a lot of cpu time, since it
+   doesn't need to redraw its screen 50 times per second.
+
+  o It would be nice to have an option -idletime time.  Where xlock would
+   run after a certain idle time.  (Here xautolock may help you, see
+   above).
+
+  o If an user tries to log in, and his password is wrong,
+   and the input password doesn't has lower-case letters,
+   but upper-case letters, the the message is printed:
+   "Password invalid - please check if SHIFT LOCK is enabled".
+   (It should be possible also to check directly for SHIFT LOCK,
+   I think, but probably more work..)
+
+  o xscreensaver compatibility
+    2 of the writable modes: mandelbrot, tube-> get them to RUN (compile OK)
+    XPM  capability needs to be improved.
+
+  o Add a way to get xlock to switch to "blank" mode after X minutes
+    of (keyboard) inactivity, and to switch back to whatever mode list was
+    being used when activity is detected.  This would be good for
+    users using DPMS to power down the monitor without using precious cpu
+    when the modes are not visible.
+
+  o configure.in should be condensed.  Its getting out of hand.
+
+  o Look into any way of not clearing the screen if can not get control of it
+     (2nd xlock running).
+
+  o gentlerandom mode option.  Switching to next mode when mode completed
+      what it was working on.
+
+  o On a PsuedoColor display
+      xlock -mode life -install &
+      sleep 5 ; xlock -mode life -install
+    Colors will all be messed up after the second one tries to run.
+    This can easily happen if you are using xautolock and decide to lock
+    the display manually.
+
+  o -wireframe should be a mode option (i.e. you should be able to turn it
+    on and off for a particular mode).  Also a linewidth mode option would be
+    nice
+
+  o I got an error with moebius running it on opengl on a 24 bit TrueColor like:
+    xlock -mode moebius -visual PseudoColor
+    (all the gl modes are messed up anyway... all mono)
+
+  o some configurations of linux: swarm and flow has noise when bees go
+    beyond screen (also may happen with forest).
+    Sun Ultra5 PCI Bus 24 bit display: flow has some noise (usually red)
+    This is especially true if you use -inwindow for swarm, flow, euler2d.
+
+  o A few uninitialized memory reads and memory leaks were detected in some
+   of the code.  grep for "PURIFY" in the source files to see where the
+   remaining problems are.  Also see docs/Purify for more details.
+
+  o  -showfps option may give a Zero Page Read and SEGV error using Mesa
+     and Sun
+
+  o superquadrics does not work on some Linux boxes (not mine).
+
+  o Text3d will dump core on some linux boxes (not mine) due to random font
+   routine.  Temporary solution: use arial.ttf directly.  See "#if 0" in
+   text3d.cc.
+
+  o glplanet does not stars clearly on Sun with OpenGL except when in
+   password window (Sun with Mesa ok).
+
+  o glplanet.c, i_spline.cc, molecule.c exit code should be recoded
+
+  o gears.c, lament.c , moebius.c, molecule.c sierpinski3d.c tube.c decay.c
+   goop.c abort code should be recoded.
+
+  o molecule logs me out on Sun Ultra 5 with OpenGL 1.2.1 and 1.2.2
+   (using gcc or cc) when the return key is held down.  This has not
+   been repeated on any other Sun.  Tracing on this seems to indicate
+   the release code but when commented out would still die (done
+   with XSynchronize on).
+
+  o -mono does not work for XPM (they just use XBM when mono), also cage
+   and stairs.
+
+  o Not all resources are listed in "xlock -resources", e.g. nolock.
+   If xlock is renamed these resources are not picked up.
+
+  o Without any programs stealing your colors, like netscape
+   xlock -modelist all -sequential -install -verbose
+   Hit the middle button a hundred times (not to bad on an ultra actually)
+   or try -duration 1 and let it sit for a while.
+   The second time it runs the GL modes they have all lost some colors.
+   This was only noticed on Solaris with pseudocolor.  Also noticed on an
+   ancient HP9000/380 HPUX9.0 with 6 bit depth (without netscape).
+
+  o On a German keyboard and Linux if the password contains special
+   characters (`|' vertical bar, `@' at-sign) while in debug mode
+   everything works fine. This probably has something to do with the
+   X11-keymapping, as these characters are composed with the right Alt-key
+   on a German keyboard.
+
+  o OpenGL and DT may be incompatible on PseudoColor.  (MesaGL should be
+   OK.)  OpenGL frequently causes xlock to error out on non-default visuals.
+
+  o -visual DirectColor if used with any of the with the writable modes
+   (mandelbrot, swirl, or tube) may corrupt the dynamic allocation of memory.
+
+  o Errors in modes, if any, should not break lock.
+
+  o Compile-time option to allow running of separate processes.
+
+  o make -n install prefix=/foo/bar does not work.
+
+  o "xlock -mode random -modelist image -bitmap ./bitmaps/"
+   It should change images when middle mouse is pushed or when
+   -duration time runs out.
+
+  o some sort of completion is used which may be confusing on UNIX
+   Say if a ../bitmaps directory exists and ../bitmap does not
+   xlock -mode random -modelist image -bitmap ../bitmap
+   will try to load ../bitmaps as a file...
+
+  o kill -HUP to change modes as well as middle mouse button.  Needed when
+   using -inroot .
+
+  o jpeg/gif/animated gif support  Fix ras for > 8 bit TrueColor
+
+  o "-visual" commandline argument should accept "best" as well as
+   PseudoColor, TrueColor, default, etc.
+
+  o Is there any chance the "visual" selection code could be made
+   mode-dependent?  Most Xservers that support TrueColor, etc, visuals also
+   support PseudoColor visuals and it would be nice to have color-cycling
+   modes like "starfish" and "swirl" pick a PseudoColor visual if available,
+   while xpm modes could prevent colormap flashing by picking a TrueColor
+   visual.
+   I heard that VisualDepthMask taken out of vis.c it seems to work better
+   to get a PseudoColor visual one a root window of 24 bits.
+
+  o  From Duncan Simpson <dps@io.stargate.co.uk>
+
+Due to the introduction of Xinerama, and a couple of monitor displays, I would
+find a horizontal fivision option that runs two windows each half the width
+of the display (which corresponds to one window one each monitor).
+
+I do not know the details of x2x, although I guess various sorts of multiple
+monitor technology might benefit from this sort of support (one could think
+of Xnest with re-direction to appropiate screens).
+
+Information on x2x is almost certainly somewhere on the web, but I do not 
+have a URL on me (ask your favorite search engine, I guess). I think it 
+involves using multiple boxes for display driving purposes---I hear someone in 
+the lab has 4 screens across with x2x (the pointer moves off one screem onto 
+another). Xnest is an xserver that asks a parent X server to do the work, and 
+I think you can use it to present different display information and so forth.
+
+Xinemera is much easier, it basically just glues mutliple bits of hardare 
+together into a single huge bit of virtual hardware. It does not appear in the 
+extensions list. xlock just sees a single display with 2304x900 pixels on my 
+system, which is actually 2 screens 1152x900 each.  AFAIK there is no easy way 
+to detect Xinemera modulo strange aspect ratios and the like (e.g. my display 
+is suspicously wide, assuming I am using conventional display hardware). 
+Recycled 1990 SUN monitors are conventional, albeit rather pickier about the 
+video signal that one expects these days.
+
+I was thinking I could add -hdiv 2 and would xlock use half the display width, 
+in my case 1152, as the width of an appropiate number of windows (2 for half 
+width). One could think of a maximum window width, with the code generating an 
+appropiate number of windows, for a similar effect. I image neither option 
+would involve vast amounts of code or internal changes.
+
+Actually, on a more careful analysis Xinereama is listed in the extensions and 
+in extensions/Xinerama.h I see the following functions
+
+Bool XineramaIsActive(Display *dpy);
+XineramaScreenInfo * 
+XineramaQueryScreens(
+   Display *dpy,
+   int     *number
+);
+
+XinermaScreenInfo is a structure that contains screen number, x and y origin, 
+width and height (one per head, judjing by the function prototype). The 
+extension is not supported everywhere but feature test macros or autoconf 
+should cope. Imake apparently includes
+
+#define XineramaDefines -DPANORAMIX
+
+if you have the support (and presumably this means you have the header too). 
+My proposal would be less elegant.
+
+~$ gcc -o xintest.^H ci^H^Hxintest.c -:^HL/usr/X11R6/lib -lX11 
+=^H-lXext -lXinerama
+~$ ./xintest 
+Xinerama supported: event base 0, error base 0
+Xinerama active
+There are 2 heads
+Head 0: screen 0 size  1152x900 starting at 0,0
+Head 1: screen 1 size  1152x900 starting at 1152,0
+~$ exit
+
+Script done on Sat Apr 15 19:25:46 2000
+
+Which has interesting effects in ink blot mode (50% of the ink blot on each 
+screen, not indeal). Modes dewsned for about 4x3 suffer quite badly from 
+stretching pn 2304x900... hence my desire for a version aof xlockmore aware of 
+the screen boundaries.
+#include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/Xinerama.h>
+
+int main(void)
+{
+    Display *dpy;
+    int xin, ev, err, i, nh;
+    XineramaScreenInfo *scr;
+
+    dpy=XOpenDisplay("");
+    xin=XineramaQueryExtension(dpy, &ev, &err);
+
+    if (!xin)
+    {
+        printf("Xinerama not avialable\n");
+        XCloseDisplay(dpy);
+        return 0;
+    }
+    printf ("Xinerama supported: event base %d, error base %d\n",
+            ev, err);
+
+    printf("Xinerama %sactive\n", XineramaIsActive(dpy) ? "" : "in");
+    
+    if ((scr=XineramaQueryScreens(dpy, &nh))!=NULL)
+    {
+        printf("There are %d heads\n", nh);
+        for (i=0; i<nh; i++)
+        {
+            printf ("Head %d: screen %d size  %dx%d starting at %d,%d\n",
+                    i, (scr+i)->screen_number,
+                    (scr+i)->width, (scr+i)->height,
+                    (scr+i)->x_org, (scr+i)->y_org);
+        }
+        XFree(scr);
+    }
+    XCloseDisplay(dpy);
+    return 0;
+}
+
+
+  o modes from xscreensaver :) : bubbles, moire, LMorph, halo, ImsMap, BlitSpin
+
+
+Mode specific problems:
+----------------------
+  Various modes need better refresh capability.
+  Various modes need more mouse capability like pacman and worm.
+
+  ant:
+    round ants.  This would involve masking and images to do efficiently.
+    3d version? may be hard to see interior though.
+
+  ball: can it be updated to use a pixmap instead of a slow circle fill?
+
+  braid: should be made so that it can be interrupted quicker.
+
+  bouboule: always starts at the bottom right
+
+  bounce:
+    sometimes a ball does not roll off another ball.
+    momentum seems to be created.
+    A -wall option, multiscreens should have balls bouncing between
+      screens.
+    -mode bounce -inroot may give BadWindow in X_GetWindowAttributes
+      if run for a while, but the screen is not locked :)
+    allow a background picture to be seen behind the bouncing football
+      (soccer ball) in "bounce" mode.  Thus a picture of your favorite
+      team, etc. can be seen behind the bouncing balls.
+    football version of "bounce" using a pigskin instead of a soccer ball for
+      Americans/Canadians/etc.
+    Different balls with different mass and size.
+
+  bug:
+    3d version?
+
+  dclock: needs a -led [LED] option
+
+  ico:
+    should have all the features of the original.
+    triangular face objects do not look good when rotated.
+
+  image: middle button should do something when called like
+     "-bitmap ./bitmap/"
+
+  flag:
+    sometimes a refresh causes a white background rectangle
+
+  hop: center and size many of the hops.
+
+  life:
+    -find option to find new lifeforms.  (mail the results out :) ).
+    When the bitmap is big it is rejected.  Probably could be handled
+      better but if accepted then the screen could be blank because there
+      are bitmaps that are off screen.
+
+  life3d: draws invisible cubes when it does not have to.  The original
+    MS DOS code weeded this out, but it did not seem to port to X.
+    Also see life.
+
+  lyapunov: needs to be speeded up
+
+  marquee:
+    "-messagefile filename" truncates a large file.
+    "-message string" does not handle Control-H correctly.
+    fallback font if screen is small... like bomb
+
+
+  mountain: -size # for mountain should do something.
+
+  nose:
+    should handle Control-H better for underlining and accents.
+    fallback font if screen is small... like bomb
+
+  pacman: add (varying but left/right symmetric) maze walls
+
+  pyro: needs XDrawSegments code similar to swarm to give it depth.
+
+  slip:
+    should be less jarring
+    get rid of single color blotch.
+    should be made so that it can be interrupted quicker.
+
+  star:
+    fractal cracks when hit by rocks (with sound?)
+    user defined ships (user defined pixmaps like eyes and pacman).
+    stars should look more star-like "*"'s
+    combine space and star for a backwards and sideways motion
+
+  swirl:
+    needs to be refreshed quicker
+    does not refresh well when colormap changes
+
+  text3d:
+     time stuff in text3d
+     maybe dclock and marquee could be combined too?
+     a separate -message3d for text3d
+
+  voters and wator:
+    neighbors option bug ... sometimes circles are not
+      drawn in the correct spot.
+    A -/+ wrap option would be nice also.
+
+  wire:  it needs a better circuit generator.
+
+  xglock:  Needs a lot of work.
+
+  kscreensaver:  port xlock to KDE.
+
+
+New mode ideas... (some may be very hard :) ):
+---------------------------------------------
+  o "bsdworm" BSD worm game with computer (and later mouse control), also
+      have more than one worm
+  o "dead" a Grateful Dead mode with dancing bears/skeletons/turtles.
+      (Or maybe "nose" in a tie die?)
+  o "floyd" a Pink Floyd mode from the cover of "Dark Side of the Moon"
+      with a turning prism and rainbow effect.
+  o "graph" a random planar graph drawn ... filled in by a 5 (or 4 :) )
+      coloring algorithm.
+  o "mail" show that one has mail (can also be an option on flag, image, etc.)
+      A spinning GL mailbox would be really cool.  Note that the password
+      screen can be setup to show if one has mail.
+  o "minimal" a random minimal surface generator.
+  o "pangea" a mode showing the changes to the earth's surface over
+      millions of years.
+  o "snow" mode with a nice Winter scene picture background and snowflakes
+      falling
+  o "soap" mode showing soap films
+  o "squig" mode from squig/xsquig (xsquig is too slow)
+  o "venus" mode showing the transformation of a Etruscan Venus to a
+      Roman surface to a Boy surface to a Ida surface, back into a
+      Etruscan Venus using GL.  This is a 3D shadow of a 4D Klein Bottle
+      (which in turn is a a 3D moebius strip).
+      (Science News October 24, 1987 Vol 132, No 17.)
+  o Simulations like sandpile avalanches or forest fires.
+      (Science News July 15, 1989 Vol 136, No 3.)
+  o A NT-like GL 3D Maze, where you are inside the maze
+  o NT-like GL FlowerBox spring and Flying Objects
+  o A GL 4D ico where the 6 4D "platonic" objects "roll" around in 3D space.
+  o GL modes based on demos: isosurf, reflect, bounce, stex3d
+  o KitCat (R) clock mode (based on X11 catclock, a version of xclock) where
+     the cat clock floats around the screen like "dclock" mode does.  Colors
+     of cat clock could be picked like nose-guy in "nose" mode.
+  o Lottery with bouncing numbered balls like PowerBall.
+  o A simple set of 2D geometric shapes that morph into one another whilst
+     colour cycling. So say you start with a rectangle that morphs into a
+     circle (leaving a small trail like Qix) that morphs into a triangle
+     that morphs into a polygon that morphs into a rectangle, etc.  All the
+     while you have movement and colour cycling like Qix.  If the trail is to
+     large then things could become messy, but if too short then you loose the
+     history element.
+  o A simple bouncing ball on a chess board. The ball is a silver
+     ray-traced/rendered globe. The chess board is a series of black and
+     white squares. Each black square is gold veined marble with the gold
+     glinting. Each white square is a textured surface (like little bumps, or
+     ridges). The whole screen is lit from two light sources (either fixed or
+     moving). As the ball bounces it reflects like a mirror what is around it.
+  o A variant of the above would be to hold that ball still in the centre of
+     the screen and move a randomly chosen bitmap around the ball.
+  o The above could also have embossed on standout lettering added (say a
+     single word like Linux). The lettering could either be stationary or
+     float around the ball in orbit a bit like the the Universal studios logo
+     where the Universal name revolves around a picture of the earth.
+  o Take pipes and add the constantly moving view point that you get with
+     rock so the mass of pipes seems to revolve and rotate around a moving
+     point in space.
+  o Make the little man in Nose seem to carve the letters of the message into
+     rock, or paint them on the screen.
+  o Make marquee use 3D extruded text that can be texture mapped and seem to
+     zoom into and out of the screen with the zoom source point drifting
+     around the screen at random
+  o Make puzzle take the present desktop image, invert it and shuffle the
+     pieces then put the whole things back. Once it has reassembled the
+     desktop you could have the image flip top over bottom as it reseeds into
+     the screen, only to have a new randomly shuffled version of the desktop
+     flip back out.
+  o Use the spheres generated in sphere to draw molecules on the screen,
+     colour coding for the various types of atom present. A limit on the size
+     of each sphere would be needed. The spheres could be joined by simple
+     white lines. If you are feeling adventurous you could make it seem to
+     rotate in space so all parts of the molecule could be seen.
+  o In shape change things so that the shapes appear to be extruded from a
+     random point on the screen. You could also have a number of shapes be
+     extruded, each from its own origin, only to shrink back into the screen
+     again.  Each time a shape shrinks back into the screen the origin would
+     move and a new shape would be chosen.
+  o When the screensaver is started have curtains drawn across the desktop
+     at a medium pace, a second or twos pause then the curtain a pulled open
+     quickly to reveal a bitmaped image in place of the desktop. This cycles
+     with a different image each time.
+  o In pyro have the fireworks appear to zoom from a randomly choose point on
+     the screen. This would give the effect of the display being seen from
+     above.
+
+PLEASE NOTE:
+-----------
+  I _REALLY_ hate to turn down contributions...  I will try to consider
+   all submissions.  Some things on new modes that bother me are:
+   Did not black out the screen when they start.  I do not like people
+     to see what I am doing. :^|  (This could be a non-default option...
+     see decay mode).
+   Did not work in the little window or buggy.  (I usually try to clean
+     it up).
+   Is too similar mode to a mode that already exists. (Maybe an option could
+     be added on an existing mode?).
+   Many people complained about the mode.
+   Just not enough randomness or is not interesting enough.
+   No multiscreen support (I usually try to clean this up too).
+  But I labor over them (in a haphazard fashion) and they usually are
+   released eventually.  (If they are in assembler I would definitely need
+   a working example and all the binaries and libraries to get it to run.)
