@@ -265,6 +265,8 @@ static void Initialize( Display *pDisplay, Window Win, GC *pGC, XImage **ppImage
 	  radius = 100;
 	
 	radius = (radius / 100.0) * (iWinHeight >> 3);
+        if (radius >= 128) /* should use UCHAR_MAX? */
+          radius = 127; /* dradius should fit in u_char */
 
 	dradius = radius * 2;
 	sradius = radius * radius;

@@ -14,13 +14,13 @@
           low="2" high="500" default="150"
           convert="invert"/>
 
-  <boolean id="random" _label="Use Randomized Surfaces and Primitives" arg-set="-rand"/>
-  <boolean id="wander" _label="Wander Around the Screen" arg-set="-wander"/>
-  <boolean id="no-spin" _label="Disable Spin" arg-set="-no-spin"/>
+  <boolean id="random" _label="Use Randomized Surfaces and Primitives" arg-set="-random"/>
+  <boolean id="wander"  _label="Wander Around the Screen" arg-set="-wander"/>
+  <boolean id="spin"    _label="Spin" arg-unset="-no-spin"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 This draws a visualization of a Klein bottle or some other interesting
-parametric surfaces. Written by Andrey Mirtchovski (mirtchov@cpsc.ucalgary.ca).
+parametric surfaces. Written by Andrey Mirtchovski.
   </_description>
 </screensaver>

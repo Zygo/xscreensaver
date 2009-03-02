@@ -16,6 +16,7 @@ $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
 $ bumps		:== $'mydir'bumps
 $ ccurve	:== $'mydir'ccurve
+$ cloudlife	:== $'mydir'cloudlife
 $ compass	:== $'mydir'compass
 $ coral		:== $'mydir'coral
 $ critical	:== $'mydir'critical

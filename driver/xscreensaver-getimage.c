@@ -43,6 +43,7 @@
 #include "colorbars.h"
 #include "visual.h"
 #include "prefs.h"
+#include "version.h"
 #include "vroot.h"
 
 #ifdef HAVE_GDK_PIXBUF
@@ -1331,7 +1332,9 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 
 #define USAGE "usage: %s [ -options... ] window-id [pixmap-id]\n"	      \
    "\n"									      \
-   "    This program puts an image on the given window or pixmap.\n"	      \
+   "    %s\n"								      \
+   "\n"									      \
+   "    %s puts an image on the given window or pixmap.\n"		      \
    "\n"									      \
    "    It is used by those xscreensaver demos that operate on images.\n"     \
    "    The image may be a file loaded from disk, a frame grabbed from\n"     \
@@ -1362,6 +1365,7 @@ main (int argc, char **argv)
   Screen *screen;
   char *oprogname = progname;
   char *file = 0;
+  char version[255];
 
   Window window = (Window) 0;
   Drawable drawable = (Drawable) 0;
@@ -1381,6 +1385,20 @@ main (int argc, char **argv)
 # ifndef _VROOT_H_
 #  error Error!  This file definitely needs vroot.h!
 # endif
+
+  /* Get the version number, for error messages. */
+  {
+    char *v = (char *) strdup(strchr(screensaver_id, ' '));
+    char *s1, *s2, *s3, *s4;
+    s1 = (char *) strchr(v,  ' '); s1++;
+    s2 = (char *) strchr(s1, ' ');
+    s3 = (char *) strchr(v,  '('); s3++;
+    s4 = (char *) strchr(s3, ')');
+    *s2 = 0;
+    *s4 = 0;
+    sprintf (version, "Part of XScreenSaver %s -- %s.", s1, s3);
+    free(v);
+  }
 
   /* We must read exactly the same resources as xscreensaver.
      That means we must have both the same progclass *and* progname,
@@ -1473,7 +1491,7 @@ main (int argc, char **argv)
             fprintf (stderr, "\n%s: unparsable window/pixmap ID: \"%s\"\n",
                      progname, argv[i]);
         LOSE:
-          fprintf (stderr, USAGE, progname);
+          fprintf (stderr, USAGE, progname, version, progname);
           exit (1);
         }
     }

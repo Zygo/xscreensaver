@@ -15,7 +15,7 @@
     <option id="light" _label="Use Lighting"/>
   </select>
 
-  <file id="bitmap" _label="Image File" arg="-bitmap %"/>
+  <file id="bitmap" _label="Image File" arg="-image %"/>
 
   <number id="speed" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"

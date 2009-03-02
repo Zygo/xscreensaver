@@ -18,10 +18,9 @@ in each, fading from pan to pan.
 This program requires a good video card capable of supporting large
 textures.
 
-The images are obtained from
-.BR xscreensaver-getimage (1) .
-You can set the directory from which images are loaded with
-.BR xscreensaver-demo (1) .
+To specify the directory that images are loaded from, run
+.BR xscreensaver-demo (1)
+and click on the "Advanced" tab.
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP

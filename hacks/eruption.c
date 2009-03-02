@@ -10,6 +10,7 @@
  *
  * Module - "eruption.c"
  *
+ * [02-2003] - W.P. van Paassen: Improvements, added some code of jwz from the pyro hack for a spherical distribution of the particles
  * [01-2003] - W.P. van Paassen: Port to X for use with XScreenSaver, the shadebob hack by Shane Smit was used as a template
  * [04-2002] - W.P. van Paassen: Creation for the Demo Effects Collection (http://demo-effects.sourceforge.net)
  */
@@ -46,6 +47,14 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
+/* Slightly whacked, for better explosions
+ */
+#define PI_2000 6284
+#define SPREAD 15
+
+static int sin_cache[PI_2000];
+static int cos_cache[PI_2000];
+
 /*particle structure*/
 typedef struct 
 {
@@ -62,13 +71,30 @@ static unsigned char xdelta, ydelta, decay;
 static signed char gravity;
 static signed short heat;
 
-void init_particle(PARTICLE* particle, signed short iColorCount)
+static void
+cache(void) /* jwz */
+{               /*needs to be run once. Could easily be */
+  int i;        /*reimplemented to run and cache at compile-time,*/
+  double dA;    
+  for (i=0; i<PI_2000; i++)
+    {
+      dA=sin(((double) (random() % (PI_2000/2)))/1000.0);
+      /*Emulation of spherical distribution*/
+      dA+=asin(frand(1.0))/M_PI_2*0.1;
+      /*Approximating the integration of the binominal, for
+        well-distributed randomness*/
+      cos_cache[i]=-abs((int) (cos(((double)i)/1000.0)*dA*ydelta));
+      sin_cache[i]=(int) (sin(((double)i)/1000.0)*dA*xdelta);
+    }
+}
+
+void init_particle(PARTICLE* particle, signed short iColorCount, unsigned short xcenter, unsigned short ycenter)
 {
-  /* randomly init particles, generate them in the center of the screen */
-  particle->xpos = (iWinWidth >> 1) - 15 + (int)(14.0 * frand(2.0));
-  particle->ypos = (iWinHeight >> 1) - 15 + (int)(16.0 * frand(2.0));
-  particle->xdir =   -xdelta + (int)(xdelta * frand(2.0));
-  particle->ydir =   -ydelta + (int)((ydelta / 2) * frand(2.0));
+  int v = random() % PI_2000;
+  particle->xpos = xcenter - SPREAD + (random() % (SPREAD * 2));
+  particle->ypos = ycenter - SPREAD + (random() % (SPREAD * 2));;
+  particle->xdir = sin_cache[v];
+  particle->ydir = cos_cache[v];
   particle->colorindex = iColorCount;
   particle->dead = 0;
 }
@@ -98,29 +124,29 @@ static void Execute( Display *pDisplay,
 	      continue;
 	    }
 	  
-	  if (particles[i].xpos < 2)
+	  if (particles[i].xpos < 1)
 	    {
-	      particles[i].xpos = 2;
+	      particles[i].xpos = 1;
 	      particles[i].xdir = -particles[i].xdir - 4;
 	      particles[i].colorindex = iColorCount;
 	    }
-	  else if (particles[i].xpos > iWinWidth - 3)
+	  else if (particles[i].xpos >= iWinWidth - 2)
 	    {
-	      particles[i].xpos = iWinWidth - 3;
+	      particles[i].xpos = iWinWidth - 2;
 	      particles[i].xdir = -particles[i].xdir + 4;
 	      particles[i].colorindex = iColorCount;
 	    }
 	  
-	  if (particles[i].ypos < 2)
+	  if (particles[i].ypos < 1)
 	    {
-	      particles[i].ypos = 2;
+	      particles[i].ypos = 1;
 	      particles[i].ydir = -particles[i].ydir;
 	      particles[i].colorindex = iColorCount;
 	    }
-	  else if (particles[i].ypos > iWinHeight - 3)
+	  else if (particles[i].ypos >= iWinHeight - 3)
 	    {
-	      particles[i].ypos = iWinHeight - 3;
-	      particles[i].ydir = (-particles[i].ydir >> 2) - (random() % 4);
+	      particles[i].ypos = iWinHeight- 3;
+	      particles[i].ydir = (-particles[i].ydir >> 2) - (random() % 2);
 	      particles[i].colorindex = iColorCount;
 	    }
 	  
@@ -209,7 +235,7 @@ static unsigned long * SetPalette(Display *pDisplay, Window Win, signed short *p
 	XGetWindowAttributes( pDisplay, Win, &XWinAttribs );
 	
 	*piColorCount = get_integer_resource( "ncolors", "Integer" );
-	if( *piColorCount <   16 )	*piColorCount = 16;
+	if( *piColorCount < 16 )	*piColorCount = 16;
 	if( *piColorCount > 255 )	*piColorCount = 256;
 
 	aColors    = calloc( *piColorCount, sizeof(XColor) );
@@ -264,13 +290,6 @@ static unsigned long * SetPalette(Display *pDisplay, Window Win, signed short *p
 	      free( aColors );
 	      free( aiColorVals );
 	      (*piColorCount)--;
-
-              if (*piColorCount < 6)
-                {
-                  fprintf (stderr, "%s: insufficient colors!\n", progname);
-                  exit (1);
-                }
-
 	      aColors     = calloc( *piColorCount, sizeof(XColor) );
 	      aiColorVals = calloc( *piColorCount, sizeof(unsigned long) );
 	      iColor = -1;
@@ -324,9 +343,9 @@ static void Initialize( Display *pDisplay, Window Win, GC *pGC, XImage **ppImage
 	iWinHeight = XWinAttribs.height;
 
 	/* create fire array */
-	fire = malloc( iWinHeight * sizeof(unsigned char*));
+	fire = calloc( iWinHeight, sizeof(unsigned char*));
 	for (i = 0; i < iWinHeight; ++i)
-	  fire[i] = malloc( iWinWidth * sizeof(unsigned char));
+	  fire[i] = calloc( iWinWidth, sizeof(unsigned char));
 
 	/*create particles */
 	particles = malloc (nParticleCount * sizeof(PARTICLE));
@@ -377,7 +396,7 @@ void screenhack(Display *pDisplay, Window Win )
 	Initialize( pDisplay, Win, &gc, &pImage );
 
 	ydelta = 0;
-	while (sum < (iWinHeight >> 1) - 15)
+	while (sum < (iWinHeight >> 1) - SPREAD)
 	  {
 	    ydelta++;
 	    sum += ydelta;
@@ -394,39 +413,47 @@ void screenhack(Display *pDisplay, Window Win )
 	cycles = get_integer_resource( "cycles", "Integer" );
 	i = cycles;
 
+	cache();
+	
 	XGetWindowAttributes( pDisplay, Win, &XWinAttribs );
 	XFreeColors( pDisplay, XWinAttribs.colormap, aiColorVals, iColorCount, 0 );
 	free( aiColorVals );
 	aiColorVals = SetPalette( pDisplay, Win, &iColorCount );
 	XClearWindow( pDisplay, Win );
+	memset( pImage->data, 0, pImage->bytes_per_line * pImage->height );
 
 	while( 1 )
-	{
-		screenhack_handle_events( pDisplay );
-
-		if( i++ >= cycles )
-		{
-			for (i = 0; i < nParticleCount; i++)
-			  init_particle(particles + i, iColorCount - 1);
-			i = 0;
-		}
-
-		Execute( pDisplay, Win, &gc, pImage, iColorCount - 1, aiColorVals );
-
-		if( delay && !(i % 4) )
-			usleep(delay);
-
+	  {
+	    screenhack_handle_events( pDisplay );
+	    
+	    if( i++ >= cycles )
+	      {
+		/* compute random center */
+		unsigned short xcenter, ycenter;
+		xcenter = random() % iWinWidth;
+		ycenter = random() % iWinHeight;
+		
+		for (i = 0; i < nParticleCount; i++)
+		  init_particle(particles + i, iColorCount - 1, xcenter, ycenter);
+		i = 0;
+	      }
+	    
+	    Execute( pDisplay, Win, &gc, pImage, iColorCount - 1, aiColorVals );
+	    
+	    if( delay && !(i % 4) )
+	      usleep(delay);
+	    
 #ifdef VERBOSE
-		iFrame++;
-		if( nTime - time( NULL ) )
-		{
-			printf( "%s: %d FPS\n", progclass, iFrame );
-			nTime = time( NULL );
-			iFrame = 0;
-		}
+	    iFrame++;
+	    if( nTime - time( NULL ) )
+	      {
+		printf( "%s: %d FPS\n", progclass, iFrame );
+		nTime = time( NULL );
+		iFrame = 0;
+	      }
 #endif  /*  VERBOSE */
-	}
-
+	  }
+	
 	free( pImage->data );
 	XDestroyImage( pImage );
 	free( aiColorVals );

@@ -740,6 +740,19 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
                     break;
                 fprintf (stderr,"%s: %d: %s on 0x%lx",
                          blurb(), i, type, (unsigned long) window);
+
+                /* Be careful never to do this unless in -debug mode, as
+                   this could expose characters from the unlock password. */
+                if (p->debug_p && event.xany.type == KeyPress)
+                  {
+                    KeySym keysym;
+                    char c = 0;
+                    XLookupString (&event.xkey, &c, 1, &keysym, 0);
+                    fprintf (stderr, " (%s%s)",
+                             (event.xkey.send_event ? "synthetic " : ""),
+                             XKeysymToString (keysym));
+                  }
+
                 if (x == -1)
                   fprintf (stderr, "\n");
                 else

@@ -19,7 +19,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xscreensaver\n"
 "POT-Creation-Date: 2002-06-18 21:56+0200\n"
-"PO-Revision-Date: 2002-06-06 19:02+0200\n"
+"PO-Revision-Date: 2002-08-29 23:33+0200\n"
 "Last-Translator: Ole Laursen <olau@hardworking.dk>\n"
 "Language-Team: Danish <dansk@klid.dk>\n"
 "MIME-Version: 1.0\n"
@@ -272,6 +272,8 @@ msgid ""
 "Whether the splash screen (with the version number and `Help' button) should "
 "be momentarily displayed when the daemon first starts up."
 msgstr ""
+"Om velkomstskærmen (med versionnummer og hjælpeknappen) skal vises "
+"kortvarigt når dæmonen først starter"
 
 #: driver/demo-Gtk-widgets.c:781 driver/xscreensaver-demo.glade.h:28
 msgid "Display Splash Screen at Startup"
@@ -322,7 +324,7 @@ msgstr "Overgangsvarighed"
 
 #: driver/demo-Gtk-widgets.c:922 driver/xscreensaver-demo.glade.h:44
 msgid "How long it should take for the screen to fade in and out."
-msgstr ""
+msgstr "Hvor lang tid det tager for skærmen at gå fra sort og tilbage"
 
 #: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
 #: driver/xscreensaver-demo.glade2.h:73
@@ -372,6 +374,7 @@ msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
+"Om billedmanipuleringer har lov til at operere med et billede af skrivebordet"
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
@@ -382,6 +385,8 @@ msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
 msgstr ""
+"Om billedmanipuleringer har lov til at operere med billeder fra systemets "
+"video-inddata (hvis de eksisterer)"
 
 #: driver/demo-Gtk-widgets.c:1180 driver/xscreensaver-demo.glade.h:40
 msgid "Grab Video Frames"
@@ -392,6 +397,8 @@ msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
 msgstr ""
+"Om billedmanipuleringer har lov til at operere på tilfældige billeder fra "
+"disken"
 
 #: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
@@ -399,7 +406,7 @@ msgstr "Vælg tilfældigt billede:"
 
 #: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
 msgid "The directory from which images will be randomly chosen."
-msgstr ""
+msgstr "Den mappe som billeder vælges tilfældigt fra"
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
@@ -440,7 +447,6 @@ msgstr "Enhver"
 msgid "Best"
 msgstr "Bedste"
 
-# i hvert fald bedre end standardsted...
 #: driver/demo-Gtk-widgets.c:1546 driver/xscreensaver-demo.glade.h:19
 #: driver/xscreensaver-demo.glade2.h:9
 msgid "Default"
@@ -501,6 +507,8 @@ msgid ""
 "The X visual type that this demo will require.  If that visual is available "
 "it will be used, otherwise, this demo will not be run."
 msgstr ""
+"Den X-visual-type som denne demo vil kræve. Hvis denne type er tilgængelig, "
+"vil den blive brugt, ellers vil demoen ikke blive kørt"
 
 #: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
@@ -513,6 +521,7 @@ msgstr "Dokumentation..."
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
 msgstr ""
+"Klik her for at læse vejledningen til denne visningstilstand, hvis den har en"
 
 #: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
@@ -541,17 +550,17 @@ msgstr "Annullér"
 
 #: driver/demo-Gtk.c:601
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
-msgstr "Fjek http://www.jwz.org/xscreensaver/ for opdateringer"
+msgstr "Tjek http://www.jwz.org/xscreensaver/ for opdateringer"
 
 #: driver/demo-Gtk.c:608
 #, c-format
 msgid "Copyright © 1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
+msgstr ""
 
 #: driver/demo-Gtk.c:610
-#, fuzzy, c-format
+#, c-format
 msgid "Copyright  1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
+msgstr ""
 
 #: driver/demo-Gtk.c:726
 msgid ""
@@ -559,6 +568,9 @@ msgid ""
 "\n"
 "No Help URL has been specified.\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Ingen hjælpe-URL er blevet angivet.\n"
 
 #: driver/demo-Gtk.c:812
 msgid ""
@@ -567,6 +579,9 @@ msgid ""
 "The xscreensaver daemon did not start up properly.\n"
 "\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Pauseskærmsdæmonen startede ikke korrekt.\n"
 
 #: driver/demo-Gtk.c:818
 msgid ""
@@ -586,10 +601,27 @@ msgid ""
 "You shouldn't run X as root. Instead, you should log in as a\n"
 "normal user, and `su' as necessary."
 msgstr ""
+"Du kører som administrator. Dette betyder som regel at\n"
+"pauseskærmsprogrammet ikke kunne kontakte din X-server fordi\n"
+"adgangskontrol er slået til. Prøv at køre denne kommando:\n"
+"\n"
+"                        xhost +localhost\n"
+"\n"
+"og vælg derefter 'Fil / Genstart dæmon'.\n"
+"\n"
+"Bemærk at deaktivering af adgangskontrollen vil tillade enhver\n"
+"der er logget på maskinen at tilgå skærmen, hvilket kan opfattes\n"
+"som et sikkerhedsproblem. Læs brugervejledningen til \n"
+"pauseskærmsprogrammet og de ofte stillede spørgsmål for yderligere\n"
+"oplysninger.\n"
+"\n"
+"Du bør ikke køre X som administratorbruger. I stedet bør du logge \n"
+"på som en almindelig bruger og skifte bruger, f.eks. med 'su', om\n"
+"med nødvendigt."
 
 #: driver/demo-Gtk.c:834
 msgid "Please check your $PATH and permissions."
-msgstr ""
+msgstr "Kontrollér venligst din $PATH og rettigheder."
 
 #: driver/demo-Gtk.c:869
 msgid ""
@@ -597,6 +629,9 @@ msgid ""
 "\n"
 "Couldn't determine init file name!\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Kunne ikke bestemme klargøringsfilnavn!\n"
 
 #: driver/demo-Gtk.c:874
 #, c-format
@@ -605,6 +640,9 @@ msgid ""
 "\n"
 "Couldn't write %s\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Kunne ikke skrive %s\n"
 
 #: driver/demo-Gtk.c:933
 msgid ""
@@ -612,6 +650,9 @@ msgid ""
 "\n"
 "no `manualCommand' resource set."
 msgstr ""
+"Fejl:\n"
+"\n"
+"Ingen 'manualCommand'-resurse angivet."
 
 #: driver/demo-Gtk.c:1114
 #, c-format
@@ -620,6 +661,9 @@ msgid ""
 "\n"
 "Unparsable time format: \"%s\"\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Ufortolkeligt tidsformat: \"%s\"\n"
 
 #: driver/demo-Gtk.c:1779
 #, c-format
@@ -628,14 +672,18 @@ msgid ""
 "\n"
 "Directory does not exist: \"%s\"\n"
 msgstr ""
+"Fejl:\n"
+"\n"
+"Mappe eksisterer ikke: \"%s\"\n"
 
 #: driver/demo-Gtk.c:2376
 msgid "Descriptions not available: no XML support compiled in."
 msgstr ""
+"Beskrivelser er ikke tilgængelige: ingen XML-understøttelse er oversat med."
 
 #: driver/demo-Gtk.c:2381
 msgid "No description available."
-msgstr ""
+msgstr "Ingen beskrivelse tilgængelig."
 
 #: driver/demo-Gtk.c:2632
 msgid "Blank Screen"
@@ -652,6 +700,9 @@ msgid ""
 "\n"
 "file \"%s\" has changed, reloading.\n"
 msgstr ""
+"Advarsel:\n"
+"\n"
+"Filen \"%s\" er ændret, genindlæser.\n"
 
 #: driver/demo-Gtk.c:2875
 msgid "No Preview"
@@ -669,6 +720,10 @@ msgid ""
 "The XScreenSaver daemon doesn't seem to be running\n"
 "on display \"%s\".  Launch it now?"
 msgstr ""
+"Advarsel:\n"
+"\n"
+"Pauseskærmsdæmonen ser ikke ud til at køre på\n"
+"terminalen \"%s\". Start den nu?"
 
 #: driver/demo-Gtk.c:3553
 #, c-format
@@ -688,6 +743,21 @@ msgid ""
 "\n"
 "Restart the xscreensaver daemon now?\n"
 msgstr ""
+"Advarsel:\n"
+"\n"
+"%s kører som brugeren \"%s\" på værten \"%s\".\n"
+"Men det pauseskærmsprogram der tager sig af \n"
+"terminalen \"%s\" kører som brugeren \"%s\" på \n"
+"værten \"%s\".\n"
+"\n"
+"Eftersom de er forskellige brugere vil de ikke\n"
+"skrive eller læse den samme ~/.xscreensaver-fil, \n"
+"hvorfor %s ikke vil virke korrekt.\n"
+"\n"
+"Du skal enten køre %s igen som \"%s\", eller køre \n"
+"xscreensaver as \"%s\".\n"
+"\n"
+"Genstart pauseskærmsdæmonen nu?\n"
 
 #: driver/demo-Gtk.c:3578
 #, c-format
@@ -704,6 +774,18 @@ msgid ""
 "\n"
 "Restart the daemon on \"%s\" as \"%s\" now?\n"
 msgstr ""
+"Advarsel:\n"
+"\n"
+"%s kører som brugeren \"%s\" på værten \"%s\".\n"
+"Men det pauseskærmsprogram der tager sig af \n"
+"terminalen \"%s\" kører som brugeren \"%s\" på \n"
+"værten \"%s\".\n"
+"\n"
+"Medmindre de to maskiner deler et filsystem (dvs.\n"
+"deler den samme samme ~%s/.xscreensaver-fil), \n"
+"vil %s ikke virke korrekt.\n"
+"\n"
+"Genstart pauseskærmsdæmonen på \"%s\" som \"%s\" nu?\n"
 
 #: driver/demo-Gtk.c:3600
 #, c-format
@@ -716,11 +798,18 @@ msgid ""
 "\n"
 "Restart the xscreensaver daemon now?\n"
 msgstr ""
+"Advarsel:\n"
+"\n"
+"Dette er %s version %s.\n"
+"Men det pauseskærmsprogram der tager sig af terminalen \n"
+"\"%s\" er version %s. Dette kan give problemer.\n"
+"\n"
+"Genstart pauseskærmsdæmonen nu?\n"
 
 #: driver/demo-Gtk.c:3999
 #, c-format
 msgid "%s: unknown option: %s\n"
-msgstr ""
+msgstr "%s: ukendt tilvalg: %s\n"
 
 #: driver/screensaver-properties.desktop.in.h:1
 msgid "Configure the settings of the screensaver."
@@ -739,164 +828,137 @@ msgid "*"
 msgstr "*"
 
 #: driver/xscreensaver-demo.glade2.h:6
-#, fuzzy
 msgid "Choose _Random Image:"
-msgstr "Vælg tilfældigt billede:"
+msgstr "Vælg _tilfældigt billede:"
 
 #: driver/xscreensaver-demo.glade2.h:16
-#, fuzzy
 msgid "Display Subprocess _Errors"
-msgstr "Vis fejl fra underprocesser"
+msgstr "Vis _fejl fra underprocesser"
 
 #: driver/xscreensaver-demo.glade2.h:17
-#, fuzzy
 msgid "Display _Splash Screen at Startup"
-msgstr "Vis velkomstskærm ved start"
+msgstr "Vis _velkomstskærm ved start"
 
 #: driver/xscreensaver-demo.glade2.h:18
-#, fuzzy
 msgid "F_ade Duration"
-msgstr "Overgangsvarighed"
+msgstr "_Overgangsvarighed"
 
 #: driver/xscreensaver-demo.glade2.h:19
-#, fuzzy
 msgid "Fade from Black When _Unblanking"
-msgstr "Gradvis overgang ved afslutning"
+msgstr "Gradvis overgang ved _afslutning"
 
 #: driver/xscreensaver-demo.glade2.h:20
-#, fuzzy
 msgid "Fade to Black when _Blanking"
-msgstr "Gradvis overgang ved start"
+msgstr "Gradvis overgang ved st_art"
 
 #: driver/xscreensaver-demo.glade2.h:22
-#, fuzzy
 msgid "Grab Desktop _Images"
-msgstr "Benyt skrivebordsbilleder"
+msgstr "Benyt skrivebords_billeder"
 
 #: driver/xscreensaver-demo.glade2.h:23
-#, fuzzy
 msgid "Grab _Video Frames"
-msgstr "Benyt videobilleder"
+msgstr "Benyt v_ideobilleder"
 
 #: driver/xscreensaver-demo.glade2.h:28
-#, fuzzy
 msgid "Install _Colormap"
-msgstr "Privat farvekortlægning"
+msgstr "Privat f_arvekortlægning"
 
 #: driver/xscreensaver-demo.glade2.h:30
-#, fuzzy
 msgid ""
 "No Preview\n"
 "Available"
-msgstr "Intet eksempel"
+msgstr ""
+"Intet eksempel\n"
+"tilgængeligt"
 
 #: driver/xscreensaver-demo.glade2.h:33
 msgid "Preview of screen saver"
 msgstr "Eksempel på pauseskærmen"
 
 #: driver/xscreensaver-demo.glade2.h:37
-#, fuzzy
 msgid "Stand_by After"
-msgstr "Standby efter"
+msgstr "Stand_by efter"
 
 #: driver/xscreensaver-demo.glade2.h:40
-#, fuzzy
 msgid "Sus_pend After"
-msgstr "Dvale efter"
+msgstr "_Dvale efter"
 
 #: driver/xscreensaver-demo.glade2.h:45
 msgid "_Advanced"
 msgstr "_Avanceret"
 
 #: driver/xscreensaver-demo.glade2.h:46
-#, fuzzy
 msgid "_Advanced >>"
-msgstr "Avanceret >>"
+msgstr "_Avanceret >>"
 
 #: driver/xscreensaver-demo.glade2.h:47
-#, fuzzy
 msgid "_Blank After"
-msgstr "Start efter"
+msgstr "_Start efter"
 
 #: driver/xscreensaver-demo.glade2.h:49
-#, fuzzy
 msgid "_Browse"
-msgstr "Gennemse"
+msgstr "_Gennemse"
 
 #: driver/xscreensaver-demo.glade2.h:50
-#, fuzzy
 msgid "_Command Line:"
-msgstr "Kommandolinje:"
+msgstr "_Kommandolinje:"
 
 #: driver/xscreensaver-demo.glade2.h:51
-#, fuzzy
 msgid "_Cycle After"
-msgstr "Gentag efter"
+msgstr "_Gentag efter"
 
 #: driver/xscreensaver-demo.glade2.h:52
-#, fuzzy
 msgid "_Display Modes"
-msgstr "Skærmtilstande"
+msgstr "_Skærmtilstande"
 
 #: driver/xscreensaver-demo.glade2.h:57
-#, fuzzy
 msgid "_Lock Screen After"
-msgstr "Lås skærm efter"
+msgstr "_Lås skærm efter"
 
 #: driver/xscreensaver-demo.glade2.h:59
-#, fuzzy
 msgid "_Mode:"
-msgstr "Tilstand:"
+msgstr "_Tilstand:"
 
 #: driver/xscreensaver-demo.glade2.h:60
-#, fuzzy
 msgid "_Off After"
-msgstr "Sluk efter"
+msgstr "S_luk efter"
 
 #: driver/xscreensaver-demo.glade2.h:61
-#, fuzzy
 msgid "_Power Management Enabled"
-msgstr "Aktivér strømstyring"
+msgstr "Aktivér str_ømstyring"
 
 #: driver/xscreensaver-demo.glade2.h:62
-#, fuzzy
 msgid "_Preview"
-msgstr "Eksempel"
+msgstr "_Eksempel"
 
 #: driver/xscreensaver-demo.glade2.h:63
-#, fuzzy
 msgid "_Quit"
 msgstr "_Afslut"
 
 #: driver/xscreensaver-demo.glade2.h:65
-#, fuzzy
 msgid "_Settings..."
-msgstr "Indstillinger..."
+msgstr "_Indstillinger..."
 
 #: driver/xscreensaver-demo.glade2.h:66
-#, fuzzy
 msgid "_Standard <<"
-msgstr "Standard <<"
+msgstr "_Standard <<"
 
 #: driver/xscreensaver-demo.glade2.h:67
-#, fuzzy
 msgid "_Verbose Dialognostics"
-msgstr "Informationsrige fejlmeddelelser"
+msgstr "_Informationsrige fejlmeddelelser"
 
 # dækker over 'visual'-begrebet i X, ca. = farvedybde her
 #: driver/xscreensaver-demo.glade2.h:68
-#, fuzzy
 msgid "_Visual:"
-msgstr "Farvedybde:"
+msgstr "_Farvedybde:"
 
 #: driver/xscreensaver-demo.glade2.h:69
 msgid "dialog1"
 msgstr "vindue1"
 
 #: driver/xscreensaver-demo.glade2.h:71
-#, fuzzy
 msgid "no preview"
-msgstr "eksempel"
+msgstr "intet eksempel"
 
 #: driver/xscreensaver-demo.glade2.h:72
 msgid "preview"
@@ -1186,7 +1248,7 @@ msgstr "Hastighed"
 
 #: hacks/config/anemone.xml.h:9
 msgid "Tentacles"
-msgstr ""
+msgstr "Tentakler"
 
 #: hacks/config/anemone.xml.h:10 hacks/config/deluxe.xml.h:10
 #: hacks/config/lmorph.xml.h:13 hacks/config/starfish.xml.h:11
@@ -1239,7 +1301,7 @@ msgstr "To"
 
 #: hacks/config/anemone.xml.h:14
 msgid "Wiggling tentacles. By Gabriel Finch."
-msgstr ""
+msgstr "Vrikkende tentakler. Af Gabriel Finch."
 
 #: hacks/config/ant.xml.h:1
 msgid ""
@@ -2545,16 +2607,18 @@ msgstr ""
 "Scott Draves. Du kan finde den på &lt;http://www.electricsheep.org/&gt;. Se "
 "også den side for konfigurationsinformation. "
 
+# RETMIG: mating nets = mat?
 #: hacks/config/endgame.xml.h:1
 msgid ""
 "Black slips out of three mating nets, but the fourth one holds him tight! A "
 "brilliant composition! Written by Blair Tennessy."
 msgstr ""
+"Sort slipper ud af tre mat, men den fjerde holder ham fast! En utrolig "
+"sammensætning! Skrevet af Blair Tennessy."
 
 #: hacks/config/endgame.xml.h:2
-#, fuzzy
 msgid "Endgame"
-msgstr "Motor"
+msgstr "Slutspil"
 
 #: hacks/config/engine.xml.h:1
 msgid ""
@@ -2745,6 +2809,9 @@ msgid ""
 "Grabs an image of the desktop, turns it into a GL texture map, and spins it "
 "around and deforms it in various ways. Written by Ben Buxton."
 msgstr ""
+"Tager et billede af skrivebordet, laver det til en 3d-teksturafbildning og "
+"drejer det omkring of deformerer det på forskellige måder. Skrevet af Ben "
+"Buxton."
 
 #: hacks/config/flow.xml.h:1
 msgid "Allow 2D Attractors"
@@ -3602,6 +3669,14 @@ msgid ""
 "base of the motion lamp are registered trademarks of Haggerty Enterprises, "
 "Inc. in the U.S.A. and in other countries around the world.\""
 msgstr ""
+"Tegner en 3d-simulering af en Lava Lite(r): mærkeligt formede klatter af en "
+"mystisk substans opvarmes, hæver sig langsomt til toppen af flasken og "
+"falder derefter ned igen efterhånden som de afkøler. Kræver en ret hurtig "
+"maskine. Skrevet af Jamie Zawinski. \"LAVA LITE(r) og konfigurationen af LAVA"
+"(r)-mærkets bevægelseslampe er registrerede varemærker for Haggerty "
+"Enterprises, Inc. Konfigurationen af globusen og foden af bevægelseslampen "
+"er registrerede varemærker for Haggerty Enterprises, Inc. i USA og andre "
+"lande rundt i verden.\""
 
 #: hacks/config/lavalite.xml.h:9
 msgid "Faceted"
@@ -4416,7 +4491,7 @@ msgstr "Gennemsigtig"
 
 #: hacks/config/queens.xml.h:2
 msgid "Queens"
-msgstr ""
+msgstr "Dronninger"
 
 #: hacks/config/queens.xml.h:5
 msgid ""
@@ -4424,6 +4499,9 @@ msgid ""
 "queens.) The problem is: how may one place N queens on an NxN chessboard "
 "such that no queen can attack a sister? Written by Blair Tennessy."
 msgstr ""
+"Løser n-dronninger-problemet (hvor n i dette tilfælde er mellem 5 og 10). "
+"Problemet er: hvordan kan man placere n dronninger på et nxn skakbræt sådan "
+"at ingen dronninger kan angribe hinanden? Skrivet af Blair Tennessy."
 
 #: hacks/config/rd-bomb.xml.h:1
 msgid "/"
@@ -4917,6 +4995,11 @@ msgid ""
 "solution to certain wave functions, most notable the eigenfunctions of "
 "angular momentum operators. Written by Paul Bourke and Jamie Zawinski."
 msgstr ""
+"Disse lukkede objekter kaldesd almindeligvis sfæriske harmoniske "
+"svingninger, selvom de kun fjernt er beslægtede med den matematiske "
+"definition som kan findes i løsningen til visse bølgefunktioner, mest "
+"bemærkelsesværdigt egenfunktionerne for vinkelinertioperatorer. Skrevet af "
+"Paul Bourke og Jamie Zawinski."
 
 #: hacks/config/spiral.xml.h:2
 msgid "Cycles"
@@ -5179,7 +5262,7 @@ msgstr "Turbulens"
 
 #: hacks/config/t3d.xml.h:1
 msgid "0 deg"
-msgstr ""
+msgstr "0 grad."
 
 #: hacks/config/t3d.xml.h:2
 msgid "5 Minute Tick Marks"
@@ -5187,7 +5270,7 @@ msgstr "5 minuttersmærker"
 
 #: hacks/config/t3d.xml.h:3
 msgid "90 deg"
-msgstr ""
+msgstr "90 grad."
 
 #: hacks/config/t3d.xml.h:4
 msgid "Bigger"
@@ -5842,9 +5925,3 @@ msgstr ""
 "linseeffekten slået til bliver resultatet som hvis man kigger gennem mange "
 "overlappende linser snarere end blot en simpel zoom. Skrevet af James "
 "Macnicol."
-
-#~ msgid "Copyright  1991-2002 %s"
-#~ msgstr "Copyright © 1991-2002 %s"
-
-#~ msgid "MacOS"
-#~ msgstr "MacOS"

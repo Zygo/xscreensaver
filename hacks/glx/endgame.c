@@ -94,6 +94,7 @@ GLfloat colors[2][3] =
     {0.5, 0.5, 0.5},
   };
 
+/* well, i prefer silver tip */
 GLfloat whites[3][3] = 
   {
     {1.0, 0.5, 0.0},
@@ -191,7 +192,7 @@ Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
   return False;
 }
 
-GLfloat position[] = { 3.0, 8.0, 3.0, 1.0 };
+GLfloat position[] = { 3.0, 7.0, 3.0, 1.0 };
 
 /* configure lighting */
 void setup_lights(void) {
@@ -291,7 +292,7 @@ void drawBoard(void) {
     for(j = 0; j < BOARDSIZE; ++j) {
       /*glColor3fv(colors[(i+j)%2]);*/
       glColor4f(colors[(i+j)%2][0], colors[(i+j)%2][1],
-		colors[(i+j)%2][2], 0.8);
+		colors[(i+j)%2][2], 0.65);
       glNormal3f(0.0, 1.0, 0.0);
       glVertex3f(i, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j + 1.0);
@@ -319,6 +320,8 @@ void draw_pieces(void) {
 
 /** reflectionboard */
 void draw_reflections(void) {
+  int i, j;
+
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, 1, 1);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -327,10 +330,16 @@ void draw_reflections(void) {
 
   glDisable(GL_DEPTH_TEST);
   glBegin(GL_QUADS);
-  glVertex3f(0,         0,  BOARDSIZE);
-  glVertex3f(0,         0,  0);
-  glVertex3f(BOARDSIZE, 0,  0);
-  glVertex3f(BOARDSIZE, 0,  BOARDSIZE);
+
+  /* only draw white squares */
+  for(i = 0; i < BOARDSIZE; ++i) {
+    for(j = (BOARDSIZE+i) % 2; j < BOARDSIZE; j += 2) {
+      glVertex3f(i, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j);
+      glVertex3f(i, 0.0, j);
+    }
+  }
   glEnd();
   glEnable(GL_DEPTH_TEST);
 
@@ -341,7 +350,7 @@ void draw_reflections(void) {
   glPushMatrix(); 
   glScalef(1.0, -1.0, 1.0);
   glTranslatef(0.5, 0.0, 0.5);
-  
+
   glLightfv(GL_LIGHT0, GL_POSITION, position);
   draw_pieces();
   glPopMatrix();
@@ -380,7 +389,7 @@ void display(Chesscreen *c) {
   else
     drawBoard();
  
-  glTranslatef(0.5, .01, 0.5);
+  glTranslatef(0.5, 0.0, 0.5);
   draw_pieces();
 
   if(!wire) {
@@ -430,7 +439,7 @@ void init_chess(ModeInfo *mi) {
 
   gen_model_lists();
 
-  if (!wire) {
+  if(!wire) {
     setup_lights();
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
     glShadeModel(GL_SMOOTH);
@@ -439,8 +448,6 @@ void init_chess(ModeInfo *mi) {
   }
   else
     glPolygonMode(GL_FRONT, GL_LINE);
-
-/*   buildBoard(); */
 }
 
 /** does dirty work drawing scene, moving pieces */
@@ -465,10 +472,6 @@ void draw_chess(ModeInfo *mi) {
       mc = 0;
     }
   }
-
-  if(done)
-    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 
-	     ( done == 1 || count == 0 ) ? 1.0+0.1*count : 99.0/count);
 
   if(++count == 100) {
     if(!done) {
@@ -502,6 +505,11 @@ void draw_chess(ModeInfo *mi) {
       count = 0;
     }
   }
+
+  /* set lighting */
+  if(done)
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 
+	     done == 1 ? 1.0+0.1*count : 100.0/count);
 
   display(c);
 

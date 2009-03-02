@@ -92,7 +92,7 @@ SRCS		= xscreensaver-gl-helper.c \
 		  toaster_handle2.c toaster_jet.c toaster_knob.c \
 		  toaster_slots.c toaster_wing.c toast.c toast2.c \
 		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
-		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c
+		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -117,7 +117,7 @@ OBJS		= xscreensaver-gl-helper.o \
 		  toaster_handle2.o toaster_jet.o toaster_knob.o \
 		  toaster_slots.o toaster_wing.o toast.o toast2.o \
 		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
-		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o
+		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -125,7 +125,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
-		  glslideshow jigglypuff
+		  glslideshow jigglypuff klein
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -152,7 +152,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  spheremonics.man sproingies.man stairs.man starwars.man \
 		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
 		  endgame.man flurry.man glblur.man atunnel.man \
-		  flyingtoasters.man bouncingcow.man glslideshow.man
+		  flyingtoasters.man bouncingcow.man glslideshow.man \
+		  jigglypuff.man klein.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -510,7 +511,10 @@ bouncingcow:	$(COWOBJS)	    $(TRACK_OBJS) $(HACK_OBJS)
 glslideshow:	glslideshow.o	$(HACK_OBJS) $(GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
 
-jigglypuff:	jigglypuff.o	$(HACK_OBJS) $(TRACK_OBJS)
+jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_OBJS) $(TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(TRACK_OBJS) $(XPM_LIBS)
+
+klein:		klein.o		$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
 
@@ -671,6 +675,12 @@ glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
 grab-ximage.o: ../../config.h
 jigglypuff.o: ../../config.h
+jigglypuff.o: $(srcdir)/gltrackball.h
+jigglypuff.o: $(HACK_SRC)/images/jigglymap.xpm
+jigglypuff.o: $(srcdir)/xpm-ximage.h
+klein.o: ../../config.h
+klein.o: $(srcdir)/gltrackball.h
+klein.o: $(srcdir)/rotator.h
 lament.o: ../../config.h
 lament.o: $(srcdir)/gltrackball.h
 lament.o: $(HACK_SRC)/images/lament.xpm

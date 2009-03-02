@@ -18,7 +18,7 @@
           low="0" high="100" default="25"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
-           _label="Count" _low-label="Low" _high-label="High"
+           _label="Cycles" _low-label="Low" _high-label="High"
           low="0" high="100" default="40"/>
 
   <select id="render">

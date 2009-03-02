@@ -19282,7 +19282,10 @@ if test "$gtk2_halfassed" != no ; then
 fi
 
 
-if test "$with_gnome_req" = yes -a "$have_gnome" = no ; then
+if test "$with_gnome_req" = yes -a "$have_gnome" = no \
+        -a "$have_gtk2" = no; then
+  # don't issue this warning if we have GTK2 -- in that case, the
+  # Gnome-specific code isn't needed.
   warn  'Use of the Gnome Control Panel was requested, but the necessary'
   warn2 'headers and/or libraries were not found.'
 fi

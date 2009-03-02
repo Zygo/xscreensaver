@@ -300,16 +300,14 @@ ensure_selected_item_visible (GtkWidget *widget)
   
   selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
   if (!gtk_tree_selection_get_selected (selection, &model, &iter))
-    return;
-
-  path = gtk_tree_model_get_path (model, &iter);
+	path = gtk_tree_path_new_first ();
+  else
+	path = gtk_tree_model_get_path (model, &iter);
   
-# if 0
-  gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (widget),
-				path, NULL, FALSE, 0.0, 0.0);
-# else
   gtk_tree_view_set_cursor (GTK_TREE_VIEW (widget), path, NULL, FALSE);
-# endif
+
+  gtk_tree_path_free (path);
+
 #else /* !HAVE_GTK2 */
 
   GtkScrolledWindow *scroller = 0;
