@@ -8,7 +8,7 @@
           _label="Start sequence time" _low-label="0 sec" _high-label="30 sec"
           low="0.00" high="30.00" default="0.00"/>
 
-  <number id="changetime" type="slider" arg="-changetime %"
+  <number id="changetime" type="slider" arg="-end %"
           _label="Color Change Time" _low-label="Short" _high-label="Long"
           low="0.00" high="30.00" default="30.00"/>
 

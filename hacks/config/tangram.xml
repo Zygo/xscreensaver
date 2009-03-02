@@ -6,7 +6,7 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Fast" _high-label="Slow"
-          low="0" high="50000" default="30000"/>
+          low="0" high="50000" default="10000"/>
 
   <number id="viewing_time" type="spinbutton" arg="-viewing_time %"
           _label="Viewing Time" low="0" high="30" default="5" />

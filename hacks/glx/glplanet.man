@@ -9,7 +9,8 @@ glplanet - rotating 3d texture-mapped planet.
 [\-root]
 [\-no-light]
 [\-delay \fInumber\fP]
-[\-bitmap \fIfile\fP]
+[\-image \fIfile\fP]
+[\-resolution \fInumber\fP]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
@@ -32,10 +33,13 @@ Draw on the root window.
 Use Flat Coloring.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 15000 (0.01 seconds.).
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
-.B \-bitmap \fIfile\fP
+.B \-images \fIfile\fP
 The texture map to wrap around the planet's surface.
+.TP 8
+.B \-resolution
+The resolution of the planet. Default: 128.
 .TP 8
 .B \-wireframe
 Render in wireframe instead of solid.

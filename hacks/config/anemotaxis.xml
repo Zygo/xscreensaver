@@ -11,7 +11,7 @@
 
   <number id="distance" type="slider" arg="-distance %"
            _label="Distance" _low-label="Near" _high-label="Far"
-          low="0" high="400" default="40"/>
+          low="10" high="250" default="40"/>
 
   <number id="sources" type="slider" arg="-sources %"
            _label="Sources" _low-label="Few" _high-label="Many"

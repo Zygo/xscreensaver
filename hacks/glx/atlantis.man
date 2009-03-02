@@ -33,8 +33,8 @@ Draw on the root window.
 .B \-whalespeed \fInumber\fP
 Whale Speed.  0 - 1000.  Default: 250.
 .TP 8
-.B \-delay \fInumber\fP
-Shark Speed.  0 - 500.	Default: 100.
+.B \-cycles \fInumber\fP
+Shark Speed.  Default: 100.
 .TP 8
 .B \-size \fInumber\fP
 Shark Proximity.  100 - 10000.	Default: 6000.

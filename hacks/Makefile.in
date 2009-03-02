@@ -213,6 +213,8 @@ EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
 		  config/README \
 		  config/$(STAR).xml \
+		  config/$(STAR).dtd \
+		  config/$(STAR).xsd \
 		  images/$(STAR).xbm \
 		  images/$(STAR).xpm \
 		  images/bubbles/$(STAR).pov \
@@ -323,7 +325,9 @@ install-man: $(MEN)
 									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  sed "s/^\.TH.*/$$TH/" < $(srcdir)/$$man > $$T ;		\
+	  sed -e "s/^\.TH.*/$$TH/"					\
+	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
+	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(manNdir)/$$instname ;			\
 	  $(INSTALL_DATA) $$T						\

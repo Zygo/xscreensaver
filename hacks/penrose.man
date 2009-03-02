@@ -3,7 +3,7 @@
 penrose - draws quasiperiodic tilings
 .SH SYNOPSIS
 .B penrose
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-redoDelay \fIseconds\fP] [\-size \fIinteger\fP] [\-ammann] [\-no\-ammann]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-ammann] [\-no\-ammann]
 
 .SH DESCRIPTION
 The \fIpenrose\fP program draws quasiperiodic tilings.
@@ -67,10 +67,6 @@ How big the tiles should be.  Default 40 pixels.
 .B \-delay \fImilliseconds\fP
 How long (in 1/1,000,000'ths of a second) to wait between drawing each
 tile.  Default 10,000 or .01 seconds.
-
-.TP 8
-.B \-redoDelay \fIseconds\fP
-How long to wait between starting a completely new tiling.  Default 3 seconds.
 
 .TP 8
 .B \-ammann

@@ -13,7 +13,7 @@
 
   <number id="maxcyc" type="slider" arg="-max-cycles %"
           _label="Duration"  _low-label="Short" _high-label="Long"
-          low="2000" high="25000" default="12000" />
+          low="2000" high="25000" default="10000" />
   
   <number id="sandg" type="slider" arg="-sand-grains %"
           _label="Sandgrains" _low-label="Few" _high-label="Lots"

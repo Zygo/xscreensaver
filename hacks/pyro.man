@@ -28,13 +28,13 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-count \fIinteger\fP
-How many particles should be allowed on the screen at once.  Default 100.
+How many particles should be allowed on the screen at once.  Default 600.
 .TP 8
 .B \-frequency \fIinteger\fP
 How often new missiles should launch.  Default 30.
 .TP 8
 .B \-scatter \fIinteger\fP
-How many particles should appear when a missile explodes.  Default 20.
+How many particles should appear when a missile explodes.  Default 100.
 The actual number used is between \fIN\fP and \fIN+(N/2)\fP.
 .SH ENVIRONMENT
 .PP

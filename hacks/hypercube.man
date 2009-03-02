@@ -66,9 +66,9 @@ the specified color, and some have all four.
 .TP 8
 .B \-zw \fIfloat\fP
 The amount that the cube should be rotated around the specified axis at
-each frame of the animation, expressed in radians.  These should be small
-floating-point values (less than 0.05 works best.)  Default: xy=0.01,
-xz=0.005, yw=0.01.
+each frame of the animation, expressed in 0.001 radians.  These should be small
+floating-point values (less than 50 works best.)  Default: xy=3,
+xz=5, yw=10.
 .SH ENVIRONMENT
 .PP
 .TP 8

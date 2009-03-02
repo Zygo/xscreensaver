@@ -164,7 +164,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
 		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
 		  ants.h polyhedra.h normals.h glxfonts.h texfont.h \
-		  tangram_shapes.h cube21-tex.h
+		  tangram_shapes.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -247,7 +247,9 @@ install-man: $(MEN)
 									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  sed "s/^\.TH.*/$$TH/" < $(srcdir)/$$man > $$T ;		\
+	  sed -e "s/^\.TH.*/$$TH/"					\
+	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
+	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(manNdir)/$$instname ;			\
 	  $(INSTALL_DATA) $$T						\
@@ -762,7 +764,6 @@ cow_tail.o: $(srcdir)/gllist.h
 cow_udder.o: $(srcdir)/gllist.h
 crackberg.o: ../../config.h
 cube21.o: ../../config.h
-cube21.o: $(srcdir)/cube21-tex.h
 cubenetic.o: ../../config.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h

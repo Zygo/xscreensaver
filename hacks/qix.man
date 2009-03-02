@@ -49,7 +49,7 @@ from the next, in degrees on the HSV wheel.  Default 3.
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
-Default 25000, or about 0.025 seconds.
+Default 10000, or about 0.01 seconds.
 .TP 8
 .B \-random
 The \fIqix\fP will wander around the screen semi-randomly.  This is the

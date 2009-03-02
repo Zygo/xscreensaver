@@ -35,7 +35,7 @@ Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
 Render in wireframe instead of solid.
 .TP 8
 .B \-boxsize 
-Sets the size of the colored boxes. Should be between 1 and 4. Default: 1 
+Sets the size of the colored boxes. Should be between 1 and 8. Default: 2 
 .TP 8
 .B \-dissolve | \-no-dissolve
 Boxes shrink instead of just vanishing.

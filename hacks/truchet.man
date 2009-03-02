@@ -4,7 +4,7 @@ truchet - draws curved or angular Truchet patterns
 .SH SYNOPSIS
 .B truchet
 [\-display \fIhost:display.screen\fP]  [\-foreground \fIcolor\fP] [\-background \fIcolor\fP]
-[\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
+[\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImilliseconds\fP]
 [\-min\-width \fIinteger\fP] [\-min-height \fIinteger\fP] [\-max-width \fIinteger\fP] 
 [\-max-height \fIinteger\fP] [\-max\-linewidth \fIinteger\fP] [\-min-linewidth \fIinteger\fP] 
 [\-erase] [\-no\-erase] [\-erase\-count \fIinteger\fP] [\-square] [\-not\-square] [\-curves]
@@ -34,8 +34,8 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 
 .TP 8
-.B \-delay \fImicroseconds\fP
-How long to wait between drawing each screenful. Default is 3 seconds.
+.B \-delay \fImilliseconds\fP
+How long to wait between drawing each screenful. Default is 1 seconds.
 
 .TP 8 
 .B \-min-width \fIinteger\fP
@@ -77,7 +77,7 @@ The number of screenfuls to draw before erasing. Default is 25.
 
 .TP 8
 .B \-not-square
-Whether to force the tiles to be square. Default is False (not-square).
+Whether to force the tiles to be square. Default is True (square).
 
 .TP 8
 .B \-curves

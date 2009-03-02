@@ -1144,10 +1144,18 @@ launch_text_generator (p_state *state)
   char *oprogram = get_string_resource ("program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 50);
 
-  /* oprogram contains a "%d" where the current number of columns goes
-   */
   strcpy (program, "( ");
-  sprintf (program + strlen(program), oprogram, state->grid_width-1);
+  strcat (program, oprogram);
+
+  /* Kludge!  Special-case "xscreensaver-text" to tell it how wide
+     the screen is.  We used to do this by just always feeding
+     `program' through sprintf() and setting the default value to
+     "xscreensaver-text --cols %d", but that makes things blow up
+     if someone ever uses a --program that includes a % anywhere.
+   */
+  if (!strcmp (oprogram, "xscreensaver-text"))
+    sprintf (program + strlen(program), " --cols %d", state->grid_width-1);
+
   strcat (program, " ) 2>&1");
 
 #ifdef HAVE_FORKPTY
@@ -1395,7 +1403,7 @@ char *defaults [] = {
   "*ticks:		   20",
   "*delay:		   50000",
   "*cursor:		   333",
-  "*program:		   xscreensaver-text --cols %d",
+  "*program:		   xscreensaver-text",
   "*relaunch:		   5",
   "*metaSendsESC:	   True",
   "*swapBSDEL:		   True",

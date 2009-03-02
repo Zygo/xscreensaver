@@ -9,7 +9,7 @@
           low="0" high="50000" default="30000"/>
 
   <number id="boxsize" type="spinbutton" arg="-boxsize %"
-          _label="Box Size" low="1" high="8" default="1"/>
+          _label="Box Size" low="1" high="8" default="2"/>
 
   <hgroup>
    <boolean id="fade"      _label="Fade"        arg-unset="-no-fade"/>

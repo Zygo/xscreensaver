@@ -69,7 +69,7 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
-.BR gears (1),
+.BR gears (MANSUFFIX),
 .BR xscreensaver (1),
 .BR X (1)
 .SH COPYRIGHT

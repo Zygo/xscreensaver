@@ -50,10 +50,7 @@ Specifies the minimum color index to be used for negative exponents
 .TP
 -D \fIn\fP
 Specifies the "dwell" or number of iterations over which to average in order
-to calculate the Lyapunov exponent. Default is 400.
-.TP
--B 
-Causes the stop, go, spin and quit buttons to be displayed.
+to calculate the Lyapunov exponent. Default is 50.
 .TP
 -H \fIn\fP
 Specifies the height of the window. Default is 256.
@@ -74,18 +71,15 @@ value 'a'.
 .TP
 -S \fIn\fP
 Specifies the "settle" or number of iterations prior to the beginning of
-the calculation of the Lyapunov exponent. Default is 200.
-.TP
--W \fIn\fP
-Specifies the width of the window. Default is 256.
+the calculation of the Lyapunov exponent. Default is 50.
 .TP
 -a \fIr\fP
 Specifies the real value to use as the minimum parameter value of the 
-horizontal axis. Default is 3.0 for the logistic map.
+horizontal axis. Default is 2.0 for the logistic map.
 .TP
 -b \fIn\fP
 Specifies the real value to use as the minimum parameter value of the 
-vertical axis. Default is 3.0 for the logistic map.
+vertical axis. Default is 2.0 for the logistic map.
 .TP
 -c \fIn\fP
 Selects one of six different color wheels to use. The default color
@@ -106,7 +100,7 @@ Specifies the real value to be used as the range over which the vertical
 parameter values vary. The default is 1.0.
 .TP
 -i \fIr\fP
-Specifies the real value of the initial condition to use. Default is 0.05.
+Specifies the real value of the initial condition to use. Default is 0.65.
 .TP
 -m \fIn\fP
 Selects between available non-linear maps of the unit interval. A value of
@@ -130,13 +124,10 @@ and narrowing the color range for positive exponents. This can be toggled
 during runtime by pressing the 'p' key.
 .TP
 -r \fIn\fP
-Specifies the maximum rgb value to be used. Default is 35000.
+Specifies the maximum rgb value to be used. Default is 65000.
 .TP
 -s \fIn\fP
 Specifies the length of the color wheel spin.
-.TP
--u
-Produces a usage message.
 .TP
 -v 
 Prints out the various values to be used and exits.
@@ -144,12 +135,6 @@ Prints out the various values to be used and exits.
 -w \fIr\fP
 Specifies the real value to be used as the range over which the horizontal
 parameter values vary. The default is 1.0.
-.TP
--x \fIn\fP
-Specifies the x screen coordinate of the window (default is 256).
-.TP
--y \fIn\fP
-Specifies the y screen coordinate of the window (default is 256).
 .sp 2
 .SH NOTES
 .sp

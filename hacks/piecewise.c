@@ -18,6 +18,11 @@
 # include "xdbe.h"
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
+#if !defined( __GNUC__ ) && !defined(__cplusplus) && !defined(c_plusplus)
+#undef inline
+#define inline			/* */
+#endif
+
 #define X_PI (180 * 64)
 
 /******** splaying code */

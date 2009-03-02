@@ -28,7 +28,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-ncolors \fIinteger\fP
-How many colors should be used (if possible).  Default 200.
+How many colors should be used (if possible).  Default 64.
 The colors are chosen randomly.
 .TP 8
 .B \-count \fIinteger\fP
@@ -36,7 +36,7 @@ Default 12.
 .TP 8
 .B \-decay
 .TP 8
-.B \-no-\decay
+.B \-no\-decay
 Whether orbits should decay.
 
 .TP 8

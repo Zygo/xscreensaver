@@ -43,7 +43,7 @@ Whether to center on screen
 Horizontal Symmetries.	-10 - 10.  Default: -3.
 .TP 8
 .B \-ny \fInumber\fP
-Vertical Symmetries.  -10 - 10.  Default: -2.
+Vertical Symmetries.  -10 - 10.  Default: -3.
 .TP 8
 .B \-count \fInumber\fP
 Count.	-5000 - 5000.  Default: -500.

@@ -5,7 +5,7 @@ rotzoomer - animated rotations and scalings of portions of the screen
 .B rotzoomer
 [\-display \fIhost:display.screen\fP]
 [\-move | \-no\-move]
-[\-delay \fIusecs\fP]
+[\-delay \fImillisecs\fP]
 [\-n \fIcount\fP]
 [\-shm | \-no\-shm]
 [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
@@ -39,9 +39,9 @@ Install a private colormap for the window.
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-delay \fImilliseconds\fP
 How much of a delay should be introduced between steps of the animation.
-Default 10000, or about 1/100th second.
+Default 10, or about 1/100th second.
 .TP 8
 .B \-move
 Make the rectangles should wander around the screen.

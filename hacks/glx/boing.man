@@ -91,8 +91,8 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
-.BR bsod (1),
-.BR pong (1),
+.BR bsod (MANSUFFIX),
+.BR pong (MANSUFFIX),
 .BR xscreensaver (1),
 .BR X (1)
 .SH COPYRIGHT

@@ -25,10 +25,8 @@
  */
 
 /* TODO:
- *  Future: some simple "solve mode"
- *  Future: new light model, less ambient light
- *  Maybe: use rotator and trackball
- *  Maybe: display lists - seem impossible with colors
+ *  some simple "solve mode"
+ *  use rotator and trackball
  */
 
 /*-
@@ -65,7 +63,6 @@
 #ifdef USE_GL
 
 #include <GL/glu.h>
-#include "cube21-tex.h"
 
 #ifdef Pi
 #undef Pi
@@ -78,6 +75,12 @@
 #define SIN15   0.2588190451
 #define COS30   0.8660254038
 #define SIN30   0.5000000000
+
+#define TEX_WIDTH  128
+#define TEX_HEIGHT 128
+#define TEX_GRAY   0.7, 0.7
+#define BORDER     3
+#define BORDER2    9
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -173,6 +176,7 @@ typedef struct {
 } cube21_conf;
 
 static cube21_conf *cube21 = NULL;
+static unsigned char texture[TEX_HEIGHT][TEX_WIDTH];
 
 static GLfloat shininess = 20.0;
 static GLfloat ambient[] = {0.0, 0.0, 0.0, 1.0};
@@ -184,7 +188,7 @@ static GLfloat material_ambient[] = {0.7, 0.7, 0.7, 1.0};
 static GLfloat material_diffuse[] = {0.7, 0.7, 0.7, 1.0};
 static GLfloat material_specular[] = {0.2, 0.2, 0.2, 1.0};
 static GLfloat color_inner[] = {1.0, 1.0, 1.0};
-static GLfloat texc[8] = {0.0}, posc[6];
+static GLfloat texp = 0.0, texq, posc[6];
 static GLfloat zpos = -18.0;
 
 /*************************************************************************/
@@ -315,12 +319,12 @@ static void draw_narrow_piece(GLfloat s, int c1, int c2, col_t colors) {
   glBegin(GL_TRIANGLES);
   glNormal3f(0.0, 0.0, s);
   if(cmat) glColor3fv(colors[c1]);
-  glTexCoord2f(0.0, 0.25);     glVertex3f(0.0, 0.0, s);
-  glTexCoord2f(0.5, texc[1]);  glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(0.5, texc[2]);  glVertex3f(posc[2], posc[3], s);
+  glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
+  glTexCoord2f(texq, 0.0); glVertex3f(posc[1], 0.0, s);
+  glTexCoord2f(texp, 0.0); glVertex3f(posc[2], posc[3], s);
   glNormal3f(0.0, 0.0, -s);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s1);
   glVertex3f(posc[1], 0.0, s1);
   glVertex3f(posc[2], posc[3], s1);
@@ -328,20 +332,20 @@ static void draw_narrow_piece(GLfloat s, int c1, int c2, col_t colors) {
   glBegin(GL_QUADS);
   glNormal3f(0.0, -1.0, 0.0);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
   glVertex3f(posc[1], 0.0, s);
   glVertex3f(posc[1], 0.0, s1);
   glVertex3f(0.0, 0.0, s1);
   glNormal3f(COS15, SIN15, 0.0);
   if(cmat) glColor3fv(colors[c2]);
-  glTexCoord2f(0.5, texc[1]);      glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(0.5, texc[2]);      glVertex3f(posc[2], posc[3], s);
-  glTexCoord2f(texc[4], texc[2]);  glVertex3f(posc[2], posc[3], s1);
-  glTexCoord2f(texc[4], texc[1]);  glVertex3f(posc[1], 0.0, s1);
+  glTexCoord2f(texq, texq); glVertex3f(posc[1], 0.0, s);
+  glTexCoord2f(texq, texp); glVertex3f(posc[2], posc[3], s);
+  glTexCoord2f(1.0, texp);  glVertex3f(posc[2], posc[3], s1);
+  glTexCoord2f(1.0, texq);  glVertex3f(posc[1], 0.0, s1);
   glNormal3f(-SIN30, COS30, 0.0);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
   glVertex3f(posc[2], posc[3], s);
   glVertex3f(posc[2], posc[3], s1);
@@ -355,15 +359,15 @@ static void draw_wide_piece(GLfloat s, int c1, int c2, int c3, col_t colors) {
   glBegin(GL_TRIANGLES);
   glNormal3f(0.0, 0.0, s);
   if(cmat) glColor3fv(colors[c1]);
-  glTexCoord2f(0.0, 0.25);     glVertex3f(0.0, 0.0, s);
-  glTexCoord2f(0.5, texc[1]);  glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(0.5, 0.0);      glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(0.5, 0.0);      glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(texc[3], 0.0);  glVertex3f(posc[3], posc[2], s);
-  glTexCoord2f(0.0, 0.25);     glVertex3f(0.0, 0.0, s);
+  glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
+  glTexCoord2f(texp, 0.0); glVertex3f(posc[1], 0.0, s);
+  glTexCoord2f(0.0, 0.0);  glVertex3f(posc[4], posc[5], s);
+  glTexCoord2f(0.0, 0.0);  glVertex3f(posc[4], posc[5], s);
+  glTexCoord2f(0.0, texp); glVertex3f(posc[3], posc[2], s);
+  glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
   glNormal3f(0.0, 0.0, -s);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s1);
   glVertex3f(posc[1], 0.0, s1);
   glVertex3f(posc[4], posc[5], s1);
@@ -374,26 +378,26 @@ static void draw_wide_piece(GLfloat s, int c1, int c2, int c3, col_t colors) {
   glBegin(GL_QUADS);
   glNormal3f(0.0, -1.0, 0);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
   glVertex3f(posc[1], 0.0, s);
   glVertex3f(posc[1], 0.0, s1);
   glVertex3f(0.0, 0.0, s1);
   glNormal3f(COS15, -SIN15, 0.0);
   if(cmat) glColor3fv(colors[c2]);
-  glTexCoord2f(0.5, texc[1]);      glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(0.5, 0.0);          glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(texc[4], 0.0);      glVertex3f(posc[4], posc[5], s1);
-  glTexCoord2f(texc[4], texc[1]);  glVertex3f(posc[1], 0.0, s1);
+  glTexCoord2f(texq, texp); glVertex3f(posc[1], 0.0, s);
+  glTexCoord2f(texq, 0.0);  glVertex3f(posc[4], posc[5], s);
+  glTexCoord2f(1.0, 0.0);   glVertex3f(posc[4], posc[5], s1);
+  glTexCoord2f(1.0, texp);  glVertex3f(posc[1], 0.0, s1);
   glNormal3f(SIN15, COS15, 0.0);
   if(cmat) glColor3fv(colors[c3]);
-  glTexCoord2f(0.5, texc[1]);      glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(0.5, 0.0);          glVertex3f(posc[3], posc[2], s);
-  glTexCoord2f(texc[4], 0.0);      glVertex3f(posc[3], posc[2], s1);
-  glTexCoord2f(texc[4], texc[1]);  glVertex3f(posc[4], posc[5], s1);
+  glTexCoord2f(texq, texp); glVertex3f(posc[4], posc[5], s);
+  glTexCoord2f(texq, 0.0);  glVertex3f(posc[3], posc[2], s);
+  glTexCoord2f(1.0, 0.0);   glVertex3f(posc[3], posc[2], s1);
+  glTexCoord2f(1.0, texp);  glVertex3f(posc[4], posc[5], s1);
   glNormal3f(-COS30, SIN30, 0.0);
   if(cmat) glColor3fv(color_inner);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
   glVertex3f(posc[3], posc[2], s);
   glVertex3f(posc[3], posc[2], s1);
@@ -407,41 +411,41 @@ static void draw_middle_piece(int s, cind_t cind, col_t colors) {
   glBegin(GL_QUADS);
   if(cmat) glColor3fv(color_inner);
   glNormal3f(0.0, 0.0, 1.0);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(posc[1], 0.0, posc[0]);
   glVertex3f(posc[4], posc[5], posc[0]);
   glVertex3f(-posc[5], posc[4], posc[0]);
   glVertex3f(-posc[1], 0.0, posc[0]);
   glNormal3f(0.0, 0.0, -1.0);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(posc[1], 0.0, -posc[0]);
   glVertex3f(posc[4], posc[5], -posc[0]);
   glVertex3f(-posc[5], posc[4], -posc[0]);
   glVertex3f(-posc[1], 0.0, -posc[0]);
   glNormal3f(0.0, -1.0, 0.0);
-  glTexCoord2f(1.0, 1.0);
+  glTexCoord2f(TEX_GRAY);
   glVertex3f(-posc[1], 0.0, posc[0]);
   glVertex3f(posc[1], 0.0, posc[0]);
   glVertex3f(posc[1], 0.0, -posc[0]);
   glVertex3f(-posc[1], 0.0, -posc[0]);
   glNormal3f(COS15, -SIN15, 0.0);
   if(cmat) glColor3fv(colors[cind[4][s]]);
-  glTexCoord2f(texc[5], 0.5);      glVertex3f(posc[1], 0.0, posc[0]);
-  glTexCoord2f(1.0, 0.5);          glVertex3f(posc[4], posc[5], posc[0]);
-  glTexCoord2f(1.0, texc[7]);      glVertex3f(posc[4], posc[5], -posc[0]);
-  glTexCoord2f(texc[5], texc[7]);  glVertex3f(posc[1], 0.0, -posc[0]);
+  glTexCoord2f(texq, texp); glVertex3f(posc[1], 0.0, posc[0]);
+  glTexCoord2f(1.0, texp);  glVertex3f(posc[4], posc[5], posc[0]);
+  glTexCoord2f(1.0, texq);  glVertex3f(posc[4], posc[5], -posc[0]);
+  glTexCoord2f(texq, texq); glVertex3f(posc[1], 0.0, -posc[0]);
   glNormal3f(SIN15, COS15, 0.0);
   if(cmat) glColor3fv(colors[cind[4][s+1]]);
-  glTexCoord2f(0.0, 0.5);      glVertex3f(posc[4], posc[5], posc[0]);
-  glTexCoord2f(1.0, 0.5);      glVertex3f(-posc[5], posc[4], posc[0]);
-  glTexCoord2f(1.0, texc[6]);  glVertex3f(-posc[5], posc[4], -posc[0]);
-  glTexCoord2f(0.0, texc[6]);  glVertex3f(posc[4], posc[5], -posc[0]);
+  glTexCoord2f(0.0, 0.5);   glVertex3f(posc[4], posc[5], posc[0]);
+  glTexCoord2f(texq, 0.5); glVertex3f(-posc[5], posc[4], posc[0]);
+  glTexCoord2f(texq, 0.75); glVertex3f(-posc[5], posc[4], -posc[0]);
+  glTexCoord2f(0.0, 0.75);   glVertex3f(posc[4], posc[5], -posc[0]);
   glNormal3f(-COS15, SIN15, 0.0);
   if(cmat) glColor3fv(colors[cind[4][s+4]]);
-  glTexCoord2f(0.0, 0.5);          glVertex3f(-posc[5], posc[4], posc[0]);
-  glTexCoord2f(texc[5], 0.5);      glVertex3f(-posc[1], 0.0, posc[0]);
-  glTexCoord2f(texc[5], texc[7]);  glVertex3f(-posc[1], 0.0, -posc[0]);
-  glTexCoord2f(0.0, texc[7]);      glVertex3f(-posc[5], posc[4], -posc[0]);
+  glTexCoord2f(0.0, 0.75); glVertex3f(-posc[5], posc[4], posc[0]);
+  glTexCoord2f(1.0, 0.75); glVertex3f(-posc[1], 0.0, posc[0]);
+  glTexCoord2f(1.0, 1.0);  glVertex3f(-posc[1], 0.0, -posc[0]);
+  glTexCoord2f(0.0, 1.0);  glVertex3f(-posc[5], posc[4], -posc[0]);
   glEnd();
 }
 
@@ -556,26 +560,93 @@ void parse_colmode(void) {
   else colmode = CUBE21_COLOR_WHITE;
 }
 
-static void init_texc(void) {
-  GLfloat p = tan(Pi/12);
-  if(texc[0]) return;
-  /* Some significant non-trivial coordinates of the texture... */
-  texc[0] = p;                     /* 0.268 */
-  texc[1] = (1.0-p)/4;             /* 0.183 */
-  texc[2] = (1.0+p)/4;             /* 0.317 */
-  texc[3] = p/2;                   /* 0.134 */
-  texc[4] = 1.0-p/2;               /* 0.866 = sqrt(3)/2 */
-  texc[5] = (1.0+p)/2;             /* 0.634 */
-  texc[6] = (1.0-p)/2;             /* 0.366 */
-  texc[7] = (1.0+p)/2;             /* = texc[5], but has different purpose */
-  /* ...and of the object. We need them exactly at GLfloat precision
+static void init_posc(void) {
+  texp = (1.0-tan(Pi/12.0))/2.0;
+  texq = 1.0-texp;
+  /* Some significant non-trivial coordinates
+   * of the object. We need them exactly at GLfloat precision
    * for the edges to line up perfectly. */
-  posc[0] = p;                     /* 0.268 */
+  posc[0] = tan(Pi/12);            /* 0.268 */
   posc[1] = 1.0/cos(Pi/12);        /* 1.035 */
   posc[2] = cos(Pi/6)/cos(Pi/12);  /* 0.897 */
   posc[3] = sin(Pi/6)/cos(Pi/12);  /* 0.518 */
   posc[4] = sqrt(2)*cos(Pi/6);     /* 1.225 */
   posc[5] = sqrt(2)*sin(Pi/6);     /* 0.707 = 1/sqrt(2) */
+}
+
+static void draw_horz_line(int x1, int x2, int y) {
+  int x, y0 = y, w;
+  if(y<BORDER) y = -y;
+  else y = -BORDER;
+  for(; y<BORDER; y++) {
+    if(y0+y>=TEX_HEIGHT) break;
+    w = y*y*255/BORDER2;
+    for(x=x1; x<=x2; x++)
+      if(texture[y0+y][x]>w) texture[y0+y][x] = w;
+  }
+}
+
+static void draw_vert_line(int x, int y1, int y2) {
+  int x0 = x, y, w;
+  if(x<BORDER) x = -x;
+  else x = -BORDER;
+  for(; x<BORDER; x++) {
+    if(x0+x>=TEX_WIDTH) break;
+    w = x*x*255/BORDER2;
+    for(y=y1; y<=y2; y++)
+      if(texture[y][x0+x]>w) texture[y][x0+x] = w;
+  }
+}
+
+static void draw_slanted_horz(int x1, int y1, int x2, int y2) {
+  int x, y, dx = x2-x1, dy = y2-y1, y0, w;
+  for(x=x1; x<=x2; x++) {
+    y0 = y1+(y2-y1)*(x-x1)/(x2-x1);
+    for(y=-1-BORDER; y<2+BORDER; y++) {
+      w = dx*(y0+y-y1)-dy*(x-x1);
+      w = w*w/(dx*dx+dy*dy);
+      w = w*255/BORDER2;
+      if(texture[y0+y][x]>w) texture[y0+y][x] = w;
+    }
+  }
+}
+
+static void draw_slanted_vert(int x1, int y1, int x2, int y2) {
+  int x, y, dx = x2-x1, dy = y2-y1, x0, w;
+  for(y=y1; y<=y2; y++) {
+    x0 = x1+(x2-x1)*(y-y1)/(y2-y1);
+    for(x=-1-BORDER; x<2+BORDER; x++) {
+      w = dy*(x0+x-x1)-dx*(y-y1);
+      w = w*w/(dy*dy+dx*dx);
+      w = w*255/BORDER2;
+      if(texture[y][x0+x]>w) texture[y][x0+x] = w;
+    }
+  }
+}
+
+static void make_texture(void) {
+  int x, y, x0, y0;
+  float grayp[2] = {TEX_GRAY};
+  for(y=0; y<TEX_HEIGHT; y++)
+    for(x=0; x<TEX_WIDTH; x++)
+      texture[y][x] = 255;
+  draw_horz_line(0, TEX_WIDTH-1, 0);
+  draw_horz_line(texq*TEX_WIDTH, TEX_WIDTH-1, texp*TEX_HEIGHT);
+  draw_horz_line(texq*TEX_WIDTH, TEX_WIDTH-1, texq*TEX_HEIGHT);
+  draw_horz_line(0, texq*TEX_WIDTH, TEX_HEIGHT/2);
+  draw_horz_line(0, TEX_WIDTH-1, TEX_HEIGHT*3/4);
+  draw_horz_line(0, TEX_WIDTH-1, TEX_HEIGHT-1);
+  draw_vert_line(0, 0, TEX_HEIGHT-1);
+  draw_vert_line(texq*TEX_WIDTH, 0, TEX_HEIGHT*3/4);
+  draw_vert_line(TEX_WIDTH-1, 0, TEX_HEIGHT-1);
+  draw_slanted_horz(0, texp*TEX_HEIGHT, TEX_WIDTH/2, TEX_HEIGHT/2);
+  draw_slanted_vert(texp*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
+  draw_slanted_vert(texq*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
+  x0 = grayp[0]*TEX_WIDTH;
+  y0 = grayp[1]*TEX_HEIGHT;
+  for(y=-1; y<=1; y++)
+    for(x=-1; x<=1; x++)
+      texture[y0+y][x0+x] = 100;   
 }
 
 /* It doesn't look good */
@@ -625,8 +696,8 @@ static void init_gl(ModeInfo *mi) {
   glEnable(GL_TEXTURE_2D);
 #ifdef MIPMAP
   clear_gl_error();
-  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, cubetex.width, cubetex.height,
-      GL_RGB, GL_UNSIGNED_BYTE, cubetex.pixel_data);
+  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 1, TEX_WIDTH, TEX_HEIGHT,
+      GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
   if (status) {
     const char *s = gluErrorString(status);
     fprintf (stderr, "%s: error mipmapping texture: %s\n", progname, (s?s:"(unknown)"));
@@ -634,8 +705,8 @@ static void init_gl(ModeInfo *mi) {
   }
   check_gl_error("mipmapping");
 #else    
-  glTexImage2D(GL_TEXTURE_2D, 0, cubetex.bytes_per_pixel, cubetex.width, cubetex.height,
-      0, GL_RGB, GL_UNSIGNED_BYTE, cubetex.pixel_data);
+  glTexImage2D(GL_TEXTURE_2D, 0, 1, TEX_WIDTH, TEX_HEIGHT,
+      0, GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
 #endif  
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -749,7 +820,10 @@ void init_cube21(ModeInfo *mi) {
     cube21 = (cube21_conf *)calloc(MI_NUM_SCREENS(mi), sizeof(cube21_conf));
     if(!cube21) return;
   }
-  init_texc();
+  if(!texp) {
+    init_posc();
+    make_texture();
+  }
   cp = &cube21[MI_SCREEN(mi)];
   if ((cp->glx_context = init_GL(mi)) != NULL) {
     init_gl(mi);

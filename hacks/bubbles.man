@@ -16,7 +16,7 @@
 bubbles - frying pan / soft drink simulation
 .SH SYNOPSIS
 .B bubbles
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D] [\-rise|\-drop] [-trails]
 .SH DESCRIPTION
 \fIBubbles\fP sprays lots of little random bubbles all over the window which
 then grow until they reach their maximum size and go pop.  The inspiration
@@ -53,7 +53,7 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay microseconds
 How much of a delay should be introduced between steps of the animation.
-Default 1, or about 1 microsecond.  Actually, this is the delay between each
+Default 800, or about 800 microsecond.  Actually, this is the delay between each
 group of 15 new bubbles since such a delay between each step results in a
 very slow animation rate.
 .TP 8
@@ -81,6 +81,10 @@ mileage may vary.
 .B \-quiet
 Don't print messages explaining why one or several command line options
 were ignored.  This is disabled by default.
+.TP 8
+.B \-rise | \-drop 
+.TP 8
+.B \-trails
 .SH NOTES
 If you find the pace of things too slow, remember that there is a delay
 even though you specify no \fI\-delay\fP option.  Try using \fI\-nodelay\fP

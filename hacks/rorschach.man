@@ -3,7 +3,7 @@
 rorschach - simulate ink-blot patterns
 .SH SYNOPSIS
 .B rorschach
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-iterations \fIinteger\fP] [\-offset \fIinteger\fP] [\-xsymmetry] [\-ysymmetry] [\-erase\-mode \fIinteger\fP] [\-erase\-speed \fIusecs\fP] [\-delay \fIsecs\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-iterations \fIinteger\fP] [\-offset \fIinteger\fP] [\-xsymmetry] [\-ysymmetry] [\-erase\-speed \fIusecs\fP] [\-delay \fIsecs\fP]
 .SH DESCRIPTION
 The \fIrorschach\fP program draws random patterns reminiscent of the
 psychological test of same name.
@@ -38,10 +38,6 @@ Whether the images should be horizontally symmetrical.  Default true.
 .TP 8
 .B \-ysymmetry
 Whether the images should be vertically symmetrical.  Default false.
-.TP 8
-.B \-erase\-mode \fIinteger\fP
-This sets the erase mode. Mode \-1 chooses a random mode each time. There
-are currently 6 modes defined (0\-5).
 .TP 8
 .B \-erase\-speed \fIusecs\fP
 This controls the speed at which the screen will be erased. (Delay between

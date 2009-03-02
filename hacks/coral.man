@@ -35,7 +35,7 @@ Duration.  1 - 60.  Default: 5.
 Density.  1 - 90.  Default: 25.
 .TP 8
 .B \-seeds \fInumber\fP
-Seeds.	1 - 100.  Default: 25.
+Seeds.	1 - 100.  Default: 20.
 .SH ENVIRONMENT
 .PP
 .TP 8

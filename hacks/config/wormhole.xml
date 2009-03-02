@@ -6,16 +6,16 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="100"
+          low="0" high="50000" default="10000"
           convert="invert"/>
 
   <number id="zspeed" type="slider" arg="-zspeed %"
           _label="Star speed" _low-label="Slow" _high-label="Fast"
-          low="1" high="30" default="15"/>
+          low="1" high="30" default="10"/>
 
   <number id="stars" type="slider" arg="-stars %"
           _label="Stars Created" _low-label="Few" _high-label="Lots"
-          low="1" high="100" default="30"/>
+          low="1" high="100" default="20"/>
 
   <_description>
   Wormhole simulates flying through a colored wormhole in space. 

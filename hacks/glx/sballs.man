@@ -19,7 +19,6 @@ sballs - draws balls spinning like crazy in GL
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
 [\-object \fIobject_number\fP] 
-[\-count \fInumber_of_spheres\fP] 
 [\-cycles \fIsphere_speed\fP] 
 [\-size \fIviewport_size\fP] 
 [\-texture] [\-no-texture]
@@ -78,17 +77,8 @@ pyramid
 .B 8 
 star
 .TP 8
-.B \-count \fInumber_of_spheres\fP\fP
-Specify how much spheres are drawn in the selected object. 
-.TP 8
 .B \-size \fIviewport_size\fP\fP
 Viewport of GL scene is specified size if greater than 32 and less than screensize. Default value is 0, meaning full screensize.
-.TP 8
-.B \-count \fInumber_of_particles\fP\fP
-Specify how much fire particles are drawn. A very special case is 0
-wich means that you get
-.B rain
-!
 .TP 8
 .B \-texture
 Show a textured background and spheres. This is the default.

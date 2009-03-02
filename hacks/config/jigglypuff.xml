@@ -19,11 +19,11 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Rotation speed" _low-label="Slow" _high-label="Fast"
-	  low="50" high="1000" default="250"/>
+	  low="50" high="1000" default="500"/>
 
   <number id="spherism" type="slider" arg="-spherism %"
            _label="Sphere strength" _low-label="none" _high-label="strong"
-	   low="0" high="1000" default="200"/>
+	   low="0" high="1000" default="75"/>
 
   <number id="hold" type="slider" arg="-hold %"
            _label="Vertex-vertex force" _low-label="none" _high-label="strong"

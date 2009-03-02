@@ -44,7 +44,7 @@ Maximum number of cracks in the substrate at a single time
 Number of sand grains dropped during coloring.  More grains cause 
 a denser colour but use more cpu power.
 .TP 8
-.B \-circle-percent \fIcirclepercent\fP (Default: \fI33\fP)
+.B \-circle-percent \fIcirclepercent\fP (Default: \fI0\fP)
 The percentage of the cracks will be circular.
 .SH ENVIRONMENT
 .PP

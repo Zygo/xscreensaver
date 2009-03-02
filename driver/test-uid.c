@@ -37,7 +37,7 @@ print(void)
   struct passwd *p = 0;
   struct group *g = 0;
   gid_t groups[1024];
-  int n;
+  int n, size;
 
   p = getpwuid (uid);
   g = getgrgid (gid);
@@ -51,7 +51,8 @@ print(void)
 	  (p && p->pw_name ? p->pw_name : "???"),
 	  (g && g->gr_name ? g->gr_name : "???"));
 
-  n = getgroups(sizeof(groups)-1, groups);
+  size = sizeof(groups) / sizeof(gid_t)
+  n = getgroups(size - 1, groups);
   if (n < 0)
     perror("getgroups failed");
   else
@@ -63,7 +64,7 @@ print(void)
           g = getgrgid (groups[i]);
           fprintf(stderr, "%s%s=%ld", (i == 0 ? "" : ", "),
                   (g->gr_name ? g->gr_name : "???"),
-                  groups[i]);
+                  (long) groups[i]);
         }
       fprintf (stderr, "]\n");
     }

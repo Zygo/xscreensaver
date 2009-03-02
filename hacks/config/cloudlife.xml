@@ -15,7 +15,7 @@
 
   <number id="density" type="slider" arg="-initial-density %"
           _label="Initial Density" _low-label="Low" _high-label="High"
-          low="1" high="300" default="160"/>
+          low="1" high="99" default="30"/>
 
   <number id="cellsize" type="slider" arg="-cell-size %"
           _label="Cell Size" _low-label="Small" _high-label="Large"

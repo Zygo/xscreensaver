@@ -55,7 +55,7 @@ Sets the moving cycle to
 .I period
 seconds. By default, this value is 10 seconds.
 .TP
-.BI "-wait " "microsec"
+.BI "-delay " "microsec"
 Inserts a wait after drawing one view of the clock. By default, t3d waits
 40 ms after each drawing. This helps you to keep the performance loss
 small.

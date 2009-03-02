@@ -18,7 +18,7 @@
 
   <number id="zangvel" type="slider" arg="-zangvel %"
           _label="Z Angular Velocity" _low-label="Slow" _high-label="Fast"
-          low="0.0" high="1.0" default="0.10"/>
+          low="0.0" high="1.0" default="0.14"/>
 
   <number id="packing" type="slider" arg="-explode %"
           _label="Packing" _low-label="Tight" _high-label="Loose"

@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.14 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.16 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -49,6 +49,8 @@ my @programs = (
   "bttvgrab -d q -Q -l 1 -o ppm -f $tmpfile",	# BTTV
   "qcam > $tmpfile",				# Connectix Qcam
   "gqcam -t PPM -d $tmpfile",			# GTK+ Qcam clone
+
+  "v4lctl snap ppm full $tmpfile",		# XawTV 3.94.
 
   "streamer -a -s 768x576 -o $tmpfile",		# XawTV
   #   the "-a" option ("mute audio") arrived with XawTV 3.76.

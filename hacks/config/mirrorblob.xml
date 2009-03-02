@@ -14,7 +14,7 @@
           _low-label="10 Seconds" _high-label="5 Minutes"
           low="10" high="300" default="30"/>
 
-  <number id="fade_speed" type="slider" arg="-fade_speed %"
+  <number id="fade_speed" type="slider" arg="-fade_time %"
           _label="Crossfade Duration:"
           _low-label="None" _high-label="30 Seconds"
           low="0" high="30" default="5"/>
@@ -47,7 +47,6 @@
   <boolean id="walls" _label="Enable Walls"/>
   <boolean id="colour" _label="Enable Colouring" arg-set="-colour"/>
   <boolean id="texture" _label="Enable Reflected Image" arg-unset="-no-texture"/>
-  <boolean id="background" _label="Enable Background Image" arg-unset="-no-bgimage"/>
   <boolean id="offset_texture" _label="Offset Texture Coordinates" arg-set="-offset_texture"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 

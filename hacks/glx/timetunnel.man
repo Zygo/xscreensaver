@@ -9,7 +9,7 @@ timetunnel - Plasma tunnels fade in and out
 [\-root]
 [\-start \fInumber\fP]
 [\-end \fInumber\fP]
-[\-dialate \fInumber\fP]
+[\-dilate \fInumber\fP]
 [\-tunonly]
 [\-reverse]
 [\-fog]
@@ -37,7 +37,7 @@ Start time of loop, 0.0 - 30.00. Default 0.0.  May be identical to end time.
 .B \-end \fInumber\fP
 End time of loop, 0.0 - 30.00. Default 27.79.  May be identical to start time.
 .TP 8
-.B \-dialate \fInumber\fP
+.B \-dilate \fInumber\fP
 Scale time to speed or slow simulation.  Numbers less than one slow it down.
 .TP 8
 .B \-tunonly

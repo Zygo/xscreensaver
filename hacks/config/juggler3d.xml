@@ -13,7 +13,7 @@
 		_low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
 
 	<number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min Objects"
-          low="3" high="35" default="8"/>
+          low="3" high="35" default="3"/>
 
 	<number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max Objects"
           low="3" high="35" default="8"/>		  

@@ -27,9 +27,9 @@
 
   <hgroup>
    <number id="lensoffsetx" type="spinbutton" arg="-lensoffsetx %"
-           _label="Lens Offset" low="1" high="100" default="1"/>
+           _label="Lens Offset" low="1" high="100" default="5"/>
    <number id="lensoffsety" type="spinbutton" arg="-lensoffsety %"
-           _label="x" low="1" high="100" default="1"/>
+           _label="x" low="1" high="100" default="5"/>
   </hgroup>
 
   <_description>

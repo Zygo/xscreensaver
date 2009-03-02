@@ -1,4 +1,4 @@
-/* celtic, Copyright (c) 2005 Max Froumentin <max@lapin-bleu.net>
+/* celtic, Copyright (c) 2006 Max Froumentin <max@lapin-bleu.net>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -7,6 +7,10 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * A celtic pattern programme inspired by "Les Entrelacs Celtes", by
+ * Christian Mercat, Dossier Pour La Science, no. 47, april/june 2005.
+ * See <http://www.entrelacs.net/>
  */
 
 #include <math.h>
@@ -14,7 +18,7 @@
 #include "screenhack.h"
 #include "erase.h"
 
-#define SQRT3_2 .86602540378443864676
+#define SQRT_3 1.73205080756887729352
 
 /*-----------------------------------------*/
 Display *dpy;
@@ -33,6 +37,7 @@ struct params {
   unsigned long cluster_size; /* only used if type is kennicott */
   unsigned long delay;        /* controls curve drawing speed (step delay 
 			       * in microsecs) */
+  unsigned long nsteps; /* only if triangle: number of subdivisions along the side */
   unsigned long nb_orbits;          /* only used if type is polar */
   unsigned long nb_nodes_per_orbit; /* only used if type is polar */
 
@@ -384,52 +389,50 @@ static Graph make_grid_graph(int xmin, int ymin, int width, int height, int step
 }
 
 
-
-static Graph make_triangle_graph(int xmin, int ymin, int width, int height, int step)
-     /* make a simple grid graph */
+static Graph make_triangle_graph(int xmin, int ymin, int width, int height, int edge_size)
 {
   Graph g;
-  int row,col,x,y;
-  int size=width<height?width:height;
-  int n=1+size/SQRT3_2/step;
   Node *grid;
+  int row,col;
+  double L=(width<height?width:height)/2.0; /* circumradius of the triangle */
+  double cx=xmin+width/2.0, cy=ymin+height/2.0; /* centre of the triangle */
+  double p2x=cx-L*SQRT_3/2.0, p2y=cy+L/2.0; /* p2 is the bottom left vertex */
+  double x,y;
+  int nsteps=3*L/(SQRT_3*edge_size);
 
-  assert(grid=(Node*)calloc(n*n,sizeof(Node)));
+  assert(grid=(Node*)calloc((nsteps+1)*(nsteps+1),sizeof(Node)));
   assert(g=graph_new());
 
-  /* adjust xmin and xmax so that the grid is centered */
-  xmin+=(width-(n-1)*step)/2; 
-  ymin+=(height-SQRT3_2*(n-3)*step)/2;
-
   /* create node grid */
-  for (row=0;row<n;row++)
-    for (col=0;col<n;col++) 
-      if (row+col<n) {
-	x=col*step+xmin + row*step/2;
-	y=SQRT3_2*row*step+ymin;
-	grid[row+col*n]=node_new((double)x, (double)y);
-	graph_add_node(g, grid[row+col*n]);
+  for (row=0;row<=nsteps;row++)
+    for (col=0;col<=nsteps;col++) 
+      if (row+col<=nsteps) {
+        x=p2x+col*L*SQRT_3/nsteps + row*L*SQRT_3/(2*nsteps);
+        y=p2y-row*3*L/(2*nsteps);
+        grid[col+row*(nsteps+1)]=node_new((double)x, (double)y);
+        graph_add_node(g, grid[col+row*(nsteps+1)]);
       }
 
   /* create edges */
-  for (row=0;row<n;row++)
-    for (col=0;col<n;col++)
-	if (row+col<n-1) { 
-	  /* horizontal edges */
-	  graph_add_edge(g,edge_new(grid[row+col*n],grid[row+(col+1)*n]));
-	  /* vertical edges */
-	  graph_add_edge(g,edge_new(grid[row+col*n],grid[row+1+col*n]));
-	  /* diagonal edges */
-	  graph_add_edge(g,edge_new(grid[row+1+col*n],grid[row+(col+1)*n]));
+  for (row=0;row<nsteps;row++)
+    for (col=0;col<nsteps;col++)
+      if (row+col<nsteps) { 
+          /* horizontal edges */
+          graph_add_edge(g,edge_new(grid[row+col*(nsteps+1)],grid[row+(col+1)*(nsteps+1)]));
+          /* vertical edges */
+          graph_add_edge(g,edge_new(grid[row+col*(nsteps+1)],grid[row+1+col*(nsteps+1)]));
+          /* diagonal edges */
+          graph_add_edge(g,edge_new(grid[row+1+col*(nsteps+1)],grid[row+(col+1)*(nsteps+1)]));
       }
 
   free(grid);
   return g;
+  
 }
 
 
 static Graph make_kennicott_graph(int xmin, int ymin, int width, int height, int step,
-			   int cluster_size)
+                           int cluster_size)
      /* make a graph inspired by one of the motifs from the Kennicott bible */
      /* square grid of clusters of the shape  /|\
       *                                       ---
@@ -487,14 +490,14 @@ static Graph make_kennicott_graph(int xmin, int ymin, int width, int height, int
   for (row=0;row<nbrow;row++)
     for (col=0;col<nbcol;col++) {
       if (col!=nbcol-1)
-	/* horizontal edge from edge 1 of cluster (row, col) to edge 3
-	 * of cluster (row,col+1) */
-	graph_add_edge(g,edge_new(grid[5*(row+col*nbrow)+1],grid[5*(row+(col+1)*nbrow)+3]));
+        /* horizontal edge from edge 1 of cluster (row, col) to edge 3
+         * of cluster (row,col+1) */
+        graph_add_edge(g,edge_new(grid[5*(row+col*nbrow)+1],grid[5*(row+(col+1)*nbrow)+3]));
       if (row!=nbrow-1)
-	/* vertical edge from edge 4 of cluster (row, col) to edge 2
-	 * of cluster (row+1,col) */
-	graph_add_edge(g,edge_new(grid[5*(row+col*nbrow)+4],
-				  grid[5*(row+1+col*nbrow)+2]));
+        /* vertical edge from edge 4 of cluster (row, col) to edge 2
+         * of cluster (row+1,col) */
+        graph_add_edge(g,edge_new(grid[5*(row+col*nbrow)+4],
+                                  grid[5*(row+1+col*nbrow)+2]));
     }
   free(grid);
   return g;
@@ -525,8 +528,8 @@ static void spline_del(void *s)
 }
 
 static void spline_add_segment(Spline s,
-			double x1, double y1, double x2, double y2, 
-			double x3, double y3, double x4, double y4)
+                        double x1, double y1, double x2, double y2, 
+                        double x3, double y3, double x4, double y4)
 {
   SplineSegment ss=(SplineSegment)calloc(1,sizeof(struct spline_segment));
   ss->x1=x1;  ss->x2=x2;  ss->x3=x3;  ss->x4=x4;
@@ -543,7 +546,7 @@ static void spline_to_s(Spline s, FILE *f)
   for (i=0;i<s->segments->nb_elements;i++) {
     ss=s->segments->elements[i];
     fprintf(f," - segment %d: (%g, %g),(%g, %g),(%g, %g),(%g, %g)\n",
-	    i,ss->x1,ss->y1,ss->x2,ss->y2,ss->x3,ss->y3,ss->x4,ss->y4);
+            i,ss->x1,ss->y1,ss->x2,ss->y2,ss->x3,ss->y3,ss->x4,ss->y4);
   }
 }
 #endif
@@ -633,8 +636,8 @@ static void pattern_edge_couple_set(Pattern p, Edge e, Direction d, int value)
 }
 
 static void pattern_draw_spline_direction(Pattern p, Spline s,
-				   Node node, Edge edge1, Edge edge2, 
-				   Direction direction)
+                                   Node node, Edge edge1, Edge edge2, 
+                                   Direction direction)
 {
   double x1=(edge1->node1->x+edge1->node2->x)/2.0;
   double y1=(edge1->node1->y+edge1->node2->y)/2.0;
@@ -716,7 +719,7 @@ static void pattern_make_curves(Pattern p)
 
       /* add the spline segment to the spline */
       pattern_draw_spline_direction(p,s,current_node,
-				    current_edge,next_edge,current_direction);
+                                    current_edge,next_edge,current_direction);
       
       /* cross the edge */
       current_edge = next_edge;
@@ -738,9 +741,9 @@ static void pattern_animate(Pattern p, unsigned long delay)
   int i,segment,unused;
   int ticks = 0;
   double step=0.0001; /* TODO: set the step (or the delay) as a
-			* function of the spline length, so that
-			* drawing speed is constant
-			*/
+                        * function of the spline length, so that
+                        * drawing speed is constant
+                        */
   Spline s;
 
   XSetLineAttributes(dpy,gc,params.curve_width,LineSolid,CapRound,JoinRound);
@@ -749,33 +752,33 @@ static void pattern_animate(Pattern p, unsigned long delay)
   for (t=0.0;t<1;t+=step) {
     for (i=0;i<p->splines->nb_elements;i++) 
       if ((s=p->splines->elements[i])) { /* skip if one-point spline */
-	spline_value_at(s, &x, &y, fmod(t,1.0),&segment);
-	spline_value_at(s, &x2, &y2, fmod(t+step,1.0),&unused);
-	
-	/* look ahead for the shadow segment */
-	t2=t+step;
-	if (t2<=1.0) {
-	  spline_value_at(s, &x3, &y3, fmod(t2,1.0),&unused);
-	  while (t2+step<1.0 && (x3-x2)*(x3-x2)+(y3-y2)*(y3-y2) < params.shadow_width*params.shadow_width) {
-	    t2+=step;
-	    spline_value_at(s, &x3, &y3, fmod(t2,1.0),&unused);
-	  }
-	  
-	  spline_value_at(s, &x4, &y4, fmod(t2+step,1.0),&unused);
-	  
-	  /* draw shadow line */
-	  XDrawLine(dpy,window,shadow_gc, 
-		    (int)rint(x3),(int)rint(y3), 
-		    (int)rint(x4),(int)rint(y4));
-	} 
-	/* draw line segment */
-	if (p->splines->nb_elements==1)
-	  XSetForeground(dpy, gc, colors[segment%(ncolors-3)+2].pixel);
-	else
-	  XSetForeground(dpy, gc, colors[s->color].pixel);
-	XDrawLine(dpy,window,gc,
-		  (int)rint(x),(int)rint(y),
-		  (int)rint(x2),(int)rint(y2));
+        spline_value_at(s, &x, &y, fmod(t,1.0),&segment);
+        spline_value_at(s, &x2, &y2, fmod(t+step,1.0),&unused);
+        
+        /* look ahead for the shadow segment */
+        t2=t+step;
+        if (t2<=1.0) {
+          spline_value_at(s, &x3, &y3, fmod(t2,1.0),&unused);
+          while (t2+step<1.0 && (x3-x2)*(x3-x2)+(y3-y2)*(y3-y2) < params.shadow_width*params.shadow_width) {
+            t2+=step;
+            spline_value_at(s, &x3, &y3, fmod(t2,1.0),&unused);
+          }
+          
+          spline_value_at(s, &x4, &y4, fmod(t2+step,1.0),&unused);
+          
+          /* draw shadow line */
+          XDrawLine(dpy,window,shadow_gc, 
+                    (int)rint(x3),(int)rint(y3), 
+                    (int)rint(x4),(int)rint(y4));
+        } 
+        /* draw line segment */
+        if (p->splines->nb_elements==1)
+          XSetForeground(dpy, gc, colors[segment%(p->ncolors-3)+2].pixel);
+        else
+          XSetForeground(dpy, gc, colors[s->color].pixel);
+        XDrawLine(dpy,window,gc,
+                  (int)rint(x),(int)rint(y),
+                  (int)rint(x2),(int)rint(y2));
       }
 
     if (++ticks > 100) {
@@ -796,8 +799,8 @@ static void pattern_animate(Pattern p, unsigned long delay)
       spline_value_at(s, &x2, &y2, fmod(t-offset,1.0),&unused);
       
       while ((x2-x)*(x2-x)+(y2-y)*(y2-y) < params.shadow_width*params.shadow_width) {
-	offset+=step;
-	spline_value_at(s, &x2, &y2, fmod(t-offset,1.0),&unused);
+        offset+=step;
+        spline_value_at(s, &x2, &y2, fmod(t-offset,1.0),&unused);
       }
       
       XDrawLine(dpy,window,gc, (int)rint(x),(int)rint(y), (int)rint(x2),(int)rint(y2));
@@ -861,6 +864,19 @@ static void params_to_s(FILE *f)
 }
 #endif
 
+#if 0
+static void colormap_to_s(int ncolors, XColor *colors)
+{
+  int i;
+  printf("-- colormap (%d colors):\n",ncolors);
+  for (i=0;i<ncolors;i++)
+    printf("%d: %d %d %d\n", i, colors[i].red, colors[i].green, colors[i].blue);
+  printf("----\n");
+}
+#endif
+
+
+
 void screenhack(Display * d, Window w)
 {
   XGCValues gcv;
@@ -895,14 +911,13 @@ void screenhack(Display * d, Window w)
       if (ncolors < 2)
         goto MONO;
       else {
-	colors[0].pixel = get_pixel_resource("foreground", "Foreground",
-					     dpy, xgwa.colormap);
-	colors[1].pixel = get_pixel_resource("background", "Background",
-					     dpy, xgwa.colormap);
+        colors[0].pixel = get_pixel_resource("foreground", "Foreground",
+                                             dpy, xgwa.colormap);
+        colors[1].pixel = get_pixel_resource("background", "Background",
+                                             dpy, xgwa.colormap);
       }
     }
-  
-  
+
   /* graphic context for curves */
   gcv.foreground = colors[0].pixel;
   gcv.background = colors[1].pixel;
@@ -924,37 +939,53 @@ void screenhack(Display * d, Window w)
   /*=======================================================*/
 
   for (;;) {
-
     params.curve_width=random()%5+4;
     params.shadow_width=params.curve_width+4;
-    params.shape1=(random()%20)/10.0 -1.0;
-    params.shape2=(random()%20)/10.0 -1.0;
+    params.shape1=(15+random()%15)/10.0 -1.0;
+    params.shape2=(15+random()%15)/10.0 -1.0;
     params.edge_size=10*(random()%5)+20;
     params.delay=get_integer_resource("delay", "Delay");
     params.angle=random()%360*2*M_PI/360;
+    params.margin=(random()%8)*100-600;
     
     switch (random()%4) {
     case 0:
       params.type=grid;
-      params.margin=(random()%30)*10;
+      params.shape1=(random()%1*2-1.0)*(random()%10+3)/10.0;
+      params.shape2=(random()%1*2-1.0)*(random()%10+3)/10.0;
+      params.edge_size=10*(random()%5)+50;
       break;
     case 1:
       params.type=kennicott;
-      params.edge_size=10*(random()%3)+50;
-      params.cluster_size=params.edge_size/(2+random()%3)-1;
-      params.margin=(random()%30)*10;
+      params.shape1=(random()%20)/10.0 -1.0;
+      params.shape2=(random()%20)/10.0 -1.0;
+      params.edge_size=10*(random()%3)+70;
+      params.cluster_size=params.edge_size/(3.0+random()%10)-1;
       break;
     case 2:
       params.type=triangle;
-      params.margin=(random()%10)*10;
+      params.edge_size=10*(random()%5)+60;
+      params.margin=(random()%10)*100-900;
       break;
     case 3:
       params.type=polar;
-      params.nb_orbits=2+random()%20;
-      params.nb_nodes_per_orbit=4+random()%20;
-      params.margin=(random()%10)*20-50;
+      params.nb_orbits=2+random()%10;
+      params.nb_nodes_per_orbit=4+random()%10;
       break;
     }
+
+
+/*     params.type= polar; */
+/*   params.nb_orbits= 5; */
+/*   params.nb_nodes_per_orbit= 19; */
+/*   params.curve_width= 4; */
+/*   params.shadow_width= 8; */
+/*   params.shape1= 0.5; */
+/*   params.shape2= 1.3; */
+/*   params.margin= 30; */
+/*   params.angle= 5.21853; */
+/*   params.delay= 10000; */
+
     
 /*     params_to_s(stdout); */
     
@@ -964,35 +995,35 @@ void screenhack(Display * d, Window w)
     switch (params.type) {
     case grid:
       g=make_grid_graph(params.margin,params.margin,
-			xgwa.width-2*params.margin, 
-			xgwa.height-2*params.margin, 
-			params.edge_size);
+                        xgwa.width-2*params.margin, 
+                        xgwa.height-2*params.margin, 
+                        params.edge_size);
       break;
     case kennicott:
       g=make_kennicott_graph(params.margin,params.margin,
-			     xgwa.width-2*params.margin, 
-			     xgwa.height-2*params.margin, 
-			     params.edge_size,
-			     params.cluster_size);
+                             xgwa.width-2*params.margin, 
+                             xgwa.height-2*params.margin, 
+                             params.edge_size,
+                             params.cluster_size);
       break;
     case triangle:
       g=make_triangle_graph(params.margin,params.margin,
-			    xgwa.width-2*params.margin, 
-			    xgwa.height-2*params.margin, 
-			    params.edge_size);
+                            xgwa.width-2*params.margin, 
+                            xgwa.height-2*params.margin, 
+                            params.edge_size);
       break;
     case polar:
       g=make_polar_graph(params.margin,params.margin,
-			 xgwa.width-2*params.margin, 
-			 xgwa.height-2*params.margin, 
-			 params.nb_nodes_per_orbit, 
-			 params.nb_orbits);
+                         xgwa.width-2*params.margin, 
+                         xgwa.height-2*params.margin, 
+                         params.nb_nodes_per_orbit, 
+                         params.nb_orbits);
       break;
     default:
       g=make_grid_graph(params.margin,params.margin,
-			xgwa.width-2*params.margin, 
-			xgwa.height-2*params.margin, 
-			params.edge_size);
+                        xgwa.width-2*params.margin, 
+                        xgwa.height-2*params.margin, 
+                        params.edge_size);
       break;
     }
 
@@ -1021,12 +1052,9 @@ void screenhack(Display * d, Window w)
    erase_full_window(dpy,window);
 
    /* recolor each time */
-   {
-     int ncolors = get_integer_resource ("ncolors", "Integer");
-     if (ncolors > 2)
-       make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap,
-                             colors, &ncolors, True, 0, True);
-   }
-
+   ncolors = get_integer_resource ("ncolors", "Integer");
+   if (ncolors > 2)
+     make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap,
+                           colors, &ncolors, True, 0, True);
   }
 }

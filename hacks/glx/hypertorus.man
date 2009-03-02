@@ -135,10 +135,10 @@ around the six possible hyperplanes.  The rotation speed is measured
 in degrees per frame.  The speeds should be set to relatively small
 values, e.g., less than 4 in magnitude.
 .TP 8
-.B \-speed-xw \fIfloat\fP
+.B \-speed-wx \fIfloat\fP
 Rotation speed around the wx plane (default: 1.1).
 .TP 8
-.B \-speed-xy \fIfloat\fP
+.B \-speed-wy \fIfloat\fP
 Rotation speed around the wy plane (default: 1.3).
 .TP 8
 .B \-speed-wz \fIfloat\fP

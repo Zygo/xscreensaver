@@ -339,7 +339,11 @@ pam_priv_init (int argc, char **argv, Bool verbose_p)
   const char file2[] = "/etc/pam.conf";
   struct stat st;
 
-  if (stat (dir, &st) == 0 && st.st_mode & S_IFDIR)
+# ifndef S_ISDIR
+#  define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+# endif
+
+  if (stat (dir, &st) == 0 && S_ISDIR(st.st_mode))
     {
       if (stat (file, &st) != 0)
         fprintf (stderr,

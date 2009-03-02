@@ -111,7 +111,7 @@ For further examples, see the
 list in the source code.
 .TP
 .BI \-tail\  number
-Minimum Trail Length.  0 \- 100.  Default: 0.  Objects may override
+Minimum Trail Length.  0 \- 100.  Default: 1.  Objects may override
 this, for example flaming torches always leave a trail.
 .TP
 .BR \-real\  |\  \-no\-real

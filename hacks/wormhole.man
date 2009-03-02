@@ -39,8 +39,8 @@ Number of stars to create every animation loop.
 Speed light streaks fly by.
 .TP 8
 .B \-delay \fImicroseconds\fP
-Number of microseconds to delay between each frame.  Default 50000, meaning
-about 1/20th second.  Compare and contrast with \fI\-speed\fP, above.
+Number of microseconds to delay between each frame.  Default 10000, meaning
+about 1/100th second.  Compare and contrast with \fI\-zspeed\fP, above.
 .SH ENVIRONMENT
 .PP
 .TP 8

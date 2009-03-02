@@ -2171,7 +2171,14 @@ screenhack(Display *dpy, Window win)
 
     sensor = 0;
 # ifdef HAVE_PING
-    sensor_info = (void *) init_ping();
+    /* init_ping() will fail if not root, so checking the effective uid
+       isn't necessary -- except that on some systems, it makes some
+       SELinux bullshit show up in syslog, which gets people's panties
+       in a bunch. */
+    if (geteuid () == 0)
+      sensor_info = (void *) init_ping();
+    else
+      sensor_info = 0;
 # else  /* !HAVE_PING */
     sensor_info = 0;
     parse_mode (0);  /* just to check argument syntax */

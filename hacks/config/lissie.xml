@@ -9,7 +9,7 @@
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Timeout" _low-label="Small" _high-label="Large"
-          low="0" high="800000" default="2000"/>
+          low="0" high="80000" default="20000"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
@@ -18,7 +18,7 @@
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="64"/>
+            low="1" high="255" default="200"/>
 
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-500" high="500" default="-200"/>

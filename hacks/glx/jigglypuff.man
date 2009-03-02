@@ -90,7 +90,7 @@ e.g. if you were to give the options '-tetra -spherism 0 -distance 500', you
 would end up with a stable tetrahedron. The 'damping' option can help to
 keep the blob from collapsing or flying apart. The option specifies the
 speed at which damping starts, hence lower values mean more damping.
-Defaults: spherism: 200; hold: 800; distance: 100; damping: 500.
+Defaults: spherism: 75; hold: 800; distance: 100; damping: 500.
 .TP 8
 .B -random
 Probably the only parameter you'l ever need. Overrides almost all of the

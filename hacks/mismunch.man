@@ -58,7 +58,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR munch (1)
+.BR munch (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2004 Steven Hazel.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any

@@ -221,7 +221,7 @@ DriftNet:
 .BR cjpeg (1),
 .BR xdpyinfo (1),
 .BR perl (1),
-.BR vidwhacker (1),
+.BR vidwhacker (MANSUFFIX),
 .BR dadadodo (1),
 .BR driftnet (1)
 .BR EtherPEG ,

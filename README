@@ -76,6 +76,14 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.23:   * New versions of `cube21', `glsnake', `celtic'.
+                      * Backed out a DPMS-related patch that cause desktop
+                        flickering with some X servers.
+                      * Fixed startup crash in getgroups() when running setuid.
+                      * Default to not displaying stderr on the saver window.
+                      * Fixed bad free() in "Documentation" button.
+                      * Don't try to run hacks that aren't installed.
+                      * Minor fixes to various XML config files and man pages.
 Changes since 4.22:   * New hacks, `glhanoi', `cube21', `timetunnel',
                         `juggler3d', and `celtic'.
                       * New versions of `tangram', `webcollage', `hypertorus',

@@ -12,7 +12,7 @@ tangram - watch the computer solve tangram puzzles.
 [\-viewing_time \fInumber\fP]
 [\-rotate]
 .SH DESCRIPTION
-The \fItangram\fP program uses a view basic shapes to build silhouettes of recognizable objects.
+The \fItangram\fP program uses a few basic shapes to build silhouettes of recognizable objects.
 .SH OPTIONS
 .I tangram
 accepts the following options:
@@ -28,13 +28,14 @@ Draw on a newly-created window.  This is the default.
 Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
+Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.
 .TP 8
 .B \-viewing_time \fInumber\fP 
 Specify the length of time, in seconds, that the finished puzzle
+should be displayed. Default: 5
 .TP 8
 .B \-rotate | \-no-rotate
 Rotate the camera around the puzzle.

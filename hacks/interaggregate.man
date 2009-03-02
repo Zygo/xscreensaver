@@ -7,10 +7,13 @@ between slowly moving circles.
 [\-display \fIhost:display.screen\fP]
 [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP]
-[\-num\-discs \fIdisc count\fP]
-[\-draw\-delay \fIdelayms\fP]
-[\-max\-riders \fImaxr\fP]
-[\-max\-radius \fImaxradius\fP]
+[\-num\-circles \fIdisc count\fP]
+[\-growth\-delay \fIdelayms\fP]
+[\-max\-cycles \fImaxr\fP]
+[\-percent\-orbits \fIpercent\fP]
+[\-base\-orbits \fIpercent\fP]
+[\-base\-on\-center]
+[\-draw\-centers]
 .SH DESCRIPTION
 The Intersection Aggregate is a fun visualization defining the relationships 
 between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
@@ -28,21 +31,14 @@ http://www.complexification.net by J.Tarbell
 .I interaggregate
 accepts the following options:
 .TP 8
-.B \-num\-discs \fIdisc count\fP (Default: \fI85\fP)
+.B \-num\-circles \fIdisc count\fP (Default: \fI100\fP)
 Number of slowly moving and growing discs to use.  The more discs, 
 the more CPU power.
 .TP 8
-.B \-draw\-delay \fIdelayms\fP (Default: \fI30000\fP)
+.B \-growth\-delay \fIdelayms\fP (Default: \fI18000\fP)
 Delay in ms between drawing cycles.  More delay, slower (but smoother 
 and less CPU intensive.)
 art.
-.TP 8
-.B \-max\-riders \fImaxrider\fP (Default: \fI40\fP)
-Maximum number of 'riders', single dots moving around the edge of the discs.
-.TP 8
-.B \-max\-radius \fImaxradius\fP (Default: \fI100\fP)
-Maximum possible radius of a disc.
-.TP 8
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -7,11 +7,11 @@ glsnake \- OpenGL enhanced Rubik's Snake cyclewaster.
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
 [\-wireframe] [\-altcolour]
-[\-velocity \fIangular\fP]
+[\-angvel \fIangular\fP]
 [\-explode \fIdistance\fP]
 [\-statictime \fImilliseconds\fP]
-[\-yspin \fIangle\fP]
-[\-zspin \fIangle\fP]
+[\-yangvel \fIangle\fP]
+[\-zangvel \fIangle\fP]
 .SH DESCRIPTION
 .PP
 .B glsnake
@@ -45,7 +45,7 @@ Display the snake in wireframe mode, rather than the default solid mode.
 Use the alternate colour scheme for the snake.  Shape identification using
 colour will be disabled.
 .TP 8
-.B -velocity \fIangular\fP
+.B -angvel \fIangular\fP
 Change the speed at which the snake morphs to a new shape.
 .TP 8
 .B -explode \fIdistance\fP
@@ -54,10 +54,10 @@ Change the distance between the nodes of a snake.
 .B \-statictime \fImilliseconds\fP
 Change the time between morphs.
 .TP 8
-.B \-yspin \fIangle\fP
+.B \-yangvel \fIangle\fP
 Change the angle of rotation around the Y axis per frame.
 .TP 8
-.B \-zspin \fIangle\fP
+.B \-zangvel \fIangle\fP
 Change the angle of rotation around the Z axis per frame.
 .SH ENVIRONMENT
 .PP
@@ -75,7 +75,7 @@ This XScreenSaver will attempt to read model files installed with the interactiv
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR glsnake (6)
+.BR glsnake (MANSUFFIX)
 .PP
 .EX
 http://spacepants.org/src/glsnake/

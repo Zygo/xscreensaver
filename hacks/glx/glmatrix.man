@@ -19,7 +19,7 @@ is seen in the title sequence of the Wachowski brothers' film,
 "The Matrix".
 
 Also see
-.BR xmatrix (1)
+.BR xmatrix (MANSUFFIX)
 for a 2D rendering of the similar effect that appeared on the
 computer monitors actually \fIin\fP the movie.
 .SH OPTIONS
@@ -85,7 +85,7 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
-.BR xmatrix (1),
+.BR xmatrix (MANSUFFIX),
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT

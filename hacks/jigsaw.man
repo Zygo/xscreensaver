@@ -35,7 +35,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
-How long to wait between shuffling pieces; default 700000, or 0.7 seconds.
+How long to wait between shuffling pieces; default 70000, or 0.07 seconds.
 .SH ENVIRONMENT
 .PP
 .TP 8
