@@ -12,13 +12,13 @@ TARFILES	= README README.VMS README.debugging INSTALL xscreensaver.lsm \
 		  config.h-vms install-sh setup.com config.guess \
 		  config.sub makevms.com screenblank.txt \
 		  xscreensaver.lsm.sh
-TAR		= gtar
+TAR		= tar
 COMPRESS	= gzip --verbose --best
 COMPRESS_EXT	= gz
 # COMPRESS	= compress
 # COMPRESS_EXT	= Z
 
-MAKE_SUBDIR	= for dir in $(SUBDIRS) ; do ( cd $$dir ; $(MAKE) $@ ) ; done
+MAKE_SUBDIR = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
 
 all::
 	@$(MAKE_SUBDIR)
@@ -46,7 +46,7 @@ tags:
 clean:
 	@$(MAKE_SUBDIR)
 distclean: clean
-	-rm -f config.h Makefile config.status config.cache config.log *~ "#"*
+	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"*
 	@$(MAKE_SUBDIR)
 
 dist: tar
@@ -55,7 +55,8 @@ dist: tar
 tar:
 	@								    \
   sh config.status ;							    \
-  $(MAKE) hack_configure ;						    \
+  rm -f configure ;							    \
+  $(MAKE) configure ;							    \
   $(MAKE) distdepend ;							    \
   sh xscreensaver.lsm.sh > xscreensaver.lsm.$$$$ ;			    \
   mv xscreensaver.lsm.$$$$ xscreensaver.lsm ;				    \
@@ -85,7 +86,7 @@ tar:
 # out options we don't use.  Odds are good that this will fail with any version
 # of autoconf other than 2.12.
 #
-hack_configure::
+configure::
 	autoconf
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
@@ -108,7 +109,6 @@ hack_configure::
 		s/--enable and --with options recognized://m;		     \
 		s/\n  --with-x .*?(["\n])/$$1/s;			     \
 		s/\n(Installation options:\n)/$$1/s;			     \
-		s/\n(X Server Extension options:\n)/$$1/s;		     \
 									     \
 		s/^  --oldincludedir=.*$$/ \
  --x-includes=DIR        X include files are in DIR\n \
@@ -119,3 +119,76 @@ hack_configure::
 	> $$TMP &&							     \
 	cat $$TMP > configure ) ;					     \
 	rm -f $$TMP
+
+bump-version::
+	@								    \
+  SRC=utils/version.h ;							    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\)\.\([0-9][0-9]*\).*/\1 \2/p' $$SRC` ;	    \
+  set - $$VERS ;							    \
+  MAJOR="$$1"; MINOR="$$2";						    \
+  NEW=`echo $$MINOR + 1 | bc` ;						    \
+  D=`date '+%d-%b-%y'`;							    \
+  if [ ! -f xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then			    \
+    echo "WARNING: xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";    \
+  fi ;									    \
+  if [ -f xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then			    \
+    echo "WARNING: xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";	    \
+  fi ;									    \
+  echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
+  read line;								    \
+  if [ "x$$line" != "xyes" -a  "x$$line" != "xy" ]; then		    \
+    exit 1 ; 								    \
+  fi ;									    \
+  TMP=/tmp/bv.$$ ;							    \
+  sed -e "s/\([0-9]\.[0-9][0-9]*\)/$$MAJOR.$$NEW/"			    \
+      -e "s/\(([0-9][0-9]*-[A-Za-z][a-z][a-z]-[0-9][0-9][0-9]*\))/($$D)/"   \
+        $$SRC > $$TMP ;							    \
+  echo -n "New version and date are ";					    \
+  sed -n "s/[^0-9]*\([0-9]\.[0-9][0-9]*\) (\([-A-Za-z0-9]*\)).*/\1, \2./p"  \
+     $$TMP;								    \
+  cat $$TMP > $$SRC ;							    \
+  rm -f $$TMP;								    \
+  echo "overwrote $$SRC"; 						    \
+  ls -lFd $$SRC
+
+www::
+	@								    \
+  DEST=$$HOME/www/xscreensaver ;					    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
+  NAME="xscreensaver-$$VERS.tar.gz" ;					    \
+  if [ ! -f $$NAME ]; then						    \
+    echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  if [ -f $$DEST/$$NAME ]; then						    \
+    echo -n "WARNING: $$DEST/$$NAME already exists!  Overwrite? ";	    \
+    read line;							    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
+  cp -p $$NAME $$DEST/$$NAME ;						    \
+  chmod u+w $$DEST/$$NAME ;						    \
+  cd $$DEST ;								    \
+									    \
+  TMP=/tmp/xd.$$$$ ;							    \
+  sed "s/xscreensaver-[0-9]\.[0-9][0-9]\.tar\.gz/$$NAME/g" index.html	    \
+    > $$TMP ;								    \
+  echo '' ;								    \
+  diff -u0 index.html $$TMP ;						    \
+  echo '' ;								    \
+									    \
+  OLDEST=`ls xscreensaver*.tar.gz | head -1` ;				    \
+  echo -n "Delete $$DEST/$$OLDEST? ";					    \
+  read line;								    \
+  if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
+    set -x ;								    \
+    rm $$OLDEST ;							    \
+    cvs remove $$OLDEST ;						    \
+  else									    \
+    set -x ;								    \
+  fi ;									    \
+  cvs add -kb $$NAME ;							    \
+  cat $$TMP > index.html ;						    \
+  rm -f $$TMP ;								    \
+  cvs commit -m "$$VERS"

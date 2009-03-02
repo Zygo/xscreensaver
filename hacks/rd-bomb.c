@@ -1,5 +1,5 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997
- *  Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
  *  Copyright (c) 1997 Scott Draves spot@transmeta.com
@@ -21,23 +21,28 @@
 #include <math.h>
 
 #include "screenhack.h"
+#include <X11/Xutil.h>
+
+#ifdef HAVE_XSHM_EXTENSION
+# include "xshm.h"
+#endif /* HAVE_XSHM_EXTENSION */
 
 /* costs ~6% speed */
 #define dither_when_mapped 1
 
-int verbose;
-int ncolors = 0;
-XColor *colors = 0;
-Display *display;
-Visual *visual;
+static int verbose;
+static int ncolors = 0;
+static XColor *colors = 0;
+static Display *display;
+static Visual *visual;
 #if dither_when_mapped
-unsigned char *mc = 0;
+static unsigned char *mc = 0;
 #endif
-Colormap cmap = 0;
-Window window;
-int mapped;
-int pdepth;
-void random_colors(void);
+static Colormap cmap = 0;
+static Window window;
+static int mapped;
+static int pdepth;
+static void random_colors(void);
 
 /* -----------------------------------------------------------
    pixel hack, 8-bit pixel grid, first/next frame interface
@@ -58,22 +63,29 @@ void random_colors(void);
 /* why strip bit? */
 #define R (ya_random()&((1<<30)-1))
 
-int frame = 0, epoch_time;
-ushort *r1, *r2, *r1b, *r2b;
-int width, height, npix;
-int radius;
-int reaction = 0;
-int diffusion = 0;
+static int frame = 0, epoch_time;
+static ushort *r1, *r2, *r1b, *r2b;
+static int width, height, npix;
+static int radius;
+static int reaction = 0;
+static int diffusion = 0;
 
 /* returns number of pixels that the pixack produces.  called once. */
-void
-pixack_init(int *size_h, int *size_v) {
+static void
+pixack_init(int *size_h, int *size_v) 
+{
   int sz_base;
   width = get_integer_resource ("width", "Integer");
   height = get_integer_resource ("height", "Integer");
   sz_base = 80 + (R%40);
   if (width <= 0) width = (R%20) ? sz_base : (28 + R%10);
   if (height <= 0) height = (R%20) ? sz_base : (28 + R%10);
+
+  /* jwz: when (and only when) XSHM is in use on an SGI 8-bit visual,
+     we get shear unless width is a multiple of 4.  I don't understand
+     why.  This is undoubtedly the wrong fix... */
+  width &= ~0x7;
+
   /* don't go there */
   if (width < 10) width = 10;
   if (height < 10) height = 10;
@@ -97,8 +109,9 @@ pixack_init(int *size_h, int *size_v) {
 
 
 /* returns the pixels.  called many times. */
-void
-pixack_frame(char *pix_buf) {
+static void
+pixack_frame(char *pix_buf) 
+{
   int i, j;
   int w2 = width + 2;
   ushort *t;
@@ -295,6 +308,9 @@ char *defaults [] = {
   "*size:	0.66",
   "*delay:	1",
   "*colors:	-1",
+#ifdef HAVE_XSHM_EXTENSION
+  "*useSHM:	True",
+#endif /* HAVE_XSHM_EXTENSION */
   0
 };
 
@@ -310,22 +326,17 @@ XrmOptionDescRec options [] = {
   { "-size",		".size",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-ncolors",		".colors",	XrmoptionSepArg, 0 },
+#ifdef HAVE_XSHM_EXTENSION
+  { "-shm",		".useSHM",	XrmoptionNoArg, "True" },
+  { "-no-shm",		".useSHM",	XrmoptionNoArg, "False" },
+#endif /* HAVE_XSHM_EXTENSION */
   { 0, 0, 0, 0 }
 };
 
 
-/* why doesn't this work???  and more importantly, do i really still have
-   to do this in X? */
-   
-#ifdef HAVE_XSHM_EXTENSION
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
-#endif
-
-
-void
-random_colors() {
+static void
+random_colors(void)
+{
   memset(colors, 0, ncolors*sizeof(*colors));
   make_smooth_colormap (display, visual, cmap, colors, &ncolors,
 			True, 0, True);
@@ -372,7 +383,7 @@ screenhack (Display *dpy, Window win)
   int vdepth;
   int npix;
 #ifdef HAVE_XSHM_EXTENSION
-  int use_shm = 0;
+  Bool use_shm = get_boolean_resource("useSHM", "Boolean");
   XShmSegmentInfo shm_info;
 #endif
 
@@ -403,6 +414,11 @@ screenhack (Display *dpy, Window win)
     array_y = (xgwa.height - array_height)/2;
     array_dx = p;
     array_dy = .31415926 * p;
+
+    /* start in a random direction */
+    if (random() & 1) array_dx = -array_dx;
+    if (random() & 1) array_dy = -array_dy;
+
   }
   verbose = get_boolean_resource ("verbose", "Boolean");
   npix = (width + 2) * (height + 2);
@@ -453,57 +469,75 @@ screenhack (Display *dpy, Window win)
     exit(1);
   }
 
+  image = 0;
+
 #ifdef HAVE_XSHM_EXTENSION
-  if (use_shm) {
-    printf("p=%X\n", p);
-    free(p);
-    image = XShmCreateImage(dpy, xgwa.visual, vdepth,
-			    ZPixmap, 0, &shm_info, width, height);
-    shm_info.shmid = shmget(IPC_PRIVATE,
-			    image->bytes_per_line * image->height,
-			    IPC_CREAT | 0777);
-    if (shm_info.shmid == -1)
-      printf ("shmget failed!");
-    shm_info.readOnly = False;
-    p = shmat(shm_info.shmid, 0, 0);
-    printf("p=%X %d\n", p, image->bytes_per_line);
-    XShmAttach(dpy, &shm_info);
-    XSync(dpy, False);
-  } else
-#endif
-  image = XCreateImage(dpy, xgwa.visual, vdepth,
-		       ZPixmap, 0, p,
-		       width, height, 8, 0);
+  if (use_shm)
+    {
+      image = create_xshm_image(dpy, xgwa.visual, vdepth,
+				ZPixmap, 0, &shm_info, width, height);
+      if (!image)
+	use_shm = False;
+      else
+	{
+	  free(p);
+	  p = image->data;
+	}
+    }
+#endif /* HAVE_XSHM_EXTENSION */
+
+  if (!image)
+    {
+      image = XCreateImage(dpy, xgwa.visual, vdepth,
+			   ZPixmap, 0, p,
+			   width, height, 8, 0);
+    }
 
   while (1) {
+    Bool bump = False;
+
     int i, j;
     pixack_frame(p);
     for (i = 0; i < array_width; i += width)
       for (j = 0; j < array_height; j += height)
 #ifdef HAVE_XSHM_EXTENSION
 	if (use_shm)
-	  XShmPutImage(dpy, win, gc, image, 0, 0, i, j,
+	  XShmPutImage(dpy, win, gc, image, 0, 0, i+array_x, j+array_y,
 		       width, height, False);
 	else
 #endif
-	  XPutImage(dpy, win, gc, image, 0, 0, i+array_x, j+array_y, width, height);
+	  XPutImage(dpy, win, gc, image, 0, 0, i+array_x, j+array_y,
+		    width, height);
 
     array_x += array_dx;
     array_y += array_dy;
     if (array_x < 0) {
       array_x = 0;
       array_dx = -array_dx;
+      bump = True;
     } else if (array_x > (xgwa.width - array_width)) {
       array_x = (xgwa.width - array_width);
       array_dx = -array_dx;
+      bump = True;
     }
     if (array_y < 0) {
       array_y = 0;
       array_dy = -array_dy;
+      bump = True;
     } else if (array_y > (xgwa.height - array_height)) {
       array_y = (xgwa.height - array_height);
       array_dy = -array_dy;
+      bump = True;
     }
+
+    if (bump) {
+      if (random() & 1) {
+	double swap = array_dx;
+	array_dx = array_dy;
+	array_dy = swap;
+      }
+    }
+
     frame++;
 
     XSync(dpy, False);

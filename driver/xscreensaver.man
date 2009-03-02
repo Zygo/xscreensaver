@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "30-Jun-98 (2.24)" "X Version 11"
+.TH XScreenSaver 1 "02-Oct-98 (2.31)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -27,6 +27,9 @@ xscreensaver - graphics hack and screen locker, launched when the user is idle
 [\-no\-install] \
 [\-verbose] \
 [\-silent] \
+[\-timestamp] \
+[\-splash] \
+[\-no\-splash] \
 [\-nice \fIint\fP] \
 [\-mit\-extension] \
 [\-no\-mit\-extension] \
@@ -242,10 +245,29 @@ the \fBdefault\-n\fP name in the section about the \fBprograms\fP resource.
 .B verbose\fP (class \fBBoolean\fP)
 Whether to print diagnostics.  Default false.
 .TP 8
+.B timestamp\fP (class \fBBoolean\fP)
+Whether to print the time of day along with any other diagnostic messages.
+Default false.
+.TP 8
+.B splash\fP (class \fBBoolean\fP)
+Whether to display a splash screen at startup.  Default true.
+.TP 8
+.B splashDuration\fP (class \fBTime\fP)
+How long the splash screen should remain visible; default 5 seconds.
+.TP 8
+.B helpURL\fP (class \fBURL\fP)
+The splash screen has a \fIHelp\fP button on it.  When you press it, it will
+display the web page indicated here in your web browser.
+.TP 8
+.B loadURL\fP (class \fBLoadURL\fP)
+This is the shell command used to load a URL into your web browser.
+The default setting will load it into Netscape if it is already running,
+otherwise, will launch a new Netscape looking at the \fIhelpURL\fP.
+.TP 8
 .B nice\fP (class \fBNice\fP)
 The sub-processes created by \fIxscreensaver\fP will be ``niced'' to this
 level, so that they are given lower priority than other processes on the
-system, and don't increase the load unnecessarily.  The default is 20.  
+system, and don't increase the load unnecessarily.  The default is 10.  
 
 (Higher numbers mean lower priority; see 
 .BR nice (1)
@@ -488,6 +510,15 @@ Same as setting the \fIverbose\fP resource to \fItrue\fP.
 .TP 8
 .B \-silent
 Same as setting the \fIverbose\fP resource to \fIfalse\fP.
+.TP 8
+.B \-timestamp
+Same as setting the \fItimestamp\fP resource to \fItrue\fP.
+.TP 8
+.B \-splash
+Same as setting the \fIsplash\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-splash
+Same as setting the \fIsplash\fP resource to \fIfalse\fP.
 .TP 8
 .B \-nice \fIinteger\fP
 Same as the \fInice\fP resource.
@@ -758,6 +789,7 @@ menu XScreenSaver
  "Blank Screen Now" !"sleep 3; xscreensaver-command -activate"
  "Lock Screen Now"  !"sleep 3; xscreensaver-command -lock"
  "Screen Saver Demo"         !"xscreensaver-command -demo"
+ "Screen Saver Preferences"  !"xscreensaver-command -prefs"
  "Reinitialize Screen Saver" !"xscreensaver-command -restart"
  "Kill Screen Saver"         !"xscreensaver-command -exit"
  "Launch Screen Saver"       !"xscreensaver &"
@@ -1035,7 +1067,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH UPGRADES
 The latest version can always be found at 
-http://people.netscape.com/jwz/xscreensaver/
+http://www.jwz.org/xscreensaver/
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver\-command (1),
@@ -1142,7 +1174,7 @@ documentation.  No representations are made about the suitability of this
 software for any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@netscape.com>.  Written in late 1991; first posted
+Jamie Zawinski <jwz@jwz.org>.  Written in late 1991; first posted
 to comp.sources.x on 13-Aug-1992.
 
 Please let me know if you find any bugs or make any improvements.

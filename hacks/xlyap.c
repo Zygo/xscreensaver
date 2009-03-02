@@ -597,7 +597,7 @@ static int
 complyap(void)
 {
   register i, bindex;
-  double total, prod, x, r;
+  double total, prod, x, dx, r;
 
   if (!run)
     return TRUE;
@@ -646,7 +646,14 @@ complyap(void)
   if (useprod) {      /* using log(a*b) */
     for (i=0;i<dwell;i++) {
       x = (*map)(x, r);
-      prod *= ABS((*deriv)(x, r));
+      dx = (*deriv)(x, r); /* ABS is a macro, so don't be fancy */
+      dx = ABS(dx);
+      if (dx == 0.0) /* log(0) is nasty so break out. */
+      {
+        i++;
+        break;
+      }
+      prod *= dx;
       /* we need to prevent overflow and underflow */
       if ((prod > 1.0e12) || (prod < 1.0e-12)) {
 	total += log(prod);
@@ -666,12 +673,19 @@ complyap(void)
 #endif
     }
     total += log(prod);
-    lyapunov = (total * M_LOG2E) / (double)dwell;
+    lyapunov = (total * M_LOG2E) / (double)i;   
   }
   else {	/* use log(a) + log(b) */
     for (i=0;i<dwell;i++) {
       x = (*map)(x, r);
-      total += log(ABS((*deriv)(x, r)));
+      dx = (*deriv)(x, r); /* ABS is a macro, so don't be fancy */
+      dx = ABS(dx);
+      if (x == 0.0)  /* log(0) check */
+      {
+        i++;
+        break;
+      }
+      total += log(dx);
       if (++bindex >= maxindex) {
 	bindex = 0;
 	if (Rflag)
@@ -685,8 +699,9 @@ complyap(void)
       deriv = Derivs[Forcing[findex]];
 #endif
     }
-    lyapunov = (total * M_LOG2E) / (double)dwell;
+    lyapunov = (total * M_LOG2E) / (double)i;
   }
+
   if (sendpoint(lyapunov) == TRUE)
     return FALSE;
   else {
@@ -1422,6 +1437,15 @@ sendpoint(double expo)
   static int index;
   static double tmpexpo;
 
+#if 0
+/* The relationship minexp <= expo <= maxexp should always be true. This test
+   enforces that. But maybe not enforcing it makes better pictures. */
+  if (expo < minexp)
+    expo = minexp;
+  else if (expo > maxexp)
+    expo = maxexp;
+#endif
+
   point.x++;
   tmpexpo = (negative) ? expo : -1.0 * expo;
   if (tmpexpo > 0) {
@@ -1854,6 +1878,14 @@ InitBuffer(void)
 static void
 BufferPoint(Display *display, Window window, int color, int x, int y)
 {
+
+/* Guard against bogus color values. Shouldn't be necessary but paranoia
+   is good. */
+  if (color < 0)
+    color = 0;
+  else if (color >= maxcolor)
+    color = maxcolor - 1;
+
   if (Points.npoints[color] == MAXPOINTS)
   {
     XDrawPoints(display, window, Data_GC[color],

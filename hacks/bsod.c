@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,6 +30,7 @@
 # include "images/amiga.xpm"
 #endif
 
+#include "images/atari.xbm"
 #include "images/mac.xbm"
 
 
@@ -131,7 +132,7 @@ double_pixmap(Display *dpy, GC gc, Visual *visual, int depth, Pixmap pixmap,
   XImage *i1 = XGetImage(dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, ZPixmap);
   XImage *i2 = XCreateImage(dpy, visual, depth, ZPixmap, 0, 0,
 			    pix_w*2, pix_h*2, 8, 0);
-  i2->data = (unsigned char *) calloc(i2->height, i2->bytes_per_line);
+  i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
   for (y = 0; y < pix_h; y++)
     for (x = 0; x < pix_w; x++)
       {
@@ -295,6 +296,146 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
   XFreeFont(dpy, font);
 }
 
+/* SCO OpenServer 5 panic, by Tom Kelly <tom@ancilla.toronto.on.ca>
+ */
+static void
+openserver (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  char *fontname;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc;
+
+  const char *openserver_panic =
+    ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+     "Unexpected trap in kernel mode:\n"
+     "\n"
+     "cr0 0x80010013     cr2  0x00000014     cr3 0x00000000  tlb  0x00000000\n"
+     "ss  0x00071054    uesp  0x00012055     efl 0x00080888  ipl  0x00000005\n"
+     "cs  0x00092585     eip  0x00544a4b     err 0x004d4a47  trap 0x0000000E\n"
+     "eax 0x0045474b     ecx  0x0042544b     edx 0x57687920  ebx  0x61726520\n"
+     "esp 0x796f7520     ebp  0x72656164     esi 0x696e6720  edi  0x74686973\n"
+     "ds  0x3f000000     es   0x43494c48     fs  0x43525343  gs   0x4f4d4b53\n"
+     "\n"
+     "PANIC: k_trap - kernel mode trap type 0x0000000E\n"
+     "Trying to dump 5023 pages to dumpdev hd (1/41), 63 pages per '.'\n"
+     "...............................................................................\n"
+     "5023 pages dumped\n"
+     "\n"
+     "\n"
+     "**   Safe to Power Off   **\n"
+     "           - or -\n"
+     "** Press Any Key to Reboot **\n"
+    );
+
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  fontname = get_string_resource ((xgwa.height > 600
+				   ? "openserver.font2"
+				   : "openserver.font"),
+				  "OpenServer.Font");
+  if (!fontname || !*fontname) fontname = (char *)def_font;
+  font = XLoadQueryFont (dpy, fontname);
+  if (!font) font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+  if (fontname && fontname != def_font)
+    free (fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource(("openserver.foreground"),
+				      "OpenServer.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource(("openserver.background"),
+				      "OpenServer.Background",
+				      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  draw_string(dpy, window, gc, &gcv, font,
+		0, 0, xgwa.width, xgwa.height, openserver_panic, 0);
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+}
+
+
+/* Linux (sparc) panic, by Tom Kelly <tom@ancilla.toronto.on.ca>
+ */
+static void
+sparc_linux (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  char *fontname;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc;
+
+  const char *linux_panic =
+    ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+	"Unable to handle kernel paging request at virtual address f0d4a000\n"
+	"tsk->mm->context = 00000014\n"
+	"tsk->mm->pgd = f26b0000\n"
+	"              \\|/ ____ \\|/\n"
+	"              \"@'/ ,. \\`@\"\n"
+	"              /_| \\__/ |_\\\n"
+	"                 \\__U_/\n"
+	"gawk(22827): Oops\n"
+	"PSR: 044010c1 PC: f001c2cc NPC: f001c2d0 Y: 00000000\n"
+	"g0: 00001000 g1: fffffff7 g2: 04401086 g3: 0001eaa0\n"
+	"g4: 000207dc g5: f0130400 g6: f0d4a018 g7: 00000001\n"
+	"o0: 00000000 o1: f0d4a298 o2: 00000040 o3: f1380718\n"
+	"o4: f1380718 o5: 00000200 sp: f1b13f08 ret_pc: f001c2a0\n"
+	"l0: efffd880 l1: 00000001 l2: f0d4a230 l3: 00000014\n"
+	"l4: 0000ffff l5: f0131550 l6: f012c000 l7: f0130400\n"
+	"i0: f1b13fb0 i1: 00000001 i2: 00000002 i3: 0007c000\n"
+	"i4: f01457c0 i5: 00000004 i6: f1b13f70 i7: f0015360\n"
+	"Instruction DUMP:"
+
+    );
+
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  fontname = get_string_resource ((xgwa.height > 600
+				   ? "sparclinux.font2"
+				   : "sparclinux.font"),
+				  "SparcLinux.Font");
+  if (!fontname || !*fontname) fontname = (char *)def_font;
+  font = XLoadQueryFont (dpy, fontname);
+  if (!font) font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+  if (fontname && fontname != def_font)
+    free (fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource(("sparclinux.foreground"),
+				      "SparcLinux.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource(("sparclinux.background"),
+				      "SparcLinux.Background",
+				      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  draw_string(dpy, window, gc, &gcv, font,
+		0, 0, xgwa.width, xgwa.height, linux_panic, 0);
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+}
+
 static void
 amiga (Display *dpy, Window window, int delay)
 {
@@ -421,6 +562,77 @@ amiga (Display *dpy, Window window, int delay)
   XFreeGC(dpy, gc);
   XFreeGC(dpy, gc2);
   XSync(dpy, False);
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+}
+
+
+/* Atari ST, by Marcus Herbert <rhoenie@nobiscum.de>
+   Marcus had this to say:
+
+	Though I still have my Atari somewhere, I hardly remember
+	the meaning of the bombs. I think 9 bombs was "bus error" or
+	something like that.  And you often had a few bombs displayed
+	quickly and then the next few ones coming up step by step.
+	Perhaps somebody else can tell you more about it..  its just
+	a quick hack :-}
+ */
+static void
+atari (Display *dpy, Window window, int delay)
+{
+	
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc;
+  Pixmap pixmap = 0;
+  int pix_w = atari_width;
+  int pix_h = atari_height;
+  int offset = atari_width + 2;
+  int i, x, y;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+                
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource("atari.foreground", "Atari.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("atari.background", "Atari.Background",
+				      dpy, xgwa.colormap);
+
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  pixmap = XCreatePixmapFromBitmapData(dpy, window, (char *) atari_bits,
+				       atari_width, atari_height,
+				       gcv.foreground,
+				       gcv.background,
+				       xgwa.depth);
+
+  x = 5;
+  y = (xgwa.height - (xgwa.height / 5));
+  if (y < 0) y = 0;
+
+  for (i=0 ; i<7 ; i++) {
+    XCopyArea(dpy, pixmap, window, gc, 0, 0, pix_w, pix_h,
+	      (x + (i*offset)), y);
+  }  
+  
+  for (i=7 ; i<10 ; i++) {
+    bsod_sleep(dpy, 1);
+    XCopyArea(dpy, pixmap, window, gc, 0, 0, pix_w, pix_h,
+	      (x + (i*offset)), y);
+  }
+
+  XFreePixmap(dpy, pixmap);
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
 }
@@ -565,11 +777,46 @@ macsbug (Display *dpy, Window window, int delay)
 			"                                | 4A1F\n"
 			"     +00888    40843718     $0004(A7),([0,A7[)"
 			"                  ; 04E8D0AE    | 66B8");
+
+#if 0
   const char *body = ("Bus Error at 4BF6D6CC\n"
 		      "while reading word from 4BF6D6CC in User data space\n"
 		      " Unable to access that address\n"
 		      "  PC: 2A0DE3E6\n"
 		      "  Frame Type: B008");
+#else
+  const char * body = ("PowerPC unmapped memory exception at 003AFDAC "
+						"BowelsOfTheMemoryMgr+04F9C\n"
+		      " Calling chain using A6/R1 links\n"
+		      "  Back chain  ISA  Caller\n"
+		      "  00000000    PPC  28C5353C  __start+00054\n"
+		      "  24DB03C0    PPC  28B9258C  main+0039C\n"
+		      "  24DB0350    PPC  28B9210C  MainEvent+00494\n"
+		      "  24DB02B0    PPC  28B91B40  HandleEvent+00278\n"
+		      "  24DB0250    PPC  28B83DAC  DoAppleEvent+00020\n"
+		      "  24DB0210    PPC  FFD3E5D0  "
+						"AEProcessAppleEvent+00020\n"
+		      "  24DB0132    68K  00589468\n"
+		      "  24DAFF8C    68K  00589582\n"
+		      "  24DAFF26    68K  00588F70\n"
+		      "  24DAFEB3    PPC  00307098  "
+						"EmToNatEndMoveParams+00014\n"
+		      "  24DAFE40    PPC  28B9D0B0  DoScript+001C4\n"
+		      "  24DAFDD0    PPC  28B9C35C  RunScript+00390\n"
+		      "  24DAFC60    PPC  28BA36D4  run_perl+000E0\n"
+		      "  24DAFC10    PPC  28BC2904  perl_run+002CC\n"
+		      "  24DAFA80    PPC  28C18490  Perl_runops+00068\n"
+		      "  24DAFA30    PPC  28BE6CC0  Perl_pp_backtick+000FC\n"
+		      "  24DAF9D0    PPC  28BA48B8  Perl_my_popen+00158\n"
+		      "  24DAF980    PPC  28C5395C  sfclose+00378\n"
+		      "  24DAF930    PPC  28BA568C  free+0000C\n"
+		      "  24DAF8F0    PPC  28BA6254  pool_free+001D0\n"
+		      "  24DAF8A0    PPC  FFD48F14  DisposePtr+00028\n"
+		      "  24DAF7C9    PPC  00307098  "
+						"EmToNatEndMoveParams+00014\n"
+		      "  24DAF780    PPC  003AA180  __DisposePtr+00010");
+#endif
+
   const char *s;
   int body_lines = 1;
 
@@ -638,8 +885,6 @@ macsbug (Display *dpy, Window window, int delay)
   draw_string(dpy, window, gc, &gcv, font, xoff, yoff, 10, 10, left, 0);
   draw_string(dpy, window, gc, &gcv, font, xoff+col_right, yoff+row_top,
 	      10, 10, bottom, 0);
-  draw_string(dpy, window, gc, &gcv, font,
-	      xoff + col_right + char_width, yoff + body_top, 10, 10, body, 0);
 
   XFillRectangle(dpy, window, gc, xoff + col_right, yoff, 2, page_bottom);
   XDrawLine(dpy, window, gc,
@@ -647,6 +892,13 @@ macsbug (Display *dpy, Window window, int delay)
   XDrawLine(dpy, window, gc,
 	    xoff+col_right, yoff+row_bottom, xoff+page_right, yoff+row_bottom);
   XDrawRectangle(dpy, window, gc,  xoff, yoff, page_right, page_bottom);
+
+  if (body_top > 4)
+    body_top = 4;
+
+  draw_string(dpy, window, gc, &gcv, font,
+	      xoff + col_right + char_width, yoff + body_top, 10, 10, body,
+	      500);
 
   while (delay > 0)
     {
@@ -693,12 +945,25 @@ char *defaults [] = {
   ".Mac.foreground:	 PaleTurquoise1",
   ".Mac.background:	 Black",
 
+  ".Atari.foreground:	 Black",
+  ".Atari.background:	 White",
+
   ".MacsBug.font:	 -*-courier-medium-r-*-*-*-100-*-*-m-*-*-*",
   ".MacsBug.font2:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".MacsBug.font3:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".MacsBug.foreground:	 Black",
   ".MacsBug.background:	 White",
   ".MacsBug.borderColor: #AAAAAA",
+  
+  ".OpenServer.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".OpenServer.font2:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".OpenServer.foreground: White",
+  ".OpenServer.background: Black",
+  
+  ".SparcLinux.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".SparcLinux.font2:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".SparcLinux.foreground: White",
+  ".SparcLinux.background: Black",
   0
 };
 
@@ -720,7 +985,7 @@ screenhack (Display *dpy, Window window)
 
   while (1)
     {
-      while (i == j) i = random() % 5;
+      while (i == j) i = random() % 8;
       j = i;
 
       switch (i)
@@ -730,6 +995,9 @@ screenhack (Display *dpy, Window window)
 	case 2: amiga(dpy, window, delay); break;
 	case 3: mac(dpy, window, delay); break;
 	case 4: macsbug(dpy, window, delay); break;
+	case 5: openserver(dpy, window, delay); break;
+	case 6: sparc_linux(dpy, window, delay); break;
+	case 7: atari(dpy, window, delay); break;
 	default: abort(); break;
 	}
       XSync (dpy, True);

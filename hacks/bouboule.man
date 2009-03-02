@@ -73,4 +73,4 @@ VMS support by Jouk Jansen <joukj@alpha.chem.uva.nl>, 01-Feb-96.
 TrueColor support by David Bagley <bagleyd@bigfoot.com>, 01-Feb-96.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 15-May-97.
+Jamie Zawinski <jwz@jwz.org>, 15-May-97.

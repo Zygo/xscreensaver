@@ -1,5 +1,5 @@
 /* bubbles_default.c - pick images for bubbles.c
- * By Jamie Zawinski <jwz@netscape.com>, 20-Jan-98.
+ * By Jamie Zawinski <jwz@jwz.org>, 20-Jan-98.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

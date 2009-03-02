@@ -98,13 +98,13 @@ INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
 		  resources.c spline.c usleep.c visual.c xmu.c xroger.c \
-		  yarandom.c erase.c sgivideo.c
+		  yarandom.c erase.c sgivideo.c xshm.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o hsv.o overlay.o \
 		  resources.o spline.o usleep.o visual.o xmu.o xroger.o \
-		  yarandom.o erase.o sgivideo.o
+		  yarandom.o erase.o sgivideo.o xshm.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
-		  yarandom.h erase.h sgivideo.h
+		  yarandom.h erase.h sgivideo.h xshm.h
 EXTRAS		= README Makefile.in ad2c
 VMSFILES	= compile_axp.com compile_decc.com vms-gtod.c vms-gtod.h \
 		  vms-strdup.c
@@ -129,7 +129,7 @@ clean:
 	-rm -f *.o a.out core
 
 distclean: clean
-	-rm -f config.h Makefile *~ "#"*
+	-rm -f Makefile TAGS *~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
@@ -198,6 +198,7 @@ distdepend:: compile_axp.com compile_decc.com
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
+# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
 alpha.o: $(srcdir)/utils.h
 alpha.o: ../config.h
@@ -259,5 +260,8 @@ sgivideo.o: ../config.h
 sgivideo.o: $(srcdir)/sgivideo.h
 sgivideo.o: $(srcdir)/resources.h
 sgivideo.o: $(srcdir)/visual.h
-sgivideo.o: $(srcdir)/usleep.h
+xshm.o: $(srcdir)/utils.h
+xshm.o: ../config.h
+xshm.o: $(srcdir)/xshm.h
+xshm.o: $(srcdir)/resources.h
 

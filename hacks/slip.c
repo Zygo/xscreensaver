@@ -20,7 +20,7 @@ static const char sccsid[] = "@(#)slip.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 12-May-97: jwz@netscape.com: turned into a standalone program.
+ * 12-May-97: jwz@jwz.org: turned into a standalone program.
  * 01-Dec-95: Patched for VMS <joukj@alpha.chem.uva.nl>.
  */
 

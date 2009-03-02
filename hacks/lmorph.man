@@ -55,4 +55,4 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver (1)
 .SH AUTHOR
 Sverre H. Huseby <sverrehu@online.no> and Glenn T. Lines <gtl@si.sintef.no>,
-built on top of the screen saver routines by Jamie Zawinski <jwz@netscape.com>.
+built on top of the screen saver routines by Jamie Zawinski <jwz@jwz.org>.

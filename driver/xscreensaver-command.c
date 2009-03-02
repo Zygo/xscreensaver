@@ -1,5 +1,5 @@
 /* xscreensaver-command, Copyright (c) 1991-1998
- *  by Jamie Zawinski <jwz@netscape.com>
+ *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -200,15 +200,15 @@ xscreensaver_command (Display *dpy, Atom command)
 
 #ifdef STANDALONE
 static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
-static Atom XA_EXIT, XA_RESTART, XA_DEMO, XA_LOCK;
+static Atom XA_EXIT, XA_RESTART, XA_DEMO, XA_PREFS, XA_LOCK;
 
 static char *progname;
 static char *screensaver_version;
 static char *usage = "\n\
-usage: %s -<switch>\n\
+usage: %s -<option>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>.\n\
+  Version %s, copyright (c) 1991-1998 Jamie Zawinski <jwz@jwz.org>.\n\
 \n\
   The xscreensaver program is a daemon that runs in the background.\n\
   You control a running xscreensaver process by sending it messages\n\
@@ -216,6 +216,9 @@ usage: %s -<switch>\n\
   details.  These are the arguments understood by xscreensaver-command:\n\
 \n\
   -demo         Ask the xscreensaver process to enter interactive demo mode.\n\
+\n\
+  -prefs        Ask the xscreensaver process to bring up the preferences\n\
+                panel.\n\
 \n\
   -activate     Turn on the screensaver (blank the screen), as if the user\n\
                 had been idle for long enough.\n\
@@ -262,7 +265,7 @@ usage: %s -<switch>\n\
                 screen became blanked or un-blanked.)\n\
 \n\
   See the man page for more details.\n\
-  For updates, check http://people.netscape.com/jwz/xscreensaver/\n\
+  For updates, check http://www.jwz.org/xscreensaver/\n\
 \n";
 
 #define USAGE() \
@@ -298,6 +301,8 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-exit", L))       cmd = &XA_EXIT;
       else if (!strncmp (s, "-restart", L))    cmd = &XA_RESTART;
       else if (!strncmp (s, "-demo", L))       cmd = &XA_DEMO;
+      else if (!strncmp (s, "-preferences",L)) cmd = &XA_PREFS;
+      else if (!strncmp (s, "-prefs",L))       cmd = &XA_PREFS;
       else if (!strncmp (s, "-lock", L))       cmd = &XA_LOCK;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_TIME;
@@ -327,7 +332,16 @@ main (int argc, char **argv)
   XA_PREV = XInternAtom (dpy, "PREV", False);
   XA_EXIT = XInternAtom (dpy, "EXIT", False);
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
+  XA_PREFS = XInternAtom (dpy, "PREFS", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
+
+  XSync (dpy, 0);
+
+  if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK ||
+      *cmd == XA_NEXT || *cmd == XA_PREV)
+    /* People never guess that KeyRelease deactivates the screen saver too,
+       so if we're issuing an activation command, wait a second. */
+    sleep (1);
 
   xscreensaver_command(dpy, *cmd);
 

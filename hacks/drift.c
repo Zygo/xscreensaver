@@ -20,7 +20,7 @@ static const char sccsid[] = "@(#)drift.c	4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 01-Jan-97: Moved new flame to drift.  Compile time options now run time.
  * 01-Jun-95: Updated by Scott Draves.
  * 27-Jun-91: vary number of functions used.

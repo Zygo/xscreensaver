@@ -80,4 +80,4 @@ Modified by David Bagley <bagleyd@bigfoot.com>, 23-Oct-94.
 Modified by Dave Mitchell <davem@magnet.com>, 7-Apr-97.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 10-May-97.
+Jamie Zawinski <jwz@jwz.org>, 10-May-97.

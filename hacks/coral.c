@@ -21,12 +21,12 @@ static int ncolors = 0;
 static int colorindex = 0;
 static int colorsloth;
 
-static XPoint *walkers;
+static XPoint *walkers = 0;
 static int nwalkers;
 static int width, widthb;
 static int height;
 
-static unsigned int *board;
+static unsigned int *board = 0;
 #define getdot(x,y) (board[(y*widthb)+(x>>5)] &  (1<<(x & 31)))
 #define setdot(x,y) (board[(y*widthb)+(x>>5)] |= (1<<(x & 31)))
 
@@ -47,6 +47,7 @@ init_coral(Display *dpy, Window window)
     width = xgwa.width;
     widthb = ((xgwa.width + 31) >> 5);
     height = xgwa.height;
+    if (board) free(board);
     board = (unsigned int *)calloc(widthb * xgwa.height, sizeof(unsigned int));
     if(!board) exit(1);
     cmap = xgwa.colormap;
@@ -73,6 +74,7 @@ init_coral(Display *dpy, Window window)
     if( density < 1 ) density = 1;
     if( density > 100 ) density = 90; /* more like mold than coral */
     nwalkers = (width*height*density)/100;
+    if (walkers) free(walkers);
     walkers = (XPoint *)calloc(nwalkers, sizeof(XPoint));
     if( (XPoint *)0 == walkers ) exit(1);
 

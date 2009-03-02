@@ -35,7 +35,7 @@
  *              Added bridge option.
  * modified:  [ 8-11-95 ] Ed James <james@mml.mmc.com>
  *              added fill of dead-end box to solve_maze while loop.
- * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@netscape.com>
+ * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@jwz.org>
  *		added the XRoger logo, cleaned up resources, made
  *		grid size a parameter.
  * modified:  [ 3-3-93 ]  Jim Randell <jmr@mddjmr.fc.hp.com>
@@ -1533,7 +1533,7 @@ enter_square (int n)                      /* move into a neighboring square */
 
 
 /*
- *  jmr additions for Jamie Zawinski's <jwz@netscape.com> screensaver stuff,
+ *  jmr additions for Jamie Zawinski's <jwz@jwz.org> screensaver stuff,
  *  note that the code above this has probably been hacked about in some
  *  arbitrary way.
  */

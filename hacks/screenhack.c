@@ -1,5 +1,5 @@
 /* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998
- *  Jamie Zawinski <jwz@netscape.com>
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -226,7 +226,7 @@ main (int argc, char **argv)
       Bool help_p = !strcmp(argv[1], "-help");
       fprintf (stderr, "%s\n", version);
       for (s = progclass; *s; s++) fprintf(stderr, " ");
-      fprintf (stderr, "  http://people.netscape.com/jwz/xscreensaver/\n\n");
+      fprintf (stderr, "  http://www.jwz.org/xscreensaver/\n\n");
 
       if (!help_p)
 	fprintf(stderr, "Unrecognised option: %s\n", argv[1]);

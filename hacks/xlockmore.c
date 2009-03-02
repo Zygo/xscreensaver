@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,7 +11,7 @@
  *
  * This file, along with xlockmore.h, make it possible to compile an xlockmore
  * module into a standalone program, and thus use it with xscreensaver.
- * By Jamie Zawinski <jwz@netscape.com> on 10-May-97; based on the ideas
+ * By Jamie Zawinski <jwz@jwz.org> on 10-May-97; based on the ideas
  * in the older xlock.h by Charles Hannum <mycroft@ai.mit.edu>.  (I had
  * to redo it, since xlockmore has diverged so far from xlock...)
  */
@@ -61,7 +61,7 @@ pre_merge_options (void)
   /* Add extra args, if they're mentioned in the defaults... */
   {
     char *args[] = { "-count", "-cycles", "-delay", "-ncolors",
-		     "-size", "-wireframe", "-use3d" };
+		     "-size", "-wireframe", "-use3d", "-useSHM" };
     for (j = 0; j < countof(args); j++)
       if (strstr(app_defaults, args[j]+1))
 	{
@@ -86,6 +86,17 @@ pre_merge_options (void)
 	      new->value = "True";
 	      new = &options[i++];
 	      new->option = "-no-3d";
+	      new->specifier = options[i-2].specifier;
+	      new->argKind = XrmoptionNoArg;
+	      new->value = "False";
+	    }
+	  else if (!strcmp(new->option, "-useSHM"))
+	    {
+	      new->option = "-shm";
+	      new->argKind = XrmoptionNoArg;
+	      new->value = "True";
+	      new = &options[i++];
+	      new->option = "-no-shm";
 	      new->specifier = options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
@@ -280,29 +291,6 @@ xlockmore_screenhack (Display *dpy, Window window,
   mi.batchcount = get_integer_resource ("count", "Int");
   mi.size	= get_integer_resource ("size", "Int");
 
-#if 0
-  decay = get_boolean_resource ("decay", "Boolean");
-  if (decay) mi.fullrandom = False;
-
-  trail = get_boolean_resource ("trail", "Boolean");
-  if (trail) mi.fullrandom = False;
-
-  grow = get_boolean_resource ("grow", "Boolean");
-  if (grow) mi.fullrandom = False;
-
-  liss = get_boolean_resource ("liss", "Boolean");
-  if (liss) mi.fullrandom = False;
-
-  ammann = get_boolean_resource ("ammann", "Boolean");
-  if (ammann) mi.fullrandom = False;
-
-  jong = get_boolean_resource ("jong", "Boolean");
-  if (jong) mi.fullrandom = False;
-
-  sine = get_boolean_resource ("sine", "Boolean");
-  if (sine) mi.fullrandom = False;
-#endif
-
   mi.threed = get_boolean_resource ("use3d", "Boolean");
   mi.threed_delta = get_float_resource ("delta3d", "Boolean");
   mi.threed_right_color = get_pixel_resource ("right3d", "Color", dpy,
@@ -316,7 +304,9 @@ xlockmore_screenhack (Display *dpy, Window window,
 
   mi.wireframe_p = get_boolean_resource ("wireframe", "Boolean");
   mi.root_p = (window == RootWindowOfScreen (mi.xgwa.screen));
-
+#ifdef HAVE_XSHM_EXTENSION
+  mi.use_shm = get_boolean_resource ("useSHM", "Boolean");
+#endif /* !HAVE_XSHM_EXTENSION */
 
   if (mi.pause < 0)
     mi.pause = 0;

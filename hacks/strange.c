@@ -20,7 +20,9 @@ static const char sccsid[] = "@(#)strange.c	   4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 30-Jul-98: sineswiper@resonatorsoft.com: added curve factor (discovered
+ *         while experimenting with the Gauss_Rand function).
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  *			  Made it render into an offscreen bitmap and then copy
  *			  that onto the screen, to reduce flicker.
  */
@@ -37,9 +39,6 @@ static const char sccsid[] = "@(#)strange.c	   4.02 97/04/01 xlockmore";
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
-
-ModeSpecOpt strange_opts = {
-  0, NULL, 0, NULL, NULL };
 
 /*****************************************************/
 /*****************************************************/
@@ -87,6 +86,19 @@ static PRM  xmin, xmax, ymin, ymax;
 static PRM  Prm[MAX_PRM];
 static PRM *Fold = NULL;
 
+static int curve;
+
+static XrmOptionDescRec opts[] =
+{
+	{"-curve", ".strange.curve", XrmoptionSepArg, (caddr_t) "10"},
+};
+static OptionStruct desc[] =
+{
+	{"-curve", "set the curve factor of the attractors"},
+};
+
+ModeSpecOpt strange_opts = { 1, opts, 0, NULL, desc };
+
 /******************************************************************/
 /******************************************************************/
 
@@ -106,10 +118,11 @@ static DBL  Mid_Prm[MAX_PRM] =
 static      DBL
 Gauss_Rand(DBL c, DBL A, DBL S)
 {
-	DBL         y;
+	DBL         y,z;
 
 	y = (DBL) LRAND() / MAXRAND;
-	y = A * (1.0 - exp(-y * y * S)) / (1.0 - exp(-S));
+	z = curve / 10;
+  	y = A * (z - exp(-y * y * S)) / (z - exp(-S));
 	if (NRAND(2))
 		return (c + y);
 	else
@@ -297,6 +310,9 @@ void
 init_strange(ModeInfo * mi)
 {
 	ATTRACTOR  *Attractor;
+
+	curve = get_integer_resource ("curve", "Integer");
+	if (curve <= 0) curve = 10;
 
 	if (Root == NULL) {
 		Root = (ATTRACTOR *) calloc(

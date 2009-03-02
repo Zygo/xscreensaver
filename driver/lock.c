@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,6 +48,10 @@ extern int validate_user(char *name, char *password);
 # include <Xm/TextF.h>
 
 #endif /* HAVE_MOTIF */
+
+#ifdef _VROOT_H_
+ERROR!  You must not include vroot.h in this file.
+#endif
 
 extern Widget passwd_dialog;
 extern Widget passwd_form;
@@ -165,16 +169,16 @@ static XtActionsRec actions[] = {{"keypress",  keypress},
 	   for all keys anyway.  So, the implementation of keypress()
 	   has BackSpace, etc, hardcoded into it instead.  FMH!
 	 */
-static char translations[] = ("<Key>BackSpace:	backspace()\n"
+static char translations[] =  "<Key>BackSpace:	backspace()\n"
 			      "<Key>Delete:	backspace()\n"
 			      "Ctrl<Key>H:	backspace()\n"
 			      "Ctrl<Key>U:	kill_line()\n"
 			      "Ctrl<Key>X:	kill_line()\n"
 			      "Ctrl<Key>J:	done()\n"
 			      "Ctrl<Key>M:	done()\n"
-			      "<Key>:		keypress()\n");
+			      "<Key>:		keypress()\n";
 # else  /* !0 */
-static char translations[] = ("<Key>:		keypress()\n");
+static char translations[] =  "<Key>:		keypress()\n";
 # endif /* !0 */
 
 
@@ -271,45 +275,6 @@ done (Widget w, XEvent *event, String *argv, Cardinal *argc)
 
 #endif /* HAVE_ATHENA || !VERIFY_CALLBACK_WORKS */
 
-
-extern void skull (Display *, Window, GC, GC, int, int, int, int);
-
-static void
-roger (Widget button, XtPointer client_data, XtPointer call_data)
-{
-  Display *dpy = XtDisplay (button);
-  Screen *screen = XtScreen (button);
-  Window window = XtWindow (button);
-  Arg av [10];
-  int ac = 0;
-  XGCValues gcv;
-  Colormap cmap;
-  GC draw_gc, erase_gc;
-  unsigned int fg, bg;
-  int x, y, size;
-  XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  if (xgwa.width > xgwa.height) size = xgwa.height;
-  else size = xgwa.width;
-  if (size > 40) size -= 30;
-  x = (xgwa.width - size) / 2;
-  y = (xgwa.height - size) / 2;
-  XtSetArg (av [ac], XtNforeground, &fg); ac++;
-  XtSetArg (av [ac], XtNbackground, &bg); ac++;
-  XtGetValues (button, av, ac);
-  /* if it's black on white, swap it cause it looks better (hack hack) */
-  if (fg == BlackPixelOfScreen (screen) && bg == WhitePixelOfScreen (screen))
-    fg = WhitePixelOfScreen (screen), bg = BlackPixelOfScreen (screen);
-  gcv.foreground = bg;
-  erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  gcv.foreground = fg;
-  draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  XFillRectangle (dpy, window, erase_gc, 0, 0, xgwa.width, xgwa.height);
-  skull (dpy, window, draw_gc, erase_gc, x, y, size, size);
-  XFreeGC (dpy, draw_gc);
-  XFreeGC (dpy, erase_gc);
-}
 
 static void
 make_passwd_dialog (saver_info *si)
@@ -424,6 +389,8 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
       XtVaGetValues(passwd_done,
 		    XmNheight, &h,
 		    XmNy, &y,
+		    0);
+      XtVaGetValues(passwd_form,
 		    XtNforeground, &fg,
 		    XtNbackground, &bg,
 		    XmNtopShadowColor, &ts,
@@ -505,6 +472,7 @@ pop_passwd_dialog (saver_info *si)
   Window focus;
   int revert_to;
   int i;
+  Window grab_window = RootWindowOfScreen(si->screens[0].screen);
 
   typed_passwd [0] = 0;
   passwd_state = pw_read;
@@ -567,12 +535,31 @@ pop_passwd_dialog (saver_info *si)
     roger(roger_label, 0, 0);
 #endif /* HAVE_ATHENA */
 
+
+  /* Make sure the mouse cursor is visible.
+     Since the screensaver was already active, we had already called
+     grab_keyboard_and_mouse() with our "invisible" Cursor object.
+     Now we need to change that.  (cursor == 0 means "server default
+     cursor.")
+   */
+  if (grab_window != si->mouse_grab_window ||
+      grab_window != si->keyboard_grab_window)
+    fprintf(stderr,
+	    "%s: WARNING: expected mouse and keyboard grabs on 0x%x,\n"
+	    "\tbut mouse-grab is 0x%x and keyboard-grab is 0x%x.\n",
+	    blurb(),
+	    (unsigned long) grab_window,
+	    (unsigned long) si->mouse_grab_window,
+	    (unsigned long) si->keyboard_grab_window);
+
+  if (p->verbose_p)
+    fprintf(stderr, "%s: re-grabbing keyboard and mouse to expose cursor.\n",
+	    blurb());
+  grab_keyboard_and_mouse (si, grab_window, 0);
+
+
   if (!si->prefs.debug_p)
     XGrabServer (dpy);				/* ############ DANGER! */
-
-  /* this call to ungrab used to be in main_loop() - see comment in
-      xscreensaver.c around line 857. */
-  ungrab_keyboard_and_mouse (si);
 
   while (passwd_state == pw_read)
     {
@@ -585,6 +572,15 @@ pop_passwd_dialog (saver_info *si)
     }
   XUngrabServer (dpy);
   XSync (dpy, False);				/* ###### (danger over) */
+
+
+  /* Now turn off the mouse cursor again.
+   */
+  if (p->verbose_p)
+    fprintf(stderr, "%s: re-grabbing keyboard and mouse to hide cursor.\n",
+	    blurb());
+  grab_keyboard_and_mouse (si, grab_window, si->screens[0].cursor);
+
 
   if (passwd_state != pw_time)
     XtRemoveTimeOut (passwd_idle_id);

@@ -19,7 +19,7 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * 13-May-97: jwz@netscape.com: turned into a standalone program.
+ * 13-May-97: jwz@jwz.org: turned into a standalone program.
  * 21-Apr-95: improved startup time for TrueColour displays
  *            (limited to 16bpp to save memory) S.Early <sde1000@cam.ac.uk>
  * 09-Jan-95: fixed colour maps (more colourful) and the image now spirals
@@ -36,13 +36,18 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 # define swirl_opts					xlockmore_opts
 # define DEFAULTS	"*count:		5       \n"			\
 					"*delay:		10000   \n"			\
-					"*ncolors:		200     \n"
+					"*ncolors:		200     \n"			\
+					"*useSHM:		True    \n"
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include <X11/Xutil.h>
+# ifdef HAVE_XSHM_EXTENSION
+#  include "xshm.h"
+# endif /* HAVE_XSHM_EXTENSION */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
+# undef HAVE_XSHM_EXTENSION
 #endif /* !STANDALONE */
 
 ModeSpecOpt swirl_opts = {
@@ -248,11 +253,26 @@ initialise_image(ModeInfo * mi, SWIRL_P swirl)
   if (swirl->ximage != NULL)
 	XDestroyImage(swirl->ximage);
 
-  swirl->ximage = XCreateImage(dpy, swirl->visual, swirl->rdepth, ZPixmap,
-							   0, 0, swirl->width, swirl->height,
-							   8, 0);
-  swirl->ximage->data = swirl->image =
-	(unsigned char *) calloc(swirl->height, swirl->ximage->bytes_per_line);
+  swirl->ximage = 0;
+#ifdef HAVE_XSHM_EXTENSION
+  if (mi->use_shm)
+	{
+	  swirl->ximage = create_xshm_image(dpy, swirl->visual, swirl->rdepth,
+										ZPixmap, 0, &mi->shm_info,
+										swirl->width, swirl->height);
+	  if (!swirl->ximage)
+		mi->use_shm = False;
+	}
+#endif /* HAVE_XSHM_EXTENSION */
+
+  if (!swirl->ximage)
+	{
+	  swirl->ximage = XCreateImage(dpy, swirl->visual, swirl->rdepth, ZPixmap,
+								   0, 0, swirl->width, swirl->height,
+								   8, 0);
+	  swirl->ximage->data = swirl->image =
+		(char *) calloc(swirl->height, swirl->ximage->bytes_per_line);
+	}
 }
 
 /****************************************************************/
@@ -1107,10 +1127,17 @@ draw_point(ModeInfo * mi, SWIRL_P swirl)
 		draw_block(swirl->ximage, x, y, r, do_point(swirl, x, y));
 
 	/* update the screen */
-/* PURIFY 4.0.1 on SunOS4 and on Solaris 2 reports a 256 byte memory leak on * 
-   the next line. */
-	XPutImage(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
-		  x, y, x, y, r, r);
+
+#ifdef HAVE_XSHM_EXTENSION
+	if (mi->use_shm)
+	  XShmPutImage(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
+				   x, y, x, y, r, r, False);
+	else
+#endif /* !HAVE_XSHM_EXTENSION */
+	  /* PURIFY 4.0.1 on SunOS4 and on Solaris 2 reports a 256 byte memory
+		 leak on the next line. */
+	  XPutImage(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
+				x, y, x, y, r, r);
 }
 
 /****************************************************************/

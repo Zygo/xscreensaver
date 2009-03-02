@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,7 @@ struct saver_preferences {
   Bool verbose_p;		/* whether to print out lots of status info */
   Bool timestamp_p;		/* whether to mark messages with a timestamp */
   Bool debug_p;			/* pay no mind to the man behind the curtain */
+  Bool xsync_p;			/* whether XSynchronize has been called */
 
   Bool lock_p;			/* whether to lock as well as save */
   Bool fade_p;			/* whether to fade to black */
@@ -56,6 +57,7 @@ struct saver_preferences {
   int nice_inferior;		/* nice value for subprocs */
 
   int initial_delay;		/* how long to sleep after launch */
+  Time splash_duration;		/* how long the splash screen stays up */
   Time timeout;			/* how much idle time before activation */
   Time lock_timeout;		/* how long after activation locking starts */
   Time cycle;			/* how long each hack should run */
@@ -72,6 +74,8 @@ struct saver_preferences {
 
   char *shell;			/* where to find /bin/sh */
 
+  char *help_url;		/* Where the help document resides. */
+  char *load_url_command;	/* How one loads URLs. */
 };
 
 
@@ -118,14 +122,21 @@ struct saver_info {
 
 
   /* =======================================================================
-     locking
+     locking and runtime priveleges
      ======================================================================= */
 
-  Bool locking_disabled_p;	/* Sometimes locking is impossible. */
-  char *nolock_reason;		/* This is why. */
   Bool locked_p;		/* Whether the screen is currently locked. */
   Bool dbox_up_p;		/* Whether the demo-mode or passwd dialogs
 				   are currently visible */
+
+  Bool locking_disabled_p;	/* Sometimes locking is impossible. */
+  char *nolock_reason;		/* This is why. */
+
+  char *orig_uid;		/* What uid/gid we had at startup, before
+				   discarding priveleges. */
+  char *uid_message;		/* Any diagnostics from our attempt to
+				   discard priveleges (printed only in
+				   -verbose mode.) */
 
   /* =======================================================================
      demoing
@@ -143,7 +154,7 @@ struct saver_info {
   Bool question_up_p;		/* Whether the question dialog is currently
 				   visible. */
   Widget question_dialog;	/* The question dialog, if any. */
-
+  Widget splash_dialog;		/* The splash screen window, if any. */
 
   /* =======================================================================
      timers
@@ -292,10 +303,17 @@ extern void ungrab_keyboard_and_mouse (saver_info *si);
 
 #ifndef NO_LOCKING
 extern Bool unlock_p (saver_info *si);
-extern create_passwd_dialog (Widget, Visual *, Colormap);
+extern void create_passwd_dialog (Widget, Visual *, Colormap);
 extern Bool lock_init (int argc, char **argv);
 extern Bool passwd_valid_p (const char *typed_passwd);
 #endif
+
+/* =======================================================================
+   runtime priveleges
+   ======================================================================= */
+
+extern void hack_uid (saver_info *si);
+extern void describe_uids (saver_info *si, FILE *out);
 
 /* =======================================================================
    demoing
@@ -304,8 +322,8 @@ extern Bool passwd_valid_p (const char *typed_passwd);
 #ifndef NO_DEMO_MODE
 extern void demo_mode (saver_info *si);
 extern void demo_mode_restart_process (saver_info *si);
-extern create_demo_dialog (Widget, Visual *, Colormap);
-extern create_resources_dialog (Widget, Visual *, Colormap);
+extern void create_demo_dialog (Widget, Visual *, Colormap);
+extern void create_resources_dialog (Widget, Visual *, Colormap);
 #endif
 
 #if !defined(NO_LOCKING) || !defined(NO_DEMO_MODE)
@@ -314,9 +332,9 @@ extern void format_into_label (Widget label, const char *arg);
 extern void steal_focus_and_colormap (Widget dialog);
 #endif
 
-#ifdef HAVE_MOTIF
-extern void disable_motif_drag_and_drop(Widget w);
-#endif
+extern void create_splash_dialog (Widget, Visual *, Colormap);
+extern void pop_splash_dialog (saver_info *si);
+extern void roger (Widget button, XtPointer client_data, XtPointer call_data);
 
 
 /* =======================================================================
@@ -351,18 +369,6 @@ extern Bool select_visual (saver_screen_info *ssi, const char *visual_name);
 extern const char *signal_name (int signal);
 
 /* =======================================================================
-   subprocs security
-   ======================================================================= */
-
-#ifdef NO_SETUID
-# define hack_uid()
-# define hack_uid_warn()
-#else /* !NO_SETUID */
- extern void hack_uid (saver_info *si);
- extern void hack_uid_warn (saver_info *si);
-#endif /* NO_SETUID */
-
-/* =======================================================================
    subprocs diagnostics
    ======================================================================= */
 
@@ -378,7 +384,7 @@ extern void clear_stderr (saver_screen_info *ssi);
 
 extern const char *blurb (void);
 extern void save_argv (int argc, char **argv);
-extern void saver_exit (saver_info *si, int status);
+extern void saver_exit (saver_info *si, int status, const char *core_reason);
 extern void restart_process (saver_info *si);
 
 extern int saver_ehandler (Display *dpy, XErrorEvent *error);
@@ -389,5 +395,6 @@ extern char *timestring (void);
 extern Atom XA_VROOT, XA_XSETROOT_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 extern Atom XA_SCREENSAVER_TIME;
+extern Atom XA_DEMO, XA_PREFS;
 
 #endif /* __XSCREENSAVER_H__ */

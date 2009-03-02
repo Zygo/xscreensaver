@@ -1,5 +1,5 @@
 /* demo.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,7 @@
 #endif
 
 #include <X11/Intrinsic.h>
+#include <X11/StringDefs.h>
 
 /* We don't actually use any widget internals, but these are included
    so that gdb will have debug info for the widgets... */
@@ -30,7 +31,6 @@
 #else  /* HAVE_ATHENA */
   /* Athena demo code contributed by Jon A. Christopher <jac8782@tamu.edu> */
   /* Copyright 1997, with the same permissions as above. */
-# include <X11/StringDefs.h>
 # include <X11/Shell.h>
 # include <X11/Xaw/Form.h>
 # include <X11/Xaw/Box.h>
@@ -49,6 +49,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef _VROOT_H_
+ERROR!  You must not include vroot.h in this file.
+#endif
+
 static void demo_mode_hack (saver_info *si, char *);
 static void demo_mode_done (saver_info *si);
 
@@ -66,6 +70,8 @@ extern Widget timeout_text, cycle_text, fade_text, ticks_text;
 extern Widget lock_time_text, passwd_time_text;
 extern Widget verbose_toggle, cmap_toggle, fade_toggle, unfade_toggle,
   lock_toggle;
+
+extern Widget splash_dialog;
 
 
 #ifdef HAVE_MOTIF
@@ -216,8 +222,13 @@ static void
 text_cb (Widget text_widget, XtPointer client_data, XtPointer call_data)
 {
   saver_info *si = (saver_info *) client_data;
+  saver_preferences *p = &si->prefs;
   char *line;
   line = get_text_string (text_widget);
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: processing text \"%s\".\n", blurb(), line);
+
   demo_mode_hack (si, line);
 }
 
@@ -271,19 +282,6 @@ select_cb (Widget button, XtPointer client_data, XtPointer call_data)
 #endif /* HAVE_MOTIF */
   steal_focus_and_colormap (demo_dialog);
 }
-
-
-#if 0  /* configure does this now */
-#ifdef HAVE_ATHENA
-# if !defined(_Viewport_h)
-   /* The R4 Athena libs don't have this function.  I don't know the right
-      way to tell, but I note that the R5 version of Viewport.h defines
-      _XawViewport_h, while the R4 version defines _Viewport_h.  So we'll
-     try and key off of that... */
-#  define HAVE_XawViewportSetCoordinates
-# endif
-#endif /* HAVE_ATHENA */
-#endif /* 0 */
 
 
 /* Why this behavior isn't automatic in *either* toolkit, I'll never know.
@@ -373,7 +371,12 @@ static void
 next_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   saver_info *si = (saver_info *) client_data;
+  saver_preferences *p = &si->prefs;
 
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Run Next\n", blurb());
+
+  {
 #ifdef HAVE_ATHENA
   int cnt;
   XawListReturnStruct *current = XawListShowCurrent(demo_list);
@@ -418,6 +421,7 @@ next_cb (Widget button, XtPointer client_data, XtPointer call_data)
   demo_mode_hack (si, get_text_string (text_line));
 
 #endif /* HAVE_MOTIF */
+  }
 }
 
 
@@ -425,7 +429,12 @@ static void
 prev_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   saver_info *si = (saver_info *) client_data;
+  saver_preferences *p = &si->prefs;
 
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Run Previous\n", blurb());
+
+  {
 #ifdef HAVE_ATHENA
   XawListReturnStruct *current=XawListShowCurrent(demo_list);
   if (current->list_index == XAW_LIST_NONE)
@@ -463,6 +472,7 @@ prev_cb (Widget button, XtPointer client_data, XtPointer call_data)
   demo_mode_hack (si, get_text_string (text_line));
 
 #endif /* HAVE_MOTIF */
+  }
 }
 
 
@@ -474,7 +484,12 @@ edit_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   saver_info *si = (saver_info *) client_data;
   saver_screen_info *ssi = si->default_screen;
+  saver_preferences *p = &si->prefs;
   Widget parent = ssi->toplevel_shell;
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Preferences\n", blurb());
+
   if (! resources_dialog)
     make_resources_dialog (si, parent);
   pop_resources_dialog (si);
@@ -492,6 +507,9 @@ static void
 restart_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   saver_info *si = (saver_info *) client_data;
+  saver_preferences *p = &si->prefs;
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Restart\n", blurb());
   demo_mode_restart_process (si);
 }
 
@@ -547,6 +565,10 @@ pop_up_dialog_box (Widget dialog, Widget form, int where)
       x = (sw + w) / 2 - w;
       y = (sh + h) / 2 - h;
       break;
+    case 3:	/* center it in the top 2/3rds of the screen */
+      x = (sw + w) / 2 - w;
+      y = (sh*2/3 + h) / 2 - h;
+      break;
     default:
       abort ();
     }
@@ -570,7 +592,8 @@ pop_up_dialog_box (Widget dialog, Widget form, int where)
   XtManageChild (form);
 #endif /* HAVE_MOTIF */
 
-  steal_focus_and_colormap (dialog);
+  if (dialog != splash_dialog)
+    steal_focus_and_colormap (dialog);
 }
 
 
@@ -687,7 +710,7 @@ make_screenhack_dialog (saver_info *si)
     /* Why isn't the viewport getting centered? */
     XtVaGetValues(viewport,
 		  XtNx, &x, XtNy, &y, XtNheight, &h, XtNborderWidth, &bw, 0);
-    printf("%d %d %d %d\n", x, y, w, h);
+/*    printf("%d %d %d %d\n", x, y, w, h); */
     XtConfigureWidget(viewport, x, y, w2-x-x, h, bw);
 
     /* And the text line, too. */
@@ -792,9 +815,15 @@ res_bool_cb (Widget button, XtPointer client_data, XtPointer call_data)
 static void
 res_cancel_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
+  saver_info *si = (saver_info *) client_data;
+  saver_preferences *p = &si->prefs;
+
   XtDestroyWidget (resources_dialog);
   resources_dialog = 0;
   raise_screenhack_dialog ();
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: lowering preferences dialog.\n", blurb());
 }
 
 
@@ -974,6 +1003,9 @@ pop_resources_dialog (saver_info *si)
   saver_preferences *p = &si->prefs;
   char buf [100];
 
+  if (p->verbose_p)
+    fprintf (stderr, "%s: raising preferences dialog.\n", blurb());
+
   res.timeout = p->timeout / 1000;
   res.cycle = p->cycle / 1000;
   res.lock_time = p->lock_timeout / 1000;
@@ -1016,10 +1048,19 @@ void
 demo_mode (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
+  Bool prefs_p = (si->demo_mode_p == (Bool) 2);  /* kludge! */
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Demo Mode.\n", blurb());
+
   si->dbox_up_p = True;
   monitor_power_on (si);
   raise_window (si, True, False, False);
   make_screenhack_dialog (si);
+
+  if (prefs_p)
+    edit_cb (0, si, 0);		/* pop up preferences panel */
+
   while (si->demo_mode_p)
     {
       XEvent event;
@@ -1041,10 +1082,11 @@ demo_mode (saver_info *si)
 	      start_notice_events_timer (si, event.xcreatewindow.window);
 #ifdef DEBUG_TIMERS
 	      if (p->verbose_p)
-		printf ("%s: starting notice_events_timer for 0x%X (%lu)\n",
-			blurb(),
-			(unsigned int) event.xcreatewindow.window,
-			p->notice_events_timeout);
+		fprintf (stderr,
+			 "%s: starting notice_events_timer for 0x%X (%lu)\n",
+			 blurb(),
+			 (unsigned int) event.xcreatewindow.window,
+			 p->notice_events_timeout);
 #endif /* DEBUG_TIMERS */
 	    }
 	  break;
@@ -1077,8 +1119,17 @@ demo_mode (saver_info *si)
 	  break;
 	}
     }
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: Demo Mode done.\n", blurb());
+
+  kill_screenhack (si);
+
   destroy_screenhack_dialogs (si);
   initialize_screensaver_window (si);
+
+  si->dbox_up_p = False;
+  si->demo_hack = 0;
 
   si->demo_mode_p = True;  /* kludge to inhibit unfade... */
   unblank_screen (si);
@@ -1100,10 +1151,5 @@ demo_mode_hack (saver_info *si, char *hack)
 static void
 demo_mode_done (saver_info *si)
 {
-  kill_screenhack (si);
-  if (si->demo_hack)
-    unblank_screen (si);
   si->demo_mode_p = False;
-  si->dbox_up_p = False;
-  si->demo_hack = 0;
 }

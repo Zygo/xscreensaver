@@ -80,4 +80,4 @@ supporting documentation.
 Sean McCullough <bankshot@mailhost.nmt.edu>, 1995.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 10-May-97.
+Jamie Zawinski <jwz@jwz.org>, 10-May-97.

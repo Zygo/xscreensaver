@@ -81,6 +81,6 @@ express or implied warranty.
 .SH AUTHOR
 Based on Lisp Machine code copyright 1988 John Nguyen <johnn@hx.lcs.mit.edu>.
 
-Ported to C and X by Jamie Zawinski <jwz@netscape.com>, 13-aug-92.
+Ported to C and X by Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
 
 Steering code by Jeremie Petit; 3D code by theiling@coli.uni-sb.de.

@@ -24,7 +24,7 @@ static const char sccsid[] = "@(#)spiral.c	4.00 97/01/01 xlockmore";
  * See xlock.c for copying information.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 24-Jul-95: Fix to allow cycles not to have an arbitrary value by
  *            Peter Schmitzberger (schmitz@coma.sbg.ac.at).
  * 06-Mar-95: Finished cleaning up and final testing.

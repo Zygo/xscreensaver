@@ -1,7 +1,7 @@
 /* cynosure --- draw some rectangles
  *
  * 01-aug-96: written in Java by ozymandias G desiderata <ogd@organic.com>
- * 25-dec-97: ported to C and XScreenSaver by Jamie Zawinski <jwz@netscape.com>
+ * 25-dec-97: ported to C and XScreenSaver by Jamie Zawinski <jwz@jwz.org>
  *
  * Original version:
  *   http://www.organic.com/staff/ogd/java/cynosure.html

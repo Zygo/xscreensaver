@@ -16,7 +16,7 @@ static const char sccsid[] = "@(#)laser.c	4.00 97/01/01 xlockmore";
  * implied warranty.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  */
 
 #ifdef STANDALONE

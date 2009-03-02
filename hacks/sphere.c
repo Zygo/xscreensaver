@@ -29,8 +29,8 @@ static const char sccsid[] = "@(#)sphere.c	4.00 97/01/01 xlockmore";
  * ***************************************************************************
  *
  * Revision History:
- * 30-May-97: jwz@netscape.com: made it go vertically as well as horizontally.
- * 27-May-97: jwz@netscape.com: turned into a standalone program.
+ * 30-May-97: jwz@jwz.org: made it go vertically as well as horizontally.
+ * 27-May-97: jwz@jwz.org: turned into a standalone program.
  * 2-Sep-93: xlock version (David Bagley bagleyd@bigfoot.com)
  * 1988: Revised to use SunView canvas instead of gfxsw Sun Microsystems
  * 1982: Orignal Algorithm  Tom Duff  Lucasfilm Ltd.

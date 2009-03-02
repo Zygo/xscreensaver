@@ -289,6 +289,130 @@ squaretate (Display *dpy, Window window, GC gc,
 }
 
 
+/* from Frederick Roeber <roeber@netscape.com> */
+static void
+fizzle (Display *dpy, Window window, GC gc,
+	    int width, int height, int delay, int granularity)
+{
+  /* These dimensions must be prime numbers.  They should be roughly the
+     square root of the width and height. */
+# define BX 31
+# define BY 31
+# define SIZE (BX*BY)
+
+  int array[SIZE];
+  int i, j;
+  XPoint *skews;
+  int nx, ny;
+
+  /* Distribute the numbers [0,SIZE) randomly in the array */
+  {
+    int indices[SIZE];
+
+    for( i = 0; i < SIZE; i++ ) {
+      array[i] = -1;
+      indices[i] = i;
+    } 
+
+    for( i = 0; i < SIZE; i++ ) {
+      j = random()%(SIZE-i);
+      array[indices[j]] = i;
+      indices[j] = indices[SIZE-i-1];
+    }
+  }
+
+  /* nx, ny are the number of cells across and down, rounded up */
+  nx = width  / BX + (0 == (width %BX) ? 0 : 1);
+  ny = height / BY + (0 == (height%BY) ? 0 : 1);
+  skews = (XPoint *)malloc(sizeof(XPoint) * (nx*ny));
+  if( (XPoint *)0 != skews ) {
+    for( i = 0; i < nx; i++ ) {
+      for( j = 0; j < ny; j++ ) {
+        skews[j * nx + i].x = random()%BX;
+        skews[j * nx + i].y = random()%BY;
+      }
+    }
+  }
+
+# define SKEWX(cx, cy) (((XPoint *)0 == skews)?0:skews[cy*nx + cx].x)
+# define SKEWY(cx, cy) (((XPoint *)0 == skews)?0:skews[cy*nx + cx].y)
+
+  for( i = 0; i < SIZE; i++ ) {
+    int x = array[i] % BX;
+    int y = array[i] / BX;
+
+    {
+      int iy, cy;
+      for( iy = 0, cy = 0; iy < height; iy += BY, cy++ ) {
+        int ix, cx;
+        for( ix = 0, cx = 0; ix < width; ix += BX, cx++ ) {
+          int xx = ix + (SKEWX(cx, cy) + x*((cx%(BX-1))+1))%BX;
+          int yy = iy + (SKEWY(cx, cy) + y*((cy%(BY-1))+1))%BY;
+          XDrawPoint(dpy, window, gc, xx, yy);
+        }
+      }
+    }
+
+    if( (BX-1) == (i%BX) ) {
+      XSync (dpy, False);
+      usleep (delay*granularity);
+    }
+  }
+
+# undef SKEWX
+# undef SKEWY
+
+  if( (XPoint *)0 != skews ) {
+    free(skews);
+  }
+
+# undef BX
+# undef BY
+# undef SIZE
+}
+
+
+#undef MAX
+#undef MIN
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#define MIN(a,b) ((a)<(b)?(a):(b))
+
+/* from David Bagley <bagleyd@tux.org> */
+static void
+random_squares(Display * dpy, Window window, GC gc,
+               int width, int height, int delay, int granularity)
+{
+  int randsize = MAX(1, MIN(width, height) / (16 + (random() % 32)));
+  int max = (height / randsize + 1) * (width / randsize + 1);
+  int *squares = (int *) calloc(max, sizeof (*squares));
+  int i;
+  int columns = width / randsize + 1;  /* Add an extra for roundoff */
+
+  for (i = 0; i < max; i++)
+    squares[i] = i;
+
+  for (i = 0; i < max; i++)
+    {
+      int t, r;
+      t = squares[i];
+      r = random() % max;
+      squares[i] = squares[r];
+      squares[r] = t;
+    }
+
+  for (i = 0; i < max; i++)
+    {
+      XFillRectangle(dpy, window, gc,
+		     (squares[i] % columns) * randsize,
+		     (squares[i] / columns) * randsize,
+		     randsize, randsize);
+
+      XSync(dpy, False);
+      if (delay > 0 && ((i % granularity) == 0))
+      usleep(delay * granularity);
+    }
+  free(squares);
+}
 
 
 static Eraser erasers[] = {
@@ -299,6 +423,8 @@ static Eraser erasers[] = {
   circle_wipe,
   three_circle_wipe,
   squaretate,
+  fizzle,
+  random_squares,
 };
 
 
@@ -362,7 +488,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {0};
+XrmOptionDescRec options [] = {{0}};
 int options_size = 0;
 
 void

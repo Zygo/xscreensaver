@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,12 +16,18 @@
 #include <X11/Xutil.h>
 #include <stdio.h>
 
-int offset = 0;
-XColor *colors = 0;
-int ncolors = 0;
-GC gc = 0;
-unsigned long fg_pixel = 0;
-unsigned long bg_pixel = 0;
+#ifdef HAVE_XSHM_EXTENSION
+# include "xshm.h"
+static Bool use_shm;
+static XShmSegmentInfo shm_info;
+#endif /* HAVE_XSHM_EXTENSION */
+
+static int offset = 0;
+static XColor *colors = 0;
+static int ncolors = 0;
+static GC gc = 0;
+static unsigned long fg_pixel = 0;
+static unsigned long bg_pixel = 0;
 
 static void
 init_moire (Display *dpy, Window window)
@@ -37,6 +43,10 @@ init_moire (Display *dpy, Window window)
 
   offset = get_integer_resource ("offset", "Integer");
   if (offset < 2) offset = 2;
+
+#ifdef HAVE_XSHM_EXTENSION
+  use_shm = get_boolean_resource("useSHM", "Boolean");
+#endif /*  HAVE_XSHM_EXTENSION */
 
  MONO:
   if (colors)
@@ -128,13 +138,25 @@ moire (Display *dpy, Window window, int offset, XColor *colors, int ncolors)
   yo = (random() % xgwa.height) - xgwa.height/2;
 
   depth = visual_depth(DefaultScreenOfDisplay(dpy), xgwa.visual);
-  image = XCreateImage (dpy, xgwa.visual,
-			depth, ZPixmap, 0,	 /* depth, format, offset */
-			0, xgwa.width, 1, 8, 0); /* data, w, h, pad, bpl */
 
-  image->data = (char *) malloc (((xgwa.width + 1) * depth / 8)
-				 * 2  /* uh, I dunno... */
-				 );
+  image = 0;
+# ifdef HAVE_XSHM_EXTENSION
+  if (use_shm)
+    {
+      image = create_xshm_image(dpy, xgwa.visual, depth, ZPixmap, 0,
+				&shm_info, xgwa.width, 1);
+      if (!image)
+	use_shm = False;
+    }
+# endif /* HAVE_XSHM_EXTENSION */
+
+  if (!image)
+    {
+      image = XCreateImage (dpy, xgwa.visual,
+			    depth, ZPixmap, 0,	    /* depth, format, offset */
+			    0, xgwa.width, 1, 8, 0); /* data, w, h, pad, bpl */
+      image->data = (char *) calloc(image->height, image->bytes_per_line);
+    }
 
   for (y = 0; y < xgwa.height; y++)
     {
@@ -149,11 +171,26 @@ moire (Display *dpy, Window window, int offset, XColor *colors, int ncolors)
 	    gcv.foreground = colors[((long) i) % ncolors].pixel;
 	  XPutPixel (image, x, 0, gcv.foreground);
 	}
-      XPutImage (dpy, window, gc, image, 0, 0, 0, y, xgwa.width, 1);
+
+# ifdef HAVE_XSHM_EXTENSION
+      if (use_shm)
+	XShmPutImage(dpy, window, gc, image, 0, 0, 0, y, xgwa.width, 1, False);
+      else
+# endif /*  HAVE_XSHM_EXTENSION */
+	XPutImage (dpy, window, gc, image, 0, 0, 0, y, xgwa.width, 1);
+
       XSync(dpy, False);
     }
-  if (image->data) free(image->data);
-  image->data = 0;
+
+# ifdef HAVE_XSHM_EXTENSION
+  if (!use_shm)
+# endif /*  HAVE_XSHM_EXTENSION */
+    if (image->data)
+      {
+	free(image->data);
+	image->data = 0;
+      }
+
   XDestroyImage (image);
 }
 
@@ -167,6 +204,9 @@ char *defaults [] = {
   "*delay:		5",
   "*ncolors:		64",
   "*offset:		50",
+#ifdef HAVE_XSHM_EXTENSION
+  "*useSHM:	      True",
+#endif /*  HAVE_XSHM_EXTENSION */
   0
 };
 
@@ -175,6 +215,10 @@ XrmOptionDescRec options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
   { "-offset",		".offset",	XrmoptionSepArg, 0 },
+#ifdef HAVE_XSHM_EXTENSION
+  { "-shm",		".useSHM",	XrmoptionNoArg, "True" },
+  { "-no-shm",		".useSHM",	XrmoptionNoArg, "False" },
+#endif /*  HAVE_XSHM_EXTENSION */
   { 0, 0, 0, 0 }
 };
 

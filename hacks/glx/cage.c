@@ -392,6 +392,8 @@ draw_cage(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 
+	MI_IS_DRAWN(mi) = True;
+
 	if (!cp->glx_context)
 		return;
 

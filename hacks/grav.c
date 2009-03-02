@@ -20,7 +20,7 @@ static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision history:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 11-Jul-94: color version
  * 06-Oct-93: by Greg Bowering <greg@smug.student.adelaide.edu.au>
  */

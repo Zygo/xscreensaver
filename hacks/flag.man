@@ -85,4 +85,4 @@ supporting documentation.
 Charles Vidal <vidalc@univ-mlv.fr>, 1996.
 
 Ability to run standalone or with \fIxscreensaver\fP, and the \-text
-and \-bitmap options, added by Jamie Zawinski <jwz@netscape.com>, 24-May-97.
+and \-bitmap options, added by Jamie Zawinski <jwz@jwz.org>, 24-May-97.

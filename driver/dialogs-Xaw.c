@@ -1,5 +1,5 @@
 /* dialogs-Xaw.c --- Athena widgets for demo, options, and password dialogs.
- * xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -73,6 +73,14 @@ Widget done;
 Widget restart;
 /*Widget spacer;*/
 
+Widget splash_dialog;
+Widget splash_form;
+Widget splash_roger_label;
+Widget splash_label1;
+Widget splash_label3;
+Widget splash_demo;
+Widget splash_prefs;
+Widget splash_help;
 
 static Widget buttonbox, textbox, okbox;
 
@@ -321,4 +329,64 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
   edit = XtVaCreateManagedWidget("edit", commandWidgetClass, box, NULL);
   restart = XtVaCreateManagedWidget("restart", commandWidgetClass, box, NULL);
   done = XtVaCreateManagedWidget("done", commandWidgetClass, box, NULL);
+}
+
+
+void
+create_splash_dialog(Widget parent, Visual *visual, Colormap colormap)
+{
+  Widget box, splash_label2;
+  int depth = visual_depth(XtScreen(parent), visual);
+
+  splash_dialog = 
+    XtVaCreatePopupShell("splash_dialog", transientShellWidgetClass, parent,
+			 XtNtitle, NULL,
+			 XtNoverrideRedirect, TRUE,
+			 XtNvisual, visual,
+			 XtNcolormap, colormap,
+			 XtNdepth, depth,
+			 NULL);
+
+  box = XtVaCreateManagedWidget("box", formWidgetClass, splash_dialog,
+				XtNleft, XtChainLeft,
+				XtNright, XtChainRight,
+				XtNtop, XtChainTop,
+				XtNbottom, XtChainBottom,
+				XtNvisual, visual,
+				XtNcolormap, colormap,
+				XtNdepth, depth,
+				NULL);
+
+  splash_roger_label = XtVaCreateManagedWidget("roger", labelWidgetClass, box,
+					       XtNlabel, "",
+					       XtNleft, XtChainLeft,
+					       XtNright, XtChainRight,
+					       XtNtop, XtChainTop,
+					       NULL);
+
+  splash_label1 = XtVaCreateManagedWidget("splashLabel1", labelWidgetClass,
+					  box,
+					  XtNfromHoriz, splash_roger_label,
+					  XtNright, XtChainRight,
+					  XtNtop, XtChainTop,
+					  NULL);
+  splash_label2 = XtVaCreateManagedWidget("splashLabel2", labelWidgetClass,
+					  box,
+					  XtNfromHoriz, splash_roger_label,
+					  XtNright, XtChainRight,
+					  XtNfromVert, splash_label1,
+					  NULL);
+  splash_label3 = XtVaCreateManagedWidget("splashLabel3", labelWidgetClass,
+					  box,
+					  XtNfromHoriz, splash_roger_label,
+					  XtNright, XtChainRight,
+					  XtNfromVert, splash_label2,
+					  NULL);
+  
+  splash_form =
+    XtVaCreateManagedWidget("splash_form", dialogWidgetClass, box,
+			    XtNfromHoriz, splash_roger_label,
+			    XtNright, XtChainRight,
+			    XtNfromVert, splash_label3,
+			    NULL);
 }

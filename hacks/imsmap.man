@@ -63,4 +63,4 @@ stored in the RESOURCE_MANAGER property.
 .SH AUTHOR
 Juergen Nickelsen <nickel@cs.tu-berlin.de>, 23-aug-92.
 
-Hacked on by Jamie Zawinski <jwz@netscape.com>, 24-aug-92, 17-May-97.
+Hacked on by Jamie Zawinski <jwz@jwz.org>, 24-aug-92, 17-May-97.

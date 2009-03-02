@@ -1,7 +1,7 @@
 /* atlantis --- Shows moving 3D sea animals */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)whale.c	1.1 98/05/13 xlockmore";
+static const char sccsid[] = "@(#)swim.c	1.3 98/06/18 xlockmore";
 
 #endif
 
@@ -73,9 +73,8 @@ static const char sccsid[] = "@(#)whale.c	1.1 98/05/13 xlockmore";
  * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
  */
 
-#include <math.h>
-
 #ifdef STANDALONE
+# include <math.h>
 # include "xlockmoreI.h"	/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"            /* from the xlockmore distribution */
@@ -84,153 +83,152 @@ static const char sccsid[] = "@(#)whale.c	1.1 98/05/13 xlockmore";
 #ifdef USE_GL
 
 #include "atlantis.h"
-#include <stdlib.h>
 
 void
 FishTransform(fishRec * fish)
 {
 
-    glTranslatef(fish->y, fish->z, -fish->x);
-    glRotatef(-fish->psi, 0.0, 1.0, 0.0);
-    glRotatef(fish->theta, 1.0, 0.0, 0.0);
-    glRotatef(-fish->phi, 0.0, 0.0, 1.0);
+	glTranslatef(fish->y, fish->z, -fish->x);
+	glRotatef(-fish->psi, 0.0, 1.0, 0.0);
+	glRotatef(fish->theta, 1.0, 0.0, 0.0);
+	glRotatef(-fish->phi, 0.0, 0.0, 1.0);
 }
 
 void
-WhalePilot(fishRec * fish)
+WhalePilot(fishRec * fish, float whalespeed, Bool whaledir)
 {
 
-    fish->phi = -20.0;
-    fish->theta = 0.0;
-    fish->psi -= 0.5;
+	fish->phi = -20.0;
+	fish->theta = 0.0;
+	fish->psi += ((whaledir) ? -0.5 : 0.5);
 
-    fish->x += WHALESPEED * fish->v * cos(fish->psi / RAD) * cos(fish->theta / RAD);
-    fish->y += WHALESPEED * fish->v * sin(fish->psi / RAD) * cos(fish->theta / RAD);
-    fish->z += WHALESPEED * fish->v * sin(fish->theta / RAD);
+	fish->x += whalespeed * fish->v * cos(fish->psi / RAD) * cos(fish->theta / RAD);
+	fish->y += whalespeed * fish->v * sin(fish->psi / RAD) * cos(fish->theta / RAD);
+	fish->z += whalespeed * fish->v * sin(fish->theta / RAD);
 }
 
 void
-SharkPilot(fishRec * fish)
+SharkPilot(fishRec * fish, float sharkspeed)
 {
-    static int sign = 1;
-    float X, Y, Z, tpsi, ttheta, thetal;
+	static int  sign = 1;
+	float       X, Y, Z, tpsi, ttheta, thetal;
 
-    fish->xt = 60000.0;
-    fish->yt = 0.0;
-    fish->zt = 0.0;
+	fish->xt = 60000.0;
+	fish->yt = 0.0;
+	fish->zt = 0.0;
 
-    X = fish->xt - fish->x;
-    Y = fish->yt - fish->y;
-    Z = fish->zt - fish->z;
+	X = fish->xt - fish->x;
+	Y = fish->yt - fish->y;
+	Z = fish->zt - fish->z;
 
-    thetal = fish->theta;
+	thetal = fish->theta;
 
-    ttheta = RAD * atan(Z / (sqrt(X * X + Y * Y)));
+	ttheta = RAD * atan(Z / (sqrt(X * X + Y * Y)));
 
-    if (ttheta > fish->theta + 0.25) {
-        fish->theta += 0.5;
-    } else if (ttheta < fish->theta - 0.25) {
-        fish->theta -= 0.5;
-    }
-    if (fish->theta > 90.0) {
-        fish->theta = 90.0;
-    }
-    if (fish->theta < -90.0) {
-        fish->theta = -90.0;
-    }
-    fish->dtheta = fish->theta - thetal;
+	if (ttheta > fish->theta + 0.25) {
+		fish->theta += 0.5;
+	} else if (ttheta < fish->theta - 0.25) {
+		fish->theta -= 0.5;
+	}
+	if (fish->theta > 90.0) {
+		fish->theta = 90.0;
+	}
+	if (fish->theta < -90.0) {
+		fish->theta = -90.0;
+	}
+	fish->dtheta = fish->theta - thetal;
 
-    tpsi = RAD * atan2(Y, X);
+	tpsi = RAD * atan2(Y, X);
 
-    fish->attack = 0;
+	fish->attack = 0;
 
-    if (fabs(tpsi - fish->psi) < 10.0) {
-        fish->attack = 1;
-    } else if (fabs(tpsi - fish->psi) < 45.0) {
-        if (fish->psi > tpsi) {
-            fish->psi -= 0.5;
-            if (fish->psi < -180.0) {
-                fish->psi += 360.0;
-            }
-        } else if (fish->psi < tpsi) {
-            fish->psi += 0.5;
-            if (fish->psi > 180.0) {
-                fish->psi -= 360.0;
-            }
-        }
-    } else {
-        if (NRAND(100) > 98) {
-            sign = 1 - sign;
-        }
-        fish->psi += sign;
-        if (fish->psi > 180.0) {
-            fish->psi -= 360.0;
-        }
-        if (fish->psi < -180.0) {
-            fish->psi += 360.0;
-        }
-    }
+	if (fabs(tpsi - fish->psi) < 10.0) {
+		fish->attack = 1;
+	} else if (fabs(tpsi - fish->psi) < 45.0) {
+		if (fish->psi > tpsi) {
+			fish->psi -= 0.5;
+			if (fish->psi < -180.0) {
+				fish->psi += 360.0;
+			}
+		} else if (fish->psi < tpsi) {
+			fish->psi += 0.5;
+			if (fish->psi > 180.0) {
+				fish->psi -= 360.0;
+			}
+		}
+	} else {
+		if (NRAND(100) > 98) {
+			sign = 1 - sign;
+		}
+		fish->psi += sign;
+		if (fish->psi > 180.0) {
+			fish->psi -= 360.0;
+		}
+		if (fish->psi < -180.0) {
+			fish->psi += 360.0;
+		}
+	}
 
-    if (fish->attack) {
-        if (fish->v < 1.1) {
-            fish->spurt = 1;
-        }
-        if (fish->spurt) {
-            fish->v += 0.2;
-        }
-        if (fish->v > 5.0) {
-            fish->spurt = 0;
-        }
-        if ((fish->v > 1.0) && (!fish->spurt)) {
-            fish->v -= 0.2;
-        }
-    } else {
-        if (!(NRAND(400)) && (!fish->spurt)) {
-            fish->spurt = 1;
-        }
-        if (fish->spurt) {
-            fish->v += 0.05;
-        }
-        if (fish->v > 3.0) {
-            fish->spurt = 0;
-        }
-        if ((fish->v > 1.0) && (!fish->spurt)) {
-            fish->v -= 0.05;
-        }
-    }
+	if (fish->attack) {
+		if (fish->v < 1.1) {
+			fish->spurt = 1;
+		}
+		if (fish->spurt) {
+			fish->v += 0.2;
+		}
+		if (fish->v > 5.0) {
+			fish->spurt = 0;
+		}
+		if ((fish->v > 1.0) && (!fish->spurt)) {
+			fish->v -= 0.2;
+		}
+	} else {
+		if (!(NRAND(400)) && (!fish->spurt)) {
+			fish->spurt = 1;
+		}
+		if (fish->spurt) {
+			fish->v += 0.05;
+		}
+		if (fish->v > 3.0) {
+			fish->spurt = 0;
+		}
+		if ((fish->v > 1.0) && (!fish->spurt)) {
+			fish->v -= 0.05;
+		}
+	}
 
-    fish->x += SHARKSPEED * fish->v * cos(fish->psi / RAD) * cos(fish->theta / RAD);
-    fish->y += SHARKSPEED * fish->v * sin(fish->psi / RAD) * cos(fish->theta / RAD);
-    fish->z += SHARKSPEED * fish->v * sin(fish->theta / RAD);
+	fish->x += sharkspeed * fish->v * cos(fish->psi / RAD) * cos(fish->theta / RAD);
+	fish->y += sharkspeed * fish->v * sin(fish->psi / RAD) * cos(fish->theta / RAD);
+	fish->z += sharkspeed * fish->v * sin(fish->theta / RAD);
 }
 
 void
-SharkMiss(atlantisstruct *ap, int i)
+SharkMiss(atlantisstruct * ap, int i)
 {
-    int j;
-    float avoid, thetal;
-    float X, Y, Z, R;
+	int         j;
+	float       avoid, thetal;
+	float       X, Y, Z, R;
 
-    for (j = 0; j < NUM_SHARKS; j++) {
-        if (j != i) {
-            X = ap->sharks[j].x - ap->sharks[i].x;
-            Y = ap->sharks[j].y - ap->sharks[i].y;
-            Z = ap->sharks[j].z - ap->sharks[i].z;
+	for (j = 0; j < ap->num_sharks; j++) {
+		if (j != i) {
+			X = ap->sharks[j].x - ap->sharks[i].x;
+			Y = ap->sharks[j].y - ap->sharks[i].y;
+			Z = ap->sharks[j].z - ap->sharks[i].z;
 
-            R = sqrt(X * X + Y * Y + Z * Z);
+			R = sqrt(X * X + Y * Y + Z * Z);
 
-            avoid = 1.0;
-            thetal = ap->sharks[i].theta;
+			avoid = 1.0;
+			thetal = ap->sharks[i].theta;
 
-            if (R < SHARKSIZE) {
-                if (Z > 0.0) {
-                    ap->sharks[i].theta -= avoid;
-                } else {
-                    ap->sharks[i].theta += avoid;
-                }
-            }
-            ap->sharks[i].dtheta += (ap->sharks[i].theta - thetal);
-        }
-    }
+			if (R < ap->sharksize) {
+				if (Z > 0.0) {
+					ap->sharks[i].theta -= avoid;
+				} else {
+					ap->sharks[i].theta += avoid;
+				}
+			}
+			ap->sharks[i].dtheta += (ap->sharks[i].theta - thetal);
+		}
+	}
 }
 #endif

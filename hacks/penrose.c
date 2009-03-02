@@ -39,7 +39,7 @@ static const char sccsid[] = "@(#)penrose.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 09-Sep-96: Written.  */
 
 /*-

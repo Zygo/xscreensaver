@@ -48,4 +48,4 @@ makes jack a dull boy.  All work and no play makes jack a dull boy.  All work
 and no play makes jack a fnord dull boy.  All work and no play makes jack a
 dull boy.
 .SH AUTHOR
-Jamie Zawinski <jwz@netscape.com>, 15-Nov-97.
+Jamie Zawinski <jwz@jwz.org>, 15-Nov-97.

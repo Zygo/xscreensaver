@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #ifndef VMS
 # include <pwd.h>
+# include <grp.h>
 #else /* VMS */
 # include "vms-pwd.h"
 #endif /* VMS */
@@ -170,7 +171,7 @@ get_encrypted_passwd(const char *user)
     }
 
   fprintf (stderr, "%s: couldn't get password of \"%s\"\n",
-	   progname, (user ? user : "(null)"));
+	   blurb(), (user ? user : "(null)"));
 
   return 0;
 }
@@ -235,6 +236,5 @@ passwd_valid_p (const char *typed_passwd)
 #else  /* VMS */
 Bool lock_init (int argc, char **argv) { return True; }
 #endif /* VMS */
-
 
 #endif /* NO_LOCKING -- whole file */

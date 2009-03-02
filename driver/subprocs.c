@@ -1,6 +1,6 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
  * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997, 1998
- *  Jamie Zawinski <jwz@netscape.com>
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,11 +47,6 @@
 #endif /* VMS */
 
 #include <signal.h>		/* for the signal names */
-
-#ifndef NO_SETUID
-#include <pwd.h>		/* for getpwnam() and struct passwd */
-#include <grp.h>		/* for getgrgid() and struct group */
-#endif /* NO_SETUID */
 
 #if !defined(SIGCHLD) && defined(SIGCLD)
 #define SIGCHLD SIGCLD
@@ -256,9 +251,9 @@ exec_screenhack (saver_info *si, const char *command)
   Bool hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"");
 
   if (p->verbose_p)
-    printf ("%s: spawning \"%s\" in pid %lu%s.\n",
-	    blurb(), command, (unsigned long) getpid (),
-	    (hairy_p ? " (via shell)" : ""));
+    fprintf (stderr, "%s: spawning \"%s\" in pid %lu%s.\n",
+	     blurb(), command, (unsigned long) getpid (),
+	     (hairy_p ? " (via shell)" : ""));
 
   if (hairy_p)
     /* If it contains any shell metacharacters, do it the hard way,
@@ -270,7 +265,8 @@ exec_screenhack (saver_info *si, const char *command)
 
 #else /* VMS */
   if (p->verbose_p)
-    printf ("%s: spawning \"%s\" in pid %lu.\n", blurb(), command, getpid());
+    fprintf (stderr, "%s: spawning \"%s\" in pid %lu.\n",
+	     blurb(), command, getpid());
   exec_vms_command (command);
 #endif /* VMS */
 
@@ -612,8 +608,8 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 		 "%s: child pid %lu (%s) exited abnormally (code %d).\n",
 		 blurb(), (unsigned long) kid, name, exit_status);
       else if (p->verbose_p)
-	printf ("%s: child pid %lu (%s) exited normally.\n",
-		blurb(), (unsigned long) kid, name);
+	fprintf (stderr, "%s: child pid %lu (%s) exited normally.\n",
+		 blurb(), (unsigned long) kid, name);
 
       if (job)
 	job->status = job_dead;
@@ -826,7 +822,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	  sprintf (buf, "%s: couldn't fork", blurb());
 	  perror (buf);
 	  restore_real_vroot (si);
-	  saver_exit (si, 1);
+	  saver_exit (si, 1, 0);
 
 	case 0:
 	  close (ConnectionNumber (si->dpy));	/* close display fd */
@@ -853,8 +849,9 @@ spawn_screenhack (saver_info *si, Bool first_time_p)
   if (!monitor_powered_on_p (si))
     {
       if (si->prefs.verbose_p)
-	printf ("%s: server reports that monitor has powered down; "
-		"not launching a new hack.\n", blurb());
+	fprintf (stderr,
+		 "%s: server reports that monitor has powered down; "
+		 "not launching a new hack.\n", blurb());
       return;
     }
 
@@ -1038,132 +1035,3 @@ hack_environment (saver_info *si)
     }
 #endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
 }
-
-
-
-/* Change the uid/gid of the screensaver process, so that it is safe for it
-   to run setuid root (which it needs to do on some systems to read the 
-   encrypted passwords from the passwd file.)
-
-   hack_uid() is run before opening the X connection, so that XAuth works.
-   hack_uid_warn() is called after the connection is opened and the command
-   line arguments are parsed, so that the messages from hack_uid() get 
-   printed after we know whether we're in `verbose' mode.
- */
-
-#ifndef NO_SETUID
-
-static int hack_uid_errno;
-static char hack_uid_buf [255], *hack_uid_error;
-
-void
-hack_uid (saver_info *si)
-{
-
-  /* If we've been run as setuid or setgid to someone else (most likely root)
-     turn off the extra permissions so that random user-specified programs
-     don't get special privileges.  (On some systems it might be necessary
-     to install this as setuid root in order to read the passwd file to
-     implement lock-mode...)
-  */
-  setgid (getgid ());
-  setuid (getuid ());
-
-  hack_uid_errno = 0;
-  hack_uid_error = 0;
-
-  /* If we're being run as root (as from xdm) then switch the user id
-     to something safe. */
-  if (getuid () == 0)
-    {
-      struct passwd *p;
-      /* Locking can't work when running as root, because we have no way of
-	 knowing what the user id of the logged in user is (so we don't know
-	 whose password to prompt for.)
-       */
-      si->locking_disabled_p = True;
-      si->nolock_reason = "running as root";
-      p = getpwnam ("nobody");
-      if (! p) p = getpwnam ("noaccess");
-      if (! p) p = getpwnam ("daemon");
-      if (! p) p = getpwnam ("bin");
-      if (! p) p = getpwnam ("sys");
-      if (! p)
-	{
-	  hack_uid_error = "couldn't find safe uid; running as root.";
-	  hack_uid_errno = -1;
-	}
-      else
-	{
-	  struct group *g = getgrgid (p->pw_gid);
-	  hack_uid_error = hack_uid_buf;
-	  sprintf (hack_uid_error, "changing uid/gid to %s/%s (%ld/%ld).",
-		   p->pw_name, (g ? g->gr_name : "???"),
-		   (long) p->pw_uid, (long) p->pw_gid);
-
-	  /* Change the gid to be a safe one.  If we can't do that, then
-	     print a warning.  We change the gid before the uid so that we
-	     change the gid while still root. */
-	  if (setgid (p->pw_gid) != 0)
-	    {
-	      hack_uid_errno = errno;
-	      sprintf (hack_uid_error, "couldn't set gid to %s (%ld)",
-		       (g ? g->gr_name : "???"), (long) p->pw_gid);
-	    }
-
-	  /* Now change the uid to be a safe one. */
-	  if (setuid (p->pw_uid) != 0)
-	    {
-	      hack_uid_errno = errno;
-	      sprintf (hack_uid_error, "couldn't set uid to %s (%ld)",
-		       p->pw_name, (long) p->pw_uid);
-	    }
-	}
-    }
-# ifndef NO_LOCKING
- else	/* disable locking if already being run as "someone else" */
-   {
-     struct passwd *p = getpwuid (getuid ());
-     if (!p ||
-	 !strcmp (p->pw_name, "root") ||
-	 !strcmp (p->pw_name, "nobody") ||
-	 !strcmp (p->pw_name, "noaccess") ||
-	 !strcmp (p->pw_name, "daemon") ||
-	 !strcmp (p->pw_name, "bin") ||
-	 !strcmp (p->pw_name, "sys"))
-       {
-	 si->locking_disabled_p = True;
-	 si->nolock_reason = hack_uid_buf;
-	 sprintf (si->nolock_reason, "running as %s", p->pw_name);
-       }
-   }
-# endif /* !NO_LOCKING */
-}
-
-void
-hack_uid_warn (saver_info *si)
-{
-  saver_preferences *p = &si->prefs;
-
-  if (! hack_uid_error)
-    ;
-  else if (hack_uid_errno == 0)
-    {
-      if (p->verbose_p)
-	printf ("%s: %s\n", blurb(), hack_uid_error);
-    }
-  else
-    {
-      char buf [255];
-      sprintf (buf, "%s: %s", blurb(), hack_uid_error);
-      if (hack_uid_errno == -1)
-	fprintf (stderr, "%s\n", buf);
-      else
-	{
-	  errno = hack_uid_errno;
-	  perror (buf);
-	}
-    }
-}
-
-#endif /* !NO_SETUID */

@@ -24,7 +24,7 @@ static const char sccsid[] = "@(#)galaxy.c	4.04 97/07/28 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 18-Apr-97: Memory leak fixed by Tom Schmidt <tschmidt@micron.com>
  * 07-Apr-97: Modified by Dave Mitchell <davem@magnet.com>
  * 23-Oct-94: Modified by David Bagley <bagleyd@bigfoot.com>

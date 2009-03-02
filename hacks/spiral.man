@@ -64,4 +64,4 @@ Darrick Brown, 1994.
 Improved by Peter Schmitzberger <schmitz@coma.sbg.ac.at>, 24-Jul-95.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 10-May-97.
+Jamie Zawinski <jwz@jwz.org>, 10-May-97.

@@ -48,6 +48,8 @@ X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 # X_EXTRA_LIBS contains extra libraries needed by X that aren't a part of X.
 #         (e.g., -lsocket, -lnsl, etc.)
 #
+# I think (but am not totally sure) that LIBS is also really "LDFLAGS".
+#
 # SAVER_LIBS is the link line for "xscreensaver", and
 # CMD_LIBS is the link line for "xscreensaver-command".
 
@@ -75,6 +77,8 @@ KERBEROS_OBJS	= kpasswd.o
 LOCK_SRCS_1	= lock.c
 LOCK_OBJS_1	= lock.o
 
+TEST_SRCS	= test-passwd.c test-uid.c
+
 DIALOG_SRCS	= @DIALOG_SRCS@
 DIALOG_OBJS	= @DIALOG_OBJS@
 PASSWD_SRCS	= @PASSWD_SRCS@
@@ -93,10 +97,10 @@ UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/spline.o \
 		  $(UTILS_BIN)/yarandom.o @XMU_OBJS@
 
-SAVER_SRCS_1	= demo.c stderr.c subprocs.c timers.c windows.c \
-		  xscreensaver.c xset.c
-SAVER_OBJS_1	= demo.o stderr.o subprocs.o timers.o windows.o \
-		  xscreensaver.o xset.o
+SAVER_SRCS_1	= demo.c stderr.c subprocs.c setuid.c timers.c windows.c \
+		  xscreensaver.c splash.c xset.c
+SAVER_OBJS_1	= demo.o stderr.o subprocs.o setuid.o timers.o windows.o \
+		  xscreensaver.o splash.o xset.o
 
 SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
@@ -104,9 +108,9 @@ SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
 CMD_SRCS	= xscreensaver-command.c
 CMD_OBJS	= xscreensaver-command.o
 
-SAVER_LIBS	= $(X_LIBS) $(X_PRE_LIBS) @SAVER_LIBS@ -lXt   \
-		  -lX11 -lXext $(X_EXTRA_LIBS) $(PASSWD_LIBS) \
-		  $(LIBS)
+SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ \
+		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
+		  $(PASSWD_LIBS)
 
 CMD_LIBS	= $(X_LIBS) $(X_PRE_LIBS)      \
 		  -lX11 -lXext $(X_EXTRA_LIBS) \
@@ -123,7 +127,7 @@ VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
 		  $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS) \
-		  $(LOCK_SRCS_1) $(CMD_SRCS) $(HDRS) $(MEN)
+		  $(LOCK_SRCS_1) $(CMD_SRCS) $(HDRS) $(TEST_SRCS) $(MEN)
 
 
 all: $(EXES)
@@ -136,7 +140,8 @@ install-strip:
 		INSTALL_SETUID='$(INSTALL_SETUID) -s' \
 		install
 
-install-program:
+install-program: $(EXES)
+	@if [ ! -d $(bindir) ]; then $(INSTALL_DIRS) $(bindir) ; fi
 	@inst="$(INSTALL_PROGRAM)" ;					\
 	if [ @NEED_SETUID@ = yes ]; then				\
 	   me="`whoami`" ;						\
@@ -156,16 +161,15 @@ install-program:
  $$e ""									     ;\
 	   fi ; 							\
 	fi ;								\
-	if [ ! -d $(bindir) ]; then $(INSTALL_DIRS) $(bindir) ; fi ;	\
 	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
 	$$inst xscreensaver $(bindir)/xscreensaver
 	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
 
-install-ad:
-	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi ;	\
+install-ad: XScreenSaver.ad
+	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi
 	$(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver
 
-install-man:
+install-man: $(MEN)
 	@men="$(MEN)" ;							\
 	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
 	for man in $$men; do						\
@@ -195,7 +199,7 @@ clean:
 	-rm -f *.o a.out core $(EXES) XScreenSaver_ad.h
 
 distclean: clean
-	-rm -f Makefile XScreenSaver.ad *~ "#"*
+	-rm -f Makefile XScreenSaver.ad TAGS *~ "#"*
 
 # Adds all current dependencies to Makefile
 depend: XScreenSaver_ad.h
@@ -317,7 +321,7 @@ xscreensaver-command: $(CMD_OBJS)
 
 
 TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PWENT_OBJS) $(DIALOG_OBJS) \
-	 subprocs.o demo.o \
+	 subprocs.o setuid.o demo.o \
 	$(UTIL_OBJS)
 
 test-passwd: $(TEST_PASSWD_OBJS)
@@ -326,6 +330,7 @@ test-passwd: $(TEST_PASSWD_OBJS)
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
+# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
 demo.o: ../config.h
 demo.o: $(srcdir)/xscreensaver.h
@@ -337,6 +342,8 @@ stderr.o: $(UTILS_SRC)/visual.h
 subprocs.o: ../config.h
 subprocs.o: $(srcdir)/xscreensaver.h
 subprocs.o: $(UTILS_SRC)/yarandom.h
+setuid.o: ../config.h
+setuid.o: $(srcdir)/xscreensaver.h
 timers.o: ../config.h
 timers.o: $(srcdir)/xscreensaver.h
 windows.o: ../config.h
@@ -350,6 +357,9 @@ xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(UTILS_SRC)/resources.h
 xscreensaver.o: $(UTILS_SRC)/visual.h
 xscreensaver.o: XScreenSaver_ad.h
+splash.o: ../config.h
+splash.o: $(srcdir)/xscreensaver.h
+splash.o: $(UTILS_SRC)/visual.h
 xset.o: ../config.h
 xset.o: $(srcdir)/xscreensaver.h
 dialogs-Xm.o: ../config.h

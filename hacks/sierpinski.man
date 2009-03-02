@@ -62,4 +62,4 @@ Desmond Daignault <tekdd@dtol.datatimes.com>, 05-Sep-96.  (Original
 xlock version was called tri.c.)
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 10-May-97.  (Renamed to sierpinski.)
+Jamie Zawinski <jwz@jwz.org>, 10-May-97.  (Renamed to sierpinski.)

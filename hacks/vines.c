@@ -16,7 +16,7 @@ static const char sccsid[] = "@(#)vines.c	4.02 97/04/01 xlockmore";
  * nifty whorls and loops.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 21-Mar-97:  David Hansen <dhansen@metapath.com>
  *             Updated mode to draw complete patterns on every
  *             iteration instead of growing the vine.  Also made

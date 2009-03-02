@@ -1,6 +1,6 @@
 /* kpasswd.c --- verify kerberos passwords.
  * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

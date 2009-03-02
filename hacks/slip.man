@@ -90,4 +90,4 @@ supporting documentation.
 Scott Graves <spot@cs.cmu.edu>.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 18-Oct-93.
+Jamie Zawinski <jwz@jwz.org>, 18-Oct-93.

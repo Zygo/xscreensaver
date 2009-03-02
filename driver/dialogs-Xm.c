@@ -1,5 +1,5 @@
 /* dialogs-Xm.c --- Motif widgets for demo, options, and password dialogs.
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -80,6 +80,14 @@ Widget done;
 Widget restart;
 Widget spacer;
 
+Widget splash_dialog;
+Widget splash_form;
+Widget splash_roger_label;
+Widget splash_label1;
+Widget splash_label3;
+Widget splash_demo;
+Widget splash_prefs;
+Widget splash_help;
 
 void
 create_passwd_dialog(Widget parent, Visual *visual, Colormap colormap)
@@ -698,4 +706,134 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtManageChild(label2);
 
   demo_form = real_dialog;
+}
+
+
+void
+create_splash_dialog(Widget parent, Visual *visual, Colormap colormap)
+{
+  Widget shell;
+  Widget  form1;
+  Widget   roger;
+  Widget   dialog;
+  Widget    form2;
+  Widget     label1, label2, label3;
+  Widget    demo, prefs, help;
+  Widget w;
+  Arg al[64];
+  int ac = 0;
+
+  ac = 0;
+  XtSetArg (al[ac], XmNvisual, visual); ac++;
+  XtSetArg (al[ac], XmNcolormap, colormap); ac++;
+  XtSetArg (al[ac], XmNdepth, visual_depth(XtScreen(parent), visual)); ac++;
+
+  shell = XmCreateDialogShell (parent, "splashDialog", al, ac);
+
+  form1 = XmCreateForm (shell, "form", 0, 0);
+
+  roger = XmCreateDrawnButton (form1, "rogerLabel", 0, 0);
+
+  dialog = XmCreateSelectionBox (form1, "splashForm", al, ac);
+
+  form2 = XmCreateForm ( dialog, "form", 0, 0);
+  label1 = XmCreateLabel ( form2, "splashLabel1", 0, 0);
+  label2 = XmCreateLabel ( form2, "splashLabel2", 0, 0);
+  label3 = XmCreateLabel ( form2, "splashLabel3", 0, 0);
+
+  ac = 0;
+  XtSetArg(al[ac], XmNtraversalOn, False); ac++;
+
+  demo = XmCreatePushButton (dialog, "splashDemo", al, ac);
+  prefs = XmCreatePushButton (dialog, "splashPrefs", al, ac);
+  help = XmSelectionBoxGetChild (dialog, XmDIALOG_HELP_BUTTON);
+  XtSetValues(help, al, ac);
+
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_OK_BUTTON);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_CANCEL_BUTTON);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_APPLY_BUTTON);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_TEXT);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_LIST_LABEL);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_LIST);
+  if (w) XtUnmanageChild (XtParent(w));
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_SELECTION_LABEL);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_SEPARATOR);
+  if (w) XtUnmanageChild (w);
+  w = XmSelectionBoxGetChild (dialog, XmDIALOG_APPLY_BUTTON);
+  if (w) XtUnmanageChild (w);
+
+  XtVaSetValues(label1,
+		XmNtopAttachment, XmATTACH_FORM,
+		XmNleftAttachment, XmATTACH_FORM,
+		XmNrightAttachment, XmATTACH_FORM,
+		XmNbottomAttachment, XmATTACH_NONE,
+		0);
+  XtVaSetValues(label2,
+		XmNtopAttachment, XmATTACH_WIDGET,
+		XmNtopWidget, label1,
+		XmNleftAttachment, XmATTACH_FORM,
+		XmNrightAttachment, XmATTACH_FORM,
+		XmNbottomAttachment, XmATTACH_NONE,
+		0);
+  XtVaSetValues(label3,
+		XmNtopAttachment, XmATTACH_WIDGET,
+		XmNtopWidget, label2,
+		XmNleftAttachment, XmATTACH_FORM,
+		XmNrightAttachment, XmATTACH_FORM,
+		XmNbottomAttachment, XmATTACH_FORM,
+		0);
+
+  XtVaSetValues(roger,
+		XmNsensitive, FALSE,
+		XmNtopAttachment, XmATTACH_FORM,
+		XmNleftAttachment, XmATTACH_FORM,
+		XmNrightAttachment, XmATTACH_NONE,
+		XmNbottomAttachment, XmATTACH_FORM,
+		0);
+  XtVaSetValues(dialog,
+		XmNtopAttachment, XmATTACH_FORM,
+		XmNleftAttachment, XmATTACH_WIDGET,
+		XmNleftWidget, roger,
+		XmNrightAttachment, XmATTACH_FORM,
+		XmNbottomAttachment, XmATTACH_FORM,
+		0);
+
+  XtManageChild(label1);
+  XtManageChild(label2);
+  XtManageChild(label3);
+
+  XtManageChild(form2);
+  XtManageChild(demo);
+  XtManageChild(prefs);
+  XtManageChild(help);
+
+  XtManageChild(roger);
+  XtManageChild(dialog);
+
+  {
+    Dimension width = 0, height = 0;
+    XtRealizeWidget(form1);
+    XtVaGetValues(roger, XmNwidth, &width, XmNheight, &height, 0);
+    if (width == height)
+      ;
+    else if (width > height)
+      XtVaSetValues(roger, XmNwidth, width, XmNheight, width, 0);
+    else
+      XtVaSetValues(roger, XmNwidth, height, XmNheight, height, 0);
+  }
+
+  splash_dialog = shell;
+  splash_form = form1;
+  splash_roger_label = roger;
+  splash_label1 = label1;
+  splash_label3 = label3;
+  splash_demo = demo;
+  splash_prefs = prefs;
+  splash_help = help;
 }

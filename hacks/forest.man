@@ -60,4 +60,4 @@ supporting documentation.
 Pascal Pensa <pensa@aurora.unice.fr>, 1995.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@netscape.com>, 27-May-97.
+Jamie Zawinski <jwz@jwz.org>, 27-May-97.

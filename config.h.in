@@ -131,10 +131,15 @@
  */
 #undef HAVE_GL
 
-/*  Define this if you have GL, but it's the MesaGL variant.  (The libraries
-    have different names.)  (HAVE_GL should be defined too.)
+/*  Define this if you have OpenGL, but it's the MesaGL variant.  (The 
+    libraries have different names.)  (HAVE_GL should be defined too.)
  */
 #undef HAVE_MESA_GL
+
+/*  Define this if your version of OpenGL has the glBindTexture() routine.
+    This is the case for OpenGL 1.1, but not for OpenGL 1.0.
+ */
+#undef HAVE_GLBINDTEXTURE
 
 /*  Define this if you have the X Shared Memory Extension.
  */

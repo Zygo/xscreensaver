@@ -21,7 +21,7 @@ static const char sccsid[] = "@(#)hop.c	4.02 97/04/01 xlockmore";
  *
  * Revision History:
  * Changes of David Bagley <bagleyd@bigfoot.com>
- * 10-May-97: jwz@netscape.com: ported from xlockmore 4.03a10 to be a 
+ * 10-May-97: jwz@jwz.org: ported from xlockmore 4.03a10 to be a 
  *			  standalone program and thus usable with xscreensaver
  *			  (I threw away my 1992 port and started over.)
  * 27-Jul-95: added Peter de Jong's hop from Scientific American

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1998 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -518,8 +518,8 @@ sgi_gamma_fade (Display *dpy,
       for (screen = 0; screen < nscreens; screen++)
 	{
 	  if (clear_windows)
-	    XClearWindow (dpy, black_windows[i]);
-	  XMapRaised (dpy, black_windows[i]);
+	    XClearWindow (dpy, black_windows[screen]);
+	  XMapRaised (dpy, black_windows[screen]);
 	}
       XSync(dpy, False);
     }

@@ -21,7 +21,7 @@ static const char sccsid[] = "@(#)ifs.c	   4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  *			  Made it render into an offscreen bitmap and then copy
  *			  that onto the screen, to reduce flicker.
  */

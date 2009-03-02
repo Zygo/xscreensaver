@@ -28,11 +28,11 @@ Entered-date:   $DATE
 Description:    A modular screen saver and locker for the X Window System.
                 Highly customizable: allows the use of any program that
                 can draw on the root window as a display mode.
-                Comes with more than 60 display modes.
-                Home page: http://people.netscape.com/jwz/xscreensaver/
+                Comes with more than 80 display modes.
+                Home page: http://www.jwz.org/xscreensaver/
 Keywords:       screen saver, screen lock, lock, xlock, X11
-Author:         jwz@netscape.com (Jamie Zawinski)
-Maintained-by:  jwz@netscape.com (Jamie Zawinski)
+Author:         jwz@jwz.org (Jamie Zawinski)
+Maintained-by:  jwz@jwz.org (Jamie Zawinski)
 Primary-site:   ftp.x.org /contrib/applications/
                 $TAR_SIZE xscreensaver-$VERSION.tar.gz
                 $README_SIZE  xscreensaver.README

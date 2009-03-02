@@ -1,5 +1,5 @@
 /* xlock-gc.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,7 +11,7 @@
  *
  * This file, along with xlockmore.h, make it possible to compile an xlockmore
  * GL module into a standalone program, and thus use it with xscreensaver.
- * By Jamie Zawinski <jwz@netscape.com> on 31-May-97.
+ * By Jamie Zawinski <jwz@jwz.org> on 31-May-97.
  */
 
 #include <stdio.h>

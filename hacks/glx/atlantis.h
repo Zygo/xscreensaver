@@ -73,33 +73,37 @@
 #define RAD 57.295
 #define RRAD 0.01745
 
+/* default values */
 #define NUM_SHARKS 4
+#define SHARKSPEED 100
 #define SHARKSIZE 6000
-#define SHARKSPEED 100.0
-
-#define WHALESPEED 250.0
 
 typedef struct _fishRec {
-    float x, y, z, phi, theta, psi, v;
-    float xt, yt, zt;
-    float htail, vtail;
-    float dtheta;
-    int spurt, attack;
+	float       x, y, z, phi, theta, psi, v;
+	float       xt, yt, zt;
+	float       htail, vtail;
+	float       dtheta;
+	int         spurt, attack;
 } fishRec;
 
 typedef struct {
-        GLint       WinH, WinW;
-        GLXContext *glx_context;
-        fishRec sharks[NUM_SHARKS];
-        fishRec momWhale;
-        fishRec babyWhale;
-        fishRec dolph;
+	GLint       WinH, WinW;
+	GLXContext *glx_context;
+	int         num_sharks;
+	float       sharkspeed, whalespeed;
+	int         sharksize;
+	int         wire;
+	Bool        whaledir;
+	fishRec    *sharks;
+	fishRec     momWhale;
+	fishRec     babyWhale;
+	fishRec     dolph;
 } atlantisstruct;
 
 extern void FishTransform(fishRec *);
-extern void WhalePilot(fishRec *);
-extern void SharkPilot(fishRec *);
-extern void SharkMiss(atlantisstruct *,int);
-extern void DrawWhale(fishRec *);
-extern void DrawShark(fishRec *);
-extern void DrawDolphin(fishRec *);
+extern void WhalePilot(fishRec *, float, Bool);
+extern void SharkPilot(fishRec *, float);
+extern void SharkMiss(atlantisstruct *, int);
+extern void DrawWhale(fishRec *, int);
+extern void DrawShark(fishRec *, int);
+extern void DrawDolphin(fishRec *, int);

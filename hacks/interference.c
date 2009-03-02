@@ -50,24 +50,19 @@
 
 # include <X11/Xutil.h>
 
+/* I thought it would be faster this way, but it turns out not to be... -jwz */
+#undef USE_XIMAGE
+#undef HAVE_XSHM_EXTENSION
+#undef HAVE_XDBE
+
+
 #ifdef HAVE_XDBE
 # include <X11/extensions/Xdbe.h>
 #endif /* HAVE_XDBE */
 
-
-/* I haven't gotten the shm stuff to work yet... and I'm not sure it would
-   help much anyway.  -- jwz */
-#undef HAVE_XSHM_EXTENSION
-
 #ifdef HAVE_XSHM_EXTENSION
-# include <sys/ipc.h>
-# include <sys/shm.h>
-# include <X11/extensions/XShm.h>
-#endif /*  HAVE_XSHM_EXTENSION */
-
-
-/* I thought it would be faster this way, but it turns out not to be... -jwz */
-/* #define USE_XIMAGE */
+# include "xshm.h"
+#endif /* HAVE_XSHM_EXTENSION */
 
 char *progclass="Interference";
 
@@ -84,11 +79,11 @@ char *defaults [] = {
   "*mono:        false", /* monochrome, not very much fun */
 
 #ifdef HAVE_XDBE
-  "*nodb:        true", /* don't use double buffering */
+  "*useDBE:      True", /* use double buffering extension */
 #endif /* HAVE_XDBE */
 
 #ifdef HAVE_XSHM_EXTENSION
-  "*noshm:        false", /* don't use shared memory */
+  "*useSHM:      True", /* use shared memory extension */
 #endif /*  HAVE_XSHM_EXTENSION */
   0
 };
@@ -104,10 +99,12 @@ XrmOptionDescRec options [] = {
   { "-gray",        ".gray",        XrmoptionNoArg,  "True" },
   { "-mono",        ".mono",        XrmoptionNoArg,  "True" },
 #ifdef HAVE_XDBE
-  { "-nodb",        ".nodb",        XrmoptionNoArg,  "True" },
+  { "-db",          ".useDBE",      XrmoptionNoArg,  "True" },
+  { "-no-db",       ".useDBE",      XrmoptionNoArg,  "False" },
 #endif /* HAVE_XDBE */
 #ifdef HAVE_XSHM_EXTENSION
-  { "-noshm",        ".noshm",      XrmoptionNoArg,  "True" },
+  { "-shm",	".useSHM",	XrmoptionNoArg, "True" },
+  { "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
 #endif /*  HAVE_XSHM_EXTENSION */
   { 0, 0, 0, 0 }
 };
@@ -139,7 +136,7 @@ struct inter_context {
 #endif /* HAVE_XDBE */
 
 #ifdef HAVE_XSHM_EXTENSION
-  int use_shm;
+  Bool use_shm;
   XShmSegmentInfo shm_info;
 #endif /* HAVE_XSHM_EXTENSION */
 
@@ -192,7 +189,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   int gray;
 #ifdef HAVE_XDBE
   int major, minor;
-  int nodb;
+  int use_dbe;
 #endif /* HAVE_XDBE */
 
   XGCValues val;
@@ -207,8 +204,8 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->cmap = xgwa.colormap;
 
 #ifdef HAVE_XDBE
-  nodb = get_boolean_resource("nodb", "Boolean");
-  if(nodb) {
+  use_dbe = get_boolean_resource("useDBE", "Boolean");
+  if(!use_dbe) {
     c->has_dbe = False;
   } else {
     c->has_dbe = XdbeQueryExtension(dpy, &major, &minor);
@@ -216,7 +213,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
 #endif /* HAVE_XDBE */
 
 #ifdef HAVE_XSHM_EXTENSION
-  c->use_shm = !get_boolean_resource("noshm", "Boolean");
+  c->use_shm = get_boolean_resource("useSHM", "Boolean");
 #endif /*  HAVE_XSHM_EXTENSION */
 
 #ifdef HAVE_XDBE
@@ -253,27 +250,20 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
 
 #ifdef USE_XIMAGE
 
-# ifdef HAVE_XSHM_EXTENSION
+  c->ximage = 0;
 
+# ifdef HAVE_XSHM_EXTENSION
   if (c->use_shm)
     {
-      c->ximage = XShmCreateImage(dpy, xgwa.visual, xgwa.depth,
-				  ZPixmap, 0, &c->shm_info,
-				  xgwa.width, c->grid_size);
-      c->shm_info.shmid = shmget(IPC_PRIVATE,
-				 c->ximage->height * c->ximage->bytes_per_line,
-				 IPC_CREAT | 0777);
-      if (c->shm_info.shmid == -1)
-	printf ("shmget failed!");
-      c->shm_info.readOnly = False;
-      c->ximage->data = shmat(c->shm_info.shmid, 0, 0);
-      printf("data=0x%X %d %d\n", c->ximage->data,
-	     c->ximage->height, c->ximage->bytes_per_line);
-      XShmAttach(dpy, &c->shm_info);
-      XSync(dpy, False);
+      c->ximage = create_xshm_image(dpy, xgwa.visual, xgwa.depth,
+				    ZPixmap, 0, &c->shm_info,
+				    xgwa.width, c->grid_size);
+      if (!c->ximage)
+	c->use_shm = False;
     }
-  else
 # endif /* HAVE_XSHM_EXTENSION */
+
+  if (!c->ximage)
     {
       c->ximage =
 	XCreateImage (dpy, xgwa.visual,
@@ -421,19 +411,13 @@ void do_inter(struct inter_context* c)
 	     c->ximage->bytes_per_line);
 
     /* Move the bits for this horizontal stripe to the server. */
-#ifdef HAVE_XSHM_EXTENSION
+# ifdef HAVE_XSHM_EXTENSION
     if (c->use_shm)
-      {
-	/* wtf? we get a badmatch unless ximage->data == 0 ? */
-	char *d = c->ximage->data;
-	c->ximage->data = 0;
-	XShmPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
-		     0, 0, 0, g*j, c->ximage->width, c->ximage->height,
-		     False);
-	c->ximage->data = d;
-      }
+      XShmPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
+		   0, 0, 0, g*j, c->ximage->width, c->ximage->height,
+		   False);
     else
-#endif /*  HAVE_XSHM_EXTENSION */
+# endif /*  HAVE_XSHM_EXTENSION */
       XPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
 		0, 0, 0, g*j, c->ximage->width, c->ximage->height);
 

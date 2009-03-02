@@ -22,7 +22,7 @@ static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
  * Revision History:
  * 18-Sep-97: 3D version Antti Kuntsi <kuntsi@iki.fi>.
  * 20-May-97: Changed the name tri to sierpinski for more compatiblity
- * 10-May-97: jwz@netscape.com: turned into a standalone program.
+ * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 05-Sep-96: Desmond Daignault Datatimes Incorporated
  *            <tekdd@dtol.datatimes.com> .
  */

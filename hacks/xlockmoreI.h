@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,11 @@
 #define __XLOCKMORE_INTERNAL_H__
 
 #include "screenhack.h"
+
+#ifdef HAVE_XSHM_EXTENSION
+# include "xshm.h"
+#endif /* HAVE_XSHM_EXTENSION */
+
 
 /* I'm told that the Sun version of OpenGL needs to have the constant
    SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
@@ -63,6 +68,13 @@ typedef struct ModeInfo {
   long threed_none_color;
   long threed_delta;
   Bool wireframe_p;
+  Bool is_drawn;
+
+#ifdef HAVE_XSHM_EXTENSION
+  Bool use_shm;
+  XShmSegmentInfo shm_info;
+#endif
+
 } ModeInfo;
 
 typedef enum {  t_String, t_Float, t_Int, t_Bool } xlockmore_type;

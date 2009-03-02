@@ -38,10 +38,12 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
-# Note: see comment in ../driver/Makefile.in for explanation of X_LIBS, etc.
+# Note: see comment in ../../driver/Makefile.in for explanation of X_LIBS, etc.
 #
-HACK_LIBS	= $(LIBS) $(X_LIBS) $(X_PRE_LIBS) @GL_LIBS@ @HACK_LIBS@ \
-		  -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
+HACK_PRE	= $(LIBS) $(X_LIBS)
+HACK_POST	= $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
+HACK_LIBS	= $(HACK_PRE)            @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
+XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
 
 HACK_SRC	= $(srcdir)/..
 HACK_BIN	= ..
@@ -61,16 +63,16 @@ SRCS		= atlantis.c buildlwo.c cage.c dolphin.c gears.c moebius.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl.c
+		  xlock-gl.c lament.c bubble3d.c
 
 OBJS		= atlantis.o buildlwo.o cage.o dolphin.o gears.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl.o
+		  xlock-gl.o lament.o bubble3d.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
-		  morph3d rubik atlantis
+		  morph3d rubik atlantis lament bubble3d
 EXES		= @GL_EXES@
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
@@ -79,7 +81,7 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 
 HDRS		= atlantis.h buildlwo.h e_textures.h
-MEN		= 
+MEN		= lament.man
 EXTRAS		= README Makefile.in
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
@@ -128,7 +130,7 @@ clean:
 	-rm -f *.o a.out core $(EXES)
 
 distclean: clean
-	-rm -f Makefile *~ "#"*
+	-rm -f Makefile TAGS *~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
@@ -235,10 +237,17 @@ SPROINGIES = sproingiewrap.o buildlwo.o \
 sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
 
+lament:		lament.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM_LIBS)
+
+B3D = b_sphere.o b_draw.o b_lockglue.o
+bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(B3D) $(HACK_LIBS)
 
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
+# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
 atlantis.o: $(HACK_SRC)/xlockmore.h
 atlantis.o: ../../config.h
@@ -251,6 +260,7 @@ atlantis.o: $(UTILS_SRC)/hsv.h
 atlantis.o: $(UTILS_SRC)/colors.h
 atlantis.o: $(UTILS_SRC)/grabscreen.h
 atlantis.o: $(UTILS_SRC)/visual.h
+atlantis.o: $(UTILS_SRC)/xshm.h
 atlantis.o: $(srcdir)/atlantis.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: $(HACK_SRC)/xlockmore.h
@@ -264,6 +274,7 @@ cage.o: $(UTILS_SRC)/hsv.h
 cage.o: $(UTILS_SRC)/colors.h
 cage.o: $(UTILS_SRC)/grabscreen.h
 cage.o: $(UTILS_SRC)/visual.h
+cage.o: $(UTILS_SRC)/xshm.h
 cage.o: $(srcdir)/e_textures.h
 dolphin.o: $(srcdir)/atlantis.h
 gears.o: $(HACK_SRC)/xlockmore.h
@@ -277,6 +288,7 @@ gears.o: $(UTILS_SRC)/hsv.h
 gears.o: $(UTILS_SRC)/colors.h
 gears.o: $(UTILS_SRC)/grabscreen.h
 gears.o: $(UTILS_SRC)/visual.h
+gears.o: $(UTILS_SRC)/xshm.h
 moebius.o: $(HACK_SRC)/xlockmore.h
 moebius.o: ../../config.h
 moebius.o: $(HACK_SRC)/xlockmoreI.h
@@ -288,6 +300,7 @@ moebius.o: $(UTILS_SRC)/hsv.h
 moebius.o: $(UTILS_SRC)/colors.h
 moebius.o: $(UTILS_SRC)/grabscreen.h
 moebius.o: $(UTILS_SRC)/visual.h
+moebius.o: $(UTILS_SRC)/xshm.h
 moebius.o: $(srcdir)/e_textures.h
 morph3d.o: $(HACK_SRC)/xlockmore.h
 morph3d.o: ../../config.h
@@ -300,6 +313,7 @@ morph3d.o: $(UTILS_SRC)/hsv.h
 morph3d.o: $(UTILS_SRC)/colors.h
 morph3d.o: $(UTILS_SRC)/grabscreen.h
 morph3d.o: $(UTILS_SRC)/visual.h
+morph3d.o: $(UTILS_SRC)/xshm.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(HACK_SRC)/xlockmore.h
 pipes.o: ../../config.h
@@ -312,6 +326,7 @@ pipes.o: $(UTILS_SRC)/hsv.h
 pipes.o: $(UTILS_SRC)/colors.h
 pipes.o: $(UTILS_SRC)/grabscreen.h
 pipes.o: $(UTILS_SRC)/visual.h
+pipes.o: $(UTILS_SRC)/xshm.h
 pipes.o: $(srcdir)/buildlwo.h
 rubik.o: $(HACK_SRC)/xlockmore.h
 rubik.o: ../../config.h
@@ -324,6 +339,7 @@ rubik.o: $(UTILS_SRC)/hsv.h
 rubik.o: $(UTILS_SRC)/colors.h
 rubik.o: $(UTILS_SRC)/grabscreen.h
 rubik.o: $(UTILS_SRC)/visual.h
+rubik.o: $(UTILS_SRC)/xshm.h
 s1_1.o: $(srcdir)/buildlwo.h
 s1_2.o: $(srcdir)/buildlwo.h
 s1_3.o: $(srcdir)/buildlwo.h
@@ -342,6 +358,7 @@ sproingies.o: $(UTILS_SRC)/hsv.h
 sproingies.o: $(UTILS_SRC)/colors.h
 sproingies.o: $(UTILS_SRC)/grabscreen.h
 sproingies.o: $(UTILS_SRC)/visual.h
+sproingies.o: $(UTILS_SRC)/xshm.h
 sproingies.o: $(srcdir)/buildlwo.h
 sproingiewrap.o: $(HACK_SRC)/xlockmore.h
 sproingiewrap.o: ../../config.h
@@ -354,6 +371,7 @@ sproingiewrap.o: $(UTILS_SRC)/hsv.h
 sproingiewrap.o: $(UTILS_SRC)/colors.h
 sproingiewrap.o: $(UTILS_SRC)/grabscreen.h
 sproingiewrap.o: $(UTILS_SRC)/visual.h
+sproingiewrap.o: $(UTILS_SRC)/xshm.h
 stairs.o: $(HACK_SRC)/xlockmore.h
 stairs.o: ../../config.h
 stairs.o: $(HACK_SRC)/xlockmoreI.h
@@ -365,6 +383,7 @@ stairs.o: $(UTILS_SRC)/hsv.h
 stairs.o: $(UTILS_SRC)/colors.h
 stairs.o: $(UTILS_SRC)/grabscreen.h
 stairs.o: $(UTILS_SRC)/visual.h
+stairs.o: $(UTILS_SRC)/xshm.h
 stairs.o: $(srcdir)/e_textures.h
 superquadrics.o: $(HACK_SRC)/xlockmore.h
 superquadrics.o: ../../config.h
@@ -377,6 +396,7 @@ superquadrics.o: $(UTILS_SRC)/hsv.h
 superquadrics.o: $(UTILS_SRC)/colors.h
 superquadrics.o: $(UTILS_SRC)/grabscreen.h
 superquadrics.o: $(UTILS_SRC)/visual.h
+superquadrics.o: $(UTILS_SRC)/xshm.h
 swim.o: $(HACK_SRC)/xlockmoreI.h
 swim.o: $(HACK_SRC)/screenhack.h
 swim.o: ../../config.h
@@ -387,6 +407,7 @@ swim.o: $(UTILS_SRC)/hsv.h
 swim.o: $(UTILS_SRC)/colors.h
 swim.o: $(UTILS_SRC)/grabscreen.h
 swim.o: $(UTILS_SRC)/visual.h
+swim.o: $(UTILS_SRC)/xshm.h
 swim.o: $(srcdir)/atlantis.h
 whale.o: $(srcdir)/atlantis.h
 xlock-gl.o: $(HACK_SRC)/screenhack.h
@@ -399,4 +420,30 @@ xlock-gl.o: $(UTILS_SRC)/colors.h
 xlock-gl.o: $(UTILS_SRC)/grabscreen.h
 xlock-gl.o: $(UTILS_SRC)/visual.h
 xlock-gl.o: $(HACK_SRC)/xlockmoreI.h
+xlock-gl.o: $(UTILS_SRC)/xshm.h
+lament.o: $(HACK_SRC)/xlockmore.h
+lament.o: ../../config.h
+lament.o: $(HACK_SRC)/xlockmoreI.h
+lament.o: $(HACK_SRC)/screenhack.h
+lament.o: $(UTILS_SRC)/yarandom.h
+lament.o: $(UTILS_SRC)/usleep.h
+lament.o: $(UTILS_SRC)/resources.h
+lament.o: $(UTILS_SRC)/hsv.h
+lament.o: $(UTILS_SRC)/colors.h
+lament.o: $(UTILS_SRC)/grabscreen.h
+lament.o: $(UTILS_SRC)/visual.h
+lament.o: $(UTILS_SRC)/xshm.h
+lament.o: $(HACK_SRC)/images/lament.xpm
+bubble3d.o: $(srcdir)/bubble3d.h
+bubble3d.o: $(HACK_SRC)/xlockmoreI.h
+bubble3d.o: $(HACK_SRC)/screenhack.h
+bubble3d.o: ../../config.h
+bubble3d.o: $(UTILS_SRC)/yarandom.h
+bubble3d.o: $(UTILS_SRC)/usleep.h
+bubble3d.o: $(UTILS_SRC)/resources.h
+bubble3d.o: $(UTILS_SRC)/hsv.h
+bubble3d.o: $(UTILS_SRC)/colors.h
+bubble3d.o: $(UTILS_SRC)/grabscreen.h
+bubble3d.o: $(UTILS_SRC)/visual.h
+bubble3d.o: $(UTILS_SRC)/xshm.h
 

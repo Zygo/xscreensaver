@@ -9,7 +9,7 @@
  * 
  * Some code stolen from / This is meant to work with
  * xscreensaver, Copyright (c) 1992, 1995, 1996
- * Jamie Zawinski <jwz@netscape.com>
+ * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

@@ -1,5 +1,5 @@
 /* xset.c --- interacting with server extensions and the builtin screensaver.
- * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,6 +29,10 @@
 #define Widget       void*
 
 #include "xscreensaver.h"
+
+#ifdef _VROOT_H_
+ERROR!  You must not include vroot.h in this file.
+#endif
 
 
 /* MIT SCREEN-SAVER server extension hackery.
@@ -196,8 +200,9 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
       desired_allow_exp != current_allow_exp)
     {
       if (desired_server_timeout == 0)
-	printf ("%s%sisabling server builtin screensaver.\n\
-	You can re-enable it with \"xset s on\".\n",
+	fprintf (stderr,
+		 "%s%sisabling server builtin screensaver.\n"
+		 "\tYou can re-enable it with \"xset s on\".\n",
 		(p->verbose_p ? "" : blurb()),
 		(p->verbose_p ? "\n\tD" : ": d"));
 

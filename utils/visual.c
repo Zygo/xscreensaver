@@ -1,5 +1,5 @@
 /* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
- *  by Jamie Zawinski <jwz@netscape.com>
+ *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

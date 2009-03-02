@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
    Ported from xlockmore 4.03a12 to be a standalone program and thus usable
-   with xscreensaver by Jamie Zawinski <jwz@netscape.com> on 15-May-97.
+   with xscreensaver by Jamie Zawinski <jwz@jwz.org> on 15-May-97.
 
    Original copyright notice from xlock.c:
 
@@ -32,12 +32,12 @@ static const char sccsid[] = "@(#)bouboule.c	4.00 97/01/01 xlockmore";
  * I only scale the sort of sphere you see to the whole sky and clip the stars
  * to the camera screen.
  *
- *   Code Copyright 1996 by Jeremie PETIT (petit@eurecom.fr, jpetit@essi.fr)
+ *   Code Copyright 1996 by Jeremie PETIT (jeremie_petit@geocities.com)
  *
  *   Use: batchcount is the number of stars.
  *        cycles is the maximum size for a star
  *
- * 15-May-97: jwz@netscape.com: turned into a standalone program.
+ * 15-May-97: jwz@jwz.org: turned into a standalone program.
  * 04-Sep-96: Added 3d support (Henrik Theiling, theiling@coli-uni-sb.de)
  * 20-Feb-96: Added tests so that already malloced objects are not
  *            malloced twice, thanks to the report from <mccomb@interport.net>
