@@ -41,6 +41,8 @@ depend::
 distdepend::
 	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR)
+	@cd po ; $(MAKE) generate_potfiles_in
+
 TAGS:: tags
 tags::
 	@$(MAKE_SUBDIR)
@@ -60,7 +62,7 @@ tar::
   $(MAKE) configure ;							    \
   $(MAKE) distdepend ;							    \
   NAME=`sed -n								    \
-  's/[^0-9]*\([0-9]\.[0-9][0-9]*b\?[0-9]*\).*/xscreensaver-\1/p' 	    \
+  's/[^0-9]*\([0-9]\.[0-9][0-9]*[0-9]*\).*/xscreensaver-\1/p'		    \
 	utils/version.h` ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
   FILES= ;								    \
@@ -88,6 +90,7 @@ tar::
 #
 configure::
 	autoconf
+	autoheader
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
 	( perl -e '							     \
@@ -111,6 +114,8 @@ configure::
 		s/^  --oldincludedir=.*$$/ \
  --x-includes=DIR        X include files are in DIR\n \
  --x-libraries=DIR       X library files are in DIR/m; \
+									     \
+		s@mandir=.\$${prefix}/man.@mandir=\\\$${datadir}/man@;       \
 									     \
 		print;'							     \
 	< configure							     \

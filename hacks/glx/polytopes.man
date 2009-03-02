@@ -16,7 +16,7 @@ polytopes - Draws one of the six regular 4d polytopes rotating in 4d.
 [\-24-cell]
 [\-120-cell]
 [\-600-cell]
-[\-mesh]
+[\-wireframe]
 [\-surface]
 [\-transparent]
 [\-single-color]
@@ -109,14 +109,14 @@ regular tetrahedra as its cells, 1200 equilateral triangles as faces,
 The following three options are mutually exclusive.  They determine
 how the polytope is displayed.
 .TP 8
-.B \-mesh
-Display the polytope as a wireframe mesh (default).
+.B \-wireframe
+Display the polytope as a wireframe mesh.
 .TP 8
 .B \-surface
 Display the polytope as a solid object.
 .TP 8
 .B \-transparent
-Display the polytope as a transparent object.
+Display the polytope as a transparent object.  Default.
 .PP
 The following two options are mutually exclusive.  They determine how
 to color the polytope.

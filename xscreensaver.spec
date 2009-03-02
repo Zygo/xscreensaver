@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 4.21
+%define	version 4.22
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -16,9 +16,21 @@ Buildroot:	%{_tmppath}/%{name}-root
 %package base
 Summary: A minimal installation of xscreensaver.
 Group: Amusements/Graphics
-BuildPrereq: bc, pam-devel, xorg-x11-devel
-BuildPrereq: gtk2-devel libglade2-devel
-Requires: /etc/pam.d/system-auth, htmlview, desktop-backgrounds-basic
+BuildRequires:	bc
+BuildRequires:	gettext
+BuildRequires:	pam-devel
+BuildRequires:	gtk2-devel
+BuildRequires:	desktop-file-utils
+# Red Hat:
+BuildRequires:	xorg-x11-devel
+BuildRequires:	libglade2-devel
+# Mandrake:
+#BuildRequires:	libxorg-x11-devel
+#BuildRequires:	libglade2.0_0-devel
+Requires: SysVinit
+Requires: /etc/pam.d/system-auth
+Requires: htmlview
+Requires: desktop-backgrounds-basic
 Provides: xscreensaver
 Provides: xscreensaver-base
 Obsoletes: xscreensaver
@@ -126,11 +138,11 @@ dd=%{_builddir}/%{name}-%{version}
 (  cd hacks     ; list_files install ) >  $dd/extras.files
 (  cd hacks/glx ; list_files install ) >  $dd/gl-extras.files
 (  cd driver    ; list_files install ) >  $dd/base.files
-(  cd po        ; list_files install ) >> $dd/base.files
+#( cd po        ; list_files install ) >> $dd/base.files
 
-# jwz: I get "find-lang.sh: No translations found for xscreensaver" on FC3
-#%find_lang %{name}
-#cat %{name}.lang >> $dd/base.files
+%find_lang %{name}
+cat %{name}.lang >> $dd/base.files
+
 
 # Make sure all files are readable by all, and writable only by owner.
 #

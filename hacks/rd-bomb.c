@@ -198,7 +198,8 @@ pixack_frame(char *pix_buf)
     int ii = i + 1;
     char *q = pix_buf + width * i;
     short *qq = ((short *) pix_buf) + width * i;
-    long  *qqq = ((long *) pix_buf) + width * i;
+/*  long  *qqq = ((long *) pix_buf) + width * i;  -- crashes on Alpha */
+    int   *qqq = ((int  *) pix_buf) + width * i;
     ushort *i1 = r1 + 1 + w2 * ii;
     ushort *i2 = r2 + 1 + w2 * ii;
     ushort *o1 = r1b + 1 + w2 * ii;

@@ -294,8 +294,7 @@ generate_potfiles_in:
 	 ( cd $(top_srcdir);			\
 	   echo "# Auto-generated: `date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
-	     ls driver/*.glade			\
-		driver/*.glade2			\
+	     ls driver/*.glade2			\
 		driver/*.desktop.in		\
 		hacks/config/*.xml ) | sort	\
 	  ) > $$tmp &&				\

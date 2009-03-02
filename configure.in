@@ -8,6 +8,282 @@ AC_CONFIG_HEADER(config.h)
 echo "current directory: `pwd`"
 echo "command line was: $0 $@"
 
+###############################################################################
+#
+#       Autoheader stuff
+#
+###############################################################################
+
+AH_TOP([
+/* config.h.in --- xscreensaver, Copyright (c) 1998-2000 Jamie Zawinski.
+ *
+ *  The best way to set these parameters is by running the included `configure'
+ *  script.  That examines your system, and generates `config.h' from 
+ *  `config.h.in'.
+ *
+ *  If something goes very wrong, you can edit `config.h' directly, but beware
+ *  that your changes will be lost if you ever run `configure' again.
+ */
+])
+
+AH_TEMPLATE([HAVE_READ_DISPLAY_EXTENSION],
+	    [Define this if you have the XReadDisplay extension (I think
+             this is an SGI-only thing; it's in
+             <X11/extensions/readdisplay.h>.) A few of the screenhacks will
+             take advantage of this if it's available.])
+
+AH_TEMPLATE([HAVE_XHPDISABLERESET],
+	    [Define this if you have the XHPDisableReset function (an HP only
+	    thing which allows the Ctrl-Sh-Reset key sequence to be
+	    temporarily disabled.)])
+
+AH_TEMPLATE([HAVE_XIDLE_EXTENSION],
+	    [Define this if you have the XIDLE extension installed. If you
+	    have the XIDLE extension, this is recommended.  (You have this
+	    extension if the file /usr/include/X11/extensions/xidle.h
+	    exists.) Turning on this flag lets XScreenSaver work better with
+	    servers which support this extension; but it will still work
+	    with servers which do not suport it, so it's a good idea to
+	    compile in support for it if you can.])
+
+AH_TEMPLATE([HAVE_MIT_SAVER_EXTENSION],
+	    [Define this if you have the MIT-SCREEN-SAVER extension
+            installed.  See the caveats about this extension, above.
+            (It's available if /usr/include/X11/extensions/scrnsaver.h
+            exists.)])
+
+AH_TEMPLATE([HAVE_SGI_SAVER_EXTENSION],
+	    [Define this if you have the SGI SCREEN_SAVER extension.  This is
+	    standard on Irix systems, and not available elsewhere.])
+
+AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
+	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
+	    is standard on Irix systems, and not available elsewhere.])
+
+AH_TEMPLATE([HAVE_DPMS_EXTENSION],
+	    [Define this if you have the XDPMS extension.  This is standard
+	    on sufficiently-recent XFree86 systems, and possibly elsewhere. 
+	    (It's available if the file /usr/include/X11/extensions/dpms.h
+	    exists.)])
+
+AH_TEMPLATE([HAVE_XF86VMODE],
+	    [Define this if you have the functions XF86VidModeGetModeLine()
+	    and XF86VidModeGetViewPort(), in support of virtual desktops
+	    where the X server's root window is bigger than the actual
+	    screen.  This is an XFree86 thing, and probably doesn't exist
+	    elsewhere.  (It's available if the file
+	    /usr/include/X11/extensions/xf86vmode.h exists.)])
+
+AH_TEMPLATE([HAVE_XF86VMODE_GAMMA],
+	    [Define this if you have the functions XF86VidModeGetGamma() and
+	    XF86VidModeSetGamma(), which allow clients to change the gamma
+	    response of the monitor.  This is an XFree86 4.0.x thing, and
+	    probably doesn't exist elsewhere.  (It's available if the file
+	    /usr/include/X11/extensions/xf86vmode.h exists and has stuff about
+	    gamma in it.)])
+
+AH_TEMPLATE([HAVE_XF86VMODE_GAMMA_RAMP],
+	    [Define this if you have the functions XF86VidModeGetGammaRamp()
+	    and XF86VidModeSetGammaRamp(), which provide finer-grained
+	    control than XF86VidMode[GS]etGamma().  These appeared in
+	    XFree86 4.1.0.])
+
+AH_TEMPLATE([HAVE_XINERAMA],
+	    [Define this if you have the Xinerama extension.  This is
+	    standard on sufficiently-recent XFree86 systems, and possibly
+	    elsewhere.  (It's available if the file
+	    /usr/include/X11/extensions/Xinerama.h exists.)])
+
+AH_TEMPLATE([HAVE_XF86MISCSETGRABKEYSSTATE],
+	    [Define this if you have the XF86MiscSetGrabKeysState function
+	    (which allows the Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash key
+	    sequences to be temporarily disabled.  Sadly, it doesn't affect
+	    Ctrl-Alt-BS or Ctrl-Alt-F1.)])
+
+AH_TEMPLATE([HAVE_RANDR],
+	    [Define this if you have the Resize and Rotate extension.
+	    This is standard on sufficiently-recent XFree86 systems, and
+	    possibly elsewhere.  (It's available if the file
+	    /usr/include/X11/extensions/Xrandr.h exists.)])
+
+AH_TEMPLATE([HAVE_PROC_INTERRUPTS],
+	    [Define this if you have a Linux-like /proc/interrupts file which
+	    can be examined to determine when keyboard activity has
+	    occurred.])
+
+AH_TEMPLATE([HAVE_MOTIF],[Define this if you have Motif.])
+
+AH_TEMPLATE([HAVE_XMCOMBOBOX],
+	    [Define this if you have the XmComboBox Motif widget (Motif 2.0.)])
+
+AH_TEMPLATE([HAVE_GTK],[Define this if you have Gtk (any version.)])
+AH_TEMPLATE([HAVE_GTK2],[Define this if you have Gtk 2.x.])
+
+AH_TEMPLATE([HAVE_CRAPPLET],
+	    [Define this if you have Gnome and want to build support for the
+	    xscreensaver control panel in the Gnome Control Center
+	    (gnomecc).  (This is needed only with Gtk 1.x.)])
+
+AH_TEMPLATE([HAVE_CRAPPLET_IMMEDIATE],
+	    [Define this if HAVE_CRAPPLET is defined, and the function
+	    capplet_widget_changes_are_immediate() is available.])
+
+AH_TEMPLATE([HAVE_XML],[Define this if you have the XML library.])
+
+AH_TEMPLATE([HAVE_OLD_XML_HEADERS],
+	    [Define this if you have the XML library headers in their old,
+	    non-namespaced location (you lack the gnome-xml/libxml symlink)])
+
+AH_TEMPLATE([HAVE_XPM],
+	    [Define this if you have the XPM library installed.  Some of the
+	    demos can make use of this if it is available.])
+
+AH_TEMPLATE([HAVE_GDK_PIXBUF],
+	    [Define this if you have the GDK_Pixbuf library installed.  Some
+	    of the demos can make use of this if it is available.])
+
+AH_TEMPLATE([HAVE_JPEGLIB],
+	    [Define this if you have the Independent JPEG Group's JPEG
+	    library installed.  Some of the demos can make use of this if it
+	    is available.])
+
+AH_TEMPLATE([HAVE_XMU],
+	    [Define this if you have the Xmu library.  This is standard part
+	    of X, and if your vendor doesn't ship it, you should report that
+	    as a bug.])
+
+AH_TEMPLATE([HAVE_GL],
+	    [Define this if you have OpenGL.  Some of the demos require it,
+	    so if you don't have it, then those particular demos won't be
+	    built.  (This won't affect the screen saver as a whole.)])
+
+AH_TEMPLATE([HAVE_MESA_GL],
+	    [Define this if you have OpenGL, but it's the MesaGL variant. 
+	    (The libraries have different names.) (HAVE_GL should be defined
+	    too.)])
+
+AH_TEMPLATE([HAVE_GLBINDTEXTURE],
+	    [Define this if your version of OpenGL has the glBindTexture()
+	    routine.  This is the case for OpenGL 1.1, but not for OpenGL
+	    1.0.])
+
+AH_TEMPLATE([HAVE_GLE],
+	    [Define this if you have the -lgle and -lmatrix libraries (GL 
+	    extrusion.)])
+
+AH_TEMPLATE([HAVE_GLE3],[Define this if you have the -lgle from GLE version 3])
+
+AH_TEMPLATE([HAVE_XSHM_EXTENSION],
+	    [Define this if you have the X Shared Memory Extension.])
+
+AH_TEMPLATE([HAVE_DOUBLE_BUFFER_EXTENSION],
+	    [Define this if you have the X Double Buffer Extension.])
+
+AH_TEMPLATE([FORTUNE_PROGRAM],
+	    [Some screenhacks like to run an external program to generate
+	    random pieces of text; set this to the one you like.  Note that
+	    this is just the default; X resources can be used to override
+	    it.])
+
+AH_TEMPLATE([PASSWD_HELPER_PROGRAM],
+	    [Set the name of the password helper program, if any])
+
+AH_TEMPLATE([NO_LOCKING],
+	    [Define this to remove the option of locking the screen at all.])
+
+AH_TEMPLATE([HAVE_KERBEROS],
+	    [Define this if you want to use Kerberos authentication to
+	    lock/unlock the screen instead of your local password.  This
+	    currently uses Kerberos V4, but a V5 server with V4
+	    compatibility will work.  WARNING: DO NOT USE AFS string-to-key
+	    passwords with this option. This option currently *only* works
+	    with standard Kerberos des_string_to_key.  If your password is
+	    an AFS password and not a kerberos password, it will not
+	    authenticate properly. See the comments in driver/kpasswd.c for
+	    more information if you need it.])
+
+AH_TEMPLATE([HAVE_KERBEROS5],
+	    [Define this if you have Kerberos 5, meaning we need to use the
+	    Kerberos 4 compatibility layer.])
+
+AH_TEMPLATE([HAVE_PAM],
+	    [Define this if you want to use PAM (Pluggable Authentication
+	    Modules) to lock/unlock the screen, instead of standard
+	    /etc/passwd authentication.])
+
+AH_TEMPLATE([PAM_SERVICE_NAME],
+	    [If PAM is being used, this is the name of the PAM service that
+	    xscreensaver will authenticate as.  The default is
+	    "xscreensaver", which means that the PAM library will look for
+	    an "xscreensaver" line in /etc/pam.conf, or (on recent Linux
+	    systems) will look for a file called /etc/pam.d/xscreensaver. 
+	    Some systems might already have a PAM installation that is
+	    configured for xlock, so setting this to "xlock" would also work
+	    in that case.])
+
+AH_TEMPLATE([PAM_STRERROR_TWO_ARGS],
+	    [Define if you have PAM and pam_strerror() requires two
+	    arguments.])
+
+AH_TEMPLATE([HAVE_SHADOW_PASSWD],
+	    [Define this if your system uses 'shadow' passwords, that is, the
+	    passwords live in /etc/shadow instead of /etc/passwd, and one
+	    reads them with getspnam() instead of getpwnam().  (Note that
+	    SCO systems do some random other thing; others might as well. 
+	    See the ifdefs in driver/passwd-pwent.c if you're having trouble
+	    related to reading passwords.)])
+
+AH_TEMPLATE([HAVE_ENHANCED_PASSWD],
+	    [Define this if your system is Digital or SCO Unix with so-called
+	    ``Enhanced Security'', that is, the passwords live in
+	    /tcb/files/auth/<x>/<xyz> instead of in /etc/passwd, and one
+	    reads them with getprpwnam() instead of getpwnam().])
+
+AH_TEMPLATE([HAVE_ADJUNCT_PASSWD],
+	    [Define this if your system is Solaris with ``adjunct'' passwords
+	    (this is the version where one gets at the passwords with
+	    getpwanam() instead of getpwnam().) I haven't tested this one,
+	    let me know if it works.])
+
+AH_TEMPLATE([HAVE_HPUX_PASSWD],
+	    [Define this if you are running HPUX with so-called ``Secure
+	    Passwords'' (if you have /usr/include/hpsecurity.h, you probably
+	    have this.) I haven't tested this one, let me know if it works.])
+
+AH_TEMPLATE([HAVE_VT_LOCKSWITCH],
+	    [Define this if you are on a system that supports the
+	    VT_LOCKSWITCH and VT_UNLOCKSWITCH ioctls.  If this is defined,
+	    then when the screen is locked, switching to another virtual
+	    terminal will also be prevented.  That is, the whole console
+	    will be locked, rather than just the VT on which X is running. 
+	    (Well, that's the theory anyway -- in practice, I haven't yet
+	    figured out how to make that work.)])
+
+AH_TEMPLATE([HAVE_SYSLOG],
+	    [Define this if you the openlog(), syslog(), and closelog()
+	    functions.  This is used for logging failed login attempts.])
+
+AH_TEMPLATE([HAVE_ICMP],
+	    [Define this if you do pings with a `struct icmp' and an
+	     `icmp_id' slot.])
+
+AH_TEMPLATE([HAVE_ICMPHDR],
+	    [Define this if you do pings with a `struct icmphdr' and an
+	     `un.echo.id' slot.])
+
+AH_TEMPLATE([HAVE_FORKPTY],
+	    [Define this if you have the 'forkpty' function:
+	     This allows 'phosphor' and 'apple2' to run curses-based
+	     programs, or be used as terminal windows.])
+
+AH_TEMPLATE([HAVE_GETTIMEOFDAY],
+	    [Define this if you have the gettimeofday function.])
+
+AH_TEMPLATE([GETTIMEOFDAY_TWO_ARGS],
+	    [Define this if gettimeofday() takes two arguments.])
+
+AH_TEMPLATE([XPointer],
+	    [Define this to void* if you're using X11R4 or earlier.])
 
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
@@ -877,11 +1153,14 @@ AC_MSG_RESULT($ac_macosx)
 
 AC_PROG_INTLTOOL
 GETTEXT_PACKAGE=xscreensaver
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
-AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE")
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
+		   [This is the name of the gettext package to use.])
+AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE",
+		   [This is the same as GETTEXT_PACKAGE, but for the glade
+		   generated code.])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 MKINSTALLDIRS="$INSTALL_DIRS"
 
@@ -964,7 +1243,7 @@ AC_ARG_WITH(hackdir,[
 
 Installation options:
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: `EPREFIX/lib/xscreensaver/'],
+                          Default: `PREFIX/libexec/xscreensaver/'],
   [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
 
 if test x"$with_hackdir" = xyes; then
@@ -1550,6 +1829,12 @@ AC_ARG_WITH(pam,
 [  --with-pam              Include support for PAM (Pluggable Auth Modules.)],
   [with_pam="$withval"; with_pam_req="$withval"],[with_pam=$with_pam_default])
 
+AC_ARG_WITH([pam_service_name],
+	    AC_HELP_STRING([--with-pam-service-name=NAME],
+	    		   [NAME is the name of the PAM service that
+	    		   xscreensaver will authenticate as.]),
+	    [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
+
 HANDLE_X_PATH_ARG(with_pam, --with-pam, PAM)
 
 if test "$enable_locking" = yes -a "$with_pam" = yes; then
@@ -1560,6 +1845,8 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
   if test "$ac_cv_pam" = yes ; then
     have_pam=yes
     AC_DEFINE(HAVE_PAM)
+    AC_DEFINE_UNQUOTED(PAM_SERVICE_NAME,"$pam_service_name")
+    
     PASSWD_LIBS="${PASSWD_LIBS} -lpam"
 
     # libpam typically requires dlopen and dlsym.  On FreeBSD,
@@ -2811,7 +3098,8 @@ fi
 
 ###############################################################################
 #
-#       Check for pty support for 'phosphor'
+#       Check for pty support: this allows 'phosphor' and 'apple2'
+#	to run curses-based programs, or be used as terminal windows.
 #
 ###############################################################################
 
@@ -2950,8 +3238,8 @@ have_imagedir=no
 with_imagedir_req=unspecified
 
 AC_ARG_WITH(image-directory,
-[  --with-image-directory=DIR  By default, some screen savers may load
-                          random images out of this directory.],
+[  --with-image-directory=DIR  By default, some demos may display random images
+                          from this directory.],
   [with_imagedir="$withval"; with_imagedir_req="$withval"],
   [with_imagedir=yes])
 # no HANDLE_X_PATH_ARG for this one
@@ -3005,6 +3293,69 @@ DEFAULT_IMAGE_DIRECTORY="$ac_cv_imagedir"
 if test -z "$DEFAULT_IMAGE_DIRECTORY" ; then
   DEFAULT_IMAGES_P='False'
 fi
+
+
+###############################################################################
+#
+#       Pick a text file to use as the default of the "textFile" preference.
+#	Any old file will do, but preferably one that will make interesting
+#	shapes when displayed by "starwars" and "fontglide".
+#
+###############################################################################
+
+have_textfile=no
+with_textfile_req=unspecified
+
+AC_ARG_WITH(text-file,
+[  --with-text-file=FILE   By default, some demos may display this file.],
+  [with_textfile="$withval"; with_textfile_req="$withval"],
+  [with_textfile=yes])
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_textfile" in
+  /*)
+    # absolute path
+    AC_MSG_CHECKING([for image directory $with_textfile])
+    if test -d "$with_textfile" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_textfile=""
+    fi
+  ;;
+  yes)
+    with_textfile=""
+
+    #### Could use some more defaults here...
+    for f in \
+      "/usr/X11R6/lib/X11/doc/README"		\
+      "/usr/share/doc/xserver-common/copyright"	\
+      "/usr/X11R6/README"			\
+    ; do
+      if test -z "$with_textfile"; then
+        AC_MSG_CHECKING([for text file $f])
+        if test -f "$f" ; then
+          AC_MSG_RESULT(yes)
+          with_textfile="$f"
+        else
+          AC_MSG_RESULT(no)
+        fi
+      fi
+    done
+
+  ;;
+  no)
+    with_textfile=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-image-directory=$with_textfile_req"
+    exit 1
+  ;;
+esac
+ac_cv_textfile="$with_textfile"
+
+DEFAULT_TEXT_FILE="$ac_cv_textfile"
 
 
 ###############################################################################
@@ -3228,6 +3579,7 @@ AC_SUBST(NEW_LOGIN_COMMAND)
 AC_SUBST(NEW_LOGIN_COMMAND_P)
 AC_SUBST(DEFAULT_IMAGES_P)
 AC_SUBST(DEFAULT_IMAGE_DIRECTORY)
+AC_SUBST(DEFAULT_TEXT_FILE)
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)

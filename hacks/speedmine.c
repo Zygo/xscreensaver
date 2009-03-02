@@ -287,7 +287,7 @@ perspective (void)
             }
 			r = rotation_bias + (int)(vertigo*zcc); MODULO(r, ROTS);
 
-			xvals[t][j] = xoffset + width/2 +
+			xvals[t][j] = xoffset + (width>>1) +
 				       	  (int)(xx * costab[r] - yy * sintab[r]);
 			maxx[t] = MAX(maxx[t], xvals[t][j]);
 			minx[t] = MIN(minx[t], xvals[t][j]);

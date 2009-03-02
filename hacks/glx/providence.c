@@ -379,6 +379,10 @@ void draw_glory(void) {
     glVertex3f(-0.75, -0.75, 0.0);
     glVertex3f(0.75, -0.75, 0.0);
     glVertex3f(0.0, 0.75, 0.0);
+
+    glVertex3f(0.0, 0.75, 0.0);
+    glVertex3f(0.75, -0.75, 0.0);
+    glVertex3f(-0.75, -0.75, 0.0);
     glEnd();
     return;
   }
@@ -521,9 +525,9 @@ void draw_eye2(void) {
   /* draw wireeye */
   if(wire) {
     glBegin(GL_TRIANGLES);
-    glVertex3f(-0.25, -0.25, 0.0);
-    glVertex3f(0.25, -0.25, 0.0);
     glVertex3f(0.0, 0.25, 0.0);
+    glVertex3f(0.25, -0.25, 0.0);
+    glVertex3f(-0.25, -0.25, 0.0);
     glEnd();
     return;
   }

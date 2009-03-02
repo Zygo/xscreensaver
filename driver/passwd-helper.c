@@ -1,6 +1,6 @@
 /* passwd-helper.c --- verifying typed passwords with external helper program
  * written by Olaf Kirch <okir@suse.de>
- * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,13 +35,22 @@
 
 #ifndef NO_LOCKING  /* whole file */
 
+#include <X11/Xlib.h>		/* not used for much... */
+
+/* This file doesn't need the Xt headers, so stub these types out... */
+#undef XtPointer
+#define XtAppContext void*
+#define XrmDatabase  void*
+#define XtIntervalId void*
+#define XtPointer    void*
+#define Widget       void*
+
+#include "xscreensaver.h"
+
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-extern char *blurb(void);
-
 
 #include <stdio.h>
 #include <string.h>
@@ -50,9 +59,6 @@ extern char *blurb(void);
 #include <errno.h>
 
 #include <sys/wait.h>
-
-extern void block_sigchld (void);
-extern void unblock_sigchld (void);
 
 static int
 ext_run (const char *user, const char *typed_passwd, int verbose_p)

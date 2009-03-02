@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,6 +64,7 @@ static char *progname;
 #include <signal.h>
 #include <sys/time.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/Xmu/Error.h>
 
 #include "vroot.h"
@@ -103,6 +104,8 @@ main(int ac, char **av)
   char *n2 = 0;
   Bool verbose = False;
   Window root, vroot;
+  XSizeHints h;
+  long ls;
 
   progname = av[0];
 
@@ -204,6 +207,13 @@ main(int ac, char **av)
 		  {
 		    if (verbose)
 		      fprintf(stderr, "%s: resizing 0x%x\n", progname, w);
+
+                    /* Make sure the window allows itself to be resized. */
+		    XGetWMNormalHints (dpy, w, &h, &ls);
+		    h.flags |= PMaxSize;
+		    h.max_width = WidthOfScreen(screen)+128;
+		    h.max_height = HeightOfScreen(screen)+128;
+		    XSetWMNormalHints (dpy, w, &h);
 
 		    XMoveResizeWindow(dpy, w, 0, 0,
 				      WidthOfScreen(screen),

@@ -56,7 +56,7 @@ on your local subnet, instead of getting images from search engines.
 accepts the following options:
 .TP 8
 .B \-root
-Draw on the root window.  This option is manditory, if output is being
+Draw on the root window.  This option is mandatory, if output is being
 produced: drawing to a window other than the root window is not yet
 supported.
 

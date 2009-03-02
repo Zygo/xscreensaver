@@ -138,9 +138,9 @@ static void onestep(Display *dpy, Window window)
   now = currentTimeInMs();
 
   /* find new x,y */
-  tlx = ((1. + sin(((float)now) / X_PERIOD * 2. * M_PI))/2.0)
+  tlx = ((1. + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0)
     * (sizex - s/2) /* -s/4 */ + MINX;
-  tly = ((1. + sin(((float)now) / Y_PERIOD * 2. * M_PI))/2.0)
+  tly = ((1. + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0)
     * (sizey - s/2) /* -s/4 */ + MINY;
 
   if (lenses) {

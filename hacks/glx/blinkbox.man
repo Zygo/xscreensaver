@@ -12,6 +12,7 @@ blinkbox
 [\-boxsize \fInumber\fP]
 [\-dissolve]
 [\-fade]
+[\-no\-blur]
 .SH DESCRIPTION
 Shows a ball contained inside of a bounding box. Colored blocks blink in
 when the ball hits the edges.
@@ -41,6 +42,9 @@ Boxes shrink instead of just vanishing.
 .TP 8
 .B \-fade | \-no-fade
 Boxes fade to transparency instead of just vanishing.
+.TP 8
+.B \-blur | \-no-blur
+Enable or disable motion blur on the ball.  Default: blurry.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -62,4 +66,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Jeremy English.
+Jeremy English.  Motion blur by John Boero.

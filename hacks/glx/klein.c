@@ -25,9 +25,8 @@
 #define DEF_RANDOM			        "False"
 #define DEF_SPEED			        "150"
 
-# define DEFAULTS					"*delay:		20000   \n"			\
-									"*showFPS:      False   \n"			\
-									"*wireframe:	False	\n"			\
+# define DEFAULTS					"*delay:		20000   \n" \
+									"*showFPS:      False   \n"
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */

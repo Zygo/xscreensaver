@@ -133,7 +133,7 @@ After the user has been idle this long, the \fIxscreensaver\fP daemon
 will blank the screen.
 .TP 4
 .B Cycle After
-jAfter the screensaver has been running for this long, the currently
+After the screensaver has been running for this long, the currently
 running graphics demo will be killed, and a new one started.  
 If this is 0, then the graphics demo will never be changed:
 only one demo will run until the screensaver is deactivated by user 

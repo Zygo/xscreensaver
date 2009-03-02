@@ -5,8 +5,8 @@
   <command arg="-root"/>
 
   <select id="display-mode">
-    <option id="mesh" _label="Wireframe Mesh"
-            arg-set="-mesh"/>
+    <option id="wire" _label="Wireframe Mesh"
+            arg-set="-wireframe"/>
     <option id="surface" _label="Solid Surface"
             arg-set="-surface"/>
     <option id="transparent" _label="Transparent Surface"

@@ -29,7 +29,7 @@ unit_sphere (int stacks, int slices, Bool wire)
   int i,j;
   double theta1, theta2, theta3;
   XYZ e, p;
-  XYZ la, lb;
+  XYZ la = { 0, 0, 0 }, lb = { 0, 0, 0 };
   XYZ c = {0, 0, 0};  /* center */
   double r = 1.0;     /* radius */
   int stacks2 = stacks * 2;

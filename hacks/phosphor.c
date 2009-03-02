@@ -1147,7 +1147,7 @@ launch_text_generator (p_state *state)
   /* oprogram contains a "%d" where the current number of columns goes
    */
   strcpy (program, "( ");
-  sprintf (program + strlen(program), oprogram, state->grid_width);
+  sprintf (program + strlen(program), oprogram, state->grid_width-1);
   strcat (program, " ) 2>&1");
 
 #ifdef HAVE_FORKPTY

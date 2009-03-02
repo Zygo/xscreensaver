@@ -3,7 +3,21 @@
 hyperball - 2d projection of a 4d object
 .SH SYNOPSIS
 .B hyperball
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-xy \fIfloat\fP] [\-xz \fIfloat\fP] [\-yz \fIfloat\fP] [\-xw \fIfloat\fP] [\-yw \fIfloat\fP] [\-zw \fIfloat\fP] [\-observer-z \fIint\fP] [\-delay \fIusecs\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP]
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-xy \fIfloat\fP]
+[\-xz \fIfloat\fP]
+[\-yz \fIfloat\fP]
+[\-xw \fIfloat\fP]
+[\-yw \fIfloat\fP]
+[\-zw \fIfloat\fP]
+[\-delay \fIusecs\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
 .SH DESCRIPTION
 The \fIhyperball\fP program displays a wireframe projection of a hyperball
 which is rotating at user-specified rates around any or all of its four axes.
@@ -30,10 +44,6 @@ or the id number (decimal or hex) of a specific visual.
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 100000, or about 1/10th second.
-.TP 8
-.B \-observer-z \fIint\fP
-How far away the observer is from the center of the cube (the cube is one
-unit per side.)  Default 5.
 .TP 8
 .B \-xw \fIfloat\fP
 .TP 8

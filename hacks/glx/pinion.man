@@ -10,6 +10,8 @@ pinion - draws a scrolling sequence of interconnected gears
 [\-spin \fIratio\fP]
 [\-size \fIratio\fP]
 [\-max-rpm \fIint\fP]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 The \fIpinion\fP program draws an interconnected set of gears moving
 across the screen.
@@ -49,6 +51,9 @@ How big the gears should be, on average; default 1.0.
 If any gear exceeds the maximum RPM, the current gear train is broken there,
 and we start a new train.  Default: 900 RPM.  (At 30 FPS, that's about half
 a rotation per frame.)
+.TP 8
+.B \-wireframe
+Render in wireframe instead of solid.
 .TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.

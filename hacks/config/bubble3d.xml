@@ -9,8 +9,9 @@
           low="0" high="20000" default="15000"
           convert="invert"/>
 
+  <boolean id="transp" _label="Transparent Bubbles" arg-set="-transparent"/>
+  <string id="color"    _label="Bubble Color"      arg="-color %"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
-
   <_description>
 Draws a stream of rising, undulating 3D bubbles, rising toward the
 top of the screen, with nice specular reflections. Written by Richard

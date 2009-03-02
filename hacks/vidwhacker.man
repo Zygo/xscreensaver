@@ -33,7 +33,7 @@ Print diagnostics.
 .TP 8
 .B \-stdin
 Instead of grabbing an image from disk or video, read an image
-to maniupulate from stdin.  This image must be in
+to manipulate from stdin.  This image must be in
 .BR ppm (5)
 format.  The program will still perform repeated random image 
 transformations, but it will always use this one image as its starting point.

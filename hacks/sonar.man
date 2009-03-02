@@ -205,7 +205,7 @@ implied warranty.
 Stephen Martin <smartin@canada.com>, 3-nov-98.
 
 Thanks to Tom Kelly for suggesting a modular approach to the sensor
-amoung other things.
+among other things.
 
 Thomas Bahls <thommy@cs.tu-berlin.de> hacked the "ttl" option, 12-jul-98.
 

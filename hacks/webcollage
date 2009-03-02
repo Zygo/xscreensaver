@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.125 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.127 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -211,6 +211,39 @@ my %warningless_sites = (
 );
 
 
+# For decoding HTML-encoded character entities to URLs.
+#
+my %entity_table = (
+   "apos"   => '\'',
+   "quot"   => '"', "amp"    => '&', "lt"     => '<', "gt"     => '>',
+   "nbsp"   => ' ', "iexcl"  => '¡', "cent"   => '¢', "pound"  => '£',
+   "curren" => '¤', "yen"    => '¥', "brvbar" => '¦', "sect"   => '§',
+   "uml"    => '¨', "copy"   => '©', "ordf"   => 'ª', "laquo"  => '«',
+   "not"    => '¬', "shy"    => '­', "reg"    => '®', "macr"   => '¯',
+   "deg"    => '°', "plusmn" => '±', "sup2"   => '²', "sup3"   => '³',
+   "acute"  => '´', "micro"  => 'µ', "para"   => '¶', "middot" => '·',
+   "cedil"  => '¸', "sup1"   => '¹', "ordm"   => 'º', "raquo"  => '»',
+   "frac14" => '¼', "frac12" => '½', "frac34" => '¾', "iquest" => '¿',
+   "Agrave" => 'À', "Aacute" => 'Á', "Acirc"  => 'Â', "Atilde" => 'Ã',
+   "Auml"   => 'Ä', "Aring"  => 'Å', "AElig"  => 'Æ', "Ccedil" => 'Ç',
+   "Egrave" => 'È', "Eacute" => 'É', "Ecirc"  => 'Ê', "Euml"   => 'Ë',
+   "Igrave" => 'Ì', "Iacute" => 'Í', "Icirc"  => 'Î', "Iuml"   => 'Ï',
+   "ETH"    => 'Ð', "Ntilde" => 'Ñ', "Ograve" => 'Ò', "Oacute" => 'Ó',
+   "Ocirc"  => 'Ô', "Otilde" => 'Õ', "Ouml"   => 'Ö', "times"  => '×',
+   "Oslash" => 'Ø', "Ugrave" => 'Ù', "Uacute" => 'Ú', "Ucirc"  => 'Û',
+   "Uuml"   => 'Ü', "Yacute" => 'Ý', "THORN"  => 'Þ', "szlig"  => 'ß',
+   "agrave" => 'à', "aacute" => 'á', "acirc"  => 'â', "atilde" => 'ã',
+   "auml"   => 'ä', "aring"  => 'å', "aelig"  => 'æ', "ccedil" => 'ç',
+   "egrave" => 'è', "eacute" => 'é', "ecirc"  => 'ê', "euml"   => 'ë',
+   "igrave" => 'ì', "iacute" => 'í', "icirc"  => 'î', "iuml"   => 'ï',
+   "eth"    => 'ð', "ntilde" => 'ñ', "ograve" => 'ò', "oacute" => 'ó',
+   "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
+   "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
+   "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
+   "ndash"  => '-', "mdash"  => "--"
+);
+
+
 ##############################################################################
 #
 # Various global flags set by command line parameters, or computed
@@ -275,8 +308,8 @@ my @tripwire_words = ("aberrate", "abode", "amorphous", "antioch",
 # returns three values: the HTTP response line; the document headers;
 # and the document body.
 #
-sub get_document_1 {
-  my ( $url, $referer, $timeout ) = @_;
+sub get_document_1($$$) {
+  my ($url, $referer, $timeout) = @_;
 
   if (!defined($timeout)) { $timeout = $http_timeout; }
   if ($timeout > $http_timeout) { $timeout = $http_timeout; }
@@ -444,8 +477,8 @@ sub get_document_1 {
 # returns two values: the document headers; and the document body.
 # if the given URL did a redirect, returns the redirected-to document.
 #
-sub get_document {
-  my ( $url, $referer, $timeout ) = @_;
+sub get_document($$;$) {
+  my ($url, $referer, $timeout) = @_;
   my $start = time;
 
   if (defined($referer) && $referer eq $driftnet_magic) {
@@ -537,7 +570,7 @@ sub get_document {
 # in again, but you have to present the old cookie to get the new cookie.
 # So, by doing this, the built-in cypherpunks cookie will never go "stale".
 #
-sub set_cookie {
+sub set_cookie($$) {
   my ($host, $cookie) = @_;
   my $oc = $cookies{$host};
   return unless $oc;
@@ -563,8 +596,8 @@ sub set_cookie {
 # given a URL and the body text at that URL, selects and returns a random
 # image from it.  returns () if no suitable images found.
 #
-sub pick_image_from_body {
-  my ( $url, $body ) = @_;
+sub pick_image_from_body($$) {
+  my ($url, $body) = @_;
 
   my $base = $url;
   $_ = $url;
@@ -779,7 +812,7 @@ sub pick_image_from_body {
 ############################################################################
 
 
-sub pick_dictionary {
+sub pick_dictionary() {
   my @dicts = ("/usr/dict/words",
                "/usr/share/dict/words",
                "/usr/share/lib/dict/words");
@@ -794,7 +827,7 @@ sub pick_dictionary {
 
 # returns a random word from the dictionary
 #
-sub random_word {
+sub random_word() {
 
   local *IN;
   if (! open (IN, "<$wordlist")) {
@@ -846,7 +879,7 @@ sub random_word {
 }
 
 
-sub random_words {
+sub random_words($) {
   my ($or_p) = @_;
   my $sep = ($or_p ? "%20OR%20" : "%20");
   return (random_word . $sep .
@@ -857,20 +890,20 @@ sub random_words {
 }
 
 
-sub url_quote {
+sub url_quote($) {
   my ($s) = @_;
   $s =~ s|([^-a-zA-Z0-9.\@/_\r\n])|sprintf("%%%02X", ord($1))|ge;
   return $s;
 }
 
-sub url_unquote {
+sub url_unquote($) {
   my ($s) = @_;
   $s =~ s/[+]/ /g;
   $s =~ s/%([a-z0-9]{2})/chr(hex($1))/ige;
   return $s;
 }
 
-sub html_quote {
+sub html_quote($) {
   my ($s) = @_;
   $s =~ s/&/&amp;/gi;
   $s =~ s/</&lt;/gi;
@@ -879,12 +912,10 @@ sub html_quote {
   return $s;
 }
 
-sub html_unquote {
+sub html_unquote($) {
   my ($s) = @_;
-  $s =~ s/&lt;/</gi;       # far from exhaustive...
-  $s =~ s/&gt;/</gi;
-  $s =~ s/&quot;/\"/gi;
-  $s =~ s/&amp;/&/gi;
+  $s =~ s/(&([a-z]+);)/{ $entity_table{$2} || $1; }/gexi;  # e.g., &apos;
+  $s =~ s/(&\#(\d+);)/{ chr($2) }/gexi;                    # e.g., &#39;
   return $s;
 }
 
@@ -895,7 +926,7 @@ sub html_unquote {
 # Note that this list contains all kinds of internal search engine
 # junk URLs too -- caller must prune them.
 #
-sub pick_from_search_engine {
+sub pick_from_search_engine($$$) {
   my ( $timeout, $search_url, $words ) = @_;
 
   $_ = $words;
@@ -1003,7 +1034,7 @@ sub pick_from_search_engine {
 }
 
 
-sub depoison {
+sub depoison(@) {
   my (@urls) = @_;
   my @urls2 = ();
   foreach (@urls) {
@@ -1036,7 +1067,7 @@ sub depoison {
 # random image from it.
 # returns the url of the page loaded; the url of the image chosen.
 #
-sub pick_image_from_pages {
+sub pick_image_from_pages($$$$@) {
   my ($base, $total_hit_count, $unfiltered_link_count, $timeout, @pages) = @_;
 
   $total_hit_count = "?" unless defined($total_hit_count);
@@ -1087,8 +1118,8 @@ my $yahoo_random_link = "http://random.yahoo.com/fast/ryl";
 # returns two URLs: the page containing the image, and the image.
 # Returns () if nothing found this time.
 #
-sub pick_from_yahoo_random_link {
-  my ( $timeout ) = @_;
+sub pick_from_yahoo_random_link($) {
+  my ($timeout) = @_;
 
   print STDERR "\n\n" if ($verbose_load);
   LOG ($verbose_load, "URL: $yahoo_random_link");
@@ -1130,8 +1161,8 @@ my $alta_vista_random_link = "http://www.altavista.com/image/randomlink";
 # returns two URLs: the page containing the image, and the image.
 # Returns () if nothing found this time.
 #
-sub pick_from_alta_vista_random_link {
-  my ( $timeout ) = @_;
+sub pick_from_alta_vista_random_link($) {
+  my ($timeout) = @_;
 
   print STDERR "\n\n" if ($verbose_load);
   LOG ($verbose_load, "URL: $alta_vista_random_link");
@@ -1177,8 +1208,8 @@ my $alta_vista_images_url = "http://www.altavista.com/image/results" .
                             "&q=";
 
 # avimages
-sub pick_from_alta_vista_images {
-  my ( $timeout ) = @_;
+sub pick_from_alta_vista_images($) {
+  my ($timeout) = @_;
 
   my $words = random_word();
   my $page = (int(rand(9)) + 1);
@@ -1234,8 +1265,8 @@ my $google_images_url =     "http://images.google.com/images" .
                             "&q=";
 
 # googleimgs
-sub pick_from_google_images {
-  my ( $timeout, $words, $max_page ) = @_;
+sub pick_from_google_images($;$$) {
+  my ($timeout, $words, $max_page) = @_;
 
   if (!defined($words)) {
     $words = random_word;   # only one word for Google
@@ -1291,8 +1322,8 @@ sub pick_from_google_images {
 
 
 # googlenums
-sub pick_from_google_image_numbers {
-  my ( $timeout ) = @_;
+sub pick_from_google_image_numbers($) {
+  my ($timeout) = @_;
 
   my $max = 9999;
   my $number = int(rand($max));
@@ -1360,8 +1391,8 @@ my @photomakers = (
 
 
 # googlephotos
-sub pick_from_google_image_photos {
-  my ( $timeout ) = @_;
+sub pick_from_google_image_photos($) {
+  my ($timeout) = @_;
 
   my $i = int(rand($#photomakers + 1));
   my $fn = $photomakers[$i];
@@ -1389,8 +1420,8 @@ my $alta_vista_url = "http://www.altavista.com/web/results" .
                      "&aqo=";
 
 # avtext
-sub pick_from_alta_vista_text {
-  my ( $timeout ) = @_;
+sub pick_from_alta_vista_text($) {
+  my ($timeout) = @_;
 
   my $words = random_words(0);
   my $page = (int(rand(9)) + 1);
@@ -1447,8 +1478,8 @@ my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
                         "&cobrand=undefined" .
                         "&query=");
 
-sub pick_from_hotbot_text {
-  my ( $timeout ) = @_;
+sub pick_from_hotbot_text($) {
+  my ($timeout) = @_;
 
   $last_search = $hotbot_search_url;   # for warnings
 
@@ -1498,8 +1529,8 @@ my $lycos_search_url = "http://search.lycos.com/default.asp" .
                        "&tab=web" .
                        "&query=";
 
-sub pick_from_lycos_text {
-  my ( $timeout ) = @_;
+sub pick_from_lycos_text($) {
+  my ($timeout) = @_;
 
   $last_search = $lycos_search_url;   # for warnings
 
@@ -1554,8 +1585,8 @@ my $yahoo_news_url = "http://news.search.yahoo.com/search/news" .
                      "&p=";
 
 # yahoonews
-sub pick_from_yahoo_news_text {
-  my ( $timeout ) = @_;
+sub pick_from_yahoo_news_text($) {
+  my ($timeout) = @_;
 
   $last_search = $yahoo_news_url;   # for warnings
 
@@ -1604,8 +1635,8 @@ my @lj_cache = (); # fifo, for ordering by age
 my %lj_cache = (); # hash, for detecting dups
 
 # livejournal
-sub pick_from_livejournal_images {
-  my ( $timeout ) = @_;
+sub pick_from_livejournal_images($) {
+  my ($timeout) = @_;
 
   $last_search = $livejournal_img_url;   # for warnings
 
@@ -1666,8 +1697,8 @@ sub pick_from_livejournal_images {
 my $ircimages_url = "http://ircimages.com/";
 
 # ircimages
-sub pick_from_ircimages {
-  my ( $timeout ) = @_;
+sub pick_from_ircimages($) {
+  my ($timeout) = @_;
 
   $last_search = $ircimages_url;   # for warnings
 
@@ -1733,8 +1764,8 @@ my %flickr_cache = (); # hash, for detecting dups
 
 
 # flickr
-sub pick_from_flickr {
-  my ( $timeout ) = @_;
+sub pick_from_flickr($) {
+  my ($timeout) = @_;
 
   my $start = 16 * int(rand(100));
 
@@ -1812,8 +1843,8 @@ sub pick_from_flickr {
 ############################################################################
 
 # driftnet
-sub pick_from_driftnet {
-  my ( $timeout ) = @_;
+sub pick_from_driftnet($) {
+  my ($timeout) = @_;
 
   my $id = $driftnet_magic;
   my $dir = $driftnet_dir;
@@ -1845,7 +1876,7 @@ sub pick_from_driftnet {
 }
 
 
-sub get_driftnet_file {
+sub get_driftnet_file($) {
   my ($file) = @_;
 
   error ("\$driftnet_dir unset?") unless ($driftnet_dir);
@@ -1865,7 +1896,7 @@ sub get_driftnet_file {
 }
 
 
-sub spawn_driftnet {
+sub spawn_driftnet($) {
   my ($cmd) = @_;
 
   # make a directory to use.
@@ -1920,8 +1951,8 @@ sub spawn_driftnet {
 # Returns () if nothing found this time.
 #
 
-sub pick_image {
-  my ( $timeout ) = @_;
+sub pick_image(;$) {
+  my ($timeout) = @_;
 
   $current_state = "select";
   $load_method = "none";
@@ -1959,21 +1990,21 @@ sub pick_image {
 #
 ############################################################################
 
-sub timestr {
+sub timestr() {
   return strftime ("%H:%M:%S: ", localtime);
 }
 
-sub blurb {
+sub blurb() {
   return "$progname: " . timestr() . "$current_state: ";
 }
 
-sub error {
+sub error($) {
   my ($err) = @_;
   print STDERR blurb() . "$err\n";
   exit 1;
 }
 
-sub stacktrace {
+sub stacktrace() {
   my $i = 1;
   print STDERR "$progname: stack trace:\n";
   while (1) {
@@ -1987,11 +2018,11 @@ sub stacktrace {
 
 my $lastlog = "";
 
-sub clearlog {
+sub clearlog() {
   $lastlog = "";
 }
 
-sub showlog {
+sub showlog() {
   my $head = "$progname: DEBUG: ";
   foreach (split (/\n/, $lastlog)) {
     print STDERR "$head$_\n";
@@ -1999,7 +2030,7 @@ sub showlog {
   $lastlog = "";
 }
 
-sub LOG {
+sub LOG($$) {
   my ($print, $msg) = @_;
   my $blurb = timestr() . "$current_state: ";
   $lastlog .= "$blurb$msg\n";
@@ -2012,7 +2043,7 @@ my %stats_successes;
 my %stats_elapsed;
 
 my $last_state = undef;
-sub record_attempt {
+sub record_attempt($) {
   my ($name) = @_;
 
   if ($last_state) {
@@ -2028,7 +2059,7 @@ sub record_attempt {
   $suppress_audit = 0;
 }
 
-sub record_success {
+sub record_success($$$) {
   my ($name, $url, $base) = @_;
   if (defined($stats_successes{$name})) {
     $stats_successes{$name}++;
@@ -2046,7 +2077,7 @@ sub record_success {
 }
 
 
-sub record_failure {
+sub record_failure($) {
   my ($name) = @_;
 
   return if $image_succeeded;
@@ -2078,7 +2109,7 @@ sub record_failure {
 
 
 
-sub stats_of {
+sub stats_of($) {
   my ($name) = @_;
   my $i = $stats_successes{$name};
   my $j = $stats_attempts{$name};
@@ -2090,7 +2121,7 @@ sub stats_of {
 
 my $current_start_time = 0;
 
-sub start_timer {
+sub start_timer($) {
   my ($name) = @_;
   $current_start_time = time;
 
@@ -2104,14 +2135,14 @@ sub start_timer {
   }
 }
 
-sub stop_timer {
+sub stop_timer($$) {
   my ($name, $success) = @_;
   $stats_elapsed{$name} += time - $current_start_time;
 }
 
 
 my $last_report_time = 0;
-sub report_performance {
+sub report_performance() {
 
   return unless $verbose_warnings;
 
@@ -2145,7 +2176,7 @@ my $max_recent_sites  = 20;
 my @recent_images = ();
 my @recent_sites = ();
 
-sub save_recent_url {
+sub save_recent_url($$) {
   my ($url, $base) = @_;
 
   return unless ($verbose_warnings);
@@ -2207,7 +2238,7 @@ sub save_recent_url {
 
 # Does %-decoding.
 #
-sub url_decode {
+sub url_decode($) {
   ($_) = @_;
   tr/+/ /;
   s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
@@ -2217,7 +2248,7 @@ sub url_decode {
 
 # Given the raw body of a GIF document, returns the dimensions of the image.
 #
-sub gif_size {
+sub gif_size($) {
   my ($body) = @_;
   my $type = substr($body, 0, 6);
   my $s;
@@ -2229,7 +2260,7 @@ sub gif_size {
 
 # Given the raw body of a JPEG document, returns the dimensions of the image.
 #
-sub jpeg_size {
+sub jpeg_size($) {
   my ($body) = @_;
   my $i = 0;
   my $L = length($body);
@@ -2280,7 +2311,7 @@ sub jpeg_size {
 
 # Given the raw body of a PNG document, returns the dimensions of the image.
 #
-sub png_size {
+sub png_size($) {
   my ($body) = @_;
   return () unless ($body =~ m/^\211PNG\r/);
   my ($bits) = ($body =~ m/^.{12}(.{12})/s);
@@ -2294,7 +2325,7 @@ sub png_size {
 # Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
 # of the image.
 #
-sub image_size {
+sub image_size($) {
   my ($body) = @_;
   my ($w, $h) = gif_size ($body);
   if ($w && $h) { return ($w, $h); }
@@ -2306,7 +2337,7 @@ sub image_size {
 
 # returns the full path of the named program, or undef.
 #
-sub which {
+sub which($) {
   my ($prog) = @_;
   foreach (split (/:/, $ENV{PATH})) {
     if (-x "$_/$prog") {
@@ -2318,7 +2349,7 @@ sub which {
 
 
 # Like rand(), but chooses numbers with a bell curve distribution.
-sub bellrand {
+sub bellrand(;$) {
   ($_) = @_;
   $_ = 1.0 unless defined($_);
   $_ /= 3.0;
@@ -2326,7 +2357,7 @@ sub bellrand {
 }
 
 
-sub exit_cleanup {
+sub exit_cleanup() {
   x_cleanup();
   print STDERR "$progname: exiting\n" if ($verbose_warnings);
   if (@pids_to_kill) {
@@ -2335,7 +2366,7 @@ sub exit_cleanup {
   }
 }
 
-sub signal_cleanup {
+sub signal_cleanup($) {
   my ($sig) = @_;
   print STDERR blurb() . (defined($sig)
                           ? "caught signal $sig."
@@ -2353,7 +2384,7 @@ sub signal_cleanup {
 #
 ##############################################################################
 
-sub url_only_output {
+sub url_only_output() {
   do {
     my ($base, $img) = pick_image;
     if ($img) {
@@ -2394,7 +2425,7 @@ my $img_height;
 
 my $delay = 2;
 
-sub x_cleanup {
+sub x_cleanup() {
   unlink $image_ppm, $image_tmp1, $image_tmp2;
   unlink $imagemap_html_tmp, $imagemap_jpg_tmp
     if (defined ($imagemap_html_tmp));
@@ -2404,7 +2435,7 @@ sub x_cleanup {
 # Like system, but prints status about exit codes, and kills this process
 # with whatever signal killed the sub-process, if any.
 #
-sub nontrapping_system {
+sub nontrapping_system(@) {
   $! = 0;
 
   $_ = join(" ", @_);
@@ -2437,7 +2468,7 @@ sub nontrapping_system {
 # writes a PPM to the given output file.  Returns the width/height of the
 # image if successful.
 #
-sub image_to_pnm {
+sub image_to_pnm($$$) {
   my ($url, $body, $output) = @_;
   my ($cmd, $cmd2, $w, $h);
 
@@ -2527,7 +2558,7 @@ sub image_to_pnm {
   }
 }
 
-sub pick_root_displayer {
+sub pick_root_displayer() {
   my @names = ();
 
   foreach my $cmd (@root_displayers) {
@@ -2549,7 +2580,7 @@ sub pick_root_displayer {
 my $ppm_to_root_window_cmd = undef;
 
 
-sub x_or_pbm_output {
+sub x_or_pbm_output($) {
   my ($window_id) = @_;
 
   # Check for our helper program, to see whether we need to use PPM pipelines.
@@ -2714,7 +2745,7 @@ sub x_or_pbm_output {
   }
 }
 
-sub paste_image {
+sub paste_image($$$$) {
   my ($base, $img, $body, $source) = @_;
 
   $current_state = "paste";
@@ -3028,7 +3059,7 @@ sub paste_image {
 }
 
 
-sub update_imagemap {
+sub update_imagemap($$$$$$$$) {
   my ($url, $x, $y, $w, $h, $image_ppm, $image_width, $image_height) = @_;
 
   $current_state = "imagemap";
@@ -3133,7 +3164,7 @@ sub update_imagemap {
 }
 
 
-sub init_signals {
+sub init_signals() {
 
   $SIG{HUP}  = \&signal_cleanup;
   $SIG{INT}  = \&signal_cleanup;
@@ -3149,7 +3180,7 @@ sub init_signals {
 END { exit_cleanup(); }
 
 
-sub main {
+sub main() {
   $| = 1;
   srand(time ^ $$);
 
@@ -3342,5 +3373,5 @@ sub main {
   }
 }
 
-main;
+main();
 exit (0);

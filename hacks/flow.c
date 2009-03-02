@@ -8,7 +8,7 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 #endif
 
 /*-
- * Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Procket.com>
+ * Copyright (c) 1996 by Tim Auckland <tda10.geo@yahoo.com>
  * Incorporating some code from Stephen Davies Copyright (c) 2000
  *
  * Search code based on techniques described in "Strange Attractors:

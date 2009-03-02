@@ -42,8 +42,9 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 # define boxed_opts	xlockmore_opts
 
 # define DEF_SPEED      "0.5"
-# define DEFAULTS	"*delay:   20000   \n"	\
-			"*showFPS: False   \n"	\
+# define DEFAULTS	"*delay:     20000   \n" \
+			"*showFPS:   False   \n" \
+			"*wireframe: False   \n"
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -630,7 +631,7 @@ void setdefaultconfig(boxed_config *config)
 /*
  * draw bottom
  */ 
-static void drawfilledbox(boxedstruct *boxed)
+static void drawfilledbox(boxedstruct *boxed, int wire)
 {   
    /* draws texture filled box, 
       top is drawn using the entire texture, 
@@ -638,7 +639,7 @@ static void drawfilledbox(boxedstruct *boxed)
     */
    
    /* front */
-   glBegin(GL_QUADS);
+   glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
    glTexCoord2f(0,1);
    glVertex3f(-1.0,1.0,1.0);
    glTexCoord2f(1,1);
@@ -735,7 +736,7 @@ static void drawbox(boxedstruct *boxed)
 /* 
  * Draw ball
  */
-static void drawball(boxedstruct *gp, ball *b)
+static void drawball(boxedstruct *gp, ball *b, int wire)
 {
    int i,pos,cnt;
    GLint *spherei = gp->spherei;
@@ -761,7 +762,7 @@ static void drawball(boxedstruct *gp, ball *b)
       cnt = SPHERE_INDICES/3;
       for (i=0; i<cnt; i++) {
 	 pos = i * 3;
-	 glBegin(GL_TRIANGLES);
+	 glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
 	 glNormal3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glVertex3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glNormal3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
@@ -783,7 +784,7 @@ static void drawball(boxedstruct *gp, ball *b)
 /* 
  * Draw all triangles in triman
  */
-static void drawtriman(triman *t) 
+static void drawtriman(triman *t, int wire) 
 {
    int i,pos;
    vectorf *spherev = t->vertices;
@@ -804,7 +805,7 @@ static void drawtriman(triman *t)
       pos = i*3;
       glPushMatrix();
       glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
-      glBegin(GL_TRIANGLES);
+      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glNormal3f(t->normals[i].x,t->normals[i].y,t->normals[i].z);
       glVertex3f(spherev[pos+0].x,spherev[pos+0].y,spherev[pos+0].z);
       glVertex3f(spherev[pos+1].x,spherev[pos+1].y,spherev[pos+1].z);
@@ -878,6 +879,7 @@ static void drawpattern(boxedstruct *boxed)
 static void draw(ModeInfo * mi)
 {
    boxedstruct *gp = &boxed[MI_SCREEN(mi)];
+   int wire = MI_IS_WIREFRAME (mi);
    vectorf v1;
    GLfloat dcam;
    int dx, dz;
@@ -908,23 +910,25 @@ static void draw(ModeInfo * mi)
    v1.y = CAM_HEIGHT * sin((gp->tic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT;
    gluLookAt(v1.x,v1.y,v1.z,0.0,0.0,0.0,0.0,1.0,0.0); 
 
-   glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient); 
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, l0_diffuse); 
-   glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular); 
-   glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
-   glLightfv(GL_LIGHT1, GL_AMBIENT, l1_ambient); 
-   glLightfv(GL_LIGHT1, GL_DIFFUSE, l1_diffuse); 
-   glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular); 
-   glLightfv(GL_LIGHT1, GL_POSITION, l1_position);
-   glEnable(GL_LIGHT0);
-   glEnable(GL_LIGHT1);
+   if (!wire) {
+     glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient); 
+     glLightfv(GL_LIGHT0, GL_DIFFUSE, l0_diffuse); 
+     glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular); 
+     glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
+     glLightfv(GL_LIGHT1, GL_AMBIENT, l1_ambient); 
+     glLightfv(GL_LIGHT1, GL_DIFFUSE, l1_diffuse); 
+     glLightfv(GL_LIGHT1, GL_SPECULAR, l1_specular); 
+     glLightfv(GL_LIGHT1, GL_POSITION, l1_position);
+     glEnable(GL_LIGHT0);
+     glEnable(GL_LIGHT1);
    
-   glFrontFace(GL_CW);
+     glFrontFace(GL_CW);
    
-   glMaterialfv(GL_FRONT, GL_SPECULAR, black);
-   glMaterialfv(GL_FRONT, GL_EMISSION, lblue);
-   glMaterialfv(GL_FRONT,GL_AMBIENT,black);
-   glMaterialf(GL_FRONT, GL_SHININESS, 5.0);
+     glMaterialfv(GL_FRONT, GL_SPECULAR, black);
+     glMaterialfv(GL_FRONT, GL_EMISSION, lblue);
+     glMaterialfv(GL_FRONT,GL_AMBIENT,black);
+     glMaterialf(GL_FRONT, GL_SHININESS, 5.0);
+   }
    
    
    /* draw ground grid */
@@ -943,12 +947,12 @@ static void draw(ModeInfo * mi)
    
    /* Set drawing mode for the boxes */
    glEnable(GL_DEPTH_TEST);
-   glEnable(GL_TEXTURE_2D);
+   if (!wire) glEnable(GL_TEXTURE_2D);
    glPushMatrix();
    glColor3f(1.0,1.0,1.0);
    glScalef(20.0,0.25,20.0);
    glTranslatef(0.0,2.0,0.0);
-   drawfilledbox(gp);
+   drawfilledbox(gp, wire);
    glPopMatrix();
    glDisable(GL_TEXTURE_2D);
 
@@ -980,10 +984,12 @@ static void draw(ModeInfo * mi)
    drawbox(gp);
    glPopMatrix();
 
-   glEnable(GL_LIGHTING);
+   if (!wire) {
+     glEnable(GL_LIGHTING);
    
-   glMaterialfv(GL_FRONT, GL_DIFFUSE, dgray);
-   glMaterialfv(GL_FRONT, GL_EMISSION, black); /* turn it off before painting the balls */
+     glMaterialfv(GL_FRONT, GL_DIFFUSE, dgray);
+     glMaterialfv(GL_FRONT, GL_EMISSION, black); /* turn it off before painting the balls */
+   }
 
    /* move the balls and shrapnel */
    updateballs(&gp->bman);
@@ -1001,10 +1007,10 @@ static void draw(ModeInfo * mi)
 	    updatetris(&gp->tman[i]);
 	 }
 	 glDisable(GL_CULL_FACE);
-	 drawtriman(&gp->tman[i]);
-	 glEnable(GL_CULL_FACE);
+	 drawtriman(&gp->tman[i], wire);
+	 if (!wire) glEnable(GL_CULL_FACE);
       } else {
-	 drawball(gp, &gp->bman.balls[i]);
+	 drawball(gp, &gp->bman.balls[i], wire);
       }
    }
       
@@ -1035,6 +1041,7 @@ static void
 pinit(ModeInfo * mi)
 {
    boxedstruct *gp = &boxed[MI_SCREEN(mi)];
+   int wire = MI_IS_WIREFRAME (mi);
    ballman *bman;
    int i,texpixels;
    char *texpixeldata;
@@ -1069,8 +1076,10 @@ pinit(ModeInfo * mi)
 
    generatesphere();
    
-   glEnable(GL_CULL_FACE);
-   glEnable(GL_LIGHTING);
+   if (!wire) {
+     glEnable(GL_CULL_FACE);
+     glEnable(GL_LIGHTING);
+   }
 
    /* define cam path */
    gp->cam_x_speed = 1.0f/((float)gp->config.camspeed/50.0 + rnd()*((float)gp->config.camspeed/50.0));

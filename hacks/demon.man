@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-demon - celular automaton.
+demon - cellular automaton.
 .SH SYNOPSIS
 .B demon
 [\-display \fIhost:display.screen\fP]

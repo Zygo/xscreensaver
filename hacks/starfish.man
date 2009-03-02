@@ -33,7 +33,7 @@ How much of a delay should be introduced between steps of the animation.
 Default 10000, or about 1/100th second.
 .TP 8
 .B \-cycle\-delay \fImicroseconds\fP
-How long to wait between shifing the colormap by one step.
+How long to wait between shifting the colormap by one step.
 Default 100000, or about 1/10th second.
 .TP 8
 .B \-thickness \fIpixels\fP

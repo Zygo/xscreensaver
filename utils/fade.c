@@ -159,7 +159,7 @@ fade_screens (Display *dpy, Colormap *cmaps,
 
 /* The business with `cmaps_per_screen' is to fake out the SGI 8-bit video
    hardware, which is capable of installing multiple (4) colormaps
-   simultaniously.  We have to install multiple copies of the same set of
+   simultaneously.  We have to install multiple copies of the same set of
    colors in order to fill up all the available slots in the hardware color
    lookup table, so we install an extra N colormaps per screen to make sure
    that all screens really go black.

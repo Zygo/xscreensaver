@@ -47,6 +47,7 @@ typedef struct bubble {
 	GLfloat    *nudge_angle_incr;	/* Amount by which we increase each nudge
 					 * angle in each frame.
 					 */
+	GLfloat	   color[4];
 } bubble;
 
 /* Should be taken care of already... but just in case */
@@ -97,6 +98,18 @@ glb_bubble_new(GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
 
 	if (b == 0)
 		return 0;
+
+	if (glb_config.bubble_colour[0] == -1.0) {
+		b->color[0] = ((float) (NRAND(100)) / 100.0);
+		b->color[1] = ((float) (NRAND(100)) / 100.0);
+		b->color[2] = ((float) (NRAND(100)) / 100.0);
+	} else {
+		b->color[0] = glb_config.bubble_colour[0];
+		b->color[1] = glb_config.bubble_colour[1];
+		b->color[2] = glb_config.bubble_colour[2];
+	}
+	b->color[3] = glb_config.bubble_colour[3];
+	
 
 	b->contributions = (GLfloat *) malloc(sizeof (GLfloat) * nr_vertices *
 					      glb_config.nr_nudge_axes);
@@ -240,6 +253,9 @@ glb_bubble_draw(void *bb)
 
 	/* Draw the bubble. */
 	glBegin(GL_TRIANGLES);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, b->color);
+
 	for (i = 0; i < nr_triangles; ++i) {
 		glNormal3fv(new_vertices[triangles[i][0]]);
 		glVertex3fv(new_vertices[triangles[i][0]]);
@@ -251,6 +267,7 @@ glb_bubble_draw(void *bb)
 	glEnd();
 	glPopMatrix();
 	(void) free((void *) new_vertices);
+    glb_config.polygon_count += nr_triangles;
 }
 
 /* Return y value. */

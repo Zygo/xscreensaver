@@ -7856,7 +7856,7 @@ msgstr "Flecken zeichnen"
 msgid ""
 "Draws a colorful random-walk, in various forms. Written by Rick Campbell."
 msgstr ""
-"Zeichnet einen farbenfrohen Random-walk in verschiedenen Formen.Von Rick "
+"Zeichnet einen farbenfrohen Random-walk in verschiedenen Formen. Von Rick "
 "Campbell."
 
 #: hacks/config/wander.xml.h:14
@@ -8088,7 +8088,7 @@ msgstr "Große Schrift"
 
 #: hacks/config/xdaliclock.xml.h:7
 msgid "Medium Font"
-msgstr "Normale Schritf"
+msgstr "Normale Schrift"
 
 #: hacks/config/xdaliclock.xml.h:8 hacks/config/xmatrix.xml.h:16
 msgid "Small Font"

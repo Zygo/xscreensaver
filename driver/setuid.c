@@ -74,6 +74,42 @@ describe_uids (saver_info *si, FILE *out)
 }
 
 
+/* Returns true if we need to call setgroups().
+
+   Without calling setgroups(), the process will retain any supplementary
+   gids associated with the uid, e.g.:
+
+       % groups root
+       root : root bin daemon sys adm disk wheel
+
+   However, setgroups() can only be called by root, and returns EPERM
+   for other users even if the call would be a no-op (e.g., setting the
+   group list to the current list.)  So, to avoid that spurious error,
+   before calling setgroups() we first check whether the current list
+   of groups contains only one element, our target group.  If so, we
+   don't need to call setgroups().
+ */
+static int
+setgroups_needed_p (uid_t target_group)
+{
+  gid_t groups[1024];
+  int n = getgroups (sizeof(groups)-1, groups);
+  if (n < 0)
+    {
+      char buf [1024];
+      sprintf (buf, "%s: getgroups(%d, ...)", blurb(), sizeof(groups)-1);
+      perror (buf);
+      return 1;
+    }
+  else if (n == 0)            /* an empty list means only egid is in effect. */
+    return 0;
+  else if (n == 1 && groups[0] == target_group)   /* one element, the target */
+    return 0;
+  else                        /* more than one, or the wrong one. */
+    return 1;
+}
+
+
 static int
 set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
 {
@@ -98,7 +134,8 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
   if (uid == (uid_t) -1) uid = (uid_t) -2;
 
   errno = 0;
-  if (setgroups (1, &gid) < 0)
+  if (setgroups_needed_p (gid) &&
+      setgroups (1, &gid) < 0)
     sgs_errno = errno ? errno : -1;
 
   errno = 0;
@@ -123,6 +160,9 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
   else
     {
       char buf [1024];
+      gid_t groups[1024];
+      int n;
+
       if (sgs_errno)
 	{
 	  sprintf (buf, "%s: couldn't setgroups to %.100s (%ld)",
@@ -136,7 +176,25 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
               errno = sgs_errno;
               perror(buf);
             }
-	}
+
+	  fprintf (stderr, "%s: effective group list: ", blurb());
+          n = getgroups (sizeof(groups)-1, groups);
+          if (n < 0)
+            fprintf (stderr, "unknown!\n");
+          else
+            {
+              int i;
+              fprintf (stderr, "[");
+              for (i = 0; i < n; i++)
+                {
+                  g = getgrgid (groups[i]);
+                  if (i > 0) fprintf (stderr, ", ");
+                  if (g && g->gr_name) fprintf (stderr, "%s", g->gr_name);
+                  else fprintf (stderr, "%ld", (long) groups[i]);
+                }
+              fprintf (stderr, "]\n");
+            }
+        }
 
       if (gid_errno)
 	{

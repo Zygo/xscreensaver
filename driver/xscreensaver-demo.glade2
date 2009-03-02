@@ -287,7 +287,7 @@
 			  <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
-			  <property name="adjustment">1 1 720 1 15 15</property>
+			  <property name="adjustment">0 0 720 1 15 15</property>
 			  <signal name="activate" handler="pref_changed_cb"/>
 			  <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 			  <signal name="value_changed" handler="pref_changed_cb"/>

@@ -350,24 +350,42 @@ munge-scripts: $(SCRIPTS)
 	  if cmp -s $(srcdir)/$$program $$tmp ; then			\
 	    true ;							\
 	  else								\
-	    echo "$$program: setting interpreter to $$perl" ;		\
+	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
 	    cat $$tmp > ./$$program ;					\
 	  fi ;								\
 	done ;								\
 	rm -f $$tmp
 
+# When installing man pages, we install "foo.man" as "foo.N" and update
+# the .TH line in the installed file with one like
+#
+#     .TH XScreenSaver N "V.VV (DD-MMM-YYYY)" "X Version 11"
+#
+# where N is the manual section suffix.
+#
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
+	U=$(UTILS_SRC)/version.h ;					\
+	V=`sed -n 's/.*\([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	echo "installing man pages: $$TH" ;				\
+									\
 	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
 	 fi ;								\
+									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  sed -e "s/^\.TH.*/$$TH/"					\
+	      -e 's/^\(\.BR xscr.*(\)[^()]\(.*\)/\1$(mansuffix)\2/'	\
+	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(manNdir)/$$instname ;			\
-	  $(INSTALL_DATA) $(srcdir)/$$man				\
+	  $(INSTALL_DATA) $$T						\
 	    $(install_prefix)$(manNdir)/$$instname ;			\
-	done
+	done ;								\
+	rm -f $$T
 
 uninstall-program:
 	@for program in $(EXES) $(SCRIPTS); do				\
@@ -382,8 +400,8 @@ uninstall-man:
 	@men="$(MEN)" ;							\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(manNdir)/$$instname ;		\
-	  rm -f $(install_prefix)$(manNdir)/$$instname ;		\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
 	done
 
 install-pam:
@@ -543,7 +561,7 @@ install-gnome:: xscreensaver-demo.glade2
 # into /usr/share/applications/
 uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
-          f=screensaver-properties.desktop                                   ;\
+          f=gnome-screensaver-properties.desktop                             ;\
           echo rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
                rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
         fi
@@ -611,7 +629,7 @@ depend: XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend: check_men update_ad_version update_man_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
+distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -657,23 +675,6 @@ update_ad_version::
 	  fi ;								    \
 	done ;								    \
 	rm $$T
-
-update_man_version::
-	@for S in $(MEN); do						    \
-	U=$(UTILS_SRC)/version.h ;					    \
-	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	V="`date '+%d-%b-%Y'` ($$V)" ;					    \
-	T=/tmp/xs.$$$$ ;						    \
-	sed "s/^\(\.TH[^\"]*\)\"[^\"]*\"\(.*\)/\1\"$$V\"\2/"		    \
-	  < $$S > $$T ;							    \
-	if cmp -s $$S $$T ; then					    \
-	  true ;							    \
-	else								    \
-	  cat $$T > $$S ;						    \
-	  echo "updated $$S to \"$$V\"" ;				    \
-	fi ;								    \
-	rm $$T ;							    \
-	done
 
 TAGS: tags
 tags:
@@ -782,6 +783,9 @@ xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 	$(GTK_LIBS) $(XPM_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
 	-lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
 
+demo-Gtk.o: XScreenSaver_ad.h
+demo-Xm.o:  XScreenSaver_ad_Xm.h
+
 xscreensaver-getimage: $(GETIMG_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm
 
@@ -843,13 +847,13 @@ xdpyinfo: xdpyinfo.o
 
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
 demo-Gtk.o: $(srcdir)/prefs.h
 demo-Gtk.o: $(srcdir)/remote.h
-demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk-support.o: ../config.h
 demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: ../config.h
@@ -888,9 +892,9 @@ test-fade.o: ../config.h
 test-fade.o: $(srcdir)/prefs.h
 test-fade.o: $(srcdir)/xscreensaver.h
 test-grab.o: ../config.h
+test-passwd.o: XScreenSaver_ad.h
 test-passwd.o: ../config.h
 test-passwd.o: $(srcdir)/prefs.h
-test-passwd.o: XScreenSaver_ad.h
 test-passwd.o: $(srcdir)/xscreensaver.h
 test-randr.o: ../config.h
 test-uid.o: ../config.h
@@ -908,9 +912,9 @@ xscreensaver-command.o: $(srcdir)/remote.h
 xscreensaver-getimage.o: ../config.h
 xscreensaver-getimage.o: XScreenSaver_ad.h
 xscreensaver-getimage.o: $(srcdir)/prefs.h
+xscreensaver.o: XScreenSaver_ad.h
 xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/prefs.h
-xscreensaver.o: XScreenSaver_ad.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
 xset.o: ../config.h
 xset.o: $(srcdir)/prefs.h

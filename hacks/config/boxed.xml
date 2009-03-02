@@ -13,7 +13,10 @@
           _label="Motion Speed" _low-label="Slow" _high-label="Fast"
           low="0.001" high="4.0" default="0.5"/>
 
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <hgroup>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
 
   <_description>
 Draws a box full of 3D bouncing balls that explode.

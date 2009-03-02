@@ -336,12 +336,42 @@ windows (Display *dpy, Window window, int delay, int which)
      "assitance.\n"
      );
 
+  /* The "RSOD" that appeared with "Windows Longhorn 5048.050401-0536_x86fre"
+     As reported by http://joi.ito.com/RedScreen.jpg
+   */
+  const char *wlha =
+    ("_Windows Boot Error\n");
+  const char *wlhb =
+    ("\n"
+     "Windows Boot Manager has experienced a problem.\n"
+     "\n"
+     "\n"
+     "    Status: 0xc000000f\n"
+     "\n"
+     "\n"
+     "\n"
+     "    Info: An error occurred transferring exectuion."  /* (sic) */
+     "\n"
+     "\n"
+     "\n"
+     "You can try to recover the system with the Microsoft Windows "
+     "System Recovery\n"
+     "Tools. (You might need to restart the system manually.)\n"
+     "\n"
+     "If the problem continues, please contact your system administrator "
+     "or computer\n"
+     "manufacturer.\n"
+     );
+  const char *wlhc =
+    (" SPACE=Continue\n"
+     );
+
   if (which < 0 || which > 2) abort();
 
   /* kludge to lump Win2K, WinME, and WinXP together; seems silly to add
      another preference/command line option just for these little ones. */
   if (which == 2 && (random() % 2))
-    which = 3 + (random() % 2);
+    which = 3 + (random() % 3);
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -366,12 +396,14 @@ windows (Display *dpy, Window window, int delay, int which)
   gcv.foreground = get_pixel_resource((which == 0 ? "windows95.foreground" :
 				       which == 1 ? "windowsNT.foreground" :
 				       which == 2 ? "windows2K.foreground" :
+				       which == 5 ? "windowsLH.foreground" :
                                                     "windowsME.foreground"),
 				      "Windows.Foreground",
 				      dpy, xgwa.colormap);
   gcv.background = get_pixel_resource((which == 0 ? "windows95.background" :
 				       which == 1 ? "windowsNT.background" :
 				       which == 2 ? "windows2K.background" :
+                                       which == 5 ? "windowsLH.background" :
                                                     "windowsME.background"),
 				      "Windows.Background",
 				      dpy, xgwa.colormap);
@@ -428,6 +460,33 @@ windows (Display *dpy, Window window, int delay, int which)
           else
             delay--;
         }
+    }
+  else if (which == 5)
+    {
+      int line_height = font->ascent + font->descent;
+      int x = 0;
+      int y = 0;
+      unsigned long p0 = gcv.background;
+      unsigned long p1 = gcv.foreground;
+      unsigned long p2 = get_pixel_resource("windowsLH.background2",
+                                            "Windows.Background",
+                                            dpy, xgwa.colormap);
+      XSetBackground (dpy, gc, p2);
+      XSetForeground (dpy, gc, p2);
+      XFillRectangle (dpy, window, gc, 0, 0, xgwa.width, line_height+2);
+      XSetForeground (dpy, gc, p0);
+      draw_string (dpy, window, gc, &gcv, font, x, y, xgwa.width, 10, wlha, 0);
+      y += line_height;
+      XSetForeground (dpy, gc, p1);
+      XSetBackground (dpy, gc, p0);
+      draw_string (dpy, window, gc, &gcv, font, x, y, 10, 10, wlhb, 0);
+
+      y = xgwa.height - (line_height+2);
+      XSetBackground (dpy, gc, p2);
+      XSetForeground (dpy, gc, p2);
+      XFillRectangle (dpy, window, gc, 0, y, xgwa.width, line_height+2);
+      XSetForeground (dpy, gc, p0);
+      draw_string (dpy, window, gc, &gcv, font, x, y, 10, 10, wlhc, 0);
     }
   else
     abort();
@@ -2455,7 +2514,7 @@ hppa_linux (Display *dpy, Window window, int delay)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.64 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.66 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3496,6 +3555,224 @@ msdos (Display *dpy, Window window, int delay)
 }
 
 
+/*
+ * OS/2 panics, by Knut St. Osmundsen <bird-xscreensaver@anduin.net>
+ *
+ * All but one messages are real ones, some are from my test machines
+ * and system dumps, others are reconstructed from google results.
+ * Please, don't be to hard if the formatting of the earlier systems
+ * aren't 100% correct.
+ */
+static void
+os2 (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  XFontStruct *font;
+  GC gc;
+  char *fontname;
+  const char *def_font = "fixed";
+  const char *str;
+  const char *panic_msg;
+  time_t start;
+  int line_height;
+  int i;
+  int y;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
+  static const char *os2_panics[] =
+    { /* OS/2 2.0 trap - details are bogus (CR0++). */
+      "TRAP 0002       ERRCD=0000  ERACC=****  ERLIM=********\n"
+      "EAX=7d240a58  EBX=ff202fdc  ECX=00064423  EDX=00003624\n"
+      "ESI=fff3272c  EDI=7d240004  EBP=00004a44  FLG=00003202\n"
+      "CS:EIP=0160:fff702a6  CSACC=c09d  CSLIM=ffffffff\n"
+      "SS:ESP=0030:00004a38  SSACC=1097  SSLIM=00003fff\n"
+      "DS=0158  DSACC=c0f3  DSLIM=ffffffff  CR0=fffffffb\n"
+      "ES=0158  ESACC=c0f3  ESLIM=ffffffff  CR2=1a060014\n"
+      "FS=0000  FSACC=****  FSLIM=********\n"
+      "GS=0000  GSACC=****  GSLIM=********\n"
+      "\n"
+      "The system detected an internal processing error\n"
+      "at location ##0160:fff6453f - 000d:a53f\n"
+      "60000, 9084\n"
+      "\n"
+      "038600d1\n"
+      "Internal revision 6.307, 92/03/01\n"
+      "\n",
+
+      /* warp 3 (early) */
+      "TRAP 000e       ERRCD=0000  ERACC=****  ERLIM=********\n"
+      "EAX=ff050c20  EBX=000000bb  ECX=ffff00c1  EDx=fff379b8\n"
+      "ESI=ffe55a3c  EDI=00000000  EBP=00004eb8  FLG=00013282\n"
+      "CS:EIP=0160:fff8dbb8  CSACC=c09b  CSLIM=ffffffff\n"
+      "SS:EIP=0030:00004eb4  SSACC=1097  SSLIM=00003fff\n"
+      "DS=0158  DSACC=c0f3  DSLIM=ffffffff  CR0=8001001b\n"
+      "ES=0158  DSACC=c0f3  DSLIM=ffffffff  CR2=000000c7\n"
+      "FS=0000  FSACC=****  FSLIM=********\n"
+      "GS=0000  GSACC=****  GSLIM=********\n"
+      "\n"
+      "The system detected an internal processing error\n"
+      "at location ##0160:fff66bf0 - 000d:9bf0.\n"
+      "60000, 9084\n"
+      "\n"
+      "048600b4\n"
+      "Internal revision 8.125, 94/02/16\n"
+      "\n"
+      "The system is stopped.  Record the location number of the error\n"
+      "and contact your service representative.\n",
+
+      /* warp 3 */
+      "TRAP 000e       ERRCD=0002  ERACC=****  ERLIM=********\n"
+      "EAX=00000000  EBX=fdef1e0c  ECX=00003824  EDX=0000edf9\n"
+      "ESI=fdf30e80  EDI=fc8b0000  EBP=00005658  FLG=00012246\n"
+      "CS:EIP=0160:fff8ada3  CSACC=c09b  CSLIM=ffffffff\n"
+      "SS:ESP=0030:000055d4  SSACC=1097  SSLIM=0000480f\n"
+      "DS=0158  DSACC=c093  DSLIM=ffffffff  CR0=8001001b\n"
+      "ES=0158  ESACC=c093  ESLIM=ffffffff  CR2=fc8b0000\n"
+      "FS=03b8  FSACC=0093  FSLIM=00000023\n"
+      "GS=0000  GSACC=****  GSLIM=********\n"
+      "\n"
+      "The system detected an internal processing error\n"
+      "at location ##0160:fff5c364 - 000d:a364.\n"
+      "60000, 9084\n"
+      "\n"
+      "05860526\n"
+      "Internal revision 8200,94/11/07\n"
+      "\n"
+      "The system is stopped. Record all of the above information and\n"
+      "contact your service representative.\n",
+
+      /* warp 3 (late) */
+      "TRAP 000d       ERRCD=2200  ERACC=1092  ERLIM=00010fff\n"
+      "EAX=0000802e  EBX=fff001c8  ECX=9bd80000  EDX=00000000\n"
+      "ESI=fff09bd8  EDI=fdeb001b  EBP=00000000  FLG=00012012\n"
+      "CS:EIP=0168:fff480a2  CSACC=c09b  CSLIM=ffffffff\n"
+      "SS:ESP=00e8:00001f32  SSACC=0093  SSLIM=00001fff\n"
+      "DS=0940  DSACC=0093  DSLIM=00000397  CR0=8001001b\n"
+      "ES=00e8  ESACC=0093  ESLIM=00001fff  CR2=15760008\n"
+      "FS=0000  FSACC=****  FSLIM=****\n"
+      "GS=0000  GSACC=****  GSLIM=****\n"
+      "\n"
+      "The system detected an internal processing error\n"
+      "at location ##0168:fff4b06e - 000e:c06e\n"
+      "60000, 9084\n"
+      "\n"
+      "06860652\n"
+      "Internal revision 8.259_uni,98/01/07\n"
+      "\n"
+      "The system is stopped. Record all of the above information and\n"
+      "contact your service representative.\n",
+
+      /* Warp 4.52+ - the official r0trap.exe from the debugging classes */
+      "Exception in module: OS2KRNL\n"
+      "TRAP 000e       ERRCD=0002  ERACC=****  ERLIM=********\n"
+      "EAX=00000001  EBX=80010002  ECX=ffed4638  EDX=0003f17b\n"
+      "ESI=00000001  EDI=00000002  EBP=00005408  FLG=00012202\n"
+      "CS:EIP=0168:fff3cd2e  CSACC=c09b  CSLIM=ffffffff\n"
+      "SS:ESP=0030:000053ec  SSACC=1097  SSLIM=000044ff\n"
+      "DS=0160  DSACC=c093  DSLIM=ffffffff  CR0=8001001b\n"
+      "ES=0160  ESACC=c093  ESLIM=ffffffff  CR2=00000001\n"
+      "FS=0000  FSACC=****  FSLIM=********\n"
+      "GS=0000  GSACC=****  GSLIM=********\n"
+      "\n"
+      "The system detected an internal processing error at\n"
+      "location ##0168:fff1e3f3 - 000e:c3f3.\n"
+      "60000, 9084\n"
+      "\n"
+      "068606a0\n"
+      "Internal revision 14.097_UNI\n"
+      "\n"
+      "The system is stopped. Record all of the above information and\n"
+      "contact your service representative.\n",
+
+      /* Warp 4.52+, typical JFS problem. */
+      "Exeption in module: JFS\n"
+      "TRAP 0003       ERRCD=0000  ERACC=****  ERLIM=********\n"
+      "EAX=00000000  EBX=ffffff05  ECX=00000001  EDX=f5cd8010\n"
+      "ESI=000000e6  EDI=000000e7  EBP=f9c7378e  FLG=00002296\n"
+      "CS:EIP=0168:f8df3250  CSACC=c09b  CSLIM=ffffffff\n"
+      "SS:ESP=1550:fdc73778  SSACC=c093  SSLIM=ffffffff\n"
+      "DS=0160  DSACC=c093  DSLIM=ffffffff  CR0=80010016\n"
+      "ES=0160  ESACC=c093  DSLIM=ffffffff  CR2=05318000\n"
+      "FS=03c0  FSACC=0093  DSLIM=00000023\n"
+      "GS=0160  GSACC=c093  DSLIM=ffffffff\n"
+      "\n"
+      "The system detected an internal processing error\n"
+      "at location ##0168:fff1e2ab - 000e:c2ab.\n"
+      "60000, 9084\n"
+      "\n"
+      "07860695\n"
+      "\n"
+      "Internal revision 14.100c_UNI\n"
+      "\n"
+      "The system is stopped. Record all of the above information and\n"
+      "contact your service representative.\n"
+    };
+
+  i = random() % countof(os2_panics);
+  panic_msg = os2_panics[i];
+
+  XGetWindowAttributes(dpy, window, &xgwa);
+  fontname = get_string_resource((xgwa.height > 1000 
+                                  ? "OS2.font3" : xgwa.height > 600
+                                  ? "OS2.font2" : "OS2.font"),
+                                 "OS2.Font");
+  if (!fontname || !*fontname) 
+    fontname = (char *)def_font;
+  font = XLoadQueryFont(dpy, fontname);
+  if (!font) 
+    font = XLoadQueryFont(dpy, def_font);
+  if (!font) 
+    exit(-1);
+  if (fontname && fontname != def_font)
+    free(fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource("OS2.foreground",
+                                      "OS2.Foreground",
+                                      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("OS2.background",
+                                      "OS2.Background",
+                                      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  /* draw the text, calc the cursor location and make it blink. */
+  line_height = font->ascent + font->descent;
+  draw_string(dpy, window, gc, &gcv, font, 0, 0, 10, 10, panic_msg, 0);
+
+  y = line_height * 2;
+  str = panic_msg - 1;
+  while ((str = strchr(str + 1, '\n')) != NULL)
+    y += line_height;
+
+  start = time((time_t *) 0);
+  while (start + delay > time((time_t *) 0))
+    {
+      XDrawImageString(dpy, window, gc, 0, y, "_", 1);
+      XSync(dpy, False);
+      usleep(200000L);
+      XDrawImageString(dpy, window, gc, 0, y, "  ", 2);
+      XSync(dpy, False);
+      usleep(200000L);
+      if (bsod_sleep(dpy, 0))
+        break;
+    }
+
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+}
+
+
 
 
 char *progclass = "BSOD";
@@ -3527,11 +3804,14 @@ char *defaults [] = {
   "*doVMS:		   True",
   "*doHVX:		   True",
   "*doMSDOS:		   True",
+  "*doOS2:		   True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".Windows.foreground:	   White",
   ".Windows.background:	   #0000AA",    /* EGA color 0x01. */
+  ".windowsLH.background:  #AA0000",    /* EGA color 0x04. */
+  ".windowsLH.background2: #AAAAAA",    /* EGA color 0x07. */
 
   ".Amiga.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Amiga.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -3631,6 +3911,12 @@ char *defaults [] = {
   ".MSDOS.foreground:	   White",
   ".MSDOS.background:	   Black",
 
+  ".OS2.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".OS2.font2:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".OS2.font3:		   -*-courier-bold-r-*-*-*-240-*-*-m-*-*-*",
+  ".OS2.foreground:	   White",
+  ".OS2.background:	   Black",
+
   ANALOGTV_DEFAULTS
 
 #ifdef HAVE_XSHM_EXTENSION
@@ -3690,6 +3976,8 @@ XrmOptionDescRec options [] = {
   { "-no-vms",		".doVMS",		XrmoptionNoArg,  "False" },
   { "-msdos",		".doMSDOS",		XrmoptionNoArg,  "True"  },
   { "-no-msdos",	".doMSDOS",		XrmoptionNoArg,  "False" },
+  { "-os2",		".doOS2",		XrmoptionNoArg,  "True"  },
+  { "-no-os2",		".doOS2",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -3722,6 +4010,7 @@ static struct {
   { "Tru64",		tru64 },
   { "Apple2",		apple2crash },
   { "VMS",		vms },
+  { "OS2",		os2 },
   { "MSDOS",		msdos },
 };
 
@@ -3768,7 +4057,7 @@ screenhack (Display *dpy, Window window)
       int count = countof(all_modes);
       char name[100], class[100];
 
-      if (only > 0)
+      if (only >= 0)
         i = only;
       else
         do {  i = (random() & 0xFF) % count; } while (i == j);

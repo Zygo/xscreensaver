@@ -111,6 +111,7 @@ static XrmOptionDescRec opts[] = {
     {"-resolution", ".gflux.resolution", XrmoptionSepArg, 0},
 /*    {"-draw", ".gflux.draw", XrmoptionSepArg, 0},*/
     {"-mode", ".gflux.mode", XrmoptionSepArg, 0},
+    {"-wireframe", ".gflux.mode", XrmoptionNoArg, "wire"},
     {"-flat", ".gflux.flat", XrmoptionSepArg, 0},
     {"-speed", ".gflux.speed", XrmoptionSepArg, 0},
     {"-rotationx", ".gflux.rotationx", XrmoptionSepArg, 0},

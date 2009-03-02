@@ -1,5 +1,5 @@
 /* test-uid.c --- playing with setuid.
- * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,6 +36,8 @@ print(void)
   int egid = getegid();
   struct passwd *p = 0;
   struct group *g = 0;
+  gid_t groups[1024];
+  int n;
 
   p = getpwuid (uid);
   g = getgrgid (gid);
@@ -48,6 +50,23 @@ print(void)
   fprintf(stderr, "eff. user/group: %ld/%ld (%s/%s)\n", (long)euid, (long)egid,
 	  (p && p->pw_name ? p->pw_name : "???"),
 	  (g && g->gr_name ? g->gr_name : "???"));
+
+  n = getgroups(sizeof(groups)-1, groups);
+  if (n < 0)
+    perror("getgroups failed");
+  else
+    {
+      int i;
+      fprintf (stderr, "eff. group list: [");
+      for (i = 0; i < n; i++)
+        {
+          g = getgrgid (groups[i]);
+          fprintf(stderr, "%s%s=%ld", (i == 0 ? "" : ", "),
+                  (g->gr_name ? g->gr_name : "???"),
+                  groups[i]);
+        }
+      fprintf (stderr, "]\n");
+    }
 }
 
 int
@@ -113,6 +132,15 @@ main (int argc, char **argv)
 		  goto NOGROUP;
 		}
 	    }
+
+	  fprintf(stderr, "setgroups(1, [%ld]) \"%s\"", gid, group);
+          {
+            gid_t g2 = gid;
+            if (setgroups(1, &g2) == 0)
+              fprintf(stderr, " succeeded.\n");
+            else
+              perror(" failed");
+          }
 
 	  fprintf(stderr, "setgid(%ld) \"%s\"", gid, group);
 	  if (setgid(gid) == 0)

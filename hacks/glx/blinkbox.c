@@ -9,6 +9,9 @@
  * implied warranty.
  */
 
+/* motion blur added March 2005 by John Boero <jlboero@cs.uwm.edu>
+ */
+
 #include <X11/Intrinsic.h>
 
 extern XtAppContext app;
@@ -25,6 +28,7 @@ extern XtAppContext app;
 #define DEF_WH       "2"
 #define DEF_DISSOLVE "False"
 #define DEF_FADE     "True"
+#define DEF_BLUR     "True"
 
 #define DEFAULTS	"*delay:	30000		 \n" \
 			"*wireframe:	False		 \n" \
@@ -94,6 +98,7 @@ static float LightPosition[]=  { 20.0f, 100.0f, 20.0f, 1.0f };
 
 static Bool do_dissolve;
 static Bool do_fade;
+static Bool do_blur;
 static GLfloat des_amt   = 1;
 
 static XrmOptionDescRec opts[] = {
@@ -101,7 +106,9 @@ static XrmOptionDescRec opts[] = {
   { "-dissolve", ".dissolve", XrmoptionNoArg, "True"  },
   { "+dissolve", ".dissolve", XrmoptionNoArg, "False" },
   { "-fade",     ".fade",     XrmoptionNoArg, "True"  },
-  { "+fade",     ".fade",     XrmoptionNoArg, "False" }
+  { "+fade",     ".fade",     XrmoptionNoArg, "False" },
+  { "-blur",     ".blur",     XrmoptionNoArg, "True"  },
+  { "+blur",     ".blur",     XrmoptionNoArg, "False" }
 
 };
 
@@ -109,6 +116,7 @@ static argtype vars[] = {
   {&bscale.wh,   "boxsize",   "Boxsize",  DEF_WH,       t_Float},
   {&do_dissolve, "dissolve",  "Dissolve", DEF_DISSOLVE, t_Bool},
   {&do_fade,     "fade",      "Fade",     DEF_FADE,     t_Bool},
+  {&do_blur,     "blur",      "Blur",     DEF_BLUR,     t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -268,7 +276,7 @@ unit_cube(int wire)
 void
 init_ball (ModeInfo *mi)
 {
-  #define SPHERE_SLICES 32  /* how densely to render spheres */
+  #define SPHERE_SLICES 12  /* how densely to render spheres */
   #define SPHERE_STACKS 16
   int wire = MI_IS_WIREFRAME(mi);
 
@@ -310,7 +318,7 @@ init_ball (ModeInfo *mi)
   glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
   glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);
   glEnable(GL_LIGHT1);
-  if (do_fade){
+  if (do_fade || do_blur) {
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
   }
@@ -348,12 +356,44 @@ draw_ball (ModeInfo *mi)
 
    glColor3f(1,1,1);
    glPushMatrix();
-   glTranslatef(ball.x += mo.x,
-                ball.y += mo.y,
-                ball.z += mo.z);
 
-   glScalef(2,2,2);
-   glCallList(ballList);
+   if (!do_blur || MI_IS_WIREFRAME(mi)) {
+     glTranslatef(ball.x += mo.x,
+                  ball.y += mo.y,
+                  ball.z += mo.z);
+
+     glScalef(2,2,2);
+     glCallList(ballList);
+
+   } else {
+
+#    define blur_detail 24.0
+     float ball_alpha = 1 / blur_detail;
+
+     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+     glTranslatef(ball.x, ball.y, ball.z);
+   
+     for (i = 0; i < blur_detail; ++i) {
+       glTranslatef(mo.x / blur_detail,
+                    mo.y / blur_detail,
+                    mo.z / blur_detail);
+
+       /* comment the following line for quick but boring linear blur */
+       ball_alpha = sin((M_PI / blur_detail) * i) / blur_detail;
+     
+       glColor4f(1, 1, 1, ball_alpha);
+
+       glScalef(2, 2, 2);
+       glCallList(ballList);
+       glScalef(.5, .5, .5);
+     }
+     i = 0;
+   
+     ball.x += mo.x;
+     ball.y += mo.y;
+     ball.z += mo.z;
+   }
+   
    glPopMatrix();
 
    while(i < 6){

@@ -44,7 +44,7 @@ Whether fractals should grow; otherwise, they are animated.
 .B \-liss
 .TP 8
 .B \-no\-liss
-Whether we should use lissojous figures to get points.
+Whether we should use lissajous figures to get points.
 
 .SH ENVIRONMENT
 .PP

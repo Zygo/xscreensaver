@@ -72,7 +72,7 @@ Disable double-buffering.
 .B \-color \fIstring\fP
 The base color for the color scheme.  Typed as a hexadecimal triplet
 with or with out the leading #. ie. fa4563 & #43cd12 are both acceptable.
-If the satration of you color is too low (<0.03) the random color
+If the saturation of you color is too low (<0.03) the random color
 generator will kick in.
 The default color is #efbea5
 .TP 8

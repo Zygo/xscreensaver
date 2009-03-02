@@ -128,7 +128,7 @@ static void
 kludge_normal (int n, const int *indices, const point *points)
 {
   XYZ normal = { 0, 0, 0 };
-  XYZ p;
+  XYZ p = { 0, 0, 0 };
   int i;
 
   for (i = 0; i < n; ++i) {
@@ -368,6 +368,9 @@ new_polyhedron (ModeInfo *mi)
   p = bp->polyhedra[bp->which];
 
   new_label (mi);
+
+  if (wire)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   glNewList (bp->object_list, GL_COMPILE);
   for (i = 0; i < p->nfaces; i++)

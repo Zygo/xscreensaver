@@ -16,8 +16,8 @@ black-and-white TV I found in someone's trash.
 When run,
 .I xteevee
 picks a mode to display from the available options.  If modes are explicitly
-set on the command-line, they over-ride the implicit options and will be
-choosen among exclusively.  If modes are explicitly excluded from the
+set on the command-line, they override the implicit options and will be
+chosen among exclusively.  If modes are explicitly excluded from the
 command-line, the they are simply removed from contention.
 
 The image that it manipulates will be grabbed from the portion of

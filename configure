@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY DEFAULT_TEXT_FILE OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -348,7 +348,7 @@ libdir='${exec_prefix}/lib'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 infodir='${prefix}/info'
-mandir='${prefix}/man'
+mandir=\${datadir}/man
 
 ac_prev=
 for ac_option
@@ -857,7 +857,7 @@ Optional Packages:
 
 Installation options:
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: `EPREFIX/lib/xscreensaver/'
+                          Default: `PREFIX/libexec/xscreensaver/'
   --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
                           Default: `PREFIX/share/xscreensaver/config/'
@@ -886,6 +886,9 @@ Screen blanking and idle-detection options:
   --with-proc-interrupts  Include support for consulting the /proc/interrupts
                           file to notice keyboard activity.
   --with-pam              Include support for PAM (Pluggable Auth Modules.)
+  --with-pam-service-name=NAME
+                          NAME is the name of the PAM service that
+                          xscreensaver will authenticate as.
   --with-kerberos         Include support for Kerberos authentication.
   --with-shadow           Include support for shadow password authentication.
   --with-passwd-helper    Include support for an external password
@@ -913,8 +916,9 @@ Graphics options:
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
-  --with-image-directory=DIR  By default, some screen savers may load
-                          random images out of this directory.
+  --with-image-directory=DIR  By default, some demos may display random images
+                          from this directory.
+  --with-text-file=FILE   By default, some demos may display this file.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 
@@ -1371,6 +1375,172 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 echo "current directory: `pwd`"
 echo "command line was: $0 $@"
+
+###############################################################################
+#
+#       Autoheader stuff
+#
+###############################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # After checking to see that --srcdir is correct (which AC_INIT does)
@@ -7125,9 +7295,11 @@ fi
 
 
 GETTEXT_PACKAGE=xscreensaver
+
 cat >>confdefs.h <<_ACEOF
 #define GETTEXT_PACKAGE "$GETTEXT_PACKAGE"
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define PACKAGE "$GETTEXT_PACKAGE"
@@ -7135,7 +7307,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -12110,6 +12282,15 @@ else
 fi;
 
 
+# Check whether --with-pam_service_name or --without-pam_service_name was given.
+if test "${with_pam_service_name+set}" = set; then
+  withval="$with_pam_service_name"
+  pam_service_name="$withval"
+else
+  pam_service_name="xscreensaver"
+fi;
+
+
    case "$with_pam" in
     yes) ;;
     no)  ;;
@@ -12220,6 +12401,11 @@ echo "${ECHO_T}$ac_cv_pam" >&6
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_PAM 1
 _ACEOF
+
+    cat >>confdefs.h <<_ACEOF
+#define PAM_SERVICE_NAME "$pam_service_name"
+_ACEOF
+
 
     PASSWD_LIBS="${PASSWD_LIBS} -lpam"
 
@@ -15926,7 +16112,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 15933 "configure"
+#line 16119 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -17952,7 +18138,8 @@ fi
 
 ###############################################################################
 #
-#       Check for pty support for 'phosphor'
+#       Check for pty support: this allows 'phosphor' and 'apple2'
+#	to run curses-based programs, or be used as terminal windows.
 #
 ###############################################################################
 
@@ -19108,6 +19295,79 @@ fi
 
 ###############################################################################
 #
+#       Pick a text file to use as the default of the "textFile" preference.
+#	Any old file will do, but preferably one that will make interesting
+#	shapes when displayed by "starwars" and "fontglide".
+#
+###############################################################################
+
+have_textfile=no
+with_textfile_req=unspecified
+
+
+# Check whether --with-text-file or --without-text-file was given.
+if test "${with_text_file+set}" = set; then
+  withval="$with_text_file"
+  with_textfile="$withval"; with_textfile_req="$withval"
+else
+  with_textfile=yes
+fi;
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_textfile" in
+  /*)
+    # absolute path
+    echo "$as_me:$LINENO: checking for image directory $with_textfile" >&5
+echo $ECHO_N "checking for image directory $with_textfile... $ECHO_C" >&6
+    if test -d "$with_textfile" ; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    else
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      with_textfile=""
+    fi
+  ;;
+  yes)
+    with_textfile=""
+
+    #### Could use some more defaults here...
+    for f in \
+      "/usr/X11R6/lib/X11/doc/README"		\
+      "/usr/share/doc/xserver-common/copyright"	\
+      "/usr/X11R6/README"			\
+    ; do
+      if test -z "$with_textfile"; then
+        echo "$as_me:$LINENO: checking for text file $f" >&5
+echo $ECHO_N "checking for text file $f... $ECHO_C" >&6
+        if test -f "$f" ; then
+          echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+          with_textfile="$f"
+        else
+          echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+        fi
+      fi
+    done
+
+  ;;
+  no)
+    with_textfile=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-image-directory=$with_textfile_req"
+    exit 1
+  ;;
+esac
+ac_cv_textfile="$with_textfile"
+
+DEFAULT_TEXT_FILE="$ac_cv_textfile"
+
+
+###############################################################################
+#
 #       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
 #       This should be safe, but let's give people the option.
 #
@@ -19348,6 +19608,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
 
 
 
@@ -20143,6 +20404,7 @@ s,@NEW_LOGIN_COMMAND@,$NEW_LOGIN_COMMAND,;t t
 s,@NEW_LOGIN_COMMAND_P@,$NEW_LOGIN_COMMAND_P,;t t
 s,@DEFAULT_IMAGES_P@,$DEFAULT_IMAGES_P,;t t
 s,@DEFAULT_IMAGE_DIRECTORY@,$DEFAULT_IMAGE_DIRECTORY,;t t
+s,@DEFAULT_TEXT_FILE@,$DEFAULT_TEXT_FILE,;t t
 s,@OBJCC@,$OBJCC,;t t
 s,@EXES_OSX@,$EXES_OSX,;t t
 s,@SCRIPTS_OSX@,$SCRIPTS_OSX,;t t

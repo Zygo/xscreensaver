@@ -95,9 +95,8 @@ usage: %s -<option>\n\
                 with a particular graphics demo.  (The first element in the\n\
                 list is numbered 1, not 0.)\n\
 \n\
-  -exit         Causes the xscreensaver process to exit gracefully.  This is\n\
-                roughly the same as killing the process with `kill', but it\n\
-                is easier, since you don't need to first figure out the pid.\n\
+  -exit         Causes the xscreensaver process to exit gracefully.\n\
+                This does nothing if the display is currently locked.\n\
                 (Note that one must *never* kill xscreensaver with -9!)\n\
 \n\
   -restart      Causes the screensaver process to exit and then restart with\n\

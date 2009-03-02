@@ -7,7 +7,7 @@ static const char sccsid[] = "@(#)fiberlamp.c	5.00 2000/11/01 xlockmore";
 #endif
 
 /*-
- * Copyright (c) 2005 by Tim Auckland <Tim.Auckland@Procket.com>
+ * Copyright (c) 2005 by Tim Auckland <tda10.geo@yahoo.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -280,6 +280,22 @@ reshape_fiberlamp(ModeInfo * mi, int width, int height)
 }
 #endif
 
+/* sort fibers so they get drawn back-to-front, one bubble pass is
+   enough as the order only changes slowly */
+static void
+sort_fibers(fiberlampstruct *fl)
+{
+	int i;
+
+	for(i = 1; i < fl->nfibers; i++) {
+		if (fl->fiber[i - 1].node[NODES - 1].z > fl->fiber[i].node[NODES - 1].z) {
+			fiberstruct tmp = fl->fiber[i - 1];
+			fl->fiber[i - 1] = fl->fiber[i];
+			fl->fiber[i] = tmp;
+		}
+	}
+}
+
 void
 draw_fiberlamp(ModeInfo * mi)
 {
@@ -304,6 +320,7 @@ draw_fiberlamp(ModeInfo * mi)
   XTranslateCoordinates(MI_DISPLAY(mi), MI_WINDOW(mi),
 						RootWindow(MI_DISPLAY(mi),MI_SCREEN(mi)),
 						cx, cy, &x, &y, &unused);
+  sort_fibers(fl);
 
   for(f = 0; f < fl->nfibers; f++) {
 	fiberstruct *fs = fl->fiber + f;
@@ -377,6 +394,10 @@ draw_fiberlamp(ModeInfo * mi)
 	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
 	XDrawLines(MI_DISPLAY(mi), fl->buffer, MI_GC(mi),
 			   fs->erase, NODES-1, CoordModeOrigin);
+  }
+
+  for(f = 0; f < fl->nfibers; f++) {
+	fiberstruct *fs = fl->fiber + f;
 
 	{
 	  double x = fs->node[1].x - fl->cx + 0.025;

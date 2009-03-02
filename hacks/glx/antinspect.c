@@ -26,8 +26,7 @@
 #define EVENT_MASK	    PointerMotionMask
 #define antinspect_opts	    xlockmore_opts
 #define DEFAULTS	    "*delay:   20000   \n" \
-			    "*showFPS: False   \n" \
-			    "*wireframe: False \n"
+			    "*showFPS: False   \n"
 
 #include "xlockmore.h"
 #else

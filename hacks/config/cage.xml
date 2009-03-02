@@ -9,12 +9,11 @@
           low="0" high="30000" default="25000"
           convert="invert"/>
 
-<!--
   <select id="render">
+    <option id="tex"   _label="Textured"/>
+    <option id="solid" _label="Solid"     arg-set="-mono"/>
     <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
   </select>
--->
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 

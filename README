@@ -76,6 +76,17 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.21:   * Fixed a bug in the new mouse-motion code that caused
+                        the screen to never blank on multi-head non-Xinerama
+                        systems.  Oops.
+                      * New hacks, `interaggregate', `antmaze', `tangram',
+                        and `crackberg'.
+                      * Minor tweaks to `fiberlamp', `ifs', `slidescreen',
+                        `zoom', `sonar', `fireworkx', `whirlwindwarp',
+                        `bubble3d', and `rd-bomb'.
+                      * Added motion blur to `blinkbox'.
+                      * `bsod' now includes Longhorn's "RSOD", and OS/2.
+                      * Fixed `-wireframe' usage in most hacks and man pages.
 Changes since 4.20:   * New hack: `fliptext'.
                       * Changed default configure installation directories:
                         /usr/bin/ for xscreensaver, etc.;

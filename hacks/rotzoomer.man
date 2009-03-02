@@ -50,7 +50,7 @@ Make the rectangles should wander around the screen.
 Make the rectangles be stationary.  This is the default.
 .TP 8
 .B \-n \fIcount\fP
-How many rectangles to animate simultaniously.  Default 2.
+How many rectangles to animate simultaneously.  Default 2.
 .TP 8
 .B \-no\-shm
 Disable use of the SHM extension, even if it appears to be available.

@@ -119,8 +119,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
 # define HACK_RESHAPE    reshape_polytopes
 # define polytopes_opts xlockmore_opts
 # define DEFAULTS        "*delay:      25000 \n" \
-                         "*showFPS:    False \n" \
-                         "*wireframe:  False \n" \
+                         "*showFPS:    False \n"
 
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -165,7 +164,7 @@ static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 static XrmOptionDescRec opts[] =
 {
-  {"-mesh",            ".polytopes.displayMode",  XrmoptionNoArg,
+  {"-wireframe",       ".polytopes.displayMode",  XrmoptionNoArg,
                        DISP_WIREFRAME_STR },
   {"-surface",         ".polytopes.displayMode",  XrmoptionNoArg,
                        DISP_SURFACE_STR },
@@ -222,7 +221,7 @@ static argtype vars[] =
 
 static OptionStruct desc[] =
 {
-  { "-mesh",            "display the polytope as a wireframe mesh" },
+  { "-wireframe",       "display the polytope as a wireframe mesh" },
   { "-surface",         "display the polytope as a solid surface" },
   { "-transparent",     "display the polytope as a transparent surface" },
   { "-solid",           "display the polytope as a solid object" },

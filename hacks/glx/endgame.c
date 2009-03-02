@@ -433,13 +433,15 @@ void drawBoard(void) {
   glEnd();
 }
 
-void draw_pieces(void) {
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, piecetexture);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+void draw_pieces(int wire) {
+  if (!wire) {
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, piecetexture);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-  glColor4f(0.5, 0.5, 0.5, 1.0);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialShadow);
+    glColor4f(0.5, 0.5, 0.5, 1.0);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialShadow);
+  }
 
   drawPieces();
   if(moving) drawMovingPiece(0);
@@ -447,12 +449,13 @@ void draw_pieces(void) {
   glDisable(GL_TEXTURE_2D);
 }
 
-void draw_shadow_pieces(void) {
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, piecetexture);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+void draw_shadow_pieces(int wire) {
+  if (!wire) {
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, piecetexture);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  }
 
-  
   drawPiecesShadow();
   if(moving) drawMovingPiece(shadows);
   if(take) drawTakePiece(shadows);
@@ -531,7 +534,7 @@ void draw_reflections(void) {
   glTranslatef(0.5, 0.0, 0.5);
 
   glLightfv(GL_LIGHT0, GL_POSITION, position);
-  draw_pieces();
+  draw_pieces(wire);
   glPopMatrix();
   
   glDisable(GL_STENCIL_TEST);
@@ -563,17 +566,19 @@ void display(Chesscreen *c) {
   position2[0] = 4.0 + 8.0*-sin(theta*100*M_PI/180.0);
   position2[2] = 4.0 + 8.0*cos(theta*100*M_PI/180.0);
 
-  glEnable(GL_LIGHTING);
-  glLightfv(GL_LIGHT0, GL_POSITION, position);
-  glLightfv(GL_LIGHT1, GL_POSITION, position2);
-  glEnable(GL_LIGHT0);
+  if (!wire) {
+    glEnable(GL_LIGHTING);
+    glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glLightfv(GL_LIGHT1, GL_POSITION, position2);
+    glEnable(GL_LIGHT0);
+  }
 
   /** draw board, pieces */
   if(!wire) {
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
 
-    if(reflections) {
+    if(reflections && !wire) {
       draw_reflections();
       glEnable(GL_BLEND);
     }
@@ -598,7 +603,7 @@ void display(Chesscreen *c) {
       glTranslatef(0.0, 0.001, 0.0);
       glMultMatrixf(m[0]);
       glTranslatef(0.5, 0.01, 0.5);
-      draw_shadow_pieces();
+      draw_shadow_pieces(wire);
       glPopMatrix();      
 
       glEnable(GL_LIGHTING);
@@ -613,7 +618,7 @@ void display(Chesscreen *c) {
     drawBoard();
  
   glTranslatef(0.5, 0.0, 0.5);
-  draw_pieces();
+  draw_pieces(wire);
 
   if(!wire) {
     glDisable(GL_COLOR_MATERIAL);
@@ -655,13 +660,15 @@ void init_chess(ModeInfo *mi) {
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
 
-  glDepthFunc(GL_LEQUAL);
-  glClearStencil(0);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
+  if (!wire) {
+    glDepthFunc(GL_LEQUAL);
+    glClearStencil(0);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
-  make_piece_texture();
-  make_board_texture();
+    make_piece_texture();
+    make_board_texture();
+  }
   gen_model_lists();
 
   if(!wire) {
@@ -672,7 +679,7 @@ void init_chess(ModeInfo *mi) {
     glEnable(GL_DEPTH_TEST);
   }
   else
-    glPolygonMode(GL_FRONT, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 int oldgame = -1;

@@ -110,7 +110,6 @@ static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
 # define hypertorus_opts xlockmore_opts
 # define DEFAULTS        "*delay:      25000 \n" \
                          "*showFPS:    False \n" \
-                         "*wireframe:  False \n" \
 
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -160,7 +159,7 @@ static const float offset3d[4] = {
 
 static XrmOptionDescRec opts[] =
 {
-  {"-mesh",            ".hypertorus.displayMode",  XrmoptionNoArg,
+  {"-wireframe",       ".hypertorus.displayMode",  XrmoptionNoArg,
                        DISP_WIREFRAME_STR },
   {"-surface",         ".hypertorus.displayMode",  XrmoptionNoArg,
                        DISP_SURFACE_STR },
@@ -218,7 +217,7 @@ static argtype vars[] =
 
 static OptionStruct desc[] =
 {
-  { "-mesh",            "display the torus as a wireframe mesh" },
+  { "-wireframe",       "display the torus as a wireframe mesh" },
   { "-surface",         "display the torus as a solid surface" },
   { "-transparent",     "display the torus as a transparent surface" },
   { "-solid",           "display the torus as a solid object" },

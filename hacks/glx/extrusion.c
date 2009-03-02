@@ -27,7 +27,7 @@
 #endif
 
 #ifdef STANDALONE
-# define PROGCLASS						"Screensaver"
+# define PROGCLASS						"Extrusion"
 # define HACK_INIT						init_screensaver
 # define HACK_DRAW						draw_screensaver
 # define HACK_RESHAPE					reshape_screensaver
@@ -36,12 +36,7 @@
 # define screensaver_opts				xlockmore_opts
 #define	DEFAULTS                        "*delay:			20000	\n" \
 										"*showFPS:      	False	\n" \
-										"*light:			True	\n" \
-                                        "*wire:				False	\n" \
-                                        "*texture:			False	\n" \
-										"*image:			BUILTIN	\n" \
-                                        "*name:             RANDOM  \n" \
-                                        "*example:          0       \n"
+										"*wireframe:	    False   \n"
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -102,7 +97,6 @@ extern void DrawStuff_twistoid(void);
 #define HEIGHT 480
 
 #define DEF_LIGHT	  	"True"
-#define DEF_WIRE   		"False"
 #define DEF_TEXTURE		"False"
 #define DEF_TEX_QUAL   "False"
 #define DEF_MIPMAP   	"False"
@@ -110,7 +104,6 @@ extern void DrawStuff_twistoid(void);
 #define DEF_IMAGE   	"BUILTIN"
 
 static int do_light;
-static int do_wire;
 static int do_texture;
 static int do_tex_qual;
 static int do_mipmap;
@@ -120,8 +113,6 @@ static char *which_image;
 static XrmOptionDescRec opts[] = {
   {"-light",           ".extrusion.light",   XrmoptionNoArg, "true" },
   {"+light",           ".extrusion.light",   XrmoptionNoArg, "false" },
-  {"-wire",            ".extrusion.wire",    XrmoptionNoArg, "true" },
-  {"+wire",            ".extrusion.wire",    XrmoptionNoArg, "false" },
   {"-texture",         ".extrusion.texture", XrmoptionNoArg, "true" },
   {"+texture",         ".extrusion.texture", XrmoptionNoArg, "false" },
   {"-texture",         ".extrusion.texture", XrmoptionNoArg, "true" },
@@ -136,7 +127,6 @@ static XrmOptionDescRec opts[] = {
 
 static argtype vars[] = {
   {&do_light,	 "light",           "Light",           DEF_LIGHT,    t_Bool},
-  {&do_wire,	 "wire",            "Wire",            DEF_WIRE,     t_Bool},
   {&do_texture,	 "texture",         "Texture",         DEF_TEXTURE,  t_Bool},
   {&do_tex_qual, "texture_quality", "Texture_Quality", DEF_TEX_QUAL, t_Bool},
   {&do_mipmap,   "mipmap",          "Mipmap",          DEF_MIPMAP,   t_Bool},
@@ -149,7 +139,6 @@ static OptionStruct desc[] =
 {
   {"-name num", "example 'name' to draw (helix2, helix3, helix4, joinoffset, screw, taper, twistoid)"},
   {"-/+ light", "whether to do enable lighting (slower)"},
-  {"-/+ wire", "whether to do use wireframe instead of filled (faster)"},
   {"-/+ texture", "whether to apply a texture (slower)"},
   {"-image <filename>", "texture image to load"},
   {"-/+ texture_quality", "whether to use texture smoothing (slower)"},
@@ -487,7 +476,7 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 
   if (do_light)
 	SetupLight();
-  if (do_wire) {
+  if (MI_IS_WIREFRAME(mi)) {
 	glPolygonMode(GL_FRONT,GL_LINE);
   	glPolygonMode(GL_BACK,GL_LINE);
   }
@@ -579,7 +568,7 @@ init_screensaver (ModeInfo * mi)
   int screen = MI_SCREEN(mi);
   screensaverstruct *gp;
 
-  if (do_wire) do_light = 0;
+  if (MI_IS_WIREFRAME(mi)) do_light = 0;
 
   if (Screensaver == NULL) {
 	if ((Screensaver = (screensaverstruct *)

@@ -527,7 +527,7 @@ bottom_right (lev_t * level, unsigned int *passed_x, unsigned int *passed_y)
 static void
 init_bonus_dots (lev_t * level)
 {
-    unsigned int x, y;
+    unsigned int x = 0, y = 0;
     top_left (level, &x, &y);
     bonus_dots[TOP_LEFT].x = x;
     bonus_dots[TOP_LEFT].y = y;

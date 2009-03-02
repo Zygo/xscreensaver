@@ -16,6 +16,7 @@ polyhedra - draws the 80 uniform polyhedra and their duals
 [\-wireframe]
 [\-no-titles]
 [\-which \fIname\fP]
+[\-wireframe]
 [\-fps]
 .SH DESCRIPTION
 This program renders 160 different 3D solids, and displays some

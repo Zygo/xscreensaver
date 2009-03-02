@@ -1590,8 +1590,8 @@ stop_the_insanity (saver_preferences *p)
 
 
   p->watchdog_timeout = p->cycle * 0.6;
-  if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */
-  if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
+  if (p->watchdog_timeout < 27000) p->watchdog_timeout = 27000;	  /* 27 secs */
+  if (p->watchdog_timeout > 57000) p->watchdog_timeout = 57000;   /* 57 secs */
 
   if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
   if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100;
