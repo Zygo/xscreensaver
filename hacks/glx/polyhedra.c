@@ -43,14 +43,17 @@
  *****************************************************************************
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include <math.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <math.h>
 #include <stdlib.h>
 #include <errno.h>
 
-#include "config.h"
 #include "polyhedra.h"
 
 extern const char *progname;
@@ -188,7 +191,7 @@ static void *matalloc(int rows, int row_size);
 static Fraction frax;
 
 
-static struct {
+static const struct {
   char *Wythoff, *name, *dual, *group, *class, *dual_class;
   short Coxeter, Wenninger;
 } uniform[] = {
@@ -976,7 +979,7 @@ mod (int i, int j)
 static void
 frac(double x)
 {
-  static Fraction zero = {0,1}, inf = {1,0};
+  static const Fraction zero = {0,1}, inf = {1,0};
   Fraction r0, r;
   long f;
   double s = x;
@@ -1421,7 +1424,7 @@ guessname(Polyhedron *P)
       return dihedral(P, "Dihedron", "Hosohedron");
     }
   } else {/* other nontabulated */
-    static char *pre[] = {"Tetr", "Oct", "Icos"};
+    static const char *pre[] = {"Tetr", "Oct", "Icos"};
     Malloc(P->name, 50, char);
     Malloc(P->dual_name, 50, char);
     sprintf(P->name, "%sahedral ", pre[P->K - 3]);
@@ -1916,7 +1919,7 @@ rotate(Vector vertex, Vector axis, double angle)
               scale(sin(angle), cross(axis, vertex)));
 }
 
-Vector x, y, z;
+static Vector x, y, z;
 
 /*
  * rotate the standard frame
@@ -1924,7 +1927,7 @@ Vector x, y, z;
 static void
 rotframe(double azimuth, double elevation, double angle)
 {
-  static Vector X = {1,0,0}, Y = {0,1,0}, Z = {0,0,1};
+  static const Vector X = {1,0,0}, Y = {0,1,0}, Z = {0,0,1};
   Vector axis;
 
   axis = rotate(rotate (X, Y, elevation), Z, azimuth);
@@ -2418,7 +2421,7 @@ construct_polyhedra (polyhedron ***polyhedra_ret)
   Malloc (result, last_uniform * 2 + 1, polyhedron*);
 
   while (index < last_uniform) {
-    static char sym[4];
+    char sym[4];
     Polyhedron *P;
 
     sprintf(sym, "#%d", index + 1);

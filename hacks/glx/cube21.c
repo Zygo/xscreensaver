@@ -41,28 +41,22 @@
  * In real OpenGL, PseudoColor DO NOT support texture map (as far as I know).
  */
 
-#define PROGCLASS     "Cube21"
-#define HACK_INIT     init_cube21
-#define HACK_DRAW     draw_cube21
-#define HACK_RESHAPE  reshape_cube21
-#define cube21_opts   xlockmore_opts
+#define DEFAULTS   "*delay:         20000         \n" \
+                   "*showFPS:       False         \n" \
+                   "*wireframe:     False         \n"
+
+# define refresh_cube21 0
+# define cube21_handle_event 0
+#include "xlockmore.h"
+
+#ifdef USE_GL
 
 #define DEF_XYSPEED   "1.0"
 #define DEF_TSPEED    "3.0"
 #define DEF_WSPEED    "1.0"
 #define DEF_TWAIT     "40.0"
 #define DEF_SIZE      "0.7"
-#define DEF_COLMODE   "(none)"
-
-#define DEFAULTS   "*delay:         20000         \n" \
-                   "*showFPS:       False         \n" \
-                   "*wireframe:     False         \n"
-
-#include "xlockmore.h"
-
-#ifdef USE_GL
-
-#include <GL/glu.h>
+#define DEF_COLMODE   "six"
 
 #ifdef Pi
 #undef Pi
@@ -90,7 +84,7 @@
 
 /*************************************************************************/
 
-static Bool wander, spin, wire, tex, rndstart, cmat;
+static Bool spin, wander, rndstart, tex;
 static float spinspeed, tspeed, wspeed, twait, size;
 static char *colmode_s;
 static int colmode;
@@ -125,7 +119,7 @@ static XrmOptionDescRec opts[] = {
   { "-colormode",   ".colormode",   XrmoptionSepArg, DEF_COLMODE }
 };
 
-ModeSpecOpt cube21_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt cube21_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   cube21_description =
@@ -173,27 +167,32 @@ typedef struct {
   int           pieces[2][13];  /* locations of "narrow" and "wide" pieces */
   int           cind[5][12];    /* color indices */
   GLfloat       colors[6][3];   /* color map */
+
+  Bool wire, cmat;
+  unsigned char texture[TEX_HEIGHT][TEX_WIDTH];
+
+  GLfloat texp, texq, posc[6];
+  GLfloat color_inner[4];
+
 } cube21_conf;
 
 static cube21_conf *cube21 = NULL;
-static unsigned char texture[TEX_HEIGHT][TEX_WIDTH];
 
-static GLfloat shininess = 20.0;
-static GLfloat ambient[] = {0.0, 0.0, 0.0, 1.0};
-static GLfloat diffuse[] = {1.0, 1.0, 1.0, 1.0};
-static GLfloat position0[] = {1.0, 1.0, 1.0, 0.0};
-static GLfloat position1[] = {-1.0, -1.0, 1.0, 0.0};
-static GLfloat lmodel_ambient[] = {0.1, 0.1, 0.1, 1.0};
-static GLfloat material_ambient[] = {0.7, 0.7, 0.7, 1.0};
-static GLfloat material_diffuse[] = {0.7, 0.7, 0.7, 1.0};
-static GLfloat material_specular[] = {0.2, 0.2, 0.2, 1.0};
-static GLfloat color_inner[] = {1.0, 1.0, 1.0};
-static GLfloat texp = 0.0, texq, posc[6];
-static GLfloat zpos = -18.0;
+static const GLfloat shininess = 20.0;
+static const GLfloat ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const GLfloat diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const GLfloat position0[] = {1.0, 1.0, 1.0, 0.0};
+static const GLfloat position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const GLfloat lmodel_ambient[] = {0.1, 0.1, 0.1, 1.0};
+static const GLfloat material_ambient[] = {0.7, 0.7, 0.7, 1.0};
+static const GLfloat material_diffuse[] = {0.7, 0.7, 0.7, 1.0};
+static const GLfloat material_specular[] = {0.2, 0.2, 0.2, 1.0};
+static const GLfloat zpos = -18.0;
 
 /*************************************************************************/
 
-static void find_matches(pieces_t pieces, int matches[12], int s) {
+static void find_matches(pieces_t pieces, int matches[12], int s) 
+{
   int i, j = 1;
   for(i = 1; i<6; i++) {
     if(pieces[s][i] && pieces[s][i+6]) {
@@ -208,7 +207,8 @@ static void find_matches(pieces_t pieces, int matches[12], int s) {
   matches[0] = j;
 }
 
-static void rot_face(pieces_t pieces, cind_t colors, int s, int o) {
+static void rot_face(pieces_t pieces, cind_t colors, int s, int o) 
+{
   int i;
   int tmp[12], tmpc[2][12];
   int c0 = 2*s, c1 = c0+1;
@@ -226,7 +226,8 @@ static void rot_face(pieces_t pieces, cind_t colors, int s, int o) {
   }
 }
 
-static void rot_halves(pieces_t pieces, cind_t colors, int hf[2], int s) {
+static void rot_halves(pieces_t pieces, cind_t colors, int hf[2], int s) 
+{
   int ss = 6*s, i, j, k, t;
   for(i = 0; i<6; i++) {
     j = ss+i; k = ss+6-i;
@@ -244,7 +245,8 @@ static void rot_halves(pieces_t pieces, cind_t colors, int hf[2], int s) {
   hf[s] ^= 1;
 }
 
-static void randomize(cube21_conf *cp) {
+static void randomize(cube21_conf *cp) 
+{
   int i, j, s;
   int matches[12];
   for(i = 0; i<SHUFFLE; i++) {
@@ -259,7 +261,8 @@ static void randomize(cube21_conf *cp) {
   }
 }
 
-static void finish(cube21_conf *cp) {
+static void finish(cube21_conf *cp) 
+{
   int j, s;
   int matches[12];
   switch(cp->state) {
@@ -314,174 +317,182 @@ static void finish(cube21_conf *cp) {
   cp->t = 0;
 }
 
-static void draw_narrow_piece(GLfloat s, int c1, int c2, col_t colors) {
-  GLfloat s1 = posc[0]*s;
+static void draw_narrow_piece(cube21_conf *cp, GLfloat s, int c1, int c2, col_t colors) 
+{
+  GLfloat s1 = cp->posc[0]*s;
   glBegin(GL_TRIANGLES);
   glNormal3f(0.0, 0.0, s);
-  if(cmat) glColor3fv(colors[c1]);
+  if(cp->cmat) glColor3fv(colors[c1]);
   glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
-  glTexCoord2f(texq, 0.0); glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(texp, 0.0); glVertex3f(posc[2], posc[3], s);
+  glTexCoord2f(cp->texq, 0.0); glVertex3f(cp->posc[1], 0.0, s);
+  glTexCoord2f(cp->texp, 0.0); glVertex3f(cp->posc[2], cp->posc[3], s);
   glNormal3f(0.0, 0.0, -s);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s1);
-  glVertex3f(posc[1], 0.0, s1);
-  glVertex3f(posc[2], posc[3], s1);
+  glVertex3f(cp->posc[1], 0.0, s1);
+  glVertex3f(cp->posc[2], cp->posc[3], s1);
   glEnd();
   glBegin(GL_QUADS);
   glNormal3f(0.0, -1.0, 0.0);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
-  glVertex3f(posc[1], 0.0, s);
-  glVertex3f(posc[1], 0.0, s1);
+  glVertex3f(cp->posc[1], 0.0, s);
+  glVertex3f(cp->posc[1], 0.0, s1);
   glVertex3f(0.0, 0.0, s1);
   glNormal3f(COS15, SIN15, 0.0);
-  if(cmat) glColor3fv(colors[c2]);
-  glTexCoord2f(texq, texq); glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(texq, texp); glVertex3f(posc[2], posc[3], s);
-  glTexCoord2f(1.0, texp);  glVertex3f(posc[2], posc[3], s1);
-  glTexCoord2f(1.0, texq);  glVertex3f(posc[1], 0.0, s1);
+  if(cp->cmat) glColor3fv(colors[c2]);
+  glTexCoord2f(cp->texq, cp->texq); glVertex3f(cp->posc[1], 0.0, s);
+  glTexCoord2f(cp->texq, cp->texp); glVertex3f(cp->posc[2], cp->posc[3], s);
+  glTexCoord2f(1.0, cp->texp);  glVertex3f(cp->posc[2], cp->posc[3], s1);
+  glTexCoord2f(1.0, cp->texq);  glVertex3f(cp->posc[1], 0.0, s1);
   glNormal3f(-SIN30, COS30, 0.0);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
-  glVertex3f(posc[2], posc[3], s);
-  glVertex3f(posc[2], posc[3], s1);
+  glVertex3f(cp->posc[2], cp->posc[3], s);
+  glVertex3f(cp->posc[2], cp->posc[3], s1);
   glVertex3f(0.0, 0.0, s1);
   glEnd();
   glRotatef(30.0, 0.0, 0.0, 1.0);
 }
 
-static void draw_wide_piece(GLfloat s, int c1, int c2, int c3, col_t colors) {
-  GLfloat s1 = posc[0]*s;
+static void draw_wide_piece(cube21_conf *cp, GLfloat s, int c1, int c2, int c3, col_t colors) 
+{
+  GLfloat s1 = cp->posc[0]*s;
   glBegin(GL_TRIANGLES);
   glNormal3f(0.0, 0.0, s);
-  if(cmat) glColor3fv(colors[c1]);
+  if(cp->cmat) glColor3fv(colors[c1]);
   glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
-  glTexCoord2f(texp, 0.0); glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(0.0, 0.0);  glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(0.0, 0.0);  glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(0.0, texp); glVertex3f(posc[3], posc[2], s);
+  glTexCoord2f(cp->texp, 0.0); glVertex3f(cp->posc[1], 0.0, s);
+  glTexCoord2f(0.0, 0.0);  glVertex3f(cp->posc[4], cp->posc[5], s);
+  glTexCoord2f(0.0, 0.0);  glVertex3f(cp->posc[4], cp->posc[5], s);
+  glTexCoord2f(0.0, cp->texp); glVertex3f(cp->posc[3], cp->posc[2], s);
   glTexCoord2f(0.5, 0.5);  glVertex3f(0.0, 0.0, s);
   glNormal3f(0.0, 0.0, -s);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s1);
-  glVertex3f(posc[1], 0.0, s1);
-  glVertex3f(posc[4], posc[5], s1);
-  glVertex3f(posc[4], posc[5], s1);
-  glVertex3f(posc[3], posc[2], s1);
+  glVertex3f(cp->posc[1], 0.0, s1);
+  glVertex3f(cp->posc[4], cp->posc[5], s1);
+  glVertex3f(cp->posc[4], cp->posc[5], s1);
+  glVertex3f(cp->posc[3], cp->posc[2], s1);
   glVertex3f(0.0, 0.0, s1);
   glEnd();
   glBegin(GL_QUADS);
   glNormal3f(0.0, -1.0, 0);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
-  glVertex3f(posc[1], 0.0, s);
-  glVertex3f(posc[1], 0.0, s1);
+  glVertex3f(cp->posc[1], 0.0, s);
+  glVertex3f(cp->posc[1], 0.0, s1);
   glVertex3f(0.0, 0.0, s1);
   glNormal3f(COS15, -SIN15, 0.0);
-  if(cmat) glColor3fv(colors[c2]);
-  glTexCoord2f(texq, texp); glVertex3f(posc[1], 0.0, s);
-  glTexCoord2f(texq, 0.0);  glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(1.0, 0.0);   glVertex3f(posc[4], posc[5], s1);
-  glTexCoord2f(1.0, texp);  glVertex3f(posc[1], 0.0, s1);
+  if(cp->cmat) glColor3fv(colors[c2]);
+  glTexCoord2f(cp->texq, cp->texp); glVertex3f(cp->posc[1], 0.0, s);
+  glTexCoord2f(cp->texq, 0.0);  glVertex3f(cp->posc[4], cp->posc[5], s);
+  glTexCoord2f(1.0, 0.0);   glVertex3f(cp->posc[4], cp->posc[5], s1);
+  glTexCoord2f(1.0, cp->texp);  glVertex3f(cp->posc[1], 0.0, s1);
   glNormal3f(SIN15, COS15, 0.0);
-  if(cmat) glColor3fv(colors[c3]);
-  glTexCoord2f(texq, texp); glVertex3f(posc[4], posc[5], s);
-  glTexCoord2f(texq, 0.0);  glVertex3f(posc[3], posc[2], s);
-  glTexCoord2f(1.0, 0.0);   glVertex3f(posc[3], posc[2], s1);
-  glTexCoord2f(1.0, texp);  glVertex3f(posc[4], posc[5], s1);
+  if(cp->cmat) glColor3fv(colors[c3]);
+  glTexCoord2f(cp->texq, cp->texp); glVertex3f(cp->posc[4], cp->posc[5], s);
+  glTexCoord2f(cp->texq, 0.0);  glVertex3f(cp->posc[3], cp->posc[2], s);
+  glTexCoord2f(1.0, 0.0);   glVertex3f(cp->posc[3], cp->posc[2], s1);
+  glTexCoord2f(1.0, cp->texp);  glVertex3f(cp->posc[4], cp->posc[5], s1);
   glNormal3f(-COS30, SIN30, 0.0);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glTexCoord2f(TEX_GRAY);
   glVertex3f(0.0, 0.0, s);
-  glVertex3f(posc[3], posc[2], s);
-  glVertex3f(posc[3], posc[2], s1);
+  glVertex3f(cp->posc[3], cp->posc[2], s);
+  glVertex3f(cp->posc[3], cp->posc[2], s1);
   glVertex3f(0.0, 0.0, s1);
   glEnd();
   glRotatef(60.0, 0.0, 0.0, 1.0);
 }
 
-static void draw_middle_piece(int s, cind_t cind, col_t colors) {
+static void draw_middle_piece(cube21_conf *cp, int s, cind_t cind, col_t colors) 
+{
   s *= 6;
   glBegin(GL_QUADS);
-  if(cmat) glColor3fv(color_inner);
+  if(cp->cmat) glColor3fv(cp->color_inner);
   glNormal3f(0.0, 0.0, 1.0);
   glTexCoord2f(TEX_GRAY);
-  glVertex3f(posc[1], 0.0, posc[0]);
-  glVertex3f(posc[4], posc[5], posc[0]);
-  glVertex3f(-posc[5], posc[4], posc[0]);
-  glVertex3f(-posc[1], 0.0, posc[0]);
+  glVertex3f(cp->posc[1], 0.0, cp->posc[0]);
+  glVertex3f(cp->posc[4], cp->posc[5], cp->posc[0]);
+  glVertex3f(-cp->posc[5], cp->posc[4], cp->posc[0]);
+  glVertex3f(-cp->posc[1], 0.0, cp->posc[0]);
   glNormal3f(0.0, 0.0, -1.0);
   glTexCoord2f(TEX_GRAY);
-  glVertex3f(posc[1], 0.0, -posc[0]);
-  glVertex3f(posc[4], posc[5], -posc[0]);
-  glVertex3f(-posc[5], posc[4], -posc[0]);
-  glVertex3f(-posc[1], 0.0, -posc[0]);
+  glVertex3f(cp->posc[1], 0.0, -cp->posc[0]);
+  glVertex3f(cp->posc[4], cp->posc[5], -cp->posc[0]);
+  glVertex3f(-cp->posc[5], cp->posc[4], -cp->posc[0]);
+  glVertex3f(-cp->posc[1], 0.0, -cp->posc[0]);
   glNormal3f(0.0, -1.0, 0.0);
   glTexCoord2f(TEX_GRAY);
-  glVertex3f(-posc[1], 0.0, posc[0]);
-  glVertex3f(posc[1], 0.0, posc[0]);
-  glVertex3f(posc[1], 0.0, -posc[0]);
-  glVertex3f(-posc[1], 0.0, -posc[0]);
+  glVertex3f(-cp->posc[1], 0.0, cp->posc[0]);
+  glVertex3f(cp->posc[1], 0.0, cp->posc[0]);
+  glVertex3f(cp->posc[1], 0.0, -cp->posc[0]);
+  glVertex3f(-cp->posc[1], 0.0, -cp->posc[0]);
   glNormal3f(COS15, -SIN15, 0.0);
-  if(cmat) glColor3fv(colors[cind[4][s]]);
-  glTexCoord2f(texq, texp); glVertex3f(posc[1], 0.0, posc[0]);
-  glTexCoord2f(1.0, texp);  glVertex3f(posc[4], posc[5], posc[0]);
-  glTexCoord2f(1.0, texq);  glVertex3f(posc[4], posc[5], -posc[0]);
-  glTexCoord2f(texq, texq); glVertex3f(posc[1], 0.0, -posc[0]);
+  if(cp->cmat) glColor3fv(colors[cind[4][s]]);
+  glTexCoord2f(cp->texq, cp->texp); glVertex3f(cp->posc[1], 0.0, cp->posc[0]);
+  glTexCoord2f(1.0, cp->texp);  glVertex3f(cp->posc[4], cp->posc[5], cp->posc[0]);
+  glTexCoord2f(1.0, cp->texq);  glVertex3f(cp->posc[4], cp->posc[5], -cp->posc[0]);
+  glTexCoord2f(cp->texq, cp->texq); glVertex3f(cp->posc[1], 0.0, -cp->posc[0]);
   glNormal3f(SIN15, COS15, 0.0);
-  if(cmat) glColor3fv(colors[cind[4][s+1]]);
-  glTexCoord2f(0.0, 0.5);   glVertex3f(posc[4], posc[5], posc[0]);
-  glTexCoord2f(texq, 0.5); glVertex3f(-posc[5], posc[4], posc[0]);
-  glTexCoord2f(texq, 0.75); glVertex3f(-posc[5], posc[4], -posc[0]);
-  glTexCoord2f(0.0, 0.75);   glVertex3f(posc[4], posc[5], -posc[0]);
+  if(cp->cmat) glColor3fv(colors[cind[4][s+1]]);
+  glTexCoord2f(0.0, 0.5);   glVertex3f(cp->posc[4], cp->posc[5], cp->posc[0]);
+  glTexCoord2f(cp->texq, 0.5); glVertex3f(-cp->posc[5], cp->posc[4], cp->posc[0]);
+  glTexCoord2f(cp->texq, 0.75); glVertex3f(-cp->posc[5], cp->posc[4], -cp->posc[0]);
+  glTexCoord2f(0.0, 0.75);   glVertex3f(cp->posc[4], cp->posc[5], -cp->posc[0]);
   glNormal3f(-COS15, SIN15, 0.0);
-  if(cmat) glColor3fv(colors[cind[4][s+4]]);
-  glTexCoord2f(0.0, 0.75); glVertex3f(-posc[5], posc[4], posc[0]);
-  glTexCoord2f(1.0, 0.75); glVertex3f(-posc[1], 0.0, posc[0]);
-  glTexCoord2f(1.0, 1.0);  glVertex3f(-posc[1], 0.0, -posc[0]);
-  glTexCoord2f(0.0, 1.0);  glVertex3f(-posc[5], posc[4], -posc[0]);
+  if(cp->cmat) glColor3fv(colors[cind[4][s+4]]);
+  glTexCoord2f(0.0, 0.75); glVertex3f(-cp->posc[5], cp->posc[4], cp->posc[0]);
+  glTexCoord2f(1.0, 0.75); glVertex3f(-cp->posc[1], 0.0, cp->posc[0]);
+  glTexCoord2f(1.0, 1.0);  glVertex3f(-cp->posc[1], 0.0, -cp->posc[0]);
+  glTexCoord2f(0.0, 1.0);  glVertex3f(-cp->posc[5], cp->posc[4], -cp->posc[0]);
   glEnd();
 }
 
-static void draw_middle(cube21_conf *cp) {
+static void draw_middle(cube21_conf *cp) 
+{
   if(cp->hf[0]) glRotatef(180.0, 0.0, 1.0, 0.0);
-  draw_middle_piece(0, cp->cind, cp->colors);
+  draw_middle_piece(cp, 0, cp->cind, cp->colors);
   if(cp->hf[0]) glRotatef(180.0, 0.0, 1.0, 0.0);
   glRotatef(180.0, 0.0, 0.0, 1.0);
   if(cp->hf[1]) glRotatef(180.0, 0.0, 1.0, 0.0);
-  draw_middle_piece(1, cp->cind, cp->colors);
+  draw_middle_piece(cp, 1, cp->cind, cp->colors);
   if(cp->hf[1]) glRotatef(180.0, 0.0, 1.0, 0.0);
 }
 
-static void draw_half_face(cube21_conf *cp, int s, int o) {
+static void draw_half_face(cube21_conf *cp, int s, int o) 
+{
   int i, s1 = 1-s*2, s2 = s*2;
   for(i = o; i<o+6; i++) {
     if(cp->pieces[s][i+1])
-      draw_narrow_piece(s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->colors);
+      draw_narrow_piece(cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->colors);
     else {
-      draw_wide_piece(s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->cind[s2+1][i+1], cp->colors);
+      draw_wide_piece(cp, s1, cp->cind[s2][i], cp->cind[s2+1][i], cp->cind[s2+1][i+1], cp->colors);
       i++;
     }
   }
 }
 
-static void draw_top_face(cube21_conf *cp) {
+static void draw_top_face(cube21_conf *cp) 
+{
   draw_half_face(cp, 0, 0);
   draw_half_face(cp, 0, 6);
 }
 
-static void draw_bottom_face(cube21_conf *cp) {
+static void draw_bottom_face(cube21_conf *cp) 
+{
   draw_half_face(cp, 1, 0);
   draw_half_face(cp, 1, 6);
 }
 
-static Bool draw_main(cube21_conf *cp) {
+static Bool draw_main(cube21_conf *cp) 
+{
   GLfloat theta = cp->ramount<0?cp->t:-cp->t;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -492,7 +503,7 @@ static Bool draw_main(cube21_conf *cp) {
   glScalef(size, size, size);
   glRotatef(cp->xrot, 1.0, 0.0, 0.0);
   glRotatef(cp->yrot, 0.0, 1.0, 0.0);
-  if(wire) glColor3f(0.7, 0.7, 0.7);
+  if(cp->wire) glColor3f(0.7, 0.7, 0.7);
   switch(cp->state) {
     case CUBE21_PAUSE1:
     case CUBE21_PAUSE2:
@@ -522,7 +533,7 @@ static Bool draw_main(cube21_conf *cp) {
       draw_half_face(cp, 1, 0);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
       if(cp->hf[0]) glRotatef(180.0, 0.0, 1.0, 0.0);
-      draw_middle_piece(0, cp->cind, cp->colors);
+      draw_middle_piece(cp, 0, cp->cind, cp->colors);
       if(cp->hf[0]) glRotatef(180.0, 0.0, 1.0, 0.0);
       if(cp->state==CUBE21_HALF1)
         glRotatef(-theta, 0.0, 1.0, 0.0);
@@ -534,7 +545,7 @@ static Bool draw_main(cube21_conf *cp) {
       draw_half_face(cp, 1, 6);
       glRotatef(-180.0, 0.0, 0.0, 1.0);
       if(cp->hf[1]) glRotatef(180.0, 0.0, 1.0, 0.0);
-      draw_middle_piece(1, cp->cind, cp->colors);
+      draw_middle_piece(cp, 1, cp->cind, cp->colors);
       break;
   }
   if(spin) {
@@ -547,7 +558,8 @@ static Bool draw_main(cube21_conf *cp) {
   return True;
 }
 
-void parse_colmode(void) {
+static void parse_colmode(void) 
+{
   if(!colmode_s) {
     colmode = CUBE21_COLOR_WHITE;
     return;
@@ -560,21 +572,23 @@ void parse_colmode(void) {
   else colmode = CUBE21_COLOR_WHITE;
 }
 
-static void init_posc(void) {
-  texp = (1.0-tan(Pi/12.0))/2.0;
-  texq = 1.0-texp;
+static void init_posc(cube21_conf *cp) 
+{
+  cp->texp = (1.0-tan(Pi/12.0))/2.0;
+  cp->texq = 1.0-cp->texp;
   /* Some significant non-trivial coordinates
    * of the object. We need them exactly at GLfloat precision
    * for the edges to line up perfectly. */
-  posc[0] = tan(Pi/12);            /* 0.268 */
-  posc[1] = 1.0/cos(Pi/12);        /* 1.035 */
-  posc[2] = cos(Pi/6)/cos(Pi/12);  /* 0.897 */
-  posc[3] = sin(Pi/6)/cos(Pi/12);  /* 0.518 */
-  posc[4] = sqrt(2)*cos(Pi/6);     /* 1.225 */
-  posc[5] = sqrt(2)*sin(Pi/6);     /* 0.707 = 1/sqrt(2) */
+  cp->posc[0] = tan(Pi/12);            /* 0.268 */
+  cp->posc[1] = 1.0/cos(Pi/12);        /* 1.035 */
+  cp->posc[2] = cos(Pi/6)/cos(Pi/12);  /* 0.897 */
+  cp->posc[3] = sin(Pi/6)/cos(Pi/12);  /* 0.518 */
+  cp->posc[4] = sqrt(2)*cos(Pi/6);     /* 1.225 */
+  cp->posc[5] = sqrt(2)*sin(Pi/6);     /* 0.707 = 1/sqrt(2) */
 }
 
-static void draw_horz_line(int x1, int x2, int y) {
+static void draw_horz_line(cube21_conf *cp, int x1, int x2, int y) 
+{
   int x, y0 = y, w;
   if(y<BORDER) y = -y;
   else y = -BORDER;
@@ -582,11 +596,12 @@ static void draw_horz_line(int x1, int x2, int y) {
     if(y0+y>=TEX_HEIGHT) break;
     w = y*y*255/BORDER2;
     for(x=x1; x<=x2; x++)
-      if(texture[y0+y][x]>w) texture[y0+y][x] = w;
+      if(cp->texture[y0+y][x]>w) cp->texture[y0+y][x] = w;
   }
 }
 
-static void draw_vert_line(int x, int y1, int y2) {
+static void draw_vert_line(cube21_conf *cp, int x, int y1, int y2) 
+{
   int x0 = x, y, w;
   if(x<BORDER) x = -x;
   else x = -BORDER;
@@ -594,11 +609,12 @@ static void draw_vert_line(int x, int y1, int y2) {
     if(x0+x>=TEX_WIDTH) break;
     w = x*x*255/BORDER2;
     for(y=y1; y<=y2; y++)
-      if(texture[y][x0+x]>w) texture[y][x0+x] = w;
+      if(cp->texture[y][x0+x]>w) cp->texture[y][x0+x] = w;
   }
 }
 
-static void draw_slanted_horz(int x1, int y1, int x2, int y2) {
+static void draw_slanted_horz(cube21_conf *cp, int x1, int y1, int x2, int y2) 
+{
   int x, y, dx = x2-x1, dy = y2-y1, y0, w;
   for(x=x1; x<=x2; x++) {
     y0 = y1+(y2-y1)*(x-x1)/(x2-x1);
@@ -606,12 +622,13 @@ static void draw_slanted_horz(int x1, int y1, int x2, int y2) {
       w = dx*(y0+y-y1)-dy*(x-x1);
       w = w*w/(dx*dx+dy*dy);
       w = w*255/BORDER2;
-      if(texture[y0+y][x]>w) texture[y0+y][x] = w;
+      if(cp->texture[y0+y][x]>w) cp->texture[y0+y][x] = w;
     }
   }
 }
 
-static void draw_slanted_vert(int x1, int y1, int x2, int y2) {
+static void draw_slanted_vert(cube21_conf *cp, int x1, int y1, int x2, int y2) 
+{
   int x, y, dx = x2-x1, dy = y2-y1, x0, w;
   for(y=y1; y<=y2; y++) {
     x0 = x1+(x2-x1)*(y-y1)/(y2-y1);
@@ -619,55 +636,62 @@ static void draw_slanted_vert(int x1, int y1, int x2, int y2) {
       w = dy*(x0+x-x1)-dx*(y-y1);
       w = w*w/(dy*dy+dx*dx);
       w = w*255/BORDER2;
-      if(texture[y][x0+x]>w) texture[y][x0+x] = w;
+      if(cp->texture[y][x0+x]>w) cp->texture[y][x0+x] = w;
     }
   }
 }
 
-static void make_texture(void) {
+static void make_texture(cube21_conf *cp) 
+{
   int x, y, x0, y0;
   float grayp[2] = {TEX_GRAY};
   for(y=0; y<TEX_HEIGHT; y++)
     for(x=0; x<TEX_WIDTH; x++)
-      texture[y][x] = 255;
-  draw_horz_line(0, TEX_WIDTH-1, 0);
-  draw_horz_line(texq*TEX_WIDTH, TEX_WIDTH-1, texp*TEX_HEIGHT);
-  draw_horz_line(texq*TEX_WIDTH, TEX_WIDTH-1, texq*TEX_HEIGHT);
-  draw_horz_line(0, texq*TEX_WIDTH, TEX_HEIGHT/2);
-  draw_horz_line(0, TEX_WIDTH-1, TEX_HEIGHT*3/4);
-  draw_horz_line(0, TEX_WIDTH-1, TEX_HEIGHT-1);
-  draw_vert_line(0, 0, TEX_HEIGHT-1);
-  draw_vert_line(texq*TEX_WIDTH, 0, TEX_HEIGHT*3/4);
-  draw_vert_line(TEX_WIDTH-1, 0, TEX_HEIGHT-1);
-  draw_slanted_horz(0, texp*TEX_HEIGHT, TEX_WIDTH/2, TEX_HEIGHT/2);
-  draw_slanted_vert(texp*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
-  draw_slanted_vert(texq*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
+      cp->texture[y][x] = 255;
+  draw_horz_line(cp, 0, TEX_WIDTH-1, 0);
+  draw_horz_line(cp, cp->texq*TEX_WIDTH, TEX_WIDTH-1, cp->texp*TEX_HEIGHT);
+  draw_horz_line(cp, cp->texq*TEX_WIDTH, TEX_WIDTH-1, cp->texq*TEX_HEIGHT);
+  draw_horz_line(cp, 0, cp->texq*TEX_WIDTH, TEX_HEIGHT/2);
+  draw_horz_line(cp, 0, TEX_WIDTH-1, TEX_HEIGHT*3/4);
+  draw_horz_line(cp, 0, TEX_WIDTH-1, TEX_HEIGHT-1);
+  draw_vert_line(cp, 0, 0, TEX_HEIGHT-1);
+  draw_vert_line(cp, cp->texq*TEX_WIDTH, 0, TEX_HEIGHT*3/4);
+  draw_vert_line(cp, TEX_WIDTH-1, 0, TEX_HEIGHT-1);
+  draw_slanted_horz(cp, 0, cp->texp*TEX_HEIGHT, TEX_WIDTH/2, TEX_HEIGHT/2);
+  draw_slanted_vert(cp, cp->texp*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
+  draw_slanted_vert(cp, cp->texq*TEX_WIDTH, 0, TEX_WIDTH/2, TEX_HEIGHT/2);
   x0 = grayp[0]*TEX_WIDTH;
   y0 = grayp[1]*TEX_HEIGHT;
   for(y=-1; y<=1; y++)
     for(x=-1; x<=1; x++)
-      texture[y0+y][x0+x] = 100;   
+      cp->texture[y0+y][x0+x] = 100;   
 }
 
 /* It doesn't look good */
 /*#define MIPMAP*/
 
-static void init_gl(ModeInfo *mi) {
+static void init_gl(ModeInfo *mi) 
+{
+  cube21_conf *cp = &cube21[MI_SCREEN(mi)];
 #ifdef MIPMAP
   int status;
 #endif
   parse_colmode();
-  wire = MI_IS_WIREFRAME(mi);
-  cmat = !wire && (colmode != CUBE21_COLOR_WHITE);
+  cp->wire = MI_IS_WIREFRAME(mi);
+  cp->cmat = !cp->wire && (colmode != CUBE21_COLOR_WHITE);
   if(MI_IS_MONO(mi)) {
     tex = False;
-    cmat = False;
+    cp->cmat = False;
   }
-  if(wire) {
+  if(cp->wire) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     return;
   }
-  if(!tex) color_inner[0] = color_inner[1] = color_inner[2] = 0.4;
+  if(!tex)
+    cp->color_inner[0] = cp->color_inner[1] = cp->color_inner[2] = 0.4;
+  else
+    cp->color_inner[0] = cp->color_inner[1] = cp->color_inner[2] = 1.0;
+
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glDrawBuffer(GL_BACK);
@@ -706,7 +730,7 @@ static void init_gl(ModeInfo *mi) {
   check_gl_error("mipmapping");
 #else    
   glTexImage2D(GL_TEXTURE_2D, 0, 1, TEX_WIDTH, TEX_HEIGHT,
-      0, GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
+      0, GL_LUMINANCE, GL_UNSIGNED_BYTE, cp->texture);
 #endif  
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -719,7 +743,8 @@ static void init_gl(ModeInfo *mi) {
 #endif
 }
 
-static void init_cp(cube21_conf *cp) {
+static void init_cp(cube21_conf *cp) 
+{
   int i, j;
   GLfloat ce_colors[6][3] = {
     {1.0, 1.0, 1.0},
@@ -787,7 +812,8 @@ static void init_cp(cube21_conf *cp) {
 
 /*************************************************************************/
 
-void reshape_cube21(ModeInfo *mi, int width, int height) {
+ENTRYPOINT void reshape_cube21(ModeInfo *mi, int width, int height) 
+{
   cube21_conf *cp = &cube21[MI_SCREEN(mi)];
   if(!height) height = 1;
   cp->ratio = (GLfloat)width/(GLfloat)height;
@@ -799,7 +825,8 @@ void reshape_cube21(ModeInfo *mi, int width, int height) {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void release_cube21(ModeInfo *mi) {
+ENTRYPOINT void release_cube21(ModeInfo *mi) 
+{
   if (cube21 != NULL) {
     int screen;
     for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
@@ -814,17 +841,20 @@ void release_cube21(ModeInfo *mi) {
   FreeAllGL(mi);
 }
 
-void init_cube21(ModeInfo *mi) {
+ENTRYPOINT void init_cube21(ModeInfo *mi) 
+{
   cube21_conf *cp;
   if(!cube21) {
     cube21 = (cube21_conf *)calloc(MI_NUM_SCREENS(mi), sizeof(cube21_conf));
     if(!cube21) return;
   }
-  if(!texp) {
-    init_posc();
-    make_texture();
-  }
   cp = &cube21[MI_SCREEN(mi)];
+
+  if(!cp->texp) {
+    init_posc(cp);
+    make_texture(cp);
+  }
+
   if ((cp->glx_context = init_GL(mi)) != NULL) {
     init_gl(mi);
     init_cp(cp);
@@ -834,7 +864,8 @@ void init_cube21(ModeInfo *mi) {
   }
 }
 
-void draw_cube21(ModeInfo * mi) {
+ENTRYPOINT void draw_cube21(ModeInfo * mi) 
+{
   Display *display = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   cube21_conf *cp;
@@ -852,11 +883,17 @@ void draw_cube21(ModeInfo * mi) {
   glXSwapBuffers(display, window);
 }
 
-void change_cube21(ModeInfo * mi) {
+#ifndef STANDALONE
+ENTRYPOINT void change_cube21(ModeInfo * mi) 
+{
   cube21_conf *cp = &cube21[MI_SCREEN(mi)];
   if (!cp->glx_context) return;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
   init_gl(mi);
 }
+#endif /* !STANDALONE */
+
+
+XSCREENSAVER_MODULE ("Cube21", cube21)
 
 #endif

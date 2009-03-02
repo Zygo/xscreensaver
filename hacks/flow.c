@@ -98,20 +98,14 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_flow
-# define PROGCLASS "Flow"
-# define HACK_INIT init_flow
-# define HACK_DRAW draw_flow
-# define flow_opts xlockmore_opts
 # define DEFAULTS   "*delay:       10000 \n" \
-					"*count:        3000 \n" \
-					"*size:         -10 \n" \
-					"*cycles:       10000 \n" \
-					"*ncolors:      200 \n" \
-
+					"*count:       3000  \n" \
+					"*size:        -10   \n" \
+					"*cycles:      10000 \n" \
+					"*ncolors:     200   \n"
+# define reshape_flow 0
+# define flow_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
-# ifndef MI_DEPTH
-#  define MI_DEPTH MI_WIN_DEPTH
-# endif
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
@@ -165,7 +159,7 @@ static OptionStruct desc[] = {
     {"-/+dbuf",     "turn on/off double buffering."},
 };
 
-ModeSpecOpt flow_opts =
+ENTRYPOINT ModeSpecOpt flow_opts =
 {sizeof opts / sizeof opts[0], opts,
  sizeof vars / sizeof vars[0], vars, desc};
 
@@ -627,8 +621,8 @@ clip(double nx, double ny, double nz, double d, dvector *s, dvector *e)
  * Public functions
  */
 
-void
-init_flow(ModeInfo * mi)
+ENTRYPOINT void
+init_flow (ModeInfo * mi)
 {
 	flowstruct *sp;
 	char       *name;
@@ -785,6 +779,10 @@ init_flow(ModeInfo * mi)
 		sp->beecount = NRAND(-sp->beecount) + 1; /* Minimum 1 */
 	}
 
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  dbufp = False;
+# endif
+
 	if(dbufp) { /* Set up double buffer */
 		if (sp->buffer != None)
 			XFreePixmap(MI_DISPLAY(mi), sp->buffer);
@@ -821,8 +819,8 @@ init_flow(ModeInfo * mi)
 	Z(1, 0) = sp->cam[1].z = 0;
 }
 
-void
-draw_flow(ModeInfo * mi)
+ENTRYPOINT void
+draw_flow (ModeInfo * mi)
 {
 	int         b, i;
 	int         col, begin, end;
@@ -836,6 +834,10 @@ draw_flow(ModeInfo * mi)
 	sp = &flows[MI_SCREEN(mi)];
 	if (sp->csegs == NULL)
 		return;
+
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
 
 	/* multiplier for indexing segment arrays.  Used in IX macro, etc. */
 	segindex = (sp->beecount + BOX_L) * sp->taillen;
@@ -1198,8 +1200,8 @@ draw_flow(ModeInfo * mi)
 	}
 }
 
-void
-release_flow(ModeInfo * mi)
+ENTRYPOINT void
+release_flow (ModeInfo * mi)
 {
 	if (flows != NULL) {
 		int         screen;
@@ -1211,10 +1213,12 @@ release_flow(ModeInfo * mi)
 	}
 }
 
-void
-refresh_flow(ModeInfo * mi)
+ENTRYPOINT void
+refresh_flow (ModeInfo * mi)
 {
 	if(!dbufp) MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Flow", flow)
 
 #endif /* MODE_flow */

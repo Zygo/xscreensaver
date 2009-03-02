@@ -102,32 +102,26 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
  */
 
 #define DEF_TEXTURE "True"
-#define DEF_GRADIENT "False"
+#define DEF_GRADIENT "True"
 #define DEF_WHALESPEED  "250"
 
 #ifdef STANDALONE
-# define PROGCLASS	"Atlantis"
-# define HACK_INIT	init_atlantis
-# define HACK_DRAW	draw_atlantis
-# define HACK_RESHAPE	reshape_atlantis
-# define atlantis_opts	xlockmore_opts
 # define DEFAULTS	"*delay:       25000 \n" \
 			 "*count:          4 \n" \
 			 "*showFPS:    False \n" \
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
-			 "*wireframe:  False \n" \
-
+			 "*wireframe:  False \n"
+# define atlantis_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
-#include "vis.h"
+# include "vis.h"
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
 
 #include "atlantis.h"
-#include <GL/glu.h>
 
 
 static int  whalespeed;
@@ -156,7 +150,7 @@ static OptionStruct desc[] =
 	{"-gradient",       "whether to introduce gradient-filled background"},
 };
 
-ModeSpecOpt atlantis_opts =
+ENTRYPOINT ModeSpecOpt atlantis_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -228,24 +222,16 @@ Init(ModeInfo *mi)
 {
 	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
 
-	static float ambient[] =
-	{0.1, 0.1, 0.1, 1.0};
-	static float diffuse[] =
-	{1.0, 1.0, 1.0, 1.0};
-	static float position[] =
-	{0.0, 1.0, 0.0, 0.0};
-	static float mat_shininess[] =
-	{90.0};
-	static float mat_specular[] =
-	{0.8, 0.8, 0.8, 1.0};
-	static float mat_diffuse[] =
-	{0.46, 0.66, 0.795, 1.0};
-	static float mat_ambient[] =
-	{0.0, 0.1, 0.2, 1.0};
-	static float lmodel_ambient[] =
-	{0.4, 0.4, 0.4, 1.0};
-	static float lmodel_localviewer[] =
-	{0.0};
+	static const float ambient[]        = {0.1, 0.1, 0.1, 1.0};
+	static const float diffuse[]        = {1.0, 1.0, 1.0, 1.0};
+	static const float position[]       = {0.0, 1.0, 0.0, 0.0};
+	static const float mat_shininess[]  = {90.0};
+	static const float mat_specular[]   = {0.8, 0.8, 0.8, 1.0};
+	static const float mat_diffuse[]    = {0.46, 0.66, 0.795, 1.0};
+	static const float mat_ambient[]    = {0.0, 0.1, 0.2, 1.0};
+	static const float lmodel_ambient[] = {0.4, 0.4, 0.4, 1.0};
+	static const float lmodel_localviewer[] = {0.0};
+
 	float        fblue = 0.0, fgreen;
 
 	glFrontFace(GL_CCW);
@@ -329,7 +315,7 @@ Init(ModeInfo *mi)
 	glClearColor(0.0, fgreen, fblue, 0.0);
 }
 
-void
+ENTRYPOINT void
 reshape_atlantis(ModeInfo * mi, int width, int height)
 {
 	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
@@ -458,7 +444,7 @@ AllDisplay(atlantisstruct * ap)
  *-----------------------------------------------------------------------------
  */
 
-void
+ENTRYPOINT void
 init_atlantis(ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
@@ -518,7 +504,7 @@ init_atlantis(ModeInfo * mi)
  *    Called by the mainline code periodically to update the display.
  *-----------------------------------------------------------------------------
  */
-void
+ENTRYPOINT void
 draw_atlantis(ModeInfo * mi)
 {
 	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
@@ -551,7 +537,7 @@ draw_atlantis(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void
+ENTRYPOINT void
 release_atlantis(ModeInfo * mi)
 {
 	int         screen;
@@ -569,12 +555,13 @@ release_atlantis(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
-void
+ENTRYPOINT void
 refresh_atlantis(ModeInfo * mi)
 {
 }
 
-void
+#ifndef STANDALONE
+ENTRYPOINT void
 change_atlantis(ModeInfo * mi)
 {
 	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
@@ -585,5 +572,8 @@ change_atlantis(ModeInfo * mi)
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ap->glx_context));
 	Init(mi);
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("Atlantis", atlantis)
 
 #endif /* USE_GL */

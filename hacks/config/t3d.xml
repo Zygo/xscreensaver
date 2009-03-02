@@ -26,7 +26,7 @@
           low="0.1" high="4.0" default="1.0"/>
 
   <select id="mins">
-    <option id="min2" _label="Minute Tick Marks" arg-set="-minute"/>
+    <option id="min2" _label="Minute Tick Marks" arg-set="-minutes"/>
     <option id="min5" _label="5 Minute Tick Marks"/>
   </select>
 
@@ -37,7 +37,8 @@
   <!-- #### -hsv [?] -->
 
   <_description>
-This draws a working analog clock composed of floating, throbbing
-bubbles.  Written by Bernd Paysan.
+Draws a working analog clock composed of floating, throbbing bubbles.
+
+Written by Bernd Paysan; 1999.
   </_description>
 </screensaver>

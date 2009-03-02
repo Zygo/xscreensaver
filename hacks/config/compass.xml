@@ -9,10 +9,12 @@
           low="0" high="20000" default="20000"
           convert="invert"/>
 
-  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/>
+<!--  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/> -->
 
   <_description>
 This draws a compass, with all elements spinning about randomly, for
-that ``lost and nauseous'' feeling. Written by Jamie Zawinski.
+that "lost and nauseous" feeling.
+
+Written by Jamie Zawinski; 1999.
   </_description>
 </screensaver>

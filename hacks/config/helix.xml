@@ -9,7 +9,8 @@
           low="1" high="60" default="5"/>
 
   <_description>
-This repeatedly generates spirally string-art-ish patterns.  Written
-by Jamie Zawinski.
+Spirally string-art-ish patterns.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>

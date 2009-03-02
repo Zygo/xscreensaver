@@ -43,10 +43,7 @@
 
 #define MAXRATIO 2
 
-
-char *progclass="Truchet";
-
-char *defaults [] = {
+static const char *truchet_defaults [] = {
   "*minWidth:                 40",
   "*minHeight:                40",
   "*max-Width:                150",
@@ -59,17 +56,16 @@ char *defaults [] = {
   "*delay:                    1000",
   "*curves:                   True",
   "*angles:                   True",
-  "*angles-and-curves:        True",
   "*scroll:                   False",
   "*scroll-overlap:           400",
   "*anim-delay:               100",
   "*anim-step-size:           3",
-  "*randomize:		      false",
+  "*randomize:		      true",
    0
 };
 
 /* options passed to this program */
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec truchet_options [] = {
   { "-min-width",      ".minWidth",       XrmoptionSepArg, 0 },
   { "-max-height",     ".max-Height",      XrmoptionSepArg, 0 },
   { "-max-width",      ".max-Width",       XrmoptionSepArg, 0 },
@@ -94,131 +90,18 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-static GC agc, bgc;
-static int linewidth;
-static int width, height;
-static XWindowAttributes xgwa;
-static Pixmap frame;
-static int overlap;
+struct state {
+  Display *dpy;
+  Window window;
 
-static void draw_truchet(Display *disp, Window win);
-static void draw_angles(Display *disp, Window win);
-static void scroll_area(Display *disp, Window win, int delay, int step_size);
-
-static void draw_angles(Display *disp, Window win)
-{
-  int countX;
-  int countY;
-
-  countX=0;
-  countY=0;
-  
-  while((xgwa.height+overlap) > countY*height)
-	{
-	  while((xgwa.width+overlap) > countX*width)
-	    {
-	      if(random()%2)
-	      {
-		/* block1 */
-		XDrawLine(disp,frame,agc,
-			  (countX*width)+(width/2),
-			  (countY*height), 
-			  (countX*width)+(width),
-			  (countY*height)+(height/2));
-		XDrawLine(disp,frame,agc,
-			  (countX*width), 
-			  (countY*height)+(height/2),
-			  (countX*width)+(width/2),
-			  (countY*height)+(height));
-	      }
-	    else
-	      {
-		/* block 2 */
-		XDrawLine(disp,frame,agc, 
-			  (countX*width)+(width/2),
-			  (countY*height),
-			  (countX*width),
-			  (countY*height)+(height/2));
-		XDrawLine(disp,frame,agc,
-			  (countX*width)+(width),
-			  (countY*height)+(height/2),
-			  (countX*width)+(width/2),
-			  (countY*height)+(height)); 
-	      }
-	      countX++;
-	    }
-	  countY++;
-	  countX=0;
-	}
-
-  countX=0;
-  countY=0;
-}
-  
-
-static void draw_truchet(Display *disp, Window win)
-{
-  int countX;
-  int countY;
-
-
-  countX=0;
-  countY=0;
-
-
-  while(xgwa.height+overlap > countY*height)
-	{
-	  while(xgwa.width+overlap > countX*width)
-	    {
-	      if(random()%2)
-	      {
-		/* block1 */
-		XDrawArc(disp, frame, agc,
-			 ((countX*width)-(width/2)),
-			 ((countY*height)-(height/2)),
-			 width,
-			 height,
-			 0, -5760);
-		XDrawArc(disp,frame, agc,
-			 ((countX*width)+(width/2)),
-			 ((countY*height)+(height/2)),
-			 width,
-			 height,
-			 11520,
-			 -5760);
-	      }
-	    else
-	      {
-		/* block 2 */
-		XDrawArc(disp,frame,agc,
-			 ((countX*width)+(width/2)),
-			 ((countY*height)-(height/2)),
-			 width,
-			 height,
-			 17280,
-			 -5760);
-		XDrawArc(disp,frame,agc,
-			 ((countX*width)-(width/2)),
-			 ((countY*height)+(height/2)),
-			 width,
-			 height,
-			 0,
-			 5760);
-	      }
-	      countX++;
-	    }
-	  countY++;
-	  countX=0;
-	}
-   countX=0;
-   countY=0;
-}
-/* this is the function called for your screensaver */
-void screenhack(Display *disp, Window win)
-{
   XGCValues gcv;
-  int countX;
-  int countY;
+  GC agc, bgc;
+  int linewidth;
+  int width, height;
+  XWindowAttributes xgwa;
+  Pixmap frame;
+  int overlap;
+
   int maxlinewidth;
   int minlinewidth;
   int minwidth;
@@ -230,7 +113,6 @@ void screenhack(Display *disp, Window win)
   int anim_delay;
   int anim_step_size;
 
-
   Colormap cmap;
   XColor fgc;
   Bool curves;
@@ -239,82 +121,230 @@ void screenhack(Display *disp, Window win)
   Bool erase;
   Bool eraseCount;
   Bool scroll;
+  int scrolling;
+};
+
+static void draw_truchet(struct state *st);
+static void draw_angles(struct state *st);
+static void scroll_area(struct state *st, int step_size);
+
+static void draw_angles(struct state *st)
+{
+  int cx = 0, cy = 0;
+  
+  while((st->xgwa.height+st->overlap) > cy*st->height)
+	{
+	  while((st->xgwa.width+st->overlap) > cx*st->width)
+	    {
+	      if(random()%2)
+	      {
+		/* block1 */
+		XDrawLine(st->dpy,st->frame,st->agc,
+			  (cx*st->width)+(st->width/2),
+			  (cy*st->height), 
+			  (cx*st->width)+(st->width),
+			  (cy*st->height)+(st->height/2));
+		XDrawLine(st->dpy,st->frame,st->agc,
+			  (cx*st->width), 
+			  (cy*st->height)+(st->height/2),
+			  (cx*st->width)+(st->width/2),
+			  (cy*st->height)+(st->height));
+	      }
+	    else
+	      {
+		/* block 2 */
+		XDrawLine(st->dpy,st->frame,st->agc, 
+			  (cx*st->width)+(st->width/2),
+			  (cy*st->height),
+			  (cx*st->width),
+			  (cy*st->height)+(st->height/2));
+		XDrawLine(st->dpy,st->frame,st->agc,
+			  (cx*st->width)+(st->width),
+			  (cy*st->height)+(st->height/2),
+			  (cx*st->width)+(st->width/2),
+			  (cy*st->height)+(st->height)); 
+	      }
+	      cx++;
+	    }
+	  cy++;
+	  cx=0;
+	}
+}
   
 
-  maxlinewidth = get_integer_resource ("maxLineWidth", "Integer");
-  minlinewidth = get_integer_resource ("minLineWidth", "Integer");
-  minwidth = get_integer_resource ("minWidth", "Integer");
-  minheight = get_integer_resource ("minHeight", "Integer");
-  max_width = get_integer_resource ("max-Width", "Integer"); 
-  max_height = get_integer_resource ("max-Height", "Integer" ); 
-  delay = get_integer_resource ("delay", "Integer");
-  eraseCount = get_integer_resource ("eraseCount", "Integer");
-  square = get_boolean_resource ("square", "Boolean");
-  curves = get_boolean_resource ("curves", "Boolean");
-  angles = get_boolean_resource ("angles", "Boolean");
-  erase = get_boolean_resource ("erase", "Boolean");
-  scroll = get_boolean_resource ("scroll", "Boolean");
-  overlap = get_integer_resource ("scroll-overlap", "Integer");
-  anim_delay = get_integer_resource ("anim-delay", "Integer");
-  anim_step_size = get_integer_resource ("anim-step-size", "Integer");
+static void draw_truchet(struct state *st)
+{
+  int cx = 0, cy = 0;
 
-  if (get_boolean_resource("randomize", "Randomize"))
+  while(st->xgwa.height+st->overlap > cy*st->height)
+	{
+	  while(st->xgwa.width+st->overlap > cx*st->width)
+	    {
+	      if(random()%2)
+	      {
+		/* block1 */
+		XDrawArc(st->dpy, st->frame, st->agc,
+			 ((cx*st->width)-(st->width/2)),
+			 ((cy*st->height)-(st->height/2)),
+			 st->width,
+			 st->height,
+			 0, -5760);
+		XDrawArc(st->dpy,st->frame, st->agc,
+			 ((cx*st->width)+(st->width/2)),
+			 ((cy*st->height)+(st->height/2)),
+			 st->width,
+			 st->height,
+			 11520,
+			 -5760);
+	      }
+	    else
+	      {
+		/* block 2 */
+		XDrawArc(st->dpy,st->frame,st->agc,
+			 ((cx*st->width)+(st->width/2)),
+			 ((cy*st->height)-(st->height/2)),
+			 st->width,
+			 st->height,
+			 17280,
+			 -5760);
+		XDrawArc(st->dpy,st->frame,st->agc,
+			 ((cx*st->width)-(st->width/2)),
+			 ((cy*st->height)+(st->height/2)),
+			 st->width,
+			 st->height,
+			 0,
+			 5760);
+	      }
+	      cx++;
+	    }
+	  cy++;
+	  cx=0;
+	}
+}
+
+
+static void scroll_area(struct state *st, int step_size)
+{
+  int scrollcount_x;
+  int scrollcount_y;
+  int offset;
+  int scroll;
+  int direction;
+  int progress;
+
+  offset=st->overlap/2;
+  scroll=st->overlap/4;
+  
+  /* This runs in a loop, starting with
+   *  st->scrolling = (scroll / st->anim_step_size) * 4 - 1;
+   * and going all the way down to st->scrolling = 0.
+   */
+
+  /* if anyone knows a good way to generate
+   * a more random scrolling motion... */
+
+  direction = st->scrolling / (scroll / st->anim_step_size);
+  progress = (st->scrolling % (scroll / st->anim_step_size)) * st->anim_step_size;
+
+  if (direction & 1) {
+    scrollcount_x = progress - scroll;
+    scrollcount_y = progress;
+  } else {
+    scrollcount_x = -progress;
+    scrollcount_y = progress - scroll;
+  }
+
+  if (direction & 2) {
+    scrollcount_x = -scrollcount_x;
+    scrollcount_y = -scrollcount_y;
+  }
+
+  XCopyArea(st->dpy, st->frame, st->window, st->agc,scrollcount_x+offset,scrollcount_y+offset, st->xgwa.width, st->xgwa.height, 0,0);
+}
+
+
+static void *
+truchet_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+
+  st->dpy = dpy;
+  st->window = window;
+
+  st->maxlinewidth = get_integer_resource (st->dpy, "maxLineWidth", "Integer");
+  st->minlinewidth = get_integer_resource (st->dpy, "minLineWidth", "Integer");
+  st->minwidth = get_integer_resource (st->dpy, "minWidth", "Integer");
+  st->minheight = get_integer_resource (st->dpy, "minHeight", "Integer");
+  st->max_width = get_integer_resource (st->dpy, "max-Width", "Integer"); 
+  st->max_height = get_integer_resource (st->dpy, "max-Height", "Integer" ); 
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->eraseCount = get_integer_resource (st->dpy, "eraseCount", "Integer");
+  st->square = get_boolean_resource (st->dpy, "square", "Boolean");
+  st->curves = get_boolean_resource (st->dpy, "curves", "Boolean");
+  st->angles = get_boolean_resource (st->dpy, "angles", "Boolean");
+  st->erase = get_boolean_resource (st->dpy, "erase", "Boolean");
+  st->scroll = get_boolean_resource (st->dpy, "scroll", "Boolean");
+  st->overlap = get_integer_resource (st->dpy, "scroll-overlap", "Integer");
+  st->anim_delay = get_integer_resource (st->dpy, "anim-delay", "Integer");
+  st->anim_step_size = get_integer_resource (st->dpy, "anim-step-size", "Integer");
+
+  if (get_boolean_resource(st->dpy, "randomize", "Randomize"))
     {
       int i = (random() % 12);
       switch(i) {
       case 0:
 	break;
       case 1:
-	curves = False;
+	st->curves = False;
 	break;
       case 2:
-	curves = False;
-	square = True;
-	erase = False;
+	st->curves = False;
+	st->square = True;
+	st->erase = False;
 	break;
       case 3:
-	square = True;
-	erase = False;
-	eraseCount = 5;
+	st->square = True;
+	st->erase = False;
+	st->eraseCount = 5;
 	break;
       case 4:
-	scroll = True;
+	st->scroll = True;
 	break;
       case 5:
-	scroll = True;
-	erase = False;
-	anim_step_size = 9;
+	st->scroll = True;
+	st->erase = False;
+	st->anim_step_size = 9;
 	break;
       case 6:
-	angles = False;
-	minwidth = max_width = 36;
+	st->angles = False;
+	st->minwidth = st->max_width = 36;
 	break;
       case 7:
-	curves = False;
-	minwidth = max_width = 12;
+	st->curves = False;
+	st->minwidth = st->max_width = 12;
 	break;
       case 8:
-	curves = False;
-	erase = False;
-	minwidth = max_width = 36;
+	st->curves = False;
+	st->erase = False;
+	st->minwidth = st->max_width = 36;
 	break;
       case 9:
-	erase = False;
-	minwidth = 256;
-	max_width = 512;
-	minlinewidth = 96;
+	st->erase = False;
+	st->minwidth = 256;
+	st->max_width = 512;
+	st->minlinewidth = 96;
 	break;
       case 10:
-	angles = False;
-	minwidth = 64;
-	max_width = 128;
-	maxlinewidth = 4;
+	st->angles = False;
+	st->minwidth = 64;
+	st->max_width = 128;
+	st->maxlinewidth = 4;
 	break;
       case 11:
-	curves = False;
-	minwidth = 64;
-	max_width = 128;
-	maxlinewidth = 4;
+	st->curves = False;
+	st->minwidth = 64;
+	st->max_width = 128;
+	st->maxlinewidth = 4;
 	break;
       default:
 	abort();
@@ -322,206 +352,176 @@ void screenhack(Display *disp, Window win)
       }
     }
 
-  XGetWindowAttributes (disp, win, &xgwa);
-  gcv.foreground = BlackPixel(disp,0);
-  gcv.background = WhitePixel(disp,0);
-  gcv.line_width = 25;
-  cmap = xgwa.colormap;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  st->gcv.foreground = BlackPixel(st->dpy,0);
+  st->gcv.background = WhitePixel(st->dpy,0);
+  st->gcv.line_width = 25;
+  st->cmap = st->xgwa.colormap;
 
-  gcv.foreground = get_pixel_resource("background", "Background",
-				      disp, xgwa.colormap);
+  st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                      "background", "Background");
 
-  bgc = XCreateGC (disp, win, GCForeground, &gcv);
-  agc = XCreateGC(disp, win, GCForeground, &gcv);
+  st->bgc = XCreateGC (st->dpy, st->window, GCForeground, &st->gcv);
+  st->agc = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
 
-  XFillRectangle(disp, win, bgc, 0, 0, xgwa.width, xgwa.height);
+  XFillRectangle(st->dpy, st->window, st->bgc, 0, 0, st->xgwa.width, st->xgwa.height);
 
  
-  width=60;
-  height=60;
-  linewidth=1;
-  countX=0;
-  countY=0;
-  count=0;
-  XSetForeground(disp, agc, gcv.background);
+  st->width=60;
+  st->height=60;
+  st->linewidth=1;
+  st->count=0;
+  XSetForeground(st->dpy, st->agc, st->gcv.background);
   
   
-  frame = XCreatePixmap(disp,win, xgwa.width+overlap, xgwa.height+overlap, xgwa.depth); 
+  st->frame = XCreatePixmap(st->dpy,st->window, st->xgwa.width+st->overlap, st->xgwa.height+st->overlap, st->xgwa.depth); 
   
+  return st;
+}
 
-  while(1)
+static unsigned long
+truchet_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->scrolling)
     {
-      if (!mono_p)
-	{
-	/* XXX there are probably bugs with this. */
-        /* could be...I just borrowed this code from munch */
+      st->scrolling--;
+      scroll_area(st, st->anim_step_size);
+      return st->anim_delay*1000;
+    }
 
-	fgc.red = random() % 65535;
-	fgc.green = random() % 65535;
-	fgc.blue = random() % 65535;
+  if (!mono_p)
+    {
+      /* XXX there are probably bugs with this. */
+      /* could be...I just borrowed this code from munch */
+
+      st->fgc.red = random() % 65535;
+      st->fgc.green = random() % 65535;
+      st->fgc.blue = random() % 65535;
 	
-	if (XAllocColor(disp, cmap, &fgc)) 
-	  {
-	    XSetForeground(disp, agc, fgc.pixel);
-	  }
-	else
-	  {
-	    /* use white if all else fails  */
-	    XSetForeground(disp,agc, gcv.background);
-	  }
-      }
+      if (XAllocColor(st->dpy, st->cmap, &st->fgc)) 
+        {
+          XSetForeground(st->dpy, st->agc, st->fgc.pixel);
+        }
+      else
+        {
+          /* use white if all else fails  */
+          XSetForeground(st->dpy,st->agc, st->gcv.background);
+        }
+    }
 
       
       
 
-      /* generate a random line width */
-      linewidth=(random()% maxlinewidth);
+  /* generate a random line width */
+  st->linewidth=(random()% st->maxlinewidth);
 
-      /* check for lower bound */
-      if(linewidth < minlinewidth)
-	linewidth = minlinewidth;
+  /* check for lower bound */
+  if(st->linewidth < st->minlinewidth)
+    st->linewidth = st->minlinewidth;
 
-      /* try to get an odd linewidth as it seem to work a little better */
-      if(linewidth%2)
-	linewidth++;
+  /* try to get an odd linewidth as it seem to work a little better */
+  if(st->linewidth%2)
+    st->linewidth++;
 
-      /* grab a random height and width */ 
-      width=(random()%max_width);
-      height=(random()%max_height);
+  /* grab a random height and width */ 
+  st->width=(random()%st->max_width);
+  st->height=(random()%st->max_height);
 
-      /* make sure we dont get a 0 height or width */
-      if(width == 0 || height == 0)
-	{
-	  height=max_height;
-	  width=max_width;
-	}
+  /* make sure we dont get a 0 height or width */
+  if(st->width == 0 || st->height == 0)
+    {
+      st->height=st->max_height;
+      st->width=st->max_width;
+    }
 
 
-      /* check for min height and width */
-      if(height < minheight)
-	{
-	  height=minheight;
-	}
-      if(width < minwidth)
-	{
-	  width=minwidth;
-	}
+  /* check for min height and width */
+  if(st->height < st->minheight)
+    {
+      st->height=st->minheight;
+    }
+  if(st->width < st->minwidth)
+    {
+      st->width=st->minwidth;
+    }
 
-      /* if tiles need to be square, fix it... */
-      if(square)
-	height=width;
+  /* if tiles need to be square, fix it... */
+  if(st->square)
+    st->height=st->width;
 
-      /* check for sane aspect ratios */
-      if((width/height) > MAXRATIO) 
-	height=width;
-      if((height/width) > MAXRATIO)
-	width=height;
+  /* check for sane aspect ratios */
+  if((st->width/st->height) > MAXRATIO) 
+    st->height=st->width;
+  if((st->height/st->width) > MAXRATIO)
+    st->width=st->height;
       
-      /* to avoid linewidths of zero */
-      if(linewidth == 0 || linewidth < minlinewidth)
-	linewidth = minlinewidth;
+  /* to avoid linewidths of zero */
+  if(st->linewidth == 0 || st->linewidth < st->minlinewidth)
+    st->linewidth = st->minlinewidth;
 
-      /* try to keep from getting line widths that would be too big */
-      if(linewidth > 0 && linewidth >= (height/5))
-	linewidth = height/5;
+  /* try to keep from getting line widths that would be too big */
+  if(st->linewidth > 0 && st->linewidth >= (st->height/5))
+    st->linewidth = st->height/5;
   
-      XSetLineAttributes(disp, agc, linewidth, LineSolid, CapRound, JoinRound);
+  XSetLineAttributes(st->dpy, st->agc, st->linewidth, LineSolid, CapRound, JoinRound);
 
-      if(erase || (count >= eraseCount))
-	{
-	  /*  XClearWindow(disp,win); */
-	  XFillRectangle(disp, frame, bgc, 0, 0, xgwa.width+overlap, xgwa.height+overlap);
-	  count=0;
-	}
+  if(st->erase || (st->count >= st->eraseCount))
+    {
+      /*  XClearWindow(dpy,window); */
+      XFillRectangle(st->dpy, st->frame, st->bgc, 0, 0, st->xgwa.width+st->overlap, st->xgwa.height+st->overlap);
+      st->count=0;
+    }
             
-      if(!scroll)
-	overlap=0;
+  if(!st->scroll)
+    st->overlap=0;
             
-      /* do the fun stuff...*/
-      if(curves && angles)
-	{
-	  if(random()%2)
-	    draw_truchet(disp,win);
-	  else
-	    draw_angles(disp,win);
-	}
-      else if(curves && !angles)
-	draw_truchet(disp,win);
-      else if(!curves && angles)
-	draw_angles(disp,win);
+  /* do the fun stuff...*/
+  if(st->curves && st->angles)
+    {
+      if(random()%2)
+        draw_truchet(st);
+      else
+        draw_angles(st);
+    }
+  else if(st->curves && !st->angles)
+    draw_truchet(st);
+  else if(!st->curves && st->angles)
+    draw_angles(st);
 
    
-      XCopyArea(disp,frame,win,agc,0,0,xgwa.width,xgwa.height,0,0);
-      if(scroll)
-	{
-	  scroll_area(disp,win,anim_delay,anim_step_size);
-	  delay = 0;
-	}
-      else
-	XSync(disp, False);
-      
-      screenhack_handle_events (disp);
+  st->count++;
 
-      /* the delay to try to minimize seizures */
-      usleep((delay*1000)); 
-      count++;
-      
+  if(st->scroll)
+    {
+      st->scrolling = ((st->overlap / 4) / st->anim_step_size) * 4;
+      return 0;
     }
 
+  XCopyArea(st->dpy,st->frame,st->window,st->agc,0,0,st->xgwa.width,st->xgwa.height,0,0);
+
+  /*printf("%d\n",st->delay);*/
+  return st->delay*1000;
 }
 
-static void scroll_area(Display *disp, Window win, int delay, int step_size)
+static void
+truchet_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-
-  int scrollcount_x;
-  int scrollcount_y;
-  int offset;
-  int scroll;
-  /* note local delay overirdes static delay cause... */
-
-
-  scrollcount_x=0;
-  scrollcount_y=0;
-
-  offset=overlap/2;
-  scroll=overlap/4;
-  
-      /* if anyone knows a good way to generate a more random scrolling motion... */
-  while(scrollcount_x <= scroll)
-    {
-      XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp, False);
-      scrollcount_x=scrollcount_x+step_size;
-      scrollcount_y=scrollcount_y+step_size;
-      usleep(1000*delay); 
-    }
-  while(scrollcount_x >= 0)
-    {
-      XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp, False);
-      scrollcount_y=scrollcount_y+step_size;
-      scrollcount_x=scrollcount_x-step_size;
-      usleep(1000*delay); 
-    }
-  while(scrollcount_y >= scroll)
-    {
-      XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp, False);
-      scrollcount_x=scrollcount_x-step_size;
-      scrollcount_y=scrollcount_y-step_size;
-      usleep(1000*delay); 
-    }
-  while(scrollcount_y > 0)
-    {
-      XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp, False);
-      scrollcount_y=scrollcount_y-step_size;
-      scrollcount_x=scrollcount_x+step_size;
-      usleep(1000*delay); 
-    }
-  
-  XSync(disp, False);
-  scrollcount_x=0;
-  scrollcount_y=0;
-  
 }
+
+static Bool
+truchet_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+truchet_free (Display *dpy, Window window, void *closure)
+{
+}
+
+
+XSCREENSAVER_MODULE ("Truchet", truchet)
+

@@ -28,7 +28,6 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
  *
  */
 
-#include <X11/Intrinsic.h>
 #include "boxed.h"
 
 /*
@@ -38,37 +37,33 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 */
 
 #ifdef STANDALONE
-# define PROGCLASS	"boxed"
-# define HACK_INIT	init_boxed
-# define HACK_DRAW	draw_boxed
-# define HACK_RESHAPE	reshape_boxed
-# define boxed_opts	xlockmore_opts
-
-# define DEF_SPEED      "0.5"
-# define DEF_BALLS	"25"
-# define DEF_BALLSIZE   "2.0"
-# define DEF_EXPLOSION	"25.0f"
 # define DEFAULTS	"*delay:     20000   \n" \
 			"*showFPS:   False   \n" \
 			"*wireframe: False   \n"
 
+# define refresh_boxed 0
+# define boxed_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
-#include <GL/glu.h>
+
+# define DEF_SPEED      "0.5"
+# define DEF_BALLS	"25"
+# define DEF_BALLSIZE   "2.0"
+# define DEF_EXPLOSION	"25.0f"
 
 #undef countof 
 #define countof(x) (int)(sizeof((x))/sizeof((*x)))
 #undef rnd
 #define rnd() (frand(1.0))
 
-GLfloat speed;  /* jwz -- overall speed factor applied to all motion */
-int cfg_balls;
-GLfloat cfg_ballsize;
-GLfloat cfg_explosion;
+static GLfloat speed;  /* jwz -- overall speed factor applied to all motion */
+static int cfg_balls;
+static GLfloat cfg_ballsize;
+static GLfloat cfg_explosion;
 
 
 static XrmOptionDescRec opts[] = {
@@ -85,7 +80,7 @@ static argtype vars[] = {
     {&cfg_explosion, "explosion", "Exlosion", DEF_BALLSIZE, t_Float},
 };
 
-ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 
@@ -266,7 +261,7 @@ squaremagnitude(vectorf * v)
  * Input: 
  */ 
 
-static void generatesphere(void)
+static void generatesphere(boxedstruct *gp)
 {
    float   dj = M_PI/(MESH_SIZE+1.0f);
    float   di = M_PI/MESH_SIZE;
@@ -282,8 +277,8 @@ static void generatesphere(void)
     * vertices 0 and 1 are the north and south poles
     */
    
-   spherei = boxed->spherei;
-   spherev = boxed->spherev;
+   spherei = gp->spherei;
+   spherev = gp->spherev;
    
    spherev[0].x = 0.0f; spherev[0].y =1.0f; spherev[0].z = 0.0f;
    spherev[1].x = 0.0f; spherev[1].y =-1.0f; spherev[1].z = 0.0f;
@@ -346,7 +341,7 @@ static void generatesphere(void)
  * create fresh ball 
  */
 
-void createball(ball *newball) 
+static void createball(ball *newball) 
 {
    float r=0.0f,g=0.0f,b=0.0f;
    newball->loc.x = 5-10*rnd();
@@ -368,7 +363,7 @@ void createball(ball *newball)
 
 /* Update position of each ball */
 
-void updateballs(ballman *bman) 
+static void updateballs(ballman *bman) 
 {
    register int b,j;
    vectorf dvect,richting,relspeed,influence;
@@ -465,7 +460,7 @@ void updateballs(ballman *bman)
 * explode ball into triangles
 */
 
-void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_num, ball *b)
+static void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_num, ball *b)
 {
    int pos;
    float explosion;
@@ -542,7 +537,7 @@ void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_
 * update position of each tri
 */
 
-void updatetris(triman *t) 
+static void updatetris(triman *t) 
 {
    int b;
    GLfloat xd,zd;
@@ -615,7 +610,7 @@ void updatetris(triman *t)
 /*
  * free memory allocated by a tri manager
  */
-void freetris(triman *t) 
+static void freetris(triman *t) 
 {
    if (!t) return;
    if (t->tris) free(t->tris);
@@ -632,7 +627,7 @@ void freetris(triman *t)
 /*
  *load defaults in config structure
  */
-void setdefaultconfig(boxed_config *config) 
+static void setdefaultconfig(boxed_config *config) 
 {
   cfg_balls = MAX(3,MIN(40,cfg_balls));
   cfg_ballsize = MAX(1.0f,MIN(5.0f,cfg_ballsize));
@@ -837,10 +832,10 @@ static void drawtriman(triman *t, int wire)
 /* 
  * draw floor pattern
  */   
-static void drawpattern(boxedstruct *boxed)
+static void drawpattern(boxedstruct *gp)
 {
-   if (!boxed->gllists[GLL_PATTERN]) {
-      glNewList(boxed->listobjects + GLL_PATTERN, GL_COMPILE);
+   if (!gp->gllists[GLL_PATTERN]) {
+      glNewList(gp->listobjects + GLL_PATTERN, GL_COMPILE);
      
       glBegin(GL_LINE_STRIP);
       glVertex3f(-25.0f, 0.0f, 35.0f);
@@ -883,9 +878,9 @@ static void drawpattern(boxedstruct *boxed)
       glEnd();
 
       glEndList();
-      boxed->gllists[GLL_PATTERN] = 1;
+      gp->gllists[GLL_PATTERN] = 1;
    } else {
-      glCallList(boxed->listobjects + GLL_PATTERN);
+      glCallList(gp->listobjects + GLL_PATTERN);
    }	
 
 }
@@ -1041,7 +1036,7 @@ static void draw(ModeInfo * mi)
 /* 
  * new window size or exposure 
  */
-void reshape_boxed(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_boxed(ModeInfo *mi, int width, int height)
 {
    GLfloat     h = (GLfloat) height / (GLfloat) width;
    
@@ -1093,7 +1088,7 @@ pinit(ModeInfo * mi)
       bman->balls[i].loc.y *= rnd();
    }
 
-   generatesphere();
+   generatesphere(gp);
    
    if (!wire) {
      glEnable(GL_CULL_FACE);
@@ -1145,7 +1140,7 @@ pinit(ModeInfo * mi)
 
  
 
-void
+ENTRYPOINT void
 init_boxed(ModeInfo * mi)
 {
    int screen = MI_SCREEN(mi);
@@ -1176,7 +1171,7 @@ init_boxed(ModeInfo * mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_boxed(ModeInfo * mi)
 {
    boxedstruct *gp = &boxed[MI_SCREEN(mi)];
@@ -1196,7 +1191,7 @@ draw_boxed(ModeInfo * mi)
    glXSwapBuffers(display, window);
 }
 
-void
+ENTRYPOINT void
 release_boxed(ModeInfo * mi)
 {
    int i;
@@ -1230,6 +1225,8 @@ release_boxed(ModeInfo * mi)
    FreeAllGL(mi);
 }
 
+
+XSCREENSAVER_MODULE ("Boxed", boxed)
 
 /*********************************************************/
 

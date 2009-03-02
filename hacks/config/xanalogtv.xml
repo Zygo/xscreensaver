@@ -4,6 +4,7 @@
 
   <command arg="-root"/>
 
+  <xscreensaver-image />
 
   <_description>
 
@@ -13,6 +14,6 @@ distortion, ghosting, and hash noise. It also simulates the TV warming
 up. It will cycle through 12 channels, some with images you give it,
 and some with color bars or nothing but static.
 
-By Trevor Blackwell.
+Written by Trevor Blackwell; 2003.
   </_description>
 </screensaver>

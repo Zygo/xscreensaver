@@ -9,11 +9,16 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <number id="radius" type="spinbutton" arg="-radius %"
-          _label="Radius" low="5" high="1000" default="125"/>
+  <number id="radius" type="slider" arg="-radius %"
+          _label="Spotlight Size" _low-label="Small" _high-label="Large"
+          low="5" high="350" default="125"/>
+
+  <xscreensaver-image />
 
   <_description>
 Draws a spotlight scanning across a black screen, illuminating the
-underlying desktop when it passes.  Written by Rick Schultz.
+underlying desktop (or a picture) when it passes.
+
+Written by Rick Schultz and Jamie Zawinski; 1999.
   </_description>
 </screensaver>

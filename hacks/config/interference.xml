@@ -37,11 +37,11 @@
 
   <!-- #### -gray -->
 
-  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/>
+<!--  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/> -->
 
   <_description>
-Another color-field hack, this one works by computing decaying
-sinusoidal waves, and allowing them to interfere with each other as
-their origins move.  Written by Hannu Mallat.
+Color field based on computing decaying sinusoidal waves.
+
+Written by Hannu Mallat; 1998.
   </_description>
 </screensaver>

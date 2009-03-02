@@ -1,4 +1,4 @@
-/* cubenetic, Copyright (c) 2002-2004 Jamie Zawinski <jwz@jwz.org>
+/* cubenetic, Copyright (c) 2002-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,31 +9,13 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"Cubenetic"
-#define HACK_INIT	init_cube
-#define HACK_DRAW	draw_cube
-#define HACK_RESHAPE	reshape_cube
-#define HACK_HANDLE_EVENT cube_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define ccs_opts	xlockmore_opts
-
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "True"
-#define DEF_TEXTURE     "True"
-
-#define DEF_WAVE_COUNT  "3"
-#define DEF_WAVE_SPEED  "80"
-#define DEF_WAVE_RADIUS "512"
-
 #define DEFAULTS	"*delay:	20000       \n" \
 			"*count:        5           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
+# define refresh_cube 0
+# define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -45,7 +27,14 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "True"
+#define DEF_TEXTURE     "True"
+
+#define DEF_WAVE_COUNT  "3"
+#define DEF_WAVE_SPEED  "80"
+#define DEF_WAVE_RADIUS "512"
 
 typedef struct {
   int color;
@@ -123,7 +112,7 @@ static argtype vars[] = {
   {&wave_radius,"waveRadius","WaveRadius", DEF_WAVE_RADIUS,t_Int},
 };
 
-ModeSpecOpt ccs_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt cube_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 static void
@@ -184,7 +173,7 @@ unit_cube (Bool wire)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_cube (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -337,7 +326,7 @@ shuffle_texture (ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 cube_handle_event (ModeInfo *mi, XEvent *event)
 {
   cube_configuration *cc = &ccs[MI_SCREEN(mi)];
@@ -378,7 +367,7 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_cube (ModeInfo *mi)
 {
   int i;
@@ -402,9 +391,9 @@ init_cube (ModeInfo *mi)
 
   if (!wire)
     {
-      static GLfloat pos[4] = {1.0, 0.5, 1.0, 0.0};
-      static GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
-      static GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      static const GLfloat pos[4] = {1.0, 0.5, 1.0, 0.0};
+      static const GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      static const GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
 
       glLightfv(GL_LIGHT0, GL_POSITION, pos);
       glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
@@ -428,6 +417,7 @@ init_cube (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -528,7 +518,7 @@ shuffle_cubes (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_cube (ModeInfo *mi)
 {
   cube_configuration *cc = &ccs[MI_SCREEN(mi)];
@@ -538,6 +528,8 @@ draw_cube (ModeInfo *mi)
 
   if (!cc->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
 
   glShadeModel(GL_FLAT);
 
@@ -598,5 +590,7 @@ draw_cube (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("Cubenetic", cubenetic, cube)
 
 #endif /* USE_GL */

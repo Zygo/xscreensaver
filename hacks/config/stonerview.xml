@@ -4,14 +4,13 @@
 
   <command arg="-root"/>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Chains of colorful squares dance around each other in complex spiral
-patterns.  Written by Andrew Plotkin, based on SGI's `electropaint'
-screensaver.
+patterns.  Inspired by SGI's `electropaint' screensaver.
+
+Written by Andrew Plotkin; 2001.
   </_description>
 </screensaver>

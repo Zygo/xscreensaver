@@ -15,16 +15,25 @@
  *                         http://astronomy.swin.edu.au/~pbourke/opengl/sphere/
  */
 
-#include "config.h"
-#include <stdlib.h>
 #include <math.h>
-#include <GL/glx.h>
+#include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
+#include "sphere.h"
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
 void
-unit_sphere (int stacks, int slices, Bool wire)
+unit_sphere (int stacks, int slices, int wire_p)
 {
   int i,j;
   double theta1, theta2, theta3;
@@ -54,12 +63,12 @@ unit_sphere (int stacks, int slices, Bool wire)
       theta1 = j       * (M_PI+M_PI) / stacks2 - M_PI_2;
       theta2 = (j + 1) * (M_PI+M_PI) / stacks2 - M_PI_2;
 
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
+      glBegin (wire_p ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
       for (i = 0; i <= slices; i++)
         {
           theta3 = i * (M_PI+M_PI) / slices;
 
-          if (wire && i != 0)
+          if (wire_p && i != 0)
             {
               glVertex3f (lb.x, lb.y, lb.z);
               glVertex3f (la.x, la.y, la.z);
@@ -76,7 +85,7 @@ unit_sphere (int stacks, int slices, Bool wire)
           glTexCoord2f (i       / (double)slices,
                         2*(j+1) / (double)stacks2);
           glVertex3f (p.x, p.y, p.z);
-          if (wire) la = p;
+          if (wire_p) la = p;
 
           e.x = cos(theta1) * cos(theta3);
           e.y = sin(theta1);
@@ -89,7 +98,7 @@ unit_sphere (int stacks, int slices, Bool wire)
           glTexCoord2f (i   / (double)slices,
                         2*j / (double)stacks2);
           glVertex3f (p.x, p.y, p.z);
-          if (wire) lb = p;
+          if (wire_p) lb = p;
         }
       glEnd();
     }

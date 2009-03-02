@@ -5,16 +5,13 @@
   <command arg="-root"/>
 
   <number id="speed" type="slider" arg="-speed %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Game Speed" _low-label="Slow" _high-label="Fast"
           low="1" high="20" default="6"/>
-
-  <number id="percent" type="slider" arg="-percent %"
-          _label="Size" _low-label="Thin" _high-label="Thick"
-          low="0.01" high="0.075" default="0.0375"/>
 
   <_description>
 The pong program simulates an ancient Pong home video game, as well as
 various artifacts from displaying it on a color TV set.
-Written by Jeremy English and Trevor Blackwell.
+
+Written by Jeremy English and Trevor Blackwell; 2003.
   </_description>
 </screensaver>

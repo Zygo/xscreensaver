@@ -21,22 +21,26 @@
  * does not, obviously.
  */
 
-#include <X11/Intrinsic.h>
+#define DEFAULTS	"*delay:	30000            \n" \
+			"*showFPS:      False            \n" \
+			"*wireframe:    False            \n" \
 
-extern XtAppContext app;
+# define refresh_boing 0
+# define release_boing 0
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define PROGCLASS	"Boing"
-#define HACK_INIT	init_boing
-#define HACK_DRAW	draw_boing
-#define HACK_RESHAPE	reshape_boing
-#define HACK_HANDLE_EVENT boing_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
+#include "xlockmore.h"
+#include "gltrackball.h"
+#include <ctype.h>
+
+#ifdef USE_GL /* whole file */
+
 
 #define DEF_SPIN        "True"
 #define DEF_LIGHTING    "False"
 #define DEF_SMOOTH      "False"
-#define DEF_SCANLINES   "False"
+#define DEF_SCANLINES   "True"
 #define DEF_SPEED       "1.0"
 #define DEF_SIZE        "0.5"
 #define DEF_ANGLE       "15"
@@ -50,21 +54,6 @@ extern XtAppContext app;
 #define DEF_GRID_COLOR   "#991999"
 #define DEF_SHADOW_COLOR "#303030"
 #define DEF_BACKGROUND   "#8C8C8C"
-
-#define DEFAULTS	"*delay:	30000            \n" \
-			"*showFPS:      False            \n" \
-			"*wireframe:    False            \n" \
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#include "xlockmore.h"
-#include "gltrackball.h"
-#include <ctype.h>
-
-#ifdef USE_GL /* whole file */
-
-#include <GL/glu.h>
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
@@ -142,7 +131,7 @@ static argtype vars[] = {
   {&bg_str,        "boingBackground", "Background", DEF_BACKGROUND, t_String},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt boing_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 static void
 parse_color (ModeInfo *mi, const char *name, const char *s, GLfloat *a)
@@ -205,14 +194,14 @@ draw_box (ModeInfo *mi)
   /* boing_configuration *bp = &bps[MI_SCREEN(mi)]; */
   glPushMatrix();
   glTranslatef (0, 0, -0.5);
-  glFrontFace (GL_CCW);
+/*  glFrontFace (GL_CCW);*/
   draw_grid (mi);
   glPopMatrix();
 
   glPushMatrix();
   glRotatef (90, 1, 0, 0);
   glTranslatef (0, 0, 0.5);
-  glFrontFace (GL_CW);
+/*  glFrontFace (GL_CW);*/
   draw_grid (mi);
   glPopMatrix();
 }
@@ -458,7 +447,7 @@ tick_physics (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_boing (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -482,7 +471,7 @@ reshape_boing (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 boing_handle_event (ModeInfo *mi, XEvent *event)
 {
   boing_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -523,7 +512,7 @@ boing_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_boing (ModeInfo *mi)
 {
   boing_configuration *bp;
@@ -614,7 +603,7 @@ init_boing (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_boing (ModeInfo *mi)
 {
   boing_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -624,13 +613,13 @@ draw_boing (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+
   mi->polygon_count = 0;
 
   glShadeModel(GL_SMOOTH);
 
   glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-  glEnable (GL_DEPTH_TEST);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -642,8 +631,20 @@ draw_boing (ModeInfo *mi)
 
   glLightfv (GL_LIGHT0, GL_POSITION, bp->lightpos);
 
+  glDisable (GL_CULL_FACE);
+  glDisable (GL_DEPTH_TEST);
+
+  glEnable (GL_LINE_SMOOTH);
+  glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable (GL_BLEND);
+
   draw_box (mi);
   draw_shadow (mi);
+
+  glEnable (GL_CULL_FACE);
+  glEnable (GL_DEPTH_TEST);
+
   draw_ball (mi);
   if (scanlines_p)
     draw_scanlines (mi);
@@ -655,5 +656,7 @@ draw_boing (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Boing", boing)
 
 #endif /* USE_GL */

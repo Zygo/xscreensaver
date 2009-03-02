@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003, 2004, 2005
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,36 +24,39 @@
    desktop, or from the system's video input, depending on user
    preferences.
 
-   If it is from a file, then it will be returned in `filename_return'.
-   filename_return may be NULL; also, NULL may be returned (e.g., if
-   it's a screenshot or video capture.)  You are responsible for
-   freeing this string.
+   When the callback is called, the image data will have been loaded
+   into the given drawable.  Copy `name' if you want to keep it.
 
-   The size and position of the image is returned in `geometry_return'.
+   If it is from a file, then the `filename' argument will be the name
+   of the file.  It may be NULL.  If you want to keep this string, copy it.
+
+   The size and position of the image is in the `geometry' arg.
    The image will generally have been scaled up to fit the window, but
    if a loaded file had a different aspect ratio than the window, it
    will have been centered, and the returned coords will describe that.
 
    Many colors may be allocated from the window's colormap.
  */
-extern void load_random_image (Screen *screen,
-                               Window top_level_window,
-                               Drawable target_window_or_pixmap, 
-                               char **filename_return,
-                               XRectangle *geometry_return);
+extern void load_image_async (Screen *, Window, Drawable,
+                              void (*callback) (Screen *, Window,
+                                                Drawable,
+                                                const char *name,
+                                                XRectangle *geometry,
+                                                void *closure),
+                              void *closure);
 
-/* Like the above, but loads the image in the background and runs the
-   given callback once it has been loaded.  Copy `name' if you want
-   to keep it.
+/* A utility wrapper around load_image_async() that is simpler if you
+   are only loading a single image at a time: just keep calling it
+   periodically until it returns NULL.  When it does, the image has
+   been loaded.
  */
-extern void fork_load_random_image (Screen *screen, Window window,
-                                    Drawable drawable,
-                                    void (*callback) (Screen *, Window,
-                                                      Drawable,
-                                                      const char *name,
-                                                      XRectangle *geometry,
-                                                      void *closure),
-                                    void *closure);
+typedef struct async_load_state async_load_state;
+extern async_load_state *load_image_async_simple (async_load_state *,
+                                                  Screen *,
+                                                  Window top_level,
+                                                  Drawable target, 
+                                                  char **filename_ret,
+                                                  XRectangle *geometry_ret);
 
 
 /* Whether one should use GCSubwindowMode when drawing on this window
@@ -78,5 +80,15 @@ extern void grab_screen_image_internal (Screen *, Window);
    pass the file name around. */
 #define XA_XSCREENSAVER_IMAGE_FILENAME "_SCREENSAVER_IMAGE_FILENAME"
 #define XA_XSCREENSAVER_IMAGE_GEOMETRY "_SCREENSAVER_IMAGE_GEOMETRY"
+
+/* For debugging: turn on verbosity. */
+extern void grabscreen_verbose (void);
+
+#ifdef HAVE_COCOA
+/* Don't use these: internal interface of grabclient.c. */
+extern void osx_grab_desktop_image (Screen *, Window, Drawable);
+extern Bool osx_load_image_file (Screen *, Window, Drawable,
+                                 const char *filename, XRectangle *geom_ret);
+#endif /* HAVE_COCOA */
 
 #endif /* __GRABSCREEN_H__ */

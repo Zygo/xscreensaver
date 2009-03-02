@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,79 +36,90 @@ struct qix {
   struct qline *lines;
 };
 
-static GC draw_gc, erase_gc;
-static unsigned int default_fg_pixel;
-static long maxx, maxy, max_spread, max_size;
-static int color_shift;
-static Bool random_p, solid_p, xor_p, transparent_p, gravity_p;
-static int delay;
-static int count;
-static Colormap cmap;
-static int npoly;
-static Bool additive_p;
-static Bool cmap_p;
+struct state {
+  Display *dpy;
+  Window window;
 
+  GC draw_gc, erase_gc;
+  unsigned int default_fg_pixel;
+  long maxx, maxy, max_spread, max_size;
+  int color_shift;
+  Bool random_p, solid_p, xor_p, transparent_p, gravity_p;
+  int delay;
+  int count;
+  Colormap cmap;
+  int npoly;
+  Bool additive_p;
+  Bool cmap_p;
 
-static GC *gcs[2];
+  GC *gcs[2];
+
+  int gtick;
+
+  struct qix **qixes;
+};
+
 
 static void
-get_geom (Display *dpy, Window window)
+get_geom (struct state *st)
 {
   XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  maxx = ((long)(xgwa.width+1)<<SCALE)  - 1;
-  maxy = ((long)(xgwa.height+1)<<SCALE) - 1;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->maxx = ((long)(xgwa.width+1)<<SCALE)  - 1;
+  st->maxy = ((long)(xgwa.height+1)<<SCALE) - 1;
 }
 
 static struct qix *
-init_one_qix (Display *dpy, Window window, int nlines, int npoly)
+init_one_qix (struct state *st, int nlines)
 {
   int i, j;
   struct qix *qix = (struct qix *) calloc (1, sizeof (struct qix));
   qix->nlines = nlines;
   qix->lines = (struct qline *) calloc (qix->nlines, sizeof (struct qline));
-  qix->npoly = npoly;
+  qix->npoly = st->npoly;
   for (i = 0; i < qix->nlines; i++)
     qix->lines[i].p = (struct qpoint *)
       calloc(qix->npoly, sizeof(struct qpoint));
 
-  if (!mono_p && !transparent_p)
+# ifndef HAVE_COCOA
+  if (!mono_p && !st->transparent_p)
+# endif
     {
       hsv_to_rgb (random () % 360, frand (1.0), frand (0.5) + 0.5,
 		  &qix->lines[0].color.red, &qix->lines[0].color.green,
 		  &qix->lines[0].color.blue);
-      if (!XAllocColor (dpy, cmap, &qix->lines[0].color))
+      if (!XAllocColor (st->dpy, st->cmap, &qix->lines[0].color))
 	{
-	  qix->lines[0].color.pixel = default_fg_pixel;
-	  XQueryColor (dpy, cmap, &qix->lines[0].color);
-	  if (!XAllocColor (dpy, cmap, &qix->lines[0].color))
+	  qix->lines[0].color.pixel = st->default_fg_pixel;
+	  XQueryColor (st->dpy, st->cmap, &qix->lines[0].color);
+	  if (!XAllocColor (st->dpy, st->cmap, &qix->lines[0].color))
 	    abort ();
 	}
     }
 
-  if (max_size == 0)
+  if (st->max_size == 0)
     {
       for (i = 0; i < qix->npoly; i++)
 	{
-	  qix->lines[0].p[i].x = random () % maxx;
-	  qix->lines[0].p[i].y = random () % maxy;
+	  qix->lines[0].p[i].x = random () % st->maxx;
+	  qix->lines[0].p[i].y = random () % st->maxy;
 	}
     }
   else
     {
       /*assert(qix->npoly == 2);*/
-      qix->lines[0].p[0].x = random () % maxx;
-      qix->lines[0].p[0].y = random () % maxy;
-      qix->lines[0].p[1].x = qix->lines[0].p[0].x + (random () % (max_size/2));
-      qix->lines[0].p[1].y = qix->lines[0].p[0].y + (random () % (max_size/2));
-      if (qix->lines[0].p[1].x > maxx) qix->lines[0].p[1].x = maxx;
-      if (qix->lines[0].p[1].y > maxy) qix->lines[0].p[1].y = maxy;
+      qix->lines[0].p[0].x = random () % st->maxx;
+      qix->lines[0].p[0].y = random () % st->maxy;
+      qix->lines[0].p[1].x = qix->lines[0].p[0].x + (random () % (st->max_size/2));
+      qix->lines[0].p[1].y = qix->lines[0].p[0].y + (random () % (st->max_size/2));
+      if (qix->lines[0].p[1].x > st->maxx) qix->lines[0].p[1].x = st->maxx;
+      if (qix->lines[0].p[1].y > st->maxy) qix->lines[0].p[1].y = st->maxy;
     }
 
   for (i = 0; i < qix->npoly; i++)
     {
-      qix->lines[0].p[i].dx = (random () % (max_spread + 1)) - (max_spread /2);
-      qix->lines[0].p[i].dy = (random () % (max_spread + 1)) - (max_spread /2);
+      qix->lines[0].p[i].dx = (random () % (st->max_spread + 1)) - (st->max_spread /2);
+      qix->lines[0].p[i].dy = (random () % (st->max_spread + 1)) - (st->max_spread /2);
     }
   qix->lines[0].dead = True;
 
@@ -119,8 +130,10 @@ init_one_qix (Display *dpy, Window window, int nlines, int npoly)
       qix->lines[i].color = qix->lines[0].color;
       qix->lines[i].dead = qix->lines[0].dead;
   
-      if (!mono_p && !transparent_p)
-	if (!XAllocColor (dpy, cmap, &qix->lines[i].color))
+# ifndef HAVE_COCOA
+      if (!mono_p && !st->transparent_p)
+# endif
+	if (!XAllocColor (st->dpy, st->cmap, &qix->lines[i].color))
 	  abort ();
     }
   return qix;
@@ -129,84 +142,87 @@ init_one_qix (Display *dpy, Window window, int nlines, int npoly)
 
 
 
-static struct qix **
-init_qix (Display *dpy, Window window)
+static void *
+qix_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int nlines;
-  struct qix **qixes;
   XGCValues gcv;
   XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  count = get_integer_resource ("count", "Integer");
-  if (count <= 0) count = 1;
-  nlines = get_integer_resource ("segments", "Integer");
+  st->dpy = dpy;
+  st->window = window;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->cmap = xgwa.colormap;
+  st->count = get_integer_resource (st->dpy, "count", "Integer");
+  if (st->count <= 0) st->count = 1;
+  nlines = get_integer_resource (st->dpy, "segments", "Integer");
   if (nlines <= 0) nlines = 20;
-  npoly = get_integer_resource("poly", "Integer");
-  if (npoly <= 2) npoly = 2;
-  if (npoly > MAXPOLY) npoly = MAXPOLY;
-  get_geom (dpy, window);
-  max_spread = get_integer_resource ("spread", "Integer");
-  if (max_spread <= 0) max_spread = 10;
-  max_spread <<= SCALE;
-  max_size = get_integer_resource ("size", "Integer");
-  if (max_size < 0) max_size = 0;
-  max_size <<= SCALE;
-  random_p = get_boolean_resource ("random", "Boolean");
-  solid_p = get_boolean_resource ("solid", "Boolean");
-  xor_p = get_boolean_resource ("xor", "Boolean");
-  transparent_p = get_boolean_resource ("transparent", "Boolean");
-  gravity_p = get_boolean_resource("gravity", "Boolean");
-  delay = get_integer_resource ("delay", "Integer");
-  color_shift = get_integer_resource ("colorShift", "Integer");
-  if (color_shift < 0 || color_shift >= 360) color_shift = 5;
-  if (delay < 0) delay = 0;
+  st->npoly = get_integer_resource(st->dpy, "poly", "Integer");
+  if (st->npoly <= 2) st->npoly = 2;
+  if (st->npoly > MAXPOLY) st->npoly = MAXPOLY;
+  get_geom (st);
+  st->max_spread = get_integer_resource (st->dpy, "spread", "Integer");
+  if (st->max_spread <= 0) st->max_spread = 10;
+  st->max_spread <<= SCALE;
+  st->max_size = get_integer_resource (st->dpy, "size", "Integer");
+  if (st->max_size < 0) st->max_size = 0;
+  st->max_size <<= SCALE;
+  st->random_p = get_boolean_resource (st->dpy, "random", "Boolean");
+  st->solid_p = get_boolean_resource (st->dpy, "solid", "Boolean");
+  st->xor_p = get_boolean_resource (st->dpy, "xor", "Boolean");
+  st->transparent_p = get_boolean_resource (st->dpy, "transparent", "Boolean");
+  st->gravity_p = get_boolean_resource(st->dpy, "gravity", "Boolean");
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->color_shift = get_integer_resource (st->dpy, "colorShift", "Integer");
+  if (st->color_shift < 0 || st->color_shift >= 360) st->color_shift = 5;
+  if (st->delay < 0) st->delay = 0;
 
   /* Clear up ambiguities regarding npoly */
-  if (solid_p) 
+  if (st->solid_p) 
     {
-      if (npoly != 2)
+      if (st->npoly != 2)
 	fprintf(stderr, "%s: Can't have -solid and -poly; using -poly 2\n",
 		progname);
-      npoly = 2;
+      st->npoly = 2;
     }      
-  if (npoly > 2)
+  if (st->npoly > 2)
     {
-      if (max_size)
+      if (st->max_size)
 	fprintf(stderr, "%s: Can't have -poly and -size; using -size 0\n",
 		progname);
-      max_size = 0;
+      st->max_size = 0;
     }
 
-  if (count == 1 && transparent_p)
-    transparent_p = False; /* it's a no-op */
+  if (st->count == 1 && st->transparent_p)
+    st->transparent_p = False; /* it's a no-op */
 
-  if (transparent_p && CellsOfScreen (DefaultScreenOfDisplay (dpy)) <= 2)
+  if (st->transparent_p && CellsOfScreen (DefaultScreenOfDisplay (st->dpy)) <= 2)
     {
       fprintf (stderr, "%s: -transparent only works on color displays.\n",
 	       progname);
-      transparent_p = False;
+      st->transparent_p = False;
     }
 
-  if (xor_p && !transparent_p)
+  if (st->xor_p && !st->transparent_p)
     mono_p = True;
 
-  gcs[0] = gcs[1] = 0;
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+  st->gcs[0] = st->gcs[1] = 0;
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
 
-  additive_p = get_boolean_resource ("additive", "Boolean");
-  cmap_p = has_writable_cells (xgwa.screen, xgwa.visual);
+  st->additive_p = get_boolean_resource (st->dpy, "additive", "Boolean");
+  st->cmap_p = has_writable_cells (xgwa.screen, xgwa.visual);
 
-  if (transparent_p)
+# ifndef HAVE_COCOA
+  if (st->transparent_p)
     {
       unsigned long *plane_masks = 0;
       unsigned long base_pixel;
-      int nplanes = count;
+      int nplanes = st->count;
       int i;
 
-      allocate_alpha_colors (xgwa.screen, xgwa.visual, cmap,
-                             &nplanes, additive_p, &plane_masks,
+      allocate_alpha_colors (xgwa.screen, xgwa.visual, st->cmap,
+                             &nplanes, st->additive_p, &plane_masks,
 			     &base_pixel);
 
       if (nplanes <= 1)
@@ -214,25 +230,26 @@ init_qix (Display *dpy, Window window)
 	  fprintf (stderr,
          "%s: couldn't allocate any color planes; turning -transparent off.\n",
 		   progname);
-	  transparent_p = False;
-	  if (xor_p)
+	  st->transparent_p = False;
+	  if (st->xor_p)
 	    goto NON_TRANSPARENT_XOR;
 	  else
 	    goto NON_TRANSPARENT;
 	}
-      else if (nplanes != count)
+      else if (nplanes != st->count)
 	{
 	  fprintf (stderr,
 		   "%s: only allocated %d color planes (instead of %d).\n",
-		   progname, nplanes, count);
-	  count = nplanes;
+		   progname, nplanes, st->count);
+	  st->count = nplanes;
 	}
 
-      gcs[0] = (GC *) malloc (count * sizeof (GC));
-      gcs[1] = xor_p ? gcs[0] : (GC *) malloc (count * sizeof (GC));
+      st->gcs[0] = (GC *) malloc (st->count * sizeof (GC));
+      st->gcs[1] = (st->xor_p
+                    ? st->gcs[0]
+                    : (GC *) malloc (st->count * sizeof (GC)));
 
-
-      for (i = 0; i < count; i++)
+      for (i = 0; i < st->count; i++)
 	{
 	  gcv.plane_mask = plane_masks [i];
 	  gcv.foreground = ~0;
@@ -242,56 +259,88 @@ init_qix (Display *dpy, Window window)
             gcv.function = GXclear;
  */
 
-	  if (xor_p)
+	  if (st->xor_p)
 	    {
 	      gcv.function = GXxor;
-	      gcs [0][i] = XCreateGC (dpy, window,
-				      GCForeground|GCFunction|GCPlaneMask,
-				      &gcv);
+	      st->gcs [0][i] = XCreateGC (st->dpy, st->window,
+                                          GCForeground|GCFunction|GCPlaneMask,
+                                          &gcv);
 	    }
 	  else
 	    {
-	      gcs [0][i] = XCreateGC (dpy, window, GCForeground|GCPlaneMask,
-				      &gcv);
+	      st->gcs [0][i] = XCreateGC (st->dpy, st->window, 
+                                          GCForeground|GCPlaneMask,
+                                          &gcv);
 	      gcv.foreground = 0;
-	      gcs [1][i] = XCreateGC (dpy, window, GCForeground|GCPlaneMask,
-				      &gcv);
+	      st->gcs [1][i] = XCreateGC (st->dpy, st->window, 
+                                          GCForeground|GCPlaneMask,
+                                          &gcv);
+# ifdef HAVE_COCOA
+           /* jwxyz_XSetAntiAliasing (st->dpy, st->gcs [0][i], False);
+              jwxyz_XSetAntiAliasing (st->dpy, st->gcs [1][i], False); */
+              if (st->transparent_p)
+                {
+                  jwxyz_XSetAlphaAllowed (dpy, st->gcs [0][i], True);
+                  jwxyz_XSetAlphaAllowed (dpy, st->gcs [1][i], True);
+                }
+# endif /* HAVE_COCOA */
 	    }
 	}
 
-      XSetWindowBackground (dpy, window, base_pixel);
-      XClearWindow (dpy, window);
+      if (plane_masks)
+        free (plane_masks);
+
+      XSetWindowBackground (st->dpy, st->window, base_pixel);
+      XClearWindow (st->dpy, st->window);
     }
-  else if (xor_p)
+  else
+#endif /* !HAVE_COCOA */
+  if (st->xor_p)
     {
+#ifndef HAVE_COCOA
     NON_TRANSPARENT_XOR:
+#endif
       gcv.function = GXxor;
       gcv.foreground =
-	(default_fg_pixel ^ get_pixel_resource ("background", "Background",
-						dpy, cmap));
-      draw_gc = erase_gc = XCreateGC(dpy,window,GCForeground|GCFunction,&gcv);
+	(st->default_fg_pixel /* ^ get_pixel_resource (st->dpy, st->cmap,
+                                                "background", "Background")*/);
+      st->draw_gc = st->erase_gc = XCreateGC(st->dpy,st->window,GCForeground|GCFunction,&gcv);
     }
   else
     {
+#ifndef HAVE_COCOA
     NON_TRANSPARENT:
-      draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-      gcv.foreground = get_pixel_resource ("background", "Background",
-					   dpy, cmap);
-      erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+#endif
+      st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+      gcv.foreground = get_pixel_resource (st->dpy, st->cmap,
+                                           "background", "Background");
+      st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     }
 
-  qixes = (struct qix **) malloc ((count + 1) * sizeof (struct qix *));
-  qixes [count] = 0;
-  while (count--)
+#ifdef HAVE_COCOA
+  if (st->transparent_p)
+    jwxyz_XSetAlphaAllowed (dpy, st->draw_gc, True);
+#endif
+
+  st->qixes = (struct qix **) malloc ((st->count + 1) * sizeof (struct qix *));
+  st->qixes [st->count] = 0;
+  while (st->count--)
     {
-      qixes [count] = init_one_qix (dpy, window, nlines, npoly);
-      qixes [count]->id = count;
+      st->qixes [st->count] = init_one_qix (st, nlines);
+      st->qixes [st->count]->id = st->count;
     }
-  return qixes;
+
+# ifdef HAVE_COCOA
+  /* line-mode leaves turds without this. */
+  jwxyz_XSetAntiAliasing (st->dpy, st->erase_gc, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->draw_gc,  False);
+# endif
+
+  return st;
 }
 
 static void
-free_qline (Display *dpy, Window window, Colormap cmap,
+free_qline (struct state *st,
 	    struct qline *qline,
 	    struct qline *prev,
 	    struct qix *qix)
@@ -299,7 +348,7 @@ free_qline (Display *dpy, Window window, Colormap cmap,
   int i;
   if (qline->dead || !prev)
     ;
-  else if (solid_p)
+  else if (st->solid_p)
     {
       XPoint points [4];
       /*assert(qix->npoly == 2);*/
@@ -311,32 +360,38 @@ free_qline (Display *dpy, Window window, Colormap cmap,
       points [2].y = prev->p[1].y >> SCALE;
       points [3].x = prev->p[0].x >> SCALE;
       points [3].y = prev->p[0].y >> SCALE;
-      XFillPolygon (dpy, window, (transparent_p ? gcs[1][qix->id] : erase_gc),
+      XFillPolygon (st->dpy, st->window,
+                    (st->transparent_p && st->gcs[1]
+                     ? st->gcs[1][qix->id]
+                     : st->erase_gc),
 		    points, 4, Complex, CoordModeOrigin);
     }
   else
     {
       /*  XDrawLine (dpy, window, (transparent_p ? gcs[1][qix->id] : erase_gc),
 	             qline->p1.x, qline->p1.y, qline->p2.x, qline->p2.y);*/
-      static XPoint points[MAXPOLY+1];
+      XPoint points[MAXPOLY+1];
       for(i = 0; i < qix->npoly; i++)
 	{
 	  points[i].x = qline->p[i].x >> SCALE;
 	  points[i].y = qline->p[i].y >> SCALE;
 	}
       points[qix->npoly] = points[0];
-      XDrawLines(dpy, window, (transparent_p ? gcs[1][qix->id] : erase_gc),
+      XDrawLines(st->dpy, st->window,
+                 (st->transparent_p && st->gcs[1] 
+                  ? st->gcs[1][qix->id]
+                  : st->erase_gc),
 		 points, qix->npoly+1, CoordModeOrigin);
     }
 
-  if (!mono_p && !transparent_p)
-    XFreeColors (dpy, cmap, &qline->color.pixel, 1, 0);
+  if (!mono_p && !st->transparent_p)
+    XFreeColors (st->dpy, st->cmap, &qline->color.pixel, 1, 0);
 
   qline->dead = True;
 }
 
 static void
-add_qline (Display *dpy, Window window, Colormap cmap,
+add_qline (struct state *st,
 	   struct qline *qline,
 	   struct qline *prev_qline,
 	   struct qix *qix)
@@ -349,41 +404,43 @@ add_qline (Display *dpy, Window window, Colormap cmap,
   qline->dead = prev_qline->dead;
 
 #define wiggle(point,delta,max)						\
-  if (random_p) delta += (random () % (1 << (SCALE+1))) - (1 << SCALE);	\
-  if (delta > max_spread) delta = max_spread;				\
-  else if (delta < -max_spread) delta = -max_spread;			\
+  if (st->random_p) delta += (random () % (1 << (SCALE+1))) - (1 << SCALE);	\
+  if (delta > st->max_spread) delta = st->max_spread;				\
+  else if (delta < -st->max_spread) delta = -st->max_spread;			\
   point += delta;							\
   if (point < 0) point = 0, delta = -delta, point += delta<<1;		\
   else if (point > max) point = max, delta = -delta, point += delta<<1;
 
-  if (gravity_p)
+  if (st->gravity_p)
     for(i=0; i<qix->npoly; i++)
       qline->p[i].dy += 3;
 
   for (i = 0; i < qix->npoly; i++)
     {
-      wiggle (qline->p[i].x, qline->p[i].dx, maxx);
-      wiggle (qline->p[i].y, qline->p[i].dy, maxy);
+      wiggle (qline->p[i].x, qline->p[i].dx, st->maxx);
+      wiggle (qline->p[i].y, qline->p[i].dy, st->maxy);
     }
 
-  if (max_size)
+  if (st->max_size)
     {
       /*assert(qix->npoly == 2);*/
-      if (qline->p[0].x - qline->p[1].x > max_size)
-	qline->p[0].x = qline->p[1].x + max_size
-	  - (random_p ? random() % max_spread : 0);
-      else if (qline->p[1].x - qline->p[0].x > max_size)
-	qline->p[1].x = qline->p[0].x + max_size
-	  - (random_p ? random() % max_spread : 0);
-      if (qline->p[0].y - qline->p[1].y > max_size)
-	qline->p[0].y = qline->p[1].y + max_size
-	  - (random_p ? random() % max_spread : 0);
-      else if (qline->p[1].y - qline->p[0].y > max_size)
-	qline->p[1].y = qline->p[0].y + max_size
-	  - (random_p ? random() % max_spread : 0);
+      if (qline->p[0].x - qline->p[1].x > st->max_size)
+	qline->p[0].x = qline->p[1].x + st->max_size
+	  - (st->random_p ? random() % st->max_spread : 0);
+      else if (qline->p[1].x - qline->p[0].x > st->max_size)
+	qline->p[1].x = qline->p[0].x + st->max_size
+	  - (st->random_p ? random() % st->max_spread : 0);
+      if (qline->p[0].y - qline->p[1].y > st->max_size)
+	qline->p[0].y = qline->p[1].y + st->max_size
+	  - (st->random_p ? random() % st->max_spread : 0);
+      else if (qline->p[1].y - qline->p[0].y > st->max_size)
+	qline->p[1].y = qline->p[0].y + st->max_size
+	  - (st->random_p ? random() % st->max_spread : 0);
     }
 
-  if (!mono_p && !transparent_p)
+#ifndef HAVE_COCOA
+  if (!mono_p && !st->transparent_p)
+#endif
     {
       XColor desired;
 
@@ -391,13 +448,13 @@ add_qline (Display *dpy, Window window, Colormap cmap,
       double s, v;
       rgb_to_hsv (qline->color.red, qline->color.green, qline->color.blue,
 		  &h, &s, &v);
-      h = (h + color_shift) % 360;
+      h = (h + st->color_shift) % 360;
       hsv_to_rgb (h, s, v,
 		  &qline->color.red, &qline->color.green, &qline->color.blue);
 
       qline->color.flags = DoRed | DoGreen | DoBlue;
       desired = qline->color;
-      if (XAllocColor (dpy, cmap, &qline->color))
+      if (XAllocColor (st->dpy, st->cmap, &qline->color))
 	{
 	  /* XAllocColor returns the actual RGB that the hardware let us
 	     allocate.  Restore the requested values into the XColor struct
@@ -410,23 +467,39 @@ add_qline (Display *dpy, Window window, Colormap cmap,
       else
 	{
 	  qline->color = prev_qline->color;
-	  if (!XAllocColor (dpy, cmap, &qline->color))
+	  if (!XAllocColor (st->dpy, st->cmap, &qline->color))
 	    abort (); /* same color should work */
 	}
-      XSetForeground (dpy, draw_gc, qline->color.pixel);
+
+# ifdef HAVE_COCOA
+          if (st->transparent_p)
+            {
+              /* give a non-opaque alpha to the color */
+              unsigned long pixel = qline->color.pixel;
+              unsigned long amask = BlackPixelOfScreen (0);
+              unsigned long a = (0xBBBBBBBB & amask);
+              pixel = (pixel & (~amask)) | a;
+              qline->color.pixel = pixel;
+            }
+# endif /* HAVE_COCOA */
+
+      XSetForeground (st->dpy, st->draw_gc, qline->color.pixel);
     }
-  if (! solid_p)
+  if (! st->solid_p)
     {
       /*  XDrawLine (dpy, window, (transparent_p ? gcs[0][qix->id] : draw_gc),
 	             qline->p1.x, qline->p1.y, qline->p2.x, qline->p2.y);*/
-      static XPoint points[MAXPOLY+1];
+      XPoint points[MAXPOLY+1];
       for (i = 0; i < qix->npoly; i++)
 	{
 	  points[i].x = qline->p[i].x >> SCALE;
 	  points[i].y = qline->p[i].y >> SCALE;
 	}
       points[qix->npoly] = points[0];
-      XDrawLines(dpy, window, (transparent_p ? gcs[0][qix->id] : draw_gc),
+      XDrawLines(st->dpy, st->window, 
+                 (st->transparent_p && st->gcs[0]
+                  ? st->gcs[0][qix->id]
+                  : st->draw_gc),
 		 points, qix->npoly+1, CoordModeOrigin);
     }
   else if (!prev_qline->dead)
@@ -440,7 +513,10 @@ add_qline (Display *dpy, Window window, Colormap cmap,
       points [2].y = prev_qline->p[1].y >> SCALE;
       points [3].x = prev_qline->p[0].x >> SCALE;
       points [3].y = prev_qline->p[0].y >> SCALE;
-      XFillPolygon (dpy, window, (transparent_p ? gcs[0][qix->id] : draw_gc),
+      XFillPolygon (st->dpy, st->window,
+                    (st->transparent_p && st->gcs[0]
+                     ? st->gcs[0][qix->id]
+                     : st->draw_gc),
 		    points, 4, Complex, CoordModeOrigin);
     }
 
@@ -448,27 +524,66 @@ add_qline (Display *dpy, Window window, Colormap cmap,
 }
 
 static void
-qix1 (Display *dpy, Window window, struct qix *qix)
+qix1 (struct state *st, struct qix *qix)
 {
   int ofp = qix->fp - 1;
-  static int gtick = 0;
   if (ofp < 0) ofp = qix->nlines - 1;
-  if (gtick++ == 500)
-    get_geom (dpy, window), gtick = 0;
-  free_qline (dpy, window, cmap, &qix->lines [qix->fp],
+  if (st->gtick++ == 500)
+    get_geom (st), st->gtick = 0;
+  free_qline (st, &qix->lines [qix->fp],
 	      &qix->lines[(qix->fp + 1) % qix->nlines], qix);
-  add_qline (dpy, window, cmap, &qix->lines[qix->fp], &qix->lines[ofp], qix);
+  add_qline (st, &qix->lines[qix->fp], &qix->lines[ofp], qix);
   if ((++qix->fp) >= qix->nlines)
     qix->fp = 0;
 }
 
-
-char *progclass = "Qix";
 
-char *defaults [] = {
+static unsigned long
+qix_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  struct qix **q1 = st->qixes;
+  struct qix **qn;
+  for (qn = q1; *qn; qn++)
+    qix1 (st, *qn);
+  return st->delay;
+}
+
+static void
+qix_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  get_geom (st);
+}
+
+static Bool
+qix_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+qix_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  if (st->gcs[0])
+    free (st->gcs[0]);
+  if (st->gcs[1] && st->gcs[0] != st->gcs[1])
+    free (st->gcs[1]);
+  free (st->qixes);
+  free (st);
+}
+
+
+static const char *qix_defaults [] = {
   ".background:	black",
   ".foreground:	white",
+#if 0
   "*count:	1",
+#else
+  "*count:	5",
+#endif
   "*segments:	50",
   "*poly:	2",
   "*spread:	8",
@@ -478,13 +593,17 @@ char *defaults [] = {
   "*delay:	10000",
   "*random:	true",
   "*xor:	false",
+#if 0
   "*transparent:false",
+#else
+  "*transparent:true",
+#endif
   "*gravity:	false",
   "*additive:	true",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec qix_options [] = {
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-segments",	".segments",	XrmoptionSepArg, 0 },
   { "-poly",		".poly",	XrmoptionSepArg, 0 },
@@ -507,17 +626,4 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  struct qix **q1 = init_qix (dpy, window);
-  struct qix **qn;
-  while (1)
-    for (qn = q1; *qn; qn++)
-      {
-	qix1 (dpy, window, *qn);
-	XSync (dpy, False);
-        screenhack_handle_events (dpy);
-	if (delay) usleep (delay);
-      }
-}
+XSCREENSAVER_MODULE ("Qix", qix)

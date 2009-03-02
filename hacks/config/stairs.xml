@@ -9,15 +9,11 @@
           low="0" high="20000" default="20000"
           convert="invert"/>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-by Marcelo Vianna's third Escher GL hack, this one draws an
-``infinite'' staircase.
+Escher's infinite staircase.
+
+Written by Marcelo Vianna; 1998.
   </_description>
 </screensaver>

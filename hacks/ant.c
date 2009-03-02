@@ -52,22 +52,23 @@ static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
   Neighbors 6 and neighbors 3 produce the same Turk ants.
 */
 
-#ifdef STANDALONE
-#define MODE_ant
-#define PROGCLASS "Ant"
-#define HACK_INIT init_ant
-#define HACK_DRAW draw_ant
-#define ant_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000 \n" \
- "*count: -3 \n" \
- "*cycles: 40000 \n" \
- "*size: -12 \n" \
- "*ncolors: 64 \n" \
+#ifndef HAVE_COCOA
+# define DO_STIPPLE
+#endif
 
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+#ifdef STANDALONE
+# define MODE_ant
+# define DEFAULTS	"*delay:   1000  \n" \
+					"*count:   -3    \n" \
+					"*cycles:  40000 \n" \
+					"*size:    -12   \n" \
+					"*ncolors: 64    \n"
+# define reshape_ant 0
+# define ant_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 #include "automata.h"
 
@@ -112,7 +113,7 @@ static OptionStruct desc[] =
 	{"-/+sharpturn", "turn on/off sharp turns (6, 8 or 12 neighbors only)"}
 };
 
-ModeSpecOpt ant_opts =
+ENTRYPOINT ModeSpecOpt ant_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -178,6 +179,9 @@ typedef struct {
 		XPoint      hexagon[7];		/* Need more than 6 for truchet */
 		XPoint      triangle[2][4];	/* Need more than 3 for truchet */
 	} shape;
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
 } antfarmstruct;
 
 static char plots[] =
@@ -644,11 +648,16 @@ drawcell(ModeInfo * mi, int col, int row, unsigned char color)
 	} else {
 		XGCValues   gcv;
 
-		gcv.stipple = ap->pixmaps[color - 1];
+#ifdef DO_STIPPLE
+          gcv.stipple = ap->pixmaps[color - 1];
+#endif /* DO_STIPPLE */
 		gcv.foreground = MI_WHITE_PIXEL(mi);
 		gcv.background = MI_BLACK_PIXEL(mi);
 		XChangeGC(MI_DISPLAY(mi), ap->stippledGC,
-			  GCStipple | GCForeground | GCBackground, &gcv);
+#ifdef DO_STIPPLE
+			  GCStipple |
+#endif /* DO_STIPPLE */
+                          GCForeground | GCBackground, &gcv);
 		gc = ap->stippledGC;
 	}
 	fillcell(mi, gc, col, row);
@@ -993,11 +1002,10 @@ free_ant(Display *display, antfarmstruct *ap)
 	}
 }
 
-void
+ENTRYPOINT void
 init_ant(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
 	int         size = MI_SIZE(mi);
 	antfarmstruct *ap;
 	int         col, row, dir;
@@ -1011,12 +1019,15 @@ init_ant(ModeInfo * mi)
 	ap = &antfarms[MI_SCREEN(mi)];
 
 	ap->redrawing = 0;
+#ifdef DO_STIPPLE
 	if (MI_NPIXELS(mi) <= 2) {
-		if (ap->stippledGC == None) {
+          Window      window = MI_WINDOW(mi);
+          if (ap->stippledGC == None) {
 			XGCValues   gcv;
 
 			gcv.fill_style = FillOpaqueStippled;
-			if ((ap->stippledGC = XCreateGC(display, window, GCFillStyle,
+			if ((ap->stippledGC = XCreateGC(display, window,
+                                                        GCFillStyle,
 					&gcv)) == None) {
 				free_ant(display, ap);
 				return;
@@ -1028,6 +1039,7 @@ init_ant(ModeInfo * mi)
 			}
 		}
 	}
+#endif /* DO_STIPPLE */
 	ap->generation = 0;
 	ap->n = MI_COUNT(mi);
 	if (ap->n < -MINANTS) {
@@ -1216,7 +1228,7 @@ init_ant(ModeInfo * mi)
 	draw_anant(mi, dir, col, row);
 }
 
-void
+ENTRYPOINT void
 draw_ant(ModeInfo * mi)
 {
 	antstruct  *anant;
@@ -1231,6 +1243,13 @@ draw_ant(ModeInfo * mi)
 	ap = &antfarms[MI_SCREEN(mi)];
 	if (ap->ants == NULL)
 		return;
+
+#ifdef STANDALONE
+    if (ap->eraser) {
+      ap->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), ap->eraser);
+      return;
+    }
+#endif
 
 	MI_IS_DRAWN(mi) = True;
 	ap->painted = True;
@@ -1293,7 +1312,7 @@ draw_ant(ModeInfo * mi)
 	}
 	if (++ap->generation > MI_CYCLES(mi)) {
 #ifdef STANDALONE
-	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+      ap->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), ap->eraser);
 #endif
 		init_ant(mi);
 	}
@@ -1316,7 +1335,7 @@ draw_ant(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_ant(ModeInfo * mi)
 {
 	if (antfarms != NULL) {
@@ -1329,7 +1348,7 @@ release_ant(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_ant(ModeInfo * mi)
 {
 	antfarmstruct *ap;
@@ -1344,5 +1363,7 @@ refresh_ant(ModeInfo * mi)
 		ap->redrawpos = 0;
 	}
 }
+
+XSCREENSAVER_MODULE ("Ant", ant)
 
 #endif /* MODE_ant */

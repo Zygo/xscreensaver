@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998, 2001, 2002, 2004
+ * xscreensaver, Copyright (c) 1997, 1998, 2001, 2002, 2004, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,36 +17,66 @@
  * to redo it, since xlockmore has diverged so far from xlock...)
  */
 
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
-#include "screenhack.h"
 #include "xlockmoreI.h"
-#include <X11/Intrinsic.h>
+#include "screenhack.h"
+
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h>
+#endif /* !HAVE_COCOA */
 
 #define countof(x) (sizeof((x))/sizeof(*(x)))
 
 #define MAX_COLORS (1L<<13)
 
-extern XtAppContext app;
-extern ModeSpecOpt xlockmore_opts[];
-extern const char *app_defaults;
+extern struct xscreensaver_function_table *xscreensaver_function_table;
+
+extern const char *progclass;
+
+extern struct xlockmore_function_table xlockmore_function_table;
+
+static void *xlockmore_init (Display *, Window, 
+                             struct xlockmore_function_table *);
+static unsigned long xlockmore_draw (Display *, Window, void *);
+static void xlockmore_reshape (Display *, Window, void *, 
+                               unsigned int w, unsigned int h);
+static Bool xlockmore_event (Display *, Window, void *, XEvent *);
+static void xlockmore_free (Display *, Window, void *);
+
 
 void
-pre_merge_options (void)
+xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
 {
+  struct xlockmore_function_table *xlmft = 
+    (struct xlockmore_function_table *) arg;
   int i, j;
   char *s;
+  XrmOptionDescRec *new_options;
+  char **new_defaults;
+  const char *xlockmore_defaults;
+  ModeSpecOpt *xlockmore_opts = xlmft->opts;
+
+# undef ya_rand_init
+  ya_rand_init (0);
+
+  xsft->init_cb    = (void *(*) (Display *, Window)) xlockmore_init;
+  xsft->draw_cb    = xlockmore_draw;
+  xsft->reshape_cb = xlockmore_reshape;
+  xsft->event_cb   = xlockmore_event;
+  xsft->free_cb    = xlockmore_free;
+
+  progclass = xlmft->progclass;
+  xlockmore_defaults = xlmft->defaults;
 
   /* Translate the xlockmore `opts[]' argument to a form that
      screenhack.c expects.
    */
+  new_options = (XrmOptionDescRec *) 
+    calloc (xlockmore_opts->numopts*3 + 100, sizeof (*new_options));
+
   for (i = 0; i < xlockmore_opts->numopts; i++)
     {
       XrmOptionDescRec *old = &xlockmore_opts->opts[i];
-      XrmOptionDescRec *new = &options[i];
+      XrmOptionDescRec *new = &new_options[i];
 
       if (old->option[0] == '-')
 	new->option = old->option;
@@ -71,9 +101,9 @@ pre_merge_options (void)
 		     "-size", "-font", "-wireframe", "-use3d", "-useSHM",
                      "-showFPS" };
     for (j = 0; j < countof(args); j++)
-      if (strstr(app_defaults, args[j]+1))
+      if (strstr(xlockmore_defaults, args[j]+1))
 	{
-	  XrmOptionDescRec *new = &options[i++];
+	  XrmOptionDescRec *new = &new_options[i++];
 	  new->option = args[j];
 	  new->specifier = strdup(args[j]);
 	  new->specifier[0] = '.';
@@ -81,9 +111,9 @@ pre_merge_options (void)
 	    {
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "True";
-	      new = &options[i++];
+	      new = &new_options[i++];
 	      new->option = "-no-wireframe";
-	      new->specifier = options[i-2].specifier;
+	      new->specifier = new_options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
@@ -92,9 +122,9 @@ pre_merge_options (void)
 	      new->option = "-3d";
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "True";
-	      new = &options[i++];
+	      new = &new_options[i++];
 	      new->option = "-no-3d";
-	      new->specifier = options[i-2].specifier;
+	      new->specifier = new_options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
@@ -103,9 +133,9 @@ pre_merge_options (void)
 	      new->option = "-shm";
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "True";
-	      new = &options[i++];
+	      new = &new_options[i++];
 	      new->option = "-no-shm";
-	      new->specifier = options[i-2].specifier;
+	      new->specifier = new_options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
@@ -114,9 +144,9 @@ pre_merge_options (void)
 	      new->option = "-fps";
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "True";
-	      new = &options[i++];
+	      new = &new_options[i++];
 	      new->option = "-no-fps";
-	      new->specifier = options[i-2].specifier;
+	      new->specifier = new_options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
@@ -129,27 +159,36 @@ pre_merge_options (void)
   }
 
 
+
   /* Construct the kind of `defaults' that screenhack.c expects from
      the xlockmore `vars[]' argument.
    */
   i = 0;
 
+  new_defaults = (char **) calloc (1, xlockmore_opts->numvarsdesc * 10 + 100);
+
   /* Put on the PROGCLASS.background/foreground resources. */
   s = (char *) malloc(50);
+  *s = 0;
+# ifndef HAVE_COCOA
   strcpy (s, progclass);
+# endif
   strcat (s, ".background: black");
-  defaults [i++] = s;
+  new_defaults [i++] = s;
 
   s = (char *) malloc(50);
+  *s = 0;
+# ifndef HAVE_COCOA
   strcpy (s, progclass);
+# endif
   strcat (s, ".foreground: white");
-  defaults [i++] = s;
+  new_defaults [i++] = s;
 
-  /* Copy the lines out of the `app_defaults' var and into this array. */
-  s = strdup (app_defaults);
+  /* Copy the lines out of the `xlockmore_defaults' var and into this array. */
+  s = strdup (xlockmore_defaults);
   while (s && *s)
     {
-      defaults [i++] = s;
+      new_defaults [i++] = s;
       s = strchr(s, '\n');
       if (s)
 	*s++ = 0;
@@ -170,7 +209,7 @@ pre_merge_options (void)
       strcat (s, xlockmore_opts->vars[j].name);
       strcat (s, ": ");
       strcat (s, def);
-      defaults [i++] = s;
+      new_defaults [i++] = s;
 
       /* Go through the list of resources and print a warning if there
          are any duplicates.
@@ -178,13 +217,12 @@ pre_merge_options (void)
       {
         char *onew = strdup (xlockmore_opts->vars[j].name);
         const char *new = onew;
-        char *s;
         int k;
         if ((s = strrchr (new, '.'))) new = s+1;
         if ((s = strrchr (new, '*'))) new = s+1;
         for (k = 0; k < i-1; k++)
           {
-            char *oold = strdup (defaults[k]);
+            char *oold = strdup (new_defaults[k]);
             const char *old = oold;
             if ((s = strchr (oold, ':'))) *s = 0;
             if ((s = strrchr (old, '.'))) old = s+1;
@@ -202,13 +240,19 @@ pre_merge_options (void)
       }
     }
 
-  defaults [i] = 0;
+  new_defaults [i] = 0;
+
+  xsft->progclass = progclass;
+  xsft->options   = new_options;
+  xsft->defaults  = (const char * const *) new_defaults;
 }
 
 
 static void
-xlockmore_read_resources (void)
+xlockmore_read_resources (ModeInfo *mi)
 {
+  Display *dpy = mi->dpy;
+  ModeSpecOpt *xlockmore_opts = mi->xlmft->opts;
   int i;
   for (i = 0; i < xlockmore_opts->numvarsdesc; i++)
     {
@@ -221,19 +265,19 @@ xlockmore_read_resources (void)
       switch (xlockmore_opts->vars[i].type)
 	{
 	case t_String:
-	  *var_c = get_string_resource (xlockmore_opts->vars[i].name,
+	  *var_c = get_string_resource (dpy, xlockmore_opts->vars[i].name,
 					xlockmore_opts->vars[i].classname);
 	  break;
 	case t_Float:
-	  *var_f = get_float_resource (xlockmore_opts->vars[i].name,
+	  *var_f = get_float_resource (dpy, xlockmore_opts->vars[i].name,
 				       xlockmore_opts->vars[i].classname);
 	  break;
 	case t_Int:
-	  *var_i = get_integer_resource (xlockmore_opts->vars[i].name,
+	  *var_i = get_integer_resource (dpy, xlockmore_opts->vars[i].name,
 					 xlockmore_opts->vars[i].classname);
 	  break;
 	case t_Bool:
-	  *var_b = get_boolean_resource (xlockmore_opts->vars[i].name,
+	  *var_b = get_boolean_resource (dpy, xlockmore_opts->vars[i].name,
 					 xlockmore_opts->vars[i].classname);
 	  break;
 	default:
@@ -243,173 +287,187 @@ xlockmore_read_resources (void)
 }
 
 
-static void
-xlockmore_handle_events (ModeInfo *mi, 
-                         void (*reshape) (ModeInfo *, int, int),
-                         Bool (*hook) (ModeInfo *, XEvent *))
+static void *
+xlockmore_init (Display *dpy, Window window, 
+                struct xlockmore_function_table *xlmft)
 {
-  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-
-  while (XPending (mi->dpy))
-    {
-      XEvent event;
-      XNextEvent (mi->dpy, &event);
-      if (reshape && event.xany.type == ConfigureNotify)
-        {
-          XGetWindowAttributes (mi->dpy, mi->window, &mi->xgwa);
-          reshape (mi, mi->xgwa.width, mi->xgwa.height);
-        }
-      else if (hook && hook (mi, &event))
-        {
-        }
-      else
-        {
-          screenhack_handle_event (mi->dpy, &event);
-        }
-    }
-}
-
-
-void 
-xlockmore_screenhack (Display *dpy, Window window,
-		      Bool want_writable_colors,
-		      Bool want_uniform_colors,
-		      Bool want_smooth_colors,
-		      Bool want_bright_colors,
-                      unsigned long event_mask,
-		      void (*hack_init) (ModeInfo *),
-		      void (*hack_draw) (ModeInfo *),
-		      void (*hack_reshape) (ModeInfo *, int, int),
-		      Bool (*hack_handle_events) (ModeInfo *, XEvent *),
-		      void (*hack_free) (ModeInfo *))
-{
-  ModeInfo mi;
+  ModeInfo *mi = (ModeInfo *) calloc (1, sizeof(*mi));
   XGCValues gcv;
   XColor color;
   int i;
-  time_t start, now;
   int orig_pause;
   Bool root_p;
 
-  memset(&mi, 0, sizeof(mi));
-  mi.dpy = dpy;
-  mi.window = window;
-  XGetWindowAttributes (dpy, window, &mi.xgwa);
-  root_p = (window == RootWindowOfScreen (mi.xgwa.screen));
+  if (! xlmft)
+    abort();
+  mi->xlmft = xlmft;
 
-  /* If this is the root window, don't allow ButtonPress to be selected.
-     Bad Things Happen. */
-  if (root_p)
-    event_mask &= (~(ButtonPressMask|ButtonReleaseMask));
+  mi->dpy = dpy;
+  mi->window = window;
+  XGetWindowAttributes (dpy, window, &mi->xgwa);
+  
+#ifdef HAVE_COCOA
+  
+  /* In Cocoa-based xscreensaver, all hacks run in the same address space,
+     so each one needs to get its own screen number.  We just use a global
+     counter for that, instead of actually trying to figure out which
+     monitor each window is on.  Also, the embedded "preview" view counts
+     as a screen as well.
+    
+     Note that the screen number will increase each time the saver is
+     restarted (e.g., each time preferences are changed!)  So we just
+     keep pushing the num_screens number up as needed, and assume that
+     no more than 10 simultanious copies will be running at once...
+   */
+  {
+    static int screen_tick = 0;
+    mi->num_screens = 10;
+    mi->screen_number = screen_tick++;
+    if (screen_tick >= mi->num_screens)
+      mi->num_screens += 10;
+  }
+  
+  root_p = True;
+#else /* !HAVE_COCOA -- real Xlib */
+  
+  /* In Xlib-based xscreensaver, each hack runs in its own address space,
+     so each one only needs to be aware of one screen.
+   */
+  mi->num_screens = 1;
+  mi->screen_number = 0;
+  
+  {  /* kludge for DEBUG_PAIR */
+    static int screen_tick = 0;
+    mi->num_screens++;
+    if (screen_tick)
+      mi->screen_number++;
+    screen_tick++;
+  }
 
-  /* If this hack wants additional events, select them. */
-  if (event_mask && ! (mi.xgwa.your_event_mask & event_mask))
-    XSelectInput (dpy, window, (mi.xgwa.your_event_mask | event_mask));
+  root_p = (window == RootWindowOfScreen (mi->xgwa.screen));
 
+  /* Everybody gets motion events, just in case. */
+  XSelectInput (dpy, window, (mi->xgwa.your_event_mask | PointerMotionMask));
+
+#endif /* !HAVE_COCOA */
+  
   color.flags = DoRed|DoGreen|DoBlue;
   color.red = color.green = color.blue = 0;
-  if (!XAllocColor(dpy, mi.xgwa.colormap, &color))
+  if (!XAllocColor(dpy, mi->xgwa.colormap, &color))
     abort();
-  mi.black = color.pixel;
+  mi->black = color.pixel;
   color.red = color.green = color.blue = 0xFFFF;
-  if (!XAllocColor(dpy, mi.xgwa.colormap, &color))
+  if (!XAllocColor(dpy, mi->xgwa.colormap, &color))
     abort();
-  mi.white = color.pixel;
+  mi->white = color.pixel;
 
   if (mono_p)
     {
       static unsigned long pixels[2];
       static XColor colors[2];
     MONO:
-      mi.npixels = 2;
-      mi.pixels = pixels;
-      mi.colors = colors;
-      pixels[0] = mi.black;
-      pixels[1] = mi.white;
+      mi->npixels = 2;
+      if (! mi->pixels)
+        mi->pixels = (unsigned long *) 
+          calloc (mi->npixels, sizeof (*mi->pixels));
+      if (!mi->colors)
+        mi->colors = (XColor *) 
+          calloc (mi->npixels, sizeof (*mi->colors));
+      pixels[0] = mi->black;
+      pixels[1] = mi->white;
       colors[0].flags = DoRed|DoGreen|DoBlue;
       colors[1].flags = DoRed|DoGreen|DoBlue;
       colors[0].red = colors[0].green = colors[0].blue = 0;
       colors[1].red = colors[1].green = colors[1].blue = 0xFFFF;
-      mi.writable_p = False;
+      mi->writable_p = False;
     }
   else
     {
-      mi.npixels = get_integer_resource ("ncolors", "Integer");
-      if (mi.npixels <= 0)
-	mi.npixels = 64;
-      else if (mi.npixels > MAX_COLORS)
-	mi.npixels = MAX_COLORS;
+      mi->npixels = get_integer_resource (dpy, "ncolors", "Integer");
+      if (mi->npixels <= 0)
+	mi->npixels = 64;
+      else if (mi->npixels > MAX_COLORS)
+	mi->npixels = MAX_COLORS;
 
-      mi.colors = (XColor *) calloc (mi.npixels, sizeof (*mi.colors));
+      mi->colors = (XColor *) calloc (mi->npixels, sizeof (*mi->colors));
 
-      mi.writable_p = want_writable_colors;
+      mi->writable_p = mi->xlmft->want_writable_colors;
 
-      if (want_uniform_colors)
-	make_uniform_colormap (dpy, mi.xgwa.visual, mi.xgwa.colormap,
-			       mi.colors, &mi.npixels,
-			       True, &mi.writable_p, True);
-      else if (want_smooth_colors)
-	make_smooth_colormap (dpy, mi.xgwa.visual, mi.xgwa.colormap,
-			      mi.colors, &mi.npixels,
-			      True, &mi.writable_p, True);
-      else
-	make_random_colormap (dpy, mi.xgwa.visual, mi.xgwa.colormap,
-			      mi.colors, &mi.npixels,
-			      want_bright_colors,
-			      True, &mi.writable_p, True);
+      switch (mi->xlmft->desired_color_scheme)
+        {
+        case color_scheme_uniform:
+          make_uniform_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+                                 mi->colors, &mi->npixels,
+                                 True, &mi->writable_p, True);
+          break;
+        case color_scheme_smooth:
+          make_smooth_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+                                mi->colors, &mi->npixels,
+                                True, &mi->writable_p, True);
+          break;
+        case color_scheme_bright:
+        case color_scheme_default:
+          make_random_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+                                mi->colors, &mi->npixels,
+                                (mi->xlmft->desired_color_scheme ==
+                                 color_scheme_bright),
+                                True, &mi->writable_p, True);
+          break;
+        default:
+          abort();
+        }
 
-      if (mi.npixels <= 2)
+      if (mi->npixels <= 2)
 	goto MONO;
       else
 	{
-	  mi.pixels = (unsigned long *)
-	    calloc (mi.npixels, sizeof (*mi.pixels));
-	  for (i = 0; i < mi.npixels; i++)
-	    mi.pixels[i] = mi.colors[i].pixel;
+	  mi->pixels = (unsigned long *)
+	    calloc (mi->npixels, sizeof (*mi->pixels));
+	  for (i = 0; i < mi->npixels; i++)
+	    mi->pixels[i] = mi->colors[i].pixel;
 	}
     }
 
-  gcv.foreground = mi.white;
-  gcv.background = mi.black;
-  mi.gc = XCreateGC(dpy, window, GCForeground|GCBackground, &gcv);
+  gcv.foreground = mi->white;
+  gcv.background = mi->black;
+  mi->gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 
-  mi.fullrandom = True;
+  mi->fullrandom = True;
 
-  mi.pause      = get_integer_resource ("delay", "Usecs");
+  mi->pause      = get_integer_resource (dpy, "delay", "Usecs");
 
-  mi.cycles     = get_integer_resource ("cycles", "Int");
-  mi.batchcount = get_integer_resource ("count", "Int");
-  mi.size	= get_integer_resource ("size", "Int");
+  mi->cycles     = get_integer_resource (dpy, "cycles", "Int");
+  mi->batchcount = get_integer_resource (dpy, "count", "Int");
+  mi->size	 = get_integer_resource (dpy, "size", "Int");
 
-  mi.threed = get_boolean_resource ("use3d", "Boolean");
-  mi.threed_delta = get_float_resource ("delta3d", "Boolean");
-  mi.threed_right_color = get_pixel_resource ("right3d", "Color", dpy,
-					      mi.xgwa.colormap);
-  mi.threed_left_color = get_pixel_resource ("left3d", "Color", dpy,
-					     mi.xgwa.colormap);
-  mi.threed_both_color = get_pixel_resource ("both3d", "Color", dpy,
-					     mi.xgwa.colormap);
-  mi.threed_none_color = get_pixel_resource ("none3d", "Color", dpy,
-					     mi.xgwa.colormap);
+  mi->threed = get_boolean_resource (dpy, "use3d", "Boolean");
+  mi->threed_delta = get_float_resource (dpy, "delta3d", "Boolean");
+  mi->threed_right_color = get_pixel_resource (dpy,
+					       mi->xgwa.colormap, "right3d", "Color");
+  mi->threed_left_color = get_pixel_resource (dpy,
+				 	      mi->xgwa.colormap, "left3d", "Color");
+  mi->threed_both_color = get_pixel_resource (dpy,
+					      mi->xgwa.colormap, "both3d", "Color");
+  mi->threed_none_color = get_pixel_resource (dpy,
+					      mi->xgwa.colormap, "none3d", "Color");
 
-  mi.wireframe_p = get_boolean_resource ("wireframe", "Boolean");
-  mi.root_p = root_p;
-  mi.fps_p = get_boolean_resource ("showFPS", "Boolean");
+  mi->wireframe_p = get_boolean_resource (dpy, "wireframe", "Boolean");
+  mi->root_p = root_p;
+  mi->fps_p = get_boolean_resource (dpy, "showFPS", "Boolean");
 #ifdef HAVE_XSHM_EXTENSION
-  mi.use_shm = get_boolean_resource ("useSHM", "Boolean");
+  mi->use_shm = get_boolean_resource (dpy, "useSHM", "Boolean");
 #endif /* !HAVE_XSHM_EXTENSION */
 
-  if (mi.pause < 0)
-    mi.pause = 0;
-  else if (mi.pause > 100000000)
-    mi.pause = 100000000;
-  orig_pause = mi.pause;
+  if (mi->pause < 0)
+    mi->pause = 0;
+  else if (mi->pause > 100000000)
+    mi->pause = 100000000;
+  orig_pause = mi->pause;
 
   /* If this hack uses fonts (meaning, mentioned "font" in DEFAULTS)
      then load it. */
   {
-    char *name = get_string_resource ("font", "Font");
+    char *name = get_string_resource (dpy, "font", "Font");
     if (name)
       {
         XFontStruct *f = XLoadQueryFont (dpy, name);
@@ -427,39 +485,84 @@ xlockmore_screenhack (Display *dpy, Window window,
                      progname, def1, def2);
             f = XLoadQueryFont (dpy, def2);
           }
-        if (f) XSetFont (dpy, mi.gc, f->fid);
+        if (f) XSetFont (dpy, mi->gc, f->fid);
         if (f) XFreeFont (dpy, f);
+        free (name);
       }
   }
 
-  xlockmore_read_resources ();
+  xlockmore_read_resources (mi);
 
   XClearWindow (dpy, window);
 
-  i = 0;
-  start = time((time_t) 0);
+  mi->xlmft->hack_init (mi);
 
-  hack_init (&mi);
-  do {
-    hack_draw (&mi);
-    XSync(dpy, False);
-    xlockmore_handle_events (&mi, hack_reshape, hack_handle_events);
-    if (mi.pause)
-      usleep(mi.pause);
-    mi.pause = orig_pause;
-
-    if (hack_free)
-      {
-	if (i++ > (mi.batchcount / 4) &&
-	    (start + 5) < (now = time((time_t) 0)))
-	  {
-	    i = 0;
-	    start = now;
-	    hack_free (&mi);
-	    hack_init (&mi);
-	    XSync(dpy, False);
-	  }
-      }
-
-  } while (1);
+  return mi;
 }
+
+static unsigned long
+xlockmore_draw (Display *dpy, Window window, void *closure)
+{
+  ModeInfo *mi = (ModeInfo *) closure;
+
+  unsigned long orig_pause = mi->pause;
+  unsigned long this_pause;
+
+  mi->xlmft->hack_draw (mi);
+
+  this_pause = mi->pause;
+  mi->pause  = orig_pause;
+  return this_pause;
+}
+
+
+static void
+xlockmore_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  ModeInfo *mi = (ModeInfo *) closure;
+  if (mi->xlmft->hack_reshape)
+    {
+      XGetWindowAttributes (dpy, window, &mi->xgwa);
+      mi->xlmft->hack_reshape (mi, mi->xgwa.width, mi->xgwa.height);
+    }
+}
+
+static Bool
+xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  ModeInfo *mi = (ModeInfo *) closure;
+  if (mi->xlmft->hack_handle_events)
+    {
+      mi->xlmft->hack_handle_events (mi, event);
+      /* Since xlockmore hacks don't tell us whether they handled the
+         event, assume they handled buttons (so we don't beep) but that
+         they didn't handle anything else (so that "q" still quits).
+       */
+      return (event->xany.type == ButtonPress);
+    }
+  else
+    return False;
+}
+
+static void
+xlockmore_free (Display *dpy, Window window, void *closure)
+{
+  ModeInfo *mi = (ModeInfo *) closure;
+  if (mi->xlmft->hack_free)
+    mi->xlmft->hack_free (mi);
+#ifdef USE_GL
+/* ####
+  if (mi->fps_state)
+    fps_free (mi);
+ */
+#endif /* USE_GL */
+
+  XFreeGC (dpy, mi->gc);
+  free_colors (dpy, mi->xgwa.colormap, mi->colors, mi->npixels);
+  free (mi->colors);
+  free (mi->pixels);
+
+  free (mi);
+}
+

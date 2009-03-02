@@ -15,8 +15,10 @@
 
   <_description>
 XaoS generates fast fly-through animations of the Mandelbrot and other
-fractal sets.  Written by Thomas Marsh and Jan Hubicka.  This is not
-included with the XScreenSaver package, but if you don't have it
-already, you can find it at &lt;http://xaos.theory.org/&gt;.
+fractal sets.  This is not included with the XScreenSaver package, but
+if you don't have it already, you can find it at
+&lt;http://xaos.theory.org/&gt;.
+
+Written by Thomas Marsh and Jan Hubicka.
   </_description>
 </screensaver>

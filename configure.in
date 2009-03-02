@@ -250,15 +250,6 @@ AH_TEMPLATE([HAVE_HPUX_PASSWD],
 	    Passwords'' (if you have /usr/include/hpsecurity.h, you probably
 	    have this.) I haven't tested this one, let me know if it works.])
 
-AH_TEMPLATE([HAVE_VT_LOCKSWITCH],
-	    [Define this if you are on a system that supports the
-	    VT_LOCKSWITCH and VT_UNLOCKSWITCH ioctls.  If this is defined,
-	    then when the screen is locked, switching to another virtual
-	    terminal will also be prevented.  That is, the whole console
-	    will be locked, rather than just the VT on which X is running. 
-	    (Well, that's the theory anyway -- in practice, I haven't yet
-	    figured out how to make that work.)])
-
 AH_TEMPLATE([HAVE_SYSLOG],
 	    [Define this if you the openlog(), syslog(), and closelog()
 	    functions.  This is used for logging failed login attempts.])
@@ -350,7 +341,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
-    CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs"
+    CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes"
     OBJCC="$OBJCC -Wall"
     # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
     # and then perhaps we can do without -pedantic?
@@ -710,6 +701,17 @@ EOF
     cd .. 2>/dev/null
     rm -fr conftestdir
   fi])
+
+###############################################################################
+#
+#       Handle the --with-x-app-defaults option HERE
+#
+###############################################################################
+
+AC_ARG_WITH(x-app-defaults,[],
+	[ac_cv_x_app_defaults="$withval"],
+	[eval ac_x_app_defaults="$withval"])
+
 
 AC_DEFUN(AC_PATH_X_APP_DEFAULTS_DIRECT,[
   # Look for the directory under a standard set of common directories.
@@ -1114,6 +1116,7 @@ AC_HEADER_DIRENT
 AC_GETTIMEOFDAY_ARGS
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
+AC_CHECK_FUNCS(setlocale)
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
 AC_CHECK_HEADERS(crypt.h sys/select.h)
@@ -1265,6 +1268,11 @@ fi
 # canonicalize slashes.
 HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
+# Expand HACKDIR as HACKDIR_FULL
+eval HACKDIR_FULL=${HACKDIR}
+eval HACKDIR_FULL=${HACKDIR_FULL}
+eval HACKDIR_FULL=${HACKDIR_FULL}
+
 # This option used to be called --enable-subdir; make sure that is no longer
 # used, since configure brain-damagedly ignores unknown --enable options.
 
@@ -1281,6 +1289,7 @@ fi
 ###############################################################################
 #
 #       Handle the --with-configdir option
+#       Help for --with-x-app-defaults option added..
 #
 ###############################################################################
 
@@ -1290,6 +1299,8 @@ AC_ARG_WITH(configdir,
 [  --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
                           Default: `PREFIX/share/xscreensaver/config/'
+  --with-x-app-defaults=DIR
+			   Where to install xscreensaver configuration file.
 ],
   [with_configdir="$withval"; with_configdir_req="$withval"],
   [with_configdir=yes])
@@ -1723,6 +1734,13 @@ AC_ARG_WITH(proc-interrupts,
 
 if test "$with_proc_interrupts" = yes; then
 
+  # Note that we may be building in an environment (e.g. Debian buildd chroot)
+  # without a proper /proc filesystem. If /proc/interrupts exists, then we'll
+  # check that it has the bits we need, but otherwise we'll just go on faith.
+  #
+  have_proc_interrupts=yes
+
+  if test -f /proc/interrupts; then
    AC_CACHE_CHECK([whether /proc/interrupts contains keyboard data],
     ac_cv_have_proc_interrupts,
     [ac_cv_have_proc_interrupts=no
@@ -1731,6 +1749,7 @@ if test "$with_proc_interrupts" = yes; then
      fi
     ])
    have_proc_interrupts=$ac_cv_have_proc_interrupts
+  fi
 
   if test "$have_proc_interrupts" = yes; then
     AC_DEFINE(HAVE_PROC_INTERRUPTS)
@@ -1770,46 +1789,6 @@ if test "$ac_macosx" = yes; then
     AC_DEFINE(NO_LOCKING)
   fi
 fi
-
-
-###############################################################################
-#
-#       The --enable-vt-locking option
-#
-###############################################################################
-
-#ac_vt_lockswitch=no
-#AC_ARG_ENABLE(vt-locking,[
-#  --enable-vt-locking     Compile in support for locking Virtual Terminals.
-#                          This is the default if the system supports it, and
-#                          if locking support is included (--enable-locking.)
-#  --disable-vt-locking    Do not allow locking of VTs, even if locking is
-#                          enabled.],
-#  [enable_vt_locking="$enableval"],[enable_vt_locking=yes])
-#if test "$enable_vt_locking" = yes; then
-#
-#  AC_CACHE_CHECK([for the VT_LOCKSWITCH ioctl], ac_cv_vt_lockswitch,
-#   [AC_TRY_COMPILE([#include <fcntl.h>
-#                   #include <sys/ioctl.h>
-#                   #include <sys/vt.h>],
-#                  [int x = VT_LOCKSWITCH; int y = VT_UNLOCKSWITCH;],
-#                  [ac_cv_vt_lockswitch=yes],
-#                  [ac_cv_vt_lockswitch=no])])
-#  ac_vt_lockswitch=$ac_cv_vt_lockswitch
-#
-#elif test "$enable_vt_locking" = no; then
-#  true
-#else
-#  echo "error: must be yes or no: --enable-vt-locking=$enable_vt_locking"
-#  exit 1
-#fi
-#
-#if test "$ac_vt_lockswitch" = yes; then
-#  AC_DEFINE(HAVE_VT_LOCKSWITCH)
-#  # the VT_LOCKSWITCH ioctl can only be used when running as root.
-#  # #### but it doesn't work yet, so don't worry about that for now.
-##  need_setuid=yes
-#fi
 
 
 ###############################################################################
@@ -3065,6 +3044,10 @@ if test "$have_motif" = yes -a "$have_xpm" = yes ; then
   fi
 fi
 
+if test "$XPM_LIBS" = "" ; then
+  XPM_LIBS=$(MINIXPM)
+fi
+
 
 ###############################################################################
 #
@@ -3331,8 +3314,8 @@ AC_ARG_WITH(text-file,
 case "$with_textfile" in
   /*)
     # absolute path
-    AC_MSG_CHECKING([for image directory $with_textfile])
-    if test -d "$with_textfile" ; then
+    AC_MSG_CHECKING([for text file $with_textfile])
+    if test -f "$with_textfile" ; then
       AC_MSG_RESULT(yes)
     else
       AC_MSG_RESULT(no)
@@ -3365,7 +3348,7 @@ case "$with_textfile" in
   ;;
 
   *)
-    echo "error: must be an absolute path: --with-image-directory=$with_textfile_req"
+    echo "error: must be an absolute path: --with-text-file=$with_textfile_req"
     exit 1
   ;;
 esac
@@ -3623,6 +3606,7 @@ AC_SUBST(GNOME24)
 AC_SUBST(GNOME22)
 AC_SUBST(NOGNOME)
 AC_SUBST(HACKDIR)
+AC_SUBST(HACKDIR_FULL)
 AC_SUBST(GTK_DATADIR)
 AC_SUBST(PO_DATADIR)
 AC_SUBST(HACK_CONF_DIR)
@@ -4137,6 +4121,7 @@ if test "$do_dir_warning" = no; then
   fi
   echo "User programs will be installed in ${bindir}/"
   echo "Screen savers will be installed in ${HACKDIR}/"
-  echo "Configuration will be installed in ${HACK_CONF_DIR}/"
+  echo "Hack configurations will be installed in ${HACK_CONF_DIR}/"
+  echo "Saver configuration will be installed in ${APPDEFAULTS}/"
   echo ''
 fi

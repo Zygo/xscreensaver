@@ -9,7 +9,13 @@
  * implied warranty.
  */
 
-#include <GL/gl.h>
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
+#include "tangram_shapes.h"
 
 #define small_scale  ( 1 )
 #define large_scale  ( 2 )
@@ -75,6 +81,7 @@ static void tri_45_90(int wire)
     glEnd();
 }
 
+static
 void unit_cube(int wire)
 {
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);
@@ -119,6 +126,7 @@ void unit_cube(int wire)
     glEnd();
 }
 
+static
 void unit_rhomboid(int wire)
 {
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);

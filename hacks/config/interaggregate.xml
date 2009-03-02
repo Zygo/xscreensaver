@@ -4,24 +4,21 @@
 
   <command arg="-root"/>
 
-  <number id="init" type="spinbutton" arg="-num-discs %"
-          _label="Number of Discs" low="50" high="400" default="85"/>
+  <number id="init" type="spinbutton" arg="-num-circles %"
+          _label="Number of Discs" low="50" high="400" default="100"/>
 
   <number id="speed" type="slider" arg="-growth-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="60000" default="30000" convert="invert"/>
 
   <_description>
-The Intersection Aggregate is a fun visualization defining the relationships 
-between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
-for display at the Whitney Museum of American Art.
+A surface is filled with a hundred medium to small sized circles.
+Each circle has a different size and direction, but moves at the same
+slow rate.  Displays the instantaneous intersections of the circles as
+well as the aggregate intersections of the circles.
 
-A surface filled with 100 medium to small sized circles. Each circle has a 
-different size and direction, but moves at the same slow rate. Display:
-    A. The instantaneous intersections of the circles.
-    B. The aggregate intersections of the circles.
+Though actually it doesn't look like circles at all!
 
-Ported to XScreensaver from the art project "InterAggregate" at
-http://www.complexification.net
+Written by Casey Reas, William Ngan, Robert Hodgin, and Jamie Zawinski; 2004.
   </_description>
 </screensaver>

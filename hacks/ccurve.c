@@ -50,21 +50,50 @@ typedef struct Segment_struct
 }
 Segment;
 
-static int                  color_count = 0;
-static int                  color_index = 0;
-static Colormap             color_map = (Colormap)NULL;
-static XColor               colors [MAXIMUM_COLOR_COUNT];
-static int                  line_count = 0;
-static int                  maximum_lines = 0;
-static double               plot_maximum_x = -1000.00;
-static double               plot_maximum_y = -1000.00;
-static double               plot_minimum_x =  1000.00;
-static double               plot_minimum_y =  1000.00;
-static int                  total_lines = 0;
+struct state {
+  Display *dpy;
+  Window window;
+
+  int                  color_count;
+  int                  color_index;
+  Colormap             color_map;
+  XColor               colors [MAXIMUM_COLOR_COUNT];
+  int                  line_count;
+  int                  maximum_lines;
+  double               plot_maximum_x;
+  double               plot_maximum_y;
+  double               plot_minimum_x;
+  double               plot_minimum_y;
+  int                  total_lines;
+
+  unsigned long int    background;
+  GC                   context;
+  Pixmap               pixmap;
+  int                  width;
+  int                  height;
+  float                delay;
+  float                delay2;
+
+  int    draw_index;
+
+  int draw_iterations;
+  double draw_maximum_x;
+  double draw_maximum_y;
+  double draw_minimum_x;
+  double draw_minimum_y;
+  int draw_segment_count;
+  Segment* draw_segments;
+  double draw_x1;
+  double draw_y1;
+  double draw_x2;
+  double draw_y2;
+};
+
+
+
 
 /* normalize alters the sequence to go from (0,0) to (1,0) */
-static
-void
+static void
 normalized_plot (int       segment_count,
 		 Segment*  segments,
 		 Position* points)
@@ -102,8 +131,7 @@ normalized_plot (int       segment_count,
     }
 }
 
-static
-void
+static void
 copy_points (int       segment_count,
 	     Position* source,
 	     Position* target)
@@ -116,8 +144,7 @@ copy_points (int       segment_count,
     }
 }
 
-static
-void
+static void
 realign (double    x1,
 	 double    y1,
 	 double    x2,
@@ -151,13 +178,8 @@ realign (double    x1,
     }
 }
 
-static
-void
-self_similar_normalized (Display*  display,
-			 Pixmap    pixmap,
-			 GC	   context,
-			 int       width,
-			 int       height,
+static void
+self_similar_normalized (struct state *st,
 			 int       iterations,
 			 double    x1,
 			 double    y1,
@@ -174,23 +196,23 @@ self_similar_normalized (Display*  display,
     {
 	double delta_x = maximum_x - minimum_x;
 	double delta_y = maximum_y - minimum_y;
-	color_index = (int)(((double)(line_count * color_count))
-			    / ((double)total_lines));
-	++line_count;
-	XSetForeground (display, context, colors [color_index].pixel);
-	if (plot_maximum_x < x1) plot_maximum_x = x1;
-	if (plot_maximum_x < x2) plot_maximum_x = x2;
-	if (plot_maximum_y < y1) plot_maximum_y = y1;
-	if (plot_maximum_y < y2) plot_maximum_y = y2;
-	if (plot_minimum_x > x1) plot_minimum_x = x1;
-	if (plot_minimum_x > x2) plot_minimum_x = x2;
-	if (plot_minimum_y > y1) plot_minimum_y = y1;
-	if (plot_minimum_y > y2) plot_minimum_y = y2;
-	XDrawLine (display, pixmap, context,
-		   (int)(((x1 - minimum_x) / delta_x) * width),
-		   (int)(((maximum_y - y1) / delta_y) * height),
-		   (int)(((x2 - minimum_x) / delta_x) * width),
-		   (int)(((maximum_y - y2) / delta_y) * height));
+	st->color_index = (int)(((double)(st->line_count * st->color_count))
+			    / ((double)st->total_lines));
+	++st->line_count;
+	XSetForeground (st->dpy, st->context, st->colors [st->color_index].pixel);
+	if (st->plot_maximum_x < x1) st->plot_maximum_x = x1;
+	if (st->plot_maximum_x < x2) st->plot_maximum_x = x2;
+	if (st->plot_maximum_y < y1) st->plot_maximum_y = y1;
+	if (st->plot_maximum_y < y2) st->plot_maximum_y = y2;
+	if (st->plot_minimum_x > x1) st->plot_minimum_x = x1;
+	if (st->plot_minimum_x > x2) st->plot_minimum_x = x2;
+	if (st->plot_minimum_y > y1) st->plot_minimum_y = y1;
+	if (st->plot_minimum_y > y2) st->plot_minimum_y = y2;
+	XDrawLine (st->dpy, st->pixmap, st->context,
+		   (int)(((x1 - minimum_x) / delta_x) * st->width),
+		   (int)(((maximum_y - y1) / delta_y) * st->height),
+		   (int)(((x2 - minimum_x) / delta_x) * st->width),
+		   (int)(((maximum_y - y2) / delta_y) * st->height));
     }
     else
     {
@@ -214,7 +236,7 @@ self_similar_normalized (Display*  display,
 	{
 	    next_x = replacement [index].x;
 	    next_y = replacement [index].y;
-	    self_similar_normalized (display, pixmap, context, width, height,
+	    self_similar_normalized (st, 
 				     iterations - 1, x, y, next_x, next_y,
 				     maximum_x, maximum_y,
 				     minimum_x, minimum_y,
@@ -226,9 +248,8 @@ self_similar_normalized (Display*  display,
     }
 }
 
-static
-void
-self_similar (Display* display,
+static void
+self_similar (struct state *st,
 	      Pixmap   pixmap,
 	      GC       context,
 	      int      width,
@@ -251,8 +272,7 @@ self_similar (Display* display,
     normalized_plot (segment_count, segments, points);
     assert (fabs ((points [segment_count - 1].x) - 1.0) < EPSILON);
     assert (fabs (points [segment_count - 1].y) < EPSILON);
-    self_similar_normalized (display, pixmap, context,
-			     width, height, iterations,
+    self_similar_normalized (st, iterations,
 			     x1, y1, x2, y2,
 			     maximum_x, maximum_y,
 			     minimum_x, minimum_y,
@@ -276,8 +296,7 @@ random_double (double base,
     return base + ((random () % steps) * epsilon);
 }
 
-static
-void
+static void
 select_2_pattern (Segment* segments)
 {
     if ((random () % 2) == 0)
@@ -317,8 +336,7 @@ select_2_pattern (Segment* segments)
     }
 }
 
-static
-void
+static void
 select_3_pattern (Segment* segments)
 {
     switch (random () % 5)
@@ -394,8 +412,7 @@ select_3_pattern (Segment* segments)
     }
 }
 
-static
-void
+static void
 select_4_pattern (Segment* segments)
 {
     switch (random () % 9)
@@ -640,19 +657,174 @@ select_pattern (int      segment_count,
     }
 }
 
-char *progclass = "Ccurve";
+#define Y_START (0.5)
 
-char *defaults [] =
+static void *
+ccurve_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+    unsigned long int    black           = 0;
+    int                  depth           = 0;
+    XWindowAttributes    hack_attributes;
+    XGCValues            values;
+    unsigned long int    white           = 0;
+
+    st->dpy = dpy;
+    st->window = window;
+
+    st->delay = get_float_resource (st->dpy, "delay", "Integer");
+    st->delay2 = get_float_resource (st->dpy, "pause", "Integer");
+    st->maximum_lines = get_integer_resource (st->dpy, "limit", "Integer");
+    black = BlackPixel (st->dpy, DefaultScreen (st->dpy));
+    white = WhitePixel (st->dpy, DefaultScreen (st->dpy));
+    st->background = black;
+    XGetWindowAttributes (st->dpy, st->window, &hack_attributes);
+    st->width = hack_attributes.width;
+    st->height = hack_attributes.height;
+    depth = hack_attributes.depth;
+    st->color_map = hack_attributes.colormap;
+    st->pixmap = XCreatePixmap (st->dpy, st->window, st->width, st->height, depth);
+    values.foreground = white;
+    values.background = black;
+    st->context = XCreateGC (st->dpy, st->window, GCForeground | GCBackground,
+			 &values);
+    st->color_count = MAXIMUM_COLOR_COUNT;
+    make_color_loop (st->dpy, st->color_map,
+		     0,   1, 1,
+		     120, 1, 1,
+		     240, 1, 1,
+		     st->colors, &st->color_count, True, False);
+    if (st->color_count <= 0)
+    {
+        st->color_count = 1;
+        st->colors [0].red = st->colors [0].green = st->colors [0].blue = 0xFFFF;
+        XAllocColor (st->dpy, st->color_map, &st->colors [0]);
+    }
+
+    st->draw_maximum_x =  1.20;
+    st->draw_maximum_y =  0.525;
+    st->draw_minimum_x = -0.20;
+    st->draw_minimum_y = -0.525;
+    st->draw_x2 = 1.0;
+
+    return st;
+}
+
+static unsigned long
+ccurve_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+	static const int lengths [] = { 4, 4, 4, 4, 4, 3, 3, 3, 2 };
+
+        if (st->draw_index == 0)
+          {
+	st->draw_segment_count
+	    = lengths [random () % (sizeof (lengths) / sizeof (int))];
+	st->draw_segments
+	    = (Segment*)(malloc ((st->draw_segment_count) * sizeof (Segment)));
+	select_pattern (st->draw_segment_count, st->draw_segments);
+	st->draw_iterations = floor (log (st->maximum_lines)
+				/ log (((double)(st->draw_segment_count))));
+	if ((random () % 3) != 0)
+	{
+	    double factor = 0.45;
+	    st->draw_x1 += random_double (-factor, factor, 0.001);
+	    st->draw_y1 += random_double (-factor, factor, 0.001);
+	    st->draw_x2 += random_double (-factor, factor, 0.001);
+	    st->draw_y2 += random_double (-factor, factor, 0.001);
+	}
+/* 	background = (random () % 2) ? black : white; */
+
+        }
+
+	/* for (st->draw_index = 0; st->draw_index < st->draw_iterations; ++st->draw_index) */
+	{
+	    double delta_x = 0.0;
+	    double delta_y = 0.0;
+
+	    XSetForeground (st->dpy, st->context, st->background);
+	    XFillRectangle (st->dpy, st->pixmap, st->context, 0, 0, st->width, st->height);
+	    st->line_count = 0;
+	    st->total_lines = (int)(pow ((double)(st->draw_segment_count),
+				     (double)st->draw_index));
+	    st->plot_maximum_x = -1000.00;
+	    st->plot_maximum_y = -1000.00;
+	    st->plot_minimum_x =  1000.00;
+	    st->plot_minimum_y =  1000.00;
+	    self_similar (st, st->pixmap, st->context, st->width, st->height, st->draw_index,
+			  st->draw_x1, st->draw_y1, st->draw_x2, st->draw_y2,
+			  st->draw_maximum_x,
+			  st->draw_maximum_y,
+			  st->draw_minimum_x,
+			  st->draw_minimum_y,
+			  st->draw_segment_count, st->draw_segments);
+	    delta_x = st->plot_maximum_x - st->plot_minimum_x;
+	    delta_y = st->plot_maximum_y - st->plot_minimum_y;
+	    st->draw_maximum_x = st->plot_maximum_x + (delta_x * 0.2);
+	    st->draw_maximum_y = st->plot_maximum_y + (delta_y * 0.2);
+	    st->draw_minimum_x = st->plot_minimum_x - (delta_x * 0.2);
+	    st->draw_minimum_y = st->plot_minimum_y - (delta_y * 0.2);
+	    delta_x = st->draw_maximum_x - st->draw_minimum_x;
+	    delta_y = st->draw_maximum_y - st->draw_minimum_y;
+	    if ((delta_y / delta_x) > (((double)st->height) / ((double)st->width)))
+	    {
+		double new_delta_x
+		    = (delta_y * ((double)st->width)) / ((double)st->height);
+		st->draw_minimum_x -= (new_delta_x - delta_x) / 2.0;
+		st->draw_maximum_x += (new_delta_x - delta_x) / 2.0;
+	    }
+	    else
+	    {
+		double new_delta_y
+		    = (delta_x * ((double)st->height)) / ((double)st->width);
+		st->draw_minimum_y -= (new_delta_y - delta_y) / 2.0;
+		st->draw_maximum_y += (new_delta_y - delta_y) / 2.0;
+	    }
+	    XCopyArea (st->dpy, st->pixmap, st->window, st->context, 0, 0, st->width, st->height,
+		       0, 0);
+	}
+        st->draw_index++;
+
+        if (st->draw_index >= st->draw_iterations)
+          {
+            st->draw_index = 0;
+            free((void*)st->draw_segments);
+            st->draw_segments = 0;
+            return (int) (1000000 * st->delay);
+          }
+        else
+          return (int) (1000000 * st->delay2);
+}
+
+static void
+ccurve_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+ccurve_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+ccurve_free (Display *dpy, Window window, void *closure)
+{
+}
+
+
+static const char *ccurve_defaults [] =
 {
     ".background:  black",
     ".foreground:  white",
-    ".delay:      1",
-    ".pause:      3",
+    ".delay:      3",
+    ".pause:      0.4",
     ".limit: 200000",
     0
 };
 
-XrmOptionDescRec options [] =
+static XrmOptionDescRec ccurve_options [] =
 {
     { "-delay", ".delay", XrmoptionSepArg, 0 },
     { "-pause", ".pause", XrmoptionSepArg, 0 },
@@ -660,136 +832,4 @@ XrmOptionDescRec options [] =
     { 0, 0, 0, 0 }
 };
 
-#define Y_START (0.5)
-
-void
-screenhack (Display* display,
-	    Window   window)
-{
-    unsigned long int    background      = 0;
-    unsigned long int    black           = 0;
-    GC                   context;
-    int                  delay           = 0;
-    int                  depth           = 0;
-    Pixmap               pixmap           = (Pixmap)NULL;
-    XWindowAttributes    hack_attributes;
-    int                  height          = 0;
-    int                  iterations      = 0;
-    int                  pause           = 0;
-    XGCValues            values;
-    unsigned long int    white           = 0;
-    int                  width           = 0;
-
-    delay = get_integer_resource ("delay", "Integer");
-    pause = get_integer_resource ("pause", "Integer");
-    maximum_lines = get_integer_resource ("limit", "Integer");
-    black = BlackPixel (display, DefaultScreen (display));
-    white = WhitePixel (display, DefaultScreen (display));
-    background = black;
-    XGetWindowAttributes (display, window, &hack_attributes);
-    width = hack_attributes.width;
-    height = hack_attributes.height;
-    depth = hack_attributes.depth;
-    color_map = hack_attributes.colormap;
-    pixmap = XCreatePixmap (display, window, width, height, depth);
-    values.foreground = white;
-    values.background = black;
-    context = XCreateGC (display, window, GCForeground | GCBackground,
-			 &values);
-    color_count = MAXIMUM_COLOR_COUNT;
-    make_color_loop (display, color_map,
-		     0,   1, 1,
-		     120, 1, 1,
-		     240, 1, 1,
-		     colors, &color_count, True, False);
-    if (color_count <= 0)
-    {
-        color_count = 1;
-        colors [0].red = colors [0].green = colors [0].blue = 0xFFFF;
-        XAllocColor (display, color_map, &colors [0]);
-    }
-
-    while (1)
-    {
-	int    index = 0;
-	double maximum_x =  1.20;
-	double maximum_y =  0.525;
-	double minimum_x = -0.20;
-	double minimum_y = -0.525;
-	static int lengths [] = { 4, 4, 4, 4, 4, 3, 3, 3, 2 };
-	int segment_count = 0;
-	Segment* segments = (Segment*)NULL;
-	double x1 = 0.0;
-	double y1 = 0.0;
-	double x2 = 1.0;
-	double y2 = 0.0;
-
-	segment_count
-	    = lengths [random () % (sizeof (lengths) / sizeof (int))];
-	segments
-	    = (Segment*)(malloc ((segment_count) * sizeof (Segment)));
-	select_pattern (segment_count, segments);
-	iterations = floor (log (maximum_lines)
-				/ log (((double)(segment_count))));
-	if ((random () % 3) != 0)
-	{
-	    double factor = 0.45;
-	    x1 += random_double (-factor, factor, 0.001);
-	    y1 += random_double (-factor, factor, 0.001);
-	    x2 += random_double (-factor, factor, 0.001);
-	    y2 += random_double (-factor, factor, 0.001);
-	}
-/* 	background = (random () % 2) ? black : white; */
-	for (index = 0; index < iterations; ++index)
-	{
-	    double delta_x = 0.0;
-	    double delta_y = 0.0;
-
-	    XSetForeground (display, context, background);
-	    XFillRectangle (display, pixmap, context, 0, 0, width, height);
-	    line_count = 0;
-	    total_lines = (int)(pow ((double)(segment_count),
-				     (double)index));
-	    plot_maximum_x = -1000.00;
-	    plot_maximum_y = -1000.00;
-	    plot_minimum_x =  1000.00;
-	    plot_minimum_y =  1000.00;
-	    self_similar (display, pixmap, context, width, height, index,
-			  x1, y1, x2, y2,
-			  maximum_x,
-			  maximum_y,
-			  minimum_x,
-			  minimum_y,
-			  segment_count, segments);
-	    delta_x = plot_maximum_x - plot_minimum_x;
-	    delta_y = plot_maximum_y - plot_minimum_y;
-	    maximum_x = plot_maximum_x + (delta_x * 0.2);
-	    maximum_y = plot_maximum_y + (delta_y * 0.2);
-	    minimum_x = plot_minimum_x - (delta_x * 0.2);
-	    minimum_y = plot_minimum_y - (delta_y * 0.2);
-	    delta_x = maximum_x - minimum_x;
-	    delta_y = maximum_y - minimum_y;
-	    if ((delta_y / delta_x) > (((double)height) / ((double)width)))
-	    {
-		double new_delta_x
-		    = (delta_y * ((double)width)) / ((double)height);
-		minimum_x -= (new_delta_x - delta_x) / 2.0;
-		maximum_x += (new_delta_x - delta_x) / 2.0;
-	    }
-	    else
-	    {
-		double new_delta_y
-		    = (delta_x * ((double)height)) / ((double)width);
-		minimum_y -= (new_delta_y - delta_y) / 2.0;
-		maximum_y += (new_delta_y - delta_y) / 2.0;
-	    }
-	    XCopyArea (display, pixmap, window, context, 0, 0, width, height,
-		       0, 0);
-	    if (delay) sleep (delay);
-	    screenhack_handle_events (display);
-	}
-        free((void*)segments);
-	if (pause) sleep (pause);
-	erase_full_window (display, window);
-    }
-}
+XSCREENSAVER_MODULE ("CCurve", ccurve)

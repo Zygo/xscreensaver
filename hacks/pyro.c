@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1994, 1996, 1998, 2001, 2005
+/* xscreensaver, Copyright (c) 1992, 1994, 1996, 1998, 2001, 2005, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -29,19 +29,37 @@ struct projectile {
   struct projectile *next_free;
 };
 
-static struct projectile *projectiles, *free_projectiles;
-static struct projectile **sorted_projectiles;
+#define PI_2000 6284
+
+
+struct state {
+  Display *dpy;
+  Window window;
+
+   struct projectile *projectiles, *free_projectiles;
+   struct projectile **sorted_projectiles;
+
+   GC draw_gc, erase_gc;
+   unsigned int default_fg_pixel;
+   Colormap cmap;
+
+   int how_many, frequency, scatter, delay;
+
+   int sin_cache[PI_2000];
+   int cos_cache[PI_2000];
+
+   int draw_xlim, draw_ylim, real_draw_xlim, real_draw_ylim;
+
+   unsigned long last_pixel;
+};
+
 
 
 /* Slightly whacked, for better explosions
  */
-#define PI_2000 6284
-
-static int sin_cache[PI_2000];
-static int cos_cache[PI_2000];
 
 static void
-cache(void)
+cache(struct state *st)
 {               /*needs to be run once. Could easily be */
   int i;        /*reimplemented to run and cache at compile-time,*/
   double dA;    /*saving on init_pyro time */
@@ -52,20 +70,20 @@ cache(void)
       dA+=asin(frand(1.0))/M_PI_2*0.1;
       /*Approximating the integration of the binominal, for
         well-distributed randomness*/
-      cos_cache[i]=(int) (cos(((double)i)/1000.0)*dA*2500.0);
-      sin_cache[i]=(int) (sin(((double)i)/1000.0)*dA*2500.0);
+      st->cos_cache[i]=(int) (cos(((double)i)/1000.0)*dA*2500.0);
+      st->sin_cache[i]=(int) (sin(((double)i)/1000.0)*dA*2500.0);
     }
 }
 
 
 static struct projectile *
-get_projectile (void)
+get_projectile (struct state *st)
 {
   struct projectile *p;
-  if (free_projectiles)
+  if (st->free_projectiles)
     {
-      p = free_projectiles;
-      free_projectiles = p->next_free;
+      p = st->free_projectiles;
+      st->free_projectiles = p->next_free;
       p->next_free = 0;
       p->dead = False;
       return p;
@@ -75,18 +93,18 @@ get_projectile (void)
 }
 
 static void
-free_projectile (struct projectile *p)
+free_projectile (struct state *st, struct projectile *p)
 {
-  p->next_free = free_projectiles;
-  free_projectiles = p;
+  p->next_free = st->free_projectiles;
+  st->free_projectiles = p;
   p->dead = True;
 }
 
 static void
-launch (int xlim, int ylim, int g,
-	Display *dpy, Colormap cmap)
+launch (struct state *st, 
+        int xlim, int ylim, int g)
 {
-  struct projectile *p = get_projectile ();
+  struct projectile *p = get_projectile (st);
   int x, dx, xxx;
   if (! p) return;
 
@@ -107,9 +125,9 @@ launch (int xlim, int ylim, int g,
 
   /* cope with small windows -- those constants assume big windows. */
   {
-    int div = 1000000 / ylim;
-    if (div > 1)
-      p->fuse /= div;
+    int dd = 1000000 / ylim;
+    if (dd > 1)
+      p->fuse /= dd;
   }
 
   if (! mono_p)
@@ -117,25 +135,25 @@ launch (int xlim, int ylim, int g,
       hsv_to_rgb (random () % 360, 1.0, 1.0,
 		  &p->color.red, &p->color.green, &p->color.blue);
       p->color.flags = DoRed | DoGreen | DoBlue;
-      if (!XAllocColor (dpy, cmap, &p->color))
+      if (!XAllocColor (st->dpy, st->cmap, &p->color))
 	{
-	  p->color.pixel = WhitePixel (dpy, DefaultScreen (dpy));
+	  p->color.pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
 	  p->color.red = p->color.green = p->color.blue = 0xFFFF;
 	}
     }
 }
 
 static struct projectile *
-shrapnel (struct projectile *parent, Display *dpy, Colormap cmap)
+shrapnel (struct state *st, struct projectile *parent)
 {
-  struct projectile *p = get_projectile ();
+  struct projectile *p = get_projectile (st);
   int v;
   if (! p) return 0;
   p->x = parent->x;
   p->y = parent->y;
   v=random () % PI_2000;
-  p->dx =(sin_cache[v]) + parent->dx;
-  p->dy =(cos_cache[v]) + parent->dy;
+  p->dx =(st->sin_cache[v]) + parent->dx;
+  p->dy =(st->cos_cache[v]) + parent->dy;
   p->decay = (random () % 50) - 60;
   p->size = (parent->size * 2) / 3;
   p->fuse = 0;
@@ -143,49 +161,49 @@ shrapnel (struct projectile *parent, Display *dpy, Colormap cmap)
 
   p->color = parent->color;
   if (! mono_p)
-    XAllocColor (dpy, cmap, &p->color); /* dup the lock */
+    XAllocColor (st->dpy, st->cmap, &p->color); /* dup the lock */
   
   return p;
 }
 
-static GC draw_gc, erase_gc;
-static unsigned int default_fg_pixel;
-
-static int how_many, frequency, scatter;
-
-static Colormap
-init_pyro (Display *dpy, Window window)
+static void *
+pyro_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
-  Colormap cmap;
   XGCValues gcv;
   XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  how_many = get_integer_resource ("count", "Integer");
-  frequency = get_integer_resource ("frequency", "Integer");
-  scatter = get_integer_resource ("scatter", "Integer");
-  if (how_many <= 0) how_many = 100;
-  if (frequency <= 0) frequency = 30;
-  if (scatter <= 0) scatter = 20;
-  projectiles = 0;
-  free_projectiles = 0;
-  projectiles = (struct projectile *)
-    calloc (how_many, sizeof (*projectiles));
-  sorted_projectiles = (struct projectile **)
-    calloc (how_many, sizeof (*sorted_projectiles));
-  for (i = 0; i < how_many; i++)
-    free_projectile (&projectiles [i]);
-  for (i = 0; i < how_many; i++)
-    sorted_projectiles[i] = &projectiles[i];
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  gcv.foreground = get_pixel_resource ("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  XClearWindow (dpy, window);
-  cache();  
-  return cmap;
+  st->dpy = dpy;
+  st->window = window;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->last_pixel = ~0;
+  st->cmap = xgwa.colormap;
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->how_many = get_integer_resource (st->dpy, "count", "Integer");
+  st->frequency = get_integer_resource (st->dpy, "frequency", "Integer");
+  st->scatter = get_integer_resource (st->dpy, "scatter", "Integer");
+  if (st->how_many <= 0) st->how_many = 100;
+  if (st->frequency <= 0) st->frequency = 30;
+  if (st->scatter <= 0) st->scatter = 20;
+  st->projectiles = 0;
+  st->free_projectiles = 0;
+  st->projectiles = (struct projectile *)
+    calloc (st->how_many, sizeof (*st->projectiles));
+  st->sorted_projectiles = (struct projectile **)
+    calloc (st->how_many, sizeof (*st->sorted_projectiles));
+  for (i = 0; i < st->how_many; i++)
+    free_projectile (st, &st->projectiles [i]);
+  for (i = 0; i < st->how_many; i++)
+    st->sorted_projectiles[i] = &st->projectiles[i];
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
+  st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  gcv.foreground = get_pixel_resource (st->dpy, st->cmap, "background", "Background");
+  st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  XClearWindow (st->dpy, st->window);
+  cache(st);  
+
+  return st;
 }
 
 
@@ -200,27 +218,27 @@ projectile_pixel_sorter (const void *a, const void *b)
 }
 
 static void
-sort_by_pixel (int length)
+sort_by_pixel (struct state *st, int length)
 {
-  qsort ((void *) sorted_projectiles,
+  qsort ((void *) st->sorted_projectiles,
          length,
-         sizeof(*sorted_projectiles),
+         sizeof(*st->sorted_projectiles),
          projectile_pixel_sorter);
 }
 
 
-static void
-pyro (Display *dpy, Window window, Colormap cmap)
+static unsigned long
+pyro_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
   XWindowAttributes xgwa;
-  static int xlim, ylim, real_xlim, real_ylim;
   int g = 100;
   int resort = 0;
   int i;
   
-  for (i = 0; i < how_many; i++)
+  for (i = 0; i < st->how_many; i++)
     {
-      struct projectile *p = sorted_projectiles [i];
+      struct projectile *p = st->sorted_projectiles [i];
       int old_x, old_y, old_size;
       int size, x, y;
       if (p->dead) continue;
@@ -237,79 +255,98 @@ pyro (Display *dpy, Window window, Colormap cmap)
       if (old_size > 0)
         {
           if (old_size == 1)
-	    XDrawPoint (dpy, window, erase_gc, old_x, old_y);
+	    XDrawPoint (st->dpy, st->window, st->erase_gc, old_x, old_y);
           else
-            XFillRectangle (dpy, window, erase_gc, old_x, old_y,
+            XFillRectangle (st->dpy, st->window, st->erase_gc, old_x, old_y,
                             old_size, old_size);
         }
 
       if ((p->primary ? (p->fuse > 0) : (p->size > 0)) &&
-	  x < real_xlim &&
-	  y < real_ylim &&
+	  x < st->real_draw_xlim &&
+	  y < st->real_draw_ylim &&
 	  x > 0 &&
 	  y > 0)
 	{
           if (size > 0)
             {
-              static unsigned long last_pixel = ~0;
               unsigned long pixel;
 
               if (mono_p || p->primary)
-                pixel = default_fg_pixel;
+                pixel = st->default_fg_pixel;
               else
                 pixel = p->color.pixel;
 
-              if (pixel != last_pixel)
+              if (pixel != st->last_pixel)
                 {
-                  last_pixel = pixel;
-                  XSetForeground (dpy, draw_gc, pixel);
+                  st->last_pixel = pixel;
+                  XSetForeground (st->dpy, st->draw_gc, pixel);
                 }
 
               if (size == 1)
-                XDrawPoint (dpy, window, draw_gc, x, y);
+                XDrawPoint (st->dpy, st->window, st->draw_gc, x, y);
               else if (size < 4)
-                XFillRectangle (dpy, window, draw_gc, x, y, size, size);
+                XFillRectangle (st->dpy, st->window, st->draw_gc, x, y, size, size);
               else
-                XFillArc (dpy, window, draw_gc, x, y, size, size, 0, 360*64);
+                XFillArc (st->dpy, st->window, st->draw_gc, x, y, size, size, 0, 360*64);
             }
         }
       else
 	{
-	  free_projectile (p);
+	  free_projectile (st, p);
 	  if (! mono_p)
-	    if (p->color.pixel != WhitePixel (dpy, DefaultScreen (dpy)))
-	      XFreeColors (dpy, cmap, &p->color.pixel, 1, 0);
+	    if (p->color.pixel != WhitePixel (st->dpy, DefaultScreen (st->dpy)))
+	      XFreeColors (st->dpy, st->cmap, &p->color.pixel, 1, 0);
 	}
 
       if (p->primary && p->fuse <= 0)
 	{
-	  int j = (random () % scatter) + (scatter/2);
+	  int j = (random () % st->scatter) + (st->scatter/2);
 	  while (j--)
-	    shrapnel (p, dpy, cmap);
+	    shrapnel (st, p);
           resort = 1;
 	}
     }
 
-  if ((random () % frequency) == 0)
+  if ((random () % st->frequency) == 0)
     {
-      XGetWindowAttributes (dpy, window, &xgwa);
-      real_xlim = xgwa.width;
-      real_ylim = xgwa.height;
-      xlim = real_xlim * 1000;
-      ylim = real_ylim * 1000;
-      launch (xlim, ylim, g, dpy, cmap);
+      XGetWindowAttributes (st->dpy, st->window, &xgwa);
+      st->real_draw_xlim = xgwa.width;
+      st->real_draw_ylim = xgwa.height;
+      st->draw_xlim = st->real_draw_xlim * 1000;
+      st->draw_ylim = st->real_draw_ylim * 1000;
+      launch (st, st->draw_xlim, st->draw_ylim, g);
       resort = 1;
     }
 
   /* being sorted lets us avoid changing the GC's foreground color as often. */
   if (resort)
-    sort_by_pixel (how_many);
+    sort_by_pixel (st, st->how_many);
+
+  return st->delay;
+}
+
+static void
+pyro_reshape (Display *dpy, Window window, void *closure, 
+              unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+pyro_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+pyro_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
 }
 
 
-char *progclass = "Pyro";
 
-char *defaults [] = {
+static const char *pyro_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*count:	600",
@@ -320,7 +357,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec pyro_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-frequency",	".frequency",	XrmoptionSepArg, 0 },
@@ -328,18 +365,4 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  Colormap cmap = init_pyro (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-
-  while (1)
-    {
-      pyro (dpy, window, cmap);
-
-      XSync (dpy, False);
-      screenhack_handle_events (dpy);
-      usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Pyro", pyro)

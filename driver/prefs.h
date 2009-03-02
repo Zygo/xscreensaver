@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,7 +53,6 @@ struct saver_preferences {
   Bool xsync_p;			/* whether XSynchronize has been called */
 
   Bool lock_p;			/* whether to lock as well as save */
-  Bool lock_vt_p;		/* whether to lock VTs too, if possible */
 
   Bool fade_p;			/* whether to fade to black, if possible */
   Bool unfade_p;		/* whether to fade from black, if possible */
@@ -64,7 +63,9 @@ struct saver_preferences {
   Bool install_cmap_p;		/* whether we should use our own colormap
 				   when using the screen's default visual. */
 
+# ifdef QUAD_MODE
   Bool quad_p;			/* whether to run four savers per monitor */
+# endif /* QUAD_MODE */
 
   screenhack **screenhacks;	/* the programs to run */
   int screenhacks_count;
@@ -119,19 +120,20 @@ struct saver_preferences {
 };
 
 
-extern void load_init_file (saver_preferences *p);
-extern Bool init_file_changed_p (saver_preferences *p);
-extern int write_init_file (saver_preferences *p, const char *version_string,
+extern void load_init_file (Display *, saver_preferences *);
+extern Bool init_file_changed_p (saver_preferences *);
+extern int write_init_file (Display *,
+                            saver_preferences *, const char *version_string,
                             Bool verbose_p);
 const char *init_file_name (void);
 
 extern screenhack *parse_screenhack (const char *line);
-extern void free_screenhack (screenhack *hack);
-extern char *format_hack (screenhack *hack, Bool wrap_p);
-char *make_hack_name (const char *shell_command);
+extern void free_screenhack (screenhack *);
+extern char *format_hack (Display *, screenhack *, Bool wrap_p);
+char *make_hack_name (Display *, const char *shell_command);
 
 /* From dpms.c */
-extern void sync_server_dpms_settings (Display *dpy, Bool enabled_p,
+extern void sync_server_dpms_settings (Display *, Bool enabled_p,
                                        int standby_secs, int suspend_secs,
                                        int off_secs,
                                        Bool verbose_p);

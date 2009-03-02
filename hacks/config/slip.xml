@@ -20,13 +20,15 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
+  <xscreensaver-image />
+
   <_description>
 This program throws some random bits on the screen, then sucks them
 through a jet engine and spews them out the other side.  To avoid
 turning the image completely to mush, every now and then it will and
 then it interjects some splashes of color into the scene, or go into
-a spin cycle, or stretch the image like taffy, or (this is my
-addition) grab an image of your current desktop to chew on.
-Originally written by Scott Draves; whacked on by Jamie Zawinski.
+a spin cycle, or stretch the image like taffy.
+
+Written by Scott Draves and Jamie Zawinski; 1997.
   </_description>
 </screensaver>

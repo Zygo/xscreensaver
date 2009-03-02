@@ -18,15 +18,13 @@
 
   <!-- #### -no-random -->
 
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+<!--  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/> -->
 
   <_description>
-This one draws cool circular interference patterns.  Most of the
-circles you see aren't explicitly rendered, but show up as a result
-of interactions between the other pixels that were drawn.  Written by
-Jamie Zawinski, inspired by Java code by Michael Bayne.  As he
-pointed out, the beauty of this one is that the heart of the display
-algorithm can be expressed with just a pair of loops and a handful of
-arithmetic, giving it a high ``display hack metric''.
+  When the lines on the screen
+  Make more lines in between,
+  That's a moire'!
+
+Written by Jamie Zawinski and Michael Bayne; 1997.
   </_description>
 </screensaver>

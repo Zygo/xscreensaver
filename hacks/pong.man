@@ -9,8 +9,8 @@ pong - Pong Home Video Game Emulator
 .SH DESCRIPTION
 The
 .I pong 
-The pong program simulates an ancient Pong home video game, as well as
-various artifacts from displaying it on a color TV set.
+program simulates an ancient Pong home video game, as well as various
+artifacts from displaying it on a color TV set.
 .SH OPTIONS
 .I pong
 accepts the following options:
@@ -46,10 +46,9 @@ to standard TV controls:
 .BR analogTVColor ,
 .BR analogTVBrightness ,
 and
-.BR analogTVContrast
-
-which correspond to standard TV controls. They range from 0 to
-100,except for tint which is an angle between -180 and +180.
+.BR analogTVContrast .
+They range from 0 to 100, except for tint which is an angle
+between -180 and +180.
 .SH TRADEMARKS
 Pong may be a trademark.
 

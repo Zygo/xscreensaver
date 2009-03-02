@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003, 2004, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -114,7 +114,6 @@ typedef struct {
    */
   xmlChar *arg_set;	/* command-line option to set for "yes", or null */
   xmlChar *arg_unset;	/* command-line option to set for "no", or null */
-  xmlChar *test;	/* #### no idea - enablement? */
 
   /* select
    */
@@ -122,8 +121,6 @@ typedef struct {
 
   /* select_option
    */
-  GList *enable;
-
   GtkWidget *widget;
 
 } parameter;
@@ -150,18 +147,10 @@ free_parameter (parameter *p)
   if (p->arg)        free (p->arg);
   if (p->arg_set)    free (p->arg_set);
   if (p->arg_unset)  free (p->arg_unset);
-  if (p->test)       free (p->test);
 
   for (rest = p->options; rest; rest = rest->next)
     if (rest->data)
       free_parameter ((parameter *) rest->data);
-
-  for (rest = p->enable; rest; rest = rest->next)
-    {
-      free ((char *) rest->data);
-      rest->data = 0;
-    }
-  if (p->enable) g_list_free (p->enable);
 
   memset (p, ~0, sizeof(*p));
   free (p);
@@ -202,7 +191,6 @@ describe_parameter (FILE *out, parameter *p)
   if (p->invert_p)   fprintf (out, " convert=\"invert\"");
   if (p->arg_set)    fprintf (out, " arg-set=\"%s\"",       p->arg_set);
   if (p->arg_unset)  fprintf (out, " arg-unset=\"%s\"",     p->arg_unset);
-  if (p->test)       fprintf (out, " test=\"%s\"",          p->test);
   fprintf (out, ">\n");
 
   if (p->type == SELECT)
@@ -217,15 +205,6 @@ describe_parameter (FILE *out, parameter *p)
           if (o->label)     fprintf (out, " _label=\"%s\"",    o->label);
           if (o->arg_set)   fprintf (out, " arg-set=\"%s\"",   o->arg_set);
           if (o->arg_unset) fprintf (out, " arg-unset=\"%s\"", o->arg_unset);
-          if (o->test)      fprintf (out, " test=\"%s\"",      o->test);
-          if (o->enable)
-            {
-              GList *e;
-              fprintf (out, " enable=\"");
-              for (e = o->enable; e; e = e->next)
-                fprintf (out, "%s%s", (char *) e->data, (e->next ? "," : ""));
-              fprintf (out, "\"");
-            }
           fprintf (out, ">\n");
         }
       fprintf (out, "</select>\n");
@@ -266,6 +245,9 @@ static void sanity_check_parameter (const char *filename,
                                     parameter *p);
 static void sanity_check_text_node (const char *filename,
                                     const xmlNodePtr node);
+static void sanity_check_menu_options (const char *filename,
+                                       const xmlChar *node_name,
+                                       parameter *p);
 
 /* Allocates and returns a new `parameter' object based on the
    properties in the given XML node.  Returns 0 if there's nothing
@@ -295,6 +277,13 @@ make_parameter (const char *filename, xmlNodePtr node)
   else if (!strcmp (name, "file"))         p->type = FILENAME;
   else if (!strcmp (name, "number"))       p->type = SPINBUTTON;
   else if (!strcmp (name, "select"))       p->type = SELECT;
+
+  else if (!strcmp (name, "xscreensaver-text") ||   /* these are ignored in X11 */
+           !strcmp (name, "xscreensaver-image"))    /* (they are used in Cocoa) */
+    {
+      free (p);
+      return 0;
+    }
   else if (node->type == XML_TEXT_NODE)
     {
       sanity_check_text_node (filename, node);
@@ -346,7 +335,6 @@ make_parameter (const char *filename, xmlNodePtr node)
   p->arg        = xmlGetProp (node, (xmlChar *) "arg");
   p->arg_set    = xmlGetProp (node, (xmlChar *) "arg-set");
   p->arg_unset  = xmlGetProp (node, (xmlChar *) "arg-unset");
-  p->test       = xmlGetProp (node, (xmlChar *) "test");
 
   /* Check for missing decimal point */
   if (debug_p &&
@@ -408,27 +396,12 @@ make_select_option (const char *filename, xmlNodePtr node)
   else
     {
       parameter *s = calloc (1, sizeof(*s));
-      char *enable, *e;
 
       s->type       = SELECT_OPTION;
       s->id         = xmlGetProp (node, (xmlChar *) "id");
       s->label      = xmlGetProp (node, (xmlChar *) "_label");
       s->arg_set    = xmlGetProp (node, (xmlChar *) "arg-set");
       s->arg_unset  = xmlGetProp (node, (xmlChar *) "arg-unset");
-      s->test       = xmlGetProp (node, (xmlChar *) "test");
-      enable = (char*)xmlGetProp (node, (xmlChar *) "enable");
-
-      if (enable)
-        {
-          enable = strdup (enable);
-          e = strtok (enable, ", ");
-          while (e)
-            {
-              s->enable = g_list_append (s->enable, strdup (e));
-              e = strtok (0, ", ");
-            }
-          free (enable);
-        }
 
       sanity_check_parameter (filename, node->name, s);
       return s;
@@ -568,7 +541,55 @@ sanity_check_parameter (const char *filename, const xmlChar *node_name,
   CHECK (arg_unset,  "arg-unset");
 # undef CHECK
 # undef WARN
+
+  if (p->type == SELECT)
+    sanity_check_menu_options (filename, node_name, p);
 }
+
+
+static void
+sanity_check_menu_options (const char *filename, const xmlChar *node_name,
+                           parameter *p)
+{
+  GList *opts;
+  int noptions = 0;
+  int nulls = 0;
+  char *prefix = 0;
+
+/*  fprintf (stderr, "\n## %s\n", p->id);*/
+  for (opts = p->options; opts; opts = opts->next)
+    {
+      parameter *s = (parameter *) opts->data;
+      if (!s->arg_set) nulls++;
+      noptions++;
+
+      if (s->arg_set)
+        {
+          char *a = strdup ((char *) s->arg_set);
+          char *spc = strchr (a, ' ');
+          if (spc) *spc = 0;
+          if (prefix)
+            {
+              if (strcmp (a, prefix))
+                fprintf (stderr,
+                      "%s: %s: both \"%s\" and \"%s\" used in <select id=\"%s\">\n",
+                         blurb(), filename, prefix, a, p->id);
+              free (prefix);
+            }
+          prefix = a;
+        }
+
+/*      fprintf (stderr, "\n   %s\n", s->arg_set);*/
+    }
+
+  if (prefix) free (prefix);
+  prefix = 0;
+  if (nulls > 1)
+    fprintf (stderr, 
+             "%s: %s: more than one menu with no arg-set in <select id=\"%s\">\n",
+             blurb(), filename, p->id);
+}
+
 
 /* "text" nodes show up for all the non-tag text in the file, including
    all the newlines between tags.  Warn if there is text there that
@@ -1807,6 +1828,7 @@ load_configurator_1 (const char *program, const char *arguments,
                      gboolean verbose_p)
 {
   const char *dir = hack_configuration_path;
+  char *base_program;
   int L = strlen (dir);
   char *file;
   char *s;
@@ -1815,13 +1837,17 @@ load_configurator_1 (const char *program, const char *arguments,
 
   if (L == 0) return 0;
 
-  file = (char *) malloc (L + strlen (program) + 10);
+  base_program = strrchr(program, '/');
+  if (base_program) base_program++;
+  if (!base_program) base_program = (char *) program;
+
+  file = (char *) malloc (L + strlen (base_program) + 10);
   data = (conf_data *) calloc (1, sizeof(*data));
 
   strcpy (file, dir);
   if (file[L-1] != '/')
     file[L++] = '/';
-  strcpy (file+L, program);
+  strcpy (file+L, base_program);
 
   for (s = file+L; *s; s++)
     if (*s == '/' || *s == ' ')

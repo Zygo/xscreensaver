@@ -22,27 +22,25 @@
 
  <hgroup>
   <select id="mode">
-   <option id="random" _label="Random"/>
-   <option id="page"   _label="Pages of text"  arg-set="-page"/>
-   <option id="scroll" _label="Horizontally scrolling text" arg-set="-scroll"/>
+   <option id="page"   _label="Pages of text"  arg-set="-mode page"/>
+   <option id="scroll" _label="Horizontally scrolling text" arg-set="-mode scroll"/>
+   <option id="random" _label="Random display style"/>
   </select>
 
    <boolean id="trails" _label="Vapor Trails"    arg-set="-trails"/>
  </hgroup>
 
-  <boolean id="db"     _label="Double Buffer" arg-unset="-no-dbuf"/>
+<!--  <boolean id="db"     _label="Double Buffer" arg-unset="-no-db"/> -->
 
-  <file id="program" _label="Text Program" arg="-program %"/>
+<!--  <file id="program" _label="Text Program" arg="-program %"/> -->
+
+  <xscreensaver-text />
 
   <_description>
 Puts text on the screen using large characters that glide in from the
 edges, assemble, then disperse.  Alternately, it can simply scroll whole 
 sentences from right to left.  
 
-The text can be the output of a program or the contents of a file
-or URL, as configured on the "Advanced" tab of the main Screensaver
-Preferences window.
-
-Written Jamie Zawinski.
+Written by Jamie Zawinski; 2003.
   </_description>
 </screensaver>

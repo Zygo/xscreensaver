@@ -1,31 +1,29 @@
 /***************************
  ** crackberg; Matus Telgarsky [ catachresis@cmu.edu ] 2005 
  ** */
-#include <X11/Intrinsic.h>
 #define XK_MISCELLANY
 #include <X11/keysymdef.h>
 
-extern XtAppContext app;
-
-#define PROGCLASS   "crackberg"
-#define HACK_INIT   crackberg_init
-#define HACK_DRAW   crackberg_draw
-#define HACK_RESHAPE    crackberg_reshape
-/* #define HACK_FREE   crackberg_free */
-#define HACK_HANDLE_EVENT crackberg_handle_ev
-#define EVENT_MASK      (KeyReleaseMask)
-#define sws_opts    xlockmore_opts
-
 #define DEFAULTS    "*delay:        20000       \n" \
                     "*showFPS:      False       \n" \
+		    "*wireframe:    False       \n" \
 
+# define refresh_crackberg 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #ifdef USE_GL /* whole file */
-#include <GL/glu.h>
 
+#define DEF_NSUBDIVS   "4"
+#define DEF_BORING     "False"
+#define DEF_CRACK      "True"
+#define DEF_NOWATER    "False"
+#define DEF_FLAT       "True"
+#define DEF_COLOR      "plain"
+#define DEF_LIT        "True"
+#define DEF_VISIBILITY "0.6"
+#define DEF_LETTERBOX  "False"
 
 
 /***************************
@@ -41,14 +39,14 @@ extern XtAppContext app;
 #define MAX_ZDELTA      0.35
 #define DISPLACE(h,d)   (h+(random()/(double)RAND_MAX-0.5)*2*MAX_ZDELTA/(1<<d))
 #define MEAN(x,y)       ( ((x) + (y)) / 2.0 )
-#define TCOORD(x,y)     (heights[(epoints * (y) - ((y)-1)*(y)/2 + (x))])
-#define sNCOORD(x,y,p)  (norms[3 * (epoints * (y) - ((y)-1)*(y)/2 + (x)) + (p)])
+#define TCOORD(x,y)     (cberg->heights[(cberg->epoints * (y) - ((y)-1)*(y)/2 + (x))])
+#define sNCOORD(x,y,p)  (cberg->norms[3 * (cberg->epoints * (y) - ((y)-1)*(y)/2 + (x)) + (p)])
 #define SET_sNCOORD(x,y, down, a,b,c,d,e,f)   \
     sNCOORD(x,y,0) = AVE3(a-d, 0.5 * (b-e), -0.5 * (c-f)); \
     sNCOORD(x,y,1) = ((down) ? -1 : +1) * AVE3(0.0, M_SQRT3_2 * (b-e), M_SQRT3_2 * (c-f)); \
     sNCOORD(x,y,2) = (2*dx)
 #define fNCOORD(x,y,w,p)  \
-    (norms[3 * (2*(y)*epoints-((y)+1)*((y)+1) + 1 + 2 * ((x)-1) + (w)) + (p)])
+    (cberg->norms[3 * (2*(y)*cberg->epoints-((y)+1)*((y)+1) + 1 + 2 * ((x)-1) + (w)) + (p)])
 #define SET_fNCOORDa(x,y, down, dz00,dz01) \
     fNCOORD(x,y,0,0) = (down) * (dy) * (dz01); \
     fNCOORD(x,y,0,1) = (down) * ((dz01) * (dx) / 2 - (dx) * (dz00)); \
@@ -77,8 +75,8 @@ typedef struct {
 
 typedef struct {
     char *id;
-    void (*land)(double);
-    void (*water)(double);
+    void (*land)(cberg_state *, double);
+    void (*water)(cberg_state *, double);
     double bg[4];
 } Color;
 
@@ -92,7 +90,7 @@ struct _Trile {
     GLuint call_list;
 
     void *morph_data;
-    Morph *morph;
+    const Morph *morph;
 
     struct _Trile *left, *right, *parent; /* for bst, NOT spatial */
     struct _Trile *next_free; /* for memory allocation */
@@ -113,55 +111,68 @@ struct _cberg_state {
 
     double fovy, aspect, zNear, zFar;
 
-    Color *color;
+    const Color *color;
+
+    int count;
+
+    unsigned int epoints, /*number of points to one edge*/
+                 tpoints, /*number points total*/
+                 ntris,   /*number triangles per trile*/
+                 tnorms;  /*number of normals*/
+
+    double *heights, *norms;
+    Trile *free_head; /* for trile_[alloc|free] */
+
+    double draw_elapsed;
+
+    double dx0;
+
+    double vs0r,vs0g,vs0b, vs1r, vs1g, vs1b,
+           vf0r,vf0g,vf0b, vf1r, vf1g, vf1b;
 };
+
 
 
 /***************************
  ** globals
  ** */
 
-
-static unsigned int nsubdivs,
-                    epoints, /*number of points to one edge*/
-                    tpoints, /*number points total*/
-                    ntris,   /*number triangles per trile*/
-                    tnorms;  /*number of normals*/
-Bool crack, boring, nowater, flat, lit, wire, letterbox;
-static char *color;
-static cberg_state *cbergs = NULL;
-static double *heights = NULL, *norms = NULL, dx;
+static unsigned int nsubdivs;
+static Bool crack, boring, nowater, flat, lit, letterbox;
 static float visibility;
-static Trile *free_head = NULL; /* for trile_[alloc|free] */
+static char *color;
+
+static cberg_state *cbergs = NULL;
 
 static XrmOptionDescRec opts[] = {
-    {"-nsubdivs", ".nsubdivs", XrmoptionSepArg, 0},
-    {"-boring", ".boring", XrmoptionNoArg, "True"},
-    {"-crack", ".crack", XrmoptionNoArg, "True"},
-    {"-nowater", ".nowater", XrmoptionNoArg, "True"},
-    {"-flat", ".flat", XrmoptionNoArg, "True"},
-    {"-color", ".color", XrmoptionSepArg, 0},
-    {"-lit", ".lit", XrmoptionNoArg, "True"},
-    {"-wire", ".wire", XrmoptionNoArg, "True"},
-    {"-visibility", ".visibility", XrmoptionSepArg, 0},
-    {"-letterbox", ".letterbox", XrmoptionNoArg, "True"}
-    
+  {"-nsubdivs",   ".nsubdivs",   XrmoptionSepArg, 0},
+  {"-boring",     ".boring",     XrmoptionNoArg,  "True"},
+  {"-crack",      ".crack",      XrmoptionNoArg,  "True"},
+  {"-no-crack",   ".crack",      XrmoptionNoArg,  "False"},
+  {"-water",      ".nowater",    XrmoptionNoArg,  "False"},
+  {"-no-water",   ".nowater",    XrmoptionNoArg,  "True"},
+  {"-flat",       ".flat",       XrmoptionNoArg,  "True"},
+  {"-no-flat",    ".flat",       XrmoptionNoArg,  "False"},
+  {"-color",      ".color",      XrmoptionSepArg, 0},
+  {"-lit",        ".lit",        XrmoptionNoArg,  "True"},
+  {"-no-lit",     ".lit",        XrmoptionNoArg,  "False"},
+  {"-visibility", ".visibility", XrmoptionSepArg, 0},
+  {"-letterbox",  ".letterbox",  XrmoptionNoArg,  "True"}
 };
 
 static argtype vars[] = {
-    {&nsubdivs, "nsubdivs", "nsubdivs", "4", t_Int},
-    {&boring, "boring", "boring", "False", t_Bool},
-    {&crack, "crack", "crack", "False", t_Bool},
-    {&nowater, "nowater", "nowater", "False", t_Bool},
-    {&flat, "flat", "flat", "False", t_Bool},
-    {&color, "color", "color", "plain", t_String},
-    {&lit, "lit", "lit", "False", t_Bool},
-    {&wire, "wire", "wire", "False", t_Bool},
-    {&visibility, "visibility", "visibility", "0.6", t_Float},
-    {&letterbox, "letterbox", "letterbox", "False", t_Bool}
+  {&nsubdivs,   "nsubdivs",   "nsubdivs",   DEF_NSUBDIVS,   t_Int},
+  {&boring,     "boring",     "boring",     DEF_BORING,     t_Bool},
+  {&crack,      "crack",      "crack",      DEF_CRACK,      t_Bool},
+  {&nowater,    "nowater",    "nowater",    DEF_NOWATER,    t_Bool},
+  {&flat,       "flat",       "flat",       DEF_FLAT,       t_Bool},
+  {&color,      "color",      "color",      DEF_COLOR,      t_String},
+  {&lit,        "lit",        "lit",        DEF_LIT,        t_Bool},
+  {&visibility, "visibility", "visibility", DEF_VISIBILITY, t_Float},
+  {&letterbox,  "letterbox",  "letterbox",  DEF_LETTERBOX,  t_Bool}
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt crackberg_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /***************************
@@ -172,11 +183,12 @@ ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 /* forward decls for trile_new */
 static Trile *triles_find(Trile *tr, int x, int y);
-static Trile *trile_alloc(void);
-static Morph *select_morph(void);
-static Color *select_color(void);
+static Trile *trile_alloc(cberg_state *cberg);
+static const Morph *select_morph(void);
+static const Color *select_color(cberg_state *);
 
-static void trile_calc_sides(Trile *new, int x, int y, Trile *root)
+static void trile_calc_sides(cberg_state *cberg, 
+                             Trile *new, int x, int y, Trile *root)
 {
     unsigned int i,j,k; 
     int dv = ( (x + y) % 2 ? +1 : -1); /* we are pointing down or up*/
@@ -191,7 +203,7 @@ static void trile_calc_sides(Trile *new, int x, int y, Trile *root)
         l = r = v = NULL;
 
     if (v) {
-        for (i = 0; i != epoints; ++i)
+        for (i = 0; i != cberg->epoints; ++i)
             new->v[i] = v->v[i];
     } else {
         if (l)          new->v[0] = l->l[0];
@@ -208,27 +220,27 @@ static void trile_calc_sides(Trile *new, int x, int y, Trile *root)
                 new->v[0] = DISPLACE(0,0);
         }
 
-        if (r)          new->v[epoints-1] = r->l[0];
-        else if (!root) new->v[epoints-1] = DISPLACE(0,0);
+        if (r)          new->v[cberg->epoints-1] = r->l[0];
+        else if (!root) new->v[cberg->epoints-1] = DISPLACE(0,0);
         else {
             Trile *tr;
             if ( (tr = triles_find(root, x+1, y + dv)) )
-                new->v[epoints-1] = tr->l[0];
+                new->v[cberg->epoints-1] = tr->l[0];
             else if ( (tr = triles_find(root, x+2, y)) )
-                new->v[epoints-1] = tr->v[0];
+                new->v[cberg->epoints-1] = tr->v[0];
             else if ( (tr = triles_find(root, x+2, y + dv)) )
-                new->v[epoints-1] = tr->v[0];
+                new->v[cberg->epoints-1] = tr->v[0];
             else
-                new->v[epoints-1] = DISPLACE(0,0);
+                new->v[cberg->epoints-1] = DISPLACE(0,0);
         }
 
         for (i = ((1 << nsubdivs) >> 1), k =1; i; i >>= 1, ++k)
-            for (j = i; j < epoints; j += i * 2)
+            for (j = i; j < cberg->epoints; j += i * 2)
                 new->v[j] = DISPLACE(MEAN(new->v[j-i], new->v[j+i]), k);
     }
         
     if (l) {
-        for (i = 0; i != epoints; ++i)
+        for (i = 0; i != cberg->epoints; ++i)
             new->l[i] = l->r[i];
     } else {
         if (r)          new->l[0] = r->v[0];
@@ -245,34 +257,34 @@ static void trile_calc_sides(Trile *new, int x, int y, Trile *root)
                 new->l[0] = DISPLACE(0,0);
         }
 
-        new->l[epoints - 1] = new->v[0];
+        new->l[cberg->epoints - 1] = new->v[0];
 
         for (i = ((1 << nsubdivs) >> 1), k =1; i; i >>= 1, ++k)
-            for (j = i; j < epoints; j += i * 2)
+            for (j = i; j < cberg->epoints; j += i * 2)
                 new->l[j] = DISPLACE(MEAN(new->l[j-i], new->l[j+i]), k);
     }
 
     if (r) {
-        for (i = 0; i != epoints; ++i)
+        for (i = 0; i != cberg->epoints; ++i)
             new->r[i] = r->l[i];
     } else {
-        new->r[0] = new->v[epoints - 1];
-        new->r[epoints - 1] = new->l[0];
+        new->r[0] = new->v[cberg->epoints - 1];
+        new->r[cberg->epoints - 1] = new->l[0];
 
         for (i = ((1 << nsubdivs) >> 1), k =1; i; i >>= 1, ++k)
-            for (j = i; j < epoints; j += i * 2)
+            for (j = i; j < cberg->epoints; j += i * 2)
                 new->r[j] = DISPLACE(MEAN(new->r[j-i], new->r[j+i]), k);
     }
 }
 
-static void trile_calc_heights(Trile *new)
+static void trile_calc_heights(cberg_state *cberg, Trile *new)
 {
     unsigned int i, j, k, h;
 
-    for (i = 0; i < epoints - 1; ++i) { /* copy in sides */
+    for (i = 0; i < cberg->epoints - 1; ++i) { /* copy in sides */
         TCOORD(i,0) = new->v[i];
-        TCOORD(epoints - 1 - i, i) = new->r[i];
-        TCOORD(0, epoints - 1 - i) = new->l[i];
+        TCOORD(cberg->epoints - 1 - i, i) = new->r[i];
+        TCOORD(0, cberg->epoints - 1 - i) = new->l[i];
     }
 
     for (i = ((1 << nsubdivs) >> 2), k =1; i; i >>= 1, ++k)
@@ -292,17 +304,18 @@ static void trile_calc_heights(Trile *new)
             }
 }
 
-static void trile_calc_flat_norms(Trile *new)
+static void trile_calc_flat_norms(cberg_state *cberg, Trile *new)
 {
     unsigned int x, y;
     int down = (((new->x + new->y) % 2) ? -1 : +1);
     double dz00,dz01,dz10,dz11, a,b,c,d;
     double dy = down * M_SQRT3_2 / (1 << nsubdivs);
+    double dx = cberg->dx0;
 
-    for (y = 0; y < epoints - 1; ++y) {
+    for (y = 0; y < cberg->epoints - 1; ++y) {
         a = TCOORD(0,y);
         b = TCOORD(0,y+1);
-        for (x = 1; x < epoints - 1 - y; ++x) {
+        for (x = 1; x < cberg->epoints - 1 - y; ++x) {
             c = TCOORD(x,y);
             d = TCOORD(x,y+1);
 
@@ -325,28 +338,29 @@ static void trile_calc_flat_norms(Trile *new)
     }
 }
 
-static void trile_calc_smooth_norms(Trile *new)
+static void trile_calc_smooth_norms(cberg_state *cberg, Trile *new)
 {
     unsigned int i,j, down = (new->x + new->y) % 2;
     double prev, cur, next;
+    double dx = cberg->dx0;
 
     /** corners -- assume level (bah) **/
     cur = TCOORD(0,0);
     SET_sNCOORD(0,0, down,
         cur,cur,TCOORD(0,1),TCOORD(1,0),cur,cur);
-    cur = TCOORD(epoints-1,0);
-    SET_sNCOORD(epoints-1,0, down,
-        TCOORD(epoints-2,0),TCOORD(epoints-2,1),cur,cur,cur,cur);
-    cur = TCOORD(0,epoints-1);
-    SET_sNCOORD(0,epoints-1, down,
-        cur,cur,cur,cur,TCOORD(1,epoints-2),TCOORD(0,epoints-2));
+    cur = TCOORD(cberg->epoints-1,0);
+    SET_sNCOORD(cberg->epoints-1,0, down,
+        TCOORD(cberg->epoints-2,0),TCOORD(cberg->epoints-2,1),cur,cur,cur,cur);
+    cur = TCOORD(0,cberg->epoints-1);
+    SET_sNCOORD(0,cberg->epoints-1, down,
+        cur,cur,cur,cur,TCOORD(1,cberg->epoints-2),TCOORD(0,cberg->epoints-2));
 
 
     /** sides **/
     /* vert */
     prev = TCOORD(0,0);
     cur = TCOORD(1,0);
-    for (i = 1; i < epoints - 1; ++i) {
+    for (i = 1; i < cberg->epoints - 1; ++i) {
         next = TCOORD(i+1,0);
         SET_sNCOORD(i,0, down, prev,TCOORD(i-1,1),TCOORD(i,1), next,cur,cur);
         prev = cur;
@@ -354,12 +368,12 @@ static void trile_calc_smooth_norms(Trile *new)
     }
 
     /* right */
-    prev = TCOORD(epoints-1,0);
-    cur = TCOORD(epoints-2,0);
-    for (i = 1; i < epoints - 1; ++i) {
-        next = TCOORD(epoints-i-2,i+1);
-        SET_sNCOORD(epoints-i-1,i, down, TCOORD(epoints-i-2,i),next,cur,
-                                        cur,prev,TCOORD(epoints-i-1,i-1));
+    prev = TCOORD(cberg->epoints-1,0);
+    cur = TCOORD(cberg->epoints-2,0);
+    for (i = 1; i < cberg->epoints - 1; ++i) {
+        next = TCOORD(cberg->epoints-i-2,i+1);
+        SET_sNCOORD(cberg->epoints-i-1,i, down, TCOORD(cberg->epoints-i-2,i),next,cur,
+                                        cur,prev,TCOORD(cberg->epoints-i-1,i-1));
         prev = cur;
         cur = next;
     }
@@ -367,7 +381,7 @@ static void trile_calc_smooth_norms(Trile *new)
     /* left */
     prev = TCOORD(0,0);
     cur = TCOORD(0,1);
-    for (i = 1; i < epoints - 1; ++i) {
+    for (i = 1; i < cberg->epoints - 1; ++i) {
         next = TCOORD(0,i+1);
         SET_sNCOORD(0,i, down, cur,cur,next,TCOORD(1,i),TCOORD(1,i-1),prev);
         prev = cur;
@@ -376,10 +390,10 @@ static void trile_calc_smooth_norms(Trile *new)
 
 
     /** fill in **/
-    for (i = 1; i < epoints - 2; ++i) {
+    for (i = 1; i < cberg->epoints - 2; ++i) {
         prev = TCOORD(0,i);
         cur = TCOORD(1,i);
-        for (j = 1; j < epoints - i - 1; ++j) {
+        for (j = 1; j < cberg->epoints - i - 1; ++j) {
             next = TCOORD(j+1,i);
             SET_sNCOORD(j,i, down, prev,TCOORD(j-1,i+1),TCOORD(j,i+1),
                             next,TCOORD(j+1,i-1),TCOORD(j,i-1));
@@ -389,7 +403,8 @@ static void trile_calc_smooth_norms(Trile *new)
     }
 }
 
-static inline void trile_light(unsigned int x, unsigned int y, 
+static inline void trile_light(cberg_state *cberg, 
+                               unsigned int x, unsigned int y, 
                                unsigned int which)
 {
     if (flat) {
@@ -416,12 +431,12 @@ static inline void trile_draw_vertex(cberg_state *cberg, unsigned int ix,
     glColor3d(0.0, 0.0, 0.0); /* don't ask. my card breaks otherwise. */
     
     if (!nowater && zcur <= 0.0) {
-        cberg->color->water(zcur); /* XXX use average-of-3 for color when flat?*/
+        cberg->color->water(cberg, zcur); /* XXX use average-of-3 for color when flat?*/
         if (lit) glNormal3d(0.0,0.0,1.0);
         glVertex3d(x, y, 0.0); 
     } else {
-        cberg->color->land(zcur);
-        if (lit) trile_light(ix,iy,which);
+        cberg->color->land(cberg, zcur);
+        if (lit) trile_light(cberg,ix,iy,which);
         glVertex3d(x, y, zcur);
     }
 }
@@ -443,7 +458,8 @@ static void trile_render(cberg_state *cberg, Trile *new)
         } else
             cornery = (new->y - 0.5) * M_SQRT3_2;
 
-        for (y = 0; y < epoints - 1; ++y) {
+        for (y = 0; y < cberg->epoints - 1; ++y) {
+            double dx = cberg->dx0;
             glBegin(GL_TRIANGLE_STRIP);
                 /* first three points all part of the same triangle.. */
                 z0 = TCOORD(0,y);
@@ -454,7 +470,7 @@ static void trile_render(cberg_state *cberg, Trile *new)
                 trile_draw_vertex(cberg, 0,y,1,
                   cornerx+0.5*dx,cornery+dy, z1, z0, z2);
 
-                for (x = 1; x < epoints - 1 - y; ++x) {
+                for (x = 1; x < cberg->epoints - 1 - y; ++x) {
                     trile_draw_vertex(cberg, x,y,0,
                       cornerx+x*dx,cornery, z2, z1, z0);
 
@@ -484,7 +500,7 @@ static Trile *trile_new(cberg_state *cberg, int x,int y,Trile *parent,Trile *roo
 {
     Trile *new;
 
-    new = trile_alloc();
+    new = trile_alloc(cberg);
 
     new->x = x;
     new->y = y;
@@ -496,48 +512,47 @@ static Trile *trile_new(cberg_state *cberg, int x,int y,Trile *parent,Trile *roo
     new->morph = select_morph();
     new->morph->init(new);
 
-    trile_calc_sides(new, x, y, root);
-    trile_calc_heights(new);
+    trile_calc_sides(cberg, new, x, y, root);
+    trile_calc_heights(cberg, new);
 
     if (lit) {
-        if (flat)   trile_calc_flat_norms(new);
-        else        trile_calc_smooth_norms(new);
+        if (flat)   trile_calc_flat_norms(cberg, new);
+        else        trile_calc_smooth_norms(cberg, new);
     }
 
     trile_render(cberg, new);
     return new;
 }
 
-static Trile *trile_alloc(void)
+static Trile *trile_alloc(cberg_state *cberg)
 {
     Trile *new;
-    static unsigned int count = 0;
 
-    if (free_head) {
-        new = free_head;
-        free_head = free_head->next_free;
+    if (cberg->free_head) {
+        new = cberg->free_head;
+        cberg->free_head = cberg->free_head->next_free;
     } else {
-        ++count;
+        ++cberg->count;
         if (!(new = malloc(sizeof(Trile)))
-         || !(new->l = (double *) malloc(sizeof(double) * epoints * 3))) {
+         || !(new->l = (double *) malloc(sizeof(double) * cberg->epoints * 3))) {
             perror(progname);
             exit(1);
         }
-        new->r = new->l + epoints;
-        new->v = new->r + epoints;
+        new->r = new->l + cberg->epoints;
+        new->v = new->r + cberg->epoints;
 #ifdef DEBUG
-        printf("needed to alloc; [%d]\n", count);
+        printf("needed to alloc; [%d]\n", cberg->count);
 #endif
     }
     return new;
 }
 
-static void trile_free(Trile *tr)
+static void trile_free(cberg_state *cberg, Trile *tr)
 {
     glDeleteLists(tr->call_list, 1);
     tr->morph->free(tr);
-    tr->next_free = free_head;
-    free_head = tr;
+    tr->next_free = cberg->free_head;
+    cberg->free_head = tr;
 }
 
 
@@ -690,17 +705,17 @@ static void identity_dying_iter(Trile *tr, cberg_state *cberg)
 
 /** now to handle selection **/
 
-static Morph morphs[] = {
+static const Morph morphs[] = {
     {grow_init, grow_free, grow_draw, grow_init_iter, grow_dying_iter},
     {fall_init, fall_free, fall_draw, fall_init_iter, fall_dying_iter},
     {yeast_init, yeast_free, yeast_draw, yeast_init_iter, yeast_dying_iter},
     {identity_init,  /*always put identity last to skip it..*/
         identity_free, identity_draw, identity_init_iter, identity_dying_iter}
 };    
-static unsigned int nmorphs = countof(morphs);
 
-static Morph *select_morph()
+static const Morph *select_morph()
 { 
+    int nmorphs = countof(morphs);
     if (crack)
         return &morphs[random() % (nmorphs-1)]; 
     else if (boring)
@@ -812,7 +827,7 @@ static void triles_update_state(Trile **root, cberg_state *cberg)
                 if ((*root)->right)
                     (*root)->right->parent = splice_me;
             }
-            trile_free(*root);
+            trile_free(cberg, *root);
             *root = splice_me;
         } else
             process_current = 0;
@@ -1024,54 +1039,52 @@ static void mark_visible(cberg_state *cberg)
  ** color schemes
  ** */
 
-static void plain_land(double z)
+static void plain_land(cberg_state *cberg, double z)
 { glColor3f(pow((z/0.35),4),  z/0.35, pow((z/0.35),4)); }
-static void plain_water(double z)
+static void plain_water(cberg_state *cberg, double z)
 { glColor3f(0.0, (z+0.35)*1.6, 0.8); }
 
-static void ice_land(double z)
+static void ice_land(cberg_state *cberg, double z)
 { glColor3f((0.35 - z)/0.35, (0.35 - z)/0.35, 1.0); }
-static void ice_water(double z)
+static void ice_water(cberg_state *cberg, double z)
 { glColor3f(0.0, (z+0.35)*1.6, 0.8); }
 
 
-static void magma_land(double z)
+static void magma_land(cberg_state *cberg, double z)
 { glColor3f(z/0.35, z/0.2,0); }
-static void magma_lava(double z)
+static void magma_lava(cberg_state *cberg, double z)
 { glColor3f((z+0.35)*1.6, (z+0.35), 0.0); }
 
-static double vs0r,vs0g,vs0b, vs1r, vs1g, vs1b,
-              vf0r,vf0g,vf0b, vf1r, vf1g, vf1b;
-static void vomit_solid(double z)
+static void vomit_solid(cberg_state *cberg, double z)
 {
     double norm = fabs(z) / 0.35;
     glColor3f( 
-      (1-norm) * vs0r + norm * vs1r, 
-      (1-norm) * vs0g + norm * vs1g, 
-      (1-norm) * vs0b + norm * vs1b 
+      (1-norm) * cberg->vs0r + norm * cberg->vs1r, 
+      (1-norm) * cberg->vs0g + norm * cberg->vs1g, 
+      (1-norm) * cberg->vs0b + norm * cberg->vs1b 
     );
 }
-static void vomit_fluid(double z)
+static void vomit_fluid(cberg_state *cberg, double z)
 {
     double norm = z / -0.35;
     glColor3f( 
-      (1-norm) * vf0r + norm * vf1r, 
-      (1-norm) * vf0g + norm * vf1g, 
-      (1-norm) * vf0b + norm * vf1b 
+      (1-norm) * cberg->vf0r + norm * cberg->vf1r, 
+      (1-norm) * cberg->vf0g + norm * cberg->vf1g, 
+      (1-norm) * cberg->vf0b + norm * cberg->vf1b 
     );
 }
 
 
-static Color colors[] = {
+static const Color colors[] = {
     {"plain", plain_land, plain_water, {0.0, 0.0, 0.0, 1.0}},
     {"ice", ice_land, ice_water, {0.0, 0.0, 0.0, 1.0}},
     {"magma", magma_land, magma_lava, {0.3, 0.3, 0.0, 1.0}},
     {"vomit", vomit_solid, vomit_fluid, {0.3, 0.3, 0.0, 1.0}}, /* no error! */
 };
-static unsigned int ncolors = countof(colors);
 
-static Color *select_color()
+static const Color *select_color(cberg_state *cberg)
 {
+    unsigned int ncolors = countof(colors);
     int idx = -1;
     if ( ! strcmp(color, "random") )
         idx = random() % ncolors;
@@ -1093,18 +1106,18 @@ static Color *select_color()
     }
 
     if ( ! strcmp(colors[idx].id, "vomit") ) { /* need to create it (ghetto) */
-        vs0r = random()/(double)RAND_MAX;
-        vs0g = random()/(double)RAND_MAX;
-        vs0b = random()/(double)RAND_MAX; 
-        vs1r = random()/(double)RAND_MAX; 
-        vs1g = random()/(double)RAND_MAX;
-        vs1b = random()/(double)RAND_MAX;
-        vf0r = random()/(double)RAND_MAX;
-        vf0g = random()/(double)RAND_MAX;
-        vf0b = random()/(double)RAND_MAX; 
-        vf1r = random()/(double)RAND_MAX; 
-        vf1g = random()/(double)RAND_MAX; 
-        vf1b = random()/(double)RAND_MAX; 
+        cberg->vs0r = random()/(double)RAND_MAX;
+        cberg->vs0g = random()/(double)RAND_MAX;
+        cberg->vs0b = random()/(double)RAND_MAX; 
+        cberg->vs1r = random()/(double)RAND_MAX; 
+        cberg->vs1g = random()/(double)RAND_MAX;
+        cberg->vs1b = random()/(double)RAND_MAX;
+        cberg->vf0r = random()/(double)RAND_MAX;
+        cberg->vf0g = random()/(double)RAND_MAX;
+        cberg->vf0b = random()/(double)RAND_MAX; 
+        cberg->vf1r = random()/(double)RAND_MAX; 
+        cberg->vf1g = random()/(double)RAND_MAX; 
+        cberg->vf1b = random()/(double)RAND_MAX; 
  
         glClearColor(random()/(double)RAND_MAX,
                      random()/(double)RAND_MAX,
@@ -1146,22 +1159,16 @@ static inline double drunken_rando(double cur_val, double max, double width)
  ** core crackberg routines
  ** */
 
+ENTRYPOINT void reshape_crackberg (ModeInfo *mi, int w, int h);
 
-void crackberg_init(ModeInfo *mi)
+ENTRYPOINT void init_crackberg (ModeInfo *mi)
 {
     cberg_state *cberg;
 
     if (!cbergs) {
         nsubdivs %= 16; /* just in case.. */
-        epoints = 1 + (1 << nsubdivs);
-        tpoints = epoints * (epoints + 1) / 2;
-        ntris = (1 << (nsubdivs << 1));
-        tnorms = ( (flat) ? ntris : tpoints);
-        dx = 1.0 / (1 << nsubdivs);
 
-        if ( !(cbergs = calloc(MI_NUM_SCREENS(mi), sizeof(cberg_state)))
-          || !(heights = malloc(tpoints * sizeof(double)))
-          || (lit && !(norms = malloc(3 * tnorms * sizeof(double)))) ) {
+        if ( !(cbergs = calloc(MI_NUM_SCREENS(mi), sizeof(cberg_state)))) {
             perror(progname);
             exit(1);
         }
@@ -1172,8 +1179,17 @@ void crackberg_init(ModeInfo *mi)
         }
     }
 
-    cberg = cbergs + MI_SCREEN(mi);
+    cberg = &cbergs[MI_SCREEN(mi)];
     
+    cberg->epoints = 1 + (1 << nsubdivs);
+    cberg->tpoints = cberg->epoints * (cberg->epoints + 1) / 2;
+    cberg->ntris = (1 << (nsubdivs << 1));
+    cberg->tnorms = ( (flat) ? cberg->ntris : cberg->tpoints);
+    cberg->dx0 = 1.0 / (1 << nsubdivs);
+
+    cberg->heights = malloc(cberg->tpoints * sizeof(double));
+    cberg->norms = malloc(3 * cberg->tnorms * sizeof(double));
+
     cberg->glx_context = init_GL(mi);
     cberg->motion_state = MOTION_AUTO;
     cberg->mspeed = 1.0;
@@ -1183,11 +1199,13 @@ void crackberg_init(ModeInfo *mi)
     cberg->zNear = 0.5;
     cberg->zFar = 5.0;
 
+    cberg->draw_elapsed = 1.0;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glShadeModel((flat) ? GL_FLAT : GL_SMOOTH);
-    glPolygonMode(GL_FRONT_AND_BACK, (wire) ? GL_LINE : GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, (MI_IS_WIREFRAME(mi)) ? GL_LINE : GL_FILL);
 
     if (lit) {
         glEnable(GL_LIGHTING);
@@ -1199,15 +1217,15 @@ void crackberg_init(ModeInfo *mi)
         glEnable(GL_RESCALE_NORMAL); 
     }
 
-    cberg->color = select_color();
+    cberg->color = select_color(cberg);
 
-    crackberg_reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    reshape_crackberg(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 }
 
-void crackberg_reshape(ModeInfo *mi, int w, int h)
+ENTRYPOINT void reshape_crackberg (ModeInfo *mi, int w, int h)
 {
     int h2;
-    cberg_state *cberg = cbergs + MI_SCREEN(mi);
+    cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
 
     if (letterbox && (h2 = w * 9 / 16) < h) {
         glViewport(0, (h-h2)/2, w, h2);
@@ -1223,9 +1241,9 @@ void crackberg_reshape(ModeInfo *mi, int w, int h)
     glMatrixMode(GL_MODELVIEW);
 }
 
-Bool crackberg_handle_ev(ModeInfo *mi, XEvent *ev)
+ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
 {
-    cberg_state *cberg = cbergs + MI_SCREEN(mi);
+    cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
 
     if (ev->xany.type == KeyPress) {
         switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
@@ -1241,6 +1259,7 @@ Bool crackberg_handle_ev(ModeInfo *mi, XEvent *ev)
         }
         cberg->motion_state |= MOTION_MANUAL;
     } else if (ev->xany.type == KeyRelease) { 
+#if 0
         XEvent peek_ev;
         if (XPending(mi->dpy)) {
             XPeekEvent(mi->dpy, &peek_ev);
@@ -1251,6 +1270,7 @@ Bool crackberg_handle_ev(ModeInfo *mi, XEvent *ev)
                 return False;
             }
         }
+#endif
 
         switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
             case XK_Left:   cberg->motion_state &= ~MOTION_LROT;  break;
@@ -1272,20 +1292,21 @@ Bool crackberg_handle_ev(ModeInfo *mi, XEvent *ev)
     return True;
 }   
  
-void crackberg_draw(ModeInfo *mi)
+ENTRYPOINT void draw_crackberg (ModeInfo *mi)
 {
-    cberg_state *cberg = cbergs + MI_SCREEN(mi);
+    cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
     struct timeval cur_frame_t;
     double cur_frame;
-    static float lpos[] = {2.0,0.0,-0.3,0.0};
+    static const float lpos[] = {2.0,0.0,-0.3,0.0};
 
     if (!cberg->glx_context) /*XXX does this get externally tweaked? it kinda*/
         return;               /*XXX can't.. check it in crackberg_init*/
 
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cberg->glx_context));
+
     gettimeofday(&cur_frame_t, NULL);
     cur_frame = cur_frame_t.tv_sec + cur_frame_t.tv_usec / 1.0E6;
     if ( cberg->prev_frame ) { /*not first run */
-        static double elapsed = 1.0;
 
         cberg->elapsed = cur_frame - cberg->prev_frame;
 
@@ -1297,9 +1318,9 @@ void crackberg_draw(ModeInfo *mi)
             /* cberg->roll */
             cberg->yaw += cberg->dyaw * cberg->elapsed;
 
-            elapsed += cberg->elapsed;
-            if (elapsed >= 0.8) {
-                elapsed = 0.0;
+            cberg->draw_elapsed += cberg->elapsed;
+            if (cberg->draw_elapsed >= 0.8) {
+                cberg->draw_elapsed = 0.0;
                 cberg->dx = drunken_rando(cberg->dx, 2.5, 0.8);
                 cberg->dy = drunken_rando(cberg->dy, 2.5, 0.8);
                 /* cberg->dz */
@@ -1333,9 +1354,9 @@ void crackberg_draw(ModeInfo *mi)
                 cberg->yaw -= 45 * scale;
 
             if (cberg->motion_state & MOTION_DEC)
-                cberg->mspeed /= pow(MSPEED_SCALE, elapsed);
+                cberg->mspeed /= pow(MSPEED_SCALE, cberg->draw_elapsed);
             if (cberg->motion_state & MOTION_INC)
-                cberg->mspeed *= pow(MSPEED_SCALE, elapsed);
+                cberg->mspeed *= pow(MSPEED_SCALE, cberg->draw_elapsed);
 
         }
     }
@@ -1353,7 +1374,7 @@ void crackberg_draw(ModeInfo *mi)
     glRotated(-cberg->yaw, 0,0,1); /* camera sees ->yaw over */
     glTranslated(-cberg->x, -cberg->y, -cberg->z);
 
-    mi->polygon_count = ntris * 
+    mi->polygon_count = cberg->ntris * 
       triles_foreach(cberg->trile_head, trile_draw,(void *) cberg);
     
     if (mi->fps_p)  
@@ -1372,13 +1393,21 @@ void crackberg_draw(ModeInfo *mi)
 }
 
 /* uh */
-void crackberg_free(ModeInfo *mi)
+ENTRYPOINT void release_crackberg (ModeInfo *mi)
 {
-    if (lit)
-        free(norms);
-
-    free(heights);
-    free(cbergs);
+  if (cbergs) {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+      cberg_state *cberg = &cbergs[screen];
+      if (cberg->norms)
+        free(cberg->norms);
+      free(cberg->heights);
+    }
+    free (cbergs);
+    cbergs = 0;
+  }
 }
+
+XSCREENSAVER_MODULE ("Crackberg", crackberg)
 
 #endif /* USE_GL */

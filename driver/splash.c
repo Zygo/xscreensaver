@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -147,6 +147,7 @@ struct splash_dialog_data {
   Dimension help_button_x, help_button_y;
 
   Pixmap logo_pixmap;
+  Pixmap logo_clipmask;
   int logo_npixels;
   unsigned long *logo_pixels;
 
@@ -177,19 +178,25 @@ make_splash_dialog (saver_info *si)
   sp = (splash_dialog_data *) calloc (1, sizeof(*sp));
   sp->prompt_screen = ssi;
 
-  sp->heading_label = get_string_resource ("splash.heading.label",
+  sp->heading_label = get_string_resource (si->dpy,
+                                           "splash.heading.label",
 					   "Dialog.Label.Label");
-  sp->body_label = get_string_resource ("splash.body.label",
+  sp->body_label = get_string_resource (si->dpy,
+                                        "splash.body.label",
 					"Dialog.Label.Label");
-  sp->body2_label = get_string_resource ("splash.body2.label",
+  sp->body2_label = get_string_resource (si->dpy,
+                                         "splash.body2.label",
 					 "Dialog.Label.Label");
-  sp->demo_label = get_string_resource ("splash.demo.label",
+  sp->demo_label = get_string_resource (si->dpy,
+                                        "splash.demo.label",
 					"Dialog.Button.Label");
 #ifdef PREFS_BUTTON
-  sp->prefs_label = get_string_resource ("splash.prefs.label",
+  sp->prefs_label = get_string_resource (si->dpy,
+                                         "splash.prefs.label",
 					"Dialog.Button.Label");
 #endif /* PREFS_BUTTON */
-  sp->help_label = get_string_resource ("splash.help.label",
+  sp->help_label = get_string_resource (si->dpy,
+                                        "splash.help.label",
 					"Dialog.Button.Label");
 
   if (!sp->heading_label)
@@ -212,27 +219,27 @@ make_splash_dialog (saver_info *si)
     sp->heading_label = s;
   }
 
-  f = get_string_resource ("splash.headingFont", "Dialog.Font");
+  f = get_string_resource (si->dpy, "splash.headingFont", "Dialog.Font");
   sp->heading_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!sp->heading_font) sp->heading_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("splash.bodyFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "splash.bodyFont", "Dialog.Font");
   sp->body_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!sp->body_font) sp->body_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("splash.buttonFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "splash.buttonFont", "Dialog.Font");
   sp->button_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!sp->button_font) sp->button_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  sp->foreground = get_pixel_resource ("splash.foreground",
-				       "Dialog.Foreground",
-				       si->dpy, cmap);
-  sp->background = get_pixel_resource ("splash.background",
-				       "Dialog.Background",
-				       si->dpy, cmap);
+  sp->foreground = get_pixel_resource (si->dpy, cmap,
+                                       "splash.foreground",
+				       "Dialog.Foreground");
+  sp->background = get_pixel_resource (si->dpy, cmap, 
+                                       "splash.background",
+				       "Dialog.Background");
 
   if (sp->foreground == sp->background)
     {
@@ -241,26 +248,30 @@ make_splash_dialog (saver_info *si)
       sp->background = WhitePixelOfScreen (ssi->screen);
     }
 
-  sp->button_foreground = get_pixel_resource ("splash.Button.foreground",
-					      "Dialog.Button.Foreground",
-					      si->dpy, cmap);
-  sp->button_background = get_pixel_resource ("splash.Button.background",
-					      "Dialog.Button.Background",
-					      si->dpy, cmap);
-  sp->shadow_top = get_pixel_resource ("splash.topShadowColor",
-				       "Dialog.Foreground",
-				       si->dpy, cmap);
-  sp->shadow_bottom = get_pixel_resource ("splash.bottomShadowColor",
-					  "Dialog.Background",
-					  si->dpy, cmap);
+  sp->button_foreground = get_pixel_resource (si->dpy, cmap,
+                                              "splash.Button.foreground",
+					      "Dialog.Button.Foreground");
+  sp->button_background = get_pixel_resource (si->dpy, cmap,
+                                              "splash.Button.background",
+					      "Dialog.Button.Background");
+  sp->shadow_top = get_pixel_resource (si->dpy, cmap,
+                                       "splash.topShadowColor",
+				       "Dialog.Foreground");
+  sp->shadow_bottom = get_pixel_resource (si->dpy, cmap,
+                                          "splash.bottomShadowColor",
+					  "Dialog.Background");
 
-  sp->logo_width = get_integer_resource ("splash.logo.width",
+  sp->logo_width = get_integer_resource (si->dpy, 
+                                         "splash.logo.width",
 					 "Dialog.Logo.Width");
-  sp->logo_height = get_integer_resource ("splash.logo.height",
+  sp->logo_height = get_integer_resource (si->dpy, 
+                                          "splash.logo.height",
 					  "Dialog.Logo.Height");
-  sp->internal_border = get_integer_resource ("splash.internalBorderWidth",
+  sp->internal_border = get_integer_resource (si->dpy, 
+                                              "splash.internalBorderWidth",
 					      "Dialog.InternalBorderWidth");
-  sp->shadow_width = get_integer_resource ("splash.shadowThickness",
+  sp->shadow_width = get_integer_resource (si->dpy, 
+                                           "splash.shadowThickness",
 					   "Dialog.ShadowThickness");
 
   if (sp->logo_width == 0)  sp->logo_width = 150;
@@ -393,7 +404,9 @@ make_splash_dialog (saver_info *si)
     if (y < sy) y = sy;
   }
 
-  bw = get_integer_resource ("splash.borderWidth", "Dialog.BorderWidth");
+  bw = get_integer_resource (si->dpy, 
+                             "splash.borderWidth",
+                             "Dialog.BorderWidth");
 
   si->splash_dialog =
     XCreateWindow (si->dpy,
@@ -408,7 +421,7 @@ make_splash_dialog (saver_info *si)
                                        si->splash_dialog, cmap,
                                        sp->background, 
                                        &sp->logo_pixels, &sp->logo_npixels,
-                                       0, True);
+                                       &sp->logo_clipmask, True);
 
   XMapRaised (si->dpy, si->splash_dialog);
   XSync (si->dpy, False);
@@ -555,6 +568,8 @@ draw_splash_window (saver_info *si)
       XGetGeometry (si->dpy, sp->logo_pixmap, &root, &x, &y, &w, &h, &bw, &d);
       XSetForeground (si->dpy, gc1, sp->foreground);
       XSetBackground (si->dpy, gc1, sp->background);
+      XSetClipMask (si->dpy, gc1, sp->logo_clipmask);
+      XSetClipOrigin (si->dpy, gc1, x1 + ((x2 - (int)w) /2), y1 + ((y2 - (int)h) / 2));
       if (d == 1)
         XCopyPlane (si->dpy, sp->logo_pixmap, si->splash_dialog, gc1,
                     0, 0, w, h,
@@ -672,6 +687,8 @@ destroy_splash_window (saver_info *si)
 
   if (sp->logo_pixmap)
     XFreePixmap (si->dpy, sp->logo_pixmap);
+  if (sp->logo_clipmask)
+    XFreePixmap (si->dpy, sp->logo_clipmask);
   if (sp->logo_pixels)
     {
       if (sp->logo_npixels)

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997, 2001, 2003
+/* xscreensaver, Copyright (c) 1992, 1997, 2001, 2003, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -13,13 +13,13 @@
 #ifndef __XSCREENSAVER_RESOURCES_H__
 #define __XSCREENSAVER_RESOURCES_H__
 
-extern char *get_string_resource (char*,char*);
-extern Bool get_boolean_resource (char*,char*);
-extern int get_integer_resource (char*,char*);
-extern double get_float_resource (char*,char*);
-extern unsigned int get_pixel_resource (char*,char*,Display*,Colormap);
-extern unsigned int get_minutes_resource (char*,char*);
-extern unsigned int get_seconds_resource (char*,char*);
+extern char *get_string_resource (Display*,char*,char*);
+extern Bool get_boolean_resource (Display*,char*,char*);
+extern int get_integer_resource (Display*,char*,char*);
+extern double get_float_resource (Display*,char*,char*);
+extern unsigned int get_pixel_resource (Display*,Colormap,char*,char*);
+extern unsigned int get_minutes_resource (Display*,char*,char*);
+extern unsigned int get_seconds_resource (Display*,char*,char*);
 extern int parse_time (const char *string, Bool seconds_default_p,
                        Bool silent_p);
 extern Pixmap

@@ -30,8 +30,10 @@
         JRST .-4
 
 As reported by HAKMEM, in 1962, Jackson Wright wrote the above PDP-1
-code. That code still lives on in this screenhack, some 35 years
+code. That code still lives on in this program, some 44 years
 later.  The number of lines of enclosing code has increased
-substantially, however.  This version is by Tim Showalter.
+substantially, however.
+
+Written by Jackson Wright and Tim Showalter; 1997.
   </_description>
 </screensaver>

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2004
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2004, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,18 +17,12 @@
  * date: 1/19/04
  */
 
-#include <stdio.h>
 #include <math.h>
-#include <string.h>
 #include "screenhack.h"
 
 #ifndef debug
 #define debug printf("File:%s Line:%d\n", __FILE__, __LINE__ );
 #endif
-
-int SCREEN_X, SCREEN_Y;
-int z_speed;
-int make_stars;
 
 typedef struct STAR{
 	int x, y;
@@ -76,13 +70,30 @@ typedef struct WORMHOLE{
 	Pixmap work;
 } wormhole;
 
-/*inline*/ static int rnd( int q ){
+struct state {
+  Display *dpy;
+  Window window;
+
+  int SCREEN_X, SCREEN_Y;
+  int z_speed;
+  int make_stars;
+
+  int delay;
+  wormhole worm;
+  GC gc;
+  Colormap cmap;
+};
+
+
+/*inline*/ static int rnd( int q )
+{
 
 	return random() % q;
 
 }
 
-static int gang( int x1, int y1, int x2, int y2 ){
+static int gang( int x1, int y1, int x2, int y2 )
+{
 
 	int tang = 0;
 	if ( x1 == x2 ) {
@@ -107,7 +118,8 @@ static int gang( int x1, int y1, int x2, int y2 ){
 
 }
 
-void blend_palette( XColor * pal, int max, XColor * sc, XColor * ec ) {
+static void blend_palette( XColor * pal, int max, XColor * sc, XColor * ec ) 
+{
 
 	int q;
 
@@ -134,7 +146,8 @@ void blend_palette( XColor * pal, int max, XColor * sc, XColor * ec ) {
 
 
 /*
-static void initHandle( RGBHandle * handle ){
+static void initHandle( RGBHandle * handle )
+{
 
 	handle->mine.red = rnd( 65536 );
 	handle->mine.green = rnd( 65536 );
@@ -146,13 +159,15 @@ static void initHandle( RGBHandle * handle ){
 }
 */
 
-static void initXColor( XColor * color ){
+static void initXColor( XColor * color )
+{
 	color->red = rnd( 50000 ) + 10000;
 	color->blue = rnd( 50000 ) + 10000;
 	color->green = rnd( 50000 ) + 10000;
 }
 
-static void initColorChanger( color_changer * ch, Display * display, Colormap * cmap ){
+static void initColorChanger( struct state *st, color_changer * ch )
+{
 
 	int q;
 	int min, max;
@@ -180,7 +195,7 @@ static void initColorChanger( color_changer * ch, Display * display, Colormap * 
 	}
 
 	for ( q = 0; q < ch->shade_max; q++ )
-		XAllocColor( display, *cmap, &( ch->shade[q] ) );
+		XAllocColor( st->dpy, st->cmap, &( ch->shade[q] ) );
 
 	/*
 	initHandle( &(ch->handle_begin) );
@@ -191,13 +206,14 @@ static void initColorChanger( color_changer * ch, Display * display, Colormap * 
 
 	blend_palette( ch->shade, ch->max, &(ch->handle_begin.mine), &(ch->handle_end.mine) );
 	for ( q = 0; q < ch->max; q++ )
-		XAllocColor( display, *cmap, &( ch->shade[q] ) );
+		XAllocColor( st->dpy, *cmap, &( ch->shade[q] ) );
 	*/
 
 }
 
 /*
-static void changeColor( unsigned short * col, unsigned short * change, int min, int max ){
+static void changeColor( unsigned short * col, unsigned short * change, int min, int max )
+{
 	int RGB_GO_BLACK = 30;
 	if ( *col < *change ) *col++;
 	if ( *col > *change ) *col--;
@@ -210,7 +226,8 @@ static void changeColor( unsigned short * col, unsigned short * change, int min,
 */
 
 /*
-static void moveRGBHandle( RGBHandle * handle, int min, int max ){
+static void moveRGBHandle( RGBHandle * handle, int min, int max )
+{
 
 	unsigned short * want[ 3 ];
 	int q;
@@ -239,7 +256,8 @@ static void moveRGBHandle( RGBHandle * handle, int min, int max ){
 }
 */
 
-static void moveColorChanger( color_changer * ch, Display * display, Colormap * cmap ){
+static void moveColorChanger( color_changer * ch )
+{
 
 	/* int q; */
 
@@ -256,58 +274,65 @@ static void moveColorChanger( color_changer * ch, Display * display, Colormap * 
 
 	/*
 	for ( q = 0; q < ch->max; q++ )
-		XFreeColors( display, *cmap, &( ch->shade[q].pixel ), 1, 0 );
+		XFreeColors( st->dpy, *cmap, &( ch->shade[q].pixel ), 1, 0 );
 
 	moveRGBHandle( &( ch->handle_begin ), 5000, 65500 );
 	moveRGBHandle( &( ch->handle_end ), 5000, 65500 );
 	
 	blend_palette( ch->shade, ch->max, &(ch->handle_begin.mine), &(ch->handle_end.mine) );
 	for ( q = 0; q < ch->max; q++ )
-		XAllocColor( display, *cmap, &( ch->shade[q] ) );
+		XAllocColor( st->dpy, *cmap, &( ch->shade[q] ) );
 	*/
 
 }
 
 #if 0
-static void destroyColorChanger( color_changer * ch, Display * display, Colormap * cmap ){
+static void destroyColorChanger( color_changer * ch )
+{
 	int q;
 	for ( q = 0; q < ch->max; q++ )
-		XFreeColors( display, *cmap, &( ch->shade[q].pixel ), 1, 0 );
+		XFreeColors( st->dpy, *cmap, &( ch->shade[q].pixel ), 1, 0 );
 	free( ch->shade );
 }
 #endif
 
-static void resizeWormhole( wormhole * worm, Display * display, Window * win ){
+static void resizeWormhole( struct state *st, wormhole * worm )
+{
 	
 	XWindowAttributes attr;
-	Colormap cmap;
 
-	XGetWindowAttributes( display, *win, &attr );
+	XGetWindowAttributes( st->dpy, st->window, &attr );
 
-	cmap = attr.colormap;
+	st->cmap = attr.colormap;
 	
-	SCREEN_X = attr.width;
-	SCREEN_Y = attr.height;
+	st->SCREEN_X = attr.width;
+	st->SCREEN_Y = attr.height;
 
-	XFreePixmap( display, worm->work );
-	worm->work = XCreatePixmap( display, *win, SCREEN_X, SCREEN_Y, attr.depth );
+# ifndef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+	XFreePixmap( st->dpy, worm->work );
+	worm->work = XCreatePixmap( st->dpy, st->window, st->SCREEN_X, st->SCREEN_Y, attr.depth );
+# endif
 
 }
 
-static void initWormhole( wormhole * worm, Display * display, Window * win ){
+static void initWormhole( struct state *st, wormhole * worm, Display * display, Window win )
+{
 	
 	int i;
 	XWindowAttributes attr;
-	Colormap cmap;
 
-	XGetWindowAttributes( display, *win, &attr );
+	XGetWindowAttributes( st->dpy, st->window, &attr );
 
-	cmap = attr.colormap;
+	st->cmap = attr.colormap;
 	
-	SCREEN_X = attr.width;
-	SCREEN_Y = attr.height;
+	st->SCREEN_X = attr.width;
+	st->SCREEN_Y = attr.height;
 
-	worm->work = XCreatePixmap( display, *win, SCREEN_X, SCREEN_Y, attr.depth );
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+        worm->work = st->window;
+# else
+	worm->work = XCreatePixmap( st->dpy, st->window, st->SCREEN_X, st->SCREEN_Y, attr.depth );
+# endif
 
 	worm->diameter = rnd( 10 ) + 15;
 	worm->diameter_change = rnd( 10 ) + 15;
@@ -317,10 +342,10 @@ static void initWormhole( wormhole * worm, Display * display, Window * win ){
 	worm->actualy = attr.height / 2;
 	worm->virtualx = worm->actualx;
 	worm->virtualy = worm->actualy;
-	worm->speed = (float)SCREEN_X / 180.0;
+	worm->speed = (float)st->SCREEN_X / 180.0;
 	/* z_speed = SCREEN_X / 120; */
 	worm->spiral = 0;
-	worm->addStar = make_stars;
+	worm->addStar = st->make_stars;
 	worm->want_x = rnd( attr.width - 50 ) + 25;
 	worm->want_y = rnd( attr.height - 50 ) + 25;
 	worm->want_ang = gang( worm->actualx, worm->actualy, worm->want_x, worm->want_y );
@@ -329,8 +354,8 @@ static void initWormhole( wormhole * worm, Display * display, Window * win ){
 	worm->black.red = 0;
 	worm->black.green = 0;
 	worm->black.blue = 0;
-	XAllocColor( display, cmap, &worm->black );
-	initColorChanger( &(worm->changer), display, &cmap );
+	XAllocColor( st->dpy, st->cmap, &worm->black );
+	initColorChanger( st, &(worm->changer) );
 
 	worm->num_stars = 64;
 	worm->stars = (starline **)malloc( sizeof(starline *) * worm->num_stars );
@@ -340,24 +365,29 @@ static void initWormhole( wormhole * worm, Display * display, Window * win ){
 }
 
 #if 0
-static void destroyWormhole( wormhole * worm, Display * display, Colormap * cmap ){
-	destroyColorChanger( &(worm->changer), display, cmap );
-	XFreePixmap( display, worm->work );
+static void destroyWormhole( wormhole * worm )
+{
+	destroyColorChanger( &(worm->changer), st->dpy, cmap );
+        if (work->work != st->window)
+          XFreePixmap( st->dpy, worm->work );
 	free( worm->stars );
 }
 #endif
 
-static double Cos( int a ){
+static double Cos( int a )
+{
 	return cos( a * 180.0 / M_PI );
 }
 
-static double Sine( int a ){
+static double Sine( int a )
+{
 	return sin( a * 180.0 / M_PI );
 }
 
 
 
-static void calcStar( star * st ){
+static void calcStar( star * st )
+{
 	if ( st->center_x == 0 || st->center_y == 0 ){
 		st->Z = 0;
 		return;
@@ -371,7 +401,8 @@ static void calcStar( star * st ){
 	}
 }
 
-static void initStar( star * st, int Z, int ang, wormhole * worm ){
+static void initStar( star * st, int Z, int ang, wormhole * worm )
+{
 
 	st->x = Cos( ang ) * worm->diameter;
 	st->y = Sine( ang ) * worm->diameter;
@@ -382,7 +413,8 @@ static void initStar( star * st, int Z, int ang, wormhole * worm ){
 
 }
 
-static void addStar( wormhole * worm ){
+static void addStar( wormhole * worm )
+{
 
 	starline * star_new;
 	starline ** xstars;
@@ -416,10 +448,11 @@ static void addStar( wormhole * worm ){
 
 }
 
-static int moveStar( starline * stl ){
+static int moveStar( struct state *st, starline * stl )
+{
 
-	stl->begin.Z -= z_speed;	
-	stl->end.Z -= z_speed;
+	stl->begin.Z -= st->z_speed;	
+	stl->end.Z -= st->z_speed;
 
 	calcStar( &stl->begin );
 	calcStar( &stl->end );
@@ -428,14 +461,16 @@ static int moveStar( starline * stl ){
 
 } 
 
-static int dist( int x1, int y1, int x2, int y2 ){
+static int dist( int x1, int y1, int x2, int y2 )
+{
 	int xs, ys;
 	xs = x1-x2;
 	ys = y1-y2;
 	return (int)sqrt( xs*xs + ys*ys );
 }
 
-static void moveWormhole( wormhole * worm, Display * display, Colormap * cmap ){
+static void moveWormhole( struct state *st, wormhole * worm )
+{
 
 	int q;
 	double dx, dy;
@@ -475,13 +510,13 @@ static void moveWormhole( wormhole * worm, Display * display, Colormap * cmap ){
 			worm->virtualy = worm->actualy;
 			find = 1;
 		}
-		if ( worm->actualx > SCREEN_X - min_dist ){
-			worm->actualx = SCREEN_X - min_dist;
+		if ( worm->actualx > st->SCREEN_X - min_dist ){
+			worm->actualx = st->SCREEN_X - min_dist;
 			worm->virtualx = worm->actualx;
 			find = 1;
 		}
-		if ( worm->actualy > SCREEN_Y - min_dist ){
-			worm->actualy = SCREEN_Y - min_dist;
+		if ( worm->actualy > st->SCREEN_Y - min_dist ){
+			worm->actualy = st->SCREEN_Y - min_dist;
 			worm->virtualy = worm->actualy;
 			find = 1;
 		}
@@ -490,8 +525,8 @@ static void moveWormhole( wormhole * worm, Display * display, Colormap * cmap ){
 	}
 
 	if ( find ){
-		worm->want_x = rnd( SCREEN_X - min_dist * 2 ) + min_dist;
-		worm->want_y = rnd( SCREEN_Y - min_dist * 2 ) + min_dist;
+		worm->want_x = rnd( st->SCREEN_X - min_dist * 2 ) + min_dist;
+		worm->want_y = rnd( st->SCREEN_Y - min_dist * 2 ) + min_dist;
 		worm->ang = gang( worm->actualx, worm->actualy, worm->want_x, worm->want_y );
 	}
 
@@ -540,14 +575,14 @@ static void moveWormhole( wormhole * worm, Display * display, Colormap * cmap ){
 
 	for ( q = 0; q < worm->num_stars; q++ ){
 		if ( worm->stars[q] != NULL ){
-			if ( moveStar( worm->stars[q] ) ){
+			if ( moveStar( st, worm->stars[q] ) ){
 				free( worm->stars[q] );
 				worm->stars[q] = NULL;
 			}
 		}
 	}
 
-	moveColorChanger( &worm->changer, display, cmap );
+	moveColorChanger( &worm->changer );
 
 	if ( worm->diameter < worm->diameter_change )
 		worm->diameter++;
@@ -561,11 +596,13 @@ static void moveWormhole( wormhole * worm, Display * display, Colormap * cmap ){
 
 }
 
-static XColor * getColorShade( color_changer * ch ){
+static XColor * getColorShade( color_changer * ch )
+{
 	return ch->shade + ch->min;
 }
 
-static void drawWormhole( Display * display, Window * win, GC * gc, wormhole * worm ){
+static void drawWormhole( struct state *st, wormhole * worm )
+{
 
 	int i;
 	int color;
@@ -573,6 +610,10 @@ static void drawWormhole( Display * display, Window * win, GC * gc, wormhole * w
 	starline * current;
 	XColor * xcol;
 	XColor * shade;
+
+	XSetForeground( st->dpy, st->gc, worm->black.pixel );
+	XFillRectangle( st->dpy, worm->work, st->gc, 0, 0, st->SCREEN_X, st->SCREEN_Y );
+
 	for ( i = 0; i < worm->num_stars; i++ )
 		if ( worm->stars[i] != NULL ){
 	
@@ -584,19 +625,17 @@ static void drawWormhole( Display * display, Window * win, GC * gc, wormhole * w
 			/* xcol = &worm->changer.shade[ color ]; */
 			xcol = &shade[ color ];
 
-			XSetForeground( display, *gc, xcol->pixel );
-			/* XDrawLine( display, *win, *gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y ); */
-			XDrawLine( display, worm->work, *gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y );
+			XSetForeground( st->dpy, st->gc, xcol->pixel );
+			/* XDrawLine( st->dpy, st->window, *gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y ); */
+			XDrawLine( st->dpy, worm->work, st->gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y );
 
 		}
-	XCopyArea( display, worm->work, *win, *gc, 0, 0, SCREEN_X, SCREEN_Y, 0, 0 );
-	XSetForeground( display, *gc, worm->black.pixel );
-	XFillRectangle( display, worm->work, *gc, 0, 0, SCREEN_X, SCREEN_Y );
-
+        if (worm->work != st->window)
+          XCopyArea( st->dpy, worm->work, st->window, st->gc, 0, 0, st->SCREEN_X, st->SCREEN_Y, 0, 0 );
 }
 
 /*
-static void eraseWormhole( Display * display, Window * win, GC * gc, wormhole * worm ){
+static void eraseWormhole( Display * display, Window * st->window, wormhole * worm ){
 	starline * current;
 	int i;
 	XColor * xcol;
@@ -604,15 +643,71 @@ static void eraseWormhole( Display * display, Window * win, GC * gc, wormhole * 
 		if ( worm->stars[i] != NULL ){
 			xcol = &worm->black;
 			current = worm->stars[i];
-			XSetForeground( display, *gc, xcol->pixel );
-			XDrawLine( display, *win, *gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y );
+			XSetForeground( st->dpy, *gc, xcol->pixel );
+			XDrawLine( st->dpy, st->window, *gc, current->begin.calc_x, current->begin.calc_y, current->end.calc_x, current->end.calc_y );
 		}
 }
 */
 
-char *progclass = "Wormhole";
 
-char *defaults [] = {
+
+static void *
+wormhole_init (Display *dpy, Window window)
+{
+	struct state *st = (struct state *) calloc (1, sizeof(*st));
+  	XGCValues gcv;
+	XWindowAttributes attr;
+
+	st->dpy = dpy;
+	st->window = window;
+	st->delay = get_integer_resource(st->dpy,  "delay", "Integer" );
+	st->make_stars = get_integer_resource(st->dpy,  "stars", "Integer" );
+	st->z_speed = get_integer_resource(st->dpy,  "zspeed", "Integer" );
+
+	initWormhole( st, &st->worm, st->dpy, st->window );
+
+	st->gc = XCreateGC( st->dpy, st->window, 0, &gcv );
+	XGetWindowAttributes( st->dpy, st->window, &attr );
+	st->cmap = attr.colormap;
+
+        return st;
+}
+
+static unsigned long
+wormhole_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  moveWormhole( st, &st->worm );
+  drawWormhole( st, &st->worm );
+  return st->delay;
+}
+
+static void
+wormhole_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  resizeWormhole( st, &st->worm );
+}
+
+static Bool
+wormhole_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+wormhole_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+
+
+static const char *wormhole_defaults [] = {
   ".background:	Black",
   ".foreground:	#E9967A",
   "*delay:	10000",
@@ -621,66 +716,11 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec wormhole_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-zspeed",		".zspeed",	XrmoptionSepArg, 0 },
   { "-stars",		".stars",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-static int handle_event( Display * display, XEvent * event ){
-
-	if ( event->xany.type == ConfigureNotify ){
-		return 1;
-	}
-	screenhack_handle_event( display, event );
-
-	return 0;
-}
-
-void screenhack (Display *dpy, Window window) {
-
-	wormhole worm;
-	GC gc;
-  	XGCValues gcv;
-	XWindowAttributes attr;
-	Colormap cmap;
-
-	int delay = get_integer_resource( "delay", "Integer" );
-	make_stars = get_integer_resource( "stars", "Integer" );
-	z_speed = get_integer_resource( "zspeed", "Integer" );
-
-	initWormhole( &worm, dpy, &window );
-
-	gcv.foreground = 1;
-	gcv.background = 1;
-	gc = XCreateGC( dpy, window, GCForeground, &gcv );
-	XGetWindowAttributes( dpy, window, &attr );
-	cmap = attr.colormap;
-
-	while (1){
-
-		moveWormhole( &worm, dpy, &cmap );
-		drawWormhole( dpy, &window, &gc, &worm );
-
-		XSync (dpy, False);
-		/* handle my own friggin events. mmmlaaaa */
-		while ( XPending(dpy) ){
-			XEvent event;
-			XNextEvent( dpy, &event );
-			if ( handle_event( dpy, &event ) == 1 ){
-				resizeWormhole( &worm, dpy, &window );
-			}
-		}
-		/* screenhack_handle_events (dpy); */
-
-		if (delay) usleep (delay);
-		/* eraseWormhole( dpy, &window, &gc, &worm ); */
-		/*
-		XSetForeground( dpy, gc, worm.black.pixel );
-		XFillRectangle( dpy, window, gc, 0, 0, SCREEN_X, SCREEN_Y );
-		*/
-	}
-
-/* not reached:	destroyWormhole( &worm, dpy, &cmap ); */
-}
+XSCREENSAVER_MODULE ("Wormhole", wormhole)

@@ -30,22 +30,21 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_strange
-#define PROGCLASS "Strange"
-#define HACK_INIT init_strange
-#define HACK_DRAW draw_strange
-#define strange_opts xlockmore_opts
-#define DEFAULTS "*delay: 2000 \n" \
- "*ncolors: 100 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* from the xscreensaver distribution */
+# define MODE_strange
+# define DEFAULTS	"*delay: 2000 \n" \
+					"*ncolors: 100 \n"
+# define SMOOTH_COLORS
+# define refresh_strange 0
+# define reshape_strange 0
+# define strange_handle_event 0
+# include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
-#include "xlock.h"		/* from the xlockmore distribution */
+# include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef MODE_strange
 
-ModeSpecOpt strange_opts =
+ENTRYPOINT ModeSpecOpt strange_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -55,6 +54,10 @@ ModStruct   strange_description =
  1000, 1, 1, 1, 64, 1.0, "",
  "Shows strange attractors", 0, NULL};
 
+#endif
+
+#ifdef HAVE_COCOA
+# define NO_DBUF
 #endif
 
 typedef float DBL;
@@ -214,7 +217,7 @@ free_strange(Display *display, ATTRACTOR *A)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_strange(ModeInfo * mi)
 {
 	int         i, j, n, Cur_Pt;
@@ -321,12 +324,14 @@ draw_strange(ModeInfo * mi)
 
 /***************************************************************/
 
-void
+ENTRYPOINT void
 init_strange(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
+#ifndef NO_DBUF
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
+#endif
 	ATTRACTOR  *Attractor;
 
 	if (Root == NULL) {
@@ -392,14 +397,19 @@ init_strange(ModeInfo * mi)
 
 		gcv.foreground = 0;
 		gcv.background = 0;
+#ifndef HAVE_COCOA
 		gcv.graphics_exposures = False;
+#endif /* HAVE_COCOA */
 		gcv.function = GXcopy;
 
 		if (Attractor->dbuf_gc != None)
 			XFreeGC(display, Attractor->dbuf_gc);
 
 		if ((Attractor->dbuf_gc = XCreateGC(display, Attractor->dbuf,
-				GCForeground | GCBackground | GCGraphicsExposures | GCFunction,
+#ifndef HAVE_COCOA
+				GCGraphicsExposures |
+#endif /* HAVE_COCOA */
+                                GCFunction | GCForeground | GCBackground,
 				&gcv)) == None) {
 			XFreePixmap(display, Attractor->dbuf);
 			Attractor->dbuf = None;
@@ -420,7 +430,7 @@ init_strange(ModeInfo * mi)
 
 /***************************************************************/
 
-void
+ENTRYPOINT void
 release_strange(ModeInfo * mi)
 {
 	if (Root != NULL) {
@@ -432,5 +442,7 @@ release_strange(ModeInfo * mi)
 		Root = (ATTRACTOR *) NULL; 
 	}
 }
+
+XSCREENSAVER_MODULE ("Strange", strange)
 
 #endif /* MODE_strange */

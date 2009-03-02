@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,6 +25,7 @@
 #endif
 
 #include <sys/time.h>		/* sys/resource.h needs this for timeval */
+#include <sys/param.h>		/* for PATH_MAX */
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>		/* for waitpid() and associated macros */
@@ -65,6 +66,7 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #define Widget       void*
 
 #include "xscreensaver.h"
+#include "exec.h"
 #include "yarandom.h"
 #include "visual.h"    /* for id_to_visual() */
 
@@ -216,7 +218,10 @@ struct screenhack_job {
 
 static struct screenhack_job *jobs = 0;
 
-/* for debugging -- nothing calls this, but it's useful to invoke from gdb. */
+/* for debugging -- nothing calls this, but it's useful to invoke from gdb.
+ */
+void show_job_list (void);
+
 void
 show_job_list (void)
 {

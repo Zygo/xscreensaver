@@ -20,11 +20,10 @@
 
   <boolean id="bloom" _label="Enable Blooming" arg-unset="-no-bloom"/>
 
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
-
   <_description>
 Draws a simulation of pulsing fire.  It can also take an arbitrary
-image and set it on fire too.  Written by Carsten Haitzler, hacked on
-by many others.
+image and set it on fire too.
+
+Written by Carsten Haitzler and many others; 1999.
   </_description>
 </screensaver>

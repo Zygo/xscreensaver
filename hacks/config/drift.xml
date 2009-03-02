@@ -17,15 +17,9 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
-  <select id="mode">
-    <option id="normal" _label="High Dimensional Sphere"/>
-    <option id="liss"   _label="Lissojous Figures" arg-set="-liss"/>
-    <option id="grow"   _label="Fractal Growth" arg-set="-grow"/>
-  </select>
-
   <_description>
-How could one possibly describe this except as ``drifting recursive
-fractal cosmic flames?''  Another fine hack from the Scott Draves
-collection of fine hacks.
+Drifting recursive fractal cosmic flames.
+
+Written by Scott Draves; 1997.
   </_description>
 </screensaver>

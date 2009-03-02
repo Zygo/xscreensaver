@@ -57,16 +57,11 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
  * In real OpenGL, PseudoColor DO NOT support texture map (as far as I know).
  */
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-# define PROGCLASS			"Stairs"
-# define HACK_INIT			init_stairs
-# define HACK_DRAW			draw_stairs
-# define HACK_RESHAPE		reshape_stairs
-# define stairs_opts		xlockmore_opts
 # define DEFAULTS			"*delay:		20000   \n" \
 							"*showFPS:      False   \n"
+# define refresh_stairs 0
+# define stairs_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -75,10 +70,9 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
 #include "e_textures.h"
 
-ModeSpecOpt stairs_opts =
+ENTRYPOINT ModeSpecOpt stairs_opts =
 {0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
@@ -109,52 +103,34 @@ typedef struct {
 	int         sphere_position;
 	int         sphere_tick;
 	GLXContext *glx_context;
+    GLuint objects;
 } stairsstruct;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient[] =
-{0.0, 0.0, 0.0, 1.0};
-static float diffuse[] =
-{1.0, 1.0, 1.0, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] = {0.7, 0.7, 0.7, 1.0};
+static const float ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const float diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const float position0[] = {1.0, 1.0, 1.0, 0.0};
+static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
 #if 0
-static float MaterialRed[] =
-{0.7, 0.0, 0.0, 1.0};
-static float MaterialGreen[] =
-{0.1, 0.5, 0.2, 1.0};
-static float MaterialBlue[] =
-{0.0, 0.0, 0.7, 1.0};
-static float MaterialCyan[] =
-{0.2, 0.5, 0.7, 1.0};
-static float MaterialMagenta[] =
-{0.6, 0.2, 0.5, 1.0};
-static float MaterialGray[] =
-{0.2, 0.2, 0.2, 1.0};
-static float MaterialGray5[] =
-{0.5, 0.5, 0.5, 1.0};
-static float MaterialGray6[] =
-{0.6, 0.6, 0.6, 1.0};
-static float MaterialGray8[] =
-{0.8, 0.8, 0.8, 1.0};
+static const float MaterialRed[] = {0.7, 0.0, 0.0, 1.0};
+static const float MaterialGreen[] = {0.1, 0.5, 0.2, 1.0};
+static const float MaterialBlue[] = {0.0, 0.0, 0.7, 1.0};
+static const float MaterialCyan[] = {0.2, 0.5, 0.7, 1.0};
+static const float MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+static const float MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
+static const float MaterialGray5[] = {0.5, 0.5, 0.5, 1.0};
+static const float MaterialGray6[] = {0.6, 0.6, 0.6, 1.0};
+static const float MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
 
 #endif
-static float MaterialYellow[] =
-{0.7, 0.7, 0.0, 1.0};
-static float MaterialWhite[] =
-{0.7, 0.7, 0.7, 1.0};
+static const float MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};
+static const float MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};
 
-static float positions[] =
+static const float positions[] =
 {
 	-2.5, 4.0, 0.0,		/* First one is FUDGED :) */
 	-3.0, 3.25, 1.0,
@@ -198,7 +174,6 @@ static float positions[] =
 #define SPHERE_TICKS 8
 
 static stairsstruct *stairs = NULL;
-static GLuint objects;
 
 #define ObjSphere    0
 
@@ -413,8 +388,8 @@ draw_stairs_internal(ModeInfo * mi)
 		sp->sphere_position = 0;
 }
 
-void
-reshape_stairs(ModeInfo * mi, int width, int height)
+ENTRYPOINT void
+reshape_stairs (ModeInfo * mi, int width, int height)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 
@@ -489,8 +464,8 @@ pinit(void)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
-void
-init_stairs(ModeInfo * mi)
+ENTRYPOINT void
+init_stairs (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 	stairsstruct *sp;
@@ -502,6 +477,10 @@ init_stairs(ModeInfo * mi)
 	}
 	sp = &stairs[screen];
 	sp->step = 0.0;
+
+    /* make multiple screens rotate at slightly different rates. */
+    sp->step -= frand(5.0);
+
 	sp->direction = LRAND() & 1;
 	sp->sphere_position = NRAND(NPOSITIONS / 3) * 3;
 	sp->sphere_tick = 0;
@@ -510,16 +489,16 @@ init_stairs(ModeInfo * mi)
 
 		reshape_stairs(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
-		if (!glIsList(objects))
-			objects = glGenLists(1);
+		if (!glIsList(sp->objects))
+			sp->objects = glGenLists(1);
 		pinit();
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
 }
 
-void
-draw_stairs(ModeInfo * mi)
+ENTRYPOINT void
+draw_stairs (ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 
@@ -562,8 +541,9 @@ draw_stairs(ModeInfo * mi)
 	sp->step += 0.025;
 }
 
-void
-change_stairs(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void
+change_stairs (ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 
@@ -573,18 +553,25 @@ change_stairs(ModeInfo * mi)
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
 	pinit();
 }
+#endif /* !STANDALONE */
 
-void
-release_stairs(ModeInfo * mi)
+ENTRYPOINT void
+release_stairs (ModeInfo * mi)
 {
 	if (stairs != NULL) {
-		(void) free((void *) stairs);
-		stairs = NULL;
-	}
-	if (glIsList(objects)) {
-		glDeleteLists(objects, 1);
+      int i;
+      for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
+        stairsstruct *sp = &stairs[i];
+        if (glIsList(sp->objects)) {
+          glDeleteLists(sp->objects, 1);
+        }
+      }
+      free(stairs);
+      stairs = NULL;
 	}
 	FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Stairs", stairs)
 
 #endif

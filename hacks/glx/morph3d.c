@@ -53,14 +53,11 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_moebius
-# define PROGCLASS		"Morph3d"
-# define HACK_INIT		init_morph3d
-# define HACK_DRAW		draw_morph3d
-# define HACK_RESHAPE	reshape
-# define morph3d_opts	xlockmore_opts
 # define DEFAULTS		"*delay:		40000	\n"		\
 						"*showFPS:      False   \n"		\
 						"*count: 		0		\n"
+# define refresh_morph3d 0
+# define morph3d_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -68,7 +65,7 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 
 #ifdef MODE_moebius
 
-ModeSpecOpt morph3d_opts =
+ENTRYPOINT ModeSpecOpt morph3d_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -124,43 +121,29 @@ typedef struct {
 	int         VisibleSpikes;
 	void        (*draw_object) (ModeInfo * mi);
 	float       Magnitude;
-	float      *MaterialColor[20];
+	const float *MaterialColor[20];
 	GLXContext *glx_context;
+    int         arrayninit;
+
 } morph3dstruct;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient[] =
-{0.0, 0.0, 0.0, 1.0};
-static float diffuse[] =
-{1.0, 1.0, 1.0, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const GLfloat front_shininess[] = {60.0};
+static const GLfloat front_specular[]  = {0.7, 0.7, 0.7, 1.0};
+static const GLfloat ambient[]         = {0.0, 0.0, 0.0, 1.0};
+static const GLfloat diffuse[]         = {1.0, 1.0, 1.0, 1.0};
+static const GLfloat position0[]       = {1.0, 1.0, 1.0, 0.0};
+static const GLfloat position1[]       = {-1.0, -1.0, 1.0, 0.0};
+static const GLfloat lmodel_ambient[]  = {0.5, 0.5, 0.5, 1.0};
+static const GLfloat lmodel_twoside[]  = {GL_TRUE};
 
-static float MaterialRed[] =
-{0.7, 0.0, 0.0, 1.0};
-static float MaterialGreen[] =
-{0.1, 0.5, 0.2, 1.0};
-static float MaterialBlue[] =
-{0.0, 0.0, 0.7, 1.0};
-static float MaterialCyan[] =
-{0.2, 0.5, 0.7, 1.0};
-static float MaterialYellow[] =
-{0.7, 0.7, 0.0, 1.0};
-static float MaterialMagenta[] =
-{0.6, 0.2, 0.5, 1.0};
-static float MaterialWhite[] =
-{0.7, 0.7, 0.7, 1.0};
-static float MaterialGray[] =
-{0.5, 0.5, 0.5, 1.0};
+static const GLfloat MaterialRed[]     = {0.7, 0.0, 0.0, 1.0};
+static const GLfloat MaterialGreen[]   = {0.1, 0.5, 0.2, 1.0};
+static const GLfloat MaterialBlue[]    = {0.0, 0.0, 0.7, 1.0};
+static const GLfloat MaterialCyan[]    = {0.2, 0.5, 0.7, 1.0};
+static const GLfloat MaterialYellow[]  = {0.7, 0.7, 0.0, 1.0};
+static const GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+static const GLfloat MaterialWhite[]   = {0.7, 0.7, 0.7, 1.0};
+static const GLfloat MaterialGray[]    = {0.5, 0.5, 0.5, 1.0};
 
 static morph3dstruct *morph3d = (morph3dstruct *) NULL;
 
@@ -273,15 +256,11 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
   GLfloat   Zf=(Edge)*(Z);                                                                                       \
   GLfloat   AmpVr2=(Amp)/sqr((Edge)*cossec36_2);                                                                 \
                                                                                                                  \
-  static    GLfloat x[6],y[6];                                                                                   \
-  static    int arrayninit=1;                                                                                    \
+  GLfloat x[6],y[6];                                                                                             \
                                                                                                                  \
-  if (arrayninit) {                                                                                              \
-    for(Fi=0;Fi<6;Fi++) {                                                                                        \
-      x[Fi]=-cos( Fi*2*Pi/5 + Pi/10 )/(Divisions)*cossec36_2*(Edge);                                             \
-      y[Fi]=sin( Fi*2*Pi/5 + Pi/10 )/(Divisions)*cossec36_2*(Edge);                                              \
-    }                                                                                                            \
-    arrayninit=0;                                                                                                \
+  for(Fi=0;Fi<6;Fi++) {                                                                                          \
+    x[Fi]=-cos( Fi*2*Pi/5 + Pi/10 )/(Divisions)*cossec36_2*(Edge);                                               \
+    y[Fi]=sin( Fi*2*Pi/5 + Pi/10 )/(Divisions)*cossec36_2*(Edge);                                                \
   }                                                                                                              \
                                                                                                                  \
   for (Ri=1; Ri<=(Divisions); Ri++) {                                                                            \
@@ -291,9 +270,9 @@ static morph3dstruct *morph3d = (morph3dstruct *) NULL;
         Xf=(float)(Ri-Ti)*x[Fi] + (float)Ti*x[Fi+1];                                                             \
         Yf=(float)(Ri-Ti)*y[Fi] + (float)Ti*y[Fi+1];                                                             \
         Xa=Xf+0.001; Yb=Yf+0.001;                                                                                \
-	Factor=1-(((Xf2=sqr(Xf))+(Yf2=sqr(Yf)))*AmpVr2);                                                         \
-	Factor1=1-((sqr(Xa)+Yf2)*AmpVr2);                                                                        \
-	Factor2=1-((Xf2+sqr(Yb))*AmpVr2);                                                                        \
+	Factor=1-(((Xf2=sqr(Xf))+(Yf2=sqr(Yf)))*AmpVr2);                                                             \
+	Factor1=1-((sqr(Xa)+Yf2)*AmpVr2);                                                                            \
+	Factor2=1-((Xf2+sqr(Yb))*AmpVr2);                                                                            \
         VertX=Factor*Xf;        VertY=Factor*Yf;        VertZ=Factor*Zf;                                         \
         NeiAX=Factor1*Xa-VertX; NeiAY=Factor1*Yf-VertY; NeiAZ=Factor1*Zf-VertZ;                                  \
         NeiBX=Factor2*Xf-VertX; NeiBY=Factor2*Yb-VertY; NeiBZ=Factor2*Zf-VertZ;                                  \
@@ -604,8 +583,8 @@ draw_icosa(ModeInfo * mi)
 	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 }
 
-void
-reshape(ModeInfo * mi, int width, int height)
+ENTRYPOINT void
+reshape_morph3d(ModeInfo * mi, int width, int height)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
@@ -728,7 +707,7 @@ pinit(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 init_morph3d(ModeInfo * mi)
 {
 	morph3dstruct *mp;
@@ -744,7 +723,7 @@ init_morph3d(ModeInfo * mi)
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_morph3d(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		mp->object = MI_COUNT(mi);
 		if (mp->object <= 0 || mp->object > 5)
@@ -755,7 +734,7 @@ init_morph3d(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_morph3d(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -820,7 +799,8 @@ draw_morph3d(ModeInfo * mi)
 	mp->step += 0.05;
 }
 
-void
+#ifndef STANDALONE
+ENTRYPOINT void
 change_morph3d(ModeInfo * mi)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
@@ -831,8 +811,9 @@ change_morph3d(ModeInfo * mi)
 	mp->object = (mp->object) % 5 + 1;
 	pinit(mi);
 }
+#endif /* !STANDALONE */
 
-void
+ENTRYPOINT void
 release_morph3d(ModeInfo * mi)
 {
 	if (morph3d != NULL) {
@@ -843,3 +824,5 @@ release_morph3d(ModeInfo * mi)
 }
 
 #endif
+
+XSCREENSAVER_MODULE ("Morph3D", morph3d)

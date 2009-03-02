@@ -41,19 +41,16 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
  */
 
 #ifdef STANDALONE	/* xscreensaver mode */
-#define PROGCLASS 	"Sballs"
-#define HACK_INIT 	init_sballs
-#define HACK_DRAW 	draw_sballs
-#define HACK_RESHAPE 	reshape_sballs
-#define sballs_opts 	xlockmore_opts
 #define DEFAULTS 	"*delay: 	30000 \n" \
  			"*size: 	    0 \n" \
 			"*cycles:	    4 \n" \
  			"*showFPS: 	False \n" \
  			"*wireframe:  	False \n" \
 
+# define refresh_sballs 0
 #define MODE_sballs
 #include "xlockmore.h"		/* from the xscreensaver distribution */
+#include "gltrackball.h"
 #else				/* !STANDALONE */
 #include "xlock.h"		/* from the xlockmore distribution */
 #include "visgl.h"
@@ -65,11 +62,7 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 #define FRAME           50      /* frame count interval */
 #define MAX_OBJ		8	/* number of 3D objects */
 
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-
-#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( HAVE_XPM )
+#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( STANDALONE )
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
 # include "xpm-ximage.h"
 # define I_HAVE_XPM
@@ -94,25 +87,20 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 
 /* Manage option vars */
 #define DEF_TEXTURE	"True"
-#define DEF_TRACKMOUSE  "False"
 #define DEF_OBJECT	"0"
 static Bool do_texture;
-static Bool do_trackmouse;
 static int  object;
 static int  spheres;
 
 static XrmOptionDescRec opts[] = {
     {"-texture", ".sballs.texture", XrmoptionNoArg, "on"},
     {"+texture", ".sballs.texture", XrmoptionNoArg, "off"},
-    {"-trackmouse", ".sballs.trackmouse", XrmoptionNoArg, "on"},
-    {"+trackmouse", ".sballs.trackmouse", XrmoptionNoArg, "off"},
     {"-object", ".sballs.object", XrmoptionSepArg, 0},
 
 };
 
 static argtype vars[] = {
     {&do_texture,    "texture",    "Texture",    DEF_TEXTURE,    t_Bool},
-    {&do_trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool},
     {&object,        "object",     "Object",     DEF_OBJECT,     t_Int},
 
 };
@@ -121,11 +109,10 @@ static OptionStruct desc[] = {
     /*{"-count spheres", "set number of spheres"},*/
     /*{"-cycles speed", "set ball speed value"},*/
     {"-/+texture", "turn on/off texturing"},
-    {"-/+trackmouse", "turn on/off the tracking of the mouse"},
     {"-object num", "number of the 3D object (0 means random)"},
 };
 
-ModeSpecOpt sballs_opts =
+ENTRYPOINT ModeSpecOpt sballs_opts =
  { sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc };
 
 #ifdef USE_MODULES
@@ -163,10 +150,12 @@ typedef struct {
     GLuint faceid;		/* face texture id: GL world */
 
     vec3_t eye;
-    vec3_t rot;
     vec3_t rotm;
     int speed;
     float radius[MAX_BALLS];
+
+    trackball_state *trackball;
+    Bool button_down_p;
 
 } sballsstruct;
 
@@ -174,9 +163,9 @@ typedef struct {
 static sballsstruct *sballs = (sballsstruct *) NULL;
 
 /* lights */
-static float LightAmbient[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
-static float LightDiffuse[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
-static float LightPosition[]=  { 0.0f, 0.0f, 4.0f, 1.0f };
+static const float LightAmbient[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
+static const float LightDiffuse[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
+static const float LightPosition[]=  { 0.0f, 0.0f, 4.0f, 1.0f };
 
 /* structure of the polyhedras */
 typedef struct {
@@ -187,7 +176,7 @@ typedef struct {
         vec3_t      v[MAX_BALLS];/* the vertices */
 } Polyinfo;
 
-static Polyinfo polygons[] =
+static const Polyinfo polygons[] =
 {
 
 /* 0: objtetra - structure values for tetrahedron */
@@ -367,54 +356,6 @@ static Polyinfo polygons[] =
  *-----------------------------------------------------------------------------
  */
 
-static void clamp(vec3_t v)
-{
-    int i;
-
-    for (i = 0; i < 3; i ++)
-        if (v[i] > 360 || v[i] < -360)
-            v[i] = 0;
-}
-
-/* track the mouse in a joystick manner : not perfect but it works */
-static void trackmouse(ModeInfo * mi)
-{
-    sballsstruct *sb = &sballs[MI_SCREEN(mi)];
-    /* we keep static values (not per screen) for the mouse stuff: in general you have only one mouse :-> */
-    static int max[2] = { 0, 0 };
-    static int min[2] = { 0x7fffffff, 0x7fffffff }, center[2];
-    Window r, c;
-    int rx, ry, cx, cy;
-    unsigned int m;
-
-    (void) XQueryPointer(MI_DISPLAY(mi), MI_WINDOW(mi),
-			 &r, &c, &rx, &ry, &cx, &cy, &m);
-
-    if (max[0] < cx)
-	max[0] = cx;
-    if (min[0] > cx)
-	min[0] = cx;
-    center[0] = (max[0] + min[0]) / 2;
-
-    if (max[1] < cy)
-	max[1] = cy;
-    if (min[1] > cy)
-	min[1] = cy;
-    center[1] = (max[1] + min[1]) / 2;
-
-    if (fabs(center[0] - (float) cx) > 0.1 * (max[0] - min[0]))
-	sb->rot[0] -= ((center[0] - (float) cx) / (max[0] - min[0]) * 180.0f) / 200.0f;
-    if (fabs(center[1] - (float) cy) > 0.1 * (max[1] - min[1]))
-        sb->rot[1] -= ((center[1] - (float) cy) / (max[1] - min[1]) * 180.0f) / 200.0f;;
-    clamp(sb->rot);
-
-    /* oops: can't get those buttons */
-    if (m & Button4Mask)
-        sb->speed++;
-    if (m & Button5Mask)
-        sb->speed--;
-
-}
 
 /* initialise textures */
 static void inittextures(ModeInfo * mi)
@@ -566,7 +507,7 @@ static void drawSphere(ModeInfo * mi,int sphere_num)
 #ifndef STANDALONE
 static void Reshape(ModeInfo * mi)
 #else
-void reshape_sballs(ModeInfo * mi, int width, int height)
+ENTRYPOINT void reshape_sballs(ModeInfo * mi, int width, int height)
 #endif
 {
 
@@ -600,9 +541,6 @@ static void Draw(ModeInfo * mi)
 
     mi->polygon_count = 0;
 
-    if (do_trackmouse && !MI_IS_ICONIC(mi))
-	trackmouse(mi);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();
@@ -633,19 +571,18 @@ static void Draw(ModeInfo * mi)
     glEnd();
     mi->polygon_count++;
 
-    /* rotate the mouse */
-    glRotatef(sb->rot[0], 1.0f, 0.0f, 0.0f);
-    glRotatef(sb->rot[1], 0.0f, 1.0f, 0.0f);
-    glRotatef(sb->rot[2], 0.0f, 0.0f, 1.0f);
+    gltrackball_rotate (sb->trackball);
 
     /* rotate the balls */
     glRotatef(sb->rotm[0], 1.0f, 0.0f, 0.0f);
     glRotatef(sb->rotm[1], 0.0f, 1.0f, 0.0f);
     glRotatef(sb->rotm[2], 0.0f, 0.0f, 1.0f);
 
-    sb->rotm[0] += sb->speed;
-    sb->rotm[1] += -(sb->speed);
-    sb->rotm[2] += 0;
+    if (! sb->button_down_p) {
+      sb->rotm[0] += sb->speed;
+      sb->rotm[1] += -(sb->speed);
+      sb->rotm[2] += 0;
+    }
 
     /* draw the balls */
     if (do_texture)
@@ -686,7 +623,6 @@ static void Init(ModeInfo * mi)
     }
 
     vinit(sb->eye   ,0.0f, 0.0f, 6.0f);
-    vinit(sb->rot   ,0.0f, 0.0f, 0.0f);
     vinit(sb->rotm  ,0.0f, 0.0f, 0.0f);
     sb->speed = MI_CYCLES(mi);
 
@@ -748,7 +684,7 @@ static void Init(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void init_sballs(ModeInfo * mi)
+ENTRYPOINT void init_sballs(ModeInfo * mi)
 {
     sballsstruct *sb;
 
@@ -758,6 +694,8 @@ void init_sballs(ModeInfo * mi)
 	    return;
     }
     sb = &sballs[MI_SCREEN(mi)];
+
+    sb->trackball = gltrackball_init ();
 
     if ((sb->glx_context = init_GL(mi)) != NULL) {
 
@@ -779,7 +717,7 @@ void init_sballs(ModeInfo * mi)
  *    Called by the mainline code periodically to update the display.
  *-----------------------------------------------------------------------------
  */
-void draw_sballs(ModeInfo * mi)
+ENTRYPOINT void draw_sballs(ModeInfo * mi)
 {
     Display *display = MI_DISPLAY(mi);
     Window window = MI_WINDOW(mi);
@@ -814,7 +752,7 @@ void draw_sballs(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void release_sballs(ModeInfo * mi)
+ENTRYPOINT void release_sballs(ModeInfo * mi)
 {
     int screen;
 
@@ -838,7 +776,49 @@ void release_sballs(ModeInfo * mi)
     FreeAllGL(mi);
 }
 
-void change_sballs(ModeInfo * mi)
+ENTRYPOINT Bool
+sballs_handle_event (ModeInfo *mi, XEvent *event)
+{
+  sballsstruct *sb = &sballs[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      sb->button_down_p = True;
+      gltrackball_start (sb->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      sb->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (sb->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           sb->button_down_p)
+    {
+      gltrackball_track (sb->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+#ifndef STANDALONE
+ENTRYPOINT void change_sballs(ModeInfo * mi)
 {
     sballsstruct *sb;
 
@@ -874,4 +854,8 @@ void change_sballs(ModeInfo * mi)
     glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sb->glx_context));
 
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("SBalls", sballs)
+
 #endif /* MODE_sballs */

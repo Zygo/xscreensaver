@@ -36,19 +36,12 @@
 
 
 #ifdef STANDALONE
-# define PROGCLASS						"Planet"
-# define HACK_INIT						init_planet
-# define HACK_DRAW						draw_planet
-# define HACK_RESHAPE					reshape_planet
-# define HACK_HANDLE_EVENT				planet_handle_event
-# define EVENT_MASK						PointerMotionMask
-# define planet_opts					xlockmore_opts
 #define DEFAULTS	"*delay:			20000   \n"	\
 					"*showFPS:			False   \n" \
 					"*wireframe:		False	\n"	\
 					"*imageForeground:	Green	\n" \
 					"*imageBackground:	Blue	\n"
-
+# define refresh_planet 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -65,9 +58,6 @@
 #  include <Xmu/Drawing.h>
 # endif /* VMS */
 #endif
-
-
-#include <GL/glu.h>
 
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
@@ -118,7 +108,7 @@ static argtype vars[] = {
   {&resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
 };
 
-ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   planet_description =
@@ -259,7 +249,7 @@ setup_texture(ModeInfo * mi)
 }
 
 
-void
+static void
 init_stars (ModeInfo *mi)
 {
   int i, j;
@@ -300,7 +290,7 @@ init_stars (ModeInfo *mi)
 }
 
 
-void
+static void
 draw_stars (ModeInfo * mi)
 {
   int width  = MI_WIDTH(mi);
@@ -418,7 +408,7 @@ init_sun (ModeInfo * mi)
 
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
-void
+ENTRYPOINT void
 reshape_planet (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -435,7 +425,7 @@ reshape_planet (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 planet_handle_event (ModeInfo *mi, XEvent *event)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
@@ -476,7 +466,7 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
+ENTRYPOINT void
 init_planet (ModeInfo * mi)
 {
   planetstruct *gp;
@@ -495,8 +485,8 @@ init_planet (ModeInfo * mi)
   }
 
   {
-	char *f = get_string_resource("imageForeground", "Foreground");
-	char *b = get_string_resource("imageBackground", "Background");
+	char *f = get_string_resource(mi->dpy, "imageForeground", "Foreground");
+	char *b = get_string_resource(mi->dpy, "imageBackground", "Background");
 	char *s;
 	if (!f) f = strdup("white");
 	if (!b) b = strdup("black");
@@ -590,7 +580,7 @@ init_planet (ModeInfo * mi)
   glEndList();
 }
 
-void
+ENTRYPOINT void
 draw_planet (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
@@ -647,7 +637,7 @@ draw_planet (ModeInfo * mi)
 }
 
 
-void
+ENTRYPOINT void
 release_planet (ModeInfo * mi)
 {
   if (planets != NULL) {
@@ -658,7 +648,8 @@ release_planet (ModeInfo * mi)
 
 	  if (gp->glx_context) {
 		/* Display lists MUST be freed while their glXContext is current. */
-		glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
+        /* but this gets a BadMatch error. -jwz */
+		/*glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));*/
 
 		if (glIsList(gp->platelist))
 		  glDeleteLists(gp->platelist, 1);
@@ -673,5 +664,6 @@ release_planet (ModeInfo * mi)
 }
 
 
-#endif
+XSCREENSAVER_MODULE_2 ("GLPlanet", glplanet, planet)
 
+#endif

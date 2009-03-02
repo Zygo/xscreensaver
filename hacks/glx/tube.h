@@ -16,11 +16,11 @@
 extern void tube (GLfloat x1, GLfloat y1, GLfloat z1,
                   GLfloat x2, GLfloat y2, GLfloat z2,
                   GLfloat diameter, GLfloat cap_size,
-                  int faces, Bool smooth, Bool caps_p, Bool wire);
+                  int faces, int smooth, int caps_p, int wire_p);
 
 extern void cone (GLfloat x1, GLfloat y1, GLfloat z1,
                   GLfloat x2, GLfloat y2, GLfloat z2,
                   GLfloat diameter, GLfloat cap_size,
-                  int faces, Bool smooth, Bool cap_p,  Bool wire);
+                  int faces, int smooth, int cap_p,  int wire_p);
 
 #endif /* __TUBE_H__ */

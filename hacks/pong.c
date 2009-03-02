@@ -61,24 +61,30 @@ typedef struct _ball {
   int h;
 } Ball;
 
-Paddle l_paddle;
-Paddle r_paddle;
-Ball ball;
-static int bx,by;
-static int m_unit;
-static int paddle_rate;
+struct state {
+  Display *dpy;
+  Window window;
 
-static analogtv *tv;
-static analogtv_input *inp;
-static analogtv_reception reception;
+  Paddle l_paddle;
+  Paddle r_paddle;
+  Ball ball;
+  int bx,by;
+  int m_unit;
+  int paddle_rate;
 
-static int paddle_ntsc[4];
-static int field_ntsc[4];
-static int ball_ntsc[4];
-static int score_ntsc[4];
-static int net_ntsc[4];
+  analogtv *tv;
+  analogtv_input *inp;
+  analogtv_reception reception;
 
-analogtv_font score_font;
+  int paddle_ntsc[4];
+  int field_ntsc[4];
+  int ball_ntsc[4];
+  int score_ntsc[4];
+  int net_ntsc[4];
+
+  analogtv_font score_font;
+};
+
 
 enum {
   PONG_W = ANALOGTV_VIS_LEN,
@@ -87,177 +93,189 @@ enum {
 };
 
 static void
-hit_top_bottom(void)
+hit_top_bottom(struct state *st)
 {
-  if ( (ball.y <= PONG_TMARG) ||
-       (ball.y+ball.h >= PONG_H) )
-    by=-by;
+  if ( (st->ball.y <= PONG_TMARG) ||
+       (st->ball.y+st->ball.h >= PONG_H) )
+    st->by=-st->by;
 }
 
-void
-new_game(void)
+static void
+new_game(struct state *st)
 {
   /* Starts a Whole New Game*/
-  ball.x = PONG_W/2;
-  ball.y = PONG_H/2;
-  bx = m_unit;
-  by = m_unit;
+  st->ball.x = PONG_W/2;
+  st->ball.y = PONG_H/2;
+  st->bx = st->m_unit;
+  st->by = st->m_unit;
 
-  l_paddle.wait = 1;
-  l_paddle.lock = 0;
-  r_paddle.wait = 0;
-  r_paddle.lock = 0;
-  paddle_rate = m_unit-1;
-  r_paddle.score = 0;
-  l_paddle.score = 0;
+  /* jwz: perhaps not totally accurate, but randomize things a little bit
+     so that games on multiple screens are not identical. */
+  if (random() & 1) st->by = -st->by;
+  st->ball.y += (random() % (PONG_H/6))-(PONG_H/3);
 
-  l_paddle.h = PONG_H/4;
-  r_paddle.h = PONG_H/4;
+  st->l_paddle.wait = 1;
+  st->l_paddle.lock = 0;
+  st->r_paddle.wait = 0;
+  st->r_paddle.lock = 0;
+  st->paddle_rate = st->m_unit-1;
+  st->r_paddle.score = 0;
+  st->l_paddle.score = 0;
+
+  st->l_paddle.h = PONG_H/4;
+  st->r_paddle.h = PONG_H/4;
 }
 
-void
-start_game(void)
+static void
+start_game(struct state *st)
 {
   /*Init the ball*/
-  ball.x = PONG_W/2;
-  ball.y = PONG_H/2;
-  bx = m_unit;
-  by = m_unit;
+  st->ball.x = PONG_W/2;
+  st->ball.y = PONG_H/2;
+  st->bx = st->m_unit;
+  st->by = st->m_unit;
 
-  l_paddle.wait = 1;
-  l_paddle.lock = 0;
-  r_paddle.wait = 0;
-  r_paddle.lock = 0;
-  paddle_rate = m_unit-1;
+  /* jwz: perhaps not totally accurate, but randomize things a little bit
+     so that games on multiple screens are not identical. */
+  if (random() & 1) st->by = -st->by;
+  st->ball.y += (random() % (PONG_H/6))-(PONG_H/3);
 
-  if (l_paddle.h > 10) l_paddle.h= l_paddle.h*19/20;
-  if (r_paddle.h > 10) r_paddle.h= r_paddle.h*19/20;
+  st->l_paddle.wait = 1;
+  st->l_paddle.lock = 0;
+  st->r_paddle.wait = 0;
+  st->r_paddle.lock = 0;
+  st->paddle_rate = st->m_unit-1;
+
+  if (st->l_paddle.h > 10) st->l_paddle.h= st->l_paddle.h*19/20;
+  if (st->r_paddle.h > 10) st->r_paddle.h= st->r_paddle.h*19/20;
 }
 
 static void
-hit_paddle(void)
+hit_paddle(struct state *st)
 {
-  if ( ball.x + ball.w >= r_paddle.x &&
-       bx > 0 ) /*we are traveling to the right*/
+  if ( st->ball.x + st->ball.w >= st->r_paddle.x &&
+       st->bx > 0 ) /*we are traveling to the right*/
     {
-      if ((ball.y + ball.h > r_paddle.y) &&
-          (ball.y < r_paddle.y + r_paddle.h))
+      if ((st->ball.y + st->ball.h > st->r_paddle.y) &&
+          (st->ball.y < st->r_paddle.y + st->r_paddle.h))
         {
-          bx=-bx;
-          l_paddle.wait = 0;
-          r_paddle.wait = 1;
-          r_paddle.lock = 0;
-          l_paddle.lock = 0;
+          st->bx=-st->bx;
+          st->l_paddle.wait = 0;
+          st->r_paddle.wait = 1;
+          st->r_paddle.lock = 0;
+          st->l_paddle.lock = 0;
         }
       else
         {
-          r_paddle.score++;
-          if (r_paddle.score >=10)
-                new_game();
+          st->r_paddle.score++;
+          if (st->r_paddle.score >=10)
+                new_game(st);
           else 
-          start_game();
+          start_game(st);
         }
     }
 
-  if (ball.x <= l_paddle.x + l_paddle.w &&
-      bx < 0 ) /*we are traveling to the left*/
+  if (st->ball.x <= st->l_paddle.x + st->l_paddle.w &&
+      st->bx < 0 ) /*we are traveling to the left*/
     {
-      if ( ball.y + ball.h > l_paddle.y &&
-           ball.y < l_paddle.y + l_paddle.h)
+      if ( st->ball.y + st->ball.h > st->l_paddle.y &&
+           st->ball.y < st->l_paddle.y + st->l_paddle.h)
         {
-          bx=-bx;
-          l_paddle.wait = 1;
-          r_paddle.wait = 0;
-          r_paddle.lock = 0;
-          l_paddle.lock = 0;
+          st->bx=-st->bx;
+          st->l_paddle.wait = 1;
+          st->r_paddle.wait = 0;
+          st->r_paddle.lock = 0;
+          st->l_paddle.lock = 0;
         }
       else
         {
-          l_paddle.score++;
-          if (l_paddle.score >= 10)
-                new_game();
+          st->l_paddle.score++;
+          if (st->l_paddle.score >= 10)
+                new_game(st);
           else
-          start_game();
+          start_game(st);
         }
     }
 }
 
-static void
-init_pong (Display *dpy, Window window)
+static void *
+pong_init (Display *dpy, Window window)
 {
-  tv=analogtv_allocate(dpy, window);
-  analogtv_set_defaults(tv, "");
-  tv->event_handler = screenhack_handle_event;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = window;
+  st->tv=analogtv_allocate(st->dpy, st->window);
+  analogtv_set_defaults(st->tv, "");
 
-  analogtv_make_font(dpy, window, &score_font,
+  analogtv_make_font(st->dpy, st->window, &st->score_font,
                      4, 6, NULL );
 
   /* If you think we haven't learned anything since the early 70s,
      look at this font for a while */
-  analogtv_font_set_char(&score_font, '0',
+  analogtv_font_set_char(&st->score_font, '0',
                         "****"
                         "*  *"
                         "*  *"
                         "*  *"
                         "*  *"
                         "****");
-  analogtv_font_set_char(&score_font, '1',
+  analogtv_font_set_char(&st->score_font, '1',
                         "   *"
                         "   *"
                         "   *"
                         "   *"
                         "   *"
                         "   *");
-  analogtv_font_set_char(&score_font, '2',
+  analogtv_font_set_char(&st->score_font, '2',
                         "****"
                         "   *"
                         "****"
                         "*   "
                         "*   "
                         "****");
-  analogtv_font_set_char(&score_font, '3',
+  analogtv_font_set_char(&st->score_font, '3',
                         "****"
                         "   *"
                         "****"
                         "   *"
                         "   *"
                         "****");
-  analogtv_font_set_char(&score_font, '4',
+  analogtv_font_set_char(&st->score_font, '4',
                         "*  *"
                         "*  *"
                         "****"
                         "   *"
                         "   *"
                         "   *");
-  analogtv_font_set_char(&score_font, '5',
+  analogtv_font_set_char(&st->score_font, '5',
                         "****"
                         "*   "
                         "****"
                         "   *"
                         "   *"
                         "****");
-  analogtv_font_set_char(&score_font, '6',
+  analogtv_font_set_char(&st->score_font, '6',
                         "****"
                         "*   "
                         "****"
                         "*  *"
                         "*  *"
                         "****");
-  analogtv_font_set_char(&score_font, '7',
+  analogtv_font_set_char(&st->score_font, '7',
                         "****"
                         "   *"
                         "   *"
                         "   *"
                         "   *"
                         "   *");
-  analogtv_font_set_char(&score_font, '8',
+  analogtv_font_set_char(&st->score_font, '8',
                         "****"
                         "*  *"
                         "****"
                         "*  *"
                         "*  *"
                         "****");
-  analogtv_font_set_char(&score_font, '9',
+  analogtv_font_set_char(&st->score_font, '9',
                         "****"
                         "*  *"
                         "****"
@@ -265,90 +283,92 @@ init_pong (Display *dpy, Window window)
                         "   *"
                         "   *");
 
-  score_font.y_mult *= 2;
-  score_font.x_mult *= 2;
+  st->score_font.y_mult *= 2;
+  st->score_font.x_mult *= 2;
 
 #ifdef OUTPUT_POS
   printf("screen(%d,%d,%d,%d)\n",0,0,PONG_W,PONG_H);
 #endif
 
-  inp=analogtv_input_allocate();
-  analogtv_setup_sync(inp, 0, 0);
+  st->inp=analogtv_input_allocate();
+  analogtv_setup_sync(st->inp, 0, 0);
 
-  reception.input = inp;
-  reception.level = 2.0;
-  reception.ofs=0;
+  st->reception.input = st->inp;
+  st->reception.level = 2.0;
+  st->reception.ofs=0;
 #if 0
   if (random()) {
-    reception.multipath = frand(1.0);
+    st->reception.multipath = frand(1.0);
   } else {
 #endif
-    reception.multipath=0.0;
+    st->reception.multipath=0.0;
 #if 0
   }
 #endif
 
   /*Init the paddles*/
-  l_paddle.x = 8;
-  l_paddle.y = 100;
-  l_paddle.w = 16;
-  l_paddle.h = PONG_H/4;
-  l_paddle.wait = 1;
-  l_paddle.lock = 0;
-  r_paddle = l_paddle;
-  r_paddle.x = PONG_W - 8 - r_paddle.w;
-  r_paddle.wait = 0;
+  st->l_paddle.x = 8;
+  st->l_paddle.y = 100;
+  st->l_paddle.w = 16;
+  st->l_paddle.h = PONG_H/4;
+  st->l_paddle.wait = 1;
+  st->l_paddle.lock = 0;
+  st->r_paddle = st->l_paddle;
+  st->r_paddle.x = PONG_W - 8 - st->r_paddle.w;
+  st->r_paddle.wait = 0;
   /*Init the ball*/
-  ball.x = PONG_W/2;
-  ball.y = PONG_H/2;
-  ball.w = 16;
-  ball.h = 8;
+  st->ball.x = PONG_W/2;
+  st->ball.y = PONG_H/2;
+  st->ball.w = 16;
+  st->ball.h = 8;
 
-  m_unit = get_integer_resource ("speed", "Integer");
+  st->m_unit = get_integer_resource (st->dpy, "speed", "Integer");
 
-  start_game();
+  start_game(st);
 
-  analogtv_lcp_to_ntsc(ANALOGTV_BLACK_LEVEL, 0.0, 0.0, field_ntsc);
-  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, ball_ntsc);
-  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, paddle_ntsc);
-  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, score_ntsc);
-  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, net_ntsc);
+  analogtv_lcp_to_ntsc(ANALOGTV_BLACK_LEVEL, 0.0, 0.0, st->field_ntsc);
+  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, st->ball_ntsc);
+  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, st->paddle_ntsc);
+  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, st->score_ntsc);
+  analogtv_lcp_to_ntsc(100.0, 0.0, 0.0, st->net_ntsc);
 
-  analogtv_draw_solid(inp,
+  analogtv_draw_solid(st->inp,
                       ANALOGTV_VIS_START, ANALOGTV_VIS_END,
                       ANALOGTV_TOP, ANALOGTV_BOT,
-                      field_ntsc);
+                      st->field_ntsc);
+
+  return st;
 }
 
 static void
-p_logic(Paddle *p)
+p_logic(struct state *st, Paddle *p)
 {
   int targ;
-  if (bx > 0) {
-    targ = ball.y + by * (r_paddle.x-ball.x) / bx;
+  if (st->bx > 0) {
+    targ = st->ball.y + st->by * (st->r_paddle.x-st->ball.x) / st->bx;
   }
-  else if (bx < 0) {
-    targ = ball.y - by * (ball.x - l_paddle.x - l_paddle.w) / bx;
+  else if (st->bx < 0) {
+    targ = st->ball.y - st->by * (st->ball.x - st->l_paddle.x - st->l_paddle.w) / st->bx;
   }
   else {
-    targ = ball.y;
+    targ = st->ball.y;
   }
   if (targ > PONG_H) targ=PONG_H;
   if (targ < 0) targ=0;
 
   if (targ < p->y && !p->lock)
   {
-    p->y -= paddle_rate;
+    p->y -= st->paddle_rate;
   }
   else if (targ > (p->y + p->h) && !p->lock)
   {
-    p->y += paddle_rate;
+    p->y += st->paddle_rate;
   }
   else
   {
     int move=targ - (p->y + p->h/2);
-    if (move>paddle_rate) move=paddle_rate;
-    if (move<-paddle_rate) move=-paddle_rate;
+    if (move>st->paddle_rate) move=st->paddle_rate;
+    if (move<-st->paddle_rate) move=-st->paddle_rate;
     p->y += move;
     p->lock = 1;
   }
@@ -380,134 +400,134 @@ p_hit_top_bottom(Paddle *p)
   }
 */
 static void
-paint_paddle(analogtv_input *inp, Paddle *p)
+paint_paddle(struct state *st, Paddle *p)
 {
-  analogtv_draw_solid(inp,
+  analogtv_draw_solid(st->inp,
                       ANALOGTV_VIS_START + p->x, ANALOGTV_VIS_START + p->x + p->w,
                       ANALOGTV_TOP, ANALOGTV_BOT,
-                      field_ntsc);
+                      st->field_ntsc);
 
-  analogtv_draw_solid(inp,
+  analogtv_draw_solid(st->inp,
                       ANALOGTV_VIS_START + p->x, ANALOGTV_VIS_START + p->x + p->w,
                       ANALOGTV_TOP + p->y, ANALOGTV_TOP + p->y + p->h,
-                      paddle_ntsc);
+                      st->paddle_ntsc);
 }
 
 /*
-  XClearArea(dpy,window, old_ballx, old_bally, ball.d, ball.d, 0);
-  XFillRectangle (dpy, window, gc, ball.x, ball.y, ball.d, ball.d);
-  XFillRectangle (dpy, window, gc, xgwa.width / 2, 0, ball.d, xgwa.height);
+  XClearArea(dpy,window, old_ballx, old_bally, st->ball.d, st->ball.d, 0);
+  XFillRectangle (dpy, window, gc, st->ball.x, st->ball.y, st->ball.d, st->ball.d);
+  XFillRectangle (dpy, window, gc, xgwa.width / 2, 0, st->ball.d, xgwa.height);
 */
 
 static void
-erase_ball(analogtv_input *inp)
+erase_ball(struct state *st)
 {
-  analogtv_draw_solid(inp,
-                      ANALOGTV_VIS_START + ball.x, ANALOGTV_VIS_START + ball.x + ball.w,
-                      ANALOGTV_TOP + ball.y, ANALOGTV_TOP + ball.y + ball.h,
-                      field_ntsc);
+  analogtv_draw_solid(st->inp,
+                      ANALOGTV_VIS_START + st->ball.x, ANALOGTV_VIS_START + st->ball.x + st->ball.w,
+                      ANALOGTV_TOP + st->ball.y, ANALOGTV_TOP + st->ball.y + st->ball.h,
+                      st->field_ntsc);
 }
 
 static void
-paint_ball(analogtv_input *inp)
+paint_ball(struct state *st)
 {
-  analogtv_draw_solid(inp,
-                      ANALOGTV_VIS_START + ball.x, ANALOGTV_VIS_START + ball.x + ball.w,
-                      ANALOGTV_TOP + ball.y, ANALOGTV_TOP + ball.y + ball.h,
-                      ball_ntsc);
+  analogtv_draw_solid(st->inp,
+                      ANALOGTV_VIS_START + st->ball.x, ANALOGTV_VIS_START + st->ball.x + st->ball.w,
+                      ANALOGTV_TOP + st->ball.y, ANALOGTV_TOP + st->ball.y + st->ball.h,
+                      st->ball_ntsc);
 }
 
 static void
-paint_score(analogtv_input *inp)
+paint_score(struct state *st)
 {
   char buf[256];
 
-  analogtv_draw_solid(inp,
+  analogtv_draw_solid(st->inp,
                       ANALOGTV_VIS_START, ANALOGTV_VIS_END,
-                      ANALOGTV_TOP, ANALOGTV_TOP + 10+ score_font.char_h * score_font.y_mult,
-                      field_ntsc);
+                      ANALOGTV_TOP, ANALOGTV_TOP + 10+ st->score_font.char_h * st->score_font.y_mult,
+                      st->field_ntsc);
 
-  sprintf(buf, "%d",r_paddle.score%256);
-  analogtv_draw_string(inp, &score_font, buf,
+  sprintf(buf, "%d",st->r_paddle.score%256);
+  analogtv_draw_string(st->inp, &st->score_font, buf,
                        ANALOGTV_VIS_START + 130, ANALOGTV_TOP + 8,
-                       score_ntsc);
+                       st->score_ntsc);
 
-  sprintf(buf, "%d",l_paddle.score%256);
-  analogtv_draw_string(inp, &score_font, buf,
+  sprintf(buf, "%d",st->l_paddle.score%256);
+  analogtv_draw_string(st->inp, &st->score_font, buf,
                        ANALOGTV_VIS_END - 200, ANALOGTV_TOP + 8,
-                       score_ntsc);
+                       st->score_ntsc);
 
 }
 
 static void
-paint_net(analogtv_input *inp)
+paint_net(struct state *st)
 {
   int x,y;
 
   x=(ANALOGTV_VIS_START + ANALOGTV_VIS_END)/2;
 
   for (y=ANALOGTV_TOP; y<ANALOGTV_BOT; y+=6) {
-    analogtv_draw_solid(inp, x-2, x+2, y, y+3,
-                        net_ntsc);
-    analogtv_draw_solid(inp, x-2, x+2, y+3, y+6,
-                        field_ntsc);
+    analogtv_draw_solid(st->inp, x-2, x+2, y, y+3,
+                        st->net_ntsc);
+    analogtv_draw_solid(st->inp, x-2, x+2, y+3, y+6,
+                        st->field_ntsc);
 
   }
 }
 
-static void
-play_pong (void)
+static unsigned long
+pong_draw (Display *dpy, Window window, void *closure)
 {
-  erase_ball(inp);
+  struct state *st = (struct state *) closure;
+  erase_ball(st);
 
-  ball.x += bx;
-  ball.y += by;
+  st->ball.x += st->bx;
+  st->ball.y += st->by;
 
   if ((random()%40)==0) {
-    if (bx>0) bx++; else bx--;
+    if (st->bx>0) st->bx++; else st->bx--;
   }
 
-  if (!r_paddle.wait)
+  if (!st->r_paddle.wait)
   {
-    p_logic(&r_paddle);
+    p_logic(st, &st->r_paddle);
   }
-  if (!l_paddle.wait)
+  if (!st->l_paddle.wait)
   {
-    p_logic(&l_paddle);
+    p_logic(st, &st->l_paddle);
   }
 
-  p_hit_top_bottom(&r_paddle);
-  p_hit_top_bottom(&l_paddle);
+  p_hit_top_bottom(&st->r_paddle);
+  p_hit_top_bottom(&st->l_paddle);
 
-  hit_top_bottom();
-  hit_paddle();
+  hit_top_bottom(st);
+  hit_paddle(st);
 
   #ifdef OUTPUT_POS
-  printf("(%d,%d,%d,%d)\n",ball.x,ball.y,ball.w,ball.h);
+  printf("(%d,%d,%d,%d)\n",st->ball.x,st->ball.y,st->ball.w,st->ball.h);
   #endif
 
-  paint_score(inp);
+  paint_score(st);
 
-  paint_net(inp);
+  paint_net(st);
 
   if (1) {
-    paint_paddle(inp, &r_paddle);
-    paint_paddle(inp, &l_paddle);
+    paint_paddle(st, &st->r_paddle);
+    paint_paddle(st, &st->l_paddle);
   }
-  if (1) paint_ball(inp);
+  if (1) paint_ball(st);
 
-  analogtv_handle_events(tv);
+  analogtv_init_signal(st->tv, 0.04);
+  analogtv_reception_update(&st->reception);
+  analogtv_add_signal(st->tv, &st->reception);
+  analogtv_draw(st->tv);
 
-  analogtv_init_signal(tv, 0.04);
-  analogtv_reception_update(&reception);
-  analogtv_add_signal(tv, &reception);
-  analogtv_draw(tv);
+  return 10000;
 }
 
 
-char *progclass = "pong";
 
-char *defaults [] = {
+static const char *pong_defaults [] = {
   ".background: black",
   ".foreground: white",
   "*speed:      6",
@@ -516,20 +536,32 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
-  { "-percent",         ".percent",     XrmoptionSepArg, 0 },
+static XrmOptionDescRec pong_options [] = {
   { "-speed",           ".speed",     XrmoptionSepArg, 0 },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
+static void
+pong_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  init_pong (dpy, window);
-  while (1)
-    {
-      play_pong ();
-    }
+  struct state *st = (struct state *) closure;
+  analogtv_reconfigure (st->tv);
 }
 
+static Bool
+pong_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+pong_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  analogtv_release(st->tv);
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("Pong", pong)

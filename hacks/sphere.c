@@ -57,24 +57,22 @@ static const char sccsid[] = "@(#)sphere.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_sphere
-#define PROGCLASS "Sphere"
-#define HACK_INIT init_sphere
-#define HACK_DRAW draw_sphere
-#define sphere_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000 \n" \
- "*cycles: 20 \n" \
- "*size: 0 \n" \
- "*ncolors: 64 \n"
-#define BRIGHT_COLORS
-#include "xlockmore.h"		/* from the xscreensaver distribution */
+# define MODE_sphere
+#define DEFAULTS	"*delay: 1000 \n" \
+					"*cycles: 20 \n" \
+					"*size: 0 \n" \
+					"*ncolors: 64 \n"
+# define BRIGHT_COLORS
+# define reshape_sphere 0
+# define sphere_handle_event 0
+# include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
-#include "xlock.h"		/* from the xlockmore distribution */
+# include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef MODE_sphere
 
-ModeSpecOpt sphere_opts =
+ENTRYPOINT ModeSpecOpt sphere_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -110,7 +108,7 @@ typedef struct {
 
 static spherestruct *spheres = (spherestruct *) NULL;
 
-void
+ENTRYPOINT void
 init_sphere(ModeInfo * mi)
 {
 	spherestruct *sp;
@@ -141,7 +139,7 @@ init_sphere(ModeInfo * mi)
 	sp->shadowy = (LRAND() & 1) ? 1 : -1;
 }
 
-void
+ENTRYPOINT void
 draw_sphere(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -270,7 +268,7 @@ draw_sphere(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_sphere(ModeInfo * mi)
 {
 	if (spheres != NULL) {
@@ -289,7 +287,7 @@ release_sphere(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_sphere(ModeInfo * mi)
 {
 	spherestruct *sp;
@@ -302,5 +300,7 @@ refresh_sphere(ModeInfo * mi)
 
 	sp->x = -sp->radius;
 }
+
+XSCREENSAVER_MODULE ("Sphere", sphere)
 
 #endif /* MODE_sphere */

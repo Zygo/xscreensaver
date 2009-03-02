@@ -25,21 +25,100 @@
 
 #define X_PI (180 * 64)
 
-/******** splaying code */
+#define START 0
+#define CROSS 1
+#define FINISH 2
+
+#define ARC_BUFFER_SIZE 256
+
 
 typedef struct _tree {
   struct _tree *l, *r;   /* left and right children */
                          /* extra stuff would go here */
   } tree;
 
-typedef int (*cut)(tree*);    /* cut x is <, =, or > 0 given a <, =, or > x for some a */
+
+struct _fringe;
+
+typedef struct _circle {
+  int r;                    /* radius */
+  double x, y;              /* position */
+  double dx, dy;            /* velocity */
+
+  int visible;              /* default visibility */
+  struct _fringe *lo, *hi;  /* lo and hi fringes */
+
+  int ni;                   /* number of intersections */
+  int *i;                   /* sorted intersection list */
+  } circle;             
+
+typedef struct _fringe {
+  struct _fringe *l, *r;  /* left and right children for splay trees */
+
+  circle *c;              /* associated circle */
+  int side;               /* 0 for lo, 1 for hi */
+
+  int mni;                /* size of intersection array */
+  int ni;                 /* number of intersections */
+  int *i;                 /* sorted intersection list */
+  } fringe;
+
+
+typedef struct _event {
+  struct _event *l, *r;    /* left and right children for splay tree */
+
+  int kind;                /* type of event */
+  double x, y;             /* position */
+  fringe *lo, *hi;         /* fringes */
+  } event;
+
+
+struct state {
+  Display *dpy;
+  Window window;
+
+  double event_cut_y;
+
+  double fringe_start_cut_x;
+  double fringe_start_cut_y;
+
+  double fringe_double_cut_x;
+  double fringe_double_cut_y;
+  fringe *fringe_double_cut_lo;
+  fringe *fringe_double_cut_hi;
+
+  int arc_buffer_count;
+  XArc arc_buffer[ARC_BUFFER_SIZE];
+
+  Bool dbuf;
+  XColor *colors;
+  XGCValues gcv;
+  GC erase_gc, draw_gc;
+  XWindowAttributes xgwa;
+  Pixmap b, ba, bb;    /* double-buffering pixmap */
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  XdbeBackBuffer backb;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
+  int count, delay, ncolors, colorspeed, color_index, flags, iterations;
+  int color_iterations;
+  circle *circles;
+};
+
+typedef int (*cut)(struct state *, tree*);    /* cut x is <, =, or > 0 given a <, =, or > x for some a */
+
+
+
+/******** splaying code */
 
 /* Top-down splay routine.  Reference:
  *   "Self-adjusting Binary Search Trees", Sleator and Tarjan,
  *   JACM Volume 32, No 3, July 1985, pp 652-686.
  * See page 668 for specific splay transformations */
 
-tree *splay(cut c, tree *t) {
+static tree *splay(struct state *st, cut c, tree *t)
+{
   int v, vv;
   tree *l, *r;
   tree **lr, **rl;
@@ -56,7 +135,7 @@ tree *splay(cut c, tree *t) {
 
   /* top-down splaying loop */
   for (;;) {
-    v = c(x);
+    v = c(st, x);
     if (v == 0)
       break;               /*** success ***/
     else if (v < 0) {
@@ -64,7 +143,7 @@ tree *splay(cut c, tree *t) {
       if (!y)
         break;             /*** trivial ***/
       else {
-        vv = c(y);
+        vv = c(st, y);
         if (vv == 0) {
           *rl = x;         /*** zig ***/
           rl = &x->l;
@@ -110,7 +189,7 @@ tree *splay(cut c, tree *t) {
       if (!y)
         break;             /*** trivial ***/
       else {
-        vv = c(y);
+        vv = c(st, y);
         if (vv == 0) {
           *lr = x;         /*** zig ***/
           lr = &x->r;
@@ -161,7 +240,8 @@ tree *splay(cut c, tree *t) {
   return x;
   }
 
-tree *splay_min(tree *t) {
+static tree *splay_min(tree *t)
+{
   tree *r, **rl;
   tree *x, *y, *z;
 
@@ -200,7 +280,8 @@ tree *splay_min(tree *t) {
   return x;
   }
 
-tree *splay_max(tree *t) {
+static tree *splay_max(tree *t)
+{
   tree *l, **lr;
   tree *x, *y, *z;
 
@@ -241,39 +322,16 @@ tree *splay_max(tree *t) {
 
 /******** circles and fringe */
 
-struct _fringe;
-
-typedef struct _circle {
-  int r;                    /* radius */
-  double x, y;              /* position */
-  double dx, dy;            /* velocity */
-
-  int visible;              /* default visibility */
-  struct _fringe *lo, *hi;  /* lo and hi fringes */
-
-  int ni;                   /* number of intersections */
-  int *i;                   /* sorted intersection list */
-  } circle;             
-
-typedef struct _fringe {
-  struct _fringe *l, *r;  /* left and right children for splay trees */
-
-  circle *c;              /* associated circle */
-  int side;               /* 0 for lo, 1 for hi */
-
-  int mni;                /* size of intersection array */
-  int ni;                 /* number of intersections */
-  int *i;                 /* sorted intersection list */
-  } fringe;
-
-inline double fringe_x(fringe *f, double y) {
+static inline double fringe_x(fringe *f, double y)
+{
   double dy, d;
   dy = f->c->y - y;
   d = sqrt(f->c->r * f->c->r - dy * dy);
   return f->side ? f->c->x + d : f->c->x - d;
   }
 
-inline void fringe_add_intersection(fringe *f, double x, double y) {
+static inline void fringe_add_intersection(fringe *f, double x, double y)
+{
   f->ni++;
   if (f->mni < f->ni) {
     f->mni += 2;
@@ -282,16 +340,17 @@ inline void fringe_add_intersection(fringe *f, double x, double y) {
   f->i[f->ni-1] = rint(atan2(y - f->c->y, x - f->c->x) * X_PI / M_PI);
   }
 
-circle *init_circles(int n, int w, int h) {
+static circle *init_circles(struct state *st, int n, int w, int h)
+{
   int i, r0, dr, speed;
   double v, a;
   double minradius, maxradius;
   fringe *s = malloc(sizeof(fringe) * n * 2);    /* never freed */
   circle *c = malloc(sizeof(circle) * n);
 
-  speed = get_integer_resource("speed", "Speed");
-  minradius = get_float_resource("minradius", "Float");
-  maxradius = get_float_resource("maxradius", "Float");
+  speed = get_integer_resource(st->dpy, "speed", "Speed");
+  minradius = get_float_resource(st->dpy, "minradius", "Float");
+  maxradius = get_float_resource(st->dpy, "maxradius", "Float");
   if (maxradius < minradius)
     maxradius = minradius;
 
@@ -325,12 +384,14 @@ circle *init_circles(int n, int w, int h) {
   }
 
 /* this is a hack, but I guess that's what I writing anyways */
-void tweak_circle(circle *c) {
+static void tweak_circle(circle *c)
+{
   c->x += frand(2) - 1;
   c->y += frand(1) + 0.1;
   }
 
-void move_circle(circle *c, int w, int h) {
+static void move_circle(circle *c, int w, int h)
+{
   c->x += c->dx;
   if (c->x < c->r) {
     c->x = c->r;
@@ -353,33 +414,21 @@ void move_circle(circle *c, int w, int h) {
 
 /******** event queue */
 
-#define START 0
-#define CROSS 1
-#define FINISH 2
-
-typedef struct _event {
-  struct _event *l, *r;    /* left and right children for splay tree */
-
-  int kind;                /* type of event */
-  double x, y;             /* position */
-  fringe *lo, *hi;         /* fringes */
-  } event;
-
-static double event_cut_y;
-
-int event_cut(event *e) {
-  return event_cut_y == e->y ? 0 : event_cut_y < e->y ? -1 : 1;
+static int event_cut(struct state *st, event *e)
+{
+  return st->event_cut_y == e->y ? 0 : st->event_cut_y < e->y ? -1 : 1;
   }
 
-void event_insert(event **eq, event *e) {
+static void event_insert(struct state *st, event **eq, event *e)
+{
   if (!*eq) {
     e->l = e->r = 0;
     *eq = e;
     return; /* avoid leak */
     }
 
-  event_cut_y = e->y;
-  *eq = (event*)splay((cut)event_cut, (tree*)*eq);
+  st->event_cut_y = e->y;
+  *eq = (event*)splay(st, (cut)event_cut, (tree*)*eq);
 
   if (e->y == (*eq)->y) {
     if (!((e->lo == (*eq)->lo && e->hi == (*eq)->hi) || (e->lo == (*eq)->hi && e->hi == (*eq)->lo))) {
@@ -404,7 +453,8 @@ void event_insert(event **eq, event *e) {
     }
   }
 
-void circle_start_event(event **eq, circle *c) {
+static void circle_start_event(struct state *st, event **eq, circle *c)
+{
   event *s;
   s = malloc(sizeof(event));
   s->kind = START;
@@ -412,10 +462,11 @@ void circle_start_event(event **eq, circle *c) {
   s->y = c->y - c->r;
   s->lo = c->lo;
   s->hi = c->hi;
-  event_insert(eq, s);
+  event_insert(st, eq, s);
   }
 
-void circle_finish_event(event **eq, circle *c) {
+static void circle_finish_event(struct state *st, event **eq, circle *c)
+{
   event *f;
   f = malloc(sizeof(event));
   f->kind = FINISH;
@@ -423,10 +474,11 @@ void circle_finish_event(event **eq, circle *c) {
   f->y = c->y + c->r;
   f->lo = c->lo;
   f->hi = c->hi;
-  event_insert(eq, f);
+  event_insert(st, eq, f);
   }
 
-event *event_next(event **eq) {
+static event *event_next(event **eq)
+{
   event *e;
   if (!*eq)
     return 0;
@@ -437,7 +489,8 @@ event *event_next(event **eq) {
     }
   }
 
-void event_shred(event *e) {
+static void event_shred(event *e)
+{
   if (e) {
     event_shred(e->l);
     event_shred(e->r);
@@ -447,11 +500,13 @@ void event_shred(event *e) {
 
 /******** fringe intersection */
 
-inline int check_fringe_intersection(double ye, fringe *lo, fringe *hi, double x, double y) {
+static inline int check_fringe_intersection(double ye, fringe *lo, fringe *hi, double x, double y)
+{
   return ye <= y && ((x < lo->c->x) ^ lo->side) && ((x < hi->c->x) ^ hi->side);
   }
 
-void fringe_intersect(event **eq, double y, fringe *lo, fringe *hi) {
+static void fringe_intersect(struct state *st, event **eq, double y, fringe *lo, fringe *hi)
+{
   event *e;
   double dx, dy, sd, rs, rd, d, sx, sy, rp, sqd;
   double x1, y1, x2, y2;
@@ -490,7 +545,7 @@ void fringe_intersect(event **eq, double y, fringe *lo, fringe *hi) {
     e->kind = CROSS;                     \
     e->x = xi; e->y = yi;                \
     e->lo = ilo; e->hi = ihi;            \
-    event_insert(eq, e);                 \
+    event_insert(st, eq, e);                 \
     }
 
   if (CHECK(x1, y1)) {
@@ -517,55 +572,56 @@ void fringe_intersect(event **eq, double y, fringe *lo, fringe *hi) {
 
 #define PANIC ((fringe*)1)     /* by alignment, no fringe should every be 1 */
 
-fringe *check_lo(event **eq, double y, fringe *f, fringe *hi) {
+static fringe *check_lo(struct state *st, event **eq, double y, fringe *f, fringe *hi)
+{
   if (f) {
     f = (fringe*)splay_max((tree*)f);
-    fringe_intersect(eq, y, f, hi);
+    fringe_intersect(st, eq, y, f, hi);
     }
   return f;
   }
 
-fringe *check_hi(event **eq, double y, fringe *lo, fringe *f) {
+static fringe *check_hi(struct state *st, event **eq, double y, fringe *lo, fringe *f)
+{
   if (f) {
     f = (fringe*)splay_min((tree*)f);
-    fringe_intersect(eq, y, lo, f);
+    fringe_intersect(st, eq, y, lo, f);
     }
   return f;
   }
 
-double fringe_start_cut_x;
-double fringe_start_cut_y;
-
-int fringe_start_cut(fringe *f) {
-  double x = fringe_x(f, fringe_start_cut_y);
-  return fringe_start_cut_x == x ? 0 : fringe_start_cut_x < x ? -1 : 1;
+static int fringe_start_cut(struct state *st, fringe *f)
+{
+  double x = fringe_x(f, st->fringe_start_cut_y);
+  return st->fringe_start_cut_x == x ? 0 : st->fringe_start_cut_x < x ? -1 : 1;
   }
 
-fringe *fringe_start(event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi) {
+static fringe *fringe_start(struct state *st, event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi)
+{
   double sx;
 
   if (!f) {
-    circle_finish_event(eq, lo->c);
+    circle_finish_event(st, eq, lo->c);
     lo->l = 0;
     lo->r = hi;
     hi->l = hi->r = 0;
     return lo;
     }
 
-  fringe_start_cut_x = x;
-  fringe_start_cut_y = y;
-  f = (fringe*)splay((cut)fringe_start_cut, (tree*)f);
+  st->fringe_start_cut_x = x;
+  st->fringe_start_cut_y = y;
+  f = (fringe*)splay(st, (cut)fringe_start_cut, (tree*)f);
 
   sx = fringe_x(f, y);
   if (x == sx) {       /* time to cheat my way out of handling degeneracies */
     tweak_circle(lo->c);
-    circle_start_event(eq, lo->c);
+    circle_start_event(st, eq, lo->c);
     return f;
     }
   else if (x < sx) {
-    circle_finish_event(eq, lo->c);
-    f->l = check_lo(eq, y, f->l, lo);    
-    fringe_intersect(eq, y, hi, f);
+    circle_finish_event(st, eq, lo->c);
+    f->l = check_lo(st, eq, y, f->l, lo);    
+    fringe_intersect(st, eq, y, hi, f);
     lo->l = f->l;
     lo->r = f;
     f->l = hi;
@@ -573,9 +629,9 @@ fringe *fringe_start(event **eq, fringe *f, double x, double y, fringe *lo, frin
     return lo;
     }
   else {
-    circle_finish_event(eq, lo->c);
-    fringe_intersect(eq, y, f, lo);
-    f->r = check_hi(eq, y, hi, f->r);
+    circle_finish_event(st, eq, lo->c);
+    fringe_intersect(st, eq, y, f, lo);
+    f->r = check_hi(st, eq, y, hi, f->r);
     hi->r = f->r;
     hi->l = f;
     f->r = lo;
@@ -584,25 +640,22 @@ fringe *fringe_start(event **eq, fringe *f, double x, double y, fringe *lo, frin
     }
   }
 
-double fringe_double_cut_x;
-double fringe_double_cut_y;
-fringe *fringe_double_cut_lo;
-fringe *fringe_double_cut_hi;
-
-int fringe_double_cut(fringe *f) {
+static int fringe_double_cut(struct state *st, fringe *f)
+{
   double x;
-  if (f == fringe_double_cut_lo || f == fringe_double_cut_hi)
+  if (f == st->fringe_double_cut_lo || f == st->fringe_double_cut_hi)
     return 0;
-  x = fringe_x(f, fringe_double_cut_y);
-  return fringe_double_cut_x == x ? 0 : fringe_double_cut_x < x ? -1 : 1;
+  x = fringe_x(f, st->fringe_double_cut_y);
+  return st->fringe_double_cut_x == x ? 0 : st->fringe_double_cut_x < x ? -1 : 1;
   }
 
-int fringe_double_splay(fringe *f, double x, double y, fringe *lo, fringe *hi) {
-  fringe_double_cut_x = x;
-  fringe_double_cut_y = y;
-  fringe_double_cut_lo = lo;
-  fringe_double_cut_hi = hi;
-  f = (fringe*)splay((cut)fringe_double_cut, (tree*)f);
+static int fringe_double_splay(struct state *st, fringe *f, double x, double y, fringe *lo, fringe *hi)
+{
+  st->fringe_double_cut_x = x;
+  st->fringe_double_cut_y = y;
+  st->fringe_double_cut_lo = lo;
+  st->fringe_double_cut_hi = hi;
+  f = (fringe*)splay(st, (cut)fringe_double_cut, (tree*)f);
 
   if (f == lo)
     return (f->r = (fringe*)splay_min((tree*)f->r)) == hi;
@@ -612,12 +665,13 @@ int fringe_double_splay(fringe *f, double x, double y, fringe *lo, fringe *hi) {
     return 0;
   }
 
-fringe *fringe_cross(event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi) {
+static fringe *fringe_cross(struct state *st, event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi)
+{
   fringe *l, *r;
-  if (!fringe_double_splay(f, x, y, lo, hi))
+  if (!fringe_double_splay(st, f, x, y, lo, hi))
     return PANIC;
-  l = check_lo(eq, y, lo->l, hi);
-  r = check_hi(eq, y, lo, hi->r);
+  l = check_lo(st, eq, y, lo->l, hi);
+  r = check_hi(st, eq, y, lo, hi->r);
   lo->l = hi;
   lo->r = r;
   hi->l = l;
@@ -625,8 +679,9 @@ fringe *fringe_cross(event **eq, fringe *f, double x, double y, fringe *lo, frin
   return lo;
   }
 
-fringe *fringe_finish(event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi) {
-  if (!fringe_double_splay(f, x, y, lo, hi))
+static fringe *fringe_finish(struct state *st, event **eq, fringe *f, double x, double y, fringe *lo, fringe *hi)
+{
+  if (!fringe_double_splay(st, f, x, y, lo, hi))
     return PANIC;
   else if (!lo->l)
     return hi->r;
@@ -635,7 +690,7 @@ fringe *fringe_finish(event **eq, fringe *f, double x, double y, fringe *lo, fri
   else {
     lo->l = (fringe*)splay_max((tree*)lo->l);
     hi->r = (fringe*)splay_min((tree*)hi->r);
-    fringe_intersect(eq, y, lo->l, hi->r);
+    fringe_intersect(st, eq, y, lo->l, hi->r);
     lo->l->r = hi->r;
     hi->r->l = 0;
     return lo->l;
@@ -644,7 +699,8 @@ fringe *fringe_finish(event **eq, fringe *f, double x, double y, fringe *lo, fri
 
 /******** plane sweep */
 
-void sweep(int n, circle *c) {
+static void sweep(struct state *st, int n, circle *c)
+{
   int i;
   event *eq, *e;
   fringe *f;
@@ -663,22 +719,22 @@ void sweep(int n, circle *c) {
 
   eq = 0;
   for (i=0;i<n;i++)
-    circle_start_event(&eq, c+i); 
+    circle_start_event(st, &eq, c+i); 
   f = 0;
 
   while ((e = event_next(&eq))) {
     switch (e->kind) {
       case START:
-        f = fringe_start(&eq, f, e->x, e->y, e->lo, e->hi);
+        f = fringe_start(st, &eq, f, e->x, e->y, e->lo, e->hi);
         break;
       case CROSS:
-        f = fringe_cross(&eq, f, e->x, e->y, e->lo, e->hi);
+        f = fringe_cross(st, &eq, f, e->x, e->y, e->lo, e->hi);
         CHECK_PANIC();
         fringe_add_intersection(e->lo, e->x, e->y);
         fringe_add_intersection(e->hi, e->x, e->y);
         break;
       case FINISH:
-        f = fringe_finish(&eq, f, e->x, e->y, e->lo, e->hi);
+        f = fringe_finish(st, &eq, f, e->x, e->y, e->lo, e->hi);
         CHECK_PANIC();
         break;
       }
@@ -688,7 +744,8 @@ void sweep(int n, circle *c) {
 
 /******** circle drawing */
 
-void adjust_circle_visibility(circle *c) {
+static void adjust_circle_visibility(circle *c)
+{
   int i, j, n, a;
   int *in;
   n = c->lo->ni + c->hi->ni;
@@ -715,18 +772,16 @@ void adjust_circle_visibility(circle *c) {
   c->i = in;
   }
 
-#define ARC_BUFFER_SIZE 256
-int arc_buffer_count = 0;
-XArc arc_buffer[ARC_BUFFER_SIZE];
-
-void flush_arc_buffer(Display *dpy, Drawable w, GC gc) {
-  if (arc_buffer_count) {
-    XDrawArcs(dpy, w, gc, arc_buffer, arc_buffer_count);
-    arc_buffer_count = 0;
+static void flush_arc_buffer(struct state *st, Drawable w, GC gc)
+{
+  if (st->arc_buffer_count) {
+    XDrawArcs(st->dpy, w, gc, st->arc_buffer, st->arc_buffer_count);
+    st->arc_buffer_count = 0;
     }
   }
 
-void draw_circle(Display *dpy, Drawable w, GC gc, circle *c) {
+static void draw_circle(struct state *st, Drawable w, GC gc, circle *c)
+{
   int i, xi, yi, di;
   adjust_circle_visibility(c); 
 
@@ -736,15 +791,15 @@ void draw_circle(Display *dpy, Drawable w, GC gc, circle *c) {
 
   #define ARC(p, a1, a2) {                                \
     if (((p) & 1) ^ c->visible) {                         \
-      arc_buffer[arc_buffer_count].x      = xi;           \
-      arc_buffer[arc_buffer_count].y      = yi;           \
-      arc_buffer[arc_buffer_count].width  = di;           \
-      arc_buffer[arc_buffer_count].height = di;           \
-      arc_buffer[arc_buffer_count].angle1 = -(a1);        \
-      arc_buffer[arc_buffer_count].angle2 = (a1) - (a2);  \
-      arc_buffer_count++;                                 \
-      if (arc_buffer_count == ARC_BUFFER_SIZE)            \
-        flush_arc_buffer(dpy, w, gc);                     \
+      st->arc_buffer[st->arc_buffer_count].x      = xi;           \
+      st->arc_buffer[st->arc_buffer_count].y      = yi;           \
+      st->arc_buffer[st->arc_buffer_count].width  = di;           \
+      st->arc_buffer[st->arc_buffer_count].height = di;           \
+      st->arc_buffer[st->arc_buffer_count].angle1 = -(a1);        \
+      st->arc_buffer[st->arc_buffer_count].angle2 = (a1) - (a2);  \
+      st->arc_buffer_count++;                                 \
+      if (st->arc_buffer_count == ARC_BUFFER_SIZE)            \
+        flush_arc_buffer(st, w, gc);                     \
       }                                                   \
     }
 
@@ -757,42 +812,6 @@ void draw_circle(Display *dpy, Drawable w, GC gc, circle *c) {
   }
 
 /******** toplevel */
-
-char *progclass = "Piecewise";
-
-char *defaults [] = {
-  ".background:         black",
-  ".foreground:         white",
-  "*delay:              5000",
-  "*speed:              15",
-  "*ncolors:            256",
-  ".colorspeed:         10",
-
-  ".count:              32",
-  ".minradius:          0.05",
-  ".maxradius:          0.2",   
-
-  "*doubleBuffer:       True",
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  "*useDBE:             True",
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-  0
-  };
-
-XrmOptionDescRec options [] = {
-  { "-delay",           ".delay",       XrmoptionSepArg, 0 },
-  { "-ncolors",         ".ncolors",     XrmoptionSepArg, 0 },
-  { "-speed",           ".speed",       XrmoptionSepArg, 0 },
-  { "-colorspeed",      ".colorspeed",  XrmoptionSepArg, 0 },
-
-  { "-count",           ".count",       XrmoptionSepArg, 0 },
-  { "-minradius",       ".minradius",   XrmoptionSepArg, 0 },
-  { "-maxradius",       ".maxradius",   XrmoptionSepArg, 0 },
-
-  { "-db",              ".doubleBuffer", XrmoptionNoArg,  "True" },
-  { "-no-db",           ".doubleBuffer", XrmoptionNoArg,  "False" },
-  { 0, 0, 0, 0 }
-  };
 
 static void
 check_for_leaks (void)
@@ -812,109 +831,165 @@ check_for_leaks (void)
 #endif /* HAVE_SBRK */
 }
 
+static void *
+piecewise_init (Display *dd, Window ww)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dd;
+  st->window = ww;
 
-void screenhack(Display *dpy, Window window) {
-  int i;
-  Bool dbuf;
-  XColor *colors;
-  XGCValues gcv;
-  GC erase_gc, draw_gc;
-  XWindowAttributes xgwa;
-  Pixmap b = 0, ba = 0, bb = 0;    /* double-buffering pixmap */
+  st->count = get_integer_resource(st->dpy, "count", "Integer");
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  st->ncolors = get_integer_resource(st->dpy, "ncolors", "Integer");
+  st->colorspeed = get_integer_resource(st->dpy, "colorspeed", "Integer");
+  st->dbuf = get_boolean_resource(st->dpy, "doubleBuffer", "Boolean");
 
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  XdbeBackBuffer backb = 0;
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  st->dbuf = False;
+# endif
 
-  int count, delay, ncolors, colorspeed, color_index, flags, iterations;
-  int color_iterations;
-  circle *circles;
+  st->color_iterations = st->colorspeed ? 100 / st->colorspeed : 100000;
+  if (!st->color_iterations)
+    st->color_iterations = 1;
 
-  count = get_integer_resource("count", "Integer");
-  delay = get_integer_resource("delay", "Integer");
-  ncolors = get_integer_resource("ncolors", "Integer");
-  colorspeed = get_integer_resource("colorspeed", "Integer");
-  dbuf = get_boolean_resource("doubleBuffer", "Boolean");
+  XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+  st->colors = calloc(sizeof(XColor), st->ncolors);
 
-  color_iterations = colorspeed ? 100 / colorspeed : 100000;
-  if (!color_iterations)
-    color_iterations = 1;
-
-  XGetWindowAttributes(dpy, window, &xgwa);
-  colors = calloc(sizeof(XColor), ncolors);
-
-  if (get_boolean_resource("mono", "Boolean")) {  
+  if (get_boolean_resource(st->dpy, "mono", "Boolean")) {  
     MONO:
-      ncolors = 1;
-      colors[0].pixel = get_pixel_resource("foreground", "Foreground", dpy, xgwa.colormap);
+      st->ncolors = 1;
+      st->colors[0].pixel = get_pixel_resource(st->dpy, st->xgwa.colormap, "foreground", "Foreground");
     }
   else {
-    make_color_loop(dpy, xgwa.colormap, 0, 1, 1, 120, 1, 1, 240, 1, 1, colors, &ncolors, True, False);
-    if (ncolors < 2)
+    make_color_loop(st->dpy, st->xgwa.colormap, 0, 1, 1, 120, 1, 1, 240, 1, 1, st->colors, &st->ncolors, True, False);
+    if (st->ncolors < 2)
       goto MONO; 
     }
 
-  if (dbuf) {
+  if (st->dbuf) {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-    b = backb = xdbe_get_backbuffer(dpy, window, XdbeUndefined);
+    st->b = st->backb = xdbe_get_backbuffer(st->dpy, st->window, XdbeUndefined);
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
     
-    if (!b) {
-      ba = XCreatePixmap(dpy, window, xgwa.width, xgwa.height,xgwa.depth);
-      bb = XCreatePixmap(dpy, window, xgwa.width, xgwa.height,xgwa.depth);
-      b = ba;
+    if (!st->b) {
+      st->ba = XCreatePixmap(st->dpy, st->window, st->xgwa.width, st->xgwa.height,st->xgwa.depth);
+      st->bb = XCreatePixmap(st->dpy, st->window, st->xgwa.width, st->xgwa.height,st->xgwa.depth);
+      st->b = st->ba;
       }
     }
   else
-    b = window;
+    st->b = st->window;
 
   /* erasure gc */
-  gcv.foreground = get_pixel_resource("background", "Background", dpy, xgwa.colormap);
-  erase_gc = XCreateGC (dpy, b, GCForeground, &gcv);
+  st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap, "background", "Background");
+  st->erase_gc = XCreateGC (st->dpy, st->b, GCForeground, &st->gcv);
 
   /* drawing gc */
-  flags = GCForeground;
-  color_index = random() % ncolors;
-  gcv.foreground = colors[color_index].pixel;
-  draw_gc = XCreateGC(dpy, b, flags, &gcv);
+  st->flags = GCForeground;
+  st->color_index = random() % st->ncolors;
+  st->gcv.foreground = st->colors[st->color_index].pixel;
+  st->draw_gc = XCreateGC(st->dpy, st->b, st->flags, &st->gcv);
 
   /* initialize circles */
-  circles = init_circles(count, xgwa.width, xgwa.height);
+  st->circles = init_circles(st, st->count, st->xgwa.width, st->xgwa.height);
   
-  iterations = 0;
-  for (;;) {
-    XFillRectangle (dpy, b, erase_gc, 0, 0, xgwa.width, xgwa.height);
+  st->iterations = 0;
 
-    sweep(count, circles);
-    for (i=0;i<count;i++) {
-      draw_circle(dpy, b, draw_gc, circles+i);
-      move_circle(circles+i, xgwa.width, xgwa.height);
-      }
-    flush_arc_buffer(dpy, b, draw_gc);
+  return st;
+}
 
-    if (++iterations % color_iterations == 0) {
-      color_index = (color_index + 1) % ncolors;
-      XSetForeground(dpy, draw_gc, colors[color_index].pixel);
-      }
+static unsigned long
+piecewise_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int i;
+
+  XFillRectangle (st->dpy, st->b, st->erase_gc, 0, 0, st->xgwa.width, st->xgwa.height);
+
+  sweep(st, st->count, st->circles);
+  for (i=0;i<st->count;i++) {
+    draw_circle(st, st->b, st->draw_gc, st->circles+i);
+    move_circle(st->circles+i, st->xgwa.width, st->xgwa.height);
+  }
+  flush_arc_buffer(st, st->b, st->draw_gc);
+
+  if (++st->iterations % st->color_iterations == 0) {
+    st->color_index = (st->color_index + 1) % st->ncolors;
+    XSetForeground(st->dpy, st->draw_gc, st->colors[st->color_index].pixel);
+  }
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-    if (backb) {
-      XdbeSwapInfo info[1];
-      info[0].swap_window = window;
-      info[0].swap_action = XdbeUndefined;
-      XdbeSwapBuffers (dpy, info, 1);
-      }
-    else
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-    if (dbuf) {
-      XCopyArea (dpy, b, window, erase_gc, 0, 0, xgwa.width, xgwa.height, 0, 0);
-      b = (b == ba ? bb : ba);
-      }
-
-    XSync(dpy, False);
-    screenhack_handle_events(dpy);
-    if (delay)
-      usleep(delay);
-    check_for_leaks();
-    }
+  if (st->backb) {
+    XdbeSwapInfo info[1];
+    info[0].swap_window = st->window;
+    info[0].swap_action = XdbeUndefined;
+    XdbeSwapBuffers (st->dpy, info, 1);
   }
+  else
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+    if (st->dbuf) {
+      XCopyArea (st->dpy, st->b, st->window, st->erase_gc, 0, 0, st->xgwa.width, st->xgwa.height, 0, 0);
+      st->b = (st->b == st->ba ? st->bb : st->ba);
+    }
+
+  check_for_leaks();
+  return st->delay;
+}
+
+static void
+piecewise_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+piecewise_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+piecewise_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+
+static const char *piecewise_defaults [] = {
+  ".background:         black",
+  ".foreground:         white",
+  "*delay:              5000",
+  "*speed:              15",
+  "*ncolors:            256",
+  ".colorspeed:         10",
+
+  ".count:              32",
+  ".minradius:          0.05",
+  ".maxradius:          0.2",   
+
+  "*doubleBuffer:       True",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  "*useDBE:             True",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+  0
+  };
+
+static XrmOptionDescRec piecewise_options [] = {
+  { "-delay",           ".delay",       XrmoptionSepArg, 0 },
+  { "-ncolors",         ".ncolors",     XrmoptionSepArg, 0 },
+  { "-speed",           ".speed",       XrmoptionSepArg, 0 },
+  { "-colorspeed",      ".colorspeed",  XrmoptionSepArg, 0 },
+
+  { "-count",           ".count",       XrmoptionSepArg, 0 },
+  { "-minradius",       ".minradius",   XrmoptionSepArg, 0 },
+  { "-maxradius",       ".maxradius",   XrmoptionSepArg, 0 },
+
+  { "-db",              ".doubleBuffer", XrmoptionNoArg,  "True" },
+  { "-no-db",           ".doubleBuffer", XrmoptionNoArg,  "False" },
+  { 0, 0, 0, 0 }
+  };
+
+
+XSCREENSAVER_MODULE ("Piecewise", piecewise)

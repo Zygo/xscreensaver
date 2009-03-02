@@ -30,24 +30,22 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_thornbird
-#define PROGCLASS "Thornbird"
-#define HACK_INIT init_thornbird
-#define HACK_DRAW draw_thornbird
-#define thornbird_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 800 \n" \
- "*cycles: 16 \n" \
- "*ncolors: 64 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_thornbird
+#define DEFAULTS	"*delay:    10000 \n" \
+					"*count:    100   \n" \
+					 "*cycles:  400   \n" \
+					 "*ncolors: 64    \n"
+# define BRIGHT_COLORS
+# define reshape_thornbird 0
+# define thornbird_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_thornbird
 
-ModeSpecOpt thornbird_opts =
+ENTRYPOINT ModeSpecOpt thornbird_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -104,8 +102,8 @@ free_thornbird(thornbirdstruct *hp)
 	}
 }
 
-void
-init_thornbird(ModeInfo * mi)
+ENTRYPOINT void
+init_thornbird (ModeInfo * mi)
 {
 	thornbirdstruct *hp;
 
@@ -160,7 +158,7 @@ init_thornbird(ModeInfo * mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_thornbird(ModeInfo * mi)
 {
 	Display    *dsp = MI_DISPLAY(mi);
@@ -235,7 +233,11 @@ draw_thornbird(ModeInfo * mi)
 	}
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(dsp, gc, MI_PIXEL(mi, hp->pix));
+#if 0
 		if (erase == 0) /* change colours after "cycles" cycles */
+#else
+        if (!((hp->inc + 1) % (1 + (MI_CYCLES(mi) / 3)))) /* jwz: sooner */
+#endif
 			if (++hp->pix >= MI_NPIXELS(mi))
 				hp->pix = 0;
 	} else
@@ -247,7 +249,7 @@ draw_thornbird(ModeInfo * mi)
 
 }
 
-void
+ENTRYPOINT void
 release_thornbird(ModeInfo * mi)
 {
 	if (thornbirds != NULL) {
@@ -260,10 +262,13 @@ release_thornbird(ModeInfo * mi)
 	}
 }
 
-void
-refresh_thornbird(ModeInfo * mi)
+ENTRYPOINT void
+refresh_thornbird (ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+
+XSCREENSAVER_MODULE ("Thornbird", thornbird)
 
 #endif /* MODE_thornbird */

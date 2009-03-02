@@ -9,33 +9,13 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"DangerBall"
-#define HACK_INIT	init_ball
-#define HACK_DRAW	draw_ball
-#define HACK_RESHAPE	reshape_ball
-#define HACK_HANDLE_EVENT ball_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "True"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "0.05"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*count:        30          \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-#define SPIKE_FACES   12  /* how densely to render spikes */
-#define SMOOTH_SPIKES True
-#define SPHERE_SLICES 32  /* how densely to render spheres */
-#define SPHERE_STACKS 16
-
-
+# define refresh_ball 0
+# define release_ball 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -49,7 +29,15 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "0.05"
+
+#define SPIKE_FACES   12  /* how densely to render spikes */
+#define SMOOTH_SPIKES True
+#define SPHERE_SLICES 32  /* how densely to render spheres */
+#define SPHERE_STACKS 16
 
 typedef struct {
   GLXContext *glx_context;
@@ -90,12 +78,12 @@ static argtype vars[] = {
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt ball_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_ball (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -186,7 +174,7 @@ move_spikes (ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 ball_handle_event (ModeInfo *mi, XEvent *event)
 {
   ball_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -227,7 +215,7 @@ ball_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_ball (ModeInfo *mi)
 {
   ball_configuration *bp;
@@ -307,7 +295,7 @@ init_ball (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_ball (ModeInfo *mi)
 {
   ball_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -315,15 +303,18 @@ draw_ball (ModeInfo *mi)
   Window window = MI_WINDOW(mi);
   int c2;
 
-  static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat scolor[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
-  static GLfloat sspec[4]  = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat bshiny    = 128.0;
-  static GLfloat sshiny    = 0.0;
+  static const GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
+  static const GLfloat sspec[4]  = {0.0, 0.0, 0.0, 1.0};
+  static const GLfloat bshiny    = 128.0;
+  static const GLfloat sshiny    = 0.0;
+
+  GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat scolor[4] = {0.0, 0.0, 0.0, 1.0};
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glShadeModel(GL_SMOOTH);
 
@@ -387,5 +378,7 @@ draw_ball (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("DangerBall", dangerball, ball)
 
 #endif /* USE_GL */

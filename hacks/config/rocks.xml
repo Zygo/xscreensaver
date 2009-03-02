@@ -17,8 +17,8 @@
           low="1" high="100" default="100"/>
 
   <hgroup>
-    <boolean id="rotate" _label="Rotation" arg-unset="-norotate"/>
-    <boolean id="rotate" _label="Steering" arg-unset="-nomove"/>
+    <boolean id="rotate" _label="Rotation" arg-unset="-no-rotate"/>
+    <boolean id="rotate" _label="Steering" arg-unset="-no-move"/>
   </hgroup>
   <boolean id="3d" _label="Do Red/Blue 3D seperation" arg-set="-3d"/>
 
@@ -32,7 +32,8 @@
 
   <_description>
 This draws an animation of flight through an asteroid field, with
-changes in rotation and direction.  It can also display 3D
-separations for red/blue glasses!  Mostly written by Jamie Zawinski.
+changes in rotation and direction.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>

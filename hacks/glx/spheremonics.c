@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002, 2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -60,31 +60,13 @@
  * surfaces would be too hard.
  */
 
-#include <X11/Intrinsic.h>
+#define DEFAULTS "*delay:	30000	    \n" \
+		 "*showFPS:	False	    \n" \
+		 "*wireframe:	False	    \n" \
+		 "*labelfont:   -*-times-bold-r-normal-*-180-*\n"
 
-extern XtAppContext app;
-
-#define PROGCLASS	"Spheremonics"
-#define HACK_INIT	init_spheremonics
-#define HACK_DRAW	draw_spheremonics
-#define HACK_RESHAPE	reshape_spheremonics
-#define HACK_HANDLE_EVENT spheremonics_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define ccs_opts	xlockmore_opts
-
-#define DEF_DURATION    "100"
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "False"
-#define DEF_RESOLUTION  "64"
-#define DEF_BBOX        "False"
-#define DEF_GRID        "True"
-#define DEF_SMOOTH      "True"
-#define DEF_PARMS       "(default)"
-
-#define DEFAULTS	"*delay:	30000       \n" \
-			"*showFPS:      False       \n" \
-			"*wireframe:    False       \n" \
-
+# define refresh_spheremonics 0
+# define release_spheremonics 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -98,7 +80,14 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+#define DEF_DURATION    "100"
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "False"
+#define DEF_RESOLUTION  "64"
+#define DEF_BBOX        "False"
+#define DEF_GRID        "True"
+#define DEF_SMOOTH      "True"
+#define DEF_PARMS       "(default)"
 
 typedef struct {
   GLXContext *glx_context;
@@ -125,6 +114,7 @@ typedef struct {
   XFontStruct *font;
   GLuint font_list;
   int change_tick;
+  int done_once;
 
 } spheremonics_configuration;
 
@@ -166,12 +156,12 @@ static argtype vars[] = {
   {&static_parms, "parameters", "Parameters", DEF_PARMS,      t_String},
 };
 
-ModeSpecOpt ccs_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt spheremonics_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_spheremonics (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -198,7 +188,7 @@ gl_init (ModeInfo *mi)
 /*  spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)]; */
   int wire = MI_IS_WIREFRAME(mi);
 
-  static GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
+  static const GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
 
   glEnable(GL_NORMALIZE);
 
@@ -229,7 +219,7 @@ gl_init (ModeInfo *mi)
          lighting effect.
        */
       glDisable(GL_CULL_FACE);
-      glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, TRUE);
+      glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
     }
 }
 
@@ -314,8 +304,8 @@ draw_bounding_box (ModeInfo *mi)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
 
-  static GLfloat c1[4] = { 0.2, 0.2, 0.6, 1.0 };
-  static GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat c1[4] = { 0.2, 0.2, 0.6, 1.0 };
+  static const GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
   int wire = MI_IS_WIREFRAME(mi);
 
   GLfloat x1 = cc->bbox[0].x;
@@ -334,6 +324,7 @@ draw_bounding_box (ModeInfo *mi)
     {
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, c1);
       glFrontFace(GL_CCW);
+      glEnable(GL_CULL_FACE);
 
       glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
       glNormal3f(0, 1, 0);
@@ -365,6 +356,7 @@ draw_bounding_box (ModeInfo *mi)
       glVertex3f(x2, y1, z1); glVertex3f(x2, y1, z2);
       glVertex3f(x2, y2, z2); glVertex3f(x2, y2, z1);
       glEnd();
+      glDisable(GL_CULL_FACE);
     }
 
   glPushAttrib (GL_LIGHTING);
@@ -428,7 +420,7 @@ do_tracer (ModeInfo *mi)
 
       if (s > 0.001)
         {
-          static GLfloat c[4] = { 0.6, 0.5, 1.0, 1.0 };
+          static const GLfloat c[4] = { 0.6, 0.5, 1.0, 1.0 };
 
           glPushAttrib (GL_LIGHTING);
           glDisable (GL_LIGHTING);
@@ -660,14 +652,11 @@ generate_spheremonics (ModeInfo *mi)
 
   tweak_parameters (mi);
 
-  {
-    static Bool done = False;
-    if (!done || (0 == (random() % 20)))
-      {
-        init_colors (mi);
-        done = True;
-      }
-  }
+  if (!cc->done_once || (0 == (random() % 20)))
+    {
+      init_colors (mi);
+      cc->done_once = True;
+    }
 
   {
     glNewList(cc->dlist, GL_COMPILE);
@@ -689,7 +678,7 @@ generate_spheremonics (ModeInfo *mi)
 
 
 
-void 
+ENTRYPOINT void 
 init_spheremonics (ModeInfo *mi)
 {
   spheremonics_configuration *cc;
@@ -731,6 +720,7 @@ init_spheremonics (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -775,7 +765,7 @@ init_spheremonics (ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 spheremonics_handle_event (ModeInfo *mi, XEvent *event)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
@@ -828,7 +818,7 @@ spheremonics_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
+ENTRYPOINT void
 draw_spheremonics (ModeInfo *mi)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
@@ -837,6 +827,8 @@ draw_spheremonics (ModeInfo *mi)
 
   if (!cc->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
 
   glShadeModel(GL_SMOOTH);
 
@@ -914,5 +906,7 @@ draw_spheremonics (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Spheremonics", spheremonics)
 
 #endif /* USE_GL */

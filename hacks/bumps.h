@@ -30,7 +30,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
@@ -51,9 +50,8 @@ typedef unsigned char	BOOL;
 
 
 /* Globals: */
-char *progclass = "Bumps";
 
-char *defaults [] = {
+static const char *bumps_defaults [] = {
   ".background: black",
   ".foreground: white",
   "*color:		random",
@@ -70,7 +68,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec bumps_options [] = {
   { "-color",		".color",		XrmoptionSepArg, 0 },
   { "-colorcount",	".colorcount",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
@@ -99,18 +97,18 @@ typedef struct
 	float nXPos, nYPos;
 } SSpotLight;
 
-void CreateSpotLight( SSpotLight *, uint16_, uint16_ );
 void CreateTables( SSpotLight * );
-void DestroySpotLight( SSpotLight *pSpotLight ) { free( pSpotLight->aLightMap ); }
 
 
 /* The entire program's operation is contained within this structure. */
 typedef struct
 {
 	/* XWindows specific variables. */
-	Display *pDisplay;
+	Display *dpy;
 	Window Win;
+        Pixmap source;
 	GC GraphicsContext;
+	XColor *xColors;
 	uint32_ *aColors;
 	XImage *pXImage;
 #ifdef HAVE_XSHM_EXTENSION
@@ -122,17 +120,12 @@ typedef struct
 	uint8_ bytesPerPixel;
 	uint16_ iWinWidth, iWinHeight;
 	uint16_ *aBumpMap;				/* The actual bump map. */
-
 	SSpotLight SpotLight;
+
+        int delay;
+
+        async_load_state *img_loader;
 } SBumps;
-
-void CreateBumps( SBumps *, Display *, Window );
-void Execute( SBumps * );
-void DestroyBumps( SBumps * );
-
-void SetPalette( SBumps *, XWindowAttributes * );
-void InitBumpMap( SBumps *, XWindowAttributes * );
-void SoftenBumpMap( SBumps * );
 
 
 #endif /* _BUMPS_H */

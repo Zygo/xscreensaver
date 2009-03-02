@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1998, 2000
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1998, 2000, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -49,6 +49,7 @@ struct hyper_state
   float hs_unit_scale;
   int hs_delay;
   GC hs_color_gcs[8];
+  GC black_gc;
 #if 0
   double hs_angle_xy;
   double hs_angle_xz;
@@ -68,21 +69,12 @@ struct hyper_state
   double hs_ref_cx, hs_ref_cy, hs_ref_cz, hs_ref_cw;
   double hs_ref_dx, hs_ref_dy, hs_ref_dz, hs_ref_dw;
   struct point_state hs_points[POINT_COUNT];
+  int roted;
 };
 
 static const struct line_info line_table[LINE_COUNT];
 
-static void init (struct hyper_state *hs);
-static void hyper (struct hyper_state *hs);
-static void check_events (struct hyper_state *hs);
-static void set_sizes (struct hyper_state *hs, int width, int height);
-
-static struct hyper_state hyper_state;
-
-
-char *progclass = "Hypercube";
-
-char *defaults[] =
+static const char *hypercube_defaults[] =
 {
   "*observer-z:	3",
   "*delay: 10000",
@@ -106,7 +98,7 @@ char *defaults[] =
   0
 };
 
-XrmOptionDescRec options [] =
+static XrmOptionDescRec hypercube_options [] =
 {
   { "-color0",		".color0",	XrmoptionSepArg, 0 },
   { "-color1",		".color1",	XrmoptionSepArg, 0 },
@@ -130,62 +122,38 @@ XrmOptionDescRec options [] =
 };
 
 
-void
-screenhack (Display *d, Window w)
+static void set_sizes (struct hyper_state *hs, int width, int height);
+
+static void *
+hypercube_init (Display *dpy, Window win)
 {
-  struct hyper_state *hs;
-
-  hs = &hyper_state;
-  hs->hs_display = d;
-  hs->hs_window = w;
-
-  init (hs);
-
-  hyper (hs);
-}
-
-
-static void
-init (struct hyper_state *hs)
-{
-  Display *dpy;
-  Window win;
   XGCValues gcv;
   Colormap cmap;
   unsigned long bg_pixel;
   int delay;
   float observer_z;
 
-  dpy = hs->hs_display;
-  win = hs->hs_window;
+  struct hyper_state *hs = (struct hyper_state *) calloc (1, sizeof(*hs));
+  hs->hs_display = dpy;
+  hs->hs_window = win;
 
-  observer_z = get_float_resource ("observer-z", "Float");
+  observer_z = get_float_resource (dpy, "observer-z", "Float");
   if (observer_z < 1.125)
     observer_z = 1.125;
   /* hs->hs_observer_z = observer_z; */
   hs->hs_two_observer_z = 2.0 * observer_z;
 
   {
-    int root;
     XWindowAttributes wa;
-    int width;
-    int height;
-
-    root = get_boolean_resource("root", "Boolean");
     XGetWindowAttributes (dpy, win, &wa);
-    XSelectInput(dpy, win, root ? ExposureMask :
-		 wa.your_event_mask | ExposureMask | ButtonPressMask);
-    
-    width = wa.width;
-    height = wa.height;
     cmap = wa.colormap;
-    set_sizes (hs, width, height);
+    set_sizes (hs, wa.width, wa.height);
   }
 
-  delay = get_integer_resource ("delay", "Integer");
+  delay = get_integer_resource (dpy, "delay", "Integer");
   hs->hs_delay = delay;
 
-  bg_pixel = get_pixel_resource ("background", "Background", dpy, cmap);
+  bg_pixel = get_pixel_resource (dpy, cmap, "background", "Background");
 
   if (mono_p)
     {
@@ -196,7 +164,7 @@ init (struct hyper_state *hs)
       gcv.function = GXcopy;
       gcv.foreground = bg_pixel;
       black_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
-      fg_pixel = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+      fg_pixel = get_pixel_resource (dpy, cmap, "foreground", "Foreground");
       gcv.foreground = fg_pixel ^ bg_pixel;
       white_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
       hs->hs_color_gcs[0] = black_gc;
@@ -206,7 +174,12 @@ init (struct hyper_state *hs)
     {
       int col;
 
-      gcv.function = GXxor;
+      gcv.function = GXcopy;
+
+      gcv.foreground = get_pixel_resource (dpy, cmap,
+                                           "background", "Background");
+      hs->black_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
+
       for (col = 0; col < 8; col++)
 	{
 	  char buffer[16];
@@ -214,8 +187,8 @@ init (struct hyper_state *hs)
 	  GC color_gc;
 
 	  sprintf (buffer, "color%d", col);
-	  fg_pixel = get_pixel_resource (buffer, "Foreground", dpy, cmap);
-	  gcv.foreground = fg_pixel ^ bg_pixel;
+	  fg_pixel = get_pixel_resource (dpy, cmap, buffer, "Foreground");
+	  gcv.foreground = fg_pixel;
 	  color_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
 	  hs->hs_color_gcs[col] = color_gc;
 	}
@@ -240,12 +213,12 @@ init (struct hyper_state *hs)
   double cos_yw, sin_yw;
   double cos_zw, sin_zw;
 
-  xy = get_float_resource ("xy", "Float") * ANGLE_SCALE;
-  xz = get_float_resource ("xz", "Float") * ANGLE_SCALE;
-  yz = get_float_resource ("yz", "Float") * ANGLE_SCALE;
-  xw = get_float_resource ("xw", "Float") * ANGLE_SCALE;
-  yw = get_float_resource ("yw", "Float") * ANGLE_SCALE;
-  zw = get_float_resource ("zw", "Float") * ANGLE_SCALE;
+  xy = get_float_resource (dpy, "xy", "Float") * ANGLE_SCALE;
+  xz = get_float_resource (dpy, "xz", "Float") * ANGLE_SCALE;
+  yz = get_float_resource (dpy, "yz", "Float") * ANGLE_SCALE;
+  xw = get_float_resource (dpy, "xw", "Float") * ANGLE_SCALE;
+  yw = get_float_resource (dpy, "yw", "Float") * ANGLE_SCALE;
+  zw = get_float_resource (dpy, "zw", "Float") * ANGLE_SCALE;
 
   cos_xy = cos (xy), sin_xy = sin (xy);
   hs->hs_cos_xy = cos_xy, hs->hs_sin_xy = sin_xy;
@@ -260,17 +233,21 @@ init (struct hyper_state *hs)
   cos_zw = cos (zw), sin_zw = sin (zw);
   hs->hs_cos_zw = cos_zw, hs->hs_sin_zw = sin_zw;
   }
+
+  return hs;
 }
 
 
-static void
-hyper (struct hyper_state *hs)
+static unsigned long
+hypercube_draw (Display *dpy, Window window, void *closure)
 {
-  int roted;
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  int this_delay = hs->hs_delay;
 
-  roted = 0;
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  XClearWindow (dpy, window);
+#endif
 
-  for (;;)
     {
       int icon;
       int resize;
@@ -279,11 +256,9 @@ hyper (struct hyper_state *hs)
       int stop;
       int delay;
 
-      check_events (hs);
-
       icon = hs->hs_icon;
       resize = hs->hs_resize;
-      if (icon || !(roted | resize))
+      if (icon || !(hs->roted | resize))
 	goto skip1;
 
       {
@@ -355,20 +330,18 @@ hyper (struct hyper_state *hs)
     skip1:
       icon = hs->hs_icon;
       redraw = hs->hs_redraw;
-      if (icon || !(roted | redraw))
+      if (icon || !(hs->roted | redraw))
 	goto skip2;
 
       {
 	int lc;
 	const struct line_info *lip;
 	int mono;
-	Display *dpy;
 	Window win;
 
 	lc = LINE_COUNT;
 	lip = &line_table[0];
 	mono = mono_p;
-	dpy = hs->hs_display;
 	win = hs->hs_window;
 
 	while (--lc >= 0)
@@ -406,11 +379,8 @@ hyper (struct hyper_state *hs)
 	      }
 	    else
 	      {
-		GC color_gc;
-
-		color_gc = hs->hs_color_gcs[col];
-		erase_gc = color_gc;
-		draw_gc = color_gc;
+		erase_gc = hs->black_gc;
+		draw_gc = hs->hs_color_gcs[col];
 	      }
 
 	    if (!redraw)
@@ -428,17 +398,15 @@ hyper (struct hyper_state *hs)
 	    q_y = sq->new_y;
 	    XDrawLine (dpy, win, draw_gc, p_x, p_y, q_x, q_y);
 	  }
-
-        XFlush (dpy);
       }
 
     skip2:
       stop = hs->hs_stop;
-      roted = 0;
+      hs->roted = 0;
       if (stop)
 	goto skip3;
 
-      roted = 1;
+      hs->roted = 1;
 
       {
 	double cos_a;
@@ -506,88 +474,32 @@ hyper (struct hyper_state *hs)
     skip3:
       /* stop = hs->hs_stop; */
       delay = hs->hs_delay;
-      if (stop && delay < 10000)
-	delay = 10000;
-      if (delay > 0)
-	usleep (delay);
+      if (stop && this_delay < 10000)
+	this_delay = 10000;
     }
+  return this_delay;
 }
 
 
-static void
-check_events (struct hyper_state *hs)
+static Bool
+hypercube_event (Display *dpy, Window window, void *closure, XEvent *e)
 {
-  Display *dpy;
-  int count;
-  int ic;
-  int resize;
-  Window win;
-  int redraw;
-
-  dpy = hs->hs_display;
-  count = XEventsQueued (dpy, QueuedAfterReading);
-  ic = count;
-  hs->hs_resize = 0;
-  hs->hs_redraw = 0;
-
-  while (--ic >= 0)
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  if (e->type == ButtonPress && e->xbutton.button == 2)
     {
-      XEvent	e;
-
-      XNextEvent (dpy, &e);
-
-      switch (e.type)
-	{
-	case Expose:
-	  hs->hs_icon = 0;
-	  hs->hs_redraw = 1;
-	  break;
-
-	case ConfigureNotify:
-	  hs->hs_icon = 0;
-	  hs->hs_resize = 1;
-	  hs->hs_redraw = 1;
-	  break;
-
-	case ButtonPress:
-	  switch (e.xbutton.button)
-	    {
-	    case 2:
-	      hs->hs_stop = !hs->hs_stop;
-	      break;
-	    default:
-	      break;
-	    }
-	  break;
-
-	case UnmapNotify:
-	  hs->hs_icon = 1;
-	  hs->hs_redraw = 0;
-	  break;
-
-	default:
-	  screenhack_handle_event(dpy, &e);
-	  break;
-	}
+      hs->hs_stop = !hs->hs_stop;
+      return True;
     }
+  return False;
+}
 
-  resize = hs->hs_resize;
-  win = hs->hs_window;
-  if (resize)
-    {
-      XWindowAttributes wa;
-      int width;
-      int height;
-
-      XGetWindowAttributes (dpy, win, &wa);
-      width = wa.width;
-      height = wa.height;
-      set_sizes (&hyper_state, width, height);
-    }
-
-  redraw = hs->hs_redraw;
-  if (redraw)
-    XClearWindow (dpy, win);
+static void
+hypercube_reshape (Display *dpy, Window window, void *closure,
+                   unsigned int w, unsigned int h)
+{
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  set_sizes (hs, w, h);
+  XClearWindow (dpy, window);
 }
 
 
@@ -651,3 +563,9 @@ static const struct line_info line_table[LINE_COUNT] =
     { 14, 15, 3, },
 };
 
+static void
+hypercube_free (Display *dpy, Window window, void *closure)
+{
+}
+
+XSCREENSAVER_MODULE ("HyperCube", hypercube)

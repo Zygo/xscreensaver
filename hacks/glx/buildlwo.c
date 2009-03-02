@@ -22,19 +22,15 @@ static const char sccsid[] = "@(#)buildlwo.c	4.02 97/04/20 xlockmore";
 
 #ifdef USE_GL
 
-#ifdef STANDALONE
-#include <GL/glx.h>
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include "buildlwo.h"
 
 GLuint
-BuildLWO(int wireframe, struct lwo *object)
+BuildLWO(int wireframe, const struct lwo *object)
 {
 	GLuint      dl_num;
-	GLfloat    *pnts, *normals, three[3], *grab;
-	unsigned short int *pols;
+	const GLfloat *pnts, *normals, *grab;
+	const unsigned short int *pols;
+        GLfloat three[3];
 	int         p, num_pnts = 0;
 
 	dl_num = glGenLists(1);

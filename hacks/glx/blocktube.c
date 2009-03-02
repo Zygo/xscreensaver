@@ -11,29 +11,14 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
 #define DEBUG 1
-
-extern XtAppContext app;
-
-#define PROGCLASS       "Blocktube"
-#define HACK_INIT       init_blocktube
-#define HACK_DRAW       draw_blocktube
-#define HACK_RESHAPE    reshape_blocktube
-#define EVENT_MASK      PointerMotionMask
-#define blocktube_opts  xlockmore_opts
-
-#define DEF_HOLDTIME    "1000"
-#define DEF_CHANGETIME  "200"
-#define MAX_ENTITIES     1000
-#define DEF_TEXTURE     "True"
-#define DEF_FOG         "True"
 
 #define DEFAULTS        "*delay:	40000           \n" \
                         "*wireframe:    False           \n" \
 			"*showFPS:      False           \n" \
 
+# define refresh_blocktube 0
+# define blocktube_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -44,23 +29,19 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+#define DEF_HOLDTIME    "1000"
+#define DEF_CHANGETIME  "200"
+#define MAX_ENTITIES     1000
+#define DEF_TEXTURE     "True"
+#define DEF_FOG         "True"
 
-#if defined(USE_XPM) || defined(USE_XPMINC) || defined(HAVE_XPM) || defined (HAVE_GDK_PIXBUF)
+#if defined(USE_XPM) || defined(USE_XPMINC) || defined(STANDALONE)
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
 #include "xpm-ximage.h"
 #define I_HAVE_XPM
 
 #include "../images/blocktube.xpm"
 #endif /* HAVE_XPM */
-
-typedef struct {
-    GLXContext *glx_context;
-    GLuint  block_dlist;
-} blocktube_configuration;
-
-static int nextID = 1;
-static blocktube_configuration *lps = NULL;
 
 typedef struct {
     int id, r, g, b;
@@ -72,24 +53,33 @@ typedef struct {
     GLfloat angularVelocity;
 } entity;
 
-static entity entities[MAX_ENTITIES];
-static float targetR, targetG, targetB,
-             currentR, currentG, currentB,
-             deltaR, deltaG, deltaB;
+typedef struct {
+  GLXContext *glx_context;
+  GLuint  block_dlist;
+  int nextID;
+
+  entity entities[MAX_ENTITIES];
+  float targetR, targetG, targetB,
+    currentR, currentG, currentB,
+    deltaR, deltaG, deltaB;
+  int counter;
+  int changing;
+  GLfloat zoom;
+  GLfloat tilt;
+  GLuint envTexture;
+  XImage *texti;
+
+  GLfloat tunnelLength;
+  GLfloat tunnelWidth;
+
+} blocktube_configuration;
+
+static blocktube_configuration *lps = NULL;
+
 static GLint holdtime;
 static GLint changetime;
-static int counter = 0;
-static int changing = 0;
-static GLfloat zoom = 30.0f;
-static GLfloat tilt = 4.5f;
-static GLuint loop;
-static GLuint envTexture;
-static XImage *texti;
 static int do_texture;
 static int do_fog;
-
-GLfloat tunnelLength=200;
-GLfloat tunnelWidth=5;
 
 static XrmOptionDescRec opts[] = {
     { "-holdtime",  ".holdtime",  XrmoptionSepArg, 0 },
@@ -113,7 +103,7 @@ static OptionStruct desc[] = {
     {"-changetime", "how long it takes to fade to a new color"},
 };
 
-ModeSpecOpt blocktube_opts = {countof(opts), opts, countof(vars), vars, desc};
+ENTRYPOINT ModeSpecOpt blocktube_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
 ModStruct blocktube_description =
@@ -126,19 +116,20 @@ ModStruct blocktube_description =
 #if defined( I_HAVE_XPM )
 static Bool LoadGLTextures(ModeInfo *mi)
 {
+    blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
     Bool status;
 
     status = True;
-    glGenTextures(1, &envTexture);
-    glBindTexture(GL_TEXTURE_2D, envTexture);
-    texti = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi), MI_COLORMAP(mi),
+    glGenTextures(1, &lp->envTexture);
+    glBindTexture(GL_TEXTURE_2D, lp->envTexture);
+    lp->texti = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi), MI_COLORMAP(mi),
                           blocktube_xpm);
-    if (!texti) {
+    if (!lp->texti) {
         status = False;
     } else {
         glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texti->width, texti->height, 0,
-            GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, texti->data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lp->texti->width, lp->texti->height, 0,
+            GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, lp->texti->data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -148,68 +139,71 @@ static Bool LoadGLTextures(ModeInfo *mi)
 }
 #endif
 
-static void newTargetColor(void)
+static void newTargetColor(blocktube_configuration *lp)
 {
     int luminance = 0;
 
     while (luminance <= 150) {
-        targetR = random() % 256;
-        targetG = random() % 256;
-        targetB = random() % 256;
-        deltaR = (targetR - currentR) / changetime;
-        deltaG = (targetG - currentG) / changetime;
-        deltaB = (targetB - currentB) / changetime;
-        luminance = 0.3 * targetR + 0.59 * targetG + 0.11 * targetB;
+        lp->targetR = random() % 256;
+        lp->targetG = random() % 256;
+        lp->targetB = random() % 256;
+        lp->deltaR = (lp->targetR - lp->currentR) / changetime;
+        lp->deltaG = (lp->targetG - lp->currentG) / changetime;
+        lp->deltaB = (lp->targetB - lp->currentB) / changetime;
+        luminance = 0.3 * lp->targetR + 0.59 * lp->targetG + 0.11 * lp->targetB;
     }
 }
 
-static void randomize_entity (entity *ent)
+static void randomize_entity (blocktube_configuration *lp, entity *ent)
 {
-    ent->id = nextID++;
+    ent->id = lp->nextID++;
     ent->tVal = 1 - ((float)random() / RAND_MAX / 1.5);
     ent->age = 0;
     ent->lifetime = 100;
     ent->angle = random() % 360;
     ent->angularVelocity = 0.5-((float)(random()) / RAND_MAX);
-    ent->position[0] = (float)(random()) / RAND_MAX + tunnelWidth;
+    ent->position[0] = (float)(random()) / RAND_MAX + lp->tunnelWidth;
     ent->position[1] = (float)(random()) / RAND_MAX * 2;
-    ent->position[2] = -(float)(random()) / RAND_MAX * tunnelLength;
+    ent->position[2] = -(float)(random()) / RAND_MAX * lp->tunnelLength;
 }
 
-static void entityTick(entity *ent)
+static void entityTick(blocktube_configuration *lp, entity *ent)
 {
     ent->angle += ent->angularVelocity;
     ent->position[2] += 0.1;
-    if (ent->position[2] > zoom) {
-        ent->position[2] = -tunnelLength + ((float)(random()) / RAND_MAX) * 20;
+    if (ent->position[2] > lp->zoom) {
+        ent->position[2] = -lp->tunnelLength + ((float)(random()) / RAND_MAX) * 20;
     }
     ent->age += 0.1;
 }
 
-static void tick(void)
+static void tick(blocktube_configuration *lp)
 {
-    counter--;
-    if (!counter) {
-        if (!changing) {
-            newTargetColor();
-            counter = changetime;
+    lp->counter--;
+    if (!lp->counter) {
+        if (!lp->changing) {
+            newTargetColor(lp);
+            lp->counter = changetime;
         } else {
-            counter = holdtime;
+            lp->counter = holdtime;
         }
-        changing = (!changing);
+        lp->changing = (!lp->changing);
     } else {
-        if (changing) {
-            currentR += deltaR;
-            currentG += deltaG;
-            currentB += deltaB;
+        if (lp->changing) {
+            lp->currentR += lp->deltaR;
+            lp->currentG += lp->deltaG;
+            lp->currentB += lp->deltaB;
         }
     }
 }
 
 static void cube_vertices(float x, float y, float z, int wire);
 
-void init_blocktube (ModeInfo *mi)
+ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height);
+
+ENTRYPOINT void init_blocktube (ModeInfo *mi)
 {
+    int loop;
     GLfloat fogColor[4] = {0,0,0,1};
     blocktube_configuration *lp;
     int wire = MI_IS_WIREFRAME(mi);
@@ -226,6 +220,11 @@ void init_blocktube (ModeInfo *mi)
 
     lp = &lps[MI_SCREEN(mi)];
     lp->glx_context = init_GL(mi);
+
+    lp->zoom = 30;
+    lp->tilt = 4.5;
+    lp->tunnelLength = 200;
+    lp->tunnelWidth = 5;
 
     if (wire) {
       do_fog = False;
@@ -254,7 +253,7 @@ void init_blocktube (ModeInfo *mi)
       glFogi(GL_FOG_MODE, GL_LINEAR);
       glHint(GL_FOG_HINT, GL_NICEST);
       glFogf(GL_FOG_START, 0);
-      glFogf(GL_FOG_END, tunnelLength/1.8);
+      glFogf(GL_FOG_END, lp->tunnelLength/1.8);
       glFogfv(GL_FOG_COLOR, fogColor);
       glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     }
@@ -280,28 +279,39 @@ void init_blocktube (ModeInfo *mi)
       glEnable(GL_LIGHT0);
     }
 
-    counter = holdtime;
-    currentR = random() % 256;
-    currentG = random() % 256;
-    currentB = random() % 256;
-    newTargetColor();
+    lp->counter = holdtime;
+    lp->currentR = random() % 256;
+    lp->currentG = random() % 256;
+    lp->currentB = random() % 256;
+    newTargetColor(lp);
     for (loop = 0; loop < MAX_ENTITIES; loop++)
     {
-        randomize_entity(&entities[loop]);
+        randomize_entity(lp, &lp->entities[loop]);
     }
     reshape_blocktube(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     glFlush();
 }
 
-void release_blocktube (ModeInfo *mi)
+ENTRYPOINT void release_blocktube (ModeInfo *mi)
 {
-#if defined ( I_HAVE_XPM )
-    glDeleteTextures(1, &envTexture);
-    XDestroyImage(texti);
-#endif
+  if (lps) {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+      blocktube_configuration *lp = &lps[screen];
+# if defined ( I_HAVE_XPM )
+      if (lp->envTexture)
+        glDeleteTextures(1, &lp->envTexture);
+      if (lp->texti)
+        XDestroyImage(lp->texti);
+# endif
+    }
+    free (lps);
+    lps = 0;
+  }
+  FreeAllGL(mi);
 }
 
-void reshape_blocktube (ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
 {
     GLfloat h = (GLfloat) height / (GLfloat) width;
 
@@ -378,7 +388,7 @@ static void draw_block(ModeInfo *mi, entity *ent)
     glCallList (lp->block_dlist);
 }
 
-void
+ENTRYPOINT void
 draw_blocktube (ModeInfo *mi)
 {
     blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
@@ -390,33 +400,37 @@ draw_blocktube (ModeInfo *mi)
     if (!lp->glx_context)
       return;
 
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (do_texture) {
       glEnable(GL_TEXTURE_GEN_S);
       glEnable(GL_TEXTURE_GEN_T);
-      glBindTexture(GL_TEXTURE_2D, envTexture);
+      glBindTexture(GL_TEXTURE_2D, lp->envTexture);
     }
 
     for (loop = 0; loop < MAX_ENTITIES; loop++) {
-        cEnt = &entities[loop];
+        cEnt = &lp->entities[loop];
 
         glLoadIdentity();
-        glTranslatef(0.0f, 0.0f, zoom);
-        glRotatef(tilt, 1.0f, 0.0f, 0.0f);
+        glTranslatef(0.0f, 0.0f, lp->zoom);
+        glRotatef(lp->tilt, 1.0f, 0.0f, 0.0f);
         glRotatef(cEnt->angle, 0.0f, 0.0f, 1.0f);
         glTranslatef(cEnt->position[0], cEnt->position[1], cEnt->position[2]);
-        glColor4ub((int)(currentR * cEnt->tVal),
-                   (int)(currentG * cEnt->tVal),
-                   (int)(currentB * cEnt->tVal), 255);
+        glColor4ub((int)(lp->currentR * cEnt->tVal),
+                   (int)(lp->currentG * cEnt->tVal),
+                   (int)(lp->currentB * cEnt->tVal), 255);
         draw_block(mi, cEnt);
-        entityTick(cEnt);
+        entityTick(lp, cEnt);
     }
-    tick();
+    tick(lp);
 
     if (mi->fps_p) do_fps (mi);
     glFinish();
     glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("BlockTube", blocktube)
 
 #endif /* USE_GL */

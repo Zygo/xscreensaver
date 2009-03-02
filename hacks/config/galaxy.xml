@@ -13,21 +13,19 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="100"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="10" high="255" default="64"/>
 
-  <number id="size" type="spinbutton" arg="-size %"
-           _label="Size" low="-20" high="20" default="-3"/>
-
   <boolean id="spin" _label="Rotate Viewpoint" arg-unset="-no-spin"/>
 
   <_description>
 This draws spinning galaxies, which then collide and scatter their
-stars to the, uh, four winds or something.  Originally an Amiga
-program by Uli Siegmund.
+stars to the, uh, four winds or something.
+
+Written by Uli Siegmund, Harald Backert, and Hubert Feyrer; 1997.
   </_description>
 </screensaver>

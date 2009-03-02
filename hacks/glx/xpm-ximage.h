@@ -23,7 +23,8 @@
    The Colormap argument is used just for parsing color names; no colors
    are allocated.
  */
-extern XImage *xpm_to_ximage (Display *, Visual *, Colormap, char **xpm_data);
+extern XImage *xpm_to_ximage (Display *, Visual *, Colormap, 
+                              char **xpm_data);
 extern XImage *xpm_file_to_ximage (Display *, Visual *, Colormap,
                                    const char *filename);
 

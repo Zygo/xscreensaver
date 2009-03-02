@@ -1,4 +1,4 @@
-/* flyingtoasters, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* flyingtoasters, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,31 +26,21 @@
  * bitmapped toasters won't get all huffy at us.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"FlyingToasters"
-#define HACK_INIT	init_toasters
-#define HACK_DRAW	draw_toasters
-#define HACK_RESHAPE	reshape_toasters
-#define HACK_HANDLE_EVENT toaster_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPEED       "1.0"
-#define DEF_NTOASTERS   "20"
-#define DEF_NSLICES     "25"
-#define DEF_TEXTURE     "True"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
 /* #define DEBUG */
 
+# define refresh_toasters 0
+# define release_toasters 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
+
+#define DEF_SPEED       "1.0"
+#define DEF_NTOASTERS   "20"
+#define DEF_NSLICES     "25"
+#define DEF_TEXTURE     "True"
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
@@ -65,16 +55,13 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
-
-
 #include "gllist.h"
 
-extern struct gllist
+extern const struct gllist
   *toaster, *toaster_base, *toaster_handle, *toaster_handle2, *toaster_jet,
   *toaster_knob, *toaster_slots, *toaster_wing, *toast, *toast2;
 
-struct gllist **all_objs[] = {
+static const struct gllist * const *all_objs[] = {
   &toaster, &toaster_base, &toaster_handle, &toaster_handle2, &toaster_jet,
   &toaster_knob, &toaster_slots, &toaster_wing, &toast, &toast2
 };
@@ -94,7 +81,7 @@ struct gllist **all_objs[] = {
 #define GRID_DEPTH 500
 
 
-static struct { GLfloat x, y; } nice_views[] = {
+static const struct { GLfloat x, y; } nice_views[] = {
   {  0,  120 },
   {  0, -120 },
   { 12,   28 },     /* this is a list of viewer rotations that look nice. */
@@ -128,6 +115,7 @@ typedef struct {
   GLfloat view_x, view_y;
   int view_steps, view_tick;
   Bool auto_tracking_p;
+  int track_tick;
 
   GLuint *dlists;
   GLuint chrome_texture;
@@ -160,7 +148,7 @@ static argtype vars[] = {
   {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt toasters_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 static void
@@ -255,9 +243,8 @@ auto_track (ModeInfo *mi)
   /* if we're not moving, maybe start moving.  Otherwise, do nothing. */
   if (! bp->auto_tracking_p)
     {
-      static int tick = 0;
-      if (++tick < 200/speed) return;
-      tick = 0;
+      if (++bp->track_tick < 200/speed) return;
+      bp->track_tick = 0;
       if (! (random() % 5))
         bp->auto_tracking_p = True;
       else
@@ -293,7 +280,7 @@ auto_track (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_toasters (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -314,8 +301,8 @@ reshape_toasters (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
-toaster_handle_event (ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool
+toasters_handle_event (ModeInfo *mi, XEvent *event)
 {
   toaster_configuration *bp = &bps[MI_SCREEN(mi)];
 
@@ -402,7 +389,7 @@ load_textures (ModeInfo *mi)
 }
 
 
-void 
+ENTRYPOINT void 
 init_toasters (ModeInfo *mi)
 {
   toaster_configuration *bp;
@@ -463,9 +450,7 @@ init_toasters (ModeInfo *mi)
 
   for (i = 0; i < countof(all_objs); i++)
     {
-      struct gllist *gll = *all_objs[i];
-      if (wire)
-        gll->primitive = GL_LINE_LOOP;
+      const struct gllist *gll = *all_objs[i];
 
       glNewList (bp->dlists[i], GL_COMPILE);
 
@@ -566,7 +551,7 @@ init_toasters (ModeInfo *mi)
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
         }
 
-      renderList (gll);
+      renderList (gll, wire);
 
       glMatrixMode(GL_TEXTURE);
       glPopMatrix();
@@ -683,6 +668,7 @@ draw_floater (ModeInfo *mi, floater *f)
     {
       glPushMatrix();
       glRotatef (180, 0, 1, 0);
+
       glCallList (bp->dlists[BASE_TOASTER]);
       mi->polygon_count += (*all_objs[BASE_TOASTER])->points / 3;
       glPopMatrix();
@@ -793,7 +779,7 @@ draw_floater (ModeInfo *mi, floater *f)
 
 
 
-void
+ENTRYPOINT void
 draw_toasters (ModeInfo *mi)
 {
   toaster_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -803,6 +789,8 @@ draw_toasters (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -864,5 +852,7 @@ draw_toasters (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("FlyingToasters", flyingtoasters, toasters)
 
 #endif /* USE_GL */

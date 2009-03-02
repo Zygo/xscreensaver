@@ -16,20 +16,15 @@
  */
 
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	  "Tangram"
-#define HACK_INIT	  init_tangram
-#define HACK_DRAW	  draw_tangram
-#define HACK_RESHAPE  reshape_tangram
-#define sws_opts	  xlockmore_opts
-
-
 #define DEFAULTS	"*delay:	10000		 \n" \
-  "*wireframe:	False		 \n" \
+			"*wireframe:    False         \n" \
+			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
+			"*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
+			"*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
 
+# define refresh_tangram 0
+# define release_tangram 0
+# define tangram_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -40,8 +35,6 @@ extern XtAppContext app;
 
 #ifdef USE_GL                   /* whole file */
 
-
-#include <GL/glu.h>
 #include <time.h>
 #include <math.h>
 #include "tangram_shapes.h"
@@ -110,6 +103,13 @@ typedef struct {
     XFontStruct *xfont3;
     GLuint font1_dlist, font2_dlist, font3_dlist;
     GLuint name_list;
+
+    GLfloat theta[3];
+    Bool going_down[3];
+
+    const char *pn;
+    int display_counter;
+
 } tangram_configuration;
 
 static tangram_configuration *tps = NULL;
@@ -121,11 +121,11 @@ static tangram_configuration *tps = NULL;
 #define DEF_Z_CAMERA_ROTATE "0"
 
 
-static GLuint viewing_time = 0;
-static Bool do_rotate = True;
-static GLfloat x_camera_rotate = 0.3;
-static GLfloat y_camera_rotate = 0.75;
-static GLfloat z_camera_rotate = 0;
+static GLuint viewing_time;
+static Bool do_rotate;
+static GLfloat x_camera_rotate;
+static GLfloat y_camera_rotate;
+static GLfloat z_camera_rotate;
 static int wire;
 
 static XrmOptionDescRec opts[] = {
@@ -145,9 +145,9 @@ static argtype vars[] = {
     {&z_camera_rotate, "z_camera_rotate", "Z Camera Rotate", DEF_Z_CAMERA_ROTATE, t_Float}
 };
 
-ModeSpecOpt sws_opts = { countof(opts), opts, countof(vars), vars, NULL };
+ENTRYPOINT ModeSpecOpt tangram_opts = { countof(opts), opts, countof(vars), vars, NULL };
 
-static puzzle solved[] = {
+static const puzzle solved[] = {
   {"Teapot", {
       {{-1.664000, -1.552000, 0}, 135, 0, 0, INIT_DZ, -SPEED, 0, True},
       {{-1.696000, 0.944000, 0}, 315, 0, 0, INIT_DZ, -SPEED, 0,  False},
@@ -695,7 +695,7 @@ static void print_shape(char *s, tangram_shape sh)
 #endif
 
 
-void reset_shape(tangram_shape * ts)
+static void reset_shape(tangram_shape * ts)
 {
     GLfloat r = random() % 10;
     GLfloat f = r / 10;
@@ -704,7 +704,7 @@ void reset_shape(tangram_shape * ts)
     ts->ddz = -SPEED;
 }
 
-void bounce(tangram_shape * ts)
+static void bounce(tangram_shape * ts)
 {
     ts->crd.z *= -1;            /* ignore this */
     ts->dz += ts->ddz;
@@ -767,18 +767,15 @@ static void set_perspective(void)
 
 }
 
-void reshape_tangram(ModeInfo * mi, int w, int h)
+ENTRYPOINT void reshape_tangram(ModeInfo * mi, int w, int h)
 {
     glViewport(0, 0, w, h);
     set_perspective();
     glLoadIdentity();
 }
 
-static void set_camera(void)
+static void set_camera(tangram_configuration *tp)
 {
-    static GLfloat theta[3] = { 1, 1, 1 };
-    static Bool going_down[3] = { False, False, False };
-
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -788,36 +785,36 @@ static void set_camera(void)
     gluLookAt(0, 5, -5, 0, 0, 0, 0, -1, 0);
 
     if (do_rotate) {
-        glRotatef(theta[0], 1, 0, 0);
-        glRotatef(theta[1], 0, 1, 0);
-        glRotatef(theta[2], 0, 0, 1);
+        glRotatef(tp->theta[0], 1, 0, 0);
+        glRotatef(tp->theta[1], 0, 1, 0);
+        glRotatef(tp->theta[2], 0, 0, 1);
     }
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
 
-    if (going_down[0] && theta[0] < 0) {
+    if (tp->going_down[0] && tp->theta[0] < 0) {
 
-        going_down[0] = False;
-    } else if ((!going_down[0]) && theta[0] > 90) {
+        tp->going_down[0] = False;
+    } else if ((!tp->going_down[0]) && tp->theta[0] > 90) {
 
-        going_down[0] = True;
+        tp->going_down[0] = True;
     }
 
-    if (theta[1] > 360.0)
-        theta[1] -= 360.0;
+    if (tp->theta[1] > 360.0)
+        tp->theta[1] -= 360.0;
 
-    if (theta[2] > 360.0)
-        theta[2] -= 360.0;
+    if (tp->theta[2] > 360.0)
+        tp->theta[2] -= 360.0;
 
-    if (going_down[0])
-      theta[0] -= x_camera_rotate;
+    if (tp->going_down[0])
+      tp->theta[0] -= x_camera_rotate;
     else
-      theta[0] += x_camera_rotate;
+      tp->theta[0] += x_camera_rotate;
 
-    theta[1] += y_camera_rotate;
-    theta[2] += z_camera_rotate;
+    tp->theta[1] += y_camera_rotate;
+    tp->theta[2] += z_camera_rotate;
 }
 
 static void init_shapes(ModeInfo * mi)
@@ -868,7 +865,7 @@ static void gl_init(ModeInfo * mi)
 
 }
 
-void init_tangram(ModeInfo * mi)
+ENTRYPOINT void init_tangram(ModeInfo * mi)
 {
     tangram_configuration *tp;
 
@@ -893,6 +890,9 @@ void init_tangram(ModeInfo * mi)
 
     load_fonts(mi);
     init_shapes(mi);
+
+    tp->theta[0] = tp->theta[1] = tp->theta[2] = 1;
+
 }
 
 static Bool all_solved(tangram_shape * ls[])
@@ -940,7 +940,7 @@ static void set_not_solved(tangram_shape * ls[])
 }
 
 
-void draw_tangram(ModeInfo * mi)
+ENTRYPOINT void draw_tangram(ModeInfo * mi)
 {
     Display *dpy = MI_DISPLAY(mi);
     Window window = MI_WINDOW(mi);
@@ -952,12 +952,14 @@ void draw_tangram(ModeInfo * mi)
 
     int i;
     int MAX_DISPLAY;
-    static char *pn = "";
-    static int display_counter = 0;
 
-    static GLfloat color[4] = { 0.0, 0.0, 0.0, 1.0 };
-    static GLfloat white[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat color[4] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat white[4] = { 1.0, 1.0, 1.0, 1.0 };
     MAX_DISPLAY = viewing_time * 100;
+
+    if (! tp->glx_context)
+      return;
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tp->glx_context));
 
     ls[small_triangle1] = &tp->tsm1;
     ls[small_triangle2] = &tp->tsm2;
@@ -975,14 +977,14 @@ void draw_tangram(ModeInfo * mi)
     nls[square] = &tp->n_sq;
     nls[rhomboid] = &tp->n_rh;
 
-    set_camera();
+    set_camera(tp);
 
-    if (display_counter <= 0) {
+    if (tp->display_counter <= 0) {
         for (i = 0; i < NUM_SHAPES; i++) {
             if (ls[i]->solved) {
                 if (all_solved(ls)) {
-                    display_counter = MAX_DISPLAY;
-                    pn = tp->puzzle_name;
+                    tp->display_counter = MAX_DISPLAY;
+                    tp->pn = tp->puzzle_name;
                     get_solved_puzzle(mi, nls[small_triangle1],
                                       nls[small_triangle2],
                                       nls[medium_triangle],
@@ -1010,13 +1012,13 @@ void draw_tangram(ModeInfo * mi)
                     break;
                 }
             } else {
-                pn = "";
+                tp->pn = "";
                 bounce(ls[i]);
                 solve(nls[i], ls[i]);
             }
         }
     } else {
-        display_counter--;
+        tp->display_counter--;
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1037,7 +1039,7 @@ void draw_tangram(ModeInfo * mi)
         glColor3f(0.8, 0.8, 0);
         print_gl_string(mi->dpy, f, fl,
                         mi->xgwa.width, mi->xgwa.height,
-                        10, mi->xgwa.height - 10, pn);
+                        10, mi->xgwa.height - 10, tp->pn);
     }
     glEndList();
 
@@ -1050,5 +1052,7 @@ void draw_tangram(ModeInfo * mi)
     glPopMatrix();
     glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Tangram", tangram)
 
 #endif                          /* USE_GL */

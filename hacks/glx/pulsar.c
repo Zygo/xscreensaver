@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* pulsar --- pulsar module for xscreensaver */
+/* pulsar --- pulsar module for xpulsar */
 /*-
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,7 +20,7 @@
  * 4-May-1999:  dek@cgl.ucsf.edu  Submitted module "pulsar" updates
  *
  * Notes:
- * The pulsar screensaver draws a number of rotating, pulsing rectangles
+ * The pulsar pulsar draws a number of rotating, pulsing rectangles
  * on your screen.  Depending on the options you choose, you can set a number
  * of interesting OpenGL parameters, including alpha blending, depth testing, fog,
  * lighting, texturing, mipmapping, bilinear filtering, and line antialiasing.  
@@ -41,15 +41,12 @@
 #include <stdlib.h>
 
 #ifdef STANDALONE
-# define PROGCLASS						"Screensaver"
-# define HACK_INIT						init_screensaver
-# define HACK_DRAW						draw_screensaver
-# define HACK_RESHAPE					reshape_screensaver
-# define screensaver_opts				xlockmore_opts
 #define	DEFAULTS                       	"*delay:			10000   \n" \
 										"*showFPS:          False   \n" \
 
-# include "xlockmore.h"				/* from the xscreensaver distribution */
+# define refresh_pulsar 0
+# define pulsar_handle_event 0
+# include "xlockmore.h"				/* from the xpulsar distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -64,14 +61,6 @@
 # endif /* VMS */
 #endif
 
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "xpm-ximage.h"
 
 /* Functions for loading and storing textures */
@@ -80,7 +69,6 @@
 #define checkImageHeight 64
 
 /* Functions for handling the frames per second timer */
-#include "GL/glx.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -168,26 +156,15 @@ static OptionStruct desc[] =
 	{"-image <filename>", "texture image to load"},
 };
 
-ModeSpecOpt screensaver_opts = {countof(opts), opts, countof(vars), vars, desc};
+ENTRYPOINT ModeSpecOpt pulsar_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
-ModStruct   screensaver_description =
-{"screensaver", "init_screensaver", "draw_screensaver", "release_screensaver",
- "draw_screensaver", "init_screensaver", NULL, &screensaver_opts,
+ModStruct   pulsar_description =
+{"pulsar", "init_pulsar", "draw_pulsar", "release_pulsar",
+ "draw_pulsar", "init_pulsar", NULL, &pulsar_opts,
  1000, 1, 2, 1, 4, 1.0, "",
- "OpenGL screensaver", 0, NULL};
+ "OpenGL pulsar", 0, NULL};
 #endif
-
-
-/* structure for holding the screensaver data */
-typedef struct {
-  int screen_width, screen_height;
-  GLXContext *glx_context;
-  Window window;
-  XColor fg, bg;
-} screensaverstruct;
-
-static screensaverstruct *Screensaver = NULL;
 
 struct quad
 {
@@ -200,14 +177,24 @@ struct quad
 };
 
 
-GLint quad_list;
+/* structure for holding the pulsar data */
+typedef struct {
+  int screen_width, screen_height;
+  GLXContext *glx_context;
+  Window window;
+  XColor fg, bg;
 
-static float scale_x=1, scale_y=1, scale_z=1;
-static int frame = 0;
+  GLint quad_list;
+  float scale_x, scale_y, scale_z;
+  int frame;
 
-struct quad *quads;
+  struct quad *quads;
 
-GLubyte *
+} pulsarstruct;
+
+static pulsarstruct *Pulsar = NULL;
+
+static GLubyte *
 Generate_Image(int *width, int *height, int *format)
 {
   GLubyte *result;
@@ -236,7 +223,7 @@ Generate_Image(int *width, int *height, int *format)
 
 /* Create a texture in OpenGL.  First an image is loaded 
    and stored in a raster buffer, then it's  */
-void Create_Texture(ModeInfo *mi, const char *filename)
+static void Create_Texture(ModeInfo *mi, const char *filename)
 {
   int height, width;
   GLubyte *image;
@@ -300,7 +287,8 @@ void Create_Texture(ModeInfo *mi, const char *filename)
     }
 }
 
-void resetProjection(void) {
+static void resetProjection(void) 
+{
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glFrustum(-1, 1, -1, 1, 1, 100); 
@@ -309,12 +297,12 @@ void resetProjection(void) {
 }
 
 
-void GenerateQuad(void)
+static void GenerateQuad(pulsarstruct *gp)
 {
   int i;
 
-  quad_list = glGenLists(1);
-  glNewList(quad_list,GL_COMPILE);
+  gp->quad_list = glGenLists(1);
+  glNewList(gp->quad_list,GL_COMPILE);
 #if 1
   glBegin(GL_QUADS);
   glColor4f(1,0,0,.4); glNormal3f(0,0,1);  glTexCoord2f(0,0); glVertex2f(-1, -1);
@@ -331,24 +319,25 @@ void GenerateQuad(void)
   glEnd();
   glEndList();
 
-  quads = (struct quad *) malloc(sizeof(struct quad) * num_quads);
+  gp->quads = (struct quad *) malloc(sizeof(struct quad) * num_quads);
   for (i=0; i < num_quads; i++)
     {
-      quads[i].rx = 0.;
-      quads[i].ry = 0.;
-      quads[i].rz = 0.;
-      quads[i].tx = 0.;
-      quads[i].ty = 0.;
-      quads[i].tz = -10;
+      gp->quads[i].rx = 0.;
+      gp->quads[i].ry = 0.;
+      gp->quads[i].rz = 0.;
+      gp->quads[i].tx = 0.;
+      gp->quads[i].ty = 0.;
+      gp->quads[i].tz = -10;
 
-      quads[i].drx = frand(5.0);
-      quads[i].dry = frand(5.0);
-      quads[i].drz = 0;
+      gp->quads[i].drx = frand(5.0);
+      gp->quads[i].dry = frand(5.0);
+      gp->quads[i].drz = 0;
     }
 }
 
-void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
+static void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
+  pulsarstruct *gp = &Pulsar[MI_SCREEN(mi)];
   GLfloat fogColor[4] = { 0.1, 0.1, 0.1, 0.1 };
 
   glViewport( 0, 0, width, height ); 
@@ -393,31 +382,34 @@ void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   if (do_texture)
 	  Create_Texture(mi, which_image); 
 
-  GenerateQuad();
+  GenerateQuad(gp);
 }
-void drawQuads(void) {
+
+static void drawQuads(pulsarstruct *gp) 
+{
   int i;
   for (i=0; i < num_quads; i++)
     {
       glPushMatrix();
-      glTranslatef(quads[i].tx,0,0);
-      glTranslatef(0,quads[i].ty,0);
-      glTranslatef(0,0,quads[i].tz);
-      glRotatef(quads[i].rx, 1,0,0);
-      glRotatef(quads[i].ry, 0,1,0);
-      glRotatef(quads[i].rz, 0,0,1);
-      glCallList(quad_list);
+      glTranslatef(gp->quads[i].tx,0,0);
+      glTranslatef(0,gp->quads[i].ty,0);
+      glTranslatef(0,0,gp->quads[i].tz);
+      glRotatef(gp->quads[i].rx, 1,0,0);
+      glRotatef(gp->quads[i].ry, 0,1,0);
+      glRotatef(gp->quads[i].rz, 0,0,1);
+      glCallList(gp->quad_list);
       glPopMatrix();
 
-      quads[i].rx += quads[i].drx;
-      quads[i].ry += quads[i].dry;
-      quads[i].rz += quads[i].drz;
+      gp->quads[i].rx += gp->quads[i].drx;
+      gp->quads[i].ry += gp->quads[i].dry;
+      gp->quads[i].rz += gp->quads[i].drz;
 
     }
 }
 
-GLvoid drawScene(ModeInfo * mi) 
+static GLvoid drawScene(ModeInfo * mi) 
 {
+  pulsarstruct *gp = &Pulsar[MI_SCREEN(mi)];
 /*  check_gl_error ("drawScene"); */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -441,24 +433,24 @@ GLvoid drawScene(ModeInfo * mi)
   resetProjection();
 
   /* use XYZ scaling factors to change the size of the pulsar */
-  glScalef(scale_x, scale_y, scale_z);
-  drawQuads();
+  glScalef(gp->scale_x, gp->scale_y, gp->scale_z);
+  drawQuads(gp);
 
   /* update the scaling factors- cyclic */
-  scale_x = cos(frame/360.)*10.;
-  scale_y = sin(frame/360.)*10.;
-  scale_z = 1;
+  gp->scale_x = cos(gp->frame/360.)*10.;
+  gp->scale_y = sin(gp->frame/360.)*10.;
+  gp->scale_z = 1;
 
   /* increment frame-counter */
-  frame++;
+  gp->frame++;
 
 /*  check_gl_error ("drawScene"); */
 }
 
 
-void draw_screensaver(ModeInfo * mi)
+ENTRYPOINT void draw_pulsar(ModeInfo * mi)
 {
-  screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
+  pulsarstruct *gp = &Pulsar[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
   Window      window = MI_WINDOW(mi);
 
@@ -472,29 +464,32 @@ void draw_screensaver(ModeInfo * mi)
 }
 
 /* Standard reshape function */
-void
-reshape_screensaver(ModeInfo *mi, int width, int height)
+ENTRYPOINT void
+reshape_pulsar(ModeInfo *mi, int width, int height)
 {
   glViewport( 0, 0, MI_WIDTH(mi), MI_HEIGHT(mi) );
   resetProjection();
 }
 
-void
-init_screensaver(ModeInfo * mi)
+ENTRYPOINT void
+init_pulsar(ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
 
-  screensaverstruct *gp;
+  pulsarstruct *gp;
 
-  if (Screensaver == NULL) {
-	if ((Screensaver = (screensaverstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (screensaverstruct))) == NULL)
+  if (Pulsar == NULL) {
+	if ((Pulsar = (pulsarstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (pulsarstruct))) == NULL)
 	  return;
   }
-  gp = &Screensaver[screen];
+  gp = &Pulsar[screen];
 
   gp->window = MI_WINDOW(mi);
+
+  gp->scale_x = gp->scale_y = gp->scale_z = 1;
+
   if ((gp->glx_context = init_GL(mi)) != NULL) {
-	reshape_screensaver(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+	reshape_pulsar(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 	initializeGL(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   } else {
 	MI_CLEARWINDOW(mi);
@@ -503,17 +498,19 @@ init_screensaver(ModeInfo * mi)
 
 
 /* all sorts of nice cleanup code should go here! */
-void release_screensaver(ModeInfo * mi)
+ENTRYPOINT void release_pulsar(ModeInfo * mi)
 {
   int screen;
-  if (Screensaver != NULL) {
+  if (Pulsar != NULL) {
 	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-/*	  screensaverstruct *gp = &Screensaver[screen];*/
+	  pulsarstruct *gp = &Pulsar[screen];
+      free(gp->quads);
 	}
-	(void) free((void *) Screensaver);
-	Screensaver = NULL;
+	(void) free((void *) Pulsar);
+	Pulsar = NULL;
   }
-  free(quads);
   FreeAllGL(mi);
 }
 #endif
+
+XSCREENSAVER_MODULE ("Pulsar", pulsar)

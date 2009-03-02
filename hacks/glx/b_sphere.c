@@ -12,18 +12,20 @@ static const char sccsid[] = "@(#)b_sphere.c  4.11 98/06/16 xlockmore";
 
 #include "bubble3d.h"
 
-/* The list of vertices created. */
 typedef glb_vertex vertex;
-static vertex *vertices = 0;
-static int  nr_vertices = 0, nr_vertices_allocated = 0;
-
-/* The list of triangles created. */
 typedef glb_triangle triangle;
-static triangle *triangles = 0;
-static int  nr_triangles = 0, nr_triangles_allocated = 0;
 
-/* Have we initialized the lists yet? */
-static int  initialized = 0;
+struct glb_data {
+
+  /* The list of vertices created. */
+  vertex *vertices;
+  int nr_vertices, nr_vertices_allocated;
+
+  /* The list of triangles created. */
+  triangle *triangles;
+  int nr_triangles, nr_triangles_allocated;
+};
+
 
 #define EPSILON GLB_VERTICES_EPSILON
 
@@ -33,7 +35,7 @@ static int  initialized = 0;
 #define inline			/* */
 #endif
 static inline int
-close_enough(GLfloat * v1, GLfloat * v2)
+close_enough(const GLfloat * v1, const GLfloat * v2)
 {
 	return fabs((double) (v1[0] - v2[0])) <= EPSILON &&
 		fabs((double) (v1[1] - v2[1])) <= EPSILON &&
@@ -44,44 +46,44 @@ close_enough(GLfloat * v1, GLfloat * v2)
 #define INCR_ALLOCATION(a, n, t) (a = (t *) realloc (a, INCR (n) * sizeof (t)))
 
 static inline GLuint
-save_vertex(GLfloat * v)
+save_vertex(glb_data *d, const GLfloat * v)
 {
 	int         i;
 
 	/* Inefficient, but we only do this a few times. Check to see if there's
 	 * an existing vertex which is `close enough' to this one.
 	 */
-	for (i = 0; i < nr_vertices; ++i)
-		if (close_enough(v, vertices[i]))
+	for (i = 0; i < d->nr_vertices; ++i)
+		if (close_enough(v, d->vertices[i]))
 			return i;
 
-	if (nr_vertices_allocated <= nr_vertices) {
-		if (vertices == 0) {
-			vertices = (vertex *) malloc(INCR(nr_vertices_allocated) * sizeof (vertex));
+	if (d->nr_vertices_allocated <= d->nr_vertices) {
+		if (d->vertices == 0) {
+			d->vertices = (vertex *) malloc(INCR(d->nr_vertices_allocated) * sizeof (vertex));
 		} else {
-			INCR_ALLOCATION(vertices, nr_vertices_allocated, vertex);
+			INCR_ALLOCATION(d->vertices, d->nr_vertices_allocated, vertex);
 		}
 	}
-	vertices[nr_vertices][0] = v[0];
-	vertices[nr_vertices][1] = v[1];
-	vertices[nr_vertices][2] = v[2];
-	return nr_vertices++;
+	d->vertices[d->nr_vertices][0] = v[0];
+	d->vertices[d->nr_vertices][1] = v[1];
+	d->vertices[d->nr_vertices][2] = v[2];
+	return d->nr_vertices++;
 }
 
 static inline GLuint
-save_triangle(GLuint v1, GLuint v2, GLuint v3)
+save_triangle(glb_data *d, GLuint v1, GLuint v2, GLuint v3)
 {
-	if (nr_triangles_allocated <= nr_triangles) {
-		if (triangles == 0) {
-			triangles = (triangle *) malloc(INCR(nr_triangles_allocated) * sizeof (triangle));
+	if (d->nr_triangles_allocated <= d->nr_triangles) {
+		if (d->triangles == 0) {
+			d->triangles = (triangle *) malloc(INCR(d->nr_triangles_allocated) * sizeof (triangle));
 		} else {
-			INCR_ALLOCATION(triangles, nr_triangles_allocated, triangle);
+			INCR_ALLOCATION(d->triangles, d->nr_triangles_allocated, triangle);
 		}
 	}
-	triangles[nr_triangles][0] = v1;
-	triangles[nr_triangles][1] = v2;
-	triangles[nr_triangles][2] = v3;
-	return nr_triangles++;
+	d->triangles[d->nr_triangles][0] = v1;
+	d->triangles[d->nr_triangles][1] = v2;
+	d->triangles[d->nr_triangles][2] = v3;
+	return d->nr_triangles++;
 }
 
 static inline void
@@ -99,15 +101,16 @@ normalize(GLfloat v[3])
 }
 
 static void
-subdivide(GLfloat * v1, GLuint vi1,
-	  GLfloat * v2, GLuint vi2,
-	  GLfloat * v3, GLuint vi3,
+subdivide(glb_data *d,
+          const GLfloat * v1, GLuint vi1,
+	  const GLfloat * v2, GLuint vi2,
+	  const GLfloat * v3, GLuint vi3,
 	  int depth)
 {
 	int         i;
 
 	if (depth == 0) {
-		save_triangle(vi1, vi2, vi3);
+		save_triangle(d, vi1, vi2, vi3);
 	} else {
 		GLuint      vi12, vi23, vi31;
 		GLfloat     v12[3], v23[3], v31[3];
@@ -118,22 +121,22 @@ subdivide(GLfloat * v1, GLuint vi1,
 			v31[i] = v3[i] + v1[i];
 		}
 		normalize(v12);
-		vi12 = save_vertex(v12);
+		vi12 = save_vertex(d, v12);
 		normalize(v23);
-		vi23 = save_vertex(v23);
+		vi23 = save_vertex(d, v23);
 		normalize(v31);
-		vi31 = save_vertex(v31);
-		subdivide(v1, vi1, v12, vi12, v31, vi31, depth - 1);
-		subdivide(v2, vi2, v23, vi23, v12, vi12, depth - 1);
-		subdivide(v3, vi3, v31, vi31, v23, vi23, depth - 1);
-		subdivide(v12, vi12, v23, vi23, v31, vi31, depth - 1);
+		vi31 = save_vertex(d, v31);
+		subdivide(d, v1, vi1, v12, vi12, v31, vi31, depth - 1);
+		subdivide(d, v2, vi2, v23, vi23, v12, vi12, depth - 1);
+		subdivide(d, v3, vi3, v31, vi31, v23, vi23, depth - 1);
+		subdivide(d, v12, vi12, v23, vi23, v31, vi31, depth - 1);
 	}
 }
 
 #define ICO_X 0.525731112119133606
 #define ICO_Z 0.850650808352039932
 
-static GLfloat vdata[12][3] =
+static const GLfloat vdata[12][3] =
 {
 	{-ICO_X, 0, ICO_Z},
 	{ICO_X, 0, ICO_Z},
@@ -149,7 +152,7 @@ static GLfloat vdata[12][3] =
 	{-ICO_Z, -ICO_X, 0}
 };
 
-static GLuint tindices[20][3] =
+static const GLuint tindices[20][3] =
 {
 	{0, 4, 1},
 	{0, 9, 4},
@@ -174,57 +177,43 @@ static GLuint tindices[20][3] =
 };
 
 /* Public interface: Create the sphere. */
-void
+glb_data *
 glb_sphere_init(void)
 {
+        glb_data *d = (glb_data *) calloc (1, sizeof (*d));
 	int         i;
 
-	if (initialized)
-		return;
-
 	for (i = 0; i < 20; ++i) {
-		subdivide(vdata[tindices[i][0]], save_vertex(vdata[tindices[i][0]]),
-		   vdata[tindices[i][1]], save_vertex(vdata[tindices[i][1]]),
-		   vdata[tindices[i][2]], save_vertex(vdata[tindices[i][2]]),
+		subdivide(d, vdata[tindices[i][0]], save_vertex(d, vdata[tindices[i][0]]),
+		   vdata[tindices[i][1]], save_vertex(d, vdata[tindices[i][1]]),
+		   vdata[tindices[i][2]], save_vertex(d, vdata[tindices[i][2]]),
 			  glb_config.subdivision_depth);
 	}
 
-	initialized = 1;
+	return d;
 }
 
 /* Return the vertices list. */
 glb_vertex *
-glb_sphere_get_vertices(int *nr_vertices_ptr)
+glb_sphere_get_vertices(glb_data *d, int *nr_vertices_ptr)
 {
-	glb_sphere_init();
-	*nr_vertices_ptr = nr_vertices;
-	return vertices;
+	*nr_vertices_ptr = d->nr_vertices;
+	return d->vertices;
 }
 
 /* Return the triangles list. */
 glb_triangle *
-glb_sphere_get_triangles(int *nr_triangles_ptr)
+glb_sphere_get_triangles(glb_data *d, int *nr_triangles_ptr)
 {
-	glb_sphere_init();
-	*nr_triangles_ptr = nr_triangles;
-	return triangles;
+	*nr_triangles_ptr = d->nr_triangles;
+	return d->triangles;
 }
 
 /* Free up memory. */
-#if 0
 void
-glb_sphere_end(void)
+glb_sphere_end(glb_data *d)
 {
-	initialized = 0;
-
-	(void) free((void *) vertices);
-	(void) free((void *) triangles);
-
-	vertices = 0;
-	nr_vertices = nr_vertices_allocated = 0;
-
-	triangles = 0;
-	nr_triangles = nr_triangles_allocated = 0;
+	(void) free((void *) d->vertices);
+	(void) free((void *) d->triangles);
+        free (d);
 }
-
-#endif

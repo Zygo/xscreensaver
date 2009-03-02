@@ -9,17 +9,13 @@
           low="0" high="30000" default="25000"
           convert="invert"/>
 
-  <select id="render">
-    <option id="tex"   _label="Textured"/>
-    <option id="solid" _label="Solid"     arg-set="-mono"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-This draws Escher's ``Impossible Cage,'' a 3d analog of a moebius
-strip, and rotates it in three dimensions.  Written by Marcelo
-Vianna.
+This draws Escher's "Impossible Cage", a 3d analog of a moebius
+strip, and rotates it in three dimensions.
+
+Written by Marcelo Vianna; 1998.
   </_description>
 </screensaver>

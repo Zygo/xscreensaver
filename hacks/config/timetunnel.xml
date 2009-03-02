@@ -12,13 +12,15 @@
           _label="Color Change Time" _low-label="Short" _high-label="Long"
           low="0.00" high="30.00" default="30.00"/>
 
-  <boolean id="tunonly" _label="Draw Logo" arg-unset="-tunonly"/>
+  <boolean id="logo"    _label="Draw Logo" arg-unset="-no-logo"/>
   <boolean id="reverse" _label="Run Backward" arg-set="-reverse"/>
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws an animation similar to the opening and closing effects on the
-Dr. Who television show.  Written by Sean P. Brennan.
+Dr. Who TV show.
+
+Written by Sean P. Brennan; 2005.
   </_description>
 </screensaver>

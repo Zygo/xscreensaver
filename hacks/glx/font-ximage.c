@@ -17,13 +17,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <GL/gl.h>	/* only for GLfloat */
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+# include <OpenGL/gl.h>
+#else  /* !HAVE_COCOA */
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+# include <GL/gl.h>	/* only for GLfloat */
+#endif /* !HAVE_COCOA */
 
 extern char *progname;
 
-#include <X11/Xutil.h>
+#include "font-ximage.h"
 
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -45,8 +51,9 @@ bigendian (void)
 static int
 to_pow2 (int i)
 {
-  static unsigned int pow2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-                                 2048, 4096, 8192, 16384, 32768, 65536 };
+  static const unsigned int pow2[] = { 
+    1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
+    2048, 4096, 8192, 16384, 32768, 65536 };
   int j;
   for (j = 0; j < countof(pow2); j++)
     if (pow2[j] >= i) return pow2[j];

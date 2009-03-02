@@ -105,16 +105,13 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_rubik
-# define PROGCLASS	"Rubik"
-# define HACK_INIT	init_rubik
-# define HACK_DRAW	draw_rubik
-# define HACK_RESHAPE reshape
-# define rubik_opts	xlockmore_opts
 # define DEFAULTS	"*delay: 40000 \n"		\
 					"*count: -30 \n"		\
 					"*showFPS: False \n"	\
 					"*cycles: 5 \n"			\
 					"*size:  -6 \n"
+# define refresh_rubik 0
+# define rubik_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -158,7 +155,7 @@ static OptionStruct desc[] =
 	{"-/+hideshuffling", "turn on/off hidden shuffle phase"}
 };
 
-ModeSpecOpt rubik_opts =
+ENTRYPOINT ModeSpecOpt rubik_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -263,7 +260,7 @@ typedef struct _RubikSlice {
  * Pick a face and a direction on face the next face and orientation
  * is then known.
  */
-static RubikLoc slideNextRow[MAXFACES][MAXORIENT] =
+static const RubikLoc slideNextRow[MAXFACES][MAXORIENT] =
 {
 	{
 		{5, TOP},
@@ -302,7 +299,7 @@ static RubikLoc slideNextRow[MAXFACES][MAXORIENT] =
  * other 2 will be opposites) and translate it into slice movements).
  * CW = DEEP Depth CCW == SHALLOW Depth with reference to faces 0, 1, and 2
  */
-static RubikLoc rotateSlice[MAXFACES][MAXORIENT / 2] =
+static const RubikLoc rotateSlice[MAXFACES][MAXORIENT / 2] =
 {
 	{
 		{1, CCW},
@@ -334,7 +331,7 @@ static RubikLoc rotateSlice[MAXFACES][MAXORIENT / 2] =
  * Rotate face clockwise by a number of orients, then the top of the
  * face then points to this face
  */
-static int  rowToRotate[MAXFACES][MAXORIENT] =
+static const int rowToRotate[MAXFACES][MAXORIENT] =
 {
 	{3, 2, 1, 5},
 	{2, 4, 5, 0},
@@ -347,7 +344,7 @@ static int  rowToRotate[MAXFACES][MAXORIENT] =
 /*
  * This translates a clockwise move to something more manageable
  */
-static RubikRowNext rotateToRow[MAXFACES] =	/*CW to min face */
+static const RubikRowNext rotateToRow[MAXFACES] =	/*CW to min face */
 {
 	{1, LEFT, TOP},
 	{0, BOTTOM, RIGHT},
@@ -377,55 +374,33 @@ typedef struct {
 	GLXContext *glx_context;
 } rubikstruct;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient[] =
-{0.0, 0.0, 0.0, 1.0};
-static float diffuse[] =
-{1.0, 1.0, 1.0, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] = {0.7, 0.7, 0.7, 1.0};
+static const float ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const float diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const float position0[] = {1.0, 1.0, 1.0, 0.0};
+static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
-static float MaterialRed[] =
-{0.5, 0.0, 0.0, 1.0};
-static float MaterialGreen[] =
-{0.0, 0.5, 0.0, 1.0};
-static float MaterialBlue[] =
-{0.0, 0.0, 0.5, 1.0};
-static float MaterialYellow[] =
-{0.7, 0.7, 0.0, 1.0};
-static float MaterialOrange[] =
-{0.9, 0.45, 0.36, 1.0};
+static const float MaterialRed[] = {0.5, 0.0, 0.0, 1.0};
+static const float MaterialGreen[] = {0.0, 0.5, 0.0, 1.0};
+static const float MaterialBlue[] = {0.0, 0.0, 0.5, 1.0};
+static const float MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};
+static const float MaterialOrange[] = {0.9, 0.45, 0.36, 1.0};
 
 #if 0
-static float MaterialMagenta[] =
-{0.7, 0.0, 0.7, 1.0};
-static float MaterialCyan[] =
-{0.0, 0.7, 0.7, 1.0};
+static float MaterialMagenta[] = {0.7, 0.0, 0.7, 1.0};
+static float MaterialCyan[] = {0.0, 0.7, 0.7, 1.0};
 
 #endif
-static float MaterialWhite[] =
-{0.8, 0.8, 0.8, 1.0};
-static float MaterialGray[] =
-{0.2, 0.2, 0.2, 1.0};
-static float MaterialGray3[] =
-{0.3, 0.3, 0.3, 1.0};
-static float MaterialGray4[] =
-{0.4, 0.4, 0.4, 1.0};
-static float MaterialGray5[] =
-{0.5, 0.5, 0.5, 1.0};
-static float MaterialGray6[] =
-{0.6, 0.6, 0.6, 1.0};
-static float MaterialGray7[] =
-{0.7, 0.7, 0.7, 1.0};
+static const float MaterialWhite[] = {0.8, 0.8, 0.8, 1.0};
+static const float MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
+static const float MaterialGray3[] = {0.3, 0.3, 0.3, 1.0};
+static const float MaterialGray4[] = {0.4, 0.4, 0.4, 1.0};
+static const float MaterialGray5[] = {0.5, 0.5, 0.5, 1.0};
+static const float MaterialGray6[] = {0.6, 0.6, 0.6, 1.0};
+static const float MaterialGray7[] = {0.7, 0.7, 0.7, 1.0};
 
 static rubikstruct *rubik = (rubikstruct *) NULL;
 
@@ -1795,8 +1770,8 @@ shuffle(ModeInfo * mi)
 	return True;
 }
 
-void
-reshape(ModeInfo * mi, int width, int height)
+ENTRYPOINT void
+reshape_rubik(ModeInfo * mi, int width, int height)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 
@@ -1858,7 +1833,7 @@ free_rubik(rubikstruct *rp)
 	}
 }
 
-void
+ENTRYPOINT void
 release_rubik(ModeInfo * mi)
 {
 	if (rubik != NULL) {
@@ -1875,7 +1850,7 @@ release_rubik(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
-void
+ENTRYPOINT void
 init_rubik(ModeInfo * mi)
 {
 	rubikstruct *rp;
@@ -1892,7 +1867,7 @@ init_rubik(ModeInfo * mi)
 
 	if ((rp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_rubik(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!pinit(mi)) {
 			free_rubik(rp);
@@ -1907,7 +1882,7 @@ init_rubik(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_rubik(ModeInfo * mi)
 {
 	Bool bounced = False;
@@ -2078,7 +2053,8 @@ draw_rubik(ModeInfo * mi)
 	rp->step += 0.05;
 }
 
-void
+#ifndef STANDALONE
+ENTRYPOINT void
 change_rubik(ModeInfo * mi)
 {
 	rubikstruct *rp;
@@ -2098,5 +2074,8 @@ change_rubik(ModeInfo * mi)
 		return;
 	}
 }
+#endif /* !STANDALONE */
 
 #endif
+
+XSCREENSAVER_MODULE ("Rubik", rubik)

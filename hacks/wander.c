@@ -17,176 +17,227 @@
 
 #define MAXIMUM_COLOR_COUNT (256)
 
-static unsigned int advance     = 0;
-static Bool         circles     = 0;
-static Colormap     color_map   = (Colormap)NULL;
-static int          color_count = 0;
-static int          color_index = 0;
-static XColor       colors      [MAXIMUM_COLOR_COUNT];
-static GC           context     = (GC)NULL;
-static unsigned int density     = 0;
-static int          depth       = 0;
-static int          height      = 0;
-static unsigned int length 	= 0;
-static unsigned int reset 	= 0;
-static unsigned int size 	= 0;
-static int          width       = 0;
+struct state {
+  Display *dpy;
+  Window window;
 
-static void
-init_wander (Display *display, Window window)
+   unsigned int advance;
+   Bool         circles;
+   Colormap     color_map;
+   int          color_count;
+   int          color_index;
+   XColor       colors      [MAXIMUM_COLOR_COUNT];
+   GC           context;
+   unsigned int density;
+   int          depth;
+   int          height;
+   unsigned int length;
+   unsigned int reset;
+   unsigned int size;
+   int          width;
+   int delay;
+
+  int x, y, last_x, last_y, width_1, height_1, length_limit, reset_limit;
+  unsigned long color;
+  Pixmap pixmap;
+
+  eraser_state *eraser;
+};
+
+
+static void *
+wander_init (Display *dpy, Window window)
 {
+    struct state *st = (struct state *) calloc (1, sizeof(*st));
     XGCValues values;
     XWindowAttributes attributes;
 
-    XClearWindow (display, window);
-    XGetWindowAttributes (display, window, &attributes);
-    width = attributes.width;
-    height = attributes.height;
-    depth = attributes.depth;
-    color_map = attributes.colormap;
-    if (color_count)
+    st->dpy = dpy;
+    st->window = window;
+    st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+
+    XClearWindow (st->dpy, st->window);
+    XGetWindowAttributes (st->dpy, st->window, &attributes);
+    st->width = attributes.width;
+    st->height = attributes.height;
+    st->depth = attributes.depth;
+    st->color_map = attributes.colormap;
+    if (st->color_count)
     {
-        free_colors (display, color_map, colors, color_count);
-        color_count = 0;
+        free_colors (st->dpy, st->color_map, st->colors, st->color_count);
+        st->color_count = 0;
     }
-    context = XCreateGC (display, window, GCForeground, &values);
-    color_count = MAXIMUM_COLOR_COUNT;
-    make_color_loop (display, color_map,
+    st->context = XCreateGC (st->dpy, st->window, 0, &values);
+    st->color_count = MAXIMUM_COLOR_COUNT;
+    make_color_loop (st->dpy, st->color_map,
                     0,   1, 1,
                     120, 1, 1,
                     240, 1, 1,
-                    colors, &color_count, True, False);
-    if (color_count <= 0)
+                    st->colors, &st->color_count, True, False);
+    if (st->color_count <= 0)
     {
-        color_count = 2;
-        colors [0].red = colors [0].green = colors [0].blue = 0;
-        colors [1].red = colors [1].green = colors [1].blue = 0xFFFF;
-        XAllocColor (display, color_map, &colors [0]);
-        XAllocColor (display, color_map, &colors [1]);
+        st->color_count = 2;
+        st->colors [0].red = st->colors [0].green = st->colors [0].blue = 0;
+        st->colors [1].red = st->colors [1].green = st->colors [1].blue = 0xFFFF;
+        XAllocColor (st->dpy, st->color_map, &st->colors [0]);
+        XAllocColor (st->dpy, st->color_map, &st->colors [1]);
     }
-    color_index = random () % color_count;
+    st->color_index = random () % st->color_count;
     
-    advance = get_integer_resource ("advance", "Integer");
-    density = get_integer_resource ("density", "Integer");
-    if (density < 1) density = 1;
-    reset = get_integer_resource ("reset", "Integer");
-    if (reset < 100) reset = 100;
-    circles = get_boolean_resource ("circles", "Boolean");
-    size = get_integer_resource ("size", "Integer");
-    if (size < 1) size = 1;
-    width = width / size;
-    height = height / size;
-    length = get_integer_resource ("length", "Integer");
-    if (length < 1) length = 1;
-    XSetForeground (display, context, colors [color_index].pixel);
+    st->advance = get_integer_resource (st->dpy, "advance", "Integer");
+    st->density = get_integer_resource (st->dpy, "density", "Integer");
+    if (st->density < 1) st->density = 1;
+    st->reset = get_integer_resource (st->dpy, "reset", "Integer");
+    if (st->reset < 100) st->reset = 100;
+    st->circles = get_boolean_resource (st->dpy, "circles", "Boolean");
+    st->size = get_integer_resource (st->dpy, "size", "Integer");
+    if (st->size < 1) st->size = 1;
+    st->width = st->width / st->size;
+    st->height = st->height / st->size;
+    st->length = get_integer_resource (st->dpy, "length", "Integer");
+    if (st->length < 1) st->length = 1;
+    XSetForeground (st->dpy, st->context, st->colors [st->color_index].pixel);
+
+
+    st->x = random () % st->width;
+    st->y = random () % st->height;
+    st->last_x = st->x;
+    st->last_y = st->y;
+    st->width_1 = st->width - 1;
+    st->height_1 = st->height - 1;
+    st->length_limit = st->length;
+    st->reset_limit = st->reset;
+    st->color_index = random () % st->color_count;
+    st->color = st->colors [random () % st->color_count].pixel;
+    st->pixmap = XCreatePixmap (st->dpy, window, st->size,
+                            st->size, st->depth);
+
+    XSetForeground (st->dpy, st->context,
+		    BlackPixel (st->dpy, DefaultScreen (st->dpy)));
+    XFillRectangle (st->dpy, st->pixmap, st->context, 0, 0,
+		    st->width * st->size, st->height * st->size);
+    XSetForeground (st->dpy, st->context, st->color);
+    XFillArc (st->dpy, st->pixmap, st->context, 0, 0, st->size, st->size, 0, 360*64);
+
+    return st;
+}
+
+
+static unsigned long
+wander_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int i;
+
+  if (st->eraser) {
+    st->eraser = erase_window (st->dpy, st->window, st->eraser);
+    goto END;
+  }
+
+  for (i = 0; i < 2000; i++)
+    {
+      if (random () % st->density)
+        {
+          st->x = st->last_x;
+          st->y = st->last_y;
+        }
+      else
+        {
+          st->last_x = st->x;
+          st->last_y = st->y;
+          st->x = (st->x + st->width_1  + (random () % 3)) % st->width;
+          st->y = (st->y + st->height_1 + (random () % 3)) % st->height;
+        }
+
+      if ((random () % st->length_limit) == 0)
+        {
+          if (st->advance == 0)
+            {
+              st->color_index = random () % st->color_count;
+            }
+          else
+            {
+              st->color_index = (st->color_index + st->advance) % st->color_count;
+            }
+          st->color = st->colors [st->color_index].pixel;
+          XSetForeground (st->dpy, st->context, st->color);
+          if (st->circles)
+            {
+              XFillArc (st->dpy, st->pixmap, st->context,
+                        0, 0, st->size, st->size, 0, 360 * 64);
+            }
+        }
+
+      if ((random () % st->reset_limit) == 0)
+        {
+          st->eraser = erase_window (st->dpy, st->window, st->eraser);
+          st->color = st->colors [random () % st->color_count].pixel;
+          st->x = random () % st->width;
+          st->y = random () % st->height;
+          st->last_x = st->x;
+          st->last_y = st->y;
+          if (st->circles)
+            {
+              XFillArc (st->dpy, st->pixmap, st->context, 0, 0, st->size, st->size, 0, 360*64);
+            }
+        }
+
+      if (st->size == 1)
+        {
+          XDrawPoint (st->dpy, st->window, st->context, st->x, st->y);
+        }
+      else
+        {
+          if (st->circles)
+            {
+              XCopyArea (st->dpy, st->pixmap, st->window, st->context, 0, 0, st->size, st->size,
+                         st->x * st->size, st->y * st->size);
+            }
+          else
+            {
+              XFillRectangle (st->dpy, st->window, st->context, st->x * st->size, st->y * st->size,
+                              st->size, st->size);
+            }
+        }
+    }
+
+ END:
+  return st->delay;
 }
 
 
 static void
-wander (Display *display, Window window)
+wander_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-    int x = random () % width;
-    int y = random () % height;
-    int last_x = x;
-    int last_y = y;
-    int width_1 = width - 1;
-    int height_1 = height - 1;
-    int length_limit = length;
-    int reset_limit = reset;
-    int color_index = random () % color_count;
-    unsigned long color = colors [random () % color_count].pixel;
-    Pixmap pixmap = XCreatePixmap (display, DefaultRootWindow (display), size,
-				   size, depth);
-    XSetForeground (display, context,
-		    BlackPixel (display, DefaultScreen (display)));
-    XFillRectangle (display, pixmap, context, 0, 0,
-		    width * size, height * size);
-    XSetForeground (display, context, color);
-    XFillArc (display, pixmap, context, 0, 0, size, size, 0, 360*64);
-
-    while (1)
-    {
-        if (random () % density)
-        {
-            x = last_x;
-            y = last_y;
-        }
-        else
-        {
-            last_x = x;
-            last_y = y;
-            x = (x + width_1  + (random () % 3)) % width;
-            y = (y + height_1 + (random () % 3)) % height;
-        }
-        if ((random () % length_limit) == 0)
-        {
-            if (advance == 0)
-            {
-                color_index = random () % color_count;
-            }
-            else
-            {
-                color_index = (color_index + advance) % color_count;
-            }
-            color = colors [color_index].pixel;
-            XSetForeground (display, context, color);
-            if (circles)
-            {
-                XFillArc (display, pixmap, context,
-			  0, 0, size, size, 0, 360 * 64);
-            }
-        }
-        if ((random () % reset_limit) == 0)
-        {
-            erase_full_window (display, window);
-            color = colors [random () % color_count].pixel;
-            x = random () % width;
-            y = random () % height;
-            last_x = x;
-            last_y = y;
-            if (circles)
-            {
-                XFillArc (display, pixmap, context, 0, 0, size, size, 0, 360*64);
-            }
-        }
-        if (size == 1)
-        {
-            XDrawPoint (display, window, context, x, y);
-        }
-        else
-        {
-            if (circles)
-            {
-                XCopyArea (display, pixmap, window, context, 0, 0, size, size,
-                           x * size, y * size);
-            }
-            else
-            {
-                XFillRectangle (display, window, context, x * size, y * size,
-                               size, size);
-            }
-        }
-        screenhack_handle_events (display);
-    }
 }
 
-char *progclass = "Wander";
+static Bool
+wander_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
 
-char *defaults [] =
+static void
+wander_free (Display *dpy, Window window, void *closure)
+{
+}
+
+static const char *wander_defaults [] =
 {
     ".background: black",
     ".foreground: white",
     ".advance:    1",
     ".density:    2",
     ".length:     25000",
-    ".delay:      1",
+    ".delay:      20000",
     ".reset:      2500000",
     ".circles:    False",
     ".size:       1",
     0
 };
 
-XrmOptionDescRec options [] =
+static XrmOptionDescRec wander_options [] =
 {
     { "-advance", ".advance", XrmoptionSepArg, 0 },
     { "-circles", ".circles",   XrmoptionNoArg, "True" },
@@ -199,18 +250,5 @@ XrmOptionDescRec options [] =
     { 0, 0, 0, 0 }
 };
 
-void
-screenhack (display, window)
-    Display *display;
-    Window window;
-{
-    int delay = get_integer_resource ("delay", "Integer");
-    while (1)
-    {
-        init_wander (display, window);
-        wander (display, window);
-        screenhack_handle_events (display);
-        if (delay) sleep (delay);
-        erase_full_window (display, window);
-    }
-}
+
+XSCREENSAVER_MODULE ("Wander", wander)

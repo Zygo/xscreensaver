@@ -1,5 +1,5 @@
 /* xpm-pixmap.c --- converts XPM data to a Pixmap.
- * xscreensaver, Copyright (c) 1998, 2001, 2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,14 +14,20 @@
 # include "config.h"
 #endif
 
-#include <X11/Xlib.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "visual.h"  /* for screen_number() */
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+# include "visual.h"  /* for screen_number() */
+#endif
+
+#include "xpm-pixmap.h"
 
 extern char *progname;
-
 
 #if defined(HAVE_GDK_PIXBUF)
 
@@ -42,7 +48,7 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
                  int *width_ret, int *height_ret,
                  Pixmap *mask_ret,
                  const char *filename,
-                 char **xpm_data)
+                 /*const*/ char * const *xpm_data)
 {
   GdkPixbuf *pb;
   static int initted = 0;
@@ -115,7 +121,6 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
 #elif defined(HAVE_XPM)
 
 #include <X11/Intrinsic.h>
-#include <X11/Xutil.h>
 #include <X11/xpm.h>
 
 #ifdef HAVE_XMU
@@ -173,7 +178,7 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
                  int *width_ret, int *height_ret,
                  Pixmap *mask_ret,
                  const char *filename,
-                 char **xpm_data)
+                 /*const*/ char * const *xpm_data)
 {
   Pixmap pixmap = 0;
   XpmAttributes xpmattrs;
@@ -267,22 +272,79 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
 
 #else  /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
 
+/* If we don't have libXPM or Pixbuf, then use "minixpm".
+   This can read XPM data from memory, but can't read files.
+ */
+
+#include "minixpm.h"
+
 static Pixmap
 xpm_to_pixmap_1 (Display *dpy, Window window,
                  int *width_ret, int *height_ret,
                  Pixmap *mask_ret,
                  const char *filename,
-                 char **xpm_data)
+                 /*const*/ char * const *xpm_data)
 {
-  fprintf(stderr, "%s: not compiled with XPM or Pixbuf support.\n", progname);
-  exit (-1);
+  XWindowAttributes xgwa;
+  XImage *ximage;
+  Pixmap pixmap, p2 = 0;
+  int iw, ih, npixels;
+  unsigned long *pixels = 0;
+  unsigned char *mask = 0;
+  XGCValues gcv;
+  GC gc;
+
+  if (filename)
+    {
+      fprintf(stderr, 
+              "%s: no files: not compiled with XPM or Pixbuf support.\n", 
+              progname);
+      exit (1);
+    }
+
+  if (! xpm_data) abort();
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  ximage = minixpm_to_ximage (dpy, xgwa.visual, xgwa.colormap, xgwa.depth, 
+                              BlackPixelOfScreen (xgwa.screen),
+                              (const char * const *)
+                              xpm_data, &iw, &ih, &pixels, &npixels, 
+                              (mask_ret ? &mask : 0));
+  if (pixels) free (pixels);
+
+  pixmap = XCreatePixmap (dpy, window, iw, ih, xgwa.depth);
+  gc = XCreateGC (dpy, pixmap, 0, &gcv);
+  XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0, iw, ih);
+  XFreeGC (dpy, gc);
+  XDestroyImage (ximage);
+
+  if (mask)
+    {
+      p2 = XCreatePixmap (dpy, window, iw, ih, 1);
+      gcv.foreground = 1;
+      gcv.background = 0;
+      gc = XCreateGC (dpy, p2, GCForeground|GCBackground, &gcv);
+      ximage = XCreateImage (dpy, xgwa.visual, 1, XYBitmap, 0, (char *) mask,
+                             iw, ih, 8, 0);
+      ximage->byte_order = ximage->bitmap_bit_order = LSBFirst;
+      if (!ximage) abort();
+      XPutImage (dpy, p2, gc, ximage, 0, 0, 0, 0, iw, ih);
+      XFreeGC (dpy, gc);
+      XDestroyImage (ximage);
+    }
+
+  if (width_ret)  *width_ret  = iw;
+  if (height_ret) *height_ret = ih;
+  if (mask_ret)   *mask_ret   = p2;
+  return pixmap;
 }
 
-#endif /* !HAVE_XPM */
+#endif /* minixpm */
 
 
 Pixmap
-xpm_data_to_pixmap (Display *dpy, Window window, char **xpm_data,
+xpm_data_to_pixmap (Display *dpy, Window window, 
+                    /*const*/ char * const *xpm_data,
                     int *width_ret, int *height_ret,
                     Pixmap *mask_ret)
 {

@@ -50,24 +50,9 @@
  * implied warranty.
  */
 
-#include "screenhack.h"
-#include <X11/Xutil.h>
-#include <stdio.h>
-#include <sys/time.h>
-
-#ifndef MAX_WIDTH
-#include <limits.h>
-#define MAX_WIDTH SHRT_MAX
-#endif
-
-/* XXX take this out later */
-
-
-#ifdef TIME_ME
-#include <sys/time.h>
-#endif
-
 #include <math.h>
+#include "screenhack.h"
+
 
 /* this program goes faster if some functions are inline.  The following is
  * borrowed from ifs.c */
@@ -84,9 +69,7 @@
 #define MAX(x,y) ((x < y) ? y : x)
 #endif
 
-char *progclass = "inter-aggregate";
-
-char *defaults[] = 
+static const char *interaggregate_defaults[] = 
 {
     ".background: white",
     ".foreground: black",
@@ -99,10 +82,12 @@ char *defaults[] =
     "*numCircles: 100",
     "*percentOrbits: 0",
     "*baseOrbits: 75",
+    "*baseOnCenter: False",
+    "*drawCenters: False",
     0
 };
 
-XrmOptionDescRec options[] = 
+static XrmOptionDescRec interaggregate_options[] = 
 {
     {"-background", ".background", XrmoptionSepArg, 0},
     {"-foreground", ".foreground", XrmoptionSepArg, 0},
@@ -120,27 +105,27 @@ XrmOptionDescRec options[] =
 #if 0
 char *rgb_colormap[] = 
 {
-    "rgb:FF/FF/FF", /* white */
-    "rgb:00/00/00", /* black */
-    "rgb:00/00/00", /* more black */
-    /* "rgb:73/64/51",  */
-    "rgb:4e/3e/2e", /* olive */
-    /* "rgb:66/66/66", */
-    "rgb:69/4d/35",  /* camel */
-    "rgb:b9/a8/8c",  /* tan */
+    "#FFFFFF", /* white */
+    "#000000", /* black */
+    "#000000", /* more black */
+    /* "#736451",  */
+    "#4e3e2e", /* olive */
+    /* "#666666", */
+    "#694d35",  /* camel */
+    "#b9a88c",  /* tan */
     0
 };
 #endif
 
-char *rgb_colormap[] = 
+static const char *rgb_colormap[] = 
 {
-    "rgb:FF/FF/FF", /* white */
-    "rgb:00/00/00", /* more black */
-    "rgb:00/00/00", /* more black */
-    "rgb:4e/3e/2e", /* olive */
-    "rgb:69/4d/35",  /* camel */
-    "rgb:b0/a0/85",  /* tan */
-    "rgb:e6/d3/ae",
+    "#FFFFFF", /* white */
+    "#000000", /* more black */
+    "#000000", /* more black */
+    "#4e3e2e", /* olive */
+    "#694d35",  /* camel */
+    "#b0a085",  /* tan */
+    "#e6d3ae",
     0
 };
 
@@ -221,8 +206,8 @@ struct field
 };
 
 
-struct field 
-*init_field(void)
+static struct field *
+init_field(void)
 {
     struct field *f = (struct field*) malloc(sizeof(struct field));
     if ( f == NULL )
@@ -264,15 +249,25 @@ struct field
 
 /* Consider rewriting with XQueryColor, or ImageByteOrder */
 
-inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b) 
+static inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b) 
 {
     switch(depth) 
     {
     case 32:
     case 24:
+#ifdef HAVE_COCOA
+        /* This program idiotically does not go through a color map, so
+           we have to hardcode in knowledge of how jwxyz.a packs pixels!
+           Fix it to go through st->colors[st->ncolors] instead!
+         */
+        *r = (c & 0x00ff0000) >> 16; 
+        *g = (c & 0x0000ffff) >>  8;
+        *b = (c & 0x000000ff);
+#else
 	*b = c & 0xff; 
 	*g = (c & 0xff00) >> 8; 
 	*r = (c & 0xff0000) >> 16; 
+#endif
 	break;
     case 16:
 	*b = (c & 0x1f) << 3; 
@@ -287,7 +282,7 @@ inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b)
     }
 }
 
-inline unsigned long rgb2point(int depth, int r, int g, int b) 
+static inline unsigned long rgb2point(int depth, int r, int g, int b) 
 {
     unsigned long ret = 0;
 
@@ -296,7 +291,15 @@ inline unsigned long rgb2point(int depth, int r, int g, int b)
     case 32:
 	ret = 0xff000000;
     case 24:
+#ifdef HAVE_COCOA
+        /* This program idiotically does not go through a color map, so
+           we have to hardcode in knowledge of how jwxyz.a packs pixels!
+           Fix it to go through st->colors[st->ncolors] instead!
+         */
+        ret = 0xFF000000 | (r << 16) | (g << 8) | b;
+#else
 	ret |= (r << 16) | (g << 8) | b;
+#endif
 	break;
     case 16:
 	ret = ((r>>3) << 11) | ((g>>2)<<5) | (b>>3);
@@ -311,7 +314,7 @@ inline unsigned long rgb2point(int depth, int r, int g, int b)
 
 /* alpha blended point drawing -- this is Not Right and will likely fail on 
  * non-intel platforms as it is now, needs fixing */
-inline unsigned long trans_point(int x1, int y1, unsigned long myc, double a, 
+static inline unsigned long trans_point(int x1, int y1, unsigned long myc, double a, 
 				 struct field *f) 
 {
     if (a >= 1.0) 
@@ -343,7 +346,7 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, double a,
     }
 }
 
-inline void drawPoint(int x, int y, unsigned long color, double intensity,
+static inline void drawPoint(int x, int y, unsigned long color, double intensity,
 		      Display *dpy, Window window, GC fgc, struct field *f)
 	       
 {
@@ -363,7 +366,7 @@ inline void drawPoint(int x, int y, unsigned long color, double intensity,
     XDrawPoint(dpy, window, fgc, x, y);
 }
 
-inline void paint(SandPainter* painter, double ax, double ay, double bx, double by,
+static inline void paint(SandPainter* painter, double ax, double ay, double bx, double by,
 		  Display *dpy, Window window, GC fgc, 
 		  struct field *f)
 {
@@ -419,7 +422,7 @@ inline void paint(SandPainter* painter, double ax, double ay, double bx, double 
     }
 }
 
-void build_colors(struct field *f, Display *dpy, XWindowAttributes *xgwa) 
+static void build_colors(struct field *f, Display *dpy, XWindowAttributes *xgwa) 
 {
 
     XColor tmpcolor;
@@ -466,7 +469,7 @@ void build_colors(struct field *f, Display *dpy, XWindowAttributes *xgwa)
 }
 
 /* used when the window is resized */
-void build_img(struct field *f)
+static void build_img(struct field *f)
 {
     if (f->off_img) {
         free(f->off_img);
@@ -488,7 +491,7 @@ void build_img(struct field *f)
 	   sizeof(unsigned long) * f->width * f->height);
 }
 
-void free_circles(struct field *f) 
+static void free_circles(struct field *f) 
 {
     int i;
 
@@ -504,7 +507,7 @@ void free_circles(struct field *f)
     }
 }
 
-void build_field(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, 
+static void build_field(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, 
 		 struct field *f) 
 {
     int i;
@@ -622,7 +625,7 @@ void build_field(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc,
     }
 }
 
-void moveCircles(struct field *f)
+static void moveCircles(struct field *f)
 {
     int i;
 
@@ -684,7 +687,7 @@ void moveCircles(struct field *f)
     }
 }
 
-void drawIntersections(Display *dpy, Window window, GC fgc, struct field *f)
+static void drawIntersections(Display *dpy, Window window, GC fgc, struct field *f)
 {
     int i,j;
 
@@ -783,17 +786,24 @@ void drawIntersections(Display *dpy, Window window, GC fgc, struct field *f)
     }
 }
 
+struct state {
+  Display *dpy;
+  Window window;
 
-void screenhack(Display * dpy, Window window)
+  unsigned int max_cycles;
+  int growth_delay;
+  GC fgc;
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+
+  struct field *f;
+};
+
+
+static void *
+interaggregate_init (Display *dpy, Window window)
 {
-    struct field *f = init_field();
-
-    unsigned int max_cycles = 0;
-    int growth_delay = 0;
-
-    GC fgc;
-    XGCValues gcv;
-    XWindowAttributes xgwa;
+    struct state *st = (struct state *) calloc (1, sizeof(*st));
 
 #ifdef TIME_ME
     int frames;
@@ -801,132 +811,157 @@ void screenhack(Display * dpy, Window window)
     double tdiff;
 #endif
 
-    growth_delay = (get_integer_resource("growthDelay", "Integer"));
-    max_cycles = (get_integer_resource("maxCycles", "Integer"));
-    f->num_circles = (get_integer_resource("numCircles", "Integer"));
-    f->percent_orbits = (get_integer_resource("percentOrbits", "Integer"));
-    f->base_orbits = (get_integer_resource("baseOrbits", "Integer"));
-    f->base_on_center = (get_boolean_resource("baseOnCenter", "Boolean"));
-    f->draw_centers = (get_boolean_resource("drawCenters", "Boolean"));
+    st->dpy = dpy;
+    st->window = window;
+    st->f = init_field();
+    st->growth_delay = (get_integer_resource(st->dpy, "growthDelay", "Integer"));
+    st->max_cycles = (get_integer_resource(st->dpy, "maxCycles", "Integer"));
+    st->f->num_circles = (get_integer_resource(st->dpy, "numCircles", "Integer"));
+    st->f->percent_orbits = (get_integer_resource(st->dpy, "percentOrbits", "Integer"));
+    st->f->base_orbits = (get_integer_resource(st->dpy, "baseOrbits", "Integer"));
+    st->f->base_on_center = (get_boolean_resource(st->dpy, "baseOnCenter", "Boolean"));
+    st->f->draw_centers = (get_boolean_resource(st->dpy, "drawCenters", "Boolean"));
 
-    if (f->num_circles <= 1) 
+    if (st->f->num_circles <= 1) 
     {
         fprintf(stderr, "%s: Minimum number of circles is 2\n", 
                 progname);
-        return;
+        exit (1);
     }
 
-    if ( (f->percent_orbits < 0) || (f->percent_orbits > 100) )
+    if ( (st->f->percent_orbits < 0) || (st->f->percent_orbits > 100) )
     {
         fprintf(stderr, "%s: percent-oribts must be between 0 and 100\n", 
                 progname);
-        return;
+        exit (1);
     }
 
-    if ( (f->base_orbits < 0) || (f->base_orbits > 100) )
+    if ( (st->f->base_orbits < 0) || (st->f->base_orbits > 100) )
     {
         fprintf(stderr, "%s: base-oribts must be between 0 and 100\n", 
                 progname);
-        return;
+        exit (1);
     }
 
-    if ( f->percent_orbits == 100 )
-	f->base_on_center = True;
+    if ( st->f->percent_orbits == 100 )
+	st->f->base_on_center = True;
 
-    XGetWindowAttributes(dpy, window, &xgwa);
+    XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
 
-    build_colors(f, dpy, &xgwa);
+    build_colors(st->f, st->dpy, &st->xgwa);
 
-    gcv.foreground = get_pixel_resource("foreground", "Foreground",
-					dpy, xgwa.colormap);
-    gcv.background = get_pixel_resource("background", "Background",
-					dpy, xgwa.colormap);
+    st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "foreground", "Foreground");
+    st->gcv.background = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "background", "Background");
 
-    fgc = XCreateGC(dpy, window, GCForeground, &gcv);
+    st->fgc = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
 
-    f->height = xgwa.height;
-    f->width = xgwa.width;
-    f->visdepth = xgwa.depth;
-    f->fgcolor = gcv.foreground;
-    f->bgcolor = gcv.background;
+    st->f->height = st->xgwa.height;
+    st->f->width = st->xgwa.width;
+    st->f->visdepth = st->xgwa.depth;
+    st->f->fgcolor = st->gcv.foreground;
+    st->f->bgcolor = st->gcv.background;
 
     /* Initialize stuff */
-    build_field(dpy, window, xgwa, fgc, f);
+    build_field(st->dpy, st->window, st->xgwa, st->fgc, st->f);
 
 #ifdef TIME_ME
     gettimeofday(&tm1, NULL);
     frames = 0;
 #endif
 
-    while (1) 
-    {
-        if ((f->cycles % 10) == 0) 
-	{
-            /* Restart if the window size changes */
-            XGetWindowAttributes(dpy, window, &xgwa);
-
-            if (f->height != xgwa.height || f->width != xgwa.width) 
-	    {
-                f->height = xgwa.height;
-                f->width = xgwa.width;
-                f->visdepth = xgwa.depth;
-
-                build_field(dpy, window, xgwa, fgc, f);
-                XSetForeground(dpy, fgc, gcv.background);
-                XFillRectangle(dpy, window, fgc, 0, 0, xgwa.width, xgwa.height);
-                XSetForeground(dpy, fgc, gcv.foreground);
-            }
-            screenhack_handle_events(dpy);
-        }
-
-	moveCircles(f);
-	drawIntersections(dpy, window, fgc, f);
-
-        f->cycles++;
-
-
-        XSync(dpy, False);
-
-        screenhack_handle_events(dpy);
-
-        if (f->cycles >= max_cycles && max_cycles != 0)
-	{
-            build_field(dpy, window, xgwa, fgc, f);
-            XSetForeground(dpy, fgc, gcv.background);
-            XFillRectangle(dpy, window, fgc, 0, 0, xgwa.width, xgwa.height);
-            XSetForeground(dpy, fgc, gcv.foreground);
-        }
-
-        if (growth_delay)
-            usleep(growth_delay);
-
-#ifdef TIME_ME
-	frames++;
-	gettimeofday(&tm2, NULL);
-
-	tdiff = (tm2.tv_sec - tm1.tv_sec) 
-	    + (tm2.tv_usec - tm1.tv_usec) * 0.00001;
-
-	if ( tdiff > 1 )
-	{
-	    fprintf(stderr, "fps: %d %f %f\n", 
-		    frames, tdiff, frames / tdiff );
-
-	    fprintf(stderr, "intersections: %d %d %f\n", 
-		    f->intersection_count, f->possible_intersections, 
-		    ((double)f->intersection_count) / 
-		    f->possible_intersections);
-
-	    fprintf(stderr, "fpi: %f\n", 
-		    ((double)frames) / f->intersection_count );
-
-	    frames = 0;
-	    tm1.tv_sec = tm2.tv_sec;
-	    tm1.tv_usec = tm2.tv_usec;
-
-	    f->intersection_count = f->possible_intersections = 0;
-	}
-#endif
-    }
+    return st;
 }
 
+
+static unsigned long
+interaggregate_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if ((st->f->cycles % 10) == 0) 
+    {
+      /* Restart if the window size changes */
+      XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+
+      if (st->f->height != st->xgwa.height || st->f->width != st->xgwa.width) 
+        {
+          st->f->height = st->xgwa.height;
+          st->f->width = st->xgwa.width;
+          st->f->visdepth = st->xgwa.depth;
+
+          build_field(st->dpy, st->window, st->xgwa, st->fgc, st->f);
+          XSetForeground(st->dpy, st->fgc, st->gcv.background);
+          XFillRectangle(st->dpy, st->window, st->fgc, 0, 0, st->xgwa.width, st->xgwa.height);
+          XSetForeground(st->dpy, st->fgc, st->gcv.foreground);
+        }
+    }
+
+  moveCircles(st->f);
+  drawIntersections(st->dpy, st->window, st->fgc, st->f);
+
+  st->f->cycles++;
+
+
+  if (st->f->cycles >= st->max_cycles && st->max_cycles != 0)
+    {
+      build_field(st->dpy, st->window, st->xgwa, st->fgc, st->f);
+      XSetForeground(st->dpy, st->fgc, st->gcv.background);
+      XFillRectangle(st->dpy, st->window, st->fgc, 0, 0, st->xgwa.width, st->xgwa.height);
+      XSetForeground(st->dpy, st->fgc, st->gcv.foreground);
+    }
+
+#ifdef TIME_ME
+  frames++;
+  gettimeofday(&tm2, NULL);
+
+  tdiff = (tm2.tv_sec - tm1.tv_sec) 
+    + (tm2.tv_usec - tm1.tv_usec) * 0.00001;
+
+  if ( tdiff > 1 )
+    {
+      fprintf(stderr, "fps: %d %f %f\n", 
+              frames, tdiff, frames / tdiff );
+
+      fprintf(stderr, "intersections: %d %d %f\n", 
+              f->intersection_count, f->possible_intersections, 
+              ((double)f->intersection_count) / 
+              f->possible_intersections);
+
+      fprintf(stderr, "fpi: %f\n", 
+              ((double)frames) / f->intersection_count );
+
+      frames = 0;
+      tm1.tv_sec = tm2.tv_sec;
+      tm1.tv_usec = tm2.tv_usec;
+
+      f->intersection_count = f->possible_intersections = 0;
+    }
+#endif
+
+  return st->growth_delay;
+}
+
+
+static void
+interaggregate_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+interaggregate_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+interaggregate_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+XSCREENSAVER_MODULE ("Interaggregate", interaggregate)

@@ -1,6 +1,6 @@
 /* lavalite --- 3D Simulation a Lava Lite, written by jwz.
  *
- * This software Copyright (c) 2002-2004 Jamie Zawinski <jwz@jwz.org>
+ * This software Copyright (c) 2002-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,40 +64,15 @@
  *      with depth buffering turned off?
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"LavaLite"
-#define HACK_INIT	init_lavalite
-#define HACK_DRAW	draw_lavalite
-#define HACK_RESHAPE	reshape_lavalite
-#define HACK_HANDLE_EVENT lavalite_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "Z"
-#define DEF_WANDER      "False"
-#define DEF_SPEED       "0.003"
-#define DEF_RESOLUTION  "40"
-#define DEF_SMOOTH      "True"
-#define DEF_COUNT       "3"
-#define DEF_STYLE       "random"
-#define DEF_IMPATIENT   "False"
-#define DEF_LCOLOR	"#FF0000" /* lava */
-#define DEF_FCOLOR	"#00AAFF" /* fluid */
-#define DEF_BCOLOR	"#666666" /* base */
-#define DEF_TCOLOR	"#000000" /*"#00FF00"*/ /* table */
-
-#define DEF_FTEX	"(none)"
-#define DEF_BTEX	"(none)"
-#define DEF_TTEX	"(none)"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 			"*geometry:	600x900\n"      \
 			"*count:      " DEF_COUNT " \n" \
+
+# define refresh_lavalite 0
+# define release_lavalite 0
+
 
 #define BLOBS_PER_GROUP 4
 
@@ -122,8 +97,23 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
 
+#define DEF_SPIN        "Z"
+#define DEF_WANDER      "False"
+#define DEF_SPEED       "0.003"
+#define DEF_RESOLUTION  "40"
+#define DEF_SMOOTH      "True"
+#define DEF_COUNT       "3"
+#define DEF_STYLE       "random"
+#define DEF_IMPATIENT   "False"
+#define DEF_LCOLOR	"#FF0000" /* lava */
+#define DEF_FCOLOR	"#00AAFF" /* fluid */
+#define DEF_BCOLOR	"#666666" /* base */
+#define DEF_TCOLOR	"#000000" /*"#00FF00"*/ /* table */
+
+#define DEF_FTEX	"(none)"
+#define DEF_BTEX	"(none)"
+#define DEF_TTEX	"(none)"
 
 typedef struct metaball metaball;
 
@@ -156,7 +146,7 @@ typedef struct {
   GLfloat texture_elevation;
 } lamp_geometry;
 
-static lamp_geometry classic_lamp[] = {
+static const lamp_geometry classic_lamp[] = {
   { CAP,    1.16, 0.089, 0.00 },
   { BOTTLE, 0.97, 0.120, 0.40 },
   { BOTTLE, 0.13, 0.300, 0.87 },
@@ -167,7 +157,7 @@ static lamp_geometry classic_lamp[] = {
   { 0, 0, 0, 0 },
 };
 
-static lamp_geometry giant_lamp[] = {
+static const lamp_geometry giant_lamp[] = {
   { CAP,    1.12, 0.105, 0.00 },
   { BOTTLE, 0.97, 0.130, 0.30 },
   { BOTTLE, 0.20, 0.300, 0.87 },
@@ -178,7 +168,7 @@ static lamp_geometry giant_lamp[] = {
   { 0, 0, 0, 0 },
 };
 
-static lamp_geometry cone_lamp[] = {
+static const lamp_geometry cone_lamp[] = {
   { CAP,    1.35, 0.001, 0.00 },
   { CAP,    1.35, 0.020, 0.00 },
   { CAP,    1.30, 0.055, 0.05 },
@@ -190,7 +180,7 @@ static lamp_geometry cone_lamp[] = {
   { 0, 0, 0, 0 },
 };
 
-static lamp_geometry rocket_lamp[] = {
+static const lamp_geometry rocket_lamp[] = {
   { CAP,    1.35, 0.001, 0.00 },
   { CAP,    1.34, 0.020, 0.00 },
   { CAP,    1.30, 0.055, 0.05 },
@@ -210,7 +200,7 @@ static lamp_geometry rocket_lamp[] = {
 typedef struct {
   GLXContext *glx_context;
   lamp_style style;
-  lamp_geometry *model;
+  const lamp_geometry *model;
   rotator *rot;
   rotator *rot2;
   trackball_state *trackball;
@@ -248,13 +238,14 @@ static char *lava_color_str, *fluid_color_str, *base_color_str,
 static char *fluid_tex, *base_tex, *table_tex;
 
 static GLfloat lava_color[4], fluid_color[4], base_color[4], table_color[4];
-static GLfloat lava_spec[4] = {1.0, 1.0, 1.0, 1.0};
-static GLfloat lava_shininess = 128.0;
-static GLfloat foot_color[4] = {0.2, 0.2, 0.2, 1.0};
 
-static GLfloat light0_pos[4] = {-0.6, 0.0, 1.0, 0.0};
-static GLfloat light1_pos[4] = { 1.0, 0.0, 0.2, 0.0};
-static GLfloat light2_pos[4] = { 0.6, 0.0, 1.0, 0.0};
+static const GLfloat lava_spec[4] = {1.0, 1.0, 1.0, 1.0};
+static const GLfloat lava_shininess = 128.0;
+static const GLfloat foot_color[4] = {0.2, 0.2, 0.2, 1.0};
+
+static const GLfloat light0_pos[4] = {-0.6, 0.0, 1.0, 0.0};
+static const GLfloat light1_pos[4] = { 1.0, 0.0, 0.2, 0.0};
+static const GLfloat light2_pos[4] = { 0.6, 0.0, 1.0, 0.0};
 
 
 
@@ -300,12 +291,12 @@ static argtype vars[] = {
   {&table_tex,       "tableTexture", "BaseTexture",  DEF_TTEX, t_String},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt lavalite_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_lavalite (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -519,7 +510,7 @@ draw_table (GLfloat z, Bool wire)
 static int
 draw_wing (GLfloat w, GLfloat h, GLfloat d, Bool wire)
 {
-  static int coords[2][8][2] = {
+  static const int coords[2][8][2] = {
     { {  0,   0 },
       { 10,  10 },
       { 20,  23 },
@@ -622,7 +613,7 @@ generate_bottle (ModeInfo *mi)
   Bool smooth = do_smooth;
   Bool have_texture = False;
 
-  lamp_geometry *top_slice = bp->model;
+  const lamp_geometry *top_slice = bp->model;
   const char *current_texture = 0;
   lamp_part last_part = 0;
 
@@ -644,7 +635,7 @@ generate_bottle (ModeInfo *mi)
 
   while (1)
     {
-      lamp_geometry *bot_slice = top_slice + 1;
+      const lamp_geometry *bot_slice = top_slice + 1;
 
       const char *texture = 0;
       GLfloat *color = 0;
@@ -692,7 +683,8 @@ generate_bottle (ModeInfo *mi)
       if ((top_slice->part == CAP  && bot_slice->part == BOTTLE) ||
           (top_slice->part == BASE && bot_slice->part == 0))
         {
-          lamp_geometry *sl = (bot_slice->part == 0 ? top_slice : bot_slice);
+          const lamp_geometry *sl = (bot_slice->part == 0
+                                     ? top_slice : bot_slice);
           bp->bottle_poly_count +=
             draw_disc (sl->radius, sl->elevation, faces, False, wire);
         }
@@ -869,7 +861,7 @@ static GLfloat
 max_bottle_radius (lavalite_configuration *bp)
 {
   GLfloat r = 0;
-  lamp_geometry *slice;
+  const lamp_geometry *slice;
   for (slice = bp->model; slice->part != 0; slice++)
     {
       if (slice->part == BOTTLE && slice->radius > r)
@@ -885,7 +877,7 @@ static GLfloat
 bottle_radius_at (lavalite_configuration *bp, GLfloat z)
 {
   GLfloat topz = -999, botz = -999, topr = 0, botr = 0;
-  lamp_geometry *slice;
+  const lamp_geometry *slice;
   GLfloat ratio;
 
   for (slice = bp->model; slice->part != 0; slice++)
@@ -1246,7 +1238,7 @@ animate_lava (ModeInfo *mi)
 /* Startup initialization
  */
 
-Bool
+ENTRYPOINT Bool
 lavalite_handle_event (ModeInfo *mi, XEvent *event)
 {
   lavalite_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -1304,7 +1296,7 @@ parse_color (ModeInfo *mi, const char *name, const char *s, GLfloat *a)
 }
 
 
-void 
+ENTRYPOINT void 
 init_lavalite (ModeInfo *mi)
 {
   lavalite_configuration *bp;
@@ -1391,6 +1383,7 @@ init_lavalite (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -1455,7 +1448,7 @@ init_lavalite (ModeInfo *mi)
 /* Render one frame
  */
 
-void
+ENTRYPOINT void
 draw_lavalite (ModeInfo *mi)
 {
   lavalite_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -1464,6 +1457,8 @@ draw_lavalite (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
@@ -1570,5 +1565,7 @@ draw_lavalite (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Lavalite", lavalite)
 
 #endif /* USE_GL */

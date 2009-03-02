@@ -77,61 +77,48 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
  * In real OpenGL, PseudoColor DO NOT support texture map (as far as I know).
  */
 
-#ifdef VMS
-#include <X11/Intrinsic.h>
-#endif
-
 #ifdef STANDALONE
 # define MODE_moebius
-# define PROGCLASS			"Moebius"
-# define HACK_INIT			init_moebius
-# define HACK_DRAW			draw_moebius
-# define HACK_RESHAPE		reshape_moebius
-# define HACK_HANDLE_EVENT	moebius_handle_event
-# define EVENT_MASK			PointerMotionMask
-# define moebius_opts		xlockmore_opts
+# define refresh_moebius 0
 # define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
-
 #endif /* !STANDALONE */
 
 #ifdef MODE_moebius
 
-
-#include <GL/glu.h>
 #include "e_textures.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
 #define DEF_SOLIDMOEBIUS  "False"
-#define DEF_NOANTS  "False"
+#define DEF_DRAWANTS  "True"
 
 static int  solidmoebius;
-static int  noants;
+static int  drawants;
 
 static XrmOptionDescRec opts[] =
 {
   {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "on"},
   {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "off"},
-  {"-noants", ".moebius.noants", XrmoptionNoArg, "on"},
-  {"+noants", ".moebius.noants", XrmoptionNoArg, "off"}
+  {"-ants", ".moebius.drawants", XrmoptionNoArg, "on"},
+  {"+ants", ".moebius.drawants", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
   {&solidmoebius, "solidmoebius", "Solidmoebius", DEF_SOLIDMOEBIUS, t_Bool},
-  {&noants, "noants", "Noants", DEF_NOANTS, t_Bool}
+  {&drawants, "drawants", "Drawants", DEF_DRAWANTS, t_Bool}
 
 };
 static OptionStruct desc[] =
 {
 	{"-/+solidmoebius", "select between a SOLID or a NET Moebius Strip"},
-	{"-/+noants", "turn on/off walking ants"}
+	{"-/+drawants", "turn on/off walking ants"}
 };
 
-ModeSpecOpt moebius_opts =
+ENTRYPOINT ModeSpecOpt moebius_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -162,51 +149,33 @@ typedef struct {
 	GLint       WindH, WindW;
 	GLfloat     step;
 	GLfloat     ant_position;
+	float       ant_step;
 	GLXContext *glx_context;
     rotator    *rot;
     trackball_state *trackball;
     Bool        button_down_p;
 } moebiusstruct;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient[] =
-{0.0, 0.0, 0.0, 1.0};
-static float diffuse[] =
-{1.0, 1.0, 1.0, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] = {0.7, 0.7, 0.7, 1.0};
+static const float ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const float diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const float position0[] = {1.0, 1.0, 1.0, 0.0};
+static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
-static float MaterialRed[] =
-{0.7, 0.0, 0.0, 1.0};
-static float MaterialGreen[] =
-{0.1, 0.5, 0.2, 1.0};
-static float MaterialBlue[] =
-{0.0, 0.0, 0.7, 1.0};
-static float MaterialCyan[] =
-{0.2, 0.5, 0.7, 1.0};
-static float MaterialYellow[] =
-{0.7, 0.7, 0.0, 1.0};
-static float MaterialMagenta[] =
-{0.6, 0.2, 0.5, 1.0};
-static float MaterialWhite[] =
-{0.7, 0.7, 0.7, 1.0};
-static float MaterialGray[] =
-{0.2, 0.2, 0.2, 1.0};
-static float MaterialGray5[] =
-{0.5, 0.5, 0.5, 1.0};
-static float MaterialGray6[] =
-{0.6, 0.6, 0.6, 1.0};
-static float MaterialGray8[] =
-{0.8, 0.8, 0.8, 1.0};
+static const float MaterialRed[] = {0.7, 0.0, 0.0, 1.0};
+static const float MaterialGreen[] = {0.1, 0.5, 0.2, 1.0};
+static const float MaterialBlue[] = {0.0, 0.0, 0.7, 1.0};
+static const float MaterialCyan[] = {0.2, 0.5, 0.7, 1.0};
+static const float MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};
+static const float MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+static const float MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};
+static const float MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
+static const float MaterialGray5[] = {0.5, 0.5, 0.5, 1.0};
+static const float MaterialGray6[] = {0.6, 0.6, 0.6, 1.0};
+static const float MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
 
 static moebiusstruct *moebius = (moebiusstruct *) NULL;
 
@@ -239,15 +208,14 @@ myCone(float radius)
 }
 
 static Bool
-draw_moebius_ant(moebiusstruct * mp, float *Material, int mono)
+draw_moebius_ant(moebiusstruct * mp, const float *Material, int mono)
 {
-	static float ant_step = 0;
-	float       cos1 = cos(ant_step);
-	float       cos2 = cos(ant_step + 2 * Pi / 3);
-	float       cos3 = cos(ant_step + 4 * Pi / 3);
-	float       sin1 = sin(ant_step);
-	float       sin2 = sin(ant_step + 2 * Pi / 3);
-	float       sin3 = sin(ant_step + 4 * Pi / 3);
+	float       cos1 = cos(mp->ant_step);
+	float       cos2 = cos(mp->ant_step + 2 * Pi / 3);
+	float       cos3 = cos(mp->ant_step + 4 * Pi / 3);
+	float       sin1 = sin(mp->ant_step);
+	float       sin2 = sin(mp->ant_step + 2 * Pi / 3);
+	float       sin3 = sin(mp->ant_step + 4 * Pi / 3);
 
 	if (mono)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray5);
@@ -396,7 +364,7 @@ draw_moebius_ant(moebiusstruct * mp, float *Material, int mono)
 
 	glEnable(GL_LIGHTING);
 
-	ant_step += 0.3;
+	mp->ant_step += 0.3;
 	return True;
 }
 
@@ -499,7 +467,7 @@ draw_moebius_strip(ModeInfo * mi)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if (!noants) {
+	if (drawants) {
 		/* DRAW BLUE ANT */
 		glPushMatrix();
 		glRotatef(mp->ant_position + 180, 0, 0, 1);
@@ -548,8 +516,8 @@ draw_moebius_strip(ModeInfo * mi)
 #undef MoebiusDivisions
 #undef MoebiusTransversals
 
-void
-reshape_moebius(ModeInfo * mi, int width, int height)
+ENTRYPOINT void
+reshape_moebius (ModeInfo * mi, int width, int height)
 {
 	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
 
@@ -626,8 +594,8 @@ pinit(void)
 
 
 
-void
-release_moebius(ModeInfo * mi)
+ENTRYPOINT void
+release_moebius (ModeInfo * mi)
 {
 	if (moebius != NULL) {
 		(void) free((void *) moebius);
@@ -636,7 +604,7 @@ release_moebius(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
-Bool
+ENTRYPOINT Bool
 moebius_handle_event (ModeInfo *mi, XEvent *event)
 {
   moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
@@ -677,8 +645,8 @@ moebius_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
-init_moebius(ModeInfo * mi)
+ENTRYPOINT void
+init_moebius (ModeInfo * mi)
 {
 	moebiusstruct *mp;
 
@@ -707,8 +675,8 @@ init_moebius(ModeInfo * mi)
 	}
 }
 
-void
-draw_moebius(ModeInfo * mi)
+ENTRYPOINT void
+draw_moebius (ModeInfo * mi)
 {
 	moebiusstruct *mp;
 
@@ -764,8 +732,9 @@ draw_moebius(ModeInfo * mi)
 	mp->step += 0.025;
 }
 
-void
-change_moebius(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void
+change_moebius (ModeInfo * mi)
 {
 	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
 
@@ -775,5 +744,9 @@ change_moebius(ModeInfo * mi)
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
 	pinit();
 }
+#endif /* !STANDALONE */
+
+
+XSCREENSAVER_MODULE ("Moebius", moebius)
 
 #endif

@@ -51,8 +51,6 @@
 
 #include "screenhack.h"
 
-# include <X11/Xutil.h>
-
 /* I thought it would be faster this way, but it turns out not to be... -jwz */
 #undef USE_XIMAGE
 
@@ -69,9 +67,7 @@
 # include "xshm.h"
 #endif /* HAVE_XSHM_EXTENSION */
 
-char *progclass="Interference";
-
-char *defaults [] = {
+static const char *interference_defaults [] = {
   ".background:  black",
   ".foreground:  white",
   "*count:       3",     /* number of waves */
@@ -97,7 +93,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec interference_options [] = {
   { "-count",       ".count",       XrmoptionSepArg, 0 }, 
   { "-ncolors",     ".ncolors",     XrmoptionSepArg, 0 }, 
   { "-gridsize",    ".gridsize",    XrmoptionSepArg, 0 }, 
@@ -116,8 +112,6 @@ XrmOptionDescRec options [] = {
 #endif /*  HAVE_XSHM_EXTENSION */
   { 0, 0, 0, 0 }
 };
-
-int options_size = (sizeof (options) / sizeof (XrmOptionDescRec));
 
 struct inter_source {
   int x; 
@@ -187,7 +181,7 @@ struct inter_context {
 # define TARGET(c) ((c)->pix_buf ? (c)->pix_buf : (c)->win)
 #endif /* !HAVE_DOUBLE_BUFFER_EXTENSION */
 
-void inter_init(Display* dpy, Window win, struct inter_context* c) 
+static void inter_init(Display* dpy, Window win, struct inter_context* c) 
 {
   XWindowAttributes xgwa;
   double H[3], S[3], V[3];
@@ -196,12 +190,19 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   int gray;
   XGCValues val;
   unsigned long valmask = 0;
-  Bool dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
+  Bool dbuf = get_boolean_resource (dpy, "doubleBuffer", "Boolean");
+
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  dbuf = False;
+# endif
 
   memset (c, 0, sizeof(*c));
 
   c->dpy = dpy;
   c->win = win;
+
+  c->delay = get_integer_resource(dpy, "delay", "Integer");
+
 
   XGetWindowAttributes(c->dpy, c->win, &xgwa);
   c->w = xgwa.width;
@@ -209,7 +210,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->cmap = xgwa.colormap;
 
 #ifdef HAVE_XSHM_EXTENSION
-  c->use_shm = get_boolean_resource("useSHM", "Boolean");
+  c->use_shm = get_boolean_resource(dpy, "useSHM", "Boolean");
 #endif /*  HAVE_XSHM_EXTENSION */
 
   if (dbuf)
@@ -228,28 +229,28 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   val.function = GXcopy;
   c->copy_gc = XCreateGC(c->dpy, TARGET(c), GCFunction, &val);
 
-  c->count = get_integer_resource("count", "Integer");
+  c->count = get_integer_resource(dpy, "count", "Integer");
   if(c->count < 1)
     c->count = 1;
-  c->grid_size = get_integer_resource("gridsize", "Integer");
+  c->grid_size = get_integer_resource(dpy, "gridsize", "Integer");
   if(c->grid_size < 1)
     c->grid_size = 1;
-  mono = get_boolean_resource("mono", "Boolean");
+  mono = get_boolean_resource(dpy, "mono", "Boolean");
   if(!mono) {
-    c->colors = get_integer_resource("ncolors", "Integer");
+    c->colors = get_integer_resource(dpy, "ncolors", "Integer");
     if(c->colors < 2)
       c->colors = 2;
   }
-  c->hue = get_integer_resource("hue", "Float");
+  c->hue = get_integer_resource(dpy, "hue", "Float");
   while (c->hue < 0 || c->hue >= 360)
     c->hue = frand(360.0);
-  c->speed = get_integer_resource("speed", "Integer");
-  c->shift = get_float_resource("color-shift", "Float");
+  c->speed = get_integer_resource(dpy, "speed", "Integer");
+  c->shift = get_float_resource(dpy, "color-shift", "Float");
   while(c->shift >= 360.0)
     c->shift -= 360.0;
   while(c->shift <= -360.0)
     c->shift += 360.0;
-  c->radius = get_integer_resource("radius", "Integer");;
+  c->radius = get_integer_resource(dpy, "radius", "Integer");;
   if(c->radius < 1)
     c->radius = 1;
 
@@ -283,7 +284,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   if(!mono) {
     c->pal = calloc(c->colors, sizeof(XColor));
 
-    gray = get_boolean_resource("gray", "Boolean");
+    gray = get_boolean_resource(dpy, "gray", "Boolean");
     if(!gray) {
       H[0] = c->hue;
       H[1] = H[0] + c->shift < 360.0 ? H[0]+c->shift : H[0] + c->shift-360.0; 
@@ -353,7 +354,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
  * it, go ahead! 
  */
 
-void do_inter(struct inter_context* c) 
+static void do_inter(struct inter_context* c) 
 {
   int i, j, k;
   int result;
@@ -434,21 +435,39 @@ void do_inter(struct inter_context* c)
         XCopyArea (c->dpy, c->pix_buf, c->win, c->copy_gc,
                    0, 0, c->w, c->h, 0, 0);
       }
-
-  XSync(c->dpy, False);
 }
 
-void screenhack(Display *dpy, Window win) 
+static void *
+interference_init (Display *dpy, Window win)
 {
-  struct inter_context c;
-  int delay;
-
-  delay = get_integer_resource("delay", "Integer");
-
-  inter_init(dpy, win, &c);
-  while(1) {
-    do_inter(&c); 
-    screenhack_handle_events (dpy);
-    if(delay) usleep(delay);
-  }
+  struct inter_context *c = (struct inter_context *) calloc (1, sizeof(*c));
+  inter_init(dpy, win, c);
+  return c;
 }
+
+static unsigned long
+interference_draw (Display *dpy, Window win, void *closure)
+{
+  struct inter_context *c = (struct inter_context *) closure;
+  do_inter(c);
+  return c->delay;
+}
+
+static void
+interference_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+interference_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+interference_free (Display *dpy, Window window, void *closure)
+{
+}
+
+XSCREENSAVER_MODULE ("Interference", interference)

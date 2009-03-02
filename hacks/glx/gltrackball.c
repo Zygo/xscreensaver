@@ -10,10 +10,19 @@
  * implied warranty.
  */
 
-#include "config.h"
-#include <stdlib.h>
 #include <math.h>
-#include <GL/gl.h>
+#include <stdlib.h>
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
 #include "trackball.h"
 #include "gltrackball.h"
 

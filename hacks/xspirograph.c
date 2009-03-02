@@ -22,65 +22,80 @@
 #include "screenhack.h"
 #include "erase.h"
 
-static GC 	draw_gc;
-static int 	sleep_time;
-static int 	sub_sleep_time;
-static int 	num_layers;
-static unsigned int default_fg_pixel;
-static Bool	always_finish_p;
+struct state {
+  Display *dpy;
+  Window window;
+  XWindowAttributes xgwa;
+
+  GC 	draw_gc;
+  int 	long_delay;
+  int 	sub_sleep_time;
+  int 	num_layers;
+  unsigned int default_fg_pixel;
+  Bool	always_finish_p;
+  XColor	color;
+  int got_color;
+
+  int theta;
+  float firstx, firsty;
+  int x1, y1, x2, y2;
+
+  int counter;
+  int distance;
+  int radius1, radius2;
+  double divisor;
+
+  int new_layer;
+  int erasing;
+  eraser_state *eraser;
+};
+
 
 static void
-init_tsg (Display *dpy, Window window)
+init_tsg (struct state *st)
 {
   XGCValues	gcv;
   Colormap	cmap;
-  XWindowAttributes xgwa;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  gcv.foreground = get_pixel_resource ("background", "Background", dpy, cmap);
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  cmap = st->xgwa.colormap;
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
+  st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
 }
 
 
-static void
-go (Display *dpy, Window window,
-       int radius1, int radius2,
-       int d)
+static Bool
+go (struct state *st, int radius1, int radius2, int d)
 {
-  XWindowAttributes xgwa;
   int width, height;
   int xmid, ymid;
-  int x1, y1, x2, y2;
-  float firstx = 0, firsty = 0;
   float tmpx, tmpy;
-  int theta;
   int delta;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  width  = xgwa.width;
-  height = xgwa.height;
+  width  = st->xgwa.width;
+  height = st->xgwa.height;
   delta = 1;
   xmid = width / 2;
   ymid = height / 2;
 
-  x1 = xmid + radius1 - radius2 + d;
-  y1 = ymid;
+  if (st->theta == 1) {
+    st->x1 = xmid + radius1 - radius2 + d;
+    st->y1 = ymid;
+  }
 
-
-  for (theta = 1; /* theta < ( 360 * 100 ) */; theta++) 
+/*  for (theta = 1; / * theta < ( 360 * 100 ) * /; theta++) */
                   /* see below about alwaysfinish */
     {
 	tmpx = xmid + ((       radius1	          /* * * * *            */
                   - radius2        )		 /* This algo simulates	*/
-                  * cos((      theta 		/* the rotation of a    */
+                  * cos((      st->theta 		/* the rotation of a    */
                   * M_PI           ) 		/* circular disk inside */
                   / 180           )) 		/* a hollow circular 	*/
                   + (              d 		/* rim. A point on the  */
                   * cos((((  radius1 		/* disk dist d from the	*/
-                  * theta          )		/* centre, traces the 	*/
+                  * st->theta      )		/* centre, traces the 	*/
                   - delta          )		/* path given by this   */
                   / radius2        )  		/* equation.	        */
                   *             M_PI		/* A deviation (error)  */
@@ -91,7 +106,7 @@ go (Display *dpy, Window window,
                      ( radius1 - radius2	/*			*/
                       ) * sin			/* Imperfection adds to */
                        (			/* beauty, symbolically */
-                        ( theta * M_PI     	/* ...			*/
+                        ( st->theta * M_PI     	/* ...			*/
                          ) / 180		/* Algo deduced by      */
                           )			/* Rohit Singh, Jan'00  */
                            ) +                  /* based on a toy he    */
@@ -99,7 +114,7 @@ go (Display *dpy, Window window,
                              (                  /* when he was a kid.  */
                               (                 /*            * * * * */
                                (          	
-                                ( radius1 * theta
+                                ( radius1 * st->theta
                                  ) - delta
                                   ) / radius2
                                    ) * M_PI / 180
@@ -107,145 +122,199 @@ go (Display *dpy, Window window,
                                      );
         
 	/*makes integers from the calculated values to do the drawing*/
-	x2 = tmpx;
-	y2 = tmpy;
+	st->x2 = tmpx;
+	st->y2 = tmpy;
 
 	/*stores the first values for later reference*/
-	if(theta == 1)
+	if(st->theta == 1)
 	{
-  		firstx = tmpx;
-  		firsty = tmpy;
+  		st->firstx = tmpx;
+  		st->firsty = tmpy;
 	}
 
-        XDrawLine (dpy, window, draw_gc, x1, y1, x2, y2);
+        if (st->theta != 1)
+          XDrawLine (st->dpy, st->window, st->draw_gc, 
+                     st->x1, st->y1, st->x2, st->y2);
 
-	x1 = x2;
-	y1 = y2;
-        XFlush (dpy);
+	st->x1 = st->x2;
+	st->y1 = st->y2;
 
 	/* compares the exact values calculated to the first
 	   exact values calculated */
 	/* this will break when nothing new is being drawn */
-	if(tmpx == firstx && tmpy == firsty && theta != 1)
-		break;
+	if(tmpx == st->firstx && tmpy == st->firsty && st->theta != 1) {
+          st->firstx = st->firsty = 0;
+          st->theta = 1;
+          return True;
+        }
 
 	/* this will break after 36000 iterations if 
 	   the -alwaysfinish option is not specified */
-	if(!always_finish_p && theta > ( 360 * 100 ) )
-		break;
+	if(!st->always_finish_p && st->theta > ( 360 * 100 ) ) {
+          st->firstx = st->firsty = 0;
+          st->theta = 1;
+          return True;
+        }
+    }
 
-	/* usleeping every time is too slow */
-	if(theta%100 == 0)
-		usleep(sub_sleep_time);
-    }	
+    st->theta++;
+
+    return False;
 }
 
 
 #define min(a,b) ((a)<(b)?(a):(b))
 
+
 static void
-getset (Display *dpy, Window window, XColor *color, Bool *got_color)
+pick_new (struct state *st)
 {
-  Colormap cmap;
-  int width, height;
-  int radius, radius1, radius2;
-  double divisor;
-  XWindowAttributes xgwa;
-  int distance;
-  int counter = 0;
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-  width = xgwa.width;
-  height = xgwa.height;
-  cmap = xgwa.colormap;
-
-  radius = min (width, height) / 2;
-
-  XClearWindow (dpy, window);
+  int radius = min (st->xgwa.width, st->xgwa.height) / 2;
+  st->divisor = ((frand (3.0) + 1) * (((random() & 1) * 2) - 1));
+  st->radius1 = radius;
+  st->radius2 = radius / st->divisor + 5;
+  st->distance = 100 + (random() % 200);
+  st->theta = 1;
+}
 
 
-  for(counter = 0; counter < num_layers; counter++)
-  {
-    divisor = ((frand (3.0) + 1) * (((random() & 1) * 2) - 1));
+static void *
+xspirograph_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = window;
+  st->long_delay = get_integer_resource(st->dpy, "delay", "Integer");
+  st->sub_sleep_time = get_integer_resource(st->dpy, "subdelay", "Integer");
+  st->num_layers = get_integer_resource(st->dpy, "layers", "Integer");
+  st->always_finish_p = get_boolean_resource (st->dpy, "alwaysfinish", "Boolean");
+  
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
-    radius1 = radius;
-    radius2 = radius / divisor + 5;
-    distance = 100 + (random() % 200);
+  init_tsg (st);
+  st->theta = 1;
+  st->new_layer = 1;
 
-    if (mono_p)
-      XSetForeground (dpy, draw_gc, default_fg_pixel);
-    else
+  return st;
+}
+
+
+static void
+new_colors (struct state *st)
+{
+  if (mono_p)
+    XSetForeground (st->dpy, st->draw_gc, st->default_fg_pixel);
+  else
     {
       hsv_to_rgb (random () % 360, frand (1.0), frand (0.5) + 0.5,
-		  &color->red, &color->green, &color->blue);
-      if ((*got_color = XAllocColor (dpy, cmap, color)))
-	XSetForeground (dpy, draw_gc, color->pixel);
+		  &st->color.red, &st->color.green, &st->color.blue);
+      if ((st->got_color = XAllocColor (st->dpy, st->xgwa.colormap,
+                                        &st->color)))
+	XSetForeground (st->dpy, st->draw_gc, st->color.pixel);
       else
-	XSetForeground (dpy, draw_gc, default_fg_pixel);
+	XSetForeground (st->dpy, st->draw_gc, st->default_fg_pixel);
     }
+}
 
-    go (dpy, window, radius1, -radius2, distance);
 
-    /* once again, with a parameter negated, just for kicks */
-    if (mono_p)
-      XSetForeground (dpy, draw_gc, default_fg_pixel);
-    else
-    {
-      hsv_to_rgb (random () % 360, frand (1.0), frand (0.5) + 0.5,
-		  &color->red, &color->green, &color->blue);
-      if ((*got_color = XAllocColor (dpy, cmap, color)))
-	XSetForeground (dpy, draw_gc, color->pixel);
-      else
-	XSetForeground (dpy, draw_gc, default_fg_pixel);
-    }
 
-    go (dpy, window, radius1, radius2, distance);
+static unsigned long
+xspirograph_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  Bool free_color = False;
+  Bool flip_p;
+
+  /* 5 sec delay before starting the erase */
+  if (st->erasing == 2) {
+    st->erasing--;
+    return (st->long_delay == 0 ? 0 : 5000000);
   }
+
+  /* erase, delaying 1/50th sec between frames */
+  if (st->erasing || st->eraser) {
+    st->erasing = 0;
+    st->eraser = erase_window (st->dpy, st->window, st->eraser);
+    if (st->eraser)
+      return 20000;
+    else
+      /* just finished erasing -- leave screen black for 1 sec */
+      return (st->long_delay == 0 ? 0 : 1000000);
+  }
+
+  flip_p = (st->counter & 1);
+
+  if (st->new_layer) {
+
+    st->new_layer = 0;
+    st->counter++;
+
+    if (st->counter > (2 * st->num_layers))
+      {
+        st->counter = 0;
+
+        if (free_color)
+          XFreeColors (st->dpy, st->xgwa.colormap, &st->color.pixel, 1, 0);
+
+        st->erasing = 2;
+      }
+
+    if (! flip_p)
+      pick_new (st);
+
+    new_colors (st);
+    st->new_layer = 0;
+  }
+
+  {
+    int i;
+    for (i = 0; i < 1000; i++) {
+      if (go (st, st->radius1, 
+              (flip_p ? st->radius2 : -st->radius2),
+              st->distance)) {
+        st->new_layer = 1;
+        break;
+      }
+    }
+  }
+
+  return st->sub_sleep_time;
+}
+
+
+static void
+xspirograph_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+}
+
+static Bool
+xspirograph_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
 }
 
 static void
-getset_go (Display *dpy, Window window)
+xspirograph_free (Display *dpy, Window window, void *closure)
 {
-  Bool		free_color = False;
-  XColor	color;
-  int		width;
-  int		height;
-  XWindowAttributes xgwa;
-  Colormap	cmap;
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-
-  width  = xgwa.width;
-  height = xgwa.height;
-  cmap   = xgwa.colormap;
-
-  getset(dpy, window, &color, &free_color);
-
-  XSync (dpy, False);
-  screenhack_handle_events (dpy);
-  sleep ( sleep_time );
-
-  screenhack_handle_events (dpy);
-  erase_full_window(dpy, window);
-
-  if (free_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
-  XSync (dpy, False);
-  screenhack_handle_events (dpy);
-  sleep (1);
+  struct state *st = (struct state *) closure;
+  free (st);
 }
 
-char *progclass = "XSpiroGraph";
 
-char *defaults [] = {
+static const char *xspirograph_defaults [] = {
   ".background:		black",
+  ".foreground:		white",
   "*delay:      	5",
-  "*subdelay:   	0",
-  "*layers:     	1",
+  "*subdelay:   	20000",
+  "*layers:     	2",
   "*alwaysfinish:	false",
   0
 };
 
-XrmOptionDescRec options [] = {   
+static XrmOptionDescRec xspirograph_options [] = {   
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
   { "-subdelay",        ".subdelay",            XrmoptionSepArg, 0 },
   { "-layers",          ".layers",        	XrmoptionSepArg, 0 },
@@ -253,17 +322,5 @@ XrmOptionDescRec options [] = {
   { "-noalwaysfinish",  ".alwaysfinish",	XrmoptionNoArg, "false"},
   { 0, 0, 0, 0 }
 };
-int options_size = (sizeof (options) / sizeof (options[0]));
 
-void
-screenhack (Display *dpy, Window window)
-{
-  sleep_time = get_integer_resource("delay", "Integer");
-  sub_sleep_time = get_integer_resource("subdelay", "Integer");
-  num_layers = get_integer_resource("layers", "Integer");
-  always_finish_p = get_boolean_resource ("alwaysfinish", "Boolean");
-  
-  init_tsg (dpy, window);
-  while (1)
-   getset_go (dpy, window);
-}
+XSCREENSAVER_MODULE ("XSpiroGraph", xspirograph)

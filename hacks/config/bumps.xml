@@ -16,10 +16,12 @@
   <!-- #### -soften [1] -->
   <!-- #### -invert -->
 
+  <xscreensaver-image />
+
   <_description>
-A bit like `Spotlight', except that instead of merely exposing part
-of your desktop, it creates a bump map from it.  Basically, it
-3D-izes a roaming section of your desktop, based on color intensity.
-Written by Shane Smit.
+A spotlight roams across an embossed version of your desktop or
+other picture.
+
+Written by Shane Smit; 1999.
   </_description>
 </screensaver>

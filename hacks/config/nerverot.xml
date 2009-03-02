@@ -41,11 +41,12 @@
             _label="Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="4"/>
 
-  <boolean id="db" _label="Double Buffer" arg-unset="-db"/>
+<!--  <boolean id="db" _label="Double Buffer" arg-set="-db"/> -->
 
   <_description>
 Draws different shapes composed of nervously vibrating squiggles,
 as if seen through a camera operated by a monkey on crack.
-By Dan Bornstein.
+
+Written by Dan Bornstein; 2000.
   </_description>
 </screensaver>

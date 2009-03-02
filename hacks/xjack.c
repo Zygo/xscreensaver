@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,358 +20,451 @@
 #include <ctype.h>
 #include "screenhack.h"
 
-char *progclass = "XJack";
+static const char *source = "All work and no play makes Jack a dull boy.  ";
+/* If you're here because you're thinking about making the above string be
+   customizable, then you don't get the joke.  You loser. */
 
-char *defaults [] = {
-  ".background:		#FFF0B4",
-  ".foreground:		#000000",
-  "XJack.font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
-  "*delay:		50000",
-  0
-};
+struct state {
+  Display *dpy;
+  Window window;
+  XWindowAttributes xgwa;
+  XFontStruct *font;
+  GC gc;
 
-XrmOptionDescRec options [] = {
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-font",		".font",	XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
-};
-
-void
-screenhack (Display *dpy, Window window)
-{
-  static const char *source = "All work and no play makes Jack a dull boy.  ";
-  /* If you're here because you're thinking about making the above string be
-     customizable, then you don't get the joke.  You loser. */
-  const char *s = source;
+  const char *s;
   int columns, rows;		/* characters */
   int left, right;		/* characters */
   int char_width, line_height;	/* pixels */
   int x, y;			/* characters */
-  int mode = 0;
-  int hspace = 15;		/* pixels */
-  int vspace = 15;		/* pixels */
-  Bool break_para = True;
-  Bool caps = False;
-  int sentences = 0;
-  int paras = 0;
+  int mode;
+  int hspace;			/* pixels */
+  int vspace;			/* pixels */
+  Bool break_para;
+  Bool caps;
+  int sentences;
+  int paras;
+  int scrolling;
+  int subscrolling;
+  int pining;
 
-  XWindowAttributes xgwa;
+  int delay;
+};
+
+
+static void
+xjack_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  st->columns = (st->xgwa.width  - st->hspace - st->hspace) / st->char_width;
+  st->rows    = (st->xgwa.height - st->vspace - st->vspace) / st->line_height;
+  st->rows--;
+  st->columns--;
+
+  if (st->y > st->rows)    st->y = st->rows-1;
+  if (st->x > st->columns) st->x = st->columns-2;
+
+  if (st->right > st->columns) st->right = st->columns;
+  if (st->left > st->columns-20) st->left = st->columns-20;
+  if (st->left < 0) st->left = 0;
+}
+
+
+static void *
+xjack_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
-  GC gc;
-  int delay = get_integer_resource ("delay", "Integer");
-  char *fontname = get_string_resource ("font", "Font");
-  XFontStruct *font = XLoadQueryFont (dpy, fontname);
+  char *fontname;
 
-  if (!font)
-    font = XLoadQueryFont (dpy, "-*-*-medium-r-*-*-*-240-*-*-m-*-*-*");
-  if (!font)
-    font = XLoadQueryFont (dpy, "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*");
-  if (!font)
-    font = XLoadQueryFont (dpy, "-*-*-*-r-*-*-*-240-*-*-m-*-*-*");
-  if (!font)
+  st->dpy = dpy;
+  st->window = window;
+  st->s = source;
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  fontname = get_string_resource (st->dpy, "font", "Font");
+  st->font = XLoadQueryFont (st->dpy, fontname);
+
+  if (!st->font)
+    st->font = XLoadQueryFont (st->dpy, "-*-*-medium-r-*-*-*-240-*-*-m-*-*-*");
+  if (!st->font)
+    st->font = XLoadQueryFont (st->dpy,
+                               "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*");
+  if (!st->font)
+    st->font = XLoadQueryFont (st->dpy, "-*-*-*-r-*-*-*-240-*-*-m-*-*-*");
+  if (!st->font)
     {
       fprintf(stderr, "no big fixed-width font like \"%s\"\n", fontname);
       exit(1);
     }
 
-  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
-  gcv.font = font->fid;
-  gcv.foreground = get_pixel_resource ("foreground", "Foreground", dpy,
-				       xgwa.colormap);
-  gcv.background = get_pixel_resource ("background", "Background", dpy,
-				       xgwa.colormap);
-  gc = XCreateGC (dpy, window, (GCFont | GCForeground | GCBackground), &gcv);
+  gcv.font = st->font->fid;
+  gcv.foreground = get_pixel_resource (st->dpy, st->xgwa.colormap,
+                                       "foreground", "Foreground");
+  gcv.background = get_pixel_resource (st->dpy, st->xgwa.colormap,
+                                       "background", "Background");
+  st->gc = XCreateGC (st->dpy, st->window,
+                      (GCFont | GCForeground | GCBackground), &gcv);
 
-  char_width = (font->per_char
-		? font->per_char['n'-font->min_char_or_byte2].rbearing
-		: font->min_bounds.rbearing);
-  line_height = font->ascent + font->descent + 1;
+  st->char_width = 
+    (st->font->per_char
+     ? st->font->per_char['n'-st->font->min_char_or_byte2].rbearing
+     : st->font->min_bounds.rbearing);
+  st->line_height = st->font->ascent + st->font->descent + 1;
 
-  columns = (xgwa.width - hspace - hspace) / char_width;
-  rows = (xgwa.height - vspace - vspace) / line_height;
+  xjack_reshape (dpy, window, st, st->xgwa.width, st->xgwa.height);
 
-  left = 0xFF & (random() % ((columns / 2)+1));
-  right = left + (0xFF & (random() % (columns - left - 10)+10));
-  x = 0;
-  y = 0;
+  st->left = 0xFF & (random() % ((st->columns / 2)+1));
+  st->right = st->left + (0xFF & (random() % (st->columns - st->left - 10)
+                                  + 10));
+  st->x = 0;
+  st->y = 0;
 
-  while (1)
-    {
-      int word_length = 0;
-      const char *s2;
-      for (s2 = s; *s2 && *s2 != ' '; s2++)
-	word_length++;
+  if (st->xgwa.width > 200 && st->xgwa.height > 200)
+    st->hspace = st->vspace = 40;
 
-      if (break_para ||
-	  (*s != ' ' &&
-	   (x + word_length) >= right))
-	{
-	  x = left;
-	  y++;
-
-	  if (break_para)
-	    y++;
-
-	  if (mode == 1 || mode == 2)
-	    {
-	      /* 1 = left margin goes southwest; 2 = southeast */
-	      left += (mode == 1 ? 1 : -1);
-	      if (left >= right - 10)
-		{
-		  if ((right < (columns - 10)) && (random() & 1))
-		    right += (0xFF & (random() % (columns - right)));
-		  else
-		    mode = 2;
-		}
-	      else if (left <= 0)
-		{
-		  left = 0;
-		  mode = 1;
-		}
-	    }
-	  else if (mode == 3 || mode == 4)
-	    {
-	      /* 3 = right margin goes southeast; 4 = southwest */
-	      right += (mode == 3 ? 1 : -1);
-	      if (right >= columns)
-		{
-		  right = columns;
-		  mode = 4;
-		}
-	      else if (right <= left + 10)
-		mode = 3;
-	    }
-
-	  if (y >= rows)	/* bottom of page */
-	    {
-	      /* scroll by 1-5 lines */
-	      int lines = (random() % 5 ? 0 : (0xFF & (random() % 5))) + 1;
-	      if (break_para)
-		lines++;
-
-	      /* but sometimes scroll by a whole page */
-	      if (0 == (random() % 100))
-		lines += rows;
-
-	      while (lines > 0)
-		{
-                  int i;
-                  int inc = line_height / 7;
-                  int pix_delay = delay / 1000;
-                  if (inc <= 0) inc = 1;
-                  for (i = 0; i < line_height; i += inc)
-                    {
-                      if (i > line_height)
-                        i = line_height;
-                      XCopyArea (dpy, window, window, gc,
-                                 0, inc,
-                                 xgwa.width, xgwa.height - inc,
-                                 0, 0);
-                      XSync (dpy, False);
-                      if (pix_delay) usleep (pix_delay);
-                    }
-		  y--;
-		  lines--;
-
-                  /* See? It's OK. He saw it on the television. */
-                  XClearArea (dpy, window,
-                              0, xgwa.height - vspace - line_height,
-                              xgwa.width, line_height + vspace + vspace,
-                              False);
-                  XSync (dpy, False);
-
-                  XGetWindowAttributes (dpy, window, &xgwa);
-                  columns = (xgwa.width - hspace - hspace) / char_width;
-                  rows = (xgwa.height - vspace - vspace) / line_height;
-                  if (y > rows) y = rows-1;
-                  if (x > columns) x = columns-2;
-
-                  if (delay) usleep (delay);
-		}
-	      if (y < 0) y = 0;
-	    }
-
-	  break_para = False;
-	}
-
-      if (*s != ' ')
-	{
-	  char c = *s;
-	  int xshift = 0, yshift = 0;
-	  if (0 == random() % 50)
-	    {
-	      xshift = random() % ((char_width / 3) + 1);      /* mis-strike */
-	      yshift = random() % ((line_height / 6) + 1);
-	      if (0 == (random() % 3))
-		yshift *= 2;
-	      if (random() & 1)
-		xshift = -xshift;
-	      if (random() & 1)
-		yshift = -yshift;
-	    }
-
-	  if (0 == (random() % 250))	/* introduce adjascent-key typo */
-	    {
-	      static const char * const typo[] = {
-		"asqw", "ASQW", "bgvhn", "cxdfv", "dserfcx", "ewsdrf",
-		"Jhuikmn", "kjiol,m", "lkop;.,", "mnjk,", "nbhjm", "oiklp09",
-		"pol;(-0", "redft54", "sawedxz", "uyhji87", "wqase32",
-		"yuhgt67", ".,l;/", 0 };
-	      int i = 0;
-	      while (typo[i] && typo[i][0] != c)
-		i++;
-	      if (typo[i])
-                c = typo[i][0xFF & ((random() % strlen(typo[i]+1)) + 1)];
-	    }
-
-	  /* caps typo */
-	  if (c >= 'a' && c <= 'z' && (caps || 0 == (random() % 350)))
-	    {
-	      c -= ('a'-'A');
-	      if (c == 'O' && random() & 1)
-		c = '0';
-	    }
-
-	OVERSTRIKE:
-	  XDrawString (dpy, window, gc,
-		       (x * char_width) + hspace + xshift,
-		       (y * line_height) + vspace + font->ascent + yshift,
-		       &c, 1);
-	  if (xshift == 0 && yshift == 0 && (0 == (random() & 3000)))
-	    {
-	      if (random() & 1)
-		xshift--;
-	      else
-		yshift--;
-	      goto OVERSTRIKE;
-	    }
-
-	  if ((tolower(c) != tolower(*s))
-	      ? (0 == (random() % 10))		/* backup to correct */
-	      : (0 == (random() % 400)))	/* fail to advance */
-	    {
-	      x--;
-	      s--;
-	      XSync (dpy, False);
-	      if (delay) usleep (0xFFFF & (delay + (random() % (delay * 10))));
-	    }
-	}
-
-      x++;
-      s++;
-
-      if (0 == random() % 200)
-	{
-	  if (random() & 1 && s != source)
-	    s--;	/* duplicate character */
-	  else if (*s)
-	    s++;	/* skip character */
-	}
-
-      if (*s == 0)
-	{
-	  sentences++;
-	  caps = (0 == random() % 40);	/* capitalize sentence */
-
-	  if (0 == (random() % 10) ||	/* randomly break paragraph */
-	      (mode == 0 &&
-	       ((0 == (random() % 10)) || sentences > 20)))
-	    {
-	      break_para = True;
-	      sentences = 0;
-	      paras++;
-
-	      if (random() & 1)		/* mode=0 50% of the time */
-		mode = 0;
-	      else
-		mode = (0xFF & (random() % 5));
-
-	      if (0 == (random() % 2))	/* re-pick margins */
-		{
-		  left = 0xFF & (random() % (columns / 3));
-		  right = columns - (0xFF & (random() % (columns / 3)));
-
-		  if (0 == random() % 3)	/* sometimes be wide */
-		    right = left + ((right - left) / 2);
-		}
-
-	      if (right - left <= 10)	/* introduce sanity */
-		{
-		  left = 0;
-		  right = columns;
-		}
-
-	      if (right - left > 50)	/* if wide, shrink and move */
-		{
-		  left += (0xFF & (random() % ((columns - 50) + 1)));
-		  right = left + (0xFF & ((random() % 40) + 10));
-		}
-
-	      /* oh, gag. */
-	      if (mode == 0 &&
-		  right - left < 25 &&
-		  columns > 40)
-		{
-		  right += 20;
-		  if (right > columns)
-		    left -= (right - columns);
-		}
-	    }
-	  s = source;
-	}
-
-      XSync (dpy, False);
-      if (delay)
-	{
-	  usleep (delay);
-	  if (0 == random() % 3)
-	    usleep(0xFFFFFF & ((random() % (delay * 5)) + 1));
-
-	  if (break_para)
-	    usleep(0xFFFFFF & ((random() % (delay * 15)) + 1));
-	}
-
-      if (paras > 5 &&
-	  (0 == (random() % 1000)) &&
-	  y < rows-5)
-	{
-	  int i;
-	  int n = random() & 3;
-	  y++;
-	  for (i = 0; i < n; i++)
-	    {
-	      /* See also http://catalog.com/hopkins/unix-haters/login.html */
-	      const char *n1 =
-		"NFS server overlook not responding, still trying...";
-	      const char *n2 = "NFS server overlook ok.";
-	      while (*n1)
-		{
-		  XDrawString (dpy, window, gc,
-			       (x * char_width) + hspace,
-			       (y * line_height) + vspace + font->ascent,
-			       n1, 1);
-		  x++;
-		  if (x >= columns) x = 0, y++;
-		  n1++;
-		}
-	      XSync (dpy, False);
-	      usleep (5000000);
-	      while (*n2)
-		{
-		  XDrawString (dpy, window, gc,
-			       (x * char_width) + hspace,
-			       (y * line_height) + vspace + font->ascent,
-			       n2, 1);
-		  x++;
-		  if (x >= columns) x = 0, y++;
-		  n2++;
-		}
-	      y++;
-	      XSync (dpy, False);
-	      usleep (500000);
-	    }
-	}
-      screenhack_handle_events (dpy);
-    }
+  return st;
 }
+
+static unsigned long
+xjack_scroll (struct state *st)
+{
+  st->break_para = 0;
+  if (st->subscrolling)
+    {
+      int inc = st->line_height / 7;
+      XCopyArea (st->dpy, st->window, st->window, st->gc,
+                 0, inc,
+                 st->xgwa.width, st->xgwa.height - inc,
+                 0, 0);
+
+      /* See? It's OK. He saw it on the television. */
+      XClearArea (st->dpy, st->window,
+                  0, st->xgwa.height - inc, st->xgwa.width, inc,
+                  False);
+
+      st->subscrolling -= inc;
+      if (st->subscrolling <= 0)
+        st->subscrolling = 0;
+      if (st->subscrolling == 0)
+        {
+          if (st->scrolling > 0)
+            st->scrolling--;
+          st->y--;
+        }
+      return st->delay / 1000;
+    }
+  else if (st->scrolling)
+    st->subscrolling = st->line_height;
+
+  if (st->y < 0)
+    st->y = 0;
+  else if (st->y >= st->rows-1)
+    st->y = st->rows-1;
+
+  return st->delay;
+}
+
+static unsigned long
+xjack_pine (struct state *st)
+{
+  /* See also http://catalog.com/hopkins/unix-haters/login.html */
+  const char *n1 = "NFS server overlook not responding, still trying...";
+  const char *n2 = "NFS server overlook ok.";
+  int prev = st->pining;
+
+  if (!st->pining)
+    st->pining = 1 + (random() % 3);
+
+  if (prev)
+    while (*n2)
+      {
+        XDrawString (st->dpy, st->window, st->gc,
+                     (st->x * st->char_width) + st->hspace,
+                     ((st->y * st->line_height) + st->vspace
+                      + st->font->ascent),
+                     (char *) n2, 1);
+        st->x++;
+        if (st->x >= st->columns) st->x = 0, st->y++;
+        n2++;
+      }
+  st->y++;
+  st->x = 0;
+  st->pining--;
+
+  if (st->pining)
+    while (*n1)
+      {
+        XDrawString (st->dpy, st->window, st->gc,
+                     (st->x * st->char_width) + st->hspace,
+                     ((st->y * st->line_height) + st->vspace
+                      + st->font->ascent),
+                     (char *) n1, 1);
+        st->x++;
+        if (st->x >= st->columns) st->x = 0, st->y++;
+        n1++;
+      }
+
+  return 5000000;
+}
+
+
+static unsigned long
+xjack_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int this_delay = st->delay;
+  int word_length = 0;
+  const char *s2;
+
+  if (st->scrolling)
+    return xjack_scroll (st);
+  if (st->pining)
+    return xjack_pine (st);
+
+  for (s2 = st->s; *s2 && *s2 != ' '; s2++)
+    word_length++;
+
+  if (st->break_para ||
+      (*st->s != ' ' &&
+       (st->x + word_length) >= st->right))
+    {
+      st->x = st->left;
+      st->y++;
+
+      if (st->break_para)
+        st->y++;
+
+      if (st->mode == 1 || st->mode == 2)
+        {
+          /* 1 = left margin goes southwest; 2 = southeast */
+          st->left += (st->mode == 1 ? 1 : -1);
+          if (st->left >= st->right - 10)
+            {
+              if ((st->right < (st->columns - 10)) && (random() & 1))
+                st->right += (0xFF & (random() % (st->columns - st->right)));
+              else
+                st->mode = 2;
+            }
+          else if (st->left <= 0)
+            {
+              st->left = 0;
+              st->mode = 1;
+            }
+        }
+      else if (st->mode == 3 || st->mode == 4)
+        {
+          /* 3 = right margin goes southeast; 4 = southwest */
+          st->right += (st->mode == 3 ? 1 : -1);
+          if (st->right >= st->columns)
+            {
+              st->right = st->columns;
+              st->mode = 4;
+            }
+          else if (st->right <= st->left + 10)
+            st->mode = 3;
+        }
+
+      if (st->y >= st->rows-1)	/* bottom of page */
+        {
+          /* scroll by 1-5 lines */
+          st->scrolling = (random() % 5 ? 0 : (0xFF & (random() % 5))) + 1;
+          if (st->break_para)
+            st->scrolling++;
+
+          /* but sometimes scroll by a whole page */
+          if (0 == (random() % 100))
+            st->scrolling += st->rows;
+
+          return xjack_scroll (st);
+        }
+    }
+
+  if (*st->s != ' ')
+    {
+      char c = *st->s;
+      int xshift = 0, yshift = 0;
+      if (0 == random() % 50)
+        {
+          xshift = random() % ((st->char_width / 3) + 1);      /* mis-strike */
+          yshift = random() % ((st->line_height / 6) + 1);
+          if (0 == (random() % 3))
+            yshift *= 2;
+          if (random() & 1)
+            xshift = -xshift;
+          if (random() & 1)
+            yshift = -yshift;
+        }
+
+      if (0 == (random() % 250))	/* introduce adjascent-key typo */
+        {
+          static const char * const typo[] = {
+            "asqw", "ASQW", "bgvhn", "cxdfv", "dserfcx", "ewsdrf",
+            "Jhuikmn", "kjiol,m", "lkop;.,", "mnjk,", "nbhjm", "oiklp09",
+            "pol;(-0", "redft54", "sawedxz", "uyhji87", "wqase32",
+            "yuhgt67", ".,l;/", 0 };
+          int i = 0;
+          while (typo[i] && typo[i][0] != c)
+            i++;
+          if (typo[i])
+            c = typo[i][0xFF & ((random() % strlen(typo[i]+1)) + 1)];
+        }
+
+      /* caps typo */
+      if (c >= 'a' && c <= 'z' && (st->caps || 0 == (random() % 350)))
+        {
+          c -= ('a'-'A');
+          if (c == 'O' && random() & 1)
+            c = '0';
+        }
+
+    OVERSTRIKE:
+      XDrawString (st->dpy, st->window, st->gc,
+                   (st->x * st->char_width) + st->hspace + xshift,
+                   ((st->y * st->line_height) + st->vspace + st->font->ascent
+                    + yshift),
+                   &c, 1);
+      if (xshift == 0 && yshift == 0 && (0 == (random() & 3000)))
+        {
+          if (random() & 1)
+            xshift--;
+          else
+            yshift--;
+          goto OVERSTRIKE;
+        }
+
+      if ((tolower(c) != tolower(*st->s))
+          ? (0 == (random() % 10))		/* backup to correct */
+          : (0 == (random() % 400)))	/* fail to advance */
+        {
+          st->x--;
+          st->s--;
+          if (st->delay)
+            st->delay += (0xFFFF & (st->delay + 
+                                    (random() % (st->delay * 10))));
+        }
+    }
+
+  st->x++;
+  st->s++;
+
+  if (0 == random() % 200)
+    {
+      if (random() & 1 && st->s != source)
+        st->s--;	/* duplicate character */
+      else if (*st->s)
+        st->s++;	/* skip character */
+    }
+
+  if (*st->s == 0)
+    {
+      st->sentences++;
+      st->caps = (0 == random() % 40);	/* capitalize sentence */
+
+      if (0 == (random() % 10) ||	/* randomly break paragraph */
+          (st->mode == 0 &&
+           ((0 == (random() % 10)) || st->sentences > 20)))
+        {
+          st->break_para = True;
+          st->sentences = 0;
+          st->paras++;
+
+          if (random() & 1)		/* mode=0 50% of the time */
+            st->mode = 0;
+          else
+            st->mode = (0xFF & (random() % 5));
+
+          if (0 == (random() % 2))	/* re-pick margins */
+            {
+              st->left = 0xFF & (random() % (st->columns / 3));
+              st->right = (st->columns -
+                           (0xFF & (random() % (st->columns / 3))));
+
+              if (0 == random() % 3)	/* sometimes be wide */
+                st->right = st->left + ((st->right - st->left) / 2);
+            }
+
+          if (st->right - st->left <= 10)	/* introduce sanity */
+            {
+              st->left = 0;
+              st->right = st->columns;
+            }
+
+          if (st->right - st->left > 50)	/* if wide, shrink and move */
+            {
+              st->left += (0xFF & (random() % ((st->columns - 50) + 1)));
+              st->right = st->left + (0xFF & ((random() % 40) + 10));
+            }
+
+          /* oh, gag. */
+          if (st->mode == 0 &&
+              st->right - st->left < 25 &&
+              st->columns > 40)
+            {
+              st->right += 20;
+              if (st->right > st->columns)
+                st->left -= (st->right - st->columns);
+            }
+        }
+      st->s = source;
+    }
+
+  if (st->delay)
+    {
+      if (0 == random() % 3)
+        this_delay += (0xFFFFFF & ((random() % (st->delay * 5)) + 1));
+
+      if (st->break_para)
+        this_delay += (0xFFFFFF & ((random() % (st->delay * 15)) + 1));
+    }
+
+  if (st->paras > 5 &&
+      (0 == (random() % 1000)) &&
+      st->y < st->rows-2)
+    return xjack_pine (st);
+
+  return this_delay;
+}
+
+static Bool
+xjack_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  struct state *st = (struct state *) closure;
+  if (event->xany.type == ButtonPress)
+    {
+      st->scrolling++;
+      return True;
+    }
+
+  return False;
+}
+
+static void
+xjack_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *xjack_defaults [] = {
+  ".background:		#FFF0B4",
+  ".foreground:		#000000",
+#ifdef HAVE_COCOA
+  ".font:		American Typewriter 24",
+#else
+  ".font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
+#endif
+  "*delay:		50000",
+  0
+};
+
+static XrmOptionDescRec xjack_options [] = {
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-font",		".font",	XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }
+};
+
+XSCREENSAVER_MODULE ("XJack", xjack)

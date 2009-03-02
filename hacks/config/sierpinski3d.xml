@@ -17,15 +17,13 @@
   <number id="depth" type="spinbutton" arg="-depth %"
           _label="Max Depth" low="1" high="6" default="5"/>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 This draws the three-dimensional variant of the recursive Sierpinski
-triangle fractal, using GL.  Written by Tim Robinson and Jamie Zawinski.
+triangle fractal, using GL.
+
+Written by Tim Robinson and Jamie Zawinski; 1999.
   </_description>
 </screensaver>

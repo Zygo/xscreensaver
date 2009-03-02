@@ -84,7 +84,7 @@ max(GLfloat a, GLfloat b)
 
 /* Create a new bubble. */
 void       *
-glb_bubble_new(GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
+glb_bubble_new(glb_data *d, GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
 	       GLfloat y_incr, GLfloat scale_incr)
 {
 	int         i, j;
@@ -92,7 +92,7 @@ glb_bubble_new(GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
 	/* GLfloat axes [glb_config.nr_nudge_axes][3]; */
 	GLfloat     axes[5][3];	/* HARD CODED for SunCC */
 	int         nr_vertices;
-	glb_vertex *vertices = glb_sphere_get_vertices(&nr_vertices);
+	glb_vertex *vertices = glb_sphere_get_vertices(d, &nr_vertices);
 
 	bubble     *b = (bubble *) malloc(sizeof *b);
 
@@ -215,14 +215,14 @@ glb_bubble_step(void *bb)
 
 /* Draw a bubble. */
 void
-glb_bubble_draw(void *bb)
+glb_bubble_draw(glb_data *d, void *bb)
 {
 	int         i, j;
 	bubble     *b = (bubble *) bb;
 	int         nr_vertices;
-	glb_vertex *vertices = glb_sphere_get_vertices(&nr_vertices);
+	glb_vertex *vertices = glb_sphere_get_vertices(d, &nr_vertices);
 	int         nr_triangles;
-	glb_triangle *triangles = glb_sphere_get_triangles(&nr_triangles);
+	glb_triangle *triangles = glb_sphere_get_triangles(d, &nr_triangles);
 	glb_vertex *new_vertices;
 
 	new_vertices = (glb_vertex *) malloc(sizeof (glb_vertex) * nr_vertices);

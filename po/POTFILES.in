@@ -1,4 +1,4 @@
-# Auto-generated: Wed Feb  8 19:16:55 PST 2006
+# Auto-generated: Tue May 23 16:01:41 PDT 2006
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -54,6 +54,7 @@ hacks/config/deluxe.xml
 hacks/config/demon.xml
 hacks/config/discrete.xml
 hacks/config/distort.xml
+hacks/config/dnalogo.xml
 hacks/config/drift.xml
 hacks/config/electricsheep.xml
 hacks/config/endgame.xml
@@ -88,6 +89,7 @@ hacks/config/glhanoi.xml
 hacks/config/glknots.xml
 hacks/config/glmatrix.xml
 hacks/config/glplanet.xml
+hacks/config/glschool.xml
 hacks/config/glslideshow.xml
 hacks/config/glsnake.xml
 hacks/config/gltext.xml
@@ -159,6 +161,7 @@ hacks/config/pyro.xml
 hacks/config/qix.xml
 hacks/config/queens.xml
 hacks/config/rd-bomb.xml
+hacks/config/rdbomb.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml
 hacks/config/rorschach.xml
@@ -180,7 +183,6 @@ hacks/config/spiral.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml
 hacks/config/squiral.xml
-hacks/config/ssystem.xml
 hacks/config/stairs.xml
 hacks/config/starfish.xml
 hacks/config/starwars.xml
@@ -193,6 +195,7 @@ hacks/config/t3d.xml
 hacks/config/tangram.xml
 hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
+hacks/config/topblock.xml
 hacks/config/triangle.xml
 hacks/config/truchet.xml
 hacks/config/twang.xml
@@ -208,8 +211,6 @@ hacks/config/wormhole.xml
 hacks/config/xanalogtv.xml
 hacks/config/xaos.xml
 hacks/config/xdaliclock.xml
-hacks/config/xearth.xml
-hacks/config/xfishtank.xml
 hacks/config/xflame.xml
 hacks/config/xjack.xml
 hacks/config/xlyap.xml

@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2002, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,12 +15,18 @@
 #ifndef __XLOCKMORE_INTERNAL_H__
 #define __XLOCKMORE_INTERNAL_H__
 
-#include "screenhack.h"
+#include <time.h>
+
+#include "screenhackI.h"
 
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
 #endif /* HAVE_XSHM_EXTENSION */
 
+
+typedef struct ModeInfo ModeInfo;
+
+#ifdef USE_GL
 
 /* I'm told that the Sun version of OpenGL needs to have the constant
    SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
@@ -28,11 +34,33 @@
    Verified with gcc 2.7.2.2 and Sun cc 4.2 with OpenGL 1.1.1 dev 4
    on Solaris 2.5.1.
  */
-#ifndef HAVE_MESA_GL
-# if defined(__sun) && defined(__SVR4)	/* Solaris */
-#  define SUN_OGL_NO_VERTEX_MACROS 1
-# endif /* Solaris */
-#endif /* !HAVE_MESA_GL */
+# ifndef HAVE_MESA_GL
+#  if defined(__sun) && defined(__SVR4)	/* Solaris */
+#   define SUN_OGL_NO_VERTEX_MACROS 1
+#  endif /* Solaris */
+# endif /* !HAVE_MESA_GL */
+
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+#  include <GL/glx.h>
+# endif
+
+  extern GLXContext *init_GL (ModeInfo *);
+  extern void clear_gl_error (void);
+  extern void check_gl_error (const char *type);
+
+  extern void do_fps (ModeInfo *);
+  extern GLfloat fps_1 (ModeInfo *);
+  extern void    fps_2 (ModeInfo *);
+
+  extern Visual *xlockmore_pick_gl_visual (Screen *);
+  extern Bool xlockmore_validate_gl_visual (Screen *, const char *, Visual *);
+
+#endif /* !USE_GL */
+
+extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 
 
 /* Compatibility with the xlockmore RNG API
@@ -44,10 +72,13 @@
 #define SRAND(n)		/* already seeded by screenhack.c */
 
 
-typedef struct ModeInfo {
+struct ModeInfo {
+  struct xlockmore_function_table *xlmft;
   Display *dpy;
   Window window;
   Bool root_p;
+  int num_screens;
+  int screen_number;
   int npixels;
   unsigned long *pixels;
   XColor *colors;
@@ -69,16 +100,17 @@ typedef struct ModeInfo {
   long threed_delta;
   Bool wireframe_p;
   Bool is_drawn;
-
+  
   Bool fps_p;
+  struct fps_state *fps_state;  /* private data for fps.c */
+  
   unsigned long polygon_count;  /* used only by FPS display */
 
 #ifdef HAVE_XSHM_EXTENSION
   Bool use_shm;
   XShmSegmentInfo shm_info;
 #endif
-
-} ModeInfo;
+};
 
 typedef enum {  t_String, t_Float, t_Int, t_Bool } xlockmore_type;
 
@@ -103,17 +135,20 @@ typedef struct {
   OptionStruct *desc;
 } ModeSpecOpt;
 
-extern void xlockmore_screenhack (Display *dpy, Window window,
-				  Bool want_writable_colors,
-				  Bool want_uniform_colors,
-				  Bool want_smooth_colors,
-				  Bool want_bright_colors,
-                                  unsigned long event_mask,
-				  void (*hack_init) (ModeInfo *),
-				  void (*hack_draw) (ModeInfo *),
-				  void (*hack_reshape) (ModeInfo *, int, int),
-                                  Bool (*hack_handle_events) (ModeInfo *,
-                                                              XEvent *),
-				  void (*hack_free) (ModeInfo *));
+struct xlockmore_function_table {
+  const char *progclass;
+  const char *defaults;
+  Bool want_writable_colors;
+  enum { color_scheme_default, color_scheme_uniform, 
+         color_scheme_smooth, color_scheme_bright }
+    desired_color_scheme;
+  void (*hack_init) (ModeInfo *);
+  void (*hack_draw) (ModeInfo *);
+  void (*hack_reshape) (ModeInfo *, int, int);
+  void (*hack_refresh) (ModeInfo *);
+  void (*hack_free) (ModeInfo *);
+  Bool (*hack_handle_events) (ModeInfo *, XEvent *);
+  ModeSpecOpt *opts;
+};
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

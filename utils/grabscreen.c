@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003, 2004
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003, 2004, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -291,12 +291,12 @@ grab_screen_image_internal (Screen *screen, Window window)
       double unmap = 0;
       if (saver_p)
 	{
-	  unmap = get_float_resource("grabRootDelay", "Seconds");
+	  unmap = get_float_resource(dpy, "grabRootDelay", "Seconds");
 	  if (unmap <= 0.00001 || unmap > 20) unmap = 2.5;
 	}
       else
 	{
-	  unmap = get_float_resource("grabWindowDelay", "Seconds");
+	  unmap = get_float_resource(dpy, "grabWindowDelay", "Seconds");
 	  if (unmap <= 0.00001 || unmap > 20) unmap = 0.66;
 	}
       unmap_time = unmap * 100000;

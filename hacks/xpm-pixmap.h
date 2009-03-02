@@ -1,5 +1,5 @@
 /* xpm-pixmap.h --- converts XPM data to Pixmaps.
- * xscreensaver, Copyright (c) 1998, 2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,7 +15,8 @@
 
 /* Returns a Pixmap structure containing the bits of the given XPM image.
  */
-extern Pixmap xpm_data_to_pixmap (Display *, Window, char **xpm_data,
+extern Pixmap xpm_data_to_pixmap (Display *, Window, 
+                                  /*const*/ char * const *xpm_data,
                                   int *width_ret, int *height_ret,
                                   Pixmap *mask_ret);
 extern Pixmap xpm_file_to_pixmap (Display *, Window, const char *filename,

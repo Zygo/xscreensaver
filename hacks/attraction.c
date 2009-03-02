@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2001
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2001, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -87,6 +87,22 @@
 #include "screenhack.h"
 #include "spline.h"
 
+/* The normal (and max) width for a graph bar */
+#define BAR_SIZE 11
+#define MAX_SIZE 16
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+
+
+enum object_mode {
+  ball_mode, line_mode, polygon_mode, spline_mode, spline_filled_mode,
+  tail_mode
+};
+
+enum graph_mode {
+  graph_none, graph_x, graph_y, graph_both, graph_speed
+};
+
 struct ball {
   double x, y;
   double vx, vy;
@@ -97,122 +113,119 @@ struct ball {
   int hue;
 };
 
-static struct ball *balls;
-static double *x_vels;
-static double *y_vels;
-static double *speeds;
-static int npoints;
-static int threshold;
-static int delay;
-static int global_size;
-static int segments;
-static Bool glow_p;
-static Bool orbit_p;
-static Bool walls_p;
-static Bool maxspeed_p;
-static Bool cbounce_p;
-static XPoint *point_stack;
-static int point_stack_size, point_stack_fp;
-static XColor *colors;
-static int ncolors;
-static int fg_index;
-static int color_shift;
-Bool no_erase_yet; /* for tail mode fix */
+struct state {
+  struct ball *balls;
+  double *x_vels;
+  double *y_vels;
+  double *speeds;
+  int npoints;
+  int threshold;
+  int delay;
+  int global_size;
+  int segments;
+  Bool glow_p;
+  Bool orbit_p;
+  Bool walls_p;
+  Bool maxspeed_p;
+  Bool cbounce_p;
+  XPoint *point_stack;
+  int point_stack_size, point_stack_fp;
+  XColor *colors;
+  int ncolors;
+  int fg_index;
+  int color_shift;
+  int xlim, ylim;
+  Bool no_erase_yet; /* for tail mode fix */
 
-/*flip mods for mouse interaction*/
-static Bool mouse_p;
-int mouse_x, mouse_y, mouse_mass, root_x, root_y;
-static double viscosity;
+  /*flip mods for mouse interaction*/
+  Bool mouse_p;
+  int mouse_x, mouse_y, mouse_mass, root_x, root_y;
+  double viscosity;
 
-static enum object_mode {
-  ball_mode, line_mode, polygon_mode, spline_mode, spline_filled_mode,
-  tail_mode
-} mode;
+  enum object_mode mode;
+  enum graph_mode graph_mode;
 
-static enum graph_mode {
-  graph_none, graph_x, graph_y, graph_both, graph_speed
-} graph_mode;
+  GC draw_gc, erase_gc;
 
-static GC draw_gc, erase_gc;
+  int total_ticks;
+  int color_tick;
+  spline *spl;
+};
 
-/* The normal (and max) width for a graph bar */
-#define BAR_SIZE 11
-#define MAX_SIZE 16
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
 
-static void
-init_balls (Display *dpy, Window window)
+static void *
+attraction_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
   XWindowAttributes xgwa;
   XGCValues gcv;
-  int xlim, ylim, midx, midy, r, vx, vy;
+  int midx, midy, r, vx, vy;
   double th;
   Colormap cmap;
   char *mode_str, *graph_mode_str;
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  xlim = xgwa.width;
-  ylim = xgwa.height;
+  st->xlim = xgwa.width;
+  st->ylim = xgwa.height;
   cmap = xgwa.colormap;
-  midx = xlim/2;
-  midy = ylim/2;
-  walls_p = get_boolean_resource ("walls", "Boolean");
+  midx = st->xlim/2;
+  midy = st->ylim/2;
+  st->walls_p = get_boolean_resource (dpy, "walls", "Boolean");
 
   /* if there aren't walls, don't set a limit on the radius */
-  r = get_integer_resource ("radius", "Integer");
-  if (r <= 0 || (r > min (xlim/2, ylim/2) && walls_p) )
-    r = min (xlim/2, ylim/2) - 50;
+  r = get_integer_resource (dpy, "radius", "Integer");
+  if (r <= 0 || (r > min (st->xlim/2, st->ylim/2) && st->walls_p) )
+    r = min (st->xlim/2, st->ylim/2) - 50;
 
-  vx = get_integer_resource ("vx", "Integer");
-  vy = get_integer_resource ("vy", "Integer");
+  vx = get_integer_resource (dpy, "vx", "Integer");
+  vy = get_integer_resource (dpy, "vy", "Integer");
 
-  npoints = get_integer_resource ("points", "Integer");
-  if (npoints < 1)
-    npoints = 3 + (random () % 5);
-  balls = (struct ball *) malloc (npoints * sizeof (struct ball));
+  st->npoints = get_integer_resource (dpy, "points", "Integer");
+  if (st->npoints < 1)
+    st->npoints = 3 + (random () % 5);
+  st->balls = (struct ball *) malloc (st->npoints * sizeof (struct ball));
 
-  no_erase_yet = 1; /* for tail mode fix */
+  st->no_erase_yet = 1; /* for tail mode fix */
 
-  segments = get_integer_resource ("segments", "Integer");
-  if (segments < 0) segments = 1;
+  st->segments = get_integer_resource (dpy, "segments", "Integer");
+  if (st->segments < 0) st->segments = 1;
 
-  threshold = get_integer_resource ("threshold", "Integer");
-  if (threshold < 0) threshold = 0;
+  st->threshold = get_integer_resource (dpy, "threshold", "Integer");
+  if (st->threshold < 0) st->threshold = 0;
 
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 0) delay = 0;
+  st->delay = get_integer_resource (dpy, "delay", "Integer");
+  if (st->delay < 0) st->delay = 0;
 
-  global_size = get_integer_resource ("size", "Integer");
-  if (global_size < 0) global_size = 0;
+  st->global_size = get_integer_resource (dpy, "size", "Integer");
+  if (st->global_size < 0) st->global_size = 0;
 
-  glow_p = get_boolean_resource ("glow", "Boolean");
+  st->glow_p = get_boolean_resource (dpy, "glow", "Boolean");
 
-  orbit_p = get_boolean_resource ("orbit", "Boolean");
+  st->orbit_p = get_boolean_resource (dpy, "orbit", "Boolean");
 
-  maxspeed_p = get_boolean_resource ("maxspeed", "Boolean");
+  st->maxspeed_p = get_boolean_resource (dpy, "maxspeed", "Boolean");
 
-  cbounce_p = get_boolean_resource ("cbounce", "Boolean");
+  st->cbounce_p = get_boolean_resource (dpy, "cbounce", "Boolean");
 
-  color_shift = get_integer_resource ("colorShift", "Integer");
-  if (color_shift <= 0) color_shift = 5;
+  st->color_shift = get_integer_resource (dpy, "colorShift", "Integer");
+  if (st->color_shift <= 0) st->color_shift = 5;
 
   /*flip mods for mouse interaction*/
-  mouse_p = get_boolean_resource ("mouse", "Boolean");
-  mouse_mass = get_integer_resource ("mouseSize", "Integer");
-  mouse_mass =  mouse_mass *  mouse_mass *10;
+  st->mouse_p = get_boolean_resource (dpy, "mouse", "Boolean");
+  st->mouse_mass = get_integer_resource (dpy, "mouseSize", "Integer");
+  st->mouse_mass =  st->mouse_mass *  st->mouse_mass *10;
 
-  viscosity = get_float_resource ("viscosity", "Float");
+  st->viscosity = get_float_resource (dpy, "viscosity", "Float");
 
-  mode_str = get_string_resource ("mode", "Mode");
-  if (! mode_str) mode = ball_mode;
-  else if (!strcmp (mode_str, "balls")) 	mode = ball_mode;
-  else if (!strcmp (mode_str, "lines")) 	mode = line_mode;
-  else if (!strcmp (mode_str, "polygons")) 	mode = polygon_mode;
-  else if (!strcmp (mode_str, "tails")) 	mode = tail_mode;
-  else if (!strcmp (mode_str, "splines")) 	mode = spline_mode;
-  else if (!strcmp (mode_str, "filled-splines"))mode = spline_filled_mode;
+  mode_str = get_string_resource (dpy, "mode", "Mode");
+  if (! mode_str) st->mode = ball_mode;
+  else if (!strcmp (mode_str, "balls")) 	st->mode = ball_mode;
+  else if (!strcmp (mode_str, "lines")) 	st->mode = line_mode;
+  else if (!strcmp (mode_str, "polygons")) 	st->mode = polygon_mode;
+  else if (!strcmp (mode_str, "tails")) 	st->mode = tail_mode;
+  else if (!strcmp (mode_str, "splines")) 	st->mode = spline_mode;
+  else if (!strcmp (mode_str, "filled-splines"))st->mode = spline_filled_mode;
   else {
     fprintf (stderr,
 	     "%s: mode must be balls, lines, tails, polygons, splines, or\n\
@@ -221,13 +234,13 @@ init_balls (Display *dpy, Window window)
     exit (1);
   }
 
-  graph_mode_str = get_string_resource ("graphmode", "Mode");
-  if (! graph_mode_str) graph_mode = graph_none;
-  else if (!strcmp (graph_mode_str, "x")) 	graph_mode = graph_x;
-  else if (!strcmp (graph_mode_str, "y")) 	graph_mode = graph_y;
-  else if (!strcmp (graph_mode_str, "both")) 	graph_mode = graph_both;
-  else if (!strcmp (graph_mode_str, "speed")) 	graph_mode = graph_speed;
-  else if (!strcmp (graph_mode_str, "none")) 	graph_mode = graph_none;
+  graph_mode_str = get_string_resource (dpy, "graphmode", "Mode");
+  if (! graph_mode_str) st->graph_mode = graph_none;
+  else if (!strcmp (graph_mode_str, "x")) 	st->graph_mode = graph_x;
+  else if (!strcmp (graph_mode_str, "y")) 	st->graph_mode = graph_y;
+  else if (!strcmp (graph_mode_str, "both")) 	st->graph_mode = graph_both;
+  else if (!strcmp (graph_mode_str, "speed")) 	st->graph_mode = graph_speed;
+  else if (!strcmp (graph_mode_str, "none")) 	st->graph_mode = graph_none;
   else {
     fprintf (stderr,
 	 "%s: graphmode must be speed, x, y, both, or none, not \"%s\"\n",
@@ -236,47 +249,47 @@ init_balls (Display *dpy, Window window)
   }
 
   /* only allocate memory if it is needed */
-  if(graph_mode != graph_none)
+  if(st->graph_mode != graph_none)
   {
-    if(graph_mode == graph_x || graph_mode == graph_both)
-      x_vels = (double *) malloc (npoints * sizeof (double));
-    if(graph_mode == graph_y || graph_mode == graph_both)
-      y_vels = (double *) malloc (npoints * sizeof (double));
-    if(graph_mode == graph_speed)
-      speeds = (double *) malloc (npoints * sizeof (double));
+    if(st->graph_mode == graph_x || st->graph_mode == graph_both)
+      st->x_vels = (double *) malloc (st->npoints * sizeof (double));
+    if(st->graph_mode == graph_y || st->graph_mode == graph_both)
+      st->y_vels = (double *) malloc (st->npoints * sizeof (double));
+    if(st->graph_mode == graph_speed)
+      st->speeds = (double *) malloc (st->npoints * sizeof (double));
   }
 
-  if (mode != ball_mode && mode != tail_mode) glow_p = False;
+  if (st->mode != ball_mode && st->mode != tail_mode) st->glow_p = False;
   
-  if (mode == polygon_mode && npoints < 3)
-    mode = line_mode;
+  if (st->mode == polygon_mode && st->npoints < 3)
+    st->mode = line_mode;
 
-  ncolors = get_integer_resource ("colors", "Colors");
-  if (ncolors < 2) ncolors = 2;
-  if (ncolors <= 2) mono_p = True;
-  colors = 0;
+  st->ncolors = get_integer_resource (dpy, "colors", "Colors");
+  if (st->ncolors < 2) st->ncolors = 2;
+  if (st->ncolors <= 2) mono_p = True;
+  st->colors = 0;
 
   if (!mono_p)
     {
-      fg_index = 0;
-      switch (mode)
+      st->fg_index = 0;
+      switch (st->mode)
 	{
 	case ball_mode:
-	  if (glow_p)
+	  if (st->glow_p)
 	    {
 	      int H = random() % 360;
 	      double S1 = 0.25;
 	      double S2 = 1.00;
 	      double V = frand(0.25) + 0.75;
-	      colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
-	      make_color_ramp (dpy, cmap, H, S1, V, H, S2, V, colors, &ncolors,
+	      st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+	      make_color_ramp (dpy, cmap, H, S1, V, H, S2, V, st->colors, &st->ncolors,
 			       False, True, False);
 	    }
 	  else
 	    {
-	      ncolors = npoints;
-	      colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
-	      make_random_colormap (dpy, xgwa.visual, cmap, colors, &ncolors,
+	      st->ncolors = st->npoints;
+	      st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+	      make_random_colormap (dpy, xgwa.visual, cmap, st->colors, &st->ncolors,
 				    True, True, False, True);
 	    }
 	  break;
@@ -285,8 +298,8 @@ init_balls (Display *dpy, Window window)
 	case spline_mode:
 	case spline_filled_mode:
 	case tail_mode:
-	  colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
-	  make_smooth_colormap (dpy, xgwa.visual, cmap, colors, &ncolors,
+	  st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+	  make_smooth_colormap (dpy, xgwa.visual, cmap, st->colors, &st->ncolors,
 				True, False, True);
 	  break;
 	default:
@@ -294,64 +307,71 @@ init_balls (Display *dpy, Window window)
 	}
     }
 
-  if (!mono_p && ncolors <= 2)
+  if (!mono_p && st->ncolors <= 2)
     {
-      if (colors) free (colors);
-      colors = 0;
+      if (st->colors) free (st->colors);
+      st->colors = 0;
       mono_p = True;
     }
 
-  if (mode != ball_mode)
+  if (st->mode != ball_mode)
     {
-      int size = (segments ? segments : 1);
-      point_stack_size = size * (npoints + 1);
-      point_stack = (XPoint *) calloc (point_stack_size, sizeof (XPoint));
-      point_stack_fp = 0;
+      int size = (st->segments ? st->segments : 1);
+      st->point_stack_size = size * (st->npoints + 1);
+      st->point_stack = (XPoint *) calloc (st->point_stack_size, sizeof (XPoint));
+      st->point_stack_fp = 0;
     }
 
-  gcv.line_width = (mode == tail_mode
-		    ? (global_size ? global_size : (MAX_SIZE * 2 / 3))
+  gcv.line_width = (st->mode == tail_mode
+		    ? (st->global_size ? st->global_size : (MAX_SIZE * 2 / 3))
 		    : 1);
-  gcv.cap_style = (mode == tail_mode ? CapRound : CapButt);
+  gcv.cap_style = (st->mode == tail_mode ? CapRound : CapButt);
 
   if (mono_p)
-    gcv.foreground = get_pixel_resource("foreground", "Foreground", dpy, cmap);
+    gcv.foreground = get_pixel_resource(dpy, cmap, "foreground", "Foreground");
   else
-    gcv.foreground = colors[fg_index].pixel;
-  draw_gc = XCreateGC (dpy, window, GCForeground|GCLineWidth|GCCapStyle, &gcv);
+    gcv.foreground = st->colors[st->fg_index].pixel;
+  st->draw_gc = XCreateGC (dpy, window, GCForeground|GCLineWidth|GCCapStyle, &gcv);
 
-  gcv.foreground = get_pixel_resource("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC (dpy, window, GCForeground|GCLineWidth|GCCapStyle,&gcv);
+  gcv.foreground = get_pixel_resource(dpy, cmap, "background", "Background");
+  st->erase_gc = XCreateGC (dpy, window, GCForeground|GCLineWidth|GCCapStyle,&gcv);
 
 
-#define rand_size() min (MAX_SIZE, 8 + (random () % (MAX_SIZE - 9)))
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (dpy, st->draw_gc,  False);
+  jwxyz_XSetAntiAliasing (dpy, st->erase_gc, False);
+#endif
 
-  if (orbit_p && !global_size)
+  /* let's make the balls bigger by default */
+#define rand_size() (3 * (8 + (random () % 7)))
+
+  if (st->orbit_p && !st->global_size)
     /* To orbit, all objects must be the same mass, or the math gets
        really hairy... */
-    global_size = rand_size ();
+    st->global_size = rand_size ();
 
+ RETRY_NO_ORBIT:
   th = frand (M_PI+M_PI);
-  for (i = 0; i < npoints; i++)
+  for (i = 0; i < st->npoints; i++)
     {
-      int new_size = (global_size ? global_size : rand_size ());
-      balls [i].dx = 0;
-      balls [i].dy = 0;
-      balls [i].size = new_size;
-      balls [i].mass = (new_size * new_size * 10);
-      balls [i].x = midx + r * cos (i * ((M_PI+M_PI) / npoints) + th);
-      balls [i].y = midy + r * sin (i * ((M_PI+M_PI) / npoints) + th);
-      if (! orbit_p)
+      int new_size = (st->global_size ? st->global_size : rand_size ());
+      st->balls [i].dx = 0;
+      st->balls [i].dy = 0;
+      st->balls [i].size = new_size;
+      st->balls [i].mass = (new_size * new_size * 10);
+      st->balls [i].x = midx + r * cos (i * ((M_PI+M_PI) / st->npoints) + th);
+      st->balls [i].y = midy + r * sin (i * ((M_PI+M_PI) / st->npoints) + th);
+      if (! st->orbit_p)
 	{
-	  balls [i].vx = vx ? vx : ((6.0 - (random () % 11)) / 8.0);
-	  balls [i].vy = vy ? vy : ((6.0 - (random () % 11)) / 8.0);
+	  st->balls [i].vx = vx ? vx : ((6.0 - (random () % 11)) / 8.0);
+	  st->balls [i].vy = vy ? vy : ((6.0 - (random () % 11)) / 8.0);
 	}
-      if (mono_p || mode != ball_mode)
-	balls [i].pixel_index = -1;
-      else if (glow_p)
-	balls [i].pixel_index = 0;
+      if (mono_p || st->mode != ball_mode)
+	st->balls [i].pixel_index = -1;
+      else if (st->glow_p)
+	st->balls [i].pixel_index = 0;
       else
-	balls [i].pixel_index = random() % ncolors;
+	st->balls [i].pixel_index = random() % st->ncolors;
     }
 
   /*  This lets modes where the points don't really have any size use the whole
@@ -359,74 +379,77 @@ init_balls (Display *dpy, Window window)
       assigned to them, they will be bounced somewhat early.  Mass and size are
       seperate, so this shouldn't cause problems.  It's a bit kludgy, tho.
   */
-  if(mode == line_mode || mode == spline_mode || 
-     mode == spline_filled_mode || mode == polygon_mode)
+  if(st->mode == line_mode || st->mode == spline_mode || 
+     st->mode == spline_filled_mode || st->mode == polygon_mode)
     {
-	for(i = 1; i < npoints; i++)
+	for(i = 1; i < st->npoints; i++)
 	  {
-		balls[i].size = 0;
+		st->balls[i].size = 0;
           }
      }
     
-  if (orbit_p)
+  if (st->orbit_p)
     {
       double a = 0;
       double v;
-      double v_mult = get_float_resource ("vMult", "Float");
+      double v_mult = get_float_resource (dpy, "vMult", "Float");
       if (v_mult == 0.0) v_mult = 1.0;
 
-      for (i = 1; i < npoints; i++)
+      for (i = 1; i < st->npoints; i++)
 	{
-          double _2ipi_n = (2 * i * M_PI / npoints);
+          double _2ipi_n = (2 * i * M_PI / st->npoints);
 	  double x = r * cos (_2ipi_n);
 	  double y = r * sin (_2ipi_n);
 	  double distx = r - x;
 	  double dist2 = (distx * distx) + (y * y);
           double dist = sqrt (dist2);
-          double a1 = ((balls[i].mass / dist2) *
-                       ((dist < threshold) ? -1.0 : 1.0) *
+          double a1 = ((st->balls[i].mass / dist2) *
+                       ((dist < st->threshold) ? -1.0 : 1.0) *
                        (distx / dist));
 	  a += a1;
 	}
       if (a < 0.0)
 	{
-	  fprintf (stderr, "%s: domain error: forces on balls too great\n",
+          /* "domain error: forces on balls too great" */
+	  fprintf (stderr, "%s: window too small for these orbit settings.\n",
 		   progname);
-	  exit (-1);
+          st->orbit_p = False;
+          goto RETRY_NO_ORBIT;
 	}
       v = sqrt (a * r) * v_mult;
-      for (i = 0; i < npoints; i++)
+      for (i = 0; i < st->npoints; i++)
 	{
-	  double k = ((2 * i * M_PI / npoints) + th);
-	  balls [i].vx = -v * sin (k);
-	  balls [i].vy =  v * cos (k);
+	  double k = ((2 * i * M_PI / st->npoints) + th);
+	  st->balls [i].vx = -v * sin (k);
+	  st->balls [i].vy =  v * cos (k);
 	}
     }
 
-  if (mono_p) glow_p = False;
+  if (mono_p) st->glow_p = False;
 
   XClearWindow (dpy, window);
+  return st;
 }
 
 static void
-compute_force (int i, double *dx_ret, double *dy_ret)
+compute_force (struct state *st, int i, double *dx_ret, double *dy_ret)
 {
   int j;
   double x_dist, y_dist, dist, dist2;
   *dx_ret = 0;
   *dy_ret = 0;
-  for (j = 0; j < npoints; j++)
+  for (j = 0; j < st->npoints; j++)
     {
       if (i == j) continue;
-      x_dist = balls [j].x - balls [i].x;
-      y_dist = balls [j].y - balls [i].y;
+      x_dist = st->balls [j].x - st->balls [i].x;
+      y_dist = st->balls [j].y - st->balls [i].y;
       dist2 = (x_dist * x_dist) + (y_dist * y_dist);
       dist = sqrt (dist2);
 	      
       if (dist > 0.1) /* the balls are not overlapping */
 	{
-	  double new_acc = ((balls[j].mass / dist2) *
-			    ((dist < threshold) ? -1.0 : 1.0));
+	  double new_acc = ((st->balls[j].mass / dist2) *
+			    ((dist < st->threshold) ? -1.0 : 1.0));
 	  double new_acc_dist = new_acc / dist;
 	  *dx_ret += new_acc_dist * x_dist;
 	  *dy_ret += new_acc_dist * y_dist;
@@ -438,17 +461,17 @@ compute_force (int i, double *dx_ret, double *dy_ret)
 	}
     }
 
-  if (mouse_p)
+  if (st->mouse_p)
     {
-      x_dist = mouse_x - balls [i].x;
-      y_dist = mouse_y - balls [i].y;
+      x_dist = st->mouse_x - st->balls [i].x;
+      y_dist = st->mouse_y - st->balls [i].y;
       dist2 = (x_dist * x_dist) + (y_dist * y_dist);
       dist = sqrt (dist2);
 	
       if (dist > 0.1) /* the balls are not overlapping */
 	{
-	  double new_acc = ((mouse_mass / dist2) *
-			    ((dist < threshold) ? -1.0 : 1.0));
+	  double new_acc = ((st->mouse_mass / dist2) *
+			    ((dist < st->threshold) ? -1.0 : 1.0));
 	  double new_acc_dist = new_acc / dist;
 	  *dx_ret += new_acc_dist * x_dist;
 	  *dy_ret += new_acc_dist * y_dist;
@@ -464,18 +487,17 @@ compute_force (int i, double *dx_ret, double *dy_ret)
 
 /* Draws meters along the diagonal for the x velocity */
 static void 
-draw_meter_x(Display *dpy, Window window, GC draw_gc,
-             struct ball *balls, int i, int alone) 
+draw_meter_x(Display *dpy, Window window, struct state *st, int i, int alone) 
 {
   XWindowAttributes xgwa;
   int x1,x2,y,w1,w2,h;
   XGetWindowAttributes (dpy, window, &xgwa);
 
   /* set the width of the bars to use */
-  if(xgwa.height < BAR_SIZE*npoints)
+  if(xgwa.height < BAR_SIZE*st->npoints)
     {
-      y = i*(xgwa.height/npoints);
-      h = (xgwa.height/npoints) - 2;
+      y = i*(xgwa.height/st->npoints);
+      h = (xgwa.height/st->npoints) - 2;
     }
   else
     {
@@ -499,9 +521,9 @@ draw_meter_x(Display *dpy, Window window, GC draw_gc,
   if(y<1) y=i;  
   if(h<1) h=1;
 
-  w1 = (int)(20*x_vels[i]);
-  w2 = (int)(20*balls[i].vx);
-  x_vels[i] = balls[i].vx; 
+  w1 = (int)(20*st->x_vels[i]);
+  w2 = (int)(20*st->balls[i].vx);
+  st->x_vels[i] = st->balls[i].vx; 
 
   if (w1<0) {
     w1=-w1;
@@ -511,8 +533,8 @@ draw_meter_x(Display *dpy, Window window, GC draw_gc,
     w2=-w2;
     x2=x2-w2;
   }
-  XDrawRectangle(dpy,window,erase_gc,x1+(h+2)/2,y,w1,h);
-  XDrawRectangle(dpy,window,draw_gc,x2+(h+2)/2,y,w2,h);
+  XDrawRectangle(dpy,window,st->erase_gc,x1+(h+2)/2,y,w1,h);
+  XDrawRectangle(dpy,window,st->draw_gc,x2+(h+2)/2,y,w2,h);
 }
 
 /* Draws meters along the diagonal for the y velocity.
@@ -520,16 +542,15 @@ draw_meter_x(Display *dpy, Window window, GC draw_gc,
    one function instead of two without making them completely unreadable?
 */
 static void 
-draw_meter_y (Display *dpy, Window window, GC draw_gc,
-              struct ball *balls, int i, int alone) 
+draw_meter_y (Display *dpy, Window window, struct state *st, int i, int alone) 
 {
   XWindowAttributes xgwa;
   int y1,y2,x,h1,h2,w;
   XGetWindowAttributes (dpy, window, &xgwa);
 
-  if(xgwa.height < BAR_SIZE*npoints){  /*needs to be height still */
-    x = i*(xgwa.height/npoints);
-    w = (xgwa.height/npoints) - 2;
+  if(xgwa.height < BAR_SIZE*st->npoints){  /*needs to be height still */
+    x = i*(xgwa.height/st->npoints);
+    w = (xgwa.height/st->npoints) - 2;
   }
   else{
     x = BAR_SIZE*i;
@@ -552,9 +573,9 @@ draw_meter_y (Display *dpy, Window window, GC draw_gc,
   if(x < 1) x = i;  
   if(w < 1) w = 1;
 
-  h1 = (int)(20*y_vels[i]);
-  h2 = (int)(20*balls[i].vy);
-  y_vels[i] = balls[i].vy; 
+  h1 = (int)(20*st->y_vels[i]);
+  h2 = (int)(20*st->balls[i].vy);
+  st->y_vels[i] = st->balls[i].vy; 
 
   if (h1<0) {
     h1=-h1;
@@ -564,24 +585,23 @@ draw_meter_y (Display *dpy, Window window, GC draw_gc,
     h2=-h2;
     y2=y2-h2;
   }
-  XDrawRectangle(dpy,window,erase_gc,x,y1+(w+2)/2,w,h1);
-  XDrawRectangle(dpy,window,draw_gc,x,y2+(w+2)/2,w,h2);
+  XDrawRectangle(dpy,window,st->erase_gc,x,y1+(w+2)/2,w,h1);
+  XDrawRectangle(dpy,window,st->draw_gc,x,y2+(w+2)/2,w,h2);
 }
 
 
 /* Draws meters of the total speed of the balls */
 static void
-draw_meter_speed (Display *dpy, Window window, GC draw_gc, 
-                  struct ball *balls, int i) 
+draw_meter_speed (Display *dpy, Window window, struct state *st, int i) 
 {
   XWindowAttributes xgwa;
   int y,x1,x2,h,w1,w2;
   XGetWindowAttributes (dpy, window, &xgwa);
 
-  if(xgwa.height < BAR_SIZE*npoints)
+  if(xgwa.height < BAR_SIZE*st->npoints)
     {
-      y = i*(xgwa.height/npoints);
-      h = (xgwa.height/npoints) - 2;
+      y = i*(xgwa.height/st->npoints);
+      h = (xgwa.height/st->npoints) - 2;
     }
   else{
     y = BAR_SIZE*i;
@@ -594,91 +614,83 @@ draw_meter_speed (Display *dpy, Window window, GC draw_gc,
   if(y < 1) y = i;  
   if(h < 1) h = 1;
 
-  w1 = (int)(5*speeds[i]);
-  w2 = (int)(5*(balls[i].vy*balls[i].vy+balls[i].vx*balls[i].vx));
-  speeds[i] =    balls[i].vy*balls[i].vy+balls[i].vx*balls[i].vx;
+  w1 = (int)(5*st->speeds[i]);
+  w2 = (int)(5*(st->balls[i].vy*st->balls[i].vy+st->balls[i].vx*st->balls[i].vx));
+  st->speeds[i] =    st->balls[i].vy*st->balls[i].vy+st->balls[i].vx*st->balls[i].vx;
 
-  XDrawRectangle(dpy,window,erase_gc,x1,y,w1,h);
-  XDrawRectangle(dpy,window,draw_gc, x2,y,w2,h);
+  XDrawRectangle(dpy,window,st->erase_gc,x1,y,w1,h);
+  XDrawRectangle(dpy,window,st->draw_gc, x2,y,w2,h);
 }
 
-static void
-run_balls (Display *dpy, Window window, int total_ticks)
+static unsigned long
+attraction_draw (Display *dpy, Window window, void *closure)
 {
-  int last_point_stack_fp = point_stack_fp;
-  static int tick = 500, xlim, ylim;
-  static Colormap cmap;
+  struct state *st = (struct state *) closure;
+  int last_point_stack_fp = st->point_stack_fp;
   
   Window root1, child1;  /*flip mods for mouse interaction*/
   unsigned int mask;
 
-  int i, radius = global_size/2;
-  if(global_size == 0)
+  int i, radius = st->global_size/2;
+
+  st->total_ticks++;
+
+  if(st->global_size == 0)
     radius = (MAX_SIZE / 3);
 
-  if(graph_mode != graph_none)
+  if(st->graph_mode != graph_none)
     {
-      if(graph_mode == graph_both)
+      if(st->graph_mode == graph_both)
 	{
-          for(i = 0; i < npoints; i++)
+          for(i = 0; i < st->npoints; i++)
             {
-              draw_meter_x(dpy,window,draw_gc, balls, i, 0);
-              draw_meter_y(dpy,window,draw_gc, balls, i, 0);
+              draw_meter_x(dpy, window, st, i, 0);
+              draw_meter_y(dpy, window, st, i, 0);
             }
 	}
-      else if(graph_mode == graph_x)
+      else if(st->graph_mode == graph_x)
 	{
-          for(i = 0; i < npoints; i++)
+          for(i = 0; i < st->npoints; i++)
             {
-              draw_meter_x(dpy,window,draw_gc, balls, i, 1);
+              draw_meter_x(dpy, window, st, i, 1);
             }
 	}
-      else if(graph_mode == graph_y)
+      else if(st->graph_mode == graph_y)
 	{
-          for(i = 0; i < npoints; i++)
+          for(i = 0; i < st->npoints; i++)
             {
-              draw_meter_y(dpy,window,draw_gc, balls, i, 1);
+              draw_meter_y(dpy, window, st, i, 1);
             }
 	}
-      else if(graph_mode == graph_speed)
+      else if(st->graph_mode == graph_speed)
 	{
-          for(i = 0; i < npoints; i++)
+          for(i = 0; i < st->npoints; i++)
             {
-              draw_meter_speed(dpy,window,draw_gc, balls, i);
+              draw_meter_speed(dpy, window, st, i);
             }
 	}
 
     }
 
-  if (mouse_p)
+  if (st->mouse_p)
     {
       XQueryPointer(dpy, window, &root1, &child1,
-		    &root_x, &root_y, &mouse_x, &mouse_y, &mask);
-    }
-
-  if (tick++ == 500)
-    {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
-      tick = 0;
-      xlim = xgwa.width;
-      ylim = xgwa.height;
-      cmap = xgwa.colormap;
+		    &st->root_x, &st->root_y, &st->mouse_x, &st->mouse_y, &mask);
     }
 
   /* compute the force of attraction/repulsion among all balls */
-  for (i = 0; i < npoints; i++)
-    compute_force (i, &balls[i].dx, &balls[i].dy);
+  for (i = 0; i < st->npoints; i++)
+    compute_force (st, i, &st->balls[i].dx, &st->balls[i].dy);
 
   /* move the balls according to the forces now in effect */
-  for (i = 0; i < npoints; i++)
+  for (i = 0; i < st->npoints; i++)
     {
-      double old_x = balls[i].x;
-      double old_y = balls[i].y;
+      double old_x = st->balls[i].x;
+      double old_y = st->balls[i].y;
       double new_x, new_y;
-      int size = balls[i].size;
-      balls[i].vx += balls[i].dx;
-      balls[i].vy += balls[i].dy;
+      int size = st->balls[i].size;
+      st->balls[i].vx += st->balls[i].dx;
+      st->balls[i].vy += st->balls[i].dy;
 
       /* "don't let them get too fast: impose a terminal velocity
          (actually, make the medium have friction)"
@@ -686,251 +698,249 @@ run_balls (Display *dpy, Window window, int total_ticks)
 	 viscosity of .9 for balls going over the speed limit.  Anyway, 
 	 this is now optional
       */
-      if (balls[i].vx > 10 && maxspeed_p)
+      if (fabs(st->balls[i].vx) > 10 && st->maxspeed_p)
 	{
-	  balls[i].vx *= 0.9;
-	  balls[i].dx = 0;
+	  st->balls[i].vx *= 0.9;
+	  st->balls[i].dx = 0;
 	}
-      else if (viscosity != 1)
+      if (st->viscosity != 1)
 	{
-	  balls[i].vx *= viscosity;
-	}
-
-      if (balls[i].vy > 10 && maxspeed_p)
-	{
-	  balls[i].vy *= 0.9;
-	  balls[i].dy = 0;
-	}
-      else if (viscosity != 1)
-	{
-	  balls[i].vy *= viscosity;
+	  st->balls[i].vx *= st->viscosity;
 	}
 
-      balls[i].x += balls[i].vx;
-      balls[i].y += balls[i].vy;
+      if (fabs(st->balls[i].vy) > 10 && st->maxspeed_p)
+	{
+	  st->balls[i].vy *= 0.9;
+	  st->balls[i].dy = 0;
+	}
+      if (st->viscosity != 1)
+	{
+	  st->balls[i].vy *= st->viscosity;
+	}
+
+      st->balls[i].x += st->balls[i].vx;
+      st->balls[i].y += st->balls[i].vy;
 
 
       /* bounce off the walls if desired
 	 note: a ball is actually its upper left corner */
-      if(walls_p)
+      if(st->walls_p)
  	{
-	  if(cbounce_p)  /* with correct bouncing */
+	  if(st->cbounce_p)  /* with correct bouncing */
 	    {
               /* so long as it's out of range, keep bouncing */
 	
-              while( (balls[i].x >= (xlim - balls[i].size)) ||
-                     (balls[i].y >= (ylim - balls[i].size)) ||
-                     (balls[i].x <= 0) ||
-                     (balls[i].y <= 0) )
+              while( (st->balls[i].x >= (st->xlim - st->balls[i].size)) ||
+                     (st->balls[i].y >= (st->ylim - st->balls[i].size)) ||
+                     (st->balls[i].x <= 0) ||
+                     (st->balls[i].y <= 0) )
                 {
-                  if (balls[i].x >= (xlim - balls[i].size))
+                  if (st->balls[i].x >= (st->xlim - st->balls[i].size))
                     {
-                      balls[i].x = (2*(xlim - balls[i].size) - balls[i].x);
-                      balls[i].vx = -balls[i].vx;
+                      st->balls[i].x = (2*(st->xlim - st->balls[i].size) - st->balls[i].x);
+                      st->balls[i].vx = -st->balls[i].vx;
                     }
-                  if (balls[i].y >= (ylim - balls[i].size))
+                  if (st->balls[i].y >= (st->ylim - st->balls[i].size))
                     {
-                      balls[i].y = (2*(ylim - balls[i].size) - balls[i].y);
-                      balls[i].vy = -balls[i].vy;
+                      st->balls[i].y = (2*(st->ylim - st->balls[i].size) - st->balls[i].y);
+                      st->balls[i].vy = -st->balls[i].vy;
                     }
-                  if (balls[i].x <= 0)
+                  if (st->balls[i].x <= 0)
                     {
-                      balls[i].x = -balls[i].x;
-		      balls[i].vx = -balls[i].vx;
+                      st->balls[i].x = -st->balls[i].x;
+		      st->balls[i].vx = -st->balls[i].vx;
                     }
-                  if (balls[i].y <= 0)
+                  if (st->balls[i].y <= 0)
                     {
-                      balls[i].y = -balls[i].y;
-		      balls[i].vy = -balls[i].vy;
+                      st->balls[i].y = -st->balls[i].y;
+		      st->balls[i].vy = -st->balls[i].vy;
                     }
                 }
             }
           else  /* with old bouncing */
             {
-              if (balls[i].x >= (xlim - balls[i].size))
+              if (st->balls[i].x >= (st->xlim - st->balls[i].size))
                 {
-                  balls[i].x = (xlim - balls[i].size - 1);
-                  if (balls[i].vx > 0) /* why is this check here? */
-                    balls[i].vx = -balls[i].vx;
+                  st->balls[i].x = (st->xlim - st->balls[i].size - 1);
+                  if (st->balls[i].vx > 0) /* why is this check here? */
+                    st->balls[i].vx = -st->balls[i].vx;
                 }
-              if (balls[i].y >= (ylim - balls[i].size))
+              if (st->balls[i].y >= (st->ylim - st->balls[i].size))
                 {
-                  balls[i].y = (ylim - balls[i].size - 1);
-                  if (balls[i].vy > 0)
-                    balls[i].vy = -balls[i].vy;
+                  st->balls[i].y = (st->ylim - st->balls[i].size - 1);
+                  if (st->balls[i].vy > 0)
+                    st->balls[i].vy = -st->balls[i].vy;
                 }
-              if (balls[i].x <= 0)
+              if (st->balls[i].x <= 0)
                 {
-                  balls[i].x = 0;
-                  if (balls[i].vx < 0)
-                    balls[i].vx = -balls[i].vx;
+                  st->balls[i].x = 0;
+                  if (st->balls[i].vx < 0)
+                    st->balls[i].vx = -st->balls[i].vx;
                 }
-              if (balls[i].y <= 0)
+              if (st->balls[i].y <= 0)
                 {
-                  balls[i].y = 0;
-                  if (balls[i].vy < 0)
-                    balls[i].vy = -balls[i].vy;
+                  st->balls[i].y = 0;
+                  if (st->balls[i].vy < 0)
+                    st->balls[i].vy = -st->balls[i].vy;
                 }
             }
         }
-      new_x = balls[i].x;
-      new_y = balls[i].y;
+      new_x = st->balls[i].x;
+      new_y = st->balls[i].y;
 
       if (!mono_p)
 	{
-	  if (mode == ball_mode)
+	  if (st->mode == ball_mode)
 	    {
-	      if (glow_p)
+	      if (st->glow_p)
 		{
 		  /* make color saturation be related to particle
 		     acceleration. */
 		  double limit = 0.5;
 		  double s, fraction;
-		  double vx = balls [i].dx;
-		  double vy = balls [i].dy;
+		  double vx = st->balls [i].dx;
+		  double vy = st->balls [i].dy;
 		  if (vx < 0) vx = -vx;
 		  if (vy < 0) vy = -vy;
 		  fraction = vx + vy;
 		  if (fraction > limit) fraction = limit;
 
 		  s = 1 - (fraction / limit);
-		  balls[i].pixel_index = (ncolors * s);
+		  st->balls[i].pixel_index = (st->ncolors * s);
 		}
-	      XSetForeground (dpy, draw_gc,
-			      colors[balls[i].pixel_index].pixel);
+	      XSetForeground (dpy, st->draw_gc,
+			      st->colors[st->balls[i].pixel_index].pixel);
 	    }
 	}
 
-      if (mode == ball_mode)
+      if (st->mode == ball_mode)
 	{
-	  XFillArc (dpy, window, erase_gc, (int) old_x, (int) old_y,
+	  XFillArc (dpy, window, st->erase_gc, (int) old_x, (int) old_y,
 		    size, size, 0, 360*64);
-	  XFillArc (dpy, window, draw_gc,  (int) new_x, (int) new_y,
+	  XFillArc (dpy, window, st->draw_gc,  (int) new_x, (int) new_y,
 		    size, size, 0, 360*64);
 	}
       else
 	{
-	  point_stack [point_stack_fp].x = new_x;
-	  point_stack [point_stack_fp].y = new_y;
-	  point_stack_fp++;
+	  st->point_stack [st->point_stack_fp].x = new_x;
+	  st->point_stack [st->point_stack_fp].y = new_y;
+	  st->point_stack_fp++;
 	}
     }
 
   /* draw the lines or polygons after computing all points */
-  if (mode != ball_mode)
+  if (st->mode != ball_mode)
     {
-      point_stack [point_stack_fp].x = balls [0].x; /* close the polygon */
-      point_stack [point_stack_fp].y = balls [0].y;
-      point_stack_fp++;
-      if (point_stack_fp == point_stack_size)
-	point_stack_fp = 0;
-      else if (point_stack_fp > point_stack_size) /* better be aligned */
+      st->point_stack [st->point_stack_fp].x = st->balls [0].x; /* close the polygon */
+      st->point_stack [st->point_stack_fp].y = st->balls [0].y;
+      st->point_stack_fp++;
+      if (st->point_stack_fp == st->point_stack_size)
+	st->point_stack_fp = 0;
+      else if (st->point_stack_fp > st->point_stack_size) /* better be aligned */
 	abort ();
       if (!mono_p)
 	{
-	  static int tick = 0;
-	  if (tick++ == color_shift)
+	  if (st->color_tick++ == st->color_shift)
 	    {
-	      tick = 0;
-	      fg_index = (fg_index + 1) % ncolors;
-	      XSetForeground (dpy, draw_gc, colors[fg_index].pixel);
+	      st->color_tick = 0;
+	      st->fg_index = (st->fg_index + 1) % st->ncolors;
+	      XSetForeground (dpy, st->draw_gc, st->colors[st->fg_index].pixel);
 	    }
 	}
     }
 
-  switch (mode)
+  switch (st->mode)
     {
     case ball_mode:
       break;
     case line_mode:
-      if (segments > 0)
-	XDrawLines (dpy, window, erase_gc, point_stack + point_stack_fp,
-		    npoints + 1, CoordModeOrigin);
-      XDrawLines (dpy, window, draw_gc, point_stack + last_point_stack_fp,
-		  npoints + 1, CoordModeOrigin);
+      if (st->segments > 0)
+	XDrawLines (dpy, window, st->erase_gc, st->point_stack + st->point_stack_fp,
+		    st->npoints + 1, CoordModeOrigin);
+      XDrawLines (dpy, window, st->draw_gc, st->point_stack + last_point_stack_fp,
+		  st->npoints + 1, CoordModeOrigin);
       break;
     case polygon_mode:
-      if (segments > 0)
-	XFillPolygon (dpy, window, erase_gc, point_stack + point_stack_fp,
-		      npoints + 1, (npoints == 3 ? Convex : Complex),
+      if (st->segments > 0)
+	XFillPolygon (dpy, window, st->erase_gc, st->point_stack + st->point_stack_fp,
+		      st->npoints + 1, (st->npoints == 3 ? Convex : Complex),
 		      CoordModeOrigin);
-      XFillPolygon (dpy, window, draw_gc, point_stack + last_point_stack_fp,
-		    npoints + 1, (npoints == 3 ? Convex : Complex),
+      XFillPolygon (dpy, window, st->draw_gc, st->point_stack + last_point_stack_fp,
+		    st->npoints + 1, (st->npoints == 3 ? Convex : Complex),
 		    CoordModeOrigin);
       break;
     case tail_mode:
       {
-	for (i = 0; i < npoints; i++)
+	for (i = 0; i < st->npoints; i++)
 	  {
-	    int index = point_stack_fp + i;
-	    int next_index = (index + (npoints + 1)) % point_stack_size;
-            if(no_erase_yet == 1)
+	    int index = st->point_stack_fp + i;
+	    int next_index = (index + (st->npoints + 1)) % st->point_stack_size;
+            if(st->no_erase_yet == 1)
 	      {
-		if(total_ticks >= segments)
+		if(st->total_ticks >= st->segments)
                   {
-                    no_erase_yet = 0;
-                    XDrawLine (dpy, window, erase_gc,
-			       point_stack [index].x + radius,
-			       point_stack [index].y + radius,
-			       point_stack [next_index].x + radius,
-			       point_stack [next_index].y + radius);
+                    st->no_erase_yet = 0;
+                    XDrawLine (dpy, window, st->erase_gc,
+			       st->point_stack [index].x + radius,
+			       st->point_stack [index].y + radius,
+			       st->point_stack [next_index].x + radius,
+			       st->point_stack [next_index].y + radius);
                   }
 	      }
 	    else
 	      {
-	    	XDrawLine (dpy, window, erase_gc,
-                           point_stack [index].x + radius,
-                           point_stack [index].y + radius,
-                           point_stack [next_index].x + radius,
-                           point_stack [next_index].y + radius);
+	    	XDrawLine (dpy, window, st->erase_gc,
+                           st->point_stack [index].x + radius,
+                           st->point_stack [index].y + radius,
+                           st->point_stack [next_index].x + radius,
+                           st->point_stack [next_index].y + radius);
 	      }
 	    index = last_point_stack_fp + i;
-	    next_index = (index - (npoints + 1)) % point_stack_size;
-	    if (next_index < 0) next_index += point_stack_size;
-	    if (point_stack [next_index].x == 0 &&
-		point_stack [next_index].y == 0)
+	    next_index = (index - (st->npoints + 1)) % st->point_stack_size;
+	    if (next_index < 0) next_index += st->point_stack_size;
+	    if (st->point_stack [next_index].x == 0 &&
+		st->point_stack [next_index].y == 0)
 	      continue;
-	    XDrawLine (dpy, window, draw_gc,
-		       point_stack [index].x + radius,
-		       point_stack [index].y + radius,
-		       point_stack [next_index].x + radius,
-		       point_stack [next_index].y + radius);
+	    XDrawLine (dpy, window, st->draw_gc,
+		       st->point_stack [index].x + radius,
+		       st->point_stack [index].y + radius,
+		       st->point_stack [next_index].x + radius,
+		       st->point_stack [next_index].y + radius);
 	  }
       }
       break;
     case spline_mode:
     case spline_filled_mode:
       {
-	static spline *s = 0;
-	if (! s) s = make_spline (npoints);
-	if (segments > 0)
+	if (! st->spl) st->spl = make_spline (st->npoints);
+	if (st->segments > 0)
 	  {
-	    for (i = 0; i < npoints; i++)
+	    for (i = 0; i < st->npoints; i++)
 	      {
-		s->control_x [i] = point_stack [point_stack_fp + i].x;
-		s->control_y [i] = point_stack [point_stack_fp + i].y;
+		st->spl->control_x [i] = st->point_stack [st->point_stack_fp + i].x;
+		st->spl->control_y [i] = st->point_stack [st->point_stack_fp + i].y;
 	      }
-	    compute_closed_spline (s);
-	    if (mode == spline_filled_mode)
-	      XFillPolygon (dpy, window, erase_gc, s->points, s->n_points,
-			    (s->n_points == 3 ? Convex : Complex),
+	    compute_closed_spline (st->spl);
+	    if (st->mode == spline_filled_mode)
+	      XFillPolygon (dpy, window, st->erase_gc, st->spl->points, st->spl->n_points,
+			    (st->spl->n_points == 3 ? Convex : Complex),
 			    CoordModeOrigin);
 	    else
-	      XDrawLines (dpy, window, erase_gc, s->points, s->n_points,
+	      XDrawLines (dpy, window, st->erase_gc, st->spl->points, st->spl->n_points,
 			  CoordModeOrigin);
 	  }
-	for (i = 0; i < npoints; i++)
+	for (i = 0; i < st->npoints; i++)
 	  {
-	    s->control_x [i] = point_stack [last_point_stack_fp + i].x;
-	    s->control_y [i] = point_stack [last_point_stack_fp + i].y;
+	    st->spl->control_x [i] = st->point_stack [last_point_stack_fp + i].x;
+	    st->spl->control_y [i] = st->point_stack [last_point_stack_fp + i].y;
 	  }
-	compute_closed_spline (s);
-	if (mode == spline_filled_mode)
-	  XFillPolygon (dpy, window, draw_gc, s->points, s->n_points,
-			(s->n_points == 3 ? Convex : Complex),
+	compute_closed_spline (st->spl);
+	if (st->mode == spline_filled_mode)
+	  XFillPolygon (dpy, window, st->draw_gc, st->spl->points, st->spl->n_points,
+			(st->spl->n_points == 3 ? Convex : Complex),
 			CoordModeOrigin);
 	else
-	  XDrawLines (dpy, window, draw_gc, s->points, s->n_points,
+	  XDrawLines (dpy, window, st->draw_gc, st->spl->points, st->spl->n_points,
 		      CoordModeOrigin);
       }
       break;
@@ -938,13 +948,42 @@ run_balls (Display *dpy, Window window, int total_ticks)
       abort ();
     }
 
-  XSync (dpy, False);
+  return st->delay;
+}
+
+static void
+attraction_reshape (Display *dpy, Window window, void *closure, 
+                    unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->xlim = w;
+  st->ylim = h;
+}
+
+static Bool
+attraction_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+attraction_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->balls)	free (st->balls);
+  if (st->x_vels)	free (st->x_vels);
+  if (st->y_vels)	free (st->y_vels);
+  if (st->speeds)	free (st->speeds);
+  if (st->point_stack)	free (st->point_stack);
+  if (st->colors)	free (st->colors);
+  if (st->spl)		free_spline (st->spl);
+
+  free (st);
 }
 
 
-char *progclass = "Attraction";
-
-char *defaults [] = {
+static const char *attraction_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*mode:	balls",
@@ -952,7 +991,7 @@ char *defaults [] = {
   "*points:	0",
   "*size:	0",
   "*colors:	200",
-  "*threshold:	100",
+  "*threshold:	200",
   "*delay:	10000",
   "*glow:	false",
   "*mouseSize:	10",
@@ -965,10 +1004,13 @@ char *defaults [] = {
   "*colorShift:	3",
   "*segments:	500",
   "*vMult:	0.9",
+  "*radius:	0",
+  "*vx:		0",
+  "*vy:		0",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec attraction_options [] = {
   { "-mode",		".mode",	XrmoptionSepArg, 0 },
   { "-graphmode",	".graphmode",   XrmoptionSepArg, 0 },
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
@@ -998,19 +1040,5 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  /* for tail mode fix */
-  int total_ticks = 0;
 
-  init_balls (dpy, window);
-  while (1)
-    {
-      total_ticks++;
-      run_balls (dpy, window, total_ticks);
-      screenhack_handle_events (dpy);
-      if (delay)
-        usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Attraction", attraction)

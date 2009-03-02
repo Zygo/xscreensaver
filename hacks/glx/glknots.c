@@ -1,4 +1,4 @@
-/* glknots, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* glknots, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,29 +13,12 @@
  * http://astronomy.swin.edu.au/~pbourke/curves/knot/
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"GLKnots"
-#define HACK_INIT	init_knot
-#define HACK_DRAW	draw_knot
-#define HACK_RESHAPE	reshape_knot
-#define HACK_HANDLE_EVENT knot_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "1.0"
-#define DEF_THICKNESS   "0.3"
-#define DEF_SEGMENTS    "800"
-#define DEF_DURATION    "8"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
+# define refresh_knot 0
+# define release_knot 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -48,7 +31,12 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "1.0"
+#define DEF_THICKNESS   "0.3"
+#define DEF_SEGMENTS    "800"
+#define DEF_DURATION    "8"
 
 typedef struct {
   GLXContext *glx_context;
@@ -65,6 +53,9 @@ typedef struct {
   int mode;  /* 0 = normal, 1 = out, 2 = in */
   int mode_tick;
   Bool clear_p;
+
+  time_t last_time;
+  int draw_tick;
 
 } knot_configuration;
 
@@ -97,7 +88,7 @@ static argtype vars[] = {
   {&duration,  "duration",  "Duration",   DEF_DURATION,  t_Int},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt knot_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 static void
@@ -184,7 +175,7 @@ make_knot (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_knot (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -233,7 +224,7 @@ new_knot (ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 knot_handle_event (ModeInfo *mi, XEvent *event)
 {
   knot_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -275,7 +266,7 @@ knot_handle_event (ModeInfo *mi, XEvent *event)
 
 
 
-void 
+ENTRYPOINT void 
 init_knot (ModeInfo *mi)
 {
   knot_configuration *bp;
@@ -333,6 +324,7 @@ init_knot (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -359,36 +351,35 @@ init_knot (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_knot (ModeInfo *mi)
 {
   knot_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
 
-  static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
-  static GLfloat bshiny    = 128.0;
-
-  static time_t last_time = 0;
+  GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
+  GLfloat bshiny    = 128.0;
 
   if (!bp->glx_context)
     return;
 
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+
   if (bp->mode == 0)
     {
-      static int tick = 0;
-      if (tick++ > 10)
+      if (bp->draw_tick++ > 10)
         {
           time_t now = time((time_t *) 0);
-          if (last_time == 0) last_time = now;
-          tick = 0;
+          if (bp->last_time == 0) bp->last_time = now;
+          bp->draw_tick = 0;
           if (!bp->button_down_p &&
-              now - last_time >= duration)
+              now - bp->last_time >= duration)
             {
               bp->mode = 1;    /* go out */
               bp->mode_tick = 10 * speed;
-              last_time = now;
+              bp->last_time = now;
             }
         }
     }
@@ -465,5 +456,7 @@ draw_knot (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("GLKnots", glknots, knot)
 
 #endif /* USE_GL */

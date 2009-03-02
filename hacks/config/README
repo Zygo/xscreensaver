@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 4.24
-                               08-Feb-2006
+                              version 5.00b2b2
+                               23-May-2006
 
                      http://www.jwz.org/xscreensaver/
 
@@ -135,6 +135,19 @@ The tags and parameters used here are:
 
         One of the menu items (the default) should have no arg-set.
 
+        Each arg-set should begin with the same switch: that is,
+        all the args in a given menu should look like:
+
+           -mode one
+           -mode two
+           -mode three
+
+        and not
+
+           -this
+           -that
+           -the other
+
 -----------------------------------------------------------------------
 
   <string id="SYMBOLIC NAME"
@@ -153,6 +166,35 @@ The tags and parameters used here are:
 
         This creates a file entry field (a text field with a "Browse"
         button next to it.)
+
+-----------------------------------------------------------------------
+
+  <xscreensaver-text />
+
+        This indicates that this screen saver displays text via the
+        "xscreensaver-text" program.  
+
+        In the X11 version, this tag does nothing: the text-related
+        preferences are in the main Screen Saver Preferences window,
+        not in the per-display-mode preferences.
+
+        In the MacOS version, the text-related preferences appear
+        in this pane, and this tag emits those several controls.
+
+-----------------------------------------------------------------------
+
+  <xscreensaver-image />
+
+        This indicates that this screen saver displays images via the
+        "xscreensaver-getimage" program.  
+
+        In the X11 version, this tag does nothing: the image-loading
+        and screen-grabbing-related preferences are in the main
+        Screen Saver Preferences window, not in the per-display-mode
+        preferences.
+
+        In the MacOS version, the image-related preferences appear
+        in this pane, and this tag emits those several controls.
 
 -----------------------------------------------------------------------
 

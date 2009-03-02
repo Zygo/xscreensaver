@@ -17,6 +17,6 @@
    stacks = number of north/south divisions (latitude)
    slices = number of clockwise/counterclockwise divisions (longitude)
  */
-extern void unit_sphere (int stacks, int slices, Bool wire);
+extern void unit_sphere (int stacks, int slices, int wire_p);
 
 #endif /* __SPHERE_H__ */

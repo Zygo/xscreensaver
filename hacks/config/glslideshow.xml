@@ -29,7 +29,9 @@
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="letterbox" _label="Letterbox" arg-unset="-clip"/>
+  <xscreensaver-image />
+
+  <boolean id="letterbox" _label="Letterbox" arg-unset="-no-letterbox"/>
 
   <boolean id="titles" _label="Show Image Titles" arg-set="-titles"/>
 
@@ -39,17 +41,6 @@
 Loads a random sequence of images and smoothly scans and zooms around
 in each, fading from pan to pan.  
 
-To tell it where to find the images to display, go to the "Advanced"
-tab on the Screensaver Preferences window.  Select "Choose Random
-Images", and enter your image directory in the text field right below
-that.
-
-(Note: not the the "Advanced" button at the bottom of this window:
-the tab at the top of the *other* window.)
-
-This program requires a good video card capable of supporting large
-textures.
-
-Written by Jamie Zawinski and Mike Oliphant.
+Written by Jamie Zawinski and Mike Oliphant; 2003.
   </_description>
 </screensaver>

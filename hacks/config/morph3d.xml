@@ -4,8 +4,14 @@
 
   <command arg="-root"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20" default="0"/>
+  <select id="object">
+   <option id="random" _label="Random Object"/>
+   <option id="tetra"  _label="Tetrahedron"  arg-set="-count 1"/>
+   <option id="cube"   _label="Cube"         arg-set="-count 2"/>
+   <option id="octa"   _label="Octahedron"   arg-set="-count 3"/>
+   <option id="dodeca" _label="Dodecahedron" arg-set="-count 4"/>
+   <option id="icosa"  _label="Icosahedron"  arg-set="-count 5"/>
+  </select>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
@@ -15,8 +21,8 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Another 3d shape-changing GL hack, by Marcelo Vianna.  It has the
-same shiny-plastic feel as Superquadrics, as many computer-generated
-objects do...
+Platonic solids that turn inside out and get spikey.
+
+Written by Marcelo Vianna; 1997.
   </_description>
 </screensaver>

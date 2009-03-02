@@ -9,10 +9,14 @@
           low="0" high="50000" default="20000"
           convert="invert"/>
 
+  <xscreensaver-image />
+
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Antspotlight draws an ant (with a headlight) who walks on top of an
-image of your desktop or other image.  Written by Blair Tennessy.
+Draws an ant (with a headlight) who walks on top of an
+image of your desktop or other image.  
+
+Written by Blair Tennessy; 2003.
   </_description>
 </screensaver>

@@ -15,7 +15,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
@@ -32,74 +31,6 @@
         (((FLOAT) ((random() >> 8) & 0xffff)) / ((FLOAT) 0x10000))
 
 
-
-/* parameters that are user configurable */
-
-/* whether or not to use xshm */
-#ifdef HAVE_XSHM_EXTENSION
-static Bool useShm;
-#endif
-
-/* delay (usec) between iterations */
-static int delay;
-
-/* the maximum number of columns of tiles */
-static int maxColumns;
-
-/* the maximum number of rows of tiles */
-static int maxRows;
-
-/* the size (width and height) of a tile */
-static int tileSize;
-
-/* the width of the border around each tile */
-static int borderWidth;
-
-/* the chance, per iteration, of an interesting event happening */
-static FLOAT eventChance;
-
-/* friction: the fraction (0..1) by which velocity decreased per iteration */
-static FLOAT friction;
-
-/* springiness: the fraction (0..1) of the orientation that turns into 
- * velocity towards the center */
-static FLOAT springiness;
-
-/* transference: the fraction (0..1) of the orientations of orthogonal
- * neighbors that turns into velocity (in the same direction as the
- * orientation) */
-static FLOAT transference;
-
-
-
-/* non-user-modifiable immutable definitions */
-
-/* width and height of the window */
-static int windowWidth;
-static int windowHeight;
-
-static Display *display;        /* the display to draw on */
-static Window window;           /* the window to draw on */
-static Screen *screen;          /* the screen to draw on */
-
-static XImage *sourceImage;     /* image source of stuff to draw */
-static XImage *workImage;       /* work area image, used when rendering */
-static XImage *backgroundImage; /* image filled with background pixels */
-
-static GC backgroundGC;         /* GC for the background color */
-static GC foregroundGC;         /* GC for the foreground color */
-static GC borderGC;             /* GC for the border color */
-unsigned long backgroundPixel;  /* background color as a pixel value */
-unsigned long borderPixel;      /* border color as a pixel value */
-
-#ifdef HAVE_XSHM_EXTENSION
-XShmSegmentInfo shmInfo;
-#endif
-
-
-
-/* the model */
-
 typedef struct
 {
     int x;        /* x coordinate of the center of the tile */
@@ -111,14 +42,50 @@ typedef struct
 }
 Tile;
 
-static Tile *tiles;  /* array of tiles (left->right, top->bottom, row major) */
-static int rows;     /* number of rows of tiles */
-static int columns;  /* number of columns of tiles */
 
-static Tile **sortedTiles; /* array of tile pointers, sorted by zoom */
-static int tileCount;     /* total number of tiles */
+struct state {
+  Display *dpy;
+  Window window;
 
-#define TILE_AT(col,row) (&tiles[(row) * columns + (col)])
+  int delay;			/* delay (usec) between iterations */
+  int maxColumns;		/* the maximum number of columns of tiles */
+  int maxRows;			/* the maximum number of rows of tiles */
+  int tileSize;			/* the size (width and height) of a tile */
+  int borderWidth;		/* the width of the border around each tile */
+  FLOAT eventChance;		/* the chance, per iteration, of an interesting event happening */
+  FLOAT friction;		/* friction: the fraction (0..1) by which velocity decreased per iteration */
+  FLOAT springiness;		/* springiness: the fraction (0..1) of the orientation that turns into velocity towards the center */
+  FLOAT transference;		/* transference: the fraction (0..1) of the orientations of orthogonal neighbors that turns into velocity (in the same direction as the orientation) */
+  int windowWidth;		/* width and height of the window */
+  int windowHeight;
+  Screen *screen;       	   /* the screen to draw on */
+  XImage *sourceImage;  	   /* image source of stuff to draw */
+  XImage *workImage;    	   /* work area image, used when rendering */
+  XImage *backgroundImage;	 /* image filled with background pixels */
+
+  GC backgroundGC;        	 /* GC for the background color */
+  GC foregroundGC;        	 /* GC for the foreground color */
+  GC borderGC;            	 /* GC for the border color */
+  unsigned long backgroundPixel;  /* background color as a pixel value */
+  unsigned long borderPixel;      /* border color as a pixel value */
+
+  Tile *tiles;  /* array of tiles (left->right, top->bottom, row major) */
+  int rows;     /* number of rows of tiles */
+  int columns;  /* number of columns of tiles */
+
+  Tile **sortedTiles; /* array of tile pointers, sorted by zoom */
+  int tileCount;     /* total number of tiles */
+
+  async_load_state *img_loader;
+
+  Bool useShm;		/* whether or not to use xshm */
+#ifdef HAVE_XSHM_EXTENSION
+  XShmSegmentInfo shmInfo;
+#endif
+};
+
+
+#define TILE_AT(col,row) (&st->tiles[(row) * st->columns + (col)])
 
 #define MAX_VANGLE (M_PI / 4.0)
 #define MAX_VZOOM 0.25
@@ -135,69 +102,77 @@ static int tileCount;     /* total number of tiles */
  */
 
 /* grab the source image */
-static void grabImage (XWindowAttributes *xwa)
+static void grabImage_start (struct state *st, XWindowAttributes *xwa)
 {
-    XFillRectangle (display, window, backgroundGC, 0, 0, 
-		    windowWidth, windowHeight);
-    backgroundImage = 
-	XGetImage (display, window, 0, 0, windowWidth, windowHeight,
+    XFillRectangle (st->dpy, st->window, st->backgroundGC, 0, 0, 
+		    st->windowWidth, st->windowHeight);
+    st->backgroundImage = 
+	XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 		   ~0L, ZPixmap);
 
-    load_random_image (screen, window, window, NULL, NULL);
-    sourceImage = XGetImage (display, window, 0, 0, windowWidth, windowHeight,
+    st->img_loader = load_image_async_simple (0, xwa->screen, st->window,
+                                              st->window, 0, 0);
+}
+
+static void grabImage_done (struct state *st)
+{
+   XWindowAttributes xwa;
+   XGetWindowAttributes (st->dpy, st->window, &xwa);
+
+    st->sourceImage = XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 			     ~0L, ZPixmap);
 
 #ifdef HAVE_XSHM_EXTENSION
-    workImage = NULL;
-    if (useShm) 
+    st->workImage = NULL;
+    if (st->useShm) 
     {
-	workImage = create_xshm_image (display, xwa->visual, xwa->depth,
-				       ZPixmap, 0, &shmInfo, 
-				       windowWidth, windowHeight);
-	if (!workImage) 
+	st->workImage = create_xshm_image (st->dpy, xwa.visual, xwa.depth,
+				       ZPixmap, 0, &st->shmInfo, 
+				       st->windowWidth, st->windowHeight);
+	if (!st->workImage) 
 	{
-	    useShm = False;
+	    st->useShm = False;
 	    fprintf (stderr, "create_xshm_image failed\n");
 	}
     }
 
-    if (workImage == NULL)
+    if (st->workImage == NULL)
 #endif /* HAVE_XSHM_EXTENSION */
 
 	/* just use XSubImage to acquire the right visual, depth, etc;
 	 * easier than the other alternatives */
-	workImage = XSubImage (sourceImage, 0, 0, windowWidth, windowHeight);
+	st->workImage = XSubImage (st->sourceImage, 0, 0, st->windowWidth, st->windowHeight);
 }
 
 /* set up the system */
-static void setup (void)
+static void setup (struct state *st)
 {
     XWindowAttributes xgwa;
     XGCValues gcv;
 
-    XGetWindowAttributes (display, window, &xgwa);
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-    screen = xgwa.screen;
-    windowWidth = xgwa.width;
-    windowHeight = xgwa.height;
+    st->screen = xgwa.screen;
+    st->windowWidth = xgwa.width;
+    st->windowHeight = xgwa.height;
 
-    gcv.line_width = borderWidth;
-    gcv.foreground = get_pixel_resource ("borderColor", "BorderColor",
-					 display, xgwa.colormap);
-    borderPixel = gcv.foreground;
-    borderGC = XCreateGC (display, window, GCForeground | GCLineWidth, 
+    gcv.line_width = st->borderWidth;
+    gcv.foreground = get_pixel_resource (st->dpy, xgwa.colormap,
+                                         "borderColor", "BorderColor");
+    st->borderPixel = gcv.foreground;
+    st->borderGC = XCreateGC (st->dpy, st->window, GCForeground | GCLineWidth, 
 			  &gcv);
 
-    gcv.foreground = get_pixel_resource ("background", "Background",
-					 display, xgwa.colormap);
-    backgroundPixel = gcv.foreground;
-    backgroundGC = XCreateGC (display, window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource (st->dpy, xgwa.colormap,
+                                         "background", "Background");
+    st->backgroundPixel = gcv.foreground;
+    st->backgroundGC = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
-    gcv.foreground = get_pixel_resource ("foreground", "Foreground",
-					 display, xgwa.colormap);
-    foregroundGC = XCreateGC (display, window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource (st->dpy, xgwa.colormap,
+                                         "foreground", "Foreground");
+    st->foregroundGC = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
-    grabImage (&xgwa);
+    grabImage_start (st, &xgwa);
 }
 
 
@@ -207,14 +182,14 @@ static void setup (void)
  */
 
 /* event: randomize all the angular velocities */
-static void randomizeAllAngularVelocities (void)
+static void randomizeAllAngularVelocities (struct state *st)
 {
     int c;
     int r;
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    TILE_AT (c, r)->vAngle = RAND_VANGLE;
 	}
@@ -222,14 +197,14 @@ static void randomizeAllAngularVelocities (void)
 }
 
 /* event: randomize all the zoomular velocities */
-static void randomizeAllZoomularVelocities (void)
+static void randomizeAllZoomularVelocities (struct state *st)
 {
     int c;
     int r;
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    TILE_AT (c, r)->vZoom = RAND_VZOOM;
 	}
@@ -237,21 +212,21 @@ static void randomizeAllZoomularVelocities (void)
 }
 
 /* event: randomize all the velocities */
-static void randomizeAllVelocities (void)
+static void randomizeAllVelocities (struct state *st)
 {
-    randomizeAllAngularVelocities ();
-    randomizeAllZoomularVelocities ();
+    randomizeAllAngularVelocities (st);
+    randomizeAllZoomularVelocities (st);
 }
 
 /* event: randomize all the angular orientations */
-static void randomizeAllAngularOrientations (void)
+static void randomizeAllAngularOrientations (struct state *st)
 {
     int c;
     int r;
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    TILE_AT (c, r)->angle = RAND_ANGLE;
 	}
@@ -259,14 +234,14 @@ static void randomizeAllAngularOrientations (void)
 }
 
 /* event: randomize all the zoomular orientations */
-static void randomizeAllZoomularOrientations (void)
+static void randomizeAllZoomularOrientations (struct state *st)
 {
     int c;
     int r;
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    TILE_AT (c, r)->zoom = RAND_ZOOM;
 	}
@@ -274,24 +249,24 @@ static void randomizeAllZoomularOrientations (void)
 }
 
 /* event: randomize all the orientations */
-static void randomizeAllOrientations (void)
+static void randomizeAllOrientations (struct state *st)
 {
-    randomizeAllAngularOrientations ();
-    randomizeAllZoomularOrientations ();
+    randomizeAllAngularOrientations (st);
+    randomizeAllZoomularOrientations (st);
 }
 
 /* event: randomize everything */
-static void randomizeEverything (void)
+static void randomizeEverything (struct state *st)
 {
-    randomizeAllVelocities ();
-    randomizeAllOrientations ();
+    randomizeAllVelocities (st);
+    randomizeAllOrientations (st);
 }
 
 /* event: pick one tile and randomize all its stats */
-static void randomizeOneTile (void)
+static void randomizeOneTile (struct state *st)
 {
-    int c = RAND_FLOAT_01 * columns;
-    int r = RAND_FLOAT_01 * rows;
+    int c = RAND_FLOAT_01 * st->columns;
+    int r = RAND_FLOAT_01 * st->rows;
 
     Tile *t = TILE_AT (c, r);
     t->angle = RAND_ANGLE;
@@ -301,12 +276,12 @@ static void randomizeOneTile (void)
 }
 
 /* event: pick one row and randomize everything about each of its tiles */
-static void randomizeOneRow (void)
+static void randomizeOneRow (struct state *st)
 {
     int c;
-    int r = RAND_FLOAT_01 * rows;
+    int r = RAND_FLOAT_01 * st->rows;
 
-    for (c = 0; c < columns; c++)
+    for (c = 0; c < st->columns; c++)
     {
 	Tile *t = TILE_AT (c, r);
 	t->angle = RAND_ANGLE;
@@ -317,12 +292,12 @@ static void randomizeOneRow (void)
 }
 
 /* event: pick one column and randomize everything about each of its tiles */
-static void randomizeOneColumn (void)
+static void randomizeOneColumn (struct state *st)
 {
-    int c = RAND_FLOAT_01 * columns;
+    int c = RAND_FLOAT_01 * st->columns;
     int r;
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
 	Tile *t = TILE_AT (c, r);
 	t->angle = RAND_ANGLE;
@@ -333,11 +308,11 @@ static void randomizeOneColumn (void)
 }
 
 /* do model event processing */
-static void modelEvents (void)
+static void modelEvents (struct state *st)
 {
     int which;
 
-    if (RAND_FLOAT_01 > eventChance)
+    if (RAND_FLOAT_01 > st->eventChance)
     {
 	return;
     }
@@ -346,21 +321,21 @@ static void modelEvents (void)
 
     switch (which)
     {
-	case 0: randomizeAllAngularVelocities ();    break;
-	case 1: randomizeAllZoomularVelocities ();   break;
-	case 2: randomizeAllVelocities ();           break;
-	case 3: randomizeAllAngularOrientations ();  break;
-	case 4: randomizeAllZoomularOrientations (); break;
-	case 5: randomizeAllOrientations ();         break;
-	case 6: randomizeEverything ();              break;
-	case 7: randomizeOneTile ();                 break;
-	case 8: randomizeOneColumn ();               break;
-	case 9: randomizeOneRow ();                  break;
+	case 0: randomizeAllAngularVelocities (st);    break;
+	case 1: randomizeAllZoomularVelocities (st);   break;
+	case 2: randomizeAllVelocities (st);           break;
+	case 3: randomizeAllAngularOrientations (st);  break;
+	case 4: randomizeAllZoomularOrientations (st); break;
+	case 5: randomizeAllOrientations (st);         break;
+	case 6: randomizeEverything (st);              break;
+	case 7: randomizeOneTile (st);                 break;
+	case 8: randomizeOneColumn (st);               break;
+	case 9: randomizeOneRow (st);                  break;
     }
 }
 
 /* update the model for one iteration */
-static void updateModel (void)
+static void updateModel (struct state *st)
 {
     int r;
     int c;
@@ -368,9 +343,9 @@ static void updateModel (void)
     /* for each tile, decrease its velocities according to the friction,
      * and increase them based on its current orientation and the orientations
      * of its orthogonal neighbors */
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    Tile *t = TILE_AT (c, r);
 	    FLOAT a = t->angle;
@@ -378,39 +353,39 @@ static void updateModel (void)
 	    FLOAT va = t->vAngle;
 	    FLOAT vz = t->vZoom;
 
-	    va -= t->angle * springiness;
-	    vz -= t->zoom * springiness;
+	    va -= t->angle * st->springiness;
+	    vz -= t->zoom * st->springiness;
 
 	    if (c > 0)
 	    {
 		Tile *t2 = TILE_AT (c - 1, r);
-		va += (t2->angle - a) * transference;
-		vz += (t2->zoom - z) * transference;
+		va += (t2->angle - a) * st->transference;
+		vz += (t2->zoom - z) * st->transference;
 	    }
 
-	    if (c < (columns - 1))
+	    if (c < (st->columns - 1))
 	    {
 		Tile *t2 = TILE_AT (c + 1, r);
-		va += (t2->angle - a) * transference;
-		vz += (t2->zoom - z) * transference;
+		va += (t2->angle - a) * st->transference;
+		vz += (t2->zoom - z) * st->transference;
 	    }
 
 	    if (r > 0)
 	    {
 		Tile *t2 = TILE_AT (c, r - 1);
-		va += (t2->angle - a) * transference;
-		vz += (t2->zoom - z) * transference;
+		va += (t2->angle - a) * st->transference;
+		vz += (t2->zoom - z) * st->transference;
 	    }
 
-	    if (r < (rows - 1))
+	    if (r < (st->rows - 1))
 	    {
 		Tile *t2 = TILE_AT (c, r + 1);
-		va += (t2->angle - a) * transference;
-		vz += (t2->zoom - z) * transference;
+		va += (t2->angle - a) * st->transference;
+		vz += (t2->zoom - z) * st->transference;
 	    }
 
-	    va *= (1.0 - friction);
-	    vz *= (1.0 - friction);
+	    va *= (1.0 - st->friction);
+	    vz *= (1.0 - st->friction);
 
 	    if (va > MAX_VANGLE) va = MAX_VANGLE;
 	    else if (va < -MAX_VANGLE) va = -MAX_VANGLE;
@@ -423,9 +398,9 @@ static void updateModel (void)
     }
 
     /* for each tile, update its orientation based on its velocities */
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    Tile *t = TILE_AT (c, r);
 	    FLOAT a = t->angle + t->vAngle;
@@ -464,13 +439,13 @@ static int sortTilesComparator (const void *v1, const void *v2)
 }
 
 /* sort the tiles in sortedTiles by zoom */
-static void sortTiles (void)
+static void sortTiles (struct state *st)
 {
-    qsort (sortedTiles, tileCount, sizeof (Tile *), sortTilesComparator);
+    qsort (st->sortedTiles, st->tileCount, sizeof (Tile *), sortTilesComparator);
 }
 
 /* render the given tile */
-static void renderTile (Tile *t)
+static void renderTile (struct state *st, Tile *t)
 {
     /* note: the zoom as stored per tile is log-based (centered on 0, with
      * 0 being no zoom, but the range for zoom-as-drawn is 0.4..2.5,
@@ -486,8 +461,8 @@ static void renderTile (Tile *t)
     FLOAT sinAng = sin (ang);
     FLOAT cosAng = cos (ang);
 
-    FLOAT innerBorder = (tileSize - borderWidth) / 2.0;
-    FLOAT outerBorder = innerBorder + borderWidth;
+    FLOAT innerBorder = (st->tileSize - st->borderWidth) / 2.0;
+    FLOAT outerBorder = innerBorder + st->borderWidth;
 
     int maxCoord = outerBorder * zoom * (fabs (sinAng) + fabs (cosAng));
     int minX = tx - maxCoord;
@@ -498,9 +473,9 @@ static void renderTile (Tile *t)
     FLOAT prey;
 
     if (minX < 0) minX = 0;
-    if (maxX > windowWidth) maxX = windowWidth;
+    if (maxX > st->windowWidth) maxX = st->windowWidth;
     if (minY < 0) minY = 0;
-    if (maxY > windowHeight) maxY = windowHeight;
+    if (maxY > st->windowHeight) maxY = st->windowHeight;
 
     sinAng /= zoom;
     cosAng /= zoom;
@@ -523,45 +498,45 @@ static void renderTile (Tile *t)
 		{
 		    continue;
 		}
-		XPutPixel (workImage, x, y, borderPixel);
+		XPutPixel (st->workImage, x, y, st->borderPixel);
 	    }
 	    else
 	    {
 		unsigned long p = 
-		    XGetPixel (sourceImage, srcx + tx, srcy + ty);
-		XPutPixel (workImage, x, y, p);
+		    XGetPixel (st->sourceImage, srcx + tx, srcy + ty);
+		XPutPixel (st->workImage, x, y, p);
 	    }
 	}
     }
 }
 
 /* render and display the current model */
-static void renderFrame (void)
+static void renderFrame (struct state *st)
 {
     int n;
 
-    memcpy (workImage->data, backgroundImage->data, 
-	    workImage->bytes_per_line * workImage->height);
+    memcpy (st->workImage->data, st->backgroundImage->data, 
+	    st->workImage->bytes_per_line * st->workImage->height);
 
-    sortTiles ();
+    sortTiles (st);
 
-    for (n = 0; n < tileCount; n++)
+    for (n = 0; n < st->tileCount; n++)
     {
-	renderTile (sortedTiles[n]);
+	renderTile (st, st->sortedTiles[n]);
     }
 
 #ifdef HAVE_XSHM_EXTENSION
-    if (useShm)
-	XShmPutImage (display, window, backgroundGC, workImage, 0, 0, 0, 0,
-		      windowWidth, windowHeight, False);
+    if (st->useShm)
+	XShmPutImage (st->dpy, st->window, st->backgroundGC, st->workImage, 0, 0, 0, 0,
+		      st->windowWidth, st->windowHeight, False);
     else
 #endif /* HAVE_XSHM_EXTENSION */
-	XPutImage (display, window, backgroundGC, workImage, 
-		   0, 0, 0, 0, windowWidth, windowHeight);
+	XPutImage (st->dpy, st->window, st->backgroundGC, st->workImage, 
+		   0, 0, 0, 0, st->windowWidth, st->windowHeight);
 }
 
 /* set up the model */
-static void setupModel (void)
+static void setupModel (struct state *st)
 {
     int c;
     int r;
@@ -569,66 +544,192 @@ static void setupModel (void)
     int leftX; /* x of the center of the top-left tile */
     int topY;  /* y of the center of the top-left tile */
 
-    if (tileSize > (windowWidth / 2))
+    if (st->tileSize > (st->windowWidth / 2))
     {
-	tileSize = windowWidth / 2;
+	st->tileSize = st->windowWidth / 2;
     }
 
-    if (tileSize > (windowHeight / 2))
+    if (st->tileSize > (st->windowHeight / 2))
     {
-	tileSize = windowHeight / 2;
+	st->tileSize = st->windowHeight / 2;
     }
 
-    columns = windowWidth / tileSize;
-    rows = windowHeight / tileSize;
+    st->columns = st->windowWidth / st->tileSize;
+    st->rows = st->windowHeight / st->tileSize;
 
-    if ((maxColumns != 0) && (columns > maxColumns))
+    if ((st->maxColumns != 0) && (st->columns > st->maxColumns))
     {
-	columns = maxColumns;
+	st->columns = st->maxColumns;
     }
 
-    if ((maxRows != 0) && (rows > maxRows))
+    if ((st->maxRows != 0) && (st->rows > st->maxRows))
     {
-	rows = maxRows;
+	st->rows = st->maxRows;
     }
 
-    tileCount = rows * columns;
+    st->tileCount = st->rows * st->columns;
 
-    leftX = (windowWidth - (columns * tileSize) + tileSize) / 2;
-    topY = (windowHeight - (rows * tileSize) + tileSize) / 2;
+    leftX = (st->windowWidth - (st->columns * st->tileSize) + st->tileSize) / 2;
+    topY = (st->windowHeight - (st->rows * st->tileSize) + st->tileSize) / 2;
 
-    tiles = calloc (tileCount, sizeof (Tile));
-    sortedTiles = calloc (tileCount, sizeof (Tile *));
+    st->tiles = calloc (st->tileCount, sizeof (Tile));
+    st->sortedTiles = calloc (st->tileCount, sizeof (Tile *));
 
-    for (r = 0; r < rows; r++)
+    for (r = 0; r < st->rows; r++)
     {
-	for (c = 0; c < columns; c++)
+	for (c = 0; c < st->columns; c++)
 	{
 	    Tile *t = TILE_AT (c, r);
-	    t->x = leftX + c * tileSize;
-	    t->y = topY + r * tileSize;
-	    sortedTiles[c + r * columns] = t;
+	    t->x = leftX + c * st->tileSize;
+	    t->y = topY + r * st->tileSize;
+	    st->sortedTiles[c + r * st->columns] = t;
 	}
     }
 
-    randomizeEverything ();
+    randomizeEverything (st);
 }
 
 /* do one iteration */
-static void oneIteration (void)
+
+static unsigned long
+twang_draw (Display *dpy, Window window, void *closure)
 {
-    modelEvents ();
-    updateModel ();
-    renderFrame ();
+  struct state *st = (struct state *) closure;
+
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      if (! st->img_loader) {  /* just finished */
+        grabImage_done (st);
+      }
+      return st->delay;
+    }
+
+
+  modelEvents (st);
+  updateModel (st);
+  renderFrame (st);
+  return st->delay;
+}
+
+
+static void
+twang_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+twang_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+twang_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
 }
 
 
 
 /* main and options and stuff */
 
-char *progclass = "Twang";
+/* initialize the user-specifiable params */
+static void initParams (struct state *st)
+{
+    int problems = 0;
 
-char *defaults [] = {
+    st->borderWidth = get_integer_resource (st->dpy, "borderWidth", "Integer");
+    if (st->borderWidth < 0)
+    {
+	fprintf (stderr, "error: border width must be at least 0\n");
+	problems = 1;
+    }
+
+    st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+    if (st->delay < 0)
+    {
+	fprintf (stderr, "error: delay must be at least 0\n");
+	problems = 1;
+    }
+
+    st->eventChance = get_float_resource (st->dpy, "eventChance", "Double");
+    if ((st->eventChance < 0.0) || (st->eventChance > 1.0))
+    {
+	fprintf (stderr, "error: eventChance must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->friction = get_float_resource (st->dpy, "friction", "Double");
+    if ((st->friction < 0.0) || (st->friction > 1.0))
+    {
+	fprintf (stderr, "error: friction must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->maxColumns = get_integer_resource (st->dpy, "maxColumns", "Integer");
+    if (st->maxColumns < 0)
+    {
+	fprintf (stderr, "error: max columns must be at least 0\n");
+	problems = 1;
+    }
+
+    st->maxRows = get_integer_resource (st->dpy, "maxRows", "Integer");
+    if (st->maxRows < 0)
+    {
+	fprintf (stderr, "error: max rows must be at least 0\n");
+	problems = 1;
+    }
+
+    st->springiness = get_float_resource (st->dpy, "springiness", "Double");
+    if ((st->springiness < 0.0) || (st->springiness > 1.0))
+    {
+	fprintf (stderr, "error: springiness must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->tileSize = get_integer_resource (st->dpy, "tileSize", "Integer");
+    if (st->tileSize < 1)
+    {
+	fprintf (stderr, "error: tile size must be at least 1\n");
+	problems = 1;
+    }
+    
+    st->transference = get_float_resource (st->dpy, "transference", "Double");
+    if ((st->transference < 0.0) || (st->transference > 1.0))
+    {
+	fprintf (stderr, "error: transference must be in the range 0..1\n");
+	problems = 1;
+    }
+
+#ifdef HAVE_XSHM_EXTENSION
+    st->useShm = get_boolean_resource (st->dpy, "useSHM", "Boolean");
+#endif
+
+    if (problems)
+    {
+	exit (1);
+    }
+}
+
+static void *
+twang_init (Display *dpy, Window win)
+{
+    struct state *st = (struct state *) calloc (1, sizeof(*st));
+    st->dpy = dpy;
+    st->window = win;
+
+    initParams (st);
+    setup (st);
+    setupModel (st);
+
+    return st;
+}
+
+
+static const char *twang_defaults [] = {
     ".background:	black",
     ".foreground:	white",
     "*borderColor:      blue",
@@ -643,11 +744,13 @@ char *defaults [] = {
     "*transference:	0.025",
 #ifdef HAVE_XSHM_EXTENSION
     "*useSHM: True",
+#else
+    "*useSHM: False",
 #endif
     0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec twang_options [] = {
   { "-border-color",     ".borderColor",    XrmoptionSepArg, 0 },
   { "-border-width",     ".borderWidth",    XrmoptionSepArg, 0 },
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
@@ -658,106 +761,10 @@ XrmOptionDescRec options [] = {
   { "-springiness",      ".springiness",    XrmoptionSepArg, 0 },
   { "-tile-size",        ".tileSize",       XrmoptionSepArg, 0 },
   { "-transference",     ".transference",   XrmoptionSepArg, 0 },
-#ifdef HAVE_XSHM_EXTENSION
   { "-shm",              ".useSHM",         XrmoptionNoArg, "True" },
   { "-no-shm",           ".useSHM",         XrmoptionNoArg, "False" },
-#endif
   { 0, 0, 0, 0 }
 };
 
-/* initialize the user-specifiable params */
-static void initParams (void)
-{
-    int problems = 0;
 
-    borderWidth = get_integer_resource ("borderWidth", "Integer");
-    if (borderWidth < 0)
-    {
-	fprintf (stderr, "error: border width must be at least 0\n");
-	problems = 1;
-    }
-
-    delay = get_integer_resource ("delay", "Delay");
-    if (delay < 0)
-    {
-	fprintf (stderr, "error: delay must be at least 0\n");
-	problems = 1;
-    }
-
-    eventChance = get_float_resource ("eventChance", "Double");
-    if ((eventChance < 0.0) || (eventChance > 1.0))
-    {
-	fprintf (stderr, "error: eventChance must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    friction = get_float_resource ("friction", "Double");
-    if ((friction < 0.0) || (friction > 1.0))
-    {
-	fprintf (stderr, "error: friction must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    maxColumns = get_integer_resource ("maxColumns", "Integer");
-    if (maxColumns < 0)
-    {
-	fprintf (stderr, "error: max columns must be at least 0\n");
-	problems = 1;
-    }
-
-    maxRows = get_integer_resource ("maxRows", "Integer");
-    if (maxRows < 0)
-    {
-	fprintf (stderr, "error: max rows must be at least 0\n");
-	problems = 1;
-    }
-
-    springiness = get_float_resource ("springiness", "Double");
-    if ((springiness < 0.0) || (springiness > 1.0))
-    {
-	fprintf (stderr, "error: springiness must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    tileSize = get_integer_resource ("tileSize", "Integer");
-    if (tileSize < 1)
-    {
-	fprintf (stderr, "error: tile size must be at least 1\n");
-	problems = 1;
-    }
-    
-    transference = get_float_resource ("transference", "Double");
-    if ((transference < 0.0) || (transference > 1.0))
-    {
-	fprintf (stderr, "error: transference must be in the range 0..1\n");
-	problems = 1;
-    }
-
-#ifdef HAVE_XSHM_EXTENSION
-    useShm = get_boolean_resource ("useSHM", "Boolean");
-#endif
-
-    if (problems)
-    {
-	exit (1);
-    }
-}
-
-/* main function */
-void screenhack (Display *dpy, Window win)
-{
-    display = dpy;
-    window = win;
-
-    initParams ();
-    setup ();
-    setupModel ();
-
-    for (;;) 
-    {
-	oneIteration ();
-        XSync (dpy, False);
-        screenhack_handle_events (dpy);
-	usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Twang", twang)

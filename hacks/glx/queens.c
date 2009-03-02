@@ -17,21 +17,12 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-# define PROGCLASS        "Queens"
-# define HACK_INIT        init_queens
-# define HACK_DRAW        draw_queens
-# define HACK_RESHAPE     reshape_queens
-# define HACK_HANDLE_EVENT queens_handle_event
-# define EVENT_MASK       PointerMotionMask
-# define queens_opts  xlockmore_opts
+#define DEFAULTS       "*delay:       20000 \n" \
+                       "*showFPS:     False \n" \
+		       "*wireframe:   False \n"	\
 
-#define DEFAULTS       "*delay:       20000       \n" \
-                       "*showFPS:       False       \n" \
-		       "*wireframe:	False     \n"	\
-
+# define refresh_queens 0
 # include "xlockmore.h"
 
 #else
@@ -40,7 +31,6 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
 #include "gltrackball.h"
 
 #undef countof
@@ -53,14 +43,14 @@ static XrmOptionDescRec opts[] = {
   {"-flat", ".queens.flat", XrmoptionNoArg, "true" },
 };
 
-int rotate, wire, clearbits, flat;
+static int rotate, wire, clearbits, flat;
 
 static argtype vars[] = {
   {&rotate, "rotate", "Rotate", "True",  t_Bool},
   {&flat,   "flat",   "Flat",   "False", t_Bool},
 };
 
-ModeSpecOpt queens_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt queens_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   queens_description =
@@ -71,32 +61,29 @@ ModStruct   queens_description =
 
 #endif
 
-typedef struct {
-  GLXContext *glx_context;
-  Window window;
-  trackball_state *trackball;
-  Bool button_down_p;
-} Queenscreen;
-
-static Queenscreen *qs = NULL;
-
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265
-#endif
-
 #define NONE 0
 #define QUEEN 1
 #define MINBOARD 5
 #define MAXBOARD 10
 #define COLORSETS 5
 
+typedef struct {
+  GLXContext *glx_context;
+  Window window;
+  trackball_state *trackball;
+  Bool button_down_p;
+  GLfloat position[4];
+
+  int board[MAXBOARD][MAXBOARD];
+  int steps, colorset, BOARDSIZE;
+  double theta;
+
+} Queenscreen;
+
+static Queenscreen *qss = NULL;
+
 /* definition of white/black colors */
-GLfloat colors[COLORSETS][2][3] = 
+static const GLfloat colors[COLORSETS][2][3] = 
   { 
     {{0.43, 0.54, 0.76}, {0.8, 0.8, 0.8}},
     {{0.5, 0.7, 0.9}, {0.2, 0.3, 0.6}},
@@ -105,20 +92,16 @@ GLfloat colors[COLORSETS][2][3] =
     {{0.9, 0.45, 0.0}, {0.5, 0.5, 0.5}},
   };
 
-int board[MAXBOARD][MAXBOARD];
-int steps = 0, colorset = 0, BOARDSIZE = 8; /* 8 cuz its classic */
-double theta = 0.0;
-
-Bool
+ENTRYPOINT Bool
 queens_handle_event (ModeInfo *mi, XEvent *event)
 {
-  Queenscreen *c = &qs[MI_SCREEN(mi)];
+  Queenscreen *qs = &qss[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
     {
-      c->button_down_p = True;
-      gltrackball_start (c->trackball,
+      qs->button_down_p = True;
+      gltrackball_start (qs->trackball,
                          event->xbutton.x, event->xbutton.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -126,21 +109,21 @@ queens_handle_event (ModeInfo *mi, XEvent *event)
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
     {
-      c->button_down_p = False;
+      qs->button_down_p = False;
       return True;
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
             event->xbutton.button == Button5))
     {
-      gltrackball_mousewheel (c->trackball, event->xbutton.button, 5,
+      gltrackball_mousewheel (qs->trackball, event->xbutton.button, 5,
                               !event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
-           c->button_down_p)
+           qs->button_down_p)
     {
-      gltrackball_track (c->trackball,
+      gltrackball_track (qs->trackball,
                          event->xmotion.x, event->xmotion.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -152,62 +135,67 @@ queens_handle_event (ModeInfo *mi, XEvent *event)
 
 
 /* returns true if placing a queen on column c causes a conflict */
-int conflictsCols(int c) {
+static int conflictsCols(Queenscreen *qs, int c) 
+{
   int i;
 
-  for(i = 0; i < BOARDSIZE; ++i)
-    if(board[i][c])
+  for(i = 0; i < qs->BOARDSIZE; ++i)
+    if(qs->board[i][c])
       return 1;
 
   return 0;
 }
 
 /* returns true if placing a queen on (r,c) causes a diagonal conflict */
-int conflictsDiag(int r, int c) {
+static int conflictsDiag(Queenscreen *qs, int r, int c) 
+{
   int i;
 
   /* positive slope */
   int n = r < c ? r : c;
-  for(i = 0; i < BOARDSIZE-abs(r-c); ++i)
-    if(board[r-n+i][c-n+i])
+  for(i = 0; i < qs->BOARDSIZE-abs(r-c); ++i)
+    if(qs->board[r-n+i][c-n+i])
       return 1;
 
   /* negative slope */
-  n = r < BOARDSIZE - (c+1) ? r : BOARDSIZE - (c+1);
-  for(i = 0; i < BOARDSIZE-abs(BOARDSIZE - (1+r+c)); ++i)
-    if(board[r-n+i][c+n-i])
+  n = r < qs->BOARDSIZE - (c+1) ? r : qs->BOARDSIZE - (c+1);
+  for(i = 0; i < qs->BOARDSIZE-abs(qs->BOARDSIZE - (1+r+c)); ++i)
+    if(qs->board[r-n+i][c+n-i])
       return 1;
   
   return 0;
 }
 
 /* returns true if placing a queen at (r,c) causes a conflict */
-int conflicts(int r, int c) {
-  return !conflictsCols(c) ? conflictsDiag(r, c) : 1;
+static int conflicts(Queenscreen *qs, int r, int c) 
+{
+  return !conflictsCols(qs, c) ? conflictsDiag(qs, r, c) : 1;
 }
 
 /* clear board */
-void blank(void) {
+static void blank(Queenscreen *qs) 
+{
   int i, j;
 
   for(i = 0; i < MAXBOARD; ++i)
     for(j = 0; j < MAXBOARD; ++j)
-      board[i][j] = NONE;
+      qs->board[i][j] = NONE;
 }
 
 /* recursively determine solution */
-int findSolution(int row, int col) {
-  if(row == BOARDSIZE)
+static int findSolution(Queenscreen *qs, int row, int col) 
+{
+  if(row == qs->BOARDSIZE)
     return 1;
   
-  while(col < BOARDSIZE) {
-    if(!conflicts(row, col)) {
-      board[row][col] = 1;
+  while(col < qs->BOARDSIZE) {
+    if(!conflicts(qs, row, col)) {
+      qs->board[row][col] = 1;
 
-      if(findSolution(row+1, 0))
+      if(findSolution(qs, row+1, 0))
         return 1;
 
-      board[row][col] = 0;
+      qs->board[row][col] = 0;
     }
 
     ++col;
@@ -217,24 +205,22 @@ int findSolution(int row, int col) {
 }
 
 /** driver for finding solution */
-void go(void) { while(!findSolution(0, random()%BOARDSIZE)); }
+static void go(Queenscreen *qs) { while(!findSolution(qs, 0, random()%qs->BOARDSIZE)); }
 
 /* lighting variables */
-GLfloat front_shininess[] = {60.0};
-GLfloat front_specular[] = {0.4, 0.4, 0.4, 1.0};
-GLfloat ambient[] = {0.3, 0.3, 0.3, 1.0};
-GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat position[] = { 0.0, 5.0, 5.0, 1.0 };
-GLfloat lmodel_ambient[] = {0.6, 0.6, 0.6, 1.0};
-GLfloat lmodel_twoside[] = {GL_TRUE};
+static const GLfloat front_shininess[] = {60.0};
+static const GLfloat front_specular[] = {0.4, 0.4, 0.4, 1.0};
+static const GLfloat ambient[] = {0.3, 0.3, 0.3, 1.0};
+static const GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
 
 /* configure lighting */
-void setup_lights(void) {
+static void setup_lights(Queenscreen *qs) 
+{
 
   /* setup twoside lighting */
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-  glLightfv(GL_LIGHT0, GL_POSITION, position);
+  glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
 
@@ -247,33 +233,36 @@ void setup_lights(void) {
 
 #define    checkImageWidth 8
 #define    checkImageHeight 8
-GLubyte checkImage[checkImageWidth][checkImageHeight][3];
+/*static GLubyte checkImage[checkImageWidth][checkImageHeight][3];*/
 
 /* return alpha value for fading */
-GLfloat findAlpha(void) {
-  return steps < 128 ? steps/128.0 : steps < 1024-128 ?1.0:(1024-steps)/128.0;
+static GLfloat findAlpha(Queenscreen *qs) 
+{
+  return qs->steps < 128 ? qs->steps/128.0 : qs->steps < 1024-128 ?1.0:(1024-qs->steps)/128.0;
 }
 
 /* draw pieces */
-void drawPieces(void) {
+static void drawPieces(Queenscreen *qs) 
+{
   int i, j;
 
-  for(i = 0; i < BOARDSIZE; ++i) {
-    for(j = 0; j < BOARDSIZE; ++j) {
-      if(board[i][j]) {
-    	glColor3fv(colors[colorset][i%2]);
+  for(i = 0; i < qs->BOARDSIZE; ++i) {
+    for(j = 0; j < qs->BOARDSIZE; ++j) {
+      if(qs->board[i][j]) {
+    	glColor3fv(colors[qs->colorset][i%2]);
 	glCallList(QUEEN);
       }
       
       glTranslatef(1.0, 0.0, 0.0);
     }
     
-    glTranslatef(-1.0*BOARDSIZE, 0.0, 1.0);
+    glTranslatef(-1.0*qs->BOARDSIZE, 0.0, 1.0);
   }
 }
 
 /** reflectionboard */
-void draw_reflections(void) {
+static void draw_reflections(Queenscreen *qs) 
+{
   int i, j;
 
   glEnable(GL_STENCIL_TEST);
@@ -286,8 +275,8 @@ void draw_reflections(void) {
   glBegin(GL_QUADS);
 
   /* only draw white squares */
-  for(i = 0; i < BOARDSIZE; ++i) {
-    for(j = (BOARDSIZE+i) % 2; j < BOARDSIZE; j += 2) {
+  for(i = 0; i < qs->BOARDSIZE; ++i) {
+    for(j = (qs->BOARDSIZE+i) % 2; j < qs->BOARDSIZE; j += 2) {
       glVertex3f(i, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j);
@@ -304,13 +293,13 @@ void draw_reflections(void) {
   glPushMatrix(); 
   glScalef(1.0, -1.0, 1.0);
   glTranslatef(0.5, 0.001, 0.5);
-  glLightfv(GL_LIGHT0, GL_POSITION, position);
-  drawPieces();
+  glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
+  drawPieces(qs);
   glPopMatrix();
   glDisable(GL_STENCIL_TEST);
 
   /* replace lights */
-  glLightfv(GL_LIGHT0, GL_POSITION, position);
+  glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -318,17 +307,18 @@ void draw_reflections(void) {
 }
 
 /* draw board */
-void drawBoard(void) {
+static void drawBoard(Queenscreen *qs) 
+{
   int i, j;
 
   glBegin(GL_QUADS);
 
-  for(i = 0; i < BOARDSIZE; ++i)
-    for(j = 0; j < BOARDSIZE; ++j) {
-      int par = (i-j+BOARDSIZE)%2;
-      glColor4f(colors[colorset][par][0],
-		colors[colorset][par][1],
-		colors[colorset][par][2],
+  for(i = 0; i < qs->BOARDSIZE; ++i)
+    for(j = 0; j < qs->BOARDSIZE; ++j) {
+      int par = (i-j+qs->BOARDSIZE)%2;
+      glColor4f(colors[qs->colorset][par][0],
+		colors[qs->colorset][par][1],
+		colors[qs->colorset][par][2],
 		0.70);
       glNormal3f(0.0, 1.0, 0.0);
       glVertex3f(i, 0.0, j + 1.0);
@@ -340,7 +330,8 @@ void drawBoard(void) {
   glEnd();
 }
 
-void display(Queenscreen *c) {
+static void display(Queenscreen *qs) 
+{
   glClear(clearbits);
   
   glMatrixMode(GL_MODELVIEW);
@@ -348,57 +339,56 @@ void display(Queenscreen *c) {
 
   /* setup light attenuation */
   glEnable(GL_COLOR_MATERIAL);
-  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha()));
+  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha(qs)));
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.06);
 
   /** setup perspective */
-  glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
+  glTranslatef(0.0, 0.0, -1.5*qs->BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
-  gltrackball_rotate (c->trackball);
-  glRotatef(theta*100, 0.0, 1.0, 0.0);
-  glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
+  gltrackball_rotate (qs->trackball);
+  glRotatef(qs->theta*100, 0.0, 1.0, 0.0);
+  glTranslatef(-0.5*qs->BOARDSIZE, 0.0, -0.5*qs->BOARDSIZE);
 
   /* find light positions */
-  position[0] = BOARDSIZE/2.0 + BOARDSIZE/1.4*-sin(theta*100*M_PI/180.0);
-  position[2] = BOARDSIZE/2.0 + BOARDSIZE/1.4*cos(theta*100*M_PI/180.0);
-  position[1] = 6.0;
+  qs->position[0] = qs->BOARDSIZE/2.0 + qs->BOARDSIZE/1.4*-sin(qs->theta*100*M_PI/180.0);
+  qs->position[2] = qs->BOARDSIZE/2.0 + qs->BOARDSIZE/1.4*cos(qs->theta*100*M_PI/180.0);
+  qs->position[1] = 6.0;
 
   if(!wire) {
     glEnable(GL_LIGHTING);
-    glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
     glEnable(GL_LIGHT0);
   }
 
   /* draw reflections */
   if(!wire) {
-    draw_reflections();
+    draw_reflections(qs);
     glEnable(GL_BLEND);
   }
-  drawBoard();
+  drawBoard(qs);
   if(!wire)
     glDisable(GL_BLEND);
 
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.1);
 
   glTranslatef(0.5, 0.0, 0.5);
-  drawPieces();
+  drawPieces(qs);
 
   /* rotate camera */
-  if(!c->button_down_p)
-    theta += .002;
+  if(!qs->button_down_p)
+    qs->theta += .002;
 
   /* zero out board, find new solution of size MINBOARD <= i <= MAXBOARD */
-  if(++steps == 1024) {
-    steps = 0;
-    blank();
-    BOARDSIZE = MINBOARD + (random() % (MAXBOARD - MINBOARD + 1));
-    colorset = (colorset+1)%COLORSETS;
-    go();
+  if(++qs->steps == 1024) {
+    qs->steps = 0;
+    blank(qs);
+    qs->BOARDSIZE = MINBOARD + (random() % (MAXBOARD - MINBOARD + 1));
+    qs->colorset = (qs->colorset+1)%COLORSETS;
+    go(qs);
   }
 }
 
-int schunks = 15;
-GLfloat spidermodel[][3] =
+static const GLfloat spidermodel[][3] =
   {
     {0.48, 0.48, 0.22},
     {0.48, 0.34, 0.18},
@@ -417,10 +407,12 @@ GLfloat spidermodel[][3] =
     {0.07, 0.00, 0.12},
   };
 
+
 #define EPSILON 0.001
 
 /** draws cylindermodel */
-void draw_model(int chunks, GLfloat model[][3], int r) {
+static void draw_model(int chunks, const GLfloat model[][3], int r) 
+{
   int i = 0;
   GLUquadricObj *quadric = gluNewQuadric();
   glPushMatrix();
@@ -435,7 +427,8 @@ void draw_model(int chunks, GLfloat model[][3], int r) {
   glPopMatrix();
 }
 
-void reshape_queens(ModeInfo *mi, int width, int height) {
+ENTRYPOINT void reshape_queens(ModeInfo *mi, int width, int height) 
+{
   GLfloat h = (GLfloat) height / (GLfloat) width;
   glViewport(0,0, width, height);
   glMatrixMode(GL_PROJECTION);
@@ -444,27 +437,30 @@ void reshape_queens(ModeInfo *mi, int width, int height) {
   glMatrixMode(GL_MODELVIEW);
 }
 
-void init_queens(ModeInfo *mi) {
+ENTRYPOINT void init_queens(ModeInfo *mi) 
+{
   int screen = MI_SCREEN(mi);
-  Queenscreen *c;
+  Queenscreen *qs;
   wire = MI_IS_WIREFRAME(mi);
 
-  if(!qs && 
-     !(qs = (Queenscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Queenscreen))))
+  if(!qss && 
+     !(qss = (Queenscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Queenscreen))))
     return;
   
-  c = &qs[screen];
-  c->window = MI_WINDOW(mi);
-  c->trackball = gltrackball_init ();
+  qs = &qss[screen];
+  qs->window = MI_WINDOW(mi);
+  qs->trackball = gltrackball_init ();
+
+  qs->BOARDSIZE = 8; /* 8 cuz its classic */
   
-  if((c->glx_context = init_GL(mi)))
+  if((qs->glx_context = init_GL(mi)))
     reshape_queens(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   else
     MI_CLEARWINDOW(mi);
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glNewList(QUEEN, GL_COMPILE);
-  draw_model(schunks, spidermodel, 24);
+  draw_model(countof(spidermodel), spidermodel, 24);
   glEndList();
 
   if(flat)
@@ -476,7 +472,7 @@ void init_queens(ModeInfo *mi) {
   glEnable(GL_COLOR_MATERIAL);
 
   if(!wire) {
-    setup_lights();
+    setup_lights(qs);
     glEnable(GL_DEPTH_TEST);
     clearbits |= GL_DEPTH_BUFFER_BIT;
     clearbits |= GL_STENCIL_BUFFER_BIT;
@@ -487,31 +483,36 @@ void init_queens(ModeInfo *mi) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   /* find a solution */
-  go();
+  go(qs);
 }
 
-void draw_queens(ModeInfo *mi) {
-  Queenscreen *c = &qs[MI_SCREEN(mi)];
+ENTRYPOINT void draw_queens(ModeInfo *mi) 
+{
+  Queenscreen *qs = &qss[MI_SCREEN(mi)];
   Window w = MI_WINDOW(mi);
   Display *disp = MI_DISPLAY(mi);
 
-  if(!c->glx_context)
+  if(!qs->glx_context)
     return;
 
-  glXMakeCurrent(disp, w, *(c->glx_context));
+  glXMakeCurrent(disp, w, *(qs->glx_context));
 
-  display(c);
+  display(qs);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
 }
 
-void release_queens(ModeInfo *mi) {
-  if(qs)
-    free((void *) qs);
+ENTRYPOINT void release_queens(ModeInfo *mi) 
+{
+  if(qss)
+    free((void *) qss);
+  qss = 0;
 
-  FreeAllGL(MI);
+  FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Queens", queens)
 
 #endif

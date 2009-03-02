@@ -67,8 +67,19 @@
  *
  * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
  */
-#include <GL/gl.h>
-#include <GL/glx.h>
+
+#ifdef STANDALONE
+# include <math.h>
+# include "screenhackI.h"
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+#  include <GL/glx.h>
+# endif
+#else
+# include "xlock.h"
+#endif
 
 #define RAD 57.295
 #define RRAD 0.01745
@@ -84,6 +95,7 @@ typedef struct _fishRec {
 	float       htail, vtail;
 	float       dtheta;
 	int         spurt, attack;
+        int         sign;
 } fishRec;
 
 typedef struct {

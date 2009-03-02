@@ -1,4 +1,4 @@
-/* menger, Copyright (c) 2001, 2002, 2004 Jamie Zawinski <jwz@jwz.org>
+/* menger, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  *         Copyright (c) 2002 Aurelien Jacobs <aurel@gnuage.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -50,28 +50,13 @@
  *  just draw them as spots on the surface!  It would look the same.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"Menger"
-#define HACK_INIT	init_sponge
-#define HACK_DRAW	draw_sponge
-#define HACK_RESHAPE	reshape_sponge
-#define HACK_HANDLE_EVENT sponge_handle_event
-#define EVENT_MASK	PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "True"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "150"
-#define DEF_MAX_DEPTH   "3"
-
 #define DEFAULTS	"*delay:	 30000          \n" \
 			"*showFPS:       False          \n" \
 			"*wireframe:     False          \n" \
 
 
+# define refresh_sponge 0
+# define release_sponge 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -83,8 +68,10 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
-
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "150"
+#define DEF_MAX_DEPTH   "3"
 
 typedef struct {
   GLXContext *glx_context;
@@ -105,6 +92,8 @@ typedef struct {
   int ccolor1;
   int ccolor2;
 
+  int draw_tick;
+
 } sponge_configuration;
 
 static sponge_configuration *sps = NULL;
@@ -115,12 +104,11 @@ static int speed;
 static int max_depth;
 
 static XrmOptionDescRec opts[] = {
-  { "-spin",   ".spin",   XrmoptionNoArg, "True" },
-  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
-  { "-wander", ".wander", XrmoptionNoArg, "True" },
-  { "+wander", ".wander", XrmoptionNoArg, "False" },
-  { "-speed",  ".speed",  XrmoptionSepArg, 0 },
-  {"-depth",   ".maxDepth", XrmoptionSepArg, 0 },
+  { "-wander", ".wander",   XrmoptionNoArg, "True"  },
+  { "+wander", ".wander",   XrmoptionNoArg, "False" },
+  { "-spin",   ".spin",     XrmoptionSepArg, 0 },
+  { "-speed",  ".speed",    XrmoptionSepArg, 0 },
+  { "-depth",  ".maxDepth", XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -130,12 +118,12 @@ static argtype vars[] = {
   {&max_depth,   "maxDepth", "MaxDepth", DEF_MAX_DEPTH, t_Int},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt sponge_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_sponge (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -240,17 +228,16 @@ cube (float x0, float x1, float y0, float y1, float z0, float z1,
 }
 
 static int
-menger_recurs (int level, float x0, float x1, float y0, float y1,
-               float z0, float z1, int faces, Bool wireframe, int orig)
+menger_recurs_1 (int level, float x0, float x1, float y0, float y1,
+                 float z0, float z1, int faces, Bool wireframe, 
+                 int orig, int forig)
 {
   float xi, yi, zi;
   int f, x, y, z;
-  static int forig;
   int n = 0;
 
   if (orig)
     {
-      forig = faces;
       if (wireframe)
         n += cube (x0, x1, y0, y1, z0, z1,
                    faces & (X0 | X1 | Y0 | Y1), wireframe);
@@ -304,10 +291,11 @@ menger_recurs (int level, float x0, float x1, float y0, float y1,
                   if (forig & Z1 && z == 0 && (x == 1 || y == 1))
                     f |= Z1;
 
-                  n += menger_recurs (level-1,
-                                      x0+x*xi, x0+(x+1)*xi,
-                                      y0+y*yi, y0+(y+1)*yi,
-                                      z0+z*zi, z0+(z+1)*zi, f, wireframe, 0);
+                  n += menger_recurs_1 (level-1,
+                                        x0+x*xi, x0+(x+1)*xi,
+                                        y0+y*yi, y0+(y+1)*yi,
+                                        z0+z*zi, z0+(z+1)*zi, f, wireframe, 0,
+                                        forig);
                 }
               else if (wireframe && (x != 1 || y != 1 || z != 1))
                 n += cube (x0+x*xi, x0+(x+1)*xi,
@@ -319,6 +307,16 @@ menger_recurs (int level, float x0, float x1, float y0, float y1,
 
   return n;
 }
+
+static int
+menger_recurs (int level, float x0, float x1, float y0, float y1,
+               float z0, float z1, int faces, Bool wireframe, 
+               int orig)
+{
+  return menger_recurs_1 (level, x0, x1, y0, y1, z0, z1, faces, 
+                          wireframe, orig, faces);
+}
+
 
 static void
 build_sponge (sponge_configuration *sp, Bool wireframe, int level)
@@ -343,7 +341,7 @@ build_sponge (sponge_configuration *sp, Bool wireframe, int level)
 }
 
 
-Bool
+ENTRYPOINT Bool
 sponge_handle_event (ModeInfo *mi, XEvent *event)
 {
   sponge_configuration *sp = &sps[MI_SCREEN(mi)];
@@ -385,7 +383,7 @@ sponge_handle_event (ModeInfo *mi, XEvent *event)
 
 
 
-void 
+ENTRYPOINT void 
 init_sponge (ModeInfo *mi)
 {
   sponge_configuration *sp;
@@ -410,10 +408,10 @@ init_sponge (ModeInfo *mi)
 
   if (!wire)
     {
-      static GLfloat pos0[4] = {-1.0, -1.0, 1.0, 0.1};
-      static GLfloat pos1[4] = { 1.0, -0.2, 0.2, 0.1};
-      static GLfloat dif0[4] = {1.0, 1.0, 1.0, 1.0};
-      static GLfloat dif1[4] = {1.0, 1.0, 1.0, 1.0};
+      static const GLfloat pos0[4] = {-1.0, -1.0, 1.0, 0.1};
+      static const GLfloat pos1[4] = { 1.0, -0.2, 0.2, 0.1};
+      static const GLfloat dif0[4] = {1.0, 1.0, 1.0, 1.0};
+      static const GLfloat dif1[4] = {1.0, 1.0, 1.0, 1.0};
 
       glLightfv(GL_LIGHT0, GL_POSITION, pos0);
       glLightfv(GL_LIGHT1, GL_POSITION, pos1);
@@ -454,24 +452,26 @@ init_sponge (ModeInfo *mi)
   sp->sponge_list0 = glGenLists (1);
   sp->sponge_list1 = glGenLists (1);
   sp->sponge_list2 = glGenLists (1);
+
+  sp->draw_tick = 9999999;
 }
 
 
-void
+ENTRYPOINT void
 draw_sponge (ModeInfo *mi)
 {
   sponge_configuration *sp = &sps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
 
-  static GLfloat color0[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color1[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color2[4] = {0.0, 0.0, 0.0, 1.0};
-
-  static int tick = 99999;
+  GLfloat color0[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color1[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color2[4] = {0.0, 0.0, 0.0, 1.0};
 
   if (!sp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -514,9 +514,9 @@ draw_sponge (ModeInfo *mi)
   if (sp->ccolor1 >= sp->ncolors) sp->ccolor1 = 0;
   if (sp->ccolor2 >= sp->ncolors) sp->ccolor2 = 0;
 
-  if (tick++ >= speed)
+  if (sp->draw_tick++ >= speed)
     {
-      tick = 0;
+      sp->draw_tick = 0;
       if (sp->current_depth >= max_depth)
         sp->current_depth = -max_depth;
       sp->current_depth++;
@@ -544,5 +544,7 @@ draw_sponge (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("Menger", menger, sponge)
 
 #endif /* USE_GL */

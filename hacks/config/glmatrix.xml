@@ -19,15 +19,9 @@
 
   <select id="mode">
     <option id="matrix" _label="Matrix Encoding"/>
-    <option id="binary" _label="Binary Encoding"      arg-set="-binary"/>
-    <option id="hex"    _label="Hexadecimal Encoding" arg-set="-hexadecimal"/>
-    <option id="dna"    _label="Genetic Encoding"     arg-set="-dna"/>
-  </select>
-
-  <select id="render">
-    <option id="textured"  _label="Draw Glyphs"/>
-    <option id="boxes"     _label="Draw Solid Boxes" arg-set="-no-texture"/>
-    <option id="wireframe" _label="Draw Outlines"    arg-set="-wireframe"/>
+    <option id="binary" _label="Binary Encoding"      arg-set="-mode binary"/>
+    <option id="hex"    _label="Hexadecimal Encoding" arg-set="-mode hex"/>
+    <option id="dna"    _label="Genetic Encoding"     arg-set="-mode dna"/>
   </select>
 
   <hgroup>
@@ -37,6 +31,8 @@
   </hgroup>
 
   <hgroup>
+   <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
   </hgroup>
 
@@ -47,6 +43,6 @@ of "The Matrix".
 See also "xmatrix" for a 2D rendering of the similar effect that
 appeared on the computer monitors actually *in* the movie.
 
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 2003.
   </_description>
 </screensaver>

@@ -2,6 +2,8 @@
 
 <screensaver name="xsnow" _label="Xsnow">
 
+  <command arg="-root"/>
+
   <!-- #### -sc          <snowcolor>				-->
   <!-- #### -tc          <tree color>				-->
   <!-- #### -bg          <background color>			-->
@@ -29,7 +31,9 @@
   <!-- #### -nonopopup						-->
 
   <_description>
-Draws falling snow and the occasional tiny Santa.  By Rick Jansen.
+Draws falling snow and the occasional tiny Santa.
 You can find it at &lt;http://www.euronet.nl/~rja/Xsnow/&gt;.
+
+Written by Rick Jansen.
   </_description>
 </screensaver>

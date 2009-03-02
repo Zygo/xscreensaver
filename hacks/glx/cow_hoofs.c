@@ -1,5 +1,5 @@
 #include "gllist.h"
-static float data[]={
+static const float data[]={
 	0.013288,-0.297478,-0.954636,1.970051,-3.141862,-1.065178,
 	-0.228294,-0.186048,-0.955651,2.110033,-3.148257,-1.068816,
 	-0.562282,-0.328888,-0.75873,2.14888,-3.221616,-1.076203,
@@ -1033,5 +1033,5 @@ static float data[]={
 	-0.093334,0.204552,0.974396,-2.729567,-3.602976,1.377236,
 	0.024044,0.175693,-0.984151,-2.791754,-3.635993,1.078555
 };
-static struct gllist frame={GL_N3F_V3F,GL_TRIANGLES,1032,data,NULL};
-struct gllist *cow_hoofs=&frame;
+static const struct gllist frame={GL_N3F_V3F,GL_TRIANGLES,1032,data,NULL};
+const struct gllist *cow_hoofs=&frame;

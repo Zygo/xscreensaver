@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,9 @@
  * to redo it, since xlockmore has diverged so far from xlock...)
  */
 
-#if !defined(PROGCLASS) || !defined(HACK_INIT) || !defined(HACK_DRAW)
-ERROR!  Define PROGCLASS, HACK_INIT, and HACK_DRAW before including xlockmore.h
-#endif
-
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 #ifndef __STDC__
 ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
@@ -28,30 +26,30 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
      and cpp-based stringification of tokens.) */
 #endif
 
-#include <stdio.h>
-#include <math.h>
+#include "screenhackI.h"
 #include "xlockmoreI.h"
 
 #ifdef USE_GL
-# include <GL/glx.h>
-  extern GLXContext *init_GL (ModeInfo *);
-  extern void clear_gl_error (void);
-  extern void check_gl_error (const char *type);
 
-  extern void do_fps (ModeInfo *);
-  extern GLfloat fps_1 (ModeInfo *);
-  extern void    fps_2 (ModeInfo *);
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glu.h>
+# else  /* !HAVE_COCOA -- real Xlib */
+#  include <GL/glx.h>
+#  include <GL/glu.h>
+# endif /* !HAVE_COCOA */
 
 # define FreeAllGL(dpy) /* */
-#endif /* !USE_GL */
+#endif /* USE_GL */
+
+# define ENTRYPOINT static
 
 /* Accessor macros for the ModeInfo structure
  */
-
 #define MI_DISPLAY(MI)		((MI)->dpy)
 #define MI_WINDOW(MI)		((MI)->window)
-#define MI_NUM_SCREENS(MI)	(1)	/* Only manage one screen at a time; */
-#define MI_SCREEN(MI)		(0)	/*  this might be fragile... */
+#define MI_NUM_SCREENS(MI)	((MI)->num_screens)
+#define MI_SCREEN(MI)		((MI)->screen_number)
 #define MI_WIN_WHITE_PIXEL(MI)	((MI)->white)
 #define MI_WIN_BLACK_PIXEL(MI)	((MI)->black)
 #define MI_NPIXELS(MI)		((MI)->npixels)
@@ -59,10 +57,12 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_WIN_WIDTH(MI)	((MI)->xgwa.width)
 #define MI_WIN_HEIGHT(MI)	((MI)->xgwa.height)
 #define MI_WIN_DEPTH(MI)	((MI)->xgwa.depth)
+#define MI_DEPTH(MI)		((MI)->xgwa.depth)
 #define MI_WIN_COLORMAP(MI)	((MI)->xgwa.colormap)
 #define MI_VISUAL(MI)		((MI)->xgwa.visual)
 #define MI_GC(MI)		((MI)->gc)
 #define MI_PAUSE(MI)		((MI)->pause)
+#define MI_DELAY(MI)		((MI)->pause)
 #define MI_WIN_IS_FULLRANDOM(MI)((MI)->fullrandom)
 #define MI_WIN_IS_VERBOSE(MI)   (False)
 #define MI_WIN_IS_INSTALL(MI)   (True)
@@ -118,81 +118,85 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 /* Maximum possible number of colors (*not* default number of colors.) */
 #define NUMCOLORS 256
 
-/* The globals that screenhack.c expects (initialized by xlockmore.c).
+
+/* In an Xlib world, we define two global symbols here:
+   a struct in `MODULENAME_xscreensaver_function_table',
+   and a pointer to that in `xscreensaver_function_table'.
+
+   In a Cocoa world, we only define the prefixed symbol;
+   the un-prefixed symbol does not exist.
  */
-char *defaults[100];
-XrmOptionDescRec options[100];
-
-/* Prototypes for the actual drawing routines...
- */
-extern void HACK_INIT(ModeInfo *);
-extern void HACK_DRAW(ModeInfo *);
-
-#ifdef HACK_FREE
-  extern void HACK_FREE(ModeInfo *);
+#ifdef HAVE_COCOA
+# define XSCREENSAVER_LINK(NAME)
 #else
-# define HACK_FREE 0
-#endif
-
-#ifdef HACK_RESHAPE
-  extern void HACK_RESHAPE(ModeInfo *, int width, int height);
-#else
-# define HACK_RESHAPE 0
-#endif
-
-#ifdef HACK_HANDLE_EVENT
-  extern Bool HACK_HANDLE_EVENT(ModeInfo *, XEvent *e);
-#else
-# define HACK_HANDLE_EVENT 0
+# define XSCREENSAVER_LINK(NAME) \
+   struct xscreensaver_function_table *xscreensaver_function_table = &NAME;
 #endif
 
 
-/* Emit code for the entrypoint used by screenhack.c, and pass control
-   down into xlockmore.c with the appropriate parameters.
- */
-
-char *progclass = PROGCLASS;
-
-void screenhack (Display *dpy, Window window)
-{
-  xlockmore_screenhack (dpy, window,
+# if !defined(USE_GL) || defined(HAVE_COCOA)
+#  define xlockmore_pick_gl_visual 0
+#  define xlockmore_validate_gl_visual 0
+# endif  /* !USE_GL || HAVE_COCOA */
 
 #ifdef WRITABLE_COLORS
-			True,
+# undef WRITABLE_COLORS
+# define WRITABLE_COLORS 1
 #else
-			False,
+# define WRITABLE_COLORS 0
 #endif
 
-#ifdef UNIFORM_COLORS
-			True,
+#if defined(UNIFORM_COLORS)
+# define XLOCKMORE_COLOR_SCHEME color_scheme_uniform
+#elif defined(SMOOTH_COLORS)
+# define XLOCKMORE_COLOR_SCHEME color_scheme_smooth
+#elif defined(BRIGHT_COLORS)
+# define XLOCKMORE_COLOR_SCHEME color_scheme_bright
 #else
-			False,
+# define XLOCKMORE_COLOR_SCHEME color_scheme_default
 #endif
 
-#ifdef SMOOTH_COLORS
-			True,
-#else
-			False,
-#endif
+/* This is the macro that links this program in with the rest of
+   xscreensaver.  For example:
 
-#ifdef BRIGHT_COLORS
-			True,
-#else
-			False,
-#endif
+     XSCREENSAVER_MODULE   ("Atlantis", atlantis)
+     XSCREENSAVER_MODULE_2 ("GLMatrix", glmatrix, matrix)
 
-#ifdef EVENT_MASK
-			EVENT_MASK,
-#else
-			0,
-#endif
+   CLASS:   a string, the class name for resources.
+   NAME:    a token, the name of the executable.  Should be the same
+            as CLASS, but downcased.
+   PREFIX:  the symbol used in the function names, e.g., `draw_atlantis'.
 
-			HACK_INIT,
-			HACK_DRAW,
-			HACK_RESHAPE,
-			HACK_HANDLE_EVENT,
-			HACK_FREE);
-}
+   NAME and PREFIX are usually the same.  If they are not, use
+   XSCREENSAVER_MODULE_2() instead of XSCREENSAVER_MODULE().
+ */
+#define XSCREENSAVER_MODULE_2(CLASS,NAME,PREFIX)			\
+									\
+  static struct xlockmore_function_table				\
+	 NAME ## _xlockmore_function_table = {			\
+	   CLASS,							\
+	   DEFAULTS,							\
+	   WRITABLE_COLORS,						\
+	   XLOCKMORE_COLOR_SCHEME,					\
+	   init_    ## PREFIX,						\
+	   draw_    ## PREFIX,						\
+	   reshape_ ## PREFIX,						\
+	   refresh_ ## PREFIX,						\
+	   release_ ## PREFIX,						\
+	   PREFIX   ## _handle_event,					\
+	   & PREFIX ## _opts						\
+  };									\
+									\
+  struct xscreensaver_function_table					\
+	 NAME ## _xscreensaver_function_table = {			\
+	   0, 0, 0,							\
+	   xlockmore_setup,						\
+	   & NAME ## _xlockmore_function_table,				\
+	   0, 0, 0, 0, 0,						\
+           xlockmore_pick_gl_visual,					\
+	   xlockmore_validate_gl_visual };				\
+									\
+  XSCREENSAVER_LINK (NAME ## _xscreensaver_function_table)
 
-
-const char *app_defaults = DEFAULTS ;
+#define XSCREENSAVER_MODULE(CLASS,PREFIX)				\
+      XSCREENSAVER_MODULE_2(CLASS,PREFIX,PREFIX)

@@ -27,11 +27,14 @@
     <option id="random" _label="Fuzzy Melt" arg-set="-mode fuzz"/>
   </select>
 
+  <xscreensaver-image />
+
   <_description>
 This takes an image and makes it melt.  You've no doubt seen this
 effect before, but no screensaver would really be complete without it.
 It works best if there's something colorful visible.  Warning, if the
 effect continues after the screen saver is off, seek medical attention.
-Written by David Wald, Vivek Khera, Jamie Zawinski, and Vince Levey.
+
+Written by David Wald, Vivek Khera, Jamie Zawinski, and Vince Levey; 1993.
   </_description>
 </screensaver>

@@ -9,17 +9,14 @@
           low="0" high="40000" default="20000"
           convert="invert"/>
 
-  <select id="render">
-    <option id="solid" _label="Normal"/>
-    <option id="solid" _label="Untextured" arg-set="-no-texture"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Animates a simulation of Lemarchand's Box, repeatedly solving itself.
-Requires OpenGL, and a machine with fast hardware support for texture
-maps.  Warning: occasionally opens doors.  Written by Jamie Zawinski.
+Animates a simulation of Lemarchand's Box, the Lament Configuration,
+repeatedly solving itself.  Warning: occasionally opens doors.
+
+Written by Jamie Zawinski; 1998.
   </_description>
 </screensaver>

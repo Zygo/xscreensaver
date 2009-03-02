@@ -11,8 +11,10 @@
  * Compute normal vectors for arbitrary triangles.
  */
 
-#include "config.h"
-#include <GL/gl.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "normals.h"
 
 /* Calculate the unit normal at p given two other points p1,p2 on the

@@ -44,13 +44,11 @@
 
  */
 
-
 /* portions by Daniel Zahn <stumpy@religions.com> */
 
 
 #include "screenhack.h"
 #include "xpm-pixmap.h"
-#include <X11/Xutil.h>
 #include <limits.h>
 
 #undef countof
@@ -64,94 +62,98 @@
 
 #define MAX_VAL             255
 
-static Display         *display;
-static Window          window;
-static int             depth;
-static int             width;
-static int             height;
-static Colormap        colormap;
-static Visual          *visual;
-static Screen          *screen;
-static Bool            shared;
-static Bool            bloom;
-static XImage          *xim;
+struct state {
+  Display *dpy;
+  Window window;
+  int             depth;
+  int             width;
+  int             height;
+  Colormap        colormap;
+  Visual          *visual;
+  Screen          *screen;
+  Bool            shared;
+  Bool            bloom;
+  XImage          *xim;
 #ifdef HAVE_XSHM_EXTENSION
-static XShmSegmentInfo shminfo;
+  XShmSegmentInfo shminfo;
 #endif /* HAVE_XSHM_EXTENSION */
-static GC              gc;
-static int             ctab[256];
+  GC              gc;
+  int             ctab[256];
 
-static unsigned char  *flame;
-static unsigned char  *theim;
-static int             fwidth;
-static int             fheight;
-static int             top;
-static int             hspread;
-static int             vspread;
-static int             residual;
+  unsigned char  *flame;
+  unsigned char  *theim;
+  int             fwidth;
+  int             fheight;
+  int             top;
+  int             hspread;
+  int             vspread;
+  int             residual;
 
-static int ihspread;
-static int ivspread;
-static int iresidual;
-static int variance;
-static int vartrend;
+  int ihspread;
+  int ivspread;
+  int iresidual;
+  int variance;
+  int vartrend;
+
+  int delay;
+  int baseline;
+  int theimx, theimy;
+};
 
 static void
-GetXInfo(Display *disp, Window win)
+GetXInfo(struct state *st)
 {
   XWindowAttributes xwa;
    
-  XGetWindowAttributes(disp,win,&xwa);
+  XGetWindowAttributes(st->dpy,st->window,&xwa);
 
-  window   = win;
-  display  = disp;
-  colormap = xwa.colormap;
-  depth    = xwa.depth;
-  visual   = xwa.visual;
-  screen   = xwa.screen;
-  width    = xwa.width;
-  height   = xwa.height;
+  st->colormap = xwa.colormap;
+  st->depth    = xwa.depth;
+  st->visual   = xwa.visual;
+  st->screen   = xwa.screen;
+  st->width    = xwa.width;
+  st->height   = xwa.height;
 
-  if (width%2)
-    width++;
-  if (height%2)
-    height++;
+  if (st->width%2)
+    st->width++;
+  if (st->height%2)
+    st->height++;
 }
 
 static void
-MakeImage(void)
+MakeImage(struct state *st)
 {
   XGCValues gcv;
 
 #ifdef HAVE_XSHM_EXTENSION
-  shared = True;
-  xim = create_xshm_image (display, visual, depth, ZPixmap, NULL,
-                           &shminfo, width, height);
+  st->shared = True;
+  st->xim = create_xshm_image (st->dpy, st->visual, st->depth, ZPixmap, NULL,
+                           &st->shminfo, st->width, st->height);
 #else  /* !HAVE_XSHM_EXTENSION */
-  xim = 0;
+  st->xim = 0;
 #endif /* !HAVE_XSHM_EXTENSION */
 
-  if (!xim)
+  if (!st->xim)
     {
-      shared = False;
-      xim = XCreateImage (display, visual, depth, ZPixmap, 0, NULL,
-                          width, height, 32, 0);
-      if (xim)
-        xim->data = (char *) calloc(xim->height, xim->bytes_per_line);
-      if (!xim || !xim->data)
+      st->shared = False;
+      st->xim = XCreateImage (st->dpy, st->visual, st->depth, ZPixmap, 0, NULL,
+                          st->width, st->height, 32, 0);
+      if (st->xim)
+        st->xim->data = (char *) calloc(st->xim->height, st->xim->bytes_per_line);
+      if (!st->xim || !st->xim->data)
         {
           fprintf(stderr,"%s: out of memory.\n", progname);
           exit(1);
         }
     }
 
-  gc = XCreateGC(display,window,0,&gcv);
-  if (!gc) exit (1);
+  st->gc = XCreateGC(st->dpy,st->window,0,&gcv);
+  if (!st->gc) exit (1);
 }
 
 
 static void
-InitColors(void)
+InitColors(struct state *st)
 {
   int i = 0, j = 0, red = 0, green = 0, blue = 0;
   XColor fg;
@@ -159,9 +161,9 @@ InitColors(void)
   /* Make it possible to set the color of the flames, 
      by Raymond Medeiros <ray@stommel.marine.usf.edu> and jwz.
   */
-  fg.pixel = get_pixel_resource ("foreground", "Foreground",
-                                 display, colormap);
-  XQueryColor (display, colormap, &fg);
+  fg.pixel = get_pixel_resource (st->dpy, st->colormap,
+                                 "foreground", "Foreground");
+  XQueryColor (st->dpy, st->colormap, &fg);
 
   red   = 255 - (fg.red   >> 8);
   green = 255 - (fg.green >> 8);
@@ -187,255 +189,255 @@ InitColors(void)
       xcl.blue  = (unsigned short)((b << 8) | b);
       xcl.flags = DoRed | DoGreen | DoBlue;
 
-      XAllocColor(display,colormap,&xcl);
+      XAllocColor(st->dpy,st->colormap,&xcl);
 
-      ctab[j++] = (int)xcl.pixel;
+      st->ctab[j++] = (int)xcl.pixel;
     }
 }
 
 
 static void
-DisplayImage(void)
+DisplayImage(struct state *st)
 {
 #ifdef HAVE_XSHM_EXTENSION
-  if (shared)
-    XShmPutImage(display, window, gc, xim, 0,(top - 1) << 1, 0,
-                 (top - 1) << 1, width, height - ((top - 1) << 1), False);
+  if (st->shared)
+    XShmPutImage(st->dpy, st->window, st->gc, st->xim, 0,(st->top - 1) << 1, 0,
+                 (st->top - 1) << 1, st->width, st->height - ((st->top - 1) << 1), False);
   else
 #endif /* HAVE_XSHM_EXTENSION */
-    XPutImage(display, window, gc, xim, 0, (top - 1) << 1, 0,
-              (top - 1) << 1, width, height - ((top - 1) << 1));
+    XPutImage(st->dpy, st->window, st->gc, st->xim, 0, (st->top - 1) << 1, 0,
+              (st->top - 1) << 1, st->width, st->height - ((st->top - 1) << 1));
 }
 
 
 static void
-InitFlame(void)
+InitFlame(struct state *st)
 {
-  fwidth  = width / 2;
-  fheight = height / 2;
-  flame   = (unsigned char *) malloc((fwidth + 2) * (fheight + 2)
+  st->fwidth  = st->width / 2;
+  st->fheight = st->height / 2;
+  st->flame   = (unsigned char *) malloc((st->fwidth + 2) * (st->fheight + 2)
                                      * sizeof(unsigned char));
 
-  if (!flame)
+  if (!st->flame)
     {
       fprintf(stderr,"%s: out of memory\n", progname);
       exit(1);
     }
 
-  top      = 1;
-  ihspread  = get_integer_resource("hspread", "Integer");
-  ivspread  = get_integer_resource("vspread", "Integer");
-  iresidual = get_integer_resource("residual", "Integer");
-  variance  = get_integer_resource("variance", "Integer");
-  vartrend  = get_integer_resource("vartrend", "Integer");
-  bloom     = get_boolean_resource("bloom",    "Boolean");
+  st->top      = 1;
+  st->ihspread  = get_integer_resource(st->dpy, "hspread", "Integer");
+  st->ivspread  = get_integer_resource(st->dpy, "vspread", "Integer");
+  st->iresidual = get_integer_resource(st->dpy, "residual", "Integer");
+  st->variance  = get_integer_resource(st->dpy, "variance", "Integer");
+  st->vartrend  = get_integer_resource(st->dpy, "vartrend", "Integer");
+  st->bloom     = get_boolean_resource(st->dpy, "bloom",    "Boolean");
 
 # define THROTTLE(VAR,NAME) \
   if (VAR < 0 || VAR > 255) { \
     fprintf(stderr, "%s: %s must be in the range 0-255 (not %d).\n", \
             progname, NAME, VAR); \
     exit(1); }
-  THROTTLE (ihspread, "hspread");
-  THROTTLE (ivspread, "vspread");
-  THROTTLE (iresidual,"residual");
-  THROTTLE (variance, "variance");
-  THROTTLE (vartrend, "vartrend");
+  THROTTLE (st->ihspread, "hspread");
+  THROTTLE (st->ivspread, "vspread");
+  THROTTLE (st->iresidual,"residual");
+  THROTTLE (st->variance, "variance");
+  THROTTLE (st->vartrend, "vartrend");
 # undef THROTTLE
 
 
 
-  hspread = ihspread;
-  vspread = ivspread;
-  residual = iresidual;
+  st->hspread = st->ihspread;
+  st->vspread = st->ivspread;
+  st->residual = st->iresidual;
 }
 
 
 static void
-Flame2Image16(void)
+Flame2Image16(struct state *st)
 {
   int x,y;
   unsigned short *ptr;
   unsigned char *ptr1;
   int v1,v2,v3,v4;
 
-  ptr  = (unsigned short *)xim->data;
-  ptr += (top << 1) * width;
-  ptr1 = flame + 1 + (top * (fwidth + 2));
+  ptr  = (unsigned short *)st->xim->data;
+  ptr += (st->top << 1) * st->width;
+  ptr1 = st->flame + 1 + (st->top * (st->fwidth + 2));
 
-  for(y = top; y < fheight; y++)
+  for(y = st->top; y < st->fheight; y++)
     {
-      for( x = 0; x < fwidth; x++)
+      for( x = 0; x < st->fwidth; x++)
         {
           v1 = (int)*ptr1;
           v2 = (int)*(ptr1 + 1);
-          v3 = (int)*(ptr1 + fwidth + 2);
-          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          v3 = (int)*(ptr1 + st->fwidth + 2);
+          v4 = (int)*(ptr1 + st->fwidth + 2 + 1);
           ptr1++;
-          *ptr++ = (unsigned short)ctab[v1];
-          *ptr   = (unsigned short)ctab[(v1 + v2) >> 1];
-          ptr   += width - 1;
-          *ptr++ = (unsigned short)ctab[(v1 + v3) >> 1];
-          *ptr   = (unsigned short)ctab[(v1 + v4) >> 1];
-          ptr   -= width - 1;
+          *ptr++ = (unsigned short)st->ctab[v1];
+          *ptr   = (unsigned short)st->ctab[(v1 + v2) >> 1];
+          ptr   += st->width - 1;
+          *ptr++ = (unsigned short)st->ctab[(v1 + v3) >> 1];
+          *ptr   = (unsigned short)st->ctab[(v1 + v4) >> 1];
+          ptr   -= st->width - 1;
         }
-      ptr  += width;
+      ptr  += st->width;
       ptr1 += 2;
     }
 }
 
 static void
-Flame2Image32(void)
+Flame2Image32(struct state *st)
 {
   int x,y;
   unsigned int *ptr;
   unsigned char *ptr1;
   int v1,v2,v3,v4;
 
-  ptr  = (unsigned int *)xim->data;
-  ptr += (top << 1) * width;
-  ptr1 = flame + 1 + (top * (fwidth + 2));
+  ptr  = (unsigned int *)st->xim->data;
+  ptr += (st->top << 1) * st->width;
+  ptr1 = st->flame + 1 + (st->top * (st->fwidth + 2));
 
-  for( y = top; y < fheight; y++)
+  for( y = st->top; y < st->fheight; y++)
     {
-      for( x = 0; x < fwidth; x++)
+      for( x = 0; x < st->fwidth; x++)
         {
           v1 = (int)*ptr1;
           v2 = (int)*(ptr1 + 1);
-          v3 = (int)*(ptr1 + fwidth + 2);
-          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          v3 = (int)*(ptr1 + st->fwidth + 2);
+          v4 = (int)*(ptr1 + st->fwidth + 2 + 1);
           ptr1++;
-          *ptr++ = (unsigned int)ctab[v1];
-          *ptr   = (unsigned int)ctab[(v1 + v2) >> 1];
-          ptr   += width - 1;
-          *ptr++ = (unsigned int)ctab[(v1 + v3) >> 1];
-          *ptr   = (unsigned int)ctab[(v1 + v4) >> 1];
-          ptr   -= width - 1;
+          *ptr++ = (unsigned int)st->ctab[v1];
+          *ptr   = (unsigned int)st->ctab[(v1 + v2) >> 1];
+          ptr   += st->width - 1;
+          *ptr++ = (unsigned int)st->ctab[(v1 + v3) >> 1];
+          *ptr   = (unsigned int)st->ctab[(v1 + v4) >> 1];
+          ptr   -= st->width - 1;
         }
-      ptr  += width;
+      ptr  += st->width;
       ptr1 += 2;
     }
 }
 
 static void
-Flame2Image24(void)
+Flame2Image24(struct state *st)
 {
   int x,y;
   unsigned char *ptr;
   unsigned char *ptr1;
   int v1,v2,v3,v4;
 
-  ptr  = (unsigned char *)xim->data;
-  ptr += (top << 1) * xim->bytes_per_line;
-  ptr1 = flame + 1 + (top * (fwidth + 2));
+  ptr  = (unsigned char *)st->xim->data;
+  ptr += (st->top << 1) * st->xim->bytes_per_line;
+  ptr1 = st->flame + 1 + (st->top * (st->fwidth + 2));
 
-  for( y = top; y < fheight; y++)
+  for( y = st->top; y < st->fheight; y++)
     {
       unsigned char *last_ptr = ptr;
-      for( x = 0; x < fwidth; x++)
+      for( x = 0; x < st->fwidth; x++)
         {
           v1 = (int)*ptr1;
           v2 = (int)*(ptr1 + 1);
-          v3 = (int)*(ptr1 + fwidth + 2);
-          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          v3 = (int)*(ptr1 + st->fwidth + 2);
+          v4 = (int)*(ptr1 + st->fwidth + 2 + 1);
           ptr1++;
 
-          ptr[2] = ((unsigned int)ctab[v1] & 0x00FF0000) >> 16;
-          ptr[1] = ((unsigned int)ctab[v1] & 0x0000FF00) >> 8;
-          ptr[0] = ((unsigned int)ctab[v1] & 0x000000FF);
+          ptr[2] = ((unsigned int)st->ctab[v1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)st->ctab[v1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)st->ctab[v1] & 0x000000FF);
           ptr += 3;
 
-          ptr[2] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x00FF0000) >> 16;
-          ptr[1] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x0000FF00) >> 8;
-          ptr[0] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x000000FF);
-          ptr += ((width - 1) * 3);
+          ptr[2] = ((unsigned int)st->ctab[(v1 + v2) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)st->ctab[(v1 + v2) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)st->ctab[(v1 + v2) >> 1] & 0x000000FF);
+          ptr += ((st->width - 1) * 3);
 
-          ptr[2] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x00FF0000) >> 16;
-          ptr[1] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x0000FF00) >> 8;
-          ptr[0] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x000000FF);
+          ptr[2] = ((unsigned int)st->ctab[(v1 + v3) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)st->ctab[(v1 + v3) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)st->ctab[(v1 + v3) >> 1] & 0x000000FF);
           ptr += 3;
 
-          ptr[2] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x00FF0000) >> 16;
-          ptr[1] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x0000FF00) >> 8;
-          ptr[0] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x000000FF);
-          ptr -= ((width - 1) * 3);
+          ptr[2] = ((unsigned int)st->ctab[(v1 + v4) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)st->ctab[(v1 + v4) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)st->ctab[(v1 + v4) >> 1] & 0x000000FF);
+          ptr -= ((st->width - 1) * 3);
         }
 
-      ptr = last_ptr + (xim->bytes_per_line << 1);
+      ptr = last_ptr + (st->xim->bytes_per_line << 1);
       ptr1 += 2;
     }
 }
 
 static void
-Flame2Image8(void)
+Flame2Image8(struct state *st)
 {
   int x,y;
   unsigned char *ptr;
   unsigned char *ptr1;
   int v1,v2,v3,v4;
 
-  ptr  = (unsigned char *)xim->data;
-  ptr += (top << 1) * width;
-  ptr1 = flame + 1 + (top * (fwidth + 2));
+  ptr  = (unsigned char *)st->xim->data;
+  ptr += (st->top << 1) * st->width;
+  ptr1 = st->flame + 1 + (st->top * (st->fwidth + 2));
 
-  for(y=top;y<fheight;y++)
+  for(y=st->top;y<st->fheight;y++)
     {
-      for(x=0;x<fwidth;x++)
+      for(x=0;x<st->fwidth;x++)
         {
           v1 = (int)*ptr1;
           v2 = (int)*(ptr1 + 1);
-          v3 = (int)*(ptr1 + fwidth + 2);
-          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          v3 = (int)*(ptr1 + st->fwidth + 2);
+          v4 = (int)*(ptr1 + st->fwidth + 2 + 1);
           ptr1++;
-          *ptr++ = (unsigned char)ctab[v1];
-          *ptr   = (unsigned char)ctab[(v1 + v2) >> 1];
-          ptr   += width - 1;
-          *ptr++ = (unsigned char)ctab[(v1 + v3) >> 1];
-          *ptr   = (unsigned char)ctab[(v1 + v4) >> 1];
-          ptr   -= width - 1;
+          *ptr++ = (unsigned char)st->ctab[v1];
+          *ptr   = (unsigned char)st->ctab[(v1 + v2) >> 1];
+          ptr   += st->width - 1;
+          *ptr++ = (unsigned char)st->ctab[(v1 + v3) >> 1];
+          *ptr   = (unsigned char)st->ctab[(v1 + v4) >> 1];
+          ptr   -= st->width - 1;
         }
-      ptr  += width;
+      ptr  += st->width;
       ptr1 += 2;
     }
 }
 
 static void
-Flame2Image1234567(void)
+Flame2Image1234567(struct state *st)
 {
   int x,y;
   unsigned char *ptr1;
   int v1,v2,v3,v4;
 
-  ptr1 = flame + 1 + (top * (fwidth + 2));
+  ptr1 = st->flame + 1 + (st->top * (st->fwidth + 2));
 
-  for( y = top; y < fheight; y++)
+  for( y = st->top; y < st->fheight; y++)
     {
-      for( x = 0; x < fwidth; x++)
+      for( x = 0; x < st->fwidth; x++)
         {
           v1 = (int)*ptr1;
           v2 = (int)*(ptr1 + 1);
-          v3 = (int)*(ptr1 + fwidth + 2);
-          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          v3 = (int)*(ptr1 + st->fwidth + 2);
+          v4 = (int)*(ptr1 + st->fwidth + 2 + 1);
           ptr1++;
-          XPutPixel(xim,(x << 1),    (y << 1),    ctab[v1]);
-          XPutPixel(xim,(x << 1) + 1,(y << 1),    ctab[(v1 + v2) >> 1]);
-          XPutPixel(xim,(x << 1),    (y << 1) + 1,ctab[(v1 + v3) >> 1]);
-          XPutPixel(xim,(x << 1) + 1,(y << 1) + 1,ctab[(v1 + v4) >> 1]);
+          XPutPixel(st->xim,(x << 1),    (y << 1),    st->ctab[v1]);
+          XPutPixel(st->xim,(x << 1) + 1,(y << 1),    st->ctab[(v1 + v2) >> 1]);
+          XPutPixel(st->xim,(x << 1),    (y << 1) + 1,st->ctab[(v1 + v3) >> 1]);
+          XPutPixel(st->xim,(x << 1) + 1,(y << 1) + 1,st->ctab[(v1 + v4) >> 1]);
         }
     }
 }
 
 static void
-Flame2Image(void)
+Flame2Image(struct state *st)
 {
-  switch (xim->bits_per_pixel)
+  switch (st->xim->bits_per_pixel)
     {
-    case 32: Flame2Image32(); break;
-    case 24: Flame2Image24(); break;
-    case 16: Flame2Image16(); break;
-    case 8:  Flame2Image8();  break;
+    case 32: Flame2Image32(st); break;
+    case 24: Flame2Image24(st); break;
+    case 16: Flame2Image16(st); break;
+    case 8:  Flame2Image8(st);  break;
     default:
-      if (xim->bits_per_pixel <= 7)
-        Flame2Image1234567();
+      if (st->xim->bits_per_pixel <= 7)
+        Flame2Image1234567(st);
       else
         abort();
       break;
@@ -444,64 +446,64 @@ Flame2Image(void)
 
 
 static void
-FlameActive(void)
+FlameActive(struct state *st)
 {
   int x,v1;
   unsigned char *ptr1;
    
-  ptr1 = flame + ((fheight + 1) * (fwidth + 2));
+  ptr1 = st->flame + ((st->fheight + 1) * (st->fwidth + 2));
 
-  for (x = 0; x < fwidth + 2; x++)
+  for (x = 0; x < st->fwidth + 2; x++)
     {
       v1      = *ptr1;
-      v1     += ((random() % variance) - vartrend);
+      v1     += ((random() % st->variance) - st->vartrend);
       *ptr1++ = v1 % 255;
     }
 
-  if (bloom)
+  if (st->bloom)
     {
       v1= (random() % 100);
       if (v1 == 10)
-	residual += (random()%10);
+	st->residual += (random()%10);
       else if (v1 == 20)
-	hspread += (random()%15);
+	st->hspread += (random()%15);
       else if (v1 == 30)
-	vspread += (random()%20);
+	st->vspread += (random()%20);
     }
 
-  residual = ((iresidual* 10) + (residual *90)) / 100;
-  hspread  = ((ihspread * 10) + (hspread  *90)) / 100;
-  vspread  = ((ivspread * 10) + (vspread  *90)) / 100;
+  st->residual = ((st->iresidual* 10) + (st->residual *90)) / 100;
+  st->hspread  = ((st->ihspread * 10) + (st->hspread  *90)) / 100;
+  st->vspread  = ((st->ivspread * 10) + (st->vspread  *90)) / 100;
 }
 
 
 static void
-FlameAdvance(void)
+FlameAdvance(struct state *st)
 {
   int x,y;
   unsigned char *ptr2;
-  int newtop = top;
+  int newtop = st->top;
 
-  for (y = fheight + 1; y >= top; y--)
+  for (y = st->fheight + 1; y >= st->top; y--)
     {
       int used = 0;
-      unsigned char *ptr1 = flame + 1 + (y * (fwidth + 2));
-      for (x = 0; x < fwidth; x++)
+      unsigned char *ptr1 = st->flame + 1 + (y * (st->fwidth + 2));
+      for (x = 0; x < st->fwidth; x++)
         {
           int v1 = (int)*ptr1;
           int v2, v3;
           if (v1 > 0)
             {
               used = 1;
-              ptr2 = ptr1 - fwidth - 2;
-              v3   = (v1 * vspread) >> 8;
+              ptr2 = ptr1 - st->fwidth - 2;
+              v3   = (v1 * st->vspread) >> 8;
               v2   = (int)*(ptr2);
               v2  += v3;
               if (v2 > MAX_VAL) 
                 v2 = MAX_VAL;
 
               *(ptr2) = (unsigned char)v2;
-              v3  = (v1 * hspread) >> 8;
+              v3  = (v1 * st->hspread) >> 8;
               v2  = (int)*(ptr2 + 1);
               v2 += v3;
               if (v2 > MAX_VAL) 
@@ -515,9 +517,9 @@ FlameAdvance(void)
           
               *(ptr2 - 1) = (unsigned char)v2;
         
-              if (y < fheight + 1)
+              if (y < st->fheight + 1)
                 {
-                  v1    = (v1 * residual) >> 8;
+                  v1    = (v1 * st->residual) >> 8;
                   *ptr1 = (unsigned char)v1;
                 }
             }
@@ -529,26 +531,26 @@ FlameAdvance(void)
       /* clean up the right gutter */
       {
         int v1 = (int)*ptr1;
-        v1 = (v1 * residual) >> 8;
+        v1 = (v1 * st->residual) >> 8;
         *ptr1 = (unsigned char)v1;
       }
     }
 
-  top = newtop - 1;
+  st->top = newtop - 1;
 
-  if (top < 1)
-    top = 1;
+  if (st->top < 1)
+    st->top = 1;
 }
 
 
 static void
-FlameFill(int val)
+FlameFill(struct state *st, int val)
 {
   int x, y;
-  for (y = 0; y < fheight + 1; y++)
+  for (y = 0; y < st->fheight + 1; y++)
     {
-      unsigned char *ptr1 = flame + 1 + (y * (fwidth + 2));
-      for (x = 0; x < fwidth; x++)
+      unsigned char *ptr1 = st->flame + 1 + (y * (st->fwidth + 2));
+      for (x = 0; x < st->fwidth; x++)
         {
           *ptr1 = val;
           ptr1++;
@@ -558,7 +560,8 @@ FlameFill(int val)
 
 
 static void
-FlamePasteData(unsigned char *d, int xx, int yy, int w, int h)
+FlamePasteData(struct state *st,
+               unsigned char *d, int xx, int yy, int w, int h)
 {
   unsigned char *ptr1,*ptr2;
   ptr2 = d;
@@ -568,13 +571,13 @@ FlamePasteData(unsigned char *d, int xx, int yy, int w, int h)
 
   if ((xx >= 0) &&
       (yy >= 0) &&
-      (xx + w <= fwidth) &&
-      (yy + h <= fheight))
+      (xx + w <= st->fwidth) &&
+      (yy + h <= st->fheight))
     {
       int x, y;
       for (y = 0; y < h; y++)
         {
-          ptr1 = flame + 1 + xx + ((yy + y) * (fwidth + 2));
+          ptr1 = st->flame + 1 + xx + ((yy + y) * (st->fwidth + 2));
           for (x = 0; x < w; x++)
             {
               if (*ptr2 / 24)
@@ -590,9 +593,9 @@ FlamePasteData(unsigned char *d, int xx, int yy, int w, int h)
       static Bool warned = False;
       if (!warned)
         {
-          fprintf (stderr, "%s: window is %dx%d; image must be "
+          fprintf (stderr, "%s: st->window is %dx%d; image must be "
                    "smaller than %dx%d (not %dx%d).\n",
-                   progname, width, height, fwidth, fheight, w, h);
+                   progname, st->width, st->height, st->fwidth, st->fheight, w, h);
           warned = True;
         }
     }
@@ -600,9 +603,9 @@ FlamePasteData(unsigned char *d, int xx, int yy, int w, int h)
 
 
 static unsigned char *
-loadBitmap(int *w, int *h)
+loadBitmap(struct state *st, int *w, int *h)
 {
-  char *bitmap_name = get_string_resource ("bitmap", "Bitmap");
+  char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
 
   if (!bitmap_name ||
       !*bitmap_name ||
@@ -614,10 +617,10 @@ loadBitmap(int *w, int *h)
       unsigned char *result, *o;
       char *bits = (char *) malloc (sizeof(bob_bits));
       int x, y;
-      int scale = ((width > bob_width * 11) ? 2 : 1);
+      int scale = ((st->width > bob_width * 11) ? 2 : 1);
  
       memcpy (bits, bob_bits, sizeof(bob_bits));
-      ximage = XCreateImage (display, visual, 1, XYBitmap, 0, bits,
+      ximage = XCreateImage (st->dpy, st->visual, 1, XYBitmap, 0, bits,
                              bob_width, bob_height, 8, 0);
       ximage->byte_order = LSBFirst;
       ximage->bitmap_bit_order = LSBFirst;
@@ -631,30 +634,33 @@ loadBitmap(int *w, int *h)
       return result;
     }
   else  /* load a bitmap file */
-    {
+#ifdef HAVE_COCOA
+    abort(); /* #### fix me */
+#else
+   {
       Pixmap pixmap =
-        xpm_file_to_pixmap (display, window, bitmap_name, &width, &height, 0);
+        xpm_file_to_pixmap (st->dpy, st->window, bitmap_name, &st->width, &st->height, 0);
       XImage *image;
       int x, y;
       unsigned char *result, *o;
       XColor colors[256];
-      Bool cmap_p = has_writable_cells (screen, visual);
+      Bool cmap_p = has_writable_cells (st->screen, st->visual);
 
       if (cmap_p)
         {
           int i;
           for (i = 0; i < countof (colors); i++)
             colors[i].pixel = i;
-          XQueryColors (display, colormap, colors, countof (colors));
+          XQueryColors (st->dpy, st->colormap, colors, countof (colors));
         }
 
-      image = XGetImage (display, pixmap, 0, 0, width, height, ~0L, ZPixmap);
-      XFreePixmap(display, pixmap);
+      image = XGetImage (st->dpy, pixmap, 0, 0, st->width, st->height, ~0L, ZPixmap);
+      XFreePixmap(st->dpy, pixmap);
 
-      result = (unsigned char *) malloc (width * height);
+      result = (unsigned char *) malloc (st->width * st->height);
       o = result;
-      for (y = 0; y < height; y++)
-        for (x = 0; x < width; x++)
+      for (y = 0; y < st->height; y++)
+        for (x = 0; x < st->width; x++)
           {
             int rgba = XGetPixel (image, x, y);
             int gray;
@@ -683,10 +689,11 @@ loadBitmap(int *w, int *h)
       image->data = 0;
       XDestroyImage (image);
 
-      *w = width;
-      *h = height;
+      *w = st->width;
+      *h = st->height;
       return result;
     }
+#endif /* !HAVE_COCOA */
 
   *w = 0;
   *h = 0;
@@ -694,11 +701,73 @@ loadBitmap(int *w, int *h)
 
 }
 
+static void *
+xflame_init (Display *dpy, Window win)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = win;
+  st->baseline = get_integer_resource (dpy, "bitmapBaseline", "Integer");
+  st->delay = get_integer_resource (dpy, "delay", "Integer");
+  st->xim      = NULL;
+  st->top      = 1;
+  st->flame    = NULL;
+
+  GetXInfo(st);
+  InitColors(st);
+  st->theim = loadBitmap(st, &st->theimx, &st->theimy);
+
+  /* utils/xshm.c doesn't provide a way to free the shared-memory image, which
+     makes it hard for us to react to window resizing.  So, punt for now.  The
+     size of the window at startup is the size it will stay.
+  */
+  GetXInfo(st);
+
+  MakeImage(st);
+  InitFlame(st);
+  FlameFill(st,0);
+
+  return st;
+}
+
+static unsigned long
+xflame_draw (Display *dpy, Window win, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  FlameActive(st);
+
+  if (st->theim)
+    FlamePasteData(st, st->theim, (st->fwidth - st->theimx) / 2,
+                   st->fheight - st->theimy - st->baseline, st->theimx, st->theimy);
+
+  FlameAdvance(st);
+  Flame2Image(st);
+  DisplayImage(st);
+
+  return st->delay;
+}
+
+static void
+xflame_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+xflame_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+xflame_free (Display *dpy, Window window, void *closure)
+{
+}
+
 
 
-char *progclass = "XFlame";
 
-char *defaults [] = {
+static const char *xflame_defaults [] = {
   ".background:     black",
   ".foreground:     #FFAF5F",
   "*bitmap:         (default)",
@@ -717,7 +786,7 @@ char *defaults [] = {
    0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec xflame_options [] = {
   { "-foreground",".foreground",     XrmoptionSepArg, 0 },
   { "-fg",        ".foreground",     XrmoptionSepArg, 0 },
   { "-delay",     ".delay",          XrmoptionSepArg, 0 },
@@ -737,45 +806,5 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *disp, Window win)
-{
-  int theimx = 0, theimy = 0;
-  int baseline = get_integer_resource ("bitmapBaseline", "Integer");
-  int delay = get_integer_resource ("delay", "Integer");
-  xim      = NULL;
-  top      = 1;
-  flame    = NULL;
 
-  GetXInfo(disp,win);
-  InitColors();
-  theim = loadBitmap(&theimx, &theimy);
-
-  /* utils/xshm.c doesn't provide a way to free the shared-memory image, which
-     makes it hard for us to react to window resizing.  So, punt for now.  The
-     size of the window at startup is the size it will stay.
-  */
-  GetXInfo(disp,win);
-
-  MakeImage();
-  InitFlame();
-  FlameFill(0);
-
-  while (1)
-    {
-      FlameActive();
-
-      if (theim)
-        FlamePasteData(theim, (fwidth - theimx) / 2,
-                       fheight - theimy - baseline, theimx, theimy);
-
-      FlameAdvance();
-      Flame2Image();
-      DisplayImage();
-
-      XSync(display,False);
-      screenhack_handle_events(display);
-      if (delay)
-        usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("XFlame", xflame)

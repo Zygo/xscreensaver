@@ -21,34 +21,6 @@
 #include <math.h>
 #include "screenhack.h"
 
-static Display *dpy;
-static Window window;
-static GC r_color0, r_color1, r_color2, r_color3, r_color4, r_color5, l_color0, l_color1;
-static GC s_color;
-static GC black;
-
-static int delay;
-
-static int NUM_ROBOTS=5;
-static int NUM_LASERS=3;
-
-static int MOTHER_SHIP=0;
-static int MOTHER_SHIP_WIDTH=25;
-static int MOTHER_SHIP_HEIGHT=7;
-static int MOTHER_SHIP_LASER=15;
-static int MOTHER_SHIP_PERIOD=150;
-static int MOTHER_SHIP_HITS=10;
-
-static int LINE_MOVE_STYLE=0;
-static int RANDOM_MOVE_STYLE=1;
-static int NUM_MOVE_STYLES=2;
-
-static int EXPLODE_SIZE_1=27;
-static int EXPLODE_SIZE_2=19;
-static int EXPLODE_SIZE_3=7;
-static GC EXPLODE_COLOR_1;
-static GC EXPLODE_COLOR_2;
-
 struct laser_state {
 	int active;
 	int start_x,start_y;
@@ -81,97 +53,135 @@ struct mother_ship_state {
 	struct laser_state *lasers;
 };
 
-static XArc *stars;
-static int NUM_STARS;
-static int MOVE_STARS;
-static int MOVE_STARS_X;
-static int MOVE_STARS_Y;
-static int MOVE_STARS_RANDOM;
-
-static struct mother_ship_state *mother;
-
-static struct robot_state *robots;
-
-XWindowAttributes xgwa;
 
 
+
+struct state {
+  Display *dpy;
+  Window window;
+
+  GC r_color0, r_color1, r_color2, r_color3, r_color4, r_color5, l_color0, l_color1;
+  GC s_color;
+  GC black;
+
+  int delay;
+
+  int NUM_ROBOTS;
+  int NUM_LASERS;
+
+  int MOTHER_SHIP;
+  int MOTHER_SHIP_WIDTH;
+  int MOTHER_SHIP_HEIGHT;
+  int MOTHER_SHIP_LASER;
+  int MOTHER_SHIP_PERIOD;
+  int MOTHER_SHIP_HITS;
+
+  int LINE_MOVE_STYLE;
+  int RANDOM_MOVE_STYLE;
+  int NUM_MOVE_STYLES;
+
+  int EXPLODE_SIZE_1;
+  int EXPLODE_SIZE_2;
+  int EXPLODE_SIZE_3;
+  GC EXPLODE_COLOR_1;
+  GC EXPLODE_COLOR_2;
+
+  XArc *stars;
+  int NUM_STARS;
+  int MOVE_STARS;
+  int MOVE_STARS_X;
+  int MOVE_STARS_Y;
+  int MOVE_STARS_RANDOM;
+
+  struct mother_ship_state *mother;
+
+  struct robot_state *robots;
+
+  XWindowAttributes xgwa;
+
+  int initted;
+
+  int draw_x;
+  int draw_y;
+  int draw_z;
+};
 
 
 /* creates a new robot. It starts out on one of the edges somewhere and
 	has no initial velocity. A target is randomly picked. */
-static void make_new_robot(int index)
+static void make_new_robot(struct state *st, int index)
 {
 	int laser_check = 0;
 	int x=0;
 
-	for(x=0;x<NUM_LASERS;x++) {
-		if(robots[index].lasers[x].active) {
-			x=NUM_LASERS;
+	for(x=0;x<st->NUM_LASERS;x++) {
+		if(st->robots[index].lasers[x].active) {
+			x=st->NUM_LASERS;
 			laser_check = 1;
 		}
 	}
 	if(laser_check==0) {
-		robots[index].alive=1;
+		st->robots[index].alive=1;
 
-		robots[index].radius = 7+(random()%7);
+		st->robots[index].radius = 7+(random()%7);
 
-		robots[index].move_style = random()%NUM_MOVE_STYLES;
+		st->robots[index].move_style = random()%st->NUM_MOVE_STYLES;
 		if(random()%2==0) {
-			robots[index].new_x=random()%(xgwa.width-robots[index].radius);
-			robots[index].old_x=robots[index].new_x;
+			st->robots[index].new_x=random()%(st->xgwa.width-st->robots[index].radius);
+			st->robots[index].old_x=st->robots[index].new_x;
 			if(random()%2==0) {
-				robots[index].new_y=0;
-				robots[index].old_y=0;
+				st->robots[index].new_y=0;
+				st->robots[index].old_y=0;
 			}
 			else {
-				robots[index].new_y=xgwa.height-robots[index].radius;
-				robots[index].old_y = robots[index].new_y;
+				st->robots[index].new_y=st->xgwa.height-st->robots[index].radius;
+				st->robots[index].old_y = st->robots[index].new_y;
 			}
 		}
 		else {
-			robots[index].new_y=random()%(xgwa.height-robots[index].radius);
-			robots[index].old_y = robots[index].new_y;
+			st->robots[index].new_y=random()%(st->xgwa.height-st->robots[index].radius);
+			st->robots[index].old_y = st->robots[index].new_y;
 			if(random()%2) {
-				robots[index].new_x=0;
-				robots[index].old_x=0;
+				st->robots[index].new_x=0;
+				st->robots[index].old_x=0;
 			}
 			else {
-				robots[index].new_x=xgwa.width-robots[index].radius;
-				robots[index].old_x=robots[index].new_x;
+				st->robots[index].new_x=st->xgwa.width-st->robots[index].radius;
+				st->robots[index].old_x=st->robots[index].new_x;
 			}
 		}
 			
 		x=random()%6;
 		if(x==0) {
-			robots[index].robot_color = r_color0;
+			st->robots[index].robot_color = st->r_color0;
 		}
 		else if(x==1) {
-			robots[index].robot_color = r_color1;
+			st->robots[index].robot_color = st->r_color1;
 		}
 		else if(x==2) {
-			robots[index].robot_color = r_color2;
+			st->robots[index].robot_color = st->r_color2;
 		}
 		else if(x==3) {
-			robots[index].robot_color = r_color3;
+			st->robots[index].robot_color = st->r_color3;
 		}
 		else if(x==4) {
-			robots[index].robot_color = r_color4;
+			st->robots[index].robot_color = st->r_color4;
 		}
 		else if(x==5) {
-		 	robots[index].robot_color = r_color5;
+		 	st->robots[index].robot_color = st->r_color5;
 		}
 
 		if(random()%2==0) {
-	 		robots[index].laser_color = l_color0;
+	 		st->robots[index].laser_color = st->l_color0;
 		}
 		else {
- 			robots[index].laser_color = l_color1;
+ 			st->robots[index].laser_color = st->l_color1;
 		}
 
-		if(NUM_ROBOTS>1) {
-			robots[index].target = random()%NUM_ROBOTS;
-			while(robots[index].target==index) {
-				robots[index].target = random()%NUM_ROBOTS;
+		if(st->NUM_ROBOTS>1) {
+			st->robots[index].target = random()%st->NUM_ROBOTS;
+			while(st->robots[index].target==index) {
+				st->robots[index].target = random()%st->NUM_ROBOTS;
 			}	
 		}
 	}
@@ -180,7 +190,7 @@ static void make_new_robot(int index)
 /* moves each robot, randomly changing its direction and velocity.
 	At random a laser is shot toward that robot's target. Also at random
 	the target can change. */
-static void move_robots(void)
+static void move_robots(struct state *st)
 {
 	int x=0;
 	int y=0;
@@ -190,25 +200,25 @@ static void move_robots(void)
 	int target_y = 0;
 	double slope = 0;
 
-	for(x=0;x<NUM_ROBOTS;x++) {
-		if(robots[x].alive) {
-			if((robots[x].new_x == robots[x].old_x) && (robots[x].new_y == robots[x].old_y)) {
-				if(robots[x].new_x==0) {
-					robots[x].old_x = -((random()%3)+1);
+	for(x=0;x<st->NUM_ROBOTS;x++) {
+		if(st->robots[x].alive) {
+			if((st->robots[x].new_x == st->robots[x].old_x) && (st->robots[x].new_y == st->robots[x].old_y)) {
+				if(st->robots[x].new_x==0) {
+					st->robots[x].old_x = -((random()%3)+1);
 				}
 				else {
-					robots[x].old_x = robots[x].old_x + (random()%3)+1;
+					st->robots[x].old_x = st->robots[x].old_x + (random()%3)+1;
 				}
-				if(robots[x].new_y==0) {
-					robots[x].old_y = -((random()%3)+1);
+				if(st->robots[x].new_y==0) {
+					st->robots[x].old_y = -((random()%3)+1);
 				}
 				else {
-					robots[x].old_y = robots[x].old_y + (random()%3)+1;
+					st->robots[x].old_y = st->robots[x].old_y + (random()%3)+1;
 				}
 			}
-			if(robots[x].move_style==LINE_MOVE_STYLE) {
-				dx = robots[x].new_x - robots[x].old_x;
-				dy = robots[x].new_y - robots[x].old_y;
+			if(st->robots[x].move_style==st->LINE_MOVE_STYLE) {
+				dx = st->robots[x].new_x - st->robots[x].old_x;
+				dy = st->robots[x].new_y - st->robots[x].old_y;
 				if(dx > 3) {
 					dx = 3;
 				}
@@ -221,15 +231,15 @@ static void move_robots(void)
 				else if(dy < -3) {
 					dy = -3;
 				}
-				robots[x].old_x = robots[x].new_x;
-				robots[x].old_y = robots[x].new_y;
+				st->robots[x].old_x = st->robots[x].new_x;
+				st->robots[x].old_y = st->robots[x].new_y;
 
-				robots[x].new_x = robots[x].new_x + dx;
-				robots[x].new_y = robots[x].new_y + dy;
+				st->robots[x].new_x = st->robots[x].new_x + dx;
+				st->robots[x].new_y = st->robots[x].new_y + dy;
 			}
-			else if(robots[x].move_style==RANDOM_MOVE_STYLE) {
-				dx = robots[x].new_x - robots[x].old_x;
-				dy = robots[x].new_y - robots[x].old_y;
+			else if(st->robots[x].move_style==st->RANDOM_MOVE_STYLE) {
+				dx = st->robots[x].new_x - st->robots[x].old_x;
+				dy = st->robots[x].new_y - st->robots[x].old_y;
 				y=random()%3;
 				if(y==0) {
 					dx = dx - ((random()%7)+1);
@@ -263,137 +273,137 @@ static void move_robots(void)
 				else if(dy < -3) {
 					dy = -3;
 				}
-				robots[x].old_x = robots[x].new_x;
-				robots[x].old_y = robots[x].new_y;
+				st->robots[x].old_x = st->robots[x].new_x;
+				st->robots[x].old_y = st->robots[x].new_y;
 
-				robots[x].new_x = robots[x].new_x + dx;
-				robots[x].new_y = robots[x].new_y + dy;
+				st->robots[x].new_x = st->robots[x].new_x + dx;
+				st->robots[x].new_y = st->robots[x].new_y + dy;
 			}
 
 			/* bounds corrections */
-			if(robots[x].new_x >= xgwa.width-robots[x].radius) {
-				robots[x].new_x = xgwa.width - robots[x].radius;
+			if(st->robots[x].new_x >= st->xgwa.width-st->robots[x].radius) {
+				st->robots[x].new_x = st->xgwa.width - st->robots[x].radius;
 			}
-			else if(robots[x].new_x < 0) {
-				robots[x].new_x = 0;
+			else if(st->robots[x].new_x < 0) {
+				st->robots[x].new_x = 0;
 			}
-			if(robots[x].new_y >= xgwa.height-robots[x].radius) {
-				robots[x].new_y = xgwa.height - robots[x].radius;
+			if(st->robots[x].new_y >= st->xgwa.height-st->robots[x].radius) {
+				st->robots[x].new_y = st->xgwa.height - st->robots[x].radius;
 			}
-			else if(robots[x].new_y < 0) {
-				robots[x].new_y = 0;
+			else if(st->robots[x].new_y < 0) {
+				st->robots[x].new_y = 0;
 			}
 		
 			if(random()%10==0) {
-				robots[x].move_style = 1;
+				st->robots[x].move_style = 1;
 			}
 			else {
-				robots[x].move_style = 0;
+				st->robots[x].move_style = 0;
 			}
 
-			if(NUM_ROBOTS>1) {
+			if(st->NUM_ROBOTS>1) {
 				if(random()%2==0) {
 					if(random()%200==0) {
-						robots[x].target = random()%NUM_ROBOTS;
-						while(robots[x].target==x) {
-							robots[x].target = random()%NUM_ROBOTS;
+						st->robots[x].target = random()%st->NUM_ROBOTS;
+						while(st->robots[x].target==x) {
+							st->robots[x].target = random()%st->NUM_ROBOTS;
 						}	
-						for(y=0;y<NUM_LASERS;y++) {
-							if(robots[x].lasers[y].active == 0) {
-								robots[x].lasers[y].active = 1;
+						for(y=0;y<st->NUM_LASERS;y++) {
+							if(st->robots[x].lasers[y].active == 0) {
+								st->robots[x].lasers[y].active = 1;
 								if(random()%2==0) {
 									if(random()%2==0) {
-										robots[x].lasers[y].start_x = robots[x].new_x+robots[x].radius;
-										robots[x].lasers[y].start_y = robots[x].new_y+robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].lasers[y].start_x+7;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y+7;
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x+st->robots[x].radius;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
 									}
 									else {
-										robots[x].lasers[y].start_x = robots[x].new_x-robots[x].radius;
-										robots[x].lasers[y].start_y = robots[x].new_y+robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].lasers[y].start_x-7;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y+7;
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x-st->robots[x].radius;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
 									}
 								}
 								else {
 									if(random()%2==0) {
-										robots[x].lasers[y].start_x = robots[x].new_x-robots[x].radius;
-										robots[x].lasers[y].start_y = robots[x].new_y-robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].lasers[y].start_x-7;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x-st->robots[x].radius;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
 									}
 									else {
-										robots[x].lasers[y].start_x = robots[x].new_x+robots[x].radius;
-										robots[x].lasers[y].start_y = robots[x].new_y-robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].lasers[y].start_x+7;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x+st->robots[x].radius;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
 									}
 								}
-								y = NUM_LASERS;
+								y = st->NUM_LASERS;
 							}
 						}
 					}
 					else {
-						for(y=0;y<NUM_LASERS;y++) {
-							if(robots[x].lasers[y].active==0) {
-								target_x = robots[robots[x].target].new_x;
-								target_y = robots[robots[x].target].new_y;
-								if((target_x-robots[x].new_x)!=0) {
-									slope = ((double)target_y-robots[x].new_y)/((double)(target_x-robots[x].new_x));
+						for(y=0;y<st->NUM_LASERS;y++) {
+							if(st->robots[x].lasers[y].active==0) {
+								target_x = st->robots[st->robots[x].target].new_x;
+								target_y = st->robots[st->robots[x].target].new_y;
+								if((target_x-st->robots[x].new_x)!=0) {
+									slope = ((double)target_y-st->robots[x].new_y)/((double)(target_x-st->robots[x].new_x));
 
 									if((slope<1) && (slope>-1)) {
-										if(target_x>robots[x].new_x) {
-											robots[x].lasers[y].start_x = robots[x].radius;
-											robots[x].lasers[y].end_x = robots[x].lasers[y].start_x + 7;
+										if(target_x>st->robots[x].new_x) {
+											st->robots[x].lasers[y].start_x = st->robots[x].radius;
+											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x + 7;
 										}
 										else {
-											robots[x].lasers[y].start_x = -robots[x].radius;
-											robots[x].lasers[y].end_x = robots[x].lasers[y].start_x - 7;
+											st->robots[x].lasers[y].start_x = -st->robots[x].radius;
+											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x - 7;
 										}
-										robots[x].lasers[y].start_y = (int)(robots[x].lasers[y].start_x * slope);
-										robots[x].lasers[y].end_y = (int)(robots[x].lasers[y].end_x * slope);
+										st->robots[x].lasers[y].start_y = (int)(st->robots[x].lasers[y].start_x * slope);
+										st->robots[x].lasers[y].end_y = (int)(st->robots[x].lasers[y].end_x * slope);
 									}
 									else {
-										slope = (target_x-robots[x].new_x)/(target_y-robots[x].new_y);
-										if(target_y>robots[x].new_y) {
-											robots[x].lasers[y].start_y = robots[x].radius;
-											robots[x].lasers[y].end_y = robots[x].lasers[y].start_y + 7;
+										slope = (target_x-st->robots[x].new_x)/(target_y-st->robots[x].new_y);
+										if(target_y>st->robots[x].new_y) {
+											st->robots[x].lasers[y].start_y = st->robots[x].radius;
+											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y + 7;
 										}
 										else {
-											robots[x].lasers[y].start_y = -robots[x].radius;
-											robots[x].lasers[y].end_y = robots[x].lasers[y].start_y - 7;
+											st->robots[x].lasers[y].start_y = -st->robots[x].radius;
+											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y - 7;
 										}
-										robots[x].lasers[y].start_x = (int)(robots[x].lasers[y].start_y * slope);;
-										robots[x].lasers[y].end_x = (int)(robots[x].lasers[y].end_y * slope);
+										st->robots[x].lasers[y].start_x = (int)(st->robots[x].lasers[y].start_y * slope);;
+										st->robots[x].lasers[y].end_x = (int)(st->robots[x].lasers[y].end_y * slope);
 									}
-									robots[x].lasers[y].start_x = robots[x].lasers[y].start_x + robots[x].new_x;
-									robots[x].lasers[y].start_y = robots[x].lasers[y].start_y + robots[x].new_y;
-									robots[x].lasers[y].end_x = robots[x].lasers[y].end_x + robots[x].new_x;
-									robots[x].lasers[y].end_y = robots[x].lasers[y].end_y + robots[x].new_y;
+									st->robots[x].lasers[y].start_x = st->robots[x].lasers[y].start_x + st->robots[x].new_x;
+									st->robots[x].lasers[y].start_y = st->robots[x].lasers[y].start_y + st->robots[x].new_y;
+									st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].end_x + st->robots[x].new_x;
+									st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].end_y + st->robots[x].new_y;
 								}
 								else {
-									if(target_y > robots[x].new_y) {
-										robots[x].lasers[y].start_x = robots[x].new_x;
-										robots[x].lasers[y].start_y = robots[x].new_y+robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].new_x;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y+7;
+									if(target_y > st->robots[x].new_y) {
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].new_x;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
 									}
 									else {
-										robots[x].lasers[y].start_x = robots[x].new_x;
-										robots[x].lasers[y].start_y = robots[x].new_y-robots[x].radius;
-										robots[x].lasers[y].end_x = robots[x].new_x;
-										robots[x].lasers[y].end_y = robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].start_x = st->robots[x].new_x;
+										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
+										st->robots[x].lasers[y].end_x = st->robots[x].new_x;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
 									}
 								}
 							
-								if((((robots[x].lasers[y].start_x - robots[x].lasers[y].end_x) > 7) || 
-									 ((robots[x].lasers[y].end_x - robots[x].lasers[y].start_x) > 7)) &&  
-									(((robots[x].lasers[y].start_y - robots[x].lasers[y].end_y) > 7) || 
-									 ((robots[x].lasers[y].end_y - robots[x].lasers[y].start_y) > 7))) {
+								if((((st->robots[x].lasers[y].start_x - st->robots[x].lasers[y].end_x) > 7) || 
+									 ((st->robots[x].lasers[y].end_x - st->robots[x].lasers[y].start_x) > 7)) &&  
+									(((st->robots[x].lasers[y].start_y - st->robots[x].lasers[y].end_y) > 7) || 
+									 ((st->robots[x].lasers[y].end_y - st->robots[x].lasers[y].start_y) > 7))) {
 								}
 								else {
-									robots[x].lasers[y].active = 1;
-									y = NUM_LASERS;
+									st->robots[x].lasers[y].active = 1;
+									y = st->NUM_LASERS;
 								}
 							}
 						}
@@ -402,8 +412,8 @@ static void move_robots(void)
 			}
 		}
 		else {
-			if(robots[x].death==0) {
-				make_new_robot(x);
+			if(st->robots[x].death==0) {
+				make_new_robot(st,x);
 			}
 		}
 	}
@@ -412,7 +422,7 @@ static void move_robots(void)
 
 /* This moves a single laser one frame. collisions with other robots or
 	the mothership is checked. */
-static void move_laser(int rindex, int index)
+static void move_laser(struct state *st, int rindex, int index)
 {
 	int x=0;
 	int y=0;
@@ -421,85 +431,85 @@ static void move_laser(int rindex, int index)
 	int dy=0;
 	struct laser_state *laser;
 	if(rindex>=0) {
-		laser = robots[rindex].lasers;
+		laser = st->robots[rindex].lasers;
 	}
 	else {
-		laser = mother->lasers;
+		laser = st->mother->lasers;
 	}
 	if(laser[index].active) {
 		/* collision with other robots are checked here */
-		for(x=0;x<NUM_ROBOTS;x++) {
+		for(x=0;x<st->NUM_ROBOTS;x++) {
 			if(x!=rindex) {
-				if(robots[x].alive) {
-					y = laser[index].start_x-robots[x].new_x;
+				if(st->robots[x].alive) {
+					y = laser[index].start_x-st->robots[x].new_x;
 					if(y<0) {
-						y = robots[x].new_x-laser[index].start_x;
+						y = st->robots[x].new_x-laser[index].start_x;
 					}
-					z = laser[index].start_y-robots[x].new_y;
+					z = laser[index].start_y-st->robots[x].new_y;
 					if(z<0) {
-						z = robots[x].new_y-laser[index].start_y;
+						z = st->robots[x].new_y-laser[index].start_y;
 					}
-					if((z<robots[x].radius-1)&&(y<robots[x].radius-1)) {
-						robots[x].alive = 0;
-						robots[x].death = 20;
-						XFillArc(dpy, window, black, robots[x].old_x, robots[x].old_y, robots[x].radius, robots[x].radius, 0, 360*64);
-						XFillArc(dpy, window, black, robots[x].new_x, robots[x].new_y, robots[x].radius, robots[x].radius, 0, 360*64);
+					if((z<st->robots[x].radius-1)&&(y<st->robots[x].radius-1)) {
+						st->robots[x].alive = 0;
+						st->robots[x].death = 20;
+            if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].old_x, st->robots[x].old_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
+            if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x, st->robots[x].new_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
 						laser[index].active = 0;
-						x = NUM_ROBOTS;
+						x = st->NUM_ROBOTS;
 					}
 					else {
-						y = laser[index].end_x-robots[x].new_x;
+						y = laser[index].end_x-st->robots[x].new_x;
 						if(y<0) {
-							y = robots[x].new_x-laser[index].end_x;
+							y = st->robots[x].new_x-laser[index].end_x;
 						}
-						z = laser[index].end_y-robots[x].new_y;
+						z = laser[index].end_y-st->robots[x].new_y;
 						if(z<0) {
-							z = robots[x].new_y-laser[index].end_y;
+							z = st->robots[x].new_y-laser[index].end_y;
 						}
-						if((z<robots[x].radius-1)&&(y<robots[x].radius-1)) {
-							robots[x].alive = 0;
-							robots[x].death = 20;
-							XFillArc(dpy, window, black, robots[x].old_x, robots[x].old_y, robots[x].radius, robots[x].radius, 0, 360*64);
-							XFillArc(dpy, window, black, robots[x].new_x, robots[x].new_y, robots[x].radius, robots[x].radius, 0, 360*64);
+						if((z<st->robots[x].radius-1)&&(y<st->robots[x].radius-1)) {
+							st->robots[x].alive = 0;
+							st->robots[x].death = 20;
+            if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].old_x, st->robots[x].old_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
+            if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x, st->robots[x].new_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
 							laser[index].active = 0;
-							x = NUM_ROBOTS;
+							x = st->NUM_ROBOTS;
 						}
 					}
 				}
 			}
 		}
-		if((MOTHER_SHIP)&&(rindex!=-1)) {
+		if((st->MOTHER_SHIP)&&(rindex!=-1)) {
 			if(laser[index].active) {
-				if(mother->active) {
-					y = laser[index].start_x-mother->new_x;
+				if(st->mother->active) {
+					y = laser[index].start_x-st->mother->new_x;
 					if(y<0) {
-						y = mother->new_x-laser[index].start_x;
+						y = st->mother->new_x-laser[index].start_x;
 					}
-					z = laser[index].start_y-mother->y;
+					z = laser[index].start_y-st->mother->y;
 					if(z<0) {
-						z = mother->y-laser[index].start_y;
+						z = st->mother->y-laser[index].start_y;
 					}
-					if((z<MOTHER_SHIP_HEIGHT-1)&&(y<MOTHER_SHIP_WIDTH-1)) {
+					if((z<st->MOTHER_SHIP_HEIGHT-1)&&(y<st->MOTHER_SHIP_WIDTH-1)) {
 						laser[index].active = 0;
-						mother->active--;
+						st->mother->active--;
 					}
 					else {
-						y = laser[index].end_x-mother->new_x;
+						y = laser[index].end_x-st->mother->new_x;
 						if(y<0) {
-							y = mother->new_x-laser[index].end_x;
+							y = st->mother->new_x-laser[index].end_x;
 						}
-						z = laser[index].end_y-mother->y;
+						z = laser[index].end_y-st->mother->y;
 						if(z<0) {
-							z = mother->y-laser[index].end_y;
+							z = st->mother->y-laser[index].end_y;
 						}
-						if((z<MOTHER_SHIP_HEIGHT-1)&&(y<MOTHER_SHIP_WIDTH-1)) {
+						if((z<st->MOTHER_SHIP_HEIGHT-1)&&(y<st->MOTHER_SHIP_WIDTH-1)) {
 							laser[index].active = 0;
-							mother->active--;
+							st->mother->active--;
 						}
 					}
 
-					if(mother->active==0) {
-						mother->death=20;
+					if(st->mother->active==0) {
+						st->mother->death=20;
 					}
 				}
 			}
@@ -514,8 +524,8 @@ static void move_laser(int rindex, int index)
 			laser[index].end_x = laser[index].end_x-dx;
 			laser[index].end_y = laser[index].end_y-dy;
 			
-			if((laser[index].end_x < 0) || (laser[index].end_x >= xgwa.width) ||
-				(laser[index].end_y < 0) || (laser[index].end_y >= xgwa.height)) {
+			if((laser[index].end_x < 0) || (laser[index].end_x >= st->xgwa.width) ||
+				(laser[index].end_y < 0) || (laser[index].end_y >= st->xgwa.height)) {
 				laser[index].active = 0;
 			}				
 		}
@@ -525,414 +535,581 @@ static void move_laser(int rindex, int index)
 /* All the robots are drawn, including the mother ship and the explosions.
 	After all the robots have been drawn, their laser banks are check and
 	the active lasers are drawn. */
-static void draw_robots(void)
+static void draw_robots(struct state *st)
 {
 	int x=0;
 	int y=0;
 
-	for(x=0;x<NUM_ROBOTS;x++) {
-		if(robots[x].alive) {
-			XFillArc(dpy, window, black, robots[x].old_x, robots[x].old_y, robots[x].radius, robots[x].radius, 0, 360*64);
-			XFillArc(dpy, window, robots[x].robot_color, robots[x].new_x, robots[x].new_y, robots[x].radius, robots[x].radius, 0, 360*64);
+	for(x=0;x<st->NUM_ROBOTS;x++) {
+		if(st->robots[x].alive) {
+      if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].old_x, st->robots[x].old_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
+			XFillArc(st->dpy, st->window, st->robots[x].robot_color, st->robots[x].new_x, st->robots[x].new_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
 		}
 		else {
-			XFillArc(dpy, window, black, robots[x].old_x, robots[x].old_y, robots[x].radius, robots[x].radius, 0, 360*64);
-			if(robots[x].death) {
-				if(robots[x].death==20) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+			if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].old_x, st->robots[x].old_y, st->robots[x].radius, st->robots[x].radius, 0, 360*64);
+			if(st->robots[x].death) {
+				if(st->robots[x].death==20) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==18) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==18) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==17) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==17) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==15) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==15) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==14) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==14) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==13) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==13) {
+          if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==12) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==12) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==11) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==11) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==10) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==10) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==9) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==9) {
+          if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==8) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==8) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==7) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->robots[x].death==7) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(robots[x].death==6) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->robots[x].death==6) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(robots[x].death==4) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->robots[x].death==4) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(robots[x].death==3) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->robots[x].death==3) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(robots[x].death==2) {
-					XFillArc(dpy, window, black, robots[x].new_x+(robots[x].radius/3), robots[x].new_y+(robots[x].radius/3), EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
-					XFillArc(dpy, window, EXPLODE_COLOR_2, robots[x].new_x+(1.7*robots[x].radius/2), robots[x].new_y+(1.7*robots[x].radius/2), EXPLODE_SIZE_3, EXPLODE_SIZE_3, 0, 360*64);
+				else if(st->robots[x].death==2) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(st->robots[x].radius/3), st->robots[x].new_y+(st->robots[x].radius/3), st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->robots[x].new_x+(1.7*st->robots[x].radius/2), st->robots[x].new_y+(1.7*st->robots[x].radius/2), st->EXPLODE_SIZE_3, st->EXPLODE_SIZE_3, 0, 360*64);
 				}
-				else if(robots[x].death==1) {
-					XFillArc(dpy, window, black, robots[x].new_x+(1.7*robots[x].radius/2), robots[x].new_y+(1.7*robots[x].radius/2), EXPLODE_SIZE_3, EXPLODE_SIZE_3, 0, 360*64);
+				else if(st->robots[x].death==1) {
+          if (st->black) XFillArc(st->dpy, st->window, st->black, st->robots[x].new_x+(1.7*st->robots[x].radius/2), st->robots[x].new_y+(1.7*st->robots[x].radius/2), st->EXPLODE_SIZE_3, st->EXPLODE_SIZE_3, 0, 360*64);
 				}
-				robots[x].death--;
+				st->robots[x].death--;
 			}
 		}
 	}
 
-	for(x=0;x<NUM_ROBOTS;x++) {
-		for(y=0;y<NUM_LASERS;y++) {
-			if(robots[x].lasers[y].active) {
-				XDrawLine(dpy, window, black, robots[x].lasers[y].start_x,
-							 robots[x].lasers[y].start_y,
-							 robots[x].lasers[y].end_x,
-							 robots[x].lasers[y].end_y);
-				move_laser(x, y);
-				if(robots[x].lasers[y].active) {
-					XDrawLine(dpy, window, robots[x].laser_color, robots[x].lasers[y].start_x,
-								 robots[x].lasers[y].start_y,
-								 robots[x].lasers[y].end_x,
-								 robots[x].lasers[y].end_y);
+	for(x=0;x<st->NUM_ROBOTS;x++) {
+		for(y=0;y<st->NUM_LASERS;y++) {
+			if(st->robots[x].lasers[y].active) {
+				if (st->black) XDrawLine(st->dpy, st->window, st->black, st->robots[x].lasers[y].start_x,
+							 st->robots[x].lasers[y].start_y,
+							 st->robots[x].lasers[y].end_x,
+							 st->robots[x].lasers[y].end_y);
+				move_laser(st, x, y);
+				if(st->robots[x].lasers[y].active) {
+					XDrawLine(st->dpy, st->window, st->robots[x].laser_color, st->robots[x].lasers[y].start_x,
+								 st->robots[x].lasers[y].start_y,
+								 st->robots[x].lasers[y].end_x,
+								 st->robots[x].lasers[y].end_y);
 				}
 				else {
-					XDrawLine(dpy, window, black, robots[x].lasers[y].start_x,
-								 robots[x].lasers[y].start_y,
-								 robots[x].lasers[y].end_x,
-								 robots[x].lasers[y].end_y);
+					if (st->black) XDrawLine(st->dpy, st->window, st->black, st->robots[x].lasers[y].start_x,
+								 st->robots[x].lasers[y].start_y,
+								 st->robots[x].lasers[y].end_x,
+								 st->robots[x].lasers[y].end_y);
 				}					
 			}
 		}
 	}
 
-	if(MOTHER_SHIP) {
-		if(mother->active) {
-			XFillArc(dpy, window, black, mother->old_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
-			XFillArc(dpy, window, mother->ship_color, mother->new_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
+	if(st->MOTHER_SHIP) {
+		if(st->mother->active) {
+			if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->old_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
+			XFillArc(st->dpy, st->window, st->mother->ship_color, st->mother->new_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
 		}
 		else {
-			if(mother->death) {
-				XFillArc(dpy, window, black, mother->old_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
-				if(mother->death==20) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+			if(st->mother->death) {
+				if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->old_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
+				if(st->mother->death==20) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==18) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==18) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==17) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==17) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==15) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==15) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==14) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==14) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==13) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==13) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==12) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==12) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==11) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==11) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==10) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==10) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==9) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==9) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==8) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==8) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==7) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_1, EXPLODE_SIZE_1, 0, 360*64);
+				else if(st->mother->death==7) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_1, st->EXPLODE_SIZE_1, 0, 360*64);
 				}
-				else if(mother->death==6) {
-					XFillArc(dpy, window, EXPLODE_COLOR_2, mother->new_x+1, mother->y+1, EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->mother->death==6) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(mother->death==4) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->mother->death==4) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(mother->death==3) {
-					XFillArc(dpy, window, EXPLODE_COLOR_1, mother->new_x+1, mother->y+1, EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
+				else if(st->mother->death==3) {
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_1, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
 				}
-				else if(mother->death==2) {
-					XFillArc(dpy, window, black, mother->new_x+1, mother->y+1, EXPLODE_SIZE_2, EXPLODE_SIZE_2, 0, 360*64);
-					XFillArc(dpy, window, EXPLODE_COLOR_2, mother->new_x+(1.7*MOTHER_SHIP_WIDTH/2), mother->y+(1.7*MOTHER_SHIP_HEIGHT/2), EXPLODE_SIZE_3, EXPLODE_SIZE_3, 0, 360*64);
+				else if(st->mother->death==2) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+1, st->mother->y+1, st->EXPLODE_SIZE_2, st->EXPLODE_SIZE_2, 0, 360*64);
+					XFillArc(st->dpy, st->window, st->EXPLODE_COLOR_2, st->mother->new_x+(1.7*st->MOTHER_SHIP_WIDTH/2), st->mother->y+(1.7*st->MOTHER_SHIP_HEIGHT/2), st->EXPLODE_SIZE_3, st->EXPLODE_SIZE_3, 0, 360*64);
 				}
-				else if(mother->death==1) {
-					XFillArc(dpy, window, black, mother->new_x+(1.7*MOTHER_SHIP_WIDTH/2), mother->y+(1.7*MOTHER_SHIP_HEIGHT/2), EXPLODE_SIZE_3, EXPLODE_SIZE_3, 0, 360*64);
+				else if(st->mother->death==1) {
+					if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x+(1.7*st->MOTHER_SHIP_WIDTH/2), st->mother->y+(1.7*st->MOTHER_SHIP_HEIGHT/2), st->EXPLODE_SIZE_3, st->EXPLODE_SIZE_3, 0, 360*64);
 				}
-				mother->death--;
+				st->mother->death--;
 			}
 		}
 		for(y=0;y<8;y++) {
-			if(mother->lasers[y].active) {
-				XDrawLine(dpy, window, black, mother->lasers[y].start_x,
-							 mother->lasers[y].start_y,
-							 mother->lasers[y].end_x,
-							 mother->lasers[y].end_y);
-				move_laser(-1,y);
-				if(mother->lasers[y].active) {
-				XDrawLine(dpy, window, mother->laser_color, mother->lasers[y].start_x,
-							 mother->lasers[y].start_y,
-							 mother->lasers[y].end_x,
-							 mother->lasers[y].end_y);
+			if(st->mother->lasers[y].active) {
+				if (st->black) XDrawLine(st->dpy, st->window, st->black, st->mother->lasers[y].start_x,
+							 st->mother->lasers[y].start_y,
+							 st->mother->lasers[y].end_x,
+							 st->mother->lasers[y].end_y);
+				move_laser(st, -1,y);
+				if(st->mother->lasers[y].active) {
+				XDrawLine(st->dpy, st->window, st->mother->laser_color, st->mother->lasers[y].start_x,
+							 st->mother->lasers[y].start_y,
+							 st->mother->lasers[y].end_x,
+							 st->mother->lasers[y].end_y);
 				}
 				else {
-					XDrawLine(dpy, window, black, mother->lasers[y].start_x,
-								 mother->lasers[y].start_y,
-								 mother->lasers[y].end_x,
-								 mother->lasers[y].end_y);
+					if (st->black) XDrawLine(st->dpy, st->window, st->black, st->mother->lasers[y].start_x,
+								 st->mother->lasers[y].start_y,
+								 st->mother->lasers[y].end_x,
+								 st->mother->lasers[y].end_y);
 				}
 			}
 		}
 	}
 }
 
-/* This is the main loop. The mothership movement and laser firing happens inside
-	this loop. */
-static void 
-start_blaster(void)
+static void
+init_stars(struct state *st)
 {
-	int x=0;
-	int y=0;
-	int z=0;
-	robots = (struct robot_state *) malloc(NUM_ROBOTS * sizeof (struct robot_state));
-	for(x=0;x<NUM_ROBOTS;x++) {
-		robots[x].alive = 0;
-		robots[x].death = 0;
-		robots[x].lasers = (struct laser_state *) malloc (NUM_LASERS * sizeof(struct laser_state));
-		for(y=0;y<NUM_LASERS;y++) {
-			robots[x].lasers[y].active = 0;
-		}
-	}
+  if(st->NUM_STARS) {
+    if (! st->stars)
+      st->stars = (XArc *) malloc (st->NUM_STARS * sizeof(XArc));
+    for(st->draw_x=0;st->draw_x<st->NUM_STARS;st->draw_x++) {
+      st->stars[st->draw_x].x = random()%st->xgwa.width;
+      st->stars[st->draw_x].y = random()%st->xgwa.height;
+      st->stars[st->draw_x].width = random()%4 + 1;
+      st->stars[st->draw_x].height = st->stars[st->draw_x].width;
+      st->stars[st->draw_x].angle1 = 0;
+      st->stars[st->draw_x].angle2 = 360 * 64;
+    }
+  }
+}
 
-	if(NUM_STARS) {
-		stars = (XArc *) malloc (NUM_STARS * sizeof(XArc));
-		for(x=0;x<NUM_STARS;x++) {
-			stars[x].x = random()%xgwa.width;
-			stars[x].y = random()%xgwa.height;
-			stars[x].width = random()%4 + 1;
-			stars[x].height = stars[x].width;
-			stars[x].angle1 = 0;
-			stars[x].angle2 = 360 * 64;
-		}
-	}
 
-	while(1) {
- 		if(NUM_STARS) {
-			if(MOVE_STARS) {
-				XFillArcs(dpy,window,black,stars,NUM_STARS);
-				if(MOVE_STARS_RANDOM) {
-					y = MOVE_STARS_X;
-					z = MOVE_STARS_Y;
+static unsigned long
+blaster_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  XClearWindow (dpy, window);
+#endif
+
+  if (!st->initted) 
+    {
+      st->initted = 1;
+
+      st->robots = (struct robot_state *) malloc(st->NUM_ROBOTS * sizeof (struct robot_state));
+      for(st->draw_x=0;st->draw_x<st->NUM_ROBOTS;st->draw_x++) {
+        st->robots[st->draw_x].alive = 0;
+        st->robots[st->draw_x].death = 0;
+        st->robots[st->draw_x].lasers = (struct laser_state *) malloc (st->NUM_LASERS * sizeof(struct laser_state));
+        for(st->draw_y=0;st->draw_y<st->NUM_LASERS;st->draw_y++) {
+          st->robots[st->draw_x].lasers[st->draw_y].active = 0;
+        }
+      }
+
+      init_stars(st);
+    }
+
+ 		if(st->NUM_STARS) {
+			if(st->MOVE_STARS) {
+				if (st->black) XFillArcs(st->dpy,st->window,st->black,st->stars,st->NUM_STARS);
+				if(st->MOVE_STARS_RANDOM) {
+					st->draw_y = st->MOVE_STARS_X;
+					st->draw_z = st->MOVE_STARS_Y;
 					if(random()%167==0) {
-						y = (-1)*y;
+						st->draw_y = (-1)*st->draw_y;
 					}
 					if(random()%173==0) {
-						z = (-1)*z;
+						st->draw_z = (-1)*st->draw_z;
 					}
 					if(random()%50==0) {
 						if(random()%2) {
-							y++;
-							if(y>MOVE_STARS_RANDOM) {
-								y = MOVE_STARS_RANDOM;
+							st->draw_y++;
+							if(st->draw_y>st->MOVE_STARS_RANDOM) {
+								st->draw_y = st->MOVE_STARS_RANDOM;
 							}
 						}
 						else {
-							y--;
-							if(y < -(MOVE_STARS_RANDOM)) {
-								y = -(MOVE_STARS_RANDOM);
+							st->draw_y--;
+							if(st->draw_y < -(st->MOVE_STARS_RANDOM)) {
+								st->draw_y = -(st->MOVE_STARS_RANDOM);
 							}
 						}
 					}
 					if(random()%50==0) {
 						if(random()%2) {
-							z++;
-							if(z>MOVE_STARS_RANDOM) {
-								z = MOVE_STARS_RANDOM;
+							st->draw_z++;
+							if(st->draw_z>st->MOVE_STARS_RANDOM) {
+								st->draw_z = st->MOVE_STARS_RANDOM;
 							}
 						}
 						else {
-							z--;
-							if(z < -MOVE_STARS_RANDOM) {
-								z = -MOVE_STARS_RANDOM;
+							st->draw_z--;
+							if(st->draw_z < -st->MOVE_STARS_RANDOM) {
+								st->draw_z = -st->MOVE_STARS_RANDOM;
 							}
 						}
 					}
-					MOVE_STARS_X = y;
-					MOVE_STARS_Y = z;
-					for(x=0;x<NUM_STARS;x++) {
-						stars[x].x = stars[x].x + y;
-						stars[x].y = stars[x].y + z;
-						if(stars[x].x<0) {
-							stars[x].x = stars[x].x + xgwa.width;
+					st->MOVE_STARS_X = st->draw_y;
+					st->MOVE_STARS_Y = st->draw_z;
+					for(st->draw_x=0;st->draw_x<st->NUM_STARS;st->draw_x++) {
+						st->stars[st->draw_x].x = st->stars[st->draw_x].x + st->draw_y;
+						st->stars[st->draw_x].y = st->stars[st->draw_x].y + st->draw_z;
+						if(st->stars[st->draw_x].x<0) {
+							st->stars[st->draw_x].x = st->stars[st->draw_x].x + st->xgwa.width;
 						}
-						else if(stars[x].x>xgwa.width) {
-							stars[x].x = stars[x].x - xgwa.width;
+						else if(st->stars[st->draw_x].x>st->xgwa.width) {
+							st->stars[st->draw_x].x = st->stars[st->draw_x].x - st->xgwa.width;
 						}
-						if(stars[x].y<0) {
-							stars[x].y = stars[x].y + xgwa.height;
+						if(st->stars[st->draw_x].y<0) {
+							st->stars[st->draw_x].y = st->stars[st->draw_x].y + st->xgwa.height;
 						}
-						else if(stars[x].y>xgwa.height) {
-							stars[x].y = stars[x].y - xgwa.height;
+						else if(st->stars[st->draw_x].y>st->xgwa.height) {
+							st->stars[st->draw_x].y = st->stars[st->draw_x].y - st->xgwa.height;
 						}
 					}
 				}
 				else {
-					for(x=0;x<NUM_STARS;x++) {
-						stars[x].x = stars[x].x + MOVE_STARS_X;
-						stars[x].y = stars[x].y + MOVE_STARS_Y;
-						if(stars[x].x<0) {
-							stars[x].x = stars[x].x + xgwa.width;
+					for(st->draw_x=0;st->draw_x<st->NUM_STARS;st->draw_x++) {
+						st->stars[st->draw_x].x = st->stars[st->draw_x].x + st->MOVE_STARS_X;
+						st->stars[st->draw_x].y = st->stars[st->draw_x].y + st->MOVE_STARS_Y;
+						if(st->stars[st->draw_x].x<0) {
+							st->stars[st->draw_x].x = st->stars[st->draw_x].x + st->xgwa.width;
 						}
-						else if(stars[x].x>xgwa.width) {
-							stars[x].x = stars[x].x - xgwa.width;
+						else if(st->stars[st->draw_x].x>st->xgwa.width) {
+							st->stars[st->draw_x].x = st->stars[st->draw_x].x - st->xgwa.width;
 						}
-						if(stars[x].y<0) {
-							stars[x].y = stars[x].y + xgwa.height;
+						if(st->stars[st->draw_x].y<0) {
+							st->stars[st->draw_x].y = st->stars[st->draw_x].y + st->xgwa.height;
 						}
-						else if(stars[x].y>xgwa.height) {
-							stars[x].y = stars[x].y - xgwa.height;
+						else if(st->stars[st->draw_x].y>st->xgwa.height) {
+							st->stars[st->draw_x].y = st->stars[st->draw_x].y - st->xgwa.height;
 						}
 					}
 				}
-				XFillArcs(dpy,window,s_color,stars,NUM_STARS);
+				XFillArcs(st->dpy,st->window,st->s_color,st->stars,st->NUM_STARS);
 			}
 			else {
-				XFillArcs(dpy,window,s_color,stars,NUM_STARS);
+				XFillArcs(st->dpy,st->window,st->s_color,st->stars,st->NUM_STARS);
 			}
 		}
 
-		if(MOTHER_SHIP) {
-			if(random()%MOTHER_SHIP_PERIOD==0) {
-				if((mother->active==0)&&(mother->death==0)) {
-					mother->active = MOTHER_SHIP_HITS;
-					mother->y = random()%(xgwa.height-7);
+		if(st->MOTHER_SHIP) {
+			if(random()%st->MOTHER_SHIP_PERIOD==0) {
+				if((st->mother->active==0)&&(st->mother->death==0)) {
+					st->mother->active = st->MOTHER_SHIP_HITS;
+					st->mother->y = random()%(st->xgwa.height-7);
 					if(random()%2==0) {
-						mother->old_x=0;
-						mother->new_x=0;
+						st->mother->old_x=0;
+						st->mother->new_x=0;
 					}
 					else {
-						mother->old_x=xgwa.width-25;
-						mother->new_x=xgwa.width-25;
+						st->mother->old_x=st->xgwa.width-25;
+						st->mother->new_x=st->xgwa.width-25;
 					}
 				}
 			}
 		}
-		move_robots();
-		if(MOTHER_SHIP) {
-			if(mother->active) {
-				if(mother->old_x==mother->new_x) {
-					if(mother->old_x==0) {
-						mother->new_x=3;
+		move_robots(st);
+		if(st->MOTHER_SHIP) {
+			if(st->mother->active) {
+				if(st->mother->old_x==st->mother->new_x) {
+					if(st->mother->old_x==0) {
+						st->mother->new_x=3;
 					}
 					else {
-						mother->new_x=mother->new_x-3;
+						st->mother->new_x=st->mother->new_x-3;
 					}
 				}
 				else {
-					if(mother->old_x>mother->new_x) {
-						mother->old_x = mother->new_x;
-						mother->new_x = mother->new_x-3;
-						if(mother->new_x<0) {
-							mother->active=0;
-							XFillArc(dpy, window, black, mother->old_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
-							XFillArc(dpy, window, black, mother->new_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
+					if(st->mother->old_x>st->mother->new_x) {
+						st->mother->old_x = st->mother->new_x;
+						st->mother->new_x = st->mother->new_x-3;
+						if(st->mother->new_x<0) {
+							st->mother->active=0;
+							if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->old_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
+							if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
 						}
 					}
 					else {
-						mother->old_x = mother->new_x;
-						mother->new_x = mother->new_x+3;
-						if(mother->new_x>xgwa.width) {
-							mother->active=0;
-							XFillArc(dpy, window, black, mother->old_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
-							XFillArc(dpy, window, black, mother->new_x, mother->y, MOTHER_SHIP_WIDTH, MOTHER_SHIP_HEIGHT, 0 , 360*64);
+						st->mother->old_x = st->mother->new_x;
+						st->mother->new_x = st->mother->new_x+3;
+						if(st->mother->new_x>st->xgwa.width) {
+							st->mother->active=0;
+							if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->old_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
+							if (st->black) XFillArc(st->dpy, st->window, st->black, st->mother->new_x, st->mother->y, st->MOTHER_SHIP_WIDTH, st->MOTHER_SHIP_HEIGHT, 0 , 360*64);
 						}
 					}
 				}
-				y=0;
-				for(x=0;x<8;x++) {
-					if(mother->lasers[x].active) {
-						y=1;
-						x=8;
+				st->draw_y=0;
+				for(st->draw_x=0;st->draw_x<8;st->draw_x++) {
+					if(st->mother->lasers[st->draw_x].active) {
+						st->draw_y=1;
+						st->draw_x=8;
 					}
 				}
-				if(y==0) {
-					for(x=0;x<8;x++) {
-						mother->lasers[x].active = 1;
-						mother->lasers[x].start_x=mother->new_x+(MOTHER_SHIP_WIDTH/2);
-						mother->lasers[x].start_y=mother->y+(MOTHER_SHIP_HEIGHT/2);
+				if(st->draw_y==0) {
+					for(st->draw_x=0;st->draw_x<8;st->draw_x++) {
+						st->mother->lasers[st->draw_x].active = 1;
+						st->mother->lasers[st->draw_x].start_x=st->mother->new_x+(st->MOTHER_SHIP_WIDTH/2);
+						st->mother->lasers[st->draw_x].start_y=st->mother->y+(st->MOTHER_SHIP_HEIGHT/2);
 					}
-					y = (int)(MOTHER_SHIP_LASER/1.5);
-					mother->lasers[0].end_x=mother->lasers[0].start_x-MOTHER_SHIP_LASER;
-					mother->lasers[0].end_y=mother->lasers[0].start_y;
-					mother->lasers[1].end_x=mother->lasers[1].start_x-y;
-					mother->lasers[1].end_y=mother->lasers[1].start_y-y;
-					mother->lasers[2].end_x=mother->lasers[2].start_x;
-					mother->lasers[2].end_y=mother->lasers[2].start_y-MOTHER_SHIP_LASER;
-					mother->lasers[3].end_x=mother->lasers[3].start_x+y;
-					mother->lasers[3].end_y=mother->lasers[3].start_y-y;
-					mother->lasers[4].end_x=mother->lasers[4].start_x+MOTHER_SHIP_LASER;
-					mother->lasers[4].end_y=mother->lasers[4].start_y;
-					mother->lasers[5].end_x=mother->lasers[5].start_x+y;
-					mother->lasers[5].end_y=mother->lasers[5].start_y+y;
-					mother->lasers[6].end_x=mother->lasers[6].start_x;
-					mother->lasers[6].end_y=mother->lasers[6].start_y+MOTHER_SHIP_LASER;
-					mother->lasers[7].end_x=mother->lasers[7].start_x-y;
-					mother->lasers[7].end_y=mother->lasers[7].start_y+y;
+					st->draw_y = (int)(st->MOTHER_SHIP_LASER/1.5);
+					st->mother->lasers[0].end_x=st->mother->lasers[0].start_x-st->MOTHER_SHIP_LASER;
+					st->mother->lasers[0].end_y=st->mother->lasers[0].start_y;
+					st->mother->lasers[1].end_x=st->mother->lasers[1].start_x-st->draw_y;
+					st->mother->lasers[1].end_y=st->mother->lasers[1].start_y-st->draw_y;
+					st->mother->lasers[2].end_x=st->mother->lasers[2].start_x;
+					st->mother->lasers[2].end_y=st->mother->lasers[2].start_y-st->MOTHER_SHIP_LASER;
+					st->mother->lasers[3].end_x=st->mother->lasers[3].start_x+st->draw_y;
+					st->mother->lasers[3].end_y=st->mother->lasers[3].start_y-st->draw_y;
+					st->mother->lasers[4].end_x=st->mother->lasers[4].start_x+st->MOTHER_SHIP_LASER;
+					st->mother->lasers[4].end_y=st->mother->lasers[4].start_y;
+					st->mother->lasers[5].end_x=st->mother->lasers[5].start_x+st->draw_y;
+					st->mother->lasers[5].end_y=st->mother->lasers[5].start_y+st->draw_y;
+					st->mother->lasers[6].end_x=st->mother->lasers[6].start_x;
+					st->mother->lasers[6].end_y=st->mother->lasers[6].start_y+st->MOTHER_SHIP_LASER;
+					st->mother->lasers[7].end_x=st->mother->lasers[7].start_x-st->draw_y;
+					st->mother->lasers[7].end_y=st->mother->lasers[7].start_y+st->draw_y;
 				}
 			}
 		}
-		draw_robots();
+		draw_robots(st);
 
-		XSync(dpy, False);
-		screenhack_handle_events(dpy);
-		if(delay) usleep(delay);
+    return st->delay;
+}
+
+static void *
+blaster_init (Display *d, Window w)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+	XGCValues gcv;
+	Colormap cmap;
+	unsigned long bg;
+
+	st->dpy = d;
+	st->window = w;
+	XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+	cmap = st->xgwa.colormap;
+
+  st->NUM_ROBOTS=5;
+  st->NUM_LASERS=3;
+
+  st->MOTHER_SHIP_WIDTH=25;
+  st->MOTHER_SHIP_HEIGHT=7;
+  st->MOTHER_SHIP_LASER=15;
+  st->MOTHER_SHIP_PERIOD=150;
+  st->MOTHER_SHIP_HITS=10;
+
+  st->RANDOM_MOVE_STYLE=1;
+  st->NUM_MOVE_STYLES=2;
+
+  st->EXPLODE_SIZE_1=27;
+  st->EXPLODE_SIZE_2=19;
+  st->EXPLODE_SIZE_3=7;
+
+
+	st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+	if(st->delay==0) {
+		st->delay=10000;
 	}
+	st->NUM_ROBOTS = get_integer_resource(st->dpy, "num_robots","Integer");
+	if(st->NUM_ROBOTS==0) {
+		st->NUM_ROBOTS=5;
+	}
+	st->NUM_LASERS = get_integer_resource(st->dpy, "num_lasers","Integer");
+	st->EXPLODE_SIZE_1 = get_integer_resource(st->dpy, "explode_size_1","Integer");
+	st->EXPLODE_SIZE_2 = get_integer_resource(st->dpy, "explode_size_2","Integer");
+	st->EXPLODE_SIZE_3 = get_integer_resource(st->dpy, "explode_size_3","Integer");
+
+	st->NUM_STARS = get_integer_resource(st->dpy, "num_stars","Integer");
+	if(get_boolean_resource(st->dpy, "move_stars","Boolean")) {
+		st->MOVE_STARS = 1;
+		st->MOVE_STARS_X = get_integer_resource(st->dpy, "move_stars_x","Integer");
+		st->MOVE_STARS_Y = get_integer_resource(st->dpy, "move_stars_y","Integer");
+		st->MOVE_STARS_RANDOM = get_integer_resource(st->dpy, "move_stars_random","Integer");
+	}
+	else {
+		st->MOVE_STARS = 0;
+	}
+
+
+	bg = get_pixel_resource(st->dpy, cmap, "background","Background");
+	gcv.function = GXcopy;
+
+#define make_gc(color,name) \
+	gcv.foreground = get_pixel_resource (st->dpy, cmap, (name), "Foreground"); \
+	color = XCreateGC (st->dpy, st->window, GCForeground|GCFunction, &gcv)
+
+	if(mono_p) {
+		gcv.foreground = bg;
+		st->black = XCreateGC(st->dpy, st->window, GCForeground|GCFunction, &gcv);
+		gcv.foreground = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
+		st->r_color0 = st->r_color1 = st->r_color2 = st->r_color3 = st->r_color4 = st->r_color5 = st->l_color0 = st->l_color1 = st->s_color=
+			XCreateGC(st->dpy, st->window, GCForeground|GCFunction, &gcv);
+		if(get_boolean_resource(st->dpy, "mother_ship","Boolean")) {
+			st->MOTHER_SHIP_WIDTH=get_integer_resource(st->dpy, "mother_ship_width","Integer");
+			st->MOTHER_SHIP_HEIGHT=get_integer_resource(st->dpy, "mother_ship_height","Integer");
+			st->MOTHER_SHIP_LASER=get_integer_resource(st->dpy, "mother_ship_laser","Integer");
+			st->MOTHER_SHIP_PERIOD=get_integer_resource(st->dpy, "mother_ship_period","Integer");
+			st->MOTHER_SHIP_HITS=get_integer_resource(st->dpy, "mother_ship_hits","Integer");
+			st->MOTHER_SHIP=1;
+			st->mother = (struct mother_ship_state *) malloc(sizeof(struct mother_ship_state));
+			st->mother->lasers = (struct laser_state *) malloc(8*sizeof(struct laser_state));
+			st->mother->active = 0;
+			st->mother->death = 0;
+			st->mother->ship_color = st->r_color0;
+			st->mother->laser_color = st->r_color0;
+		}
+	}
+	else {
+		if(get_boolean_resource(st->dpy, "mother_ship","Boolean")) {
+			st->MOTHER_SHIP_WIDTH=get_integer_resource(st->dpy, "mother_ship_width","Integer");
+			st->MOTHER_SHIP_HEIGHT=get_integer_resource(st->dpy, "mother_ship_height","Integer");
+			st->MOTHER_SHIP_LASER=get_integer_resource(st->dpy, "mother_ship_laser","Integer");
+			st->MOTHER_SHIP_PERIOD=get_integer_resource(st->dpy, "mother_ship_period","Integer");
+			st->MOTHER_SHIP_HITS=get_integer_resource(st->dpy, "mother_ship_hits","Integer");
+			st->MOTHER_SHIP=1;
+			st->mother = (struct mother_ship_state *) malloc(sizeof(struct mother_ship_state));
+			st->mother->lasers = (struct laser_state *) malloc(8*sizeof(struct laser_state));
+			st->mother->active = 0;
+			st->mother->death = 0;
+			make_gc(st->mother->ship_color,"mother_ship_color0");
+			make_gc(st->mother->laser_color,"mother_ship_color1");		
+		}
+
+		make_gc (st->s_color,"star_color");
+		
+		make_gc (st->EXPLODE_COLOR_1,"explode_color_1");
+		make_gc (st->EXPLODE_COLOR_2,"explode_color_2");
+		
+      make_gc (st->r_color0,"r_color0");
+      make_gc (st->r_color1,"r_color1");
+      make_gc (st->r_color2,"r_color2");
+      make_gc (st->r_color3,"r_color3");
+      make_gc (st->r_color4,"r_color4");
+      make_gc (st->r_color5,"r_color5");
+      make_gc (st->l_color0,"l_color0");
+      make_gc (st->l_color1,"l_color1");
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    st->black = 0;
+#else
+		make_gc (st->black,"background");
+#endif
+	}
+
+  return st;
 }
 
 
+static void
+blaster_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+	XGetWindowAttributes (dpy, window, &st->xgwa);
+  XClearWindow (dpy, window);
+  init_stars (st);
+}
+
+static Bool
+blaster_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+blaster_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int i;
+  if (st->r_color0) XFreeGC (dpy, st->r_color0);
+  if (st->r_color1) XFreeGC (dpy, st->r_color1);
+  if (st->r_color2) XFreeGC (dpy, st->r_color2);
+  if (st->r_color3) XFreeGC (dpy, st->r_color3);
+  if (st->r_color4) XFreeGC (dpy, st->r_color4);
+  if (st->r_color5) XFreeGC (dpy, st->r_color5);
+  if (st->l_color0) XFreeGC (dpy, st->l_color0);
+  if (st->l_color1) XFreeGC (dpy, st->l_color1);
+  if (st->s_color)  XFreeGC (dpy, st->s_color);
+  if (st->black)    XFreeGC (dpy, st->black);
+  if (st->stars) free (st->stars);
+  if (st->mother) {
+    free (st->mother->lasers);
+    free (st->mother);
+  }
+  for (i = 0; i < st->NUM_ROBOTS; i++)
+    free (st->robots[i].lasers);
+  free (st->robots);
+  free (st);
+}
 
 
-
-
-
-
-char *progclass = "Blaster";
-
-char *defaults [] = {
+static const char *blaster_defaults [] = {
   ".background:	black",
   ".foreground:	white",
-  "*r_color0:	magenta",
-  "*r_color1:	orange",
-  "*r_color2:	yellow",
-  "*r_color3:	white",
-  "*r_color4:	blue",
-  "*r_color5:	cyan",
-  "*l_color0:	green",
-  "*l_color1:	red",
-  "*mother_ship_color0:	darkblue",
-  "*mother_ship_color1:	white",
-  "*explode_color_1: yellow",
-  "*explode_color_2: orange",
+  "*r_color0:	#FF00FF",
+  "*r_color1:	#FFA500",
+  "*r_color2:	#FFFF00",
+  "*r_color3:	#FFFFFF",
+  "*r_color4:	#0000FF",
+  "*r_color5:	#00FFFF",
+  "*l_color0:	#00FF00",
+  "*l_color1:	#FF0000",
+  "*mother_ship_color0:	#00008B",
+  "*mother_ship_color1:	#FFFFFF",
+  "*explode_color_1: #FFFF00",
+  "*explode_color_2: #FFA500",
   "*delay: 10000",
   "*num_robots: 5",
   "*num_lasers: 3",
@@ -954,7 +1131,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec blaster_options [] = {
 	/* These are the 6 robot colors */
   { "-r_color0",		".r_color0",	XrmoptionSepArg, 0 },
   { "-r_color1",		".r_color1",	XrmoptionSepArg, 0 },
@@ -1006,104 +1183,4 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-
-
-void screenhack(Display *d, Window w)
-{
-	XGCValues gcv;
-	Colormap cmap;
-	unsigned long bg;
-
-	dpy = d;
-	window = w;
-	XGetWindowAttributes(dpy, window, &xgwa);
-	cmap = xgwa.colormap;
-
-	delay = get_integer_resource("delay", "Integer");
-	if(delay==0) {
-		delay=10000;
-	}
-	NUM_ROBOTS = get_integer_resource("num_robots","Integer");
-	if(NUM_ROBOTS==0) {
-		NUM_ROBOTS=5;
-	}
-	NUM_LASERS = get_integer_resource("num_lasers","Integer");
-	EXPLODE_SIZE_1 = get_integer_resource("explode_size_1","Integer");
-	EXPLODE_SIZE_2 = get_integer_resource("explode_size_2","Integer");
-	EXPLODE_SIZE_3 = get_integer_resource("explode_size_3","Integer");
-
-	NUM_STARS = get_integer_resource("num_stars","Integer");
-	if(get_boolean_resource("move_stars","Boolean")) {
-		MOVE_STARS = 1;
-		MOVE_STARS_X = get_integer_resource("move_stars_x","Integer");
-		MOVE_STARS_Y = get_integer_resource("move_stars_y","Integer");
-		MOVE_STARS_RANDOM = get_integer_resource("move_stars_random","Integer");
-	}
-	else {
-		MOVE_STARS = 0;
-	}
-
-
-	bg = get_pixel_resource("background","Background", dpy, cmap);
-	gcv.function = GXcopy;
-
-#define make_gc(color,name) \
-	gcv.foreground = bg ^ get_pixel_resource ((name), "Foreground", \
-						  dpy, cmap);		\
-	color = XCreateGC (dpy, window, GCForeground|GCFunction, &gcv)
-
-	if(mono_p) {
-		gcv.foreground = bg;
-		black = XCreateGC(dpy, window, GCForeground|GCFunction, &gcv);
-		gcv.foreground = get_pixel_resource("foreground", "Foreground", dpy, cmap);
-		r_color0 = r_color1 = r_color2 = r_color3 = r_color4 = r_color5 = l_color0 = l_color1 = s_color=
-			XCreateGC(dpy, window, GCForeground|GCFunction, &gcv);
-		if(get_boolean_resource("mother_ship","Boolean")) {
-			MOTHER_SHIP_WIDTH=get_integer_resource("mother_ship_width","Integer");
-			MOTHER_SHIP_HEIGHT=get_integer_resource("mother_ship_height","Integer");
-			MOTHER_SHIP_LASER=get_integer_resource("mother_ship_laser","Integer");
-			MOTHER_SHIP_PERIOD=get_integer_resource("mother_ship_period","Integer");
-			MOTHER_SHIP_HITS=get_integer_resource("mother_ship_hits","Integer");
-			MOTHER_SHIP=1;
-			mother = (struct mother_ship_state *) malloc(sizeof(struct mother_ship_state));
-			mother->lasers = (struct laser_state *) malloc(8*sizeof(struct laser_state));
-			mother->active = 0;
-			mother->death = 0;
-			mother->ship_color = r_color0;
-			mother->laser_color = r_color0;
-		}
-	}
-	else {
-		if(get_boolean_resource("mother_ship","Boolean")) {
-			MOTHER_SHIP_WIDTH=get_integer_resource("mother_ship_width","Integer");
-			MOTHER_SHIP_HEIGHT=get_integer_resource("mother_ship_height","Integer");
-			MOTHER_SHIP_LASER=get_integer_resource("mother_ship_laser","Integer");
-			MOTHER_SHIP_PERIOD=get_integer_resource("mother_ship_period","Integer");
-			MOTHER_SHIP_HITS=get_integer_resource("mother_ship_hits","Integer");
-			MOTHER_SHIP=1;
-			mother = (struct mother_ship_state *) malloc(sizeof(struct mother_ship_state));
-			mother->lasers = (struct laser_state *) malloc(8*sizeof(struct laser_state));
-			mother->active = 0;
-			mother->death = 0;
-			make_gc(mother->ship_color,"mother_ship_color0");
-			make_gc(mother->laser_color,"mother_ship_color1");		
-		}
-
-		make_gc (s_color,"star_color");
-		
-		make_gc (EXPLODE_COLOR_1,"explode_color_1");
-		make_gc (EXPLODE_COLOR_2,"explode_color_2");
-		
-      make_gc (r_color0,"r_color0");
-      make_gc (r_color1,"r_color1");
-      make_gc (r_color2,"r_color2");
-      make_gc (r_color3,"r_color3");
-      make_gc (r_color4,"r_color4");
-      make_gc (r_color5,"r_color5");
-      make_gc (l_color0,"l_color0");
-      make_gc (l_color1,"l_color1");
-		make_gc (black,"background");
-	}
-
-	start_blaster();
-}
+XSCREENSAVER_MODULE ("Blaster", blaster)

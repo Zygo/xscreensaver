@@ -12,8 +12,8 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <boolean id="decay" _label="Orbital Decay" arg-set="-decay"/>
-  <boolean id="decay" _label="Object Trails" arg-set="-trail"/>
+  <boolean id="decay" _label="Orbital Decay" arg-unset="-no-decay"/>
+  <boolean id="decay" _label="Object Trails" arg-unset="-no-trail"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
@@ -21,7 +21,8 @@
 
   <_description>
 This program draws a simple orbital simulation.  If you turn on
-trails, it looks kind of like a cloud-chamber photograph.  Written
-by Greg Bowering.
+trails, it looks kind of like a cloud-chamber photograph.
+
+Written by Greg Bowering; 1997.
   </_description>
 </screensaver>

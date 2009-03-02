@@ -3,8 +3,6 @@
 #ifndef __bubbles3d_h__
 #define __bubbles3d_h__
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # include <math.h>
 # include "xlockmoreI.h"	/* from the xscreensaver distribution */
@@ -12,8 +10,13 @@
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+# include <OpenGL/glu.h>
+#else
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
 
 /* Static configuration. */
 #define GLB_SLOW_GL          0	/* Set this if you have a slow GL
@@ -68,19 +71,21 @@ extern struct glb_config glb_config;
 #define glb_drand() ((double)LRAND() / (double)MAXRAND)
 
 /*-- From glb_sphere.c. --*/
+typedef struct glb_data glb_data;
 typedef GLfloat glb_vertex[3];
 typedef GLuint glb_triangle[3];
-extern void glb_sphere_init(void);
-extern glb_vertex *glb_sphere_get_vertices(int *nr_vertices);
-extern glb_triangle *glb_sphere_get_triangles(int *nr_triangles);
-extern void glb_sphere_end(void);
+extern glb_data * glb_sphere_init(void);
+extern glb_vertex *glb_sphere_get_vertices(glb_data *, int *nr_vertices);
+extern glb_triangle *glb_sphere_get_triangles(glb_data *, int *nr_triangles);
+extern void glb_sphere_end(glb_data *);
 
 /*-- From glb_bubble.c. --*/
-extern void *glb_bubble_new(GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
+extern void *glb_bubble_new(glb_data *d, 
+                            GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
 			    GLfloat y_incr, GLfloat scale_incr);
 extern void glb_bubble_delete(void *);
 extern void glb_bubble_step(void *);
-extern void glb_bubble_draw(void *);
+extern void glb_bubble_draw(glb_data *d, void *);
 extern GLfloat glb_bubble_get_y(void *);
 
 /*-- From glb_draw.c. --*/

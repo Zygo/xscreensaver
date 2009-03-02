@@ -28,36 +28,34 @@
     _label="Delay in ending position" _low-label="Short" _high-label="Long"
     low="10.0" high="100.0" default="40.0"/>
 
-  <select id="render">
-    <option id="solid" _label="Textured"/>
-    <option id="notex" _label="Untextured" arg-set="-no-texture"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
   <select id="start">
     <option id="cube"    _label="Start as cube" arg-set="-no-randomize"/>
     <option id="shuffle" _label="Start as random shape"/>
   </select>
 
   <select id="colors">
-    <option id="white" _label="White"/>
+    <option id="white" _label="White"  arg-set="-colormode white"/>
     <option id="one"   _label="Random color" arg-set="-colormode rnd"/>
     <option id="se"    _label="Silver Edition" arg-set="-colormode se"/>
     <option id="two"   _label="Two random colors" arg-set="-colormode two"/>
     <option id="ce"    _label="Classic Edition" arg-set="-colormode ce"/>
-    <option id="six"   _label="Six random colors" arg-set="-colormode six"/>
+    <option id="six"   _label="Six random colors"/>
   </select>
   
-  <boolean id="spin" _label="Spin" arg-unset="-no-spin"/>
-
-  <boolean id="wander" _label="Wander on screen" arg-unset="-no-wander"/>
-
+  <hgroup>
+  <boolean id="spin"    _label="Spin"                   arg-unset="-no-spin"/>
+  <boolean id="wander"  _label="Wander"                 arg-unset="-no-wander"/>
+  <boolean id="tex"     _label="Textured"               arg-unset="-no-texture"/>
+  </hgroup>
+  <hgroup>
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
 Animates a Rubik-like puzzle known as Cube 21 or Square-1.
-The rotations are chosen randomly.  Requires OpenGL.
+The rotations are chosen randomly.
 
-Written by Vasek Potocek.
+Written by Vasek Potocek; 2005.
   </_description>
 </screensaver>

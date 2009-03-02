@@ -81,60 +81,67 @@ typedef struct cell_s
                                     /* 24 36 - */
 } cell;
 
-static int arr_width;
-static int arr_height;
-static int count;
+struct state {
+  Display *dpy;
+  Window window;
 
-static cell *arr;
-static cell *head;
-static cell *tail;
-static int blastcount;
+  int arr_width;
+  int arr_height;
+  int count;
 
-static Display *display;
-static Window window;
-static GC *coloredGCs;
+  cell *arr;
+  cell *head;
+  cell *tail;
+  int blastcount;
 
-static int windowWidth;
-static int windowHeight;
-static int xOffset;
-static int yOffset;
-static int xSize;
-static int ySize;
+  GC *coloredGCs;
 
-static FLOAT orthlim = 1.0;
-static FLOAT diaglim;
-static FLOAT anychan;
-static FLOAT minorchan;
-static FLOAT instantdeathchan;
-static int minlifespan;
-static int maxlifespan;
-static FLOAT minlifespeed;
-static FLOAT maxlifespeed;
-static FLOAT mindeathspeed;
-static FLOAT maxdeathspeed;
-static Bool originalcolors;
+  int windowWidth;
+  int windowHeight;
+  int xOffset;
+  int yOffset;
+  int xSize;
+  int ySize;
 
-#define cell_x(c) (((c) - arr) % arr_width)
-#define cell_y(c) (((c) - arr) / arr_width)
+  FLOAT orthlim;
+  FLOAT diaglim;
+  FLOAT anychan;
+  FLOAT minorchan;
+  FLOAT instantdeathchan;
+  int minlifespan;
+  int maxlifespan;
+  FLOAT minlifespeed;
+  FLOAT maxlifespeed;
+  FLOAT mindeathspeed;
+  FLOAT maxdeathspeed;
+  Bool originalcolors;
+
+  int warned;
+  int delay;
+};
 
 
-static int random_life_value (void)
+#define cell_x(c) (((c) - st->arr) % st->arr_width)
+#define cell_y(c) (((c) - st->arr) / st->arr_width)
+
+
+static int random_life_value (struct state *st)
 {
-    return (int) ((RAND_FLOAT * (maxlifespan - minlifespan)) + minlifespan);
+    return (int) ((RAND_FLOAT * (st->maxlifespan - st->minlifespan)) + st->minlifespan);
 }
 
-static void setup_random_colormap (XWindowAttributes *xgwa)
+static void setup_random_colormap (struct state *st, XWindowAttributes *xgwa)
 {
     XGCValues gcv;
     int lose = 0;
-    int ncolors = count - 1;
+    int ncolors = st->count - 1;
     int n;
-    XColor *colors = (XColor *) calloc (sizeof(*colors), count*2);
+    XColor *colors = (XColor *) calloc (sizeof(*colors), st->count*2);
     
-    colors[0].pixel = get_pixel_resource ("background", "Background",
-					  display, xgwa->colormap);
+    colors[0].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
+                                          "background", "Background");
     
-    make_random_colormap (display, xgwa->visual, xgwa->colormap,
+    make_random_colormap (st->dpy, xgwa->visual, xgwa->colormap,
 			  colors+1, &ncolors, True, True, 0, True);
     if (ncolors < 1)
       {
@@ -143,20 +150,20 @@ static void setup_random_colormap (XWindowAttributes *xgwa)
       }
     
     ncolors++;
-    count = ncolors;
+    st->count = ncolors;
     
-    memcpy (colors + count, colors, count * sizeof(*colors));
-    colors[count].pixel = get_pixel_resource ("foreground", "Foreground",
-					      display, xgwa->colormap);
+    memcpy (colors + st->count, colors, st->count * sizeof(*colors));
+    colors[st->count].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
+                                              "foreground", "Foreground");
     
-    for (n = 1; n < count; n++)
+    for (n = 1; n < st->count; n++)
     {
-	int m = n + count;
+	int m = n + st->count;
 	colors[n].red = colors[m].red / 2;
 	colors[n].green = colors[m].green / 2;
 	colors[n].blue = colors[m].blue / 2;
 	
-	if (!XAllocColor (display, xgwa->colormap, &colors[n]))
+	if (!XAllocColor (st->dpy, xgwa->colormap, &colors[n]))
 	{
 	    lose++;
 	    colors[n] = colors[m];
@@ -170,36 +177,36 @@ static void setup_random_colormap (XWindowAttributes *xgwa)
 		 progname, lose);
     }
     
-    for (n = 0; n < count*2; n++) 
+    for (n = 0; n < st->count*2; n++) 
     {
 	gcv.foreground = colors[n].pixel;
-	coloredGCs[n] = XCreateGC (display, window, GCForeground, &gcv);
+	st->coloredGCs[n] = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     }
 
     free (colors);
 }
 
-static void setup_original_colormap (XWindowAttributes *xgwa)
+static void setup_original_colormap (struct state *st, XWindowAttributes *xgwa)
 {
     XGCValues gcv;
     int lose = 0;
     int n;
-    XColor *colors = (XColor *) calloc (sizeof(*colors), count*2);
+    XColor *colors = (XColor *) calloc (sizeof(*colors), st->count*2);
     
-    colors[0].pixel = get_pixel_resource ("background", "Background",
-					  display, xgwa->colormap);
+    colors[0].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
+                                          "background", "Background");
 
-    colors[count].pixel = get_pixel_resource ("foreground", "Foreground",
-					      display, xgwa->colormap);
+    colors[st->count].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
+                                              "foreground", "Foreground");
 
-    for (n = 1; n < count; n++)
+    for (n = 1; n < st->count; n++)
     {
-	int m = n + count;
+	int m = n + st->count;
 	colors[n].red =   ((n & 0x01) != 0) * 0x8000;
 	colors[n].green = ((n & 0x02) != 0) * 0x8000;
 	colors[n].blue =  ((n & 0x04) != 0) * 0x8000;
 
-	if (!XAllocColor (display, xgwa->colormap, &colors[n]))
+	if (!XAllocColor (st->dpy, xgwa->colormap, &colors[n]))
 	{
 	    lose++;
 	    colors[n] = colors[0];
@@ -209,10 +216,10 @@ static void setup_original_colormap (XWindowAttributes *xgwa)
 	colors[m].green = colors[n].green + 0x4000;
 	colors[m].blue  = colors[n].blue + 0x4000;
 
-	if (!XAllocColor (display, xgwa->colormap, &colors[m]))
+	if (!XAllocColor (st->dpy, xgwa->colormap, &colors[m]))
 	{
 	    lose++;
-	    colors[m] = colors[count];
+	    colors[m] = colors[st->count];
 	}
     }
 
@@ -223,21 +230,22 @@ static void setup_original_colormap (XWindowAttributes *xgwa)
 		 progname, lose);
     }
     
-    for (n = 0; n < count*2; n++) 
+    for (n = 0; n < st->count*2; n++) 
     {
 	gcv.foreground = colors[n].pixel;
-	coloredGCs[n] = XCreateGC (display, window, GCForeground, &gcv);
+	st->coloredGCs[n] = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     }
 
     free (colors);
 }
 
-static void setup_display (void)
+static void
+setup_display (struct state *st)
 {
     XWindowAttributes xgwa;
     Colormap cmap;
 
-    int cell_size = get_integer_resource ("size", "Integer");
+    int cell_size = get_integer_resource (st->dpy, "size", "Integer");
     int osize, alloc_size, oalloc;
     int mem_throttle = 0;
     char *s;
@@ -246,7 +254,7 @@ static void setup_display (void)
 
     osize = cell_size;
 
-    s = get_string_resource ("memThrottle", "MemThrottle");
+    s = get_string_resource (st->dpy, "memThrottle", "MemThrottle");
     if (s)
       {
         int n;
@@ -269,254 +277,253 @@ static void setup_display (void)
         free (s);
       }
 
-    XGetWindowAttributes (display, window, &xgwa);
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-    originalcolors = get_boolean_resource ("originalcolors", "Boolean");
+    st->originalcolors = get_boolean_resource (st->dpy, "originalcolors", "Boolean");
 
-    count = get_integer_resource ("count", "Integer");
-    if (count < 2) count = 2;
+    st->count = get_integer_resource (st->dpy, "count", "Integer");
+    if (st->count < 2) st->count = 2;
 
     /* number of colors can't be greater than the half depth of the screen. */
-    if (count > (1L << (xgwa.depth-1)))
-      count = (1L << (xgwa.depth-1));
+    if (st->count > (unsigned int) (1L << (xgwa.depth-1)))
+      st->count = (unsigned int) (1L << (xgwa.depth-1));
 
     /* Actually, since cell->col is of type char, this has to be small. */
-    if (count >= (1L << ((sizeof(arr[0].col) * 8) - 1)))
-      count = (1L << ((sizeof(arr[0].col) * 8) - 1));
+    if (st->count >= (unsigned int) (1L << ((sizeof(st->arr[0].col) * 8) - 1)))
+      st->count = (unsigned int) (1L << ((sizeof(st->arr[0].col) * 8) - 1));
 
 
-    if (originalcolors && (count > 8))
+    if (st->originalcolors && (st->count > 8))
     {
-	count = 8;
+	st->count = 8;
     }
 
-    coloredGCs = (GC *) calloc (sizeof(GC), count * 2);
+    st->coloredGCs = (GC *) calloc (sizeof(GC), st->count * 2);
 
-    diaglim  = get_float_resource ("diaglim", "Float");
-    if (diaglim < 1.0)
+    st->diaglim  = get_float_resource (st->dpy, "diaglim", "Float");
+    if (st->diaglim < 1.0)
     {
-	diaglim = 1.0;
+	st->diaglim = 1.0;
     }
-    else if (diaglim > 2.0)
+    else if (st->diaglim > 2.0)
     {
-	diaglim = 2.0;
+	st->diaglim = 2.0;
     }
-    diaglim *= orthlim;
+    st->diaglim *= st->orthlim;
 
-    anychan  = get_float_resource ("anychan", "Float");
-    if (anychan < 0.0)
+    st->anychan  = get_float_resource (st->dpy, "anychan", "Float");
+    if (st->anychan < 0.0)
     {
-	anychan = 0.0;
+	st->anychan = 0.0;
     }
-    else if (anychan > 1.0)
+    else if (st->anychan > 1.0)
     {
-	anychan = 1.0;
+	st->anychan = 1.0;
     }
     
-    minorchan = get_float_resource ("minorchan","Float");
-    if (minorchan < 0.0)
+    st->minorchan = get_float_resource (st->dpy, "minorchan","Float");
+    if (st->minorchan < 0.0)
     {
-	minorchan = 0.0;
+	st->minorchan = 0.0;
     }
-    else if (minorchan > 1.0)
+    else if (st->minorchan > 1.0)
     {
-	minorchan = 1.0;
+	st->minorchan = 1.0;
     }
     
-    instantdeathchan = get_float_resource ("instantdeathchan","Float");
-    if (instantdeathchan < 0.0)
+    st->instantdeathchan = get_float_resource (st->dpy, "instantdeathchan","Float");
+    if (st->instantdeathchan < 0.0)
     {
-	instantdeathchan = 0.0;
+	st->instantdeathchan = 0.0;
     }
-    else if (instantdeathchan > 1.0)
+    else if (st->instantdeathchan > 1.0)
     {
-	instantdeathchan = 1.0;
-    }
-
-    minlifespan = get_integer_resource ("minlifespan", "Integer");
-    if (minlifespan < 1)
-    {
-	minlifespan = 1;
+	st->instantdeathchan = 1.0;
     }
 
-    maxlifespan = get_integer_resource ("maxlifespan", "Integer");
-    if (maxlifespan < minlifespan)
+    st->minlifespan = get_integer_resource (st->dpy, "minlifespan", "Integer");
+    if (st->minlifespan < 1)
     {
-	maxlifespan = minlifespan;
+	st->minlifespan = 1;
     }
 
-    minlifespeed = get_float_resource ("minlifespeed", "Float");
-    if (minlifespeed < 0.0)
+    st->maxlifespan = get_integer_resource (st->dpy, "maxlifespan", "Integer");
+    if (st->maxlifespan < st->minlifespan)
     {
-	minlifespeed = 0.0;
-    }
-    else if (minlifespeed > 1.0)
-    {
-	minlifespeed = 1.0;
+	st->maxlifespan = st->minlifespan;
     }
 
-    maxlifespeed = get_float_resource ("maxlifespeed", "Float");
-    if (maxlifespeed < minlifespeed)
+    st->minlifespeed = get_float_resource (st->dpy, "minlifespeed", "Float");
+    if (st->minlifespeed < 0.0)
     {
-	maxlifespeed = minlifespeed;
+	st->minlifespeed = 0.0;
     }
-    else if (maxlifespeed > 1.0)
+    else if (st->minlifespeed > 1.0)
     {
-	maxlifespeed = 1.0;
-    }
-
-    mindeathspeed = get_float_resource ("mindeathspeed", "Float");
-    if (mindeathspeed < 0.0)
-    {
-	mindeathspeed = 0.0;
-    }
-    else if (mindeathspeed > 1.0)
-    {
-	mindeathspeed = 1.0;
+	st->minlifespeed = 1.0;
     }
 
-    maxdeathspeed = get_float_resource ("maxdeathspeed", "Float");
-    if (maxdeathspeed < mindeathspeed)
+    st->maxlifespeed = get_float_resource (st->dpy, "maxlifespeed", "Float");
+    if (st->maxlifespeed < st->minlifespeed)
     {
-	maxdeathspeed = mindeathspeed;
+	st->maxlifespeed = st->minlifespeed;
     }
-    else if (maxdeathspeed > 1.0)
+    else if (st->maxlifespeed > 1.0)
     {
-	maxdeathspeed = 1.0;
+	st->maxlifespeed = 1.0;
     }
 
-    minlifespeed *= diaglim;
-    maxlifespeed *= diaglim;
-    mindeathspeed *= diaglim;
-    maxdeathspeed *= diaglim;
+    st->mindeathspeed = get_float_resource (st->dpy, "mindeathspeed", "Float");
+    if (st->mindeathspeed < 0.0)
+    {
+	st->mindeathspeed = 0.0;
+    }
+    else if (st->mindeathspeed > 1.0)
+    {
+	st->mindeathspeed = 1.0;
+    }
+
+    st->maxdeathspeed = get_float_resource (st->dpy, "maxdeathspeed", "Float");
+    if (st->maxdeathspeed < st->mindeathspeed)
+    {
+	st->maxdeathspeed = st->mindeathspeed;
+    }
+    else if (st->maxdeathspeed > 1.0)
+    {
+	st->maxdeathspeed = 1.0;
+    }
+
+    st->minlifespeed *= st->diaglim;
+    st->maxlifespeed *= st->diaglim;
+    st->mindeathspeed *= st->diaglim;
+    st->maxdeathspeed *= st->diaglim;
 
     cmap = xgwa.colormap;
     
-    windowWidth = xgwa.width;
-    windowHeight = xgwa.height;
+    st->windowWidth = xgwa.width;
+    st->windowHeight = xgwa.height;
     
-    arr_width = windowWidth / cell_size;
-    arr_height = windowHeight / cell_size;
+    st->arr_width = st->windowWidth / cell_size;
+    st->arr_height = st->windowHeight / cell_size;
 
-    alloc_size = sizeof(cell) * arr_width * arr_height;
+    alloc_size = sizeof(cell) * st->arr_width * st->arr_height;
     oalloc = alloc_size;
 
     if (mem_throttle > 0)
-      while (cell_size < windowWidth/10 &&
-             cell_size < windowHeight/10 &&
+      while (cell_size < st->windowWidth/10 &&
+             cell_size < st->windowHeight/10 &&
              alloc_size > mem_throttle)
         {
           cell_size++;
-          arr_width = windowWidth / cell_size;
-          arr_height = windowHeight / cell_size;
-          alloc_size = sizeof(cell) * arr_width * arr_height;
+          st->arr_width = st->windowWidth / cell_size;
+          st->arr_height = st->windowHeight / cell_size;
+          alloc_size = sizeof(cell) * st->arr_width * st->arr_height;
         }
 
     if (osize != cell_size)
       {
-        static int warned = 0;
-        if (!warned)
+        if (!st->warned)
           {
             fprintf (stderr,
              "%s: throttling cell size from %d to %d because of %dM limit.\n",
                      progname, osize, cell_size, mem_throttle / (1 << 20));
             fprintf (stderr, "%s: %dx%dx%d = %.1fM, %dx%dx%d = %.1fM.\n",
                      progname,
-                     windowWidth, windowHeight, osize,
+                     st->windowWidth, st->windowHeight, osize,
                      ((float) oalloc) / (1 << 20),
-                     windowWidth, windowHeight, cell_size,
+                     st->windowWidth, st->windowHeight, cell_size,
                      ((float) alloc_size) / (1 << 20));
-            warned = 1;
+            st->warned = 1;
           }
       }
 
-    xSize = windowWidth / arr_width;
-    ySize = windowHeight / arr_height;
-    if (xSize > ySize)
+    st->xSize = st->windowWidth / st->arr_width;
+    st->ySize = st->windowHeight / st->arr_height;
+    if (st->xSize > st->ySize)
     {
-	xSize = ySize;
+	st->xSize = st->ySize;
     }
     else
     {
-	ySize = xSize;
+	st->ySize = st->xSize;
     }
     
-    xOffset = (windowWidth - (arr_width * xSize)) / 2;
-    yOffset = (windowHeight - (arr_height * ySize)) / 2;
+    st->xOffset = (st->windowWidth - (st->arr_width * st->xSize)) / 2;
+    st->yOffset = (st->windowHeight - (st->arr_height * st->ySize)) / 2;
 
-    if (originalcolors)
+    if (st->originalcolors)
     {
-	setup_original_colormap (&xgwa);
+	setup_original_colormap (st, &xgwa);
     }
     else
     {
-	setup_random_colormap (&xgwa);
+	setup_random_colormap (st, &xgwa);
     }
 }
 
-static void drawblock (int x, int y, unsigned char c)
+static void drawblock (struct state *st, int x, int y, unsigned char c)
 {
-  if (xSize == 1 && ySize == 1)
-    XDrawPoint (display, window, coloredGCs[c], x + xOffset, y + yOffset);
+  if (st->xSize == 1 && st->ySize == 1)
+    XDrawPoint (st->dpy, st->window, st->coloredGCs[c], x + st->xOffset, y + st->yOffset);
   else
-    XFillRectangle (display, window, coloredGCs[c],
-		    x * xSize + xOffset, y * ySize + yOffset,
-		    xSize, ySize);
+    XFillRectangle (st->dpy, st->window, st->coloredGCs[c],
+		    x * st->xSize + st->xOffset, y * st->ySize + st->yOffset,
+		    st->xSize, st->ySize);
 }
 
-static void setup_arr (void)
+static void setup_arr (struct state *st)
 {
     int x, y;
 
-    if (arr != NULL)
+    if (st->arr != NULL)
     {
-	free (arr);
+	free (st->arr);
     }
 
-    XFillRectangle (display, window, coloredGCs[0], 0, 0, 
-		    windowWidth, windowHeight);
+    XFillRectangle (st->dpy, st->window, st->coloredGCs[0], 0, 0, 
+		    st->windowWidth, st->windowHeight);
 
-    arr = (cell *) calloc (sizeof(cell), arr_width * arr_height);  
-    if (!arr)
+    st->arr = (cell *) calloc (sizeof(cell), st->arr_width * st->arr_height);  
+    if (!st->arr)
       {
         fprintf (stderr, "%s: out of memory allocating %dx%d grid\n",
-                 progname, arr_width, arr_height);
+                 progname, st->arr_width, st->arr_height);
         exit (1);
       }
 
-    for (y = 0; y < arr_height; y++)
+    for (y = 0; y < st->arr_height; y++)
     {
-      int row = y * arr_width;
-	for (x = 0; x < arr_width; x++) 
+      int row = y * st->arr_width;
+	for (x = 0; x < st->arr_width; x++) 
 	{
-	    arr[row+x].speed = 0.0;
-	    arr[row+x].growth = 0.0;
-	    arr[row+x].col = 0;
-	    arr[row+x].isnext = 0;
-	    arr[row+x].next = 0;
-	    arr[row+x].prev = 0;
+	    st->arr[row+x].speed = 0.0;
+	    st->arr[row+x].growth = 0.0;
+	    st->arr[row+x].col = 0;
+	    st->arr[row+x].isnext = 0;
+	    st->arr[row+x].next = 0;
+	    st->arr[row+x].prev = 0;
 	}
     }
 
-    if (head == NULL)
+    if (st->head == NULL)
     {
-	head = (cell *) malloc (sizeof (cell));
+	st->head = (cell *) malloc (sizeof (cell));
     }
     
-    if (tail == NULL)
+    if (st->tail == NULL)
     {
-	tail = (cell *) malloc (sizeof (cell));
+	st->tail = (cell *) malloc (sizeof (cell));
     }
 
-    head->next = tail;
-    head->prev = head;
-    tail->next = tail;
-    tail->prev = head;
+    st->head->next = st->tail;
+    st->head->prev = st->head;
+    st->tail->next = st->tail;
+    st->tail->prev = st->head;
 
-    blastcount = random_life_value ();
+    st->blastcount = random_life_value (st);
 }
 
-static void newcell (cell *c, unsigned char col, FLOAT sp)
+static void newcell (struct state *st, cell *c, unsigned char col, FLOAT sp)
 {
     if (! c) return;
     
@@ -527,48 +534,48 @@ static void newcell (cell *c, unsigned char col, FLOAT sp)
     c->isnext = 1;
     
     if (c->prev == 0) {
-	c->next = head->next;
-	c->prev = head;
-	head->next = c;
+	c->next = st->head->next;
+	c->prev = st->head;
+	st->head->next = c;
 	c->next->prev = c;
     }
 }
 
-static void killcell (cell *c)
+static void killcell (struct state *st, cell *c)
 {
     c->prev->next = c->next;
     c->next->prev = c->prev;
     c->prev = 0;
     c->speed = 0.0;
-    drawblock (cell_x(c), cell_y(c), c->col);
+    drawblock (st, cell_x(c), cell_y(c), c->col);
 }
 
 
-static void randblip (int doit)
+static void randblip (struct state *st, int doit)
 {
     int n;
     int b = 0;
     if (!doit 
-	&& (blastcount-- >= 0) 
-	&& (RAND_FLOAT > anychan))
+	&& (st->blastcount-- >= 0) 
+	&& (RAND_FLOAT > st->anychan))
     {
 	return;
     }
     
-    if (blastcount < 0) 
+    if (st->blastcount < 0) 
     {
 	b = 1;
 	n = 2;
-	blastcount = random_life_value ();
-	if (RAND_FLOAT < instantdeathchan)
+	st->blastcount = random_life_value (st);
+	if (RAND_FLOAT < st->instantdeathchan)
 	{
 	    /* clear everything every so often to keep from getting into a
 	     * rut */
-	    setup_arr ();
+	    setup_arr (st);
 	    b = 0;
 	}
     }
-    else if (RAND_FLOAT <= minorchan) 
+    else if (RAND_FLOAT <= st->minorchan) 
     {
 	n = 2;
     }
@@ -579,44 +586,44 @@ static void randblip (int doit)
     
     while (n--) 
     {
-	int x = random () % arr_width;
-	int y = random () % arr_height;
+	int x = random () % st->arr_width;
+	int y = random () % st->arr_height;
 	int c;
 	FLOAT s;
 	if (b)
 	{
 	    c = 0;
-	    s = RAND_FLOAT * (maxdeathspeed - mindeathspeed) + mindeathspeed;
+	    s = RAND_FLOAT * (st->maxdeathspeed - st->mindeathspeed) + st->mindeathspeed;
 	}
 	else
 	{
-	    c = (random () % (count-1)) + 1;
-	    s = RAND_FLOAT * (maxlifespeed - minlifespeed) + minlifespeed;
+	    c = (random () % (st->count-1)) + 1;
+	    s = RAND_FLOAT * (st->maxlifespeed - st->minlifespeed) + st->minlifespeed;
 	}
-	newcell (&arr[y * arr_width + x], c, s);
+	newcell (st, &st->arr[y * st->arr_width + x], c, s);
     }
 }
 
-static void update (void)
+static void update (struct state *st)
 {
     cell *a;
     
-    for (a = head->next; a != tail; a = a->next) 
+    for (a = st->head->next; a != st->tail; a = a->next) 
     {
-	static XPoint all_coords[] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
-				      {-1,  0}, { 1, 0}, {0, -1}, {0, 1},
-				      {99, 99}};
+	static const XPoint all_coords[] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
+                                            {-1,  0}, { 1, 0}, {0, -1}, {0, 1},
+                                            {99, 99}};
 
-        XPoint *coords = 0;
+        const XPoint *coords = 0;
 
         if (a->speed == 0) continue;
         a->growth += a->speed;
 
-	if (a->growth >= diaglim) 
+	if (a->growth >= st->diaglim) 
 	{
 	    coords = all_coords;
 	}
-        else if (a->growth >= orthlim)
+        else if (a->growth >= st->orthlim)
 	{
 	    coords = &all_coords[4];
 	}
@@ -631,22 +638,22 @@ static void update (void)
 	    int y = cell_y(a) + coords->y;
 	    coords++;
 	    
-	    if (x < 0) x = arr_width - 1;
-	    else if (x >= arr_width) x = 0;
+	    if (x < 0) x = st->arr_width - 1;
+	    else if (x >= st->arr_width) x = 0;
 	    
-	    if (y < 0) y = arr_height - 1;
-	    else if (y >= arr_height) y = 0;
+	    if (y < 0) y = st->arr_height - 1;
+	    else if (y >= st->arr_height) y = 0;
 	    
-	    newcell (&arr[y * arr_width + x], a->col, a->speed);
+	    newcell (st, &st->arr[y * st->arr_width + x], a->col, a->speed);
 	}
 
-	if (a->growth >= diaglim) 
-	    killcell (a);
+	if (a->growth >= st->diaglim) 
+	    killcell (st, a);
     }
     
-    randblip ((head->next) == tail);
+    randblip (st, (st->head->next) == st->tail);
     
-    for (a = head->next; a != tail; a = a->next)
+    for (a = st->head->next; a != st->tail; a = a->next)
     {
 	if (a->isnext) 
 	{
@@ -654,20 +661,63 @@ static void update (void)
 	    a->speed = a->nextspeed;
 	    a->growth = 0.0;
 	    a->col = a->nextcol;
-	    drawblock (cell_x(a), cell_y(a), a->col + count);
+	    drawblock (st, cell_x(a), cell_y(a), a->col + st->count);
 	}
     }
 }
 
-
-char *progclass = "Petri";
+static void *
+petri_init (Display *dpy, Window win)
+{
+    struct state *st = (struct state *) calloc (1, sizeof(*st));
+    st->dpy = dpy;
+    st->window = win;
 
-char *defaults [] = {
+    st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+    st->orthlim = 1;
+
+    setup_display (st);
+    setup_arr (st);
+    randblip (st, 1);
+    
+    return st;
+}
+
+static unsigned long
+petri_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  update (st);
+  return st->delay;
+}
+
+static void
+petri_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+petri_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+petri_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+
+static const char *petri_defaults [] = {
   ".background:		black",
   ".foreground:		white",
   "*delay:		10000",
-  "*count:		8",
-  "*size:		4",
+  "*count:		20",
+  "*size:		2",
   "*diaglim:		1.414",
   "*anychan:		0.0015",
   "*minorchan:		0.5",
@@ -684,7 +734,7 @@ char *defaults [] = {
     0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec petri_options [] = {
   { "-delay",		 ".delay",		XrmoptionSepArg, 0 },
   { "-size",		 ".size",		XrmoptionSepArg, 0 },
   { "-count",		 ".count",		XrmoptionSepArg, 0 },
@@ -703,22 +753,5 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void screenhack (Display *dpy, Window win)
-{
-    int delay = get_integer_resource ("delay", "Delay");
-    display = dpy;
-    window = win;
-    setup_display ();
-    
-    setup_arr ();
-    
-    randblip (1);
-    
-    for (;;) 
-    {
-	update ();
-        XSync (dpy, False);
-        screenhack_handle_events (dpy);
-	usleep (delay);
-    }
-}
+
+XSCREENSAVER_MODULE ("Petri", petri)

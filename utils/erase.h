@@ -1,5 +1,5 @@
 /* erase.c: Erase the screen in various more or less interesting ways.
- * Copyright (c) 1997-2001 Jamie Zawinski <jwz@jwz.org>
+ * Copyright (c) 1997-2001, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,8 @@
 #ifndef __XSCREENSAVER_ERASE_H__
 #define __XSCREENSAVER_ERASE_H__
 
-extern void erase_full_window(Display *dpy, Window window);
+typedef struct eraser_state eraser_state;
+
+extern eraser_state *erase_window (Display *, Window, eraser_state *);
 
 #endif /* __XSCREENSAVER_ERASE_H__ */

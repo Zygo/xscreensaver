@@ -65,19 +65,18 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_apollonian
-#define PROGCLASS "Apollonian"
-#define HACK_INIT init_apollonian
-#define HACK_DRAW draw_apollonian
-#define apollonian_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000000 \n" \
- "*count: 64 \n" \
- "*cycles: 20 \n" \
- "*ncolors: 64 \n"
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+# define MODE_apollonian
+# define DEFAULTS	"*delay:   1000000 \n" \
+					"*count:   64      \n" \
+					"*cycles:  20      \n" \
+					"*ncolors: 64      \n"
+# define refresh_apollonian 0
+# define reshape_apollonian 0
+# define apollonian_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_apollonian
@@ -106,7 +105,7 @@ static OptionStruct desc[] =
         {"-/+label", "turn on/off alternate space and number labeling"},
 };
 
-ModeSpecOpt apollonian_opts =
+ENTRYPOINT ModeSpecOpt apollonian_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef DOFONT
@@ -136,7 +135,7 @@ enum space {
   euclidean = 0, spherical, hyperbolic
 };
 
-const char * space_string[] = {
+static const char * space_string[] = {
   "euclidean",
   "spherical",
   "hyperbolic"
@@ -159,7 +158,7 @@ the label in the standard picture) then the "spherical label" is
 (e^2+x^2+y^2-1)/(2*e) (an integer!)  and the "hyperbolic label", is 
 calulated by h + s = e.
 */
-circle examples[][4] = {
+static circle examples[][4] = {
 { /* double semi-bounded */
 	{ 0, 0, 0,   0,  1},
 	{ 0, 0, 0,   0, -1},
@@ -296,6 +295,9 @@ typedef struct {
 #endif
 	int         time;
 	int         game;
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
 } apollonianstruct;
 
 static apollonianstruct *apollonians = (apollonianstruct *) NULL;
@@ -547,7 +549,7 @@ p(ModeInfo *mi, circle c)
 		  XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
 			((int) (cp->size * c.x / (2.0 * c.e) + cp->offset.x)),
 			((int) (cp->size * c.y / (2.0 * c.e) + MI_HEIGHT(mi) -
-			FONT_HEIGHT / 2)), space_string[cp->geometry],
+			FONT_HEIGHT / 2)), (char *) space_string[cp->geometry],
 			strlen(space_string[cp->geometry]));
 		}
 		return;
@@ -628,8 +630,8 @@ f(ModeInfo *mi, circle c1, circle c2, circle c3, circle c4)
         f(mi, c1, c2, c, c3);
 }
 
-static void
-free_apollonian(Display *display, apollonianstruct *cp)
+ENTRYPOINT void
+free_apollonian (Display *display, apollonianstruct *cp)
 {
 	if (cp->quad != NULL) {
 		(void) free((void *) cp->quad);
@@ -648,7 +650,7 @@ free_apollonian(Display *display, apollonianstruct *cp)
 }
 
 #ifndef DEBUG
-void
+static void
 randomize_c(int randomize, circle * c)
 {
   if (randomize / 2) {
@@ -665,8 +667,8 @@ randomize_c(int randomize, circle * c)
 }
 #endif
 
-void
-init_apollonian(ModeInfo * mi)
+ENTRYPOINT void
+init_apollonian (ModeInfo * mi)
 {
 	apollonianstruct *cp;
 	int i;
@@ -720,7 +722,9 @@ init_apollonian(ModeInfo * mi)
 			cquad(&(cp->c1), &(cp->c2), &(cp->c3), &(cp->c4));
 	}
 	cp->time = 0;
+#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
+#endif
 	if (cp->game != 0) {
 		double q123;
 
@@ -762,8 +766,8 @@ init_apollonian(ModeInfo * mi)
 #endif 
 }
 
-void
-draw_apollonian(ModeInfo * mi)
+ENTRYPOINT void
+draw_apollonian (ModeInfo * mi)
 {
 	apollonianstruct *cp;
 
@@ -771,6 +775,12 @@ draw_apollonian(ModeInfo * mi)
 		return;
 	cp = &apollonians[MI_SCREEN(mi)];
 
+#ifdef STANDALONE
+    if (cp->eraser) {
+      cp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), cp->eraser);
+      return;
+    }
+#endif
 
 	MI_IS_DRAWN(mi) = True;
 
@@ -798,14 +808,14 @@ draw_apollonian(ModeInfo * mi)
 	if (++cp->time > MI_CYCLES(mi))
       {
 #ifdef STANDALONE
-        erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+        cp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), cp->eraser);
 #endif /* STANDALONE */
 		init_apollonian(mi);
       }
 }
 
-void
-release_apollonian(ModeInfo * mi)
+ENTRYPOINT void
+release_apollonian (ModeInfo * mi)
 {
 	if (apollonians != NULL) {
 		int         screen;
@@ -816,5 +826,7 @@ release_apollonian(ModeInfo * mi)
 		apollonians = (apollonianstruct *) NULL;
 	}
 }
+
+XSCREENSAVER_MODULE ("Apollonian", apollonian)
 
 #endif /* MODE_apollonian */

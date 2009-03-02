@@ -5,32 +5,28 @@
   <command arg="-root"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="80000" default="40000"
           convert="invert"/>
 
   <number id="spinspeed" type="slider" arg="-spinspeed %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Spin Speed" _low-label="Slow" _high-label="Fast"
           low="0.1" high="15.0" default="5.0"/>
 
   <number id="count" type="slider" arg="-count %"
-           _label="Count" _low-label="Low" _high-label="High"
+           _label="Density" _low-label="Low" _high-label="High"
           low="0" high="100" default="25"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
-           _label="Cycles" _low-label="Low" _high-label="High"
+           _label="Duration" _low-label="Short" _high-label="Long"
           low="0" high="100" default="40"/>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Ed Mackey reports that he wrote the first version of this program in
-BASIC on a Commodore 64 in 1987, as a 320x200 black and white
-wireframe.  Now it is GL and has specular reflections.
+Morphing 3D shapes.
+
+Written by Ed Mackey; 1987, 1997.
   </_description>
 </screensaver>

@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005, 2006 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -11,13 +11,22 @@
  */
 
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
+
+#ifdef HAVE_COCOA
+# include <OpenGL/glu.h>
+#else
+# include <GL/glx.h>
+# include <GL/glu.h>
+#endif
+
 #include "resources.h"
 #include "texfont.h"
 
@@ -45,8 +54,9 @@ struct texture_font_data {
 static int
 to_pow2 (int i)
 {
-  static unsigned int pow2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-                                 2048, 4096, 8192, 16384, 32768, 65536 };
+  static const unsigned int pow2[] = { 
+    1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 
+    2048, 4096, 8192, 16384, 32768, 65536 };
   int j;
   for (j = 0; j < sizeof(pow2)/sizeof(*pow2); j++)
     if (pow2[j] >= i) return pow2[j];
@@ -54,13 +64,16 @@ to_pow2 (int i)
 }
 
 
-/* Given a Pixmap of depth 1, converts it to an OpenGL luminance mipmap.
-   The 1 bits are drawn, the 0 bits are alpha.
+/* Given a Pixmap (of screen depth), converts it to an OpenGL luminance mipmap.
+   RGB are averaged to grayscale, and the resulting value is treated as alpha.
    Pass in the size of the pixmap; the size of the texture is returned
    (it may be larger, since GL like powers of 2.)
+
+   We use a screen-depth pixmap instead of a 1bpp bitmap so that if the fonts
+   were drawn with antialiasing, that is preserved.
  */
 static void
-bitmap_to_texture (Display *dpy, Pixmap p, int *wP, int *hP)
+bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int *wP, int *hP)
 {
   Bool mipmap_p = True;
   int ow = *wP;
@@ -68,7 +81,7 @@ bitmap_to_texture (Display *dpy, Pixmap p, int *wP, int *hP)
   int w2 = to_pow2 (ow);
   int h2 = to_pow2 (oh);
   int x, y;
-  XImage *image = XGetImage (dpy, p, 0, 0, ow, oh, ~0L, XYPixmap);
+  XImage *image = XGetImage (dpy, p, 0, 0, ow, oh, ~0L, ZPixmap);
   unsigned char *data = (unsigned char *) calloc (w2, (h2 + 1));
   unsigned char *out = data;
   GLuint iformat = GL_INTENSITY;
@@ -76,9 +89,14 @@ bitmap_to_texture (Display *dpy, Pixmap p, int *wP, int *hP)
   GLuint type = GL_UNSIGNED_BYTE;
 
   for (y = 0; y < h2; y++)
-    for (x = 0; x < w2; x++)
-      *out++ = (x >= ow || y >= oh ? 0 :
-                XGetPixel (image, x, y) ? 255 : 0);
+    for (x = 0; x < w2; x++) {
+      unsigned long pixel = (x >= ow || y >= oh ? 0 : XGetPixel (image, x, y));
+      /* instead of averaging all three channels, let's just use red,
+         and assume it was already grayscale. */
+      unsigned long r = pixel & visual->red_mask;
+      pixel = ((r >> 24) | (r >> 16) | (r >> 8) | r) & 0xFF;
+      *out++ = pixel;
+    }
   XDestroyImage (image);
   image = 0;
 
@@ -116,8 +134,12 @@ bitmap_to_texture (Display *dpy, Pixmap p, int *wP, int *hP)
 texture_font_data *
 load_texture_font (Display *dpy, char *res)
 {
+  Screen *screen = DefaultScreenOfDisplay (dpy);
+  Window root = RootWindowOfScreen (screen);
+  XWindowAttributes xgwa;
+
   texture_font_data *data = 0;
-  const char *font = get_string_resource (res, "Font");
+  char *font = get_string_resource (dpy, res, "Font");
   const char *def1 = "-*-times-bold-r-normal-*-240-*";
   const char *def2 = "-*-times-bold-r-normal-*-180-*";
   const char *def3 = "fixed";
@@ -126,15 +148,18 @@ load_texture_font (Display *dpy, char *res)
 
   check_gl_error ("stale texture font");
 
+  XGetWindowAttributes (dpy, root, &xgwa);
+
   if (!res || !*res) abort();
-  if (!font) font = def1;
+  if (!font) font = strdup(def1);
 
   f = XLoadQueryFont(dpy, font);
   if (!f && !!strcmp (font, def1))
     {
       fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
                progname, font, def1);
-      font = def1;
+      free (font);
+      font = strdup (def1);
       f = XLoadQueryFont(dpy, font);
     }
 
@@ -142,7 +167,8 @@ load_texture_font (Display *dpy, char *res)
     {
       fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
                progname, font, def2);
-      font = def2;
+      free (font);
+      font = strdup (def2);
       f = XLoadQueryFont(dpy, font);
     }
 
@@ -150,7 +176,8 @@ load_texture_font (Display *dpy, char *res)
     {
       fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
                progname, font, def3);
-      font = def3;
+      free (font);
+      font = strdup (def3);
       f = XLoadQueryFont(dpy, font);
     }
 
@@ -160,6 +187,9 @@ load_texture_font (Display *dpy, char *res)
                progname, font);
       exit (1);
     }
+
+  free (font);
+  font = 0;
 
   data = (texture_font_data *) calloc (1, sizeof(*data));
   data->dpy = dpy;
@@ -198,8 +228,6 @@ load_texture_font (Display *dpy, char *res)
          (modulo the "ntextures" scaling.)
          Make it square-ish, since GL likes dimensions to be powers of 2.
        */
-      Screen *screen = DefaultScreenOfDisplay (dpy);
-      Window root = RootWindowOfScreen (screen);
       XGCValues gcv;
       GC gc;
       Pixmap p;
@@ -213,13 +241,13 @@ load_texture_font (Display *dpy, char *res)
       data->cell_width  = cw;
       data->cell_height = ch;
 
-      p = XCreatePixmap (dpy, root, w, h, 1);
+      p = XCreatePixmap (dpy, root, w, h, xgwa.depth);
       gcv.font = f->fid;
-      gcv.foreground = 0;
-      gcv.background = 0;
+      gcv.foreground = BlackPixelOfScreen (xgwa.screen);
+      gcv.background = BlackPixelOfScreen (xgwa.screen);
       gc = XCreateGC (dpy, p, (GCFont|GCForeground|GCBackground), &gcv);
       XFillRectangle (dpy, p, gc, 0, 0, w, h);
-      XSetForeground (dpy, gc, 1);
+      XSetForeground (dpy, gc, WhitePixelOfScreen (xgwa.screen));
       for (i = 0; i < 256 / data->ntextures; i++)
         {
           int ii = (i + (which * 256 / data->ntextures));
@@ -256,14 +284,38 @@ load_texture_font (Display *dpy, char *res)
         GC gc2 = XCreateGC (dpy, win, 0, &gcv);
         XSetForeground (dpy, gc2, BlackPixel (dpy, 0));
         XSetBackground (dpy, gc2, WhitePixel (dpy, 0));
-        XCopyPlane (dpy, p, win, gc2, 0, 0, w, h, 0, 0, 1);
+        XCopyArea (dpy, p, win, gc2, 0, 0, w, h, 0, 0);
         XFreeGC (dpy, gc2);
         XSync(dpy, False);
         usleep (100000);
       }
 #endif
 
-      bitmap_to_texture (dpy, p, &data->tex_width, &data->tex_height);
+#if 0  /* debugging: write the bitmap to a pgm file */
+      {
+        char file[255];
+        XImage *image;
+        int x, y;
+        FILE *f;
+        sprintf (file, "/tmp/%02d.pgm", which);
+        image = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+        f = fopen (file, "w");
+        fprintf (f, "P5\n%d %d\n255\n", w, h);
+        for (y = 0; y < h; y++)
+          for (x = 0; x < w; x++) {
+            unsigned long pix = XGetPixel (image, x, y);
+            unsigned long r = (pix & xgwa.visual->red_mask);
+            r = ((r >> 24) | (r >> 16) | (r >> 8) | r);
+            fprintf (f, "%c", (char) r);
+          }
+        fclose (f);
+        XDestroyImage (image);
+        fprintf (stderr, "%s: wrote %s\n", progname, file);
+      }
+#endif
+
+      bitmap_to_texture (dpy, p, xgwa.visual, 
+                         &data->tex_width, &data->tex_height);
       XFreePixmap (dpy, p);
     }
 

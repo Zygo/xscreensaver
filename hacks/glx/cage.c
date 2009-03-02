@@ -77,27 +77,22 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_cage
-# define PROGCLASS			"Cage"
-# define HACK_INIT			init_cage
-# define HACK_DRAW			draw_cage
-# define HACK_RESHAPE		reshape
-# define cage_opts			xlockmore_opts
 # define DEFAULTS			"*delay:		25000   \n"			\
 							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
+# define refresh_cage 0
+# define reshape_cage 0
+# define cage_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
-
 #endif /* !STANDALONE */
 
 #ifdef MODE_cage
 
-
-#include <GL/glu.h>
 #include "e_textures.h"
 
-ModeSpecOpt cage_opts =
+ENTRYPOINT ModeSpecOpt cage_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -129,25 +124,16 @@ typedef struct {
 	GLXContext *glx_context;
 } cagestruct;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient[] =
-{0.0, 0.0, 0.0, 1.0};
-static float diffuse[] =
-{1.0, 1.0, 1.0, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] = {0.7, 0.7, 0.7, 1.0};
+static const float ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const float diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const float position0[] = {1.0, 1.0, 1.0, 0.0};
+static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
-static float MaterialWhite[] =
-{0.7, 0.7, 0.7, 1.0};
+static const float MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};
 
 static cagestruct *cage = (cagestruct *) NULL;
 
@@ -292,7 +278,7 @@ draw_impossiblecage(cagestruct * cp, int wire)
 	return True;
 }
 
-void
+static void
 reshape(ModeInfo * mi, int width, int height)
 {
 	cagestruct *cp = &cage[MI_SCREEN(mi)];
@@ -369,8 +355,8 @@ pinit(ModeInfo *mi)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
-void
-release_cage(ModeInfo * mi)
+ENTRYPOINT void
+release_cage (ModeInfo * mi)
 {
 	if (cage != NULL) {
 		int screen;
@@ -388,8 +374,8 @@ release_cage(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
-void
-init_cage(ModeInfo * mi)
+ENTRYPOINT void
+init_cage (ModeInfo * mi)
 {
 	cagestruct *cp;
 
@@ -411,8 +397,8 @@ init_cage(ModeInfo * mi)
 	}
 }
 
-void
-draw_cage(ModeInfo * mi)
+ENTRYPOINT void
+draw_cage (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
@@ -458,8 +444,9 @@ draw_cage(ModeInfo * mi)
 	cp->step += 0.025;
 }
 
-void
-change_cage(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void
+change_cage (ModeInfo * mi)
 {
 	cagestruct *cp = &cage[MI_SCREEN(mi)];
 
@@ -469,5 +456,8 @@ change_cage(ModeInfo * mi)
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
 	pinit(mi);
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("Cage", cage)
 
 #endif

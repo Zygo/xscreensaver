@@ -40,19 +40,13 @@
 
 
 #ifdef STANDALONE
-# define PROGCLASS						"gflux"
-# define HACK_INIT						init_gflux
-# define HACK_DRAW						draw_gflux
-# define HACK_RESHAPE					reshape_gflux
-# define HACK_HANDLE_EVENT				gflux_handle_event
-# define EVENT_MASK						PointerMotionMask
-# define gflux_opts						xlockmore_opts
-#define DEFAULTS                        "*delay:		20000   \n" \
-										"*showFPS:      False   \n" \
-                                        "*mode:         light" "\n" \
-                                        "*useSHM:      True     \n" 
+#define DEFAULTS                        "*delay:		20000\n" \
+										"*showFPS:      False\n" \
+                                        "*mode:         light\n" \
+                                        "*useSHM:       True \n" 
 
 
+# define refresh_gflux 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -74,34 +68,29 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
-
 #include <math.h>
 
 #include "grab-ximage.h"
 #include "gltrackball.h"
 
 
-static enum {wire=0,solid,light,checker,grab} _draw; /* draw style */
-static int _squares = 19;                                 /* grid size */
-static int _resolution = 4;                    /* wireframe resolution */
-static int _flat = 0;
+static enum {wire=0,solid,light,checker,grab} _draw;
 
-static float _speed = 0.05;
-static float _rotationx = 0.01;
-static float _rotationy = 0.0;
-static float _rotationz = 0.1;
-static float _zoom = 1.0;
+static int _squares;                        /* grid size */
+static int _resolution;                    /* wireframe resolution */
+static int _flat;
 
-static int _waves = 3;
-static int _waveChange = 50;
-static float _waveHeight = 1.0;
-static float _waveFreq = 3.0;
+static float _speed;
+static float _rotationx;
+static float _rotationy;
+static float _rotationz;
+static float _zoom;
 
-static trackball_state *trackball;
-static Bool button_down_p = False;
+static int _waves;
+static int _waveChange;
+static float _waveHeight;
+static float _waveFreq;
+
 
 #define WIDTH 320
 #define HEIGHT 240
@@ -159,7 +148,7 @@ static OptionStruct desc[] =
     {"-zoom num", "camera control (1.0)"},
 };
 
-ModeSpecOpt gflux_opts = {countof(opts), opts, countof(vars), vars, desc};
+ENTRYPOINT ModeSpecOpt gflux_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   gflux_description =
@@ -170,7 +159,7 @@ ModStruct   gflux_description =
 #endif
 
 /* structure for holding the gflux data */
-typedef struct {
+typedef struct gfluxstruct {
     ModeInfo *modeinfo;
     int screen_width, screen_height;
     GLXContext *glx_context;
@@ -187,42 +176,59 @@ typedef struct {
     GLfloat tex_yscale;
     XRectangle img_geom;
     int img_width, img_height;
-    void (*drawFunc)(void);
+    void (*drawFunc)(struct gfluxstruct *);
+
+    trackball_state *trackball;
+    Bool button_down_p;
+
+    double time;
+    double anglex;
+    double angley;
+    double anglez;
+
+    int counter;
+    int newWave;
+
+    Bool mipmap_p;
+    Bool waiting_for_image_p;
+
 } gfluxstruct;
-static gfluxstruct *gflux = NULL;
+static gfluxstruct *gfluxes = NULL;
 
 /* prototypes */
-void initLighting(void);
-void grabTexture(void);
-void createTexture(void);
-void displaySolid(void);            /* drawFunc implementations */
-void displayLight(void);
-void displayTexture(void);
-void displayWire(void);
-void calcGrid(void);
-double getGrid(double,double,double);
+static void initLighting(void);
+static void grabTexture(gfluxstruct *);
+static void createTexture(gfluxstruct *);
+static void displaySolid(gfluxstruct *);     /* drawFunc implementations */
+static void displayLight(gfluxstruct *);
+static void displayTexture(gfluxstruct *);
+static void displayWire(gfluxstruct *);
+static void calcGrid(gfluxstruct *);
+static double getGrid(gfluxstruct *,double,double,double);
 
 /* as macro for speed */
 /* could do with colour cycling here */
 /* void genColour(double);*/
 #define genColour(X) \
 {\
-    gflux->colour[0] = 0.0;\
-    gflux->colour[1] = 0.5+0.5*(X);\
-    gflux->colour[2] = 0.5-0.5*(X);\
+    gp->colour[0] = 0.0;\
+    gp->colour[1] = 0.5+0.5*(X);\
+    gp->colour[2] = 0.5-0.5*(X);\
 }
 
 /* BEGINNING OF FUNCTIONS */
 
 
-Bool
+ENTRYPOINT Bool
 gflux_handle_event (ModeInfo *mi, XEvent *event)
 {
+  gfluxstruct *gp = &gfluxes[MI_SCREEN(mi)];
+
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
     {
-      button_down_p = True;
-      gltrackball_start (trackball,
+      gp->button_down_p = True;
+      gltrackball_start (gp->trackball,
                          event->xbutton.x, event->xbutton.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -230,21 +236,21 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
     {
-      button_down_p = False;
+      gp->button_down_p = False;
       return True;
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
             event->xbutton.button == Button5))
     {
-      gltrackball_mousewheel (trackball, event->xbutton.button, 10,
+      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
                               !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
-           button_down_p)
+           gp->button_down_p)
     {
-      gltrackball_track (trackball,
+      gltrackball_track (gp->trackball,
                          event->xmotion.x, event->xmotion.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -255,31 +261,35 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
 
 
 static void
-userRot(void)
+userRot(gfluxstruct *gp)
 {
-  gltrackball_rotate (trackball);
+  gltrackball_rotate (gp->trackball);
 }
 
 /* draw the gflux once */
-void draw_gflux(ModeInfo * mi)
+ENTRYPOINT void draw_gflux(ModeInfo * mi)
 {
-    gfluxstruct *gp = &gflux[MI_SCREEN(mi)];
+    gfluxstruct *gp = &gfluxes[MI_SCREEN(mi)];
     Display    *display = MI_DISPLAY(mi);
     Window      window = MI_WINDOW(mi);
 
     if (!gp->glx_context) return;
 
+    /* Just keep running before the texture has come in. */
+    /* if (gp->waiting_for_image_p) return; */
+
     glXMakeCurrent(display, window, *(gp->glx_context));
 
-    calcGrid();
-    gflux->drawFunc();
+    calcGrid(gp);
+    gp->drawFunc(gp);
     if (mi->fps_p) do_fps (mi);
     glXSwapBuffers(display, window);
 }
 
 
 /* reset the projection matrix */
-void resetProjection(void) {
+static void resetProjection(void) 
+{
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-_zoom,_zoom,-0.8*_zoom,0.8*_zoom,2,6);
@@ -289,7 +299,7 @@ void resetProjection(void) {
 }
 
 /* Standard reshape function */
-void
+ENTRYPOINT void
 reshape_gflux(ModeInfo *mi, int width, int height)
 {
     glViewport( 0, 0, width, height );
@@ -298,39 +308,41 @@ reshape_gflux(ModeInfo *mi, int width, int height)
 
 
 /* main OpenGL initialization routine */
-void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
+static void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
+  gfluxstruct *gp = &gfluxes[MI_SCREEN(mi)];
+
   reshape_gflux(mi, width, height);
   glViewport( 0, 0, width, height ); 
 
-  gflux->tex_xscale = 1.0;  /* maybe changed later */
-  gflux->tex_yscale = 1.0;
+  gp->tex_xscale = 1.0;  /* maybe changed later */
+  gp->tex_yscale = 1.0;
 
   switch(_draw) {
     case solid :
-      gflux->drawFunc = (displaySolid);
+      gp->drawFunc = (displaySolid);
       glEnable(GL_DEPTH_TEST);
     break;
     case light :
-      gflux->drawFunc = (displayLight);
+      gp->drawFunc = (displayLight);
       glEnable(GL_DEPTH_TEST);
       initLighting();
 	break;
 	case checker :
-      gflux->drawFunc = (displayTexture);
+      gp->drawFunc = (displayTexture);
       glEnable(GL_DEPTH_TEST);
-      createTexture();
+      createTexture(gp);
       initLighting();
     break;
 	case grab :
-      gflux->drawFunc = (displayTexture);
+      gp->drawFunc = (displayTexture);
       glEnable(GL_DEPTH_TEST);
-      grabTexture();
+      grabTexture(gp);
       initLighting();
     break;
     case wire :
 	default :
-      gflux->drawFunc = (displayWire);
+      gp->drawFunc = (displayWire);
       glDisable(GL_DEPTH_TEST);
     break;
   }
@@ -342,22 +354,24 @@ void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 
 
 /* xgflux initialization routine */
-void init_gflux(ModeInfo * mi)
+ENTRYPOINT void init_gflux(ModeInfo * mi)
 {
     int screen = MI_SCREEN(mi);
     gfluxstruct *gp;
 
-    if (gflux == NULL) {
-        if ((gflux = (gfluxstruct *) 
+    if (gfluxes == NULL) {
+        if ((gfluxes = (gfluxstruct *) 
                  calloc(MI_NUM_SCREENS(mi), sizeof (gfluxstruct))) == NULL)
             return;
     }
-    gp = &gflux[screen];
+    gp = &gfluxes[screen];
 
-    trackball = gltrackball_init ();
+    gp->trackball = gltrackball_init ();
+
+    gp->time = frand(1000.0);  /* don't run two screens in lockstep */
 
     {
-      char *s = get_string_resource ("mode", "Mode");
+      char *s = get_string_resource (mi->dpy, "mode", "Mode");
       if (!s || !*s)                       _draw = wire;
       else if (!strcasecmp (s, "wire"))    _draw = wire;
       else if (!strcasecmp (s, "solid"))   _draw = solid;
@@ -385,19 +399,17 @@ void init_gflux(ModeInfo * mi)
 }
 
 /* cleanup code */
-void release_gflux(ModeInfo * mi)
+ENTRYPOINT void release_gflux(ModeInfo * mi)
 {
-    if(gflux->glx_context!=NULL) free(gflux->glx_context);
-    if (gflux != NULL) {
-        (void) free((void *) gflux);
-        gflux = NULL;
+    if (gfluxes != NULL) {
+      free((void *) gfluxes);
+      gfluxes = NULL;
     }
     FreeAllGL(mi);
 }
 
 
-
-void createTexture(void)
+static void createTexture(gfluxstruct *gp)
 {
   int size = 4;
   unsigned int data[] = { 0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA,
@@ -405,11 +417,11 @@ void createTexture(void)
                           0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA,
                           0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF };
 
-  gflux->tex_xscale = size;
-  gflux->tex_yscale = size;
+  gp->tex_xscale = size;
+  gp->tex_yscale = size;
 
-  glGenTextures (1, &gflux->texName);
-  glBindTexture (GL_TEXTURE_2D, gflux->texName);
+  glGenTextures (1, &gp->texName);
+  glBindTexture (GL_TEXTURE_2D, gp->texName);
 
   glTexImage2D (GL_TEXTURE_2D, 0, 3, size, size, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -422,41 +434,51 @@ void createTexture(void)
 }
 
 
-void
-grabTexture(void)
+static void
+image_loaded_cb (const char *filename, XRectangle *geometry,
+                 int image_width, int image_height, 
+                 int texture_width, int texture_height,
+                 void *closure)
 {
-  Bool mipmap_p = True;
-  int iw, ih, tw, th;
+  gfluxstruct *gp = (gfluxstruct *) closure;
+  gp->img_geom = *geometry;
 
-  if (MI_IS_WIREFRAME(gflux->modeinfo))
-    return;
-
-  if (! screen_to_texture (gflux->modeinfo->xgwa.screen,
-                           gflux->modeinfo->window, 0, 0, mipmap_p,
-                           NULL, &gflux->img_geom, &iw, &ih, &tw, &th))
-    exit (1);
-
-  gflux->tex_xscale =  (GLfloat) iw / tw;
-  gflux->tex_yscale = -(GLfloat) ih / th;
-  gflux->img_width  = iw;
-  gflux->img_height = ih;
+  gp->tex_xscale =  (GLfloat) image_width  / texture_width;
+  gp->tex_yscale = -(GLfloat) image_height / texture_height;
+  gp->img_width  = image_width;
+  gp->img_height = image_height;
    
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+                   (gp->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+
+  gp->waiting_for_image_p = False;
+}
+
+static void
+grabTexture(gfluxstruct *gp)
+{
+  if (MI_IS_WIREFRAME(gp->modeinfo))
+    return;
+
+  gp->waiting_for_image_p = True;
+  gp->mipmap_p = True;
+  load_texture_async (gp->modeinfo->xgwa.screen, gp->modeinfo->window,
+                      *gp->glx_context, 0, 0, gp->mipmap_p, gp->texName,
+                      image_loaded_cb, gp);
 }
 
 
-void initLighting(void)
+static void initLighting(void)
 {
-    static float ambientA[] = {0.0, 0.0, 0.0, 1.0};
-    static float diffuseA[] = {1.0, 1.0, 1.0, 1.0};
-    static float positionA[] = {5.0, 5.0, 15.0, 1.0};
+    static const float ambientA[]  = {0.0, 0.0, 0.0, 1.0};
+    static const float diffuseA[]  = {1.0, 1.0, 1.0, 1.0};
+    static const float positionA[] = {5.0, 5.0, 15.0, 1.0};
 
-    static float front_mat_shininess[] = {30.0};
-    static float front_mat_specular[] = {0.5, 0.5, 0.5, 1.0};
+    static const float front_mat_shininess[] = {30.0};
+    static const float front_mat_specular[]  = {0.5, 0.5, 0.5, 1.0};
 
-    static float mat_diffuse[] = {0.5, 0.5, 0.5, 1.0};
+    static const float mat_diffuse[] = {0.5, 0.5, 0.5, 1.0};
 
     glMaterialfv(GL_FRONT, GL_SHININESS, front_mat_shininess);
     glMaterialfv(GL_FRONT, GL_SPECULAR, front_mat_specular);
@@ -483,13 +505,8 @@ void initLighting(void)
 /* storing the values in an array   */
 /* is a posibility                  */
 /************************************/
-void displayTexture(void)
+static void displayTexture(gfluxstruct *gp)
 {
-    static double time = 0.0;
-    static double anglex = 0.0;
-    static double angley = 0.0;
-    static double anglez = 0.0;
-
     double x,y,u,v;
     double z;
     double dx = 2.0/((double)_squares);
@@ -498,19 +515,19 @@ void displayTexture(void)
     double du = 2.0/((double)_squares);
     double dv = 2.0/((double)_squares);
 
-    double xs = gflux->tex_xscale;
-    double ys = gflux->tex_yscale;
+    double xs = gp->tex_xscale;
+    double ys = gp->tex_yscale;
 
     double minx, miny, maxx, maxy;
     double minu, minv;
 
 #if 0
-    minx = (GLfloat) gflux->img_geom.x / gflux->img_width;
-    miny = (GLfloat) gflux->img_geom.y / gflux->img_height;
-    maxx = ((GLfloat) (gflux->img_geom.x + gflux->img_geom.width) /
-            gflux->img_width);
-    maxy = ((GLfloat) (gflux->img_geom.y + gflux->img_geom.height) /
-            gflux->img_height);
+    minx = (GLfloat) gp->img_geom.x / gp->img_width;
+    miny = (GLfloat) gp->img_geom.y / gp->img_height;
+    maxx = ((GLfloat) (gp->img_geom.x + gp->img_geom.width) /
+            gp->img_width);
+    maxy = ((GLfloat) (gp->img_geom.y + gp->img_geom.height) /
+            gp->img_height);
     minu = minx;
     minv = miny;
     minx = (minx * 2) - 1;
@@ -533,17 +550,17 @@ void displayTexture(void)
 	glMatrixMode (GL_MODELVIEW);
 
     glLoadIdentity();
-    userRot();
-    glRotatef(anglex,1,0,0);
-    glRotatef(angley,0,1,0);
-    glRotatef(anglez,0,0,1);
+    userRot(gp);
+    glRotatef(gp->anglex,1,0,0);
+    glRotatef(gp->angley,0,1,0);
+    glRotatef(gp->anglez,0,0,1);
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 
     clear_gl_error();
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glBindTexture(GL_TEXTURE_2D, gflux->texName);
+	glBindTexture(GL_TEXTURE_2D, gp->texName);
     check_gl_error("texture binding");
 
 	glColor3f(0.5,0.5,0.5);
@@ -551,20 +568,20 @@ void displayTexture(void)
     for(x = minx, u = minu; x < maxx - 0.01; x += dx, u += du) {
         glBegin(GL_QUAD_STRIP);
         for (y = miny, v = minv; y <= maxy + 0.01; y += dy, v += dv) {
-            z = getGrid(x,y,time);
+            z = getGrid(gp,x,y,gp->time);
             glTexCoord2f(u*xs,v*ys);
             glNormal3f(
-                getGrid(x+dx,y,time)-getGrid(x-dx,y,time),
-                getGrid(x,y+dy,time)-getGrid(x,y-dy,time),
+                getGrid(gp,x+dx,y,gp->time)-getGrid(gp, x-dx,y,gp->time),
+                getGrid(gp,x,y+dy,gp->time)-getGrid(gp, x,y-dy,gp->time),
                 1
             );
             glVertex3f(x,y,z);
 
-            z = getGrid(x+dx,y,time);
+            z = getGrid(gp,x+dx,y,gp->time);
             glTexCoord2f((u+du)*xs,v*ys);
             glNormal3f(
-                getGrid(x+dx+dx,y,time)-getGrid(x,y,time),
-                getGrid(x+dx,y+dy,time)-getGrid(x+dx,y-dy,time),
+                getGrid(gp,x+dx+dx,y,gp->time)-getGrid(gp, x,y,gp->time),
+                getGrid(gp,x+dx,y+dy,gp->time)-getGrid(gp, x+dx,y-dy,gp->time),
                 1
             );
             glVertex3f(x+dx,y,z);
@@ -581,111 +598,101 @@ void displayTexture(void)
     glBegin(GL_LINE_LOOP);
     y = miny;
     for (x = minx; x <= maxx; x += dx)
-      glVertex3f (x, y, getGrid (x, y, time));
+      glVertex3f (x, y, getGrid (gp, x, y, gp->time));
     x = maxx;
     for (y = miny; y <= maxy; y += dy)
-      glVertex3f (x, y, getGrid (x, y, time));
+      glVertex3f (x, y, getGrid (gp, x, y, gp->time));
     y = maxy;
     for (x = maxx; x >= minx; x -= dx)
-      glVertex3f (x, y, getGrid (x, y, time));
+      glVertex3f (x, y, getGrid (gp, x, y, gp->time));
     x = minx;
     for (y = maxy; y >= miny; y -= dy)
-      glVertex3f (x, y, getGrid (x, y, time));
+      glVertex3f (x, y, getGrid (gp, x, y, gp->time));
 
     glEnd();
     glEnable(GL_TEXTURE_2D);
 
-    if (! button_down_p) {
-      time -= _speed;
-      anglex -= _rotationx;
-      angley -= _rotationy;
-      anglez -= _rotationz;
+    if (! gp->button_down_p) {
+      gp->time -= _speed;
+      gp->anglex -= _rotationx;
+      gp->angley -= _rotationy;
+      gp->anglez -= _rotationz;
     }
 }
-void displaySolid(void)
+static void displaySolid(gfluxstruct *gp)
 {
-    static double time = 0.0;
-    static double anglex = 0.0;
-    static double angley = 0.0;
-    static double anglez = 0.0;
-
     double x,y;
     double z;
     double dx = 2.0/((double)_squares);
     double dy = 2.0/((double)_squares);
 
     glLoadIdentity();
-    glRotatef(anglex,1,0,0);
-    glRotatef(angley,0,1,0);
-    glRotatef(anglez,0,0,1);
-    userRot();
+    glRotatef(gp->anglex,1,0,0);
+    glRotatef(gp->angley,0,1,0);
+    glRotatef(gp->anglez,0,0,1);
+    userRot(gp);
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     for(x=-1;x<0.9999;x+=dx) {
         glBegin(GL_QUAD_STRIP);
         for(y=-1;y<=1;y+=dy) {
-            z = getGrid(x,y,time);
+            z = getGrid(gp, x,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glVertex3f(x,y,z);
 
-            z = getGrid(x+dx,y,time);
+            z = getGrid(gp, x+dx,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glVertex3f(x+dx,y,z);
         }
         glEnd();
     }
 
-    if (! button_down_p) {
-      time -= _speed;
-      anglex -= _rotationx;
-      angley -= _rotationy;
-      anglez -= _rotationz;
+    if (! gp->button_down_p) {
+      gp->time -= _speed;
+      gp->anglex -= _rotationx;
+      gp->angley -= _rotationy;
+      gp->anglez -= _rotationz;
     }
 
 }
 
-void displayLight(void)
+static void displayLight(gfluxstruct *gp)
 {
-    static double time = 0.0;
-    static double anglex = 0.0;
-    static double angley = 0.0;
-    static double anglez = 0.0;
-
     double x,y;
     double z;
     double dx = 2.0/((double)_squares);
     double dy = 2.0/((double)_squares);
 
     glLoadIdentity();
-    glRotatef(anglex,1,0,0);
-    glRotatef(angley,0,1,0);
-    glRotatef(anglez,0,0,1);
-    userRot();
+    glRotatef(gp->anglex,1,0,0);
+    glRotatef(gp->angley,0,1,0);
+    glRotatef(gp->anglez,0,0,1);
+    userRot(gp);
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     for(x=-1;x<0.9999;x+=dx) {
         glBegin(GL_QUAD_STRIP);
         for(y=-1;y<=1;y+=dy) {
-            z = getGrid(x,y,time);
+            z = getGrid(gp, x,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glNormal3f(
-                getGrid(x+dx,y,time)-getGrid(x-dx,y,time),
-                getGrid(x,y+dy,time)-getGrid(x,y-dy,time),
+                getGrid(gp, x+dx,y,gp->time)-getGrid(gp, x-dx,y,gp->time),
+                getGrid(gp, x,y+dy,gp->time)-getGrid(gp, x,y-dy,gp->time),
                 1
             );
             glVertex3f(x,y,z);
 
-            z = getGrid(x+dx,y,time);
+            z = getGrid(gp, x+dx,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glNormal3f(
-                getGrid(x+dx+dx,y,time)-getGrid(x,y,time),
-                getGrid(x+dx,y+dy,time)-getGrid(x+dx,y-dy,time),
+                getGrid(gp, x+dx+dx,y,gp->time)-getGrid(gp, x,y,gp->time),
+                getGrid(gp, x+dx,y+dy,gp->time)-getGrid(gp, x+dx,y-dy,gp->time),
                 1
             );
             glVertex3f(x+dx,y,z);
@@ -693,21 +700,16 @@ void displayLight(void)
         glEnd();
     }
 
-    if (! button_down_p) {
-      time -= _speed;
-      anglex -= _rotationx;
-      angley -= _rotationy;
-      anglez -= _rotationz;
+    if (! gp->button_down_p) {
+      gp->time -= _speed;
+      gp->anglex -= _rotationx;
+      gp->angley -= _rotationy;
+      gp->anglez -= _rotationz;
     }
 }
 
-void displayWire(void)
+static void displayWire(gfluxstruct *gp)
 {
-    static double time = 0.0;
-    static double anglex = 0.0;
-    static double angley = 0.0;
-    static double anglez = 0.0;
-
     double x,y;
     double z;
     double dx1 = 2.0/((double)(_squares*_resolution)) - 0.00001;
@@ -716,19 +718,19 @@ void displayWire(void)
     double dy2 = 2.0/((double)_squares) - 0.00001;
 
     glLoadIdentity();
-    glRotatef(anglex,1,0,0);
-    glRotatef(angley,0,1,0);
-    glRotatef(anglez,0,0,1);
-    userRot();
+    glRotatef(gp->anglex,1,0,0);
+    glRotatef(gp->angley,0,1,0);
+    glRotatef(gp->anglez,0,0,1);
+    userRot(gp);
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT);
 
     for(x=-1;x<=1;x+=dx2) {
         glBegin(GL_LINE_STRIP);
         for(y=-1;y<=1;y+=dy1) {
-            z = getGrid(x,y,time);
+            z = getGrid(gp, x,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glVertex3f(x,y,z);
         }
         glEnd();
@@ -736,46 +738,44 @@ void displayWire(void)
     for(y=-1;y<=1;y+=dy2) {
         glBegin(GL_LINE_STRIP);
         for(x=-1;x<=1;x+=dx1) {
-            z = getGrid(x,y,time);
+            z = getGrid(gp, x,y,gp->time);
             genColour(z);
-            glColor3fv(gflux->colour);
+            glColor3fv(gp->colour);
             glVertex3f(x,y,z);
         }
         glEnd();
     }
 
-    if (! button_down_p) {
-      time -= _speed;
-      anglex -= _rotationx;
-      angley -= _rotationy;
-      anglez -= _rotationz;
+    if (! gp->button_down_p) {
+      gp->time -= _speed;
+      gp->anglex -= _rotationx;
+      gp->angley -= _rotationy;
+      gp->anglez -= _rotationz;
     }
 }
 
 /* generates new ripples */
-void calcGrid(void)
+static void calcGrid(gfluxstruct *gp)
 {
-    static int counter=0;
     double tmp;
-    static int newWave;
 
-    if (button_down_p) return;
+    if (gp->button_down_p) return;
 
     tmp = 1.0/((double)_waveChange);
-    if(!(counter%_waveChange)) {
-        newWave = ((int)(counter*tmp))%_waves;
-        gflux->dispx[newWave] = -frand(1.0);
-        gflux->dispy[newWave] = -frand(1.0);
-        gflux->freq[newWave] = _waveFreq * frand(1.0);
-        gflux->wa[newWave] = 0.0;
+    if(!(gp->counter%_waveChange)) {
+        gp->newWave = ((int)(gp->counter*tmp))%_waves;
+        gp->dispx[gp->newWave] = -frand(1.0);
+        gp->dispy[gp->newWave] = -frand(1.0);
+        gp->freq[gp->newWave] = _waveFreq * frand(1.0);
+        gp->wa[gp->newWave] = 0.0;
     }
-    counter++;
-    gflux->wa[newWave] += tmp;
-    gflux->wa[(newWave+1)%_waves] -= tmp;
+    gp->counter++;
+    gp->wa[gp->newWave] += tmp;
+    gp->wa[(gp->newWave+1)%_waves] -= tmp;
 }
 
 /* returns a height for the grid given time and x,y space co-ords */
-double getGrid(double x, double y, double a)
+static double getGrid(gfluxstruct *gp, double x, double y, double a)
 {
     register int i;
     double retval=0.0;
@@ -783,12 +783,14 @@ double getGrid(double x, double y, double a)
 
     tmp = 1.0/((float)_waves);
     for(i=0;i<_waves;i++) {
-      retval += gflux->wa[i] * tmp * sin( gflux->freq[i]
-              * ( (x+gflux->dispx[i]) * (x+gflux->dispx[i]) 
-                + (y+gflux->dispy[i]) * (y+gflux->dispy[i]) +a ) );
+      retval += gp->wa[i] * tmp * sin( gp->freq[i]
+              * ( (x+gp->dispx[i]) * (x+gp->dispx[i]) 
+                + (y+gp->dispy[i]) * (y+gp->dispy[i]) +a ) );
     }
     return(retval);
 }
 
-#endif
 
+XSCREENSAVER_MODULE ("Gflux", gflux)
+
+#endif

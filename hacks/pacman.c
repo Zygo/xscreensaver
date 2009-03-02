@@ -48,21 +48,15 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 #	define MODE_pacman
-#	define PROGCLASS "Pacman"
-#	define HACK_INIT init_pacman
-#	define HACK_DRAW draw_pacman
-#	define pacman_opts xlockmore_opts
-#	define DEFAULTS "*delay: 10000 \n" \
-		 			"*size: 0 \n" \
- 					"*ncolors: 6 \n" \
-
+#	define DEFAULTS "*delay:   10000 \n" \
+		 			"*size:    0     \n" \
+ 					"*ncolors: 6     \n"
 #	define UNIFORM_COLORS
 #	define BRIGHT_COLORS
-
-#include <assert.h>
-#include <string.h>
-
+#   define reshape_pacman 0
+#   define pacman_handle_event 0
 #	include "xlockmore.h"   /* in xscreensaver distribution */
+#   include <assert.h>
 #else /* STANDALONE */
 #	include "xlock.h"       /* in xlockmore distribution */
 #endif /* STANDALONE */
@@ -73,16 +67,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 #include "pacman_ai.h"
 #include "pacman_level.h"
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-#define USE_PIXMAP
-#include "xpm-pixmap.h"
-#else
-#if defined(USE_PIXMAP)
-#undef USE_PIXMAP
-#endif
-#endif
-
-#if defined(USE_PIXMAP)
+#if defined(USE_PIXMAP) /* computed in pacman.h */
 # include "images/pacman/ghost-u1.xpm"
 # include "images/pacman/ghost-u2.xpm"
 # include "images/pacman/ghost-r1.xpm"
@@ -123,14 +108,13 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 static const struct
 {
     int dx, dy;
-} dirvecs[DIRVECS] = { {
--1, 0}, {
-0, 1}, {
-1, 0}, {
-0, -1}};
+} dirvecs[DIRVECS] = { { -1, 0},
+                       {  0, 1},
+                       {  1, 0},
+                       {  0, -1}};
 
 #ifdef DISABLE_INTERACTIVE
-ModeSpecOpt pacman_opts = {
+ENTRYPOINT ModeSpecOpt pacman_opts = {
     0,
     (XrmOptionDescRec *) NULL,
     0,
@@ -151,7 +135,7 @@ static OptionStruct desc[] = {
     {"-/+trackmouse", "turn on/off the tracking of the mouse"}
 };
 
-ModeSpecOpt pacman_opts =
+ENTRYPOINT ModeSpecOpt pacman_opts =
     { sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars,
 desc };
 #endif
@@ -173,7 +157,6 @@ ModStruct pacman_description = {
 
 Bool trackmouse;
 pacmangamestruct *pacmangames = (pacmangamestruct *) NULL;
-
 
 static void repopulate (ModeInfo * mi);
 static void drawlevel (ModeInfo * mi);
@@ -333,7 +316,7 @@ repopulate (ModeInfo * mi)
 {
     pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     pp->pacman.deaths = 0;
-    reset_level (mi, createnewlevel (mi), True);
+    reset_level (mi, createnewlevel (pp), True);
     check_death (mi, pp);
 }
 
@@ -502,7 +485,7 @@ print_ghost_stats (ModeInfo *mi, ghoststruct *g , int ghost_num)
 static void
 print_pac_stats ( ModeInfo *mi, pacmanstruct *pac )
 {
-    static char last_pac_stat[1024] = "\0";
+    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     char s[1024];
     sprintf (s, "Pacman, Deaths: %d", pac->deaths );
     switch ( pac->aistate ){
@@ -522,9 +505,9 @@ print_pac_stats ( ModeInfo *mi, pacmanstruct *pac )
         sprintf(s, "%s ps_dieing",s );
         break;
     }
-    draw_string ( mi, 0, 200, last_pac_stat, 0x000000);
+    draw_string ( mi, 0, 200, pp->last_pac_stat, 0x000000);
     draw_string ( mi, 0, 200, s, 0xff0000);
-    strcpy(last_pac_stat, s );
+    strcpy(pp->last_pac_stat, s );
 }
 
 #endif
@@ -623,7 +606,9 @@ drawlevelblock (ModeInfo * mi, pacmangamestruct * pp,
     if (pp->ys % 2 == 1)
         dy = -1;
 
+#ifndef HAVE_COCOA
     XSetFillStyle (display, pp->stippledGC, FillSolid);
+#endif /* !HAVE_COCOA */
     XSetLineAttributes (display, pp->stippledGC, pp->wallwidth,
                         LineSolid, CapRound, JoinMiter);
 
@@ -767,11 +752,6 @@ draw_pacman_sprite (ModeInfo * mi)
     unsigned int dir = 0;
     int old_mask_dir = 0;
     int old_mask_mouth = 0;
-    static int mouth = 0;
-    static int mouth_delay = 0;
-    static int open_mouth = 0;
-    static int death_frame = 0;
-    static int death_delay = 0;
     Pixmap old_mask, new_mask;
     Pixmap pacman;
 
@@ -792,42 +772,42 @@ draw_pacman_sprite (ModeInfo * mi)
     dir = (ABS (pp->pacman.cfactor) * (2 - pp->pacman.cfactor) +
            ABS (pp->pacman.rfactor) * (1 + pp->pacman.rfactor)) % 4;
 
-    if (mouth_delay == MAX_MOUTH_DELAY) {
-        if (mouth == (MAXMOUTH - 1) || mouth == 0) {
-            open_mouth = !open_mouth;
+    if (pp->pm_mouth_delay == MAX_MOUTH_DELAY) {
+        if (pp->pm_mouth == (MAXMOUTH - 1) || pp->pm_mouth == 0) {
+            pp->pm_open_mouth = !pp->pm_open_mouth;
         }
-        open_mouth ? mouth++ : mouth--;
-        mouth_delay = 0;
+        pp->pm_open_mouth ? pp->pm_mouth++ : pp->pm_mouth--;
+        pp->pm_mouth_delay = 0;
     }
     else {
-        mouth_delay++;
+        pp->pm_mouth_delay++;
     }
     
     if (pp->pacman.aistate == ps_dieing){
-        if (death_frame >= PAC_DEATH_FRAMES) {
+        if (pp->pm_death_frame >= PAC_DEATH_FRAMES) {
             pp->pacman.aistate = ps_eating;
-            death_frame = 0;
-            death_delay = 0;
+            pp->pm_death_frame = 0;
+            pp->pm_death_delay = 0;
             reset_level (mi, 0, False);
             return;
         }
         else {
             old_mask   = pp->pacmanMask[0][0];
             new_mask   = pp->pacmanMask[0][0];
-            pacman     = pp->pacman_ds[death_frame];
-            if (death_delay == MAX_DEATH_DELAY){
-                death_frame++;
-                death_delay = 0;
+            pacman     = pp->pacman_ds[pp->pm_death_frame];
+            if (pp->pm_death_delay == MAX_DEATH_DELAY){
+                pp->pm_death_frame++;
+                pp->pm_death_delay = 0;
             }
             else{
-                death_delay++;
+                pp->pm_death_delay++;
             }
         }
     }
     else{
         old_mask = pp->pacmanMask[old_mask_dir][old_mask_mouth];
-        new_mask = pp->pacmanMask[dir][mouth];
-        pacman   = pp->pacmanPixmap[dir][mouth];
+        new_mask = pp->pacmanMask[dir][pp->pm_mouth];
+        pacman   = pp->pacmanPixmap[dir][pp->pm_mouth];
     }
 
     XSetForeground (display, pp->stippledGC, MI_BLACK_PIXEL (mi));
@@ -849,7 +829,7 @@ draw_pacman_sprite (ModeInfo * mi)
         pp->pacman.oldrf = pp->pacman.rf;
     }
     old_mask_dir = dir;
-    old_mask_mouth = mouth;
+    old_mask_mouth = pp->pm_mouth;
 }
 
 #if 0
@@ -877,9 +857,7 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
-    static int wag = 0;
 #define MAX_WAG_COUNT 50
-    static int wag_count = 0;
     unsigned int dir = 0;
     unsigned int fs  = 0; /*flash scared*/
     Pixmap g_pix; /*ghost pixmap*/
@@ -895,7 +873,7 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
     /* Choose the pixmap */
     switch (pp->ghosts[ghost].aistate){
     case hiding:
-        g_pix = pp->s_ghostPixmap[fs][wag];
+        g_pix = pp->s_ghostPixmap[fs][pp->gh_wag];
         break;
     case goingin:
         g_pix = pp->ghostEyes[dir];
@@ -917,7 +895,7 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
                 
         break;
     default:
-        g_pix = pp->ghostPixmap[ghost][dir][wag];
+        g_pix = pp->ghostPixmap[ghost][dir][pp->gh_wag];
     }
 
     pp->ghosts[ghost].cf =
@@ -966,9 +944,9 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
     if (pp->pacman.aistate != ps_dieing) {
         pp->ghosts[ghost].oldcf = pp->ghosts[ghost].cf;
         pp->ghosts[ghost].oldrf = pp->ghosts[ghost].rf;
-        if (wag_count++ == MAX_WAG_COUNT) {
-            wag = !wag;
-            wag_count = 0;
+        if (pp->gh_wag_count++ == MAX_WAG_COUNT) {
+            pp->gh_wag = !pp->gh_wag;
+            pp->gh_wag_count = 0;
         }
     }
 }
@@ -994,31 +972,20 @@ draw_pacman_sprite (ModeInfo * mi)
 
     XSetForeground (display, pp->stippledGC, MI_BLACK_PIXEL (mi));
     if (pp->pacman.oldcf != NOWHERE && pp->pacman.oldrf != NOWHERE) {
-#ifdef FLASH
-        XFillRectangle (display, window, pp->stippledGC,
-                        pp->pacman.oldcf, pp->pacman.oldrf,
-                        pp->spritexs, pp->spriteys);
-#else
+
         ERASE_IMAGE (display, window, pp->stippledGC,
                      pp->pacman.cf, pp->pacman.rf,
                      pp->pacman.oldcf, pp->pacman.oldrf,
                      pp->spritexs, pp->spriteys);
-#endif
     }
 
-    XSetTSOrigin (display, pp->stippledGC, pp->pacman.cf, pp->pacman.rf);
     if (MI_NPIXELS (mi) > 2)
         XSetForeground (display, pp->stippledGC, MI_PIXEL (mi, YELLOW));
     else
         XSetForeground (display, pp->stippledGC, MI_WHITE_PIXEL (mi));
 
-    XSetStipple (display, pp->stippledGC,
-                 pp->pacmanPixmap[dir][pp->pacman.mouthstage]);
-#ifdef FLASH
-    XSetFillStyle (display, pp->stippledGC, FillStippled);
-#else
     XSetFillStyle (display, pp->stippledGC, FillOpaqueStippled);
-#endif
+
     if (pp->xs < 2 || pp->ys < 2)
         XDrawPoint (display, window, pp->stippledGC,
                     pp->pacman.cf, pp->pacman.rf);
@@ -1059,37 +1026,24 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
 
     if (pp->ghosts[ghost].oldcf != NOWHERE ||
         pp->ghosts[ghost].oldrf != NOWHERE) {
-#ifdef FLASH
-        XFillRectangle (display, window,
-                        pp->stippledGC, pp->ghosts[ghost].oldcf,
-                        pp->ghosts[ghost].oldrf, pp->spritexs, pp->spriteys);
-#else
+
         ERASE_IMAGE (display, window, pp->stippledGC,
                      pp->ghosts[ghost].cf, pp->ghosts[ghost].rf,
                      pp->ghosts[ghost].oldcf, pp->ghosts[ghost].oldrf,
                      pp->spritexs, pp->spriteys);
-#endif
     }
 
     drawlevelblock (mi, pp,
                     (unsigned int) pp->ghosts[ghost].col,
                     (unsigned int) pp->ghosts[ghost].row);
 
-    XSetTSOrigin (display, pp->stippledGC,
-                  pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
-
     if (MI_NPIXELS (mi) > 2)
         XSetForeground (display, pp->stippledGC, MI_PIXEL (mi, GREEN));
     else
         XSetForeground (display, pp->stippledGC, MI_WHITE_PIXEL (mi));
 
-    XSetStipple (display, pp->stippledGC, pp->ghostPixmap[0][0][0]);
-
-#ifdef FLASH
-    XSetFillStyle (display, pp->stippledGC, FillStippled);
-#else
     XSetFillStyle (display, pp->stippledGC, FillOpaqueStippled);
-#endif
+
     if (pp->xs < 2 || pp->ys < 2)
         XDrawPoint (display, window, pp->stippledGC,
                     pp->ghosts[ghost].cf, pp->ghosts[ghost].rf);
@@ -1129,24 +1083,22 @@ static void
 flash_bonus_dots (ModeInfo * mi)
 {
 #define MAX_FLASH_COUNT 25
-    static int flash_count = 0;
-    static int on = 0;
     pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     int i, x, y;
     for (i = 0; i < NUM_BONUS_DOTS; i++) {
-        if (!bonus_dot_eaten (i)) {
-            bonus_dot_pos (i, &x, &y);
+        if (!bonus_dot_eaten (pp, i)) {
+            bonus_dot_pos (pp, i, &x, &y);
             if (ghost_over (mi, x, y))
                 continue;
-            if (on)
+            if (pp->bd_on)
                 draw_bonus_dot (mi, pp, x, y);
             else
                 clear_bonus_dot (mi, pp, x, y);
         }
     }
-    if (flash_count-- == 0) {
-        flash_count = MAX_FLASH_COUNT;
-        on = !on;
+    if (pp->bd_flash_count-- == 0) {
+        pp->bd_flash_count = MAX_FLASH_COUNT;
+        pp->bd_on = !pp->bd_on;
     }
 }
 
@@ -1159,9 +1111,9 @@ ate_bonus_dot (ModeInfo * mi)
     unsigned int ret = 0;
     int idx = 0;
     pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
-    if (is_bonus_dot (pp->pacman.col, pp->pacman.row, &idx)) {
-        ret = !bonus_dot_eaten (idx);
-        eat_bonus_dot (idx);
+    if (is_bonus_dot (pp, pp->pacman.col, pp->pacman.row, &idx)) {
+        ret = !bonus_dot_eaten (pp, idx);
+        eat_bonus_dot (pp, idx);
     }
     return ret;
 }
@@ -1215,12 +1167,8 @@ pacman_tick (ModeInfo * mi)
 #define START_FLASH 200
 #define FLASH_COUNT 25
 
-    Display *display = MI_DISPLAY (mi);
     pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     unsigned int ghost;
-    static int ghost_scared_timer = 0;
-    static int flash_timer = 0;
-    static PacmanState old_pac_state = chasing;
 #if 0
     draw_grid (mi);
 #endif
@@ -1236,19 +1184,19 @@ pacman_tick (ModeInfo * mi)
     draw_pacman_sprite (mi);
     flash_bonus_dots (mi);
     if (ate_bonus_dot (mi)) {
-        ghost_scared_timer = (random () % 100) + DEFAULT_SCARED_TIME;
+        pp->ghost_scared_timer = (random () % 100) + DEFAULT_SCARED_TIME;
         ghost_scared (mi);
     }
 
-    if (ghost_scared_timer > 0) {
-        if (--ghost_scared_timer == 0)
+    if (pp->ghost_scared_timer > 0) {
+        if (--pp->ghost_scared_timer == 0)
             ghost_not_scared (mi);
-        else if (ghost_scared_timer <= START_FLASH) {
-            if (flash_timer <= 0) {
-                flash_timer = FLASH_COUNT;
+        else if (pp->ghost_scared_timer <= START_FLASH) {
+            if (pp->flash_timer <= 0) {
+                pp->flash_timer = FLASH_COUNT;
                 ghost_flash_scared (mi);
             }
-            flash_timer--;
+            pp->flash_timer--;
         }
     }
 
@@ -1261,13 +1209,11 @@ pacman_tick (ModeInfo * mi)
     if (pp->dotsleft == 0 )
         repopulate (mi);
     else if (pp->pacman.deaths >= 3){
-        if (old_pac_state == ps_dieing && pp->pacman.aistate != ps_dieing)
+        if (pp->old_pac_state == ps_dieing && pp->pacman.aistate != ps_dieing)
             repopulate (mi);
     }
 
-    old_pac_state = pp->pacman.aistate;
-
-    (void) XFlush (display);
+    pp->old_pac_state = pp->pacman.aistate;
 }
 
 
@@ -1342,22 +1288,22 @@ load_ghost_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
 {
     pacmangamestruct *pp = *ps;
     Display *display = *dpy;
-    static char *colors[] = {
-        ".	c #FF0000",     /*Red */
+    char *colors[] = {
+        ".	c #FF0000",         /*Red */
         ".  c #00FFDE",         /*Blue */
         ".  c #FFB847",         /*Orange */
         ".  c #FFB8DE",         /*Pink */
     };
 
-    static char **bits[] = {
+    char **bits[] = {
         ghost_u1_xpm, ghost_u2_xpm, ghost_r1_xpm, ghost_r2_xpm,
         ghost_d1_xpm, ghost_d2_xpm, ghost_l1_xpm, ghost_l2_xpm
     };
-    static char **s_bits[] = {
+    char * const *s_bits[] = {
         ghost_s1_xpm, ghost_s2_xpm,
         ghost_sf1_xpm, ghost_sf2_xpm
     };
-    static char **e_bits[] = {
+    char * const *e_bits[] = {
         eyes_u_xpm, eyes_r_xpm, eyes_d_xpm, eyes_l_xpm
     };
         
@@ -1461,14 +1407,14 @@ load_pacman_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
     pacmangamestruct *pp = *ps;
     Display *display = *dpy;
 
-    static char **bits[] = {
+    char **bits[] = {
         pacman_0_xpm, pacman_u1_xpm, pacman_u2_xpm,
         pacman_0_xpm, pacman_r1_xpm, pacman_r2_xpm,
         pacman_0_xpm, pacman_d1_xpm, pacman_d2_xpm,
         pacman_0_xpm, pacman_l1_xpm, pacman_l2_xpm
     };
  
-    static char **ds_bits[] = {
+    char * const *ds_bits[] = {
         pacman_ds1_xpm, pacman_ds2_xpm, pacman_ds3_xpm, pacman_ds4_xpm,
         pacman_ds5_xpm, pacman_ds6_xpm, pacman_ds7_xpm, pacman_ds8_xpm
     };
@@ -1534,7 +1480,7 @@ load_pacman_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
 #endif /* USE_PIXMAP */
 
 /* Hook function, sets state to initial position. */
-void
+ENTRYPOINT void
 init_pacman (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
@@ -1617,6 +1563,7 @@ init_pacman (ModeInfo * mi)
     pp->spriteys = MAX (pp->ys + (pp->ys >> 1) - 1, 1);
     pp->spritedx = (pp->xs - pp->spritexs) >> 1;
     pp->spritedy = (pp->ys - pp->spriteys) >> 1;
+    pp->old_pac_state = chasing;
 
     if (!pp->stippledGC) {
         gcv.foreground = MI_BLACK_PIXEL (mi);
@@ -1628,6 +1575,10 @@ init_pacman (ModeInfo * mi)
             return;
         }
     }
+
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (display, pp->stippledGC, False);
+#endif
 
 #if defined(USE_PIXMAP)
     load_ghost_pixmaps (&display, window, &pp);
@@ -1758,7 +1709,7 @@ init_pacman (ModeInfo * mi)
 
 /* Callback function called for each tick.  This is the complete machinery of
    everything that moves. */
-void
+ENTRYPOINT void
 draw_pacman (ModeInfo * mi)
 {
     unsigned int g;
@@ -1809,7 +1760,7 @@ draw_pacman (ModeInfo * mi)
 }
 
 /* Releases resources. */
-void
+ENTRYPOINT void
 release_pacman (ModeInfo * mi)
 {
     if (pacmangames != NULL) {
@@ -1823,19 +1774,24 @@ release_pacman (ModeInfo * mi)
 }
 
 /* Refresh current level. */
-void
+ENTRYPOINT void
 refresh_pacman (ModeInfo * mi)
 {
     drawlevel (mi);
     pacman_tick (mi);
 }
 
+#ifndef STANDALONE
 /* Callback to change level. */
-void
+ENTRYPOINT void
 change_pacman (ModeInfo * mi)
 {
     MI_CLEARWINDOW (mi);
     repopulate (mi);
 }
+#endif /* !STANDALONE */
+
+
+XSCREENSAVER_MODULE ("Pacman", pacman)
 
 #endif /* MODE_pacman */

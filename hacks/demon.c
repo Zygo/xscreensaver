@@ -46,23 +46,23 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
   Triangle 3, 9, or 12
 */
 
+#ifndef HAVE_COCOA
+# define DO_STIPPLE
+#endif
+
 #ifdef STANDALONE
-#define MODE_demon
-#define PROGCLASS "Demon"
-#define HACK_INIT init_demon
-#define HACK_DRAW draw_demon
-#define demon_opts xlockmore_opts
-#define DEFAULTS "*delay: 50000 \n" \
- "*count: 0 \n" \
- "*cycles: 1000 \n" \
- "*size: -7 \n" \
- "*ncolors: 64 \n" \
-
-#define UNIFORM_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_demon
+# define DEFAULTS	"*delay:   50000 \n" \
+					"*count:   0     \n" \
+					"*cycles:  1000  \n" \
+					"*size:    -7    \n" \
+					"*ncolors: 64    \n"
+# define reshape_demon 0
+# define demon_handle_event 0
+# define UNIFORM_COLORS
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 #include "automata.h"
 
@@ -89,7 +89,7 @@ static OptionStruct desc[] =
 	{"-neighbors num", "squares 4 or 8, hexagons 6, triangles 3, 9 or 12"}
 };
 
-ModeSpecOpt demon_opts =
+ENTRYPOINT ModeSpecOpt demon_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -165,7 +165,9 @@ drawcell(ModeInfo * mi, int col, int row, unsigned char state)
 	} else {
 		XGCValues   gcv;
 
+#ifdef DO_STIPPLE
 		gcv.stipple = dp->pixmaps[(state - 1) % (NUMSTIPPLES - 1)];
+#endif /* DO_STIPPLE */
 		gcv.foreground = MI_WHITE_PIXEL(mi);
 		gcv.background = MI_BLACK_PIXEL(mi);
 		XChangeGC(MI_DISPLAY(mi), dp->stippledGC,
@@ -328,7 +330,9 @@ draw_state(ModeInfo * mi, int state)
 	} else {
 		XGCValues   gcv;
 
+#ifdef DO_STIPPLE
 		gcv.stipple = dp->pixmaps[(state - 1) % (NUMSTIPPLES - 1)];
+#endif /* DO_STIPPLE */
 		gcv.foreground = MI_WHITE_PIXEL(mi);
 		gcv.background = MI_BLACK_PIXEL(mi);
 		XChangeGC(MI_DISPLAY(mi), dp->stippledGC,
@@ -401,7 +405,6 @@ draw_state(ModeInfo * mi, int state)
 		}
 	}
 	free_state(dp, state);
-	XFlush(MI_DISPLAY(mi));
 	return True;
 }
 
@@ -422,11 +425,10 @@ RandomSoup(ModeInfo * mi)
 	}
 }
 
-void
-init_demon(ModeInfo * mi)
+ENTRYPOINT void
+init_demon (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
 	int         size = MI_SIZE(mi), nk;
 	demonstruct *dp;
 
@@ -439,8 +441,10 @@ init_demon(ModeInfo * mi)
 
 	dp->generation = 0;
 	dp->redrawing = 0;
+#ifdef DO_STIPPLE
 	if (MI_NPIXELS(mi) < NUMSTIPPLES) {
-		if (dp->stippledGC == None) {
+          Window window = MI_WINDOW(mi);
+          if (dp->stippledGC == None) {
 			XGCValues   gcv;
 
 			gcv.fill_style = FillOpaqueStippled;
@@ -458,6 +462,7 @@ init_demon(ModeInfo * mi)
 			}
 		}
 	}
+#endif /* DO_STIPPLE */
 	free_struct(dp);
 
 	for (nk = 0; nk < NEIGHBORKINDS; nk++) {
@@ -588,8 +593,8 @@ init_demon(ModeInfo * mi)
 	RandomSoup(mi);
 }
 
-void
-draw_demon(ModeInfo * mi)
+ENTRYPOINT void
+draw_demon (ModeInfo * mi)
 {
 	int         i, j, k, l, mj = 0, ml;
 	demonstruct *dp;
@@ -938,8 +943,10 @@ draw_demon(ModeInfo * mi)
 		}
 	}
 }
-void
-release_demon(ModeInfo * mi)
+
+
+ENTRYPOINT void
+release_demon (ModeInfo * mi)
 {
 	if (demons != NULL) {
 		int         screen;
@@ -951,8 +958,8 @@ release_demon(ModeInfo * mi)
 	}
 }
 
-void
-refresh_demon(ModeInfo * mi)
+ENTRYPOINT void
+refresh_demon (ModeInfo * mi)
 {
 	demonstruct *dp;
 
@@ -963,5 +970,7 @@ refresh_demon(ModeInfo * mi)
 	dp->redrawing = 1;
 	dp->redrawpos = 0;
 }
+
+XSCREENSAVER_MODULE ("Demon", demon)
 
 #endif /* MODE_demon */

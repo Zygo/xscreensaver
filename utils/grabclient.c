@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,11 +22,14 @@
 #include "grabscreen.h"
 #include "resources.h"
 
-#include "vroot.h"
-#include <X11/Xatom.h>
-
-#include <X11/Intrinsic.h>   /* for XtInputId, etc */
-
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+# include "colorbars.h"
+#else /* !HAVE_COCOA -- real Xlib */
+# include "vroot.h"
+# include <X11/Xatom.h>
+# include <X11/Intrinsic.h>   /* for XtInputId, etc */
+#endif /* !HAVE_COCOA */
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -37,8 +40,10 @@
 
 
 extern char *progname;
-extern XtAppContext app;
 
+static void print_loading_msg (Screen *, Window);
+
+#ifndef HAVE_COCOA
 
 static Bool error_handler_hit_p = False;
 
@@ -100,7 +105,7 @@ xscreensaver_window_p (Display *dpy, Window window)
    explain.
  */
 Bool
-use_subwindow_mode_p(Screen *screen, Window window)
+use_subwindow_mode_p (Screen *screen, Window window)
 {
   if (window != VirtualRootWindowOfScreen(screen))
     return False;
@@ -165,6 +170,7 @@ checkerboard (Screen *screen, Drawable drawable)
         XFillRectangle (dpy, drawable, gc, x,      y,      size, size);
         XFillRectangle (dpy, drawable, gc, x+size, y+size, size, size);
       }
+  XFreeGC (dpy, gc);
 }
 
 
@@ -182,10 +188,11 @@ get_name (Display *dpy, Window window)
                           &name)
       == Success
       && type != None)
-    return strdup((char *) name);
+    return (char *) name;
   else
     return 0;
 }
+
 
 static Bool
 get_geometry (Display *dpy, Window window, XRectangle *ret)
@@ -205,6 +212,7 @@ get_geometry (Display *dpy, Window window, XRectangle *ret)
       && type != None)
     {
       int flags = XParseGeometry ((char *) name, &x, &y, &w, &h);
+      free (name);
       /* Require all four, and don't allow negative positions. */
       if (flags == (XValue|YValue|WidthValue|HeightValue))
         {
@@ -220,7 +228,6 @@ get_geometry (Display *dpy, Window window, XRectangle *ret)
   else
     return False;
 }
-
 
 
 static void
@@ -250,7 +257,6 @@ hack_subproc_environment (Display *dpy)
    parse arguments?  I'm not sure.  But using fork() and execvp()
    here seems to close the race.
  */
-
 static void
 exec_simple_command (const char *command)
 {
@@ -266,6 +272,7 @@ exec_simple_command (const char *command)
 
   execvp (av[0], av);	/* shouldn't return. */
 }
+
 
 static void
 fork_exec_wait (const char *command)
@@ -303,6 +310,7 @@ typedef struct {
   FILE *read_pipe;
   FILE *write_pipe;
   XtInputId pipe_id;
+  pid_t pid;
 } grabclient_data;
 
 
@@ -316,6 +324,7 @@ fork_exec_cb (const char *command,
                                 void *closure),
               void *closure)
 {
+  XtAppContext app = XtDisplayToApplicationContext (DisplayOfScreen (screen));
   grabclient_data *data;
   char buf [255];
   pid_t forked;
@@ -350,7 +359,8 @@ fork_exec_cb (const char *command,
                    (XtPointer) (XtInputReadMask | XtInputExceptMask),
                    finalize_cb, (XtPointer) data);
 
-  switch ((int) (forked = fork ()))
+  forked = fork ();
+  switch ((int) forked)
     {
     case -1:
       sprintf (buf, "%s: couldn't fork", progname);
@@ -379,6 +389,7 @@ fork_exec_cb (const char *command,
     default:					/* parent */
       fclose (data->write_pipe);
       data->write_pipe = 0;
+      data->pid = forked;
       break;
     }
 }
@@ -405,6 +416,14 @@ finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
   if (name) free (name);
 
   fclose (data->read_pipe);
+
+  if (data->pid)	/* reap zombies */
+    {
+      int status;
+      waitpid (data->pid, &status, 0);
+      data->pid = 0;
+    }
+
   memset (data, 0, sizeof (*data));
   free (data);
 }
@@ -423,7 +442,7 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
                      XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
-  char *grabber = get_string_resource ("desktopGrabber", "DesktopGrabber");
+  char *grabber = get_string_resource(dpy, "desktopGrabber", "DesktopGrabber");
   char *cmd;
   char id[200];
 
@@ -448,10 +467,14 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
      then the game is already over.
    */
   sprintf (cmd, grabber, id);
+  free (grabber);
+  grabber = 0;
 
   /* In case "cmd" fails, leave some random image on the screen, not just
      black or white, so that it's more obvious what went wrong. */
   checkerboard (screen, drawable);
+  if (window == drawable)
+    print_loading_msg (screen, window);
 
   XSync (dpy, True);
   hack_subproc_environment (dpy);
@@ -479,69 +502,336 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   XSync (dpy, True);
 }
 
+#else  /* HAVE_COCOA */
+
+/* Gets the name of an image file to load by running xscreensaver-getimage-file
+   at the end of a pipe.  This can be very slow!
+ */
+static FILE *
+open_image_name_pipe (const char *dir)
+{
+  char *cmd = malloc (strlen(dir) * 2 + 100);
+  char *s;
+  strcpy (cmd, "xscreensaver-getimage-file --name ");
+  s = cmd + strlen (cmd);
+  while (*dir) {
+    char c = *dir++;
+    /* put a backslash in front of any character that might confuse sh. */
+    if (! ((c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') ||
+           c == '.' || c == '_' || c == '-' || c == '+' || c == '/'))
+      *s++ = '\\';
+    *s++ = c;
+  }
+  *s = 0;
+
+  FILE *pipe = popen (cmd, "r");
+  free (cmd);
+  return pipe;
+}
+
+
+struct pipe_closure {
+  FILE *pipe;
+  XtInputId id;
+  Screen *screen;
+  Window xwindow;
+  Drawable drawable;
+  void (*callback) (Screen *, Window, Drawable,
+                    const char *name, XRectangle *geom,
+                    void *closure);
+  void *closure;
+};
+
+
+static void
+pipe_cb (XtPointer closure, int *source, XtInputId *id)
+{
+  /* This is not called from a signal handler, so doing stuff here is fine.
+   */
+  struct pipe_closure *clo2 = (struct pipe_closure *) closure;
+  char buf[10240];
+  fgets (buf, sizeof(buf)-1, clo2->pipe);
+  pclose (clo2->pipe);
+  clo2->pipe = 0;
+  XtRemoveInput (clo2->id);
+  clo2->id = 0;
+
+  /* strip trailing newline */
+  int L = strlen(buf);
+  while (L > 0 && (buf[L-1] == '\r' || buf[L-1] == '\n'))
+    buf[--L] = 0;
+
+  Display *dpy = DisplayOfScreen (clo2->screen);
+  XRectangle geom;
+
+  if (! osx_load_image_file (clo2->screen, clo2->xwindow, clo2->drawable,
+                             buf, &geom)) {
+    /* unable to load image - draw colorbars 
+     */
+    XWindowAttributes xgwa;
+    XGetWindowAttributes (dpy, clo2->xwindow, &xgwa);
+    Window r;
+    int x, y;
+    unsigned int w, h, bbw, d;
+    XGetGeometry (dpy, clo2->drawable, &r, &x, &y, &w, &h, &bbw, &d);
+    draw_colorbars (clo2->screen, xgwa.visual, clo2->drawable, xgwa.colormap,
+                    0, 0, w, h);
+    geom.x = geom.y = 0;
+    geom.width = w;
+    geom.height = h;
+  }
+
+  clo2->callback (clo2->screen, clo2->xwindow, clo2->drawable, buf, &geom,
+                  clo2->closure);
+  clo2->callback = 0;
+  free (clo2);
+}
+
+
+static void
+osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
+                           const char *dir,
+                           void (*callback) (Screen *, Window, Drawable,
+                                             const char *name,
+                                             XRectangle *geom,
+                                             void *closure),
+                       void *closure)
+{
+#if 0	/* do it synchronously */
+
+  FILE *pipe = open_image_name_pipe (dir);
+  char buf[10240];
+  *buf = 0;
+  fgets (buf, sizeof(buf)-1, pipe);
+  pclose (pipe);
+
+  /* strip trailing newline */
+  int L = strlen(buf);
+  while (L > 0 && (buf[L-1] == '\r' || buf[L-1] == '\n'))
+    buf[--L] = 0;
+
+  XRectangle geom;
+  if (! osx_load_image_file (screen, xwindow, drawable, buf, &geom)) {
+    /* draw colorbars */
+    abort();
+  }
+  callback (screen, xwindow, drawable, buf, &geom, closure);
+
+#else	/* do it asynchronously */
+
+  Display *dpy = DisplayOfScreen (screen);
+  struct pipe_closure *clo2 = (struct pipe_closure *) calloc (1, sizeof(*clo2));
+  clo2->pipe = open_image_name_pipe (dir);
+  clo2->id = XtAppAddInput (XtDisplayToApplicationContext (dpy), 
+                            fileno (clo2->pipe),
+                            (XtPointer) (XtInputReadMask | XtInputExceptMask),
+                            pipe_cb, (XtPointer) clo2);
+  clo2->screen = screen;
+  clo2->xwindow = xwindow;
+  clo2->drawable = drawable;
+  clo2->callback = callback;
+  clo2->closure = closure;
+#endif
+}
+
+
+/* Loads an image into the Drawable, returning once the image is loaded.
+ */
+static void
+load_random_image_1 (Screen *screen, Window window, Drawable drawable,
+                     void (*callback) (Screen *, Window, Drawable,
+                                       const char *name, XRectangle *geom,
+                                       void *closure),
+                     void *closure,
+                     char **name_ret,
+                     XRectangle *geom_ret)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  XWindowAttributes xgwa;
+  Bool deskp = get_boolean_resource (dpy, "grabDesktopImages",  "Boolean");
+  Bool filep = get_boolean_resource (dpy, "chooseRandomImages", "Boolean");
+  const char *dir = 0;
+  Bool done = False;
+  XRectangle geom_ret_2;
+  char *name_ret_2 = 0;
+
+  if (callback) {
+    geom_ret = &geom_ret_2;
+    name_ret = &name_ret_2;
+  }
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  {
+    Window r;
+    int x, y;
+    unsigned int w, h, bbw, d;
+    XGetGeometry (dpy, drawable, &r, &x, &y, &w, &h, &bbw, &d);
+    xgwa.width = w;
+    xgwa.height = h;
+  }
+
+  if (name_ret)
+    *name_ret = 0;
+
+  if (geom_ret) {
+    geom_ret->x = 0;
+    geom_ret->y = 0;
+    geom_ret->width  = xgwa.width;
+    geom_ret->height = xgwa.height;
+  }
+
+  if (filep)
+    dir = get_string_resource (dpy, "imageDirectory", "ImageDirectory");
+
+  if (!dir || !*dir)
+    filep = False;
+
+  if (deskp && filep) {
+    deskp = !(random() & 5);    /* if both, desktop 1/5th of the time */
+    filep = !deskp;
+  }
+
+  if (filep && !done) {
+    osx_load_image_file_async (screen, window, drawable, dir, 
+                               callback, closure);
+    return;
+  }
+
+  if (deskp && !done) {
+    osx_grab_desktop_image (screen, window, drawable);
+    if (name_ret)
+      *name_ret = strdup ("desktop");
+    done = True;
+  }
+
+  if (! done) {
+    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
+                    0, 0, xgwa.width, xgwa.height);
+    done = True;
+  }
+
+  if (callback) {
+    /* If we got here, we loaded synchronously even though they wanted async.
+     */
+    callback (screen, window, drawable, name_ret_2, &geom_ret_2, closure);
+  }
+}
+
+#endif /* HAVE_COCOA */
+
+
+/* Writes the string "Loading..." in the middle of the screen.
+   This will presumably get blown away when the image finally loads,
+   minutes or hours later...
+
+   This is called by load_image_async_simple() but not by load_image_async(),
+   since it is assumed that hacks that are loading more than one image
+   *at one time* will be doing something more clever than just blocking
+   with a blank screen.
+ */
+static void
+print_loading_msg (Screen *screen, Window window)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  XWindowAttributes xgwa;
+  XGCValues gcv;
+  XFontStruct *f = 0;
+  GC gc;
+  char *fn = get_string_resource (dpy, "labelFont", "Font");
+  const char *text = "Loading...";
+  int w;
+
+  if (!fn) fn = get_string_resource (dpy, "titleFont", "Font");
+  if (!fn) fn = get_string_resource (dpy, "font", "Font");
+  if (!fn) fn = strdup ("-*-times-bold-r-normal-*-180-*");
+  f = XLoadQueryFont (dpy, fn);
+  if (!f) f = XLoadQueryFont (dpy, "fixed");
+  if (!f) abort();
+  free (fn);
+  fn = 0;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  w = XTextWidth (f, text, strlen(text));
+
+  gcv.foreground = get_pixel_resource (dpy, xgwa.colormap,
+                                       "foreground", "Foreground");
+  gcv.background = get_pixel_resource (dpy, xgwa.colormap,
+                                       "background", "Background");
+  gcv.font = f->fid;
+  gc = XCreateGC (dpy, window, GCFont | GCForeground | GCBackground, &gcv);
+  XDrawImageString (dpy, window, gc,
+                    (xgwa.width - w) / 2,
+                    (xgwa.height - (f->ascent + f->descent)) / 2 + f->ascent,
+                    text, strlen(text));
+  XFreeFont (dpy, f);
+  XFreeGC (dpy, gc);
+  XSync (dpy, False);
+}
+
 
 /* Loads an image into the Drawable in the background;
    when the image is fully loaded, runs the callback.
    When grabbing desktop images, the Window will be unmapped first.
  */
 void
-fork_load_random_image (Screen *screen, Window window, Drawable drawable,
-                        void (*callback) (Screen *, Window, Drawable,
-                                          const char *name, XRectangle *geom,
-                                          void *closure),
-                        void *closure)
+load_image_async (Screen *screen, Window window, Drawable drawable,
+                  void (*callback) (Screen *, Window, Drawable,
+                                    const char *name, XRectangle *geom,
+                                    void *closure),
+                  void *closure)
 {
   load_random_image_1 (screen, window, drawable, callback, closure, 0, 0);
 }
 
-
-#ifndef DEBUG
-
-/* Loads an image into the Drawable, returning once the image is loaded.
-   When grabbing desktop images, the Window will be unmapped first.
- */
-void
-load_random_image (Screen *screen, Window window, Drawable drawable,
-                   char **name_ret, XRectangle *geom_ret)
-{
-  load_random_image_1 (screen, window, drawable, 0, 0, name_ret, geom_ret);
-}
-
-#else  /* DEBUG */
-
-typedef struct {
-  char **name_ret;
-  Bool done;
-} debug_closure;
+struct async_load_state {
+  Bool done_p;
+  char *filename;
+  XRectangle geom;
+};
 
 static void
-debug_cb (Screen *screen, Window window, Drawable drawable,
-          const char *name, void *closure)
+load_image_async_simple_cb (Screen *screen, Window window, Drawable drawable,
+                            const char *name, XRectangle *geom, void *closure)
 {
-  debug_closure *data = (debug_closure *) closure;
-  fprintf (stderr, "%s: GRAB DEBUG: callback\n", progname);
-  if (data->name_ret)
-    *data->name_ret = (name ? strdup (name) : 0);
-  data->done = True;
+  async_load_state *state = (async_load_state *) closure;
+  state->done_p = True;
+  state->filename = (name ? strdup (name) : 0);
+  state->geom = *geom;
 }
 
-void
-load_random_image (Screen *screen, Window window, Drawable drawable,
-                   char **name_ret)
+async_load_state *
+load_image_async_simple (async_load_state *state,
+                         Screen *screen,
+                         Window window,
+                         Drawable drawable, 
+                         char **filename_ret,
+                         XRectangle *geometry_ret)
 {
-  debug_closure data;
-  data.name_ret = name_ret;
-  data.done = False;
-  fprintf (stderr, "%s: GRAB DEBUG: forking\n", progname);
-  fork_load_random_image (screen, window, drawable, debug_cb, &data);
-  while (! data.done)
+  if (state && state->done_p)		/* done! */
     {
-      fprintf (stderr, "%s: GRAB DEBUG: waiting\n", progname);
-      if (XtAppPending (app) & XtIMAlternateInput)
-        XtAppProcessEvent (app, XtIMAlternateInput);
-      usleep (50000);
-    }
-  fprintf (stderr, "%s: GRAB DEBUG: done\n", progname);
-}
+      if (filename_ret)
+        *filename_ret = state->filename;
+      else if (state->filename)
+        free (state->filename);
 
-#endif /* DEBUG */
+      if (geometry_ret)
+        *geometry_ret = state->geom;
+
+      free (state);
+      return 0;
+    }
+  else if (! state)			/* first time */
+    {
+      state = (async_load_state *) calloc (1, sizeof(*state));
+      state->done_p = False;
+      print_loading_msg (screen, window);
+      load_image_async (screen, window, drawable, 
+                        load_image_async_simple_cb,
+                        state);
+      return state;
+    }
+  else					/* still waiting */
+    return state;
+}

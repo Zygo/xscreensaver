@@ -13,7 +13,7 @@
 		_low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
 
 	<number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min Objects"
-          low="3" high="35" default="3"/>
+          low="3" high="35" default="8"/>
 
 	<number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max Objects"
           low="3" high="35" default="8"/>		  
@@ -28,7 +28,8 @@
 	<boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
 	<_description>
-3D simulation of a juggler performing with balls, clubs and rings.  Written
-by Brian Apps and partially based on his Win32 Juggle Saver program.
+3D simulation of a juggler performing with balls, clubs and rings.  
+
+Written by Brian Apps; 2005.
 	</_description>
 </screensaver>

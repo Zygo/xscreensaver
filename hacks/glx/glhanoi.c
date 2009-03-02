@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 4 -*- */
 /* glhanoi, Copyright (c) 2005 Dave Atkinson <dave.atkinson@uwe.ac.uk>
  * except noise function code Copyright (c) 2002 Ken Perlin
  *
@@ -11,20 +12,11 @@
  */
 
 #include <assert.h>
-#include <X11/Intrinsic.h>
 
-#include <rotator.h>
-
-#define PROGCLASS         "glhanoi"
-#define HACK_INIT         init_glhanoi
-#define HACK_DRAW         draw_glhanoi
-#define HACK_RESHAPE      reshape_glhanoi
-#define HACK_HANDLE_EVENT glhanoi_handle_event
-#define EVENT_MASK        PointerMotionMask
-#define glh_opts          xlockmore_opts
+#include "rotator.h"
 
 #define DEF_DELAY     "15000"
-#define DEF_DISKS     "7"
+#define DEF_DISKS     "0"         /* < 2 means 3-12 */
 #define DEF_WIRE      "False"
 #define DEF_LIGHT     "True"
 #define DEF_FPS       "False"
@@ -35,6 +27,8 @@
 				 "*count:     " DEF_DISKS     "\n" \
 				 "*showFPS:   " DEF_FPS       "\n" \
 				 "*wireframe: " DEF_WIRE      "\n"
+
+# define refresh_glhanoi 0
 
 #define NSLICE 32
 #define NLOOPS 1
@@ -47,6 +41,9 @@
 #define MIN_CAMERA_RADIUS 75.0
 
 #define MARBLE_SCALE 1.01
+
+#undef BELLRAND
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
 enum {
 	MARBLE_TEXURE,
@@ -63,39 +60,16 @@ enum {
 
 #ifdef USE_GL					/* whole file */
 
-#include <GL/glu.h>
-
-#ifdef HAVE_GETTIMEOFDAY
-#ifdef GETTIMEOFDAY_TWO_ARGS
-# include <sys/time.h>
-# include <time.h>
 typedef struct timeval glhtime;
-#else							/* GETTIMEOFDAY_TWO_ARGS */
-# include <sys/time.h>
-# include <time.h>
-typedef struct timeval glhtime;
-#endif
-#else							/* HAVE_GETTIMEOFDAY */
-#ifdef HAVE_FTIME
-# include <sys/timeb.h>
-typedef struct timeb glhtime;
-#endif							/* HAVE_FTIME */
-#endif							/* HAVE_GETTIMEOFDAY */
 
-double getTime(void)
+static double getTime(void)
 {
-#ifdef HAVE_GETTIMEOFDAY
 	struct timeval t;
 #ifdef GETTIMEOFDAY_TWO_ARGS
 	gettimeofday(&t, NULL);
 #else							/* !GETTIMEOFDAY_TWO_ARGS */
 	gettimeofday(&t);
 #endif							/* !GETTIMEOFDAY_TWO_ARGS */
-#else							/* !HAVE_GETTIMEOFDAY */
-#ifdef HAVE_FTIME
-	ftime(&t);
-#endif							/* HAVE_FTIME */
-#endif							/* !HAVE_GETTIMEOFDAY */
 	return t.tv_sec + t.tv_usec / 1000000.0;
 }
 
@@ -174,28 +148,30 @@ typedef struct {
 	GLuint textureNames[N_TEXTURES];
 	int drag_x;
 	int drag_y;
+	int noise_initted;
+
+        int p[512];
+
 } glhcfg;
 
 static glhcfg *glhanoi_cfg = NULL;
-static glhcfg *glhanoi = NULL;
 static Bool fog;
 static Bool light;
 static Bool texture;
 
 static XrmOptionDescRec opts[] = {
-	{"-light", ".glhanoi.light", XrmoptionNoArg, (caddr_t) "true"},
-	{"+light", ".glhanoi.light", XrmoptionNoArg, (caddr_t) "false"},
-	{"-fog", ".glhanoi.fog", XrmoptionNoArg, (caddr_t) "true"},
-	{"+fog", ".glhanoi.fog", XrmoptionNoArg, (caddr_t) "false"},
-	{"-texture", ".glhanoi.texture", XrmoptionNoArg, (caddr_t) "true"},
-	{"+texture", ".glhanoi.texture", XrmoptionNoArg, (caddr_t) "false"}
+	{"-light", ".glhanoi.light", XrmoptionNoArg, "true"},
+	{"+light", ".glhanoi.light", XrmoptionNoArg, "false"},
+	{"-fog", ".glhanoi.fog", XrmoptionNoArg, "true"},
+	{"+fog", ".glhanoi.fog", XrmoptionNoArg, "false"},
+	{"-texture", ".glhanoi.texture", XrmoptionNoArg, "true"},
+	{"+texture", ".glhanoi.texture", XrmoptionNoArg, "false"}
 };
 
 static argtype vars[] = {
-	{(caddr_t *) (void *)&light, "light", "Light", DEF_LIGHT, t_Bool},
-	{(caddr_t *) (void *)&fog, "fog", "Fog", DEF_FOG, t_Bool},
-	{(caddr_t *) (void *)&texture, "texture", "Texture", DEF_TEXTURE,
-	 t_Bool}
+	{&light, "light", "Light", DEF_LIGHT, t_Bool},
+	{&fog, "fog", "Fog", DEF_FOG, t_Bool},
+	{&texture, "texture", "Texture", DEF_TEXTURE, t_Bool}
 };
 
 static OptionStruct desc[] = {
@@ -204,7 +180,7 @@ static OptionStruct desc[] = {
 	{"+/-texture", "whether to apply texture to the scene"}
 };
 
-ModeSpecOpt glh_opts = { countof(opts), opts, countof(vars), vars, desc };
+ENTRYPOINT ModeSpecOpt glhanoi_opts = { countof(opts), opts, countof(vars), vars, desc };
 
 #ifdef USE_MODULES
 
@@ -217,45 +193,45 @@ ModStruct glhanoi_description = {
 
 #endif
 
-static GLfloat cBlack[] = { 0.0, 0.0, 0.0, 1.0 };
-static GLfloat cWhite[] = { 1.0, 1.0, 1.0, 1.0 };
-static GLfloat poleColor[] = { 0.545, 0.137, 0.137 };
-static GLfloat baseColor[] = { 0.34, 0.34, 0.48 };
-static GLfloat fogcolor[] = { 0.5, 0.5, 0.5 };
+static const GLfloat cBlack[] = { 0.0, 0.0, 0.0, 1.0 };
+static const GLfloat cWhite[] = { 1.0, 1.0, 1.0, 1.0 };
+static const GLfloat poleColor[] = { 0.545, 0.137, 0.137 };
+static const GLfloat baseColor[] = { 0.34, 0.34, 0.48 };
+static const GLfloat fogcolor[] = { 0.5, 0.5, 0.5 };
 
-static float left[] = { 1.0, 0.0, 0.0 };
-static float up[] = { 0.0, 1.0, 0.0 };
-static float front[] = { 0.0, 0.0, 1.0 };
-static float right[] = { -1.0, 0.0, 0.0 };
-static float down[] = { 0.0, -1.0, 0.0 };
-static float back[] = { 0.0, 0.0, -1.0 };
+static const float left[] = { 1.0, 0.0, 0.0 };
+static const float up[] = { 0.0, 1.0, 0.0 };
+static const float front[] = { 0.0, 0.0, 1.0 };
+static const float right[] = { -1.0, 0.0, 0.0 };
+static const float down[] = { 0.0, -1.0, 0.0 };
+static const float back[] = { 0.0, 0.0, -1.0 };
 
-GLfloat pos0[4] = { 50.0, 50.0, 50.0, 0.0 };
-GLfloat amb0[4] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat dif0[4] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat spc0[4] = { 0.0, 1.0, 1.0, 1.0 };
+static const GLfloat pos0[4] = { 50.0, 50.0, 50.0, 0.0 };
+static const GLfloat amb0[4] = { 0.0, 0.0, 0.0, 1.0 };
+static const GLfloat dif0[4] = { 1.0, 1.0, 1.0, 1.0 };
+static const GLfloat spc0[4] = { 0.0, 1.0, 1.0, 1.0 };
 
-GLfloat pos1[4] = { -50.0, 50.0, -50.0, 0.0 };
-GLfloat amb1[4] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat dif1[4] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat spc1[4] = { 1.0, 1.0, 1.0, 1.0 };
+static const GLfloat pos1[4] = { -50.0, 50.0, -50.0, 0.0 };
+static const GLfloat amb1[4] = { 0.0, 0.0, 0.0, 1.0 };
+static const GLfloat dif1[4] = { 1.0, 1.0, 1.0, 1.0 };
+static const GLfloat spc1[4] = { 1.0, 1.0, 1.0, 1.0 };
 
-float g = 3.0 * 9.80665;		/* hmm, looks like we need more gravity, Scotty... */
+static float g = 3.0 * 9.80665;		/* hmm, looks like we need more gravity, Scotty... */
 
 #define DOPUSH(X, Y)	(((X)->count) >= ((X)->size)) ? NULL : ((X)->data[(X)->count++] = (Y))
 #define DOPOP(X)	(X)->count <= 0 ? NULL : ((X)->data[--((X)->count)])
 
-Disk *push(int idx, Disk * d)
+static Disk *push(glhcfg *glhanoi, int idx, Disk * d)
 {
 	return DOPUSH(&glhanoi->pole[idx], d);
 }
 
-Disk *pop(int idx)
+static Disk *pop(glhcfg *glhanoi, int idx)
 {
 	return DOPOP(&glhanoi->pole[idx]);
 }
 
-/* inline */ static void swap(int *x, int *y)
+static inline void swap(int *x, int *y)
 {
 	*x = *x ^ *y;
 	*y = *x ^ *y;
@@ -265,7 +241,7 @@ Disk *pop(int idx)
 /*
  * magic - it's magic...
  */
-int magic(int i)
+static int magic(int i)
 {
 	int count = 0;
 	if(i <= 1)
@@ -277,7 +253,8 @@ int magic(int i)
 	return count % 2 == 0;
 }
 
-float distance(float *p0, float *p1)
+#if 0
+static float distance(float *p0, float *p1)
 {
 	float x, y, z;
 	x = p1[0] - p0[0];
@@ -285,14 +262,15 @@ float distance(float *p0, float *p1)
 	z = p1[2] - p0[2];
 	return (float)sqrt(x * x + y * y + z * z);
 }
+#endif
 
-GLfloat A(GLfloat a, GLfloat b, GLfloat c)
+static GLfloat A(GLfloat a, GLfloat b, GLfloat c)
 {
 	GLfloat sum = a + b;
 	return c / (a * b - 0.25 * sum * sum);
 }
 
-void moveSetup(Disk * disk)
+static void moveSetup(glhcfg *glhanoi, Disk * disk)
 {
 	float h, ymax;
 	float u;
@@ -346,14 +324,14 @@ void moveSetup(Disk * disk)
 	disk->u2 = disk->usintheta - g * disk->t2;
 }
 
-void makeMove(void)
+static void makeMove(glhcfg *glhanoi)
 {
 	int fudge = glhanoi->move + 2;
 	int magicNumber = magic(fudge);
 
-	glhanoi->currentDisk = pop(glhanoi->src);
-	moveSetup(glhanoi->currentDisk);
-	push(glhanoi->dst, glhanoi->currentDisk);
+	glhanoi->currentDisk = pop(glhanoi, glhanoi->src);
+	moveSetup(glhanoi, glhanoi->currentDisk);
+	push(glhanoi, glhanoi->dst, glhanoi->currentDisk);
 	fudge = fudge % 2;
 
 	if(fudge == 1 || magicNumber) {
@@ -365,12 +343,12 @@ void makeMove(void)
 	glhanoi->magicNumber = magicNumber;
 }
 
-double lerp(double alpha, double start, double end)
+static double lerp(double alpha, double start, double end)
 {
 	return start + alpha * (end - start);
 }
 
-void upfunc(GLdouble t, Disk * d)
+static void upfunc(GLdouble t, Disk * d)
 {
 	d->position[0] = d->xmin;
 	d->position[1] = d->base0 + (d->u1 - 0.5 * g * t) * t;
@@ -378,7 +356,7 @@ void upfunc(GLdouble t, Disk * d)
 	d->rotation[1] = 0.0;
 }
 
-void parafunc(GLdouble t, Disk * d)
+static void parafunc(GLdouble t, Disk * d)
 {
 	d->position[0] = d->xmin + d->ucostheta * t;
 	d->position[1] = d->ymin + (d->usintheta - 0.5 * g * t) * t;
@@ -387,7 +365,7 @@ void parafunc(GLdouble t, Disk * d)
 		d->rotAngle * (d->position[0] - d->xmin) / (d->xmax - d->xmin);
 }
 
-void downfunc(GLdouble t, Disk * d)
+static void downfunc(GLdouble t, Disk * d)
 {
 	d->position[0] = d->xmax;
 	d->position[1] = d->ymin + (d->u2 - 0.5 * g * t) * t;
@@ -395,9 +373,9 @@ void downfunc(GLdouble t, Disk * d)
 	d->rotation[1] = 0.0;
 }
 
-Bool computePosition(GLfloat t, Disk * d)
+static Bool computePosition(GLfloat t, Disk * d)
 {
-	Bool finished = FALSE;
+	Bool finished = False;
 
 	if(t < d->t1) {
 		upfunc(t, d);
@@ -407,13 +385,13 @@ Bool computePosition(GLfloat t, Disk * d)
 		downfunc(t - d->t1 - d->t2, d);
 		if(d->position[1] <= d->base1) {
 			d->position[1] = d->base1;
-			finished = TRUE;
+			finished = True;
 		}
 	}
 	return finished;
 }
 
-void updateView(void)
+static void updateView(glhcfg *glhanoi)
 {
 	double longitude, latitude, radius;
 	double a, b, c, A, B;
@@ -451,13 +429,13 @@ void updateView(void)
 			  sin(longitude * 2.0 * M_PI));
 }
 
-void changeState(State state)
+static void changeState(glhcfg *glhanoi, State state)
 {
 	glhanoi->state = state;
 	glhanoi->startTime = getTime();
 }
 
-void update_glhanoi(void)
+static void update_glhanoi(glhcfg *glhanoi)
 {
 	double t = getTime() - glhanoi->startTime;
 	int i;
@@ -473,23 +451,23 @@ void update_glhanoi(void)
 			swap(&glhanoi->tmp, &glhanoi->dst);
 		}
 		glhanoi->magicNumber = 1;
-		makeMove();
-		changeState(MOVE_DISK);
+		makeMove(glhanoi);
+		changeState(glhanoi, MOVE_DISK);
 		break;
 
 	case MOVE_DISK:
 		if(computePosition(t, glhanoi->currentDisk)) {
-			changeState(MOVE_FINISHED);
+			changeState(glhanoi, MOVE_FINISHED);
 		}
 		break;
 
 	case MOVE_FINISHED:
 		if(++glhanoi->move < glhanoi->numberOfMoves) {
-			makeMove();
-			changeState(MOVE_DISK);
+			makeMove(glhanoi);
+			changeState(glhanoi, MOVE_DISK);
 		} else {
 			glhanoi->duration = FINISH_DURATION;
-			changeState(FINISHED);
+			changeState(glhanoi, FINISHED);
 		}
 		break;
 
@@ -500,14 +478,14 @@ void update_glhanoi(void)
 		glhanoi->src = glhanoi->olddst;
 		glhanoi->dst = glhanoi->oldsrc;
 		for(i = 0; i < glhanoi->numberOfDisks; ++i) {
-			Disk *disk = pop(glhanoi->src);
+			Disk *disk = pop(glhanoi, glhanoi->src);
 			assert(disk != NULL);
-			moveSetup(disk);
+			moveSetup(glhanoi, disk);
 		}
 		for(i = glhanoi->maxDiskIdx; i >= 0; --i) {
-			push(glhanoi->dst, &glhanoi->disk[i]);
+			push(glhanoi, glhanoi->dst, &glhanoi->disk[i]);
 		}
-		changeState(MONEY_SHOT);
+		changeState(glhanoi, MONEY_SHOT);
 		break;
 
 	case MONEY_SHOT:
@@ -532,7 +510,7 @@ void update_glhanoi(void)
 			glhanoi->src = glhanoi->oldsrc;
 			glhanoi->tmp = glhanoi->oldtmp;
 			glhanoi->dst = glhanoi->olddst;
-			changeState(START);
+			changeState(glhanoi, START);
 		}
 		break;
 
@@ -543,7 +521,7 @@ void update_glhanoi(void)
 	}
 }
 
-void HSVtoRGBf(GLfloat h, GLfloat s, GLfloat v,
+static void HSVtoRGBf(GLfloat h, GLfloat s, GLfloat v,
 			   GLfloat * r, GLfloat * g, GLfloat * b)
 {
 	if(s == 0.0) {
@@ -596,12 +574,12 @@ void HSVtoRGBf(GLfloat h, GLfloat s, GLfloat v,
 	}
 }
 
-void HSVtoRGBv(GLfloat * hsv, GLfloat * rgb)
+static void HSVtoRGBv(GLfloat * hsv, GLfloat * rgb)
 {
 	HSVtoRGBf(hsv[0], hsv[1], hsv[2], &rgb[0], &rgb[1], &rgb[2]);
 }
 
-void setMaterial(GLfloat color[3], GLfloat hlite[3], int shininess)
+static void setMaterial(const GLfloat color[3], const GLfloat hlite[3], int shininess)
 {
 	glColor3fv(color);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, hlite);
@@ -617,7 +595,7 @@ void setMaterial(GLfloat color[3], GLfloat hlite[3], int shininess)
  * people's hardware supports 3D textures, so I didn't bother (xorg
  * ATI server doesn't :-( )
  */
-void drawTube(GLdouble bottomRadius, GLdouble topRadius,
+static void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 			  GLdouble bottomThickness, GLdouble topThickness,
 			  GLdouble height, GLuint nSlice, GLuint nLoop)
 {
@@ -751,19 +729,19 @@ void drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	glEnd();
 }
 
-void drawPole(GLfloat radius, GLfloat length)
+static void drawPole(GLfloat radius, GLfloat length)
 {
 	drawTube(radius, radius, radius, radius, length, NSLICE, NLOOPS);
 }
 
-void drawDisk3D(GLdouble inner_radius, GLdouble outer_radius,
+static void drawDisk3D(GLdouble inner_radius, GLdouble outer_radius,
 				GLdouble height)
 {
 	drawTube(outer_radius, outer_radius, outer_radius - inner_radius,
 			 outer_radius - inner_radius, height, NSLICE, NLOOPS);
 }
 
-void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
+static void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
 {
 	GLfloat xmin = -length / 2.0f;
 	GLfloat xmax = length / 2.0f;
@@ -812,7 +790,7 @@ void drawCuboid(GLfloat length, GLfloat width, GLfloat height)
 	glEnd();
 }
 
-void drawDisks(void)
+static void drawDisks(glhcfg *glhanoi)
 {
 	int i;
 
@@ -836,12 +814,12 @@ void drawDisks(void)
 	glPopMatrix();
 }
 
-GLfloat getDiskRadius(int i)
+static GLfloat getDiskRadius(glhcfg *glhanoi, int i)
 {
 	return ((GLfloat) i + 3.0) * glhanoi->poleRadius;
 }
 
-void initData(void)
+static void initData(glhcfg *glhanoi)
 {
 	GLfloat maxDiskRadius;
 	int i;
@@ -849,9 +827,9 @@ void initData(void)
 	glhanoi->baseLength = BASE_LENGTH;
 	glhanoi->poleRadius = glhanoi->baseLength /
 		(2.0 * (3 * glhanoi->numberOfDisks + 7.0));
-	maxDiskRadius = getDiskRadius(glhanoi->numberOfDisks);
+	maxDiskRadius = getDiskRadius(glhanoi, glhanoi->numberOfDisks);
 	glhanoi->baseWidth = 2.0 * maxDiskRadius;
-	glhanoi->poleOffset = 2.0 * getDiskRadius(glhanoi->maxDiskIdx);
+	glhanoi->poleOffset = 2.0 * getDiskRadius(glhanoi, glhanoi->maxDiskIdx);
 	glhanoi->diskHeight = 2.0 * glhanoi->poleRadius;
 	glhanoi->baseHeight = 2.0 * glhanoi->poleRadius;
 	glhanoi->poleHeight = glhanoi->numberOfDisks *
@@ -882,7 +860,7 @@ void initData(void)
 	glhanoi->dst = glhanoi->olddst = 2;
 }
 
-void initView(void)
+static void initView(glhcfg *glhanoi)
 {
 	glhanoi->camera[0] = 0.0;
 	glhanoi->camera[1] = 0.0;
@@ -909,7 +887,7 @@ static double grad(int hash, double x, double y, double z)
 	return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 }
 
-static int p[512], permutation[] = { 151, 160, 137, 91, 90, 15,
+static const int permutation[] = { 151, 160, 137, 91, 90, 15,
 	131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142,
 	8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26,
 	197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237,
@@ -930,24 +908,23 @@ static int p[512], permutation[] = { 151, 160, 137, 91, 90, 15,
 	156, 180
 };
 
-static void initNoise(void)
+static void initNoise(glhcfg *glhanoi)
 {
 	int i;
 	for(i = 0; i < 256; i++)
-		p[256 + i] = p[i] = permutation[i];
+		glhanoi->p[256 + i] = glhanoi->p[i] = permutation[i];
 }
 
-double improved_noise(double x, double y, double z)
+static double improved_noise(glhcfg *glhanoi, double x, double y, double z)
 {
 	double u, v, w;
 	int A, AA, AB, B, BA, BB;
 	int X = (int)floor(x) & 255,	/* FIND UNIT CUBE THAT */
 		Y = (int)floor(y) & 255,	/* CONTAINS POINT. */
 		Z = (int)floor(z) & 255;
-	static int start = 0;
-	if(start == 0) {
-		initNoise();
-		start = 1;
+	if(!glhanoi->noise_initted) {
+		initNoise(glhanoi);
+		glhanoi->noise_initted = 1;
 	}
 	x -= floor(x);				/* FIND RELATIVE X,Y,Z */
 	y -= floor(y);				/* OF POINT IN CUBE. */
@@ -955,15 +932,15 @@ double improved_noise(double x, double y, double z)
 	u = fade(x),				/* COMPUTE FADE CURVES */
 		v = fade(y),			/* FOR EACH OF X,Y,Z. */
 		w = fade(z);
-	A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z,	/* HASH COORDINATES OF */
-		B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;	/* THE 8 CUBE CORNERS, */
-	return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),	/* AND ADD */
-								grad(p[BA], x - 1, y, z)),	/* BLENDED */
-						lerp(u, grad(p[AB], x, y - 1, z),	/* RESULTS */
-							 grad(p[BB], x - 1, y - 1, z))),	/* FROM 8 CORNERS */
-				lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1), grad(p[BA + 1], x - 1, y, z - 1)),	/* OF CUBE */
-					 lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
-						  grad(p[BB + 1], x - 1, y - 1, z - 1))));
+	A = glhanoi->p[X] + Y, AA = glhanoi->p[A] + Z, AB = glhanoi->p[A + 1] + Z,	/* HASH COORDINATES OF */
+		B = glhanoi->p[X + 1] + Y, BA = glhanoi->p[B] + Z, BB = glhanoi->p[B + 1] + Z;	/* THE 8 CUBE CORNERS, */
+	return lerp(w, lerp(v, lerp(u, grad(glhanoi->p[AA], x, y, z),	/* AND ADD */
+								grad(glhanoi->p[BA], x - 1, y, z)),	/* BLENDED */
+						lerp(u, grad(glhanoi->p[AB], x, y - 1, z),	/* RESULTS */
+							 grad(glhanoi->p[BB], x - 1, y - 1, z))),	/* FROM 8 CORNERS */
+				lerp(v, lerp(u, grad(glhanoi->p[AA + 1], x, y, z - 1), grad(glhanoi->p[BA + 1], x - 1, y, z - 1)),	/* OF CUBE */
+					 lerp(u, grad(glhanoi->p[AB + 1], x, y - 1, z - 1),
+						  grad(glhanoi->p[BB + 1], x - 1, y - 1, z - 1))));
 }
 
 /*
@@ -977,8 +954,8 @@ struct tex_col_t {
 };
 typedef struct tex_col_t tex_col_t;
 
-GLubyte *makeTexture(int x_size, int y_size, int z_size,
-					 GLuint(*texFunc) (double, double, double,
+static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
+					 GLuint(*texFunc) (glhcfg *, double, double, double,
 									   tex_col_t *), tex_col_t * colours)
 {
 	int i, j, k;
@@ -1003,7 +980,7 @@ GLubyte *makeTexture(int x_size, int y_size, int z_size,
 		for(j = 0; j < y_size; j++, y += yi) {
 			x = 0.0;
 			for(i = 0; i < x_size; i++, x += xi) {
-				*texturePtr = texFunc(x, y, z, colours);
+				*texturePtr = texFunc(glhanoi, x, y, z, colours);
 				++texturePtr;
 			}
 		}
@@ -1011,7 +988,7 @@ GLubyte *makeTexture(int x_size, int y_size, int z_size,
 	return textureData;
 }
 
-tex_col_t makeMarbleColours(void)
+static tex_col_t makeMarbleColours(void)
 {
 	tex_col_t marbleColours;
 	int ncols = 2;
@@ -1025,32 +1002,32 @@ tex_col_t makeMarbleColours(void)
 	return marbleColours;
 }
 
-double turb(double x, double y, double z, int octaves)
+static double turb(glhcfg *glhanoi, double x, double y, double z, int octaves)
 {
 	int oct, freq = 1;
 	double r = 0.0;
 
 	for(oct = 0; oct < octaves; ++oct) {
-		r += fabs(improved_noise(freq * x, freq * y, freq * z)) / freq;
+		r += fabs(improved_noise(glhanoi, freq * x, freq * y, freq * z)) / freq;
 		freq <<= 1;
 	}
 	return r / 2.0;
 }
 
-void perturb(double *x, double *y, double *z, double scale)
+static void perturb(glhcfg *glhanoi, double *x, double *y, double *z, double scale)
 {
-	double t = scale * turb(*x, *y, *z, 4);
+	double t = scale * turb(glhanoi, *x, *y, *z, 4);
 	*x += t;
 	*y += t;
 	*z += t;
 }
 
-double f_m(double x, double y, double z)
+static double f_m(double x, double y, double z)
 {
 	return sin(3.0 * M_PI * x);
 }
 
-GLuint C_m(double x, const tex_col_t * tex_cols)
+static GLuint C_m(double x, const tex_col_t * tex_cols)
 {
 	int r = tex_cols->colours[0] & 0xff;
 	int g = tex_cols->colours[0] >> 8 & 0xff;
@@ -1073,18 +1050,18 @@ GLuint C_m(double x, const tex_col_t * tex_cols)
 }
 
 
-GLuint makeMarbleTexture(double x, double y, double z, tex_col_t * colours)
+static GLuint makeMarbleTexture(glhcfg *glhanoi, double x, double y, double z, tex_col_t * colours)
 {
-	perturb(&x, &y, &z, MARBLE_SCALE);
+	perturb(glhanoi, &x, &y, &z, MARBLE_SCALE);
 	return C_m(f_m(x, y, z), colours);
 }
 
-void setTexture(int n)
+static void setTexture(glhcfg *glhanoi, int n)
 {
 	glBindTexture(GL_TEXTURE_2D, glhanoi->textureNames[n]);
 }
 
-int makeTextures(void)
+static int makeTextures(glhcfg *glhanoi)
 {
 	GLubyte *marbleTexture;
 	tex_col_t marbleColours;
@@ -1093,7 +1070,7 @@ int makeTextures(void)
 
 	marbleColours = makeMarbleColours();
 	if((marbleTexture =
-		makeTexture(MARBLE_TEXTURE_SIZE, MARBLE_TEXTURE_SIZE, 1,
+		makeTexture(glhanoi, MARBLE_TEXTURE_SIZE, MARBLE_TEXTURE_SIZE, 1,
 					makeMarbleTexture, &marbleColours)) == NULL) {
 		return 1;
 	}
@@ -1111,13 +1088,13 @@ int makeTextures(void)
 	return 0;
 }
 
-void initFloor(void)
+static void initFloor(glhcfg *glhanoi)
 {
 	int i, j;
 	float tileSize = glhanoi->boardSize / BOARD_SQUARES;
 	float x0, x1, z0, z1;
 	float tx0, tx1, tz0, tz1;
-	float *col = cWhite;
+	const float *col = cWhite;
 	float texIncr = 1.0 / BOARD_SQUARES;
 
 	if((glhanoi->floorList = glGenLists(1)) == 0) {
@@ -1128,7 +1105,7 @@ void initFloor(void)
 	x0 = -glhanoi->boardSize / 2.0;
 	tx0 = 0.0f;
 	setMaterial(col, cWhite, 128);
-	setTexture(0);
+	setTexture(glhanoi, 0);
 	glNormal3fv(up);
 	for(i = 0; i < BOARD_SQUARES; i++, x0 += tileSize, tx0 += texIncr) {
 		x1 = x0 + tileSize;
@@ -1167,7 +1144,7 @@ void initFloor(void)
 	glEndList();
 }
 
-void initTowers(void)
+static void initTowers(glhcfg *glhanoi)
 {
 	if((glhanoi->baseList = glGenLists(1)) == 0) {
 		fprintf(stderr, "can't allocate memory for towers display list\n");
@@ -1199,7 +1176,7 @@ void initTowers(void)
 	glEndList();
 }
 
-double cfunc(double x)
+static double cfunc(double x)
 {
 #define COMP <
 	if(x < 2.0 / 7.0) {
@@ -1217,7 +1194,7 @@ double cfunc(double x)
 	return (1.0 / 12.0) / (1.0 / 7.0) * x + 1.0 / 3.0;
 }
 
-void initDisks(void)
+static void initDisks(glhcfg *glhanoi)
 {
 	int i;
 	if((glhanoi->disk =
@@ -1253,19 +1230,20 @@ void initDisks(void)
 		}
 		glNewList(disk->displayList, GL_COMPILE);
 		setMaterial(color, cWhite, 100.0);
-		drawDisk3D(glhanoi->poleRadius, getDiskRadius(i),
-				   glhanoi->diskHeight);
+		drawDisk3D(glhanoi->poleRadius, 
+                           getDiskRadius(glhanoi, i),
+                           glhanoi->diskHeight);
 		glEndList();
 	}
 	for(i = glhanoi->maxDiskIdx; i >= 0; --i) {
 		GLfloat height = (GLfloat) (glhanoi->maxDiskIdx - i);
 		int h = glhanoi->maxDiskIdx - i;
 		glhanoi->diskPos[h] = glhanoi->diskHeight * height;
-		push(glhanoi->src, &glhanoi->disk[i]);
+		push(glhanoi, glhanoi->src, &glhanoi->disk[i]);
 	}
 }
 
-void initLights(Bool state)
+static void initLights(Bool state)
 {
 	if(state) {
 		glLightfv(GL_LIGHT0, GL_POSITION, pos0);
@@ -1286,12 +1264,12 @@ void initLights(Bool state)
 	}
 }
 
-void drawFloor(void)
+static void drawFloor(glhcfg *glhanoi)
 {
 	glCallList(glhanoi->floorList);
 }
 
-void drawTowers(void)
+static void drawTowers(glhcfg *glhanoi)
 {
 	glCallList(glhanoi->baseList);
 	glCallList(glhanoi->poleList);
@@ -1299,7 +1277,7 @@ void drawTowers(void)
 
 /* Window management, etc
  */
-void reshape_glhanoi(ModeInfo * mi, int width, int height)
+ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
 {
 	glViewport(0, 0, (GLint) width, (GLint) height);
 
@@ -1314,8 +1292,9 @@ void reshape_glhanoi(ModeInfo * mi, int width, int height)
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void init_glhanoi(ModeInfo * mi)
+ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 {
+	glhcfg *glhanoi;
 	if(!glhanoi_cfg) {
 		glhanoi_cfg =
 			(glhcfg *) calloc(MI_NUM_SCREENS(mi), sizeof(glhcfg));
@@ -1324,12 +1303,15 @@ void init_glhanoi(ModeInfo * mi)
 					progname);
 			exit(1);
 		}
-		glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	}
 
 	glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	glhanoi->glx_context = init_GL(mi);
 	glhanoi->numberOfDisks = MI_BATCHCOUNT(mi);
+
+    if (glhanoi->numberOfDisks <= 1)
+      glhanoi->numberOfDisks = 3 + (int) BELLRAND(9);
+
 	glhanoi->maxDiskIdx = glhanoi->numberOfDisks - 1;
 	glhanoi->wire = MI_IS_WIREFRAME(mi);
 	glhanoi->light = light;
@@ -1339,22 +1321,22 @@ void init_glhanoi(ModeInfo * mi)
 	reshape_glhanoi(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
 	if(glhanoi->wire) {
-		glhanoi->light = FALSE;
-		glhanoi->fog = FALSE;
-		glhanoi->texture = FALSE;
+		glhanoi->light = False;
+		glhanoi->fog = False;
+		glhanoi->texture = False;
 	}
 
 	initLights(!glhanoi->wire && glhanoi->light);
-	if(makeTextures() != 0) {
+	if(makeTextures(glhanoi) != 0) {
 		fprintf(stderr, "can't allocate memory for marble texture\n");
 		exit(EXIT_FAILURE);
 	}
 
-	initData();
-	initView();
-	initFloor();
-	initTowers();
-	initDisks();
+	initData(glhanoi);
+	initView(glhanoi);
+	initFloor(glhanoi);
+	initTowers(glhanoi);
+	initDisks(glhanoi);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_NORMALIZE);
@@ -1373,35 +1355,37 @@ void init_glhanoi(ModeInfo * mi)
 
 
 	glhanoi->duration = START_DURATION;
-	changeState(START);
+	changeState(glhanoi, START);
 }
 
-void draw_glhanoi(ModeInfo * mi)
+ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 {
+        glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	Display *dpy = MI_DISPLAY(mi);
 	Window window = MI_WINDOW(mi);
 
-	glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
-
 	if(!glhanoi->glx_context)
 		return;
+
+        glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
+
 	glPolygonMode(GL_FRONT, glhanoi->wire ? GL_LINE : GL_FILL);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
 
-	update_glhanoi();
-	updateView();
+	update_glhanoi(glhanoi);
+	updateView(glhanoi);
 
 	if(!glhanoi->wire && glhanoi->texture) {
 		glEnable(GL_TEXTURE_2D);
 	}
-	drawFloor();
+	drawFloor(glhanoi);
 	glDisable(GL_TEXTURE_2D);
 
-	drawTowers();
-	drawDisks();
+	drawTowers(glhanoi);
+	drawDisks(glhanoi);
 
 	if(mi->fps_p) {
 		do_fps(mi);
@@ -1411,7 +1395,7 @@ void draw_glhanoi(ModeInfo * mi)
 	glXSwapBuffers(dpy, window);
 }
 
-Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
+ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 {
 	glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 
@@ -1454,7 +1438,7 @@ Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 	return False;
 }
 
-void release_glhanoi(ModeInfo * mi)
+ENTRYPOINT void release_glhanoi(ModeInfo * mi)
 {
 	if(glhanoi_cfg != NULL) {
 		int screen;
@@ -1465,6 +1449,7 @@ void release_glhanoi(ModeInfo * mi)
 			glDeleteLists(glh->floorList, 1);
 			glDeleteLists(glh->baseList, 1);
 			glDeleteLists(glh->poleList, 1);
+                        glDeleteLists(glh->textureNames[0], 2);
 			for(j = 0; j < glh->numberOfDisks; ++j) {
 				glDeleteLists(glh->disk[j].displayList, 1);
 			}
@@ -1478,7 +1463,8 @@ void release_glhanoi(ModeInfo * mi)
 	}
 	free(glhanoi_cfg);
 	glhanoi_cfg = NULL;
-	glDeleteLists(glhanoi->textureNames[0], 2);
 }
+
+XSCREENSAVER_MODULE ("GLHanoi", glhanoi)
 
 #endif							/* USE_GL */

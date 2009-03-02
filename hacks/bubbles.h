@@ -1,9 +1,16 @@
 /* bubbles.h - definitions for bubbles screensaver */
 
-/* $Id: bubbles.h,v 1.4 2002/01/17 02:16:04 jwz Exp $ */
+/* $Id: bubbles.h,v 1.6 2006/02/25 20:11:57 jwz Exp $ */
 
 #ifndef _BUBBLES_H_
 #define _BUBBLES_H_
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+# define HAVE_XPM
+#else
+# include <X11/Xlib.h>
+#endif
 
 /***************************************************************************
  *   Options you might like to change to affect the program's behaviour    *
@@ -209,5 +216,9 @@ Disable file I/O code too. */
 #  undef NO_DEFAULT_BUBBLE
 # endif /* BUBBLES_IO */
 #endif /* HAVE_XPM || HAVE_GDK_PIXBUF */
+
+extern void init_default_bubbles(void);
+extern int num_default_bubbles;
+extern char **default_bubbles[];
 
 #endif /* _BUBBLES_H_ */

@@ -6,22 +6,20 @@
 
   <number id="Delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="1000"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="maxlife" type="slider" arg="-maxlife %"
           _label="Activity" _low-label="Dense" _high-label="Sparse"
           low="250" high="5000" default="2000"/>
 
-  <boolean id="flash" _label="Light Flash" arg-unset="-noflash"/>
-  <boolean id="glow"  _label="Self Glowing Smoke!" arg-unset="-noglow"/>
-  <boolean id="shoot" _label="Shoot The Shells up" arg-set="-shoot"/>
+  <boolean id="flash" _label="Light Flash" arg-unset="-no-flash"/>
+  <boolean id="glow"  _label="Self Glowing Smoke!" arg-unset="-no-glow"/>
+  <boolean id="shoot" _label="Shoot the Shells Up" arg-set="-shoot"/>
 
   <_description>
-Pyrotechnics simulation eye-candy, MMX optimized. 
-Turn off Light for speed. Clicks on the preview window Explodes..!
+Exploding fireworks.
 
-Written by Rony B Chandran. 
-http://www.ronybc.8k.com
+Written by Rony B Chandran; 2004.
   </_description>
 </screensaver>

@@ -24,7 +24,8 @@
            _label="Size" low="-50" high="50" default="-6"/>
 
   <_description>
-Another ancient xlock demo, this one by Tom Lawrence.  It draws a
-line segment moving along a complex spiraling curve.
+Draws a line segment moving along a complex spiraling curve.
+
+Written by Tom Lawrence; 1997.
   </_description>
 </screensaver>

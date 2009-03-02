@@ -21,7 +21,8 @@
            _label="Size" low="-50" high="50" default="-12"/>
 
   <_description>
-This one produces loop-shaped colonies that spawn, age, and
-eventually die.  Written by David Bagley.
+Generates loop-shaped colonies that spawn, age, and eventually die.
+
+Written by David Bagley; 1999.
   </_description>
 </screensaver>

@@ -74,13 +74,9 @@ static const char sccsid[] = "@(#)bouboule.c	4.00 97/01/01 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Bouboule"
-# define HACK_INIT					init_bouboule
-# define HACK_DRAW					draw_bouboule
-# define bouboule_opts				xlockmore_opts
 # define DEFAULTS	"*count:		100     \n"			\
 					"*size:			15      \n"			\
-					"*delay:		5000    \n"			\
+					"*delay:		20000   \n"			\
 					"*ncolors:		64      \n"			\
 					"*use3d:		False   \n"			\
 					"*delta3d:		1.5		\n"			\
@@ -90,12 +86,15 @@ static const char sccsid[] = "@(#)bouboule.c	4.00 97/01/01 xlockmore";
 					"*none3d:		black	\n"
 
 # define SMOOTH_COLORS
+# define reshape_bouboule 0
+# define bouboule_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
+# define ENTRYPOINT /**/
 #endif /* !STANDALONE */
 
-ModeSpecOpt bouboule_opts = {
+ENTRYPOINT ModeSpecOpt bouboule_opts = {
   0, NULL, 0, NULL, NULL };
 
 #define USEOLDXARCS  1		/* If 1, we use old xarcs list for erasing.
@@ -297,8 +296,9 @@ sinfree(SinVariable * point)
 	}
 }
 
+
 /***************/
-void
+ENTRYPOINT void
 init_bouboule(ModeInfo * mi)
 /***************/
 
@@ -528,7 +528,7 @@ init_bouboule(ModeInfo * mi)
 }
 
 /****************/
-void
+ENTRYPOINT void
 draw_bouboule(ModeInfo * mi)
 /****************/
 
@@ -541,6 +541,10 @@ draw_bouboule(ModeInfo * mi)
 	double      CX, CY, CZ, SX, SY, SZ;
 	Star       *star;
 	XArc       *arc = NULL, *arcleft = NULL;
+
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
 
 #if (ADAPT_ERASE == 1)
 	struct timeval tv1;
@@ -798,7 +802,7 @@ draw_bouboule(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_bouboule(ModeInfo * mi)
 {
 	if (starfield != NULL) {
@@ -833,8 +837,10 @@ release_bouboule(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_bouboule(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+XSCREENSAVER_MODULE ("Bouboule", bouboule)

@@ -14,9 +14,8 @@
             low="1" high="255" default="64"/>
 
   <_description>
-This one generates a continuous sequence of small, curvy geometric
-patterns.  It scatters them around your screen until it fills up,
-then it clears the screen and starts over.  Written by Tracy Camp and
-David Hansen.
+Generates a continuous sequence of small, curvy geometric patterns.
+
+Written by Tracy Camp and David Hansen; 1997.
   </_description>
 </screensaver>

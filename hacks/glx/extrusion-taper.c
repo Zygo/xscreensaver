@@ -11,20 +11,10 @@
  *
  */
 
-/* required include files */
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "extrusion.h"
 
 #include <math.h>
 #include <stdlib.h>
-#include <GL/gl.h>
-/*#include <GL/glut.h>*/
-#ifdef HAVE_GLE3
-#include <GL/gle.h>
-#else
-#include <GL/tube.h>
-#endif
 
 #ifndef NULL
 #define NULL ((void *) 0x0)

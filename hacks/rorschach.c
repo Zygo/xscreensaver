@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1998, 2001
+/* xscreensaver, Copyright (c) 1992, 1996, 1998, 2001, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -16,128 +16,190 @@
 #include "screenhack.h"
 #include "erase.h"
 
-static GC draw_gc, erase_gc;
-static unsigned int default_fg_pixel;
-static int iterations, offset;
-static Bool xsym, ysym;
-static int sleep_time;
+struct state {
+  GC draw_gc;
+  unsigned int default_fg_pixel;
+  int iterations, offset;
+  Bool xsym, ysym;
+  int sleep_time;
+  int xlim, ylim;
+  XColor color;
+  int current_x, current_y, remaining_iterations;
+  eraser_state *eraser;
+};
 
-static void
-init_rorschach (Display *dpy, Window window)
+
+static void *
+rorschach_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   Colormap cmap;
   XWindowAttributes xgwa;
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  gcv.foreground = get_pixel_resource ("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  iterations = get_integer_resource ("iterations", "Integer");
-  offset = get_integer_resource ("offset", "Integer");
-  if (offset <= 0) offset = 3;
-  if (iterations < 10) iterations = 10;
-  xsym = get_boolean_resource ("xsymmetry", "Symmetry");
-  ysym = get_boolean_resource ("ysymmetry", "Symmetry");
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource (dpy, cmap, "foreground", "Foreground");
+  st->draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+  gcv.foreground = get_pixel_resource (dpy, cmap, "background", "Background");
+  st->iterations = get_integer_resource (dpy, "iterations", "Integer");
+  st->offset = get_integer_resource (dpy, "offset", "Integer");
+  if (st->offset <= 0) st->offset = 3;
+  if (st->iterations < 10) st->iterations = 10;
+  st->sleep_time = get_integer_resource (dpy, "delay", "Delay");
+  st->xsym = get_boolean_resource (dpy, "xsymmetry", "Symmetry");
+  st->ysym = get_boolean_resource (dpy, "ysymmetry", "Symmetry");
+  st->remaining_iterations = -1;
+  st->color.pixel = 0;
+  return st;
 }
 
 static void
-hurm (Display *dpy, Window window)
+rorschach_reshape (Display *dpy, Window window, void *closure,
+                   unsigned int width, unsigned int height)
+{
+  struct state *st = (struct state *) closure;
+  st->xlim = width;
+  st->ylim = height;
+}
+
+
+static void
+rorschach_draw_start (Display *dpy, Window window, struct state *st)
 {
   Colormap cmap;
   XWindowAttributes xgwa;
-  int xlim, ylim, x, y, i, got_color = 0;
-  XPoint points [4];
-  XColor color;
-  XClearWindow (dpy, window);
+
   XGetWindowAttributes (dpy, window, &xgwa);
-  xlim = xgwa.width;
-  ylim = xgwa.height;
+  st->xlim = xgwa.width;
+  st->ylim = xgwa.height;
   cmap = xgwa.colormap;
 
-  if (! mono_p)
-    hsv_to_rgb (random()%360, 1.0, 1.0, &color.red, &color.green, &color.blue);
-  if ((!mono_p) && (got_color = XAllocColor (dpy, cmap, &color)))
-    XSetForeground (dpy, draw_gc, color.pixel);
-  else
-    XSetForeground (dpy, draw_gc, default_fg_pixel);
+  if (st->color.pixel) XFreeColors (dpy, cmap, &st->color.pixel, 1, 0);
 
-  x = xlim/2;
-  y = ylim/2;
-  for (i = 0; i < iterations; i++)
+  if (! mono_p)
+    hsv_to_rgb (random()%360, 1.0, 1.0, &st->color.red, &st->color.green, &st->color.blue);
+  if ((!mono_p) && XAllocColor (dpy, cmap, &st->color))
+    XSetForeground (dpy, st->draw_gc, st->color.pixel);
+  else
+    XSetForeground (dpy, st->draw_gc, st->default_fg_pixel);
+
+  st->current_x = st->xlim/2;
+  st->current_y = st->ylim/2;
+  st->remaining_iterations = st->iterations;
+}
+
+
+static void
+rorschach_draw_step (Display *dpy, Window window, struct state *st)
+{
+# define ITER_CHUNK 300
+  XPoint points [4 * ITER_CHUNK];
+  int x = st->current_x;
+  int y = st->current_y;
+  int i, j = 0;
+
+  int this_iterations = ITER_CHUNK;
+  if (this_iterations > st->remaining_iterations)
+    this_iterations = st->remaining_iterations;
+
+  for (i = 0; i < this_iterations; i++)
     {
-      int j = 0;
-      x += ((random () % (1 + (offset << 1))) - offset);
-      y += ((random () % (1 + (offset << 1))) - offset);
+      x += ((random () % (1 + (st->offset << 1))) - st->offset);
+      y += ((random () % (1 + (st->offset << 1))) - st->offset);
       points [j].x = x;
       points [j].y = y;
       j++;
-      if (xsym)
+      if (st->xsym)
 	{
-	  points [j].x = xlim - x;
+	  points [j].x = st->xlim - x;
 	  points [j].y = y;
 	  j++;
 	}
-      if (ysym)
+      if (st->ysym)
 	{
 	  points [j].x = x;
-	  points [j].y = ylim - y;
+	  points [j].y = st->ylim - y;
 	  j++;
 	}
-      if (xsym && ysym)
+      if (st->xsym && st->ysym)
 	{
-	  points [j].x = xlim - x;
-	  points [j].y = ylim - y;
+	  points [j].x = st->xlim - x;
+	  points [j].y = st->ylim - y;
 	  j++;
 	}
-      XDrawPoints (dpy, window, draw_gc, points, j, CoordModeOrigin);
-      XSync (dpy, False);
-      screenhack_handle_events (dpy);
     }
-  sleep ( sleep_time );
+  XDrawPoints (dpy, window, st->draw_gc, points, j, CoordModeOrigin);
+  st->remaining_iterations -= this_iterations;
+  if (st->remaining_iterations < 0) st->remaining_iterations = 0;
+  st->current_x = x;
+  st->current_y = y;
+}
 
-  erase_full_window(dpy, window);
 
-  XClearWindow (dpy, window);
-  if (got_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
-  XSync (dpy, False);
-  screenhack_handle_events (dpy);
-  sleep (1);
+static unsigned long
+rorschach_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  unsigned long delay = 20000;
+
+  if (st->eraser) {
+    st->eraser = erase_window (dpy, window, st->eraser);
+    goto END;
+  }
+
+  if (st->remaining_iterations > 0)
+    {
+      rorschach_draw_step (dpy, window, st);
+      if (st->remaining_iterations == 0)
+        delay = st->sleep_time * 1000000;
+    }
+  else
+    {
+      if (st->remaining_iterations == 0)
+        st->eraser = erase_window (dpy, window, st->eraser);
+
+      rorschach_draw_start (dpy, window, st);
+    }
+ END:
+  return delay;
+}
+
+
+static Bool
+rorschach_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+rorschach_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
 }
 
 
-char *progclass = "Rorschach";
-
-char *defaults [] = {
+static const char *rorschach_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*xsymmetry:	true",
   "*ysymmetry:	false",
   "*iterations:	4000",
-  "*offset:	4",
+  "*offset:	7",
   "*delay:	5",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec rorschach_options [] = {
   { "-iterations",	".iterations",	XrmoptionSepArg, 0 },
   { "-offset",		".offset",	XrmoptionSepArg, 0 },
   { "-xsymmetry",	".xsymmetry",	XrmoptionNoArg, "true" },
   { "-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "true" },
   { "-no-xsymmetry",	".xsymmetry",	XrmoptionNoArg, "false" },
   { "-no-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "false" },
-  { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  sleep_time = get_integer_resource("delay", "Integer");
-  init_rorschach (dpy, window);
-  while (1)
-    hurm (dpy, window);
-}
+XSCREENSAVER_MODULE ("Rorschach", rorschach)

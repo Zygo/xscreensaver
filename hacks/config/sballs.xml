@@ -21,19 +21,13 @@
     <option id="star" _label="Star" arg-set="-object 8"/>
   </select>
 
-  <select id="render">
-    <option id="normal" _label="Normal"/>
-    <option id="solid" _label="Untextured" arg-set="-no-texture"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Draws an animation of textured balls spinning like crazy in GL.
-Requires OpenGL, and a machine with fast hardware support for texture
-maps.
+Draws an animation of textured balls spinning like crazy.
 
-Written by Eric Lassauge &lt;lassauge@users.sourceforge.net&gt;.
+Written by Eric Lassauge; 2002.
   </_description>
 </screensaver>

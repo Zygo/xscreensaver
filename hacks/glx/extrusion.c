@@ -27,17 +27,12 @@
 #endif
 
 #ifdef STANDALONE
-# define PROGCLASS						"Extrusion"
-# define HACK_INIT						init_screensaver
-# define HACK_DRAW						draw_screensaver
-# define HACK_RESHAPE					reshape_screensaver
-# define HACK_HANDLE_EVENT				screensaver_handle_event
-# define EVENT_MASK						PointerMotionMask
-# define screensaver_opts				xlockmore_opts
-#define	DEFAULTS                        "*delay:			20000	\n" \
-										"*showFPS:      	False	\n" \
-										"*wireframe:	    False   \n"
+#define	DEFAULTS	"*delay:	 20000	\n" \
+					"*showFPS:	 False	\n" \
+					"*wireframe: False   \n"
 
+# define refresh_extrusion 0
+# define release_extrusion 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -53,44 +48,16 @@
 # endif /* VMS */
 #endif
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#ifdef HAVE_GLE3
-#include <GL/gle.h>
-#else
-#include <GL/tube.h>
-#endif
-
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "extrusion.h"
 
 #define checkImageWidth 64
 #define checkImageHeight 64
-
-
-extern void InitStuff_helix2(void);
-extern void DrawStuff_helix2(void);
-extern void InitStuff_helix3(void);
-extern void DrawStuff_helix3(void);
-extern void InitStuff_helix4(void);
-extern void DrawStuff_helix4(void);
-extern void InitStuff_joinoffset(void);
-extern void DrawStuff_joinoffset(void);
-extern void InitStuff_screw(void);
-extern void DrawStuff_screw(void);
-extern void InitStuff_taper(void);
-extern void DrawStuff_taper(void);
-extern void InitStuff_twistoid(void);
-extern void DrawStuff_twistoid(void);
-
 
 
 #define WIDTH 640
@@ -145,18 +112,18 @@ static OptionStruct desc[] =
   {"-/+ mipmap", "whether to use texture mipmap (slower)"},
 };
 
-ModeSpecOpt screensaver_opts = {countof(opts), opts, countof(vars), vars, desc};
+ENTRYPOINT ModeSpecOpt extrusion_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
-ModStruct   screensaver_description =
-{"screensaver", "init_screensaver", "draw_screensaver", "release_screensaver",
- "draw_screensaver", "init_screensaver", NULL, &screensaver_opts,
+ModStruct   extrusion_description =
+{"extrusion", "init_extrusion", "draw_extrusion", "release_extrusion",
+ "draw_extrusion", "init_extrusion", NULL, &extrusion_opts,
  1000, 1, 2, 1, 4, 1.0, "",
- "OpenGL screensaver", 0, NULL};
+ "OpenGL extrusion", 0, NULL};
 #endif
 
 
-/* structure for holding the screensaver data */
+/* structure for holding the extrusion data */
 typedef struct {
   int screen_width, screen_height;
   GLXContext *glx_context;
@@ -169,26 +136,25 @@ typedef struct {
   int mouse_dx, mouse_dy;
   Window window;
   XColor fg, bg;
-} screensaverstruct;
+  int extrusion_number;
+} extrusionstruct;
 
-static screensaverstruct *Screensaver = NULL;
+static extrusionstruct *Extrusion = NULL;
 
 
 
 /* set up a light */
-static GLfloat lightOnePosition[] = {40.0, 40, 100.0, 0.0};
-static GLfloat lightOneColor[] = {0.99, 0.99, 0.00, 1.0}; 
+static const GLfloat lightOnePosition[] = {40.0, 40, 100.0, 0.0};
+static const GLfloat lightOneColor[] = {0.99, 0.99, 0.00, 1.0}; 
 
-static GLfloat lightTwoPosition[] = {-40.0, 40, 100.0, 0.0};
-static GLfloat lightTwoColor[] = {0.00, 0.99, 0.99, 1.0}; 
+static const GLfloat lightTwoPosition[] = {-40.0, 40, 100.0, 0.0};
+static const GLfloat lightTwoColor[] = {0.00, 0.99, 0.99, 1.0}; 
 
 float rot_x=0, rot_y=0, rot_z=0;
 float lastx=0, lasty=0;
 
 static float max_lastx=400,  max_lasty=400;
 static float min_lastx=-400, min_lasty=-400;
-
-static int screensaver_number;
 
 struct functions {
   void (*InitStuff)(void);
@@ -200,7 +166,7 @@ struct functions {
    like we're looking at them from the back or something
 */
 
-static struct functions funcs_ptr[] = {
+static const struct functions funcs_ptr[] = {
   {InitStuff_helix2, DrawStuff_helix2, "helix2"},
   {InitStuff_helix3, DrawStuff_helix3, "helix3"},
   {InitStuff_helix4, DrawStuff_helix4, "helix4"},
@@ -210,13 +176,13 @@ static struct functions funcs_ptr[] = {
   {InitStuff_twistoid, DrawStuff_twistoid, "twistoid"},
 };
 
-static int num_screensavers = countof(funcs_ptr);
+static int num_extrusions = countof(funcs_ptr);
 
 
 /* BEGINNING OF FUNCTIONS */
 
 
-GLubyte *
+static GLubyte *
 Generate_Image(int *width, int *height, int *format)
 {
   GLubyte *result;
@@ -245,7 +211,7 @@ Generate_Image(int *width, int *height, int *format)
 
 /* Create a texture in OpenGL.  First an image is loaded 
    and stored in a raster buffer, then it's  */
-void Create_Texture(ModeInfo *mi, const char *filename)
+static void Create_Texture(ModeInfo *mi, const char *filename)
 {
   int height, width;
   GLubyte *image;
@@ -313,7 +279,7 @@ void Create_Texture(ModeInfo *mi, const char *filename)
 static void
 init_rotation (ModeInfo *mi)
 {
-  screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
+  extrusionstruct *gp = &Extrusion[MI_SCREEN(mi)];
   double spin_speed = 0.5;
   gp->rot = make_rotator (spin_speed, spin_speed, spin_speed,
                           0.2,
@@ -326,22 +292,24 @@ init_rotation (ModeInfo *mi)
 }
 
 
-/* draw the screensaver once */
-void
-draw_screensaver(ModeInfo * mi)
+/* draw the extrusion once */
+ENTRYPOINT void
+draw_extrusion(ModeInfo * mi)
 {
-  screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
+  extrusionstruct *gp = &Extrusion[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
   Window      window = MI_WINDOW(mi);
 
-  static GLfloat color[4] = {0.6, 0.6, 0.4, 1.0};
-  /* static GLfloat spec[4]  = {0.6, 0.6, 0.6, 1.0}; */
-  /* static GLfloat shiny    = 40.0; */
+  static const GLfloat color[4] = {0.6, 0.6, 0.4, 1.0};
+  /* static const GLfloat spec[4]  = {0.6, 0.6, 0.6, 1.0}; */
+  /* static const GLfloat shiny    = 40.0; */
 
   double x, y, z;
 
   if (!gp->glx_context)
 	return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
 
   glPushMatrix();
 
@@ -378,7 +346,7 @@ draw_screensaver(ModeInfo * mi)
   glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glFrontFace(GL_CCW);
 
-  funcs_ptr[screensaver_number].DrawStuff();
+  funcs_ptr[gp->extrusion_number].DrawStuff();
 	  
   glPopMatrix();
 
@@ -406,8 +374,8 @@ SetupLight(void)
 }
 
 /* Standard reshape function */
-void
-reshape_screensaver (ModeInfo *mi, int width, int height)
+ENTRYPOINT void
+reshape_extrusion (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
@@ -427,34 +395,35 @@ reshape_screensaver (ModeInfo *mi, int width, int height)
 }
 
 
-/* decide which screensaver example to run */
+/* decide which extrusion example to run */
 static void
-chooseScreensaverExample (ModeInfo *mi)
+chooseExtrusionExample (ModeInfo *mi)
 {
+  extrusionstruct *gp = &Extrusion[MI_SCREEN(mi)];
   int i;
   /* call the extrusion init routine */
 
   if (!strncmp(which_name, "RANDOM", strlen(which_name))) {
-    screensaver_number = random() % num_screensavers;
+    gp->extrusion_number = random() % num_extrusions;
   }
   else {
-	screensaver_number=-1;
-	for (i=0; i < num_screensavers; i++) {
+	gp->extrusion_number=-1;
+	for (i=0; i < num_extrusions; i++) {
 	  if (!strncmp(which_name, funcs_ptr[i].name, strlen(which_name))) {
-		screensaver_number = i;
+		gp->extrusion_number = i;
 	  }
 	}	  
   }
 	
-  if (screensaver_number < 0 || screensaver_number >= num_screensavers) {
-	fprintf(stderr, "%s: invalid screensaver example number!\n", progname);
-	fprintf(stderr, "%s: known screensavers:\n", progname);
-	for (i=0; i < num_screensavers; i++)
+  if (gp->extrusion_number < 0 || gp->extrusion_number >= num_extrusions) {
+	fprintf(stderr, "%s: invalid extrusion example number!\n", progname);
+	fprintf(stderr, "%s: known extrusions:\n", progname);
+	for (i=0; i < num_extrusions; i++)
 	  fprintf(stderr,"\t%s\n", funcs_ptr[i].name);
 	exit(1);
   }
   init_rotation(mi);
-  funcs_ptr[screensaver_number].InitStuff();
+  funcs_ptr[gp->extrusion_number].InitStuff();
 }
 
 
@@ -465,7 +434,7 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   int style;
   int mode;
 
-  reshape_screensaver(mi, width, height);
+  reshape_extrusion(mi, width, height);
   glViewport( 0, 0, width, height ); 
 
   glEnable(GL_DEPTH_TEST);
@@ -501,13 +470,21 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 
 }
 
-Bool
-screensaver_handle_event (ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool
+extrusion_handle_event (ModeInfo *mi, XEvent *event)
 {
-  screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
+  extrusionstruct *gp = &Extrusion[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+      (event->xbutton.button == Button4 ||
+       event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&   /* rotate with left button */
+           !event->xbutton.state)		/* if no modifier keys */
     {
       gp->button_down_p = True;
       gltrackball_start (gp->trackball,
@@ -515,31 +492,16 @@ screensaver_handle_event (ModeInfo *mi, XEvent *event)
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      gp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
-    {
-      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           event->xbutton.button != Button1)
-    {
+  else if (event->xany.type == ButtonPress)  /* deform with other buttons */
+    {                                        /* or with modifier keys */
       gp->button2_down_p = True;
       gp->mouse_start_x = gp->mouse_x = event->xbutton.x;
       gp->mouse_start_y = gp->mouse_y = event->xbutton.y;
       return True;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button != Button1)
+  else if (event->xany.type == ButtonRelease)
     {
+      gp->button_down_p = False;
       gp->button2_down_p = False;
       return True;
     }
@@ -561,31 +523,33 @@ screensaver_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-/* xscreensaver initialization routine */
-void
-init_screensaver (ModeInfo * mi)
+/* xextrusion initialization routine */
+ENTRYPOINT void
+init_extrusion (ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
-  screensaverstruct *gp;
+  extrusionstruct *gp;
 
   if (MI_IS_WIREFRAME(mi)) do_light = 0;
 
-  if (Screensaver == NULL) {
-	if ((Screensaver = (screensaverstruct *)
-         calloc(MI_NUM_SCREENS(mi), sizeof (screensaverstruct))) == NULL)
+  if (Extrusion == NULL) {
+	if ((Extrusion = (extrusionstruct *)
+         calloc(MI_NUM_SCREENS(mi), sizeof (extrusionstruct))) == NULL)
 	  return;
   }
-  gp = &Screensaver[screen];
+  gp = &Extrusion[screen];
 
   gp->window = MI_WINDOW(mi);
   if ((gp->glx_context = init_GL(mi)) != NULL) {
-	reshape_screensaver(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+	reshape_extrusion(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 	initializeGL(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-	chooseScreensaverExample(mi);
+	chooseExtrusionExample(mi);
   } else {
 	MI_CLEARWINDOW(mi);
   }
 
 }
+
+XSCREENSAVER_MODULE ("Extrusion", extrusion)
 
 #endif  /* USE_GL */

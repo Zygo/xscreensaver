@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* atunnels --- OpenGL Advanced Tunnel Screensaver */
+/* atunnel --- OpenGL Advanced Tunnel Screensaver */
 
 #if 0
-static const char sccsid[] = "@(#)atunnels.c	5.13 2004/05/25 xlockmore";
+static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
 #endif
 
 /* Copyright (c) E. Lassauge, 2003-2004. */
@@ -39,21 +39,18 @@ static const char sccsid[] = "@(#)atunnels.c	5.13 2004/05/25 xlockmore";
  */
 
 #ifdef STANDALONE		/* xscreensaver mode */
-# define PROGCLASS		"Atunnels"
-# define HACK_INIT		init_atunnels
-# define HACK_DRAW		draw_atunnels
-# define HACK_RESHAPE		reshape_atunnels
-# define atunnels_opts		xlockmore_opts
 #define	DEFAULTS                "*delay:	10000	\n" \
                                 "*showFPS:  False   \n" \
 
-#define MODE_atunnels
+# define refresh_atunnel 0
+# define atunnel_handle_event 0
+#define MODE_atunnel
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else 				/* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif 				/* !STANDALONE */
 
-#ifdef MODE_atunnels /* whole file */
+#ifdef MODE_atunnel /* whole file */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,12 +92,12 @@ static Bool do_wire;
 static Bool do_texture;
 
 static XrmOptionDescRec opts[] = {
-  {"-light",   ".atunnels.light",      XrmoptionNoArg, "true" },
-  {"+light",   ".atunnels.light",      XrmoptionNoArg, "false" },
-  {"-wire",    ".atunnels.wire",       XrmoptionNoArg, "true" },
-  {"+wire",    ".atunnels.wire",       XrmoptionNoArg, "false" },
-  {"-texture", ".atunnels.texture",    XrmoptionNoArg, "true" },
-  {"+texture", ".atunnels.texture",    XrmoptionNoArg, "false" },
+  {"-light",   ".atunnel.light",      XrmoptionNoArg, "true" },
+  {"+light",   ".atunnel.light",      XrmoptionNoArg, "false" },
+  {"-wireframe",".atunnel.wire",       XrmoptionNoArg, "true" },
+  {"+wireframe",".atunnel.wire",       XrmoptionNoArg, "false" },
+  {"-texture", ".atunnel.texture",    XrmoptionNoArg, "true" },
+  {"+texture", ".atunnel.texture",    XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {
@@ -116,12 +113,12 @@ static OptionStruct desc[] =
   {"-/+ texture", "whether to apply a texture (slower)"},
 };
 
-ModeSpecOpt atunnels_opts = {countof(opts), opts, countof(vars), vars, desc};
+ENTRYPOINT ModeSpecOpt atunnel_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
-ModStruct   atunnels_description =
-{"atunnels", "init_atunnels", "draw_atunnels", "release_atunnels",
- "draw_atunnels", "init_atunnels", NULL, &atunnels_opts,
+ModStruct   atunnel_description =
+{"atunnel", "init_atunnel", "draw_atunnel", "release_atunnel",
+ "draw_atunnel", "init_atunnel", NULL, &atunnel_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL advanced tunnel screensaver", 0, NULL};
 #endif
@@ -131,22 +128,23 @@ typedef struct {
   int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
-} atunnelsstruct;
+  struct tunnel_state *ts;
+  GLuint texture[MAX_TEXTURE]; /* texture id: GL world */
+} atunnelstruct;
 
-static atunnelsstruct *Atunnels = NULL;
-
-static GLuint texture[MAX_TEXTURE]; /* texture id: GL world */
+static atunnelstruct *Atunnel = NULL;
 
 /*=================== Load Texture =========================================*/
 static void LoadTexture(ModeInfo * mi, char **fn, int t_num)
 {
 #if defined( I_HAVE_XPM )
+  	atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];
 	XImage *teximage;    /* Texture data */
  
         if ((teximage = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
 			 MI_COLORMAP(mi), fn)) == None) {
 	    (void) fprintf(stderr, "Error reading the texture.\n");
-	    glDeleteTextures(1, &texture[t_num]);
+	    glDeleteTextures(1, &sa->texture[t_num]);
             do_texture = False;
 #ifdef STANDALONE
 	    exit(0);
@@ -156,12 +154,15 @@ static void LoadTexture(ModeInfo * mi, char **fn, int t_num)
 	}
 
 #ifdef HAVE_GLBINDTEXTURE
-	glBindTexture(GL_TEXTURE_2D, texture[t_num]);
+	glBindTexture(GL_TEXTURE_2D, sa->texture[t_num]);
 #endif /* HAVE_GLBINDTEXTURE */
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, teximage->width, teximage->height, 
-			0, GL_RGBA, GL_UNSIGNED_BYTE, teximage->data);
+			0, GL_RGBA,
+                 /* GL_UNSIGNED_BYTE, */
+                 GL_UNSIGNED_INT_8_8_8_8_REV,
+                 teximage->data);
 	check_gl_error("texture");
 
 	/* Texture parameters, LINEAR scaling for better texture quality */
@@ -177,6 +178,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, int t_num)
 /*=================== Main Initialization ==================================*/
 static void Init(ModeInfo * mi)
 {
+  	atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];
 	GLfloat light_ambient[] = {1.0, 1.0, 1.0, 1.0};
 	GLfloat light_diffuse[] = {1.0, 1.0, 1.0, 1.0};
 	GLfloat light_specular[] = {1.0, 1.0, 1.0, 1.0};
@@ -186,7 +188,7 @@ static void Init(ModeInfo * mi)
   	glClearColor(0, 0, 0, 0);
 	if (do_texture)
 	{
-		glGenTextures(MAX_TEXTURE, texture);
+		glGenTextures(MAX_TEXTURE, sa->texture);
 		LoadTexture(mi, texture0,0);
 		LoadTexture(mi, texture1,1);
 		LoadTexture(mi, texture2,2);
@@ -195,7 +197,7 @@ static void Init(ModeInfo * mi)
 		LoadTexture(mi, texture5,5);
 		glEnable(GL_TEXTURE_2D);
 	}
-	InitTunnel();
+	sa->ts = InitTunnel();
 	
 	/* Set lighting parameters */
 	if (do_light)
@@ -240,8 +242,8 @@ static void Init(ModeInfo * mi)
 
 
 /* Standard reshape function */
-void
-reshape_atunnels(ModeInfo *mi, int width, int height)
+ENTRYPOINT void
+reshape_atunnel(ModeInfo *mi, int width, int height)
 {
 	float a;
 
@@ -254,9 +256,9 @@ reshape_atunnels(ModeInfo *mi, int width, int height)
 }
 
 /* draw the screensaver once */
-void draw_atunnels(ModeInfo * mi)
+ENTRYPOINT void draw_atunnel(ModeInfo * mi)
 {
-  	atunnelsstruct *sa = &Atunnels[MI_SCREEN(mi)];
+  	atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];
   	Display    *display = MI_DISPLAY(mi);
   	Window      window = MI_WINDOW(mi);
 
@@ -269,8 +271,8 @@ void draw_atunnels(ModeInfo * mi)
 
 	glLoadIdentity();
 
-	DrawTunnel(do_texture, do_light, texture);
-	SplashScreen(do_wire, do_texture, do_light);
+	DrawTunnel(sa->ts, do_texture, do_light, sa->texture);
+	SplashScreen(sa->ts, do_wire, do_texture, do_light);
 
 	glFlush();  
 	/* manage framerate display */
@@ -281,20 +283,20 @@ void draw_atunnels(ModeInfo * mi)
 
 
 /* xscreensaver initialization routine */
-void init_atunnels(ModeInfo * mi)
+ENTRYPOINT void init_atunnel(ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
-  atunnelsstruct *sa;
+  atunnelstruct *sa;
 
-  if (Atunnels == NULL) {
-	if ((Atunnels = (atunnelsstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (atunnelsstruct))) == NULL)
+  if (Atunnel == NULL) {
+	if ((Atunnel = (atunnelstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (atunnelstruct))) == NULL)
 	  return;
   }
-  sa = &Atunnels[screen];
+  sa = &Atunnel[screen];
 
   sa->window = MI_WINDOW(mi);
   if ((sa->glx_context = init_GL(mi)) != NULL) {
-	reshape_atunnels(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+	reshape_atunnel(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 	Init(mi);
   } else {
 	MI_CLEARWINDOW(mi);
@@ -303,16 +305,20 @@ void init_atunnels(ModeInfo * mi)
 }
 
 /* all sorts of nice cleanup code should go here! */
-void release_atunnels(ModeInfo * mi)
+ENTRYPOINT void release_atunnel(ModeInfo * mi)
 {
   int screen;
-  if (Atunnels != NULL) {
+  if (Atunnel != NULL) {
 	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-	  /*	  atunnelsstruct *sa = &Atunnels[screen];*/
+      atunnelstruct *sa = &Atunnel[screen];
+      FreeTunnel(sa->ts);
 	}
-	(void) free((void *) Atunnels);
-	Atunnels = NULL;
+	(void) free((void *) Atunnel);
+	Atunnel = NULL;
   }
   FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Atunnel", atunnel)
+
 #endif

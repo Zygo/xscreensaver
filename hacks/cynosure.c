@@ -37,60 +37,36 @@
  */
 
 #include "screenhack.h"
-static Display *dpy;
-static Window window;
-static XColor *colors;
-static int ncolors;
-static int fg_pixel, bg_pixel;
-static GC fg_gc, bg_gc, shadow_gc;
 
-static void paint(void);
-static int genNewColor(void);
-static int genConstrainedColor(int base, int tweak);
-static int c_tweak(int base, int tweak);
+/* #define DO_STIPPLE */
 
-/**
- * The current color that is being tweaked to create the
- * rectangles.
- **/
-static int curColor;
+struct state {
+  Display *dpy;
+  Window window;
 
-/**
- * A variable used for the progression of the colors (yes, I know
- * that's a lame explanation, but if your read the source, it should
- * become obvious what I'm doing with this variable).
- **/
-static int curBase;
+  XColor *colors;
+  int ncolors;
 
-/**
- * The width of the right and bottom edges of the rectangles.
- **/
-static int   shadowWidth;
+#ifndef DO_STIPPLE
+  XColor *colors2;
+  int ncolors2;
+#endif
 
-/* The offset of the dropshadow beneath the rectangles. */
-static int   elevation;
+  int fg_pixel, bg_pixel;
+  GC fg_gc, bg_gc, shadow_gc;
 
-/**
- * The approximate amount of time that will elapse before the base
- * color is permanently changed.
- *
- * @see #tweak
- **/
-static int   sway;
+  int curColor;
+  int curBase;	/* color progression */
+  int   shadowWidth;
+  int   elevation;	/* offset of dropshadow */
+  int   sway;	/* time until base color changed */
+  int   timeLeft;	/* until base color used */
+  int   tweak;	/* amount of color variance */
+  int gridSize;
+  int iterations, i, delay;
+  XWindowAttributes xgwa;
+};
 
-/**
- * The counter of time left until the base color value used. This class
- * variable is necessary because Java doesn't support static method
- * variables (grr grr).
- **/
-static int   timeLeft;
-
-/**
- * The amount by which the color of the polygons drawn will vary.
- *
- * @see #sway;
- **/
-static int   tweak;
 
 /**
  * The smallest size for an individual cell.
@@ -103,11 +79,6 @@ static int   tweak;
 #define MINRECTSIZE 6
 
 /**
- * The size of the grid that the rectangles are placed within.
- **/
-static int gridSize;
-
-/**
  * Every so often genNewColor() generates a completely random
  * color. This variable sets how frequently that happens. It's
  * currently set to happen 1% of the time.
@@ -116,109 +87,134 @@ static int gridSize;
  **/
 #define THRESHOLD 100 /*0.01*/
 
-
-char *progclass = "Cynosure";
-char *defaults [] = {
-  ".background:		black",
-  ".foreground:		white",
-  "*delay:		500000",
-  "*colors:		128",
-  "*iterations:		100",
-  "*shadowWidth:	2",
-  "*elevation:		5",
-  "*sway:		30",
-  "*tweak:		20",
-  "*gridSize:		12",
-  0
-};
-
-XrmOptionDescRec options [] = {
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-ncolors",		".colors",	XrmoptionSepArg, 0 },
-  { "-iterations",	".iterations",	XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
-};
+static void paint(struct state *st);
+static int genNewColor(struct state *st);
+static int genConstrainedColor(struct state *st, int base, int tweak);
+static int c_tweak(struct state *st, int base, int tweak);
 
 
-void screenhack(Display *d, Window w) 
+static void *
+cynosure_init (Display *d, Window w)
 {
-  XWindowAttributes xgwa;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
-  int delay;
-  int i, iterations;
 
-  dpy = d;
-  window = w;
+  st->dpy = d;
+  st->window = w;
 
-  curColor    = 0;
-  curBase     = curColor;
-  shadowWidth = get_integer_resource ("shadowWidth", "Integer");
-  elevation   = get_integer_resource ("elevation", "Integer");
-  sway        = get_integer_resource ("sway", "Integer");
-  tweak       = get_integer_resource ("tweak", "Integer");
-  gridSize    = get_integer_resource ("gridSize", "Integer");
-  timeLeft    = 0;
+  st->curColor    = 0;
+  st->curBase     = st->curColor;
+  st->shadowWidth = get_integer_resource (st->dpy, "shadowWidth", "Integer");
+  st->elevation   = get_integer_resource (st->dpy, "elevation", "Integer");
+  st->sway        = get_integer_resource (st->dpy, "sway", "Integer");
+  st->tweak       = get_integer_resource (st->dpy, "tweak", "Integer");
+  st->gridSize    = get_integer_resource (st->dpy, "gridSize", "Integer");
+  st->timeLeft    = 0;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
-  ncolors = get_integer_resource ("colors", "Colors");
-  if (ncolors < 2) ncolors = 2;
-  if (ncolors <= 2) mono_p = True;
+  st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+  if (st->ncolors < 2) st->ncolors = 2;
+  if (st->ncolors <= 2) mono_p = True;
 
   if (mono_p)
-    colors = 0;
+    st->colors = 0;
   else
-    colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
+    st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
 
   if (mono_p)
     ;
   else {
-    make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap, colors, &ncolors,
+    make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors,
 			  True, 0, True);
-    if (ncolors <= 2) {
+    if (st->ncolors <= 2) {
       mono_p = True;
-      ncolors = 2;
-      if (colors) free(colors);
-      colors = 0;
+      st->ncolors = 2;
+      if (st->colors) free(st->colors);
+      st->colors = 0;
     }
   }
 
-  bg_pixel = get_pixel_resource("background", "Background", dpy,
-				xgwa.colormap);
-  fg_pixel = get_pixel_resource("foreground", "Foreground", dpy,
-				xgwa.colormap);
+  st->bg_pixel = get_pixel_resource(st->dpy,
+				st->xgwa.colormap, "background", "Background");
+  st->fg_pixel = get_pixel_resource(st->dpy,
+				st->xgwa.colormap, "foreground", "Foreground");
 
-  gcv.foreground = fg_pixel;
-  fg_gc = XCreateGC(dpy, window, GCForeground, &gcv);
-  gcv.foreground = bg_pixel;
-  bg_gc = XCreateGC(dpy, window, GCForeground, &gcv);
+  gcv.foreground = st->fg_pixel;
+  st->fg_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+  gcv.foreground = st->bg_pixel;
+  st->bg_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
 
+#ifdef DO_STIPPLE
   gcv.fill_style = FillStippled;
-  gcv.stipple = XCreateBitmapFromData(dpy, window, "\125\252", 8, 2);
-  shadow_gc = XCreateGC(dpy, window, GCForeground|GCFillStyle|GCStipple, &gcv);
-  XFreePixmap(dpy, gcv.stipple);
+  gcv.stipple = XCreateBitmapFromData(st->dpy, st->window, "\125\252", 8, 2);
+  st->shadow_gc = XCreateGC(st->dpy, st->window, GCForeground|GCFillStyle|GCStipple, &gcv);
+  XFreePixmap(st->dpy, gcv.stipple);
 
-  delay = get_integer_resource ("delay", "Delay");
-  iterations = get_integer_resource ("iterations", "Iterations");
+#else /* !DO_STIPPLE */
+  st->shadow_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
 
-  i = 0;
-  while (1)
+#  ifdef HAVE_COCOA /* allow non-opaque alpha components in pixel values */
+  jwxyz_XSetAlphaAllowed (st->dpy, st->shadow_gc, True);
+#  endif
+
+  if (st->colors)
     {
-      if (iterations > 0 && ++i >= iterations)
-	{
-	  i = 0;
-	  if (!mono_p)
-	    XSetWindowBackground(dpy, window,
-				 colors[random() % ncolors].pixel);
-	  XClearWindow(dpy, window);
-	}
-      paint();
-      XSync(dpy, False);
-      screenhack_handle_events (dpy);
-      if (delay)
-	usleep(delay);
+      int i;
+      st->ncolors2 = st->ncolors;
+      st->colors2 = (XColor *) malloc(sizeof(*st->colors2) * (st->ncolors2+1));
+
+      for (i = 0; i < st->ncolors2; i++)
+        {
+#  ifdef HAVE_COCOA
+          /* give a non-opaque alpha to the shadow colors */
+          unsigned long pixel = st->colors[i].pixel;
+          unsigned long amask = BlackPixelOfScreen (st->xgwa.screen);
+          unsigned long a = (0x77777777 & amask);
+          pixel = (pixel & (~amask)) | a;
+          st->colors2[i].pixel = pixel;
+#  else /* !HAVE_COCOA */
+          int h;
+          double s, v;
+          rgb_to_hsv (st->colors[i].red,
+                      st->colors[i].green,
+                      st->colors[i].blue,
+                      &h, &s, &v);
+          v *= 0.4;
+          hsv_to_rgb (h, s, v,
+                      &st->colors2[i].red,
+                      &st->colors2[i].green,
+                      &st->colors2[i].blue);
+          st->colors2[i].pixel = st->colors[i].pixel;
+          XAllocColor (st->dpy, st->xgwa.colormap, &st->colors2[i]);
+#  endif /* !HAVE_COCOA */
+        }
     }
+# endif /* !DO_STIPPLE */
+
+  st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+  st->iterations = get_integer_resource (st->dpy, "iterations", "Iterations");
+
+  return st;
 }
+
+static unsigned long
+cynosure_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  if (st->iterations > 0 && ++st->i >= st->iterations)
+    {
+      st->i = 0;
+      if (!mono_p)
+        XSetWindowBackground(st->dpy, st->window,
+                             st->colors[random() % st->ncolors].pixel);
+      XClearWindow(st->dpy, st->window);
+    }
+  paint(st);
+
+  return st->delay;
+}
+
 
 /**
  * paint adds a new layer of multicolored rectangles within a grid of
@@ -230,28 +226,19 @@ void screenhack(Display *d, Window w)
  * @param g      the Graphics coordinate in which to draw
  * @see #genNewColor
  **/
-static void paint(void)
+static void paint(struct state *st)
 {
     int i;
     int cellsWide, cellsHigh, cellWidth, cellHeight;
-    static int width, height;
-    static int size_check = 1;
-
-    if (--size_check <= 0)
-      {
-	XWindowAttributes xgwa;
-	XGetWindowAttributes (dpy, window, &xgwa);
-	width = xgwa.width;
-	height = xgwa.height;
-	size_check = 1000;
-      }
+    int width = st->xgwa.width;
+    int height = st->xgwa.height;
 
     /* How many cells wide the grid is (equal to gridSize +/- (gridSize / 2))
      */
-    cellsWide  = c_tweak(gridSize, gridSize / 2);
+    cellsWide  = c_tweak(st, st->gridSize, st->gridSize / 2);
     /* How many cells high the grid is (equal to gridSize +/- (gridSize / 2))
      */
-    cellsHigh  = c_tweak(gridSize, gridSize / 2);
+    cellsHigh  = c_tweak(st, st->gridSize, st->gridSize / 2);
     /* How wide each cell in the grid is */
     cellWidth  = width  / cellsWide;
     /* How tall each cell in the grid is */
@@ -276,8 +263,12 @@ static void paint(void)
       /* Each row is a different color, randomly generated (but constrained) */
       if (!mono_p)
 	{
-	  int c = genNewColor();
-	  XSetForeground(dpy, fg_gc, colors[c].pixel);
+	  int c = genNewColor(st);
+	  XSetForeground(st->dpy, st->fg_gc, st->colors[c].pixel);
+# ifndef DO_STIPPLE
+          if (st->colors2)
+            XSetForeground(st->dpy, st->shadow_gc, st->colors2[c].pixel);
+# endif
 	}
 
       for(j = 0; j < cellsWide; j++) {
@@ -285,37 +276,37 @@ static void paint(void)
 
         /* Generate a random height for a rectangle and make sure that */
         /* it's above a certain minimum size */
-        curHeight = random() % (cellHeight - shadowWidth);
+        curHeight = random() % (cellHeight - st->shadowWidth);
         if (curHeight < MINRECTSIZE)
           curHeight = MINRECTSIZE;
         /* Generate a random width for a rectangle and make sure that
            it's above a certain minimum size */
-        curWidth  = random() % (cellWidth  - shadowWidth);
+        curWidth  = random() % (cellWidth  - st->shadowWidth);
         if (curWidth < MINRECTSIZE)
           curWidth = MINRECTSIZE;
         /* Figure out a random place to locate the rectangle within the
            cell */
         curY      = (i * cellHeight) + (random() % ((cellHeight - curHeight) -
-						    shadowWidth));
+						    st->shadowWidth));
         curX      = (j * cellWidth) +  (random() % ((cellWidth  - curWidth) -
-						    shadowWidth));
+						    st->shadowWidth));
 
         /* Draw the shadow */
-	if (elevation > 0)
-	  XFillRectangle(dpy, window, shadow_gc,
-			 curX + elevation, curY + elevation,
+	if (st->elevation > 0)
+	  XFillRectangle(st->dpy, st->window, st->shadow_gc,
+			 curX + st->elevation, curY + st->elevation,
 			 curWidth, curHeight);
 
         /* Draw the edge */
-	if (shadowWidth > 0)
-	  XFillRectangle(dpy, window, bg_gc,
-			 curX + shadowWidth, curY + shadowWidth,
+	if (st->shadowWidth > 0)
+	  XFillRectangle(st->dpy, st->window, st->bg_gc,
+			 curX + st->shadowWidth, curY + st->shadowWidth,
 			 curWidth, curHeight);
 
-	XFillRectangle(dpy, window, fg_gc, curX, curY, curWidth, curHeight);
+	XFillRectangle(st->dpy, st->window, st->fg_gc, curX, curY, curWidth, curHeight);
 
         /* Draw a 1-pixel black border around the rectangle */
-	XDrawRectangle(dpy, window, bg_gc, curX, curY, curWidth, curHeight);
+	XDrawRectangle(st->dpy, st->window, st->bg_gc, curX, curY, curWidth, curHeight);
       }
 
     }
@@ -328,28 +319,28 @@ static void paint(void)
  *
  * @return the new color
  **/
-static int genNewColor(void)
+static int genNewColor(struct state *st)
 {
     /* These lines handle "sway", or the gradual random changing of */
     /* colors. After genNewColor() has been called a given number of */
     /* times (specified by a random permutation of the tweak variable), */
     /* take whatever color has been most recently randomly generated and */
     /* make it the new base color. */
-    if (timeLeft == 0) {
-      timeLeft = c_tweak(sway, sway / 3);
-      curColor = curBase;
+    if (st->timeLeft == 0) {
+      st->timeLeft = c_tweak(st, st->sway, st->sway / 3);
+      st->curColor = st->curBase;
     } else {
-      timeLeft--;
+      st->timeLeft--;
     }
      
     /* If a randomly generated number is less than the threshold value,
        produce a "sport" color value that is completely unrelated to the 
        current palette. */
     if (0 == (random() % THRESHOLD)) {
-      return (random() % ncolors);
+      return (random() % st->ncolors);
     } else {
-      curBase = genConstrainedColor(curColor, tweak);
-      return curBase;
+      st->curBase = genConstrainedColor(st, st->curColor, st->tweak);
+      return st->curBase;
     }
 
 }
@@ -365,14 +356,14 @@ static int genNewColor(void)
  * @return a new constrained color
  * @see #genNewColor
  **/
-static int genConstrainedColor(int base, int tweak) 
+static int genConstrainedColor(struct state *st, int base, int tweak) 
 {
-    int i = 1 + (random() % tweak);
+    int i = 1 + (random() % st->tweak);
     if (random() & 1)
       i = -i;
-    i = (base + i) % ncolors;
+    i = (base + i) % st->ncolors;
     while (i < 0)
-      i += ncolors;
+      i += st->ncolors;
     return i;
 }
 
@@ -384,10 +375,57 @@ static int genConstrainedColor(int base, int tweak)
  * @see    #tweak
  * @return the tweaked byte
  **/
-static int c_tweak(int base, int tweak) 
+static int c_tweak(struct state *st, int base, int tweak) 
 {
     int ranTweak = (random() % (2 * tweak));
     int n = (base + (ranTweak - tweak));
     if (n < 0) n = -n;
     return (n < 255 ? n : 255);
 }
+
+static void
+cynosure_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->xgwa.width = w;
+  st->xgwa.height = h;
+}
+
+static Bool
+cynosure_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+cynosure_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *cynosure_defaults [] = {
+  ".background:		black",
+  ".foreground:		white",
+  "*delay:		500000",
+  "*colors:		128",
+  "*iterations:		100",
+  "*shadowWidth:	2",
+  "*elevation:		5",
+  "*sway:		30",
+  "*tweak:		20",
+  "*gridSize:		12",
+  0
+};
+
+static XrmOptionDescRec cynosure_options [] = {
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-ncolors",		".colors",	XrmoptionSepArg, 0 },
+  { "-iterations",	".iterations",	XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }
+};
+
+
+XSCREENSAVER_MODULE ("Cynosure", cynosure)

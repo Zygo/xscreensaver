@@ -99,10 +99,12 @@
 
   <_description>
 XMountains generates realistic-looking fractal terrains of snow-capped
-mountains near water, with either a top view or a side view.  Written
-by Stephen Booth.  This is not included with the XScreenSaver package,
-but if you don't have it already, you can find it at
-&lt;http://www.epcc.ed.ac.uk/~spb/xmountains/&gt;.  (Make sure you have
-version 2.7 or newer!)
+mountains near water, with either a top view or a side view.  This is not
+included with the XScreenSaver package, but if you don't have it already,
+you can find it at
+&lt;http://www.epcc.ed.ac.uk/~spb/xmountains/&gt;.
+(Make sure you have version 2.7 or newer!)
+
+Written by Stephen Booth.
   </_description>
 </screensaver>

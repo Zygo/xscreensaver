@@ -177,7 +177,7 @@ ghost_hiding (pacmangamestruct * pp, ghoststruct * g)
 }
 
 #if 1
-void
+static void
 clear_trace(ghoststruct *g)
 {
     int i = 0;
@@ -310,7 +310,7 @@ recur_back_track ( pacmangamestruct * pp, ghoststruct *g, int row, int col ){
     return False;
 }
 
-void
+static void
 find_home ( pacmangamestruct *pp, ghoststruct *g ){
     int i;
     int r,c;

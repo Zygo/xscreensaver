@@ -29,26 +29,23 @@ static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_fadeplot
-#define PROGCLASS "Fadeplot"
-#define HACK_INIT init_fadeplot
-#define HACK_DRAW draw_fadeplot
-#define fadeplot_opts xlockmore_opts
-#define DEFAULTS "*delay: 30000 \n" \
- "*count: 10 \n" \
- "*cycles: 1500 \n" \
- "*ncolors: 64 \n"
-#define BRIGHT_COLORS
-#define UNIFORM_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_fadeplot
+# define DEFAULTS	"*delay: 30000 \n" \
+					"*count: 10 \n" \
+					"*cycles: 1500 \n" \
+					"*ncolors: 64 \n"
+# define BRIGHT_COLORS
+# define UNIFORM_COLORS
+# define reshape_fadeplot 0
+# define fadeplot_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_fadeplot
 
-ModeSpecOpt fadeplot_opts =
+ENTRYPOINT ModeSpecOpt fadeplot_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -107,8 +104,8 @@ initSintab(ModeInfo * mi)
 	return True;
 }
 
-void
-init_fadeplot(ModeInfo * mi)
+ENTRYPOINT void
+init_fadeplot (ModeInfo * mi)
 {
 	fadeplotstruct *fp;
 
@@ -158,8 +155,8 @@ init_fadeplot(ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
 }
 
-void
-draw_fadeplot(ModeInfo * mi)
+ENTRYPOINT void
+draw_fadeplot (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
@@ -197,7 +194,6 @@ draw_fadeplot(ModeInfo * mi)
 		}
 	}
 	XDrawPoints(display, window, gc, fp->pts, temp, CoordModeOrigin);
-	XFlush(display);
 	fp->st.x = (fp->st.x + fp->speed.x) % fp->angles;
 	fp->st.y = (fp->st.y + fp->speed.y) % fp->angles;
 	fp->temps++;
@@ -213,14 +209,15 @@ draw_fadeplot(ModeInfo * mi)
 		MI_CLEARWINDOW(mi);
 	}
 }
-void
-refresh_fadeplot(ModeInfo * mi)
+
+ENTRYPOINT void
+refresh_fadeplot (ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
 
-void
-release_fadeplot(ModeInfo * mi)
+ENTRYPOINT void
+release_fadeplot (ModeInfo * mi)
 {
 	if (fadeplots != NULL) {
 		int         screen;
@@ -231,5 +228,7 @@ release_fadeplot(ModeInfo * mi)
 		fadeplots = (fadeplotstruct *) NULL;
 	}
 }
+
+XSCREENSAVER_MODULE ("Fadeplot", fadeplot)
 
 #endif /* MODE_fadeplot */

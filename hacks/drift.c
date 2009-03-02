@@ -31,20 +31,18 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_drift
-#define PROGCLASS "Drift"
-#define HACK_INIT init_drift
-#define HACK_DRAW draw_drift
-#define drift_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 30 \n" \
- "*ncolors: 200 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+# define MODE_drift
+# define DEFAULTS "*delay: 10000 \n" \
+				  "*count: 30 \n" \
+				  "*ncolors: 200 \n"
+# define SMOOTH_COLORS
+# define reshape_drift 0
+# define drift_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# define ENTRYPOINT /**/
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_drift
@@ -69,7 +67,7 @@ static XrmOptionDescRec opts[] =
 static argtype vars[] =
 {
 	{&grow, "grow", "Grow", DEF_GROW, t_Bool},
-	{&liss, "liss", "Liss", DEF_LISS, t_Bool}
+	{&liss, "trail", "Trail", DEF_LISS, t_Bool}
 };
 static OptionStruct desc[] =
 {
@@ -77,7 +75,7 @@ static OptionStruct desc[] =
 	{"-/+liss", "turn on/off using lissojous figures to get points"}
 };
 
-ModeSpecOpt drift_opts =
+ENTRYPOINT ModeSpecOpt drift_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -133,6 +131,11 @@ typedef struct {
 	short       lasthalf;
 	long        saved_random_bits;
 	int         nbits;
+
+#ifdef STANDALONE
+  int erase_countdown;
+  eraser_state *eraser;
+#endif
 } driftstruct;
 
 static driftstruct *drifts = (driftstruct *) NULL;
@@ -237,7 +240,9 @@ initmode(ModeInfo * mi, int mode)
 	}
 	dp->fractal_len = (dp->fractal_len * MI_COUNT(mi)) / 20;
 
+#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
+#endif
 }
 
 static void
@@ -337,7 +342,7 @@ initfractal(ModeInfo * mi)
 }
 
 
-void
+ENTRYPOINT void
 init_drift(ModeInfo * mi)
 {
 	driftstruct *dp;
@@ -603,7 +608,7 @@ draw_flush(ModeInfo * mi, driftstruct * dp, Drawable d)
 }
 
 
-void
+ENTRYPOINT void
 draw_drift(ModeInfo * mi)
 {
 	Window      window = MI_WINDOW(mi);
@@ -615,6 +620,17 @@ draw_drift(ModeInfo * mi)
 	if (dp->ncpoints == NULL)
 		return;
 
+    if (dp->erase_countdown) {
+      if (!--dp->erase_countdown) {
+        dp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), dp->eraser);
+      }
+      return;
+    }
+    if (dp->eraser) {
+      dp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), dp->eraser);
+      return;
+    }
+
 	MI_IS_DRAWN(mi) = True;
 	dp->timer = 3000;
 	while (dp->timer) {
@@ -624,9 +640,7 @@ draw_drift(ModeInfo * mi)
 			draw_flush(mi, dp, window);
 			if (0 == --dp->nfractals) {
 #ifdef STANDALONE
-			  XSync(MI_DISPLAY(mi), False);
-			  sleep(4); /* #### make settable */
-			  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+              dp->erase_countdown = 4 * 1000000 / MI_PAUSE(mi);
 #endif /* STANDALONE */
 				initmode(mi, frandom(dp, 2));
 			}
@@ -655,7 +669,7 @@ draw_drift(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_drift(ModeInfo * mi)
 {
 	if (drifts != NULL) {
@@ -668,10 +682,12 @@ release_drift(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_drift(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Drift", drift)
 
 #endif /* MODE_drift */

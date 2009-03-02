@@ -44,8 +44,15 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
 #include <stdlib.h>
 #include <math.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef STANDALONE
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glu.h>
+# else
+#  include <GL/gl.h>
+#  include <GL/glu.h>
+# endif
+#endif
 
 #include "tunnel_draw.h"
 
@@ -67,9 +74,7 @@ typedef struct _tnPath
 } tnPath;
 
 
-tnPath *path = NULL;
-
-const cvPoint initpath[]={
+static const cvPoint initpath[]={
 {0.000000, 0.000000, 0.000000},
 {2.000000, 1.000000, 0.000000},
 {4.000000, 0.000000, 0.000000},
@@ -91,22 +96,25 @@ const cvPoint initpath[]={
 {-1.000000, -1.000000, -1.000000}
 };
 
-/* Camera variables */
-static float cam_t=0;
-static tnPath *cam_pos;
-static float alpha=0;
 
-/* Tunnel Drawing Variables */
-static int tFlag=0;
-static cvPoint prev_points[10];
-static int current_texture;
+struct tunnel_state {
 
-/* Modes */
-static float ModeX=0;
-static int ModeXFlag=0;
+  tnPath *path;
+
+  float cam_t;					/* Camera variables */
+  tnPath *cam_pos;
+  float alpha;
+
+  int tFlag;					/* Tunnel Drawing Variables */
+  cvPoint prev_points[10];
+  int current_texture;
+
+  float ModeX;					/* Modes */
+  int ModeXFlag;
+};
 
 /*=================== Vector normalization ==================================*/
-void normalize(cvPoint *V)
+static void normalize(cvPoint *V)
 {
   float d;
 
@@ -119,16 +127,18 @@ void normalize(cvPoint *V)
   V->z /= d; 
 }
 /*=================== C = A x B  (Vector multiply) ==========================*/
-void vect_mult(cvPoint *A, cvPoint *B, cvPoint *C)
+#if 0
+static void vect_mult(cvPoint *A, cvPoint *B, cvPoint *C)
 {
 	/* Vector multiply */
 	C->x = A->y*B->z - A->z*B->y;
 	C->y = A->z*B->x - A->x*B->z;
 	C->z = A->x*B->y - A->y*B->x;
 }
+#endif
 
 /* Catmull-Rom Curve calculations */
-void cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
+static void cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
 {
 	float t2, t3, t1;
 
@@ -149,7 +159,7 @@ void cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
 // outp - output point
 //==========================================================================
 */
-void RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPoint *outp)
+static void RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPoint *outp)
 {
 	cvPoint p1, p2;
 	float l, m, n, ca, sa;
@@ -176,7 +186,7 @@ void RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPoint *ou
 
 
 /*=================== Load camera and tunnel path ==========================*/
-static void LoadPath(void)
+static void LoadPath(struct tunnel_state *st)
 {
 	float x, y, z;
 	tnPath *path1=NULL, *path2=NULL;
@@ -190,10 +200,10 @@ static void LoadPath(void)
 		z = f->z;
 		f++;
 
-		if (path == NULL)
+		if (st->path == NULL)
 		{
-			path = (tnPath *)malloc(sizeof(tnPath));
-			path1 = path;
+			st->path = (tnPath *)malloc(sizeof(tnPath));
+			path1 = st->path;
 		}
 		else
 		{
@@ -208,18 +218,22 @@ static void LoadPath(void)
 		path1->p.z = z;
 	}
 
-	cam_pos = path;
-	cam_t = 0;
+	st->cam_pos = st->path;
+	st->cam_t = 0;
 }
 
 /*=================== Tunnel Initialization ================================*/
-void InitTunnel(void)
+struct tunnel_state *
+InitTunnel(void)
 {
-	LoadPath();
-	current_texture = NRAND(MAX_TEXTURE);
+    struct tunnel_state *st = (struct tunnel_state *) calloc (1, sizeof(*st));
+	LoadPath(st);
+	st->current_texture = NRAND(MAX_TEXTURE);
+    return st;
 }
 
-void DrawTunnel(int do_texture, int do_light, GLuint *textures)
+void DrawTunnel(struct tunnel_state *st, 
+                int do_texture, int do_light, GLuint *textures)
 {
 	tnPath *p, *p1, *cmpos;
 	cvPoint op, p4[4], T, ppp, ppp1, op1, op2;
@@ -231,13 +245,13 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 
 	/* Select current tunnel texture */
 	if (do_texture)
-		glBindTexture(GL_TEXTURE_2D, textures[current_texture]);
+		glBindTexture(GL_TEXTURE_2D, textures[st->current_texture]);
 	
-	cmpos = cam_pos;
+	cmpos = st->cam_pos;
 	/* Get current curve */
-	if (cam_pos->next->next->next)
+	if (st->cam_pos->next->next->next)
 	{
-		p1 = cam_pos;
+		p1 = st->cam_pos;
 		for (i=0; i<4; i++)
 		{
 			p4[i].x = p1->p.x;
@@ -249,20 +263,20 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 	else 
 	{
 		/* End of tunnel */
-		ModeX = 1.0;
-		ModeXFlag = 0;
+		st->ModeX = 1.0;
+		st->ModeXFlag = 0;
 		return;
 	};
 		
 	/* Get current camera position */
-	cvCatmullRom(p4, cam_t, &op);
+	cvCatmullRom(p4, st->cam_t, &op);
 
 	/* Next camera position */
-	cam_t += 0.02f;
-	if (cam_t >= 1)
+	st->cam_t += 0.02f;
+	if (st->cam_t >= 1)
 	{
-		cam_t = cam_t - 1;
-		cmpos = cam_pos->next;
+		st->cam_t = st->cam_t - 1;
+		cmpos = st->cam_pos->next;
 	}
 		
 	/* Get curve for next camera position */
@@ -280,17 +294,17 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 	else 
 	{	
 		/*  End of tunnel */
-		ModeX = 1.0;
-		ModeXFlag = 0;
+		st->ModeX = 1.0;
+		st->ModeXFlag = 0;
 		return;
 	}
 	
 	/*  Get next camera position */
-	cvCatmullRom(p4, cam_t, &op1);
+	cvCatmullRom(p4, st->cam_t, &op1);
 	
 	/*  Rotate camera */
-	glRotatef(alpha, 0, 0, -1);
-	alpha += 1;
+	glRotatef(st->alpha, 0, 0, -1);
+	st->alpha += 1;
 	/*  Set camera position */
 	gluLookAt(op.x, op.y, op.z, op1.x, op1.y, op1.z, 0, 1, 0);
 
@@ -304,7 +318,7 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 		glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	}
 	
-	p = cam_pos;
+	p = st->cam_pos;
 	flag = 0;
 	t = 0;
 	k = 0;
@@ -326,8 +340,8 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 		else
 		{
 			/*  End of tunnel */
-			ModeX = 1.0;
-			ModeXFlag = 0;
+			st->ModeX = 1.0;
+			st->ModeXFlag = 0;
 			return;
 		}
 		cvCatmullRom(p4, t, &op);
@@ -358,8 +372,8 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 		else
 		{
 			/*  End of tunnel */
-			ModeX = 1.0;
-			ModeXFlag = 0;
+			st->ModeX = 1.0;
+			st->ModeXFlag = 0;
 			return;
 		}
 			
@@ -383,9 +397,9 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 			points[i].z = op2.z;
 			if (!flag)
 			{
-				prev_points[i].x = op2.x;
-				prev_points[i].y = op2.y;
-				prev_points[i].z = op2.z;
+				st->prev_points[i].x = op2.x;
+				st->prev_points[i].y = op2.y;
+				st->prev_points[i].z = op2.z;
 			}
 		}
 	
@@ -401,40 +415,41 @@ void DrawTunnel(int do_texture, int do_light, GLuint *textures)
 			j = i+1;
 			if (j > 9) j = 0;
 			glNormal3f(0, 0, 1); /*  Normal for lighting */
-			glTexCoord2f(0, 0); glVertex3f(prev_points[i].x, prev_points[i].y, prev_points[i].z);
+			glTexCoord2f(0, 0); glVertex3f(st->prev_points[i].x, st->prev_points[i].y, st->prev_points[i].z);
 			glNormal3f(0, 0, 1);
 			glTexCoord2f(1, 0); glVertex3f(points[i].x, points[i].y, points[i].z);
 			glNormal3f(0, 0, 1);
 			glTexCoord2f(1, 1); glVertex3f(points[j].x, points[j].y, points[j].z);
 			glNormal3f(0, 0, 1);
-			glTexCoord2f(0, 1); glVertex3f(prev_points[j].x, prev_points[j].y, prev_points[j].z);
+			glTexCoord2f(0, 1); glVertex3f(st->prev_points[j].x, st->prev_points[j].y, st->prev_points[j].z);
 		}
 		/*  Save current polygon coordinates for next position */
 		for (i=0; i<10; i++)
 		{
-			prev_points[i].x = points[i].x;
-			prev_points[i].y = points[i].y;
-			prev_points[i].z = points[i].z;
+			st->prev_points[i].x = points[i].x;
+			st->prev_points[i].y = points[i].y;
+			st->prev_points[i].z = points[i].z;
 		}
 	}
 	glEnd();
-	cam_pos = cmpos;
+	st->cam_pos = cmpos;
 }
 
 /* =================== Show splash screen =================================== */
-void SplashScreen(int do_wire, int do_texture, int do_light)
+void SplashScreen(struct tunnel_state *st, 
+                  int do_wire, int do_texture, int do_light)
 {
-	if (ModeX > 0)
+	if (st->ModeX > 0)
 	{
 		/*  Reset tunnel and camera position */
-		if (!ModeXFlag)
+		if (!st->ModeXFlag)
 		{
-			cam_pos = path;			
-			cam_t = 0;
-			tFlag = 0;
-			ModeXFlag = 1;
-			current_texture++;
-			if (current_texture >= MAX_TEXTURE) current_texture = 0;
+			st->cam_pos = st->path;			
+			st->cam_t = 0;
+			st->tFlag = 0;
+			st->ModeXFlag = 1;
+			st->current_texture++;
+			if (st->current_texture >= MAX_TEXTURE) st->current_texture = 0;
 		}
 		/*  Now we want to draw splash screen */
 		glLoadIdentity();
@@ -447,7 +462,7 @@ void SplashScreen(int do_wire, int do_texture, int do_light)
 		glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
 		glEnable(GL_BLEND);
 		glDisable(GL_TEXTURE_2D);
-		glColor4f(1, 1, 1, ModeX);
+		glColor4f(1, 1, 1, st->ModeX);
 		
 		/*  Draw splash screen (simply quad) */
 		glBegin(GL_QUADS);
@@ -457,8 +472,8 @@ void SplashScreen(int do_wire, int do_texture, int do_light)
 	        glVertex3f(-10, 10, -1);
 		glEnd();
 
-		ModeX -= 0.05;
-		if (ModeX <= 0)	ModeX = 0;
+		st->ModeX -= 0.05;
+		if (st->ModeX <= 0)	st->ModeX = 0;
 
 		if (!do_wire)
 		{
@@ -478,4 +493,10 @@ void SplashScreen(int do_wire, int do_texture, int do_light)
 		glColor4f(1, 1, 1, 1);
 	}
 }
+
+void FreeTunnel(struct tunnel_state *st)
+{
+  free (st);
+}
+
 #endif

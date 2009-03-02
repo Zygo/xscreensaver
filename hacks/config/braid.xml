@@ -24,7 +24,8 @@
             low="1" high="255" default="64"/>
 
   <_description>
-Draws random color-cycling inter-braided concentric circles.  Written
-by John Neil.
+Draws random color-cycling inter-braided concentric circles.
+
+Written by John Neil; 1997.
   </_description>
 </screensaver>

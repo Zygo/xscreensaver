@@ -21,7 +21,8 @@
             low="1" high="255" default="64"/>
 
   <_description>
-Moving circular patterns, by Peter Schmitzberger.  Moving circular
-patterns means moire; interference patterns, of course.
+Moving circular moire patterns.
+
+Written by Peter Schmitzberger; 1997.
   </_description>
 </screensaver>

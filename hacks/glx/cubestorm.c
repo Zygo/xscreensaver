@@ -9,24 +9,6 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"CubeStorm"
-#define HACK_INIT	init_cube
-#define HACK_DRAW	draw_cube
-#define HACK_RESHAPE	reshape_cube
-#define HACK_HANDLE_EVENT cube_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "True"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "1.0"
-#define DEF_THICKNESS   "0.06"
-#define DEF_COUNT       "4"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*count:      " DEF_COUNT   "\n" \
 			"*showFPS:      False       \n" \
@@ -34,6 +16,8 @@ extern XtAppContext app;
 			"*wireframe:    False       \n" \
 
 
+# define refresh_cube 0
+# define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -45,7 +29,11 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "1.0"
+#define DEF_THICKNESS   "0.06"
+#define DEF_COUNT       "4"
 
 typedef struct {
   rotator *rot;
@@ -90,7 +78,7 @@ static argtype vars[] = {
   {&thickness, "thickness", "Thickness",  DEF_THICKNESS,  t_Float},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt cube_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 static void
@@ -164,7 +152,7 @@ new_cube_colors (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_cube (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -185,7 +173,7 @@ reshape_cube (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 cube_handle_event (ModeInfo *mi, XEvent *event)
 {
   cube_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -241,7 +229,7 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_cube (ModeInfo *mi)
 {
   cube_configuration *bp;
@@ -324,7 +312,7 @@ init_cube (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_cube (ModeInfo *mi)
 {
   cube_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -336,6 +324,8 @@ draw_cube (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glShadeModel(GL_SMOOTH);
 
@@ -374,9 +364,9 @@ draw_cube (ModeInfo *mi)
 
   for (i = 0; i < MI_COUNT(mi); i++)
     {
-      static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
-      static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
-      static GLfloat bshiny    = 128.0;
+      GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
+      GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
+      GLfloat bshiny    = 128.0;
 
       glPushMatrix();
 
@@ -422,5 +412,7 @@ draw_cube (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("CubeStorm", cubestorm, cube)
 
 #endif /* USE_GL */

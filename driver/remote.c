@@ -322,7 +322,7 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	abort();
       else if (arg != 0 && command == XA_DEMO)
 	{
-	  arg1 = 300;	/* version number of the XA_DEMO protocol, */
+	  arg1 = 5000;	/* version number of the XA_DEMO protocol, */
 	  arg2 = arg;	/* since it didn't use to take an argument. */
 	}
 

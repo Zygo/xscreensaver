@@ -21,17 +21,14 @@
           _label="Number of Slices" _low-label="None" _high-label="Swarm"
           low="0" high="50" default="25"/>
 
-  <select id="render">
-    <option id="solid"    _label="Chrome Toasters"/>
-    <option id="solid"    _label="Solid Colors" arg-set="-no-texture"/>
-    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="tex"     _label="Chrome"      arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 A fleet of 3d space-age jet-powered flying toasters (and toast!)
 Inspired by the ancient Berkeley Systems After Dark flying toasters.
-By Jamie Zawinski and Baconmonkey.
+
+Written by Jamie Zawinski and Baconmonkey; 2003.
   </_description>
 </screensaver>

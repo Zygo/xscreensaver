@@ -21,8 +21,8 @@
 
   <select id="effect">
    <option id="normal" _label="Normal"/>
-   <option id="swamp"  _label="Swamp Thing" arg-set="-swamp"/>
-   <option id="bounce" _label="Bounce"      arg-set="-bounce"/>
+   <option id="swamp"  _label="Swamp Thing" arg-set="-effect swamp"/>
+   <option id="bounce" _label="Bounce"      arg-set="-effect bounce"/>
   </select>
 
   <hgroup>
@@ -35,11 +35,13 @@
     <boolean id="vortex" _label="Vortex"        arg-set="-vortex"/>
    </vgroup>
   </hgroup>
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+
+  <xscreensaver-image />
 
   <_description>
-This hack grabs an image of the screen, and then lets a transparent
+Grabs an image of the screen, and then lets a transparent
 lens wander around the screen, magnifying whatever is underneath.
-Written by Jonas Munsin.
+
+Written by Jonas Munsin; 1998.
   </_description>
 </screensaver>

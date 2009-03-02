@@ -10,7 +10,7 @@
 
   <number id="offset" type="slider" arg="-offset %"
           _label="Offset" _low-label="Small" _high-label="Large"
-          low="0" high="50" default="4"/>
+          low="0" high="50" default="7"/>
 
   <boolean id="xsymmetry" _label="With X Symmetry" arg-unset="-no-xsymmetry"/>
   <boolean id="ysymmetry" _label="With Y Symmetry" arg-set="-ysymmetry"/>
@@ -20,10 +20,10 @@
           low="1" high="60" default="5"/>
 
   <_description>
-This generates random inkblot patterns.  The algorithm is deceptively
-simple for how well it works; it merely walks a dot around the screen
-randomly, and then reflects the image horizontally, vertically, or
-both.  Any deep-seated neurotic tendencies which this program reveals
-are your own problem.  Written by Jamie Zawinski.
+This generates random inkblot patterns via a reflected random walk.
+Any deep-seated neurotic tendencies which this program reveals
+are your own problem.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>

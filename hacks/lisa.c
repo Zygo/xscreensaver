@@ -36,22 +36,18 @@ static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_lisa
-#define PROGCLASS "Lisa"
-#define HACK_INIT init_lisa
-#define HACK_DRAW draw_lisa
-#define lisa_opts xlockmore_opts
-#define DEFAULTS "*delay: 25000 \n" \
- "*count: 1 \n" \
- "*cycles: 256 \n" \
- "*size: -1 \n" \
- "*ncolors: 200 \n"
-#define UNIFORM_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
-
+# define MODE_lisa
+# define DEFAULTS	"*delay: 25000 \n" \
+					"*count: 1 \n" \
+					"*cycles: 256 \n" \
+					"*size: -1 \n" \
+					"*ncolors: 200 \n"
+# define UNIFORM_COLORS
+# define reshape_lisa 0
+# define lisa_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_lisa
@@ -76,7 +72,7 @@ static OptionStruct desc[] =
 	{"-/+additive", "turn on/off additive functions mode"}
 };
 
-ModeSpecOpt lisa_opts =
+ENTRYPOINT ModeSpecOpt lisa_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -437,7 +433,7 @@ refreshlisa(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_lisa(ModeInfo * mi)
 {
 	lisacons   *lc;
@@ -455,7 +451,7 @@ refresh_lisa(ModeInfo * mi)
 	}
 }
 
-void
+static void
 change_lisa(ModeInfo * mi)
 {
 	lisas      *loop;
@@ -478,8 +474,8 @@ change_lisa(ModeInfo * mi)
 	}
 }
 
-void
-init_lisa(ModeInfo * mi)
+ENTRYPOINT void
+init_lisa (ModeInfo * mi)
 {
 	int         lctr;
 	lisacons   *lc;
@@ -513,8 +509,8 @@ init_lisa(ModeInfo * mi)
 	}
 }
 
-void
-draw_lisa(ModeInfo * mi)
+ENTRYPOINT void
+draw_lisa (ModeInfo * mi)
 {
 	lisacons   *lc;
 
@@ -524,6 +520,10 @@ draw_lisa(ModeInfo * mi)
 	if (lc->lisajous == NULL)
 		return;
 
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
+
 	MI_IS_DRAWN(mi) = True;
 	lc->painted = True;
 	if (++lc->loopcount > lc->maxcycles) {
@@ -532,8 +532,8 @@ draw_lisa(ModeInfo * mi)
 	refreshlisa(mi);
 }
 
-void
-release_lisa(ModeInfo * mi)
+ENTRYPOINT void
+release_lisa (ModeInfo * mi)
 {
 	if (Lisa) {
 		int    screen;
@@ -544,5 +544,7 @@ release_lisa(ModeInfo * mi)
 		Lisa = (lisacons *) NULL;
 	}
 }
+
+XSCREENSAVER_MODULE ("Lisa", lisa)
 
 #endif /* MODE_lisa */

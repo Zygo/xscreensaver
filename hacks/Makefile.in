@@ -17,8 +17,7 @@ bindir		= @bindir@
 datadir		= @datadir@
 mandir		= @mandir@
 libexecdir	= @libexecdir@
-# maybe this should be 6 (games)?
-mansuffix	= 1
+mansuffix	= 6
 manNdir		= $(mandir)/man$(mansuffix)
 
 HACKDIR		= @HACKDIR@
@@ -59,6 +58,7 @@ XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
 JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
 PTY_LIBS	= @PTY_LIBS@
+MINIXPM		= $(UTILS_BIN)/minixpm.o
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
@@ -70,6 +70,7 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/hsv.c $(UTILS_SRC)/resources.c \
 		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/logo.c \
+		  $(UTILS_SRC)/minixpm.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
@@ -77,6 +78,7 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/logo.o \
+		  $(UTILS_SRC)/minixpm.c \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o
@@ -97,7 +99,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
-		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
+		  blaster.c bumps.c ripples.c xspirograph.c \
 		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
 		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
@@ -110,6 +112,13 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c
 SCRIPTS		= vidwhacker webcollage ljlatest
+
+# Programs that are mentioned in XScreenSaver.ad, and that have XML files,
+# but that are not shipped with xscreensaver itself.
+#
+EXTERNALS	= cosmos electricsheep extrusion fireflies goban \
+		  sphereeversion ssystem xaos xdaliclock xearth xfishtank \
+		  xmountains xplanet xsnow
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -127,7 +136,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
-		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
+		  blaster.o bumps.o ripples.o xspirograph.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
 		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
@@ -151,7 +160,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  demon loop t3d penetrate deluxe compass squiral xflame \
 		  wander spotlight critical phosphor xmatrix petri shadebobs \
-		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
+		  xsublim ccurve blaster bumps ripples xspirograph \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
@@ -168,15 +177,16 @@ EXES		= $(NEXES) $(SEXES)
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
-XLOCK_OBJS	= screenhack-xlock.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1)
+XLOCK_OBJS	= screenhack.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1)
 COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 
-HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h \
-		  bumps.h xpm-pixmap.h apple2.h analogtv.h \
-		  pacman.h pacman_ai.h pacman_level.h
+HDRS		= screenhack.h screenhackI.h xlockmore.h xlockmoreI.h \
+		  automata.h bubbles.h bumps.h xpm-pixmap.h apple2.h \
+		  analogtv.h pacman.h pacman_ai.h pacman_level.h \
+		  change_locale.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bubbles.man bumps.man ccurve.man compass.man coral.man \
@@ -200,7 +210,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 	          twang.man vermiculate.man vidwhacker.man vines.man \
 	          wander.man webcollage.man whirlwindwarp.man whirlygig.man \
 	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
-	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
+	          xrayswarm.man xspirograph.man xsublim.man \
 	          zoom.man halftone.man eruption.man metaballs.man \
 		  barcode.man piecewise.man cloudlife.man ljlatest.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
@@ -209,7 +219,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man
 STAR		= *
-EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
+EXTRAS		= README Makefile.in xml2man.pl .gdbinit \
 		  euler2d.tex \
 		  config/README \
 		  config/$(STAR).xml \
@@ -221,7 +231,6 @@ EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  images/bubbles/$(STAR).xpm \
 		  images/noseguy/$(STAR).xbm \
 		  images/noseguy/$(STAR).xpm \
-		  images/jigsaw/$(STAR).xbm  \
 		  images/molecules/$(STAR).pdb \
 		  images/pacman/$(STAR).xpm
 
@@ -314,7 +323,7 @@ munge-scripts: $(SCRIPTS)
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
 	U=$(UTILS_SRC)/version.h ;					\
-	V=`sed -n 's/.*\([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;	\
 	T=/tmp/xs$$$$.$(mansuffix) ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
 	echo "installing man pages: $$TH" ;				\
@@ -325,6 +334,8 @@ install-man: $(MEN)
 									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  manbase=`echo $$man | sed 's/\.man$$//'` ;    \
+	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;    \
 	  sed -e "s/^\.TH.*/$$TH/"					\
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
 	    < $(srcdir)/$$man > $$T ;					\
@@ -341,7 +352,7 @@ install-xml:
 	   $(INSTALL_DIRS) $$dest ;					\
 	 fi ;								\
 	 src=$(srcdir)/config ;						\
-	 for file in $(EXES) $(SCRIPTS) ; do				\
+	 for file in $(EXES) $(SCRIPTS) $(EXTERNALS) ; do		\
 	   if [ -f $$src/$$file.xml ]; then				\
 	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
 	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
@@ -364,7 +375,7 @@ uninstall-man:
 
 uninstall-xml:
 	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
-	 for file in $(EXES) $(SCRIPTS) ; do				\
+	 for file in $(EXES) $(SCRIPTS) $(EXTERNALS) ; do		\
 	     echo rm -f $$dest/$$file.xml ;				\
 	          rm -f $$dest/$$file.xml ;				\
 	done
@@ -464,8 +475,6 @@ compile_axp.com: Makefile.in
 	   c=`echo $$c | tr a-z A-Z` ;					    \
 	   echo "$(VMS_AXP_COMPILE_1)$(VMS_AXP_COMPILE_2) $$c" ;	    \
          done ;								    \
-	 foo="$(VMS_AXP_COMPILE_1),XLOCKMORE$(VMS_AXP_COMPILE_2)" ;	    \
-         echo $${foo}/OBJ=SCREENHACK-XLOCK.OBJ SCREENHACK.C ;		    \
 	) | sort -d > $@
 
 compile_decc.com: compile_axp.com
@@ -519,6 +528,7 @@ $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
 $(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
+$(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
@@ -532,23 +542,16 @@ $(UTIL_OBJS):
 .c.o:
 	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
 
-# Some hacks use a slightly-differently-compiled variant of this file.
-# This is how to make the the other .o file from it.
-#
-screenhack-xlock.o: screenhack.c
-	$(CC) -o $@ -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) \
-	-DXLOCKMORE $(srcdir)/screenhack.c
 
 # Make sure these are regenerated when the version number ticks.
 screenhack.o: $(UTILS_SRC)/version.h
-screenhack-xlock.o: $(UTILS_SRC)/version.h
 
 # Some abbreviations to keep the lines short...
 XPM		= xpm-pixmap.o
 ALP		= $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
-LOGO		= $(UTILS_BIN)/logo.o
+LOGO		= $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o
 GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
@@ -622,8 +625,8 @@ moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
 noseguy:	noseguy.o	$(HACK_OBJS) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
 
-pedal:		pedal.o		$(HACK_OBJS) $(HSV)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
+pedal:		pedal.o		$(HACK_OBJS) $(HSV) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ERASE) $(HACK_LIBS)
 
 pyro:		pyro.o		$(HACK_OBJS) $(HSV)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
@@ -661,8 +664,8 @@ xjack:	 	xjack.o		$(HACK_OBJS)
 xlyap:	 	xlyap.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-jigsaw:	 	jigsaw.o	$(HACK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS)
+jigsaw:	 	jigsaw.o	$(HACK_OBJS) $(SPL) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPL) $(GRAB) $(HACK_LIBS)
 
 cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -745,9 +748,6 @@ bumps:		bumps.o		$(HACK_OBJS) $(GRAB) $(SHM)
 ripples:	ripples.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB) $(HACK_LIBS)
 
-xteevee:	xteevee.o	$(BARS) $(HACK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(BARS) $(HACK_OBJS) $(GRAB) $(HACK_LIBS)
-
 xspirograph:	xspirograph.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
@@ -784,8 +784,8 @@ twang:		twang.o		$(HACK_OBJS) $(GRAB) $(SHM)
 fluidballs:	fluidballs.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
 
-anemone:	anemone.o	$(HACK_OBJS) $(DBE)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
+anemone:	anemone.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
 halftone:	halftone.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -823,8 +823,8 @@ mismunch:	mismunch.o	$(HACK_OBJS) $(COL) $(SPL)
 fuzzyflakes:	fuzzyflakes.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-anemotaxis:	anemotaxis.o	$(HACK_OBJS) $(DBE)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
+anemotaxis:	anemotaxis.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
 memscroller:	memscroller.o	$(HACK_OBJS) $(SHM) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(HACK_LIBS)
@@ -987,46 +987,56 @@ webcollage-helper: webcollage-helper.o
 
 analogtv.o: $(srcdir)/analogtv.h
 analogtv.o: ../config.h
+analogtv.o: $(srcdir)/images/6x10font.xbm
 anemone.o: ../config.h
+anemone.o: $(srcdir)/screenhackI.h
 anemone.o: $(srcdir)/screenhack.h
 anemotaxis.o: ../config.h
+anemotaxis.o: $(srcdir)/screenhackI.h
 anemotaxis.o: $(srcdir)/screenhack.h
 ant.o: $(srcdir)/automata.h
 ant.o: ../config.h
-ant.o: $(srcdir)/screenhack.h
+ant.o: $(srcdir)/screenhackI.h
 ant.o: $(srcdir)/xlockmoreI.h
 ant.o: $(srcdir)/xlockmore.h
 apollonian.o: ../config.h
-apollonian.o: $(srcdir)/screenhack.h
+apollonian.o: $(srcdir)/screenhackI.h
 apollonian.o: $(srcdir)/xlockmoreI.h
 apollonian.o: $(srcdir)/xlockmore.h
 apple2-main.o: $(srcdir)/analogtv.h
 apple2-main.o: $(srcdir)/apple2.h
 apple2-main.o: ../config.h
+apple2-main.o: $(srcdir)/screenhackI.h
 apple2-main.o: $(srcdir)/screenhack.h
 apple2.o: $(srcdir)/analogtv.h
 apple2.o: $(srcdir)/apple2.h
 apple2.o: ../config.h
-apple2.o: $(srcdir)/screenhack.h
+apple2.o: $(srcdir)/images/apple2font.xbm
+apple2.o: $(srcdir)/screenhackI.h
 attraction.o: ../config.h
+attraction.o: $(srcdir)/screenhackI.h
 attraction.o: $(srcdir)/screenhack.h
 barcode.o: ../config.h
+barcode.o: $(srcdir)/screenhackI.h
 barcode.o: $(srcdir)/screenhack.h
 blaster.o: ../config.h
+blaster.o: $(srcdir)/screenhackI.h
 blaster.o: $(srcdir)/screenhack.h
 blitspin.o: ../config.h
 blitspin.o: $(srcdir)/images/som.xbm
+blitspin.o: $(srcdir)/screenhackI.h
 blitspin.o: $(srcdir)/screenhack.h
 blitspin.o: $(srcdir)/xpm-pixmap.h
 bouboule.o: ../config.h
-bouboule.o: $(srcdir)/screenhack.h
+bouboule.o: $(srcdir)/screenhackI.h
 bouboule.o: $(srcdir)/xlockmoreI.h
 bouboule.o: $(srcdir)/xlockmore.h
 boxfit.o: ../config.h
+boxfit.o: $(srcdir)/screenhackI.h
 boxfit.o: $(srcdir)/screenhack.h
 boxfit.o: $(srcdir)/xpm-pixmap.h
 braid.o: ../config.h
-braid.o: $(srcdir)/screenhack.h
+braid.o: $(srcdir)/screenhackI.h
 braid.o: $(srcdir)/xlockmoreI.h
 braid.o: $(srcdir)/xlockmore.h
 bsod.o: $(srcdir)/analogtv.h
@@ -1037,6 +1047,7 @@ bsod.o: $(srcdir)/images/atari.xbm
 bsod.o: $(srcdir)/images/hmac.xpm
 bsod.o: $(srcdir)/images/macbomb.xbm
 bsod.o: $(srcdir)/images/mac.xbm
+bsod.o: $(srcdir)/screenhackI.h
 bsod.o: $(srcdir)/screenhack.h
 bsod.o: $(srcdir)/xpm-pixmap.h
 bubbles-default.o: $(srcdir)/bubbles.h
@@ -1087,218 +1098,226 @@ bubbles-default.o: $(srcdir)/images/bubbles/jade8.xpm
 bubbles-default.o: $(srcdir)/images/bubbles/jade9.xpm
 bubbles.o: $(srcdir)/bubbles.h
 bubbles.o: ../config.h
+bubbles.o: $(srcdir)/screenhackI.h
 bubbles.o: $(srcdir)/screenhack.h
 bubbles.o: $(srcdir)/xpm-pixmap.h
 bumps.o: $(srcdir)/bumps.h
 bumps.o: ../config.h
+bumps.o: $(srcdir)/screenhackI.h
 bumps.o: $(srcdir)/screenhack.h
 ccurve.o: ../config.h
+ccurve.o: $(srcdir)/screenhackI.h
 ccurve.o: $(srcdir)/screenhack.h
 celtic.o: ../config.h
+celtic.o: $(srcdir)/screenhackI.h
 celtic.o: $(srcdir)/screenhack.h
 cloudlife.o: ../config.h
+cloudlife.o: $(srcdir)/screenhackI.h
 cloudlife.o: $(srcdir)/screenhack.h
 compass.o: ../config.h
+compass.o: $(srcdir)/screenhackI.h
 compass.o: $(srcdir)/screenhack.h
 coral.o: ../config.h
+coral.o: $(srcdir)/screenhackI.h
 coral.o: $(srcdir)/screenhack.h
 critical.o: ../config.h
+critical.o: $(srcdir)/screenhackI.h
 critical.o: $(srcdir)/screenhack.h
 crystal.o: ../config.h
-crystal.o: $(srcdir)/screenhack.h
+crystal.o: $(srcdir)/screenhackI.h
 crystal.o: $(srcdir)/xlockmoreI.h
 crystal.o: $(srcdir)/xlockmore.h
 cynosure.o: ../config.h
+cynosure.o: $(srcdir)/screenhackI.h
 cynosure.o: $(srcdir)/screenhack.h
 decayscreen.o: ../config.h
+decayscreen.o: $(srcdir)/screenhackI.h
 decayscreen.o: $(srcdir)/screenhack.h
 deco.o: ../config.h
+deco.o: $(srcdir)/screenhackI.h
 deco.o: $(srcdir)/screenhack.h
 deluxe.o: ../config.h
+deluxe.o: $(srcdir)/screenhackI.h
 deluxe.o: $(srcdir)/screenhack.h
 demon.o: $(srcdir)/automata.h
 demon.o: ../config.h
-demon.o: $(srcdir)/screenhack.h
+demon.o: $(srcdir)/screenhackI.h
 demon.o: $(srcdir)/xlockmoreI.h
 demon.o: $(srcdir)/xlockmore.h
 discrete.o: ../config.h
-discrete.o: $(srcdir)/screenhack.h
+discrete.o: $(srcdir)/screenhackI.h
 discrete.o: $(srcdir)/xlockmoreI.h
 discrete.o: $(srcdir)/xlockmore.h
 distort.o: ../config.h
+distort.o: $(srcdir)/screenhackI.h
 distort.o: $(srcdir)/screenhack.h
 drift.o: ../config.h
-drift.o: $(srcdir)/screenhack.h
+drift.o: $(srcdir)/screenhackI.h
 drift.o: $(srcdir)/xlockmoreI.h
 drift.o: $(srcdir)/xlockmore.h
 epicycle.o: ../config.h
+epicycle.o: $(srcdir)/screenhackI.h
 epicycle.o: $(srcdir)/screenhack.h
 eruption.o: ../config.h
+eruption.o: $(srcdir)/screenhackI.h
 eruption.o: $(srcdir)/screenhack.h
 euler2d.o: ../config.h
-euler2d.o: $(srcdir)/screenhack.h
+euler2d.o: $(srcdir)/screenhackI.h
 euler2d.o: $(srcdir)/xlockmoreI.h
 euler2d.o: $(srcdir)/xlockmore.h
 fadeplot.o: ../config.h
-fadeplot.o: $(srcdir)/screenhack.h
+fadeplot.o: $(srcdir)/screenhackI.h
 fadeplot.o: $(srcdir)/xlockmoreI.h
 fadeplot.o: $(srcdir)/xlockmore.h
 fiberlamp.o: ../config.h
-fiberlamp.o: $(srcdir)/screenhack.h
+fiberlamp.o: $(srcdir)/screenhackI.h
 fiberlamp.o: $(srcdir)/xlockmoreI.h
 fiberlamp.o: $(srcdir)/xlockmore.h
 fireworkx.o: ../config.h
+fireworkx.o: $(srcdir)/screenhackI.h
 fireworkx.o: $(srcdir)/screenhack.h
 flag.o: ../config.h
 flag.o: $(srcdir)/images/bob.xbm
-flag.o: $(srcdir)/screenhack.h
+flag.o: $(srcdir)/screenhackI.h
 flag.o: $(srcdir)/xlockmoreI.h
 flag.o: $(srcdir)/xlockmore.h
 flag.o: $(srcdir)/xpm-pixmap.h
 flame.o: ../config.h
+flame.o: $(srcdir)/screenhackI.h
 flame.o: $(srcdir)/screenhack.h
 flow.o: ../config.h
-flow.o: $(srcdir)/screenhack.h
+flow.o: $(srcdir)/screenhackI.h
 flow.o: $(srcdir)/xlockmoreI.h
 flow.o: $(srcdir)/xlockmore.h
 fluidballs.o: ../config.h
+fluidballs.o: $(srcdir)/screenhackI.h
 fluidballs.o: $(srcdir)/screenhack.h
 fontglide.o: ../config.h
+fontglide.o: $(srcdir)/screenhackI.h
 fontglide.o: $(srcdir)/screenhack.h
 forest.o: ../config.h
-forest.o: $(srcdir)/screenhack.h
+forest.o: $(srcdir)/screenhackI.h
 forest.o: $(srcdir)/xlockmoreI.h
 forest.o: $(srcdir)/xlockmore.h
 fuzzyflakes.o: ../config.h
+fuzzyflakes.o: $(srcdir)/screenhackI.h
 fuzzyflakes.o: $(srcdir)/screenhack.h
 galaxy.o: ../config.h
-galaxy.o: $(srcdir)/screenhack.h
+galaxy.o: $(srcdir)/screenhackI.h
 galaxy.o: $(srcdir)/xlockmoreI.h
 galaxy.o: $(srcdir)/xlockmore.h
 goop.o: ../config.h
+goop.o: $(srcdir)/screenhackI.h
 goop.o: $(srcdir)/screenhack.h
 grav.o: ../config.h
-grav.o: $(srcdir)/screenhack.h
+grav.o: $(srcdir)/screenhackI.h
 grav.o: $(srcdir)/xlockmoreI.h
 grav.o: $(srcdir)/xlockmore.h
 greynetic.o: ../config.h
+greynetic.o: $(srcdir)/screenhackI.h
 greynetic.o: $(srcdir)/screenhack.h
 halftone.o: ../config.h
+halftone.o: $(srcdir)/screenhackI.h
 halftone.o: $(srcdir)/screenhack.h
 halo.o: ../config.h
+halo.o: $(srcdir)/screenhackI.h
 halo.o: $(srcdir)/screenhack.h
 helix.o: ../config.h
+helix.o: $(srcdir)/screenhackI.h
 helix.o: $(srcdir)/screenhack.h
 hopalong.o: ../config.h
-hopalong.o: $(srcdir)/screenhack.h
+hopalong.o: $(srcdir)/screenhackI.h
 hopalong.o: $(srcdir)/xlockmoreI.h
 hopalong.o: $(srcdir)/xlockmore.h
 hyperball.o: ../config.h
+hyperball.o: $(srcdir)/screenhackI.h
 hyperball.o: $(srcdir)/screenhack.h
 hypercube.o: ../config.h
+hypercube.o: $(srcdir)/screenhackI.h
 hypercube.o: $(srcdir)/screenhack.h
 ifs.o: ../config.h
+ifs.o: $(srcdir)/screenhackI.h
 ifs.o: $(srcdir)/screenhack.h
 imsmap.o: ../config.h
+imsmap.o: $(srcdir)/screenhackI.h
 imsmap.o: $(srcdir)/screenhack.h
 interaggregate.o: ../config.h
+interaggregate.o: $(srcdir)/screenhackI.h
 interaggregate.o: $(srcdir)/screenhack.h
 interference.o: ../config.h
+interference.o: $(srcdir)/screenhackI.h
 interference.o: $(srcdir)/screenhack.h
 intermomentary.o: ../config.h
+intermomentary.o: $(srcdir)/screenhackI.h
 intermomentary.o: $(srcdir)/screenhack.h
 jigsaw.o: ../config.h
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_ne_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_ne_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_n_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_n_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_nw_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_nw_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_se_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_se_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_s_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_s_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_sw_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_sw_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_w_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_w_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_e_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_e_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_ne_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_ne_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_n_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_n_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_nw_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_nw_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_se_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_se_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_s_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_s_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_sw_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_sw_h.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_w_f.xbm
-jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_w_h.xbm
+jigsaw.o: $(srcdir)/screenhackI.h
 jigsaw.o: $(srcdir)/screenhack.h
 juggle.o: ../config.h
-juggle.o: $(srcdir)/screenhack.h
+juggle.o: $(srcdir)/screenhackI.h
 juggle.o: $(srcdir)/xlockmoreI.h
 juggle.o: $(srcdir)/xlockmore.h
 julia.o: ../config.h
-julia.o: $(srcdir)/screenhack.h
+julia.o: $(srcdir)/screenhackI.h
 julia.o: $(srcdir)/xlockmoreI.h
 julia.o: $(srcdir)/xlockmore.h
 kaleidescope.o: ../config.h
+kaleidescope.o: $(srcdir)/screenhackI.h
 kaleidescope.o: $(srcdir)/screenhack.h
 kumppa.o: ../config.h
+kumppa.o: $(srcdir)/screenhackI.h
 kumppa.o: $(srcdir)/screenhack.h
 laser.o: ../config.h
-laser.o: $(srcdir)/screenhack.h
+laser.o: $(srcdir)/screenhackI.h
 laser.o: $(srcdir)/xlockmoreI.h
 laser.o: $(srcdir)/xlockmore.h
 lightning.o: ../config.h
-lightning.o: $(srcdir)/screenhack.h
+lightning.o: $(srcdir)/screenhackI.h
 lightning.o: $(srcdir)/xlockmoreI.h
 lightning.o: $(srcdir)/xlockmore.h
 lisa.o: ../config.h
-lisa.o: $(srcdir)/screenhack.h
+lisa.o: $(srcdir)/screenhackI.h
 lisa.o: $(srcdir)/xlockmoreI.h
 lisa.o: $(srcdir)/xlockmore.h
 lissie.o: ../config.h
-lissie.o: $(srcdir)/screenhack.h
+lissie.o: $(srcdir)/screenhackI.h
 lissie.o: $(srcdir)/xlockmoreI.h
 lissie.o: $(srcdir)/xlockmore.h
 lmorph.o: ../config.h
+lmorph.o: $(srcdir)/screenhackI.h
 lmorph.o: $(srcdir)/screenhack.h
 loop.o: $(srcdir)/automata.h
 loop.o: ../config.h
-loop.o: $(srcdir)/screenhack.h
+loop.o: $(srcdir)/screenhackI.h
 loop.o: $(srcdir)/xlockmoreI.h
 loop.o: $(srcdir)/xlockmore.h
 maze.o: ../config.h
+maze.o: $(srcdir)/screenhackI.h
 maze.o: $(srcdir)/screenhack.h
 memscroller.o: ../config.h
+memscroller.o: $(srcdir)/screenhackI.h
 memscroller.o: $(srcdir)/screenhack.h
 metaballs.o: ../config.h
+metaballs.o: $(srcdir)/screenhackI.h
 metaballs.o: $(srcdir)/screenhack.h
 mismunch.o: ../config.h
+mismunch.o: $(srcdir)/screenhackI.h
 mismunch.o: $(srcdir)/screenhack.h
 moire2.o: ../config.h
+moire2.o: $(srcdir)/screenhackI.h
 moire2.o: $(srcdir)/screenhack.h
 moire.o: ../config.h
+moire.o: $(srcdir)/screenhackI.h
 moire.o: $(srcdir)/screenhack.h
 mountain.o: ../config.h
-mountain.o: $(srcdir)/screenhack.h
+mountain.o: $(srcdir)/screenhackI.h
 mountain.o: $(srcdir)/xlockmoreI.h
 mountain.o: $(srcdir)/xlockmore.h
 munch.o: ../config.h
+munch.o: $(srcdir)/screenhackI.h
 munch.o: $(srcdir)/screenhack.h
 nerverot.o: ../config.h
+nerverot.o: $(srcdir)/screenhackI.h
 nerverot.o: $(srcdir)/screenhack.h
 noseguy.o: ../config.h
 noseguy.o: $(srcdir)/images/noseguy/nose-f1.xpm
@@ -1309,19 +1328,20 @@ noseguy.o: $(srcdir)/images/noseguy/nose-l1.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-l2.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-r1.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-r2.xpm
+noseguy.o: $(srcdir)/screenhackI.h
 noseguy.o: $(srcdir)/screenhack.h
 noseguy.o: $(srcdir)/xpm-pixmap.h
 pacman_ai.o: ../config.h
 pacman_ai.o: $(srcdir)/pacman_ai.h
 pacman_ai.o: $(srcdir)/pacman.h
 pacman_ai.o: $(srcdir)/pacman_level.h
-pacman_ai.o: $(srcdir)/screenhack.h
+pacman_ai.o: $(srcdir)/screenhackI.h
 pacman_ai.o: $(srcdir)/xlockmoreI.h
 pacman_ai.o: $(srcdir)/xpm-pixmap.h
 pacman_level.o: ../config.h
 pacman_level.o: $(srcdir)/pacman.h
 pacman_level.o: $(srcdir)/pacman_level.h
-pacman_level.o: $(srcdir)/screenhack.h
+pacman_level.o: $(srcdir)/screenhackI.h
 pacman_level.o: $(srcdir)/xlockmoreI.h
 pacman_level.o: $(srcdir)/xpm-pixmap.h
 pacman.o: ../config.h
@@ -1362,140 +1382,177 @@ pacman.o: $(srcdir)/images/pacman/pacman-u2.xpm
 pacman.o: $(srcdir)/pacman_ai.h
 pacman.o: $(srcdir)/pacman.h
 pacman.o: $(srcdir)/pacman_level.h
-pacman.o: $(srcdir)/screenhack.h
+pacman.o: $(srcdir)/screenhackI.h
 pacman.o: $(srcdir)/xlockmoreI.h
 pacman.o: $(srcdir)/xlockmore.h
 pacman.o: $(srcdir)/xpm-pixmap.h
 pedal.o: ../config.h
+pedal.o: $(srcdir)/screenhackI.h
 pedal.o: $(srcdir)/screenhack.h
 penetrate.o: ../config.h
+penetrate.o: $(srcdir)/screenhackI.h
 penetrate.o: $(srcdir)/screenhack.h
 penrose.o: ../config.h
-penrose.o: $(srcdir)/screenhack.h
+penrose.o: $(srcdir)/screenhackI.h
 penrose.o: $(srcdir)/xlockmoreI.h
 penrose.o: $(srcdir)/xlockmore.h
 petri.o: ../config.h
+petri.o: $(srcdir)/screenhackI.h
 petri.o: $(srcdir)/screenhack.h
 phosphor.o: ../config.h
+phosphor.o: $(srcdir)/images/6x10font.xbm
+phosphor.o: $(srcdir)/screenhackI.h
 phosphor.o: $(srcdir)/screenhack.h
 piecewise.o: ../config.h
+piecewise.o: $(srcdir)/screenhackI.h
 piecewise.o: $(srcdir)/screenhack.h
 polyominoes.o: ../config.h
-polyominoes.o: $(srcdir)/screenhack.h
+polyominoes.o: $(srcdir)/screenhackI.h
 polyominoes.o: $(srcdir)/xlockmoreI.h
 polyominoes.o: $(srcdir)/xlockmore.h
 pong.o: $(srcdir)/analogtv.h
 pong.o: ../config.h
+pong.o: $(srcdir)/screenhackI.h
 pong.o: $(srcdir)/screenhack.h
 popsquares.o: ../config.h
+popsquares.o: $(srcdir)/screenhackI.h
 popsquares.o: $(srcdir)/screenhack.h
 pyro.o: ../config.h
+pyro.o: $(srcdir)/screenhackI.h
 pyro.o: $(srcdir)/screenhack.h
 qix.o: ../config.h
+qix.o: $(srcdir)/screenhackI.h
 qix.o: $(srcdir)/screenhack.h
 rd-bomb.o: ../config.h
+rd-bomb.o: $(srcdir)/screenhackI.h
 rd-bomb.o: $(srcdir)/screenhack.h
 ripples.o: ../config.h
+ripples.o: $(srcdir)/screenhackI.h
 ripples.o: $(srcdir)/screenhack.h
 rocks.o: ../config.h
+rocks.o: $(srcdir)/screenhackI.h
 rocks.o: $(srcdir)/screenhack.h
 rorschach.o: ../config.h
+rorschach.o: $(srcdir)/screenhackI.h
 rorschach.o: $(srcdir)/screenhack.h
 rotor.o: ../config.h
-rotor.o: $(srcdir)/screenhack.h
+rotor.o: $(srcdir)/screenhackI.h
 rotor.o: $(srcdir)/xlockmoreI.h
 rotor.o: $(srcdir)/xlockmore.h
 rotzoomer.o: ../config.h
+rotzoomer.o: $(srcdir)/screenhackI.h
 rotzoomer.o: $(srcdir)/screenhack.h
+screenhack.o: $(srcdir)/change_locale.h
 screenhack.o: ../config.h
-screenhack.o: $(srcdir)/screenhack.h
+screenhack.o: $(srcdir)/screenhackI.h
 shadebobs.o: ../config.h
+shadebobs.o: $(srcdir)/screenhackI.h
 shadebobs.o: $(srcdir)/screenhack.h
 sierpinski.o: ../config.h
-sierpinski.o: $(srcdir)/screenhack.h
+sierpinski.o: $(srcdir)/screenhackI.h
 sierpinski.o: $(srcdir)/xlockmoreI.h
 sierpinski.o: $(srcdir)/xlockmore.h
 slidescreen.o: ../config.h
+slidescreen.o: $(srcdir)/screenhackI.h
 slidescreen.o: $(srcdir)/screenhack.h
 slip.o: ../config.h
-slip.o: $(srcdir)/screenhack.h
+slip.o: $(srcdir)/screenhackI.h
 slip.o: $(srcdir)/xlockmoreI.h
 slip.o: $(srcdir)/xlockmore.h
 sonar.o: ../config.h
+sonar.o: $(srcdir)/screenhackI.h
 sonar.o: $(srcdir)/screenhack.h
 speedmine.o: ../config.h
+speedmine.o: $(srcdir)/screenhackI.h
 speedmine.o: $(srcdir)/screenhack.h
 sphere.o: ../config.h
-sphere.o: $(srcdir)/screenhack.h
+sphere.o: $(srcdir)/screenhackI.h
 sphere.o: $(srcdir)/xlockmoreI.h
 sphere.o: $(srcdir)/xlockmore.h
 spiral.o: ../config.h
-spiral.o: $(srcdir)/screenhack.h
+spiral.o: $(srcdir)/screenhackI.h
 spiral.o: $(srcdir)/xlockmoreI.h
 spiral.o: $(srcdir)/xlockmore.h
 spotlight.o: ../config.h
+spotlight.o: $(srcdir)/screenhackI.h
 spotlight.o: $(srcdir)/screenhack.h
 squiral.o: ../config.h
+squiral.o: $(srcdir)/screenhackI.h
 squiral.o: $(srcdir)/screenhack.h
 starfish.o: ../config.h
+starfish.o: $(srcdir)/screenhackI.h
 starfish.o: $(srcdir)/screenhack.h
 strange.o: ../config.h
-strange.o: $(srcdir)/screenhack.h
+strange.o: $(srcdir)/screenhackI.h
 strange.o: $(srcdir)/xlockmoreI.h
 strange.o: $(srcdir)/xlockmore.h
 substrate.o: ../config.h
+substrate.o: $(srcdir)/screenhackI.h
 substrate.o: $(srcdir)/screenhack.h
 swirl.o: ../config.h
-swirl.o: $(srcdir)/screenhack.h
+swirl.o: $(srcdir)/screenhackI.h
 swirl.o: $(srcdir)/xlockmoreI.h
 swirl.o: $(srcdir)/xlockmore.h
 t3d.o: ../config.h
+t3d.o: $(srcdir)/screenhackI.h
 t3d.o: $(srcdir)/screenhack.h
 thornbird.o: ../config.h
-thornbird.o: $(srcdir)/screenhack.h
+thornbird.o: $(srcdir)/screenhackI.h
 thornbird.o: $(srcdir)/xlockmoreI.h
 thornbird.o: $(srcdir)/xlockmore.h
 triangle.o: ../config.h
-triangle.o: $(srcdir)/screenhack.h
+triangle.o: $(srcdir)/screenhackI.h
 triangle.o: $(srcdir)/xlockmoreI.h
 triangle.o: $(srcdir)/xlockmore.h
 truchet.o: ../config.h
+truchet.o: $(srcdir)/screenhackI.h
 truchet.o: $(srcdir)/screenhack.h
 twang.o: ../config.h
+twang.o: $(srcdir)/screenhackI.h
 twang.o: $(srcdir)/screenhack.h
 vermiculate.o: ../config.h
+vermiculate.o: $(srcdir)/screenhackI.h
 vermiculate.o: $(srcdir)/screenhack.h
 vines.o: ../config.h
-vines.o: $(srcdir)/screenhack.h
+vines.o: $(srcdir)/screenhackI.h
 vines.o: $(srcdir)/xlockmoreI.h
 vines.o: $(srcdir)/xlockmore.h
 wander.o: ../config.h
+wander.o: $(srcdir)/screenhackI.h
 wander.o: $(srcdir)/screenhack.h
 webcollage-helper.o: ../config.h
 whirlwindwarp.o: ../config.h
+whirlwindwarp.o: $(srcdir)/screenhackI.h
 whirlwindwarp.o: $(srcdir)/screenhack.h
 whirlygig.o: ../config.h
+whirlygig.o: $(srcdir)/screenhackI.h
 whirlygig.o: $(srcdir)/screenhack.h
 wormhole.o: ../config.h
+wormhole.o: $(srcdir)/screenhackI.h
 wormhole.o: $(srcdir)/screenhack.h
 worm.o: ../config.h
-worm.o: $(srcdir)/screenhack.h
+worm.o: $(srcdir)/screenhackI.h
 worm.o: $(srcdir)/xlockmoreI.h
 worm.o: $(srcdir)/xlockmore.h
 xanalogtv.o: $(srcdir)/analogtv.h
 xanalogtv.o: ../config.h
+xanalogtv.o: $(srcdir)/screenhackI.h
 xanalogtv.o: $(srcdir)/screenhack.h
 xanalogtv.o: $(srcdir)/xpm-pixmap.h
 xflame.o: ../config.h
 xflame.o: $(srcdir)/images/bob.xbm
+xflame.o: $(srcdir)/screenhackI.h
 xflame.o: $(srcdir)/screenhack.h
 xflame.o: $(srcdir)/xpm-pixmap.h
 xjack.o: ../config.h
+xjack.o: $(srcdir)/screenhackI.h
 xjack.o: $(srcdir)/screenhack.h
 xlockmore.o: ../config.h
+xlockmore.o: $(srcdir)/screenhackI.h
 xlockmore.o: $(srcdir)/screenhack.h
 xlockmore.o: $(srcdir)/xlockmoreI.h
 xlyap.o: ../config.h
+xlyap.o: $(srcdir)/screenhackI.h
 xlyap.o: $(srcdir)/screenhack.h
 xmatrix.o: ../config.h
 xmatrix.o: $(srcdir)/images/matrix1b.xbm
@@ -1506,15 +1563,18 @@ xmatrix.o: $(srcdir)/images/matrix2b.xbm
 xmatrix.o: $(srcdir)/images/matrix2b.xpm
 xmatrix.o: $(srcdir)/images/matrix2.xbm
 xmatrix.o: $(srcdir)/images/matrix2.xpm
+xmatrix.o: $(srcdir)/screenhackI.h
 xmatrix.o: $(srcdir)/screenhack.h
 xmatrix.o: $(srcdir)/xpm-pixmap.h
 xpm-pixmap.o: ../config.h
+xpm-pixmap.o: $(srcdir)/xpm-pixmap.h
 xrayswarm.o: ../config.h
+xrayswarm.o: $(srcdir)/screenhackI.h
 xrayswarm.o: $(srcdir)/screenhack.h
 xspirograph.o: ../config.h
+xspirograph.o: $(srcdir)/screenhackI.h
 xspirograph.o: $(srcdir)/screenhack.h
-xteevee.o: ../config.h
-xteevee.o: $(srcdir)/screenhack.h
 zoom.o: ../config.h
+zoom.o: $(srcdir)/screenhackI.h
 zoom.o: $(srcdir)/screenhack.h
 

@@ -118,16 +118,10 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #define DEF_DTHETA                 DTHETA_STR
 
 #ifdef STANDALONE
-# define PROGCLASS          "Hypertorus"
-# define HACK_INIT          init_hypertorus
-# define HACK_DRAW          draw_hypertorus
-# define HACK_RESHAPE       reshape_hypertorus
-# define HACK_HANDLE_EVENT  hypertorus_handle_event
-# define EVENT_MASK         PointerMotionMask|KeyReleaseMask
-# define hypertorus_opts    xlockmore_opts
 # define DEFAULTS           "*delay:      25000 \n" \
                             "*showFPS:    False \n" \
 
+# define refresh_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -136,8 +130,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #ifdef USE_GL
 
 #include <X11/keysym.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+
 #include "gltrackball.h"
 
 
@@ -164,27 +157,21 @@ static float speed_xy;
 static float speed_xz;
 static float speed_yz;
 
-/* 4D rotation angles */
-static float alpha, beta, delta, zeta, eta, theta;
-static float aspect;
-
-/* Trackball states */
-trackball_state *trackballs[2];
-int current_trackball;
-Bool button_pressed;
-
 static const float offset4d[4] = {  0.0,  0.0,  0.0,  2.0 };
 static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 
 static XrmOptionDescRec opts[] =
 {
+  {"-mode",            ".hypertorus.displayMode",  XrmoptionSepArg, 0 },
   {"-wireframe",       ".hypertorus.displayMode",  XrmoptionNoArg,
                        DISP_WIREFRAME_STR },
   {"-surface",         ".hypertorus.displayMode",  XrmoptionNoArg,
                        DISP_SURFACE_STR },
   {"-transparent",     ".hypertorus.displayMode",  XrmoptionNoArg,
                        DISP_TRANSPARENT_STR },
+
+  {"-appearance",      ".hypertorus.appearance",   XrmoptionSepArg, 0 },
   {"-solid",           ".hypertorus.appearance",   XrmoptionNoArg,
                        APPEARANCE_SOLID_STR },
   {"-bands",           ".hypertorus.appearance",   XrmoptionNoArg,
@@ -267,13 +254,24 @@ static OptionStruct desc[] =
   { "-speed-yz <arg>",  "rotation speed around the yz plane" }
 };
 
-ModeSpecOpt hypertorus_opts =
+ENTRYPOINT ModeSpecOpt hypertorus_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 
 typedef struct {
-  GLint       WindH, WindW;
+  GLint      WindH, WindW;
   GLXContext *glx_context;
+  /* 4D rotation angles */
+  float alpha, beta, delta, zeta, eta, theta;
+  /* Aspect ratio of the current window */
+  float aspect;
+  /* Trackball states */
+  trackball_state *trackballs[2];
+  int current_trackball;
+  Bool button_pressed;
+
+  float speed_scale;
+
 } hypertorusstruct;
 
 static hypertorusstruct *hyper = (hypertorusstruct *) NULL;
@@ -522,13 +520,13 @@ static void color(double angle)
    will only work correctly if numu and numv are set to 64 or any higher
    power of 2.  Similarly, the banded appearance will only work correctly
    if numu and numv are divisible by 4. */
-static void hypertorus(double umin, double umax, double vmin, double vmax,
-                       int numu, int numv)
+static void hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
+                       double vmax, int numu, int numv)
 {
-  static GLfloat mat_diff_red[] = { 1.0, 0.0, 0.0, 1.0 };
-  static GLfloat mat_diff_green[] = { 0.0, 1.0, 0.0, 1.0 };
-  static GLfloat mat_diff_trans_red[] = { 1.0, 0.0, 0.0, 0.7 };
-  static GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
   float p[3], pu[3], pv[3], n[3], mat[4][4];
   int i, j, k, l, m, b, skew;
   double u, v, ur, vr;
@@ -536,11 +534,12 @@ static void hypertorus(double umin, double umax, double vmin, double vmax,
   double xx[4], xxu[4], xxv[4], x[4], xu[4], xv[4];
   double r, s, t;
   float q1[4], q2[4], r1[4][4], r2[4][4];
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
 
-  rotateall(alpha,beta,delta,zeta,eta,theta,r1);
+  rotateall(hp->alpha,hp->beta,hp->delta,hp->zeta,hp->eta,hp->theta,r1);
 
-  gltrackball_get_quaternion(trackballs[0],q1);
-  gltrackball_get_quaternion(trackballs[1],q2);
+  gltrackball_get_quaternion(hp->trackballs[0],q1);
+  gltrackball_get_quaternion(hp->trackballs[1],q2);
   quats_to_rotmat(q1,q2,r2);
 
   mult_rotmat(r2,r1,mat);
@@ -660,11 +659,12 @@ static void hypertorus(double umin, double umax, double vmin, double vmax,
 
 static void init(ModeInfo *mi)
 {
-  static GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-  static GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-  static GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-  static GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
-  static GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
+  static const GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
+  static const GLfloat mat_specular[]   = { 1.0, 1.0, 1.0, 1.0 };
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
 
   if (appearance >= APPEARANCE_SPIRALS_1)
   {
@@ -676,12 +676,12 @@ static void init(ModeInfo *mi)
     num_spirals = 0;
   }
 
-  alpha = 0.0;
-  beta = 0.0;
-  delta = 0.0;
-  zeta = 0.0;
-  eta = 0.0;
-  theta = 0.0;
+  hp->alpha = 0.0;
+  hp->beta = 0.0;
+  hp->delta = 0.0;
+  hp->zeta = 0.0;
+  hp->eta = 0.0;
+  hp->theta = 0.0;
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -750,71 +750,74 @@ static void init(ModeInfo *mi)
 
 
 /* Redisplay the hypertorus. */
-static void display_hypertorus(void)
+static void display_hypertorus(ModeInfo *mi)
 {
-  if (!button_pressed)
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
+
+  if (!hp->button_pressed)
   {
-    alpha += speed_wx;
-    if (alpha >= 360.0)
-      alpha -= 360.0;
-    beta += speed_wy;
-    if (beta >= 360.0)
-      beta -= 360.0;
-    delta += speed_wz;
-    if (delta >= 360.0)
-      delta -= 360.0;
-    zeta += speed_xy;
-    if (zeta >= 360.0)
-      zeta -= 360.0;
-    eta += speed_xz;
-    if (eta >= 360.0)
-      eta -= 360.0;
-    theta += speed_yz;
-    if (theta >= 360.0)
-      theta -= 360.0;
+    hp->alpha += speed_wx * hp->speed_scale;
+    if (hp->alpha >= 360.0)
+      hp->alpha -= 360.0;
+    hp->beta += speed_wy * hp->speed_scale;
+    if (hp->beta >= 360.0)
+      hp->beta -= 360.0;
+    hp->delta += speed_wz * hp->speed_scale;
+    if (hp->delta >= 360.0)
+      hp->delta -= 360.0;
+    hp->zeta += speed_xy * hp->speed_scale;
+    if (hp->zeta >= 360.0)
+      hp->zeta -= 360.0;
+    hp->eta += speed_xz * hp->speed_scale;
+    if (hp->eta >= 360.0)
+      hp->eta -= 360.0;
+    hp->theta += speed_yz * hp->speed_scale;
+    if (hp->theta >= 360.0)
+      hp->theta -= 360.0;
   }
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if (projection_3d == DISP_3D_ORTHOGRAPHIC)
   {
-    if (aspect >= 1.0)
-      glOrtho(-aspect,aspect,-1.0,1.0,0.1,100.0);
+    if (hp->aspect >= 1.0)
+      glOrtho(-hp->aspect,hp->aspect,-1.0,1.0,0.1,100.0);
     else
-      glOrtho(-1.0,1.0,-1.0/aspect,1.0/aspect,0.1,100.0);
+      glOrtho(-1.0,1.0,-1.0/hp->aspect,1.0/hp->aspect,0.1,100.0);
   }
   else
   {
-    gluPerspective(60.0,aspect,0.1,100.0);
+    gluPerspective(60.0,hp->aspect,0.1,100.0);
   }
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  hypertorus(0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
+  hypertorus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
 }
 
 
-void reshape_hypertorus(ModeInfo * mi, int width, int height)
+ENTRYPOINT void reshape_hypertorus(ModeInfo *mi, int width, int height)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
 
   hp->WindW = (GLint)width;
   hp->WindH = (GLint)height;
   glViewport(0,0,width,height);
-  aspect = (GLfloat)width/(GLfloat)height;
+  hp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
 
-Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
 {
   Display *display = MI_DISPLAY(mi);
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
   KeySym  sym;
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
   {
-    button_pressed = True;
-    gltrackball_start(trackballs[current_trackball],
+    hp->button_pressed = True;
+    gltrackball_start(hp->trackballs[hp->current_trackball],
                       event->xbutton.x, event->xbutton.y,
                       MI_WIDTH(mi), MI_HEIGHT(mi));
     return True;
@@ -822,7 +825,7 @@ Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
   {
-    button_pressed = False;
+    hp->button_pressed = False;
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -830,9 +833,9 @@ Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
     sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
-      current_trackball = 1;
-      if (button_pressed)
-        gltrackball_start(trackballs[current_trackball],
+      hp->current_trackball = 1;
+      if (hp->button_pressed)
+        gltrackball_start(hp->trackballs[hp->current_trackball],
                           event->xbutton.x, event->xbutton.y,
                           MI_WIDTH(mi), MI_HEIGHT(mi));
       return True;
@@ -843,17 +846,17 @@ Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
     sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
-      current_trackball = 0;
-      if (button_pressed)
-        gltrackball_start(trackballs[current_trackball],
+      hp->current_trackball = 0;
+      if (hp->button_pressed)
+        gltrackball_start(hp->trackballs[hp->current_trackball],
                           event->xbutton.x, event->xbutton.y,
                           MI_WIDTH(mi), MI_HEIGHT(mi));
       return True;
     }
   }
-  else if (event->xany.type == MotionNotify && button_pressed)
+  else if (event->xany.type == MotionNotify && hp->button_pressed)
   {
-    gltrackball_track(trackballs[current_trackball],
+    gltrackball_track(hp->trackballs[hp->current_trackball],
                       event->xmotion.x, event->xmotion.y,
                       MI_WIDTH(mi), MI_HEIGHT(mi));
     return True;
@@ -877,7 +880,7 @@ Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
  *-----------------------------------------------------------------------------
  */
 
-void init_hypertorus(ModeInfo * mi)
+ENTRYPOINT void init_hypertorus(ModeInfo *mi)
 {
   hypertorusstruct *hp;
 
@@ -890,10 +893,14 @@ void init_hypertorus(ModeInfo * mi)
   }
   hp = &hyper[MI_SCREEN(mi)];
 
-  trackballs[0] = gltrackball_init();
-  trackballs[1] = gltrackball_init();
-  current_trackball = 0;
-  button_pressed = False;
+  
+  hp->trackballs[0] = gltrackball_init();
+  hp->trackballs[1] = gltrackball_init();
+  hp->current_trackball = 0;
+  hp->button_pressed = False;
+
+  /* make multiple screens rotate at slightly different rates. */
+  hp->speed_scale = 0.9 + frand(0.3);
 
   if ((hp->glx_context = init_GL(mi)) != NULL)
   {
@@ -912,7 +919,7 @@ void init_hypertorus(ModeInfo * mi)
  *    Called by the mainline code periodically to update the display.
  *-----------------------------------------------------------------------------
  */
-void draw_hypertorus(ModeInfo * mi)
+ENTRYPOINT void draw_hypertorus(ModeInfo *mi)
 {
   Display          *display = MI_DISPLAY(mi);
   Window           window = MI_WINDOW(mi);
@@ -931,7 +938,7 @@ void draw_hypertorus(ModeInfo * mi)
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  display_hypertorus();
+  display_hypertorus(mi);
 
   if (MI_IS_FPS(mi))
     do_fps (mi);
@@ -950,7 +957,7 @@ void draw_hypertorus(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void release_hypertorus(ModeInfo * mi)
+ENTRYPOINT void release_hypertorus(ModeInfo *mi)
 {
   if (hyper != NULL)
   {
@@ -969,7 +976,8 @@ void release_hypertorus(ModeInfo * mi)
   FreeAllGL(mi);
 }
 
-void change_hypertorus(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void change_hypertorus(ModeInfo *mi)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
 
@@ -979,5 +987,8 @@ void change_hypertorus(ModeInfo * mi)
   glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(hp->glx_context));
   init(mi);
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("Hypertorus", hypertorus)
 
 #endif /* USE_GL */

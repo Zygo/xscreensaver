@@ -1,4 +1,4 @@
-/* bouncingcow, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* bouncingcow, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,27 +11,18 @@
  * Boing, boing, boing.  Cow, cow, cow.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"BouncingCow"
-#define HACK_INIT	init_cow
-#define HACK_DRAW	draw_cows
-#define HACK_RESHAPE	reshape_cow
-#define HACK_HANDLE_EVENT cow_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPEED       "0.7"
-#define DEF_TEXTURE     "(none)"
-
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*count:        1           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
 /* #define DEBUG */
+
+
+# define refresh_cow 0
+# define release_cow 0
+#define DEF_SPEED       "1.0"
+#define DEF_TEXTURE     "(none)"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -49,15 +40,12 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
-
-
 #include "gllist.h"
 
 extern struct gllist
  *cow_face, *cow_hide, *cow_hoofs, *cow_horns, *cow_tail, *cow_udder;
 
-struct gllist **all_objs[] = {
+static struct gllist **all_objs[] = {
  &cow_face, &cow_hide, &cow_hoofs, &cow_horns, &cow_tail, &cow_udder
 };
 
@@ -106,7 +94,7 @@ static argtype vars[] = {
   {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_String},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt cow_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 #define BOTTOM 28.0
@@ -167,7 +155,7 @@ tick_floater (ModeInfo *mi, floater *f)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_cow (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -188,7 +176,7 @@ reshape_cow (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 cow_handle_event (ModeInfo *mi, XEvent *event)
 {
   cow_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -280,7 +268,7 @@ load_texture (ModeInfo *mi, const char *filename)
 }
 
 
-void
+ENTRYPOINT void
 init_cow (ModeInfo *mi)
 {
   cow_configuration *bp;
@@ -338,9 +326,7 @@ init_cow (ModeInfo *mi)
   for (i = 0; i < countof(all_objs); i++)
     {
       GLfloat black[4] = {0, 0, 0, 1};
-      struct gllist *gll = *all_objs[i];
-      if (wire)
-        gll->primitive = GL_LINE_LOOP;
+      const struct gllist *gll = *all_objs[i];
 
       glNewList (bp->dlists[i], GL_COMPILE);
 
@@ -420,7 +406,7 @@ init_cow (ModeInfo *mi)
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
         }
 
-      renderList (gll);
+      renderList (gll, wire);
 
       glMatrixMode(GL_TEXTURE);
       glPopMatrix();
@@ -508,8 +494,8 @@ draw_floater (ModeInfo *mi, floater *f)
 
 
 
-void
-draw_cows (ModeInfo *mi)
+ENTRYPOINT void
+draw_cow (ModeInfo *mi)
 {
   cow_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
@@ -518,6 +504,8 @@ draw_cows (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -558,5 +546,7 @@ draw_cows (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("BouncingCow", bouncingcow, cow)
 
 #endif /* USE_GL */

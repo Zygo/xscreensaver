@@ -12,27 +12,12 @@
 /* motion blur added March 2005 by John Boero <jlboero@cs.uwm.edu>
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	  "BlinkBox"
-#define HACK_INIT	  init_ball
-#define HACK_DRAW	  draw_ball
-#define HACK_RESHAPE  reshape_ball
-#define sws_opts	  xlockmore_opts
-#define MAX_COUNT 20
-#define ALPHA_AMT 0.05
-
-/* this should be between 1 and 8 */
-#define DEF_WH       "2"
-#define DEF_DISSOLVE "False"
-#define DEF_FADE     "True"
-#define DEF_BLUR     "True"
-
 #define DEFAULTS	"*delay:	30000		 \n" \
 			"*wireframe:	False		 \n" \
 
+# define refresh_ball 0
+# define release_ball 0
+# define ball_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -42,8 +27,15 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
+#define MAX_COUNT 20
+#define ALPHA_AMT 0.05
 
-#include <GL/glu.h>
+/* this should be between 1 and 8 */
+#define DEF_WH       "2"
+#define DEF_DISSOLVE "False"
+#define DEF_FADE     "True"
+#define DEF_BLUR     "True"
+
 
 typedef struct{
   GLfloat x,y,z;
@@ -62,44 +54,60 @@ typedef struct{
 struct Bounding_box {
   Tdpos top;
   Tdpos bottom;
-} bbox = {{14,14,20},{-14,-14,-20}};
+};
 
 struct Ball {
   GLfloat x;
   GLfloat y;
   GLfloat z;
   int d;
-} ball = {0,0,0,1};
+};
 
-struct {
+struct bscale {
   GLfloat wh; /*width Height*/
   GLfloat d; /*depth*/
-} bscale = {1, 0.25};
+};
 
-static GLuint ballList;
-static GLuint boxList;
-Tdpos mo = { 1.0, 1.0, 1.0};  /*motion*/
-Tdpos moh= {-1.0,-1.5,-1.5}; /*hold motion value*/
+static const struct Bounding_box bbox = {{14,14,20},{-14,-14,-20}};
 
-Tdpos bpos= {1.0, 1.0, 1.0};
+typedef struct {
+  GLXContext *glx_context;
 
-/*sides*/
-static Side lside = {0, {0, 0, 0,}, MAX_COUNT,  {1.0, 0.0, 0.0},{90,0,1,0},1,1};/*Red*/
-static Side rside = {0, {0, 0, 0,}, MAX_COUNT,  {0.0, 1.0, 0.0},{90,0,1,0},1,1};/*Green*/
-static Side tside = {0, {0, 0, 0,}, MAX_COUNT,  {0.0, 0.0, 1.0},{90,1,0,0},1,1};/*Blue*/
-static Side bside = {0, {0, 0, 0,}, MAX_COUNT,  {1.0, 0.5, 0.0},{90,1,0,0},1,1};/*Orange*/
-static Side fside = {0, {0, 0, 0,}, MAX_COUNT,  {1.0, 1.0, 0.0},{90,0,0,1},1,1};/*Yellow*/
-static Side aside = {0, {0, 0, 0,}, MAX_COUNT,  {0.5, 0.0, 1.0},{90,0,0,1},1,1};/*Purple*/
-Side *sp;
+  struct Ball ball;
+
+  struct bscale bscale;
+
+  Tdpos mo;  /*motion*/
+  Tdpos moh; /*hold motion value*/
+
+  Tdpos bpos;
+
+  GLuint ballList;
+  GLuint boxList;
+  GLfloat des_amt;
+
+  /*sides*/
+  Side lside;/*Red*/
+  Side rside;/*Green*/
+  Side tside;/*Blue*/
+  Side bside;/*Orange*/
+  Side fside;/*Yellow*/
+  Side aside;/*Purple*/
+  Side *sp;
+
+} blinkboxstruct;
+
+static blinkboxstruct *blinkbox = (blinkboxstruct *) NULL;
+
 
 /* lights */
-static float LightDiffuse[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
-static float LightPosition[]=  { 20.0f, 100.0f, 20.0f, 1.0f };
+static const float LightDiffuse[]=   { 1.0f, 1.0f, 1.0f, 1.0f };
+static const float LightPosition[]=  { 20.0f, 100.0f, 20.0f, 1.0f };
 
 static Bool do_dissolve;
 static Bool do_fade;
 static Bool do_blur;
-static GLfloat des_amt   = 1;
+static float bscale_wh;
 
 static XrmOptionDescRec opts[] = {
   { "-boxsize",  ".boxsize",  XrmoptionSepArg, 0      },
@@ -113,15 +121,15 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&bscale.wh,   "boxsize",   "Boxsize",  DEF_WH,       t_Float},
+  {&bscale_wh,   "boxsize",   "Boxsize",  DEF_WH,       t_Float},
   {&do_dissolve, "dissolve",  "Dissolve", DEF_DISSOLVE, t_Bool},
   {&do_fade,     "fade",      "Fade",     DEF_FADE,     t_Bool},
   {&do_blur,     "blur",      "Blur",     DEF_BLUR,     t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt ball_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-void
+static void
 swap(GLfloat *a, GLfloat *b)
 {
   GLfloat t = *a;
@@ -129,14 +137,14 @@ swap(GLfloat *a, GLfloat *b)
   *b = t;
 }
 
-float
+static float
 get_rand(void)
 {
   GLfloat j = 1+(random() % 2);
   return (j);
 }
 
-void
+static void
 swap_mov(GLfloat *a, GLfloat *b)
 {
   int j;
@@ -148,77 +156,78 @@ swap_mov(GLfloat *a, GLfloat *b)
     *a = j;
 }
 
-void
-cp_b_pos(Tdpos *s_pos){
-  s_pos->x = ball.x;
-  s_pos->y = ball.y;
-  s_pos->z = ball.z;
+static void
+cp_b_pos(blinkboxstruct *bp, Tdpos *s_pos)
+{
+  s_pos->x = bp->ball.x;
+  s_pos->y = bp->ball.y;
+  s_pos->z = bp->ball.z;
 }
 
-void
-hit_side(void)
+static void
+hit_side(blinkboxstruct *bp)
 {
-  if ((ball.x - ball.d) <= bbox.bottom.x){
-    lside.hit = 1;
-    lside.counter   = MAX_COUNT;
-    lside.des_count = 1;
-    lside.alpha_count = 0;
-    cp_b_pos(&lside.pos);
-    swap_mov(&mo.x,&moh.x);
+  if ((bp->ball.x - bp->ball.d) <= bbox.bottom.x){
+    bp->lside.hit = 1;
+    bp->lside.counter   = MAX_COUNT;
+    bp->lside.des_count = 1;
+    bp->lside.alpha_count = 0;
+    cp_b_pos(bp, &bp->lside.pos);
+    swap_mov(&bp->mo.x,&bp->moh.x);
   }else
-  if ((ball.x + ball.d) >= bbox.top.x){
-    rside.hit = 1;
-    rside.counter = MAX_COUNT;
-    rside.des_count = 1;
-    rside.alpha_count = 0;
-    cp_b_pos(&rside.pos);
-    swap_mov(&mo.x,&moh.x);
+  if ((bp->ball.x + bp->ball.d) >= bbox.top.x){
+    bp->rside.hit = 1;
+    bp->rside.counter = MAX_COUNT;
+    bp->rside.des_count = 1;
+    bp->rside.alpha_count = 0;
+    cp_b_pos(bp, &bp->rside.pos);
+    swap_mov(&bp->mo.x,&bp->moh.x);
   }
 }
 
-void
-hit_top_bottom(void)
+static void
+hit_top_bottom(blinkboxstruct *bp)
 {
-  if ((ball.y - ball.d) <= bbox.bottom.y){
-    bside.hit = 1;
-    bside.counter = MAX_COUNT;
-    bside.des_count = 1;
-    bside.alpha_count = 0;
-    cp_b_pos(&bside.pos);
-    swap_mov(&mo.y,&moh.y);
+  if ((bp->ball.y - bp->ball.d) <= bbox.bottom.y){
+    bp->bside.hit = 1;
+    bp->bside.counter = MAX_COUNT;
+    bp->bside.des_count = 1;
+    bp->bside.alpha_count = 0;
+    cp_b_pos(bp, &bp->bside.pos);
+    swap_mov(&bp->mo.y,&bp->moh.y);
   }else
-  if ((ball.y + ball.d) >= bbox.top.y){
-    tside.hit = 1;
-    tside.counter = MAX_COUNT;
-    tside.des_count = 1;
-    tside.alpha_count = 0;
-    cp_b_pos(&tside.pos);
-    swap_mov(&mo.y,&moh.y);
+  if ((bp->ball.y + bp->ball.d) >= bbox.top.y){
+    bp->tside.hit = 1;
+    bp->tside.counter = MAX_COUNT;
+    bp->tside.des_count = 1;
+    bp->tside.alpha_count = 0;
+    cp_b_pos(bp, &bp->tside.pos);
+    swap_mov(&bp->mo.y,&bp->moh.y);
   }
 }
 
-void
-hit_front_back(void)
+static void
+hit_front_back(blinkboxstruct *bp)
 {
-  if ((ball.z - ball.d) <= bbox.bottom.z){
-    aside.hit = 1;
-    aside.counter = MAX_COUNT;
-    aside.des_count = 1;
-    aside.alpha_count = 0;
-    cp_b_pos(&aside.pos);
-    swap_mov(&mo.z,&moh.z);
+  if ((bp->ball.z - bp->ball.d) <= bbox.bottom.z){
+    bp->aside.hit = 1;
+    bp->aside.counter = MAX_COUNT;
+    bp->aside.des_count = 1;
+    bp->aside.alpha_count = 0;
+    cp_b_pos(bp, &bp->aside.pos);
+    swap_mov(&bp->mo.z,&bp->moh.z);
   }else
-  if((ball.z + ball.d) >= bbox.top.z){
-    fside.hit = 1;
-    fside.counter = MAX_COUNT;
-    fside.des_count = 1;
-    fside.alpha_count = 0;
-    cp_b_pos(&fside.pos);
-    swap_mov(&mo.z,&moh.z);
+  if((bp->ball.z + bp->ball.d) >= bbox.top.z){
+    bp->fside.hit = 1;
+    bp->fside.counter = MAX_COUNT;
+    bp->fside.des_count = 1;
+    bp->fside.alpha_count = 0;
+    cp_b_pos(bp, &bp->fside.pos);
+    swap_mov(&bp->mo.z,&bp->moh.z);
   }
 }
 
-void
+ENTRYPOINT void
 reshape_ball (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -236,7 +245,7 @@ reshape_ball (ModeInfo *mi, int width, int height)
 
 }
 
-void
+static void
 unit_cube(int wire)
 {
   glBegin((wire)?GL_LINE_LOOP:GL_QUADS);
@@ -273,35 +282,120 @@ unit_cube(int wire)
   glEnd();
 }
 
-void
+ENTRYPOINT void
 init_ball (ModeInfo *mi)
 {
-  #define SPHERE_SLICES 12  /* how densely to render spheres */
-  #define SPHERE_STACKS 16
   int wire = MI_IS_WIREFRAME(mi);
+  blinkboxstruct *bp;
+  
+  if(blinkbox == NULL) {
+    if((blinkbox = (blinkboxstruct *) calloc(MI_NUM_SCREENS(mi),
+                                             sizeof (blinkboxstruct))) == NULL)
+      return;
+  }
+  bp = &blinkbox[MI_SCREEN(mi)];
 
-  sp = malloc(sizeof(*sp));
-  if(sp == NULL){
+  if ((bp->glx_context = init_GL(mi)) != NULL) {
+    reshape_ball(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    glDrawBuffer(GL_BACK);
+  }
+  else
+    MI_CLEARWINDOW(mi);
+
+  bp->ball.d = 1;
+  bp->bscale.wh = bscale_wh;
+  bp->bscale.d = 0.25;
+
+  bp->mo.x = 1;
+  bp->mo.y = 1;
+  bp->mo.z = 1;
+
+  bp->moh.x = -1.0;
+  bp->moh.y = -1.5;
+  bp->moh.z = -1.5;
+
+  bp->bpos.x = 1;
+  bp->bpos.y = 1;
+  bp->bpos.z = 1;
+
+  bp->des_amt = 1;
+
+  bp->lside.counter = MAX_COUNT;
+  bp->rside.counter = MAX_COUNT;
+  bp->tside.counter = MAX_COUNT;
+  bp->bside.counter = MAX_COUNT;
+  bp->fside.counter = MAX_COUNT;
+  bp->aside.counter = MAX_COUNT;
+
+  bp->lside.color[0] = 1;
+  bp->rside.color[1] = 1;
+  bp->tside.color[2] = 1;
+
+  bp->bside.color[0] = 1;
+  bp->bside.color[1] = 0.5;
+
+  bp->fside.color[0] = 1;
+  bp->fside.color[1] = 1;
+
+  bp->aside.color[0] = 0.5;
+  bp->aside.color[2] = 1;
+
+  bp->lside.rot[0] = 90;
+  bp->rside.rot[0] = 90;
+  bp->tside.rot[0] = 90;
+  bp->bside.rot[0] = 90;
+  bp->fside.rot[0] = 90;
+  bp->aside.rot[0] = 90;
+
+  bp->lside.rot[2] = 1;
+  bp->rside.rot[2] = 1;
+  bp->tside.rot[1] = 1;
+  bp->bside.rot[1] = 1;
+  bp->fside.rot[3] = 1;
+  bp->aside.rot[3] = 1;
+
+  bp->lside.des_count = 1;
+  bp->rside.des_count = 1;
+  bp->tside.des_count = 1;
+  bp->bside.des_count = 1;
+  bp->fside.des_count = 1;
+  bp->aside.des_count = 1;
+
+  bp->lside.alpha_count = 1;
+  bp->rside.alpha_count = 1;
+  bp->tside.alpha_count = 1;
+  bp->bside.alpha_count = 1;
+  bp->fside.alpha_count = 1;
+  bp->aside.alpha_count = 1;
+
+
+#define SPHERE_SLICES 12  /* how densely to render spheres */
+#define SPHERE_STACKS 16
+
+  bp->sp = malloc(sizeof(*bp->sp));
+  if(bp->sp == NULL){
     fprintf(stderr,"Could not allocate memory\n");
     exit(1);
   }
-  if( (bscale.wh < 1) ||
-      (bscale.wh > 8) ) {
+  if( (bp->bscale.wh < 1) ||
+      (bp->bscale.wh > 8) ) {
     fprintf(stderr,"Boxsize out of range. Using default\n");
-    bscale.wh = 2;
+    bp->bscale.wh = 2;
   }
   if (do_dissolve){
-    des_amt = bscale.wh / MAX_COUNT;
+    bp->des_amt = bp->bscale.wh / MAX_COUNT;
   }
-  init_GL(mi);
+
+  bp->glx_context = init_GL(mi);
+
   reshape_ball(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-  ballList = glGenLists(1);
-  glNewList(ballList, GL_COMPILE);
+  bp->ballList = glGenLists(1);
+  glNewList(bp->ballList, GL_COMPILE);
   unit_sphere (SPHERE_STACKS, SPHERE_SLICES, wire);
   glEndList ();
 
-  boxList = glGenLists(1);
-  glNewList(boxList, GL_COMPILE);
+  bp->boxList = glGenLists(1);
+  glNewList(bp->boxList, GL_COMPILE);
   unit_cube(wire);
   glEndList();
 
@@ -324,27 +418,35 @@ init_ball (ModeInfo *mi)
   }
 }
 
-void
-CheckBoxPos(GLfloat bot_x, GLfloat top_x, GLfloat bot_y, GLfloat top_y)
+static void
+CheckBoxPos(blinkboxstruct *bp, 
+            GLfloat bot_x, GLfloat top_x, GLfloat bot_y, GLfloat top_y)
 {
   /*Make sure it's inside of the bounding box*/
-  bpos.x = ((bpos.x - bscale.wh) < bot_x) ? bot_x + bscale.wh : bpos.x;
-  bpos.x = ((bpos.x + bscale.wh) > top_x) ? top_x - bscale.wh : bpos.x;
-  bpos.y = ((bpos.y - bscale.wh) < bot_y) ? bot_y + bscale.wh : bpos.y;
-  bpos.y = ((bpos.y + bscale.wh) > top_y) ? top_y - bscale.wh : bpos.y;
+  bp->bpos.x = ((bp->bpos.x - bp->bscale.wh) < bot_x) ? bot_x + bp->bscale.wh : bp->bpos.x;
+  bp->bpos.x = ((bp->bpos.x + bp->bscale.wh) > top_x) ? top_x - bp->bscale.wh : bp->bpos.x;
+  bp->bpos.y = ((bp->bpos.y - bp->bscale.wh) < bot_y) ? bot_y + bp->bscale.wh : bp->bpos.y;
+  bp->bpos.y = ((bp->bpos.y + bp->bscale.wh) > top_y) ? top_y - bp->bscale.wh : bp->bpos.y;
 }
 
-void
+ENTRYPOINT void
 draw_ball (ModeInfo *mi)
 {
+   blinkboxstruct *bp = &blinkbox[MI_SCREEN(mi)];
+
    Display *dpy = MI_DISPLAY(mi);
    Window window = MI_WINDOW(mi);
    int i = 0;
+
+   if (! bp->glx_context)
+     return;
+   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   hit_top_bottom();
-   hit_front_back();
-   hit_side();
+   hit_top_bottom(bp);
+   hit_front_back(bp);
+   hit_side(bp);
 
    glRotated(0.25,0,0,1);
    glRotated(0.25,0,1,0);
@@ -358,12 +460,12 @@ draw_ball (ModeInfo *mi)
    glPushMatrix();
 
    if (!do_blur || MI_IS_WIREFRAME(mi)) {
-     glTranslatef(ball.x += mo.x,
-                  ball.y += mo.y,
-                  ball.z += mo.z);
+     glTranslatef(bp->ball.x += bp->mo.x,
+                  bp->ball.y += bp->mo.y,
+                  bp->ball.z += bp->mo.z);
 
      glScalef(2,2,2);
-     glCallList(ballList);
+     glCallList(bp->ballList);
 
    } else {
 
@@ -371,12 +473,12 @@ draw_ball (ModeInfo *mi)
      float ball_alpha = 1 / blur_detail;
 
      glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-     glTranslatef(ball.x, ball.y, ball.z);
+     glTranslatef(bp->ball.x, bp->ball.y, bp->ball.z);
    
      for (i = 0; i < blur_detail; ++i) {
-       glTranslatef(mo.x / blur_detail,
-                    mo.y / blur_detail,
-                    mo.z / blur_detail);
+       glTranslatef(bp->mo.x / blur_detail,
+                    bp->mo.y / blur_detail,
+                    bp->mo.z / blur_detail);
 
        /* comment the following line for quick but boring linear blur */
        ball_alpha = sin((M_PI / blur_detail) * i) / blur_detail;
@@ -384,14 +486,14 @@ draw_ball (ModeInfo *mi)
        glColor4f(1, 1, 1, ball_alpha);
 
        glScalef(2, 2, 2);
-       glCallList(ballList);
+       glCallList(bp->ballList);
        glScalef(.5, .5, .5);
      }
      i = 0;
    
-     ball.x += mo.x;
-     ball.y += mo.y;
-     ball.z += mo.z;
+     bp->ball.x += bp->mo.x;
+     bp->ball.y += bp->mo.y;
+     bp->ball.z += bp->mo.z;
    }
    
    glPopMatrix();
@@ -399,83 +501,83 @@ draw_ball (ModeInfo *mi)
    while(i < 6){
     switch(i){
       case 0:{
-               sp = &lside;
-               bpos.x = lside.pos.z*-1;
-               bpos.y = lside.pos.y;
-               bpos.z = bbox.bottom.x - bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.z,bbox.top.z,bbox.bottom.y,bbox.top.y);
+               bp->sp = &bp->lside;
+               bp->bpos.x = bp->lside.pos.z*-1;
+               bp->bpos.y = bp->lside.pos.y;
+               bp->bpos.z = bbox.bottom.x - bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.z,bbox.top.z,bbox.bottom.y,bbox.top.y);
                break;
              }
       case 1:{
-               sp = &rside;
-               bpos.x = rside.pos.z*-1;
-               bpos.y = rside.pos.y;
-               bpos.z = bbox.top.x + bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.z,bbox.top.z,bbox.bottom.y,bbox.top.y);
+               bp->sp = &bp->rside;
+               bp->bpos.x = bp->rside.pos.z*-1;
+               bp->bpos.y = bp->rside.pos.y;
+               bp->bpos.z = bbox.top.x + bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.z,bbox.top.z,bbox.bottom.y,bbox.top.y);
                break;
              }
       case 2:{
-               sp = &tside;
-               bpos.x = tside.pos.x;
-               bpos.y = tside.pos.z;
-               bpos.z = bbox.bottom.y - bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.x,bbox.top.x,bbox.bottom.z,bbox.top.z);
+               bp->sp = &bp->tside;
+               bp->bpos.x = bp->tside.pos.x;
+               bp->bpos.y = bp->tside.pos.z;
+               bp->bpos.z = bbox.bottom.y - bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.x,bbox.top.x,bbox.bottom.z,bbox.top.z);
                break;
              }
       case 3:{
-               sp = &bside;
-               bpos.x = bside.pos.x;
-               bpos.y = bside.pos.z;
-               bpos.z = bbox.top.y + bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.x,bbox.top.x,bbox.bottom.z,bbox.top.z);
+               bp->sp = &bp->bside;
+               bp->bpos.x = bp->bside.pos.x;
+               bp->bpos.y = bp->bside.pos.z;
+               bp->bpos.z = bbox.top.y + bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.x,bbox.top.x,bbox.bottom.z,bbox.top.z);
                break;
              }
       case 4:{
-               sp = &fside;
-               bpos.x = fside.pos.y;
-               bpos.y = fside.pos.x*-1;
-               bpos.z = bbox.top.z + bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.y,bbox.top.y,bbox.bottom.x,bbox.top.x);
+               bp->sp = &bp->fside;
+               bp->bpos.x = bp->fside.pos.y;
+               bp->bpos.y = bp->fside.pos.x*-1;
+               bp->bpos.z = bbox.top.z + bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.y,bbox.top.y,bbox.bottom.x,bbox.top.x);
                break;
              }
       case 5:{
-               sp = &aside;
-               bpos.x = aside.pos.y;
-               bpos.y = aside.pos.x*-1;
-               bpos.z = bbox.bottom.z + bscale.d;
-               if (sp->hit)
-                CheckBoxPos(bbox.bottom.y,bbox.top.y,bbox.bottom.x,bbox.top.x);
+               bp->sp = &bp->aside;
+               bp->bpos.x = bp->aside.pos.y;
+               bp->bpos.y = bp->aside.pos.x*-1;
+               bp->bpos.z = bbox.bottom.z + bp->bscale.d;
+               if (bp->sp->hit)
+                CheckBoxPos(bp, bbox.bottom.y,bbox.top.y,bbox.bottom.x,bbox.top.x);
                break;
              }
     }
-    if(sp->hit){
+    if(bp->sp->hit){
       if(do_fade){
-        glColor4f(sp->color[0],sp->color[1],sp->color[2],1-(ALPHA_AMT * sp->alpha_count));
+        glColor4f(bp->sp->color[0],bp->sp->color[1],bp->sp->color[2],1-(ALPHA_AMT * bp->sp->alpha_count));
       }else{
-        glColor3fv(sp->color);
+        glColor3fv(bp->sp->color);
       }
       glBlendFunc(GL_SRC_ALPHA,GL_ONE);
       glPushMatrix();
-      glRotatef(sp->rot[0],sp->rot[1],sp->rot[2],sp->rot[3]);
-      glTranslatef(bpos.x,bpos.y,bpos.z);
+      glRotatef(bp->sp->rot[0],bp->sp->rot[1],bp->sp->rot[2],bp->sp->rot[3]);
+      glTranslatef(bp->bpos.x,bp->bpos.y,bp->bpos.z);
       if (do_dissolve) {
-         glScalef(bscale.wh-(des_amt*sp->des_count),bscale.wh-(des_amt*sp->des_count),bscale.d);
+         glScalef(bp->bscale.wh-(bp->des_amt*bp->sp->des_count),bp->bscale.wh-(bp->des_amt*bp->sp->des_count),bp->bscale.d);
       }else{
-        glScalef(bscale.wh,bscale.wh,bscale.d);
+        glScalef(bp->bscale.wh,bp->bscale.wh,bp->bscale.d);
       }
-      glCallList(boxList);
+      glCallList(bp->boxList);
       glPopMatrix();
-      sp->counter--;
-      sp->des_count++;
-      sp->alpha_count++;
-      if(!sp->counter)
+      bp->sp->counter--;
+      bp->sp->des_count++;
+      bp->sp->alpha_count++;
+      if(!bp->sp->counter)
       {
-        sp->hit = 0;
+        bp->sp->hit = 0;
       }
     }
     i++;
@@ -487,5 +589,7 @@ draw_ball (ModeInfo *mi)
    glXSwapBuffers(dpy, window);
 
 }
+
+XSCREENSAVER_MODULE_2 ("BlinkBox", blinkbox, ball)
 
 #endif /* USE_GL */

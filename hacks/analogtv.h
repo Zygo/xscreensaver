@@ -65,7 +65,12 @@ enum {
   ANALOGTV_SIGNAL_LEN=ANALOGTV_V*ANALOGTV_H,
 
   /* The number of intensity levels we deal with for gamma correction &c */
-  ANALOGTV_CV_MAX=1024
+  ANALOGTV_CV_MAX=1024,
+
+  /* MAX_LINEHEIGHT corresponds to 2400 vertical pixels, beyond which
+     it interpolates extra black lines. */
+  ANALOGTV_MAX_LINEHEIGHT=12
+
 };
 
 typedef struct analogtv_input_s {
@@ -152,19 +157,16 @@ typedef struct analogtv_s {
   XShmSegmentInfo shm_info;
 #endif
   int visdepth,visclass,visbits;
-  int red_invprec,red_shift,red_mask;
-  int green_invprec,green_shift,green_mask;
-  int blue_invprec,blue_shift,blue_mask;
+  int red_invprec, red_shift;
+  int green_invprec, green_shift;
+  int blue_invprec, blue_shift;
+  unsigned int red_mask, green_mask, blue_mask;
 
   Colormap colormap;
   int usewidth,useheight,xrepl,subwidth;
   XImage *image; /* usewidth * useheight */
   GC gc;
   int screen_xo,screen_yo; /* centers image in window */
-
-  void (*event_handler)(Display *dpy, XEvent *event);
-  int (*key_handler)(Display *dpy, XEvent *event,void *key_data);
-  void *key_data;
 
   int flutter_horiz_desync;
   int flutter_tint;
@@ -211,6 +213,11 @@ typedef struct analogtv_s {
   int channel_change_cycles;
   double rx_signal_level;
   double rx_signal[ANALOGTV_SIGNAL_LEN + 2*ANALOGTV_H];
+
+  struct {
+    int index;
+    double value;
+  } leveltable[ANALOGTV_MAX_LINEHEIGHT+1][ANALOGTV_MAX_LINEHEIGHT+1];
 
 } analogtv;
 

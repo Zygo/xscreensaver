@@ -32,24 +32,27 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
  * 01-May-96: written.
  */
 
+#ifdef HAVE_COCOA
+# define DEF_FONT "Monaco 15"
+#else
+# define DEF_FONT "fixed"
+#endif
+
 #ifdef STANDALONE
-# define PROGCLASS					"Flag"
-# define HACK_INIT					init_flag
-# define HACK_DRAW					draw_flag
-# define flag_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		50000   \n"			\
-					"*cycles:		1000    \n"			\
-					"*size:			-7      \n"			\
-					"*ncolors:		200     \n"
+# define DEFAULTS	"*delay:		50000   \n"		\
+					"*cycles:		1000    \n"		\
+					"*size:			-7      \n"		\
+					"*ncolors:		200     \n"		\
+					"*bitmap:				\n"		\
+					"*font:		" DEF_FONT	"\n"	\
+					"*text:					\n"
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
-# define DEF_FONT					"-*-helvetica-bold-r-*-240-*"
-# define DEF_BITMAP					""
-# define DEF_TEXT					""
+# define reshape_flag 0
+# define flag_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 
 #include "xpm-pixmap.h"
-
 #include "images/bob.xbm"
 
 #else  /* !STANDALONE */
@@ -71,16 +74,13 @@ static XrmOptionDescRec opts[] =
 
 #endif /* STANDALONE */
 
-ModeSpecOpt flag_opts = {
+ENTRYPOINT ModeSpecOpt flag_opts = {
 #ifdef STANDALONE
   2, opts, 0, NULL, NULL
 #else  /* !STANDALONE */
   0, NULL, 0, NULL, NULL
 #endif /* STANDALONE */
 };
-
-#include <string.h>
-#include <X11/Xutil.h>
 
 #define MINSIZE 1
 #define MAXSCALE 8
@@ -103,6 +103,7 @@ typedef struct {
 	int         timer;
 	int         initialized;
 	int         stab[ANGLES];
+    Bool		dbufp;
 	Pixmap      cache;
 	int         width, height;
 	int         pointsize;
@@ -165,6 +166,11 @@ affiche(ModeInfo * mi)
 				XSetForeground(display, MI_GC(mi),
 					       MI_PIXEL(mi, (y + x + fp->sidx + fp->startcolor) % MI_NPIXELS(mi)));
 
+            if (fp->cache == MI_WINDOW(mi)) {  /* not double-buffering */
+              xp += fp->x_flag;
+              yp += fp->y_flag;
+            }
+
 			if (fp->pointsize <= 1)
 				XDrawPoint(display, fp->cache, MI_GC(mi), xp, yp);
 			else if (fp->pointsize < 6)
@@ -183,8 +189,8 @@ make_flag_bits(ModeInfo *mi)
 {
   Display *dpy = MI_DISPLAY(mi);
   flagstruct *fp = &flags[MI_SCREEN(mi)];
-  char *bitmap_name = get_string_resource ("bitmap", "Bitmap");
-  char *text = get_string_resource ("text", "Text");
+  char *bitmap_name = get_string_resource (dpy, "bitmap", "Bitmap");
+  char *text = get_string_resource (dpy, "text", "Text");
 
   /* If neither a bitmap nor text are specified, randomly select either
 	 the builtin bitmap or builtin text. */
@@ -222,7 +228,7 @@ make_flag_bits(ModeInfo *mi)
   else if (text && *text)
 	{
 	  char *text2;
-	  char *fn = get_string_resource ("font", "Font");
+	  char *fn = get_string_resource (dpy, "font", "Font");
 	  char *def_fn = "fixed";
 	  char *line, *token;
 	  int width, height;
@@ -382,7 +388,7 @@ make_flag_bits(ModeInfo *mi)
 #endif /* !STANDALONE */
 
 
-void
+ENTRYPOINT void
 init_flag(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -415,9 +421,17 @@ init_flag(ModeInfo * mi)
 	fp->sidx = fp->x_flag = fp->y_flag = 0;
 
 	if (!fp->initialized) {
+      fp->dbufp = True;
+# ifdef HAVE_COCOA		/* Don't second-guess Quartz's double-buffering */
+      fp->dbufp = False;
+#endif
 		fp->initialized = True;
-		if (!(fp->cache = XCreatePixmap(display, MI_WINDOW(mi),
-		MAXW(fp), MAXH(fp), MI_WIN_DEPTH(mi))))
+		if (!fp->dbufp)
+          fp->cache = MI_WINDOW(mi);  /* not double-buffering */
+        else
+          if (!(fp->cache = XCreatePixmap(display, MI_WINDOW(mi),
+                                          MAXW(fp), MAXH(fp),
+                                          MI_WIN_DEPTH(mi))))
 #ifdef STANDALONE
 		  exit(-1);
 #else   /* !STANDALONE */
@@ -448,38 +462,38 @@ init_flag(ModeInfo * mi)
 	XClearWindow(display, MI_WINDOW(mi));
 }
 
-void release_flag(ModeInfo * mi);
+ENTRYPOINT void release_flag(ModeInfo * mi);
 
 
-void
+ENTRYPOINT void
 draw_flag(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	flagstruct *fp = &flags[MI_SCREEN(mi)];
 
-	if (fp->width <= MAXW(fp) || fp->height <= MAXH(fp)) {
+    if (fp->cache == window) {  /* not double-buffering */
+      XClearWindow (display, window);
+    } else if (fp->width <= MAXW(fp) || fp->height <= MAXH(fp)) {
 		fp->size = MININITSIZE;
 		/* fp->pointsize = MINPOINTSIZE; */
-		XCopyArea(display, fp->cache, window, MI_GC(mi),
-			  0, 0, MINW(fp), MINH(fp), fp->x_flag, fp->y_flag);
+        XCopyArea(display, fp->cache, window, MI_GC(mi),
+                  0, 0, MINW(fp), MINH(fp), fp->x_flag, fp->y_flag);
 	} else {
 		if ((fp->size + fp->inctaille) > MAXSCALE)
 			fp->inctaille = -fp->inctaille;
 		if ((fp->size + fp->inctaille) < MINSCALE)
 			fp->inctaille = -fp->inctaille;
 		fp->size += fp->inctaille;
-		XCopyArea(display, fp->cache, window, MI_GC(mi),
-			  0, 0, MAXW(fp), MAXH(fp), fp->x_flag, fp->y_flag);
+        XCopyArea(display, fp->cache, window, MI_GC(mi),
+                  0, 0, MAXW(fp), MAXH(fp), fp->x_flag, fp->y_flag);
 	}
 	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WIN_BLACK_PIXEL(mi));
 	XFillRectangle(display, fp->cache, MI_GC(mi),
 		       0, 0, MAXW(fp), MAXH(fp));
-	XFlush(display);
 	affiche(mi);
 	fp->sidx += 2;
 	fp->sidx %= (ANGLES * MI_NPIXELS(mi));
-	XFlush(display);
 	fp->timer++;
 	if ((MI_CYCLES(mi) > 0) && (fp->timer >= MI_CYCLES(mi)))
       {
@@ -488,7 +502,7 @@ draw_flag(ModeInfo * mi)
       }
 }
 
-void
+ENTRYPOINT void
 release_flag(ModeInfo * mi)
 {
 	if (flags != NULL) {
@@ -496,7 +510,7 @@ release_flag(ModeInfo * mi)
 
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
 		  {
-			if (flags[screen].cache)
+			if (flags[screen].cache && flags[screen].dbufp)
 				XFreePixmap(MI_DISPLAY(mi), flags[screen].cache);
 			if (flags[screen].image)
 			  XDestroyImage(flags[screen].image);
@@ -506,8 +520,10 @@ release_flag(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_flag(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+XSCREENSAVER_MODULE ("Flag", flag)

@@ -71,15 +71,12 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Superquadrics"
-# define HACK_INIT					init_superquadrics
-# define HACK_DRAW					draw_superquadrics
-# define superquadrics_opts			xlockmore_opts
 # define DEFAULTS	"*delay:		40000   \n"			\
 					"*count:		25      \n"			\
 					"*cycles:		40      \n"			\
 					"*showFPS:      False   \n"			\
 					"*wireframe:	False	\n"
+# define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -111,7 +108,7 @@ static OptionStruct desc[] =
 	{"-spinspeed num", "speed of rotation, in degrees per frame"}
 };
 
-ModeSpecOpt superquadrics_opts =
+ENTRYPOINT ModeSpecOpt superquadrics_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -122,8 +119,6 @@ ModStruct   superquadrics_description =
  "Shows 3D mathematical shapes", 0, NULL};
 
 #endif
-
-#include <GL/glu.h>
 
 #define MaxRes          50
 #define MinRes          5
@@ -150,6 +145,10 @@ typedef struct {
 	double      xExponent, yExponent, Mode;
 	int         resolution;
 	state       now, later;
+
+    int         pats[4][4];
+	int	        cullmode;
+
 } superquadricsstruct;
 
 static superquadricsstruct *superquadrics = NULL;
@@ -221,14 +220,6 @@ Cosine(double x, double e)
 static void
 MakeUpStuff(int allstuff, superquadricsstruct * sp)
 {
-	static int  pats[4][4] =
-	{
-		{0, 0, 0, 0},
-		{0, 1, 0, 1},
-		{0, 0, 1, 1},
-		{0, 1, 1, 0}
-	};
-
 	int         dostuff;
 	int         t, pat;
 	GLfloat     r, g, b, r2, g2, b2;
@@ -282,9 +273,9 @@ MakeUpStuff(int allstuff, superquadricsstruct * sp)
 
 		pat = myrand(4);
 		for (t = 0; t < 4; ++t) {
-			sp->later.r[t] = pats[pat][t] ? r : r2;
-			sp->later.g[t] = pats[pat][t] ? g : g2;
-			sp->later.b[t] = pats[pat][t] ? b : b2;
+			sp->later.r[t] = sp->pats[pat][t] ? r : r2;
+			sp->later.g[t] = sp->pats[pat][t] ? g : g2;
+			sp->later.b[t] = sp->pats[pat][t] ? b : b2;
 		}
 	}
 	if (dostuff & 8) {
@@ -453,28 +444,27 @@ DoneScale(superquadricsstruct * sp)
 static void
 SetCull(int init, superquadricsstruct * sp)
 {
-	static int  cullmode;
-
 	if (init) {
-		cullmode = 0;
+        glDisable(GL_CULL_FACE);
+		sp->cullmode = 0;
 		return;
 	}
 	if (sp->Mode < 1.0001) {
-		if (cullmode != 1) {
+		if (sp->cullmode != 1) {
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
-			cullmode = 1;
+			sp->cullmode = 1;
 		}
 	} else if (sp->Mode > 2.9999) {
-		if (cullmode != 2) {
+		if (sp->cullmode != 2) {
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_FRONT);
-			cullmode = 2;
+			sp->cullmode = 2;
 		}
 	} else {
-		if (cullmode) {
+		if (sp->cullmode) {
 			glDisable(GL_CULL_FACE);
-			cullmode = 0;
+			sp->cullmode = 0;
 		}
 	}
 }
@@ -560,7 +550,7 @@ DisplaySuperquadrics(superquadricsstruct * sp)
 
 	if (sp->viewcount < 1) {
 		sp->viewcount = sp->viewwait;
-		ReshapeSuperquadrics(-1, -1);
+/*		ReshapeSuperquadrics(-1, -1);*/
 	}
 	glPushMatrix();
 	glTranslatef(0.0, 0.0, -((GLfloat) (sp->dist) / 16.0) - (sp->Mode * 3.0 - 1.0));	/* viewing transform  */
@@ -588,16 +578,9 @@ NextSuperquadricDisplay(superquadricsstruct * sp)
 static void
 ReshapeSuperquadrics(int w, int h)
 {
-	static int  last_w = 0, last_h = 0;
+#if 0
 	int         maxsize, cursize;
 
-	if (w < 0) {
-		w = last_w;
-		h = last_h;
-	} else {
-		last_w = w;
-		last_h = h;
-	}
 	maxsize = (w < h) ? w : h;
 	if (maxsize <= MINSIZE) {
 		cursize = maxsize;
@@ -610,9 +593,13 @@ ReshapeSuperquadrics(int w, int h)
 	} else {
 		glViewport(0, 0, w, h);
 	}
+#else
+    glViewport(0, 0, w, h);
+#endif
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(30.0, (GLfloat) w / (GLfloat) h, 0.1, 200.0);
+	gluPerspective(15.0, (GLfloat) w / (GLfloat) h, 0.1, 200.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -633,8 +620,12 @@ InitSuperquadrics(int wfmode, int snorm, int res, int count, float speed, superq
 
 	int         t;
 
-	for (t = 0; t < 4; ++t)
+	for (t = 0; t < 4; ++t) {
+		sp->curmat[t][0] = 0.0;
+		sp->curmat[t][1] = 0.0;
+		sp->curmat[t][2] = 0.0;
 		sp->curmat[t][3] = 1.0;
+    }
 
 	sp->rotx = 35.0;
 	sp->roty = 0.0;
@@ -647,6 +638,7 @@ InitSuperquadrics(int wfmode, int snorm, int res, int count, float speed, superq
 	sp->maxwait = sp->maxcount >> 1;
 	SetCull(1, sp);
 
+    sp->mono = 0;
 	sp->spinspeed = speed;
 	sp->viewcount = sp->viewwait = (sp->maxcount < 2) ? 1 : (sp->maxcount << 3);
 
@@ -663,6 +655,9 @@ InitSuperquadrics(int wfmode, int snorm, int res, int count, float speed, superq
 
 	if (snorm)
 		sp->shownorms = 1;
+
+    glClearColor(0.0,0.0,0.0,1.0);
+    glClearDepth(1.0);
 
 	if (sp->wireframe) {
 		glShadeModel(GL_FLAT);
@@ -700,7 +695,7 @@ InitSuperquadrics(int wfmode, int snorm, int res, int count, float speed, superq
 
 /* End of superquadrics main functions */
 
-void
+ENTRYPOINT void
 init_superquadrics(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -717,6 +712,19 @@ init_superquadrics(ModeInfo * mi)
 	sp = &superquadrics[screen];
 	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
 
+    sp->pats[1][1] = 1;
+    sp->pats[1][3] = 1;
+    sp->pats[2][2] = 1;
+    sp->pats[2][3] = 1;
+    sp->pats[3][1] = 1;
+    sp->pats[3][2] = 1;
+
+/*		{0, 0, 0, 0},
+		{0, 1, 0, 1},
+		{0, 0, 1, 1},
+		{0, 1, 1, 0}
+ */
+
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
 		InitSuperquadrics(MI_IS_WIREFRAME(mi), 0,
@@ -731,7 +739,7 @@ init_superquadrics(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_superquadrics(ModeInfo * mi)
 {
 	superquadricsstruct *sp = &superquadrics[MI_SCREEN(mi)];
@@ -750,13 +758,19 @@ draw_superquadrics(ModeInfo * mi)
 	glXSwapBuffers(display, window);
 }
 
-void
+ENTRYPOINT void
 refresh_superquadrics(ModeInfo * mi)
 {
 	/* Nothing happens here */
 }
 
-void
+ENTRYPOINT void
+reshape_superquadrics(ModeInfo * mi, int width, int height)
+{
+  ReshapeSuperquadrics(MI_WIDTH(mi), MI_HEIGHT(mi));
+}
+
+ENTRYPOINT void
 release_superquadrics(ModeInfo * mi)
 {
 	if (superquadrics != NULL) {
@@ -770,3 +784,5 @@ release_superquadrics(ModeInfo * mi)
 #endif
 
 /* End of superquadrics.c */
+
+XSCREENSAVER_MODULE ("Superquadrics", superquadrics)

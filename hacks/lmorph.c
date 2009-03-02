@@ -62,9 +62,6 @@
  |                    * Original Windows version (we didn't know better).
  +----------------------------------------------------------------------*/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "screenhack.h"
 
@@ -83,40 +80,43 @@
 #define FT_CLOSED  2
 #define FT_ALL     (FT_OPEN | FT_CLOSED)
 
-static int
-    numFigs = 0,                /* number of figure arrays. */
-    numPoints,                  /* number of points in each array. */
-    nWork,                      /* current work array number. */
-    nFrom,                      /* current from array number. */
-    nTo,                        /* current to array number. */
-    nNext,                      /* current next array number (after to).*/
-    shift,                      /* shifts the starting point of a figure */
-    figType;
-static long delay;              /* usecs to wait between updates. */
-static XPoint
-    *aWork[2],                  /* working arrays. */
-    *a[MAXFIGS],                /* the figure arrays. */
-    *aTmp,                      /* used as source when interrupting morph */
-    *aPrev,                     /* previous points displayed. */
-    *aCurr,                     /* the current points displayed. */  
-    *aFrom,                     /* figure converting from. */
-    *aTo,                       /* figure converting to. */
-    *aNext,                     /* figure converting to next time. */
-    *aSlopeFrom,                /* slope at start of morph */ 
-    *aSlopeTo;                  /* slope at end of morph */ 
-static int         scrWidth, scrHeight;
-static double      currGamma, maxGamma = 1.0, deltaGamma;
-static GC          gcDraw, gcClear;
-static Display     *dpy;
-static Window      window;
+struct state {
+  Display *dpy;
+  Window window;
+
+   int numFigs;             /* number of figure arrays. */
+   int numPoints;           /* number of points in each array. */
+   int nWork;               /* current work array number. */
+   int nFrom;               /* current from array number. */
+   int nTo;                 /* current to array number. */
+   int nNext;               /* current next array number (after to).*/
+   int shift;               /* shifts the starting point of a figure */
+   int figType;
+
+   long delay;              /* usecs to wait between updates. */
+
+   XPoint *aWork[2];        /* working arrays. */
+   XPoint *a[MAXFIGS];      /* the figure arrays. */
+   XPoint *aTmp;            /* used as source when interrupting morph */
+   XPoint *aPrev;           /* previous points displayed. */
+   XPoint *aCurr;           /* the current points displayed. */  
+   XPoint *aFrom;           /* figure converting from. */
+   XPoint *aTo;             /* figure converting to. */
+   XPoint *aNext;           /* figure converting to next time. */
+   XPoint *aSlopeFrom;      /* slope at start of morph */ 
+   XPoint *aSlopeTo;        /* slope at end of morph */ 
+
+   int         scrWidth, scrHeight;
+   double      currGamma, maxGamma, deltaGamma;
+   GC          gcDraw, gcClear;
+};
+
 
 /*-----------------------------------------------------------------------+
 |  PUBLIC DATA                                                           |
 +-----------------------------------------------------------------------*/
 
-char *progclass = "LMorph";
-
-char *defaults [] = {
+static const char *lmorph_defaults [] = {
     ".background: black",
     ".foreground: #4444FF",
     "*points: 200",
@@ -127,7 +127,7 @@ char *defaults [] = {
     0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec lmorph_options [] = {
     { "-points",      ".points",      XrmoptionSepArg, 0 },
     { "-steps",       ".steps",       XrmoptionSepArg, 0 },
     { "-delay",       ".delay",       XrmoptionSepArg, 0 },
@@ -135,7 +135,6 @@ XrmOptionDescRec options [] = {
     { "-linewidth",   ".linewidth",   XrmoptionSepArg, 0 },
     { 0, 0, 0, 0 }
 };
-int options_size = (sizeof (options) / sizeof (options[0]));
 
 /*-----------------------------------------------------------------------+
 |  PRIVATE FUNCTIONS                                                     |
@@ -154,7 +153,7 @@ xmalloc(size_t size)
 }
 
 static void
-initPointArrays(void)
+initPointArrays(struct state *st)
 {
     int    q, w;
     int    mx, my;            /* max screen coordinates. */
@@ -163,164 +162,164 @@ initPointArrays(void)
     int    marginx, marginy;
     double scalex, scaley;
 
-    mx = scrWidth - 1;
-    my = scrHeight - 1;
-    mp = numPoints - 1;
+    mx = st->scrWidth - 1;
+    my = st->scrHeight - 1;
+    mp = st->numPoints - 1;
 
-    aWork[0] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-    aWork[1] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-    aTmp     = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+    st->aWork[0] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+    st->aWork[1] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+    st->aTmp     = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 
-    if (figType & FT_CLOSED) {
+    if (st->figType & FT_CLOSED) {
 	/* rectangle */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-	s = numPoints / 4;
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+	s = st->numPoints / 4;
 	for (q = 0; q < s; q++) {
-	    a[numFigs][q].x = ((double) q / s) * mx;
-	    a[numFigs][q].y = 0;
-	    a[numFigs][s + q].x = mx;
-	    a[numFigs][s + q].y = ((double) q / s) * my;
-	    a[numFigs][2 * s + q].x = mx - ((double) q / s) * mx;
-	    a[numFigs][2 * s + q].y = my;
-	    a[numFigs][3 * s + q].x = 0;
-	    a[numFigs][3 * s + q].y = my - ((double) q / s) * my;
+	    st->a[st->numFigs][q].x = ((double) q / s) * mx;
+	    st->a[st->numFigs][q].y = 0;
+	    st->a[st->numFigs][s + q].x = mx;
+	    st->a[st->numFigs][s + q].y = ((double) q / s) * my;
+	    st->a[st->numFigs][2 * s + q].x = mx - ((double) q / s) * mx;
+	    st->a[st->numFigs][2 * s + q].y = my;
+	    st->a[st->numFigs][3 * s + q].x = 0;
+	    st->a[st->numFigs][3 * s + q].y = my - ((double) q / s) * my;
 	}
-	for (q = 4 * s; q < numPoints; q++) 
-	    a[numFigs][q].x = a[numFigs][q].y = 0;
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	for (q = 4 * s; q < st->numPoints; q++) 
+	    st->a[st->numFigs][q].x = st->a[st->numFigs][q].y = 0;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + rx * sin(1 * TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * cos(3 * TWO_PI * (double) q / mp);
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + rx * sin(1 * TWO_PI * (double) q / mp);
+	    st->a[st->numFigs][q].y = my / 2 + ry * cos(3 * TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + ry * sin(3 * TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * cos(1 * TWO_PI * (double) q / mp);
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + ry * sin(3 * TWO_PI * (double) q / mp);
+	    st->a[st->numFigs][q].y = my / 2 + ry * cos(1 * TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + ry 
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + ry 
 		* (0.8 - 0.2 * sin(30 * TWO_PI * q / mp))
 		* sin(TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry
+	    st->a[st->numFigs][q].y = my / 2 + ry
 		* (0.8 - 0.2 * sin(30 * TWO_PI * q / mp))
 		* cos(TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 
 	/* */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + ry * sin(TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * cos(TWO_PI * (double) q / mp);
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + ry * sin(TWO_PI * (double) q / mp);
+	    st->a[st->numFigs][q].y = my / 2 + ry * cos(TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + rx * cos(TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * sin(TWO_PI * (double) q / mp);
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + rx * cos(TWO_PI * (double) q / mp);
+	    st->a[st->numFigs][q].y = my / 2 + ry * sin(TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + rx * sin(2 * TWO_PI * (double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * cos(3 * TWO_PI * (double) q / mp);
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + rx * sin(2 * TWO_PI * (double) q / mp);
+	    st->a[st->numFigs][q].y = my / 2 + ry * cos(3 * TWO_PI * (double) q / mp);
 	}
-	a[numFigs][mp].x = a[numFigs][0].x;
-	a[numFigs][mp].y = a[numFigs][0].y;
-	++numFigs;
+	st->a[st->numFigs][mp].x = st->a[st->numFigs][0].x;
+	st->a[st->numFigs][mp].y = st->a[st->numFigs][0].y;
+	++st->numFigs;
     }
 
-    if (figType & FT_OPEN) {
+    if (st->figType & FT_OPEN) {
 	/* sine wave, one period */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = ((double) q / numPoints) * mx;
-	    a[numFigs][q].y = (1.0 - sin(((double) q / mp) * TWO_PI))
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = ((double) q / st->numPoints) * mx;
+	    st->a[st->numFigs][q].y = (1.0 - sin(((double) q / mp) * TWO_PI))
 		* my / 2.0;
 	}
-	++numFigs;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = ((double) q / mp) * mx;
-	    a[numFigs][q].y = (1.0 - cos(((double) q / mp) * 3 * TWO_PI))
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = ((double) q / mp) * mx;
+	    st->a[st->numFigs][q].y = (1.0 - cos(((double) q / mp) * 3 * TWO_PI))
 		* my / 2.0;
 	}
-	++numFigs;
+	++st->numFigs;
 
 	/* spiral, one endpoint at bottom */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + ry * sin(5 * TWO_PI * (double) q / mp)
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + ry * sin(5 * TWO_PI * (double) q / mp)
 		* ((double) q / mp);
-	    a[numFigs][q].y = my / 2 + ry * cos(5 * TWO_PI * (double) q / mp)
+	    st->a[st->numFigs][q].y = my / 2 + ry * cos(5 * TWO_PI * (double) q / mp)
 		* ((double) q / mp);
 	}
-	++numFigs;
+	++st->numFigs;
 
 	/* spiral, one endpoint at top */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = mx / 2 + ry * sin(6 * TWO_PI * (double) q / mp)
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = mx / 2 + ry * sin(6 * TWO_PI * (double) q / mp)
 		* ((double) q / mp);
-	    a[numFigs][q].y = my / 2 - ry * cos(6 * TWO_PI * (double) q / mp)
+	    st->a[st->numFigs][q].y = my / 2 - ry * cos(6 * TWO_PI * (double) q / mp)
 		* ((double) q / mp);
 	}
-	++numFigs;
+	++st->numFigs;
 
 	/*  */
-	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
-	for (q = 0; q < numPoints; q++) {
-	    a[numFigs][q].x = ((double) q / mp) * mx;
-	    a[numFigs][q].y = (1.0 - sin(((double) q / mp) * 5 * TWO_PI))
+	st->a[st->numFigs] = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint));
+	for (q = 0; q < st->numPoints; q++) {
+	    st->a[st->numFigs][q].x = ((double) q / mp) * mx;
+	    st->a[st->numFigs][q].y = (1.0 - sin(((double) q / mp) * 5 * TWO_PI))
 		* my / 2.0;
 	}
-	++numFigs;
+	++st->numFigs;
     }
 
 #ifdef MARGINS
@@ -329,16 +328,16 @@ initPointArrays(void)
     marginy = (my + 1) / 10;
     scalex = (double) ((mx + 1) - 2.0 * marginx) / (mx + 1.0);
     scaley = (double) ((my + 1) - 2.0 * marginy) / (my + 1.0);
-    for (q = 0; q < numFigs; q++)
-	for (w = 0; w < numPoints; w++) {
- 	    a[q][w].x = marginx + a[q][w].x * scalex;
- 	    a[q][w].y = marginy + a[q][w].y * scaley;
+    for (q = 0; q < st->numFigs; q++)
+	for (w = 0; w < st->numPoints; w++) {
+ 	    st->a[q][w].x = marginx + st->a[q][w].x * scalex;
+ 	    st->a[q][w].y = marginy + st->a[q][w].y * scaley;
 	}
 #endif
 }
 
 static void
-initLMorph(void)
+initLMorph(struct state *st)
 {
     int               steps;
     XGCValues         gcv;
@@ -347,85 +346,86 @@ initLMorph(void)
     char              *ft;
     int               i;
 
-    numPoints = get_integer_resource("points", "Integer");
-    steps = get_integer_resource("steps", "Integer");
-    delay = get_integer_resource("delay", "Integer");
-    ft = get_string_resource("figtype", "String");
+    st->maxGamma = 1.0;
+    st->numPoints = get_integer_resource(st->dpy, "points", "Integer");
+    steps = get_integer_resource(st->dpy, "steps", "Integer");
+    st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+    ft = get_string_resource(st->dpy, "figtype", "String");
 
     if (strcmp(ft, "all") == 0)
-	figType = FT_ALL;
+	st->figType = FT_ALL;
     else if (strcmp(ft, "open") == 0)
-	figType = FT_OPEN;
+	st->figType = FT_OPEN;
     else if (strcmp(ft, "closed") == 0)
-	figType = FT_CLOSED;
+	st->figType = FT_CLOSED;
     else {
 	fprintf(stderr, "figtype should be `all', `open' or `closed'.\n");
-	figType = FT_ALL;
+	st->figType = FT_ALL;
     }
 
     if (steps <= 0)
       steps = (random() % 400) + 100;
 
-    deltaGamma = 1.0 / steps;
-    XGetWindowAttributes(dpy, window, &wa);
-    scrWidth = wa.width;
-    scrHeight = wa.height;
+    st->deltaGamma = 1.0 / steps;
+    XGetWindowAttributes(st->dpy, st->window, &wa);
+    st->scrWidth = wa.width;
+    st->scrHeight = wa.height;
     cmap = wa.colormap;
-    gcv.foreground = get_pixel_resource("foreground", "Foreground", dpy, cmap);
-    gcDraw = XCreateGC(dpy, window, GCForeground, &gcv);
-    XSetForeground(dpy, gcDraw, gcv.foreground);
-    gcv.foreground = get_pixel_resource("background", "Background", dpy, cmap);
-    gcClear = XCreateGC(dpy, window, GCForeground, &gcv);
-    XClearWindow(dpy, window);
+    gcv.foreground = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
+    st->gcDraw = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+    XSetForeground(st->dpy, st->gcDraw, gcv.foreground);
+    gcv.foreground = get_pixel_resource(st->dpy, cmap, "background", "Background");
+    st->gcClear = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+    XClearWindow(st->dpy, st->window);
 
-    initPointArrays();
-    aCurr = aWork[nWork = 0];
-    aPrev = NULL;
-    currGamma = maxGamma + 1.0;  /* force creation of new figure at startup */
-    nTo = RND(numFigs);
+    initPointArrays(st);
+    st->aCurr = st->aWork[st->nWork = 0];
+    st->aPrev = NULL;
+    st->currGamma = st->maxGamma + 1.0;  /* force creation of new figure at startup */
+    st->nTo = RND(st->numFigs);
     do {
-        nNext = RND(numFigs);
-    } while (nNext == nTo);
+        st->nNext = RND(st->numFigs);
+    } while (st->nNext == st->nTo);
 
-    aSlopeTo = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
-    aSlopeFrom = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
-    aNext = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
+    st->aSlopeTo = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
+    st->aSlopeFrom = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
+    st->aNext = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
 
-    for (i = 0; i < numPoints ; i++) {
-        aSlopeTo[i].x = 0.0;
-        aSlopeTo[i].y = 0.0; 
+    for (i = 0; i < st->numPoints ; i++) {
+        st->aSlopeTo[i].x = 0.0;
+        st->aSlopeTo[i].y = 0.0; 
     }
 
     {   /* jwz for version 2.11 */
         /*      int width = random() % 10;*/
-        int width = get_integer_resource("linewidth", "Integer");
+        int width = get_integer_resource(st->dpy, "linewidth", "Integer");
         int style = LineSolid;
         int cap   = (width > 1 ? CapRound  : CapButt);
         int join  = (width > 1 ? JoinRound : JoinBevel);
         if (width == 1)
             width = 0;
-        XSetLineAttributes(dpy, gcDraw,  width, style, cap, join);
-        XSetLineAttributes(dpy, gcClear, width, style, cap, join);
+        XSetLineAttributes(st->dpy, st->gcDraw,  width, style, cap, join);
+        XSetLineAttributes(st->dpy, st->gcClear, width, style, cap, join);
     }
 }
 
 /* 55% of execution time */
 static void
-createPoints(void)
+createPoints(struct state *st)
 {
     int    q;
-    XPoint *pa = aCurr, *pa1 = aFrom, *pa2 = aTo;
-    XPoint *qa1 = aSlopeFrom, *qa2 = aSlopeTo; 
+    XPoint *pa = st->aCurr, *pa1 = st->aFrom, *pa2 = st->aTo;
+    XPoint *qa1 = st->aSlopeFrom, *qa2 = st->aSlopeTo; 
     float  fg, f1g;
     float  speed;
 
-    fg  = currGamma;
-    f1g = 1.0 - currGamma;
-    for (q = numPoints; q; q--) {
-        speed = 0.45 * sin(TWO_PI * (double) (q + shift) / (numPoints - 1));
-        fg = currGamma + 1.67 * speed
-            * exp(-200.0 * (currGamma - 0.5 + 0.7 * speed)
-                  * (currGamma - 0.5 + 0.7 * speed));
+    fg  = st->currGamma;
+    f1g = 1.0 - st->currGamma;
+    for (q = st->numPoints; q; q--) {
+        speed = 0.45 * sin(TWO_PI * (double) (q + st->shift) / (st->numPoints - 1));
+        fg = st->currGamma + 1.67 * speed
+            * exp(-200.0 * (st->currGamma - 0.5 + 0.7 * speed)
+                  * (st->currGamma - 0.5 + 0.7 * speed));
 
         f1g = 1.0 - fg;
         pa->x = (short) (f1g * f1g * f1g * pa1->x + f1g * f1g * fg
@@ -445,8 +445,9 @@ createPoints(void)
 
 /* 36% of execution time */
 static void
-drawImage(void)
+drawImage(struct state *st)
 {
+#if 0
     int    q;
     XPoint *old0, *old1, *new0, *new1;
 
@@ -455,15 +456,15 @@ drawImage(void)
      * line, then draw the new line. The problem is that this leaves
      * small black pixels on the figure. To fix this, we draw the
      * entire figure using XDrawLines() afterwards. */
-    if (aPrev) {
-	old0 = aPrev;
-	old1 = aPrev + 1;
-	new0 = aCurr;
-	new1 = aCurr + 1;
-	for (q = numPoints - 1; q; q--) {
-	   XDrawLine(dpy, window, gcClear,
+    if (st->aPrev) {
+	old0 = st->aPrev;
+	old1 = st->aPrev + 1;
+	new0 = st->aCurr;
+	new1 = st->aCurr + 1;
+	for (q = st->numPoints - 1; q; q--) {
+	   XDrawLine(st->dpy, st->window, st->gcClear,
 	     old0->x, old0->y, old1->x, old1->y); 
-	    XDrawLine(dpy, window, gcDraw,
+	    XDrawLine(st->dpy, st->window, st->gcDraw,
 		      new0->x, new0->y, new1->x, new1->y);
 	    ++old0;
 	    ++old1;
@@ -471,71 +472,97 @@ drawImage(void)
 	    ++new1;
 	}
     }
-    XDrawLines(dpy, window, gcDraw, aCurr, numPoints, CoordModeOrigin);
-
-    XFlush(dpy);
+#else
+    XClearWindow(st->dpy,st->window);
+#endif
+    XDrawLines(st->dpy, st->window, st->gcDraw, st->aCurr, st->numPoints, CoordModeOrigin);
 }
 
 /* neglectible % of execution time */
 static void
-animateLMorph(void)
+animateLMorph(struct state *st)
 {
     int i;
-    if (currGamma > maxGamma) {
-        currGamma = 0.0;
-        nFrom = nTo;
-        nTo = nNext;
-        aFrom = a[nFrom];
-	aTo = a[nTo];
+    if (st->currGamma > st->maxGamma) {
+        st->currGamma = 0.0;
+        st->nFrom = st->nTo;
+        st->nTo = st->nNext;
+        st->aFrom = st->a[st->nFrom];
+	st->aTo = st->a[st->nTo];
         do {
-            nNext = RND(numFigs);
-        } while (nNext == nTo);
-	aNext = a[nNext];
+            st->nNext = RND(st->numFigs);
+        } while (st->nNext == st->nTo);
+	st->aNext = st->a[st->nNext];
 
-	shift = RND(numPoints);
+	st->shift = RND(st->numPoints);
         if (RND(2)) {
             /* reverse the array to get more variation. */
             int    i1, i2;
             XPoint p;
             
-            for (i1 = 0, i2 = numPoints - 1; i1 < numPoints / 2; i1++, i2--) {
-                p = aNext[i1];
-                aNext[i1] = aNext[i2];
-                aNext[i2] = p;
+            for (i1 = 0, i2 = st->numPoints - 1; i1 < st->numPoints / 2; i1++, i2--) {
+                p = st->aNext[i1];
+                st->aNext[i1] = st->aNext[i2];
+                st->aNext[i2] = p;
             }
         }
 
 	/* calculate the slopes */
-	for (i = 0; i < numPoints ; i++) {
-            aSlopeFrom[i].x = aSlopeTo[i].x;
-            aSlopeFrom[i].y = aSlopeTo[i].y;
-            aSlopeTo[i].x = aNext[i].x - aTo[i].x;
-            aSlopeTo[i].y = (aNext[i].y - aTo[i].y);
+	for (i = 0; i < st->numPoints ; i++) {
+            st->aSlopeFrom[i].x = st->aSlopeTo[i].x;
+            st->aSlopeFrom[i].y = st->aSlopeTo[i].y;
+            st->aSlopeTo[i].x = st->aNext[i].x - st->aTo[i].x;
+            st->aSlopeTo[i].y = (st->aNext[i].y - st->aTo[i].y);
 	}
     }
 
-    createPoints();
-    drawImage();
-    aPrev = aCurr;
-    aCurr = aWork[nWork ^= 1];
+    createPoints(st);
+    drawImage(st);
+    st->aPrev = st->aCurr;
+    st->aCurr = st->aWork[st->nWork ^= 1];
 
-    currGamma += deltaGamma;
+    st->currGamma += st->deltaGamma;
 }
 
 /*-----------------------------------------------------------------------+
 |  PUBLIC FUNCTIONS                                                      |
 +-----------------------------------------------------------------------*/
 
-void
-screenhack(Display *disp, Window win)
+static void *
+lmorph_init (Display *d, Window w)
 {
-    dpy = disp;
-    window = win;
-    initLMorph();
-    for (;;) {
-      	animateLMorph();
-        screenhack_handle_events (dpy);
-	usleep(delay);
-	}
-
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = d;
+  st->window = w;
+  initLMorph(st);
+  return st;
 }
+
+static unsigned long
+lmorph_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  animateLMorph(st);
+  return st->delay;
+}
+
+static void
+lmorph_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+lmorph_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+lmorph_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("LMorph", lmorph)

@@ -69,17 +69,13 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS		"Crystal"
-# define HACK_INIT		init_crystal
-# define HACK_DRAW		draw_crystal
-# define crystal_opts	xlockmore_opts
 # define DEFAULTS		"*delay:		60000	\n" \
 						 "*count:		 -500	\n" \
 						 "*cycles:		  200	\n" \
 						 "*size:		  -15	\n" \
-						 "*ncolors:		  100	\n" \
-						 "*fullrandom:	 True	\n" \
-						 "*verbose:		False	\n"
+						 "*ncolors:		  100	\n"
+# define reshape_crystal 0
+# define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */
@@ -97,10 +93,6 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 #define DEF_CYCLE "True"
 
 #define min(a,b) ((a) <= (b) ? (a) : (b))
-
-#ifdef STANDALONE
-void release_crystal(ModeInfo * mi);
-#endif
 
 static int  nx, ny;
 
@@ -143,7 +135,7 @@ static OptionStruct desc[] =
 	{"-/+shift", "turn on/off colour cycling"}
 };
 
-ModeSpecOpt crystal_opts =
+ENTRYPOINT ModeSpecOpt crystal_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -560,12 +552,20 @@ crystal_drawatom(ModeInfo * mi, crystalatom * atom0)
 	}
 }
 
-void
+ENTRYPOINT void init_crystal(ModeInfo * mi);
+ENTRYPOINT void release_crystal(ModeInfo * mi);
+
+
+ENTRYPOINT void
 draw_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	crystalstruct *cryst = &crystals[MI_SCREEN(mi)];
 	int         i;
+
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
 
 	if (cryst->no_colors) {
 		release_crystal(mi);
@@ -618,7 +618,7 @@ draw_crystal(ModeInfo * mi)
 	XSetFunction(display, cryst->gc, GXcopy);
 }
 
-void
+ENTRYPOINT void
 refresh_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -785,7 +785,7 @@ refresh_crystal(ModeInfo * mi)
 	XSetFunction(display, cryst->gc, GXcopy);
 }
 
-void
+ENTRYPOINT void
 release_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -821,7 +821,7 @@ release_crystal(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 init_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -1259,6 +1259,7 @@ init_crystal(ModeInfo * mi)
 		crystal_setupatom(atom0, cryst->gamma);
 		crystal_drawatom(mi, atom0);
 	}
-	XSync(display, False);
 	XSetFunction(display, cryst->gc, GXcopy);
 }
+
+XSCREENSAVER_MODULE ("Crystal", crystal)

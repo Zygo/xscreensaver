@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2006 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,15 +12,26 @@
  * Created: 21-Feb-2005
  */
 
-#include <X11/Intrinsic.h>
+#define DEF_FONT "-*-times-bold-r-normal-*-240-*"
+#define DEFAULTS  "*count:           7         \n" \
+		  "*delay:           10000     \n" \
+		  "*wireframe:       False     \n" \
+                  "*showFPS:         False     \n" \
+	          "*fpsSolid:        True      \n" \
+	          "*useSHM:          True      \n" \
+		  "*font:	   " DEF_FONT "\n" \
+                  "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
+		  "*grabDesktopImages:   False \n" \
+		  "*chooseRandomImages:  True  \n"
 
-# define PROGCLASS "Carousel"
-# define HACK_INIT init_carousel
-# define HACK_DRAW draw_carousel
-# define HACK_RESHAPE reshape_carousel
-# define HACK_HANDLE_EVENT carousel_handle_event
-# define EVENT_MASK        PointerMotionMask
-# define carousel_opts xlockmore_opts
+# define refresh_carousel 0
+# define release_carousel 0
+# include "xlockmore.h"
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#ifdef USE_GL
 
 # define DEF_SPEED          "1.0"
 # define DEF_DURATION	    "20"
@@ -30,52 +41,33 @@
 # define DEF_MIPMAP         "True"
 # define DEF_DEBUG          "False"
 
-#define DEF_FONT "-*-times-bold-r-normal-*-240-*"
-
-#define DEFAULTS  "*count:           7         \n" \
-		  "*delay:           10000     \n" \
-		  "*wireframe:       False     \n" \
-                  "*showFPS:         False     \n" \
-	          "*fpsSolid:        True      \n" \
-	          "*useSHM:          True      \n" \
-		  "*font:	   " DEF_FONT "\n" \
-                  "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n"
-
-# include "xlockmore.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#ifdef USE_GL
-
-#include <GL/glu.h>
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "rotator.h"
 #include "gltrackball.h"
 #include "grab-ximage.h"
 #include "texfont.h"
 
-extern XtAppContext app;
+# ifndef HAVE_COCOA
+#  include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
+# endif
 
 typedef struct {
   double x, y, w, h;
 } rect;
 
-typedef enum { NORMAL, OUT, LOADING, IN, DEAD } fade_mode;
+typedef enum { EARLY, NORMAL, LOADING, OUT, IN, DEAD } fade_mode;
 static int fade_ticks = 60;
 
 typedef struct {
-  ModeInfo *mi;
-
   char *title;			/* the filename of this image */
   int w, h;			/* size in pixels of the image */
   int tw, th;			/* size in pixels of the texture */
   XRectangle geom;		/* where in the image the bits are */
-  GLuint texid;			/* which texture contains the image */
+  GLuint texid;
+} image;
 
+typedef struct {
+  ModeInfo *mi;
+  image current, loading;
   GLfloat r, theta;		/* radius and rotation on the tube */
   rotator *rot;			/* for zoomery */
   Bool from_top_p;		/* whether this image drops in or rises up */
@@ -83,8 +75,7 @@ typedef struct {
   fade_mode mode;		/* in/out animation state */
   int mode_tick;
   Bool loaded_p;		/* whether background load is done */
-
-} image;
+} image_frame;
 
 
 typedef struct {
@@ -94,14 +85,22 @@ typedef struct {
   Bool button_down_p;
   time_t button_down_time;
 
-  int nimages;			/* how many images are loaded */
-  int images_size;
-  image **images;		/* pointers to the images */
+  int nframes;			/* how many frames are loaded */
+  int frames_size;
+  image_frame **frames;		/* pointers to the frames */
+
+  Bool awaiting_first_images_p;
+  int loads_in_progress;
 
   texture_font_data *texfont;
 
   fade_mode mode;
   int mode_tick;
+
+  int loading_sw, loading_sh;
+
+  time_t last_time, now;
+  int draw_tick;
 
 } carousel_state;
 
@@ -146,39 +145,42 @@ static argtype vars[] = {
   { &duration,      "duration",     "Duration",     DEF_DURATION,    t_Int},
 };
 
-ModeSpecOpt carousel_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt carousel_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
-/* Allocates an image structure and stores it in the list.
+/* Allocates a frame structure and stores it in the list.
  */
-static image *
-alloc_image (ModeInfo *mi)
+static image_frame *
+alloc_frame (ModeInfo *mi)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
-  image *img = (image *) calloc (1, sizeof (*img));
+  image_frame *frame = (image_frame *) calloc (1, sizeof (*frame));
 
-  img->mi = mi;
-  img->rot = make_rotator (0, 0, 0, 0, 0.04 * frand(1.0) * speed, False);
+  frame->mi = mi;
+  frame->mode = EARLY;
+  frame->rot = make_rotator (0, 0, 0, 0, 0.04 * frand(1.0) * speed, False);
 
-  glGenTextures (1, &img->texid);
-  if (img->texid <= 0) abort();
+  glGenTextures (1, &frame->current.texid);
+  glGenTextures (1, &frame->loading.texid);
+  if (frame->current.texid <= 0) abort();
+  if (frame->loading.texid <= 0) abort();
 
-  if (ss->images_size <= ss->nimages)
+  if (ss->frames_size <= ss->nframes)
     {
-      ss->images_size = (ss->images_size * 1.2) + ss->nimages;
-      ss->images = (image **)
-        realloc (ss->images, ss->images_size * sizeof(*ss->images));
-      if (! ss->images)
+      ss->frames_size = (ss->frames_size * 1.2) + ss->nframes;
+      ss->frames = (image_frame **)
+        realloc (ss->frames, ss->frames_size * sizeof(*ss->frames));
+      if (! ss->frames)
         {
           fprintf (stderr, "%s: out of memory (%d images)\n",
-                   progname, ss->images_size);
+                   progname, ss->frames_size);
           exit (1);
         }
     }
 
-  ss->images[ss->nimages++] = img;
+  ss->frames[ss->nframes++] = frame;
 
-  return img;
+  return frame;
 }
 
 
@@ -191,58 +193,36 @@ static void image_loaded_cb (const char *filename, XRectangle *geom,
 /* Load a new file into the given image struct.
  */
 static void
-load_image (ModeInfo *mi, image *img, Bool force_sync_p)
+load_image (ModeInfo *mi, image_frame *frame)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
-  Bool async_p = !force_sync_p;
-  int i;
 
-  if (debug_p && !wire && img->w != 0)
+  if (debug_p && !wire && frame->current.w != 0)
     fprintf (stderr, "%s:  dropped %4d x %-4d  %4d x %-4d  \"%s\"\n",
-             progname, img->geom.width, img->geom.height, img->tw, img->th,
-             (img->title ? img->title : "(null)"));
+             progname, 
+             frame->current.geom.width, 
+             frame->current.geom.height, 
+             frame->current.tw, frame->current.th,
+             (frame->current.title ? frame->current.title : "(null)"));
 
-  if (img->title)
+  switch (frame->mode) 
     {
-      free (img->title);
-      img->title = 0;
+    case EARLY:  break;
+    case NORMAL: frame->mode = LOADING; break;
+    default: abort();
     }
 
-  img->mode = LOADING;
+  ss->loads_in_progress++;
 
   if (wire)
-    image_loaded_cb (0, 0, 0, 0, 0, 0, img);
-  else if (async_p)
-    screen_to_texture_async (mi->xgwa.screen, mi->window,
-                             MI_WIDTH(mi)/2-1,
-                             MI_HEIGHT(mi)/2-1,
-                             mipmap_p, img->texid, image_loaded_cb, img);
+    image_loaded_cb (0, 0, 0, 0, 0, 0, frame);
   else
-    {
-      char *filename = 0;
-      XRectangle geom;
-      int iw=0, ih=0, tw=0, th=0;
-      time_t start = time((time_t *) 0);
-      time_t end;
-
-      glBindTexture (GL_TEXTURE_2D, img->texid);
-      if (! screen_to_texture (mi->xgwa.screen, mi->window,
-                               MI_WIDTH(mi)/2-1,
-                               MI_HEIGHT(mi)/2-1,
-                               mipmap_p, &filename, &geom, &iw, &ih, &tw, &th))
-        exit(1);
-      image_loaded_cb (filename, &geom, iw, ih, tw, th, img);
-      if (filename) free (filename);
-
-      /* Push the expire times of all images forward by the amount of time
-         it took to load *this* image, so that we don't count image-loading
-         time against image duration.
-      */
-      end = time((time_t *) 0);
-      for (i = 0; i < ss->nimages; i++)
-        ss->images[i]->expires += end - start;
-    }
+    load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context,
+                        (MI_WIDTH(mi)  / 2) - 1,
+                        (MI_HEIGHT(mi) / 2) - 1,
+                        mipmap_p, frame->loading.texid, 
+                        image_loaded_cb, frame);
 }
 
 
@@ -254,17 +234,17 @@ image_loaded_cb (const char *filename, XRectangle *geom,
                  int texture_width, int texture_height,
                  void *closure)
 {
-  image *img = (image *) closure;
-  ModeInfo *mi = img->mi;
-  /* slideshow_state *ss = &sss[MI_SCREEN(mi)]; */
+  image_frame *frame = (image_frame *) closure;
+  ModeInfo *mi = frame->mi;
+  carousel_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
 
   if (wire)
     {
-      img->w = MI_WIDTH (mi) * (0.5 + frand (1.0));
-      img->h = MI_HEIGHT (mi);
-      img->geom.width  = img->w;
-      img->geom.height = img->h;
+      frame->loading.w = MI_WIDTH (mi) * (0.5 + frand (1.0));
+      frame->loading.h = MI_HEIGHT (mi);
+      frame->loading.geom.width  = frame->loading.w;
+      frame->loading.geom.height = frame->loading.h;
       goto DONE;
     }
 
@@ -278,148 +258,124 @@ image_loaded_cb (const char *filename, XRectangle *geom,
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  img->w  = image_width;
-  img->h  = image_height;
-  img->tw = texture_width;
-  img->th = texture_height;
-  img->geom = *geom;
-  img->title = (filename ? strdup (filename) : 0);
+  frame->loading.w  = image_width;
+  frame->loading.h  = image_height;
+  frame->loading.tw = texture_width;
+  frame->loading.th = texture_height;
+  frame->loading.geom = *geom;
 
-  if (img->title)   /* strip filename to part after last /. */
+  if (frame->loading.title)
+    free (frame->loading.title);
+  frame->loading.title = (filename ? strdup (filename) : 0);
+
+  if (frame->loading.title)   /* strip filename to part after last /. */
     {
-      char *s = strrchr (img->title, '/');
-      if (s) strcpy (img->title, s+1);
+      char *s = strrchr (frame->loading.title, '/');
+      if (s) strcpy (frame->loading.title, s+1);
     }
 
   if (debug_p)
     fprintf (stderr, "%s:   loaded %4d x %-4d  %4d x %-4d  \"%s\"\n",
              progname,
-             img->geom.width, img->geom.height, img->tw, img->th,
-             (img->title ? img->title : "(null)"));
+             frame->loading.geom.width, 
+             frame->loading.geom.height, 
+             frame->loading.tw, frame->loading.th,
+             (frame->loading.title ? frame->loading.title : "(null)"));
 
  DONE:
 
+  frame->loaded_p = True;
+
+  if (ss->loads_in_progress <= 0) abort();
+  ss->loads_in_progress--;
+
   /* This image expires N seconds after it finished loading. */
-  img->expires = time((time_t *) 0) + (duration * MI_COUNT(mi));
+  frame->expires = time((time_t *) 0) + (duration * MI_COUNT(mi));
 
-  img->mode = IN;
-  img->mode_tick = fade_ticks * speed;
-  img->from_top_p = random() & 1;
-  img->loaded_p = True;
-}
-
-
-
-
-/* Free the image and texture, after nobody is referencing it.
- */
-#if 0
-static void
-destroy_image (ModeInfo *mi, image *img)
-{
-  carousel_state *ss = &sss[MI_SCREEN(mi)];
-  Bool freed_p = False;
-  int i;
-
-  if (!img) abort();
-  if (img->texid <= 0) abort();
-
-  for (i = 0; i < ss->nimages; i++)		/* unlink it from the list */
-    if (ss->images[i] == img)
+  switch (frame->mode) 
+    {
+    case EARLY:		/* part of the initial batch of images */
       {
-        int j;
-        for (j = i; j < ss->nimages-1; j++)	/* pull remainder forward */
-          ss->images[j] = ss->images[j+1];
-        ss->images[j] = 0;
-        ss->nimages--;
-        freed_p = True;
-        break;
+        image swap = frame->current;
+        frame->current = frame->loading;
+        frame->loading = swap;
       }
-
-  if (!freed_p) abort();
-
-  if (debug_p)
-    fprintf (stderr, "%s: unloaded %4d x %-4d  %4d x %-4d  \"%s\"\n",
-             progname,
-             img->geom.width, img->geom.height, img->tw, img->th,
-             (img->title ? img->title : "(null)"));
-
-  if (img->title) free (img->title);
-  glDeleteTextures (1, &img->texid);
-  free (img);
+      break;
+    case LOADING:	/* start dropping the old image out */
+      {
+        frame->mode = OUT;
+        frame->mode_tick = fade_ticks / speed;
+        frame->from_top_p = random() & 1;
+      }
+      break;
+    default:
+      abort();
+    }
 }
-#endif
 
 
 static void loading_msg (ModeInfo *mi, int n);
 
-static void
+static Bool
 load_initial_images (ModeInfo *mi)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
   int i;
-  time_t now;
-  Bool async_p = True;   /* computed after first image */
+  Bool all_loaded_p = True;
+  for (i = 0; i < ss->nframes; i++)
+    if (! ss->frames[i]->loaded_p)
+      all_loaded_p = False;
 
-  for (i = 0; i < MI_COUNT(mi); i++)
+  if (all_loaded_p)
     {
-      image *img;
-      loading_msg (mi, (async_p ? 0 : i));
-      img = alloc_image (mi);
-      img->r = 1.0;
-      img->theta = i * 360.0 / MI_COUNT(mi);
+      if (ss->nframes < MI_COUNT (mi))
+        {
+          /* The frames currently on the list are fully loaded.
+             Start the next one loading.  (We run the image loader
+             asynchronously, but we load them one at a time.)
+           */
+          load_image (mi, alloc_frame (mi));
+        }
+      else
+        {
+          /* The first batch of images are now all loaded!
+             Stagger the expire times so that they don't all drop out at once.
+           */
+          time_t now = time((time_t *) 0);
+          int i;
 
-      load_image (mi, img, True);
-      if (i == 0)
-        async_p = !img->loaded_p;
+          for (i = 0; i < ss->nframes; i++)
+            {
+              image_frame *frame = ss->frames[i];
+              frame->r = 1.0;
+              frame->theta = i * 360.0 / ss->nframes;
+              frame->expires = now + (duration * (i + 1));
+              frame->mode = NORMAL;
+            }
+
+          /* Instead of always going clockwise, shuffle the expire times
+             of the frames so that they drop out in a random order.
+          */
+          for (i = 0; i < ss->nframes; i++)
+            {
+              image_frame *frame1 = ss->frames[i];
+              image_frame *frame2 = ss->frames[random() % ss->nframes];
+              time_t swap = frame1->expires;
+              frame1->expires = frame2->expires;
+              frame2->expires = swap;
+            }
+
+          ss->awaiting_first_images_p = False;
+        }
     }
+      
+  loading_msg (mi, ss->nframes-1);
 
-  /* Wait for the images to load...
-   */
-  while (1)
-    {
-      int j;
-      int count = 0;
-
-      for (j = 0; j < MI_COUNT(mi); j++)
-        if (ss->images[j]->loaded_p)
-          count++;
-      if (count == MI_COUNT(mi))
-        break;
-      loading_msg (mi, count);
-
-      usleep (100000);		/* check every 1/10th sec */
-      if (i++ > 600) abort();	/* if a minute has passed, we're broken */
-
-      while (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-    }
-
-  /* Stagger expire times of the first batch of images.
-   */
-  now = time((time_t *) 0);
-  for (i = 0; i < ss->nimages; i++)
-    {
-      image *img = ss->images[i];
-      img->expires = now + (duration * (i + 1));
-      img->mode = NORMAL;
-    }
-
-  /* Instead of always going clockwise, shuffle the expire times
-     of the images so that they drop out in a random order.
-  */
-  for (i = 0; i < ss->nimages; i++)
-    {
-      image *img1 = ss->images[i];
-      image *img2 = ss->images[random() % ss->nimages];
-      time_t swap = img1->expires;
-      img1->expires = img2->expires;
-      img2->expires = swap;
-    }
+  return !ss->awaiting_first_images_p;
 }
 
 
-void
+ENTRYPOINT void
 reshape_carousel (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -440,7 +396,7 @@ reshape_carousel (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 carousel_handle_event (ModeInfo *mi, XEvent *event)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
@@ -462,13 +418,13 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
       if (ss->button_down_p)
         {
           /* Add the time the mouse was held to the expire times of all
-             images, so that mouse-dragging doesn't count against
+             frames, so that mouse-dragging doesn't count against
              image expiration.
            */
           int secs = time((time_t *) 0) - ss->button_down_time;
           int i;
-          for (i = 0; i < ss->nimages; i++)
-            ss->images[i]->expires += secs;
+          for (i = 0; i < ss->nframes; i++)
+            ss->frames[i]->expires += secs;
         }
       ss->button_down_p = False;
       return True;
@@ -497,20 +453,21 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
 /* Kludge to add "-v" to invocation of "xscreensaver-getimage" in -debug mode
  */
 static void
-hack_resources (void)
+hack_resources (Display *dpy)
 {
-#if 0
+# ifndef HAVE_COCOA
   char *res = "desktopGrabber";
-  char *val = get_string_resource (res, "DesktopGrabber");
+  char *val = get_string_resource (dpy, res, "DesktopGrabber");
   char buf1[255];
   char buf2[255];
   XrmValue value;
-  sprintf (buf1, "%.100s.%.100s", progclass, res);
+  XrmDatabase db = XtDatabase (dpy);
+  sprintf (buf1, "%.100s.%.100s", progname, res);
   sprintf (buf2, "%.200s -v", val);
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
-#endif
+# endif /* !HAVE_COCOA */
 }
 
 
@@ -520,7 +477,6 @@ loading_msg (ModeInfo *mi, int n)
   carousel_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   char text[100];
-  static int sw=0, sh=0;
   GLfloat scale;
 
   if (wire) return;
@@ -531,10 +487,10 @@ loading_msg (ModeInfo *mi, int n)
     sprintf (text, "Loading images...  (%d%%)",
              (int) (n * 100 / MI_COUNT(mi)));
 
-  if (sw == 0)    /* only do this once, so that the string doesn't move. */
-    sw = texture_string_width (ss->texfont, text, &sh);
+  if (ss->loading_sw == 0)    /* only do this once, so that the string doesn't move. */
+    ss->loading_sw = texture_string_width (ss->texfont, text, &ss->loading_sh);
 
-  scale = sh / (GLfloat) MI_HEIGHT(mi);
+  scale = ss->loading_sh / (GLfloat) MI_HEIGHT(mi);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -547,12 +503,14 @@ loading_msg (ModeInfo *mi, int n)
   glLoadIdentity();
   gluOrtho2D(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi));
 
-  glTranslatef ((MI_WIDTH(mi)  - sw) / 2,
-                (MI_HEIGHT(mi) - sh) / 2,
+  glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,
+                (MI_HEIGHT(mi) - ss->loading_sh) / 2,
                 0);
   glColor3f (1, 1, 0);
   glEnable (GL_TEXTURE_2D);
+  glDisable (GL_DEPTH_TEST);
   print_texture_string (ss->texfont, text);
+  glEnable (GL_DEPTH_TEST);
   glPopMatrix();
 
   glMatrixMode(GL_PROJECTION);
@@ -565,7 +523,7 @@ loading_msg (ModeInfo *mi, int n)
 }
 
 
-void
+ENTRYPOINT void
 init_carousel (ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
@@ -586,6 +544,8 @@ init_carousel (ModeInfo *mi)
   }
 
   if (!tilt_str || !*tilt_str)
+    ;
+  else if (!strcasecmp (tilt_str, "0"))
     ;
   else if (!strcasecmp (tilt_str, "X"))
     tilt_x_p = 1;
@@ -637,54 +597,56 @@ init_carousel (ModeInfo *mi)
   ss->texfont = load_texture_font (MI_DISPLAY(mi), "font");
 
   if (debug_p)
-    hack_resources();
+    hack_resources (MI_DISPLAY (mi));
 
-  ss->nimages = 0;
-  ss->images_size = 10;
-  ss->images = (image **) calloc (1, ss->images_size * sizeof(*ss->images));
+  ss->nframes = 0;
+  ss->frames_size = 10;
+  ss->frames = (image_frame **)
+    calloc (1, ss->frames_size * sizeof(*ss->frames));
 
   ss->mode = IN;
-  ss->mode_tick = fade_ticks * speed;
+  ss->mode_tick = fade_ticks / speed;
 
-  load_initial_images (mi);
+  ss->awaiting_first_images_p = True;
 }
 
 
 static void
-draw_img (ModeInfo *mi, image *img, time_t now, Bool body_p)
+draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
 
-  GLfloat texw  = img->geom.width  / (GLfloat) img->tw;
-  GLfloat texh  = img->geom.height / (GLfloat) img->th;
-  GLfloat texx1 = img->geom.x / (GLfloat) img->tw;
-  GLfloat texy1 = img->geom.y / (GLfloat) img->th;
+  GLfloat texw  = frame->current.geom.width  / (GLfloat) frame->current.tw;
+  GLfloat texh  = frame->current.geom.height / (GLfloat) frame->current.th;
+  GLfloat texx1 = frame->current.geom.x / (GLfloat) frame->current.tw;
+  GLfloat texy1 = frame->current.geom.y / (GLfloat) frame->current.th;
   GLfloat texx2 = texx1 + texw;
   GLfloat texy2 = texy1 + texh;
-  GLfloat aspect = img->geom.height / (GLfloat) img->geom.width;
+  GLfloat aspect = ((GLfloat) frame->current.geom.height /
+                    (GLfloat) frame->current.geom.width);
 
-  glBindTexture (GL_TEXTURE_2D, img->texid);
+  glBindTexture (GL_TEXTURE_2D, frame->current.texid);
 
   glPushMatrix();
 
   /* Position this image on the wheel.
    */
-  glRotatef (img->theta, 0, 1, 0);
-  glTranslatef (0, 0, img->r);
+  glRotatef (frame->theta, 0, 1, 0);
+  glTranslatef (0, 0, frame->r);
 
-  /* Scale down the image so that all N images fit on the wheel
+  /* Scale down the image so that all N frames fit on the wheel
      without bumping in to each other.
   */
   {
     GLfloat t, s;
-    switch (ss->nimages)
+    switch (ss->nframes)
       {
       case 1:  t = -1.0; s = 1.7; break;
       case 2:  t = -0.8; s = 1.6; break;
       case 3:  t = -0.4; s = 1.5; break;
       case 4:  t = -0.2; s = 1.3; break;
-      default: t =  0.0; s = 6.0 / ss->nimages; break;
+      default: t =  0.0; s = 6.0 / ss->nframes; break;
       }
     glTranslatef (0, 0, t);
     glScalef (s, s, s);
@@ -700,49 +662,53 @@ draw_img (ModeInfo *mi, image *img, time_t now, Bool body_p)
     {
       double x, y, z;
       /* Only use the Z component of the rotator for in/out position. */
-      get_position (img->rot, &x, &y, &z, !ss->button_down_p);
+      get_position (frame->rot, &x, &y, &z, !ss->button_down_p);
       glTranslatef (0, 0, z/2);
     }
 
   /* Compute the "drop in and out" state.
    */
-  switch (img->mode)
+  switch (frame->mode)
     {
+    case EARLY:
+      abort();
+      break;
     case NORMAL:
       if (!ss->button_down_p &&
-          now >= img->expires)
-        {
-          img->mode = OUT;
-          img->mode_tick = fade_ticks * speed;
-        }
-      break;
-    case OUT:
-      if (--img->mode_tick <= 0)
-        load_image (mi, img, False);
+          now >= frame->expires &&
+          ss->loads_in_progress == 0)  /* only load one at a time */
+        load_image (mi, frame);
       break;
     case LOADING:
-      /* just wait, with the image off screen. */
+      break;
+    case OUT:
+      if (--frame->mode_tick <= 0) {
+        image swap = frame->current;
+        frame->current = frame->loading;
+        frame->loading = swap;
+
+        frame->mode = IN;
+        frame->mode_tick = fade_ticks / speed;
+      }
       break;
     case IN:
-      if (--img->mode_tick <= 0)
-        img->mode = NORMAL;
+      if (--frame->mode_tick <= 0)
+        frame->mode = NORMAL;
       break;
     default:
       abort();
     }
 
-  /* Now drop in/out.
+  /* Now translate for current in/out state.
    */
-  if (img->mode != NORMAL)
+  if (frame->mode == OUT || frame->mode == IN)
     {
-      GLfloat t = (img->mode == LOADING
-                   ? -100
-                   : img->mode == OUT
-                   ? img->mode_tick / (fade_ticks * speed)
-                   : (((fade_ticks * speed) - img->mode_tick + 1) /
-                      (fade_ticks * speed)));
+      GLfloat t = (frame->mode == OUT
+                   ? frame->mode_tick / (fade_ticks / speed)
+                   : (((fade_ticks / speed) - frame->mode_tick + 1) /
+                      (fade_ticks / speed)));
       t = 5 * (1 - t);
-      if (img->from_top_p) t = -t;
+      if (frame->from_top_p) t = -t;
       glTranslatef (0, t, 0);
     }
 
@@ -779,7 +745,7 @@ draw_img (ModeInfo *mi, image *img, time_t now, Bool body_p)
     {
       int sw, sh;
       GLfloat scale = 0.05;
-      char *title = img->title ? img->title : "(untitled)";
+      char *title = frame->current.title ? frame->current.title : "(untitled)";
       sw = texture_string_width (ss->texfont, title, &sh);
 
       glTranslatef (0, -scale, 0);
@@ -810,25 +776,28 @@ draw_img (ModeInfo *mi, image *img, time_t now, Bool body_p)
 }
 
 
-void
+ENTRYPOINT void
 draw_carousel (ModeInfo *mi)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
-  static time_t last_time = 0;
-  static time_t now = 0;
   int i;
 
   if (!ss->glx_context)
     return;
 
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+
+  if (ss->awaiting_first_images_p)
+    if (!load_initial_images (mi))
+      return;
+
   /* Only check the wall clock every 10 frames */
   {
-    static int tick = 0;
-    if (now == 0 || tick++ > 10)
+    if (ss->now == 0 || ss->draw_tick++ > 10)
       {
-        now = time((time_t *) 0);
-        if (last_time == 0) last_time = now;
-        tick = 0;
+        ss->now = time((time_t *) 0);
+        if (ss->last_time == 0) ss->last_time = ss->now;
+        ss->draw_tick = 0;
       }
   }
 
@@ -846,7 +815,7 @@ draw_carousel (ModeInfo *mi)
       if (--ss->mode_tick <= 0)
         {
           ss->mode = NORMAL;
-          last_time = time((time_t *) 0);
+          ss->last_time = time((time_t *) 0);
         }
       break;
     case NORMAL:
@@ -861,9 +830,9 @@ draw_carousel (ModeInfo *mi)
   if (ss->mode != NORMAL)
     {
       GLfloat s = (ss->mode == OUT
-                   ? ss->mode_tick / (fade_ticks * speed)
-                   : (((fade_ticks * speed) - ss->mode_tick + 1) /
-                      (fade_ticks * speed)));
+                   ? ss->mode_tick / (fade_ticks / speed)
+                   : (((fade_ticks / speed) - ss->mode_tick + 1) /
+                      (fade_ticks / speed)));
       glScalef (s, s, s);
     }
 
@@ -885,16 +854,16 @@ draw_carousel (ModeInfo *mi)
     glRotatef (y * 360, 0, 1, 0);
   }
 
-  /* First draw each image, then draw the titles.  Insists that you
+  /* First draw each image, then draw the titles.  GL insists that you
      draw back-to-front in order to make alpha blending work properly,
      so we need to draw all of the 100% opaque images before drawing
      any of the not-100%-opaque titles.
    */
-  for (i = 0; i < ss->nimages; i++)
-    draw_img (mi, ss->images[i], now, True);
+  for (i = 0; i < ss->nframes; i++)
+    draw_frame (mi, ss->frames[i], ss->now, True);
   if (titles_p)
-    for (i = 0; i < ss->nimages; i++)
-      draw_img (mi, ss->images[i], now, False);
+    for (i = 0; i < ss->nframes; i++)
+      draw_frame (mi, ss->frames[i], ss->now, False);
 
   glPopMatrix();
 
@@ -902,5 +871,7 @@ draw_carousel (ModeInfo *mi)
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
 }
+
+XSCREENSAVER_MODULE ("Carousel", carousel)
 
 #endif /* USE_GL */

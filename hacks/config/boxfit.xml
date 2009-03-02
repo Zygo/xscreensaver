@@ -27,8 +27,8 @@
 
   <select id="mode">
     <option id="random"  _label="Boxes or Circles"/>
-    <option id="boxes"   _label="Boxes Only"   arg-set="-squares"/>
-    <option id="circles" _label="Circles Only" arg-set="-circles"/>
+    <option id="boxes"   _label="Boxes Only"   arg-set="-mode squares"/>
+    <option id="circles" _label="Circles Only" arg-set="-mode circles"/>
   </select>
 
   <select id="mode2">
@@ -36,11 +36,17 @@
     <option id="image"    _label="Grab Images" arg-set="-grab"/>
   </select>
 
+  <xscreensaver-image />
+
+  <boolean id="peek" _label="Peek at underlying images" arg-set="-peek"/>
+
   <_description>
 Packs the screen with growing squares or circles, colored according to a
 horizontal or vertical gradient, or according to the colors of the
 desktop or a loaded image file.  The objects grow until they touch,
 then stop.  When the screen is full, they shrink away and the process
-restarts.  Written by Jamie Zawinski.
+restarts.
+
+Written by Jamie Zawinski; 2005.
   </_description>
 </screensaver>

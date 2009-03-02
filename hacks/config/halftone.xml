@@ -17,8 +17,8 @@
           low="0.1" high="3" default="1.5"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Delay (Large = low cpu load)" _low-label="Small" _high-label="Large"
-          low="0" high="100000" default="10000"/>
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="100000" default="10000" convert="invert"/>
 
   <number id="minspeed" type="slider" arg="-minspeed %"
            _label="Minimum speed" _low-label="Low" _high-label="High"
@@ -39,8 +39,8 @@
   <_description>
 Draws the gravity force in each point on the screen seen through a
 halftone dot pattern. The gravity force is calculated from a set of
-moving mass points. View it from a distance for best effect. Written
-by Peter Jaric &lt;peter@jaric.org&gt;.
+moving mass points. View it from a distance for best effect.
 
+Written by Peter Jaric; 2002.
   </_description>
 </screensaver>

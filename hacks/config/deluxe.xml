@@ -22,14 +22,13 @@
 
   <!-- #### -speed [15] -->
 
-  <boolean id="transparent" _label="Transparency" arg-set="-transparent"/>
+  <boolean id="transparent" _label="Transparency" arg-unset="-no-transparent"/>
 
-  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/>
+<!--  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/> -->
 
   <_description>
-This draws a pulsing sequence of stars, circles, and lines.  It would
-look better if it was faster, but as far as I can tell, there is no
-way to make this be both: fast, and flicker-free.  Yet another reason
-X sucks.  Written by Jamie Zawinski.
+Draws a pulsing sequence of transparent stars, circles, and lines.
+
+Written by Jamie Zawinski; 1999.
   </_description>
 </screensaver>

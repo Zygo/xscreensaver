@@ -42,11 +42,13 @@
    </vgroup>
   </hgroup>
 
-
+  <xscreensaver-image />
 
   <_description>
-BSOD stands for ``Blue Screen of Death.''  The finest in personal
-computer emulation, this hack simulates popular screen savers from a
-number of less robust operating systems.  Written by Jamie Zawinski.
+BSOD stands for "Blue Screen of Death".  The finest in personal
+computer emulation, this program simulates popular screen savers from a
+number of less robust operating systems.
+
+Written by Jamie Zawinski; 1998.
   </_description>
 </screensaver>

@@ -3,7 +3,7 @@
 starfish - radially-symmetric throbbing colormap-hacking graphics demo
 .SH SYNOPSIS
 .B starfish
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-delay2 \fIsecs\fP] [\-cycle\-delay2 \fIusecs\fP] [\-thickness \fIpixels\fP] [\-rotation \fIdegrees\fP] [\-duration \fIseconds\fP] [\-colors \fIint\fP] [\-cycle] [\-no\-cycle] [\-blob] [\-no\-blob]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-delay2 \fIsecs\fP] [\-thickness \fIpixels\fP] [\-rotation \fIdegrees\fP] [\-duration \fIseconds\fP] [\-colors \fIint\fP] [\-blob] [\-no\-blob]
 .SH DESCRIPTION
 The \fIstarfish\fP program draws radially symmetric objects, which expand,
 contract, rotate, and turn inside out.  It uses these shapes to lay down a
@@ -32,10 +32,6 @@ or the id number (decimal or hex) of a specific visual.
 How much of a delay should be introduced between steps of the animation.
 Default 10000, or about 1/100th second.
 .TP 8
-.B \-cycle\-delay \fImicroseconds\fP
-How long to wait between shifting the colormap by one step.
-Default 100000, or about 1/10th second.
-.TP 8
 .B \-thickness \fIpixels\fP
 How wide each color band should be.  Default 0, meaning random (the chosen
 value will be between 0 and 15.)
@@ -47,11 +43,6 @@ random (the chosen value will be between 0 and 12 degrees.)
 .B \-colors \fIint\fP
 How many colors to use.  Default 200.  The more colors, the smoother the
 transitions will be, and the nicer the resultant images.
-.TP 8
-.B \-cycle
-.TP 8
-.B \-no\-cycle
-Whether to do colormap cycling.  Default true.
 .TP 8
 .B \-duration \fIseconds\fP
 How long to run before choosing a new shape.  Default 30 seconds.

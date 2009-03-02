@@ -27,8 +27,10 @@
     <option id="tiltxy"  _label="Tilt In/Out and Left/Right"/>
     <option id="tiltx"   _label="Tilt In/Out Only"     arg-set="-tilt x"/>
     <option id="tilty"   _label="Tilt Left/Right Only" arg-set="-tilt y"/>
-    <option id="notilt"  _label="No Tilting"           arg-set="-no-tilt"/>
+    <option id="notilt"  _label="No Tilting"           arg-set="-tilt 0"/>
   </select>
+
+  <xscreensaver-image />
 
   <boolean id="zoom" _label="Zoom In/Out" arg-unset="-no-zoom"/>
   <boolean id="titles" _label="Show Image Titles" arg-unset="-no-titles"/>
@@ -37,20 +39,9 @@
 
   <_description>
 Loads several random images, and displays them flying in a circular
-formation.  The circle changes speed and direction randomly, tilts on
-its axis, and the images move in and out.
+formation.  The formation changes speed and direction randomly, and
+images periodically drop out to be replaced by new ones.
 
-To tell it where to find the images to display, go to the "Advanced"
-tab on the Screensaver Preferences window.  Select "Choose Random
-Images", and enter your image directory in the text field right below
-that.
-
-(Note: not the the "Advanced" button at the bottom of this window:
-the tab at the top of the *other* window.)
-
-This program requires a good video card capable of supporting large
-textures.
-
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 2005.
   </_description>
 </screensaver>

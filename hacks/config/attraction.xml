@@ -36,7 +36,7 @@
   <number id="threshold" type="slider" arg="-threshold %"
           _label="Repulsion Threshold"
           _low-label="Small" _high-label="Large"
-          low="0" high="500" default="100"/>
+          low="0" high="600" default="200"/>
 
   <number id="segments" type="slider" arg="-segments %"
           _label="Trail Length" _low-label="Short" _high-label="Long"
@@ -72,18 +72,13 @@
   <!-- #### -graphmode [none] -->
 
   <_description>
-Like qix, this uses a simple simple motion model to generate many
-different display modes.  The control points attract each other up to
-a certain distance, and then begin to repel each other.  The
+
+Uses a simple simple motion model to generate many different display
+modes.  The control points attract each other up to a certain
+distance, and then begin to repel each other.  The
 attraction/repulsion is proportional to the distance between any two
 particles, similar to the strong and weak nuclear forces.
 
-One of the most interesting ways to watch this hack is simply as
-bouncing balls, because their motions and interactions with each
-other are so odd.  Sometimes two balls will get into a tight orbit
-around each other, to be interrupted later by a third, or by the edge
-of the screen.  It looks quite chaotic.
-
-Written by Jamie Zawinski, based on Lisp code by John Pezaris.
+Written by Jamie Zawinski and John Pezaris; 1992.
   </_description>
 </screensaver>

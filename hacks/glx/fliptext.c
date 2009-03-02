@@ -1,5 +1,5 @@
 /*
- * fliptext, Copyright (c) 2005 Jamie Zawinski <jwz@jwz.org>
+ * fliptext, Copyright (c) 2005-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,23 +10,25 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-extern XtAppContext app;
+#include <ctype.h>
+#include <sys/stat.h>
 
-#define PROGCLASS	"FlipText"
-#define HACK_INIT	init_fliptext
-#define HACK_DRAW	draw_fliptext
-#define HACK_RESHAPE	reshape_fliptext
-#define fliptext_opts	xlockmore_opts
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h>
+#endif
 
-#define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
-#define DEF_LINES      "8"
-#define DEF_FONT_SIZE  "20"
-#define DEF_COLUMNS    "80"
-#define DEF_ALIGN      "random"
-#define DEF_COLOR      "#00CCFF"
-#define DEF_SPEED       "1.0"
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>
+#endif /* HAVE_UNAME */
+
 
 /* Utopia 800 needs 64 512x512 textures (4096x4096 bitmap).
    Utopia 720 needs 16 512x512 textures (2048x2048 bitmap).
@@ -36,11 +38,7 @@ extern XtAppContext app;
    Times  240 needs  1 512x512 texture.
  */
 #define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1"
-
-#define TAB_WIDTH        8
-
-#define FONT_WEIGHT       14
-#define KEEP_ASPECT
+#define DEF_COLOR      "#00CCFF"
 
 #define DEFAULTS "*delay:        10000      \n" \
 		 "*showFPS:      False      \n" \
@@ -48,6 +46,8 @@ extern XtAppContext app;
 		 "*font:       " DEF_FONT  "\n" \
 		 ".foreground: " DEF_COLOR "\n" \
 
+# define refresh_fliptext 0
+# define fliptext_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -55,17 +55,20 @@ extern XtAppContext app;
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
 #include "xlockmore.h"
+#include "texfont.h"
 
 #ifdef USE_GL /* whole file */
 
-#include <ctype.h>
-#include <GL/glu.h>
-#include <sys/stat.h>
-#include "texfont.h"
+#define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
+#define DEF_LINES      "8"
+#define DEF_FONT_SIZE  "20"
+#define DEF_COLUMNS    "80"
+#define DEF_ALIGN      "random"
+#define DEF_SPEED       "1.0"
+#define TAB_WIDTH        8
 
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
+#define FONT_WEIGHT       14
+#define KEEP_ASPECT
 
 typedef enum { NEW, HESITATE, IN, LINGER, OUT, DEAD } line_state;
 typedef enum { SCROLL_BOTTOM, SCROLL_TOP, SPIN } line_anim_type;
@@ -89,12 +92,14 @@ typedef struct {
 
 
 typedef struct {
+  Display *dpy;
   GLXContext *glx_context;
 
   texture_font_data *texfont;
 
   FILE *pipe;
   XtInputId pipe_id;
+  XtIntervalId pipe_timer;
   Time subproc_relaunch_delay;
 
   char *buf;
@@ -139,6 +144,7 @@ static XrmOptionDescRec opts[] = {
   {"-columns",	   ".columns",   XrmoptionSepArg, 0 },
   {"-speed",       ".speed",     XrmoptionSepArg, 0 },
 /*{"-font",        ".font",      XrmoptionSepArg, 0 },*/
+  {"-alignment",   ".alignment", XrmoptionSepArg, 0 },
   {"-left",        ".alignment", XrmoptionNoArg,  "Left"   },
   {"-right",       ".alignment", XrmoptionNoArg,  "Right"  },
   {"-center",      ".alignment", XrmoptionNoArg,  "Center" },
@@ -153,7 +159,7 @@ static argtype vars[] = {
   {&speed,	    "speed",     "Speed",      DEF_SPEED,     t_Float},
 };
 
-ModeSpecOpt fliptext_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt fliptext_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
@@ -236,7 +242,8 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (fliptext_configuration *sc)
 {
-  char *oprogram = get_string_resource ("program", "Program");
+  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
+  char *oprogram = get_string_resource (sc->dpy, "program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
@@ -260,6 +267,8 @@ static void
 relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 {
   fliptext_configuration *sc = (fliptext_configuration *) closure;
+  if (!sc->pipe_timer) abort();
+  sc->pipe_timer = 0;
   launch_text_generator (sc);
 }
 
@@ -270,6 +279,7 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 static void
 drain_input (fliptext_configuration *sc)
 {
+  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
   if (sc->buf_tail < sc->buf_size - 2)
     {
       int target = sc->buf_size - sc->buf_tail - 2;
@@ -306,9 +316,9 @@ drain_input (fliptext_configuration *sc)
           sc->buf[sc->buf_tail] = 0;
 
           /* Set up a timer to re-launch the subproc in a bit. */
-          XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
-                           relaunch_generator_timer,
-                           (XtPointer) sc);
+          sc->pipe_timer = XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
+                                            relaunch_generator_timer,
+                                            (XtPointer) sc);
         }
     }
 }
@@ -846,7 +856,7 @@ parse_color (ModeInfo *mi, const char *name, const char *s, GLfloat *a)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_fliptext (ModeInfo *mi, int width, int height)
 {
   fliptext_configuration *sc = &scs[MI_SCREEN(mi)];
@@ -871,7 +881,7 @@ reshape_fliptext (ModeInfo *mi, int width, int height)
 }
 
 
-void 
+ENTRYPOINT void 
 init_fliptext (ModeInfo *mi)
 {
   int wire = MI_IS_WIREFRAME(mi);
@@ -891,12 +901,13 @@ init_fliptext (ModeInfo *mi)
   }
 
   sc = &scs[MI_SCREEN(mi)];
+  sc->dpy = MI_DISPLAY(mi);
 
   if ((sc->glx_context = init_GL(mi)) != NULL) {
     reshape_fliptext (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
-  program = get_string_resource ("program", "Program");
+  program = get_string_resource (mi->dpy, "program", "Program");
 
   {
     int cw, lh;
@@ -977,7 +988,7 @@ init_fliptext (ModeInfo *mi)
   if (min_lines < 1) min_lines = 1;
 
   parse_color (mi, "foreground",
-               get_string_resource("foreground", "Foreground"),
+               get_string_resource(mi->dpy, "foreground", "Foreground"),
                sc->color);
 
   sc->top_margin = (sc->char_width * 100);
@@ -986,10 +997,11 @@ init_fliptext (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_fliptext (ModeInfo *mi)
 {
   fliptext_configuration *sc = &scs[MI_SCREEN(mi)];
+/*  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);*/
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   int i;
@@ -997,8 +1009,12 @@ draw_fliptext (ModeInfo *mi)
   if (!sc->glx_context)
     return;
 
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sc->glx_context));
+
+#if 0
   if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
     XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+#endif
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1057,5 +1073,29 @@ draw_fliptext (ModeInfo *mi)
   glFinish();
   glXSwapBuffers(dpy, window);
 }
+
+ENTRYPOINT void
+release_fliptext (ModeInfo *mi)
+{
+  if (scs) {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+      fliptext_configuration *sc = &scs[screen];
+      if (sc->pipe_id)
+        XtRemoveInput (sc->pipe_id);
+      if (sc->pipe)
+        pclose (sc->pipe);
+      if (sc->pipe_timer)
+        XtRemoveTimeOut (sc->pipe_timer);
+
+      /* #### there's more to free here */
+    }
+    free (scs);
+    scs = 0;
+  }
+  FreeAllGL(mi);
+}
+
+XSCREENSAVER_MODULE ("FlipText", fliptext)
 
 #endif /* USE_GL */

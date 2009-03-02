@@ -27,7 +27,8 @@
   <!-- #### -anim-step-size [3] -->
 
   <_description>
-This draws line- and arc-based Truchet patterns that tile the screen.
-Written by Adrian Likins.
+This draws line- and arc-based truchet patterns that tile the screen.
+
+Written by Adrian Likins; 1998.
   </_description>
 </screensaver>

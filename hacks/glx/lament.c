@@ -69,19 +69,11 @@
         duplicated on the "Unnatural History 2" compilation, WORLN M04699.)
  */
 
-#include <X11/Intrinsic.h>
-
-#define PROGCLASS	"Lament"
-#define HACK_INIT	init_lament
-#define HACK_DRAW	draw_lament
-#define HACK_RESHAPE	reshape_lament
-#define HACK_HANDLE_EVENT lament_handle_event
-#define EVENT_MASK	PointerMotionMask
-#define lament_opts	xlockmore_opts
 #define DEFAULTS	"*delay:	20000   \n"	\
 			"*showFPS:      False   \n"     \
-			"*wireframe:	False	\n"	\
-
+			"*wireframe:	False	\n"
+# define refresh_lament 0
+# define release_lament 0
 #include "xlockmore.h"
 
 #ifdef USE_GL /* whole file */
@@ -92,6 +84,7 @@
 #define DEF_TEXTURE "True"
 
 static int do_texture;
+
 static XrmOptionDescRec opts[] = {
   {"-texture", ".lament.texture", XrmoptionNoArg, "true" },
   {"+texture", ".lament.texture", XrmoptionNoArg, "false" },
@@ -101,7 +94,7 @@ static argtype vars[] = {
   {&do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
 };
 
-ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #include "normals.h"
 #include "xpm-ximage.h"
@@ -138,16 +131,18 @@ typedef enum {
 
 } lament_type;
 
-static GLfloat exterior_color[] = { 0.33, 0.22, 0.03, 1.00,  /* ambient    */
-                                    0.78, 0.57, 0.11, 1.00,  /* specular   */
-                                    0.99, 0.91, 0.81, 1.00,  /* diffuse    */
-                                   27.80                     /* shininess  */
-                                  };
-static GLfloat interior_color[] = { 0.20, 0.20, 0.15, 1.00,  /* ambient    */
-                                    0.40, 0.40, 0.32, 1.00,  /* specular   */
-                                    0.99, 0.99, 0.81, 1.00,  /* diffuse    */
-                                   50.80                     /* shininess  */
-                                  };
+static const GLfloat exterior_color[] =
+ { 0.33, 0.22, 0.03, 1.00,  /* ambient    */
+   0.78, 0.57, 0.11, 1.00,  /* specular   */
+   0.99, 0.91, 0.81, 1.00,  /* diffuse    */
+   27.80                   /* shininess  */
+ };
+static const GLfloat interior_color[] =
+ { 0.20, 0.20, 0.15, 1.00,  /* ambient    */
+   0.40, 0.40, 0.32, 1.00,  /* specular   */
+   0.99, 0.99, 0.81, 1.00,  /* diffuse    */
+   50.80                    /* shininess  */
+ };
 
 
 typedef struct {
@@ -169,6 +164,9 @@ typedef struct {
 
   int anim_pause;		   /* countdown before animating again */
   GLfloat anim_r, anim_y, anim_z;  /* relative position during anims */
+
+  int state, nstates;
+  lament_type *states;
 
 } lament_configuration;
 
@@ -196,7 +194,7 @@ parse_image_data(ModeInfo *mi)
  */
 
 static void
-set_colors (GLfloat *color)
+set_colors (const GLfloat *color)
 {
   glMaterialfv(GL_FRONT, GL_AMBIENT, color+0);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, color+4);
@@ -205,7 +203,7 @@ set_colors (GLfloat *color)
 }
 
 static void
-face3(GLint texture, GLfloat *color, Bool wire,
+face3(GLint texture, const GLfloat *color, Bool wire,
       GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3)
@@ -224,7 +222,7 @@ face3(GLint texture, GLfloat *color, Bool wire,
 }
 
 static void
-face4(GLint texture, GLfloat *color, Bool wire,
+face4(GLint texture, const GLfloat *color, Bool wire,
       GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3,
@@ -244,7 +242,7 @@ face4(GLint texture, GLfloat *color, Bool wire,
 }
 
 static void
-face5(GLint texture, GLfloat *color, Bool wire,
+face5(GLint texture, const GLfloat *color, Bool wire,
       GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3,
@@ -1314,7 +1312,7 @@ taser(ModeInfo *mi, Bool wire)
 /* Rendering and animating object models
  */
 
-Bool
+ENTRYPOINT Bool
 lament_handle_event (ModeInfo *mi, XEvent *event)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
@@ -1519,6 +1517,25 @@ draw(ModeInfo *mi)
 }
 
 
+/* Rather than just picking states randomly, pick an ordering randomly, do it,
+   and then re-randomize.  That way one can be assured of seeing all states in
+   a short time period, though not always in the same order (it's frustrating
+   to see it pick the same state 5x in a row.)
+ */
+static void
+shuffle_states (lament_configuration *lc)
+{
+  int i;
+  for (i = 0; i < lc->nstates; i++)
+    {
+      int a = random() % lc->nstates;
+      lament_type swap = lc->states[a];
+      lc->states[a] = lc->states[i];
+      lc->states[i] = swap;
+    }
+}
+
+
 static void
 animate(ModeInfo *mi)
 {
@@ -1531,38 +1548,13 @@ animate(ModeInfo *mi)
     {
     case LAMENT_BOX:
       {
-	/* Rather than just picking states randomly, pick an ordering randomly,
-	   do it, and then re-randomize.  That way one can be assured of seeing
-	   all states in a short time period, though not always in the same
-	   order (it's frustrating to see it pick the same state 5x in a row.)
-	 */
-	static lament_type states[] = {
-	  LAMENT_STAR_OUT, LAMENT_STAR_OUT,
-	  LAMENT_TETRA_UNE, LAMENT_TETRA_USW,
-	  LAMENT_TETRA_DWN, LAMENT_TETRA_DSE,
-	  LAMENT_LID_OPEN, LAMENT_LID_OPEN, LAMENT_LID_OPEN,
-	  LAMENT_TASER_OUT, LAMENT_TASER_OUT,
-	  LAMENT_BOX, LAMENT_BOX, LAMENT_BOX, LAMENT_BOX, LAMENT_BOX,
-	  LAMENT_BOX, LAMENT_BOX, LAMENT_BOX, LAMENT_BOX, LAMENT_BOX,
-	};
-	static int state = countof(states);
-
-	if (state < countof(states))
-	  {
-	    lc->type = states[state++];
-	  }
-	else
-	  {
-	    int i;
-	    state = 0;
-	    for (i = 0; i < countof(states); i++)
-	      {
-		int a = random() % countof(states);
-		lament_type swap = states[a];
-		states[a] = states[i];
-		states[i] = swap;
-	      }
-	  }
+        lc->state++;
+        if (lc->state >= lc->nstates)
+          {
+            shuffle_states (lc);
+            lc->state = 0;
+          }
+        lc->type = lc->states[lc->state];
 
 	if (lc->type == LAMENT_BOX)
 	  lc->anim_pause = pause3;
@@ -1765,7 +1757,7 @@ animate(ModeInfo *mi)
 /* Window management, etc
  */
 
-void
+ENTRYPOINT void
 reshape_lament(ModeInfo *mi, int width, int height)
 {
   int target_size = 180;
@@ -1819,13 +1811,13 @@ gl_init(ModeInfo *mi)
 
   if (!wire)
     {
-      static GLfloat pos0[]  = { -4.0,  2.0, 5.0, 1.0 };
-      static GLfloat pos1[]  = {  6.0, -1.0, 3.0, 1.0 };
+      static const GLfloat pos0[]  = { -4.0,  2.0, 5.0, 1.0 };
+      static const GLfloat pos1[]  = {  6.0, -1.0, 3.0, 1.0 };
 
-      static GLfloat amb0[]  = { 0.7, 0.7, 0.7, 1.0 };
-/*    static GLfloat amb1[]  = { 0.7, 0.0, 0.0, 1.0 }; */
-      static GLfloat dif0[]  = { 1.0, 1.0, 1.0, 1.0 };
-      static GLfloat dif1[]  = { 0.3, 0.1, 0.1, 1.0 };
+      static const GLfloat amb0[]  = { 0.7, 0.7, 0.7, 1.0 };
+/*    static const GLfloat amb1[]  = { 0.7, 0.0, 0.0, 1.0 }; */
+      static const GLfloat dif0[]  = { 1.0, 1.0, 1.0, 1.0 };
+      static const GLfloat dif1[]  = { 0.3, 0.1, 0.1, 1.0 };
 
       glLightfv(GL_LIGHT0, GL_POSITION, pos0);
       glLightfv(GL_LIGHT1, GL_POSITION, pos1);
@@ -1958,7 +1950,7 @@ handle_signals (void)
 # endif /* HAVE_MESA_GL */
 
 
-void
+ENTRYPOINT void
 init_lament(ModeInfo *mi)
 {
   lament_configuration *lc;
@@ -1990,13 +1982,38 @@ init_lament(ModeInfo *mi)
       gl_init(mi);
     }
 
+  lc->states = (lament_type *) calloc (50, sizeof (*lc->states));
+  lc->nstates = 0;
+  lc->states[lc->nstates++] = LAMENT_STAR_OUT;
+  lc->states[lc->nstates++] = LAMENT_STAR_OUT;
+  lc->states[lc->nstates++] = LAMENT_TETRA_UNE;
+  lc->states[lc->nstates++] = LAMENT_TETRA_USW;
+  lc->states[lc->nstates++] = LAMENT_TETRA_DWN;
+  lc->states[lc->nstates++] = LAMENT_TETRA_DSE;
+  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
+  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
+  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
+  lc->states[lc->nstates++] = LAMENT_TASER_OUT;
+  lc->states[lc->nstates++] = LAMENT_TASER_OUT;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  lc->states[lc->nstates++] = LAMENT_BOX;
+  shuffle_states (lc);
+
 # ifdef HAVE_MESA_GL
   handle_signals ();
 # endif /* HAVE_MESA_GL */
 }
 
 
-void
+ENTRYPOINT void
 draw_lament(ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
@@ -2020,5 +2037,7 @@ draw_lament(ModeInfo *mi)
   else
     animate(mi);
 }
+
+XSCREENSAVER_MODULE ("Lament", lament)
 
 #endif /* USE_GL */

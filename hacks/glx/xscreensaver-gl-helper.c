@@ -21,7 +21,6 @@
 
 char *progname = 0;
 char *progclass = "XScreenSaver";
-void *db = 0; /* hack hack -- no need for Xt in this program */
 
 int
 main (int argc, char **argv)

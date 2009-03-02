@@ -44,9 +44,6 @@
    -sources <arg>  number of sources
    -searhers <arg> number of searcher        */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "screenhack.h"
 
@@ -65,8 +62,8 @@
 #define MAX_INV_RATE 5
 
 #define RND(x)     (random() % (x))
-#define X(x) ((int) (ax * (x) + bx))
-#define Y(x) ((int) (ay * (x) + by))
+#define X(x) ((int) (st->ax * (x) + st->bx))
+#define Y(x) ((int) (st->ay * (x) + st->by))
 
 typedef struct {
   short x;
@@ -107,8 +104,6 @@ typedef struct PList {
 
 typedef enum {UP_LEFT, UP_RIGHT, LEFT, RIGHT, DONE} State_t;
 
-typedef enum {FALSE = 0, TRUE = 1} bool;
-
 typedef struct {
 
   Point r;              /* Current position */
@@ -134,60 +129,40 @@ typedef struct {
 
 } Searcher;
 
-static Source **source;
-static Searcher **searcher;
+struct state {
+  Source **source;
+  Searcher **searcher;
 
-static int max_dist, max_src, max_searcher;
+  int max_dist, max_src, max_searcher;
 
-static double ax, ay, bx, by;
-static int dx, dy;
+  double ax, ay, bx, by;
+  int dx, dy;
 
-static Display *dpy;
-static Window window;
+  Display *dpy;
+  Window window;
 
-static Pixmap b, ba, bb;
+  Pixmap b, ba, bb;
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-static  XdbeBackBuffer backb;
+  XdbeBackBuffer backb;
 #endif
 
-static long delay;              /* usecs to wait between updates. */
+  long delay;              /* usecs to wait between updates. */
 
-static int scrWidth, scrHeight;
-static GC gcDraw, gcClear;
+  int scrWidth, scrHeight;
+  GC gcDraw, gcClear;
 
-static bool dbuf;
+  Bool dbuf;
 
-static XGCValues gcv;
-static Colormap cmap;
-
+  XGCValues gcv;
+  Colormap cmap;
+  XColor *colors;
+  int ncolors;
+};
 
 /*-----------------------------------------------------------------------+
   |  PUBLIC DATA                                                           |
   +-----------------------------------------------------------------------*/
-
-char *progclass = "Anemotaxis";
-
-char *defaults [] = {
-  ".background: black",
-  "*distance: 40",
-  "*sources: 25",
-  "*searchers: 25",
-  "*delay: 20000",
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  "*useDBE:		True",
-#endif
-  0
-};
-
-
-XrmOptionDescRec options [] = {
-  { "-delay",       ".delay",       XrmoptionSepArg, 0 },
-  { "-distance",    ".distance",    XrmoptionSepArg, 0 },
-  { "-sources",     ".sources",     XrmoptionSepArg, 0 },
-  { "-searchers",   ".searchers",   XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
-};
 
 
 
@@ -206,23 +181,23 @@ static void *emalloc(size_t size)
   return ret;
 }
 
-static Searcher *new_searcher(void)
+static Searcher *new_searcher(struct state *st)
 {
   Searcher *m = (Searcher *) emalloc(sizeof(Searcher));
 
-  m->r.x = m->vertex.x = max_dist;
+  m->r.x = m->vertex.x = st->max_dist;
 
   do {
-    m->r.y = RND(2 * max_dist);
-  } while(m->r.y < MIN_DIST || m->r.y > 2 * max_dist - MIN_DIST);
+    m->r.y = RND(2 * st->max_dist);
+  } while(m->r.y < MIN_DIST || m->r.y > 2 * st->max_dist - MIN_DIST);
 
   m->vertex.y = m->r.y;
 
   m->state = (RND(2) == 0 ? UP_RIGHT : UP_LEFT);
   m->hist = NULL;
-  m->color = random();
+  m->color = st->colors[random() % st->ncolors].pixel;
 
-  m->rs = RND(dx);
+  m->rs = RND(st->dx);
 
   return m;
 }
@@ -254,7 +229,7 @@ static void write_hist(Searcher *m)
 static void move_searcher(Searcher *m)
 {
 
-  if(m->c == TRUE) {
+  if(m->c == True) {
     write_hist(m);
     m->r.x -= 1;
     m->r.y -= m->v;
@@ -334,23 +309,23 @@ static void evolve_source(Source *s)
 
 }
 
-static Source *new_source(void)
+static Source *new_source(struct state *st)
 {
   int i;
 
   Source *s = (Source *) emalloc(sizeof(Source));
-  if(max_searcher == 0) {
+  if(st->max_searcher == 0) {
     s->r.x = 0;
-    s->r.y = RND(2 * max_dist);
+    s->r.y = RND(2 * st->max_dist);
   }
   else {
-    s->r.x = RND(max_dist / 3);
+    s->r.x = RND(st->max_dist / 3);
     do {
-      s->r.y = RND(2 * max_dist);
-    } while(s->r.y < MIN_DIST || s->r.y > 2 * max_dist - MIN_DIST);
+      s->r.y = RND(2 * st->max_dist);
+    } while(s->r.y < MIN_DIST || s->r.y > 2 * st->max_dist - MIN_DIST);
   }
 
-  s->n = max_dist - s->r.x;
+  s->n = st->max_dist - s->r.x;
   s->yv = emalloc(sizeof(YV) * s->n);
 
   for(i = 0; i < s->n; i++)
@@ -361,7 +336,7 @@ static Source *new_source(void)
   if(s->inv_rate == 0)
     s->inv_rate = 1;
 
-  s->color = random();
+  s->color = st->colors[random() % st->ncolors].pixel;
 
   return s;
 }
@@ -390,321 +365,388 @@ static void get_v(const Source *s, Searcher *m)
 }
 
 
-static void init_anemotaxis(void)
+static void *
+anemotaxis_init (Display *disp, Window win)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XWindowAttributes wa;
 
-  delay = get_integer_resource("delay", "Integer");
-  max_dist = get_integer_resource("distance", "Integer");
+  st->dpy = disp;
+  st->window = win;
 
-  if(max_dist < MIN_DIST)
-    max_dist = MIN_DIST + 1;
-  if(max_dist > MAX_DIST)
-    max_dist = MAX_DIST;
+  XGetWindowAttributes(st->dpy, st->window, &wa);
 
-  max_src = get_integer_resource("sources", "Integer");
+  st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+  st->ncolors++;
+  st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+  make_random_colormap (st->dpy, wa.visual, wa.colormap, st->colors, &st->ncolors,
+                        True, True, 0, True);
 
-  if(max_src <= 0) 
-    max_src = 1;
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  st->max_dist = get_integer_resource(st->dpy, "distance", "Integer");
 
-  max_searcher = get_integer_resource("searchers", "Integer");
+  if(st->max_dist < MIN_DIST)
+    st->max_dist = MIN_DIST + 1;
+  if(st->max_dist > MAX_DIST)
+    st->max_dist = MAX_DIST;
 
-  if(max_searcher < 0)
-    max_searcher = 0;
+  st->max_src = get_integer_resource(st->dpy, "sources", "Integer");
 
-  dbuf = TRUE;
+  if(st->max_src <= 0) 
+    st->max_src = 1;
 
-  source = (Source **) emalloc(sizeof(Source *) * max_src);
-  memset(source, 0, max_src * sizeof(Source *));
+  st->max_searcher = get_integer_resource(st->dpy, "searchers", "Integer");
 
-  source[0] = new_source();
+  if(st->max_searcher < 0)
+    st->max_searcher = 0;
 
-  searcher = (Searcher **) emalloc(max_searcher * sizeof(Searcher *));
+  st->dbuf = True;
 
-  memset(searcher, 0, max_searcher * sizeof(Searcher *));
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    st->dbuf = False;
+# endif
 
-  b = ba = bb = 0;	/* double-buffer to reduce flicker */
+  st->source = (Source **) emalloc(sizeof(Source *) * st->max_src);
+  memset(st->source, 0, st->max_src * sizeof(Source *));
+
+  st->source[0] = new_source(st);
+
+  st->searcher = (Searcher **) emalloc(st->max_searcher * sizeof(Searcher *));
+
+  memset(st->searcher, 0, st->max_searcher * sizeof(Searcher *));
+
+  st->b = st->ba = st->bb = 0;	/* double-buffer to reduce flicker */
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  b = backb = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+  st->b = st->backb = xdbe_get_backbuffer (st->dpy, st->window, XdbeUndefined);
 #endif
 
-  XGetWindowAttributes(dpy, window, &wa);
-  scrWidth = wa.width;
-  scrHeight = wa.height;
-  cmap = wa.colormap;
-  gcDraw = XCreateGC(dpy, window, GCForeground, &gcv);
-  gcv.foreground = get_pixel_resource("background", "Background", dpy, cmap);
-  gcClear = XCreateGC(dpy, window, GCForeground, &gcv);
+  st->scrWidth = wa.width;
+  st->scrHeight = wa.height;
+  st->cmap = wa.colormap;
+  st->gcDraw = XCreateGC(st->dpy, st->window, 0, &st->gcv);
+  st->gcv.foreground = get_pixel_resource(st->dpy, st->cmap,
+                                          "background", "Background");
+  st->gcClear = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
 
-  if (dbuf) {
-    if (!b) {
-	ba = XCreatePixmap (dpy, window, scrWidth, scrHeight, wa.depth);
-	bb = XCreatePixmap (dpy, window, scrWidth, scrHeight, wa.depth);
-	b = ba;
+  if (st->dbuf) {
+    if (!st->b) {
+	st->ba = XCreatePixmap (st->dpy, st->window, st->scrWidth, st->scrHeight, wa.depth);
+	st->bb = XCreatePixmap (st->dpy, st->window, st->scrWidth, st->scrHeight, wa.depth);
+	st->b = st->ba;
       }
   }
   else
-    b = window;
+    st->b = st->window;
   
 
-  if (ba) XFillRectangle (dpy, ba, gcClear, 0, 0, scrWidth, scrHeight);
-  if (bb) XFillRectangle (dpy, bb, gcClear, 0, 0, scrWidth, scrHeight);
+  if (st->ba) XFillRectangle (st->dpy, st->ba, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
+  if (st->bb) XFillRectangle (st->dpy, st->bb, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
 
-  ax = scrWidth / (double) max_dist;
-  ay = scrHeight / (2. * max_dist);
-  bx = 0.;
-  by = 0.;
+  st->ax = st->scrWidth / (double) st->max_dist;
+  st->ay = st->scrHeight / (2. * st->max_dist);
+  st->bx = 0.;
+  st->by = 0.;
 
-  if((dx = scrWidth / (2 * max_dist)) == 0)
-    dx = 1;
-  if((dy = scrHeight / (4 * max_dist)) == 0)
-    dy = 1;
-  XSetLineAttributes(dpy, gcDraw, dx / 3 + 1, LineSolid, CapRound, JoinRound);
-  XClearWindow(dpy, window);
+  if((st->dx = st->scrWidth / (2 * st->max_dist)) == 0)
+    st->dx = 1;
+  if((st->dy = st->scrHeight / (4 * st->max_dist)) == 0)
+    st->dy = 1;
+  XSetLineAttributes(st->dpy, st->gcDraw, st->dx / 3 + 1, LineSolid, CapRound, JoinRound);
+  XClearWindow(st->dpy, st->window);
+
+  return st;
 }
 
-static void draw_searcher(Drawable curr_window, int i)
+static void draw_searcher(struct state *st, Drawable curr_window, int i)
 {
   Point r1, r2;
   PList *l;
 
-  if(searcher[i] == NULL)
+  if(st->searcher[i] == NULL)
     return;
 
-  XSetForeground(dpy, gcDraw, searcher[i]->color);
+  XSetForeground(st->dpy, st->gcDraw, st->searcher[i]->color);
 
-  r1.x = X(searcher[i]->r.x) + searcher[i]->rs;
-  r1.y = Y(searcher[i]->r.y);
+  r1.x = X(st->searcher[i]->r.x) + st->searcher[i]->rs;
+  r1.y = Y(st->searcher[i]->r.y);
 
-  XFillRectangle(dpy, curr_window, gcDraw, r1.x - 2, r1.y - 2, 4, 4);
+  XFillRectangle(st->dpy, curr_window, st->gcDraw, r1.x - 2, r1.y - 2, 4, 4);
 
-  for(l = searcher[i]->hist; l != NULL; l = l->next) {
+  for(l = st->searcher[i]->hist; l != NULL; l = l->next) {
 
-    r2.x = X(l->r.x) + searcher[i]->rs;
+    r2.x = X(l->r.x) + st->searcher[i]->rs;
     r2.y = Y(l->r.y);
 
-    XDrawLine(dpy, curr_window, gcDraw, r1.x, r1.y, r2.x, r2.y);
+    XDrawLine(st->dpy, curr_window, st->gcDraw, r1.x, r1.y, r2.x, r2.y);
 
     r1 = r2;
   }
 
 }
 
-static void draw_image(Drawable curr_window)
+static void draw_image(struct state *st, Drawable curr_window)
 {
   int i, j;
   int x, y;
 
-  for(i = 0; i < max_src; i++) {
+  for(i = 0; i < st->max_src; i++) {
 
-    if(source[i] == NULL)
+    if(st->source[i] == NULL)
       continue;
 
-    XSetForeground(dpy, gcDraw, source[i]->color);
+    XSetForeground(st->dpy, st->gcDraw, st->source[i]->color);
 
-    if(source[i]->inv_rate > 0) {
+    if(st->source[i]->inv_rate > 0) {
 
-      if(max_searcher > 0) {
-      x = (int) X(source[i]->r.x);
-      y = (int) Y(source[i]->r.y);
-      j = dx * (MAX_INV_RATE + 1 - source[i]->inv_rate) / (2 * MAX_INV_RATE);
+      if(st->max_searcher > 0) {
+      x = (int) X(st->source[i]->r.x);
+      y = (int) Y(st->source[i]->r.y);
+      j = st->dx * (MAX_INV_RATE + 1 - st->source[i]->inv_rate) / (2 * MAX_INV_RATE);
       if(j == 0)
 	j = 1;
-      XFillArc(dpy, curr_window, gcDraw, x - j, y - j, 2 * j, 2 * j, 0, 360 * 64);
+      XFillArc(st->dpy, curr_window, st->gcDraw, x - j, y - j, 2 * j, 2 * j, 0, 360 * 64);
       }}
 
-    for(j = 0; j < source[i]->n; j++) {
+    for(j = 0; j < st->source[i]->n; j++) {
 
-      if(source[i]->yv[j].v == 2)
+      if(st->source[i]->yv[j].v == 2)
 	continue;
 
       /* Move the particles slightly off lattice */
-      x =  X(source[i]->r.x + 1 + j) + RND(dx);
-      y = Y(source[i]->r.y + source[i]->yv[j].y) + RND(dy);
-      XFillArc(dpy, curr_window, gcDraw, x - 2, y - 2, 4, 4, 0, 360 * 64);
+      x =  X(st->source[i]->r.x + 1 + j) + RND(st->dx);
+      y = Y(st->source[i]->r.y + st->source[i]->yv[j].y) + RND(st->dy);
+      XFillArc(st->dpy, curr_window, st->gcDraw, x - 2, y - 2, 4, 4, 0, 360 * 64);
     }
 
   }
 
-  for(i = 0; i < max_searcher; i++)
-    draw_searcher(curr_window, i);
+  for(i = 0; i < st->max_searcher; i++)
+    draw_searcher(st, curr_window, i);
  
 }
 
-static void animate_anemotaxis(Drawable curr_window)
+static void animate_anemotaxis(struct state *st, Drawable curr_window)
 {
   int i, j;
-  bool dead;
+  Bool dead;
 
-  for(i = 0; i < max_src; i++) {
+  for(i = 0; i < st->max_src; i++) {
 
-    if(source[i] == NULL)
+    if(st->source[i] == NULL)
       continue;
 
-    evolve_source(source[i]);
+    evolve_source(st->source[i]);
 
     /* reap dead sources for which all particles are gone */
-    if(source[i]->inv_rate == 0) {
+    if(st->source[i]->inv_rate == 0) {
 
-      dead = TRUE;
+      dead = True;
 
-      for(j = 0; j < source[i]->n; j++) {
-	if(source[i]->yv[j].v != 2) {
-	  dead = FALSE;
+      for(j = 0; j < st->source[i]->n; j++) {
+	if(st->source[i]->yv[j].v != 2) {
+	  dead = False;
 	  break;
 	}
       }
 
-      if(dead == TRUE) {
-	destroy_source(source[i]);
-	source[i] = NULL;
+      if(dead == True) {
+	destroy_source(st->source[i]);
+	st->source[i] = NULL;
       }
     }
   }
 
   /* Decide if we want to add new  sources */
 
-  for(i = 0; i < max_src; i++) {
-    if(source[i] == NULL && RND(max_dist * max_src) == 0)
-      source[i] = new_source();
+  for(i = 0; i < st->max_src; i++) {
+    if(st->source[i] == NULL && RND(st->max_dist * st->max_src) == 0)
+      st->source[i] = new_source(st);
   }
 
-  if(max_searcher == 0) { /* kill some sources when searchers don't do that */
-    for(i = 0; i < max_src; i++) {
-      if(source[i] != NULL && RND(max_dist * max_src) == 0) {
-	destroy_source(source[i]);
-	source[i] = 0;
+  if(st->max_searcher == 0) { /* kill some sources when searchers don't do that */
+    for(i = 0; i < st->max_src; i++) {
+      if(st->source[i] != NULL && RND(st->max_dist * st->max_src) == 0) {
+	destroy_source(st->source[i]);
+	st->source[i] = 0;
       }
     }
   }
 
   /* Now deal with searchers */
 
-  for(i = 0; i < max_searcher; i++) {
+  for(i = 0; i < st->max_searcher; i++) {
 
-    if((searcher[i] != NULL) && (searcher[i]->state == DONE)) {
-      destroy_searcher(searcher[i]);
-      searcher[i] = NULL;
+    if((st->searcher[i] != NULL) && (st->searcher[i]->state == DONE)) {
+      destroy_searcher(st->searcher[i]);
+      st->searcher[i] = NULL;
     }
 
-    if(searcher[i] == NULL) {
+    if(st->searcher[i] == NULL) {
 
-      if(RND(max_dist * max_searcher) == 0) {
+      if(RND(st->max_dist * st->max_searcher) == 0) {
 
-	searcher[i] = new_searcher();
+	st->searcher[i] = new_searcher(st);
 
       }
     }
 
-    if(searcher[i] == NULL)
+    if(st->searcher[i] == NULL)
       continue;
 
     /* Check if searcher found a source or missed all of them */
-    for(j = 0; j < max_src; j++) {
+    for(j = 0; j < st->max_src; j++) {
 
-      if(source[j] == NULL || source[j]->inv_rate == 0)
+      if(st->source[j] == NULL || st->source[j]->inv_rate == 0)
 	continue;
 
-      if(searcher[i]->r.x < 0) {
-	searcher[i]->state = DONE;
+      if(st->searcher[i]->r.x < 0) {
+	st->searcher[i]->state = DONE;
 	break;
       }
 
-      if((source[j]->r.y == searcher[i]->r.y) && 
-	 (source[j]->r.x == searcher[i]->r.x)) {
-	searcher[i]->state = DONE;
-	source[j]->inv_rate = 0;  /* source disappears */
+      if((st->source[j]->r.y == st->searcher[i]->r.y) && 
+	 (st->source[j]->r.x == st->searcher[i]->r.x)) {
+	st->searcher[i]->state = DONE;
+	st->source[j]->inv_rate = 0;  /* source disappears */
 
 	/* Make it flash */
-	searcher[i]->color = WhitePixel(dpy, DefaultScreen(dpy));
+	st->searcher[i]->color = WhitePixel(st->dpy, DefaultScreen(st->dpy));
 
 	break;
       }
     }
 
-    searcher[i]->c = 0; /* set it here in case we don't get to get_v() */
+    st->searcher[i]->c = 0; /* set it here in case we don't get to get_v() */
 
     /* Find the concentration at searcher's location */
     
-    if(searcher[i]->state != DONE) {
-      for(j = 0; j < max_src; j++) {
+    if(st->searcher[i]->state != DONE) {
+      for(j = 0; j < st->max_src; j++) {
 	
-	if(source[j] == NULL)
+	if(st->source[j] == NULL)
 	  continue;
 
-	get_v(source[j], searcher[i]);
+	get_v(st->source[j], st->searcher[i]);
       
-	if(searcher[i]->c == 1)
+	if(st->searcher[i]->c == 1)
 	  break;
       }
     }
 
-    move_searcher(searcher[i]);
+    move_searcher(st->searcher[i]);
 
   }
 
-  draw_image(curr_window);
-  usleep(delay);
+  draw_image(st, curr_window);
 }
 
-/*-----------------------------------------------------------------------+
-  |  PUBLIC FUNCTIONS                                                      |
-  +-----------------------------------------------------------------------*/
-
-void screenhack(Display *disp, Window win)
+static unsigned long
+anemotaxis_draw (Display *disp, Window window, void *closure)
 {
-
+  struct state *st = (struct state *) closure;
   XWindowAttributes wa;
   int w, h;
 
-
-  dpy = disp;
-  window = win;
-
-  init_anemotaxis();
-
-  for(;;) {
     
-    XGetWindowAttributes(dpy, window, &wa);
+  XGetWindowAttributes(st->dpy, st->window, &wa);
 
-    w = wa.width;
-    h = wa.height;
+  w = wa.width;
+  h = wa.height;
 
-    if(w != scrWidth || h != scrHeight) {
-      scrWidth = w;
-      scrHeight = h;
-      ax = scrWidth / (double) max_dist;
-      ay = scrHeight / (2. * max_dist);
-      bx = 0.;
-      by = 0.;
+  if(w != st->scrWidth || h != st->scrHeight) {
+    st->scrWidth = w;
+    st->scrHeight = h;
+    st->ax = st->scrWidth / (double) st->max_dist;
+    st->ay = st->scrHeight / (2. * st->max_dist);
+    st->bx = 0.;
+    st->by = 0.;
       
-      if((dx = scrWidth / (2 * max_dist)) == 0)
-	dx = 1;
-      if((dy = scrHeight / (4 * max_dist)) == 0)
-	dy = 1;
-      XSetLineAttributes(dpy, gcDraw, dx / 3 + 1, LineSolid, CapRound, JoinRound);
-    } 
+    if((st->dx = st->scrWidth / (2 * st->max_dist)) == 0)
+      st->dx = 1;
+    if((st->dy = st->scrHeight / (4 * st->max_dist)) == 0)
+      st->dy = 1;
+    XSetLineAttributes(st->dpy, st->gcDraw, st->dx / 3 + 1, LineSolid, CapRound, JoinRound);
+  } 
 
-    XFillRectangle (dpy, b, gcClear, 0, 0, scrWidth, scrHeight);
-    animate_anemotaxis(b);
+  XFillRectangle (st->dpy, st->b, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
+  animate_anemotaxis(st, st->b);
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-    if (backb) {
-	XdbeSwapInfo info[1];
-	info[0].swap_window = window;
-	info[0].swap_action = XdbeUndefined;
-	XdbeSwapBuffers (dpy, info, 1);
-      }
-    else
-#endif
-      if (dbuf)	{
-	  XCopyArea (dpy, b, window, gcClear, 0, 0,
-		     scrWidth, scrHeight, 0, 0);
-	  b = (b == ba ? bb : ba);
-	}
-
-    screenhack_handle_events (dpy);
+  if (st->backb) {
+    XdbeSwapInfo info[1];
+    info[0].swap_window = st->window;
+    info[0].swap_action = XdbeUndefined;
+    XdbeSwapBuffers (st->dpy, info, 1);
   }
+  else
+#endif
+    if (st->dbuf)	{
+      XCopyArea (st->dpy, st->b, st->window, st->gcClear, 0, 0,
+                 st->scrWidth, st->scrHeight, 0, 0);
+      st->b = (st->b == st->ba ? st->bb : st->ba);
+    }
 
+  return st->delay;
 }
+
+
+
+static void
+anemotaxis_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+anemotaxis_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+anemotaxis_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int i;
+  if (st->source) {
+    for (i = 0; i < st->max_src; i++)
+      if (st->source[i]) destroy_source (st->source[i]);
+    free (st->source);
+  }
+  if (st->searcher) {
+    for (i = 0; i < st->max_searcher; i++)
+      if (st->searcher[i]) destroy_searcher (st->searcher[i]);
+    free (st->searcher);
+  }
+  free (st);
+}
+
+
+
+
+static const char *anemotaxis_defaults [] = {
+  ".background: black",
+  "*distance: 40",
+  "*sources: 25",
+  "*searchers: 25",
+  "*delay: 20000",
+  "*colors: 20",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  "*useDBE:		True",
+#endif
+  0
+};
+
+
+static XrmOptionDescRec anemotaxis_options [] = {
+  { "-delay",       ".delay",       XrmoptionSepArg, 0 },
+  { "-distance",    ".distance",    XrmoptionSepArg, 0 },
+  { "-sources",     ".sources",     XrmoptionSepArg, 0 },
+  { "-searchers",   ".searchers",   XrmoptionSepArg, 0 },
+  { "-colors",      ".colors",      XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }
+};
+
+
+XSCREENSAVER_MODULE ("Anemotaxis", anemotaxis)

@@ -28,35 +28,6 @@
 #define DEFAULT_MIN_SPEED      0.001
 #define DEFAULT_MAX_SPEED      0.02
 
-char *progclass = "Halftone";
-
-char *defaults [] = {
-  "*delay:		10000",
-  "*count:		10",
-  "*minMass:		0.001",
-  "*maxMass:		0.02",
-  "*minSpeed:		0.001",
-  "*maxSpeed:		0.02",
-  "*spacing:		14",
-  "*sizeFactor:		1.5",
-  "*colors:		200",
-  "*cycleSpeed:		10",
-  0
-};
-
-XrmOptionDescRec options [] = {
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-count",		".count",	XrmoptionSepArg, 0 },
-  { "-minmass",		".minMass",	XrmoptionSepArg, 0 },
-  { "-maxmass",		".maxMass",	XrmoptionSepArg, 0 },
-  { "-minspeed",	".minSpeed",	XrmoptionSepArg, 0 },
-  { "-maxspeed",	".maxSpeed",	XrmoptionSepArg, 0 },
-  { "-spacing",		".spacing",	XrmoptionSepArg, 0 },
-  { "-sizefactor",	".sizeFactor",	XrmoptionSepArg, 0 },
-  { "-colors",		".colors",	XrmoptionSepArg, 0 },
-  { "-cycle-speed",	".cycleSpeed",	XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
-};
 
 typedef struct
 {
@@ -77,7 +48,7 @@ typedef struct
   double* gravity_point_y_inc;
 
   /* X stuff */
-  Display *display;
+  Display *dpy;
   Window window;
   GC gc;
 
@@ -91,6 +62,9 @@ typedef struct
   GC buffer_gc;
   int buffer_width;
   int buffer_height;
+
+  int delay;
+
 } halftone_screen;
 
 
@@ -104,15 +78,20 @@ static void update_buffer(halftone_screen *halftone, XWindowAttributes * attrs)
     if (halftone->buffer_width != -1 &&
 	halftone->buffer_height != -1)
     {
-      XFreePixmap(halftone->display, halftone->buffer);
-      XFreeGC(halftone->display, halftone->buffer_gc);
+      if (halftone->buffer == halftone->window)
+        XFreePixmap(halftone->dpy, halftone->buffer);
+      XFreeGC(halftone->dpy, halftone->buffer_gc);
     }
 
     halftone->buffer_width = attrs->width;
     halftone->buffer_height = attrs->height;
-    halftone->buffer = XCreatePixmap(halftone->display, halftone->window, halftone->buffer_width, halftone->buffer_height, attrs->depth);
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    halftone->buffer = halftone->window;
+#else
+    halftone->buffer = XCreatePixmap(halftone->dpy, halftone->window, halftone->buffer_width, halftone->buffer_height, attrs->depth);
+#endif
 
-    halftone->buffer_gc = XCreateGC(halftone->display, halftone->buffer, GCForeground|GCBackground, &gc_values);
+    halftone->buffer_gc = XCreateGC(halftone->dpy, halftone->buffer, 0, &gc_values);
   }
 }
 
@@ -134,7 +113,8 @@ static void update_dot_attributes(halftone_screen *halftone, XWindowAttributes *
   }
 }
 
-static halftone_screen * init_halftone(Display *display, Window window)
+static void *
+halftone_init (Display *dpy, Window window)
 {
   int x, y, i;
   int count;
@@ -150,37 +130,40 @@ static halftone_screen * init_halftone(Display *display, Window window)
 
   halftone = (halftone_screen *) calloc (1, sizeof(halftone_screen));
 
-  halftone->display = display;
+  halftone->dpy = dpy;
   halftone->window = window;
 
-  halftone->gc = XCreateGC (halftone->display, halftone->window, GCForeground | GCBackground, &gc_values);
+  halftone->delay = get_integer_resource (dpy, "delay", "Integer");
+  halftone->delay = (halftone->delay < 0 ? DEFAULT_DELAY : halftone->delay);
+
+  halftone->gc = XCreateGC (halftone->dpy, halftone->window, 0, &gc_values);
 
   halftone->buffer_width = -1;
   halftone->buffer_height = -1;
   halftone->dots = NULL;
 
   /* Read command line arguments and set all settings. */ 
-  count = get_integer_resource ("count", "Count");
+  count = get_integer_resource (dpy, "count", "Count");
   halftone->gravity_point_count = count < 1 ? DEFAULT_COUNT : count; 
 
-  spacing = get_integer_resource ("spacing", "Integer");
+  spacing = get_integer_resource (dpy, "spacing", "Integer");
   halftone->spacing = spacing < 1 ? DEFAULT_SPACING : spacing; 
 
-  factor = get_float_resource ("sizeFactor", "Double");
+  factor = get_float_resource (dpy, "sizeFactor", "Double");
   halftone->max_dot_size = 
     (factor < 0 ? DEFAULT_SIZE_FACTOR : factor) * halftone->spacing; 
 
-  min_mass = get_float_resource ("minMass", "Double");
+  min_mass = get_float_resource (dpy, "minMass", "Double");
   min_mass = min_mass < 0 ? DEFAULT_MIN_MASS : min_mass;
 
-  max_mass = get_float_resource ("maxMass", "Double");
+  max_mass = get_float_resource (dpy, "maxMass", "Double");
   max_mass = max_mass < 0 ? DEFAULT_MAX_MASS : max_mass;
   max_mass = max_mass < min_mass ? min_mass : max_mass;
 
-  min_speed = get_float_resource ("minSpeed", "Double");
+  min_speed = get_float_resource (dpy, "minSpeed", "Double");
   min_speed = min_speed < 0 ? DEFAULT_MIN_SPEED : min_speed;
 
-  max_speed = get_float_resource ("maxSpeed", "Double");
+  max_speed = get_float_resource (dpy, "maxSpeed", "Double");
   max_speed = max_speed < 0 ? DEFAULT_MAX_SPEED : max_speed;
   max_speed = max_speed < min_speed ? min_speed : max_speed;
 
@@ -203,17 +186,17 @@ static halftone_screen * init_halftone(Display *display, Window window)
 
 
   /* Set up the dots. */
-  XGetWindowAttributes(halftone->display, halftone->window, &attrs);  
+  XGetWindowAttributes(halftone->dpy, halftone->window, &attrs);  
 
-  halftone->ncolors = get_integer_resource ("colors", "Colors");
+  halftone->ncolors = get_integer_resource (dpy, "colors", "Colors");
   if (halftone->ncolors < 4) halftone->ncolors = 4;
   halftone->colors = (XColor *) calloc(halftone->ncolors, sizeof(XColor));
-  make_smooth_colormap (display, attrs.visual, attrs.colormap,
+  make_smooth_colormap (dpy, attrs.visual, attrs.colormap,
                         halftone->colors, &halftone->ncolors,
                         True, 0, False);
   halftone->color0 = 0;
   halftone->color1 = halftone->ncolors / 2;
-  halftone->cycle_speed = get_integer_resource ("cycleSpeed", "CycleSpeed");
+  halftone->cycle_speed = get_integer_resource (dpy, "cycleSpeed", "CycleSpeed");
   halftone->color_tick = 0;
 
   update_buffer(halftone, &attrs);
@@ -230,7 +213,7 @@ static halftone_screen * init_halftone(Display *display, Window window)
 
 
 
-static void fill_circle(Display *display, Window window, GC gc, int x, int y, int size)
+static void fill_circle(Display *dpy, Window window, GC gc, int x, int y, int size)
 {
   int start_x = x - (size / 2);
   int start_y = y - (size / 2);
@@ -239,7 +222,7 @@ static void fill_circle(Display *display, Window window, GC gc, int x, int y, in
   int angle1 = 0;
   int angle2 = 360 * 64; /* A full circle */
 
-  XFillArc (display, window, gc,
+  XFillArc (dpy, window, gc,
 	    start_x, start_y, width, height,
 	    angle1, angle2);
 }
@@ -256,12 +239,12 @@ static void repaint_halftone(halftone_screen *halftone)
 
   
   /* Fill buffer with background color */
-  XSetForeground (halftone->display, halftone->buffer_gc,
+  XSetForeground (halftone->dpy, halftone->buffer_gc,
                   halftone->colors[halftone->color0].pixel);
-  XFillRectangle(halftone->display, halftone->buffer, halftone->buffer_gc, 0, 0, halftone->buffer_width, halftone->buffer_height);
+  XFillRectangle(halftone->dpy, halftone->buffer, halftone->buffer_gc, 0, 0, halftone->buffer_width, halftone->buffer_height);
 
   /* Draw dots on buffer */
-  XSetForeground (halftone->display, halftone->buffer_gc,
+  XSetForeground (halftone->dpy, halftone->buffer_gc,
                   halftone->colors[halftone->color1].pixel);
 
   if (halftone->color_tick++ >= halftone->cycle_speed)
@@ -273,12 +256,13 @@ static void repaint_halftone(halftone_screen *halftone)
 
   for (x = 0; x < halftone->dots_width; x++)
     for (y = 0; y < halftone->dots_height; y++)
-      fill_circle(halftone->display, halftone->buffer, halftone->buffer_gc,
+      fill_circle(halftone->dpy, halftone->buffer, halftone->buffer_gc,
 		  x_offset + x * halftone->spacing, y_offset + y * halftone->spacing, 
 		  halftone->max_dot_size * halftone->dots[x + y * halftone->dots_width]);
 
   /* Copy buffer to window */
-  XCopyArea(halftone->display, halftone->buffer, halftone->window, halftone->gc, 0, 0, halftone->buffer_width, halftone->buffer_height, 0, 0);
+  if (halftone->buffer != halftone->window)
+    XCopyArea(halftone->dpy, halftone->buffer, halftone->window, halftone->gc, 0, 0, halftone->buffer_width, halftone->buffer_height, 0, 0);
 }
 
 static double calculate_gravity(halftone_screen *halftone, int x, int y)
@@ -310,7 +294,7 @@ static void update_halftone(halftone_screen *halftone)
   int x, y, i;
   XWindowAttributes attrs;
 
-  XGetWindowAttributes(halftone->display, halftone->window, &attrs);
+  XGetWindowAttributes(halftone->dpy, halftone->window, &attrs);
 
   /* Make sure we have a valid buffer */
   update_buffer(halftone, &attrs);
@@ -345,19 +329,66 @@ static void update_halftone(halftone_screen *halftone)
 }
 
 
-void screenhack (Display *display, Window window)
+static unsigned long
+halftone_draw (Display *dpy, Window window, void *closure)
 {
-  halftone_screen *halftone = init_halftone(display, window);
-  int delay = get_integer_resource ("delay", "Integer");
-  delay = (delay < 0 ? DEFAULT_DELAY : delay);
+  halftone_screen *halftone = (halftone_screen *) closure;
 
-  while (1)
-    {
-      repaint_halftone(halftone);
-      update_halftone(halftone);
-      screenhack_handle_events (display);
+  repaint_halftone(halftone);
+  update_halftone(halftone);
 
-      if (delay != 0) 
-	usleep (delay);
-    }
+  return halftone->delay;
 }
+
+
+static void
+halftone_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+halftone_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+halftone_free (Display *dpy, Window window, void *closure)
+{
+  halftone_screen *halftone = (halftone_screen *) closure;
+  free (halftone);
+}
+
+
+static const char *halftone_defaults [] = {
+  ".background:		Black",
+  "*delay:		10000",
+  "*count:		10",
+  "*minMass:		0.001",
+  "*maxMass:		0.02",
+  "*minSpeed:		0.001",
+  "*maxSpeed:		0.02",
+  "*spacing:		14",
+  "*sizeFactor:		1.5",
+  "*colors:		200",
+  "*cycleSpeed:		10",
+  0
+};
+
+static XrmOptionDescRec halftone_options [] = {
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-count",		".count",	XrmoptionSepArg, 0 },
+  { "-minmass",		".minMass",	XrmoptionSepArg, 0 },
+  { "-maxmass",		".maxMass",	XrmoptionSepArg, 0 },
+  { "-minspeed",	".minSpeed",	XrmoptionSepArg, 0 },
+  { "-maxspeed",	".maxSpeed",	XrmoptionSepArg, 0 },
+  { "-spacing",		".spacing",	XrmoptionSepArg, 0 },
+  { "-sizefactor",	".sizeFactor",	XrmoptionSepArg, 0 },
+  { "-colors",		".colors",	XrmoptionSepArg, 0 },
+  { "-cycle-speed",	".cycleSpeed",	XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }
+};
+
+
+XSCREENSAVER_MODULE ("Halftone", halftone)

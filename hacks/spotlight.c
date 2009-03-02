@@ -8,8 +8,7 @@
 /* modified from a module from the xscreensaver distribution */
 
 /*
- * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2005
- * Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,49 +19,54 @@
  * implied warranty.
  */
 
+
 /* #define DEBUG */
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
-#include <sys/time.h>
 
 #define MINX 0.0
 #define MINY 0.0
 #define X_PERIOD 15000.0
 #define Y_PERIOD 12000.0
 
-static int sizex, sizey; /* screen size */
-static int delay;        /* in case it's too fast... */
-static GC window_gc;
+struct state {
+  Display *dpy;
+  Window window;
+
+  int sizex, sizey; /* screen size */
+  int delay;        /* in case it's too fast... */
+  GC window_gc;
 #ifdef DEBUG
-static GC white_gc;
+  GC white_gc;
 #endif
-static GC buffer_gc;     /* draw in buffer, then flush to screen
-			    to avoid flicker */
-static int radius;       /* radius of spotlight in pixels */
+  GC buffer_gc;     /* draw in buffer, then flush to screen
+                       to avoid flicker */
+  int radius;       /* radius of spotlight in pixels */
 
-static Pixmap pm;        /* pixmap grabbed from screen */
-static Pixmap clip_pm;   /* pixmap for clipping (spotlight shape) */
-static Pixmap buffer;    /* pixmap for the buffer */
+  Pixmap pm;        /* pixmap grabbed from screen */
+  Pixmap buffer;    /* pixmap for the buffer */
 
-static GC clip_gc;       /* GC for the clip pixmap */
+  int x, y, s;      /* x & y coords of buffer (upper left corner) */
+  /* s is the width of the buffer */
 
-static int x, y, s;      /* x & y coords of buffer (upper left corner) */
-                         /* s is the width of the buffer */
+  int off;	/* random offset from currentTimeInMs(), so that
+                   two concurrent copies of spotlight have different
+                   behavior. */
 
-static int off = 0;	/* random offset from currentTimeInMs(), so that
-                           two concurrent copies of spotlight have different
-                           behavior. */
+  int oldx, oldy, max_x_speed, max_y_speed;
+  /* used to keep the new buffer position
+     over the old spotlight image to make sure 
+     the old image is completely erased */
 
-static int oldx, oldy, max_x_speed, max_y_speed;
-                         /* used to keep the new buffer position
-			    over the old spotlight image to make sure 
-			    the old image is completely erased */
+  Bool first_p;
+  async_load_state *img_loader;
+};
+
 
 /* The path the spotlight follows around the screen is sinusoidal.
    This function is fed to sin() to get the x & y coords */
 static long
-currentTimeInMs(void)
+currentTimeInMs(struct state *st)
 {
   struct timeval curTime;
 #ifdef GETTIMEOFDAY_TWO_ARGS
@@ -75,31 +79,43 @@ currentTimeInMs(void)
 }
 
 
-static void
-init_hack (Display *dpy, Window window)
+static void *
+spotlight_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
   long gcflags;
   Colormap cmap;
   unsigned long fg, bg;
+  GC clip_gc;
+  Pixmap clip_pm;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  sizex = xgwa.width;
-  sizey = xgwa.height;
+  st->dpy = dpy;
+  st->window = window;
+  st->first_p = True;
+
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->sizex = xgwa.width;
+  st->sizey = xgwa.height;
   cmap = xgwa.colormap;
-  fg = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  bg = get_pixel_resource ("background", "Background", dpy, cmap);
+  fg = get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
+  bg = get_pixel_resource (st->dpy, cmap, "background", "Background");
 
   /* read parameters, keep em sane */
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 1) delay = 1;
-  radius = get_integer_resource ("radius", "Integer");
-  if (radius < 0) radius = 125;
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  if (st->delay < 1) st->delay = 1;
+  st->radius = get_integer_resource (st->dpy, "radius", "Integer");
+  if (st->radius < 0) st->radius = 125;
 
-  /* Don't let the spotlight be bigger than 1/4 of the window */
-  if (radius > xgwa.width  / 4) radius = xgwa.width  / 4;
-  if (radius > xgwa.height / 4) radius = xgwa.height / 4;
+  /* Don't let the spotlight be bigger than the window */
+  while (st->radius > xgwa.width * 0.45)
+    st->radius /= 2;
+  while (st->radius > xgwa.height * 0.45)
+    st->radius /= 2;
+
+  if (st->radius < 4)
+    st->radius = 4;
 
   /* do the dance */
   gcv.function = GXcopy;
@@ -108,54 +124,61 @@ init_hack (Display *dpy, Window window)
   gcv.foreground = bg;
 
 #ifdef NOPE
-  if (use_subwindow_mode_p(xgwa.screen, window)) /* see grabscreen.c */
+  if (use_subwindow_mode_p(xgwa.screen, st->window)) /* see grabscreen.c */
     gcflags |= GCSubwindowMode;
 #endif
-  window_gc = XCreateGC(dpy, window, gcflags, &gcv);
+  st->window_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
   /* grab screen to pixmap */
-  pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  load_random_image (xgwa.screen, window, pm, NULL, NULL);
-  XClearWindow(dpy, window);
-  XFlush (dpy);
+  st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
+  XClearWindow(st->dpy, st->window);
 
   /* create buffer to reduce flicker */
-  buffer = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  buffer_gc = XCreateGC(dpy, buffer, gcflags, &gcv);
-  XFillRectangle(dpy, buffer, buffer_gc, 0, 0, sizex, sizey);
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  st->buffer = 0;
+#else
+  st->buffer = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
+#endif
+
+  st->buffer_gc = XCreateGC(st->dpy, (st->buffer ? st->buffer : window), gcflags, &gcv);
+  if (st->buffer)
+    XFillRectangle(st->dpy, st->buffer, st->buffer_gc, 0, 0, st->sizex, st->sizey);
 
   /* blank out screen */
-  XFillRectangle(dpy, window, window_gc, 0, 0, sizex, sizey);
-  XSetWindowBackground (dpy, window, bg);
+  XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
+  XSetWindowBackground (st->dpy, st->window, bg);
 
   /* create clip mask (so it's a circle, not a square) */
-  clip_pm = XCreatePixmap(dpy, window, radius*4, radius*4, 1);
+  clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
+  st->img_loader = load_image_async_simple (0, xgwa.screen, st->window, st->pm,
+                                            0, 0);
 
   gcv.foreground = 0L;
-  clip_gc = XCreateGC(dpy, clip_pm, gcflags, &gcv);
-  XFillRectangle(dpy, clip_pm, clip_gc, 0, 0, radius*4, radius*4);
+  clip_gc = XCreateGC(st->dpy, clip_pm, gcflags, &gcv);
+  XFillRectangle(st->dpy, clip_pm, clip_gc, 0, 0, st->radius*4, st->radius*4);
 
-  XSetForeground(dpy, clip_gc, 1L);
-  XFillArc(dpy, clip_pm, clip_gc, radius , radius,
-	   radius*2, radius*2, 0, 360*64);
+  XSetForeground(st->dpy, clip_gc, 1L);
+  XFillArc(st->dpy, clip_pm, clip_gc, st->radius , st->radius,
+	   st->radius*2, st->radius*2, 0, 360*64);
 
   /* set buffer's clip mask to the one we just made */
-  XSetClipMask(dpy, buffer_gc, clip_pm);
+  XSetClipMask(st->dpy, st->buffer_gc, clip_pm);
 
   /* free everything */
-  XFreeGC(dpy, clip_gc);
-  XFreePixmap(dpy, clip_pm);
+  XFreeGC(st->dpy, clip_gc);
+  XFreePixmap(st->dpy, clip_pm);
 
   /* avoid remants */
-  max_x_speed = max_y_speed = radius;
+  st->max_x_speed = st->max_y_speed = st->radius;
   
-  off = random();
+  st->off = random();
 
 #ifdef DEBUG
   /* create GC with white fg */
   gcv.foreground = fg;
-  white_gc = XCreateGC(dpy, window, gcflags, &gcv);
+  st->white_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 #endif
+  return st;
 }
 
 
@@ -163,59 +186,104 @@ init_hack (Display *dpy, Window window)
  * perform one iteration
  */
 static void
-onestep (Display *dpy, Window window, Bool first_p)
+onestep (struct state *st, Bool first_p)
 {
-    long now;
+  long now;
 
-    /* clear buffer */
-    XFillRectangle(dpy, buffer, buffer_gc, x, y, s, s);
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      return;
+    }
 
-    
 #define nrnd(x) (random() % (x))
 
-    oldx = x;
-    oldy = y;
+  st->oldx = st->x;
+  st->oldy = st->y;
 
-    s = radius *4 ;   /* s = width of buffer */
+  st->s = st->radius *4 ;   /* s = width of buffer */
 
-    now = currentTimeInMs() + off;
+  now = currentTimeInMs(st) + st->off;
 
-    /* find new x,y */
-    x = ((1 + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0) 
-      * (sizex - s/2) -s/4  + MINX;
-    y = ((1 + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0) 
-      * (sizey - s/2) -s/4  + MINY;
+  /* find new x,y */
+  st->x = ((1 + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0) 
+    * (st->sizex - st->s/2) -st->s/4  + MINX;
+  st->y = ((1 + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0) 
+    * (st->sizey - st->s/2) -st->s/4  + MINY;
     
-    if (!first_p)
-      {
-        /* limit change in x and y to buffer width */
-        if ( x < (oldx - max_x_speed) ) x = oldx - max_x_speed;
-        if ( x > (oldx + max_x_speed) ) x = oldx + max_x_speed;
-        if ( y < (oldy - max_y_speed) ) y = oldy - max_y_speed;
-        if ( y > (oldy + max_y_speed) ) y = oldy + max_y_speed;
-      }
+  if (!st->first_p)
+    {
+      /* limit change in x and y to buffer width */
+      if ( st->x < (st->oldx - st->max_x_speed) ) st->x = st->oldx - st->max_x_speed;
+      if ( st->x > (st->oldx + st->max_x_speed) ) st->x = st->oldx + st->max_x_speed;
+      if ( st->y < (st->oldy - st->max_y_speed) ) st->y = st->oldy - st->max_y_speed;
+      if ( st->y > (st->oldy + st->max_y_speed) ) st->y = st->oldy + st->max_y_speed;
+    }
 
-    /* copy area of screen image (pm) to buffer
-       Clip to a circle */
-    XSetClipOrigin(dpy, buffer_gc, x,y);
-    XCopyArea(dpy, pm, buffer, buffer_gc, x, y, s, s, x, y);
-    /* copy buffer to screen (window) */
-    XCopyArea(dpy, buffer, window, window_gc, x , y, s, s, x, y);
+  if (! st->buffer)
+    {
+      XClearWindow (st->dpy, st->window);
+      XSetClipOrigin(st->dpy, st->buffer_gc, st->x,st->y);
+      XCopyArea(st->dpy, st->pm, st->window, st->buffer_gc, st->x, st->y, st->s, st->s, st->x, st->y);
+    }
+  else
+    {
+      /* clear buffer */
+      XFillRectangle(st->dpy, st->buffer, st->buffer_gc, st->x, st->y, st->s, st->s);
+
+      /* copy area of screen image (pm) to buffer
+         Clip to a circle */
+      XSetClipOrigin(st->dpy, st->buffer_gc, st->x,st->y);
+      XCopyArea(st->dpy, st->pm, st->buffer, st->buffer_gc, st->x, st->y, st->s, st->s, st->x, st->y);
+
+      /* copy buffer to screen (window) */
+      XCopyArea(st->dpy, st->buffer, st->window, st->window_gc, st->x , st->y, st->s, st->s, st->x, st->y);
+    }
 
 #ifdef DEBUG
-    /* draw a box around the buffer */
-    XDrawLine(dpy, window, white_gc, x, y, x+s, y);
-    XDrawLine(dpy, window, white_gc, x, y, x, y+s);
-    XDrawLine(dpy, window, white_gc, x+s, y, x+s, y+s);
-    XDrawLine(dpy, window, white_gc, x, y+s, x+s, y+s);
+  /* draw a box around the buffer */
+  XDrawRectangle(st->dpy, st->window, st->white_gc, st->x , st->y, st->s, st->s);
 #endif
 
 }
 
-
-char *progclass = "Spotlight";
 
-char *defaults [] = {
+static unsigned long
+spotlight_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  onestep(st, st->first_p);
+  st->first_p = False;
+  return st->delay;
+}
+  
+static void
+spotlight_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+spotlight_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+spotlight_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->window_gc);
+  XFreeGC (dpy, st->buffer_gc);
+  if (st->pm) XFreePixmap (dpy, st->pm);
+  if (st->buffer) XFreePixmap (dpy, st->buffer);
+  free (st);
+}
+
+
+
+
+static const char *spotlight_defaults [] = {
   ".background:			black",
   ".foreground:			white",
   "*dontClearRoot:		True",
@@ -229,23 +297,10 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec spotlight_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-radius",		".radius",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  Bool first_p = True;
-  init_hack (dpy, window);
-  while (1) {
-    onestep(dpy, window, first_p);
-    first_p = False;
-    XSync(dpy, False);
-    if (delay) usleep (delay);
-    screenhack_handle_events (dpy);
-  }
-}
-  
+XSCREENSAVER_MODULE ("Spotlight", spotlight)

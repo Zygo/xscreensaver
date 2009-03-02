@@ -26,6 +26,8 @@
   <boolean id="twitch" _label="Twitch" arg-set="-twitch"/>
 
   <_description>
-This draws a pop-art-ish looking grid of pulsing colors.  By Levi Burton.
+This draws a pop-art-ish looking grid of pulsing colors.
+
+Written by Levi Burton; 2003.
   </_description>
 </screensaver>

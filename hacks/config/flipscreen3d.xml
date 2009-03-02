@@ -13,8 +13,12 @@
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
+  <xscreensaver-image />
+
   <_description>
 Grabs an image of the desktop, turns it into a GL texture map, and
-spins it around and deforms it in various ways.  Written by Ben Buxton.
+spins it around and deforms it in various ways.
+
+Written by Ben Buxton and Jamie Zawinski; 2001.
   </_description>
 </screensaver>

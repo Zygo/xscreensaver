@@ -233,10 +233,43 @@ static void schedule_preview (state *, const char *cmd);
 static void kill_preview_subproc (state *, Bool reset_p);
 static void schedule_preview_check (state *);
 
+
+/* Prototypes of functions used by the Glade-generated code,
+   to avoid warnings.
+ */
+void exit_menu_cb (GtkMenuItem *, gpointer user_data);
+void about_menu_cb (GtkMenuItem *, gpointer user_data);
+void doc_menu_cb (GtkMenuItem *, gpointer user_data);
+void file_menu_cb (GtkMenuItem *, gpointer user_data);
+void activate_menu_cb (GtkMenuItem *, gpointer user_data);
+void lock_menu_cb (GtkMenuItem *, gpointer user_data);
+void kill_menu_cb (GtkMenuItem *, gpointer user_data);
+void restart_menu_cb (GtkWidget *, gpointer user_data);
+void run_this_cb (GtkButton *, gpointer user_data);
+void manual_cb (GtkButton *, gpointer user_data);
+void run_next_cb (GtkButton *, gpointer user_data);
+void run_prev_cb (GtkButton *, gpointer user_data);
+void pref_changed_cb (GtkWidget *, gpointer user_data);
+gboolean pref_changed_event_cb (GtkWidget *, GdkEvent *, gpointer user_data);
+void mode_menu_item_cb (GtkWidget *, gpointer user_data);
+void switch_page_cb (GtkNotebook *, GtkNotebookPage *, 
+                     gint page_num, gpointer user_data);
+void browse_image_dir_cb (GtkButton *, gpointer user_data);
+void browse_text_file_cb (GtkButton *, gpointer user_data);
+void browse_text_program_cb (GtkButton *, gpointer user_data);
+void settings_cb (GtkButton *, gpointer user_data);
+void settings_adv_cb (GtkButton *, gpointer user_data);
+void settings_std_cb (GtkButton *, gpointer user_data);
+void settings_switch_page_cb (GtkNotebook *, GtkNotebookPage *,
+                              gint page_num, gpointer user_data);
+void settings_cancel_cb (GtkButton *, gpointer user_data);
+void settings_ok_cb (GtkButton *, gpointer user_data);
 
 
 /* Some random utility functions
  */
+
+const char *blurb (void);
 
 const char *
 blurb (void)
@@ -716,9 +749,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2005 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-2006 %s"), s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2005 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-2006 %s"), s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
@@ -978,6 +1011,7 @@ selected_list_element (state *s)
 static int
 demo_write_init_file (state *s, saver_preferences *p)
 {
+  Display *dpy = GDK_DISPLAY();
 
 #if 0
   /* #### try to figure out why shit keeps getting reordered... */
@@ -985,7 +1019,7 @@ demo_write_init_file (state *s, saver_preferences *p)
     abort();
 #endif
 
-  if (!write_init_file (p, s->short_version, False))
+  if (!write_init_file (dpy, p, s->short_version, False))
     {
       if (s->debug_p)
         fprintf (stderr, "%s: wrote %s\n", blurb(), init_file_name());
@@ -1024,6 +1058,7 @@ run_this_cb (GtkButton *button, gpointer user_data)
 G_MODULE_EXPORT void
 manual_cb (GtkButton *button, gpointer user_data)
 {
+  Display *dpy = GDK_DISPLAY();
   state *s = global_state_kludge;  /* I hate C so much... */
   saver_preferences *p = &s->prefs;
   GtkWidget *list_widget = name_to_widget (s, "list");
@@ -1045,9 +1080,9 @@ manual_cb (GtkButton *button, gpointer user_data)
   while (*str && !isspace (*str)) str++;
   *str = 0;
   str = strrchr (name2, '/');
-  if (str) name = str+1;
+  if (str) name2 = str+1;
 
-  cmd = get_string_resource ("manualCommand", "ManualCommand");
+  cmd = get_string_resource (dpy, "manualCommand", "ManualCommand");
   if (cmd)
     {
       char *cmd2 = (char *) malloc (strlen (cmd) + (strlen (name2) * 4) + 100);
@@ -1697,7 +1732,7 @@ pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 
 /* Callback on menu items in the "mode" options menu.
  */
-void
+G_MODULE_EXPORT void
 mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
 {
   state *s = (state *) user_data;
@@ -2172,7 +2207,7 @@ browse_text_program_cb (GtkButton *button, gpointer user_data)
 
 
 
-G_MODULE_EXPORT  void
+G_MODULE_EXPORT void
 settings_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
@@ -2360,6 +2395,7 @@ scroll_to_current_hack (state *s)
 static void
 populate_hack_list (state *s)
 {
+  Display *dpy = GDK_DISPLAY();
 #ifdef HAVE_GTK2
   saver_preferences *p = &s->prefs;
   GtkTreeView *list = GTK_TREE_VIEW (name_to_widget (s, "list"));
@@ -2420,7 +2456,7 @@ populate_hack_list (state *s)
 
       pretty_name = (hack->name
                      ? strdup (hack->name)
-                     : make_hack_name (hack->command));
+                     : make_hack_name (dpy, hack->command));
 
       if (!available_p)
         {
@@ -3152,6 +3188,7 @@ eschew_gtk_lossage (GtkLabel *label)
 static void
 populate_demo_window (state *s, int list_elt)
 {
+  Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
   screenhack *hack;
   char *pretty_name;
@@ -3183,7 +3220,7 @@ populate_demo_window (state *s, int list_elt)
       pretty_name = (hack
                      ? (hack->name
                         ? strdup (hack->name)
-                        : make_hack_name (hack->command))
+                        : make_hack_name (dpy, hack->command))
                      : 0);
 
       if (hack)
@@ -3264,6 +3301,7 @@ sort_hack_cmp (const void *a, const void *b)
 static void
 initialize_sort_map (state *s)
 {
+  Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
   int i, j;
 
@@ -3314,7 +3352,7 @@ initialize_sort_map (state *s)
       screenhack *hack = p->screenhacks[i];
       char *name = (hack->name && *hack->name
                     ? strdup (hack->name)
-                    : make_hack_name (hack->command));
+                    : make_hack_name (dpy, hack->command));
       char *str;
       for (str = name; *str; str++)
         *str = tolower(*str);
@@ -3348,6 +3386,7 @@ initialize_sort_map (state *s)
 static int
 maybe_reload_init_file (state *s)
 {
+  Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
   int status = 0;
 
@@ -3371,7 +3410,7 @@ maybe_reload_init_file (state *s)
       warning_dialog (s->toplevel_widget, b, False, 100);
       free (b);
 
-      load_init_file (p);
+      load_init_file (dpy, p);
       initialize_sort_map (s);
 
       list_elt = selected_list_element (s);
@@ -3755,9 +3794,13 @@ kill_preview_subproc (state *s, Bool reset_p)
               perror (buf);
             }
         }
-      else if (s->debug_p)
-        fprintf (stderr, "%s: killed pid %lu (%s)\n", blurb(),
-                 (unsigned long) s->running_preview_pid, ss);
+      else {
+	int endstatus;
+	waitpid(s->running_preview_pid, &endstatus, 0);
+	if (s->debug_p)
+	  fprintf (stderr, "%s: killed pid %lu (%s)\n", blurb(),
+		   (unsigned long) s->running_preview_pid, ss);
+      }
 
       free (ss);
       s->running_preview_pid = 0;
@@ -4775,7 +4818,7 @@ main (int argc, char **argv)
 
   hack_environment (s);  /* must be before initialize_sort_map() */
 
-  load_init_file (p);
+  load_init_file (dpy, p);
   initialize_sort_map (s);
 
   /* Now that Xt has been initialized, and the resources have been read,
@@ -5012,7 +5055,8 @@ main (int argc, char **argv)
 
 
   /* Issue any warnings about the running xscreensaver daemon. */
-  the_network_is_not_the_computer (s);
+  if (! s->debug_p)
+    the_network_is_not_the_computer (s);
 
 
   /* Run the Gtk event loop, and not the Xt event loop.  This means that
@@ -5030,17 +5074,18 @@ main (int argc, char **argv)
   gtk_timeout_add (500, delayed_scroll_kludge, s);
 
 
-#if 0
+#if 1
   /* Load every configurator in turn, to scan them for errors all at once. */
-  {
-    int i;
-    for (i = 0; i < p->screenhacks_count; i++)
-      {
-        screenhack *hack = p->screenhacks[i];
-        conf_data *d = load_configurator (hack->command, False);
-        if (d) free_conf_data (d);
-      }
-  }
+  if (s->debug_p)
+    {
+      int i;
+      for (i = 0; i < p->screenhacks_count; i++)
+        {
+          screenhack *hack = p->screenhacks[i];
+          conf_data *d = load_configurator (hack->command, s->debug_p);
+          if (d) free_conf_data (d);
+        }
+    }
 #endif
 
 

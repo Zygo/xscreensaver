@@ -12,6 +12,10 @@
 
   <_description>
 XTeeVee simulates various television problems, including static,
-loss of vertical hold, and a test pattern.  By Greg Knauss.
+loss of vertical hold, and a test pattern.
+
+See also "xanalogtv" for a much more accurate simulation.
+
+Written by Greg Knauss; 2000.
   </_description>
 </screensaver>

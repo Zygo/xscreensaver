@@ -59,10 +59,11 @@
   </hgroup>
 
   <_description>
-This is the swiss army chainsaw of qix programs.  It bounces a series
-of line segments around the screen, and uses variations on this basic
-motion pattern to produce all sorts of different presentations: line
-segments, filled polygons, overlapping translucent areas...  Written
-by Jamie Zawinski.
+Bounces a series of line segments around the screen, and uses
+variations on this basic motion pattern to produce all sorts of
+different presentations: line segments, filled polygons, and
+overlapping translucent areas.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>
