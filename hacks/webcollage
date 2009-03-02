@@ -1,0 +1,1717 @@
+#!/usr/local/bin/perl5 -w
+#
+# webcollage, Copyright (c) 1999 by Jamie Zawinski <jwz@jwz.org>
+# This program decorates the screen with random images from the web.
+# One satisfied customer described it as "a nonstop pop culture brainbath."
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+# To run this as a display mode with xscreensaver, add this to `programs':
+#
+#   default-n:  webcollage -root					\n\
+#   default-n:	webcollage -root -filter 'vidwhacker -stdin -stdout'    \n\
+#
+# To run this as a CGI program on a web site, do this (these instructions
+# work with Apache 1.3 or newer):
+#
+#   1:  Place this program in your document directory, named "webcollage".
+#       The name shouldn't end in .cgi or .html, since this CGI behaves like
+#       a directory.
+#   2:  Make it world-readable and world-executable.
+#   3:  Create a ".htaccess" file in the same directory containing these lines:
+#         <Files ~ "^webcollage$">
+#         SetHandler cgi-script
+#         </Files>
+#   4:  Create these files in the same directory, world-writable, zero-length:
+#        collage.ppm
+#        collage.tmp
+#        collage.jpg
+#        collage.pending
+#        collage.map
+#
+# Now the CGI is ready to go.
+
+my $copyright = "WebCollage, Copyright (c) 1999" .
+    " Jamie Zawinski <jwz\@jwz.org>\n" .
+    "            http://www.jwz.org/xscreensaver/\n";
+
+my $argv0 = $0;
+my $progname = $argv0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+use Socket;
+require Time::Local;
+require POSIX;
+use Fcntl ':flock'; # import LOCK_* constants
+
+
+#  CGI Parameters
+
+my $data_dir     = "";		  # if you want the following files to go in
+                                  # some directory below ".", name it here.
+
+my $image_ppm    = "${data_dir}collage.ppm"; # names of the various data files.
+my $image_tmp    = "${data_dir}collage.tmp";
+my $image_jpg    = "${data_dir}collage.jpg";
+my $pending_file = "${data_dir}collage.pending";
+my $map_file     = "${data_dir}collage.map";
+
+my $url_generation_time  = 60;	  # total time to spend getting URLs.
+my $image_retrieval_time = 60;    # maximum time to spend loading all images.
+my $max_map_entries = 100;	  # how many lines to save in $map_file.
+my $pastes_per_load = 3;          # how many images to try and paste each time.
+
+my $max_age = 5 * 60;             # minutes before it is considered stale.
+my $scale = 1.0;                  # client-side image expansion.
+
+my $img_width = 800;		  # size of the image being generated.
+my $img_height = 600;
+
+my @all_files = ($image_ppm, $image_tmp, $image_jpg, $pending_file, $map_file);
+my $script_date;
+
+# Other Parameters
+
+my $random_redirector = "http://random.yahoo.com/bin/ryl";
+my $image_randomizer_a = "http://image.altavista.com/";
+my $image_randomizer = $image_randomizer_a . "cgi-bin/avncgi" .
+                       "?do=3&verb=no&oshape=n&oorder=" .
+                       "&ophoto=1&oart=1&ocolor=1&obw=1" .
+                       "&stype=simage&oprem=0&query=";
+
+my $http_timeout = 30;
+my $ppm_to_root_window_cmd = "xv -root -rmode 5 -viewonly" .
+                             " +noresetroot %%PPM%% -quit";
+my $filter_cmd = undef;
+my $post_filter_cmd = undef;
+my $background = undef;
+my $no_output_p = 0;
+my $urls_only_p = 0;
+my $delay = 0;
+
+my $wordlist = "/usr/dict/words";
+
+if (!-r $wordlist) {
+    $wordlist = "/usr/share/lib/dict/words";    # irix
+}
+
+
+my $min_width = 50;
+my $min_height = 50;
+my $min_ratio = 1/5;
+
+my $DEBUG = 0;
+
+
+
+##############################################################################
+#
+# Retrieving URLs
+#
+##############################################################################
+
+# returns three values: the HTTP response line; the document headers;
+# and the document body.
+#
+sub get_document_1 {
+    my ( $url, $referer, $timeout ) = @_;
+
+    if (!defined($timeout)) { $timeout = $http_timeout; }
+    if ($timeout <= 0) { return undef; }
+    if ($timeout > $http_timeout) { $timeout = $http_timeout; }
+
+    if ( $DEBUG > 3 ) {
+	print STDERR "get_document_1 $url " .
+            ($referer ? $referer : "") . "\n";
+    }
+
+    my($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
+    if (! ($url_proto && $url_proto =~ m/^http:$/i)) {
+        if ($DEBUG) { print STDERR "not an HTTP URL: $url\n"; }
+        return undef;
+    }
+    my($them,$port) = split(/:/, $serverstring);
+    $port = 80 unless $port;
+    my $size="";
+
+    my ($remote, $iaddr, $paddr, $proto, $line);
+    $remote = $them;
+    if ($port =~ /\D/) { $port = getservbyname($port, 'tcp') }
+    return unless $port;
+    $iaddr   = inet_aton($remote)               || return;
+    $paddr   = sockaddr_in($port, $iaddr);
+
+    @_ =
+    eval {
+        local $SIG{ALRM}  = sub {
+            if ($DEBUG > 0) {
+                print STDERR "timed out ($timeout) for $url\n";
+            }
+            die "alarm\n" };
+        alarm $timeout;
+
+        $proto   = getprotobyname('tcp');
+        socket(S, PF_INET, SOCK_STREAM, $proto)  || return;
+        connect(S, $paddr)    || return;
+
+        select(S); $| = 1; select(STDOUT);
+
+        print S ("GET /$path HTTP/1.0\n" .
+                 "Host: $them\n" .
+                 "User-Agent: $progname/$version\n" .
+                 ($referer ? "Referer: $referer\n" : "") .
+                 "\n");
+
+        my $http = <S>;
+
+        my $head = "";
+        my $body = "";
+        while (<S>) {
+            $head .= $_;
+            last if m@^[\r\n]@;
+        }
+        while (<S>) {
+            $body .= $_;
+        }
+
+        close S;
+
+        return ( $http, $head, $body );
+    };
+    die if ($@ && $@ ne "alarm\n");       # propagate errors
+    if ($@) {
+        # timed out
+        return undef;
+    } else {
+        # didn't
+        alarm 0;
+        return @_;
+    }
+}
+
+
+# returns two values: the document headers; and the document body.
+# if the given URL did a redirect, returns the redirected-to document.
+#
+sub get_document {
+    my ( $url, $referer, $timeout ) = @_;
+    my $start = time;
+
+    do {
+        if (defined($timeout) && $timeout <= 0) { return undef; }
+
+	my ( $http, $head, $body ) = get_document_1 ($url, $referer, $timeout);
+
+        if (defined ($timeout)) {
+            my $now = time;
+            my $elapsed = $now - $start;
+            $timeout -= $elapsed;
+            $start = $now;
+        }
+
+	return undef if ( ! $body );
+
+	if ( $http =~ m@HTTP/[0-9.]+ 30[23]@ ) {
+	    $_ = $head;
+	    my ( $location ) = m@^location:[ \t]*(.*)$@im;
+	    if ( $location ) {
+
+		if ( $DEBUG > 3 ) {
+		    print STDERR "redirect from $url to $location\n";
+		}
+                $referer = $url;
+		$url = $location;
+	    } else {
+		return ( $url, $body );
+	    }
+
+        } elsif ( $http =~ m@HTTP/[0-9.]+ [4-9][0-9][0-9]@ ) {
+            # http errors -- return nothing.
+            return undef;
+
+	} else {
+
+	    return ( $url, $body );
+	}
+
+    } while (1);
+}
+
+
+# given a URL and the body text at that URL, selects and returns a random
+# image from it.  returns undef if no suitable images found.
+#
+sub pick_image_from_body {
+    my ( $base, $body ) = @_;
+
+    $_ = $base;
+
+    # if there's at least one slash after the host, take off the last
+    # pathname component
+    if ( m@^http://[^/]+/@io ) {
+	( $base = $base ) =~ s@[^/]+$@@go;
+    }
+
+    # if there are no slashes after the host at all, put one on the end.
+    if ( m@^http://[^/]+$@io ) {
+	$base .= "/";
+    }
+
+    if ( $DEBUG > 3 ) {
+	print STDERR "base is $base\n";
+    }
+
+
+    $_ = $body;
+
+    # strip out newlines, compress whitespace
+    s/[\r\n\t ]+/ /go;
+
+    # nuke comments
+    s/<!--.*?-->//go;
+
+    my @urls;
+    my %unique_urls;
+
+    foreach (split(/ *</)) {
+	if ( m/^(img|a) .*(src|href) ?= ?\"? ?(.*?)[ >\"]/io ) {
+
+	    my $was_inline = ( "$1" eq "a" || "$1" eq "A" );
+	    my $link = $3;
+	    my ( $width )  = m/width ?=[ \"]*([0-9]+)/oi;
+	    my ( $height ) = m/height ?=[ \"]*([0-9]+)/oi;
+	    $_ = $link;
+
+	    if ( m@^/@o ) {
+		my $site;
+		( $site = $base ) =~ s@^(http://[^/]*).*@$1@gio;
+		$_ = "$site$link";
+	    } elsif ( ! m@^[^/:?]+:@ ) {
+		$_ = "$base$link";
+                s@/\./@/@g;
+                while (s@/\.\./@/@g) {
+                }
+	    }
+
+	    # skip non-http
+	    if ( ! m@^http://@io ) {
+		next;
+	    }
+
+	    # skip non-image
+	    if ( ! m@[.](gif|jpg|jpeg|pjpg|pjpeg)$@io ) {
+		next;
+	    }
+
+#	    # skip GIF?
+#	    if ( m@[.](gif)@io ) {
+##		if ( $DEBUG > 2 ) { print STDERR "skip GIF $_\n"; }
+#		next;
+#	    }
+
+	    # skip really short or really narrow images
+	    if ( $width && $width < $min_width) {
+		if ( $DEBUG > 2 ) {
+                    if (!$height) { $height = "?"; }
+		    print STDERR "skip narrow image $_ ($width x $height)\n";
+		}
+		next;
+	    }
+
+	    if ( $height && $height < $min_height) {
+		if ( $DEBUG > 2 ) {
+                    if (!$width) { $width = "?"; }
+		    print STDERR "skip short image $_ ($width x $height)\n";
+		}
+		next;
+	    }
+
+            # skip images with ratios that make them look like banners.
+	    if ( $min_ratio && $width && $height &&
+                ($width * $min_ratio ) > $height ) {
+		if ( $DEBUG > 2 ) {
+                    if (!$height) { $height = "?"; }
+		    print STDERR "skip bad ratio $_ ($width x $height)\n";
+		}
+		next;
+	    }
+
+	    my $url = $_;
+
+	    if ( $unique_urls{$url} ) {
+		if ( $DEBUG > 2 ) { print STDERR "skip duplicate image $_\n"; }
+		next;
+	    }
+
+	    if ( $DEBUG > 2 ) {
+		print STDERR "got $url" . 
+		    ($width && $height ? " (${width}x${height})" : "") .
+		    ($was_inline ? " (inline)" : "") . "\n";
+	    }
+
+	    $urls[++$#urls] = $url;
+	    $unique_urls{$url}++;
+
+	    # jpegs are preferable to gifs.
+            $_ = $url;
+            if ( ! m@[.]gif$@io ) {
+		$urls[++$#urls] = $url;
+            }
+
+	    # pointers to images are preferable to inlined images.
+	    if ( ! $was_inline ) {
+		$urls[++$#urls] = $url;
+		$urls[++$#urls] = $url;
+	    }
+	}
+    }
+
+    if ( $#urls == 0 ) {
+	if ( $DEBUG > 2 ) {
+	    print STDERR "no images on $base\n";
+	}
+	return undef;
+    }
+
+    return undef if ( $#urls < 1 );
+
+    # pick a random element of the table
+    my $i = ((rand() * 99999) % $#urls);
+    my $url = $urls[$i];
+
+    if ( $DEBUG > 2 ) {
+	print STDERR "picked $url\n";
+    }
+
+    return $url;
+}
+
+
+# Using the URL-randomizer, picks a random image on a random page, and
+# returns two URLs: the page containing the image, and the image.
+# Returns undef if nothing found this time.
+#
+sub pick_from_url_randomizer {
+    my ( $timeout ) = @_;
+
+    if ( $DEBUG > 3 ) {
+	print STDERR "\n\npicking from $random_redirector...\n\n";
+    }
+
+    my ( $base, $body ) = get_document ($random_redirector, undef, $timeout);
+
+    return if (!$base || !$body);
+    my $img = pick_image_from_body ($base, $body);
+
+    if ($img) {
+        return ($base, $img);
+    } else {
+        return undef;
+    }
+}
+
+
+sub random_word {
+    
+    my $word = 0;
+    if (open (IN, "<$wordlist")) {
+        my $size = (stat(IN))[7];
+        my $pos = rand $size;
+        if (seek (IN, $pos, 0)) {
+            $word = <IN>;   # toss partial line
+            $word = <IN>;   # keep next line
+        }
+        close (IN);
+    }
+
+    return 0 if (!$word);
+
+    $word =~ s/^[ \t\n\r]+//;
+    $word =~ s/[ \t\n\r]+$//;
+    $word =~ s/ys$/y/;
+    $word =~ s/ally$//;
+    $word =~ s/ly$//;
+    $word =~ s/ies$/y/;
+    $word =~ s/ally$/al/;
+    $word =~ s/izes$/ize/;
+    $word =~ tr/A-Z/a-z/;
+
+    return $word;
+}
+
+
+
+# Using the image-randomizer, picks a random image on a random page, and
+# returns two URLs: the page containing the image, and the image.
+# Returns undef if nothing found this time.
+#
+sub pick_from_image_randomizer {
+    my ( $timeout ) = @_;
+
+    my $words = random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+
+    my $search_url = $image_randomizer . $words;
+
+    if ( $DEBUG > 3 ) {
+        $_ = $words; s/%20/ /g; print STDERR "search words: $_\n";
+    }
+
+    if ( $DEBUG > 3 ) {
+	print STDERR "\n\npicking from $search_url\n";
+    }
+
+    my $start = time;
+    my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+    if (defined ($timeout)) {
+        $timeout -= (time - $start);
+        return undef if ($timeout <= 0);
+    }
+
+    return undef if (! $body);
+
+
+    my @subpages;
+    my $skipped = 0;
+
+    $_ = $body;
+    s/(<A )/\n$1/gi;
+    foreach (split(/\n/)) {
+
+        if ( m@<A HREF=([^>]+)><IMG SRC=http://image\.altavista\.com@i ) {
+
+            my $u = $1;
+            if (m/^"(.*)"$/) { $u = $1; }
+
+            if (m@\.corbis\.com/@) {
+                $skipped = 1;
+                if ( $DEBUG > 3 ) {
+                    print STDERR "skipping corbis URL: $_\n";
+                }
+                next;
+            } elsif ( $DEBUG > 3 ) {
+                print STDERR "sub-page: $1\n";
+            }
+
+            $subpages[++$#subpages] = $u;
+        }
+    }
+
+    if ( $#subpages <= 0 ) {
+        if (!$skipped) {
+            print STDERR "Found nothing on $base\n";
+        }
+	return undef;
+    }
+
+    # pick a random element of the table
+    my $i = ((rand() * 99999) % $#subpages);
+    my $subpage = $subpages[$i];
+
+    if ( $DEBUG > 3 ) {
+	print STDERR "picked page $subpage\n";
+    }
+
+
+
+    my ( $base2, $body2 ) = get_document ($subpage, $base, $timeout);
+
+    return undef if (!$base2 || !body2);
+
+    my $img = pick_image_from_body ($base2, $body2);
+
+    if ($img) {
+        return ($base2, $img);
+    } else {
+        return undef;
+    }
+}
+
+
+# Picks a random image on a random page, and returns two URLs:
+# the page containing the image, and the image. 
+# Returns undef if nothing found this time.
+# Uses the url-randomizer 1 time in 5, else the image randomizer.
+#
+sub pick_image {
+    my ( $timeout ) = @_;
+
+    if (int(rand 5) == 0) {
+        return pick_from_url_randomizer ($timeout);
+    } else {
+        return pick_from_image_randomizer ($timeout);
+    }
+}
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size {
+    my ($body) = @_;
+    my $type = substr($body, 0, 6);
+    my $s;
+    return undef unless ($type =~ /GIF8[7,9]a/);
+    $s = substr ($body, 6, 10);
+    my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+    return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size {
+    my ($body) = @_;
+    my $i = 0;
+    my $L = length($body);
+    
+    $c1 = substr($body, $i, 1); $i++;
+    $c2 = substr($body, $i, 1); $i++;
+    return undef unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+    my $ch = "0";
+    while (ord($ch) != 0xDA && $i < $L) {
+        # Find next marker, beginning with 0xFF.
+        while (ord($ch) != 0xFF) {
+            $ch = substr($body, $i, 1); $i++;
+        }
+        # markers can be padded with any number of 0xFF.
+        while (ord($ch) == 0xFF) {
+            $ch = substr($body, $i, 1); $i++;
+        }
+
+        # $ch contains the value of the marker.
+        my $marker = ord($ch);
+
+        if (($marker >= 0xC0) &&
+            ($marker <= 0xCF) &&
+            ($marker != 0xC4) &&
+            ($marker != 0xCC)) {  # it's a SOFn marker
+            $i += 3;
+            my $s = substr($body, $i, 4); $i += 4;
+            my ($a,$b,$c,$d) = unpack("C"x4, $s);
+            return (($c<<8|$d), ($a<<8|$b));
+
+        } else {
+            # We must skip variables, since FFs in variable names aren't
+            # valid JPEG markers.
+            my $s = substr($body, $i, 2); $i += 2;
+            my ($c1, $c2) = unpack ("C"x2, $s); 
+            my $length = ($c1 << 8) | $c2;
+            return undef if ($length < 2);
+            $i += $length-2;
+        }
+    }
+    return undef;
+}
+
+# Given the raw body of a GIF or JPEG document, returns the dimensions of
+# the image.
+#
+sub image_size {
+    my ($body) = @_;
+    my ($w, $h) = gif_size ($body);
+    if ($w && $h) { return ($w, $h); }
+    return jpeg_size ($body);
+}
+
+
+# returns the full path of the named program, or undef.
+#
+sub which {
+    my ($prog) = @_;
+    foreach (split (/:/, $ENV{PATH})) {
+        if (-x "$_/$prog") {
+            return $prog;
+        }
+    }
+    return undef;
+}
+
+##############################################################################
+#
+# Running as a CGI
+#
+##############################################################################
+
+my $body_tag = "<BODY BGCOLOR=\"#000000\" TEXT=\"#DDFFDD\"\n" .
+    "      LINK=\"#00EEEE\" VLINK=\"#EEEE00\" ALINK=\"#FF0000\">\n";
+
+my $html_document =
+    ("" .
+     "<HTML>\n" .
+     "<HEAD>\n" .
+     " <TITLE>WebCollage</TITLE>\n" .
+     "\n" .
+     "</HEAD>\n" .
+     $body_tag .
+     "\n" .
+     "<CENTER><FONT SIZE=1><BR></FONT>" .
+     "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=720>\n" .
+     " <TR>\n" .
+     "  <TD ALIGN=CENTER VALIGN=TOP NOWRAP>\n" .
+     "   <FONT SIZE=\"+3\"><B>WebCollage: </B></FONT>\n" .
+     "   <FONT SIZE=\"-1\"><BR><B>by\n" .
+     "     <A HREF=\"http://www.jwz.org/\">Jamie Zawinski</A></B>\n" .
+     "  </TD>\n" .
+     "  <TD ALIGN=LEFT VALIGN=TOP>\n" .
+     "\n" .
+     "   <P><FONT SIZE=\"+3\"><B>Exterminate All Rational Thought.\n" .
+     "   </B></FONT>\n" .
+     "   <BR>This program creates collages out of random images\n" .
+     "   found on the Web.\n" .
+     "   <P>More images are being added to the\n" .
+     "   collage now: please wait for the image below to load.\n" .
+     "   This will take a minute or two, since it has to contact\n" .
+     "   other web sites to retrieve the images before it can construct\n" .
+     "   the collage.  Once the image below is loaded, you can reload\n" .
+     "   this page to do it again.\n" .
+     "   <P>If you enjoy this, you might also enjoy\n" .
+     "   <A HREF=\"http://www.jwz.org/dadadodo/\">DadaDodo</A>.\n" .
+     "   WebCollage also works as a screen saver, for those of you\n" .
+     "   using Unix: it is included with the\n" .
+     "   <A HREF=\"http://www.jwz.org/xscreensaver/\">XScreenSaver</A>\n" .
+     "   package.<P>\n" .
+     "  </TD>\n" .
+     " </TR>\n" .
+     " <TR>\n" .
+     "  <TD COLSPAN=2 VALIGN=TOP ALIGN=CENTER><TABLE \n" .
+     "      BORDER=2 WIDTH=%%WIDTH%% HEIGHT=%%HEIGHT%% \n" .
+     "      CELLPADDING=0 CELLSPACING=0>\n" .
+     "    <TR><TD BGCOLOR=\"#C0C0C0\">\n" .
+     "      %%MAP%%\n" .
+     "     <A NAME=\"#image\">\n" .
+     "     <IMG SRC=\"%%IMAGE%%\" BORDER=0 \n" .
+     "      WIDTH=%%WIDTH%% HEIGHT=%%HEIGHT%% \n" .
+     "      USEMAP=\"#collage\"></A></TD></TR>\n" .
+     "  </TABLE></TD>\n" .
+     " </TR>\n" .
+     "</TABLE>\n" .
+     "<P>\n" .
+     "</CENTER>\n");
+
+
+my @time_fmt_days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+my @time_fmt_months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+
+# Converts a time_t to a string acceptable to HTTP.
+#
+sub format_http_time {
+    my ($time) = @_;
+    my @t = gmtime($time);
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday) = @t;
+    $year += 1900;
+    $wday = $time_fmt_days[$wday];
+    $mon = $time_fmt_months[$mon];
+    return sprintf("%s, %02d %s %d %02d:%02d:%02d GMT",
+                   $wday, $mday, $mon, $year, $hour, $min, $sec);
+}
+
+
+
+# Parses exactly the time format that HTTP requires, no more, no less.
+#
+sub parse_http_time {
+    ($_) = @_;
+
+    if (!m/^[SMTWF][a-z][a-z]+, (\d\d)[- ]([JFMAJSOND][a-z][a-z]+)[- ](\d\d\d?\d?)[- ](\d\d):(\d\d):(\d\d)( GMT)?$/o) {
+        return undef;
+    }
+
+    my @moy = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    @moy{@moy} = (1..12);
+
+    my $t = Time::Local::timegm($6, $5, $4, $1, $moy{$2}-1,
+                                ($3 < 100 ? $3 : $3-1900));
+    return ($t < 0 ? undef : $t);
+}
+
+
+# Given a modification time, returns a time_t to use as the expiration time
+# of both the HTML and the JPEG.
+#
+sub compute_expires_time {
+    my ($mod_time) = (@_);
+    my $now = time;
+    if ($mod_time < $now) { $mod_time = $now; }
+    return $mod_time + $max_age;
+}
+
+
+# Parse the If-Modified-Since header, and write a response if appropriate.
+# If this returns 1, we're done.
+#
+sub do_ifmod {
+    # see http://vancouver-webpages.com/proxy/log-tail.pl and
+    # http://mnot.cbd.net.au/cache_docs/ for clues about how to
+    # do cacheing properly with CGI-generated documents.
+    my ($mod_time) = (@_);
+    if ($ENV{HTTP_IF_MODIFIED_SINCE}) {
+        my $ims = $ENV{HTTP_IF_MODIFIED_SINCE};
+        $ims =~ s/;.*// ; # lose trailing "; length=3082"
+        $ims = parse_http_time($ims);
+        if ($ims && $mod_time <= $ims) {
+            print "Status: 304 Not Modified\n\n" ;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+# Returns N urls of images (and the pages on which they were found.)
+# Unless there is a significant surplus of URLs in the $pending_file,
+# this will spend $url_generation_time seconds generating as many URLs
+# as it can.  The first N will be returned, and the rest will be left
+# in the file.
+#
+sub get_image_urls {
+    my ($count) = @_;
+
+    my @urls;
+    my $body = "";
+    my $file_count = 0;
+
+    local *PEND;
+
+    # Open and lock the file (read/write.)
+    # rewind after locking, in case we had to wait for the lock.
+    #
+    open (PEND, "+<$pending_file") || die "couldn't open $pending_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: opened $pending_file\n"; }
+
+    my $flock_wait = time;
+    flock (PEND, LOCK_EX) || die "couldn't lock $pending_file: $!";
+    $flock_wait = (time - $flock_wait);
+
+    seek (PEND, 0, 0)     || die "couldn't rewind $pending_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: locked $pending_file\n"; }
+
+
+    # Take N URLs off the top, and leave the rest.
+    #
+    while (<PEND>) {
+        if (--$count >= 0) {
+            if ($DEBUG > 3) { print STDERR "  <   $_"; }
+            s/[\r\n]+$//;
+            $urls[++$#urls] = $_;
+        } else {
+            $body .= $_;
+            if ($DEBUG > 3) { print STDERR "  -   $_"; }
+            $file_count++;
+        }
+    }
+
+    # rewind and overwrite the file
+    seek (PEND, 0, 0)  || die "couldn't rewind $pending_file: $!";
+    truncate (PEND, 0) || die "couldn't truncate $pending_file: $!";
+    print PEND $body;
+
+
+    # If there are fewer than 3x as many URLs as we took left in the file,
+    # then generate as many URLs as we can in N seconds.  Take what we
+    # need from that, and append the rest to the file.  Note that we are
+    # still holding a lock on the file.
+    #
+    # Count the time spent waiting for flock as time spent gathering URLs.
+    # Because that means someone else was doing it.
+    #
+    $body = "";
+    if ($file_count < $count * 3) {
+        my $timeout = $url_generation_time - $flock_wait;
+        my $start = time;
+
+        while (1) {
+            last if ($timeout <= 0);
+
+            if ($DEBUG > 2) { print STDERR "time remaining: $timeout\n"; }
+            my ($base, $img) = pick_image ($timeout);
+
+            if ($img) {
+                $img  =~ s/ /%20/g;
+                $base =~ s/ /%20/g;
+                $_ = "$img $base";
+                if ($count-- >= 0) {
+                    if ($DEBUG > 3) { print STDERR "  <<   $img\n"; }
+                    $urls[++$#urls] = $_;
+                } else {
+                    if ($DEBUG > 3) { print STDERR "  >>   $img\n"; }
+                    print PEND "$_\n"; # append to file
+                    $file_count++;
+                }
+            }
+
+            my $now = time;
+            my $elapsed = $now - $start;
+            $timeout -= $elapsed;
+            $start = $now;
+        }
+    }
+
+    my $of = select(PEND); $| = 1; select($of);		# flush output
+    print PEND "";
+
+    flock (PEND, LOCK_UN) || die "couldn't unlock $pending_file: $!";
+    close (PEND)          || die "couldn't close $pending_file: $!";
+
+    if ($DEBUG > 2) {
+        print STDERR "jpeg: closed $pending_file; $file_count urls in file;" .
+            " returning $#urls.\n";
+    }
+
+    return @urls;
+}
+
+
+sub cgi_reset_all_files {
+    foreach (@all_files) {
+        my $file = $_;
+        local *OUT;
+        open (OUT, "+<$file") || die "couldn't open $file: $!";
+        flock (OUT, LOCK_EX)  || die "couldn't lock $file: $!";
+        truncate (OUT, 0)     || die "couldn't truncate $file: $!";
+        flock (OUT, LOCK_UN)  || die "couldn't unlock $file: $!";
+        close (OUT)           || die "couldn't close $file: $!";
+    }
+
+    system "ppmmake '#000000' $img_width $img_height > $image_ppm" ||
+        die "failed to create blank $image_ppm file: $!";
+    system "cjpeg -progressive $image_ppm > $image_jpg" ||
+        die "failed to create blank $image_jpg file: $!";
+}
+
+
+# Given the URL of an image and the page on which it was found, this will
+# load the image, and paste it at a random spot in $image_ppm and $img_jpg.
+# It will also update $map_file to contain the appropriate referer, and
+# will limit it to $max_map_entries lines.
+#
+sub cgi_paste_image {
+    my ($img, $referer) = @_;
+
+    my ( $base, $body ) = get_document ($img, $referer);
+    return if (!$base || !$body);
+
+    my ($iw, $ih) = image_size ($body);
+    return if (!$iw || !$ih);
+
+    if ($DEBUG > 2) { print STDERR "got $base ($iw x $ih)\n"; }
+
+    my $cmd;
+
+    if ($base =~ m/\.gif$/i) {
+        $cmd = "giftopnm";
+    } else {
+        $cmd = "djpeg";
+    }
+
+    if ($iw > $img_width || $ih > $img_height) {
+        while ($iw > $img_width || $ih > $img_height) {
+            $iw = int($iw / 2);
+            $ih = int($ih / 2);
+        }
+        $cmd .= " | pnmscale -xysize $iw $ih";
+    }
+
+    my $x = int (rand() * ($img_width - $iw));
+    my $y = int (rand() * ($img_height - $ih));
+
+    $cmd .= " | pnmpaste - $x $y $image_ppm";
+
+
+    local *MAP;
+    local *PIPE_OUT;
+
+    # Open and lock the map (read/write.)
+    # rewind after locking, in case we had to wait for the lock.
+    # This lock doubles as our lock on the image file itself.
+    #
+    open (MAP, "+<$map_file") || die "couldn't open $map_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: opened $map_file\n"; }
+
+    flock (MAP, LOCK_EX) || die "couldn't lock $map_file: $!";
+    seek (MAP, 0, 0)     || die "couldn't rewind $map_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: locked $map_file\n"; }
+
+    # Read in the first hundred lines of the map file.
+    #
+    my $map = "";
+    my $count = 0;
+    while (<MAP>) {
+        last if ($count++ > $max_map_entries);
+        $map .= $_;
+    }
+
+    # Add this entry to the front of the map data.
+    #
+    $map = "$x $y $iw $ih $referer\n" . $map;
+
+
+    # Ensure that the $image_ppm file exists and has a ppm in it.
+    #
+    my $ppm_size = $img_width * $img_height * 3 * 2;
+    my $s = (stat($image_ppm))[7];
+    if ($s < $ppm_size) {
+
+        if ( $DEBUG ) {
+            print STDERR "$image_ppm is $s bytes;" .
+                " should be at least $ppm_size\n";
+            print STDERR "resetting everything.";
+            cgi_reset_all_files();
+        }
+    }
+
+    # Paste the bits into the image.  Note that the map file is still locked.
+    #
+    local *TMP;
+    open (TMP, ">$image_tmp") || die "couldn't open $image_tmp: $!";
+    close (TMP);
+
+    if (! $DEBUG ) {
+        $cmd = "( $cmd ) 2>/dev/null";
+    }
+
+    $cmd .= " > $image_tmp";
+    if ($DEBUG > 2) { print STDERR "executing $cmd\n"; }
+
+    if (open(PIPE_OUT, "| $cmd")) {
+        print PIPE_OUT $body;
+        close(PIPE_OUT);
+
+        if ($DEBUG > 2) { system "ls -ldF $image_tmp >&2"; }
+
+        my @tmp_stat = stat($image_tmp);
+        if (@tmp_stat && $tmp_stat[7] < 200) {
+#            unlink ($image_tmp) || die "couldn't unlink $image_tmp: $!";
+            open (OUT, ">$image_tmp") || die "$image_tmp unwritable: $!";
+            close (OUT);
+            if ($DEBUG > 2) { print STDERR "FAILED writing $image_ppm\n"; }
+        } else {
+#            rename ($image_tmp, $image_ppm) ||
+#                die "couldn't rename $image_tmp to $image_ppm: $!";
+            local *IN;
+            local *OUT;
+            open (IN, "+<$image_tmp") || die "$image_tmp unreadable: $!";
+            open (OUT, ">$image_ppm") || die "$image_ppm unwritable: $!";
+            while (<IN>) { print OUT $_; }
+            truncate (IN, 0) || die "couldn't truncate $image_tmp: $!";
+            close (IN);
+            close (OUT) || die "couldn't write $image_ppm: $!";
+            if ($DEBUG > 2) { print STDERR "wrote $image_ppm\n"; }
+
+
+            # Now convert the PPM to a JPEG.
+            #
+            system "cjpeg -progressive $image_ppm > $image_tmp 2>/dev/null";
+
+            @tmp_stat = stat($image_tmp);
+            if (@tmp_stat && $tmp_stat[7] < 200) {
+#                unlink ($image_tmp) || die "couldn't unlink $image_tmp: $!";
+                open (OUT, ">$image_tmp") || die "$image_tmp unwritable: $!";
+                close (OUT);
+                if ($DEBUG > 2) { print STDERR "FAILED writing $image_jpg\n"; }
+            } else {
+#                rename ($image_tmp, $image_ppm) ||
+#                    die "couldn't rename $image_tmp to $image_ppm: $!";
+                open (IN, "+<$image_tmp") || die "$image_tmp unreadable: $!";
+                open (OUT, ">$image_jpg") || die "$image_jpg unwritable: $!";
+                while (<IN>) { print OUT $_; }
+                truncate (IN, 0) || die "couldn't truncate $image_tmp: $!";
+                close (IN);
+                close (OUT) || die "couldn't write $image_jpg: $!";
+                if ($DEBUG > 2) { print STDERR "wrote $image_jpg\n"; }
+            }
+        }
+
+        # Overwrite the map data.
+        #
+        seek (MAP, 0, 0)  || die "couldn't rewind $map_file: $!";
+        truncate (MAP, 0) || die "couldn't truncate $map_file: $!";
+        print MAP $map;
+    }
+
+    my $of = select(MAP); $| = 1; select($of);		# flush output
+    print MAP "";
+
+    flock (MAP, LOCK_UN) || die "couldn't unlock $map_file: $!";
+    close (MAP)          || die "couldn't close $map_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: closed $map_file\n"; }
+}
+
+
+sub cgi_generate_image {
+
+    $SIG{PIPE} = 'IGNORE';
+
+    my @urls = get_image_urls ($pastes_per_load);
+    my $end_time = time + $image_retrieval_time;
+
+    if ($DEBUG > 2) {
+        print STDERR "loading $#urls images\n";
+    }
+
+    foreach (@urls) {
+        my ($img, $referer) = m/^([^ ]+) ([^ ]+)/;
+        if ($img) {
+            cgi_paste_image ($img, $referer);
+        }
+        last if (time > $end_time);
+    }
+}
+
+
+sub cgi_sanity_check {
+    my $error = undef;
+    foreach (@all_files) {
+        if (! -e $_) { $error = "$_ does not exist.\n"; }
+        elsif (! -r $_) { $error = "$_ is unreadable.\n"; }
+        elsif (! -w $_) { $error = "$_ is unwritable.\n"; }
+        last if ($error);
+    }
+
+    return unless $error;
+
+    print "Content-Type: text/html\n";
+    print "\n\n<TITLE>Error</TITLE>$body_tag<H1>Error</H1>";
+    print POSIX::getcwd() . "/" . $error . "<P>\n";
+
+    $_ = join("</TT>, <TT>", @all_files);
+    s/,([^,]*)$/, and$1/;
+
+    print "Each of the files: <TT>$_</TT>\n";
+    print " must exist and be readable and writable by the httpd process\n";
+    print "(which probably means they must be globally readable and\n";
+    print "writable, since on most systems, CGI scripts run as the\n";
+    print "user <I>nobody</I>.)\n<P>\n";
+
+    exit (0);
+}
+
+
+# Write the encapsulating HTML document and associated HTTP headers.
+# This is fast -- it just writes out the wrapper document corresponding
+# to the data currently on disk.  It is the loading of the sub-image
+# that does the real work.
+#
+sub cgi_emit_html_document {
+
+    cgi_sanity_check;
+
+    my $map_file_date;
+    my $doc = $html_document;
+
+    my $w2 = int ($img_width  * $scale);
+    my $h2 = int ($img_height * $scale);
+    $doc =~ s/%%WIDTH%%/$w2/g;
+    $doc =~ s/%%HEIGHT%%/$h2/g;
+
+    local *MAP;
+    open (MAP, "<$map_file") || die "couldn't open $map_file: $!";
+    if ($DEBUG > 2) { print STDERR "html: opened $map_file\n"; }
+
+    flock (MAP, LOCK_SH) || die "couldn't lock $map_file: $!";
+    seek (MAP, 0, 0)     || die "couldn't rewind $map_file: $!";
+    if ($DEBUG > 2) { print STDERR "html: locked $map_file\n"; }
+
+    $map_file_date = (stat(MAP))[9];
+
+    my $map = "<MAP NAME=\"collage\">\n";
+    while (<MAP>) {
+        my ($x, $y, $w, $h, $url) =
+            m/^([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) (.*)$/;
+        if ($w && $h) {
+            $x = int($x * $scale);
+            $y = int($y * $scale);
+            $w = int($w * $scale);
+            $h = int($h * $scale);
+
+            # protect against URLs that contain <, >, or ".
+            $url =~ s/([<>\"])/uc sprintf("%%%02X",ord($1))/eg;
+
+            my $x2 = $x + $w;
+            my $y2 = $y + $h;
+            $map .=
+                "<AREA SHAPE=RECT COORDS=\"$x,$y,$x2,$y2\" HREF=\"$url\">\n";
+        }
+    }
+    $map .= "</MAP>";
+    flock (MAP, LOCK_UN) || die "couldn't unlock $map_file: $!";
+    close (MAP)          || die "couldn't close $map_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "html: closed $map_file\n"; }
+
+    $doc =~ s/%%MAP%%/$map/g;
+
+    my $img_name = "current";
+
+    $doc =~ s@%%IMAGE%%@images/$img_name.jpg@g;
+
+
+    my $mod_time = $map_file_date;
+    if ($script_date > $mod_time) { $mod_time = $script_date; }
+
+    if (do_ifmod($mod_time)) {
+        return;
+    }
+
+    my $exp = compute_expires_time($mod_time);
+
+    print "Content-Type: text/html\n";
+    print "Content-Length: " . length($doc) . "\n";
+    print "Last-Modified: " . format_http_time($mod_time) . "\n";
+
+    # This is a suggestion to consider the object invalid after the given
+    # date.  This is sometimes ignored.
+    #
+    print "Expires: " . format_http_time($exp) . "\n";
+
+    # This may or may not cause a cacheing proxy to pass this stuff along.
+    # It's not standardized, but was historically used for... something.
+    print "Pragma: no-cache\n";
+
+    # This says the same thing as the Expires header, but it is a stronger
+    # assertion that we're serious and should be listened to.
+    #
+    my $age = $exp - time;
+    print "Cache-Control: max-age=$age, must-revalidate\n";
+
+    print "\n";
+    print $doc;
+}
+
+
+# Write the interior JPEG document and associated HTTP headers.
+#
+sub cgi_emit_jpeg_document {
+
+    my $image_data = "";
+    my $jpg_file_date;
+    my $do_ims = 0;
+
+    # The map file is the means by which we hold write-locks on the image
+    # file.  So first obtain the lock on that file.
+    #
+    local *MAP;
+    open (MAP, "+<$map_file") || die "couldn't open $map_file: $!";
+
+    if ($DEBUG > 2) { print STDERR "jpeg: opened $map_file\n"; }
+    flock (MAP, LOCK_SH) || die "couldn't lock $map_file: $!";
+    if ($DEBUG > 2) { print STDERR "jpeg: locked $map_file\n"; }
+
+    # Now we have exclusive access to the image file.  Read it.
+    #
+    local *IMG;
+    open (IMG, "<$image_jpg") || die "couldn't open $image_jpg: $!";
+
+    $jpg_file_date = (stat(IMG))[9];
+
+    if (do_ifmod($jpg_file_date)) {
+        $do_ims = 1;
+        if ($DEBUG > 2) {
+            my $ims = $ENV{HTTP_IF_MODIFIED_SINCE};
+            $ims =~ s/;.*//;
+            print STDERR "not-modified-since " .
+                localtime(parse_http_time($ims)) . "\n";
+            print STDERR "jpg date: " . localtime($jpg_file_date) . "\n";
+        }
+    }
+
+    if (!$do_ims) {
+        while (<IMG>) { $image_data .= $_; }
+    }
+    close (IMG) || die "couldn't close $image_jpg: $!";
+
+    # Now free the lock so that others can write to the file.
+    #
+    flock (MAP, LOCK_UN) || die "couldn't unlock $map_file: $!";
+    close (MAP)          || die "couldn't close $map_file: $!";
+    if ($DEBUG > 2) { print STDERR "jpeg: closed $map_file\n"; }
+
+    return if ($do_ims);
+
+
+    # At this point, we have the image data we will be returning.
+    # However, don't return it yet -- first go off and generate the
+    # *next* image, then we can return *this* one.  If we don't do it
+    # in this order, people will jump the gun hitting reload, and no
+    # image updates will happen.
+    #
+    my $type = "image/jpeg";
+    my $mod_time = $jpg_file_date;
+    if ($script_date > $mod_time) { $mod_time = $script_date; }
+
+    print "Last-Modified: " . format_http_time($mod_time) . "\n";
+    print "Expires: " . format_http_time(compute_expires_time($mod_time))
+        . "\n";
+    print "Content-Type: $type\n";
+    print "Content-Length: " . length($image_data) . "\n";
+    print "\n";
+
+    # Now, before returning the image data, go catatonic for a minute
+    # while we load some URLs and make the next image.
+    #
+    cgi_generate_image;
+
+    # Done setting up for next time -- now finish loading.
+    #
+    print $image_data;
+    $image_data = undef;
+}
+
+
+# Write the source code of this script as a text/plain document.
+#
+sub cgi_emit_source_document {
+    my $mod_time = $script_date;
+
+    if (do_ifmod($mod_time)) {
+        return;
+    }
+
+    print "Content-Type: text/plain\n";
+    print "Last-Modified: " . format_http_time($mod_time) . "\n";
+    print "\n";
+    open (IN, "<$argv0") || die "couldn't open $argv0: $!";
+    while (<IN>) {
+        print;
+    }
+    close (IN);
+}
+
+
+# Parse the various environment variables to decide how we were invoked,
+# and then do something about it.
+#
+sub cgi_main {
+
+    $DEBUG=4;
+
+    $ENV{PATH} .= ":/usr/local/bin";
+
+    # make sure the various programs we execute exist, right up front.
+    foreach ("ppmmake", "cjpeg", "djpeg", "giftopnm", "pnmpaste", "pnmscale") {
+        if (!which ($_)) {
+            print "Content-Type: text/html\n";
+            print "\n\n<TITLE>Error</TITLE>$body_tag<H1>Error</H1>";
+            print "The <TT>$_</TT> program was not found on \$PATH.<BR>\n";
+
+            my $p = $ENV{PATH};
+            $p =~ s/%/%25/g; $p =~ s/\&/%26/g;
+            $p =~ s/</%3C/g; $p =~ s/>/%3E/g;
+            $p =~ s/:/:<WBR>/g;
+            print "\$PATH is: <TT>$p</TT><P>\n";
+            exit (0);
+        }
+    }
+
+    $script_date = (stat($argv0))[9];
+
+    print "Blat: Foop\n";
+
+    if ($ENV{REQUEST_METHOD} &&
+        $ENV{REQUEST_METHOD} ne "GET" &&
+        $ENV{REQUEST_METHOD} ne "HEAD" ) {
+        print "Content-Type: text/html\n";
+        print "\n\n<TITLE>Error</TITLE>$body_tag<H1>Error</H1>";
+        $_ = $ENV{REQUEST_METHOD};
+        print "bad request method: <TT>$_</TT>\n";
+        exit (0);
+
+    } elsif ( $ENV{QUERY_STRING} ) {
+        if ( $ENV{QUERY_STRING} eq "reset" ) {
+            cgi_reset_all_files;
+
+            print "Content-Type: text/html\n";
+            print "\n\n<TITLE>Collage Reset</TITLE>";
+            print "$body_tag<H1>Collage Reset</H1><P>\n";
+            exit (0);
+
+        } else {
+            print "Content-Type: text/html\n";
+            print "\n\n<TITLE>Error</TITLE>$body_tag<H1>Error</H1>";
+            $_ = $ENV{QUERY_STRING};
+            print "malformed URL: <TT>$_</TT>\n";
+            exit (0);
+        }
+
+    } elsif ( !$ENV{PATH_INFO} || $ENV{PATH_INFO} eq "" ) {
+        # don't allow /webcollage as a URL -- force it to be /webcollage/
+        print "Status: 301 Moved Permanently\n";
+        print "Location: http://" .
+            ($ENV{HTTP_HOST} ? $ENV{HTTP_HOST} : 
+             $ENV{SERVER_NAME} ? $ENV{SERVER_NAME} : "???") .
+            ($ENV{REQUEST_URI} ? $ENV{REQUEST_URI} : "") .
+                "/\n\n";
+        exit (0);
+
+    } elsif ( $ENV{PATH_INFO} eq "/" ) {
+	cgi_emit_html_document;
+
+    } elsif ( $ENV{PATH_INFO} =~ m@^/images/[^/]+\.jpg$@ ) {
+        cgi_emit_jpeg_document;
+
+    } elsif ( $ENV{PATH_INFO} eq "/webcollage.pl" ) {
+        cgi_emit_source_document;
+
+    } else {
+        print "Content-Type: text/html\n";
+        print "\n\n<TITLE>Error</TITLE>$body_tag<H1>Error</H1>";
+        $_ = $ENV{PATH_INFO};
+        print "malformed URL: <TT>$_</TT>\n";
+        exit (0);
+    }
+}
+
+
+##############################################################################
+#
+# Generating a list of urls only
+#
+##############################################################################
+
+sub url_only_output {
+    $| = 1;
+    do {
+        my ($base, $img) = pick_image;
+        if ($img) {
+            $base =~ s/ /%20/g;
+            $img  =~ s/ /%20/g;
+            print "$img $base\n";
+        }
+    } while (1);
+}
+
+##############################################################################
+#
+# Running as an xscreensaver module
+#
+##############################################################################
+
+my $image_tmp2;
+my $image_tmp3;
+
+sub x_cleanup {
+    if ($DEBUG > 0) { print STDERR "caught signal\n"; }
+    unlink $image_ppm, $image_tmp, $image_tmp2, $image_tmp3;
+    exit 1;
+}
+
+
+sub x_output {
+
+    my $win_cmd = $ppm_to_root_window_cmd;
+    $win_cmd =~ s/^([^ \t\r\n]+).*$/$1/;
+
+    # make sure the various programs we execute exist, right up front.
+    foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale",
+             $win_cmd) {
+        which ($_) || die "$progname: $_ not found on \$PATH.\n";
+    }
+
+    $SIG{HUP}  = \&x_cleanup;
+    $SIG{INT}  = \&x_cleanup;
+    $SIG{QUIT} = \&x_cleanup;
+    $SIG{ABRT} = \&x_cleanup;
+    $SIG{KILL} = \&x_cleanup;
+    $SIG{TERM} = \&x_cleanup;
+
+    # Need this so that if giftopnm dies, we don't die.
+    $SIG{PIPE} = 'IGNORE';
+
+    if (!$img_width || !$img_height) {
+        $_ = "xdpyinfo";
+        which ($_) || die "$progname: $_ not found on \$PATH.\n";
+        $_ = `$_`;
+        ($img_width, $img_height) = m/dimensions: *([0-9]+)x([0-9]+) /;
+    }
+
+    my $bgcolor = "#000000";
+    my $bgimage = undef;
+
+    if ($background) {
+        if ($background =~ m/^\#[0-9a-f]+$/i) {
+            $bgcolor = $background;
+        } elsif (-r $background) {
+            $bgimage = $background;
+            
+        } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
+            print STDERR "not a color or readable file: $background\n";
+            exit 1;
+        } else {
+            # default to assuming it's a color
+            $bgcolor = $background;
+        }
+    }
+
+    # Create the sold-colored base image.
+    #
+    $_ = "ppmmake '$bgcolor' $img_width $img_height";
+    if ($DEBUG > 1) {
+        print STDERR "creating base image: $_\n";
+    }
+    system "$_ > $image_ppm";
+
+    # Paste the default background image in the middle of it.
+    #
+    if ($bgimage) {
+        my ($iw, $ih);
+        if (open(IMG, "<$bgimage")) {
+            $_ = <IMG>;
+            $_ = <IMG>;
+            ($iw, $ih) = m/^([0-9]+) ([0-9]+)$/;
+            close (IMG);
+        }
+        my $x = int (($img_width - $iw) / 2);
+        my $y = int (($img_height - $ih) / 2);
+        if ($DEBUG > 1) {
+            print STDERR "pasting $bgimage into base image at $x, $y\n";
+        }
+        system "pnmpaste $bgimage $x $y $image_ppm > $image_tmp2" .
+            " && mv $image_tmp2 $image_ppm";
+    }
+
+
+    do {
+        my ($base, $img) = pick_image;
+
+        my ($headers, $body);
+        if ($img) {
+            ($headers, $body) = get_document ($img, $base);
+        }
+
+        if ($body) {
+
+            if ($DEBUG > 0) {
+                print STDERR "got $img (" . length($body) . ")\n";
+            }
+
+            my $cmd;
+            if ($img =~ m/\.gif/i) {
+                $cmd = "giftopnm";
+            } else {
+                $cmd = "djpeg";
+            }
+
+            if ($DEBUG == 0) {
+                $cmd .= " 2>/dev/null";
+            }
+
+            if (open(PIPE, "| $cmd > $image_tmp")) {
+                print PIPE $body;
+                close PIPE;
+
+                if ($DEBUG > 1) {
+                    print STDERR "created $image_tmp ($cmd)\n";
+                }
+            }
+
+            if (-s $image_tmp) {
+
+                if ($filter_cmd) {
+                    if ($DEBUG > 1) {
+                        print STDERR "running $filter_cmd\n";
+                    }
+                    system "($filter_cmd) < $image_tmp > $image_tmp3" .
+                        " && mv $image_tmp3 $image_tmp";
+                }
+
+                my ($iw, $ih);
+                if (open(IMG, "<$image_tmp")) {
+                    $_ = <IMG>;
+                    $_ = <IMG>;
+                    ($iw, $ih) = m/^([0-9]+) ([0-9]+)$/;
+                    close (IMG);
+                }
+
+                if ($iw && $ih) {
+
+                    if ($DEBUG > 1) {
+                        print STDERR "image size is $iw x $ih\n";
+                    }
+
+                    if ($iw > $img_width || $ih > $img_height) {
+                        while ($iw > $img_width ||
+                               $ih > $img_height) {
+                            $iw = int($iw / 2);
+                            $ih = int($ih / 2);
+                        }
+                        if ($DEBUG > 1) {
+                            print STDERR "scaling to $iw x $ih\n";
+                        }
+                        system "pnmscale -xysize $iw $ih $image_tmp" .
+                            " > $image_tmp2" .
+                            " 2>/dev/null && mv $image_tmp2 $image_tmp";
+                    }
+
+                    my $x = int (rand() * ($img_width - $iw));
+                    my $y = int (rand() * ($img_height - $ih));
+
+                    if ($DEBUG > 1) {
+                        print STDERR "pasting at $x, $y in $image_ppm\n";
+                    }
+
+                    system "pnmpaste $image_tmp $x $y $image_ppm" .
+                        " > $image_tmp2" .
+                        " && mv $image_tmp2 $image_ppm";
+
+
+                    my $target = $image_ppm;
+                    if ($post_filter_cmd) {
+                        if ($DEBUG > 1) {
+                            print STDERR "running $post_filter_cmd\n";
+                        }
+                        system "($post_filter_cmd) < $image_ppm > $image_tmp3";
+                        $target = $image_tmp3;
+                    }
+
+                    if (!$no_output_p) {
+
+                        my $tsize = (stat($target))[7];
+                        if ($tsize > 200) {
+                            $_ = $ppm_to_root_window_cmd;
+                            s/%%PPM%%/$target/;
+
+                            if ($DEBUG > 1) {
+                                print STDERR "running $_\n";
+                            }
+                            system $_;
+
+                        } elsif ($DEBUG > 1) {
+                            print STDERR "$target size is $tsize\n";
+                        }
+                    }
+                }
+            }
+            unlink $image_tmp, $image_tmp2, $image_tmp3;
+        }
+
+        sleep $delay;
+
+    } while (1);
+}
+
+
+sub x_main {
+
+    # Unlike CGI, when running in X mode, the various tmp files should be
+    # in the /tmp directory and should have gensymed names.
+    #
+    $image_ppm = ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp") . "/webcollage." . $$;
+    $image_tmp   = $image_ppm . "-1";
+    $image_tmp2  = $image_ppm . "-2";
+    $image_tmp3  = $image_ppm . "-3";
+
+    # In X mode, these aren't used.  Set them to undef to error if we try.
+    #
+    $data_dir = undef;
+    $image_jpg = undef;
+    $pending_file = undef;
+    $map_file = undef;
+    $url_generation_time = undef;
+    $image_retrieval_time = undef;
+    $max_map_entries = undef;
+    $pastes_per_load = undef;
+    $max_age = undef;
+    $script_date = undef;
+    @all_files = undef;
+
+    # In X mode, these come either from the command line, or from the X server.
+    $img_width = undef;
+    $img_height = undef;
+
+
+    my $root_p = 0;
+
+    while ($_ = $ARGV[0]) {
+        shift @ARGV;
+        if ($_ eq "-display" ||
+            $_ eq "-displ" ||
+            $_ eq "-disp" ||
+            $_ eq "-dis" ||
+            $_ eq "-dpy" ||
+            $_ eq "-d") {
+            $ENV{DISPLAY} = shift @ARGV;
+        } elsif ($_ eq "-root") {
+            $root_p = 1;
+        } elsif ($_ eq "-no-output") {
+            $no_output_p = 1;
+        } elsif ($_ eq "-urls-only") {
+            $urls_only_p = 1;
+            $no_output_p = 1;
+        } elsif ($_ eq "-verbose") {
+            $DEBUG++;
+        } elsif (m/^-v+$/) {
+            $DEBUG += length($_)-1;
+        } elsif ($_ eq "-delay") {
+            $delay = shift @ARGV;
+        } elsif ($_ eq "-timeout") {
+            $http_timeout = shift @ARGV;
+        } elsif ($_ eq "-filter") {
+            $filter_cmd = shift @ARGV;
+        } elsif ($_ eq "-filter2") {
+            $post_filter_cmd = shift @ARGV;
+        } elsif ($_ eq "-background" || $_ eq "-bg") {
+            $background = shift @ARGV;
+        } elsif ($_ eq "-size") {
+            $_ = shift @ARGV;
+            if (m@^([0-9]+)x([0-9]+)$@) {
+                $img_width = $1;
+                $img_height = $2;
+            } else {
+                die "$progname: argument to \"-size\" must be" .
+                    " of the form \"640x400\"\n";
+            }
+        } else {
+            die "$copyright\nusage: $progname [-root]" .
+                " [-display dpy] [-root] [-verbose] [-timeout secs]\n" .
+                "\t\t  [-delay secs] [-filter cmd] [-filter2 cmd]\n";
+        }
+    }
+
+    if (!$root_p && !$no_output_p) {
+        die "$copyright" .
+            "$progname: the -root argument is manditory (for now.)\n";
+    }
+
+    if (!$no_output_p && !$ENV{DISPLAY}) {
+        die "$progname: \$DISPLAY is not set.\n";
+    }
+
+    if ($urls_only_p) {
+        url_only_output;
+    } else {
+        x_output;
+    }
+}
+
+
+##############################################################################
+#
+# Decide if we're in X or CGI mode, and dispatch.
+#
+##############################################################################
+
+sub main {
+    srand(time ^ $$);
+    if ( $progname =~ m/\.cgi$/i || $ENV{REQUEST_METHOD} ) {
+        cgi_main;
+    } else {
+        x_main;
+    }
+}
+
+main;
+exit (0);
