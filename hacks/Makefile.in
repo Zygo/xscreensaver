@@ -78,7 +78,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
-		  truchet.c bsod.c crystal.c discrete.c
+		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -92,7 +92,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
-		  truchet.o bsod.o crystal.o discrete.o
+		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -102,7 +102,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
-		  interference truchet bsod crystal discrete
+		  interference truchet bsod crystal discrete distort kumppa
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -440,6 +440,12 @@ truchet: $(HACK_OBJS) truchet.o $(COL)
 
 bsod: $(HACK_OBJS) bsod.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) bsod.o $(COL) $(HACK_LIBS) $(XPM_LIBS)
+
+distort:		 $(HACK_OBJS) distort.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) distort.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+
+kumppa:		 $(HACK_OBJS) kumppa.o
+	$(CC_HACK) -o $@ $(HACK_OBJS) kumppa.o $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1356,4 +1362,22 @@ discrete.o: $(UTILS_SRC)/colors.h
 discrete.o: $(UTILS_SRC)/grabscreen.h
 discrete.o: $(UTILS_SRC)/visual.h
 discrete.o: $(UTILS_SRC)/erase.h
+distort.o: $(srcdir)/screenhack.h
+distort.o: ../config.h
+distort.o: $(UTILS_SRC)/yarandom.h
+distort.o: $(UTILS_SRC)/usleep.h
+distort.o: $(UTILS_SRC)/resources.h
+distort.o: $(UTILS_SRC)/hsv.h
+distort.o: $(UTILS_SRC)/colors.h
+distort.o: $(UTILS_SRC)/grabscreen.h
+distort.o: $(UTILS_SRC)/visual.h
+kumppa.o: $(srcdir)/screenhack.h
+kumppa.o: ../config.h
+kumppa.o: $(UTILS_SRC)/yarandom.h
+kumppa.o: $(UTILS_SRC)/usleep.h
+kumppa.o: $(UTILS_SRC)/resources.h
+kumppa.o: $(UTILS_SRC)/hsv.h
+kumppa.o: $(UTILS_SRC)/colors.h
+kumppa.o: $(UTILS_SRC)/grabscreen.h
+kumppa.o: $(UTILS_SRC)/visual.h
 

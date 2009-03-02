@@ -27,6 +27,7 @@
 #include <X11/Xaw/Toggle.h>
 #include <X11/Xaw/Viewport.h>
 #include <X11/Xaw/Dialog.h>
+#include <X11/Xaw/AsciiText.h>
 
 #include <stdio.h>
 
@@ -278,33 +279,45 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
 			    XtNfromVert, label1,
 			    NULL);
 
-  subform=
+  subform =
     XtVaCreateManagedWidget("subform", formWidgetClass, demo_form,
 			    XtNleft, XtChainLeft,
 			    XtNright, XtChainRight,
 			    XtNfromVert, label2,
-			    XtNbottom, XtChainBottom,
 			    NULL);
-  viewport=
+  viewport =
     XtVaCreateManagedWidget("viewport", viewportWidgetClass, subform,
+			    XtNtop, XtChainTop,
+			    XtNleft, XtChainLeft,
+			    XtNright, XtChainRight,
 			    XtNallowVert, TRUE,
 			    XtNallowHoriz, TRUE,
 			    XtNforceBars, TRUE,
 			    NULL);
 
   demo_list = XtVaCreateManagedWidget("demo_list", listWidgetClass, viewport,
-				    XtNverticalList, TRUE,
-				    XtNdefaultColumns, 1,
-				    NULL);
-  box=
+				      XtNverticalList, TRUE,
+				      XtNdefaultColumns, 1,
+				      NULL);
+
+  text_line = XtVaCreateManagedWidget("text", asciiTextWidgetClass, subform,
+				      XtNleft, XtChainLeft,
+				      XtNright, XtChainRight,
+				      XtNfromVert, viewport,
+				      XtNbottom, XtChainBottom,
+				      XtNeditType, XawtextEdit,
+				      NULL);
+
+  box =
     XtVaCreateManagedWidget("box", boxWidgetClass, demo_form,
-			    XtNfromHoriz, subform,
-			    XtNfromVert, label2,
+			    XtNleft, XtChainLeft,
+			    XtNfromVert, subform,
 			    XtNbottom, XtChainBottom,
 			    XtNright, XtChainRight,
+			    XtNorientation, XtEhorizontal,
 			    NULL);
-  prev = XtVaCreateManagedWidget("prev", commandWidgetClass, box, NULL);
   next = XtVaCreateManagedWidget("next", commandWidgetClass, box, NULL);
+  prev = XtVaCreateManagedWidget("prev", commandWidgetClass, box, NULL);
   edit = XtVaCreateManagedWidget("edit", commandWidgetClass, box, NULL);
   restart = XtVaCreateManagedWidget("restart", commandWidgetClass, box, NULL);
   done = XtVaCreateManagedWidget("done", commandWidgetClass, box, NULL);

@@ -21,6 +21,7 @@
 
 #include <X11/StringDefs.h>
 #include <X11/Intrinsic.h>
+#include <X11/IntrinsicP.h>	/* for XtResizeWidget */
 #include "xscreensaver.h"
 #include "resources.h"
 
@@ -29,7 +30,6 @@
 #else /* VMS */
 extern char *getenv(const char *name);
 extern int validate_user(char *name, char *password);
-static char * user_vms;
 #endif /* VMS */
 
 
@@ -40,17 +40,6 @@ static char * user_vms;
 # include <X11/Xaw/Text.h>
 # include <X11/Xaw/Label.h>
 # include <X11/Xaw/Dialog.h>
-
-static void passwd_done_cb (Widget, XtPointer, XtPointer);
-static XtActionsRec actionsList[] =
-{
-    {"passwdentered", (XtActionProc) passwd_done_cb},
-};
-
-static char Translations[] =
-"\
-<Key>Return:   passwdentered()\
-";
 
 #else  /* HAVE_MOTIF */
 
@@ -93,30 +82,31 @@ passwd_cancel_cb (Widget button, XtPointer client_data, XtPointer call_data)
   passwd_state = pw_cancel;
 }
 
+
+#ifdef VMS
+static Bool
+vms_passwd_valid_p(char *pw)
+{
+  char *u = getenv("USER");
+  return (validate_user (i, typed_passwd) == 1);
+}
+# undef passwd_valid_p
+# define passwd_valid_p vms_passwd_valid_p
+
+#endif /* VMS */
+
+
 static void
 passwd_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   if (passwd_state != pw_read) return; /* already done */
-#ifndef VMS
 
-# ifdef HAVE_ATHENA
-  strncpy(typed_passwd, XawDialogGetValueString(passwd_form),
-	  sizeof(typed_passwd)-1);
-  typed_passwd[sizeof(typed_passwd)-1] = 0;
-# endif /* HAVE_ATHENA */
   if (passwd_valid_p (typed_passwd))
     passwd_state = pw_ok;
   else
     passwd_state = pw_fail;
-
-#else	/* VMS */
-  user_vms = getenv("USER");
-  if (validate_user(user_vms,typed_passwd) == 1) 
-    passwd_state = pw_ok;
-  else 
-    passwd_state = pw_fail;
-#endif /* VMS */
 }
+
 
 #if defined(HAVE_MOTIF) && defined(VERIFY_CALLBACK_WORKS)
 
@@ -171,22 +161,21 @@ static XtActionsRec actions[] = {{"keypress",  keypress},
 				 {"done",      done}
 			        };
 
-# ifdef HAVE_MOTIF
-#  if 0  /* oh fuck, why doesn't this work? */
-static char translations[] = "\
-<Key>BackSpace:		backspace()\n\
-<Key>Delete:		backspace()\n\
-Ctrl<Key>H:		backspace()\n\
-Ctrl<Key>U:		kill_line()\n\
-Ctrl<Key>X:		kill_line()\n\
-Ctrl<Key>J:		done()\n\
-Ctrl<Key>M:		done()\n\
-<Key>:			keypress()\n\
-";
-#  else  /* !0 */
-static char translations[] = "<Key>:keypress()";
-#  endif /* !0 */
-# endif /* HAVE_MOTIF */
+# if 0  /* This works for Athena, but not Motif: keypress() gets called
+	   for all keys anyway.  So, the implementation of keypress()
+	   has BackSpace, etc, hardcoded into it instead.  FMH!
+	 */
+static char translations[] = ("<Key>BackSpace:	backspace()\n"
+			      "<Key>Delete:	backspace()\n"
+			      "Ctrl<Key>H:	backspace()\n"
+			      "Ctrl<Key>U:	kill_line()\n"
+			      "Ctrl<Key>X:	kill_line()\n"
+			      "Ctrl<Key>J:	done()\n"
+			      "Ctrl<Key>M:	done()\n"
+			      "<Key>:		keypress()\n");
+# else  /* !0 */
+static char translations[] = ("<Key>:		keypress()\n");
+# endif /* !0 */
 
 
 static void
@@ -347,7 +336,6 @@ make_passwd_dialog (saver_info *si)
   create_passwd_dialog (parent, ssi->default_visual, ssi->demo_cmap);
 
 #ifdef HAVE_ATHENA
-
   XtVaSetValues(passwd_form, XtNvalue, typed_passwd, 0);
 
   XawDialogAddButton(passwd_form,"ok", passwd_done_cb, 0);
@@ -355,9 +343,15 @@ make_passwd_dialog (saver_info *si)
   passwd_done = XtNameToWidget(passwd_form,"ok");
   passwd_text = XtNameToWidget(passwd_form,"value");
 
-  XtAppAddActions(XtWidgetToApplicationContext(passwd_text), 
-		  actionsList, XtNumber(actionsList));
-  XtOverrideTranslations(passwd_text, XtParseTranslationTable(Translations));
+  XtAppAddActions(XtWidgetToApplicationContext(passwd_text),
+		  actions, XtNumber(actions));
+  XtOverrideTranslations(passwd_text, XtParseTranslationTable(translations));
+
+  /* Lose the label on the inner dialog. */
+  {
+    Widget w = XtNameToWidget(passwd_form, "label");
+    if (w) XtUnmanageChild(w);
+  }
 
 #else  /* HAVE_MOTIF */
 
@@ -368,15 +362,15 @@ make_passwd_dialog (saver_info *si)
 # ifdef VERIFY_CALLBACK_WORKS
   XtAddCallback (passwd_text, XmNmodifyVerifyCallback, check_passwd_cb, 0);
   XtAddCallback (passwd_text, XmNactivateCallback, check_passwd_cb, 0);
-# else
+# else  /* !VERIFY_CALLBACK_WORKS */
   XtAddCallback (passwd_text, XmNactivateCallback, passwd_done_cb, 0);
   XtOverrideTranslations (passwd_text, XtParseTranslationTable (translations));
-# endif
+# endif /* !VERIFY_CALLBACK_WORKS */
 
 # if defined(HAVE_MOTIF) && (XmVersion >= 1002)
   /* The focus stuff changed around; this didn't exist in 1.1.5. */
   XtVaSetValues (passwd_form, XmNinitialFocus, passwd_text, 0);
-# endif
+# endif /* HAVE_MOTIF && XmVersion >= 1002 */
 
   /* Another random thing necessary in 1.2.1 but not 1.1.5... */
   XtVaSetValues (roger_label, XmNborderWidth, 2, 0);
@@ -446,7 +440,7 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
 
       x = (w / 2);
 
-#ifdef __sgi	/* Kludge -- SGI's Motif hacks place buttons differently. */
+# ifdef __sgi	/* Kludge -- SGI's Motif hacks place buttons differently. */
       {
 	static int sgi_mode = -1;
 	if (sgi_mode == -1)
@@ -455,7 +449,7 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
 	if (sgi_mode)
 	  x = d;
       }
-#endif /* __sgi */
+# endif /* __sgi */
 
       x -= d/2;
       y += d/2;
@@ -501,78 +495,6 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
 }
 
 
-#ifdef HAVE_ATHENA
-
-void
-pop_up_athena_dialog_box (Widget parent, Widget focus, Widget dialog,
-			  Widget form, int where)
-{
-  /* modified from demo.c */
-  /* I'm sure this is the wrong way to pop up a dialog box, but I can't
-     figure out how else to do it.
-
-     It's important that the screensaver dialogs not get decorated or
-     otherwise reparented by the window manager, because they need to be
-     children of the *real* root window, not the WM's virtual root, in
-     order for us to guarentee that they are visible above the screensaver
-     window itself.
-   */
-  Arg av [100];
-  int ac = 0;
-  Dimension sw, sh, x, y, w, h;
-
-  XtRealizeWidget(dialog);
-  sw = WidthOfScreen (XtScreen (dialog));
-  sh = HeightOfScreen (XtScreen (dialog));
-  ac = 0;
-  XtSetArg (av [ac], XtNwidth, &w); ac++;
-  XtSetArg (av [ac], XtNheight, &h); ac++;
-  XtGetValues (form, av, ac);
-  switch (where)
-    {
-    case 0:	/* center it in the top-right quadrant */
-      x = (sw/2 + w) / 2 + (sw/2) - w;
-      y = (sh/2 + h) / 2 - h;
-      break;
-    case 1:	/* center it in the bottom-right quadrant */
-      x = (sw/2 + w) / 2 + (sw/2) - w;
-      y = (sh/2 + h) / 2 + (sh/2) - h;
-      break;
-    case 2:	/* center it on the screen */
-      x = (sw + w) / 2 - w;
-      y = (sh + h) / 2 - h;
-      break;
-    default:
-      abort ();
-    }
-  if (x + w > sw) x = sw - w;
-  if (y + h > sh) y = sh - h;
-  ac = 0;
-  XtVaSetValues(dialog,
-		XtNx, x,
-		XtNy, y,
-		NULL);
-  XtVaSetValues(form,
-		XtNx, x,
-		XtNy, y,
-		NULL);
-  XtPopup(dialog,XtGrabNone);
-  steal_focus_and_colormap (focus);
-}
-
-static void
-passwd_set_label (char *buf, int len)
-{
-  Widget label;
-  if (!passwd_text)
-    return;
-  label=XtNameToWidget(XtParent(passwd_text),"*label");
-  XtVaSetValues(label,
-		XtNlabel, buf,
-		NULL);
-}
-#endif /* HAVE_ATHENA */
-
 static Bool
 pop_passwd_dialog (saver_info *si)
 {
@@ -602,25 +524,39 @@ pop_passwd_dialog (saver_info *si)
    */
   if (XtWindow (passwd_form))
     XMapRaised (dpy, XtWindow (passwd_dialog));
-#endif
+#endif /* HAVE_MOTIF && !DESTROY_WORKS */
 
   monitor_power_on (si);
-#ifdef HAVE_ATHENA
-  pop_up_athena_dialog_box (parent, passwd_text, passwd_dialog,
-			    passwd_form, 2);
-#else
   pop_up_dialog_box (passwd_dialog, passwd_form,
 		     /* for debugging -- don't ask */
 		     (si->prefs.debug_p ? 69 : 0) +
 		     2);
   XtManageChild (passwd_form);
-#endif
+
+#ifdef HAVE_ATHENA
+  steal_focus_and_colormap (passwd_text);
+
+  /* For some reason, the passwd_form box is not stretching all the way
+     to the right edge of the window, despite being XtChainRight.
+     So... resize it by hand.
+  */
+  {
+    Dimension x=0, w=0, h=0;
+    XtVaGetValues(passwd_form, XtNx, &x, XtNwidth, &w, XtNheight, &h, 0);
+    XtVaGetValues(XtParent(passwd_form), XtNwidth, &w, 0);
+    w -= x;
+    w -= 6;
+    if (w > 0) XtResizeWidget(passwd_form, w, h, 0);
+  }
+
+#endif /* HAVE_ATHENA */
+
 
 #if defined(HAVE_MOTIF) && (XmVersion < 1002)
   /* The focus stuff changed around; this causes problems in 1.2.1
      but is necessary in 1.1.5. */
   XmProcessTraversal (passwd_text, XmTRAVERSE_CURRENT);
-#endif
+#endif /* HAVE_MOTIF && XmVersion < 1002 */
 
   passwd_idle_timer_tick = p->passwd_timeout / 1000;
   passwd_idle_id = XtAppAddTimeOut (si->app, 1000,  passwd_idle_timer,
@@ -663,21 +599,17 @@ pop_passwd_dialog (saver_info *si)
 	case pw_cancel: lose = 0; break;
 	default: abort ();
 	}
+
 #ifdef HAVE_MOTIF
       XmProcessTraversal (passwd_cancel, 0); /* turn off I-beam */
-#endif
+#else  /* HAVE_ATHENA */
+      steal_focus_and_colormap (passwd_done);
+#endif /* HAVE_ATHENA */
+
       if (lose)
 	{
-#ifdef HAVE_ATHENA
-	  /* show the message */
-	  passwd_set_label(lose,strlen(lose)+1);
-
-	  /* and clear the password line */
-	  memset(typed_passwd, 0, sizeof(typed_passwd));
-	  text_field_set_string (passwd_text, "", 0);
-#else
 	  text_field_set_string (passwd_text, lose, strlen (lose) + 1);
-#endif
+
 	  passwd_idle_timer_tick = 1;
 	  passwd_idle_id = XtAppAddTimeOut (si->app, 3000, passwd_idle_timer,
 				(XtPointer) si);
@@ -699,9 +631,9 @@ pop_passwd_dialog (saver_info *si)
 #ifdef DESTROY_WORKS
   XtDestroyWidget (passwd_dialog);
   passwd_dialog = 0;
-#else
+#else  /* !DESTROY_WORKS */
   XUnmapWindow (XtDisplay (passwd_dialog), XtWindow (passwd_dialog));
-#endif
+#endif /* !DESTROY_WORKS */
   {
     XErrorHandler old_handler = XSetErrorHandler (BadWindow_ehandler);
     /* I don't understand why this doesn't refocus on the old selected
@@ -731,9 +663,11 @@ unlock_p (saver_info *si)
   static Bool initted = False;
   if (! initted)
     {
+
 #ifndef VERIFY_CALLBACK_WORKS
       XtAppAddActions (si->app, actions, XtNumber (actions));
-#endif
+#endif /* !VERIFY_CALLBACK_WORKS */
+
       passwd_dialog = 0;
       initted = True;
     }

@@ -40,6 +40,7 @@
 # include <X11/Xaw/Viewport.h>
 # include <X11/Xaw/Dialog.h>
 # include <X11/Xaw/Scrollbar.h>
+# include <X11/Xaw/Text.h>
 #endif /* HAVE_ATHENA */
 
 #include "xscreensaver.h"
@@ -104,7 +105,13 @@ get_text_string (Widget text_widget)
   return XmTextGetString (text_widget);
 #else  /* HAVE_ATHENA */
   char *string = 0;
-  XtVaGetValues (text_widget, XtNvalue, &string, 0);
+  if (XtIsSubclass(text_widget, textWidgetClass))
+    XtVaGetValues (text_widget, XtNstring, &string, 0);
+  else if (XtIsSubclass(text_widget, dialogWidgetClass))
+    XtVaGetValues (text_widget, XtNvalue, &string, 0);
+  else
+    string = 0;
+
   return string;
 #endif /* HAVE_ATHENA */
 }
@@ -204,7 +211,6 @@ destroy_screenhack_dialogs (saver_info *si)
     XInstallColormap (si->dpy, ssi->cmap);
 }
 
-#ifdef HAVE_MOTIF
 
 static void
 text_cb (Widget text_widget, XtPointer client_data, XtPointer call_data)
@@ -215,7 +221,24 @@ text_cb (Widget text_widget, XtPointer client_data, XtPointer call_data)
   demo_mode_hack (si, line);
 }
 
-#endif /* HAVE_MOTIF */
+
+#ifdef HAVE_ATHENA
+/* Bend over backwards to make hitting Return in the text field do the
+   right thing. 
+   */
+extern saver_info *global_si_kludge;
+static void text_enter (Widget w, XEvent *event, String *av, Cardinal *ac)
+{
+  text_cb (w, global_si_kludge, 0);
+}
+
+static XtActionsRec actions[] = {{"done",      text_enter}
+			        };
+static char translations[] = ("<Key>Return:	done()\n"
+			      "<Key>Linefeed:	done()\n"
+			      "Ctrl<Key>M:	done()\n"
+			      "Ctrl<Key>J:	done()\n");
+#endif /* HAVE_ATHENA */
 
 
 static void
@@ -225,6 +248,8 @@ select_cb (Widget button, XtPointer client_data, XtPointer call_data)
 
 #ifdef HAVE_ATHENA
   XawListReturnStruct *item = (XawListReturnStruct*)call_data;
+  XtVaSetValues(text_line, XtNstring, item->string, 0);
+
   demo_mode_hack (si, item->string);
   if (item->list_index >= 0)
     si->default_screen->current_hack = item->list_index;
@@ -353,7 +378,7 @@ next_cb (Widget button, XtPointer client_data, XtPointer call_data)
   int cnt;
   XawListReturnStruct *current = XawListShowCurrent(demo_list);
   if (current->list_index == XAW_LIST_NONE)
-    XawListHighlight(demo_list,1);
+    XawListHighlight(demo_list, 0);
   else
     {
       XtVaGetValues(demo_list,
@@ -368,6 +393,7 @@ next_cb (Widget button, XtPointer client_data, XtPointer call_data)
 
   ensure_selected_item_visible (demo_list);
   current = XawListShowCurrent(demo_list);
+  XtVaSetValues(text_line, XtNstring, current->string, 0);
   demo_mode_hack (si, current->string);
 
 #else  /* HAVE_MOTIF */
@@ -403,10 +429,10 @@ prev_cb (Widget button, XtPointer client_data, XtPointer call_data)
 #ifdef HAVE_ATHENA
   XawListReturnStruct *current=XawListShowCurrent(demo_list);
   if (current->list_index == XAW_LIST_NONE)
-    XawListHighlight(demo_list,1);
+    XawListHighlight(demo_list, 0);
   else
     {
-      if (current->list_index>=1)
+      if (current->list_index >= 1)
 	{
 	  current->list_index--;
 	  XawListHighlight(demo_list, current->list_index);
@@ -415,6 +441,7 @@ prev_cb (Widget button, XtPointer client_data, XtPointer call_data)
 
   ensure_selected_item_visible (demo_list);
   current = XawListShowCurrent(demo_list);
+  XtVaSetValues(text_line, XtNstring, current->string, 0);
   demo_mode_hack (si, current->string);
 
 #else  /* HAVE_MOTIF */
@@ -547,7 +574,7 @@ pop_up_dialog_box (Widget dialog, Widget form, int where)
 }
 
 
-static void
+void
 make_screenhack_dialog (saver_info *si)
 {
   saver_screen_info *ssi = si->default_screen;
@@ -585,12 +612,13 @@ make_screenhack_dialog (saver_info *si)
 		 select_cb, (XtPointer) si);
   XtAddCallback (text_line, XmNactivateCallback, text_cb, (XtPointer) si);
 
-  for (; *hacks; hacks++)
-    {
-      XmString xmstr = XmStringCreate (*hacks, XmSTRING_DEFAULT_CHARSET);
-      XmListAddItem (demo_list, xmstr, 0);
-      XmStringFree (xmstr);
-    }
+  if (hacks)
+    for (; *hacks; hacks++)
+      {
+	XmString xmstr = XmStringCreate (*hacks, XmSTRING_DEFAULT_CHARSET);
+	XmListAddItem (demo_list, xmstr, 0);
+	XmStringFree (xmstr);
+      }
 
   /* Cause the most-recently-run hack to be selected in the list.
      Do some voodoo to make it be roughly centered in the list (really,
@@ -620,6 +648,18 @@ make_screenhack_dialog (saver_info *si)
 
 #else  /* HAVE_ATHENA */
 
+  /* Hook up the text line. */
+
+  XtAppAddActions(XtWidgetToApplicationContext(text_line),
+		  actions, XtNumber(actions));
+  XtOverrideTranslations(text_line, XtParseTranslationTable(translations));
+
+
+  /* Must realize the widget before populating the list, or the dialog
+     will be as wide as the longest string.
+  */
+  XtRealizeWidget (demo_dialog);
+
   XtVaSetValues (demo_list,
 		 XtNlist, hacks,
 		 XtNnumberStrings, si->prefs.screenhacks_count,
@@ -627,6 +667,48 @@ make_screenhack_dialog (saver_info *si)
   XtAddCallback (demo_list, XtNcallback, select_cb, si);
   if (ssi->current_hack > 0)
   XawListHighlight(demo_list, ssi->current_hack);
+
+  /* Now that we've populated the list, make sure that the list is as
+     wide as the dialog itself.
+  */
+  {
+    Widget viewport = XtParent(demo_list);
+    Widget subform = XtParent(viewport);
+    Widget box = XtNameToWidget(demo_dialog, "*box");
+    Widget label1 = XtNameToWidget(demo_dialog, "*label1");
+    Widget label2 = XtNameToWidget(demo_dialog, "*label2");
+    Dimension x=0, y=0, w=0, h=0, bw=0, w2=0;
+    XtVaGetValues(subform,
+		  XtNwidth, &w, XtNheight, &h, XtNborderWidth, &bw, 0);
+    XtVaGetValues(box, XtNwidth, &w2, 0);
+    if (w2 != w)
+      XtResizeWidget(subform, w2, h, bw);
+
+    /* Why isn't the viewport getting centered? */
+    XtVaGetValues(viewport,
+		  XtNx, &x, XtNy, &y, XtNheight, &h, XtNborderWidth, &bw, 0);
+    printf("%d %d %d %d\n", x, y, w, h);
+    XtConfigureWidget(viewport, x, y, w2-x-x, h, bw);
+
+    /* And the text line, too. */
+    XtVaGetValues(text_line,
+		  XtNwidth, &w, XtNheight, &h, XtNborderWidth, &bw, 0);
+    XtVaGetValues(viewport, XtNwidth, &w2, 0);
+    if (w2 != w)
+      XtResizeWidget(text_line, w2, h, bw);
+
+    /* And the labels too. */
+    XtVaGetValues(label1,
+		  XtNwidth, &w, XtNheight, &h, XtNborderWidth, &bw, 0);
+    if (w2 != w)
+      XtResizeWidget(label1, w2, h, bw);
+
+    XtVaGetValues(label2,
+		  XtNwidth, &w, XtNheight, &h, XtNborderWidth, &bw, 0);
+    if (w2 != w)
+      XtResizeWidget(label2, w2, h, bw);
+
+  }
 
 #endif /* HAVE_ATHENA */
 
@@ -758,7 +840,7 @@ res_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
 	timeout: %d\n\tcycle:   %d\n\tlock:    %d\n\tpasswd:  %d\n\
 	fade:    %d\n\tfade:    %d\n\tverbose: %d\n\tinstall: %d\n\
 	fade:    %d\n\tunfade:  %d\n\tlock:    %d\n",
-	     progname, p->timeout, p->cycle, p->lock_timeout,
+	     blurb(), p->timeout, p->cycle, p->lock_timeout,
 #ifdef NO_LOCKING
 	     0,
 #else
@@ -782,7 +864,7 @@ res_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
 	  if (p->verbose_p)
 	    fprintf (stderr,
 		   "%s: configuring server for saver timeout of %d seconds.\n",
-		     progname, server_timeout);
+		     blurb(), server_timeout);
 	  /* Leave all other parameters the same. */
 	  XSetScreenSaver (si->dpy, server_timeout, server_interval,
 			   prefer_blank, allow_exp);
@@ -960,7 +1042,7 @@ demo_mode (saver_info *si)
 #ifdef DEBUG_TIMERS
 	      if (p->verbose_p)
 		printf ("%s: starting notice_events_timer for 0x%X (%lu)\n",
-			progname,
+			blurb(),
 			(unsigned int) event.xcreatewindow.window,
 			p->notice_events_timeout);
 #endif /* DEBUG_TIMERS */

@@ -5,6 +5,7 @@
 "*nice:			10",
 "*lock:			False",
 "*verbose:		False",
+"*timestamp:		False",
 "*fade:			True",
 "*unfade:		False",
 "*fadeSeconds:		3",
@@ -78,7 +79,6 @@
 		vines -root						\\n\
 		kaleidescope -root					\\n\
 		xjack -root						\\n\
-		xlyap -root -randomize					\\n\
 		cynosure -root						\\n\
 		flow -root						\\n\
 		epicycle -root						\\n\
@@ -87,6 +87,7 @@
 		bsod -root						\\n\
 		crystal -root						\\n\
 		discrete -root						\\n\
+		kumppa -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -180,12 +181,14 @@
 "*resources_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "XScreenSaver.demo_dialog*List.font: \
 				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
-"XScreenSaver.passwd_dialog*passwd_form.value*font:	*nil*",
+"XScreenSaver.demo_dialog*Text*font: \
+				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "XScreenSaver.demo_dialog*foreground:			#000000",
 "XScreenSaver.demo_dialog*background:			#E5E5E5",
 "XScreenSaver.demo_dialog*List.background:		#FFFFFF",
 "XScreenSaver.demo_dialog*Scrollbar.background:		#D9D9D9",
 "XScreenSaver.demo_dialog*Command.background:		#D9D9D9",
+"XScreenSaver.demo_dialog*Text*background:		#FFFFFF",
 "XScreenSaver.resources_dialog*foreground:		#000000",
 "XScreenSaver.resources_dialog*background:		#E5E5E5",
 "XScreenSaver.resources_dialog*Command.background:	#D9D9D9",
@@ -199,7 +202,6 @@
 "XScreenSaver.passwd_dialog*Text*background:		#FFFFFF",
 "XScreenSaver.passwd_dialog*roger.foreground:		#CD0000",
 "XScreenSaver.passwd_dialog*roger.background:		#FFFFFF",
-"*demo_dialog*viewport.width:			400",
 "*demo_dialog*viewport.height:			200",
 "*Form.borderWidth:				0",
 "*Box.borderWidth:				0",
@@ -210,6 +212,8 @@
 "*demo_dialog*edit.label:			Preferences",
 "*demo_dialog*done.label:			Exit Demo Mode",
 "*demo_dialog*restart.label:			Reinitialize",
+"XScreenSaver.demo_dialog*Command.internalWidth:  10",
+"XScreenSaver.demo_dialog*Command.internalHeight: 4",
 "*resources_dialog*timeout.label:		Saver Timeout:",
 "*resources_dialog*cycle.label:			Cycle Timeout:",
 "*resources_dialog*fade.label:			Fade Duration:",
@@ -229,9 +233,10 @@
 "*passwd_dialog*label3.label:		Please type %s's password to unlock it.",
 "*passwd_dialog*ok.label:			OK",
 "*passwd_dialog*cancel.label:			Cancel",
-"*passwd_dialog*passwd_form*label.label:		Enter password:",
-"*passwd_dialog*Dialog.label:			Enter password:",
+"*passwd_dialog*passwd_form*label.label:		",
+"*passwd_dialog*Dialog.label:			",
 "*passwd_dialog*passwd_form*Text.width:		200",
+"*passwd_dialog*passwd_form.borderWidth:		0",
 "*passwd_dialog*roger.width:			150",
 "*passwd_dialog*roger.height:			150",
 "*passwd_dialog*roger.borderWidth:		1",

@@ -373,8 +373,9 @@ has_writable_cells (Screen *screen, Visual *visual)
 }
 
 void
-describe_visual (FILE *f, Screen *screen, Visual *visual)
+describe_visual (FILE *f, Screen *screen, Visual *visual, Bool private_cmap_p)
 {
+  char n[10];
   Display *dpy = DisplayOfScreen (screen);
   XVisualInfo vi_in, *vi_out;
   int out_count;
@@ -383,7 +384,12 @@ describe_visual (FILE *f, Screen *screen, Visual *visual)
   vi_out = XGetVisualInfo (dpy, (VisualScreenMask | VisualIDMask),
 			   &vi_in, &out_count);
   if (! vi_out) abort ();
-  fprintf (f, "0x%02x (%s depth: %2d, cmap: %3d)\n",
+  if (private_cmap_p)
+    sprintf(n, "%3d", vi_out->colormap_size);
+  else
+    strcpy(n, "default");
+
+  fprintf (f, "0x%02x (%s depth: %2d, cmap: %s)\n",
 	   (unsigned int) vi_out->visualid,
 	   (vi_out->class == StaticGray  ? "StaticGray, " :
 	    vi_out->class == StaticColor ? "StaticColor," :
@@ -392,7 +398,7 @@ describe_visual (FILE *f, Screen *screen, Visual *visual)
 	    vi_out->class == PseudoColor ? "PseudoColor," :
 	    vi_out->class == DirectColor ? "DirectColor," :
 					   "UNKNOWN:    "),
-	   vi_out->depth, vi_out->colormap_size /*, vi_out->bits_per_rgb*/);
+	   vi_out->depth, n);
   XFree ((char *) vi_out);
 }
 

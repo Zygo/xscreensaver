@@ -93,7 +93,7 @@ nice_subproc (int nice_level)
     if (nice (n) == -1 && errno != 0)
       {
 	char buf [512];
-	sprintf (buf, "%s: nice(%d) failed", progname, n);
+	sprintf (buf, "%s: nice(%d) failed", blurb(), n);
 	perror (buf);
     }
   }
@@ -102,13 +102,13 @@ nice_subproc (int nice_level)
     {
       char buf [512];
       sprintf (buf, "%s: setpriority(PRIO_PROCESS, %lu, %d) failed",
-	       progname, (unsigned long) getpid(), nice_level);
+	       blurb(), (unsigned long) getpid(), nice_level);
       perror (buf);
     }
 #else
   fprintf (stderr,
 	   "%s: don't know how to change process priority on this system.\n",
-	   progname);
+	   blurb());
 
 #endif
 }
@@ -133,7 +133,7 @@ exec_simple_command (const char *command)
 
   {
     char buf [512];
-    sprintf (buf, "%s: could not execute \"%s\"", progname, av[0]);
+    sprintf (buf, "%s: could not execute \"%s\"", blurb(), av[0]);
     perror (buf);
 
     if (errno == ENOENT &&
@@ -191,7 +191,7 @@ exec_complex_command (const char *shell, const char *command)
 
   {
     char buf [512];
-    sprintf (buf, "%s: execvp(\"%s\") failed", progname, av[0]);
+    sprintf (buf, "%s: execvp(\"%s\") failed", blurb(), av[0]);
     perror (buf);
     fflush(stderr);
     fflush(stdout);
@@ -257,7 +257,7 @@ exec_screenhack (saver_info *si, const char *command)
 
   if (p->verbose_p)
     printf ("%s: spawning \"%s\" in pid %lu%s.\n",
-	    progname, command, (unsigned long) getpid (),
+	    blurb(), command, (unsigned long) getpid (),
 	    (hairy_p ? " (via shell)" : ""));
 
   if (hairy_p)
@@ -270,7 +270,7 @@ exec_screenhack (saver_info *si, const char *command)
 
 #else /* VMS */
   if (p->verbose_p)
-    printf ("%s: spawning \"%s\" in pid %lu.\n", progname, command, getpid());
+    printf ("%s: spawning \"%s\" in pid %lu.\n", blurb(), command, getpid());
   exec_vms_command (command);
 #endif /* VMS */
 
@@ -306,7 +306,7 @@ void
 show_job_list (void)
 {
   struct screenhack_job *job;
-  fprintf(stderr, "%s: job list:\n", progname);
+  fprintf(stderr, "%s: job list:\n", blurb());
   for (job = jobs; job; job = job->next)
     fprintf (stderr, "  %5ld: (%s) %s\n",
 	     (long) job->pid,
@@ -471,7 +471,7 @@ kill_job (saver_info *si, pid_t pid, int signal)
     {
       if (p->verbose_p)
 	fprintf (stderr, "%s: no child %ld to signal!\n",
-		 progname, (long) pid);
+		 blurb(), (long) pid);
       goto DONE;
     }
 
@@ -487,14 +487,14 @@ kill_job (saver_info *si, pid_t pid, int signal)
 
 #ifdef SIGSTOP
   if (p->verbose_p)
-    fprintf (stderr, "%s: %s pid %lu.\n", progname,
+    fprintf (stderr, "%s: %s pid %lu.\n", blurb(),
 	     (signal == SIGTERM ? "killing" :
 	      signal == SIGSTOP ? "suspending" :
 	      signal == SIGCONT ? "resuming" : "signalling"),
 	     (unsigned long) job->pid);
 #else  /* !SIGSTOP */
   if (p->verbose_p)
-    fprintf (stderr, "%s: %s pid %lu.\n", progname, "killing",
+    fprintf (stderr, "%s: %s pid %lu.\n", blurb(), "killing",
 	     (unsigned long) job->pid);
 #endif /* !SIGSTOP */
 
@@ -504,12 +504,12 @@ kill_job (saver_info *si, pid_t pid, int signal)
     {
       if (errno == ESRCH)
 	fprintf (stderr, "%s: child process %lu (%s) was already dead.\n",
-		 progname, job->pid, job->name);
+		 blurb(), job->pid, job->name);
       else
 	{
 	  char buf [1024];
 	  sprintf (buf, "%s: couldn't kill child process %lu (%s)",
-		   progname, job->pid, job->name);
+		   blurb(), job->pid, job->name);
 	  perror (buf);
 	}
     }
@@ -533,7 +533,7 @@ sigchld_handler (int sig)
   saver_info *si = global_si_kludge;	/* I hate C so much... */
 
   if (si->prefs.debug_p)
-    fprintf(stderr, "%s: got SIGCHLD%s\n", progname,
+    fprintf(stderr, "%s: got SIGCHLD%s\n", blurb(),
 	    (block_sigchld_handler ? " (blocked)" : ""));
 
   if (block_sigchld_handler < 0)
@@ -565,10 +565,10 @@ await_dying_children (saver_info *si)
       if (si->prefs.debug_p)
 	{
 	  if (kid < 0 && errno)
-	    fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", progname,
+	    fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", blurb(),
 		     (long) kid, errno);
 	  else
-	    fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", progname,
+	    fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", blurb(),
 		     (long) kid);
 	}
 
@@ -610,10 +610,10 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 	   (p->verbose_p || job->status != job_killed)))
 	fprintf (stderr,
 		 "%s: child pid %lu (%s) exited abnormally (code %d).\n",
-		 progname, (unsigned long) kid, name, exit_status);
+		 blurb(), (unsigned long) kid, name, exit_status);
       else if (p->verbose_p)
 	printf ("%s: child pid %lu (%s) exited normally.\n",
-		progname, (unsigned long) kid, name);
+		blurb(), (unsigned long) kid, name);
 
       if (job)
 	job->status = job_dead;
@@ -625,7 +625,7 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 	  job->status != job_killed ||
 	  WTERMSIG (wait_status) != SIGTERM)
 	fprintf (stderr, "%s: child pid %lu (%s) terminated with %s.\n",
-		 progname, (unsigned long) kid, name,
+		 blurb(), (unsigned long) kid, name,
 		 signal_name (WTERMSIG(wait_status)));
 
       if (job)
@@ -635,7 +635,7 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
     {
       if (p->verbose_p)
 	fprintf (stderr, "%s: child pid %lu (%s) stopped with %s.\n",
-		 progname, (unsigned long) kid, name,
+		 blurb(), (unsigned long) kid, name,
 		 signal_name (WSTOPSIG (wait_status)));
 
       if (job)
@@ -644,7 +644,7 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
   else
     {
       fprintf (stderr, "%s: child pid %lu (%s) died in a mysterious way!",
-	       progname, (unsigned long) kid, name);
+	       blurb(), (unsigned long) kid, name);
       if (job)
 	job->status = job_dead;
     }
@@ -684,7 +684,7 @@ init_sigchld (void)
       if (sigaction(SIGCHLD, &action, &old) < 0)
 	{
 	  char buf [255];
-	  sprintf (buf, "%s: couldn't catch SIGCHLD", progname);
+	  sprintf (buf, "%s: couldn't catch SIGCHLD", blurb());
 	  perror (buf);
 	}
       sigchld_initialized_p = True;
@@ -695,7 +695,7 @@ init_sigchld (void)
   if (((long) signal (SIGCHLD, sigchld_handler)) == -1L)
     {
       char buf [255];
-      sprintf (buf, "%s: couldn't catch SIGCHLD", progname);
+      sprintf (buf, "%s: couldn't catch SIGCHLD", blurb());
       perror (buf);
     }
 # endif /* !HAVE_SIGACTION */
@@ -734,7 +734,7 @@ select_visual_of_hack (saver_screen_info *ssi, const char *hack)
 	       (si->demo_mode_p
 		? "%s: warning, no \"%s\" visual for \"%s\".\n"
 		: "%s: no \"%s\" visual; skipping \"%s\".\n"),
-	       progname, (vis ? vis : "???"), in);
+	       blurb(), (vis ? vis : "???"), in);
     }
 
   return selected;
@@ -794,7 +794,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 		  if (p->verbose_p)
 		    fprintf(stderr,
 			    "%s: no suitable visuals for these programs.\n",
-			    progname);
+			    blurb());
 		  return;
 		}
 	      else
@@ -823,7 +823,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
       switch ((int) (forked = fork ()))
 	{
 	case -1:
-	  sprintf (buf, "%s: couldn't fork", progname);
+	  sprintf (buf, "%s: couldn't fork", blurb());
 	  perror (buf);
 	  restore_real_vroot (si);
 	  saver_exit (si, 1);
@@ -854,7 +854,7 @@ spawn_screenhack (saver_info *si, Bool first_time_p)
     {
       if (si->prefs.verbose_p)
 	printf ("%s: server reports that monitor has powered down; "
-		"not launching a new hack.\n", progname);
+		"not launching a new hack.\n", blurb());
       return;
     }
 
@@ -955,7 +955,7 @@ restart_process (saver_info *si)
   execvp (saved_argv [0], saved_argv);	/* shouldn't return */
   {
     char buf [512];
-    sprintf (buf, "%s: could not restart process", progname);
+    sprintf (buf, "%s: could not restart process", blurb());
     perror(buf);
     fflush(stderr);
   }
@@ -1150,12 +1150,12 @@ hack_uid_warn (saver_info *si)
   else if (hack_uid_errno == 0)
     {
       if (p->verbose_p)
-	printf ("%s: %s\n", progname, hack_uid_error);
+	printf ("%s: %s\n", blurb(), hack_uid_error);
     }
   else
     {
       char buf [255];
-      sprintf (buf, "%s: %s", progname, hack_uid_error);
+      sprintf (buf, "%s: %s", blurb(), hack_uid_error);
       if (hack_uid_errno == -1)
 	fprintf (stderr, "%s\n", buf);
       else

@@ -20,7 +20,7 @@ extern int visual_class (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int screen_number (Screen *);
 extern Visual *find_similar_visual (Screen *, Visual *old);
-extern void describe_visual (FILE *f, Screen *, Visual *);
+extern void describe_visual (FILE *f, Screen *, Visual *, Bool private_cmap_p);
 extern Visual *get_overlay_visual (Screen *, unsigned long *pixel_return);
 extern Bool has_writable_cells (Screen *screen, Visual *visual);
 

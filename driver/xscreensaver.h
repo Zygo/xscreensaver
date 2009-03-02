@@ -37,10 +37,11 @@ typedef struct saver_screen_info saver_screen_info;
    command line, the resource database, or entered through a dialog box.
  */
 struct saver_preferences {
-  Bool verbose_p;
-  Bool lock_p;			/* whether to lock as well as save */
+  Bool verbose_p;		/* whether to print out lots of status info */
+  Bool timestamp_p;		/* whether to mark messages with a timestamp */
+  Bool debug_p;			/* pay no mind to the man behind the curtain */
 
-  Bool debug_p;
+  Bool lock_p;			/* whether to lock as well as save */
   Bool fade_p;			/* whether to fade to black */
   Bool unfade_p;		/* whether to fade from black */
   int fade_seconds;		/* how long that should take */
@@ -375,6 +376,7 @@ extern void clear_stderr (saver_screen_info *ssi);
    misc
    ======================================================================= */
 
+extern const char *blurb (void);
 extern void save_argv (int argc, char **argv);
 extern void saver_exit (saver_info *si, int status);
 extern void restart_process (saver_info *si);

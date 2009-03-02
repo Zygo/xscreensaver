@@ -145,6 +145,8 @@ window, which are pointed at by the screensaver's default resource settings.
    bsod		- Simulates the system crashes of various other OSes.
    crystal	- A kaleidoscope of moving polygons.
    discrete	- Various fractal-ish "discrete map" forms.
+   distort	- A moving lens wanders around the screen, magnifying it.
+   kumppa	- Spinning 3D color fields, kinda.
    gears	- Draws interlocking rotating gears (GLX only.)
    morph3d	- Draws shiny shape-changing 3d forms (GLX only.)
    superquadrics - More shiny shape-changing 3d forms (GLX only.)
@@ -187,6 +189,22 @@ http://people.netscape.com/jwz/xscreensaver/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 2.23:   * Tweaked the order of the -L options again.
+		      * Cleaned up configure's --help message.
+		      * Added `kumppa' hack.
+		      * Smarter maze-solving algorithm in `maze'.
+		      * Took `xlyap' out of the default list of hacks, since
+			it's just incredibly buggy (and slow.)  Maybe someday
+			someone will fix it...
+		      * Added `distort' hack, but didn't add it to the default
+			list (yet) because it's still too slow.
+		      * Made the Athena demo dialog look more like the Motif
+			version; it has a text-entry field now, too.
+		      * Made the Athena password dialog echo asterisks, like
+			Motif does, instead of using a flyspeck font.
+		      * Some random configure tweaks.
+		      * Added a `timestamp' resource that makes the `-verbose'
+			messages include the time at which they were printed.
 Changes since 2.22:   * The fix for SGI's "scheme" nonsense broke things, and
 			let the user's "*background" resource show through.
 			Fixed it in a different way.

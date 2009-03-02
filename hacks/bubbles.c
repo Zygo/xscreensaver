@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.14 1998/06/04 22:55:09 jwz Exp $*/
+/*$Id: bubbles.c,v 1.15 1998/06/21 23:49:25 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol

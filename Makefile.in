@@ -53,8 +53,10 @@ dist: tar
 
 # This really makes me sick...
 tar:
-	@$(MAKE) distdepend ;						    \
+	@								    \
   sh config.status ;							    \
+  $(MAKE) hack_configure ;						    \
+  $(MAKE) distdepend ;							    \
   sh xscreensaver.lsm.sh > xscreensaver.lsm.$$$$ ;			    \
   mv xscreensaver.lsm.$$$$ xscreensaver.lsm ;				    \
   NAME=`sed -n								    \
@@ -74,3 +76,46 @@ tar:
     `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `	    \
    | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;			    \
   rm $$NAME
+
+
+# This also makes me sick...
+# autoconf generates a configure script that begins with a very hard to read,
+# nearly impossible to customize --help blurb.  This horrid set of regexps
+# go through and clean up the help text, by inserting whitespace and ripping
+# out options we don't use.  Odds are good that this will fail with any version
+# of autoconf other than 2.12.
+#
+hack_configure::
+	autoconf
+	@TMP=configure.$$$$ ;						     \
+	echo "munging configure's --help message..." ;			     \
+	( perl -e '							     \
+		my $$file="";						     \
+		while (<>) { $$file .= $$_; }				     \
+		$$_ = $$file;						     \
+									     \
+		s/^(Configuration:)$$/\n$$1\n/m;			     \
+		s/^(Directory and file names:)$$/\n$$1\n/m;		     \
+		s/^  --sbindir=.*\n//m;					     \
+		s/^  --libexecdir.*\n//m;				     \
+		s/^  --datadir.*\n.*\n//m;				     \
+		s/^  --sysconfdir.*\n//m;				     \
+		s/^  --sharedstatedir.*\n.*\n//m;			     \
+		s/^  --localstatedir.*\n//m;				     \
+		s/^  --infodir.*\n//m;					     \
+		s/^(Host type:)$$/\n$$1\n/m;				     \
+		s/\nFeatures and packages:\n.*library files are in DIR\n/\n/s;\
+		s/--enable and --with options recognized://m;		     \
+		s/\n  --with-x .*?(["\n])/$$1/s;			     \
+		s/\n(Installation options:\n)/$$1/s;			     \
+		s/\n(X Server Extension options:\n)/$$1/s;		     \
+									     \
+		s/^  --oldincludedir=.*$$/ \
+ --x-includes=DIR        X include files are in DIR\n \
+ --x-libraries=DIR       X library files are in DIR/m; \
+									     \
+		print;'							     \
+	< configure							     \
+	> $$TMP &&							     \
+	cat $$TMP > configure ) ;					     \
+	rm -f $$TMP

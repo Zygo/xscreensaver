@@ -34,6 +34,17 @@ The color of the path.
 .B \-dead\-color \fIcolor\fP
 The color of the failed path (it is also stippled with a 50% pattern.)
 .TP 8
+.B \-skip\-color \fIcolor\fP
+The maze solver will choose to not go down a path if it can "see" (in a
+straight line) that it is a dead end.  This is the color to use for paths
+that are skipped for this reason.
+.TP 8
+.B \-surround\-color \fIcolor\fP
+If the maze solver ever completely encloses an area within the maze, then
+it knows that the exit is not in there (and in fact the interior of that
+area might not even be reachable.)  It will mark out those cells using this
+color.
+.TP 8
 .B \-solve\-delay \fIinteger\fP
 Delay (in microseconds) between each step of the solution path.
 Default 5000, or about 1/200th second.
@@ -121,6 +132,7 @@ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .SH AUTHOR(s)
 .nf
+Zack Weinberg [ Smarter maze-solver ] zack@rabi.phys.columbia.edu
 Johannes Keukelaar [ Generators 1 and 2 ] johannes@nada.kth.se 
   Royal Institute of Technology, Stockholm, Sweden
 Jim Randell	[ XScreenSaver version ] jmr@mddjmr.fc.hp.com

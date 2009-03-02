@@ -1,6 +1,35 @@
 /******************************************************************************
  * [ maze ] ...
  *
+ * modified:  [ 6-28-98 ]  Zack Weinberg <zack@rabi.phys.columbia.edu>
+ *
+ *              Made the maze-solver somewhat more intelligent.  There are
+ *              three optimizations:
+ *
+ *              - Straight-line lookahead: the solver does not enter dead-end
+ *                corridors.  This is a win with all maze generators.
+ *
+ *              - First order direction choice: the solver knows where the
+ *                exit is in relation to itself, and will try paths leading in
+ *                that direction first. This is a major win on maze generator 1
+ *                which tends to offer direct routes to the exit.
+ *
+ *              - Dead region elimination: the solver already has a map of
+ *                all squares visited.  Whenever it starts to backtrack, it
+ *                consults this map and marks off all squares that cannot be
+ *                reached from the exit without crossing a square already
+ *                visited.  Those squares can never contribute to the path to
+ *                the exit, so it doesn't bother checking them.  This helps a
+ *                lot with maze generator 2 and somewhat less with generator 1.
+ *
+ *              Further improvements would require knowledge of the wall map
+ *              as well as the position of the exit and the squares visited.
+ *              I would consider that to be cheating.  Generator 0 makes
+ *              mazes which are remarkably difficult to solve mechanically --
+ *              even with these optimizations the solver generally must visit
+ *              at least two-thirds of the squares.  This is partially
+ *              because generator 0's mazes have longer paths to the exit.
+ *
  * modified:  [ 4-10-97 ]  Johannes Keukelaar <johannes@nada.kth.se>
  *              Added multiple maze creators. Robustified solver.
  *              Added bridge option.
@@ -69,10 +98,16 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 
 #define MOVE_LIST_SIZE  (MAX_MAZE_SIZE_X * MAX_MAZE_SIZE_Y)
 
-#define WALL_TOP	0x8000
-#define WALL_RIGHT	0x4000
-#define WALL_BOTTOM	0x2000
-#define WALL_LEFT	0x1000
+#define NOT_DEAD	0x8000
+#define SOLVER_VISIT    0x4000
+#define START_SQUARE	0x2000
+#define END_SQUARE	0x1000
+
+#define WALL_TOP	0x8
+#define WALL_RIGHT	0x4
+#define WALL_BOTTOM	0x2
+#define WALL_LEFT	0x1
+#define WALL_ANY	0xF
 
 #define DOOR_IN_TOP	0x800
 #define DOOR_IN_RIGHT	0x400
@@ -85,15 +120,13 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 #define DOOR_OUT_BOTTOM	0x20
 #define DOOR_OUT_LEFT	0x10
 
-#define SOLVER_VISIT    0x4
-#define START_SQUARE	0x2
-#define END_SQUARE	0x1
 
 #define	border_x        (0)
 #define	border_y        (0)
 
 #define	get_random(x)	(random() % (x))
-  
+
+
 static int logo_x, logo_y;
 
 #ifdef XROGER
@@ -111,7 +144,7 @@ static unsigned short maze[MAX_MAZE_SIZE_X][MAX_MAZE_SIZE_Y];
 static struct {
   unsigned char x;
   unsigned char y;
-  unsigned char dir;
+  unsigned char dir, ways;
 } move_list[MOVE_LIST_SIZE], save_path[MOVE_LIST_SIZE], path[MOVE_LIST_SIZE];
 
 static int maze_size_x, maze_size_y;
@@ -122,7 +155,7 @@ static int bw;
 
 static Display	*dpy;
 static Window	win;
-static GC	gc, cgc, tgc, logo_gc, erase_gc;
+static GC	gc, cgc, tgc, sgc, ugc, logo_gc, erase_gc;
 static Pixmap	logo_map;
 
 static int	x = 0, y = 0, restart = 0, stop = 1, state = 1, max_length;
@@ -1094,8 +1127,8 @@ draw_maze_border (void)                         /* draw the maze outline */
 		  border_x + 3 + grid_width * logo_x,
 		  border_y + 3 + grid_height * logo_y, 1);
     }
-  draw_solid_square (start_x, start_y, start_dir, tgc);
-  draw_solid_square (end_x, end_y, end_dir, tgc);
+  draw_solid_square (start_x, start_y, WALL_TOP >> start_dir, tgc);
+  draw_solid_square (end_x, end_y, WALL_TOP >> end_dir, tgc);
 }
 
 
@@ -1210,84 +1243,268 @@ draw_solid_square(int i, int j,          /* draw a solid square in a square */
 		  int dir, GC gc)
 {
   switch (dir) {
-  case 0: XFillRectangle(dpy, win, gc,
-			 border_x + bw + grid_width * i, 
-			 border_y - bw + grid_height * j, 
-			 grid_width - (bw+bw), grid_height);
-    break;
-  case 1: XFillRectangle(dpy, win, gc,
-			 border_x + bw + grid_width * i, 
-			 border_y + bw + grid_height * j, 
-			 grid_width, grid_height - (bw+bw));
-    break;
-  case 2: XFillRectangle(dpy, win, gc,
-			 border_x + bw + grid_width * i, 
-			 border_y + bw + grid_height * j, 
-			 grid_width - (bw+bw), grid_height);
-    break;
-  case 3: XFillRectangle(dpy, win, gc,
-			 border_x - bw + grid_width * i, 
-			 border_y + bw + grid_height * j, 
-			 grid_width, grid_height - (bw+bw));
-    break;
+  case WALL_TOP:
+      XFillRectangle(dpy, win, gc,
+		     border_x + bw + grid_width * i, 
+		     border_y - bw + grid_height * j, 
+		     grid_width - (bw+bw), grid_height);
+      break;
+  case WALL_RIGHT:
+      XFillRectangle(dpy, win, gc,
+		     border_x + bw + grid_width * i, 
+		     border_y + bw + grid_height * j, 
+		     grid_width, grid_height - (bw+bw));
+      break;
+  case WALL_BOTTOM:
+      XFillRectangle(dpy, win, gc,
+		     border_x + bw + grid_width * i, 
+		     border_y + bw + grid_height * j, 
+		     grid_width - (bw+bw), grid_height);
+      break;
+  case WALL_LEFT:
+      XFillRectangle(dpy, win, gc,
+		     border_x - bw + grid_width * i, 
+		     border_y + bw + grid_height * j, 
+		     grid_width, grid_height - (bw+bw));
+      break;
   }
   XSync (dpy, False);
 }
 
+int
+longdeadend_p(int x1, int y1, int x2, int y2, int endwall)
+{
+    int dx = x2 - x1, dy = y2 - y1;
+    int sidewalls;
+
+    sidewalls = endwall | (endwall >> 2 | endwall << 2);
+    sidewalls = ~sidewalls & WALL_ANY;
+
+    while((maze[x2][y2] & WALL_ANY) == sidewalls)
+    {
+	x2 += dx;
+	y2 += dy;
+    }
+
+    if((maze[x2][y2] & WALL_ANY) == (sidewalls | endwall))
+    {
+	endwall = (endwall >> 2 | endwall << 2) & WALL_ANY;
+	while(x1 != x2 || y1 != y2)
+	{
+	    x1 += dx;
+	    y1 += dy;
+	    draw_solid_square(x1, y1, endwall, sgc);
+	    maze[x1][y1] |= SOLVER_VISIT;
+	}
+	return 1;
+    }
+    else
+	return 0;
+}
+
+/* Find all dead regions -- areas from which the goal cannot be reached --
+   and mark them visited. */
+void
+find_dead_regions(void)
+{
+    int x, y, flipped;
+
+    /* Find all not SOLVER_VISIT squares bordering NOT_DEAD squares
+       and mark them NOT_DEAD also.  Repeat until no more such squares. */
+    maze[start_x][start_y] |= NOT_DEAD;
+    
+    do
+    {
+	flipped = 0;
+	for(x = 0; x < maze_size_x; x++)
+	    for(y = 0; y < maze_size_y; y++)
+		if(!(maze[x][y] & (SOLVER_VISIT | NOT_DEAD))
+		   && (   (x && (maze[x-1][y] & NOT_DEAD))
+		       || (y && (maze[x][y-1] & NOT_DEAD))))
+		{
+		    flipped = 1;
+		    maze[x][y] |= NOT_DEAD;
+		}
+	for(x = maze_size_x-1; x >= 0; x--)
+	    for(y = maze_size_y-1; y >= 0; y--)
+		if(!(maze[x][y] & (SOLVER_VISIT | NOT_DEAD))
+		   && (   (x != maze_size_x-1 && (maze[x+1][y] & NOT_DEAD))
+		       || (y != maze_size_y-1 && (maze[x][y+1] & NOT_DEAD))))
+		{
+		    flipped = 1;
+		    maze[x][y] |= NOT_DEAD;
+		}
+    }
+    while(flipped);
+
+    for (y = 0; y < maze_size_y; y++)
+      for (x = 0; x < maze_size_x; x++)
+      {
+	if (maze[x][y] & NOT_DEAD)
+	  maze[x][y] &= ~NOT_DEAD;
+	else if (!(maze[x][y] & SOLVER_VISIT))
+	{
+	  maze[x][y] |= SOLVER_VISIT;
+	  if((x < logo_x || x > logo_x + logo_width / grid_width) ||
+	     (y < logo_y || y > logo_y + logo_height / grid_height))
+	  {
+	    if (!maze[x][y] & WALL_ANY)
+	      XFillRectangle(dpy, win, ugc,
+			     border_x + bw + grid_width * x,
+			     border_y + bw + grid_height * y,
+			     grid_width - (bw+bw), grid_height - (bw+bw));
+	    else
+	    {
+	      if (! (maze[x][y] & WALL_LEFT))
+		draw_solid_square(x, y, WALL_LEFT, ugc);
+	      if (! (maze[x][y] & WALL_RIGHT))
+		draw_solid_square(x, y, WALL_RIGHT, ugc);
+	      if (! (maze[x][y] & WALL_TOP))
+		draw_solid_square(x, y, WALL_TOP, ugc);
+	      if (! (maze[x][y] & WALL_BOTTOM))
+		draw_solid_square(x, y, WALL_BOTTOM, ugc);
+	    }
+	  }
+	}
+      }
+    XSync(dpy, 0);
+}
 
 static void
 solve_maze (void)                     /* solve it with graphical feedback */
 {
-  int i;
-  int step_x[4] = { 0, 1, 0, -1 };
-  int step_y[4] = { -1, 0, 1, 0 };
-    
-  /* plug up the surrounding wall */
-  maze[start_x][start_y] |= (WALL_TOP >> start_dir);
-  maze[end_x][end_y] |= (WALL_TOP >> end_dir);
-  
-  /* initialize search path */
-  i = 0;
-  path[i].x = end_x;
-  path[i].y = end_y;
-  path[i].dir = -1;
-  maze[end_x][end_y] |= SOLVER_VISIT;
-  
-  /* do it */
-  while (1) {
-    if ( ++path[i].dir >= 4 ) {
-      XFillRectangle(dpy, win, cgc,
-		     border_x + bw + grid_width * (int)(path[i].x),
-		     border_y + bw + grid_height * (int)(path[i].y),
-		     grid_width - (bw+bw), grid_height - (bw+bw));
-      i--;
-      if(i<0) /* Can't solve this maze. */
-	{
-	  printf("Unsolvable maze.\n");
-	  return;
-	}
-      draw_solid_square( (int)(path[i].x), (int)(path[i].y), 
-			(int)(path[i].dir), cgc);
-    }
-    else if ( (! (maze[path[i].x][path[i].y] & (WALL_TOP >> path[i].dir))) && 
-	     (!( maze[path[i].x+step_x[path[i].dir]]
-	            [path[i].y+step_y[path[i].dir]]&SOLVER_VISIT)) ) {
-      path[i+1].x = path[i].x+step_x[path[i].dir];
-      path[i+1].y = path[i].y+step_y[path[i].dir];
-      path[i+1].dir = -1;
-      draw_solid_square(path[i].x, path[i].y, path[i].dir, tgc);
-      i++;
-      maze[path[i].x][path[i].y] |= SOLVER_VISIT;
-      if ( maze[path[i].x][path[i].y] & START_SQUARE ) {
-	return;
-      }
-    } 
-    if (check_events()) return;
-    /* Abort solve on expose - cheapo repaint strategy */
-    if (solve_delay) usleep (solve_delay);
-  }
-} 
+    int i, dir, from, x, y, ways, bt;
 
+    /* plug up the surrounding wall */
+    maze[end_x][end_y] |= (WALL_TOP >> end_dir);
+    
+    /* initialize search path */
+    i = 0;
+    path[i].x = end_x;
+    path[i].y = end_y;
+    path[i].dir = 0;
+    maze[end_x][end_y] |= SOLVER_VISIT;
+    
+    /* do it */
+    while (1)
+    {
+	if ( maze[path[i].x][path[i].y] & START_SQUARE )
+	    return;
+
+	/* Abort solve on expose - cheapo repaint strategy */
+	if (check_events()) return;
+	
+	if (solve_delay) usleep (solve_delay);
+	
+	if(!path[i].dir)
+	{
+	    ways = 0;
+	    /* First visit this square.  Which adjacent squares are open? */
+	    for(dir = WALL_TOP; dir & WALL_ANY; dir >>= 1)
+	    {
+		if(maze[path[i].x][path[i].y] & dir)
+		    continue;
+		
+		y = path[i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
+		x = path[i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
+		
+		if(maze[x][y] & SOLVER_VISIT)
+		    continue;
+		
+		from = (dir << 2 & WALL_ANY) | (dir >> 2 & WALL_ANY);
+		/* don't enter obvious dead ends */
+		if(((maze[x][y] & WALL_ANY) | from) != WALL_ANY)
+		{
+		    if(!longdeadend_p(path[i].x, path[i].y, x, y, dir))
+			ways |= dir;
+		}
+		else
+		{
+		    draw_solid_square(x, y, from, sgc);
+		    maze[x][y] |= SOLVER_VISIT;
+		}
+	    }
+	}
+	else
+	    ways = path[i].ways;
+	/* ways now has a bitmask of open paths. */
+	
+	if(!ways)
+	    goto backtrack;
+      
+	x = path[i].x - start_x;
+	y = path[i].y - start_y;
+	/* choice one */
+	if(abs(y) <= abs(x))
+	    dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+	else
+	    dir = (y > 0) ? WALL_TOP : WALL_BOTTOM;
+	
+	if(dir & ways)
+	    goto found;
+	
+	/* choice two */
+	switch(dir)
+	{
+	case WALL_LEFT:
+	case WALL_RIGHT:
+	    dir = (y > 0) ? WALL_TOP : WALL_BOTTOM; break;
+	case WALL_TOP:
+	case WALL_BOTTOM:
+	    dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+	}
+	
+	if(dir & ways)
+	    goto found;
+	
+	/* choice three */
+	
+	dir = (dir << 2 & WALL_ANY) | (dir >> 2 & WALL_ANY);
+	if(dir & ways)
+	    goto found;
+	
+	/* choice four */
+	dir = ways;
+	if(!dir)
+	    goto backtrack;
+
+    found:
+	bt = 0;
+	ways &= ~dir;  /* tried this one */
+	
+	y = path[i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
+	x = path[i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
+	
+	/* advance in direction dir */
+	path[i].dir = dir;
+	path[i].ways = ways;
+	draw_solid_square(path[i].x, path[i].y, dir, tgc);
+	
+	i++;
+	path[i].dir = 0;
+	path[i].ways = 0;
+	path[i].x = x;
+	path[i].y = y;
+	maze[x][y] |= SOLVER_VISIT;
+	continue;
+
+    backtrack:
+	if(i == 0)
+	{
+	    printf("Unsolvable maze.\n");
+	    return;
+	}
+
+	if(!bt)
+	    find_dead_regions();
+	bt = 1;
+	from = path[i-1].dir;
+	from = (from << 2 & WALL_ANY) | (from >> 2 & WALL_ANY);
+	
+	draw_solid_square(path[i].x, path[i].y, from, cgc);
+	i--;
+    }
+} 
 
 #if 0
 static void
@@ -1332,6 +1549,8 @@ char *defaults[] = {
   "*postDelay:	4000000",
   "*liveColor:	green",
   "*deadColor:	red",
+  "*skipColor:  orange",
+  "*surroundColor: slateblue",
   "*generator:  -1",
   "*maxLength:  5",
   "*syncDraw:   False",
@@ -1349,6 +1568,8 @@ XrmOptionDescRec options[] = {
   { "-post-delay",	".postDelay",	XrmoptionSepArg, 0 },
   { "-live-color",	".liveColor",	XrmoptionSepArg, 0 },
   { "-dead-color",	".deadColor",	XrmoptionSepArg, 0 },
+  { "-skip-color",	".skipColor",	XrmoptionSepArg, 0 },
+  { "-surround-color",	".surroundColor",XrmoptionSepArg, 0 },
   { "-generator",       ".generator",   XrmoptionSepArg, 0 },
   { "-max-length",      ".maxLength",   XrmoptionSepArg, 0 },
   { "-bridge",          ".bridge",      XrmoptionNoArg, "True" },
@@ -1366,7 +1587,7 @@ screenhack(Display *display, Window window)
   Pixmap gray;
   int size, root, generator, this_gen;
   XWindowAttributes xgwa;
-  unsigned long bg, fg, pfg, pbg, lfg;
+  unsigned long bg, fg, pfg, pbg, lfg, sfg, ufg;
 
   size = get_integer_resource ("gridSize", "Dimension");
   root = get_boolean_resource("root", "Boolean");
@@ -1393,9 +1614,11 @@ screenhack(Display *display, Window window)
   if (! root)
     XSelectInput (dpy, win, ExposureMask|ButtonPressMask|StructureNotifyMask);
   
-  gc = XCreateGC(dpy, win, 0, 0);
+  gc  = XCreateGC(dpy, win, 0, 0);
   cgc = XCreateGC(dpy, win, 0, 0);
-  tgc = XCreateGC(dpy,win,0,0);
+  tgc = XCreateGC(dpy, win, 0, 0);
+  sgc = XCreateGC(dpy, win, 0, 0);
+  ugc = XCreateGC(dpy, win, 0, 0);
   logo_gc = XCreateGC(dpy, win, 0, 0);
   erase_gc = XCreateGC(dpy, win, 0, 0);
   
@@ -1406,6 +1629,8 @@ screenhack(Display *display, Window window)
   lfg = get_pixel_resource ("logoColor", "Foreground", dpy, xgwa.colormap);
   pfg = get_pixel_resource ("liveColor", "Foreground", dpy, xgwa.colormap);
   pbg = get_pixel_resource ("deadColor", "Foreground", dpy, xgwa.colormap);
+  sfg = get_pixel_resource ("skipColor", "Foreground", dpy, xgwa.colormap);
+  ufg = get_pixel_resource ("surroundColor", "Foreground", dpy, xgwa.colormap);
   if (mono_p) lfg = pfg = fg;
 
   if (lfg == bg)
@@ -1419,6 +1644,10 @@ screenhack(Display *display, Window window)
   XSetBackground (dpy, cgc, bg);
   XSetForeground (dpy, tgc, pfg);
   XSetBackground (dpy, tgc, bg);
+  XSetForeground (dpy, sgc, sfg);
+  XSetBackground (dpy, sgc, bg);
+  XSetForeground (dpy, ugc, ufg);
+  XSetBackground (dpy, ugc, bg);
   XSetForeground (dpy, logo_gc, lfg);
   XSetBackground (dpy, logo_gc, bg);
   XSetForeground (dpy, erase_gc, bg);
@@ -1426,6 +1655,10 @@ screenhack(Display *display, Window window)
 
   XSetStipple (dpy, cgc, gray);
   XSetFillStyle (dpy, cgc, FillOpaqueStippled);
+  XSetStipple (dpy, sgc, gray);
+  XSetFillStyle (dpy, sgc, FillOpaqueStippled);
+  XSetStipple (dpy, ugc, gray);
+  XSetFillStyle (dpy, ugc, FillOpaqueStippled);
   
 #ifdef XROGER
   {

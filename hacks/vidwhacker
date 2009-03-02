@@ -308,8 +308,11 @@ main() {
       if [ -s $tmp_ppm2 ]; then
         if [ "$verbose" = true ]; then
           echo "launching xv $xvargs $tmp_ppm2" >&2
+	  ls -lF $tmp_ppm2
         fi
-        xv $xvargs $tmp_ppm2 &
+
+	# cat the file so that we can nuke it without racing against xv.
+        cat $tmp_ppm2 | xv $xvargs - &
         pid=$!
       fi
     fi
@@ -324,4 +327,4 @@ main() {
 main $@
 
 # to find stray xv data:
-# xwininfo -root -children|grep 'xv image comments' | awk '{print $1}'
+# xwininfo -root -children|grep 'xv image comments' | awk '{print "xkill -id ", $1}'

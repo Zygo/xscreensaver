@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "21-Jun-98 (2.23)" "X Version 11"
+.TH XScreenSaver 1 "30-Jun-98 (2.24)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -602,6 +602,27 @@ locking; for example, by using this pair of commands:
 xscreensaver-command -exit
 xscreensaver
 .EE
+If you get "connection refused" errors when running \fIxscreensaver\fP
+from \fIxdm\fP, then this probably means that you have
+.BR xauth (1)
+or some other security mechanism turned on.  One way around this is to
+add \fB"xhost\ +localhost"\fP to \fIXsetup\fP, just before \fIxscreensaver\fP
+is launched.  
+
+Note that this will give access to the X server to anyone capable of logging
+in to the local machine, so in some environments, this might not be 
+appropriate.  If turning off file-system-based access control is not
+acceptable, then running \fIxscreensaver\fP from \fIxdm\fP might not be
+possible, and users will have to launch it themselves instead of having it
+be launched by \fIxdm\fP before anyone logs in.
+
+For more information on the X server's access control mechanisms, see the
+man pages for
+.BR X (1),
+.BR Xsecurity (1),
+.BR xauth (1),
+and
+.BR xhost (1).
 .SH USING CDE (COMMON DESKTOP ENVIRONMENT)
 The easiest way to use \fIxscreensaver\fP on a system with CDE is to simply
 switch off the built-in CDE screensaver, and use \fIxscreensaver\fP instead;
@@ -814,13 +835,16 @@ in code intended for use as a screensaver.  This prevents too much graphics
 activity from being buffered up.
 .TP 8
 .B Locking and XDM
-If xscreensaver has been launched from XDM, you will need to cause the
-xscreensaver daemon to exit and restart in order to lock the screen.
+If xscreensaver has been launched from 
+.BR xdm (1),
+you will need to cause the xscreensaver daemon to exit and restart in 
+order to lock the screen.
 
-The reason for this is, if xscreensaver has been launched by XDM, that
-means it was launched \fIbefore\fP you logged in: so it has no way of
-knowing who the logged-in user is, and therefore, whose password it
-should prompt for.
+The reason for this is, if xscreensaver has been launched by 
+.BR xdm (1),
+that means it was launched \fIbefore\fP you logged in: so it has no way of
+knowing who the logged-in user is, and therefore, whose password it should
+prompt for.
 
 So if you want to use it as a locker, you must start it with your user id.
 If it has already been started by \fIxdm\fP, you can kill it by sending
@@ -830,6 +854,7 @@ something like the following in your personal X startup script:
 xscreensaver-command -exit
 xscreensaver &
 .EE
+See the ``\fIUsing XDM(1)\fP'' section, above, for more details.
 .TP 8
 .B Locking and root logins
 An implication of the above is that if you log in as \fIroot\fP on the
@@ -845,6 +870,24 @@ should log in as you, and
 .BR su (1)
 to \fIroot\fP as necessary.  People who spend their day logged in 
 as \fIroot\fP are just begging for disaster.
+.TP 8
+.B XAUTH and XDM
+For xscreensaver to work when launched by
+.BR xdm (1),
+programs running on the local machine as user \fI"nobody"\fP must be
+able to connect to the X server.  This means that \fB"xhost +localhost"\fP
+is required if xscreensaver is to be launched by
+.BR xdm (1).
+This is \fInot\fP required if \fIxscreensaver\fP is launched by the
+individual users: it is only necessary when it is launched by
+.BR xdm (1),
+before any user has logged in.  See the ``\fIUsing XDM(1)\fP'' section, 
+above, for more details.
+
+If anyone has suggestions on how xscreensaver could be made to work with
+.BR xdm (1)
+without first turning off \fI.Xauthority\fP-based access control, please
+let me know.
 .TP 8
 .B Passwords
 If you get an error message like ``couldn't get password of \fIuser\fP'' 
@@ -998,6 +1041,9 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR xscreensaver\-command (1),
 .BR xdm (1),
 .BR xset (1),
+.BR Xsecurity (1),
+.BR xauth (1),
+.BR xhost (1).
 .BR ant (1),
 .BR atlantis (1),
 .BR attraction (1),

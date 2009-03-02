@@ -57,7 +57,7 @@ reset_stderr (saver_screen_info *ssi)
 
   if (si->prefs.debug_p)
     fprintf ((real_stderr ? real_stderr : stderr),
-	     "%s: resetting stderr\n", progname);
+	     "%s: resetting stderr\n", blurb());
 
   ssi->stderr_text_x = 0;
   ssi->stderr_text_y = 0;
@@ -207,7 +207,7 @@ make_stderr_overlay_window (saver_screen_info *ssi)
       if (si->prefs.debug_p)
 	fprintf(real_stderr,
 		"%s: using overlay visual 0x%0x for stderr text layer.\n",
-		progname, (int) XVisualIDFromVisual (visual));
+		blurb(), (int) XVisualIDFromVisual (visual));
 
       ssi->stderr_cmap = XCreateColormap(si->dpy,
 					 RootWindowOfScreen(ssi->screen),

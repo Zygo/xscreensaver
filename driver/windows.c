@@ -95,7 +95,7 @@ grab_kbd(saver_info *si, Window w)
 
   if (p->debug_p)
     fprintf(stderr, "%s: XGrabKeyboard(... 0x%x ...) ==> %s\n",
-	    progname, (unsigned long) w,
+	    blurb(), (unsigned long) w,
 	    (status == GrabSuccess ? "GrabSuccess" :
 	     status == AlreadyGrabbed ? "AlreadyGrabbed" :
 	     status == GrabInvalidTime ? "GrabInvalidTime" :
@@ -138,7 +138,7 @@ grab_mouse (saver_info *si, Window w, Cursor cursor)
 
   if (p->debug_p)
     fprintf(stderr, "%s: XGrabPointer(... 0x%x, 0x%x ...) ==> %s\n",
-	    progname, (unsigned long) w, (unsigned long) cursor,
+	    blurb(), (unsigned long) w, (unsigned long) cursor,
 	    grab_string(status));
   return status;
 }
@@ -150,7 +150,7 @@ ungrab_kbd(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabKeyboard(si->dpy, CurrentTime);
   if (p->debug_p)
-    fprintf(stderr, "%s: XUngrabKeyboard (was 0x%x)\n", progname,
+    fprintf(stderr, "%s: XUngrabKeyboard (was 0x%x)\n", blurb(),
 	    (unsigned long) si->keyboard_grab_window);
   si->keyboard_grab_window = 0;
 }
@@ -162,7 +162,7 @@ ungrab_mouse(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabPointer(si->dpy, CurrentTime);
   if (p->debug_p)
-    fprintf(stderr, "%s: XUngrabPointer (was 0x%x)\n", progname,
+    fprintf(stderr, "%s: XUngrabPointer (was 0x%x)\n", blurb(),
 	    (unsigned long) si->mouse_grab_window);
   si->mouse_grab_window = 0;
 }
@@ -181,7 +181,7 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
       status = grab_kbd (si, window);
       if (status != GrabSuccess)
 	fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
-		 progname, grab_string(status));
+		 blurb(), grab_string(status));
     }
 
   status = grab_mouse (si, window, cursor);
@@ -191,7 +191,7 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
       status = grab_mouse (si, window, cursor);
       if (status != GrabSuccess)
 	fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
-		 progname, grab_string(status));
+		 blurb(), grab_string(status));
     }
 }
 
@@ -244,7 +244,7 @@ ensure_no_screensaver_running (Display *dpy, Screen *screen)
 
 	  fprintf (stderr,
       "%s: already running on display %s (window 0x%x)\n from process %s.\n",
-		   progname, DisplayString (dpy), (int) kids [i], id);
+		   blurb(), DisplayString (dpy), (int) kids [i], id);
 	  status = True;
 	}
     }
@@ -269,7 +269,7 @@ store_vroot_property (Display *dpy, Window win, Window value)
 #if 0
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s: storing XA_VROOT = 0x%x (%s) = 0x%x (%s)\n", progname, 
+	     "%s: storing XA_VROOT = 0x%x (%s) = 0x%x (%s)\n", blurb(), 
 	     win,
 	     (win == screensaver_window ? "ScreenSaver" :
 	      (win == real_vroot ? "VRoot" :
@@ -288,7 +288,7 @@ remove_vroot_property (Display *dpy, Window win)
 {
 #if 0
   if (p->verbose_p)
-    fprintf (stderr, "%s: removing XA_VROOT from 0x%x (%s)\n", progname, win, 
+    fprintf (stderr, "%s: removing XA_VROOT from 0x%x (%s)\n", blurb(), win, 
 	     (win == screensaver_window ? "ScreenSaver" :
 	      (win == real_vroot ? "VRoot" :
 	       (win == real_vroot_value ? "Vroot_value" : "???"))));
@@ -328,13 +328,13 @@ kill_xsetroot_data (Display *dpy, Window window, Bool verbose_p)
 	{
 	  if (verbose_p)
 	    printf ("%s: destroying xsetroot data (0x%lX).\n",
-		    progname, *dataP);
+		    blurb(), *dataP);
 	  XKillClient (dpy, *dataP);
 	}
       else
 	fprintf (stderr, "%s: deleted unrecognised _XSETROOT_ID property: \n\
 	%lu, %lu; type: %lu, format: %d, nitems: %lu, bytesafter %ld\n",
-		 progname, (unsigned long) dataP, (dataP ? *dataP : 0), type,
+		 blurb(), (unsigned long) dataP, (dataP ? *dataP : 0), type,
 		 format, nitems, bytesafter);
     }
 }
@@ -380,7 +380,7 @@ save_real_vroot (saver_screen_info *ssi)
 	  if (*vrootP == ssi->screensaver_window) abort ();
 	  fprintf (stderr,
 	    "%s: more than one virtual root window found (0x%x and 0x%x).\n",
-		   progname, (int) ssi->real_vroot, (int) kids [i]);
+		   blurb(), (int) ssi->real_vroot, (int) kids [i]);
 	  exit (1);
 	}
       ssi->real_vroot = kids [i];
@@ -405,7 +405,7 @@ restore_real_vroot_2 (saver_screen_info *ssi)
   saver_preferences *p = &si->prefs;
   if (p->verbose_p && ssi->real_vroot)
     printf ("%s: restoring __SWM_VROOT property on the real vroot (0x%lx).\n",
-	    progname, (unsigned long) ssi->real_vroot);
+	    blurb(), (unsigned long) ssi->real_vroot);
   remove_vroot_property (si->dpy, ssi->screensaver_window);
   if (ssi->real_vroot)
     {
@@ -530,7 +530,7 @@ restore_real_vroot_handler (int sig)
   signal (sig, SIG_DFL);
   if (restore_real_vroot_1 (si))
     fprintf (real_stderr, "\n%s: %s intercepted, vroot restored.\n",
-	     progname, signal_name(sig));
+	     blurb(), signal_name(sig));
   kill (getpid (), sig);
 }
 
@@ -544,7 +544,7 @@ catch_signal (saver_info *si, int sig, Bool on_p)
       if (((long) signal (sig, restore_real_vroot_handler)) == -1L)
 	{
 	  char buf [255];
-	  sprintf (buf, "%s: couldn't catch %s", progname, signal_name(sig));
+	  sprintf (buf, "%s: couldn't catch %s", blurb(), signal_name(sig));
 	  perror (buf);
 	  saver_exit (si, 1);
 	}
@@ -603,9 +603,9 @@ saver_exit (saver_info *si, int status)
   emergency_kill_subproc (si);
 
   if (vrs && (p->verbose_p || status != 0))
-    fprintf (real_stderr, "%s: vroot restored, exiting.\n", progname);
+    fprintf (real_stderr, "%s: vroot restored, exiting.\n", blurb());
   else if (p->verbose_p)
-    fprintf (real_stderr, "%s: no vroot to restore; exiting.\n", progname);
+    fprintf (real_stderr, "%s: no vroot to restore; exiting.\n", blurb());
 
   fflush(real_stdout);
 
@@ -616,7 +616,7 @@ saver_exit (saver_info *si, int status)
 
   if (si->prefs.debug_p)
     {
-      fprintf(real_stderr, "%s: dumping core (because of -debug)\n", progname);
+      fprintf(real_stderr, "%s: dumping core (because of -debug)\n", blurb());
       /* Do this to drop a core file, so that we can get a stack trace. */
       abort();
     }
@@ -645,7 +645,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  Bool install_cmap_p = ssi->install_cmap_p;
+  Bool install_cmap_p = (ssi->install_cmap_p || p->install_cmap_p);
 
   /* This resets the screensaver window as fully as possible, since there's
      no way of knowing what some random client may have done to us in the
@@ -717,16 +717,19 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     ;
   else if (ssi->current_visual == DefaultVisualOfScreen (ssi->screen))
     {
-      fprintf (stderr, "%s: using default visual ", progname);
-      describe_visual (stderr, ssi->screen, ssi->current_visual);
+      fprintf (stderr, "%s: using default visual ", blurb());
+      describe_visual (stderr, ssi->screen, ssi->current_visual,
+		       install_cmap_p);
     }
   else
     {
-      fprintf (stderr, "%s: using visual:   ", progname);
-      describe_visual (stderr, ssi->screen, ssi->current_visual);
-      fprintf (stderr, "%s: default visual: ", progname);
+      fprintf (stderr, "%s: using visual:   ", blurb());
+      describe_visual (stderr, ssi->screen, ssi->current_visual,
+		       install_cmap_p);
+      fprintf (stderr, "%s: default visual: ", blurb());
       describe_visual (stderr, ssi->screen,
-		       DefaultVisualOfScreen (ssi->screen));
+		       DefaultVisualOfScreen (ssi->screen),
+		       ssi->install_cmap_p);
     }
   printed_visual_info = True;
 
@@ -806,7 +809,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
       store_activate_time(si, True);
       if (p->verbose_p)
 	fprintf (stderr, "%s: saver window is 0x%lx.\n",
-		 progname, (unsigned long) ssi->screensaver_window);
+		 blurb(), (unsigned long) ssi->screensaver_window);
     }
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
@@ -913,7 +916,7 @@ raise_window (saver_info *si,
 				ssi->black_pixel);
 	}
 
-      if (p->verbose_p) fprintf (stderr, "%s: fading... ", progname);
+      if (p->verbose_p) fprintf (stderr, "%s: fading... ", blurb());
 
       XGrabServer (si->dpy);			/* ############ DANGER! */
 
@@ -1063,7 +1066,7 @@ unblank_screen (saver_info *si)
 				ssi->black_pixel);
 	}
 
-      if (p->verbose_p) fprintf (stderr, "%s: unfading... ", progname);
+      if (p->verbose_p) fprintf (stderr, "%s: unfading... ", blurb());
 
 
       XSync (si->dpy, False);
@@ -1237,16 +1240,12 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
       if (p->verbose_p)
 	{
+	  fprintf (stderr, "%s: switching to visual ", blurb());
+	  describe_visual (stderr, ssi->screen, new_v, install_cmap_p);
 #if 0
-	  fprintf (stderr, "%s: switching visuals\tfrom: ", progname);
-	  describe_visual (stderr, ssi->screen, ssi->current_visual);
-	  fprintf (stderr, "\t\t\t\tto:   ");
-	  describe_visual (stderr, ssi->screen, new_v);
-	  fprintf (stderr, "\t\t\t\t install cmap:   %s\n",
-		   (install_cmap_p ? "yes" : "no"));
-#else
-	  fprintf (stderr, "%s: switching to visual ", progname);
-	  describe_visual (stderr, ssi->screen, new_v);
+	  fprintf (stderr, "%s:                from ", blurb());
+	  describe_visual (stderr, ssi->screen, ssi->current_visual,
+			   was_installed_p);
 #endif
 	}
 
@@ -1304,7 +1303,7 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
       if (p->verbose_p)
 	fprintf (stderr, "%s: destroyed old saver window 0x%lx.\n",
-		 progname, (unsigned long) old_w);
+		 blurb(), (unsigned long) old_w);
 
       if (old_c &&
 	  old_c != DefaultColormapOfScreen (ssi->screen) &&

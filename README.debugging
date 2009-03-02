@@ -128,6 +128,10 @@ RUNNING:
            prevent the data from being displayed on the screensaver
            window as well.
 
+           You also might want to set the "*timestamp" resource to True, which
+           will cause the xscreensaver messages to include the time at which
+           they were printed.
+
         *  If the problem is intermittent, you might want to capture the
            log information to a file and examine it later.
 

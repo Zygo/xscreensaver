@@ -109,11 +109,8 @@ Installation options:
                           specify the name of the subdirectory.  For example,
                           --exec-prefix=/usr/local/bin --enable-subdir=demos
                           would put xscreensaver in /usr/local/bin/, and would
-                          put the demos in /usr/local/bin/demos/.  Note that if
-                          you do this, you must make sure that the directory
-                          is on your \$PATH before xscreensaver is started: the
-                          directory name is not hardcoded into the program.
-                          This merely sets the default installation location.
+                          put the demos in /usr/local/bin/demos/.  (If DIR
+                          begins with /, then bindir will not be prepended.)
 
   --disable-subdir        Just put the demos in \`bindir' (this is the default.)
 ],
@@ -222,7 +219,9 @@ AC_DEFUN(AC_PATH_X_APP_DEFAULTS,
   [AC_REQUIRE_CPP()
     AC_CACHE_CHECK([for X app-defaults directory], ac_cv_x_app_defaults,
      [AC_PATH_X_APP_DEFAULTS_XMKMF
-      AC_PATH_X_APP_DEFAULTS_DIRECT
+      if test x"$ac_x_app_defaults" = x; then
+        AC_PATH_X_APP_DEFAULTS_DIRECT
+      fi
       if test x"$ac_x_app_defaults" = x; then
         ac_cv_x_app_defaults="/usr/lib/X11/app-defaults"
       else
@@ -430,7 +429,7 @@ fi
 have_sgi=no
 with_sgi_req=unspecified
 AC_ARG_WITH(sgi-ext,[
-Server options:
+X Server Extension options:
 
   --with-sgi-ext          Include support for the SGI SCREEN_SAVER
                           server extension, if possible (this is the default).
@@ -643,7 +642,7 @@ with_motif_req=unspecified
 with_athena_req=unspecified
 
 AC_ARG_WITH(motif,[
-Toolkit options:
+X Client Toolkit options:
 
   --with-motif            Use the Motif toolkit for the user interface,
                           if possible (this is the default).
@@ -810,7 +809,7 @@ fi
 have_xpm=no
 with_xpm_req=unspecified
 AC_ARG_WITH(xpm,[
-Demo options:
+Graphics Demo options:
 
   --with-xpm              Include support for XPM files in some demos,
                           if possible (this is the default).
@@ -1065,7 +1064,7 @@ with_shadow_req=unspecified
 need_setuid=no
 
 AC_ARG_ENABLE(locking,[
-Locking options:
+Screen Locking options:
 
   --enable-locking        Compile in support for locking the display
                           (this is the default.)

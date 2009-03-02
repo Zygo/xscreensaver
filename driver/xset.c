@@ -124,7 +124,7 @@ init_sgi_saver_extension (saver_info *si)
 	  fprintf (stderr,
        "%s: SGI SCREEN_SAVER extension exists, but can't be initialized;\n\
 		perhaps some other screensaver program is already running?\n",
-		   progname);
+		   blurb());
 	  p->use_sgi_saver_extension = False;
 	  return;
 	}
@@ -198,11 +198,11 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
       if (desired_server_timeout == 0)
 	printf ("%s%sisabling server builtin screensaver.\n\
 	You can re-enable it with \"xset s on\".\n",
-		(p->verbose_p ? "" : progname),
+		(p->verbose_p ? "" : blurb()),
 		(p->verbose_p ? "\n\tD" : ": d"));
 
       if (p->verbose_p)
-	fprintf (stderr, "%s: (xset s %d %d %s %s)\n", progname,
+	fprintf (stderr, "%s: (xset s %d %d %s %s)\n", blurb(),
 		 desired_server_timeout, desired_server_interval,
 		 (desired_prefer_blank ? "blank" : "noblank"),
 		 (desired_allow_exp ? "noexpose" : "expose"));
@@ -333,7 +333,7 @@ monitor_power_on (saver_info *si)
       if (!monitor_powered_on_p (si))
 	fprintf (stderr,
        "%s: DPMSForceLevel(dpy, DPMSModeOn) did not power the monitor on?\n",
-		 progname);
+		 blurb());
     }
 }
 

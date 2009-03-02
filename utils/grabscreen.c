@@ -245,7 +245,8 @@ grab_screen_image_1 (Screen *screen, Window window)
     XWindowAttributes xgwa2;
     XGetWindowAttributes (dpy, window, &xgwa2);
     fprintf(stderr, "%s: ", progname);
-    describe_visual(stderr, screen, xgwa2.visual);
+    describe_visual(stderr, screen, xgwa2.visual, ####);
+    fprintf (stderr, "\n");
   }
 #endif /* DEBUG */
 

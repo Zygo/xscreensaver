@@ -16,6 +16,7 @@ $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
 $ discrete	:== $'mydir'discrete
+$ distort	:== $'mydir'distort
 $ drift		:== $'mydir'drift
 $ epicycle	:== $'mydir'epicycle
 $ fadeplot	:== $'mydir'fadeplot
@@ -37,6 +38,7 @@ $ interference	:== $'mydir'interference
 $ jigsaw	:== $'mydir'jigsaw
 $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
+$ kumppa	:== $'mydir'kumppa
 $ laser		:== $'mydir'laser
 $ lightning	:== $'mydir'lightning
 $ lisa		:== $'mydir'lisa

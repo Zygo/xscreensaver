@@ -106,7 +106,7 @@ notice_events (saver_info *si, Window window, Bool top_p)
   if (top_p && p->verbose_p && (events & KeyPressMask))
     {
       /* Only mention one window per tree (hack hack). */
-      printf ("%s: selected KeyPress on 0x%lX\n", progname,
+      printf ("%s: selected KeyPress on 0x%lX\n", blurb(),
 	      (unsigned long) window);
       top_p = False;
     }
@@ -184,13 +184,13 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   if (si->dbox_up_p || si->question_up_p)
     {
       if (p->verbose_p)
-	printf ("%s: dialog box up; delaying hack change.\n", progname);
+	printf ("%s: dialog box up; delaying hack change.\n", blurb());
       how_long = 30000; /* 30 secs */
     }
   else
     {
       if (p->verbose_p)
-	printf ("%s: changing graphics hacks.\n", progname);
+	printf ("%s: changing graphics hacks.\n", blurb());
       kill_screenhack (si);
       spawn_screenhack (si, False);
     }
@@ -200,7 +200,7 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
 #ifdef DEBUG_TIMERS
   if (p->verbose_p)
     printf ("%s: starting cycle_timer (%ld, %ld)\n",
-	    progname, how_long, si->cycle_id);
+	    blurb(), how_long, si->cycle_id);
 #endif /* DEBUG_TIMERS */
 }
 
@@ -212,7 +212,7 @@ activate_lock_timer (XtPointer closure, XtIntervalId *id)
   saver_preferences *p = &si->prefs;
 
   if (p->verbose_p)
-    printf ("%s: timed out; activating lock\n", progname);
+    printf ("%s: timed out; activating lock\n", blurb());
   si->locked_p = True;
 
 #ifdef HAVE_XHPDISABLERESET
@@ -237,7 +237,7 @@ reset_timers (saver_info *si)
 #ifdef DEBUG_TIMERS
   if (p->verbose_p)
     printf ("%s:   killing idle_timer    (%ld, %ld)\n",
-	    progname, p->timeout, si->timer_id);
+	    blurb(), p->timeout, si->timer_id);
 #endif /* DEBUG_TIMERS */
 
   XtRemoveTimeOut (si->timer_id);
@@ -248,7 +248,7 @@ reset_timers (saver_info *si)
 #ifdef DEBUG_TIMERS
   if (p->verbose_p)
     printf ("%s:   restarting idle_timer (%ld, %ld)\n",
-	    progname, p->timeout, si->timer_id);
+	    blurb(), p->timeout, si->timer_id);
 #endif /* DEBUG_TIMERS */
 
   si->last_activity_time = time ((time_t *) 0);
@@ -299,10 +299,10 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
 	    root_y == ssi->poll_mouse_last_root_y &&
 	    child  == ssi->poll_mouse_last_child)
 	  printf ("%s: modifiers changed at %s on screen %d.\n",
-		  progname, timestring(), i);
+		  blurb(), timestring(), i);
 	else
 	  printf ("%s: pointer moved at %s on screen %d.\n",
-		  progname, timestring(), i);
+		  blurb(), timestring(), i);
 #endif /* DEBUG_TIMERS */
 
       si->last_activity_screen    = ssi;
@@ -334,7 +334,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #ifdef DEBUG_TIMERS
 	  if (p->verbose_p)
 	    printf ("%s: starting idle_timer (%ld, %ld)\n",
-		    progname, p->timeout, si->timer_id);
+		    blurb(), p->timeout, si->timer_id);
 #endif /* DEBUG_TIMERS */
 	}
 
@@ -359,7 +359,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	      {
 		if (! XGetIdleTime (si->dpy, &idle))
 		  {
-		    fprintf (stderr, "%s: XGetIdleTime() failed.\n", progname);
+		    fprintf (stderr, "%s: XGetIdleTime() failed.\n", blurb());
 		    saver_exit (si, 1);
 		  }
 	      }
@@ -399,7 +399,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #ifdef DEBUG_TIMERS
 		if (p->verbose_p)
 		  printf ("%s: starting idle_timer (%ld, %ld)\n",
-			  progname, p->timeout - idle, si->timer_id);
+			  blurb(), p->timeout - idle, si->timer_id);
 #endif /* DEBUG_TIMERS */
 	      }
 	  }
@@ -419,7 +419,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #ifdef DEBUG_TIMERS
 	    if (p->verbose_p)
 	      printf ("%s: starting notice_events_timer for 0x%X (%lu)\n",
-		      progname,
+		      blurb(),
 		      (unsigned int) event.xcreatewindow.window,
 		      p->notice_events_timeout);
 #endif /* DEBUG_TIMERS */
@@ -436,9 +436,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	if (p->verbose_p)
 	  {
 	    if (event.xany.type == MotionNotify)
-	      printf ("%s: MotionNotify at %s\n", progname, timestring ());
+	      printf ("%s: MotionNotify at %s\n", blurb(), timestring ());
 	    else if (event.xany.type == KeyPress)
-	      printf ("%s: KeyPress seen on 0x%X at %s\n", progname,
+	      printf ("%s: KeyPress seen on 0x%X at %s\n", blurb(),
 		      (unsigned int) event.xkey.window, timestring ());
 	  }
 #endif /* DEBUG_TIMERS */
@@ -462,7 +462,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 		if (p->verbose_p)
 		  printf ("%s: ScreenSaverOn event received at %s\n",
-			  progname, timestring ());
+			  blurb(), timestring ());
 # endif /* DEBUG_TIMERS */
 
 		/* Get the "real" server window(s) out of the way as soon
@@ -482,7 +482,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 		    fprintf (stderr,
 			 "%s: ScreenSaverOn event wasn't of type External!\n",
-			     progname);
+			     blurb());
 # endif /* DEBUG_TIMERS */
 		  }
 
@@ -494,7 +494,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 		if (p->verbose_p)
 		  printf ("%s: ScreenSaverOff event received at %s\n",
-			  progname, timestring ());
+			  blurb(), timestring ());
 # endif /* DEBUG_TIMERS */
 		if (!until_idle_p)
 		  goto DONE;
@@ -502,7 +502,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 	    else if (p->verbose_p)
 	      printf ("%s: unknown MIT-SCREEN-SAVER event received at %s\n",
-		      progname, timestring ());
+		      blurb(), timestring ());
 # endif /* DEBUG_TIMERS */
 	  }
 	else
@@ -516,7 +516,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 	    if (p->verbose_p)
 	      printf ("%s: ScreenSaverStart event received at %s\n",
-		      progname, timestring ());
+		      blurb(), timestring ());
 # endif /* DEBUG_TIMERS */
 
 	    if (until_idle_p)
@@ -528,7 +528,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # ifdef DEBUG_TIMERS
 	    if (p->verbose_p)
 	      printf ("%s: ScreenSaverEnd event received at %s\n",
-		      progname, timestring ());
+		      blurb(), timestring ());
 # endif /* DEBUG_TIMERS */
 	    if (!until_idle_p)
 	      goto DONE;
@@ -604,7 +604,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 #ifdef DEBUG_TIMERS
 	  if (si->prefs.verbose_p)
 	    printf ("%s: watchdog timer raising %sscreen.\n",
-		    progname, (running_p ? "" : "and clearing "));
+		    blurb(), (running_p ? "" : "and clearing "));
 #endif /* DEBUG_TIMERS */
 
 	  raise_window (si, True, True, running_p);
@@ -613,7 +613,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 	    {
 	      if (si->prefs.verbose_p)
 		printf ("%s: server reports that monitor has powered down; "
-			"killing running hacks.\n", progname);
+			"killing running hacks.\n", blurb());
 	      kill_screenhack (si);
 	    }
 	}
@@ -640,7 +640,7 @@ reset_watchdog_timer (saver_info *si, Bool on_p)
 #ifdef DEBUG_TIMERS
       if (p->verbose_p)
 	printf ("%s: restarting watchdog_timer (%ld, %ld)\n",
-		progname, p->watchdog_timeout, si->watchdog_id);
+		blurb(), p->watchdog_timeout, si->watchdog_id);
 #endif /* DEBUG_TIMERS */
 
     }
