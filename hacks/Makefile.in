@@ -48,7 +48,7 @@ SGI_VIDEO_LIBS  = @SGI_VIDEO_LIBS@
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
 
-INCLUDES	= -I$(srcdir) -I$(srcdir)/.. -I$(UTILS_SRC) -I.. @INCLUDES@
+INCLUDES	= -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
 
 UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/hsv.c \
@@ -74,7 +74,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
-		  cynosure.c moire2.c flow.c
+		  cynosure.c moire2.c flow.c epicycle.c interference.c \
+		  truchet.c bsod.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -87,7 +88,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
-		  cynosure.o moire2.o flow.o
+		  cynosure.o moire2.o flow.o epicycle.o interference.o \
+		  truchet.o bsod.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -96,7 +98,8 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
-		  ant xjack xlyap jigsaw cynosure moire2 flow
+		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
+		  interference truchet bsod
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -118,11 +121,12 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
-		  xjack.man xlyap.man jigsaw.man
+		  xjack.man xlyap.man jigsaw.man epicycle.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
 		  images/$(STAR).xbm \
+		  images/$(STAR).xpm \
 		  images/bubbles/$(STAR).pov \
 		  images/bubbles/$(STAR).xpm \
 		  images/noseguy/$(STAR).xbm \
@@ -421,6 +425,18 @@ jigsaw: $(HACK_OBJS) jigsaw.o $(GRAB)
 
 cynosure: $(HACK_OBJS) cynosure.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) cynosure.o $(COL) $(HACK_LIBS)
+
+epicycle: $(HACK_OBJS) epicycle.o $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $(HACK_OBJS) epicycle.o $(COL) $(ERASE) $(HACK_LIBS)
+
+interference: $(HACK_OBJS) interference.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) interference.o $(COL) $(HACK_LIBS)
+
+truchet: $(HACK_OBJS) truchet.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) truchet.o $(COL) $(HACK_LIBS)
+
+bsod: $(HACK_OBJS) bsod.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) bsod.o $(COL) $(HACK_LIBS) $(XPM_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1269,4 +1285,43 @@ flow.o: $(UTILS_SRC)/colors.h
 flow.o: $(UTILS_SRC)/grabscreen.h
 flow.o: $(UTILS_SRC)/visual.h
 flow.o: $(UTILS_SRC)/erase.h
+epicycle.o: $(srcdir)/screenhack.h
+epicycle.o: ../config.h
+epicycle.o: $(UTILS_SRC)/yarandom.h
+epicycle.o: $(UTILS_SRC)/usleep.h
+epicycle.o: $(UTILS_SRC)/resources.h
+epicycle.o: $(UTILS_SRC)/hsv.h
+epicycle.o: $(UTILS_SRC)/colors.h
+epicycle.o: $(UTILS_SRC)/grabscreen.h
+epicycle.o: $(UTILS_SRC)/visual.h
+epicycle.o: $(UTILS_SRC)/erase.h
+interference.o: $(srcdir)/screenhack.h
+interference.o: ../config.h
+interference.o: $(UTILS_SRC)/yarandom.h
+interference.o: $(UTILS_SRC)/usleep.h
+interference.o: $(UTILS_SRC)/resources.h
+interference.o: $(UTILS_SRC)/hsv.h
+interference.o: $(UTILS_SRC)/colors.h
+interference.o: $(UTILS_SRC)/grabscreen.h
+interference.o: $(UTILS_SRC)/visual.h
+truchet.o: $(srcdir)/screenhack.h
+truchet.o: ../config.h
+truchet.o: $(UTILS_SRC)/yarandom.h
+truchet.o: $(UTILS_SRC)/usleep.h
+truchet.o: $(UTILS_SRC)/resources.h
+truchet.o: $(UTILS_SRC)/hsv.h
+truchet.o: $(UTILS_SRC)/colors.h
+truchet.o: $(UTILS_SRC)/grabscreen.h
+truchet.o: $(UTILS_SRC)/visual.h
+bsod.o: $(srcdir)/screenhack.h
+bsod.o: ../config.h
+bsod.o: $(UTILS_SRC)/yarandom.h
+bsod.o: $(UTILS_SRC)/usleep.h
+bsod.o: $(UTILS_SRC)/resources.h
+bsod.o: $(UTILS_SRC)/hsv.h
+bsod.o: $(UTILS_SRC)/colors.h
+bsod.o: $(UTILS_SRC)/grabscreen.h
+bsod.o: $(UTILS_SRC)/visual.h
+bsod.o: $(srcdir)/images/amiga.xpm
+bsod.o: $(srcdir)/images/mac.xbm
 

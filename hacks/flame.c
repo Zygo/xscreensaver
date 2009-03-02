@@ -381,8 +381,8 @@ int matherr(x)
 char *progclass = "Flame";
 
 char *defaults [] = {
-  "Flame.background:	black",		/* to placate SGI */
-  "Flame.foreground:	white",
+  "*background:	black",
+  "*foreground:	white",
   "*colors:	64",
   "*iterations:	25",
   "*delay:	50000",

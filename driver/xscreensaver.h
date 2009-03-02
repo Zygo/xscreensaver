@@ -112,6 +112,8 @@ struct saver_info {
      ======================================================================= */
 
   Bool screen_blanked_p;	/* Whether the saver is currently active. */
+  Window mouse_grab_window;	/* Window holding our mouse grab */
+  Window keyboard_grab_window;	/* Window holding our keyboard grab */
 
 
   /* =======================================================================
@@ -124,7 +126,6 @@ struct saver_info {
   Bool dbox_up_p;		/* Whether the demo-mode or passwd dialogs
 				   are currently visible */
 
-
   /* =======================================================================
      demoing
      ======================================================================= */
@@ -132,6 +133,15 @@ struct saver_info {
   Bool demo_mode_p;		/* Whether demo-mode is active */
   char *demo_hack;		/* The hack that has been selected from the
 				   dialog box, which should be run next. */
+
+
+  /* =======================================================================
+     asking questions
+     ======================================================================= */
+
+  Bool question_up_p;		/* Whether the question dialog is currently
+				   visible. */
+  Widget question_dialog;	/* The question dialog, if any. */
 
 
   /* =======================================================================
@@ -248,7 +258,7 @@ struct saver_screen_info {
 
 extern void restore_real_vroot (saver_info *si);
 extern void disable_builtin_screensaver (saver_info *si, Bool turn_off_p);
-extern void ensure_no_screensaver_running (Display *, Screen *);
+extern Bool ensure_no_screensaver_running (Display *, Screen *);
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
 extern Bool query_mit_saver_extension (saver_info *);
@@ -370,7 +380,7 @@ extern Bool window_exists_p (Display *dpy, Window window);
 extern char *timestring (void);
 
 extern Atom XA_VROOT, XA_XSETROOT_ID;
-extern Atom XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
+extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 extern Atom XA_SCREENSAVER_TIME;
 
 #endif /* __XSCREENSAVER_H__ */

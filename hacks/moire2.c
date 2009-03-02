@@ -13,7 +13,7 @@
 #include <X11/Xutil.h>
 #include <stdio.h>
 
-static int ncolors, color_shift;
+static int ncolors;
 static XColor *colors = 0;
 static int fg_pixel, bg_pixel;
 static Pixmap p0 = 0, p1 = 0, p2 = 0, p3 = 0;
@@ -207,8 +207,8 @@ moire2 (Display *dpy, Window window)
 char *progclass = "Moire2";
 
 char *defaults [] = {
-  "Moire2.background:	black",		/* to placate SGI */
-  "Moire2.foreground:	white",
+  "*background:		black",
+  "*foreground:		white",
   "*delay:		50000",
   "*thickness:		0",
   "*colors:		150",

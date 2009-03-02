@@ -119,7 +119,8 @@ static int gridSize;
 
 char *progclass = "Cynosure";
 char *defaults [] = {
-  "Cynosure.background:	black",		/* to placate SGI */
+  "*background:		black",
+  "*foreground:		white",
   "*delay:		500000",
   "*colors:		128",
   "*iterations:		100",
@@ -200,6 +201,7 @@ void screenhack(Display *d, Window w)
   delay = get_integer_resource ("delay", "Delay");
   iterations = get_integer_resource ("iterations", "Iterations");
 
+  i = 0;
   while (1)
     {
       if (iterations > 0 && ++i >= iterations)

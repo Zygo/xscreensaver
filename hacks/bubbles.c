@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.13 1998/02/21 21:55:14 jwz Exp $*/
+/*$Id: bubbles.c,v 1.14 1998/06/04 22:55:09 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -506,8 +506,8 @@ size. */
   }
   rv->visible = 0;
   rv->magic = BUBBLE_MAGIC;
-  rv->x = ya_random() % screen_width;
-  rv->y = ya_random() % screen_height;
+  rv->x = random() % screen_width;
+  rv->y = random() % screen_height;
   rv->cell_index = pixel_to_mesh(rv->x, rv->y);
 
   return rv;
@@ -837,7 +837,7 @@ merge_bubbles(Bubble *b1, Bubble *b2)
       break;
     }
   } else {
-    if ((ya_random() % 2) == 0) {
+    if ((random() % 2) == 0) {
       switch (bubble_eat(b1, b2)) {
       case 0:
 	return 0;
@@ -1217,8 +1217,6 @@ init_bubbles (Display *dpy, Window window)
 
   defdsp = dpy;
   defwin = window;
-
-  ya_rand_init(0);
 
   get_resources(dpy, window);
 

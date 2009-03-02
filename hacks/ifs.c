@@ -257,6 +257,7 @@ init_ifs(ModeInfo * mi)
 /***************************************************************/
 
 #ifndef __GNUC__
+# undef inline
 # define inline /* */
 #endif
 

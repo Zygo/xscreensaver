@@ -45,7 +45,7 @@ AD_DIR		= @APPDEFAULTS@
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
 
-INCLUDES	= -I. -I$(srcdir) -I$(srcdir)/.. -I$(UTILS_SRC) -I.. @INCLUDES@
+INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
 
 PASSWD_LIBS	= @PASSWD_LIBS@
 MOTIF_SRCS	= dialogs-Xm.c
@@ -187,7 +187,7 @@ depend: XScreenSaver_ad.h
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend: update_ad_version XScreenSaver_ad.h
+distdepend: update_ad_version update_man_version XScreenSaver_ad.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -212,9 +212,11 @@ update_ad_version::
 	@S=XScreenSaver.ad.in ;						    \
 	U=$(UTILS_SRC)/version.h ;					    \
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	echo -n "Updating version number in $$S to $$V... " ;		    \
+	D=`date '+%d-%b-%y'` ;						    \
+	echo -n "Updating version number in $$S to $$V $$D... " ;	    \
 	T=/tmp/xs.$$$$ ;						    \
-	sed "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
+	sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
+	    -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9]\)/$$D/"	    \
 	  < $$S > $$T ;							    \
 	if cmp -s $$S $$T ; then					    \
 	  echo "unchanged." ;						    \
@@ -224,6 +226,23 @@ update_ad_version::
 	fi ;								    \
 	rm $$T
 
+update_man_version::
+	@for S in $(MEN); do						    \
+	U=$(UTILS_SRC)/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	V="`date '+%d-%b-%y'` ($$V)" ;					    \
+	echo -n "Updating footer in $$S to \"$$V\"... " ;		    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/^\(\.TH[^\"]*\)\"[^\"]*\"\(.*\)/\1\"$$V\"\2/"		    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T ;							    \
+	done
 
 TAGS: tags
 tags:
@@ -260,7 +279,7 @@ $(UTIL_OBJS):
 # How we build the default app-defaults file into the program.
 #
 XScreenSaver_ad.h: XScreenSaver.ad
-	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > $@
+	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > XScreenSaver_ad.h
 
 # The executables linked in this directory.
 #

@@ -610,8 +610,8 @@ get_words (void)
 char *progclass = "Noseguy";
 
 char *defaults [] = {
-  "Noseguy.background:	black",		/* to placate SGI */
-  "Noseguy.foreground:	gray80",
+  "*background:		black",
+  "*foreground:		gray80",
 #ifndef VMS
   "*mode:		program",
 #else

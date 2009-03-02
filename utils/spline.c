@@ -53,7 +53,7 @@ no_more_memory (void)
 }
 
 spline*
-make_spline (u_int size)
+make_spline (unsigned int size)
 {
   spline* s = (spline*)calloc (1, sizeof (spline));
   if (!s)
@@ -318,4 +318,13 @@ spline_bounding_box (spline *s, XRectangle *rectangle_out)
   rectangle_out->y = min_y;
   rectangle_out->width = max_x - min_x;
   rectangle_out->height = max_y - min_y;
+}
+
+void
+free_spline(spline * s)
+{
+  free ((void *) s->control_x);
+  free ((void *) s->control_y);
+  free ((void *) s->points);
+  free ((void *) s);
 }

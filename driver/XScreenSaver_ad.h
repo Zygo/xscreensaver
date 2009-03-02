@@ -11,8 +11,8 @@
 "*fadeTicks:		20",
 "*captureStderr: 	True",
 "*captureStdout: 	True",
-"*textForeground:	Yellow",
-"*textBackground:	Black",
+"*overlayTextForeground:	Yellow",
+"*overlayTextBackground:	Black",
 "*overlayStderr:		True",
 "*font:			*-medium-r-*-140-*-m-*",
 "*installColormap:	True",
@@ -78,9 +78,13 @@
 		vines -root						\\n\
 		kaleidescope -root					\\n\
 		xjack -root						\\n\
-		xlyap -root -random					\\n\
+		xlyap -root -randomize					\\n\
 		cynosure -root						\\n\
 		flow -root						\\n\
+		epicycle -root						\\n\
+		interference -root					\\n\
+		truchet -root -randomize				\\n\
+		bsod -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -114,17 +118,17 @@
 "*fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwdDialog*fontList:          *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1",
-"*XmList.fontList:                  *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*XmTextField.fontList:             *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*passwdDialog.passwdText.fontList: *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
+"XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*XmDialogShell*foreground:		black",
 "*XmDialogShell*background:		gray90",
 "*XmDialogShell*XmTextField.foreground:	black",
 "*XmDialogShell*XmTextField.background:	white",
 "*XmDialogShell*demoList.foreground:	black",
 "*XmDialogShell*demoList.background:	white",
-"*XmDialogShell*rogerLabel.foreground:	red3",
-"*XmDialogShell*rogerLabel.background:	white",
+"XScreenSaver*XmDialogShell*rogerLabel.foreground:	red3",
+"XScreenSaver*XmDialogShell*rogerLabel.background:	white",
 "*XmDialogShell.title:		XScreenSaver",
 "*allowShellResize:		True",
 "*autoUnmanage:			False",
@@ -137,7 +141,7 @@
 "*demoList.automaticSelection:	True",
 "*next.labelString:		Run Next",
 "*prev.labelString:		Run Previous",
-"*edit.labelString:		Edit Parameters",
+"*edit.labelString:		Preferences",
 "*done.labelString:		Exit Demo Mode",
 "*restart.labelString:		Reinitialize",
 "*resourcesLabel.labelString:	XScreenSaver Parameters",
@@ -197,7 +201,7 @@
 "*resources_dialog*Dialog.borderWidth:		0",
 "*demo_dialog*next.label:			Run Next",
 "*demo_dialog*prev.label:			Run Previous",
-"*demo_dialog*edit.label:			Edit Parameters",
+"*demo_dialog*edit.label:			Preferences",
 "*demo_dialog*done.label:			Exit Demo Mode",
 "*demo_dialog*restart.label:			Reinitialize",
 "*resources_dialog*timeout.label:		Saver Timeout:",
@@ -227,7 +231,7 @@
 "*passwd_dialog*roger.foreground:		red3",
 "*passwd_dialog*roger.background:		white",
 "*passwd_dialog*roger.borderWidth:		1",
-"*pointerPollTime:	5",
-"*initialDelay:		30",
-"*windowCreationTimeout:	30",
-"*bourneShell:		/bin/sh",
+"XScreenSaver.pointerPollTime:		5",
+"XScreenSaver.initialDelay:		0",
+"XScreenSaver.windowCreationTimeout:	30",
+"XScreenSaver.bourneShell:		/bin/sh",

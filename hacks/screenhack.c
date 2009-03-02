@@ -37,6 +37,11 @@
 #include <X11/CoreP.h>
 #include <X11/Shell.h>
 #include <X11/StringDefs.h>
+
+#ifdef __sgi
+# include <X11/SGIScheme.h>	/* for SgiUseSchemes() */
+#endif /* __sgi */
+
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Error.h>
@@ -165,6 +170,19 @@ main (int argc, char **argv)
   pre_merge_options ();
 #endif
   merge_options ();
+
+#ifdef __sgi
+  /* We have to do this on SGI to prevent the background color from being
+     overridden by the current desktop color scheme (we'd like our backgrounds
+     to be black, thanks.)  This should be the same as setting the
+     "*useSchemes: none" resource, but it's not -- if that resource is
+     present in the `default_defaults' above, it doesn't work, though it
+     does work when passed as an -xrm arg on the command line.  So screw it,
+     turn them off from C instead.
+   */
+  SgiUseSchemes ("none"); 
+#endif /* __sgi */
+
   toplevel = XtAppInitialize (&app, progclass, merged_options,
 			      merged_options_size, &argc, argv,
 			      merged_defaults, 0, 0);

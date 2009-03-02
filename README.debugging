@@ -51,7 +51,7 @@ BUILDING:
                csh:  setenv CC cc ; ./configure
                sh:   CC=cc ; ./configure
 
-    After doing this, you'll need to nuke `config.cache'.
+    Before doing this, you'll need to nuke `config.cache'.
 
     If you get errors about not being able to find Motif or Athena (the
     Xm/ or Xaw/ header files), and you can't find them on your system,

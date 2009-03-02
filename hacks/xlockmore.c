@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -75,7 +75,7 @@ pre_merge_options (void)
 	      new->value = "True";
 	      new = &options[i++];
 	      new->option = "-no-wireframe";
-	      new->specifier = options[i-1].specifier;
+	      new->specifier = options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }
@@ -86,7 +86,7 @@ pre_merge_options (void)
 	      new->value = "True";
 	      new = &options[i++];
 	      new->option = "-no-3d";
-	      new->specifier = options[i-1].specifier;
+	      new->specifier = options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
 	    }

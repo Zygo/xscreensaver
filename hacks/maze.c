@@ -1324,8 +1324,8 @@ enter_square (int n)                      /* move into a neighboring square */
 char *progclass = "Maze";
 
 char *defaults[] = {
-  "Maze.background:	black",		/* to placate SGI */
-  "Maze.foreground:	white",		/* to placate SGI */
+  "*background:	black",
+  "*foreground:	white",
   "*gridSize:	0",
   "*solveDelay:	5000",
   "*preDelay:	2000000",

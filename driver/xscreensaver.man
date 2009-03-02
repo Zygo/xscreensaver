@@ -11,12 +11,30 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "16-Jan-98" "X Version 11"
+.TH XScreenSaver 1 "15-Jun-98 (2.21)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
 .B xscreensaver
-[\-display \fIhost:display.screen\fP] [\-timeout \fIint\fP] [\-cycle \fIint\fP] [\-nice \fIint\fP] [\-lock] [\-no\-lock] [\-lock\-timeout \fIint\fP] [\-demo] [\-visual \fIvisual\fP] [\-install] [\-no\-install] [\-verbose] [\-silent] [\-xidle\-extension] [\-no\-xidle\-extension] [\-sgi\-extension] [\-no\-sgi\-extension] [\-mit\-extension] [\-no\-mit\-extension] [\-xrm \fIresources\fP]
+[\-display \fIhost:display.screen\fP] \
+[\-timeout \fIint\fP] \
+[\-cycle \fIint\fP] \
+[\-lock\-mode] \
+[\-no\-lock\-mode] \
+[\-lock\-timeout \fIint\fP] \
+[\-visual \fIvisual\fP] \
+[\-install] \
+[\-no\-install] \
+[\-verbose] \
+[\-silent] \
+[\-nice \fIint\fP] \
+[\-mit\-extension] \
+[\-no\-mit\-extension] \
+[\-sgi\-extension] \
+[\-no\-sgi\-extension] \
+[\-xidle\-extension] \
+[\-no\-xidle\-extension] \
+[\-xrm \fIresources\fP]
 .SH DESCRIPTION
 The \fIxscreensaver\fP program waits until the keyboard and mouse have been 
 idle for a period, and then runs a graphics demo chosen at random.  It 
@@ -36,11 +54,19 @@ mode.
 .SH GETTING STARTED
 For the impatient, try this:
 .EX
-        xscreensaver &
-        xscreensaver-command -demo
+xscreensaver &
+xscreensaver-command -demo
 .EE
 After a few seconds, the screen should go black, and a dialog box should
 appear in the upper right corner.  This is \fIDemo Mode\fP.
+
+.B Note:
+unlike
+.BR xlock (1),
+xscreensaver has a client-server model: the xscreensaver process is a
+daemon that runs in the background; it is controlled by the foreground
+.BR xscreensaver-command (1)
+program.
 .SH DEMO MODE
 If \fIxscreensaver\fP receives the \fBDEMO\fP ClientMessage, which is done
 by running the
@@ -72,13 +98,13 @@ the bottom.
 .B Run Previous
 Opposite of Run Next; at the top, it scrolls around to the bottom.
 .TP 8
-.B Edit Parameters
+.B Preferences
 This pops up a second dialog box, in which you have the option to 
 interactively change most of the screensaver's operational parameters,
 such as its timeouts, and whether it should lock the screen.  Changing 
-these parameters here will affect only the running \fIxscreensaver\fP 
+these parameters here will affect only the running \fIxscreensaver\fP
 process; to make the changes permanent, you need to edit your X resource
-file.  (See below.)
+file.  (See the \fIConfiguration\fP section, below.)
 .TP 8
 .B Exit Demo Mode
 Returns to normal screensaver operation.
@@ -90,60 +116,79 @@ and then restart itself with the same command-line arguments.  This is just
 like the \fI\-restart\fP argument to 
 .BR xscreensaver\-command (1)
 except that when executed from this button, the screensaver will 
-automatically return to demo mode after restarting.
-.SH OPTIONS
-.I xscreensaver
-accepts the following command line options:
+automatically return to Demo Mode after restarting.
+.SH CONFIGURATION
+\fIxscreensaver\fP understands the following X resources.  The best way
+to specify these parameters is to set them in your X resource file, 
+which is usually called \fI~/.Xdefaults\fP.  For example, to set the
+default value of the \fItimeout\fP resource, you would add the following
+line to your .Xdefaults file:
+.EX
+xscreensaver.timeout: 5
+.EE
+To make the system notice this change, you might also need to run
+.BR xrdb (1):
+.EX
+xrdb < ~/.Xdefaults
+.EE
+And if xscreensaver was already running, and you would like it to notice
+your changes, you'll also have to tell the running xscreensaver process
+to re-initialize itself, like so:
+.EX
+xscreensaver-command -restart
+.EE
+If you want to set the system-wide defaults, then make your edits to
+the xscreensaver app-defaults file, which should have been installed
+when xscreensaver itself was installed.  The app-defaults file will
+usually be named /usr/lib/X11/app-defaults/XScreenSaver, but different
+systems might keep it in a different place (for example,
+/usr/openwin/lib/app-defaults/XScreenSaver on Solaris.)
+.PP
 .TP 8
-.B \-timeout \fIminutes\fP
-The screensaver will activate after the keyboard and mouse have been idle
-for this many minutes.  Default 10.
+.B timeout\fP (class \fBTime\fP)
+The screensaver will activate (blank the screen) after the keyboard and
+mouse have been idle for this many minutes.  Default 10 minutes.
 .TP 8
-.B \-cycle \fIminutes\fP
+.B cycle\fP (class \fBTime\fP)
 After the screensaver has been running for this many minutes, the currently
-running graphics hack sub-process will be killed (with \fBSIGTERM\fP), and a
-new one started.  If this is 0, then the graphics hack will not be changed:
+running graphics-hack sub-process will be killed (with \fBSIGTERM\fP), and a
+new one started.  If this is 0, then the graphics hack will never be changed:
 only one demo will run until the screensaver is deactivated by user activity.
-Default 10.
+Default 10 minutes.
 .TP 8
-.B \-nice \fIinteger\fP
-The sub-processes created by \fIxscreensaver\fP will be ``niced'' to this
-level, so that they are given lower priority than other processes on the
-system, and don't increase the load unnecessarily.  The default is 20.  
-
-(Higher numbers mean lower priority; see 
-.BR nice (1)
-for details.)
-.TP 8
-.B \-lock
-Enable locking: before the screensaver will turn off, it requires you to
-type the password of the person who launched the screensaver, or the root
-password.  (Note: this doesn't work if the screensaver is launched
-by
+.B lock\fP (class \fBBoolean\fP)
+Enable locking: before the screensaver will turn off, it will require you 
+to type the password of the logged-in user (really, the person who ran
+xscreensaver), or the root password.  (\fBNote:\fP this doesn't work if the
+screensaver is launched by
 .BR xdm (1)
-because it can't know the user-id of the logged-in user.)
+because it can't know the user-id of the logged-in user.  See 
+the ``\fIUsing XDM(1)\fP'' section, below.
 .TP 8
-.B \-no\-lock
-Disable locking.  This is the default.
-.TP 8
-.B \-lock\-timeout \fIminutes\fP
-This is how long after the screensaver activates that locking is enabled.
+.B lockTimeout\fP (class \fBTime\fP)
+If locking is enabled, this controls the length of the ``grace period''
+between when the screensaver activates, and when the screen becomes locked.
 For example, if this is 5, and \fI\-timeout\fP is 10, then after 10 minutes,
 the screen would blank.  If there was user activity at 12 minutes, no password
-would be required.  But, if there was user activity at 15 minutes or later 
-(\fI\-lock\-timeout\fP minutes after activation) then a password would be
-required.  The default is 0, meaning that if locking is enabled, then
-a password will be required as soon as the screensaver activates.
+would be required to un-blank the screen.  But, if there was user activity
+at 15 minutes or later (that is, \fI\-lock\-timeout\fP minutes after 
+activation) then a password would be required.  The default is 0, meaning
+that if locking is enabled, then a password will be required as soon as the 
+screen blanks.
 .TP 8
-.B \-demo
-Enter the interactive demo mode immediately after startup.  Normally
-demo mode is invoked via the
-.BR xscreensaver\-command (1)
-program, but this is a shortcut for new users.  See below for a description
-of how demo-mode works.
+.B passwdTimeout\fP (class \fBTime\fP)
+If the screen is locked, then this is how many seconds the password dialog box
+should be left on the screen before giving up (default 30 seconds.)  This
+should not be too large: the X server is grabbed for the duration that the
+password dialog box is up (for security purposes) and leaving the server 
+grabbed for too long can cause problems.
 .TP 8
-.B \-visual \fIvisual\fP
-Specify which X visual to use by default.  Legal values are:
+.B visualID\fP (class \fBVisualID\fP)
+Specify which X visual to use by default.  (Note carefully that this resource
+is called \fBvisualID\fP, not merely \fBvisual\fP; if you set the \fBvisual\fP
+resource instead, things will malfunction in obscure ways for obscure reasons.)
+
+Legal values for the \fBVisualID\fP resource are:
 .RS 8
 .TP 8
 .B default
@@ -186,7 +231,7 @@ be used: the visual used may be overridden on a program-by-program basis.
 See the description of the \fBprograms\fP resource, below.
 .RE
 .TP 8
-.B \-install
+.B installColormap\fP (class \fBBoolean\fP)
 Install a private colormap while the screensaver is active, so that the
 graphics hacks can get as many colors as possible.  This is the 
 default.  (This only applies when the screen's default visual is being
@@ -194,81 +239,51 @@ used, since non-default visuals get their own colormaps automatically.)
 This can also be overridden on a per-hack basis: see the discussion of
 the \fBdefault\-n\fP name in the section about the \fBprograms\fP resource.
 .TP 8
-.B \-no\-install
-Use the default colormap.
-.TP 8
-.B \-verbose
-Print diagnostics.
-.TP 8
-.B \-silent
-
-.TP 8
-.B \-xidle\-extension
-Use the \fBXIDLE\fP server extension to decide whether the user is idle.
-This is the default if \fIxscreensaver\fP has been compiled with support
-for this extension.  On X11R4 or X11R5 systems, the XIdle method is faster 
-and more reliable than what will be done otherwise, so use it if you can.
-.TP 8
-.B \-no\-xidle\-extension
-Don't use the \fBXIDLE\fP server extension.
-.TP 8
-.B \-sgi\-extension
-Use the SGI \fBSCREEN_SAVER\fP server extension to decide whether the user
-is idle.  This is the default if \fIxscreensaver\fP has been compiled with
-support for this extension (which is the default on SGI systems.).  If it
-is available, the \fBSCREEN_SAVER\fP method is faster and more reliable than
-what will be done otherwise, so use it if you can.
-.TP 8
-.B \-no\-sgi\-extension
-Don't use the SGI \fBSCREEN_SAVER\fP server extension.
-.TP 8
-.B \-mit\-extension
-Use the \fBMIT\-SCREEN\-SAVER\fP server extension to decide whether the user
-is idle.  This is the default if \fIxscreensaver\fP has been compiled with
-support for this extension.  However, this extension is flaky, so it's use 
-is not really recommended.  (It also makes the \fIfade\fP option not work
-properly.)
-.TP 8
-.B \-no\-mit\-extension
-Don't use the \fBMIT\-SCREEN\-SAVER\fP server extension.
-.SH X RESOURCES
-\fIxscreensaver\fP understands the following resources:
-.PP
-.TP 8
-.B timeout\fP (class \fBTime\fP)
-Same as the \fI\-timeout\fP command-line option.  Default 10 minutes.
-.TP 8
-.B cycle\fP (class \fBTime\fP)
-Same as the \fI\-cycle\fP command-line option.  Default 10 minutes.
+.B verbose\fP (class \fBBoolean\fP)
+Whether to print diagnostics.  Default false.
 .TP 8
 .B nice\fP (class \fBNice\fP)
-Same as the \fI\-nice\fP command-line option.  Default 10.
+The sub-processes created by \fIxscreensaver\fP will be ``niced'' to this
+level, so that they are given lower priority than other processes on the
+system, and don't increase the load unnecessarily.  The default is 20.  
+
+(Higher numbers mean lower priority; see 
+.BR nice (1)
+for details.)
 .TP 8
-.B lock\fP (class \fBBoolean\fP)
-Same as the \fI\-lock\fP command-line option.
+.B sgiSaverExtension\fP (class \fBBoolean\fP)
+There are a number of different X server extensions which can make
+xscreensaver's job easier.  The next few resources specify whether these
+extensions should be utilized if they are available.
+
+This resource controls whether the SGI \fBSCREEN_SAVER\fP server extension
+will be used to decide whether the user is idle.  This is the default 
+if \fIxscreensaver\fP has been compiled with support for this 
+extension (which is the default on SGI systems.).  If it is available, 
+the \fBSCREEN_SAVER\fP method is faster and more reliable than what will
+be done otherwise, so use it if you can.  (This extension is only available
+on Silicon Graphics systems, unfortunately.)
 .TP 8
-.B lockTimeout\fP (class \fBTime\fP)
-Same as the \fI\-lock\-timeout\fP command-line option.
+.B mitSaverExtension\fP (class \fBBoolean\fP)
+This resource controls whether the \fBMIT\-SCREEN\-SAVER\fP server extension
+will be used to decide whether the user is idle.  However, the default for
+this resource is \fIfalse\fP, because even if this extension is available,
+it is flaky (and it also makes the \fBfade\fP option not work properly.)
+Use of this extension is not recommended.
 .TP 8
-.B passwdTimeout\fP (class \fBTime\fP)
-If the screen is locked, then this is how many seconds the password dialog box
-should be left on the screen before giving up (default 30.)  This should not
-be too large: the X server is grabbed for the duration that the password
-dialog box is up (for security purposes) and leaving the server grabbed for
-too long can cause problems.
-.TP 8
-.B verbose\fP (class \fBBoolean\fP)
-Same as the \fI\-verbose\fP command-line option.
-.TP 8
-.B xidle\fP (class \fBBoolean\fP)
-Same as the \fI\-xidle\fP command-line option.
+.B xidleExtension\fP (class \fBBoolean\fP)
+This resource controls whether the \fBXIDLE\fP server extension will be
+used to decide whether the user is idle.  This is the default 
+if \fIxscreensaver\fP has been compiled with support for this extension.
+(This extension is only available for X11R4 and X11R5 systems, unfortunately.)
 .TP 8
 .B fade\fP (class \fBBoolean\fP)
 If this is true, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  This only
 works on displays with writable colormaps, that is, if the screen's default
-visual is a PseudoColor visual.  Default true.  A fade will also be done when
+visual is a PseudoColor visual.  A fade will also be done when
 switching graphics hacks (when the \fIcycle\fP timer expires.)
+Default: true.  
 .TP 8
 .B unfade\fP (class \fBBoolean\fP)
 If this is true, then when the screensaver deactivates, the original contents
@@ -278,7 +293,7 @@ as well.  Default false.
 .TP 8
 .B fadeSeconds\fP (class \fBTime\fP)
 If \fIfade\fP is true, this is how long the fade will be in 
-seconds (default 3.)
+seconds (default 3 seconds.)
 .TP 8
 .B fadeTicks\fP (class \fBInteger\fP)
 If \fIfade\fP is true, this is how many times a second the colormap will
@@ -286,19 +301,13 @@ be changed to effect a fade.  Higher numbers yield smoother fades, but
 may make the fades take longer than the specified \fIfadeSeconds\fP if
 your server isn't fast enough to keep up.  Default 20.
 .TP 8
-.B visualID\fP (class \fBVisualID\fP)
-Same as the \fI\-visual\fP command-line option.  Default \fBdefault\fP.
-.TP 8
-.B installColormap\fP (class \fBBoolean\fP)
-Same as the \fI\-install\fP command-line option.  Default true.
-.TP 8
 .B captureStderr\fP (class \fBBoolean\fP)
 Whether \fIxscreensaver\fP should redirect its standard-error stream to the
 window itself.  Since its nature is to take over the screen, you would not
-normally see error messages generated by the screensaver or the programs it
+normally see error messages generated by xscreensaver or the sub-programs it
 runs; this resource will cause the output of all relevant programs to be
-drawn on the screensaver window itself instead of written to the controlling
-terminal of the screensaver driver process.  Default true.
+drawn on the screensaver window itself, as well as being written to the
+controlling terminal of the screensaver driver process.  Default true.
 .TP 8
 .B captureStdout\fP (class \fBBoolean\fP)
 Like \fBcaptureStderr\fP but for the standard-output stream.  Default true.
@@ -308,18 +317,18 @@ The font used for the stdout/stderr text, if \fBcaptureStdout\fP or
 \fBcaptureStderr\fP are true.  Default \fB*\-medium\-r\-*\-140\-*\-m\-*\fP
 (a 14 point fixed-width font.)
 .TP 8
-.B textForeground\fP (class \fBForeground\fP)
+.B overlayTextForeground\fP (class \fBForeground\fP)
 The foreground color used for the stdout/stderr text, if \fBcaptureStdout\fP 
 or \fBcaptureStderr\fP are true.  Default: Yellow.
 .TP 8
-.B textBackground\fP (class \fBBackground\fP)
+.B overlayTextBackground\fP (class \fBBackground\fP)
 The background color used for the stdout/stderr text, if \fBcaptureStdout\fP 
 or \fBcaptureStderr\fP are true.  Default: Black.
 .TP 8
 .B programs\fP (class \fBPrograms\fP)
 The graphics hacks which \fIxscreensaver\fP runs when the user is idle.
 The value of this resource is a string, one \fIsh\fP-syntax command per line.  
-Each line must contain exactly one command -- no semicolons, no ampersands.
+Each line must contain exactly one command: no semicolons, no ampersands.
 
 When the screensaver starts up, one of these is selected at random, and
 run.  After the \fIcycle\fP period expires, it is killed, and another
@@ -328,11 +337,11 @@ is selected and run.
 If the value of this resource is empty, then no programs will be run; the
 screen will simply be made black.
 
-If the display has multiple screens, then a different program will be run 
-for each screen.
+If the display has multiple screens, then a different program will be run
+for each screen.  (All screens are blanked and unblanked simultaniously.)
 
 Note that you must escape the newlines; here is an example of how you
-might set this in your \fI.Xdefaults\fP file:
+might set this in your \fI~/.Xdefaults\fP file:
 
 .RS 8
 .EX
@@ -360,8 +369,8 @@ display, and others that you want to run only when using a monochrome
 display, you can specify that like this:
 
 .EX
-        mono:   mono-program  -root        \\n\\
-        color:  color-program -root        \\n\\
+    mono:   mono-program  -root        \\n\\
+    color:  color-program -root        \\n\\
 .EE
 .RE
 .RS 8
@@ -371,8 +380,8 @@ program works best if it has a colormap, but another works best if it has
 a 24-bit visual, both can be accommodated:
 
 .EX
-        PseudoColor: cmap-program  -root   \\n\\
-        TrueColor:   24bit-program -root   \\n\\
+    PseudoColor: cmap-program  -root   \\n\\
+    TrueColor:   24bit-program -root   \\n\\
 .EE
 .RE
 .RS 8
@@ -380,9 +389,9 @@ a 24-bit visual, both can be accommodated:
 and \fImonoPrograms\fP resources, but those resources have now been removed;
 a warning will be issued if they are used.)
 
-In addition to the symbolic visual names described above (in the section
-about the \fI\-visual\fP command-line option) one other visual name is
-supported in the \fIprograms\fP list:
+In addition to the symbolic visual names described above (in the discussion
+of the \fIvisualID\fP resource) one other visual name is supported in
+the \fIprograms\fP list:
 .RS 1
 .TP 4
 .B default-n
@@ -390,8 +399,12 @@ This is like \fBdefault\fP, but also requests the use of the default colormap,
 instead of a private colormap.  (That is, it behaves as if 
 the \fI\-no\-install\fP command-line option was specified, but only for
 this particular hack.)  This is provided because some third-party programs
-that draw on the root window make assumptions about the visual and colormap
-of that window: assumptions which xscreensaver can violate.
+that draw on the root window (notably: 
+.BR xv (1),
+and
+.BR xearth (1))
+make assumptions about the visual and colormap of the root window: 
+assumptions which xscreensaver can violate.
 
 .RE
 If you specify a particular visual for a program, and that visual does not
@@ -408,7 +421,7 @@ Normally you won't need to change the following resources:
 .TP 8
 .B bourneShell\fP (class \fBBourneShell\fP)
 The pathname of the shell that \fIxscreensaver\fP uses to start subprocesses.
-This must be whatever your local variant of \fB/bin/sh\fP is -- in particular,
+This must be whatever your local variant of \fB/bin/sh\fP is: in particular,
 it must not be \fBcsh\fP.
 .TP 8
 .B windowCreationTimeout\fP (class \fBTime\fP)
@@ -425,13 +438,82 @@ have changed.  Default 5 seconds.
 When server extensions are not in use, \fIxscreensaver\fP will wait this many
 seconds before selecting events on existing windows, under the assumption that 
 \fIxscreensaver\fP is started during your login procedure, and the window 
-state may be in flux.  Default 30 seconds.
+state may be in flux.  Default 0.  (This used to default to 30, but that was
+back in the days when slow machines and X terminals were more common...)
 .TP 8
 .B overlayStderr\fP (class \fBBoolean\fP)
 If \fBcaptureStderr\fP or \fBcaptureStdout\fP are True, and your server 
 supports ``overlay'' visuals, then the text will be written into one of
 the higher layers instead of into the same layer as the running screenhack.
 Set this to False to disable that (though you shouldn't need to.)
+.SH COMMAND-LINE OPTIONS
+.I xscreensaver
+also accepts the following command line options.  Except for 
+the \fI\-display\fP option, these command-line options are all 
+simply shorthand for the X resources described in 
+the \fIConfiguration\fP section, above.
+.TP 8
+.B \-display \fIhost:display.screen\fP
+The X display to use.  For displays with multiple screens, XScreenSaver 
+will manage all screens on the display simultaniously; the \fIscreen\fP 
+argument (the ``default'' screen) says which screen should be used for
+dialog boxes (the password window, \fIDemo Mode\fP, etc.)
+.TP 8
+.B \-timeout \fIminutes\fP
+Same as the \fItimeout\fP resource.
+.TP 8
+.B \-cycle \fIminutes\fP
+Same as the \fIcycle\fP resource.
+.TP 8
+.B \-lock\-mode
+Same as setting the \fIlock\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-lock\-mode
+Same as setting the \fIlock\fP resource to \fIfalse\fP.
+.TP 8
+.B \-lock\-timeout \fIminutes\fP
+Same as the \fIlockTimeout\fP resource.
+.TP 8
+.B \-visual \fIvisual\fP
+Same as the \fIvisualID\fP resource.
+.TP 8
+.B \-install
+Same as setting the \fIinstallColormap\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-install
+Same as setting the \fIinstallColormap\fP resource to \fIfalse\fP.
+.TP 8
+.B \-verbose
+Same as setting the \fIverbose\fP resource to \fItrue\fP.
+.TP 8
+.B \-silent
+Same as setting the \fIverbose\fP resource to \fIfalse\fP.
+.TP 8
+.B \-nice \fIinteger\fP
+Same as the \fInice\fP resource.
+.TP 8
+.B \-sgi\-extension
+Same as setting the \fIsgiSaverExtension\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-sgi\-extension
+Same as setting the \fIsgiSaverExtension\fP resource to \fIfalse\fP.
+.TP 8
+.B \-mit\-extension
+Same as setting the \fImitSaverExtension\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-mit\-extension
+Same as setting the \fImitSaverExtension\fP resource to \fIfalse\fP.
+.TP 8
+.B \-xidle\-extension
+Same as setting the \fIxidleExtension\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-xidle\-extension
+Same as setting the \fIxidleExtension\fP resource to \fIfalse\fP.
+.TP 8
+.B \-xrm \fIresource-specification\fP
+As with all other Xt programs, you can specify X resources on the command-line
+using the \fI\-xrm\fP argument.  Most of the interesting resources have 
+command-line equivalents, however.
 .SH HOW IT WORKS
 When it is time to activate the screensaver, a full-screen black window is
 created on each screen of the display.  The window or windows is given the
@@ -476,15 +558,16 @@ Make sure you have \fB$PATH\fP set up correctly in the Xsetup script, or
 won't be able to find its graphics hacks.
 
 (If your system does not seem to be executing the \fIXsetup\fP file, you
-may need to configure it to do so -- the traditional way to do this is
+may need to configure it to do so: the traditional way to do this is
 to make that file the value of the \fIDisplayManager*setup\fP resource
-in the \fIxdm-config\fP file.  See the man page for
+in the \fI/usr/lib/X11/xdm/xdm-config\fP file.  See the man page for
 .BR xdm (1)
 for more details.)
 
 Users may want to add \fB"xscreensaver-command -restart"\fP to their 
 startup scripts, so that the screensaver will be reinitialized with
-their private resource settings when they log in.
+their private resource settings when they log in.  Users who don't do
+this will get the system-wide defaults instead.
 
 It is safe to run this program as root (as \fIxdm\fP is likely to do.)  If 
 run as root, \fIxscreensaver\fP changes its effective user and group ids to
@@ -497,7 +580,8 @@ and kill and restart it from your personal X startup script to enable
 locking; for example, by using this pair of commands:
 
 .EX
-        xscreensaver-command -exit ; xscreensaver
+xscreensaver-command -exit
+xscreensaver
 .EE
 .SH USING CDE (COMMON DESKTOP ENVIRONMENT)
 The easiest way to use \fIxscreensaver\fP on a system with CDE is to simply
@@ -517,7 +601,7 @@ Screen section of the Style Manager.
 Edit the file \fI~/.dt/sessions/sessionetc\fP and add to it the line
 
 .EX
-    xscreensaver &
+xscreensaver &
 .EE
 This will cause \fIxscreensaver\fP to be launched when you log in.
 (As always, make sure that xscreensaver and the graphics demos are on
@@ -581,7 +665,7 @@ Screen section of the Style Manager.
 Edit the file \fI~/.vue/sessions/home/vue.session\fP and add to it
 the line
 .EX
-    vuesmcmd -screen 0 -cmd "xscreensaver"
+vuesmcmd -screen 0 -cmd "xscreensaver"
 .EE
 This will cause \fIxscreensaver\fP to be launched when you log in.
 (As always, make sure that xscreensaver and the graphics demos are on
@@ -603,11 +687,61 @@ This associates the VUE front panel ``Lock'' icon with the xscreensaver
 lock command.
 .RE
 .PP
+.SH ADDING TO MENUS
+The
+.BR xscreensaver-command (1)
+program is a perfect candidate for something to add to your window manager's
+popup menus.  If you use 
+.BR mwm (1),
+.BR 4Dwm (1),
+.BR twm (1),
+or (probably) any of \fItwm\fP's many descendants, you can do it like this:
+.RS 0
+.TP 3
+\fB1. Create ~/.mwmrc (or ~/.twmrc or ...)\fP
+If you don't have a \fI~/.mwmrc\fP file (or, on SGIs, a \fI~/.4Dwmrc\fP file;
+or, with TWM, a \fI~/.twmrc\fP file) then create one by making a copy of
+the \fI/usr/lib/X11/system.mwmrc\fP 
+file (or \fI/usr/lib/X11/twm/system.twmrc\fP, and so on.)
+.TP 3
+\fB2. Add a menu definition.\fP
+Something like this:
+.EX
+menu XScreenSaver
+{
+ "Blank Screen Now" !"sleep 3; xscreensaver-command -activate"
+ "Lock Screen Now"  !"sleep 3; xscreensaver-command -lock"
+ "Screen Saver Demo"         !"xscreensaver-command -demo"
+ "Reinitialize Screen Saver" !"xscreensaver-command -restart"
+ "Kill Screen Saver"         !"xscreensaver-command -exit"
+ "Launch Screen Saver"       !"xscreensaver &"
+}
+.EE
+.TP 3
+\fB3. Add the menu\fP
+For
+.BR mwm (1)
+and
+.BR 4Dwm (1),
+find the section of the file that says \fIMenu DefaultRootMenu\fP.
+For
+.BR twm (1),
+it will probably be \fImenu "defops"\fP.  If you add a line somewhere 
+in that menu definition that reads
+.EX
+  "XScreenSaver"        f.menu XScreenSaver
+.EE
+then this will add an XScreenSaver sub-menu to your default root-window
+popup menu.  Alternately, you could just put the \fIxscreensaver-command\fP
+menu items directly into the root menu.
+.RE
+
+Other window managers might (and probably do) do things differently.
 .SH BUGS
 (This is not a bug, but) note that as of release 1.32, the \fBcolorPrograms\fP 
 and \fBmonoPrograms\fP resources are no longer used: they have been 
 supplanted by the extended syntax of the \fBprograms\fP resource (which is
-described above, in the \fIX Resources\fP section.)
+described in the \fIConfiguration\fP section, above.)
 .TP 8
 .B Extensions
 If you are not making use of one of the server extensions (\fBXIDLE\fP,
@@ -655,29 +789,33 @@ in code intended for use as a screensaver.  This prevents too much graphics
 activity from being buffered up.
 .TP 8
 .B Locking and XDM
-Locking doesn't work if the screensaver is launched by \fIxdm\fP.
-The reason for this is that when it is launched by \fIxdm\fP, the
-screensaver process is owned by some standard user id (such as \fIroot\fP
-or \fIdaemon\fP) instead of the user who is logged in on the console:
-because the screensaver was started \fIbefore\fP anyone was logged in.
-In order for the screensaver to prompt for the password of the person
-who had logged in from \fIxdm\fP, it would need to know who that user was, 
-and there is no reliable and safe way to figure that out.  (And even if 
-there was, there would be some other security issues here as well.)
+If xscreensaver has been launched from XDM, you will need to cause the
+xscreensaver daemon to exit and restart in order to lock the screen.
+
+The reason for this is, if xscreensaver has been launched by XDM, that
+means it was launched \fIbefore\fP you logged in: so it has no way of
+knowing who the logged-in user is, and therefore, whose password it
+should prompt for.
 
 So if you want to use it as a locker, you must start it with your user id.
-If it has already been started by \fIxdm\fP, you can kill it with
-\fBxscreensaver\-command -exit\fP, and then start it again as you.
+If it has already been started by \fIxdm\fP, you can kill it by sending
+it the \fBexit\fP command, and then re-launching it as you, by putting
+something like the following in your personal X startup script:
+.EX
+xscreensaver-command -exit
+xscreensaver &
+.EE
 .TP 8
 .B Locking and root logins
 An implication of the above is that if you log in as \fIroot\fP on the
 console, xscreensaver will refuse to lock the screen (because it can't tell
 the difference between \fIroot\fP being logged in on the console, and a
 normal user being logged in on the console but xscreensaver having been run
-by \fIxdm\fP.)
+by
+.BR xdm (1)).
 
 The solution to this is simple: you shouldn't be logging in on the console
-as \fIroot\fP in the first place (what, are you crazy or something?)  You 
+as \fIroot\fP in the first place!  (What, are you crazy or something?)  You 
 should log in as you, and
 .BR su (1)
 to \fIroot\fP as necessary.  People who spend their day logged in 
@@ -697,8 +835,11 @@ some options with \fIconfigure\fP and recompile.
 
 If you change your password after xscreensaver has been launched, it will
 continue using your old password to unlock the screen until xscreensaver
-is restarted.  This turns out to be kind of hard to fix.  (But remember,
-kids!  Unix security doesn't do much more than keep honest people honest...)
+is restarted.  So, after you change your password, you'll have to do
+.EX
+xscreensaver-command -restart
+.EE
+to make \fIxscreensaver\fP notice.
 .TP 8
 .B Colormap lossage: TWM
 The \fBinstallColormap\fP option doesn't work very well with the
@@ -728,9 +869,9 @@ from another console.  Any thoughts on this problem are welcome...
 .B Colormap lossage: XV, XAnim, XEarth
 Some programs don't operate properly on visuals other than the default one,
 or with colormaps other than the default one.  See the discussion of the
-magic "default-n" visual name in the section about the \fBprograms\fP 
-resource.  When programs only work with the default colormap, you need to
-use a syntax like this:
+magic "default-n" visual name in the description of the \fBprograms\fP 
+resource in the \fIConfiguration\fP section.  When programs only work with
+the default colormap, you need to use a syntax like this:
 .EX
     default-n: xv -root image-1.gif -quit  \\n\\
     default-n: xearth -nostars -wait 0     \\n\\
@@ -757,10 +898,14 @@ it tells the \fIxscreensaver\fP process to activate.  The \fIxscreensaver\fP
 process immediately unmaps that window, but this results in a flicker.  I 
 haven't figured a way  to get around this; it seems to be a fundamental
 property of the (mis-) design of this server extension.
+
+It sure would be nice if someone would implement the \fBSGI SCREEN_SAVER\fP
+extension in XFree86; it's dead simple, and works far better than the 
+overengineered and broken \fBMIT-SCREEN-SAVER\fP extension.
 .TP 8
 .B Lesstif (Motif clone)
-Demo mode is buggy if XScreenSaver was compiled against really old versions
-Lesstif; if you use Lesstif, use version 0.82 or newer.
+\fIDemo Mode\fP is buggy if XScreenSaver was compiled against really old 
+versions Lesstif; if you use Lesstif, make sure you use version 0.82 or newer.
 .TP 8
 .B Athena Widgets
 If you compiled against the Athena widget toolkit, the dialog boxes are
@@ -771,6 +916,38 @@ have OSF Motif, use GNU Lesstif, it's free: http://www.lesstif.org/
 If you're running Irix 6.3, you might find that your monitor is powering down
 after an hour or two even if you've told it not to.  This is fixed by SGI
 patches 2447 and 2537.
+.TP 8
+.B OpenGL Programs and Visuals
+Some of the graphics demos included with xscreensaver make use of the 
+OpenGL (or MesaGL) 3D library, if it is available.  It is possible (even 
+likely) that \fIxscreensaver\fP's notion of the ``\fIbest\fP'' visual is 
+not quite right for these GL programs.  
+
+The odd thing about GL programs is that, unlike normal X11 programs, they
+tend to work best on a visual \fIhalf\fP as deep as the depth of the screen,
+since that way, they can do double-buffering.  Try it and see, but you will
+probably find that, for these particular programs, you should specify the
+deepest visual that is half as deep as the screen.  (See the discussion
+of the \fBprograms\fP resource in the \fIConfiguration\fP section, above.)
+
+For example, on a screen that supports both 24-bit TrueColor and 12-bit
+PseudoColor visuals, the 12-bit visual will probably work best (this is true
+of base-model SGI Indys: the 0x29 visual is the one you want.)  Oddly, on 
+SGI O2s (machines that have serious hardware support for GL), the 12-bit
+PseudoColor visual looks awful (you get a black and white, flickery image.)
+On these machines, the visual you want turns out to be 0x31.  However, 0x31
+is but \fIone\fP of the \fIeight\fP 15-bit TrueColor visuals (yes, 8, and 
+yes, 15) that the O2 X server provides.  This is the only visual that works
+properly: as far as 
+.BR xdpyinfo (1)
+is concerned, all of the 15-bit TrueColor visuals are identical, but some
+flicker like mad, and some have deeply weird artifacts (such as hidden 
+surfaces that show through, as if depth worked backwards!)  
+
+I suppose these other visuals must be tied to some arcane hardware feature...
+If anyone would care to explain it to me, that would be great.
+
+Your mileage, therefore, may vary dramatically.
 .TP 8
 .B Red Hot Lava
 There need to be a lot more graphics hacks.  In particular, there should be
@@ -801,6 +978,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR blitspin (1),
 .BR bouboule (1),
 .BR braid (1),
+.BR bsod (1),
 .BR bubbles (1),
 .BR cage (1),
 .BR coral (1),
@@ -808,6 +986,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR decayscreen (1),
 .BR deco (1),
 .BR drift (1),
+.BR epicycle (1),
 .BR fadeplot (1),
 .BR flag (1),
 .BR flame (1),
@@ -823,6 +1002,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR hypercube (1),
 .BR ifs (1),
 .BR imsmap (1),
+.BR interference (1),
 .BR jigsaw (1),
 .BR julia (1),
 .BR kaleidescope (1),
@@ -861,6 +1041,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR superquadrics (1),
 .BR swirl (1),
 .BR triangle (1),
+.BR truchet (1),
 .BR vines (1),
 .BR worm (1),
 .BR xjack (1),

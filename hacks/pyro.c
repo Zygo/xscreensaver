@@ -223,8 +223,8 @@ pyro (Display *dpy, Window window, Colormap cmap)
 char *progclass = "Pyro";
 
 char *defaults [] = {
-  "Pyro.background:	black",		/* to placate SGI */
-  "Pyro.foreground:	white",
+  "*background:	black",
+  "*foreground:	white",
   "*count:	100",
   "*frequency:	30",
   "*scatter:	20",

@@ -21,7 +21,7 @@ SHELL		= /bin/sh
 
 X_CFLAGS	= @X_CFLAGS@
 
-INCLUDES	= -I$(srcdir) -I$(srcdir)/.. -I.. @INCLUDES@
+INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
 		  resources.c spline.c usleep.c visual.c xmu.c xroger.c \

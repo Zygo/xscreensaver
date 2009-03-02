@@ -11,68 +11,83 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "31-May-97" "X Version 11"
+.TH XScreenSaver 1 "15-Jun-98 (2.21)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
 .B xscreensaver-command
-[\-help] [\-demo] [\-activate] [\-deactivate] [\-lock] [\-cycle] [\-next] [\-prev] [\-exit] [\-restart] [\-version] [\-time]
+[\-help] \
+[\-demo] \
+[\-activate] \
+[\-deactivate] \
+[\-cycle] \
+[\-next] \
+[\-prev] \
+[\-exit] \
+[\-restart] \
+[\-lock] \
+[\-version] \
+[\-time]
 .SH DESCRIPTION
 The \fIxscreensaver\-command\fP program controls a running \fIxscreensaver\fP
 process by sending it client-messages.
+
+.BR xscreensaver (1)
+has a client-server model: the xscreensaver process is a
+daemon that runs in the background; it is controlled by the 
+foreground \fIxscreensaver-command\fP program.
 .SH OPTIONS
 .I xscreensaver-command
-accepts the following options:
+accepts the following command-line options:
 .TP 8
 .B \-help
 Prints a brief summary of command-line options.
 .TP 8
 .B \-demo
 Cause the screensaver to enter its interactive demo mode, in which one
-can experiment with the various graphics hacks available.  See 
+can experiment with the various graphics hacks available.  See
 .BR xscreensaver (1)
 for details.
 .TP 8
 .B \-activate
-Tell the screensaver to turn on immediately (that is, pretend that the 
-user been idle for long enough.)  It will turn off as soon as there is
-any user activity, as usual.
+Tell xscreensaver to turn on immediately (that is, blank the screen, as if
+the user had been idle for long enough.)  The screensaver will deactivate as
+soon as there is any user activity, as usual.
 
 It is useful to run this from a menu; you may wish to run it as
 .EX
 sleep 5 ; xscreensaver-command -activate
 .EE
 to be sure that you have time to remove your hand from the mouse before
-the screensaver comes on.
+the screensaver comes on.  (Because if you jiggle the mouse, xscreensaver
+will notice, and deactivate.)
 .TP 8
 .B \-deactivate
-Tell the screensaver to turn off, as if there had been user activity.
+If the screensaver is active (the screen is blanked), this command will
+deactivate it just as if there had been keyboard or mouse activity.  
 If locking is enabled, then the screensaver will prompt for a password
 as usual.
 .TP 8
-.B \-lock
-Like \fI\-activate\fP, but a password will be required before the screensaver
-turns off, even if the screensaver's \fIlock\fP resource is false.  The 
-display will be locked immediately even if the screensaver's \fIlockTimeout\fP
-resource is non-zero.
-.TP 8
 .B \-cycle
-Tell the screensaver to change which graphics hack it is running, just
-as if the ``cycle'' timer had expired.  A new hack will be chosen randomly.
+If the screensaver is active (the screen is blanked), then stop the current
+graphics demo and run a new one (chosen randomly.)
 .TP 8
 .B \-next
 This is like either \fI\-activate\fP or \fI\-cycle\fP, depending on which is
-more appropriate, except that the screenhack that will be run is the next
-one in the list of programs, instead of a randomly-chosen one.  Repeatedly
-executing this will cycle through each hack in turn (though using 
-the \fI\-demo\fP option is probably an easier way to accomplish that.)
+more appropriate, except that the graphics hack that will be run is the next
+one in the list, instead of a randomly-chosen one.  In other words, 
+repeatedly executing -next will cause the xscreensaver process to invoke each
+graphics demo sequentially.  (Though using the \fI\-demo\fP option is probably
+an easier way to accomplish that.)
 .TP 8
 .B \-prev
 This is like \fI\-next\fP, but cycles in the other direction.
 .TP 8
 .B \-exit
-Causes the screensaver process to exit gracefully.  This is a safer and
-easier way to kill the screensaver than by using \fIkill\fP.  
+Causes the xscreensaver process to exit gracefully.  This is roughly the same
+as killing the process with
+.BR kill (1),
+but it is easier, since you don't need to first figure out the pid.  
 
 .B Warning:
 never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
@@ -82,26 +97,32 @@ manager to repair the damage.
 .TP 8
 .B \-restart
 Causes the screensaver process to exit and then restart with the same command
-line arguments.  This is a good way of causing the screensaver to re-read the
-resource database.
+line arguments as last time.  Do this after you've changed the resource
+database, to cause xscreensaver to notice the changes.
 
 If the screensaver is run from \fIxdm(1)\fP (that is, it is already running
-before you log in) then you may want to issue the ``restart'' command from 
+before you log in) then you may want to issue the \fI\-restart\fP command from
 one of your startup scripts, so that the screensaver gets your resource
 settings instead of the default ones.
 .TP 8
+.B \-lock
+Tells the running xscreensaver process to lock the screen immediately.  
+This is like \fI\-activate\fP, but forces locking as well, even if locking
+is not the default (that is, even if xscreensaver's \fIlock\fP resource is
+false, and even if the \fIlockTimeout\fP resource is non-zero.)
+.TP 8
 .B \-version
-Print (on stdout) the version number of the xscreensaver program that is 
-running on $DISPLAY.  (To see the version number of \fIxscreensaver-command\fP
-itself, use the \fI\-help\fP option.)
+Prints the version of xscreensaver that is currently running on the display:
+that is, the actual version number of the running xscreensaver background 
+process, rather than the version number of xscreensaver-command.  (To see
+the version number of \fIxscreensaver-command\fP itself, use 
+the \fI\-help\fP option.)
 .TP 8
 .B \-time
-This option prints on stdout the time at which the screensaver last activated
-(blanked the screen) or deactivated (restored the screen.)  Note that the
-activation-time is not the last time at which the user was active, but is
-some time later (it is the time at which either: xscreensaver decided that
-the user has been idle long enough; or, the user explicitly activated the
-screensaver or locker.)
+Prints the time at which the screensaver last activated or 
+deactivated (roughly, how long the user has been idle or non-idle: but 
+not quite, since it only tells you when the screen became blanked or
+un-blanked.)
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -113,6 +134,11 @@ to be manipulated.
 to find the executable to restart (for the \fI\-restart\fP command).  
 Note that this variable is consulted in the environment of 
 the \fIxscreensaver\fP process, not the \fIxscreensaver-command\fP process.
+.SH UPGRADES
+The latest version of
+.BR xscreensaver (1)
+and \fIxscreensaver\-command\fP can always be found at 
+http://people.netscape.com/jwz/xscreensaver/
 .SH "SEE ALSO"
 .BR X (1),
 .BR xscreensaver (1)
@@ -121,12 +147,15 @@ Some diagnostics are reported on the stderr of the \fIxscreensaver\fP
 process, not this process, so the caller of \fIxscreensaver-command\fP
 may not see the error messages.
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997 by Jamie Zawinski.  
-Permission to use, copy, modify, distribute, and sell this software and its
-documentation for any purpose is hereby granted without fee, provided that
-the above copyright notice appear in all copies and that both that copyright
-notice and this permission notice appear in supporting documentation.  No
-representations are made about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
+Copyright \(co 1992, 1993, 1997, 1998
+by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted without
+fee, provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or implied
+warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@netscape.com>, 13-aug-92.
+
+Please let me know if you find any bugs or make any improvements.

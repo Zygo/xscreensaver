@@ -59,8 +59,8 @@ deco (Display *dpy,
 char *progclass = "Deco";
 
 char *defaults [] = {
-  "Deco.background:	black",		/* to placate SGI */
-  "Deco.foreground:	white",
+  "*background:		black",
+  "*foreground:		white",
   "*maxDepth:		12",
   "*minWidth:		20",
   "*minHeight:		20",

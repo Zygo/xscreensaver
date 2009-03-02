@@ -65,7 +65,7 @@
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 Atom XA_VROOT, XA_XSETROOT_ID;
-Atom XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
+Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 Atom XA_SCREENSAVER_TIME;
 
 
@@ -90,8 +90,11 @@ grab_kbd(saver_info *si, Window w)
 				 but these seem to work... */
 			      GrabModeSync, GrabModeAsync,
 			      CurrentTime);
+  if (status == GrabSuccess)
+    si->keyboard_grab_window = w;
+
   if (p->debug_p)
-    fprintf(real_stderr, "%s: XGrabKeyboard(... 0x%x ...) ==> %s\n",
+    fprintf(stderr, "%s: XGrabKeyboard(... 0x%x ...) ==> %s\n",
 	    progname, (unsigned long) w,
 	    (status == GrabSuccess ? "GrabSuccess" :
 	     status == AlreadyGrabbed ? "AlreadyGrabbed" :
@@ -103,6 +106,26 @@ grab_kbd(saver_info *si, Window w)
   return status;
 }
 
+static const char *
+grab_string(int status)
+{
+  switch (status)
+    {
+    case GrabSuccess:     return "GrabSuccess";     break;
+    case AlreadyGrabbed:  return "AlreadyGrabbed";  break;
+    case GrabInvalidTime: return "GrabInvalidTime"; break;
+    case GrabNotViewable: return "GrabNotViewable"; break;
+    case GrabFrozen:      return "GrabFrozen";      break;
+    default:
+      {
+	static char foo[255];
+	sprintf(foo, "unknown status: %d", status);
+	return foo;
+      }
+    }
+}
+
+
 static int
 grab_mouse (saver_info *si, Window w, Cursor cursor)
 {
@@ -110,16 +133,38 @@ grab_mouse (saver_info *si, Window w, Cursor cursor)
   int status = XGrabPointer (si->dpy, w, True, ALL_POINTER_EVENTS,
 			     GrabModeAsync, GrabModeAsync, None,
 			     cursor, CurrentTime);
+  if (status == GrabSuccess)
+    si->mouse_grab_window = w;
+
   if (p->debug_p)
-    fprintf(real_stderr, "%s: XGrabPointer(... 0x%x, 0x%x ...) ==> %s\n",
+    fprintf(stderr, "%s: XGrabPointer(... 0x%x, 0x%x ...) ==> %s\n",
 	    progname, (unsigned long) w, (unsigned long) cursor,
-	    (status == GrabSuccess ? "GrabSuccess" :
-	     status == AlreadyGrabbed ? "AlreadyGrabbed" :
-	     status == GrabInvalidTime ? "GrabInvalidTime" :
-	     status == GrabNotViewable ? "GrabNotViewable" :
-	     status == GrabFrozen ? "GrabFrozen" :
-	     "???"));
+	    grab_string(status));
   return status;
+}
+
+
+static void
+ungrab_kbd(saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  XUngrabKeyboard(si->dpy, CurrentTime);
+  if (p->debug_p)
+    fprintf(stderr, "%s: XUngrabKeyboard (was 0x%x)\n", progname,
+	    (unsigned long) si->keyboard_grab_window);
+  si->keyboard_grab_window = 0;
+}
+
+
+static void
+ungrab_mouse(saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  XUngrabPointer(si->dpy, CurrentTime);
+  if (p->debug_p)
+    fprintf(stderr, "%s: XUngrabPointer (was 0x%x)\n", progname,
+	    (unsigned long) si->mouse_grab_window);
+  si->mouse_grab_window = 0;
 }
 
 
@@ -135,36 +180,35 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
       sleep (1);
       status = grab_kbd (si, window);
       if (status != GrabSuccess)
-	fprintf (stderr, "%s: couldn't grab keyboard!  (%d)\n",
-		 progname, status);
+	fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
+		 progname, grab_string(status));
     }
+
   status = grab_mouse (si, window, cursor);
   if (status != GrabSuccess)
     {	/* try again in a second */
       sleep (1);
       status = grab_mouse (si, window, cursor);
       if (status != GrabSuccess)
-	fprintf (stderr, "%s: couldn't grab pointer!  (%d)\n",
-		 progname, status);
+	fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
+		 progname, grab_string(status));
     }
 }
 
 void
 ungrab_keyboard_and_mouse (saver_info *si)
 {
-  saver_preferences *p = &si->prefs;
-
-  XUngrabPointer (si->dpy, CurrentTime);
-  XUngrabKeyboard (si->dpy, CurrentTime);
-
-  if (p->debug_p)
-    fprintf(real_stderr, "%s: XungrabPointer / XUngrabKeyboard\n", progname);
+  ungrab_mouse (si);
+  ungrab_kbd (si);
 }
 
 
-void
+/* Prints an error message to stderr and returns True if there is another
+   xscreensaver running already.  Silently returns False otherwise. */
+Bool
 ensure_no_screensaver_running (Display *dpy, Screen *screen)
 {
+  Bool status = 0;
   int i;
   Window root = RootWindowOfScreen (screen);
   Window root2, parent, *kids;
@@ -201,13 +245,14 @@ ensure_no_screensaver_running (Display *dpy, Screen *screen)
 	  fprintf (stderr,
       "%s: already running on display %s (window 0x%x)\n from process %s.\n",
 		   progname, DisplayString (dpy), (int) kids [i], id);
-	  exit (1);
+	  status = True;
 	}
     }
 
   if (kids) XFree ((char *) kids);
   XSync (dpy, False);
   XSetErrorHandler (old_handler);
+  return status;
 }
 
 
@@ -870,8 +915,17 @@ raise_window (saver_info *si,
 
       if (p->verbose_p) fprintf (stderr, "%s: fading... ", progname);
 
-      XGrabServer (si->dpy);
+      XGrabServer (si->dpy);			/* ############ DANGER! */
 
+      /* Clear the stderr layer on each screen.
+	 Grab the mouse on the first screen on which the mouse is grabbable
+	 (if there are multiple heads, I think you might only be able to
+	 grab the mouse on the screen that currently has the mouse?  Anyway,
+	 we only grab the mouse once, and don't try again after the grab
+	 has succeeded.)  We grab the mouse on the root window of the screen,
+	 not on the screensaver window, since the screensaver window is not
+	 yet mapped.
+       */
       for (i = 0; i < si->nscreens; i++)
 	{
 	  saver_screen_info *ssi = &si->screens[i];
@@ -879,8 +933,11 @@ raise_window (saver_info *si,
 	  /* grab and blacken mouse on the root window (saver not mapped yet)
 	   */
 	  if (grabbed != GrabSuccess)
-	    grabbed = grab_mouse (si, ssi->screensaver_window,
-				  (si->demo_mode_p ? 0 : ssi->cursor));
+	    {
+	      Window root = RootWindowOfScreen(ssi->screen);
+	      grabbed = grab_mouse (si, root,
+				    (si->demo_mode_p ? 0 : ssi->cursor));
+	    }
 
 	  if (!dont_clear || ssi->stderr_overlay_window)
 	    /* Do this before the fade, since the stderr cmap won't fade
@@ -888,8 +945,11 @@ raise_window (saver_info *si,
 	    clear_stderr (ssi);
 	}
 
+      /* Note!  The server is grabbed, and this will take several seconds
+	 to complete! */
       fade_screens (si->dpy, current_maps, current_windows,
 		    p->fade_seconds, p->fade_ticks, True, !dont_clear);
+
       free(current_maps);
       free(current_windows);
       current_maps = 0;
@@ -907,9 +967,12 @@ raise_window (saver_info *si,
 	}
 #endif /* HAVE_MIT_SAVER_EXTENSION */
 
+      /* If we had successfully grabbed the mouse, let it go now. */
       if (grabbed == GrabSuccess)
-	XUngrabPointer (si->dpy, CurrentTime);
+	ungrab_mouse (si);
+
       XUngrabServer (si->dpy);
+      XSync (si->dpy, False);			/* ###### (danger over) */
     }
   else
     {
@@ -952,9 +1015,16 @@ blank_screen (saver_info *si)
     }
   store_activate_time (si, si->screen_blanked_p);
   raise_window (si, False, False, False);
-  /* #### */
-  grab_keyboard_and_mouse (si, si->screens[0].screensaver_window,
+
+  /* Note: we do our grabs on the root window, not on the screensaver window.
+     If we grabbed on the saver window, then the demo mode and lock dialog
+     boxes wouldn't get any events.
+   */
+  grab_keyboard_and_mouse (si,
+			   /*si->screens[0].screensaver_window,*/
+			   RootWindowOfScreen(si->screens[0].screen),
 			   (si->demo_mode_p ? 0 : si->screens[0].cursor));
+
 #ifdef HAVE_XHPDISABLERESET
   if (si->locked_p && !hp_locked_p)
     {
@@ -998,6 +1068,13 @@ unblank_screen (saver_info *si)
       XGrabServer (si->dpy);			/* ############ DANGER! */
       XSync (si->dpy, False);
 
+      /* Clear the stderr layer on each screen.
+	 Grab the mouse on the first screen on which the mouse is grabbable
+	 (if there are multiple heads, I think you might only be able to
+	 grab the mouse on the screen that currently has the mouse?  Anyway,
+	 we only grab the mouse once, and don't try again after the grab
+	 has succeeded.)
+       */
       for (i = 0; i < si->nscreens; i++)
 	{
 	  saver_screen_info *ssi = &si->screens[i];
@@ -1019,8 +1096,10 @@ unblank_screen (saver_info *si)
       current_windows = 0;
 
       if (p->verbose_p) fprintf (stderr, "unfading done.\n");
+
+      /* If we had successfully grabbed the mouse, let it go now. */
       if (grabbed == GrabSuccess)
-	XUngrabPointer (si->dpy, CurrentTime);
+	ungrab_mouse (si);
     }
   else
     {
@@ -1181,7 +1260,50 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 			    ssi->screensaver_window, ssi->screensaver_window);
       store_activate_time (si, True);
 
+
+
+      /* Transfer the grabs from the old window to the new.
+	 Actually I think none of this is necessary, since we always
+	 hold our grabs on the root window, but I wrote this before
+	 re-discovering that...
+       */
+
+
+      /* If we're destroying the window that holds our mouse grab,
+	 transfer the grab to the new window.  (Grab the server while
+	 so doing, to avoid a race condition.)
+       */
+      if (old_w == si->mouse_grab_window)
+	{
+	  XGrabServer (si->dpy);		/* ############ DANGER! */
+	  ungrab_mouse(si);
+	  grab_mouse(si, ssi->screensaver_window,
+		     (si->demo_mode_p ? 0 : ssi->cursor));
+	  XUngrabServer (si->dpy);
+	  XSync (si->dpy, False);		/* ###### (danger over) */
+	}
+
+      /* If we're destroying the window that holds our keyboard grab,
+	 transfer the grab to the new window.  (Grab the server while
+	 so doing, to avoid a race condition.)
+       */
+      if (old_w == si->keyboard_grab_window)
+	{
+	  XGrabServer (si->dpy);		/* ############ DANGER! */
+	  ungrab_kbd(si);
+	  grab_kbd(si, ssi->screensaver_window);
+	  XUngrabServer (si->dpy);
+	  XSync (si->dpy, False);		/* ###### (danger over) */
+	}
+
+      /* Now we can destroy this window without horking our grabs. */
+
       XDestroyWindow (si->dpy, old_w);
+
+      if (p->verbose_p)
+	fprintf (stderr, "%s: destroyed old saver window 0x%lx.\n",
+		 progname, (unsigned long) old_w);
+
       if (old_c &&
 	  old_c != DefaultColormapOfScreen (ssi->screen) &&
 	  old_c != ssi->demo_cmap)

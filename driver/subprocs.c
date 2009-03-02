@@ -959,8 +959,8 @@ demo_mode_restart_process (saver_info *si)
 {
   int i;
   for (i = 0; saved_argv [i]; i++);
-  /* add the -demo switch; save_argv() left room for this. */
-  saved_argv [i] = "-demo";
+  /* add the -initial-demo-mode switch; save_argv() left room for this. */
+  saved_argv [i] = "-initial-demo-mode";
   saved_argv [i+1] = 0;
   restart_process (si);		/* shouldn't return */
   saved_argv [i] = 0;

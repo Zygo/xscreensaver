@@ -8,12 +8,14 @@ $ attraction	:== $'mydir'attraction
 $ blitspin	:== $'mydir'blitspin
 $ bouboule	:== $'mydir'bouboule
 $ braid		:== $'mydir'braid
+$ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
 $ coral		:== $'mydir'coral
 $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
 $ drift		:== $'mydir'drift
+$ epicycle	:== $'mydir'epicycle
 $ fadeplot	:== $'mydir'fadeplot
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
@@ -29,6 +31,7 @@ $ hopalong	:== $'mydir'hopalong
 $ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
+$ interference	:== $'mydir'interference
 $ jigsaw	:== $'mydir'jigsaw
 $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
@@ -60,6 +63,7 @@ $ starfish	:== $'mydir'starfish
 $ strange	:== $'mydir'strange
 $ swirl		:== $'mydir'swirl
 $ triangle	:== $'mydir'triangle
+$ truchet	:== $'mydir'truchet
 $ vines		:== $'mydir'vines
 $ worm		:== $'mydir'worm
 $ xjack		:== $'mydir'xjack

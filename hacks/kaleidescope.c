@@ -83,8 +83,8 @@ OBJECT *objects;
 
 char *progclass = "Kaleidescope";
 char *defaults [] = {
-  "Kaleidescope.background:	black",		/* to placate SGI */
-  "Kaleidescope.foreground:	white",
+  "*background:	     black",
+  "*foreground:	     white",
   "*color_mode:      nice",
   "*symmetry:	       11",
   "*ntrails:	      100",
@@ -126,13 +126,13 @@ static void
 krandom_color(XColor *color)
 {
   int r;
-  r = ya_random() % 3;
+  r = random() % 3;
 
   if((g.color_mode == 0) || (g.color_mode == 1)) {
 
-    color->blue  = ((r = ya_random()) % g.bluerange) + g.bluemin;
-    color->green = ((r = ya_random()) % g.greenrange) + g.greenmin;
-    color->red   = ((r = ya_random()) % g.redrange) + g.redmin;
+    color->blue  = ((r = random()) % g.bluerange) + g.bluemin;
+    color->green = ((r = random()) % g.greenrange) + g.greenmin;
+    color->red   = ((r = random()) % g.redrange) + g.redmin;
 
     if(!XAllocColor(g.dpy, g.cmap, color)) {
       color->pixel = g.default_fg_pixel;
@@ -227,10 +227,10 @@ init_ksegment (OBJECT *obj)
 {
 
   /* Give the segment some random values */
-  ((Ksegment *)obj->cur)->x1 = ya_random() % g.xoff;
-  ((Ksegment *)obj->cur)->y1 = ya_random() % g.yoff;
-  ((Ksegment *)obj->cur)->x2 = ya_random() % g.xoff;
-  ((Ksegment *)obj->cur)->y2 = ya_random() % g.yoff;
+  ((Ksegment *)obj->cur)->x1 = random() % g.xoff;
+  ((Ksegment *)obj->cur)->y1 = random() % g.yoff;
+  ((Ksegment *)obj->cur)->x2 = random() % g.xoff;
+  ((Ksegment *)obj->cur)->y2 = random() % g.yoff;
 }
 
 
@@ -434,20 +434,9 @@ init_g (Display *dpy, Window window)
   g.erase_gc     = XCreateGC (dpy, (Drawable) window, GCForeground|GCLineWidth|GCCapStyle,&gcv);
 }
 
-static void
-init_rand (void)
-{
-  time_t t;
-  time(&t);
-
-/*   ya_rand_init(((unsigned int) t) % 3600 ); */
-  ya_rand_init(((unsigned int) t));
-}
-
 void
 screenhack (Display *dpy, Window window)
 {
-  init_rand();
   init_g (dpy, window);
   create_objects();
   init_objects ();

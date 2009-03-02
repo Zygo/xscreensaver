@@ -282,8 +282,8 @@ char *progclass = "RD";
 
 
 char *defaults [] = {
-  "RD.background:	black",		/* to placate SGI */
-  "RD.foreground:	white",
+  "*background:	black",
+  "*foreground:	white",
   "*width:	0",                     /* tried to use -1 but it complained */
   "*height:	0",
   "*epoch:	40000",
@@ -441,7 +441,7 @@ screenhack (Display *dpy, Window win)
     int i, di;
     mc = (unsigned char *) malloc(1<<16);
     for (i = 0; i < (1<<16); i++) {
-      di = (i + (ya_random()&255))>>8;
+      di = (i + (random()&255))>>8;
       if (di > 255) di = 255;
       mc[i] = di;
     }

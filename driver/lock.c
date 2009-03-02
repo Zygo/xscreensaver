@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,7 @@
 #include <X11/StringDefs.h>
 #include <X11/Intrinsic.h>
 #include "xscreensaver.h"
+#include "resources.h"
 
 #ifndef VMS
 # include <pwd.h>
@@ -444,6 +445,17 @@ passwd_idle_timer (XtPointer closure, XtIntervalId *id)
       if (d & 1) d++;
 
       x = (w / 2);
+
+#ifdef __sgi	/* Kludge -- SGI's Motif hacks place buttons differently. */
+      {
+	static int sgi_mode = -1;
+	if (sgi_mode == -1)
+	  sgi_mode = get_boolean_resource("sgiMode", "sgiMode") ? 1 : 0;
+
+	if (sgi_mode)
+	  x = d;
+      }
+#endif /* __sgi */
 
       x -= d/2;
       y += d/2;

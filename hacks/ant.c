@@ -69,7 +69,7 @@ static const char sccsid[] = "@(#)ant.c	4.04 97/07/28 xlockmore";
 
 #endif /* STANDALONE */
 
-#define DEF_TRUCHET  "False"
+#define DEF_TRUCHET  "True"
 
 #ifdef STANDALONE
 static int neighbors;
@@ -119,7 +119,7 @@ ModeSpecOpt ant_opts =
 #define MINGRIDSIZE 24
 #define MINSIZE 1
 #define ANGLES 360
-#define NEIGHBORKINDS 3
+#define NEIGHBORKINDS 2
 
 #ifdef STANDALONE
 static XPoint hexagonUnit[6] =
@@ -199,7 +199,7 @@ typedef struct {
 } antfarmstruct;
 
 static int  initVal[NEIGHBORKINDS] =
-{3, 4, 6};			/* Neighborhoods, 8 just makes a mess */
+{3, 6};			/* Neighborhoods, 8 just makes a mess */
 
 
 /* Relative ant moves */
@@ -501,11 +501,9 @@ fillcell(ModeInfo * mi, GC gc, int col, int row)
 			XFillPolygon(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
 			      ap->hexagonList, 6, Convex, CoordModePrevious);
 
-#if 0 /* jwz sez: this looks like crap */
 	} else if (ap->neighbors == 4 || ap->neighbors == 8) {
 		XFillRectangle(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
 		ap->xb + ap->xs * col, ap->yb + ap->ys * row, ap->xs, ap->ys);
-#endif
 
 	} else {		/* TRI */
 		int         orient = (col + row) % 2;	/* O left 1 right */

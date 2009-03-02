@@ -181,10 +181,10 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   saver_info *si = (saver_info *) closure;
   saver_preferences *p = &si->prefs;
   Time how_long = p->cycle;
-  if (si->dbox_up_p)
+  if (si->dbox_up_p || si->question_up_p)
     {
       if (p->verbose_p)
-	printf ("%s: dbox up; delaying hack change.\n", progname);
+	printf ("%s: dialog box up; delaying hack change.\n", progname);
       how_long = 30000; /* 30 secs */
     }
   else

@@ -27,34 +27,25 @@
 #ifndef _SPLINE_H_
 #define _SPLINE_H_
 
-#ifdef VMS
-# ifndef __DECC
-   typedef unsigned int u_int;
-# else
-#  if __DECC_VER < 50200000
-    typedef unsigned int u_int;
-#  endif
-# endif
-#endif
-
 typedef struct _spline
 {
   /* input */
-  u_int		n_controls;
+  unsigned int	n_controls;
   double*	control_x;
   double*	control_y;
 
   /* output */
-  u_int		n_points;
+  unsigned int		n_points;
   XPoint*	points;
-  u_int		allocated_points;
+  unsigned int		allocated_points;
 } spline;
 
-spline* make_spline (u_int size);
+spline* make_spline (unsigned int size);
 void compute_spline (spline* s);
 void compute_closed_spline (spline* s);
 void just_fill_spline (spline* s);
 void append_spline_points (spline* s1, spline* s2);
 void spline_bounding_box (spline* s, XRectangle* rectangle_out);
+void free_spline(spline *s);
 
 #endif /* _SPLINE_H_ */

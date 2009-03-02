@@ -226,6 +226,9 @@ select_cb (Widget button, XtPointer client_data, XtPointer call_data)
 #ifdef HAVE_ATHENA
   XawListReturnStruct *item = (XawListReturnStruct*)call_data;
   demo_mode_hack (si, item->string);
+  if (item->list_index >= 0)
+    si->default_screen->current_hack = item->list_index;
+
 #else  /* HAVE_MOTIF */
   XmListCallbackStruct *lcb = (XmListCallbackStruct *) call_data;
   char *string = 0;
@@ -233,7 +236,11 @@ select_cb (Widget button, XtPointer client_data, XtPointer call_data)
     XmStringGetLtoR (lcb->item, XmSTRING_DEFAULT_CHARSET, &string);
   set_text_string (text_line, (string ? string : ""));
   if (lcb->reason == XmCR_DEFAULT_ACTION && string)
-    demo_mode_hack (si, string);
+    {
+      demo_mode_hack (si, string);
+      if (lcb->item_position > 0)
+	si->default_screen->current_hack = lcb->item_position - 1;
+    }
   if (string)
     XtFree (string);
 #endif /* HAVE_MOTIF */
@@ -618,10 +625,8 @@ make_screenhack_dialog (saver_info *si)
 		 XtNnumberStrings, si->prefs.screenhacks_count,
 		 0);
   XtAddCallback (demo_list, XtNcallback, select_cb, si);
-
-  /* ####   still need to do the "select most-recently-run hack"
-     ####   thing for Athena.
-  */
+  if (ssi->current_hack > 0)
+  XawListHighlight(demo_list, ssi->current_hack);
 
 #endif /* HAVE_ATHENA */
 
@@ -629,6 +634,11 @@ make_screenhack_dialog (saver_info *si)
 		    /* for debugging -- don't ask */
 		    (si->prefs.debug_p ? 69 : 0) +
 		    0);
+
+#ifdef HAVE_ATHENA
+  /* For Athena, have to do this after the dialog is managed. */
+  ensure_selected_item_visible (demo_list);
+#endif /* HAVE_ATHENA */
 }
 
 
@@ -923,7 +933,6 @@ demo_mode (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
   si->dbox_up_p = True;
-  initialize_screensaver_window (si);
   raise_window (si, True, False, False);
   make_screenhack_dialog (si);
   while (si->demo_mode_p)

@@ -535,6 +535,20 @@ if test $with_xshm = yes; then
     AC_CHECK_X_HEADER(sys/shm.h, [have_xshm=yes])
   fi
 
+  # AIX is pathological, as usual: apparently it's normal for the Xshm headers
+  # to exist, but the library code to not exist.  And even better, the library
+  # code is in its own library: libXextSam.a.  So, if we're on AIX, and that
+  # lib doesn't exist, give up.
+  #
+  case "$host" in
+    *-aix*)
+      have_xshm=no
+      AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
+		     [have_xshm=yes; SAVER_LIBS="$SAVER_LIBS -lXextSam"],
+		       [], -lX11 -lXext -lm)
+    ;;
+  esac
+
   # if that succeeded, then we've really got it.
   if test $have_xshm = yes; then
     AC_DEFINE(HAVE_XSHM_EXTENSION)

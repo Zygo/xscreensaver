@@ -612,8 +612,8 @@ run_balls (Display *dpy, Window window)
 char *progclass = "Attraction";
 
 char *defaults [] = {
-  "Attraction.background:	black",		/* to placate SGI */
-  "Attraction.foreground:	white",
+  "*background:	black",
+  "*foreground:	white",
   "*mode:	balls",
   "*points:	0",
   "*size:	0",

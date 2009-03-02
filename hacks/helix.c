@@ -282,7 +282,7 @@ random_helix_or_trig (Display *dpy, Window window)
 char *progclass = "Helix";
 
 char *defaults [] = {
-  "Helix.background: black",		/* to placate SGI */
+  "*background: black",
   "*delay:      5",
   0
 };

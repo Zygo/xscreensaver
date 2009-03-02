@@ -417,8 +417,8 @@ run_circles (Display *dpy, Window window)
 char *progclass = "Halo";
 
 char *defaults [] = {
-  "Halo.background:	black",		/* to placate SGI */
-  "Halo.foreground:	white",
+  "*background:		black",
+  "*foreground:		white",
   "*colorMode:		random",
   "*colors:		100",
   "*cycle:		true",
