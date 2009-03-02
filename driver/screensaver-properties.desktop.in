@@ -1,0 +1,9 @@
+[Desktop Entry]
+Exec=xscreensaver-demo --crapplet
+TryExec=xscreensaver-demo
+Icon=xscreensaver.xpm
+Terminal=0
+_Name=Screensaver
+_Comment=Change screensaver properties
+Type=Application
+Categories=Applications;Settings;

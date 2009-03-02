@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="whirlygig" _label="WhirlyGig">
+
+  <command arg="-root"/>
+
+  <number id="whirlies" type="spinbutton" arg="-whirlies %"
+          _label="Whirlies" low="1" high="50" default="40"/>
+
+  <number id="lines" type="spinbutton" arg="-nlines %"
+          _label="Lines" low="-1" high="50" default="-1"/>
+
+  <hgroup>
+    <number id="xspeed" type="spinbutton" arg="-xspeed %"
+            _label="Speed" low="0.0" high="10.0" default="1.0"/>
+    <number id="yspeed" type="spinbutton" arg="-yspeed %"
+            _label="x" low="0.0" high="10.0" default="1.0"/>
+  </hgroup>
+
+  <hgroup>
+    <number id="xamplitude" type="spinbutton" arg="-xamplitude %"
+            _label="Amplitude" low="0.0" high="10.0" default="1.0"/>
+    <number id="yamplitude" type="spinbutton" arg="-yamplitude %"
+            _label="x" low="0.0" high="10.0" default="1.0"/>
+  </hgroup>
+
+  <!-- #### -xmode [change] -->
+  <!-- #### -ymode [change] -->
+  <!-- #### -speed [1] -->
+  <!-- #### -trail [0] -->
+  <!-- #### -color_modifier [-1] -->
+  <!-- #### -start_time [-1] -->
+  <!-- #### -xoffset [1.0] -->
+  <!-- #### -yoffset [1.0] -->
+  <!-- #### -offset_period [1] -->
+  <!-- #### -explain [0] -->
+  <!-- #### -wrap [0] -->
+
+  <_description>
+Draws zooming chains of sinusoidal spots.  Written by Ashton Trey Belew.
+  </_description>
+</screensaver>

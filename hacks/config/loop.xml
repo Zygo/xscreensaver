@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="loop" _label="Loop">
+
+  <command arg="-root"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="8000" default="1600"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="150000" default="100000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="15"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Size" low="-50" high="50" default="-12"/>
+
+  <_description>
+This one produces loop-shaped colonies that spawn, age, and
+eventually die.  Written by David Bagley.
+  </_description>
+</screensaver>
