@@ -354,6 +354,7 @@ extern void activate_lock_timer (XtPointer si, XtIntervalId *id);
 extern void reset_watchdog_timer (saver_info *si, Bool on_p);
 extern void idle_timer (XtPointer si, XtIntervalId *id);
 extern void sleep_until_idle (saver_info *si, Bool until_idle_p);
+extern void reset_timers (saver_info *si);
 
 /* =======================================================================
    remote control

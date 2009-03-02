@@ -626,7 +626,9 @@ handle_signals (saver_info *si, Bool on_p)
   catch_signal (si, SIGQUIT, on_p);
   catch_signal (si, SIGILL,  on_p);
   catch_signal (si, SIGTRAP, on_p);
+#ifdef SIGIOT
   catch_signal (si, SIGIOT,  on_p);
+#endif
   catch_signal (si, SIGABRT, on_p);
 #ifdef SIGEMT
   catch_signal (si, SIGEMT,  on_p);

@@ -165,6 +165,10 @@ are disavowed shortly after startup (just after connecting to the
 X server and reading the resource database) so this is \fIbelieved\fP
 to be a safe thing to do, but it is usually recommended that you 
 have as few setuid programs around as possible, on general principles.
+.EX
+chown root.root sonar
+chmod u+s sonar
+.EE
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

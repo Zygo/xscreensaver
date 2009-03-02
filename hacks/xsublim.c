@@ -368,7 +368,9 @@ int main(int argc,char* argv[])
 		SIGQUIT,
 		SIGILL,
 		SIGTRAP,
+#if defined(SIGIOT)
 		SIGIOT,
+#endif
 		SIGABRT,
 #if defined(SIGEMT)
 		SIGEMT,

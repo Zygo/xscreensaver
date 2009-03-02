@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		3.33
+%define	version		3.34
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6

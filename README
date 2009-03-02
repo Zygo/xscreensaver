@@ -71,6 +71,36 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.33:   * Turned `memoryLimit' off by default, sigh.  Apparently
+                        some versions of the GL libraries (appear to) allocate
+                        hundreds of megs for every GL program, so `memoryLimit'
+                        was causing GL programs to malfunction or crash on
+                        those systems.
+                      * Improved fading on TrueColor XFree86 4.1.x systems.
+                      * New GL hack, `circuit'.
+                      * Added `fuzz' mode to `decayscreen'.
+                      * New version of `whirlygig'.
+                      * Added links to `glplanet' and `sphereEversion'.
+                      * Fixed rare race condition that could make `sonar' hang.
+                      * Fixed potential crash in `speedmine'.
+                      * Made `xscreensaver-demo' not crash when imageDirectory
+                        was set to a non-existent directory.
+                      * Made `xscreensaver-getimage-video' invoke XawTV's
+                        `streamer' program better.
+                      * Made `phosphor' and `starwars' deal with CR, LF, 
+                        or CRLF line endings.
+                      * Changes for Cygwin compilation environments.
+                      * Made `sonar' compile on systems that can't ping.
+                      * Configure changes for HPUX 10.20.
+                      * Made PAM code work on Red Had 4.2 systems.
+                      * Made `xscreensaver-command -deactivate' work when the
+                        saver is not active: what that does is reset the idle
+                        timer, as if keyboard input had been detected.  This
+                        was added for the benefit of people writing DVD-playing
+                        software: they can now prevent the screensaver from
+                        kicking in by sending a -deactivate message once a
+                        minute while the movie is playing and not paused.
+                      * Various minor portability tweaks.
 Changes since 3.32:   * New hacks, `speedmine' and `whirlygig'.
                       * Sped up `pyro', made the explosions look a bit better.
                       * Added better stars to `glplanet' and `starwars'.

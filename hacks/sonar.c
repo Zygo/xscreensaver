@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.19 $
+ * $Revision: 1.20 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -230,7 +230,9 @@ void *sensor_info;			/* Information about the sensor */
 
 typedef struct ping_target {
     char *name;			/* The name of the target */
+#ifdef HAVE_PING
     struct sockaddr address;	/* The address of the target */
+#endif /* HAVE_PING */
     struct ping_target *next;	/* The next one in the list */
 } ping_target;
 
@@ -1022,6 +1024,8 @@ getping(sonar_info *si, ping_info *pi)
     char *name;
     struct sigaction sa;
     struct itimerval it;
+    fd_set rfds;
+    struct timeval tv;
 
     /* Set up a signal to interupt our wait for a packet */
 
@@ -1047,9 +1051,16 @@ getping(sonar_info *si, ping_info *pi)
     /* Wait for a result packet */
 
     fromlen = sizeof(from);
-    while (! timer_expired &&
-	   (result = recvfrom(pi->icmpsock, packet, sizeof(packet),
-			      0, &from, &fromlen)) > 0) {
+    while (! timer_expired) {
+      tv.tv_usec=pi->timeout;
+      tv.tv_sec=0;
+      FD_ZERO(&rfds);
+      FD_SET(pi->icmpsock,&rfds);
+      /* only wait a little while, in case we raced with the timer expiration.
+         From Valentijn Sessink <valentyn@openoffice.nl> */
+      if (select(pi->icmpsock+1, &rfds, NULL, NULL, &tv) >0) {
+        result = recvfrom(pi->icmpsock, packet, sizeof(packet),
+                      0, &from, &fromlen);
 
 	/* Check the packet */
 
@@ -1115,6 +1126,7 @@ getping(sonar_info *si, ping_info *pi)
 	new->distance = delta(then, &now) / 100;
 	if (new->distance == 0)
 		new->distance = 2; /* HACK */
+      }
     }
 
     /* Done */
@@ -1741,10 +1753,12 @@ parse_mode (Bool ping_works_p)
   while (token < end)
     {
       char *next;
+# ifdef HAVE_PING
       ping_target *new;
       struct stat st;
       unsigned int n0=0, n1=0, n2=0, n3=0, m=0;
       char d;
+# endif /* HAVE_PING */
 
       for (next = token;
            *next != ',' && *next != ' ' && *next != '\t' && *next != '\n';
@@ -1768,6 +1782,7 @@ parse_mode (Bool ping_works_p)
           return 0;
         }
 
+#ifdef HAVE_PING
       if ((4 == sscanf (token, "%d.%d.%d/%d %c",    &n0,&n1,&n2,    &m,&d)) ||
           (5 == sscanf (token, "%d.%d.%d.%d/%d %c", &n0,&n1,&n2,&n3,&m,&d)))
         {
@@ -1814,6 +1829,7 @@ parse_mode (Bool ping_works_p)
 
           sensor = ping;
         }
+#endif /* HAVE_PING */
 
       token = next + 1;
       while (token < end &&
@@ -1849,7 +1865,12 @@ screenhack(Display *dpy, Window win)
     debug_p = get_boolean_resource ("debug", "Debug");
 
     sensor = 0;
+# ifdef HAVE_PING
     sensor_info = (void *) init_ping();
+# else  /* !HAVE_PING */
+    sensor_info = 0;
+    parse_mode (0);  /* just to check argument syntax */
+# endif /* !HAVE_PING */
 
     if (sensor == 0)
       {

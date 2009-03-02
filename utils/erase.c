@@ -91,6 +91,10 @@ random_lines (Display *dpy, Window window, GC gc,
           for (j = 0; j < granularity; j++)
             {
               int ii = i * granularity + j;
+
+              if (ii >= horiz_p ? height : width) /* don't go off array */
+                break;
+
               if (horiz_p)
                 XDrawLine (dpy, window, gc, 0, lines[ii], width, lines[ii]);
               else

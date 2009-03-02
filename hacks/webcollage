@@ -35,18 +35,19 @@ use POSIX qw(strftime);
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.77 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.78 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2001" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
 
 
 
-my @search_methods = (  35, "imagevista", \&pick_from_alta_vista_images,
-                        33, "altavista",  \&pick_from_alta_vista_text,
-                        20, "yahoorand",  \&pick_from_yahoo_random_link,
+my @search_methods = (  30, "imagevista", \&pick_from_alta_vista_images,
+                        28, "altavista",  \&pick_from_alta_vista_text,
+                        18, "yahoorand",  \&pick_from_yahoo_random_link,
+                        14, "googleimgs", \&pick_from_google_images,
                          2, "yahoonews",  \&pick_from_yahoo_news_text,
-                        10, "lycos",      \&pick_from_lycos_text,
+                         8, "lycos",      \&pick_from_lycos_text,
 
                      # Hotbot gives me "no matches" just about every time.
                      # Then I try the same URL again, and it works.  I guess
@@ -56,6 +57,7 @@ my @search_methods = (  35, "imagevista", \&pick_from_alta_vista_images,
                       );
 
 #@search_methods=(100, "lycos",     \&pick_from_lycos_text);
+@search_methods=(100, "googleimgs",\&pick_from_google_images);
 
 # programs we can use to write to the root window (tried in ascending order.)
 #
@@ -156,15 +158,7 @@ my $min_ratio = 1/5;
 my $no_output_p = 0;
 my $urls_only_p = 0;
 
-my $wordlist = "/usr/dict/words";
-
-if (!-r $wordlist) {
-  $wordlist = "/usr/share/dict/words";          # BSD
-}
-if (!-r $wordlist) {
-  $wordlist = "/usr/share/lib/dict/words";      # Irix
-}
-die "$progname: $wordlist doesn't exist!\n" unless (-r $wordlist);
+my $wordlist;
 
 my %rejected_urls;
 my @tripwire_words = ("aberrate", "abode", "amorphous", "antioch",
@@ -255,9 +249,15 @@ sub get_document_1 {
 
       my $cookie = $cookies{$them};
 
+      my $user_agent = "$progname/$version";
+      if ($url =~ m@^http://www\.altavista\.com/@) {
+        # block this, you turkeys.
+        $user_agent = "Mozilla/4.76 [en] (X11; U; Linux 2.2.16-22 i686; Nav)";
+      }
+
       my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
                  "Host: $them\r\n" .
-                 "User-Agent: $progname/$version\r\n";
+                 "User-Agent: $user_agent\r\n";
       if ($referer) {
         $hdrs .= "Referer: $referer\r\n";
       }
@@ -640,6 +640,19 @@ sub pick_image_from_body {
 ############################################################################
 
 
+sub pick_dictionary {
+  my @dicts = ("/usr/dict/words",
+               "/usr/share/dict/words",
+               "/usr/share/lib/dict/words");
+  foreach my $f (@dicts) {
+    if (-f $f) {
+      $wordlist = $f;
+      last;
+    }
+  }
+  error ("$dicts[0] does not exist") unless defined($wordlist);
+}
+
 # returns a random word from the dictionary
 #
 sub random_word {
@@ -956,6 +969,56 @@ sub pick_from_alta_vista_images {
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random words into Google Image Search
+# By Charles Gales <gales@us.ibm.com>
+#
+############################################################################
+
+
+my $google_images_url =     "http://images.google.com/images" .
+                            "?site=images" .  # photos
+                            "&btnG=Search" .  # graphics
+                            "&safe=off" .     # no screening
+                            "&imgsafe=off" .
+                            "&q=";
+
+# googleimgs
+sub pick_from_google_images {
+  my ( $timeout ) = @_;
+
+  my $words = random_word;   # only one word for Google
+  my $page = (int(rand(9)) + 1);
+  my $num = 20;     # 20 images per page
+  my $search_url = $google_images_url . $words;
+
+  if ($page > 1) {
+    $search_url .= "&start=" . $page*$num;	# page number
+    $search_url .= "&num="   . $num;            #images per page
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+    next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
+    next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
+
+    if ($u =~ m@^/imgres\?imgurl=(.*?)\&imgrefurl=(.*?)\&@) {
+      my $urlf = $2;
+      LOG ($verbose_filter, "  candidate: $urlf");
+      push @candidates, $urlf;
+    }
   }
 
   return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
@@ -2074,6 +2137,7 @@ sub main {
   srand(time ^ $$);
 
   my $verbose = 0;
+  my $dict;
 
   $current_state = "init";
   $load_method = "none";
@@ -2123,10 +2187,13 @@ sub main {
       }
     } elsif ($_ eq "-proxy" || $_ eq "-http-proxy") {
       $http_proxy = shift @ARGV;
+    } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
+      $dict = shift @ARGV;
     } else {
       print STDERR "$copyright\nusage: $progname [-root]" .
                  " [-display dpy] [-root] [-verbose] [-timeout secs]\n" .
                  "\t\t  [-delay secs] [-filter cmd] [-filter2 cmd]\n" .
+                 "\t\t  [-dictionary dictionary-file]\n" .
                  "\t\t  [-http-proxy host[:port]]\n";
       exit 1;
     }
@@ -2200,6 +2267,12 @@ sub main {
     $verbose_exec     = 1;
   }
 
+  if ($dict) {
+    error ("$dict does not exist") unless (-f $dict);
+    $wordlist = $dict;
+  } else {
+    pick_dictionary();
+  }
 
   if ($urls_only_p) {
     url_only_output;

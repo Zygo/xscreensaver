@@ -3,7 +3,12 @@
 swirl - draws swirly color-cycling patterns
 .SH SYNOPSIS
 .B swirl
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP]
+[\-ncolors \fIinteger\fP]
+[\-delay \fImicroseconds\fP]
+[\-count \fIinteger\fP]
 
 .SH DESCRIPTION
 The \fIswirl\fP program draws swirly color-cycling patterns.
@@ -29,9 +34,6 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-ncolors \fIinteger\fP
 How many colors should be used (if possible).  Default 200.
-.TP 8
-.B \-cycles \fIinteger\fP
-
 .TP 8
 .B \-count \fIinteger\fP
 

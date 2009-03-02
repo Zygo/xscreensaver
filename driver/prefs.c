@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -1351,10 +1352,7 @@ format_hack (screenhack *hack, Bool wrap_p)
 
       col = string_columns (h2, strlen (h2), 0);
       if (wrap_p && col >= tab)
-        {
-          out = stab_to (out, col, 77);
-          *out += strlen(out);
-        }
+        out = stab_to (out, col, 77);
       else
         *out++ = ' ';
 

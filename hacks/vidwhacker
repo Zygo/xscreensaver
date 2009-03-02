@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.18 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -249,7 +249,7 @@ sub read_config {
   local *IN;
   open (IN, "<$conf") ||  error "reading $conf: $!";
   while (<IN>) {
-    if (!$imagedir && m/^imageDirectory:\s+([^\s]+)\s*$/i) { $imagedir = $1; }
+    if (!$imagedir && m/^imageDirectory:\s+(.*)\s*$/i) { $imagedir = $1; }
     elsif (m/^grabVideoFrames:\s+true\s*$/i)     { $video_p = 1; }
     elsif (m/^grabVideoFrames:\s+false\s*$/i)    { $video_p = 0; }
     elsif (m/^chooseRandomImages:\s+true\s*$/i)  { $file_p  = 1; }
@@ -259,6 +259,7 @@ sub read_config {
 
   $file_p = 1 if $had_dir;
 
+  $imagedir = undef unless ($imagedir && $imagedir ne '');
 
   if (!$file_p && !$video_p) {
 #    error "neither grabVideoFrames nor chooseRandomImages are set\n\t" .
@@ -305,7 +306,7 @@ sub get_ppm {
     my $v = ($verbose <= 1 ? "" : "-" . ("v" x ($verbose-1)));
     my $cmd;
     if ($do_file_p) {
-      $cmd = "xscreensaver-getimage-file  $v --name $imagedir";
+      $cmd = "xscreensaver-getimage-file  $v --name \"$imagedir\"";
     } else {
       $cmd = "xscreensaver-getimage-video $v --stdout";
     }
@@ -321,8 +322,8 @@ sub get_ppm {
 
       print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
 
-      if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < $fn"; }
-      elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < $fn"; }
+      if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
+      elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < \"$fn\""; }
       else {
         error "unrecognized file extension on $fn";
       }
@@ -435,7 +436,7 @@ sub main {
   read_config;
 
   if (!$use_stdout) {
-    $_ = `xdpyinfo 2>-`;
+    $_ = `xdpyinfo 2>&-`;
     ($screen_width) =~ m/ dimensions: +(\d+)x(\d+) pixels/;
     $screen_width = 800 unless $screen_width > 0;
   }

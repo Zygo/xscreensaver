@@ -279,7 +279,7 @@ activate_lock_timer (XtPointer closure, XtIntervalId *id)
 
 /* Call this when user activity (or "simulated" activity) has been noticed.
  */
-static void
+void
 reset_timers (saver_info *si)
 {
   saver_preferences *p = &si->prefs;

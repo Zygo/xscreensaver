@@ -66,7 +66,8 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   unsigned long *pixels;
   XImage *ximage = 0;
 
-  if (4 != sscanf (*data, "%d %d %d %d %c", &w, &h, &ncolors, &nbytes, &c))
+  if (4 != sscanf ((const char *) *data,
+                   "%d %d %d %d %c", &w, &h, &ncolors, &nbytes, &c))
     abort();
   if (ncolors < 1 || ncolors > 255)
     abort();
@@ -79,7 +80,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   if (mask_ret)
     {
       int s = (w8 * h) + 1;
-      *mask_ret = (char *) malloc (s);
+      *mask_ret = (unsigned char *) malloc (s);
       if (!*mask_ret)
         mask_ret = 0;
       else
@@ -226,8 +227,9 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
 
       if (mask_ret && mask)
         {
-          *mask_ret = XCreatePixmapFromBitmapData (dpy, window, mask,
-                                                   iw, ih, 1L, 0L, 1);
+          *mask_ret = (Pixmap)
+            XCreatePixmapFromBitmapData (dpy, window, (char *) mask,
+                                         iw, ih, 1L, 0L, 1);
           free (mask);
         }
     }

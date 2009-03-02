@@ -344,7 +344,7 @@ AC_DEFUN(AC_CHECK_ICMPHDR,
                    struct ip ip;
                    i.type = ICMP_ECHO;
                    i.code = 0;
-                   i.cksum = 0;
+                   i.checksum = 0;
                    i.un.echo.id = 0;
                    i.un.echo.sequence = 0;
                    si.sin_family = AF_INET;
@@ -516,15 +516,15 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
       #
       for version in X11R6 X11R5 X11R4 ; do
         # if either pair of directories exists...
-        if test -d /usr/lib/$version || test -d /usr/contrib/$version/lib
+        if test -d /usr/include/$version || test -d /usr/contrib/$version/include
         then
            # if contrib exists, use it...
-           if test -d /usr/contrib/$version/lib ; then
+           if test -d /usr/contrib/$version/include ; then
              X_CFLAGS="$X_CFLAGS -I/usr/contrib/$version/include"
              X_LIBS="$X_LIBS -L/usr/contrib/$version/lib"
            fi
            # if the "standard" one exists, use it.
-           if test -d /usr/lib/$version ; then
+           if test -d /usr/include/$version ; then
              X_CFLAGS="$X_CFLAGS -I/usr/include/$version"
              X_LIBS="$X_LIBS -L/usr/lib/$version"
            fi
@@ -536,20 +536,28 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
       # Now find Motif.  Thanks for not making xmkmf find this by
       # default, you losers.
       #
-      if test -d /usr/lib/Motif1.2 ; then
+      if test -d /usr/include/Motif2.1 ; then
+        X_CFLAGS="$X_CFLAGS -I/usr/include/Motif2.1"
+        X_LIBS="$X_LIBS -L/usr/lib/Motif2.1"
+      elif test -d /usr/include/Motif1.2 ; then
         X_CFLAGS="$X_CFLAGS -I/usr/include/Motif1.2"
         X_LIBS="$X_LIBS -L/usr/lib/Motif1.2"
-      elif test -d /usr/lib/Motif1.1 ; then
+      elif test -d /usr/include/Motif1.1 ; then
         X_CFLAGS="$X_CFLAGS -I/usr/include/Motif1.1"
         X_LIBS="$X_LIBS -L/usr/lib/Motif1.1"
       fi
 
       # Now let's check for the pseudo-standard locations for OpenGL and XPM.
       #
-      if test -d /opt/Mesa/lib ; then
+      if test -d /opt/graphics/OpenGL/include ; then
+        # HP-UX 10.20 puts it here
+        X_CFLAGS="-I/opt/graphics/OpenGL/include $X_CFLAGS"
+        X_LIBS="-L/opt/graphics/OpenGL/lib $X_LIBS"
+      elif test -d /opt/Mesa/lib ; then
         X_CFLAGS="-I/opt/Mesa/include $X_CFLAGS"
         X_LIBS="-L/opt/Mesa/lib $X_LIBS"
       fi
+
 
       if test -d /opt/xpm/lib/X11 ; then
         X_CFLAGS="-I/opt/xpm/include $X_CFLAGS"
@@ -1136,6 +1144,7 @@ fi
 ###############################################################################
 
 have_xf86gamma=no
+have_xf86gamma_ramp=no
 with_xf86gamma_req=unspecified
 AC_ARG_WITH(xf86gamma-ext,
 [  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
@@ -1161,14 +1170,26 @@ if test "$with_xf86gamma" = yes; then
                    [true], -lXext -lX11)
   fi
 
+  # check for the Ramp versions of the functions too.
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma_ramp=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
+                  [have_xf86gamma_ramp=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # if those tests succeeded, then we've really got the functions.
+  if test "$have_xf86gamma" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+  fi
+
+  if test "$have_xf86gamma_ramp" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
+  fi
+
   # pull in the lib, if we haven't already
   if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
     SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xf86gamma" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
   fi
 
 elif test "$with_xf86gamma" != no; then
@@ -1789,7 +1810,7 @@ if test "$with_gtk" = yes; then
   # Check for Gnome Capplet support.
   #
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-    gnome_config_libs="capplet gnomeui"
+    gnome_config_libs="gtk capplet gnomeui"
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
       [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \

@@ -357,12 +357,17 @@ get_more_lines (sws_configuration *sc)
           return;
         }
 
-      if (*s == '\n' || col > sc->columns)
+      if (*s == '\r' || *s == '\n' || col > sc->columns)
         {
           int L = s - sc->buf;
 
-          if (*s == '\n')
-            *s++ = 0;
+          if (*s == '\r' || *s == '\n')
+            {
+              if (*s == '\r' && s[1] == '\n')  /* swallow CRLF too */
+                *s++ = 0;
+
+              *s++ = 0;
+            }
           else
             {
               /* We wrapped -- try to back up to the previous word boundary. */

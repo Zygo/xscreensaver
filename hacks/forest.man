@@ -3,7 +3,7 @@
 forest - draws a fractal forest
 .SH SYNOPSIS
 .B forest
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP]
 
 .SH DESCRIPTION
 The \fIforest\fP program draws a fractal forest.
@@ -29,11 +29,6 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-ncolors \fIinteger\fP
 How many colors should be used (if possible).  Default 100.
-.TP 8
-.B \-cycles \fIinteger\fP
-
-.TP 8
-.B \-count \fIinteger\fP
 
 .SH ENVIRONMENT
 .PP
