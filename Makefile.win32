@@ -1,0 +1,33 @@
+# build applications
+CC=gcc
+MAKE=make
+
+# compiler flags
+CFLAGS=-DWIN32 -O2 -mno-cygwin -mwindows
+
+# Include & Library directories
+WIN32API=/usr/include/w32api
+INCS=-I$(WIN32API)
+LIBS=-L/usr/lib/w32api -lscrnsave -lcrypt
+PROG=xlock95.scr
+
+# specific rules
+all:	$(PROG)
+
+$(PROG):	xlock modes win32
+	(cd xlock ; $(MAKE) -f Makefile.win32 )
+	(cd modes ; $(MAKE) -f Makefile.win32 )
+	(cd win32 ; $(MAKE) -f Makefile.win32 )
+	$(CC) $(CFLAGS) -o $@ xlock/*.o modes/*.o win32/*.o $(LIBS)
+
+clean:
+	(cd xlock ; $(MAKE) -f Makefile.win32 clean )
+	(cd modes ; $(MAKE) -f Makefile.win32 clean )
+	(cd win32 ; $(MAKE) -f Makefile.win32 clean )
+	rm -f *.scr core *~ *% *.bak *.rej *.orig *.patch *.pure
+
+install:	all
+	cp -p $(PROG) `cygpath -W`
+
+uninstall:
+	rm -f `cygpath -W`/$(PROG)

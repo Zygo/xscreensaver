@@ -1,0 +1,135 @@
+############################################################
+#
+# $Id : Makefile.in 5.15 2005/01/22 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+SUBDIRS = xlock modes/glx modes xmlock xglock
+
+MAKE_SUBDIR = for dir in $(SUBDIRS) ; do ( cd $$dir ; $(MAKE) $@ ) ; done
+# convenient not to use configure just to clean
+MAKEIN_SUBDIR = for dir in $(SUBDIRS) ; do ( cd $$dir ; sed s/@MODULES@/\#/ Makefile.in > Makefile ; $(MAKE) $@ ) ; done
+
+all :
+	@$(MAKE_SUBDIR)
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+
+TAR = tar
+RM = rm -f
+
+VER = xlockmore
+DISTVER = xlockmore-4.20
+
+install :
+	@$(MAKE_SUBDIR)
+
+install-program :
+	@$(MAKE_SUBDIR)
+
+install-man :
+	@$(MAKE_SUBDIR)
+
+install-ad :
+	@$(MAKE_SUBDIR)
+
+uninstall :
+	@$(MAKE_SUBDIR)
+
+uninstall-program :
+	@$(MAKE_SUBDIR)
+
+uninstall-man :
+	@$(MAKE_SUBDIR)
+
+install.program : install-program
+
+install.man : install-man
+
+install.ad : install-ad
+
+uninstall.program : uninstall-program
+
+uninstall.man : uninstall-man
+
+uninstall.ad : uninstall-ad
+
+depend :
+	@$(MAKE_SUBDIR)
+
+distdepend :
+	@$(MAKE_SUBDIR)
+
+lint :
+	@$(MAKE_SUBDIR)
+
+xrdb :
+	@$(MAKE_SUBDIR)
+
+man :
+	@$(MAKE_SUBDIR)
+
+html :
+	@$(MAKE_SUBDIR)
+
+hlp :
+	@$(MAKE_SUBDIR)
+
+clean :
+	$(RM) core *~ *% *.bak *.orig *.rej make.log MakeOut *.patch
+	@$(MAKE_SUBDIR)
+
+distclean :
+	$(RM) core *~ *% *.bak *.orig *.rej make.log MakeOut *.patch
+	$(RM) Makefile config.status config.cache config.log config.h
+	rm -rf autom4te.cache
+	make -f Makefile.win32 clean
+	@$(MAKEIN_SUBDIR)
+
+Makefile : Makefile.in config.status
+	$(SHELL) config.status
+config.status : configure
+	$(SHELL) config.status --recheck
+#configure : configure.in
+# enable this rule if you want autoconf to be executed automatically when
+# configure.in is changed. This is commented out, since patching might give
+# configure.in a newer timestamp than configure and not everybody has autoconf
+#	cd $(srcdir); autoconf
+
+clean.all : distclean
+
+tar : distclean
+	cd .. ; $(TAR) cvf $(VER).tar $(VER)/*
+
+bzip2 : tar
+	cd .. ; bzip2 -f $(VER).tar
+
+gzip : tar
+	cd .. ; gzip -best -f $(VER).tar
+
+compress : tar
+	cd .. ; compress -f $(VER).tar
+
+dist : bzip2
+
+tbz : tar
+	cd .. ; bzip2 -c $(VER).tar > `echo $(VER) | cut -c1-8`.tbz ; \
+$(RM) $(VER).tar
+
+tgz : tar
+	cd .. ; gzip -best -c $(VER).tar > `echo $(VER) | cut -c1-8`.tgz ; \
+$(RM) $(VER).tar
+
+read :
+	more README

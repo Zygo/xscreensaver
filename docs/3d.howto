@@ -1,0 +1,43 @@
+
+              Introduction to 3d modes
+                  Henrik Theiling
+
+
+This is a short introduction to how you could try to see the 3d effects
+in xlock:
+
+- You will need glasses with one lens red and the other blue (or green).
+  The blue (or green) one needs to be in front of the left eye, the red one
+  in front of the right one.  If you have got differently coloured lenses
+  (like green) you can try to adjust the colours by using the switches
+  -right3d <colour> and -left3d <colour> .
+
+ If you do not see any 3d effect, try to change the -delta3d value.
+
+- Adjust the colour of your screen (or use -right3d/-left3d instead).  Most
+  likely if you use the green colours will be too bright so you can see them
+  through the red lens, too.
+
+- Let the program display in blue for the green lens.  You should still be
+  able to see blue through your green lens, but less likely through your
+  red lens.
+
+- Try to zoom in from a completely dark screen.
+
+- Try different 3d modes.  Some people see `rock' more easily, others `worm'.
+  It depends.
+
+I hope you enjoy it.
+
+Currently the following modes are implemented for 3d view:
+  rock, worm, bouboule, pyro.
+
+BUGS:
+  Some of the 3d modes are not implemented with real 3d.  They try to
+  use a close approach.
+  Rock, pyro and bouboule use real 3d calculations.
+  In the worm mode, worms can not just creep to the bottom or the top.  That
+  means they do not have a real 3d direction but one 2d direction (the same
+  as in 2d mode) and an additional 1d direction for the z-axis.  This could
+  be fixed.
+

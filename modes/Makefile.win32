@@ -1,0 +1,163 @@
+# build applications
+CC=gcc
+
+# compiler flags
+CFLAGS=-DWIN32 -mno-cygwin -mwindows -O2
+
+# Include & Library directories
+INCS=-I../xlock -I../win32 -I..
+
+# sources
+SRC=	ant.c			\
+		ant3d.c			\
+		apollonian.c	\
+		ball.c			\
+		bat.c			\
+		blot.c			\
+		bouboule.c		\
+		bounce.c		\
+		braid.c			\
+		bug.c			\
+		clock.c			\
+		coral.c			\
+		crystal.c		\
+		daisy.c			\
+		deco.c			\
+		demon.c			\
+		dilemma.c		\
+		discrete.c		\
+		dragon.c		\
+		drift.c			\
+		euler2d.c		\
+		eyes.c			\
+		fadeplot.c		\
+		fiberlamp.c		\
+		flame.c			\
+		flow.c			\
+		forest.c		\
+		galaxy.c		\
+		grav.c			\
+		helix.c			\
+		hop.c			\
+		hyper.c			\
+		ico.c			\
+		image.c			\
+		julia.c			\
+		juggle.c		\
+		kaleid.c		\
+		kumppa.c		\
+		laser.c			\
+		life.c			\
+		life1d.c		\
+		life3d.c		\
+		lightning.c		\
+		lisa.c			\
+		lissie.c		\
+		lyapunov.c		\
+		loop.c			\
+		mandelbrot.c		\
+		matrix.c		\
+		maze.c			\
+		mountain.c		\
+		munch.c			\
+		nose.c			\
+		pacman.c		\
+		petal.c			\
+		petri.c			\
+		polyominoes.c		\
+		pyro.c			\
+		qix.c			\
+		random.c		\
+		roll.c			\
+		rotor.c			\
+		scooter.c		\
+		shape.c			\
+		sierpinski.c		\
+		slip.c			\
+		space.c			\
+		sphere.c		\
+		spiral.c		\
+		spline.c		\
+		star.c			\
+		starfish.c		\
+		swarm.c			\
+		tetris.c		\
+		thornbird.c		\
+		tik_tak.c		\
+		toneclock.c		\
+		triangle.c		\
+		tube.c			\
+		turtle.c		\
+		vines.c			\
+		voters.c		\
+		wator.c			\
+		wire.c			\
+		world.c			\
+		worm.c			\
+		xjack.c
+
+XBMS=	bat.xbm			\
+		bounce.xbm		\
+		decay.xbm		\
+		eyes.xbm		\
+		eyes2.xbm		\
+		flag.xbm		\
+		gray1.xbm		\
+		image.xbm		\
+		life.xbm		\
+		life1d.xbm		\
+		life2.xbm		\
+		maze.xbm		\
+		puzzle.xbm
+
+# objects
+OBJS=	$(SRC:.c=.o)
+
+# general rules
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $< $(INCS)
+
+# specific rules
+all:	$(XBMS) $(OBJS)
+
+bat.xbm:
+	ln -sf ../bitmaps/l-xlock.xbm bat.xbm
+
+bounce.xbm:
+	ln -sf ../bitmaps/l-xlock.xbm bounce.xbm
+
+decay.xbm:
+	ln -sf ../bitmaps/l-xlock.xbm decay.xbm
+
+eyes.xbm:
+	ln -sf ../bitmaps/m-grelb.xbm eyes.xbm
+
+eyes2.xbm:
+	ln -sf ../bitmaps/m-grelb-2.xbm eyes2.xbm
+
+flag.xbm:
+	ln -sf ../bitmaps/l-win.xbm flag.xbm
+
+gray1.xbm:
+	ln -sf ../bitmaps/gray1.xbm gray1.xbm
+
+image.xbm:
+	ln -sf ../bitmaps/l-win.xbm image.xbm
+
+life.xbm:
+	ln -sf ../bitmaps/s-grelb.xbm life.xbm
+
+life1d.xbm:
+	ln -sf ../bitmaps/t-x11.xbm life1d.xbm
+
+life2.xbm:
+	ln -sf ../bitmaps/s-grelb-2.xbm life2.xbm
+
+maze.xbm:
+	ln -sf ../bitmaps/l-win.xbm maze.xbm
+
+puzzle.xbm:
+	ln -sf ../bitmaps/l-xlock.xbm puzzle.xbm
+
+clean:
+	rm -f *.o *~ $(XBMS)

@@ -1,0 +1,2503 @@
+.\" @(#)xlock.man	5.21 2005/12/06
+.\" Copyright (c) 1991 - Patrick J. Naughton
+.\" xlockmore updates from David A. Bagley
+.TH XLOCK 1 "6 December 2005" "X11R6 Contrib"
+.SH NAME
+xlock \- Locks the local X display until a password is entered.
+.sp
+.IX xlock#(1) "" "\fLxlock\fP(1)"
+.SH SYNOPSIS
+.B xlock
+[
+.BI \-help
+]
+[
+.BI \-version
+]
+[
+.BI \-resources
+]
+[
+.BI \-display " displayname"
+]
+[
+.BI \-visual " visualname"
+]
+[
+.BI \-name " resourcename"
+]
+[
+.BI \-mode " modename"
+]
+[
+.BI \-delay " usecs"
+]
+[
+.BI \-batchcount " num"
+]
+[
+.BI \-count " num"
+]
+[
+.BI \-cycles " num"
+]
+[
+.BI \-ncolors " num"
+]
+[
+.BI \-size " num"
+]
+[
+.BI \-saturation " value"
+]
+[
+.BI \-erasemode " modename"
+]
+[
+.BI \-erasedelay " usecs"
+]
+[
+.BI -/+allowaccess
+]
+[
+.BI \-vtlock " modename"
+]
+[
+.BI -/+nolock
+]
+[
+.BI -/+inwindow
+]
+[
+.BI -/+inroot
+]
+[
+.BI -/+remote
+]
+[
+.BI -/+mono
+]
+[
+.BI -/+allowroot
+]
+[
+.BI -/+debug
+]
+[
+.BI -/+description
+]
+[
+.BI -/+echokeys
+]
+[
+.BI \-echokey " echokey"
+]
+[
+.BI -/+enablesaver
+]
+[
+.BI -/+resetsaver
+]
+[
+.BI -/+grabmouse
+]
+[
+.BI -/+grabserver
+]
+[
+.BI -/+install
+]
+[
+.BI -/+mousemotion
+]
+[
+.BI -/+sound
+]
+[
+.BI -/+timeelapsed
+]
+[
+.BI -/+usefirst
+]
+[
+.BI -/+verbose
+]
+[
+.BI \-nice " level"
+]
+[
+.BI \-lockdelay " seconds"
+]
+[
+.BI \-timeout " seconds"
+]
+[
+.BI \-font " fontname"
+]
+[
+.BI \-planfont " fontname"
+]
+[
+.BI \-bg " color"
+]
+[
+.BI \-fg " color"
+]
+[
+.BI \-background " color"
+]
+[
+.BI \-foreground " color"
+]
+[
+.BI \-username " string"
+]
+[
+.BI \-password " string"
+]
+[
+.BI \-info " string"
+]
+[
+.BI \-validate " string"
+]
+[
+.BI \-invalid " string"
+]
+[
+.BI \-geometry " geom"
+]
+[
+.BI \-icongeometry " geom"
+]
+[
+.BI \-glgeometry " geom"
+]
+[
+.BI -/+wireframe
+]
+[
+.BI -/+showfps
+]
+[
+.BI \-fpsfont " fontname"
+]
+[
+.BI -/+fpstop
+]
+[
+.BI -/+use3d
+]
+[
+.BI \-delta3d " value"
+]
+[
+.BI \-none3d " color"
+]
+[
+.BI \-right3d " color"
+]
+[
+.BI \-left3d " color"
+]
+[
+.BI \-both3d " color"
+]
+[
+.BI \-program " programname"
+]
+[
+.BI \-messagesfile " formatted-filename"
+]
+[
+.BI \-messagefile " filename"
+]
+[
+.BI \-message " string"
+]
+[
+.BI \-messagefont " fontname"
+]
+[
+.BI \-bitmap " filename"
+]
+[
+.BI \-cpasswd " crypted-password"
+]
+[
+.BI \-forceLogout " minutes"
+]
+[
+.BI \-logoutButton " minutes"
+]
+[
+.BI \-logoutButtonLabel " textstring"
+]
+[
+.BI \-logoutButtonHelp " textstring"
+]
+[
+.BI \-logoutFailedString " textstring"
+]
+[
+.BI -/+dtsaver
+]
+[
+.BI \-modulepath " path"
+]
+[
+.BI \-locksound " string"
+]
+[
+.BI \-infosound " string"
+]
+[
+.BI \-validsound " string"
+]
+[
+.BI \-invalidsound " string"
+]
+[
+.BI \-startCmd " string"
+]
+[
+.BI \-endCmd " string"
+]
+[
+.BI \-pipepassCmd " string"
+]
+[
+.BI \-logoutCmd " string"
+]
+
+.SH DESCRIPTION
+.B xlock
+locks the X server till the user enters their password at the keyboard.
+While
+.B xlock
+is running,
+all new server connections are refused.
+The screen saver is disabled.
+The mouse cursor is turned off.
+The screen is blanked and a changing pattern is put on the screen.
+If a key or a mouse button is pressed then the user is prompted for the
+password of the user who started
+.BR xlock .
+
+If the correct password is typed, then the screen is unlocked and the X
+server is restored.  When typing the password Control-U and Control-H are
+active as kill and erase respectively.  To return to the locked screen,
+click in the small icon version of the changing pattern.
+
+In the lower part of the password screen a text is displayed.  This
+message is taken from the first file of the following that exists:
+$HOME/.xlocktext, $HOME/.plan, or $HOME/.signature.
+
+On systems which support new BSD style authentication, the password
+may be prefixed by an authentication style followed by a colon
+(i.e. "style:password").  See the login.conf(5) for more information
+on authentication styles.
+
+.SH "NOTE ON ETIQUETTE"
+.I Xlock
+should not be used on public terminals when there is a high demand for them.
+
+If you find a public terminal that has been locked by another user and
+there are no other terminals available, and the terminal appears to have
+been left idle for a while (normally more than 15 minutes), it is fair to
+try to reset the session in some manner.
+
+.SH OPTIONS
+.TP 5
+.BI \-help
+Print options and a brief description to standard output.
+.TP 5
+.BI \-version
+Print version number (if >= 4.00) to standard output.
+.TP 5
+.BI \-resources
+Print default resource file to standard output.
+.TP 5
+.BI \-display \ displayname
+The
+.I display
+option sets the X11 display to lock.
+.B xlock
+locks all available screens on a given server,
+and restricts you to locking only a local server such as
+.BI unix:0,
+.BI localhost:0,
+or
+.BI :0
+unless you set the
+.B \-remote
+option.
+.TP 5
+.BI \-visual \ visualname
+.I visualname
+which is one of "StaticGray", "GrayScale", "StaticColor", "PseudoColor",
+"TrueColor", "DirectColor", or "default".  default used to set the screen's
+default visual (the visual of the root window).
+.TP 5
+.BI \-name \ resourcename
+.I resourcename
+is used instead of
+.B XLock
+when looking for resources to configure
+.BR xlock .
+.TP 5
+.BI \-mode \ modename
+As of this writing there are over 90 display modes supported
+(plus one more for random selection of one of these).
+.TP 8
+.B ant
+Shows Langton's and Turk's generalized ants.
+.TP 8
+.B ant3d
+Shows 3D ants.
+.TP 8
+.B apollonian
+Shows Apollonian Circles.
+.TP 8
+.B atlantis
+Shows moving sharks/whales/dolphin.  May not be available depending on how
+it was configured.
+.TP 8
+.B atunnels
+Advance GL tunnels screensaver.  May not be available depending on how
+it was configured.
+.TP 8
+.B ball
+Shows bouncing balls.
+.TP 8
+.B bat
+Shows bouncing flying bats.
+.TP 8
+.B biof
+Shows 3D bioform.
+.TP 8
+.B blot
+Shows Rorschach's ink blot test.
+.TP 8
+.B bouboule
+Shows Mimi's bouboule of moving stars.
+.TP 8
+.B bounce
+Shows bouncing footballs.
+.TP 8
+.B braid
+Shows random braids and knots.
+.TP 8
+.B bubble
+Shows popping bubbles.
+.TP 8
+.B bubble3d
+Shows Richard Jones's GL bubbles.  May not be available depending on how
+it was configured.
+.TP 8
+.B bug
+Shows Palmiter's bug evolution and a garden of Eden.
+.TP 8
+.B clock
+Shows Packard's oclock.
+.TP 8
+.B coral
+Shows a coral reef.
+.TP 8
+.B crystal
+Shows polygons in 2D plane groups.
+.TP 8
+.B daisy
+Shows a meadow of daisies.
+.TP 8
+.B dclock
+Shows a floating digital clock or message.
+.TP 8
+.B deco
+Shows art as ugly as sin.
+.TP 8
+.B demon
+Shows Griffeath's cellular automata.
+.TP 8
+.B dilemma
+Shows Lloyd's Prisoner's Dilemma simulation.
+.TP 8
+.B discrete
+Shows various discrete maps.
+.TP 8
+.B dragon
+Shows Deventer's Hexagonal Dragons Maze.
+.TP 8
+.B drift
+Shows cosmic drifting flame fractals.
+.TP 8
+.B cage
+Shows the Impossible Cage, an Escher-like GL scene.  May not be available
+depending on how it was configured.
+.TP 8
+.B euler2d
+Shows a simulation of 2D incompressible inviscid fluid.
+.TP 8
+.B eyes
+Shows eyes following a bouncing grelb.
+.TP 8
+.B fadeplot
+Shows a fading plot of sine squared.
+.TP 8
+.B fiberlamp
+Shows a Fiber Optic Lamp.
+.TP 8
+.B fire
+Shows a 3D fire-like image.  May not be available depending on how it was
+configured.
+.TP 8
+.B flag
+Shows a waving flag image.  This may be text or a graphic image.
+Default text is the hostname and operating system.
+.TP 8
+.B flame
+Shows cosmic flame fractals.
+.TP 8
+.B flow
+Shows dynamic strange attractors.
+.TP 8
+.B forest
+Shows binary trees of a fractal forest.
+.TP 8
+.B fzort
+Shows a metallic-looking fzort.
+.TP 8
+.B galaxy
+Shows crashing spiral galaxies.
+.TP 8
+.B gears
+Shows GL's gears.  May not be available depending on how it was configured.
+.TP 8
+.B glplanet
+Animates texture mapped sphere (planet)
+.TP 8
+.B goop
+Shows goop from a lava lamp.
+.TP 8
+.B grav
+Shows orbiting planets.
+.TP 8
+.B helix
+Shows string art.
+.TP 8
+.B hop
+Shows real plane iterated fractals.
+.TP 8
+.B hyper
+Shows spinning n-dimensional hypercubes.
+.TP 8
+.B ico
+Shows a bouncing polyhedron.
+.TP 8
+.B ifs
+Shows a modified iterated function system.
+.TP 8
+.B image
+Shows randomly appearing logos.
+.TP 8
+.B juggle
+Shows a Juggler, juggling.
+.TP 8
+.B julia
+Shows the Julia set.
+.TP 8
+.B kaleid
+Shows Brewster's Kaleidoscope.
+.TP 8
+.B kumppa
+Shows kumppa.
+.TP 8
+.B laser
+Shows spinning lasers.
+.TP 8
+.B life
+Shows Conway's game of life.
+.TP 8
+.B life1d
+Shows Wolfram's game of 1D life.
+.TP 8
+.B life3d
+Shows Bays' game of 3D life.
+.TP 8
+.B lightning
+Shows Keith's fractal lightning bolts.
+.TP 8
+.B lisa
+Shows animated lissajous loops.
+.TP 8
+.B lissie
+Shows lissajous worms.
+.TP 8
+.B loop
+Shows Langton's self-producing loops.
+.TP 8
+.B mandelbrot
+Shows mandelbrot sets.
+.TP 8
+.B marquee
+Shows text.
+.TP 8
+.B matrix
+Shows the matrix.
+.TP 8
+.B maze
+Shows a random maze and a depth first search solution.
+.TP 8
+.B moebius
+Shows the Moebius Strip II, an Escher-like GL scene with ants.  May not be
+available depending on how it was configured.
+.TP 8
+.B molecule
+Draws molecules, based on coordinates from PDB (Protein Data Base) files.
+.TP 8
+.B morph3d
+Shows GL morphing polyhedra.  May not be available depending on how it
+was configured.
+.TP 8
+.B mountain
+Shows Papo's mountain range.
+.TP 8
+.B munch
+Shows munching squares.
+.TP 8
+.B noof
+Shows SGI Diatoms.
+.TP 8
+.B nose
+Shows a man with a big nose runs around spewing out text.
+.TP 8
+.B pacman
+Shows Pacman(tm).
+.TP 8
+.B penrose
+Shows Penrose's quasiperiodic tilings.
+.TP 8
+.B petal
+Shows various GCD Flowers.
+.TP 8
+.B petri
+Shows a mold simultation in a petri dish
+.TP 8
+.B pipes
+Shows a self-building pipe system.  May not be available depending on how it
+was configured.
+.TP 8
+.B polyominoes
+Shows attempts to place polyominoes into a rectangle.
+.TP 8
+.B puzzle
+Shows a puzzle being scrambled and then solved.
+.TP 8
+.B pyro
+Shows fireworks.
+.TP 8
+.B qix
+Shows spinning lines a la Qix(tm).
+.TP 8
+.B roll
+Shows a rolling ball.
+.TP 8
+.B rotor
+Shows Tom's Roto-Rooter.
+.TP 8
+.B rubik
+Shows an auto-solving Rubik's Cube.  May not be available depending on how it
+was configured.
+.TP 8
+.B sballs
+Shows balls spinning like crazy in GL.  May not be available depending on how
+it was configured.
+.TP 8
+.B scooter
+Shows a journey through space tunnel and stars.
+.TP 8
+.B shape
+Shows stippled rectangles, ellipses, and triangles.
+.TP 8
+.B sierpinski
+Shows a Sierpinski's triangle.
+.TP 8
+.B sierpinski3d
+Shows a Sierpinski's gasket.
+.TP 8
+.B slip
+Shows slipping blits.
+.TP 8
+.B solitare
+Shows Klondike's game of solitare.
+.TP 8
+.B space
+Shows a journey into deep space.
+.TP 8
+.B sphere
+Shows a bunch of shaded spheres.
+.TP 8
+.B spiral
+Shows a helical locus of points.
+.TP 8
+.B spline
+Shows colorful moving splines.
+.TP 8
+.B sproingies
+Shows Sproingies!  Nontoxic.  Safe for pets and small children.
+May not be available depending on how it was configured.
+.TP 8
+.B stairs
+Shows Infinite Stairs, an Escher-like GL scene.
+May not be available depending on how it was configured.
+.TP 8
+.B star
+Shows a star field with a twist.
+.TP 8
+.B starfish
+Shows starfish.
+.TP 8
+.B strange
+Shows strange attractors.
+.TP 8
+.B superquadrics
+Shows 3D mathematical shapes.  May not be available depending on how it
+was configured.
+.TP 8
+.B swarm
+Shows a swarm of bees following a wasp.
+.TP 8
+.B swirl
+Shows animated swirling patterns.
+.TP 8
+.B t3d
+Shows a Flying Balls Clock Demo.
+.TP 8
+.B tetris
+Shows an autoplaying tetris game.
+.TP 8
+.B text3d | text3d2
+Shows 3D moving texts.
+.TP 8
+.B thornbird
+Shows an animated Bird in a Thorn Bush fractal map.
+.TP 8
+.B tik_tak
+Shows rotating polygons.
+.TP 8
+.B toneclock
+Shows Peter Schat's toneclock.
+.TP 8
+.B triangle
+Shows a triangular mountain range.
+.TP 8
+.B tube
+Shows an animated tube.
+.TP 8
+.B turtle
+Shows turtle fractals.
+.TP 8
+.B vines
+Shows fractal-like vines.
+.TP 8
+.B voters
+Shows Dewdney's Voters.
+.TP 8
+.B wator
+Shows Dewdney's Water-Torus planet of fish and sharks.
+.TP 8
+.B wire
+Shows a random circuit with 2 electrons.
+.TP 8
+.B world
+Shows spinning Earths.
+.TP 8
+.B worm
+Shows wiggly worms.
+.TP 8
+.B xjack
+Shows Jack having one of those days.
+.TP 8
+.B xcl
+Shows a Control Line combat model race
+.TP 8
+.B blank
+Shows nothing but a black screen.  Does not show up in random mode.
+.TP 8
+.B bomb
+Shows a bomb and will autologout after a time.  Does not show up in random
+mode and may be available depending on how it was configured.
+.TP 8
+.B random
+Shows a random mode from above except blank (and bomb).
+
+.TP 5
+.BI \-delay \ usecs
+The
+.I delay
+option sets the speed at which a mode will operate.  It simply sets the
+number of microseconds to delay between batches of animations.  In
+blank mode, it is important to set this to some small number of seconds,
+because the keyboard and mouse are only checked after each delay, so you
+cannot set the delay too high, but a delay of zero would needlessly
+consume cpu checking for mouse and keyboard input in a tight loop, since
+blank mode has no work to do.
+.TP 5
+.BI \-count \ num
+The
+.I batchcount
+option sets number of
+.I things
+to do per batch to
+.I num .
+
+In ant and ant3d modes this refers the number of ants.
+
+In apollonian mode it is the number of possible ways to imbed circles within
+a circle, all of integer curvature.
+
+In atlantis mode it is the number of sharks.
+
+In atunnels mode it is means nothing.
+
+In ball mode it is the number of balls.
+
+In bat mode it is the number of bats, could be less because of conflicts.
+
+In blot mode this refers to the number of pixels rendered in the same color.
+
+In bouboule mode it is the number of stars.
+
+In bounce mode it is the number of balls, could be less because of conflicts.
+
+In braid mode it is the upper bound number of strands.
+
+In bubble mode it is the number of bubbles.
+
+In bubble3d mode it is the number of bubbles.
+
+In bug mode it is the number of bugs, could be less because of conflicts.
+
+In cage mode it is means nothing.
+
+In clock mode it is the percentage of the screen, but less than 100%.
+
+In coral mode it is the number of seeds.
+
+In crystal mode it is the number of polygons.
+
+In daisy mode it is the number flowers that make a meadow.
+
+In dclock mode it means nothing.
+
+In deco mode it is the depth.
+
+In demon mode this refers the number of colors.
+
+In dilemma mode this refers the number of initial defectors.
+
+In discrete mode it is the number of points.
+
+In drift mode it is the number of levels to recurse (larger = more complex).
+
+In dragon mode it means nothing.
+
+In euler2d mode it is the number of segments.
+
+In eyes mode it is the number of eyes.
+
+In fadeplot mode it is the number of steps.
+
+In fiberlamp it is the number of fibers.
+
+In fire mode it is the number of fire particles (set it to 0 to have rain).
+
+In flag mode it means nothing.
+
+In flame mode it is the number of levels to recurse (larger = more complex).
+
+In flow mode it is the number of bees.
+
+In forest mode it is the number trees that make a forest.
+
+In fzort mode it means nothing.
+
+In galaxy mode it means the number of galaxies.
+
+In gears mode it is the number of degrees to rotate the set of gears by.
+
+In glplanet mode it is the number of hundredth degrees to roll the planet by.
+
+In goop mode it is the number of blobs per plane.
+
+In grav mode it is the number of planets.
+
+In helix mode it means nothing.
+
+In hop mode this refers to the number of pixels rendered in the same color.
+
+In hyper mode it the number of dimensions.
+
+In ico mode it is the ith platonic solid.
+
+In ifs mode it means nothing.
+
+In image mode it means it is the number of logos on screen at once.
+
+In juggle mode it is time in milliseconds between a throw and the next
+catch.
+
+In julia mode it is the depth of recursion.
+
+In kaleid mode it is the number of pens.
+
+In kumppa mode it means nothing.
+
+In lament mode it means nothing.
+
+In laser mode it is the number lasers.
+
+In life and life3d modes it is the number of generations before a glider is introduced.
+
+In life1d mode it means nothing.
+
+In lisa mode it is the number of loops.
+
+In lissie mode it is the number of worms.
+
+In loop mode it is the number of flaws.
+
+In mandelbrot mode it is the order.
+
+In marquee mode it means nothing.
+
+In matrix mode it means nothing.
+
+In maze mode it means nothing.
+
+In moebius mode it is means nothing.
+
+In molecule mode it means nothing.
+
+In morph3d mode it is the ith platonic solid.
+
+In mountain mode it is the number of mountains.
+
+In munch mode it means nothing.
+
+In noof mode it means nothing.
+
+In nose mode it means nothing.
+
+In qix mode it is the number of points.
+
+In pacman mode it means the number of ghosts.
+
+In penrose mode it means nothing.
+
+In petal mode it the greatest random number of petals.
+
+In petri mode it means nothing.
+
+In pipes mode it shows different joints, 0 random, 1 spherical, 2 bolted
+elbow, 3 elbow, and 4 alternating.
+
+In polyominoes mode it means nothing.
+
+In puzzle mode it the number of moves.
+
+In pyro mode it is the maximum number flying rockets at one time.
+
+In roll mode it is the number of points.
+
+In rotor mode it is the number of rotor thingys which whirr...
+
+In rubik mode it is the number of moves.
+
+In sballs mode it is the number of spheres.
+
+In scooter mode it is the number of doors.
+
+In shape mode it means nothing.
+
+In sierpinski mode it is the number of points.
+
+In slip mode it means nothing.
+
+In solitare mode it means nothing.
+
+In space mode it is the number of stars.
+
+In sphere mode it means nothing.
+
+In spiral mode it is the number of spirals.
+
+In spline mode it is the number of points "splined".
+
+In sproingies mode it is the number of sproingies.
+
+In stairs mode it is means nothing.
+
+In star mode it is the number of stars on the screen at once.
+
+In starfish mode it means nothing.
+
+In strange mode it means nothing.
+
+In superquadrics mode its the number of horizontal and vertical lines in
+the superquadric.
+
+In swirl mode it means the number of "knots".
+
+In swarm mode it is the number of bees.
+
+In t3d mode it means nothing.
+
+In tetris mode it means nothing.
+
+In text3d mode it means nothing.
+
+In thornbird mode it is the number of points.
+
+In triangular mode it is the number of mountains.
+
+In tube mode it is a rectangle (= 1), an ellipse (= 2), or a polygon if
+greater.
+
+In turtle mode it means nothing.
+
+In vines mode it is draw a complete vine (= 0) or a portion (= 1).
+
+In voters mode it means the number of parties, 2 or 3.
+
+In wator mode it means the breed time for the fish.
+
+In wire mode it means the length of the circuit.
+
+In world mode it is the number of worlds.
+
+In worm mode it is the number of worms.
+
+In xcl mode it represents the number of planes.
+
+In xjack mode it means nothing.
+
+In blank mode it means nothing.
+
+In bomb mode it means the number of minutes to autologout.
+
+A negative
+.I count
+allows for randomness.  The range from the minimum allowed nonnegative
+.I count
+for a particular mode to the
+ABS(
+.I count
+) (or maximum allowed
+.I count
+, whichever is less).
+.TP 5
+.BI \-batchcount \ num
+The
+.I batchcount
+option is deprecated but should still work as
+.I count.
+.TP 5
+.BI \-cycles \ num
+The
+.I cycles
+option sets the number of cycles until time out for ant, ant3d,
+apollonian, blot, braid, bug, clock, crystal,
+daisy, deco, demon, dilemma, discrete, dragon,
+eyes, fiberlamp, flag, flow, forest, galaxy, helix, hop, hyper, ico, juggle,
+laser, life, life1d, life3d, lisa, lissie, loop, mandelbrot, mountain,
+petal, sierpinski, shape, spline +erase, t3d, thornbird, triangle, tube,
+voters, wator, and wire.  For euler2d and worm it is the length
+of the lines, for atlantis it is the shark speed,
+for fadeplot, julia and spiral it is the length of the trail of dots,
+munch it is the minimum size of the squares,
+for kaleid it is the % of black,
+for qix it is the number of lines,
+for spline -erase it means the number of
+splines * 64 (for compatibility with +erase),
+for gears it is the number of degrees to increment the spin of each gear by,
+for glplanet it is the number of hundredth degrees to rotate the planet by,
+for molecule it is the time in seconds until timeout,
+for pipes it is the number of systems to draw before clearing the screen,
+for rubik it is the number of steps to complete a 90 move,
+for sballs it is the sphere speed value,
+for scooter it is the speed,
+for superquadrics it is the number of frames it takes to morph from one
+shape to another.
+for text3d it is the number of times drawing a word before the next one,
+For others it means nothing.
+.TP 5
+.BI \-size \ num
+The
+.I size
+option sets the size maximum size of a star in bouboule, pyro and star,
+size of ball in ball and bounce, size of bat in bat,
+maximum size of bubble in bubble, size of clock in clock,
+minimum size of rectangles in deco, size of the polygons in crystal,
+tik_tak, and toneclock, size of polyhedron in ico, size of lissie in lissie,
+size of dots of flag, for kaleid it is the symmetry,
+width of maze hallway, size of side of penrose tile, radius of loop in lisa,
+radius of ball in roll, number of corners in sierpinski,
+number of stars in scooter, size of tube in tube, width of worm in worm,
+line width in rotor, size of cells in ant, bug, dilemma, dragon, life,
+life1d, pacman, petri, tetris, voters, wator, and wire.
+In pipes it is the maximum length of a system.
+In flow and swarm it is the length of the lines.
+In atlantis it is the shark size.
+A negative number allows for randomness, similar to
+.I count.
+In atunnels, fire, gears, sballs and sproingies it is the size of the screen
+(default 400), this is because on many slow systems it runs too slow when the
+picture covers the full screen.  Set to 0 for full screen on fast machines.
+.TP 5
+.BI \-ncolors \ num
+The
+.I ncolors
+option sets the maximum number of colors to be used.
+.TP 5
+.BI \-saturation \ value
+The
+.I saturation
+option sets saturation of the color ramp used to
+.I value .
+0 is grayscale and 1 is very rich color.  0.4 is a nice pastel.
+.TP 5
+.BI \-erasemode \ modename
+As of this writing there are over 12 erase modes supported
+(if its not chosen its assumed random).
+The erase modes are random_lines, random_squares, venetian, triple_wipe,
+quad_wipe, circle_wipe, three_circle_wipe, squaretate, fizzle, spiral,
+slide_lines, losira, no_fade.
+.I modename
+is now similar to the option
+.BI modelist
+where you can it can be something like "all-losira" to get all erasemodes
+but losira.  Use a "+" or a "," to add modes like "spiral+venetian".
+.TP 5
+.BI \-erasedelay \ usecs
+The
+.I erasedelay
+option sets the number of microseconds for steps of the
+.B erasemode
+(a setting of 0 and the
+.B erasemode
+is bypassed).
+.TP 5
+.B +/-nolock
+The
+.I nolock
+option causes
+.B xlock
+to only draw the patterns and not lock the display.
+A key press or a mouse click will terminate the screen saver.
+.TP 5
+.B -/+inwindow
+Runs
+.B xlock
+in a window, so that you can iconify, move, or resize it and
+still use your screen for other stuff.  When running in a window,
+.B xlock
+no longer locks your screen, it just looks good.
+.TP 5
+.B -/+inroot
+Runs
+.B xlock
+in your root window.  Like the
+.I inwindow
+option it no longer locks the screen, it just looks good.
+.TP 5
+.B -/+remote
+The
+.I remote
+option tells
+.B xlock
+to not stop you from locking remote X11 servers.  This option should be
+used with care and is intended mainly to lock X11 terminals which cannot
+run
+.B xlock
+locally.  If you lock someone else's workstation, they will have to know
+.B your
+password to unlock it.  Using
+.I +remote
+overrides any resource derived values for
+.I remote
+and prevents
+.B xlock
+from being used to lock other X11 servers.  (Use `+' instead of `-' to
+override resources for other options that can take the `+' modifier
+similarly.)
+.TP 5
+.B -/+mono
+The
+.I mono
+option causes
+.B xlock
+to display monochrome, (black and white) pixels rather than the default
+colored ones on color displays.
+.TP 5
+.B -/+allowaccess
+This option is required for servers which do not allow clients to modify
+the host access control list.  It is also useful if you need to run x
+clients on a server which is locked for some reason...  When
+.I allowaccess
+is true, the X11 server is left open for clients to attach and thus
+lowers the inherent security of this lock screen.  A side effect of using
+this option is that if
+.B xlock
+is killed -KILL, the access control list is not lost.
+.TP 5
+.BI \-vtlock \ modename
+This option is used on a XFree86 system to manage VT switching in
+[off|noswitch|switch|restore] mode.
+.TP 10
+.I off
+means no VT switch locking.
+.TP 10
+.I switch
+means VT switch locking + switching to xlock VT when activated.
+.TP 10
+.I restore
+means VT switch locking + switching to xlock VT when activated +
+switching back to previous VT when desactivated.
+.TP 10
+.I noswitch
+means VT switch locking only when xlock VT is active.
+.TP 5
+.B -/+allowroot
+The
+.I allowroot
+option allows the root password to unlock the server as well as the user
+who started
+.BR xlock .
+May not be able to turn this on and off depending on your system and how
+.B xlock
+was configured.
+.TP 5
+.B -/+debug
+Allows
+.B xlock
+to be debugged by doing all but locking the screen.
+.TP 5
+.B -/+description
+The
+.I description
+option causes
+.B xlock
+shows a mode description above password window.  The default is to
+show this description.
+.TP 5
+.B -/+echokeys
+The
+.I echokeys
+option causes
+.B xlock
+to echo '?' characters (default) for each key typed into the password prompt.
+Some consider this a security risk, so the default is to not echo
+anything.
+.TP 5
+.BI \-echokey \ echokey
+The text character to use for echo key in
+.I echokeys .
+.TP 5
+.B -/+enablesaver
+By default
+.B xlock
+will disable the normal X server's screen saver since
+it is in effect a replacement for it.  Since it is possible to set delay
+parameters long enough to cause phosphor burn on some displays, this
+option will turn back on the default screen saver which is very careful
+to keep most of the screen black.
+.TP 5
+.B -/+resetsaver
+By default
+.B xlock
+will call XResetScreenSaver.  This may be undesirable with DPMS monitors.
+.TP 5
+.B -/+grabmouse
+The
+.I grabmouse
+option causes
+.B xlock
+to grab the mouse and keyboard, this is the default.
+.B xlock
+can not lock the screen without this.
+.TP 5
+.B -/+grabserver
+The
+.I grabserver
+option causes
+.B xlock
+to grab the server.  This is not usually needed but some unsecure X servers
+can be defeated without this.
+.TP 5
+.B -/+install
+Allows
+.B xlock
+to install its own colormap if
+.B xlock
+runs out of colors.
+May not work on with some window managers (fvwm) and does not work with
+the -inroot option.
+.TP 5
+.B -/+mousemotion
+Allows you to turn on and off the sensitivity to the mouse to bring up
+the password window.
+.TP 5
+.B -/+sound
+Allows you to turn on and off sound if installed with the capability.
+.TP 5
+.B -/+timeelapsed
+Allows you to find out how long a machine is locked so you can complain
+to an administrator that someone is hogging a machine.
+.TP 5
+.B -/+usefirst
+The
+.I usefirst
+option causes
+.B xlock
+to use the keystroke which got you to the password screen as the first
+character in the password.  The default is to ignore the first key
+pressed.
+.TP 5
+.B -/+verbose
+Verbose mode, tells what options it is going to use.
+.TP 5
+.BI \-nice \ nicelevel
+The
+.I nice
+option sets system nicelevel of the
+.B xlock
+process to
+.I nicelevel .
+.TP 5
+.BI \-lockdelay \ seconds
+The
+.I lockdelay
+option sets the number of
+.I seconds
+before the screen needs a password to be unlocked.  Good for use with
+an autolocking mechanism like xautolock(1).
+.TP 5
+.BI \-timeout \ seconds
+The
+.I timeout
+option sets the number of
+.I seconds
+before the password screen will time out.
+.TP 5
+.BI \-font \ fontname
+The
+.I font
+option sets the font to be used on the prompt screen.
+.TP 5
+.BI \-planfont \ fontname
+option sets the font to be used for the text that is displayed in
+the lower part of the password screen.
+.TP 5
+.BI \-fg \ color
+The
+.I fg
+option sets the color of the text on the password screen to
+.I color .
+.TP 5
+.BI \-bg \ color
+The
+.I bg
+option sets the color of the background on the password screen to
+.I color .
+.TP 5
+.BI \-foreground \ color
+The
+.I foreground
+option sets the color of the text on the password screen to
+.I color .
+.TP 5
+.BI \-background \ color
+The
+.I background
+option sets the color of the background on the password screen to
+.I color .
+.TP 5
+.BI \-username \ string
+Text
+.I string
+is shown in front of user name, defaults to "Name: ".
+.TP 5
+.BI \-password \ string
+Text
+.I string
+is the password prompt string, defaults to "Password: ".
+.TP 5
+.BI \-info \ string
+Text
+.I string
+is an informational message to tell the user what to do, defaults to
+"Enter password to unlock; select icon to lock.".
+.TP 5
+.BI \-validate \ string
+Text
+.I string
+is a message shown while validating the password, defaults to
+"Validating login..."
+.TP 5
+.BI \-invalid \ string
+Text
+.I string
+is a message shown when password is invalid, defaults to
+"Invalid login."
+.TP 5
+.BI \-geometry \ geom
+The
+.I geometry
+option sets
+.I geom
+the size and offset of the lock window (normally the entire screen).
+The entire screen format is still used for entering the password.  The
+purpose is to see the screen even though it is locked.  This should be
+used with caution since many of the modes will fail if the windows
+are far from square or are too small (size must be greater than 0x0).
+This should also be used with -enablesaver to protect screen from
+phosphor burn.
+.TP 5
+.BI \-icongeometry \ geom
+The
+.I icongeometry
+option sets
+.I geom
+the size of the iconic screen (normally 64x64) seen when entering the
+password.  This should be used with caution since many of the modes will
+fail if the windows are far from square or are too small (size must be
+greater than 0x0).  The greatest size is 256x256.  There should be some
+limit so users could see who has locked the screen.  Position
+information of icon is ignored.
+.TP 5
+.BI \-glgeometry \ geom
+The
+.I glgeometry
+option sets
+.I geom
+the size of the screen for gl modes.  Not normally available or needed.
+.TP 5
+.B -/+wireframe
+Turn on/off wireframe, available on ant3d, atlantis, atunnels, daisy, fire,
+gears, lament, life3d, mountain, sballs, sproingies, superquadrics,
+and triangle.
+.TP 5
+.B -/+showfps
+Turn on/off frame per sec display, available on atlantis, atunnels,
+bubble3d, cage, fire, gears, invert, lament, moebius, morph3d, rubik,
+sballs, stairs, and superquadrics.
+.TP 5
+.B -/+fpstop
+Turn on/off frame per sec display on top of screen, used if showfps is on.
+.TP 5
+.BI \-fpsfont \ fontname
+The
+.I fpsfont
+option sets the font to be used in the frame per sec display,
+used if showfps is on.
+.TP 5
+.B -/+use3d
+Turn on/off 3d view, available on bouboule, pyro, star, and worm.
+.TP 5
+.BI \-delta3d \ value
+Space between the center of your 2 eyes for 3d mode.
+.TP 5
+.BI \-none3d \ color
+Color used for empty size in 3d mode.
+.TP 5
+.BI \-right3d \ color
+Color used for right eye in 3d mode.
+.TP 5
+.BI \-left3d \ color
+Color used for left eye in 3d mode.
+.TP 5
+.BI \-both3d \ color
+Color used for overlapping images for left and right eye in 3d mode.
+.TP 5
+.BI \-program \ programname
+The
+.I program
+option sets the program to be used as the fortune generator.  Currently
+used only for marquee and nose modes.
+.TP 5
+.BI \-messagesfile \ formatted-filename
+The
+.I messagesfile
+option sets the file to be used as the fortune generator.  The first
+entry is the number of fortunes, the next line contains the first fortune.
+Fortunes begin with a "%%" on a line by itself.  Currently used only for
+marquee and nose modes.  If one exists, it takes precedence over the
+fortune program.
+.TP 5
+.BI \-messagefile \ filename
+The
+.I messagefile
+option sets the file whose contents are displayed.  Currently
+used only for marquee and nose modes.  If one exists, it takes
+precedence over the fortune program and messagesfile.
+.TP 5
+.BI \-message \ textstring
+The
+.I message
+option sets the text to be displayed in a mode.  Currently used only for
+flag, marquee and nose modes.  If one exists, it takes precedence over the
+fortune program, messagesfile and message.
+.TP 5
+.BI \-messagefont \ fontname
+The
+.I messagefont
+option sets the font to be used in the mode.  Currently used only for
+flag, marquee, and nose modes.
+.TP 5
+.BI \-bitmap \ filename
+The
+.I bitmap
+option sets the xbm, xpm, or ras file to be displayed with flag,
+image, life, life1d, maze, or puzzle mode.  For eyes and pacman only a
+xbm file is accepted.  Certain modes reject the bitmap if too big.
+/
+.sp
+.SH "MORE OPTIONS (these may not be available)"
+.TP 5
+.BI \-cpasswd  \ crypted-password
+The
+.I cpasswd
+option sets the key to be this text string to unlock
+.B xlock
+instead of password file.
+.TP 5
+.BI \-forceLogout \ minutes
+The
+.I forceLogout
+option sets
+.I minutes
+to auto-logout.
+.TP 5
+.BI \-logoutButton \ minutes
+The
+.I logoutButton
+option sets
+.I minutes
+to logoutButton is available on password screen.
+.TP 5
+.BI \-logoutButtonLabel \ string
+Text
+.I string
+is a message shown inside logout button when logout button is displayed.
+Defaults to
+"Logout".
+.TP 5
+.BI \-logoutButtonHelp \ string
+Text
+.I string
+is a message shown outside logout button when logout button is
+displayed.  Defaults to
+"Click the \\"Logout\\" button to log out current\\n
+user and make workstation available."
+.TP 5
+.BI \-logoutFailedString \ string
+Text
+.I string
+is a message shown when a logout is attempted and fails.
+Defaults to
+"Logout attempt FAILED.\\n
+Current user could not be automatically logged out."
+.TP 5
+.B -/+dtsaver
+Turn on/off CDE Saver Mode.  This option is only available if CDE
+support was compiled in.
+.TP 5
+.BI \-modulepath \ path
+The
+.I modulepath
+option sets the
+.I directories
+that
+.B xlock
+searches for mode modules to load.  It is a colon separated list of
+directories to search. If "%S" is included in the path, it is replaced
+by the default modulepath.  To add a private module directory to the
+default path, use something like '%S:~/mymoduledir' as the path.  This
+option is only available if module support was compiled in.
+.TP 5
+.BI \-locksound \ string
+Text
+.I string
+references sound to use at lock time.  Default sound, male voice:
+"Thank you, for your cooperation."
+.TP 5
+.BI \-infosound \ string
+Text
+.I string
+references sound to use for information.  Default sound, male voice:
+"Identify please."
+.TP 5
+.BI \-validsound \ string
+Text
+.I string
+references sound to when a password is valid.  Default sound, female voice:
+"Complete."
+.TP 5
+.BI \-invalidsound \ string
+Text
+.I string
+references sound to when a password is invalid.  Default sound, female
+voice: "I am not programmed to give you that information."
+.TP 5
+.BI \-startCmd \ string
+Text
+.I string
+command to execute when the screen is locked. Commonly used instructions include:
+"zaway". This command, if still running when the screensaver exits, will be killed.
+.TP 5
+.BI \-endCmd \ string
+Text
+.I string
+command to execute when the screen is unlocked.
+.TP 5
+.BI \-pipepassCmd \ string
+Text
+.I string
+command into which to pipe the password when the screen is unlocked.
+.TP 5
+.BI \-logoutCmd \ string
+Text
+.I string
+command to execute when the program logs the user out (either via the autologout
+or by pressing the logout button).
+.TP 5
+.BI \-mailCmd \ string
+Text
+.I string
+command to execute when the program to check mail.
+.TP 5
+.BI \-mailIcon \ string
+Text
+.I string
+of file for the "mail arrived" bitmap.
+.TP 5
+.BI \-nomailIcon \ string
+Text
+.I string
+of file for the "no mail" bitmap.
+.TP 5
+.B -dpmsstandby \ seconds
+Allows one to set DPMS Standby for monitor (0 is defined as infinite).
+(Horizontal sync on, Vertical sync off, RGB guns off, power supply on,
+tube filaments energized, (screen saver mode).  Typical 17 inch screen...
+110 out of 120 watts with a 3 sec recovery time.)  This option is only
+available if DPMS support was compiled in.
+.TP 5
+.B -dpmssuspend \ seconds
+Allows one to set DPMS Suspend for monitor (0 is defined as infinite).
+(Horizontal sync off, Vertical sync on, RGB guns off, power supply off,
+tube filaments energized.  Typical 17 inch screen ...  15 out of 120 watts
+with a 3 sec recovery time.)  This option is only available if DPMS support
+was compiled in.
+.TP 5
+.B -dpmsoff \ seconds
+Allows one to set DPMS Power Off for monitor (0 is defined as infinite).
+(Horizontal sync off, Vertical sync off, Small auxiliary circuit stays on
+to monitor the HS/VS signals to enable power on when data needs to be
+displayed on the screen.  Typical 17 inch screen ...  5 out of 120 watts with
+a 10 sec recovery time.)  This option is only available if DPMS support was
+compiled in.
+.sp
+.SH "SPECIAL MODE DEPENDENT OPTIONS"
+.TP 5
+.BI \-neighbors \ num
+The
+.I neighbors
+option sets the number of neighbors of a cell to 3, 4, 6, 9 (may not have
+real mathematical meaning), or 12 for several automata modes
+.I (ant, bug, demon, dilemma, life, loop, voters, wator,
+and
+.I wire) (bug
+and
+.I loop
+do not span this full range).  Setting it to 0 typically randomizes this,
+except where bitmaps are used
+.I (dilemma, life, voters,
+and
+.I wator).
+.TP 5
+.BI -/+eyes
+Turn on and off eyes for
+.I ant, ant3d,
+and
+.I bug.
+.TP 5
+.BI -/+cycle
+Turn on and off colour cycling in
+.I crystal, lyapunov, mandelbrot, starfish, swirl, tetris, tik_tak, toneclock,
+and
+.I tube.
+.TP 5
+.BI -/+label
+Turn on and off alternate space and number labeling in
+.I apollonian.
+For
+.I ant
+and
+.I ant3d
+this turns on and off the labeling of the rule.
+For
+.I life
+and
+.I life3d
+this turns on and off the labeling of the pattern name and rule.
+.TP 5
+.BI -/+serial
+Turn on and off sequential allocation of colors in
+.I kaleid.
+For
+.I life
+and
+.I life3d
+this turns on and off the picking of sequential patterns (to be used with
+middle button of the mouse).
+.TP 5
+.BI -/+trackmouse
+Turn on and off mouse interaction in
+.I eyes, fire, julia, solitare, sballs, swarm,
+and
+.I tetris.
+For
+.I maze, pacman, solitare
+and
+.I tetris
+this may not be available depending on how
+.B xlock
+was configured.
+.TP 5
+.BI -/+texture
+Turn on and off texturing in
+.I fire,
+.I lament
+and
+.I sballs.
+This may not be available depending on how
+.B xlock
+was configured.
+.TP 5
+.BI \-rule \ <rule>
+The rule string is defined as S<neighborhood>/B<neighborhood> for
+.I life
+and
+.I life3d.
+Special parameters: P, picks a random rule from all rules that have known
+patterns; G, picks a random rule from all rules that have known gliders.
+For
+.I life
+a good example is Conway's rule which is S23/B3.  Others are B36/S23 and
+B3678/S34678.
+For
+.I life3d
+good examples are Bay's rules which are S45/B5, S567/B6, S56/B5, and S67/B67.
+The rule string is defined as a binary string (requires at least one 1
+and one 0) for
+.I ant
+and a base 4 (or quadranary) string (requires 3 of 4 digits to be
+represented) for
+.I ant3d.
+Here a special parameter, T and then a number, will pick a specific table.
+.TP 5
+.BI \-lifefile \ filename
+The
+.I lifefile
+option sets the
+.I life
+and
+.I life3d
+lifeform.  Only one format is currently supported, similar to the #P xlife
+format.  For
+.I life3d,
+2 linefeeds in a row are assumed to advance the depth.
+.TP 5
+.BI -/+truchet
+Turn on and off Truchet lines (trail) in
+.I ant.
+.TP 5
+.BI -/+altgeom
+Turn on and off alternate geometries (off euclidean space, on includes spherical
+and hyperbolic) in
+.I apollonian
+mode.
+.TP 5
+.BI \-whalespeed \ num
+Allows one to set the speed of the whales and dolphin in
+.I atlantis.
+.TP 5
+.BI -/+boil
+Turn on and off having the bubbles bubble up in
+.I bubble.
+.TP 5
+.BI \-nx \ num
+Allows one to set the number of unit cells in x-direction in
+.I crystal.
+.TP 5
+.BI \-ny \ num
+Allows one to set the number of unit cells in y-direction in
+.I crystal.
+.TP 5
+.BI -/+centre
+Turn on and off the centering on screen in
+.I crystal.
+.TP 5
+.BI -/+maxsize
+Turn on and off the centering on screen in
+.I crystal.
+.TP 5
+.BI -/+cell
+Turn on and off the drawing of unit cell in
+.I crystal.
+.TP 5
+.BI -/+grid
+Turn on and off the drwing of grid of unit cells (if -cell is on) in
+.I crystal.
+.TP 5
+.BI -/+garden
+Turn off and on garden look in
+.I daisy.
+.TP 5
+.BI -/+binary
+Turn on and off the binary clock in
+.I dclock.
+.TP 5
+.BI -/+led
+Turn on and off the led clock in
+.I dclock.
+.TP 5
+.BI -/+popex
+Turn on and off the population explosion counter in
+.I dclock.
+.TP 5
+.BI -/+forest
+Turn on and off the tropical deforest (hectares/acres) counter in
+.I dclock.
+.TP 5
+.BI -/+hiv
+Turn on and off the HIV infection counter in
+.I dclock.
+.TP 5
+.BI -/+lab
+Turn on and off the Animal Research counter in
+.I dclock.
+.TP 5
+.BI -/+veg
+Turn on and off the Animal Consumation counter in
+.I dclock.
+.TP 5
+.BI -/+y2k
+Turn on and off the Year 2000 countdown in
+.I dclock.
+.TP 5
+.BI -/+millennium
+Turn on and off the Second Millennium (January 1, 2001) countdown in
+.I dclock.
+.TP 5
+.BI \-bonus \ value
+Allows one to set the bonus for cheating... between 1.0 and 4.0 in
+.I dilemma.
+.TP 5
+.BI -/+conscious
+Turn off and on self-awareness in
+.I dilemma.
+.TP 5
+.BI -/+grow
+Turn on and off growing fractals (else they are animated) for
+.I drift.
+.TP 5
+.BI -/+liss
+Turn on and off using lissajous figures to get points for
+.I drift.
+.TP 5
+.BI -/+fog
+Turn on and off fog for
+.I fire.
+.TP 5
+.BI -/+shadows
+Turn on and off shadows for
+.I fire.
+.TP 5
+.BI -trees \ num
+Validate the displaying of trees for
+.I fire
+if greater than zero.
+.TP 5
+.BI -/+invert
+Turn on and off inverting of the
+.I flag.
+.TP 5
+.BI -/+rotate
+Turn on/off rotating around attractor in
+.I flow.
+.TP 5
+.BI -/+ride
+Turn on/off rideing in the
+.I flow.
+.TP 5
+.BI -/+box
+Turn on/off bounding box in
+.I flow.
+.TP 5
+.BI -/+periodic
+Turn on/off periodic attractors in
+.I flow.
+.TP 5
+.BI -/+search
+Turn on/off search for new attractors in
+.I flow.
+.TP 5
+.BI -/+dbuf
+Turn on/off double buffering in
+.I flow.
+.TP 5
+.BI -/+tracks
+Turn on and off star tracks in
+.I galaxy.
+.TP 5
+.BI -/+light
+Turn on and off lighting of the planet for
+.I glplanet.
+.TP 5
+.BI -/+bounce
+Turn on and off bouncing movement of the planet for
+.I glplanet.
+.TP 5
+.BI \-pimage \ filename
+Use the named xbm or xpm file for texturing the planet for
+.I glplanet.
+Use BUILTIN as filename for the builtin image taken from Xearth.
+.TP 5
+.BI -/+roll
+Turn on and off rolling of the planet for
+.I glplanet.
+.TP 5
+.BI -/+rotate
+Turn on and off rotation of the planet for
+.I glplanet.
+.TP 5
+.BI -/+texture
+Turn on and off texturing of the planet for
+.I glplanet.
+.TP 5
+.BI -/+stars
+Turn on and off showing stars in the background for
+.I glplanet.
+.TP 5
+.BI -/+decay
+Turn on and off decaying orbits for
+.I grav.
+.TP 5
+.BI -/+trail
+Turn on and off decaying trail of dots for
+.I grav.
+.TP 5
+.BI -/+ellipse
+Turn on and off ellipse format in
+.I helix.
+.TP 5
+.BI -/+martin
+Turn on and off Barry Martin's square root
+.I hop.
+.BI -/+popcorn
+Turn on and off Clifford A. Pickover's popcorn
+.I hop.
+.TP 5
+.BI -/+ejk1...ejk6
+Turn on and off Ed J. Kubaitis'
+.I hops.
+.TP 5
+.BI -/+rr
+Turn on and off Renaldo Recuerdo's
+.I hop.
+.TP 5
+.BI -/+jong
+Turn on and off Jong's
+.I hop.
+.TP 5
+.BI -/+sine
+Turn on and off Barry Martin's sine
+.I hop.
+.TP 5
+.BI \-pattern \ <pattern>
+Allows one to set the pattern for
+.I juggle.
+.TP 5
+.BI \-tail \ num
+Minimum Trail Length for
+.I juggle.
+.TP 5
+.BI \-/+real
+Turn on/off real-time juggling for
+.I juggle.
+.B Deprecated.
+There should be no need to turn off real-time juggling, even on slow
+systems.  Adjust speed using
+.BR \-count .
+.TP 5
+.BR \-/+describe
+Turn on/off pattern descriptions in
+.I juggle.
+.TP  5
+.BR \-/+balls
+Turn on/off Balls in
+.I juggle.
+.TP 5
+.BR \-/+clubs
+Turn on/off Clubs in
+.I juggle.
+.TP 5
+.BR \-/+torches
+Turn on/off Flaming Torches in
+.I juggle.
+.TP 5
+.BR \-/+knives
+Turn on/off Knives in
+.I juggle.
+.TP 5
+.BR \-/+rings
+Turn on/off Rings in
+.I juggle.
+.TP 5
+.BR \-/+bballs
+Turn on/off Bowling Balls in
+.I juggle.
+.TP 5
+.BI -/+planetary
+Turn on and off planetary gears in
+.I gears.
+.TP 5
+.BI \-planetsize \ num
+Sets the size of the screen for planetary option in
+.I gears.
+This is for machines with slower CPU. (Set to 0 for full screen).
+.TP 5
+.BI -/+disconnected
+Turn on and off disconnected pen movement in
+.I kaleid.
+.TP 5
+.BI -/+alternate
+Turn on and off alternate rotated display mode
+.I kaleid.
+.TP 5
+.BI -/+quad
+Turn on and off quad mirrored/rotated mode similar to size 4 in
+.I kaleid.
+.TP 5
+.BI -/+oct
+Turn on and off oct mirrored/rotated mode similar to size 8 in
+.I kaleid.
+.TP 5
+.BI -/+linear
+Turn on and off Cartesian/Polar coordinate mode in
+.I kaleid.
+.TP 5
+.BI -/+conway
+Turn on and off John Conway's original Life rule S23/B3
+.I life.
+.TP 5
+.BI -/+highlife
+Turn on and off David Bell's HighLife rule S23/B36
+.I life.
+.TP 5
+.BI -/+daynight
+Turn on and off Nathan Thompson's Day and Night rule S34678/B3678
+.I life.
+.TP 5
+.BI -/+callahan
+Turn on and off Paul Callahan's S2b34/B2a hexagonal
+.I life.
+.TP 5
+.BI -/+andreen
+Turn on and off Bob Andreen's S2a2b4a/B2a3a4b hexagonal
+.I life.
+.TP 5
+.BI -/+trilife
+Turn on and off Carter Bays' S34/B45 triangular
+.I life.
+.TP 5
+.BI -/+trilife1
+Turn on and off Carter Bays' S45/B456 triangular
+.I life.
+.TP 5
+.BI -/+trilife2
+Turn on and off Carter Bays' S23/B45 triangular
+.I life.
+.TP 5
+.BI -/+totalistic
+Turn on and off totalistic rules for
+.I life1d.
+If this is off then it follows rules of the LCAU collection.  These
+rules may not be symmetric and are more general.
+.TP 5
+.BI -/+additive
+Turn on and off additive functions mode in
+.I lisa.
+.TP 5
+.BI -/+dissolve
+Turn on and off disolving state in
+.I loop.
+.TP 5
+.BI -/+evolve
+Turn on and off Evolving Loops in
+.I loop.
+.TP 5
+.BI -/+langton
+Turn on and off Langton Loops for
+.I loop.
+.TP 5
+.BI -/+sheath
+Turn on and off sheath extension for
+.I loop.
+.TP 5
+.BI -/+wrap
+Turn on and off wrapping of borders for
+.I loop.
+.TP 5
+.BI \-increment \ num
+Sets the option for increasing orders in
+.I mandelbrot.
+.TP 5
+.BI -/+alpha
+Turn on and off interior displaying level of closest return in
+.I mandelbrot.
+.TP 5
+.BI -/+binary
+Turn on and off binary decomposition color modulation in
+.I mandelbrot.
+.TP 5
+.BI -/+dem
+Turn on and off Distance Estimator Method (instead of escape time) in
+.I mandelbrot.
+.TP 5
+.BI -/+index
+Turn on and off interior displaying iteration of closest return in
+.I mandelbrot.
+.TP 5
+.BI -/+lyap
+Turn on and off interior displaying according to an estimate of the
+Lyapunov exponent in
+.I mandelbrot.
+.TP 5
+.BI -/+pow
+Turn on and off adding z^z in
+.I mandelbrot.
+.TP 5
+.BI -/+sin
+Turn on and off adding sin(z) in
+.I mandelbrot.
+.TP 5
+.BI -/+noants
+Turn off and on ants in
+.I moebius.
+.TP 5
+.BI -/+solidmoebius
+Turn on and off solid Mobius strip in
+.I moebius.
+.TP 5
+.BI -/+atoms
+Turn on and off the drawing of spheres for the atoms in
+.I molecule.
+.TP 5
+.BI -/+bbox
+Turn on and off showing the molecules in a blue box in
+.I molecule.
+.TP 5
+.BI -/+bonds
+Turn on and off the drawing of the atomic bonds in
+.I molecule.
+.TP 5
+.BI \-molecule \ filename
+Read a molecule structure from a pdb file in
+.I molecule.
+.TP 5
+.BI -/+labels
+Turn on and off the labeling of the atoms in
+.I molecule.
+.TP 5
+.BI \-spin {x|y|z}
+Set the axis for molecule rotation in
+.I molecule.
+The default is "XYZ".
+.TP 5
+.BI \+spin
+Turn off the molecule rotation in
+.I molecule.
+.TP 5
+.BI -/+titles
+Turn on and off the molecule description in
+.I molecule.
+.TP 5
+.BI -/+wander
+Turn on and off the moving of the molecule on a sinoid curve in
+.I molecule.
+Turn on and off movements in
+.I fire.
+.TP 5
+.BI -/+ammann
+Turn on and off lines for
+.I penrose.
+.TP 5
+.BI \-increment \ value
+Allows fine adjustments to order in
+.I mandelbrot.
+.TP 5
+.BI -/+erase
+Turn on and off erasing for
+.I spline.
+If this option is on,
+.I cycles
+is divided by 64 to compute the number of lines, so as to be compatible
+when using -fullrandom.
+.TP 5
+.BI \-factory \ num
+Number of extra factory parts in
+.I pipes.
+.TP 5
+.BI -/+fisheye
+Turn on if you want a zoomed-in view of
+.I pipes.
+.TP 5
+.BI -/+tightturns
+Turn on if you want the
+.I pipes
+to bend more often.
+.TP 5
+.BI -/+rotatepipes
+Turn on if you want the pipe system rotated in
+.I pipes.
+.TP 5
+.BI -/+complete
+Turn on or off complete graph morphing in
+.I qix.
+.TP 5
+.BI \-size[xyz] \ num
+Number represents the number of cubies on the x, y, or z axis.  Negative
+numbers offer randomness from 2 to the absolute value of the number.
+.I star.
+.TP 5
+.BI -/+hideshuffling
+Turn on or off hidden shuffle phase for
+.I rubik.
+.TP 5
+.BI -/+border
+Turn on or off borders in
+.I shape.
+.TP 5
+.BI -/+shadowing
+Turn on or off shadowing in
+.I shape.
+.TP 5
+.BI -/+stippling
+Turn on or off stippling in
+.I shape.
+.TP 5
+.BI \-intensity \ value
+Set the brightness (default 2185) of the sierpinski structure for
+.I sierpinski3d.
+.TP 5
+.BI \-maxdepth \ value
+Set the maximum depth (up to 10) of the sierpinski structure for
+.I sierpinski3d.
+.TP 5
+.BI \-speed \ value
+Determines after how much steps the depth changes for
+.I sierpinski3d.
+.TP 5
+.BI \-trek \ num
+If its a high number you will see the space ship all the time in
+.I star.
+.TP 5
+.BI -/+rock
+Turn on and off rocks for
+.I star.
+If this is off, stars will be seen instead.
+.TP 5
+.BI -/+straight
+Turn on if
+.I star
+gets you motion sick.
+.TP 5
+.BI \-cyclepeed \ num
+Set speed of cycling in
+.I starfish.
+.TP 5
+.BI \-rotation \ num
+Set rotation velocity in
+.I starfish.
+.TP 5
+.BI \-thickness \ num
+Set thickness in
+.I starfish.
+.TP 5
+.BI -/+rock
+Turn on and off blob for
+.I starfish.
+.TP 5
+.BI \-spinspeed \ num
+Set speed of rotation, in degrees per frame for
+.I superquadrics.
+.TP 5
+.BI -/+bonus
+Turn on in
+.I tetris
+to see 5 square bonus pieces.
+.TP 5
+.BI -/+well
+Turn on in
+.I tetris
+to see welltris.
+.TP 5
+.BI \-ttfont \ filename
+Sets the True Type font file (or font directory) used for
+.I text3d
+.TP 5
+.BI \-extrusion \ num
+Sets length of the text extrusion for
+.I text3d
+.TP 5
+.BI \-rot_amplitude \ float
+Sets rotation amplitude value of each letter for
+.I text3d
+.TP 5
+.BI \-rot_frequency \ float
+Sets rotation frequency for
+.I text3d
+.TP 5
+.BI -/+no_split
+Turn on and off word splitting for
+.I text3d
+.TP 5
+.BI \-ttanimate \ function_name
+Sets the animation function used for
+.I text3d.
+Currently one of : \
+Random \ FullRandom \ Default \ Default2 \ None \ Crazy \ UpDown \ Extrude \ RotateXY \ RotateYZ \ Frequency \ Amplitude
+.TP 5
+.B \-speed \fIkm/h\fP
+The speed for all planes in km/h for
+.I xcl.
+.TP 5
+.B \-frametime \fImicroseconds\fP
+The time for one frame on the screen. This time is used to calculate
+the delay time and depends on the speed of the X server for
+.I xcl.
+.TP 5
+.B \-line_length \fImm\fP
+The distance between the pilot and the plane for
+.I xcl.
+.TP 5
+.B \-spectator \fImm\fP
+The distance between spectator and pilot. It should be grater than the
+line_length and the half wing width of the plane to be not dangerous
+for the spectator for
+.I xcl.
+.TP 5
+.B \-viewmodel
+Shows an animated view of one model for
+.I xcl.
+.TP 5
+.B -/+oldcolor
+Sets the colors for the first two planes fixed to red and yellow in
+.I xcl.
+.TP 5
+.B \-xcldebug
+Shows some additional timing information to make sure that the calibrate
+procedure goes right in
+.I xcl.
+.TP 8
+.B \-automatic
+The auto scale for automatic fit into the window is \fIDe\fPactivated
+with this option for
+.I xcl.
+.TP 5
+.B \-randomstart
+Use a random start point for models at startup for
+.I xcl.
+.TP 5
+.B \-preset \ num
+Use the preset
+.I num 
+[1-5] for
+.I biof.
+.TP 5
+.B \-lines \ num
+Use 
+.I num 
+lines in
+.I biof.
+.TP 5
+.B \-points \ num
+Use 
+.I num 
+points in
+.I biof.
+.TP 5
+.B -/+offangle
+Use 
+.I offangle 
+in
+.I biof.
+.TP 5
+.BI \-duration \ seconds
+Allows one to set a duration for a mode in
+.I random.
+Duration of 0 is defined as infinite.
+.TP 5
+.B -/+fullrandom
+Turn on/off randomness options within modes in
+.I random.
+Not implemented for all mode options.
+.TP 5
+.BI \-modelist \ textstring
+Allows one to pass a list of files to randomly display to
+.I random.
+"all" will get all files but blank (and bomb if compiled in). "all,blank"
+will get all modes.  "all,-image bounce,+blank" will get all modes excluding
+image and bounce modes.  "bug wator" will get only bug and wator.  "allgl" will
+get only the GL modes if compiled in, all-allgl will get all excluding the GL
+modes, "allnice" will weed out high cpu usage modes (as well as hackers and
+gl modes).  "allxpm" will get all modes that use xpm.  "allwrite" will get
+all modes that take advantage of writable colormaps (not including xpm).
+"all3d" will get all the modes that support this option.  "allmouse"
+will get all the modes that support mouse interaction.  Similarly,
+"allautomata" for automata modes, "allfractal" for fractal modes,
+"allgeometry" for geometry modes, "allspace" for space modes.  The random
+mode itself can not be referenced.
+.TP 5
+.BI -/+sequential
+Turn on non-random
+.I random
+option.
+.sp
+.SH **WARNING**
+.B xlock
+can appear to hang if it is competing with a high-priority process for
+the CPU. For example, if
+.B xlock
+is started after a process with 'nice -20'
+(high priority),
+.B xlock
+will take  considerable amount of time to respond.
+.sp
+.SH "SHADOW PASSWORDS"
+If the machine is using a shadow password system, then
+.B xlock
+may not be set up to get the real password and so must be given one
+of its own. This can be either on the command line, via the
+.B -cpasswd
+option,
+or in the file
+.BR $HOME/.xlockrc ,
+with the first taking precedence.  In both cases an encrypted password
+is expected (see makekey(8)).  If neither is given, then
+.B xlock
+will prompt for a password and will use that, also storing an
+encrypted version of it in
+.B $HOME/.xlockrc
+for future use.
+.sp
+.SH "XLOCK AND SSH-AGENT"
+If you use ssh-agent(1) to avoid entering a passphrase every time you use
+one of your ssh(1) private keys, it's good security practice to have
+ssh-agent forget the keys before you leave your terminal unattended.  That
+way, an attacker who takes over your terminal won't be able to use your
+private ssh keys to log in to other systems.  Once you return to your
+terminal, you can enter the passphrase and re-add the keys to ssh-agent.
+There are a couple of ways in which
+.B xlock
+can help to automate this process.  Firstly, the
+.I startCmd
+option allows
+.B xlock
+to be configured to run 'ssh-add -D' every time you lock the screen, so
+that your keys are automatically deleted from ssh-agent.  If the
+passphrase on your ssh keys is the same as your password, then
+.B xlock
+can also be made to re-add the keys to ssh-agent when you unlock the
+screen, via the
+.I pipepassCmd
+option.  This requires a bit of scripting, as the command must read your
+password from standard input and then automate the interaction with
+ssh-add to re-add the keys.  There is an example of such a script in the
+.B xlock
+distribution - see
+.I etc/xlockssh*
+.sp
+.SH BUGS
+"kill -KILL
+.B xlock
+" causes the server that was locked to be unusable, since all hosts
+(including localhost) were removed from the access control list
+to lock out new X clients, and since
+.B xlock
+could not catch SIGKILL, it terminated before restoring the access
+control list.  This will leave the X server in a state where
+\fI"you can no longer connect to that server,
+and this operation cannot be reversed unless you reset the server."\fP
+		-From the X11R4 Xlib Documentation, Chapter 7.
+.br
+NCD terminals do not allow xlock to remove all the hosts from the access
+control list.  Therefore you will need to use the "-remote" and
+"-allowaccess" switches.  If you happen to run without "-allowaccess" on an
+NCD terminal,
+.B xlock
+will not work and you will need to reboot the terminal, or simply go into
+the SETUP menus, under 'Network Parameters', and turn off TCP/IP access
+control.
+.br
+.SH "SEE ALSO"
+X(1), Xlib Documentation.
+.sp
+.SH AUTHOR
+Maintained by:
+.RS
+David Albert Bagley, <\fIbagleyd@tux.org\fP>
+.RE
+.sp
+The latest version is currently at:
+.RS
+\fIftp://ftp.tux.org/pub/tux/bagleyd/xlockmore\fP
+.br
+\fIftp://ftp.x.org/contrib/applications\fP
+.RE
+.sp
+Original Author:
+.RS
+Patrick J. Naughton, <\fInaughton@eng.sun.com\fP>
+.br
+Mailstop 21-14
+.br
+Sun Microsystems Laboratories, Inc.
+.br
+Mountain View, CA  94043
+.br
+415/336-1080
+.RE
+.sp
+with many additional contributors.
+.sp
+.SH COPYRIGHT
+Copyright (c) 1988-1991 by Patrick J. Naughton
+.br
+Copyright (c) 1993-2005 by David A. Bagley
+.sp
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.
+.br
+The original BSD daemon is Copyright (c) 1988 Marshall Kirk McKusick.
+All Rights Reserved.
+.br
+DEC, HP, IBM, Linux, SCO, SGI, and Sun icons have their respective
+copyrights.

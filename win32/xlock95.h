@@ -1,0 +1,13 @@
+#define MODE_BOX     1000
+#define MODE_LIST    1010
+#define DESC_LABEL   1020
+#define DELAY_LABEL  1030
+#define DELAY_TEXT   1040
+#define COUNT_LABEL  1050
+#define COUNT_TEXT   1060
+#define CYCLES_LABEL 1070
+#define CYCLES_TEXT  1080
+#define ENABLE_BUTTON 1090
+
+
+

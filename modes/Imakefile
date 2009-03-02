@@ -1,0 +1,503 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+
+top_srcdir = ..
+BITMAPDIR = $(top_srcdir)/bitmaps/
+PIXMAPDIR = $(top_srcdir)/pixmaps/
+UTILDIR = ../xlock/
+GLDIR = glx/
+UTILOBJDIR = ../xlock/
+GLOBJDIR = glx/
+
+DM =
+DOM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+DG = $(GLDIR)
+DOG = $(GLOBJDIR)
+OM = $(O)$(S)$(DOM)
+OU = $(O)$(S)$(DOU)
+OG = $(O)$(S)$(DOG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+CG = $(CX) $(DG)
+
+XCOMM  please define
+XCOMM  C as the C source code extension
+XCOMM  O as the object extension
+XCOMM  S as the separator for object code
+
+XCOMM Here is your chance to override the default icon:
+XCOMM TINYBITMAP = $(BITMAPTYPE)
+TINYBITMAP = t-x11
+SMALLBITMAP = s-$(BITMAPTYPE)
+MEDIUMBITMAP = m-$(BITMAPTYPE)
+LARGEBITMAP = l-$(BITMAPTYPE)
+MEDIUMPIXMAP = m-$(PIXMAPTYPE)
+LARGEPIXMAP = l-$(PIXMAPTYPE)
+
+XCOMM BATBITMAP = $(LARGEBITMAP)
+BATBITMAP = l-xlock
+XCOMM BATBITMAP = l-linux
+XCOMM BOUNCEBITMAP = $(LARGEBITMAP)
+BOUNCEBITMAP = l-xlock
+XCOMM BOUNCEBITMAP = l-linux
+XCOMM DECAYBITMAP = $(LARGEBITMAP)
+DECAYBITMAP = l-xlock
+XCOMM DECAYBITMAP = l-linux
+XCOMM EYESBITMAP = $(MEDIUMBITMAP)
+EYESBITMAP = m-grelb
+FLAGBITMAP = $(MEDIUMBITMAP)
+IMAGEBITMAP = $(MEDIUMBITMAP)
+XCOMM IMAGEBITMAP = l-bob #Slackware icon
+XCOMM IMAGEBITMAP = m-xlock #XLock icon
+XCOMM LIFEBITMAP = $(SMALLBITMAP)
+LIFEBITMAP = s-grelb
+LIFE1DBITMAP = $(TINYBITMAP)
+MAZEBITMAP = $(LARGEBITMAP)
+XCOMM MAZEBITMAP = m-xlock
+XCOMM PUZZLEBITMAP = $(LARGEBITMAP)
+PUZZLEBITMAP = l-xlock
+XCOMM PUZZLEBITMAP = l-linux
+XCOMM BATPIXMAP = $(LARGEPIXMAP)
+BATPIXMAP = l-xlock
+XCOMM BATPIXMAP = l-linux
+XCOMM BOUNCEPIXMAP = $(LARGEPIXMAP)
+BOUNCEPIXMAP = l-xlock
+XCOMM BOUNCEPIXMAP = l-linux
+XCOMM DECAYPIXMAP = $(LARGEPIXMAP)
+DECAYPIXMAP = l-xlock
+XCOMM DECAYPIXMAP = l-linux
+FLAGPIXMAP = $(MEDIUMPIXMAP)
+XCOMM FLAGPIXMAP = m-xlock
+IMAGEPIXMAP = $(MEDIUMPIXMAP)
+XCOMM IMAGEPIXMAP = m-xlock
+LIFEPIXMAP = s-grelb
+MAZEPIXMAP = $(MEDIUMPIXMAP)
+XCOMM MAZEPIXMAP = m-xlock
+XCOMM PUZZLEPIXMAP = $(LARGEPIXMAP)
+PUZZLEPIXMAP = l-xlock
+XCOMM PUZZLEPIXMAP = l-linux
+
+XCOMM  List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(OU)parsecmd$(O)$(S)\
+$(DOU)util$(OU)logout$(OU)mode$(OU)xlockimage$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)vis$(OU)visgl$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+$(DOU)spline$(OU)erase$(OU)sound$(O)$(S)\
+$(DOU)vtlock$(OU)vtlock_proc$(O)
+#ifdef Check
+XLOCKCHECKOBJS = $(S)memcheck$(O)
+#endif
+XLOCKMODEOBJS = $(DOM)ant$(OM)ant3d$(OM)apollonian$(OM)\
+ball$(OM)bat$(OM)blot$(OM)\
+bouboule$(OM)bounce$(OM)braid$(OM)bubble$(OM)bug$(OM)\
+clock$(OM)coral$(OM)crystal$(OM)\
+daisy$(OM)dclock$(OM)decay$(OM)deco$(OM)demon$(OM)\
+dilemma$(OM)discrete$(OM)dragon$(OM)drift$(OM)euler2d$(OM)eyes$(OM)\
+fadeplot$(OM)fiberlamp$(OM)flag$(OM)flame$(OM)flow$(OM)forest$(OM)\
+fzort$(OM)galaxy$(OM)goop$(OM)grav$(OM)\
+helix$(OM)hop$(OM)hyper$(OM)\
+ico$(OM)ifs$(OM)image$(OM)juggle$(OM)julia$(OM)kaleid$(OM)kumppa$(OM)\
+laser$(OM)life$(OM)life1d$(OM)life3d$(OM)\
+lightning$(OM)lisa$(OM)lissie$(OM)loop$(OM)lyapunov$(OM)\
+mandelbrot$(OM)marquee$(OM)matrix$(OM)maze$(OM)\
+mountain$(OM)munch$(OM)nose$(OM)\
+pacman$(OM)penrose$(OM)petal$(OM)petri$(OM)\
+polyominoes$(OM)puzzle$(OM)pyro$(OM)\
+qix$(OM)roll$(OM)rotor$(OM)\
+scooter$(OM)shape$(OM)sierpinski$(OM)slip$(OM)\
+space$(OM)sphere$(OM)spiral$(OM)spline$(OM)\
+star$(OM)starfish$(OM)strange$(OM)swarm$(OM)swirl$(OM)\
+t3d$(OM)tetris$(OM)thornbird$(OM)tik_tak$(OM)toneclock$(OM)\
+triangle$(OM)tube$(OM)turtle$(OM)\
+vines$(OM)voters$(OM)\
+wator$(OM)wire$(OM)world$(OM)worm$(OM)xcl$(OM)xjack$(O)
+#ifdef Unstable
+XLOCKUNSTABLEOBJS = $(DOM)run$(O)
+XCOMM CONSTRUCTIONOBJS = $(DOM)billiards(O)
+#endif
+#ifdef CPPCompiler
+XLOCKCPPOBJS = $(DOM)solitare$(O)$(S)$(CONSTRUCTIONOBJS)
+
+$(CX)$(O) :
+	$(CXX) -c $(CFLAGS) $<
+XCOMM	Sun and gcc
+XCOMM	$(CXX) -c -isystem /usr/openwin/include $(CFLAGS) $<
+#endif
+#ifdef XpmLibrary
+XLOCKXPMOBJS =
+#endif
+#ifdef GLLibrary
+#ifdef Unstable
+XLOCKUNSTABLEGLOBJS = $(DOG)skewb$(O)
+#endif
+#ifdef CPPCompiler
+INVERTOBJS = $(DOG)i_figureeight$(O)$(S)\
+$(DOG)i_linkage$(OG)i_sphere$(OG)i_spline$(O)$(S)\
+$(DOG)i_threejet$(OG)i_threejetvec$(O)$(S)\
+$(DOG)i_twojet$(OG)i_twojetvec$(O)
+XLOCKDEPCPPGLOBJS = $(INVERTOBJS)
+XLOCKMULTCPPGLOBJS = $(DOG)invert$(O)
+#if defined(TtfLibrary) && defined(GlttLibrary)
+XLOCKTEXTGLOBJS = $(DOG)text3d$(O)
+#endif
+#endif
+SPROINGIESOBJS = $(DOG)buildlwo$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DOG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)
+ATLANTISOBJS = $(DOG)dolphin$(OG)shark$(OG)swim$(OG)whale$(O)
+ATUNNELSOBJS = $(DOG)tunnel_draw$(O)
+BUBBLE3DOBJS = $(DOG)b_draw$(OG)b_sphere$(OG)b_lockglue$(O)
+GLPLANETOBJS = $(DOG)sphere$(O)
+MOLECULEOBJS = $(DOG)tube$(OG)sphere$(O)
+XLOCKDEPGLOBJS = $(DOG)xpm-ximage$(OG)pipeobjs$(O)$(S)\
+$(SPROINGIESOBJS)$(S)$(ATLANTISOBJS)$(S)$(ATUNNELSOBJS)$(S)\
+$(BUBBLE3DOBJS)$(S)$(MOLECULEOBJS)$(S)$(XLOCKDEPCPPGLOBJS)
+XLOCKNORMGLOBJS = $(DOG)biof$(OG)cage$(OG)gears$(O)$(S)\
+$(DOG)moebius$(OG)morph3d$(OG)noof$(O)$(S)\
+$(DOG)rubik$(OG)sierpinski3d$(OG)stairs$(OG)superquadrics$(O)$(S)\
+$(XLOCKTEXTGLOBJS)$(S)$(XLOCKUNSTABLEGLOBJS)
+XLOCKMULTGLOBJS = $(DOG)fire$(OG)lament$(OG)sballs$(OG)molecule$(O)$(S)\
+$(DOG)pipes$(OG)sproingies$(OG)atlantis$(OG)atunnels$(O)$(S)\
+$(DOG)bubble3d$(OG)glplanet$(O)$(S)$(XLOCKMULTCPPGLOBJS)
+XLOCKGLOBJS = $(XLOCKNORMGLOBJS)$(S)\
+$(XLOCKDEPGLOBJS)$(S)$(XLOCKMULTGLOBJS)
+#endif
+#if 1
+XLOCKBOMBOBJS = $(DOM)bomb$(O)
+#endif
+XLOCKUTILMODEOBJS = $(XLOCKBOMBOBJS)$(S)$(DOM)blank$(OM)random$(O)
+XLOCKNORMMODEOBJS = $(XLOCKMODEOBJS)$(S)$(XLOCKUNSTABLEOBJS)$(S)\
+$(XLOCKCPPOBJS)$(S)$(XLOCKXPMOBJS)$(S)$(XLOCKNORMGLOBJS)$(S)\
+$(XLOCKUTILMODEOBJS)
+XLOCKMULTMODEOBJS = $(XLOCKMULTGLOBJS)
+XLOCKALLUTILOBJS = $(XLOCKUTILOBJS)$(XLOCKCHECKOBJS)
+XLOCKOBJS = $(XLOCKALLUTILOBJS)$(S)$(XLOCKNORMMODEOBJS)$(S)\
+$(XLOCKDEPGLOBJS)$(S)$(XLOCKMULTGLOBJS)
+
+XCOMM  List of source files
+BITMAPS = bat.xbm bounce.xbm decay.xbm eyes.xbm eyes2.xbm flag.xbm \
+image.xbm life.xbm life2.xbm life1d.xbm maze.xbm puzzle.xbm
+PIXMAPS = bat.xpm bounce.xpm decay.xpm flag.xpm image.xpm maze.xpm \
+puzzle.xpm
+XCOMM life.xpm
+XLOCKUTILHDRS = xlock.h mode.h vroot.h xlockimage.h ras.h spline.h \
+version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(CU)parsecmd$(C) \
+$(DU)util$(CU)logout$(CU)mode$(CU)xlockimage$(CU)ras$(CU)xbm$(C) \
+$(DU)vis$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+$(DU)spline$(CU)sound$(CU)erase$(C) \
+$(DU)vtlock$(CU)vtlock_proc$(C)
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+XLOCKMODESRCS = $(DM)ant$(CM)ant3d$(CM)apollonian$(C) \
+$(DM)ball$(CM)bat$(CM)blot$(C) \
+$(DM)bouboule$(CM)bounce$(CM)braid$(CM)bubble$(CM)bug$(C) \
+$(DM)clock$(CM)coral$(CM)crystal$(C) \
+$(DM)daisy$(CM)dclock$(CM)decay$(CM)deco$(CM)demon$(C) \
+$(DM)dilemma$(CM)discrete$(CM)dragon$(CM)drift$(CM)euler2d$(CM)eyes$(C) \
+$(DM)fadeplot$(CM)fiberlamp$(CM)flag$(CM)flame$(CM)flow$(CM)forest$(C) \
+$(DM)fzort$(CM)galaxy$(CM)goop$(CM)grav$(C) \
+$(DM)helix$(CM)hop$(CM)hyper$(C) \
+$(DM)ico$(CM)ifs$(CM)image$(CM)juggle$(CM)julia$(CM)kaleid$(CM)kumppa$(C) \
+$(DM)laser$(CM)life$(CM)life1d$(CM)life3d$(C) \
+$(DM)lightning$(CM)lisa$(CM)lissie$(CM)loop$(CM)lyapunov$(C) \
+$(DM)mandelbrot$(CM)marquee$(CM)matrix$(CM)maze$(C) \
+$(DM)mountain$(CM)munch$(CM)nose$(C) \
+$(DM)pacman$(CM)penrose$(CM)petal$(CM)petri$(C) \
+$(DM)polyominoes$(CM)puzzle$(CM)pyro$(C) \
+$(DM)qix$(CM)roll$(CM)rotor$(C) \
+$(DM)scooter$(CM)shape$(CM)sierpinski$(CM)slip$(C) \
+$(DM)space$(CM)sphere$(CM)spiral$(CM)spline$(C) \
+$(DM)star$(CM)starfish$(CM)strange$(CM)swarm$(CM)swirl$(C) \
+$(DM)t3d$(CM)tetris$(CM)thornbird$(CM)tik_tak$(CM)toneclock$(C) \
+$(DM)triangle$(CM)tube$(CM)turtle$(C) \
+$(DM)vines$(CM)voters$(C) \
+$(DM)wator$(CM)wire$(CM)world$(CM)worm$(CM)xcl$(CM)xjack$(C)
+XLOCKUNSTABLESRCS = $(DM)run$(C)
+XCOMM CONSTRUCTIONSRCS = $(DM)billiards(CX)
+XLOCKCPPSRCS = $(DM)solitare$(CX) $(CONSTRUCTIONSRCS)
+XLOCKXPMSRCS =
+XLOCKGLSRCS = $(DG)biof$(OG)cage$(CG)fire$(CG)gears$(C) \
+$(DG)glplanet$(CG)sphere$(CG)lament$(CG)moebius$(CG)morph3d$(C) \
+$(DG)molecule$(CG)tube$(CG)noof$(C) \
+$(DG)rubik$(CG)sballs$(CG)skewb$(C) \
+$(DG)sierpinski3d$(CG)stairs$(CG)superquadrics$(C) \
+$(DG)xpm-ximage$(CG)buildlwo$(CG)pipes$(CG)pipeobjs$(C) \
+$(DG)sproingies$(CG)sproingiewrap$(CG)s1_b$(C) \
+$(DG)s1_1$(CG)s1_2$(CG)s1_3$(CG)s1_4$(CG)s1_5$(CG)s1_6$(C) \
+$(DG)atlantis$(CG)dolphin$(CG)shark$(CG)swim$(CG)whale$(C) \
+$(DG)bubble3d$(CG)b_draw$(CG)b_sphere$(CG)b_lockglue$(C) \
+$(DG)invert$(CG)i_figureeight$(CXG)i_linkage$(CX) \
+$(DG)i_sphere$(CXG)i_spline$(CX) \
+$(DG)i_threejet$(CXG)i_threejetvec$(CX) \
+$(DG)i_twojet$(CXG)i_twojetvec$(CXG)text3d$(CX)
+XLOCKBOMBSRCS = $(DM)bomb$(C)
+XLOCKUTILMODESRCS = $(XLOCKBOMBSRCS) $(DM)blank$(CM)random$(C)
+XLOCKSRCS = $(XLOCKUTILSRCS) $(XLOCKCHECKSRCS) $(XLOCKUNSTABLESRCS) \
+$(XLOCKCPPSRCS) $(XLOCKXPMSRCS) $(XLOCKGLSRCS) \
+$(XLOCKMODESRCS) $(XLOCKUTILMODESRCS)
+
+AllTarget($(UTILDIR)xlock)
+#ifdef XpmLibrary
+depend:: $(BITMAPS) $(PIXMAPS)
+#else
+depend:: $(BITMAPS)
+#endif
+
+#ifdef Modules
+
+NORMMODULES = $(XLOCKNORMMODEOBJS:.o=.xlk)
+
+MULTMODULES = $(XLOCKMULTMODEOBJS:.o=.xlk)
+
+MODULES = $(NORMMODULES) $(MULTMODULES)
+
+EXTRA_LDOPTIONS += $(MODULEFLAGS)
+AllTarget($(MODULES) $(UTILDIR)xlock)
+
+NormalProgramTarget($(UTILDIR)xlock, $(XLOCKALLUTILOBJS), $(DEPXLIB), $(LOCAL_LIBRARIES), NullParameter)
+
+InstallMultiple($(MODULES), $(DEF_MODULEPATH))
+
+$(NORMMODULES) : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $<
+
+#ifdef GLLibrary
+
+$(DOG)fire.xlk : $(DOG)xpm-ximage.o
+$(DOG)lament.xlk : $(DOG)xpm-ximage.o
+$(DOG)sballs.xlk : $(DOG)xpm-ximage.o
+
+$(DOG)fire.xlk $(DOG)lament.xlk $(DOG)sballs.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(DOG)xpm-ximage.o $<
+
+$(DOG)pipes.xlk : $(DOG)buildlwo.o $(DOG)pipeobjs.o
+
+$(DOG)pipes.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(DOG)buildlwo.o $(DOG)pipeobjs.o $<
+
+$(DOG)sproingies.xlk : $(SPROINGIESOBJS)
+
+$(DOG)sproingies.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(SPROINGIESOBJS) $<
+
+$(DOG)atlantis.xlk : $(ATLANTISOBJS) $(DOG)xpm-ximage.o
+
+$(DOG)atlantis.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(ATLANTISOBJS) $(DOG)xpm-ximage.o $<
+
+$(DOG)atunnels.xlk : $(ATUNNELSOBJS) $(DOG)xpm-ximage.o
+
+$(DOG)atunnels.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(ATUNNELSOBJS) $(DOG)xpm-ximage.o $<
+
+$(DOG)bubble3d.xlk : $(BUBBLE3DOBJS)
+
+$(DOG)bubble3d.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(BUBBLE3DOBJS) $<
+
+$(DOG)glplanet.xlk : $(GLPLANETOBJS) $(DOG)xpm-ximage.o
+
+$(DOG)glplanet.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(GLPLANETOBJS) $(DOG)xpm-ximage.o $<
+
+$(DOG)molecule.xlk : $(MOLECULEOBJS) sphere.o
+
+$(DOG)molecule.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(MOLECULEOBJS) $<
+
+#ifdef CPPCompiler
+
+$(DOG)invert.xlk : $(INVERTOBJS)
+
+$(DOG)invert.xlk : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(INVERTOBJS) $<
+#endif
+
+#endif
+
+clean::
+	$(RM) *.xlk .pure
+
+#else
+
+NormalProgramTarget($(UTILDIR)xlock, $(XLOCKOBJS), $(DEPXLIB), $(LOCAL_LIBRARIES), NullParameter)
+
+#endif
+
+DependTarget()
+LintTarget()
+
+bat$(O) : bat$(C) bat.xbm bat.xpm
+bounce$(O) : bounce$(C) bounce.xbm bounce.xpm
+decay$(O) : decay$(C) decay.xbm decay.xpm
+eyes$(O) : eyes$(C) eyes.xbm eyes2.xbm
+life$(O) : life$(C) life.xbm life2.xbm
+life1d$(O) : life1d$(C) life1d.xbm
+# Do not need xpm files if not using them but not worth figuring out
+flag$(O) : flag$(C) flag.xbm flag.xpm
+image$(O) : image$(C) image.xbm image.xpm
+maze$(O) : maze$(C) maze.xbm maze.xpm
+puzzle$(O) : puzzle$(C) puzzle.xbm puzzle.xpm
+
+bat.xbm : $(BITMAPDIR)$(BATBITMAP).xbm
+	$(RM) bat.xbm ; $(LN_S) $(BITMAPDIR)$(BATBITMAP).xbm bat.xbm
+
+bounce.xbm : $(BITMAPDIR)$(BOUNCEBITMAP).xbm
+	$(RM) bounce.xbm ; $(LN_S) $(BITMAPDIR)$(BOUNCEBITMAP).xbm bounce.xbm
+
+decay.xbm : $(BITMAPDIR)$(DECAYBITMAP).xbm
+	$(RM) decay.xbm ; $(LN_S) $(BITMAPDIR)$(DECAYBITMAP).xbm decay.xbm
+
+eyes.xbm : $(BITMAPDIR)$(EYESBITMAP).xbm
+	$(RM) eyes.xbm ; $(LN_S) $(BITMAPDIR)$(EYESBITMAP).xbm eyes.xbm
+
+eyes2.xbm : $(BITMAPDIR)m-grelb-2.xbm
+	$(RM) eyes2.xbm ; $(LN_S) $(BITMAPDIR)m-grelb-2.xbm eyes2.xbm
+
+flag.xbm : $(BITMAPDIR)$(FLAGBITMAP).xbm
+	$(RM) flag.xbm ; $(LN_S) $(BITMAPDIR)$(FLAGBITMAP).xbm flag.xbm
+
+image.xbm : $(BITMAPDIR)$(IMAGEBITMAP).xbm
+	$(RM) image.xbm ; $(LN_S) $(BITMAPDIR)$(IMAGEBITMAP).xbm image.xbm
+
+life.xbm : $(BITMAPDIR)$(LIFEBITMAP).xbm
+	$(RM) life.xbm ; $(LN_S) $(BITMAPDIR)$(LIFEBITMAP).xbm life.xbm
+
+life2.xbm : $(BITMAPDIR)s-grelb-2.xbm
+	$(RM) life2.xbm ; $(LN_S) $(BITMAPDIR)s-grelb-2.xbm life2.xbm
+
+life1d.xbm : $(BITMAPDIR)$(LIFE1DBITMAP).xbm
+	$(RM) life1d.xbm ; $(LN_S) $(BITMAPDIR)$(LIFE1DBITMAP).xbm life1d.xbm
+
+maze.xbm : $(BITMAPDIR)$(MAZEBITMAP).xbm
+	$(RM) maze.xbm ; $(LN_S) $(BITMAPDIR)$(MAZEBITMAP).xbm maze.xbm
+
+puzzle.xbm : $(BITMAPDIR)$(PUZZLEBITMAP).xbm
+	$(RM) puzzle.xbm ; $(LN_S) $(BITMAPDIR)$(PUZZLEBITMAP).xbm puzzle.xbm
+
+bat.xpm : $(PIXMAPDIR)$(BATPIXMAP).xpm
+	$(RM) bat.xpm ; $(LN_S) $(PIXMAPDIR)$(BATPIXMAP).xpm bat.xpm
+
+bounce.xpm : $(PIXMAPDIR)$(BOUNCEPIXMAP).xpm
+	$(RM) bounce.xpm ; $(LN_S) $(PIXMAPDIR)$(BOUNCEPIXMAP).xpm bounce.xpm
+
+decay.xpm : $(PIXMAPDIR)$(DECAYPIXMAP).xpm
+	$(RM) decay.xpm ; $(LN_S) $(PIXMAPDIR)$(DECAYPIXMAP).xpm decay.xpm
+
+flag.xpm : $(PIXMAPDIR)$(FLAGPIXMAP).xpm
+	$(RM) flag.xpm ; $(LN_S) $(PIXMAPDIR)$(FLAGPIXMAP).xpm flag.xpm
+
+image.xpm : $(PIXMAPDIR)$(IMAGEPIXMAP).xpm
+	$(RM) image.xpm ; $(LN_S) $(PIXMAPDIR)$(IMAGEPIXMAP).xpm image.xpm
+
+life.xpm : $(PIXMAPDIR)$(LIFEPIXMAP).xpm
+	$(RM) life.xpm ; $(LN_S) $(PIXMAPDIR)$(LIFEPIXMAP).xpm life.xpm
+
+maze.xpm : $(PIXMAPDIR)$(MAZEPIXMAP).xpm
+	$(RM) maze.xpm ; $(LN_S) $(PIXMAPDIR)$(MAZEPIXMAP).xpm maze.xpm
+
+puzzle.xpm : $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm
+	$(RM) puzzle.xpm ; $(LN_S) $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm puzzle.xpm
+
+$(UTILOBJDIR)xlock.o : $(UTILDIR)xlock.c
+$(UTILOBJDIR)passwd.o : $(UTILDIR)passwd.c
+$(UTILOBJDIR)resource.o : $(UTILDIR)resource.c
+$(UTILOBJDIR)parsecmd.o : $(UTILDIR)parsecmd.c
+$(UTILOBJDIR)util.o : $(UTILDIR)util.c
+$(UTILOBJDIR)logout.o : $(UTILDIR)logout.c
+$(UTILOBJDIR)mode.o : $(UTILDIR)mode.c
+$(UTILOBJDIR)ras.o : $(UTILDIR)ras.c
+$(UTILOBJDIR)xbm.o : $(UTILDIR)xbm.c
+$(UTILOBJDIR)vis.o : $(UTILDIR)vis.c
+$(UTILOBJDIR)visgl.o : $(UTILDIR)visgl.c
+$(UTILOBJDIR)color.o : $(UTILDIR)color.c
+$(UTILOBJDIR)random.o : $(UTILDIR)random.c
+$(UTILOBJDIR)iostuff.o : $(UTILDIR)iostuff.c
+$(UTILOBJDIR)automata.o : $(UTILDIR)automata.c
+$(UTILOBJDIR)spline.o : $(UTILDIR)spline.c
+$(UTILOBJDIR)sound.o : $(UTILDIR)sound.c
+$(UTILOBJDIR)erase.o : $(UTILDIR)erase.c
+$(UTILOBJDIR)vtlock.o : $(UTILDIR)vtlock.c
+$(UTILOBJDIR)vtlock_proc.o : $(UTILDIR)vtlock_proc.c
+$(UTILOBJDIR)memcheck.o : $(UTILDIR)memcheck.c
+
+$(XLOCKUTILOBJS) :
+	cd $(UTILOBJDIR) ; \
+$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(GLOBJDIR)biof.o : $(GLDIR)biof.c
+$(GLOBJDIR)cage.o : $(GLDIR)cage.c
+$(GLOBJDIR)fire.o : $(GLDIR)fire.c
+$(GLOBJDIR)gears.o : $(GLDIR)gears.c
+$(GLOBJDIR)glplanet.o : $(GLDIR)glplanet.c
+$(GLOBJDIR)sphere.o : $(GLDIR)sphere.c
+$(GLOBJDIR)lament.o : $(GLDIR)lament.c
+$(GLOBJDIR)moebius.o : $(GLDIR)moebius.c
+$(GLOBJDIR)molecule.o : $(GLDIR)molecule.c
+$(GLOBJDIR)tube.o : $(GLDIR)tube.c
+$(GLOBJDIR)morph3d.o : $(GLDIR)morph3d.c
+$(GLOBJDIR)rubik.o : $(GLDIR)rubik.c
+$(GLOBJDIR)sballs.o : $(GLDIR)sballs.c
+$(GLOBJDIR)stairs.o : $(GLDIR)stairs.c
+$(GLOBJDIR)sierpinski3d.o : $(GLDIR)sierpinski3d.c
+$(GLOBJDIR)superquadrics.o : $(GLDIR)superquadrics.c
+$(GLOBJDIR)buildlwo.o : $(GLDIR)buildlwo.c
+$(GLOBJDIR)pipes.o : $(GLDIR)pipes.c
+$(GLOBJDIR)pipeobjs.o : $(GLDIR)pipeobjs.c
+$(GLOBJDIR)sproingies.o : $(GLDIR)sproingies.c
+$(GLOBJDIR)sproingiewrap.o : $(GLDIR)sproingiewrap.c
+$(GLOBJDIR)s1_b.o : $(GLDIR)s1_b.c
+$(GLOBJDIR)s1_1.o : $(GLDIR)s1_1.c
+$(GLOBJDIR)s1_2.o : $(GLDIR)s1_2.c
+$(GLOBJDIR)s1_3.o : $(GLDIR)s1_3.c
+$(GLOBJDIR)s1_4.o : $(GLDIR)s1_4.c
+$(GLOBJDIR)s1_5.o : $(GLDIR)s1_5.c
+$(GLOBJDIR)s1_6.o : $(GLDIR)s1_6.c
+$(GLOBJDIR)atlantis.o : $(GLDIR)atlantis.c
+$(GLOBJDIR)swim.o : $(GLDIR)swim.c
+$(GLOBJDIR)dolphin.o : $(GLDIR)dolphin.c
+$(GLOBJDIR)shark.o : $(GLDIR)shark.c
+$(GLOBJDIR)whale.o : $(GLDIR)whale.c
+$(GLOBJDIR)bubble3d.o : $(GLDIR)bubble3d.c
+$(GLOBJDIR)b_draw.o : $(GLDIR)b_draw.c
+$(GLOBJDIR)b_lockglue.o : $(GLDIR)b_lockglue.c
+$(GLOBJDIR)b_sphere.o : $(GLDIR)b_sphere.c
+$(GLOBJDIR)invert.o : $(GLDIR)invert.c
+$(GLOBJDIR)i_figureeight.o : $(GLDIR)i_figureeight.cc
+$(GLOBJDIR)i_linkage.o : $(GLDIR)i_linkage.cc
+$(GLOBJDIR)i_sphere.o : $(GLDIR)i_sphere.cc
+$(GLOBJDIR)i_spline.o : $(GLDIR)i_spline.cc
+$(GLOBJDIR)i_threejet.o : $(GLDIR)i_threejet.cc
+$(GLOBJDIR)i_threejetvec.o : $(GLDIR)i_threejetvec.cc
+$(GLOBJDIR)i_twojet.o : $(GLDIR)i_twojet.cc
+$(GLOBJDIR)i_twojetvec.o : $(GLDIR)i_twojetvec.cc
+$(GLOBJDIR)skewb.o : $(GLDIR)skewb.c
+$(GLOBJDIR)text3d.o : $(GLDIR)text3d.cc
+
+$(XLOCKGLOBJS) :
+	cd $(GLDIR) ; \
+$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+XLOCKINC = -I$(top_srcdir) -I. -I$(UTILDIR) -I../$(UTILDIR) -I../..
+
+distclean:: clean
+	$(RM) Makefile $(BITMAPS) $(PIXMAPS) \
+config.status config.cache config.log config.h
+
+clean.all:: distclean

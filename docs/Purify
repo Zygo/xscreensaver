@@ -1,0 +1,32 @@
+Summary of problems detected using Purify
+-----------------------------------------
+Purify problems are marked in code comments with "PURIFY" keyword
+
+Mode      Problem
+--------  -------------------------------------------------------------------
+bat       Possible 15985 byte memory leak from XPutImage.
+cartoon   Possible 29756 byte memory leak from XPutImage.
+flag      Sometimes have thousands of Array Bounds Reads and Free Memory Reads
+          on XGetPixel call when image loaded is small.
+fzort     Uninitialized memory read
+life      Possible 132 byte memory leak from XPutImage
+star      Possible 3264 byte memory leak detected only on SunOS 4.1.X
+swirl     Possible 256 byte memory leak from XPutImage
+tetris    Possible 120 byte memory leak from XPutImage
+text3d    (unstable mode) Array Bounds Reads and Writes
+
+There are also some Uninitialized Memory Reads that appear to be internal
+to X11.
+
+There are also some memory leaks detected in these source code files:
+xlock/iostuff.c xlock/resource.c xlock/spline.c xmlock/option.c
+
+MesaGL 2.3 fixes many cumulative leaks and uninitialized memory reads that
+existed in MesaGL 2.2 and earlier MesaGL releases.  This affected all GL modes.
+MesaGL 2.3 or newer is recommended since it fixes these memory leaks and runs
+faster.  Cumulative means that the memory leaks occur each time the mode is run
+when in random mode, which is why after some time it may crash xlock since it
+runs out of available memory.
+
+---
+Thanks to Tom Schmidt (tschmidt@micron.com) for the Purify logs.

@@ -1,0 +1,286 @@
+I translate a part of the HACKER.DOC in french
+first in text
+second in html
+bye
+--
+charles /  \
+vidal  / ..|\
+      (_\  |_)vidalc@club-internet.fr
+      /  \@'
+     /     \  http://www.chez.com/vidalc
+ _  /  `   |
+\\/  \  | _\
+ \   /_ || \\
+  \____)|_) \_)
+-----------------------------------------
+LA DOC DU BIDOUILLEUR
+
+INTRODUCTION
+________________________________________________________________________________
+
+Ce document est pour tous ceux qui veulent modifier xlock (more), ajouter de
+nouveaux modes, debugger , etc....
+
+xlock kesako ?
+
+xlock est une application pour X-windows qui empˆche l'accŠs d'un ou plusieurs
+‚crans. Il peut ˆtre envoy‚ manuellement ou plus commun‚ment envoy‚
+automatiquement par un d‚mon aprŠs une p‚riodes d'inactivit‚.
+Xlock cr‚‚ une fenˆtre couvrant entiŠrement l'‚cran, et capte tous ‚v‚nements
+pr‚venant ainsi l'accŠs ext‚rieur.
+Quand une touche est press‚e alors xlock affiche un message mais aussi le mode
+dans une icone
+(MODE_ICONIQUE) et demande votre mot de passe.
+Lorsque l'‚cran est lock‚ ( ferm‚ ), des images, des dessins, ou des animations
+sont affich‚es servant de screen-saver ‚vitant la d‚gradation du phosphore.
+Xlock fut d‚velopp‚ chez Sun Micro System par Pack J Naughton.David Bagley l'a
+repris et maintenu sous le nom de Xlockmore dans lequel d'innombrable mode ont
+‚t‚ ajout‚, ainsi que la possibilit‚ d'afficher un mode dans une fenˆtre et
+aussi sur la root window.
+
+________________________________________________________________________________
+ORGANISATION GENERALE
+
+xlock est organiser en deux partie.
+
+1. le traitement de la ligne de commande, la cr‚ation de fenˆtre, le mot de
+passe, etc ...
+
+2 les modes: ils peuvent ˆtre coder de tel maniŠre qu'il n'y a pas besoin de
+faire appel … X pour la taille de la fenˆtre, les couleurs ...
+Une API est comprise dans xlock pour avoir tout les renseignements en ce qui
+concerne l'‚cran.
+C'est dans cette partie que vous allez pouvoir ajouter d'autres modes.
+
+L'architecture logiciel d'un mode est structur‚ en 4 sortes de fonctions:
+
+-init:
+celle-ci devra ˆtre appelle pour pr‚parer le d‚roulement d'un mode. Le mode
+devra initialiser des tables de sinus
+par exemple, allouer des ressources, m‚moire entre autre, ‚tablir l'‚tat initial
+par des variables etc. ...
+Cette fonction peut ˆtre appel‚ plusieurs fois et la fenˆtre ou l'‚cran peuvent avoir des taille diff‚rentes.
+
+-callback:
+C'est la principale fonction, c'est la que est implement‚ le corps du mode.
+ Elle est appel‚ p‚riodiquement.
+ Cette fonction ne doit pas occuper beaucoup de temps a s'ex‚cuter.
+Cette fonction peut etre appele dans deux contextes diff‚rents:
+ plein ‚cran ou en version icon. La fonction MI_IS_ICONIC vous dira dans
+quelle contexte on se trouve.
+
+-release:
+Ici, cette fonction sera appel‚ si un autre mode est appel‚ ( random , et bouton
+droit ), ou si xlock se termine.
+Dans cette fonction, il faut d‚sallouer la m‚moire, X ressource, Pixmaps et
+graphics context.
+
+-refresh:
+ Celle ci est appel‚ lorsque le dessin peut ˆtre abim‚. Le mode doit repeindre
+l'ensemble de la fenˆtre.
+
+-change: ???? <A FINIR>
+
+
+
+________________________________________________________________________________
+CONVERSION:
+Le prototype de ces fonctions est d‚fini dans mode.h et ressemble …:
+	void typefonction _mode( ModeInfo *mode_info)
+La structure mode_info est en lecture seule, et contient l'ensemble des
+informations sur l'‚cran.
+Ne regardez pas les variables globales, n'‚crasez pas ce pointeur.
+Au lieu de faire des requetes pour connaŒtre le num‚ro de la couleur blanche
+etc... , il y a des fonctions propres a xlock: utilisez les.
+
+
+
+
+________________________________________________________________________________
+L'AJOUT D'UN NOUVEAU MODE:
+
+Ajoutons un nouveau mode appel‚ fadeplot:
+Pour ce faire il faut d'abords ajouter dans mode.h
+® extern ModeHook init_fadeplot;
+extern ModeHook draw_fadeplot;
+extern ModeHook release_fadeplot;
+extern ModeHook refresh_fadeplot; ¯
+les fonctions qui vont ˆtre cr‚‚s.
+
+® extern ModeSpecOpt fadeplot_opts; ¯
+une structure qui ne m'a pas r‚v‚l‚ tous ces secrets.
+
+mais aussi dans mode.c … cot‚ des autres fonctions , dans ce que j'appelle la
+ tableau des modes:
+ {"fadeplot", init_fadeplot, draw_fadeplot, release_fadeplot,
+ refresh_fadeplot, init_fadeplot, NULL, &blank_opts, 17000, 1, 20, 1.0,
+  "fadeplot", 0, NULL},
+
+On passe ensuite … l'impl‚mentation des fonctions proprement dit dans un fichier
+que l'on appellera fadeplot.c.
+Il est ‚vident qu'il faudra modifier le Makefile ( Pour cela je vous laisse
+faire :).
+
+Dans ces fonctions, … partir de la structure ModeInfo, on va obtenir des
+informations sur l'‚cran qui sont indispensables pour la suite
+
+MI_WIDTH(mi) et MI_HEIGHT(mi) 	vont nous donn‚ la taille de l'‚cran.
+Display    *display    = MI_DISPLAY(mi);	d‚livre le display
+Window      window = MI_WINDOW(mi);	  d‚livre l'identificateur de la fenˆtre
+GC          gc               = MI_GC(mi);    donne le graphics context courant
+XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
+				Mettre la couleur du trac‚ en noir
+XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
+				 Mettre la couleur du trac‚ en blanc
+
+MI_IS_ICONIC(mi)		permet de savoir si on est pass‚ en phase
+								password.
+NUMCOLORS			Donne le nombre de couleur
+
+
+Oubliez pas aprŠs avoir dessin‚ l'ensemble de faire Xflush(display),
+ce qui permettra d'afficher r‚ellement votre graphisme sur l'‚cran.
+La cr‚ation d'un nouveau mode s'‚ffectue souvent en r‚cup‚rant le squelette
+d'un autre et de le modifier … sa volont‚.
+N'h‚sitez pas a … regarder le code des autres modes, c'est souvent tr‚s
+instructifs.
+Dernierement on peut utiliser la librairie mesa (la libraire GNU OpenGL de
+silicon Graphics) dans xlock.
+Voila j'espere que vous prendrez plaisir a ajouter des nouveaux modes … xlock,
+ un petit conseil le mainteneur de xlock est un fan de casse tˆte et compagnie.
+Bon Xlock.
+
+Charles VIDAL: vidalc@club-internet.fr
+mode flag, fadeplot, circle
+createur de xmxlock : GUI launcher de xlockmore.
+
+------------------------------------------------------
+
+<HTML>
+<HEAD>
+<TITLE>Xlock french hacker</TITLE>
+</HEAD>
+<BODY>
+<Center><H1>XLOCK FRENCH HACKER</H1></Center>
+<BR>
+<H2>INTRODUCTION</H2>
+<HR>
+Ce document est pour tous ceux qui veulent modifier xlock (more), ajouter de nouveaux modes, debugger , etc....
+
+<H2>xlock kesako ?</H2>
+
+xlock est une application pour X-windows qui empêche l’accès d’un ou plusieurs écrans. Il peut être envoyé manuellement ou plus communément envoyé automatiquement par un démon après une périodes d’inactivité.
+ Xlock créé une fenêtre couvrant entièrement l’écran, et capte tous événements prévenant ainsi l’accès extérieur.
+Quand une touche est pressée alors xlock affiche un message mais aussi le mode dans une icone (MODE_ICONIQUE) et demande votre mot de passe.<p>
+Lorsque l’écran est locké ( fermé ), des images, des dessins, ou des animations sont affichées servant de screen-saver évitant la dégradation du phosphore.
+Xlock fut développé chez Sun Micro System par Pack J Naughton.David Bagley l’a repris et maintenu sous le nom de Xlockmore dans lequel d’innombrable mode ont été ajouté, ainsi que la possibilité d’afficher un mode dans une fenêtre et aussi sur la root window ou d’afficher sequentiellement plusieur mode par l’option random et par l’appuis du bouton du millieu.<p>
+Il existe des terminaux X avec plusieur ecrans gere par un seul terminal, alors le même mode s’affichera sur plusieur ecran. On peut toutefois faire des effets, comme une balle passant de lui a l’autre.
+
+<HR>
+<H2>ORGANISATION GENERALE</H2>
+
+xlock est organiser en deux partie.<p>
+
+<OL>
+<LI> le traitement de la ligne de commande, la création de fenêtre(s), le mot de passe, etc ...
+<LI> les modes: ils peuvent être coder de tel manière qu’il n’y a pas besoin de faire appel à X pour la taille de la fenêtre, les couleurs ... Une API est comprise dans xlock pour avoir tout les renseignements en ce qui concerne l’écran.C’est dans cette
+</OL>
+<HR>
+<B>L’architecture logiciel d’un mode est structuré en 4 sortes de fonctions:</B>
+<UL>
+<LI><U><B>-init:</B></U>
+celle-ci devra être appelle pour préparer le déroulement d’un mode. Le mode devra initialiser des tables de sinus par exemple, allouer des ressources, mémoire entre autre, établir l’état initial par des variables etc. ...
+Cette fonction peut être appelé plusieurs fois et la fenêtre ou l’écran peuvent avoir des taille différentes.<p>
+
+<LI><U><B>-callback:</B></U>
+C’est la principale fonction, c’est la que est implementé le corps du mode. Elle est appelé périodiquement. Cette fonction ne doit pas occuper beaucoup de temps a s’exécuter surtout si elle a plusieur ecran s’occuper.
+Cette fonction peut etre appele dans deux contextes différents:
+ plein écran ou en version icon. La fonction MI_IS_ICONIC vous dira dans quelle contexte on se trouve.
+la fonction init_mode est toujours appelle avant la fonction callback.
+On peut choisir de faire quelque chose a chaque appelle, ou de compter le nombre d’appelle, et puis de modifier l’ecran periodiquement.<p>
+
+<LI><U><B>-release: </B></U>
+Ici, cette fonction sera appelé si un autre mode est appelé ( random , et bouton droit ), ou si xlock se termine. Dans cette fonction, il faut désallouer la mémoire, X ressource, Pixmaps et graphics context.
+<p>
+<LI><U><B>-refresh:</B></U>
+ Celle ci est appelé lorsque le dessin peut être abimé. Le mode doit repeindre l’ensemble de la fenêtre.
+Aucun information sur la partie de l’ecran endomage n’est delivre.
+<p>
+<LI><U><B>-change:</B></U> Dans la version courante, seule le mode random utilise cette fonctionnalite. Cet fonction est appele lorsque que l’on change de mode par l’appuie du boutton du millieu. Il est laisse a l’imagination de chacun en ce qui conserne
+</UL>
+
+
+<HR>
+<H2>CONVENTION:</H2>
+Le prototype de ces fonctions est défini dans mode.h et ressemble à:<p>
+<Center>	void typefonction _mode( ModeInfo *mode_info)</Center>
+La structure mode_info est en lecture seule, et contient l’ensemble des informations sur l’écran. Ne regardez pas les variables globales, n’écrasez pas ce pointeur. Au lieu de faire des requetes pour connaître le numéro de la couleur blanche etc... , il y a des fonctions propres a xlock: utilisez les. Si vous utilisez les informations passe en parametre des fonctions du modes ( voir ci dessus ), votre code sera toujours correcte.
+Le temps entre chaque appelle  de fonctions est en milliseconde.
+
+<HR>
+<H2>L’AJOUT D’UN NOUVEAU MODE:</H2>
+
+Ajoutons un nouveau mode appelé <A HREF="file:fadeplot.txt">fadeplot</A>:<p>
+Pour ce faire il faut d’abords ajouter dans mode.h<p>
+« extern ModeHook init_fadeplot;<p>
+extern ModeHook draw_fadeplot;<p>
+extern ModeHook release_fadeplot;<p>
+extern ModeHook refresh_fadeplot; »<p>
+les fonctions qui vont être créés.
+<p>
+« extern ModeSpecOpt fadeplot_opts; »<p>
+une structure qui ne m’a pas révélé tous ces secrets.<p>
+
+mais aussi dans mode.c à coté des autres fonctions , dans ce que j’appelle le tableau des modes:<p>
+ {"fadeplot", init_fadeplot, draw_fadeplot, release_fadeplot,
+ refresh_fadeplot, init_fadeplot, NULL, &blank_opts, 17000, 1, 20, 1.0,
+  "fadeplot", 0, NULL},<p>
+
+On passe ensuite à l’implémentation des fonctions proprement dit dans un fichier que l’on appellera fadeplot.c.<p>
+Il est évident qu’il faudra modifier le Makefile ( Pour cela je vous laisse faire :).<p>
+Dans ces fonctions, à partir de la structure ModeInfo ( mode.h ) , on va obtenir des informations sur l’écran qui sont indispensables pour la suite.<p>
+
+<TABLE Border=1>
+<CAPTION><B>fonction</B></CAPTION>
+<TR><TD>MI_WIDTH(mi) et MI_HEIGHT(mi)</TD> 	<TD>vont nous donné la taille de l’écran</TD></TR>.
+<TR><TD>Display    *display    = MI_DISPLAY(mi);</TD>	<TD>délivre le display</TD></TR>
+<TR>	<TD>	         MI_SCREEN	</TD>	<TD>délivre le screen</TD></TR>
+<TR><TD>Window      window = MI_WINDOW(mi)</TD>;	<TD>délivre l’identificateur de la fenêtre</TD></TR>
+<TR><TD>GC          gc               = MI_GC(mi);</TD>	<TD>donne le graphics context courant</TD></TR>
+<TR>	        <TD>MI_DELAY</TD>		<TD>    donne le delai (microsec.) entre callbacks</TD></TR>
+<TR>        <TD>MI_CMAP</TD>		<TD>donne la table des couleurs</TD></TR>
+<TR><TD>XSetForeground(display, gc, MI_BLACK_PIXEL(mi));</TD> 	<TD>Mettre la couleur du tracé en noir</TD></TR>
+<TR><TD>XSetForeground(display, gc, MI_WHITE_PIXEL(mi));</TD> <TD>Mettre la couleur du tracé en blanc</TD></TR>
+<TR><TD>MI_IS_ICONIC(mi)	</TD>	<TD>permet de savoir si on est passé en phase password. </TD></TR>
+</TABLE>
+
+<TABLE Border=1>
+<CAPTION><B>variable</B></CAPTION>
+<TR><TD>MI_IS_MONO	</TD>		<TD>l’ecran est monochrome</TD></TR>
+<TR><TD>MI_IS_INWINDOW</TD>		<TD>le mode s’affiche dans un fenetre reguliere</TD></TR>
+<TR><TD>MI_IS_INROOT	</TD>		<TD>le mode s’affiche sur la root windows</TD></TR>
+<TR><TD>NUMCOLORS</TD>			<TD>Donne le nombre de couleur</TD></TR>
+</TABLE>
+
+
+Oubliez pas après avoir dessiné l’ensemble de faire Xflush(display), ce qui permettra d’afficher réellement votre graphisme sur l’écran.
+La création d’un nouveau mode s’éffectue souvent en récupérant le squelette d’un autre et de le modifier à sa volonté.
+N’hésitez pas a à regarder le code des autres modes, c’est souvent trés instructifs.
+<HR>
+<H2>Perspective:</H2>
+Dernierement on peut utiliser la librairie mesa (la libraire OpenGL de silicon GNU) dans xlock, quelqu’un s’est propose de faire le screen-saver tube de Win NT.
+Je pense qu’il serait interressant de joindre a xlock un langage simple ( genre logo un peu plus evolue).
+<HR>
+<H2>Reference: </H2>
+HACKERS.GUIDE qui se trouve dans le repertoire docs ( j’ai essaye de le traduire :)<p>
+	    X_Window programmation avec les Xt-Intrinsics Douglas A YOUNG MASSON PARIS.<p>
+<HR>
+Voila j’espere que vous prendrez plaisir a ajouter des nouveaux modes à xlock; c’est une maniere de programmer facilement des graphismes sous X11. Un petit conseil le mainteneur de xlock est un fan de casse tête et compagnie.
+Bon Xlock.
+<p>
+Charles VIDAL: vidalc@club-internet.fr<p>
+mode flag, fadeplot, bubble<p>
+createur de xmxlock : GUI launcher de xlockmore.<p>
+
+</BODY>
+</HTML>
