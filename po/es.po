@@ -1,5 +1,5 @@
 # XScreenSaver Spanish translation file
-# Copyright (C) 1999-2001 Free Software Foundation, Inc.
+# Copyright (C) 1999-2001,2002 Free Software Foundation, Inc.
 # Pablo Saratxaga <srtxg@chanae.alphanet.ch>, 1998-2000
 # Carlos Perelló Marín <carlos@gnome-db.org>, 2001
 # Lucas Di Pentima <lucas@lunix.com.ar>, 2001
@@ -8,15 +8,15 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: xscreensaver 4.04.2\n"
+"Project-Id-Version: es\n"
 "POT-Creation-Date: 2002-06-18 21:56+0200\n"
-"PO-Revision-Date: 2002-06-24 18:13GMT-03:00\n"
-"Last-Translator: Pablo del Campo <pablodc@bigfoot.com>\n"
-"Language-Team: Español <traductores@es.gnome.org>\n"
+"PO-Revision-Date: 2002-09-16 22:50GMT -03:00\n"
+"Last-Translator: Pablo Gonzalo del Campo <pablodc@bigfoot.com>\n"
+"Language-Team: español <traductores@es.gnome.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 0.9.6\n"
+"X-Generator: KBabel 1.0beta2\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
@@ -51,8 +51,7 @@ msgid "_Blank Screen Now"
 msgstr "A_ctivar protector ahora"
 
 #: driver/demo-Gtk-widgets.c:205 driver/xscreensaver-demo.glade.h:2
-msgid ""
-"Activate the XScreenSaver daemon now (locking the screen if so configured.)"
+msgid "Activate the XScreenSaver daemon now (locking the screen if so configured.)"
 msgstr ""
 "Activar el demonio XScreenSaver ahora (bloqueando la pantalla si esta "
 "configurado.)"
@@ -64,8 +63,7 @@ msgstr "_Bloquear pantalla ahora"
 
 #: driver/demo-Gtk-widgets.c:218 driver/xscreensaver-demo.glade.h:51
 msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
-msgstr ""
-"Bloquear la pantalla ahora (aún si «Bloquear Pantalla» no esta marcado.)"
+msgstr "Bloquear la pantalla ahora (aún si «Bloquear Pantalla» no esta marcado.)"
 
 #: driver/demo-Gtk-widgets.c:222 driver/xscreensaver-demo.glade.h:96
 #: driver/xscreensaver-demo.glade2.h:56
@@ -94,8 +92,8 @@ msgid ""
 "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
 "running in the background.)"
 msgstr ""
-"Quita el programa de demostración del XScreenSaver (pero deja el demonio del "
-"XScreenSaver ejecutándose en segundo plano.)"
+"Quita el programa de demostración del XScreenSaver (pero deja el demonio "
+"del XScreenSaver ejecutándose en segundo plano.)"
 
 #: driver/demo-Gtk-widgets.c:270 driver/xscreensaver-demo.glade2.h:55
 msgid "_Help"
@@ -126,8 +124,7 @@ msgstr "Cambiar después de"
 #: driver/demo-Gtk-widgets.c:364 driver/xscreensaver-demo.glade.h:78
 #: driver/xscreensaver-demo.glade2.h:42
 msgid "Whether a password should be required to un-blank the screen."
-msgstr ""
-"¿Debería requerirse una contraseña al desactivar el protector de pantalla?"
+msgstr "¿Debería requerirse una contraseña al desactivar el protector de pantalla?"
 
 #: driver/demo-Gtk-widgets.c:366 driver/xscreensaver-demo.glade.h:50
 msgid "Lock Screen After"
@@ -160,8 +157,8 @@ msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
 msgstr ""
-"Muestra el salvapantalla seleccionado en el modo de pantalla completa (haga "
-"clic con el ratón para volver.)"
+"Muestra el salvapantalla seleccionado en el modo de pantalla completa (haga clic "
+"con el ratón para volver.)"
 
 #: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
@@ -214,8 +211,8 @@ msgid ""
 "Run the next screen saver in the list in full-screen mode (click the mouse "
 "to return.)"
 msgstr ""
-"Ejecuta el siguiente salvapantallas de la lista en el modo de pantalla "
-"completa (haga clic con el ratón para volver.)"
+"Ejecuta el siguiente salvapantallas de la lista en el modo de pantalla completa "
+"(haga clic con el ratón para volver.)"
 
 #: driver/demo-Gtk-widgets.c:648
 msgid "/\\"
@@ -226,8 +223,8 @@ msgid ""
 "Run the previous screen saver in the list in full-screen mode (click the "
 "mouse to return.)"
 msgstr ""
-"Ejecuta el salvapantalla anterior en la lista en el modo de pantalla "
-"completa (haga clic con el ratón para volver.)"
+"Ejecuta el salvapantalla anterior en la lista en el modo de pantalla completa "
+"(haga clic con el ratón para volver.)"
 
 #: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
 #: driver/xscreensaver-demo.glade.h:22 driver/xscreensaver-demo.glade2.h:11
@@ -296,9 +293,7 @@ msgstr "Instalar mapa de color"
 msgid ""
 "Whether the screen should slowly fade to black when the screen saver "
 "activates."
-msgstr ""
-"¿Debería fundirse lentamente a negro la pantalla cuando el salvapantalla se "
-"activa?"
+msgstr "¿Debería fundirse lentamente a negro la pantalla cuando el salvapantalla se activa?"
 
 #: driver/demo-Gtk-widgets.c:861 driver/xscreensaver-demo.glade.h:36
 msgid "Fade To Black When Blanking"
@@ -308,8 +303,7 @@ msgstr "Fundir a negro al activarse"
 msgid ""
 "Whether the screen should slowly fade in from black when the screen saver "
 "deactivates."
-msgstr ""
-"¿Debería iluminarse lentamente la pantalla al desactivarse el salvapantallas?"
+msgstr "¿Debería iluminarse lentamente la pantalla al desactivarse el salvapantallas?"
 
 #: driver/demo-Gtk-widgets.c:878 driver/xscreensaver-demo.glade.h:35
 msgid "Fade From Black When Unblanking"
@@ -355,9 +349,7 @@ msgstr "Modo de espera después de"
 
 #: driver/demo-Gtk-widgets.c:1099 driver/xscreensaver-demo.glade.h:45
 msgid "How long until the monitor goes into power-saving mode."
-msgstr ""
-"Cuanto tiempo debe pasar para que el monitor entre en modo de ahorro de "
-"energía."
+msgstr "Cuanto tiempo debe pasar para que el monitor entre en modo de ahorro de energía."
 
 #: driver/demo-Gtk-widgets.c:1113 driver/xscreensaver-demo.glade.h:46
 msgid "How long until the monitor powers down."
@@ -373,8 +365,8 @@ msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
-"¿Deberían los modos de manipulación de imagen tener permiso para operar "
-"sobre una imagen de su escritorio?"
+"¿Deberían los modos de manipulación de imagen tener permiso para operar sobre "
+"una imagen de su escritorio?"
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
@@ -396,9 +388,7 @@ msgstr "Tomar cuadros de vídeo"
 msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
-msgstr ""
-"¿Deberían los modos de manipulación de imagen trabajar con imágenes "
-"aleatorias cargadas desde el disco?"
+msgstr "¿Deberían los modos de manipulación de imagen trabajar con imágenes aleatorias cargadas desde el disco?"
 
 #: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
@@ -406,8 +396,7 @@ msgstr "Seleccionar imagen aleatoriamente:"
 
 #: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
 msgid "The directory from which images will be randomly chosen."
-msgstr ""
-"El directorio desde donde las imágenes serán seleccionadas aleatoriamente."
+msgstr "El directorio desde donde las imágenes serán seleccionadas aleatoriamente."
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
@@ -520,8 +509,7 @@ msgstr "Documentación..."
 
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
-msgstr ""
-"Clic acá para leer el manual para el modo de visualización, si tiene uno."
+msgstr "Clic acá para leer el manual para el modo de visualización, si tiene uno."
 
 #: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
@@ -560,7 +548,7 @@ msgstr "Copyright © 1991-2002 %s"
 #: driver/demo-Gtk.c:610
 #, c-format
 msgid "Copyright  1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
+msgstr "Copyright  1991-2002 %s"
 
 #: driver/demo-Gtk.c:726
 msgid ""
@@ -677,8 +665,7 @@ msgstr ""
 
 #: driver/demo-Gtk.c:2376
 msgid "Descriptions not available: no XML support compiled in."
-msgstr ""
-"Descripciones no disponibles: No se ha compilado con el soporte para XML."
+msgstr "Descripciones no disponibles: No se ha compilado con el soporte para XML."
 
 #: driver/demo-Gtk.c:2381
 msgid "No description available."
@@ -1308,10 +1295,10 @@ msgid ""
 "Written by David Bagley."
 msgstr ""
 "Un autómata celular que en realidad es una máquina de Turing de dos "
-"dimensiones: A medida que las cabezas («Hormigas») caminan por la pantalla "
-"van cambiando los valores de los pixels en su ruta. Por lo cual al ir "
-"cambiando el valor de los pixels su comportamiento es influenciado. Escrito "
-"por David Bagley."
+"dimensiones: A medida que las cabezas («Hormigas») caminan por la pantalla van "
+"cambiando los valores de los pixels en su ruta. Por lo cual al ir cambiando "
+"el valor de los pixels su comportamiento es influenciado. Escrito por David "
+"Bagley."
 
 #: hacks/config/ant.xml.h:2
 msgid "Ant"
@@ -1419,8 +1406,8 @@ msgid ""
 "Packs a large circle with smaller circles, demonstrating the Descartes "
 "Circle Theorem. Written by Allan R. Wilks and David Bagley."
 msgstr ""
-"Dibuja un círculo grande con pequeños círculos dentro demostrando el teorema "
-"de círculos de Descartes. Escrito por Allan R. Wilks y David Bagley."
+"Dibuja un círculo grande con pequeños círculos dentro demostrando el "
+"teorema de círculos de Descartes. Escrito por Allan R. Wilks y David Bagley."
 
 #: hacks/config/apollonian.xml.h:10
 msgid "Shallow"
@@ -1598,17 +1585,16 @@ msgid ""
 "edge of the screen. It looks quite chaotic. Written by Jamie Zawinski, based "
 "on Lisp code by John Pezaris."
 msgstr ""
-"AL igual que qix, usa un modelo simple de movimiento para generar muchos "
-"modos distintos de visualización. Los puntos de control se atraen unos a "
-"otros hasta cierta distancia y luego se repelen entre ellos. La atracción/"
-"repulsión es proporcional a la distancia entre cualquiera de dos partículas "
-"similar a las fuerzas y debilidades nucleares. Una de las formas mas "
-"interesantes para mirar este hack es simplemente como bolas saltando porque "
-"sus movimientos e iteraciones con cada otra son muy raras. Algunas veces dos "
-"bolas entran en una órbita ajustada alrededor de cada otra, para ser "
-"interrumpida mas tarde por una tercera o por el margen de la pantalla. Luce "
-"bastante caótico. Escrito por Jamie Zawinski, basado en el código Lisp de "
-"John Pezaris."
+"AL igual que qix, usa un modelo simple de movimiento para generar muchos modos "
+"distintos de visualización. Los puntos de control se atraen unos a otros "
+"hasta cierta distancia y luego se repelen entre ellos. La atracción/repulsión "
+"es proporcional a la distancia entre cualquiera de dos partículas similar a "
+"las fuerzas y debilidades nucleares. Una de las formas mas interesantes para "
+"mirar este hack es simplemente como bolas saltando porque sus movimientos e "
+"iteraciones con cada otra son muy raras. Algunas veces dos bolas entran en "
+"una órbita ajustada alrededor de cada otra, para ser interrumpida mas tarde "
+"por una tercera o por el margen de la pantalla. Luce bastante caótico. "
+"Escrito por Jamie Zawinski, basado en el código Lisp de John Pezaris."
 
 #: hacks/config/attraction.xml.h:15 hacks/config/deluxe.xml.h:5
 #: hacks/config/lmorph.xml.h:7 hacks/config/pedal.xml.h:5
@@ -1751,14 +1737,14 @@ msgid ""
 msgstr ""
 "El hack «blitspin» rota un mapa de bits 90 grados usando operaciones "
 "lógicas: El mapa de bits es dividido en cuadrantes y los cuadrantes son "
-"desplazados en sentido horario. Luego lo mismo es realizado una vez "
-"masprogresivamente con cuadrantes mas pequeños, excluyendo a todos los "
+"desplazados en sentido horario. Luego lo mismo es realizado una vez mas"
+"progresivamente con cuadrantes mas pequeños, excluyendo a todos los "
 "subcuadrantes de un tamaño dado que son rotados paralelamente. Escrito por "
 "Jamie Zawinski basado en un código muy bueno de SmallTalk visto en la "
 "revista Byte en 1981. Como puede ver las imágenes parecen disolverse en "
-"estática y luego se reconstruyen a si mismas pero rotadas. Puede proveer las "
-"imagen a usar como un archivo XBM o XPM o indicarle que tome la imagen de la "
-"pantalla y rote esta."
+"estática y luego se reconstruyen a si mismas pero rotadas. Puede proveer "
+"las imagen a usar como un archivo XBM o XPM o indicarle que tome la imagen "
+"de la pantalla y rote esta."
 
 #: hacks/config/bouboule.xml.h:1
 msgid "Bouboule"
@@ -1969,8 +1955,8 @@ msgid ""
 msgstr ""
 "Simula el tipo de formación de burbuja que sucede cuandos el agua hierve: "
 "aparecen pequeñas burbujas y al acercarse unas a otras se combinan en "
-"burbujas mas grandes, las cuales eventualmente revientan. Escrito por James "
-"Macnicol."
+"burbujas mas grandes, las cuales eventualmente revientan. Escrito por "
+"James Macnicol."
 
 #: hacks/config/bumps.xml.h:1
 msgid ""
@@ -1978,9 +1964,9 @@ msgid ""
 "desktop, it creates a bump map from it. Basically, it 3D-izes a roaming "
 "section of your desktop, based on color intensity. Written by Shane Smit."
 msgstr ""
-"Un poquito como «Spotlight» excepto que en vez de sólo exponer parte de su "
-"escritorio este crea un mapa rebotador. Básicamente lo que hace es poner en "
-"3D una porción de su escritorio basándose en la intensidad del color. "
+"Un poquito como «Spotlight» excepto que en vez de sólo exponer parte de "
+"su escritorio este crea un mapa rebotador. Básicamente lo que hace es poner "
+"en 3D una porción de su escritorio basándose en la intensidad del color. "
 "Escrito por Shane Smit."
 
 #: hacks/config/bumps.xml.h:2
@@ -1996,8 +1982,8 @@ msgid ""
 "This draws Escher's ``Impossible Cage,'' a 3d analog of a moebius strip, and "
 "rotates it in three dimensions. Written by Marcelo Vianna."
 msgstr ""
-"Dibuja la «Caja Imposible» de Escher, una analogía 3D de la cinta de Moebius "
-"y la rota en tres dimensiones. Escrito por Marcelo Vianna."
+"Dibuja la «Caja Imposible» de Escher, una analogía 3D de la cinta de Moebius y "
+"la rota en tres dimensiones. Escrito por Marcelo Vianna."
 
 #: hacks/config/ccurve.xml.h:1
 msgid "0 seconds"
@@ -2036,8 +2022,7 @@ msgstr ""
 
 #: hacks/config/circuit.xml.h:1
 msgid "Animates a number of 3D electronic components. Written by Ben Buxton."
-msgstr ""
-"Anima una serie de componentes electrónicos en 3D. Escrito por Ben Buxton."
+msgstr "Anima una serie de componentes electrónicos en 3D. Escrito por Ben Buxton."
 
 #: hacks/config/circuit.xml.h:2
 msgid "Circuit"
@@ -2121,8 +2106,7 @@ msgid "Seeds"
 msgstr "Semillas"
 
 #: hacks/config/coral.xml.h:11
-msgid ""
-"Simulates coral growth, albeit somewhat slowly. Written by Frederick Roeber."
+msgid "Simulates coral growth, albeit somewhat slowly. Written by Frederick Roeber."
 msgstr ""
 "Simula el crecimiento de coral, aunque un poco mas lento. Escrito por "
 "Frederick Roeber."
@@ -2241,9 +2225,9 @@ msgid ""
 "undulating across their surfaces. It's sort of a cubist Lavalite. Written by "
 "Jamie Zawinski."
 msgstr ""
-"Dibuja un conjunto de cuadros parpadeantes con patrones burbujeantes siempre "
-"cambiantes ondulando sobre sus superficies. Es una especie de lampara de "
-"lava cubista. Escrito por Jamie Zawinski."
+"Dibuja un conjunto de cuadros parpadeantes con patrones burbujeantes siempre cambiantes "
+"ondulando sobre sus superficies. Es una especie de lampara de lava cubista. Escrito por "
+"Jamie Zawinski."
 
 #: hacks/config/cubenetic.xml.h:14 hacks/config/gltext.xml.h:5
 #: hacks/config/lavalite.xml.h:19 hacks/config/menger.xml.h:7
@@ -2314,10 +2298,10 @@ msgid ""
 "clone. That clone was discovered by Jamie Zawinski, and ported to C for "
 "inclusion here."
 msgstr ""
-"Un hack similar a «greynetic» pero menos frenético. La primera "
-"implementación fue hecha por Stephen Linhart; luego Ozymandias G. Desiderata "
-"escribió una copia  como un applet de Java. Esa copia fue descubierta por "
-"Jamie Zawinski y luego portada a C para incluirlo aquí."
+"Un hack similar a «greynetic» pero menos frenético. La primera implementación "
+"fue hecha por Stephen Linhart; luego Ozymandias G. Desiderata escribió una "
+"copia  como un applet de Java. Esa copia fue descubierta por Jamie Zawinski y "
+"luego portada a C para incluirlo aquí."
 
 #: hacks/config/cynosure.xml.h:2
 msgid "Cynosure"
@@ -2463,10 +2447,10 @@ msgid ""
 "this be both: fast, and flicker-free. Yet another reason X sucks. Written by "
 "Jamie Zawinski."
 msgstr ""
-"Dibuja una secuencia de estrellas parpadeantes, círculos y líneas. Podría "
-"verse mejor si fuese mas rápido, pero hasta donde yo sé, no hay forma de "
-"hacer ambas cosas: rápido y libre de saltos. Sólo una razón más por las que "
-"X apesta. Escrito por Jamie Zawinski."
+"Dibuja una secuencia de estrellas parpadeantes, círculos y líneas. "
+"Podría verse mejor si fuese mas rápido, pero hasta donde yo sé, no hay forma "
+"de hacer ambas cosas: rápido y libre de saltos. Sólo una razón más por las "
+"que X apesta. Escrito por Jamie Zawinski."
 
 #: hacks/config/deluxe.xml.h:13
 msgid "Transparency"
@@ -2548,8 +2532,8 @@ msgid ""
 "Jonas Munsin."
 msgstr ""
 "Este hack toma una imagen de la pantalla y entonces deja que lentes "
-"transparentes se paseen por la pantalla, aumentando cualquier cosa que este "
-"en su camino. Escrito por Jonas Munsin."
+"transparentes se paseen por la pantalla, aumentando cualquier cosa que "
+"este en su camino. Escrito por Jonas Munsin."
 
 #: hacks/config/distort.xml.h:16 hacks/config/moire.xml.h:12
 #: hacks/config/rd-bomb.xml.h:21 hacks/config/ripples.xml.h:15
@@ -2626,8 +2610,8 @@ msgid ""
 "Draws a simple four-stroke engine that floats around the screen. Written by "
 "Ben Buxton."
 msgstr ""
-"Dibuja un simple motor de cuatro cilindros que flota alrededor de la "
-"pantalla. Escrito por Ben Buxton."
+"Dibuja un simple motor de cuatro cilindros que flota alrededor de la pantalla. "
+"Escrito por Ben Buxton."
 
 #: hacks/config/engine.xml.h:2
 msgid "Engine"
@@ -3244,8 +3228,7 @@ msgid "Greynetic"
 msgstr "Grisnética"
 
 #: hacks/config/greynetic.xml.h:5
-msgid ""
-"This draws random colored and stippled rectangles. Written by Jamie Zawinski."
+msgid "This draws random colored and stippled rectangles. Written by Jamie Zawinski."
 msgstr ""
 "Dibuja aleatoriamente rectángulos coloreados y granulados. Escrito por Jamie "
 "Zawinski."
@@ -3288,8 +3271,7 @@ msgstr "Hélice"
 msgid ""
 "This repeatedly generates spirally string-art-ish patterns. Written by Jamie "
 "Zawinski."
-msgstr ""
-"Este repetidamente genera espirales de patrones. Escrito por Jamie Zawinski. "
+msgstr "Este repetidamente genera espirales de patrones. Escrito por Jamie Zawinski. "
 
 #: hacks/config/hopalong.xml.h:3
 msgid "EJK1"
@@ -4429,8 +4411,7 @@ msgid "Pyro"
 msgstr "Pyro"
 
 #: hacks/config/pyro.xml.h:11
-msgid ""
-"Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
+msgid "Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
 msgstr ""
 "Pyro dibuja fuegos artificiales explotando. Blah blah blah. Escrito por "
 "Jamie Zawinski."
@@ -5055,20 +5036,18 @@ msgid ""
 "celestia/). Sadly, neither of these programs work with xscreensaver at all. "
 "You are encouraged to nag their authors into adding xscreensaver support!"
 msgstr ""
-"Ssystem es un simulador GL del sistema solar. Simula las fluctuaciones del "
-"Sol, los nueve planetas y unos pocos satélites importantes, posee cuatro "
-"modos de cámara. Escrito por Raul Alonso. No esta incluido con el paquete "
-"XScreenSaver pero si esta empaquetado por separado. Nota: SSystem no "
-"funciona como un salvapantalla en todos los sistemas porque no se puede "
-"comunicar apropiadamente con XScreenSaver. Esto sucede al trabajar con "
-"algunos administradores de ventanas, pero no con otros, por lo cual este "
-"comportamiento puede variar. SSystem estuvo disponible en &lt;http://www1."
-"las.es/~amil/ssystem/&gt; pero ya no esta mas. Puede ser que encuentre "
-"copias en cualquier otro lugar. SSystem estuvo involucrado en dos programas "
-"distintos: OpenUniverse (http://openuniverse.sourceforge.net/) y Celestia "
-"(http://www.shatters.net/celestia/). Lamentablemente ninguno de estos "
-"programas funciona con XScreenSaver en forma completa. ¡Queda invitado a "
-"molestar a sus autores para que agreguen el soporte para XScreenSaver.!"
+"Ssystem es un simulador GL del sistema solar. Simula las fluctuaciones del Sol, los "
+"nueve planetas y unos pocos satélites importantes, posee cuatro modos de cámara. Escrito "
+"por Raul Alonso. No esta incluido con el paquete XScreenSaver pero si esta empaquetado por "
+"separado. Nota: SSystem no funciona como un salvapantalla en todos los sistemas porque "
+"no se puede comunicar apropiadamente con XScreenSaver. Esto sucede al trabajar con algunos "
+"administradores de ventanas, pero no con otros, por lo cual este comportamiento puede "
+"variar. SSystem estuvo disponible en &lt;http://www1.las.es/~amil/ssystem/&gt; pero ya no "
+"esta mas. Puede ser que encuentre copias en cualquier otro lugar. SSystem estuvo involucrado "
+"en dos programas distintos: OpenUniverse (http://openuniverse.sourceforge.net/) y Celestia "
+"(http://www.shatters.net/celestia/). Lamentablemente ninguno de estos programas funciona "
+"con XScreenSaver en forma completa. ¡Queda invitado a molestar a sus autores para que "
+"agreguen el soporte para XScreenSaver.!"
 
 #: hacks/config/stairs.xml.h:6
 msgid "Stairs"
@@ -5078,8 +5057,7 @@ msgstr "Escaleras"
 msgid ""
 "by Marcelo Vianna's third Escher GL hack, this one draws an ``infinite'' "
 "staircase."
-msgstr ""
-"Tercer hack GL de Escher por Marcelo Vianna, Dibuja una escalera «infinita»"
+msgstr "Tercer hack GL de Escher por Marcelo Vianna, Dibuja una escalera «infinita»"
 
 #: hacks/config/starfish.xml.h:1
 msgid "Color Gradients"
@@ -5169,9 +5147,8 @@ msgid ""
 "patterns. Written by Andrew Plotkin, based on SGI's `electropaint' "
 "screensaver."
 msgstr ""
-"Cadenas de cuadrados coloridos bailan alrededor de cada otro en patrones "
-"complejos de espiral. Escrito por Andrew Plotkin, basado en el "
-"salvapantallas «electropain» de SGI."
+"Cadenas de cuadrados coloridos bailan alrededor de cada otro en patrones complejos de "
+"espiral. Escrito por Andrew Plotkin, basado en el salvapantallas «electropain» de SGI."
 
 #: hacks/config/stonerview.xml.h:3
 msgid "StonerView"
@@ -5191,9 +5168,9 @@ msgid ""
 "field of dots that swoops and twists around. The motion is very nice. "
 "Written by Massimino Pascal."
 msgstr ""
-"Dibuja atractores extraños: Es una animación colorida imprevisible de campos "
-"de puntos que se intercambian y giran alrededor. El movimiento es muy "
-"bonito. Escrito por Massimino Pascal."
+"Dibuja atractores extraños: Es una animación colorida imprevisible de campos de puntos "
+"que se intercambian y giran alrededor. El movimiento es muy bonito. Escrito por "
+"Massimino Pascal."
 
 #: hacks/config/superquadrics.xml.h:2
 msgid ""
@@ -5201,9 +5178,9 @@ msgid ""
 "on a Commodore 64 in 1987, as a 320x200 black and white wireframe. Now it is "
 "GL and has specular reflections."
 msgstr ""
-"Ed Mackey dice que escribió la primera versión de este programa en BASIC "
-"usando una Commodore 64 en 1987, como una malla de alambre en blanco y "
-"negro. Ahora esto es un GL y tiene reflexión especular."
+"Ed Mackey dice que escribió la primera versión de este programa en BASIC usando "
+"una Commodore 64 en 1987, como una malla de alambre en blanco y negro. Ahora esto "
+"es un GL y tiene reflexión especular."
 
 #: hacks/config/superquadrics.xml.h:10
 msgid "Superquadrics"
@@ -5272,9 +5249,7 @@ msgstr "Wobbliness"
 msgid ""
 "Displays a view of the ``Bird in a Thornbush'' fractal. Written by Tim "
 "Auckland."
-msgstr ""
-"Muestra una vista del fractal «Bird in a Thornbush». Escrito por Tim "
-"Auckland."
+msgstr "Muestra una vista del fractal «Bird in a Thornbush». Escrito por Tim Auckland."
 
 #: hacks/config/thornbird.xml.h:6
 msgid "Points"
@@ -5309,11 +5284,10 @@ msgid "Truchet"
 msgstr "Truchet"
 
 #: hacks/config/twang.xml.h:2
-msgid ""
-"Divides the screen into a grid, and plucks them. Written by Dan Bornstein."
+msgid "Divides the screen into a grid, and plucks them. Written by Dan Bornstein."
 msgstr ""
-"Divide la pantalla de una grilla y luego luego tirá las cuadriculas. Escrito "
-"por Dan Bornstein."
+"Divide la pantalla de una grilla y luego luego tirá las cuadriculas. Escrito por "
+"Dan Bornstein."
 
 #: hacks/config/twang.xml.h:6
 msgid "Jumpy"
@@ -5333,8 +5307,7 @@ msgstr "Twang"
 
 #: hacks/config/vermiculate.xml.h:1
 msgid "Draws squiggly worm-like paths. Written by Tyler Pierce."
-msgstr ""
-"Dibuja trazos de garabatos similares a gusanos. Escrito por Tyler Pierce."
+msgstr "Dibuja trazos de garabatos similares a gusanos. Escrito por Tyler Pierce."
 
 #: hacks/config/vermiculate.xml.h:2
 msgid "Vermiculate"
@@ -5358,12 +5331,11 @@ msgid ""
 "well if you just feed broadcast television into it."
 msgstr ""
 "Actualmente esto es sólo un guión de shell que toma un cuadro de Video desde "
-"la entrada de Video del sistema y luego usa algunos filtros PBM (escogidos "
-"al azar) para manipular y recombinar el cuadro de Video de varios modos "
-"(detección de borde, extrayendo la la imagen desde una versión rotada de sí "
-"misma, etc.) Luego muestra esa imagen por algunos segundos y hace todo lo "
-"mencionado nuevamente. Funciona realmente bien si es alimentado con la "
-"transmisión de una televisión."
+"la entrada de Video del sistema y luego usa algunos filtros PBM (escogidos al azar) para "
+"manipular y recombinar el cuadro de Video de varios modos (detección de borde, extrayendo "
+"la la imagen desde una versión rotada de sí misma, etc.) Luego muestra esa imagen por "
+"algunos segundos y hace todo lo mencionado nuevamente. Funciona realmente bien si es "
+"alimentado con la transmisión de una televisión."
 
 #: hacks/config/vidwhacker.xml.h:6
 msgid "VidWhacker"
@@ -5385,11 +5357,8 @@ msgid "Draw Spots"
 msgstr "Dibujar Focos"
 
 #: hacks/config/wander.xml.h:6
-msgid ""
-"Draws a colorful random-walk, in various forms. Written by Rick Campbell."
-msgstr ""
-"Dibuja una pared colorida aleatoria de varios modos. Escrito por Rick "
-"Campbell."
+msgid "Draws a colorful random-walk, in various forms. Written by Rick Campbell."
+msgstr "Dibuja una pared colorida aleatoria de varios modos. Escrito por Rick Campbell."
 
 #: hacks/config/wander.xml.h:14
 msgid "Sustain"
@@ -5417,14 +5386,13 @@ msgid ""
 "This is because most of the web is pictures of text. Which is pretty sad.) "
 "Written by Jamie Zawinski."
 msgstr ""
-"Este programa crea collages de imágenes al azar traídas desde la World Wide "
-"Web. Busca estas imágenes haciendo busquedas al azar en la web y luego "
-"extrae la imágenes de las páginas devueltas por la consulta. También puede "
-"ser configurado para filtrar la imágenes por medio del programa «VidWhacker» "
-"de mas arriba, el cual luce realmente grandioso. (Vea que la mayoría de las "
-"imágenes que encuentra son texto y no fotografías, esto es porque la mayoría "
-"de web contiene imágenes de texto, lo cual es muy triste.) Escrito por Jamie "
-"Zawinski."
+"Este programa crea collages de imágenes al azar traídas desde la World Wide Web. "
+"Busca estas imágenes haciendo busquedas al azar en la web y luego extrae la imágenes "
+"de las páginas devueltas por la consulta. También puede ser configurado para filtrar "
+"la imágenes por medio del programa «VidWhacker» de mas arriba, el cual luce realmente "
+"grandioso. (Vea que la mayoría de las imágenes que encuentra son texto y no fotografías, "
+"esto es porque la mayoría de web contiene imágenes de texto, lo cual es muy triste.) "
+"Escrito por Jamie Zawinski."
 
 #: hacks/config/webcollage.xml.h:10
 msgid "URL Timeout"
@@ -5455,9 +5423,7 @@ msgstr "Amplitud"
 
 #: hacks/config/whirlygig.xml.h:2
 msgid "Draws zooming chains of sinusoidal spots. Written by Ashton Trey Belew."
-msgstr ""
-"Dibuja cadenas de focos sinoidales acercándose. Escrito por Ashton Trey "
-"Belew."
+msgstr "Dibuja cadenas de focos sinoidales acercándose. Escrito por Ashton Trey Belew."
 
 #: hacks/config/whirlygig.xml.h:5
 msgid "Whirlies"
@@ -5473,9 +5439,8 @@ msgid ""
 "screen. Written by Brad Taylor, Dave Lemke, Boris Putanec, and Henrik "
 "Theiling."
 msgstr ""
-"Un antiguo hack xlock que dibuja gusanos multicolores que se dispersan por "
-"la pantalla. Escrito por Brad Taylor, Dave Lemke, Boris Putanec, y Henrik "
-"Theiling."
+"Un antiguo hack xlock que dibuja gusanos multicolores que se dispersan por la pantalla. "
+"Escrito por Brad Taylor, Dave Lemke, Boris Putanec, y Henrik Theiling."
 
 #: hacks/config/xaos.xml.h:1
 msgid "XaoS"
@@ -5532,11 +5497,10 @@ msgid ""
 "included with the XScreenSaver package, but if you don't have it already, "
 "you can find it at &lt;http://www.jwz.org/xdaliclock/&gt;."
 msgstr ""
-"XDaliXClock dibuja un enorme reloj digital, los números de este cambian "
-"«mezclándose» en nuevas formas. Escrito por Jamie Zawinski. Este "
-"salvapantallas no esta incluido con el paquete del XScreenSaver, pero si "
-"usted aún no lo tiene puede encontrarlo en &lt;http://www.jwz.org/xdaliclock/"
-"&gt;."
+"XDaliXClock dibuja un enorme reloj digital, los números de este cambian «mezclándose» en "
+"nuevas formas. Escrito por Jamie Zawinski. Este salvapantallas no esta incluido con el "
+"paquete del XScreenSaver, pero si usted aún no lo tiene puede encontrarlo en "
+"&lt;http://www.jwz.org/xdaliclock/&gt;."
 
 #: hacks/config/xearth.xml.h:1
 msgid "Bright"
@@ -5696,8 +5660,8 @@ msgid ""
 "A rendition of the text scrolls seen in the movie ``The Matrix.'' Written by "
 "Jamie Zawinski."
 msgstr ""
-"Un homenaje a los textos que se desplazan en la película «The Matrix». "
-"Escrito por Jamie Zawinski."
+"Un homenaje a los textos que se desplazan en la película «The Matrix». Escrito por "
+"Jamie Zawinski."
 
 #: hacks/config/xmatrix.xml.h:2
 msgid "Binary Encoding"
@@ -5784,9 +5748,8 @@ msgid ""
 "Draws falling snow and the occasional tiny Santa. By Rick Jansen. You can "
 "find it at &lt;http://www.euronet.nl/~rja/Xsnow/&gt;."
 msgstr ""
-"Dibuja una nevada y ocasionalmente un pequeño Santa. Escrito por Rick "
-"Jansen. Puede encontrar este programa en &lt;http://www.euronet.nl/~rja/"
-"Xsnow/&gt;."
+"Dibuja una nevada y ocasionalmente un pequeño Santa. Escrito por Rick Jansen. Puede "
+"encontrar este programa en &lt;http://www.euronet.nl/~rja/Xsnow/&gt;."
 
 #: hacks/config/xsnow.xml.h:2
 msgid "Xsnow"
@@ -5801,8 +5764,8 @@ msgid ""
 "Simulates that pen-in-nested-plastic-gears toy from your childhood. By Rohit "
 "Singh."
 msgstr ""
-"Simula ese juguete de engranajes para hacer trazos de lápiz anidados de su "
-"infancia. Escrito por Rohit Singh."
+"Simula ese juguete de engranajes para hacer trazos de lápiz anidados de su infancia. "
+"Escrito por Rohit Singh."
 
 #: hacks/config/xspirograph.xml.h:6
 msgid "XSpiroGraph"
@@ -5854,3 +5817,4 @@ msgstr ""
 
 #~ msgid "Copyright  1991-2002 %s"
 #~ msgstr "Copyright  1991-2002 %s"
+

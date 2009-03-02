@@ -113,7 +113,7 @@ typedef enum {
 	FLOW_2D = 8,     /* Allow 2D attractors */
 	FLOW_BOX = 16,    /* Compute a box around the attractor */
 	FLOW_SLOW = 32,   /* Some bees are slower (and have antifreeze) */
-	FLOW_FREEZE = 64, /* Freeze some of the bees in action */
+	FLOW_FREEZE = 64  /* Freeze some of the bees in action */
 } FlowMode;
 
 #define FLOW_DEFAULT (FLOW_ROTATE|FLOW_RIDE|FLOW_ZOOM|FLOW_2D|\

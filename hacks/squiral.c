@@ -15,7 +15,7 @@
 #include "yarandom.h"
 
 #define R(x)  (abs(random())%x)
-#define PROB(x) (abs(random())<(x*(double)RAND_MAX))
+#define PROB(x) (frand(1.0) < (x))
 
 #define NCOLORSMAX 255
 static int width, height, count, cycle;

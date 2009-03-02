@@ -24,11 +24,19 @@
 #include "screenhack.h"
 #include <stdio.h>
 
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+#include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 typedef struct {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
+
+  Pixmap b, ba;	/* double-buffer to reduce flicker */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  XdbeBackBuffer backb;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
   GC draw_gc;		/* most of the balls */
   GC draw_gc2;		/* the ball being dragged with the mouse */
@@ -57,6 +65,8 @@ typedef struct {
 
   Bool random_sizes_p;  /* Whether balls should be various sizes up to max. */
   Bool shake_p;		/* Whether to mess with gravity when things settle. */
+  Bool dbuf;            /* Whether we're using double buffering. */
+  Bool dbeclear_p;      /* ? */
   float shake_threshold;
   int time_since_shake;
 
@@ -66,10 +76,22 @@ typedef struct {
   int font_baseline;
   int frame_count;
   int collision_count;
-
+  char fps_str[1024];
+  
 } b_state;
 
 
+/* Draws the frames per second string */
+static void 
+draw_fps_string (b_state *state)
+{  
+  XFillRectangle (state->dpy, state->b, state->erase_gc,
+		  0, state->xgwa.height - state->font_height,
+		  state->xgwa.width, state->font_height);
+  XDrawImageString (state->dpy, state->b, state->font_gc,
+		    0, state->xgwa.height - state->font_baseline,
+		    state->fps_str, strlen(state->fps_str));
+}
 
 /* Finds the origin of the window relative to the root window, by
    walking up the window tree until it reaches the top.
@@ -117,6 +139,7 @@ static void
 check_window_moved (b_state *state)
 {
   float oxmin = state->xmin;
+  float oxmax = state->xmax;
   float oymin = state->ymin;
   float oymax = state->ymax;
   int wx, wy;
@@ -127,14 +150,29 @@ check_window_moved (b_state *state)
   state->xmax = state->xmin + state->xgwa.width;
   state->ymax = state->ymin + state->xgwa.height - state->font_height;
 
-  /* Only need to erase the window if the origin moved */
-  if (oxmin != state->xmin || oymin != state->ymin)
-    XClearWindow (state->dpy, state->window);
-  else if (state->fps_p && oymax != state->ymax)
-    XFillRectangle (state->dpy, state->window, state->erase_gc,
-                    0, state->xgwa.height - state->font_height,
-                    state->xgwa.width, state->font_height);
-
+  if (state->dbuf && (state->ba))
+    {
+      if (oxmax != state->xmax || oymax != state->ymax)
+	{
+	  XFreePixmap (state->dpy, state->ba);
+	  state->ba = XCreatePixmap (state->dpy, state->window, 
+				     state->xgwa.width, state->xgwa.height,
+				     state->xgwa.depth);
+	  XFillRectangle (state->dpy, state->ba, state->erase_gc, 0, 0, 
+			  state->xgwa.width, state->xgwa.height);
+	  state->b = state->ba;
+	}
+    }
+  else 
+    {
+      /* Only need to erase the window if the origin moved */
+      if (oxmin != state->xmin || oymin != state->ymin)
+	XClearWindow (state->dpy, state->window);
+      else if (state->fps_p && oymax != state->ymax)
+	XFillRectangle (state->dpy, state->b, state->erase_gc,
+			0, state->xgwa.height - state->font_height,
+			state->xgwa.width, state->font_height);
+    }
 }
 
 
@@ -186,7 +224,6 @@ recolor (b_state *state)
     XSetForeground (state->dpy, state->draw_gc2, state->fg2.pixel);
 }
 
-
 /* Initialize the state structure and various X data.
  */
 static b_state *
@@ -198,9 +235,36 @@ init_balls (Display *dpy, Window window)
   XGCValues gcv;
 
   state->dpy = dpy;
+
   state->window = window;
 
   check_window_moved (state);
+
+  state->dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
+  state->dbeclear_p = get_boolean_resource ("useDBEClear", "Boolean");
+
+  if (state->dbuf)
+    {
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      if (state->dbeclear_p)
+        state->b = xdbe_get_backbuffer (dpy, window, XdbeBackground);
+      else
+        state->b = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+      state->backb = state->b;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
+      if (!state->b)
+        {
+          state->ba = XCreatePixmap (state->dpy, state->window, 
+				     state->xgwa.width, state->xgwa.height,
+				     state->xgwa.depth);
+          state->b = state->ba;
+        }
+    }
+  else
+    {
+      state->b = state->window;
+    }
 
   /* Select ButtonRelease events on the external window, if no other app has
      already selected it (only one app can select it at a time: BadAccess. */
@@ -212,17 +276,22 @@ init_balls (Display *dpy, Window window)
                                       state->dpy, state->xgwa.colormap);
   gcv.background = get_pixel_resource("background", "Background",
                                       state->dpy, state->xgwa.colormap);
-  state->draw_gc = XCreateGC (state->dpy, state->window,
+  state->draw_gc = XCreateGC (state->dpy, state->b,
                               GCForeground|GCBackground, &gcv);
 
   gcv.foreground = get_pixel_resource("mouseForeground", "MouseForeground",
                                       state->dpy, state->xgwa.colormap);
-  state->draw_gc2 = XCreateGC (state->dpy, state->window,
+  state->draw_gc2 = XCreateGC (state->dpy, state->b,
                                GCForeground|GCBackground, &gcv);
 
   gcv.foreground = gcv.background;
-  state->erase_gc = XCreateGC (state->dpy, state->window,
+  state->erase_gc = XCreateGC (state->dpy, state->b,
                                GCForeground|GCBackground, &gcv);
+
+
+  if (state->ba) 
+    XFillRectangle (state->dpy, state->ba, state->erase_gc, 0, 0, 
+		    state->xgwa.width, state->xgwa.height);
 
   recolor (state);
 
@@ -266,7 +335,7 @@ init_balls (Display *dpy, Window window)
       gcv.font = font->fid;
       gcv.foreground = get_pixel_resource("textColor", "Foreground",
                                           state->dpy, state->xgwa.colormap);
-      state->font_gc = XCreateGC(dpy, window,
+      state->font_gc = XCreateGC(dpy, state->b,
                                  GCFont|GCForeground|GCBackground, &gcv);
       state->font_height = font->ascent + font->descent;
       state->font_baseline = font->descent;
@@ -346,11 +415,11 @@ check_wall_clock (b_state *state, float max_d)
 {
   static int tick = 0;
   state->frame_count++;
-
+  
   if (tick++ > 20)  /* don't call gettimeofday() too often -- it's slow. */
     {
-      static struct timeval last = { 0, };
       struct timeval now;
+      static struct timeval last = {0, };
 # ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;
       gettimeofday(&now, &tzp);
@@ -367,31 +436,25 @@ check_wall_clock (b_state *state, float max_d)
 
       state->time_since_shake += (now.tv_sec - last.tv_sec);
 
-      if (state->fps_p)
-        {
-          static char buf[1024];
-          float elapsed = ((now.tv_sec  + (now.tv_usec  / 1000000.0)) -
-                           (last.tv_sec + (last.tv_usec / 1000000.0)));
-          float fps = state->frame_count / elapsed;
-          float cps = state->collision_count / elapsed;
-
-          sprintf (buf, " FPS: %.2f  Collisions: %.f/frame  Max motion: %.3f",
-                   fps, cps/fps, max_d);
-
-          XFillRectangle (state->dpy, state->window, state->erase_gc,
-                          0, state->xgwa.height - state->font_height,
-                          state->xgwa.width, state->font_height);
-          XDrawImageString (state->dpy, state->window, state->font_gc,
-                            0, state->xgwa.height - state->font_baseline,
-                            buf, strlen(buf));
-        }
+      if (state->fps_p) 
+	{
+	  float elapsed = ((now.tv_sec  + (now.tv_usec  / 1000000.0)) -
+			   (last.tv_sec + (last.tv_usec / 1000000.0)));
+	  float fps = state->frame_count / elapsed;
+	  float cps = state->collision_count / elapsed;
+	  
+	  sprintf (state->fps_str, 
+		   " FPS: %.2f  Collisions: %.3f/frame  Max motion: %.3f",
+		   fps, cps/fps, max_d);
+	  
+	  draw_fps_string(state);
+	}
 
       state->frame_count = 0;
       state->collision_count = 0;
       last = now;
     }
 }
-
 
 /* Erases the balls at their previous positions, and draws the new ones.
  */
@@ -416,20 +479,26 @@ repaint_balls (b_state *state)
       x2b = (state->px[a] + state->r[a] - state->xmin);
       y2b = (state->py[a] + state->r[a] - state->ymin);
 
-/*      if (x1a != x1b || y1a != y1b)   -- leaves turds if we optimize this */
-        {
-          gc = state->erase_gc;
-          XFillArc (state->dpy, state->window, gc,
-                    x1a, y1a, x2a-x1a, y2a-y1a,
-                    0, 360*64);
-        }
-
+      if (!state->dbeclear_p ||
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+          !state->backb
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+	  )
+	{
+/*	  if (x1a != x1b || y1a != y1b)   -- leaves turds if we optimize this */
+	    {
+	      gc = state->erase_gc;
+	      XFillArc (state->dpy, state->b, gc,
+			x1a, y1a, x2a-x1a, y2a-y1a,
+			0, 360*64);
+	    }
+	}
       if (state->mouse_ball == a)
         gc = state->draw_gc2;
       else
         gc = state->draw_gc;
 
-      XFillArc (state->dpy, state->window, gc,
+      XFillArc (state->dpy, state->b, gc,
                 x1b, y1b, x2b-x1b, y2b-y1b,
                 0, 360*64);
 
@@ -445,6 +514,25 @@ repaint_balls (b_state *state)
 
       state->opx[a] = state->px[a];
       state->opy[a] = state->py[a];
+    }
+
+  if (state->fps_p && state->dbeclear_p) 
+    draw_fps_string(state);
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  if (state->backb)
+    {
+      XdbeSwapInfo info[1];
+      info[0].swap_window = state->window;
+      info[0].swap_action = (state->dbeclear_p ? XdbeBackground : XdbeUndefined);
+      XdbeSwapBuffers (state->dpy, info, 1);
+    }
+  else
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+  if (state->dbuf)
+    {
+      XCopyArea (state->dpy, state->b, state->window, state->erase_gc,
+		 0, 0, state->xgwa.width, state->xgwa.height, 0, 0);
     }
 
   if (state->shake_p && state->time_since_shake > 5)
@@ -660,6 +748,11 @@ char *defaults [] = {
   "*doFPS:		False",
   "*shake:		True",
   "*shakeThreshold:	0.015",
+  "*doubleBuffer:	True",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  "*useDBE:		True",
+  "*useDBEClear:	True",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
   0
 };
 
@@ -677,6 +770,8 @@ XrmOptionDescRec options [] = {
   { "-no-shake",	".shake",	XrmoptionNoArg, "False" },
   { "-random",		".random",	XrmoptionNoArg, "True" },
   { "-nonrandom",	".random",	XrmoptionNoArg, "False" },
+  { "-db",		".doubleBuffer", XrmoptionNoArg,  "True" },
+  { "-no-db",		".doubleBuffer", XrmoptionNoArg,  "False" },
   { 0, 0, 0, 0 }
 };
 

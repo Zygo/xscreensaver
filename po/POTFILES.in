@@ -1,4 +1,4 @@
-# Auto-generated: Wed Oct 23 20:26:20 PDT 2002
+# Auto-generated: Mon Feb  3 04:06:28 PST 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -11,6 +11,7 @@ hacks/config/ant.xml
 hacks/config/apollonian.xml
 hacks/config/atlantis.xml
 hacks/config/attraction.xml
+hacks/config/barcode.xml
 hacks/config/blaster.xml
 hacks/config/blitspin.xml
 hacks/config/bouboule.xml
@@ -42,6 +43,7 @@ hacks/config/electricsheep.xml
 hacks/config/endgame.xml
 hacks/config/engine.xml
 hacks/config/epicycle.xml
+hacks/config/eruption.xml
 hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
@@ -50,6 +52,7 @@ hacks/config/flame.xml
 hacks/config/flipscreen3d.xml
 hacks/config/flow.xml
 hacks/config/fluidballs.xml
+hacks/config/flurry.xml
 hacks/config/forest.xml
 hacks/config/galaxy.xml
 hacks/config/gears.xml
@@ -87,6 +90,7 @@ hacks/config/lmorph.xml
 hacks/config/loop.xml
 hacks/config/maze.xml
 hacks/config/menger.xml
+hacks/config/metaballs.xml
 hacks/config/moebius.xml
 hacks/config/moire.xml
 hacks/config/moire2.xml
@@ -103,6 +107,7 @@ hacks/config/petri.xml
 hacks/config/phosphor.xml
 hacks/config/pipes.xml
 hacks/config/polyominoes.xml
+hacks/config/popsquares.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
 hacks/config/qix.xml

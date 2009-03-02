@@ -98,8 +98,8 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 static char gray1_bits[] = { 0x01, 0x02 };
 
 
-#define MAX_MAZE_SIZE_X	500
-#define MAX_MAZE_SIZE_Y	500
+#define MAX_MAZE_SIZE_X	1000
+#define MAX_MAZE_SIZE_Y	1000
 
 #define MOVE_LIST_SIZE  (MAX_MAZE_SIZE_X * MAX_MAZE_SIZE_Y)
 
@@ -135,8 +135,8 @@ static char gray1_bits[] = { 0x01, 0x02 };
 static int logo_x, logo_y;
 
 #ifdef XSCREENSAVER_LOGO
-# define logo_width  50
-# define logo_height 50
+# define logo_width  54
+# define logo_height 54
 #else
 # include  <X11/bitmaps/xlogo64>
 # define logo_width xlogo64_width
@@ -147,8 +147,8 @@ static int logo_x, logo_y;
 static unsigned short maze[MAX_MAZE_SIZE_X][MAX_MAZE_SIZE_Y];
 
 static struct {
-  unsigned char x;
-  unsigned char y;
+  unsigned short x;
+  unsigned short y;
   unsigned char dir, ways;
 } move_list[MOVE_LIST_SIZE], save_path[MOVE_LIST_SIZE], path[MOVE_LIST_SIZE];
 
@@ -1135,6 +1135,15 @@ draw_maze_border (void)                         /* draw the maze outline */
       int hh = ((logo_height / grid_height) + 1) * grid_height;
 
       XGetGeometry (dpy, logo_map, &r, &x, &y, &w, &h, &bw, &d);
+
+# ifdef XSCREENSAVER_LOGO
+      /* kludge: if the logo "hole" is around the same size as the logo,
+         don't center it (since the xscreensaver logo image is a little
+         off center...  But do center if if the hole/gridsize is large. */
+      if (ww < logo_width  + 5) ww = w; 
+      if (hh < logo_height + 5) hh = h; 
+# endif /* XSCREENSAVER_LOGO */
+
       if (d == 1)
         XCopyPlane (dpy, logo_map, win, logo_gc,
                     0, 0, w, h,
@@ -1265,27 +1274,27 @@ draw_solid_square(int i, int j,          /* draw a solid square in a square */
   switch (dir) {
   case WALL_TOP:
       XFillRectangle(dpy, win, gc,
-		     border_x + bw + grid_width * i, 
-		     border_y - bw + grid_height * j, 
-		     grid_width - (bw+bw), grid_height);
+		     border_x + bw+(bw==0?1:0) + grid_width * i, 
+		     border_y - bw-(bw==0?1:0) + grid_height * j, 
+		     grid_width - (bw+bw+(bw==0?1:0)), grid_height);
       break;
   case WALL_RIGHT:
       XFillRectangle(dpy, win, gc,
-		     border_x + bw + grid_width * i, 
-		     border_y + bw + grid_height * j, 
-		     grid_width, grid_height - (bw+bw));
+		     border_x + bw+(bw==0?1:0) + grid_width * i, 
+		     border_y + bw+(bw==0?1:0) + grid_height * j, 
+		     grid_width, grid_height - (bw+bw+(bw==0?1:0)));
       break;
   case WALL_BOTTOM:
       XFillRectangle(dpy, win, gc,
-		     border_x + bw + grid_width * i, 
-		     border_y + bw + grid_height * j, 
-		     grid_width - (bw+bw), grid_height);
+		     border_x + bw+(bw==0?1:0) + grid_width * i, 
+		     border_y + bw+(bw==0?1:0) + grid_height * j, 
+		     grid_width - (bw+bw+(bw==0?1:0)), grid_height);
       break;
   case WALL_LEFT:
       XFillRectangle(dpy, win, gc,
-		     border_x - bw + grid_width * i, 
-		     border_y + bw + grid_height * j, 
-		     grid_width, grid_height - (bw+bw));
+		     border_x - bw-(bw==0?1:0) + grid_width * i, 
+		     border_y + bw+(bw==0?1:0) + grid_height * j, 
+		     grid_width, grid_height - (bw+bw+(bw==0?1:0)));
       break;
   }
   XSync (dpy, False);
@@ -1601,6 +1610,8 @@ XrmOptionDescRec options[] = {
   { "-solve-delay",	".solveDelay",	XrmoptionSepArg, 0 },
   { "-pre-delay",	".preDelay",	XrmoptionSepArg, 0 },
   { "-post-delay",	".postDelay",	XrmoptionSepArg, 0 },
+  { "-bg-color",	".background",	XrmoptionSepArg, 0 },
+  { "-fg-color",	".foreground",	XrmoptionSepArg, 0 },
   { "-live-color",	".liveColor",	XrmoptionSepArg, 0 },
   { "-dead-color",	".deadColor",	XrmoptionSepArg, 0 },
   { "-skip-color",	".skipColor",	XrmoptionSepArg, 0 },

@@ -22,10 +22,15 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
  * other special, indirect and consequential damages.
  *
  *    Programming:  Ed Mackey, http://www.netaxs.com/~emackey/
+ *                  Gordon Wrigley, gdw33@student.canterbury.ac.nz
  *    Sproingie 3D objects modeled by:  Al Mackey, al@iam.com
  *       (using MetaNURBS in NewTek's Lightwave 3D v5).
  *
  * Revision History:
+ * 13-Dec-02: Changed triangle normals into vertex normals to give a smooth
+                apperance and moved the sproingies from Display Lists to 
+				Vertex Arrays, still need to do this for the TopsSides.
+                (gordon)
  * 26-Apr-97: Added glPointSize() calls around explosions, plus other fixes.
  * 28-Mar-97: Added size support.
  * 22-Mar-97: Updated to use glX interface instead of xmesa one.

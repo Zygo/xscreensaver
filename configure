@@ -14526,8 +14526,29 @@ else
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
 # include <GL/xmesa.h>
-# define MESA_MAJOR_VERSION XMESA_MAJOR_VERSION
-# define MESA_MINOR_VERSION XMESA_MINOR_VERSION
+# ifdef XMESA_MAJOR_VERSION
+   /* Around Mesa 3.2, they took out the Mesa version number, so instead,
+      we have to check the XMesa version number (the number of the X protocol
+      support, which seems to be the same as the Mesa version number.)
+    */
+#  define MESA_MAJOR_VERSION XMESA_MAJOR_VERSION
+#  define MESA_MINOR_VERSION XMESA_MINOR_VERSION
+# else
+   /* Oh great.  Some time after 3.4, they took out the xmesa.h header file,
+      so we have no way of telling what version of Mesa this is at all.
+      So, we'll guess that the osmesa version (the "offscreen protocol")
+      is less than or equal to the real mesa version number.  Except that
+      if OSmesa is 3.3, assume at least Mesa 3.4, since OSmesa was 3.3 in
+      Mesa 3.4.  And Mesa 3.3 had xmesa.h.  What a complete load of shit!
+    */
+# include <GL/osmesa.h>
+#  define MESA_MAJOR_VERSION OSMESA_MAJOR_VERSION
+#  define MESA_MINOR_VERSION OSMESA_MINOR_VERSION or newer, probably?
+#  if OSMESA_MAJOR_VERSION == 3 && OSMESA_MINOR_VERSION == 3
+#   undef MESA_MINOR_VERSION
+#   define MESA_MINOR_VERSION 4 or newer, probably?
+#  endif
+# endif
 #endif
 configure: MESA_MAJOR_VERSION MESA_MINOR_VERSION
 EOF
@@ -14543,7 +14564,7 @@ EOF
          # M4 sucks!!
 
           mglv=`echo "$mglv" | sed -n \
-             's/^configure:.*\([0-9][0-9]*\).*\([0-9][0-9]*\).*$/\1.\2/p'`
+             's/^configure: *\([0-9][0-9]*\) \([0-9].*\)$/\1.\2/p'`
 
 
          rm -f conftest.$ac_ext
@@ -14554,9 +14575,12 @@ EOF
            ac_mesagl_version=unknown
            ac_mesagl_version_string=unknown
          else
-           ac_mesagl_version_string=$mglv
-           maj=`echo $mglv | sed -n 's/\..*//p'`
-           min=`echo $mglv | sed -n 's/.*\.//p'`
+           ac_mesagl_version_string="$mglv"
+           # M4 sucks!!
+
+           maj=`echo "$mglv" | sed -n 's/^\([0-9][0-9]*\)\..*$/\1/p'`
+           min=`echo "$mglv" | sed -n 's/^.*\.\([0-9][0-9]*\).*$/\1/p'`
+
            ac_mesagl_version=`echo "$maj * 1000 + $min" | bc`
            if test -z "$ac_mesagl_version"; then
              ac_mesagl_version=unknown
@@ -15306,7 +15330,6 @@ if test "$have_motif" = yes -a "$have_xpm" = yes ; then
     MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
   fi
 fi
-
 
 ###############################################################################
 #
@@ -17473,7 +17496,6 @@ fi
 
 if test "$have_gle" = yes; then
   GLE_EXES='$(GLE_EXES)'
-  GLE_MEN='$(GLE_MEN)'
   GLE_KLUDGE="${tab}   "
 else
   GLE_KLUDGE="-${tab}   "
@@ -17591,7 +17613,6 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
-
 
 
 
@@ -18334,7 +18355,6 @@ s,@GL_UTIL_EXES@,$GL_UTIL_EXES,;t t
 s,@GL_MEN@,$GL_MEN,;t t
 s,@GL_KLUDGE@,$GL_KLUDGE,;t t
 s,@GLE_EXES@,$GLE_EXES,;t t
-s,@GLE_MEN@,$GLE_MEN,;t t
 s,@GLE_KLUDGE@,$GLE_KLUDGE,;t t
 s,@GNOMEHELP_Y@,$GNOMEHELP_Y,;t t
 s,@GNOMEHELP_N@,$GNOMEHELP_N,;t t
@@ -19134,8 +19154,7 @@ if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no || \
   echo ''
   warn2 'Some of the demos will not be as colorful as they'
   warn2 'could be.  You should consider installing Pixbuf or'
-  warn2 'XPM and re-running configure.  (Remember to delete'
-  warn2 'the config.cache file first.)  The Pixbuf library is'
+  warn2 'XPM and re-running configure.  The Pixbuf library is'
   warn2 'a part of GNOME.  The XPM library comes with most'
   warn2 'X11 installations; you can also find it at the X11'
   warn2 'archive sites, such as <http://sunsite.unc.edu/>.'
@@ -19177,13 +19196,14 @@ if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
     warn2 "Make sure you are using version $preferred_mesagl or newer."
 
   elif test \! "$ac_mesagl_version" -gt 2006; then
-    warnL "MesaGL version $mgv is being used.  MesaGL 2.6 and earlier"
-    warn2 "have a security bug.  It is strongly recommended that you"
-    warn2 "upgrade to at least version $preferred_mesagl."
+    warnL "MesaGL version number is $mgv --"
+    warn2 "MesaGL 2.6 and earlier have a security bug.  It is strongly"
+    warn2 "recommended that you upgrade to at least version $preferred_mesagl."
 
   elif test \! "$ac_mesagl_version" -gt 3003; then
-    warnL "MesaGL version $mgv is being used.  That version has some"
-    warn2 "bugs; it is recommended that you upgrade to $pgl or newer."
+    warnL "MesaGL version number is $mgv --"
+    warn2 "MesaGL 3.3 and earlier have some bugs; it is recommended"
+    warn2 "that you upgrade to $pgl or newer."
   fi
 fi
 
@@ -19207,8 +19227,7 @@ if test "$have_gl" = no ; then
   echo ''
   warn2 'Those demos which use 3D will not be built or installed.'
   warn2 'You might want to consider installing OpenGL and'
-  warn2 're-running configure.  (Remember to delete the'
-  warn2 "config.cache file first.)  If your vendor doesn't ship"
+  warn2 "re-running configure.  If your vendor doesn't ship"
   warn2 'their own implementation of OpenGL, you can get a free'
   warn2 'version at <http://www.mesa3d.org/>.  For general OpenGL'
   warn2 'info, see <http://www.opengl.org/>.'
@@ -19240,10 +19259,9 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
   echo ''
   warn2 'Some of the OpenGL (3D) demos (those that depend on GLE)'
   warn2 'will not be built or installed.  You might want to consider'
-  warn2 'installing GLE and re-running configure.  (Remember to delete'
-  warn2 'the config.cache file first.)  You can find the GLE library'
-  warn2 'at <http://www.linas.org/gle/>.  For general OpenGL info,'
-  warn2 'see <http://www.opengl.org/>.'
+  warn2 'installing GLE and re-running configure.  You can find the'
+  warn2 'GLE library at <http://www.linas.org/gle/>.  For general'
+  warn2 'OpenGL info, see <http://www.opengl.org/>.'
 
 fi
 
@@ -19365,7 +19383,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (140+ different executables) will"
+  echo "      The various graphics demos (150+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

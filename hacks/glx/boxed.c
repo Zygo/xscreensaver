@@ -55,7 +55,7 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 #undef countof 
 #define countof(x) (int)(sizeof((x))/sizeof((*x)))
 #undef rnd
-#define rnd() ( ((float)random()) / ((float)RAND_MAX * 2.0) )
+#define rnd() (frand(1.0))
 
 /* #define DEF_PLANETARY "False"
 

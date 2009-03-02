@@ -8,7 +8,7 @@ anemone - wiggling tentacles.
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
-[\-cycles \fInumber\fP]
+[\-arms \fInumber\fP]
 [\-finpoints \fInumber\fP]
 [\-width \fInumber\fP]
 .SH DESCRIPTION
@@ -28,14 +28,25 @@ Draw on the root window.
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 40000 (0.04 seconds.).
 .TP 8
-.B \-cycles \fInumber\fP
+.B \-arms \fInumber\fP
 Arms.  2 - 500.  Default: 128.
 .TP 8
 .B \-finpoints \fInumber\fP
 Tentacles.  3 - 200.  Default: 64.
 .TP 8
+.B \-withdraw \fInumber\fP
+Frequency that the arms withdraw. Arms withdraw on randomly generated
+values between 1 and 11; this value determines the maximum value of
+that range. So 100 spends a lot of time withdrawn, while 1000,000 tends
+not to withdraw at all. Default: 1200.
+.TP 8
+.B \-turnspeed \fInumber\fP
+How fast it turns. At zero, not at all, all they way up to thousands 
+which are very fast indeed.  Default: 50.
+.TP 8
 .B \-width \fInumber\fP
 Thickness.  1 - 10.  Default: 2.
+
 .SH ENVIRONMENT
 .PP
 .TP 8

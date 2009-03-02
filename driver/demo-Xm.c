@@ -354,8 +354,13 @@ about_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
   *s2 = 0;
   s2 += 2;
 
-  sprintf (buf, "%s\n%s\n\n"
-           "For updates, check http://www.jwz.org/xscreensaver/",
+  sprintf (buf, "%s\n%s\n"
+           "\n"
+           "This is the Motif version of \"xscreensaver-demo\".  The Motif\n"
+           "version is no longer maintained.  Please use the GTK version\n"
+           "instead, which has many more features.\n"
+           "\n"
+           "For xscreensaver updates, check http://www.jwz.org/xscreensaver/",
            s, s2);
   free (s);
 
@@ -1266,6 +1271,7 @@ get_hack_blurb (screenhack *hack)
     }
   else
     {
+# if 0
       static int doc_installed = 0;
       if (doc_installed == 0)
         {
@@ -1286,7 +1292,16 @@ get_hack_blurb (screenhack *hack)
                   "To fix this problem, delete that file, or "
                   "install a current version (either will work.)");
       else
-        doc_string = strdup ("");
+# endif /* 0 */
+        doc_string = strdup (
+           "\n"
+           "This is the Motif version of \"xscreensaver-demo\".  The Motif "
+           "version is no longer maintained.  Please use the GTK version "
+           "instead, which has many more features."
+           "\n\n"
+           "If you were running the GTK version, there would be a preview "
+           "of this screen saver mode displayed here, along with graphical "
+           "configuration options.");
     }
 
   return doc_string;

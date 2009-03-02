@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.22 $
+ * $Revision: 1.23 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -1350,8 +1350,8 @@ init_sim(void)
 	    return NULL;
 	}
 	sprintf(si->teamA[i].name, "%s%03d", si->teamAID, i+1);
-	si->teamA[i].nexttick = (int) (90.0 * random() / RAND_MAX);
-	si->teamA[i].nextdist = (int) (100.0 * random() / RAND_MAX);
+	si->teamA[i].nexttick = random() % 90;
+	si->teamA[i].nextdist = random() % 100;
 	si->teamA[i].movedonsweep = -1;
     }
 
@@ -1373,8 +1373,8 @@ init_sim(void)
 	    return NULL;
 	}
 	sprintf(si->teamB[i].name, "%s%03d", si->teamBID, i+1);
-	si->teamB[i].nexttick = (int) (90.0 * random() / RAND_MAX);
-	si->teamB[i].nextdist = (int) (100.0 * random() / RAND_MAX);
+	si->teamB[i].nexttick = random() % 90;
+	si->teamB[i].nextdist = random() % 100;
 	si->teamB[i].movedonsweep = -1;
     }
 
@@ -1524,8 +1524,8 @@ updateLocation(sim_target *t)
 
     int xdist, xtick;
 
-    xtick = (int) (3.0 * random() / RAND_MAX) - 1;
-    xdist = (int) (11.0 * random() / RAND_MAX) - 5;
+    xtick = (int) (random() %  3) - 1;
+    xdist = (int) (random() % 11) - 5;
     if (((t->nexttick + xtick) < 90) && ((t->nexttick + xtick) >= 0))
 	t->nexttick += xtick;
     else

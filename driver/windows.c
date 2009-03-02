@@ -361,6 +361,11 @@ remove_vroot_property (Display *dpy, Window win)
 
 static Bool safe_XKillClient (Display *dpy, XID id);
 
+#ifdef HAVE_XF86VMODE
+static Bool safe_XF86VidModeGetViewPort (Display *, int, int *, int *);
+#endif /* HAVE_XF86VMODE */
+
+
 static void
 kill_xsetroot_data_1 (Display *dpy, Window window,
                       Atom prop, const char *atom_name,
@@ -966,8 +971,8 @@ get_screen_viewport (saver_screen_info *ssi,
 
   if (!xinerama_p &&  /* Xinerama + VidMode = broken. */
       XF86VidModeQueryExtension (si->dpy, &event, &error) &&
-      XF86VidModeGetModeLine (si->dpy, ssi->number, &dot, &ml) &&
-      XF86VidModeGetViewPort (si->dpy, ssi->number, &x, &y))
+      safe_XF86VidModeGetViewPort (si->dpy, ssi->number, &x, &y) &&
+      XF86VidModeGetModeLine (si->dpy, ssi->number, &dot, &ml))
     {
       char msg[512];
       *x_ret = x;
@@ -1162,6 +1167,36 @@ safe_XKillClient (Display *dpy, XID id)
 
   return (!error_handler_hit_p);
 }
+
+
+#ifdef HAVE_XF86VMODE
+static Bool
+safe_XF86VidModeGetViewPort (Display *dpy, int screen, int *xP, int *yP)
+{
+  Bool result;
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  result = XF86VidModeGetViewPort (dpy, screen, xP, yP);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (error_handler_hit_p
+          ? False
+          : result);
+}
+
+/* There is no "safe_XF86VidModeGetModeLine" because it fails with an
+   untrappable I/O error instead of an X error -- so one must call
+   safe_XF86VidModeGetViewPort first, and assume that both have the
+   same error condition.  Thank you XFree, may I have another.
+ */
+
+#endif /* HAVE_XF86VMODE */
 
 
 static void
@@ -1577,9 +1612,9 @@ blank_screen (saver_info *si)
       {
         int ev, er;
         if (!XF86VidModeQueryExtension (si->dpy, &ev, &er) ||
-            !XF86VidModeGetViewPort (si->dpy, i,
-                                     &ssi->blank_vp_x,
-                                     &ssi->blank_vp_y))
+            !safe_XF86VidModeGetViewPort (si->dpy, i,
+                                          &ssi->blank_vp_x,
+                                          &ssi->blank_vp_y))
           ssi->blank_vp_x = ssi->blank_vp_y = -1;
       }
 #endif /* HAVE_XF86VMODE */

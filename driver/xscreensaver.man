@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "23-Oct-2002 (4.06)" "X Version 11"
+.TH XScreenSaver 1 "03-Feb-2003 (4.07)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -868,10 +868,16 @@ Open the ``\fILook and Feel / Desktop / Paths\fP'' page,
 and see what your ``Autostart'' directory is set to: it will
 probably be \fI~/.kde3/Autostart/\fP or something similar.
 .TP 3
-\fB3: Add xscreensaver to your startup programs.\fP
-Create a file in your autostart directory
-called \fIlaunch-xscreensaver\fP.  Make that file be executable,
-and contain a single line: \fI``xscreensaver\fP''.
+\fB3: Make xscreensaver be an Autostart program.\fP
+Create a file in your autostart directory 
+called \fIxscreensaver.desktop\fP that contains the following five lines:
+.EX
+[Desktop Entry]
+Exec=xscreensaver
+Name=XScreensaver
+Type=Application
+X-KDE-StartupNotify=false
+.EE
 .RE
 .PP
 Now use xscreensaver normally, controlling it via the usual
@@ -1176,11 +1182,10 @@ screen locked.  Depending on your setup, you might consider this a problem.
 Unfortunately, there is no way for xscreensaver itself to override the
 interpretation of these keys.  If you want to disable Ctrl+Alt+Backspace
 globally, you need to set the \fIDontZap\fP flag in 
-your \fI/etc/X11/XF86Config\fP file.  See the
+your \fI/etc/X11/XF86Config\fP file.  To globally disable VT switching,
+you can set the \fIDontVTSwitch\fP flag.  See the
 .BR XF86Config (5)
 manual for details.
-
-There is no way (as far as I can tell) to disable the VT-switching keystrokes.
 
 Some Linux systems come with a VT_LOCKSWITCH ioctl, that one could 
 theoretically use to prevent VT-switching while the screen is locked; 

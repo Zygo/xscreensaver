@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-1999 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -96,7 +96,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
-		  anemone.c halftone.c
+		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
+		  barcode.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -120,7 +121,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
-		  anemone.o halftone.o
+		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
+		  barcode.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -137,6 +139,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
+		  metaballs eruption popsquares barcode \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -177,7 +180,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          wander.man webcollage.man whirlwindwarp.man whirlygig.man \
 	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
 	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
-	          zoom.man halftone.man
+	          zoom.man halftone.man eruption.man metaballs.man barcode.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  config/README \
@@ -705,8 +708,8 @@ whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
 rotzoomer:	rotzoomer.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
 
-whirlygig:	whirlygig.o	$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+whirlygig:	whirlygig.o	$(HACK_OBJS) $(DBE) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(COL) $(HACK_LIBS)
 
 speedmine:	speedmine.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -717,14 +720,26 @@ vermiculate:	vermiculate.o	$(HACK_OBJS) $(COL)
 twang:		twang.o		$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
 
-fluidballs:	fluidballs.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+fluidballs:	fluidballs.o	$(HACK_OBJS) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
 
 anemone:	anemone.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
 
 halftone:	halftone.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+metaballs:	metaballs.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+eruption:	eruption.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+popsquares:	popsquares.o	$(HACK_OBJS) $(DBE) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(COL) $(HACK_LIBS)
+
+barcode:	barcode.o	$(HACK_OBJS) $(HSV)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -871,6 +886,8 @@ apollonian.o: $(srcdir)/xlockmoreI.h
 apollonian.o: $(srcdir)/xlockmore.h
 attraction.o: ../config.h
 attraction.o: $(srcdir)/screenhack.h
+barcode.o: ../config.h
+barcode.o: $(srcdir)/screenhack.h
 blaster.o: ../config.h
 blaster.o: $(srcdir)/screenhack.h
 blitspin.o: ../config.h
@@ -983,6 +1000,8 @@ drift.o: $(srcdir)/xlockmoreI.h
 drift.o: $(srcdir)/xlockmore.h
 epicycle.o: ../config.h
 epicycle.o: $(srcdir)/screenhack.h
+eruption.o: ../config.h
+eruption.o: $(srcdir)/screenhack.h
 euler2d.o: ../config.h
 euler2d.o: $(srcdir)/screenhack.h
 euler2d.o: $(srcdir)/xlockmoreI.h
@@ -1118,6 +1137,8 @@ loop.o: $(srcdir)/xlockmoreI.h
 loop.o: $(srcdir)/xlockmore.h
 maze.o: ../config.h
 maze.o: $(srcdir)/screenhack.h
+metaballs.o: ../config.h
+metaballs.o: $(srcdir)/screenhack.h
 moire2.o: ../config.h
 moire2.o: $(srcdir)/screenhack.h
 moire.o: ../config.h
@@ -1157,6 +1178,8 @@ polyominoes.o: ../config.h
 polyominoes.o: $(srcdir)/screenhack.h
 polyominoes.o: $(srcdir)/xlockmoreI.h
 polyominoes.o: $(srcdir)/xlockmore.h
+popsquares.o: ../config.h
+popsquares.o: $(srcdir)/screenhack.h
 pyro.o: ../config.h
 pyro.o: $(srcdir)/screenhack.h
 qix.o: ../config.h

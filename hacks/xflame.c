@@ -1,4 +1,4 @@
-/* xflame, Copyright (c) 1996-1999 Carsten Haitzler <raster@redhat.com>
+/* xflame, Copyright (c) 1996-2002 Carsten Haitzler <raster@redhat.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,6 +53,9 @@
 #include <X11/Xutil.h>
 #include <limits.h>
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
 #endif /* HAVE_XSHM_EXTENSION */
@@ -68,6 +71,7 @@ static int             width;
 static int             height;
 static Colormap        colormap;
 static Visual          *visual;
+static Screen          *screen;
 static Bool            shared;
 static Bool            bloom;
 static XImage          *xim;
@@ -104,6 +108,7 @@ GetXInfo(Display *disp, Window win)
   colormap = xwa.colormap;
   depth    = xwa.depth;
   visual   = xwa.visual;
+  screen   = xwa.screen;
   width    = xwa.width;
   height   = xwa.height;
 
@@ -632,6 +637,16 @@ loadBitmap(int *w, int *h)
       XImage *image;
       int x, y;
       unsigned char *result, *o;
+      XColor colors[256];
+      Bool cmap_p = has_writable_cells (screen, visual);
+
+      if (cmap_p)
+        {
+          int i;
+          for (i = 0; i < countof (colors); i++)
+            colors[i].pixel = i;
+          XQueryColors (display, colormap, colors, countof (colors));
+        }
 
       image = XGetImage (display, pixmap, 0, 0, width, height, ~0L, ZPixmap);
       XFreePixmap(display, pixmap);
@@ -642,16 +657,25 @@ loadBitmap(int *w, int *h)
         for (x = 0; x < width; x++)
           {
             int rgba = XGetPixel (image, x, y);
-            /* This is *so* not handling all the cases... */
-            int gray = (image->depth > 16
-                        ? ((((rgba >> 24) & 0xFF) +
-                            ((rgba >> 16) & 0xFF) +
-                            ((rgba >>  8) & 0xFF) +
-                            ((rgba      ) & 0xFF)) >> 2)
-                        : ((((rgba >> 12) & 0x0F) +
-                            ((rgba >>  8) & 0x0F) +
-                            ((rgba >>  4) & 0x0F) +
-                            ((rgba      ) & 0x0F)) >> 1));
+            int gray;
+            if (cmap_p)
+              gray = ((200 - ((((colors[rgba].red   >> 8) & 0xFF) +
+                              ((colors[rgba].green >> 8) & 0xFF) +
+                              ((colors[rgba].blue  >> 8) & 0xFF))
+                             >> 1))
+                      & 0xFF);
+            else
+              /* This is *so* not handling all the cases... */
+              gray = (image->depth > 16
+                      ? ((((rgba >> 24) & 0xFF) +
+                          ((rgba >> 16) & 0xFF) +
+                          ((rgba >>  8) & 0xFF) +
+                          ((rgba      ) & 0xFF)) >> 2)
+                      : ((((rgba >> 12) & 0x0F) +
+                          ((rgba >>  8) & 0x0F) +
+                          ((rgba >>  4) & 0x0F) +
+                          ((rgba      ) & 0x0F)) >> 1));
+
             *o++ = 255 - gray;
           }
 

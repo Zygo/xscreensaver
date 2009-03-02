@@ -327,7 +327,7 @@ overlay_blur_texture (ModeInfo *mi)
     {
       glColor4f (1, 1, 1, alpha);
       glTexCoord2f (0+spost, 1-spost); glVertex2f (0, 0);
-      glTexCoord2f (0+spost, 0+spost); glVertex2f (0, w);
+      glTexCoord2f (0+spost, 0+spost); glVertex2f (0, h);
       glTexCoord2f (1-spost, 0+spost); glVertex2f (w, h);
       glTexCoord2f (1-spost, 1-spost); glVertex2f (w, 0);
       spost += inc;

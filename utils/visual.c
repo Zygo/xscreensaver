@@ -429,13 +429,12 @@ has_writable_cells (Screen *screen, Visual *visual)
     {
     case GrayScale:	/* Mappable grays. */
     case PseudoColor:	/* Mappable colors. */
+    case DirectColor:	/* Like TrueColor, but with three colormaps:
+                           one each for red, green, and blue. */
       return True;
     case StaticGray:	/* Fixed grays. */
     case TrueColor:	/* Fixed colors. */
-    case StaticColor:	/* (What's the difference again?) */
-    case DirectColor:	/* DirectColor visuals are like TrueColor, but have
-			   three colormaps - one for each component of RGB.
-			   Screw it. */
+    case StaticColor:	/* Like PseudoColor with an unmodifiable colormap. */
       return False;
     default:
       abort();

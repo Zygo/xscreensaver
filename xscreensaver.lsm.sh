@@ -27,7 +27,7 @@ Entered-date:   $DATE
 Description:    A modular screen saver and locker for the X Window System.
                 Highly customizable: allows the use of any program that
                 can draw on the root window as a display mode.
-                More than 140 display modes are included in this package.
+                More than 150 display modes are included in this package.
 Keywords:       screen saver, screen lock, lock, xlock, X11
 Author:         jwz@jwz.org (Jamie Zawinski)
 Maintained-by:  jwz@jwz.org (Jamie Zawinski)

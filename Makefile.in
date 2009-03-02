@@ -187,9 +187,9 @@ rpm::
   mkdir $$DIR ;								   \
   ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
   cp -p $${ADIR}$$TGZ $$DIR/SOURCES/ ;					   \
-  rpm --define "_topdir $$DIR"						   \
-      --define "USE_GL yes"						   \
-      -v -ba xscreensaver.spec ;					   \
+  rpmbuild --define "_topdir $$DIR"					   \
+           --define "USE_GL yes"					   \
+           -v -ba xscreensaver.spec ;					   \
   echo '' ;								   \
   echo 'RPM build complete' ;						   \
   echo '' ;								   \

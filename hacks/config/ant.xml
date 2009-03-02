@@ -4,9 +4,11 @@
 
   <command arg="-root"/>
 
-  <boolean id="sharpturn" _label="Sharp Turns" arg-set="-sharpturns"/>
+  <boolean id="sharpturn" _label="Sharp Turns" arg-set="-sharpturn"/>
 
   <boolean id="truchet" _label="Truchet Lines" arg-set="-truchet"/>
+
+  <boolean id="eyes" _label="Draw Eyes" arg-set="-eyes"/>
 
   <number id="speed" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"

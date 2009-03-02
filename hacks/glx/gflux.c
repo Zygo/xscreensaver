@@ -912,9 +912,9 @@ void calcGrid(void)
     tmp = 1.0/((double)_waveChange);
     if(!(counter%_waveChange)) {
         newWave = ((int)(counter*tmp))%_waves;
-        gflux->dispx[newWave] = 1.0 - ((double)random())/RAND_MAX;
-        gflux->dispy[newWave] = 1.0 - ((double)random())/RAND_MAX;
-        gflux->freq[newWave] = _waveFreq * ((float)random())/RAND_MAX;
+        gflux->dispx[newWave] = -frand(1.0);
+        gflux->dispy[newWave] = -frand(1.0);
+        gflux->freq[newWave] = _waveFreq * frand(1.0);
         gflux->wa[newWave] = 0.0;
     }
     counter++;

@@ -7,6 +7,7 @@ $ anemone	:== $'mydir'anemone
 $ ant		:== $'mydir'ant
 $ apollonian	:== $'mydir'apollonian
 $ attraction	:== $'mydir'attraction
+$ barcode	:== $'mydir'barcode
 $ blaster	:== $'mydir'blaster
 $ blitspin	:== $'mydir'blitspin
 $ bouboule	:== $'mydir'bouboule
@@ -28,6 +29,7 @@ $ discrete	:== $'mydir'discrete
 $ distort	:== $'mydir'distort
 $ drift		:== $'mydir'drift
 $ epicycle	:== $'mydir'epicycle
+$ eruption	:== $'mydir'eruption
 $ euler2d	:== $'mydir'euler2d
 $ fadeplot	:== $'mydir'fadeplot
 $ flag		:== $'mydir'flag
@@ -60,6 +62,7 @@ $ lissie	:== $'mydir'lissie
 $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
 $ maze		:== $'mydir'maze
+$ metaballs	:== $'mydir'metaballs
 $ moire		:== $'mydir'moire
 $ moire2	:== $'mydir'moire2
 $ mountain	:== $'mydir'mountain
@@ -72,6 +75,7 @@ $ penrose	:== $'mydir'penrose
 $ petri		:== $'mydir'petri
 $ phosphor	:== $'mydir'phosphor
 $ polyominoes	:== $'mydir'polyominoes
+$ popsquares	:== $'mydir'popsquares
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
 $ rd-bomb	:== $'mydir'rd-bomb

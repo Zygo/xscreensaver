@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -660,6 +660,11 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
         {
           /* No hacks at all */
           new_hack = -1;
+        }
+      else if (p->screenhacks_count == 1)
+        {
+          /* Exactly one hack in the list */
+          new_hack = 0;
         }
       else if (si->selection_mode == -1)
         {

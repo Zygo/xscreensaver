@@ -187,6 +187,10 @@
  	                	fluidballs -root			    \\n\
  	                	anemone -root				    \\n\
  	                	halftone -root				    \\n\
+ 	                	metaballs -root				    \\n\
+ 	                	eruption -root				    \\n\
+ 	                	popsquares -root			    \\n\
+ 	                	barcode -root				    \\n\
   color: 			bubbles -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
@@ -208,6 +212,7 @@
 	   GL:			lament -root				    \\n\
 	   GL:			bubble3d -root				    \\n\
 	   GL:			glplanet -root				    \\n\
+	   GL:			flurry -root -preset random		    \\n\
 	   GL:			pulsar -root				    \\n\
 -	   GL:	   \"Pulsar (textures)\"					      \
 				  pulsar -root -texture -mipmap		      \
