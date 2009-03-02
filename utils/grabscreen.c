@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998
  *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -522,13 +522,23 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
       return False;
     }
 
-  /* Uh, this can't be right, can it?  But it's necessary.  X sucks.
-     If the visual is of depth 24, but the image came back as depth 32,
-     hack it to be 24 lest we get a BadMatch from XPutImage.  (I presume
-     I'm expected to look at the server's pixmap formats or some such
-     nonsense... but fuck it.)
+  /* XReadDisplay tends to LIE about the depth of the image it read.
+     It is returning an XImage which has `depth' and `bits_per_pixel'
+     confused!
+
+     That is, on a 24-bit display, where all visuals claim depth 24, and
+     where XGetImage would return an XImage with depth 24, and where
+     XPutImage will get a BadMatch with images that are not depth 24,
+     XReadDisplay is returning images with depth 32!  Fuckwits!
+
+     So if the visual is of depth 24, but the image came back as depth 32,
+     hack it to be 24 lest we get a BadMatch from XPutImage.
+
+     I wonder what happens on an 8-bit SGI...  Probably it still returns
+     an image claiming depth 32?  Certainly it can't be 8.  So, let's just
+     smash it to 32...
    */
-  if (xgwa.depth == 24 && image->depth == 32)
+  if (image->depth == 32 /* && xgwa.depth == 24 */ )
     image->depth = 24;
 
   /* If the visual of the window/pixmap into which we're going to draw is

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1997
+/* xscreensaver, Copyright (c) 1992, 1996, 1997, 1998
  *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -58,23 +58,23 @@ static void (*next_fn) (void);
 #ifdef HAVE_XPM
 # include <X11/xpm.h>
 
-# include "noses/nose-f1.xpm"
-# include "noses/nose-f2.xpm"
-# include "noses/nose-f3.xpm"
-# include "noses/nose-f4.xpm"
-# include "noses/nose-l1.xpm"
-# include "noses/nose-l2.xpm"
-# include "noses/nose-r1.xpm"
-# include "noses/nose-r2.xpm"
+# include "images/noseguy/nose-f1.xpm"
+# include "images/noseguy/nose-f2.xpm"
+# include "images/noseguy/nose-f3.xpm"
+# include "images/noseguy/nose-f4.xpm"
+# include "images/noseguy/nose-l1.xpm"
+# include "images/noseguy/nose-l2.xpm"
+# include "images/noseguy/nose-r1.xpm"
+# include "images/noseguy/nose-r2.xpm"
 #else
-# include "noses/nose-f1.xbm"
-# include "noses/nose-f2.xbm"
-# include "noses/nose-f3.xbm"
-# include "noses/nose-f4.xbm"
-# include "noses/nose-l1.xbm"
-# include "noses/nose-l2.xbm"
-# include "noses/nose-r1.xbm"
-# include "noses/nose-r2.xbm"
+# include "images/noseguy/nose-f1.xbm"
+# include "images/noseguy/nose-f2.xbm"
+# include "images/noseguy/nose-f3.xbm"
+# include "images/noseguy/nose-f4.xbm"
+# include "images/noseguy/nose-l1.xbm"
+# include "images/noseguy/nose-l2.xbm"
+# include "images/noseguy/nose-r1.xbm"
+# include "images/noseguy/nose-r2.xbm"
 #endif
 
 static void

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,6 +89,24 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
 	      int seconds, int ticks,
 	      Bool out_p, Bool clear_windows)
 {
+  int oseconds = seconds;
+  Bool was_in_p = !out_p;
+
+  /* When we're asked to fade in, first fade out, then fade in.
+     That way all the transitions are smooth -- from what's on the
+     screen, to black, to the desktop.
+   */
+  if (was_in_p)
+    {
+      clear_windows = True;
+      out_p = True;
+      seconds /= 3;
+      if (seconds == 0)
+	seconds = 1;
+    }
+
+ AGAIN:
+
 #ifdef HAVE_SGI_VC_EXTENSION
   /* First try to do it by fading the gamma in an SGI-specific way... */
   if (0 != sgi_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
@@ -98,6 +116,19 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
        there are TrueColor windows visible. */
     fade_screens_1 (dpy, cmaps, black_windows, seconds, ticks,
 		    out_p, clear_windows);
+
+  /* If we were supposed to be fading in, do so now (we just faded out,
+     so now fade back in.)
+   */
+  if (was_in_p)
+    {
+      was_in_p = False;
+      out_p = False;
+      seconds = oseconds * 2 / 3;
+      if (seconds == 0)
+	seconds = 1;
+      goto AGAIN;
+    }
 }
 
 
@@ -291,13 +322,15 @@ fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
      releasing the colormaps.
    */
   if (out_p && black_windows)
-    for (i = 0; i < nscreens; i++)
-      {
-	if (clear_windows)
-	  XClearWindow (dpy, black_windows[i]);
-	XMapRaised (dpy, black_windows[i]);
-      }
-
+    {
+      for (i = 0; i < nscreens; i++)
+	{
+	  if (clear_windows)
+	    XClearWindow (dpy, black_windows[i]);
+	  XMapRaised (dpy, black_windows[i]);
+	}
+      XSync(dpy, False);
+    }
 
   /* Now put the target maps back.
      If we're fading out, use the given cmap (or the default cmap, if none.)
@@ -425,6 +458,7 @@ sgi_gamma_fade (Display *dpy,
 	  {
 	    XUnmapWindow (dpy, black_windows[screen]);
 	    XClearWindow (dpy, black_windows[screen]);
+	    XSync(dpy, False);
 	  }
       }
 
@@ -490,6 +524,12 @@ sgi_gamma_fade (Display *dpy,
       XSync(dpy, False);
     }
 
+  /* I can't explain this; without this delay, we get a flicker.
+     I suppose there's some lossage with stale bits being in the
+     hardware frame buffer or something, and this delay gives it
+     time to flush out.  This sucks! */
+  usleep(100000);  /* 1/10th second */
+
   for (screen = 0; screen < nscreens; screen++)
     whack_gamma(dpy, screen, &info[screen], 1.0);
   XSync(dpy, False);
@@ -507,6 +547,7 @@ sgi_gamma_fade (Display *dpy,
       if (info[screen].blue2)  free (info[screen].blue2);
     }
   free(info);
+
   return status;
 }
 
@@ -515,6 +556,7 @@ whack_gamma(Display *dpy, int screen, struct screen_gamma_info *info,
 	    float ratio)
 {
   int k;
+
   if (ratio < 0) ratio = 0;
   if (ratio > 1) ratio = 1;
   for (k = 0; k < info->gamma_size; k++)
@@ -523,6 +565,7 @@ whack_gamma(Display *dpy, int screen, struct screen_gamma_info *info,
       info->green2[k] = info->green1[k] * ratio;
       info->blue2[k]  = info->blue1[k]  * ratio;
     }
+
   XSGIvcStoreGammaColors16(dpy, screen, info->gamma_map, info->nred,
 			   XSGIVC_MComponentRed, info->red2);
   XSGIvcStoreGammaColors16(dpy, screen, info->gamma_map, info->ngreen,

@@ -24,6 +24,9 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History: 
+ * 22-Jan-98: jwz: made the flag wigglier; added xpm support.
+ *            (I tried to do this by re-porting from xlockmore, but the
+ *            current xlockmore version is completely inscrutable.)
  * 13-May-97: jwz@netscape.com: turned into a standalone program.
  *			  Made it able to animate arbitrary (runtime) text or bitmaps.
  * 01-May-96: written.
@@ -45,6 +48,13 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 # define DEF_TEXT					""
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 
+# ifdef HAVE_XPM
+#  include <X11/xpm.h>
+#  ifndef PIXEL_ALREADY_TYPEDEFED
+#   define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
+#  endif
+# endif
+
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Drawing.h>
@@ -53,7 +63,7 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 # endif /* VMS */
 #endif /* HAVE_XMU */
 
-#include "bob.xbm"
+#include "images/bob.xbm"
 
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -69,8 +79,21 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 # include <sys/utsname.h>
 #endif /* HAVE_UNAME */
 
+#ifdef STANDALONE
+static XrmOptionDescRec opts[] =
+{
+  { "-bitmap", ".flag.bitmap", XrmoptionSepArg, 0 }
+};
+
+#endif /* STANDALONE */
+
 ModeSpecOpt flag_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef STANDALONE
+  1, opts, 0, NULL, NULL
+#else  /* !STANDALONE */
+  0, NULL, 0, NULL, NULL
+#endif /* STANDALONE */
+};
 
 #include <string.h>
 #include <X11/Xutil.h>
@@ -119,8 +142,18 @@ initSintab(ModeInfo * mi)
 	flagstruct *fp = &flags[MI_SCREEN(mi)];
 	int         i;
 
+  /*-
+   * change the periodicity of the sin formula : the maximum of the
+   * periocity seem to be 16 ( 2^4 ), after the drawing isn't good looking
+   */
+	int         periodicity = random_num(4);
+	int         puissance = 1;
+
+	/* for (i=0;i<periodicity;i++) puissance*=2; */
+	puissance <<= periodicity;
 	for (i = 0; i < ANGLES; i++)
-		fp->stab[i] = (int) (SINF(i * 4 * M_PI / ANGLES) * fp->samp) + fp->sofs;
+		fp->stab[i] = (int) (SINF(i * puissance * M_PI / ANGLES) * fp->samp) +
+			fp->sofs;
 }
 
 static void
@@ -136,13 +169,18 @@ affiche(ModeInfo * mi)
 				fp->stab[(fp->sidx + x + y) % ANGLES];
 			yp = (int) (fp->size * (float) y) +
 				fp->stab[(fp->sidx + 4 * x + y + y) % ANGLES];
-			if (XGetPixel(fp->image, x, y))
+
+			if (fp->image->depth > 1)
+			  XSetForeground(display, MI_GC(mi),
+							 XGetPixel(fp->image, x, y));
+			else if (XGetPixel(fp->image, x, y))
 				XSetForeground(display, MI_GC(mi), MI_WIN_BLACK_PIXEL(mi));
 			else if (MI_NPIXELS(mi) <= 2)
 				XSetForeground(display, MI_GC(mi), MI_WIN_WHITE_PIXEL(mi));
 			else
 				XSetForeground(display, MI_GC(mi),
 					       MI_PIXEL(mi, (y + x + fp->sidx + fp->startcolor) % MI_NPIXELS(mi)));
+
 			if (fp->pointsize <= 1)
 				XDrawPoint(display, fp->cache, MI_GC(mi), xp, yp);
 			else if (fp->pointsize < 6)
@@ -184,20 +222,91 @@ make_flag_bits(ModeInfo *mi)
 	  *bitmap_name &&
 	  !!strcmp(bitmap_name, "(default)"))
 	{
-#ifdef HAVE_XMU
-	  int width, height, xh, yh;
-	  Pixmap bitmap =
-		XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy),
-							 bitmap_name, 0, 0, &width, &height, &xh, &yh);
-	  if (!bitmap)
+#ifdef HAVE_XPM
+	  Window window = MI_WINDOW(mi);
+	  XWindowAttributes xgwa;
+	  XpmAttributes xpmattrs;
+	  int result;
+	  Pixmap bitmap = 0;
+	  int width = 0, height = 0;
+	  xpmattrs.valuemask = 0;
+
+	  XGetWindowAttributes (dpy, window, &xgwa);
+
+# ifdef XpmCloseness
+	  xpmattrs.valuemask |= XpmCloseness;
+	  xpmattrs.closeness = 40000;
+# endif
+# ifdef XpmVisual
+	  xpmattrs.valuemask |= XpmVisual;
+	  xpmattrs.visual = xgwa.visual;
+# endif
+# ifdef XpmDepth
+	  xpmattrs.valuemask |= XpmDepth;
+	  xpmattrs.depth = xgwa.depth;
+# endif
+# ifdef XpmColormap
+	  xpmattrs.valuemask |= XpmColormap;
+	  xpmattrs.colormap = xgwa.colormap;
+# endif
+
+	  /* Uh, we don't need these now.  We use the colors from the xpm.
+		 It kinda sucks that we already allocated them. */
+	  XFreeColors(dpy, xgwa.colormap, mi->pixels, mi->npixels, 0L);
+
+	  result = XpmReadFileToPixmap (dpy, window, bitmap_name, &bitmap, 0,
+									&xpmattrs);
+	  switch (result)
 		{
-		  fprintf(stderr, "%s: unable to load bitmap file %s\n",
-				  progname, bitmap_name);
-		  exit (1);
+		case XpmColorError:
+		  fprintf (stderr, "%s: warning: xpm color substitution performed\n",
+				   progname);
+		  /* fall through */
+		case XpmSuccess:
+		  width = xpmattrs.width;
+		  height = xpmattrs.height;
+		  break;
+		case XpmFileInvalid:
+		case XpmOpenFailed:
+		  bitmap = 0;
+		  break;
+		case XpmColorFailed:
+		  fprintf (stderr, "%s: xpm: color allocation failed\n", progname);
+		  exit (-1);
+		case XpmNoMemory:
+		  fprintf (stderr, "%s: xpm: out of memory\n", progname);
+		  exit (-1);
+		default:
+		  fprintf (stderr, "%s: xpm: unknown error code %d\n", progname,
+				   result);
+		  exit (-1);
 		}
-	  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height,
-							1L, XYPixmap);
-	  XFreePixmap(dpy, bitmap);
+
+	  if (bitmap)
+		{
+		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, ~0L,
+								ZPixmap);
+		  XFreePixmap(dpy, bitmap);
+		}
+	  else
+#endif /* HAVE_XPM */
+
+#ifdef HAVE_XMU
+		{
+		  int width, height, xh, yh;
+		  Pixmap bitmap =
+			XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy),
+								 bitmap_name, 0, 0, &width, &height, &xh, &yh);
+		  if (!bitmap)
+			{
+			  fprintf(stderr, "%s: unable to load bitmap file %s\n",
+					  progname, bitmap_name);
+			  exit (1);
+			}
+		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height,
+								1L, XYPixmap);
+		  XFreePixmap(dpy, bitmap);
+		}
 
 #else  /* !XMU */
       fprintf (stderr,

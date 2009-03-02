@@ -1339,8 +1339,6 @@ char *defaults[] = {
 #ifdef XROGER
   "*logoColor:	red3",
 #endif
-  "*eraseSpeed:   400",
-  "*eraseMode:    -1",
   0
 };
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 by Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1993-1998 by Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,7 @@
 extern Visual *get_visual (Screen *, const char *name, Bool, Bool);
 extern Visual *get_visual_resource (Screen *, char *, char *, Bool);
 extern int visual_depth (Screen *, Visual *);
+/* extern int visual_pixmap_depth (Screen *, Visual *); */
 extern int visual_class (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int screen_number (Screen *);

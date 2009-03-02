@@ -1,10 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * superquadrics.c --- 3D mathematical shapes
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* superquadrics --- 3D mathematical shapes */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)superquadrics.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
+
 #endif
-/* Permission to use, copy, modify, and distribute this software and its
+
+/*-
+ * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
  * both that copyright notice and this permission notice appear in
@@ -80,9 +83,9 @@ static const char sccsid[] = "@(#)superquadrics.c	4.04 97/07/28 xlockmore";
 # define HACK_INIT					init_superquadrics
 # define HACK_DRAW					draw_superquadrics
 # define superquadrics_opts			xlockmore_opts
-# define DEFAULTS	"*count:		25      \n"			\
+# define DEFAULTS	"*delay:		100     \n"			\
+					"*count:		25      \n"			\
 					"*cycles:		40      \n"			\
-					"*delay:		100     \n"			\
 					"*wireframe:	False	\n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -118,6 +121,15 @@ static OptionStruct desc[] =
 ModeSpecOpt superquadrics_opts =
 {1, opts, 1, vars, desc};
 
+#ifdef USE_MODULES
+ModStruct   superquadrics_description =
+{"superquadrics", "init_superquadrics", "draw_superquadrics", "release_superquadrics",
+ "refresh_superquadrics", "init_superquadrics", NULL, &superquadrics_opts,
+ 1000, 25, 40, 1, 1.0, "",
+ "Shows 3D mathematical shapes", 0, NULL};
+
+#endif
+
 #include <GL/glu.h>
 
 #define MaxRes          50
@@ -133,7 +145,7 @@ typedef struct {
 } state;
 
 typedef struct {
-	GLXContext  glx_context;
+	GLXContext *glx_context;
 	int         dist, wireframe, flatshade, shownorms, maxcount, maxwait;
 	int         counter, viewcount, viewwait, mono;
 	GLfloat     curmat[4][4], rotx, roty, rotz, spinspeed;
@@ -258,8 +270,13 @@ MakeUpStuff(int allstuff, superquadricsstruct * sp)
 	}
 	if (dostuff & 4) {
 		if (sp->mono) {
-			b = g = r = (GLfloat) (140 + myrand(100)) / 255.0;
-			b2 = g2 = r2 = ((r > 0.69) ? (1.0 - r) : r);
+			if (sp->wireframe) {
+				b = g = r = 1.0;
+				b2 = g2 = r2 = 1.0;
+			} else {
+				b = g = r = (GLfloat) (140 + myrand(100)) / 255.0;
+				b2 = g2 = r2 = ((r > 0.69) ? (1.0 - r) : r);
+			}
 		} else {
 			r = (GLfloat) (40 + myrand(200)) / 255.0;
 			g = (GLfloat) (40 + myrand(200)) / 255.0;
@@ -707,13 +724,34 @@ init_superquadrics(ModeInfo * mi)
 	sp = &superquadrics[screen];
 	sp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
 
-	sp->glx_context = init_GL(mi);
+	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
-	InitSuperquadrics(MI_WIN_IS_WIREFRAME(mi) || sp->mono, 0,
-			  MI_BATCHCOUNT(mi), MI_CYCLES(mi), spinspeed, sp);
-	ReshapeSuperquadrics(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		InitSuperquadrics(MI_WIN_IS_WIREFRAME(mi), 0,
+			    MI_BATCHCOUNT(mi), MI_CYCLES(mi), spinspeed, sp);
+		ReshapeSuperquadrics(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
 
-	DisplaySuperquadrics(sp);
+		DisplaySuperquadrics(sp);
+		glFinish();
+		glXSwapBuffers(display, window);
+	} else {
+		MI_CLEARWINDOW(mi);
+	}
+}
+
+void
+draw_superquadrics(ModeInfo * mi)
+{
+	superquadricsstruct *sp = &superquadrics[MI_SCREEN(mi)];
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+
+	if (!sp->glx_context)
+		return;
+
+	glXMakeCurrent(display, window, *(sp->glx_context));
+
+	NextSuperquadricDisplay(sp);
+
 	glFinish();
 	glXSwapBuffers(display, window);
 }
@@ -725,30 +763,13 @@ refresh_superquadrics(ModeInfo * mi)
 }
 
 void
-draw_superquadrics(ModeInfo * mi)
-{
-	superquadricsstruct *sp = &superquadrics[MI_SCREEN(mi)];
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-
-	glXMakeCurrent(display, window, sp->glx_context);
-
-	NextSuperquadricDisplay(sp);
-
-	glFinish();
-	glXSwapBuffers(display, window);
-}
-
-void
 release_superquadrics(ModeInfo * mi)
 {
 	if (superquadrics != NULL) {
-
-		/* Don't destroy the glXContext.  init_GL does that. */
-
 		(void) free((void *) superquadrics);
 		superquadrics = NULL;
 	}
+	FreeAllGL(mi);
 }
 
 

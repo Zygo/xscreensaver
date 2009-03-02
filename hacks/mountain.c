@@ -199,12 +199,7 @@ draw_mountain(ModeInfo * mi)
 			drawamountain(mi);
 			break;
 		case 1:
-#ifdef STANDALONE
-		  XSync(MI_DISPLAY(mi), False);
-		  usleep(2000000);
-#else
 			MI_PAUSE(mi) = 2000000;
-#endif
 			/*if (++mp->time > MI_CYCLES(mi)); */
 			mp->stage++;
 			break;

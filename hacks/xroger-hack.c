@@ -70,6 +70,8 @@ screenhack (dpy, window)
       x = random () % (w - ww);
       y = random () % (h - hh);
       XClearWindow (dpy, window);
+
+
       skull (dpy, window, draw_gc, erase_gc, x, y, ww, hh);
       XSync (dpy, True);
       start_time = time ((time_t *) 0);
@@ -84,7 +86,7 @@ screenhack (dpy, window)
 	    rgb_to_hsv (color2.red, color2.green, color2.blue, &H, &S, &V);
 	    V += delta;
 	    if (V >= 1.0) V = 1.0, delta = -delta;
-	    if (V <= 0.7) V = 0.7, delta = -delta;
+	    if (V <= 0.6) V = 0.7, delta = -delta;
 	    hsv_to_rgb (H, S, V, &color2.red, &color2.green, &color2.blue);
 	    color3 = color2;
 	    if (XAllocColor (dpy, cmap, &color3))

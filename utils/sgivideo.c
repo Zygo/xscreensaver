@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "sgivideo.h"
 #include "resources.h"
+#include "visual.h"
 
 #ifdef HAVE_SGI_VIDEO	/* whole file */
 
@@ -50,6 +51,39 @@ extern char *progname;
 static Bool dark_image_p(unsigned long *image, int width, int height);
 static Bool install_video_frame(unsigned long *image, int width, int height,
 				Screen *screen, Visual *visual, Drawable dest);
+
+#ifdef DEBUG
+static void
+describe_input(const char *prefix, VLServer server, int camera)
+{
+  VLDevList dl;
+  int i, j;
+
+  if (camera == VL_ANY)
+    {
+      printf("%s: %s VL_ANY\n", progname, prefix);
+      return;
+    }
+
+  vlGetDeviceList(server, &dl);
+  for (i = 0; i < dl.numDevices; i++)
+    {
+      VLDevice *d = &dl.devices[i];
+      for (j = 0; j < d->numNodes; j++)
+	if (d->nodes[j].number == camera)
+	  {
+	    printf("%s: %s %d, \"%s\"\n", progname, prefix,
+		   d->nodes[j].number,
+		   d->nodes[j].name);
+	    return;
+	  }
+    }
+
+  /* else... */
+  printf("%s: %s %d (???)\n", progname, prefix, camera);
+}
+#endif /* DEBUG */
+
 
 static Bool
 grab_frame_1(Screen *screen, Visual *visual, Drawable dest, int camera)
@@ -75,6 +109,10 @@ grab_frame_1(Screen *screen, Visual *visual, Drawable dest, int camera)
 #endif /* DEBUG */
       goto DONE;
     }
+
+#ifdef DEBUG
+  describe_input("trying device", server, camera);
+#endif /* DEBUG */
 
   input  = vlGetNode (server, VL_SRC, VL_VIDEO, camera);
   output = vlGetNode (server, VL_DRN, VL_MEM, VL_ANY);
@@ -201,6 +239,10 @@ grab_frame_1(Screen *screen, Visual *visual, Drawable dest, int camera)
       goto DONE;
     }
 
+#ifdef DEBUG
+  describe_input("read device", server, camera);
+#endif /* DEBUG */
+
   if (dark_image_p(image, width, height))
     goto DONE;
 
@@ -275,14 +317,14 @@ grab_video_frame(Screen *screen, Visual *visual, Drawable dest)
   else
     {
       int i;
+      VLServer server = vlOpenVideo (NULL);
       for (i = 0; i < 5; i++)	/* if we get all black images, retry up to
 				   five times. */
 	{
-	  VLServer server = vlOpenVideo (NULL);
 	  VLDevList dl;
 	  int j;
 	  vlGetDeviceList(server, &dl);
-	  vlCloseVideo (server);
+	  vlCloseVideo(server);
 	  for (j = 0; j < dl.numDevices; j++)
 	    {
 	      VLDevice *d = &dl.devices[j];
@@ -292,8 +334,8 @@ grab_video_frame(Screen *screen, Visual *visual, Drawable dest)
 		    d->nodes[k].kind == VL_VIDEO)
 		  if (grab_frame_1(screen, visual, dest, d->nodes[k].number))
 		    return True;
+	      /* nothing yet?  go around and try again... */
 	    }
-	  /* nothing yet?  go around and try again... */
 	}
     }
 #ifdef DEBUG
@@ -315,6 +357,7 @@ install_video_frame(unsigned long *image, int width, int height,
   XGCValues gcv;
   GC gc;
   XImage *ximage = 0;
+  int image_depth;
   Bool free_data = False;
   int vblank_kludge = 3;	/* lose the closed-captioning blips... */
 
@@ -332,15 +375,15 @@ install_video_frame(unsigned long *image, int width, int height,
   gcv.foreground = BlackPixelOfScreen(screen);
   gc = XCreateGC (dpy, dest, GCFunction|GCForeground, &gcv);
 
-  ximage = XCreateImage (dpy, visual, 32, ZPixmap, 0, (char *) image,
+  image_depth = visual_depth(screen, visual);
+  if (image_depth < 24)
+    image_depth = 24;  /* We'll dither */
+
+  ximage = XCreateImage (dpy, visual, image_depth, ZPixmap, 0, (char *) image,
 			 width, height, 8, 0);
   XInitImage(ximage);
   if (!ximage)
     return False;
-
-  if (ximage->depth == 32 && d == 24)
-    ximage->depth = d;
-
 
   if (gain > 0.0)	/* Pump up the volume */
     {

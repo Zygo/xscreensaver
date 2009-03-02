@@ -255,6 +255,9 @@
 /* Define if you have the fcntl function.  */
 #undef HAVE_FCNTL
 
+/* Define if you have the sigaction function.  */
+#undef HAVE_SIGACTION
+
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 

@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,7 +34,7 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 
 #ifdef USE_GL
 # include <GL/glx.h>
-  extern GLXContext init_GL (ModeInfo *);
+  extern GLXContext *init_GL (ModeInfo *);
 # define FreeAllGL(dpy) /* */
 #endif
 
@@ -73,6 +73,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_CYCLES(MI)		((MI)->cycles)
 #define MI_BATCHCOUNT(MI)	((MI)->batchcount)
 #define MI_SIZE(MI)		((MI)->size)
+
+#define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
 
 /* Some other utility macros.
  */

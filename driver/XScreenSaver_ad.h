@@ -43,6 +43,7 @@
 		lmorph -root						\\n\
 		deco -root						\\n\
 		moire -root						\\n\
+		moire2 -root						\\n\
 		lightning -root						\\n\
 		strange -root						\\n\
 		spiral -root						\\n\
@@ -78,6 +79,7 @@
 		kaleidescope -root					\\n\
 		xjack -root						\\n\
 		xlyap -root -random					\\n\
+		cynosure -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -100,7 +102,9 @@
 		gears -root					  	\\n\
 		superquadrics -root				  	\\n\
 		morph3d -root					  	\\n\
-		escher -root					  	\\n\
+		cage -root					  	\\n\
+		moebius -root					  	\\n\
+		stairs -root					  	\\n\
 		pipes -root					  	\\n\
 		sproingies -root				  	\\n\
 		rubik -root					  	\\n",
@@ -125,8 +129,8 @@
 "*demoDialog.maxWidth:		600",
 "*label1.labelString:		XScreenSaver %s",
 "*label1.label:			XScreenSaver %s",
-"*label2.labelString: Copyright © 1991-1997 by Jamie Zawinski <jwz@netscape.com>",
-"*label2.label:	     Copyright © 1991-1997 by Jamie Zawinski <jwz@netscape.com>",
+"*label2.labelString: Copyright © 1991-1998 by Jamie Zawinski <jwz@netscape.com>",
+"*label2.label:	     Copyright © 1991-1998 by Jamie Zawinski <jwz@netscape.com>",
 "*demoList.visibleItemCount:	10",
 "*demoList.automaticSelection:	True",
 "*next.labelString:		Run Next",

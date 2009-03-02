@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1992, 1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992, 1997, 1998
+ *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -125,6 +126,8 @@ get_pixel_resource (char *res_name, char *res_class,
   for (s2 = s + strlen(s) - 1; s2 > s; s2--)
     if (*s2 == ' ' || *s2 == '\t')
       *s2 = 0;
+    else
+      break;
 
   if (! XParseColor (dpy, cmap, s, &color))
     {

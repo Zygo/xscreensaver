@@ -35,9 +35,7 @@ static const char sccsid[] = "@(#)drift.c	4.02 97/04/01 xlockmore";
 # define drift_opts					xlockmore_opts
 # define DEFAULTS	"*count:		30    \n"			\
 					"*delay:		10000 \n"			\
-					"*ncolors:		200   \n"			\
-					"*eraseSpeed:   400 \n"				\
-					"*eraseMode:    -1 \n"
+					"*ncolors:		200   \n"
 # define SMOOTH_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include "erase.h"

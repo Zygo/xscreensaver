@@ -2,7 +2,7 @@
 /* rubik --- Shows a auto-solving Rubik's cube */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)rubik.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
 
 #endif
 
@@ -159,6 +159,15 @@ static OptionStruct desc[] =
 
 ModeSpecOpt rubik_opts =
 {2, opts, 1, vars, desc};
+
+#ifdef USE_MODULES
+ModStruct   rubik_description =
+{"rubik", "init_rubik", "draw_rubik", "release_rubik",
+ "draw_rubik", "change_rubik", NULL, &rubik_opts,
+ 1000, -30, 5, -6, 1.0, "",
+ "Shows an auto-solving Rubik's Cube", 0, NULL};
+
+#endif
 
 #define VectMul(X1,Y1,Z1,X2,Y2,Z2) (Y1)*(Z2)-(Z1)*(Y2),(Z1)*(X2)-(X1)*(Z2),(X1)*(Y2)-(Y1)*(X2)
 #define sqr(A)                     ((A)*(A))
@@ -372,7 +381,7 @@ typedef struct {
 	RubikLoc   *rowLoc[MAXORIENT];
 	RubikMove   movement;
 	GLfloat     rotatestep;
-	GLXContext  glx_context;
+	GLXContext *glx_context;
 	int         AreObjectsDefined[1];
 } rubikstruct;
 
@@ -709,7 +718,6 @@ draw_cubit(ModeInfo * mi,
 		glVertex3f(-0.35, 0.51, -0.40);
 		glEnd();
 	}
-	glEnd();
 }
 
 
@@ -1669,6 +1677,8 @@ init_rubik(ModeInfo * mi)
 		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
 		objects = glGenLists(1);
 		pinit(mi);
+	} else {
+		MI_CLEARWINDOW(mi);
 	}
 }
 
@@ -1683,7 +1693,7 @@ draw_rubik(ModeInfo * mi)
 		return;
 
 	glDrawBuffer(GL_BACK);
-	glXMakeCurrent(display, window, rp->glx_context);
+	glXMakeCurrent(display, window, *(rp->glx_context));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1796,7 +1806,7 @@ release_rubik(ModeInfo * mi)
 		(void) free((void *) rubik);
 		rubik = NULL;
 	}
-	FreeAllGL(MI_DISPLAY(mi));
+	FreeAllGL(mi);
 }
 
 #endif

@@ -55,9 +55,7 @@ static const char sccsid[] = "@(#)hop.c	4.02 97/04/01 xlockmore";
 # define DEFAULTS	"*count:		1000    \n"			\
 					"*cycles:		2500    \n"			\
 					"*delay:		10000   \n"			\
-					"*ncolors:		200     \n"			\
-					"*eraseSpeed:   400 \n"				\
-					"*eraseMode:    -1 \n"
+					"*ncolors:		200     \n"
 # define SMOOTH_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include "erase.h"

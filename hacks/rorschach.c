@@ -19,7 +19,7 @@ static GC draw_gc, erase_gc;
 static unsigned int default_fg_pixel;
 static int iterations, offset;
 static Bool xsym, ysym;
-static int erase_speed, sleep_time, erase_mode;
+static int sleep_time;
 
 static void
 init_rorschach (Display *dpy, Window window)
@@ -115,8 +115,6 @@ char *defaults [] = {
   "*iterations:	4000",
   "*offset:	4",
   "*delay:	5",
-  "*eraseSpeed: 400",
-  "*eraseMode: -1",
   0
 };
 
@@ -127,16 +125,13 @@ XrmOptionDescRec options [] = {
   { "-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "true" },
   { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
-  { "-erase-mode",      ".eraseMode",           XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
 void
 screenhack (Display *dpy, Window window)
 {
-  erase_speed = get_integer_resource("eraseSpeed", "Integer");
   sleep_time = get_integer_resource("delay", "Integer");
-  erase_mode = get_integer_resource("eraseMode", "Integer");
   init_rorschach (dpy, window);
   while (1)
     hurm (dpy, window);

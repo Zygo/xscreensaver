@@ -1,5 +1,5 @@
 /* xlock-gc.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,7 +40,7 @@ BadValue_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
-GLXContext
+GLXContext *
 init_GL(ModeInfo * mi)
 {
   Display *dpy = mi->dpy;
@@ -88,7 +88,14 @@ init_GL(ModeInfo * mi)
       }
   }
 
-  return (glx_context);
+  /* GLXContext is already a pointer type.
+     Why this function returns a pointer to a pointer, I have no idea...
+   */
+  {
+    GLXContext *ptr = (GLXContext *) malloc(sizeof(GLXContext));
+    *ptr = glx_context;
+    return ptr;
+  }
 }
 
 

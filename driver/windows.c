@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -822,6 +822,10 @@ raise_window (saver_info *si,
 	  current_maps[i] = (between_hacks_p
 			     ? ssi->cmap
 			     : DefaultColormapOfScreen (ssi->screen));
+	  /* Ensure that the default background of the window is really black,
+	     not a pixmap or something.  (This does not clear the window.) */
+	  XSetWindowBackground (si->dpy, ssi->screensaver_window,
+				ssi->black_pixel);
 	}
 
       if (p->verbose_p) fprintf (stderr, "%s: fading... ", progname);
@@ -941,11 +945,17 @@ unblank_screen (saver_info *si)
 	{
 	  saver_screen_info *ssi = &si->screens[i];
 	  current_windows[i] = ssi->screensaver_window;
+	  /* Ensure that the default background of the window is really black,
+	     not a pixmap or something.  (This does not clear the window.) */
+	  XSetWindowBackground (si->dpy, ssi->screensaver_window,
+				ssi->black_pixel);
 	}
 
       if (p->verbose_p) fprintf (stderr, "%s: unfading... ", progname);
 
+      XSync (si->dpy, False);
       XGrabServer (si->dpy);
+      XSync (si->dpy, False);
       for (i = 0; i < si->nscreens; i++)
 	{
 	  saver_screen_info *ssi = &si->screens[i];
@@ -955,6 +965,7 @@ unblank_screen (saver_info *si)
 	  clear_stderr (ssi);
 	}
       XUngrabServer (si->dpy);
+      XSync (si->dpy, False);
 
       fade_screens (si->dpy, 0, current_windows,
 		    p->fade_seconds, p->fade_ticks,
@@ -1024,6 +1035,13 @@ unblank_screen (saver_info *si)
       hp_locked_p = False;
     }
 #endif
+
+  /* Unmap the windows a second time, dammit -- just to avoid a race
+     with the screen-grabbing hacks.  (I'm not sure if this is really
+     necessary; I'm stabbing in the dark now.)
+  */
+  for (i = 0; i < si->nscreens; i++)
+    XUnmapWindow (si->dpy, si->screens[i].screensaver_window);
 
   si->screen_blanked_p = False;
 }

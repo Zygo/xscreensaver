@@ -1,10 +1,14 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * sproingies.c --- 3D sproingies
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* sproingies.c - 3D sproingies */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/26 xlockmore";
+static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
+
 #endif
-/* Copyright 1996 by Ed Mackey, 12/7/96 freely distributable.
+
+/*-
+ *  sproingies.c - Copyright 1996 by Ed Mackey, freely distributable.
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
@@ -16,12 +20,15 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/26 xlockmore";
  * trade secrets or any patents by this file or any part thereof.  In no
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
+ *
+ * Revision History:
+ * 07-Dec-96: Written.
  */
 
 #ifdef STANDALONE
-# include "xlockmoreI.h"			/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"         /* from the xlockmore distribution */
+# include "xlockmoreI.h"		/* from the xscreensaver distribution */
+#else /* !STANDALONE */
+# include "xlock.h"            /* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef USE_GL

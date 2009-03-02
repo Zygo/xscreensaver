@@ -241,37 +241,18 @@ initialise_swirl(ModeInfo * mi, SWIRL_P swirl)
  * -      swirl is the swirl data
  */
 static void
-initialise_image(Display * dpy, SWIRL_P swirl)
+initialise_image(ModeInfo * mi, SWIRL_P swirl)
 {
-	unsigned int pad;
-	int         bytes_per_line;
-	int image_depth = swirl->rdepth;
-	int data_depth = image_depth;
+  Display *dpy = MI_DISPLAY(mi);
 
-	/* On SGIs at least, using an XImage of depth 24 on a Visual of depth 24
-	   requires the XImage data to use 32 bits per pixel.  I don't understand
-	   how one is supposed to determine this -- maybe XListPixmapFormats?
-	   But on systems that don't work this way, allocating 32 bpp instead of
-	   24 will be wasteful but non-fatal.  -- jwz, 16-May-97. */
-	if (data_depth >= 24 && data_depth < 32)
-	  data_depth = 32;
+  if (swirl->ximage != NULL)
+	XDestroyImage(swirl->ximage);
 
-	/* get the bitmap pad */
-	pad = BitmapPad(dpy);
-	/* destroy the old image (destroy XImage and data) */
-	if (swirl->ximage != NULL)
-		XDestroyImage(swirl->ximage);
-
-	/* how many bytes per line? (bits rounded up to pad) */
-	bytes_per_line = ((swirl->width * data_depth + pad - 1) / pad) * (pad / 8);
-
-	/* allocate space for the image */
-	swirl->image = (unsigned char *) calloc(bytes_per_line * swirl->height, 1);
-
-	/* create an ximage with this */
-	swirl->ximage = XCreateImage(dpy, swirl->visual, image_depth, ZPixmap,
-				     0, (char *) swirl->image, swirl->width,
-				     swirl->height, pad, bytes_per_line);
+  swirl->ximage = XCreateImage(dpy, swirl->visual, swirl->rdepth, ZPixmap,
+							   0, 0, swirl->width, swirl->height,
+							   8, 0);
+  swirl->ximage->data = swirl->image =
+	(unsigned char *) calloc(swirl->height, swirl->ximage->bytes_per_line);
 }
 
 /****************************************************************/
@@ -1272,7 +1253,7 @@ init_swirl(ModeInfo * mi)
 		swirl->depth = 16;
 
 	/* initialise image for speeding up drawing */
-	initialise_image(display, swirl);
+	initialise_image(mi, swirl);
 
 	/* clear the window (before setting the colourmap) */
 	XClearWindow(display, MI_WINDOW(mi));

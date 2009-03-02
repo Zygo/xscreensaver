@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997
+ * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997, 1998
  *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -427,12 +427,12 @@ static int block_sigchld_handler = 0;
 static void
 block_sigchld (void)
 {
-#ifdef USE_SIGACTION
+#ifdef HAVE_SIGACTION
   sigset_t child_set;
   sigemptyset (&child_set);
   sigaddset (&child_set, SIGCHLD);
   sigprocmask (SIG_BLOCK, &child_set, 0);
-#endif /* USE_SIGACTION */
+#endif /* HAVE_SIGACTION */
 
   block_sigchld_handler++;
 }
@@ -440,12 +440,13 @@ block_sigchld (void)
 static void
 unblock_sigchld (void)
 {
-#ifdef USE_SIGACTION
+#ifdef HAVE_SIGACTION
   sigset_t child_set;
   sigemptyset(&child_set);
   sigaddset(&child_set, SIGCHLD);
   sigprocmask(SIG_UNBLOCK, &child_set, 0);
-#endif /* USE_SIGACTION */
+#endif /* HAVE_SIGACTION */
+
   block_sigchld_handler--;
 }
 
@@ -536,7 +537,7 @@ sigchld_handler (int sig)
   if (si->prefs.debug_p)
     fprintf(stderr, "%s: got SIGCHLD%s\n", progname,
 	    (block_sigchld_handler ? " (blocked)" : ""));
-#endif
+#endif /* DEBUG */
 
   if (block_sigchld_handler < 0)
     abort();
@@ -549,7 +550,7 @@ sigchld_handler (int sig)
 
   init_sigchld();
 }
-#endif
+#endif /* SIGCHLD */
 
 
 #ifndef VMS
@@ -570,7 +571,7 @@ await_dying_children (saver_info *si)
 		   (long) kid, errno);
       else
 	  fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", progname, (long) kid);
-#endif
+#endif /* DEBUG */
 
       /* 0 means no more children to reap.
 	 -1 means error -- except "interrupted system call" isn't a "real"
@@ -670,7 +671,7 @@ init_sigchld (void)
 {
 #ifdef SIGCHLD
 
-# ifdef USE_SIGACTION	/* Thanks to Tom Kelly <tom@ancilla.toronto.on.ca> */
+# ifdef HAVE_SIGACTION	/* Thanks to Tom Kelly <tom@ancilla.toronto.on.ca> */
 
   static Bool sigchld_initialized_p = 0;
   if (!sigchld_initialized_p)
@@ -690,7 +691,7 @@ init_sigchld (void)
       sigchld_initialized_p = True;
     }
 
-# else  /* !USE_SIGACTION */
+# else  /* !HAVE_SIGACTION */
 
   if (((long) signal (SIGCHLD, sigchld_handler)) == -1L)
     {
@@ -698,8 +699,8 @@ init_sigchld (void)
       sprintf (buf, "%s: couldn't catch SIGCHLD", progname);
       perror (buf);
     }
-# endif /* !USE_SIGACTION */
-#endif
+# endif /* !HAVE_SIGACTION */
+#endif /* SIGCHLD */
 }
 
 
@@ -893,7 +894,7 @@ emergency_kill_subproc (saver_info *si)
   int i;
 #ifdef SIGCHLD
   signal (SIGCHLD, SIG_IGN);
-#endif
+#endif /* SIGCHLD */
 
   for (i = 0; i < si->nscreens; i++)
     {
@@ -1053,6 +1054,7 @@ hack_uid (saver_info *si)
       si->locking_disabled_p = True;
       si->nolock_reason = "running as root";
       p = getpwnam ("nobody");
+      if (! p) p = getpwnam ("noaccess");
       if (! p) p = getpwnam ("daemon");
       if (! p) p = getpwnam ("bin");
       if (! p) p = getpwnam ("sys");
@@ -1088,13 +1090,14 @@ hack_uid (saver_info *si)
 	    }
 	}
     }
-#ifndef NO_LOCKING
+# ifndef NO_LOCKING
  else	/* disable locking if already being run as "someone else" */
    {
      struct passwd *p = getpwuid (getuid ());
      if (!p ||
 	 !strcmp (p->pw_name, "root") ||
 	 !strcmp (p->pw_name, "nobody") ||
+	 !strcmp (p->pw_name, "noaccess") ||
 	 !strcmp (p->pw_name, "daemon") ||
 	 !strcmp (p->pw_name, "bin") ||
 	 !strcmp (p->pw_name, "sys"))
@@ -1104,7 +1107,7 @@ hack_uid (saver_info *si)
 	 sprintf (si->nolock_reason, "running as %s", p->pw_name);
        }
    }
-#endif /* NO_LOCKING */
+# endif /* !NO_LOCKING */
 }
 
 void

@@ -86,6 +86,7 @@ window, which are pointed at by the screensaver's default resource settings.
    bubbles	- condensation forms on your monitor, then pops.
    deco		- Generates Brady-Bunch-era wall paneling.
    moire	- Circular interference patterns.
+   moire2	- More moire.
    kaleidescope	- Groovy, man.
    swirl	- Swirly color-cycling patterns.
    bouboule	- Spinning bubbles on a transparent ball.
@@ -121,13 +122,15 @@ window, which are pointed at by the screensaver's default resource settings.
    ant		- A cellular automaton.
    xjack	- Simulates a schizophrenic typist.
    xlyap	- Calculates and displays Lyapunov exponents.
-   escher	- Draws some escher-like scenes (GLX only.)
    gears	- Draws interlocking rotating gears (GLX only.)
    morph3d	- Draws shiny shape-changing 3d forms (GLX only.)
    superquadrics - More shiny shape-changing 3d forms (GLX only.)
    pipes	- Generates a field of intertwined plumbing (GLX only.)
    rubik	- Solves a Rubik's Cube (GLX only.)
    sproingies	- Marble Madness meets Q-Bert (GLX only.)
+   stairs	- Draws Escher's infinite staircase (GLX only.)
+   cage		- Draws Escher's impossible cage (GLX only.)
+   moebius	- Draws Escher's Moebius Strip II (GLX only.)
 
 All of these will pop up their own window unless given that -root option.
 See their man pages for more details.
@@ -160,6 +163,26 @@ http://people.netscape.com/jwz/xscreensaver/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 2.15:	Made `flag' able to do XPM images.
+			New look for the xscreensaver logo (`xroger').
+			Fixed compilation error on Suns with adjunct passwords.
+			Got multi-architecture builds working again.
+			Some configure tweaks for building on HPUX and Solaris.
+			Fixed bug in decayscreen.
+			Fixed typo i passwd.c.
+			Made `cynosure' not die when colormap is full.
+Changes since 2.14:	Added `cynosure' hack.
+			Added `moire2' hack.
+			Tweaked `erase.c' some more.
+			Made unfading a bit smoother.
+			Added `vidwhacker' hack (not installed by default.)
+			Added `stairs' hack.
+			Split `escher' into `cage' and `moebius', as per
+			xlockmore.
+			Changed subprocess handling to use sigaction() instead
+			of signal() if it's available (this is necessary for
+			SCO but should work fine on other systems too.)
+			Various other tweaks.
 Changes since 2.13:	Better fix for the Motif drag-and-die lossage.
 			Put in some kludges to work around a LessTif bug.
 			XScreenSaver is known to work with LessTif 0.82 now.

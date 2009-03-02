@@ -81,6 +81,8 @@ init_decay (Display *dpy, Window window)
 
   if (delay < 0) delay = 0;
 
+  XGetWindowAttributes (dpy, window, &xgwa);
+
   gcv.function = GXcopy;
   gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCForeground |GCFunction;
@@ -88,7 +90,6 @@ init_decay (Display *dpy, Window window)
     gcflags |= GCSubwindowMode;
   gc = XCreateGC (dpy, window, gcflags, &gcv);
 
-  XGetWindowAttributes (dpy, window, &xgwa);
   sizex = xgwa.width;
   sizey = xgwa.height;
 

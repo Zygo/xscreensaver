@@ -1,10 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * pipes.c - Shows 3D selfbuiding pipe system (xlock Version)
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* pipes --- 3D selfbuiding pipe system */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)pipes.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
+
 #endif
-/* Permission to use, copy, modify, and distribute this software and its
+
+/*-
+ * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
  * both that copyright notice and this permission notice appear in
@@ -27,15 +30,14 @@ static const char sccsid[] = "@(#)pipes.c	4.04 97/07/28 xlockmore";
  * Thanks goes to Brian Paul for making it possible and inexpensive to use
  * OpenGL at home.
  *
- * Since I'm not a native english speaker, my apologies for any gramatical
+ * Since I'm not a native English speaker, my apologies for any grammatical
  * mistake.
  *
  * My e-mail addresses are
  *
  * vianna@cat.cbpf.br 
  *         and
- * marcelo@venus.rdc.puc-rio.br
- *
+ * m-vianna@usa.net
  * Marcelo F. Vianna (Apr-09-1997)
  *
  * Revision History:
@@ -56,10 +58,10 @@ static const char sccsid[] = "@(#)pipes.c	4.04 97/07/28 xlockmore";
 # define HACK_INIT					init_pipes
 # define HACK_DRAW					draw_pipes
 # define pipes_opts					xlockmore_opts
-# define DEFAULTS	"*count:		2       \n"			\
+# define DEFAULTS	"*delay:		100     \n"			\
+					"*count:		2       \n"			\
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
-					"*delay:		100     \n"			\
 					"*fisheye:		True    \n"			\
 					"*tightturns:	False   \n"			\
 					"*rotatepipes:	True    \n"			\
@@ -111,6 +113,20 @@ static OptionStruct desc[] =
 ModeSpecOpt pipes_opts =
 {7, opts, 4, vars, desc};
 
+#ifdef USE_MODULES
+ModStruct   pipes_description =
+{"pipes", "init_pipes", "draw_pipes", "release_pipes",
+#if defined( MESA ) && defined( SLOW )
+ "draw_pipes",
+#else
+ "change_pipes",
+#endif
+ "change_pipes", NULL, &pipes_opts,
+ 1000, 2, 5, 500, 1.0, "",
+ "Shows a selfbuilding pipe system", 0, NULL};
+
+#endif
+
 #define Scale4Window               0.1
 #define Scale4Iconic               0.07
 
@@ -148,11 +164,12 @@ typedef struct {
 	int         system_type;
 	int         system_length;
 	int         turncounter;
+	Window      window;
 	float      *system_color;
 	GLfloat     initial_rotation;
 	GLuint      valve, bolts, betweenbolts, elbowbolts, elbowcoins;
 	GLuint      guagehead, guageface, guagedial, guageconnector;
-	GLXContext  glx_context;
+	GLXContext *glx_context;
 } pipesstruct;
 
 extern struct lwo LWO_BigValve, LWO_PipeBetweenBolts, LWO_Bolts3D;
@@ -213,8 +230,10 @@ MakeTube(int direction)
 	/*dirNEAR  = 00000100 */
 	/*dirFAR   = 00000101 */
 
-	glRotatef(90.0, (direction & 6) ? 0.0 : 1.0, (direction & 2) ? 1.0 : 0.0, 0.0);
-
+	if (!(direction & 4)) {
+		glRotatef(90.0, (direction & 2) ? 0.0 : 1.0,
+			  (direction & 2) ? 1.0 : 0.0, 0.0);
+	}
 	glBegin(GL_QUAD_STRIP);
 	for (an = 0.0; an <= 2.0 * M_PI; an += M_PI / 12.0) {
 		glNormal3f((COSan_3 = cos(an) / 3.0), (SINan_3 = sin(an) / 3.0), 0.0);
@@ -475,7 +494,193 @@ MakeShape(ModeInfo * mi, int newdir)
 	}
 }
 
-static void pinit(ModeInfo * mi, int zera);
+static void
+reshape(ModeInfo * mi, int width, int height)
+{
+	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+
+	glViewport(0, 0, pp->WindW = (GLint) width, pp->WindH = (GLint) height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
+	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+static void
+pinit(ModeInfo * mi, int zera)
+{
+	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+	int         X, Y, Z;
+
+	glClearDepth(1.0);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glColor3f(1.0, 1.0, 1.0);
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
+	glLightfv(GL_LIGHT0, GL_POSITION, position0);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
+	glLightfv(GL_LIGHT1, GL_POSITION, position1);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_CULL_FACE);
+
+	glShadeModel(GL_SMOOTH);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
+
+	if (zera) {
+		pp->system_number = 1;
+		glDrawBuffer(GL_FRONT_AND_BACK);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		(void) memset(pp->Cells, 0, sizeof (pp->Cells));
+		for (X = 0; X < HCELLS; X++) {
+			for (Y = 0; Y < VCELLS; Y++) {
+				pp->Cells[X][Y][0] = 1;
+				pp->Cells[X][Y][HCELLS - 1] = 1;
+				pp->Cells[0][Y][X] = 1;
+				pp->Cells[HCELLS - 1][Y][X] = 1;
+			}
+		}
+		for (X = 0; X < HCELLS; X++) {
+			for (Z = 0; Z < HCELLS; Z++) {
+				pp->Cells[X][0][Z] = 1;
+				pp->Cells[X][VCELLS - 1][Z] = 1;
+			}
+		}
+		(void) memset(pp->usedcolors, 0, sizeof (pp->usedcolors));
+		if ((pp->initial_rotation += 10.0) > 45.0) {
+			pp->initial_rotation -= 90.0;
+		}
+	}
+	pp->counter = 0;
+	pp->turncounter = 0;
+
+	if (!MI_WIN_IS_MONO(mi)) {
+		int         collist[DEFINEDCOLORS];
+		int         i, j, lower = 1000;
+
+		/* Avoid repeating colors on the same screen unless necessary */
+		for (i = 0; i < DEFINEDCOLORS; i++) {
+			if (lower > pp->usedcolors[i])
+				lower = pp->usedcolors[i];
+		}
+		for (i = 0, j = 0; i < DEFINEDCOLORS; i++) {
+			if (pp->usedcolors[i] == lower) {
+				collist[j] = i;
+				j++;
+			}
+		}
+		i = collist[NRAND(j)];
+		pp->usedcolors[i]++;
+		switch (i) {
+			case 0:
+				pp->system_color = MaterialRed;
+				break;
+			case 1:
+				pp->system_color = MaterialGreen;
+				break;
+			case 2:
+				pp->system_color = MaterialBlue;
+				break;
+			case 3:
+				pp->system_color = MaterialCyan;
+				break;
+			case 4:
+				pp->system_color = MaterialYellow;
+				break;
+			case 5:
+				pp->system_color = MaterialMagenta;
+				break;
+			case 6:
+				pp->system_color = MaterialWhite;
+				break;
+		}
+	} else {
+		pp->system_color = MaterialGray;
+	}
+
+	do {
+		pp->PX = NRAND((HCELLS - 1)) + 1;
+		pp->PY = NRAND((VCELLS - 1)) + 1;
+		pp->PZ = NRAND((HCELLS - 1)) + 1;
+	} while (pp->Cells[pp->PX][pp->PY][pp->PZ] ||
+		 (pp->Cells[pp->PX + 1][pp->PY][pp->PZ] && pp->Cells[pp->PX - 1][pp->PY][pp->PZ] &&
+		  pp->Cells[pp->PX][pp->PY + 1][pp->PZ] && pp->Cells[pp->PX][pp->PY - 1][pp->PZ] &&
+		  pp->Cells[pp->PX][pp->PY][pp->PZ + 1] && pp->Cells[pp->PX][pp->PY][pp->PZ - 1]));
+	pp->Cells[pp->PX][pp->PY][pp->PZ] = 1;
+	pp->olddir = dirNone;
+
+	FindNeighbors(mi);
+
+	pp->nowdir = SelectNeighbor(mi);
+}
+
+void
+init_pipes(ModeInfo * mi)
+{
+	int         screen = MI_SCREEN(mi);
+	pipesstruct *pp;
+
+	if (pipes == NULL) {
+		if ((pipes = (pipesstruct *) calloc(MI_NUM_SCREENS(mi),
+					      sizeof (pipesstruct))) == NULL)
+			return;
+	}
+	pp = &pipes[screen];
+
+	pp->window = MI_WINDOW(mi);
+	if ((pp->glx_context = init_GL(mi)) != NULL) {
+
+		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		pp->initial_rotation = -10.0;
+		pinit(mi, 1);
+
+		if (factory > 0) {
+			pp->valve = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_BigValve);
+			pp->bolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_Bolts3D);
+			pp->betweenbolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_PipeBetweenBolts);
+
+			pp->elbowbolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_ElbowBolts);
+			pp->elbowcoins = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_ElbowCoins);
+
+			pp->guagehead = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageHead);
+			pp->guageface = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageFace);
+			pp->guagedial = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageDial);
+			pp->guageconnector = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageConnector);
+		}
+		/* else they are all 0, thanks to calloc(). */
+
+		if (MI_BATCHCOUNT(mi) < 1 || MI_BATCHCOUNT(mi) > NofSysTypes + 1) {
+			pp->system_type = NRAND(NofSysTypes) + 1;
+		} else {
+			pp->system_type = MI_BATCHCOUNT(mi);
+		}
+
+		if (MI_CYCLES(mi) > 0 && MI_CYCLES(mi) < 11) {
+			pp->number_of_systems = MI_CYCLES(mi);
+		} else {
+			pp->number_of_systems = 5;
+		}
+
+		if (MI_SIZE(mi) < 10) {
+			pp->system_length = 10;
+		} else if (MI_SIZE(mi) > 1000) {
+			pp->system_length = 1000;
+		} else {
+			pp->system_length = MI_SIZE(mi);
+		}
+	} else {
+		MI_CLEARWINDOW(mi);
+	}
+}
 
 void
 draw_pipes(ModeInfo * mi)
@@ -488,7 +693,10 @@ draw_pipes(ModeInfo * mi)
 	int         newdir;
 	int         OPX, OPY, OPZ;
 
-	glXMakeCurrent(display, window, pp->glx_context);
+	if (!pp->glx_context)
+		return;
+
+	glXMakeCurrent(display, window, *(pp->glx_context));
 
 #if defined( MESA ) && defined( SLOW )
 	glDrawBuffer(GL_BACK);
@@ -770,197 +978,15 @@ draw_pipes(ModeInfo * mi)
 #endif
 }
 
-static void
-reshape(ModeInfo * mi, int width, int height)
-{
-	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
-
-	glViewport(0, 0, pp->WindW = (GLint) width, pp->WindH = (GLint) height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
-	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
-	glMatrixMode(GL_MODELVIEW);
-}
-
-static void
-pinit(ModeInfo * mi, int zera)
-{
-	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
-	int         X, Y, Z;
-
-	glClearDepth(1.0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glColor3f(1.0, 1.0, 1.0);
-
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_LIGHT0, GL_POSITION, position0);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
-	glLightfv(GL_LIGHT1, GL_POSITION, position1);
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glEnable(GL_CULL_FACE);
-
-	glShadeModel(GL_SMOOTH);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
-
-	if (zera) {
-		pp->system_number = 1;
-		glDrawBuffer(GL_FRONT_AND_BACK);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		(void) memset(pp->Cells, 0, sizeof (pp->Cells));
-		for (X = 0; X < HCELLS; X++) {
-			for (Y = 0; Y < VCELLS; Y++) {
-				pp->Cells[X][Y][0] = 1;
-				pp->Cells[X][Y][HCELLS - 1] = 1;
-				pp->Cells[0][Y][X] = 1;
-				pp->Cells[HCELLS - 1][Y][X] = 1;
-			}
-		}
-		for (X = 0; X < HCELLS; X++) {
-			for (Z = 0; Z < HCELLS; Z++) {
-				pp->Cells[X][0][Z] = 1;
-				pp->Cells[X][VCELLS - 1][Z] = 1;
-			}
-		}
-		(void) memset(pp->usedcolors, 0, sizeof (pp->usedcolors));
-		if ((pp->initial_rotation += 10.0) > 45.0) {
-			pp->initial_rotation -= 90.0;
-		}
-	}
-	pp->counter = 0;
-	pp->turncounter = 0;
-
-	if (!MI_WIN_IS_MONO(mi)) {
-		int         collist[DEFINEDCOLORS];
-		int         i, j, lower = 1000;
-
-		/* Avoid repeating colors on the same screen unless necessary */
-		for (i = 0; i < DEFINEDCOLORS; i++) {
-			if (lower > pp->usedcolors[i])
-				lower = pp->usedcolors[i];
-		}
-		for (i = 0, j = 0; i < DEFINEDCOLORS; i++) {
-			if (pp->usedcolors[i] == lower) {
-				collist[j] = i;
-				j++;
-			}
-		}
-		i = collist[NRAND(j)];
-		pp->usedcolors[i]++;
-		switch (i) {
-			case 0:
-				pp->system_color = MaterialRed;
-				break;
-			case 1:
-				pp->system_color = MaterialGreen;
-				break;
-			case 2:
-				pp->system_color = MaterialBlue;
-				break;
-			case 3:
-				pp->system_color = MaterialCyan;
-				break;
-			case 4:
-				pp->system_color = MaterialYellow;
-				break;
-			case 5:
-				pp->system_color = MaterialMagenta;
-				break;
-			case 6:
-				pp->system_color = MaterialWhite;
-				break;
-		}
-	} else {
-		pp->system_color = MaterialGray;
-	}
-
-	do {
-		pp->PX = NRAND((HCELLS - 1)) + 1;
-		pp->PY = NRAND((VCELLS - 1)) + 1;
-		pp->PZ = NRAND((HCELLS - 1)) + 1;
-	} while (pp->Cells[pp->PX][pp->PY][pp->PZ] ||
-		 (pp->Cells[pp->PX + 1][pp->PY][pp->PZ] && pp->Cells[pp->PX - 1][pp->PY][pp->PZ] &&
-		  pp->Cells[pp->PX][pp->PY + 1][pp->PZ] && pp->Cells[pp->PX][pp->PY - 1][pp->PZ] &&
-		  pp->Cells[pp->PX][pp->PY][pp->PZ + 1] && pp->Cells[pp->PX][pp->PY][pp->PZ - 1]));
-	pp->Cells[pp->PX][pp->PY][pp->PZ] = 1;
-	pp->olddir = dirNone;
-
-	FindNeighbors(mi);
-
-	pp->nowdir = SelectNeighbor(mi);
-}
-
-void
-init_pipes(ModeInfo * mi)
-{
-	int         screen = MI_SCREEN(mi);
-	pipesstruct *pp;
-
-	if (pipes == NULL) {
-		if ((pipes = (pipesstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (pipesstruct))) == NULL)
-			return;
-	}
-	pp = &pipes[screen];
-
-	pp->glx_context = init_GL(mi);
-
-	reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
-	pp->initial_rotation = -10.0;
-	pinit(mi, 1);
-
-	if (factory > 0) {
-		pp->valve = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_BigValve);
-		pp->bolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_Bolts3D);
-		pp->betweenbolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_PipeBetweenBolts);
-
-		pp->elbowbolts = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_ElbowBolts);
-		pp->elbowcoins = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_ElbowCoins);
-
-		pp->guagehead = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageHead);
-		pp->guageface = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageFace);
-		pp->guagedial = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageDial);
-		pp->guageconnector = BuildLWO(MI_WIN_IS_WIREFRAME(mi), &LWO_GuageConnector);
-	}
-	/* else they are all 0, thanks to calloc(). */
-
-	if (MI_BATCHCOUNT(mi) < 1 || MI_BATCHCOUNT(mi) > NofSysTypes + 1) {
-		pp->system_type = NRAND(NofSysTypes) + 1;
-	} else {
-		pp->system_type = MI_BATCHCOUNT(mi);
-	}
-
-	if (MI_CYCLES(mi) > 0 && MI_CYCLES(mi) < 11) {
-		pp->number_of_systems = MI_CYCLES(mi);
-	} else {
-		pp->number_of_systems = 5;
-	}
-
-	if (MI_SIZE(mi) < 10) {
-		pp->system_length = 10;
-	} else if (MI_SIZE(mi) > 1000) {
-		pp->system_length = 1000;
-	} else {
-		pp->system_length = MI_SIZE(mi);
-	}
-
-}
-
 void
 change_pipes(ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), pp->glx_context);
+	if (!pp->glx_context)
+		return;
+
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
 	pinit(mi, 1);
 }
 
@@ -973,36 +999,38 @@ release_pipes(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			pipesstruct *pp = &pipes[screen];
 
-			/* Display lists MUST be freed while their glXContext is current. */
-			glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), pp->glx_context);
+			if (pp->glx_context) {
 
-			if (pp->valve)
-				glDeleteLists(pp->valve, 1);
-			if (pp->bolts)
-				glDeleteLists(pp->bolts, 1);
-			if (pp->betweenbolts)
-				glDeleteLists(pp->betweenbolts, 1);
+				/* Display lists MUST be freed while their glXContext is current. */
+				glXMakeCurrent(MI_DISPLAY(mi), pp->window, *(pp->glx_context));
 
-			if (pp->elbowbolts)
-				glDeleteLists(pp->elbowbolts, 1);
-			if (pp->elbowcoins)
-				glDeleteLists(pp->elbowcoins, 1);
+				if (pp->valve)
+					glDeleteLists(pp->valve, 1);
+				if (pp->bolts)
+					glDeleteLists(pp->bolts, 1);
+				if (pp->betweenbolts)
+					glDeleteLists(pp->betweenbolts, 1);
 
-			if (pp->guagehead)
-				glDeleteLists(pp->guagehead, 1);
-			if (pp->guageface)
-				glDeleteLists(pp->guageface, 1);
-			if (pp->guagedial)
-				glDeleteLists(pp->guagedial, 1);
-			if (pp->guageconnector)
-				glDeleteLists(pp->guageconnector, 1);
+				if (pp->elbowbolts)
+					glDeleteLists(pp->elbowbolts, 1);
+				if (pp->elbowcoins)
+					glDeleteLists(pp->elbowcoins, 1);
+
+				if (pp->guagehead)
+					glDeleteLists(pp->guagehead, 1);
+				if (pp->guageface)
+					glDeleteLists(pp->guageface, 1);
+				if (pp->guagedial)
+					glDeleteLists(pp->guagedial, 1);
+				if (pp->guageconnector)
+					glDeleteLists(pp->guageconnector, 1);
+			}
 		}
-
-		/* Don't destroy the glXContext.  init_GL does that. */
 
 		(void) free((void *) pipes);
 		pipes = NULL;
 	}
+	FreeAllGL(mi);
 }
 
 #endif

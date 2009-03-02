@@ -10,6 +10,7 @@ $ bouboule	:== $'mydir'bouboule
 $ braid		:== $'mydir'braid
 $ bubbles	:== $'mydir'bubbles
 $ coral		:== $'mydir'coral
+$ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
 $ drift		:== $'mydir'drift
@@ -36,6 +37,7 @@ $ lissie	:== $'mydir'lissie
 $ lmorph	:== $'mydir'lmorph
 $ maze		:== $'mydir'maze
 $ moire		:== $'mydir'moire
+$ moire2	:== $'mydir'moire2
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ noseguy	:== $'mydir'noseguy

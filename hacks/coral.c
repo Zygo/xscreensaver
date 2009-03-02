@@ -231,8 +231,6 @@ char *defaults[] = {
     "*seeds: 20", /* too many for 640x480, too few for 1280x1024 */
     "*delay: 5",
     "*delay2: 1000",
-    "*eraseSpeed: 400",
-    "*eraseMode: -1",
     0
 };
 
@@ -241,8 +239,6 @@ XrmOptionDescRec options[] = {
     { "-seeds", ".seeds", XrmoptionSepArg, 0 },
     { "-delay", ".delay", XrmoptionSepArg, 0 },
     { "-delay2", ".delay2", XrmoptionSepArg, 0 },
-    { "-erase-speed", ".eraseSpeed", XrmoptionSepArg, 0 },
-    { "-erase-mode",  ".eraseMode",  XrmoptionSepArg, 0 },
     { 0, 0, 0, 0 }
 };
 

@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -61,7 +61,7 @@
 #   include <sys/audit.h>
 #   include <pwdadj.h>
 
-#   define PRTYPE   passwd_adjunct *
+#   define PWTYPE   struct passwd_adjunct *
 #   define PWPSLOT  pwa_passwd
 #   define GETPW    getpwanam
 
@@ -70,7 +70,7 @@
 #   include <hpsecurity.h>
 #   include <prot.h>
 
-#   define PRTYPE   struct s_passwd *
+#   define PWTYPE   struct s_passwd *
 #   define PWPSLOT  pw_passwd
 #   define GETPW    getspwnam
 #   define crypt    bigcrypt

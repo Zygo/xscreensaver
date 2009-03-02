@@ -1,19 +1,17 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.10 1997/12/03 10:56:13 jwz Exp $*/
+/*$Id: bubbles.c,v 1.13 1998/02/21 21:55:14 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
  *
- *   This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any later
- * version.
- *
- *   This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details. 
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
  */
 
 /*
@@ -45,20 +43,9 @@
 #include "screenhack.h"
 #include "bubbles.h"
 
-#ifdef BUBBLES_IO
-# include <dirent.h>
-# include <fcntl.h>
-# include <sys/types.h>
-#endif /* BUBBLES_IO */
-
 #include <limits.h>
 
-#ifdef SIGNAL_NONSENSE		/* what's this crap doing in here? */
-#include <signal.h>
-#endif /* SIGNAL_NONSENSE */
-
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifndef VMS
@@ -75,34 +62,28 @@
 #include "yarandom.h"
 
 #ifdef HAVE_XPM
-#include <X11/xpm.h>
+# include <X11/xpm.h>
 #endif
 
 /* 
  * Public variables 
  */
 
-#ifndef NO_DEFAULT_BUBBLE
+extern void init_default_bubbles(void);
 extern int num_default_bubbles;
 extern char **default_bubbles[];
-#endif /* NO_DEFAULT_BUBBLE */
 
 char *progclass = "Bubbles";
 
 char *defaults [] = {
-  "*background: black",
-  "*foreground: white",
-  "*simple:     false",
-  "*broken:     false",
-  "*delay:      800",
-#ifdef BUBBLES_IO
-  "*file:       (default)",
-  "*directory:  (default)",
-#endif /* BUBBLES_IO */
-  "*quiet:      false", 
-  "*nodelay:    false",
-  "*3D:     false",
-  "*geometry:   400x300",
+  "Bubbles.background:	black",
+  "*foreground:		white",
+  "*simple:		false",
+  "*broken:		false",
+  "*delay:		800",
+  "*quiet:		false", 
+  "*nodelay:		false",
+  "*3D:			false",
   0
 };
 
@@ -114,10 +95,6 @@ XrmOptionDescRec options [] = {
   { "-quiet",           ".quiet",       XrmoptionNoArg, "true" },
   { "-nodelay",         ".nodelay",     XrmoptionNoArg, "true" },
   { "-3D",          ".3D",      XrmoptionNoArg, "true" },
-#ifdef BUBBLES_IO
-  { "-file",            ".file",        XrmoptionSepArg, 0 },
-  { "-directory",       ".directory",   XrmoptionSepArg, 0 },
-#endif /* BUBBLES_IO */
   { "-delay",           ".delay",       XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
@@ -156,10 +133,6 @@ static GC draw_gc, erase_gc;
 #ifdef HAVE_XPM
 static int num_bubble_pixmaps;
 static Bubble_Step **step_pixmaps;
-#ifdef BUBBLES_IO
-static char *pixmap_file;
-#endif /* BUBBLES_IO */
-static int use_default_bubble;
 #endif /* HAVE_XPM */
 
 /* Options stuff */
@@ -960,53 +933,6 @@ get_length_of_bubble_list(Bubble *bb)
 
 #ifdef HAVE_XPM
 
-static void 
-free_pixmaps (void)
-/* Free resources associated with XPM */
-{
-  int i;
-
-#ifdef DEBUG
-  if (simple) {
-    fprintf(stderr, "free_pixmaps() called in simple mode\n");
-    exit(1);
-  }
-  printf("free_pixmaps()\n");
-#endif /* DEBUG */
-
-  for(i = 0; i < (num_bubble_pixmaps - 1); i++) {
-    XFreePixmap(defdsp, step_pixmaps[i]->ball);
-    XFreePixmap(defdsp, step_pixmaps[i]->shape_mask);
-    XFreeGC(defdsp, step_pixmaps[i]->draw_gc);
-    XFreeGC(defdsp, step_pixmaps[i]->erase_gc);
-    XFreeColors(defdsp, defcmap, step_pixmaps[i]->xpmattrs.pixels, 
-		step_pixmaps[i]->xpmattrs.npixels, 0);
-    XpmFreeAttributes(&step_pixmaps[i]->xpmattrs);
-  }
-}
-
-#ifdef SIGNAL_NONSENSE
-static void 
-onintr(int a)
-/* This gets called when SIGINT or SIGTERM is received */
-{
-  free_pixmaps();
-  exit(0);
-}
-
-#ifdef DEBUG
-static void
-onsegv(int a)
-/* Called when SEGV detected.   Hmmmmm.... */
-{
-  fflush(stdout);
-  fprintf(stderr, "SEGV detected! : %d\n", a);
-  exit(1);
-}
-#endif /* DEBUG */
-#endif /* SIGNAL_NONSENSE */
-
-
 /*
  * Pixmaps without file I/O (but do have XPM)
  */
@@ -1118,7 +1044,6 @@ make_pixmap_array(Bubble_Step *list)
 #endif /* DEBUG */
 }
 
-#ifndef NO_DEFAULT_BUBBLE
 static void
 make_pixmap_from_default(char **pixmap_data, Bubble_Step *bl)
 /* Read pixmap data which has been compiled into the program and a pointer
@@ -1206,23 +1131,7 @@ default_to_pixmaps (void)
   Bubble_Step *newpix, *tmppix;
   char **pixpt;
 
-  /* Make sure pixmaps are freed when program is terminated */
-  /* This is when I hit ^C */
-#ifdef SIGNAL_NONSENSE
-  if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-    signal(SIGINT, onintr);
-  /* xscreensaver sends SIGTERM */
-  if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
-    signal(SIGTERM, onintr);
-#ifdef DEBUG
-  if (signal(SIGSEGV, SIG_IGN) != SIG_IGN) {
-    printf("Setting signal handler for SIGSEGV\n");
-    signal(SIGSEGV, onsegv);
-  } else {
-    printf("Didn't set signal hanlder for SIGSEGV\n");
-  }
-#endif /* DEBUG */
-#endif /* SIGNAL_NONSENSE */
+  init_default_bubbles();
 
   for (i = 0; i < num_default_bubbles; i++) {
     pixpt = default_bubbles[i];
@@ -1244,408 +1153,8 @@ default_to_pixmaps (void)
   make_pixmap_array(pixmap_list);
 }
 
-#endif /* NO_DEFAULT_BUBBLE */
-
 #endif /* HAVE_XPM */
 
-/* 
- * File I/O stuff
- */
-
-#ifdef BUBBLES_IO
-
-static DIR *
-my_opendir(char *name)
-/* Like opendir() but checks for things so we don't have to do it multiple
-times in the code. */
-{
-  DIR *rv;
-
-  if (name == (char *)NULL) {
-    fprintf(stderr, "NULL directory name\n");
-    return (DIR *)NULL;
-  }
-  
-  if ((rv = opendir(name)) == NULL) {
-    perror(name);
-    return (DIR *)NULL;
-  }
-
-  return rv;
-}
-
-static int
-regular_file(char *name)
-/* Check to see if we can use the named file.  This was broken under Linux
-1.3.45 but seems to be okay under 1.3.54.  The parameter "name" was being
-trashed if the file didn't exist.  Yeah, I know 1.3.x are development
-kernels....
-*/
-{
-  int fd;
-
-  if ((fd = open(name, O_RDONLY)) == -1) {
-    perror(name);
-    return 0;
-  } else {
-    close(fd);
-    return 1;
-  }
-}
-
-static char *
-get_random_name(char *dir)
-/* Pick an appropriate file at random out of the files in the directory dir */
-{
-  STRUCT_DIRENT *dp;
-  DIR *dfd;
-  int numentries = 0;
-  int entnum;
-  int x;
-  char buf[PATH_BUF_SIZE];
-  char *rv;
-
-  if ((dfd = my_opendir(dir)) == (DIR *)NULL)
-    return (char *)NULL;
-
-  while ((dp = readdir(dfd)) != NULL) {
-    if ((strcmp(DIRENT_NAME, ".") == 0) || (strcmp(DIRENT_NAME, "..") == 0))
-      continue;
-    if ((strlen(dir)+strlen(DIRENT_NAME)+2) > 1024) {
-      fprintf(stderr, "name %s/%s too long\n", dir, DIRENT_NAME);
-      continue;
-    }
-    if (sprintf(buf, "%s/%s", dir, DIRENT_NAME) > (PATH_BUF_SIZE-1)) {
-      fprintf(stderr, "path buffer overflowed in get_random_name()\n");
-      continue;
-    }
-    if (regular_file(buf))
-      ++numentries;
-  }
-  closedir(dfd);
-  if (numentries == 0) {
-    fprintf(stderr, "No suitable files found in %s\n", dir);
-    return (char *)NULL;
-  }
-  entnum = ya_random() % numentries;
-  x = 0;
-
-  if ((dfd = my_opendir(dir)) == (DIR *)NULL)
-    return (char *)NULL;
-  while ((dp = readdir(dfd)) != NULL) {
-    if ((strcmp(DIRENT_NAME, ".") == 0) || (strcmp(DIRENT_NAME, "..") == 0))
-      continue;
-    if ((strlen(dir)+strlen(DIRENT_NAME)+2) > 1024) {
-      /* We warned about this previously */
-      continue;
-    }
-    if (sprintf(buf, "%s/%s", dir, DIRENT_NAME) > (PATH_BUF_SIZE-1)) {
-      fprintf(stderr, "path buffer overflowed in get_random_name()\n");
-      continue;
-    }
-    if (regular_file(buf)) {
-      if (x == entnum) {
-	rv = (char *)xmalloc(1024 * sizeof(char));
-	strcpy(rv, buf);
-	closedir(dfd);
-	return rv;
-      }
-      ++x;
-    }
-  }
-  /* We've screwed up if we reach here - someone must have deleted all the
-     files while we were counting them... */
-  fprintf(stderr, "get_random_name(): Oops!\n");
-  exit(1);
-}
-
-static int
-read_line(int fd, char **buf, int bufsize)
-/* A line is read from fd until a '\n' is found or EOF is reached.  (*buf)
-is initially of length bufsize and is extended by bufsize chars if need
-be (for as many times as it takes). */
-{
-  char x;
-  int pos = 0;
-  int size = bufsize;
-  int rv;
-  char *newbuf;
-
-  while (1) {
-    rv = read(fd, &x, 1);
-    if (rv == -1) {
-      perror("read_line(): ");
-      return IO_ERROR;
-    } else if (rv == 0) {
-      (*buf)[pos] = '\0';
-      return EOF_REACHED;
-    } else if (x == '\n') {
-      (*buf)[pos] = '\0';
-      return LINE_READ;
-    } else {
-      (*buf)[pos++] = x;
-      if (pos == (size - 1)) {
-	/* We've come to the end of the space */
-	newbuf = (char *)xmalloc((size+bufsize) * sizeof(char));
-	strncpy(newbuf, *buf, (size - 1));
-	free(*buf);
-	*buf = newbuf;
-	size += bufsize;
-      }
-    }
-  }
-}
-
-static int
-create_temp_file(char **name)
-/* Create a temporary file in /tmp and return a filedescriptor to it */
-{
-  int rv;
- 
-  if (*name != (char *)NULL)
-    free(*name);
-
-  if ((*name = tempnam("/tmp", "abxdfes")) == (char *)NULL) {
-    fprintf(stderr, "Couldn't make new temporary file\n");
-    exit(1);
-  }
-/*   printf("Temp file created : %s\n", *name); */
-  if ((rv = creat(*name, 0644)) == -1) {
-    fprintf(stderr, "Couldn't open temporary file\n");
-    exit(1);
-  }
-  
-  return rv;
-}
-
-
-#ifdef BUBBLES_IO
-static void 
-make_pixmap_from_file(char *fname, Bubble_Step *bl)
-/* Read the pixmap in file fname into structure bl which must already
- be allocated. */
-{
-  int result;
-  XGCValues gcv;
-
-  if (bl == (Bubble_Step *)NULL) {
-    fprintf(stderr, "NULL pointer passed to make_pixmap()\n");
-    exit(1);
-  }
-
-  bl->xpmattrs.closeness = 40000;
-  bl->xpmattrs.valuemask = XpmColormap | XpmCloseness;
-  bl->xpmattrs.colormap = defcmap;
-
-  result = XpmReadFileToPixmap(defdsp, defwin, fname, &bl->ball, 
-			       &bl->shape_mask, &bl->xpmattrs);
-
-  switch(result) {
-  case XpmColorError:
-    fprintf(stderr, "xpm: color substitution performed\n");
-    /* fall through */
-  case XpmSuccess:
-    bl->radius = MAX(bl->xpmattrs.width, bl->xpmattrs.height) / 2;
-    bl->area = calc_bubble_area(bl->radius);
-    break;
-  case XpmColorFailed:
-    fprintf(stderr, "xpm: color allocation failed\n");
-    exit(1);
-  case XpmNoMemory:
-    fprintf(stderr, "xpm: out of memory\n");
-    exit(1);
-  default:
-    fprintf(stderr, "xpm: unknown error code %d\n", result);
-    exit(1);
-  }
-  
-  gcv.plane_mask = AllPlanes;
-  gcv.foreground = default_fg_pixel;
-  gcv.function = GXcopy;
-  bl->draw_gc = XCreateGC (defdsp, defwin, GCForeground, &gcv);
-  XSetClipMask(defdsp, bl->draw_gc, bl->shape_mask);
-  
-  gcv.foreground = default_bg_pixel;
-  gcv.function = GXcopy;
-  bl->erase_gc = XCreateGC (defdsp, defwin, GCForeground, &gcv);
-  XSetClipMask(defdsp, bl->erase_gc, bl->shape_mask);  
-}
-#endif /* BUBBLES_IO */
-
-static void 
-read_file_to_pixmaps(char *fname)
-/* Read the pixmaps contained in the file fname into memory.  THESE SHOULD
-BE UNCOMPRESSED AND READY TO GO! */
-{
-  int fd, tmpfd=0, rv;
-  int inxpm = 0;
-  int xpmseen = 0;
-  char *buf = (char *)NULL;
-  char *tmpname = (char *)NULL;
-  Bubble_Step *pixmap_list = (Bubble_Step *)NULL;
-  Bubble_Step *newpix, *tmppix;
-
-  /* We first create a linked list of pixmaps before allocating
-     memory for the array */
-
-  if ((fd = open(fname, O_RDONLY)) == -1) {
-    fprintf(stderr, "Couldn't open %s\n", fname);
-    exit(1);
-  }
-
-#ifdef SIGNAL_NONSENSE
-  /* Make sure pixmaps are freed when program is terminated */
-  /* This is when I hit ^C */
-  if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-    signal(SIGINT, onintr);
-  /* xscreensaver sends SIGTERM */
-  if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
-    signal(SIGTERM, onintr);
-#ifdef DEBUG
-  if (signal(SIGSEGV, SIGN_IGN) != SIG_IGN)
-    signal(SIGSEGV, onsegv);
-#endif /* DEBUG */
-#endif /* SIGNAL_NONSENSE */
-  
-  while (1) {
-    if (inxpm == 2)
-      break;
-
-    buf = (char *)malloc(READ_LINE_BUF_SIZE * sizeof(char));
-
-    switch ((rv = read_line(fd, &buf, READ_LINE_BUF_SIZE))) {
-    case IO_ERROR:
-      fprintf(stderr, "An I/O error occurred\n");
-      exit(1);
-    case EOF_REACHED:
-      if (inxpm) {
-	fprintf(stderr, "EOF occurred inside an XPM block\n");
-	exit(1);
-      } else
-	inxpm = 2;
-      break;
-    case LINE_READ:
-      if (inxpm) {
-	if (strncmp("};", buf, 2) == 0) {
-	  inxpm = 0;
-	  write(tmpfd, buf, strlen(buf));
-	  write(tmpfd, "\n", 1);
-	  close(tmpfd);
-	  /* Now process the tmpfile */
-	  newpix = (Bubble_Step *)xmalloc(sizeof(Bubble_Step));
-	  make_pixmap_from_file(tmpname, newpix);
-	  /* Now add to list */
-	  if (pixmap_list == (Bubble_Step *)NULL) {
-	    pixmap_list = newpix;
-	  } else {
-	    tmppix = pixmap_list;
-	    while (tmppix->next != (Bubble_Step *)NULL)
-	      tmppix = tmppix->next;
-	    tmppix->next = newpix;
-	  }
-	  newpix->next = (Bubble_Step *)NULL;
-	  unlink(tmpname);
-	} else {
-	  write(tmpfd, buf, strlen(buf));
-	  write(tmpfd, "\n", 1);
-	}
-      } else {
-	if (strncmp("/* XPM */", buf, 9) == 0) {
-	  tmpfd = create_temp_file(&tmpname);
-/* This proves XPM's performance is kinda pathetic */
-#ifdef DEBUG
- 	  printf("New XPM detected : %s, fd=%d\n", tmpname, tmpfd); 
-#endif /* DEBUG */
-	  inxpm = 1;
-	  xpmseen = 1;
-	}
-	write(tmpfd, buf, strlen(buf));
-	write(tmpfd, "\n", 1);
-      }
-      break;
-    default:
-      fprintf(stderr, "read_line returned unknown code %d\n", rv);
-      exit(1);
-    }
-
-    free(buf);
-  }
-
-  close(fd);
-  if (buf != (char *)NULL)
-    free(buf);
-  if (tmpname != (char *)NULL)
-    free(tmpname);
-
-  if (! xpmseen) {
-    fprintf(stderr, "There was no XPM data in the file %s\n", fname);
-    exit(1);
-  }
-
-  /* Finally construct step_pixmaps[] */
-  make_pixmap_array(pixmap_list);
-}
-
-static void 
-shell_exec(char *command)
-/* Forks a shell to execute "command" then waits for command to finish */
-{
-  int pid, status, wval;
-
-  switch(pid=fork()) {
-  case 0:
-    if (execlp(BOURNESH, BOURNESH, "-c", command, (char *)NULL) == -1) {
-      fprintf(stderr, "Couldn't exec shell %s\n", BOURNESH);
-      exit(1);
-    }
-    /* fall through if execlp() fails */
-  case -1:
-    /* Couldn't fork */
-    perror(progname);
-    exit(1);
-  default:
-    while ((wval = wait(&status)) != pid)
-      if (wval == -1) {
-	perror(progname);
-	exit(1);
-      }    
-  }
-}
-
-static void 
-uncompress_file(char *current, char *namebuf)
-/* If the file current is compressed (i.e. its name ends in .gz or .Z,
-no check is made to see if it is actually a compressed file...) then a
-new temporary file is created for it and it is decompressed into there,
-returning the name of the file to namebuf, else current is returned in
-namebuf */
-{
-  int fd;
-  char *tname = (char *)NULL;
-  char argbuf[COMMAND_BUF_SIZE];
-
-  if (((strlen(current) >=4) && 
-       (strncmp(&current[strlen(current)-3], ".gz", 3) == 0)) || 
-      ((strlen(current) >=3) && 
-       (strncmp(&current[strlen(current)-2], ".Z", 2) == 0))) {
-    fd = create_temp_file(&tname);
-    /* close immediately but don't unlink so we should have a zero length
-       file in /tmp which we can append to */
-    close(fd);
-    if (sprintf(argbuf, "%s -dc %s > %s", GZIP, current, tname) > 
-	(COMMAND_BUF_SIZE-1)) {
-      fprintf(stderr, "command buffer overflowed in uncompress_file()\n");
-      exit(1);
-    }
-    shell_exec(argbuf);
-    strcpy(namebuf, tname);
-  } else {
-    strcpy(namebuf, current);
-  }
-  return;
-}
-
-#endif /* BUBBLES_IO */
 
 /* 
  * Main stuff 
@@ -1657,14 +1166,6 @@ get_resources(Display *dpy, Window window)
 /* Get the appropriate X resources and warn about any inconsistencies. */
 {
   Bool nodelay;
-#ifdef BUBBLES_IO
-#ifdef HAVE_XPM
-  char *dirname;
-#else
-  char *foo, *bar;
-#endif /* HAVE_XPM */
-#endif /* BUBBLES_IO */
-
   XWindowAttributes xgwa;
   Colormap cmap;
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -1703,37 +1204,6 @@ get_resources(Display *dpy, Window window)
     simple = 1;
 #else
     broken = get_boolean_resource("broken", "Boolean");
-#ifdef BUBBLES_IO
-    pixmap_file = get_string_resource("file", "File");
-    dirname = get_string_resource("directory", "Directory");    
-#ifdef NO_DEFAULT_BUBBLE
-    /* Must specify -file or -directory if no default bubble compiled in */
-    if (strcmp(pixmap_file, "(default)") != 0) {
-    } else if (strcmp(dirname, "(default)") != 0) {
-      if ((pixmap_file = get_random_name(dirname)) == (char *)NULL) {
-	/* Die if we can't open directory - make it consistent with -file
-	   when it fails, rather than falling back to default. */
-	exit(1);
-      }
-    } else {
-      fprintf(stderr,
-	      "No default bubble compiled in - use -file or -directory\n");
-      exit(1);
-    }
-#else
-    if (strcmp(pixmap_file, "(default)") != 0) {
-    } else if (strcmp(dirname, "(default)") != 0) {
-      if ((pixmap_file = get_random_name(dirname)) == (char *)NULL) {
-	exit(1);
-      }
-    } else {
-      /* Use default bubble */
-      use_default_bubble = 1;
-    }
-#endif /* NO_DEFAULT_BUBBLE */
-#else 
-    use_default_bubble = 1;
-#endif /* BUBBLES_IO */
 #endif /* HAVE_XPM */
   }
 }
@@ -1744,9 +1214,6 @@ init_bubbles (Display *dpy, Window window)
   XGCValues gcv;
   XWindowAttributes xgwa;
   int i;
-#ifdef BUBBLES_IO
-  char uncompressed[1024];
-#endif /* BUBBLES_IO */
 
   defdsp = dpy;
   defwin = window;
@@ -1799,35 +1266,10 @@ init_bubbles (Display *dpy, Window window)
 #else
     /* Make sure all #ifdef sort of things have been taken care of in
        get_resources(). */
-    if (use_default_bubble) {
-#ifdef NO_DEFAULT_BUBBLE
-      fprintf(stderr,
-	      "Bug: use_default_bubble and NO_DEFAULT_BUBBLE both defined\n");
-      exit(1);
-#else
-      default_to_pixmaps();
-#endif /* NO_DEFAULT_BUBBLE */
+    default_to_pixmaps();
 
-      /* Set mesh length */
-      mesh_length = (2 * step_pixmaps[num_bubble_pixmaps-1]->radius) + 3;
-    } else {
-#ifdef BUBBLES_IO
-      if (! regular_file(pixmap_file)) {
-	/* perror() in regular_file printed error message */
-	exit(1);
-      }
-      uncompress_file(pixmap_file, uncompressed);
-      read_file_to_pixmaps(uncompressed);
-      if (strcmp(pixmap_file, uncompressed))
-	unlink(uncompressed);
-
-      mesh_length = (2 * step_pixmaps[num_bubble_pixmaps-1]->radius) + 3;
-#else
-      fprintf(stderr,
-	"Bug: use_default_bubble is not defined yet I/O is not compiled in\n");
-      exit(1);
-#endif /* BUBBLES_IO */
-    }
+    /* Set mesh length */
+    mesh_length = (2 * step_pixmaps[num_bubble_pixmaps-1]->radius) + 3;
 #endif /* HAVE_XPM */
 
     /* Am I missing something in here??? */

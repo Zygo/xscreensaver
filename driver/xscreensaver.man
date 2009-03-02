@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "31-May-97" "X Version 11"
+.TH XScreenSaver 1 "16-Jan-98" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -517,11 +517,11 @@ Edit the file \fI~/.dt/sessions/sessionetc\fP and add to it the line
 
 This will cause \fIxscreensaver\fP to be launched when you log in.
 (As always, make sure that xscreensaver and the graphics demos are on
-your \fB$PATH\fP; this needs to be set in \fI.cshrc\fP and/or \fI.dtprofile\fP,
-not \fI.login\fP.)
+your \fB$PATH\fP; the path needs to be set in \fI.cshrc\fP 
+and/or \fI.dtprofile\fP, not \fI.login\fP.)
 .TP 3
 \fB3: Create XScreenSaver.dt\fP
-Create a file called \fI~/.dt/sessions/XScreenSaver.dt\fP with the following
+Create a file called \fI~/.dt/types/XScreenSaver.dt\fP with the following
 contents:
 
     ACTION XScreenSaver
@@ -537,7 +537,7 @@ This defines a ``lock'' command for the CDE front panel, that knows how
 to talk to \fIxscreensaver\fP.
 .TP 3
 \fB4: Create Lock.fp\fP
-Create a file called \fI~/.dt/sessions/Lock.fp\fP with the following
+Create a file called \fI~/.dt/types/Lock.fp\fP with the following
 contents:
 
     CONTROL Lock
@@ -558,7 +558,7 @@ we just defined in step 3.
 .TP 3
 \fB5: Restart\fP
 Select ``\fIRestart Workspace Manager\fP'' from the popup menu to make
-your changes take effect.  If things seem not to be working, the 
+your changes take effect.  If things seem not to be working, check the
 file \fI~/.dt/errorlog\fP for error messages.
 .RE
 .PP
@@ -645,7 +645,7 @@ continue using your old password to unlock the screen until xscreensaver
 is restarted.  This turns out to be kind of hard to fix.  (But remember,
 kids!  Unix security doesn't do much more than keep honest people honest...)
 .TP 8
-TWM and Colormaps
+Colormap lossage: TWM
 The \fBinstallColormap\fP option doesn't work very well with the
 .BR twm (1)
 window manager and its descendants.  
@@ -669,6 +669,20 @@ colormap.  Apparently, \fBtwm\fP doesn't \fIalways\fP do this; it seems to do
 it regularly if the screensaver is activated from a menu item, but seems to
 not do it if the screensaver comes on of its own volition, or is activated
 from another console.  Any thoughts on this problem are welcome...
+.TP 8
+Colormap lossage: XV, XAnim, XEarth
+Some programs don't operate properly on visuals other than the default one,
+or with colormaps other than the default one.  See the discussion of the
+magic "default-n" visual name in the section about the \fBprograms\fP 
+resource.  When programs only work with the default colormap, you need to
+use a syntax like this:
+
+        default-n: xv -root image-1.gif -quit  \\n\\
+        default-n: xearth -nostars -wait 0     \\n\\
+
+It would also work to turn off the \fBinstallColormap\fP option altogether,
+but that would deny extra colors to those programs that \fIcan\fP take
+advantage of them.
 .TP 8
 XView Clients
 Apparently there are some problems with XView programs getting confused
@@ -697,6 +711,11 @@ Athena Widgets
 If you compiled against the Athena widget toolkit, the dialog boxes are
 pretty ugly, especially the password dialog.  Use Motif!  If you don't
 have OSF Motif, use GNU LessTif, it's free: http://www.lesstif.org/
+.TP 8
+SGI Power Saver
+If you're running Irix 6.3, you might find that your monitor is powering down
+after an hour or two even if you've told it not to.  This is fixed by SGI
+patches 2447 and 2537.
 .TP 8
 Red Hot Lava
 There need to be a lot more graphics hacks.  In particular, there should be
@@ -727,11 +746,12 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR bouboule (1),
 .BR braid (1),
 .BR bubbles (1),
+.BR cage (1),
 .BR coral (1),
+.BR cynosure (1),
 .BR decayscreen (1),
 .BR deco (1),
 .BR drift (1),
-.BR escher (1),
 .BR fadeplot (1),
 .BR flag (1),
 .BR flame (1),
@@ -755,7 +775,9 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR lissie (1),
 .BR lmorph (1),
 .BR maze (1),
+.BR moebius (1),
 .BR moire (1),
+.BR moire2 (1),
 .BR morph3d (1),
 .BR mountain (1),
 .BR munch (1),
@@ -777,6 +799,7 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR sphere (1),
 .BR spiral (1),
 .BR sproingies (1),
+.BR stairs (1),
 .BR starfish (1),
 .BR strange (1),
 .BR superquadrics (1),
@@ -801,19 +824,20 @@ http://people.netscape.com/jwz/xscreensaver/
 .BR xv (1),
 .BR xwave (1).
 .SH COPYRIGHT
-Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997 by Jamie Zawinski.
-Permission to use, copy, modify, distribute, and sell this software and its
-documentation for any purpose is hereby granted without fee, provided that
-the above copyright notice appear in all copies and that both that copyright
-notice and this permission notice appear in supporting documentation.  No
-representations are made about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
+Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
+by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted without
+fee, provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or implied
+warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@netscape.com>.  Written in late 1991; first posted
 to comp.sources.x on 13-Aug-1992.
 
 Please let me know if you find any bugs or make any improvements.
-
+.SH ACKNOWLEDGEMENTS
 Thanks to David Wojtowicz for implementing \fIlockTimeout\fP.
 
 Thanks to Martin Kraemer for adding support for shadow passwords and

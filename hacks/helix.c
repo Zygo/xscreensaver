@@ -284,15 +284,11 @@ char *progclass = "Helix";
 char *defaults [] = {
   "Helix.background: black",		/* to placate SGI */
   "*delay:      5",
-  "*eraseSpeed: 400",
-  "*eraseMode: -1",
   0
 };
 
 XrmOptionDescRec options [] = {   
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
-  { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
-  { "-erase-mode",      ".eraseMode",           XrmoptionSepArg, 0 },
   { 0 },
 };
 int options_size = (sizeof (options) / sizeof (options[0]));

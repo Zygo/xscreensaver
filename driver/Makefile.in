@@ -38,14 +38,14 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
-XLIBS		= $(X_LIBS) $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
+XLIBS		= $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
 
 AD_DIR		= @APPDEFAULTS@
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
 
-INCLUDES	= -I. -I$(srcdir) -I$(srcdir)/.. -I$(UTILS_SRC) @INCLUDES@
+INCLUDES	= -I. -I$(srcdir) -I$(srcdir)/.. -I$(UTILS_SRC) -I.. @INCLUDES@
 
 PASSWD_LIBS	= @PASSWD_LIBS@
 MOTIF_SRCS	= dialogs-Xm.c
@@ -73,10 +73,12 @@ LOCK_OBJS	= @LOCK_OBJS@
 UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/xroger.c \
+		  $(UTILS_SRC)/spline.c \
 		  $(UTILS_SRC)/yarandom.c @XMU_SRCS@
 UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/xroger.o \
+		  $(UTILS_BIN)/spline.o \
 		  $(UTILS_BIN)/yarandom.o @XMU_OBJS@
 
 SAVER_SRCS_1	= demo.c stderr.c subprocs.c timers.c windows.c \
@@ -86,11 +88,11 @@ SAVER_OBJS_1	= demo.o stderr.o subprocs.o timers.o windows.o \
 
 SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
-SAVER_LIBS	= @SAVER_LIBS@ -lXt $(XLIBS) $(PASSWD_LIBS) $(LIBS)
+SAVER_LIBS	= $(X_LIBS) @SAVER_LIBS@ -lXt $(XLIBS) $(PASSWD_LIBS) $(LIBS)
 
 CMD_SRCS	= xscreensaver-command.c
 CMD_OBJS	= xscreensaver-command.o
-CMD_LIBS	= $(XLIBS) $(LIBS)
+CMD_LIBS	= $(X_LIBS) $(XLIBS) $(LIBS)
 
 EXES		= xscreensaver xscreensaver-command
 
@@ -132,7 +134,7 @@ install-program:
  $$e "           must run 'make install' as 'root', not as '$$me'."	     ;\
  $$e ""									     ;\
  $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
- $$e "           means that locking may not work."			     ;\
+ $$e "           means that locking might not work."			     ;\
  $$e ""									     ;\
 	   fi ; 							\
 	fi ;								\
@@ -196,7 +198,8 @@ distdepend: update_ad_version XScreenSaver_ad.h
 	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
 	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
-	      -e 's@$$.*\(XScreenSaver_ad\)@\1@g' ;			    \
+	      -e 's@$$.*\(XScreenSaver_ad\)@\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config\.h\)@ \1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv Makefile.in Makefile.in.bak &&				    \
@@ -242,6 +245,7 @@ $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
 $(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 
 $(UTIL_OBJS):
@@ -271,31 +275,31 @@ xscreensaver-command: $(CMD_OBJS)
 #
 # DO NOT DELETE: updated by make distdepend
 
-demo.o: $(srcdir)/../config.h
+demo.o: ../config.h
 demo.o: $(srcdir)/xscreensaver.h
 demo.o: $(UTILS_SRC)/resources.h
-stderr.o: $(srcdir)/../config.h
+stderr.o: ../config.h
 stderr.o: $(srcdir)/xscreensaver.h
 stderr.o: $(UTILS_SRC)/resources.h
 stderr.o: $(UTILS_SRC)/visual.h
-subprocs.o: $(srcdir)/../config.h
+subprocs.o: ../config.h
 subprocs.o: $(srcdir)/xscreensaver.h
 subprocs.o: $(UTILS_SRC)/yarandom.h
-timers.o: $(srcdir)/../config.h
+timers.o: ../config.h
 timers.o: $(srcdir)/xscreensaver.h
-windows.o: $(srcdir)/../config.h
+windows.o: ../config.h
 windows.o: $(srcdir)/xscreensaver.h
 windows.o: $(UTILS_SRC)/visual.h
 windows.o: $(UTILS_SRC)/fade.h
-xscreensaver.o: $(srcdir)/../config.h
+xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
 xscreensaver.o: $(UTILS_SRC)/version.h
 xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(UTILS_SRC)/resources.h
 xscreensaver.o: $(UTILS_SRC)/visual.h
 xscreensaver.o: XScreenSaver_ad.h
-xset.o: $(srcdir)/../config.h
+xset.o: ../config.h
 xset.o: $(srcdir)/xscreensaver.h
-xscreensaver-command.o: $(srcdir)/../config.h
+xscreensaver-command.o: ../config.h
 xscreensaver-command.o: $(UTILS_SRC)/version.h
 

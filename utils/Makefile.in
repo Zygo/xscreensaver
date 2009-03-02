@@ -21,7 +21,7 @@ SHELL		= /bin/sh
 
 X_CFLAGS	= @X_CFLAGS@
 
-INCLUDES	= -I$(srcdir) -I$(srcdir)/.. @INCLUDES@
+INCLUDES	= -I$(srcdir) -I$(srcdir)/.. -I.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
 		  resources.c spline.c usleep.c visual.c xmu.c xroger.c \
@@ -56,7 +56,7 @@ clean:
 	-rm -f *.o a.out core
 
 distclean: clean
-	-rm -f Makefile *~ "#"*
+	-rm -f config.h Makefile *~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
@@ -78,7 +78,8 @@ distdepend::
 	(								    \
 	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
 	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
-	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g' ;			    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv Makefile.in Makefile.in.bak &&				    \
@@ -126,24 +127,24 @@ distdepend:: compile_axp.com compile_decc.com
 # DO NOT DELETE: updated by make distdepend
 
 alpha.o: $(srcdir)/utils.h
-alpha.o: $(srcdir)/../config.h
+alpha.o: ../config.h
 alpha.o: $(srcdir)/alpha.h
 alpha.o: $(srcdir)/hsv.h
 alpha.o: $(srcdir)/yarandom.h
 alpha.o: $(srcdir)/resources.h
 colors.o: $(srcdir)/utils.h
-colors.o: $(srcdir)/../config.h
+colors.o: ../config.h
 colors.o: $(srcdir)/hsv.h
 colors.o: $(srcdir)/yarandom.h
 colors.o: $(srcdir)/visual.h
 colors.o: $(srcdir)/colors.h
 fade.o: $(srcdir)/utils.h
-fade.o: $(srcdir)/../config.h
+fade.o: ../config.h
 fade.o: $(srcdir)/visual.h
 fade.o: $(srcdir)/usleep.h
 fade.o: $(srcdir)/fade.h
 grabscreen.o: $(srcdir)/utils.h
-grabscreen.o: $(srcdir)/../config.h
+grabscreen.o: ../config.h
 grabscreen.o: $(srcdir)/yarandom.h
 grabscreen.o: $(srcdir)/usleep.h
 grabscreen.o: $(srcdir)/colors.h
@@ -153,35 +154,37 @@ grabscreen.o: $(srcdir)/visual.h
 grabscreen.o: $(srcdir)/resources.h
 grabscreen.o: $(srcdir)/vroot.h
 hsv.o: $(srcdir)/utils.h
-hsv.o: $(srcdir)/../config.h
+hsv.o: ../config.h
 hsv.o: $(srcdir)/hsv.h
 overlay.o: $(srcdir)/utils.h
-overlay.o: $(srcdir)/../config.h
+overlay.o: ../config.h
 overlay.o: $(srcdir)/visual.h
 resources.o: $(srcdir)/utils.h
-resources.o: $(srcdir)/../config.h
+resources.o: ../config.h
 resources.o: $(srcdir)/resources.h
 spline.o: $(srcdir)/utils.h
-spline.o: $(srcdir)/../config.h
+spline.o: ../config.h
 spline.o: $(srcdir)/spline.h
-usleep.o: $(srcdir)/../config.h
+usleep.o: ../config.h
 visual.o: $(srcdir)/utils.h
-visual.o: $(srcdir)/../config.h
+visual.o: ../config.h
 visual.o: $(srcdir)/resources.h
 visual.o: $(srcdir)/visual.h
-xmu.o: $(srcdir)/../config.h
+xmu.o: ../config.h
 xroger.o: $(srcdir)/utils.h
-xroger.o: $(srcdir)/../config.h
-yarandom.o: $(srcdir)/../config.h
+xroger.o: ../config.h
+xroger.o: $(srcdir)/spline.h
+yarandom.o: ../config.h
 yarandom.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/utils.h
-erase.o: $(srcdir)/../config.h
+erase.o: ../config.h
 erase.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/usleep.h
 erase.o: $(srcdir)/resources.h
 sgivideo.o: $(srcdir)/utils.h
-sgivideo.o: $(srcdir)/../config.h
+sgivideo.o: ../config.h
 sgivideo.o: $(srcdir)/sgivideo.h
 sgivideo.o: $(srcdir)/resources.h
+sgivideo.o: $(srcdir)/visual.h
 sgivideo.o: $(srcdir)/usleep.h
 

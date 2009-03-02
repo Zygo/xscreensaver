@@ -1,5 +1,5 @@
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)pipeobjs.c	4.2 97/04/27 xlockmore";
+static const char sccsid[] = "@(#)pipeobjs.c	4.04 97/07/28 xlockmore";
 
 #endif
 
@@ -12,9 +12,9 @@ static const char sccsid[] = "@(#)pipeobjs.c	4.2 97/04/27 xlockmore";
 #ifndef STANDALONE
 #include "xlock.h"
 #endif
- 
+
 #ifdef USE_GL
- 
+
 #ifdef STANDALONE
 #include <GL/glx.h>
 #endif

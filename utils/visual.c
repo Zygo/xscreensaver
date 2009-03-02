@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
  *  by Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -301,6 +301,39 @@ visual_depth (Screen *screen, Visual *visual)
   XFree ((char *) vi_out);
   return d;
 }
+
+
+#if 0
+/* You very probably don't want to be using this.
+   Pixmap depth doesn't refer to the depths of pixmaps, but rather, to
+   the depth of protocol-level on-the-wire pixmap data, that is, XImages.
+   To get this info, you should be looking at XImage->bits_per_pixel
+   instead.  (And allocating the data for your XImage structures by
+   multiplying ximage->bytes_per_line by ximage->height.)
+ */
+int
+visual_pixmap_depth (Screen *screen, Visual *visual)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  int vdepth = visual_depth (screen, visual);
+  int pdepth = vdepth;
+  int i, pfvc = 0;
+  XPixmapFormatValues *pfv = XListPixmapFormats (dpy, &pfvc);
+
+  /* Return the first matching depth in the pixmap formats.  If there are no
+     matching pixmap formats (which shouldn't be able to happen at all) then
+     return the visual depth instead. */
+  for (i = 0; i < pfvc; i++)
+    if (pfv[i].depth == vdepth)
+      {
+	pdepth = pfv[i].bits_per_pixel;
+	break;
+      }
+  if (pfv)
+    XFree (pfv);
+  return pdepth;
+}
+#endif /* 0 */
 
 
 int

@@ -1,5 +1,5 @@
 /* xset.c --- interacting with server extensions and the builtin screensaver.
- * xscreensaver, Copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,32 +157,16 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
 
   /* On SGIs, if interval is non-zero, it is the number of seconds after
      screen saving starts at which the monitor should be powered down.
-     Obviously I don't want that, so make sure it's a large positive number.
+     Obviously I don't want that, so set it to 0 (meaning "never".)
 
      Power saving is disabled if DontPreferBlanking, but in that case,
      we don't get extension events either.  So we can't turn it off that way.
 
-     The man page for `XSetScreenSaver' says that setting interval to 0 will
-     disable powering down of the monitor, but this turns out not to be the
-     case on Irix 6.3 (O2); the monitor powers down anyway.  It didn't do
-     this on 6.2, so someone screwed up.
-
-     Extra Sucky Factoid #2: the number can't be more than 15 bits, which
-     is only a bit over nine hours.  So there's just *no fucking way* to make
-     an SGI O2 leave its monitor powered on and idle for more than nine hours.
-     You fucking losers!
-
-     [...Later...]  Ok, it's worse than that.  The above doesn't work either.
-     Setting it to a small number will cause it to power down early; but even
-     if you set it to a large number, it still seems to power down in about
-     an hour.  You fucking fucking fucking losers!
+     Note: if you're running Irix 6.3 (O2), you may find that your monitor is
+     powering down anyway, regardless of the xset settings.  This is fixed by
+     installing SGI patches 2447 and 2537.
    */
-#ifdef HAVE_SGI_SAVER_EXTENSION
-  if (p->use_sgi_saver_extension)
-    desired_server_interval = 32767;
-  else
-#endif
-    desired_server_interval = 0;
+  desired_server_interval = 0;
 
   /* I suspect (but am not sure) that DontAllowExposures might have
      something to do with powering off the monitor as well. */

@@ -33,9 +33,7 @@ static const char sccsid[] = "@(#)forest.c	4.03 97/05/10 xlockmore";
 # define DEFAULTS	"*count:		100     \n"			\
 					"*cycles:		200     \n"			\
 					"*delay:		400000  \n"			\
-					"*ncolors:		100     \n"			\
-					"*eraseSpeed:   400 \n"				\
-					"*eraseMode:    -1 \n"
+					"*ncolors:		100     \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include "erase.h"

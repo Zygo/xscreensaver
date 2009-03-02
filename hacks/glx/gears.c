@@ -1,10 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * gears.c --- 3D gear wheels
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* gears --- 3D gear wheels */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)gears.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
+
 #endif
-/* Permission to use, copy, modify, and distribute this software and its
+
+/*-
+ * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
  * both that copyright notice and this permission notice appear in
@@ -17,8 +20,9 @@ static const char sccsid[] = "@(#)gears.c	4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 10-May-97: Compatible with xscreensaver
  * 22-Mar-97: Added support for -mono mode, and monochrome X servers.
- *              Ed Mackey, emackey@early.com
+ *              Ed Mackey, emackey@netaxs.com
  * 13-Mar-97: Memory leak fix by Tom Schmidt <tschmidt@micron.com>
  * 1996: "written" by Danny Sung <dannys@ucla.edu>
  *       Based on 3-D gear wheels by Brian Paul which is in the public domain.
@@ -58,12 +62,21 @@ static const char sccsid[] = "@(#)gears.c	4.02 97/04/01 xlockmore";
 ModeSpecOpt gears_opts = {
   0, NULL, 0, NULL, NULL };
 
+#ifdef USE_MODULES
+ModStruct   gears_description =
+{"gears", "init_gears", "draw_gears", "release_gears",
+ "draw_gears", "init_gears", NULL, &gears_opts,
+ 1000, 1, 2, 1, 1.0, "",
+ "Shows GL's gears", 0, NULL};
+
+#endif
+
 typedef struct {
 	GLfloat     view_rotx, view_roty, view_rotz;
 	GLuint      gear1, gear2, gear3;
 	GLfloat     angle;
-	int         mono;
-	GLXContext  glx_context;
+	GLXContext *glx_context;
+	Window      window;
 #if 0
 	Window      win;
 #endif
@@ -71,7 +84,7 @@ typedef struct {
 
 static gearsstruct *gears = NULL;
 
-/* 
+/*-
  * Draw a gear wheel.  You'll probably want to call this function when
  * building a display list since we do a lot of trig here.
  *
@@ -263,7 +276,7 @@ static void
 draw(ModeInfo * mi)
 {
 	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	int         wire = MI_WIN_IS_WIREFRAME(mi) || gp->mono;
+	int         wire = MI_WIN_IS_WIREFRAME(mi);
 
 	if (!wire) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -335,7 +348,12 @@ pinit(ModeInfo * mi)
 	{0.0, 0.8, 0.2, 1.0};
 	static GLfloat blue[4] =
 	{0.2, 0.2, 1.0, 1.0};
-	int         wire = MI_WIN_IS_WIREFRAME(mi) || gp->mono;
+	static GLfloat gray[4] =
+	{0.5, 0.5, 0.5, 1.0};
+	static GLfloat white[4] =
+	{1.0, 1.0, 1.0, 1.0};
+	int         wire = MI_WIN_IS_WIREFRAME(mi);
+	int         mono = MI_WIN_IS_MONO(mi);
 
 	if (!wire) {
 		glLightfv(GL_LIGHT0, GL_POSITION, pos);
@@ -360,28 +378,49 @@ pinit(ModeInfo * mi)
 	/* make the gears */
 	gp->gear1 = glGenLists(1);
 	glNewList(gp->gear1, GL_COMPILE);
-	if (!wire)
-		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-	else
-		glColor4fv(red);
+	if (wire) {
+		if (mono)
+			glColor4fv(white);
+		else
+			glColor4fv(red);
+	} else {
+		if (mono)
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
+		else
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
+	}
 	gear(1.0, 4.0, 1.0, 20, 0.7, wire);
 	glEndList();
 
 	gp->gear2 = glGenLists(1);
 	glNewList(gp->gear2, GL_COMPILE);
-	if (!wire)
-		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-	else
-		glColor4fv(green);
+	if (wire) {
+		if (mono)
+			glColor4fv(white);
+		else
+			glColor4fv(green);
+	} else {
+		if (mono)
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
+		else
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
+	}
 	gear(0.5, 2.0, 2.0, 10, 0.7, wire);
 	glEndList();
 
 	gp->gear3 = glGenLists(1);
 	glNewList(gp->gear3, GL_COMPILE);
-	if (!wire)
-		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-	else
-		glColor4fv(blue);
+	if (wire) {
+		if (mono)
+			glColor4fv(white);
+		else
+			glColor4fv(blue);
+	} else {
+		if (mono)
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
+		else
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
+	}
 	gear(1.3, 2.0, 0.5, 10, 0.7, wire);
 	glEndList();
 	if (!wire)
@@ -391,11 +430,6 @@ pinit(ModeInfo * mi)
 void
 init_gears(ModeInfo * mi)
 {
-#if 0
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-
-#endif
 	int         screen = MI_SCREEN(mi);
 
 	/*Colormap    cmap; */
@@ -409,19 +443,18 @@ init_gears(ModeInfo * mi)
 	}
 	gp = &gears[screen];
 
-#if 0
-	gp->win = window;
-#endif
+	gp->window = MI_WINDOW(mi);
 	gp->view_rotx = NRAND(360);
 	gp->view_roty = NRAND(360);
 	gp->view_rotz = NRAND(360);
 	gp->angle = NRAND(360);
-	gp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
 
-	gp->glx_context = init_GL(mi);
-
-	reshape(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
-	pinit(mi);
+	if ((gp->glx_context = init_GL(mi)) != NULL) {
+		reshape(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		pinit(mi);
+	} else {
+		MI_CLEARWINDOW(mi);
+	}
 }
 
 void
@@ -433,9 +466,12 @@ draw_gears(ModeInfo * mi)
 	int         angle_incr = MI_CYCLES(mi) ? MI_CYCLES(mi) : 2;
 	int         rot_incr = MI_BATCHCOUNT(mi) ? MI_BATCHCOUNT(mi) : 1;
 
+	if (!gp->glx_context)
+		return;
+
 	glDrawBuffer(GL_BACK);
 
-	glXMakeCurrent(display, window, gp->glx_context);
+	glXMakeCurrent(display, window, *(gp->glx_context));
 	draw(mi);
 
 	/* let's do something so we don't get bored */
@@ -457,22 +493,23 @@ release_gears(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			gearsstruct *gp = &gears[screen];
 
-			/* Display lists MUST be freed while their glXContext is current. */
-			glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), gp->glx_context);
+			if (gp->glx_context) {
+				/* Display lists MUST be freed while their glXContext is current. */
+				glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 
-			if (glIsList(gp->gear1))
-				glDeleteLists(gp->gear1, 1);
-			if (glIsList(gp->gear2))
-				glDeleteLists(gp->gear2, 1);
-			if (glIsList(gp->gear3))
-				glDeleteLists(gp->gear3, 1);
+				if (glIsList(gp->gear1))
+					glDeleteLists(gp->gear1, 1);
+				if (glIsList(gp->gear2))
+					glDeleteLists(gp->gear2, 1);
+				if (glIsList(gp->gear3))
+					glDeleteLists(gp->gear3, 1);
 
-			/* Don't destroy the glXContext.  init_GL does that. */
-
+			}
 		}
 		(void) free((void *) gears);
 		gears = NULL;
 	}
+	FreeAllGL(mi);
 }
 
 

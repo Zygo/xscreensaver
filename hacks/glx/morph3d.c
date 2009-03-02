@@ -1,14 +1,25 @@
+/* -*- Mode: C; tab-width: 4 -*- */
+/* morph3d --- Shows 3D morphing objects */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)morph3d.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
 
 #endif
 
 #undef DEBUG_CULL_FACE
 
 /*-
- * morph3d.c - Shows 3D morphing objects (XLock Version)
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation.
  *
- * See xlock.c for copying information.
+ * This file is provided AS IS with no warranties of any kind.  The author
+ * shall have no liability with respect to the infringement of copyrights,
+ * trade secrets or any patents by this file or any part thereof.  In no
+ * event will the author be liable for any lost revenue or profits or
+ * other special, indirect and consequential damages.
  *
  * The original code for this mode was written by Marcelo Fernandes Vianna 
  * (me...) and was inspired on a WindowsNT(R)'s screen saver. It was written 
@@ -25,13 +36,13 @@ static const char sccsid[] = "@(#)morph3d.c	4.02 97/04/01 xlockmore";
  * If you are interested in the original version of this program (not a xlock
  * mode, please refer to the Mesa package (ftp iris.ssec.wisc.edu on /pub/Mesa)
  *
- * Since I'm not a native english speaker, my apologies for any gramatical
+ * Since I'm not a native English speaker, my apologies for any grammatical
  * mistake.
  *
  * My e-mail addresses are
  * vianna@cat.cbpf.br 
  *         and
- * marcelo@venus.rdc.puc-rio.br
+ * m-vianna@usa.net
  *
  * Marcelo F. Vianna (Feb-13-1997)
  *
@@ -70,6 +81,15 @@ static const char sccsid[] = "@(#)morph3d.c	4.02 97/04/01 xlockmore";
 
 ModeSpecOpt morph3d_opts =
 {0, NULL, 0, NULL, NULL};
+
+#ifdef USE_MODULES
+ModStruct   morph3d_description =
+{"morph3d", "init_morph3d", "draw_morph3d", "release_morph3d",
+ "draw_morph3d", "change_morph3d", NULL, &morph3d_opts,
+ 1000, 0, 1, 1, 1.0, "",
+ "Shows GL morphing polyhedra", 0, NULL};
+
+#endif
 
 #define Scale4Window               0.3
 #define Scale4Iconic               1.0
@@ -116,7 +136,7 @@ typedef struct {
 	void        (*draw_object) (ModeInfo * mi);
 	float       Magnitude;
 	float      *MaterialColor[20];
-	GLXContext  glx_context;
+	GLXContext *glx_context;
 } morph3dstruct;
 
 static float front_shininess[] =
@@ -151,7 +171,7 @@ static float MaterialMagenta[] =
 static float MaterialWhite[] =
 {0.7, 0.7, 0.7, 1.0};
 static float MaterialGray[] =
-{0.2, 0.2, 0.2, 1.0};
+{0.5, 0.5, 0.5, 1.0};
 
 static morph3dstruct *morph3d = NULL;
 
@@ -632,65 +652,6 @@ draw_icosa(ModeInfo * mi)
 	glDeleteLists(list, 1);
 }
 
-void
-draw_morph3d(ModeInfo * mi)
-{
-	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
-
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-
-	glDrawBuffer(GL_BACK);
-	glXMakeCurrent(display, window, mp->glx_context);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glPushMatrix();
-
-	glTranslatef(0.0, 0.0, -10.0);
-
-	if (!MI_WIN_IS_ICONIC(mi)) {
-		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);
-		glTranslatef(2.5 * mp->WindW / mp->WindH * sin(mp->step * 1.11), 2.5 * cos(mp->step * 1.25 * 1.11), 0);
-	} else {
-		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
-	}
-
-	glRotatef(mp->step * 100, 1, 0, 0);
-	glRotatef(mp->step * 95, 0, 1, 0);
-	glRotatef(mp->step * 90, 0, 0, 1);
-
-	mp->seno = (sin(mp->step) + 1.0 / 3.0) * (4.0 / 5.0) * mp->Magnitude;
-
-	if (mp->VisibleSpikes) {
-#ifdef DEBUG_CULL_FACE
-		int         loop;
-
-		for (loop = 0; loop < 20; loop++)
-			mp->MaterialColor[loop] = MaterialGray;
-#endif
-		glDisable(GL_CULL_FACE);
-	} else {
-#ifdef DEBUG_CULL_FACE
-		int         loop;
-
-		for (loop = 0; loop < 20; loop++)
-			mp->MaterialColor[loop] = MaterialWhite;
-#endif
-		glEnable(GL_CULL_FACE);
-	}
-
-	mp->draw_object(mi);
-
-	glPopMatrix();
-
-	glFlush();
-
-	glXSwapBuffers(display, window);
-
-	mp->step += 0.05;
-}
-
 static void
 reshape(ModeInfo * mi, int width, int height)
 {
@@ -830,19 +791,87 @@ init_morph3d(ModeInfo * mi)
 	mp->step = NRAND(90);
 	mp->VisibleSpikes = 1;
 
-	mp->glx_context = init_GL(mi);
+	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-	reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
-	mp->object = MI_BATCHCOUNT(mi);
-	if (mp->object <= 0 || mp->object > 5)
-		mp->object = NRAND(5) + 1;
-	pinit(mi);
+		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		mp->object = MI_BATCHCOUNT(mi);
+		if (mp->object <= 0 || mp->object > 5)
+			mp->object = NRAND(5) + 1;
+		pinit(mi);
+	} else {
+		MI_CLEARWINDOW(mi);
+	}
+}
+
+void
+draw_morph3d(ModeInfo * mi)
+{
+	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
+
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+
+	if (!mp->glx_context)
+		return;
+
+	glDrawBuffer(GL_BACK);
+	glXMakeCurrent(display, window, *(mp->glx_context));
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glPushMatrix();
+
+	glTranslatef(0.0, 0.0, -10.0);
+
+	if (!MI_WIN_IS_ICONIC(mi)) {
+		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);
+		glTranslatef(2.5 * mp->WindW / mp->WindH * sin(mp->step * 1.11), 2.5 * cos(mp->step * 1.25 * 1.11), 0);
+	} else {
+		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
+	}
+
+	glRotatef(mp->step * 100, 1, 0, 0);
+	glRotatef(mp->step * 95, 0, 1, 0);
+	glRotatef(mp->step * 90, 0, 0, 1);
+
+	mp->seno = (sin(mp->step) + 1.0 / 3.0) * (4.0 / 5.0) * mp->Magnitude;
+
+	if (mp->VisibleSpikes) {
+#ifdef DEBUG_CULL_FACE
+		int         loop;
+
+		for (loop = 0; loop < 20; loop++)
+			mp->MaterialColor[loop] = MaterialGray;
+#endif
+		glDisable(GL_CULL_FACE);
+	} else {
+#ifdef DEBUG_CULL_FACE
+		int         loop;
+
+		for (loop = 0; loop < 20; loop++)
+			mp->MaterialColor[loop] = MaterialWhite;
+#endif
+		glEnable(GL_CULL_FACE);
+	}
+
+	mp->draw_object(mi);
+
+	glPopMatrix();
+
+	glFlush();
+
+	glXSwapBuffers(display, window);
+
+	mp->step += 0.05;
 }
 
 void
 change_morph3d(ModeInfo * mi)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
+
+	if (!mp->glx_context)
+		return;
 
 	mp->object = (mp->object) % 5 + 1;
 	pinit(mi);
@@ -855,6 +884,7 @@ release_morph3d(ModeInfo * mi)
 		(void) free((void *) morph3d);
 		morph3d = NULL;
 	}
+	FreeAllGL(mi);
 }
 
 #endif

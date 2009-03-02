@@ -1,5 +1,5 @@
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)s1_6.c	4.2 97/04/20 xlockmore";
+static const char sccsid[] = "@(#)s1_6.c	4.04 97/07/28 xlockmore";
 
 #endif
 
@@ -13,9 +13,9 @@ static const char sccsid[] = "@(#)s1_6.c	4.2 97/04/20 xlockmore";
 #ifndef STANDALONE
 #include "xlock.h"
 #endif
- 
+
 #ifdef USE_GL
- 
+
 #ifdef STANDALONE
 #include <GL/glx.h>
 #endif

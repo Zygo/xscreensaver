@@ -197,6 +197,7 @@ xlockmore_screenhack (Display *dpy, Window window,
   XColor color;
   int i;
   time_t start, now;
+  int orig_pause;
 
   memset(&mi, 0, sizeof(mi));
   mi.dpy = dpy;
@@ -321,6 +322,7 @@ xlockmore_screenhack (Display *dpy, Window window,
     mi.pause = 0;
   else if (mi.pause > 100000000)
     mi.pause = 100000000;
+  orig_pause = mi.pause;
 
   xlockmore_read_resources ();
 
@@ -335,6 +337,7 @@ xlockmore_screenhack (Display *dpy, Window window,
     XSync(dpy, False);
     if (mi.pause)
       usleep(mi.pause);
+    mi.pause = orig_pause;
 
     if (hack_free)
       {

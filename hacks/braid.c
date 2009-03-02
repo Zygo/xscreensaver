@@ -35,9 +35,7 @@ static const char sccsid[] = "@(#)braid.c	4.00 97/01/01 xlockmore";
 					"*size:		   -7     \n"			\
 					"*cycles:		100   \n"			\
 					"*delay:		1000  \n"			\
-					"*ncolors:		64    \n"			\
-					"*eraseSpeed:   400 \n"				\
-					"*eraseMode:    -1 \n"
+					"*ncolors:		64    \n"
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include "erase.h"

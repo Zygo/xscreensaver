@@ -61,9 +61,7 @@ static const char sccsid[] = "@(#)ant.c	4.04 97/07/28 xlockmore";
 					"*count:  -3 \n"		\
 					"*cycles:  40000 \n"	\
 					"*size:   -7 \n"		\
-					"*ncolors: 64 \n"		\
-					"*eraseSpeed: 400 \n"	\
-					"*eraseMode: -1 \n"
+					"*ncolors: 64 \n"
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */

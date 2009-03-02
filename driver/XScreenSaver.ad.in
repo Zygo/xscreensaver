@@ -4,7 +4,7 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 2.14
+!                              version 2.16
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://people.netscape.com/jwz/xscreensaver/
@@ -90,6 +90,7 @@
 		lmorph -root						\n\
 		deco -root						\n\
 		moire -root						\n\
+		moire2 -root						\n\
 		lightning -root						\n\
 		strange -root						\n\
 		spiral -root						\n\
@@ -125,6 +126,7 @@
 		kaleidescope -root					\n\
 		xjack -root						\n\
 		xlyap -root -random					\n\
+		cynosure -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -147,7 +149,9 @@
 @GL_KLUDGE_2@	gears -root					  	\n\
 @GL_KLUDGE_2@	superquadrics -root				  	\n\
 @GL_KLUDGE_2@	morph3d -root					  	\n\
-@GL_KLUDGE_2@	escher -root					  	\n\
+@GL_KLUDGE_2@	cage -root					  	\n\
+@GL_KLUDGE_2@	moebius -root					  	\n\
+@GL_KLUDGE_2@	stairs -root					  	\n\
 @GL_KLUDGE_2@	pipes -root					  	\n\
 @GL_KLUDGE_2@	sproingies -root				  	\n\
 @GL_KLUDGE_2@	rubik -root					  	\n
@@ -157,11 +161,11 @@
 ! If your vendor doesn't provide real OpenGL, you might want to consider
 ! building MesaGL, which is a free implementation -- GL is way cool.
 !
-! Note that those hacks (gears, superquadratics, morph3d, escher, pipes,
-! sproingies, and rubik) tend to work best on a visual *half* as deep as the
-! depth of the screen, since that way, they can do double-buffering -- try it
-! and see, but you will probably find that you should specify the deepest
-! visual that is half as deep as the screen.  
+! Note that those hacks (gears, superquadratics, morph3d, cage, moebius,
+! stairs, pipes, sproingies, and rubik) tend to work best on a visual *half*
+! as deep as the depth of the screen, since that way, they can do
+! double-buffering -- try it and see, but you will probably find that you
+! should specify the deepest visual that is half as deep as the screen.
 !
 ! For example, on a screen that supports both 24-bit TrueColor and 12-bit
 ! PseudoColor, the 12-bit visual will probably work best (this is true of
@@ -287,8 +291,8 @@
 
 *label1.labelString:		XScreenSaver %s
 *label1.label:			XScreenSaver %s
-*label2.labelString: Copyright © 1991-1997 by Jamie Zawinski <jwz@netscape.com>
-*label2.label:	     Copyright © 1991-1997 by Jamie Zawinski <jwz@netscape.com>
+*label2.labelString: Copyright © 1991-1998 by Jamie Zawinski <jwz@netscape.com>
+*label2.label:	     Copyright © 1991-1998 by Jamie Zawinski <jwz@netscape.com>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next

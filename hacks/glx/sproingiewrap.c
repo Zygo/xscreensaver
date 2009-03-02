@@ -1,13 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * sproingies.c --- 3D sproingies
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* sproingiewrap.c - sproingies wrapper */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)sproingiewrap.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
+
 #endif
-/*
+
+/*-
  * sproingiewrap.c - Copyright 1996 Sproingie Technologies Incorporated.
- *                   Source and binary freely distributable under the
- *                   terms in xlock.c
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -21,8 +21,7 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.04 97/07/28 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- ***************************************************************************
- *    Programming:  Ed Mackey, http://www.early.com/~emackey/
+ *    Programming:  Ed Mackey, http://www.netaxs.com/~emackey/
  *    Sproingie 3D objects modeled by:  Al Mackey, al@iam.com
  *       (using MetaNURBS in NewTek's Lightwave 3D v5).
  *
@@ -35,8 +34,6 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.04 97/07/28 xlockmore";
  *              xlockmore's built-in Mesa/OpenGL support instead of
  *              my own.  Submitted for inclusion in xlockmore.
  * 09-Dec-96: Written.
- *
- * Ed Mackey
  */
 
 /*-
@@ -61,9 +58,9 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.04 97/07/28 xlockmore";
 # define HACK_INIT					init_sproingies
 # define HACK_DRAW					draw_sproingies
 # define sproingies_opts			xlockmore_opts
-# define DEFAULTS	"*count:		5       \n"			\
+# define DEFAULTS	"*delay:		100     \n"			\
+					"*count:		5       \n"			\
 					"*cycles:		0       \n"			\
-					"*delay:		100     \n"			\
 					"*size:			0       \n"			\
 					"*wireframe:	False	\n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -76,6 +73,15 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.04 97/07/28 xlockmore";
 ModeSpecOpt sproingies_opts = {
   0, NULL, 0, NULL, NULL };
 
+#ifdef USE_MODULES
+ModStruct   sproingies_description =
+{"sproingies", "init_sproingies", "draw_sproingies", "release_sproingies",
+ "refresh_sproingies", "init_sproingies", NULL, &sproingies_opts,
+ 1000, 5, 0, 400, 1.0, "",
+ "Shows Sproingies!  Nontoxic.  Safe for pets and small children", 0, NULL};
+
+#endif
+
 #define MINSIZE 32
 
 #include <GL/glu.h>
@@ -84,8 +90,10 @@ ModeSpecOpt sproingies_opts = {
 void        NextSproingie(int screen);
 void        NextSproingieDisplay(int screen);
 void        DisplaySproingies(int screen);
+
 #if 0
 void        ReshapeSproingies(int w, int h);
+
 #endif
 void        CleanupSproingies(int screen);
 void        InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens, int mono);
@@ -96,8 +104,9 @@ typedef struct {
 	GLfloat     angle;
 	GLuint      limit;
 	GLuint      count;
-	GLXContext  glx_context;
+	GLXContext *glx_context;
 	int         mono;
+	Window      window;
 } sproingiesstruct;
 
 static sproingiesstruct *sproingies = NULL;
@@ -113,6 +122,71 @@ SproingieSwap(void)
 }
 
 
+void
+init_sproingies(ModeInfo * mi)
+{
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	int         screen = MI_SCREEN(mi);
+
+	int         cycles = MI_CYCLES(mi);
+	int         batchcount = MI_BATCHCOUNT(mi);
+	int         size = MI_SIZE(mi);
+
+	sproingiesstruct *sp;
+	int         wfmode = 0, grnd, mspr, w, h;
+
+	if (sproingies == NULL) {
+		if ((sproingies = (sproingiesstruct *) calloc(MI_NUM_SCREENS(mi),
+					 sizeof (sproingiesstruct))) == NULL)
+			return;
+	}
+	sp = &sproingies[screen];
+
+	sp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
+	sp->window = window;
+	if ((sp->glx_context = init_GL(mi)) != NULL) {
+
+		if ((cycles & 1) || MI_WIN_IS_WIREFRAME(mi))
+			wfmode = 1;
+		grnd = (cycles >> 1);
+		if (grnd > 2)
+			grnd = 2;
+
+		mspr = batchcount;
+		if (mspr > 100)
+			mspr = 100;
+
+		/* wireframe, ground, maxsproingies */
+		InitSproingies(wfmode, grnd, mspr, MI_SCREEN(mi), MI_NUM_SCREENS(mi), sp->mono);
+
+		/* Viewport is specified size if size >= MINSIZE && size < screensize */
+		if (size == 0) {
+			w = MI_WIN_WIDTH(mi);
+			h = MI_WIN_HEIGHT(mi);
+		} else if (size < MINSIZE) {
+			w = MINSIZE;
+			h = MINSIZE;
+		} else {
+			w = (size > MI_WIN_WIDTH(mi)) ? MI_WIN_WIDTH(mi) : size;
+			h = (size > MI_WIN_HEIGHT(mi)) ? MI_WIN_HEIGHT(mi) : size;
+		}
+
+		glViewport((MI_WIN_WIDTH(mi) - w) / 2, (MI_WIN_HEIGHT(mi) - h) / 2, w, h);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(65.0, (GLfloat) w / (GLfloat) h, 0.1, 2000.0);	/* was 200000.0 */
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		swap_display = display;
+		swap_window = window;
+		DisplaySproingies(MI_SCREEN(mi));
+	} else {
+		MI_CLEARWINDOW(mi);
+	}
+}
+
 /* ARGSUSED */
 void
 draw_sproingies(ModeInfo * mi)
@@ -121,8 +195,11 @@ draw_sproingies(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 
+	if (!sp->glx_context)
+		return;
+
 	glDrawBuffer(GL_BACK);
-	glXMakeCurrent(display, window, sp->glx_context);
+	glXMakeCurrent(display, window, *(sp->glx_context));
 
 	swap_display = display;
 	swap_window = window;
@@ -149,77 +226,17 @@ release_sproingies(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			sproingiesstruct *sp = &sproingies[screen];
 
-			glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), sp->glx_context);
-			CleanupSproingies(MI_SCREEN(mi));
-		}
+			if (sp->glx_context) {
 
-		/* Don't destroy the glXContext.  init_GL does that. */
+				glXMakeCurrent(MI_DISPLAY(mi), sp->window, *(sp->glx_context));
+				CleanupSproingies(MI_SCREEN(mi));
+			}
+		}
 
 		(void) free((void *) sproingies);
 		sproingies = NULL;
 	}
-}
-
-void
-init_sproingies(ModeInfo * mi)
-{
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-	int         screen = MI_SCREEN(mi);
-
-	int         cycles = MI_CYCLES(mi);
-	int         batchcount = MI_BATCHCOUNT(mi);
-	int         size = MI_SIZE(mi);
-
-	sproingiesstruct *sp;
-	int         wfmode = 0, grnd, mspr, w, h;
-
-	if (sproingies == NULL) {
-		if ((sproingies = (sproingiesstruct *) calloc(MI_NUM_SCREENS(mi),
-					 sizeof (sproingiesstruct))) == NULL)
-			return;
-	}
-	sp = &sproingies[screen];
-
-	sp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
-
-	sp->glx_context = init_GL(mi);
-
-	if ((cycles & 1) || MI_WIN_IS_WIREFRAME(mi) || sp->mono)
-		wfmode = 1;
-	grnd = (cycles >> 1);
-	if (grnd > 2)
-		grnd = 2;
-
-	mspr = batchcount;
-	if (mspr > 100)
-		mspr = 100;
-
-	/* wireframe, ground, maxsproingies */
-	InitSproingies(wfmode, grnd, mspr, MI_SCREEN(mi), MI_NUM_SCREENS(mi), sp->mono);
-
-	/* Viewport is specified size if size >= MINSIZE && size < screensize */
-	if (size == 0) {
-		w = MI_WIN_WIDTH(mi);
-		h = MI_WIN_HEIGHT(mi);
-	} else if (size < MINSIZE) {
-		w = MINSIZE;
-		h = MINSIZE;
-	} else {
-		w = (size > MI_WIN_WIDTH(mi)) ? MI_WIN_WIDTH(mi) : size;
-		h = (size > MI_WIN_HEIGHT(mi)) ? MI_WIN_HEIGHT(mi) : size;
-	}
-
-	glViewport((MI_WIN_WIDTH(mi) - w) / 2, (MI_WIN_HEIGHT(mi) - h) / 2, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(65.0, (GLfloat) w / (GLfloat) h, 0.1, 2000.0);	/* was 200000.0 */
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	swap_display = display;
-	swap_window = window;
-	DisplaySproingies(MI_SCREEN(mi));
+	FreeAllGL(mi);
 }
 
 #endif

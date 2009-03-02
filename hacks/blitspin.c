@@ -42,7 +42,7 @@
 # endif /* VMS */
 #endif
 
-#include "default.xbm"
+#include "images/som.xbm"
 
 static Display *dpy;
 static Window window;
@@ -249,9 +249,9 @@ init (void)
 
   if (!strcmp (bitmap_name, "(default)"))
     {
-      width = logo_width;
-      height = logo_height;
-      bitmap = XCreatePixmapFromBitmapData (dpy, window, (char *) logo_bits,
+      width = som_width;
+      height = som_height;
+      bitmap = XCreatePixmapFromBitmapData (dpy, window, (char *) som_bits,
 					    width, height, fg, bg, depth);
       scale_up = True; /* definitely. */
     }

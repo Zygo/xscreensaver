@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -193,7 +193,7 @@ static void
 do_help (saver_info *si)
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1997 by Jamie Zawinski <jwz@netscape.com>\n\
+xscreensaver %s, copyright (c) 1991-1998 by Jamie Zawinski <jwz@netscape.com>\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>         When the screensaver should activate.\n\
@@ -663,7 +663,7 @@ initialize (saver_info *si, int argc, char **argv)
 
   if (p->verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1997 by Jamie Zawinski <jwz@netscape.com>\n\
+%s %s, copyright (c) 1991-1998 by Jamie Zawinski <jwz@netscape.com>\n\
  pid = %d.\n", progname, si->version, (int) getpid ());
 
   
@@ -820,7 +820,7 @@ main_loop (saver_info *si)
       if (si->demo_mode_p)
 	demo_mode (si);
       else
-#endif
+#endif /* !NO_DEMO_MODE */
 	{
 	  if (p->verbose_p)
 	    printf ("%s: user is idle; waking up at %s.\n", progname,
@@ -839,7 +839,7 @@ main_loop (saver_info *si)
 	    si->lock_id = XtAppAddTimeOut (si->app, p->lock_timeout,
 					   activate_lock_timer,
 					   (XtPointer) si);
-#endif
+#endif /* !NO_LOCKING */
 
 	PASSWD_INVALID:
 
@@ -889,21 +889,27 @@ main_loop (saver_info *si)
 		goto PASSWD_INVALID;
 	      si->locked_p = False;
 	    }
-#endif
-	  unblank_screen (si);
+#endif /* !NO_LOCKING */
+
+	  /* Let's kill it before unblanking, to get it to stop drawing as
+	     soon as possible... */
 	  kill_screenhack (si);
+	  unblank_screen (si);
+
 	  if (si->cycle_id)
 	    {
 	      XtRemoveTimeOut (si->cycle_id);
 	      si->cycle_id = 0;
 	    }
+
 #ifndef NO_LOCKING
 	  if (si->lock_id)
 	    {
 	      XtRemoveTimeOut (si->lock_id);
 	      si->lock_id = 0;
 	    }
-#endif
+#endif /* !NO_LOCKING */
+
 	  if (p->verbose_p)
 	    printf ("%s: user is active; going to sleep at %s.\n", progname,
 		    timestring ());
