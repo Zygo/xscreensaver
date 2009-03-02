@@ -70,7 +70,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t *) &preset_str, "preset",     "Preset",     DEF_PRESET,     t_String},
+    {&preset_str, "preset",     "Preset",     DEF_PRESET,     t_String},
 };
 
 #define countof(x) (sizeof((x))/sizeof((*x)))

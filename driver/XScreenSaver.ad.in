@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.14
-!                              25-Oct-2003
+!                              version 4.15
+!                              26-Feb-2004
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -98,48 +98,22 @@
 
 
 ! Turning on "installColormap" on 8-bit systems interacts erratically with
-! twm and tvtwm, but seems to work fine with mwm and olwm.  Try it and see.
-! If your screen turns some color other than black, the window manager is
-! buggy, and you need to set this resource to False (or get a WM that works.)
+! certain jurassic window managers.  If your screen turns some color other
+! than black, the window manager is buggy, and you need to set this resource
+! to false.  Or switch WMs.  Or join the 21st century and get a 24-bit
+! graphics card.
 !
 *installColormap:	True
 
 
-! Any program which can draw on the root window will work as a screensaver.
-! The following resource enumerates them.
+! This is the list of installed screen saver modes.  See "man xscreensaver"
+! for the syntax used here.
 !
-! Programs are separated by newlines (specified in resource files with \n).
-! Lines may be continued with a lone \ at the end of the line.
+! If you want to disable a screensaver, DO NOT remove it from this list:
+! instead, mark it as inactive by placing a "-" at the beginning of the line.
 !
-! Each line is an `sh' command.
-!
-! If the first (non-blank) character on the line is "-", then that means
-! that this command is disabled: it's still in the list, but it won't ever
-! be used.  (This is just to make it easy to disable and then re-enable 
-! them later.)
-!
-! If the first word on the line is the name of a visual followed by a
-! colon, then that visual will be used for the program, if it is available.
-! If no such visual is available, then the program will be skipped.  In
-! this way, you can specify that you want certain programs to run only
-! on color screens, and others only on mono screens, by making use of the
-! magic visual names "color" and "mono".  Likewise, if some hacks prefer
-! colormaps, but others prefer 24-bit windows, that also can be arranged
-! (in this case, by using "PseudoColor:" versus "TrueColor:".)
-!
-! Some of the screenhacks are written using OpenGL.  OpenGL programs are
-! a bit different than normal X programs, in that they prefer visuals that
-! are *half* as deep as the screen.  You can tell xscreensaver to select a
-! good visual for a GL program by using the magic visual name "GL".
-!
-! All programs must be launched in such a way that they draw on the root
-! window; they should not be spawned in the background with "&".  If shell
-! metacharacters are used, they must be understandable to `sh', not `csh'
-! (the $SHELL variable is not consulted, for unfortunate but good reasons.)
-!
-! Be sure to check out Demo Mode: run the `xscreensaver-demo' program to
-! edit the current list of programs interactively, try out the various modes,
-! and change other parameters.  See the man page for details.
+! You can use the `xscreensaver-demo' program to edit the current list of
+! screen savers interactively.
 !
 *programs:								      \
 		 "Qix (solid)" 	qix -root -solid -segments 100		    \n\
@@ -211,6 +185,7 @@
 				starfish -root				    \n\
 	     "Starfish (blob)" 	starfish -root -blob			    \n\
 				munch -root				    \n\
+				mismunch -root				    \n\
 				fadeplot -root				    \n\
 				coral -root -delay 0			    \n\
 				mountain -root				    \n\
@@ -297,6 +272,8 @@
 				apple2 -root				    \n\
                                 bubbles -root				    \n\
 				pong -root				    \n\
+				wormhole -root				    \n\
+				pacman -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -339,8 +316,8 @@
 @GL_KLUDGE@ GL:			flipscreen3d -root			    \n\
 @GL_KLUDGE@ GL:			glsnake -root				    \n\
 @GL_KLUDGE@ GL:			boxed -root				    \n\
-@GL_KLUDGE@ GL:			glforestfire -root			    \n\
--	   GL:			glforestfire -root -rain		    \n\
+@GL_KLUDGE@ GL:	"GLForestFire"		glforestfire -root		    \n\
+-	   GL:	"GLForestFire (rain)"	glforestfire -root -rain	    \n\
 @GL_KLUDGE@ GL:			sballs -root				    \n\
 @GL_KLUDGE@ GL:			cubenetic -root				    \n\
 @GL_KLUDGE@ GL:			spheremonics -root			    \n\
@@ -368,13 +345,14 @@
 @GL_KLUDGE@ GL:	    "MirrorBlob (color only)"				      \
                                 mirrorblob -root -colour -no-texture	    \n\
 @GL_KLUDGE@ GL:			blinkbox -root				    \n\
+@GL_KLUDGE@ GL:			noof -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
 				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
 				  sunrel/38/-30				    \n\
--				xplanetbg -xscreensaver -moonside             \
-                                  -markerfile earth -wait 1 -timewarp 400   \n\
+-				xplanet -vroot -wait 1 -timewarp 90000        \
+                                  -label -origin moon			    \n\
 -				xmountains -b -M -Z 0 -r 1		    \n\
 -	"XMountains (top)"	xmountains -b -M -Z 0 -r 1 -m		    \n\
 -                               xaos -root -autopilot -nogui -delay 10000     \
@@ -387,27 +365,6 @@
 -				cosmos -root                                \n\
 -	   GL:                  sphereEversion --root                       \n\
 -	   GL:                  fireflies -root                             \n
-
-
-! To display a randomized slideshow of images, you can do something like this:
-!
-!    default-n:  "Slideshow"	xv -root -rmode 5 -random -viewonly           \
-!				  -wloop -wait 30 $HOME/bitmaps/*.jpg	    \n\
-!
-! Recipes for using other slideshow programs can be found in the
-! XScreenSaver FAQ: http://www.jwz.org/xscreensaver/faq.html
-!
-! Note that we've used "default-n" as the visual name, rather than just
-! "default": this means "default visual, no install", that is, it's like
-! specifying the command-line arguments "-visual default -no-install".
-! This is necessary because, when XV or XLI arerunning in "-root" mode, they
-! always assume that the default visual and colormap are being used, rather
-! than  examining the window it is drawing on to see what visual and colormap
-! it has.  If we didn't force the default visual to be used, we would get an
-! X error.  If we didn't force the default colormap to be installed, the
-! colors would be all wrong.  "default-i" may also be used as a visual name
-! (meaning, "-visual default -install") but you probably won't ever need
-! to use that.
 
 
 
@@ -459,7 +416,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2003 by
+*splash.body.label:		Copyright © 1991-2004 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -633,6 +590,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.sballs.name:         SBalls
 *hacks.xdaliclock.name:     XDaliClock
 *hacks.xplanetbg.name:      XPlanet
+*hacks.xplanet.name:        XPlanet
 *hacks.xaos.name:           XaoS
 *hacks.xfishtank.name:      XFishTank
 *hacks.electricsheep.name:  ElectricSheep

@@ -18,7 +18,7 @@
   <boolean id="showfps"	_label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-An OpenGL Kaleidescope.
-Written by andrew dean.
+An OpenGL kaleidescope that operates on your desktop image, or on
+image files loaded from disk.  Written by andrew dean.
   </_description>
 </screensaver>

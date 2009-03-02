@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.12 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -44,7 +44,7 @@ my $verbose = 0;
 my $tmpdir = $ENV{TMPDIR};
 $tmpdir = "/tmp" unless $tmpdir;
 
-my $tmpfile = "$tmpdir/xssgv.$$.ppm";
+my $tmpfile = sprintf ("%s/xssgv.%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
 
 # this crap is because "vidtomem" can only write to a file, and uses
 # a stupid, non-overridable file name format.
@@ -55,7 +55,10 @@ my @programs = (
   "bttvgrab -d q -Q -l 1 -o ppm -f $tmpfile",	# BTTV
   "qcam > $tmpfile",				# Connectix Qcam
   "gqcam -t PPM -d $tmpfile",			# GTK+ Qcam clone
-  "streamer -s 768x576 -o $tmpfile",		# XawTV
+
+  "streamer -a -s 768x576 -o $tmpfile",		# XawTV
+  #   the "-a" option ("mute audio") arrived with XawTV 3.76.
+
   "atitv snap $tmpfile",			# ATI video capture card
 
   "grab -type ppm -format ntsc -source 1 " .

@@ -152,10 +152,10 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
-	{(caddr_t *) & sizex, (char *) "sizex", (char *) "SizeX", (char *) DEF_SIZEX, t_Int},
-	{(caddr_t *) & sizey, (char *) "sizey", (char *) "SizeY", (char *) DEF_SIZEY, t_Int},
-	{(caddr_t *) & sizez, (char *) "sizez", (char *) "SizeZ", (char *) DEF_SIZEZ, t_Int},
-	{(caddr_t *) & hideshuffling, (char *) "hideshuffling", (char *) "Hideshuffling", (char *) DEF_HIDESHUFFLING, t_Bool}
+	{&sizex, "sizex", "SizeX", DEF_SIZEX, t_Int},
+	{&sizey, "sizey", "SizeY", DEF_SIZEY, t_Int},
+	{&sizez, "sizez", "SizeZ", DEF_SIZEZ, t_Int},
+	{&hideshuffling, "hideshuffling", "Hideshuffling", DEF_HIDESHUFFLING, t_Bool}
 };
 
 static OptionStruct desc[] =

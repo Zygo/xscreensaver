@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -115,6 +115,9 @@
 
 #include "logo-50.xpm"
 #include "logo-180.xpm"
+
+#undef dgettext  /* else these are defined twice... */
+#undef dcgettext
 
 #include "demo-Gtk-widgets.h"
 #include "demo-Gtk-support.h"
@@ -650,9 +653,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2003 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-2004 %s"), s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2003 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-2004 %s"), s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
@@ -2833,15 +2836,15 @@ populate_demo_window (state *s, int list_elt)
   if (!pretty_name)
     pretty_name = strdup (_("Preview"));
 
-  gtk_frame_set_label (frame1, pretty_name);
-  gtk_frame_set_label (frame2, pretty_name);
+  gtk_frame_set_label (frame1, _(pretty_name));
+  gtk_frame_set_label (frame2, _(pretty_name));
 
   gtk_entry_set_text (cmd, (hack ? hack->command : ""));
   gtk_entry_set_position (cmd, 0);
 
   {
     char title[255];
-    sprintf (title, "%s: %.100s Settings",
+    sprintf (title, _("%s: %.100s Settings"),
              progclass, (pretty_name ? pretty_name : "???"));
     gtk_window_set_title (GTK_WINDOW (s->popup_widget), title);
   }

@@ -98,7 +98,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
+  {&do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
 };
 
 ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};

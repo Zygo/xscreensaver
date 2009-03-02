@@ -115,9 +115,9 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t *) & do_texture, (char *) "texture", (char *) "Texture", (char *) DEF_TEXTURE, t_Bool},
-    {(caddr_t *) & do_trackmouse, (char *) "trackmouse", (char *) "TrackMouse", (char *) DEF_TRACKMOUSE, t_Bool},
-    {(caddr_t *) & object, (char *) "object", (char *) "Object", (char *) DEF_OBJECT, t_Int},
+    {&do_texture,    "texture",    "Texture",    DEF_TEXTURE,    t_Bool},
+    {&do_trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool},
+    {&object,        "object",     "Object",     DEF_OBJECT,     t_Int},
 
 };
 

@@ -17,6 +17,11 @@
           low="1" high="100" default="20"
           convert="invert"/>
 
+  <select id="mode">
+    <option id="dumb" _label="Dump pipe"/>
+    <option id="pty"  _label="Use PTY" arg-set="-pty"/>
+  </select>
+
   <file id="program" _label="Text Program" arg="-program %"/>
 
   <!-- #### -font [fixed] -->

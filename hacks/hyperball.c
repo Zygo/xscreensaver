@@ -228,8 +228,7 @@ init (struct hyper_state *hs)
     root = get_boolean_resource("root", "Boolean");
     XGetWindowAttributes (dpy, win, &wa);
     XSelectInput(dpy, win, root ? ExposureMask :
-		 wa.your_event_mask | ExposureMask |
-		 ButtonPressMask | StructureNotifyMask);
+		 wa.your_event_mask | ExposureMask | ButtonPressMask);
 
     width = wa.width;
     height = wa.height;

@@ -478,6 +478,8 @@ play_pong (void)
 char *progclass = "pong";
 
 char *defaults [] = {
+  ".background: black",
+  ".foreground: white",
   "*delay:	10000",
   "*speed:      6",
   ANALOGTV_DEFAULTS

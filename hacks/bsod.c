@@ -314,9 +314,9 @@ windows (Display *dpy, Window window, int delay, int which)
       "with the manufacturer for driver updates. Try changing video\n"
       "adapters.\n"
       "\n"
-      "Check with you hardware vendor for any BIOS updates. Disable\n"
+      "Check with your hardware vendor for any BIOS updates. Disable\n"
       "BIOS memory options such as caching or shadowing. If you need\n"
-      "to use Safe Mode to remove or disable compinents, restart your\n"
+      "to use Safe Mode to remove or disable components, restart your\n"
       "computer, press F8 to select Advanced Startup Options, and then\n"
       "select Safe Mode.\n"
       "\n"
@@ -1735,7 +1735,7 @@ sparc_solaris (Display* dpy, Window window, int delay)
 
   const char *msg1 =
     "BAD TRAP: cpu=0 type=0x31 rp=0x2a10043b5e0 addr=0xf3880 mmu_fsr=0x0\n"
-    "BAD TRAP occured in module \"unix\" due to an illegal access to a"
+    "BAD TRAP occurred in module \"unix\" due to an illegal access to a"
     " user address.\n"
     "adb: trap type = 0x31\n"
     "addr=0xf3880\n"

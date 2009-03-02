@@ -76,6 +76,20 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.14:   * New hacks, `wormhole', `mismunch', `noof', and
+                        `pacman'.
+                      * `phosphor' and `apple2' include vt100 emulators now:
+                        this means you can do "phosphor -program top", or
+                        can use either program as an xterm replacement:
+                        "apple2 -text -fast -program 'xemacs -nw'".
+                      * `analogtv' (and related) fill the screen better.
+                      * The '-gradient' option works in `atlantis' now.
+                      * Minor updates to `blinkbox', `queens', `endgame',
+                        `glmatrix', `mirrorblob', `blocktube', and `molecule'.
+                      * Integrated SuSE's "external passwd helper" support.
+                      * Marginally better /tmp handling in various programs.
+                      * Updated config defaults for xplanet 1.0.3.
+                      * Portability fixes.
 Changes since 4.13:   * New hacks, `fontglide', `apple2', `xanalogtv', `pong',
                         `gleidescope', `mirrorblob', and `blinkbox'.
                       * New version of `glsnake' (with many more models.)

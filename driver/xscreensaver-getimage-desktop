@@ -34,7 +34,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my @grabber   = ("screencapture", "-x");
 my @converter = ("pdf2jpeg");
@@ -81,7 +81,7 @@ sub grab_image {
   my $tmpdir = $ENV{TMPDIR};
   $tmpdir = "/tmp" unless $tmpdir;
 
-  my $tmpfile = "$tmpdir/xssgrab.$$.pdf";
+  my $tmpfile = sprintf ("%s/xssgrab.%08x.pdf", $tmpdir, rand(0xffffffff));
   my @cmd     = (@grabber, $tmpfile);
 
   unlink $tmpfile;

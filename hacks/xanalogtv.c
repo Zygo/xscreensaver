@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>
 
@@ -194,6 +195,8 @@ draw_color_square(analogtv_input *input)
 char *progclass = "XAnalogTV";
 
 char *defaults [] = {
+  ".background:	     black",
+  ".foreground:	     white",
   "*delay:	     5",
   ANALOGTV_DEFAULTS
   0,

@@ -95,12 +95,12 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
-  {(caddr_t *) &thickness, "thickness", "Thickness",  DEF_THICKNESS, t_Float},
-  {(caddr_t *) &segments,  "segments",  "Segments",   DEF_SEGMENTS,  t_Int},
-  {(caddr_t *) &duration,  "duration",  "Duration",   DEF_DURATION,  t_Int},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
+  {&thickness, "thickness", "Thickness",  DEF_THICKNESS, t_Float},
+  {&segments,  "segments",  "Segments",   DEF_SEGMENTS,  t_Int},
+  {&duration,  "duration",  "Duration",   DEF_DURATION,  t_Int},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

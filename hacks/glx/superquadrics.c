@@ -111,7 +111,7 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-  {(caddr_t *) & spinspeed, "spinspeed", "Spinspeed", DEF_SPINSPEED, t_Float}
+  {&spinspeed, "spinspeed", "Spinspeed", DEF_SPINSPEED, t_Float}
 };
 static OptionStruct desc[] =
 {

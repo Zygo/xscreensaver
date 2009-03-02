@@ -35,10 +35,17 @@
 
   <_description>
 Loads a random sequence of images and smoothly scans and zooms around
-in each, fading from pan to pan.  You can set the directory from which
-images are loaded on the "Advanced" tab.
+in each, fading from pan to pan.  
 
-This  program  requires  a good video card capable of supporting large
+To tell it where to find the images to display, go to the "Advanced"
+tab on the Screensaver Preferences window.  Select "Choose Random
+Images", and enter your image directory in the text field right below
+that.
+
+(Note: not the the "Advanced" button at the bottom of this window:
+the one on the other window.)
+
+This program requires a good video card capable of supporting large
 textures.
 
 Written by Jamie Zawinski and Mike Oliphant.

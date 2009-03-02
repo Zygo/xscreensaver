@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -139,6 +139,32 @@ sub error {
   exit 1;
 }
 
+# Any files on this list will be deleted at exit.
+#
+my @all_tmpfiles = ();
+
+sub signal_cleanup {
+  unlink @all_tmpfiles;
+}
+
+sub init_signals {
+
+  $SIG{HUP}  = \&signal_cleanup;
+  $SIG{INT}  = \&signal_cleanup;
+  $SIG{QUIT} = \&signal_cleanup;
+  $SIG{ABRT} = \&signal_cleanup;
+  $SIG{KILL} = \&signal_cleanup;
+  $SIG{TERM} = \&signal_cleanup;
+
+  # Need this so that if giftopnm dies, we don't die.
+  $SIG{PIPE} = 'IGNORE';
+}
+
+END { signal_cleanup(); }
+
+
+
+
 # ####  Lifted from driver/xscreensaver-getimage-file
 #
 sub pick_displayer {
@@ -188,6 +214,7 @@ sub randcolors {
 }
 
 
+
 sub filter_subst {
   my ($filter, $width, $height, @tmpfiles) = @_;
   my $colors = randcolors();
@@ -219,8 +246,12 @@ sub frob_ppm {
 
   my $tmpdir = $ENV{TMPDIR};
   $tmpdir = "/tmp" unless $tmpdir;
-  my $fn = sprintf("$tmpdir/vw.%04x", $$);
-  my @files = ( "$fn", "$fn.1", "$fn.2", "$fn.3" );
+  my $fn =  sprintf ("%s/vidwhacker-0-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn1 = sprintf ("%s/vidwhacker-1-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn2 = sprintf ("%s/vidwhacker-2-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn3 = sprintf ("%s/vidwhacker-3-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my @files = ( "$fn", "$fn1", "$fn2", "$fn3" );
+  push @all_tmpfiles, @files;
 
   my $n = int(rand($#filters+1));
   my $filter = $filters[$n];
@@ -389,9 +420,10 @@ sub dispose_ppm {
 
     my $tmpdir = $ENV{TMPDIR};
     $tmpdir = "/tmp" unless $tmpdir;
-    my $fn = sprintf("$tmpdir/vw.%04x", $$);
+    my $fn =  sprintf ("%s/vidwhacker-%08x", $tmpdir, rand(0xFFFFFFFF));
     local *OUT;
     unlink $fn;
+    push @all_tmpfiles, $fn;
     open (OUT, ">$fn") || error "writing $fn: $!";
     print OUT $ppm;
     close OUT;
@@ -462,6 +494,8 @@ sub main {
     elsif (m/^-./) { usage; }
     else { usage; }
   }
+
+  init_signals();
 
   read_config;
 

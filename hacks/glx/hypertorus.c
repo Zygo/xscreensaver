@@ -208,27 +208,27 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
-  { (caddr_t *) &display_mode,  "displayMode",  "DisplayMode",
+  { &display_mode,  "displayMode",  "DisplayMode",
     DEF_DISPLAY_MODE,  t_Int },
-  { (caddr_t *) &appearance,    "appearance",   "Appearance",
+  { &appearance,    "appearance",   "Appearance",
     DEF_APPEARANCE,    t_Int },
-  { (caddr_t *) &colors,        "colors",       "Colors",
+  { &colors,        "colors",       "Colors",
     DEF_COLORS,        t_Int },
-  { (caddr_t *) &projection_3d, "projection3d", "Projection3d",
+  { &projection_3d, "projection3d", "Projection3d",
     DEF_3D_PROJECTION, t_Int },
-  { (caddr_t *) &projection_4d, "projection4d", "Projection4d",
+  { &projection_4d, "projection4d", "Projection4d",
     DEF_4D_PROJECTION, t_Int },
-  { (caddr_t *) &speed_wx,      "speedwx",      "Speedwx",
+  { &speed_wx,      "speedwx",      "Speedwx",
     DEF_DALPHA,        t_Float},
-  { (caddr_t *) &speed_wy,      "speedwy",      "Speedwy",
+  { &speed_wy,      "speedwy",      "Speedwy",
     DEF_DBETA,         t_Float},
-  { (caddr_t *) &speed_wz,      "speedwz",      "Speedwz",
+  { &speed_wz,      "speedwz",      "Speedwz",
     DEF_DDELTA,        t_Float},
-  { (caddr_t *) &speed_xy,      "speedxy",      "Speedxy",
+  { &speed_xy,      "speedxy",      "Speedxy",
     DEF_DZETA,         t_Float},
-  { (caddr_t *) &speed_xz,      "speedxz",      "Speedxz",
+  { &speed_xz,      "speedxz",      "Speedxz",
     DEF_DETA,          t_Float},
-  { (caddr_t *) &speed_yz,      "speedyz",      "Speedyz",
+  { &speed_yz,      "speedyz",      "Speedyz",
     DEF_DTHETA,        t_Float}
 };
 

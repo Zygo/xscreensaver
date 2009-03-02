@@ -1,5 +1,5 @@
 /*
- * starwars, Copyright (c) 1998-2001 Jamie Zawinski <jwz@jwz.org> and
+ * starwars, Copyright (c) 1998-2001, 2004 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -162,17 +162,17 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &program,        "program", "Program", DEF_PROGRAM, t_String},
-  {(caddr_t *) &max_lines,      "lines",   "Integer", DEF_LINES,   t_Int},
-  {(caddr_t *) &scroll_steps,   "steps",   "Integer", DEF_STEPS,   t_Int},
-  {(caddr_t *) &star_spin,      "spin",    "Float",   DEF_SPIN,    t_Float},
-  {(caddr_t *) &font_size,      "fontSize","Float",   DEF_STEPS,   t_Float},
-  {(caddr_t *) &target_columns, "columns", "Integer", DEF_COLUMNS, t_Int},
-  {(caddr_t *) &wrap_p,         "lineWrap","Boolean", DEF_COLUMNS, t_Bool},
-  {(caddr_t *) &alignment_str,  "alignment","Alignment",DEF_ALIGN, t_String},
-  {(caddr_t *) &smooth_p,       "smooth",  "Boolean", DEF_SMOOTH,  t_Bool},
-  {(caddr_t *) &thick_p,        "thick",   "Boolean", DEF_THICK,   t_Bool},
-  {(caddr_t *) &fade_p,         "fade",    "Boolean", DEF_FADE,    t_Bool},
+  {&program,        "program",   "Program",    DEF_PROGRAM, t_String},
+  {&max_lines,      "lines",     "Integer",    DEF_LINES,   t_Int},
+  {&scroll_steps,   "steps",     "Integer",    DEF_STEPS,   t_Int},
+  {&star_spin,      "spin",      "Float",      DEF_SPIN,    t_Float},
+  {&font_size,      "fontSize",  "Float",      DEF_STEPS,   t_Float},
+  {&target_columns, "columns",   "Integer",    DEF_COLUMNS, t_Int},
+  {&wrap_p,         "lineWrap",  "Boolean",    DEF_COLUMNS, t_Bool},
+  {&alignment_str,  "alignment", "Alignment", DEF_ALIGN,    t_String},
+  {&smooth_p,       "smooth",    "Boolean",   DEF_SMOOTH,   t_Bool},
+  {&thick_p,        "thick",     "Boolean",   DEF_THICK,    t_Bool},
+  {&fade_p,         "fade",      "Boolean",   DEF_FADE,     t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -265,7 +265,7 @@ launch_text_generator (sws_configuration *sc)
     {
       oprogram = FORTUNE_PROGRAM;
 
-#ifdef __linux__
+#if defined(__linux__) && defined(HAVE_UNAME)
       {
         static int done_once = 0;
         if (!done_once)
@@ -295,7 +295,7 @@ launch_text_generator (sws_configuration *sc)
               }
           }
       }
-#endif /* __linux__ */
+#endif /* __linux__ && HAVE_UNAME */
 
 #ifdef __APPLE__   /* MacOS X + XDarwin */
       {

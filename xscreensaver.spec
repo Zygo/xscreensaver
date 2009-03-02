@@ -1,7 +1,7 @@
 %define	name		xscreensaver
-%define	version		4.14
+%define	version		4.15
 %define	release		1
-%define	serial		1
+%define	epoch		1
 %define	x11_prefix	/usr/X11R6
 %define	gnome_prefix	/usr
 %define	kde_prefix	/usr
@@ -18,10 +18,10 @@ Summary(fr):	Economiseur d'écran et verrouillage de terminaux X
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
-Serial:		%{serial}
+Epoch:		%{epoch}
 Group:		Amusements/Graphics
-Copyright:	BSD
-URL:		http://www.jwz.org/xscreensaver
+License:	BSD
+URL:		http://www.jwz.org/xscreensaver/
 Vendor:		Jamie Zawinski <jwz@jwz.org>
 Source:		%{name}-%{version}.tar.gz
 Buildroot:	%{_tmppath}/%{name}-%{version}-root
@@ -48,7 +48,7 @@ Plus de 175 modes d'affichage sont inclus dans ce paquet.
 
 %{?USE_GL:%package gl}
 %{?USE_GL:Group:	Amusements/Graphics}
-%{?USE_GL:Requires:	xscreensaver = %{version}}
+%{?USE_GL:Requires:     xscreensaver = %{epoch}:%{version}-%{release}}
 %{?USE_GL:Summary:	A set of GL screensavers}
 %{?USE_GL:Summary(fr):	Un ensemble d'économiseurs d'écran OpenGL}
 %{?USE_GL:%description gl}

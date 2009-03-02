@@ -66,7 +66,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &planetary, "planetary", "Planetary", DEF_PLANETARY, t_Bool},
+  {&planetary, "planetary", "Planetary", DEF_PLANETARY, t_Bool},
 };
 */
 

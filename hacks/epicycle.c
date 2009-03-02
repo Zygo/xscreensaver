@@ -589,8 +589,7 @@ setup(void)
     {
       XGetWindowAttributes (dpy, window, &xgwa);
       XSelectInput (dpy, window,
-                    xgwa.your_event_mask | ExposureMask |
-                    ButtonPressMask |StructureNotifyMask);
+                    xgwa.your_event_mask | ExposureMask | ButtonPressMask);
     }
   
 }

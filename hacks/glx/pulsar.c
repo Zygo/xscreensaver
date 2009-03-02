@@ -157,17 +157,17 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-  {(caddr_t *) &num_quads, "quads", "Quads", DEF_NUM_QUADS, t_Int},
-  {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
-  {(caddr_t *) &do_wire,    "wire",   "Wire",   DEF_WIRE,   t_Bool},
-  {(caddr_t *) &do_blend,    "blend",   "Blend",   DEF_BLEND,   t_Bool},
-  {(caddr_t *) &do_fog,    "fog",   "Fog",   DEF_FOG,   t_Bool},
-  {(caddr_t *) &do_antialias,    "antialias",   "Antialias",   DEF_ANTIALIAS,   t_Bool},
-  {(caddr_t *) &do_texture,    "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
-  {(caddr_t *) &do_texture_quality,    "texture_quality",   "Texture_quality",   DEF_TEXTURE_QUALITY,   t_Bool},
-  {(caddr_t *) &do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
-  {(caddr_t *) &do_depth,    "doDepth",   "DoDepth",   DEF_DO_DEPTH,   t_Bool},
-  {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {&num_quads,    "quads",     "Quads",     DEF_NUM_QUADS, t_Int},
+  {&do_light,     "light",     "Light",     DEF_LIGHT,     t_Bool},
+  {&do_wire,      "wire",      "Wire",      DEF_WIRE,      t_Bool},
+  {&do_blend,     "blend",     "Blend",     DEF_BLEND,     t_Bool},
+  {&do_fog,       "fog",       "Fog",       DEF_FOG,       t_Bool},
+  {&do_antialias, "antialias", "Antialias", DEF_ANTIALIAS, t_Bool},
+  {&do_texture,   "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
+  {&do_texture_quality, "texture_quality", "Texture_quality", DEF_TEXTURE_QUALITY,   t_Bool},
+  {&do_mipmap,    "mipmap",    "Mipmap",    DEF_MIPMAP,    t_Bool},
+  {&do_depth,    "doDepth",    "DoDepth",   DEF_DO_DEPTH,  t_Bool},
+  {&which_image, "image",      "Image",     DEF_IMAGE,     t_String},
 };
 
 

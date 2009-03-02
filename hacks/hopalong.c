@@ -121,17 +121,17 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & martin, (char *) "martin", (char *) "Martin", (char *) DEF_MARTIN, t_Bool},
-	{(caddr_t *) & popcorn, (char *) "popcorn", (char *) "Popcorn", (char *) DEF_POPCORN, t_Bool},
-	{(caddr_t *) & ejk1, (char *) "ejk1", (char *) "EJK1", (char *) DEF_EJK1, t_Bool},
-	{(caddr_t *) & ejk2, (char *) "ejk2", (char *) "EJK2", (char *) DEF_EJK2, t_Bool},
-	{(caddr_t *) & ejk3, (char *) "ejk3", (char *) "EJK3", (char *) DEF_EJK3, t_Bool},
-	{(caddr_t *) & ejk4, (char *) "ejk4", (char *) "EJK4", (char *) DEF_EJK4, t_Bool},
-	{(caddr_t *) & ejk5, (char *) "ejk5", (char *) "EJK5", (char *) DEF_EJK5, t_Bool},
-	{(caddr_t *) & ejk6, (char *) "ejk6", (char *) "EJK6", (char *) DEF_EJK6, t_Bool},
-	{(caddr_t *) & rr, (char *) "rr", (char *) "RR", (char *) DEF_RR, t_Bool},
-	{(caddr_t *) & jong, (char *) "jong", (char *) "Jong", (char *) DEF_JONG, t_Bool},
-	{(caddr_t *) & sine, (char *) "sine", (char *) "Sine", (char *) DEF_SINE, t_Bool}
+	{&martin,  "martin",  "Martin",  DEF_MARTIN,  t_Bool},
+	{&popcorn, "popcorn", "Popcorn", DEF_POPCORN, t_Bool},
+	{&ejk1, "ejk1", "EJK1", DEF_EJK1, t_Bool},
+	{&ejk2, "ejk2", "EJK2", DEF_EJK2, t_Bool},
+	{&ejk3, "ejk3", "EJK3", DEF_EJK3, t_Bool},
+	{&ejk4, "ejk4", "EJK4", DEF_EJK4, t_Bool},
+	{&ejk5, "ejk5", "EJK5", DEF_EJK5, t_Bool},
+	{&ejk6, "ejk6", "EJK6", DEF_EJK6, t_Bool},
+	{&rr,   "rr",   "RR",   DEF_RR,   t_Bool},
+	{&jong, "jong", "Jong", DEF_JONG, t_Bool},
+	{&sine, "sine", "Sine", DEF_SINE, t_Bool}
 };
 static OptionStruct desc[] =
 {

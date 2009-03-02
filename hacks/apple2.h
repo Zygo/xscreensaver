@@ -94,6 +94,7 @@ void a2_add_disk_item(apple2_state_t *st, char *name, u_char *data,
                       int len, char type);
 void a2_scroll(apple2_state_t *st);
 void a2_printc(apple2_state_t *st, char c);
+void a2_printc_noscroll(apple2_state_t *st, char c);
 void a2_prints(apple2_state_t *st, char *s);
 void a2_goto(apple2_state_t *st, int r, int c);
 void a2_cls(apple2_state_t *st);

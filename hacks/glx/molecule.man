@@ -107,11 +107,15 @@ This will be very fast.
 When using the built-in data set, change to a new molecule every
 this-many seconds.  Default is 20 seconds.
 .TP 8
-.B \-molecule \fIfilename\fP
+.B \-molecule \fIfile-or-directory\fP
 Instead of using the built-in molecules, read one from the given file.
 This file must be in PDB (Protein Data Base) format.  (Note that it's
 not uncommon for PDB files to contain only the atoms, with no (or
 little) information about the atomic bonds.)
+
+This can also be a directory, in which case, all of the .pdb files in
+that directory will be loaded.  A new one will be displayed at random
+every few seconds (as per the \fI\-timeout\fP option.)
 .PP
 When the molecule is too large (bigger than about 30 angstroms from
 side to side), the \fI\-label\fP option will be automatically turned
@@ -142,7 +146,7 @@ A good source of PDB files:
 http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
 .EE
 .SH COPYRIGHT
-Copyright \(co 2001 by Jamie Zawinski.
+Copyright \(co 2001, 2004 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and
 its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

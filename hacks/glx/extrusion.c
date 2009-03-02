@@ -141,13 +141,13 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-  {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
-  {(caddr_t *) &do_wire,    "wire",   "Wire",   DEF_WIRE,   t_Bool},
-  {(caddr_t *) &do_texture,    "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
-  {(caddr_t *) &do_texture_quality,    "texture_quality",   "Texture_Quality",   DEF_TEXTURE_QUALITY,   t_Bool},
-  {(caddr_t *) &do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
-  {(caddr_t *) &which_name, "name",   "Name",   DEF_NAME,   t_String},
-  {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {&do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
+  {&do_wire,    "wire",   "Wire",   DEF_WIRE,   t_Bool},
+  {&do_texture,    "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
+  {&do_texture_quality,    "texture_quality",   "Texture_Quality",   DEF_TEXTURE_QUALITY,   t_Bool},
+  {&do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
+  {&which_name, "name",   "Name",   DEF_NAME,   t_String},
+  {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
 };
 
 

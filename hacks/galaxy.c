@@ -67,7 +67,7 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
- {(caddr_t *) & tracks, "tracks", "Tracks", DEF_TRACKS, t_Bool}
+ {&tracks, "tracks", "Tracks", DEF_TRACKS, t_Bool}
 };
 
 static OptionStruct desc[] =

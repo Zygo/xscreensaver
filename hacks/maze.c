@@ -1659,8 +1659,7 @@ screenhack(Display *display, Window window)
       XWindowAttributes xgwa;
       XGetWindowAttributes (dpy, window, &xgwa);
       XSelectInput (dpy, win,
-                    xgwa.your_event_mask | ExposureMask |
-                    ButtonPressMask |StructureNotifyMask);
+                    xgwa.your_event_mask | ExposureMask | ButtonPressMask);
     }
   
   gc  = XCreateGC(dpy, win, 0, 0);

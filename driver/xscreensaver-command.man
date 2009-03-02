@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "25-Oct-2003 (4.14)" "X Version 11"
+.TH XScreenSaver 1 "26-Feb-2004 (4.15)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -148,8 +148,8 @@ using a machine remotely, and you find that some display modes are using too
 much CPU.  
 
 (If you want to do this \fIpermanently\fP, that is, you want the screen saver
-to only blank the screen and not run demos at all, then set the \fIprograms\fP
-resource to an empty list:  See
+to only blank the screen and not run demos at all, then set the \fImode\fP
+preference to "blank":  See
 .BR xscreensaver (1)
 for details.)
 .TP 8
@@ -256,7 +256,7 @@ and related tools can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver (1)
 .BR xscreensaver\-demo (1)
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

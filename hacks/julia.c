@@ -63,7 +63,7 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & track_p, "mouse", "Mouse", DEF_MOUSE, t_Bool},
+	{&track_p, "mouse", "Mouse", DEF_MOUSE, t_Bool},
 };
 static OptionStruct desc[] =
 {

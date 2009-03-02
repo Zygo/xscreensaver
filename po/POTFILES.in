@@ -1,14 +1,14 @@
-# Auto-generated: Mon Oct 13 17:43:29 PDT 2003
-driver/demo-Gtk.c
+# Auto-generated: Thu Jan 29 17:47:32 RST 2004
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
+driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade
 driver/xscreensaver-demo.glade2
 hacks/config/anemone.xml
-hacks/config/antspotlight.xml
 hacks/config/ant.xml
+hacks/config/antspotlight.xml
 hacks/config/apollonian.xml
 hacks/config/apple2.xml
 hacks/config/atlantis.xml
@@ -16,6 +16,7 @@ hacks/config/attraction.xml
 hacks/config/atunnel.xml
 hacks/config/barcode.xml
 hacks/config/blaster.xml
+hacks/config/blinkbox.xml
 hacks/config/blitspin.xml
 hacks/config/blocktube.xml
 hacks/config/bouboule.xml
@@ -69,6 +70,7 @@ hacks/config/galaxy.xml
 hacks/config/gears.xml
 hacks/config/gflux.xml
 hacks/config/glblur.xml
+hacks/config/gleidescope.xml
 hacks/config/glforestfire.xml
 hacks/config/glknots.xml
 hacks/config/glmatrix.xml
@@ -108,9 +110,10 @@ hacks/config/loop.xml
 hacks/config/maze.xml
 hacks/config/menger.xml
 hacks/config/metaballs.xml
+hacks/config/mirrorblob.xml
 hacks/config/moebius.xml
-hacks/config/moire2.xml
 hacks/config/moire.xml
+hacks/config/moire2.xml
 hacks/config/molecule.xml
 hacks/config/morph3d.xml
 hacks/config/mountain.xml
@@ -126,6 +129,7 @@ hacks/config/piecewise.xml
 hacks/config/pipes.xml
 hacks/config/polyominoes.xml
 hacks/config/polytopes.xml
+hacks/config/pong.xml
 hacks/config/popsquares.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
@@ -140,15 +144,15 @@ hacks/config/rotzoomer.xml
 hacks/config/rubik.xml
 hacks/config/sballs.xml
 hacks/config/shadebobs.xml
-hacks/config/sierpinski3d.xml
 hacks/config/sierpinski.xml
+hacks/config/sierpinski3d.xml
 hacks/config/slidescreen.xml
 hacks/config/slip.xml
 hacks/config/sonar.xml
 hacks/config/speedmine.xml
+hacks/config/sphere.xml
 hacks/config/sphereEversion.xml
 hacks/config/spheremonics.xml
-hacks/config/sphere.xml
 hacks/config/spiral.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml

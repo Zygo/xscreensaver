@@ -8,6 +8,15 @@
           _label="Speed" _low-label="Fast" _high-label="Slow"
           low="0" high="50000" default="30000"/>
 
+  <number id="boxsize" type="spinbutton" arg="-boxsize %"
+          _label="Box Size" low="1" high="4" default="1"/>
+
+  <hgroup>
+   <boolean id="fade"      _label="Fade"       arg-unset="-no-fade"/>
+   <boolean id="dissolve"  _label="Dissolve"   arg-set="-dissolve"/>
+   <boolean id="wire"      _label="Wireframe"  arg-set="-wireframe"/>
+  </hgroup>
+
   <_description>
 Shows a ball contained inside of a bounding box.
 Colored blocks blink in when the ball hits the edges.

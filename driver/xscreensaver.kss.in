@@ -58,23 +58,27 @@ while [ -n "$1" ]; do
       exit
       ;;
 
-    -test)
-      # I was unable to grep stdout because xscreensaver nabs it. But I was able
-      # to output it to a file, and grep the file.
-      TEMP_FILE=/tmp/xsc.$RANDOM
-      $bindir/xscreensaver -no-splash -verbose -no-capture-stderr 2> $TEMP_FILE &
-      $bindir/xscreensaver-command -activate
-      while true; do
-        ExitNow=$(grep -E -c unblanking\|already $TEMP_FILE)
-        if [ $ExitNow != 0 ]; then
-          kill $!
-          rm $TEMP_FILE
-          exit
-        fi
-        sleep 1
-      done
-      exit	# It should never get this far.
-      ;;
+# I don't know what "-test" was supposed to do, but I suspect the
+# answer is "something stupid."  Also, it uses /tmp insecurely.
+# So let's just comment it out, shall we?  -jwz, 10-Nov-2003.
+#
+#    -test)
+#      # I was unable to grep stdout because xscreensaver nabs it. But I was able
+#      # to output it to a file, and grep the file.
+#      TEMP_FILE=/tmp/xsc.$RANDOM
+#      $bindir/xscreensaver -no-splash -verbose -no-capture-stderr 2> $TEMP_FILE &
+#      $bindir/xscreensaver-command -activate
+#      while true; do
+#        ExitNow=$(grep -E -c unblanking\|already $TEMP_FILE)
+#        if [ $ExitNow != 0 ]; then
+#          kill $!
+#          rm $TEMP_FILE
+#          exit
+#        fi
+#        sleep 1
+#      done
+#      exit	# It should never get this far.
+#      ;;
 
 #    -corners)
 #      echo "Not yet supported"
@@ -124,7 +128,7 @@ if [ -n "$Install" ] ; then
   wait $!                                               # Do not exit, just wait for signals.
 
 else
-  echo "Usage: ./xscreensaver.kss -install|-setup|-test|-desc [-delay num] [-lock] [-nice num]"
+  echo "Usage: ./xscreensaver.kss -install|-setup|-desc [-delay num] [-lock] [-nice num]"
 #  echo "  -corners xxxx     Placing cursor in corner performs action:"
 #  echo "                     x = i  no action (ignore)"
 #  echo "                     x = s  save screen"
@@ -139,7 +143,7 @@ else
   echo "  -preview wid      Run in the specified XWindow"
 #  echo "  -inroot           Run in the root window"
   echo "  -setup            Setup screen saver"
-  echo "  -test             Invoke the screen saver immediately"
+#  echo "  -test             Invoke the screen saver immediately"
 fi
 
 # End of script - "xscreensaver.kss"

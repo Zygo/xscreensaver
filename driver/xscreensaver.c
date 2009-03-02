@@ -255,7 +255,7 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2003 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-2004 by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
   All xscreensaver configuration is via the `~/.xscreensaver' file.\n\
   Rather than editing that file by hand, just run `xscreensaver-demo':\n\
@@ -719,7 +719,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2003 "
+	     "%s %s, copyright (c) 1991-2004 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 
@@ -1372,27 +1372,33 @@ main_loop (saver_info *si)
 
          To avoid this: after un-blanking the screen, sleep for a second,
          and then really make sure the window is unmapped.
+
+         Update: actually, let's do that once a second for 8 seconds,
+         because sometimes the machine is slow, and we miss...
        */
       {
-        int i;
-        XSync (si->dpy, False);
-        sleep (1);
-        for (i = 0; i < si->nscreens; i++)
+        int i, j;
+        for (j = 0; j < 8; j++)
           {
-            saver_screen_info *ssi = &si->screens[i];
-            Window w = ssi->screensaver_window;
-            XWindowAttributes xgwa;
-            XGetWindowAttributes (si->dpy, w, &xgwa);
-            if (xgwa.map_state != IsUnmapped)
+            XSync (si->dpy, False);
+            sleep (1);
+            for (i = 0; i < si->nscreens; i++)
               {
-                if (p->verbose_p)
-                  fprintf (stderr,
-                           "%s: %d: client race! emergency unmap 0x%lx.\n",
-                           blurb(), i, (unsigned long) w);
-                XUnmapWindow (si->dpy, w);
+                saver_screen_info *ssi = &si->screens[i];
+                Window w = ssi->screensaver_window;
+                XWindowAttributes xgwa;
+                XGetWindowAttributes (si->dpy, w, &xgwa);
+                if (xgwa.map_state != IsUnmapped)
+                  {
+                    if (p->verbose_p)
+                      fprintf (stderr,
+                               "%s: %d: client race! emergency unmap 0x%lx.\n",
+                               blurb(), i, (unsigned long) w);
+                    XUnmapWindow (si->dpy, w);
+                  }
               }
+            XSync (si->dpy, False);
           }
-        XSync (si->dpy, False);
       }
     }
 }

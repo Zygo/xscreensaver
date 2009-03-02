@@ -55,6 +55,10 @@ extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 extern Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
 extern Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
+#ifdef PASSWD_HELPER_PROGRAM
+extern Bool ext_priv_init (int argc, char **argv, Bool verbose_p);
+extern Bool ext_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
+#endif
 extern Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
 extern Bool pwent_priv_init (int argc, char **argv, Bool verbose_p);
 extern Bool pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
@@ -74,6 +78,10 @@ struct auth_methods methods[] = {
   { "PAM",              0, pam_priv_init, pam_passwd_valid_p, 
                         False, False },
 # endif
+# ifdef PASSWD_HELPER_PROGRAM
+  { "external",		0, ext_priv_init, ext_passwd_valid_p,
+  			False, False },
+#endif
   { "normal",           pwent_lock_init, pwent_priv_init, pwent_passwd_valid_p,
                         False, False }
 };

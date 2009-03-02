@@ -53,7 +53,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.107 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.108 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -1967,9 +1967,15 @@ sub url_only_output {
 #
 ##############################################################################
 
-my $image_ppm   = ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp") . "/webcollage." . $$;
-my $image_tmp1  = $image_ppm . "-1";
-my $image_tmp2  = $image_ppm . "-2";
+my $image_ppm   = sprintf ("%s/webcollage-%08x",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
+my $image_tmp1  = sprintf ("%s/webcollage-1-%08x",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
+my $image_tmp2  = sprintf ("%s/webcollage-2-%08x",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
 
 my $filter_cmd = undef;
 my $post_filter_cmd = undef;

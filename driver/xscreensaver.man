@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "25-Oct-2003 (4.14)" "X Version 11"
+.TH XScreenSaver 1 "26-Feb-2004 (4.15)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -231,7 +231,7 @@ Whether to print diagnostics.  Default false.
 .TP 8
 .B timestamp\fP (class \fBBoolean\fP)
 Whether to print the time of day along with any other diagnostic messages.
-Default false.
+Default true.
 .TP 8
 .B splash\fP (class \fBBoolean\fP)
 Whether to display a splash screen at startup.  Default true.
@@ -269,23 +269,6 @@ system, and don't increase the load unnecessarily.  The default is 10.
 (Higher numbers mean lower priority; see 
 .BR nice (1)
 for details.)
-.TP 8
-.B memoryLimit\fP (class \fBMemoryLimit\fP)
-The sub-processes created by \fIxscreensaver\fP will not be allowed to
-allocate more than this much memory (more accurately, this is the maximum
-size their address space may become.)  If any sub-process tries to allocate
-more than this,
-.BR malloc (3)
-will fail, and the process will likely exit (or safely crash) rather than
-going forth and hogging memory.  
-
-The assumption here is that if one of the screenhacks is trying to use
-a lot of memory, then something has gone wrong, and it's better to kill
-that program than to overload the machine.
-
-Default: 0, meaning "no limit."  30M is a good choice on most systems.
-(But beware that setting this to a small value can cause OpenGL programs
-to malfunction on certain systems.)
 .TP 8
 .B fade\fP (class \fBBoolean\fP)
 If this is true, then when the screensaver activates, the current contents
@@ -476,12 +459,13 @@ seconds before selecting events on existing windows, under the assumption that
 \fIxscreensaver\fP is started during your login procedure, and the window 
 state may be in flux.  Default 0.  (This used to default to 30, but that was
 back in the days when slow machines and X terminals were more common...)
-.TP 8
-.B sgiSaverExtension\fP (class \fBBoolean\fP)
+.RE
+.PP
 There are a number of different X server extensions which can make
 xscreensaver's job easier.  The next few resources specify whether these
 extensions should be utilized if they are available.
-
+.TP 8
+.B sgiSaverExtension\fP (class \fBBoolean\fP)
 This resource controls whether the SGI \fBSCREEN_SAVER\fP server extension
 will be used to decide whether the user is idle.  This is the default 
 if \fIxscreensaver\fP has been compiled with support for this 
@@ -1332,7 +1316,7 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR zoom (1)
 .SH COPYRIGHT
 Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2003 by Jamie Zawinski.  Permission to use, copy,
+2000, 2001, 2002, 2003, 2004 by Jamie Zawinski.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright

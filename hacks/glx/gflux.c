@@ -148,19 +148,19 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-    {(caddr_t *) & _squares, "squares", "Squares", "19", t_Int},
-    {(caddr_t *) & _resolution, "resolution", "Resolution", "4", t_Int},
-/*    {(caddr_t *) & _draw, "draw", "Draw", "2", t_Int},*/
-    {(caddr_t *) & _flat, "flat", "Flat", "0", t_Int},
-    {(caddr_t *) & _speed, "speed", "Speed", "0.05", t_Float},
-    {(caddr_t *) & _rotationx, "rotationx", "Rotationx", "0.01", t_Float},
-    {(caddr_t *) & _rotationy, "rotationy", "Rotationy", "0.0", t_Float},
-    {(caddr_t *) & _rotationz, "rotationz", "Rotationz", "0.1", t_Float},
-    {(caddr_t *) & _waves, "waves", "Waves", "3", t_Int},
-    {(caddr_t *) & _waveChange, "waveChange", "WaveChange", "50", t_Int},
-    {(caddr_t *) & _waveHeight, "waveHeight", "WaveHeight", "1.0", t_Float},
-    {(caddr_t *) & _waveFreq, "waveFreq", "WaveFreq", "3.0", t_Float},
-    {(caddr_t *) & _zoom, "zoom", "Zoom", "1.0", t_Float},
+    {&_squares, "squares", "Squares", "19", t_Int},
+    {&_resolution, "resolution", "Resolution", "4", t_Int},
+/*    {&_draw, "draw", "Draw", "2", t_Int},*/
+    {&_flat, "flat", "Flat", "0", t_Int},
+    {&_speed, "speed", "Speed", "0.05", t_Float},
+    {&_rotationx, "rotationx", "Rotationx", "0.01", t_Float},
+    {&_rotationy, "rotationy", "Rotationy", "0.0", t_Float},
+    {&_rotationz, "rotationz", "Rotationz", "0.1", t_Float},
+    {&_waves, "waves", "Waves", "3", t_Int},
+    {&_waveChange, "waveChange", "WaveChange", "50", t_Int},
+    {&_waveHeight, "waveHeight", "WaveHeight", "1.0", t_Float},
+    {&_waveFreq, "waveFreq", "WaveFreq", "3.0", t_Float},
+    {&_zoom, "zoom", "Zoom", "1.0", t_Float},
 };
 
 

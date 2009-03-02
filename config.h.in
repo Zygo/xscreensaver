@@ -232,6 +232,10 @@
  */
 #define FORTUNE_PROGRAM "fortune"
 
+/*  Set the name of the password helper program, if any
+ */
+#undef PASSWD_HELPER_PROGRAM
+
 
 
 /* *************************************************************************
@@ -392,7 +396,10 @@
 #undef HAVE_SETRLIMIT
 
 /* Define if you have the sbrk function.  */
-#define HAVE_SBRK 1
+#undef HAVE_SBRK
+
+/* Define if you have the forkpty function.  */
+#undef HAVE_FORKPTY
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H

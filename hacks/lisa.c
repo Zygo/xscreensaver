@@ -68,7 +68,7 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
-	{(caddr_t *) & additive, (char *) "additive", (char *) "Additive", (char *) DEF_ADDITIVE, t_Bool}
+	{&additive, "additive", "Additive", DEF_ADDITIVE, t_Bool}
 };
 
 static OptionStruct desc[] =

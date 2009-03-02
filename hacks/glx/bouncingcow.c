@@ -104,8 +104,8 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
-  {(caddr_t *) &do_texture, "texture",    "Texture", DEF_TEXTURE,   t_String},
+  {&speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
+  {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_String},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

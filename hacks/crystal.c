@@ -124,13 +124,13 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
-	{(caddr_t *) & nx, "nx", "nx", DEF_NX, t_Int},
-	{(caddr_t *) & ny, "ny", "ny", DEF_NY, t_Int},
-	{(caddr_t *) & centre, "centre", "Centre", DEF_CENTRE, t_Bool},
-	{(caddr_t *) & maxsize, "maxsize", "Maxsize", DEF_MAXSIZE, t_Bool},
-	{(caddr_t *) & unit_cell, "cell", "Cell", DEF_CELL, t_Bool},
-	{(caddr_t *) & grid_cell, "grid", "Grid", DEF_GRID, t_Bool},
-	{(caddr_t *) & cycle_p, "shift", "Shift", DEF_CYCLE, t_Bool}
+	{&nx, "nx", "nx", DEF_NX, t_Int},
+	{&ny, "ny", "ny", DEF_NY, t_Int},
+	{&centre, "centre", "Centre", DEF_CENTRE, t_Bool},
+	{&maxsize, "maxsize", "Maxsize", DEF_MAXSIZE, t_Bool},
+	{&unit_cell, "cell", "Cell", DEF_CELL, t_Bool},
+	{&grid_cell, "grid", "Grid", DEF_GRID, t_Bool},
+	{&cycle_p, "shift", "Shift", DEF_CYCLE, t_Bool}
 };
 static OptionStruct desc[] =
 {

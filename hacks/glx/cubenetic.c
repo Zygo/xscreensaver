@@ -121,12 +121,12 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
-  {(caddr_t *) &wave_count, "waves",     "Waves",      DEF_WAVE_COUNT, t_Int},
-  {(caddr_t *) &wave_speed, "waveSpeed", "WaveSpeed",  DEF_WAVE_SPEED, t_Int},
-  {(caddr_t *) &wave_radius,"waveRadius","WaveRadius", DEF_WAVE_RADIUS,t_Int},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
+  {&wave_count, "waves",     "Waves",      DEF_WAVE_COUNT, t_Int},
+  {&wave_speed, "waveSpeed", "WaveSpeed",  DEF_WAVE_SPEED, t_Int},
+  {&wave_radius,"waveRadius","WaveRadius", DEF_WAVE_RADIUS,t_Int},
 };
 
 ModeSpecOpt ccs_opts = {countof(opts), opts, countof(vars), vars, NULL};

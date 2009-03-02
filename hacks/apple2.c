@@ -71,14 +71,16 @@ void
 a2_scroll(apple2_state_t *st)
 {
   int i;
+  st->textlines[st->cursy][st->cursx] ^= 0xc0;     /* turn off cursor */
   for (i=0; i<23; i++) {
     memcpy(st->textlines[i],st->textlines[i+1],40);
   }
   memset(st->textlines[23],0xe0,40);
+  st->textlines[st->cursy][st->cursx] ^= 0xc0;     /* turn cursor back on */
 }
 
-void
-a2_printc(apple2_state_t *st, char c)
+static void
+a2_printc_1(apple2_state_t *st, char c, int scroll_p)
 {
   st->textlines[st->cursy][st->cursx] |= 0xc0; /* turn off blink */
 
@@ -86,7 +88,8 @@ a2_printc(apple2_state_t *st, char c)
     {
       if (st->cursy==23)
         {
-          a2_scroll(st);
+          if (scroll_p)
+            a2_scroll(st);
         }
       else
         {
@@ -118,7 +121,8 @@ a2_printc(apple2_state_t *st, char c)
       st->cursx++;
       if (st->cursx==40) {
         if (st->cursy==23) {
-          a2_scroll(st);
+          if (scroll_p)
+            a2_scroll(st);
         } else {
           st->cursy++;
         }
@@ -130,6 +134,19 @@ a2_printc(apple2_state_t *st, char c)
 }
 
 void
+a2_printc(apple2_state_t *st, char c)
+{
+  a2_printc_1(st, c, 1);
+}
+
+void
+a2_printc_noscroll(apple2_state_t *st, char c)
+{
+  a2_printc_1(st, c, 0);
+}
+
+
+void
 a2_prints(apple2_state_t *st, char *s)
 {
   while (*s) a2_printc(st, *s++);
@@ -138,6 +155,8 @@ a2_prints(apple2_state_t *st, char *s)
 void
 a2_goto(apple2_state_t *st, int r, int c)
 {
+  if (r > 23) r = 23;
+  if (c > 39) r = 39;
   st->textlines[st->cursy][st->cursx] |= 0xc0; /* turn off blink */
   st->cursy=r;
   st->cursx=c;

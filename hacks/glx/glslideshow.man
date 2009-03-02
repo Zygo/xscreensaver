@@ -7,9 +7,11 @@ glslideshow - slideshow of images using smooth zooming and fades
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
+[\-duration \fIseconds\fP]
+[\-zoom \fIpercent\fP]
 [\-pan \fIseconds\fP]
 [\-fade \fIseconds\fP]
-[\-zoom \fIpercent\fP]
+[\-speed \fIfloat\fP]
 [\-delay \fIusecs\fP]
 [\-cutoff \fIint\fP]
 [\-titles]
@@ -38,6 +40,10 @@ Draw on a newly-created window.  This is the default.
 .B \-root
 Draw on the root window.
 .TP 8
+.B \-duration \fIseconds\fP
+How long each image will be displayed before loading a new one.
+Default 30 seconds.
+.TP 8
 .B \-pan \fIseconds\fP
 How long each pan should last.  Default 6 seconds.
 .TP 8
@@ -55,6 +61,9 @@ Amount to zoom and pan as a percentage. Default: 75, meaning that
 then the images will always fill the screen, and no panning or 
 zooming will occur.  Images will still smoothly fade from one
 to another, however, assuming \fI\-fade\fP is non-zero.
+.TP 8
+.B \-speed \fIfloat\fP
+Speed up or slow down.  2 means twice as fast; 0.5 means half as fast.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).

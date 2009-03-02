@@ -209,13 +209,13 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &mode_str,   "mode",       "Mode",    DEF_MODE,      t_String},
-  {(caddr_t *) &speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
-  {(caddr_t *) &density,    "density",    "Density", DEF_DENSITY,   t_Float},
-  {(caddr_t *) &do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
-  {(caddr_t *) &do_waves,   "waves",      "Waves",   DEF_WAVES,     t_Bool},
-  {(caddr_t *) &do_rotate,  "rotate",     "Rotate",  DEF_ROTATE,    t_Bool},
-  {(caddr_t *) &do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
+  {&mode_str,   "mode",       "Mode",    DEF_MODE,      t_String},
+  {&speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
+  {&density,    "density",    "Density", DEF_DENSITY,   t_Float},
+  {&do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
+  {&do_waves,   "waves",      "Waves",   DEF_WAVES,     t_Bool},
+  {&do_rotate,  "rotate",     "Rotate",  DEF_ROTATE,    t_Bool},
+  {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
 };
 
 ModeSpecOpt matrix_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -400,8 +400,8 @@ draw_glyph (ModeInfo *mi, int glyph,
            we fade towards a completely solid rectangle.  WTF?
 
            So, for now, instead of changing the alpha, just make the colors
-           be darker.  This isn't quite right (it causes a large dark glyph
-           to occlude the brighter glyphs behind it) but it's close...
+           be darker.  This works out ok so long as we use GL_ONE in
+           glBlendFunc, so that stacked glyph colors are added together.
          */
         r *= a;
         g *= a;
@@ -863,7 +863,13 @@ init_matrix (ModeInfo *mi)
       load_textures (mi, flip_p);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_BLEND);
-      glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+
+      /* Jeff Epler points out:
+         By using GL_ONE instead of GL_SRC_ALPHA, glyphs are added to
+         each other, so that a bright glyph with a darker one in front
+         is a little brighter than the bright glyph alone.
+       */
+      glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, /* GL_SRC_ALPHA */ GL_ONE);
     }
 
   /* to scale coverage-percent to strips, this number looks about right... */

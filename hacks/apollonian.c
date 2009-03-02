@@ -97,8 +97,8 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & altgeom, (char *) "altgeom", (char *) "AltGeom", (char *) DEF_ALTGEOM, t_Bool},
-	{(caddr_t *) & label, (char *) "label", (char *) "Label", (char *) DEF_LABEL, t_Bool},
+	{&altgeom, "altgeom", "AltGeom", DEF_ALTGEOM, t_Bool},
+	{&label,   "label",   "Label",   DEF_LABEL,   t_Bool},
 };
 static OptionStruct desc[] =
 {

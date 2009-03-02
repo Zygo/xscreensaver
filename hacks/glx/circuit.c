@@ -102,13 +102,13 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &maxparts, "parts", "Parts", DEF_PARTS, t_Int},
-  {(caddr_t *) &font, "font", "Font", "fixed", t_String},
-  {(caddr_t *) &rotatespeed, "rotatespeed", "Rotatespeed", "1", t_Int},
-  {(caddr_t *) &spin, "spin", "Spin", DEF_SPIN, t_Bool},
-  {(caddr_t *) &rotate, "rotate", "Rotate", "False", t_Bool},
-  {(caddr_t *) &uselight, "light", "Light", "True", t_Bool},
-  {(caddr_t *) &seven, "seven", "Seven", DEF_SEVEN, t_Bool},
+  {&maxparts, "parts", "Parts", DEF_PARTS, t_Int},
+  {&font, "font", "Font", "fixed", t_String},
+  {&rotatespeed, "rotatespeed", "Rotatespeed", "1", t_Int},
+  {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
+  {&rotate, "rotate", "Rotate", "False", t_Bool},
+  {&uselight, "light", "Light", "True", t_Bool},
+  {&seven, "seven", "Seven", DEF_SEVEN, t_Bool},
 };
 
 ModeSpecOpt circuit_opts = {countof(opts), opts, countof(vars), vars, NULL};
