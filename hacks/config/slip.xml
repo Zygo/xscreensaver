@@ -25,9 +25,9 @@
   <_description>
 This program throws some random bits on the screen, then sucks them
 through a jet engine and spews them out the other side.  To avoid
-turning the image completely to mush, every now and then it will and
-then it interjects some splashes of color into the scene, or go into
-a spin cycle, or stretch the image like taffy.
+turning the image completely to mush, every now and then it will it
+interject some splashes of color into the scene, or go into a spin
+cycle, or stretch the image like taffy.
 
 Written by Scott Draves and Jamie Zawinski; 1997.
   </_description>

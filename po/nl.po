@@ -2323,7 +2323,7 @@ msgid "Bouboule"
 msgstr "Bouboule"
 
 #: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
-msgid "Do Red/Blue 3D seperation"
+msgid "Do Red/Blue 3D separation"
 msgstr "Gebruik rood/blauw 3D scheiding"
 
 #: hacks/config/bouboule.xml.h:7
@@ -6439,27 +6439,27 @@ msgid "Fertility"
 msgstr "Vruchtbaarheid"
 
 #: hacks/config/petri.xml.h:12
-msgid "Maxium Lifespan"
+msgid "Maximum Lifespan"
 msgstr "Maximale Levensduur"
 
 #: hacks/config/petri.xml.h:13
-msgid "Maxium Rate of Death"
+msgid "Maximum Rate of Death"
 msgstr "Maximum Doodssnelheid"
 
 #: hacks/config/petri.xml.h:14
-msgid "Maxium Rate of Growth"
+msgid "Maximum Rate of Growth"
 msgstr "Maximum Groeisnelheid"
 
 #: hacks/config/petri.xml.h:15
-msgid "Minium Lifespan"
+msgid "Minimum Lifespan"
 msgstr "Minimum Levensverwachting"
 
 #: hacks/config/petri.xml.h:16
-msgid "Minium Rate of Death"
+msgid "Minimum Rate of Death"
 msgstr "Minimum Snelheid van Doodgaan"
 
 #: hacks/config/petri.xml.h:17
-msgid "Minium Rate of Growth"
+msgid "Minimum Rate of Growth"
 msgstr "Minimum Groeisnelheid"
 
 #: hacks/config/petri.xml.h:18
@@ -7565,7 +7565,7 @@ msgid "RD-Bomb"
 msgstr "Rd-Bom"
 
 #: hacks/config/rd-bomb.xml.h:15
-msgid "Reaction/Difusion"
+msgid "Reaction/Diffusion"
 msgstr "Reactie/Diffusie"
 
 #: hacks/config/rd-bomb.xml.h:16

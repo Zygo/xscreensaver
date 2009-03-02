@@ -16,7 +16,7 @@
           low="1" high="7" default="7"/>
 
   <number id="delay2" type="slider" arg="-delay2 %"
-          _label="Speed" _low-label="Slow" _high-label="Fast"
+          _label="Speed" _low-label="Fast" _high-label="Slow"
           low="0" high="1000000" default="20000"/>
 
   <number id="delay" type="slider" arg="-delay %"

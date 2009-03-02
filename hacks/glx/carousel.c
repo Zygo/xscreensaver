@@ -218,11 +218,15 @@ load_image (ModeInfo *mi, image_frame *frame)
   if (wire)
     image_loaded_cb (0, 0, 0, 0, 0, 0, frame);
   else
-    load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context,
-                        (MI_WIDTH(mi)  / 2) - 1,
-                        (MI_HEIGHT(mi) / 2) - 1,
-                        mipmap_p, frame->loading.texid, 
-                        image_loaded_cb, frame);
+    {
+      int w = (MI_WIDTH(mi)  / 2) - 1;
+      int h = (MI_HEIGHT(mi) / 2) - 1;
+      if (w <= 10) w = 10;
+      if (h <= 10) h = 10;
+      load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context, w, h,
+                          mipmap_p, frame->loading.texid, 
+                          image_loaded_cb, frame);
+    }
 }
 
 

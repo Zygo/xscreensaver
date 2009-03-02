@@ -23,7 +23,11 @@
 
   <number id="explosion" type="slider" arg="-explosion %"
           _label="Explosion Force" _low-label="Popcorn" _high-label="Nuke"
-          low="1.0" high="50.0" default="25.0"/>
+          low="1.0" high="50.0" default="15.0"/>
+
+  <number id="decay" type="slider" arg="-decay %"
+          _label="Explosion Decay" _low-label="Linger" _high-label="Pop!"
+          low="0.0" high="1.0" default="0.1"/>
 
   <hgroup>
    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>

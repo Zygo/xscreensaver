@@ -191,6 +191,9 @@ AH_TEMPLATE([PASSWD_HELPER_PROGRAM],
 AH_TEMPLATE([NO_LOCKING],
 	    [Define this to remove the option of locking the screen at all.])
 
+AH_TEMPLATE([ALLOW_ROOT_PASSWD],
+	    [Define this to allow the root password to unlock the screen.])
+
 AH_TEMPLATE([HAVE_KERBEROS],
 	    [Define this if you want to use Kerberos authentication to
 	    lock/unlock the screen instead of your local password.  This
@@ -220,6 +223,10 @@ AH_TEMPLATE([PAM_SERVICE_NAME],
 	    Some systems might already have a PAM installation that is
 	    configured for xlock, so setting this to "xlock" would also work
 	    in that case.])
+
+AH_TEMPLATE([HAVE_PAM_FAIL_DELAY],
+	    [Define this if you have pam_fail_delay function.
+	    see driver/passwd-pam.c.])
 
 AH_TEMPLATE([PAM_STRERROR_TWO_ARGS],
 	    [Define if you have PAM and pam_strerror() requires two
@@ -1793,6 +1800,23 @@ fi
 
 ###############################################################################
 #
+#       Whether to allow root password to unblank.
+#
+###############################################################################
+AC_ARG_ENABLE(root-passwd, [
+  --enable-root-passwd	      Allow root passwd to unlock screen.
+  --disable-root-passwd       Do not allow that.],
+  [enable_root_passwd="$enableval"],[enable_root_passwd=yes])
+if test "$enable_root_passwd" = yes; then
+  AC_DEFINE(ALLOW_ROOT_PASSWD)
+  true
+elif test "$enable_root_passwd" != no; then
+  echo "error: something wrong with root-passwd option. Check configure.in ."
+  exit 1
+fi
+
+###############################################################################
+#
 #       Check for PAM.
 #
 ###############################################################################
@@ -1872,6 +1896,28 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
     else
       AC_MSG_RESULT(unknown)
     fi
+
+# Check pam_fail_delay
+    AC_MSG_CHECKING(pam_fail_delay in -lpam)
+    AC_CACHE_VAL(ac_cv_pam_fail_delay,
+     [ac_save_LDFLAGS="$LDFLAGS"
+      LDFLAGS="-lpam"
+      AC_TRY_LINK([#include <security/pam_appl.h>],
+                  [pam_handle_t *pamh = 0;
+		   unsigned int usec = 1;
+		   int status = pam_fail_delay (pamh, usec);],
+                  [ac_pam_fail_delay=yes],
+                  [ac_pam_fail_delay=no])
+      ac_cv_pam_fail_delay=$ac_pam_fail_delay,
+      LD_FLAGS=$ac_save_LDFLAGS])
+
+      if test "$ac_pam_fail_delay" = yes ; then
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_PAM_FAIL_DELAY)
+      else
+        AC_MSG_RESULT(no)
+      fi
+
   fi
 fi
 
@@ -2430,6 +2476,7 @@ fi
 
 # Check for the various Gnome help and URL loading programs.
 #
+WITH_BROWSER=gnome-open
 if test "$have_gtk" = yes; then
   AC_CHECK_PROGS(gnome_open_program,     gnome-open)
   AC_CHECK_PROGS(gnome_url_show_program, gnome-url-show)
@@ -3359,6 +3406,45 @@ DEFAULT_TEXT_FILE="$ac_cv_textfile"
 
 ###############################################################################
 #
+#       Check the browser to see help URL
+#
+###############################################################################
+
+have_browser=no
+with_browser_req=unspecified
+
+AC_ARG_WITH(browser,
+[  --with-browser=BROWSER   Specify the browser to show help URL.],
+  [with_browser="$withval"; with_browser_req="$withval"],
+  [with_browser=no ])
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_browser" in
+  no )
+  ;;
+  * )
+    WITH_BROWSER=$with_browser
+    gnome_open_program=$with_browser
+    AC_MSG_CHECKING([for browser $with_browser])
+    with_browser_fullpath=`which $with_browser 2>/dev/null`
+    case $with_browser_fullpath in
+	 /* )
+	        AC_MSG_RESULT(yes)
+		 have_browser=yes
+		 ;;
+	* )
+	       AC_MSG_RESULT(no)
+# Only warning: we don't want to install all packages for the 
+# dependency of the browser in building stage...
+	       echo "WARNING: browser not found: --with-browser=$with_browser"
+	       ;;
+    esac
+  ;;
+esac
+ac_cv_browser="$with_browser"
+
+###############################################################################
+#
 #       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
 #       This should be safe, but let's give people the option.
 #
@@ -3574,11 +3660,13 @@ AC_SUBST(SETUID_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)
+AC_SUBST(HAVE_PAM_FAIL_DELAY)
 AC_SUBST(NEW_LOGIN_COMMAND)
 AC_SUBST(NEW_LOGIN_COMMAND_P)
 AC_SUBST(DEFAULT_IMAGES_P)
 AC_SUBST(DEFAULT_IMAGE_DIRECTORY)
 AC_SUBST(DEFAULT_TEXT_FILE)
+AC_SUBST(WITH_BROWSER)
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)

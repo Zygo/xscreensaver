@@ -186,7 +186,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
      default: abort();
     }
 
-#define nrnd(x) (random() % (x))
+#define nrnd(x) ((x) ? random() % (x) : x)
 
     if (st->mode == MELT || st->mode == STRETCH) {
       left = nrnd(st->sizex/2);

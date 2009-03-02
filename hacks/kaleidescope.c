@@ -228,10 +228,10 @@ init_ksegment (GLOBAL *g, OBJECT *obj)
 {
 
   /* Give the segment some random values */
-  ((Ksegment *)obj->cur)->x1 = random() % g->xoff;
-  ((Ksegment *)obj->cur)->y1 = random() % g->yoff;
-  ((Ksegment *)obj->cur)->x2 = random() % g->xoff;
-  ((Ksegment *)obj->cur)->y2 = random() % g->yoff;
+  ((Ksegment *)obj->cur)->x1 = (g->xoff ? random() % g->xoff : 0);
+  ((Ksegment *)obj->cur)->y1 = (g->yoff ? random() % g->yoff : 0);
+  ((Ksegment *)obj->cur)->x2 = (g->xoff ? random() % g->xoff : 0);
+  ((Ksegment *)obj->cur)->y2 = (g->yoff ? random() % g->yoff : 0);
 }
 
 

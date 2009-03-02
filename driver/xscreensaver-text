@@ -29,7 +29,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.14 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -372,6 +372,10 @@ sub output() {
 
     if (-f "/etc/redhat-release") {	    # "Fedora Core release 4 (Stentz)"
       system ("cat", "/etc/redhat-release");
+    }
+
+    if (-f "/etc/release") {	    	    # "Solaris 10 3/05 s10_74L2a X86"
+      safe_system ("head", "-1", "/etc/release");
     }
 
     if (-f "/usr/sbin/system_profiler") {   # "Mac OS X 10.4.5 (8H14)"

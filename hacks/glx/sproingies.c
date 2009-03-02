@@ -45,13 +45,30 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 #include "gllist.h"
 #include "sproingies.h"
 
-#define MAXSPROING 100
-#define T_COUNT 40
-#define BOOM_FRAME 50
+#define MAXSPROING           100
+#define TARGET_COUNT         40
+#define BOOM_FRAME           50
+#define NO_FRAME             (-10)
+#define RESET_SPROINGIE_LIFE (-30 + myrand(28))
+#define NEW_SPROINGIE_LIFE   (40 + myrand(200))
+#define JUMP_LEFT            0
+#define JUMP_RIGHT           1
 
-struct sPosColor {
-	int         x, y, z, frame, life;
-	GLfloat     r, g, b;
+#define FIRST_FRAME          0
+#define LAST_FRAME           5 
+/*-
+ * The sproingies have six "real" frames, (s1_1 to s1_6) that show a
+ * sproingie jumping off a block, headed down and to the right. 
+ * The frames are numbered from 0 (FIRST_FRAME) to 5 (LAST_FRAME). 
+ * 
+ * There are other frame numbers for special cases (e.g. BOOM_FRAME).
+ */
+struct sPosColor {   /* Position and color of the sproingie     */
+	int x, y, z;     /*   Position                              */
+	int frame;       /*   Current frame (0-5)                   */
+	int life;        /*   Life points                           */
+	GLfloat r, g, b; /*   Color RGB                             */
+	int direction;   /*   Direction of next hop (left or right) */
 };
 
 typedef struct {
@@ -80,6 +97,8 @@ myrand(int range)
 {
 	return ((int) (((float) range) * LRAND() / (MAXRAND)));
 }
+
+static int smart_sproingies = 0;
 
 static      GLuint
 build_TopsSides(int wireframe)
@@ -241,8 +260,6 @@ LayGround(int sx, int sy, int sz, int width, int height, sp_instance * si)
 	}
 }
 
-#define RESET_SPROINGIE (-30 + myrand(28))
-
 static void
 AdvanceSproingie(int t, sp_instance * si)
 {
@@ -251,7 +268,7 @@ AdvanceSproingie(int t, sp_instance * si)
 	struct sPosColor *S2 = &(si->positions[0]);
 
 	if (thisSproingie->life > 0) {
-		if ((++(thisSproingie->frame)) > 11) {
+		if ((++(thisSproingie->frame)) > LAST_FRAME) {
 			if (thisSproingie->frame >= BOOM_FRAME) {
 				if ((thisSproingie->r -= 0.08) < 0.0)
 					thisSproingie->r = 0.0;
@@ -260,19 +277,17 @@ AdvanceSproingie(int t, sp_instance * si)
 				if ((thisSproingie->b -= 0.08) < 0.0)
 					thisSproingie->b = 0.0;
 				if ((--(thisSproingie->life)) < 1) {
-					thisSproingie->life = RESET_SPROINGIE;
+					thisSproingie->life = RESET_SPROINGIE_LIFE;
 				}
 				return;
 			}
-			thisSproingie->x += 1;
-			thisSproingie->y -= 2;
-			thisSproingie->z += 1;
-			thisSproingie->frame = 0;
+			thisSproingie->frame = FIRST_FRAME;
 
+			/* Check for collisions */
 			for (t2 = 0; t2 < si->maxsproingies; ++t2) {
 				if ((t2 != t) && (thisSproingie->x == S2->x) &&
 				    (thisSproingie->y == S2->y) && (thisSproingie->z == S2->z) &&
-				    (S2->life > 10) && (S2->frame < 6)) {
+				    (S2->life > 10) && (S2->frame < LAST_FRAME + 1)) {
 #if 0
 					if (thisSproingie->life > S2->life) {
 						S2->life = 10;
@@ -295,17 +310,18 @@ AdvanceSproingie(int t, sp_instance * si)
 				++S2;
 			}
 		}
+		/* Time to disappear... */
 		if (!((thisSproingie->life == 10) &&
-		      (thisSproingie->frame > 0) &&
+		      (thisSproingie->frame > FIRST_FRAME) &&
 		      (thisSproingie->frame < BOOM_FRAME))) {
 			if ((--(thisSproingie->life)) < 1) {
-				thisSproingie->life = RESET_SPROINGIE;
+				thisSproingie->life = RESET_SPROINGIE_LIFE;
 			} else if (thisSproingie->life < 9) {
 				thisSproingie->frame -= 2;
-			}
-		}		/* else wait here for frame 0 to come about. */
+			} 
+		}		/* ... else wait here for frame FIRST_FRAME to come about. */
 	} else if (++(thisSproingie->life) >= 0) {
-		if (t > 1) {
+		if (1 || t > 1) {
 			g_higher = -3 + myrand(5);
 			g_back = -2 + myrand(5);
 		} else if (t == 1) {
@@ -316,20 +332,20 @@ AdvanceSproingie(int t, sp_instance * si)
 			g_back = 0;
 		}
 
-		thisSproingie->x = (-g_higher - g_back);
-		thisSproingie->y = (g_higher << 1);
-		thisSproingie->z = (g_back - g_higher);
-		thisSproingie->life = 40 + myrand(200);
-		thisSproingie->frame = -10;
-		thisSproingie->r = (GLfloat) (40 + myrand(200)) / 255.0;
-		thisSproingie->g = (GLfloat) (40 + myrand(200)) / 255.0;
-		thisSproingie->b = (GLfloat) (40 + myrand(200)) / 255.0;
+		thisSproingie->x     = (-g_higher - g_back);
+		thisSproingie->y     = (g_higher << 1);
+		thisSproingie->z     = (g_back - g_higher);
+		thisSproingie->life  = NEW_SPROINGIE_LIFE;
+		thisSproingie->frame = NO_FRAME;
+		thisSproingie->r     = (GLfloat) (40 + myrand(200)) / 255.0;
+		thisSproingie->g     = (GLfloat) (40 + myrand(200)) / 255.0;
+		thisSproingie->b     = (GLfloat) (40 + myrand(200)) / 255.0;
 
 		for (t2 = 0; t2 < si->maxsproingies; ++t2) {
 			if ((t2 != t) && (thisSproingie->x == S2->x) &&
 			    (thisSproingie->y == S2->y) && (thisSproingie->z == S2->z) &&
-			    (S2->life > 10) && (S2->frame < 0)) {
-				/* If one is already being born, just wait. */
+			    (S2->life > 10) && (S2->frame < FIRST_FRAME)) {
+				/* If another is already on this place, wait. */
 				thisSproingie->life = -1;
 			}
 			++S2;
@@ -344,8 +360,11 @@ NextSproingie(int screen)
 	int         ddx, t;
 	struct sPosColor *thisSproingie = &(si->positions[0]);
 
+	/* Although the sproingies cycle has six frames, the blocks cycle  */
+	/* has twelve. After a full cycle (12 frames), re-center positions */
+	/* of sproingies                                                   */
 	if (++si->sframe > 11) {
-		si->sframe = 0;
+		si->sframe = FIRST_FRAME;
 		for (t = 0; t < si->maxsproingies; ++t) {
 			thisSproingie->x -= 1;
 			thisSproingie->y += 2;
@@ -353,6 +372,7 @@ NextSproingie(int screen)
 			++thisSproingie;
 		}
 	}
+
 	for (t = 0; t < si->maxsproingies; ++t) {
 		AdvanceSproingie(t, si);
 	}
@@ -378,7 +398,7 @@ NextSproingie(int screen)
 
 		if ((si->target_rx == si->rotx) && (si->target_ry == si->roty) &&
 		    (si->target_dist == si->dist)) {
-			si->target_count = T_COUNT;
+			si->target_count = TARGET_COUNT;
 			if (si->target_dist <= 32)
 				si->target_count >>= 2;
 		}
@@ -417,7 +437,7 @@ ResetEm(void)
 		positions[t].y = 0;
 		positions[t].z = 0;
 		positions[t].life = -2;
-		positions[t].frame = 0;
+		positions[t].frame = FIRST_FRAME;
 	}
 }
 
@@ -483,7 +503,7 @@ rotyBSubtract(void)
 	roty = (roty - 45) % 360;
 }
 
-#endif
+#endif /* __AUXFUNCS__ */
 
 static void
 RenderSproingie(int t, sp_instance * si)
@@ -509,7 +529,8 @@ RenderSproingie(int t, sp_instance * si)
 			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mat_color);
 		}
 	}
-	if (thisSproingie->frame < 0) {
+
+	if (thisSproingie->frame < FIRST_FRAME) {
 		glEnable(GL_CLIP_PLANE0);
 		glTranslatef((GLfloat) (thisSproingie->x),
 			     (GLfloat) (thisSproingie->y) +
@@ -544,17 +565,62 @@ RenderSproingie(int t, sp_instance * si)
 		if (!si->wireframe) {
 			glEnable(GL_LIGHTING);
 		}
-	} else if (thisSproingie->frame > 5) {
-		glTranslatef((GLfloat) (thisSproingie->x + 1),
-			     (GLfloat) (thisSproingie->y - 1), (GLfloat) (thisSproingie->z - 1));
-		glRotatef((GLfloat) - 90.0, 0.0, 1.0, 0.0);
-/**		glCallList(si->sproingies[thisSproingie->frame - 6]);*/
-/**/	renderList(si->sproingies[thisSproingie->frame - 6], si->wireframe);
 	} else {
-		glTranslatef((GLfloat) (thisSproingie->x), (GLfloat) (thisSproingie->y),
-			     (GLfloat) (thisSproingie->z));
+		if (thisSproingie->direction == JUMP_LEFT) {
+			/* When the sproingie jumps to the left, the frames must be */
+			/* rotated and translated */
+			glTranslatef((GLfloat) (thisSproingie->x    ),
+						 (GLfloat) (thisSproingie->y    ), 
+						 (GLfloat) (thisSproingie->z - 1));
+			glRotatef((GLfloat) - 90.0, 0.0, 1.0, 0.0);
+			if (thisSproingie->frame == LAST_FRAME) {
+				thisSproingie->x -= 0;
+				thisSproingie->y -= 1;
+				thisSproingie->z += 1;
+			} 
+		} else {
+			glTranslatef((GLfloat) (thisSproingie->x),
+						 (GLfloat) (thisSproingie->y), 
+						 (GLfloat) (thisSproingie->z));
+			glRotatef((GLfloat) - 0.0, 0.0, 1.0, 0.0);
+			if (thisSproingie->frame == LAST_FRAME) {
+				thisSproingie->x += 1;
+				thisSproingie->y -= 1;
+				thisSproingie->z -= 0;
+			}
+		}
+/* 	} */
 /**		glCallList(si->sproingies[thisSproingie->frame]);*/
 /**/	renderList(si->sproingies[thisSproingie->frame], si->wireframe);
+
+		/* Every 6 frame cycle... */
+		if (thisSproingie->frame == LAST_FRAME) {
+			/* ...check if the sproingies have gone out of the bricks */
+			if (((thisSproingie->x - thisSproingie->z == 6) &&
+				 (2*thisSproingie->x + thisSproingie->y == 6)) ||
+				((thisSproingie->z - thisSproingie->x == 5) &&
+				 (2*thisSproingie->x + thisSproingie->y == -5))) {
+				/* If they have, then they die */
+				if (thisSproingie->life > 0 && thisSproingie->frame < BOOM_FRAME && thisSproingie->frame > FIRST_FRAME) {
+					thisSproingie->frame = BOOM_FRAME;
+				}
+			} else {
+				/* If not, they choose a direction for the next hop */
+				if (smart_sproingies) {
+					if ((thisSproingie->x - thisSproingie->z == 5) &&   
+						(2*thisSproingie->x + thisSproingie->y == 5)) {
+						thisSproingie->direction = JUMP_LEFT;
+					} else if ((thisSproingie->z - thisSproingie->x == 4) &&   
+						 (2*thisSproingie->x + thisSproingie->y == -4)) {
+						thisSproingie->direction = JUMP_RIGHT;
+					} else {
+						thisSproingie->direction = myrand(2);
+					}
+				} else {
+					thisSproingie->direction = myrand(2);
+				}
+			}
+		}
 	}
 
 	glPopMatrix();
@@ -716,8 +782,8 @@ CleanupSproingies(int screen)
 }
 
 void
-InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
-	       int mono)
+InitSproingies(int wfmode, int grnd, int mspr, int smrtspr, 
+			   int screen, int numscreens, int mono)
 {
 	GLfloat     ambient[] =
 	{0.2, 0.2, 0.2, 1.0};
@@ -748,6 +814,8 @@ InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
 	if (mspr >= MAXSPROING)
 		mspr = MAXSPROING - 1;
 
+	smart_sproingies = smrtspr; 
+
 	si->rotx = 0;
 	si->roty = -45;
 	si->dist = (16 << 2);
@@ -777,7 +845,8 @@ InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
 		si->positions[t].y = 0;
 		si->positions[t].z = 0;
 		si->positions[t].life = (-t * ((si->maxsproingies > 19) ? 1 : 4)) - 2;
-		si->positions[t].frame = 0;
+		si->positions[t].frame = FIRST_FRAME;
+		si->positions[t].direction = myrand(2);
 	}
 
 #if 0				/* Test boom */
@@ -848,6 +917,7 @@ InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
 	}
 }
 
-#endif
+#endif /* USE_GL */
 
 /* End of sproingies.c */
+

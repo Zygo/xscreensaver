@@ -26,7 +26,7 @@
 
   <hgroup>
    <number id="reaction" type="spinbutton" arg="-reaction %"
-           _label="Reaction/Difusion" low="-1" high="2" default="-1"/>
+           _label="Reaction/Diffusion" low="-1" high="2" default="-1"/>
    <number id="diffusion" type="spinbutton" arg="-diffusion %"
            _label="/" low="-1" high="2" default="-1"/>
   </hgroup>

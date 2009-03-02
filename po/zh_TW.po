@@ -2233,7 +2233,7 @@ msgid "Bouboule"
 msgstr "Bouboule"
 
 #: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
-msgid "Do Red/Blue 3D seperation"
+msgid "Do Red/Blue 3D separation"
 msgstr ""
 
 #: hacks/config/bouboule.xml.h:7
@@ -7453,7 +7453,7 @@ msgid "RD-Bomb"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:15
-msgid "Reaction/Difusion"
+msgid "Reaction/Diffusion"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:16

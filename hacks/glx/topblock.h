@@ -29,7 +29,7 @@ typedef struct blockNode {
 #define blockWidth 2.0f
 #define getLocation(a) (a * blockWidth)
 
-#define TOLLERANCE 0.1
+#define TOLERANCE 0.1f
 
 #define cylSize 0.333334f
 #define uddSize 0.4f

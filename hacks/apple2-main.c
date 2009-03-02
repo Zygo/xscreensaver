@@ -27,6 +27,7 @@
 #ifndef HAVE_COCOA
 # define XK_MISCELLANY
 # include <X11/keysymdef.h>
+# include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <X11/Intrinsic.h>
 #endif

@@ -346,7 +346,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	while( nSoften-- )
 		softenMultiplier *= 1.0f + ( 1.0f / 3.0f );	/* Softening takes the max height down, so scale up to compensate. */
 	maxHeight = pBumps->SpotLight.nLightRadius * softenMultiplier;
-	nAverager = ( 3 * 0xFFFF ) / maxHeight;
+	nAverager = maxHeight ? ( 3 * 0xFFFF ) / maxHeight : 0;
 
 	pBump = pBumps->aBumpMap;
 	if( bInvert )	/* Funny, it's actually the 'else' that inverts the bump map... */
@@ -361,7 +361,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 
 			pColor = pBumps->xColors;
 			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
-				*pBump = ( ( pColor->red + pColor->green + pColor->blue ) / nAverager );
+			  *pBump = ( nAverager ? ( pColor->red + pColor->green + pColor->blue ) / nAverager : 0 );
 		}
 	}
 	else
@@ -376,7 +376,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	
 			pColor = pBumps->xColors;
 			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
-				*pBump = ( maxHeight - ( ( pColor->red + pColor->green + pColor->blue ) / nAverager ) );
+			  *pBump = ( maxHeight - ( nAverager ? ( pColor->red + pColor->green + pColor->blue ) / nAverager : 0 ) );
 		}
 	}
 

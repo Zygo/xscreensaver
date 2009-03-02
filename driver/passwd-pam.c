@@ -288,6 +288,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
       goto DONE;
     }
 
+#ifdef ALLOW_ROOT_PASSWD
   /* If that didn't work, set the user to root, and try to authenticate again.
    */
   if (user) free (user);
@@ -309,6 +310,8 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
              blurb(), status, PAM_STRERROR(pamh, status));
+
+#endif /* ALLOW_ROOT_PASSWD */
 
  DONE:
   if (user) free (user);

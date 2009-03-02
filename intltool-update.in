@@ -415,6 +415,10 @@ sub generate_headers
            if (/\.($xml_extension|$ini_extension)$/ || /^\[/){
 	       $_ =~ s/^\[[^\[].*]\s*//;
                my $filename = "../$_";
+               my $srcdir = $ENV{'top_srcdir'};
+               if ($srcdir){
+		   $filename="$srcdir/$_" ;
+               };
 
                if ($VERBOSE){
                    system($EXTRACT, "--update", "--type=$gettext_type", $filename);
@@ -435,6 +439,12 @@ sub generate_po_template
 
     move ("POTFILES.in", "POTFILES.in.old");
 
+    my $srcdir = $ENV{'top_srcdir'};
+    my $adddirectory = "--directory=." ;
+    if ($srcdir){
+        $adddirectory = "--directory=$srcdir";
+    }
+
     open INFILE, "<POTFILES.in.old";
     open OUTFILE, ">POTFILES.in";
     while (<INFILE>) {
@@ -447,6 +457,7 @@ sub generate_po_template
 
     system ("xgettext", "--default-domain\=$MODULE", 
 			"--directory\=\.\.",
+			"$adddirectory" ,
 	   		"--add-comments", 
 			"--keyword\=\_", 
 			"--keyword\=N\_", 

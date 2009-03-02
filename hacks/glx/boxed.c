@@ -53,7 +53,8 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 # define DEF_SPEED      "0.5"
 # define DEF_BALLS	"25"
 # define DEF_BALLSIZE   "2.0"
-# define DEF_EXPLOSION	"25.0f"
+# define DEF_EXPLOSION	"15.0"
+# define DEF_DECAY	"0.1"
 
 #undef countof 
 #define countof(x) (int)(sizeof((x))/sizeof((*x)))
@@ -64,6 +65,7 @@ static GLfloat speed;  /* jwz -- overall speed factor applied to all motion */
 static int cfg_balls;
 static GLfloat cfg_ballsize;
 static GLfloat cfg_explosion;
+static GLfloat cfg_decay;
 
 
 static XrmOptionDescRec opts[] = {
@@ -71,13 +73,15 @@ static XrmOptionDescRec opts[] = {
     {"-balls", ".boxed.balls", XrmoptionSepArg, 0},
     {"-ballsize", ".boxed.ballsize", XrmoptionSepArg, 0},
     {"-explosion", ".boxed.explosion", XrmoptionSepArg, 0},
+    {"-decay", ".boxed.decay", XrmoptionSepArg, 0},
 };
 
 static argtype vars[] = {
     {&speed, "speed", "Speed", DEF_SPEED, t_Float},
     {&cfg_balls, "balls", "Balls", DEF_BALLS, t_Int},
     {&cfg_ballsize, "ballsize", "Ball Size", DEF_BALLSIZE, t_Float},
-    {&cfg_explosion, "explosion", "Exlosion", DEF_BALLSIZE, t_Float},
+    {&cfg_explosion, "explosion", "Explosion", DEF_EXPLOSION, t_Float},
+    {&cfg_decay, "decay", "Explosion Decay", DEF_DECAY, t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -140,6 +144,7 @@ typedef struct {
    vectorf	loc;
    vectorf	dir;
    BOOL         far;
+   BOOL         gone;
 } tri;
 
 typedef struct {
@@ -147,6 +152,7 @@ typedef struct {
    int 		lifetime;
    float	scalefac;
    float	explosion;
+   float	decay;
    vectorf	color;
    tri		*tris;
    GLint	*indices;
@@ -158,6 +164,7 @@ typedef struct {
    int numballs;
    float ballsize;
    float explosion;
+   float decay;
    BOOL textures;
    BOOL transparent;
    float camspeed;
@@ -482,6 +489,7 @@ static void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, i
    
    for (i=0; i<(tman->num_tri); i++) {
       tman->tris[i].far = FALSE;
+      tman->tris[i].gone = FALSE;
       pos = i * 3;
       /* kopieer elke poly apart naar een tri structure */
       copyvector(&tman->vertices[pos+0],&spherev[spherei[pos+0]]);
@@ -543,6 +551,8 @@ static void updatetris(triman *t)
    GLfloat xd,zd;
    
    for (b=0;b<t->num_tri;b++) {
+      /* the exploded triangles disappear over time */
+      if (rnd() < t->decay) { t->tris[b].gone = TRUE; }
       /* apply gravity */
       t->tris[b].dir.y -= (0.1f * speed);
       /* apply movement */
@@ -632,10 +642,13 @@ static void setdefaultconfig(boxed_config *config)
   cfg_balls = MAX(3,MIN(40,cfg_balls));
   cfg_ballsize = MAX(1.0f,MIN(5.0f,cfg_ballsize));
   cfg_explosion = MAX(0.0f,MIN(50.0f,cfg_explosion));
+  cfg_decay = MAX(0.0f,MIN(1.0f,cfg_decay));
+
   config->numballs = cfg_balls;
   config->textures = TRUE;
   config->transparent = FALSE;
   config->explosion = cfg_explosion;
+  config->decay = cfg_decay;
   config->ballsize = cfg_ballsize;
   config->camspeed = 35.0f;
 }
@@ -815,6 +828,7 @@ static void drawtriman(triman *t, int wire)
    glMaterialfv(GL_FRONT, GL_EMISSION,col);
    
    for (i=0; i<t->num_tri; i++) {
+      if (t->tris[i].gone == TRUE) { continue; }
       pos = i*3;
       glPushMatrix();
       glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
@@ -1081,6 +1095,7 @@ pinit(ModeInfo * mi)
    
    for(i=0;i<bman->num_balls;i++) {
       gp->tman[i].explosion = (float) (((int)gp->config.explosion) / 15.0f );
+      gp->tman[i].decay = gp->config.decay;
       gp->tman[i].vertices = NULL;
       gp->tman[i].normals = NULL;
       gp->tman[i].tris = NULL;

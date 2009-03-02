@@ -100,12 +100,15 @@ init_coral(struct state *st)
     st->colorsloth = st->nwalkers*2/st->ncolors;
     XSetForeground(st->dpy, st->draw_gc, st->colors[st->colorindex].pixel);
 
+    if ((st->width <= 2) || (st->height <= 2)) return;
+
     for( i = 0; i < seeds; i++ ) {
         int x, y;
+	int max_repeat = 10;
         do {
           x = 1 + random() % (st->width - 2);
           y = 1 + random() % (st->height - 2);
-        } while( getdot(x, y) );
+        } while( getdot(x, y) && max_repeat--);
 
         setdot((x-1), (y-1)); setdot(x, (y-1)); setdot((x+1), (y-1));
 	setdot((x-1),  y   ); setdot(x,  y   ); setdot((x+1),  y   );
@@ -169,7 +172,8 @@ coral(struct state *st)
       st->nwalkers--;
       st->walkers[i].x = st->walkers[st->nwalkers].x;
       st->walkers[i].y = st->walkers[st->nwalkers].y;
-      if( 0 == (st->nwalkers%st->colorsloth) ) {
+      if( 0 == 
+	  ((st->colorsloth ? st->nwalkers%st->colorsloth : 0)) ) {
         color = True;
       }
 		  

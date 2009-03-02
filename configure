@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY DEFAULT_TEXT_FILE OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR HACKDIR_FULL GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM HAVE_PAM_FAIL_DELAY NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY DEFAULT_TEXT_FILE WITH_BROWSER OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR HACKDIR_FULL GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -851,6 +851,9 @@ Screen locking options:
   --enable-locking        Compile in support for locking the display.
   --disable-locking       Do not allow locking at all.
 
+  --enable-root-passwd	      Allow root passwd to unlock screen.
+  --disable-root-passwd       Do not allow that.
+
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
@@ -922,6 +925,7 @@ Graphics options:
   --with-image-directory=DIR  By default, some demos may display random images
                           from this directory.
   --with-text-file=FILE   By default, some demos may display this file.
+  --with-browser=BROWSER   Specify the browser to show help URL.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 
@@ -1384,6 +1388,12 @@ echo "command line was: $0 $@"
 #       Autoheader stuff
 #
 ###############################################################################
+
+
+
+
+
+
 
 
 
@@ -12354,6 +12364,29 @@ fi
 
 ###############################################################################
 #
+#       Whether to allow root password to unblank.
+#
+###############################################################################
+# Check whether --enable-root-passwd or --disable-root-passwd was given.
+if test "${enable_root_passwd+set}" = set; then
+  enableval="$enable_root_passwd"
+  enable_root_passwd="$enableval"
+else
+  enable_root_passwd=yes
+fi;
+if test "$enable_root_passwd" = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define ALLOW_ROOT_PASSWD 1
+_ACEOF
+
+  true
+elif test "$enable_root_passwd" != no; then
+  echo "error: something wrong with root-passwd option. Check configure.in ."
+  exit 1
+fi
+
+###############################################################################
+#
 #       Check for PAM.
 #
 ###############################################################################
@@ -12840,6 +12873,80 @@ echo "${ECHO_T}two arguments" >&6
       echo "$as_me:$LINENO: result: unknown" >&5
 echo "${ECHO_T}unknown" >&6
     fi
+
+# Check pam_fail_delay
+    echo "$as_me:$LINENO: checking pam_fail_delay in -lpam" >&5
+echo $ECHO_N "checking pam_fail_delay in -lpam... $ECHO_C" >&6
+    if test "${ac_cv_pam_fail_delay+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_save_LDFLAGS="$LDFLAGS"
+      LDFLAGS="-lpam"
+      cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <security/pam_appl.h>
+int
+main ()
+{
+pam_handle_t *pamh = 0;
+		   unsigned int usec = 1;
+		   int status = pam_fail_delay (pamh, usec);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_pam_fail_delay=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_pam_fail_delay=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+      ac_cv_pam_fail_delay=$ac_pam_fail_delay,
+      LD_FLAGS=$ac_save_LDFLAGS
+fi
+
+
+      if test "$ac_pam_fail_delay" = yes ; then
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+        cat >>confdefs.h <<\_ACEOF
+#define HAVE_PAM_FAIL_DELAY 1
+_ACEOF
+
+      else
+        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      fi
+
   fi
 fi
 
@@ -14828,6 +14935,7 @@ fi
 
 # Check for the various Gnome help and URL loading programs.
 #
+WITH_BROWSER=gnome-open
 if test "$have_gtk" = yes; then
   for ac_prog in gnome-open
 do
@@ -16213,7 +16321,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16220 "configure"
+#line 16328 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -19571,6 +19679,52 @@ DEFAULT_TEXT_FILE="$ac_cv_textfile"
 
 ###############################################################################
 #
+#       Check the browser to see help URL
+#
+###############################################################################
+
+have_browser=no
+with_browser_req=unspecified
+
+
+# Check whether --with-browser or --without-browser was given.
+if test "${with_browser+set}" = set; then
+  withval="$with_browser"
+  with_browser="$withval"; with_browser_req="$withval"
+else
+  with_browser=no
+fi;
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_browser" in
+  no )
+  ;;
+  * )
+    WITH_BROWSER=$with_browser
+    gnome_open_program=$with_browser
+    echo "$as_me:$LINENO: checking for browser $with_browser" >&5
+echo $ECHO_N "checking for browser $with_browser... $ECHO_C" >&6
+    with_browser_fullpath=`which $with_browser 2>/dev/null`
+    case $with_browser_fullpath in
+	 /* )
+	        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+		 have_browser=yes
+		 ;;
+	* )
+	       echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+# Only warning: we don't want to install all packages for the
+# dependency of the browser in building stage...
+	       echo "WARNING: browser not found: --with-browser=$with_browser"
+	       ;;
+    esac
+  ;;
+esac
+ac_cv_browser="$with_browser"
+
+###############################################################################
+#
 #       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
 #       This should be safe, but let's give people the option.
 #
@@ -19811,6 +19965,8 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
+
 
 
 
@@ -20604,11 +20760,13 @@ s,@SETUID_HACKS@,$SETUID_HACKS,;t t
 s,@INSTALL_DIRS@,$INSTALL_DIRS,;t t
 s,@NEED_SETUID@,$NEED_SETUID,;t t
 s,@INSTALL_PAM@,$INSTALL_PAM,;t t
+s,@HAVE_PAM_FAIL_DELAY@,$HAVE_PAM_FAIL_DELAY,;t t
 s,@NEW_LOGIN_COMMAND@,$NEW_LOGIN_COMMAND,;t t
 s,@NEW_LOGIN_COMMAND_P@,$NEW_LOGIN_COMMAND_P,;t t
 s,@DEFAULT_IMAGES_P@,$DEFAULT_IMAGES_P,;t t
 s,@DEFAULT_IMAGE_DIRECTORY@,$DEFAULT_IMAGE_DIRECTORY,;t t
 s,@DEFAULT_TEXT_FILE@,$DEFAULT_TEXT_FILE,;t t
+s,@WITH_BROWSER@,$WITH_BROWSER,;t t
 s,@OBJCC@,$OBJCC,;t t
 s,@EXES_OSX@,$EXES_OSX,;t t
 s,@SCRIPTS_OSX@,$SCRIPTS_OSX,;t t

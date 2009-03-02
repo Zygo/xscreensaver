@@ -38,6 +38,16 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.00:   * Backed out recent locale-related changes, since they
+                        broke far more things than they fixed.
+                      * Fail gracefully with ridiculously small window sizes.
+                      * `xflame' and `flag' ignore bitmap option on MacOS.
+                      * `speedmine' prefs work on MacOS.
+                      * Better explosions in `boxed'.
+                      * More dynamic motion in `sproingies'.
+                      * More options in `flipflop'.
+                      * Minor updates to `topblock'.
+                      * Various other minor fixes.
 Changes since 4.24:   * Ported to MacOS X! (10.4.0 or newer)
                       * API change: instead of providing a single screenhack()
                         function that does not return, screen savers using the

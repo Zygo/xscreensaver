@@ -345,6 +345,8 @@ reset_starfish (struct state *st)
       if (st->colors)
 	free (st->colors);
       st->colors = 0;
+      XFreeGC (st->dpy, st->gc);
+      st->gc = 0;
     }
 
   st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
@@ -479,6 +481,8 @@ starfish_draw (Display *dpy, Window window, void *closure)
             s = reset_starfish (st);
           else
             s = make_window_starfish (st);
+
+	  st->starfish = s;
         }
     }
 

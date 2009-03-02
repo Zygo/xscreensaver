@@ -176,8 +176,8 @@ reset_zoom (struct state *st, struct zoom_area *za)
     za->ww = st->width - za->w;
     za->hh = st->height - za->h;
 
-    za->x = (random() % za->ww);
-    za->y = (random() % za->hh);
+    za->x = (za->ww ? random() % za->ww : 0);
+    za->y = (za->hh ? random() % za->hh : 0);
 
     za->dx = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
     za->dy = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
@@ -269,8 +269,9 @@ init_hack (struct state *st)
     st->zoom_box[i] = create_zoom (st);
   }
 
-  memcpy (st->buffer_map->data, st->orig_map->data,
-          st->height * st->buffer_map->bytes_per_line);
+  if (st->height && st->orig_map->data)
+    memcpy (st->buffer_map->data, st->orig_map->data,
+	    st->height * st->buffer_map->bytes_per_line);
 
   DisplayImage(st, 0, 0, st->width, st->height);
 }

@@ -4,11 +4,12 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: xscreensaver 4.03\n"
+"Project-Id-Version: xscreensaver 5.00-6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-13 12:26+0100\n"
-"PO-Revision-Date: 2002-06-10 01:27+0900\n"
-"Last-Translator: Takeshi Aihana <aihana@gnome.gr.jp>\n"
+"PO-Revision-Date: 2006-06-28 00:51+0900\n"
+"Former-Translator: Takeshi Aihana <aihana@gnome.gr.jp>\n"
+"Last-Translator:  Mamoru Tasaka <mtasaka@ioa.s.u-tokyo.ac.jp>\n"
 "Language-Team: Japanese <translation@gnome.gr.jp>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -114,12 +115,11 @@ msgstr "XScreenSaver のウェブサイトにジャンプします。"
 
 #: driver/demo-Gtk-widgets.c:348
 msgid "Cycle After"
-msgstr "繰り返す周期: "
+msgstr "モードの周期: "
 
 #: driver/demo-Gtk-widgets.c:370 driver/xscreensaver-demo.glade2.h:63
 msgid "Whether a password should be required to un-blank the screen."
-msgstr ""
-"画面をロックする周期です (画面ロックを解除する場合はパスワードが必要です)。"
+msgstr "画面をブランクした後、しばらくして自動的にロックしたい時は、これを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:372
 msgid "Lock Screen After"
@@ -139,7 +139,7 @@ msgstr "自動的に XScreenSaver を起動するまでの時間です。"
 #: driver/demo-Gtk-widgets.c:1032 driver/demo-Gtk-widgets.c:1044
 #: driver/xscreensaver-demo.glade2.h:106
 msgid "minutes"
-msgstr "分後"
+msgstr "分"
 
 #: driver/demo-Gtk-widgets.c:482 driver/demo-Gtk.c:3233
 msgid "Preview"
@@ -277,9 +277,7 @@ msgstr "カラーマップをインストールする"
 msgid ""
 "Whether the screen should slowly fade to black when the screen saver "
 "activates."
-msgstr ""
-"スクリーンセーバーが有効になったら、スクリーンをゆっくりとフェードインするか"
-"どうかを選択して下さい。"
+msgstr "スクリーンセーバーを起動する時、スクリーンをゆっくりとフェードインするかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:867
 msgid "Fade To Black When Blanking"
@@ -289,9 +287,7 @@ msgstr "スクリーンセーバーをフェードインする"
 msgid ""
 "Whether the screen should slowly fade in from black when the screen saver "
 "deactivates."
-msgstr ""
-"スクリーンセーバーが無効になったら、スクリーンをゆっくりとフェードアウトする"
-"かどうかを選択して下さい。"
+msgstr "画面を再び明るくする時、スクリーンをゆっくりとフェードアウトするかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:884
 msgid "Fade From Black When Unblanking"
@@ -303,7 +299,7 @@ msgstr "フェードする時間: "
 
 #: driver/demo-Gtk-widgets.c:928 driver/xscreensaver-demo.glade2.h:26
 msgid "How long it should take for the screen to fade in and out."
-msgstr "スクリーンをフェードイン/アウトする間隔を指定して下さい。"
+msgstr "スクリーンをフェードイン/アウトする時間を指定して下さい。"
 
 #: driver/demo-Gtk-widgets.c:932 driver/xscreensaver-demo.glade2.h:111
 msgid "seconds"
@@ -315,7 +311,7 @@ msgstr "モニタのパワーマネージメント"
 
 #: driver/demo-Gtk-widgets.c:986 driver/xscreensaver-demo.glade2.h:67
 msgid "Whether the monitor should be powered down after a while."
-msgstr "モニタの電源を OFF にする場合に選択して下さい。"
+msgstr "モニタの電源管理を設定するかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:988
 msgid "Power Management Enabled"
@@ -349,33 +345,27 @@ msgstr "画像の操作"
 msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
-msgstr ""
-"画像の操作モード (お使いのデスクトップ上の画像に対する操作) を許可するかどう"
-"かを選択して下さい。"
+msgstr "画像を用いるセーバの時、デスクトップの画像を使うかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1169
 msgid "Grab Desktop Images"
-msgstr "デスクトップ画像を操作対象にする"
+msgstr "デスクトップの画像を用いる"
 
 #: driver/demo-Gtk-widgets.c:1184
 msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
-msgstr ""
-"画像の操作モードで (可能ならば) システムのビデオ入力を対象にするかどうかを選"
-"択して下さい。"
+msgstr "画像の操作モードで (可能ならば) システムのビデオ入力を用いるかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1186
 msgid "Grab Video Frames"
-msgstr "ビデオ入力を操作対象にする"
+msgstr "ビデオ入力を用いる"
 
 #: driver/demo-Gtk-widgets.c:1201 driver/xscreensaver-demo.glade2.h:66
 msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
-msgstr ""
-"画像の操作モードで、ローカルディスクにある画像をランダムに取得するかどうかを"
-"選択して下さい。"
+msgstr "画像の操作モードで、ローカルディスクにある画像をランダムに取得するかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1203
 msgid "Choose Random Image:"
@@ -639,10 +629,10 @@ msgid ""
 msgstr ""
 "Error:\n"
 "\n"
-"ディレクトリが存在しません: \"%s\"\n"
+"次のディレクトリが存在しません: \"%s\"\n"
 
 #: driver/demo-Gtk.c:2021 driver/demo-Gtk.c:2052
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error:\n"
 "\n"
@@ -650,7 +640,7 @@ msgid ""
 msgstr ""
 "Error:\n"
 "\n"
-"ディレクトリが存在しません: \"%s\"\n"
+"次のファイルが存在しません: \"%s\"\n"
 
 #: driver/demo-Gtk.c:2877
 msgid "Descriptions not available: no XML support compiled in."
@@ -671,7 +661,7 @@ msgstr "スクリーンセーバーは無効です"
 #: driver/demo-Gtk.c:3243
 #, c-format
 msgid "%s: %.100s Settings"
-msgstr ""
+msgstr "%s: %.100s の設定"
 
 #: driver/demo-Gtk.c:3407
 #, c-format
@@ -694,7 +684,7 @@ msgstr "無効です。"
 
 #: driver/demo-Gtk.c:3493
 msgid "Not"
-msgstr ""
+msgstr "インストールされていません"
 
 #: driver/demo-Gtk.c:3493
 msgid "Installed"
@@ -785,9 +775,8 @@ msgid "%s: unknown option: %s\n"
 msgstr "%s: 不明なオプション: %s\n"
 
 #: driver/demo-Gtk.c:4865
-#, fuzzy
 msgid "Screensaver Preferences"
-msgstr "スクリーンセーバー"
+msgstr "XScreenSaverの設定"
 
 #: driver/screensaver-properties.desktop.in.h:1
 msgid "Change screensaver properties"
@@ -802,122 +791,107 @@ msgid "*"
 msgstr ""
 
 #: driver/xscreensaver-demo.glade2.h:5
-#, fuzzy
 msgid "Choose _Random Image:"
-msgstr "画像をランダムに選択する:"
+msgstr "画像をランダムに選択する(_R):"
 
 #: driver/xscreensaver-demo.glade2.h:14
-#, fuzzy
 msgid "F_ade Duration"
-msgstr "フェードする時間: "
+msgstr "フェードする時間(_a): "
 
 #: driver/xscreensaver-demo.glade2.h:15
-#, fuzzy
 msgid "Fade from Black When _Unblanking"
-msgstr "スクリーンセーバーをフェードアウトする"
+msgstr "明るくする時フェードアウト(_U)"
 
 #: driver/xscreensaver-demo.glade2.h:16
-#, fuzzy
 msgid "Fade to Black when _Blanking"
-msgstr "スクリーンセーバーをフェードインする"
+msgstr "ブランクにする時にフェードイン(_B)"
 
 #: driver/xscreensaver-demo.glade2.h:17
-#, fuzzy
 msgid "Fading and Colormaps"
-msgstr "カラーマップ"
+msgstr "フェードとカラーマップ"
 
 #: driver/xscreensaver-demo.glade2.h:19
-#, fuzzy
 msgid "Grab Desktop _Images"
-msgstr "デスクトップ画像を操作対象にする"
+msgstr "デスクトップ画像を用いる(_I)"
 
 #: driver/xscreensaver-demo.glade2.h:20
-#, fuzzy
 msgid "Grab _Video Frames"
-msgstr "ビデオ入力を操作対象にする"
+msgstr "ビデオ入力を用いる(_V)"
 
 #: driver/xscreensaver-demo.glade2.h:23
 msgid "How long after the screen blanks until a password will be required."
-msgstr ""
+msgstr "画面がブランクになってからロックするまでの時間を指定して下さい。"
 
 #: driver/xscreensaver-demo.glade2.h:24
-#, fuzzy
 msgid "How long before the screen saver activates."
-msgstr "スクリーンをフェードイン/アウトする間隔を指定して下さい。"
+msgstr "セーバーが起動するまでの時間を指定して下さい。"
 
 #: driver/xscreensaver-demo.glade2.h:25
 msgid ""
 "How long each display mode should run before choosing a new one (in Random "
 "mode.)"
-msgstr ""
+msgstr "ランダムなセーバーモードの時、次のセーバーに移るまでの時間を指定して下さい。"
 
 #: driver/xscreensaver-demo.glade2.h:27
-#, fuzzy
 msgid "How long until the monitor goes completely black."
-msgstr "自動的に XScreenSaver を起動するまでの時間です。"
+msgstr "モニターがスタンドバイになるまでの時間を指定して下さい。"
 
 #: driver/xscreensaver-demo.glade2.h:31
-#, fuzzy
 msgid "Install _Colormap"
-msgstr "カラーマップをインストールする"
+msgstr "カラーマップをインストールする(_C)"
 
 #: driver/xscreensaver-demo.glade2.h:33
 msgid "Never blank the screen or power down the monitor."
-msgstr ""
+msgstr "スクリーンを暗くしたり、モニターの電源を落としたりしません。"
 
 #: driver/xscreensaver-demo.glade2.h:34
-#, fuzzy
 msgid ""
 "No Preview\n"
 "Available"
-msgstr "プレビューは"
+msgstr "プレビューを利用できません"
 
 #: driver/xscreensaver-demo.glade2.h:36
 msgid ""
 "Not\n"
 "Installed"
-msgstr ""
+msgstr "インストールされていません"
 
 #: driver/xscreensaver-demo.glade2.h:42
-#, fuzzy
 msgid "Stand_by After"
-msgstr "スタンバイ: "
+msgstr "スタンバイまで(_b): "
 
 #: driver/xscreensaver-demo.glade2.h:45
-#, fuzzy
 msgid "Sus_pend After"
-msgstr "サスペンド: "
+msgstr "サスペンドまで(_p): "
 
 #: driver/xscreensaver-demo.glade2.h:46
-#, fuzzy
 msgid "Text Manipulation"
-msgstr "画像の操作"
+msgstr "表示するテキストの設定"
 
 #: driver/xscreensaver-demo.glade2.h:47
-#, fuzzy
 msgid "Text _file"
-msgstr "ファイルを選択して下さい。"
+msgstr "ファイル(_f)"
 
 #: driver/xscreensaver-demo.glade2.h:48
 msgid ""
 "Text-displaying modes will display the contents of this URL (HTML or RSS)."
-msgstr ""
+msgstr "（テキストを表示するセーバの時）次のURLの内容が表示されます。HTMLかRSSで書かれている必要があります。"
 
 #: driver/xscreensaver-demo.glade2.h:49
 msgid "Text-displaying modes will display the contents of this file."
-msgstr ""
+msgstr "（テキストを表示するセーバの時は）次のテキストファイルの内容が表示されます。"
 
 #: driver/xscreensaver-demo.glade2.h:50
 msgid "Text-displaying modes will display the local host name, date, and time."
-msgstr ""
+msgstr "（テキストを表示するセーバの時は）ホスト名と、日時が表示されます。"
 
 #: driver/xscreensaver-demo.glade2.h:51
 msgid "Text-displaying modes will display the output of this program."
-msgstr ""
+msgstr "（テキストを表示するセーバの時は）次のプログラムの出力結果が表示されます。"
 
 #: driver/xscreensaver-demo.glade2.h:52
 msgid "Text-displaying modes will display the text typed here."
-msgstr ""
+msgstr "（テキストを表示するセーバの時は）次の文字列が出力されます。"
 
 #: driver/xscreensaver-demo.glade2.h:55
 msgid ""
@@ -926,128 +900,112 @@ msgid ""
 "This probably means that the \"xscreensaver-extras\" and\n"
 "\"xscreensaver-gl-extras\" packages are not installed."
 msgstr ""
+"セーバーの数が少ない、若しくは全く無いようです。\n"
+"これは、恐らく\"xscreensaver-extras\"、あるいは\n"
+"\"xscreensaver-gl-extras\"のパッケージがインストールされていない\n"
+"ためだと思われます。"
 
 #: driver/xscreensaver-demo.glade2.h:59
 msgid "When idle or locked, blacken the screen only."
-msgstr ""
+msgstr "セーバーが起動した時、ただ単にスクリーンを真っ暗にします。"
 
 #: driver/xscreensaver-demo.glade2.h:60
 msgid ""
 "When idle or locked, choose a random display mode from among the checked "
 "items in the list below."
-msgstr ""
+msgstr "セーバーが起動した時、下のリストでチェックが入っているモードからランダムに選択して、（代る代る）モニターに表示します。"
 
 #: driver/xscreensaver-demo.glade2.h:61
 msgid ""
 "When idle or locked, choose a random display mode from among the checked "
 "items in the list below.  Run that same mode on each monitor."
-msgstr ""
+msgstr "セーバーが起動した時、下のリストでチェックが入っているモードからランダムに選択して、（代る代る）モニターに表示します。各モニターには同じモードが表示されます。"
 
 #: driver/xscreensaver-demo.glade2.h:62
 msgid "When idle or locked, run the display mode selected below."
-msgstr ""
+msgstr "セーバーが起動した時、下のリストで選択された（一つの）モードをモニターに表示します。"
 
 #: driver/xscreensaver-demo.glade2.h:65
-#, fuzzy
 msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one.)"
-msgstr ""
-"画像の操作モードで (可能ならば) システムのビデオ入力を対象にするかどうかを選"
-"択して下さい。"
+msgstr "画像の操作モードで (可能な時) ビデオ入力の画像を使うかどうかを選択して下さい。"
 
 #: driver/xscreensaver-demo.glade2.h:73
-#, fuzzy
 msgid "_Advanced"
-msgstr "オプション"
+msgstr "拡張オプション(_A)"
 
 #: driver/xscreensaver-demo.glade2.h:74
-#, fuzzy
 msgid "_Advanced >>"
-msgstr "拡張オプション >>"
+msgstr "拡張オプション(_A)>>"
 
 #: driver/xscreensaver-demo.glade2.h:75
-#, fuzzy
 msgid "_Blank After"
-msgstr "XScreenSaver の起動: "
+msgstr "ブランクになるまで(_B): "
 
 #: driver/xscreensaver-demo.glade2.h:77
-#, fuzzy
 msgid "_Blank Screen Only"
-msgstr "ブランク・スクリーンのみ"
+msgstr "ブランク・スクリーンのみ(_B)"
 
 #: driver/xscreensaver-demo.glade2.h:78
-#, fuzzy
 msgid "_Browse"
-msgstr "参照"
+msgstr "参照(_B)"
 
 #: driver/xscreensaver-demo.glade2.h:79
-#, fuzzy
 msgid "_Command Line:"
-msgstr "コマンドライン:"
+msgstr "コマンド(_C):"
 
 #: driver/xscreensaver-demo.glade2.h:80
-#, fuzzy
 msgid "_Cycle After"
-msgstr "繰り返す周期: "
+msgstr "セーバーの周期(_C): "
 
 #: driver/xscreensaver-demo.glade2.h:81
-#, fuzzy
 msgid "_Disable Screen Saver"
-msgstr "スクリーンセーバーを無効にする"
+msgstr "セーバーを無効にする(_D)"
 
 #: driver/xscreensaver-demo.glade2.h:82
-#, fuzzy
 msgid "_Display Modes"
 msgstr "表示モード"
 
 #: driver/xscreensaver-demo.glade2.h:86
 msgid "_Host Name and Time"
-msgstr ""
+msgstr "ホスト名と日時(_H)"
 
 #: driver/xscreensaver-demo.glade2.h:88
-#, fuzzy
 msgid "_Lock Screen After  "
-msgstr "画面ロックの起動: "
+msgstr "画面をロックするまで(_L): "
 
 #: driver/xscreensaver-demo.glade2.h:90
-#, fuzzy
 msgid "_Mode:"
-msgstr "モード:"
+msgstr "モード(_M):"
 
 #: driver/xscreensaver-demo.glade2.h:91
-#, fuzzy
 msgid "_Off After"
-msgstr "電源 OFF: "
+msgstr "電源OFFまで(_O): "
 
 #: driver/xscreensaver-demo.glade2.h:92
-#, fuzzy
 msgid "_Only One Screen Saver"
-msgstr "一つのスクリーンセーバーのみ"
+msgstr "一つのセーバーのみ(_O)"
 
 #: driver/xscreensaver-demo.glade2.h:93
-#, fuzzy
 msgid "_Power Management Enabled"
-msgstr "パワーマネージメントを有効にする"
+msgstr "電源管理を有効にする(_P)"
 
 #: driver/xscreensaver-demo.glade2.h:94
-#, fuzzy
 msgid "_Preview"
-msgstr "プレビュー"
+msgstr "プレビュー(_P)"
 
 #: driver/xscreensaver-demo.glade2.h:95
 msgid "_Program"
-msgstr ""
+msgstr "プログラム(_P)"
 
 #: driver/xscreensaver-demo.glade2.h:96
-#, fuzzy
 msgid "_Quit"
-msgstr "終了(_E)"
+msgstr "終了(_Q)"
 
 #: driver/xscreensaver-demo.glade2.h:97
-#, fuzzy
 msgid "_Random Screen Saver"
-msgstr "ランダムなスクリーンセーバー"
+msgstr "ランダムなセーバを用いる(_R)"
 
 #: driver/xscreensaver-demo.glade2.h:99
 #, fuzzy
@@ -1055,28 +1013,24 @@ msgid "_Same Random Savers"
 msgstr "ランダムなスクリーンセーバー"
 
 #: driver/xscreensaver-demo.glade2.h:100
-#, fuzzy
 msgid "_Settings..."
-msgstr "設定..."
+msgstr "設定(_S)"
 
 #: driver/xscreensaver-demo.glade2.h:101
-#, fuzzy
 msgid "_Standard <<"
-msgstr "標準オプション <<"
+msgstr "標準オプション(_S)<<"
 
 #: driver/xscreensaver-demo.glade2.h:102
-#, fuzzy
 msgid "_Text"
-msgstr "最適"
+msgstr "文字列(_T)"
 
 #: driver/xscreensaver-demo.glade2.h:103
 msgid "_URL"
 msgstr ""
 
 #: driver/xscreensaver-demo.glade2.h:104
-#, fuzzy
 msgid "_Visual:"
-msgstr "表示:"
+msgstr "ビジュアル(_V):"
 
 #: driver/xscreensaver-demo.glade2.h:105
 msgid "dialog1"
@@ -2285,7 +2239,7 @@ msgid "Bouboule"
 msgstr ""
 
 #: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
-msgid "Do Red/Blue 3D seperation"
+msgid "Do Red/Blue 3D separation"
 msgstr ""
 
 #: hacks/config/bouboule.xml.h:7
@@ -6196,27 +6150,27 @@ msgid "Fertility"
 msgstr ""
 
 #: hacks/config/petri.xml.h:12
-msgid "Maxium Lifespan"
+msgid "Maximum Lifespan"
 msgstr ""
 
 #: hacks/config/petri.xml.h:13
-msgid "Maxium Rate of Death"
+msgid "Maximum Rate of Death"
 msgstr ""
 
 #: hacks/config/petri.xml.h:14
-msgid "Maxium Rate of Growth"
+msgid "Maximum Rate of Growth"
 msgstr ""
 
 #: hacks/config/petri.xml.h:15
-msgid "Minium Lifespan"
+msgid "Minimum Lifespan"
 msgstr ""
 
 #: hacks/config/petri.xml.h:16
-msgid "Minium Rate of Death"
+msgid "Minimum Rate of Death"
 msgstr ""
 
 #: hacks/config/petri.xml.h:17
-msgid "Minium Rate of Growth"
+msgid "Minimum Rate of Growth"
 msgstr ""
 
 #: hacks/config/petri.xml.h:18
@@ -7253,7 +7207,7 @@ msgid "RD-Bomb"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:15
-msgid "Reaction/Difusion"
+msgid "Reaction/Diffusion"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:16

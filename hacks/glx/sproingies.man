@@ -10,6 +10,7 @@ sproingies - Q-Bert meets Marble Madness!
 [\-count \fInumber\fP]
 [\-delay \fInumber\fP]
 [\-size \fInumber\fP]
+[\-no\-fall]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
@@ -34,6 +35,9 @@ Per-frame delay, in microseconds.  Default: 25000 (0.03 seconds.).
 .TP 8
 .B \-size \fInumber\fP
 How much to scale the image down.  Default 0 (full screen.)
+.TP 8
+.B \-no\-fall
+Make sproingies "smart", so they do not fall down the edge.
 .TP 8
 .B \-wireframe
 Render in wireframe instead of solid.
@@ -61,4 +65,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Ed Mackey.
+Ed Mackey. Some aditional code by Sergio Gutiérrez "Sergut". 

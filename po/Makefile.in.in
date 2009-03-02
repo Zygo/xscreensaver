@@ -192,8 +192,8 @@ all-no:
 $(srcdir)/$(GETTEXT_PACKAGE).pot: $(POTFILES)
 	@INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
 	export INTLTOOL_EXTRACT ; \
-	echo $(GENPOT) ; \
-	     $(GENPOT)
+	echo top_srcdir=$(top_srcdir) $(GENPOT) ; \
+	     top_srcdir=$(top_srcdir) $(GENPOT)
 
 install-strip: install
 
@@ -292,7 +292,7 @@ generate_potfiles_in:
 	@tmp=po.$$$$ ;				\
 	 file=POTFILES.in ;			\
 	 ( cd $(top_srcdir);			\
-	   echo "# Auto-generated: `date`" ;	\
+	   echo "# Auto-generated: `LANG=C date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
 	     ls driver/*.glade2			\
 		driver/*.desktop.in		\
@@ -320,6 +320,9 @@ update-po: Makefile
 	for cat in $$catalogs; do \
 	  cat=`basename $$cat`; \
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
+          if [ ! -f $$lang.po ] ; then \
+             cp $(srcdir)/$$lang.po . ; \
+          fi ; \
 	  cp $$lang.po $$lang.old.po; \
 	  echo $(MSGMERGE) $$lang; \
 	  if   $(MSGMERGE) $$lang >/dev/null 2>&1; then \

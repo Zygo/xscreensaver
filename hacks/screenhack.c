@@ -105,10 +105,6 @@
 #include "screenhackI.h"
 #include "version.h"
 #include "vroot.h"
-#include "change_locale.h"
-#if HAVE_SETLOCALE
-#include <locale.h>
-#endif
 
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.
@@ -161,27 +157,6 @@ static char *default_defaults[] = {
 static XrmOptionDescRec *merged_options;
 static int merged_options_size;
 static char **merged_defaults;
-
-static void 
-reset_locale (void)
-{
-#ifdef HAVE_SETLOCALE
-  const char *current_locale = setlocale(LC_ALL, "");
-  const char *cmp_locale;
-  int j = 0;
-
-  while ((cmp_locale = change_locale[j]))
-    {
-      if (!strncmp(current_locale, cmp_locale, strlen(cmp_locale)))
-	{
-	  setlocale(LC_ALL, "C");
-	  break;
-	}
-      j++;
-    }
-#endif /* HAVE_SETLOCALE */
-}
-
 
 static void
 merge_options (void)
@@ -738,7 +713,6 @@ main (int argc, char **argv)
   char version[255];
 
   fix_fds();
-  reset_locale();
 
   progname = argv[0];   /* reset later */
   progclass = ft->progclass;

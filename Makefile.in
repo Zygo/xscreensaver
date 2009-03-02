@@ -334,7 +334,7 @@ www::
   else									    \
     set -x ;								    \
   fi ;									    \
-true  cvs add -kb $$BNAME $$BNAME2 ;					    \
+  cvs add -kb $$BNAME $$BNAME2 ;					    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \

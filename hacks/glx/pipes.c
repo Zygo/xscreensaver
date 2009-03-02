@@ -475,21 +475,6 @@ MakeShape(ModeInfo * mi, int newdir)
 	}
 }
 
-ENTRYPOINT void
-reshape_pipes(ModeInfo * mi, int width, int height)
-{
-	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
-
-	glViewport(0, 0, pp->WindW = (GLint) width, pp->WindH = (GLint) height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
-	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
-	glMatrixMode(GL_MODELVIEW);
-
-  glClear(GL_COLOR_BUFFER_BIT);
-}
-
 static void
 pinit(ModeInfo * mi, int zera)
 {
@@ -607,6 +592,22 @@ pinit(ModeInfo * mi, int zera)
 	FindNeighbors(mi);
 
 	pp->nowdir = SelectNeighbor(mi);
+}
+
+ENTRYPOINT void
+reshape_pipes(ModeInfo * mi, int width, int height)
+{
+	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+    pinit(mi, 1);
+
+	glViewport(0, 0, pp->WindW = (GLint) width, pp->WindH = (GLint) height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
+	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
+	glMatrixMode(GL_MODELVIEW);
+
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 ENTRYPOINT void

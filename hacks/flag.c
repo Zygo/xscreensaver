@@ -192,6 +192,10 @@ make_flag_bits(ModeInfo *mi)
   char *bitmap_name = get_string_resource (dpy, "bitmap", "Bitmap");
   char *text = get_string_resource (dpy, "text", "Text");
 
+#ifdef HAVE_COCOA
+  bitmap_name = 0;  /* #### always use default */
+#endif
+
   /* If neither a bitmap nor text are specified, randomly select either
 	 the builtin bitmap or builtin text. */
   if ((!bitmap_name || !*bitmap_name) && (!text || !*text))

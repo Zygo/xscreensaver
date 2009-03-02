@@ -472,7 +472,9 @@ install-pam:
 	    echo rm -f $$src ;						\
 	         rm -f $$src ;						\
 	  fi ;								\
-	  if ! ( grep $$dest $$conf >/dev/null ); then			\
+	  if ( grep $$dest $$conf >/dev/null ); then			\
+	    echo ;							\
+	  else								\
 	    e=echo ;							\
  $$e ""									     ;\
  $$e "  ####################################################################";\
