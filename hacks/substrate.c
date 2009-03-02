@@ -31,20 +31,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
-#include <stdio.h>
-#include <sys/time.h>
-
-#ifndef MAX_WIDTH
-#include <limits.h>
-#define MAX_WIDTH SHRT_MAX
-#endif
-
-#ifdef TIME_ME
-#include <time.h>
-#endif
-
-#include <math.h>
 
 /* this program goes faster if some functions are inline.  The following is
  * borrowed from ifs.c */
@@ -56,38 +42,38 @@
 #define STEP 0.42
 
 /* Raw colormap extracted from pollockEFF.gif */
-char *rgb_colormap[] = {
-    "rgb:20/1F/21", "rgb:26/2C/2E", "rgb:35/26/26", "rgb:37/2B/27",
-    "rgb:30/2C/2E", "rgb:39/2B/2D", "rgb:32/32/29", "rgb:3F/32/29",
-    "rgb:38/32/2E", "rgb:2E/33/3D", "rgb:33/3A/3D", "rgb:47/33/29",
-    "rgb:40/39/2C", "rgb:40/39/2E", "rgb:47/40/2C", "rgb:47/40/2E",
-    "rgb:4E/40/2C", "rgb:4F/40/2E", "rgb:4E/47/38", "rgb:58/40/37",
-    "rgb:65/47/2D", "rgb:6D/5D/3D", "rgb:74/55/30", "rgb:75/55/32",
-    "rgb:74/5D/32", "rgb:74/64/33", "rgb:7C/6C/36", "rgb:52/31/52",
-    "rgb:44/48/42", "rgb:4C/56/47", "rgb:65/5D/45", "rgb:6D/5D/44",
-    "rgb:6C/5D/4E", "rgb:74/6C/43", "rgb:7C/6C/42", "rgb:7C/6C/4B",
-    "rgb:6B/73/4B", "rgb:73/73/4B", "rgb:7B/7B/4A", "rgb:6B/6C/55",
-    "rgb:69/6D/5E", "rgb:7B/6C/5D", "rgb:6B/73/53", "rgb:6A/74/5D",
-    "rgb:72/7B/52", "rgb:7B/7B/52", "rgb:57/74/6E", "rgb:68/74/66",
-    "rgb:9C/54/2B", "rgb:9D/54/32", "rgb:9D/5B/35", "rgb:93/6B/36",
-    "rgb:AA/73/30", "rgb:C4/5A/27", "rgb:D9/52/23", "rgb:D8/5A/20",
-    "rgb:DB/5A/23", "rgb:E5/70/37", "rgb:83/6C/4B", "rgb:8C/6B/4B",
-    "rgb:82/73/5C", "rgb:93/73/52", "rgb:81/7B/63", "rgb:81/7B/6D",
-    "rgb:92/7B/63", "rgb:D9/89/3B", "rgb:E4/98/32", "rgb:DF/A1/33",
-    "rgb:E5/A0/37", "rgb:F0/AB/3B", "rgb:8A/8A/59", "rgb:B2/9A/58",
-    "rgb:89/82/6B", "rgb:9A/82/62", "rgb:88/8B/7C", "rgb:90/9A/7A",
-    "rgb:A2/82/62", "rgb:A1/8A/69", "rgb:A9/99/68", "rgb:99/A1/60",
-    "rgb:99/A1/68", "rgb:CA/81/48", "rgb:EB/8D/43", "rgb:C2/91/60",
-    "rgb:C2/91/68", "rgb:D1/A9/77", "rgb:C9/B9/7F", "rgb:F0/E2/7B",
-    "rgb:9F/92/8B", "rgb:C0/B9/99", "rgb:E6/B8/8F", "rgb:C8/C1/87",
-    "rgb:E0/C8/86", "rgb:F2/CC/85", "rgb:F5/DA/83", "rgb:EC/DE/9D",
-    "rgb:F5/D2/94", "rgb:F5/DA/94", "rgb:F4/E7/84", "rgb:F4/E1/8A",
-    "rgb:F4/E1/93", "rgb:E7/D8/A7", "rgb:F1/D4/A5", "rgb:F1/DC/A5",
-    "rgb:F4/DB/AD", "rgb:F1/DC/AE", "rgb:F4/DB/B5", "rgb:F5/DB/BD",
-    "rgb:F4/E2/AD", "rgb:F5/E9/AD", "rgb:F4/E3/BE", "rgb:F5/EA/BE",
-    "rgb:F7/F0/B6", "rgb:D9/D1/C1", "rgb:E0/D0/C0", "rgb:E7/D8/C0",
-    "rgb:F1/DD/C6", "rgb:E8/E1/C0", "rgb:F3/ED/C7", "rgb:F6/EC/CE",
-    "rgb:F8/F2/C7", "rgb:EF/EF/D0", 0
+static const char *rgb_colormap[] = {
+    "#201F21", "#262C2E", "#352626", "#372B27",
+    "#302C2E", "#392B2D", "#323229", "#3F3229",
+    "#38322E", "#2E333D", "#333A3D", "#473329",
+    "#40392C", "#40392E", "#47402C", "#47402E",
+    "#4E402C", "#4F402E", "#4E4738", "#584037",
+    "#65472D", "#6D5D3D", "#745530", "#755532",
+    "#745D32", "#746433", "#7C6C36", "#523152",
+    "#444842", "#4C5647", "#655D45", "#6D5D44",
+    "#6C5D4E", "#746C43", "#7C6C42", "#7C6C4B",
+    "#6B734B", "#73734B", "#7B7B4A", "#6B6C55",
+    "#696D5E", "#7B6C5D", "#6B7353", "#6A745D",
+    "#727B52", "#7B7B52", "#57746E", "#687466",
+    "#9C542B", "#9D5432", "#9D5B35", "#936B36",
+    "#AA7330", "#C45A27", "#D95223", "#D85A20",
+    "#DB5A23", "#E57037", "#836C4B", "#8C6B4B",
+    "#82735C", "#937352", "#817B63", "#817B6D",
+    "#927B63", "#D9893B", "#E49832", "#DFA133",
+    "#E5A037", "#F0AB3B", "#8A8A59", "#B29A58",
+    "#89826B", "#9A8262", "#888B7C", "#909A7A",
+    "#A28262", "#A18A69", "#A99968", "#99A160",
+    "#99A168", "#CA8148", "#EB8D43", "#C29160",
+    "#C29168", "#D1A977", "#C9B97F", "#F0E27B",
+    "#9F928B", "#C0B999", "#E6B88F", "#C8C187",
+    "#E0C886", "#F2CC85", "#F5DA83", "#ECDE9D",
+    "#F5D294", "#F5DA94", "#F4E784", "#F4E18A",
+    "#F4E193", "#E7D8A7", "#F1D4A5", "#F1DCA5",
+    "#F4DBAD", "#F1DCAE", "#F4DBB5", "#F5DBBD",
+    "#F4E2AD", "#F5E9AD", "#F4E3BE", "#F5EABE",
+    "#F7F0B6", "#D9D1C1", "#E0D0C0", "#E7D8C0",
+    "#F1DDC6", "#E8E1C0", "#F3EDC7", "#F6ECCE",
+    "#F8F2C7", "#EFEFD0", 0
 };
 
 typedef struct {
@@ -138,6 +124,19 @@ struct field {
     unsigned int wireframe;
 };
 
+struct state {
+  Display *dpy;
+  Window window;
+
+  struct field *f;
+  unsigned int max_cycles;
+  int growth_delay;
+  GC fgc;
+  XWindowAttributes xgwa;
+  XGCValues gcv;
+};
+
+
 static void 
 *xrealloc(void *p, size_t size)
 {
@@ -149,7 +148,7 @@ static void
     return ret;
 }
 
-struct field 
+static struct field 
 *init_field(void)
 {
     struct field *f = xrealloc(NULL, sizeof(struct field));
@@ -177,7 +176,8 @@ struct field
 #define ref_pixel(f, x, y)   ((f)->off_img[(y) * (f)->width + (x)])
 #define ref_cgrid(f, x, y)   ((f)->cgrid[(y) * (f)->width + (x)])
 
-inline void start_crack(struct field *f, crack *cr) {
+static inline void start_crack(struct field *f, crack *cr) 
+{
     /* synthesis of Crack::findStart() and crack::startCrack() */
     int px = 0;
     int py = 0;
@@ -243,7 +243,8 @@ inline void start_crack(struct field *f, crack *cr) {
 
 }
 
-inline void make_crack(struct field *f) {
+static inline void make_crack(struct field *f) 
+{
     crack *cr;
 
     if (f->num < f->max_num) {
@@ -272,13 +273,24 @@ inline void make_crack(struct field *f) {
     }
 }
 
-inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b) {
+static inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b) 
+{
     switch(depth) {
         case 32:
         case 24:
+#ifdef HAVE_COCOA
+            /* This program idiotically does not go through a color map, so
+               we have to hardcode in knowledge of how jwxyz.a packs pixels!
+               Fix it to go through st->colors[st->ncolors] instead!
+             */
+            *r = (c & 0x00ff0000) >> 16; 
+            *g = (c & 0x0000ffff) >>  8;
+            *b = (c & 0x000000ff); 
+#else
             *g = (c & 0xff00) >> 8; 
             *r = (c & 0xff0000) >> 16; 
             *b = c & 0xff; 
+#endif
             break;
         case 16:
             *g = ((c >> 5) & 0x3f) << 2;
@@ -293,14 +305,23 @@ inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b) {
     }
 }
 
-inline unsigned long rgb2point(int depth, int r, int g, int b) {
+static inline unsigned long rgb2point(int depth, int r, int g, int b) 
+{
     unsigned long ret = 0;
 
     switch(depth) {
         case 32:
             ret = 0xff000000;
         case 24:
+#ifdef HAVE_COCOA
+            /* This program idiotically does not go through a color map, so
+               we have to hardcode in knowledge of how jwxyz.a packs pixels!
+               Fix it to go through st->colors[st->ncolors] instead!
+             */
+            ret = 0xFF000000 | (r << 16) | (g << 8) | b;
+#else
             ret |= (r << 16) | (g << 8) | b;
+#endif
             break;
         case 16:
             ret = ((r>>3) << 11) | ((g>>2)<<5) | (b>>3);
@@ -315,8 +336,11 @@ inline unsigned long rgb2point(int depth, int r, int g, int b) {
 
 /* alpha blended point drawing -- this is Not Right and will likely fail on 
  * non-intel platforms as it is now, needs fixing */
-inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, 
-                                 struct field *f) {
+static inline unsigned long
+trans_point(struct state *st,
+            int x1, int y1, unsigned long myc, float a, 
+            struct field *f) 
+{
     if ((x1 >= 0) && (x1 < f->width) && (y1 >= 0) && (y1 < f->height)) {
         if (a >= 1.0) {
             ref_pixel(f, x1, y1) = myc;
@@ -343,11 +367,12 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a,
         }
     }
 
-    return 0;
+    return f->bgcolor;
 }
 
-inline void region_color(Display *dpy, Window window, GC fgc, struct field *f, 
-                         crack *cr) {
+static inline void 
+region_color(struct state *st, GC fgc, struct field *f, crack *cr) 
+{
     /* synthesis of Crack::regionColor() and SandPainter::render() */
 
     float rx = cr->x;
@@ -402,15 +427,16 @@ inline void region_color(Display *dpy, Window window, GC fgc, struct field *f,
         drawy = (cr->y + (ry - cr->y) * sin(cr->sandp + sin((float) i * w)));
 
         /* Draw sand bit */
-        c = trans_point(drawx, drawy, cr->sandcolor, (0.1 - i / (grains * 10.0)), f);
+        c = trans_point(st, drawx, drawy, cr->sandcolor, (0.1 - i / (grains * 10.0)), f);
 
-        XSetForeground(dpy, fgc, c);
-        XDrawPoint(dpy, window, fgc, (int) drawx, (int) drawy);
-        XSetForeground(dpy, fgc, f->fgcolor);
+        XSetForeground(st->dpy, fgc, c);
+        XDrawPoint(st->dpy, st->window, fgc, (int) drawx, (int) drawy);
+        XSetForeground(st->dpy, fgc, f->fgcolor);
     }
 }
 
-void build_substrate(struct field *f) {
+static void build_substrate(struct field *f) 
+{
     int tx;
     /* int ty; */
 
@@ -447,8 +473,9 @@ void build_substrate(struct field *f) {
 }
 
 
-inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f, 
-                          int cracknum) {
+static inline void
+movedrawcrack(struct state *st, GC fgc, struct field *f, int cracknum) 
+{
     /* Basically Crack::move() */
 
     int cx, cy;
@@ -484,11 +511,11 @@ inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f,
     if ((cx >= 0) && (cx < f->width) && (cy >= 0) && (cy < f->height)) {
         /* draw sand painter if we're not wireframe */
         if (!f->wireframe)
-            region_color(dpy, window, fgc, f, cr);
+            region_color(st, fgc, f, cr);
 
         /* draw fgcolor crack */
         ref_pixel(f, cx, cy) = f->fgcolor;
-        XDrawPoint(dpy, window, fgc, cx, cy);
+        XDrawPoint(st->dpy, st->window, fgc, cx, cy);
 
         if ( cr->curved && (cr->degrees_drawn > 360) ) {
             /* completed the circle, stop cracking */
@@ -519,9 +546,168 @@ inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f,
 
 }
 
-char *progclass = "Substrate";
 
-char *defaults[] = {
+static void build_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, 
+               struct field *f) 
+{
+    if (f->off_img) {
+        free(f->off_img);
+        f->off_img = NULL;
+    }
+
+    f->off_img = (unsigned long *) xrealloc(f->off_img, sizeof(unsigned long) * 
+                                            f->width * f->height);
+
+    memset(f->off_img, f->bgcolor, sizeof(unsigned long) * f->width * f->height);
+}
+
+
+static void *
+substrate_init (Display *dpy, Window window)
+{
+    struct state *st = (struct state *) calloc (1, sizeof(*st));
+    XColor tmpcolor;
+
+    st->dpy = dpy;
+    st->window = window;
+    st->f = init_field();
+
+    st->growth_delay = (get_integer_resource(st->dpy, "growthDelay", "Integer"));
+    st->max_cycles = (get_integer_resource(st->dpy, "maxCycles", "Integer"));
+    st->f->initial_cracks = (get_integer_resource(st->dpy, "initialCracks", "Integer"));
+    st->f->max_num = (get_integer_resource(st->dpy, "maxCracks", "Integer"));
+    st->f->wireframe = (get_boolean_resource(st->dpy, "wireFrame", "Boolean"));
+    st->f->grains = (get_integer_resource(st->dpy, "sandGrains", "Integer"));
+    st->f->circle_percent = (get_integer_resource(st->dpy, "circlePercent", "Integer"));
+
+    if (st->f->initial_cracks <= 2) {
+        fprintf(stderr, "%s: Initial cracks must be greater than 2\n", progname);
+        exit (1);
+    }
+
+    if (st->f->max_num <= 10) {
+        fprintf(stderr, "%s: Maximum number of cracks must be less than 10\n", 
+                progname);
+        exit (1);
+    }
+
+    if (st->f->circle_percent < 0) {
+        fprintf(stderr, "%s: circle percent must be at least 0\n", progname);
+        exit (1);
+    }
+
+    if (st->f->circle_percent > 100) {
+        fprintf(stderr, "%s: circle percent must be less than 100\n", progname);
+        exit (1);
+    }
+    
+    XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+
+    st->f->height = st->xgwa.height;
+    st->f->width = st->xgwa.width;
+    st->f->visdepth = st->xgwa.depth;
+ 
+    /* Count the colors in our map and assign them in a horrifically inefficient 
+     * manner but it only happens once */
+    while (rgb_colormap[st->f->numcolors] != NULL) {
+        st->f->parsedcolors = (unsigned long *) xrealloc(st->f->parsedcolors, 
+                                                     sizeof(unsigned long) * 
+                                                     (st->f->numcolors + 1));
+        if (!XParseColor(st->dpy, st->xgwa.colormap, rgb_colormap[st->f->numcolors], &tmpcolor)) {
+            fprintf(stderr, "%s: couldn't parse color %s\n", progname,
+                    rgb_colormap[st->f->numcolors]);
+            exit(1);
+        }
+
+        if (!XAllocColor(st->dpy, st->xgwa.colormap, &tmpcolor)) {
+            fprintf(stderr, "%s: couldn't allocate color %s\n", progname,
+                    rgb_colormap[st->f->numcolors]);
+            exit(1);
+        }
+
+        st->f->parsedcolors[st->f->numcolors] = tmpcolor.pixel;
+
+        st->f->numcolors++;
+    }
+
+    st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "foreground", "Foreground");
+    st->gcv.background = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "background", "Background");
+    st->fgc = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
+
+    st->f->fgcolor = st->gcv.foreground;
+    st->f->bgcolor = st->gcv.background;
+
+    /* Initialize stuff */
+    build_img(st->dpy, st->window, st->xgwa, st->fgc, st->f);
+    build_substrate(st->f);
+    
+    return st;
+}
+
+static unsigned long
+substrate_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int tempx;
+
+  if ((st->f->cycles % 10) == 0) {
+
+    /* Restart if the window size changes */
+    XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+
+    if (st->f->height != st->xgwa.height || st->f->width != st->xgwa.width) {
+      st->f->height = st->xgwa.height;
+      st->f->width = st->xgwa.width;
+      st->f->visdepth = st->xgwa.depth;
+
+      build_substrate(st->f);
+      build_img(st->dpy, st->window, st->xgwa, st->fgc, st->f);
+      XSetForeground(st->dpy, st->fgc, st->gcv.background);
+      XFillRectangle(st->dpy, st->window, st->fgc, 0, 0, st->xgwa.width, st->xgwa.height);
+      XSetForeground(st->dpy, st->fgc, st->gcv.foreground);
+    }
+  }
+
+  for (tempx = 0; tempx < st->f->num; tempx++) {
+    movedrawcrack(st, st->fgc, st->f, tempx);
+  }
+
+  st->f->cycles++;
+
+  if (st->f->cycles >= st->max_cycles && st->max_cycles != 0) {
+    build_substrate(st->f);
+    build_img(st->dpy, st->window, st->xgwa, st->fgc, st->f);
+    XSetForeground(st->dpy, st->fgc, st->gcv.background);
+    XFillRectangle(st->dpy, st->window, st->fgc, 0, 0, st->xgwa.width, st->xgwa.height);
+    XSetForeground(st->dpy, st->fgc, st->gcv.foreground);
+  }
+
+  return st->growth_delay;
+}
+
+
+static void
+substrate_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+substrate_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+substrate_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+static const char *substrate_defaults[] = {
     ".background: white",
     ".foreground: black",
     "*wireFrame: false",
@@ -530,11 +716,11 @@ char *defaults[] = {
     "*initialCracks: 3",
     "*maxCracks: 100",
     "*sandGrains: 64",
-    "*circlePercent: 0",
+    "*circlePercent: 33",
     0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec substrate_options[] = {
     {"-background", ".background", XrmoptionSepArg, 0},
     {"-foreground", ".foreground", XrmoptionSepArg, 0},
     {"-wireframe", ".wireFrame", XrmoptionNoArg, "true"},
@@ -547,141 +733,4 @@ XrmOptionDescRec options[] = {
     {0, 0, 0, 0}
 };
 
-void build_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, 
-               struct field *f) {
-    if (f->off_img) {
-        free(f->off_img);
-        f->off_img = NULL;
-    }
-
-    f->off_img = (unsigned long *) xrealloc(f->off_img, sizeof(unsigned long) * 
-                                            f->width * f->height);
-
-    memset(f->off_img, f->bgcolor, sizeof(unsigned long) * f->width * f->height);
-}
-
-void screenhack(Display * dpy, Window window)
-{
-    struct field *f = init_field();
-
-    unsigned int max_cycles = 0;
-    int growth_delay = 0;
-    int tempx;
-
-    GC fgc;
-    XGCValues gcv;
-    XWindowAttributes xgwa;
-    XColor tmpcolor;
-
-    growth_delay = (get_integer_resource("growthDelay", "Integer"));
-    max_cycles = (get_integer_resource("maxCycles", "Integer"));
-    f->initial_cracks = (get_integer_resource("initialCracks", "Integer"));
-    f->max_num = (get_integer_resource("maxCracks", "Integer"));
-    f->wireframe = (get_boolean_resource("wireFrame", "Boolean"));
-    f->grains = (get_integer_resource("sandGrains", "Integer"));
-    f->circle_percent = (get_integer_resource("circlePercent", "Integer"));
-
-    if (f->initial_cracks <= 2) {
-        fprintf(stderr, "%s: Initial cracks must be greater than 2\n", progname);
-        return;
-    }
-
-    if (f->max_num <= 10) {
-        fprintf(stderr, "%s: Maximum number of cracks must be less than 10\n", 
-                progname);
-        return;
-    }
-
-    if (f->circle_percent < 0) {
-        fprintf(stderr, "%s: circle percent must be at least 0\n", progname);
-        return;
-    }
-
-    if (f->circle_percent > 100) {
-        fprintf(stderr, "%s: circle percent must be less than 100\n", progname);
-        return;
-    }
-    
-    XGetWindowAttributes(dpy, window, &xgwa);
-
-    f->height = xgwa.height;
-    f->width = xgwa.width;
-    f->visdepth = xgwa.depth;
- 
-    /* Count the colors in our map and assign them in a horrifically inefficient 
-     * manner but it only happens once */
-    while (rgb_colormap[f->numcolors] != NULL) {
-        f->parsedcolors = (unsigned long *) xrealloc(f->parsedcolors, 
-                                                     sizeof(unsigned long) * 
-                                                     (f->numcolors + 1));
-        if (!XParseColor(dpy, xgwa.colormap, rgb_colormap[f->numcolors], &tmpcolor)) {
-            fprintf(stderr, "%s: couldn't parse color %s\n", progname,
-                    rgb_colormap[f->numcolors]);
-            exit(1);
-        }
-
-        if (!XAllocColor(dpy, xgwa.colormap, &tmpcolor)) {
-            fprintf(stderr, "%s: couldn't allocate color %s\n", progname,
-                    rgb_colormap[f->numcolors]);
-            exit(1);
-        }
-
-        f->parsedcolors[f->numcolors] = tmpcolor.pixel;
-
-        f->numcolors++;
-    }
-
-    gcv.foreground = get_pixel_resource("foreground", "Foreground",
-					dpy, xgwa.colormap);
-    gcv.background = get_pixel_resource("background", "Background",
-					dpy, xgwa.colormap);
-    fgc = XCreateGC(dpy, window, GCForeground, &gcv);
-
-    f->fgcolor = gcv.foreground;
-    f->bgcolor = gcv.background;
-
-    /* Initialize stuff */
-    build_img(dpy, window, xgwa, fgc, f);
-    build_substrate(f);
-    
-    while (1) {
-        if ((f->cycles % 10) == 0) {
-            /* Restart if the window size changes */
-            XGetWindowAttributes(dpy, window, &xgwa);
-
-            if (f->height != xgwa.height || f->width != xgwa.width) {
-                f->height = xgwa.height;
-                f->width = xgwa.width;
-                f->visdepth = xgwa.depth;
-
-                build_substrate(f);
-                build_img(dpy, window, xgwa, fgc, f);
-                XSetForeground(dpy, fgc, gcv.background);
-                XFillRectangle(dpy, window, fgc, 0, 0, xgwa.width, xgwa.height);
-                XSetForeground(dpy, fgc, gcv.foreground);
-            }
-        }
-
-        for (tempx = 0; tempx < f->num; tempx++) {
-            movedrawcrack(dpy, window, fgc, f, tempx);
-        }
-
-        f->cycles++;
-
-        XSync(dpy, False);
-
-        screenhack_handle_events(dpy);
-
-        if (f->cycles >= max_cycles && max_cycles != 0) {
-            build_substrate(f);
-            build_img(dpy, window, xgwa, fgc, f);
-            XSetForeground(dpy, fgc, gcv.background);
-            XFillRectangle(dpy, window, fgc, 0, 0, xgwa.width, xgwa.height);
-            XSetForeground(dpy, fgc, gcv.foreground);
-        }
-
-        if (growth_delay)
-            usleep(growth_delay);
-    }
-}
-
+XSCREENSAVER_MODULE ("Substrate", substrate)

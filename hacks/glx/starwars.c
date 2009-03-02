@@ -1,5 +1,5 @@
 /*
- * starwars, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org> and
+ * starwars, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,15 +26,40 @@
  *     starwars -program 'cat starwars.txt' -columns 25 -no-wrap -texture
  */
 
-#include <X11/Intrinsic.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-extern XtAppContext app;
+#include <ctype.h>
+#include <sys/stat.h>
 
-#define PROGCLASS	"StarWars"
-#define HACK_INIT	init_sws
-#define HACK_DRAW	draw_sws
-#define HACK_RESHAPE	reshape_sws
-#define sws_opts	xlockmore_opts
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>
+#endif /* HAVE_UNAME */
+
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h>
+#endif
+
+
+#define DEFAULTS "*delay:    40000     \n" \
+		 "*showFPS:  False     \n" \
+		 "*fpsTop:   True      \n" \
+		 "*font:   " DEF_FONT "\n"
+
+# define refresh_sws 0
+# define sws_handle_event 0
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#include "xlockmore.h"
+
+#ifdef USE_GL /* whole file */
+
 
 #define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
 #define DEF_LINES      "125"
@@ -65,32 +90,13 @@ extern XtAppContext app;
 #define FONT_WEIGHT       14
 #define KEEP_ASPECT
 
-#define DEFAULTS "*delay:    40000     \n" \
-		 "*showFPS:  False     \n" \
-		 "*fpsTop:   True      \n" \
-		 "*font:   " DEF_FONT "\n" \
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#include "xlockmore.h"
-
-#ifdef USE_GL /* whole file */
-
-#include <ctype.h>
-#include <GL/glu.h>
-#include <sys/stat.h>
 #include "texfont.h"
 #include "glutstroke.h"
 #include "glut_roman.h"
 #define GLUT_FONT (&glutStrokeRoman)
 
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
-
-
 typedef struct {
+  Display *dpy;
   GLXContext *glx_context;
 
   GLuint text_list, star_list;
@@ -99,6 +105,7 @@ typedef struct {
 
   FILE *pipe;
   XtInputId pipe_id;
+  XtIntervalId pipe_timer;
   Time subproc_relaunch_delay;
 
   char *buf;
@@ -157,6 +164,7 @@ static XrmOptionDescRec opts[] = {
   {"-wrap",	   ".lineWrap",  XrmoptionNoArg,  "True"   },
   {"-no-wrap",	   ".lineWrap",  XrmoptionNoArg,  "False"  },
   {"-nowrap",	   ".lineWrap",  XrmoptionNoArg,  "False"  },
+  {"-alignment",   ".alignment", XrmoptionSepArg, 0        },
   {"-left",        ".alignment", XrmoptionNoArg,  "Left"   },
   {"-right",       ".alignment", XrmoptionNoArg,  "Right"  },
   {"-center",      ".alignment", XrmoptionNoArg,  "Center" },
@@ -179,7 +187,7 @@ static argtype vars[] = {
   {&debug_p,        "debug",     "Boolean",    DEF_DEBUG,     t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
@@ -287,7 +295,8 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (sws_configuration *sc)
 {
-  char *oprogram = get_string_resource ("program", "Program");
+  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
+  char *oprogram = get_string_resource (sc->dpy, "program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
@@ -311,6 +320,8 @@ static void
 relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 {
   sws_configuration *sc = (sws_configuration *) closure;
+  if (!sc->pipe_timer) abort();
+  sc->pipe_timer = 0;
   launch_text_generator (sc);
 }
 
@@ -321,6 +332,7 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 static void
 drain_input (sws_configuration *sc)
 {
+  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
   if (sc->buf_tail < sc->buf_size - 2)
     {
       int target = sc->buf_size - sc->buf_tail - 2;
@@ -357,9 +369,9 @@ drain_input (sws_configuration *sc)
           sc->buf[sc->buf_tail] = 0;
 
           /* Set up a timer to re-launch the subproc in a bit. */
-          XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
-                           relaunch_generator_timer,
-                           (XtPointer) sc);
+          sc->pipe_timer = XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
+                                            relaunch_generator_timer,
+                                            (XtPointer) sc);
         }
     }
 }
@@ -643,7 +655,7 @@ init_stars (ModeInfo *mi, int width, int height)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_sws (ModeInfo *mi, int width, int height)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
@@ -727,7 +739,7 @@ gl_init (ModeInfo *mi)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
 
-  program = get_string_resource ("program", "Program");
+  program = get_string_resource (mi->dpy, "program", "Program");
 
   glDisable (GL_LIGHTING);
   glDisable (GL_DEPTH_TEST);
@@ -752,12 +764,12 @@ gl_init (ModeInfo *mi)
 }
 
 
-void 
+ENTRYPOINT void 
 init_sws (ModeInfo *mi)
 {
   double font_height;
 
-  sws_configuration *sc;
+  sws_configuration *sc = 0;
 
   if (!scs) {
     scs = (sws_configuration *)
@@ -766,12 +778,13 @@ init_sws (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    sc = &scs[MI_SCREEN(mi)];
-    sc->lines = (char **) calloc (max_lines+1, sizeof(char *));
   }
 
   sc = &scs[MI_SCREEN(mi)];
+
+  sc->dpy = MI_DISPLAY(mi);
+  sc = &scs[MI_SCREEN(mi)];
+  sc->lines = (char **) calloc (max_lines+1, sizeof(char *));
 
   if ((sc->glx_context = init_GL(mi)) != NULL) {
     gl_init(mi);
@@ -903,10 +916,11 @@ draw_stars (ModeInfo *mi)
   glPopMatrix ();
 }
 
-void
+ENTRYPOINT void
 draw_sws (ModeInfo *mi)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
+/*  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);*/
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   int i;
@@ -914,8 +928,10 @@ draw_sws (ModeInfo *mi)
   if (!sc->glx_context)
     return;
 
+#if 0
   if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
     XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+#endif
 
   glDrawBuffer (GL_BACK);
   glXMakeCurrent (dpy, window, *(sc->glx_context));
@@ -1054,5 +1070,30 @@ draw_sws (ModeInfo *mi)
 
   sc->star_theta += star_spin;
 }
+
+ENTRYPOINT void
+release_sws (ModeInfo *mi)
+{
+  if (scs) {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+      sws_configuration *sc = &scs[screen];
+      if (sc->pipe_id)
+        XtRemoveInput (sc->pipe_id);
+      if (sc->pipe)
+        pclose (sc->pipe);
+      if (sc->pipe_timer)
+        XtRemoveTimeOut (sc->pipe_timer);
+
+      /* #### there's more to free here */
+    }
+    free (scs);
+    scs = 0;
+  }
+  FreeAllGL(mi);
+}
+
+
+XSCREENSAVER_MODULE_2 ("StarWars", starwars, sws)
 
 #endif /* USE_GL */

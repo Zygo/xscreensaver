@@ -1,55 +1,51 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="hypertorus" _label="4D Hypertorus">
+<screensaver name="hypertorus" _label="Hypertorus">
 
   <command arg="-root"/>
 
-  <select id="display-mode">
-    <option id="wire" _label="Wireframe Mesh"
-            arg-set="-wireframe"/>
-    <option id="surface" _label="Solid Surface"
-            arg-set="-surface"/>
-    <option id="transparent" _label="Transparent Surface"
-            arg-set="-transparent"/>
-  </select>
+  <hgroup>
+    <select id="display-mode">
+      <option id="wire"        _label="Wireframe Mesh" arg-set="-mode 0"/>
+      <option id="surface"     _label="Solid Surface"  arg-set="-mode 1"/>
+      <option id="transparent" _label="Transparent Surface"/>
+    </select>
 
-  <select id="appearance">
-    <option id="solid" _label="Solid Object"
-            arg-set="-solid"/>
-    <option id="bands" _label="See-Through Bands"
-            arg-set="-bands"/>
-    <option id="bands" _label="See-Through Spirals (1 Spiral)"
-            arg-set="-spirals-1"/>
-    <option id="bands" _label="See-Through Spirals (2 Spirals)"
-            arg-set="-spirals-2"/>
-    <option id="bands" _label="See-Through Spirals (4 Spirals)"
-            arg-set="-spirals-4"/>
-    <option id="bands" _label="See-Through Spirals (8 Spirals)"
-            arg-set="-spirals-8"/>
-    <option id="bands" _label="See-Through Spirals (16 Spirals)"
-            arg-set="-spirals-16"/>
-  </select>
+    <select id="appearance">
+      <option id="solid" _label="Solid Object"
+              arg-set="-appearance 0"/>
+      <option id="bands" _label="See-Through Bands"/>
+      <option id="bands" _label="See-Through Spirals (1 Spiral)"
+              arg-set="-appearance 3"/>
+      <option id="bands" _label="See-Through Spirals (2 Spirals)"
+              arg-set="-appearance 4"/>
+      <option id="bands" _label="See-Through Spirals (4 Spirals)"
+              arg-set="-appearance 5"/>
+      <option id="bands" _label="See-Through Spirals (8 Spirals)"
+              arg-set="-appearance 6"/>
+      <option id="bands" _label="See-Through Spirals (16 Spirals)"
+              arg-set="-appearance 7"/>
+    </select>
+  </hgroup>
 
-  <select id="colors">
-    <option id="twosided" _label="Two-Sided"
-            arg-set="-twosided"/>
-    <option id="colorwheel" _label="Color Wheel"
-            arg-set="-colorwheel"/>
-  </select>
+  <hgroup>
+    <select id="colors">
+      <option id="twosided" _label="Two-Sided"/>
+      <option id="colorwheel" _label="Color Wheel" arg-set="-colorwheel"/>
+    </select>
 
-  <select id="projection3d">
-    <option id="perspective-3d" _label="Perspective 3d"
-            arg-set="-perspective-3d"/>
-    <option id="orthographic-3d" _label="Orthographic 3d"
-            arg-set="-orthographic-3d"/>
-  </select>
+    <select id="projection3d">
+      <option id="perspective-3d" _label="Perspective 3d"/>
+      <option id="orthographic-3d" _label="Orthographic 3d"
+              arg-set="-orthographic-3d"/>
+    </select>
 
-  <select id="projection4d">
-    <option id="perspective-4d" _label="Perspective 4d"
-            arg-set="-perspective-4d"/>
-    <option id="orthographic-4d" _label="Orthographic 4d"
-            arg-set="-orthographic-4d"/>
-  </select>
+    <select id="projection4d">
+      <option id="perspective-4d" _label="Perspective 4d"/>
+      <option id="orthographic-4d" _label="Orthographic 4d"
+              arg-set="-orthographic-4d"/>
+    </select>
+  </hgroup>
 
   <hgroup>
 
@@ -101,9 +97,12 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
+
 This program shows a rotating Clifford Torus: a torus lying on the
-"surface" of a 4D hypersphere.  Written by Carsten Steger, inspired by
-Thomas Banchoff's book "Beyond the Third Dimension: Geometry, Computer
-Graphics, and Higher Dimensions", Scientific American Library, 1990.
+"surface" of a 4D hypersphere.  Inspired by Thomas Banchoff's book
+"Beyond the Third Dimension: Geometry, Computer Graphics, and Higher
+Dimensions", Scientific American Library, 1990.
+
+Written by Carsten Steger; 2003.
   </_description>
 </screensaver>

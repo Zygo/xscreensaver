@@ -19,12 +19,14 @@
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-20" high="20" default="-6"/>
 
-  <boolean id="shuffle" _label="Show Shuffling" arg-unset="-hideshuffling"/>
+  <boolean id="shuffle" _label="Hide Shuffling" arg-set="-hideshuffling"/>
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws a Rubik's Cube that rotates in three dimensions and repeatedly
-shuffles and solves itself.  Another fine GL hack by Marcelo Vianna.
+shuffles and solves itself.  
+
+Written by Marcelo Vianna; 1997.
   </_description>
 </screensaver>

@@ -29,8 +29,8 @@
   <!-- #### -w [] -->
 
   <_description>
-This generates pretty fractal pictures by doing funky math involving
-the ``Lyapunov exponent.''  It has a cool interactive mode, too.
-Written by Ron Record.
+This generates pretty fractal pictures via the Lyapunov exponent.
+
+Written by Ron Record; 1997.
   </_description>
 </screensaver>

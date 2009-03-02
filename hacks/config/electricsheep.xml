@@ -39,15 +39,16 @@
 
   <_description>
 
-ElectricSheep is an xscreensaver module that displays mpeg video of an
-animated fractal flame.  In the background, it contributes render
-cycles to the next animation.  Periodically it uploades completed
-frames to the server, where they are compressed for distribution to all
-clients.
+Displays mpeg video of an animated fractal flame.  In the background,
+it contributes render cycles to the next animation.  Periodically it
+uploades completed frames to the server, where they are compressed for
+distribution to all clients.
 
 This program is recommended only if you have a high bandwidth,
 always-on connection to the Internet.
 
-By Scott Draves.  You can find it at &lt;http://www.electricsheep.org/&gt;.
+You can find it at &lt;http://www.electricsheep.org/&gt;.
+
+Written by By Scott Draves.
   </_description>
 </screensaver>

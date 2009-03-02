@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005, 2006 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,11 @@
 # .xscreensaver file.  It may load a file, a URL, run a program, or just
 # print the date.
 #
+# In a native MacOS build of xscreensaver, this script is included in
+# the Contents/Resources/ directory of each screen saver .bundle that
+# uses it; and in that case, it looks up its resources using
+# /usr/bin/defaults instead.
+#
 # Created: 19-Mar-2005.
 
 require 5;
@@ -24,7 +29,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -37,6 +42,7 @@ my $text_program  = '';
 my $text_url      = '';
 
 my $wrap_columns  = undef;
+my $nyarlathotep_p = 0;
 
 
 # Maps HTML character entities to the corresponding Latin1 characters.
@@ -142,8 +148,7 @@ sub de_unicoddle($) {
 
 # Reads the prefs we use from ~/.xscreensaver
 #
-sub get_prefs() {
-
+sub get_x11_prefs() {
   my $got_any_p = 0;
   local *IN;
 
@@ -152,20 +157,20 @@ sub get_prefs() {
     my $body = '';
     while (<IN>) { $body .= $_; }
     close IN;
-    $got_any_p = get_prefs_1 ($body);
+    $got_any_p = get_x11_prefs_1 ($body);
 
   } elsif ($verbose > 1) {
     print STDERR "$progname: $config_file: $!\n";
   }
 
-  if (! $got_any_p) {
+  if (! $got_any_p && defined ($ENV{DISPLAY})) {
     # We weren't able to read settings from the .xscreensaver file.
     # Fall back to any settings in the X resource database
     # (/usr/X11R6/lib/X11/app-defaults/XScreenSaver)
     #
     print STDERR "$progname: reading X resources\n" if ($verbose > 1);
     my $body = `appres XScreenSaver xscreensaver -1`;
-    $got_any_p = get_prefs_1 ($body);
+    $got_any_p = get_x11_prefs_1 ($body);
   }
 
   if ($verbose > 1) {
@@ -181,7 +186,7 @@ sub get_prefs() {
 }
 
 
-sub get_prefs_1($) {
+sub get_x11_prefs_1($) {
   my ($body) = @_;
 
   my $got_any_p = 0;
@@ -205,6 +210,60 @@ sub get_prefs_1($) {
   }
 
   return $got_any_p;
+}
+
+
+sub get_cocoa_prefs($) {
+  my ($id) = @_;
+  my $v;
+ 
+  print STDERR "$progname: reading Cocoa prefs: \"$id\"\n" if ($verbose > 1);
+
+  $v = get_cocoa_pref_1 ($id, "textMode");
+  $text_mode = $v if defined ($v);
+
+  # The "textMode" pref is set to a number instead of a string because I
+  # can't figure out the black magic to make Cocoa bindings work right.
+  #
+  if    ($text_mode eq '0') { $text_mode = 'date';    }
+  elsif ($text_mode eq '1') { $text_mode = 'literal'; }
+  elsif ($text_mode eq '2') { $text_mode = 'file';    }
+  elsif ($text_mode eq '3') { $text_mode = 'url';     }
+
+  $v = get_cocoa_pref_1 ($id, "textLiteral");
+  $text_literal = $v if defined ($v);
+
+  $v = get_cocoa_pref_1 ($id, "textFile");
+  $text_file = $v if defined ($v);
+
+  $v = get_cocoa_pref_1 ($id, "textProgram");
+  $text_program = $v if defined ($v);
+
+  $v = get_cocoa_pref_1 ($id, "textURL");
+  $text_url = $v if defined ($v);
+}
+
+
+sub get_cocoa_pref_1($$) {
+  my ($id, $key) = @_;
+  # make sure there's nothing stupid/malicious in either string.
+  $id  =~ s/[^-a-z\d. ]/_/gsi;
+  $key =~ s/[^-a-z\d. ]/_/gsi;
+  my $cmd = "defaults -currentHost read \"$id\" \"$key\"";
+
+  print STDERR "$progname: executing $cmd\n"
+    if ($verbose > 3);
+
+  my $val = `$cmd 2>/dev/null`;
+  $val =~ s/^\s+//s;
+  $val =~ s/\s+$//s;
+
+  print STDERR "$progname: Cocoa: $id $key = \"$val\"\n"
+    if ($verbose > 2);
+
+  $val = undef if ($val =~ m/^$/s);
+
+  return $val;
 }
 
 
@@ -257,10 +316,13 @@ sub output() {
 
   if ($text_mode eq 'literal') {
     $text_literal = strftime ($text_literal, localtime);
+    $text_literal =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
     print STDOUT $text_literal;
     print STDOUT "\n" unless ($text_literal =~ m/\n$/s);
 
   } elsif ($text_mode eq 'file') {
+
+    $text_file =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
 
     local *IN;
     if (open (IN, "<$text_file")) {
@@ -273,7 +335,10 @@ sub output() {
         reformat_text ($body);
       } else {
         # stream it
-        while (<IN>) { print $_; }
+        while (<IN>) { 
+          y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
+          print $_;
+        }
       }
       close IN;
     } else {
@@ -302,8 +367,28 @@ sub output() {
   } else { # $text_mode eq 'date'
 
     safe_system ("uname", "-n");
-    if (-f "/etc/redhat-release") { system ("cat", "/etc/redhat-release"); }
-    safe_system ("uname", "-sr");
+
+    my $unamep = 1;
+
+    if (-f "/etc/redhat-release") {	    # "Fedora Core release 4 (Stentz)"
+      system ("cat", "/etc/redhat-release");
+    }
+
+    if (-f "/usr/sbin/system_profiler") {   # "Mac OS X 10.4.5 (8H14)"
+      my $sp =				    # "iMac G5"
+        `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType`;
+      my ($v) = ($sp =~ m/^\s*System Version:\s*(.*)$/mi);
+      my ($s) = ($sp =~ m/^\s*CPU Speed:\s*(.*)$/mi);
+      my ($t) = ($sp =~ m/^\s*Machine Name:\s*(.*)$/mi);
+      print "$v\n" if ($v);
+      print "$s $t\n" if ($s && $t);
+      $unamep = !defined ($v);
+    }
+
+    if ($unamep) {
+      safe_system ("uname", "-sr");	    # "Linux 2.6.15-1.1831_FC4"
+    }
+
     print "\n";
     safe_system ("date", "+%c");
     print "\n";
@@ -321,7 +406,7 @@ sub output() {
 sub get_url_1($;$) {
   my ($url, $referer) = @_;
   
-  if (! ($url =~ m@^http://@i)) {
+  if (! ($url =~ m@^(http|feed)://@i)) {
     error ("not an HTTP URL: $url");
   }
 
@@ -541,6 +626,7 @@ sub reformat_html($$) {
     s/[ \t]+$//gm;                # lose whitespace at end of line again
   }
 
+  y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
   print STDOUT $_;
 }
 
@@ -638,6 +724,7 @@ sub reformat_text($) {
     $body =~ s/[ \t]+$//gm;
   }
 
+  $body =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
   print STDOUT $body;
 }
 
@@ -709,6 +796,7 @@ sub usage() {
 sub main() {
 
   my $load_p = 1;
+  my $cocoa_id = undef;
 
   while ($#ARGV >= 0) {
     $_ = shift @ARGV;
@@ -729,11 +817,26 @@ sub main() {
                               $text_url = shift @ARGV;
                               $load_p = 0; }
     elsif (m/^--?col(umn)?s?$/) { $wrap_columns = 0 + shift @ARGV; }
+    elsif (m/^--?cocoa$/)   { $cocoa_id = shift @ARGV; }
+    elsif (m/^--?nyarlathotep$/) { $nyarlathotep_p++; }
     elsif (m/^-./) { usage; }
     else { usage; }
   }
 
-  get_prefs() if ($load_p);
+  if ($load_p) {
+
+    if (!defined ($cocoa_id)) {
+      # see OSX/XScreenSaverView.m
+      $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
+    }
+
+    if (defined ($cocoa_id)) {
+      get_cocoa_prefs($cocoa_id);
+    } else {
+      get_x11_prefs();
+    }
+  }
+
   output();
 }
 

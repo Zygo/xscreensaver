@@ -119,14 +119,14 @@ draw_colorbars (Screen *screen, Visual *visual,
       {
         Window root;
         unsigned int logo_width, logo_height;
-        unsigned int w = width;
-        unsigned int h = height * heights[0] / 100;
+        int w = width;
+        int h = height * heights[0] / 100;
         int x1, y1;
         unsigned int bw, d;
         XGetGeometry (dpy, logo_map, &root, &x1, &y1,
                       &logo_width, &logo_height, &bw, &d);
-        x1 = x + (w - logo_width) / 2;
-        y1 = y + (h - logo_height) / 2;
+        x1 = x + (w - (int) logo_width) / 2;
+        y1 = y + (h - (int) logo_height) / 2;
         if (logo_mask)
           {
             XSetClipMask (dpy, gc, logo_mask);

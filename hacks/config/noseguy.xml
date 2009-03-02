@@ -4,24 +4,13 @@
 
   <command arg="-root"/>
 
-  <select id="mode">
-    <option id="program" _label="Get Text from Program"/>
-    <option id="file"    _label="Get Text from File" arg-set="-mode file"/>
-    <option id="string"  _label="Use Text Below"     arg-set="-mode string"/>
-  </select>
+<!--  <file   id="program" _label="Text Program" arg="-program %"/> -->
 
-  <file   id="program" _label="Text Program" arg="-program %"/>
-  <file   id="file"    _label="Text File"    arg="-filename %"/>
-  <string id="string"  _label="Text"         arg="-text %"/>
-
-  <!-- #### -font [-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*] -->
-  <!-- #### -text-foreground [?] -->
-  <!-- #### -text-background [?] -->
+  <xscreensaver-text />
 
   <_description>
 A little man with a big nose wanders around your screen saying things.
-The things which he says are the output of a program or the contents
-of a file or URL, as configured on the "Advanced" tab of the main
-Screensaver Preferences window.  By Dan Heller and Jamie Zawinski.
+
+Written by Dan Heller and Jamie Zawinski; 1992.
   </_description>
 </screensaver>

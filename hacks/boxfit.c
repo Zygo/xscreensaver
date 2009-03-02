@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2005, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,11 +17,11 @@
 
 #include "screenhack.h"
 #include <stdio.h>
-#include <X11/Xutil.h>
 #include "xpm-pixmap.h"
 
 #define ALIVE   1
 #define CHANGED 2
+#define UNDEAD  4
 
 typedef struct {
   unsigned long fill_color;
@@ -51,25 +51,31 @@ typedef struct {
   XImage *image;
   int ncolors;
   XColor *colors;
+  int delay;
+  int countdown;
+
+  Bool done_once;
+  async_load_state *img_loader;
+  Pixmap loading_pixmap;
+
 } state;
 
 
 static void
 reset_boxes (state *st)
 {
-  static Bool once = False;
   int mode = -1;
 
   st->nboxes = 0;
   st->growing_p = True;
   st->color_horiz_p = random() & 1;
 
-  if (once && st->colors)
+  if (st->done_once && st->colors)
     free_colors (st->dpy, st->xgwa.colormap, st->colors, st->ncolors);
 
-  if (!once)
+  if (!st->done_once)
     {
-      char *s = get_string_resource ("mode", "Mode");
+      char *s = get_string_resource (st->dpy, "mode", "Mode");
       if (!s || !*s || !strcasecmp (s, "random"))
         mode = -1;
       else if (!strcasecmp (s, "squares") || !strcasecmp (s, "square"))
@@ -90,83 +96,37 @@ reset_boxes (state *st)
   else
     st->circles_p = (mode == 1);
 
-  once = True;
+  st->done_once = True;
 
-  if (st->image || get_boolean_resource ("grab", "Boolean"))
+  if (st->image || get_boolean_resource (st->dpy, "grab", "Boolean"))
     {
-      Pixmap p = 0;
       if (st->image) XDestroyImage (st->image);
       st->image = 0;
 
-      if (!get_boolean_resource ("peek", "Boolean"))
-        p = XCreatePixmap (st->dpy, st->window,
-                           st->xgwa.width, st->xgwa.height,
-                           st->xgwa.depth);
+      if (st->loading_pixmap) abort();
+      if (st->img_loader) abort();
+      if (!get_boolean_resource (st->dpy, "peek", "Boolean"))
+        st->loading_pixmap = XCreatePixmap (st->dpy, st->window,
+                                            st->xgwa.width, st->xgwa.height,
+                                            st->xgwa.depth);
 
-      load_random_image (st->xgwa.screen, st->window,
-                         (p ? p : st->window), 0, 0);
-      st->image = XGetImage (st->dpy, (p ? p : st->window), 0, 0,
-                             st->xgwa.width, st->xgwa.height, ~0L, ZPixmap);
-      if (p) XFreePixmap (st->dpy, p);
-      XSync (st->dpy, False);
-      XSetWindowBackground (st->dpy, st->window, st->bg_color);
-      if (!p) sleep (2);
+      XClearWindow (st->dpy, st->window);
+      st->img_loader = load_image_async_simple (0, st->xgwa.screen, 
+                                                st->window,
+                                                (st->loading_pixmap
+                                                 ? st->loading_pixmap
+                                                 : st->window), 
+                                                0, 0);
     }
   else
     {
-      st->ncolors = get_integer_resource ("colors", "Colors");  /* re-get */
+      st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");  /* re-get */
       make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, 0, False);
+      XClearWindow (st->dpy, st->window);
     }
-
-  XClearWindow (st->dpy, st->window);
 }
 
-
-state *
-init_boxes (Display *dpy, Window window)
-{
-  XGCValues gcv;
-  state *st = (state *) calloc (1, sizeof (*st));
-
-  st->dpy = dpy;
-  st->window = window;
-
-  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
-  XSelectInput (dpy, window, st->xgwa.your_event_mask | ExposureMask);
-
-  if (! get_boolean_resource ("grab", "Boolean"))
-    {
-      st->ncolors = get_integer_resource ("colors", "Colors");
-      if (st->ncolors < 1) st->ncolors = 1;
-      st->colors = (XColor *) malloc (sizeof(XColor) * st->ncolors);
-    }
-
-  st->inc = get_integer_resource ("growBy", "GrowBy");
-  st->spacing = get_integer_resource ("spacing", "Spacing");
-  st->border_size = get_integer_resource ("borderSize", "BorderSize");
-  st->fg_color = get_pixel_resource ("foreground", "Foreground",
-                                     st->dpy, st->xgwa.colormap);
-  st->bg_color = get_pixel_resource ("background", "Background",
-                                     st->dpy, st->xgwa.colormap);
-  if (st->inc < 1) st->inc = 1;
-  if (st->border_size < 0) st->border_size = 0;
-
-  gcv.line_width = st->border_size;
-  gcv.background = st->bg_color;
-  st->gc = XCreateGC (st->dpy, st->window, GCBackground|GCLineWidth, &gcv);
-
-  st->box_count = get_integer_resource ("boxCount", "BoxCount");
-  if (st->box_count < 1) st->box_count = 1;
-
-  st->nboxes = 0;
-  st->boxes_size = st->box_count * 2;
-  st->boxes = (box *) calloc (st->boxes_size, sizeof(*st->boxes));
-
-  reset_boxes (st);
-
-  return st;
-}
 
 static void
 reshape_boxes (state *st)
@@ -179,6 +139,54 @@ reshape_boxes (state *st)
       b->flags |= CHANGED;
     }
 }
+
+static void *
+boxfit_init (Display *dpy, Window window)
+{
+  XGCValues gcv;
+  state *st = (state *) calloc (1, sizeof (*st));
+
+  st->dpy = dpy;
+  st->window = window;
+  st->delay = get_integer_resource (dpy, "delay", "Integer");
+
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+/*  XSelectInput (dpy, window, st->xgwa.your_event_mask | ExposureMask);*/
+
+  if (! get_boolean_resource (dpy, "grab", "Boolean"))
+    {
+      st->ncolors = get_integer_resource (dpy, "colors", "Colors");
+      if (st->ncolors < 1) st->ncolors = 1;
+      st->colors = (XColor *) malloc (sizeof(XColor) * st->ncolors);
+    }
+
+  st->inc = get_integer_resource (dpy, "growBy", "GrowBy");
+  st->spacing = get_integer_resource (dpy, "spacing", "Spacing");
+  st->border_size = get_integer_resource (dpy, "borderSize", "BorderSize");
+  st->fg_color = get_pixel_resource (st->dpy, st->xgwa.colormap, 
+                                     "foreground", "Foreground");
+  st->bg_color = get_pixel_resource (st->dpy, st->xgwa.colormap,
+                                     "background", "Background");
+  if (st->inc < 1) st->inc = 1;
+  if (st->border_size < 0) st->border_size = 0;
+
+  gcv.line_width = st->border_size;
+  gcv.background = st->bg_color;
+  st->gc = XCreateGC (st->dpy, st->window, GCBackground|GCLineWidth, &gcv);
+
+  st->box_count = get_integer_resource (dpy, "boxCount", "BoxCount");
+  if (st->box_count < 1) st->box_count = 1;
+
+  st->nboxes = 0;
+  st->boxes_size = st->box_count * 2;
+  st->boxes = (box *) calloc (st->boxes_size, sizeof(*st->boxes));
+
+  reset_boxes (st);
+
+  reshape_boxes (st);
+  return st;
+}
+
 
 
 static Bool
@@ -245,7 +253,7 @@ box_collides_p (state *st, box *a, int pad)
 }
 
 
-static void
+static unsigned int
 grow_boxes (state *st)
 {
   int inc2 = st->inc + st->spacing + st->border_size;
@@ -293,9 +301,9 @@ grow_boxes (state *st)
         }
 
       a = &st->boxes[st->nboxes-1];
-      a->flags |= CHANGED;
+      a->flags = CHANGED;
 
-      for (i = 0; i < 5000; i++)
+      for (i = 0; i < 100; i++)
         {
           a->x = inc2 + (random() % (st->xgwa.width  - inc2));
           a->y = inc2 + (random() % (st->xgwa.height - inc2));
@@ -315,11 +323,7 @@ grow_boxes (state *st)
         {
           st->nboxes--;			/* go into "fade out" mode now. */
           st->growing_p = False;
-
-          XSync (st->dpy, False);
-          sleep (2);
-
-          break;
+          return 2000000; /* make customizable... */
         }
 
       /* Pick colors for this box */
@@ -337,10 +341,12 @@ grow_boxes (state *st)
           a->fill_color   = st->colors [n % st->ncolors].pixel;
         }
     }
+
+  return st->delay;
 }
 
 
-static void
+static unsigned int
 shrink_boxes (state *st)
 {
   int i;
@@ -364,8 +370,12 @@ shrink_boxes (state *st)
         remaining++;
     }
 
-  if (remaining == 0)
+  if (remaining == 0) {
     reset_boxes (st);
+    return 1000000;
+  } else {
+    return st->delay;
+  }
 }
 
 
@@ -377,37 +387,33 @@ draw_boxes (state *st)
     {
       box *b = &st->boxes[i];
 
+      if (b->flags & UNDEAD) continue;
+      if (! (b->flags & CHANGED)) continue;
+      b->flags &= ~CHANGED;
+
       if (!st->growing_p)
         {
           /* When shrinking, black out an area outside of the border
              before re-drawing the box.
            */
-
-          if (b->w <= -st->inc*2 || b->h <= -st->inc*2) continue;
+          int margin = st->inc + st->border_size;
 
           XSetForeground (st->dpy, st->gc, st->bg_color);
-          XSetLineAttributes (st->dpy, st->gc,
-                              (st->inc + st->border_size) * 2,
-                              LineSolid, CapButt, JoinMiter);
-
           if (st->circles_p)
-            XDrawArc (st->dpy, st->window, st->gc,
-                      b->x, b->y,
-                      (b->w > 0 ? b->w : 1),
-                      (b->h > 0 ? b->h : 1),
+            XFillArc (st->dpy, st->window, st->gc,
+                      b->x - margin, b->y - margin,
+                      b->w + (margin*2), b->h + (margin*2),
                       0, 360*64);
           else
-            XDrawRectangle (st->dpy, st->window, st->gc,
-                            b->x, b->y,
-                            (b->w > 0 ? b->w : 1),
-                            (b->h > 0 ? b->h : 1));
-          XSetLineAttributes (st->dpy, st->gc, st->border_size,
-                              LineSolid, CapButt, JoinMiter);
+            XFillRectangle (st->dpy, st->window, st->gc,
+                      b->x - margin, b->y - margin,
+                      b->w + (margin*2), b->h + (margin*2));
+
+          if (b->w <= 0 || b->h <= 0)
+            b->flags |= UNDEAD;   /* really very dead now */
         }
 
       if (b->w <= 0 || b->h <= 0) continue;
-      if (! (b->flags & CHANGED)) continue;
-      b->flags &= ~CHANGED;
 
       XSetForeground (st->dpy, st->gc, b->fill_color);
 
@@ -434,29 +440,82 @@ draw_boxes (state *st)
     }
 }
 
-static void
-handle_events (state *st)
-{
-  XSync (st->dpy, False);
-  while (XPending (st->dpy))
-    {
-      XEvent event;
-      XNextEvent (st->dpy, &event);
-      if (event.xany.type == ConfigureNotify ||
-          event.xany.type == Expose)
-        reshape_boxes (st);
-      else if (event.xany.type == ButtonPress)
-        st->growing_p = !st->growing_p;
 
-      screenhack_handle_event (st->dpy, &event);
+static unsigned long
+boxfit_draw (Display *dpy, Window window, void *closure)
+{
+  state *st = (state *) closure;
+  int delay;
+
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      if (! st->img_loader)  /* just finished */
+        {
+          st->image = XGetImage (st->dpy,
+                                 (st->loading_pixmap ? st->loading_pixmap :
+                                  st->window),
+                                 0, 0,
+                                 st->xgwa.width, st->xgwa.height, ~0L, 
+                                 ZPixmap);
+          if (st->loading_pixmap) XFreePixmap (st->dpy, st->loading_pixmap);
+          XSetWindowBackground (st->dpy, st->window, st->bg_color);
+          if (st->loading_pixmap)
+            XClearWindow (st->dpy, st->window);
+          else
+            st->countdown = 2000000;
+          st->loading_pixmap = 0;
+        }
+      return st->delay;
     }
+
+  if (st->countdown > 0)
+    {
+      st->countdown -= st->delay;
+      if (st->countdown <= 0)
+        {
+          st->countdown = 0;
+          XClearWindow (st->dpy, st->window);
+        }
+      return st->delay;
+    }
+
+  if (st->growing_p) {
+    draw_boxes (st);
+    delay = grow_boxes (st);
+  } else {
+    delay = shrink_boxes (st);
+    draw_boxes (st);
+  }
+  return delay;
+}
+
+static void
+boxfit_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  state *st = (state *) closure;
+  reshape_boxes (st);
+}
+
+static Bool
+boxfit_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  state *st = (state *) closure;
+  if (event->xany.type == ButtonPress) {
+    st->growing_p = !st->growing_p;
+    return True;
+  }
+  return False;
+}
+
+static void
+boxfit_free (Display *dpy, Window window, void *closure)
+{
 }
 
 
-
-char *progclass = "BoxFit";
-
-char *defaults [] = {
+static const char *boxfit_defaults [] = {
   ".background:		   black",
   ".foreground:		   #444444",
   "*delay:		   20000",
@@ -468,16 +527,19 @@ char *defaults [] = {
   "*borderSize:		   1",
   "*grab:		   False",
   "*peek:		   False",
+  "*grabDesktopImages:     False",   /* HAVE_COCOA */
+  "*chooseRandomImages:    True",    /* HAVE_COCOA */
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec boxfit_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-colors",		".colors",		XrmoptionSepArg, 0 },
   { "-count",		".boxCount",		XrmoptionSepArg, 0 },
   { "-growby",		".growBy",		XrmoptionSepArg, 0 },
   { "-spacing",		".spacing",		XrmoptionSepArg, 0 },
   { "-border",		".borderSize",		XrmoptionSepArg, 0 },
+  { "-mode",		".mode",		XrmoptionSepArg, 0 },
   { "-circles",		".mode",		XrmoptionNoArg, "circles" },
   { "-squares",		".mode",		XrmoptionNoArg, "squares" },
   { "-random",		".mode",		XrmoptionNoArg, "random"  },
@@ -489,21 +551,4 @@ XrmOptionDescRec options [] = {
 };
 
 
-void
-screenhack (Display *dpy, Window window)
-{
-  state *st = init_boxes (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-  reshape_boxes (st);
-  while (1)
-    {
-      if (st->growing_p)
-        grow_boxes (st);
-      else
-        shrink_boxes (st);
-
-      draw_boxes (st);
-      handle_events (st);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Boxfit", boxfit)

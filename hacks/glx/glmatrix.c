@@ -16,17 +16,30 @@
  * movie did.
  */
 
-#include <X11/Intrinsic.h>
+#define DEFAULTS	"*delay:	30000         \n" \
+			"*showFPS:      False         \n" \
+			"*wireframe:    False         \n" \
 
-extern XtAppContext app;
+# define refresh_matrix 0
+# define release_matrix 0
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define PROGCLASS	"GLMatrix"
-#define HACK_INIT	init_matrix
-#define HACK_DRAW	draw_matrix
-#define HACK_RESHAPE	reshape_matrix
-#define HACK_HANDLE_EVENT matrix_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define matrix_opts	xlockmore_opts
+#undef BELLRAND
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
+
+#include "xlockmore.h"
+#include "xpm-ximage.h"
+
+#ifdef __GNUC__
+  __extension__  /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when including
+                    the following XPM file... */
+#endif
+#include "../images/matrix3.xpm"
+
+#ifdef USE_GL /* whole file */
+
 
 #define DEF_SPEED       "1.0"
 #define DEF_DENSITY     "20"
@@ -38,51 +51,30 @@ extern XtAppContext app;
 #define DEF_MODE        "Matrix"
 #define DEF_TIMEFMT     " %l%M%p "
 
-#define DEFAULTS	"*delay:	30000         \n" \
-			"*showFPS:      False         \n" \
-			"*wireframe:    False         \n" \
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#undef BELLRAND
-#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
-
-#include "xlockmore.h"
-#include "xpm-ximage.h"
-#include <ctype.h>
-#include <time.h>
-#include <stdio.h>
-
-#ifdef __GNUC__
-  __extension__  /* don't warn about "string length is greater than the length
-                    ISO C89 compilers are required to support" when including
-                    the following XPM file... */
-#endif
-#include "../images/matrix3.xpm"
-
-#ifdef USE_GL /* whole file */
-
-#include <GL/glu.h>
-
-
 #include "gllist.h"
 
 
 #define CHAR_COLS 16
 #define CHAR_ROWS 13
-static int real_char_rows;
 
-static int matrix_encoding[] = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                                 192, 193, 194, 195, 196, 197, 198, 199,
-                                 200, 201, 202, 203, 204, 205, 206, 207 };
-static int decimal_encoding[]  = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 };
-static int hex_encoding[]      = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                                   33, 34, 35, 36, 37, 38 };
-static int binary_encoding[] = { 16, 17 };
-static int dna_encoding[]    = { 33, 35, 39, 52 };
+static const int matrix_encoding[] = {
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+# if 0
+    192, 193, 194, 195, 196, 197, 198, 199,
+    200, 201, 202, 203, 204, 205, 206, 207
+# else
+    160, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 173, 174, 175
+# endif
+  };
+static const int decimal_encoding[]  = {
+  16, 17, 18, 19, 20, 21, 22, 23, 24, 25 };
+static const int hex_encoding[] = {
+  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 33, 34, 35, 36, 37, 38 };
+static const int binary_encoding[] = { 16, 17 };
+static const int dna_encoding[]    = { 33, 35, 39, 52 };
 
-static unsigned char char_map[256] = {
+static const unsigned char char_map[256] = {
    96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /*   0 */
    96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96,  /*  16 */
     0,  1,  2, 96,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,  /*  32 */
@@ -115,7 +107,7 @@ static unsigned char char_map[256] = {
 #define WAVE_SIZE  22     /* periodicity of color (brightness) waves */
 #define SPLASH_RATIO 0.7  /* ratio of GRID_DEPTH where chars hit the screen */
 
-static struct { GLfloat x, y; } nice_views[] = {
+static const struct { GLfloat x, y; } nice_views[] = {
   {  0,     0 },
   {  0,   -20 },     /* this is a list of viewer rotations that look nice. */
   {  0,    20 },     /* every now and then we switch to a new one.         */
@@ -170,7 +162,7 @@ typedef struct {
   GLuint texture;
   int nstrips;
   strip *strips;
-  int *glyph_map;
+  const int *glyph_map;
   int nglyphs;
   GLfloat tex_char_width, tex_char_height;
 
@@ -179,12 +171,14 @@ typedef struct {
   GLfloat view_x, view_y;
   int view_steps, view_tick;
   Bool auto_tracking_p;
+  int track_tick;
+
+  int real_char_rows;
+  GLfloat brightness_ramp[WAVE_SIZE];
 
 } matrix_configuration;
 
 static matrix_configuration *mps = NULL;
-
-static GLfloat brightness_ramp[WAVE_SIZE];
 
 static GLfloat speed;
 static GLfloat density;
@@ -229,7 +223,7 @@ static argtype vars[] = {
   {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
 };
 
-ModeSpecOpt matrix_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt matrix_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Re-randomize the state of one strip.
@@ -395,7 +389,7 @@ draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
       int ccy = ((glyph - 1) / CHAR_COLS);
 
       cx = ccx * w;
-      cy = (real_char_rows - ccy - 1) * h;
+      cy = (mp->real_char_rows - ccy - 1) * h;
 
       if (do_fog)
         {
@@ -430,7 +424,7 @@ draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
         if (i < 0) i = 0;
         else if (i >= WAVE_SIZE) i = WAVE_SIZE-1; 
 
-        a = brightness_ramp[i];
+        a = mp->brightness_ramp[i];
 #if 1
         /* I don't understand this -- if I change the alpha on the color of
            the quad, I'd expect that to make the quad more transparent.
@@ -479,6 +473,7 @@ draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
 static void
 draw_strip (ModeInfo *mi, strip *s)
 {
+  matrix_configuration *mp = &mps[MI_SCREEN(mi)];
   int i;
   for (i = 0; i < GRID_SIZE; i++)
     {
@@ -497,7 +492,7 @@ draw_strip (ModeInfo *mi, strip *s)
             {
               int j = WAVE_SIZE - ((i + (GRID_SIZE - s->wave_position))
                                    % WAVE_SIZE);
-              brightness = brightness_ramp[j];
+              brightness = mp->brightness_ramp[j];
             }
 
           draw_glyph (mi, g, s->highlight[i],
@@ -552,9 +547,8 @@ auto_track (ModeInfo *mi)
   /* if we're not moving, maybe start moving.  Otherwise, do nothing. */
   if (! mp->auto_tracking_p)
     {
-      static int tick = 0;
-      if (++tick < 20/speed) return;
-      tick = 0;
+      if (++mp->track_tick < 20/speed) return;
+      mp->track_tick = 0;
       if (! (random() % 20))
         mp->auto_tracking_p = True;
       else
@@ -590,7 +584,7 @@ auto_track (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_matrix (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -611,7 +605,7 @@ reshape_matrix (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 matrix_handle_event (ModeInfo *mi, XEvent *event)
 {
   matrix_configuration *mp = &mps[MI_SCREEN(mi)];
@@ -656,14 +650,14 @@ bigendian (void)
    well then, Something Else Will Need To Be Done.
  */
 static void
-spank_image (XImage *xi)
+spank_image (matrix_configuration *mp, XImage *xi)
 {
   int ch = xi->height / CHAR_ROWS;
   int cut = 2;
   unsigned char *bits = (unsigned char *) xi->data;
   unsigned char *from, *to, *s, *end;
   int L = xi->bytes_per_line * ch;
-  int i;
+/*  int i;*/
 
   /* Copy row 12 into 10 (which really means, copy 2 into 0,
      since texture data is upside down.).
@@ -693,13 +687,15 @@ spank_image (XImage *xi)
     *s++ = 0;
 
   xi->height -= (cut * ch);
-  real_char_rows -= cut;
+  mp->real_char_rows -= cut;
 
+# if 0
   /* Finally, pull the map indexes back to match the new bits.
    */
   for (i = 0; i < countof(matrix_encoding); i++)
     if (matrix_encoding[i] > (CHAR_COLS * (CHAR_ROWS - cut)))
       matrix_encoding[i] -= (cut * CHAR_COLS);
+# endif
 }
 
 
@@ -719,8 +715,8 @@ load_textures (ModeInfo *mi, Bool flip_p)
                       matrix3_xpm);
   orig_w = xi->width;
   orig_h = xi->height;
-  real_char_rows = CHAR_ROWS;
-  spank_image (xi);
+  mp->real_char_rows = CHAR_ROWS;
+  spank_image (mp, xi);
 
   if (xi->height != 512 && xi->height != 1024)
     {
@@ -826,7 +822,7 @@ load_textures (ModeInfo *mi, Bool flip_p)
 }
 
 
-void 
+ENTRYPOINT void 
 init_matrix (ModeInfo *mi)
 {
   matrix_configuration *mp;
@@ -942,7 +938,7 @@ init_matrix (ModeInfo *mi)
       j *= (M_PI / 2);       /* j ranges from 0.0 - PI/2  */
       j = sin (j);           /* j ranges from 0.0 - 1.0   */
       j = 0.2 + (j * 0.8);   /* j ranges from 0.2 - 1.0   */
-      brightness_ramp[i] = j;
+      mp->brightness_ramp[i] = j;
       /* printf("%2d %8.2f\n", i, j); */
     }
 
@@ -962,6 +958,7 @@ draw_grid (ModeInfo *mi)
       glDisable(GL_BLEND);
     }
   glPushMatrix();
+
   glColor3f(1, 1, 1);
   glBegin(GL_LINES);
   glVertex3f(-GRID_SIZE, 0, 0); glVertex3f(GRID_SIZE, 0, 0);
@@ -1005,7 +1002,7 @@ draw_grid (ModeInfo *mi)
 #endif /* DEBUG */
 
 
-void
+ENTRYPOINT void
 draw_matrix (ModeInfo *mi)
 {
   matrix_configuration *mp = &mps[MI_SCREEN(mi)];
@@ -1015,6 +1012,8 @@ draw_matrix (ModeInfo *mi)
 
   if (!mp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1076,5 +1075,7 @@ draw_matrix (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("GLMatrix", glmatrix, matrix)
 
 #endif /* USE_GL */

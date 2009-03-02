@@ -33,24 +33,22 @@ static const char sccsid[] = "@(#)rotor.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 #define MODE_rotor
-#define PROGCLASS "Rotor"
-#define HACK_INIT init_rotor
-#define HACK_DRAW draw_rotor
-#define rotor_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 4 \n" \
- "*cycles: 20 \n" \
- "*size: -6 \n" \
- "*ncolors: 200 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+#define DEFAULTS	"*delay: 10000 \n" \
+					"*count: 4 \n" \
+					"*cycles: 20 \n" \
+					"*size: -6 \n" \
+					"*ncolors: 200 \n"
+# define SMOOTH_COLORS
+# define reshape_rotor 0
+# define rotor_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_rotor
 
-ModeSpecOpt rotor_opts =
+ENTRYPOINT ModeSpecOpt rotor_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -119,8 +117,8 @@ free_rotor(rotorstruct *rp)
 	}
 }
 
-void
-init_rotor(ModeInfo * mi)
+ENTRYPOINT void
+init_rotor (ModeInfo * mi)
 {
 	int         x;
 	elem       *pelem;
@@ -133,6 +131,10 @@ init_rotor(ModeInfo * mi)
 			return;
 	}
 	rp = &rotors[MI_SCREEN(mi)];
+
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi),  False);
+#endif
 
 	rp->prevcenterx = rp->centerx;
 	rp->prevcentery = rp->centery;
@@ -224,8 +226,8 @@ init_rotor(ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
 }
 
-void
-draw_rotor(ModeInfo * mi)
+ENTRYPOINT void
+draw_rotor (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
@@ -365,8 +367,8 @@ draw_rotor(ModeInfo * mi)
 			   LineSolid, CapButt, JoinMiter);
 }
 
-void
-release_rotor(ModeInfo * mi)
+ENTRYPOINT void
+release_rotor (ModeInfo * mi)
 {
 	if (rotors != NULL) {
 		int         screen;
@@ -378,8 +380,8 @@ release_rotor(ModeInfo * mi)
 	}
 }
 
-void
-refresh_rotor(ModeInfo * mi)
+ENTRYPOINT void
+refresh_rotor (ModeInfo * mi)
 {
 	rotorstruct *rp;
 
@@ -391,5 +393,7 @@ refresh_rotor(ModeInfo * mi)
 	rp->redrawing = 1;
 	rp->redrawpos = 1;
 }
+
+XSCREENSAVER_MODULE ("Rotor", rotor)
 
 #endif /* MODE_rotor */

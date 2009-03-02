@@ -38,10 +38,6 @@ static const char sccsid[] = "@(#)worm.c	4.04 97/07/28 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS "Worm"
-# define HACK_INIT init_worm
-# define HACK_DRAW draw_worm
-# define worm_opts xlockmore_opts
 # define DEFAULTS	"*delay:  17000 \n" 	\
 					"*count:  -20 \n"		\
 					"*cycles:  10 \n"		\
@@ -52,14 +48,16 @@ static const char sccsid[] = "@(#)worm.c	4.04 97/07/28 xlockmore";
 					"*right3d: red \n"		\
 					"*left3d:  blue \n"		\
 					"*both3d:  magenta \n"	\
-					"*none3d:  black \n	"
+					"*none3d:  black \n"
 # define SMOOTH_COLORS
+# define reshape_worm 0
+# define worm_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
-ModeSpecOpt worm_opts =
+ENTRYPOINT ModeSpecOpt worm_opts =
 {0, NULL, 0, NULL, NULL};
 
 #define MINSIZE 1
@@ -265,8 +263,8 @@ free_worms(wormstruct * wp)
 	}
 }
 
-void
-init_worm(ModeInfo * mi)
+ENTRYPOINT void
+init_worm (ModeInfo * mi)
 {
 	wormstruct *wp;
 	int         size = MI_SIZE(mi);
@@ -361,8 +359,8 @@ init_worm(ModeInfo * mi)
 		XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
-void
-draw_worm(ModeInfo * mi)
+ENTRYPOINT void
+draw_worm (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
@@ -407,7 +405,7 @@ draw_worm(ModeInfo * mi)
 		wp->chromo = 0;
 }
 
-void
+ENTRYPOINT void
 release_worm(ModeInfo * mi)
 {
 	if (worms != NULL) {
@@ -420,8 +418,8 @@ release_worm(ModeInfo * mi)
 	}
 }
 
-void
-refresh_worm(ModeInfo * mi)
+ENTRYPOINT void
+refresh_worm (ModeInfo * mi)
 {
 	if (MI_WIN_IS_USE3D(mi))
 		/* The 3D code does drawing&clearing by XORing.  We do not
@@ -438,3 +436,5 @@ refresh_worm(ModeInfo * mi)
 		}
 	}
 }
+
+XSCREENSAVER_MODULE ("Worm", worm)

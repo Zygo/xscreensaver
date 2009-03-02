@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,28 +9,12 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"GLText"
-#define HACK_INIT	init_text
-#define HACK_DRAW	draw_text
-#define HACK_RESHAPE	reshape_text
-#define HACK_HANDLE_EVENT text_handle_event
-#define EVENT_MASK	PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_TEXT        "(default)"
-#define DEF_PROGRAM     "(default)"
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "True"
-#define DEF_FRONT       "False"
-
 #define DEFAULTS	"*delay:	20000        \n" \
 			"*showFPS:      False        \n" \
 			"*wireframe:    False        \n" \
 
+# define refresh_text 0
+# define release_text 0
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
 #ifdef SMOOTH_TUBE
@@ -48,8 +32,7 @@ extern XtAppContext app;
 #include "tube.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include <time.h>
-#include <sys/time.h>
+
 #include <ctype.h>
 
 #ifdef HAVE_LOCALE_H
@@ -58,12 +41,21 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
+#ifdef HAVE_COCOA
+# define DEF_TEXT       "%A%n%d %b %Y%n%r"
+#else
+# define DEF_TEXT        "(default)"
+#endif
+
+#define DEF_PROGRAM     "(default)"
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "True"
+#define DEF_FRONT       "True"
+
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>
 #endif /* HAVE_UNAME */
 
-
-#include <GL/glu.h>
 #include "glutstroke.h"
 #include "glut_roman.h"
 #define GLUT_FONT (&glutStrokeRoman)
@@ -84,6 +76,8 @@ typedef struct {
 
   char *text;
   int reload;
+
+  time_t last_update;
 
 } text_configuration;
 
@@ -114,12 +108,12 @@ static argtype vars[] = {
   {&face_front_p, "faceFront", "FaceFront", DEF_FRONT,   t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt text_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_text (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -146,7 +140,7 @@ gl_init (ModeInfo *mi)
   text_configuration *tp = &tps[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
 
-  static GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
+  static const GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
 
   if (!wire)
     {
@@ -289,7 +283,7 @@ parse_text (ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 text_handle_event (ModeInfo *mi, XEvent *event)
 {
   text_configuration *tp = &tps[MI_SCREEN(mi)];
@@ -330,15 +324,20 @@ text_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_text (ModeInfo *mi)
 {
   text_configuration *tp;
   int i;
 
+  /* setlocale (LC_TIME, "") only refers to environment:
+     not needed
+   */
+#if 0
 # ifdef HAVE_SETLOCALE
   setlocale (LC_TIME, "");      /* for strftime() calls */
 # endif
+#endif
 
   if (!tps) {
     tps = (text_configuration *)
@@ -370,6 +369,7 @@ init_text (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') tp->spinx = True;
         else if (*s == 'y' || *s == 'Y') tp->spiny = True;
         else if (*s == 'z' || *s == 'Z') tp->spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -545,7 +545,7 @@ fill_string (const char *string, Bool wire)
 }
 
 
-void
+ENTRYPOINT void
 draw_text (ModeInfo *mi)
 {
   text_configuration *tp = &tps[MI_SCREEN(mi)];
@@ -553,19 +553,20 @@ draw_text (ModeInfo *mi)
   Window window = MI_WINDOW(mi);
   int wire = MI_IS_WIREFRAME(mi);
 
-  static GLfloat color[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
+  GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
+  GLfloat color[4] = {0.0, 0.0, 0.0, 1.0};
 
   if (!tp->glx_context)
     return;
 
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tp->glx_context));
+
   if (tp->reload)
     {
-      static time_t last_update = 0;
-      if (time ((time_t *) 0) >= last_update + tp->reload)
+      if (time ((time_t *) 0) >= tp->last_update + tp->reload)
         {
           parse_text (mi);
-          last_update = time ((time_t *) 0);
+          tp->last_update = time ((time_t *) 0);
         }
     }
 
@@ -574,6 +575,7 @@ draw_text (ModeInfo *mi)
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_NORMALIZE);
   glEnable(GL_CULL_FACE);
+
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -629,5 +631,7 @@ draw_text (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("GLText", gltext, text)
 
 #endif /* USE_GL */

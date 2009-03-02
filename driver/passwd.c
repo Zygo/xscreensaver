@@ -63,6 +63,9 @@ extern Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
 extern Bool pwent_priv_init (int argc, char **argv, Bool verbose_p);
 extern Bool pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 
+Bool lock_priv_init (int argc, char **argv, Bool verbose_p);
+Bool lock_init (int argc, char **argv, Bool verbose_p);
+Bool passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 
 /* The authorization methods to try, in order.
    Note that the last one (the pwent version) is actually two auth methods,

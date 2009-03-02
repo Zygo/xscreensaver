@@ -64,33 +64,8 @@
 
 #define MODULO(a,b) while ((a)<0) (a)+=(b); (a) %= (b);
 
-static Display * display;
-static Pixmap dbuf, stars_mask;
-static Colormap cmap;
-static unsigned int default_fg_pixel;
-static GC draw_gc, erase_gc, tunnelend_gc, stars_gc, stars_erase_gc;
-
 /* No. of shades of each color (ground, walls, bonuses) */
 #define MAX_COLORS 32
-static int ncolors, nr_ground_colors, nr_wall_colors, nr_bonus_colors;
-static XColor ground_colors[MAX_COLORS], wall_colors[MAX_COLORS];
-static XColor bonus_colors[MAX_COLORS];
-static GC ground_gcs[MAX_COLORS], wall_gcs[MAX_COLORS], bonus_gcs[MAX_COLORS];
-
-static int be_wormy;
-
-static int width, height;
-static int delay;
-
-static int smoothness;
-static int verbose_flag;
-static int wire_flag;
-static int terrain_flag;
-static int widening_flag;
-static int bumps_flag;
-static int bonuses_flag;
-static int crosshair_flag;
-static int psychedelic_flag;
 
 #ifdef NDEBUG
 #define DEBUG_FLAG 0
@@ -98,42 +73,16 @@ static int psychedelic_flag;
 #define DEBUG_FLAG 1
 #endif
 
-static double maxspeed;
-
-static double thrust, gravity;
-
-static double vertigo;
-static double curviness;
-static double twistiness;
-
-static double pos=0.0;
-static double speed=-1.1;
-static double accel=0.00000001;
-static double step=0.0;
-
 
 #define FORWARDS 1
 #define BACKWARDS -1
-static int direction = FORWARDS;
-
 /* Apparently AIX's math.h bogusly defines `nearest' as a function,
    in violation of the ANSI C spec. */
 #undef nearest
 #define nearest n3arest
 
-static int pindex=0, nearest=0;
-static int flipped_at=0;
-static int xoffset=0, yoffset=0;
-
-static int bonus_bright = 0;
-static int wire_bonus=0;
-#define wireframe (wire_flag||wire_bonus>8||wire_bonus%2==1)
-
-static double speed_bonus=0.0;
-#define effective_speed (direction*(speed+speed_bonus))
-
-static int spin_bonus = 0;
-static int backwards_bonus = 0;
+#define wireframe (st->wire_flag||st->wire_bonus>8||st->wire_bonus%2==1)
+#define effective_speed (st->direction*(st->speed+st->speed_bonus))
 
 /* No. of levels of interpolation, for perspective */
 #define INTERP 32
@@ -147,46 +96,108 @@ static int backwards_bonus = 0;
 
 #define ROTS 1024
 #define TB_MUL (ROTS/TERRAIN_BREADTH)
-static double sintab[ROTS], costab[ROTS];
 
-static int orientation = (17*ROTS)/22;
-
-static int terrain[TERRAIN_LENGTH][TERRAIN_BREADTH];
-static double xcurvature[TERRAIN_LENGTH];
-static double ycurvature[TERRAIN_LENGTH];
-static double zcurvature[TERRAIN_LENGTH];
-static int wideness[TERRAIN_LENGTH];
-static int bonuses[TERRAIN_LENGTH];
-static int xvals[TERRAIN_LENGTH][TERRAIN_BREADTH];
-static int yvals[TERRAIN_LENGTH][TERRAIN_BREADTH];
-static double worldx[TERRAIN_LENGTH][TERRAIN_BREADTH];
-static double worldy[TERRAIN_LENGTH][TERRAIN_BREADTH];
-static int minx[TERRAIN_LENGTH], maxx[TERRAIN_LENGTH];
-static int miny[TERRAIN_LENGTH], maxy[TERRAIN_LENGTH];
-
-#define random_elevation() (terrain_flag?(random() % 200):0)
-#define random_curvature() (curviness>0.0?((double)(random() % 40)-20)*curviness:0.0)
-#define random_twist() (twistiness>0.0?((double)(random() % 40)-20)*twistiness:0.0)
-#define random_wideness() (widening_flag?(int)(random() % 1200):0)
+#define random_elevation() (st->terrain_flag?(random() % 200):0)
+#define random_curvature() (st->curviness>0.0?((double)(random() % 40)-20)*st->curviness:0.0)
+#define random_twist() (st->twistiness>0.0?((double)(random() % 40)-20)*st->twistiness:0.0)
+#define random_wideness() (st->widening_flag?(int)(random() % 1200):0)
 
 #define STEEL_ELEVATION 300
 
-/* a forward declaration ... */
-static void change_colors(void);
+struct state {
+    Display *dpy;
+    Window window;
 
-#if HAVE_GETTIMEOFDAY
-static int total_nframes = 0;
-static int nframes = 0;
-static double fps = 0.0;
-static double fps_start, fps_end;
-static struct timeval start_time;
+    Pixmap dbuf, stars_mask;
+    Colormap cmap;
+    unsigned int default_fg_pixel;
+    GC draw_gc, erase_gc, tunnelend_gc, stars_gc, stars_erase_gc;
+
+    int ncolors, nr_ground_colors, nr_wall_colors, nr_bonus_colors;
+    XColor ground_colors[MAX_COLORS], wall_colors[MAX_COLORS];
+    XColor bonus_colors[MAX_COLORS];
+    GC ground_gcs[MAX_COLORS], wall_gcs[MAX_COLORS], bonus_gcs[MAX_COLORS];
+
+    int be_wormy;
+
+    int width, height;
+    int delay;
+
+    int smoothness;
+    int verbose_flag;
+    int wire_flag;
+    int terrain_flag;
+    int widening_flag;
+    int bumps_flag;
+    int bonuses_flag;
+    int crosshair_flag;
+    int psychedelic_flag;
+
+    double maxspeed;
+
+    double thrust, gravity;
+
+    double vertigo;
+    double curviness;
+    double twistiness;
+
+    double pos;
+    double speed;
+    double accel;
+    double step;
+
+    int direction;
+
+    int pindex, nearest;
+    int flipped_at;
+    int xoffset, yoffset;
+
+    int bonus_bright;
+    int wire_bonus;
+
+    double speed_bonus;
+
+    int spin_bonus;
+    int backwards_bonus;
+
+    double sintab[ROTS], costab[ROTS];
+
+    int orientation;
+
+    int terrain[TERRAIN_LENGTH][TERRAIN_BREADTH];
+    double xcurvature[TERRAIN_LENGTH];
+    double ycurvature[TERRAIN_LENGTH];
+    double zcurvature[TERRAIN_LENGTH];
+    int wideness[TERRAIN_LENGTH];
+    int bonuses[TERRAIN_LENGTH];
+    int xvals[TERRAIN_LENGTH][TERRAIN_BREADTH];
+    int yvals[TERRAIN_LENGTH][TERRAIN_BREADTH];
+    double worldx[TERRAIN_LENGTH][TERRAIN_BREADTH];
+    double worldy[TERRAIN_LENGTH][TERRAIN_BREADTH];
+    int minx[TERRAIN_LENGTH], maxx[TERRAIN_LENGTH];
+    int miny[TERRAIN_LENGTH], maxy[TERRAIN_LENGTH];
+
+    int total_nframes;
+    int nframes;
+    double fps;
+    double fps_start, fps_end;
+    struct timeval start_time;
+
+    int rotation_offset;
+    int jamming;
+};
+
+/* a forward declaration ... */
+static void change_colors(struct state *st);
+
+
 
 /*
  * get_time ()
  *
  * returns the total time elapsed since the beginning of the demo
  */
-static double get_time(void) {
+static double get_time(struct state *st) {
   struct timeval t;
   float f;
 #if GETTIMEOFDAY_TWO_ARGS
@@ -194,7 +205,7 @@ static double get_time(void) {
 #else
   gettimeofday(&t);
 #endif
-  t.tv_sec -= start_time.tv_sec;
+  t.tv_sec -= st->start_time.tv_sec;
   f = ((double)t.tv_sec) + t.tv_usec*1e-6;
   return f;
 }
@@ -204,15 +215,15 @@ static double get_time(void) {
  *
  * initialises the timing structures
  */
-static void init_time(void) {
+static void init_time(struct state *st) {
 #if GETTIMEOFDAY_TWO_ARGS
-  gettimeofday(&start_time, NULL);
+  gettimeofday(&st->start_time, NULL);
 #else
-  gettimeofday(&start_time);
+  gettimeofday(&st->start_time);
 #endif
-  fps_start = get_time();
+  st->fps_start = get_time(st);
 }
-#endif
+
 
 /*
  * perspective()
@@ -221,10 +232,8 @@ static void init_time(void) {
  * screen coordinates xvals[t][j], yvals[t][j]
  */
 static void
-perspective (void)
+perspective (struct state *st)
 {
-	static int rotation_offset=0;
-
 	int i, j, jj, t=0, depth, view_pos;
    	int rotation_bias, r;
 	double xc=0.0, yc=0.0, zc=0.0;
@@ -232,73 +241,73 @@ perspective (void)
 	double xx, yy;
 	double zfactor, zf;
 
-	zf = 8.0*28.0 / (double)(width*TERRAIN_LENGTH);
-	if (be_wormy) zf *= 3.0;
+	zf = 8.0*28.0 / (double)(st->width*TERRAIN_LENGTH);
+	if (st->be_wormy) zf *= 3.0;
 
-	depth = TERRAIN_PDIST - INTERP + pindex;
+	depth = TERRAIN_PDIST - INTERP + st->pindex;
 
-	view_pos = (nearest+3*TERRAIN_LENGTH/4)%TERRAIN_LENGTH;
+	view_pos = (st->nearest+3*TERRAIN_LENGTH/4)%TERRAIN_LENGTH;
 	
-	xoffset += - xcurvature[view_pos]*curviness/8;
-	xoffset /= 2;
+	st->xoffset += - st->xcurvature[view_pos]*st->curviness/8;
+	st->xoffset /= 2;
 
-	yoffset += - ycurvature[view_pos]*curviness/4;
-	yoffset /= 2;
+	st->yoffset += - st->ycurvature[view_pos]*st->curviness/4;
+	st->yoffset /= 2;
 
-	rotation_offset += (int)((zcurvature[view_pos]-zcurvature[nearest])*ROTS/8);
-	rotation_offset /= 2;
-	rotation_bias = orientation + spin_bonus - rotation_offset;
+	st->rotation_offset += (int)((st->zcurvature[view_pos]-st->zcurvature[st->nearest])*ROTS/8);
+	st->rotation_offset /= 2;
+	rotation_bias = st->orientation + st->spin_bonus - st->rotation_offset;
 
-	if (bumps_flag) {
-		if (be_wormy) {
-			yoffset -= ((terrain[view_pos][TERRAIN_BREADTH/4] * width /(8*1600)));
-			rotation_bias += (terrain[view_pos][TERRAIN_BREADTH/4+2] -
-							 terrain[view_pos][TERRAIN_BREADTH/4-2])/8;
+	if (st->bumps_flag) {
+		if (st->be_wormy) {
+			st->yoffset -= ((st->terrain[view_pos][TERRAIN_BREADTH/4] * st->width /(8*1600)));
+			rotation_bias += (st->terrain[view_pos][TERRAIN_BREADTH/4+2] -
+							 st->terrain[view_pos][TERRAIN_BREADTH/4-2])/8;
 		} else {
-			yoffset -= ((terrain[view_pos][TERRAIN_BREADTH/4] * width /(2*1600)));
-			rotation_bias += (terrain[view_pos][TERRAIN_BREADTH/4+2] -
-							 terrain[view_pos][TERRAIN_BREADTH/4-2])/16;
+			st->yoffset -= ((st->terrain[view_pos][TERRAIN_BREADTH/4] * st->width /(2*1600)));
+			rotation_bias += (st->terrain[view_pos][TERRAIN_BREADTH/4+2] -
+							 st->terrain[view_pos][TERRAIN_BREADTH/4-2])/16;
 		}
 	}
 
 	MODULO(rotation_bias, ROTS);
 
 	for (t=0; t < TERRAIN_LENGTH; t++) {
-		i = nearest + t; MODULO(i, TERRAIN_LENGTH);
-		xc += xcurvature[i]; yc += ycurvature[i]; zc += zcurvature[i];
+		i = st->nearest + t; MODULO(i, TERRAIN_LENGTH);
+		xc += st->xcurvature[i]; yc += st->ycurvature[i]; zc += st->zcurvature[i];
 		xcc += xc; ycc += yc; zcc += zc;
-		maxx[i] = maxy[i] = 0;
-		minx[i] = width; miny[i] = height;
+		st->maxx[i] = st->maxy[i] = 0;
+		st->minx[i] = st->width; st->miny[i] = st->height;
 	}
 
 	for (t=0; t < TERRAIN_LENGTH; t++) {
-		i = nearest - 1 - t; MODULO(i, TERRAIN_LENGTH);
+		i = st->nearest - 1 - t; MODULO(i, TERRAIN_LENGTH);
 
 		zfactor = (double)depth* (12.0 - TERRAIN_LENGTH/8.0) * zf;
 		for (j=0; j < TERRAIN_BREADTH; j++) {
-			jj = direction * j; MODULO(jj, TERRAIN_BREADTH);
+			jj = st->direction * j; MODULO(jj, TERRAIN_BREADTH);
             /* jwz: not totally sure if this is right, but it avoids div0 */
             if (zfactor != 0) {
-                xx = (worldx[i][jj]-(vertigo*xcc))/zfactor;
-                yy = (worldy[i][j]-(vertigo*ycc))/zfactor;
+                xx = (st->worldx[i][jj]-(st->vertigo*xcc))/zfactor;
+                yy = (st->worldy[i][j]-(st->vertigo*ycc))/zfactor;
             } else {
                 xx = 0;
                 yy = 0;
             }
-			r = rotation_bias + (int)(vertigo*zcc); MODULO(r, ROTS);
+			r = rotation_bias + (int)(st->vertigo*zcc); MODULO(r, ROTS);
 
-			xvals[t][j] = xoffset + (width>>1) +
-				       	  (int)(xx * costab[r] - yy * sintab[r]);
-			maxx[t] = MAX(maxx[t], xvals[t][j]);
-			minx[t] = MIN(minx[t], xvals[t][j]);
+			st->xvals[t][j] = st->xoffset + (st->width>>1) +
+				       	  (int)(xx * st->costab[r] - yy * st->sintab[r]);
+			st->maxx[t] = MAX(st->maxx[t], st->xvals[t][j]);
+			st->minx[t] = MIN(st->minx[t], st->xvals[t][j]);
 
-			yvals[t][j] = yoffset + height/2 +
-						  (int)(xx * sintab[r] + yy * costab[r]);
-			maxy[t] = MAX(maxy[t], yvals[t][j]);
-			miny[t] = MIN(miny[t], yvals[t][j]);
+			st->yvals[t][j] = st->yoffset + st->height/2 +
+						  (int)(xx * st->sintab[r] + yy * st->costab[r]);
+			st->maxy[t] = MAX(st->maxy[t], st->yvals[t][j]);
+			st->miny[t] = MIN(st->miny[t], st->yvals[t][j]);
 		}
 		xcc -= xc; ycc -= yc; zcc -= zc;
-		xc -= xcurvature[i]; yc -= ycurvature[i]; zc -= zcurvature[i];
+		xc -= st->xcurvature[i]; yc -= st->ycurvature[i]; zc -= st->zcurvature[i];
 		depth -= INTERP;
 	}
 }
@@ -315,7 +324,7 @@ perspective (void)
  * worldx[i][j], worldy[i][j]
  */
 static void
-wrap_tunnel (int start, int end)
+wrap_tunnel (struct state *st, int start, int end)
 {
 	int i, j, v;
 	double x, y;
@@ -325,16 +334,16 @@ wrap_tunnel (int start, int end)
 	for (i=start; i <= end; i++) {
 		for (j=0; j < TERRAIN_BREADTH; j++) {
 			x = j * (1.0/TERRAIN_BREADTH);
-			v = terrain[i][j];
-			y = (double)(v==STEEL_ELEVATION?200:v) - wideness[i] - 1200;
+			v = st->terrain[i][j];
+			y = (double)(v==STEEL_ELEVATION?200:v) - st->wideness[i] - 1200;
 
 			/* lower road */
 			if (j > TERRAIN_BREADTH/8 && j < 3*TERRAIN_BREADTH/8) y -= 300;
 
-		    worldx[i][j] = x/2 * costab[j*TB_MUL] -
-				 			(y-height/4.0)*x*sintab[j*TB_MUL];
-			worldy[i][j] = x/4 * sintab[j*TB_MUL] +
-							y * costab[j*TB_MUL];
+		    st->worldx[i][j] = x/2 * st->costab[j*TB_MUL] -
+				 			(y-st->height/4.0)*x*st->sintab[j*TB_MUL];
+			st->worldy[i][j] = x/4 * st->sintab[j*TB_MUL] +
+							y * st->costab[j*TB_MUL];
 		}
 	}
 }
@@ -346,21 +355,21 @@ wrap_tunnel (int start, int end)
  * "look backwards/look forwards" bonus
  */
 static void
-flip_direction (void)
+flip_direction (struct state *st)
 {
 	int i, ip, in, j, t;
 
-	direction = -direction;
+	st->direction = -st->direction;
 
-	bonus_bright = 20;
+	st->bonus_bright = 20;
 
 	for (i=0; i < TERRAIN_LENGTH; i++) {
-		in = nearest + i; MODULO(in, TERRAIN_BREADTH);
-		ip = nearest - i; MODULO(ip, TERRAIN_BREADTH);
+		in = st->nearest + i; MODULO(in, TERRAIN_BREADTH);
+		ip = st->nearest - i; MODULO(ip, TERRAIN_BREADTH);
 		for (j=0; j < TERRAIN_BREADTH; j++) {
-			t = terrain[ip][j];
-			terrain[ip][j] = terrain[in][j];
-			terrain[in][j] = t;
+			t = st->terrain[ip][j];
+			st->terrain[ip][j] = st->terrain[in][j];
+			st->terrain[in][j] = t;
 		}
 	}
 }
@@ -371,7 +380,7 @@ flip_direction (void)
  * generate smooth terrain between i=start and i=end inclusive
  */
 static void
-generate_smooth (int start, int end)
+generate_smooth (struct state *st, int start, int end)
 {
 	int i,j, ii;
 
@@ -380,7 +389,7 @@ generate_smooth (int start, int end)
 	for (i=start; i <= end; i++) {
 		ii = i; MODULO(ii, TERRAIN_LENGTH);
 		for (j=0; j < TERRAIN_BREADTH; j++) {
-			terrain[i][j] = STEEL_ELEVATION;
+			st->terrain[i][j] = STEEL_ELEVATION;
 		}
 	}
 }
@@ -391,7 +400,7 @@ generate_smooth (int start, int end)
  * zero the curvature and wideness between i=start and i=end inclusive
  */
 static void
-generate_straight (int start, int end)
+generate_straight (struct state *st, int start, int end)
 {
 	int i,j, ii;
 
@@ -400,10 +409,10 @@ generate_straight (int start, int end)
 	for (i=start; i <= end; i++) {
 		ii = i; MODULO(ii, TERRAIN_LENGTH);
 		for (j=0; j < TERRAIN_BREADTH; j++) {
-	  		xcurvature[ii] = 0;
-	 		ycurvature[ii] = 0;
-			zcurvature[ii] = 0;
-			wideness[ii] = 0;
+	  		st->xcurvature[ii] = 0;
+	 		st->ycurvature[ii] = 0;
+			st->zcurvature[ii] = 0;
+			st->wideness[ii] = 0;
 		}
 	}
 }
@@ -415,16 +424,16 @@ generate_straight (int start, int end)
  * perturbation proportional to w
  */
 static int
-generate_terrain_value (int v1, int v2, int v3, int v4, int w)
+generate_terrain_value (struct state *st, int v1, int v2, int v3, int v4, int w)
 {
 	int sum, ret;
 	int rval;
 
-	if (!terrain_flag) return 0;
+	if (!st->terrain_flag) return 0;
 
 	sum = v1 + v2 + v3 + v4;
 
-	rval = w*sum/smoothness;
+	rval = w*sum/st->smoothness;
 	if (rval == 0) rval = 2;
 
 	ret = (sum/4 -(rval/2) + RAND(rval));
@@ -449,7 +458,7 @@ generate_terrain_value (int v1, int v2, int v3, int v4, int w)
  * uncalculated) etc.
  */
 static void
-generate_terrain (int start, int end, int final)
+generate_terrain (struct state *st, int start, int end, int final)
 {
 	int i,j,w,l;
 	int ip, jp, in, jn; /* prev, next values */
@@ -461,8 +470,8 @@ generate_terrain (int start, int end, int final)
 
 	diff = end - start + 1;
 
-	terrain[end][0] = random_elevation();
-	terrain[end][TERRAIN_BREADTH/2] = random_elevation();
+	st->terrain[end][0] = random_elevation();
+	st->terrain[end][TERRAIN_BREADTH/2] = random_elevation();
 
 	for (w= diff/2, l=TERRAIN_BREADTH/4;
 	     w >= final || l >= final; w /= 2, l /= 2) {
@@ -475,9 +484,9 @@ generate_terrain (int start, int end, int final)
 			for (j=l-1; j < TERRAIN_BREADTH; j += (l*2)) {
 				jp = j-1; MODULO(jp, TERRAIN_BREADTH);
 				jn = j+1; MODULO(jn, TERRAIN_BREADTH);
-				terrain[i][j] =
-					generate_terrain_value (terrain[ip][jp], terrain[in][jp], 
-		                            terrain[ip][jn], terrain[in][jn], w);
+				st->terrain[i][j] =
+					generate_terrain_value (st, st->terrain[ip][jp], st->terrain[in][jp], 
+		                            st->terrain[ip][jn], st->terrain[in][jn], w);
 		   	}
 		}
 
@@ -487,9 +496,9 @@ generate_terrain (int start, int end, int final)
 			for (j=l-1; j < TERRAIN_BREADTH; j += (l*2)) {
 				jp = j-1; MODULO(jp, TERRAIN_BREADTH);
 				jn = j+1; MODULO(jn, TERRAIN_BREADTH);
-				terrain[i][j] =
-					generate_terrain_value (terrain[ip][j], terrain[in][j],
-		                            terrain[i][jp], terrain[i][jn], w);
+				st->terrain[i][j] =
+					generate_terrain_value (st, st->terrain[ip][j], st->terrain[in][j],
+		                            st->terrain[i][jp], st->terrain[i][jn], w);
 		   	}
 		}
 
@@ -499,9 +508,9 @@ generate_terrain (int start, int end, int final)
 			for (j=2*l-1; j < TERRAIN_BREADTH; j += (l*2)) {
 				jp = j-1; MODULO(jp, TERRAIN_BREADTH);
 				jn = j+1; MODULO(jn, TERRAIN_BREADTH);
-				terrain[i][j] =
-					generate_terrain_value (terrain[ip][j], terrain[in][j],
-		                            terrain[i][jp], terrain[i][jn], w);
+				st->terrain[i][j] =
+					generate_terrain_value (st, st->terrain[ip][j], st->terrain[in][j],
+		                            st->terrain[i][jp], st->terrain[i][jn], w);
 		   	}
 		}
 	}
@@ -543,7 +552,7 @@ generate_curvature_value (double v1, double v2, int w)
  * between start and end inclusive
  */
 static void
-generate_curves (int start, int end)
+generate_curves (struct state *st, int start, int end)
 {
 	int i, diff, ii, in, ip, w;
 
@@ -552,44 +561,44 @@ generate_curves (int start, int end)
 	diff = end - start + 1; MODULO (diff, TERRAIN_LENGTH);
 
 	if (random() % 100 == 0)
-	  xcurvature[end] = 30 * random_curvature();
+	  st->xcurvature[end] = 30 * random_curvature();
 	else if (random() % 10 == 0)
-	  xcurvature[end] = 20 * random_curvature();
+	  st->xcurvature[end] = 20 * random_curvature();
 	else
-	  xcurvature[end] = 10 * random_curvature();
+	  st->xcurvature[end] = 10 * random_curvature();
 
 	if (random() % 50 == 0)
-	  ycurvature[end] = 20 * random_curvature();
+	  st->ycurvature[end] = 20 * random_curvature();
 	else if (random() % 25 == 0)
-	  ycurvature[end] = 30 * random_curvature();
+	  st->ycurvature[end] = 30 * random_curvature();
 	else
-	  ycurvature[end] = 10 * random_curvature();
+	  st->ycurvature[end] = 10 * random_curvature();
 
 	if (random() % 3 == 0)
-	  zcurvature[end] = random_twist();
+	  st->zcurvature[end] = random_twist();
 	else
-	  zcurvature[end] =
-			  generate_curvature_value (zcurvature[end], random_twist(), 1);
+	  st->zcurvature[end] =
+			  generate_curvature_value (st->zcurvature[end], random_twist(), 1);
 
-	if (be_wormy)
-			wideness[end] = random_wideness();
+	if (st->be_wormy)
+			st->wideness[end] = random_wideness();
 	else
-		wideness[end] =
-			generate_curvature_value (wideness[end], random_wideness(), 1);
+		st->wideness[end] =
+			generate_curvature_value (st->wideness[end], random_wideness(), 1);
 
     for (w=diff/2; w >= 1; w /= 2) {
       for (i=start+w-1; i < end; i+=(w*2)) {
         ii = i; MODULO (ii, TERRAIN_LENGTH);
   	  	ip = i-w; MODULO (ip, TERRAIN_LENGTH);
   	    in = i+w; MODULO (in, TERRAIN_LENGTH);
-  	    xcurvature[ii] =
-				generate_curvature_value (xcurvature[ip], xcurvature[in], w);
-  	    ycurvature[ii] =
-				generate_curvature_value (ycurvature[ip], ycurvature[in], w);
-	    zcurvature[ii] =
-				generate_curvature_value (zcurvature[ip], zcurvature[in], w);
-	    wideness[ii] =
-				generate_curvature_value (wideness[ip], wideness[in], w);
+  	    st->xcurvature[ii] =
+				generate_curvature_value (st->xcurvature[ip], st->xcurvature[in], w);
+  	    st->ycurvature[ii] =
+				generate_curvature_value (st->ycurvature[ip], st->ycurvature[in], w);
+	    st->zcurvature[ii] =
+				generate_curvature_value (st->zcurvature[ip], st->zcurvature[in], w);
+	    st->wideness[ii] =
+				generate_curvature_value (st->wideness[ip], st->wideness[in], w);
       }
     }
 }
@@ -600,44 +609,42 @@ generate_curves (int start, int end)
  * choose a random bonus and perform its state transition
  */
 static void
-do_bonus (void)
+do_bonus (struct state *st)
 {
-	static int jamming=0;
+	st->bonus_bright = 20;
 
-	bonus_bright = 20;
-
-	if (jamming > 0) {
-		jamming--;
-		nearest -= 2; MODULO(nearest, TERRAIN_LENGTH);
+	if (st->jamming > 0) {
+		st->jamming--;
+		st->nearest -= 2; MODULO(st->nearest, TERRAIN_LENGTH);
 		return;
 	}
 
-	if (psychedelic_flag) change_colors();
+	if (st->psychedelic_flag) change_colors(st);
 
 	switch (random() % 7) {
 	case 0: /* switch to or from wireframe */
-		wire_bonus = (wire_bonus?0:300);
+		st->wire_bonus = (st->wire_bonus?0:300);
 		break;
 	case 1: /* speedup */
-		speed_bonus = 40.0;
+		st->speed_bonus = 40.0;
 		break;
 	case 2:
-		spin_bonus += ROTS;
+		st->spin_bonus += ROTS;
 		break;
 	case 3:
-		spin_bonus -= ROTS;
+		st->spin_bonus -= ROTS;
 		break;
 	case 4: /* look backwards / look forwards */
-		flipped_at = nearest;
-		flip_direction ();
-		backwards_bonus = (backwards_bonus?0:10);
+		st->flipped_at = st->nearest;
+		flip_direction (st);
+		st->backwards_bonus = (st->backwards_bonus?0:10);
 		break;
 	case 5:
-		change_colors();
+		change_colors(st);
 		break;
 	case 6: /* jam against the bonus a few times; deja vu! */
-		nearest -= 2; MODULO(nearest, TERRAIN_LENGTH);
-		jamming = 3;
+		st->nearest -= 2; MODULO(st->nearest, TERRAIN_LENGTH);
+		st->jamming = 3;
 		break;
 	default:
 		assert(0);
@@ -651,26 +658,26 @@ do_bonus (void)
  * check if a bonus has been passed in the last frame, and handle it
  */
 static void
-check_bonuses (void)
+check_bonuses (struct state *st)
 {
 	int i, ii, start, end;
 
-	if (!bonuses_flag) return;
+	if (!st->bonuses_flag) return;
 
-	if (step >= 0.0) {
-		start = nearest; end = nearest + (int)floor(step);
+	if (st->step >= 0.0) {
+		start = st->nearest; end = st->nearest + (int)floor(st->step);
 	} else {
-		end = nearest; start = nearest + (int)floor(step);
+		end = st->nearest; start = st->nearest + (int)floor(st->step);
 	}
 
-	if (be_wormy) {
+	if (st->be_wormy) {
 		start += TERRAIN_LENGTH/4;
 		end += TERRAIN_LENGTH/4;
 	}
 
 	for (i=start; i < end; i++) {
 		ii = i; MODULO(ii, TERRAIN_LENGTH);
-		if (bonuses[ii] == 1) do_bonus ();
+		if (st->bonuses[ii] == 1) do_bonus (st);
 	}
 }
 
@@ -680,23 +687,23 @@ check_bonuses (void)
  * decrement timers associated with bonuses
  */
 static void
-decrement_bonuses (double time_per_frame)
+decrement_bonuses (struct state *st, double time_per_frame)
 {
-	if (!bonuses_flag) return;
+	if (!st->bonuses_flag) return;
 
-	if (bonus_bright > 0) bonus_bright-=4;
-	if (wire_bonus > 0) wire_bonus--;
-	if (speed_bonus > 0) speed_bonus -= 2.0;
+	if (st->bonus_bright > 0) st->bonus_bright-=4;
+	if (st->wire_bonus > 0) st->wire_bonus--;
+	if (st->speed_bonus > 0) st->speed_bonus -= 2.0;
 
-	if (spin_bonus > 10) spin_bonus -= (int)(step*13.7);
-	else if (spin_bonus < -10) spin_bonus += (int)(step*11.3);
+	if (st->spin_bonus > 10) st->spin_bonus -= (int)(st->step*13.7);
+	else if (st->spin_bonus < -10) st->spin_bonus += (int)(st->step*11.3);
 
-	if (backwards_bonus > 1) backwards_bonus--;
-	else if (backwards_bonus == 1) {
-		nearest += 2*(MAX(flipped_at, nearest) - MIN(flipped_at,nearest));
-		MODULO(nearest, TERRAIN_LENGTH);
-		flip_direction ();
-		backwards_bonus = 0;
+	if (st->backwards_bonus > 1) st->backwards_bonus--;
+	else if (st->backwards_bonus == 1) {
+		st->nearest += 2*(MAX(st->flipped_at, st->nearest) - MIN(st->flipped_at,st->nearest));
+		MODULO(st->nearest, TERRAIN_LENGTH);
+		flip_direction (st);
+		st->backwards_bonus = 0;
 	}
 }
 
@@ -706,11 +713,11 @@ decrement_bonuses (double time_per_frame)
  * choose if to and where to set a bonus between i=start and i=end inclusive
  */
 static void
-set_bonuses (int start, int end)
+set_bonuses (struct state *st, int start, int end)
 {
 	int i, diff, ii;
 
-	if (!bonuses_flag) return;
+	if (!st->bonuses_flag) return;
 
 	assert (start < end);
 
@@ -718,14 +725,14 @@ set_bonuses (int start, int end)
 
 	for (i=start; i <= end; i++) {
 		ii = i; if (ii>=TERRAIN_LENGTH) ii -= TERRAIN_LENGTH;
-		bonuses[ii] = 0;
+		st->bonuses[ii] = 0;
 	}
 	if (random() % 4 == 0) {
 		i = start + RAND(diff-3);
 		ii = i; if (ii>=TERRAIN_LENGTH) ii -= TERRAIN_LENGTH;
-		bonuses[ii] = 2; /* marker */
+		st->bonuses[ii] = 2; /* marker */
 		ii = i+3; if (ii>=TERRAIN_LENGTH) ii -= TERRAIN_LENGTH;
-		bonuses[ii] = 1; /* real thing */
+		st->bonuses[ii] = 1; /* real thing */
 	}
 }
 
@@ -738,51 +745,51 @@ set_bonuses (int start, int end)
  * choose the kind of terrain to produce, produce it and wrap the tunnel
  */
 static void
-regenerate_terrain (void)
+regenerate_terrain (struct state *st)
 {
 	int start, end;
 	int passed;
 
-	passed = nearest % (TERRAIN_LENGTH/4);
+	passed = st->nearest % (TERRAIN_LENGTH/4);
 
-	if (speed == 0.0 ||
-		(speed > 0.0 && passed > (int)step) ||
-		(speed < 0.0 && (TERRAIN_LENGTH/4)-passed > (int)fabs(step))) {
+	if (st->speed == 0.0 ||
+		(st->speed > 0.0 && passed > (int)st->step) ||
+		(st->speed < 0.0 && (TERRAIN_LENGTH/4)-passed > (int)fabs(st->step))) {
 
 		return;
 	}
 
-	end = nearest - passed - 1; MODULO(end, TERRAIN_LENGTH);
+	end = st->nearest - passed - 1; MODULO(end, TERRAIN_LENGTH);
 	start = end - TERRAIN_LENGTH/4 + 1; MODULO(start, TERRAIN_LENGTH);
 
 	if (DEBUG_FLAG) printf ("Regenerating [%d - %d]\n", start, end);
 
-	set_bonuses (start, end);
+	set_bonuses (st, start, end);
 
 	switch (random() % 64) {
 	case 0:
 	case 1:
-		generate_terrain (start, end, 1);
-		generate_smooth (start,
+		generate_terrain (st, start, end, 1);
+		generate_smooth (st, start,
 			start + TERRAIN_LENGTH/8 + (random() % TERRAIN_LENGTH/8));
 		break;
 	case 2:
-		generate_smooth (start, end);
-		generate_terrain (start, end, 4); break;
+		generate_smooth (st, start, end);
+		generate_terrain (st, start, end, 4); break;
 	case 3:
-		generate_smooth (start, end);
-		generate_terrain (start, end, 2); break;
+		generate_smooth (st, start, end);
+		generate_terrain (st, start, end, 2); break;
 	default:
-		generate_terrain (start, end, 1);
+		generate_terrain (st, start, end, 1);
 	}
 
 	if (random() % 16 == 0) {
-		generate_straight (start, end);
+		generate_straight (st, start, end);
 	} else {
-		generate_curves (start, end);
+		generate_curves (st, start, end);
 	}
 
-	wrap_tunnel (start, end);
+	wrap_tunnel (st, start, end);
 }
 
 /*
@@ -791,24 +798,24 @@ regenerate_terrain (void)
  * initialise the terrain map for the beginning of the demo
  */
 static void
-init_terrain (void)
+init_terrain (struct state *st)
 {
 	int i, j;
 
 	for (i=0; i < TERRAIN_LENGTH; i++) {
 		for (j=0; j < TERRAIN_BREADTH; j++) {
-			terrain[i][j] = 0;
+			st->terrain[i][j] = 0;
 		}
 	}
 
-	terrain[TERRAIN_LENGTH-1][0] =  - (random() % 300);
-	terrain[TERRAIN_LENGTH-1][TERRAIN_BREADTH/2] =  - (random() % 300);
+	st->terrain[TERRAIN_LENGTH-1][0] =  - (random() % 300);
+	st->terrain[TERRAIN_LENGTH-1][TERRAIN_BREADTH/2] =  - (random() % 300);
 
-	generate_smooth (0, TERRAIN_LENGTH-1);
-	generate_terrain (0, TERRAIN_LENGTH/4 -1, 4);
-	generate_terrain (TERRAIN_LENGTH/4, TERRAIN_LENGTH/2 -1, 2);
-	generate_terrain (TERRAIN_LENGTH/2, 3*TERRAIN_LENGTH/4 -1, 1);
-	generate_smooth (3*TERRAIN_LENGTH/4, TERRAIN_LENGTH-1);
+	generate_smooth (st, 0, TERRAIN_LENGTH-1);
+	generate_terrain (st, 0, TERRAIN_LENGTH/4 -1, 4);
+	generate_terrain (st, TERRAIN_LENGTH/4, TERRAIN_LENGTH/2 -1, 2);
+	generate_terrain (st, TERRAIN_LENGTH/2, 3*TERRAIN_LENGTH/4 -1, 1);
+	generate_smooth (st, 3*TERRAIN_LENGTH/4, TERRAIN_LENGTH-1);
 }
 
 /*
@@ -817,24 +824,24 @@ init_terrain (void)
  * initialise the curvatures and wideness for the beginning of the demo.
  */
 static void
-init_curves (void)
+init_curves (struct state *st)
 {
 	int i;
 
 	for (i=0; i < TERRAIN_LENGTH-1; i++) {
-    	xcurvature[i] = 0.0;
-	    ycurvature[i] = 0.0;
-		zcurvature[i] = 0.0;
+    	st->xcurvature[i] = 0.0;
+	    st->ycurvature[i] = 0.0;
+		st->zcurvature[i] = 0.0;
 	}
 
-    xcurvature[TERRAIN_LENGTH-1] = random_curvature();
-    ycurvature[TERRAIN_LENGTH-1] = random_curvature();
-    zcurvature[TERRAIN_LENGTH-1] = random_twist();
+    st->xcurvature[TERRAIN_LENGTH-1] = random_curvature();
+    st->ycurvature[TERRAIN_LENGTH-1] = random_curvature();
+    st->zcurvature[TERRAIN_LENGTH-1] = random_twist();
 
-	generate_straight (0, TERRAIN_LENGTH/4-1);
-	generate_curves (TERRAIN_LENGTH/4, TERRAIN_LENGTH/2-1);
-	generate_curves (TERRAIN_LENGTH/2, 3*TERRAIN_LENGTH/4-1);
-	generate_straight (3*TERRAIN_LENGTH/4, TERRAIN_LENGTH-1);
+	generate_straight (st, 0, TERRAIN_LENGTH/4-1);
+	generate_curves (st, TERRAIN_LENGTH/4, TERRAIN_LENGTH/2-1);
+	generate_curves (st, TERRAIN_LENGTH/2, 3*TERRAIN_LENGTH/4-1);
+	generate_straight (st, 3*TERRAIN_LENGTH/4, TERRAIN_LENGTH-1);
 
 }
 
@@ -845,60 +852,60 @@ init_curves (void)
  * i is passed as a hint, where i corresponds to t as asserted.
  */
 static void
-render_quads (Display * dpy, Drawable d, int t, int dt, int i)
+render_quads (struct state *st, Drawable d, int t, int dt, int i)
 {
 	int j, t2, j2, in;
 	int index;
 	XPoint points[4];
 	GC gc;
 
-	assert (i == (nearest - (t + dt) + TERRAIN_LENGTH) % TERRAIN_LENGTH);
+	assert (i == (st->nearest - (t + dt) + TERRAIN_LENGTH) % TERRAIN_LENGTH);
 
 	in = i + 1; MODULO(in, TERRAIN_LENGTH);
 
 	for (j=0; j < TERRAIN_BREADTH; j+=dt) {
 		t2 = t+dt; if (t2 >= TERRAIN_LENGTH) t2 -= TERRAIN_LENGTH;
 		j2 = j+dt; if (j2 >= TERRAIN_BREADTH) j2 -= TERRAIN_BREADTH;
-		points[0].x = xvals[t][j]; points[0].y = yvals[t][j];
-		points[1].x = xvals[t2][j]; points[1].y = yvals[t2][j];
-		points[2].x = xvals[t2][j2]; points[2].y = yvals[t2][j2];
-		points[3].x = xvals[t][j2]; points[3].y = yvals[t][j2];
+		points[0].x = st->xvals[t][j]; points[0].y = st->yvals[t][j];
+		points[1].x = st->xvals[t2][j]; points[1].y = st->yvals[t2][j];
+		points[2].x = st->xvals[t2][j2]; points[2].y = st->yvals[t2][j2];
+		points[3].x = st->xvals[t][j2]; points[3].y = st->yvals[t][j2];
 
-	    index = bonus_bright + ncolors/3 +
-				t*(t*INTERP + pindex) * ncolors /
+	    index = st->bonus_bright + st->ncolors/3 +
+				t*(t*INTERP + st->pindex) * st->ncolors /
 			    (3*TERRAIN_LENGTH*TERRAIN_PDIST);
 		if (!wireframe) {
 			index += (int)((points[0].y - points[3].y) / 8);
-			index += (int)((worldx[i][j] - worldx[in][j]) / 40);
-			index += (int)((terrain[in][j] - terrain[i][j]) / 100);
+			index += (int)((st->worldx[i][j] - st->worldx[in][j]) / 40);
+			index += (int)((st->terrain[in][j] - st->terrain[i][j]) / 100);
 		}
-		if (be_wormy && psychedelic_flag) index += ncolors/4;
+		if (st->be_wormy && st->psychedelic_flag) index += st->ncolors/4;
 
-		index = MIN (index, ncolors-1);
+		index = MIN (index, st->ncolors-1);
 		index = MAX (index, 0);
 
-		if (bonuses[i]) {
-			XSetClipMask (dpy, bonus_gcs[index], None);
+		if (st->bonuses[i]) {
+			XSetClipMask (st->dpy, st->bonus_gcs[index], None);
 		}
 
 		if (wireframe) {
-			if (bonuses[i]) gc = bonus_gcs[index];
-			else gc = ground_gcs[index];
-			XDrawLines (dpy, d, gc, points, 4, CoordModeOrigin);
+			if (st->bonuses[i]) gc = st->bonus_gcs[index];
+			else gc = st->ground_gcs[index];
+			XDrawLines (st->dpy, d, gc, points, 4, CoordModeOrigin);
 		} else {
-			if (bonuses[i])
-				gc = bonus_gcs[index];
-			else if ((direction>0 && j < TERRAIN_BREADTH/8) ||
+			if (st->bonuses[i])
+				gc = st->bonus_gcs[index];
+			else if ((st->direction>0 && j < TERRAIN_BREADTH/8) ||
 				(j > TERRAIN_BREADTH/8 && j < 3*TERRAIN_BREADTH/8-1) ||
-				(direction < 0 && j > 3*TERRAIN_BREADTH/8-1 &&
+				(st->direction < 0 && j > 3*TERRAIN_BREADTH/8-1 &&
 					j < TERRAIN_BREADTH/2) ||
-				terrain[i][j] == STEEL_ELEVATION ||
-				wideness[in] - wideness[i] > 200) 
-				gc = ground_gcs[index];
+				st->terrain[i][j] == STEEL_ELEVATION ||
+				st->wideness[in] - st->wideness[i] > 200) 
+				gc = st->ground_gcs[index];
 			else
-				gc = wall_gcs[index];
+				gc = st->wall_gcs[index];
 
-			XFillPolygon (dpy, d, gc, points, 4, Nonconvex, CoordModeOrigin);
+			XFillPolygon (st->dpy, d, gc, points, 4, Nonconvex, CoordModeOrigin);
 		}
 	}
 }
@@ -910,14 +917,14 @@ render_quads (Display * dpy, Drawable d, int t, int dt, int i)
  * i is passed as a hint, where i corresponds to t as asserted.
  */
 static void
-render_pentagons (Display *dpy, Drawable d, int t, int dt, int i)
+render_pentagons (struct state *st, Drawable d, int t, int dt, int i)
 {
 	int j, t2, j2, j3, in;
 	int index;
 	XPoint points[5];
 	GC gc;
 
-	assert (i == (nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH);
+	assert (i == (st->nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH);
 
 	in = i + 1; MODULO(in, TERRAIN_LENGTH);
 
@@ -925,45 +932,45 @@ render_pentagons (Display *dpy, Drawable d, int t, int dt, int i)
 		t2 = t+(dt*2); if (t2 >= TERRAIN_LENGTH) t2 -= TERRAIN_LENGTH;
 		j2 = j+dt; if (j2 >= TERRAIN_BREADTH) j2 -= TERRAIN_BREADTH;
 		j3 = j+dt+dt; if (j3 >= TERRAIN_BREADTH) j3 -= TERRAIN_BREADTH;
-		points[0].x = xvals[t][j]; points[0].y = yvals[t][j];
-		points[1].x = xvals[t2][j]; points[1].y = yvals[t2][j];
-		points[2].x = xvals[t2][j2]; points[2].y = yvals[t2][j2];
-		points[3].x = xvals[t2][j3]; points[3].y = yvals[t2][j3];
-		points[4].x = xvals[t][j3]; points[4].y = yvals[t][j3];
+		points[0].x = st->xvals[t][j]; points[0].y = st->yvals[t][j];
+		points[1].x = st->xvals[t2][j]; points[1].y = st->yvals[t2][j];
+		points[2].x = st->xvals[t2][j2]; points[2].y = st->yvals[t2][j2];
+		points[3].x = st->xvals[t2][j3]; points[3].y = st->yvals[t2][j3];
+		points[4].x = st->xvals[t][j3]; points[4].y = st->yvals[t][j3];
 
-	    index = bonus_bright + ncolors/3 +
-				t*(t*INTERP + pindex) * ncolors /
+	    index = st->bonus_bright + st->ncolors/3 +
+				t*(t*INTERP + st->pindex) * st->ncolors /
 			    (3*TERRAIN_LENGTH*TERRAIN_PDIST);
 		if (!wireframe) {
 			index += (int)((points[0].y - points[3].y) / 8);
-			index += (int)((worldx[i][j] - worldx[in][j]) / 40);
-			index += (int)((terrain[in][j] - terrain[i][j]) / 100);
+			index += (int)((st->worldx[i][j] - st->worldx[in][j]) / 40);
+			index += (int)((st->terrain[in][j] - st->terrain[i][j]) / 100);
 		}
-		if (be_wormy && psychedelic_flag) index += ncolors/4;
+		if (st->be_wormy && st->psychedelic_flag) index += st->ncolors/4;
 
-		index = MIN (index, ncolors-1);
+		index = MIN (index, st->ncolors-1);
 		index = MAX (index, 0);
 
-		if (bonuses[i]) {
-			XSetClipMask (dpy, bonus_gcs[index], None);
+		if (st->bonuses[i]) {
+			XSetClipMask (st->dpy, st->bonus_gcs[index], None);
 		}
 
 		if (wireframe) {
-			if (bonuses[i]) gc = bonus_gcs[index];
-			else gc = ground_gcs[index];
-			XDrawLines (dpy, d, gc, points, 5, CoordModeOrigin);
+			if (st->bonuses[i]) gc = st->bonus_gcs[index];
+			else gc = st->ground_gcs[index];
+			XDrawLines (st->dpy, d, gc, points, 5, CoordModeOrigin);
 		} else {
-			if (bonuses[i])
-				gc = bonus_gcs[index];
+			if (st->bonuses[i])
+				gc = st->bonus_gcs[index];
 			else if (j < TERRAIN_BREADTH/8 ||
 				(j > TERRAIN_BREADTH/8 && j < 3*TERRAIN_BREADTH/8-1) ||
-				terrain[i][j] == STEEL_ELEVATION ||
-				wideness[in] - wideness[i] > 200) 
-				gc = ground_gcs[index];
+				st->terrain[i][j] == STEEL_ELEVATION ||
+				st->wideness[in] - st->wideness[i] > 200) 
+				gc = st->ground_gcs[index];
 			else
-				gc = wall_gcs[index];
+				gc = st->wall_gcs[index];
 
-			XFillPolygon (dpy, d, gc, points, 5, Complex, CoordModeOrigin);
+			XFillPolygon (st->dpy, d, gc, points, 5, Complex, CoordModeOrigin);
 		}
 	}
 }
@@ -974,18 +981,18 @@ render_pentagons (Display *dpy, Drawable d, int t, int dt, int i)
  * render a filled polygon at perspective depth t using the given GC
  */
 static void
-render_block (Display * dpy, Drawable d, GC gc, int t)
+render_block (struct state *st, Drawable d, GC gc, int t)
 {
 	int i;
 
 	XPoint erase_points[TERRAIN_BREADTH/2];
 
 	for (i=0; i < TERRAIN_BREADTH/2; i++) {
-		erase_points[i].x = xvals[t][i*2];
-		erase_points[i].y = yvals[t][i*2];
+		erase_points[i].x = st->xvals[t][i*2];
+		erase_points[i].y = st->yvals[t][i*2];
 	}
 
-	XFillPolygon (dpy, d, gc, erase_points,
+	XFillPolygon (st->dpy, d, gc, erase_points,
 				  TERRAIN_BREADTH/2, Complex, CoordModeOrigin);
 }
 
@@ -996,35 +1003,35 @@ render_block (Display * dpy, Drawable d, GC gc, int t)
  * random positions within the bounding box at depth t
  */
 static void
-regenerate_stars_mask (Display * dpy, int t)
+regenerate_stars_mask (struct state *st, int t)
 {
 	int i, w, h, a, b, l1, l2;
-	const int lim = width*TERRAIN_LENGTH/(300*(TERRAIN_LENGTH-t));
+	const int lim = st->width*TERRAIN_LENGTH/(300*(TERRAIN_LENGTH-t));
 
-	w = maxx[t] - minx[t];
-	h = maxy[t] - miny[t];
+	w = st->maxx[t] - st->minx[t];
+	h = st->maxy[t] - st->miny[t];
 
 	if (w<6||h<6) return;
 
-	XFillRectangle (dpy, stars_mask, stars_erase_gc,
-					0, 0, width, height);
+	XFillRectangle (st->dpy, st->stars_mask, st->stars_erase_gc,
+					0, 0, st->width, st->height);
 
 	l1 = (t>3*TERRAIN_LENGTH/4?2:1);
 	l2 = (t>7*TERRAIN_LENGTH/8?2:1);
 
 	for (i=0; i < lim; i++) {
 		a = RAND(w); b = RAND(h);
-		XDrawLine (dpy, stars_mask, stars_gc,
-					minx[t]+a-l1, miny[t]+b, minx[t]+a+l1, miny[t]+b);
-		XDrawLine (dpy, stars_mask, stars_gc,
-					minx[t]+a, miny[t]+b-l1, minx[t]+a, miny[t]+b+l1);
+		XDrawLine (st->dpy, st->stars_mask, st->stars_gc,
+					st->minx[t]+a-l1, st->miny[t]+b, st->minx[t]+a+l1, st->miny[t]+b);
+		XDrawLine (st->dpy, st->stars_mask, st->stars_gc,
+					st->minx[t]+a, st->miny[t]+b-l1, st->minx[t]+a, st->miny[t]+b+l1);
 	}
 	for (i=0; i < lim; i++) {
 		a = RAND(w); b = RAND(h);
-		XDrawLine (dpy, stars_mask, stars_gc,
-					minx[t]+a-l2, miny[t]+b, minx[t]+a+l2, miny[t]+b);
-		XDrawLine (dpy, stars_mask, stars_gc,
-					minx[t]+a, miny[t]+b-l2, minx[t]+a, miny[t]+b+l2);
+		XDrawLine (st->dpy, st->stars_mask, st->stars_gc,
+					st->minx[t]+a-l2, st->miny[t]+b, st->minx[t]+a+l2, st->miny[t]+b);
+		XDrawLine (st->dpy, st->stars_mask, st->stars_gc,
+					st->minx[t]+a, st->miny[t]+b-l2, st->minx[t]+a, st->miny[t]+b+l2);
 	}
 }
 
@@ -1035,34 +1042,34 @@ regenerate_stars_mask (Display * dpy, int t)
  * i is passed as a hint, where i corresponds to t as asserted.
  */
 static void
-render_bonus_block (Display * dpy, Drawable d, int t, int i)
+render_bonus_block (struct state *st, Drawable d, int t, int i)
 {
 	int bt;
 
-	assert (i == (nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH);
+	assert (i == (st->nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH);
 
-	if (!bonuses[i] || wireframe) return;
+	if (!st->bonuses[i] || wireframe) return;
 
-	regenerate_stars_mask (dpy, t);
+	regenerate_stars_mask (st, t);
 
-	bt = t * nr_bonus_colors / (2*TERRAIN_LENGTH);
+	bt = t * st->nr_bonus_colors / (2*TERRAIN_LENGTH);
 
-	XSetClipMask (dpy, bonus_gcs[bt], stars_mask);
+	XSetClipMask (st->dpy, st->bonus_gcs[bt], st->stars_mask);
 
-	render_block (dpy, d, bonus_gcs[bt], t);
+	render_block (st, d, st->bonus_gcs[bt], t);
 }
 
 static int
-begin_at (void)
+begin_at (struct state *st)
 {
 	int t;
-	int max_minx=0, min_maxx=width, max_miny=0, min_maxy=height;
+	int max_minx=0, min_maxx=st->width, max_miny=0, min_maxy=st->height;
 
 	for (t=TERRAIN_LENGTH-1; t > 0; t--) {
-		max_minx = MAX (max_minx, minx[t]);
-		min_maxx = MIN (min_maxx, maxx[t]);
-		max_miny = MAX (max_miny, miny[t]);
-		min_maxy = MIN (min_maxy, maxy[t]);
+		max_minx = MAX (max_minx, st->minx[t]);
+		min_maxx = MIN (min_maxx, st->maxx[t]);
+		max_miny = MAX (max_miny, st->miny[t]);
+		min_maxy = MIN (min_maxy, st->maxy[t]);
 
 		if (max_miny >= min_maxy || max_minx >= min_maxx) break;
 	}
@@ -1076,69 +1083,69 @@ begin_at (void)
  * render the current frame.
  */
 static void
-render_speedmine (Display * dpy, Drawable d)
+render_speedmine (struct state *st, Drawable d)
 {
-	int t, i=nearest, dt=1;
+	int t, i=st->nearest, dt=1;
 	GC gc;
 
-	assert (nearest >= 0 && nearest < TERRAIN_LENGTH);
+	assert (st->nearest >= 0 && st->nearest < TERRAIN_LENGTH);
 
-	if (be_wormy || wireframe) {
-		XFillRectangle (dpy, d, erase_gc, 0, 0, width, height);
+	if (st->be_wormy || wireframe) {
+		XFillRectangle (st->dpy, d, st->erase_gc, 0, 0, st->width, st->height);
 
 		dt=4;
 		for (t=0; t < TERRAIN_LENGTH/4; t+=dt) {
-			render_bonus_block (dpy, d, t, i);
+			render_bonus_block (st, d, t, i);
 			i -= dt; MODULO(i, TERRAIN_LENGTH);
-			render_quads (dpy, d, t, dt, i);
+			render_quads (st, d, t, dt, i);
 		}
 
 		assert (t == TERRAIN_LENGTH/4);
 	} else {
-		t = MAX(begin_at(), TERRAIN_LENGTH/4);
+		t = MAX(begin_at(st), TERRAIN_LENGTH/4);
 		/*t = TERRAIN_LENGTH/4; dt = 2; */
 		dt = (t >= 3*TERRAIN_LENGTH/4 ? 1 : 2);
-		i = (nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH;
-		render_block (dpy, d, tunnelend_gc, t);
+		i = (st->nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH;
+		render_block (st, d, st->tunnelend_gc, t);
 	}
 
 	dt=2;
 
 	if (t == TERRAIN_LENGTH/4)
-		render_pentagons (dpy, d, t, dt, i);
+		render_pentagons (st, d, t, dt, i);
 
 	for (; t < 3*TERRAIN_LENGTH/4; t+=dt) {
-		render_bonus_block (dpy, d, t, i);
+		render_bonus_block (st, d, t, i);
 		i -= dt; MODULO(i, TERRAIN_LENGTH);
-		render_quads (dpy, d, t, dt, i);
+		render_quads (st, d, t, dt, i);
 	}
 
 	dt=1;
-	if (be_wormy) {
-		for (; t < TERRAIN_LENGTH-(1+(pindex<INTERP/2)); t+=dt) {
-			render_bonus_block (dpy, d, t, i);
+	if (st->be_wormy) {
+		for (; t < TERRAIN_LENGTH-(1+(st->pindex<INTERP/2)); t+=dt) {
+			render_bonus_block (st, d, t, i);
 			i -= dt; MODULO(i, TERRAIN_LENGTH);
 		}
 	} else {
 		if (wireframe) {assert (t == 3*TERRAIN_LENGTH/4);}
 
 		if (t == 3*TERRAIN_LENGTH/4)
-			render_pentagons (dpy, d, t, dt, i);
+			render_pentagons (st, d, t, dt, i);
 
-		for (; t < TERRAIN_LENGTH-(1+(pindex<INTERP/2)); t+=dt) {
-			render_bonus_block (dpy, d, t, i);
+		for (; t < TERRAIN_LENGTH-(1+(st->pindex<INTERP/2)); t+=dt) {
+			render_bonus_block (st, d, t, i);
 			i -= dt; MODULO(i, TERRAIN_LENGTH);
-			render_quads (dpy, d, t, dt, i);
+			render_quads (st, d, t, dt, i);
 		}
 	}
 
 	/* Draw crosshair */
-	if (crosshair_flag) {
-		gc = (wireframe ? bonus_gcs[nr_bonus_colors/2] : erase_gc);
-		XFillRectangle (dpy, d, gc,
-						width/2+(xoffset)-8, height/2+(yoffset*2)-1, 16, 3);
-		XFillRectangle (dpy, d, gc,
-						width/2+(xoffset)-1, height/2+(yoffset*2)-8, 3, 16);
+	if (st->crosshair_flag) {
+		gc = (wireframe ? st->bonus_gcs[st->nr_bonus_colors/2] : st->erase_gc);
+		XFillRectangle (st->dpy, d, gc,
+						st->width/2+(st->xoffset)-8, st->height/2+(st->yoffset*2)-1, 16, 3);
+		XFillRectangle (st->dpy, d, gc,
+						st->width/2+(st->xoffset)-1, st->height/2+(st->yoffset*2)-8, 3, 16);
 	}
 
 }
@@ -1147,34 +1154,34 @@ render_speedmine (Display * dpy, Drawable d)
  * move (step)
  *
  * move to the position for the next frame, and modify the state variables
- * nearest, pindex, pos, speed
+ * st->nearest, pindex, pos, speed
  */
 static void
-move (double step)
+move (struct state *st)
 {
 	double dpos;
 
-	pos += step;
-	dpos = SIGN3(pos) * floor(fabs(pos));
+	st->pos += st->step;
+	dpos = SIGN3(st->pos) * floor(fabs(st->pos));
 
-	pindex += SIGN3(effective_speed) + INTERP;
-	while (pindex >= INTERP) {
-		nearest --;
-		pindex -= INTERP;
+	st->pindex += SIGN3(effective_speed) + INTERP;
+	while (st->pindex >= INTERP) {
+		st->nearest --;
+		st->pindex -= INTERP;
 	}
-	while (pindex < 0) {
-		nearest ++;
-		pindex += INTERP;
+	while (st->pindex < 0) {
+		st->nearest ++;
+		st->pindex += INTERP;
 	}
 
-    nearest += dpos; MODULO(nearest, TERRAIN_LENGTH);
+    st->nearest += dpos; MODULO(st->nearest, TERRAIN_LENGTH);
 
-	pos -= dpos;
+	st->pos -= dpos;
 
-	accel = thrust + ycurvature[nearest] * gravity;
-	speed += accel;
-	if (speed > maxspeed) speed = maxspeed;
-	if (speed < -maxspeed) speed = -maxspeed;
+	st->accel = st->thrust + st->ycurvature[st->nearest] * st->gravity;
+	st->speed += st->accel;
+	if (st->speed > st->maxspeed) st->speed = st->maxspeed;
+	if (st->speed < -st->maxspeed) st->speed = -st->maxspeed;
 }
 
 /*
@@ -1182,51 +1189,51 @@ move (double step)
  *
  * do everything required for one frame of the demo
  */
-static void
-speedmine (Display *dpy, Window window)
+static unsigned long
+speedmine_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
 	double elapsed, time_per_frame = 0.04;
 
-	regenerate_terrain ();
+	regenerate_terrain (st);
 
-	perspective ();
+	perspective (st);
 
-	render_speedmine (dpy, dbuf);
-	XCopyArea (dpy, dbuf, window, draw_gc, 0, 0, width, height, 0, 0);
+	render_speedmine (st, st->dbuf);
+    if (st->dbuf != st->window)
+      XCopyArea (st->dpy, st->dbuf, st->window, st->draw_gc, 0, 0, st->width, st->height, 0, 0);
 
-#if HAVE_GETTIMEOFDAY
-	fps_end = get_time();
-	nframes++;
-	total_nframes++;
+	st->fps_end = get_time(st);
+	st->nframes++;
+	st->total_nframes++;
 
-	if (fps_end > fps_start + 0.5) {
-		elapsed = fps_end - fps_start;
-		fps_start = get_time();
+	if (st->fps_end > st->fps_start + 0.5) {
+		elapsed = st->fps_end - st->fps_start;
+		st->fps_start = get_time(st);
 
-		time_per_frame = elapsed / nframes - delay*1e-6;
-		fps = nframes / elapsed;
+		time_per_frame = elapsed / st->nframes - st->delay*1e-6;
+		st->fps = st->nframes / elapsed;
 		if (DEBUG_FLAG) {
 			printf ("%f s elapsed\t%3f s/frame\t%.1f FPS\n", elapsed,
-					time_per_frame, fps);
+					time_per_frame, st->fps);
 		}
-		step = effective_speed * elapsed;
+		st->step = effective_speed * elapsed;
 
-		nframes = 0;
+		st->nframes = 0;
 	}
-#else
-	time_per_frame = 0.04;
-	step = effective_speed;
-#endif
 
-	move (step);
 
-	decrement_bonuses (time_per_frame);
+	move (st);
 
-	check_bonuses ();
+	decrement_bonuses (st, time_per_frame);
+
+	check_bonuses (st);
+
+    return st->delay;
 }
 
 /*
- * speedmine_color_ramp (dpy, cmap, gcs, colors, ncolors, s1, s2, v1, v2)
+ * speedmine_color_ramp (dpy, gcs, colors, ncolors, s1, s2, v1, v2)
  *
  * generate a color ramp of up to *ncolors between randomly chosen hues,
  * varying from saturation s1 to s2 and value v1 to v2, placing the colors
@@ -1235,7 +1242,7 @@ speedmine (Display *dpy, Window window)
  * The number of colors actually allocated is returned in ncolors.
  */
 static void
-speedmine_color_ramp (Display * dpy, Colormap cmap, GC *gcs, XColor * colors,
+speedmine_color_ramp (struct state *st, GC *gcs, XColor * colors,
 					 int *ncolors, double s1, double s2, double v1, double v2)
 {
 	XGCValues gcv;
@@ -1243,22 +1250,23 @@ speedmine_color_ramp (Display * dpy, Colormap cmap, GC *gcs, XColor * colors,
 	unsigned long flags;
 	int i;
 
-	assert (*ncolors >= 0);
+	assert (*st->ncolors >= 0);
 	assert (s1 >= 0.0 && s1 <= 1.0 && v1 >= 0.0 && v2 <= 1.0);
 
-	if (psychedelic_flag) {
+	if (st->psychedelic_flag) {
 		h1 = RAND(360); h2 = (h1 + 180) % 360;
 	} else {
 		h1 = h2 = RAND(360);
 	}
 
-	make_color_ramp (dpy, cmap, h1, s1, v1, h2, s2, v2,
+	make_color_ramp (st->dpy, st->cmap, 
+                     h1, s1, v1, h2, s2, v2,
 				     colors, ncolors, False, True, False);
 
 	flags = GCForeground;
 	for (i=0; i < *ncolors; i++) {
 		gcv.foreground = colors[i].pixel;
-		gcs[i] = XCreateGC (dpy, dbuf, flags, &gcv);
+		gcs[i] = XCreateGC (st->dpy, st->dbuf, flags, &gcv);
 	}
 
 }
@@ -1271,36 +1279,36 @@ speedmine_color_ramp (Display * dpy, Colormap cmap, GC *gcs, XColor * colors,
  * colors are also chosen for the ground.
  */
 static void
-change_colors (void)
+change_colors (struct state *st)
 {
 	double s1, s2;
 
-	if (psychedelic_flag) {
-		free_colors (display, cmap, bonus_colors, nr_bonus_colors);
-		free_colors (display, cmap, wall_colors, nr_wall_colors);
-		free_colors (display, cmap, ground_colors, nr_ground_colors);
-		ncolors = MAX_COLORS;
+	if (st->psychedelic_flag) {
+		free_colors (st->dpy, st->cmap, st->bonus_colors, st->nr_bonus_colors);
+		free_colors (st->dpy, st->cmap, st->wall_colors, st->nr_wall_colors);
+		free_colors (st->dpy, st->cmap, st->ground_colors, st->nr_ground_colors);
+		st->ncolors = MAX_COLORS;
 
 		s1 = 0.4; s2 = 0.9;
 
-  		speedmine_color_ramp (display, cmap, ground_gcs, ground_colors,
-							  &ncolors, 0.0, 0.8, 0.0, 0.9);
-  		nr_ground_colors = ncolors;
+  		speedmine_color_ramp (st, st->ground_gcs, st->ground_colors,
+							  &st->ncolors, 0.0, 0.8, 0.0, 0.9);
+  		st->nr_ground_colors = st->ncolors;
 	} else {
-		free_colors (display, cmap, bonus_colors, nr_bonus_colors);
-		free_colors (display, cmap, wall_colors, nr_wall_colors);
-		ncolors = nr_ground_colors;
+		free_colors (st->dpy, st->cmap, st->bonus_colors, st->nr_bonus_colors);
+		free_colors (st->dpy, st->cmap, st->wall_colors, st->nr_wall_colors);
+		st->ncolors = st->nr_ground_colors;
 
 		s1 = 0.0; s2 = 0.6;
 	}
 
-    speedmine_color_ramp (display, cmap, wall_gcs, wall_colors, &ncolors,
+    speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		  s1, s2, 0.0, 0.9);
-    nr_wall_colors = ncolors;
+    st->nr_wall_colors = st->ncolors;
 
-    speedmine_color_ramp (display, cmap, bonus_gcs, bonus_colors, &ncolors,
+    speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		  0.6, 0.9, 0.4, 1.0);
-	nr_bonus_colors = ncolors;
+	st->nr_bonus_colors = st->ncolors;
 }
 
 /*
@@ -1309,26 +1317,26 @@ change_colors (void)
  * initialise a psychedelic colormap
  */
 static void
-init_psychedelic_colors (Display * dpy, Window window, Colormap cmap)
+init_psychedelic_colors (struct state *st)
 {
   XGCValues gcv;
 
-  gcv.foreground = get_pixel_resource ("tunnelend", "TunnelEnd", dpy, cmap);
-  tunnelend_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+  gcv.foreground = get_pixel_resource (st->dpy, st->cmap, "tunnelend", "TunnelEnd");
+  st->tunnelend_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
-  ncolors = MAX_COLORS;
+  st->ncolors = MAX_COLORS;
 
-  speedmine_color_ramp (dpy, cmap, ground_gcs, ground_colors, &ncolors,
+  speedmine_color_ramp (st, st->ground_gcs, st->ground_colors, &st->ncolors,
 				  		0.0, 0.8, 0.0, 0.9);
-  nr_ground_colors = ncolors;
+  st->nr_ground_colors = st->ncolors;
 
-  speedmine_color_ramp (dpy, cmap, wall_gcs, wall_colors, &ncolors,
+  speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		0.0, 0.6, 0.0, 0.9);
-  nr_wall_colors = ncolors;
+  st->nr_wall_colors = st->ncolors;
 
-  speedmine_color_ramp (dpy, cmap, bonus_gcs, bonus_colors, &ncolors,
+  speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		0.6, 0.9, 0.4, 1.0);
-  nr_bonus_colors = ncolors;
+  st->nr_bonus_colors = st->ncolors;
 }
 
 /*
@@ -1337,7 +1345,7 @@ init_psychedelic_colors (Display * dpy, Window window, Colormap cmap)
  * initialise a normal colormap
  */
 static void
-init_colors (Display * dpy, Window window, Colormap cmap)
+init_colors (struct state *st)
 {
   XGCValues gcv;
   XColor dark, light;
@@ -1346,36 +1354,36 @@ init_colors (Display * dpy, Window window, Colormap cmap)
   unsigned long flags;
   int i;
 
-  gcv.foreground = get_pixel_resource ("tunnelend", "TunnelEnd", dpy, cmap);
-  tunnelend_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+  gcv.foreground = get_pixel_resource (st->dpy, st->cmap, "tunnelend", "TunnelEnd");
+  st->tunnelend_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
-  ncolors = MAX_COLORS;
+  st->ncolors = MAX_COLORS;
 
-  dark.pixel = get_pixel_resource ("darkground", "DarkGround", dpy, cmap);
-  XQueryColor (dpy, cmap, &dark);
+  dark.pixel = get_pixel_resource (st->dpy, st->cmap, "darkground", "DarkGround");
+  XQueryColor (st->dpy, st->cmap, &dark);
 
-  light.pixel = get_pixel_resource ("lightground", "LightGround", dpy, cmap);
-  XQueryColor (dpy, cmap, &light);
+  light.pixel = get_pixel_resource (st->dpy, st->cmap, "lightground", "LightGround");
+  XQueryColor (st->dpy, st->cmap, &light);
 
   rgb_to_hsv (dark.red, dark.green, dark.blue, &h1, &s1, &v1);
   rgb_to_hsv (light.red, light.green, light.blue, &h2, &s2, &v2);
-  make_color_ramp (dpy, cmap, h1, s1, v1, h2, s2, v2,
-				  ground_colors, &ncolors, False, True, False);
-  nr_ground_colors = ncolors;
+  make_color_ramp (st->dpy, st->cmap, h1, s1, v1, h2, s2, v2,
+				  st->ground_colors, &st->ncolors, False, True, False);
+  st->nr_ground_colors = st->ncolors;
 
   flags = GCForeground;
-  for (i=0; i < ncolors; i++) {
-	gcv.foreground = ground_colors[i].pixel;
-	ground_gcs[i] = XCreateGC (dpy, dbuf, flags, &gcv);
+  for (i=0; i < st->ncolors; i++) {
+	gcv.foreground = st->ground_colors[i].pixel;
+	st->ground_gcs[i] = XCreateGC (st->dpy, st->dbuf, flags, &gcv);
   }
 
-  speedmine_color_ramp (dpy, cmap, wall_gcs, wall_colors, &ncolors,
+  speedmine_color_ramp (st, st->wall_gcs, st->wall_colors, &st->ncolors,
 				 		0.0, 0.6, 0.0, 0.9);
-  nr_wall_colors = ncolors;
+  st->nr_wall_colors = st->ncolors;
 
-  speedmine_color_ramp (dpy, cmap, bonus_gcs, bonus_colors, &ncolors,
+  speedmine_color_ramp (st, st->bonus_gcs, st->bonus_colors, &st->ncolors,
 				  		0.6, 0.9, 0.4, 1.0);
-  nr_bonus_colors = ncolors;
+  st->nr_bonus_colors = st->ncolors;
 }
 
 /*
@@ -1383,125 +1391,162 @@ init_colors (Display * dpy, Window window, Colormap cmap)
  *
  * print out average FPS stats for the demo
  */
+#if 0
 static void
-print_stats (void)
+print_stats (struct state *st)
 {
-	if (total_nframes >= 1)
-		printf ("Rendered %d frames averaging %f FPS\n", total_nframes,
-				total_nframes / get_time());
+	if (st->total_nframes >= 1)
+		printf ("Rendered %d frames averaging %f FPS\n", st->total_nframes,
+				st->total_nframes / get_time(st));
 }
+#endif
 
 /*
  * init_speedmine (dpy, window)
  *
  * initialise the demo
  */
-static void
-init_speedmine (Display *dpy, Window window)
+static void *
+speedmine_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
   int i;
   double th;
   int wide;
 
-  display = dpy;
+  st->dpy = dpy;
+  st->window = window;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  width = xgwa.width;
-  height = xgwa.height;
+  st->speed = 1.1;
+  st->accel = 0.00000001;
+  st->direction = FORWARDS;
+  st->orientation = (17*ROTS)/22;
 
-  verbose_flag = get_boolean_resource ("verbose", "Boolean");
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->cmap = xgwa.colormap;
+  st->width = xgwa.width;
+  st->height = xgwa.height;
 
-  dbuf = XCreatePixmap (dpy, window, width, height, xgwa.depth);
-  stars_mask = XCreatePixmap (dpy, window, width, height, 1);
+  st->verbose_flag = get_boolean_resource (st->dpy, "verbose", "Boolean");
 
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-  stars_gc = XCreateGC (dpy, stars_mask, GCForeground, &gcv);
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  st->dbuf = st->window;
+#else
+  st->dbuf = XCreatePixmap (st->dpy, st->window, st->width, st->height, xgwa.depth);
+#endif
+  st->stars_mask = XCreatePixmap (st->dpy, st->window, st->width, st->height, 1);
 
-  gcv.foreground = get_pixel_resource ("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC (dpy, dbuf, GCForeground, &gcv);
-  stars_erase_gc = XCreateGC (dpy, stars_mask, GCForeground, &gcv);
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
+  st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  gcv.foreground = 1;
+  st->stars_gc = XCreateGC (st->dpy, st->stars_mask, GCForeground, &gcv);
 
-  wire_flag = get_boolean_resource ("wire", "Boolean");
+  gcv.foreground = get_pixel_resource (st->dpy, st->cmap, "background", "Background");
+  st->erase_gc = XCreateGC (st->dpy, st->dbuf, GCForeground, &gcv);
+  gcv.foreground = 0;
+  st->stars_erase_gc = XCreateGC (st->dpy, st->stars_mask, GCForeground, &gcv);
 
-  psychedelic_flag = get_boolean_resource ("psychedelic", "Boolean");
+  st->wire_flag = get_boolean_resource (st->dpy, "wire", "Boolean");
 
-  delay = get_integer_resource("delay", "Integer");
+  st->psychedelic_flag = get_boolean_resource (st->dpy, "psychedelic", "Boolean");
 
-  smoothness = get_integer_resource("smoothness", "Integer");
-  if (smoothness < 1) smoothness = 1;
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
 
-  maxspeed = get_float_resource("maxspeed", "Float");
-  maxspeed *= 0.01;
-  maxspeed = fabs(maxspeed);
+  st->smoothness = get_integer_resource(st->dpy, "smoothness", "Integer");
+  if (st->smoothness < 1) st->smoothness = 1;
 
-  thrust = get_float_resource("thrust", "Float");
-  thrust *= 0.2;
+  st->maxspeed = get_float_resource(st->dpy, "maxspeed", "Float");
+  st->maxspeed *= 0.01;
+  st->maxspeed = fabs(st->maxspeed);
 
-  gravity = get_float_resource("gravity", "Float");
-  gravity *= 0.002/9.8;
+  st->thrust = get_float_resource(st->dpy, "thrust", "Float");
+  st->thrust *= 0.2;
 
-  vertigo = get_float_resource("vertigo", "Float");
-  vertigo *= 0.2;
+  st->gravity = get_float_resource(st->dpy, "gravity", "Float");
+  st->gravity *= 0.002/9.8;
 
-  curviness = get_float_resource("curviness", "Float");
-  curviness *= 0.25;
+  st->vertigo = get_float_resource(st->dpy, "vertigo", "Float");
+  st->vertigo *= 0.2;
 
-  twistiness = get_float_resource("twistiness", "Float");
-  twistiness *= 0.125;
+  st->curviness = get_float_resource(st->dpy, "curviness", "Float");
+  st->curviness *= 0.25;
 
-  terrain_flag = get_boolean_resource ("terrain", "Boolean");
-  widening_flag = get_boolean_resource ("widening", "Boolean");
-  bumps_flag = get_boolean_resource ("bumps", "Boolean");
-  bonuses_flag = get_boolean_resource ("bonuses", "Boolean");
-  crosshair_flag = get_boolean_resource ("crosshair", "Boolean");
+  st->twistiness = get_float_resource(st->dpy, "twistiness", "Float");
+  st->twistiness *= 0.125;
 
-  be_wormy = get_boolean_resource ("worm", "Boolean");
-  if (be_wormy) {
-      maxspeed   *= 1.43;
-      thrust     *= 10;
-      gravity    *= 3;
-      vertigo    *= 0.5;
-      smoothness *= 2;
-      curviness  *= 2;
-      twistiness *= 2;
-      psychedelic_flag = True;
-      crosshair_flag = False;
+  st->terrain_flag = get_boolean_resource (st->dpy, "terrain", "Boolean");
+  st->widening_flag = get_boolean_resource (st->dpy, "widening", "Boolean");
+  st->bumps_flag = get_boolean_resource (st->dpy, "bumps", "Boolean");
+  st->bonuses_flag = get_boolean_resource (st->dpy, "bonuses", "Boolean");
+  st->crosshair_flag = get_boolean_resource (st->dpy, "crosshair", "Boolean");
+
+  st->be_wormy = get_boolean_resource (st->dpy, "worm", "Boolean");
+  if (st->be_wormy) {
+      st->maxspeed   *= 1.43;
+      st->thrust     *= 10;
+      st->gravity    *= 3;
+      st->vertigo    *= 0.5;
+      st->smoothness *= 2;
+      st->curviness  *= 2;
+      st->twistiness *= 2;
+      st->psychedelic_flag = True;
+      st->crosshair_flag = False;
   }
 
-  if (psychedelic_flag) init_psychedelic_colors (dpy, window, cmap);
-  else init_colors (dpy, window, cmap);
+  if (st->psychedelic_flag) init_psychedelic_colors (st);
+  else init_colors (st);
 
   for (i=0; i<ROTS; i++) {
 	th = M_PI * 2.0 * i / ROTS;
-	costab[i] = cos(th);
-	sintab[i] = sin(th);
+	st->costab[i] = cos(th);
+	st->sintab[i] = sin(th);
   }
 
   wide = random_wideness();
 
   for (i=0; i < TERRAIN_LENGTH; i++) {
-	wideness[i] = wide;
-	bonuses[i] = 0;
+	st->wideness[i] = wide;
+	st->bonuses[i] = 0;
   }
 
-  init_terrain ();
-  init_curves ();
-  wrap_tunnel (0, TERRAIN_LENGTH-1);
+  init_terrain (st);
+  init_curves (st);
+  wrap_tunnel (st, 0, TERRAIN_LENGTH-1);
 
-  if (DEBUG_FLAG || verbose_flag) atexit(print_stats);
-
-  step = effective_speed;
-
-#ifdef HAVE_GETTIMEOFDAY
-  init_time ();
+#if 0
+  if (DEBUG_FLAG || st->verbose_flag) atexit(print_stats);
 #endif
 
+  st->step = effective_speed;
+
+  init_time (st);
+
+  return st;
 }
+
+
+static void
+speedmine_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+speedmine_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+speedmine_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
 
 
 /*
@@ -1518,9 +1563,8 @@ init_speedmine (Display *dpy, Window window)
  * he's made of speed from end to end.
  */
 
-char *progclass = "Speedmine";
 
-char *defaults [] = {
+static const char *speedmine_defaults [] = {
   ".verbose: False",
   "*worm: False",
   "*wire: False",
@@ -1546,11 +1590,11 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec speedmine_options [] = {
   { "-verbose",			".verbose",				XrmoptionNoArg, "True"},
   { "-worm",			".worm",				XrmoptionNoArg, "True"},
-  { "-wire",			".wire",				XrmoptionNoArg, "True"},
-  { "-nowire",			".wire",				XrmoptionNoArg, "False"},
+  { "-wireframe",		".wire",				XrmoptionNoArg, "True"},
+  { "-no-wireframe",	".wire",				XrmoptionNoArg, "False"},
   { "-darkground",		".darkground",			XrmoptionSepArg, 0 },
   { "-lightground",		".lightground",			XrmoptionSepArg, 0 },
   { "-tunnelend",		".tunnelend",			XrmoptionSepArg, 0 },
@@ -1560,40 +1604,25 @@ XrmOptionDescRec options [] = {
   { "-gravity",			".gravity",				XrmoptionSepArg, 0 },
   { "-vertigo",			".vertigo",				XrmoptionSepArg, 0 },
   { "-terrain",			".terrain",				XrmoptionNoArg, "True"},
-  { "-noterrain",		".terrain",				XrmoptionNoArg, "False"},
+  { "-no-terrain",		".terrain",				XrmoptionNoArg, "False"},
   { "-smoothness",      ".smoothness",			XrmoptionSepArg, 0 },
   { "-curviness",		".curviness",			XrmoptionSepArg, 0 },
   { "-twistiness",		".twistiness",			XrmoptionSepArg, 0 },
   { "-widening",		".widening",			XrmoptionNoArg, "True"},
-  { "-nowidening",		".widening",			XrmoptionNoArg, "False"},
+  { "-no-widening",		".widening",			XrmoptionNoArg, "False"},
   { "-bumps",			".bumps",				XrmoptionNoArg, "True"},
-  { "-nobumps",			".bumps",				XrmoptionNoArg, "False"},
+  { "-no-bumps",		".bumps",				XrmoptionNoArg, "False"},
   { "-bonuses",			".bonuses",				XrmoptionNoArg, "True"},
-  { "-nobonuses",		".bonuses",				XrmoptionNoArg, "False"},
+  { "-no-bonuses",		".bonuses",				XrmoptionNoArg, "False"},
   { "-crosshair",		".crosshair",			XrmoptionNoArg, "True"},
-  { "-nocrosshair",		".crosshair",			XrmoptionNoArg, "False"},
+  { "-no-crosshair",	".crosshair",			XrmoptionNoArg, "False"},
   { "-psychedelic",		".psychedelic",			XrmoptionNoArg, "True"},
-  { "-nopsychedelic",	".psychedelic",			XrmoptionNoArg, "False"},
+  { "-no-psychedelic",	".psychedelic",			XrmoptionNoArg, "False"},
   { 0, 0, 0, 0 }
 };
 
 
-void
-screenhack (Display *dpy, Window window)
-{
-#ifndef NDEBUG
-	atexit (abort);
-#endif
-
-	init_speedmine (dpy, window);
-
-	while (1) {
-		speedmine (dpy, window);
-		XSync (dpy, False);
-		screenhack_handle_events (dpy);
-		if (delay) usleep(delay);
-	}
-}
+XSCREENSAVER_MODULE ("Speedmine", speedmine)
 
 /* vim: ts=4
  */

@@ -327,14 +327,6 @@
 /* Define to 1 if you have the <util.h> header file. */
 #undef HAVE_UTIL_H
 
-/* Define this if you are on a system that supports the VT_LOCKSWITCH and
-   VT_UNLOCKSWITCH ioctls. If this is defined, then when the screen is locked,
-   switching to another virtual terminal will also be prevented. That is, the
-   whole console will be locked, rather than just the VT on which X is
-   running. (Well, that's the theory anyway -- in practice, I haven't yet
-   figured out how to make that work.) */
-#undef HAVE_VT_LOCKSWITCH
-
 /* Define this if you have the XF86MiscSetGrabKeysState function (which allows
    the Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash key sequences to be temporarily
    disabled. Sadly, it doesn't affect Ctrl-Alt-BS or Ctrl-Alt-F1.) */

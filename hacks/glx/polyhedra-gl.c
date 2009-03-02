@@ -1,4 +1,4 @@
-/* polyhedra, Copyright (c) 2004 Jamie Zawinski <jwz@jwz.org>
+/* polyhedra, Copyright (c) 2004-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,25 +15,6 @@
  * is in "polyhedra.c".
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"Polyhedra"
-#define HACK_INIT	init_polyhedra
-#define HACK_DRAW	draw_polyhedra
-#define HACK_RESHAPE	reshape_polyhedra
-#define HACK_HANDLE_EVENT polyhedra_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "True"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "1.0"
-#define DEF_TITLES      "True"
-#define DEF_DURATION    "12"
-#define DEF_WHICH       "-1"
-
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
@@ -42,11 +23,20 @@ extern XtAppContext app;
 			"*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
 
 
+# define refresh_polyhedra 0
+# define release_polyhedra 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
-#include <GL/glu.h>
+
+
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "1.0"
+#define DEF_TITLES      "True"
+#define DEF_DURATION    "12"
+#define DEF_WHICH       "random"
 
 #include "glxfonts.h"
 #include "normals.h"
@@ -54,11 +44,8 @@ extern XtAppContext app;
 #include "colors.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include <ctype.h>
 
 #ifdef USE_GL /* whole file */
-
-#include <GL/glu.h>
 
 typedef struct {
   GLXContext *glx_context;
@@ -82,6 +69,9 @@ typedef struct {
 
   XFontStruct *xfont1, *xfont2, *xfont3;
   GLuint font1_dlist, font2_dlist, font3_dlist;
+
+  time_t last_change_time;
+  int change_tick;
 
 } polyhedra_configuration;
 
@@ -116,7 +106,7 @@ static argtype vars[] = {
   {&do_which_str,"which", "Which", DEF_WHICH,   t_String},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt polyhedra_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
@@ -188,7 +178,7 @@ startup_blurb (ModeInfo *mi)
  */
 static void new_label (ModeInfo *mi);
 
-void
+ENTRYPOINT void
 reshape_polyhedra (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -212,7 +202,7 @@ reshape_polyhedra (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 polyhedra_handle_event (ModeInfo *mi, XEvent *event)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -338,7 +328,6 @@ new_polyhedron (ModeInfo *mi)
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   polyhedron *p;
   int wire = MI_IS_WIREFRAME(mi);
-  static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
   int i;
 
   /* Use the GLU polygon tesselator so that nonconvex faces are displayed
@@ -383,9 +372,11 @@ new_polyhedron (ModeInfo *mi)
         glColor3f (0, 1, 0);
       else
         {
+          GLfloat bcolor[4];
           bcolor[0] = bp->colors[f->color].red   / 65536.0;
           bcolor[1] = bp->colors[f->color].green / 65536.0;
           bcolor[2] = bp->colors[f->color].blue  / 65536.0;
+          bcolor[2] = 1.0;
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
         }
 
@@ -408,7 +399,7 @@ new_polyhedron (ModeInfo *mi)
 }
 
 
-void 
+ENTRYPOINT void 
 init_polyhedra (ModeInfo *mi)
 {
   polyhedra_configuration *bp;
@@ -482,7 +473,9 @@ init_polyhedra (ModeInfo *mi)
     int x;
     char c;
     do_which = -1;
-    if (1 == sscanf (do_which_str, " %d %c", &x, &c))
+    if (!strcasecmp (do_which_str, "random"))
+      ;
+    else if (1 == sscanf (do_which_str, " %d %c", &x, &c))
       do_which = x;
     else if (*do_which_str)
       {
@@ -511,39 +504,37 @@ init_polyhedra (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_polyhedra (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
 
-  static time_t last_time = 0;
-
-  static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
-  static GLfloat bshiny    = 128.0;
+  static const GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
+  GLfloat bshiny    = 128.0;
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   if (bp->mode == 0 && do_which >= 0 && bp->change_to < 0)
     ;
   else if (bp->mode == 0)
     {
-      static int tick = 0;
-
       if (bp->change_to >= 0)
-        tick = 999, last_time = 1;
-      if (tick++ > 10)
+        bp->change_tick = 999, bp->last_change_time = 1;
+      if (bp->change_tick++ > 10)
         {
           time_t now = time((time_t *) 0);
-          if (last_time == 0) last_time = now;
-          tick = 0;
-          if (!bp->button_down_p && now - last_time >= duration)
+          if (bp->last_change_time == 0) bp->last_change_time = now;
+          bp->change_tick = 0;
+          if (!bp->button_down_p && now - bp->last_change_time >= duration)
             {
               bp->mode = 1;    /* go out */
               bp->mode_tick = 20 * speed;
-              last_time = now;
+              bp->last_change_time = now;
             }
         }
     }
@@ -613,5 +604,7 @@ draw_polyhedra (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Polyhedra", polyhedra)
 
 #endif /* USE_GL */

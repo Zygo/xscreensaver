@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,7 +14,8 @@
 #define __GRAB_XIMAGE_H__
 
 /* Grabs an image of the desktop (or another random image file) and
-   loads tht image into GL's texture memory.
+   loads the image into GL's texture memory.  Most of the work is done
+   in the background; when the image has been loaded, a callback is run.
 
    As a side-effect, that image *may* be painted onto the given Window.
 
@@ -54,37 +55,22 @@
       [gx/tw - (gx+gw)/tw]  If you want to display a quad that is the same
       [gy/th - (gy+gh)/th]  size as the loaded image file.
 
-   Writes to stderr and returns False on error.
- */
-Bool screen_to_texture (Screen *screen, Window window,
-                        int desired_width, int desired_height,
-                        Bool mipmap_p,
-                        char **filename_return,
-                        XRectangle *geometry_return,
-                        int *image_width_return,
-                        int *image_height_return,
-                        int *texture_width_return,
-                        int *texture_height_return);
-
-
-/* Like the above, but the image is loaded in a background process,
-   and a callback is run when the loading is complete.
    When the callback is called, the image data will have been loaded
    into texture number `texid' (via glBindTexture.)
 
    If an error occurred, width/height will be 0.
  */
-void screen_to_texture_async (Screen *screen, Window window,
-                              int desired_width, int desired_height,
-                              Bool mipmap_p,
-                              GLuint texid,
-                              void (*callback) (const char *filename,
-                                                XRectangle *geometry,
-                                                int image_width,
-                                                int image_height,
-                                                int texture_width,
-                                                int texture_height,
-                                                void *closure),
-                              void *closure);
+void load_texture_async (Screen *, Window, GLXContext,
+                         int desired_width, int desired_height,
+                         Bool mipmap_p,
+                         GLuint texid,
+                         void (*callback) (const char *filename,
+                                           XRectangle *geometry,
+                                           int image_width,
+                                           int image_height,
+                                           int texture_width,
+                                           int texture_height,
+                                           void *closure),
+                         void *closure);
 
 #endif /* __GRAB_XIMAGE_H__ */

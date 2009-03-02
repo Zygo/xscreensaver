@@ -11,23 +11,10 @@
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Klein"
-# define HACK_INIT					init_klein
-# define HACK_DRAW					draw_klein
-# define HACK_RESHAPE				reshape_klein
-# define HACK_HANDLE_EVENT			klein_handle_event
-# define EVENT_MASK					PointerMotionMask
-# define klein_opts					xlockmore_opts
-
-
-#define DEF_SPIN			        "True"
-#define DEF_WANDER			        "False"
-#define DEF_RANDOM			        "False"
-#define DEF_SPEED			        "150"
-
 # define DEFAULTS					"*delay:		20000   \n" \
 									"*showFPS:      False   \n"
 
+# define refresh_klein 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -35,7 +22,11 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
+#define DEF_SPIN			        "True"
+#define DEF_WANDER			        "False"
+#define DEF_RANDOM			        "True"
+#define DEF_SPEED			        "150"
+
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -94,7 +85,7 @@ static argtype vars[] = {
 };
 
 
-ModeSpecOpt klein_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt klein_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
@@ -117,6 +108,8 @@ typedef struct {
 	float du, dv;
 	float a, b, c;
 
+    float draw_step;
+
 } kleinstruct;
 
 static kleinstruct *klein = NULL;
@@ -126,7 +119,6 @@ static void
 draw(ModeInfo *mi)
 {
 	kleinstruct *kp = &klein[MI_SCREEN(mi)];
-	static float step = 0.0;
 	double u, v;
 	float coord[3];
 	
@@ -264,13 +256,13 @@ draw(ModeInfo *mi)
 	glPopMatrix();
 
 
-	kp->a = sin(step+=0.01);
-	kp->b = cos(step+=0.01);
+	kp->a = sin(kp->draw_step+=0.01);
+	kp->b = cos(kp->draw_step+=0.01);
 }
 
 
 /* new window size or exposure */
-void
+ENTRYPOINT void
 reshape_klein(ModeInfo *mi, int width, int height)
 {
 	GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -290,7 +282,7 @@ reshape_klein(ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 klein_handle_event (ModeInfo *mi, XEvent *event)
 {
 	kleinstruct *kp = &klein[MI_SCREEN(mi)];
@@ -317,7 +309,7 @@ klein_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
+ENTRYPOINT void
 init_klein(ModeInfo *mi)
 {
 	int	 screen = MI_SCREEN(mi);
@@ -374,7 +366,7 @@ init_klein(ModeInfo *mi)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_klein(ModeInfo * mi)
 {
 	kleinstruct *kp = &klein[MI_SCREEN(mi)];
@@ -392,7 +384,7 @@ draw_klein(ModeInfo * mi)
 	glXSwapBuffers(display, window);
 }
 
-void
+ENTRYPOINT void
 release_klein(ModeInfo * mi)
 {
 	if (klein != NULL) {
@@ -412,6 +404,8 @@ release_klein(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
+
+XSCREENSAVER_MODULE ("Klein", klein)
 
 /*********************************************************/
 

@@ -41,15 +41,12 @@
 #define FULLCIRCLE (2.0 * M_PI)	/* radians in a circle. */
 
 
-/* Name of the Screensaver hack */
-char *progclass="Epicycle";
-
 /* Some of these resource values here are hand-tuned to give a
  * pleasing variety of interesting shapes.  These are not the only
  * good settings, but you may find you need to change some as a group
  * to get pleasing figures.
  */
-char *defaults [] = {
+static const char *epicycle_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*colors:	100",
@@ -71,7 +68,7 @@ char *defaults [] = {
 };
 
 /* options passed to this program */
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec epicycle_options [] = {
   { "-color0",		".color0",	  XrmoptionSepArg, 0 },
   { "-colors",		".colors",	  XrmoptionSepArg, 0 },
   { "-colours",		".colors",	  XrmoptionSepArg, 0 },
@@ -91,28 +88,6 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-
-static Display *dpy;
-static Window window;
-static GC color0;
-static int width, height;
-static int x_offset, y_offset;
-static int unit_pixels;
-static unsigned long bg;
-static Colormap cmap;
-static int restart = 0;
-static int stop = 0;
-static double wdot_max;
-static XColor *colors = NULL;
-static int ncolors = 2;
-static int color_shift_pos=0;	/* how far we are towards that. */
-static double colour_cycle_rate = 1.0;
-static int harmonics = 8;
-static double divisorPoisson = 0.4;
-static double sizeFactorMin = 1.05;
-static double sizeFactorMax = 2.05;
-static int minCircles;
-static int maxCircles;
 
 /* Each circle is centred on a point on the rim of another circle.
  */
@@ -139,6 +114,43 @@ struct tagBody			/* a body that moves on a system of circles. */
   struct tagBody *next;		/* next in list. */
 };
 typedef struct tagBody Body;
+
+
+struct state {
+   Display *dpy;
+   Window window;
+   GC color0;
+   int width, height;
+   int x_offset, y_offset;
+   int unit_pixels;
+   unsigned long bg;
+   Colormap cmap;
+   int restart;
+   double wdot_max;
+   XColor *colors;
+   int ncolors;
+   int color_shift_pos;	/* how far we are towards that. */
+   double colour_cycle_rate;
+   int harmonics;
+   double divisorPoisson;
+   double sizeFactorMin;
+   double sizeFactorMax;
+   int minCircles;
+   int maxCircles;
+
+   Bool done;
+
+   long L;
+   double T, timestep, circle, timestep_coarse;
+   int delay;
+   int uncleared;
+   int holdtime;
+   int xmax, xmin, ymax, ymin;
+   Body *pb0;
+   double xtime;
+   eraser_state *eraser;
+};
+
 
 
 /* Determine the GCD of two numbers using Euclid's method.  The other
@@ -186,11 +198,11 @@ lcm(int u, int v)
 }
 
 static long 
-random_radius(double scale)	
+random_radius(struct state *st, double scale)	
 {
   long r;
 
-  r = frand(scale) * unit_pixels/2; /* for frand() see utils/yarandom.h */
+  r = frand(scale) * st->unit_pixels/2; /* for frand() see utils/yarandom.h */
   if (r < MIN_RADIUS)
     r = MIN_RADIUS;
   return r;
@@ -198,12 +210,12 @@ random_radius(double scale)
 
 
 static long
-random_divisor(void)
+random_divisor(struct state *st)
 {
   int divisor = 1;
   int sign;
 
-  while (frand(1.0) < divisorPoisson && divisor <= harmonics)
+  while (frand(1.0) < st->divisorPoisson && divisor <= st->harmonics)
     {
       ++divisor;
     }
@@ -213,7 +225,7 @@ random_divisor(void)
 
 
 static void
-oom(void)
+oom(struct state *st)
 {
   fprintf(stderr, "Failed to allocate memory!\n");
   exit(-1);
@@ -222,15 +234,15 @@ oom(void)
 
 /* Construct a circle or die.
  */
-Circle *
-new_circle(double scale)
+static Circle *
+new_circle(struct state *st, double scale)
 {
   Circle *p = malloc(sizeof(Circle));
   
-  p->radius = random_radius(scale);
+  p->radius = random_radius(st, scale);
   p->w = p->initial_w = 0.0;
-  p->divisor = random_divisor();
-  p->wdot = wdot_max / p->divisor;
+  p->divisor = random_divisor(st);
+  p->wdot = st->wdot_max / p->divisor;
   p->pchild = NULL;
   
   return p;
@@ -252,8 +264,8 @@ delete_circle_chain(Circle *p)
     }
 }
 
-Circle *
-new_circle_chain(void)
+static Circle *
+new_circle_chain(struct state *st)
 {
   Circle *head;
   double scale = 1.0, factor;
@@ -262,19 +274,19 @@ new_circle_chain(void)
   /* Parent circles are larger than their children by a factor of at
    * least FACTOR_MIN and at most FACTOR_MAX.
    */
-  factor = sizeFactorMin + frand(sizeFactorMax - sizeFactorMin);
+  factor = st->sizeFactorMin + frand(st->sizeFactorMax - st->sizeFactorMin);
   
   /* There are between minCircles and maxCircles in each figure.
    */
-  if (maxCircles == minCircles)
-    n = minCircles;            /* Avoid division by zero. */
+  if (st->maxCircles == st->minCircles)
+    n = st->minCircles;            /* Avoid division by zero. */
   else
-    n = minCircles + random() % (maxCircles - minCircles);
+    n = st->minCircles + random() % (st->maxCircles - st->minCircles);
   
   head = NULL;
   while (n--)
     {
-      Circle *p = new_circle(scale);
+      Circle *p = new_circle(st, scale);
       p->pchild = head;
       head = p;
 
@@ -295,12 +307,12 @@ assign_random_common_w(Circle *p)
 }
 
 static Body *
-new_body(void)
+new_body(struct state *st)
 {
   Body *p = malloc(sizeof(Body));
   if (NULL == p)
-    oom();
-  p->epicycles = new_circle_chain();
+    oom(st);
+  p->epicycles = new_circle_chain(st);
   p->current_color = 0;		/* ?? start them all on different colors? */
   p->next = NULL;
   p->x = p->y = 0;
@@ -325,9 +337,9 @@ delete_body(Body *p)
 
 
 static void 
-draw_body(Body *pb, GC gc)
+draw_body(struct state *st, Body *pb, GC gc)
 {
-  XDrawLine(dpy, window, gc, pb->old_x, pb->old_y, pb->x, pb->y);
+  XDrawLine(st->dpy, st->window, gc, pb->old_x, pb->old_y, pb->x, pb->y);
 }
 
 static long
@@ -377,7 +389,7 @@ move_body(Body *pb, double t)
 }
 
 static int
-colour_init(XWindowAttributes *pxgwa)
+colour_init(struct state *st, XWindowAttributes *pxgwa)
 {
   XGCValues gcv;
 
@@ -395,48 +407,48 @@ colour_init(XWindowAttributes *pxgwa)
   
   /* Free any already allocated colors...
    */
-  if (colors)
+  if (st->colors)
     {
-      free_colors(dpy, cmap, colors, ncolors);
-      colors = 0;
-      ncolors = 0;
+      free_colors(st->dpy, st->cmap, st->colors, st->ncolors);
+      st->colors = 0;
+      st->ncolors = 0;
     }
 	
-  ncolors = get_integer_resource ("colors", "Colors");
-  if (0 == ncolors)		/* English spelling? */
-    ncolors = get_integer_resource ("colours", "Colors");
+  st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+  if (0 == st->ncolors)		/* English spelling? */
+    st->ncolors = get_integer_resource (st->dpy, "colours", "Colors");
   
-  if (ncolors < 2)
-    ncolors = 2;
-  if (ncolors <= 2)
+  if (st->ncolors < 2)
+    st->ncolors = 2;
+  if (st->ncolors <= 2)
     mono_p = True;
-  colors = 0;
+  st->colors = 0;
 
   if (!mono_p)
     {
-      colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
-      if (!colors)
-	oom();
+      st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+      if (!st->colors)
+	oom(st);
 	  
-      make_smooth_colormap (dpy, pxgwa->visual, cmap, colors, &ncolors,
+      make_smooth_colormap (st->dpy, pxgwa->visual, st->cmap, st->colors, &st->ncolors,
 			    True, /* allocate */
 			    False, /* not writable */
 			    True); /* verbose (complain about failure) */
-      if (ncolors <= 2)
+      if (st->ncolors <= 2)
 	{
-	  if (colors)
-	    free (colors);
-	  colors = 0;
+	  if (st->colors)
+	    free (st->colors);
+	  st->colors = 0;
 	  mono_p = True;
 	}
     }
 
   
-  bg = get_pixel_resource ("background", "Background", dpy, cmap);
+  st->bg = get_pixel_resource (st->dpy, st->cmap, "background", "Background");
 
   /* Set the line width
    */
-  gcv.line_width = get_integer_resource ("lineWidth", "Integer");
+  gcv.line_width = get_integer_resource (st->dpy, "lineWidth", "Integer");
   if (gcv.line_width)
     {
       valuemask |= GCLineWidth;
@@ -455,161 +467,67 @@ colour_init(XWindowAttributes *pxgwa)
   
   /* Set the foreground.
    */
-  if (mono_p)
-    fg = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  else
-    fg = bg ^ get_pixel_resource (("color0"), "Foreground", dpy, cmap); 
+/*  if (mono_p)*/
+    fg = get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
+/* WTF?
+else
+    fg = st->bg ^ get_pixel_resource (st->dpy, st->cmap, ("color0"), "Foreground"); 
+*/
   gcv.foreground = fg;
   valuemask |= GCForeground;
 
   /* Actually create the GC.
    */
-  color0 = XCreateGC (dpy, window, valuemask, &gcv);
+  st->color0 = XCreateGC (st->dpy, st->window, valuemask, &gcv);
   
   return retval;
 }
 
 
-/* check_events(); originally from XScreensaver: hacks/maze.c,
- * but now quite heavily modified.
- *
- * Reaction to events:-
- *
- * Mouse 1 -- new figure }
- *       2 -- new figure }-- ignored when running on root window.
- *       3 -- exit       }
- *
- * Window resized or exposed -- new figure.
- * Window iconised -- wait until it's re-mapped, then start a new figure.
- */
-static int
-check_events (void)                        /* X event handler [ rhess ] */
-{
-  XEvent e;
-  int unmapped = 0;
-	
-  while (unmapped || XPending(dpy))
-    {
-      XNextEvent(dpy, &e);
-		
-      switch (e.type)
-	{
-	case ButtonPress:
-	  switch (e.xbutton.button)
-	    {
-	    case 3:
-	      exit (0);
-	      break;
-				
-	    case 2:
-	    case 1:
-	    default:
-	      restart = 1 ;
-	      stop = 0 ;
-	      break;
-	    }
-	  break;
-			
-	case ConfigureNotify:
-	  restart = 1;
-	  break;
-			
-	case UnmapNotify:
-	  printf("unmapped!\n");
-	  unmapped = 1;
-	  restart = 1;			/* restart with new fig. when re-mapped. */
-	  break;
-			
-	case Expose:		
-	  if (0 == e.xexpose.count)
-	    {
-				/* We can get several expose events in the queue.
-				 * Only the last one has a zero count.  We eat
-				 * events in this function so as to avoid restarting
-				 * the screensaver many times in quick succession.
-				 */
-	      restart = 1;
-	    }
-	  /* If we had been unmapped and are now waiting to be re-mapped,
-	   * indicate that we condition we are waiting for is now met.
-	   */
-	  if (unmapped)
-	    printf("re-mapped!\n");
-	  unmapped = 0;
-	  break;
-
-        default:
-          screenhack_handle_event(dpy, &e);
-          break;
-	}
-		
-      /* If we're unmapped, don't return to the caller.  This
-       * prevents us wasting CPU, calculating new positions for
-       * things that will never be plotted.   This is a real CPU
-       * saver.
-       */
-      if (!unmapped)
-	return 1;
-    }
-  return 0;
-}
 
 
 static void
-setup(void)
+setup(struct state *st)
 {
   XWindowAttributes xgwa;
-  int root;
   
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->cmap = xgwa.colormap;
 
-  width = xgwa.width;
-  height = xgwa.height;
-  x_offset = width / 2;
-  y_offset = height / 2;
-  unit_pixels = width < height ? width : height;
+  st->width = xgwa.width;
+  st->height = xgwa.height;
+  st->x_offset = st->width / 2;
+  st->y_offset = st->height / 2;
+  st->unit_pixels = st->width < st->height ? st->width : st->height;
 
   {
-    static Bool done = False;
-    if (!done)
+    if (!st->done)
       {
-	colour_init(&xgwa);
-	done = True;
+	colour_init(st, &xgwa);
+	st->done = True;
       }
   }
-  
-  root = get_boolean_resource("root", "Boolean");
-  
-  if (root)
-    {
-      XSelectInput(dpy, window, ExposureMask);
-    }
-  else
-    {
-      XGetWindowAttributes (dpy, window, &xgwa);
-      XSelectInput (dpy, window,
-                    xgwa.your_event_mask | ExposureMask | ButtonPressMask);
-    }
-  
 }
+
+
 static void
-color_step(Body *pb, double frac)
+color_step(struct state *st, Body *pb, double frac)
 {
   if (!mono_p)
     {
-      int newshift = ncolors * fmod(frac * colour_cycle_rate, 1.0);
-      if (newshift != color_shift_pos)
+      int newshift = st->ncolors * fmod(frac * st->colour_cycle_rate, 1.0);
+      if (newshift != st->color_shift_pos)
 	{
 	  pb->current_color = newshift;
-	  XSetForeground (dpy, color0, colors[pb->current_color].pixel);
-	  color_shift_pos = newshift;
+	  XSetForeground (st->dpy, st->color0, st->colors[pb->current_color].pixel);
+	  st->color_shift_pos = newshift;
 	}
     }
 }
 
 
-long
+#if 0
+static long
 distance(long x1, long y1, long x2, long y2)
 {
   long dx, dy;
@@ -619,7 +537,6 @@ distance(long x1, long y1, long x2, long y2)
   return dx*dx + dy*dy;
 }
 
-#if 0
 static int poisson_irand(double p)
 {
   int r = 1;
@@ -631,7 +548,7 @@ static int poisson_irand(double p)
 
 static void
 precalculate_figure(Body *pb,
-		    double xtime, double step,
+		    double this_xtime, double step,
 		    int *x_max, int *y_max,
 		    int *x_min, int *y_min)
 {
@@ -641,7 +558,7 @@ precalculate_figure(Body *pb,
   *x_min = *x_max = pb->x;
   *y_min = *y_max = pb->y;
   
-  for (t=0.0; t<xtime; t += step)
+  for (t=0.0; t<this_xtime; t += step)
     {
       move_body(pb, t); /* move once to avoid initial line from origin */
       if (pb->x > *x_max)
@@ -660,24 +577,24 @@ static int i_max(int a, int b)
   return (a>b) ? a : b;
 }
 
-static void rescale_circles(Body *pb,
+static void rescale_circles(struct state *st, Body *pb,
 			    int x_max, int y_max,
 			    int x_min, int y_min)
 {
   double xscale, yscale, scale;
   double xm, ym;
   
-  x_max -= x_offset;
-  x_min -= x_offset;
-  y_max -= y_offset;
-  y_min -= y_offset;
+  x_max -= st->x_offset;
+  x_min -= st->x_offset;
+  y_max -= st->y_offset;
+  y_min -= st->y_offset;
 
   x_max = i_max(x_max, -x_min);
   y_max = i_max(y_max, -y_min);
 
 
-  xm = width / 2.0;
-  ym = height / 2.0;
+  xm = st->width / 2.0;
+  ym = st->height / 2.0;
   if (x_max > xm)
     xscale = xm / x_max;
   else
@@ -713,131 +630,159 @@ static void rescale_circles(Body *pb,
  * value.  That should please the Pythagoreans among you... :-)
  */
 static double 
-random_wdot_max(void)
+random_wdot_max(struct state *st)
 {
   /* Maximum and minimum values for the choice of wdot_max.  Possible
    * epicycle speeds vary from wdot_max to (wdot_max * harmonics).
    */
   double minspeed, maxspeed;
-  minspeed = get_float_resource("minSpeed", "Double");
-  maxspeed = get_float_resource("maxSpeed", "Double");
-  return harmonics * (minspeed + FULLCIRCLE * frand(maxspeed-minspeed));
+  minspeed = get_float_resource(st->dpy, "minSpeed", "Double");
+  maxspeed = get_float_resource(st->dpy, "maxSpeed", "Double");
+  return st->harmonics * (minspeed + FULLCIRCLE * frand(maxspeed-minspeed));
 }
 
-/* this is the function called for your screensaver */
-/*GLOBAL*/ void
-screenhack(Display *disp, Window win)
+
+static void *
+epicycle_init (Display *disp, Window win)
 {
-  Body *pb = NULL;
-  long l;
-  double t, timestep, circle, xtime, timestep_coarse;
-  int delay;
-  int uncleared = 1;
-  int xmax, xmin, ymax, ymin;
-  int holdtime = get_integer_resource ("holdtime", "Integer");
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = disp;
+  st->window = win;
 
-  dpy = disp;
-  window = win;
+  st->holdtime = get_integer_resource (st->dpy, "holdtime", "Integer");
 
-  circle = FULLCIRCLE;
+  st->circle = FULLCIRCLE;
   
-  XClearWindow(dpy, window);
-  uncleared = 0;
+  XClearWindow(st->dpy, st->window);
+  st->uncleared = 0;
+  st->restart = 1;
   
-  delay = get_integer_resource ("delay", "Integer");
-  harmonics = get_integer_resource("harmonics", "Integer");
-  divisorPoisson = get_float_resource("divisorPoisson", "Double");
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->harmonics = get_integer_resource(st->dpy, "harmonics", "Integer");
+  st->divisorPoisson = get_float_resource(st->dpy, "divisorPoisson", "Double");
   
-  timestep = get_float_resource("timestep", "Double");
-  timestep_coarse = timestep *
-    get_float_resource("timestepCoarseFactor", "Double");
+  st->timestep = get_float_resource(st->dpy, "timestep", "Double");
+  st->timestep_coarse = st->timestep *
+    get_float_resource(st->dpy, "timestepCoarseFactor", "Double");
   
-  sizeFactorMin = get_float_resource("sizeFactorMin", "Double");
-  sizeFactorMax = get_float_resource("sizeFactorMax", "Double");
+  st->sizeFactorMin = get_float_resource(st->dpy, "sizeFactorMin", "Double");
+  st->sizeFactorMax = get_float_resource(st->dpy, "sizeFactorMax", "Double");
 
-  minCircles = get_integer_resource ("minCircles", "Integer");
-  maxCircles = get_integer_resource ("maxCircles", "Integer");
+  st->minCircles = get_integer_resource (st->dpy, "minCircles", "Integer");
+  st->maxCircles = get_integer_resource (st->dpy, "maxCircles", "Integer");
 
-  xtime = 0; /* is this right? */
-  while (0 == stop)
+  st->xtime = 0; /* is this right? */
+
+  return st;
+}
+
+static unsigned long
+epicycle_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int this_delay = st->delay;
+
+  if (st->eraser) {
+    st->eraser = erase_window (st->dpy, st->window, st->eraser);
+    return 10000;
+  }
+
+  if (st->restart)
     {
-      setup(); /* do this inside the loop to cope with any window resizing */
-      restart = 0;
+      setup(st);
+      st->restart = 0;
 
       /* Flush any outstanding events; this has the side effect of
        * reducing the number of "false restarts"; resdtarts caused by
        * one event (e.g. ConfigureNotify) followed by another
        * (e.g. Expose).
        */
-      XSync(dpy, True);
 	  
-      wdot_max = random_wdot_max();
+      st->wdot_max = random_wdot_max(st);
 	  
-      if (pb)
-	{
-	  delete_body(pb);
-	  pb = NULL;
-	}
-      pb = new_body();
-      pb->x_origin = pb->x = x_offset;
-      pb->y_origin = pb->y = y_offset;
-	  
-      
-      if (uncleared)
-	{
-	  erase_full_window(dpy, window);
-	  uncleared = 0;
-	}
+      if (st->pb0)
+        {
+          delete_body(st->pb0);
+          st->pb0 = NULL;
+        }
+      st->pb0 = new_body(st);
+      st->pb0->x_origin = st->pb0->x = st->x_offset;
+      st->pb0->y_origin = st->pb0->y = st->y_offset;
 
-      fflush(stdout);
-      precalculate_figure(pb, xtime, timestep_coarse,
-			  &xmax, &ymax, &xmin, &ymin);
+      if (st->uncleared)
+        {
+          st->eraser = erase_window (st->dpy, st->window, st->eraser);
+          st->uncleared = 0;
+        }
 
-      rescale_circles(pb, xmax, ymax, xmin, ymin);
+      precalculate_figure(st->pb0, st->xtime, st->timestep_coarse,
+                          &st->xmax, &st->ymax, &st->xmin, &st->ymin);
+
+      rescale_circles(st, st->pb0, st->xmax, st->ymax, st->xmin, st->ymin);
       
-      move_body(pb, 0.0); /* move once to avoid initial line from origin */
-      move_body(pb, 0.0); /* move once to avoid initial line from origin */
+      move_body(st->pb0, 0.0); /* move once to avoid initial line from origin */
+      move_body(st->pb0, 0.0); /* move once to avoid initial line from origin */
 
       
-      t = 0.0;			/* start at time zero. */
+      st->T = 0.0;			/* start at time zero. */
 
-      l = compute_divisor_lcm(pb->epicycles);
+      st->L = compute_divisor_lcm(st->pb0->epicycles);
       
-      colour_cycle_rate = fabs(l);
+      st->colour_cycle_rate = fabs(st->L);
       
-      xtime = fabs(l * circle / wdot_max);
+      st->xtime = fabs(st->L * st->circle / st->wdot_max);
 
-      if (colors)				/* (colors==NULL) if mono_p */
-	XSetForeground (dpy, color0, colors[pb->current_color].pixel);
-
-      while (0 == restart)
-	{
-	  color_step(pb, t/xtime );
-	  draw_body(pb, color0);
-	  uncleared = 1;
-
-	  
-	  /* Check if the figure is complete...*/
-	  if (t > xtime)
-	    {
-	      XSync (dpy, False);
-
-              check_events();
-	      if (holdtime)
-		sleep(holdtime); /* show complete figure for a bit. */
-
-	      restart = 1;	/* begin new figure. */
-	    }
-	  
-	  
-	  check_events();
-	  if (delay)
-	    usleep (delay);
-	  
-	  t += timestep;
-	  move_body(pb, t);
-	  check_events();
-	}
+      if (st->colors)				/* (colors==NULL) if mono_p */
+        XSetForeground (st->dpy, st->color0, st->colors[st->pb0->current_color].pixel);
     }
+
+
+  color_step(st, st->pb0, st->T/st->xtime );
+  draw_body(st, st->pb0, st->color0);
+  st->uncleared = 1;
+
+	  
+  /* Check if the figure is complete...*/
+  if (st->T > st->xtime)
+    {
+      this_delay = st->holdtime * 1000000;
+      st->restart = 1;	/* begin new figure. */
+    }
+	  
+
+
+  st->T += st->timestep;
+  move_body(st->pb0, st->T);
+
+  return this_delay;
 }
 
+static void
+epicycle_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->restart = 1;
+}
+
+static Bool
+epicycle_event (Display *dpy, Window window, void *closure, XEvent *e)
+{
+  struct state *st = (struct state *) closure;
+  if (e->type == ButtonPress)
+    {
+      st->restart = 1;
+      return True;
+    }
+
+  return False;
+}
+
+static void
+epicycle_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("Epicycle", epicycle)

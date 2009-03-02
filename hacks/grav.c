@@ -29,24 +29,21 @@ static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 #define MODE_grav
-#define PROGCLASS "Grav"
-#define HACK_INIT init_grav
-#define HACK_DRAW draw_grav
-#define grav_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 12 \n" \
- "*ncolors: 64 \n"
+#define DEFAULTS	"*delay: 10000 \n" \
+					"*count: 12 \n" \
+					"*ncolors: 64 \n"
 #define BRIGHT_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define reshape_grav 0
+# define grav_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_grav
 
-#define DEF_DECAY "False"	/* Damping for decaying orbits */
-#define DEF_TRAIL "False"	/* For trails (works good in mono only) */
+#define DEF_DECAY "True"	/* Damping for decaying orbits */
+#define DEF_TRAIL "True"	/* For trails (works good in mono only) */
 
 static Bool decay;
 static Bool trail;
@@ -69,7 +66,7 @@ static OptionStruct desc[] =
 	{"-/+trail", "turn on/off trail dots"}
 };
 
-ModeSpecOpt grav_opts =
+ENTRYPOINT ModeSpecOpt grav_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -144,6 +141,10 @@ init_planet(ModeInfo * mi, planetstruct * planet)
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
 	gravstruct *gp = &gravs[MI_SCREEN(mi)];
+
+# ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi), False);
+# endif
 
 	if (MI_NPIXELS(mi) > 2)
 		planet->colors = MI_PIXEL(mi, NRAND(MI_NPIXELS(mi)));
@@ -232,7 +233,7 @@ draw_planet(ModeInfo * mi, planetstruct * planet)
 	Planet(gp->x, gp->y);
 }
 
-void
+ENTRYPOINT void
 init_grav(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -281,7 +282,7 @@ init_grav(ModeInfo * mi)
 		 0, 23040);
 }
 
-void
+ENTRYPOINT void
 draw_grav(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -324,7 +325,7 @@ draw_grav(ModeInfo * mi)
 		draw_planet(mi, &gp->planets[ball]);
 }
 
-void
+ENTRYPOINT void
 release_grav(ModeInfo * mi)
 {
 	if (gravs != NULL) {
@@ -341,10 +342,12 @@ release_grav(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_grav(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Grav", grav)
 
 #endif /* MODE_grav */

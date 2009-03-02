@@ -12,17 +12,20 @@
           _label="Rectangle Count" low="1" high="20" default="2"/>
 
   <select id="mode">
-    <option id="stationary" _label="Stationary Rectangles"/>
-    <option id="move" _label="Wandering Rectangles" arg-set="-move"/>
-    <option id="sweep" _label="Sweeping Arcs" arg-set="-sweep"/>
+   <option id="stationary" _label="Stationary Rectangles"/>
+   <option id="move"       _label="Wandering Rectangles" arg-set="-mode move"/>
+   <option id="sweep"      _label="Sweeping Arcs"        arg-set="-mode sweep"/>
   </select>
 
   <boolean id="anim" _label="Animate" arg-unset="-no-anim"/>
 
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+<!--  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/> -->
+
+  <xscreensaver-image />
 
   <_description>
-Creates a collage of rotated and scaled portions of the
-screen. Written by Claudio Matsuoka.
+Creates a collage of rotated and scaled portions of the screen. 
+
+Written by Claudio Matsuoka; 2001.
   </_description>
 </screensaver>

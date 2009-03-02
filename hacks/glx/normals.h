@@ -14,6 +14,12 @@
 #ifndef __NORMALS_H__
 #define __NORMALS_H__
 
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
 typedef struct {
   double x,y,z;
 } XYZ;

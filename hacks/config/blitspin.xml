@@ -14,22 +14,19 @@
           low="1" high="800000" default="500000"
           convert="invert"/>
 
-  <boolean id="grab" _label="Grab Screen" arg-set="-grab"/>
+<!--  <file id="bitmap" _label="Bitmap to rotate" arg="-bitmap %"/> -->
 
-  <file id="bitmap" _label="Bitmap to rotate" arg="-bitmap %"/>
+  <xscreensaver-image />
 
   <_description>
-The ``blitspin'' hack repeatedly rotates a bitmap by 90 degrees by
-using logical operations: the bitmap is divided into quadrants, and
-the quadrants are shifted clockwise.  Then the same thing is done
-again with progressively smaller quadrants, except that all
-sub-quadrants of a given size are rotated in parallel.  Written by
-Jamie Zawinski based on some cool SmallTalk code seen in in Byte
-Magazine in 1981.
 
-As you watch it, the image appears to dissolve into static and then
-reconstitute itself, but rotated. You can provide the image to use,
-as an XBM or XPM file, or tell it to grab a screen image and rotate
-that.
+Repeatedly rotates a bitmap by 90 degrees by using logical operations:
+the bitmap is divided into quadrants, and the quadrants are shifted
+clockwise.  Then the same thing is done again with progressively
+smaller quadrants, except that all sub-quadrants of a given size are
+rotated in parallel.  As you watch it, the image appears to dissolve
+into static and then reconstitute itself, but rotated.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>

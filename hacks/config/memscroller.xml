@@ -21,6 +21,8 @@
 
   <_description>
 This draws a dump of its own process memory scrolling across the screen
-in three windows at three different rates.  Written by Jamie Zawinski.
+in three windows at three different rates.
+
+Written by Jamie Zawinski; 2004.
   </_description>
 </screensaver>

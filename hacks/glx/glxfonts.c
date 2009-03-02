@@ -1,4 +1,4 @@
-/* glxfonts, Copyright (c) 2001-2004 Jamie Zawinski <jwz@jwz.org>
+/* glxfonts, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -10,14 +10,25 @@
  * implied warranty.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+# include <OpenGL/gl.h>
+# include <OpenGL/glu.h>
+# include <AGL/agl.h>
+#else
+# include <GL/glx.h>
+# include <GL/glu.h>
+#endif
+
 #include "resources.h"
 #include "glxfonts.h"
 
@@ -36,10 +47,11 @@ extern char *progname;
 void
 load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
 {
-  const char *font = get_string_resource (res, "Font");
+  XFontStruct *f;
+
+  const char *font = get_string_resource (dpy, res, "Font");
   const char *def1 = "-*-times-bold-r-normal-*-180-*";
   const char *def2 = "fixed";
-  XFontStruct *f;
   Font id;
   int first, last;
 
@@ -76,6 +88,9 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
   first = f->min_char_or_byte2;
   last = f->max_char_or_byte2;
   
+
+# ifndef HAVE_COCOA /* Xlib version */
+
   if (dlist_ret)
     {
       clear_gl_error ();
@@ -84,6 +99,29 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
       glXUseXFont(id, first, last-first+1, *dlist_ret + first);
       check_gl_error ("glXUseXFont");
     }
+
+# else  /* HAVE_COCOA */
+
+  {
+    int afid, face, size;
+    afid = jwxyz_font_info (id, &size, &face);
+
+    if (dlist_ret)
+      {
+        clear_gl_error ();
+        *dlist_ret = glGenLists ((GLuint) last+1);
+        check_gl_error ("glGenLists");
+
+        AGLContext ctx = aglGetCurrentContext();
+        if (! aglUseFont (ctx, afid, face, size, 
+                          first, last-first+1, *dlist_ret + first)) {
+          check_gl_error ("aglUseFont");
+          abort();
+      }
+    }
+  }
+
+# endif  /* HAVE_COCOA */
 
   if (font_ret)
     *font_ret = f;

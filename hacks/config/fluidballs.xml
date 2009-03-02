@@ -29,7 +29,7 @@
           low="0" high="100000" default="10000"
           convert="invert"/>
 
-  <boolean id="random" _label="Various Ball Sizes"    arg-unset="-nonrandom"/>
+  <boolean id="random" _label="Various Ball Sizes"    arg-unset="-no-random"/>
   <boolean id="shake"  _label="Shake Box"             arg-unset="-no-shake"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
@@ -38,6 +38,7 @@ Models the physics of bouncing balls, or of particles in a gas or
 fluid, depending on the settings.  If "Shake Box" is selected, then
 every now and then, the box will be rotated, changing which direction
 is down (in order to keep the settled balls in motion.)
-By Peter Birtles and Jamie Zawinski.
+
+Written by Peter Birtles and Jamie Zawinski; 2002.
   </_description>
 </screensaver>

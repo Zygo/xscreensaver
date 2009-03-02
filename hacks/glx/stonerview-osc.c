@@ -10,23 +10,31 @@
    implied warranty.
 */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "yarandom.h"
-#include "stonerview-osc.h"
+#include "stonerview.h"
 
-/* A private linked list of all osc_t objects created. New objects are added
-   to the end of the list, not the beginning. */
-static osc_t *oscroot = NULL;
-static osc_t **osctail = &oscroot;
 
-static int rand_range(int min, int max);
+/* Return a random number between min and max, inclusive. */
+static int rand_range(int min, int max)
+{
+  int res;
+  unsigned int diff = (max+1) - min;
+  if (diff <= 1)
+    return min;
+  res = random() % diff;
+  return min+res;
+}
+
 
 /* Create a new, blank osc_t. The caller must fill in the type data. */
-static osc_t *create_osc(int type)
+static osc_t *create_osc(stonerview_state *st, int type)
 {
   osc_t *osc = (osc_t *)malloc(sizeof(osc_t));
   if (!osc) 
@@ -35,8 +43,8 @@ static osc_t *create_osc(int type)
   osc->type = type;
   osc->next = NULL;
     
-  *osctail = osc;
-  osctail = &(osc->next);
+  *st->osctail = osc;
+  st->osctail = &(osc->next);
     
   return osc;
 }
@@ -44,9 +52,9 @@ static osc_t *create_osc(int type)
 /* Creation functions for all the osc_t types. These are all pretty obvious
    in their construction. */
 
-osc_t *new_osc_constant(int val)
+osc_t *new_osc_constant(stonerview_state *st, int val)
 {
-  osc_t *osc = create_osc(otyp_Constant);
+  osc_t *osc = create_osc(st, otyp_Constant);
   if (!osc)
     return NULL;
         
@@ -54,10 +62,10 @@ osc_t *new_osc_constant(int val)
   return osc;
 }
 
-osc_t *new_osc_bounce(int min, int max, int step)
+osc_t *new_osc_bounce(stonerview_state *st, int min, int max, int step)
 {
   int diff;
-  osc_t *osc = create_osc(otyp_Bounce);
+  osc_t *osc = create_osc(st, otyp_Bounce);
   if (!osc)
     return NULL;
         
@@ -74,10 +82,10 @@ osc_t *new_osc_bounce(int min, int max, int step)
   return osc;
 }
 
-osc_t *new_osc_wrap(int min, int max, int step)
+osc_t *new_osc_wrap(stonerview_state *st, int min, int max, int step)
 {
   int diff;
-  osc_t *osc = create_osc(otyp_Wrap);
+  osc_t *osc = create_osc(st, otyp_Wrap);
   if (!osc)
     return NULL;
         
@@ -94,9 +102,9 @@ osc_t *new_osc_wrap(int min, int max, int step)
   return osc;
 }
 
-osc_t *new_osc_velowrap(int min, int max, osc_t *step)
+osc_t *new_osc_velowrap(stonerview_state *st, int min, int max, osc_t *step)
 {
-  osc_t *osc = create_osc(otyp_VeloWrap);
+  osc_t *osc = create_osc(st, otyp_VeloWrap);
   if (!osc)
     return NULL;
         
@@ -110,9 +118,12 @@ osc_t *new_osc_velowrap(int min, int max, osc_t *step)
   return osc;
 }
 
-osc_t *new_osc_multiplex(osc_t *sel, osc_t *ox0, osc_t *ox1, osc_t *ox2, osc_t *ox3)
+osc_t *new_osc_multiplex(stonerview_state *st, 
+                         osc_t *sel, osc_t *ox0, 
+                         osc_t *ox1, osc_t *ox2, 
+                         osc_t *ox3)
 {
-  osc_t *osc = create_osc(otyp_Multiplex);
+  osc_t *osc = create_osc(st, otyp_Multiplex);
   if (!osc)
     return NULL;
     
@@ -125,9 +136,9 @@ osc_t *new_osc_multiplex(osc_t *sel, osc_t *ox0, osc_t *ox1, osc_t *ox2, osc_t *
   return osc;
 }
 
-osc_t *new_osc_phaser(int phaselen)
+osc_t *new_osc_phaser(stonerview_state *st, int phaselen)
 {
-  osc_t *osc = create_osc(otyp_Phaser);
+  osc_t *osc = create_osc(st, otyp_Phaser);
   if (!osc)
     return NULL;
         
@@ -140,9 +151,10 @@ osc_t *new_osc_phaser(int phaselen)
   return osc;
 }
 
-osc_t *new_osc_randphaser(int minphaselen, int maxphaselen)
+osc_t *new_osc_randphaser(stonerview_state *st, 
+                          int minphaselen, int maxphaselen)
 {
-  osc_t *osc = create_osc(otyp_RandPhaser);
+  osc_t *osc = create_osc(st, otyp_RandPhaser);
   if (!osc)
     return NULL;
         
@@ -158,9 +170,9 @@ osc_t *new_osc_randphaser(int minphaselen, int maxphaselen)
   return osc;
 }
 
-osc_t *new_osc_linear(osc_t *base, osc_t *diff)
+osc_t *new_osc_linear(stonerview_state *st, osc_t *base, osc_t *diff)
 {
-  osc_t *osc = create_osc(otyp_Linear);
+  osc_t *osc = create_osc(st, otyp_Linear);
   if (!osc)
     return NULL;
 
@@ -170,27 +182,27 @@ osc_t *new_osc_linear(osc_t *base, osc_t *diff)
   return osc;
 }
 
-osc_t *new_osc_buffer(osc_t *val)
+osc_t *new_osc_buffer(stonerview_state *st, osc_t *val)
 {
   int ix;
-  osc_t *osc = create_osc(otyp_Buffer);
+  osc_t *osc = create_osc(st, otyp_Buffer);
   if (!osc)
     return NULL;
     
   osc->u.obuffer.val = val;
-  osc->u.obuffer.firstel = NUM_ELS-1;
+  osc->u.obuffer.firstel = st->num_els-1;
     
   /* The last N values are stored in a ring buffer, which we must initialize
      here. */
-  for (ix=0; ix<NUM_ELS; ix++) {
-    osc->u.obuffer.el[ix] = osc_get(val, 0);
+  for (ix=0; ix<st->num_els; ix++) {
+    osc->u.obuffer.el[ix] = osc_get(st, val, 0);
   }
 
   return osc;
 }
 
 /* Compute f(i,el) for the current i. */
-int osc_get(osc_t *osc, int el)
+int osc_get(stonerview_state *st, osc_t *osc, int el)
 {
   if (!osc)
     return 0;
@@ -210,13 +222,13 @@ int osc_get(osc_t *osc, int el)
     return osc->u.ovelowrap.val;
         
   case otyp_Linear:
-    return osc_get(osc->u.olinear.base, el)
-      + el * osc_get(osc->u.olinear.diff, el);
+    return osc_get(st, osc->u.olinear.base, el)
+      + el * osc_get(st, osc->u.olinear.diff, el);
         
   case otyp_Multiplex: {
     struct omultiplex_struct *ox = &(osc->u.omultiplex);
-    int sel = osc_get(ox->sel, el);
-    return osc_get(ox->val[sel % NUM_PHASES], el);
+    int sel = osc_get(st, ox->sel, el);
+    return osc_get(st, ox->val[sel % NUM_PHASES], el);
   }
         
   case otyp_Phaser: {
@@ -231,7 +243,7 @@ int osc_get(osc_t *osc, int el)
         
   case otyp_Buffer: {
     struct obuffer_struct *ox = &(osc->u.obuffer);
-    return ox->el[(ox->firstel + el) % NUM_ELS];
+    return ox->el[(ox->firstel + el) % st->num_els];
   }
         
   default:
@@ -241,11 +253,11 @@ int osc_get(osc_t *osc, int el)
 
 /* Increment i. This affects all osc_t objects; we go down the linked list to
    get them all. */
-void osc_increment()
+void osc_increment(stonerview_state *st)
 {
   osc_t *osc;
     
-  for (osc = oscroot; osc; osc = osc->next) {
+  for (osc = st->oscroot; osc; osc = osc->next) {
     switch (osc->type) {
         
     case otyp_Bounce: {
@@ -277,7 +289,7 @@ void osc_increment()
     case otyp_VeloWrap: {
       struct ovelowrap_struct *ox = &(osc->u.ovelowrap);
       int diff = (ox->max - ox->min);
-      ox->val += osc_get(ox->step, 0);
+      ox->val += osc_get(st, ox->step, 0);
       while (ox->val < ox->min)
 	ox->val += diff;
       while (ox->val > ox->max)
@@ -314,8 +326,8 @@ void osc_increment()
       struct obuffer_struct *ox = &(osc->u.obuffer);
       ox->firstel--;
       if (ox->firstel < 0)
-	ox->firstel += NUM_ELS;
-      ox->el[ox->firstel] = osc_get(ox->val, 0);
+	ox->firstel += st->num_els;
+      ox->el[ox->firstel] = osc_get(st, ox->val, 0);
       /* We can assume that ox->val has already been incremented, since it
 	 was created first. This is why new objects are put on the end
 	 of the linked list... yeah, it's gross. */
@@ -327,15 +339,3 @@ void osc_increment()
     }
   }
 }
-
-/* Return a random number between min and max, inclusive. */
-static int rand_range(int min, int max)
-{
-  int res;
-  unsigned int diff = (max+1) - min;
-  if (diff <= 1)
-    return min;
-  res = random() % diff;
-  return min+res;
-}
-

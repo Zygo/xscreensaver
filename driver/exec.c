@@ -1,5 +1,5 @@
 /* exec.c --- executes a program in *this* pid, without an intervening process.
- * xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -77,6 +77,7 @@
 # define fork  vfork
 #endif /* VMS */
 
+#include "exec.h"
 
 extern const char *blurb (void);
 

@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001, 2003, 2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,11 +17,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <GL/gl.h>	/* only for GLfloat */
-#include <GL/glu.h>	/* for gluBuild2DMipmaps */
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+# include <OpenGL/gl.h>
+# include <OpenGL/glu.h>
+#else
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+# include <GL/gl.h>	/* only for GLfloat */
+# include <GL/glu.h>	/* for gluBuild2DMipmaps */
+# include <GL/glx.h>	/* for glXMakeCurrent() */
+#endif
+
+#include "grab-ximage.h"
 #include "grabscreen.h"
 #include "visual.h"
 
@@ -54,8 +63,13 @@
 
 extern char *progname;
 
-#include <X11/Xutil.h>
 #include <sys/time.h>
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xutil.h>
+#endif
 
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -288,11 +302,10 @@ static XImage *
 pixmap_to_gl_ximage (Screen *screen, Window window, Pixmap pixmap)
 {
   Display *dpy = DisplayOfScreen (screen);
-  Visual *visual = DefaultVisualOfScreen (screen);
   unsigned int width, height, depth;
 
 # ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm = get_boolean_resource ("useSHM", "Boolean");
+  Bool use_shm = get_boolean_resource (dpy, "useSHM", "Boolean");
   XShmSegmentInfo shm_info;
 # endif /* HAVE_XSHM_EXTENSION */
 
@@ -311,6 +324,7 @@ pixmap_to_gl_ximage (Screen *screen, Window window, Pixmap pixmap)
 # ifdef HAVE_XSHM_EXTENSION
   if (use_shm)
     {
+      Visual *visual = DefaultVisualOfScreen (screen);
       server_ximage = create_xshm_image (dpy, visual, depth,
                                          ZPixmap, 0, &shm_info,
                                          width, height);
@@ -360,7 +374,7 @@ typedef struct {
 #define SHORT_5_6_5        GL_UNSIGNED_SHORT_5_6_5
 #define SHORT_5_6_5_REV    GL_UNSIGNED_SHORT_5_6_5_REV
 
-static conversion_table ctable[] = {
+static const conversion_table ctable[] = {
   { 8,  0x000000E0, 0x0000001C, 0x00000003, BYTE_3_3_2,         GL_RGB      },
   { 8,  0x00000007, 0x00000038, 0x000000C0, BYTE_2_3_3_REV,     GL_RGB      },
   { 16, 0x0000F800, 0x000007E0, 0x0000001F, SHORT_5_6_5,        GL_RGB      },
@@ -458,6 +472,7 @@ gl_settings_for_ximage (XImage *image,
 #endif /* ! REFORMAT_IMAGE_DATA */
 
 typedef struct {
+  GLXContext glx_context;
   Pixmap pixmap;
   int pix_width, pix_height, pix_depth;
   int texid;
@@ -504,8 +519,9 @@ double_time (void)
 static int
 to_pow2 (int i)
 {
-  static unsigned int pow2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-                                 2048, 4096, 8192, 16384, 32768, 65536 };
+  static const unsigned int pow2[] = { 
+    1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 
+    2048, 4096, 8192, 16384, 32768, 65536 };
   int j;
   for (j = 0; j < countof(pow2); j++)
     if (pow2[j] >= i) return pow2[j];
@@ -585,7 +601,7 @@ ximage_to_texture (XImage *ximage,
 
       if (!s || !*s)
         {
-          sprintf (buf, "unknown error %d", err);
+          sprintf (buf, "unknown error %d", (int) err);
           s = buf;
         }
 
@@ -622,89 +638,33 @@ ximage_to_texture (XImage *ximage,
 }
 
 
-static void screen_to_texture_async_cb (Screen *screen,
+static void load_texture_async_cb (Screen *screen,
                                         Window window, Drawable drawable,
                                         const char *name, XRectangle *geometry,
                                         void *closure);
 
 
 /* Grabs an image of the desktop (or another random image file) and
-   loads tht image into GL's texture memory.
-   Writes to stderr and returns False on error.
- */
-Bool
-screen_to_texture (Screen *screen, Window window,
-                   int desired_width, int desired_height,
-                   Bool mipmap_p,
-                   char **filename_return,
-                   XRectangle *geometry_return,
-                   int *image_width_return,
-                   int *image_height_return,
-                   int *texture_width_return,
-                   int *texture_height_return)
-{
-  Display *dpy = DisplayOfScreen (screen);
-  img_closure *data = (img_closure *) calloc (1, sizeof(*data));
-  XWindowAttributes xgwa;
-  char *filename = 0;
-  XRectangle geom = { 0, 0, 0, 0 };
-  int wret;
-
-  if (! image_width_return)
-    image_width_return = &wret;
-
-  if (debug_p)
-    data->load_time = double_time();
-
-  data->texid     = -1;
-  data->mipmap_p  = mipmap_p;
-  data->filename_return       = filename_return;
-  data->geometry_return       = geometry_return;
-  data->image_width_return    = image_width_return;
-  data->image_height_return   = image_height_return;
-  data->texture_width_return  = texture_width_return;
-  data->texture_height_return = texture_height_return;
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-  data->pix_width  = xgwa.width;
-  data->pix_height = xgwa.height;
-  data->pix_depth  = xgwa.depth;
-
-  if (desired_width  && desired_width  < xgwa.width)
-    data->pix_width  = desired_width;
-  if (desired_height && desired_height < xgwa.height)
-    data->pix_height = desired_height;
-
-  data->pixmap = XCreatePixmap (dpy, window, data->pix_width, data->pix_height,
-                                data->pix_depth);
-  load_random_image (screen, window, data->pixmap, &filename, &geom);
-  screen_to_texture_async_cb (screen, window, data->pixmap, filename, &geom,
-                              data);
-
-  return (*image_width_return != 0);
-}
-
-
-/* Like the above, but the image is loaded in a background process,
-   and a callback is run when the loading is complete.
+   loads the image into GL's texture memory.
    When the callback is called, the image data will have been loaded
    into texture number `texid' (via glBindTexture.)
 
    If an error occurred, width/height will be 0.
  */
 void
-screen_to_texture_async (Screen *screen, Window window,
-                         int desired_width, int desired_height,
-                         Bool mipmap_p,
-                         GLuint texid,
-                         void (*callback) (const char *filename,
-                                           XRectangle *geometry,
-                                           int image_width,
-                                           int image_height,
-                                           int texture_width,
-                                           int texture_height,
-                                           void *closure),
-                         void *closure)
+load_texture_async (Screen *screen, Window window,
+                    GLXContext glx_context,
+                    int desired_width, int desired_height,
+                    Bool mipmap_p,
+                    GLuint texid,
+                    void (*callback) (const char *filename,
+                                      XRectangle *geometry,
+                                      int image_width,
+                                      int image_height,
+                                      int texture_width,
+                                      int texture_height,
+                                      void *closure),
+                    void *closure)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
@@ -713,10 +673,11 @@ screen_to_texture_async (Screen *screen, Window window,
   if (debug_p)
     data->load_time = double_time();
 
-  data->texid     = texid;
-  data->mipmap_p  = mipmap_p;
-  data->callback  = callback;
-  data->closure   = closure;
+  data->texid       = texid;
+  data->mipmap_p    = mipmap_p;
+  data->glx_context = glx_context;
+  data->callback    = callback;
+  data->closure     = closure;
 
   XGetWindowAttributes (dpy, window, &xgwa);
   data->pix_width  = xgwa.width;
@@ -730,8 +691,8 @@ screen_to_texture_async (Screen *screen, Window window,
 
   data->pixmap = XCreatePixmap (dpy, window, data->pix_width, data->pix_height,
                                 data->pix_depth);
-  fork_load_random_image (screen, window, data->pixmap,
-                          screen_to_texture_async_cb, data);
+  load_image_async (screen, window, data->pixmap, 
+                    load_texture_async_cb, data);
 }
 
 
@@ -739,9 +700,8 @@ screen_to_texture_async (Screen *screen, Window window,
    This is used in both synchronous and asynchronous mode.
  */
 static void
-screen_to_texture_async_cb (Screen *screen, Window window, Drawable drawable,
-                            const char *name, XRectangle *geometry,
-                            void *closure)
+load_texture_async_cb (Screen *screen, Window window, Drawable drawable,
+                       const char *name, XRectangle *geometry, void *closure)
 {
   Display *dpy = DisplayOfScreen (screen);
   Bool ok;
@@ -755,6 +715,9 @@ screen_to_texture_async_cb (Screen *screen, Window window, Drawable drawable,
   memset (data, 0, sizeof (*data));
   free (data);
   data = 0;
+
+  if (dd.glx_context)
+    glXMakeCurrent (dpy, window, dd.glx_context);
 
   if (geometry->width <= 0 || geometry->height <= 0)
     {

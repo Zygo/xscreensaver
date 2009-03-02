@@ -7,27 +7,18 @@
  * representations are made about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty. */
 
-#include <X11/Intrinsic.h>
-
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define PROGCLASS          "Juggler3D"
-#define HACK_INIT          Juggler3D_HackInitEvent
-#define HACK_DRAW          Juggler3D_HackDrawEvent
-#define HACK_RESHAPE       Juggler3D_HackReshapeEvent
-#define HACK_HANDLE_EVENT  Juggler3D_HackHandleEvent
-#define EVENT_MASK         PointerMotionMask
-#define SWITCH_OPTS        xlockmore_opts
-
 #define DEFAULTS    \
-    "*JuggleSpeed: 0.15\n*delay: 20000\n*showFPS: False\n*wireframe: False\n"
+    "*delay: 20000\n*showFPS: False\n*wireframe: False\n"
 
+# define refresh_juggler3d 0
+# define release_juggler3d 0
 #include "xlockmore.h"
 #include "gltrackball.h"
 
 #ifdef USE_GL /* whole file */
-#include <GL/glu.h>
 
 /* A selection of macros to make functions from math.h return single precision
  * numbers.  Arguably it's better to work at a higher precision and cast it
@@ -266,8 +257,8 @@ typedef struct
  * the previous throw to the next catch.
  */
  
-const float CARRY_TIME = 0.56f;
-const float PI = 3.14159265358979f;
+static const float CARRY_TIME = 0.56f;
+static const float PI = 3.14159265358979f;
 
 
 /* While a ball is thrown it twists slighty about an axis, this routine gives
@@ -282,7 +273,7 @@ static float GetBallTwistAmount(const THROW_INFO* pThrow)
 }
 
 
-float NormaliseAngle(float Ang)
+static float NormaliseAngle(float Ang)
 {
     if (Ang >= 0.0f)
     {
@@ -399,7 +390,7 @@ static POS InterpolateCarry(
 
 /* Determine the position of the hand at a point in time. */
 
-void GetHandPosition(
+static void GetHandPosition(
     PATTERN_INFO* pPattern, int RightHand, float Time, POS* pPos)
 {
     OBJECT_POSITION* pObj = 
@@ -1236,7 +1227,7 @@ static EXT_SITE_INFO* ParsePattern(const char* Site, int* pLen)
  * originally created.
  */
 
-const char* PatternText[] =
+static const char* PatternText[] =
 {
     "9b@(-2.5,0,-70,40)>(2.5,0,70)*2 1b@(1,0,10)>(-1,0,-10)",
     
@@ -1335,7 +1326,7 @@ static const float Cols[][4] =
 static int InitGLDisplayLists(void);
 
 
-void InitGLSettings(RENDER_STATE* pState, int WireFrame)
+static void InitGLSettings(RENDER_STATE* pState, int WireFrame)
 {
     memset(pState, 0, sizeof(RENDER_STATE));
     
@@ -1466,7 +1457,7 @@ static void SetCamera(RENDER_STATE* pState)
 }
 
 
-void ResizeGL(RENDER_STATE* pState, int w, int h)
+static void ResizeGL(RENDER_STATE* pState, int w, int h)
 {
     glViewport(0, 0, w, h);
     pState->AspectRatio = (float) w / h;
@@ -1611,7 +1602,7 @@ static void DrawRing(void)
  * body.  The club is draw such that the one stripe uses the current material
  * and the second stripe the standard silver colour. */
 
-void DrawClub(void)
+static void DrawClub(void)
 {
     const float r[4] = {0.06f, 0.1f, 0.34f, 0.34f / 2.0f};
     const float z[4] = {-0.4f, 0.6f, 1.35f, 2.1f};
@@ -1769,7 +1760,7 @@ static int InitGLDisplayLists(void)
  * elbow out by 20 degrees from the lowest position gives a reasonably looking
  * orientation. */
 
-void DrawArm(RENDER_STATE* pState, float TimePos, int Left)
+static void DrawArm(RENDER_STATE* pState, float TimePos, int Left)
 {
     POS Pos;
     float x, y, len, len2, ang, ang2;
@@ -1805,7 +1796,7 @@ void DrawArm(RENDER_STATE* pState, float TimePos, int Left)
 }
 
 
-void DrawGLScene(RENDER_STATE* pState)
+static void DrawGLScene(RENDER_STATE* pState)
 {
     float Time = pState->Time;
     int nCols = sizeof(Cols) / sizeof(Cols[0]);
@@ -1882,7 +1873,7 @@ static int RandInRange(int Min, int Max)
 }
 
 
-extern void UpdatePattern(
+static void UpdatePattern(
     RENDER_STATE* pState, int MinBalls, int MaxBalls, 
     int MinHeightInc, int MaxHeightInc)
 {
@@ -1927,8 +1918,6 @@ extern void UpdatePattern(
  *
  ******************************************************************************/
 
-extern XtAppContext app;
-
 typedef struct
 {
     GLXContext* glxContext;
@@ -1950,39 +1939,39 @@ static float JuggleSpeed;
 
 static XrmOptionDescRec Options[] =
 {
-    {"-spin", ".spin", XrmoptionSepArg, 0},
-    {"-trans", ".trans", XrmoptionSepArg, 0},
-    {"-speed", ".speed", XrmoptionSepArg, 0},
-    {"-maxobjs", ".maxobjs", XrmoptionSepArg, 0},
-    {"-minobjs", ".minobjs", XrmoptionSepArg, 0},
-    {"-maxhinc", ".maxhinc", XrmoptionSepArg, 0},
-    {"-minhinc", ".minhinc", XrmoptionSepArg, 0},
+    {"-spin", ".spinSpeed", XrmoptionSepArg, 0},
+    {"-trans", ".translateSpeed", XrmoptionSepArg, 0},
+    {"-speed", ".juggleSpeed", XrmoptionSepArg, 0},
+    {"-maxobjs", ".maxObjs", XrmoptionSepArg, 0},
+    {"-minobjs", ".minObjs", XrmoptionSepArg, 0},
+    {"-maxhinc", ".maxHInc", XrmoptionSepArg, 0},
+    {"-minhinc", ".minHInc", XrmoptionSepArg, 0},
 };
 
 
 static argtype Vars[] = 
 {
-    {&MaxObjects, "maxobjs", "MaxObjs", "8", t_Int},
-    {&MinObjects, "minobjs", "MinObjs", "3", t_Int},
-    {&MaxHeightInc, "maxhinc", "MaxHInc", "6", t_Int},
-    {&MinHeightInc, "minhinc", "MaxHInc", "2", t_Int},
-    {&JuggleSpeed, "speed", "JuggleSpeed", "2.2", t_Float},
-    {&TranslateSpeed, "trans", "TranslateSpeed", "0.1", t_Float},
-    {&SpinSpeed, "spin", "SpinSpeed", "20.0", t_Float},
+    {&MaxObjects, "maxObjs", "MaxObjs", "8", t_Int},
+    {&MinObjects, "minObjs", "MinObjs", "3", t_Int},
+    {&MaxHeightInc, "maxHInc", "MaxHInc", "6", t_Int},
+    {&MinHeightInc, "minHInc", "MinHInc", "2", t_Int},
+    {&JuggleSpeed, "juggleSpeed", "JuggleSpeed", "2.2", t_Float},
+    {&TranslateSpeed, "translateSpeed", "TranslateSpeed", "0.1", t_Float},
+    {&SpinSpeed, "spinSpeed", "SpinSpeed", "20.0", t_Float},
 };
 
 
-ModeSpecOpt SWITCH_OPTS = {countof(Options), Options, countof(Vars), Vars};
+ENTRYPOINT ModeSpecOpt juggler3d_opts = {countof(Options), Options, countof(Vars), Vars};
 
 
-void Juggler3D_HackReshapeEvent(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_juggler3d(ModeInfo *mi, int width, int height)
 {
     JUGGLER3D_CONFIG* pConfig = &pConfigInfo[MI_SCREEN(mi)];
     ResizeGL(&pConfig->RenderState, width, height);
 }
 
 
-void Juggler3D_HackInitEvent(ModeInfo* mi)
+ENTRYPOINT void init_juggler3d(ModeInfo* mi)
 {
     JUGGLER3D_CONFIG* pConfig;
     
@@ -2014,11 +2003,11 @@ void Juggler3D_HackInitEvent(ModeInfo* mi)
     UpdatePattern(&pConfig->RenderState, MinObjects, MaxObjects, 
         MinHeightInc, MaxHeightInc);
     
-    Juggler3D_HackReshapeEvent(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    reshape_juggler3d(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 }
 
 
-void Juggler3D_HackDrawEvent(ModeInfo* mi)
+ENTRYPOINT void draw_juggler3d(ModeInfo* mi)
 {
     JUGGLER3D_CONFIG* pConfig = &pConfigInfo[MI_SCREEN(mi)];
     Display* pDisplay = MI_DISPLAY(mi);
@@ -2026,6 +2015,8 @@ void Juggler3D_HackDrawEvent(ModeInfo* mi)
 
     if (pConfig->glxContext == NULL)
         return;
+
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pConfig->glxContext));
     
     /* While drawing, keep track of the rendering speed so we can adjust the
      * animation speed so things appear consistent.  The basis of the this
@@ -2088,7 +2079,7 @@ void Juggler3D_HackDrawEvent(ModeInfo* mi)
 }
 
 
-Bool Juggler3D_HackHandleEvent(ModeInfo* mi, XEvent* pEvent)
+ENTRYPOINT Bool juggler3d_handle_event(ModeInfo* mi, XEvent* pEvent)
 {
   JUGGLER3D_CONFIG* pConfig = &pConfigInfo[MI_SCREEN(mi)];
   RENDER_STATE* pState = &pConfig->RenderState;
@@ -2139,5 +2130,7 @@ Bool Juggler3D_HackHandleEvent(ModeInfo* mi, XEvent* pEvent)
     
     return False;
 }
+
+XSCREENSAVER_MODULE ("Juggler3D", juggler3d)
 
 #endif

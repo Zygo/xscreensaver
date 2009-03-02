@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright (c) 2004-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,23 +9,6 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS       "Pinion"
-#define HACK_INIT       init_pinion
-#define HACK_DRAW       draw_pinion
-#define HACK_RESHAPE    reshape_pinion
-#define HACK_HANDLE_EVENT pinion_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts        xlockmore_opts
-
-#define DEF_SPIN_SPEED   "1.0"
-#define DEF_SCROLL_SPEED "1.0"
-#define DEF_GEAR_SIZE    "1.0"
-#define DEF_MAX_RPM      "900"
-
 #define DEFAULTS        "*delay:        15000              \n" \
                         "*showFPS:      False              \n" \
                         "*wireframe:    False              \n" \
@@ -33,6 +16,8 @@ extern XtAppContext app;
                         "*titleFont2: -*-times-bold-r-normal-*-120-*\n" \
                         "*titleFont3: -*-times-bold-r-normal-*-80-*\n"  \
 
+# define refresh_pinion 0
+# define release_pinion 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -47,7 +32,10 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
+#define DEF_SPIN_SPEED   "1.0"
+#define DEF_SCROLL_SPEED "1.0"
+#define DEF_GEAR_SIZE    "1.0"
+#define DEF_MAX_RPM      "900"
 
 typedef struct {
   unsigned long id;          /* unique name */
@@ -105,24 +93,30 @@ typedef struct {
   XFontStruct *xfont1, *xfont2, *xfont3;
   GLuint font1_dlist, font2_dlist, font3_dlist;
   GLuint title_list;
+  int draw_tick;
+
+  GLfloat plane_displacement;        /* distance between coaxial gears */
+
+  int debug_size_failures;           /* for debugging messages */
+  int debug_position_failures;
+  unsigned long current_length;      /* gear count in current train */
+  unsigned long current_blur_length; /* how long have we been blurring? */
 
 } pinion_configuration;
 
 
 static pinion_configuration *pps = NULL;
-static GLfloat spin_speed, scroll_speed, max_rpm, gear_size;
-static GLfloat plane_displacement = 0.1;  /* distance between coaxial gears */
+
+/* command line arguments */
+static GLfloat spin_speed, scroll_speed, gear_size, max_rpm;
 
 static Bool verbose_p = False;            /* print progress on stderr */
-static Bool debug_placement_p = False;    /* extreme verbosity on stderr */
 static Bool debug_p = False;              /* render as flat schematic */
+
+/* internal debugging variables */
+static Bool debug_placement_p = False;    /* extreme verbosity on stderr */
 static Bool debug_one_gear_p = False;     /* draw one big stationary gear */
 static Bool wire_all_p = False;           /* in wireframe, do not abbreviate */
-
-static int debug_size_failures;           /* for debugging messages */
-static int debug_position_failures;
-static unsigned long current_length;      /* gear count in current train */
-static unsigned long current_blur_length; /* how long have we been blurring? */
 
 
 static XrmOptionDescRec opts[] = {
@@ -143,7 +137,7 @@ static argtype vars[] = {
   {&verbose_p,    "verbose",     "Verbose",     "False",          t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt pinion_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Font stuff
@@ -182,7 +176,7 @@ new_label (ModeInfo *mi)
     *label = 0;
   else
     {
-      sprintf (label, "%d teeth\n", g->nteeth);
+      sprintf (label, "%d teeth\n", (int) g->nteeth);
       rpm_string (g->rpm, label + strlen(label));
       if (debug_p)
         sprintf (label + strlen (label), "\nPolys:  %d\nModel:  %s  (%.2f)\n",
@@ -332,7 +326,7 @@ new_gear (ModeInfo *mi, gear *parent, Bool coaxial_p)
 {
   gear *g = (gear *) calloc (1, sizeof (*g));
   int loop_count = 0;
-  static unsigned long id = 0;
+  static unsigned long id = 0;  /* only used in debugging output */
 
   if (!g) return 0;
   if (coaxial_p && !parent) abort();
@@ -522,7 +516,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
                  progname,
                  (g->r + g->tooth_h), gear_size,
                  pp->vp_width, pp->vp_height);
-      debug_size_failures++;
+      pp->debug_size_failures++;
       return False;
     }
 
@@ -587,7 +581,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
     }
   else if (coaxial_p)
     {
-      double off = plane_displacement;
+      double off = pp->plane_displacement;
 
       g->x = parent->x;
       g->y = parent->y;
@@ -620,7 +614,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
           if (verbose_p && debug_placement_p)
             fprintf (stderr, "%s: placement: bad depth: %.2f\n",
                      progname, g->z);
-          debug_position_failures++;
+          pp->debug_position_failures++;
           return False;
         }
     }
@@ -646,7 +640,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
           if (verbose_p && debug_placement_p)
             fprintf (stderr, "%s: placement: out of bounds: %s\n",
                      progname, (g->y > pp->vp_top ? "top" : "bottom"));
-          debug_position_failures++;
+          pp->debug_position_failures++;
           return False;
         }
 
@@ -690,7 +684,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
     {
       if (verbose_p && debug_placement_p)
         fprintf (stderr, "%s: placement: out of bounds: left\n", progname);
-      debug_position_failures++;
+      pp->debug_position_failures++;
       return False;
     }
 
@@ -720,7 +714,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
             if (verbose_p && debug_placement_p)
               fprintf (stderr, "%s: placement: collision with %lu\n",
                        progname, og->id);
-            debug_position_failures++;
+            pp->debug_position_failures++;
             return False;
           }
       }
@@ -732,7 +726,7 @@ place_gear (ModeInfo *mi, gear *g, gear *parent, Bool coaxial_p)
   /* Make deeper gears be darker.
    */
   {
-    double depth = g->z / plane_displacement;
+    double depth = g->z / pp->plane_displacement;
     double brightness = 1 + (depth / 6);
     double limit = 0.4;
     if (brightness < limit)   brightness = limit;
@@ -847,8 +841,8 @@ push_gear (ModeInfo *mi)
   Bool last_ditch_coax_p = False;
   int loop_count = 0;
 
-  debug_size_failures = 0;
-  debug_position_failures = 0;
+  pp->debug_size_failures = 0;
+  pp->debug_position_failures = 0;
 
  AGAIN:
   loop_count++;
@@ -885,7 +879,7 @@ push_gear (ModeInfo *mi)
      it's a safe guess that we've wandered off into the woods and aren't
      coming back.  Bail on this train.
    */
-  if (current_blur_length >= 10)
+  if (pp->current_blur_length >= 10)
     {
       if (verbose_p)
         fprintf (stderr, "%s: it's a blurpocalypse!\n\n", progname);
@@ -951,7 +945,7 @@ push_gear (ModeInfo *mi)
                  "%s: placement: resetting growth zone!  "
                  "failed: %d size, %d pos\n",
                  progname,
-                 debug_size_failures, debug_position_failures);
+                 pp->debug_size_failures, pp->debug_position_failures);
       for (i = pp->ngears-1; i >= 0; i--)
         {
           gear *g = pp->gears[i];
@@ -983,34 +977,34 @@ push_gear (ModeInfo *mi)
 
       fprintf (stderr, " %2d%%",
                (int) (g->r * 2 * 100 / pp->vp_height));
-      fprintf (stderr, "  %2d teeth", g->nteeth);
+      fprintf (stderr, "  %2d teeth", (int) g->nteeth);
       fprintf (stderr, " %3.0f rpm;", g->rpm);
 
       {
         char buf1[50], buf2[50], buf3[100];
         *buf1 = 0; *buf2 = 0; *buf3 = 0;
-        if (debug_size_failures)
-          sprintf (buf1, "%3d sz", debug_size_failures);
-        if (debug_position_failures)
-          sprintf (buf2, "%2d pos", debug_position_failures);
+        if (pp->debug_size_failures)
+          sprintf (buf1, "%3d sz", pp->debug_size_failures);
+        if (pp->debug_position_failures)
+          sprintf (buf2, "%2d pos", pp->debug_position_failures);
         if (*buf1 || *buf2)
           sprintf (buf3, " tries: %-7s%s", buf1, buf2);
         fprintf (stderr, "%-21s", buf3);
       }
 
-      if (g->base_p) fprintf (stderr, " RESET %lu", current_length);
+      if (g->base_p) fprintf (stderr, " RESET %lu", pp->current_length);
       fprintf (stderr, "\n");
     }
 
   if (g->base_p)
-    current_length = 1;
+    pp->current_length = 1;
   else
-    current_length++;
+    pp->current_length++;
 
   if (g->motion_blur_p)
-    current_blur_length++;
+    pp->current_blur_length++;
   else
-    current_blur_length = 0;
+    pp->current_blur_length = 0;
 }
 
 
@@ -1429,6 +1423,7 @@ draw_gear_schematic (ModeInfo *mi, gear *g)
 static int
 draw_gear_interior (ModeInfo *mi, gear *g)
 {
+  pinion_configuration *pp = &pps[MI_SCREEN(mi)];
   Bool wire_p = MI_IS_WIREFRAME(mi);
   int polys = 0;
 
@@ -1500,7 +1495,7 @@ draw_gear_interior (ModeInfo *mi, gear *g)
                     g->inner_r2 ? g->inner_r2 :
                     g->inner_r);
       GLfloat za = -(g->thickness/2 + cap_height);
-      GLfloat zb = g->coax_thickness/2 + plane_displacement + cap_height;
+      GLfloat zb = g->coax_thickness/2 + pp->plane_displacement + cap_height;
 
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, g->color);
 
@@ -1890,8 +1885,8 @@ draw_gear_1 (ModeInfo *mi, gear *g)
   Bool wire_p = MI_IS_WIREFRAME(mi);
   int polys = 0;
 
-  static GLfloat spec[4] = {1.0, 1.0, 1.0, 1.0};
-  static GLfloat shiny   = 128.0;
+  static const GLfloat spec[4] = {1.0, 1.0, 1.0, 1.0};
+  GLfloat shiny   = 128.0;
 
   glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
   glMateriali  (GL_FRONT, GL_SHININESS, shiny);
@@ -2001,7 +1996,7 @@ draw_gears (ModeInfo *mi)
   /* draw a line connecting gears that are, uh, geared. */
   if (debug_p)
     {
-      static GLfloat color[4] = {1.0, 0.0, 0.0, 1.0};
+      static const GLfloat color[4] = {1.0, 0.0, 0.0, 1.0};
       GLfloat off = 0.1;
       GLfloat ox=0, oy=0, oz=0;
 
@@ -2029,7 +2024,7 @@ draw_gears (ModeInfo *mi)
 
 /* Mouse hit detection
  */
-void
+static void
 find_mouse_gear (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
@@ -2105,7 +2100,7 @@ find_mouse_gear (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_pinion (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -2147,7 +2142,7 @@ reshape_pinion (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
+ENTRYPOINT Bool
 pinion_handle_event (ModeInfo *mi, XEvent *event)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
@@ -2199,7 +2194,7 @@ pinion_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_pinion (ModeInfo *mi)
 {
   pinion_configuration *pp;
@@ -2229,7 +2224,7 @@ init_pinion (ModeInfo *mi)
   pp->gears_size = 0;
   pp->gears = 0;
 
-  plane_displacement *= gear_size;
+  pp->plane_displacement = gear_size * 0.1;
 
   if (!wire)
     {
@@ -2255,17 +2250,18 @@ init_pinion (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_pinion (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   Bool wire_p = MI_IS_WIREFRAME(mi);
-  static int tick = 0;
 
   if (!pp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
 
   if (!pp->button_down_p)
     {
@@ -2337,9 +2333,9 @@ draw_pinion (ModeInfo *mi)
         if (!wire_p) glEnable(GL_LIGHTING);
       }
 
-    if (tick++ > 10)   /* only do this every N frames */
+    if (pp->draw_tick++ > 10)   /* only do this every N frames */
       {
-        tick = 0;
+        pp->draw_tick = 0;
         find_mouse_gear (mi);
         new_label (mi);
       }
@@ -2353,5 +2349,7 @@ draw_pinion (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Pinion", pinion)
 
 #endif /* USE_GL */

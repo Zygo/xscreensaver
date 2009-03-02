@@ -4,6 +4,8 @@
  *
  * glChess - A 3D chess interface
  *
+ * Copyright (C) 2006  John-Paul Gignac <jjgignac@users.sf.net>
+ *
  * Copyright (C) 2002  Robert  Ancell <bob27@users.sourceforge.net>
  *                     Michael Duelli <duelli@users.sourceforge.net>
  *
@@ -38,13 +40,5 @@
 #define BROOK    12
 #define BPAWN    13 
 
-void revolve_line(double *, double *, double, int);
-void gen_model_lists(void);
-void draw_pawn(void);
-void draw_rook(void);
-void draw_rook_old(void);
-void draw_knight(void);
-void draw_bishop(void);
-void draw_queen(void);
-void draw_king(void);
+extern void gen_model_lists( int classic, int poly_count[PIECES]);
 

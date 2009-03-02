@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,11 +18,19 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Xlib.h>
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+#endif
+
+#include "xpm-ximage.h"
 
 extern char *progname;
 
 
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 static Bool
 bigendian (void)
 {
@@ -30,6 +38,7 @@ bigendian (void)
   u.i = 1;
   return !u.c[0];
 }
+#endif /* HAVE_GDK_PIXBUF || HAVE_XPM */
 
 
 #if defined(HAVE_GDK_PIXBUF)
@@ -294,23 +303,6 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 #endif
       rpos =  0, gpos =  8, bpos = 16, apos = 24;
 
-    for (y = 0; y < xpm_image.height; y++)
-      {
-	int y2 = (xpm_image.height-1-y); /* Texture maps are upside down. */
-
-	unsigned int *oline = (unsigned int *) (ximage->data   + (y  * bpl));
-	unsigned int *iline = (unsigned int *) (xpm_image.data + (y2 * wpl));
-
-	for (x = 0; x < xpm_image.width; x++)
-	  {
-	    XColor *c = &colors[iline[x]];
-            int alpha = ((iline[x] == transparent_color_index) ? 0x00 : 0xFF);
-            oline[x] = (((c->red   >> 8) << rpos) |
-                        ((c->green >> 8) << gpos) |
-                        ((c->blue  >> 8) << bpos) |
-                        (alpha           << apos));
-	  }
-      }
   }
 
   /* I sure hope these only free the contents, and not the args. */
@@ -325,12 +317,120 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 
 #else  /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
 
+/* If we don't have libXPM or Pixbuf, then use "minixpm".
+   This can read XPM data from memory, but can't read files.
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include "minixpm.h"
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+
+/* Given a bitmask, returns the position and width of the field.
+ */
+static void
+decode_mask (unsigned int mask, unsigned int *pos_ret, unsigned int *size_ret)
+{
+  int i;
+  for (i = 0; i < 32; i++)
+    if (mask & (1L << i))
+      {
+        int j = 0;
+        *pos_ret = i;
+        for (; i < 32; i++, j++)
+          if (! (mask & (1L << i)))
+            break;
+        *size_ret = j;
+        return;
+      }
+}
+
+
+/* The minixpm version of this function...
+ */
 static XImage *
 xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
                  const char *filename, char **xpm_data)
 {
-  fprintf(stderr, "%s: not compiled with XPM or Pixbuf support.\n", progname);
-  exit (1);
+  int iw, ih, w8, x, y;
+  XImage *ximage;
+  char *data;
+  unsigned char *mask = 0;
+  int depth = 32;
+  unsigned long background_color =
+    BlackPixelOfScreen (DefaultScreenOfDisplay (dpy));
+  unsigned long *pixels = 0;
+  int npixels = 0;
+  int bpl;
+
+  unsigned int rpos=0, gpos=0, bpos=0, apos=0;
+  unsigned int rmsk=0, gmsk=0, bmsk=0, amsk=0;
+  unsigned int rsiz=0, gsiz=0, bsiz=0, asiz=0;
+
+  if (filename)
+    {
+      fprintf(stderr, 
+              "%s: no files: not compiled with XPM or Pixbuf support.\n", 
+              progname);
+      exit (1);
+    }
+
+  if (! xpm_data) abort();
+  ximage = minixpm_to_ximage (dpy, visual, cmap, depth, background_color,
+                              (const char * const *) xpm_data,
+                              &iw, &ih, &pixels, &npixels, &mask);
+  if (pixels) free (pixels);
+  
+  bpl = ximage->bytes_per_line;
+  data = ximage->data;
+  ximage->data = malloc (ximage->height * bpl);
+  
+  /* Flip image upside down, for texture maps; 
+     process the mask; and re-arrange the color components for GL.
+   */
+  w8 = (ximage->width + 7) / 8;
+
+  rmsk = ximage->red_mask;
+  gmsk = ximage->green_mask;
+  bmsk = ximage->blue_mask;
+  amsk = ~(rmsk|gmsk|bmsk);
+
+  decode_mask (rmsk, &rpos, &rsiz);
+  decode_mask (gmsk, &gpos, &gsiz);
+  decode_mask (bmsk, &bpos, &bsiz);
+  decode_mask (amsk, &apos, &asiz);
+
+  for (y = 0; y < ximage->height; y++)
+    {
+      int y2 = (ximage->height-1-y);
+    
+      unsigned int *oline = (unsigned int *) (ximage->data + (y  * bpl));
+      unsigned int *iline = (unsigned int *) (data         + (y2 * bpl));
+    
+      for (x = 0; x < ximage->width; x++)
+        {
+          unsigned long pixel = iline[x];
+          unsigned char r = (pixel & rmsk) >> rpos;
+          unsigned char g = (pixel & gmsk) >> gpos;
+          unsigned char b = (pixel & bmsk) >> bpos;
+          unsigned char a = (mask
+                             ? ((mask [(y2 * w8) + (x >> 3)] & (1 << (x % 8)))
+                                ? 0xFF : 0)
+                             : 0xFF);
+# if 0
+          pixel = ((r << rpos) | (g << gpos) | (b << bpos) | (a << apos));
+# else
+          pixel = ((a << 24) | (b << 16) | (g <<  8) | r);
+# endif
+          oline[x] = pixel;
+        }
+    }
+  free (data);
+
+  return ximage;
 }
 
 #endif /* !HAVE_XPM */
@@ -347,7 +447,8 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
    are allocated.
  */
 XImage *
-xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
+xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, 
+               char **xpm_data)
 {
   return xpm_to_ximage_1 (dpy, visual, cmap, 0, xpm_data);
 }

@@ -26,7 +26,7 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="5000"
+          low="0" high="100000" default="10000"
           convert="invert"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
@@ -34,6 +34,8 @@
           low="10" high="3000" default="80"/>
 
   <_description>
-An exposive version of XFlame.  By W.P. van Paassen.
+Exploding fireworks.
+
+Written by W.P. van Paassen; 2003.
   </_description>
 </screensaver>

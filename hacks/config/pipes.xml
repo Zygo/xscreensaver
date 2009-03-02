@@ -7,21 +7,16 @@
   <select id="style">
     <option id="curves" _label="Curved Pipes"   arg-set="-count 0"/>
     <option id="balls"  _label="Ball Joints"    arg-set="-count 1"/>
-    <option id="fit"    _label="Pipe Fittings"/>
+    <option id="fit"    _label="Bolted Fittings"/>
   </select>
 
-  <vgroup>
-    <hgroup>
-      <number id="cycles" type="spinbutton" arg="-cycles %"
-               _label="Number of Pipe Systems" low="0" high="100" default="5"/>
-    </hgroup>
-    <hgroup>
-      <number id="size" type="spinbutton" arg="-size %"
-              _label="System Length" low="0" high="1000" default="500"/>
-    </hgroup>
-  </vgroup>
+  <number id="size" type="slider" arg="-cycles %"
+          _label="Number of Pipes" _low-label="One" _high-label="A Hundred"
+          low="1" high="100" default="10"/>
 
-  <!-- #### -factory [2] -->
+  <number id="size" type="slider" arg="-size %"
+          _label="Pipe Length" _low-label="Short" _high-label="Long"
+          low="0" high="3000" default="500"/>
 
   <number id="factory" type="slider" arg="-factory %"
           _label="Gadgetry" _low-label="None" _high-label="Lots"
@@ -32,19 +27,15 @@
           low="0" high="80000" default="10000"
           convert="invert"/>
 
-  <boolean id="fisheye" _label="Fisheye Lens" arg-unset="-no-fisheye"/>
-
-  <boolean id="tight"   _label="Allow Tight Turns" arg-set="-tightturns"/>
-
-  <boolean id="db"      _label="Double Buffer" arg-set="-db"/>
-
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
-
-  <!-- #### -no-rotatepipes -->
+  <hgroup>
+   <boolean id="fisheye" _label="Fisheye Lens" arg-unset="-no-fisheye"/>
+   <boolean id="tight"   _label="Allow Tight Turns" arg-set="-tightturns"/>
+  </hgroup>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-If you've ever been in the same room with a Windows NT machine,
-you've probably seen this GL hack.  This version is by Marcelo
-Vianna.
+A growing plumbing system, with bolts and valves.
+
+Written by Marcelo Vianna; 1997.
   </_description>
 </screensaver>

@@ -13,6 +13,8 @@
           low="100" high="10000" default="10000"/>
 
   <_description>
-Draws a groovy rotating fiber optic lamp.  Written by Tim Auckland.
+Draws a groovy rotating fiber optic lamp.  
+
+Written by Tim Auckland; 2005.
   </_description>
 </screensaver>

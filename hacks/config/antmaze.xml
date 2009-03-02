@@ -12,7 +12,8 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Antmaze draws a few views of a few ants walking around in a simple
-maze. Written by Blair Tennessy.
+Draws a few views of a few ants walking around in a simple maze. 
+
+Written by Blair Tennessy; 2005.
   </_description>
 </screensaver>

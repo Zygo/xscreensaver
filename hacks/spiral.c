@@ -34,24 +34,22 @@ static const char sccsid[] = "@(#)spiral.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_spiral
-#define PROGCLASS "Spiral"
-#define HACK_INIT init_spiral
-#define HACK_DRAW draw_spiral
-#define spiral_opts xlockmore_opts
-#define DEFAULTS "*delay: 50000 \n" \
- "*count: 40 \n" \
- "*cycles: 350 \n" \
- "*ncolors: 64 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* from the xscreensaver distribution */
+# define MODE_spiral
+#define DEFAULTS	"*delay: 50000 \n" \
+					"*count: 40 \n" \
+					"*cycles: 350 \n" \
+					"*ncolors: 64 \n"
+# define SMOOTH_COLORS
+# define reshape_spiral 0
+# define spiral_handle_event 0
+# include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
-#include "xlock.h"		/* from the xlockmore distribution */
+# include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef MODE_spiral
 
-ModeSpecOpt spiral_opts =
+ENTRYPOINT ModeSpecOpt spiral_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -121,7 +119,7 @@ draw_dots(ModeInfo * mi, int in)
 	}
 }
 
-void
+ENTRYPOINT void
 init_spiral(ModeInfo * mi)
 {
 	spiralstruct *sp;
@@ -133,6 +131,10 @@ init_spiral(ModeInfo * mi)
 			return;
 	}
 	sp = &spirals[MI_SCREEN(mi)];
+
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi),  False);
+#endif
 
 	sp->width = MI_WIDTH(mi);
 	sp->height = MI_HEIGHT(mi);
@@ -190,7 +192,7 @@ init_spiral(ModeInfo * mi)
 		sp->dots = MINDOTS;
 }
 
-void
+ENTRYPOINT void
 draw_spiral(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -295,7 +297,7 @@ draw_spiral(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_spiral(ModeInfo * mi)
 {
 	if (spirals != NULL) {
@@ -312,7 +314,7 @@ release_spiral(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_spiral(ModeInfo * mi)
 {
 	spiralstruct *sp;
@@ -325,5 +327,7 @@ refresh_spiral(ModeInfo * mi)
 	sp->redrawing = 1;
 	sp->redrawpos = 0;
 }
+
+XSCREENSAVER_MODULE ("Spiral", spiral)
 
 #endif /* MODE_spiral */

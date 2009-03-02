@@ -25,20 +25,26 @@
 #ifndef __PACMAN_H__
 #define __PACMAN_H__
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "xlockmoreI.h"
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-#define USE_PIXMAP
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_COCOA)
+# define USE_PIXMAP
 #include "xpm-pixmap.h"
-#else
-#if defined(USE_PIXMAP)
-#undef USE_PIXMAP
-#endif
+# else
+# if defined(USE_PIXMAP)
+#  undef USE_PIXMAP
+# endif
 #endif
 
 #define LEVHEIGHT 	32U
 #define LEVWIDTH 	40U
+
+#define TILEWIDTH 5U
+#define TILEHEIGHT 5U
 
 #define GETNB(n) ((1 << (n)) - 1)
 #define TESTNB(v, n) (((1 << (n)) & v) != 0x00)
@@ -76,6 +82,9 @@
 #define PAC_DEATH_FRAMES 8
 
 #define GHOST_TRACE ( LEVWIDTH * LEVHEIGHT )
+
+#define DIRVECS 4
+#define NUM_BONUS_DOTS 4
 
 typedef struct
 {
@@ -143,6 +152,22 @@ typedef struct
     int init_row;
 } pacmanstruct;
 
+
+typedef struct
+{
+    unsigned int x, y;
+    int eaten;
+} bonus_dot;
+
+
+/* This are tiles which can be placed to create a level. */
+struct tiles {
+    char block[TILEWIDTH * TILEHEIGHT + 1];
+    unsigned dirvec[4];
+    unsigned ndirs;
+    unsigned simular_to;
+};
+
 typedef struct
 {
     unsigned short width, height;
@@ -169,15 +194,38 @@ typedef struct
 
     GameState gamestate;
     unsigned int timeleft;
-} pacmangamestruct;
 
-#define DIRVECS 4
+    char last_pac_stat[1024];
+
+    /* draw_pacman_sprite */
+    int pm_mouth;
+    int pm_mouth_delay;
+    int pm_open_mouth;
+    int pm_death_frame;
+    int pm_death_delay;
+
+	/* draw_ghost_sprite */
+    int gh_wag;
+    int gh_wag_count;
+
+    /* flash_bonus_dots */
+    int bd_flash_count;
+    int bd_on;
+
+    /* pacman_tick */
+    int ghost_scared_timer;
+    int flash_timer;
+    PacmanState old_pac_state;
+
+    /* pacman_level.c */
+    bonus_dot bonus_dots[NUM_BONUS_DOTS];
+    struct tiles *tiles;
+
+} pacmangamestruct;
 
 extern pacmangamestruct *pacmangames;
 extern Bool trackmouse;
 
 typedef char lev_t[LEVHEIGHT][LEVWIDTH + 1];
-
-#define NUM_BONUS_DOTS 4
 
 #endif /* __PACMAN_H__ */

@@ -48,7 +48,7 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global
 resources stored in the RESOURCE_MANAGER property.
-.TP8
+.TP 8
 .SH BUGS
 .PP
 .TP 8

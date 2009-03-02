@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,18 +13,25 @@
  * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
-#include "screenhack.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
 #include <signal.h>
 #include <sys/wait.h>
 
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/Intrinsic.h>
+#ifndef HAVE_COCOA
+# define XK_MISCELLANY
+# include <X11/keysymdef.h>
+# include <X11/Xatom.h>
+# include <X11/Intrinsic.h>
+#endif
 
-#define XK_MISCELLANY
-#include <X11/keysymdef.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+# include <fcntl.h>  /* for O_RDWR */
+#endif
 
 #ifdef HAVE_FORKPTY
 # include <sys/ioctl.h>
@@ -36,7 +43,7 @@
 # endif
 #endif /* HAVE_FORKPTY */
 
-extern XtAppContext app;
+#include "screenhack.h"
 
 #define FUZZY_BORDER
 
@@ -52,6 +59,12 @@ extern XtAppContext app;
 #define CURSOR_INDEX 128
 
 #define NPAR 16
+
+#define BUILTIN_FONT
+
+#ifdef BUILTIN_FONT
+# include "images/6x10font.xbm"
+#endif /* BUILTIN_FONT */
 
 typedef struct {
   unsigned char name;
@@ -97,6 +110,7 @@ typedef struct {
 
   int cursor_x, cursor_y;
   XtIntervalId cursor_timer;
+  XtIntervalId pipe_timer;
   Time cursor_blink;
 
   FILE *pipe;
@@ -106,6 +120,13 @@ typedef struct {
   XComposeStatus compose;
   Bool meta_sends_esc_p;
   Bool swap_bs_del_p;
+  int delay;
+
+  char last_c;
+  int bk;
+
+  Bool meta_done_once;
+  unsigned int meta_mask;
 
 } p_state;
 
@@ -146,44 +167,60 @@ static void launch_text_generator (p_state *state);
    that box (the "charcell" box) then we're going to lose it.  Alas.
  */
 
-static p_state *
-init_phosphor (Display *dpy, Window window)
+
+static void clear (p_state *);
+static void set_cursor (p_state *, Bool on);
+
+static void *
+phosphor_init (Display *dpy, Window window)
 {
   int i;
   unsigned long flags;
   p_state *state = (p_state *) calloc (sizeof(*state), 1);
-  char *fontname = get_string_resource ("font", "Font");
+  char *fontname = get_string_resource (dpy, "font", "Font");
   XFontStruct *font;
 
   state->dpy = dpy;
   state->window = window;
 
   XGetWindowAttributes (dpy, window, &state->xgwa);
-  XSelectInput (dpy, window, state->xgwa.your_event_mask | ExposureMask);
+/*  XSelectInput (dpy, window, state->xgwa.your_event_mask | ExposureMask);*/
 
-  state->meta_sends_esc_p = get_boolean_resource ("metaSendsESC", "Boolean");
-  state->swap_bs_del_p    = get_boolean_resource ("swapBSDEL",    "Boolean");
+  state->delay = get_integer_resource (dpy, "delay", "Integer");
+  state->meta_sends_esc_p = get_boolean_resource (dpy, "metaSendsESC", "Boolean");
+  state->swap_bs_del_p    = get_boolean_resource (dpy, "swapBSDEL",    "Boolean");
 
-  state->font = XLoadQueryFont (dpy, fontname);
-
-  if (!state->font)
+  if (!strcasecmp (fontname, "builtin") ||
+      !strcasecmp (fontname, "(builtin)"))
     {
-      fprintf(stderr, "couldn't load font \"%s\"\n", fontname);
+#ifndef BUILTIN_FONT
+      fprintf (stderr, "%s: no builtin font\n", progname);
       state->font = XLoadQueryFont (dpy, "fixed");
+#endif /* !BUILTIN_FONT */
     }
-  if (!state->font)
+  else
     {
-      fprintf(stderr, "couldn't load font \"fixed\"");
-      exit(1);
+      state->font = XLoadQueryFont (dpy, fontname);
+
+      if (!state->font)
+        {
+          fprintf(stderr, "couldn't load font \"%s\"\n", fontname);
+          state->font = XLoadQueryFont (dpy, "fixed");
+        }
+      if (!state->font)
+        {
+          fprintf(stderr, "couldn't load font \"fixed\"");
+          exit(1);
+        }
     }
 
   font = state->font;
-  state->scale = get_integer_resource ("scale", "Integer");
-  state->ticks = STATE_MAX + get_integer_resource ("ticks", "Integer");
+  state->scale = get_integer_resource (dpy, "scale", "Integer");
+  state->ticks = STATE_MAX + get_integer_resource (dpy, "ticks", "Integer");
   state->escstate = 0;
 
   {
-    char *s = get_string_resource ("mode", "Integer");
+    char *s = get_string_resource (dpy, "mode", "Integer");
     state->mode = 0;
     if (!s || !*s || !strcasecmp (s, "pipe"))
       state->mode = 0;
@@ -206,12 +243,22 @@ init_phosphor (Display *dpy, Window window)
       printf ("font: %s\n", XGetAtomName(dpy, font->properties[i].card32));
 #endif /* 0 */
 
-  state->cursor_blink = get_integer_resource ("cursor", "Time");
+  state->cursor_blink = get_integer_resource (dpy, "cursor", "Time");
   state->subproc_relaunch_delay =
-    (1000 * get_integer_resource ("relaunch", "Time"));
+    (1000 * get_integer_resource (dpy, "relaunch", "Time"));
 
-  state->char_width  = font->max_bounds.width;
-  state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
+# ifdef BUILTIN_FONT
+  if (! font)
+    {
+      state->char_width  = (font6x10_width / 256) - 1;
+      state->char_height = font6x10_height;
+    }
+  else
+# endif /* BUILTIN_FONT */
+    {
+      state->char_width  = font->max_bounds.width;
+      state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
+    }
 
   state->grid_width = state->xgwa.width / (state->char_width * state->scale);
   state->grid_height = state->xgwa.height /(state->char_height * state->scale);
@@ -227,14 +274,14 @@ init_phosphor (Display *dpy, Window window)
     int h1, h2;
     double s1, s2, v1, v2;
 
-    unsigned long fg = get_pixel_resource ("foreground", "Foreground",
-                                           state->dpy, state->xgwa.colormap);
-    unsigned long bg = get_pixel_resource ("background", "Background",
-                                           state->dpy, state->xgwa.colormap);
-    unsigned long flare = get_pixel_resource ("flareForeground", "Foreground",
-                                              state->dpy,state->xgwa.colormap);
-    unsigned long fade = get_pixel_resource ("fadeForeground", "Foreground",
-                                             state->dpy,state->xgwa.colormap);
+    unsigned long fg = get_pixel_resource (state->dpy, state->xgwa.colormap,
+                                           "foreground", "Foreground");
+    unsigned long bg = get_pixel_resource (state->dpy, state->xgwa.colormap,
+                                           "background", "Background");
+    unsigned long flare = get_pixel_resource (state->dpy,state->xgwa.colormap,
+                                              "flareForeground", "Foreground");
+    unsigned long fade = get_pixel_resource (state->dpy,state->xgwa.colormap,
+                                             "fadeForeground", "Foreground");
 
     XColor start, end;
 
@@ -258,7 +305,7 @@ init_phosphor (Display *dpy, Window window)
 
     /* Now, GCs all around.
      */
-    state->gcv.font = font->fid;
+    state->gcv.font = (font ? font->fid : 0);
     state->gcv.cap_style = CapRound;
 #ifdef FUZZY_BORDER
     state->gcv.line_width = (int) (((long) state->scale) * 1.3);
@@ -297,7 +344,10 @@ init_phosphor (Display *dpy, Window window)
 
   capture_font_bits (state);
 
+  set_cursor (state, True);
+
   launch_text_generator (state);
+/*  clear (state);*/
 
   return state;
 }
@@ -349,12 +399,33 @@ static void
 capture_font_bits (p_state *state)
 {
   XFontStruct *font = state->font;
-  int safe_width = font->max_bounds.rbearing - font->min_bounds.lbearing;
-  int height = state->char_height;
+  int safe_width, height;
   unsigned char string[257];
   int i;
-  Pixmap p = XCreatePixmap (state->dpy, state->window,
-                            (safe_width * 256), height, 1);
+  Pixmap p;
+
+# ifdef BUILTIN_FONT
+  Pixmap p2 = 0;
+
+  if (!font)
+    {
+      safe_width = state->char_width + 1;
+      height = state->char_height;
+      p2 = XCreatePixmapFromBitmapData (state->dpy, state->window,
+                                        (char *) font6x10_bits,
+                                        font6x10_width,
+                                        font6x10_height,
+                                        1, 0, 1);
+    }
+  else
+# endif /* BUILTIN_FONT */
+    {
+      safe_width = font->max_bounds.rbearing - font->min_bounds.lbearing;
+      height = state->char_height;
+    }
+
+  p = XCreatePixmap (state->dpy, state->window,
+                     (safe_width * 256), height, 1);
 
   for (i = 0; i < 256; i++)
     string[i] = (unsigned char) i;
@@ -368,9 +439,15 @@ capture_font_bits (p_state *state)
 
   state->gcv.foreground = 1;
   state->gc1 = XCreateGC (state->dpy, p,
-                          (GCFont | GCForeground | GCBackground |
+                          ((font ? GCFont : 0) |
+                           GCForeground | GCBackground |
                            GCCapStyle | GCLineWidth),
                           &state->gcv);
+
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (state->dpy, state->gc0, False);
+  jwxyz_XSetAntiAliasing (state->dpy, state->gc1, False);
+#endif
 
 #ifdef FUZZY_BORDER
   {
@@ -380,7 +457,8 @@ capture_font_bits (p_state *state)
     if (state->gcv.line_width < 1)
       state->gcv.line_width = 1;
     state->gc2 = XCreateGC (state->dpy, p,
-                            (GCFont | GCForeground | GCBackground |
+                            ((font ? GCFont : 0) |
+                             GCForeground | GCBackground |
                              GCCapStyle | GCLineWidth),
                             &state->gcv);
   }
@@ -388,31 +466,40 @@ capture_font_bits (p_state *state)
 
   XFillRectangle (state->dpy, p, state->gc0, 0, 0, (safe_width * 256), height);
 
-  for (i = 0; i < 256; i++)
+# ifdef BUILTIN_FONT
+  if (p2)
     {
-      if (string[i] < font->min_char_or_byte2 ||
-          string[i] > font->max_char_or_byte2)
-        continue;
-      XDrawString (state->dpy, p, state->gc1,
-                   i * safe_width, font->ascent,
-                   (char *) (string + i), 1);
+      XCopyPlane (state->dpy, p2, p, state->gc1,
+                  0, 0, font6x10_width, font6x10_height, 
+                  0, 0, 1);
+      XFreePixmap (state->dpy, p2);
+    }
+  else
+# endif /* BUILTIN_FONT */
+    {
+      for (i = 0; i < 256; i++)
+        {
+          if (string[i] < font->min_char_or_byte2 ||
+              string[i] > font->max_char_or_byte2)
+            continue;
+          XDrawString (state->dpy, p, state->gc1,
+                       i * safe_width, font->ascent,
+                       (char *) (string + i), 1);
+        }
     }
 
   /* Draw the cursor. */
   XFillRectangle (state->dpy, p, state->gc1,
                   (CURSOR_INDEX * safe_width), 1,
-                  (font->per_char
-                   ? font->per_char['n'-font->min_char_or_byte2].width
-                   : font->max_bounds.width),
-                  font->ascent - 1);
+                  (font
+                   ? (font->per_char
+                      ? font->per_char['n'-font->min_char_or_byte2].width
+                      : font->max_bounds.width)
+                   : state->char_width),
+                  (font
+                   ? font->ascent - 1
+                   : state->char_height));
 
-#if 0
-  XCopyPlane (state->dpy, p, state->window, state->gcs[FLARE],
-              0, 0, (safe_width * 256), height, 0, 0, 1L);
-  XSync(state->dpy, False);
-#endif
-
-  XSync (state->dpy, False);
   state->font_bits = XGetImage (state->dpy, p, 0, 0,
                                 (safe_width * 256), height, ~0L, XYPixmap);
   XFreePixmap (state->dpy, p);
@@ -448,13 +535,15 @@ char_to_pixmap (p_state *state, p_char *pc, int c)
   int x1, y;
 
   XFontStruct *font = state->font;
-  int safe_width = font->max_bounds.rbearing - font->min_bounds.lbearing;
+  int safe_width = (font 
+                    ? font->max_bounds.rbearing - font->min_bounds.lbearing
+                    : state->char_width + 1);
 
   int width  = state->scale * state->char_width;
   int height = state->scale * state->char_height;
 
-  if (c < font->min_char_or_byte2 ||
-      c > font->max_char_or_byte2)
+  if (font && (c < font->min_char_or_byte2 ||
+               c > font->max_char_or_byte2))
     goto DONE;
 
   gc = state->gc1;
@@ -560,6 +649,7 @@ static void
 cursor_off_timer (XtPointer closure, XtIntervalId *id)
 {
   p_state *state = (p_state *) closure;
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
   set_cursor_1 (state, False);
   state->cursor_timer = XtAppAddTimeOut (app, state->cursor_blink,
                                          cursor_on_timer, closure);
@@ -569,6 +659,7 @@ static void
 cursor_on_timer (XtPointer closure, XtIntervalId *id)
 {
   p_state *state = (p_state *) closure;
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
   set_cursor_1 (state, True);
   state->cursor_timer = XtAppAddTimeOut (app, 2 * state->cursor_blink,
                                          cursor_off_timer, closure);
@@ -661,9 +752,6 @@ scroll (p_state *state)
 static void
 print_char (p_state *state, int c)
 {
-  static char last_c = 0;
-  static int bk;
-
   p_cell *cell = &state->cells[state->grid_width * state->cursor_y
 			       + state->cursor_x];
   int i, start, end;
@@ -711,10 +799,10 @@ print_char (p_state *state, int c)
 	    case 10: /* LF */
 	    case 11: /* VT */
 	    case 12: /* FF */
-	      if(last_c == 13)
+	      if(state->last_c == 13)
 		{
 		  cell->state = NORMAL;
-		  cell->p_char = state->chars[bk];
+		  cell->p_char = state->chars[state->bk];
 		  cell->changed = True;
 		}
 	      if (state->cursor_y < state->grid_height - 1)
@@ -726,9 +814,9 @@ print_char (p_state *state, int c)
 	      state->cursor_x = 0;
 	      cell = &state->cells[state->grid_width * state->cursor_y];
 	      if((cell->p_char == NULL) || (cell->p_char->name == CURSOR_INDEX))
-		bk = ' ';
+		state->bk = ' ';
 	      else
-		bk = cell->p_char->name;
+		state->bk = cell->p_char->name;
 	      break;
 	    case 14: /* SO */
 	    case 15: /* SI */
@@ -1018,7 +1106,7 @@ print_char (p_state *state, int c)
 
       if (c == '\r' || c == '\n')  /* handle CR, LF, or CRLF as "new line". */
 	{
-	  if (c == '\n' && last_c == '\r')
+	  if (c == '\n' && state->last_c == '\r')
 	    ;   /* CRLF -- do nothing */
 	  else
 	    {
@@ -1055,7 +1143,7 @@ print_char (p_state *state, int c)
       set_cursor (state, True);
     }
 
-  last_c = c;
+  state->last_c = c;
 }
 
 
@@ -1117,12 +1205,14 @@ update_display (p_state *state, Bool changed_only)
 }
 
 
-static void
-run_phosphor (p_state *state)
+static unsigned long
+phosphor_draw (Display *dpy, Window window, void *closure)
 {
+  p_state *state = (p_state *) closure;
   update_display (state, True);
   decay (state);
   drain_input (state);
+  return state->delay;
 }
 
 
@@ -1140,8 +1230,10 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (p_state *state)
 {
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
+  Display *dpy = state->dpy;
   char buf[255];
-  char *oprogram = get_string_resource ("program", "Program");
+  char *oprogram = get_string_resource (dpy, "program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 50);
 
   strcpy (program, "( ");
@@ -1207,7 +1299,12 @@ launch_text_generator (p_state *state)
     {
       /* don't mess up controlling terminal if someone dumbly does
          "-pipe -program tcsh". */
-      fclose (stdin);
+      static int protected_stdin_p = 0;
+      if (! protected_stdin_p) {
+        fclose (stdin);
+        open ("/dev/null", O_RDWR); /* re-allocate fd 0 */
+        protected_stdin_p = 1;
+      }
 
       if ((state->pipe = popen (program, "r")))
 	{
@@ -1231,6 +1328,8 @@ static void
 relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 {
   p_state *state = (p_state *) closure;
+  if (!state->pipe_timer) abort();
+  state->pipe_timer = 0;
   launch_text_generator (state);
 }
 
@@ -1238,6 +1337,7 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 static void
 drain_input (p_state *state)
 {
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
   if (state->input_available_p)
     {
       unsigned char s[2];
@@ -1261,14 +1361,18 @@ drain_input (p_state *state)
 	    }
           state->pipe = 0;
 
-          if (state->cursor_x != 0)	/* break line if unbroken */
-            print_char (state, '\n');	/* blank line */
+          if (state->cursor_x != 0) {	/* break line if unbroken */
+            print_char (state, '\r');
+            print_char (state, '\n');
+          }
+          print_char (state, '\r');	/* blank line */
           print_char (state, '\n');
 
           /* Set up a timer to re-launch the subproc in a bit. */
-          XtAppAddTimeOut (app, state->subproc_relaunch_delay,
-                           relaunch_generator_timer,
-                           (XtPointer) state);
+          state->pipe_timer =
+            XtAppAddTimeOut (app, state->subproc_relaunch_delay,
+                             relaunch_generator_timer,
+                             (XtPointer) state);
         }
         
       state->input_available_p = False;
@@ -1286,6 +1390,7 @@ static unsigned int
 do_icccm_meta_key_stupidity (Display *dpy)
 {
   unsigned int modbits = 0;
+# ifndef HAVE_COCOA
   int i, j, k;
   XModifierKeymap *modmap = XGetModifierMapping (dpy);
   for (i = 3; i < 8; i++)
@@ -1303,102 +1408,119 @@ do_icccm_meta_key_stupidity (Display *dpy)
         XFree (syms);
       }
   XFreeModifiermap (modmap);
+# endif /* HAVE_COCOA */
   return modbits;
 }
 
 /* Returns a mask of the bit or bits of a KeyPress event that mean "meta". 
  */
 static unsigned int
-meta_modifier (Display *dpy)
+meta_modifier (p_state *state)
 {
-  static Bool done_once = False;
-  static unsigned int mask = 0;
-  if (!done_once)
+  if (!state->meta_done_once)
     {
       /* Really, we are supposed to recompute this if a KeymapNotify
          event comes in, but fuck it. */
-      done_once = True;
-      mask = do_icccm_meta_key_stupidity (dpy);
+      state->meta_done_once = True;
+      state->meta_mask = do_icccm_meta_key_stupidity (state->dpy);
     }
-  return mask;
+  return state->meta_mask;
 }
 
 
 static void
-handle_events (p_state *state)
+phosphor_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  XSync (state->dpy, False);
-  while (XPending (state->dpy))
-    {
-      XEvent event;
-      XNextEvent (state->dpy, &event);
-
-      if (event.xany.type == ConfigureNotify)
-        {
-          resize_grid (state);
+  p_state *state = (p_state *) closure;
+  resize_grid (state);
 
 # if defined(HAVE_FORKPTY) && defined(TIOCSWINSZ)
-          if (state->pid)
-            {
-              /* Tell the sub-process that the screen size has changed. */
-              struct winsize ws;
-              ws.ws_row = state->grid_height - 1;
-              ws.ws_col = state->grid_width  - 2;
-              ws.ws_xpixel = state->xgwa.width;
-              ws.ws_ypixel = state->xgwa.height;
-              ioctl (fileno (state->pipe), TIOCSWINSZ, &ws);
-              kill (state->pid, SIGWINCH);
-            }
+  if (state->pid)
+    {
+      /* Tell the sub-process that the screen size has changed. */
+      struct winsize ws;
+      ws.ws_row = state->grid_height - 1;
+      ws.ws_col = state->grid_width  - 2;
+      ws.ws_xpixel = state->xgwa.width;
+      ws.ws_ypixel = state->xgwa.height;
+      ioctl (fileno (state->pipe), TIOCSWINSZ, &ws);
+      kill (state->pid, SIGWINCH);
+    }
 # endif /* HAVE_FORKPTY && TIOCSWINSZ */
-        }
-      else if (event.xany.type == Expose)
+}
+
+static Bool
+phosphor_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  p_state *state = (p_state *) closure;
+
+  if (event->xany.type == Expose)
+    update_display (state, False);
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      unsigned char c = 0;
+      XLookupString (&event->xkey, (char *) &c, 1, &keysym,
+                     &state->compose);
+      if (c != 0 && state->pipe)
         {
-          update_display (state, False);
-        }
-      else if (event.xany.type == KeyPress)
-        {
-          KeySym keysym;
-          unsigned char c = 0;
-          XLookupString (&event.xkey, (char *) &c, 1, &keysym,
-                         &state->compose);
-          if (c != 0 && state->pipe)
+          if (!state->swap_bs_del_p) ;
+          else if (c == 127) c = 8;
+          else if (c == 8)   c = 127;
+
+          /* If meta was held down, send ESC, or turn on the high bit. */
+          if (event->xkey.state & meta_modifier (state))
             {
-              if (!state->swap_bs_del_p) ;
-              else if (c == 127) c = 8;
-              else if (c == 8)   c = 127;
-
-              /* If meta was held down, send ESC, or turn on the high bit. */
-              if (event.xkey.state & meta_modifier (state->dpy))
-                {
-                  if (state->meta_sends_esc_p)
-                    fputc ('\033', state->pipe);
-                  else
-                    c |= 0x80;
-                }
-
-              fputc (c, state->pipe);
-              fflush (state->pipe);
-              event.xany.type = 0;  /* don't interpret this event defaultly. */
+              if (state->meta_sends_esc_p)
+                fputc ('\033', state->pipe);
+              else
+                c |= 0x80;
             }
-        }
 
-      screenhack_handle_event (state->dpy, &event);
+          fputc (c, state->pipe);
+          fflush (state->pipe);
+          event->xany.type = 0;  /* don't interpret this event defaultly. */
+        }
+      return True;
     }
 
-  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+  return False;
+}
+
+static void
+phosphor_free (Display *dpy, Window window, void *closure)
+{
+  p_state *state = (p_state *) closure;
+
+  if (state->pipe_id)
+    XtRemoveInput (state->pipe_id);
+  if (state->pipe)
+    pclose (state->pipe);
+  if (state->cursor_timer)
+    XtRemoveTimeOut (state->cursor_timer);
+  if (state->pipe_timer)
+    XtRemoveTimeOut (state->pipe_timer);
+
+  /* #### there's more to free here */
+
+  free (state);
 }
 
 
-
-char *progclass = "Phosphor";
 
-char *defaults [] = {
+static const char *phosphor_defaults [] = {
   ".background:		   Black",
-  ".foreground:		   Green",
-  "*fadeForeground:	   DarkGreen",
-  "*flareForeground:	   White",
+  ".foreground:		   #00FF00",
+  "*fadeForeground:	   #006400",
+  "*flareForeground:	   #FFFFFF",
+#if defined(BUILTIN_FONT)
+  "*font:		   (builtin)",
+#elif defined(HAVE_COCOA)
+  "*font:		   Monaco 15",
+#else
   "*font:		   fixed",
+#endif
   "*scale:		   6",
   "*ticks:		   20",
   "*delay:		   50000",
@@ -1415,7 +1537,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec phosphor_options [] = {
   { "-font",		".font",		XrmoptionSepArg, 0 },
   { "-scale",		".scale",		XrmoptionSepArg, 0 },
   { "-ticks",		".ticks",		XrmoptionSepArg, 0 },
@@ -1431,19 +1553,4 @@ XrmOptionDescRec options [] = {
 };
 
 
-void
-screenhack (Display *dpy, Window window)
-{
-  int delay = get_integer_resource ("delay", "Integer");
-  p_state *state = init_phosphor (dpy, window);
-
-  clear (state);
-
-  while (1)
-    {
-      run_phosphor (state);
-      XSync (dpy, False);
-      handle_events (state);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Phosphor", phosphor)

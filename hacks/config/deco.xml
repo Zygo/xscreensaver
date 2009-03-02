@@ -23,13 +23,10 @@
             _label="x" low="1" high="100" default="20"/>
   </hgroup>
 
-  <!-- #### -cycle -->
-  <!-- #### -cycle-delay [1000000] -->
-
   <_description>
-This one subdivides and colors rectangles randomly.  It looks kind of
-like Brady-Bunch-era rec-room wall paneling.  (Raven says: ``this
-screensaver is ugly enough to peel paint.'')  Written by Jamie
-Zawinski, inspired by Java code by Michael Bayne.
+Subdivides and colors rectangles randomly.  It looks kind of
+like Brady-Bunch-era rec-room wall paneling. 
+
+Written by Jamie Zawinski and Michael Bayne; 1997.
   </_description>
 </screensaver>

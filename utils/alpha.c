@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -125,7 +125,7 @@ initialize_transparency_colormap (Display *dpy, Colormap cmap,
 
   /* clone the default background of the window into our "base" pixel */
   all_colors [total_colors - 1].pixel =
-    get_pixel_resource ("background", "Background", dpy, cmap);
+    get_pixel_resource (dpy, cmap, "background", "Background");
   XQueryColor (dpy, cmap, &all_colors [total_colors - 1]);
   all_colors [total_colors - 1].pixel = base_pixel;
 

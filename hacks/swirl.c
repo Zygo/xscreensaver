@@ -30,18 +30,15 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Swirl"
-# define HACK_INIT					init_swirl
-# define HACK_DRAW					draw_swirl
-# define swirl_opts					xlockmore_opts
 # define DEFAULTS	"*count:		5       \n"			\
 					"*delay:		10000   \n"			\
 					"*ncolors:		200     \n"			\
 					"*useSHM:		True    \n"
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
+# define reshape_swirl 0
+# define swirl_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
-# include <X11/Xutil.h>
 # ifdef HAVE_XSHM_EXTENSION
 #  include "xshm.h"
 # endif /* HAVE_XSHM_EXTENSION */
@@ -50,7 +47,7 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 # undef HAVE_XSHM_EXTENSION
 #endif /* !STANDALONE */
 
-ModeSpecOpt swirl_opts = {
+ENTRYPOINT ModeSpecOpt swirl_opts = {
   0, NULL, 0, NULL, NULL };
 
 #include <time.h>
@@ -1246,7 +1243,7 @@ next_point(SWIRL_P swirl)
  *
  * -      win is the window to draw in
  */
-void
+ENTRYPOINT void
 init_swirl(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -1255,19 +1252,14 @@ init_swirl(ModeInfo * mi)
 
 	/* does the swirls array exist? */
 	if (swirls == NULL) {
-		int         i;
-
 		/* allocate an array, one entry for each screen */
-		swirls = (SWIRL_P) calloc(ScreenCount(display), sizeof (SWIRL));
-
-		/* initialise them all */
-		for (i = 0; i < ScreenCount(display); i++)
-			initialise_swirl(mi, &swirls[i]);
+		swirls = (SWIRL_P) calloc(MI_NUM_SCREENS(mi), sizeof (SWIRL));
 	}
 	/* get a pointer to this swirl */
 	swirl = &(swirls[MI_SCREEN(mi)]);
-
-	/* get window parameters */
+        initialise_swirl(mi, swirl);
+                
+        /* get window parameters */
 	swirl->win = window;
 	swirl->width = MI_WIN_WIDTH(mi);
 	swirl->height = MI_WIN_HEIGHT(mi);
@@ -1348,7 +1340,7 @@ init_swirl(ModeInfo * mi)
  *
  * -      win is the window to draw in
  */
-void
+ENTRYPOINT void
 draw_swirl(ModeInfo * mi)
 {
 	SWIRL_P     swirl = &(swirls[MI_SCREEN(mi)]);
@@ -1441,8 +1433,8 @@ draw_swirl(ModeInfo * mi)
 
 /****************************************************************/
 
-void
-release_swirl(ModeInfo * mi)
+ENTRYPOINT void
+release_swirl (ModeInfo * mi)
 {
 	/* does the swirls array exist? */
 	if (swirls != NULL) {
@@ -1452,10 +1444,14 @@ release_swirl(ModeInfo * mi)
 		for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
 			SWIRL_P     swirl = &(swirls[i]);
 
+#ifndef STANDALONE
 			if (swirl->cmap != (Colormap) NULL)
 				XFreeColormap(MI_DISPLAY(mi), swirl->cmap);
+#endif /* STANDALONE */
+#ifndef STANDALONE
 			if (swirl->rgb_values != NULL)
 				XFree((void *) swirl->rgb_values);
+#endif /* !STANDALONE */
 			if (swirl->ximage != NULL)
 				XDestroyImage(swirl->ximage);
 			if (swirl->knots)
@@ -1469,8 +1465,8 @@ release_swirl(ModeInfo * mi)
 
 /****************************************************************/
 
-void
-refresh_swirl(ModeInfo * mi)
+ENTRYPOINT void
+refresh_swirl (ModeInfo * mi)
 {
 	SWIRL_P     swirl = &(swirls[MI_SCREEN(mi)]);
 
@@ -1480,3 +1476,5 @@ refresh_swirl(ModeInfo * mi)
 		swirl->drawing = False;
 	}
 }
+
+XSCREENSAVER_MODULE ("Swirl", swirl)

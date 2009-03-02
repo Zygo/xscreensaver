@@ -10,31 +10,29 @@
           convert="invert"/>
 
   <number id="scale" type="spinbutton" arg="-scale %"
-          _label="Scale" low="1" high="100" default="6"/>
+          _label="Font Scale" low="1" high="100" default="6"/>
 
   <number id="fade" type="slider" arg="-ticks %"
           _label="Fade" _low-label="Slow" _high-label="Fast"
           low="1" high="100" default="20"
           convert="invert"/>
 
+<!--
   <select id="mode">
-    <option id="dumb" _label="Dump pipe"/>
-    <option id="pty"  _label="Use PTY" arg-set="-pty"/>
+    <option id="dumb" _label="Text Only" arg-set="-pipe"/>
+    <option id="pty"  _label="Terminal Emulation"/>
   </select>
+ -->
 
-  <file id="program" _label="Text Program" arg="-program %"/>
+<!--  <file id="program" _label="Text Program" arg="-program %"/> -->
 
-  <!-- #### -font [fixed] -->
+  <xscreensaver-text />
 
   <_description>
 Draws a simulation of an old terminal, with large pixels and
 long-sustain phosphor.  This program is also a fully-functional VT100
 emulator!  
 
-The text can be the output of a program or the contents of a file or
-URL, as configured on the "Advanced" tab of the main Screensaver
-Preferences window.
-
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 1999.
   </_description>
 </screensaver>

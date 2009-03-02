@@ -167,16 +167,21 @@ See option \-teamACount, above.  Default value is 4.
 .B teamBCount \fIint\fP
 See option \-teamBCount, above.  Default value is 4.
 .SH NOTES
-In order to use the ping sensor, this program must be installed as 
-setuid root, so that it can create an ICMP socket.  Root privileges
-are disavowed shortly after startup (just after connecting to the
-X server and reading the resource database) so this is \fIbelieved\fP
-to be a safe thing to do, but it is usually recommended that you 
-have as few setuid programs around as possible, on general principles.
+In order to use the ping sensor on most systems, this program must be
+installed as setuid root, so that it can create an ICMP RAW socket.
+Root privileges are disavowed shortly after startup (just after
+connecting to the X server and reading the resource database) so this
+is \fIbelieved\fP to be a safe thing to do, but it is usually
+recommended that you have as few setuid programs around as possible,
+on general principles.
 .EX
-chown root.root sonar
+chown root:root sonar
 chmod u+s sonar
 .EE
+It is not necessary to make it setuid on MacOS systems, because on
+those systems, unprivileged programs can ping by using ICMP DGRAM
+sockets instead of ICMP RAW.
+
 In ping-mode, the display is a logarithmic scale, calibrated so that the
 three rings represent ping times of approximately 2.5, 70 and 2,000
 milliseconds respectively.  

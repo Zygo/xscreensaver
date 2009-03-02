@@ -51,9 +51,13 @@
   Trevor Blackwell <tlb@tlb.org>
 */
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Intrinsic.h>
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else /* !HAVE_COCOA */
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+#endif
+
 #include <assert.h>
 #include "utils.h"
 #include "resources.h"
@@ -174,13 +178,13 @@ analogtv_set_defaults(analogtv *it, char *prefix)
   char buf[256];
 
   sprintf(buf,"%sTVTint",prefix);
-  it->tint_control = get_float_resource(buf,"TVTint");
+  it->tint_control = get_float_resource(it->dpy, buf,"TVTint");
   sprintf(buf,"%sTVColor",prefix);
-  it->color_control = get_float_resource(buf,"TVColor")/100.0;
+  it->color_control = get_float_resource(it->dpy, buf,"TVColor")/100.0;
   sprintf(buf,"%sTVBrightness",prefix);
-  it->brightness_control = get_float_resource(buf,"TVBrightness") / 100.0;
+  it->brightness_control = get_float_resource(it->dpy, buf,"TVBrightness") / 100.0;
   sprintf(buf,"%sTVContrast",prefix);
-  it->contrast_control = get_float_resource(buf,"TVContrast") / 100.0;
+  it->contrast_control = get_float_resource(it->dpy, buf,"TVContrast") / 100.0;
   it->height_control = 1.0;
   it->width_control = 1.0;
   it->squish_control = 0.0;
@@ -236,7 +240,7 @@ analogtv_set_defaults(analogtv *it, char *prefix)
 
 extern Bool mono_p; /* shoot me */
 
-void
+static void
 analogtv_free_image(analogtv *it)
 {
   if (it->image) {
@@ -251,7 +255,7 @@ analogtv_free_image(analogtv *it)
   }
 }
 
-void
+static void
 analogtv_alloc_image(analogtv *it)
 {
   if (it->use_shm) {
@@ -270,7 +274,7 @@ analogtv_alloc_image(analogtv *it)
 }
 
 
-void
+static void
 analogtv_configure(analogtv *it)
 {
   int oldwidth=it->usewidth;
@@ -280,7 +284,7 @@ analogtv_configure(analogtv *it)
   /* If the window is very small, don't let the image we draw get lower
      than the actual TV resolution (266x200.)
 
-     If the aspect ratio of the window is within 20% of a 4:3 ratio,
+     If the aspect ratio of the window is within 15% of a 4:3 ratio,
      then scale the image to exactly fill the window.
 
      Otherwise, center the image either horizontally or vertically,
@@ -289,7 +293,8 @@ analogtv_configure(analogtv *it)
      If it's very close (2.5%) to a multiple of VISLINES, make it exact
      For example, it maps 1024 => 1000.
    */
-  float percent = 0.20;
+  float percent = 0.15;  /* jwz: 20% caused severe top/bottom clipping
+                                 in Pong on 1680x1050 iMac screen. */
   float min_ratio = 4.0 / 3.0 * (1 - percent);
   float max_ratio = 4.0 / 3.0 * (1 + percent);
   float ratio;
@@ -404,7 +409,7 @@ analogtv_allocate(Display *dpy, Window window)
   it->visbits=it->xgwa.visual->bits_per_rgb;
   it->visdepth=it->xgwa.depth;
   if (it->visclass == TrueColor || it->visclass == DirectColor) {
-    if (get_integer_resource ("use_cmap", "Integer")) {
+    if (get_integer_resource (it->dpy, "use_cmap", "Integer")) {
       it->use_cmap=1;
     } else {
       it->use_cmap=0;
@@ -430,7 +435,7 @@ analogtv_allocate(Display *dpy, Window window)
     /* Is there a standard way to do this? Does this handle all cases? */
     int shift, prec;
     for (shift=0; shift<32; shift++) {
-      for (prec=1; prec<16 && prec<32-shift; prec++) {
+      for (prec=1; prec<16 && prec<40-shift; prec++) {
         unsigned long mask=(0xffffUL>>(16-prec)) << shift;
         if (it->red_shift<0 && mask==it->red_mask)
           it->red_shift=shift, it->red_invprec=16-prec;
@@ -455,8 +460,8 @@ analogtv_allocate(Display *dpy, Window window)
 
   }
 
-  gcv.background=get_pixel_resource("background", "Background",
-                                    it->dpy, it->colormap);
+  gcv.background=get_pixel_resource(it->dpy, it->colormap,
+                                    "background", "Background");
 
   it->gc = XCreateGC(it->dpy, it->window, GCBackground, &gcv);
   XSetWindowBackground(it->dpy, it->window, gcv.background);
@@ -882,7 +887,7 @@ analogtv_setup_sync(analogtv_input *input, int do_cb, int do_ssavi)
   }
 }
 
-void
+static void
 analogtv_sync(analogtv *it)
 {
   int cur_hsync=it->cur_hsync;
@@ -972,7 +977,7 @@ analogtv_sync(analogtv *it)
 static double
 analogtv_levelmult(analogtv *it, int level)
 {
-  static double levelfac[3]={-7.5, 5.5, 24.5};
+  static const double levelfac[3]={-7.5, 5.5, 24.5};
   return (40.0 + levelfac[level]*puramp(it, 3.0, 6.0, 1.0))/256.0;
 }
 
@@ -1000,46 +1005,40 @@ analogtv_level(analogtv *it, int y, int ytop, int ybot)
 }
 
 /*
-
   The point of this stuff is to ensure that when useheight is not a
   multiple of VISLINES so that TV scan lines map to different numbers
   of vertical screen pixels, the total brightness of each scan line
   remains the same.
-  MAX_LINEHEIGHT corresponds to 2400 vertical pixels, beyond which
+  ANALOGTV_MAX_LINEHEIGHT corresponds to 2400 vertical pixels, beyond which
   it interpolates extra black lines.
  */
-enum {MAX_LINEHEIGHT=12};
-static struct {
-  int index;
-  double value;
-} leveltable[MAX_LINEHEIGHT+1][MAX_LINEHEIGHT+1];
 
 static void
 analogtv_setup_levels(analogtv *it, double avgheight)
 {
   int i,height;
-  static double levelfac[3]={-7.5, 5.5, 24.5};
+  static const double levelfac[3]={-7.5, 5.5, 24.5};
 
-  for (height=0; height<avgheight+2.0 && height<=MAX_LINEHEIGHT; height++) {
+  for (height=0; height<avgheight+2.0 && height<=ANALOGTV_MAX_LINEHEIGHT; height++) {
 
     for (i=0; i<height; i++) {
-      leveltable[height][i].index = 2;
+      it->leveltable[height][i].index = 2;
     }
     
     if (avgheight>=3) {
-      leveltable[height][0].index=0;
+      it->leveltable[height][0].index=0;
     }
     if (avgheight>=5) {
-      leveltable[height][height-1].index=0;
+      it->leveltable[height][height-1].index=0;
     }
     if (avgheight>=7) {
-      leveltable[height][1].index=1;
-      leveltable[height][height-2].index=1;
+      it->leveltable[height][1].index=1;
+      it->leveltable[height][height-2].index=1;
     }
 
     for (i=0; i<height; i++) {
-      leveltable[height][i].value = 
-        (40.0 + levelfac[leveltable[height][i].index]*puramp(it, 3.0, 6.0, 1.0)) / 256.0;
+      it->leveltable[height][i].value = 
+        (40.0 + levelfac[it->leveltable[height][i].index]*puramp(it, 3.0, 6.0, 1.0)) / 256.0;
     }
 
   }
@@ -1057,8 +1056,8 @@ analogtv_blast_imagerow(analogtv *it,
   for (i=0; i<3; i++) level_copyfrom[i]=NULL;
 
   for (y=ytop; y<ybot; y++) {
-    int level=leveltable[ybot-ytop][y-ytop].index;
-    double levelmult=leveltable[ybot-ytop][y-ytop].value;
+    int level=it->leveltable[ybot-ytop][y-ytop].index;
+    double levelmult=it->leveltable[ybot-ytop][y-ytop].value;
     char *rowdata;
 
     rowdata=it->image->data + y*it->image->bytes_per_line;
@@ -1235,7 +1234,7 @@ analogtv_draw(analogtv *it)
     if (ytop<0) ytop=0;
     if (ybot>it->useheight) ybot=it->useheight;
 
-    if (ybot > ytop+MAX_LINEHEIGHT) ybot=ytop+MAX_LINEHEIGHT;
+    if (ybot > ytop+ANALOGTV_MAX_LINEHEIGHT) ybot=ytop+ANALOGTV_MAX_LINEHEIGHT;
 
     if (ytop < overall_top) overall_top=ytop;
     if (ybot > overall_bot) overall_bot=ybot;
@@ -1564,11 +1563,6 @@ analogtv_draw(analogtv *it)
     it->last_display_time=tv;
   }
 #endif
-
-  XSync(it->dpy,0);
-
-  /* Small delay to avoid hogging the CPU. */
-  usleep (10000);
 }
 
 analogtv_input *
@@ -1601,7 +1595,7 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im)
 
   img_w=pic_im->width;
   img_h=pic_im->height;
-
+  
   for (i=0; i<ANALOGTV_PIC_LEN+4; i++) {
     double phase=90.0-90.0*i;
     double ampl=1.0;
@@ -1888,6 +1882,11 @@ analogtv_reception_update(analogtv_reception *rec)
 }
 
 
+/* jwz: since MacOS doesn't have "6x10", I dumped this font to an XBM...
+ */
+
+#include "images/6x10font.xbm"
+
 void
 analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
                    int w, int h, char *fontname)
@@ -1904,7 +1903,18 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
-  if (fontname) {
+  if (fontname && !strcmp (fontname, "6x10")) {
+
+    text_pm = XCreatePixmapFromBitmapData (dpy, window,
+                                           (char *) font6x10_bits,
+                                           font6x10_width,
+                                           font6x10_height,
+                                           1, 0, 1);
+    f->text_im = XGetImage(dpy, text_pm, 0, 0, font6x10_width, font6x10_height,
+                           1, XYPixmap);
+    XFreePixmap(dpy, text_pm);
+
+  } else if (fontname) {
 
     font = XLoadQueryFont (dpy, fontname);
     if (!font) {
@@ -1912,7 +1922,7 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
       abort();
     }
 
-    text_pm=XCreatePixmap(dpy, window, 128*f->char_w, f->char_h, xgwa.depth);
+    text_pm=XCreatePixmap(dpy, window, 256*f->char_w, f->char_h, 1);
 
     memset(&gcv, 0, sizeof(gcv));
     gcv.foreground=1;
@@ -1921,23 +1931,25 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
     gc=XCreateGC(dpy, text_pm, GCFont|GCBackground|GCForeground, &gcv);
 
     XSetForeground(dpy, gc, 0);
-    XFillRectangle(dpy, text_pm, gc, 0, 0, 128*f->char_w, f->char_h);
+    XFillRectangle(dpy, text_pm, gc, 0, 0, 256*f->char_w, f->char_h);
     XSetForeground(dpy, gc, 1);
-    /* Just ASCII */
-    for (i=0; i<128; i++) {
+    for (i=0; i<256; i++) {
       char c=i;
       int x=f->char_w*i+1;
       int y=f->char_h*8/10;
       XDrawString(dpy, text_pm, gc, x, y, &c, 1);
     }
-    f->text_im = XGetImage(dpy, text_pm, 0, 0, 128*f->char_w, f->char_h,
-                           ~0L, ZPixmap);
+    f->text_im = XGetImage(dpy, text_pm, 0, 0, 256*f->char_w, f->char_h,
+                           1, XYPixmap);
+# if 0
+    XWriteBitmapFile(dpy, "/tmp/tvfont.xbm", text_pm, 
+                     256*f->char_w, f->char_h, -1, -1);
+# endif
     XFreeGC(dpy, gc);
     XFreePixmap(dpy, text_pm);
   } else {
-    f->text_im = XCreateImage(dpy, xgwa.visual, xgwa.depth,
-                              ZPixmap, 0, 0,
-                              128*f->char_w, f->char_h, 8, 0);
+    f->text_im = XCreateImage(dpy, xgwa.visual, 1, XYPixmap, 0, 0,
+                              256*f->char_w, f->char_h, 8, 0);
     f->text_im->data = (char *)calloc(f->text_im->height,
                                       f->text_im->bytes_per_line);
 
@@ -1951,7 +1963,7 @@ analogtv_font_pixel(analogtv_font *f, int c, int x, int y)
 {
   if (x<0 || x>=f->char_w) return 0;
   if (y<0 || y>=f->char_h) return 0;
-  if (c<0 || c>=128) return 0;
+  if (c<0 || c>=256) return 0;
   return XGetPixel(f->text_im, c*f->char_w + x, y) ? 1 : 0;
 }
 
@@ -1960,7 +1972,7 @@ analogtv_font_set_pixel(analogtv_font *f, int c, int x, int y, int value)
 {
   if (x<0 || x>=f->char_w) return;
   if (y<0 || y>=f->char_h) return;
-  if (c<0 || c>=128) return;
+  if (c<0 || c>=256) return;
 
   XPutPixel(f->text_im, c*f->char_w + x, y, value);
 }
@@ -1970,7 +1982,7 @@ analogtv_font_set_char(analogtv_font *f, int c, char *s)
 {
   int value,x,y;
 
-  if (c<0 || c>=128) return;
+  if (c<0 || c>=256) return;
 
   for (y=0; y<f->char_h; y++) {
     for (x=0; x<f->char_w; x++) {
@@ -2186,64 +2198,3 @@ analogtv_draw_xpm(analogtv *tv, analogtv_input *input,
     }
   }
 }
-
-extern XtAppContext app;
-
-int
-analogtv_handle_events (analogtv *it)
-{
-  XSync(it->dpy, False);
-  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-
-  while (XPending (it->dpy))
-    {
-      XEvent event;
-      XNextEvent (it->dpy, &event);
-      switch (event.xany.type)
-        {
-        case ButtonPress:
-          return 1;
-
-        case KeyPress:
-          {
-            KeySym keysym;
-            char c = 0;
-
-            if (it->key_handler) {
-              if (it->key_handler (it->dpy, &event, it->key_data))
-                return 1;
-            } else {
-              XLookupString (&event.xkey, &c, 1, &keysym, 0);
-              if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-                return 1;
-            }
-          }
-          break;
-
-          /* I don't seem to get an event when clicking the "full
-             screen" window manager icon, at least when using
-             metacity. Thus, it doesn't change the video size. Is this
-             some separate WM_* message I have to deal with?
-          */
-        case ConfigureNotify:
-          if (event.xconfigure.width  != it->xgwa.width ||
-              event.xconfigure.height != it->xgwa.height)
-            analogtv_reconfigure(it);
-          break;
-
-        case Expose:
-        case GraphicsExpose:
-          it->need_clear=1;
-          break;
-
-        default:
-          break;
-        }
-      if (it->event_handler) {
-        (*it->event_handler) (it->dpy, &event);
-      }
-    }
-  return 0;
-}
-

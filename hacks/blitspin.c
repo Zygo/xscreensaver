@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,91 +30,107 @@
 
 #include "images/som.xbm"
 
-static Display *dpy;
-static Window window;
-static unsigned int size;
-static Pixmap self, temp, mask;
-static GC SET, CLR, CPY, IOR, AND, XOR;
-static GC gc;
-static int delay, delay2;
-static Pixmap bitmap;
-static int depth;
-static unsigned int fg, bg;
-
-static void display (Pixmap);
-
-#define copy_all_to(from, xoff, yoff, to, gc)		\
-  XCopyArea (dpy, (from), (to), (gc), 0, 0,		\
-	     size-(xoff), size-(yoff), (xoff), (yoff))
-
-#define copy_all_from(to, xoff, yoff, from, gc)		\
-  XCopyArea (dpy, (from), (to), (gc), (xoff), (yoff),	\
-	     size-(xoff), size-(yoff), 0, 0)
-
-static void
-rotate (void)
-{
-  int qwad; /* fuckin' C, man... who needs namespaces? */
-  XFillRectangle (dpy, mask, CLR, 0, 0, size, size);
-  XFillRectangle (dpy, mask, SET, 0, 0, size>>1, size>>1);
-  for (qwad = size>>1; qwad > 0; qwad>>=1)
-    {
-      if (delay) usleep (delay);
-      copy_all_to   (mask,       0,       0, temp, CPY);  /* 1 */
-      copy_all_to   (mask,       0,    qwad, temp, IOR);  /* 2 */
-      copy_all_to   (self,       0,       0, temp, AND);  /* 3 */
-      copy_all_to   (temp,       0,       0, self, XOR);  /* 4 */
-      copy_all_from (temp,    qwad,       0, self, XOR);  /* 5 */
-      copy_all_from (self,    qwad,       0, self, IOR);  /* 6 */
-      copy_all_to   (temp,    qwad,       0, self, XOR);  /* 7 */
-      copy_all_to   (self,       0,       0, temp, CPY);  /* 8 */
-      copy_all_from (temp,    qwad,    qwad, self, XOR);  /* 9 */
-      copy_all_to   (mask,       0,       0, temp, AND);  /* A */
-      copy_all_to   (temp,       0,       0, self, XOR);  /* B */
-      copy_all_to   (temp,    qwad,    qwad, self, XOR);  /* C */
-      copy_all_from (mask, qwad>>1, qwad>>1, mask, AND);  /* D */
-      copy_all_to   (mask,    qwad,       0, mask, IOR);  /* E */
-      copy_all_to   (mask,       0,    qwad, mask, IOR);  /* F */
-      display (self);
-    }
-}
-
-static Pixmap
-read_screen (Display *dpy, Window window, int *widthP, int *heightP)
-{
-  Pixmap p;
+struct state {
+  Display *dpy;
+  Window window;
   XWindowAttributes xgwa;
-  XGCValues gcv;
+  int width, height, size;
+  Bool scale_up;
+  Pixmap self, temp, mask;
+  GC SET, CLR, CPY, IOR, AND, XOR;
   GC gc;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  *widthP = xgwa.width;
-  *heightP = xgwa.height;
+  int delay, delay2;
+  Pixmap bitmap;
+  unsigned int fg, bg;
 
-  p = XCreatePixmap(dpy, window, *widthP, *heightP, xgwa.depth);
-  gcv.function = GXcopy;
-  gc = XCreateGC (dpy, window, GCFunction, &gcv);
+  int qwad; /* fuckin' C, man... who needs namespaces? */
+  int first_time;
+  int last_w, last_h;
 
-  load_random_image (xgwa.screen, window, p, NULL, NULL);
+  Bool loaded_p;
+  async_load_state *img_loader;
+};
 
-  /* Reset the window's background color... */
-  XSetWindowBackground (dpy, window,
-			get_pixel_resource ("background", "Background",
-					    dpy, xgwa.colormap));
-  XCopyArea (dpy, p, window, gc, 0, 0, *widthP, *heightP, 0, 0);
-  XFreeGC (dpy, gc);
+static void display (struct state *, Pixmap);
+static void blitspin_init_2 (struct state *);
 
-  return p;
+#define copy_all_to(from, xoff, yoff, to, gc)			\
+  XCopyArea (st->dpy, (from), (to), (gc), 0, 0,			\
+	     st->size-(xoff), st->size-(yoff), (xoff), (yoff))
+
+#define copy_all_from(to, xoff, yoff, from, gc)			\
+  XCopyArea (st->dpy, (from), (to), (gc), (xoff), (yoff),	\
+	     st->size-(xoff), st->size-(yoff), 0, 0)
+
+static unsigned long
+blitspin_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int this_delay = st->delay;
+
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      return this_delay;
+    }
+
+  if (! st->loaded_p) {
+    blitspin_init_2 (st);
+    st->loaded_p = True;
+  }
+
+  if (st->qwad == -1) 
+    {
+      XFillRectangle (st->dpy, st->mask, st->CLR, 0, 0, st->size, st->size);
+      XFillRectangle (st->dpy, st->mask, st->SET, 0, 0, st->size>>1, st->size>>1);
+      st->qwad = st->size>>1;
+    }
+
+  if (st->first_time)
+    {
+      st->first_time = 0;
+      display (st, st->self);
+      return st->delay2;
+    }
+
+  /* for (st->qwad = st->size>>1; st->qwad > 0; st->qwad>>=1) */
+
+  copy_all_to   (st->mask,       0,       0, st->temp, st->CPY);  /* 1 */
+  copy_all_to   (st->mask,       0,    st->qwad, st->temp, st->IOR);  /* 2 */
+  copy_all_to   (st->self,       0,       0, st->temp, st->AND);  /* 3 */
+  copy_all_to   (st->temp,       0,       0, st->self, st->XOR);  /* 4 */
+  copy_all_from (st->temp,    st->qwad,       0, st->self, st->XOR);  /* 5 */
+  copy_all_from (st->self,    st->qwad,       0, st->self, st->IOR);  /* 6 */
+  copy_all_to   (st->temp,    st->qwad,       0, st->self, st->XOR);  /* 7 */
+  copy_all_to   (st->self,       0,       0, st->temp, st->CPY);  /* 8 */
+  copy_all_from (st->temp,    st->qwad,    st->qwad, st->self, st->XOR);  /* 9 */
+  copy_all_to   (st->mask,       0,       0, st->temp, st->AND);  /* A */
+  copy_all_to   (st->temp,       0,       0, st->self, st->XOR);  /* B */
+  copy_all_to   (st->temp,    st->qwad,    st->qwad, st->self, st->XOR);  /* C */
+  copy_all_from (st->mask, st->qwad>>1, st->qwad>>1, st->mask, st->AND);  /* D */
+  copy_all_to   (st->mask,    st->qwad,       0, st->mask, st->IOR);  /* E */
+  copy_all_to   (st->mask,       0,    st->qwad, st->mask, st->IOR);  /* F */
+  display (st, st->self);
+
+  st->qwad >>= 1;
+  if (st->qwad == 0)  /* done with this round */
+    {
+      st->qwad = -1;
+      this_delay = st->delay2;
+    }
+
+  return this_delay;
 }
 
 
 static int 
-to_pow2(int n, Bool up)
+to_pow2(struct state *st, int n, Bool up)
 {
   /* sizeof(Dimension) == 2. */
   int powers_of_2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
 			2048, 4096, 8192, 16384, 32768, 65536 };
   int i = 0;
-  if (n > 65536) size = 65536;
+  if (n > 65536) st->size = 65536;
   while (n >= powers_of_2[i]) i++;
   if (n == powers_of_2[i-1])
     return n;
@@ -122,117 +138,163 @@ to_pow2(int n, Bool up)
     return powers_of_2[up ? i : i-1];
 }
 
-static void
-init (void)
+static void *
+blitspin_init (Display *d_arg, Window w_arg)
 {
-  XWindowAttributes xgwa;
-  Colormap cmap;
-  XGCValues gcv;
-  int width, height;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   char *bitmap_name;
-  Bool scale_up;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  depth = xgwa.depth;
+  st->dpy = d_arg;
+  st->window = w_arg;
 
-  fg = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  bg = get_pixel_resource ("background", "Background", dpy, cmap);
-  delay = get_integer_resource ("delay", "Integer");
-  delay2 = get_integer_resource ("delay2", "Integer");
-  if (delay < 0) delay = 0;
-  if (delay2 < 0) delay2 = 0;
-  bitmap_name = get_string_resource ("bitmap", "Bitmap");
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+
+  st->fg = get_pixel_resource (st->dpy, st->xgwa.colormap,
+                               "foreground", "Foreground");
+  st->bg = get_pixel_resource (st->dpy, st->xgwa.colormap,
+                               "background", "Background");
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->delay2 = get_integer_resource (st->dpy, "delay2", "Integer");
+  if (st->delay < 0) st->delay = 0;
+  if (st->delay2 < 0) st->delay2 = 0;
+  bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
   if (! bitmap_name || !*bitmap_name)
     bitmap_name = "(default)";
 
-  if (!strcmp (bitmap_name, "(default)"))
+  if (!strcasecmp (bitmap_name, "(default)") ||
+      !strcasecmp (bitmap_name, "default"))
+# ifdef HAVE_COCOA
+    bitmap_name = "(builtin)";
+# else
+    bitmap_name = "(screen)";
+# endif
+
+  if (!strcasecmp (bitmap_name, "(builtin)") ||
+      !strcasecmp (bitmap_name, "builtin"))
     {
-      width = som_width;
-      height = som_height;
-      bitmap = XCreatePixmapFromBitmapData (dpy, window, (char *) som_bits,
-					    width, height, fg, bg, depth);
-      scale_up = True; /* definitely. */
+      st->width = som_width;
+      st->height = som_height;
+      st->bitmap = XCreatePixmapFromBitmapData (st->dpy, st->window,
+                                                (char *) som_bits,
+                                                st->width, st->height, 
+                                                st->fg, st->bg, 
+                                                st->xgwa.depth);
+      st->scale_up = True; /* definitely. */
     }
-  else if (!strcmp (bitmap_name, "(screen)"))
+  else if (!strcasecmp (bitmap_name, "(screen)") ||
+           !strcasecmp (bitmap_name, "screen"))
     {
-      bitmap = read_screen (dpy, window, &width, &height);
-      scale_up = True; /* maybe? */
+      st->bitmap = XCreatePixmap (st->dpy, st->window, 
+                                  st->xgwa.width, st->xgwa.height,
+                                  st->xgwa.depth);
+      st->width = st->xgwa.width;
+      st->height = st->xgwa.height;
+      st->scale_up = True; /* maybe? */
+      st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
+                                            st->bitmap, 0, 0);
     }
   else
     {
-      bitmap = xpm_file_to_pixmap (dpy, window, bitmap_name,
-                                   &width, &height, 0);
-      scale_up = True; /* probably? */
+      st->bitmap = xpm_file_to_pixmap (st->dpy, st->window, bitmap_name,
+                                   &st->width, &st->height, 0);
+      st->scale_up = True; /* probably? */
     }
 
-  size = (width < height) ? height : width;	/* make it square */
-  size = to_pow2(size, scale_up);		/* round up to power of 2 */
+  return st;
+}
+
+
+static void
+blitspin_init_2 (struct state *st)
+{
+  XGCValues gcv;
+
+  /* make it square */
+  st->size = (st->width < st->height) ? st->height : st->width;
+  st->size = to_pow2(st, st->size, st->scale_up); /* round up to power of 2 */
   {						/* don't exceed screen size */
-    int s = XScreenNumberOfScreen(xgwa.screen);
-    int w = to_pow2(XDisplayWidth(dpy, s), False);
-    int h = to_pow2(XDisplayHeight(dpy, s), False);
-    if (size > w) size = w;
-    if (size > h) size = h;
+    int s = XScreenNumberOfScreen(st->xgwa.screen);
+    int w = to_pow2(st, XDisplayWidth(st->dpy, s), False);
+    int h = to_pow2(st, XDisplayHeight(st->dpy, s), False);
+    if (st->size > w) st->size = w;
+    if (st->size > h) st->size = h;
   }
 
-  self = XCreatePixmap (dpy, window, size, size, depth);
-  temp = XCreatePixmap (dpy, window, size, size, depth);
-  mask = XCreatePixmap (dpy, window, size, size, depth);
-  gcv.foreground = (depth == 1 ? 1 : (~0));
-  gcv.function=GXset;  SET = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
-  gcv.function=GXclear;CLR = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
-  gcv.function=GXcopy; CPY = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
-  gcv.function=GXor;   IOR = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
-  gcv.function=GXand;  AND = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
-  gcv.function=GXxor;  XOR = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
+  st->self = XCreatePixmap (st->dpy, st->window, st->size, st->size, st->xgwa.depth);
+  st->temp = XCreatePixmap (st->dpy, st->window, st->size, st->size, st->xgwa.depth);
+  st->mask = XCreatePixmap (st->dpy, st->window, st->size, st->size, st->xgwa.depth);
+  gcv.foreground = (st->xgwa.depth == 1 ? 1 : (~0));
+  gcv.function=GXset;  st->SET = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
+  gcv.function=GXclear;st->CLR = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
+  gcv.function=GXcopy; st->CPY = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
+  gcv.function=GXor;   st->IOR = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
+  gcv.function=GXand;  st->AND = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
+  gcv.function=GXxor;  st->XOR = XCreateGC(st->dpy,st->self,GCFunction|GCForeground,&gcv);
 
-  gcv.foreground = gcv.background = bg;
-  gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
-  /* Clear self to the background color (not to 0, which CLR does.) */
-  XFillRectangle (dpy, self, gc, 0, 0, size, size);
-  XSetForeground (dpy, gc, fg);
+  gcv.foreground = gcv.background = st->bg;
+  st->gc = XCreateGC (st->dpy, st->window, GCForeground|GCBackground, &gcv);
+  /* Clear st->self to the background color (not to 0, which st->CLR does.) */
+  XFillRectangle (st->dpy, st->self, st->gc, 0, 0, st->size, st->size);
+  XSetForeground (st->dpy, st->gc, st->fg);
 
-  XCopyArea (dpy, bitmap, self, CPY, 0, 0, width, height,
-	     (size - width)>>1, (size - height)>>1);
-  XFreePixmap(dpy, bitmap);
+  XCopyArea (st->dpy, st->bitmap, st->self, st->CPY, 0, 0, 
+             st->width, st->height,
+	     (st->size - st->width)  >> 1,
+             (st->size - st->height) >> 1);
+  XFreePixmap(st->dpy, st->bitmap);
 
-  display (self);
-  XSync(dpy, False);
-  screenhack_handle_events (dpy);
+  st->qwad = -1;
+  st->first_time = 1;
 }
 
 static void
-display (Pixmap pixmap)
+display (struct state *st, Pixmap pixmap)
 {
-  XWindowAttributes xgwa;
-  static int last_w = 0, last_h = 0;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  if (xgwa.width != last_w || xgwa.height != last_h)
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+
+  if (st->xgwa.width != st->last_w || 
+      st->xgwa.height != st->last_h)
     {
-      XClearWindow (dpy, window);
-      last_w = xgwa.width;
-      last_h = xgwa.height;
+      XClearWindow (st->dpy, st->window);
+      st->last_w = st->xgwa.width;
+      st->last_h = st->xgwa.height;
     }
-  if (depth != 1)
-    XCopyArea (dpy, pixmap, window, gc, 0, 0, size, size,
-	       (xgwa.width-size)>>1, (xgwa.height-size)>>1);
+  if (st->xgwa.depth != 1)
+    XCopyArea (st->dpy, pixmap, st->window, st->gc, 0, 0, st->size, st->size,
+	       (st->xgwa.width - st->size) >> 1,
+               (st->xgwa.height - st->size) >> 1);
   else
-    XCopyPlane (dpy, pixmap, window, gc, 0, 0, size, size,
-		(xgwa.width-size)>>1, (xgwa.height-size)>>1, 1);
+    XCopyPlane (st->dpy, pixmap, st->window, st->gc, 0, 0, st->size, st->size,
+		(st->xgwa.width - st->size) >> 1,
+                (st->xgwa.height - st->size) >> 1,
+                1);
 /*
-  XDrawRectangle (dpy, window, gc,
-		  ((xgwa.width-size)>>1)-1, ((xgwa.height-size)>>1)-1,
-		  size+2, size+2);
+  XDrawRectangle (st->dpy, st->window, st->gc,
+		  ((st->xgwa.width - st->size) >> 1) - 1,
+                  ((st->xgwa.height - st->size) >> 1) - 1,
+		  st->size+2, st->size+2);
 */
-  XSync (dpy, False);
-  screenhack_handle_events (dpy);
+}
+
+static void
+blitspin_reshape (Display *dpy, Window window, void *closure, 
+                  unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+blitspin_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+blitspin_free (Display *dpy, Window window, void *closure)
+{
 }
 
 
-char *progclass = "BlitSpin";
-
-char *defaults [] = {
+static const char *blitspin_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*delay:	500000",
@@ -242,25 +304,12 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec blitspin_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-delay2",		".delay2",	XrmoptionSepArg, 0 },
   { "-bitmap",		".bitmap",	XrmoptionSepArg, 0 },
-  { "-grab-screen",	".bitmap",	XrmoptionNoArg, "(screen)" },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *d, Window w)
-{
-  dpy = d;
-  window = w;
-  init ();
-  if (delay2) usleep (delay2 * 2);
-  while (1)
-    {
-      rotate ();
-      screenhack_handle_events (d);
-      if (delay2) usleep (delay2);
-    }
-}
+
+XSCREENSAVER_MODULE ("BlitSpin", blitspin)

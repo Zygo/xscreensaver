@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1419,7 +1419,12 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   attrs.backing_pixel = ssi->black_pixel;
   attrs.border_pixel = ssi->black_pixel;
 
-  if (p->debug_p && !p->quad_p) width = width / 2;
+  if (p->debug_p
+# ifdef QUAD_MODE
+      && !p->quad_p
+# endif
+      )
+    width = width / 2;
 
   if (!p->verbose_p || printed_visual_info)
     ;
@@ -1677,7 +1682,12 @@ resize_screensaver_window (saver_info *si)
       changes.height = height;
       changes.border_width = 0;
 
-      if (p->debug_p && !p->quad_p) changes.width = changes.width / 2;
+      if (p->debug_p
+# ifdef QUAD_MODE
+          && !p->quad_p
+# endif
+          ) 
+        changes.width = changes.width / 2;
 
       if (p->verbose_p)
         fprintf (stderr,

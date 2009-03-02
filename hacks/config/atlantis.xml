@@ -8,9 +8,10 @@
            _label="Whale Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="1000" default="250"/>
 
-  <number id="sharkspeed" type="slider" arg="-cycles %"
+  <number id="sharkspeed" type="slider" arg="-delay %"
           _label="Shark Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="1000" default="100"/>
+          low="0" high="500000" default="25000"
+          convert="invert"/>
 
   <number id="sharkproximity" type="slider" arg="-size %"
           _label="Shark Proximity" _low-label="Shy" _high-label="Agressive"
@@ -25,20 +26,16 @@
   </select>
 
   <select id="bg">
-    <option id="flat"     _label="Flat Background"/>
-    <option id="gradient" _label="Gradient Background" arg-set="-gradient"/>
+    <option id="flat"     _label="Flat Background" arg-set="-no-gradient"/>
+    <option id="gradient" _label="Gradient Background"/>
   </select>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-This is xfishtank writ large: a GL animation of a number of sharks,
-dolphins, and whales.  The swimming motions are great. Originally
-written by Mark Kilgard.
+A 3D animation of a number of sharks, dolphins, and whales.
+
+Written by Mark Kilgard; 1998.
   </_description>
 </screensaver>

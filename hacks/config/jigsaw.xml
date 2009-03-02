@@ -14,6 +14,8 @@
           _low-label="0 Seconds" _high-label="1 Minute"
           low="0" high="60" default="5"/>
 
+  <xscreensaver-image />
+
   <_description>
 This grabs a screen image, carves it up into a jigsaw puzzle,
 shuffles it, and then solves the puzzle.  This works especially well
@@ -21,6 +23,7 @@ when you feed it an external video signal instead of letting it grab
 the screen image (actually, I guess this is generally true...)  When
 it is grabbing a video image, it is sometimes pretty hard to guess
 what the image is going to look like once the puzzle is solved.
-Written by Jamie Zawinski.
+
+Written by Jamie Zawinski; 1998.
   </_description>
 </screensaver>

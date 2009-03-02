@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 2001
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 2001, 2006
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -97,7 +97,7 @@ create_xshm_image (Display *dpy, Visual *visual,
 {
   Status status;
   XImage *image = 0;
-  if (!get_boolean_resource("useSHM", "Boolean"))
+  if (!get_boolean_resource(dpy, "useSHM", "Boolean"))
     return 0;
 
   if (!XShmQueryExtension (dpy))

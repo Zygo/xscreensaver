@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997, 1998, 2001, 2003
+/* xscreensaver, Copyright (c) 1992, 1997, 1998, 2001, 2003, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,16 +12,23 @@
 
 #include "utils.h"
 #include "resources.h"
-#include <X11/Xresource.h>
-
-
-/* Resource functions.  Assumes: */
 
 extern char *progname;
-extern char *progclass;
-extern XrmDatabase db;
 
-static unsigned int get_time_resource (char *res_name, char *res_class,
+
+#ifndef HAVE_COCOA
+
+#include <X11/Xresource.h>
+
+/* These are the Xlib/Xrm versions of these functions.
+   The Cocoa versions are on OSX/XScreenSaverView.m.
+ */
+
+extern char *progclass;
+extern XrmDatabase XtDatabase (Display *);
+
+static unsigned int get_time_resource (Display *dpy, 
+                                       char *res_name, char *res_class,
 				       Bool sec_p);
 
 #ifndef isupper
@@ -32,7 +39,7 @@ static unsigned int get_time_resource (char *res_name, char *res_class,
 #endif
 
 char *
-get_string_resource (char *res_name, char *res_class)
+get_string_resource (Display *dpy, char *res_name, char *res_class)
 {
   XrmValue value;
   char	*type;
@@ -43,7 +50,7 @@ get_string_resource (char *res_name, char *res_class)
   strcpy (full_class, progclass);
   strcat (full_class, ".");
   strcat (full_class, res_class);
-  if (XrmGetResource (db, full_name, full_class, &type, &value))
+  if (XrmGetResource (XtDatabase (dpy), full_name, full_class, &type, &value))
     {
       char *str = (char *) malloc (value.size + 1);
       strncpy (str, (char *) value.addr, value.size);
@@ -54,10 +61,10 @@ get_string_resource (char *res_name, char *res_class)
 }
 
 Bool 
-get_boolean_resource (char *res_name, char *res_class)
+get_boolean_resource (Display *dpy, char *res_name, char *res_class)
 {
   char *tmp, buf [100];
-  char *s = get_string_resource (res_name, res_class);
+  char *s = get_string_resource (dpy, res_name, res_class);
   char *os = s;
   if (! s) return 0;
   for (tmp = buf; *s; s++)
@@ -80,10 +87,10 @@ get_boolean_resource (char *res_name, char *res_class)
 }
 
 int 
-get_integer_resource (char *res_name, char *res_class)
+get_integer_resource (Display *dpy, char *res_name, char *res_class)
 {
   int val;
-  char c, *s = get_string_resource (res_name, res_class);
+  char c, *s = get_string_resource (dpy, res_name, res_class);
   char *ss = s;
   if (!s) return 0;
 
@@ -113,10 +120,10 @@ get_integer_resource (char *res_name, char *res_class)
 }
 
 double
-get_float_resource (char *res_name, char *res_class)
+get_float_resource (Display *dpy, char *res_name, char *res_class)
 {
   double val;
-  char c, *s = get_string_resource (res_name, res_class);
+  char c, *s = get_string_resource (dpy, res_name, res_class);
   if (! s) return 0.0;
   if (1 == sscanf (s, " %lf %c", &val, &c))
     {
@@ -129,13 +136,19 @@ get_float_resource (char *res_name, char *res_class)
   return 0.0;
 }
 
+#endif /* !HAVE_COCOA */
+
+
+/* These functions are the same with Xlib and Cocoa:
+ */
+
 
 unsigned int
-get_pixel_resource (char *res_name, char *res_class,
-		    Display *dpy, Colormap cmap)
+get_pixel_resource (Display *dpy, Colormap cmap,
+                    char *res_name, char *res_class)
 {
   XColor color;
-  char *s = get_string_resource (res_name, res_class);
+  char *s = get_string_resource (dpy, res_name, res_class);
   char *s2;
   Bool ok = True;
   if (!s) goto DEFAULT;
@@ -229,10 +242,10 @@ parse_time (const char *string, Bool seconds_default_p, Bool silent_p)
 }
 
 static unsigned int 
-get_time_resource (char *res_name, char *res_class, Bool sec_p)
+get_time_resource (Display *dpy, char *res_name, char *res_class, Bool sec_p)
 {
   int val;
-  char *s = get_string_resource (res_name, res_class);
+  char *s = get_string_resource (dpy, res_name, res_class);
   if (!s) return 0;
   val = parse_time (s, sec_p, False);
   free (s);
@@ -240,13 +253,13 @@ get_time_resource (char *res_name, char *res_class, Bool sec_p)
 }
 
 unsigned int 
-get_seconds_resource (char *res_name, char *res_class)
+get_seconds_resource (Display *dpy, char *res_name, char *res_class)
 {
-  return get_time_resource (res_name, res_class, True);
+  return get_time_resource (dpy, res_name, res_class, True);
 }
 
 unsigned int 
-get_minutes_resource (char *res_name, char *res_class)
+get_minutes_resource (Display *dpy, char *res_name, char *res_class)
 {
-  return get_time_resource (res_name, res_class, False);
+  return get_time_resource (dpy, res_name, res_class, False);
 }

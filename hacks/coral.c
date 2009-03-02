@@ -13,26 +13,41 @@
 #include "colors.h"
 #include "erase.h"
 
-static GC draw_gc, erase_gc;
-static unsigned int default_fg_pixel;
 #define NCOLORSMAX 200
-static XColor colors[NCOLORSMAX];
-static int ncolors = 0;
-static int colorindex = 0;
-static int colorsloth;
 
-static XPoint *walkers = 0;
-static int nwalkers;
-static int width, widthb;
-static int height;
+struct state {
+  Display *dpy;
+  Window window;
 
-static unsigned int *board = 0;
-#define getdot(x,y) (board[(y*widthb)+(x>>5)] &  (1<<(x & 31)))
-#define setdot(x,y) (board[(y*widthb)+(x>>5)] |= (1<<(x & 31)))
+   GC draw_gc, erase_gc;
+   unsigned int default_fg_pixel;
+   XColor colors[NCOLORSMAX];
+   int ncolors;
+   int colorindex;
+   int colorsloth;
+
+   XPoint *walkers;
+   int nwalkers;
+   int width, widthb;
+   int height;
+   int delay, delay2;
+   int max_points;
+   XPoint *pointbuf;
+
+   unsigned int *board;
+
+   int done, reset;
+   int npoints;
+   eraser_state *eraser;
+};
+
+
+#define getdot(x,y) (st->board[(y*st->widthb)+(x>>5)] &  (1<<(x & 31)))
+#define setdot(x,y) (st->board[(y*st->widthb)+(x>>5)] |= (1<<(x & 31)))
 
 
 static void
-init_coral(Display *dpy, Window window)
+init_coral(struct state *st)
 {
     XGCValues gcv;
     Colormap cmap;
@@ -42,65 +57,65 @@ init_coral(Display *dpy, Window window)
     int density;
     int i;
 
-    XClearWindow(dpy, window);
-    XGetWindowAttributes(dpy, window, &xgwa);
-    width = xgwa.width;
-    widthb = ((xgwa.width + 31) >> 5);
-    height = xgwa.height;
-    if (board) free(board);
-    board = (unsigned int *)calloc(widthb * xgwa.height, sizeof(unsigned int));
-    if(!board) exit(1);
+    XClearWindow(st->dpy, st->window);
+    XGetWindowAttributes(st->dpy, st->window, &xgwa);
+    st->width = xgwa.width;
+    st->widthb = ((xgwa.width + 31) >> 5);
+    st->height = xgwa.height;
+    if (st->board) free(st->board);
+    st->board = (unsigned int *)calloc(st->widthb * xgwa.height, sizeof(unsigned int));
+    if(!st->board) exit(1);
     cmap = xgwa.colormap;
-    if( ncolors ) {
-        free_colors(dpy, cmap, colors, ncolors);
-        ncolors = 0;
+    if( st->ncolors ) {
+        free_colors(st->dpy, cmap, st->colors, st->ncolors);
+        st->ncolors = 0;
     }
-    gcv.foreground = default_fg_pixel = get_pixel_resource("foreground", "Foreground", dpy, cmap);
-    draw_gc = XCreateGC(dpy, window, GCForeground, &gcv);
-    gcv.foreground = get_pixel_resource ("background", "Background",dpy, cmap);
-    erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-    ncolors = NCOLORSMAX;
-    make_uniform_colormap(dpy, xgwa.visual, cmap, colors, &ncolors, True, &writeable, False);
-    if (ncolors <= 0) {
-      ncolors = 2;
-      colors[0].red = colors[0].green = colors[0].blue = 0;
-      colors[1].red = colors[1].green = colors[1].blue = 0xFFFF;
-      XAllocColor(dpy, cmap, &colors[0]);
-      XAllocColor(dpy, cmap, &colors[1]);
+    gcv.foreground = st->default_fg_pixel = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
+    st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
+    st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+    st->ncolors = NCOLORSMAX;
+    make_uniform_colormap(st->dpy, xgwa.visual, cmap, st->colors, &st->ncolors, True, &writeable, False);
+    if (st->ncolors <= 0) {
+      st->ncolors = 2;
+      st->colors[0].red = st->colors[0].green = st->colors[0].blue = 0;
+      st->colors[1].red = st->colors[1].green = st->colors[1].blue = 0xFFFF;
+      XAllocColor(st->dpy, cmap, &st->colors[0]);
+      XAllocColor(st->dpy, cmap, &st->colors[1]);
    }
-    colorindex = random()%ncolors;
+    st->colorindex = random()%st->ncolors;
     
-    density = get_integer_resource("density", "Integer");
+    density = get_integer_resource(st->dpy, "density", "Integer");
     if( density < 1 ) density = 1;
     if( density > 100 ) density = 90; /* more like mold than coral */
-    nwalkers = (width*height*density)/100;
-    if (walkers) free(walkers);
-    walkers = (XPoint *)calloc(nwalkers, sizeof(XPoint));
-    if( (XPoint *)0 == walkers ) exit(1);
+    st->nwalkers = (st->width*st->height*density)/100;
+    if (st->walkers) free(st->walkers);
+    st->walkers = (XPoint *)calloc(st->nwalkers, sizeof(XPoint));
+    if( (XPoint *)0 == st->walkers ) exit(1);
 
-    seeds = get_integer_resource("seeds", "Integer");
+    seeds = get_integer_resource(st->dpy, "seeds", "Integer");
     if( seeds < 1 ) seeds = 1;
     if( seeds > 1000 ) seeds = 1000;
 
-    colorsloth = nwalkers*2/ncolors;
-    XSetForeground(dpy, draw_gc, colors[colorindex].pixel);
+    st->colorsloth = st->nwalkers*2/st->ncolors;
+    XSetForeground(st->dpy, st->draw_gc, st->colors[st->colorindex].pixel);
 
     for( i = 0; i < seeds; i++ ) {
         int x, y;
         do {
-          x = 1 + random() % (width - 2);
-          y = 1 + random() % (height - 2);
+          x = 1 + random() % (st->width - 2);
+          y = 1 + random() % (st->height - 2);
         } while( getdot(x, y) );
 
         setdot((x-1), (y-1)); setdot(x, (y-1)); setdot((x+1), (y-1));
 	setdot((x-1),  y   ); setdot(x,  y   ); setdot((x+1),  y   );
 	setdot((x-1), (y+1)); setdot(x, (y+1)); setdot((x+1), (y+1));
-        XDrawPoint(dpy, window, draw_gc, x, y);
+        XDrawPoint(st->dpy, st->window, st->draw_gc, x, y);
     }
 
-    for( i = 0; i < nwalkers; i++ ) {
-        walkers[i].x = (random() % (width-2)) + 1;
-        walkers[i].y = (random() % (height-2)) + 1;
+    for( i = 0; i < st->nwalkers; i++ ) {
+        st->walkers[i].x = (random() % (st->width-2)) + 1;
+        st->walkers[i].y = (random() % (st->height-2)) + 1;
     }
 }
 
@@ -128,116 +143,149 @@ rand_2(void)
 }
 
 
-static void
-coral(Display *dpy, Window window)
+static int
+coral(struct state *st)
 {
-    int delay2 = get_integer_resource ("delay2", "Integer");
+  int i = 0;
 
-    int max_points = 200;
-    int npoints = 0;
-    XPoint *pointbuf = (XPoint *) calloc(sizeof(XPoint), max_points+2);
-    if (!pointbuf) exit(-1);
+  for( i = 0; i < st->nwalkers; i++ ) {
+    int x = st->walkers[i].x;
+    int y = st->walkers[i].y;
 
-    while( 1 ) {
-        int i;
+    if( getdot(x, y) ) {
 
-        for( i = 0; i < nwalkers; i++ ) {
-            int x = walkers[i].x;
-            int y = walkers[i].y;
+      Bool flush = False;
+      Bool color = False;
 
-            if( getdot(x, y) ) {
+      /* XDrawPoint(dpy, window, draw_gc, x, y); */
+      st->pointbuf[st->npoints].x = x;
+      st->pointbuf[st->npoints].y = y;
+      st->npoints++;
 
-	        Bool flush = False;
-	        Bool color = False;
-
-	        /* XDrawPoint(dpy, window, draw_gc, x, y); */
-	        pointbuf[npoints].x = x;
-	        pointbuf[npoints].y = y;
-		npoints++;
-
-                /* Mark the surrounding area as "sticky" */
-                setdot((x-1), (y-1)); setdot(x, (y-1)); setdot((x+1), (y-1));
-		setdot((x-1),  y   );                   setdot((x+1),  y   );
-                setdot((x-1), (y+1)); setdot(x, (y+1)); setdot((x+1), (y+1));
-                nwalkers--;
-                walkers[i].x = walkers[nwalkers].x;
-                walkers[i].y = walkers[nwalkers].y;
-                if( 0 == (nwalkers%colorsloth) ) {
-		  color = True;
-                }
+      /* Mark the surrounding area as "sticky" */
+      setdot((x-1), (y-1)); setdot(x, (y-1)); setdot((x+1), (y-1));
+      setdot((x-1),  y   );                   setdot((x+1),  y   );
+      setdot((x-1), (y+1)); setdot(x, (y+1)); setdot((x+1), (y+1));
+      st->nwalkers--;
+      st->walkers[i].x = st->walkers[st->nwalkers].x;
+      st->walkers[i].y = st->walkers[st->nwalkers].y;
+      if( 0 == (st->nwalkers%st->colorsloth) ) {
+        color = True;
+      }
 		  
-		if (flush || color || 0 == nwalkers || npoints >= max_points) {
-		  XDrawPoints(dpy, window, draw_gc, pointbuf, npoints,
-			      CoordModeOrigin);
-		  npoints = 0;
-		  XSync(dpy, False);
-		}
+      if (flush || color || 0 == st->nwalkers || st->npoints >= st->max_points) {
+        XDrawPoints(st->dpy, st->window, st->draw_gc, st->pointbuf, st->npoints,
+                    CoordModeOrigin);
+        st->npoints = 0;
+      }
 
-		if (color) {
-                    colorindex++;
-                    if( colorindex == ncolors )
-                        colorindex = 0;
-                    XSetForeground(dpy, draw_gc, colors[colorindex].pixel);
-                }
-
-                if( 0 == nwalkers ) {
-                    XSync(dpy, False);
-		    free(pointbuf);
-                    return;
-                }
-            } else {
-                /* move it a notch */
-                do {
-                    switch(rand_2()) {
-                    case 0:
-                        if( 1 == x ) continue;
-                        walkers[i].x--;
-                        break;
-                    case 1:
-                        if( width-2 == x ) continue;
-                        walkers[i].x++;
-                        break;
-                    case 2:
-                        if( 1 == y ) continue;
-                        walkers[i].y--;
-                        break;
-                    default: /* case 3: */
-                        if( height-2 == y ) continue;
-                        walkers[i].y++;
-                        break;
-		    /* default:
-		      abort(); */
-                    }
-                } while(0);
-            }
+      if (color) {
+        st->colorindex++;
+        if( st->colorindex == st->ncolors )
+          st->colorindex = 0;
+        XSetForeground(st->dpy, st->draw_gc, st->colors[st->colorindex].pixel);
+      }
+    } else {
+      /* move it a notch */
+      do {
+        switch(rand_2()) {
+        case 0:
+          if( 1 == x ) continue;
+          st->walkers[i].x--;
+          break;
+        case 1:
+          if( st->width-2 == x ) continue;
+          st->walkers[i].x++;
+          break;
+        case 2:
+          if( 1 == y ) continue;
+          st->walkers[i].y--;
+          break;
+        default: /* case 3: */
+          if( st->height-2 == y ) continue;
+          st->walkers[i].y++;
+          break;
+          /* default:
+             abort(); */
         }
-
-	if (delay2 > 0) {
-	  if (npoints > 0) {
-	    XDrawPoints(dpy, window, draw_gc, pointbuf, npoints,
-			CoordModeOrigin);
-	    npoints = 0;
-	    XSync(dpy, False);
-	  }
-          screenhack_handle_events (dpy);
-	  usleep(delay2);
-	}
+      } while(0);
     }
+  }
+
+ return (0 == st->nwalkers);
 }
 
-char *progclass = "Coral";
+static void *
+coral_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = window;
+  st->max_points = 200;
+  st->pointbuf = (XPoint *) calloc(sizeof(XPoint), st->max_points+2);
+  if (!st->pointbuf) exit(-1);
 
-char *defaults[] = {
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->delay2 = get_integer_resource (st->dpy, "delay2", "Integer");
+  st->reset = 1;
+  return st;
+}
+
+
+static unsigned long
+coral_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->eraser || st->done)
+    {
+      st->done = 0;
+      st->eraser = erase_window (st->dpy, st->window, st->eraser);
+      return st->delay2;
+    }
+
+  if (st->reset)
+    init_coral(st);
+  st->reset = st->done = coral(st);
+
+  return (st->reset
+          ? (st->delay * 1000000)
+          : st->delay2);
+}
+
+static void
+coral_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+coral_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+coral_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st->pointbuf);
+  if (st->walkers) free (st->walkers);
+  if (st->board) free (st->board);
+  free (st);
+}
+
+static const char *coral_defaults[] = {
   ".background:	black",
   ".foreground:	white",
   "*density:	25",
   "*seeds:	20", /* too many for 640x480, too few for 1280x1024 */
   "*delay:	5",
-  "*delay2:	1000",
+  "*delay2:	20000",
   0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec coral_options[] = {
     { "-density", ".density", XrmoptionSepArg, 0 },
     { "-seeds", ".seeds", XrmoptionSepArg, 0 },
     { "-delay", ".delay", XrmoptionSepArg, 0 },
@@ -245,17 +293,4 @@ XrmOptionDescRec options[] = {
     { 0, 0, 0, 0 }
 };
 
-void
-screenhack(dpy, window)
-Display *dpy;
-Window window;
-{
-    int delay = get_integer_resource ("delay", "Integer");
-    while( 1 ) {
-        init_coral(dpy, window);
-        coral(dpy, window);
-        screenhack_handle_events (dpy);
-        if( delay ) sleep(delay);
-	erase_full_window(dpy, window);
-    }
-}
+XSCREENSAVER_MODULE ("Coral", coral)

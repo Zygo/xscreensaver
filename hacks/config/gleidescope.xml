@@ -4,10 +4,12 @@
 
   <command arg="-root"/>
 
-  <boolean id="move"	_label="Move" arg-unset="-no-move"/>
-  <boolean id="rotate"	_label="Rotate" arg-unset="-no-rotate"/>
-  <boolean id="zoom"	_label="Zoom" arg-set="-zoom"/>
-  <file id="image"		_label="Image file" arg="-image %"/>
+  <hgroup>
+   <boolean id="move"	_label="Move"   arg-unset="-no-move"/>
+   <boolean id="rotate"	_label="Rotate" arg-unset="-no-rotate"/>
+   <boolean id="zoom"	_label="Zoom"   arg-set="-zoom"/>
+  </hgroup>
+
   <number id="size"		_label="Size of tube" arg="-size %"
 	  type="slider" _low-label="Small" _high-label="Large"
 	  low="1" high="10" default="7" />
@@ -15,10 +17,15 @@
           _label="Image Duration"
           _low-label="10 Seconds" _high-label="5 Minutes"
           low="10" high="300" default="30"/>
+
+  <xscreensaver-image />
+
   <boolean id="showfps"	_label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-An OpenGL kaleidescope that operates on your desktop image, or on
-image files loaded from disk.  Written by andrew dean.
+A kaleidescope that operates on your desktop image, or on
+image files loaded from disk.  
+
+Written by Andrew Dean; 2003.
   </_description>
 </screensaver>

@@ -9,15 +9,23 @@
 #ifndef __BUILD_LWO_H__
 #define __BUILD_LWO_H__
 
+#ifdef STANDALONE
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+# endif
+#endif
+
 struct lwo {
-	int         num_pnts;
-	GLfloat    *pnts;
-	GLfloat    *normals;
-	unsigned short int *pols;
-	GLfloat    *smoothnormals;
+	int             num_pnts;
+	const GLfloat  *pnts;
+	const GLfloat  *normals;
+	const unsigned  short int *pols;
+	const GLfloat  *smoothnormals;
 };
 
-GLuint      BuildLWO(int wireframe, struct lwo *object);
+GLuint      BuildLWO(int wireframe, const struct lwo *object);
 
 #endif
 

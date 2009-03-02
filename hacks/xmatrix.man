@@ -1,3 +1,16 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
 .TH XScreenSaver 1 "30-Oct-99" "X Version 11"
 .SH NAME
 xmatrix - simulates the computer displays from the movie
@@ -10,6 +23,7 @@ xmatrix - simulates the computer displays from the movie
 [\-top | \-bottom | \-both]
 [\-small | \-large]
 [\-trace]
+[\-mode \fImode\fP]
 [\-phone \fInumber\fP]
 .SH DESCRIPTION
 The \fIxmatrix\fP program draws dropping characters similar to what
@@ -64,28 +78,49 @@ switch to both-mode.
 These options specify the sizes of the characters.  The default
 is \fB\-large\fP.
 .TP 8
-.B \-trace
+.B \-mode trace
 Start off with a representation of a phone number being traced.  
 When the number is finally found, display The Matrix as usual.
+This is the default.
 .TP 8
 .B \-phone\fP \fInumber\fP
 The phone number to trace, if \fB\-trace\fP is specified.
 .TP 8
-.B \-crack
+.B \-mode crack
 Start off by shutting down the power grid.
 .TP 8
-.B \-binary\fP
+.B \-mode binary
 Instead of displaying Matrix glyphs, only display ones and zeros.
 .TP 8
-.B \-hexadecimal\fP
+.B \-mode hexadecimal
 Instead of displaying Matrix glyphs, display hexadecimal digits.
 .TP 8
-.B \-dna\fP
+.B \-mode dna
 Instead of displaying Matrix glyphs, display genetic code
 (guanine, adenine, thymine, and cytosine.)
 .TP 8
-.B \-knock\-knock\fP
-Produce some messages at random times.
+.B \-mode ascii
+Instead of displaying Matrix glyphs, display random ASCII characters.
+.TP 8
+.B \-mode pipe
+Instead of displaying random characters, display the output of a subprocess,
+as ASCII.
+.TP 8
+.B \-program \fIsh-command\fP
+The command to run to generate the text to display.  This option may
+be any string acceptable to /bin/sh.  The program will be run at the
+end of a pty or pipe, and any characters that it prints to
+\fIstdout\fP will be placed in the feeders for xmatrix. If the program
+exits, it will be launched again after xmatrix has processed all the
+text it produced.
+
+For example:
+.EX
+xmatrix -program 'echo Hello World'
+xmatrix -ascii -program 'ps -eo comm | rev'
+xmatrix -program 'od -txC -w6 /dev/random'
+xmatrix -program 'cat /dev/random'
+.EE
 .SH ENVIRONMENT
 .PP
 .TP 8

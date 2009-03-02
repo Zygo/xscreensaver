@@ -21,9 +21,6 @@
           _label="Resolution" _low-label="Low" _high-label="High"
           low="10" high="120" default="40"/>
 
-  <boolean id="wander" _label="Wander" arg-set="-wander"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
-
   <select id="style">
     <option id="classic" _label="Classic Lavalite" arg-set="-style classic"/>
     <option id="giant"   _label="Giant Lavalite"   arg-set="-style giant"/>
@@ -33,32 +30,39 @@
   </select>
 
   <select id="rotation">
-    <option id="no"  _label="Don't Rotate" arg-set="-no-spin"/>
+    <option id="no"  _label="Don't Rotate"                 arg-set="-spin 0"/>
     <option id="x"   _label="Rotate around X axis"/>
-    <option id="y"   _label="Rotate around Y axis" arg-set="-spin Y"/>
-    <option id="z"   _label="Rotate around Z axis" arg-set="-spin Z"/>
-    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
-    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
-    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="y"   _label="Rotate around Y axis"         arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis"         arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes"   arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes"   arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes"   arg-set="-spin YZ"/>
     <option id="xyz" _label="Rotate around all three axes" arg-set="-spin XYZ"/>
   </select>
 
-  <select id="render">
-    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid"    _label="Smooth"/>
-    <option id="solid"    _label="Faceted" arg-set="-no-smooth"/>
-  </select>
+ <hgroup>
+  <boolean id="impatient" _label="Impatient"   arg-set="-impatient"/>
+  <boolean id="smooth"    _label="Smooth"      arg-unset="-no-smooth"/>
+  <boolean id="wander" _label="Wander" arg-set="-wander"/>
+ </hgroup>
+
+ <hgroup>
+  <boolean id="wire"      _label="Wireframe"   arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+ </hgroup>
 
   <_description>
 Draws a 3D Simulation a Lava Lite(r): odd-shaped blobs of a mysterious
 substance are heated, slowly rise to the top of the bottle, and then
-drop back down as they cool.  This program requires OpenGL and a fairly
-fast machine (both CPU and 3D performance.)  Written by Jamie Zawinski.
+drop back down as they cool.  This program requires a fairly fast
+machine (both CPU and 3D performance.)
 
 "LAVA LITE(r) and the configuration of the LAVA(r) brand motion lamp are
 registered trademarks of Haggerty Enterprises, Inc.  The configuration
 of the globe and base of the motion lamp are registered trademarks of
 Haggerty Enterprises, Inc. in the U.S.A. and in other countries around
 the world."
+
+Written by Jamie Zawinski; 2002.
   </_description>
 </screensaver>

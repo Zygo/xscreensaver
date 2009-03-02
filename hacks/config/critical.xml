@@ -13,14 +13,10 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <!-- #### -restart [8] -->
-  <!-- #### -cellsize [?] -->
-  <!-- #### -batchcount [1500] -->
-  <!-- #### -trail [50] -->
-
   <_description>
 Draws a system of self-organizing lines.  It starts out as random
 squiggles, but after a few iterations, order begins to appear.
-Written by Martin Pool.
+
+Written by Martin Pool; 1999.
   </_description>
 </screensaver>

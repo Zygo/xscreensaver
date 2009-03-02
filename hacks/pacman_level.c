@@ -20,8 +20,6 @@
 #include "pacman_level.h"
 
 
-#define MI_SCREEN(MI)		(0)
-
 #define NONE 0x0000
 #define LT   0x1000
 #define RT   0x0001
@@ -79,8 +77,6 @@ static const lev_t stdlevel = {
     "########################################"
 };
 
-#define TILEWIDTH 5U
-#define TILEHEIGHT 5U
 #define TILES_COUNT 11U
 
 #define GO_UP 0x0001U
@@ -88,14 +84,7 @@ static const lev_t stdlevel = {
 #define GO_RIGHT 0x0004U
 #define GO_DOWN 0x0008U
 
-/* This are tiles which can be places to create a level. */
-static struct
-{
-    char block[TILEWIDTH * TILEHEIGHT + 1];
-    unsigned dirvec[4];
-    unsigned ndirs;
-    unsigned simular_to;
-} tiles[TILES_COUNT] = {
+static const struct tiles def_tiles[TILES_COUNT] = {
 /*   
  *   ' ' == dont care == BLOCK_EMPTY
  *   '#' == set wall, and not clear == BLOCK_WALL
@@ -139,21 +128,13 @@ static const unsigned tileprob[MAXTILEPROB] =
     { 0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 6, 6, 7, 7, 8, 8, 8, 9, 9, 10, 10, 10 };
 
 
-static int creatlevelblock (lev_t * level, const unsigned x,
+static int creatlevelblock (pacmangamestruct *pp, 
+                            lev_t * level, const unsigned x,
                             const unsigned y);
-
-typedef struct
-{
-    unsigned int x, y;
-    int eaten;
-} bonus_dot;
-
 
 
 enum
 { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT };
-
-static bonus_dot bonus_dots[NUM_BONUS_DOTS];
 
 /* Sets a block in the level to a certain state. */
 static void
@@ -346,7 +327,8 @@ tryset (lev_t * level, const unsigned xpos, const unsigned ypos,
 
 /* Tries certain combinations of blocks in the level recursively. */
 static unsigned
-nextstep (lev_t * level, const unsigned x, const unsigned y,
+nextstep (pacmangamestruct *pp, 
+          lev_t * level, const unsigned x, const unsigned y,
           unsigned dirvec[], unsigned ndirs)
 {
     unsigned dirpos, curdir, inc = 0;
@@ -367,22 +349,22 @@ nextstep (lev_t * level, const unsigned x, const unsigned y,
 
         switch (curdir) {
         case GO_UP:
-            if (y < 1 || (ret = creatlevelblock (level, x, y - 1))
+            if (y < 1 || (ret = creatlevelblock (pp, level, x, y - 1))
                 == 0)
                 return 0;
             break;
         case GO_RIGHT:
-            if (x > LEVWIDTH - 2 || (ret = creatlevelblock (level, x + 1, y))
+            if (x > LEVWIDTH - 2 || (ret = creatlevelblock (pp, level, x + 1, y))
                 == 0)
                 return 0;
             break;
         case GO_DOWN:
-            if (y > LEVHEIGHT - 2 || (ret = creatlevelblock (level, x, y + 1))
+            if (y > LEVHEIGHT - 2 || (ret = creatlevelblock (pp, level, x, y + 1))
                 == 0)
                 return 0;
             break;
         case GO_LEFT:
-            if (x < 1 || (ret = creatlevelblock (level, x - 1, y))
+            if (x < 1 || (ret = creatlevelblock (pp, level, x - 1, y))
                 == 0)
                 return 0;
         }
@@ -395,12 +377,18 @@ nextstep (lev_t * level, const unsigned x, const unsigned y,
 }
 
 static int
-creatlevelblock (lev_t * level, const unsigned x, const unsigned y)
+creatlevelblock (pacmangamestruct *pp, 
+                 lev_t * level, const unsigned x, const unsigned y)
 {
     unsigned tried = GETNB (TILES_COUNT);
     unsigned tilenr;
     unsigned ret;
     lev_t savedlev;
+
+    if (!pp->tiles) {
+        pp->tiles = (struct tiles *) malloc (sizeof (def_tiles));
+        memcpy (pp->tiles, def_tiles, sizeof (def_tiles));
+    }
 
     if (!((x < LEVWIDTH) && (y < LEVHEIGHT)))
         return 0;
@@ -436,14 +424,14 @@ creatlevelblock (lev_t * level, const unsigned x, const unsigned y)
         if (!TESTNB (tried, tilenr))
             continue;
 
-        if (tryset (level, x, y, tiles[tilenr].block) != 0) {
-            if ((ret = nextstep (level, x, y, tiles[tilenr].dirvec,
-                                 tiles[tilenr].ndirs)) != 0) {
+        if (tryset (level, x, y, pp->tiles[tilenr].block) != 0) {
+            if ((ret = nextstep (pp, level, x, y, pp->tiles[tilenr].dirvec,
+                                 pp->tiles[tilenr].ndirs)) != 0) {
                 return ret + 1;
             }
             (void) memcpy (level, &savedlev, sizeof (lev_t));
         }
-        tried &= ~(tiles[tilenr].simular_to);
+        tried &= ~(pp->tiles[tilenr].simular_to);
     }
     return 0;
 }
@@ -525,35 +513,35 @@ bottom_right (lev_t * level, unsigned int *passed_x, unsigned int *passed_y)
 }
 
 static void
-init_bonus_dots (lev_t * level)
+init_bonus_dots (pacmangamestruct *pp, lev_t * level)
 {
     unsigned int x = 0, y = 0;
     top_left (level, &x, &y);
-    bonus_dots[TOP_LEFT].x = x;
-    bonus_dots[TOP_LEFT].y = y;
-    bonus_dots[TOP_LEFT].eaten = False;
+    pp->bonus_dots[TOP_LEFT].x = x;
+    pp->bonus_dots[TOP_LEFT].y = y;
+    pp->bonus_dots[TOP_LEFT].eaten = False;
     top_right (level, &x, &y);
-    bonus_dots[TOP_RIGHT].x = x;
-    bonus_dots[TOP_RIGHT].y = y;
-    bonus_dots[TOP_RIGHT].eaten = False;
+    pp->bonus_dots[TOP_RIGHT].x = x;
+    pp->bonus_dots[TOP_RIGHT].y = y;
+    pp->bonus_dots[TOP_RIGHT].eaten = False;
     bottom_left (level, &x, &y);
-    bonus_dots[BOTTOM_LEFT].x = x;
-    bonus_dots[BOTTOM_LEFT].y = y;
-    bonus_dots[BOTTOM_LEFT].eaten = False;
+    pp->bonus_dots[BOTTOM_LEFT].x = x;
+    pp->bonus_dots[BOTTOM_LEFT].y = y;
+    pp->bonus_dots[BOTTOM_LEFT].eaten = False;
     bottom_right (level, &x, &y);
-    bonus_dots[BOTTOM_RIGHT].x = x;
-    bonus_dots[BOTTOM_RIGHT].y = y;
-    bonus_dots[BOTTOM_RIGHT].eaten = False;
+    pp->bonus_dots[BOTTOM_RIGHT].x = x;
+    pp->bonus_dots[BOTTOM_RIGHT].y = y;
+    pp->bonus_dots[BOTTOM_RIGHT].eaten = False;
 }
 
 int
-is_bonus_dot (int x, int y, int *idx)
+is_bonus_dot (pacmangamestruct *pp, int x, int y, int *idx)
 {
     int ret = False;
     int i;
     for (i = 0; i <= NUM_BONUS_DOTS; i++) {
 /*     fprintf(stderr,"is bonus: passed x (%d, %d) bonus (%d, %d)\n",x,y,bonus_dots[i].x, bonus_dots[i].y); */
-        if (x == bonus_dots[i].x && y == bonus_dots[i].y) {
+        if (x == pp->bonus_dots[i].x && y == pp->bonus_dots[i].y) {
             ret = True;
             *idx = i;
             break;
@@ -569,31 +557,31 @@ check_bonus_idx (int idx)
 }
 
 int
-bonus_dot_eaten (int idx)
+bonus_dot_eaten (pacmangamestruct *pp, int idx)
 {
     check_bonus_idx (idx);
-    return bonus_dots[idx].eaten;
+    return pp->bonus_dots[idx].eaten;
 }
 
 void
-eat_bonus_dot (int idx)
+eat_bonus_dot (pacmangamestruct *pp, int idx)
 {
     check_bonus_idx (idx);
-    bonus_dots[idx].eaten = True;
+    pp->bonus_dots[idx].eaten = True;
 }
 
 void
-bonus_dot_pos (int idx, int *x, int *y)
+bonus_dot_pos (pacmangamestruct *pp, int idx, int *x, int *y)
 {
     check_bonus_idx (idx);
-    *x = bonus_dots[idx].x;
-    *y = bonus_dots[idx].y;
+    *x = pp->bonus_dots[idx].x;
+    *y = pp->bonus_dots[idx].y;
 }
 
 /* Changes a level from a simple wall/nowall to a wall with rounded corners
    and such.  Stupid algorithm, could be done better! */
 static void
-frmtlevel (lev_t * level)
+frmtlevel (pacmangamestruct *pp, lev_t * level)
 {
     lev_t frmtlev;
     int x, y;
@@ -602,12 +590,12 @@ frmtlevel (lev_t * level)
     register unsigned poscond2;
 
     clearlevel (&frmtlev);
-    init_bonus_dots (level);
+    init_bonus_dots (pp, level);
     for (y = 0; y < LEVHEIGHT; y++)
         for (x = 0; x < LEVWIDTH; x++) {
 
             if (checkset (level, x, y) == 0) {
-                if (is_bonus_dot (x, y, &idx)) {
+                if (is_bonus_dot (pp, x, y, &idx)) {
                     frmtlev[y][x] = BLOCK_DOT_BONUS;
                 }
                 else {
@@ -708,9 +696,8 @@ frmtlevel (lev_t * level)
 
 /* Counts the number of dots in the level, and returns that number. */
 static unsigned
-countdots (ModeInfo * mi)
+countdots (pacmangamestruct *pp)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     unsigned i, count = 0;
 
     for (i = 0; i < LEVWIDTH * LEVHEIGHT; i++)
@@ -722,9 +709,8 @@ countdots (ModeInfo * mi)
 
 /* Creates a new level, and places that in the pacmangamestruct. */
 int
-createnewlevel (ModeInfo * mi)
+createnewlevel (pacmangamestruct *pp)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
     lev_t *level;
     unsigned dirvec[1] = { GO_UP };
     unsigned ret = 0, i = 0;
@@ -737,7 +723,7 @@ createnewlevel (ModeInfo * mi)
         do {
             clearlevel (level);
             createjail (level, JAILWIDTH, JAILHEIGHT);
-            if ((ret = nextstep (level, LEVWIDTH / 2 - 1,
+            if ((ret = nextstep (pp, level, LEVWIDTH / 2 - 1,
                                  LEVHEIGHT / 2 - JAILHEIGHT / 2 - 3,
                                  dirvec, 1)) == 0) {
                 (void) free ((void *) level);
@@ -746,16 +732,16 @@ createnewlevel (ModeInfo * mi)
         } while (ret * 100 < (LEVWIDTH * LEVHEIGHT * MINDOTPERC));
 
         filllevel (level);
-        frmtlevel (level);
+        frmtlevel (pp, level);
         finishjail (level, JAILWIDTH, JAILHEIGHT);
     }
     else {
         (void) memcpy (level, stdlevel, sizeof (lev_t));
-        frmtlevel (level);
+        frmtlevel (pp, level);
         i = 1;
     }
     copylevel (pp->level, level);
-    pp->dotsleft = countdots (mi);
+    pp->dotsleft = countdots (pp);
 
     (void) free ((void *) level);
     return i;

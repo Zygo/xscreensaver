@@ -14,7 +14,9 @@
  * implied warranty.
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 /* ******************************   NOTE   ******************************
 
@@ -25,21 +27,17 @@
  */
 
 #ifdef STANDALONE
-# define PROGCLASS          "Forest" /*"XTree"*/
-# define HACK_INIT          init_trees
-# define HACK_DRAW          draw_trees
-# define trees_opts         xlockmore_opts 
 # define DEFAULTS   "*delay:            500000 \n"  \
-                    "*ncolors:          20     \n"  \
-                    "*eraseSpeed:       400    \n"  \
-                    "*eraseMode:        -1     \n"  \
-                    "*installColormap   False"
+                    "*ncolors:          20     \n"
 # include "xlockmore.h"     /* from the xscreensaver distribution */
+# define refresh_trees 0
+# define reshape_trees 0
+# define trees_handle_event 0
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt trees_opts = {0, NULL, 0, NULL, NULL};
+ENTRYPOINT ModeSpecOpt trees_opts = {0, NULL, 0, NULL, NULL};
 
 typedef struct {
   int     x;
@@ -48,13 +46,14 @@ typedef struct {
   double  size;
   long    color;
   int     toDo;
+  int     pause;
   int     season;
 } treestruct;
 
 static treestruct *trees = NULL;
 
-XColor colors[20];
-int color;
+static XColor colors[20];
+static int color;
 
 static long colorM[12] = {0xff0000, 0xff8000, 0xffff00, 0x80ff00,
                           0x00ff00, 0x00ff80, 0x00ffff, 0x0080ff,
@@ -64,7 +63,9 @@ static long colorV[12] = {0x0a0000, 0x0a0500, 0x0a0a00, 0x050a00,
                           0x000a00, 0x000a05, 0x000a0a, 0x00050a,
                           0x00000a, 0x05000a, 0x0a000a, 0x0a0005};
 
-void init_trees(ModeInfo * mi) {
+ENTRYPOINT void
+init_trees(ModeInfo * mi)
+{
 	unsigned long			pixels[20];
   treestruct       *tree;
   Display          *display = MI_DISPLAY(mi);
@@ -140,13 +141,15 @@ void init_trees(ModeInfo * mi) {
   color = i;
 }
 
-double rRand(double a, double b) {
+static double rRand(double a, double b)
+{
   return (a+(b-a)*NRAND(10001)/10000.0);
 }
 
-void draw_line(ModeInfo * mi,
-               int x1, int y1, int x2, int y2,
-               double angle, int widths, int widthe) {
+static void draw_line(ModeInfo * mi,
+                      int x1, int y1, int x2, int y2,
+                      double angle, int widths, int widthe)
+{
 
   Display    *display = MI_DISPLAY(mi);
   GC          gc = MI_GC(mi);
@@ -174,7 +177,8 @@ void draw_line(ModeInfo * mi,
   }
 }
 
-void draw_tree_rec(ModeInfo * mi, double thick, int x, int y, double angle) {
+static void draw_tree_rec(ModeInfo * mi, double thick, int x, int y, double angle)
+{
   treestruct *tree = &trees[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
   GC          gc = MI_GC(mi);
@@ -210,14 +214,22 @@ void draw_tree_rec(ModeInfo * mi, double thick, int x, int y, double angle) {
   }
 }
 
-void draw_trees(ModeInfo * mi) {
+ENTRYPOINT void
+draw_trees(ModeInfo * mi)
+{
   treestruct *tree = &trees[MI_SCREEN(mi)];
 	int					width = MI_WIN_WIDTH(mi);
 	int					height = MI_WIN_HEIGHT(mi);
 
-  if (--(tree->toDo) == 0) {
-    usleep(3000000);
+  if (tree->pause == 1) {
+    tree->pause--;
     init_trees(mi);
+  } else if (tree->pause > 1) {
+    tree->pause--;
+    return;
+  } else if (--(tree->toDo) == 0) {
+    tree->pause = 6;
+    return;
   }
 
   tree->x        = NRAND(width);
@@ -233,9 +245,14 @@ void draw_trees(ModeInfo * mi) {
   draw_tree_rec(mi, tree->thick, tree->x, tree->y, rRand(-0.1, 0.1));
 }
 
-void release_trees(ModeInfo * mi) {
+
+ENTRYPOINT void
+release_trees(ModeInfo * mi)
+{
   if (trees != NULL) {
     (void) free((void *) trees);
     trees = NULL;
   }
 }
+
+XSCREENSAVER_MODULE_2 ("Forest", forest, trees)

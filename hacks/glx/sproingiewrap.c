@@ -58,11 +58,6 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Sproingies"
-# define HACK_INIT					init_sproingies
-# define HACK_DRAW					draw_sproingies
-# define HACK_RESHAPE				reshape_sproingies
-# define sproingies_opts			xlockmore_opts
 # define DEFAULTS	"*delay:		25000   \n"			\
 					"*count:		5       \n"			\
 					"*cycles:		0       \n"			\
@@ -70,6 +65,8 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 					"*showFPS:      False   \n"			\
 					"*fpsTop:       True    \n"			\
 					"*wireframe:	False	\n"
+# define refresh_sproingies 0
+# define sproingies_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -77,7 +74,9 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-ModeSpecOpt sproingies_opts =
+#include "sproingies.h"
+
+ENTRYPOINT ModeSpecOpt sproingies_opts =
 {0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
@@ -91,7 +90,6 @@ ModStruct   sproingies_description =
 
 #define MINSIZE 32
 
-#include <GL/glu.h>
 #include <time.h>
 
 void        NextSproingie(int screen);
@@ -114,25 +112,9 @@ typedef struct {
 
 static sproingiesstruct *sproingies = NULL;
 
-static Display *swap_display;
-static Window swap_window;
-
-static ModeInfo *global_mi_kludge;
-
-void
-SproingieSwap(void)
+ENTRYPOINT void
+init_sproingies (ModeInfo * mi)
 {
-    ModeInfo *mi = global_mi_kludge;
-    if (mi->fps_p) do_fps (mi);
-	glFinish();
-	glXSwapBuffers(swap_display, swap_window);
-}
-
-
-void
-init_sproingies(ModeInfo * mi)
-{
-	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	int         screen = MI_SCREEN(mi);
 
@@ -142,8 +124,6 @@ init_sproingies(ModeInfo * mi)
 
 	sproingiesstruct *sp;
 	int         wfmode = 0, grnd, mspr, w, h;
-
-    global_mi_kludge = mi;
 
 	if (sproingies == NULL) {
 		if ((sproingies = (sproingiesstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -188,17 +168,16 @@ init_sproingies(ModeInfo * mi)
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
-		swap_display = display;
-		swap_window = window;
 		DisplaySproingies(MI_SCREEN(mi),mi->pause);
+
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
 }
 
 /* ARGSUSED */
-void
-draw_sproingies(ModeInfo * mi)
+ENTRYPOINT void
+draw_sproingies (ModeInfo * mi)
 {
 	sproingiesstruct *sp = &sproingies[MI_SCREEN(mi)];
 	Display    *display = MI_DISPLAY(mi);
@@ -210,13 +189,15 @@ draw_sproingies(ModeInfo * mi)
 	glDrawBuffer(GL_BACK);
 	glXMakeCurrent(display, window, *(sp->glx_context));
 
-	swap_display = display;
-	swap_window = window;
-
 	NextSproingieDisplay(MI_SCREEN(mi),mi->pause);	/* It will swap. */
+
+    if (mi->fps_p) do_fps (mi);
+    glFinish();
+    glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
-void
+#ifndef STANDALONE
+ENTRYPOINT void
 refresh_sproingies(ModeInfo * mi)
 {
 	/* No need to do anything here... The whole screen is updated
@@ -225,16 +206,17 @@ refresh_sproingies(ModeInfo * mi)
 	 * with DisplaySproingies(...).
 	 */
 }
+#endif /* !STANDALONE */
 
-void
+ENTRYPOINT void
 reshape_sproingies (ModeInfo *mi, int w, int h)
 {
   ReshapeSproingies(w, h);
 }
 
 
-void
-release_sproingies(ModeInfo * mi)
+ENTRYPOINT void
+release_sproingies (ModeInfo * mi)
 {
 	if (sproingies != NULL) {
 		int         screen;
@@ -254,6 +236,8 @@ release_sproingies(ModeInfo * mi)
 	}
 	FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Sproingies", sproingies)
 
 #endif
 

@@ -3,7 +3,7 @@
 imsmap - generate fractal maps
 .SH SYNOPSIS
 .B imsmap
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random] [\-cycle] [\-no\-cycle]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random]
 .SH DESCRIPTION
 The \fIimsmap\fP program generates map or cloud-like patterns.  It looks
 quite different in monochrome and color.
@@ -39,15 +39,6 @@ A measure of the resolution of the resultant image, from 0 to 7.  Default 7.
 .B \-mode [ hue | saturation | value | random ]
 The axis upon which colors should be interpolated between the foreground
 and background color.  Default random.  
-.TP 8
-.B \-cycle
-.TP 8
-.B \-no\-cycle
-Whether to do colormap cycling.  Default is to cycle.
-.TP 8
-.B \-cycle\-delay
-Number of microseconds between shifts of the colormap; default 100000,
-or 1/10th second.
 .SH ENVIRONMENT
 .PP
 .TP 8

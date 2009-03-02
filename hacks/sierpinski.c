@@ -33,24 +33,22 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_sierpinski
-#define PROGCLASS "Sierpinski"
-#define HACK_INIT init_sierpinski
-#define HACK_DRAW draw_sierpinski
-#define sierpinski_opts xlockmore_opts
-#define DEFAULTS "*delay: 400000 \n" \
- "*count: 2000 \n" \
- "*cycles: 100 \n" \
- "*ncolors: 64 \n"
-#define BRIGHT_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_sierpinski
+# define DEFAULTS	"*delay: 400000 \n" \
+					"*count: 2000 \n" \
+					"*cycles: 100 \n" \
+					"*ncolors: 64 \n"
+# define BRIGHT_COLORS
+# define reshape_sierpinski 0
+# define sierpinski_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_sierpinski
 
-ModeSpecOpt sierpinski_opts =
+ENTRYPOINT ModeSpecOpt sierpinski_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -126,7 +124,7 @@ free_sierpinski(sierpinskistruct *sp)
 		}
 }
 
-void
+ENTRYPOINT void
 init_sierpinski(ModeInfo * mi)
 {
 	int         i;
@@ -160,7 +158,7 @@ init_sierpinski(ModeInfo * mi)
 	startover(mi);
 }
 
-void
+ENTRYPOINT void
 draw_sierpinski(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -200,7 +198,7 @@ draw_sierpinski(ModeInfo * mi)
 		startover(mi);
 }
 
-void
+ENTRYPOINT void
 release_sierpinski(ModeInfo * mi)
 {
 	if (tris != NULL) {
@@ -213,10 +211,12 @@ release_sierpinski(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_sierpinski(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Sierpinski", sierpinski)
 
 #endif /* MODE_sierpinski */

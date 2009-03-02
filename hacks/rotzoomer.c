@@ -25,389 +25,437 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-static Bool use_shm;
-static XShmSegmentInfo shm_info;
 #endif
 
 struct zoom_area {
-	int w, h;		/* rectangle width and height */
-	int inc1, inc2;		/* rotation and zoom angle increments */
-	int dx, dy;		/* translation increments */
-	int a1, a2;		/* rotation and zoom angular variables */
-	int ox, oy;		/* origin in the background copy */
-	int xx, yy;		/* left-upper corner position (* 256) */
-	int x, y;		/* left-upper corner position */
-	int ww, hh;		/* valid area to place left-upper corner */
-	int n;			/* number of iteractions */
-	int count;		/* current iteraction */
+  int w, h;		/* rectangle width and height */
+  int inc1, inc2;	/* rotation and zoom angle increments */
+  int dx, dy;		/* translation increments */
+  int a1, a2;		/* rotation and zoom angular variables */
+  int ox, oy;		/* origin in the background copy */
+  int xx, yy;		/* left-upper corner position (* 256) */
+  int x, y;		/* left-upper corner position */
+  int ww, hh;		/* valid area to place left-upper corner */
+  int n;		/* number of iteractions */
+  int count;		/* current iteraction */
 };
 
-static Window window;
-static Display *display;
-static GC gc;
-static Visual *visual;
-static XImage *orig_map, *buffer_map;
-static Colormap colormap;
+struct state {
+  Display *dpy;
+  Window window;
 
-static int width, height;
-static struct zoom_area **zoom_box;
-static int num_zoom = 2;
-static int move = 0;
-static int sweep = 0;
-static int delay = 10;
-static int anim = 1;
+  GC gc;
+  Visual *visual;
+  XImage *orig_map, *buffer_map;
+  Colormap colormap;
+
+  int width, height;
+  struct zoom_area **zoom_box;
+  int num_zoom;
+  int move;
+  int sweep;
+  int delay;
+  int anim;
+
+  async_load_state *img_loader;
+
+#ifdef HAVE_XSHM_EXTENSION
+  Bool use_shm;
+  XShmSegmentInfo shm_info;
+#endif
+};
 
 
-static void rotzoom (struct zoom_area *za)
+static void
+rotzoom (struct state *st, struct zoom_area *za)
 {
-	int x, y, c, s, zoom, z;
-	int x2 = za->x + za->w - 1, y2 = za->y + za->h - 1;
-	int ox = 0, oy = 0;
+  int x, y, c, s, zoom, z;
+  int x2 = za->x + za->w - 1, y2 = za->y + za->h - 1;
+  int ox = 0, oy = 0;
 
-	z = 8100 * sin (M_PI * za->a2 / 8192);
-	zoom = 8192 + z;
+  z = 8100 * sin (M_PI * za->a2 / 8192);
+  zoom = 8192 + z;
 
-	c = zoom * cos (M_PI * za->a1 / 8192);
-	s = zoom * sin (M_PI * za->a1 / 8192);
-	for (y = za->y; y <= y2; y++) {
-		for (x = za->x; x <= x2; x++) {
-			ox = (x * c + y * s) >> 13;
-			oy = (-x * s + y * c) >> 13;
+  c = zoom * cos (M_PI * za->a1 / 8192);
+  s = zoom * sin (M_PI * za->a1 / 8192);
+  for (y = za->y; y <= y2; y++) {
+    for (x = za->x; x <= x2; x++) {
+      ox = (x * c + y * s) >> 13;
+      oy = (-x * s + y * c) >> 13;
 
-			while (ox < 0)
-				ox += width;
-			while (oy < 0)
-				oy += height;
-			while (ox >= width)
-				ox -= width;
-			while (oy >= height)
-				oy -= height;
+      while (ox < 0)
+        ox += st->width;
+      while (oy < 0)
+        oy += st->height;
+      while (ox >= st->width)
+        ox -= st->width;
+      while (oy >= st->height)
+        oy -= st->height;
 
-			XPutPixel (buffer_map, x, y, XGetPixel (orig_map, ox, oy));
-		}
-	}
+      XPutPixel (st->buffer_map, x, y, XGetPixel (st->orig_map, ox, oy));
+    }
+  }
 
-	za->a1 += za->inc1;		/* Rotation angle */
-	za->a1 &= 0x3fff;;
+  za->a1 += za->inc1;		/* Rotation angle */
+  za->a1 &= 0x3fff;;
 
-	za->a2 += za->inc2;		/* Zoom */
-	za->a2 &= 0x3fff;
+  za->a2 += za->inc2;		/* Zoom */
+  za->a2 &= 0x3fff;
 
-	za->ox = ox;			/* Save state for next iteration */
-	za->oy = oy;
+  za->ox = ox;			/* Save state for next iteration */
+  za->oy = oy;
 
-	za->count++;
+  za->count++;
 }
 
 
-static void reset_zoom (struct zoom_area *za)
+static void
+reset_zoom (struct state *st, struct zoom_area *za)
 {
-	if (sweep) {
-		int speed = random () % 100 + 100;
-		switch (random () % 4) {
-		case 0:
-			za->w = width;
-			za->h = 10;
-			za->x = 0;
-			za->y = 0;
-			za->dx = 0;
-			za->dy = speed;
-			za->n = (height - 10) * 256 / speed;
-			break;
-		case 1:
-			za->w = 10;
-			za->h = height;
-			za->x = width - 10;
-			za->y = 0;
-			za->dx = -speed;
-			za->dy = 0;
-			za->n = (width - 10) * 256 / speed;
-			break;
-		case 2:
-			za->w = width;
-			za->h = 10;
-			za->x = 0;
-			za->y = height - 10;
-			za->dx = 0;
-			za->dy = -speed;
-			za->n = (height - 10) * 256 / speed;
-			break;
-		case 3:
-			za->w = 10;
-			za->h = height;
-			za->x = 0;
-			za->y = 0;
-			za->dx = speed;
-			za->dy = 0;
-			za->n = (width - 10) * 256 / speed;
-			break;
-		}
-		za->ww = width - za->w;
-		za->hh = height - za->h;
+  if (st->sweep) {
+    int speed = random () % 100 + 100;
+    switch (random () % 4) {
+    case 0:
+      za->w = st->width;
+      za->h = 10;
+      za->x = 0;
+      za->y = 0;
+      za->dx = 0;
+      za->dy = speed;
+      za->n = (st->height - 10) * 256 / speed;
+      break;
+    case 1:
+      za->w = 10;
+      za->h = st->height;
+      za->x = st->width - 10;
+      za->y = 0;
+      za->dx = -speed;
+      za->dy = 0;
+      za->n = (st->width - 10) * 256 / speed;
+      break;
+    case 2:
+      za->w = st->width;
+      za->h = 10;
+      za->x = 0;
+      za->y = st->height - 10;
+      za->dx = 0;
+      za->dy = -speed;
+      za->n = (st->height - 10) * 256 / speed;
+      break;
+    case 3:
+      za->w = 10;
+      za->h = st->height;
+      za->x = 0;
+      za->y = 0;
+      za->dx = speed;
+      za->dy = 0;
+      za->n = (st->width - 10) * 256 / speed;
+      break;
+    }
+    za->ww = st->width - za->w;
+    za->hh = st->height - za->h;
 
-		/* We want smaller angle increments in sweep mode (looks better) */
+    /* We want smaller angle increments in sweep mode (looks better) */
 
-		za->a1 = 0;
-		za->a2 = 0;
-		za->inc1 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
-		za->inc2 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
-	} else {
-		za->w = 50 + random() % 300;
-		za->h = 50 + random() % 300;
+    za->a1 = 0;
+    za->a2 = 0;
+    za->inc1 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
+    za->inc2 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
+  } else {
+    za->w = 50 + random() % 300;
+    za->h = 50 + random() % 300;
 
-		if (za->w > width / 3)
-			za->w = width / 3;
-		if (za->h > height / 3)
-			za->h = height / 3;
+    if (za->w > st->width / 3)
+      za->w = st->width / 3;
+    if (za->h > st->height / 3)
+      za->h = st->height / 3;
 
-		za->ww = width - za->w;
-		za->hh = height - za->h;
+    za->ww = st->width - za->w;
+    za->hh = st->height - za->h;
 
-		za->x = (random() % za->ww);
-		za->y = (random() % za->hh);
+    za->x = (random() % za->ww);
+    za->y = (random() % za->hh);
 
-		za->dx = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
-		za->dy = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
+    za->dx = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
+    za->dy = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
 
-		if (anim) {
-			za->n = 50 + random() % 1000;
-			za->a1 = 0;
-			za->a2 = 0;
-		} else {
-			za->n = 5 + random() % 10;
-			za->a1 = random ();
-			za->a2 = random ();
-		}
+    if (st->anim) {
+      za->n = 50 + random() % 1000;
+      za->a1 = 0;
+      za->a2 = 0;
+    } else {
+      za->n = 5 + random() % 10;
+      za->a1 = random ();
+      za->a2 = random ();
+    }
 
-		za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
-		za->inc2 = ((2 * (random() & 1)) - 1) * (random () % 30);
-	}
+    za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
+    za->inc2 = ((2 * (random() & 1)) - 1) * (random () % 30);
+  }
 
-	za->xx = za->x * 256;
-	za->yy = za->y * 256;
+  za->xx = za->x * 256;
+  za->yy = za->y * 256;
 
-	za->count = 0;
+  za->count = 0;
 }
 
 
-static struct zoom_area *create_zoom (void)
+static struct zoom_area *
+create_zoom (struct state *st)
 {
-	struct zoom_area *za;
+  struct zoom_area *za;
 
-	za = malloc (sizeof (struct zoom_area));
-	reset_zoom (za);
+  za = malloc (sizeof (struct zoom_area));
+  reset_zoom (st, za);
 
-	return za;
+  return za;
 }
 
 
-static void update_position (struct zoom_area *za)
+static void
+update_position (struct zoom_area *za)
 {
-	za->xx += za->dx;
-	za->yy += za->dy;
+  za->xx += za->dx;
+  za->yy += za->dy;
 
-	za->x = za->xx >> 8;
-	za->y = za->yy >> 8;
+  za->x = za->xx >> 8;
+  za->y = za->yy >> 8;
 
-	if (za->x < 0) {
-		za->x = 0;
-		za->dx = 100 + random() % 100;
-	}
+  if (za->x < 0) {
+    za->x = 0;
+    za->dx = 100 + random() % 100;
+  }
 		
-	if (za->y < 0) {
-		za->y = 0;
-		za->dy = 100 + random() % 100;
-	}
+  if (za->y < 0) {
+    za->y = 0;
+    za->dy = 100 + random() % 100;
+  }
 		
-	if (za->x > za->ww) {
-		za->x = za->ww;
-		za->dx = -(100 + random() % 100);
-	}
+  if (za->x > za->ww) {
+    za->x = za->ww;
+    za->dx = -(100 + random() % 100);
+  }
 
-	if (za->y > za->hh) {
-		za->y = za->hh;
-		za->dy = -(100 + random() % 100);
-	}
+  if (za->y > za->hh) {
+    za->y = za->hh;
+    za->dy = -(100 + random() % 100);
+  }
 }
 
 
-static void DisplayImage (int x, int y, int w, int h)
+static void
+DisplayImage (struct state *st, int x, int y, int w, int h)
 {
 #ifdef HAVE_XSHM_EXTENSION
-	if (use_shm)
-		XShmPutImage (display, window, gc, buffer_map, x, y, x, y,
-			w, h, False);
-	else
+  if (st->use_shm)
+    XShmPutImage (st->dpy, st->window, st->gc, st->buffer_map, x, y, x, y,
+                  w, h, False);
+  else
 #endif /* HAVE_XSHM_EXTENSION */
-		XPutImage(display, window, gc, buffer_map, x, y, x, y, w, h);
+    XPutImage(st->dpy, st->window, st->gc, st->buffer_map, x, y, x, y, w, h);
 }
 
 
-static void hack_main (void)
+static void
+init_hack (struct state *st)
 {
-	int i;
+  int i;
 
-	for (i = 0; i < num_zoom; i++) {
-		if (move || sweep)
-			update_position (zoom_box[i]);
+  st->zoom_box = calloc (st->num_zoom, sizeof (struct zoom_area *));
+  for (i = 0; i < st->num_zoom; i++) {
+    st->zoom_box[i] = create_zoom (st);
+  }
 
-		if (zoom_box[i]->n > 0) {
-			if (anim || zoom_box[i]->count == 0) {
-				rotzoom (zoom_box[i]);
-			} else {
-				sleep (1);
-			}
-			zoom_box[i]->n--;
-		} else {
-			reset_zoom (zoom_box[i]);
-		}
-	}
+  memcpy (st->buffer_map->data, st->orig_map->data,
+          st->height * st->buffer_map->bytes_per_line);
 
-	for (i = 0; i < num_zoom; i++) {
-		DisplayImage(zoom_box[i]->x, zoom_box[i]->y,
-			zoom_box[i]->w, zoom_box[i]->h);
-	}
-
-	XSync(display,False);
-	screenhack_handle_events(display);
+  DisplayImage(st, 0, 0, st->width, st->height);
 }
 
 
-static void init_hack (void)
+static unsigned long
+rotzoomer_draw (Display *disp, Window win, void *closure)
 {
-	int i;
+  struct state *st = (struct state *) closure;
+  int delay = (st->delay * 1000);
+  int i;
 
-	zoom_box = calloc (num_zoom, sizeof (struct zoom_area *));
-	for (i = 0; i < num_zoom; i++) {
-		zoom_box[i] = create_zoom ();
-	}
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      if (! st->img_loader) {  /* just finished */
+	st->orig_map = XGetImage (st->dpy, st->window, 0, 0, 
+                                  st->width, st->height, ~0L, ZPixmap);
+        init_hack (st);
+      }
+      return st->delay;
+    }
 
-	memcpy (buffer_map->data, orig_map->data,
-		height * buffer_map->bytes_per_line);
+  for (i = 0; i < st->num_zoom; i++) {
+    if (st->move || st->sweep)
+      update_position (st->zoom_box[i]);
 
-	DisplayImage(0, 0, width, height);
-	XSync(display,False);
+    if (st->zoom_box[i]->n > 0) {
+      if (st->anim || st->zoom_box[i]->count == 0) {
+        rotzoom (st, st->zoom_box[i]);
+      } else {
+        delay = 1000000;
+      }
+      st->zoom_box[i]->n--;
+    } else {
+      reset_zoom (st, st->zoom_box[i]);
+    }
+  }
+
+  for (i = 0; i < st->num_zoom; i++) {
+    DisplayImage(st, st->zoom_box[i]->x, st->zoom_box[i]->y,
+                 st->zoom_box[i]->w, st->zoom_box[i]->h);
+  }
+
+  return delay;
 }
 
 
-static void setup_X (Display * disp, Window win)
+static void
+setup_X (struct state *st)
 {
-	XWindowAttributes xwa;
-	int depth;
-	XGCValues gcv;
-	long gcflags;
+  XWindowAttributes xgwa;
+  int depth;
+  XGCValues gcv;
+  long gcflags;
 
-	XGetWindowAttributes (disp, win, &xwa);
-	window = win;
-	display = disp;
-	depth = xwa.depth;
-	colormap = xwa.colormap;
-	width = xwa.width;
-	height = xwa.height;
-	visual = xwa.visual;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  depth = xgwa.depth;
+  st->colormap = xgwa.colormap;
+  st->width = xgwa.width;
+  st->height = xgwa.height;
+  st->visual = xgwa.visual;
 
-	if (width % 2)
-		width--;
-	if (height % 2)
-		height--;
+  if (st->width % 2)
+    st->width--;
+  if (st->height % 2)
+    st->height--;
 
-	gcv.function = GXcopy;
-	gcv.subwindow_mode = IncludeInferiors;
-	gcflags = GCForeground | GCFunction;
-	if (use_subwindow_mode_p (xwa.screen, window))	/* see grabscreen.c */
-		gcflags |= GCSubwindowMode;
-	gc = XCreateGC (display, window, gcflags, &gcv);
-        load_random_image (xwa.screen, window, window, NULL, NULL);
+  gcv.function = GXcopy;
+  gcv.subwindow_mode = IncludeInferiors;
+  gcflags = GCFunction;
+  if (use_subwindow_mode_p (xgwa.screen, st->window))	/* see grabscreen.c */
+    gcflags |= GCSubwindowMode;
+  st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
+  st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                            st->window, 0, 0);
 
-	orig_map = XGetImage (display, window, 0, 0, width, height, ~0L, ZPixmap);
-
-	if (!gc) {
-		fprintf(stderr, "XCreateGC failed\n");
-		exit(1);
-	}
-
-	buffer_map = 0;
+  st->buffer_map = 0;
 
 #ifdef HAVE_XSHM_EXTENSION
-	if (use_shm) {
-		buffer_map = create_xshm_image(display, xwa.visual, depth,
-			ZPixmap, 0, &shm_info, width, height);
-		if (!buffer_map) {
-			use_shm = False;
-			fprintf(stderr, "create_xshm_image failed\n");
-		}
-	}
+  if (st->use_shm) {
+    st->buffer_map = create_xshm_image(st->dpy, xgwa.visual, depth,
+                                       ZPixmap, 0, &st->shm_info, st->width, st->height);
+    if (!st->buffer_map) {
+      st->use_shm = False;
+      fprintf(stderr, "create_xshm_image failed\n");
+    }
+  }
 #endif /* HAVE_XSHM_EXTENSION */
 
-	if (!buffer_map) {
-		buffer_map = XCreateImage(display, xwa.visual,
-			depth, ZPixmap, 0, 0, width, height, 8, 0);
-		buffer_map->data = (char *)calloc (buffer_map->height,
-			buffer_map->bytes_per_line);
-	}
+  if (!st->buffer_map) {
+    st->buffer_map = XCreateImage(st->dpy, xgwa.visual,
+                                  depth, ZPixmap, 0, 0, st->width, st->height, 8, 0);
+    st->buffer_map->data = (char *)calloc (st->buffer_map->height,
+                                           st->buffer_map->bytes_per_line);
+  }
 }
 
 
-char *progclass = "Rotzoomer";
-
-char *defaults[] = {
+static void *
+rotzoomer_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  char *s;
+  st->dpy = dpy;
+  st->window = window;
 #ifdef HAVE_XSHM_EXTENSION
-	"*useSHM: True",
+  st->use_shm = get_boolean_resource (st->dpy, "useSHM", "Boolean");
 #endif
-	"*move: False",
-	"*sweep: False",
-	"*anim: True",
-	"*numboxes: 2",
-	"*delay: 10",
-	0
+  st->num_zoom = get_integer_resource (st->dpy, "numboxes", "Integer");
+
+  s = get_string_resource (dpy, "mode", "Mode");
+  if (!s || !*s || !strcasecmp (s, "stationary"))
+    ;
+  else if (!strcasecmp (s, "move"))
+    st->move = True;
+  else if (!strcasecmp (s, "sweep"))
+    st->sweep = True;
+  else
+    fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
+
+  st->anim = get_boolean_resource (st->dpy, "anim", "Boolean");
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+
+  /* In sweep or static mode, we want only one box */
+  if (st->sweep || !st->anim)
+    st->num_zoom = 1;
+
+  /* Can't have static sweep mode */
+  if (!st->anim)
+    st->sweep = 0;
+
+  setup_X (st);
+
+  return st;
+}
+
+static void
+rotzoomer_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+rotzoomer_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+rotzoomer_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *rotzoomer_defaults[] = {
+  ".background: black",
+  ".foreground: white",
+#ifdef HAVE_XSHM_EXTENSION
+  "*useSHM: True",
+#else
+  "*useSHM: False",
+#endif
+  "*anim: True",
+  "*mode: stationary",
+  "*numboxes: 2",
+  "*delay: 10",
+  0
 };
 
 
-XrmOptionDescRec options[] = {
-#ifdef HAVE_XSHM_EXTENSION
-	{ "-shm",	".useSHM",	XrmoptionNoArg, "True"  },
-	{ "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
-#endif
-	{ "-move",	".move",	XrmoptionNoArg, "True"  },
-	{ "-sweep",	".sweep",	XrmoptionNoArg, "True"  },
-	{ "-anim",	".anim",	XrmoptionNoArg, "True"  },
-	{ "-no-anim",	".anim",	XrmoptionNoArg, "False" },
-	{ "-delay",	".delay",	XrmoptionSepArg, 0      },
-	{ "-n",		".numboxes",	XrmoptionSepArg, 0      },
-	{ 0, 0, 0, 0 }
+static XrmOptionDescRec rotzoomer_options[] = {
+  { "-shm",	".useSHM",	XrmoptionNoArg, "True"  },
+  { "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
+  { "-mode",	".mode",	XrmoptionSepArg, 0      },
+  { "-move",	".mode",	XrmoptionNoArg, "move"  },
+  { "-sweep",	".mode",	XrmoptionNoArg, "sweep" },
+  { "-anim",	".anim",	XrmoptionNoArg, "True"  },
+  { "-no-anim",	".anim",	XrmoptionNoArg, "False" },
+  { "-delay",	".delay",	XrmoptionSepArg, 0      },
+  { "-n",	".numboxes",	XrmoptionSepArg, 0      },
+  { 0, 0, 0, 0 }
 };
 
 
-void screenhack(Display *disp, Window win)
-{
-#ifdef HAVE_XSHM_EXTENSION
-	use_shm = get_boolean_resource ("useSHM", "Boolean");
-#endif
-	num_zoom = get_integer_resource ("numboxes", "Integer");
-	move = get_boolean_resource ("move", "Boolean");
-	delay = get_integer_resource ("delay", "Integer");
-	sweep = get_boolean_resource ("sweep", "Boolean");
-	anim = get_boolean_resource ("anim", "Boolean");
-
-	/* In sweep or static mode, we want only one box */
-	if (sweep || !anim)
-		num_zoom = 1;
-
-	/* Can't have static sweep mode */
-	if (!anim)
-		sweep = 0;
-
-	setup_X (disp, win);
-
-	init_hack ();
-
-	/* Main drawing loop */
-	while (42) {
-		hack_main ();
-		usleep (delay * 1000);
-	}
-}
+XSCREENSAVER_MODULE ("Rotzoomer", rotzoomer)

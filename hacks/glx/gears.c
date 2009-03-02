@@ -35,19 +35,13 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Gears"
-# define HACK_INIT					init_gears
-# define HACK_DRAW					draw_gears
-# define HACK_RESHAPE				reshape_gears
-# define HACK_HANDLE_EVENT			gears_handle_event
-# define EVENT_MASK					PointerMotionMask
-# define gears_opts					xlockmore_opts
-# define DEFAULTS	"*count:		1       \n"			\
+# define DEFAULTS	"*count:		1000000 \n"			\
 					"*cycles:		2       \n"			\
 					"*delay:		20000   \n"			\
 					"*showFPS:      False   \n"			\
 					"*wireframe:	False	\n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
+# define refresh_gears 0
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -60,25 +54,26 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define DEF_PLANETARY "False"
+#define DEF_MODE "random"
 #define DEF_SPIN "True"
 
-static int planetary;
+static char *mode_str;
 static int spin;
 
 static XrmOptionDescRec opts[] = {
-  {"-planetary", ".gears.planetary", XrmoptionNoArg, "true" },
-  {"+planetary", ".gears.planetary", XrmoptionNoArg, "false" },
+  {"-mode",      ".gears.mode", XrmoptionSepArg, 0 },
+  {"-planetary", ".gears.mode", XrmoptionNoArg, "planetary" },
+  {"-simple",    ".gears.mode", XrmoptionNoArg, "simple" },
   {"-spin", ".gears.spin", XrmoptionNoArg, "true" },
   {"+spin", ".gears.spin", XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {
-  {&planetary, "planetary", "Planetary", DEF_PLANETARY, t_Bool},
+  {&mode_str, "mode", "Mode", DEF_MODE, t_String},
   {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
 };
 
-ModeSpecOpt gears_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt gears_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   gears_description =
@@ -108,6 +103,7 @@ typedef struct {
   rotator    *rot;
   trackball_state *trackball;
   Bool		  button_down_p;
+  int		  planetary_p;
 } gearsstruct;
 
 static gearsstruct *gears = NULL;
@@ -549,7 +545,7 @@ draw(ModeInfo * mi)
 		glRotatef (z * 360, 0.0, 0.0, 1.0);
 	  }
 
-    if (!planetary) {
+    if (!gp->planetary_p) {
       glPushMatrix();
       glTranslatef(-3.0, -2.0, 0.0);
       glRotatef(gp->angle, 0.0, 0.0, 1.0);
@@ -570,7 +566,7 @@ draw(ModeInfo * mi)
       glCallList(gp->gear3);
       glPopMatrix();
 
-    } else { /* planetary */
+    } else { /* gp->planetary_p */
 
       glScalef(0.8, 0.8, 0.8);
 
@@ -618,8 +614,8 @@ draw(ModeInfo * mi)
 
 
 /* new window size or exposure */
-void
-reshape_gears(ModeInfo *mi, int width, int height)
+ENTRYPOINT void
+reshape_gears (ModeInfo *mi, int width, int height)
 {
 	GLfloat     h = (GLfloat) height / (GLfloat) width;
 
@@ -643,18 +639,12 @@ static void
 pinit(ModeInfo * mi)
 {
 	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	static GLfloat pos[4] =
-	{5.0, 5.0, 10.0, 1.0};
-	static GLfloat red[4] =
-	{0.8, 0.1, 0.0, 1.0};
-	static GLfloat green[4] =
-	{0.0, 0.8, 0.2, 1.0};
-	static GLfloat blue[4] =
-	{0.2, 0.2, 1.0, 1.0};
-	static GLfloat gray[4] =
-	{0.5, 0.5, 0.5, 1.0};
-	static GLfloat white[4] =
-	{1.0, 1.0, 1.0, 1.0};
+	static const GLfloat pos[4]   = {5.0, 5.0, 10.0, 1.0};
+	static const GLfloat red[4]   = {0.8, 0.1, 0.0, 1.0};
+	static const GLfloat green[4] = {0.0, 0.8, 0.2, 1.0};
+	static const GLfloat blue[4]  = {0.2, 0.2, 1.0, 1.0};
+	static const GLfloat gray[4]  = {0.5, 0.5, 0.5, 1.0};
+	static const GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
 	int         wire = MI_IS_WIREFRAME(mi);
 	int         mono = MI_IS_MONO(mi);
 
@@ -680,7 +670,7 @@ pinit(ModeInfo * mi)
 
 	/* make the gears */
 
-    if (! planetary) {
+    if (! gp->planetary_p) {
 
       gp->gear1 = glGenLists(1);
       glNewList(gp->gear1, GL_COMPILE);
@@ -733,7 +723,7 @@ pinit(ModeInfo * mi)
       if (!wire)
 		glEnable(GL_NORMALIZE);
 
-    } else { /* planetary */
+    } else { /* gp->planetary_p */
 
       gp->gear1 = glGenLists(1);
       glNewList(gp->gear1, GL_COMPILE);
@@ -918,7 +908,7 @@ pinit(ModeInfo * mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 gears_handle_event (ModeInfo *mi, XEvent *event)
 {
   gearsstruct *gp = &gears[MI_SCREEN(mi)];
@@ -959,8 +949,8 @@ gears_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
-init_gears(ModeInfo * mi)
+ENTRYPOINT void
+init_gears (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 
@@ -975,6 +965,16 @@ init_gears(ModeInfo * mi)
 	}
 	gp = &gears[screen];
 
+    if (mode_str && !strcasecmp (mode_str, "planetary"))
+      gp->planetary_p = True;
+    else if (mode_str && !strcasecmp (mode_str, "simple"))
+      gp->planetary_p = False;
+    else if (!mode_str || !*mode_str || !strcasecmp (mode_str, "random"))
+      gp->planetary_p = !(random() % 2);
+    else
+      fprintf (stderr, "%s: mode must be planetary, simple, or random", 
+               progname);
+
 	gp->window = MI_WINDOW(mi);
 
     gp->rot = make_rotator (1, 1, 1, 1, 0, True);
@@ -988,15 +988,15 @@ init_gears(ModeInfo * mi)
 	}
 }
 
-void
-draw_gears(ModeInfo * mi)
+ENTRYPOINT void
+draw_gears (ModeInfo * mi)
 {
 	gearsstruct *gp = &gears[MI_SCREEN(mi)];
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	int         angle_incr = MI_CYCLES(mi) ? MI_CYCLES(mi) : 2;
 
-    if (planetary)
+    if (gp->planetary_p)
       angle_incr *= 3;
 
 	if (!gp->glx_context)
@@ -1015,8 +1015,8 @@ draw_gears(ModeInfo * mi)
 	glXSwapBuffers(display, window);
 }
 
-void
-release_gears(ModeInfo * mi)
+ENTRYPOINT void
+release_gears (ModeInfo * mi)
 {
 	if (gears != NULL) {
 		int         screen;
@@ -1047,6 +1047,8 @@ release_gears(ModeInfo * mi)
 	FreeAllGL(mi);
 }
 
+
+XSCREENSAVER_MODULE ("Gears", gears)
 
 /*********************************************************/
 

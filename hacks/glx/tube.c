@@ -10,14 +10,24 @@
  * implied warranty.
  */
 
-#include "config.h"
-#include <stdlib.h>
 #include <math.h>
-#include <GL/glx.h>
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include <stdlib.h>
+
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
 #include "tube.h"
 
 static void
-unit_tube (int faces, Bool smooth, Bool caps_p, Bool wire)
+unit_tube (int faces, int smooth, int caps_p, int wire_p)
 {
   int i;
   GLfloat step = M_PI * 2 / faces;
@@ -29,7 +39,7 @@ unit_tube (int faces, Bool smooth, Bool caps_p, Bool wire)
   /* side walls
    */
   glFrontFace(GL_CCW);
-  glBegin (wire ? GL_LINES : (smooth ? GL_QUAD_STRIP : GL_QUADS));
+  glBegin (wire_p ? GL_LINES : (smooth ? GL_QUAD_STRIP : GL_QUADS));
 
   th = 0;
   x = 1;
@@ -75,8 +85,8 @@ unit_tube (int faces, Bool smooth, Bool caps_p, Bool wire)
       {
         glFrontFace(z == 0 ? GL_CCW : GL_CW);
         glNormal3f(0, (z == 0 ? -1 : 1), 0);
-        glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-        if (! wire) glVertex3f(0, z, 0);
+        glBegin(wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+        if (! wire_p) glVertex3f(0, z, 0);
         for (i = 0, th = 0; i <= faces; i++)
           {
             GLfloat x = cos (th);
@@ -90,7 +100,7 @@ unit_tube (int faces, Bool smooth, Bool caps_p, Bool wire)
 
 
 static void
-unit_cone (int faces, Bool smooth, Bool cap_p, Bool wire)
+unit_cone (int faces, int smooth, int cap_p, int wire_p)
 {
   int i;
   GLfloat step = M_PI * 2 / faces;
@@ -101,7 +111,7 @@ unit_cone (int faces, Bool smooth, Bool cap_p, Bool wire)
   /* side walls
    */
   glFrontFace(GL_CW);
-  glBegin(wire ? GL_LINES : GL_TRIANGLES);
+  glBegin(wire_p ? GL_LINES : GL_TRIANGLES);
 
   th = 0;
   x = 1;
@@ -134,8 +144,8 @@ unit_cone (int faces, Bool smooth, Bool cap_p, Bool wire)
     {
       glFrontFace(GL_CCW);
       glNormal3f(0, -1, 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire) glVertex3f(0, 0, 0);
+      glBegin(wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+      if (! wire_p) glVertex3f(0, 0, 0);
       for (i = 0, th = 0; i <= faces; i++)
         {
           GLfloat x = cos (th);
@@ -152,8 +162,8 @@ static void
 tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
         GLfloat x2, GLfloat y2, GLfloat z2,
         GLfloat diameter, GLfloat cap_size,
-        int faces, Bool smooth, Bool caps_p, Bool wire,
-        Bool cone_p)
+        int faces, int smooth, int caps_p, int wire_p,
+        int cone_p)
 {
   GLfloat length, X, Y, Z;
 
@@ -184,9 +194,9 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
     }
 
   if (cone_p)
-    unit_cone (faces, smooth, caps_p, wire);
+    unit_cone (faces, smooth, caps_p, wire_p);
   else
-    unit_tube (faces, smooth, caps_p, wire);
+    unit_tube (faces, smooth, caps_p, wire_p);
 
   glPopMatrix();
 }
@@ -196,11 +206,11 @@ void
 tube (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
-      int faces, Bool smooth, Bool caps_p, Bool wire)
+      int faces, int smooth, int caps_p, int wire_p)
 {
   tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
-          faces, smooth, caps_p, wire,
-          False);
+          faces, smooth, caps_p, wire_p,
+          0);
 }
 
 
@@ -208,9 +218,9 @@ void
 cone (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
-      int faces, Bool smooth, Bool cap_p, Bool wire)
+      int faces, int smooth, int cap_p, int wire_p)
 {
   tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
-          faces, smooth, cap_p, wire,
-          True);
+          faces, smooth, cap_p, wire_p,
+          1);
 }

@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.129 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.130 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -209,6 +209,7 @@ my %warningless_sites = (
   "images.quizdiva.net"     => 1,
 
   "driftnet"                => 1,  # builtin...
+  "local-directory"         => 1,  # builtin...
 );
 
 
@@ -289,6 +290,9 @@ my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
 my $driftnet_magic = 'driftnet';
 my $driftnet_dir = undef;
 my $default_driftnet_cmd = "driftnet -a -m 100";
+
+my $local_magic = 'local-directory';
+my $local_dir = undef;
 
 my $wordlist;
 
@@ -484,6 +488,10 @@ sub get_document($$;$) {
 
   if (defined($referer) && $referer eq $driftnet_magic) {
     return get_driftnet_file ($url);
+  }
+
+  if (defined($referer) && $referer eq $local_magic) {
+    return get_local_file ($url);
   }
 
   my $orig_url = $url;
@@ -2003,6 +2011,46 @@ sub spawn_driftnet($) {
     unless (1 == kill (0, $pid));
 }
 
+# local-directory
+sub pick_from_local_dir {
+  my ( $timeout ) = @_;
+
+  my $id = $local_magic;
+  $last_search = $id;
+
+  my $dir = $local_dir;
+  error ("\$local_dir unset?") unless ($dir);
+  $dir =~ s@/+$@@;
+
+  error ("$dir unreadable") unless (-d "$dir/.");
+
+  my $v = ($verbose_exec ? "-v" : "");
+  my $pick = `xscreensaver-getimage-file $v "$dir"`;
+
+  LOG ($verbose_load, "picked file $pick ($id)");
+  return ($id, $pick);
+}
+
+
+sub get_local_file {
+  my ($file) = @_;
+
+  error ("\$local_dir unset?") unless ($local_dir);
+
+  my $id = $local_magic;
+  my $re = qr/$local_dir/;
+  error ("$id: $file not in $local_dir?")
+    unless ($file =~ m@^$re@o);
+
+  local *IN;
+  open (IN, $file) || error ("$id: $file: $!");
+  my $body = '';
+  while (<IN>) { $body .= $_; }
+  close IN || error ("$id: $file: $!");
+  return ($id, $body);
+}
+
+
 
 ############################################################################
 #
@@ -2250,8 +2298,8 @@ sub save_recent_url($$) {
   my ($site) = m@^http://([^ \t\n\r/:]+)@;
   return unless defined ($site);
 
-  if ($base eq $driftnet_magic) {
-    $site = $driftnet_magic;
+  if ($base eq $driftnet_magic || $base eq $local_magic) {
+    $site = $base;
     @recent_images = ();
   }
 
@@ -3321,6 +3369,13 @@ sub main() {
       } else {
         $driftnet_cmd = $default_driftnet_cmd;
       }
+    } elsif ($_ eq "-directory" || $_ eq "--directory") {
+      @search_methods = ( 100, "local", \&pick_from_local_dir );
+      if (! ($ARGV[0] =~ m/^-/)) {
+        $local_dir = shift @ARGV;
+      } else {
+        error ("local directory path must be set")
+      }
     } elsif ($_ eq "-debug" || $_ eq "--debug") {
       my $which = shift @ARGV;
       my @rest = @search_methods;
@@ -3347,6 +3402,7 @@ sub main() {
         "\t\t  [-filter cmd] [-filter2 cmd] [-background color]\n" .
         "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
         "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
+        "\t\t  [-directory local-image-directory]\n" .
         "\n";
       exit 1;
     }
@@ -3429,6 +3485,11 @@ sub main() {
 
   if ($imagemap_base && !($img_width && $img_height)) {
     error ("-size WxH is required with -imagemap");
+  }
+
+  if (defined ($local_dir)) {
+    $_ = "xscreensaver-getimage-file";
+    which ($_) || error "$_ not found on \$PATH.";
   }
 
   init_signals();

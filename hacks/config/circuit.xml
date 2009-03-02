@@ -28,6 +28,8 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Animates a number of 3D electronic components.  Written by Ben Buxton.
+Animates a number of 3D electronic components.
+
+Written by Ben Buxton; 2001.
   </_description>
 </screensaver>

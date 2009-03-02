@@ -480,6 +480,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
   double total_s = 0;
   double total_v = 0;
   Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
+  int loop = 0;
 
   if (*ncolorsP <= 0) return;
 
@@ -495,6 +496,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
   for (i = 0; i < npoints; i++)
     {
     REPICK_THIS_COLOR:
+      if (++loop > 10000) abort();
       h[i] = random() % 360;
       s[i] = frand(1.0);
       v[i] = frand(0.8) + 0.2;

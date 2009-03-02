@@ -172,12 +172,15 @@
 <option _label="Great Dirhombicosidodecacron" arg-set="-which great_dirhombicosidodecacron"/>
   </select>
 
-
-  <boolean id="titles"  _label="Show Description" arg-unset="-no-titles"/>
-  <boolean id="spin"    _label="Spin"      arg-unset="-no-spin"/>
-  <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
-  <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <hgroup>
+   <boolean id="spin"    _label="Spin"      arg-unset="-no-spin"/>
+   <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
+  <hgroup>
+   <boolean id="titles"  _label="Show Description" arg-unset="-no-titles"/>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
 Displays different 3D solids and some information about each.
@@ -185,6 +188,6 @@ A new solid is chosen every few seconds.  There are 75 uniform
 polyhedra, plus 5 infinite sets of prisms and antiprisms;
 including their duals brings the total to 160.
 
-Written by Dr. Zvi Har'El and Jamie Zawinski.
+Written by Dr. Zvi Har'El and Jamie Zawinski; 2004.
   </_description>
 </screensaver>

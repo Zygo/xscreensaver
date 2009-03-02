@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,38 +12,11 @@
 
 
 /* Documentation on the PDB file format:
-   http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
+   http://www.rcsb.org/pdb/file_formats/pdb/pdbguide2.2/guide2.2_frame.html
 
    Good source of PDB files:
    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
  */
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <X11/Intrinsic.h>
-
-#define PROGCLASS	"Molecule"
-#define HACK_INIT	init_molecule
-#define HACK_DRAW	draw_molecule
-#define HACK_RESHAPE	reshape_molecule
-#define HACK_HANDLE_EVENT molecule_handle_event
-#define EVENT_MASK	PointerMotionMask
-#define molecule_opts	xlockmore_opts
-
-#define DEF_TIMEOUT     "20"
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "False"
-#define DEF_LABELS      "True"
-#define DEF_TITLES      "True"
-#define DEF_ATOMS       "True"
-#define DEF_BONDS       "True"
-#define DEF_SHELLS      "False"
-#define DEF_BBOX        "False"
-#define DEF_SHELL_ALPHA "0.3"
-#define DEF_MOLECULE    "(default)"
-#define DEF_VERBOSE     "False"
 
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*showFPS:      False         \n" \
@@ -53,7 +26,8 @@
 			"*noLabelThreshold:    30     \n" \
 			"*wireframeThreshold:  150    \n" \
 
-
+# define refresh_molecule 0
+# define release_molecule 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -67,11 +41,23 @@
 
 #ifdef USE_GL /* whole file */
 
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include <ctype.h>
-#include <time.h>
-#include <sys/time.h>
-#include <GL/glu.h>
+
+#define DEF_TIMEOUT     "20"
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "False"
+#define DEF_LABELS      "True"
+#define DEF_TITLES      "True"
+#define DEF_ATOMS       "True"
+#define DEF_BONDS       "True"
+#define DEF_SHELLS      "True"
+#define DEF_BBOX        "False"
+#define DEF_SHELL_ALPHA "0.3"
+#define DEF_MOLECULE    "(default)"
+#define DEF_VERBOSE     "False"
 
 #define SPHERE_SLICES 24  /* how densely to render spheres */
 #define SPHERE_STACKS 12
@@ -84,7 +70,6 @@
 # define TUBE_FACES  8
 #endif
 
-static int scale_down;
 #define SPHERE_SLICES_2  7
 #define SPHERE_STACKS_2  4
 #define TUBE_FACES_2     3
@@ -112,16 +97,16 @@ typedef struct {
 /* These are the traditional colors used to render these atoms,
    and their approximate size in angstroms.
  */
-static atom_data all_atom_data[] = {
-  { "H",    1.17,  0,  "White",           "Grey70",        { 0, }},
-  { "C",    1.75,  0,  "Grey60",          "White",         { 0, }},
-  { "CA",   1.80,  0,  "Blue",            "LightBlue",     { 0, }},
-  { "N",    1.55,  0,  "LightSteelBlue3", "SlateBlue1",    { 0, }},
-  { "O",    1.40,  0,  "Red",             "LightPink",     { 0, }},
-  { "P",    1.28,  0,  "MediumPurple",    "PaleVioletRed", { 0, }},
-  { "S",    1.80,  0,  "Yellow4",         "Yellow1",       { 0, }},
-  { "bond", 0,     0,  "Grey70",          "Yellow1",       { 0, }},
-  { "*",    1.40,  0,  "Green4",          "LightGreen",    { 0, }}
+static const atom_data all_atom_data[] = {
+  { "H",    1.17,  0.40, "#FFFFFF", "#B3B3B3", { 0, }},
+  { "C",    1.75,  0.58, "#999999", "#FFFFFF", { 0, }},
+  { "CA",   1.80,  0.60, "#0000FF", "#ADD8E6", { 0, }},
+  { "N",    1.55,  0.52, "#A2B5CD", "#836FFF", { 0, }},
+  { "O",    1.40,  0.47, "#FF0000", "#FFB6C1", { 0, }},
+  { "P",    1.28,  0.43, "#9370DB", "#DB7093", { 0, }},
+  { "S",    1.80,  0.60, "#8B8B00", "#FFFF00", { 0, }},
+  { "bond", 0,     0,    "#B3B3B3", "#FFFF00", { 0, }},
+  { "*",    1.40,  0.47, "#008B00", "#90EE90", { 0, }}
 };
 
 
@@ -129,7 +114,7 @@ typedef struct {
   int id;		/* sequence number in the PDB file */
   const char *label;	/* The atom name */
   GLfloat x, y, z;	/* position in 3-space (angstroms) */
-  atom_data *data;	/* computed: which style of atom this is */
+  const atom_data *data; /* computed: which style of atom this is */
 } molecule_atom;
 
 typedef struct {
@@ -171,6 +156,11 @@ typedef struct {
   XFontStruct *xfont1, *xfont2;
   GLuint font1_dlist, font2_dlist;
   int polygon_count;
+
+  time_t draw_time;
+  int draw_tick;
+
+  int scale_down;
 
 } molecule_configuration;
 
@@ -233,7 +223,7 @@ static argtype vars[] = {
   {&verbose_p,	  "verbose",	"Verbose",	DEF_VERBOSE,  t_Bool},
 };
 
-ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
@@ -241,10 +231,11 @@ ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
 /* shapes */
 
 static int
-sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
+sphere (molecule_configuration *mc,
+        GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
 {
-  int stacks = (scale_down ? SPHERE_STACKS_2 : SPHERE_STACKS);
-  int slices = (scale_down ? SPHERE_SLICES_2 : SPHERE_SLICES);
+  int stacks = (mc->scale_down ? SPHERE_STACKS_2 : SPHERE_STACKS);
+  int slices = (mc->scale_down ? SPHERE_SLICES_2 : SPHERE_SLICES);
 
   glPushMatrix ();
   glTranslatef (x, y, z);
@@ -265,11 +256,11 @@ load_fonts (ModeInfo *mi)
 }
 
 
-static atom_data *
+static const atom_data *
 get_atom_data (const char *atom_name)
 {
   int i;
-  atom_data *d = 0;
+  const atom_data *d = 0;
   char *n = strdup (atom_name);
   char *n2 = n;
   int L;
@@ -292,21 +283,31 @@ get_atom_data (const char *atom_name)
 
 
 static void
-set_atom_color (ModeInfo *mi, molecule_atom *a, Bool font_p, GLfloat alpha)
+set_atom_color (ModeInfo *mi, const molecule_atom *a, 
+                Bool font_p, GLfloat alpha)
 {
-  atom_data *d;
-  GLfloat *gl_color;
+  const atom_data *d;
+  GLfloat gl_color[4];
 
   if (a)
     d = a->data;
   else
-    {
-      static atom_data *def_data = 0;
-      if (!def_data) def_data = get_atom_data ("bond");
-      d = def_data;
-    }
+    d = get_atom_data ("bond");
 
-  gl_color = (!font_p ? d->gl_color : (d->gl_color + 4));
+  if (font_p)
+    {
+      gl_color[0] = d->gl_color[4];
+      gl_color[1] = d->gl_color[5];
+      gl_color[2] = d->gl_color[6];
+      gl_color[3] = d->gl_color[7];
+    }
+  else
+    {
+      gl_color[0] = d->gl_color[0];
+      gl_color[1] = d->gl_color[1];
+      gl_color[2] = d->gl_color[2];
+      gl_color[3] = d->gl_color[3];
+    }
 
   if (gl_color[3] == 0)
     {
@@ -334,25 +335,10 @@ set_atom_color (ModeInfo *mi, molecule_atom *a, Bool font_p, GLfloat alpha)
 
 
 static GLfloat
-atom_size (molecule_atom *a)
+atom_size (const molecule_atom *a)
 {
   if (do_bonds)
-    {
-      if (a->data->size2 == 0)
-        {
-          /* let the molecules have the same relative sizes, but scale
-             them to a smaller range, so that the bond-tubes are
-             actually visible...
-           */
-          GLfloat bot = 0.4;
-          GLfloat top = 0.6;
-          GLfloat min = 1.17;
-          GLfloat max = 1.80;
-          GLfloat ratio = (a->data->size - min) / (max - min);
-          a->data->size2 = bot + (ratio * (top - bot));
-        }
-      return a->data->size2;
-    }
+    return a->data->size2;
   else
     return a->data->size;
 }
@@ -426,8 +412,8 @@ molecule_bounding_box (ModeInfo *mi,
 static void
 draw_bounding_box (ModeInfo *mi)
 {
-  static GLfloat c1[4] = { 0.2, 0.2, 0.4, 1.0 };
-  static GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat c1[4] = { 0.2, 0.2, 0.4, 1.0 };
+  static const GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
   int wire = MI_IS_WIREFRAME(mi);
   GLfloat x1, y1, z1, x2, y2, z2;
   molecule_bounding_box (mi, &x1, &y1, &z1, &x2, &y2, &z2);
@@ -508,14 +494,14 @@ ensure_bounding_box_visible (ModeInfo *mi)
 
   mc->molecule_size = size;
 
-  scale_down = 0;
+  mc->scale_down = 0;
 
   if (size > max_size)
     {
       GLfloat scale = max_size / size;
       glScalef (scale, scale, scale);
 
-      scale_down = scale < 0.3;
+      mc->scale_down = scale < 0.3;
     }
 
   glTranslatef (-(x1 + w/2),
@@ -563,9 +549,9 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
   if (do_bonds)
     for (i = 0; i < m->nbonds; i++)
       {
-        molecule_bond *b = &m->bonds[i];
-        molecule_atom *from = get_atom (m->atoms, m->natoms, b->from);
-        molecule_atom *to   = get_atom (m->atoms, m->natoms, b->to);
+        const molecule_bond *b = &m->bonds[i];
+        const molecule_atom *from = get_atom (m->atoms, m->natoms, b->from);
+        const molecule_atom *to   = get_atom (m->atoms, m->natoms, b->to);
 
         if (wire)
           {
@@ -577,7 +563,7 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
           }
         else
           {
-            int faces = (scale_down ? TUBE_FACES_2 : TUBE_FACES);
+            int faces = (mc->scale_down ? TUBE_FACES_2 : TUBE_FACES);
 # ifdef SMOOTH_TUBE
             int smooth = True;
 # else
@@ -599,10 +585,10 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
   if (!wire && do_atoms)
     for (i = 0; i < m->natoms; i++)
       {
-        molecule_atom *a = &m->atoms[i];
+        const molecule_atom *a = &m->atoms[i];
         GLfloat size = atom_size (a);
         set_atom_color (mi, a, False, alpha);
-        polys += sphere (a->x, a->y, a->z, size, wire);
+        polys += sphere (mc, a->x, a->y, a->z, size, wire);
       }
 
   if (do_bbox && !transparent_p)
@@ -743,6 +729,15 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
                !strncmp (s, "MTRIX3", 6) ||
                !strncmp (s, "SHEET ", 6) ||
                !strncmp (s, "CISPEP", 6) ||
+/*
+               !strncmp (s, "SEQADV", 6) ||
+               !strncmp (s, "SITE ",  5) ||
+               !strncmp (s, "FTNOTE", 6) ||
+               !strncmp (s, "MODEL ", 5) ||
+               !strncmp (s, "ENDMDL", 6) ||
+               !strncmp (s, "SPRSDE", 6) ||
+               !strncmp (s, "MODRES", 6) ||
+ */
                !strncmp (s, "GENERATED BY", 12) ||
                !strncmp (s, "TER ", 4) ||
                !strncmp (s, "END ", 4) ||
@@ -1142,7 +1137,7 @@ load_molecules (ModeInfo *mi)
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_molecule (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -1166,10 +1161,10 @@ reshape_molecule (ModeInfo *mi, int width, int height)
 static void
 gl_init (ModeInfo *mi)
 {
-  static GLfloat pos[4] = {1.0, 0.4, 0.9, 0.0};
-  static GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat dif[4] = {0.8, 0.8, 0.8, 1.0};
-  static GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
+  static const GLfloat pos[4] = {1.0, 0.4, 0.9, 0.0};
+  static const GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
+  static const GLfloat dif[4] = {0.8, 0.8, 0.8, 1.0};
+  static const GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
   glLightfv(GL_LIGHT0, GL_POSITION, pos);
   glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
   glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
@@ -1190,7 +1185,7 @@ startup_blurb (ModeInfo *mi)
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
-Bool
+ENTRYPOINT Bool
 molecule_handle_event (ModeInfo *mi, XEvent *event)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
@@ -1245,7 +1240,7 @@ molecule_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_molecule (ModeInfo *mi)
 {
   molecule_configuration *mc;
@@ -1284,6 +1279,7 @@ init_molecule (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -1316,9 +1312,9 @@ init_molecule (ModeInfo *mi)
   load_molecules (mi);
   mc->which = random() % mc->nmolecules;
 
-  mc->no_label_threshold = get_float_resource ("noLabelThreshold",
+  mc->no_label_threshold = get_float_resource (mi->dpy, "noLabelThreshold",
                                                "NoLabelThreshold");
-  mc->wireframe_threshold = get_float_resource ("wireframeThreshold",
+  mc->wireframe_threshold = get_float_resource (mi->dpy, "wireframeThreshold",
                                                 "WireframeThreshold");
   mc->mode = 0;
 
@@ -1331,7 +1327,7 @@ init_molecule (ModeInfo *mi)
    This can't be a part of the display list because of the games
    we play with the translation matrix.
  */
-void
+static void
 draw_labels (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
@@ -1401,6 +1397,7 @@ draw_labels (ModeInfo *mi)
                 NULL);
 
       for (j = 0; j < strlen(a->label); j++)
+
         glCallList (mc->font1_dlist + (int)(a->label[j]));
 
       glPopMatrix();
@@ -1497,10 +1494,9 @@ pick_new_molecule (ModeInfo *mi, time_t last)
 }
 
 
-void
+ENTRYPOINT void
 draw_molecule (ModeInfo *mi)
 {
-  static time_t last = 0;
   time_t now = time ((time_t *) 0);
   GLfloat speed = 4.0;  /* speed at which the zoom out/in happens */
 
@@ -1511,28 +1507,29 @@ draw_molecule (ModeInfo *mi)
   if (!mc->glx_context)
     return;
 
-  if (last == 0)
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mc->glx_context));
+
+  if (mc->draw_time == 0)
     {
-      pick_new_molecule (mi, last);
-      last = now;
+      pick_new_molecule (mi, mc->draw_time);
+      mc->draw_time = now;
     }
   else if (mc->mode == 0)
     {
-      static int tick = 0;
-      if (tick++ > 10)
+      if (mc->draw_tick++ > 10)
         {
           time_t now = time((time_t *) 0);
-          if (last == 0) last = now;
-          tick = 0;
+          if (mc->draw_time == 0) mc->draw_time = now;
+          mc->draw_tick = 0;
 
           if (!mc->button_down_p &&
               mc->nmolecules > 1 &&
-              last + timeout <= now)
+              mc->draw_time + timeout <= now)
             {
               /* randomize molecules every -timeout seconds */
               mc->mode = 1;    /* go out */
               mc->mode_tick = 10 * speed;
-              last = now;
+              mc->draw_time = now;
             }
         }
     }
@@ -1542,8 +1539,8 @@ draw_molecule (ModeInfo *mi)
         {
           mc->mode_tick = 10 * speed;
           mc->mode = 2;  /* go in */
-          pick_new_molecule (mi, last);
-          last = now;
+          pick_new_molecule (mi, mc->draw_time);
+          mc->draw_time = now;
         }
     }
   else if (mc->mode == 2)   /* in */
@@ -1631,5 +1628,7 @@ draw_molecule (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE ("Molecule", molecule)
 
 #endif /* USE_GL */

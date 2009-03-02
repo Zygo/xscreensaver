@@ -6,8 +6,9 @@
 
   <!-- #### -mouse -->
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20000" default="1000"/>
+  <number id="count" type="slider" arg="-count %"
+           _label="Count" _low-label="Few" _high-label="Lots"
+          low="10" high="20000" default="1000"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Iterations" _low-label="Small" _high-label="Large"
@@ -23,12 +24,10 @@
             low="1" high="255" default="200"/>
 
   <_description>
-This one draws spinning, animating (are you detecting a pattern here
-yet?)  explorations of the Julia set. You've probably seen static
-images of this fractal form before, but it's a lot of fun to watch in
-motion as well.  One interesting thing is that there is a small
-swinging dot passing in front of the image, which indicates the
-control point from which the rest of the image was generated.
-Written by Sean McCullough.
+Animates the Julia set (a close relative of the Mandelbrot set).  The
+small moving dot indicates the control point from which the rest of
+the image was generated.
+
+Written by Sean McCullough; 1997.
   </_description>
 </screensaver>

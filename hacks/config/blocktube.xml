@@ -17,16 +17,14 @@
           _label="Color Change Time" _low-label="Short" _high-label="Long"
           low="10" high="1000" default="200"/>
 
-  <select id="render">
-    <option id="texture"  _label="Reflective Blocks"/>
-    <option id="solid"    _label="Solid Blocks" arg-set="-no-texture"/>
-    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-This hack draws a swirling, falling tunnel of reflective slabs. They fade from
-hue to hue.  Written by Lars R. Damerow.
+Draws a swirling, falling tunnel of reflective slabs. They fade from
+hue to hue.
+
+Written by Lars R. Damerow; 2003.
   </_description>
 </screensaver>

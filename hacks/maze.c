@@ -84,18 +84,12 @@
 #include "screenhack.h"
 #include "erase.h"
 
-#define XSCREENSAVER_LOGO
-
-static int solve_delay, pre_solve_delay, post_solve_delay;
-
 #include  <stdio.h>
-#include  <X11/Xlib.h>
-#include  <X11/Xutil.h>
 
 /* #include  <X11/bitmaps/gray1> */
 #define gray1_width  2
 #define gray1_height 2
-static char gray1_bits[] = { 0x01, 0x02 };
+static const char gray1_bits[] = { 0x01, 0x02 };
 
 
 #define MAX_MAZE_SIZE_X	1000
@@ -132,272 +126,239 @@ static char gray1_bits[] = { 0x01, 0x02 };
 #define	get_random(x)	(random() % (x))
 
 
-static int logo_x, logo_y;
-
-#ifdef XSCREENSAVER_LOGO
-# define logo_width  54
-# define logo_height 54
-#else
-# include  <X11/bitmaps/xlogo64>
-# define logo_width xlogo64_width
-# define logo_height xlogo64_height
-# define logo_bits xlogo64_bits
-#endif
-
-static unsigned short maze[MAX_MAZE_SIZE_X][MAX_MAZE_SIZE_Y];
-
-static struct {
+struct move_list_struct {
   unsigned short x;
   unsigned short y;
   unsigned char dir, ways;
-} move_list[MOVE_LIST_SIZE], save_path[MOVE_LIST_SIZE], path[MOVE_LIST_SIZE];
+};
 
-static int maze_size_x, maze_size_y;
-static int sqnum, cur_sq_x, cur_sq_y, path_length;
-static int start_x, start_y, start_dir, end_x, end_y, end_dir;
-static int grid_width, grid_height;
-static int bw;
+struct solve_state {
+  int running;
+  int i, x, y, bt;
+};
 
-static Display	*dpy;
-static Window	win;
-static GC	gc, cgc, tgc, sgc, ugc, logo_gc, erase_gc;
-static Pixmap	logo_map;
 
-static int	x = 0, y = 0, restart = 0, stop = 1, state = 1, max_length;
-static int      sync_p, bridge_p, ignorant_p;
+struct state {
+  Display *dpy;
+  Window window;
 
-static int
-check_events (void)                        /* X event handler [ rhess ] */
+  GC	gc, cgc, tgc, sgc, ugc, logo_gc, erase_gc;
+  Pixmap logo_map;
+  int logo_width, logo_height; /* in pixels */
+
+  int solve_delay, pre_solve_delay, post_solve_delay;
+  int logo_x, logo_y;
+
+  unsigned short maze[MAX_MAZE_SIZE_X][MAX_MAZE_SIZE_Y];
+
+  struct move_list_struct move_list[MOVE_LIST_SIZE];
+  struct move_list_struct save_path[MOVE_LIST_SIZE];
+  struct move_list_struct path[MOVE_LIST_SIZE];
+
+  int maze_size_x, maze_size_y;
+  int sqnum, cur_sq_x, cur_sq_y, path_length;
+  int start_x, start_y, start_dir, end_x, end_y, end_dir;
+  int grid_width, grid_height;
+  int bw;
+
+  int x, y, restart, stop, state, max_length;
+  int sync_p, sync_tick;
+  int bridge_p, ignorant_p;
+
+  struct solve_state *solve_state;
+
+  int *sets;		/* The sets that our squares are in. */
+  int *hedges;		/* The `list' of hedges. */
+
+  int this_gen;
+  int erase_window;
+  eraser_state *eraser;
+
+  int ifrandom;
+  int ifinit;
+
+};
+
+
+static void
+set_maze_sizes (struct state *st, int width, int height)
 {
-  XEvent	e;
+  st->maze_size_x = width / st->grid_width;
+  st->maze_size_y = height / st->grid_height;
 
-  if (XPending(dpy)) {
-    XNextEvent(dpy, &e);
-    switch (e.type) {
-
-    case ButtonPress:
-      switch (e.xbutton.button) {
-      case 3:
-	exit (0);
-	break;
-      case 2:
-	stop = !stop ;
-	if (state == 5) state = 4 ;
-	else {
-	  restart = 1;
-	  stop = 0;
-	}
-	break;
-      default:
-	restart = 1 ;
-	stop = 0 ;
-	break;
-      }
-      break;
-
-    case ConfigureNotify:
-      restart = 1;
-      break;
-    case UnmapNotify:
-      stop = 1;
-      XClearWindow (dpy, win);
-      XSync (dpy, False);
-      break;
-    case Expose:
-      restart = 1;
-      break;
-    default:
-      screenhack_handle_event(dpy, &e);
-      break;
-    }
-    return(1);
-  }
-  return(0);
+  if (st->maze_size_x < 4) st->maze_size_x = 4;
+  if (st->maze_size_y < 4) st->maze_size_y = 4;
 }
 
 
 static void
-set_maze_sizes (int width, int height)
-{
-  maze_size_x = width / grid_width;
-  maze_size_y = height / grid_height;
-}
-
-
-static void
-initialize_maze (void) /* draw the surrounding wall and start/end squares */
+initialize_maze (struct state *st) /* draw the surrounding wall and start/end squares */
 {
   register int i, j, wall;
-  int logow = 1 + logo_width / grid_width;
-  int logoh = 1 + logo_height / grid_height;
+  int logow = 1 + st->logo_width / st->grid_width;
+  int logoh = 1 + st->logo_height / st->grid_height;
   
   /* initialize all squares */
-  for ( i=0; i<maze_size_x; i++) {
-    for ( j=0; j<maze_size_y; j++) {
-      maze[i][j] = 0;
+  for ( i=0; i<st->maze_size_x; i++) {
+    for ( j=0; j<st->maze_size_y; j++) {
+      st->maze[i][j] = 0;
     }
   }
   
   /* top wall */
-  for ( i=0; i<maze_size_x; i++ ) {
-    maze[i][0] |= WALL_TOP;
+  for ( i=0; i<st->maze_size_x; i++ ) {
+    st->maze[i][0] |= WALL_TOP;
   }
   
   /* right wall */
-  for ( j=0; j<maze_size_y; j++ ) {
-    maze[maze_size_x-1][j] |= WALL_RIGHT;
+  for ( j=0; j<st->maze_size_y; j++ ) {
+    st->maze[st->maze_size_x-1][j] |= WALL_RIGHT;
   }
   
   /* bottom wall */
-  for ( i=0; i<maze_size_x; i++ ) {
-    maze[i][maze_size_y-1] |= WALL_BOTTOM;
+  for ( i=0; i<st->maze_size_x; i++ ) {
+    st->maze[i][st->maze_size_y-1] |= WALL_BOTTOM;
   }
   
   /* left wall */
-  for ( j=0; j<maze_size_y; j++ ) {
-    maze[0][j] |= WALL_LEFT;
+  for ( j=0; j<st->maze_size_y; j++ ) {
+    st->maze[0][j] |= WALL_LEFT;
   }
   
   /* set start square */
   wall = get_random(4);
   switch (wall) {
   case 0:	
-    i = get_random(maze_size_x);
+    i = get_random(st->maze_size_x);
     j = 0;
     break;
   case 1:	
-    i = maze_size_x - 1;
-    j = get_random(maze_size_y);
+    i = st->maze_size_x - 1;
+    j = get_random(st->maze_size_y);
     break;
   case 2:	
-    i = get_random(maze_size_x);
-    j = maze_size_y - 1;
+    i = get_random(st->maze_size_x);
+    j = st->maze_size_y - 1;
     break;
   case 3:	
     i = 0;
-    j = get_random(maze_size_y);
+    j = get_random(st->maze_size_y);
     break;
   }
-  maze[i][j] |= START_SQUARE;
-  maze[i][j] |= ( DOOR_IN_TOP >> wall );
-  maze[i][j] &= ~( WALL_TOP >> wall );
-  cur_sq_x = i;
-  cur_sq_y = j;
-  start_x = i;
-  start_y = j;
-  start_dir = wall;
-  sqnum = 0;
+  st->maze[i][j] |= START_SQUARE;
+  st->maze[i][j] |= ( DOOR_IN_TOP >> wall );
+  st->maze[i][j] &= ~( WALL_TOP >> wall );
+  st->cur_sq_x = i;
+  st->cur_sq_y = j;
+  st->start_x = i;
+  st->start_y = j;
+  st->start_dir = wall;
+  st->sqnum = 0;
   
   /* set end square */
   wall = (wall + 2)%4;
   switch (wall) {
   case 0:
-    i = get_random(maze_size_x);
+    i = get_random(st->maze_size_x);
     j = 0;
     break;
   case 1:
-    i = maze_size_x - 1;
-    j = get_random(maze_size_y);
+    i = st->maze_size_x - 1;
+    j = get_random(st->maze_size_y);
     break;
   case 2:
-    i = get_random(maze_size_x);
-    j = maze_size_y - 1;
+    i = get_random(st->maze_size_x);
+    j = st->maze_size_y - 1;
     break;
   case 3:
     i = 0;
-    j = get_random(maze_size_y);
+    j = get_random(st->maze_size_y);
     break;
   }
-  maze[i][j] |= END_SQUARE;
-  maze[i][j] |= ( DOOR_OUT_TOP >> wall );
-  maze[i][j] &= ~( WALL_TOP >> wall );
-  end_x = i;
-  end_y = j;
-  end_dir = wall;
+  st->maze[i][j] |= END_SQUARE;
+  st->maze[i][j] |= ( DOOR_OUT_TOP >> wall );
+  st->maze[i][j] &= ~( WALL_TOP >> wall );
+  st->end_x = i;
+  st->end_y = j;
+  st->end_dir = wall;
   
   /* set logo */
-  if ((maze_size_x-logow >= 6) && (maze_size_y-logoh >= 6))
+  if ((st->maze_size_x-logow >= 6) && (st->maze_size_y-logoh >= 6))
     {
       /* not closer than 3 grid units from a wall */
-      logo_x = get_random (maze_size_x - logow - 5) + 3;
-      logo_y = get_random (maze_size_y - logoh - 5) + 3;
+      st->logo_x = get_random (st->maze_size_x - logow - 5) + 3;
+      st->logo_y = get_random (st->maze_size_y - logoh - 5) + 3;
       for (i=0; i<logow; i++)
 	for (j=0; j<logoh; j++)
-	  maze[logo_x + i][logo_y + j] |= DOOR_IN_TOP;
+	  st->maze[st->logo_x + i][st->logo_y + j] |= DOOR_IN_TOP;
     }
   else
-    logo_y = logo_x = -1;
+    st->logo_y = st->logo_x = -1;
 }
 
-static int choose_door (void);
-static int backup (void);
-static void draw_wall (int, int, int, GC);
-static void draw_solid_square (int, int, int, GC);
-/*static void enter_square (int);*/
-static void build_wall (int, int, int);
-/*static void break_wall (int, int, int);*/
+static int choose_door (struct state *st);
+static int backup (struct state *st);
+static void draw_wall (struct state *, int, int, int, GC);
+static void draw_solid_square (struct state *, int, int, int, GC);
+/*static void enter_square (struct state *, int);*/
+static void build_wall (struct state *, int, int, int);
+/*static void break_wall (struct state *, int, int, int);*/
 
-static void join_sets(int, int);
-
-/* For set_create_maze. */
-/* The sets that our squares are in. */
-static int *sets = 0;
-/* The `list' of hedges. */
-static int *hedges = 0;
+static void join_sets(struct state *, int, int);
 
 #define DEBUG_SETS 0
 
 /* Initialise the sets. */
 static void 
-init_sets(void)
+init_sets(struct state *st)
 {
-  int i, t, r, x, y;
+  int i, t, r, xx, yy;
 
-  if(sets)
-    free(sets);
-  sets = (int *)malloc(maze_size_x*maze_size_y*sizeof(int));
-  if(!sets)
+  if(st->sets)
+    free(st->sets);
+  st->sets = (int *)malloc(st->maze_size_x*st->maze_size_y*sizeof(int));
+  if(!st->sets)
     abort();
-  for(i = 0; i < maze_size_x*maze_size_y; i++)
+  for(i = 0; i < st->maze_size_x*st->maze_size_y; i++)
     {
-      sets[i] = i;
+      st->sets[i] = i;
     }
   
-  if(hedges)
-    free(hedges);
-  hedges = (int *)malloc(maze_size_x*maze_size_y*2*sizeof(int));
-  if(!hedges)
+  if(st->hedges)
+    free(st->hedges);
+  st->hedges = (int *)malloc(st->maze_size_x*st->maze_size_y*2*sizeof(int));
+  if(!st->hedges)
     abort();
-  for(i = 0; i < maze_size_x*maze_size_y*2; i++)
+  for(i = 0; i < st->maze_size_x*st->maze_size_y*2; i++)
     {
-      hedges[i] = i;
+      st->hedges[i] = i;
     }
   /* Mask out outside walls. */
-  for(i = 0; i < maze_size_y; i++)
+  for(i = 0; i < st->maze_size_y; i++)
     {
-      hedges[2*((maze_size_x)*i+maze_size_x-1)+1] = -1;
+      st->hedges[2*((st->maze_size_x)*i+st->maze_size_x-1)+1] = -1;
     }
-  for(i = 0; i < maze_size_x; i++)
+  for(i = 0; i < st->maze_size_x; i++)
     {
-      hedges[2*((maze_size_y-1)*maze_size_x+i)] = -1;
+      st->hedges[2*((st->maze_size_y-1)*st->maze_size_x+i)] = -1;
     }
   /* Mask out a possible logo. */
-  if(logo_x!=-1)
+  if(st->logo_x!=-1)
     {
-      int logow = 1 + logo_width / grid_width;
-      int logoh = 1 + logo_height / grid_height;
+      int logow = 1 + st->logo_width / st->grid_width;
+      int logoh = 1 + st->logo_height / st->grid_height;
       int bridge_dir, bridge_c;
 
-      if(bridge_p && logoh>=3 && logow>=3)
+      if(st->bridge_p && logoh>=3 && logow>=3)
 	{
 	  bridge_dir = 1+random()%2;
 	  if(bridge_dir==1)
 	    {
-	      bridge_c = logo_y+random()%(logoh-2)+1;
+	      bridge_c = st->logo_y+random()%(logoh-2)+1;
 	    }
 	  else
 	    {
-	      bridge_c = logo_x+random()%(logow-2)+1;
+	      bridge_c = st->logo_x+random()%(logow-2)+1;
 	    }
 	}
       else
@@ -406,114 +367,113 @@ init_sets(void)
 	  bridge_c = -1;
 	}
 
-      for(x = logo_x; x < logo_x+logow; x++)
-	for(y = logo_y; y < logo_y+logoh; y++)
+      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
+	for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
 	  {
 	    /* I should check for the bridge here, except that I join the
              * bridge together below.
              */
-	    hedges[2*(x+maze_size_x*y)+1] = -1;
-	    hedges[2*(x+maze_size_x*y)] = -1;
+	    st->hedges[2*(xx+st->maze_size_x*yy)+1] = -1;
+	    st->hedges[2*(xx+st->maze_size_x*yy)] = -1;
 	  }
-      for(x = logo_x; x < logo_x+logow; x++)
+      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
 	{
-	  if(!(bridge_dir==2 && x==bridge_c))
+	  if(!(bridge_dir==2 && xx==bridge_c))
 	    {
-	      build_wall(x, logo_y, 0);
-	      build_wall(x, logo_y+logoh, 0);
+	      build_wall(st, xx, st->logo_y, 0);
+	      build_wall(st, xx, st->logo_y+logoh, 0);
 	    }
-	  hedges[2*(x+maze_size_x*(logo_y-1))] = -1;
+	  st->hedges[2*(xx+st->maze_size_x*(st->logo_y-1))] = -1;
 	  if(bridge_dir==1)
 	    {
-	      build_wall(x, bridge_c, 0);
-	      build_wall(x, bridge_c, 2);
+	      build_wall(st, xx, bridge_c, 0);
+	      build_wall(st, xx, bridge_c, 2);
 	    }
 	}
-      for(y = logo_y; y < logo_y+logoh; y++)
+      for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
 	{
-	  if(!(bridge_dir==1 && y==bridge_c))
+	  if(!(bridge_dir==1 && yy==bridge_c))
 	    {
-	      build_wall(logo_x, y, 3);
-	      build_wall(logo_x+logow, y, 3);
+	      build_wall(st, st->logo_x, yy, 3);
+	      build_wall(st, st->logo_x+logow, yy, 3);
 	    }
-	  hedges[2*(logo_x-1+maze_size_x*y)+1] = -1;
+	  st->hedges[2*(st->logo_x-1+st->maze_size_x*yy)+1] = -1;
 	  if(bridge_dir==2)
 	    {
-	      build_wall(bridge_c, y, 1);
-	      build_wall(bridge_c, y, 3);
+	      build_wall(st, bridge_c, yy, 1);
+	      build_wall(st, bridge_c, yy, 3);
 	    }
 	}
       /* Join the whole bridge together. */
-      if(bridge_p)
+      if(st->bridge_p)
 	{
 	  if(bridge_dir==1)
 	    {
-	      x = logo_x-1;
-	      y = bridge_c;
-	      for(i = logo_x; i < logo_x+logow+1; i++)
-		join_sets(x+y*maze_size_x, i+y*maze_size_x);
+	      xx = st->logo_x-1;
+	      yy = bridge_c;
+	      for(i = st->logo_x; i < st->logo_x+logow+1; i++)
+		join_sets(st, xx+yy*st->maze_size_x, i+yy*st->maze_size_x);
 	    }
 	  else
 	    {
-	      y = logo_y-1;
-	      x = bridge_c;
-	      for(i = logo_y; i < logo_y+logoh+1; i++)
-		join_sets(x+y*maze_size_x, x+i*maze_size_x);
+	      yy = st->logo_y-1;
+	      xx = bridge_c;
+	      for(i = st->logo_y; i < st->logo_y+logoh+1; i++)
+		join_sets(st, xx+yy*st->maze_size_x, xx+i*st->maze_size_x);
 	    }
 	}
     }
 
-  for(i = 0; i < maze_size_x*maze_size_y*2; i++)
+  for(i = 0; i < st->maze_size_x*st->maze_size_y*2; i++)
     {
-      t = hedges[i];
-      r = random()%(maze_size_x*maze_size_y*2);
-      hedges[i] = hedges[r];
-      hedges[r] = t;
+      t = st->hedges[i];
+      r = random()%(st->maze_size_x*st->maze_size_y*2);
+      st->hedges[i] = st->hedges[r];
+      st->hedges[r] = t;
     }
 }
 
 /* Get the representative of a set. */
 static int
-get_set(int num)
+get_set(struct state *st, int num)
 {
   int s;
 
-  if(sets[num]==num)
+  if(st->sets[num]==num)
     return num;
   else
     {
-      s = get_set(sets[num]);
-      sets[num] = s;
+      s = get_set(st, st->sets[num]);
+      st->sets[num] = s;
       return s;
     }
 }
 
 /* Join two sets together. */
 static void
-join_sets(num1, num2)
-     int num1, num2;
+join_sets(struct state *st, int num1, int num2)
 {
   int s1, s2;
 
-  s1 = get_set(num1);
-  s2 = get_set(num2);
+  s1 = get_set(st, num1);
+  s2 = get_set(st, num2);
   
   if(s1<s2)
-    sets[s2] = s1;
+    st->sets[s2] = s1;
   else
-    sets[s1] = s2;
+    st->sets[s1] = s2;
 }
 
 /* Exitialise the sets. */
 static void
-exit_sets(void)
+exit_sets(struct state *st)
 {
-  if(hedges)
-    free(hedges);
-  hedges = 0;
-  if(sets)
-    free(sets);
-  sets = 0;
+  if(st->hedges)
+    free(st->hedges);
+  st->hedges = 0;
+  if(st->sets)
+    free(st->sets);
+  st->sets = 0;
 }
 
 #if DEBUG_SETS
@@ -521,18 +481,18 @@ exit_sets(void)
 static void
 show_set(int num, GC gc)
 {
-  int x, y, set;
+  int st->x, st->y, set;
 
   set = get_set(num);
 
-  for(x = 0; x < maze_size_x; x++)
-    for(y = 0; y < maze_size_y; y++)
+  for(st->x = 0; st->x < st->maze_size_x; st->x++)
+    for(st->y = 0; st->y < st->maze_size_y; st->y++)
       {
-	if(get_set(x+y*maze_size_x)==set)
+	if(get_set(st->x+st->y*st->maze_size_x)==set)
 	  {
-	    XFillRectangle(dpy, win, gc,  border_x + bw + grid_width * x, 
-			 border_y + bw + grid_height * y, 
-			 grid_width-2*bw , grid_height-2*bw);
+	    XFillRectangle(st->dpy, st->window, st->gc,  border_x + st->bw + st->grid_width * st->x, 
+			 border_y + st->bw + st->grid_height * st->y, 
+			 st->grid_width-2*st->bw , st->grid_height-2*st->bw);
 	  }
       }
 }
@@ -545,32 +505,32 @@ show_set(int num, GC gc)
  * Continue until all hedges have been processed or only one set remains.
  */
 static void
-set_create_maze(void)
+set_create_maze(struct state *st)
 {
-  int i, h, x, y, dir, v, w;
+  int i, h, xx, yy, dir, v, w;
 #if DEBUG_SETS
   int cont = 0;
   char c;
 #endif
 
   /* Do almost all the setup. */
-  init_sets();
+  init_sets(st);
 
   /* Start running through the hedges. */
-  for(i = 0; i < 2*maze_size_x*maze_size_y; i++)
+  for(i = 0; i < 2*st->maze_size_x*st->maze_size_y; i++)
     { 
-      h = hedges[i];
+      h = st->hedges[i];
 
       /* This one is in the logo or outside border. */
       if(h==-1)
 	continue;
 
       dir = h%2?1:2;
-      x = (h>>1)%maze_size_x;
-      y = (h>>1)/maze_size_x;
+      xx = (h>>1)%st->maze_size_x;
+      yy = (h>>1)/st->maze_size_x;
 
-      v = x;
-      w = y;
+      v = xx;
+      w = yy;
       switch(dir)
 	{
 	case 1:
@@ -582,15 +542,15 @@ set_create_maze(void)
 	}
 
 #if DEBUG_SETS
-      show_set(x+y*maze_size_x, logo_gc);
-      show_set(v+w*maze_size_x, tgc);
+      show_set(st, xx+yy*st->maze_size_x, st->logo_gc);
+      show_set(st, v+w*st->maze_size_x, st->tgc);
 #endif
-      if(get_set(x+y*maze_size_x)!=get_set(v+w*maze_size_x))
+      if(get_set(st, xx+yy*st->maze_size_x)!=get_set(st, v+w*st->maze_size_x))
 	{
 #if DEBUG_SETS
 	  printf("Join!");
 #endif
-	  join_sets(x+y*maze_size_x, v+w*maze_size_x);
+	  join_sets(st, xx+yy*st->maze_size_x, v+w*st->maze_size_x);
 	  /* Don't draw the wall. */
 	}
       else
@@ -599,23 +559,23 @@ set_create_maze(void)
 	  printf("Build.");
 #endif
 	  /* Don't join the sets. */
-	  build_wall(x, y, dir); 
+	  build_wall(st, xx, yy, dir); 
 	}
 #if DEBUG_SETS
       if(!cont)
 	{
-	  XSync(dpy, False);
+	  XSync(st->dpy, False);
 	  c = getchar();
 	  if(c=='c')
 	    cont = 1;
 	}
-      show_set(x+y*maze_size_x, erase_gc);
-      show_set(v+w*maze_size_x, erase_gc);
+      show_set(xx+yy*st->maze_size_x, st->erase_gc);
+      show_set(v+w*st->maze_size_x, st->erase_gc);
 #endif
     }
 
   /* Free some memory. */
-  exit_sets();
+  exit_sets(st);
 }
 
 /* First alternative maze creator: Pick a random, empty corner in the maze.
@@ -624,14 +584,14 @@ set_create_maze(void)
  * shorter than a certain length. Otherwise we get lots of long walls.
  */
 static void
-alt_create_maze(void)
+alt_create_maze(struct state *st)
 {
   char *corners;
   int *c_idx;
-  int i, j, height, width, open_corners, k, dir, x, y;
+  int i, j, height, width, open_corners, k, dir, xx, yy;
 
-  height = maze_size_y+1;
-  width = maze_size_x+1;
+  height = st->maze_size_y+1;
+  width = st->maze_size_x+1;
 
   /* Allocate and clear some mem. */
   corners = (char *)calloc(height*width, 1);
@@ -669,22 +629,22 @@ alt_create_maze(void)
     }
   /* Walls around logo. In fact, inside the logo, too. */
   /* Also draw the walls. */
-  if(logo_x!=-1)
+  if(st->logo_x!=-1)
     {
-      int logow = 1 + logo_width / grid_width;
-      int logoh = 1 + logo_height / grid_height;
+      int logow = 1 + st->logo_width / st->grid_width;
+      int logoh = 1 + st->logo_height / st->grid_height;
       int bridge_dir, bridge_c;
 
-      if(bridge_p && logoh>=3 && logow>=3)
+      if(st->bridge_p && logoh>=3 && logow>=3)
 	{
 	  bridge_dir = 1+random()%2;
 	  if(bridge_dir==1)
 	    {
-	      bridge_c = logo_y+random()%(logoh-2)+1;
+	      bridge_c = st->logo_y+random()%(logoh-2)+1;
 	    }
 	  else
 	    {
-	      bridge_c = logo_x+random()%(logow-2)+1;
+	      bridge_c = st->logo_x+random()%(logow-2)+1;
 	    }
 	}
       else
@@ -692,133 +652,133 @@ alt_create_maze(void)
 	  bridge_dir = 0;
 	  bridge_c = -1;
 	}
-      for(i = logo_x; i <= logo_x + logow; i++)
+      for(i = st->logo_x; i <= st->logo_x + logow; i++)
 	{
-	  for(j = logo_y; j <= logo_y + logoh; j++)
+	  for(j = st->logo_y; j <= st->logo_y + logoh; j++)
 	    {
 	      corners[i+width*j] = 1;
 	    }
 	}
-      for(x = logo_x; x < logo_x+logow; x++)
+      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
 	{
-	  if(!(bridge_dir==2 && x==bridge_c))
+	  if(!(bridge_dir==2 && xx==bridge_c))
 	    {
-	      build_wall(x, logo_y, 0);
-	      build_wall(x, logo_y+logoh, 0);
+	      build_wall(st, xx, st->logo_y, 0);
+	      build_wall(st, xx, st->logo_y+logoh, 0);
 	    }
 	  if(bridge_dir==1)
 	    {
-	      build_wall(x, bridge_c, 0);
-	      build_wall(x, bridge_c, 2);
+	      build_wall(st, xx, bridge_c, 0);
+	      build_wall(st, xx, bridge_c, 2);
 	    }
 	}
-      for(y = logo_y; y < logo_y+logoh; y++)
+      for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
 	{
-	  if(!(bridge_dir==1 && y==bridge_c))
+	  if(!(bridge_dir==1 && yy==bridge_c))
 	    {
-	      build_wall(logo_x, y, 3);
-	      build_wall(logo_x+logow, y, 3);
+	      build_wall(st, st->logo_x, yy, 3);
+	      build_wall(st, st->logo_x+logow, yy, 3);
 	    }
 	  if(bridge_dir==2)
 	    {
-	      build_wall(bridge_c, y, 1);
-	      build_wall(bridge_c, y, 3);
+	      build_wall(st, bridge_c, yy, 1);
+	      build_wall(st, bridge_c, yy, 3);
 	    }
 	}
       /* Connect one wall of the logo with an outside wall. */
-      if(bridge_p)
+      if(st->bridge_p)
 	dir = (bridge_dir+1)%4;
       else
 	dir = random()%4;
       switch(dir)
 	{
 	case 0:
-	  x = logo_x+(random()%(logow+1));
-	  y = logo_y;
+	  xx = st->logo_x+(random()%(logow+1));
+	  yy = st->logo_y;
 	  break;
 	case 1:
-	  x = logo_x+logow;
-	  y = logo_y+(random()%(logoh+1));
+	  xx = st->logo_x+logow;
+	  yy = st->logo_y+(random()%(logoh+1));
 	  break;
 	case 2:
-	  x = logo_x+(random()%(logow+1));
-	  y = logo_y+logoh;
+	  xx = st->logo_x+(random()%(logow+1));
+	  yy = st->logo_y+logoh;
 	  break;
 	case 3:
-	  x = logo_x;
-	  y = logo_y+(random()%(logoh+1));
+	  xx = st->logo_x;
+	  yy = st->logo_y+(random()%(logoh+1));
 	  break;
 	}
       do
 	{
-	  corners[x+width*y] = 1;
+	  corners[xx+width*yy] = 1;
 	  switch(dir)
 	    {
 	    case 0:
-	      build_wall(x-1, y-1, 1);
-	      y--;
+	      build_wall(st, xx-1, yy-1, 1);
+	      yy--;
 	      break;
 	    case 1:
-	      build_wall(x, y, 0);
-	      x++;
+	      build_wall(st, xx, yy, 0);
+	      xx++;
 	      break;
 	    case 2:
-	      build_wall(x, y, 3);
-	      y++;
+	      build_wall(st, xx, yy, 3);
+	      yy++;
 	      break;
 	    case 3:
-	      build_wall(x-1, y-1, 2);
-	      x--;
+	      build_wall(st, xx-1, yy-1, 2);
+	      xx--;
 	      break;	  
 	    }
 	}
-      while(!corners[x+width*y]);
-      if(bridge_p)
+      while(!corners[xx+width*yy]);
+      if(st->bridge_p)
 	{
 	  dir = (dir+2)%4;
 	  switch(dir)
 	    {
 	    case 0:
-	      x = logo_x+(random()%(logow+1));
-	      y = logo_y;
+	      xx = st->logo_x+(random()%(logow+1));
+	      yy = st->logo_y;
 	      break;
 	    case 1:
-	      x = logo_x+logow;
-	      y = logo_y+(random()%(logoh+1));
+	      xx = st->logo_x+logow;
+	      yy = st->logo_y+(random()%(logoh+1));
 	      break;
 	    case 2:
-	      x = logo_x+(random()%(logow+1));
-	      y = logo_y+logoh;
+	      xx = st->logo_x+(random()%(logow+1));
+	      yy = st->logo_y+logoh;
 	      break;
 	    case 3:
-	      x = logo_x;
-	      y = logo_y+(random()%(logoh+1));
+	      xx = st->logo_x;
+	      yy = st->logo_y+(random()%(logoh+1));
 	      break;
 	    }
 	  do
 	    {
-	      corners[x+width*y] = 1;
+	      corners[xx+width*yy] = 1;
 	      switch(dir)
 		{
 		case 0:
-		  build_wall(x-1, y-1, 1);
-		  y--;
+		  build_wall(st, xx-1, yy-1, 1);
+		  yy--;
 		  break;
 		case 1:
-		  build_wall(x, y, 0);
-		  x++;
+		  build_wall(st, xx, yy, 0);
+		  xx++;
 		  break;
 		case 2:
-		  build_wall(x, y, 3);
-		  y++;
+		  build_wall(st, xx, yy, 3);
+		  yy++;
 		  break;
 		case 3:
-		  build_wall(x-1, y-1, 2);
-		  x--;
+		  build_wall(st, xx-1, yy-1, 2);
+		  xx--;
 		  break;	  
 		}
 	    }
-	  while(!corners[x+width*y]);
+	  while(!corners[xx+width*yy]);
 	}
     }
 
@@ -836,60 +796,60 @@ alt_create_maze(void)
 	{
 	  if(!corners[c_idx[i]])
 	    {
-	      x = c_idx[i]%width;
-	      y = c_idx[i]/width;
+	      xx = c_idx[i]%width;
+	      yy = c_idx[i]/width;
 	      /* Choose a random direction. */
 	      dir = random()%4;
 	      
 	      k = 0;
 	      /* Measure the length of the wall we'd draw. */
-	      while(!corners[x+width*y])
+	      while(!corners[xx+width*yy])
 		{
 		  k++;
 		  switch(dir)
 		    {
 		    case 0:
-		      y--;
+		      yy--;
 		      break;
 		    case 1:
-		      x++;
+		      xx++;
 		      break;
 		    case 2:
-		      y++;
+		      yy++;
 		      break;
 		    case 3:
-		      x--;
+		      xx--;
 		      break;
 		    }
 		}
 	      
-	      if(k<=max_length)
+	      if(k<=st->max_length)
 		{
-		  x = c_idx[i]%width;
-		  y = c_idx[i]/width;
+		  xx = c_idx[i]%width;
+		  yy = c_idx[i]/width;
 		  
 		  /* Draw a wall until we hit something. */
-		  while(!corners[x+width*y])
+		  while(!corners[xx+width*yy])
 		    {
 		      open_corners--;
-		      corners[x+width*y] = 1;
+		      corners[xx+width*yy] = 1;
 		      switch(dir)
 			{
 			case 0:
-			  build_wall(x-1, y-1, 1);
-			  y--;
+			  build_wall(st, xx-1, yy-1, 1);
+			  yy--;
 			  break;
 			case 1:
-			  build_wall(x, y, 0);
-			  x++;
+			  build_wall(st, xx, yy, 0);
+			  xx++;
 			  break;
 			case 2:
-			  build_wall(x, y, 3);
-			  y++;
+			  build_wall(st, xx, yy, 3);
+			  yy++;
 			  break;
 			case 3:
-			  build_wall(x-1, y-1, 2);
-			  x--;
+			  build_wall(st, xx-1, yy-1, 2);
+			  xx--;
 			  break;
 			}
 		    }
@@ -908,14 +868,14 @@ alt_create_maze(void)
  * we find a point where we can go in another direction.
  */
 static void
-create_maze (void)    /* create a maze layout given the initialized maze */
+create_maze (struct state *st)    /* create a maze layout given the initialized maze */
 {
   register int i, newdoor = 0;
-  int logow = 1 + logo_width / grid_width;
-  int logoh = 1 + logo_height / grid_height;
+  int logow = 1 + st->logo_width / st->grid_width;
+  int logoh = 1 + st->logo_height / st->grid_height;
   
   /* Maybe we should make a bridge? */
-  if(bridge_p && logo_x>=0 && logow>=3 && logoh>=3)
+  if(st->bridge_p && st->logo_x >= 0 && logow>=3 && logoh>=3)
     {
       int bridge_dir, bridge_c;
 
@@ -923,69 +883,69 @@ create_maze (void)    /* create a maze layout given the initialized maze */
       if(bridge_dir==1)
 	{
 	  if(logoh>=3)
-	    bridge_c = logo_y+random()%(logoh-2)+1;
+	    bridge_c = st->logo_y+random()%(logoh-2)+1;
 	  else
-	    bridge_c = logo_y+random()%logoh;
+	    bridge_c = st->logo_y+random()%logoh;
 	}
       else
 	{
 	  if(logow>=3)
-	    bridge_c = logo_x+random()%(logow-2)+1;
+	    bridge_c = st->logo_x+random()%(logow-2)+1;
 	  else
-	    bridge_c = logo_x+random()%logow;
+	    bridge_c = st->logo_x+random()%logow;
 	}
 
       if(bridge_dir==1)
 	{
-	  for(i = logo_x; i < logo_x+logow; i++)
+	  for(i = st->logo_x; i < st->logo_x+logow; i++)
 	    {
-	      maze[i][bridge_c] &= ~DOOR_IN_TOP;
+	      st->maze[i][bridge_c] &= ~DOOR_IN_TOP;
 	    }
 	}
       else
 	{
-	  for(i = logo_y; i < logo_y+logoh; i++)
+	  for(i = st->logo_y; i < st->logo_y+logoh; i++)
 	    {
-	      maze[bridge_c][i] &= ~DOOR_IN_TOP;
+	      st->maze[bridge_c][i] &= ~DOOR_IN_TOP;
 	    }
 	}
     }
 
   do {
-    move_list[sqnum].x = cur_sq_x;
-    move_list[sqnum].y = cur_sq_y;
-    move_list[sqnum].dir = newdoor;
-    while ( ( newdoor = choose_door() ) == -1 ) { /* pick a door */
-      if ( backup() == -1 ) { /* no more doors ... backup */
+    st->move_list[st->sqnum].x = st->cur_sq_x;
+    st->move_list[st->sqnum].y = st->cur_sq_y;
+    st->move_list[st->sqnum].dir = newdoor;
+    while ( ( newdoor = choose_door(st) ) == -1 ) { /* pick a door */
+      if ( backup(st) == -1 ) { /* no more doors ... backup */
 	return; /* done ... return */
       }
     }
     
     /* mark the out door */
-    maze[cur_sq_x][cur_sq_y] |= ( DOOR_OUT_TOP >> newdoor );
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= ( DOOR_OUT_TOP >> newdoor );
     
     switch (newdoor) {
-    case 0: cur_sq_y--;
+    case 0: st->cur_sq_y--;
       break;
-    case 1: cur_sq_x++;
+    case 1: st->cur_sq_x++;
       break;
-    case 2: cur_sq_y++;
+    case 2: st->cur_sq_y++;
       break;
-    case 3: cur_sq_x--;
+    case 3: st->cur_sq_x--;
       break;
     }
-    sqnum++;
+    st->sqnum++;
     
     /* mark the in door */
-    maze[cur_sq_x][cur_sq_y] |= ( DOOR_IN_TOP >> ((newdoor+2)%4) );
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= ( DOOR_IN_TOP >> ((newdoor+2)%4) );
     
     /* if end square set path length and save path */
-    if ( maze[cur_sq_x][cur_sq_y] & END_SQUARE ) {
-      path_length = sqnum;
-      for ( i=0; i<path_length; i++) {
-	save_path[i].x = move_list[i].x;
-	save_path[i].y = move_list[i].y;
-	save_path[i].dir = move_list[i].dir;
+    if ( st->maze[st->cur_sq_x][st->cur_sq_y] & END_SQUARE ) {
+      st->path_length = st->sqnum;
+      for ( i=0; i<st->path_length; i++) {
+	st->save_path[i].x = st->move_list[i].x;
+	st->save_path[i].y = st->move_list[i].y;
+	st->save_path[i].dir = st->move_list[i].dir;
       }
     }
     
@@ -995,7 +955,7 @@ create_maze (void)    /* create a maze layout given the initialized maze */
 
 
 static int
-choose_door (void)                                   /* pick a new path */
+choose_door (struct state *st)                                   /* pick a new path */
 {
   int candidates[3];
   register int num_candidates;
@@ -1003,64 +963,64 @@ choose_door (void)                                   /* pick a new path */
   num_candidates = 0;
   
   /* top wall */
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_IN_TOP )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_IN_TOP )
     goto rightwall;
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_OUT_TOP )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_OUT_TOP )
     goto rightwall;
-  if ( maze[cur_sq_x][cur_sq_y] & WALL_TOP )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & WALL_TOP )
     goto rightwall;
-  if ( maze[cur_sq_x][cur_sq_y - 1] & DOOR_IN_ANY ) {
-    maze[cur_sq_x][cur_sq_y] |= WALL_TOP;
-    maze[cur_sq_x][cur_sq_y - 1] |= WALL_BOTTOM;
-    draw_wall(cur_sq_x, cur_sq_y, 0, gc);
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y - 1] & DOOR_IN_ANY ) {
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= WALL_TOP;
+    st->maze[st->cur_sq_x][st->cur_sq_y - 1] |= WALL_BOTTOM;
+    draw_wall(st, st->cur_sq_x, st->cur_sq_y, 0, st->gc);
     goto rightwall;
   }
   candidates[num_candidates++] = 0;
   
  rightwall:
   /* right wall */
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_IN_RIGHT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_IN_RIGHT )
     goto bottomwall;
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_OUT_RIGHT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_OUT_RIGHT )
     goto bottomwall;
-  if ( maze[cur_sq_x][cur_sq_y] & WALL_RIGHT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & WALL_RIGHT )
     goto bottomwall;
-  if ( maze[cur_sq_x + 1][cur_sq_y] & DOOR_IN_ANY ) {
-    maze[cur_sq_x][cur_sq_y] |= WALL_RIGHT;
-    maze[cur_sq_x + 1][cur_sq_y] |= WALL_LEFT;
-    draw_wall(cur_sq_x, cur_sq_y, 1, gc);
+  if ( st->maze[st->cur_sq_x + 1][st->cur_sq_y] & DOOR_IN_ANY ) {
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= WALL_RIGHT;
+    st->maze[st->cur_sq_x + 1][st->cur_sq_y] |= WALL_LEFT;
+    draw_wall(st, st->cur_sq_x, st->cur_sq_y, 1, st->gc);
     goto bottomwall;
   }
   candidates[num_candidates++] = 1;
   
  bottomwall:
   /* bottom wall */
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_IN_BOTTOM )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_IN_BOTTOM )
     goto leftwall;
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_OUT_BOTTOM )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_OUT_BOTTOM )
     goto leftwall;
-  if ( maze[cur_sq_x][cur_sq_y] & WALL_BOTTOM )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & WALL_BOTTOM )
     goto leftwall;
-  if ( maze[cur_sq_x][cur_sq_y + 1] & DOOR_IN_ANY ) {
-    maze[cur_sq_x][cur_sq_y] |= WALL_BOTTOM;
-    maze[cur_sq_x][cur_sq_y + 1] |= WALL_TOP;
-    draw_wall(cur_sq_x, cur_sq_y, 2, gc);
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y + 1] & DOOR_IN_ANY ) {
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= WALL_BOTTOM;
+    st->maze[st->cur_sq_x][st->cur_sq_y + 1] |= WALL_TOP;
+    draw_wall(st, st->cur_sq_x, st->cur_sq_y, 2, st->gc);
     goto leftwall;
   }
   candidates[num_candidates++] = 2;
   
  leftwall:
   /* left wall */
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_IN_LEFT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_IN_LEFT )
     goto donewall;
-  if ( maze[cur_sq_x][cur_sq_y] & DOOR_OUT_LEFT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & DOOR_OUT_LEFT )
     goto donewall;
-  if ( maze[cur_sq_x][cur_sq_y] & WALL_LEFT )
+  if ( st->maze[st->cur_sq_x][st->cur_sq_y] & WALL_LEFT )
     goto donewall;
-  if ( maze[cur_sq_x - 1][cur_sq_y] & DOOR_IN_ANY ) {
-    maze[cur_sq_x][cur_sq_y] |= WALL_LEFT;
-    maze[cur_sq_x - 1][cur_sq_y] |= WALL_RIGHT;
-    draw_wall(cur_sq_x, cur_sq_y, 3, gc);
+  if ( st->maze[st->cur_sq_x - 1][st->cur_sq_y] & DOOR_IN_ANY ) {
+    st->maze[st->cur_sq_x][st->cur_sq_y] |= WALL_LEFT;
+    st->maze[st->cur_sq_x - 1][st->cur_sq_y] |= WALL_RIGHT;
+    draw_wall(st, st->cur_sq_x, st->cur_sq_y, 3, st->gc);
     goto donewall;
   }
   candidates[num_candidates++] = 3;
@@ -1076,157 +1036,170 @@ choose_door (void)                                   /* pick a new path */
 
 
 static int
-backup (void)                                          /* back up a move */
+backup (struct state *st)                                          /* back up a move */
 {
-  sqnum--;
-  cur_sq_x = move_list[sqnum].x;
-  cur_sq_y = move_list[sqnum].y;
-  return ( sqnum );
+  st->sqnum--;
+  st->cur_sq_x = st->move_list[st->sqnum].x;
+  st->cur_sq_y = st->move_list[st->sqnum].y;
+  return ( st->sqnum );
 }
 
 
 static void
-draw_maze_border (void)                         /* draw the maze outline */
+draw_maze_border (struct state *st)                         /* draw the maze outline */
 {
   register int i, j;
   
   
-  for ( i=0; i<maze_size_x; i++) {
-    if ( maze[i][0] & WALL_TOP ) {
-      XDrawLine(dpy, win, gc,
-		border_x + grid_width * i,
+  for ( i=0; i<st->maze_size_x; i++) {
+    if ( st->maze[i][0] & WALL_TOP ) {
+      XDrawLine(st->dpy, st->window, st->gc,
+		border_x + st->grid_width * i,
 		border_y,
-		border_x + grid_width * (i+1) - 1,
+		border_x + st->grid_width * (i+1) - 1,
 		border_y);
     }
-    if ((maze[i][maze_size_y - 1] & WALL_BOTTOM)) {
-      XDrawLine(dpy, win, gc,
-		border_x + grid_width * i,
-		border_y + grid_height * (maze_size_y) - 1,
-		border_x + grid_width * (i+1) - 1,
-		border_y + grid_height * (maze_size_y) - 1);
+    if ((st->maze[i][st->maze_size_y - 1] & WALL_BOTTOM)) {
+      XDrawLine(st->dpy, st->window, st->gc,
+		border_x + st->grid_width * i,
+		border_y + st->grid_height * (st->maze_size_y) - 1,
+		border_x + st->grid_width * (i+1) - 1,
+		border_y + st->grid_height * (st->maze_size_y) - 1);
     }
   }
-  for ( j=0; j<maze_size_y; j++) {
-    if ( maze[maze_size_x - 1][j] & WALL_RIGHT ) {
-      XDrawLine(dpy, win, gc,
-		border_x + grid_width * maze_size_x - 1,
-		border_y + grid_height * j,
-		border_x + grid_width * maze_size_x - 1,
-		border_y + grid_height * (j+1) - 1);
+  for ( j=0; j<st->maze_size_y; j++) {
+    if ( st->maze[st->maze_size_x - 1][j] & WALL_RIGHT ) {
+      XDrawLine(st->dpy, st->window, st->gc,
+		border_x + st->grid_width * st->maze_size_x - 1,
+		border_y + st->grid_height * j,
+		border_x + st->grid_width * st->maze_size_x - 1,
+		border_y + st->grid_height * (j+1) - 1);
     }
-    if ( maze[0][j] & WALL_LEFT ) {
-      XDrawLine(dpy, win, gc,
+    if ( st->maze[0][j] & WALL_LEFT ) {
+      XDrawLine(st->dpy, st->window, st->gc,
 		border_x,
-		border_y + grid_height * j,
+		border_y + st->grid_height * j,
 		border_x,
-		border_y + grid_height * (j+1) - 1);
+		border_y + st->grid_height * (j+1) - 1);
     }
   }
   
-  if (logo_x != -1)
+  if (st->logo_x != -1)
     {
       Window r;
-      int x, y;
-      unsigned int w, h, bw, d;
+      int xx, yy;
+      unsigned int w, h, bbw, d;
 
       /* round up to grid size */
-      int ww = ((logo_width  / grid_width) + 1)  * grid_width;
-      int hh = ((logo_height / grid_height) + 1) * grid_height;
+      int ww = ((st->logo_width  / st->grid_width) + 1)  * st->grid_width;
+      int hh = ((st->logo_height / st->grid_height) + 1) * st->grid_height;
+      int lx, ly;
 
-      XGetGeometry (dpy, logo_map, &r, &x, &y, &w, &h, &bw, &d);
+      XGetGeometry (st->dpy, st->logo_map, &r, &xx, &yy, &w, &h, &bbw, &d);
 
-# ifdef XSCREENSAVER_LOGO
       /* kludge: if the logo "hole" is around the same size as the logo,
          don't center it (since the xscreensaver logo image is a little
-         off center...  But do center if if the hole/gridsize is large. */
-      if (ww < logo_width  + 5) ww = w; 
-      if (hh < logo_height + 5) hh = h; 
-# endif /* XSCREENSAVER_LOGO */
+         off center...  But do center it if the hole/gridsize is large. */
+      if (ww < st->logo_width  + 5) ww = w; 
+      if (hh < st->logo_height + 5) hh = h; 
 
+
+      lx = border_x + 3 + st->grid_width  * st->logo_x + ((ww - w) / 2);
+      ly = border_y + 3 + st->grid_height * st->logo_y + ((hh - h) / 2);
+
+      /* Fill the background of the logo box with the "unreachable" color */
+      XFillRectangle (st->dpy, st->window, st->ugc, 
+                      border_x + 3 + st->grid_width  * st->logo_x,
+                      border_y + 3 + st->grid_height * st->logo_y,
+                      ww, hh);
+
+      XSetClipOrigin (st->dpy, st->logo_gc, lx, ly);
       if (d == 1)
-        XCopyPlane (dpy, logo_map, win, logo_gc,
-                    0, 0, w, h,
-                    border_x + 3 + grid_width  * logo_x + ((ww - w) / 2),
-                    border_y + 3 + grid_height * logo_y + ((hh - h) / 2),
-                    1);
+        XCopyPlane (st->dpy, st->logo_map, st->window, st->logo_gc,
+                    0, 0, w, h, lx, ly, 1);
       else
-        XCopyArea (dpy, logo_map, win, logo_gc,
-                   0, 0, w, h,
-                   border_x + 3 + grid_width  * logo_x + ((ww - w) / 2),
-                   border_y + 3 + grid_height * logo_y + ((hh - h) / 2));
+        XCopyArea (st->dpy, st->logo_map, st->window, st->logo_gc,
+                   0, 0, w, h, lx, ly);
     }
-  draw_solid_square (start_x, start_y, WALL_TOP >> start_dir, tgc);
-  draw_solid_square (end_x, end_y, WALL_TOP >> end_dir, tgc);
+  draw_solid_square (st, st->start_x, st->start_y, WALL_TOP >> st->start_dir, st->tgc);
+  draw_solid_square (st, st->end_x, st->end_y, WALL_TOP >> st->end_dir, st->tgc);
 }
 
 
 static void
-draw_wall(int i, int j, int dir, GC gc)                /* draw a single wall */
+draw_wall(struct state *st, int i, int j, int dir, GC with_gc)                /* draw a single wall */
 {
   switch (dir) {
   case 0:
-    XDrawLine(dpy, win, gc,
-	      border_x + grid_width * i, 
-	      border_y + grid_height * j,
-	      border_x + grid_width * (i+1), 
-	      border_y + grid_height * j);
+    XDrawLine(st->dpy, st->window, with_gc,
+	      border_x + st->grid_width * i, 
+	      border_y + st->grid_height * j,
+	      border_x + st->grid_width * (i+1), 
+	      border_y + st->grid_height * j);
     break;
   case 1:
-    XDrawLine(dpy, win, gc,
-	      border_x + grid_width * (i+1), 
-	      border_y + grid_height * j,
-	      border_x + grid_width * (i+1), 
-	      border_y + grid_height * (j+1));
+    XDrawLine(st->dpy, st->window, with_gc,
+	      border_x + st->grid_width * (i+1), 
+	      border_y + st->grid_height * j,
+	      border_x + st->grid_width * (i+1), 
+	      border_y + st->grid_height * (j+1));
     break;
   case 2:
-    XDrawLine(dpy, win, gc,
-	      border_x + grid_width * i, 
-	      border_y + grid_height * (j+1),
-	      border_x + grid_width * (i+1), 
-	      border_y + grid_height * (j+1));
+    XDrawLine(st->dpy, st->window, with_gc,
+	      border_x + st->grid_width * i, 
+	      border_y + st->grid_height * (j+1),
+	      border_x + st->grid_width * (i+1), 
+	      border_y + st->grid_height * (j+1));
     break;
   case 3:
-    XDrawLine(dpy, win, gc,
-	      border_x + grid_width * i, 
-	      border_y + grid_height * j,
-	      border_x + grid_width * i, 
-	      border_y + grid_height * (j+1));
+    XDrawLine(st->dpy, st->window, with_gc,
+	      border_x + st->grid_width * i, 
+	      border_y + st->grid_height * j,
+	      border_x + st->grid_width * i, 
+	      border_y + st->grid_height * (j+1));
     break;
   }
-  if(sync_p)
-    XSync(dpy, False);
+
+  if(st->sync_p) {
+    /* too slow if we sync on every wall, so only sync about ten times
+       during the maze-creation process. 
+     */
+    st->sync_tick--;
+    if (st->sync_tick <= 0) {
+      XSync(st->dpy, False);
+      st->sync_tick = st->maze_size_x * st->maze_size_x / 10;
+    }
+  }
 }
 
 /* Actually build a wall. */
 static void
-build_wall(i, j, dir)
-     int i, j, dir;
+build_wall(struct state *st, int i, int j, int dir)
 {
   /* Draw it on the screen. */
-  draw_wall(i, j, dir, gc);
+  draw_wall(st, i, j, dir, st->gc);
   /* Put it in the maze. */
   switch(dir)
     {
     case 0:
-      maze[i][j] |= WALL_TOP;
+      st->maze[i][j] |= WALL_TOP;
       if(j>0)
-	maze[i][j-1] |= WALL_BOTTOM;
+	st->maze[i][j-1] |= WALL_BOTTOM;
       break;
     case 1:
-      maze[i][j] |= WALL_RIGHT;
-      if(i<maze_size_x-1)
-	maze[i+1][j] |= WALL_LEFT;
+      st->maze[i][j] |= WALL_RIGHT;
+      if(i<st->maze_size_x-1)
+	st->maze[i+1][j] |= WALL_LEFT;
       break;
     case 2:
-      maze[i][j] |= WALL_BOTTOM;
-      if(j<maze_size_y-1)
-	maze[i][j+1] |= WALL_TOP;
+      st->maze[i][j] |= WALL_BOTTOM;
+      if(j<st->maze_size_y-1)
+	st->maze[i][j+1] |= WALL_TOP;
       break;
     case 3:
-      maze[i][j] |= WALL_LEFT;
+      st->maze[i][j] |= WALL_LEFT;
       if(i>0)
-	maze[i-1][j] |= WALL_RIGHT;
+	st->maze[i-1][j] |= WALL_RIGHT;
       break;
     }
 }
@@ -1238,27 +1211,27 @@ break_wall(i, j, dir)
      int i, j, dir;
 {
   /* Draw it on the screen. */
-  draw_wall(i, j, dir, erase_gc);
+  draw_wall(i, j, dir, st->erase_gc);
   /* Put it in the maze. */
   switch(dir)
     {
     case 0:
-      maze[i][j] &= ~WALL_TOP;
+      st->maze[i][j] &= ~WALL_TOP;
       if(j>0)
 	maze[i][j-1] &= ~WALL_BOTTOM;
       break;
     case 1:
-      maze[i][j] &= ~WALL_RIGHT;
-      if(i<maze_size_x-1)
+      st->maze[i][j] &= ~WALL_RIGHT;
+      if(i<st->maze_size_x-1)
 	maze[i+1][j] &= ~WALL_LEFT;
       break;
     case 2:
-      maze[i][j] &= ~WALL_BOTTOM;
-      if(j<maze_size_y-1)
+      st->maze[i][j] &= ~WALL_BOTTOM;
+      if(j<st->maze_size_y-1)
 	maze[i][j+1] &= ~WALL_BOTTOM;
       break;
     case 3:
-      maze[i][j] &= ~WALL_LEFT;
+      st->maze[i][j] &= ~WALL_LEFT;
       if(i>0)
 	maze[i-1][j] &= ~WALL_RIGHT;
       break;
@@ -1268,40 +1241,40 @@ break_wall(i, j, dir)
 
 
 static void
-draw_solid_square(int i, int j,          /* draw a solid square in a square */
-		  int dir, GC gc)
+draw_solid_square(struct state *st, 
+                  int i, int j,          /* draw a solid square in a square */
+		  int dir, GC with_gc)
 {
   switch (dir) {
   case WALL_TOP:
-      XFillRectangle(dpy, win, gc,
-		     border_x + bw+(bw==0?1:0) + grid_width * i, 
-		     border_y - bw-(bw==0?1:0) + grid_height * j, 
-		     grid_width - (bw+bw+(bw==0?1:0)), grid_height);
+      XFillRectangle(st->dpy, st->window, with_gc,
+		     border_x + st->bw+(st->bw==0?1:0) + st->grid_width * i, 
+		     border_y - st->bw-(st->bw==0?1:0) + st->grid_height * j, 
+		     st->grid_width - (st->bw+st->bw+(st->bw==0?1:0)), st->grid_height);
       break;
   case WALL_RIGHT:
-      XFillRectangle(dpy, win, gc,
-		     border_x + bw+(bw==0?1:0) + grid_width * i, 
-		     border_y + bw+(bw==0?1:0) + grid_height * j, 
-		     grid_width, grid_height - (bw+bw+(bw==0?1:0)));
+      XFillRectangle(st->dpy, st->window, with_gc,
+		     border_x + st->bw+(st->bw==0?1:0) + st->grid_width * i, 
+		     border_y + st->bw+(st->bw==0?1:0) + st->grid_height * j, 
+		     st->grid_width, st->grid_height - (st->bw+st->bw+(st->bw==0?1:0)));
       break;
   case WALL_BOTTOM:
-      XFillRectangle(dpy, win, gc,
-		     border_x + bw+(bw==0?1:0) + grid_width * i, 
-		     border_y + bw+(bw==0?1:0) + grid_height * j, 
-		     grid_width - (bw+bw+(bw==0?1:0)), grid_height);
+      XFillRectangle(st->dpy, st->window, with_gc,
+		     border_x + st->bw+(st->bw==0?1:0) + st->grid_width * i, 
+		     border_y + st->bw+(st->bw==0?1:0) + st->grid_height * j, 
+		     st->grid_width - (st->bw+st->bw+(st->bw==0?1:0)), st->grid_height);
       break;
   case WALL_LEFT:
-      XFillRectangle(dpy, win, gc,
-		     border_x - bw-(bw==0?1:0) + grid_width * i, 
-		     border_y + bw+(bw==0?1:0) + grid_height * j, 
-		     grid_width, grid_height - (bw+bw+(bw==0?1:0)));
+      XFillRectangle(st->dpy, st->window, with_gc,
+		     border_x - st->bw-(st->bw==0?1:0) + st->grid_width * i, 
+		     border_y + st->bw+(st->bw==0?1:0) + st->grid_height * j, 
+		     st->grid_width, st->grid_height - (st->bw+st->bw+(st->bw==0?1:0)));
       break;
   }
-  XSync (dpy, False);
 }
 
-int
-longdeadend_p(int x1, int y1, int x2, int y2, int endwall)
+static int
+longdeadend_p(struct state *st, int x1, int y1, int x2, int y2, int endwall)
 {
     int dx = x2 - x1, dy = y2 - y1;
     int sidewalls;
@@ -1309,21 +1282,24 @@ longdeadend_p(int x1, int y1, int x2, int y2, int endwall)
     sidewalls = endwall | (endwall >> 2 | endwall << 2);
     sidewalls = ~sidewalls & WALL_ANY;
 
-    while((maze[x2][y2] & WALL_ANY) == sidewalls)
+    while((st->maze[x2][y2] & WALL_ANY) == sidewalls)
     {
+        if (x2 + dx < 0 || x2 + dx >= st->maze_size_x ||
+            y2 + dy < 0 || y2 + dy >= st->maze_size_y)
+          break;
 	x2 += dx;
 	y2 += dy;
     }
 
-    if((maze[x2][y2] & WALL_ANY) == (sidewalls | endwall))
+    if((st->maze[x2][y2] & WALL_ANY) == (sidewalls | endwall))
     {
 	endwall = (endwall >> 2 | endwall << 2) & WALL_ANY;
 	while(x1 != x2 || y1 != y2)
 	{
 	    x1 += dx;
 	    y1 += dy;
-	    draw_solid_square(x1, y1, endwall, sgc);
-	    maze[x1][y1] |= SOLVER_VISIT;
+	    draw_solid_square(st, x1, y1, endwall, st->sgc);
+	    st->maze[x1][y1] |= SOLVER_VISIT;
 	}
 	return 1;
     }
@@ -1333,145 +1309,150 @@ longdeadend_p(int x1, int y1, int x2, int y2, int endwall)
 
 /* Find all dead regions -- areas from which the goal cannot be reached --
    and mark them visited. */
-void
-find_dead_regions(void)
+static void
+find_dead_regions(struct state *st)
 {
-    int x, y, flipped;
+    int xx, yy, flipped;
 
     /* Find all not SOLVER_VISIT squares bordering NOT_DEAD squares
        and mark them NOT_DEAD also.  Repeat until no more such squares. */
-    maze[start_x][start_y] |= NOT_DEAD;
+    st->maze[st->start_x][st->start_y] |= NOT_DEAD;
     
     do
     {
 	flipped = 0;
-	for(x = 0; x < maze_size_x; x++)
-	    for(y = 0; y < maze_size_y; y++)
-		if(!(maze[x][y] & (SOLVER_VISIT | NOT_DEAD))
-		   && (   (x && (maze[x-1][y] & NOT_DEAD))
-		       || (y && (maze[x][y-1] & NOT_DEAD))))
+	for(xx = 0; xx < st->maze_size_x; xx++)
+	    for(yy = 0; yy < st->maze_size_y; yy++)
+		if(!(st->maze[xx][yy] & (SOLVER_VISIT | NOT_DEAD))
+		   && (   (xx && (st->maze[xx-1][yy] & NOT_DEAD))
+		       || (yy && (st->maze[xx][yy-1] & NOT_DEAD))))
 		{
 		    flipped = 1;
-		    maze[x][y] |= NOT_DEAD;
+		    st->maze[xx][yy] |= NOT_DEAD;
 		}
-	for(x = maze_size_x-1; x >= 0; x--)
-	    for(y = maze_size_y-1; y >= 0; y--)
-		if(!(maze[x][y] & (SOLVER_VISIT | NOT_DEAD))
-		   && (   (x != maze_size_x-1 && (maze[x+1][y] & NOT_DEAD))
-		       || (y != maze_size_y-1 && (maze[x][y+1] & NOT_DEAD))))
+	for(xx = st->maze_size_x-1; xx >= 0; xx--)
+	    for(yy = st->maze_size_y-1; yy >= 0; yy--)
+		if(!(st->maze[xx][yy] & (SOLVER_VISIT | NOT_DEAD))
+		   && (   (xx != st->maze_size_x-1 && (st->maze[xx+1][yy] & NOT_DEAD))
+		       || (yy != st->maze_size_y-1 && (st->maze[xx][yy+1] & NOT_DEAD))))
 		{
 		    flipped = 1;
-		    maze[x][y] |= NOT_DEAD;
+		    st->maze[xx][yy] |= NOT_DEAD;
 		}
     }
     while(flipped);
 
-    for (y = 0; y < maze_size_y; y++)
-      for (x = 0; x < maze_size_x; x++)
+    for (yy = 0; yy < st->maze_size_y; yy++)
+      for (xx = 0; xx < st->maze_size_x; xx++)
       {
-	if (maze[x][y] & NOT_DEAD)
-	  maze[x][y] &= ~NOT_DEAD;
-	else if (!(maze[x][y] & SOLVER_VISIT))
+	if (st->maze[xx][yy] & NOT_DEAD)
+	  st->maze[xx][yy] &= ~NOT_DEAD;
+	else if (!(st->maze[xx][yy] & SOLVER_VISIT))
 	{
-	  maze[x][y] |= SOLVER_VISIT;
-	  if((x < logo_x || x > logo_x + logo_width / grid_width) ||
-	     (y < logo_y || y > logo_y + logo_height / grid_height))
+	  st->maze[xx][yy] |= SOLVER_VISIT;
+	  if((xx < st->logo_x || xx > st->logo_x + st->logo_width / st->grid_width) ||
+	     (yy < st->logo_y || yy > st->logo_y + st->logo_height / st->grid_height))
 	  {
             /* if we are completely surrounded by walls, just draw the
                inside part */
-            if ((maze[x][y] & WALL_ANY) == WALL_ANY)
-	      XFillRectangle(dpy, win, ugc,
-			     border_x + bw + grid_width * x,
-			     border_y + bw + grid_height * y,
-			     grid_width - (bw+bw), grid_height - (bw+bw));
+            if ((st->maze[xx][yy] & WALL_ANY) == WALL_ANY)
+	      XFillRectangle(st->dpy, st->window, st->ugc,
+			     border_x + st->bw + st->grid_width * xx,
+			     border_y + st->bw + st->grid_height * yy,
+			     st->grid_width - (st->bw+st->bw), st->grid_height - (st->bw+st->bw));
 	    else
 	    {
-	      if (! (maze[x][y] & WALL_LEFT))
-		draw_solid_square(x, y, WALL_LEFT, ugc);
-	      if (! (maze[x][y] & WALL_RIGHT))
-		draw_solid_square(x, y, WALL_RIGHT, ugc);
-	      if (! (maze[x][y] & WALL_TOP))
-		draw_solid_square(x, y, WALL_TOP, ugc);
-	      if (! (maze[x][y] & WALL_BOTTOM))
-		draw_solid_square(x, y, WALL_BOTTOM, ugc);
+	      if (! (st->maze[xx][yy] & WALL_LEFT))
+		draw_solid_square(st, xx, yy, WALL_LEFT, st->ugc);
+	      if (! (st->maze[xx][yy] & WALL_RIGHT))
+		draw_solid_square(st, xx, yy, WALL_RIGHT, st->ugc);
+	      if (! (st->maze[xx][yy] & WALL_TOP))
+		draw_solid_square(st, xx, yy, WALL_TOP, st->ugc);
+	      if (! (st->maze[xx][yy] & WALL_BOTTOM))
+		draw_solid_square(st, xx, yy, WALL_BOTTOM, st->ugc);
 	    }
 	  }
 	}
       }
-    XSync(dpy, False);
 }
 
-static void
-solve_maze (void)                     /* solve it with graphical feedback */
+static int
+solve_maze (struct state *st)                     /* solve it with graphical feedback */
 {
-    int i, dir, from, x, y, ways, bt = 0;
+  struct solve_state *ss = st->solve_state;
+  if (!ss)
+    ss = st->solve_state = (struct solve_state *) calloc (1, sizeof(*ss));
 
+  if (!ss->running) {
     /* plug up the surrounding wall */
-    maze[end_x][end_y] |= (WALL_TOP >> end_dir);
+    st->maze[st->end_x][st->end_y] |= (WALL_TOP >> st->end_dir);
     
     /* initialize search path */
-    i = 0;
-    path[i].x = end_x;
-    path[i].y = end_y;
-    path[i].dir = 0;
-    maze[end_x][end_y] |= SOLVER_VISIT;
+    ss->i = 0;
+    st->path[ss->i].x = st->end_x;
+    st->path[ss->i].y = st->end_y;
+    st->path[ss->i].dir = 0;
+    st->maze[st->end_x][st->end_y] |= SOLVER_VISIT;
+
+    ss->running = 1;
+  }
     
     /* do it */
-    while (1)
+    /* while (1) */
     {
-	if ( maze[path[i].x][path[i].y] & START_SQUARE )
-	    return;
+        int dir, from, ways;
 
-	/* Abort solve on expose - cheapo repaint strategy */
-	if (check_events()) return;
-	
-	if (solve_delay) usleep (solve_delay);
-	
-	if(!path[i].dir)
+	if ( st->maze[st->path[ss->i].x][st->path[ss->i].y] & START_SQUARE )
+          {
+            ss->running = 0;
+	    return 1;
+          }
+
+	if(!st->path[ss->i].dir)
 	{
 	    ways = 0;
 	    /* First visit this square.  Which adjacent squares are open? */
 	    for(dir = WALL_TOP; dir & WALL_ANY; dir >>= 1)
 	    {
-		if(maze[path[i].x][path[i].y] & dir)
+		if(st->maze[st->path[ss->i].x][st->path[ss->i].y] & dir)
 		    continue;
 		
-		y = path[i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
-		x = path[i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
+		ss->y = st->path[ss->i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
+		ss->x = st->path[ss->i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
 		
-		if(maze[x][y] & SOLVER_VISIT)
-		    continue;
+		if(st->maze[ss->x][ss->y] & SOLVER_VISIT)
+                  continue;
 		
 		from = (dir << 2 & WALL_ANY) | (dir >> 2 & WALL_ANY);
 		/* don't enter obvious dead ends */
-		if(((maze[x][y] & WALL_ANY) | from) != WALL_ANY)
+		if(((st->maze[ss->x][ss->y] & WALL_ANY) | from) != WALL_ANY)
 		{
-		    if(!longdeadend_p(path[i].x, path[i].y, x, y, dir))
+		    if(!longdeadend_p(st, st->path[ss->i].x, st->path[ss->i].y, ss->x, ss->y, dir))
 			ways |= dir;
 		}
 		else
 		{
-		    draw_solid_square(x, y, from, sgc);
-		    maze[x][y] |= SOLVER_VISIT;
+		    draw_solid_square(st, ss->x, ss->y, from, st->sgc);
+		    st->maze[ss->x][ss->y] |= SOLVER_VISIT;
 		}
 	    }
 	}
 	else
-	    ways = path[i].ways;
+	    ways = st->path[ss->i].ways;
 	/* ways now has a bitmask of open paths. */
 	
 	if(!ways)
 	    goto backtrack;
 
-	if (!ignorant_p)
+	if (!st->ignorant_p)
 	  {
-	    x = path[i].x - start_x;
-	    y = path[i].y - start_y;
+	    ss->x = st->path[ss->i].x - st->start_x;
+	    ss->y = st->path[ss->i].y - st->start_y;
 	    /* choice one */
-	    if(abs(y) <= abs(x))
-	      dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+	    if(abs(ss->y) <= abs(ss->x))
+	      dir = (ss->x > 0) ? WALL_LEFT : WALL_RIGHT;
 	    else
-	      dir = (y > 0) ? WALL_TOP : WALL_BOTTOM;
+	      dir = (ss->y > 0) ? WALL_TOP : WALL_BOTTOM;
 	    
 	    if(dir & ways)
 	      goto found;
@@ -1481,10 +1462,10 @@ solve_maze (void)                     /* solve it with graphical feedback */
 	      {
 	      case WALL_LEFT:
 	      case WALL_RIGHT:
-		dir = (y > 0) ? WALL_TOP : WALL_BOTTOM; break;
+		dir = (ss->y > 0) ? WALL_TOP : WALL_BOTTOM; break;
 	      case WALL_TOP:
 	      case WALL_BOTTOM:
-		dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+		dir = (ss->x > 0) ? WALL_LEFT : WALL_RIGHT;
 	      }
 	    
 	    if(dir & ways)
@@ -1516,63 +1497,67 @@ solve_maze (void)                     /* solve it with graphical feedback */
 	    else
 	      goto backtrack;
 	  }
-	bt = 0;
+	ss->bt = 0;
 	ways &= ~dir;  /* tried this one */
 	
-	y = path[i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
-	x = path[i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
+	ss->y = st->path[ss->i].y - !!(dir & WALL_TOP) + !!(dir & WALL_BOTTOM);
+	ss->x = st->path[ss->i].x + !!(dir & WALL_RIGHT) - !!(dir & WALL_LEFT);
 	
 	/* advance in direction dir */
-	path[i].dir = dir;
-	path[i].ways = ways;
-	draw_solid_square(path[i].x, path[i].y, dir, tgc);
+	st->path[ss->i].dir = dir;
+	st->path[ss->i].ways = ways;
+	draw_solid_square(st, st->path[ss->i].x, st->path[ss->i].y, dir, st->tgc);
 	
-	i++;
-	path[i].dir = 0;
-	path[i].ways = 0;
-	path[i].x = x;
-	path[i].y = y;
-	maze[x][y] |= SOLVER_VISIT;
-	continue;
+	ss->i++;
+	st->path[ss->i].dir = 0;
+	st->path[ss->i].ways = 0;
+	st->path[ss->i].x = ss->x;
+	st->path[ss->i].y = ss->y;
+	st->maze[ss->x][ss->y] |= SOLVER_VISIT;
+        return 0;
+	/* continue; */
 
     backtrack:
-	if(i == 0)
+	if(ss->i == 0)
 	{
 	    printf("Unsolvable maze.\n");
-	    return;
+            ss->running = 0;
+	    return 1;
 	}
 
-	if(!bt && !ignorant_p)
-	    find_dead_regions();
-	bt = 1;
-	from = path[i-1].dir;
+	if(!ss->bt && !st->ignorant_p)
+	    find_dead_regions(st);
+	ss->bt = 1;
+	from = st->path[ss->i-1].dir;
 	from = (from << 2 & WALL_ANY) | (from >> 2 & WALL_ANY);
 	
-	draw_solid_square(path[i].x, path[i].y, from, cgc);
-	i--;
+	draw_solid_square(st, st->path[ss->i].x, st->path[ss->i].y, from, st->cgc);
+	ss->i--;
     }
+
+    return 0;
 } 
 
 #if 0
 static void
 enter_square (int n)                      /* move into a neighboring square */
 {
-  draw_solid_square( (int)path[n].x, (int)path[n].y, 
-		    (int)path[n].dir, tgc);
+  draw_solid_square( (int)st->path[n].x, (int)st->path[n].y, 
+		    (int)st->path[n].dir, st->tgc);
   
-  path[n+1].dir = -1;
-  switch (path[n].dir) {
-  case 0: path[n+1].x = path[n].x;
-    path[n+1].y = path[n].y - 1;
+  st->path[n+1].dir = -1;
+  switch (st->path[n].dir) {
+  case 0: st->path[n+1].x = st->path[n].x;
+    st->path[n+1].y = st->path[n].y - 1;
     break;
-  case 1: path[n+1].x = path[n].x + 1;
-    path[n+1].y = path[n].y;
+  case 1: st->path[n+1].x = st->path[n].x + 1;
+    st->path[n+1].y = st->path[n].y;
     break;
-  case 2: path[n+1].x = path[n].x;
-    path[n+1].y = path[n].y + 1;
+  case 2: st->path[n+1].x = st->path[n].x;
+    st->path[n+1].y = st->path[n].y + 1;
     break;
-  case 3: path[n+1].x = path[n].x - 1;
-    path[n+1].y = path[n].y;
+  case 3: st->path[n+1].x = st->path[n].x - 1;
+    st->path[n+1].y = st->path[n].y;
     break;
   }
 }
@@ -1585,27 +1570,28 @@ enter_square (int n)                      /* move into a neighboring square */
  *  arbitrary way.
  */
 
-char *progclass = "Maze";
+static const char *maze_defaults[] = {
+  ".background:	   black",
+  ".foreground:	   white",
+  "*gridSize:	   0",
+  "*generator:     -1",
+  "*maxLength:     5",
+  "*bridge:        False",
+  "*ignorant:      False",
 
-char *defaults[] = {
-  ".background:	black",
-  ".foreground:	white",
-  "*gridSize:	0",
-  "*solveDelay:	5000",
-  "*preDelay:	2000000",
-  "*postDelay:	4000000",
-  "*liveColor:	green",
-  "*deadColor:	red",
-  "*skipColor:  orange",
-  "*surroundColor: slateblue",
-  "*generator:  -1",
-  "*maxLength:  5",
-  "*syncDraw:   False",
-  "*bridge:     False",
+  "*solveDelay:	   5000",
+  "*preDelay:	   2000000",
+  "*postDelay:	   4000000",
+
+  "*liveColor:	   #00FF00",
+  "*deadColor:	   #880000",
+  "*skipColor:     #8B5A00",
+  "*surroundColor: #220055",
+
   0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec maze_options[] = {
   { "-ignorant",        ".ignorant",    XrmoptionNoArg, "True" },
   { "-no-ignorant",     ".ignorant",    XrmoptionNoArg, "False" },
   { "-grid-size",	".gridSize",	XrmoptionSepArg, 0 },
@@ -1625,165 +1611,272 @@ XrmOptionDescRec options[] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack(Display *display, Window window)
+static int generator = 0;
+
+static void *
+maze_init (Display *dpy_arg, Window window_arg)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+# ifdef DO_STIPPLE
   Pixmap gray;
-  int size, root, generator, this_gen;
+# endif
+  int size;
   XWindowAttributes xgwa;
   unsigned long bg, fg, pfg, pbg, sfg, ufg;
 
-  size = get_integer_resource ("gridSize", "Dimension");
-  root = get_boolean_resource("root", "Boolean");
-  solve_delay = get_integer_resource ("solveDelay", "Integer");
-  pre_solve_delay = get_integer_resource ("preDelay", "Integer");
-  post_solve_delay = get_integer_resource ("postDelay", "Integer");
-  generator = get_integer_resource("generator", "Integer");
-  max_length = get_integer_resource("maxLength", "Integer");
-  bridge_p = get_boolean_resource("bridge", "Boolean");
-  ignorant_p = get_boolean_resource("ignorant", "Boolean");
+  st->dpy = dpy_arg; 
+  st->window = window_arg;
+
+  st->stop = 0;
+  st->state = 1;
+  st->restart = 1;
+
+  st->ifrandom = 0;
+  st->ifinit = 1;
+
+  size = get_integer_resource (st->dpy, "gridSize", "Dimension");
+  st->solve_delay = get_integer_resource (st->dpy, "solveDelay", "Integer");
+  st->pre_solve_delay = get_integer_resource (st->dpy, "preDelay", "Integer");
+  st->post_solve_delay = get_integer_resource (st->dpy, "postDelay", "Integer");
+  generator = get_integer_resource(st->dpy, "generator", "Integer");
+  st->max_length = get_integer_resource(st->dpy, "maxLength", "Integer");
+  st->bridge_p = get_boolean_resource(st->dpy, "bridge", "Boolean");
+  st->ignorant_p = get_boolean_resource(st->dpy, "ignorant", "Boolean");
+
+  if (!size) st->ifrandom = 1;
 
   if (size < 2) size = 7 + (random () % 30);
-  grid_width = grid_height = size;
-  bw = (size > 6 ? 3 : (size-1)/2);
+  st->grid_width = st->grid_height = size;
+  st->bw = (size > 6 ? 3 : (size-1)/2);
 
-  dpy = display; win = window; /* the maze stuff uses global variables */
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-  XGetWindowAttributes (dpy, win, &xgwa);
+  st->x = 0;
+  st->y = 0;
 
-  x = 0;
-  y = 0;
+  set_maze_sizes (st, xgwa.width, xgwa.height);
 
-  set_maze_sizes (xgwa.width, xgwa.height);
-
-  if (! root)
-    {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
-      XSelectInput (dpy, win,
-                    xgwa.your_event_mask | ExposureMask | ButtonPressMask);
-    }
+  st->gc  = XCreateGC(st->dpy, st->window, 0, 0);
+  st->cgc = XCreateGC(st->dpy, st->window, 0, 0);
+  st->tgc = XCreateGC(st->dpy, st->window, 0, 0);
+  st->sgc = XCreateGC(st->dpy, st->window, 0, 0);
+  st->ugc = XCreateGC(st->dpy, st->window, 0, 0);
+  st->logo_gc = XCreateGC(st->dpy, st->window, 0, 0);
+  st->erase_gc = XCreateGC(st->dpy, st->window, 0, 0);
   
-  gc  = XCreateGC(dpy, win, 0, 0);
-  cgc = XCreateGC(dpy, win, 0, 0);
-  tgc = XCreateGC(dpy, win, 0, 0);
-  sgc = XCreateGC(dpy, win, 0, 0);
-  ugc = XCreateGC(dpy, win, 0, 0);
-  logo_gc = XCreateGC(dpy, win, 0, 0);
-  erase_gc = XCreateGC(dpy, win, 0, 0);
+# ifdef DO_STIPPLE
+  gray = XCreateBitmapFromData (st->dpy,st->window,gray1_bits,gray1_width,gray1_height);
+# endif
+
+  bg  = get_pixel_resource (st->dpy, xgwa.colormap, "background","Background");
+  fg  = get_pixel_resource (st->dpy, xgwa.colormap, "foreground","Foreground");
+  pfg = get_pixel_resource (st->dpy, xgwa.colormap, "liveColor", "Foreground");
+  pbg = get_pixel_resource (st->dpy, xgwa.colormap, "deadColor", "Foreground");
+  sfg = get_pixel_resource (st->dpy, xgwa.colormap, "skipColor", "Foreground");
+  ufg = get_pixel_resource (st->dpy, xgwa.colormap, "surroundColor", "Foreground");
+
+  XSetForeground (st->dpy, st->gc, fg);
+  XSetBackground (st->dpy, st->gc, bg);
+  XSetForeground (st->dpy, st->cgc, pbg);
+  XSetBackground (st->dpy, st->cgc, bg);
+  XSetForeground (st->dpy, st->tgc, pfg);
+  XSetBackground (st->dpy, st->tgc, bg);
+  XSetForeground (st->dpy, st->sgc, sfg);
+  XSetBackground (st->dpy, st->sgc, bg);
+  XSetForeground (st->dpy, st->ugc, ufg);
+  XSetBackground (st->dpy, st->ugc, bg);
+  XSetForeground (st->dpy, st->logo_gc, fg);
+  XSetBackground (st->dpy, st->logo_gc, bg);
+  XSetForeground (st->dpy, st->erase_gc, bg);
+  XSetBackground (st->dpy, st->erase_gc, bg);
+
+# ifdef DO_STIPPLE
+  XSetStipple (st->dpy, st->cgc, gray);
+  XSetFillStyle (st->dpy, st->cgc, FillOpaqueStippled);
+  XSetStipple (st->dpy, st->sgc, gray);
+  XSetFillStyle (st->dpy, st->sgc, FillOpaqueStippled);
+  XSetStipple (st->dpy, st->ugc, gray);
+  XSetFillStyle (st->dpy, st->ugc, FillOpaqueStippled);
+# endif
   
-  gray = XCreateBitmapFromData (dpy,win,gray1_bits,gray1_width,gray1_height);
-
-  bg  = get_pixel_resource ("background","Background", dpy, xgwa.colormap);
-  fg  = get_pixel_resource ("foreground","Foreground", dpy, xgwa.colormap);
-  pfg = get_pixel_resource ("liveColor", "Foreground", dpy, xgwa.colormap);
-  pbg = get_pixel_resource ("deadColor", "Foreground", dpy, xgwa.colormap);
-  sfg = get_pixel_resource ("skipColor", "Foreground", dpy, xgwa.colormap);
-  ufg = get_pixel_resource ("surroundColor", "Foreground", dpy, xgwa.colormap);
-
-  XSetForeground (dpy, gc, fg);
-  XSetBackground (dpy, gc, bg);
-  XSetForeground (dpy, cgc, pbg);
-  XSetBackground (dpy, cgc, bg);
-  XSetForeground (dpy, tgc, pfg);
-  XSetBackground (dpy, tgc, bg);
-  XSetForeground (dpy, sgc, sfg);
-  XSetBackground (dpy, sgc, bg);
-  XSetForeground (dpy, ugc, ufg);
-  XSetBackground (dpy, ugc, bg);
-  XSetForeground (dpy, logo_gc, fg);
-  XSetBackground (dpy, logo_gc, bg);
-  XSetForeground (dpy, erase_gc, bg);
-  XSetBackground (dpy, erase_gc, bg);
-
-  XSetStipple (dpy, cgc, gray);
-  XSetFillStyle (dpy, cgc, FillOpaqueStippled);
-  XSetStipple (dpy, sgc, gray);
-  XSetFillStyle (dpy, sgc, FillOpaqueStippled);
-  XSetStipple (dpy, ugc, gray);
-  XSetFillStyle (dpy, ugc, FillOpaqueStippled);
-  
-#ifdef XSCREENSAVER_LOGO
   {
-    unsigned long *pixels; /* ignored - unfreed */
+    Window r;
+    int x, y;
+    unsigned int w, h, bbw, d;
+    unsigned long *pixels;
     int npixels;
-    logo_map = xscreensaver_logo (xgwa.screen, xgwa.visual, win,
-                                  xgwa.colormap, bg,
-                                  &pixels, &npixels, 0,
-                                  logo_width > 150);
-  }
-#else
-  if  (!(logo_map = XCreateBitmapFromData (dpy, win, logo_bits,
-					   logo_width, logo_height)))
-    {
-      fprintf (stderr, "Can't create logo pixmap\n");
-      exit (1);
+    Pixmap logo_mask = 0;
+    st->logo_map = xscreensaver_logo (xgwa.screen, xgwa.visual, st->window,
+                                      xgwa.colormap, bg,
+                                      &pixels, &npixels, &logo_mask,
+                                      xgwa.width > 800);
+    if (logo_mask) {
+      XSetClipMask (st->dpy, st->logo_gc, logo_mask);
+      XFreePixmap (st->dpy, logo_mask);
     }
-#endif
-  XMapRaised(dpy, win);
+    if (pixels) free (pixels);
+    XGetGeometry (st->dpy, st->logo_map, &r, &x, &y, &w, &h, &bbw, &d);
+    st->logo_width = w;
+    st->logo_height = h;
+  }
 
-  restart = root;
 
-  sync_p = !(random() % 10);
+  st->restart = 0;
+  st->sync_p = 1;
 
-  while (1) {                            /* primary execution loop [ rhess ] */
-    if (check_events()) continue ;
-    if (restart || stop) goto pop;
-    switch (state) {
+  return st;
+}
+
+
+static void
+maze_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->restart = 1;
+}
+
+
+static unsigned long
+maze_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int this_delay = st->solve_delay;
+
+  if (st->eraser || st->erase_window)
+    {
+      st->erase_window = 0;
+      st->eraser = erase_window (st->dpy, st->window, st->eraser);
+      if (st->eraser)
+        this_delay = 10000;
+      else {
+        this_delay = 1000000;
+        if (this_delay > st->pre_solve_delay)
+          this_delay = st->pre_solve_delay;
+      }
+      goto END;
+    }
+
+    if (st->restart || st->stop) goto pop;
+    switch (st->state) {
     case 1:
-      initialize_maze();
+      initialize_maze(st);
+      if (st->ifrandom && st->ifinit)
+       {
+	 int size;
+         size = 7 + (random () % 30);
+         st->grid_width = st->grid_height = size;
+         st->bw = (size > 6 ? 3 : (size-1)/2);
+         st->ifinit = 0;
+	 st->restart = 1;
+       }
       break;
     case 2:
-      XClearWindow(dpy, win);
-      draw_maze_border();
+      XClearWindow(st->dpy, st->window);
+      draw_maze_border(st);
       break;
     case 3:
-      this_gen = generator;
-      if(this_gen<0 || this_gen>2)
-	this_gen = random()%3;
+      st->this_gen = generator;
+      if(st->this_gen<0 || st->this_gen>2)
+	st->this_gen = random()%3;
 
-      switch(this_gen)
+      switch(st->this_gen)
 	{
 	case 0:
-	  create_maze();
+	  create_maze(st);
 	  break;
 	case 1:
-	  alt_create_maze();
+	  alt_create_maze(st);
 	  break;
 	case 2:
-	  set_create_maze();
+	  set_create_maze(st);
 	  break;
 	}
       break;
     case 4:
-      XSync (dpy, False);
-      usleep (pre_solve_delay);
+      this_delay = st->pre_solve_delay;
       break;
     case 5:
-      solve_maze();
+      if (! solve_maze(st))
+        --st->state;  /* stay in state 5 */
       break;
     case 6:
-      XSync (dpy, False);
-      usleep (post_solve_delay);
-      state = 0 ;
-      erase_full_window(display, window);
+      st->erase_window = 1;
+      this_delay = st->post_solve_delay;
+      st->state = 0 ;
+      st->ifinit = 1;
       break;
     default:
       abort ();
     }
-    ++state;
+    ++st->state;
   pop:
-    if (restart)
+    if (st->restart)
       {
-	static XWindowAttributes wattr;
-	restart = 0;
-	stop = 0;
-	state = 1;
-	XGetWindowAttributes (dpy, win, &wattr);
-	set_maze_sizes (wattr.width, wattr.height);
-	XClearWindow (dpy, win);
-	XSync (dpy, False);
-	sync_p = !(random() % 10);
+        XWindowAttributes xgwa;
+        int size;
+
+        st->restart = 0;
+        st->stop = 0;
+        st->state = 1;
+
+        st->sync_p = ((random() % 4) != 0);
+
+        size = get_integer_resource (st->dpy, "gridSize", "Dimension");
+        if (size < 2) size = 7 + (random () % 30);
+        st->grid_width = st->grid_height = size;
+        st->bw = (size > 6 ? 3 : (size-1)/2);
+
+        XGetWindowAttributes (st->dpy, st->window, &xgwa);
+        set_maze_sizes (st, xgwa.width, xgwa.height);
       }
-  }
+
+ END:
+    return this_delay;
 }
+
+
+static Bool
+maze_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  struct state *st = (struct state *) closure;
+  switch (event->type) 
+    {
+    case ButtonPress:
+      switch (event->xbutton.button) 
+        {
+        case 2:
+          st->stop = !st->stop ;
+          if (st->state == 5) st->state = 4 ;
+          else {
+            st->restart = 1;
+            st->stop = 0;
+          }
+          return True;
+
+        default:
+          st->restart = 1 ;
+          st->stop = 0 ;
+          return True;
+        }
+      break;
+
+    case Expose:
+      st->restart = 1;
+      break;
+
+    default:
+      break;
+    }
+  return False;
+}
+
+
+static void
+maze_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("Maze", maze)

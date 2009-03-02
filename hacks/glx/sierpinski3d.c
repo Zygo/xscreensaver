@@ -27,24 +27,11 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Sierpinski3D"
-# define HACK_INIT					init_gasket
-# define HACK_DRAW					draw_gasket
-# define HACK_RESHAPE				reshape_gasket
-# define HACK_HANDLE_EVENT			gasket_handle_event
-# define EVENT_MASK					PointerMotionMask
-# define gasket_opts				xlockmore_opts
-
-
-#define DEF_SPIN			        "True"
-#define DEF_WANDER			        "True"
-#define DEF_SPEED			        "150"
-#define DEF_MAXDEPTH		        "5"
-
 # define DEFAULTS					"*delay:		20000   \n"			\
 									"*showFPS:      False   \n"			\
 									"*wireframe:	False	\n"			\
 
+# define refresh_gasket 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -52,7 +39,11 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
+#define DEF_SPIN			        "True"
+#define DEF_WANDER			        "True"
+#define DEF_SPEED			        "150"
+#define DEF_MAXDEPTH		        "5"
+
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -81,7 +72,7 @@ static argtype vars[] = {
 };
 
 
-ModeSpecOpt gasket_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt gasket_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   gasket_description =
@@ -115,13 +106,14 @@ typedef struct {
   int ccolor2;
   int ccolor3;
 
+  int tick;
+
+  GLfloat normals[4][3];
+
 } gasketstruct;
 
 static gasketstruct *gasket = NULL;
 
-static GLfloat normals[4][3];
-
-
 
 static void
 triangle (GLfloat x1, GLfloat y1, GLfloat z1,
@@ -140,7 +132,8 @@ triangle (GLfloat x1, GLfloat y1, GLfloat z1,
 }
 
 static void
-four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
+four_tetras (gasketstruct *gp, 
+             GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
              int *countP)
 {
   if (countdown <= 0)
@@ -148,7 +141,7 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
       (*countP)++;
       if (which == 0)
         {
-          glNormal3f (normals[0][0], normals[0][1], normals[0][2]);
+          glNormal3f (gp->normals[0][0], gp->normals[0][1], gp->normals[0][2]);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[1].x, outer[1].y, outer[1].z,
                     outer[2].x, outer[2].y, outer[2].z,
@@ -156,7 +149,7 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
         }
       else if (which == 1)
         {
-          glNormal3f (normals[1][0], normals[1][1], normals[1][2]);
+          glNormal3f (gp->normals[1][0], gp->normals[1][1], gp->normals[1][2]);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[3].x, outer[3].y, outer[3].z,
                     outer[1].x, outer[1].y, outer[1].z,
@@ -164,7 +157,7 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
         }
       else if (which == 2)
         {
-          glNormal3f (normals[2][0], normals[2][1], normals[2][2]);
+          glNormal3f (gp->normals[2][0], gp->normals[2][1], gp->normals[2][2]);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[2].x, outer[2].y, outer[2].z,
                     outer[3].x, outer[3].y, outer[3].z,
@@ -172,7 +165,7 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
         }
       else
         {
-          glNormal3f (normals[3][0], normals[3][1], normals[3][2]);
+          glNormal3f (gp->normals[3][0], gp->normals[3][1], gp->normals[3][2]);
           triangle (outer[1].x, outer[1].y, outer[1].z,
                     outer[3].x, outer[3].y, outer[3].z,
                     outer[2].x, outer[2].y, outer[2].z,
@@ -220,25 +213,25 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
       corner[1] = inner[M01];
       corner[2] = inner[M02];
       corner[3] = inner[M03];
-      four_tetras (corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M01];
       corner[1] = outer[1];
       corner[2] = inner[M12];
       corner[3] = inner[M13];
-      four_tetras (corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M02];
       corner[1] = inner[M12];
       corner[2] = outer[2];
       corner[3] = inner[M23];
-      four_tetras (corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M03];
       corner[1] = inner[M13];
       corner[2] = inner[M23];
       corner[3] = outer[3];
-      four_tetras (corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
     }
 }
 
@@ -252,21 +245,21 @@ compile_gasket(ModeInfo *mi, int which)
 
   GL_VECTOR   vertex[5];
 
-  normals[0][0] =  0;
-  normals[0][1] =  0;
-  normals[0][2] = -sqrt(2.0 / 3.0);
+  gp->normals[0][0] =  0;
+  gp->normals[0][1] =  0;
+  gp->normals[0][2] = -sqrt(2.0 / 3.0);
 
-  normals[1][0] =  0;
-  normals[1][1] = -sqrt(0.75);
-  normals[1][2] =  sqrt(2.0 / 3.0) / 3.0;
+  gp->normals[1][0] =  0;
+  gp->normals[1][1] = -sqrt(0.75);
+  gp->normals[1][2] =  sqrt(2.0 / 3.0) / 3.0;
 
-  normals[2][0] =  sqrt (0.5);
-  normals[2][1] =  sqrt(0.75) / 2.0;
-  normals[2][2] =  normals[1][2];
+  gp->normals[2][0] =  sqrt (0.5);
+  gp->normals[2][1] =  sqrt(0.75) / 2.0;
+  gp->normals[2][2] =  gp->normals[1][2];
 
-  normals[3][0] = -normals[2][0];
-  normals[3][1] =  normals[2][1];
-  normals[3][2] =  normals[1][2];
+  gp->normals[3][0] = -gp->normals[2][0];
+  gp->normals[3][1] =  gp->normals[2][1];
+  gp->normals[3][2] =  gp->normals[1][2];
 
 
   /* define verticies */
@@ -291,7 +284,7 @@ compile_gasket(ModeInfo *mi, int which)
   vertex[4].z = 0.0;
   
   count = 0;
-  four_tetras (vertex, wireframe_p,
+  four_tetras (gp, vertex, wireframe_p,
                (gp->current_depth < 0
                 ? -gp->current_depth : gp->current_depth),
                which,
@@ -304,14 +297,14 @@ draw(ModeInfo *mi)
 {
   Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
-  static int tick = 999999;
   
-  static GLfloat pos[4] = {-4.0, 3.0, 10.0, 1.0};
-  static float white[]  = {1.0, 1.0, 1.0, 1.0};
-  static float color0[] = {0.0, 0.0, 0.0, 1.0};
-  static float color1[] = {0.0, 0.0, 0.0, 1.0};
-  static float color2[] = {0.0, 0.0, 0.0, 1.0};
-  static float color3[] = {0.0, 0.0, 0.0, 1.0};
+  static const GLfloat pos[]    = {-4.0, 3.0, 10.0, 1.0};
+  static const GLfloat white[]  = {1.0, 1.0, 1.0, 1.0};
+
+  GLfloat color0[] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color1[] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color2[] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color3[] = {0.0, 0.0, 0.0, 1.0};
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -387,9 +380,9 @@ draw(ModeInfo *mi)
   glPopMatrix();
 
 
-  if (tick++ >= speed)
+  if (gp->tick++ >= speed)
     {
-      tick = 0;
+      gp->tick = 0;
       if (gp->current_depth >= max_depth)
         gp->current_depth = -max_depth;
       gp->current_depth++;
@@ -415,7 +408,7 @@ draw(ModeInfo *mi)
 
 
 /* new window size or exposure */
-void
+ENTRYPOINT void
 reshape_gasket(ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -448,7 +441,7 @@ pinit(ModeInfo *mi)
 }
 
 
-Bool
+ENTRYPOINT Bool
 gasket_handle_event (ModeInfo *mi, XEvent *event)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
@@ -489,7 +482,7 @@ gasket_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void
+ENTRYPOINT void
 init_gasket(ModeInfo *mi)
 {
   int           screen = MI_SCREEN(mi);
@@ -526,6 +519,7 @@ init_gasket(ModeInfo *mi)
   gp->ccolor1 = gp->ncolors * 0.25;
   gp->ccolor2 = gp->ncolors * 0.5;
   gp->ccolor3 = gp->ncolors * 0.75;
+  gp->tick = 999999;
 
   if ((gp->glx_context = init_GL(mi)) != NULL)
   {
@@ -538,7 +532,7 @@ init_gasket(ModeInfo *mi)
   }
 }
 
-void
+ENTRYPOINT void
 draw_gasket(ModeInfo * mi)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
@@ -559,7 +553,7 @@ draw_gasket(ModeInfo * mi)
   glXSwapBuffers(display, window);
 }
 
-void
+ENTRYPOINT void
 release_gasket(ModeInfo * mi)
 {
   if (gasket != NULL)
@@ -587,6 +581,7 @@ release_gasket(ModeInfo * mi)
   FreeAllGL(mi);
 }
 
+XSCREENSAVER_MODULE_2 ("Sierpinski3D", sierpinski3d, gasket)
 
 /*********************************************************/
 

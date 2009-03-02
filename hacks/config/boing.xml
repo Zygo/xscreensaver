@@ -22,7 +22,7 @@
    <hgroup>
     <boolean id="smoothing" _label="Smoothing" arg-set="-smooth"/>
     <boolean id="lighting"  _label="Lighting" arg-set="-lighting"/>
-    <boolean id="scanlines" _label="Scanlines" arg-set="-scanlines"/>
+    <boolean id="scanlines" _label="Scanlines" arg-unset="-no-scanlines"/>
    </hgroup>
    <hgroup>
     <boolean id="wire"      _label="Wireframe" arg-set="-wireframe"/>
@@ -39,6 +39,6 @@ the 1984 Consumer Electronics Show (or so the legend goes.)
 This looks like the original Amiga demo if you turn off "smoothing"
 and "lighting" and turn on "scanlines".
 
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 2005.
   </_description>
 </screensaver>

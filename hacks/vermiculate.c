@@ -13,25 +13,13 @@
  * implied warranty.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <math.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
-#ifdef VERMICULATE_STANDALONE
-#include "yarandom.h"
-#include "usleep.h"
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/Xresource.h>
-#else
+#include <ctype.h>
+#include <math.h>
 #include "screenhack.h"
-#include "config.h"
-#endif /* VERMICULATE_STANDALONE */
 
 #define degs 360
 #define degs2 (degs/2)
@@ -41,9 +29,9 @@
 #define thrmax 120
 #define tailmax (thrmax * 2 + 1)
 #define tmodes '7'
-#define ymax (hei - 1)
+#define ymax (st->hei - 1)
 #define ymin 0
-#define xmax (wid - 1)
+#define xmax (st->wid - 1)
 #define xmin 0
 #define rlmax 200
 #define SPEEDINC 10
@@ -75,105 +63,85 @@ typedef struct linedata
 }
 linedata;
 
-#ifdef    VERMICULATE_STANDALONE
-static XEvent myevent;
-static Bool use_root = False;
-static unsigned char rgb[256][3];
-
-#else
-char *progclass = "Vermiculate";
-
-char *defaults[] = {
-  ".ticks: 20000",
-  0
-};
-
-XrmOptionDescRec options[] = {
-  {"-speed", ".speed", XrmoptionSepArg, 0},
-  {"-instring", ".instring", XrmoptionSepArg, 0},
-  {0, 0, 0, 0}
-};
-#endif /* VERMICULATE_STANDALONE */
-
-static Display *mydpy;
-static Window mywindow;
-static GC mygc;
-static Colormap mycmap;
-static XWindowAttributes xgwa;
-static Bool neednewkey = True;
-static XColor mycolors[tailmax];
-
-static int hei = 500, wid = 500, speed = 100;
-static Bool erasing = True;
-static char *instring = 0;
-static int max_ticks;
-
-static struct stringAndSpeed
+static const struct stringAndSpeed
 {
   char *str;
   int speed;
 }
 sampleStrings[] =
 {
-  { "]]]]]]]]7ces123400-9-8#c123456#s9998880004#ma3#car9ma6#c-#r1", 600} ,
-  { "bmarrrr#c1234#lc5678#lyet]", 600} ,
+/*  { "]]]]]]]]7ces123400-9-8#c123456#s9998880004#ma3#car9ma6#c-#r1", 600} , 
+	{ "bmarrrr#c1234#lc5678#lyet]", 600} , */
   { "AEBMN222222223#CAR9CAD4CAOV", 150} ,
   { "mn333#c23#f1#]]]]]]]]]]]3bc9#r9#c78#f9#ma4#", 600} ,
-  { "AEBMN22222#CAD4CAORc1#f2#c1#r6", 100} ,
+  { "AEBMN22222#CAD4CAORc1#f2#c1#r6", 100} , 
 /*  { "mn6666666#c1i#f1#y2#sy2#vyety1#ry13i#l", 40} , */
-  { "aebmnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr#", 500} ,
-  { "bg+++++++++++++++++++++++#mnrrrrrrrrrrrrrrrrrrrrrrr#y1#k", 500} ,
-  { "BMN22222223#CAD4CAOVYAS", 150} ,
+  { "aebmnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr#", 500} , 
+/*  { "bg+++++++++++++++++++++++#mnrrrrrrrrrrrrrrrrrrrrrrr#y1#k", 500},  */
+/*  { "BMN22222223#CAD4CAOVYAS", 150}, */
 /*  { "aebmnrrrrrrrrrrrrrrrr#yaryakg--#", 100} , */
-  { "mn6rrrrrrrrrrrrrrr#by1i#lcalc1#fnyav", 200 } ,
-  { "mn1rrrrrrrrrrrrrrr#by1i#lcalc1#fn", 200 }
+  { "mn6rrrrrrrrrrrrrrr#by1i#lcalc1#fnyav" , 200 } ,
+  { "mn1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr#by1i#lcalc1#fn", 2000 },
+  { "baeMn333333333333333333333333#CerrYerCal", 800 },
+  { "baeMn1111111111111111111111111111111111111111111111111111111111#Cer9YesYevYerCal", 1200 },
+  { "baMn111111222222333333444444555555#Ct1#lCt2#lCt3#lCt4#lCt5#lCerrYerYet", 1400 },
+  { "baMn111111222222333333444444555555#Ct1#lCt2#lCt3#lCt4#lCt5#lCerrYerYetYt1i#lYt1i#sYt1#v", 1400 }
 };
 
-static real sinof[degs], cosof[degs], tanof[degs];
-static unsigned char *point;
+struct state {
+  Display *dpy;
+  Window window;
 
-static linedata thread[thrmax];
-static banktype bank;
-static int bankt, boxw, boxh, curviness, gridden, ogd, bordcorn;
-static unsigned char bordcol, threads;
-static char ch, boolop;
+  GC mygc;
+  Colormap mycmap;
+  XWindowAttributes xgwa;
+  XColor mycolors[tailmax];
+
+  int hei, wid, speed;
+  Bool erasing, cleared, autopal;
+  char *instring;
+  int max_ticks;
+
+  real sinof[degs], cosof[degs], tanof[degs];
+  unsigned char *point;
+
+  linedata thread[thrmax];
+  banktype bank;
+  int bnkt;
+  int boxw, boxh, curviness, gridden, ogd, bordcorn;
+  unsigned char bordcol, threads;
+  char ch, boolop;
+
+  int reset_p;
+  int cyc;
+};
+
+
+
+static void
+consume_instring(struct state *st);
 
 static Bool
-wasakeypressed (void)
+wasakeypressed (struct state *st)
 {
-  if (!neednewkey || *instring != 0)
+  if (*st->instring != 0)
     return True;
   else
-#ifdef VERMICULATE_STANDALONE
-    return !(neednewkey =
-	     !XCheckWindowEvent (mydpy, mywindow, KeyPressMask, &myevent));
-#else
     return False;
-#endif /* VERMICULATE_STANDALONE */
 }
 
 static char
-readkey (void)
+readkey (struct state *st)
 {
   char readkey_result;
-  if (*instring == 0)
+  if (*st->instring == 0)
     {
-#ifdef VERMICULATE_STANDALONE
-      char key_buffer[1];
-      KeySym key_sym;
-      if (neednewkey)
-	XWindowEvent (mydpy, mywindow, KeyPressMask, &myevent);
-      XLookupString (&myevent.xkey, key_buffer, 1, &key_sym, NULL);
-      readkey_result = key_sym;
-#else
       readkey_result = '#';
-#endif /* VERMICULATE_STANDALONE */
-      neednewkey = True;
     }
   else
     {
-      readkey_result = *instring;
-      instring++;
+      readkey_result = *st->instring;
+      st->instring++;
     };
   return toupper (readkey_result);
 }
@@ -184,229 +152,187 @@ random1 (unsigned int i)
   return (ya_random () % i);
 }
 
-static void
-waitabit (void)
+static unsigned long
+waitabit (struct state *st)
 {
-  static int cyc = 0;
-  cyc += threads;
-  while (cyc > speed)
+  int result = 0;
+  st->cyc += st->threads;
+  while (st->cyc > st->speed)
     {
-      usleep (10000);
-      cyc -= speed;
+      result += 10000;
+      st->cyc -= st->speed;
     }
+  return result;
 }
 
 static void
-clearscreen (void)
+clearscreen (struct state *st)
 {
-  XClearWindow (mydpy, mywindow);
-  memset (point, 0, wid * hei);
+  XClearWindow (st->dpy, st->window);
+  memset (st->point, 0, st->wid * st->hei);
 }
 
 static void
-sp (int x, int y, int c)
+sp (struct state *st, int x, int y, int c)
 {
-  XSetForeground (mydpy, mygc, mycolors[c].pixel);
-  XDrawPoint (mydpy, mywindow, mygc, x, y);
-  point[(wid * y) + x] = c;
+  XSetForeground (st->dpy, st->mygc, st->mycolors[c].pixel);
+  XDrawPoint (st->dpy, st->window, st->mygc, x, y);
+  st->point[(st->wid * y) + x] = c;
 }
 
 static int
-gp (int x, int y)
+gp (struct state *st, int x, int y)
 {
-  return point[(wid * y) + x];
+  return st->point[(st->wid * y) + x];
 }
 
 static void
-redraw (int x, int y, int width, int height)
+redraw (struct state *st, int x, int y, int width, int height)
 {
   int xc, yc;
   for (xc = x; xc <= x + width - 1; xc++)
     for (yc = y; yc <= y + height - 1; yc++)
-      if (point[wid * yc + xc] != 0)
-	sp (xc, yc, point[wid * yc + xc]);
+      if (st->point[st->wid * yc + xc] != 0)
+	sp (st, xc, yc, st->point[st->wid * yc + xc]);
 }
 
 static void
-palupdate (Bool forceUpdate)
+palupdate (struct state *st, Bool forceUpdate)
 {
-  if (forceUpdate || *instring == 0)
+  if (forceUpdate || *st->instring == 0)
     {
-#ifdef VERMICULATE_STANDALONE
-      int colnum;
-      for (colnum = 0; colnum < tailmax; colnum++)
-	{
-	  mycolors[colnum].red = rgb[colnum][0] << 10;
-	  mycolors[colnum].green = rgb[colnum][1] << 10;
-	  mycolors[colnum].blue = rgb[colnum][2] << 10;
-	  mycolors[colnum].flags = DoRed | DoBlue | DoGreen;
-	  XAllocColor (mydpy, mycmap, &mycolors[colnum]);
-	};
-#endif /* VERMICULATE_STANDALONE */
-      redraw (xmin, ymin, wid, hei);
+      redraw (st, xmin, ymin, st->wid, st->hei);
     }
 }
 
 static void
-randpal (void)
+randpal (struct state *st)
 {
-#ifdef VERMICULATE_STANDALONE
-  int co, ro;
-  for (co = 1; co <= 255; co++)
-    for (ro = 0; ro <= 2; ro++)
-      if (co > tailmax)
-	rgb[co][ro] = random1 (20);
-      else
-	rgb[co][ro] = random1 (64);
-  for (ro = 0; ro <= 2; ro++)
-    rgb[0][ro] = 0;
-#else
   int ncolors = tailmax - 1;
-  make_random_colormap (mydpy,
-			xgwa.visual,
-			mycmap, &mycolors[1], &ncolors, True, True, 0, True);
+  make_random_colormap (st->dpy,
+			st->xgwa.visual,
+			st->mycmap, &st->mycolors[1], &ncolors, True, True, 0, True);
   if (ncolors < tailmax - 1)
     {
       int c;
       for (c = 1; c < tailmax; c++)
-	mycolors[c].pixel = WhitePixel (mydpy, DefaultScreen (mydpy));
+	st->mycolors[c].pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
     }
-#endif /* VERMICULATE_STANDALONE */
 }
 
 static void
-gridupdate (Bool interruptible)
+gridupdate (struct state *st, Bool interruptible)
 {
   int x, y;
-  if (gridden > 0)
-    for (x = 0; x <= xmax && !(wasakeypressed () && interruptible); x += boxw)
-      for (y = 0; y <= ymax; y += boxh)
+  if (st->gridden > 0)
+    for (x = 0; x <= xmax && !(wasakeypressed (st) && interruptible); x += st->boxw)
+      for (y = 0; y <= ymax; y += st->boxh)
 	{
-	  if (random1 (15) < gridden)
+	  if (random1 (15) < st->gridden)
 	    {
 #define lesser(A,B) ( ((A)<(B)) ? (A) : (B) )
-	      int max = lesser (x + boxw, xmax);
+	      int max = lesser (x + st->boxw, xmax);
 	      int xc;
 	      for (xc = x; xc <= max; xc++)
-		sp (xc, y, 1);
+		sp (st, xc, y, 1);
 	    }
-	  if (random1 (15) < gridden)
+	  if (random1 (15) < st->gridden)
 	    {
-	      int max = lesser (y + boxh, ymax);
+	      int max = lesser (y + st->boxh, ymax);
 	      int yc;
 	      for (yc = y; yc <= max; yc++)
-		sp (x, yc, 1);
+		sp (st, x, yc, 1);
 	    }
 	}
 }
 
 static void
-bordupdate (void)
+bordupdate (struct state *st)
 {
   int xbord, ybord;
 
-  if (bordcorn == 0 || bordcorn == 1)
+  if (st->bordcorn == 0 || st->bordcorn == 1)
     ybord = ymin;
   else
     ybord = ymax;
-  if (bordcorn == 0 || bordcorn == 3)
+  if (st->bordcorn == 0 || st->bordcorn == 3)
     xbord = xmin;
   else
     xbord = xmax;
   {
     int x, y;
     for (x = xmin; x <= xmax; x++)
-      sp (x, ybord, bordcol);
+      sp (st, x, ybord, st->bordcol);
     for (y = ymin; y <= ymax; y++)
-      sp (ybord, y, bordcol);
+      sp (st, ybord, y, st->bordcol);
   }
 }
 
 static Bool
-inbank (unsigned char thr)
+inbank (struct state *st, unsigned char thr)
 {
   int c;
-  if (bankt > 0)
-    for (c = 1; c <= bankt; c++)
-      if (bank[c - 1] == thr)
+  if (st->bnkt > 0)
+    for (c = 1; c <= st->bnkt; c++)
+      if (st->bank[c - 1] == thr)
 	return True;
   return False;
 }
 
 static void
-pickbank (void)
+pickbank (struct state *st)
 {
   unsigned char thr = 1;
-#ifdef VERMICULATE_STANDALONE
-  int co, ro;
-  unsigned char orgb[256][3];
-
-  arrcpy (orgb, rgb);
-  for (co = 2; co <= tailmax; co++)
-    for (ro = 0; ro <= 2; ro++)
-      rgb[co][ro] = 25;
-#endif /* VERMICULATE_STANDALONE */
-  bankt = 0;
-  ch = '\0';
+  st->bnkt = 0;
+  st->ch = '\0';
   do
     {
-      while (inbank (thr))
-	thr = thr % threads + 1;
-#ifdef VERMICULATE_STANDALONE
-      for (co = 1; co <= threads; co++)
-	{
-	  for (ro = 0; ro <= 2; ro++)
-	    rgb[co + 1][ro] = 25;
-	  if (inbank (co))
-	    for (ro = 0; ro <= 1; ro++)
-	      rgb[co + 1][ro] = 60;
-	}
-      for (ro = 0; ro <= 2; ro++)
-	rgb[thr + 1][ro] = 60;
-#endif /* VERMICULATE_STANDALONE */
-      palupdate (False);
-      ch = readkey ();
-      palupdate (False);
-      switch (ch)
+      while (inbank (st, thr))
+	thr = thr % st->threads + 1;
+
+      palupdate (st, False);
+      st->ch = readkey (st);
+      palupdate (st, False); 
+      switch (st->ch)
 	{
 	case '+':
 	case '-':
 	  do
 	    {
-	      if (ch == '+')
+	      if (st->ch == '+')
 		thr++;
 	      else
 		thr--;
-	      wraparound (thr, 1, threads + 1);
+	      wraparound (thr, 1, st->threads + 1);
 	    }
-	  while (inbank (thr));
+	  while (inbank (st, thr));
 	  break;
 	case ' ':
-	  bank[++bankt - 1] = thr;
+	  st->bank[++st->bnkt - 1] = thr;
 	  break;
 	case '1': case '2': case '3':
         case '4': case '5': case '6':
         case '7': case '8': case '9':
 
-	  bank[++bankt - 1] = ch - '0';
-	  if (bank[bankt - 1] > threads)
-	    bankt--;
+	  st->bank[++st->bnkt - 1] = st->ch - '0';
+	  if (st->bank[st->bnkt - 1] > st->threads)
+	    st->bnkt--;
 	  break;
 	case 'I':
 	  {
 	    banktype tbank;
 	    int tbankt = 0;
 	    int c;
-	    for (c = 1; c <= threads; c++)
-	      if (!inbank (c))
+	    for (c = 1; c <= st->threads; c++)
+	      if (!inbank (st, c))
 		tbank[++tbankt - 1] = c;
-	    bankt = tbankt;
-	    arrcpy (bank, tbank);
+	    st->bnkt = tbankt;
+	    arrcpy (st->bank, tbank);
 	  }
 	  break;
 	case 'T':
-	  ch = readkey ();
-	  switch (ch)
+	  st->ch = readkey (st);
+	  switch (st->ch)
 	    {
 	    case '1': case '2': case '3':
             case '4': case '5': case '6':
@@ -414,39 +340,36 @@ pickbank (void)
 
 	      {
 		int c;
-		for (c = 1; c <= threads; c++)
-		  if (thread[c - 1].tmode == ch - '0')
-		    bank[++bankt - 1] = c;
+		for (c = 1; c <= st->threads; c++)
+		  if (st->thread[c - 1].tmode == st->ch - '0')
+		    st->bank[++st->bnkt - 1] = c;
 	      }
 	      break;
 	    }
 	  break;
 	case 'A':
-	  for (bankt = 1; bankt <= threads; bankt++)
-	    bank[bankt - 1] = bankt;
-	  bankt = threads;
+	  for (st->bnkt = 1; st->bnkt <= st->threads; st->bnkt++)
+	    st->bank[st->bnkt - 1] = st->bnkt;
+	  st->bnkt = st->threads;
 	  break;
 	case 'E':
-	  for (bankt = 1; bankt <= thrmax; bankt++)
-	    bank[bankt - 1] = bankt;
-	  bankt = thrmax;
+	  for (st->bnkt = 1; st->bnkt <= thrmax; st->bnkt++)
+	    st->bank[st->bnkt - 1] = st->bnkt;
+	  st->bnkt = thrmax;
 	  break;
 	}
     }
-  while (!(bankt >= threads || ch == 'N' || ch == '\15' || ch == '#'));
-  if (bankt == 0 && ch != 'N')
+  while (!(st->bnkt >= st->threads || st->ch == 'N' || st->ch == '\15' || st->ch == '#'));
+  if (st->bnkt == 0 && st->ch != 'N')
     {
-      bankt = 1;
-      bank[0] = thr;
+      st->bnkt = 1;
+      st->bank[0] = thr;
     }
-#ifdef VERMICULATE_STANDALONE
-  arrcpy (rgb, orgb);
-#endif /* VERMICULATE_STANDALONE */
-  palupdate (False);
+  palupdate (st, False);
 }
 
 static void
-bankmod (Bool * Bool_)
+bankmod (char boolop, Bool * Bool_)
 {
   switch (boolop)
     {
@@ -463,25 +386,25 @@ bankmod (Bool * Bool_)
 }
 
 static void
-newonscreen (unsigned char thr)
+newonscreen (struct state *st, unsigned char thr)
 {
-  linedata *LP = &thread[thr - 1];
+  linedata *LP = &st->thread[thr - 1];
   LP->filled = False;
   LP->dead = False;
   LP->reclen = (LP->little) ? 
 	random1 (10) + 5 : random1 (rlmax - 30) + 30;
   LP->deg = random1 (degs);
-  LP->y = random1 (hei);
-  LP->x = random1 (wid);
+  LP->y = random1 (st->hei);
+  LP->x = random1 (st->wid);
   LP->recpos = 0;
   LP->turnco = 2;
   LP->turnsize = random1 (4) + 2;
 }
 
 static void
-firstinit (unsigned char thr)
+firstinit (struct state *st, unsigned char thr)
 {
-  linedata *LP = &thread[thr - 1];
+  linedata *LP = &st->thread[thr - 1];
   LP->col = thr + 1;
   LP->prey = 0;
   LP->tmode = 1;
@@ -508,51 +431,55 @@ firstinit (unsigned char thr)
 }
 
 static void
-maininit (void)
+maininit (struct state *st)
 {
-  if (!instring)
+  if (!st->instring)
     {
       int n = random1 (sizeof (sampleStrings) / sizeof (sampleStrings[0]));
-      instring = sampleStrings[n].str;
-      speed = sampleStrings[n].speed;
+      st->instring = sampleStrings[n].str;
+      st->speed = sampleStrings[n].speed;
     }
-  boxh = 10;
-  boxw = 10;
-  gridden = 0;
-  bordcorn = 0;
-  threads = 4;
-  curviness = 30;
-  bordcol = 1;
-  ogd = 8;
-  ch = '\0';
-  erasing = True;
+  if (st->speed == 0)
+    {
+	  st->speed = 200;
+    }
+  st->boxh = 10;
+  st->boxw = 10;
+  st->gridden = 0;
+  st->bordcorn = 0;
+  st->threads = 4;
+  st->curviness = 30;
+  st->bordcol = 1;
+  st->ogd = 8;
+  st->ch = '\0';
+  st->erasing = True;
   {
     unsigned char thr;
     for (thr = 1; thr <= thrmax; thr++)
       {
-	firstinit (thr);
-	newonscreen (thr);
+	firstinit (st, thr);
+	newonscreen (st, thr);
       }
   }
   {
     int d;
     for (d = degs - 1; d >= 0; d--)
       {
-	sinof[d] = sin (d * dtor);
-	cosof[d] = cos (d * dtor);
+	st->sinof[d] = sin (d * dtor);
+	st->cosof[d] = cos (d * dtor);
 	if (d % degs4 == 0)
-	  tanof[d] = tanof[d + 1];
+	  st->tanof[d] = st->tanof[d + 1];
 	else
-	  tanof[d] = tan (d * dtor);
+	  st->tanof[d] = tan (d * dtor);
       }
   }
-  randpal ();
+  randpal (st);
 }
 
 static Bool
-move (unsigned char thr)
+move (struct state *st, unsigned char thr)
 {
-  linedata *LP = &thread[thr - 1];
+  linedata *LP = &st->thread[thr - 1];
   if (LP->dead)
     return (False);
   if (LP->prey == 0)
@@ -600,7 +527,7 @@ move (unsigned char thr)
 	LP->turnco = abs (LP->turnco) - 1;
 	if (LP->turnco == 0)
 	  {
-	    LP->turnco = curviness + random1 (10);
+	    LP->turnco = st->curviness + random1 (10);
 	    LP->circturn *= -1;
 	  }
 	LP->deg += LP->circturn;
@@ -634,13 +561,13 @@ move (unsigned char thr)
       real dy, dx;
       if (LP->tailfollow || LP->prey == thr)
 	{
-	  dx = thread[LP->prey - 1].xrec[thread[LP->prey - 1].recpos] - LP->x;
-	  dy = thread[LP->prey - 1].yrec[thread[LP->prey - 1].recpos] - LP->y;
+	  dx = st->thread[LP->prey - 1].xrec[st->thread[LP->prey - 1].recpos] - LP->x;
+	  dy = st->thread[LP->prey - 1].yrec[st->thread[LP->prey - 1].recpos] - LP->y;
 	}
       else
 	{
-	  dx = thread[LP->prey - 1].x - LP->x;
-	  dy = thread[LP->prey - 1].y - LP->y;
+	  dx = st->thread[LP->prey - 1].x - LP->x;
+	  dy = st->thread[LP->prey - 1].y - LP->y;
 	}
       desdeg =
 	(LP->vhfollow) ?
@@ -679,7 +606,7 @@ move (unsigned char thr)
 	}
       else
 	LP->deg +=
-	  (tanof[LP->deg] >
+	  (st->tanof[LP->deg] >
 	   dy / dx) ? -abs (LP->circturn) : abs (LP->circturn);
     }
 
@@ -687,21 +614,21 @@ move (unsigned char thr)
   {
     unsigned char oldcol;
     real oldy = LP->y, oldx = LP->x;
-    LP->x += cosof[LP->deg];
+    LP->x += st->cosof[LP->deg];
     wraparound (LP->x, xmin, xmax + 1);
-    LP->y += sinof[LP->deg];
+    LP->y += st->sinof[LP->deg];
     wraparound (LP->y, ymin, ymax + 1);
 #define xi ((int) LP->x)
 #define yi ((int) LP->y)
 
-    oldcol = gp (xi, yi);
+    oldcol = gp (st, xi, yi);
     if (oldcol != 0)
       {
 	Bool vertwall = False, horiwall = False;
-	if (oldcol == 1 && ((LP->killwalls && gridden > 0) || LP->realbounce))
+	if (oldcol == 1 && ((LP->killwalls && st->gridden > 0) || LP->realbounce))
 	  {
-	    vertwall = (gp (xi, (int) oldy) == 1);
-	    horiwall = (gp ((int) oldx, yi) == 1);
+	    vertwall = (gp (st, xi, (int) oldy) == 1);
+	    horiwall = (gp (st, (int) oldx, yi) == 1);
 	  }
 	if (oldcol == 1 && LP->realbounce && (vertwall || horiwall))
 	  {
@@ -718,23 +645,23 @@ move (unsigned char thr)
 	    else if (oldcol != LP->col)
 	      LP->deg += degs2;
 	  }
-	if (LP->killwalls && gridden > 0 && oldcol == 1)
+	if (LP->killwalls && st->gridden > 0 && oldcol == 1)
 	  {
 	    if (vertwall && xi + 1 <= xmax)
 	      {
 		int yy;
-		for (yy = yi - yi % boxh;
-		     yy <= yi - yi % boxh + boxh && yy <= ymax; yy++)
-		  if (gp (xi + 1, yy) != 1 || yy == ymax)
-		    sp (xi, yy, 0);
+		for (yy = yi - yi % st->boxh;
+		     yy <= yi - yi % st->boxh + st->boxh && yy <= ymax; yy++)
+		  if (gp (st, xi + 1, yy) != 1 || yy == ymax)
+		    sp (st, xi, yy, 0);
 	      }
 	    if (horiwall && yi + 1 <= ymax)
 	      {
 		int xx;
-		for (xx = xi - xi % boxw;
-		     xx <= xi - xi % boxw + boxw && xx <= xmax; xx++)
-		  if (gp (xx, yi + 1) != 1 || xx == xmax)
-		    sp (xx, yi, 0);
+		for (xx = xi - xi % st->boxw;
+		     xx <= xi - xi % st->boxw + st->boxw && xx <= xmax; xx++)
+		  if (gp (st, xx, yi + 1) != 1 || xx == xmax)
+		    sp (st, xx, yi, 0);
 	      }
 	  }
 	if (oldcol != LP->col || LP->selfbounce)
@@ -746,19 +673,19 @@ move (unsigned char thr)
       }
   }
 
-  sp (xi, yi, LP->col);
+  sp (st, xi, yi, LP->col);
   if (LP->filled)
     {
-      if (erasing)
-	sp (LP->xrec[LP->recpos], LP->yrec[LP->recpos], 0);
+      if (st->erasing)
+	sp (st, LP->xrec[LP->recpos], LP->yrec[LP->recpos], 0);
       else
-	sp (LP->xrec[LP->recpos], LP->yrec[LP->recpos], LP->col + thrmax);
+	sp (st, LP->xrec[LP->recpos], LP->yrec[LP->recpos], LP->col + thrmax);
     }
   LP->yrec[LP->recpos] = yi;
   LP->xrec[LP->recpos] = xi;
   if (LP->recpos == LP->reclen - 1)
     LP->filled = True;
-  if (LP->filled && !erasing)
+  if (LP->filled && !st->erasing)
     {
       int co = LP->recpos;
       LP->dead = True;
@@ -778,84 +705,171 @@ move (unsigned char thr)
   return (!LP->dead);
 }
 
-static void
-vermiculate_main (void)
+static unsigned long
+vermiculate_draw (Display *dpy, Window window, void *closure)
 {
-  int had_instring = (instring != 0);
+  struct state *st = (struct state *) closure;
+  int had_instring = (st->instring != 0);
   int tick = 0;
-  Bool halted = False, autopal = False, cleared;
-  point = (unsigned char *) malloc (wid * hei);
-  maininit ();
-  palupdate (True);
+  int this_delay = 0;
+  int loop = 0;
 
-  do
+  
+ AGAIN:
+  if (st->reset_p) 
     {
-      clearscreen ();
+      st->reset_p = 0;
+
+      clearscreen (st);
       {
 	unsigned char thr;
-	for (thr = 1; thr <= threads; thr++)
-	  newonscreen (thr);
+	for (thr = 1; thr <= st->threads; thr++)
+	  newonscreen (st, thr);
       }
-      if (autopal)
+      if (st->autopal)
 	{
-	  randpal ();
-	  palupdate (False);
+	  randpal (st);
+	  palupdate (st, False);
 	}
-      bordupdate ();
-      gridupdate (False);
-      cleared = False;
-      do
-	{
-	  while (wasakeypressed ())
+      bordupdate (st);
+      gridupdate (st, False);
+    }
+
+  {
+    Bool alltrap = True;
+    unsigned char thr;
+    for (thr = 1; thr <= st->threads; thr++)
+      if (move (st, thr))
+        alltrap = False;
+    if (alltrap)	/* all threads are trapped */
+      st->reset_p = True;
+    if (st->speed != SPEEDMAX)
+      this_delay = waitabit (st);
+  }
+
+  if (tick++ > st->max_ticks && !had_instring)
+    {
+      tick = 0;
+      st->instring = 0;
+      maininit(st);
+      st->reset_p = True;
+      st->autopal = False;
+    }
+
+  if (this_delay == 0 && loop++ < 1000)
+    goto AGAIN;
+
+  return this_delay;
+}
+
+static void *
+vermiculate_init (Display *d, Window w)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = d;
+  st->window = w;
+  st->reset_p = 1;
+  st->instring = get_string_resource (st->dpy, "instring", "Instring");
+  if (st->instring && !*st->instring)
+    st->instring = 0;
+
+  st->max_ticks = get_integer_resource (st->dpy, "ticks", "Integer");
+  {
+    int temp = get_integer_resource (st->dpy, "speed", "Speed");
+    if (temp != 0)
+      st->speed = temp;
+  }
+
+  st->mycolors[0].pixel = BlackPixel (st->dpy, DefaultScreen (st->dpy));
+
+  XSetWindowBackground (st->dpy, st->window,
+			BlackPixel (st->dpy, DefaultScreen (st->dpy)));
+  {
+    XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+    st->wid = st->xgwa.width;
+    st->hei = st->xgwa.height;
+    st->mycmap = st->xgwa.colormap;
+  }
+  {
+    XGCValues mygcv;
+    st->mygc = XCreateGC (st->dpy, st->window, 0, &mygcv);
+  }
+
+  st->point = (unsigned char *) malloc (st->wid * st->hei);
+  maininit (st);
+  palupdate (st, True);
+  consume_instring(st);
+  return st;
+}
+
+
+static void
+vermiculate_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+vermiculate_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+consume_instring(struct state *st)
+{
+  char boolop;
+
+	  while (wasakeypressed (st))
 	    {
-	      ch = readkey ();
-	      switch (ch)
+	      st->ch = readkey (st);
+	      switch (st->ch)
 		{
 		case 'M':
-		  ch = readkey ();
-		  switch (ch)
+		  st->ch = readkey (st);
+		  switch (st->ch)
 		    {
 		    case 'A':
 		    case 'N':
 		      {
-			unsigned char othreads = threads;
-			if (ch == 'N')
-			  threads = 0;
+			unsigned char othreads = st->threads;
+			if (st->ch == 'N')
+			  st->threads = 0;
 			do
 			  {
-			    ch = readkey ();
-			    switch (ch)
+			    st->ch = readkey (st);
+			    switch (st->ch)
 			      {
                               case '1': case '2': case '3':
                               case '4': case '5': case '6':
                               case '7': case '8': case '9':
-				thread[++threads - 1].tmode = ch - '0';
+				st->thread[++st->threads - 1].tmode = st->ch - '0';
 				break;
 			      case 'R':
-				thread[++threads - 1].tmode =
+				st->thread[++st->threads - 1].tmode =
 				  random1 (tmodes - '0') + 1;
 				break;
 			      }
 			  }
-			while (!(ch == '\15' || ch == '#'
-				 || threads == thrmax));
-			if (threads == 0)
-			  threads = othreads;
-			cleared = True;
+			while (!(st->ch == '\15' || st->ch == '#'
+				 || st->threads == thrmax));
+			if (st->threads == 0)
+			  st->threads = othreads;
+			st->reset_p = 1;
 		      }
 		      break;
 		    }
 		  break;
 		case 'C':
-		  pickbank ();
-		  if (bankt > 0)
+		  pickbank (st);
+		  if (st->bnkt > 0)
 		    {
-		      ch = readkey ();
-		      switch (ch)
+		      st->ch = readkey (st);
+		      switch (st->ch)
 			{
 			case 'D':
-			  ch = readkey ();
-			  switch (ch)
+			  st->ch = readkey (st);
+			  switch (st->ch)
 			    {
                             case '1': case '2': case '3':
                             case '4': case '5': case '6':
@@ -864,10 +878,10 @@ vermiculate_main (void)
 block in which it's invoked, since it declares variables: */
 #define forallinbank(LDP) linedata *LDP; int bankc; \
 		for (bankc = 1;	\
-		(LDP = &thread[bank[bankc - 1] - 1],	\
-		bankc <= bankt); bankc++)
+		(LDP = &st->thread[st->bank[bankc - 1] - 1],	\
+		bankc <= st->bnkt); bankc++)
 			      {
-				forallinbank (L) L->slice = degs / (ch - '0');
+				forallinbank (L) L->slice = degs / (st->ch - '0');
 			      }
 			      break;
 			    case 'M':
@@ -887,19 +901,19 @@ block in which it's invoked, since it declares variables: */
 			  }
 			  do
 			    {
-			      char oldch = ch;
-			      ch = readkey ();
+			      char oldch = st->ch;
+			      st->ch = readkey (st);
 			      {
 				forallinbank (L)
 				{
-				  switch (ch)
+				  switch (st->ch)
 				    {
                                     case '0':
                                     case '1': case '2': case '3':
                                     case '4': case '5': case '6':
                                     case '7': case '8': case '9':
 				      L->tslen++;
-				      L->turnseq[L->tslen - 1] = ch - '0';
+				      L->turnseq[L->tslen - 1] = st->ch - '0';
 				      if (oldch == '-')
 					L->turnseq[L->tslen - 1] *= -1;
 				      if (bankc % 2 == 0)
@@ -909,8 +923,8 @@ block in which it's invoked, since it declares variables: */
 				}
 			      }
 			    }
-			  while (!(ch == '\15' || ch == '#'
-				   || thread[bank[0] - 1].tslen == 50));
+			  while (!(st->ch == '\15' || st->ch == '#'
+				   || st->thread[st->bank[0] - 1].tslen == 50));
 			  {
 			    forallinbank (L)
 			    {
@@ -931,16 +945,16 @@ block in which it's invoked, since it declares variables: */
 			  break;
 			case 'T':
 			  {
-			    ch = readkey ();
+			    st->ch = readkey (st);
 			    {
 			      forallinbank (L)
 			      {
-				switch (ch)
+				switch (st->ch)
 				  {
                                   case '1': case '2': case '3':
                                   case '4': case '5': case '6':
                                   case '7': case '8': case '9':
-				    L->tmode = ch - '0';
+				    L->tmode = st->ch - '0';
 				    break;
 				  case 'R':
 				    L->tmode = random1 (tmodes - '0') + 1;
@@ -951,44 +965,44 @@ block in which it's invoked, since it declares variables: */
 			  }
 			  break;
 			case 'O':
-			  ch = readkey ();
+			  st->ch = readkey (st);
 			  {
-			    forallinbank (L) L->orichar = ch;
+			    forallinbank (L) L->orichar = st->ch;
 			  }
 			  break;
 			case 'F':
 			  {
 			    banktype fbank;
-			    arrcpy (fbank, bank);
+			    arrcpy (fbank, st->bank);
 			    {
-			      int fbankt = bankt;
+			      int fbnkt = st->bnkt;
 			      int bankc;
-			      pickbank ();
-			      for (bankc = 1; bankc <= fbankt; bankc++)
+			      pickbank (st);
+			      for (bankc = 1; bankc <= fbnkt; bankc++)
 				{
-				  linedata *L = &thread[fbank[bankc - 1] - 1];
-				  if (ch == 'N')
+				  linedata *L = &st->thread[fbank[bankc - 1] - 1];
+				  if (st->ch == 'N')
 				    L->prey = 0;
 				  else
-				    L->prey = bank[0 + (bankc - 1) % bankt];
+				    L->prey = st->bank[0 + (bankc - 1) % st->bnkt];
 				}
 			    }
 			  }
 			  break;
 			case 'L':
 			  {
-			    forallinbank (L) L->prey = bank[bankc % bankt];
+			    forallinbank (L) L->prey = st->bank[bankc % st->bnkt];
 			  }
 			  break;
 			case 'R':
-			  ch = readkey ();
+			  st->ch = readkey (st);
 			  {
-			    forallinbank (L) switch (ch)
+			    forallinbank (L) switch (st->ch)
 			      {
                               case '1': case '2': case '3':
                               case '4': case '5': case '6':
                               case '7': case '8': case '9':
-				L->circturn = 10 - (ch - '0');
+				L->circturn = 10 - (st->ch - '0');
 				break;
 			      case 'R':
 				L->circturn = random1 (7) + 1;
@@ -1002,34 +1016,34 @@ block in which it's invoked, since it declares variables: */
 		case 'T':
 		case 'Y':
 		case 'N':
-		  boolop = ch;
-		  pickbank ();
-		  if (bankt > 0)
+		  boolop = st->ch;
+		  pickbank (st);
+		  if (st->bnkt > 0)
 		    {
-		      ch = readkey ();
+		      st->ch = readkey (st);
 		      {
 			forallinbank (L)
 			{
-			  switch (ch)
+			  switch (st->ch)
 			    {
 			    case 'S':
-			      bankmod (&L->selfbounce);
+			      bankmod (boolop, &L->selfbounce);
 			      break;
 			    case 'V':
-			      bankmod (&L->vhfollow);
+			      bankmod (boolop, &L->vhfollow);
 			      break;
 			    case 'R':
-			      bankmod (&L->realbounce);
+			      bankmod (boolop, &L->realbounce);
 			      break;
 			    case 'L':
-			      bankmod (&L->little);
-			      cleared = True;
+			      bankmod (boolop, &L->little);
+			      st->cleared = True;
 			      break;
 			    case 'T':
-			      bankmod (&L->tailfollow);
+			      bankmod (boolop, &L->tailfollow);
 			      break;
 			    case 'K':
-			      bankmod (&L->killwalls);
+			      bankmod (boolop, &L->killwalls);
 			      break;
 			    }
 			}
@@ -1037,17 +1051,14 @@ block in which it's invoked, since it declares variables: */
 		    }
 		  break;
 		case 'R':
-		  if (bordcol == 1)
+		  if (st->bordcol == 1)
 		    {
-		      bordcol = 0;
-		      bordupdate ();
-		      bordcorn = (bordcorn + 1) % 4;
-		      bordcol = 1;
-		      bordupdate ();
+		      st->bordcol = 0;
+		      bordupdate (st);
+		      st->bordcorn = (st->bordcorn + 1) % 4;
+		      st->bordcol = 1;
+		      bordupdate (st);
 		    }
-		  break;
-		case '\33':
-		  halted = True;
 		  break;
                 case '1': case '2': case '3':
                 case '4': case '5': case '6':
@@ -1055,36 +1066,36 @@ block in which it's invoked, since it declares variables: */
 		  {
 		    int c;
 		    for (c = 1; c <= thrmax; c++)
-		      thread[c - 1].tmode = ch - '0';
+		      st->thread[c - 1].tmode = st->ch - '0';
 		  }
 		  break;
 		case '\40':
-		  cleared = True;
+		  st->cleared = True;
 		  break;
 		case 'E':
-		  erasing = !erasing;
+		  st->erasing = !st->erasing;
 		  break;
 		case 'P':
-		  randpal ();
-		  palupdate (True);
+		  randpal (st);
+		  palupdate (st, True);
 		  break;
 		case 'G':
 		  {
 		    char dimch = 'B';
 		    Bool gridchanged = True;
-		    if (gridden == 0)
-		      gridden = ogd;
+		    if (st->gridden == 0)
+		      st->gridden = st->ogd;
 		    do
 		      {
 			int msize = 0;
 			if (gridchanged)
 			  {
-			    clearscreen ();
-			    gridupdate (True);
+			    clearscreen (st);
+			    gridupdate (st, True);
 			  }
-			ch = readkey ();
+			st->ch = readkey (st);
 			gridchanged = True;
-			switch (ch)
+			switch (st->ch)
 			  {
 			  case '+':
 			    msize = 1;
@@ -1093,268 +1104,110 @@ block in which it's invoked, since it declares variables: */
 			    msize = -1;
 			    break;
 			  case ']':
-			    if (gridden < 15)
-			      gridden++;
+			    if (st->gridden < 15)
+			      st->gridden++;
 			    break;
 			  case '[':
-			    if (gridden > 0)
-			      gridden--;
+			    if (st->gridden > 0)
+			      st->gridden--;
 			    break;
 			  case 'O':
-			    ogd = gridden;
-			    gridden = 0;
+			    st->ogd = st->gridden;
+			    st->gridden = 0;
 			    break;
 			  case 'S':
-			    boxw = boxh;
+			    st->boxw = st->boxh;
 			  case 'W':
 			  case 'H':
 			  case 'B':
-			    dimch = ch;
+			    dimch = st->ch;
 			    break;
 			  default:
 			    gridchanged = False;
 			  }
 			if (dimch == 'W' || dimch == 'B')
-			  boxw += msize;
+			  st->boxw += msize;
 			if (dimch == 'H' || dimch == 'B')
-			  boxh += msize;
-			if (boxw == 0)
-			  boxw = 1;
-			if (boxh == 0)
-			  boxh = 1;
+			  st->boxh += msize;
+			if (st->boxw == 0)
+			  st->boxw = 1;
+			if (st->boxh == 0)
+			  st->boxh = 1;
 		      }
-		    while (!(ch == '\15' || ch == '#' || ch == 'O'));
-		    cleared = True;
+		    while (!(st->ch == '\15' || st->ch == '#' || st->ch == 'O'));
+		    st->cleared = True;
 		  }
 		  break;
 		case 'A':
-		  autopal = !autopal;
+		  st->autopal = !st->autopal;
 		  break;
 		case 'B':
-		  bordcol = 1 - bordcol;
-		  bordupdate ();
+		  st->bordcol = 1 - st->bordcol;
+		  bordupdate (st);
 		  break;
 		case '-':
-		  speed -= SPEEDINC;
-		  if (speed < 1)
-		    speed = 1;
+		  st->speed -= SPEEDINC;
+		  if (st->speed < 1)
+		    st->speed = 1;
 		  break;
 		case '+':
-		  speed += SPEEDINC;
-		  if (speed > SPEEDMAX)
-		    speed = SPEEDMAX;
+		  st->speed += SPEEDINC;
+		  if (st->speed > SPEEDMAX)
+		    st->speed = SPEEDMAX;
 		  break;
 		case '/':
-		  if (curviness > 5)
-		    curviness -= 5;
+		  if (st->curviness > 5)
+		    st->curviness -= 5;
 		  break;
 		case '*':
-		  if (curviness < 50)
-		    curviness += 5;
+		  if (st->curviness < 50)
+		    st->curviness += 5;
 		  break;
 		case ']':
-		  if (threads < thrmax)
-		    newonscreen (++threads);
+		  if (st->threads < thrmax)
+		    newonscreen (st, ++st->threads);
 		  break;
 		case '[':
-		  if (threads > 1)
+		  if (st->threads > 1)
 		    {
-		      linedata *L = &thread[threads - 1];
+		      linedata *L = &st->thread[st->threads - 1];
 		      int lastpos = (L->filled) ? L->reclen - 1 : L->recpos;
 		      int c;
 		      for (c = 0; c <= lastpos; c++)
-			sp (L->xrec[c], L->yrec[c], 0);
-		      threads--;
+			sp (st, L->xrec[c], L->yrec[c], 0);
+		      st->threads--;
 		    }
 		  break;
 		}
 	    }
-
-#ifdef VERMICULATE_STANDALONE
-	  {
-	    XEvent xe;
-	    while (XCheckWindowEvent
-		   (mydpy, mywindow, ExposureMask, &xe))
-	      switch (xe.type)
-		{
-		case ConfigureNotify:
-		  wid = xe.xconfigure.width;
-		  hei = xe.xconfigure.height;
-		  free (point);
-		  point = (unsigned char *) malloc (wid * hei);
-		  cleared = True;
-		  break;
-		case Expose:
-		  if (!cleared)
-		    redraw (xe.xexpose.x,
-			    xe.xexpose.y, xe.xexpose.width,
-			    xe.xexpose.height);
-		  break;
-		}
-	  }
-#else
-	  screenhack_handle_events (mydpy);
-#endif /* VERMICULATE_STANDALONE */
-
-	  if (!cleared)
-	    {
-	      Bool alltrap = True;
-	      unsigned char thr;
-	      for (thr = 1; thr <= threads; thr++)
-		if (move (thr))
-		  alltrap = False;
-	      if (alltrap)	/* all threads are trapped */
-		cleared = True;
-	      if (speed != SPEEDMAX)
-		waitabit ();
-	    }
-
-          if (tick++ > max_ticks && !had_instring)
-            {
-              tick = 0;
-              instring = 0;
-              maininit();
-              cleared = True;
-              autopal = False;
-            }
-	}
-      while (!(halted || cleared));
-    }
-  while (!halted);
 }
 
-void
-commonXinit (void)
+static void
+vermiculate_free (Display *dpy, Window window, void *closure)
 {
-  XSetWindowBackground (mydpy, mywindow,
-			BlackPixel (mydpy, DefaultScreen (mydpy)));
-  {
-    XGetWindowAttributes (mydpy, mywindow, &xgwa);
-    wid = xgwa.width;
-    hei = xgwa.height;
-    mycmap = xgwa.colormap;
-  }
-  {
-    XGCValues mygcv;
-    XGetGCValues (mydpy, XDefaultGC (mydpy, XDefaultScreen (mydpy)),
-		  GCForeground, &mygcv);
-    mygc = XCreateGC (mydpy, mywindow, GCForeground, &mygcv);
-  }
-}
+  struct state *st = (struct state *) closure;
 
-#ifdef VERMICULATE_STANDALONE
-/* Function Name: GetVRoot (slightly changed from the X Windows FAQ)
- * Description: Gets the root window, even if it's a virtual root
- * Arguments: the display and the screen
- * Returns: the root window for the client
- */
-static Window
-GetVRoot (Display * dpy, int scr)
-{
-  Window rootReturn, parentReturn, *children;
-  unsigned int numChildren;
-  Window root = RootWindow (dpy, scr);
-  Atom __SWM_VROOT = None;
-  int i;
-
-  __SWM_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
-  XQueryTree (dpy, root, &rootReturn, &parentReturn, &children, &numChildren);
-  for (i = 0; i < numChildren; i++)
+  if (st->point)
     {
-      Atom actual_type;
-      int actual_format;
-      unsigned long int nitems, bytesafter;
-      Window *newRoot = NULL;
-
-      if (XGetWindowProperty (dpy, children[i], __SWM_VROOT, 0, 1,
-			      False, XA_WINDOW, &actual_type, &actual_format,
-			      &nitems, &bytesafter,
-			      (unsigned char **) &newRoot) == Success
-	  && newRoot)
-	{
-	  root = *newRoot;
-	  break;
-	}
+      free(st->point);
     }
-
-  XFree ((char *) children);
-  return root;
+  free (st);
 }
 
-int
-main (int argc, char **argv)
-{
-  int argnum;
-  if ((mydpy = XOpenDisplay (NULL)) == NULL)
-    {
-      fprintf (stderr, "%s: cannot connect to X server %s\n", argv[0],
-	       XDisplayName (NULL));
-      exit (1);
-    }
 
-  for (argnum = 1; argnum < argc; argnum++)
-    {
-      if (!strcmp (argv[argnum], "-geometry"))
-	{
-	  int x, y;
-	  unsigned int uh, uw;
-	  XParseGeometry (argv[++argnum], &x, &y, &uw, &uh);
-	  hei = (int) uh;
-	  wid = (int) uw;
-	}
-      else if (!strcmp (argv[argnum], "-instring"))
-	instring = argv[++argnum];
-      else if (!strcmp (argv[argnum], "-root"))
-	use_root = True;
-      else if (!strcmp (argv[argnum], "-speed"))
-	speed = atoi (argv[++argnum]);
-      else
-	{
-	  fprintf (stderr,
-		   "\nvermiculate options are:"
-		   "\n -speed NUMBER:  set speed, can be from 1 to %d."
-		   "\n -root:  use root window."
-		   "\n -instring STRING:  put STRING in kbd buffer."
-		   "\n -geometry WIDTHxHEIGHT \n", SPEEDMAX);
-	  exit (1);
-	}
-    }
+static const char *vermiculate_defaults[] = {
+  ".background: Black",
+  "*ticks: 20000",
+  "*speed: 0",
+  "*instring: ",
+  0
+};
 
-  if (use_root)
-    mywindow = GetVRoot (mydpy, DefaultScreen (mydpy));
-  else
-    mywindow = XCreateSimpleWindow (mydpy, DefaultRootWindow (mydpy), 0, 0,
-				    wid, hei, 0, 0, BlackPixel (mydpy,
-								DefaultScreen
-								(mydpy)));
-  XStoreName (mydpy, mywindow, "vermiculate");
-  XMapWindow (mydpy, mywindow);
-  commonXinit ();
-  XSelectInput (mydpy, mywindow, KeyPressMask | ExposureMask);
+static XrmOptionDescRec vermiculate_options[] = {
+  {"-speed", ".speed", XrmoptionSepArg, 0},
+  {"-instring", ".instring", XrmoptionSepArg, 0},
+  {0, 0, 0, 0}
+};
 
-#undef ya_rand_init
-  ya_rand_init (0);
 
-  vermiculate_main ();
-  return 0;
-}
-
-#else
-
-void
-screenhack (Display * d, Window w)
-{
-  mydpy = d;
-  mywindow = w;
-  instring = get_string_resource ("instring", "Instring");
-  max_ticks = get_integer_resource ("ticks", "Integer");
-  {
-    int temp = get_integer_resource ("speed", "Speed");
-    if (temp != 0)
-      speed = temp;
-  }
-  commonXinit ();
-  mycolors[0].pixel = BlackPixel (mydpy, DefaultScreen (mydpy));
-  vermiculate_main ();
-}
-#endif /* VERMICULATE_STANDALONE */
+XSCREENSAVER_MODULE ("Vermiculate", vermiculate)

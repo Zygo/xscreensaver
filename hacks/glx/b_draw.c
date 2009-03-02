@@ -17,6 +17,9 @@ typedef struct draw_context {
 
 	/* When was the last time we created a new bubble? */
 	int         bubble_count;
+
+	glb_data *d;
+
 } draw_context;
 
 void       *
@@ -98,6 +101,8 @@ glb_draw_init(void)
 	glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse[2]);
 	glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular[2]);
 
+	c->d = glb_sphere_init();
+
 	return c;
 }
 
@@ -124,6 +129,9 @@ glb_draw_end(void *cc)
 		delete_bubble(c, i);
 		i--;
 	}
+
+	glb_sphere_end (c->d);
+
 	(void) free((void *) c->bubble_list);
 	(void) free((void *) c);
 }
@@ -168,7 +176,7 @@ create_new_bubbles(draw_context * c)
 
 	/* Create the bubble(s). */
 	for (i = 0; i < n; ++i) {
-		if ((b[i] = glb_bubble_new(x, y, z, size, speed, scale_incr)) == 0) {
+		if ((b[i] = glb_bubble_new(c->d, x, y, z, size, speed, scale_incr)) == 0) {
 			/* Out of memory - recover. */
 			i--;
 			while (i >= 0)
@@ -225,7 +233,7 @@ glb_draw_step(void *cc)
 		void       *b = c->bubble_list[i];
 
 		glb_bubble_step(b);
-		glb_bubble_draw(b);
+		glb_bubble_draw(c->d, b);
 
 		/* Has the bubble reached the top of the screen? */
 		if (glb_bubble_get_y(b) >= glb_config.screen_top) {

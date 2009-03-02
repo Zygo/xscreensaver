@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * Bumps, Copyright (c) 2002 Shane Smit <CodeWeaver@DigitalLoom.org>
+ * Bumps, Copyright (c) 2002, 2006 Shane Smit <CodeWeaver@DigitalLoom.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,34 +30,42 @@
 
 #include "bumps.h"
 
-/* This function pointer will point to the appropriate PutPixel*() function below. */
-void (*MyPutPixel)( int8_ *, uint32_ );
+static void SetPalette(Display *, SBumps *, XWindowAttributes * );
+static void InitBumpMap(Display *, SBumps *, XWindowAttributes * );
+static void InitBumpMap_2(Display *, SBumps *);
+static void SoftenBumpMap( SBumps * );
 
-void PutPixel32( int8_ *pData, uint32_ pixel )
+
+
+
+/* This function pointer will point to the appropriate PutPixel*() function below. */
+static void (*MyPutPixel)( int8_ *, uint32_ );
+
+static void PutPixel32( int8_ *pData, uint32_ pixel )
 {
 	*(uint32_ *)pData = pixel;
 }
 
-void PutPixel24( int8_ *pData, uint32_ pixel )
+static void PutPixel24( int8_ *pData, uint32_ pixel )
 {
 	pData[ 2 ] = ( pixel & 0x00FF0000 ) >> 16;
 	pData[ 1 ] = ( pixel & 0x0000FF00 ) >> 8;
 	pData[ 0 ] = ( pixel & 0x000000FF );
 }
 
-void PutPixel16( int8_ *pData, uint32_ pixel )
+static void PutPixel16( int8_ *pData, uint32_ pixel )
 {
 	*(uint16_ *)pData = (uint16_)pixel;
 }
 
-void PutPixel8( int8_ *pData, uint32_ pixel )
+static void PutPixel8( int8_ *pData, uint32_ pixel )
 {
 	*(uint8_ *)pData = (uint8_)pixel;
 }
 
 /* Creates the light map, which is a circular image... going from black around the edges
  * to white in the center. */
-void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorCount )
+static void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorCount )
 {
 	double nDist;
 	int16_ iDistX, iDistY;
@@ -98,7 +106,7 @@ void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorC
 
 
 /* Calculates the position of the spot light on the screen. */
-void CalcLightPos( SBumps *pBumps )
+static void CalcLightPos( SBumps *pBumps )
 {
 	SSpotLight *pSpotLight = &pBumps->SpotLight;
 	float nGravity;
@@ -136,7 +144,7 @@ void CalcLightPos( SBumps *pBumps )
 
 
 /* Main initialization function. */
-void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
+static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 {
 	XWindowAttributes XWinAttribs;
 	XGCValues GCValues;
@@ -144,25 +152,29 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	uint16_ iDiameter;
 
 	/* Make size and velocity a function of window size, so it appears the same at 100x60 as it does in 3200x1200. */
-	XGetWindowAttributes( pNewDisplay, NewWin, &XWinAttribs );
+	XGetWindowAttributes( dpy, NewWin, &XWinAttribs );
 	pBumps->iWinWidth = XWinAttribs.width;
 	pBumps->iWinHeight = XWinAttribs.height;
 	pBumps->SpotLight.nXPos = XWinAttribs.width / 2.0f;
 	pBumps->SpotLight.nYPos = XWinAttribs.height / 2.0f;
 	pBumps->SpotLight.nVelocityMax = ( ( XWinAttribs.width < XWinAttribs.height ) ? XWinAttribs.width : XWinAttribs.height ) / 140.0f;
 	pBumps->SpotLight.nAccelMax = pBumps->SpotLight.nVelocityMax / 10.0f;
-	pBumps->pDisplay = pNewDisplay;
+	pBumps->dpy = dpy;
 	pBumps->Win = NewWin;
 	pBumps->pXImage = NULL;
 	
 	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 2;
 
+    /* jwz: sometimes we get tearing if this lands on the wrong bounaary;
+       constraining it to be a multiple of 8 seems to fix it. */
+    iDiameter = ((iDiameter+7)/8)*8;
+
 #ifdef HAVE_XSHM_EXTENSION
-	pBumps->bUseShm = get_boolean_resource( "useSHM", "Boolean" );
+	pBumps->bUseShm = get_boolean_resource(dpy,  "useSHM", "Boolean" );
 
 	if( pBumps->bUseShm )
 	{
-		pBumps->pXImage = create_xshm_image( pBumps->pDisplay, XWinAttribs.visual, XWinAttribs.depth,
+		pBumps->pXImage = create_xshm_image( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth,
 											 ZPixmap, NULL, &pBumps->XShmInfo, iDiameter, iDiameter );
 		if( !pBumps->pXImage )
 		{
@@ -173,8 +185,8 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 #endif /* HAVE_XSHM_EXTENSION */
 	if( !pBumps->pXImage )
 	{
-		pBumps->pXImage = XCreateImage( pBumps->pDisplay, XWinAttribs.visual, XWinAttribs.depth, 
-									ZPixmap, 0, NULL, iDiameter, iDiameter, BitmapPad( pBumps->pDisplay ), 0 );
+		pBumps->pXImage = XCreateImage( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth, 
+									ZPixmap, 0, NULL, iDiameter, iDiameter, BitmapPad( pBumps->dpy ), 0 );
 		pBumps->pXImage->data = malloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height * sizeof(int8_) );
 	}
 
@@ -205,7 +217,7 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 			fprintf( stderr, "%s: Unknown XImage depth.", progname );
 #ifdef HAVE_XSHM_EXTENSION
 			if( pBumps->bUseShm )
-				destroy_xshm_image( pBumps->pDisplay, pBumps->pXImage, &pBumps->XShmInfo );
+				destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
 			else
 #endif /* HAVE_XSHM_EXTENSION */
 				XDestroyImage( pBumps->pXImage );
@@ -214,29 +226,26 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	
 	GCValues.function = GXcopy;
 	GCValues.subwindow_mode = IncludeInferiors;
-	nGCFlags = GCForeground | GCFunction;
+	nGCFlags = GCFunction;
 	if( use_subwindow_mode_p( XWinAttribs.screen, pBumps->Win ) ) /* See grabscreen.c */
 		nGCFlags |= GCSubwindowMode;
-	pBumps->GraphicsContext = XCreateGC( pBumps->pDisplay, pBumps->Win, nGCFlags, &GCValues );
+	pBumps->GraphicsContext = XCreateGC( pBumps->dpy, pBumps->Win, nGCFlags, &GCValues );
 	
-	SetPalette( pBumps, &XWinAttribs );
+	SetPalette(dpy, pBumps, &XWinAttribs );
 	CreateSpotLight( &pBumps->SpotLight, iDiameter, pBumps->nColorCount );
-	InitBumpMap( pBumps, &XWinAttribs );
-
-	XSetWindowBackground( pBumps->pDisplay, pBumps->Win, pBumps->aColors[ 0 ] );
-	XClearWindow (pBumps->pDisplay, pBumps->Win);
+	InitBumpMap(dpy, pBumps, &XWinAttribs );
 }
 
 
 /* Creates a specialized phong shade palette. */
-void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
+static void SetPalette(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 {
 	XColor BaseColor;
 	XColor Color;
 	char *sColor;			/* Spotlight Color */
 	int16_ iColor;
 	
-	sColor = get_string_resource( "color", "Color" );
+	sColor = get_string_resource(dpy,  "color", "Color" );
 
 	BaseColor.red = RANDOM() % 0xFFFF; 
 	BaseColor.green = RANDOM() % 0xFFFF;
@@ -250,14 +259,14 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 		case 2: BaseColor.blue	= 0xFFFF;	break;
 	}
 
-	if( strcasecmp( sColor, "random" ) && !XParseColor( pBumps->pDisplay, pXWinAttribs->colormap, sColor, &BaseColor ) )
+	if( strcasecmp( sColor, "random" ) && !XParseColor( pBumps->dpy, pXWinAttribs->colormap, sColor, &BaseColor ) )
 		fprintf( stderr, "%s: color %s not found in database. Choosing random...\n", progname, sColor );
 
 #ifdef VERBOSE
 	printf( "%s: Spotlight color is <%d,%d,%d> RGB.\n", progclass, BaseColor.red, BaseColor.green, BaseColor.blue );
 #endif  /*  VERBOSE */
 
-	pBumps->nColorCount = get_integer_resource( "colorcount", "Integer" );
+	pBumps->nColorCount = get_integer_resource(dpy,  "colorcount", "Integer" );
 	if( pBumps->nColorCount < 2 )	pBumps->nColorCount = 2;
 	if( pBumps->nColorCount > 128 )	pBumps->nColorCount = 128;
 
@@ -273,9 +282,9 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 		Color.green = (uint16_)( ( ( BaseColor.green / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.green, iColor/(double)pBumps->nColorCount ) );
 		Color.blue  = (uint16_)( ( ( BaseColor.blue  / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.blue,  iColor/(double)pBumps->nColorCount ) );
 
-		if( !XAllocColor( pBumps->pDisplay, pXWinAttribs->colormap, &Color ) )
+		if( !XAllocColor( pBumps->dpy, pXWinAttribs->colormap, &Color ) )
 		{
-			XFreeColors( pBumps->pDisplay, pXWinAttribs->colormap, pBumps->aColors, iColor, 0 );
+			XFreeColors( pBumps->dpy, pXWinAttribs->colormap, pBumps->aColors, iColor, 0 );
 			free( pBumps->aColors );
 			pBumps->aColors = malloc( pBumps->nColorCount * sizeof(uint32_) );
 			pBumps->nColorCount--;
@@ -290,41 +299,50 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	printf( "%s: Allocated %d colors.\n", progclass, pBumps->nColorCount );
 #endif  /*  VERBOSE */
 
-	XSetWindowBackground( pBumps->pDisplay, pBumps->Win, pBumps->aColors[ 0 ] );
+	XSetWindowBackground( pBumps->dpy, pBumps->Win, pBumps->aColors[ 0 ] );
 }
 
 
 /* Grabs the current contents of the window to use an intensity-based bump map. */
-void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
+static void InitBumpMap(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAttribs )
+{
+	pBumps->xColors = (XColor*)malloc( pBumps->iWinWidth * sizeof(XColor) );
+
+    if (pBumps->source) abort();
+    pBumps->source = XCreatePixmap(pBumps->dpy, pBumps->Win,
+                                   pXWinAttribs->width, pXWinAttribs->height,
+                                   pXWinAttribs->depth);
+  pBumps->img_loader = load_image_async_simple (0, pXWinAttribs->screen,
+                                            pBumps->Win, pBumps->source, 0, 0);
+}
+
+static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 {
 	XImage *pScreenImage;
-	XColor *aColors, *pColor;
+	XColor *pColor;
 	uint8_ nSoften;
 	uint16_ iWidth, iHeight;
 	uint32_ nAverager;
 	uint16_	*pBump;
 	uint16_ maxHeight;
 	double softenMultiplier = 1.0f;
-	BOOL bInvert = (BOOL)get_boolean_resource( "invert", "Boolean" );
-    Pixmap p;
+	BOOL bInvert = (BOOL)get_boolean_resource(dpy,  "invert", "Boolean" );
+    XWindowAttributes XWinAttribs;
+    XGetWindowAttributes( pBumps->dpy, pBumps->Win, &XWinAttribs );
 
-	aColors = (XColor*)malloc( pBumps->iWinWidth * sizeof(XColor) );
+	pScreenImage = XGetImage( pBumps->dpy, pBumps->source, 0, 0, 
+                              pBumps->iWinWidth, pBumps->iWinHeight,
+                              ~0L, ZPixmap );
+    XFreePixmap (pBumps->dpy, pBumps->source);
+    pBumps->source = 0;
 
-    p = XCreatePixmap(pBumps->pDisplay, pBumps->Win,
-                      pXWinAttribs->width, pXWinAttribs->height,
-                      pXWinAttribs->depth);
-    load_random_image (pXWinAttribs->screen, pBumps->Win, p, NULL, NULL);
-
-	pScreenImage = XGetImage( pBumps->pDisplay, p, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
-    XFreePixmap (pBumps->pDisplay, p);
-
-	/* jwz: get the grabbed bits off the screen fast */
-	XClearWindow (pBumps->pDisplay, pBumps->Win);
-	XSync (pBumps->pDisplay, 0);
+	XSetWindowBackground( pBumps->dpy, pBumps->Win, pBumps->aColors[ 0 ] );
+	XClearWindow (pBumps->dpy, pBumps->Win);
+	XSync (pBumps->dpy, 0);
 
 	pBumps->aBumpMap = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
 	
-	nSoften = get_integer_resource( "soften", "Integer" );
+	nSoften = get_integer_resource(dpy,  "soften", "Integer" );
 	while( nSoften-- )
 		softenMultiplier *= 1.0f + ( 1.0f / 3.0f );	/* Softening takes the max height down, so scale up to compensate. */
 	maxHeight = pBumps->SpotLight.nLightRadius * softenMultiplier;
@@ -335,13 +353,13 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	{
 		for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
 		{
-			pColor = aColors;
+			pColor = pBumps->xColors;
 			for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
 				(pColor++)->pixel = XGetPixel( pScreenImage, iWidth, iHeight );
 
-			XQueryColors( pBumps->pDisplay, pXWinAttribs->colormap, aColors, pBumps->iWinWidth );
+			XQueryColors( pBumps->dpy, XWinAttribs.colormap, pBumps->xColors, pBumps->iWinWidth );
 
-			pColor = aColors;
+			pColor = pBumps->xColors;
 			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
 				*pBump = ( ( pColor->red + pColor->green + pColor->blue ) / nAverager );
 		}
@@ -350,13 +368,13 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	{
 		for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
 		{
-			pColor = aColors;
+			pColor = pBumps->xColors;
 			for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
 				(pColor++)->pixel = XGetPixel( pScreenImage, iWidth, iHeight );
 
-			XQueryColors( pBumps->pDisplay, pXWinAttribs->colormap, aColors, pBumps->iWinWidth );
+			XQueryColors( pBumps->dpy, XWinAttribs.colormap, pBumps->xColors, pBumps->iWinWidth );
 	
-			pColor = aColors;
+			pColor = pBumps->xColors;
 			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
 				*pBump = ( maxHeight - ( ( pColor->red + pColor->green + pColor->blue ) / nAverager ) );
 		}
@@ -364,14 +382,15 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 
 	XDestroyImage( pScreenImage );
 
-	nSoften = get_integer_resource( "soften", "Integer" );
+	nSoften = get_integer_resource(dpy,  "soften", "Integer" );
 #ifdef VERBOSE
 	if( nSoften )	printf( "%s: Softening Bump Map %d time(s)...\n", progclass, nSoften );
 #endif
 	while( nSoften-- )
 		SoftenBumpMap( pBumps );
 
-	free( aColors );
+	free( pBumps->xColors );
+    pBumps->xColors = 0;
 }
 
 /* Soften the bump map.  This is to avoid pixelated-looking ridges.
@@ -383,7 +402,7 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
  * |  0% |12.5%|  0% |
  * |-----|-----|-----|
  */
-void SoftenBumpMap( SBumps *pBumps )
+static void SoftenBumpMap( SBumps *pBumps )
 {
 	uint16_ *pOffset, *pTOffset;
 	uint32_ nHeight;
@@ -420,7 +439,7 @@ void SoftenBumpMap( SBumps *pBumps )
 
 
 /* This is where we slap down some pixels... */
-void Execute( SBumps *pBumps )
+static void Execute( SBumps *pBumps )
 {
 	int32_ nLightXPos, nLightYPos;
 	int32_ iScreenX, iScreenY;
@@ -500,26 +519,26 @@ void Execute( SBumps *pBumps )
 	
 #ifdef HAVE_XSHM_EXTENSION
 	if( pBumps->bUseShm )
-		XShmPutImage( pBumps->pDisplay, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
+		XShmPutImage( pBumps->dpy, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
 					  nX, nY, False);
 	else
 #endif /* HAVE_XSHM_EXTENSION */
-		XPutImage( pBumps->pDisplay, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
+		XPutImage( pBumps->dpy, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
 				   nX, nY );
-	
-	XSync( pBumps->pDisplay, False );
 }
 
 
+static void DestroySpotLight( SSpotLight *pSpotLight ) { free( pSpotLight->aLightMap ); }
+
 /* Clean up */
-void DestroyBumps( SBumps *pBumps )
+static void DestroyBumps( SBumps *pBumps )
 {
 	DestroySpotLight( &pBumps->SpotLight );
 	free( pBumps->aColors );
 	free( pBumps->aBumpMap );
 #ifdef HAVE_XSHM_EXTENSION
 	if( pBumps->bUseShm )
-		destroy_xshm_image( pBumps->pDisplay, pBumps->pXImage, &pBumps->XShmInfo );
+		destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
 	else
 #endif /* HAVE_XSHM_EXTENSION */
 		XDestroyImage( pBumps->pXImage );
@@ -527,38 +546,72 @@ void DestroyBumps( SBumps *pBumps )
 
 
 /* All messages to the screensaver are processed here. */
-void screenhack( Display *pDisplay, Window Win )
+static void *
+bumps_init (Display *dpy, Window Win)
 {
-	SBumps Bumps;
-	uint32_ iDelay;
+	SBumps *Bumps = (SBumps *) calloc (1, sizeof(SBumps));
+
 #ifdef VERBOSE
 	time_t Time = time( NULL );
 	uint16_ iFrame = 0;
 #endif  /*  VERBOSE */
 	
-	CreateBumps( &Bumps, pDisplay, Win );
-	iDelay = get_integer_resource( "delay", "Integer" );
-
-	while( 1 )
-	{
-		screenhack_handle_events( pDisplay );
-		Execute( &Bumps );
-		usleep( iDelay );
-
-#ifdef VERBOSE
-		iFrame++;
-		if( Time - time( NULL ) )
-		{
-			printf( "FPS: %d\n", iFrame );
-			Time = time( NULL );
-			iFrame = 0;
-		}
-#endif  /*  VERBOSE */
-	}
-
-	DestroyBumps( &Bumps );
+	CreateBumps( Bumps, dpy, Win );
+	Bumps->delay = get_integer_resource(dpy,  "delay", "Integer" );
+    return Bumps;
 }
 
- 
+static unsigned long
+bumps_draw (Display *dpy, Window window, void *closure)
+{
+  SBumps *Bumps = (SBumps *) closure;
+
+  if (Bumps->img_loader)   /* still loading */
+    {
+      Bumps->img_loader = load_image_async_simple (Bumps->img_loader, 0, 0, 0, 0, 0);
+      if (! Bumps->img_loader)  /* just finished */
+        InitBumpMap_2(dpy, Bumps);
+      return Bumps->delay;
+    }
+
+
+
+  Execute( Bumps );
+
+#ifdef VERBOSE
+  iFrame++;
+  if( Time - time( NULL ) )
+    {
+      printf( "FPS: %d\n", iFrame );
+      Time = time( NULL );
+      iFrame = 0;
+    }
+#endif  /*  VERBOSE */
+
+  return Bumps->delay;
+}
+
+static void
+bumps_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+bumps_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+bumps_free (Display *dpy, Window window, void *closure)
+{
+  SBumps *Bumps = (SBumps *) closure;
+  DestroyBumps( Bumps );
+}
+
+
+XSCREENSAVER_MODULE ("Bumps", bumps)
+
 /* vim: ts=4
  */

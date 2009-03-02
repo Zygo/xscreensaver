@@ -27,24 +27,22 @@ static const char sccsid[] = "@(#)mountain.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_mountain
-#define PROGCLASS "Mountain"
-#define HACK_INIT init_mountain
-#define HACK_DRAW draw_mountain
-#define mountain_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000 \n" \
- "*count: 30 \n" \
- "*cycles: 4000 \n" \
- "*ncolors: 64 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_mountain
+#define DEFAULTS	"*delay: 1000 \n" \
+					"*count: 30 \n" \
+					"*cycles: 4000 \n" \
+					"*ncolors: 64 \n"
+# define SMOOTH_COLORS
+# define reshape_mountain 0
+# define mountain_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_mountain
 
-ModeSpecOpt mountain_opts =
+ENTRYPOINT ModeSpecOpt mountain_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -163,8 +161,8 @@ drawamountain(ModeInfo * mi)
 		mp->stage++;
 }
 
-void
-init_mountain(ModeInfo * mi)
+ENTRYPOINT void
+init_mountain (ModeInfo * mi)
 {
 	int         i, j, x, y;
 	XGCValues   gcv;
@@ -228,8 +226,8 @@ init_mountain(ModeInfo * mi)
 		mp->offset = 0;
 }
 
-void
-draw_mountain(ModeInfo * mi)
+ENTRYPOINT void
+draw_mountain (ModeInfo * mi)
 {
 	mountainstruct *mp;
 
@@ -255,8 +253,8 @@ draw_mountain(ModeInfo * mi)
 	}
 }
 
-void
-release_mountain(ModeInfo * mi)
+ENTRYPOINT void
+release_mountain (ModeInfo * mi)
 {
 	if (mountains != NULL) {
 		int         screen;
@@ -272,7 +270,7 @@ release_mountain(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_mountain(ModeInfo * mi)
 {
 	mountainstruct *mp;
@@ -285,5 +283,7 @@ refresh_mountain(ModeInfo * mi)
 	mp->x = 0;
 	mp->y = 0;
 }
+
+XSCREENSAVER_MODULE ("Mountain", mountain)
 
 #endif /* MODE_mountain */

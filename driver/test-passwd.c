@@ -59,6 +59,7 @@ int move_mouse_grab (saver_info *si, Window to, Cursor c, int ts) { return 0; }
 int mouse_screen (saver_info *si) { return 0; }
 void check_for_leaks (const char *where) { }
 void exec_command (const char *shell, const char *command, int nice) { }
+int on_path_p (const char *program) { return 0; }
 void shutdown_stderr (saver_info *si) { }
 
 const char *blurb(void) { return progname; }
@@ -143,6 +144,15 @@ main (int argc, char **argv)
       exit (1);
     }
 
+#ifdef NO_LOCKING
+  if (which == PASS || which == TTY)
+    {
+      fprintf (stderr, "%s: compiled with NO_LOCKING\n", progname);
+      exit (1);
+    }
+#endif
+
+#ifndef NO_LOCKING
   /* before hack_uid() for proper permissions */
   lock_priv_init (argc, argv, True);
 
@@ -153,6 +163,7 @@ main (int argc, char **argv)
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
     }
+#endif
 
   progclass = "XScreenSaver";
 
@@ -178,13 +189,14 @@ main (int argc, char **argv)
       db = p->db;
       XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
-      load_init_file (&si->prefs);
+      load_init_file (si->dpy, &si->prefs);
     }
 
   p->verbose_p = True;
 
   while (1)
     {
+#ifndef NO_LOCKING
       if (which == PASS)
         {
           if (unlock_p (si))
@@ -195,7 +207,9 @@ main (int argc, char **argv)
           XSync(si->dpy, False);
           sleep (3);
         }
-      else if (which == SPLASH)
+      else
+#endif
+      if (which == SPLASH)
         {
           XEvent event;
           make_splash_dialog (si);
@@ -224,10 +238,12 @@ main (int argc, char **argv)
           if (pass[strlen(pass)-1] == '\n')
             pass[strlen(pass)-1] = 0;
 
+#ifndef NO_LOCKING
           if (passwd_valid_p (pass, True))
             printf ("%s: Ok!\n", progname);
           else
             printf ("%s: Wrong!\n", progname);
+#endif
         }
       else
         abort();

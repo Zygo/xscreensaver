@@ -1,4 +1,4 @@
-/*Copyright © Chris Le Sueur (thefishface@gmail.com) February 2005
+/* Copyright © Chris Le Sueur and Robby Griffin, 2005-2006
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -24,6 +24,8 @@ xscreensaver hack, and inspired me with it's swirly goodness. This
 version adds things like variable quality, number of functions and also
 a groovier colouring mode.
 
+This version by Chris Le Sueur <thefishface@gmail.com>, Feb 2005
+Many improvements by Robby Griffin <rmg@terc.edu>, Mar 2006
 */
 
 #include <assert.h>
@@ -34,336 +36,456 @@ a groovier colouring mode.
 
 #include "screenhack.h"
 
+#undef countof
+#define countof(x) (sizeof((x)) / sizeof(*(x)))
+
+typedef struct {
+  float r, s, tx, ty;   /* Rotation, Scale, Translation X & Y */
+  float ro, rt, rc;     /* Old Rotation, Rotation Target, Rotation Counter */
+  float so, st, sc;     /* Old Scale, Scale Target, Scale Counter */
+  float sa, txa, tya;   /* Scale change, Translation change */
+
+  int ua, ub, utx;      /* Precomputed combined r,s,t values */
+  int uc, ud, uty;      /* Precomputed combined r,s,t values */
+
+} Lens;	
+
+struct state {
+  Display *dpy;
+  Window window;
+  GC gc;
+  Drawable backbuffer;
+  XColor *colours;
+  int ncolours;
+  int ccolour;
+  int blackColor, whiteColor;
+
+  int width, widthb, height;
+  int width8, height8;
+  unsigned int *board;
+  XPoint pointbuf[1000];
+  int npoints;
+  int xmin, xmax, ymin, ymax;
+  int x, y;
+
+  int delay;
+
+  int lensnum;
+  Lens *lenses;
+  int length;
+  int mode;
+  Bool recurse;
+  Bool translate, scale, rotate;
+};
+
+#define getdot(x,y) (st->board[((y)*st->widthb)+((x)>>5)] &  (1<<((x) & 31)))
+#define setdot(x,y) (st->board[((y)*st->widthb)+((x)>>5)] |= (1<<((x) & 31)))
+
 static float
 myrandom(float up)
 {
-	return(((float)random()/RAND_MAX)*up);
+  return (((float)random() / RAND_MAX) * up);
 }
 
-static int delay;
-static int lensnum;
-static int length;
-static int mode;
-static Bool notranslate, noscale, norotate;
-static float ht,wt;
-static float hs,ws;
-static int width,height;
-static long wcol;
-
-static int count;
-
-/*X stuff*/
-static GC gc;
-static Window w;
-static Display *dpy;
-static Pixmap backbuffer;
-static XColor *colours;
-static int ncolours;
-static int screen_num;
-
-static int blackColor, whiteColor;
-
-char *progclass = "IFS";
-
-char *defaults [] = {
-  ".lensnum:		3",
-  ".length:			9",
-  ".mode:			0",
-  ".colors:			200",
-  "*delay:			10000",
-  "*notranslate:	False",
-  "*noscale:		False",
-  "*norotate:		False",
+static const char *ifs_defaults [] = {
+  ".background:		Black",
+  "*lensnum:		3",
+  "*length:		9",
+  "*mode:		0",
+  "*colors:		200",
+  "*delay:		20000",
+  "*translate:		True",
+  "*scale:		True",
+  "*rotate:		True",
+  "*recurse:		False",
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  "*doubleBuffer:	False",
+#else
+  "*doubleBuffer:	True",
+#endif
   0
 };
 
-XrmOptionDescRec options [] = {
-  { "-detail",		".length",		XrmoptionSepArg, 0 },
-  { "-delay",		".delay",		XrmoptionSepArg, 0 },
-  { "-mode",		".mode",		XrmoptionSepArg, 0 },
-  { "-colors",		".colors",		XrmoptionSepArg, 0 },
+static XrmOptionDescRec ifs_options [] = {
+  { "-detail",		".length",	XrmoptionSepArg, 0 },
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-mode",		".mode",	XrmoptionSepArg, 0 },
+  { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { "-functions",	".lensnum", 	XrmoptionSepArg, 0 },
-  { "-notranslate",	".notranslate", XrmoptionNoArg,  "True" },
-  { "-noscale",		".noscale",		XrmoptionNoArg,  "True" },
-  { "-norotate",	".norotate",	XrmoptionNoArg,  "True" },
+  { "-no-translate",	".translate",   XrmoptionNoArg, "False" },
+  { "-no-scale",	".scale",	XrmoptionNoArg, "False" },
+  { "-no-rotate",	".rotate",	XrmoptionNoArg, "False" },
+  { "-recurse",		".recurse",	XrmoptionNoArg, "True" },
+  { "-iterate",		".recurse",	XrmoptionNoArg, "False" },
+  { "-db",		".doubleBuffer",XrmoptionNoArg, "True" },
+  { "-no-db",		".doubleBuffer",XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
 };
 
-/*Takes the average of two colours, with some nifty bit-shifting*/
-static long
-blend(long c1, long c2)
-{
-	long R1=(c1 & 0xFF0000) >> 16;
-	long R2=(c2 & 0xFF0000) >> 16;
-	long G1=(c1 & 0x00FF00) >> 8;
-	long G2=(c2 & 0x00FF00) >> 8;
-	long B1=(c1 & 0x0000FF);
-	long B2=(c2 & 0x0000FF);
-	
-	return (((R1+R2)/2 << 16) | ((G1+G2)/2 << 8) | ((B1+B2)/2));
-}
 
-/*Draw a point on the backbuffer*/
+/* Draw all the queued points on the backbuffer */
 static void
-sp(float x, float y, long c)
+drawpoints(struct state *st)
 {
-	x+=16;    x*=wt;
-	y=16.5-y; y*=ht;
-	if(x<0 || x>=width || y<0 || y>=height) return;
-	XSetForeground(dpy, gc, c);
-	XDrawPoint(dpy, backbuffer, gc, (int)x, (int)y);
+  XDrawPoints(st->dpy, st->backbuffer, st->gc, st->pointbuf, st->npoints,
+	      CoordModeOrigin);
+  st->npoints = 0;
 }
 
-/*Copy backbuffer to front buffer and clear backbuffer*/
+/* Set a point to be drawn, if it hasn't been already.
+ * Expects coordinates in 256ths of a pixel. */
 static void
-draw(void)
+sp(struct state *st, int x, int y)
 {
-	XCopyArea( dpy,
-	           backbuffer, w,
-	           gc,
-	           0, 0,
-	           width, height,
-	           0, 0);
-	
-	XSetForeground(dpy, gc, blackColor);
-	XFillRectangle(	dpy,
-	                backbuffer,
-	                gc,
-	                0, 0,
-	                width, height);
+  if (x < 0 || x >= st->width8 || y < 0 || y >= st->height8)
+    return;
+
+  x >>= 8;
+  y >>= 8;
+
+  if (getdot(x, y)) return;
+  setdot(x, y);
+
+  if (x < st->xmin) st->xmin = x;
+  if (x > st->xmax) st->xmax = x;
+  if (y < st->ymin) st->ymin = y;
+  if (y > st->ymax) st->ymax = y;
+
+  st->pointbuf[st->npoints].x = x;
+  st->pointbuf[st->npoints].y = y;
+  st->npoints++;
+
+  if (st->npoints >= countof(st->pointbuf)) {
+    drawpoints(st);
+  }
 }
 
-typedef struct {
-	float r,s,tx,ty;
-	/*Rotation, Scale, Translation X & Y*/
-	float ro,rt,rc;
-	/*Old Rotation, Rotation Target, Rotation Counter*/
-	float so,st,sc;
-	/*Old Scale, Scale Target, Scale Counter*/
-	float sa,txa,tya;
-	/*Scale change, Translation change*/
-	
-	int co;
-} Lens;	
 
+/* Precompute integer values for matrix multiplication and vector
+ * addition. The matrix multiplication will go like this (see iterate()):
+ *   |x2|     |ua ub|   |x|     |utx|
+ *   |  |  =  |     | * | |  +  |   |
+ *   |y2|     |uc ud|   |y|     |uty|
+ * 
+ * There is an extra factor of 2^10 in these values, and an extra factor of
+ * 2^8 in the coordinates, in order to implement fixed-point arithmetic.
+ */
+static void
+lensmatrix(struct state *st, Lens *l)
+{
+  l->ua = 1024.0 * l->s * cos(l->r);
+  l->ub = -1024.0 * l->s * sin(l->r);
+  l->uc = -l->ub;
+  l->ud = l->ua;
+  l->utx = 131072.0 * st->width * (l->s * (sin(l->r) - cos(l->r))
+				   + l->tx / 16 + 1);
+  l->uty = -131072.0 * st->height * (l->s * (sin(l->r) + cos(l->r))
+				     + l->ty / 16 - 1);
+}
 
 static void
-CreateLens( float nr, 
-            float ns, 
-            float nx, 
-            float ny, 
-            int nco,
-            Lens *newlens)
+CreateLens(struct state *st,
+           float nr,
+           float ns,
+           float nx,
+           float ny,
+           Lens *newlens)
 {
-	newlens->sa=newlens->txa=newlens->tya=0;
-	if(!norotate) newlens->r=nr;
-	else newlens->r=0;
-	
-	if(!noscale) newlens->s=ns;
-	else newlens->s=0.5;
-	
-	if(!notranslate) {
-		newlens->tx=nx;
-		newlens->ty=ny;
-	} else {
-		newlens->tx=nx;
-		newlens->tx=ny;
-	}
+  newlens->sa = newlens->txa = newlens->tya = 0;
+  if (st->rotate) {
+    newlens->r = newlens->ro = newlens->rt = nr;
+    newlens->rc = 1;
+  }
+  else newlens->r = 0;
 
-	newlens->rc=newlens->sc=1;
-	newlens->co=nco;
+  if (st->scale) {
+    newlens->s = newlens->so = newlens->st = ns;
+    newlens->sc = 1;
+  }
+  else newlens->s = 0.5;
+
+  newlens->tx = nx;
+  newlens->tx = ny;
+
+  lensmatrix(st, newlens);
 }
 	
-static float
-stepx(float x, float y, Lens *l)
-{
-	return l->s*cos(l->r)*x+l->s*sin(l->r)*y+l->tx;
-}
-static float
-stepy(float x, float y, Lens *l)
-{
-	return l->s*sin(l->r)*-x+l->s*cos(l->r)*y+l->ty;
-}
 static void
-mutate(Lens *l)
+mutate(struct state *st, Lens *l)
 {
-	if(!norotate) {
-		float factor;
-		if(l->rc >= 1) {
-			l->rc= 0;
-			l->ro = l->rt;
-			l->rt = myrandom(4)-2;
-		}
-		factor = (sin((-M_PI / 2.0) + M_PI * l->rc) + 1.0) / 2.0;
-		l->r=l->ro + (l->rt - l->ro) * factor;
-		l->rc+=0.01;
-		
-	}
-	if(!noscale) {
-		float factor;
-		if(l->sc >= 1) {
-			/*Reset counter, obtain new target value*/
-			l->sc= 0;
-			l->so = l->st;
-			l->st = myrandom(2)-1;
-		}
-		factor = (sin((-M_PI / 2.0) + M_PI * l->sc) + 1.0) / 2.0;
-		/* Take average of old target and new target, using factor to *
-		 * weight. It's computed sinusoidally, resulting in smooth,   *
-		 * rhythmic transitions.                                      */
-		l->s=l->so + (l->st - l->so) * factor;
-		l->sc+=0.01;
-	}
-	if(!notranslate) {
-		l->txa+=myrandom(0.004)-0.002;
-		l->tya+=myrandom(0.004)-0.002;
-		l->tx+=l->txa;
-		l->ty+=l->tya;
-		if(l->tx>6)  l->txa-=0.004;
-		if(l->ty>6)  l->tya-=0.004;
-		if(l->tx<-6)  l->txa+=0.004;
-		if(l->ty<-6)  l->tya+=0.004;
-		if(l->txa>0.05 || l->txa<-0.05) l->txa/=1.7;
-		if(l->tya>0.05 || l->tya<-0.05) l->tya/=1.7;
-	}
-	
-	/*Groovy, colour-shifting functions!*/
-	l->co++;
-	l->co %= ncolours;
+  if (st->rotate) {
+    float factor;
+    if(l->rc >= 1) {
+      l->rc = 0;
+      l->ro = l->rt;
+      l->rt = myrandom(4) - 2;
+    }
+    factor = (sin((-M_PI / 2.0) + M_PI * l->rc) + 1.0) / 2.0;
+    l->r = l->ro + (l->rt - l->ro) * factor;
+    l->rc += 0.01;
+  }
+  if (st->scale) {
+    float factor;
+    if (l->sc >= 1) {
+      /* Reset counter, obtain new target value */
+      l->sc = 0;
+      l->so = l->st;
+      l->st = myrandom(2) - 1;
+    }
+    factor = (sin((-M_PI / 2.0) + M_PI * l->sc) + 1.0) / 2.0;
+    /* Take average of old target and new target, using factor to *
+     * weight. It's computed sinusoidally, resulting in smooth,   *
+     * rhythmic transitions.                                      */
+    l->s = l->so + (l->st - l->so) * factor;
+    l->sc += 0.01;
+  }
+  if (st->translate) {
+    l->txa += myrandom(0.004) - 0.002;
+    l->tya += myrandom(0.004) - 0.002;
+    l->tx += l->txa;
+    l->ty += l->tya;
+    if (l->tx > 6) l->txa -= 0.004;
+    if (l->ty > 6) l->tya -= 0.004;
+    if (l->tx < -6) l->txa += 0.004;
+    if (l->ty < -6) l->tya += 0.004;
+    if (l->txa > 0.05 || l->txa < -0.05) l->txa /= 1.7;
+    if (l->tya > 0.05 || l->tya < -0.05) l->tya /= 1.7;
+  }
+  if (st->rotate || st->scale || st->translate) {
+    lensmatrix(st, l);
+  }
 }
 
-Lens **lenses;
+
+#define STEPX(l,x,y) (((l)->ua * (x) + (l)->ub * (y) + (l)->utx) >> 10)
+#define STEPY(l,x,y) (((l)->uc * (x) + (l)->ud * (y) + (l)->uty) >> 10)
+/*#define STEPY(l,x,y) (((l)->ua * (y) - (l)->ub * (x) + (l)->uty) >> 10)*/
 
 /* Calls itself <lensnum> times - with results from each lens/function.  *
  * After <length> calls to itself, it stops iterating and draws a point. */
 static void
-iterate(float x, float y, long curcol, int length)
+recurse(struct state *st, int x, int y, int length)
 {
-	int i;
-	if(length == 0) {
-		sp(x,y,curcol);
-	} else {
-		for(i=0;i<lensnum;i++) {
-			switch(mode) {
-				case 0 : iterate(stepx( x, y, lenses[i]), stepy( x, y, lenses[i]), blend( curcol,colours[(int)lenses[i]->co].pixel ), length-1); break;
-				case 1 : iterate(stepx( x, y, lenses[i]), stepy( x, y, lenses[i]), colours[(int)lenses[i]->co].pixel, length-1); break;
-				case 2 : iterate(stepx( x, y, lenses[i]), stepy( x, y, lenses[i]), curcol, length-1); break;
-				default: exit(0);
-			}
-		}
-	}
-	count++;
+  int i;
+  Lens *l;
+
+  if (length == 0) {
+    sp(st, x, y);
+  } else {
+    for (i = 0; i < st->lensnum; i++) {
+      l = &st->lenses[i];
+      recurse(st, STEPX(l, x, y), STEPY(l, x, y), length - 1);
+    }
+  }
+}
+
+/* Performs <count> random lens transformations, drawing a point at each
+ * iteration after the first 10.
+ */
+static void
+iterate(struct state *st, int count)
+{
+  int i;
+  Lens *l;
+  int x = st->x;
+  int y = st->y;
+  int tx;
+
+# define STEP()                              \
+    l = &st->lenses[random() % st->lensnum]; \
+    tx = STEPX(l, x, y);                     \
+    y = STEPY(l, x, y);                      \
+    x = tx
+
+  for (i = 0; i < 10; i++) {
+    STEP();
+  }
+
+  for ( ; i < count; i++) {
+    STEP();
+    sp(st, x, y);
+  }
+
+# undef STEP
+
+  st->x = x;
+  st->y = y;
 }
 
 /* Come on and iterate, iterate, iterate and sing... *
  * Yeah, this function just calls iterate, mutate,   *
  * and then draws everything.                        */
-static void
-step(void)
+static unsigned long
+ifs_draw (Display *dpy, Window window, void *closure)
 {
-	int i;
-	if(mode == 2) {
-		wcol++;
-		wcol %= ncolours;
-		iterate(0,0,colours[wcol].pixel,length);
-	} else {
-		iterate(0,0,0xFFFFFF,length);
-	}
-	
-	
-	count=0;
-	
-	for(i=0;i<lensnum;i++) {
-		mutate(lenses[i]);
-	}
-	draw();
+  struct state *st = (struct state *) closure;
+  int i;
+  int xmin = st->xmin, xmax = st->xmax, ymin = st->ymin, ymax = st->ymax;
+
+  /* erase whatever was drawn in the previous frame */
+  if (xmin <= xmax && ymin <= ymax) {
+    XSetForeground(st->dpy, st->gc, st->blackColor);
+    XFillRectangle(st->dpy, st->backbuffer, st->gc,
+		   xmin, ymin,
+		   xmax - xmin + 1, ymax - ymin + 1);
+    st->xmin = st->width + 1;
+    st->xmax = st->ymax = -1;
+    st->ymin = st->height + 1;
+  }
+
+  st->ccolour++;
+  st->ccolour %= st->ncolours;
+  XSetForeground(st->dpy, st->gc, st->colours[st->ccolour].pixel);
+
+  /* calculate and draw points for this frame */
+  memset(st->board, 0, st->widthb * st->height * sizeof(*st->board));
+  if (st->recurse)
+    recurse(st, st->width << 7, st->height << 7, st->length);
+  else
+    iterate(st, pow(st->lensnum, st->length));
+  if (st->npoints)
+    drawpoints(st);
+
+  /* if we just drew into a buffer, copy the changed area (including
+   * erased area) to screen */
+  if (st->backbuffer != st->window
+      && ((st->xmin <= st->xmax && st->ymin <= st->ymax)
+	  || (xmin <= xmax && ymin <= ymax))) {
+    if (st->xmin < xmin) xmin = st->xmin;
+    if (st->xmax > xmax) xmax = st->xmax;
+    if (st->ymin < ymin) ymin = st->ymin;
+    if (st->ymax > ymax) ymax = st->ymax;
+    XCopyArea(st->dpy, st->backbuffer, st->window, st->gc,
+	      xmin, ymin,
+	      xmax - xmin + 1, ymax - ymin + 1,
+	      xmin, ymin);
+  }
+
+  for(i = 0; i < st->lensnum; i++) {
+    mutate(st, &st->lenses[i]);
+  }
+
+  return st->delay;
 }
 
 static void
-init_ifs(void)
+ifs_reshape (Display *, Window, void *, unsigned int, unsigned int);
+
+static void *
+ifs_init (Display *d_arg, Window w_arg)
 {
-	Window rw;
-	int i;
-	XWindowAttributes xgwa;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  int i;
+  XWindowAttributes xgwa;
 	
-	delay = get_integer_resource("delay", "Delay");
-	length = get_integer_resource("length", "Detail");
-	mode = get_integer_resource("mode", "Mode");
+  /* Initialise all this X shizzle */
+  st->dpy = d_arg;
+  st->window = w_arg;
 
-	norotate    = get_boolean_resource("norotate", "NoRotate");
-	noscale     = get_boolean_resource("noscale", "NoScale");
-	notranslate = get_boolean_resource("notranslate", "NoTranslate");
+  st->blackColor = BlackPixel(st->dpy, DefaultScreen(st->dpy));
+  st->whiteColor = WhitePixel(st->dpy, DefaultScreen(st->dpy));
+  st->gc = XCreateGC(st->dpy, st->window, 0, NULL);
 
-	lensnum = get_integer_resource("lensnum", "Functions");
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  ifs_reshape(st->dpy, st->window, st, xgwa.width, xgwa.height);
 	
-	lenses = malloc(sizeof(Lens)*lensnum);
-	
-	for(i=0;i<lensnum;i++) {
-		lenses[i]=malloc(sizeof(Lens));
-	}
-	
-	/*Thanks go to Dad for teaching me how to allocate memory for struct**s . */
-	
-	XGetWindowAttributes (dpy, w, &xgwa);
-	width=xgwa.width;
-	height=xgwa.height;
-	
-	/*Initialise all this X shizzle*/
-	blackColor = BlackPixel(dpy, DefaultScreen(dpy));
-	whiteColor = WhitePixel(dpy, DefaultScreen(dpy));
-	rw = RootWindow(dpy, screen_num);
-	screen_num = DefaultScreen(dpy);
-	gc = XCreateGC(dpy, rw, 0, NULL);
-	
-	/* Do me some colourmap magic. If we're using blend mode, this is just   *
-	 * for the nice colours - we're still using true/hicolour. Screw me if   *
-	 * I'm going to work out how to blend with colourmaps - I'm too young to *
-	 * die!! On a sidenote, this is mostly stolen from halftone because I    *
-	 * don't really know what the hell I'm doing, here.                      */
-	ncolours = get_integer_resource("colors", "Colors");
-	if(ncolours < lensnum) ncolours=lensnum; /*apparently you're allowed to do this kind of thing...*/
-	colours = (XColor *)calloc(ncolours, sizeof(XColor));
-	make_smooth_colormap ( dpy,
-	                       xgwa.visual,
-	                       xgwa.colormap,
-                           colours,
-                           &ncolours,
-                           True, 0, False);
-	/*No, I didn't have a clue what that really did... hopefully I have some colours in an array, now.*/
-	wcol = (int)myrandom(ncolours);
-		
-	/*Double buffering - I can't be bothered working out the XDBE thingy*/
-	backbuffer = XCreatePixmap(dpy, w, width, height, XDefaultDepth(dpy, screen_num));
-	
-	/*Scaling factor*/
-	wt=width/32;
-	ht=height/24;
-	
-	ws=400;
-	hs=400;
+  st->ncolours = get_integer_resource(st->dpy, "colors", "Colors");
+  if (st->ncolours < st->lensnum)
+    st->ncolours = st->lensnum;
+  if (st->colours) free(st->colours);
+  st->colours = (XColor *)calloc(st->ncolours, sizeof(XColor));
+  if (!st->colours) exit(1);
+  make_smooth_colormap (st->dpy, xgwa.visual, xgwa.colormap, 
+                        st->colours, &st->ncolours,
+                        True, 0, False);
 
-	/*Colourmapped colours for the general prettiness*/
-	for(i=0;i<lensnum;i++) {
-		CreateLens(	myrandom(1)-0.5,
-		            myrandom(1),
-		            myrandom(4)-2,
-		            myrandom(4)+2,
-		            myrandom(ncolours),
-		            lenses[i]);
-	}
+  /* Initialize IFS data */
+ 
+  st->delay = get_integer_resource(st->dpy, "delay", "Delay");
+  st->length = get_integer_resource(st->dpy, "length", "Detail");
+  if (st->length < 0) st->length = 0;
+  st->mode = get_integer_resource(st->dpy, "mode", "Mode");
+
+  st->rotate    = get_boolean_resource(st->dpy, "rotate", "Boolean");
+  st->scale     = get_boolean_resource(st->dpy, "scale", "Boolean");
+  st->translate = get_boolean_resource(st->dpy, "translate", "Boolean");
+  st->recurse = get_boolean_resource(st->dpy, "recurse", "Boolean");
+
+  st->lensnum = get_integer_resource(st->dpy, "lensnum", "Functions");
+  if (st->lenses) free (st->lenses);
+  st->lenses = (Lens *)calloc(st->lensnum, sizeof(Lens));
+  if (!st->lenses) exit(1);
+  for (i = 0; i < st->lensnum; i++) {
+    CreateLens(st,
+	       myrandom(1)-0.5,
+	       myrandom(1),
+	       myrandom(4)-2,
+	       myrandom(4)+2,
+	       &st->lenses[i]);
+  }
+
+  return st;
 }
 
-void
-screenhack (Display *display, Window window)
+static void
+ifs_reshape (Display *dpy, Window window, void *closure, 
+	     unsigned int w, unsigned int h)
 {
-	dpy = display;
-	w   = window;
-	
-	init_ifs();
-	
-	while (1) {
-		step();
-		screenhack_handle_events(dpy);
-		if (delay) usleep(delay);
-	}
+  struct state *st = (struct state *)closure;
+  XWindowAttributes xgwa;
+
+  /* oh well, we need the screen depth anyway */
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+
+  st->width = xgwa.width;
+  st->widthb = ((xgwa.width + 31) >> 5);
+  st->height = xgwa.height;
+  st->width8 = xgwa.width << 8;
+  st->height8 = xgwa.height << 8;
+
+  if (!st->xmax && !st->ymax && !st->xmin && !st->ymin) {
+    st->xmin = xgwa.width + 1;
+    st->xmax = st->ymax = -1;
+    st->ymin = xgwa.height + 1;
+  }
+
+  if (st->backbuffer != None && st->backbuffer != st->window) {
+    XFreePixmap(st->dpy, st->backbuffer);
+    st->backbuffer = None;
+  }
+
+  if (get_boolean_resource (st->dpy, "doubleBuffer", "Boolean")) {
+    st->backbuffer = XCreatePixmap(st->dpy, st->window, st->width, st->height, xgwa.depth);
+    XSetForeground(st->dpy, st->gc, st->blackColor);
+    XFillRectangle(st->dpy, st->backbuffer, st->gc,
+		   0, 0, st->width, st->height);
+  } else {
+    st->backbuffer = st->window;
+    XClearWindow(st->dpy, st->window);
+  }
+
+  if (st->board) free(st->board);
+  st->board = (unsigned int *)calloc(st->widthb * st->height, sizeof(unsigned int));
+  if (!st->board) exit(1);
 }
+
+static Bool
+ifs_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+ifs_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->board) free(st->board);
+  if (st->lenses) free(st->lenses);
+  if (st->colours) free(st->colours);
+  if (st->backbuffer != None && st->backbuffer != st->window)
+    XFreePixmap(st->dpy, st->backbuffer);
+  free(st);
+}
+
+XSCREENSAVER_MODULE ("IFS", ifs)

@@ -31,25 +31,23 @@ static const char sccsid[] = "@(#)lissie.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_lissie
-#define PROGCLASS "Lissie"
-#define HACK_INIT init_lissie
-#define HACK_DRAW draw_lissie
-#define lissie_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 1 \n" \
- "*cycles: 20000 \n" \
- "*size: -200 \n" \
- "*ncolors: 200 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_lissie
+# define DEFAULTS	"*delay: 10000 \n" \
+					"*count: 1 \n" \
+					"*cycles: 20000 \n" \
+					"*size: -200 \n" \
+					"*ncolors: 200 \n"
+# define SMOOTH_COLORS
+# define reshape_lissie 0
+# define lissie_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_lissie
 
-ModeSpecOpt lissie_opts =
+ENTRYPOINT ModeSpecOpt lissie_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -215,8 +213,8 @@ initlissie(ModeInfo * mi, lissiestruct * lissie)
 	drawlissie(mi, lissie);
 }
 
-void
-init_lissie(ModeInfo * mi)
+ENTRYPOINT void
+init_lissie (ModeInfo * mi)
 {
 	lissstruct *lp;
 	unsigned char ball;
@@ -229,6 +227,11 @@ init_lissie(ModeInfo * mi)
 	lp = &lisses[MI_SCREEN(mi)];
 
 	lp->width = MI_WIDTH(mi);
+
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi),  False);
+#endif
+
 	lp->height = MI_HEIGHT(mi);
 
 	lp->nlissies = MI_COUNT(mi);
@@ -256,8 +259,8 @@ init_lissie(ModeInfo * mi)
 
 }
 
-void
-draw_lissie(ModeInfo * mi)
+ENTRYPOINT void
+draw_lissie (ModeInfo * mi)
 {
 	register unsigned char ball;
 	lissstruct *lp;
@@ -279,8 +282,8 @@ draw_lissie(ModeInfo * mi)
 	}
 }
 
-void
-release_lissie(ModeInfo * mi)
+ENTRYPOINT void
+release_lissie (ModeInfo * mi)
 {
 	if (lisses != NULL) {
 		int         screen;
@@ -298,7 +301,7 @@ release_lissie(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_lissie(ModeInfo * mi)
 {
 	int         i;
@@ -318,5 +321,7 @@ refresh_lissie(ModeInfo * mi)
 		}
 	}
 }
+
+XSCREENSAVER_MODULE ("Lissie", lissie)
 
 #endif /* MODE_lissie */

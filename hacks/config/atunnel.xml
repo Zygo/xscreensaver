@@ -9,20 +9,14 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <select id="render">
-    <option id="normal" _label="Normal"/>
-    <option id="solid" _label="Untextured" arg-set="-no-texture"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wire"/>
-  </select>
-
-  <boolean id="light" _label="Use light" arg-set="-light"/>
-
+  <boolean id="tex"     _label="Textured"    arg-unset="-no-texture"/>
+  <boolean id="light"   _label="Lighting"    arg-set="-light"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws an animation of a textured tunnel in GL.
-Requires OpenGL, and a machine with fast hardware support for texture maps.
 
-Written by Eric Lassauge and Roman Podobedov.
+Written by Eric Lassauge and Roman Podobedov; 2003.
   </_description>
 </screensaver>

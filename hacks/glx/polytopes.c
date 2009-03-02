@@ -114,16 +114,10 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #define DEF_DTHETA                DTHETA_STR
 
 #ifdef STANDALONE
-# define PROGCLASS          "Polytopes"
-# define HACK_INIT          init_polytopes
-# define HACK_DRAW          draw_polytopes
-# define HACK_RESHAPE       reshape_polytopes
-# define HACK_HANDLE_EVENT  polytopes_handle_event
-# define EVENT_MASK         PointerMotionMask|KeyReleaseMask
-# define polytopes_opts     xlockmore_opts
 # define DEFAULTS           "*delay:      25000 \n" \
                             "*showFPS:    False \n"
 
+# define refresh_polytopes 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -132,8 +126,6 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #ifdef USE_GL
 
 #include <X11/keysym.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include "gltrackball.h"
 
 
@@ -159,21 +151,13 @@ static float speed_xy;
 static float speed_xz;
 static float speed_yz;
 
-/* 4D rotation angles */
-static float alpha, beta, delta, zeta, eta, theta;
-static float aspect;
-
-/* Trackball states */
-trackball_state *trackballs[2];
-int current_trackball;
-Bool button_pressed;
-
 static const float offset4d[4] = {  0.0,  0.0,  0.0,  3.0 };
 static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 
 static XrmOptionDescRec opts[] =
 {
+  {"-mode",            ".polytopes.displayMode",  XrmoptionSepArg, 0 },
   {"-wireframe",       ".polytopes.displayMode",  XrmoptionNoArg,
                        DISP_WIREFRAME_STR },
   {"-surface",         ".polytopes.displayMode",  XrmoptionNoArg,
@@ -182,6 +166,8 @@ static XrmOptionDescRec opts[] =
                        DISP_TRANSPARENT_STR },
   {"-random",          ".polytopes.polytope",     XrmoptionNoArg,
                        POLYTOPE_RANDOM_STR },
+
+  {"-polytope",        ".polytopes.polytope",     XrmoptionSepArg, 0 },
   {"-5-cell",          ".polytopes.polytope",     XrmoptionNoArg,
                        POLYTOPE_5_CELL_STR },
   {"-8-cell",          ".polytopes.polytope",     XrmoptionNoArg,
@@ -250,21 +236,9 @@ static OptionStruct desc[] =
   { "-speed-yz <arg>",  "rotation speed around the yz plane" }
 };
 
-ModeSpecOpt polytopes_opts =
+ENTRYPOINT ModeSpecOpt polytopes_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
-
-typedef struct {
-  GLint       WindH, WindW;
-  GLXContext *glx_context;
-} polytopesstruct;
-
-static polytopesstruct *poly = (polytopesstruct *) NULL;
-
-
-/* Vertex, edge, and face data for the six regular polytopes.  All the
-   polytopes are constructed with coordinates chosen such that their 4d
-   circumsphere has a radius of 2. */
 
 /* 5-cell {3,3,3} */
 #define NUM_VERT_5 5
@@ -276,28 +250,6 @@ static polytopesstruct *poly = (polytopesstruct *) NULL;
 #define MAX_EDGE_DEPTH_5 0.75
 #define MIN_FACE_DEPTH_5 (-0.5)
 #define MAX_FACE_DEPTH_5 (1.0/3.0)
-
-static float vert_5[NUM_VERT_5][4] = {
-  { -SQRT5OVER2, -SQRT5OVER6, -SQRT5OVER12, -0.5 },
-  {  SQRT5OVER2, -SQRT5OVER6, -SQRT5OVER12, -0.5 },
-  {         0.0, SQRT10OVER3, -SQRT5OVER12, -0.5 },
-  {         0.0,         0.0,  SQRT15OVER4, -0.5 },
-  {         0.0,         0.0,          0.0,  2.0 }
-};
-
-static int edge_5[NUM_EDGE_5][2] = {
-  { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 1, 2 }, { 1, 3 }, { 1, 4 },
-  { 2, 3 }, { 2, 4 }, { 3, 4 }
-};
-
-static int face_5[NUM_FACE_5][VERT_PER_FACE_5] = {
-  { 0, 1, 2 }, { 0, 1, 3 }, { 0, 1, 4 }, { 0, 2, 3 }, { 0, 2, 4 }, { 0, 3, 4 },
-  { 1, 2, 3 }, { 1, 2, 4 }, { 1, 3, 4 }, { 2, 3, 4 }
-};
-
-static float edge_color_5[NUM_EDGE_5][4];
-static float face_color_5[NUM_FACE_5][4];
-static float face_color_trans_5[NUM_FACE_5][4];
 
 
 /* 8-cell {4,3,3} */
@@ -311,42 +263,6 @@ static float face_color_trans_5[NUM_FACE_5][4];
 #define MIN_FACE_DEPTH_8 (-1.0)
 #define MAX_FACE_DEPTH_8 1.0
 
-static float vert_8[NUM_VERT_8][4] = {
-  { -1.0, -1.0, -1.0, -1.0 }, {  1.0, -1.0, -1.0, -1.0 },
-  { -1.0,  1.0, -1.0, -1.0 }, {  1.0,  1.0, -1.0, -1.0 },
-  { -1.0, -1.0,  1.0, -1.0 }, {  1.0, -1.0,  1.0, -1.0 },
-  { -1.0,  1.0,  1.0, -1.0 }, {  1.0,  1.0,  1.0, -1.0 },
-  { -1.0, -1.0, -1.0,  1.0 }, {  1.0, -1.0, -1.0,  1.0 },
-  { -1.0,  1.0, -1.0,  1.0 }, {  1.0,  1.0, -1.0,  1.0 },
-  { -1.0, -1.0,  1.0,  1.0 }, {  1.0, -1.0,  1.0,  1.0 },
-  { -1.0,  1.0,  1.0,  1.0 }, {  1.0,  1.0,  1.0,  1.0 }
-};
-
-static int edge_8[NUM_EDGE_8][2] = {
-  {  0,  1 }, {  0,  2 }, {  0,  4 }, {  0,  8 }, {  1,  3 }, {  1,  5 },
-  {  1,  9 }, {  2,  3 }, {  2,  6 }, {  2, 10 }, {  3,  7 }, {  3, 11 },
-  {  4,  5 }, {  4,  6 }, {  4, 12 }, {  5,  7 }, {  5, 13 }, {  6,  7 },
-  {  6, 14 }, {  7, 15 }, {  8,  9 }, {  8, 10 }, {  8, 12 }, {  9, 11 },
-  {  9, 13 }, { 10, 11 }, { 10, 14 }, { 11, 15 }, { 12, 13 }, { 12, 14 },
-  { 13, 15 }, { 14, 15 }
-};
-
-static int face_8[NUM_FACE_8][VERT_PER_FACE_8] = {
-  {  0,  1,  3,  2 }, {  0,  1,  5,  4 }, {  0,  1,  9,  8 },
-  {  0,  2,  6,  4 }, {  0,  2, 10,  8 }, {  0,  4, 12,  8 },
-  {  1,  3,  7,  5 }, {  1,  3, 11,  9 }, {  1,  5, 13,  9 },
-  {  2,  3,  7,  6 }, {  2,  3, 11, 10 }, {  2,  6, 14, 10 },
-  {  3,  7, 15, 11 }, {  4,  5,  7,  6 }, {  4,  5, 13, 12 },
-  {  4,  6, 14, 12 }, {  5,  7, 15, 13 }, {  6,  7, 15, 14 },
-  {  8,  9, 11, 10 }, {  8,  9, 13, 12 }, {  8, 10, 14, 12 },
-  {  9, 11, 15, 13 }, { 10, 11, 15, 14 }, { 12, 13, 15, 14 }
-};
-
-static float edge_color_8[NUM_EDGE_8][4];
-static float face_color_8[NUM_FACE_8][4];
-static float face_color_trans_8[NUM_FACE_8][4];
-
-
 /* 16-cell {3,3,4} */
 #define NUM_VERT_16 8
 #define NUM_EDGE_16 24
@@ -357,33 +273,6 @@ static float face_color_trans_8[NUM_FACE_8][4];
 #define MAX_EDGE_DEPTH_16 1.0
 #define MIN_FACE_DEPTH_16 (-2.0/3.0)
 #define MAX_FACE_DEPTH_16 (2.0/3.0)
-
-static float vert_16[NUM_VERT_16][4] = {
-  {  0.0,  0.0,  0.0, -2.0 }, {  0.0,  0.0, -2.0,  0.0 },
-  {  0.0, -2.0,  0.0,  0.0 }, { -2.0,  0.0,  0.0,  0.0 },
-  {  2.0,  0.0,  0.0,  0.0 }, {  0.0,  2.0,  0.0,  0.0 },
-  {  0.0,  0.0,  2.0,  0.0 }, {  0.0,  0.0,  0.0,  2.0 }
-};
-
-static int edge_16[NUM_EDGE_16][2] = {
-  { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 0, 5 }, { 0, 6 }, { 1, 2 },
-  { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 7 }, { 2, 3 }, { 2, 4 }, { 2, 6 },
-  { 2, 7 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 4, 5 }, { 4, 6 }, { 4, 7 },
-  { 5, 6 }, { 5, 7 }, { 6, 7 }
-};
-
-static int face_16[NUM_FACE_16][VERT_PER_FACE_16] = {
-  { 0, 1, 2 }, { 0, 1, 3 }, { 0, 1, 4 }, { 0, 1, 5 }, { 0, 2, 3 }, { 0, 2, 4 },
-  { 0, 2, 6 }, { 0, 3, 5 }, { 0, 3, 6 }, { 0, 4, 5 }, { 0, 4, 6 }, { 0, 5, 6 },
-  { 1, 2, 3 }, { 1, 2, 4 }, { 1, 2, 7 }, { 1, 3, 5 }, { 1, 3, 7 }, { 1, 4, 5 },
-  { 1, 4, 7 }, { 1, 5, 7 }, { 2, 3, 6 }, { 2, 3, 7 }, { 2, 4, 6 }, { 2, 4, 7 },
-  { 2, 6, 7 }, { 3, 5, 6 }, { 3, 5, 7 }, { 3, 6, 7 }, { 4, 5, 6 }, { 4, 5, 7 },
-  { 4, 6, 7 }, { 5, 6, 7 }
-};
-
-static float edge_color_16[NUM_EDGE_16][4];
-static float face_color_16[NUM_FACE_16][4];
-static float face_color_trans_16[NUM_FACE_16][4];
 
 
 /* 24-cell {3,4,3} */
@@ -397,7 +286,158 @@ static float face_color_trans_16[NUM_FACE_16][4];
 #define MIN_FACE_DEPTH_24 (-SQRT2)
 #define MAX_FACE_DEPTH_24 SQRT2
 
-static float vert_24[NUM_VERT_24][4] = {
+
+/* 120-cell {5,3,3} */
+#define NUM_VERT_120 600
+#define NUM_EDGE_120 1200
+#define NUM_FACE_120 720
+#define VERT_PER_FACE_120 5
+
+#define MIN_EDGE_DEPTH_120 (-GOLDEN22)
+#define MAX_EDGE_DEPTH_120 GOLDEN22
+#define MIN_FACE_DEPTH_120 (-GOLDEN22)
+#define MAX_FACE_DEPTH_120 GOLDEN22
+
+
+/* 600-cell {3,3,5} */
+#define NUM_VERT_600 120
+#define NUM_EDGE_600 720
+#define NUM_FACE_600 1200
+#define VERT_PER_FACE_600 3
+
+#define MIN_EDGE_DEPTH_600 (-GOLDEN/2.0-1)
+#define MAX_EDGE_DEPTH_600 (GOLDEN/2.0+1)
+#define MIN_FACE_DEPTH_600 ((-2*GOLDEN-2)/3.0)
+#define MAX_FACE_DEPTH_600 ((2*GOLDEN+2)/3.0)
+
+
+typedef struct {
+  GLint       WindH, WindW;
+  GLXContext *glx_context;
+  /* 4D rotation angles */
+  float alpha, beta, delta, zeta, eta, theta;
+  /* Aspect ratio of the current window */
+  float aspect;
+  /* Counter */
+  int tick, poly;
+  /* Trackball states */
+  trackball_state *trackballs[2];
+  int current_trackball;
+  Bool button_pressed;
+
+  float edge_color_5[NUM_EDGE_5][4];
+  float face_color_5[NUM_FACE_5][4];
+  float face_color_trans_5[NUM_FACE_5][4];
+
+  float edge_color_8[NUM_EDGE_8][4];
+  float face_color_8[NUM_FACE_8][4];
+  float face_color_trans_8[NUM_FACE_8][4];
+
+  float edge_color_16[NUM_EDGE_16][4];
+  float face_color_16[NUM_FACE_16][4];
+  float face_color_trans_16[NUM_FACE_16][4];
+
+  float edge_color_24[NUM_EDGE_24][4];
+  float face_color_24[NUM_FACE_24][4];
+  float face_color_trans_24[NUM_FACE_24][4];
+
+  float edge_color_120[NUM_EDGE_120][4];
+  float face_color_120[NUM_FACE_120][4];
+  float face_color_trans_120[NUM_FACE_120][4];
+
+  float edge_color_600[NUM_EDGE_600][4];
+  float face_color_600[NUM_FACE_600][4];
+  float face_color_trans_600[NUM_FACE_600][4];
+
+  float speed_scale;
+
+} polytopesstruct;
+
+static polytopesstruct *poly = (polytopesstruct *) NULL;
+
+
+/* Vertex, edge, and face data for the six regular polytopes.  All the
+   polytopes are constructed with coordinates chosen such that their 4d
+   circumsphere has a radius of 2. */
+
+static const float vert_5[NUM_VERT_5][4] = {
+  { -SQRT5OVER2, -SQRT5OVER6, -SQRT5OVER12, -0.5 },
+  {  SQRT5OVER2, -SQRT5OVER6, -SQRT5OVER12, -0.5 },
+  {         0.0, SQRT10OVER3, -SQRT5OVER12, -0.5 },
+  {         0.0,         0.0,  SQRT15OVER4, -0.5 },
+  {         0.0,         0.0,          0.0,  2.0 }
+};
+
+static const int edge_5[NUM_EDGE_5][2] = {
+  { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 1, 2 }, { 1, 3 }, { 1, 4 },
+  { 2, 3 }, { 2, 4 }, { 3, 4 }
+};
+
+static const int face_5[NUM_FACE_5][VERT_PER_FACE_5] = {
+  { 0, 1, 2 }, { 0, 1, 3 }, { 0, 1, 4 }, { 0, 2, 3 }, { 0, 2, 4 }, { 0, 3, 4 },
+  { 1, 2, 3 }, { 1, 2, 4 }, { 1, 3, 4 }, { 2, 3, 4 }
+};
+
+
+static const float vert_8[NUM_VERT_8][4] = {
+  { -1.0, -1.0, -1.0, -1.0 }, {  1.0, -1.0, -1.0, -1.0 },
+  { -1.0,  1.0, -1.0, -1.0 }, {  1.0,  1.0, -1.0, -1.0 },
+  { -1.0, -1.0,  1.0, -1.0 }, {  1.0, -1.0,  1.0, -1.0 },
+  { -1.0,  1.0,  1.0, -1.0 }, {  1.0,  1.0,  1.0, -1.0 },
+  { -1.0, -1.0, -1.0,  1.0 }, {  1.0, -1.0, -1.0,  1.0 },
+  { -1.0,  1.0, -1.0,  1.0 }, {  1.0,  1.0, -1.0,  1.0 },
+  { -1.0, -1.0,  1.0,  1.0 }, {  1.0, -1.0,  1.0,  1.0 },
+  { -1.0,  1.0,  1.0,  1.0 }, {  1.0,  1.0,  1.0,  1.0 }
+};
+
+static const int edge_8[NUM_EDGE_8][2] = {
+  {  0,  1 }, {  0,  2 }, {  0,  4 }, {  0,  8 }, {  1,  3 }, {  1,  5 },
+  {  1,  9 }, {  2,  3 }, {  2,  6 }, {  2, 10 }, {  3,  7 }, {  3, 11 },
+  {  4,  5 }, {  4,  6 }, {  4, 12 }, {  5,  7 }, {  5, 13 }, {  6,  7 },
+  {  6, 14 }, {  7, 15 }, {  8,  9 }, {  8, 10 }, {  8, 12 }, {  9, 11 },
+  {  9, 13 }, { 10, 11 }, { 10, 14 }, { 11, 15 }, { 12, 13 }, { 12, 14 },
+  { 13, 15 }, { 14, 15 }
+};
+
+static const int face_8[NUM_FACE_8][VERT_PER_FACE_8] = {
+  {  0,  1,  3,  2 }, {  0,  1,  5,  4 }, {  0,  1,  9,  8 },
+  {  0,  2,  6,  4 }, {  0,  2, 10,  8 }, {  0,  4, 12,  8 },
+  {  1,  3,  7,  5 }, {  1,  3, 11,  9 }, {  1,  5, 13,  9 },
+  {  2,  3,  7,  6 }, {  2,  3, 11, 10 }, {  2,  6, 14, 10 },
+  {  3,  7, 15, 11 }, {  4,  5,  7,  6 }, {  4,  5, 13, 12 },
+  {  4,  6, 14, 12 }, {  5,  7, 15, 13 }, {  6,  7, 15, 14 },
+  {  8,  9, 11, 10 }, {  8,  9, 13, 12 }, {  8, 10, 14, 12 },
+  {  9, 11, 15, 13 }, { 10, 11, 15, 14 }, { 12, 13, 15, 14 }
+};
+
+
+
+static const float vert_16[NUM_VERT_16][4] = {
+  {  0.0,  0.0,  0.0, -2.0 }, {  0.0,  0.0, -2.0,  0.0 },
+  {  0.0, -2.0,  0.0,  0.0 }, { -2.0,  0.0,  0.0,  0.0 },
+  {  2.0,  0.0,  0.0,  0.0 }, {  0.0,  2.0,  0.0,  0.0 },
+  {  0.0,  0.0,  2.0,  0.0 }, {  0.0,  0.0,  0.0,  2.0 }
+};
+
+static const int edge_16[NUM_EDGE_16][2] = {
+  { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 0, 5 }, { 0, 6 }, { 1, 2 },
+  { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 7 }, { 2, 3 }, { 2, 4 }, { 2, 6 },
+  { 2, 7 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 4, 5 }, { 4, 6 }, { 4, 7 },
+  { 5, 6 }, { 5, 7 }, { 6, 7 }
+};
+
+static const int face_16[NUM_FACE_16][VERT_PER_FACE_16] = {
+  { 0, 1, 2 }, { 0, 1, 3 }, { 0, 1, 4 }, { 0, 1, 5 }, { 0, 2, 3 }, { 0, 2, 4 },
+  { 0, 2, 6 }, { 0, 3, 5 }, { 0, 3, 6 }, { 0, 4, 5 }, { 0, 4, 6 }, { 0, 5, 6 },
+  { 1, 2, 3 }, { 1, 2, 4 }, { 1, 2, 7 }, { 1, 3, 5 }, { 1, 3, 7 }, { 1, 4, 5 },
+  { 1, 4, 7 }, { 1, 5, 7 }, { 2, 3, 6 }, { 2, 3, 7 }, { 2, 4, 6 }, { 2, 4, 7 },
+  { 2, 6, 7 }, { 3, 5, 6 }, { 3, 5, 7 }, { 3, 6, 7 }, { 4, 5, 6 }, { 4, 5, 7 },
+  { 4, 6, 7 }, { 5, 6, 7 }
+};
+
+
+
+static const float vert_24[NUM_VERT_24][4] = {
   {    0.0,    0.0, -SQRT2, -SQRT2 }, {    0.0, -SQRT2,    0.0, -SQRT2 },
   { -SQRT2,    0.0,    0.0, -SQRT2 }, {  SQRT2,    0.0,    0.0, -SQRT2 },
   {    0.0,  SQRT2,    0.0, -SQRT2 }, {    0.0,    0.0,  SQRT2, -SQRT2 },
@@ -412,7 +452,7 @@ static float vert_24[NUM_VERT_24][4] = {
   {    0.0,  SQRT2,    0.0,  SQRT2 }, {    0.0,    0.0,  SQRT2,  SQRT2 }
 };
 
-static int edge_24[NUM_EDGE_24][2] = {
+static const int edge_24[NUM_EDGE_24][2] = {
   {  0,  1 }, {  0,  2 }, {  0,  3 }, {  0,  4 }, {  0,  6 }, {  0,  7 },
   {  0,  8 }, {  0,  9 }, {  1,  2 }, {  1,  3 }, {  1,  5 }, {  1,  6 },
   {  1, 10 }, {  1, 11 }, {  1, 14 }, {  2,  4 }, {  2,  5 }, {  2,  7 },
@@ -431,7 +471,7 @@ static int edge_24[NUM_EDGE_24][2] = {
   { 19, 23 }, { 20, 22 }, { 20, 23 }, { 21, 22 }, { 21, 23 }, { 22, 23 }
 };
 
-static int face_24[NUM_FACE_24][VERT_PER_FACE_24] = {
+static const int face_24[NUM_FACE_24][VERT_PER_FACE_24] = {
   {  0,  1,  2 }, {  0,  1,  3 }, {  0,  1,  6 }, {  0,  2,  4 }, 
   {  0,  2,  7 }, {  0,  3,  4 }, {  0,  3,  8 }, {  0,  4,  9 },
   {  0,  6,  7 }, {  0,  6,  8 }, {  0,  7,  9 }, {  0,  8,  9 },
@@ -458,23 +498,10 @@ static int face_24[NUM_FACE_24][VERT_PER_FACE_24] = {
   { 19, 20, 23 }, { 19, 21, 23 }, { 20, 22, 23 }, { 21, 22, 23 }
 };
 
-static float edge_color_24[NUM_EDGE_24][4];
-static float face_color_24[NUM_FACE_24][4];
-static float face_color_trans_24[NUM_FACE_24][4];
 
 
-/* 120-cell {5,3,3} */
-#define NUM_VERT_120 600
-#define NUM_EDGE_120 1200
-#define NUM_FACE_120 720
-#define VERT_PER_FACE_120 5
 
-#define MIN_EDGE_DEPTH_120 (-GOLDEN22)
-#define MAX_EDGE_DEPTH_120 GOLDEN22
-#define MIN_FACE_DEPTH_120 (-GOLDEN22)
-#define MAX_FACE_DEPTH_120 GOLDEN22
-
-static float vert_120[NUM_VERT_120][4] = {
+static const float vert_120[NUM_VERT_120][4] = {
   { -GOLDENINV22,          0.0,    -SQRT2INV,    -GOLDEN22 },
   {  GOLDENINV22,          0.0,    -SQRT2INV,    -GOLDEN22 },
   {  -GOLDENINV2,  -GOLDENINV2,  -GOLDENINV2,    -GOLDEN22 },
@@ -1077,7 +1104,7 @@ static float vert_120[NUM_VERT_120][4] = {
   {  GOLDENINV22,          0.0,     SQRT2INV,     GOLDEN22 }
 };
 
-static int edge_120[NUM_EDGE_120][2] = {
+static const int edge_120[NUM_EDGE_120][2] = {
   {   0,   1 }, {   0,   2 }, {   0,   4 }, {   0,  20 }, {   1,   3 },
   {   1,   5 }, {   1,  21 }, {   2,   6 }, {   2,   8 }, {   2,  22 },
   {   3,   6 }, {   3,   9 }, {   3,  23 }, {   4,   7 }, {   4,  10 },
@@ -1320,7 +1347,7 @@ static int edge_120[NUM_EDGE_120][2] = {
   { 594, 598 }, { 595, 599 }, { 596, 598 }, { 597, 599 }, { 598, 599 }
 };
 
-static int face_120[NUM_FACE_120][VERT_PER_FACE_120] = {
+static const int face_120[NUM_FACE_120][VERT_PER_FACE_120] = {
   {   0,   1,   3,   6,   2 }, {   0,   1,   5,   7,   4 },
   {   0,   1,  21,  40,  20 }, {   0,   2,   8,  10,   4 },
   {   0,   2,  22,  41,  20 }, {   0,   4,  24,  43,  20 },
@@ -1683,23 +1710,9 @@ static int face_120[NUM_FACE_120][VERT_PER_FACE_120] = {
   { 592, 594, 598, 599, 595 }, { 593, 596, 598, 599, 597 }
 };
 
-static float edge_color_120[NUM_EDGE_120][4];
-static float face_color_120[NUM_FACE_120][4];
-static float face_color_trans_120[NUM_FACE_120][4];
 
 
-/* 600-cell {3,3,5} */
-#define NUM_VERT_600 120
-#define NUM_EDGE_600 720
-#define NUM_FACE_600 1200
-#define VERT_PER_FACE_600 3
-
-#define MIN_EDGE_DEPTH_600 (-GOLDEN/2.0-1)
-#define MAX_EDGE_DEPTH_600 (GOLDEN/2.0+1)
-#define MIN_FACE_DEPTH_600 ((-2*GOLDEN-2)/3.0)
-#define MAX_FACE_DEPTH_600 ((2*GOLDEN+2)/3.0)
-
-static float vert_600[NUM_VERT_600][4] = {
+static const float vert_600[NUM_VERT_600][4] = {
   {        0.0,        0.0,        0.0,       -2.0 },
   {        0.0, -GOLDENINV,       -1.0,    -GOLDEN },
   {        0.0,  GOLDENINV,       -1.0,    -GOLDEN },
@@ -1822,7 +1835,7 @@ static float vert_600[NUM_VERT_600][4] = {
   {        0.0,        0.0,        0.0,        2.0 }
 };
 
-static int edge_600[NUM_EDGE_600][2] = {
+static const int edge_600[NUM_EDGE_600][2] = {
   {   0,   1 }, {   0,   2 }, {   0,   3 }, {   0,   4 }, {   0,   5 },
   {   0,   6 }, {   0,   7 }, {   0,   8 }, {   0,   9 }, {   0,  10 },
   {   0,  11 }, {   0,  12 }, {   1,   2 }, {   1,   3 }, {   1,   4 },
@@ -1969,7 +1982,7 @@ static int edge_600[NUM_EDGE_600][2] = {
   { 116, 118 }, { 116, 119 }, { 117, 118 }, { 117, 119 }, { 118, 119 }
 };
 
-static int face_600[NUM_FACE_600][VERT_PER_FACE_600] = {
+static const int face_600[NUM_FACE_600][VERT_PER_FACE_600] = {
   {   0,   1,   2 }, {   0,   1,   3 }, {   0,   1,   4 }, {   0,   1,   5 },
   {   0,   1,   6 }, {   0,   2,   3 }, {   0,   2,   4 }, {   0,   2,   7 },
   {   0,   2,   8 }, {   0,   3,   5 }, {   0,   3,   7 }, {   0,   3,   9 },
@@ -2272,9 +2285,6 @@ static int face_600[NUM_FACE_600][VERT_PER_FACE_600] = {
   { 116, 117, 118 }, { 116, 117, 119 }, { 116, 118, 119 }, { 117, 118, 119 }
 };
 
-static float edge_color_600[NUM_EDGE_600][4];
-static float face_color_600[NUM_FACE_600][4];
-static float face_color_trans_600[NUM_FACE_600][4];
 
 
 /* Add a rotation around the wx-plane to the matrix m. */
@@ -2457,7 +2467,8 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
 
 
 /* Compute the normal vector of a plane based on three points in the plane. */
-static void normal(float *p, float *q, float *r, float *n)
+static void normal(const float *p, const float *q, const float *r, 
+                   float *n)
 {
   float u[3], v[3], t;
 
@@ -2478,15 +2489,16 @@ static void normal(float *p, float *q, float *r, float *n)
 
 
 /* Project an array of vertices from 4d to 3d. */
-static void project(float vert[][4], float v[][4], int num)
+static void project(ModeInfo *mi, const float vert[][4], float v[][4], int num)
 {
   float s, q1[4], q2[4], r1[4][4], r2[4][4], m[4][4];
   int i, j, k;
+  polytopesstruct *pp = &poly[MI_SCREEN(mi)];
 
-  rotateall(alpha,beta,delta,zeta,eta,theta,r1);
+  rotateall(pp->alpha,pp->beta,pp->delta,pp->zeta,pp->eta,pp->theta,r1);
 
-  gltrackball_get_quaternion(trackballs[0],q1);
-  gltrackball_get_quaternion(trackballs[1],q2);
+  gltrackball_get_quaternion(pp->trackballs[0],q1);
+  gltrackball_get_quaternion(pp->trackballs[1],q2);
   quats_to_rotmat(q1,q2,r2);
 
   mult_rotmat(r2,r1,m);
@@ -2526,14 +2538,18 @@ static void project(float vert[][4], float v[][4], int num)
 
 /* Draw a single polytope. */
 static void draw(ModeInfo *mi,
-                 float v[][4], int edge[][2], int num_edge, int face[],
-                 int num_face, int vert_per_face, float edge_color[][4],
-                 float face_color[][4], float face_color_trans[][4])
+                 float v[][4], 
+                 const int edge[][2], int num_edge, 
+                 const int face[], int num_face, 
+                 int vert_per_face, 
+                 float edge_color[][4], 
+                 float face_color[][4], 
+                 float face_color_trans[][4])
 {
   int i, j;
   float n[3];
-  static float red[4] = { 1.0, 0.0, 0.0, 1.0 };
-  static float red_trans[4] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat red[4] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat red_trans[4] = { 1.0, 0.0, 0.0, 1.0 };
 
   mi->polygon_count = 0;
   if (display_mode == DISP_WIREFRAME)
@@ -2588,68 +2604,72 @@ static void draw(ModeInfo *mi,
 /* Draw a 5-cell {3,3,3} projected into 3d. */
 static void cell_5(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_5][4];
 
-  project(vert_5,v,NUM_VERT_5);
-  draw(mi, v,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,VERT_PER_FACE_5,
-       edge_color_5,face_color_5,face_color_trans_5);
+  project(mi,vert_5,v,NUM_VERT_5);
+  draw(mi,v,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,VERT_PER_FACE_5,
+       hp->edge_color_5,hp->face_color_5,hp->face_color_trans_5);
 }
 
 
 /* Draw a 8-cell {4,3,3} projected into 3d. */
 static void cell_8(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_8][4];
 
-  project(vert_8,v,NUM_VERT_8);
+  project(mi,vert_8,v,NUM_VERT_8);
   draw(mi,v,edge_8,NUM_EDGE_8,(int *)face_8,NUM_FACE_8,VERT_PER_FACE_8,
-       edge_color_8,face_color_8,face_color_trans_8);
+       hp->edge_color_8,hp->face_color_8,hp->face_color_trans_8);
 }
 
 
 /* Draw a 16-cell {3,3,4} projected into 3d. */
 static void cell_16(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_16][4];
 
-  project(vert_16,v,NUM_VERT_16);
+  project(mi,vert_16,v,NUM_VERT_16);
   draw(mi,v,edge_16,NUM_EDGE_16,(int *)face_16,NUM_FACE_16,VERT_PER_FACE_16,
-       edge_color_16,face_color_16,face_color_trans_16);
+       hp->edge_color_16,hp->face_color_16,hp->face_color_trans_16);
 }
 
 
 /* Draw a 24-cell {3,4,3} projected into 3d. */
 static void cell_24(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_24][4];
 
-  project(vert_24,v,NUM_VERT_24);
+  project(mi,vert_24,v,NUM_VERT_24);
   draw(mi,v,edge_24,NUM_EDGE_24,(int *)face_24,NUM_FACE_24,VERT_PER_FACE_24,
-       edge_color_24,face_color_24,face_color_trans_24);
+       hp->edge_color_24,hp->face_color_24,hp->face_color_trans_24);
 }
 
 
 /* Draw a 120-cell {5,3,3} projected into 3d. */
 static void cell_120(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_120][4];
 
-  project(vert_120,v,NUM_VERT_120);
-  draw(mi,
-       v,edge_120,NUM_EDGE_120,(int *)face_120,NUM_FACE_120,VERT_PER_FACE_120,
-       edge_color_120,face_color_120,face_color_trans_120);
+  project(mi,vert_120,v,NUM_VERT_120);
+  draw(mi,v,edge_120,NUM_EDGE_120,(int *)face_120,NUM_FACE_120,
+       VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,hp->face_color_trans_120);
 }
 
 
 /* Draw a 600-cell {3,3,5} projected into 3d. */
 static void cell_600(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   float v[NUM_VERT_600][4];
 
-  project(vert_600,v,NUM_VERT_600);
-  draw(mi,
-       v,edge_600,NUM_EDGE_600,(int *)face_600,NUM_FACE_600,VERT_PER_FACE_600,
-       edge_color_600,face_color_600,face_color_trans_600);
+  project(mi,vert_600,v,NUM_VERT_600);
+  draw(mi,v,edge_600,NUM_EDGE_600,(int *)face_600,NUM_FACE_600,
+       VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,hp->face_color_trans_600);
 }
 
 
@@ -2705,10 +2725,15 @@ static void color(float depth, float alpha, float min, float max,
 
 
 /* Set the colors of a single polytope's edges and faces. */
-static void colors(float vert[][4], int edge[][2], int num_edge, int face[],
-                   int num_face, int vert_per_face, float edge_color[][4],
-                   float face_color[][4], float face_color_trans[][4],
-                   float alpha, float min_edge_depth, float max_edge_depth,
+static void colors(const float vert[][4], 
+                   const int edge[][2], int num_edge, 
+                   const int face[], int num_face, 
+                   int vert_per_face, 
+                   float edge_color[][4], 
+                   float face_color[][4],
+                   float face_color_trans[][4],
+                   float alpha, 
+                   float min_edge_depth, float max_edge_depth,
                    float min_face_depth, float max_face_depth)
 {
   int i, j;
@@ -2732,41 +2757,42 @@ static void colors(float vert[][4], int edge[][2], int num_edge, int face[],
 
 
 /* Set the colors of the polytopes' edges and faces. */
-static void set_colors(void)
+static void set_colors(ModeInfo *mi)
 {
+  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   /* 5-cell. */
   colors(vert_5,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,
-         VERT_PER_FACE_5,edge_color_5,face_color_5,face_color_trans_5,
+         VERT_PER_FACE_5,hp->edge_color_5,hp->face_color_5,hp->face_color_trans_5,
          0.5,MIN_EDGE_DEPTH_5,MAX_EDGE_DEPTH_5,MIN_FACE_DEPTH_5,
          MAX_FACE_DEPTH_5);
 
   /* 8-cell. */
   colors(vert_8,edge_8,NUM_EDGE_8,(int *)face_8,NUM_FACE_8,
-         VERT_PER_FACE_8,edge_color_8,face_color_8,face_color_trans_8,
+         VERT_PER_FACE_8,hp->edge_color_8,hp->face_color_8,hp->face_color_trans_8,
          0.4,MIN_EDGE_DEPTH_8,MAX_EDGE_DEPTH_8,MIN_FACE_DEPTH_8,
          MAX_FACE_DEPTH_8);
 
   /* 16-cell. */
   colors(vert_16,edge_16,NUM_EDGE_16,(int *)face_16,NUM_FACE_16,
-         VERT_PER_FACE_16,edge_color_16,face_color_16,face_color_trans_16,
+         VERT_PER_FACE_16,hp->edge_color_16,hp->face_color_16,hp->face_color_trans_16,
          0.25,MIN_EDGE_DEPTH_16,MAX_EDGE_DEPTH_16,MIN_FACE_DEPTH_16,
          MAX_FACE_DEPTH_16);
 
   /* 24-cell. */
   colors(vert_24,edge_24,NUM_EDGE_24,(int *)face_24,NUM_FACE_24,
-         VERT_PER_FACE_24,edge_color_24,face_color_24,face_color_trans_24,
+         VERT_PER_FACE_24,hp->edge_color_24,hp->face_color_24,hp->face_color_trans_24,
          0.25,MIN_EDGE_DEPTH_24,MAX_EDGE_DEPTH_24,MIN_FACE_DEPTH_24,
          MAX_FACE_DEPTH_24);
 
   /* 120-cell. */
   colors(vert_120,edge_120,NUM_EDGE_120,(int *)face_120,NUM_FACE_120,
-         VERT_PER_FACE_120,edge_color_120,face_color_120,face_color_trans_120,
+         VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,hp->face_color_trans_120,
          0.15,MIN_EDGE_DEPTH_120,MAX_EDGE_DEPTH_120,MIN_FACE_DEPTH_120,
          MAX_FACE_DEPTH_120);
 
   /* 600-cell. */
   colors(vert_600,edge_600,NUM_EDGE_600,(int *)face_600,NUM_FACE_600,
-         VERT_PER_FACE_600,edge_color_600,face_color_600,face_color_trans_600,
+         VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,hp->face_color_trans_600,
          0.06,MIN_EDGE_DEPTH_600,MAX_EDGE_DEPTH_600,MIN_FACE_DEPTH_600,
          MAX_FACE_DEPTH_600);
 }
@@ -2774,20 +2800,24 @@ static void set_colors(void)
 
 static void init(ModeInfo *mi)
 {
-  static float light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-  static float light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-  static float light_specular[] = { 0.0, 0.0, 0.0, 1.0 };
-  static float light_position[] = { 0.0, 0.0, 1.0, 0.0 };
-  static float mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
+  static const GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_specular[] = { 0.0, 0.0, 0.0, 1.0 };
+  static const GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 };
+  static const GLfloat mat_specular[]   = { 1.0, 1.0, 1.0, 1.0 };
+  polytopesstruct *pp = &poly[MI_SCREEN(mi)];
 
-  set_colors();
+  set_colors(mi);
 
-  alpha = 0.0;
-  beta = 0.0;
-  delta = 0.0;
-  zeta = 0.0;
-  eta = 0.0;
-  theta = 0.0;
+  pp->alpha = 0.0;
+  pp->beta = 0.0;
+  pp->delta = 0.0;
+  pp->zeta = 0.0;
+  pp->eta = 0.0;
+  pp->theta = 0.0;
+
+  pp->tick = 0;
+  pp->poly = 0;
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -2850,96 +2880,95 @@ static void init(ModeInfo *mi)
 /* Redisplay the polytopes. */
 static void display_polytopes(ModeInfo *mi)
 {
-  if (!button_pressed)
+  polytopesstruct *pp = &poly[MI_SCREEN(mi)];
+
+  if (!pp->button_pressed)
   {
-    alpha += speed_wx;
-    if (alpha >= 360.0)
-      alpha -= 360.0;
-    beta += speed_wy;
-    if (beta >= 360.0)
-      beta -= 360.0;
-    delta += speed_wz;
-    if (delta >= 360.0)
-      delta -= 360.0;
-    zeta += speed_xy;
-    if (zeta >= 360.0)
-      zeta -= 360.0;
-    eta += speed_xz;
-    if (eta >= 360.0)
-      eta -= 360.0;
-    theta += speed_yz;
-    if (theta >= 360.0)
-      theta -= 360.0;
+    pp->alpha += speed_wx * pp->speed_scale;
+    if (pp->alpha >= 360.0)
+      pp->alpha -= 360.0;
+    pp->beta += speed_wy * pp->speed_scale;
+    if (pp->beta >= 360.0)
+      pp->beta -= 360.0;
+    pp->delta += speed_wz * pp->speed_scale;
+    if (pp->delta >= 360.0)
+      pp->delta -= 360.0;
+    pp->zeta += speed_xy * pp->speed_scale;
+    if (pp->zeta >= 360.0)
+      pp->zeta -= 360.0;
+    pp->eta += speed_xz * pp->speed_scale;
+    if (pp->eta >= 360.0)
+      pp->eta -= 360.0;
+    pp->theta += speed_yz * pp->speed_scale;
+    if (pp->theta >= 360.0)
+      pp->theta -= 360.0;
   }
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if (projection_3d == DISP_3D_ORTHOGRAPHIC)
   {
-    if (aspect >= 1.0)
-      glOrtho(-aspect,aspect,-1.0,1.0,0.1,100.0);
+    if (pp->aspect >= 1.0)
+      glOrtho(-pp->aspect,pp->aspect,-1.0,1.0,0.1,100.0);
     else
-      glOrtho(-1.0,1.0,-1.0/aspect,1.0/aspect,0.1,100.0);
+      glOrtho(-1.0,1.0,-1.0/pp->aspect,1.0/pp->aspect,0.1,100.0);
   }
   else
   {
-    gluPerspective(60.0,aspect,0.1,100.0);
+    gluPerspective(60.0,pp->aspect,0.1,100.0);
   }
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+  if (pp->tick == 0)
   {
-    static int tick = 0;
-    static int p;
-
-    if (tick == 0)
-      {
-        if (polytope == POLYTOPE_RANDOM)
-          p = random() % (POLYTOPE_LAST_CELL+1);
-        else
-          p = polytope;
-      }
-    if (++tick > 1000) tick = 0;
-
-    if (p == POLYTOPE_5_CELL)
-      cell_5(mi);
-    else if (p == POLYTOPE_8_CELL)
-      cell_8(mi);
-    else if (p == POLYTOPE_16_CELL)
-      cell_16(mi);
-    else if (p == POLYTOPE_24_CELL)
-      cell_24(mi);
-    else if (p == POLYTOPE_120_CELL)
-      cell_120(mi);
-    else if (p == POLYTOPE_600_CELL)
-      cell_600(mi);
+    if (polytope == POLYTOPE_RANDOM)
+      pp->poly = random() % (POLYTOPE_LAST_CELL+1);
     else
-      abort();
+      pp->poly = polytope;
   }
+  if (++pp->tick > 1000)
+    pp->tick = 0;
+
+  if (pp->poly == POLYTOPE_5_CELL)
+    cell_5(mi);
+  else if (pp->poly == POLYTOPE_8_CELL)
+    cell_8(mi);
+  else if (pp->poly == POLYTOPE_16_CELL)
+    cell_16(mi);
+  else if (pp->poly == POLYTOPE_24_CELL)
+    cell_24(mi);
+  else if (pp->poly == POLYTOPE_120_CELL)
+    cell_120(mi);
+  else if (pp->poly == POLYTOPE_600_CELL)
+    cell_600(mi);
+  else
+    abort();
 }
 
 
-void reshape_polytopes(ModeInfo * mi, int width, int height)
+ENTRYPOINT void reshape_polytopes(ModeInfo *mi, int width, int height)
 {
-  polytopesstruct *hp = &poly[MI_SCREEN(mi)];
+  polytopesstruct *pp = &poly[MI_SCREEN(mi)];
 
-  hp->WindW = (GLint)width;
-  hp->WindH = (GLint)height;
+  pp->WindW = (GLint)width;
+  pp->WindH = (GLint)height;
   glViewport(0,0,width,height);
-  aspect = (GLfloat)width/(GLfloat)height;
+  pp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
 
-Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
 {
   Display *display = MI_DISPLAY(mi);
+  polytopesstruct *pp = &poly[MI_SCREEN(mi)];
   KeySym  sym;
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
   {
-    button_pressed = True;
-    gltrackball_start(trackballs[current_trackball],
+    pp->button_pressed = True;
+    gltrackball_start(pp->trackballs[pp->current_trackball],
                       event->xbutton.x, event->xbutton.y,
                       MI_WIDTH(mi), MI_HEIGHT(mi));
     return True;
@@ -2947,7 +2976,7 @@ Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
   {
-    button_pressed = False;
+    pp->button_pressed = False;
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -2955,9 +2984,9 @@ Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
     sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
-      current_trackball = 1;
-      if (button_pressed)
-        gltrackball_start(trackballs[current_trackball],
+      pp->current_trackball = 1;
+      if (pp->button_pressed)
+        gltrackball_start(pp->trackballs[pp->current_trackball],
                           event->xbutton.x, event->xbutton.y,
                           MI_WIDTH(mi), MI_HEIGHT(mi));
       return True;
@@ -2968,17 +2997,17 @@ Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
     sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
-      current_trackball = 0;
-      if (button_pressed)
-        gltrackball_start(trackballs[current_trackball],
+      pp->current_trackball = 0;
+      if (pp->button_pressed)
+        gltrackball_start(pp->trackballs[pp->current_trackball],
                           event->xbutton.x, event->xbutton.y,
                           MI_WIDTH(mi), MI_HEIGHT(mi));
       return True;
     }
   }
-  else if (event->xany.type == MotionNotify && button_pressed)
+  else if (event->xany.type == MotionNotify && pp->button_pressed)
   {
-    gltrackball_track(trackballs[current_trackball],
+    gltrackball_track(pp->trackballs[pp->current_trackball],
                       event->xmotion.x, event->xmotion.y,
                       MI_WIDTH(mi), MI_HEIGHT(mi));
     return True;
@@ -3002,9 +3031,9 @@ Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
  *-----------------------------------------------------------------------------
  */
 
-void init_polytopes(ModeInfo * mi)
+ENTRYPOINT void init_polytopes(ModeInfo *mi)
 {
-  polytopesstruct *hp;
+  polytopesstruct *pp;
 
   if (poly == NULL)
   {
@@ -3013,14 +3042,17 @@ void init_polytopes(ModeInfo * mi)
     if (poly == NULL)
       return;
   }
-  hp = &poly[MI_SCREEN(mi)];
+  pp = &poly[MI_SCREEN(mi)];
 
-  trackballs[0] = gltrackball_init();
-  trackballs[1] = gltrackball_init();
-  current_trackball = 0;
-  button_pressed = False;
+  pp->trackballs[0] = gltrackball_init();
+  pp->trackballs[1] = gltrackball_init();
+  pp->current_trackball = 0;
+  pp->button_pressed = False;
 
-  if ((hp->glx_context = init_GL(mi)) != NULL)
+  /* make multiple screens rotate at slightly different rates. */
+  pp->speed_scale = 0.9 + frand(0.3);
+
+  if ((pp->glx_context = init_GL(mi)) != NULL)
   {
     reshape_polytopes(mi,MI_WIDTH(mi),MI_HEIGHT(mi));
     glDrawBuffer(GL_BACK);
@@ -3037,7 +3069,7 @@ void init_polytopes(ModeInfo * mi)
  *    Called by the mainline code periodically to update the display.
  *-----------------------------------------------------------------------------
  */
-void draw_polytopes(ModeInfo * mi)
+ENTRYPOINT void draw_polytopes(ModeInfo *mi)
 {
   Display         *display = MI_DISPLAY(mi);
   Window          window = MI_WINDOW(mi);
@@ -3075,7 +3107,7 @@ void draw_polytopes(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void release_polytopes(ModeInfo * mi)
+ENTRYPOINT void release_polytopes(ModeInfo *mi)
 {
   if (poly != NULL)
   {
@@ -3094,7 +3126,8 @@ void release_polytopes(ModeInfo * mi)
   FreeAllGL(mi);
 }
 
-void change_polytopes(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void change_polytopes(ModeInfo *mi)
 {
   polytopesstruct *hp = &poly[MI_SCREEN(mi)];
 
@@ -3104,5 +3137,8 @@ void change_polytopes(ModeInfo * mi)
   glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(hp->glx_context));
   init(mi);
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("Polytopes", polytopes)
 
 #endif /* USE_GL */

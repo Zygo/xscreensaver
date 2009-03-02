@@ -44,9 +44,10 @@
 Hyperball is to hypercube as dodecahedron is to cube: this displays
 a 2D projection of the sequence of 3D objects which are the projections
 of the 4D analog to the dodecahedron.  Technically, it is a "120 cell
-polytope."  Written by Joe Keane.
+polytope".
 
-See also the "polytopes" hack for a more general version of this
-using OpenGL.
+See also "polytopes" for a more general version of this using OpenGL.
+
+Written by Joe Keane; 2000.
   </_description>
 </screensaver>

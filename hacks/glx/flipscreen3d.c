@@ -14,25 +14,15 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-
 #ifdef STANDALONE
-# define PROGCLASS                                      "FlipScreen3D"
-# define HACK_INIT                                      init_screenflip
-# define HACK_DRAW                                      draw_screenflip
-# define HACK_RESHAPE                           reshape_screenflip
-# define HACK_HANDLE_EVENT				screenflip_handle_event
-# define EVENT_MASK					PointerMotionMask
-# define screenflip_opts                                     xlockmore_opts
-/* insert defaults here */
-
 #define DEFAULTS "*delay:     20000 \n" \
                  "*showFPS:   False \n" \
                  "*wireframe: False \n" \
                  "*useSHM:    True  \n"
 
+# define refresh_screenflip 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
+# include "gltrackball.h"
 #else  /* !STANDALONE */
 # include "xlock.h"                                     /* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -44,20 +34,10 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
-
-int rotate;
-
-int winw, winh;
-int tw, th; /* texture width, height */
-int tx, ty;
-GLfloat min_tx, min_ty;
-GLfloat max_tx, max_ty;
+static int rotate;
 
 #define QW 12
 #define QH 12
-GLfloat qw = QW, qh = QH; /* q? are for the quad we'll draw */
-GLfloat qx = -6 , qy = 6;
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -75,7 +55,7 @@ static argtype vars[] = {
 
 
 
-ModeSpecOpt screenflip_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt screenflip_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 #ifdef USE_MODULES
@@ -91,38 +71,57 @@ ModStruct   screenflip_description =
 typedef struct {
   GLXContext *glx_context;
   Window window;
+
+  int winw, winh;
+  int tw, th; /* texture width, height */
+  GLfloat min_tx, min_ty;
+  GLfloat max_tx, max_ty;
+  GLfloat qx, qy, qw, qh; /* the quad we'll draw */
+
+  int regrab;
+  int fadetime; /* fade before regrab */
+
+  trackball_state *trackball;
+  Bool button_down_p;
+
+  GLfloat show_colors[4];
+  GLfloat stretch_val_x, stretch_val_y;
+  GLfloat stretch_val_dx, stretch_val_dy;
+
+  GLfloat curx, cury, curz;
+
+  GLfloat rx, ry, rz;
+  GLfloat rot, drot, odrot, ddrot, orot;
+  float theta, rho, dtheta, drho, gamma, dgamma;
+
+  GLuint texid;
+  Bool mipmap_p;
+  Bool waiting_for_image_p;
+  Bool first_image_p;
+
 } Screenflip;
 
 static Screenflip *screenflip = NULL;
 
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "grab-ximage.h"
-#include "gltrackball.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265
 #endif
 
-static GLfloat viewer[] = {0.0, 0.0, 15.0};
-
-int regrab = 0;
-int fadetime = 0; /* fade before regrab */
-
-static trackball_state *trackball;
-static Bool button_down_p = False;
+static const GLfloat viewer[] = {0.0, 0.0, 15.0};
 
 
-Bool
+ENTRYPOINT Bool
 screenflip_handle_event (ModeInfo *mi, XEvent *event)
 {
+  Screenflip *c = &screenflip[MI_SCREEN(mi)];
+
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
     {
-      button_down_p = True;
-      gltrackball_start (trackball,
+      c->button_down_p = True;
+      gltrackball_start (c->trackball,
                          event->xbutton.x, event->xbutton.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -130,21 +129,21 @@ screenflip_handle_event (ModeInfo *mi, XEvent *event)
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
     {
-      button_down_p = False;
+      c->button_down_p = False;
       return True;
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
             event->xbutton.button == Button5))
     {
-      gltrackball_mousewheel (trackball, event->xbutton.button, 10,
+      gltrackball_mousewheel (c->trackball, event->xbutton.button, 10,
                               !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
-           button_down_p)
+           c->button_down_p)
     {
-      gltrackball_track (trackball,
+      gltrackball_track (c->trackball,
                          event->xmotion.x, event->xmotion.y,
                          MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
@@ -155,59 +154,57 @@ screenflip_handle_event (ModeInfo *mi, XEvent *event)
 
 
 /* draw the texture mapped quad (actually two back to back)*/
-void showscreen(int frozen, int wire)
+static void showscreen(Screenflip *c, int frozen, int wire)
 {
-  static GLfloat r = 1, g = 1, b = 1, a = 1;
   GLfloat x, y, w, h;
-  /* static int stretch; */
-  static GLfloat stretch_val_x = 0, stretch_val_y = 0;
-  static GLfloat stretch_val_dx = 0, stretch_val_dy = 0;
-  /* static int stretch_x = 0, stretch_y = 0; */
 
-  if (fadetime) {
+  if (c->fadetime) {
 /*    r -= 0.02; g -= 0.02; b -= 0.02; */
-    a -= 0.02;
-    if (a < 0) {
-      regrab = 1;
-      fadetime = 0;
+    c->show_colors[3] -= 0.02;
+    if (c->show_colors[3] < 0) {
+      c->regrab = 1;
+      c->fadetime = 0;
     }
-  } else if (a < 0) {
-    r = g = b = a = 1;
-    stretch_val_x = stretch_val_y = stretch_val_dx = stretch_val_dy = 0;
+  } else if (c->show_colors[3] < 0) {
+    c->show_colors[0] = c->show_colors[1] = 
+      c->show_colors[2] = c->show_colors[3] = 1;
+    c->stretch_val_x = c->stretch_val_y = 
+      c->stretch_val_dx = c->stretch_val_dy = 0;
   }
-  if (stretch_val_dx == 0 && !frozen && !(random() % 25))
-    stretch_val_dx = (float)(random() % 100) / 5000;
-  if (stretch_val_dy == 0 && !frozen && !(random() % 25))
-    stretch_val_dy = (float)(random() % 100) / 5000;
+  if (c->stretch_val_dx == 0 && !frozen && !(random() % 25))
+    c->stretch_val_dx = (float)(random() % 100) / 5000;
+  if (c->stretch_val_dy == 0 && !frozen && !(random() % 25))
+    c->stretch_val_dy = (float)(random() % 100) / 5000;
     
-  x = qx;
-  y = qy;
-  w = qx+qw;
-  h = qy-qh;
+  x = c->qx;
+  y = c->qy;
+  w = c->qx+c->qw;
+  h = c->qy-c->qh;
 
   if (!frozen) {
-     w *= sin (stretch_val_x) + 1;
-     x *= sin (stretch_val_x) + 1;
-     if (!button_down_p) {
-     if (!fadetime) stretch_val_x += stretch_val_dx;
-     if (stretch_val_x > 2*M_PI && !(random() % 5))
-       stretch_val_dx = (float)(random() % 100) / 5000;
+     w *= sin (c->stretch_val_x) + 1;
+     x *= sin (c->stretch_val_x) + 1;
+     if (!c->button_down_p) {
+     if (!c->fadetime) c->stretch_val_x += c->stretch_val_dx;
+     if (c->stretch_val_x > 2*M_PI && !(random() % 5))
+       c->stretch_val_dx = (float)(random() % 100) / 5000;
      else
-       stretch_val_x -= 2*M_PI;
+       c->stretch_val_x -= 2*M_PI;
      }
 
-     if (!button_down_p && !fadetime) stretch_val_y += stretch_val_dy;
-     h *= sin (stretch_val_y) / 2 + 1;
-     y *= sin (stretch_val_y) / 2 + 1;
-     if (!button_down_p) {
-     if (stretch_val_y > 2*M_PI && !(random() % 5))
-       stretch_val_dy = (float)(random() % 100) / 5000;
+     if (!c->button_down_p && !c->fadetime) c->stretch_val_y += c->stretch_val_dy;
+     h *= sin (c->stretch_val_y) / 2 + 1;
+     y *= sin (c->stretch_val_y) / 2 + 1;
+     if (!c->button_down_p) {
+     if (c->stretch_val_y > 2*M_PI && !(random() % 5))
+       c->stretch_val_dy = (float)(random() % 100) / 5000;
      else
-       stretch_val_y -= 2*M_PI;
+       c->stretch_val_y -= 2*M_PI;
      }
   }
 
-  glColor4f(r, g, b, a);
+  glColor4f(c->show_colors[0], c->show_colors[1], 
+            c->show_colors[2], c->show_colors[3]);
 
   if (!wire)
     {
@@ -220,16 +217,16 @@ void showscreen(int frozen, int wire)
   glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
 
   glNormal3f(0, 0, 1);
-  glTexCoord2f(max_tx, max_ty); glVertex3f(w, h, 0);
-  glTexCoord2f(max_tx, min_ty); glVertex3f(w, y, 0);
-  glTexCoord2f(min_tx, min_ty); glVertex3f(x, y, 0);
-  glTexCoord2f(min_tx, max_ty); glVertex3f(x, h, 0);
+  glTexCoord2f(c->max_tx, c->max_ty); glVertex3f(w, h, 0);
+  glTexCoord2f(c->max_tx, c->min_ty); glVertex3f(w, y, 0);
+  glTexCoord2f(c->min_tx, c->min_ty); glVertex3f(x, y, 0);
+  glTexCoord2f(c->min_tx, c->max_ty); glVertex3f(x, h, 0);
 
   glNormal3f(0, 0, -1);
-  glTexCoord2f(min_tx, min_ty); glVertex3f(x, y, -0.05);
-  glTexCoord2f(max_tx, min_ty); glVertex3f(w, y, -0.05);
-  glTexCoord2f(max_tx, max_ty); glVertex3f(w, h, -0.05);
-  glTexCoord2f(min_tx, max_ty); glVertex3f(x, h, -0.05);
+  glTexCoord2f(c->min_tx, c->min_ty); glVertex3f(x, y, -0.05);
+  glTexCoord2f(c->max_tx, c->min_ty); glVertex3f(w, y, -0.05);
+  glTexCoord2f(c->max_tx, c->max_ty); glVertex3f(w, h, -0.05);
+  glTexCoord2f(c->min_tx, c->max_ty); glVertex3f(x, h, -0.05);
   glEnd();
 
 
@@ -252,51 +249,51 @@ void showscreen(int frozen, int wire)
  * it just does a glTranslatef() and returns 1
  */
 
-int inposition(void)
+static int inposition(Screenflip *c)
 {
-  static GLfloat curx, cury, curz = 0;
   GLfloat wx;
   GLfloat wy;
-  wx = 0 - (qw/2);
-  wy = (qh/2);
+  wx = 0 - (c->qw/2);
+  wy = (c->qh/2);
 
-  if (curx == 0) curx = qx;
-  if (cury == 0) cury = qy;
-  if (regrab) {
-     curz = 0;
-     curx = qx;
-     cury = qy;
-     regrab = 0;
+  if (c->curx == 0) c->curx = c->qx;
+  if (c->cury == 0) c->cury = c->qy;
+  if (c->regrab) {
+     c->curz = 0;
+     c->curx = c->qx;
+     c->cury = c->qy;
+     c->regrab = 0;
   }
-  if (curz > -10 || curx > wx + 0.1 || curx < wx - 0.1 ||
-         cury > wy + 0.1 || cury < wy - 0.1) {
-    if (curz > -10)
-      curz -= 0.05;
-    if (curx > wx) {
-       qx -= 0.02;
-       curx -= 0.02;
+  if (c->curz > -10 || c->curx > wx + 0.1 || c->curx < wx - 0.1 ||
+         c->cury > wy + 0.1 || c->cury < wy - 0.1) {
+    if (c->curz > -10)
+      c->curz -= 0.05;
+    if (c->curx > wx) {
+       c->qx -= 0.02;
+       c->curx -= 0.02;
     }
-    if (curx < wx) {
-       qx += 0.02;
-       curx += 0.02;
+    if (c->curx < wx) {
+       c->qx += 0.02;
+       c->curx += 0.02;
     }
-    if (cury > wy) {
-       qy -= 0.02;
-       cury -= 0.02;
+    if (c->cury > wy) {
+       c->qy -= 0.02;
+       c->cury -= 0.02;
     }
-    if (cury < wy) {
-       qy += 0.02;
-       cury += 0.02;
+    if (c->cury < wy) {
+       c->qy += 0.02;
+       c->cury += 0.02;
     }
-    glTranslatef(0, 0, curz);
+    glTranslatef(0, 0, c->curz);
     return 0;
   }
-  glTranslatef(0, 0, curz);
+  glTranslatef(0, 0, c->curz);
   return 1;
 
 }
 
-void drawgrid(void)
+#if 0
+static void drawgrid(void)
 {
   int i;
 
@@ -310,16 +307,11 @@ void drawgrid(void)
   }
   glEnd();
 }
+#endif
 
-void display(int wire)
+
+static void display(Screenflip *c, int wire)
 {
-  static GLfloat rx=1, ry=1, rz=0;
-  static GLfloat rot = 0;
-  static GLfloat drot = 0;
-  static GLfloat odrot = 1;
-  static GLfloat ddrot = 0;
-  static float theta = 0, rho = 0, dtheta = 0, drho = 0, gamma = 0, dgamma = 0;
-  static GLfloat orot;
   int frozen;
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -327,96 +319,112 @@ void display(int wire)
   gluLookAt(viewer[0], viewer[1], viewer[2], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   glPushMatrix();
 
-  if (inposition()) {
+  if (inposition(c)) {
     frozen = 0;
-    glTranslatef(5 * sin(theta), 5 * sin(rho), 10 * cos(gamma) - 10);
+    glTranslatef(5 * sin(c->theta), 5 * sin(c->rho), 10 * cos(c->gamma) - 10);
 /* randomly change the speed */
-    if (!button_down_p && !(random() % 300)) {
+    if (!c->button_down_p && !(random() % 300)) {
       if (random() % 2)
-        drho = 1/60 - (float)(random() % 100)/3000;
+        c->drho = 1/60 - (float)(random() % 100)/3000;
       if (random() % 2)
-        dtheta = 1/60 - (float)(random() % 100)/3000;
+        c->dtheta = 1/60 - (float)(random() % 100)/3000;
       if (random() % 2)
-        dgamma = 1/60 - (float)(random() % 100)/3000;
+        c->dgamma = 1/60 - (float)(random() % 100)/3000;
     }
-    gltrackball_rotate (trackball);
-    if (rotate) glRotatef(rot, rx, ry, rz);
+    gltrackball_rotate (c->trackball);
+    if (rotate) glRotatef(c->rot, c->rx, c->ry, c->rz);
 /* update variables with each frame */
-    if(!button_down_p && !fadetime) {
-      theta += dtheta;
-      rho += drho;
-      gamma += dgamma;
-      rot += drot;
-      drot += ddrot;
+    if(!c->button_down_p && !c->fadetime) {
+      c->theta += c->dtheta;
+      c->rho += c->drho;
+      c->gamma += c->dgamma;
+      c->rot += c->drot;
+      c->drot += c->ddrot;
     }
 /* dont let our rotation speed get too high */
-    if (drot > 5 && ddrot > 0)
-        ddrot = 0 - (GLfloat)(random() % 100) / 1000;
-    else if (drot < -5 && ddrot < 0)
-        ddrot = (GLfloat)(random() % 100) / 1000;
+    if (c->drot > 5 && c->ddrot > 0)
+        c->ddrot = 0 - (GLfloat)(random() % 100) / 1000;
+    else if (c->drot < -5 && c->ddrot < 0)
+        c->ddrot = (GLfloat)(random() % 100) / 1000;
   } else { /* reset some paramaters */
-    ddrot = 0.05 - (GLfloat)(random() % 100) / 1000;
-    theta = rho = gamma = 0;
-    rot = 0;
+    c->ddrot = 0.05 - (GLfloat)(random() % 100) / 1000;
+    c->theta = c->rho = c->gamma = 0;
+    c->rot = 0;
     frozen = 1;
   }
-  if (!button_down_p && !fadetime && (rot >= 360 || rot <= -360) && !(random() % 7)) { /* rotate  change */
-    rx = (GLfloat)(random() % 100) / 100;
-    ry = (GLfloat)(random() % 100) / 100;
-    rz = (GLfloat)(random() % 100) / 100;
+  if (!c->button_down_p && !c->fadetime && (c->rot >= 360 || c->rot <= -360) && !(random() % 7)) { /* rotate  change */
+    c->rx = (GLfloat)(random() % 100) / 100;
+    c->ry = (GLfloat)(random() % 100) / 100;
+    c->rz = (GLfloat)(random() % 100) / 100;
   }
-  if (odrot * drot < 0 && tw < winw && !(random() % 10)) {
-    fadetime = 1;                /* randomly fade and get new snapshot */
+  if (c->odrot * c->drot < 0 && c->tw < c->winw && !(random() % 10)) {
+    c->fadetime = 1;                /* randomly fade and get new snapshot */
   }
-  orot = rot;
-  odrot = drot;
-  if (rot > 360 || rot < -360) /* dont overflow rotation! */
-    rot -= rot;
-  showscreen(frozen, wire);
+  c->orot = c->rot;
+  c->odrot = c->drot;
+  if (c->rot > 360 || c->rot < -360) /* dont overflow rotation! */
+    c->rot -= c->rot;
+  showscreen(c, frozen, wire);
   glPopMatrix();
   glFlush();
 }
 
-void reshape_screenflip(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_screenflip(ModeInfo *mi, int width, int height)
 {
+ Screenflip *c = &screenflip[MI_SCREEN(mi)];
  glViewport(0,0,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
  gluPerspective(45, 1, 2.0, 85);
  glMatrixMode(GL_MODELVIEW);
- winw = width;
- winh = height;
+ c->winw = width;
+ c->winh = height;
 }
 
-void getSnapshot (ModeInfo *modeinfo)
+static void
+image_loaded_cb (const char *filename, XRectangle *geometry,
+                 int image_width, int image_height, 
+                 int texture_width, int texture_height,
+                 void *closure)
 {
-  Bool mipmap_p = True;
-  XRectangle geom;
-  int iw, ih;
+  Screenflip *c = (Screenflip *) closure;
+
+  c->tw = texture_width;
+  c->th = texture_height;
+  c->min_tx = (GLfloat) geometry->x / c->tw;
+  c->min_ty = (GLfloat) geometry->y / c->th;
+  c->max_tx = (GLfloat) (geometry->x + geometry->width)  / c->tw;
+  c->max_ty = (GLfloat) (geometry->y + geometry->height) / c->th;
+
+  c->qx = -QW/2 + ((GLfloat) geometry->x * QW / image_width);
+  c->qy =  QH/2 - ((GLfloat) geometry->y * QH / image_height);
+  c->qw =  QW   * ((GLfloat) geometry->width  / image_width);
+  c->qh =  QH   * ((GLfloat) geometry->height / image_height);
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (c->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+
+  c->waiting_for_image_p = False;
+  c->first_image_p = False;
+}
+
+
+static void getSnapshot (ModeInfo *modeinfo)
+{
+  Screenflip *c = &screenflip[MI_SCREEN(modeinfo)];
 
   if (MI_IS_WIREFRAME(modeinfo))
     return;
 
-  if (! screen_to_texture (modeinfo->xgwa.screen, modeinfo->window, 0, 0,
-                           mipmap_p, NULL, &geom, &iw, &ih, &tw, &th))
-    exit (1);
-
-  min_tx = (GLfloat) geom.x / tw;
-  min_ty = (GLfloat) geom.y / th;
-  max_tx = (GLfloat) (geom.x + geom.width)  / tw;
-  max_ty = (GLfloat) (geom.y + geom.height) / th;
-
-  qx = -QW/2 + ((GLfloat) geom.x * QW / iw);
-  qy =  QH/2 - ((GLfloat) geom.y * QH / ih);
-  qw = QW * ((GLfloat) geom.width  / iw);
-  qh = QH * ((GLfloat) geom.height / ih);
-
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+  c->waiting_for_image_p = True;
+  c->mipmap_p = True;
+  load_texture_async (modeinfo->xgwa.screen, modeinfo->window,
+                      *c->glx_context, 0, 0, c->mipmap_p, c->texid,
+                      image_loaded_cb, c);
 }
 
-void init_screenflip(ModeInfo *mi)
+ENTRYPOINT void init_screenflip(ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
   Screenflip *c;
@@ -429,15 +437,26 @@ void init_screenflip(ModeInfo *mi)
  c = &screenflip[screen];
  c->window = MI_WINDOW(mi);
 
- trackball = gltrackball_init ();
+ c->trackball = gltrackball_init ();
 
  if ((c->glx_context = init_GL(mi)) != NULL) {
       reshape_screenflip(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
  } else {
      MI_CLEARWINDOW(mi);
  }
- winh = MI_WIN_HEIGHT(mi);
- winw = MI_WIN_WIDTH(mi);
+ c->winh = MI_WIN_HEIGHT(mi);
+ c->winw = MI_WIN_WIDTH(mi);
+ c->qw = QW;
+ c->qh = QH;
+ c->qx = -6;
+ c->qy = 6;
+
+ c->rx = c->ry = 1;
+ c->odrot = 1;
+
+ c->show_colors[0] = c->show_colors[1] = 
+   c->show_colors[2] = c->show_colors[3] = 1;
+
  glClearColor(0.0,0.0,0.0,0.0);
 
  if (! MI_IS_WIREFRAME(mi))
@@ -450,10 +469,13 @@ void init_screenflip(ModeInfo *mi)
      glDisable(GL_LIGHTING);
    }
 
+ glGenTextures(1, &c->texid);
+
+ c->first_image_p = True;
  getSnapshot(mi);
 }
 
-void draw_screenflip(ModeInfo *mi)
+ENTRYPOINT void draw_screenflip(ModeInfo *mi)
 {
   Screenflip *c = &screenflip[MI_SCREEN(mi)];
   Window w = MI_WINDOW(mi);
@@ -462,25 +484,34 @@ void draw_screenflip(ModeInfo *mi)
   if (!c->glx_context)
       return;
 
- glXMakeCurrent(disp, w, *(c->glx_context));
+  /* Wait for the first image; for subsequent images, load them in the
+     background while animating. */
+  if (c->waiting_for_image_p && c->first_image_p)
+    return;
 
-  if (regrab)
+  glXMakeCurrent(disp, w, *(c->glx_context));
+
+  glBindTexture(GL_TEXTURE_2D, c->texid);
+
+  if (c->regrab)
     getSnapshot(mi);
 
-  display(MI_IS_WIREFRAME(mi));
+  display(c, MI_IS_WIREFRAME(mi));
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
 }
 
-void release_screenflip(ModeInfo *mi)
+ENTRYPOINT void release_screenflip(ModeInfo *mi)
 {
   if (screenflip != NULL) {
    (void) free((void *) screenflip);
    screenflip = NULL;
   }
-  FreeAllGL(MI);
+  FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE_2 ("FlipScreen3D", flipscreen3d, screenflip)
 
 #endif

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -425,10 +425,6 @@ extern void emergency_kill_subproc (saver_info *si);
 extern Bool select_visual (saver_screen_info *ssi, const char *visual_name);
 extern void store_saver_status (saver_info *si);
 extern const char *signal_name (int signal);
-extern void exec_command (const char *shell, const char *command,
-                          int nice_level);
-extern int on_path_p (const char *program);
-
 
 /* =======================================================================
    subprocs diagnostics

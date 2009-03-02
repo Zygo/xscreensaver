@@ -16,7 +16,7 @@
  *
  * Additional programming: 
  * ------------------------
- * Support for different display color modes: 
+ * Support for different dpy color modes: 
  * Jean-Pierre Demailly <Jean-Pierre.Demailly@ujf-grenoble.fr>
  *
  * Fixed array access problems by beating on it with a large hammer.
@@ -29,7 +29,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
 
 #define FWXVERSION "1.5"
 
@@ -44,24 +43,6 @@ void mmx_glow(char *a, int b, int c, int d, char *e);
 #endif
 
 #define rnd(x) ((int)(random() % (x)))
-
-static int depth;
-static int bigendian;
-static Bool flash_on   = True;
-static Bool glow_on    = True;
-static Bool verbose    = False;
-static Bool shoot      = False;
-static int width;
-static int height;
-static int rndlife;
-static int minlife;
-static int delay = 0;
-static float flash_fade = 0.99;
-static unsigned char *palaka1=NULL;
-static unsigned char *palaka2=NULL;
-static XImage *xim=NULL;
-static XColor *colors;
-static int ncolors = 255;
 
 typedef struct {
   unsigned int burn;
@@ -80,14 +61,40 @@ typedef struct {
   float air,flash;
   firepix *fpix; }fireshell;
 
-int explode(fireshell *fs)
+struct state {
+  Display *dpy;
+  Window window;
+
+  fireshell *fshell, *ffshell;
+  GC gc;
+
+  int depth;
+  int bigendian;
+  Bool flash_on;
+  Bool glow_on;
+  Bool verbose;
+  Bool shoot;
+  int width;
+  int height;
+  int rndlife;
+  int minlife;
+  int delay;
+  float flash_fade;
+  unsigned char *palaka1;
+  unsigned char *palaka2;
+  XImage *xim;
+  XColor *colors;
+  int ncolors;
+};
+
+static int explode(struct state *st, fireshell *fs)
 {
   float air,adg = 0.001;         /* gravity */
   unsigned int n,c;
-  unsigned int h = height;
-  unsigned int w = width;
+  unsigned int h = st->height;
+  unsigned int w = st->width;
   unsigned int *prgb;
-  unsigned char *palaka = palaka1;
+  unsigned char *palaka = st->palaka1;
   firepix *fp = fs->fpix;
   if(fs->vgn){
     if(--fs->cy == fs->shy){  
@@ -102,7 +109,7 @@ int explode(fireshell *fs)
   if((fs->cshift+1)%50==0) fs->color = ~fs->color;
   c = fs->color;
   air = fs->air;
-  fs->flash *= flash_fade;
+  fs->flash *= st->flash_fade;
   for(n=PIXCOUNT;n;n--){
   if(fp->burn){ --fp->burn; 
   if(fs->special){
@@ -120,23 +127,23 @@ int explode(fireshell *fs)
   } fp++;
   } return(--fs->life); }
 
-void recycle(fireshell *fs,int x,int y)
+static void recycle(struct state *st, fireshell *fs,int x,int y)
 {
   unsigned int n,pixlife;
   firepix *fp = fs->fpix;
-  fs->vgn = shoot;
+  fs->vgn = st->shoot;
   fs->shy = y;
   fs->cx = x;
-  fs->cy = shoot ? height : y ;
+  fs->cy = st->shoot ? st->height : y ;
   fs->color = (rnd(155)+100) <<16 |
               (rnd(155)+100) <<8  |
                rnd(255);
-  fs->life = rnd(rndlife)+minlife;
+  fs->life = rnd(st->rndlife)+st->minlife;
   fs->air  = 1-(float)(rnd(200))/10000;
   fs->flash   = rnd(30000)+15000;        /* million jouls */
   fs->cshift  = !rnd(5) ? 120:0; 
   fs->special = !rnd(10) ? 1:0; 
-  if(verbose)
+  if(st->verbose)
   printf("recycle(): color = %x air = %f life = %d \n",fs->color,fs->air,fs->life);
   pixlife = rnd(fs->life)+fs->life/10+1;    /* ! */
   for(n=0;n<PIXCOUNT;n++){
@@ -148,14 +155,14 @@ void recycle(fireshell *fs,int x,int y)
   fp->y = y; 
   fp++;             }}
 
-void glow(void)
+static void glow(struct state *st)
 {
   unsigned int n,q;
-  unsigned int w = width;
-  unsigned int h = height;
+  unsigned int w = st->width;
+  unsigned int h = st->height;
   unsigned char *pa, *pb, *pm, *po;
-  pm = palaka1;
-  po = palaka2;
+  pm = st->palaka1;
+  po = st->palaka2;
   for(n=0;n<w*4;n++) 
   {pm[n]=0; po[n]=0;}    /* clean first line */
   pm+=n; po+=n; h-=2; 
@@ -174,13 +181,13 @@ void glow(void)
   for(n=0;n<w*4;n++)
   {pm[n]=0; po[n]=0;}}   /* clean last line */
 
-void blur(void)
+static void blur(struct state *st)
 {
   unsigned int n,q;
-  unsigned int w = width;
-  unsigned int h = height;
+  unsigned int w = st->width;
+  unsigned int h = st->height;
   unsigned char *pa, *pb, *pm;
-  pm = palaka1;
+  pm = st->palaka1;
   pm += w*4; h-=2;  /* line 0&h */
   pa = pm-(w*4);
   pb = pm+(w*4);
@@ -192,20 +199,20 @@ void blur(void)
   pm[n] = q>>4;}
   pm += n-4;    /* last line */
   for(n=0;n<w*4+4;n++) pm[n]=0;
-  pm = palaka1; /* first line */
+  pm = st->palaka1; /* first line */
   for(n=0;n<w*4+4;n++) pm[n]=pm[n+w*4]; }
 
-void light_2x2(fireshell *fss)
+static void light_2x2(struct state *st, fireshell *fss)
 {
   unsigned int l,t,n,x,y;
   float s;
-  int w = width;
-  int h = height;
-  unsigned char *dim = palaka2;
-  unsigned char *sim = palaka1;
+  int w = st->width;
+  int h = st->height;
+  unsigned char *dim = st->palaka2;
+  unsigned char *sim = st->palaka1;
   int nl = w*4;
   fireshell *f;
-  if(glow_on) sim=dim;
+  if(st->glow_on) sim=dim;
   for(y=0;y<h;y+=2){
   for(x=0;x<w;x+=2){
   f = fss; s = 0;
@@ -244,117 +251,218 @@ void light_2x2(fireshell *fss)
 
   sim += 8; dim += 8; } sim += nl; dim += nl;}}
 
-void resize(Display *display, Window win)
+static void resize(struct state *st)
 {
   XWindowAttributes xwa;
-  XGetWindowAttributes (display, win, &xwa);
+  XGetWindowAttributes (st->dpy, st->window, &xwa);
   xwa.width  -= xwa.width % 2;
   xwa.height -= xwa.height % 2;
-  if(xwa.height != height || xwa.width != width) {
-  width  = xwa.width;
-  height = xwa.height;
-  if (verbose)
-  printf("sky size: %dx%d ------------------------------\n",width,height);
-  XSync(display,0);
-  if (xim) {
-  if (xim->data==(char *)palaka2) xim->data=NULL;  
-  XDestroyImage(xim);
-  XSync(display,0);
-  if (palaka2!=palaka1) free(palaka2 - 8);
-  free(palaka1 - 8); 
+  if(xwa.height != st->height || xwa.width != st->width) {
+  st->width  = xwa.width;
+  st->height = xwa.height;
+  if (st->verbose)
+  printf("sky size: %dx%d ------------------------------\n",st->width,st->height);
+  if (st->xim) {
+  if (st->xim->data==(char *)st->palaka2) st->xim->data=NULL;  
+  XDestroyImage(st->xim);
+  if (st->palaka2!=st->palaka1) free(st->palaka2 - 8);
+  free(st->palaka1 - 8); 
   }
-  palaka1 = NULL;
-  palaka2 = NULL;
-  xim = XCreateImage(display, xwa.visual, xwa.depth, ZPixmap, 0, 0,
-		     width, height, 8, 0);
-  palaka1 = (unsigned char *) calloc(xim->height+1,xim->width*4) + 8;
-  if(flash_on|glow_on)
-  palaka2 = (unsigned char *) calloc(xim->height+1,xim->width*4) + 8;
+  st->palaka1 = NULL;
+  st->palaka2 = NULL;
+  st->xim = XCreateImage(st->dpy, xwa.visual, xwa.depth, ZPixmap, 0, 0,
+		     st->width, st->height, 8, 0);
+  st->palaka1 = (unsigned char *) calloc(st->xim->height+1,st->xim->width*4) + 8;
+  if(st->flash_on|st->glow_on)
+  st->palaka2 = (unsigned char *) calloc(st->xim->height+1,st->xim->width*4) + 8;
   else
-  palaka2 = palaka1;
-  if (depth>=24)
-  xim->data = (char *)palaka2;
+  st->palaka2 = st->palaka1;
+  if (st->depth>=24)
+  st->xim->data = (char *)st->palaka2;
   else
-  xim->data = calloc(xim->height,xim->bytes_per_line); }}
+  st->xim->data = calloc(st->xim->height,st->xim->bytes_per_line); }}
 
-void put_image(Display *display, Window win, GC gc, XImage *xim)
+static void put_image(struct state *st)
 {
   int x,y,i,j;
   unsigned char r, g, b;
   i = 0;
   j = 0;
-  if (depth==16) {
-     if(bigendian)
-     for (y=0;y<xim->height; y++)
-     for (x=0;x<xim->width; x++) {
-     r = palaka2[j++];
-     g = palaka2[j++];
-     b = palaka2[j++];
+  if (st->depth==16) {
+     if(st->bigendian)
+     for (y=0;y<st->xim->height; y++)
+     for (x=0;x<st->xim->width; x++) {
+     r = st->palaka2[j++];
+     g = st->palaka2[j++];
+     b = st->palaka2[j++];
      j++;
-     xim->data[i++] = (g&224)>>5 | (r&248);
-     xim->data[i++] = (b&248)>>3 | (g&28)<<3;
+     st->xim->data[i++] = (g&224)>>5 | (r&248);
+     st->xim->data[i++] = (b&248)>>3 | (g&28)<<3;
      }
      else
-     for (y=0;y<xim->height; y++)
-     for (x=0;x<xim->width; x++) {
-     r = palaka2[j++];
-     g = palaka2[j++];
-     b = palaka2[j++];
+     for (y=0;y<st->xim->height; y++)
+     for (x=0;x<st->xim->width; x++) {
+     r = st->palaka2[j++];
+     g = st->palaka2[j++];
+     b = st->palaka2[j++];
      j++;
-     xim->data[i++] = (b&248)>>3 | (g&28)<<3;
-     xim->data[i++] = (g&224)>>5 | (r&248);
+     st->xim->data[i++] = (b&248)>>3 | (g&28)<<3;
+     st->xim->data[i++] = (g&224)>>5 | (r&248);
      }
   }
-  if (depth==15) {
-     if(bigendian)
-     for (y=0;y<xim->height; y++)
-     for (x=0;x<xim->width; x++) {
-     r = palaka2[j++];
-     g = palaka2[j++];
-     b = palaka2[j++];
+  if (st->depth==15) {
+     if(st->bigendian)
+     for (y=0;y<st->xim->height; y++)
+     for (x=0;x<st->xim->width; x++) {
+     r = st->palaka2[j++];
+     g = st->palaka2[j++];
+     b = st->palaka2[j++];
      j++;
-     xim->data[i++] = (g&192)>>6 | (r&248)>>1;
-     xim->data[i++] = (b&248)>>3 | (g&56)<<2;
+     st->xim->data[i++] = (g&192)>>6 | (r&248)>>1;
+     st->xim->data[i++] = (b&248)>>3 | (g&56)<<2;
      }
      else
-     for (y=0;y<xim->height; y++)
-     for (x=0;x<xim->width; x++) {
-     r = palaka2[j++];
-     g = palaka2[j++];
-     b = palaka2[j++];
+     for (y=0;y<st->xim->height; y++)
+     for (x=0;x<st->xim->width; x++) {
+     r = st->palaka2[j++];
+     g = st->palaka2[j++];
+     b = st->palaka2[j++];
      j++;
-     xim->data[i++] = (b&248)>>3 | (g&56)<<2;
-     xim->data[i++] = (g&192)>>6 | (r&248)>>1;
+     st->xim->data[i++] = (b&248)>>3 | (g&56)<<2;
+     st->xim->data[i++] = (g&192)>>6 | (r&248)>>1;
      }
   }
-  if (depth==8) {
-     for (y=0;y<xim->height; y++)
-     for (x=0;x<xim->width; x++) {
-     r = palaka2[j++];
-     g = palaka2[j++];
-     b = palaka2[j++];
+  if (st->depth==8) {
+     for (y=0;y<st->xim->height; y++)
+     for (x=0;x<st->xim->width; x++) {
+     r = st->palaka2[j++];
+     g = st->palaka2[j++];
+     b = st->palaka2[j++];
      j++;     
-     xim->data[i++] = (((7*g)/256)*36)+(((6*r)/256)*6)+((6*b)/256);
+     st->xim->data[i++] = (((7*g)/256)*36)+(((6*r)/256)*6)+((6*b)/256);
      }
   }
-  XPutImage(display,win,gc,xim,0,0,0,0,xim->width,xim->height); }
+  XPutImage(st->dpy,st->window,st->gc,st->xim,0,0,0,0,st->xim->width,st->xim->height); }
 
-void sniff_events(Display *dis, Window win, fireshell *fss)
+
+static void *
+fireworkx_init (Display *dpy, Window win)
 {
-  XEvent e;
-  while (XPending(dis)){
-  XNextEvent (dis, &e);
-  if (e.type == ConfigureNotify) resize(dis,win);
-  if (e.type == ButtonPress)     recycle(fss,e.xbutton.x, e.xbutton.y);
-  screenhack_handle_event(dis,&e); }}
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  unsigned int n;
+  Visual *vi;
+  Colormap cmap;
+  Bool writable;
+  XWindowAttributes xwa;
+  XGCValues gcv;
+  firepix *fpix, *ffpix;
+
+  st->dpy = dpy;
+  st->window = win;
+
+  st->glow_on  = get_boolean_resource(st->dpy, "glow"    , "Boolean");
+  st->flash_on = get_boolean_resource(st->dpy, "flash"   , "Boolean");
+  st->shoot    = get_boolean_resource(st->dpy, "shoot"   , "Boolean");
+  st->verbose  = get_boolean_resource(st->dpy, "verbose" , "Boolean");
+  st->rndlife  = get_integer_resource(st->dpy, "maxlife" , "Integer");
+  st->delay    = get_integer_resource(st->dpy, "delay"   , "Integer");
+  st->minlife  = st->rndlife/4;
+  if(st->rndlife<1000) st->flash_fade=0.98;
+  if(st->rndlife<500) st->flash_fade=0.97;
+  if(st->verbose){
+  printf("Fireworkx %s - pyrotechnics simulation program \n", FWXVERSION);
+  printf("Copyright (c) 1999-2005 Rony B Chandran <ronybc@asia.com> \n\n");
+  printf("url: http://www.ronybc.8k.com \n\n");}
+
+  XGetWindowAttributes(st->dpy,win,&xwa);
+  st->depth     = xwa.depth;
+  vi        = xwa.visual;
+  cmap      = xwa.colormap;
+  st->bigendian = (ImageByteOrder(st->dpy) == MSBFirst);
+ 
+  if(st->depth==8){
+  if(st->verbose){
+  printf("Pseudocolor color: use '-no-flash' for better results.\n");}
+  st->colors = (XColor *) calloc(sizeof(XColor),st->ncolors+1);
+  writable = False;
+  make_smooth_colormap(st->dpy, vi, cmap, st->colors, &st->ncolors,
+                                False, &writable, True);
+  }
+  st->gc = XCreateGC(st->dpy, win, 0, &gcv);
+
+  resize(st);   /* initialize palakas */ 
+  
+  ffpix = malloc(sizeof(firepix) * PIXCOUNT * SHELLCOUNT);
+  st->ffshell = malloc(sizeof(fireshell) * SHELLCOUNT);
+  st->fshell = st->ffshell;
+  fpix = ffpix;
+  for (n=0;n<SHELLCOUNT;n++){
+  st->fshell->fpix = fpix;
+  recycle (st, st->fshell,rnd(st->width),rnd(st->height));
+  st->fshell++; 
+  fpix += PIXCOUNT; }
+  
+  return st;
+}
 
 
-char *progclass = "Fireworkx";
+static unsigned long
+fireworkx_draw (Display *dpy, Window win, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int q,n;
+  for(q=FTWEAK;q;q--){
+    st->fshell=st->ffshell;
+    for(n=SHELLCOUNT;n;n--){
+      if (!explode(st, st->fshell)){
+        recycle(st, st->fshell,rnd(st->width),rnd(st->height)); }
+      st->fshell++; }}
+#if HAVE_X86_MMX
+  if(st->glow_on) mmx_glow(st->palaka1,st->width,st->height,8,st->palaka2);
+#else
+  if(st->glow_on) glow(st);
+#endif
+  if(st->flash_on) light_2x2(st, st->ffshell);
+  put_image(st);
+#if HAVE_X86_MMX
+  if(!st->glow_on) mmx_blur(st->palaka1,st->width,st->height,8);
+#else
+  if(!st->glow_on) blur(st);
+#endif
 
-char *defaults [] = {
+  return st->delay;
+}
+
+
+static void
+fireworkx_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  resize(st);
+}
+
+static Bool
+fireworkx_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  struct state *st = (struct state *) closure;
+  if (event->type == ButtonPress) {
+    recycle(st, st->fshell, event->xbutton.x, event->xbutton.y);
+    return True;
+  }
+  return False;
+}
+
+static void
+fireworkx_free (Display *dpy, Window window, void *closure)
+{
+}
+
+
+static const char *fireworkx_defaults [] = {
   ".background:	black",
   ".foreground:	white",
-  "*delay:	10000",  /* never default to zero! */
+  "*delay:	20000",  /* never default to zero! */
   "*maxlife:	2000",
   "*flash:	True",
   "*glow:	True",
@@ -363,91 +471,14 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec fireworkx_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-maxlife",		".maxlife",	XrmoptionSepArg, 0 },
-  { "-noflash",		".flash",	XrmoptionNoArg, "False" },
-  { "-noglow",		".glow",	XrmoptionNoArg, "False" },
+  { "-no-flash",	".flash",	XrmoptionNoArg, "False" },
+  { "-no-glow",		".glow",	XrmoptionNoArg, "False" },
   { "-shoot",		".shoot",	XrmoptionNoArg, "True" },
   { "-verbose",		".verbose",	XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *display, Window win)
-{
-  unsigned int n,q;
-  Visual *vi;
-  Colormap cmap;
-  Bool writable;
-  XWindowAttributes xwa;
-  GC gc;
-  XGCValues gcv;
-  firepix *fpix, *ffpix;
-  fireshell *fshell, *ffshell;
-  glow_on  = get_boolean_resource("glow"    , "Boolean");
-  flash_on = get_boolean_resource("flash"   , "Boolean");
-  shoot    = get_boolean_resource("shoot"   , "Boolean");
-  verbose  = get_boolean_resource("verbose" , "Boolean");
-  rndlife  = get_integer_resource("maxlife" , "Integer");
-  delay    = get_integer_resource("delay"   , "Integer");
-  minlife  = rndlife/4;
-  if(rndlife<1000) flash_fade=0.98;
-  if(rndlife<500) flash_fade=0.97;
-  if(verbose){
-  printf("Fireworkx %s - pyrotechnics simulation program \n", FWXVERSION);
-  printf("Copyright (c) 1999-2005 Rony B Chandran <ronybc@asia.com> \n\n");
-  printf("url: http://www.ronybc.8k.com \n\n");}
-
-  XGetWindowAttributes(display,win,&xwa);
-  depth     = xwa.depth;
-  vi        = xwa.visual;
-  cmap      = xwa.colormap;
-  bigendian = (ImageByteOrder(display) == MSBFirst);
- 
-  if(depth==8){
-  if(verbose){
-  printf("Pseudocolor color: use '-noflash' for better results.\n");}
-  colors = (XColor *) calloc(sizeof(XColor),ncolors+1);
-  writable = False;
-  make_smooth_colormap(display, vi, cmap, colors, &ncolors,
-                                False, &writable, True);
-  }
-  gc = XCreateGC(display, win, 0, &gcv);
-
-  resize(display,win);   /* initialize palakas */ 
-  
-  ffpix = malloc(sizeof(firepix) * PIXCOUNT * SHELLCOUNT);
-  ffshell = malloc(sizeof(fireshell) * SHELLCOUNT);
-  fshell = ffshell;
-  fpix = ffpix;
-  for (n=0;n<SHELLCOUNT;n++){
-  fshell->fpix = fpix;
-  recycle (fshell,rnd(width),rnd(height));
-  fshell++; 
-  fpix += PIXCOUNT; }
-  
-  while(1) {
-  for(q=FTWEAK;q;q--){
-  fshell=ffshell;
-  for(n=SHELLCOUNT;n;n--){
-  if (!explode(fshell)){
-       recycle(fshell,rnd(width),rnd(height)); }
-       fshell++; }}
-#if HAVE_X86_MMX
-  if(glow_on) mmx_glow(palaka1,width,height,8,palaka2);
-#else
-  if(glow_on) glow();
-#endif
-  if(flash_on) light_2x2(ffshell);
-  put_image(display,win,gc,xim);
-  usleep(delay);
-  XSync(display,0);
-  sniff_events(display, win, ffshell);
-#if HAVE_X86_MMX
-  if(!glow_on) mmx_blur(palaka1,width,height,8);
-#else
-  if(!glow_on) blur();
-#endif
-
-}}
+XSCREENSAVER_MODULE ("Fireworkx", fireworkx)

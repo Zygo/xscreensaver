@@ -22,6 +22,12 @@ different size and direction, but moves at the same slow rate. Display:
     A. The instantaneous intersections of the circles.
     B. The aggregate intersections of the circles.
 
+The circles begin with a radius of 1 pixel and slowly increase to some
+arbitrary size.  Circles are drawn with small moving points along the
+perimeter. The intersections are rendered as glowing orbs.  Glowing
+orbs are rendered only when a perimeter point moves past the
+intersection point.
+
 Ported to XScreensaver from the art project "InterMomentary" at
 http://www.complexification.net by J.Tarbell
 .SH OPTIONS
@@ -52,7 +58,7 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global
 resources stored in the RESOURCE_MANAGER property.
-.TP8
+.TP 8
 .SH BUGS
 .PP
 .TP 8

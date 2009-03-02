@@ -26,6 +26,8 @@
             low="1" high="255" default="64"/>
 
   <_description>
-Another iterative fractal generator.  Written by Scott Draves.
+Iterative fractals.
+
+Written by Scott Draves; 1993.
   </_description>
 </screensaver>

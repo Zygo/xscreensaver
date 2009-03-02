@@ -32,25 +32,23 @@ static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_discrete
-#define PROGCLASS "Discrete"
-#define HACK_INIT init_discrete
-#define HACK_DRAW draw_discrete
-#define discrete_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000 \n" \
- "*count: 4096 \n" \
- "*cycles: 2500 \n" \
- "*ncolors: 100 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+# define MODE_discrete
+#define DEFAULTS	"*delay: 1000 \n" \
+					"*count: 4096 \n" \
+					"*cycles: 2500 \n" \
+					"*ncolors: 100 \n"
+# define SMOOTH_COLORS
+# define reshape_discrete 0
+# define discrete_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_discrete
 
-ModeSpecOpt discrete_opts =
+ENTRYPOINT ModeSpecOpt discrete_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -99,12 +97,19 @@ typedef struct {
 	enum ftypes op;
 	int         count;
 	XPoint     *pointBuffer;	/* pointer for XDrawPoints */
+
+    int sqrt_sign, std_sign;
+
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
+
 } discretestruct;
 
 static discretestruct *discretes = (discretestruct *) NULL;
 
-void
-init_discrete(ModeInfo * mi)
+ENTRYPOINT void
+init_discrete (ModeInfo * mi)
 {
 	double      range;
 	discretestruct *hp;
@@ -243,16 +248,20 @@ init_discrete(ModeInfo * mi)
 		/* if fails will check later */
 	}
 
+#ifndef STANDALONE
 	/* Clear the background. */
 	MI_CLEARWINDOW(mi);
+#endif
 
 	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WHITE_PIXEL(mi));
 	hp->count = 0;
+    hp->sqrt_sign = 1;
+    hp->std_sign = 1;
 }
 
 
-void
-draw_discrete(ModeInfo * mi)
+ENTRYPOINT void
+draw_discrete (ModeInfo * mi)
 {
 	Display    *dsp = MI_DISPLAY(mi);
 	Window      win = MI_WINDOW(mi);
@@ -269,6 +278,11 @@ draw_discrete(ModeInfo * mi)
 	hp = &discretes[MI_SCREEN(mi)];
 	if (hp->pointBuffer == NULL)
 		return;
+
+    if (hp->eraser) {
+      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+      return;
+    }
 
 	k = count;
 	xp = hp->pointBuffer;
@@ -338,11 +352,9 @@ draw_discrete(ModeInfo * mi)
 					? sqrt(fabs(hp->b * (hp->i - hp->c)))
 							 : -sqrt(fabs(hp->b * (hp->i - hp->c))));
 				} else {
-					static int  s = 1;
-
-					hp->i = s * hp->inc * hp->maxx / cycles / 2;
+					hp->i = (hp->sqrt_sign ? 1 : -1) * hp->inc * hp->maxx / cycles / 2;
 					hp->j = hp->a + hp->i;
-					s = -s;
+					hp->sqrt_sign = !hp->sqrt_sign;
 				}
 				break;
 			case STANDARD:
@@ -352,11 +364,9 @@ draw_discrete(ModeInfo * mi)
 					hp->i = oldi + hp->j;
 					hp->i = fmod(hp->i + 2 * M_PI, 2 * M_PI);
 				} else {
-					static int  s = 1;
-
-					hp->j = M_PI + fmod(s * hp->inc * 2 * M_PI / (cycles - 0.5), M_PI);
+					hp->j = M_PI + fmod((hp->std_sign ? 1 : -1) * hp->inc * 2 * M_PI / (cycles - 0.5), M_PI);
 					hp->i = M_PI;
-					s = -s;
+					hp->std_sign = !hp->std_sign;
 				}
 				break;
 			case BIRDIE:
@@ -392,13 +402,13 @@ draw_discrete(ModeInfo * mi)
 	XDrawPoints(dsp, win, gc, hp->pointBuffer, count, CoordModeOrigin);
 	if (++hp->count > cycles) {
 #ifdef STANDALONE
-		erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
 #endif /* STANDALONE */
 		init_discrete(mi);
 	}
 }
 
-void
+ENTRYPOINT void
 release_discrete(ModeInfo * mi)
 {
 	if (discretes != NULL) {
@@ -417,10 +427,12 @@ release_discrete(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_discrete(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Discrete", discrete)
 
 #endif /* MODE_discrete */

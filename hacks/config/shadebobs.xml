@@ -11,8 +11,9 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
-          _label="Count" low="0" high="20" default="4"/>
+  <number id="count" type="slider" arg="-count %"
+          _label="Count" _low-label="One" _high-label="Many"
+          low="1" high="20" default="4"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
@@ -25,6 +26,8 @@
 
   <_description>
 This draws smoothly-shaded oscillating oval patterns, that look
-something like vapor trails or neon tubes.  Written by Shane Smit.
+something like vapor trails or neon tubes.
+
+Written by Shane Smit; 1999.
   </_description>
 </screensaver>

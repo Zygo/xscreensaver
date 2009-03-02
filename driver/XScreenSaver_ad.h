@@ -17,7 +17,6 @@
 "*nice:			10",
 "*memoryLimit:		0",
 "*lock:			False",
-"*lockVTs:		True",
 "*verbose:		False",
 "*timestamp:		True",
 "*fade:			True",
@@ -27,7 +26,7 @@
 "*splash:		True",
 "*splashDuration:	0:00:05",
 "*visualID:		default",
-"*captureStderr: 	False",
+"*captureStderr: 	True",
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
@@ -55,34 +54,30 @@
 	   \"Qix (transparent)\" 	qix -root -count 4 -solid -transparent	    \\n\
 		\"Qix (linear)\" 	qix -root -count 5 -solid -transparent	      \
 				  -linear -segments 250 -size 100	    \\n\
--		   \"Qix (xor)\" 	qix -root -linear -count 5 -size 200	      \
-				  -spread 30 -segments 75 -solid -xor	    \\n\
 									      \
 	  \"Attraction (balls)\" 	attraction -root -mode balls		    \\n\
 	  \"Attraction (lines)\" 	attraction -root -mode lines -points 3	      \
 				  -segments 200				    \\n\
--	   \"Attraction (poly)\" 	attraction -root -mode polygons		    \\n\
-	\"Attraction (splines)\" 	attraction -root -mode splines -segments      \
+-	\"Attraction (splines)\" 	attraction -root -mode splines -segments      \
 				  300					    \\n\
-	\"Attraction (orbital)\" 	attraction -root -mode lines -radius 300      \
+-	\"Attraction (orbital)\" 	attraction -root -mode lines -radius 300      \
 				  -orbit -vmult 0.5			    \\n\
 									      \
 				pyro -root				    \\n\
 				rocks -root				    \\n\
 				helix -root				    \\n\
 				pedal -root				    \\n\
-				rorschach -root -offset 7		    \\n\
+				rorschach -root				    \\n\
 				hopalong -root				    \\n\
 				greynetic -root				    \\n\
 				imsmap -root				    \\n\
 				slidescreen -root			    \\n\
 				decayscreen -root			    \\n\
 				jigsaw -root				    \\n\
-				blitspin -root -grab			    \\n\
+				blitspin -root				    \\n\
 				slip -root				    \\n\
 				distort -root				    \\n\
 				spotlight -root				    \\n\
-	      \"Ripples (oily)\"	ripples -root -oily -light 2		    \\n\
 	      \"Ripples (stir)\"	ripples -root -oily -light 2 -stir	    \\n\
 	   \"Ripples (desktop)\"	ripples -root -water -light 6		    \\n\
 				hypercube -root				    \\n\
@@ -99,8 +94,7 @@
 				strange -root				    \\n\
 -				spiral -root				    \\n\
 				laser -root				    \\n\
-				grav -root				    \\n\
-	       \"Grav (trails)\" 	grav -root -trail -decay		    \\n\
+	       			grav -root				    \\n\
 				drift -root				    \\n\
 				ifs -root				    \\n\
 				julia -root				    \\n\
@@ -115,16 +109,14 @@
 				forest -root				    \\n\
 -				lisa -root				    \\n\
 -				lissie -root				    \\n\
-				goop -root -max-velocity 0.5 -elasticity      \
-				  0.9					    \\n\
+				goop -root				    \\n\
 				starfish -root				    \\n\
-	     \"Starfish (blob)\" 	starfish -root -blob			    \\n\
 				munch -root				    \\n\
 				mismunch -root				    \\n\
 				fadeplot -root				    \\n\
-				coral -root -delay 0			    \\n\
+				coral -root				    \\n\
 				mountain -root				    \\n\
-				triangle -root -delay 1			    \\n\
+				triangle -root				    \\n\
 -				worm -root				    \\n\
 -				rotor -root				    \\n\
 -				demon -root				    \\n\
@@ -132,12 +124,12 @@
 -				vines -root				    \\n\
 				kaleidescope -root			    \\n\
 				xjack -root				    \\n\
-				xlyap -root -randomize			    \\n\
+				xlyap -root				    \\n\
 				cynosure -root				    \\n\
 				flow -root				    \\n\
 				epicycle -root				    \\n\
 				interference -root			    \\n\
-				truchet -root -randomize		    \\n\
+				truchet -root				    \\n\
 				bsod -root				    \\n\
 				crystal -root				    \\n\
 				discrete -root				    \\n\
@@ -157,7 +149,7 @@
 -				critical -root				    \\n\
 				phosphor -root				    \\n\
 				xmatrix -root				    \\n\
-				petri -root -size 2 -count 20		    \\n\
+				petri -root				    \\n\
 		     \"Petri 2\" 	petri -root -minlifespeed 0.02		      \
 				  -maxlifespeed 0.03 -minlifespan 1	      \
 				  -maxlifespan 1 -instantdeathchan 0	      \
@@ -166,22 +158,16 @@
 				ccurve -root				    \\n\
 				blaster -root				    \\n\
 				bumps -root				    \\n\
-				xteevee -root				    \\n\
 				xanalogtv -root				    \\n\
 				xspirograph -root			    \\n\
 				nerverot -root				    \\n\
--	    \"NerveRot (dense)\"	nerverot -root -count 1000		    \\n\
--	    \"NerveRot (thick)\"	nerverot -root -count 100 -line-width 4       \
-			        -max-nerve-radius 0.8 -nervousness 0.5 -db  \\n\
 				xrayswarm -root				    \\n\
 -	       \"Zoom (Fatbits)\"	zoom -root				    \\n\
 	       \"Zoom (Lenses)\"	zoom -root -lenses			    \\n\
 				rotzoomer -root				    \\n\
--	   \"RotZoomer (mobile)\" rotzoomer -root -move			    \\n\
--	   \"RotZoomer (sweep)\"  rotzoomer -root -sweep			    \\n\
 				whirlwindwarp -root			    \\n\
- 	            \"WhirlyGig\"	whirlygig -root				    \\n\
- 	            \"SpeedMine\"	speedmine -root				    \\n\
+ 	            		whirlygig -root				    \\n\
+ 	            		speedmine -root				    \\n\
  	            \"SpeedWorm\"	speedmine -root -worm			    \\n\
  	                	vermiculate -root			    \\n\
  	                	twang -root				    \\n\
@@ -201,8 +187,7 @@
  	                	barcode -root				    \\n\
  	                	piecewise -root				    \\n\
  	                	cloudlife -root				    \\n\
-		   \"FontGlide\"	fontglide -root -page			    \\n\
-	\"FontGlide (scroller)\"	fontglide -root -scroll			    \\n\
+		   		fontglide -root				    \\n\
 				apple2 -root				    \\n\
                                 bubbles -root				    \\n\
 				pong -root				    \\n\
@@ -212,7 +197,6 @@
 				anemotaxis -root			    \\n\
 				memscroller -root			    \\n\
 				substrate -root				    \\n\
-	 \"Substrate (circles)\"  substrate -root -circle-percent 33          \\n\
 				intermomentary -root			    \\n\
 				interaggregate -root			    \\n\
 				fireworkx -root				    \\n\
@@ -226,7 +210,6 @@
 - default-n:			vidwhacker -root			    \\n\
 									      \
 	   GL:			gears -root				    \\n\
-	   GL:	\"Gears (planetary)\" gears -root -planetary		    \\n\
 	   GL:			superquadrics -root			    \\n\
 	   GL:			morph3d -root				    \\n\
 	   GL:			cage -root				    \\n\
@@ -235,11 +218,11 @@
 	   GL:			pipes -root				    \\n\
 	   GL:			sproingies -root			    \\n\
 	   GL:			rubik -root				    \\n\
-	   GL:			atlantis -root -gradient		    \\n\
+	   GL:			atlantis -root				    \\n\
 	   GL:			lament -root				    \\n\
 	   GL:			bubble3d -root				    \\n\
 	   GL:			glplanet -root				    \\n\
-	   GL:			flurry -root -preset random		    \\n\
+	   GL:			flurry -root				    \\n\
 	   GL:			pulsar -root				    \\n\
 -	   GL:	   \"Pulsar (textures)\"					      \
 				  pulsar -root -texture -mipmap		      \
@@ -247,20 +230,20 @@
 -	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
 	   GL:			menger -root				    \\n\
-	   GL:	 \"GFlux\"	gflux -root				    \\n\
+	   GL:	 		gflux -root				    \\n\
 	   GL:	 \"GFlux (grab)\"	gflux -root -mode grab			    \\n\
 	   GL:			stonerview -root			    \\n\
 	   GL:			starwars -root				    \\n\
 	   GL:			gltext -root				    \\n\
 	   GL:	\"GLText (clock)\" gltext -text \"%A%n%d %b %Y%n%r\" -root	    \\n\
-	   GL:	 		molecule -root -shells			    \\n\
+	   GL:	 		molecule -root				    \\n\
 	   GL:			dangerball -root			    \\n\
 	   GL:			circuit -root				    \\n\
 	   GL:			engine -root				    \\n\
 	   GL:			flipscreen3d -root			    \\n\
 	   GL:			glsnake -root				    \\n\
 	   GL:			boxed -root				    \\n\
--	   GL:	\"GLForestFire\"		glforestfire -root		    \\n\
+-	   GL:			glforestfire -root			    \\n\
 -	   GL:	\"GLForestFire (rain)\"	glforestfire -root -count 0	    \\n\
 -	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
@@ -272,10 +255,9 @@
 	   GL:			atunnel -root				    \\n\
 	   GL:			flyingtoasters -root			    \\n\
 	   GL:			bouncingcow -root			    \\n\
-	   GL:			jigglypuff -root -random		    \\n\
-	   GL:			klein -root -random			    \\n\
-	   GL:	\"HyperTorus (striped)\" hypertorus -root			    \\n\
-	   GL:	\"HyperTorus (solid)\"   hypertorus -root -solid -transparent \\n\
+	   GL:			jigglypuff -root			    \\n\
+	   GL:			klein -root				    \\n\
+	   GL:			hypertorus -root			    \\n\
 	   GL:			glmatrix -root				    \\n\
 	   GL:			cubestorm -root				    \\n\
 	   GL:			glknots -root				    \\n\
@@ -300,17 +282,15 @@
 	   GL:			fliptext -root				    \\n\
 -	   GL:                  antmaze -root                               \\n\
 	   GL:			tangram -root				    \\n\
-	   GL:			crackberg -root -flat -lit -crack	      \
-				 -color random				    \\n\
+	   GL:			crackberg -root				    \\n\
 	   GL:			glhanoi -root				    \\n\
-	   GL:			cube21 -root -colormode six		    \\n\
+	   GL:			cube21 -root				    \\n\
 	   GL:			timetunnel -root			    \\n\
 	   GL:			juggler3d -root				    \\n\
+	   GL:			topblock -root				    \\n\
+	   GL:			glschool -root				    \\n\
 									      \
--				xdaliclock -root -builtin3 -cycle	    \\n\
-- default-n:			xearth -nofork -nostars -ncolors 50	      \
-				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
-				  sunrel/38/-30				    \\n\
+-				xdaliclock -root -font BUILTIN3		    \\n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
                                   -label -origin moon			    \\n\
 -				xmountains -b -M -Z 0 -r 1		    \\n\
@@ -318,8 +298,7 @@
 -                               xaos -root -autopilot -nogui -delay 10000     \
                                   -maxframerate 30                            \
                                   -incoloring -1 -outcoloring -1            \\n\
--				xfishtank -d -s                             \\n\
--				xsnow                                       \\n\
+-				xsnow -root                                 \\n\
 -				goban -root                                 \\n\
 -				electricsheep                               \\n\
 -				cosmos -root                                \\n\
@@ -333,6 +312,7 @@
 "*Dialog.headingFont:		*-helvetica-bold-r-*-*-*-180-*-*-*-iso8859-1",
 "*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"*Dialog.unameFont:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
 "*Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "*Dialog.dateFont:		*-helvetica-medium-r-*-*-*-80-*-*-*-iso8859-1",
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
@@ -358,8 +338,9 @@
 "*passwd.passwd.label:		Password:",
 "*passwd.thermometer.width:	8",
 "*passwd.asterisks:              True",
+"*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2005 by",
+"*splash.body.label:		Copyright © 1991-2006 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -375,7 +356,6 @@
 "*hacks.t3d.name:            T3D",
 "*hacks.shadebobs.name:      ShadeBobs",
 "*hacks.ccurve.name:         C Curve",
-"*hacks.xteevee.name:        XTeeVee",
 "*hacks.xanalogtv.name:      XAnalogTV",
 "*hacks.xspirograph.name:    XSpiroGraph",
 "*hacks.nerverot.name:       NerveRot",
@@ -419,4 +399,6 @@
 "*hacks.boxfit.name:         BoxFit",
 "*hacks.fliptext.name:       FlipText",
 "*hacks.glhanoi.name:        GLHanoi",
+"*hacks.topblock.name:       TopBlock",
+"*hacks.glschool.name:       GLSchool",
 "*hacks.documentation.isInstalled: True",

@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001, 2006 Jamie Zawinski <jwz@jwz.org>
  * Utility function to draw a frames-per-second display.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -10,16 +10,21 @@
  * implied warranty.
  */
 
-#include "config.h"
-#include <stdlib.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-#include "screenhack.h"
 #include "xlockmoreI.h"
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+# include <OpenGL/glu.h>
+# include <AGL/agl.h>
+#else /* !HAVE_COCOA -- real Xlib */
+# include <GL/gl.h>
+# include <GL/glu.h>
+# include <GL/glx.h>
+#endif /* !HAVE_COCOA */
 
 #undef DEBUG  /* Defining this causes check_gl_error() to be called inside
                  time-critical sections, which could slow things down (since
@@ -29,56 +34,115 @@
 extern void clear_gl_error (void);
 extern void check_gl_error (const char *type);
 
-static int fps_text_x = 10;
-static int fps_text_y = 10;
-static int fps_ascent, fps_descent;
-static GLuint font_dlist;
-static Bool fps_clear_p = False;
-static char fps_string[1024];
+extern GLfloat fps_1 (ModeInfo *mi);
+extern void    fps_2 (ModeInfo *mi);
+extern void    do_fps (ModeInfo *mi);
+extern void    fps_free (ModeInfo *mi);
+
+struct fps_state {
+  int x, y;
+  int ascent, descent;
+  GLuint font_dlist;
+  Bool clear_p;
+  char string[1024];
+
+  int last_ifps;
+  GLfloat last_fps;
+  int frame_count;
+  struct timeval prev, now;
+};
+
 
 static void
 fps_init (ModeInfo *mi)
 {
-  const char *font = get_string_resource ("fpsFont", "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
+  struct fps_state *st = mi->fps_state;
 
-  fps_clear_p = get_boolean_resource ("fpsSolid", "FPSSolid");
+  if (st) free (st);
+  st = (struct fps_state *) calloc (1, sizeof(*st));
+  mi->fps_state = st;
 
-  if (!font) font = "-*-courier-bold-r-normal-*-180-*";
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
+  st->clear_p = get_boolean_resource (mi->dpy, "fpsSolid", "FPSSolid");
 
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
+# ifndef HAVE_COCOA /* Xlib version */
+  {
+    const char *font;
+    XFontStruct *f;
+    Font id;
+    int first, last;
+
+    font = get_string_resource (mi->dpy, "fpsFont", "Font");
+
+    if (!font) font = "-*-courier-bold-r-normal-*-180-*";
+    f = XLoadQueryFont (mi->dpy, font);
+    if (!f) f = XLoadQueryFont (mi->dpy, "fixed");
+
+    id = f->fid;
+    first = f->min_char_or_byte2;
+    last = f->max_char_or_byte2;
   
-  clear_gl_error ();
-  font_dlist = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
+    clear_gl_error ();
+    st->font_dlist = glGenLists ((GLuint) last+1);
+    check_gl_error ("glGenLists");
 
-  fps_ascent = f->ascent;
-  fps_descent = f->descent;
+    st->ascent = f->ascent;
+    st->descent = f->descent;
 
-  if (get_boolean_resource ("fpsTop", "FPSTop"))
-    fps_text_y = - (f->ascent + 10);
+    glXUseXFont (id, first, last-first+1, st->font_dlist + first);
+    check_gl_error ("glXUseXFont");
+  }
 
-  glXUseXFont(id, first, last-first+1, font_dlist + first);
-  check_gl_error ("glXUseXFont");
+# else  /* HAVE_COCOA */
+
+  {
+    AGLContext ctx = aglGetCurrentContext();
+    GLint id    = 0;   /* 0 = system font; 1 = application font */
+    Style face  = 1;   /* 0 = plain; 1=B; 2=I; 3=BI; 4=U; 5=UB; etc. */
+    GLint size  = 24;
+    GLint first = 32;
+    GLint last  = 255;
+
+    st->ascent  = size * 0.9;
+    st->descent = size - st->ascent;
+
+    clear_gl_error ();
+    st->font_dlist = glGenLists ((GLuint) last+1);
+    check_gl_error ("glGenLists");
+
+    if (! aglUseFont (ctx, id, face, size, 
+                      first, last-first+1, st->font_dlist + first)) {
+      check_gl_error ("aglUseFont");
+      abort();
+    }
+  }
+
+# endif  /* HAVE_COCOA */
+
+  st->x = 10;
+  st->y = 10;
+  if (get_boolean_resource (mi->dpy, "fpsTop", "FPSTop"))
+    st->y = - (st->ascent + 10);
 }
 
+void
+fps_free (ModeInfo *mi)
+{
+  if (mi->fps_state)
+    free (mi->fps_state);
+  mi->fps_state = 0;
+}
 
 static void
 fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 {
+  struct fps_state *st = mi->fps_state;
   const char *L2 = strchr (string, '\n');
 
   if (y < 0)
     {
       y = mi->xgwa.height + y;
       if (L2)
-        y -= (fps_ascent + fps_descent);
+        y -= (st->ascent + st->descent);
     }
 
 # ifdef DEBUG
@@ -136,25 +200,25 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 # endif
 
         /* clear the background */
-        if (fps_clear_p)
+        if (st->clear_p)
           {
             int lines = L2 ? 2 : 1;
             glColor3f (0, 0, 0);
-            glRecti (x / 2, y - fps_descent,
+            glRecti (x / 2, y - st->descent,
                      mi->xgwa.width - x,
-                     y + lines * (fps_ascent + fps_descent));
+                     y + lines * (st->ascent + st->descent));
           }
 
         /* draw the text */
         glColor3f (1, 1, 1);
         glRasterPos2f (x, y);
-        glListBase (font_dlist);
+        glListBase (st->font_dlist);
 
         if (L2)
           {
             L2++;
             glCallLists (strlen(L2), GL_UNSIGNED_BYTE, L2);
-            glRasterPos2f (x, y + (fps_ascent + fps_descent));
+            glRasterPos2f (x, y + (st->ascent + st->descent));
             glCallLists (L2 - string - 1, GL_UNSIGNED_BYTE, string);
           }
         else
@@ -183,52 +247,49 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 GLfloat
 fps_1 (ModeInfo *mi)
 {
-  static Bool initted_p = False;
-  static int last_ifps = -1;
-  static GLfloat last_fps = -1;
-  static int frame_count = 0;
-  static struct timeval prev = { 0, 0 };
-  static struct timeval now  = { 0, 0 };
-
-  if (!initted_p)
+  struct fps_state *st = mi->fps_state;
+  if (!st)
     {
-      initted_p = True;
       fps_init (mi);
-      strcpy (fps_string, "FPS: (accumulating...)");
+      st = mi->fps_state;
+      strcpy (st->string, "FPS: (accumulating...)");
     }
 
   /* Every N frames (where N is approximately one second's worth of frames)
      check the wall clock.  We do this because checking the wall clock is
      a slow operation.
    */
-  if (frame_count++ >= last_ifps)
+  if (st->frame_count++ >= st->last_ifps)
     {
 # ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;
-      gettimeofday(&now, &tzp);
+      gettimeofday(&st->now, &tzp);
 # else
-      gettimeofday(&now);
+      gettimeofday(&st->now);
 # endif
 
-      if (prev.tv_sec == 0)
-        prev = now;
+      if (st->prev.tv_sec == 0)
+        st->prev = st->now;
     }
 
   /* If we've probed the wall-clock time, regenerate the string.
    */
-  if (now.tv_sec != prev.tv_sec)
+  if (st->now.tv_sec != st->prev.tv_sec)
     {
-      double uprev = prev.tv_sec + ((double) prev.tv_usec * 0.000001);
-      double unow  =  now.tv_sec + ((double)  now.tv_usec * 0.000001);
-      double fps   = frame_count / (unow - uprev);
+      double uprev = st->prev.tv_sec + ((double) st->prev.tv_usec * 0.000001);
+      double unow  =  st->now.tv_sec + ((double)  st->now.tv_usec * 0.000001);
+      double fps   = st->frame_count / (unow - uprev);
 
-      prev = now;
-      frame_count = 0;
-      last_ifps = fps;
-      last_fps  = fps;
+      st->prev = st->now;
+      st->frame_count = 0;
+      st->last_ifps = fps;
+      st->last_fps  = fps;
 
-      sprintf (fps_string, "FPS: %.02f", fps);
+      sprintf (st->string, "FPS: %.02f", fps);
 
+#ifndef HAVE_COCOA
+      /* since there's no "-delay 0" in the Cocoa version,
+         don't bother mentioning the inter-frame delay. */
       if (mi->pause != 0)
         {
           char buf[40];
@@ -237,10 +298,11 @@ fps_1 (ModeInfo *mi)
             buf[strlen(buf)-1] = 0;
           if (buf[strlen(buf)-1] == '.')
             buf[strlen(buf)-1] = 0;
-          sprintf(fps_string + strlen(fps_string),
+          sprintf(st->string + strlen(st->string),
                   " (including %s sec/frame delay)",
                   buf);
         }
+#endif /* HAVE_COCOA */
 
       if (mi->polygon_count > 0)
         {
@@ -251,25 +313,26 @@ fps_1 (ModeInfo *mi)
           else if (p >= 2048)          p >>= 10, s = "K";
 # endif
 
-          strcat (fps_string, "\nPolys: ");
+          strcat (st->string, "\nPolys: ");
           if (p >= 1000000)
-            sprintf (fps_string + strlen(fps_string), "%lu,%03lu,%03lu%s",
+            sprintf (st->string + strlen(st->string), "%lu,%03lu,%03lu%s",
                      (p / 1000000), ((p / 1000) % 1000), (p % 1000), s);
           else if (p >= 1000)
-            sprintf (fps_string + strlen(fps_string), "%lu,%03lu%s",
+            sprintf (st->string + strlen(st->string), "%lu,%03lu%s",
                      (p / 1000), (p % 1000), s);
           else
-            sprintf (fps_string + strlen(fps_string), "%lu%s", p, s);
+            sprintf (st->string + strlen(st->string), "%lu%s", p, s);
         }
     }
 
-  return last_fps;
+  return st->last_fps;
 }
 
 void
 fps_2 (ModeInfo *mi)
 {
-  fps_print_string (mi, fps_text_x, fps_text_y, fps_string);
+  struct fps_state *st = mi->fps_state;
+  fps_print_string (mi, st->x, st->y, st->string);
 }
 
 

@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2003
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2003, 2006
+ * 
  * 
  *  by Jamie Zawinski <jwz@jwz.org>
  *
@@ -161,7 +162,7 @@ Visual *
 get_visual_resource (Screen *screen, char *name, char *class,
 		     Bool prefer_writable_cells)
 {
-  char *string = get_string_resource (name, class);
+  char *string = get_string_resource (DisplayOfScreen (screen), name, class);
   Visual *v = get_visual (screen, string, prefer_writable_cells, True);
   if (string)
     free(string);

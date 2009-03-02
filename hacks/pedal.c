@@ -22,6 +22,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "screenhack.h"
+#include "erase.h"
 
 /* If MAXLINES is too big, we might not be able to get it
  * to the X server in the 2byte length field. Must be less
@@ -29,7 +30,6 @@
  */
 #define MAXLINES (16 * 1024)
 #define MAXPOINTS MAXLINES
-XPoint *points;
 
 /* 
  * If the pedal has only this many lines, it must be ugly and we dont
@@ -37,15 +37,23 @@ XPoint *points;
  */
 #define MINLINES 7
 
-static int sizex, sizey;
-static int delay;
-static int fadedelay;
-static int maxlines;
-static GC gc;
-static XColor foreground, background;
-static Colormap cmap;
 
-static Bool fade_p;
+struct state {
+  Display *dpy;
+  Window window;
+
+  XPoint *points;
+
+  int sizex, sizey;
+  int delay;
+  int maxlines;
+  GC gc;
+  XColor foreground, background;
+  Colormap cmap;
+
+  eraser_state *eraser;
+  int erase_p;
+};
 
 
 /*
@@ -116,7 +124,7 @@ static int numlines (int a, int b, int d)
 }
 
 static int
-compute_pedal(XPoint *points, int maxpoints)
+compute_pedal(struct state *st, XPoint *points, int maxpoints)
 /*
  * Description:
  *
@@ -150,15 +158,15 @@ compute_pedal(XPoint *points, int maxpoints)
 
     double r;
     int theta = 0;
-    XPoint *pp = points;
+    XPoint *pp = st->points;
     int count;
     int numpoints;
 
     /* Just to make sure that this division is not done inside the loop */
-    int h_width = sizex / 2, h_height = sizey / 2 ;
+    int h_width = st->sizex / 2, h_height = st->sizey / 2 ;
 
     for (;;) {
-	d = rand_range (MINLINES, maxlines);
+	d = rand_range (MINLINES, st->maxlines);
 
 	a = rand_range (1, d);
 	b = rand_range (1, d);
@@ -189,101 +197,39 @@ compute_pedal(XPoint *points, int maxpoints)
     return(numpoints);
 }
 
-static void
-init_pedal (Display *dpy, Window window)
+static void *
+pedal_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
 
-  fade_p = !mono_p;
+  st->dpy = dpy;
+  st->window = window;
 
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 0) delay = 0;
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  if (st->delay < 0) st->delay = 0;
 
-  fadedelay = get_integer_resource ("fadedelay", "Integer");
-  if (fadedelay < 0) fadedelay = 0;
+  st->maxlines = get_integer_resource (st->dpy, "maxlines", "Integer");
+  if (st->maxlines < MINLINES) st->maxlines = MINLINES;
+  else if (st->maxlines > MAXLINES) st->maxlines = MAXLINES;
 
-  maxlines = get_integer_resource ("maxlines", "Integer");
-  if (maxlines < MINLINES) maxlines = MINLINES;
-  else if (maxlines > MAXLINES) maxlines = MAXLINES;
+  st->points = (XPoint *)malloc(sizeof(XPoint) * st->maxlines);
 
-  points = (XPoint *)malloc(sizeof(XPoint) * maxlines);
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->sizex = xgwa.width;
+  st->sizey = xgwa.height;
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  sizex = xgwa.width;
-  sizey = xgwa.height;
-
-  if ((xgwa.visual->class != GrayScale) && (xgwa.visual->class != PseudoColor))
-    fade_p = False;
-
-  cmap = xgwa.colormap;
+  st->cmap = xgwa.colormap;
 
   gcv.function = GXcopy;
-  gcv.foreground = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  gcv.background = get_pixel_resource ("background", "Background", dpy, cmap);
-  gc = XCreateGC (dpy, window, GCForeground | GCBackground |GCFunction, &gcv);
+  gcv.foreground = get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
+  gcv.background = get_pixel_resource (st->dpy, st->cmap, "background", "Background");
+  st->gc = XCreateGC (st->dpy, st->window, GCForeground | GCBackground |GCFunction, &gcv);
 
-  if (fade_p)
-  {
-      int status;
-      foreground.pixel = gcv.foreground;
-      XQueryColor (dpy, cmap, &foreground);
-
-      status = XAllocColorCells (
-			dpy,
-			cmap,
-			0,
-			NULL,
-			0,
-			&foreground.pixel,
-			1);
-      if (status)
-      {
-	  XStoreColor ( dpy, cmap, &foreground);
-	  XSetForeground (dpy, gc, foreground.pixel);
-
-	  background.pixel = gcv.background;
-	  XQueryColor (dpy, cmap, &background);
-      }
-      else
-      {
-	  /* If we cant allocate a color cell, then just forget the
-           * whole fade business.
-           */
-	  fade_p = False;
-      }
-  }
+  return st;
 }
 
-static void
-fade_foreground (Display *dpy, Colormap cmap,
-		 XColor from, XColor to, int steps)
-/*
- * This routine assumes that we have a writeable colormap.
- * That means that the default colormap is not full, and that
- * the visual class is PseudoColor or GrayScale.
- */
-{
-    int i;
-    XColor inbetween;
-    int udelay = fadedelay / (steps + 1);
-
-    inbetween = foreground;
-    for (i = 0; i <= steps; i++ )
-    {
-      inbetween.red   = from.red   + (to.red   - from.red)   * i / steps ;
-      inbetween.green = from.green + (to.green - from.green) * i / steps ;
-      inbetween.blue  = from.blue  + (to.blue  - from.blue)  * i / steps ;
-      XStoreColor (dpy, cmap, &inbetween);
-      /* If we don't sync, these can bunch up */
-      XSync(dpy, False);
-      screenhack_handle_events (dpy);
-      usleep(udelay);
-    }
-}
-
-static void
-pedal (Display *dpy, Window window)
 /*
  *    Since the XFillPolygon doesn't require that the last
  *    point == first point, the number of points is the same
@@ -291,92 +237,89 @@ pedal (Display *dpy, Window window)
  *    the line from the last point to the first point.
  *
  */
+static unsigned long
+pedal_draw (Display *dpy, Window window, void *closure)
 {
-   int numpoints;
+  struct state *st = (struct state *) closure;
+  int numpoints;
+  int erase_delay = 10000;
+  int long_delay = 1000000 * st->delay;
 
-   numpoints = compute_pedal(points, maxlines);
+  if (st->erase_p || st->eraser) {
+    st->eraser = erase_window (dpy, window, st->eraser);
+    st->erase_p = 0;
+    return (st->eraser ? erase_delay : 1000000);
+  }
 
-   /* Fade out, make foreground the same as background */
-   if (fade_p)
-     fade_foreground (dpy, cmap, foreground, background, 32);
+  numpoints = compute_pedal(st, st->points, st->maxlines);
 
-    /* Clear the window of previous garbage */
-    XClearWindow (dpy, window);
+  /* Pick a new foreground color (added by jwz) */
+  if (! mono_p)
+    {
+      XColor color;
+      hsv_to_rgb (random()%360, 1.0, 1.0,
+                  &color.red, &color.green, &color.blue);
+      if (XAllocColor (st->dpy, st->cmap, &color))
+        {
+          XSetForeground (st->dpy, st->gc, color.pixel);
+          XFreeColors (st->dpy, st->cmap, &st->foreground.pixel, 1, 0);
+          st->foreground.red = color.red;
+          st->foreground.green = color.green;
+          st->foreground.blue = color.blue;
+          st->foreground.pixel = color.pixel;
+        }
+    }
 
-    XFillPolygon (
-                dpy,
-                window,
-                gc,
-                points,
-                numpoints,
-                Complex,
-                CoordModeOrigin);
+  XFillPolygon (st->dpy, st->window, st->gc, st->points, numpoints,
+                Complex, CoordModeOrigin);
 
-   /* Pick a new foreground color (added by jwz) */
-   if (! mono_p)
-     {
-       XColor color;
-       hsv_to_rgb (random()%360, 1.0, 1.0,
-		   &color.red, &color.green, &color.blue);
-       XSync(dpy, False);
-       if (fade_p)
-	 {
-	   foreground.red = color.red;
-	   foreground.green = color.green;
-	   foreground.blue = color.blue;
-	   /* don't do this here -- let fade_foreground() bring it up! */
-	   /* XStoreColor (dpy, cmap, &foreground); */
-	 }
-       else if (XAllocColor (dpy, cmap, &color))
-	 {
-	   XSetForeground (dpy, gc, color.pixel);
-	   XFreeColors (dpy, cmap, &foreground.pixel, 1, 0);
-	   foreground.red = color.red;
-	   foreground.green = color.green;
-	   foreground.blue = color.blue;
-	   foreground.pixel = color.pixel;
-	 }
-       XSync(dpy, False);
-     }
-
-    /* Fade in by bringing the foreground back from background */
-    if (fade_p)
-       fade_foreground (dpy, cmap, background, foreground, 32);
+  st->erase_p = 1;
+  return long_delay;
 }
 
+static void
+pedal_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->sizex = w;
+  st->sizey = h;
+}
+
+static Bool
+pedal_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+pedal_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
 
-char *progclass = "Pedal";
 
 /*
  * If we are trying to save the screen, the background
  * should be dark.
  */
-char *defaults [] = {
+static const char *pedal_defaults [] = {
   ".background:			black",
   ".foreground:			white",
   "*delay:			5",
-  "*fadedelay:			200000",
   "*maxlines:			1000",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec pedal_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
-  { "-fadedelay",	".fadedelay",		XrmoptionSepArg, 0 },
   { "-maxlines",	".maxlines",		XrmoptionSepArg, 0 },
   { "-foreground",      ".foreground",          XrmoptionSepArg, 0 },
   { "-background",      ".background",          XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-    init_pedal (dpy, window);
-    for (;;) {
-	pedal (dpy, window);
-	XSync(dpy, False);
-        screenhack_handle_events (dpy);
-	if (delay) sleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Pedal", pedal)

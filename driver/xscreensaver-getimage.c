@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2004 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2006 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -100,6 +100,8 @@ typedef enum {
 #define GETIMAGE_VIDEO_PROGRAM   "xscreensaver-getimage-video"
 #define GETIMAGE_FILE_PROGRAM    "xscreensaver-getimage-file"
 #define GETIMAGE_SCREEN_PROGRAM  "xscreensaver-getimage-desktop"
+
+extern const char *blurb (void);
 
 const char *
 blurb (void)
@@ -297,7 +299,7 @@ compute_image_scaling (int src_w, int src_h,
    If out of memory, returns False, and the XImage will have been
    destroyed and freed.
  */
-#ifndef USE_EXTERNAL_SCREEN_GRABBER
+#if !defined(USE_EXTERNAL_SCREEN_GRABBER) || defined(HAVE_JPEGLIB)
 static Bool
 scale_ximage (Screen *screen, Visual *visual,
               XImage *ximage, int new_width, int new_height)
@@ -345,7 +347,7 @@ scale_ximage (Screen *screen, Visual *visual,
 
   return True;
 }
-#endif /* ! USE_EXTERNAL_SCREEN_GRABBER */
+#endif /* !USE_EXTERNAL_SCREEN_GRABBER || HAVE_JPEGLIB */
 
 
 #ifdef HAVE_GDK_PIXBUF
@@ -1773,7 +1775,7 @@ main (int argc, char **argv)
 
   memset (&P, 0, sizeof(P));
   P.db = db;
-  load_init_file (&P);
+  load_init_file (dpy, &P);
 
   progname = argv[0] = oprogname;
 

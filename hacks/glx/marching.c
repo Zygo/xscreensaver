@@ -13,11 +13,20 @@
  * http://astronomy.swin.edu.au/~pbourke/modelling/polygonise/
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <GL/gl.h>
+
+#ifdef HAVE_COCOA
+# include <OpenGL/gl.h>
+#else
+# include <GL/gl.h>
+#endif
+
 #include "marching.h"
 #include "normals.h"
 

@@ -26,7 +26,7 @@
 This program makes collages out of random images pulled off of the
 World Wide Web.  It finds these images by doing random web searches,
 and then extracting images from the returned pages.  It can also be
-set up to filter the images through the `VidWhacker' program.
+set up to filter the images through the "VidWhacker" program.
 
 WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY.
 
@@ -34,6 +34,6 @@ The Internet being what it is, absolutely anything might show up in the
 collage including -- quite possibly -- pornography, or even nudity.
 Please act accordingly.
 
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 1999.
   </_description>
 </screensaver>

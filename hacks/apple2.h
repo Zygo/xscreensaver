@@ -17,10 +17,9 @@
 
 #include "analogtv.h"
 
-
 typedef struct apple2_state {
-  u_char hireslines[192][40];
-  u_char textlines[24][40];
+  unsigned char hireslines[192][40];
+  unsigned char textlines[24][40];
   int gr_text;
   enum {
     A2_GR_FULL=1,
@@ -34,7 +33,8 @@ typedef struct apple2_state {
 } apple2_state_t;
 
 
-typedef struct apple2_sim_s {
+typedef struct apple2_sim_s apple2_sim_t;
+struct apple2_sim_s {
   
   void *controller_data;
 
@@ -44,7 +44,7 @@ typedef struct apple2_sim_s {
   analogtv_input *inp;
   analogtv_reception reception;
 
-  char *typing;
+  const char *typing;
   char typing_buf[1024];
   double typing_rate;
 
@@ -61,7 +61,14 @@ typedef struct apple2_sim_s {
   struct timeval basetime_tv;
   double curtime;
   double delay;
-} apple2_sim_t;
+
+  int stepno;
+  double next_actiontime;
+  void (*controller)(apple2_sim_t *sim,
+                     int *stepno,
+                     double *next_actiontime);
+
+};
 
 
 enum {
@@ -80,9 +87,11 @@ enum {
   A2CONTROLLER_FREE=-2
 };
 
-extern void
-apple2(Display *dpy, Window window, int delay,
-       void (*)(apple2_sim_t *sim, int *stepno, double *next_actiontime));
+
+extern apple2_sim_t * apple2_start (Display *, Window, int delay,
+                                    void (*)(apple2_sim_t *, int *stepno,
+                                             double *next_actiontime));
+extern int apple2_one_frame (apple2_sim_t *);
 
 
 void a2_poke(apple2_state_t *st, int addr, int val);
@@ -90,7 +99,7 @@ void a2_goto(apple2_state_t *st, int r, int c);
 void a2_cls(apple2_state_t *st);
 void a2_invalidate(apple2_state_t *st);
 
-void a2_add_disk_item(apple2_state_t *st, char *name, u_char *data,
+void a2_add_disk_item(apple2_state_t *st, char *name, unsigned char *data,
                       int len, char type);
 void a2_scroll(apple2_state_t *st);
 void a2_printc(apple2_state_t *st, char c);

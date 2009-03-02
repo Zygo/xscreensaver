@@ -51,7 +51,7 @@ print(void)
 	  (p && p->pw_name ? p->pw_name : "???"),
 	  (g && g->gr_name ? g->gr_name : "???"));
 
-  size = sizeof(groups) / sizeof(gid_t)
+  size = sizeof(groups) / sizeof(gid_t);
   n = getgroups(size - 1, groups);
   if (n < 0)
     perror("getgroups failed");

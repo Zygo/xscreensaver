@@ -65,7 +65,7 @@ static char *usage = "\n\
 usage: %s -<option>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>.\n\
+  Version %s, copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>.\n\
 \n\
   The xscreensaver program is a daemon that runs in the background.\n\
   You control a running xscreensaver process by sending it messages\n\

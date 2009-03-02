@@ -4,25 +4,13 @@
 
   <command arg="-root"/>
 
-  <hgroup>
-    <select id="render">
-      <option id="flat"  _label="Use Flat Coloring" arg-set="-no-light"/>
-      <option id="light" _label="Directional Lighting"/>
-    </select>
-
-    <select id="render">
-      <option id="wire"  _label="Wireframe" arg-set="-wire"/>
-      <option id="solid" _label="Solid Surface"/>
-    </select>
-  </hgroup>
-
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <number id="quads" type="slider" arg="-quads %"
-          _label="Quad Count" low="1" high="50" default="5"/>
+   <number id="quads" type="spinbutton" arg="-quads %"
+            _label="Quad Count" low="1" high="50" default="5"/>
 
   <hgroup>
    <vgroup>
@@ -42,12 +30,10 @@
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
-  <file id="bitmap" _label="Texture PPM File" arg="-bitmap %"/>
-
   <_description>
 Draws some intersecting planes, making use of alpha blending, fog,
-textures, and mipmaps, plus a ``frames per second'' meter so that you
-can tell how fast your graphics card is...  Requires OpenGL.  Written
-by David Konerding.
+textures, and mipmaps.
+
+Written by David Konerding; 1999.
   </_description>
 </screensaver>

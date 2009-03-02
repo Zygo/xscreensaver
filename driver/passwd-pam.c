@@ -89,6 +89,8 @@ struct pam_closure {
   Bool verbose_p;
 };
 
+Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
+Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
 
 #ifdef HAVE_PAM_FAIL_DELAY
    /* We handle delays ourself.*/

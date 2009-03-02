@@ -9,15 +9,12 @@
           low="0" high="50000" default="20000"
           convert="invert"/>
 
-  <select id="render">
-    <option id="solid"    _label="Solid Tiles"/>
-    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-Flipflop draws a grid of 3D colored tiles that change positions with 
-each other.  Written by Kevin Ogden.
+Draws a grid of 3D colored tiles that change positions with each other.  
+
+Written by Kevin Ogden; 2003.
   </_description>
 </screensaver>

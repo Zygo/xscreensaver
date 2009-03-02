@@ -18,36 +18,10 @@
 #define PROB(x) (frand(1.0) < (x))
 
 #define NCOLORSMAX 255
-static int width, height, count, cycle;
-static double frac, disorder, handedness;
-static int ncolors=0;
-static GC draw_gc, erase_gc;
-static XColor colors[NCOLORSMAX];
 #define STATES 8
 
 /* 0- 3 left-winding  */
 /* 4- 7 right-winding */
-
-#define CLEAR1(x,y) (!fill[((y)%height)*width+(x)%width])
-#define MOVE1(x,y) (fill[((y)%height)*width+(x)%width]=1, XDrawPoint(dpy, window, draw_gc, (x)%width,(y)%height), cov++)
-
-static int cov;
-static int dirh[4];
-static int dirv[4];
-
-static int *fill;
-
-#define CLEARDXY(x,y,dx,dy) CLEAR1(x+dx, y+dy) && CLEAR1(x+dx+dx, y+dy+dy)
-#define MOVEDXY(x,y,dx,dy)  MOVE1 (x+dx, y+dy), MOVE1 (x+dx+dx, y+dy+dy)
-
-#define CLEAR(d) CLEARDXY(w->h,w->v, dirh[d],dirv[d])
-#define MOVE(d) (XSetForeground(dpy, draw_gc, colors[w->c].pixel), \
-                  MOVEDXY(w->h,w->v, dirh[d],dirv[d]), \
-		  w->h=w->h+dirh[d]*2, \
-		  w->v=w->v+dirv[d]*2, dir=d)
-
-#define RANDOM (void) (w->h = R(width), w->v = R(height), w->c = R(ncolors), \
-		  type=R(2), dir=R(4), (cycle && (w->cc=R(3)+ncolors)))
 
 struct worm {
     int h;
@@ -55,7 +29,47 @@ struct worm {
     int s;
     int c;
     int cc;
-} *worms;
+};
+
+
+struct state {
+  Display *dpy;
+  Window window;
+
+   int width, height, count, cycle;
+   double frac, disorder, handedness;
+   int ncolors;
+   GC draw_gc, erase_gc;
+   XColor colors[NCOLORSMAX];
+
+   int delay;
+
+   int cov;
+   int dirh[4];
+   int dirv[4];
+
+   int *fill;
+
+   struct worm *worms;
+   int inclear;
+};
+
+#define CLEAR1(x,y) (!st->fill[((y)%st->height)*st->width+(x)%st->width])
+#define MOVE1(x,y) (st->fill[((y)%st->height)*st->width+(x)%st->width]=1, XDrawPoint(st->dpy, st->window, st->draw_gc, (x)%st->width,(y)%st->height), st->cov++)
+
+#define CLEARDXY(x,y,dx,dy) CLEAR1(x+dx, y+dy) && CLEAR1(x+dx+dx, y+dy+dy)
+#define MOVEDXY(x,y,dx,dy)  MOVE1 (x+dx, y+dy), MOVE1 (x+dx+dx, y+dy+dy)
+
+#define CLEAR(d) CLEARDXY(w->h,w->v, st->dirh[d],st->dirv[d])
+#define MOVE(d) (XSetForeground(st->dpy, st->draw_gc, st->colors[w->c].pixel), \
+                  MOVEDXY(w->h,w->v, st->dirh[d],st->dirv[d]), \
+		  w->h=w->h+st->dirh[d]*2, \
+		  w->v=w->v+st->dirv[d]*2, dir=d)
+
+#define RANDOM (void) (w->h = R(st->width), w->v = R(st->height), w->c = R(st->ncolors), \
+		  type=R(2), dir=R(4), (st->cycle && (w->cc=R(3)+st->ncolors)))
+
+
 
 #define SUCC(x) ((x+1)%4)
 #define PRED(x) ((x+3)%4)
@@ -66,14 +80,14 @@ struct worm {
 #define TRY(x)  if (CLEAR(x)) { MOVE(x); break; }
 
 static void
-do_worm(Display *dpy, Window window, struct worm *w)
+do_worm(struct state *st, struct worm *w)
 {
     int type = w->s / 4;
     int dir = w->s % 4;
 
-    w->c = (w->c+w->cc) % ncolors;
+    w->c = (w->c+w->cc) % st->ncolors;
 
-    if (PROB(disorder)) type=PROB(handedness);
+    if (PROB(st->disorder)) type=PROB(st->handedness);
     switch(type) {
     case 0: /* CCW */
 	TRY(CCW)
@@ -89,115 +103,137 @@ do_worm(Display *dpy, Window window, struct worm *w)
 	break;
     }
     w->s = type*4+dir;
-    w->h = w->h % width;
-    w->v = w->v % height;
+    w->h = w->h % st->width;
+    w->v = w->v % st->height;
 }
 
-static void
-init_squiral(Display *dpy, Window window)
+static void *
+squiral_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
     XGCValues gcv;
     Colormap cmap;
     XWindowAttributes xgwa;
     Bool writeable = False;
     int i;
 
-    XClearWindow(dpy, window);
-    XGetWindowAttributes(dpy, window, &xgwa);
-    width  = xgwa.width;
-    height = xgwa.height;
+    st->dpy = dpy;
+    st->window = window;
+
+   st->delay= get_integer_resource(st->dpy, "delay", "Integer");
+
+    XClearWindow(st->dpy, st->window);
+    XGetWindowAttributes(st->dpy, st->window, &xgwa);
+    st->width  = xgwa.width;
+    st->height = xgwa.height;
 
     cmap = xgwa.colormap;
-    gcv.foreground = get_pixel_resource("foreground",
-	"Foreground", dpy, cmap);
-    draw_gc = XCreateGC(dpy, window, GCForeground, &gcv);
-    gcv.foreground = get_pixel_resource ("background", "Background",dpy, cmap);
-    erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource(st->dpy, cmap, "foreground",
+	"Foreground");
+    st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
+    st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     cmap = xgwa.colormap;
-    if( ncolors ) {
-        free_colors(dpy, cmap, colors, ncolors);
-        ncolors = 0;
+    if( st->ncolors ) {
+        free_colors(st->dpy, cmap, st->colors, st->ncolors);
+        st->ncolors = 0;
     }
     if( mono_p ) {
-      ncolors=1;
-      colors[0].pixel=get_pixel_resource("foreground","Foreground", dpy, cmap);
+      st->ncolors=1;
+      st->colors[0].pixel=get_pixel_resource(st->dpy, cmap, "foreground","Foreground");
     } else {
-      ncolors = get_integer_resource("ncolors", "Integer");
-      if (ncolors < 0 || ncolors > NCOLORSMAX)
-        ncolors = NCOLORSMAX;
-      make_uniform_colormap(dpy, xgwa.visual, cmap, colors, &ncolors, True,
+      st->ncolors = get_integer_resource(st->dpy, "ncolors", "Integer");
+      if (st->ncolors < 0 || st->ncolors > NCOLORSMAX)
+        st->ncolors = NCOLORSMAX;
+      make_uniform_colormap(st->dpy, xgwa.visual, cmap, st->colors, &st->ncolors, True,
 	  &writeable, False);
-      if (ncolors <= 0) {
-        ncolors = 1;
-        colors[0].pixel=get_pixel_resource("foreground","Foreground",dpy, cmap);
+      if (st->ncolors <= 0) {
+        st->ncolors = 1;
+        st->colors[0].pixel=get_pixel_resource(st->dpy, cmap, "foreground","Foreground");
       }
     }
-    count= get_integer_resource("count", "Integer");
-    frac = get_integer_resource("fill",  "Integer")*0.01;
-    cycle= get_boolean_resource("cycle", "Cycle");
-    disorder=get_float_resource("disorder", "Float");
-    handedness=get_float_resource("handedness", "Float");
+    st->count= get_integer_resource(st->dpy, "count", "Integer");
+    st->frac = get_integer_resource(st->dpy, "fill",  "Integer")*0.01;
+    st->cycle= get_boolean_resource(st->dpy, "cycle", "Cycle");
+    st->disorder=get_float_resource(st->dpy, "disorder", "Float");
+    st->handedness=get_float_resource(st->dpy, "handedness", "Float");
 
-    if(frac<0.01) frac=0.01;
-    if(frac>0.99) frac=0.99;
-    if(count==0) count=width/32;
-    if(count<1) count=1;
-    if(count>1000) count=1000;
+    if(st->frac<0.01) st->frac=0.01;
+    if(st->frac>0.99) st->frac=0.99;
+    if(st->count==0) st->count=st->width/32;
+    if(st->count<1) st->count=1;
+    if(st->count>1000) st->count=1000;
 
-    if(worms) free(worms);
-    if(fill)  free(fill);
+    if(st->worms) free(st->worms);
+    if(st->fill)  free(st->fill);
 
-    worms=calloc(count, sizeof(struct worm));
-    fill=calloc(width*height, sizeof(int));
+    st->worms=calloc(st->count, sizeof(struct worm));
+    st->fill=calloc(st->width*st->height, sizeof(int));
 
-    dirh[0]=0; dirh[1]=1; dirh[2]=0; dirh[3]=width-1;
-    dirv[0]=height-1; dirv[1]=0; dirv[2]=1; dirv[3]=0;
-    for(i=0;i<count;i++) {
-	worms[i].h=R(width);
-	worms[i].v=R(height);
-	worms[i].s=R(4)+4*PROB(handedness);
-	worms[i].c=R(ncolors);
-	if(cycle) { worms[i].cc=R(3)+ncolors; }
-	else worms[i].cc=0;
+    st->dirh[0]=0; st->dirh[1]=1; st->dirh[2]=0; st->dirh[3]=st->width-1;
+    st->dirv[0]=st->height-1; st->dirv[1]=0; st->dirv[2]=1; st->dirv[3]=0;
+    for(i=0;i<st->count;i++) {
+	st->worms[i].h=R(st->width);
+	st->worms[i].v=R(st->height);
+	st->worms[i].s=R(4)+4*PROB(st->handedness);
+	st->worms[i].c=R(st->ncolors);
+	if(st->cycle) { st->worms[i].cc=R(3)+st->ncolors; }
+	else st->worms[i].cc=0;
     }
+
+    return st;
 }
 
-void
-screenhack(Display *dpy, Window window)
+static unsigned long
+squiral_draw (Display *dpy, Window window, void *closure)
 {
-   int inclear, i;
-   int delay= get_integer_resource("delay", "Integer");
-   init_squiral(dpy, window);
-   cov=0; inclear=height;
-   while(1) {
-	if(inclear<height) {
-	    XDrawLine(dpy, window, erase_gc, 0, inclear, width-1, inclear);
-	    memset(&fill[inclear*width], 0, sizeof(int)*width);
-	    XDrawLine(dpy, window, erase_gc, 0, height-inclear-1, width-1,
-	   	    height-inclear-1);
-	    memset(&fill[(height-inclear-1)*width], 0, sizeof(int)*width);
-	    inclear++;
-	    XDrawLine(dpy, window, erase_gc, 0, inclear, width-1, inclear);
-	    memset(&fill[inclear*width], 0, sizeof(int)*width);
-	    XDrawLine(dpy, window, erase_gc, 0, height-inclear-1, width-1,
-		    height-inclear-1);
-	    memset(&fill[(height-inclear-1)*width], 0, sizeof(int)*width);
-	    inclear++;
-	    if(inclear>height/2) inclear=height;
-	}
-	else if(cov>(frac*width*height)) {
-	    inclear=0;
-	    cov=0;
-	}
-	for(i=0;i<count;i++) do_worm(dpy, window, &worms[i]);
-	screenhack_handle_events(dpy);
-	usleep(delay);
-    }	
+  struct state *st = (struct state *) closure;
+  int i;
+
+  if(st->inclear<st->height) {
+    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->inclear, st->width-1, st->inclear);
+    memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
+    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->height-st->inclear-1, st->width-1,
+              st->height-st->inclear-1);
+    memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
+    st->inclear++;
+    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->inclear, st->width-1, st->inclear);
+    memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
+    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->height-st->inclear-1, st->width-1,
+              st->height-st->inclear-1);
+    memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
+    st->inclear++;
+    if(st->inclear>st->height/2) st->inclear=st->height;
+  }
+  else if(st->cov>(st->frac*st->width*st->height)) {
+    st->inclear=0;
+    st->cov=0;
+  }
+  for(i=0;i<st->count;i++) do_worm(st, &st->worms[i]);
+  return st->delay;
 }
 
-char *progclass="Squiral";
+static void
+squiral_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
 
-char *defaults[] = {
+static Bool
+squiral_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+squiral_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *squiral_defaults[] = {
   ".background: black",
   ".foreground: white",
   "*fill:       75",
@@ -210,7 +246,7 @@ char *defaults[] = {
   0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec squiral_options[] = {
     {"-fill", ".fill", XrmoptionSepArg, 0},
     {"-count", ".count", XrmoptionSepArg, 0},
     {"-delay", ".delay", XrmoptionSepArg, 0},
@@ -221,3 +257,5 @@ XrmOptionDescRec options[] = {
     {"-no-cycle", ".cycle", XrmoptionNoArg, "False"},
     { 0, 0, 0, 0 }
 };
+
+XSCREENSAVER_MODULE ("Squiral", squiral)

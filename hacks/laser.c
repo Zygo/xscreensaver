@@ -27,24 +27,22 @@ static const char sccsid[] = "@(#)laser.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_laser
-#define PROGCLASS "Laser"
-#define HACK_INIT init_laser
-#define HACK_DRAW draw_laser
-#define laser_opts xlockmore_opts
-#define DEFAULTS "*delay: 40000 \n" \
- "*count: 10 \n" \
- "*cycles: 200 \n" \
- "*ncolors: 64 \n"
-#define BRIGHT_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_laser
+# define DEFAULTS	"*delay: 40000 \n" \
+					"*count: 10 \n" \
+					"*cycles: 200 \n" \
+					"*ncolors: 64 \n"
+# define BRIGHT_COLORS
+# define reshape_laser 0
+# define laser_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_laser
 
-ModeSpecOpt laser_opts =
+ENTRYPOINT ModeSpecOpt laser_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -119,7 +117,7 @@ free_laser(Display *display, lasersstruct *lp)
 	}
 }
 
-void
+ENTRYPOINT void
 init_laser(ModeInfo * mi)
 {
 	Display *display = MI_DISPLAY(mi);
@@ -166,6 +164,9 @@ init_laser(ModeInfo * mi)
 			free_laser(display, lp);
 			return;
 		}
+# ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), lp->stippledGC, False);
+# endif
 	}
 	MI_CLEARWINDOW(mi);
 
@@ -319,7 +320,7 @@ draw_laser_once(ModeInfo * mi)
 	lp->so = (lp->so + 1) % lp->lw;
 }
 
-void
+ENTRYPOINT void
 draw_laser(ModeInfo * mi)
 {
 	int         i;
@@ -339,7 +340,7 @@ draw_laser(ModeInfo * mi)
 		init_laser(mi);
 }
 
-void
+ENTRYPOINT void
 release_laser(ModeInfo * mi)
 {
 	if (lasers != NULL) {
@@ -352,10 +353,12 @@ release_laser(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_laser(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Laser", laser)
 
 #endif /* MODE_laser */

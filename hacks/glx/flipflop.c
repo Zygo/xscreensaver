@@ -9,30 +9,16 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
-
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #define BOARDSIZE 9
 #define NUMSQUARES 76
 #define HALFTHICK 0.04
 
 #ifdef STANDALONE
-# define PROGCLASS        "Flipflop"
-# define HACK_INIT        init_flipflop
-# define HACK_DRAW        draw_flipflop
-# define HACK_RESHAPE     reshape_flipflop
-# define HACK_HANDLE_EVENT flipflop_handle_event
-# define EVENT_MASK       PointerMotionMask
-# define flipflop_opts  xlockmore_opts
-
 #define DEFAULTS       "*delay:       20000       \n" \
                        "*showFPS:       False       \n" \
 		       "*wireframe:	False     \n"
 
+# define refresh_flipflop 0
 # include "xlockmore.h"
 
 #else
@@ -41,7 +27,6 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
 #include "gltrackball.h"
 
 #undef countof
@@ -60,7 +45,7 @@ static argtype vars[] = {
   { &rotate, "rotate", "Rotate", "True", t_Bool},
 };
 
-ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   flipflop_description =
@@ -70,15 +55,6 @@ ModStruct   flipflop_description =
  "Flipflop", 0, NULL};
 
 #endif
-
-typedef struct {
-  GLXContext *glx_context;
-  Window window;
-  trackball_state *trackball;
-  Bool button_down_p;
-} Flipflopcreen;
-
-static Flipflopcreen *qs = NULL;
 
 typedef struct{
   /* 2D array specifying which squares are where (to avoid collisions) */
@@ -100,17 +76,22 @@ typedef struct{
 } randsheet;
 
 
-/*** ADDED RANDSHEET VARS ***/
+typedef struct {
+  GLXContext *glx_context;
+  Window window;
+  trackball_state *trackball;
+  Bool button_down_p;
 
-static randsheet MyRandSheet;
+  randsheet sheet;
 
-static double theta = 0.0;
-/* amount which the square flips.  1 is a entire flip */
-static float flipspeed = 0.03;
-/* relative distace of camera from center */
-static float reldist = 1;
-/* likelehood a square will attempt a move */
-static float energy = 40;
+  double theta;
+  float flipspeed;  /* amount of flip.  1 is a entire flip */
+  float reldist;    /* relative distace of camera from center */
+  float energy;     /* likelehood a square will attempt a move */
+
+} Flipflopcreen;
+
+static Flipflopcreen *qs = NULL;
 
 
 static void randsheet_initialize( randsheet *rs );
@@ -119,7 +100,7 @@ static int randsheet_new_move( randsheet* rs );
 static void randsheet_move( randsheet *rs, float rot );
 static void randsheet_draw( randsheet *rs );
 static void setup_lights(void);
-static void drawBoard(void);
+static void drawBoard(Flipflopcreen *);
 static void display(Flipflopcreen *c);
 static void draw_sheet(void);
 
@@ -140,7 +121,7 @@ setup_lights(void)
   glEnable(GL_LIGHT0);
  }
 
-Bool
+ENTRYPOINT Bool
 flipflop_handle_event (ModeInfo *mi, XEvent *event)
 {
   Flipflopcreen *c = &qs[MI_SCREEN(mi)];
@@ -182,13 +163,13 @@ flipflop_handle_event (ModeInfo *mi, XEvent *event)
 
 /* draw board */
 static void
-drawBoard(void)
+drawBoard(Flipflopcreen *c)
 {
   int i;
-  for( i=0; i < (energy) ; i++ )
-    randsheet_new_move( &MyRandSheet );
-  randsheet_move( &MyRandSheet, flipspeed * 3.14159 );
-  randsheet_draw( &MyRandSheet );
+  for( i=0; i < (c->energy) ; i++ )
+    randsheet_new_move( &c->sheet );
+  randsheet_move( &c->sheet, c->flipspeed * 3.14159 );
+  randsheet_draw( &c->sheet );
 }
 
 
@@ -209,20 +190,20 @@ display(Flipflopcreen *c)
 
 
   /** setup perspectif */
-  glTranslatef(0.0, 0.0, -reldist*BOARDSIZE);
+  glTranslatef(0.0, 0.0, -c->reldist*BOARDSIZE);
   glRotatef(22.5, 1.0, 0.0, 0.0);
   gltrackball_rotate (c->trackball);
-  glRotatef(theta*100, 0.0, 1.0, 0.0);
+  glRotatef(c->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
-  drawBoard();
+  drawBoard(c);
 
   if (!c->button_down_p)
-    theta += .001;
+    c->theta += .001;
 
 }
 
-void
+ENTRYPOINT void
 reshape_flipflop(ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -233,7 +214,7 @@ reshape_flipflop(ModeInfo *mi, int width, int height)
   glMatrixMode(GL_MODELVIEW);
 }
 
-void
+ENTRYPOINT void
 init_flipflop(ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
@@ -247,6 +228,10 @@ init_flipflop(ModeInfo *mi)
   c = &qs[screen];
   c->window = MI_WINDOW(mi);
   c->trackball = gltrackball_init ();
+
+  c->flipspeed = 0.03;
+  c->reldist = 1;
+  c->energy = 40;
 
   if((c->glx_context = init_GL(mi)))
     reshape_flipflop(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
@@ -265,12 +250,12 @@ init_flipflop(ModeInfo *mi)
   clearbits |= GL_DEPTH_BUFFER_BIT;
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
-  randsheet_initialize( &MyRandSheet );
+  randsheet_initialize( &c->sheet );
 
 
 }
 
-void
+ENTRYPOINT void
 draw_flipflop(ModeInfo *mi)
 {
   Flipflopcreen *c = &qs[MI_SCREEN(mi)];
@@ -294,13 +279,14 @@ draw_flipflop(ModeInfo *mi)
 
 }
 
-void
+ENTRYPOINT void
 release_flipflop(ModeInfo *mi)
 {
   if(qs)
     free((void *) qs);
+  qs = 0;
 
-  FreeAllGL(MI);
+  FreeAllGL(mi);
 }
 
 /*** ADDED RANDSHEET FUNCTIONS ***/
@@ -592,5 +578,7 @@ randsheet_draw( randsheet *rs )
 }
 
 /**** END RANDSHEET FUNCTIONS ***/
+
+XSCREENSAVER_MODULE ("Flipflop", flipflop)
 
 #endif

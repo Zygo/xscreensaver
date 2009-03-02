@@ -13,24 +13,8 @@
  * See the included man page for more details.
  */
 
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
-
-#include <time.h>
-#include <sys/time.h>
-#include <ctype.h>
-
-
-/* parameters that are user configurable */
-
-/* delay (usec) between iterations */
-static int delay;
-
 
 /* non-user-modifiable immutable definitions */
 
@@ -43,21 +27,6 @@ static int delay;
 #define BARCODE_WIDTH (164)
 #define BARCODE_HEIGHT (69)
 #define MAX_MAG (7)
-
-/* width and height of the window */
-static int windowWidth;
-static int windowHeight;
-
-static Display *display;        /* the display to draw on */
-static Window window;           /* the window to draw on */
-static Visual *visual;          /* the visual to use */
-static Screen *screen;          /* the screen to draw on */
-static Colormap cmap;           /* the colormap of the window */
-
-static GC theGC;                /* GC for drawing */
-unsigned long fg_pixel;
-static Bool button_down_p;
-
 
 
 /* simple bitmap structure */
@@ -86,17 +55,43 @@ typedef struct
 }
 Barcode;
 
-static Barcode *barcodes; /* array of barcodes */
-static int barcode_count; /* how many barcodes are currently active */
-static int barcode_max;   /* the maximum number of active barcodes */
+struct state {
+  Display *dpy;
+  Window window;
 
-static XImage *theImage;  /* ginormo image for drawing */
-static Bitmap *theBitmap; /* ginormo bitmap for drawing */
+  /* parameters that are user configurable */
 
-static enum { BC_SCROLL, BC_GRID, BC_CLOCK12, BC_CLOCK24 } mode;
+  /* delay (usec) between iterations */
+  int delay;
+
+  /* width and height of the window */
+  int windowWidth;
+  int windowHeight;
+
+  Visual *visual;          /* the visual to use */
+  Colormap cmap;           /* the colormap of the window */
+
+  GC theGC;                /* GC for drawing */
+  unsigned long fg_pixel, grid_pixel;
+  Bool button_down_p;
+  int grid_alloced_p;
+  char *strings[200];
+
+  Barcode *barcodes; /* array of barcodes */
+  int barcode_count; /* how many barcodes are currently active */
+  int barcode_max;   /* the maximum number of active barcodes */
+
+  XImage *theImage;  /* ginormo image for drawing */
+  Bitmap *theBitmap; /* ginormo bitmap for drawing */
+
+  enum { BC_SCROLL, BC_GRID, BC_CLOCK12, BC_CLOCK24 } mode;
+
+  int grid_w;
+  int grid_h;
+};
 
 /* a bunch of words */
-static char *words[] = 
+static const char *words[] = 
 {
   "abdomen",
   "abeyance",
@@ -379,7 +374,7 @@ static char *words[] =
  */
 
 /* construct a new bitmap */
-Bitmap *makeBitmap (int width, int height)
+static Bitmap *makeBitmap (int width, int height)
 {
     Bitmap *result = malloc (sizeof (Bitmap));
     result->width = width;
@@ -390,21 +385,24 @@ Bitmap *makeBitmap (int width, int height)
 }
 
 /* clear a bitmap */
-void bitmapClear (Bitmap *b)
+static void bitmapClear (Bitmap *b)
 {
     memset (b->buf, 0, b->widthBytes * b->height);
 }
 
+#if 0
 /* free a bitmap */
-void bitmapFree (Bitmap *b)
+static void bitmapFree (Bitmap *b)
 {
     free (b->buf);
     free (b);
 }
+#endif
+
 
 /* get the byte value at the given byte-offset coordinates in the given
  * bitmap */
-int bitmapGetByte (Bitmap *b, int xByte, int y)
+static int bitmapGetByte (Bitmap *b, int xByte, int y)
 {
     if ((xByte < 0) || 
 	(xByte >= b->widthBytes) || 
@@ -419,7 +417,7 @@ int bitmapGetByte (Bitmap *b, int xByte, int y)
 }
 
 /* get the bit value at the given coordinates in the given bitmap */
-int bitmapGet (Bitmap *b, int x, int y)
+static int bitmapGet (Bitmap *b, int x, int y)
 {
     int xbyte = x >> 3;
     int xbit = x & 0x7;
@@ -429,7 +427,7 @@ int bitmapGet (Bitmap *b, int x, int y)
 }
 
 /* set the bit value at the given coordinates in the given bitmap */
-void bitmapSet (Bitmap *b, int x, int y, int value)
+static void bitmapSet (Bitmap *b, int x, int y, int value)
 {
     int xbyte = x >> 3;
     int xbit = x & 0x7;
@@ -454,8 +452,8 @@ void bitmapSet (Bitmap *b, int x, int y, int value)
 }
 
 /* copy the given rectangle to the given destination from the given source. */
-void bitmapCopyRect (Bitmap *dest, int dx, int dy,
-		     Bitmap *src, int sx, int sy, int width, int height)
+static void bitmapCopyRect (Bitmap *dest, int dx, int dy,
+                            Bitmap *src, int sx, int sy, int width, int height)
 {
     int x, y;
 
@@ -469,7 +467,7 @@ void bitmapCopyRect (Bitmap *dest, int dx, int dy,
 }
 
 /* draw a vertical line in the given bitmap */
-void bitmapVlin (Bitmap *b, int x, int y1, int y2)
+static void bitmapVlin (Bitmap *b, int x, int y1, int y2)
 {
     while (y1 <= y2)
     {
@@ -479,13 +477,13 @@ void bitmapVlin (Bitmap *b, int x, int y1, int y2)
 }
 
 /* scale a bitmap into another bitmap */
-void bitmapScale (Bitmap *dest, Bitmap *src, int mag)
+static void bitmapScale (Bitmap *dest, Bitmap *src, int mag)
 {
     int x, y, x2, y2;
 
-    for (y = 0; y < src->height; y++)
+    for (y = 0; y < BARCODE_HEIGHT; y++)
     {
-	for (x = 0; x < src->width; x++)
+	for (x = 0; x < BARCODE_WIDTH; x++)
 	{
 	    int v = bitmapGet (src, x, y);
 	    for (x2 = 0; x2 < mag; x2++) 
@@ -597,13 +595,13 @@ static unsigned char font5x8Buf[] =
 static Bitmap font5x8 = { 8, 1024, 1, (char *) font5x8Buf };
 
 /* draw the given 5x8 character at the given coordinates */
-void bitmapDrawChar5x8 (Bitmap *b, int x, int y, char c)
+static void bitmapDrawChar5x8 (Bitmap *b, int x, int y, char c)
 {
     bitmapCopyRect (b, x, y, &font5x8, 0, c * 8, 5, 8);
 }
 
 /* draw a string of 5x8 characters at the given coordinates */
-void bitmapDrawString5x8 (Bitmap *b, int x, int y, char *str)
+static void bitmapDrawString5x8 (Bitmap *b, int x, int y, char *str)
 {
     int origx = x;
 
@@ -778,34 +776,34 @@ typedef enum
 UpcSet;
 
 /* the Left A patterns */
-unsigned int upcLeftA[] = { 
+static unsigned int upcLeftA[] = { 
     0x0d, 0x19, 0x13, 0x3d, 0x23, 0x31, 0x2f, 0x3b, 0x37, 0x0b 
 };
 
 /* the Left B patterns */
-unsigned int upcLeftB[] = { 
+static unsigned int upcLeftB[] = { 
     0x27, 0x33, 0x1b, 0x21, 0x1d, 0x39, 0x05, 0x11, 0x09, 0x17
 };
 
 /* the Right patterns */
-unsigned int upcRight[] = { 
+static unsigned int upcRight[] = { 
     0x72, 0x66, 0x6c, 0x42, 0x5c, 0x4e, 0x50, 0x44, 0x48, 0x74
 };
 
 /* the EAN-13 first-digit patterns */
-unsigned int ean13FirstDigit[] = {
+static unsigned int ean13FirstDigit[] = {
     0x00, 0x0b, 0x0d, 0x0e, 0x13, 0x19, 0x1c, 0x15, 0x16, 0x1a
 };
 
 /* the UPC-E last-digit patterns for first digit 0 (complement for
  * digit 1); also used for 5-digit supplemental check patterns */
-unsigned int upcELastDigit[] = {
+static unsigned int upcELastDigit[] = {
     0x38, 0x34, 0x32, 0x31, 0x2c, 0x26, 0x23, 0x2a, 0x29, 0x25
 };
 
 /* turn a character into an int representing its digit value; return
  * 0 for things not in the range '0'-'9' */
-int charToDigit (char c)
+static int charToDigit (char c)
 {
     if ((c >= '0') && (c <= '9'))
     {
@@ -819,10 +817,10 @@ int charToDigit (char c)
 
 /* draw the given digit character at the given coordinates; a '0' is
  * used in place of any non-digit character */
-void drawDigitChar (Bitmap *b, int x, int y, char c)
+static void drawDigitChar (struct state *st, Bitmap *b, int x, int y, char c)
 {
-  if (mode != BC_CLOCK24 &&
-      mode != BC_CLOCK12)
+  if (st->mode != BC_CLOCK24 &&
+      st->mode != BC_CLOCK12)
     if ((c < '0') || (c > '9'))
       c = '0';
 
@@ -830,8 +828,8 @@ void drawDigitChar (Bitmap *b, int x, int y, char c)
 }
 
 /* draw a upc/ean digit at the given coordinates */
-void drawUpcEanDigit (Bitmap *upcBitmap, int x, int y1, int y2, char n, 
-		      UpcSet set)
+static void drawUpcEanDigit (Bitmap *upcBitmap, int x, int y1, int y2, char n, 
+                             UpcSet set)
 {
     unsigned int bits;
     int i;
@@ -862,7 +860,7 @@ void drawUpcEanDigit (Bitmap *upcBitmap, int x, int y1, int y2, char n,
 
 /* report the width of the given supplemental code or 0 if it is a bad
  * supplement form */
-int upcEanSupplementWidth (char *digits)
+static int upcEanSupplementWidth (char *digits)
 {
     switch (strlen (digits))
     {
@@ -873,8 +871,9 @@ int upcEanSupplementWidth (char *digits)
 }
 
 /* draw the given supplemental barcode, including the textual digits */
-void drawUpcEanSupplementalBars (Bitmap *upcBitmap, char *digits, 
-				 int x, int y, int y2, int textAbove)
+static void drawUpcEanSupplementalBars (struct state *st, 
+                                        Bitmap *upcBitmap, char *digits, 
+                                        int x, int y, int y2, int textAbove)
 {
     int len = strlen (digits);
     int i;
@@ -949,13 +948,13 @@ void drawUpcEanSupplementalBars (Bitmap *upcBitmap, char *digits,
 			 digits[i], 
 			 lset);
 
-        drawDigitChar (upcBitmap, textX + i*6, textY, digits[i]);
+        drawDigitChar (st, upcBitmap, textX + i*6, textY, digits[i]);
     }
 }
 
 /* draw the actual barcode part of a UPC-A barcode */
-void drawUpcABars (Bitmap *upcBitmap, char *digits, int x, int y, 
-		   int barY2, int guardY2)
+static void drawUpcABars (Bitmap *upcBitmap, char *digits, int x, int y, 
+                          int barY2, int guardY2)
 {
     int i;
 
@@ -989,10 +988,10 @@ void drawUpcABars (Bitmap *upcBitmap, char *digits, int x, int y,
 }
 
 /* make and return a full-height UPC-A barcode */
-int makeUpcAFull (Bitmap *dest, char *digits, int y)
+static int makeUpcAFull (struct state *st, Bitmap *dest, char *digits, int y)
 {
-    static int baseWidth = 108;
-    static int baseHeight = 60;
+    int baseWidth = 108;
+    int baseHeight = 60;
 
     int height = baseHeight + y;
     int i;
@@ -1000,21 +999,21 @@ int makeUpcAFull (Bitmap *dest, char *digits, int y)
     bitmapClear (dest);
     drawUpcABars (dest, digits, 6, y, height - 10, height - 4);
 
-    drawDigitChar (dest, 0, height - 14, digits[0]);
+    drawDigitChar (st, dest, 0, height - 14, digits[0]);
 
     for (i = 0; i < 5; i++)
     {
-        drawDigitChar (dest, 18 + i*7, height - 7, digits[i+1]);
-        drawDigitChar (dest, 57 + i*7, height - 7, digits[i+6]);
+        drawDigitChar (st, dest, 18 + i*7, height - 7, digits[i+1]);
+        drawDigitChar (st, dest, 57 + i*7, height - 7, digits[i+6]);
     }
 
-    drawDigitChar (dest, 103, height - 14, digits[11]);
+    drawDigitChar (st, dest, 103, height - 14, digits[11]);
 
     return baseWidth;
 }
 
 /* make and return a UPC-A barcode */
-int makeUpcA (Bitmap *dest, char *digits, int y)
+static int makeUpcA (struct state *st, Bitmap *dest, char *digits, int y)
 {
     int i;
     unsigned int mul = 3;
@@ -1031,17 +1030,18 @@ int makeUpcA (Bitmap *dest, char *digits, int y)
         digits[11] = ((10 - (sum % 10)) % 10) + '0';
     }
 
-    return makeUpcAFull (dest, digits, y);
+    return makeUpcAFull (st, dest, digits, y);
 }
 
 /* draw the actual barcode part of a UPC-E barcode */
-void drawUpcEBars (Bitmap *upcBitmap, char *digits, int x, int y, 
-		   int barY2, int guardY2)
+static void drawUpcEBars (struct state *st, 
+                          Bitmap *upcBitmap, char *digits, int x, int y, 
+                          int barY2, int guardY2)
 {
     int i;
     int parityPattern = upcELastDigit[charToDigit(digits[7])];
 
-    int clockp = (mode == BC_CLOCK12 || mode == BC_CLOCK24);
+    int clockp = (st->mode == BC_CLOCK12 || st->mode == BC_CLOCK24);
 
     if (digits[0] == '1')
     {
@@ -1059,7 +1059,7 @@ void drawUpcEBars (Bitmap *upcBitmap, char *digits, int x, int y,
 
     /* clock kludge -- this draws an extra set of dividers after
        digits 2 and 4.  This makes this *not* be a valid bar code,
-       but, it looks pretty for the clock display.
+       but, it looks pretty for the clock dpy.
      */
     if (clockp)
       {
@@ -1089,25 +1089,25 @@ void drawUpcEBars (Bitmap *upcBitmap, char *digits, int x, int y,
 }
 
 /* make and return a full-height UPC-E barcode */
-int makeUpcEFull (Bitmap *dest, char *digits, int y)
+static int makeUpcEFull (struct state *st, Bitmap *dest, char *digits, int y)
 {
-    static int baseWidth = 64;
-    static int baseHeight = 60;
+    int baseWidth = 64;
+    int baseHeight = 60;
 
     int height = baseHeight + y;
     int i;
 
     bitmapClear (dest);
-    drawUpcEBars (dest, digits, 6, y, height - 10, height - 4);
+    drawUpcEBars (st, dest, digits, 6, y, height - 10, height - 4);
 
-    drawDigitChar (dest, 0, height - 14, digits[0]);
+    drawDigitChar (st, dest, 0, height - 14, digits[0]);
 
     for (i = 0; i < 6; i++)
     {
-        drawDigitChar (dest, 11 + i*7, height - 7, digits[i+1]);
+        drawDigitChar (st, dest, 11 + i*7, height - 7, digits[i+1]);
     }
 
-    drawDigitChar (dest, 59, height - 14, digits[7]);
+    drawDigitChar (st, dest, 59, height - 14, digits[7]);
 
     return baseWidth;
 }
@@ -1116,7 +1116,7 @@ int makeUpcEFull (Bitmap *dest, char *digits, int y)
  * array, or just store '\0' into the first element, if the form factor
  * is incorrect; this will also calculate the check digit, if it is
  * specified as '?' */
-void expandToUpcADigits (char *compressed, char *expanded)
+static void expandToUpcADigits (char *compressed, char *expanded)
 {
     int i;
 
@@ -1200,7 +1200,7 @@ void expandToUpcADigits (char *compressed, char *expanded)
 }
 
 /* make and return a UPC-E barcode */
-int makeUpcE (Bitmap *dest, char *digits, int y)
+static int makeUpcE (struct state *st, Bitmap *dest, char *digits, int y)
 {
     char expandedDigits[13];
     char compressedDigits[9];
@@ -1217,12 +1217,12 @@ int makeUpcE (Bitmap *dest, char *digits, int y)
     
     compressedDigits[7] = expandedDigits[11];
 
-    return makeUpcEFull (dest, compressedDigits, y);
+    return makeUpcEFull (st, dest, compressedDigits, y);
 }
 
 /* draw the actual barcode part of a EAN-13 barcode */
-void drawEan13Bars (Bitmap *upcBitmap, char *digits, int x, int y, 
-		   int barY2, int guardY2)
+static void drawEan13Bars (Bitmap *upcBitmap, char *digits, int x, int y, 
+                           int barY2, int guardY2)
 {
     int i;
     int leftPattern = ean13FirstDigit[charToDigit (digits[0])];
@@ -1259,10 +1259,10 @@ void drawEan13Bars (Bitmap *upcBitmap, char *digits, int x, int y,
 }
 
 /* make and return a full-height EAN-13 barcode */
-int makeEan13Full (Bitmap *dest, char *digits, int y)
+static int makeEan13Full (struct state *st, Bitmap *dest, char *digits, int y)
 {
-    static int baseWidth = 102;
-    static int baseHeight = 60;
+    int baseWidth = 102;
+    int baseHeight = 60;
 
     int height = baseHeight + y;
     int i;
@@ -1270,19 +1270,19 @@ int makeEan13Full (Bitmap *dest, char *digits, int y)
     bitmapClear (dest);
     drawEan13Bars (dest, digits, 6, y, height - 10, height - 4);
 
-    drawDigitChar (dest, 0, height - 7, digits[0]);
+    drawDigitChar (st, dest, 0, height - 7, digits[0]);
 
     for (i = 0; i < 6; i++)
     {
-        drawDigitChar (dest, 11 + i*7, height - 7, digits[i+1]);
-        drawDigitChar (dest, 57 + i*7, height - 7, digits[i+7]);
+        drawDigitChar (st, dest, 11 + i*7, height - 7, digits[i+1]);
+        drawDigitChar (st, dest, 57 + i*7, height - 7, digits[i+7]);
     }
 
     return baseWidth;
 }
 
 /* make and return an EAN-13 barcode */
-int makeEan13 (Bitmap *dest, char *digits, int y)
+static int makeEan13 (struct state *st, Bitmap *dest, char *digits, int y)
 {
     int i;
     unsigned int mul = 1;
@@ -1299,12 +1299,12 @@ int makeEan13 (Bitmap *dest, char *digits, int y)
         digits[12] = ((10 - (sum % 10)) % 10) + '0';
     }
 
-    return makeEan13Full (dest, digits, y);
+    return makeEan13Full (st, dest, digits, y);
 }
 
 /* draw the actual barcode part of an EAN-8 barcode */
-void drawEan8Bars (Bitmap *upcBitmap, char *digits, int x, int y, 
-		   int barY2, int guardY2)
+static void drawEan8Bars (Bitmap *upcBitmap, char *digits, int x, int y, 
+                          int barY2, int guardY2)
 {
     int i;
 
@@ -1338,10 +1338,10 @@ void drawEan8Bars (Bitmap *upcBitmap, char *digits, int x, int y,
 }
 
 /* make and return a full-height EAN-8 barcode */
-int makeEan8Full (Bitmap *dest, char *digits, int y)
+static int makeEan8Full (struct state *st, Bitmap *dest, char *digits, int y)
 {
-    static int baseWidth = 68;
-    static int baseHeight = 60;
+    int baseWidth = 68;
+    int baseHeight = 60;
 
     int height = baseHeight + y;
     int i;
@@ -1351,15 +1351,15 @@ int makeEan8Full (Bitmap *dest, char *digits, int y)
 
     for (i = 0; i < 4; i++)
     {
-        drawDigitChar (dest, 5 + i*7, height - 7, digits[i]);
-        drawDigitChar (dest, 37 + i*7, height - 7, digits[i+4]);
+        drawDigitChar (st, dest, 5 + i*7, height - 7, digits[i]);
+        drawDigitChar (st, dest, 37 + i*7, height - 7, digits[i+4]);
     }
 
     return baseWidth;
 }
 
 /* make and return an EAN-8 barcode */
-int makeEan8 (Bitmap *dest, char *digits, int y)
+static int makeEan8 (struct state *st, Bitmap *dest, char *digits, int y)
 {
     int i;
     unsigned int mul = 3;
@@ -1376,11 +1376,11 @@ int makeEan8 (Bitmap *dest, char *digits, int y)
         digits[7] = ((10 - (sum % 10)) % 10) + '0';
     }
 
-    return makeEan8Full (dest, digits, y);
+    return makeEan8Full (st, dest, digits, y);
 }
 
 /* Dispatch to the right form factor UPC/EAN barcode generator */
-void processUpcEan (char *str, Bitmap *dest)
+static void processUpcEan (struct state *st, char *str, Bitmap *dest)
 {
     char digits[16];
     int digitCount = 0;
@@ -1451,22 +1451,22 @@ void processUpcEan (char *str, Bitmap *dest)
     {
 	case 7: 
 	{
-	    width = makeUpcE (dest, digits, vstart);
+	    width = makeUpcE (st, dest, digits, vstart);
 	    break;
 	}
 	case 8: 
 	{
-	    width = makeEan8 (dest, digits, vstart);
+	    width = makeEan8 (st, dest, digits, vstart);
 	    break;
 	}
 	case 12: 
 	{
-	    width = makeUpcA (dest, digits, vstart);
+	    width = makeUpcA (st, dest, digits, vstart);
 	    break;
 	}
 	case 13:
 	{
-	    width = makeEan13 (dest, digits, vstart);
+	    width = makeEan13 (st, dest, digits, vstart);
 	    break;
 	}
 	default:
@@ -1479,7 +1479,7 @@ void processUpcEan (char *str, Bitmap *dest)
 
     if (supplement)
     {
-	drawUpcEanSupplementalBars (dest, supDigits,
+	drawUpcEanSupplementalBars (st, dest, supDigits,
 				    width,
 				    vstart + 1, dest->height - 4, 1);
     }
@@ -1505,32 +1505,31 @@ void processUpcEan (char *str, Bitmap *dest)
  */
 
 /* set up the system */
-static void setup (void)
+static void setup (struct state *st)
 {
     XWindowAttributes xgwa;
     XGCValues gcv;
 
-    XGetWindowAttributes (display, window, &xgwa);
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-    screen = xgwa.screen;
-    visual = xgwa.visual;
-    cmap = xgwa.colormap;
-    windowWidth = xgwa.width;
-    windowHeight = xgwa.height;
+    st->visual = xgwa.visual;
+    st->cmap = xgwa.colormap;
+    st->windowWidth = xgwa.width;
+    st->windowHeight = xgwa.height;
 
-    gcv.background = get_pixel_resource ("background", "Background",
-					 display, xgwa.colormap);
-    gcv.foreground = get_pixel_resource ("foreground", "Foreground",
-					 display, xgwa.colormap);
-    fg_pixel = gcv.foreground;
-    theGC = XCreateGC (display, window, GCForeground|GCBackground, &gcv);
+    gcv.background = get_pixel_resource (st->dpy, xgwa.colormap,
+                                         "background", "Background");
+    gcv.foreground = get_pixel_resource (st->dpy, xgwa.colormap,
+                                         "foreground", "Foreground");
+    st->fg_pixel = gcv.foreground;
+    st->theGC = XCreateGC (st->dpy, st->window, GCForeground|GCBackground, &gcv);
 
-    theBitmap = makeBitmap(BARCODE_WIDTH * MAX_MAG, BARCODE_HEIGHT * MAX_MAG);
-    theImage = XCreateImage(display, visual, 1, XYBitmap, 0, theBitmap->buf,
-			    theBitmap->width, theBitmap->height, 8,
-			    theBitmap->widthBytes);
-    theImage->bitmap_bit_order = LSBFirst;
-    theImage->byte_order       = LSBFirst;
+    st->theBitmap = makeBitmap(BARCODE_WIDTH * MAX_MAG, BARCODE_HEIGHT * MAX_MAG);
+    st->theImage = XCreateImage(st->dpy, st->visual, 1, XYBitmap, 0, st->theBitmap->buf,
+			    st->theBitmap->width, st->theBitmap->height, 8,
+			    st->theBitmap->widthBytes);
+    st->theImage->bitmap_bit_order = LSBFirst;
+    st->theImage->byte_order       = LSBFirst;
 }
 
 
@@ -1540,23 +1539,23 @@ static void setup (void)
  */
 
 /* set up the model */
-static void setupModel (void)
+static void setupModel (struct state *st)
 {
     int i;
 
-    barcode_max = 20;
-    barcode_count = 0;
-    barcodes = malloc (sizeof (Barcode) * barcode_max);
+    st->barcode_max = 20;
+    st->barcode_count = 0;
+    st->barcodes = malloc (sizeof (Barcode) * st->barcode_max);
 
-    for (i = 0; i < barcode_max; i++)
+    for (i = 0; i < st->barcode_max; i++)
     {
-	barcodes[i].bitmap = makeBitmap(BARCODE_WIDTH * MAX_MAG, 
+	st->barcodes[i].bitmap = makeBitmap(BARCODE_WIDTH * MAX_MAG, 
 					BARCODE_HEIGHT * MAX_MAG);
     }
 }
 
 /* make a new barcode string */
-static void makeBarcodeString (char *str)
+static void makeBarcodeString (struct state *st, char *str)
 {
     int dig, i;
 
@@ -1602,120 +1601,113 @@ static void makeBarcodeString (char *str)
 }
 
 /* update the model for one iteration */
-static void scrollModel (void)
+static void scrollModel (struct state *st)
 {
     int i;
 
-    for (i = 0; i < barcode_count; i++) 
+    for (i = 0; i < st->barcode_count; i++) 
     {
-	Barcode *b = &barcodes[i];
+	Barcode *b = &st->barcodes[i];
 	b->x--;
 	if ((b->x + BARCODE_WIDTH * b->mag) < 0) 
 	{
 	    /* fell off the edge */
-	    if (i != (barcode_count - 1)) {
+	    if (i != (st->barcode_count - 1)) {
 		Bitmap *oldb = b->bitmap;
-		memmove (b, b + 1, (barcode_count - i - 1) * sizeof (Barcode));
-		barcodes[barcode_count - 1].bitmap = oldb;
+		memmove (b, b + 1, (st->barcode_count - i - 1) * sizeof (Barcode));
+		st->barcodes[st->barcode_count - 1].bitmap = oldb;
 
-                XFreeColors (display, cmap, &b->pixel, 1, 0);
+                XFreeColors (st->dpy, st->cmap, &b->pixel, 1, 0);
 	    }
 
 	    i--;
-	    barcode_count--;
+	    st->barcode_count--;
 	}
     }
 
-    while (barcode_count < barcode_max)
+    while (st->barcode_count < st->barcode_max)
     {
-	Barcode *barcode = &barcodes[barcode_count];
-	barcode->x = (barcode_count == 0) ? 
+	Barcode *barcode = &st->barcodes[st->barcode_count];
+	barcode->x = (st->barcode_count == 0) ? 
 	    0 : 
-	    (barcodes[barcode_count - 1].x + 
-	     barcodes[barcode_count - 1].mag * BARCODE_WIDTH);
+	    (st->barcodes[st->barcode_count - 1].x + 
+	     st->barcodes[st->barcode_count - 1].mag * BARCODE_WIDTH);
 	barcode->x += RAND_FLOAT_01 * 100;
 	barcode->mag = RAND_FLOAT_01 * MAX_MAG;
 	barcode->y =
-	    RAND_FLOAT_01 * (windowHeight - BARCODE_HEIGHT * barcode->mag);
+	    RAND_FLOAT_01 * (st->windowHeight - BARCODE_HEIGHT * barcode->mag);
 	if (barcode->y < 0) 
 	{
 	    barcode->y = 0;
 	}
-	makeBarcodeString(barcode->code);
-	processUpcEan (barcode->code, theBitmap);
-	bitmapScale (barcode->bitmap, theBitmap, barcode->mag);
+	makeBarcodeString(st, barcode->code);
+	processUpcEan (st, barcode->code, st->theBitmap);
+	bitmapScale (barcode->bitmap, st->theBitmap, barcode->mag);
 
         {
           XColor c;
-          int i, ok = 0;
-          for (i = 0; i < 100; i++)
+          int ii, ok = 0;
+          for (ii = 0; ii < 100; ii++)
             {
               hsv_to_rgb (random() % 360, 1.0, 1.0, &c.red, &c.green, &c.blue);
-              ok = XAllocColor (display, cmap, &c);
+              ok = XAllocColor (st->dpy, st->cmap, &c);
               if (ok) break;
             }
           if (!ok)
             {
               c.red = c.green = c.blue = 0xFFFF;
-              if (!XAllocColor (display, cmap, &c))
+              if (!XAllocColor (st->dpy, st->cmap, &c))
                 abort();
             }
           barcode->pixel = c.pixel;
         }
 
-	barcode_count++;
+	st->barcode_count++;
     }
 }
 
 /* update the model for one iteration */
-static void updateGrid (void)
+static void updateGrid (struct state *st)
 {
     int i, x, y;
-    static int grid_w = 0;
-    static int grid_h = 0;
 
-    static unsigned long pixel;
-    static int alloced_p = 0;
-
-    static char *strings[200] = { 0, };
-
-    if (grid_w == 0 || grid_h == 0 ||
+    if (st->grid_w == 0 || st->grid_h == 0 ||
         (! (random() % 400)))
       {
-        XClearWindow (display, window);
-        grid_w = 1 + (random() % 3);
-        grid_h = 1 + (random() % 4);
+        XClearWindow (st->dpy, st->window);
+        st->grid_w = 1 + (random() % 3);
+        st->grid_h = 1 + (random() % 4);
       }
 
-    if (!alloced_p || (! (random() % 100)))
+    if (!st->grid_alloced_p || (! (random() % 100)))
       {
         XColor c;
         hsv_to_rgb (random() % 360, 1.0, 1.0, &c.red, &c.green, &c.blue);
-        if (alloced_p)
-          XFreeColors (display, cmap, &pixel, 1, 0);
-        XAllocColor (display, cmap, &c);
-        pixel = c.pixel;
-        alloced_p = 1;
+        if (st->grid_alloced_p)
+          XFreeColors (st->dpy, st->cmap, &st->grid_pixel, 1, 0);
+        XAllocColor (st->dpy, st->cmap, &c);
+        st->grid_pixel = c.pixel;
+        st->grid_alloced_p = 1;
       }
 
-    barcode_count = grid_w * grid_h;
-    if (barcode_count > barcode_max) abort();
+    st->barcode_count = st->grid_w * st->grid_h;
+    if (st->barcode_count > st->barcode_max) abort();
 
-    for (i = 0; i < barcode_max; i++)
+    for (i = 0; i < st->barcode_max; i++)
       {
-        Barcode *b = &barcodes[i];
+        Barcode *b = &st->barcodes[i];
         b->x = b->y = 999999;
       }
 
     i = 0;
-    for (y = 0; y < grid_h; y++)
-      for (x = 0; x < grid_w; x++, i++)
+    for (y = 0; y < st->grid_h; y++)
+      for (x = 0; x < st->grid_w; x++, i++)
         {
-          Barcode *b = &barcodes[i];
+          Barcode *b = &st->barcodes[i];
           int digits = 12;
 
-          int cell_w = (windowWidth  / grid_w);
-          int cell_h = (windowHeight / grid_h);
+          int cell_w = (st->windowWidth  / st->grid_w);
+          int cell_h = (st->windowHeight / st->grid_h);
           int mag_x  = cell_w / BARCODE_WIDTH;
           int mag_y  = cell_h / BARCODE_HEIGHT;
           int BW = 108 /*BARCODE_WIDTH*/;
@@ -1725,13 +1717,13 @@ static void updateGrid (void)
 
           b->x = (x * cell_w) + ((cell_w - b->mag * BW) / 2);
           b->y = (y * cell_h) + ((cell_h - b->mag * BH) / 2);
-          b->pixel = pixel;
+          b->pixel = st->grid_pixel;
 
-          if (!strings[i])
+          if (!st->strings[i])
             {
               int j;
               char *s = malloc (digits + 10);
-              strings[i] = s;
+              st->strings[i] = s;
               for (j = 0; j < digits; j++)
                 s[j] = (random() % 10) + '0';
               s[j++] = '?';
@@ -1740,19 +1732,19 @@ static void updateGrid (void)
             }
 
           /* change one digit in this barcode */
-          strings[i][random() % digits] = (random() % 10) + '0';
+          st->strings[i][random() % digits] = (random() % 10) + '0';
 
-          strcpy (b->code, strings[i]);
-          processUpcEan (b->code, b->bitmap);
+          strcpy (b->code, st->strings[i]);
+          processUpcEan (st, b->code, b->bitmap);
         }
 }
 
 
 /* update the model for one iteration.
    This one draws a clock.  By jwz.  */
-static void updateClock (void)
+static void updateClock (struct state *st)
 {
-  Barcode *b = &barcodes[0];
+  Barcode *b = &st->barcodes[0];
   int BW = 76 /* BARCODE_WIDTH  */;
   int BH = BARCODE_HEIGHT;
   int mag_x, mag_y;
@@ -1760,30 +1752,30 @@ static void updateClock (void)
   time_t now = time ((time_t *) 0);
   struct tm *tm = localtime (&now);
   XWindowAttributes xgwa;
-  int ow = windowWidth;
-  int oh = windowHeight;
+  int ow = st->windowWidth;
+  int oh = st->windowHeight;
 
-  XGetWindowAttributes (display, window, &xgwa);
-  windowWidth = xgwa.width;
-  windowHeight = xgwa.height;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->windowWidth = xgwa.width;
+  st->windowHeight = xgwa.height;
 
-  mag_x  = windowWidth  / BW;
-  mag_y  = windowHeight / BH;
+  mag_x  = st->windowWidth  / BW;
+  mag_y  = st->windowHeight / BH;
 
-  barcode_count = 1;
+  st->barcode_count = 1;
 
   b->mag = (mag_x < mag_y ? mag_x : mag_y);
 
   if (b->mag > MAX_MAG) b->mag = MAX_MAG;
   if (b->mag < 1) b->mag = 1;
 
-  b->x = (windowWidth  - (b->mag * BW      )) / 2;
-  b->y = (windowHeight - (b->mag * (BH + 9))) / 2;
-  b->pixel = fg_pixel;
+  b->x = (st->windowWidth  - (b->mag * BW      )) / 2;
+  b->y = (st->windowHeight - (b->mag * (BH + 9))) / 2;
+  b->pixel = st->fg_pixel;
 
-  if (!button_down_p)
+  if (!st->button_down_p)
     sprintf (b->code, "0%02d%02d%02d?:",
-             (mode == BC_CLOCK24
+             (st->mode == BC_CLOCK24
               ? tm->tm_hour
               : (tm->tm_hour > 12
                  ? tm->tm_hour - 12
@@ -1807,60 +1799,60 @@ static void updateClock (void)
     if (expandedDigits[0] != '\0')
       b->code[7] = expandedDigits[11];
 
-    bitmapClear (theBitmap);
-    drawUpcEBars (theBitmap, b->code, 6, 9, 59, 65);
+    bitmapClear (st->theBitmap);
+    drawUpcEBars (st, st->theBitmap, b->code, 6, 9, 59, 65);
     for (i = 0; i < 6; i++)
       {
         int off = (i < 2 ? 0 :
                    i < 4 ? 4 :
                    8);
-        drawDigitChar (theBitmap, 11 + i*7 + off, hh - 16, b->code[i+1]);
+        drawDigitChar (st, st->theBitmap, 11 + i*7 + off, hh - 16, b->code[i+1]);
       }
 
-    if (!button_down_p)
+    if (!st->button_down_p)
       {
 #if 0
         char *days[] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
         char *s = days[tm->tm_wday];
-        bitmapDrawString5x8 (theBitmap, (BW - strlen (s)*5) / 2, 0, s);
+        bitmapDrawString5x8 (st->theBitmap, (BW - strlen (s)*5) / 2, 0, s);
 #endif
-        drawDigitChar (theBitmap,  0, hh - 23, (tm->tm_hour < 12 ? 'A' : 'P'));
-        drawDigitChar (theBitmap, 68, hh - 23, 'M');
+        drawDigitChar (st, st->theBitmap,  0, hh - 23, (tm->tm_hour < 12 ? 'A' : 'P'));
+        drawDigitChar (st, st->theBitmap, 68, hh - 23, 'M');
       }
     else
       {
         char s[20];
         sprintf (s, "%03d", tm->tm_yday);
-        bitmapDrawString5x8 (theBitmap, (BW - strlen (s)*5) / 2, 0, s);
+        bitmapDrawString5x8 (st->theBitmap, (BW - strlen (s)*5) / 2, 0, s);
       }
   }
 
-  bitmapScale (b->bitmap, theBitmap, b->mag);
+  bitmapScale (b->bitmap, st->theBitmap, b->mag);
 
-  if (ow != windowWidth || oh != windowHeight)
-    XClearWindow (display, window);
+  if (ow != st->windowWidth || oh != st->windowHeight)
+    XClearWindow (st->dpy, st->window);
 }
 
 
 
-/* render and display the current model */
-static void renderFrame (void)
+/* render and dpy the current model */
+static void renderFrame (struct state *st)
 {
     int i;
 
-    for (i = 0; i < barcode_count; i++)
+    for (i = 0; i < st->barcode_count; i++)
     {
-	Barcode *barcode = &barcodes[i];
+	Barcode *barcode = &st->barcodes[i];
 
-	if (barcode->x > windowWidth) {
+	if (barcode->x > st->windowWidth) {
 	    break;
 	}
 
-	/* bitmapScale (theBitmap, barcode->bitmap, barcode->mag);*/
-	theImage->data = barcode->bitmap->buf;
+	/* bitmapScale (st->theBitmap, barcode->bitmap, barcode->mag);*/
+	st->theImage->data = barcode->bitmap->buf;
 
-        XSetForeground (display, theGC, barcode->pixel);
-	XPutImage (display, window, theGC, theImage, 
+        XSetForeground (st->dpy, st->theGC, barcode->pixel);
+	XPutImage (st->dpy, st->window, st->theGC, st->theImage, 
 		   0, 0, barcode->x, barcode->y, 
 		   BARCODE_WIDTH * barcode->mag,
 		   BARCODE_HEIGHT * barcode->mag);
@@ -1868,51 +1860,65 @@ static void renderFrame (void)
 }
 
 /* do one iteration */
-static void oneIteration (void)
+static unsigned long
+barcode_draw (Display *dpy, Window win, void *closure)
 {
-    if (mode == BC_SCROLL)
-      scrollModel ();
-    else if (mode == BC_GRID)
-      updateGrid ();
-    else if (mode == BC_CLOCK12 || mode == BC_CLOCK24)
-      updateClock ();
+  struct state *st = (struct state *) closure;
+    if (st->mode == BC_SCROLL)
+      scrollModel (st);
+    else if (st->mode == BC_GRID)
+      updateGrid (st);
+    else if (st->mode == BC_CLOCK12 || st->mode == BC_CLOCK24)
+      updateClock (st);
     else
       abort();
 
-    renderFrame ();
+    renderFrame (st);
+
+    return st->delay;
 }
 
 
-static void barcode_handle_events (Display *dpy)
+static Bool
+barcode_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
-  int clockp = (mode == BC_CLOCK12 || mode == BC_CLOCK24);
-  while (XPending (dpy))
-    {
-      XEvent event;
-      XNextEvent (dpy, &event);
-      if (clockp && event.xany.type == ButtonPress)
-        button_down_p = True;
-      else if (clockp && event.xany.type == ButtonRelease)
-        button_down_p = False;
-      else
-        screenhack_handle_event (dpy, &event);
-    }
+  struct state *st = (struct state *) closure;
+  int clockp = (st->mode == BC_CLOCK12 || st->mode == BC_CLOCK24);
+  if (clockp && event->xany.type == ButtonPress) {
+    st->button_down_p = True;
+    return True;
+  } else if (clockp && event->xany.type == ButtonRelease) {
+    st->button_down_p = False;
+    return True;
+  } else
+    return False;
+}
+
+static void
+barcode_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static void
+barcode_free (Display *dpy, Window window, void *closure)
+{
 }
 
 
 /* main and options and stuff */
 
-char *progclass = "Barcode";
-
-char *defaults [] = {
+static const char *barcode_defaults [] = {
     ".background:	black",
     ".foreground:	green",
     "*delay:		10000",
+    "*mode:		scroll",
     0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec barcode_options [] = {
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
+  { "-mode",             ".mode",           XrmoptionSepArg, 0 },
   { "-scroll",           ".mode",           XrmoptionNoArg, "scroll"  },
   { "-grid",             ".mode",           XrmoptionNoArg, "grid"    },
   { "-clock",            ".mode",           XrmoptionNoArg, "clock"   },
@@ -1922,28 +1928,28 @@ XrmOptionDescRec options [] = {
 };
 
 /* initialize the user-specifiable params */
-static void initParams (void)
+static void initParams (struct state *st)
 {
     int problems = 0;
     char *s;
 
-    delay = get_integer_resource ("delay", "Delay");
-    if (delay < 0)
+    st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+    if (st->delay < 0)
     {
 	fprintf (stderr, "%s: delay must be at least 0\n", progname);
 	problems = 1;
     }
 
-    s = get_string_resource ("mode", "Mode");
+    s = get_string_resource (st->dpy, "mode", "Mode");
     if (!s || !*s || !strcasecmp (s, "scroll"))
-      mode = BC_SCROLL;
+      st->mode = BC_SCROLL;
     else if (!strcasecmp (s, "grid"))
-      mode = BC_GRID;
+      st->mode = BC_GRID;
     else if (!strcasecmp (s, "clock") ||
              !strcasecmp (s, "clock12"))
-      mode = BC_CLOCK12;
+      st->mode = BC_CLOCK12;
     else if (!strcasecmp (s, "clock24"))
-      mode = BC_CLOCK24;
+      st->mode = BC_CLOCK24;
     else
       {
 	fprintf (stderr, "%s: unknown mode \"%s\"\n", progname, s);
@@ -1951,8 +1957,8 @@ static void initParams (void)
       }
     free (s);
 
-    if (mode == BC_CLOCK12 || mode == BC_CLOCK24)
-      delay = 10000;  /* only update every 1/10th second */
+    if (st->mode == BC_CLOCK12 || st->mode == BC_CLOCK24)
+      st->delay = 10000;  /* only update every 1/10th second */
 
     if (problems)
     {
@@ -1960,21 +1966,18 @@ static void initParams (void)
     }
 }
 
-/* main function */
-void screenhack (Display *dpy, Window win)
+static void *
+barcode_init (Display *dpy, Window win)
 {
-    display = dpy;
-    window = win;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = win;
 
-    initParams ();
-    setup ();
-    setupModel ();
-
-    for (;;) 
-    {
-	oneIteration ();
-        XSync (dpy, False);
-        barcode_handle_events (dpy);
-	usleep (delay);
-    }
+  initParams (st);
+  setup (st);
+  setupModel (st);
+  return st;
 }
+
+
+XSCREENSAVER_MODULE ("Barcode", barcode)

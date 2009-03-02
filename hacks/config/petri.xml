@@ -15,10 +15,10 @@
 
   <hgroup>
     <number id="size" type="spinbutton" arg="-size %"
-             _label="Cell Size" low="0" high="100" default="4"/>
+             _label="Cell Size" low="0" high="100" default="2"/>
 
     <number id="count" type="spinbutton" arg="-count %"
-            _label="Mold Varieties" low="0" high="20" default="8"/>
+            _label="Mold Varieties" low="0" high="20" default="20"/>
   </hgroup>
 
 <hgroup>
@@ -76,6 +76,7 @@
   <_description>
 This simulates colonies of mold growing in a petri dish.  Growing
 colored circles overlap and leave spiral interference in their wake.
-Written by Dan Bornstein.
+
+Written by Dan Bornstein; 1999.
   </_description>
 </screensaver>

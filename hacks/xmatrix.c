@@ -49,10 +49,20 @@
  *
  */
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include "screenhack.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
-#include <X11/Xutil.h>
+#include <sys/wait.h>
+
+#ifdef HAVE_COCOA
+# define HAVE_XPM
+#else
+# define DO_XBM     /* only do mono bitmaps under real X11 */
+#endif
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 # include "images/matrix1.xpm"
@@ -61,10 +71,27 @@
 # include "images/matrix2b.xpm"
 #endif
 
-#include "images/matrix1.xbm"
-#include "images/matrix2.xbm"
-#include "images/matrix1b.xbm"
-#include "images/matrix2b.xbm"
+#ifdef DO_XBM
+# include "images/matrix1.xbm"
+# include "images/matrix2.xbm"
+# include "images/matrix1b.xbm"
+# include "images/matrix2b.xbm"
+#endif /* DO_XBM */
+
+#ifndef HAVE_COCOA
+# include <X11/Xatom.h>
+# include <X11/Intrinsic.h>
+#endif
+
+#ifdef HAVE_FORKPTY
+# include <sys/ioctl.h>
+# ifdef HAVE_PTY_H
+#  include <pty.h>
+# endif
+# ifdef HAVE_UTIL_H
+#  include <util.h>
+# endif
+#endif /* HAVE_FORKPTY */
 
 #define CHAR_COLS 16
 #define CHAR_ROWS 13
@@ -80,6 +107,7 @@ typedef struct {
 } m_cell;
 
 typedef struct {
+  int pipe_loc;
   int remaining;
   int throttle;
   int y;
@@ -87,15 +115,27 @@ typedef struct {
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 
-static int matrix_encoding[] = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                                 192, 193, 194, 195, 196, 197, 198, 199,
-                                 200, 201, 202, 203, 204, 205, 206, 207 };
-static int decimal_encoding[]  = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 };
-static int hex_encoding[]      = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                                   33, 34, 35, 36, 37, 38 };
-static int binary_encoding[] = { 16, 17 };
-static int dna_encoding[]    = { 33, 35, 39, 52 };
-static unsigned char char_map[256] = {
+static const int matrix_encoding[] = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                       192, 193, 194, 195, 196, 197, 198, 199,
+                                       200, 201, 202, 203, 204, 205, 206, 207 };
+static const int decimal_encoding[] = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
+static const int hex_encoding[]     = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        33, 34, 35, 36, 37, 38 };
+static const int binary_encoding[] = { 16, 17 };
+static const int dna_encoding[]    = { 33, 35, 39, 52 };
+static const int ascii_encoding[]  = {
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 
+   16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 
+   32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 
+   48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 
+   64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 
+   80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 
+   96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,
+  112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127
+};
+static const unsigned char char_map[256] = {
     3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /*   0 */
     3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  /*  16 */
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,  /*  32 */
@@ -116,9 +156,32 @@ static unsigned char char_map[256] = {
 
 #define CURSOR_GLYPH 97
 
-typedef enum { TRACEA1, TRACEA2,
-               TRACEB1, TRACEB2, SYSTEMFAILURE,
-               KNOCK, NMAP, MATRIX, DNA, BINARY, DEC, HEX } m_mode;
+/* larger numbers should mean more variability between columns */
+#define BUF_SIZE 200
+
+typedef enum { DRAIN_TRACE_A,
+               TRACE_TEXT_A,		/* Call trans opt: received. */
+               TRACE_A,			/* (31_) 5__-0_9_ */
+               TRACE_DONE,
+
+               DRAIN_TRACE_B,
+               TRACE_TEXT_B,		/* Call trans opt: received. */
+               TRACE_B,
+               TRACE_FAIL,		/* System Failure */
+
+               DRAIN_KNOCK,
+               KNOCK,			/* Wake up, Neo... */
+
+               DRAIN_NMAP,
+               NMAP,			/* Starting nmap V. 2.54BETA25 */
+
+               DRAIN_MATRIX,
+               MATRIX,
+               DNA,
+               BINARY,
+               DEC,
+               HEX,
+               ASCII } m_mode;
 
 typedef struct {
   Display *dpy;
@@ -128,31 +191,59 @@ typedef struct {
   int grid_width, grid_height;
   int char_width, char_height;
   m_cell *cells;
-  m_cell *cursor;
   m_feeder *feeders;
   int nspinners;
   Bool knock_knock_p;
   Bool small_p;
   Bool insert_top_p, insert_bottom_p;
+  Bool use_pipe_p;
   m_mode mode;
+
+  pid_t pid;
+  FILE *pipe;
+  XtInputId pipe_id;
+  Bool input_available_p;
+  Time subproc_relaunch_delay;
+  char buf [BUF_SIZE*2+1]; /* twice because this is a ring buffer */
+
+  Bool do_fill_buff;
+  int buf_done;
+  int buf_pos;
+
   signed char *tracing;
   int density;
 
+  const char *typing;
+  Bool typing_scroll_p;
+  Bool typing_cursor_p;
+  Bool typing_bold_p;
+  Bool typing_stutter_p;
+  int typing_left_margin;
+  int typing_char_delay;
+  int typing_line_delay;
+  int typing_delay;
+
+  Bool cursor_on;
+  int cursor_x, cursor_y;
+  XtIntervalId cursor_timer;
+
   Pixmap images[CHAR_MAPS];
   int image_width, image_height;
+  Bool images_flipped_p;
 
   int nglyphs;
-  int *glyph_map;
+  const int *glyph_map;
 
   unsigned long colors[5];
+  int delay;
 } m_state;
 
 
 static void
-load_images_1 (m_state *state, int which)
+load_images_1 (Display *dpy, m_state *state, int which)
 {
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-  if (!get_boolean_resource ("mono", "Boolean") &&
+  if (!get_boolean_resource (dpy, "mono", "Boolean") &&
       state->xgwa.depth > 1)
     {
       char **bits =
@@ -166,28 +257,32 @@ load_images_1 (m_state *state, int which)
   else
 #endif /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
     {
+#ifdef DO_XBM
       unsigned long fg, bg;
       state->image_width  = (state->small_p ? matrix1b_width :matrix1_width);
       state->image_height = (state->small_p ? matrix1b_height:matrix1_height);
-      fg = get_pixel_resource("foreground", "Foreground",
-                              state->dpy, state->xgwa.colormap);
-      bg = get_pixel_resource("background", "Background",
-                              state->dpy, state->xgwa.colormap);
+      fg = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                              "foreground", "Foreground");
+      bg = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                              "background", "Background");
       state->images[which] =
         XCreatePixmapFromBitmapData (state->dpy, state->window, (char *)
                 (which == 1 ? (state->small_p ? matrix1b_bits :matrix1_bits) :
                               (state->small_p ? matrix2b_bits :matrix2_bits)),
                                      state->image_width, state->image_height,
                                      bg, fg, state->xgwa.depth);
+#else  /* !DO_XBM */
+      abort();
+#endif /* !DO_XBM */
     }
 }
 
 
 static void
-load_images (m_state *state)
+load_images (Display *dpy, m_state *state)
 {
-  load_images_1 (state, 1);
-  load_images_1 (state, 2);
+  load_images_1 (dpy, state, 1);
+  load_images_1 (dpy, state, 2);
 }
 
 
@@ -219,10 +314,154 @@ flip_images_1 (m_state *state, int which)
 }
 
 static void
-flip_images (m_state *state)
+flip_images (m_state *state, Bool flipped_p)
 {
-  flip_images_1 (state, 1);
-  flip_images_1 (state, 2);
+  if (flipped_p != state->images_flipped_p)
+    {
+      state->images_flipped_p = flipped_p;
+      flip_images_1 (state, 1);
+      flip_images_1 (state, 2);
+    }
+}
+
+static void
+subproc_cb (XtPointer closure, int *source, XtInputId *id)
+{
+  m_state *state = (m_state *) closure;
+  state->input_available_p = True;
+}
+
+static void
+launch_text_generator (m_state *state)
+{
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
+  char *oprogram = get_string_resource (state->dpy, "program", "Program");
+  char *program = (char *) malloc (strlen (oprogram) + 10);
+  strcpy (program, "( ");
+  strcat (program, oprogram);
+  strcat (program, " ) 2>&1");
+
+  if ((state->pipe = popen (program, "r")))
+    {
+      state->pipe_id =
+        XtAppAddInput (app, fileno (state->pipe),
+                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
+                       subproc_cb, (XtPointer) state);
+    }
+  else
+    {
+      perror (program);
+    }
+}
+
+
+static void
+relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
+{
+  m_state *state = (m_state *) closure;
+  launch_text_generator (state);
+}
+
+/* When the subprocess has generated some output, this reads as much as it
+   can into s->buf at s->buf_tail.
+ */
+
+static void
+fill_input (m_state *s)
+{
+  XtAppContext app = XtDisplayToApplicationContext (s->dpy);
+  int n;
+
+  if (! s->pipe) return;
+  if (! s->input_available_p) return;
+  s->input_available_p = False;
+
+  n = read (fileno (s->pipe),
+            (void *) (s->buf+s->buf_pos),
+            BUF_SIZE);
+  if (n > 0)
+    {
+      if (n == BUF_SIZE){
+        /* if one read wasn't enough to fill the whole buffer, then 
+           read again. This might need some work if it's too intensive. */
+        s->do_fill_buff = False;
+      }
+      s->buf_pos = (s->buf_pos + n);
+      if(s->buf_pos > BUF_SIZE){
+        /* just in case areas overlap */
+        memmove(s->buf,s->buf+BUF_SIZE,s->buf_pos-BUF_SIZE);
+      }
+      s->buf_pos = s->buf_pos % BUF_SIZE;
+      /*      s->input_available_p = True;*/
+    }
+  else
+    {
+      s->do_fill_buff = True;
+      XtRemoveInput (s->pipe_id);
+      s->pipe_id = 0;
+      pclose (s->pipe);
+      s->pipe = 0;
+
+      /* Set up a timer to re-launch the subproc in a bit. */
+      XtAppAddTimeOut (app, s->subproc_relaunch_delay,
+                       relaunch_generator_timer,
+                       (XtPointer) s);
+    }
+}
+
+
+
+static void cursor_on_timer (XtPointer closure, XtIntervalId *id);
+static void cursor_off_timer (XtPointer closure, XtIntervalId *id);
+
+static Bool
+set_cursor_1 (m_state *state, Bool on)
+{
+  Bool changed = (state->cursor_on != on);
+  state->cursor_on = on;
+
+  if (changed && state->cursor_x >= 0 && state->cursor_y >= 0)
+    {
+      m_cell *cell = &state->cells[state->grid_width * state->cursor_y
+                                   + state->cursor_x];
+      cell->glow = 0;
+      cell->changed = True;
+    }
+  return changed;
+}
+
+
+static void
+set_cursor (m_state *state, Bool on)
+{
+  if (set_cursor_1 (state, on))
+    {
+      if (state->cursor_timer)
+        XtRemoveTimeOut (state->cursor_timer);
+      state->cursor_timer = 0;
+      if (on)
+        cursor_on_timer (state, 0);
+    }
+}
+
+static void
+cursor_off_timer (XtPointer closure, XtIntervalId *id)
+{
+  m_state *state = (m_state *) closure;
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
+  set_cursor_1 (state, False);
+  state->cursor_timer = XtAppAddTimeOut (app, 333,
+                                         cursor_on_timer, closure);
+}
+
+static void
+cursor_on_timer (XtPointer closure, XtIntervalId *id)
+{
+  m_state *state = (m_state *) closure;
+  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
+  set_cursor_1 (state, True);
+  state->cursor_timer = XtAppAddTimeOut (app, 666,
+                                         cursor_off_timer, closure);
 }
 
 
@@ -250,10 +489,13 @@ init_spinners (m_state *state)
 }
 
 
+static void set_mode (m_state *, m_mode);
+
+
 static void
 init_trace (m_state *state)
 {
-  char *s = get_string_resource ("tracePhone", "TracePhone");
+  char *s = get_string_resource (state->dpy, "tracePhone", "TracePhone");
   char *s2, *s3;
   int i;
   if (!s)
@@ -285,12 +527,118 @@ init_trace (m_state *state)
   if (s) free (s);
   if (state->tracing) free (state->tracing);
   state->tracing = 0;
-  state->mode = MATRIX;
+  set_mode (state, MATRIX);
 }
 
 
-static m_state *
-init_matrix (Display *dpy, Window window)
+static void
+init_drain (m_state *state)
+{
+  int i;
+
+  set_cursor (state, False);
+  state->cursor_x = -1;
+  state->cursor_y = -1;
+
+  /* Fill the top row with empty top-feeders, to clear the screen. */
+  for (i = 0; i < state->grid_width; i++)
+    {
+      m_feeder *f = &state->feeders[i];
+      f->y = -1;
+      f->remaining = 0;
+      f->throttle = 0;
+      f->pipe_loc = BUF_SIZE-1;
+    }
+
+  /* Turn off all the spinners, else they never go away. */
+  for (i = 0; i < state->grid_width * state->grid_height; i++)
+    if (state->cells[i].spinner)
+      {
+        state->cells[i].spinner = 0;
+        state->cells[i].changed = 1;
+      }
+}
+
+static Bool
+screen_blank_p (m_state *state)
+{
+  int i;
+  for (i = 0; i < state->grid_width * state->grid_height; i++)
+    if (state->cells[i].glyph)
+      return False;
+  return True;
+}
+
+
+static void
+set_mode (m_state *state, m_mode mode)
+{
+  if (mode == state->mode)
+    return;
+
+  state->mode = mode;
+  state->typing = 0;
+
+  switch (mode)
+    {
+    case MATRIX:
+      state->glyph_map = matrix_encoding;
+      state->nglyphs = countof(matrix_encoding);
+      flip_images (state, True);
+      init_spinners (state);
+      break;
+    case DNA:
+      state->glyph_map = dna_encoding;
+      state->nglyphs = countof(dna_encoding);
+      flip_images (state, False);
+      break;
+    case BINARY:
+      state->glyph_map = binary_encoding;
+      state->nglyphs = countof(binary_encoding);
+      flip_images (state, False);
+      break;
+    case HEX:
+      state->glyph_map = hex_encoding;
+      state->nglyphs = countof(hex_encoding);
+      flip_images (state, False);
+      break;
+    case ASCII:
+      state->glyph_map = ascii_encoding;
+      state->nglyphs = countof(ascii_encoding);
+      flip_images (state, False);
+      break;
+    case DEC:
+    case TRACE_A:
+    case TRACE_B:
+    case NMAP:
+    case KNOCK:
+      state->glyph_map = decimal_encoding;
+      state->nglyphs = countof(decimal_encoding);
+      flip_images (state, False);
+      break;
+    case TRACE_TEXT_A: 
+    case TRACE_TEXT_B:
+      flip_images (state, False);
+      init_trace (state);
+      break;
+    case DRAIN_TRACE_A:
+    case DRAIN_TRACE_B:
+    case DRAIN_KNOCK:
+    case DRAIN_NMAP:
+    case DRAIN_MATRIX:
+      init_drain (state);
+      break;
+    case TRACE_DONE:
+    case TRACE_FAIL:
+      break;
+    default:
+      abort();
+    }
+}
+
+
+static void *
+xmatrix_init (Display *dpy, Window window)
 {
   XGCValues gcv;
   char *insert, *mode;
@@ -299,23 +647,28 @@ init_matrix (Display *dpy, Window window)
 
   state->dpy = dpy;
   state->window = window;
+  state->delay = get_integer_resource (dpy, "delay", "Integer");
 
   XGetWindowAttributes (dpy, window, &state->xgwa);
 
+  state->small_p = (state->xgwa.width < 300);
   {
-    const char *s = get_string_resource ("small", "Boolean");
-    if (s && *s)
-      state->small_p = get_boolean_resource ("small", "Boolean");
+    const char *s = get_string_resource (dpy, "matrixFont", "String");
+    if (!s || !*s || !strcasecmp(s, "large"))
+      state->small_p = False;
+    else if (!strcasecmp(s, "small"))
+      state->small_p = True;
     else
-      state->small_p = (state->xgwa.width < 300);
+      fprintf (stderr, "%s: matrixFont should be 'small' or 'large' not '%s'\n",
+               progname, s);
   }
 
-  load_images (state);
+  load_images (dpy, state);
 
-  gcv.foreground = get_pixel_resource("foreground", "Foreground",
-                                      state->dpy, state->xgwa.colormap);
-  gcv.background = get_pixel_resource("background", "Background",
-                                      state->dpy, state->xgwa.colormap);
+  gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                      "foreground", "Foreground");
+  gcv.background = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                      "background", "Background");
   state->draw_gc = XCreateGC (state->dpy, state->window,
                               GCForeground|GCBackground, &gcv);
   gcv.foreground = gcv.background;
@@ -357,12 +710,11 @@ init_matrix (Display *dpy, Window window)
 
   state->cells = (m_cell *)
     calloc (sizeof(m_cell), state->grid_width * state->grid_height);
-  state->cursor = NULL;
   state->feeders = (m_feeder *) calloc (sizeof(m_feeder), state->grid_width);
 
-  state->density = get_integer_resource ("density", "Integer");
+  state->density = get_integer_resource (dpy, "density", "Integer");
 
-  insert = get_string_resource("insert", "Insert");
+  insert = get_string_resource(dpy, "insert", "Insert");
   if (insert && !strcmp(insert, "top"))
     {
       state->insert_top_p = True;
@@ -388,69 +740,59 @@ init_matrix (Display *dpy, Window window)
       state->insert_bottom_p = True;
     }
 
-  state->nspinners = get_integer_resource ("spinners", "Integer");
+  state->nspinners = get_integer_resource (dpy, "spinners", "Integer");
 
   if (insert)
     free (insert);
 
-  state->knock_knock_p = get_boolean_resource ("knockKnock", "KnockKnock");
+  state->knock_knock_p = get_boolean_resource (dpy, "knockKnock", "KnockKnock");
 
-  mode = get_string_resource ("mode", "Mode");
+  state->use_pipe_p = get_boolean_resource (dpy, "usePipe", "Boolean");
+  state->buf_done = 0;
+  state->do_fill_buff = True;
+
+  launch_text_generator (state);
+
+  state->mode = -1;
+  mode = get_string_resource (dpy, "mode", "Mode");
   if (mode && !strcasecmp(mode, "trace"))
-    state->mode = (((random() % 3) == 0) ? TRACEB1 : TRACEA1);
+    set_mode (state, ((random() % 3) ? TRACE_TEXT_A : TRACE_TEXT_B));
   else if (mode && !strcasecmp(mode, "crack"))
-    state->mode = NMAP;
+    set_mode (state, DRAIN_NMAP);
   else if (mode && !strcasecmp(mode, "dna"))
-    state->mode = DNA;
+    set_mode (state, DNA);
   else if (mode && (!strcasecmp(mode, "bin") ||
                     !strcasecmp(mode, "binary")))
-    state->mode = BINARY;
+    set_mode (state, BINARY);
   else if (mode && (!strcasecmp(mode, "hex") ||
                     !strcasecmp(mode, "hexadecimal")))
-    state->mode = HEX;
+    set_mode (state, HEX);
   else if (mode && (!strcasecmp(mode, "dec") ||
                     !strcasecmp(mode, "decimal")))
-    state->mode = DEC;
+    set_mode (state, DEC);
+  else if (mode && (!strcasecmp(mode, "asc") ||
+                    !strcasecmp(mode, "ascii")))
+    set_mode (state, ASCII);
   else if (!mode || !*mode || !strcasecmp(mode, "matrix"))
-    state->mode = MATRIX;
+    set_mode (state, MATRIX);
+  else if (!mode || !*mode || !strcasecmp(mode, "pipe"))
+    {
+      set_mode (state, ASCII);
+      state->use_pipe_p = True;
+    }
   else
     {
-      fprintf (stderr,
-           "%s: `mode' must be matrix, trace, dna, binary, or hex: not `%s'\n",
-               progname, mode);
-      state->mode = MATRIX;
+      fprintf (stderr, "%s: `mode' must be ",progname);
+      fprintf (stderr, "matrix, trace, dna, binary, ascii, or hex: ");
+      fprintf (stderr, "not `%s'\n", mode);
+      set_mode (state, MATRIX);
     }
 
-  switch (state->mode)
-    {
-    case DNA:
-      state->glyph_map = dna_encoding;
-      state->nglyphs = countof(dna_encoding);
-      break;
-    case BINARY:
-      state->glyph_map = binary_encoding;
-      state->nglyphs = countof(binary_encoding);
-      break;
-    case DEC:
-      state->glyph_map = decimal_encoding;
-      state->nglyphs = countof(decimal_encoding);
-      break;
-    case HEX:
-      state->glyph_map = hex_encoding;
-      state->nglyphs = countof(hex_encoding);
-      break;
-    case TRACEA1: case TRACEB1:
-      init_trace (state);
-      break;
-    case NMAP:
-      break;
-    case MATRIX:
-      flip_images (state);
-      init_spinners (state);
-      break;
-    default:
-      abort();
-    }
+  if (state->mode == MATRIX && get_boolean_resource (dpy, "trace", "Boolean"))
+    set_mode (state, ((random() % 3) ? TRACE_TEXT_A : TRACE_TEXT_B));
+
+  state->cursor_x = -1;
+  state->cursor_y = -1;
 
   return state;
 }
@@ -501,12 +843,66 @@ feed_matrix (m_state *state)
 
   switch (state->mode)
     {
-    case TRACEA2: case TRACEB2:
-    case MATRIX: case DNA: case BINARY: case DEC: case HEX:
+    case TRACE_A:
+        {
+          int L = strlen((char *) state->tracing);
+          int count = 0;
+          int i;
+
+          for (i = 0; i < strlen((char *) state->tracing); i++)
+            if (state->tracing[i] > 0) 
+              count++;
+
+          if (count >= L)
+            {
+              set_mode (state, TRACE_DONE);
+              state->typing_delay = 1000000;
+              return;
+            }
+          else
+            {
+              i = 5 + (30 / (count+1)); /* how fast numbers are discovered */
+
+              if ((random() % i) == 0)
+                {
+                  i = random() % L;
+                  if (state->tracing[i] < 0)
+                    state->tracing[i] = -state->tracing[i];
+                }
+            }
+        }
       break;
+
+    case TRACE_B:
+      if ((random() % 40) == 0)
+        {
+          set_mode (state, TRACE_FAIL);
+          return;
+        }
+      break;
+
+    case MATRIX: case DNA: case BINARY: case DEC: case HEX: case ASCII: 
+    case DRAIN_TRACE_A:
+    case DRAIN_TRACE_B:
+    case DRAIN_KNOCK:
+    case DRAIN_NMAP:
+    case DRAIN_MATRIX:
+      break;
+
     default:
-      return;
+      abort();
     }
+
+  /*get input*/
+  if(state->use_pipe_p){
+    state->buf_done = (state->buf_done + 1) % BUF_SIZE;
+    if(state->buf_done == 0){
+      state->do_fill_buff = True;
+    }
+    if(state->do_fill_buff){
+      fill_input(state);
+    }
+  }
 
   /* Update according to current feeders. */
   for (x = 0; x < state->grid_width; x++)
@@ -519,7 +915,20 @@ feed_matrix (m_state *state)
         }
       else if (f->remaining > 0)	/* how many items are in the pipe */
         {
-          int g = state->glyph_map[(random() % state->nglyphs)] + 1;
+          int g;
+          long rval;
+          if(state->use_pipe_p){
+            rval = (int) state->buf[f->pipe_loc];
+            if(++f->pipe_loc > (BUF_SIZE-1)){
+              f->pipe_loc = 0;
+              /*fill_input(state);*/
+            }
+            rval = (rval % state->nglyphs);
+          }
+          else{
+            rval = (random() % state->nglyphs);
+          }
+          g = state->glyph_map[rval] + 1;
           insert_glyph (state, g, x, f->y);
           f->remaining--;
           if (f->y >= 0)  /* bottom_feeder_p */
@@ -550,11 +959,18 @@ redraw_cells (m_state *state, Bool active)
     for (x = 0; x < state->grid_width; x++)
       {
         m_cell *cell = &state->cells[state->grid_width * y + x];
+        Bool cursor_p = (state->cursor_on &&
+                         x == state->cursor_x && 
+                         y == state->cursor_y);
 
         if (cell->glyph)
           count++;
 
-        if ((state->mode == TRACEA2 || state->mode == TRACEB2) && active)
+        /* In trace-mode, the state of each cell is random unless we have
+           a match for this digit. */
+        if (active && (state->mode == TRACE_A || 
+                       state->mode == TRACE_B ||
+                       state->mode == TRACE_DONE))
           {
             int xx = x % strlen((char *) state->tracing);
             Bool dead_p = state->tracing[xx] > 0;
@@ -576,7 +992,7 @@ redraw_cells (m_state *state, Bool active)
         if (!cell->changed)
           continue;
 
-        if (cell->glyph == 0 && cell != state->cursor)
+        if (cell->glyph == 0 && !cursor_p)
           XFillRectangle (state->dpy, state->window, state->erase_gc,
                           x * state->char_width,
                           y * state->char_height,
@@ -584,7 +1000,7 @@ redraw_cells (m_state *state, Bool active)
                           state->char_height);
         else
           {
-            int g = (cell == state->cursor ? CURSOR_GLYPH : cell->glyph);
+            int g = (cursor_p ? CURSOR_GLYPH : cell->glyph);
             int cx = (g - 1) % CHAR_COLS;
             int cy = (g - 1) / CHAR_COLS;
             int map = ((cell->glow != 0 || cell->spinner) ? GLOW_MAP :
@@ -602,7 +1018,7 @@ redraw_cells (m_state *state, Bool active)
 
         cell->changed = 0;
 
-        if (cell->glow > 0)
+        if (cell->glow > 0 && state->mode != NMAP)
           {
             cell->glow--;
             cell->changed = 1;
@@ -616,11 +1032,6 @@ redraw_cells (m_state *state, Bool active)
             cell->changed = 1;
           }
       }
-
-  if (state->cursor)
-    {
-      state->cursor->changed = 1;
-    }
 }
 
 
@@ -646,202 +1057,267 @@ densitizer (m_state *state)
 }
 
 
-static void drain_matrix (m_state *);
-
 static void
-handle_events (m_state *state)
+hack_text (m_state *state)
 {
-  XSync (state->dpy, False);
-  while (XPending (state->dpy))
+  if (!state->typing)
     {
-      XEvent event;
-      XNextEvent (state->dpy, &event);
+      set_cursor (state, False);
+      state->cursor_x = 0;
+      state->cursor_y = 0;
+      state->typing_scroll_p = False;
+      state->typing_bold_p = False;
+      state->typing_cursor_p = True;
+      state->typing_stutter_p = False;
+      state->typing_char_delay = 10000;
+      state->typing_line_delay = 1500000;
 
-      if (event.xany.type == ConfigureNotify)
+      switch (state->mode)
         {
-          int ow = state->grid_width;
-          int oh = state->grid_height;
-          XGetWindowAttributes (state->dpy, state->window, &state->xgwa);
-          state->grid_width  = state->xgwa.width  / state->char_width;
-          state->grid_height = state->xgwa.height / state->char_height;
-          state->grid_width++;
-          state->grid_height++;
-          if (state->grid_width  < 5) state->grid_width  = 5;
-          if (state->grid_height < 5) state->grid_height = 5;
-
-          if (ow != state->grid_width ||
-              oh != state->grid_height)
+        case TRACE_TEXT_A:
+        case TRACE_TEXT_B:
+          if (state->mode == TRACE_TEXT_A)
             {
-              m_cell *ncells = (m_cell *)
-                calloc (sizeof(m_cell),
-                        state->grid_width * state->grid_height);
-              m_feeder *nfeeders = (m_feeder *)
-                calloc (sizeof(m_feeder), state->grid_width);
-              int x, y, i;
-
-              /* fprintf(stderr, "resize: %d x %d  ==>  %d x %d\n",
-                        ow, oh, state->grid_width, state->grid_height); */
-
-              for (y = 0; y < oh; y++)
-                for (x = 0; x < ow; x++)
-                  if (x < ow && x < state->grid_width &&
-                      y < oh && y < state->grid_height)
-                    ncells[y * state->grid_width + x] =
-                      state->cells[y * ow + x];
-              free (state->cells);
-              state->cells = ncells;
-
-              x = (ow < state->grid_width ? ow : state->grid_width);
-              for (i = 0; i < x; i++)
-                nfeeders[i] = state->feeders[i];
-              free (state->feeders);
-              state->feeders = nfeeders;
-            }
-        }
-      else if (event.xany.type == KeyPress)
-        {
-          KeySym keysym;
-          char c = 0;
-          XLookupString (&event.xkey, &c, 1, &keysym, 0);
-          if (c == '0' && !state->tracing)
-            {
-              drain_matrix (state);
-              return;
-            }
-          else if (c == '+' || c == '=' || c == '>' || c == '.')
-            {
-              state->density += 10;
-              if (state->density > 100)
-                state->density = 100;
+              if (state->grid_width >= 52)
+                state->typing =
+                  ("Call trans opt: received. 2-19-98 13:24:18 REC:Log>\n"
+                   "Trace program: running\n");
               else
-                return;
-            }
-          else if (c == '-' || c == '_' || c == '<' || c == ',')
-            {
-              state->density -= 10;
-              if (state->density < 0)
-                state->density = 0;
-              else
-                return;
-            }
-          else if (c == '[' || c == '(' || c == '{')
-            {
-              state->insert_top_p    = True;
-              state->insert_bottom_p = False;
-              return;
-            }
-          else if (c == ']' || c == ')' || c == '}')
-            {
-              state->insert_top_p    = False;
-              state->insert_bottom_p = True;
-              return;
-            }
-          else if (c == '\\' || c == '|')
-            {
-              state->insert_top_p    = True;
-              state->insert_bottom_p = True;
-              return;
-            }
-          else if ((c == 't' || c == 'T') && state->mode == MATRIX)
-            {
-              state->mode = (c == 't' ? TRACEA1 : TRACEB1);
-              flip_images (state);
-              init_trace (state);
-              return;
-            }
-          else if ((c == 'c' || c == 'k') && state->mode == MATRIX)
-            {
-              drain_matrix (state);
-              state->mode = (c == 'c' ? NMAP : KNOCK);
-              flip_images (state);
-              return;
-            }
-        }
-
-      screenhack_handle_event (state->dpy, &event);
-    }
-}
-
-
-static void
-matrix_usleep (m_state *state, unsigned long delay)
-{
-  if (!delay) return;
-
-  if (state->cursor)
-    {
-      int blink_delay = 333000;
-      int tot_delay = 0;
-      m_cell *cursor = state->cursor;
-      while (tot_delay < delay)
-        {
-          if (state->cursor)
-            {
-              usleep (blink_delay * 2);
-              tot_delay += (2 * blink_delay);
-              state->cursor = NULL;
+                state->typing =
+                  ("Call trans opt: received.\n2-19-98 13:24:18 REC:Log>\n"
+                   "Trace program: running\n");
             }
           else
             {
-              usleep (blink_delay);
-              tot_delay += blink_delay;
-              state->cursor = cursor;
+              if (state->grid_width >= 52)
+                state->typing =
+                  ("Call trans opt: received. 9-18-99 14:32:21 REC:Log>\n"
+                   "WARNING: carrier anomaly\n"
+                   "Trace program: running\n");
+              else
+                state->typing =
+                  ("Call trans opt: received.\n9-18-99 14:32:21 REC:Log>\n"
+                   "WARNING: carrier anomaly\n"
+                   "Trace program: running\n");
             }
-          cursor->changed = 1;
-          redraw_cells (state, False);
-          XSync (state->dpy, False);
-          handle_events (state);
+          break;
+
+        case TRACE_FAIL:
+          {
+            const char *s = "SYSTEM FAILURE\n";
+            int i;
+            float cx = (state->grid_width - strlen(s) - 1) / 2 - 0.5;
+            float cy = (state->grid_height / 2) - 1.3;
+
+            if (cy < 0) cy = 0;
+            if (cx < 0) cx = 0;
+
+            XFillRectangle (state->dpy, state->window, state->erase_gc,
+                            cx * state->char_width,
+                            cy * state->char_height,
+                            strlen(s) * state->char_width,
+                            state->char_height * 1.6);
+
+            for (i = -2; i < 3; i++)
+              {
+                XGCValues gcv;
+                gcv.foreground = state->colors[i + 2];
+                XChangeGC (state->dpy, state->scratch_gc, GCForeground, &gcv);
+                XDrawRectangle (state->dpy, state->window, state->scratch_gc,
+                                cx * state->char_width - i,
+                                cy * state->char_height - i,
+                                strlen(s) * state->char_width + (2 * i),
+                                (state->char_height * 1.6) + (2 * i));
+              }
+
+            /* If we don't clear these, part of the box may get overwritten */
+            for (i = 0; i < state->grid_height * state->grid_width; i++)
+              {
+                m_cell *cell = &state->cells[i];
+                cell->changed = 0;
+              }
+
+            state->cursor_x = (state->grid_width - strlen(s) - 1) / 2;
+            state->cursor_y = (state->grid_height / 2) - 1;
+            if (state->cursor_x < 0) state->cursor_x = 0;
+            if (state->cursor_y < 0) state->cursor_y = 0;
+
+            state->typing = s;
+            state->typing_char_delay = 0;
+            state->typing_cursor_p = False;
+          }
+          break;
+
+        case KNOCK:
+          {
+            state->typing = ("\001Wake up, Neo...\n"
+                             "\001The Matrix has you...\n"
+                             "\001Follow the white rabbit.\n"
+                             "\n"
+                             "Knock, knock, Neo.\n");
+
+            state->cursor_x = 4;
+            state->cursor_y = 2;
+            state->typing_char_delay = 0;
+            state->typing_line_delay = 2000000;
+          }
+          break;
+
+        case NMAP:
+          {
+            /* Note that what Trinity is using here is moderately accurate:
+               She runs nmap (http://www.insecure.org/nmap/) then breaks in
+               with a (hypothetical) program called "sshnuke" that exploits
+               the (very real) SSHv1 CRC32 compensation attack detector bug
+               (http://staff.washington.edu/dittrich/misc/ssh-analysis.txt).
+
+               The command syntax of the power grid control software looks a
+               lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
+            */
+
+            state->typing =
+# ifdef __GNUC__
+            __extension__  /* don't warn about "string length is greater than
+                              the length ISO C89 compilers are required to
+                              support"... */
+
+# endif
+              ("# "
+               "\010\010\010\010"
+               "\001nmap 10.2.2.2\n"
+               "Starting nmap V. 2.54BETA25\n"
+               "\010\010\010\010\010\010\010\010\010\010"
+               "Insufficient responses for TCP sequencing (3), OS detection"
+               " may be less accurate\n"
+               "Interesting ports on 10.2.2.2:\n"
+               "(The 1538 ports scanned but not shown below are in state:"
+               " filtered)\n"
+               "Port       state       service\n"
+               "22/tcp     open        ssh\n"
+               "\n"
+               "No exact OS matches for host\n"
+               "\n"
+               "Nmap run completed -- 1 IP address (1 host up) scanned\n"
+               "# "
+
+               "\010\010\010\010"
+               "\001sshnuke 10.2.2.2 -rootpw=\"Z1ON0101\"\n"
+               "Connecting to 10.2.2.2:ssh ... "
+               "\010\010"
+               "successful.\n"
+               "Attempting to exploit SSHv1 CRC32 ... "
+               "\010\010\010\010"
+               "successful.\n"
+               "Resetting root password to \"Z1ON0101\".\n"
+               "\010\010"
+               "System open: Access Level <9>\n"
+
+               "# "
+               "\010\010"
+
+               "\001ssh 10.2.2.2 -l root\n"
+               "\010\010"
+               "root@10.2.2.2's password: "
+               "\010\010\n"
+               "\010\010\n"
+               "RRF-CONTROL> "
+
+               "\010\010"
+               "\001disable grid nodes 21 - 48\n"
+               "\n"
+               "\002Warning: Disabling nodes 21-48 will disconnect sector 11"
+               " (27 nodes)\n"
+               "\n"
+               "\002         ARE YOU SURE? (y/n) "
+
+               "\010\010"
+               "\001y\n"
+               "\n"
+               "\n"
+               "\010\002Grid Node 21 offline...\n"
+               "\010\002Grid Node 22 offline...\n"
+               "\010\002Grid Node 23 offline...\n"
+               "\010\002Grid Node 24 offline...\n"
+               "\010\002Grid Node 25 offline...\n"
+               "\010\002Grid Node 26 offline...\n"
+               "\010\002Grid Node 27 offline...\n"
+               "\010\002Grid Node 28 offline...\n"
+               "\010\002Grid Node 29 offline...\n"
+               "\010\002Grid Node 30 offline...\n"
+               "\010\002Grid Node 31 offline...\n"
+               "\010\002Grid Node 32 offline...\n"
+               "\010\002Grid Node 33 offline...\n"
+               "\010\002Grid Node 34 offline...\n"
+               "\010\002Grid Node 35 offline...\n"
+               "\010\002Grid Node 36 offline...\n"
+               "\010\002Grid Node 37 offline...\n"
+               "\010\002Grid Node 38 offline...\n"
+               "\010\002Grid Node 39 offline...\n"
+               "\010\002Grid Node 40 offline...\n"
+               "\010\002Grid Node 41 offline...\n"
+               "\010\002Grid Node 42 offline...\n"
+               "\010\002Grid Node 43 offline...\n"
+               "\010\002Grid Node 44 offline...\n"
+               "\010\002Grid Node 45 offline...\n"
+               "\010\002Grid Node 46 offline...\n"
+               "\010\002Grid Node 47 offline...\n"
+               "\010\002Grid Node 48 offline...\n"
+               "\010\010"
+               "\nRRF-CONTROL> "
+               "\010\010\010\010\010\010\010\010"
+               );
+
+            state->cursor_x = 0;
+            state->cursor_y = state->grid_height - 3;
+            state->typing_scroll_p = True;
+            state->typing_char_delay = 0;
+            state->typing_line_delay = 20000;
+          }
+          break;
+
+        default:
+          abort();
+          break;
         }
+
+      state->typing_left_margin = state->cursor_x;
+      state->typing_delay = state->typing_char_delay;
+      if (state->typing_cursor_p)
+        set_cursor (state, True);
     }
   else
     {
-      XSync (state->dpy, False);
-      handle_events (state);
-      usleep (delay);
-    }
-}
+      Bool scrolled_p = False;
+      unsigned char c, c1;
+      int x = state->cursor_x;
+      int y = state->cursor_y;
 
+    AGAIN:
+      c  = ((unsigned char *) state->typing)[0];
+      c1 = ((unsigned char *) state->typing)[1];
 
-static void
-hack_text_1 (m_state *state,
-             int *xP, int *yP,
-             const char *s,
-             Bool typing_delay,
-             Bool transmit_delay,
-             Bool long_delay,
-             Bool visible_cursor,
-             Bool scroll_p)
-{
-  int x = *xP;
-  int y = *yP;
-  int i = state->grid_width * y + x;
-  Bool glow_p = False;
-  int long_delay_usecs = 1000000;
-
-  if (long_delay == -1)
-    long_delay = 0, long_delay_usecs /= 6;
-
-  if (y >= state->grid_height-1) return;
-
-  while (*s)
-    {
-      m_cell *cell;
-      Bool done_p = s[1] == '\000';
-
-      long_delay = done_p;
-              
-      if (*s == '\n' || x >= state->grid_width - 1)
+      state->typing_delay = (!c || c1 == '\n'
+                             ? state->typing_line_delay
+                             : state->typing_char_delay);
+      if (! c)
         {
-          if (*s != '\n')
-            s--;
+          state->typing_delay = 0;
+          state->typing = 0;
+          return;
+        }
+
+      if (state->typing_scroll_p &&
+          (c == '\n' || 
+           x >= state->grid_width - 1))
+        {
+          set_cursor (state, False);
           x = 0;
           y++;
-          i = state->grid_width * y + x;
 
-          if (scroll_p)
+          if (y >= state->grid_height-1)
             {
               int xx, yy;
-              for (yy = 0; yy < state->grid_height-1; yy++)
+              for (yy = 0; yy < state->grid_height-2; yy++)
                 for (xx = 0; xx < state->grid_width; xx++)
                   {
                     int ii = yy     * state->grid_width + xx;
@@ -856,476 +1332,82 @@ hack_text_1 (m_state *state,
                   state->cells[ii].glyph   = 0;
                   state->cells[ii].changed = 1;
                 }
-              y--;  /* move it back */
-              i = state->grid_width * y + x;
-            }
-
-          if (y >= state->grid_height) return;
-
-          cell = &state->cells[i];
-          if (visible_cursor)
-            {
-              cell->changed = 1;
-              state->cursor = cell;
+              y--;  /* move back up to bottom line */
+              scrolled_p = True;
             }
         }
-      else if (*s == '\010')
-        ;
-      else if (*s == '\002')
-        glow_p = True;
-      else
+
+      if (c == '\n')
         {
-          cell = &state->cells[i];
-          if (x < state->grid_width-1)
+          if (!state->typing_scroll_p)
             {
-              cell->glyph = char_map[(unsigned char) *s] + 1;
-              if (*s == ' ' || *s == '\t') cell->glyph = 0;
-              cell->changed = 1;
-              cell->glow = (glow_p ? 100 : 0);
-              if (visible_cursor)
+              int i, j;
+              set_cursor (state, False);
+              x = state->typing_left_margin;
+
+              /* clear the line */
+              i = state->grid_width * y;
+              j = i + state->grid_width;
+              for (; i < j; i++)
                 {
-                  m_cell *next = &state->cells[i + 1];
-                  next->changed = 1;
-                  state->cursor = next;
+                  state->cells[i].glyph   = 0;
+                  state->cells[i].changed = 1;
                 }
-              i++;
             }
-          x++;
+          state->typing_bold_p = False;
+          state->typing_stutter_p = False;
+          scrolled_p = True;
         }
-      s++;
-      if (typing_delay || transmit_delay || long_delay)
+
+      else if (c == '\010')
+        state->typing_delay += 500000;
+
+      else if (c == '\001')
         {
-          redraw_cells (state, False);
-          XSync (state->dpy, False);
-          handle_events (state);
-          if (typing_delay)
-            {
-              usleep (50000);
-              if (typing_delay && 0 == random() % 3)
-                usleep (0xFFFFFF & ((random() % 250000) + 1));
-            }
-          else
-            if (long_delay)
-              matrix_usleep (state, long_delay_usecs);
-            else
-              usleep (20000);
+          state->typing_stutter_p = True;
+          state->typing_bold_p = False;
         }
-    }
+      else if (c == '\002')
+        state->typing_bold_p = True;
 
-  *xP = x;
-  *yP = y;
-}
-
-
-static void
-zero_cells (m_state *state)
-{
-  int i;
-  for (i = 0; i < state->grid_height * state->grid_width; i++)
-    {
-      m_cell *cell = &state->cells[i];
-      cell->changed = (cell->glyph != 0);
-      cell->glyph   = 0;
-      cell->glow    = 0;
-      cell->spinner = 0;
-    }
-}
-
-
-static void
-hack_text (m_state *state)
-{
-  Bool typing_delay = False;
-  Bool transmit_delay = False;
-  Bool long_delay = False;
-  Bool visible_cursor = False;
-
-  switch (state->mode)
-    {
-    case KNOCK:
-      {
-        const char *blocks[] = {
-          "Wake up, Neo...",
-          "The Matrix has you...",
-          "Follow the white rabbit.",
-          " ",
-          "Knock, knock, Neo."
-        };
-        int nblocks = countof(blocks);
-        int j;
-        typing_delay = True;
-        transmit_delay = False;
-        long_delay = False;
-        visible_cursor = True;
-        for (j = 0; j < nblocks; j++)
-          {
-            int x = 3;
-            int y = 2;
-            const char *s = blocks[j];
-            if (!s[0] || !s[1]) typing_delay = False;
-            zero_cells (state);
-            hack_text_1 (state, &x, &y, s,
-                         typing_delay, transmit_delay, -1,
-                         visible_cursor, True);
-            matrix_usleep (state, 2000000);
-          }
-      }
-      break;
-
-    case TRACEA1: case TRACEB1:
-      {
-        const char *blocks[10];
-        int j, n = 0;
-
-        if (state->mode == TRACEA1)
-          blocks[n++] =
-            (state->grid_width >= 52
-             ?  "Call trans opt: received. 2-19-98 13:24:18 REC:Log>"
-             : "Call trans opt: received.\n2-19-98 13:24:18 REC:Log>");
-        else
-          blocks[n++] =
-            (state->grid_width >= 52
-             ?  "Call trans opt: received. 9-18-99 14:32:21 REC:Log>"
-             : "Call trans opt: received.\n9-18-99 14:32:21 REC:Log>");
-
-        if (state->mode == TRACEB1)
-          blocks[n++] = "WARNING: carrier anomaly";
-        blocks[n++] = "Trace program: running";
-
-        typing_delay = False;
-        transmit_delay = True;
-        long_delay = True;
-        visible_cursor = True;
-        for (j = 0; j < n; j++)
-          {
-            const char *s = blocks[j];
-            int x = 0;
-            int y = 0;
-            zero_cells (state);
-            hack_text_1 (state, &x, &y, s,
-                         typing_delay, transmit_delay, long_delay,
-                         visible_cursor, True);
-          }
-        matrix_usleep (state, 1000000);
-      }
-      break;
-
-    case SYSTEMFAILURE:
-      {
-        const char *s = "SYSTEM FAILURE";
-        int i;
-        float cx = ((int)state->grid_width - (int)strlen(s)) / 2 - 0.5;
-        float cy = (state->grid_height / 2) - 1.3;
-        int x, y;
-
-        if (cy < 0) cy = 0;
-        if (cx < 0) cx = 0;
-
-        XFillRectangle (state->dpy, state->window, state->erase_gc,
-                        cx * state->char_width,
-                        cy * state->char_height,
-                        (strlen(s) + 1) * state->char_width,
-                        state->char_height * 1.6);
-
-        for (i = -2; i < 3; i++)
-          {
-            XGCValues gcv;
-            gcv.foreground = state->colors[i + 2];
-            XChangeGC (state->dpy, state->scratch_gc, GCForeground, &gcv);
-            XDrawRectangle (state->dpy, state->window, state->scratch_gc,
-                            cx * state->char_width - i,
-                            cy * state->char_height - i,
-                            (strlen(s) + 1) * state->char_width + (2 * i),
-                            (state->char_height * 1.6) + (2 * i));
-          }
-
-        /* If we don't clear these out, part of the box may get overwritten */
-        for (i = 0; i < state->grid_height * state->grid_width; i++)
-          {
-            m_cell *cell = &state->cells[i];
-            cell->changed = 0;
-          }
-
-        x = ((int)state->grid_width - (int)strlen(s)) / 2;
-        y = (state->grid_height / 2) - 1;
-        if (y < 0) y = 0;
-        if (x < 0) x = 0;
-        hack_text_1 (state, &x, &y, s,
-                     typing_delay, transmit_delay, long_delay,
-                     visible_cursor, False);
-      }
-    break;
-
-    case NMAP:
-      {
-        /* Note that what Trinity is using here is moderately accurate:
-           She runs nmap (http://www.insecure.org/nmap/) then breaks in
-           with a (hypothetical) program called "sshnuke" that exploits
-           the (very real) SSHv1 CRC32 compensation attack detector bug
-           (http://staff.washington.edu/dittrich/misc/ssh-analysis.txt).
-
-           The command syntax of the power grid control software looks a
-           lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
-        */
-        const char *blocks[] = {
-          "# ",
-
-          "\001nmap 10.2.2.2\n",
-          "Starting nmap V. 2.54BETA25\n"
-
-          "\010", "\010", "\010",
-
-          "Insufficient responses for TCP sequencing (3), OS detection "
-          "may be less accurate\n"
-          "Interesting ports on 10.2.2.2:\n"
-          "(The 1538 ports scanned but not shown below are in state: "
-          "filtered)\n"
-          "Port       state       service\n"
-          "22/tcp     open        ssh\n"
-          "\n"
-          "No exact OS matches for host\n"
-          "\n"
-          "Nmap run completed -- 1 IP address (1 host up) scanned\n"
-          "# ",
-
-          "\001sshnuke 10.2.2.2 -rootpw=\"Z1ON0101\"\n",
-
-          "Connecting to 10.2.2.2:ssh ... ",
-
-          "successful.\n"
-          "Attempting to exploit SSHv1 CRC32 ... ",
-
-          "successful.\n"
-          "Resetting root password to \"Z1ON0101\".\n",
-
-          "System open: Access Level <9>\n"
-          "# ",
-
-          "\001ssh 10.2.2.2 -l root\n",
-
-          "root@10.2.2.2's password: ",
-
-          "\001\010\010\010\010\010\010\010\010\n",
-
-          "\n"
-          "RRF-CONTROL> ",
-
-          "\001disable grid nodes 21 - 48\n",
-
-          "\002Warning: Disabling nodes 21-48 will disconnect sector 11 "
-          "(27 nodes)\n"
-          "\n"
-          "\002         ARE YOU SURE? (y/n) ",
-
-          "\001\010\010y\n",
-          "\n"
-        };
-
-        int nblocks = countof(blocks);
-        int y = state->grid_height - 2;
-        int x, j;
-
-        visible_cursor = True;
-        x = 0;
-        zero_cells (state);
-        for (j = 0; j < nblocks; j++)
-          {
-            const char *s = blocks[j];
-            typing_delay = (*s == '\001');
-            if (typing_delay) s++;
-
-            long_delay = False;
-            hack_text_1 (state, &x, &y, s,
-                         typing_delay, transmit_delay, long_delay,
-                         visible_cursor, True);
-          }
-
-        typing_delay = False;
-        long_delay = False;
-        for (j = 21; j <= 48; j++)
-          {
-            char buf[100];
-            sprintf (buf, "\002Grid Node %d offline...\n", j);
-            hack_text_1 (state, &x, &y, buf,
-                         typing_delay, transmit_delay, -1,
-                         visible_cursor, True);
-
-          }
-        long_delay = True;
-        hack_text_1 (state, &x, &y, "\nRRF-CONTROL> ",
-                     typing_delay, transmit_delay, long_delay,
-                     visible_cursor, True);
-
-        /* De-glow all cells before draining them... */
-        for (j = 0; j < state->grid_height * state->grid_width; j++)
-          {
-            m_cell *cell = &state->cells[j];
-            cell->changed = (cell->glow != 0);
-            cell->glow = 0;
-          }
-      }
-    break;
-
-  default:
-    abort();
-    break;
-  }
-}
-
-
-static void
-drain_matrix (m_state *state)
-{
-  int delay = get_integer_resource ("delay", "Integer");
-  int i;
-
-  /* Fill the top row with empty top-feeders, to clear the screen. */
-  for (i = 0; i < state->grid_width; i++)
-    {
-      m_feeder *f = &state->feeders[i];
-      f->y = -1;
-      f->remaining = 0;
-      f->throttle = 0;
-    }
-
-  /* Turn off all the spinners, else they never go away. */
-  for (i = 0; i < state->grid_width * state->grid_height; i++)
-    if (state->cells[i].spinner)
-      {
-        state->cells[i].spinner = 0;
-        state->cells[i].changed = 1;
-      }
-
-  /* Run the machine until there are no live cells left. */
-  while (1)
-    {
-      Bool any_cells_p = False;
-      for (i = 0; i < state->grid_width * state->grid_height; i++)
-        if (state->cells[i].glyph)
-          {
-            any_cells_p = True;
-            goto FOUND;
-          }
-    FOUND:
-      if (! any_cells_p)
-        return;
-
-      feed_matrix (state);
-      redraw_cells (state, True);
-      XSync (state->dpy, False);
-      handle_events (state);
-      if (delay) usleep (delay);
-    }
-}
-
-
-static void
-roll_state (m_state *state)
-{
-  int delay = 0;
-  switch (state->mode)
-    {
-    case TRACEA1:
-      state->mode = TRACEA2;
-      break;
-    case TRACEB1:
-      state->mode = TRACEB2;
-      break;
-
-    case TRACEA2:
-      {
-        Bool any = False;
-        int i;
-        for (i = 0; i < strlen((char *) state->tracing); i++)
-          if (state->tracing[i] < 0) any = True;
-
-        if (!any)
-          {
-            XSync (state->dpy, False);
-            matrix_usleep (state, 3000000);
-            state->mode = MATRIX;
-            state->glyph_map = matrix_encoding;
-            state->nglyphs = countof(matrix_encoding);
-            flip_images (state);
-            free (state->tracing);
-            state->tracing = 0;
-          }
-        else if ((random() % 20) == 0)  /* how fast numbers are discovered */
-          {
-            int x = random() % strlen((char *) state->tracing);
-            if (state->tracing[x] < 0)
-              state->tracing[x] = -state->tracing[x];
-          }
-        break;
-      }
-
-    case TRACEB2:
-      {
-        /* reversed logic from TRACEA2 */
-        Bool any = False;
-        int i;
-        for (i = 0; i < strlen((char *) state->tracing); i++)
-          if (state->tracing[i] > 0) any = True;
-
-        if ((random() % 15) == 0) {
-          if (any)
-            state->mode = SYSTEMFAILURE;
-          else
-            {
-              int x = random() % strlen((char *) state->tracing);
-              if (state->tracing[x] < 0)
-                state->tracing[x] = -state->tracing[x];
-            }
-        }
-        break;
-      }
-
-    case SYSTEMFAILURE:
-      XSync (state->dpy, False);
-      matrix_usleep (state, 6000000);
-      state->mode = MATRIX;
-      state->glyph_map = matrix_encoding;
-      state->nglyphs = countof(matrix_encoding);
-      flip_images (state);
-      drain_matrix (state);
-      matrix_usleep (state, 2000000);
-      if (state->tracing) {
-        free (state->tracing);
-        state->tracing = 0;
-      }
-      break;
-
-    case KNOCK:
-    case NMAP:
-      state->mode = MATRIX;
-      state->glyph_map = matrix_encoding;
-      state->nglyphs = countof(matrix_encoding);
-      flip_images (state);
-      break;
-
-    case MATRIX:
-      if (state->knock_knock_p && (! (random() % 3500)))
+      else if (x < state->grid_width-1)
         {
-          drain_matrix (state);
-          if (! (random() % 5))
-            state->mode = NMAP;
-          else
-            state->mode = KNOCK;
-
-          flip_images (state);
+          m_cell *cell = &state->cells[state->grid_width * y + x];
+          cell->glyph = char_map[c] + 1;
+          if (c == ' ' || c == '\t') cell->glyph = 0;
+          cell->changed = 1;
+          cell->glow = (state->typing_bold_p ? 127 : 0);
         }
-      break;
 
-    case DNA: case BINARY: case DEC: case HEX:
-      break;
+      if (c >= ' ')
+        x++;
 
-    default:
-      abort();
-      break;
+      if (x >= state->grid_width-1)
+        x = state->grid_width-1;
+
+      state->typing++;
+
+      if (state->typing_stutter_p)
+        {
+          if (state->typing_delay == 0)
+            state->typing_delay = 20000;
+          if (random() % 3)
+            state->typing_delay += (0xFFFFFF & ((random() % 200000) + 1));
+        }
+
+      /* If there's no delay after this character, just keep going. */
+      if (state->typing_delay == 0)
+        goto AGAIN;
+
+      if (scrolled_p || x != state->cursor_x || y != state->cursor_y)
+        {
+          set_cursor (state, False);
+          state->cursor_x = x;
+          state->cursor_y = y;
+          if (state->typing_cursor_p)
+            set_cursor (state, True);
+        }
     }
-
-  matrix_usleep (state, delay * 1000000);
-  state->cursor = NULL;
 }
 
 
@@ -1336,12 +1418,10 @@ hack_matrix (m_state *state)
 
   switch (state->mode)
     {
-    case TRACEA1: case TRACEB1: case SYSTEMFAILURE:
-    case KNOCK: case NMAP:
-      hack_text (state);
+    case TRACE_DONE: case TRACE_FAIL:
       return;
-    case TRACEA2: case TRACEB2:
-    case MATRIX: case DNA: case BINARY: case DEC: case HEX:
+    case TRACE_A: case TRACE_B:
+    case MATRIX: case DNA: case BINARY: case DEC: case HEX: case ASCII:
       break;
     default:
       abort(); break;
@@ -1382,7 +1462,7 @@ hack_matrix (m_state *state)
       if ((random() % 4) != 0)
         f->remaining = 0;
 
-      if (state->mode == TRACEA2 || state->mode == TRACEB2)
+      if (state->mode == TRACE_A || state->mode == TRACE_B)
         bottom_feeder_p = True;
       if (state->insert_top_p && state->insert_bottom_p)
         bottom_feeder_p = (random() & 1);
@@ -1395,19 +1475,95 @@ hack_matrix (m_state *state)
         f->y = -1;
     }
 
-  if (!state->mode == TRACEA2 && !state->mode == TRACEB2 &&
-      ! (random() % 500))
+  if (state->mode == MATRIX && (! (random() % 500)))
     init_spinners (state);
 }
 
 
-static void
-draw_matrix (m_state *state)
+static unsigned long
+xmatrix_draw (Display *dpy, Window window, void *closure)
 {
-  feed_matrix (state);
-  hack_matrix (state);
+  m_state *state = (m_state *) closure;
+
+  if (state->typing_delay > 0)
+    {
+      state->typing_delay -= state->delay;
+      if (state->typing_delay < 0)
+        state->typing_delay = 0;
+      redraw_cells (state, False);
+      return state->delay;
+    }
+
+  switch (state->mode)
+    {
+    case MATRIX: case DNA: case BINARY: case DEC: case HEX: case ASCII:
+    case TRACE_A: case TRACE_B:
+      feed_matrix (state);
+      hack_matrix (state);
+      break;
+
+    case DRAIN_TRACE_A:
+    case DRAIN_TRACE_B:
+    case DRAIN_KNOCK:
+    case DRAIN_NMAP:
+    case DRAIN_MATRIX:
+      feed_matrix (state);
+      if (screen_blank_p (state))
+        {
+          state->typing_delay = 500000;
+          switch (state->mode)
+            {
+            case DRAIN_TRACE_A: set_mode (state, TRACE_TEXT_A); break;
+            case DRAIN_TRACE_B: set_mode (state, TRACE_TEXT_B); break;
+            case DRAIN_KNOCK:   set_mode (state, KNOCK);        break;
+            case DRAIN_NMAP:    set_mode (state, NMAP);         break;
+            case DRAIN_MATRIX:  set_mode (state, MATRIX);       break;
+            default:            abort();                        break;
+            }
+        }
+      break;
+
+    case TRACE_DONE:
+      set_mode (state, MATRIX);
+      break;
+
+    case TRACE_TEXT_A: 
+    case TRACE_TEXT_B: 
+    case TRACE_FAIL: 
+    case KNOCK: 
+    case NMAP:
+      hack_text (state);
+
+      if (! state->typing)  /* done typing */
+        {
+          set_cursor (state, False);
+          switch (state->mode)
+            {
+            case TRACE_TEXT_A: set_mode (state, TRACE_A); break;
+            case TRACE_TEXT_B: set_mode (state, TRACE_B); break;
+            case TRACE_FAIL:   set_mode (state, MATRIX);  break;
+            case KNOCK:        set_mode (state, MATRIX);  break;
+            case NMAP:         set_mode (state, MATRIX);  break;
+            default:           abort();                   break;
+            }
+        }
+      break;
+
+    default:
+      abort();
+    }
+
+  if (state->mode == MATRIX &&
+      state->knock_knock_p &&
+      (! (random() % 10000)))
+    {
+      if (! (random() % 5))
+        set_mode (state, DRAIN_NMAP);
+      else
+        set_mode (state, DRAIN_KNOCK);
+    }
+
   redraw_cells (state, True);
-  roll_state (state);
 
 #if 0
   {
@@ -1428,56 +1584,183 @@ draw_matrix (m_state *state)
   }
 #endif
 
+  return state->delay;
 }
 
-
-char *progclass = "XMatrix";
 
-char *defaults [] = {
+static void
+xmatrix_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  m_state *state = (m_state *) closure;
+  int ow = state->grid_width;
+  int oh = state->grid_height;
+  XGetWindowAttributes (state->dpy, state->window, &state->xgwa);
+  state->grid_width  = state->xgwa.width  / state->char_width;
+  state->grid_height = state->xgwa.height / state->char_height;
+  state->grid_width++;
+  state->grid_height++;
+  if (state->grid_width  < 5) state->grid_width  = 5;
+  if (state->grid_height < 5) state->grid_height = 5;
+
+  if (ow != state->grid_width ||
+      oh != state->grid_height)
+    {
+      m_cell *ncells = (m_cell *)
+        calloc (sizeof(m_cell), state->grid_width * state->grid_height);
+      m_feeder *nfeeders = (m_feeder *)
+        calloc (sizeof(m_feeder), state->grid_width);
+      int x, y, i;
+
+      /* fprintf(stderr, "resize: %d x %d  ==>  %d x %d\n",
+         ow, oh, state->grid_width, state->grid_height); */
+
+      for (y = 0; y < oh; y++)
+        for (x = 0; x < ow; x++)
+          if (x < ow && x < state->grid_width &&
+              y < oh && y < state->grid_height)
+            ncells[y * state->grid_width + x] =
+              state->cells[y * ow + x];
+      free (state->cells);
+      state->cells = ncells;
+
+      x = (ow < state->grid_width ? ow : state->grid_width);
+      for (i = 0; i < x; i++)
+        nfeeders[i] = state->feeders[i];
+      free (state->feeders);
+      state->feeders = nfeeders;
+    }
+}
+
+static Bool
+xmatrix_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  m_state *state = (m_state *) closure;
+
+ if (event->xany.type == KeyPress)
+   {
+     KeySym keysym;
+     char c = 0;
+     XLookupString (&event->xkey, &c, 1, &keysym, 0);
+     switch (c)
+       {
+       case '0':
+         set_mode (state, DRAIN_MATRIX);
+         return True;
+
+       case '+': case '=': case '>': case '.':
+         state->density += 10;
+         if (state->density > 100)
+           state->density = 100;
+         else
+           return True;
+         break;
+
+       case '-': case '_': case '<': case ',':
+         state->density -= 10;
+         if (state->density < 0)
+           state->density = 0;
+         else
+           return True;
+         break;
+
+       case '[': case '(': case '{':
+         state->insert_top_p    = True;
+         state->insert_bottom_p = False;
+         return True;
+
+       case ']': case ')': case '}':
+         state->insert_top_p    = False;
+         state->insert_bottom_p = True;
+         return True;
+
+       case '\\': case '|':
+         state->insert_top_p    = True;
+         state->insert_bottom_p = True;
+         return True;
+
+       case 't':
+         set_mode (state, DRAIN_TRACE_A);
+         return True;
+
+       case 'T':
+         set_mode (state, DRAIN_TRACE_B);
+         return True;
+
+       case 'k':
+         set_mode (state, DRAIN_KNOCK);
+         return True;
+
+       case 'c':
+         set_mode (state, DRAIN_NMAP);
+         return True;
+
+       default:
+         return False;
+       }
+   }
+
+  return False;
+}
+
+static void
+xmatrix_free (Display *dpy, Window window, void *closure)
+{
+  m_state *state = (m_state *) closure;
+
+  if (state->cursor_timer)
+    XtRemoveTimeOut (state->cursor_timer);
+
+  /* #### there's more to free here */
+
+  free (state);
+}
+
+
+
+static const char *xmatrix_defaults [] = {
   ".background:		   black",
   ".foreground:		   #00AA00",
-  "*small:		   ",
+  "*matrixFont:		   large",
   "*delay:		   10000",
   "*insert:		   both",
   "*mode:		   Matrix",
   "*tracePhone:            (312) 555-0690",
   "*spinners:		   5",
   "*density:		   75",
-  "*knockKnock:		   False",
+  "*trace:		   True",
+  "*knockKnock:		   True",
+  "*usePipe:		   False",
+  "*program:		   xscreensaver-text",
   "*geometry:		   800x600",
   0
 };
 
-XrmOptionDescRec options [] = {
-  { "-small",		".small",		XrmoptionNoArg, "True" },
-  { "-large",		".small",		XrmoptionNoArg, "False" },
+static XrmOptionDescRec xmatrix_options [] = {
+  { "-small",		".matrixFont",		XrmoptionNoArg, "Small" },
+  { "-large",		".matrixFont",		XrmoptionNoArg, "Large" },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
+  { "-insert",		".insert",		XrmoptionSepArg, 0 },
   { "-top",		".insert",		XrmoptionNoArg, "top" },
   { "-bottom",		".insert",		XrmoptionNoArg, "bottom" },
   { "-both",		".insert",		XrmoptionNoArg, "both" },
   { "-density",		".density",		XrmoptionSepArg, 0 },
-  { "-trace",		".mode",		XrmoptionNoArg, "trace" },
+  { "-trace",		".trace",		XrmoptionNoArg, "True" },
+  { "-no-trace",	".trace",		XrmoptionNoArg, "False" },
   { "-crack",		".mode",		XrmoptionNoArg, "crack"},
   { "-phone",		".tracePhone",		XrmoptionSepArg, 0 },
+  { "-mode",		".mode",		XrmoptionSepArg, 0 },
   { "-dna",		".mode",		XrmoptionNoArg, "DNA" },
   { "-binary",		".mode",		XrmoptionNoArg, "binary" },
   { "-hexadecimal",	".mode",		XrmoptionNoArg, "hexadecimal"},
   { "-decimal",		".mode",		XrmoptionNoArg, "decimal"},
   { "-knock-knock",	".knockKnock",		XrmoptionNoArg, "True" },
+  { "-no-knock-knock",	".knockKnock",		XrmoptionNoArg, "False" },
+  { "-ascii",		".mode",		XrmoptionNoArg, "ascii"},
+  { "-pipe",	        ".usePipe",		XrmoptionNoArg, "True" },
+  { "-no-pipe",	        ".usePipe",		XrmoptionNoArg, "False" },
+  { "-program",	        ".program",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-
-void
-screenhack (Display *dpy, Window window)
-{
-  m_state *state = init_matrix (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-  while (1)
-    {
-      draw_matrix (state);
-      XSync (dpy, False);
-      handle_events (state);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("XMatrix", xmatrix)

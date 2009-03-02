@@ -24,7 +24,8 @@
            _label="Size" low="-500" high="500" default="-200"/>
 
   <_description>
-Another Lissajous figure.  This one draws the progress of circular
-shapes along a path.  Written by Alexander Jolk.
+This one draws the progress of circular shapes along a path.
+
+Written by Alexander Jolk; 1997.
   </_description>
 </screensaver>

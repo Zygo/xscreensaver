@@ -26,8 +26,6 @@
  */
 
 #include "screenhack.h"
-#include <stdio.h>
-#include <sys/time.h>
 
 #ifndef MAX_WIDTH
 #include <limits.h>
@@ -54,6 +52,35 @@ struct field {
     unsigned char *new_cells;
 };
 
+struct state {
+  Display *dpy;
+  Window window;
+
+#ifdef TIME_ME
+  time_t start_time;
+#endif
+
+  unsigned int cycles;
+  unsigned int colorindex;  /* which color in the colormap are we on */
+  unsigned int colortimer;  /* when this reaches 0, cycle to next color */
+
+  int cycle_delay;
+  int cycle_colors;
+  int ncolors;
+  int density;
+
+  GC fgc, bgc;
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  XColor *colors;
+
+  struct field *field;
+
+  XPoint fg_points[MAX_WIDTH];
+  XPoint bg_points[MAX_WIDTH];
+};
+
+
 static void 
 *xrealloc(void *p, size_t size)
 {
@@ -65,14 +92,14 @@ static void
     return ret;
 }
 
-struct field 
-*init_field(void)
+static struct field *
+init_field(struct state *st)
 {
     struct field *f = xrealloc(NULL, sizeof(struct field));
     f->height = 0;
     f->width = 0;
-    f->cell_size = get_integer_resource("cellSize", "Integer");
-    f->max_age = get_integer_resource("maxAge", "Integer");
+    f->cell_size = get_integer_resource(st->dpy, "cellSize", "Integer");
+    f->max_age = get_integer_resource(st->dpy, "maxAge", "Integer");
 
     if (f->max_age > 255) {
       fprintf (stderr, "%s: max-age must be < 256 (not %d)\n", progname,
@@ -85,7 +112,7 @@ struct field
     return f;
 }
 
-void 
+static void 
 resize_field(struct field * f, unsigned int w, unsigned int h)
 {
     int s = w * h * sizeof(unsigned char);
@@ -98,14 +125,14 @@ resize_field(struct field * f, unsigned int w, unsigned int h)
     memset(f->new_cells, 0, s);
 }
 
-inline unsigned char 
+static inline unsigned char 
 *cell_at(struct field * f, unsigned int x, unsigned int y)
 {
     return (f->cells + x * sizeof(unsigned char) + 
                        y * f->width * sizeof(unsigned char));
 }
 
-inline unsigned char 
+static inline unsigned char 
 *new_cell_at(struct field * f, unsigned int x, unsigned int y)
 {
     return (f->new_cells + x * sizeof(unsigned char) + 
@@ -113,15 +140,12 @@ inline unsigned char
 }
 
 static void
-draw_field(Display * dpy,
-	   Window window, GC fgc, GC bgc, struct field * f)
+draw_field(struct state *st, struct field * f)
 {
     unsigned int x, y;
     unsigned int rx, ry = 0;	/* random amount to offset the dot */
     unsigned int size = 1 << f->cell_size;
     unsigned int mask = size - 1;
-    static XPoint fg_points[MAX_WIDTH];
-    static XPoint bg_points[MAX_WIDTH];
     unsigned int fg_count, bg_count;
 
     /* columns 0 and width-1 are off screen and not drawn. */
@@ -137,23 +161,23 @@ draw_field(Display * dpy,
 	    ry &= mask;
 
 	    if (*cell_at(f, x, y)) {
-		fg_points[fg_count].x = (short) x *size - rx - 1;
-		fg_points[fg_count].y = (short) y *size - ry - 1;
+		st->fg_points[fg_count].x = (short) x *size - rx - 1;
+		st->fg_points[fg_count].y = (short) y *size - ry - 1;
 		fg_count++;
 	    } else {
-		bg_points[bg_count].x = (short) x *size - rx - 1;
-		bg_points[bg_count].y = (short) y *size - ry - 1;
+		st->bg_points[bg_count].x = (short) x *size - rx - 1;
+		st->bg_points[bg_count].y = (short) y *size - ry - 1;
 		bg_count++;
 	    }
 	}
-	XDrawPoints(dpy, window, fgc, fg_points, fg_count,
+	XDrawPoints(st->dpy, st->window, st->fgc, st->fg_points, fg_count,
 		    CoordModeOrigin);
-	XDrawPoints(dpy, window, bgc, bg_points, bg_count,
+	XDrawPoints(st->dpy, st->window, st->bgc, st->bg_points, bg_count,
 		    CoordModeOrigin);
     }
 }
 
-inline unsigned int 
+static inline unsigned int 
 cell_value(unsigned char c, unsigned int age)
 {
     if (!c) {
@@ -165,7 +189,7 @@ cell_value(unsigned char c, unsigned int age)
     }
 }
 
-inline unsigned int 
+static inline unsigned int 
 is_alive(struct field * f, unsigned int x, unsigned int y)
 {
     unsigned int count;
@@ -198,7 +222,7 @@ is_alive(struct field * f, unsigned int x, unsigned int y)
     }
 }
 
-unsigned int 
+static unsigned int 
 do_tick(struct field * f)
 {
     unsigned int x, y;
@@ -214,7 +238,7 @@ do_tick(struct field * f)
 }
 
 
-unsigned int 
+static unsigned int 
 random_cell(unsigned int p)
 {
     int r = random() & 0xff;
@@ -226,7 +250,7 @@ random_cell(unsigned int p)
     }
 }
 
-void 
+static void 
 populate_field(struct field * f, unsigned int p)
 {
     unsigned int x, y;
@@ -238,7 +262,7 @@ populate_field(struct field * f, unsigned int p)
     }
 }
 
-void 
+static void 
 populate_edges(struct field * f, unsigned int p)
 {
     unsigned int i;
@@ -254,10 +278,116 @@ populate_edges(struct field * f, unsigned int p)
     }
 }
 
-
-char *progclass = "Cloudlife";
+static void *
+cloudlife_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+    Bool tmp = True;
 
-char *defaults[] = {
+    st->dpy = dpy;
+    st->window = window;
+    st->field = init_field(st);
+
+#ifdef TIME_ME
+    st->start_time = time(NULL);
+#endif
+
+    st->cycle_delay = get_integer_resource(st->dpy, "cycleDelay", "Integer");
+    st->cycle_colors = get_integer_resource(st->dpy, "cycleColors", "Integer");
+    st->ncolors = get_integer_resource(st->dpy, "ncolors", "Integer");
+    st->density = (get_integer_resource(st->dpy, "initialDensity", "Integer") 
+                  % 100 * 256)/100;
+
+    XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+
+    if (st->cycle_colors) {
+        st->colors = (XColor *) xrealloc(st->colors, sizeof(XColor) * (st->ncolors+1));
+        make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors,
+                              True, &tmp, True);
+    }
+
+    st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "foreground", "Foreground");
+    st->fgc = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
+
+    st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                        "background", "Background");
+    st->bgc = XCreateGC(st->dpy, st->window, GCForeground, &st->gcv);
+
+    return st;
+}
+
+static unsigned long
+cloudlife_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->cycle_colors) {
+    if (st->colortimer == 0) {
+      st->colortimer = st->cycle_colors;
+      if( st->colorindex == 0 ) 
+        st->colorindex = st->ncolors;
+      st->colorindex--;
+      XSetForeground(st->dpy, st->fgc, st->colors[st->colorindex].pixel);
+    }
+    st->colortimer--;
+  } 
+
+  XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
+  if (st->field->height != st->xgwa.height / (1 << st->field->cell_size) + 2 ||
+      st->field->width != st->xgwa.width / (1 << st->field->cell_size) + 2) {
+
+    resize_field(st->field, st->xgwa.width / (1 << st->field->cell_size) + 2,
+                 st->xgwa.height / (1 << st->field->cell_size) + 2);
+    populate_field(st->field, st->density);
+  }
+
+  draw_field(st, st->field);
+
+  if (do_tick(st->field) < (st->field->height + st->field->width) / 4) {
+    populate_field(st->field, st->density);
+  }
+
+  if (st->cycles % (st->field->max_age /2) == 0) {
+    populate_edges(st->field, st->density);
+    do_tick(st->field);
+    populate_edges(st->field, 0);
+  }
+
+  st->cycles++;
+
+#ifdef TIME_ME
+  if (st->cycles % st->field->max_age == 0) {
+    printf("%g s.\n",
+           ((time(NULL) - st->start_time) * 1000.0) / st->cycles);
+  }
+#endif
+
+  return (st->cycle_delay);
+}
+
+
+static void
+cloudlife_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+cloudlife_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+cloudlife_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *cloudlife_defaults[] = {
     ".background:	black",
     ".foreground:	blue",
     "*cycleDelay:	25000",
@@ -269,7 +399,7 @@ char *defaults[] = {
     0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec cloudlife_options[] = {
     {"-background", ".background", XrmoptionSepArg, 0},
     {"-foreground", ".foreground", XrmoptionSepArg, 0},
     {"-cycle-delay", ".cycleDelay", XrmoptionSepArg, 0},
@@ -281,99 +411,5 @@ XrmOptionDescRec options[] = {
     {0, 0, 0, 0}
 };
 
-void screenhack(Display * dpy, Window window)
-{
-    struct field *f = init_field();
 
-#ifdef TIME_ME
-    time_t start_time = time(NULL);
-#endif
-
-    unsigned int cycles = 0;
-    unsigned int colorindex = 0;  /* which color in the colormap are we on */
-    unsigned int colortimer = 0;  /* when this reaches 0, cycle to next color */
-
-    int cycle_delay;
-    int cycle_colors;
-    int ncolors;
-    int density;
-
-    GC fgc, bgc;
-    XGCValues gcv;
-    XWindowAttributes xgwa;
-    XColor *colors = NULL;
-    Bool tmp = True;
-
-    cycle_delay = get_integer_resource("cycleDelay", "Integer");
-    cycle_colors = get_integer_resource("cycleColors", "Integer");
-    ncolors = get_integer_resource("ncolors", "Integer");
-    density = (get_integer_resource("initialDensity", "Integer") 
-                  % 100 * 256)/100;
-
-    XGetWindowAttributes(dpy, window, &xgwa);
-
-    if (cycle_colors) {
-        colors = (XColor *) xrealloc(colors, sizeof(XColor) * (ncolors+1));
-        make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap, colors, &ncolors,
-                              True, &tmp, True);
-    }
-
-    gcv.foreground = get_pixel_resource("foreground", "Foreground",
-					dpy, xgwa.colormap);
-    fgc = XCreateGC(dpy, window, GCForeground, &gcv);
-
-    gcv.foreground = get_pixel_resource("background", "Background",
-					dpy, xgwa.colormap);
-    bgc = XCreateGC(dpy, window, GCForeground, &gcv);
-
-    while (1) {
-
-        if (cycle_colors) {
-            if (colortimer == 0) {
-               colortimer = cycle_colors;
-               if( colorindex == 0 ) 
-                   colorindex = ncolors;
-               colorindex--;
-               XSetForeground(dpy, fgc, colors[colorindex].pixel);
-            }
-            colortimer--;
-        } 
-
-	XGetWindowAttributes(dpy, window, &xgwa);
-	if (f->height != xgwa.height / (1 << f->cell_size) + 2 ||
-	    f->width != xgwa.width / (1 << f->cell_size) + 2) {
-
-	    resize_field(f, xgwa.width / (1 << f->cell_size) + 2,
-			 xgwa.height / (1 << f->cell_size) + 2);
-	    populate_field(f, density);
-	}
-
-	screenhack_handle_events(dpy);
-
-	draw_field(dpy, window, fgc, bgc, f);
-
-	if (do_tick(f) < (f->height + f->width) / 4) {
-	    populate_field(f, density);
-	}
-
-	if (cycles % (f->max_age /2) == 0) {
-	    populate_edges(f, density);
-	    do_tick(f);
-	    populate_edges(f, 0);
-	}
-
-	XSync(dpy, False);
- 
-	cycles++;
-
-	if (cycle_delay)
-	    usleep(cycle_delay);
-
-#ifdef TIME_ME
-	if (cycles % f->max_age == 0) {
-	    printf("%g s.\n",
-		   ((time(NULL) - start_time) * 1000.0) / cycles);
-	}
-#endif
-    }
-}
+XSCREENSAVER_MODULE ("Cloudlife", cloudlife)

@@ -41,19 +41,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 #endif
 
-#define DEF_PRESET     "classic"
+#define DEF_PRESET     "random"
 #define DEF_BRIGHTNESS "8"
 
-#include <X11/Intrinsic.h>
-
-# define PROGCLASS		"Flurry"
-# define HACK_INIT		init_flurry
-# define HACK_DRAW		draw_flurry
-# define HACK_RESHAPE	reshape_flurry
-# define flurry_opts	xlockmore_opts
 # define DEFAULTS		"*delay:      10000 \n" \
 						"*showFPS:    False \n"
 
+# define refresh_flurry 0
+# define flurry_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 
 #ifdef USE_GL
@@ -70,7 +65,7 @@ static argtype vars[] = {
 
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-ModeSpecOpt flurry_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt flurry_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   flurry_description = {
@@ -91,14 +86,13 @@ ModStruct   flurry_description = {
 
 #endif
 
-#include <sys/time.h>
-
 #include "flurry.h"
 
 global_info_t *flurry_info = NULL;
 
 static double gTimeCounter = 0.0;
 
+static
 double currentTime(void) {
   struct timeval tv;
 # ifdef GETTIMEOFDAY_TWO_ARGS
@@ -130,6 +124,8 @@ static int IsAltiVecAvailable(void)
 #endif
 #endif
 
+
+static
 void delete_flurry_info(flurry_info_t *flurry)
 {
     int i;
@@ -140,9 +136,10 @@ void delete_flurry_info(flurry_info_t *flurry)
     {
 	free(flurry->spark[i]);
     }
-    free(flurry);
+    /* free(flurry); */
 }
 
+static
 flurry_info_t *new_flurry_info(global_info_t *global, int streams, ColorModes colour, float thickness, float speed, double bf)
 {
     int i,k;
@@ -187,6 +184,7 @@ flurry_info_t *new_flurry_info(global_info_t *global, int streams, ColorModes co
     return flurry;
 }
 
+static
 void GLSetupRC(global_info_t *global)
 {
     /* setup the defaults for OpenGL */
@@ -226,6 +224,7 @@ void GLSetupRC(global_info_t *global)
 #endif /* 0 */
 }
 
+static
 void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
 {
     int i;
@@ -310,6 +309,7 @@ void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
     glDisable(GL_TEXTURE_2D);
 }
 
+static
 void GLResize(global_info_t *global, float w, float h)
 {
     global->sys_glWidth = w;
@@ -317,7 +317,7 @@ void GLResize(global_info_t *global, float w, float h)
 }
 
 /* new window size or exposure */
-void reshape_flurry(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
 {
     global_info_t *global = flurry_info + MI_SCREEN(mi);
 
@@ -337,7 +337,7 @@ void reshape_flurry(ModeInfo *mi, int width, int height)
     GLResize(global, (float)width, (float)height);
 }
 
-void
+ENTRYPOINT void
 init_flurry(ModeInfo * mi)
 {
     int screen = MI_SCREEN(mi);
@@ -475,7 +475,7 @@ init_flurry(ModeInfo * mi)
     }
 }
 
-void
+ENTRYPOINT void
 draw_flurry(ModeInfo * mi)
 {
     static int first = 1;
@@ -543,7 +543,7 @@ draw_flurry(ModeInfo * mi)
     glXSwapBuffers(display, window);
 }
 
-void
+ENTRYPOINT void
 release_flurry(ModeInfo * mi)
 {
     if (flurry_info != NULL) {
@@ -566,5 +566,7 @@ release_flurry(ModeInfo * mi)
     }
     FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Flurry", flurry)
 
 #endif

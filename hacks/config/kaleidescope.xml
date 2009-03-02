@@ -9,11 +9,13 @@
           low="0" high="20000" default="20000"
           convert="invert"/>
 
-  <number id="nsegments" type="spinbutton" arg="-nsegments %"
-          _label="Segments" low="1" high="100" default="7"/>
+  <number id="nsegments" type="slider" arg="-nsegments %"
+          _label="Segments" _low-label="Few" _high-label="Many"
+          low="1" high="100" default="7"/>
 
-  <number id="symmetry" type="spinbutton" arg="-symmetry %"
-          _label="Symmetry" low="3" high="32" default="11"/>
+  <number id="symmetry" type="slider" arg="-symmetry %"
+          _label="Symmetry" _low-label="3" _high-label="32"
+          low="3" high="32" default="11"/>
 
   <number id="ntrails" type="slider" arg="-ntrails %"
           _label="Trails" _low-label="Few" _high-label="Many"
@@ -25,10 +27,8 @@
   <!-- #### -spring_constant [5] -->
 
   <_description>
-Another clone of an ancient meme, consisting largely of frenetic
-rotational motion of colored lines.  This one is by Ron Tapia.  The
-motion is nice, but I think it needs more solids, or perhaps just
-brighter colors.  More variations in the rotational speed might help,
-too.
+A simple kaleidescope.  See also "gleidescope".
+
+Written by Ron Tapia; 1997.
   </_description>
 </screensaver>

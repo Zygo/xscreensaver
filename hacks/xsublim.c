@@ -112,8 +112,6 @@
 
 /* Globals *******************************************************************/
 char*        progname;
-XtAppContext app;
-XrmDatabase  db;
 char*        progclass = XSUBLIM_NAME;
 
 # ifdef __GNUC__
@@ -122,7 +120,7 @@ char*        progclass = XSUBLIM_NAME;
                      in the following string constant... */
 # endif
 
-char*        defaults[] =
+static char*        defaults[] =
 {
 	".background:                     #000000",
 	".foreground:                     #FFFFFF",
@@ -180,7 +178,8 @@ char*        defaults[] =
 	"*" XSUBLIM_ARG_CENTER":          true",
 	NULL
 };
-XrmOptionDescRec options[] =
+
+static XrmOptionDescRec options[] =
 {
 	{"-" XSUBLIM_ARG_FONT,          "." XSUBLIM_ARG_FONT,
 	 XrmoptionSepArg,0},
@@ -223,7 +222,7 @@ static int Xsublim_Sig_Last;
 /* Functions *****************************************************************/
 
 /* Defer signals to protect the server grab ================================ */
-void xsublim_Sig_Catch(int sig_Number)
+static void xsublim_Sig_Catch(int sig_Number)
 {
 	/* BSD needs this reset each time, and it shouldn't hurt anything
 	   else */
@@ -262,8 +261,11 @@ static int xsublim_Sh_Handler(Display* handle_Display,
 	}
 	return (*Xsublim_Sh_Handler)(handle_Display,handle_Error);
 }
+
+
 int main(int argc,char* argv[])
 {
+	XtAppContext app;
 	int               sig_Number;
 	int               sig_Signal[] =
 	{
@@ -298,7 +300,7 @@ int main(int argc,char* argv[])
 		-1
 	};
 	Widget            app_App;
-	Display*          disp_Display;
+	Display*          dpy;
 	Window            win_Root;
 	XWindowAttributes attr_Win;
 	XGCValues         gc_ValFore;
@@ -419,23 +421,22 @@ int main(int argc,char* argv[])
             exit (-1);
           }
 
-	disp_Display = XtDisplay(app_App);
-	db = XtDatabase(disp_Display);
-	XtGetApplicationNameAndClass(disp_Display,&progname,&progclass);
+	dpy = XtDisplay(app_App);
+	XtGetApplicationNameAndClass(dpy,&progname,&progclass);
 	win_Root = RootWindowOfScreen(XtScreen(app_App));
 	XtDestroyWidget(app_App);
 
 	/* Get the arguments */
-	arg_FlagCenter = get_boolean_resource(XSUBLIM_ARG_CENTER,"Boolean");
-	arg_FlagOutline = get_boolean_resource(XSUBLIM_ARG_OUTLINE,"Boolean");
-	arg_FlagScreensaver = get_boolean_resource(XSUBLIM_ARG_SCREENSAVER,
+	arg_FlagCenter = get_boolean_resource(dpy, XSUBLIM_ARG_CENTER,"Boolean");
+	arg_FlagOutline = get_boolean_resource(dpy, XSUBLIM_ARG_OUTLINE,"Boolean");
+	arg_FlagScreensaver = get_boolean_resource(dpy, XSUBLIM_ARG_SCREENSAVER,
 	 "Boolean");
-	arg_FlagRandom = get_boolean_resource(XSUBLIM_ARG_RANDOM,"Boolean");
-	arg_DelayShow = get_integer_resource(XSUBLIM_ARG_DELAYSHOW,"Integer");
-	arg_DelayWord = get_integer_resource(XSUBLIM_ARG_DELAYWORD,"Integer");
-	arg_DelayPhraseMin = get_integer_resource(XSUBLIM_ARG_DELAYPHRASEMIN,
+	arg_FlagRandom = get_boolean_resource(dpy, XSUBLIM_ARG_RANDOM,"Boolean");
+	arg_DelayShow = get_integer_resource(dpy, XSUBLIM_ARG_DELAYSHOW,"Integer");
+	arg_DelayWord = get_integer_resource(dpy, XSUBLIM_ARG_DELAYWORD,"Integer");
+	arg_DelayPhraseMin = get_integer_resource(dpy, XSUBLIM_ARG_DELAYPHRASEMIN,
 	 "Integer");
-	arg_DelayPhraseMax = get_integer_resource(XSUBLIM_ARG_DELAYPHRASEMAX,
+	arg_DelayPhraseMax = get_integer_resource(dpy, XSUBLIM_ARG_DELAYPHRASEMAX,
 	 "Integer");
 	if (arg_DelayPhraseMax < arg_DelayPhraseMin)
 	{
@@ -447,7 +448,7 @@ int main(int argc,char* argv[])
 	text_Item = 0;
 	text_Count = 0;
 	memset(text_Used,0,sizeof(text_Used));
-	arg_Source = get_string_resource(XSUBLIM_ARG_FILE,"Filename");
+	arg_Source = get_string_resource(dpy, XSUBLIM_ARG_FILE,"Filename");
 	if (arg_Source != NULL)
 	{
 		FILE*       file_Fs;
@@ -480,7 +481,7 @@ int main(int argc,char* argv[])
 	}
 	else
 	{
-		arg_Source = get_string_resource(XSUBLIM_ARG_PROGRAM,
+		arg_Source = get_string_resource(dpy, XSUBLIM_ARG_PROGRAM,
 		 "Executable");
 		if (arg_Source != NULL)
 		{
@@ -531,7 +532,7 @@ int main(int argc,char* argv[])
 		else
 		{
 			arg_Text =
-			 get_string_resource(XSUBLIM_ARG_PHRASES,"Phrases");
+			 get_string_resource(dpy, XSUBLIM_ARG_PHRASES,"Phrases");
 			if (arg_Text != NULL)
 			{
 				arg_Text = strdup(arg_Text);
@@ -556,12 +557,12 @@ int main(int argc,char* argv[])
 	}
 
 	/* Load the font */
-	font_Font = XLoadQueryFont(disp_Display,
-	 get_string_resource(XSUBLIM_ARG_FONT,"Font"));
+	font_Font = XLoadQueryFont(dpy,
+	 get_string_resource(dpy, XSUBLIM_ARG_FONT,"Font"));
 	font_Index = 0;
 	while ((font_Font == NULL) && (font_List[font_Index] != NULL))
 	{
-		font_Font = XLoadQueryFont(disp_Display,font_List[font_Index]);
+		font_Font = XLoadQueryFont(dpy,font_List[font_Index]);
 		font_Index++;
 	}
 	if (font_Font == NULL)
@@ -571,22 +572,26 @@ int main(int argc,char* argv[])
 	}
 
 	/* Create the GCs */
-	XGetWindowAttributes(disp_Display,win_Root,&attr_Win);
+	XGetWindowAttributes(dpy,win_Root,&attr_Win);
 	gc_ValFore.font = font_Font->fid;
-	gc_ValFore.foreground = get_pixel_resource("foreground","Foreground",
-	 disp_Display,attr_Win.colormap);
-	gc_ValFore.background = get_pixel_resource("background","Background",
-	 disp_Display,attr_Win.colormap);
+	gc_ValFore.foreground = get_pixel_resource(dpy,
+                                                   attr_Win.colormap,
+                                                   "foreground","Foreground");
+	gc_ValFore.background = get_pixel_resource(dpy,
+                                                   attr_Win.colormap,
+                                                   "background","Background");
 	gc_ValFore.subwindow_mode = IncludeInferiors;
-	gc_GcFore = XCreateGC(disp_Display,win_Root,
+	gc_GcFore = XCreateGC(dpy,win_Root,
 	 (GCFont|GCForeground|GCBackground|GCSubwindowMode),&gc_ValFore);
 	gc_ValBack.font = font_Font->fid;
-	gc_ValBack.foreground = get_pixel_resource("background","Background",
-	 disp_Display,attr_Win.colormap);
-	gc_ValBack.background = get_pixel_resource("foreground","Foreground",
-	 disp_Display,attr_Win.colormap);
+	gc_ValBack.foreground = get_pixel_resource(dpy,
+                                                   attr_Win.colormap,
+                                                   "background","Background");
+	gc_ValBack.background = get_pixel_resource(dpy,
+                                                   attr_Win.colormap,
+                                                   "foreground","Foreground");
 	gc_ValBack.subwindow_mode = IncludeInferiors;
-	gc_GcBack = XCreateGC(disp_Display,win_Root,
+	gc_GcBack = XCreateGC(dpy,win_Root,
 	 (GCFont|GCForeground|GCBackground|GCSubwindowMode),&gc_ValBack);
 
 	/* Loop ------------------------------------------------------------ */
@@ -598,7 +603,7 @@ int main(int argc,char* argv[])
 		if (arg_FlagScreensaver != FALSE)
 		{
 			/* Find the screensaver's window */
-			win_Root = xsublim_Ss_GetWindow(disp_Display);
+			win_Root = xsublim_Ss_GetWindow(dpy);
 			if (win_Root == 0)
 			{
 				usleep(30000000);
@@ -640,7 +645,7 @@ int main(int argc,char* argv[])
 			/* Once-per-word stuff ----------------------------- */
 
 			/* Find the text's position */
-			XGetWindowAttributes(disp_Display,win_Root,&attr_Win);
+			XGetWindowAttributes(dpy,win_Root,&attr_Win);
 			text_Length = strlen(text_Word);
 			text_Width = XTextWidth(font_Font,text_Word,
 			 text_Length)+XSUBLIM_TEXT_OUTLINE*2;
@@ -686,9 +691,9 @@ int main(int argc,char* argv[])
 
 			/* Grab the server -- we can't let anybody draw over
 			   us */
-			XSync(disp_Display,FALSE);
-			XGrabServer(disp_Display);
-			XSync(disp_Display,FALSE);
+			XSync(dpy,FALSE);
+			XGrabServer(dpy);
+			XSync(dpy,FALSE);
 
 			/* Set up an error handler that ignores BadMatches --
 			   since the screensaver can take its window away at
@@ -698,7 +703,7 @@ int main(int argc,char* argv[])
 			 XSetErrorHandler(xsublim_Sh_Handler);
 
 			/* Save the current background */
-			image_Image = XGetImage(disp_Display,win_Root,image_X,
+			image_Image = XGetImage(dpy,win_Root,image_X,
 			 image_Y,image_Width,image_Height,~0L,ZPixmap);
 
 			/* If we've successfully saved the background... */
@@ -721,7 +726,7 @@ int main(int argc,char* argv[])
 							   annoying at some
 							   point... */
 							XDrawString(
-							 disp_Display,
+							 dpy,
 							 win_Root,gc_GcBack,
 							 text_X+text_Outline[
 							 text_OutlineIndex].
@@ -739,7 +744,7 @@ int main(int argc,char* argv[])
 					}
 
 					/* Draw the word */
-					XDrawString(disp_Display,win_Root,
+					XDrawString(dpy,win_Root,
 					 gc_GcFore,text_X,
 					 text_Y+(font_Font->ascent),text_Word,
 					 text_Length);
@@ -747,14 +752,14 @@ int main(int argc,char* argv[])
 				if (Xsublim_Sh_Status == 0)
 				{
 					/* Wait a bit */
-					XSync(disp_Display,FALSE);
+					XSync(dpy,FALSE);
 					if (Xsublim_Sig_Last == -1)
 					{
 						usleep(arg_DelayShow);
 					}
 	
 					/* Restore the background */
-					XPutImage(disp_Display,win_Root,
+					XPutImage(dpy,win_Root,
 					 gc_GcFore,image_Image,0,0,image_X,
 					 image_Y,image_Width,image_Height);
 				}
@@ -764,10 +769,10 @@ int main(int argc,char* argv[])
 			}
 
 			/* Restore the error handler, ungrab the server */
-                        XSync(disp_Display,FALSE);
+                        XSync(dpy,FALSE);
 			XSetErrorHandler(Xsublim_Sh_Handler);
-			XUngrabServer(disp_Display);
-                        XSync(disp_Display,FALSE);
+			XUngrabServer(dpy);
+                        XSync(dpy,FALSE);
 
 			/* Pause between words */
 			if (Xsublim_Sig_Last == -1)

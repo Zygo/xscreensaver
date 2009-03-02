@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -335,7 +335,7 @@ sub generate_c {
   my $code = '';
 
   $code .= "#include \"gllist.h\"\n";
-  $code .= "static float data[]={\n";
+  $code .= "static const float data[]={\n";
 
   my $npoints = ($#points + 1) / 3;
   my $nfaces = $npoints / 3;
@@ -422,9 +422,9 @@ sub generate_c {
 
   $code =~ s/,\n$//s;
   $code .= "\n};\n";
-  $code .= "static struct gllist frame={";
+  $code .= "static const struct gllist frame={";
   $code .= "$format,$primitive,$npoints,data,NULL};\n";
-  $code .= "struct gllist *$token=&frame;\n";
+  $code .= "const struct gllist *$token=&frame;\n";
 
   print STDERR "$progname: $filename: " .
                (($#points+1)/3) . " points, " .

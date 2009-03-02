@@ -131,8 +131,10 @@
   <_description>
 Xplanet draws an image of the Earth, as seen from your favorite vantage
 point in space, correctly shaded for the current position of the Sun.
-Written by Hari Nair.  This is not included with the XScreenSaver
-package, but if you don't have it already, you can find it at
+This is not included with the XScreenSaver package, but if you don't have
+it already, you can find it at
 &lt;http://xplanet.sourceforge.net/&gt;.
+
+Written by Hari Nair; 2001.
   </_description>
 </screensaver>

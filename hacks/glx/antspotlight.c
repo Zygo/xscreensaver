@@ -14,30 +14,21 @@
  * Copyright 2003 Blair Tennessy
  */
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-#define PROGCLASS	    "AntSpotlight"
-#define HACK_INIT	    init_antspotlight
-#define HACK_DRAW	    draw_antspotlight
-#define HACK_RESHAPE	    reshape_antspotlight
-#define HACK_HANDLE_EVENT   antspotlight_handle_event
-#define EVENT_MASK	    PointerMotionMask
-#define antspotlight_opts	    xlockmore_opts
 #define DEFAULTS	    "*delay:   20000   \n" \
 			    "*showFPS: False   \n" \
                             "*useSHM:  True    \n"
 
+# define refresh_antspotlight 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
 #endif
 
-#include <GL/glu.h>
 #include "rotator.h"
 #include "gltrackball.h"
 
-ModeSpecOpt antspotlight_opts = {
+ENTRYPOINT ModeSpecOpt antspotlight_opts = {
   0, NULL, 0, NULL, NULL
 };
 
@@ -59,26 +50,36 @@ ModStruct   antspotlight_description = {
 #define Pi M_PI
 #endif
 
-GLfloat max_tx, max_ty;
-int mono = 0, wire = 0, ticks = 0;
-GLuint screentexture;
+#include "ants.h"
+#include "grab-ximage.h"
 
 typedef struct {
   GLXContext *glx_context;
   rotator    *rot;
   trackball_state *trackball;
   Bool        button_down_p;
-} antspotlightstruct;
 
-#include "ants.h"
-#include "grab-ximage.h"
+  GLfloat max_tx, max_ty;
+  int mono, wire, ticks;
+  GLuint screentexture;
+
+  Ant *ant;
+  double boardsize;
+  GLfloat spot_direction[3];
+  int mag;
+
+  Bool mipmap_p;
+  Bool waiting_for_image_p;
+
+} antspotlightstruct;
 
 static antspotlightstruct *antspotlight = (antspotlightstruct *) NULL;
 
 #define NUM_SCENES      2
 
 /* draw method for ant */
-Bool draw_ant(GLfloat *Material, int mono, int shadow, 
+static Bool draw_ant(antspotlightstruct *mp,
+                     const GLfloat *Material, int mono, int shadow, 
 	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float))
 {
   
@@ -89,7 +90,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
   float sin2 = sin(ant_step + 2 * Pi / 3);
   float sin3 = sin(ant_step + 4 * Pi / 3);
   
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mono ? MaterialGray5 : Material);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->mono ? MaterialGray5 : Material);
   glEnable(GL_CULL_FACE);
   glPushMatrix();
   glScalef(1, 1.3, 1);
@@ -123,11 +124,11 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
   
   /* ANTENNAS */
   glBegin(GL_LINES);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, 0.40);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.30, 0.00);
   glColor3fv(MaterialGray);
   glVertex3f(0.40, 0.70, -0.40);
@@ -135,7 +136,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   if(!shadow) {
     glBegin(GL_POINTS);
-    glColor3fv(mono ? MaterialGray6 : MaterialGray5);
+    glColor3fv(mp->mono ? MaterialGray6 : MaterialGray5);
     glVertex3f(0.40, 0.70, 0.40);
     glVertex3f(0.40, 0.70, -0.40);
     glEnd();
@@ -143,7 +144,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* LEFT-FRONT ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos1, 0.15, 0.25);
   glColor3fv(MaterialGray);
@@ -152,7 +153,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* LEFT-CENTER ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.00, 0.18);
   glVertex3f(0.35 + 0.05 * cos2, 0.00, 0.25);
   glColor3fv(MaterialGray);
@@ -161,7 +162,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* LEFT-BACK ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, -0.05, 0.18);
   glVertex3f(0.35 + 0.05 * cos3, -0.15, 0.25);
   glColor3fv(MaterialGray);
@@ -170,7 +171,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* RIGHT-FRONT ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin1, 0.15, -0.25);
   glColor3fv(MaterialGray);
@@ -179,7 +180,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* RIGHT-CENTER ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.00, -0.18);
   glVertex3f(0.35 - 0.05 * sin2, 0.00, -0.25);
   glColor3fv(MaterialGray);
@@ -188,7 +189,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   /* RIGHT-BACK ARM */
   glBegin(GL_LINE_STRIP);
-  glColor3fv(mono ? MaterialGray5 : Material);
+  glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, -0.05, -0.18);
   glVertex3f(0.35 - 0.05 * sin3, -0.15, -0.25);
   glColor3fv(MaterialGray);
@@ -244,14 +245,7 @@ static Bool mySphere2(float radius)
 /* no cone */
 static Bool myCone2(float radius) { return True; }
 
-Ant *ant;
-
-double boardsize = 8.0;
-#define BOARDLIST 1
-
-GLfloat spot_direction[3];
-
-void draw_board(void)
+static void draw_board(antspotlightstruct *mp)
 {
   int i, j;
   double cutoff = Pi/3.0;
@@ -259,18 +253,18 @@ void draw_board(void)
   double centertex[2];
 
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, screentexture);
+  glBindTexture(GL_TEXTURE_2D, mp->screentexture);
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray6);
 
   /* draw mesh */
 
   /* center is roughly spotlight position */
-  center[0] = ant->position[0];/* + cos(ant->direction); */
+  center[0] = mp->ant->position[0];/* + cos(ant->direction); */
   center[1] = 0.0;
-  center[2] = ant->position[2];/* - 0.7*sin(ant->direction);*/
+  center[2] = mp->ant->position[2];/* - 0.7*sin(ant->direction);*/
 
-  centertex[0] = (boardsize/2.0+center[0]) * max_tx / boardsize;
-  centertex[1] = max_ty - ((boardsize/2.0+center[2]) * max_ty / boardsize);
+  centertex[0] = (mp->boardsize/2.0+center[0]) * mp->max_tx / mp->boardsize;
+  centertex[1] = mp->max_ty - ((mp->boardsize/2.0+center[2]) * mp->max_ty / mp->boardsize);
 
 /*   glPolygonMode(GL_FRONT, GL_LINE); */
 /*   glDisable(GL_TEXTURE_2D); */
@@ -294,8 +288,8 @@ void draw_board(void)
     glVertex3f(center[0], 0.01, center[2]);
 
     /* watch those constants */
-    theta1 = ant->direction + i*(cutoff/8);
-    theta2 = ant->direction + (i+1)*(cutoff/8);
+    theta1 = mp->ant->direction + i*(cutoff/8);
+    theta2 = mp->ant->direction + (i+1)*(cutoff/8);
 
     for(j = 1; j <= 40; ++j) {
       double point[3], tex[2];
@@ -305,8 +299,8 @@ void draw_board(void)
       point[1] = 0.0;
       point[2] = center[2] - fj*sin(theta1);
 
-      tex[0] = (boardsize/2.0+point[0]) * max_tx / boardsize;
-      tex[1] = (boardsize/2.0+point[2]) * max_ty / boardsize;
+      tex[0] = (mp->boardsize/2.0+point[0]) * mp->max_tx / mp->boardsize;
+      tex[1] = (mp->boardsize/2.0+point[2]) * mp->max_ty / mp->boardsize;
 
       glTexCoord2f(tex[0], tex[1]);
       glVertex3f(point[0], point[1], point[2]);
@@ -315,8 +309,8 @@ void draw_board(void)
       point[1] = 0.0;
       point[2] = center[2] - fj*sin(theta2);
 
-      tex[0] = (boardsize/2.0+point[0]) * max_tx / boardsize;
-      tex[1] = (boardsize/2.0+point[2]) * max_ty / boardsize;
+      tex[0] = (mp->boardsize/2.0+point[0]) * mp->max_tx / mp->boardsize;
+      tex[1] = (mp->boardsize/2.0+point[2]) * mp->max_ty / mp->boardsize;
 
       glTexCoord2f(tex[0], tex[1]);
       glVertex3f(point[0], point[1], point[2]);
@@ -329,7 +323,7 @@ void draw_board(void)
 }
 
 /* return euclidean distance between two points */
-double distance(double x[3], double y[3])
+static double distance(double x[3], double y[3])
 {
   double dx = x[0] - y[0];
   double dz = x[2] - y[2];
@@ -337,126 +331,128 @@ double distance(double x[3], double y[3])
 }
 
 /* determine a new goal */
-void find_goal(void)
+static void find_goal(antspotlightstruct *mp)
 {
   do {
-    ant->goal[0] = random()%((int)(boardsize+0.5)-2) - boardsize/2.0 + 1.0;
-    ant->goal[1] = 0.0;
-    ant->goal[2] = random()%((int)(boardsize+0.5)-2) - boardsize/2.0 + 1.0;
+    mp->ant->goal[0] = random()%((int)(mp->boardsize+0.5)-2) - mp->boardsize/2.0 + 1.0;
+    mp->ant->goal[1] = 0.0;
+    mp->ant->goal[2] = random()%((int)(mp->boardsize+0.5)-2) - mp->boardsize/2.0 + 1.0;
   }
-  while(distance(ant->position, ant->goal) < 2.0);
+  while(distance(mp->ant->position, mp->ant->goal) < 2.0);
 }
 
 /* construct our ant */
-void build_ant(void)
+static void build_ant(antspotlightstruct *mp)
 {
-  ant = (Ant *) malloc(sizeof (Ant));
-  ant->position[0] = 0.0;
-  ant->position[1] = 0.0;
-  ant->position[2] = 0.0;
-  ant->direction = 0.0;
-  ant->velocity = 0.02;
-  ant->material = MaterialGray5;
-  ant->step = 0;
-  find_goal();
+  mp->ant = (Ant *) malloc(sizeof (Ant));
+  mp->ant->position[0] = 0.0;
+  mp->ant->position[1] = 0.0;
+  mp->ant->position[2] = 0.0;
+  mp->ant->direction = 0.0;
+  mp->ant->velocity = 0.02;
+  mp->ant->material = MaterialGray5;
+  mp->ant->step = 0;
+  find_goal(mp);
 }
 
 #define EPSILON 0.01
 
-double sign(double d)
+static double sign(double d)
 {
   return d < 0.0 ? -1.0 : 1.0;
 }
 
-double min(double a, double b)
+static double min(double a, double b)
 {
   return a < b ? a : b;
 }
 
-double max(double a, double b)
+/*
+static double max(double a, double b)
 {
   return a > b ? a : b;
 }
+*/
 
 /* find a new goal and reset steps */
-void reset_ant(void)
+static void reset_ant(antspotlightstruct *mp)
 {
-  find_goal();
+  find_goal(mp);
 }
 
 /* draw ant composed of skeleton and glass */
-void show_ant(void)
+static void show_ant(antspotlightstruct *mp)
 {
 
   glPushMatrix();
 
   /* move into position */
-  glTranslatef(ant->position[0], 0.33, ant->position[2]);
-  glRotatef(180.0 + ant->direction*180.0/Pi, 0.0, 1.0, 0.0);
+  glTranslatef(mp->ant->position[0], 0.33, mp->ant->position[2]);
+  glRotatef(180.0 + mp->ant->direction*180.0/Pi, 0.0, 1.0, 0.0);
   glRotatef(90.0, 0.0, 0.0, 1.0);
 
   /* draw skeleton */
-  draw_ant(ant->material, mono, 0, ant->step, mySphere2, myCone2);
+  draw_ant(mp, mp->ant->material, mp->mono, 0, mp->ant->step, mySphere2, myCone2);
 
   /* draw glass */
-  if(!wire && !mono) {
+  if(!mp->wire && !mp->mono) {
     glEnable(GL_BLEND);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGrayB);
     glColor4fv(MaterialGrayB);
-    draw_ant(MaterialGrayB, mono, 0, ant->step, mySphere, myCone2);
+    draw_ant(mp, MaterialGrayB, mp->mono, 0, mp->ant->step, mySphere, myCone2);
     glDisable(GL_BLEND);
   }
 
   glPopMatrix();
 }
 
-void draw_antspotlight_strip(ModeInfo *mi)
+static void draw_antspotlight_strip(ModeInfo *mi)
 {
+  antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
 
   /* compute spotlight position and direction */
   GLfloat light1_position[4];
 
-  light1_position[0] = ant->position[0] + 0.7*cos(ant->direction);
+  light1_position[0] = mp->ant->position[0] + 0.7*cos(mp->ant->direction);
   light1_position[1] = 0.5;
-  light1_position[2] = ant->position[2] - 0.7*sin(ant->direction);
+  light1_position[2] = mp->ant->position[2] - 0.7*sin(mp->ant->direction);
   light1_position[3] = 1.0;
 
-  spot_direction[0] = cos(ant->direction);
-  spot_direction[1] = -0.5;
-  spot_direction[2] = -sin(ant->direction);
+  mp->spot_direction[0] = cos(mp->ant->direction);
+  mp->spot_direction[1] = -0.5;
+  mp->spot_direction[2] = -sin(mp->ant->direction);
 
   glLightfv(GL_LIGHT2, GL_POSITION, light1_position);
-  glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, spot_direction);
+  glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, mp->spot_direction);
   
   glEnable(GL_LIGHT2);
   glDisable(GL_LIGHT0);
   glDisable(GL_LIGHT1);
 
   /* draw board */
-  if(wire)
+  if(mp->wire)
     ;
   else
-    draw_board();
-/*     glCallList(BOARDLIST); */
+    draw_board(mp);
 
   glDisable(GL_LIGHT2);
   glEnable(GL_LIGHT0);
   glEnable(GL_LIGHT1);
   
   /* now modify ant */
-  show_ant();
+  show_ant(mp);
 
   /* near goal, bend path towards next step */
-  if(distance(ant->position, ant->goal) < 0.2) {
-    reset_ant();
+  if(distance(mp->ant->position, mp->ant->goal) < 0.2) {
+    reset_ant(mp);
   }
 
   /* move toward goal, correct ant direction if required */
   else {
     
     /* difference */
-    double dx = ant->goal[0] - ant->position[0];
-    double dz = -(ant->goal[2] - ant->position[2]);
+    double dx = mp->ant->goal[0] - mp->ant->position[0];
+    double dz = -(mp->ant->goal[2] - mp->ant->position[2]);
     double theta, ideal, dt;
     
     if(fabs(dx) > EPSILON) {
@@ -470,27 +466,27 @@ void draw_antspotlight_strip(ModeInfo *mi)
     if(theta < 0.0)
       theta += 2*Pi;
     
-    ideal = theta - ant->direction;
+    ideal = theta - mp->ant->direction;
     if(ideal > Pi)
       ideal -= 2*Pi;
     
     /* compute correction */
     dt = sign(ideal) * min(fabs(ideal), Pi/100.0);
-    ant->direction += dt;
-    while(ant->direction < 0.0)
-      ant->direction += 2*Pi;
-    while(ant->direction > 2*Pi)
-      ant->direction -= 2*Pi;
+    mp->ant->direction += dt;
+    while(mp->ant->direction < 0.0)
+      mp->ant->direction += 2*Pi;
+    while(mp->ant->direction > 2*Pi)
+      mp->ant->direction -= 2*Pi;
   }
 
-  ant->position[0] += ant->velocity * cos(ant->direction);
-  ant->position[2] += ant->velocity * sin(-ant->direction);
-  ant->step += 10*ant->velocity;
-  while(ant->step > 2*Pi)
-    ant->step -= 2*Pi;
+  mp->ant->position[0] += mp->ant->velocity * cos(mp->ant->direction);
+  mp->ant->position[2] += mp->ant->velocity * sin(-mp->ant->direction);
+  mp->ant->step += 10*mp->ant->velocity;
+  while(mp->ant->step > 2*Pi)
+    mp->ant->step -= 2*Pi;
 }
 
-void reshape_antspotlight(ModeInfo * mi, int width, int height)
+ENTRYPOINT void reshape_antspotlight(ModeInfo * mi, int width, int height)
 {
   double h = (GLfloat) height / (GLfloat) width;  
   int size = 2;
@@ -506,17 +502,17 @@ void reshape_antspotlight(ModeInfo * mi, int width, int height)
 }
 
 /* lighting variables */
-GLfloat front_shininess[] = {60.0};
-GLfloat front_specular[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat ambient[] = {0.4, 0.4, 0.4, 1.0};
-GLfloat ambient2[] = {0.0, 0.0, 0.0, 0.0};
-GLfloat diffuse[] = {1.0, 1.0, 1.0, 1.0};
-GLfloat position0[] = {1.0, 5.0, 1.0, 0.0};
-GLfloat position1[] = {-1.0, -5.0, 1.0, 0.0};
-GLfloat lmodel_ambient[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat lmodel_twoside[] = {GL_TRUE};
-GLfloat spotlight_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+static const GLfloat front_shininess[] = {60.0};
+static const GLfloat front_specular[] = {0.8, 0.8, 0.8, 1.0};
+static const GLfloat ambient[] = {0.4, 0.4, 0.4, 1.0};
+/*static const GLfloat ambient2[] = {0.0, 0.0, 0.0, 0.0};*/
+static const GLfloat diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const GLfloat position0[] = {1.0, 5.0, 1.0, 0.0};
+static const GLfloat position1[] = {-1.0, -5.0, 1.0, 0.0};
+/*static const GLfloat lmodel_ambient[] = {0.8, 0.8, 0.8, 1.0};*/
+static const GLfloat lmodel_twoside[] = {GL_TRUE};
+static const GLfloat spotlight_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+static const GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
 
 static void pinit(void)
 {
@@ -560,7 +556,7 @@ static void pinit(void)
 }
 
 /* cleanup routine */
-void release_antspotlight(ModeInfo * mi)
+ENTRYPOINT void release_antspotlight(ModeInfo * mi)
 {
 
   if(antspotlight) {
@@ -571,13 +567,12 @@ void release_antspotlight(ModeInfo * mi)
   FreeAllGL(mi);
 }
 
-int mag = 1;
 #define MAX_MAGNIFICATION 10
 #define max(a, b) a < b ? b : a
 #define min(a, b) a < b ? a : b
 
 /* event handling */
-Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
 {
   antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
 
@@ -594,11 +589,11 @@ Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
       break;
       
     case Button4:
-      mag = max(mag-1, 1);
+      mp->mag = max(mp->mag-1, 1);
       break;
 
     case Button5:
-      mag = min(mag+1, MAX_MAGNIFICATION);
+      mp->mag = min(mp->mag+1, MAX_MAGNIFICATION);
       break;
     }
 
@@ -628,28 +623,42 @@ Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
   return True;
 }
 
-/* get screenshot */
-void get_snapshot(ModeInfo *modeinfo)
+static void
+image_loaded_cb (const char *filename, XRectangle *geometry,
+                 int image_width, int image_height, 
+                 int texture_width, int texture_height,
+                 void *closure)
 {
-  Bool mipmap_p = True;
-  int iw, ih, tw, th;
+  antspotlightstruct *mp = (antspotlightstruct *) closure;
+
+  mp->max_tx = (GLfloat) image_width  / texture_width;
+  mp->max_ty = (GLfloat) image_height / texture_height;
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (mp->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+
+  mp->waiting_for_image_p = False;
+}
+
+
+/* get screenshot */
+static void get_snapshot(ModeInfo *modeinfo)
+{
+  antspotlightstruct *mp = &antspotlight[MI_SCREEN(modeinfo)];
 
   if (MI_IS_WIREFRAME(modeinfo))
     return;
 
-  if (! screen_to_texture (modeinfo->xgwa.screen, modeinfo->window, 0, 0,
-                           mipmap_p, NULL, NULL, &iw, &ih, &tw, &th))
-    exit (1);
-
-  max_tx = (GLfloat) iw / tw;
-  max_ty = (GLfloat) ih / th;
-
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+  mp->waiting_for_image_p = True;
+  mp->mipmap_p = True;
+  load_texture_async (modeinfo->xgwa.screen, modeinfo->window,
+                      *mp->glx_context, 0, 0, mp->mipmap_p, 
+                      mp->screentexture, image_loaded_cb, mp);
 }
 
-void init_antspotlight(ModeInfo *mi)
+
+ENTRYPOINT void init_antspotlight(ModeInfo *mi)
 {
   double rot_speed = 0.3;
 
@@ -672,20 +681,18 @@ void init_antspotlight(ModeInfo *mi)
   else
     MI_CLEARWINDOW(mi);
 
-  glGenTextures(1, &screentexture);
-  glBindTexture(GL_TEXTURE_2D, screentexture);
+  glGenTextures(1, &mp->screentexture);
+  glBindTexture(GL_TEXTURE_2D, mp->screentexture);
   get_snapshot(mi);
 
-  build_ant();
-  mono = MI_IS_MONO(mi);
-  wire = MI_IS_WIREFRAME(mi);
-
-/*   glNewList(BOARDLIST, GL_COMPILE); */
-/*   draw_board(); */
-/*   glEndList(); */
+  build_ant(mp);
+  mp->mono = MI_IS_MONO(mi);
+  mp->wire = MI_IS_WIREFRAME(mi);
+  mp->boardsize = 8.0;
+  mp->mag = 1;
 }
 
-void draw_antspotlight(ModeInfo * mi)
+ENTRYPOINT void draw_antspotlight(ModeInfo * mi)
 {
   antspotlightstruct *mp;
   
@@ -701,6 +708,9 @@ void draw_antspotlight(ModeInfo * mi)
   if(!mp->glx_context)
 	return;
   
+  /* Just keep running before the texture has come in. */
+  /* if (mp->waiting_for_image_p) return; */
+
   glXMakeCurrent(display, window, *(mp->glx_context));
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -710,10 +720,10 @@ void draw_antspotlight(ModeInfo * mi)
   /* position camera */
 
   /* follow focused ant */
-  glTranslatef(0.0, 0.0, -6.0 - mag);
+  glTranslatef(0.0, 0.0, -6.0 - mp->mag);
   glRotatef(35.0, 1.0, 0.0, 0.0);
   gltrackball_rotate(mp->trackball);
-  glTranslatef(-ant->position[0], ant->position[1], -ant->position[2]);
+  glTranslatef(-mp->ant->position[0], mp->ant->position[1], -mp->ant->position[2]);
 
   /* stable position */
 /*   glTranslatef(0.0, 0.0, -10.0 - mag); */
@@ -723,7 +733,7 @@ void draw_antspotlight(ModeInfo * mi)
 
   draw_antspotlight_strip(mi);
 
-  ++ticks;
+  ++mp->ticks;
   
   glPopMatrix();
   
@@ -733,7 +743,8 @@ void draw_antspotlight(ModeInfo * mi)
   glXSwapBuffers(display, window);
 }
 
-void change_antspotlight(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void change_antspotlight(ModeInfo * mi)
 {
   antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
   
@@ -743,3 +754,6 @@ void change_antspotlight(ModeInfo * mi)
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
   pinit();
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("AntSpotlight", antspotlight)

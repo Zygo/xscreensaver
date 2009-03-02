@@ -30,71 +30,6 @@
         (((FLOAT) ((random() >> 8) & 0xffff)) / ((FLOAT) 0x10000))
 
 
-
-/* parameters that are user configurable */
-
-/* number of blots */
-static int requestedBlotCount;
-
-/* delay (usec) between iterations */
-int delay;
-
-/* max iterations per model */
-int maxIters;
-
-/* variability of xoff/yoff per iteration (0..1) */
-static FLOAT nervousness;
-
-/* max nervousness radius (0..1) */
-static FLOAT maxNerveRadius;
-
-/* chance per iteration that an event will happen */
-static FLOAT eventChance;
-
-/* fraction (0..1) towards rotation target or scale target to move each
- * iteration */
-static FLOAT iterAmt;
-
-/* min and max scale for drawing, as fraction of baseScale */
-static FLOAT minScale;
-static FLOAT maxScale;
-
-/* min and max radius of blot drawing */
-static int minRadius;
-static int maxRadius;
-
-/* the number of colors to use */
-static int colorCount;
-
-/* width of lines */
-static int lineWidth;
-
-/* whether or not to do double-buffering */
-static Bool doubleBuffer;
-
-
-
-/* non-user-modifiable immutable definitions */
-
-/* base scale factor for drawing, calculated as
- * max(screenWidth,screenHeight) */
-static int baseScale;
-
-/* width and height of the window */
-static int windowWidth;
-static int windowHeight;
-
-/* center position of the window */
-static int centerX;
-static int centerY;
-
-static Display *display;  /* the display to draw on */
-static Window window;     /* the window to draw on */
-static Drawable drawable; /* the thing to directly draw on */
-static GC *gcs;           /* array of gcs, one per color used */
-
-
-
 /* structure of the model */
 
 /* each point-like thingy to draw is represented as a blot */
@@ -117,48 +52,83 @@ typedef struct linesegment_s
     int y2;
 } LineSegment;
 
-/* array of the blots in the model */
-static Blot *blots = NULL;
-static int blotCount;
-
 /* each blot draws as a simple 2d shape with each coordinate as an int
  * in the range (-1..1); this is the base shape */
-static XPoint blotShape[] = { { 0, 0}, { 1, 0}, { 1, 1}, 
-			      { 0, 1}, {-1, 1}, {-1, 0}, 
-			      {-1,-1}, { 0,-1}, { 1,-1} };
+static const XPoint blotShape[] = { { 0, 0}, { 1, 0}, { 1, 1}, 
+                                    { 0, 1}, {-1, 1}, {-1, 0}, 
+                                    {-1,-1}, { 0,-1}, { 1,-1} };
 static int blotShapeCount = sizeof (blotShape) / sizeof (XPoint);
 
-/* two arrays of line segments; one for the ones to erase, and one for the
- * ones to draw */
-static int segCount;
-static LineSegment *segsToDraw = NULL;
-static LineSegment *segsToErase = NULL;
 
-/* current rotation values per axis, scale factor, and light position */
-static FLOAT xRot;
-static FLOAT yRot;
-static FLOAT zRot;
-static FLOAT curScale;
-static FLOAT lightX;
-static FLOAT lightY;
-static FLOAT lightZ;
 
-/* target rotation values per axis, scale factor, and light position */
-static FLOAT xRotTarget;
-static FLOAT yRotTarget;
-static FLOAT zRotTarget;
-static FLOAT scaleTarget;
-static FLOAT lightXTarget;
-static FLOAT lightYTarget;
-static FLOAT lightZTarget;
 
-/* current absolute offsets from the center */
-static int centerXOff = 0;
-static int centerYOff = 0;
 
-/* iterations until the model changes */
-static int itersTillNext;
+struct state {
+  Display *dpy;
+  Window window;
 
+   int requestedBlotCount;	/* number of blots */
+   int delay;		/* delay (usec) between iterations */
+   int maxIters;		/* max iterations per model */
+   FLOAT nervousness;	/* variability of xoff/yoff per iteration (0..1) */
+   FLOAT maxNerveRadius;	/* max nervousness radius (0..1) */
+   FLOAT eventChance;	/* chance per iteration that an event will happen */
+   FLOAT iterAmt;		/* fraction (0..1) towards rotation target or scale target to move each * iteration */
+   FLOAT minScale;		/* min and max scale for drawing, as fraction of baseScale */
+   FLOAT maxScale;
+   int minRadius;		/* min and max radius of blot drawing */
+   int maxRadius;
+   int colorCount;		/* the number of colors to use */
+
+   int lineWidth;		/* width of lines */
+
+   Bool doubleBuffer;	/* whether or not to do double-buffering */
+
+
+   int baseScale;		/* base scale factor for drawing, calculated as max(screenWidth,screenHeight) */
+
+
+   int windowWidth;		/* width and height of the window */
+   int windowHeight;
+
+   int centerX;		/* center position of the window */
+   int centerY;
+
+   Drawable drawable; /* the thing to directly draw on */
+   GC *gcs;           /* array of gcs, one per color used */
+
+   Blot *blots;	/* array of the blots in the model */
+   int blotCount;
+
+   int segCount;		/* two arrays of line segments; one for the ones to erase, and one for the ones to draw */
+
+   LineSegment *segsToDraw;
+   LineSegment *segsToErase;
+
+
+   FLOAT xRot;		/* current rotation values per axis, scale factor, and light position */
+
+   FLOAT yRot;
+   FLOAT zRot;
+   FLOAT curScale;
+   FLOAT lightX;
+   FLOAT lightY;
+   FLOAT lightZ;
+
+   FLOAT xRotTarget;	/* target rotation values per axis, scale factor, and light position */
+
+   FLOAT yRotTarget;
+   FLOAT zRotTarget;
+   FLOAT scaleTarget;
+   FLOAT lightXTarget;
+   FLOAT lightYTarget;
+   FLOAT lightZTarget;
+
+   int centerXOff;	/* current absolute offsets from the center */
+   int centerYOff;
+
+   int itersTillNext;	/* iterations until the model changes */
+};
 
 
 /*
@@ -185,17 +155,17 @@ static void initBlot (Blot *b, FLOAT x, FLOAT y, FLOAT z)
 }
 
 /* scale the blots to have a max distance of 1 from the center */
-static void scaleBlotsToRadius1 (void)
+static void scaleBlotsToRadius1 (struct state *st)
 {
     FLOAT max = 0.0;
     int n;
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	FLOAT distSquare = 
-	    blots[n].x * blots[n].x +
-	    blots[n].y * blots[n].y +
-	    blots[n].z * blots[n].z;
+	    st->blots[n].x * st->blots[n].x +
+	    st->blots[n].y * st->blots[n].y +
+	    st->blots[n].z * st->blots[n].z;
 	if (distSquare > max)
 	{
 	    max = distSquare;
@@ -209,30 +179,30 @@ static void scaleBlotsToRadius1 (void)
 
     max = sqrt (max);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
-	blots[n].x /= max;
-	blots[n].y /= max;
-	blots[n].z /= max;
+	st->blots[n].x /= max;
+	st->blots[n].y /= max;
+	st->blots[n].z /= max;
     }
 }
 
 /* randomly reorder the blots */
-static void randomlyReorderBlots (void)
+static void randomlyReorderBlots (struct state *st)
 {
     int n;
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
-	int m = RAND_FLOAT_01 * (blotCount - n) + n;
-	Blot tmpBlot = blots[n];
-	blots[n] = blots[m];
-	blots[m] = tmpBlot;
+	int m = RAND_FLOAT_01 * (st->blotCount - n) + n;
+	Blot tmpBlot = st->blots[n];
+	st->blots[n] = st->blots[m];
+	st->blots[m] = tmpBlot;
     }
 }
 
 /* randomly rotate the blots around the origin */
-static void randomlyRotateBlots (void)
+static void randomlyRotateBlots (struct state *st)
 {
     int n;
 
@@ -249,11 +219,11 @@ static void randomlyRotateBlots (void)
     FLOAT sinZ = sin (zRot);
     FLOAT cosZ = cos (zRot);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
-	FLOAT x1 = blots[n].x;
-	FLOAT y1 = blots[n].y;
-	FLOAT z1 = blots[n].z;
+	FLOAT x1 = st->blots[n].x;
+	FLOAT y1 = st->blots[n].y;
+	FLOAT z1 = st->blots[n].z;
 	FLOAT x2, y2, z2;
 
 	/* rotate on z axis */
@@ -271,9 +241,9 @@ static void randomlyRotateBlots (void)
 	x2 = z1 * sinY + x1 * cosY;
 	y2 = y1;
 
-	blots[n].x = x2;
-	blots[n].y = y2;
-	blots[n].z = z2;
+	st->blots[n].x = x2;
+	st->blots[n].y = y2;
+	st->blots[n].z = z2;
     }
 }
 
@@ -284,14 +254,14 @@ static void randomlyRotateBlots (void)
  */
 
 /* set up the initial array of blots to be a at the edge of a sphere */
-static void setupBlotsSphere (void)
+static void setupBlotsSphere (struct state *st)
 {
     int n;
 
-    blotCount = requestedBlotCount;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = st->requestedBlotCount;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	/* pick a spot, but reject if its radius is < 0.2 or > 1 to
 	 * avoid scaling problems */
@@ -314,18 +284,18 @@ static void setupBlotsSphere (void)
 	y /= radius;
 	z /= radius;
 
-	initBlot (&blots[n], x, y, z);
+	initBlot (&st->blots[n], x, y, z);
     }
 }
 
 /* set up the initial array of blots to be a simple cube */
-static void setupBlotsCube (void)
+static void setupBlotsCube (struct state *st)
 {
     int i, j, k, n;
 
     /* derive blotsPerEdge from blotCount, but then do the reverse
      * since roundoff may have changed blotCount */
-    int blotsPerEdge = ((requestedBlotCount - 8) / 12) + 2;
+    int blotsPerEdge = ((st->requestedBlotCount - 8) / 12) + 2;
     FLOAT distBetween;
 
     if (blotsPerEdge < 2)
@@ -335,8 +305,8 @@ static void setupBlotsCube (void)
 
     distBetween = 2.0 / (blotsPerEdge - 1.0);
 
-    blotCount = 8 + (blotsPerEdge - 2) * 12;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = 8 + (blotsPerEdge - 2) * 12;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
     n = 0;
 
     /* define the corners */
@@ -346,7 +316,7 @@ static void setupBlotsCube (void)
 	{
 	    for (k = -1; k < 2; k += 2)
 	    {
-		initBlot (&blots[n], i, j, k);
+		initBlot (&st->blots[n], i, j, k);
 		n++;
 	    } 
 	}
@@ -356,36 +326,36 @@ static void setupBlotsCube (void)
     for (i = 1; i < (blotsPerEdge - 1); i++)
     {
 	FLOAT varEdge = distBetween * i - 1;
-	initBlot (&blots[n++], varEdge, -1, -1);
-	initBlot (&blots[n++], varEdge,  1, -1);
-	initBlot (&blots[n++], varEdge, -1,  1);
-	initBlot (&blots[n++], varEdge,  1,  1);
-	initBlot (&blots[n++], -1, varEdge, -1);
-	initBlot (&blots[n++],  1, varEdge, -1);
-	initBlot (&blots[n++], -1, varEdge,  1);
-	initBlot (&blots[n++],  1, varEdge,  1);
-	initBlot (&blots[n++], -1, -1, varEdge);
-	initBlot (&blots[n++],  1, -1, varEdge);
-	initBlot (&blots[n++], -1,  1, varEdge);
-	initBlot (&blots[n++],  1,  1, varEdge);
+	initBlot (&st->blots[n++], varEdge, -1, -1);
+	initBlot (&st->blots[n++], varEdge,  1, -1);
+	initBlot (&st->blots[n++], varEdge, -1,  1);
+	initBlot (&st->blots[n++], varEdge,  1,  1);
+	initBlot (&st->blots[n++], -1, varEdge, -1);
+	initBlot (&st->blots[n++],  1, varEdge, -1);
+	initBlot (&st->blots[n++], -1, varEdge,  1);
+	initBlot (&st->blots[n++],  1, varEdge,  1);
+	initBlot (&st->blots[n++], -1, -1, varEdge);
+	initBlot (&st->blots[n++],  1, -1, varEdge);
+	initBlot (&st->blots[n++], -1,  1, varEdge);
+	initBlot (&st->blots[n++],  1,  1, varEdge);
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
-    randomlyRotateBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
+    randomlyRotateBlots (st);
 }
 
 /* set up the initial array of blots to be a cylinder */
-static void setupBlotsCylinder (void)
+static void setupBlotsCylinder (struct state *st)
 {
     int i, j, n;
     FLOAT distBetween;
 
     /* derive blotsPerEdge and blotsPerRing from blotCount, but then do the
      * reverse since roundoff may have changed blotCount */
-    FLOAT reqRoot = sqrt ((FLOAT) requestedBlotCount);
+    FLOAT reqRoot = sqrt ((FLOAT) st->requestedBlotCount);
     int blotsPerRing = ceil (RAND_FLOAT_PM1 * reqRoot) / 2 + reqRoot;
-    int blotsPerEdge = requestedBlotCount / blotsPerRing;
+    int blotsPerEdge = st->requestedBlotCount / blotsPerRing;
 
     if (blotsPerRing < 2)
     {
@@ -399,8 +369,8 @@ static void setupBlotsCylinder (void)
 
     distBetween = 2.0 / (blotsPerEdge - 1);
 
-    blotCount = blotsPerEdge * blotsPerRing;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = blotsPerEdge * blotsPerRing;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
     n = 0;
 
     /* define the edges */
@@ -410,25 +380,25 @@ static void setupBlotsCylinder (void)
 	FLOAT y = cos (2 * M_PI / blotsPerRing * i);
 	for (j = 0; j < blotsPerEdge; j++)
 	{
-	    initBlot (&blots[n], x, y, j * distBetween - 1);
+	    initBlot (&st->blots[n], x, y, j * distBetween - 1);
 	    n++;
 	}
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
-    randomlyRotateBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
+    randomlyRotateBlots (st);
 }
 
 /* set up the initial array of blots to be a squiggle */
-static void setupBlotsSquiggle (void)
+static void setupBlotsSquiggle (struct state *st)
 {
     FLOAT x, y, z, xv, yv, zv, len;
     int minCoor, maxCoor;
     int n;
 
-    blotCount = requestedBlotCount;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = st->requestedBlotCount;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
     maxCoor = (int) (RAND_FLOAT_01 * 5) + 1;
     minCoor = -maxCoor;
@@ -445,10 +415,10 @@ static void setupBlotsSquiggle (void)
     yv /= len;
     zv /= len;
     
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	FLOAT newx, newy, newz;
-	initBlot (&blots[n], x, y, z);
+	initBlot (&st->blots[n], x, y, z);
 
 	for (;;)
 	{
@@ -477,20 +447,20 @@ static void setupBlotsSquiggle (void)
 	z = newz;
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
 }
 
 /* set up the initial array of blots to be near the corners of a
  * cube, distributed slightly */
-static void setupBlotsCubeCorners (void)
+static void setupBlotsCubeCorners (struct state *st)
 {
     int n;
 
-    blotCount = requestedBlotCount;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = st->requestedBlotCount;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	FLOAT x = rint (RAND_FLOAT_01) * 2 - 1;
 	FLOAT y = rint (RAND_FLOAT_01) * 2 - 1;
@@ -500,33 +470,33 @@ static void setupBlotsCubeCorners (void)
 	y += RAND_FLOAT_PM1 * 0.3;
 	z += RAND_FLOAT_PM1 * 0.3;
 
-	initBlot (&blots[n], x, y, z);
+	initBlot (&st->blots[n], x, y, z);
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyRotateBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyRotateBlots (st);
 }
 
 /* set up the initial array of blots to be randomly distributed
  * on the surface of a tetrahedron */
-static void setupBlotsTetrahedron (void)
+static void setupBlotsTetrahedron (struct state *st)
 {
     /* table of corners of the tetrahedron */
-    static FLOAT cor[4][3] = { {  0.0,   1.0,  0.0 },
-			       { -0.75, -0.5, -0.433013 },
-			       {  0.0,  -0.5,  0.866025 },
-			       {  0.75, -0.5, -0.433013 } };
+    static const FLOAT cor[4][3] = { {  0.0,   1.0,  0.0 },
+                                     { -0.75, -0.5, -0.433013 },
+                                     {  0.0,  -0.5,  0.866025 },
+                                     {  0.75, -0.5, -0.433013 } };
 
     int n, c;
 
     /* derive blotsPerSurface from blotCount, but then do the reverse
      * since roundoff may have changed blotCount */
-    int blotsPerSurface = requestedBlotCount / 4;
+    int blotsPerSurface = st->requestedBlotCount / 4;
 
-    blotCount = blotsPerSurface * 4;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = blotsPerSurface * 4;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
-    for (n = 0; n < blotCount; n += 4)
+    for (n = 0; n < st->blotCount; n += 4)
     {
 	/* pick a random point on a unit right triangle */
 	FLOAT rawx = RAND_FLOAT_01;
@@ -560,20 +530,20 @@ static void setupBlotsTetrahedron (void)
 		(cor[c2][2] - cor[c][2]) * rawy + 
 		cor[c][2];
 
-	    initBlot (&blots[n + c], x, y, z);
+	    initBlot (&st->blots[n + c], x, y, z);
 	}
     }
 
-    randomlyRotateBlots ();
+    randomlyRotateBlots (st);
 }
 
 /* set up the initial array of blots to be an almost-evenly-distributed
  * square sheet */
-static void setupBlotsSheet (void)
+static void setupBlotsSheet (struct state *st)
 {
     int x, y;
 
-    int blotsPerDimension = floor (sqrt (requestedBlotCount));
+    int blotsPerDimension = floor (sqrt (st->requestedBlotCount));
     FLOAT spaceBetween;
 
     if (blotsPerDimension < 2)
@@ -583,8 +553,8 @@ static void setupBlotsSheet (void)
 
     spaceBetween = 2.0 / (blotsPerDimension - 1);
 
-    blotCount = blotsPerDimension * blotsPerDimension;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = blotsPerDimension * blotsPerDimension;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
     for (x = 0; x < blotsPerDimension; x++)
     {
@@ -598,29 +568,29 @@ static void setupBlotsSheet (void)
 	    y1 += RAND_FLOAT_PM1 * spaceBetween / 3;
 	    z1 += RAND_FLOAT_PM1 * spaceBetween / 2;
 
-	    initBlot (&blots[x + y * blotsPerDimension], x1, y1, z1);
+	    initBlot (&st->blots[x + y * blotsPerDimension], x1, y1, z1);
 	}
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
-    randomlyRotateBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
+    randomlyRotateBlots (st);
 }
 
 /* set up the initial array of blots to be a swirlycone */
-static void setupBlotsSwirlyCone (void)
+static void setupBlotsSwirlyCone (struct state *st)
 {
-    FLOAT radSpace = 1.0 / (requestedBlotCount - 1);
+    FLOAT radSpace = 1.0 / (st->requestedBlotCount - 1);
     FLOAT zSpace = radSpace * 2;
     FLOAT rotAmt = RAND_FLOAT_PM1 * M_PI / 10;
 
     int n;
     FLOAT rot = 0.0;
 
-    blotCount = requestedBlotCount;
-    blots = calloc (sizeof (Blot), blotCount);
+    st->blotCount = st->requestedBlotCount;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	FLOAT radius = n * radSpace;
 	FLOAT x = cos (rot) * radius;
@@ -628,31 +598,31 @@ static void setupBlotsSwirlyCone (void)
 	FLOAT z = n * zSpace - 1.0;
 
 	rot += rotAmt;
-	initBlot (&blots[n], x, y, z);
+	initBlot (&st->blots[n], x, y, z);
     }
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
-    randomlyRotateBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
+    randomlyRotateBlots (st);
 }
 
 /* forward declaration for recursive use immediately below */
-static void setupBlots (void);
+static void setupBlots (struct state *st);
 
 /* set up the blots to be two of the other choices, placed next to
  * each other */
-static void setupBlotsDuo (void)
+static void setupBlotsDuo (struct state *st)
 {
-    int origRequest = requestedBlotCount;
+    int origRequest = st->requestedBlotCount;
     FLOAT tx, ty, tz, radius;
     Blot *blots1, *blots2;
     int count1, count2;
     int n;
 
-    if (requestedBlotCount < 15)
+    if (st->requestedBlotCount < 15)
     {
 	/* special case bottom-out */
-	setupBlotsSphere ();
+	setupBlotsSphere (st);
 	return;
     }
 
@@ -665,20 +635,20 @@ static void setupBlotsDuo (void)
     tz /= radius;
 
     /* recursive call to setup set 1 */
-    requestedBlotCount = origRequest / 2;
-    setupBlots ();
+    st->requestedBlotCount = origRequest / 2;
+    setupBlots (st);
 
-    if (blotCount >= origRequest)
+    if (st->blotCount >= origRequest)
     {
 	/* return immediately if this satisfies the original count request */
-	requestedBlotCount = origRequest;
+	st->requestedBlotCount = origRequest;
 	return;
     }
 
-    blots1 = blots;
-    count1 = blotCount;
-    blots = NULL;
-    blotCount = 0;
+    blots1 = st->blots;
+    count1 = st->blotCount;
+    st->blots = NULL;
+    st->blotCount = 0;
     
     /* translate to new position */
     for (n = 0; n < count1; n++)
@@ -689,10 +659,10 @@ static void setupBlotsDuo (void)
     }
 
     /* recursive call to setup set 2 */
-    requestedBlotCount = origRequest - count1;
-    setupBlots ();
-    blots2 = blots;
-    count2 = blotCount;
+    st->requestedBlotCount = origRequest - count1;
+    setupBlots (st);
+    blots2 = st->blots;
+    count2 = st->blotCount;
 
     /* translate to new position */
     for (n = 0; n < count2; n++)
@@ -703,18 +673,18 @@ static void setupBlotsDuo (void)
     }
 
     /* combine the two arrays */
-    blotCount = count1 + count2;
-    blots = calloc (sizeof (Blot), blotCount);
-    memcpy (&blots[0],      blots1, sizeof (Blot) * count1);
-    memcpy (&blots[count1], blots2, sizeof (Blot) * count2);
+    st->blotCount = count1 + count2;
+    st->blots = calloc (sizeof (Blot), st->blotCount);
+    memcpy (&st->blots[0],      blots1, sizeof (Blot) * count1);
+    memcpy (&st->blots[count1], blots2, sizeof (Blot) * count2);
     free (blots1);
     free (blots2);
 
-    scaleBlotsToRadius1 ();
-    randomlyReorderBlots ();
+    scaleBlotsToRadius1 (st);
+    randomlyReorderBlots (st);
 
     /* restore the original requested count, for future iterations */
-    requestedBlotCount = origRequest;
+    st->requestedBlotCount = origRequest;
 }
 
 
@@ -724,79 +694,75 @@ static void setupBlotsDuo (void)
  */
 
 /* free the blots, in preparation for a new shape */
-static void freeBlots (void)
+static void freeBlots (struct state *st)
 {
-    if (blots != NULL)
+    if (st->blots != NULL)
     {
-	free (blots);
-	blots = NULL;
+	free (st->blots);
+	st->blots = NULL;
     }
 
-    if (segsToErase != NULL)
+    if (st->segsToErase != NULL)
     {
-	free (segsToErase);
-	segsToErase = NULL;
+	free (st->segsToErase);
+	st->segsToErase = NULL;
     }
 
-    if (segsToDraw != NULL)
+    if (st->segsToDraw != NULL)
     {
-	free (segsToDraw);
-	segsToDraw = NULL;
+	free (st->segsToDraw);
+	st->segsToDraw = NULL;
     }
 }
 
 /* set up the initial arrays of blots */
-static void setupBlots (void)
+static void setupBlots (struct state *st)
 {
     int which = RAND_FLOAT_01 * 11;
 
-    freeBlots ();
+    freeBlots (st);
 
     switch (which)
     {
 	case 0:
-	    setupBlotsCube ();
+	    setupBlotsCube (st);
 	    break;
 	case 1:
-	    setupBlotsSphere ();
+	    setupBlotsSphere (st);
 	    break;
 	case 2:
-	    setupBlotsCylinder ();
+	    setupBlotsCylinder (st);
 	    break;
 	case 3:
-	    setupBlotsSquiggle ();
+	    setupBlotsSquiggle (st);
 	    break;
 	case 4:
-	    setupBlotsCubeCorners ();
+	    setupBlotsCubeCorners (st);
 	    break;
 	case 5:
-	    setupBlotsTetrahedron ();
+	    setupBlotsTetrahedron (st);
 	    break;
 	case 6:
-	    setupBlotsSheet ();
+	    setupBlotsSheet (st);
 	    break;
 	case 7:
-	    setupBlotsSwirlyCone ();
+	    setupBlotsSwirlyCone (st);
 	    break;
 	case 8:
 	case 9:
 	case 10:
-	    setupBlotsDuo ();
+	    setupBlotsDuo (st);
 	    break;
     }
 }
 
 /* set up the segments arrays */
-static void setupSegs (void)
+static void setupSegs (struct state *st)
 {
     /* there are blotShapeCount - 1 line segments per blot */
-    segCount = blotCount * (blotShapeCount - 1);
-    segsToErase = calloc (sizeof (LineSegment), segCount);
-    segsToDraw = calloc (sizeof (LineSegment), segCount);
-
-    /* erase the world */
-    XFillRectangle (display, drawable, gcs[0], 0, 0, 
-		    windowWidth, windowHeight);
+    st->segCount = st->blotCount * (blotShapeCount - 1);
+    st->segsToErase = calloc (sizeof (LineSegment), st->segCount);
+    st->segsToDraw = calloc (sizeof (LineSegment), st->segCount);
 }
 
 
@@ -806,11 +772,11 @@ static void setupSegs (void)
  */
 
 /* set up the colormap */
-static void setupColormap (XWindowAttributes *xgwa)
+static void setupColormap (struct state *st, XWindowAttributes *xgwa)
 {
     int n;
     XGCValues gcv;
-    XColor *colors = (XColor *) calloc (sizeof (XColor), colorCount + 1);
+    XColor *colors = (XColor *) calloc (sizeof (XColor), st->colorCount + 1);
 
     unsigned short r, g, b;
     int h1, h2;
@@ -830,25 +796,25 @@ static void setupColormap (XWindowAttributes *xgwa)
     s2 = 0.7;
     v2 = 0.7;
     
-    colors[0].pixel = get_pixel_resource ("background", "Background",
-					  display, xgwa->colormap);
+    colors[0].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
+                                          "background", "Background");
     
-    make_color_ramp (display, xgwa->colormap, h1, s1, v1, h2, s2, v2,
-		     colors + 1, &colorCount, False, True, False);
+    make_color_ramp (st->dpy, xgwa->colormap, h1, s1, v1, h2, s2, v2,
+		     colors + 1, &st->colorCount, False, True, False);
 
-    if (colorCount < 1)
+    if (st->colorCount < 1)
     {
         fprintf (stderr, "%s: couldn't allocate any colors\n", progname);
 	exit (-1);
     }
     
-    gcs = (GC *) calloc (sizeof (GC), colorCount + 1);
+    st->gcs = (GC *) calloc (sizeof (GC), st->colorCount + 1);
 
-    for (n = 0; n <= colorCount; n++) 
+    for (n = 0; n <= st->colorCount; n++) 
     {
 	gcv.foreground = colors[n].pixel;
-	gcv.line_width = lineWidth;
-	gcs[n] = XCreateGC (display, window, GCForeground | GCLineWidth, &gcv);
+	gcv.line_width = st->lineWidth;
+	st->gcs[n] = XCreateGC (st->dpy, st->window, GCForeground | GCLineWidth, &gcv);
     }
 
     free (colors);
@@ -861,43 +827,43 @@ static void setupColormap (XWindowAttributes *xgwa)
  */
 
 /* set up the system */
-static void setup (void)
+static void setup (struct state *st)
 {
     XWindowAttributes xgwa;
 
-    XGetWindowAttributes (display, window, &xgwa);
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-    windowWidth = xgwa.width;
-    windowHeight = xgwa.height;
-    centerX = windowWidth / 2;
-    centerY = windowHeight / 2;
-    baseScale = (xgwa.height < xgwa.width) ? xgwa.height : xgwa.width;
+    st->windowWidth = xgwa.width;
+    st->windowHeight = xgwa.height;
+    st->centerX = st->windowWidth / 2;
+    st->centerY = st->windowHeight / 2;
+    st->baseScale = (xgwa.height < xgwa.width) ? xgwa.height : xgwa.width;
 
-    if (doubleBuffer)
+    if (st->doubleBuffer)
     {
-	drawable = XCreatePixmap (display, window, xgwa.width, xgwa.height,
+	st->drawable = XCreatePixmap (st->dpy, st->window, xgwa.width, xgwa.height,
 				  xgwa.depth);
     }
     else
     {
-	drawable = window;
+	st->drawable = st->window;
     }
 
-    setupColormap (&xgwa);
-    setupBlots ();
-    setupSegs ();
+    setupColormap (st, &xgwa);
+    setupBlots (st);
+    setupSegs (st);
 
     /* set up the initial rotation, scale, and light values as random, but
      * with the targets equal to where it is */
-    xRot = xRotTarget = RAND_FLOAT_01 * M_PI;
-    yRot = yRotTarget = RAND_FLOAT_01 * M_PI;
-    zRot = zRotTarget = RAND_FLOAT_01 * M_PI;
-    curScale = scaleTarget = RAND_FLOAT_01 * (maxScale - minScale) + minScale;
-    lightX = lightXTarget = RAND_FLOAT_PM1;
-    lightY = lightYTarget = RAND_FLOAT_PM1;
-    lightZ = lightZTarget = RAND_FLOAT_PM1;
+    st->xRot = st->xRotTarget = RAND_FLOAT_01 * M_PI;
+    st->yRot = st->yRotTarget = RAND_FLOAT_01 * M_PI;
+    st->zRot = st->zRotTarget = RAND_FLOAT_01 * M_PI;
+    st->curScale = st->scaleTarget = RAND_FLOAT_01 * (st->maxScale - st->minScale) + st->minScale;
+    st->lightX = st->lightXTarget = RAND_FLOAT_PM1;
+    st->lightY = st->lightYTarget = RAND_FLOAT_PM1;
+    st->lightZ = st->lightZTarget = RAND_FLOAT_PM1;
 
-    itersTillNext = RAND_FLOAT_01 * maxIters;
+    st->itersTillNext = RAND_FLOAT_01 * st->maxIters;
 }
 
 
@@ -907,22 +873,22 @@ static void setup (void)
  */
 
 /* "render" the blots into segsToDraw, with the current rotation factors */
-static void renderSegs (void)
+static void renderSegs (struct state *st)
 {
     int n;
     int m = 0;
 
     /* rotation factors */
-    FLOAT sinX = sin (xRot);
-    FLOAT cosX = cos (xRot);
-    FLOAT sinY = sin (yRot);
-    FLOAT cosY = cos (yRot);
-    FLOAT sinZ = sin (zRot);
-    FLOAT cosZ = cos (zRot);
+    FLOAT sinX = sin (st->xRot);
+    FLOAT cosX = cos (st->xRot);
+    FLOAT sinY = sin (st->yRot);
+    FLOAT cosY = cos (st->yRot);
+    FLOAT sinZ = sin (st->zRot);
+    FLOAT cosZ = cos (st->zRot);
 
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
-	Blot *b = &blots[n];
+	Blot *b = &st->blots[n];
 	int i, j;
 	int baseX, baseY;
 	FLOAT radius;
@@ -930,9 +896,9 @@ static void renderSegs (void)
 	int y[3][3];
 	int color;
 
-	FLOAT x1 = blots[n].x;
-	FLOAT y1 = blots[n].y;
-	FLOAT z1 = blots[n].z;
+	FLOAT x1 = st->blots[n].x;
+	FLOAT y1 = st->blots[n].y;
+	FLOAT z1 = st->blots[n].z;
 	FLOAT x2, y2, z2;
 
 	/* rotate on z axis */
@@ -952,74 +918,74 @@ static void renderSegs (void)
 
 	/* the color to draw is based on the distance from the light of
 	 * the post-rotation blot */
-	x1 = x2 - lightX;
-	y1 = y2 - lightY;
-	z1 = z2 - lightZ;
-	color = 1 + (x1 * x1 + y1 * y1 + z1 * z1) / 4 * colorCount;
-	if (color > colorCount)
+	x1 = x2 - st->lightX;
+	y1 = y2 - st->lightY;
+	z1 = z2 - st->lightZ;
+	color = 1 + (x1 * x1 + y1 * y1 + z1 * z1) / 4 * st->colorCount;
+	if (color > st->colorCount)
 	{
-	    color = colorCount;
+	    color = st->colorCount;
 	}
 
 	/* set up the base screen coordinates for drawing */
-	baseX = x2 / 2 * baseScale * curScale + centerX + centerXOff;
-	baseY = y2 / 2 * baseScale * curScale + centerY + centerYOff;
+	baseX = x2 / 2 * st->baseScale * st->curScale + st->centerX + st->centerXOff;
+	baseY = y2 / 2 * st->baseScale * st->curScale + st->centerY + st->centerYOff;
 	
-	radius = (z2 + 1) / 2 * (maxRadius - minRadius) + minRadius;
+	radius = (z2 + 1) / 2 * (st->maxRadius - st->minRadius) + st->minRadius;
 
 	for (i = 0; i < 3; i++)
 	{
 	    for (j = 0; j < 3; j++)
 	    {
 		x[i][j] = baseX + 
-		    ((i - 1) + (b->xoff[i][j] * maxNerveRadius)) * radius;
+		    ((i - 1) + (b->xoff[i][j] * st->maxNerveRadius)) * radius;
 		y[i][j] = baseY + 
-		    ((j - 1) + (b->yoff[i][j] * maxNerveRadius)) * radius;
+		    ((j - 1) + (b->yoff[i][j] * st->maxNerveRadius)) * radius;
 	    }
 	}
 
 	for (i = 1; i < blotShapeCount; i++)
 	{
-	    segsToDraw[m].gc = gcs[color];
-	    segsToDraw[m].x1 = x[blotShape[i-1].x + 1][blotShape[i-1].y + 1];
-	    segsToDraw[m].y1 = y[blotShape[i-1].x + 1][blotShape[i-1].y + 1];
-	    segsToDraw[m].x2 = x[blotShape[i].x   + 1][blotShape[i].y   + 1];
-	    segsToDraw[m].y2 = y[blotShape[i].x   + 1][blotShape[i].y   + 1];
+	    st->segsToDraw[m].gc = st->gcs[color];
+	    st->segsToDraw[m].x1 = x[blotShape[i-1].x + 1][blotShape[i-1].y + 1];
+	    st->segsToDraw[m].y1 = y[blotShape[i-1].x + 1][blotShape[i-1].y + 1];
+	    st->segsToDraw[m].x2 = x[blotShape[i].x   + 1][blotShape[i].y   + 1];
+	    st->segsToDraw[m].y2 = y[blotShape[i].x   + 1][blotShape[i].y   + 1];
 	    m++;
 	}
     }
 }
 
 /* update blots, adjusting the offsets and rotation factors. */
-static void updateWithFeeling (void)
+static void updateWithFeeling (struct state *st)
 {
     int n, i, j;
 
     /* pick a new model if the time is right */
-    itersTillNext--;
-    if (itersTillNext < 0)
+    st->itersTillNext--;
+    if (st->itersTillNext < 0)
     {
-	itersTillNext = RAND_FLOAT_01 * maxIters;
-	setupBlots ();
-	setupSegs ();
-	renderSegs ();
+	st->itersTillNext = RAND_FLOAT_01 * st->maxIters;
+	setupBlots (st);
+	setupSegs (st);
+	renderSegs (st);
     }
 
     /* update the rotation factors by moving them a bit toward the targets */
-    xRot = xRot + (xRotTarget - xRot) * iterAmt; 
-    yRot = yRot + (yRotTarget - yRot) * iterAmt;
-    zRot = zRot + (zRotTarget - zRot) * iterAmt;
+    st->xRot = st->xRot + (st->xRotTarget - st->xRot) * st->iterAmt; 
+    st->yRot = st->yRot + (st->yRotTarget - st->yRot) * st->iterAmt;
+    st->zRot = st->zRot + (st->zRotTarget - st->zRot) * st->iterAmt;
 
     /* similarly the scale factor */
-    curScale = curScale + (scaleTarget - curScale) * iterAmt;
+    st->curScale = st->curScale + (st->scaleTarget - st->curScale) * st->iterAmt;
 
     /* and similarly the light position */
-    lightX = lightX + (lightXTarget - lightX) * iterAmt; 
-    lightY = lightY + (lightYTarget - lightY) * iterAmt; 
-    lightZ = lightZ + (lightZTarget - lightZ) * iterAmt; 
+    st->lightX = st->lightX + (st->lightXTarget - st->lightX) * st->iterAmt; 
+    st->lightY = st->lightY + (st->lightYTarget - st->lightY) * st->iterAmt; 
+    st->lightZ = st->lightZ + (st->lightZTarget - st->lightZ) * st->iterAmt; 
 
     /* for each blot... */
-    for (n = 0; n < blotCount; n++)
+    for (n = 0; n < st->blotCount; n++)
     {
 	/* add a bit of random jitter to xoff/yoff */
 	for (i = 0; i < 3; i++)
@@ -1028,105 +994,105 @@ static void updateWithFeeling (void)
 	    {
 		FLOAT newOff;
 
-		newOff = blots[n].xoff[i][j] + RAND_FLOAT_PM1 * nervousness;
+		newOff = st->blots[n].xoff[i][j] + RAND_FLOAT_PM1 * st->nervousness;
 		if (newOff < -1) newOff = -(newOff + 1) - 1;
 		else if (newOff > 1) newOff = -(newOff - 1) + 1;
-		blots[n].xoff[i][j] = newOff;
+		st->blots[n].xoff[i][j] = newOff;
 
-		newOff = blots[n].yoff[i][j] + RAND_FLOAT_PM1 * nervousness;
+		newOff = st->blots[n].yoff[i][j] + RAND_FLOAT_PM1 * st->nervousness;
 		if (newOff < -1) newOff = -(newOff + 1) - 1;
 		else if (newOff > 1) newOff = -(newOff - 1) + 1;
-		blots[n].yoff[i][j] = newOff;
+		st->blots[n].yoff[i][j] = newOff;
 	    }
 	}
     }
 
     /* depending on random chance, update one or more factors */
-    if (RAND_FLOAT_01 <= eventChance)
+    if (RAND_FLOAT_01 <= st->eventChance)
     {
 	int which = RAND_FLOAT_01 * 14;
 	switch (which)
 	{
 	    case 0:
 	    {
-		xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 1:
 	    {
-		yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 2:
 	    {
-		zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 3:
 	    {
-		xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
-		yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 4:
 	    {
-		xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
-		zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 5:
 	    {
-		yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
-		zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 6:
 	    {
-		xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
-		yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
-		zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->xRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->yRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
+		st->zRotTarget = RAND_FLOAT_PM1 * M_PI * 2;
 		break;
 	    }
 	    case 7:
 	    {
-		centerXOff = RAND_FLOAT_PM1 * maxRadius;
+		st->centerXOff = RAND_FLOAT_PM1 * st->maxRadius;
 		break;
 	    }
 	    case 8:
 	    {
-		centerYOff = RAND_FLOAT_PM1 * maxRadius;
+		st->centerYOff = RAND_FLOAT_PM1 * st->maxRadius;
 		break;
 	    }
 	    case 9:
 	    {
-		centerXOff = RAND_FLOAT_PM1 * maxRadius;
-		centerYOff = RAND_FLOAT_PM1 * maxRadius;
+		st->centerXOff = RAND_FLOAT_PM1 * st->maxRadius;
+		st->centerYOff = RAND_FLOAT_PM1 * st->maxRadius;
 		break;
 	    }
 	    case 10:
 	    {
-		scaleTarget = 
-		    RAND_FLOAT_01 * (maxScale - minScale) + minScale;
+		st->scaleTarget = 
+		    RAND_FLOAT_01 * (st->maxScale - st->minScale) + st->minScale;
 		break;
 	    }
 	    case 11:
 	    {
-		curScale = 
-		    RAND_FLOAT_01 * (maxScale - minScale) + minScale;
+		st->curScale = 
+		    RAND_FLOAT_01 * (st->maxScale - st->minScale) + st->minScale;
 		break;
 	    }
 	    case 12:
 	    {
-		lightX = RAND_FLOAT_PM1;
-		lightY = RAND_FLOAT_PM1;
-		lightZ = RAND_FLOAT_PM1;
+		st->lightX = RAND_FLOAT_PM1;
+		st->lightY = RAND_FLOAT_PM1;
+		st->lightZ = RAND_FLOAT_PM1;
 		break;
 	    }
 	    case 13:
 	    {
-		lightXTarget = RAND_FLOAT_PM1;
-		lightYTarget = RAND_FLOAT_PM1;
-		lightZTarget = RAND_FLOAT_PM1;
+		st->lightXTarget = RAND_FLOAT_PM1;
+		st->lightYTarget = RAND_FLOAT_PM1;
+		st->lightZTarget = RAND_FLOAT_PM1;
 		break;
 	    }
 	}
@@ -1134,48 +1100,214 @@ static void updateWithFeeling (void)
 }
 
 /* erase segsToErase and draw segsToDraw */
-static void eraseAndDraw (void)
+static void eraseAndDraw (struct state *st)
 {
     int n;
 
-    for (n = 0; n < segCount; n++)
+    if (st->doubleBuffer)
+      XFillRectangle (st->dpy, st->drawable, st->gcs[0], 0, 0, 
+                      st->windowWidth, st->windowHeight);
+    else
+      XClearWindow (st->dpy, st->drawable);
+
+    for (n = 0; n < st->segCount; n++)
     {
-	LineSegment *seg = &segsToErase[n];
-	XDrawLine (display, drawable, gcs[0], 
+	LineSegment *seg = &st->segsToErase[n];
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+	XDrawLine (st->dpy, st->drawable, st->gcs[0], 
 		   seg->x1, seg->y1, seg->x2, seg->y2);
-	seg = &segsToDraw[n];
-	XDrawLine (display, drawable, seg->gc,
+#endif
+	seg = &st->segsToDraw[n];
+	XDrawLine (st->dpy, st->drawable, seg->gc,
 		   seg->x1, seg->y1, seg->x2, seg->y2);
     }
 
-    if (doubleBuffer)
+    if (st->doubleBuffer)
     {
-	XCopyArea (display, drawable, window, gcs[0], 0, 0, 
-		   windowWidth, windowHeight, 0, 0);
+	XCopyArea (st->dpy, st->drawable, st->window, st->gcs[0], 0, 0, 
+		   st->windowWidth, st->windowHeight, 0, 0);
     }
 }
 
 /* do one iteration */
-static void oneIteration (void)
+static unsigned long
+nerverot_draw (Display *dpy, Window win, void *closure)
 {
+  struct state *st = (struct state *) closure;
     /* switch segsToErase and segsToDraw */
-    LineSegment *temp = segsToDraw;
-    segsToDraw = segsToErase;
-    segsToErase = temp;
+    LineSegment *temp = st->segsToDraw;
+    st->segsToDraw = st->segsToErase;
+    st->segsToErase = temp;
 
     /* update the model */
-    updateWithFeeling ();
+    updateWithFeeling (st);
 
     /* render new segments */
-    renderSegs ();
+    renderSegs (st);
 
     /* erase old segments and draw new ones */
-    eraseAndDraw ();
+    eraseAndDraw (st);
+
+    return st->delay;
 }
 
-char *progclass = "NerveRot";
+/* initialize the user-specifiable params */
+static void initParams (struct state *st)
+{
+    int problems = 0;
 
-char *defaults [] = {
+    st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+    if (st->delay < 0)
+    {
+	fprintf (stderr, "error: delay must be at least 0\n");
+	problems = 1;
+    }
+    
+    st->maxIters = get_integer_resource (st->dpy, "maxIters", "Integer");
+    if (st->maxIters < 0)
+    {
+	fprintf (stderr, "error: maxIters must be at least 0\n");
+	problems = 1;
+    }
+    
+    st->doubleBuffer = get_boolean_resource (st->dpy, "doubleBuffer", "Boolean");
+
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    st->doubleBuffer = False;
+# endif
+
+    st->requestedBlotCount = get_integer_resource (st->dpy, "count", "Count");
+    if (st->requestedBlotCount <= 0)
+    {
+	fprintf (stderr, "error: count must be at least 0\n");
+	problems = 1;
+    }
+
+    st->colorCount = get_integer_resource (st->dpy, "colors", "Colors");
+    if (st->colorCount <= 0)
+    {
+	fprintf (stderr, "error: colors must be at least 1\n");
+	problems = 1;
+    }
+
+    st->lineWidth = get_integer_resource (st->dpy, "lineWidth", "LineWidth");
+    if (st->lineWidth < 0)
+    {
+	fprintf (stderr, "error: line width must be at least 0\n");
+	problems = 1;
+    }
+
+    st->nervousness = get_float_resource (st->dpy, "nervousness", "Float");
+    if ((st->nervousness < 0) || (st->nervousness > 1))
+    {
+	fprintf (stderr, "error: nervousness must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->maxNerveRadius = get_float_resource (st->dpy, "maxNerveRadius", "Float");
+    if ((st->maxNerveRadius < 0) || (st->maxNerveRadius > 1))
+    {
+	fprintf (stderr, "error: maxNerveRadius must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->eventChance = get_float_resource (st->dpy, "eventChance", "Float");
+    if ((st->eventChance < 0) || (st->eventChance > 1))
+    {
+	fprintf (stderr, "error: eventChance must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->iterAmt = get_float_resource (st->dpy, "iterAmt", "Float");
+    if ((st->iterAmt < 0) || (st->iterAmt > 1))
+    {
+	fprintf (stderr, "error: iterAmt must be in the range 0..1\n");
+	problems = 1;
+    }
+
+    st->minScale = get_float_resource (st->dpy, "minScale", "Float");
+    if ((st->minScale < 0) || (st->minScale > 10))
+    {
+	fprintf (stderr, "error: minScale must be in the range 0..10\n");
+	problems = 1;
+    }
+
+    st->maxScale = get_float_resource (st->dpy, "maxScale", "Float");
+    if ((st->maxScale < 0) || (st->maxScale > 10))
+    {
+	fprintf (stderr, "error: maxScale must be in the range 0..10\n");
+	problems = 1;
+    }
+
+    if (st->maxScale < st->minScale)
+    {
+	fprintf (stderr, "error: maxScale must be >= minScale\n");
+	problems = 1;
+    }	
+
+    st->minRadius = get_integer_resource (st->dpy, "minRadius", "Integer");
+    if ((st->minRadius < 1) || (st->minRadius > 100))
+    {
+	fprintf (stderr, "error: minRadius must be in the range 1..100\n");
+	problems = 1;
+    }
+
+    st->maxRadius = get_integer_resource (st->dpy, "maxRadius", "Integer");
+    if ((st->maxRadius < 1) || (st->maxRadius > 100))
+    {
+	fprintf (stderr, "error: maxRadius must be in the range 1..100\n");
+	problems = 1;
+    }
+
+    if (st->maxRadius < st->minRadius)
+    {
+	fprintf (stderr, "error: maxRadius must be >= minRadius\n");
+	problems = 1;
+    }	
+
+    if (problems)
+    {
+	exit (1);
+    }
+}
+
+static void *
+nerverot_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  st->dpy = dpy;
+  st->window = window;
+
+    initParams (st);
+    setup (st);
+
+    /* make a valid set to erase at first */
+    renderSegs (st);
+    return st;
+}
+
+static void
+nerverot_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+nerverot_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+nerverot_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  freeBlots (st);
+  free (st);
+}
+
+
+static const char *nerverot_defaults [] = {
     ".background:	black",
     ".foreground:	white",
     "*count:		250",
@@ -1195,7 +1327,7 @@ char *defaults [] = {
     0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec nerverot_options [] = {
   { "-count",            ".count",          XrmoptionSepArg, 0 },
   { "-colors",           ".colors",         XrmoptionSepArg, 0 },
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
@@ -1214,139 +1346,5 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-/* initialize the user-specifiable params */
-static void initParams (void)
-{
-    int problems = 0;
 
-    delay = get_integer_resource ("delay", "Delay");
-    if (delay < 0)
-    {
-	fprintf (stderr, "error: delay must be at least 0\n");
-	problems = 1;
-    }
-    
-    maxIters = get_integer_resource ("maxIters", "Integer");
-    if (maxIters < 0)
-    {
-	fprintf (stderr, "error: maxIters must be at least 0\n");
-	problems = 1;
-    }
-    
-    doubleBuffer = get_boolean_resource ("doubleBuffer", "Boolean");
-
-    requestedBlotCount = get_integer_resource ("count", "Count");
-    if (requestedBlotCount <= 0)
-    {
-	fprintf (stderr, "error: count must be at least 0\n");
-	problems = 1;
-    }
-
-    colorCount = get_integer_resource ("colors", "Colors");
-    if (colorCount <= 0)
-    {
-	fprintf (stderr, "error: colors must be at least 1\n");
-	problems = 1;
-    }
-
-    lineWidth = get_integer_resource ("lineWidth", "LineWidth");
-    if (lineWidth < 0)
-    {
-	fprintf (stderr, "error: line width must be at least 0\n");
-	problems = 1;
-    }
-
-    nervousness = get_float_resource ("nervousness", "Float");
-    if ((nervousness < 0) || (nervousness > 1))
-    {
-	fprintf (stderr, "error: nervousness must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    maxNerveRadius = get_float_resource ("maxNerveRadius", "Float");
-    if ((maxNerveRadius < 0) || (maxNerveRadius > 1))
-    {
-	fprintf (stderr, "error: maxNerveRadius must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    eventChance = get_float_resource ("eventChance", "Float");
-    if ((eventChance < 0) || (eventChance > 1))
-    {
-	fprintf (stderr, "error: eventChance must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    iterAmt = get_float_resource ("iterAmt", "Float");
-    if ((iterAmt < 0) || (iterAmt > 1))
-    {
-	fprintf (stderr, "error: iterAmt must be in the range 0..1\n");
-	problems = 1;
-    }
-
-    minScale = get_float_resource ("minScale", "Float");
-    if ((minScale < 0) || (minScale > 10))
-    {
-	fprintf (stderr, "error: minScale must be in the range 0..10\n");
-	problems = 1;
-    }
-
-    maxScale = get_float_resource ("maxScale", "Float");
-    if ((maxScale < 0) || (maxScale > 10))
-    {
-	fprintf (stderr, "error: maxScale must be in the range 0..10\n");
-	problems = 1;
-    }
-
-    if (maxScale < minScale)
-    {
-	fprintf (stderr, "error: maxScale must be >= minScale\n");
-	problems = 1;
-    }	
-
-    minRadius = get_integer_resource ("minRadius", "Integer");
-    if ((minRadius < 1) || (minRadius > 100))
-    {
-	fprintf (stderr, "error: minRadius must be in the range 1..100\n");
-	problems = 1;
-    }
-
-    maxRadius = get_integer_resource ("maxRadius", "Integer");
-    if ((maxRadius < 1) || (maxRadius > 100))
-    {
-	fprintf (stderr, "error: maxRadius must be in the range 1..100\n");
-	problems = 1;
-    }
-
-    if (maxRadius < minRadius)
-    {
-	fprintf (stderr, "error: maxRadius must be >= minRadius\n");
-	problems = 1;
-    }	
-
-    if (problems)
-    {
-	exit (1);
-    }
-}
-
-/* main function */
-void screenhack (Display *dpy, Window win)
-{
-    display = dpy;
-    window = win;
-
-    initParams ();
-    setup ();
-
-    /* make a valid set to erase at first */
-    renderSegs ();
-    
-    for (;;) 
-    {
-	oneIteration ();
-        XSync (dpy, False);
-        screenhack_handle_events (dpy);
-	usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("NerveRot", nerverot)

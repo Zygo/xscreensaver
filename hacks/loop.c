@@ -79,22 +79,23 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
    there is handedness at both the initial condition and the transition rule.
  */
 
-#ifdef STANDALONE
-#define MODE_loop
-#define PROGCLASS "loop"
-#define HACK_INIT init_loop
-#define HACK_DRAW draw_loop
-#define loop_opts xlockmore_opts
-#define DEFAULTS "*delay: 100000 \n" \
- "*count: -5 \n" \
- "*cycles: 1600 \n" \
- "*size: -12 \n" \
- "*ncolors: 15 \n" \
+#ifndef HAVE_COCOA
+# define DO_STIPPLE
+#endif
 
-#define UNIFORM_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+#ifdef STANDALONE
+# define MODE_loop
+# define DEFAULTS	"*delay:   100000 \n" \
+					"*count:   -5     \n" \
+					"*cycles:  1600   \n" \
+					"*size:    -12    \n" \
+					"*ncolors: 15     \n"
+# define UNIFORM_COLORS
+# define reshape_loop 0
+# define loop_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 #include "automata.h"
 
@@ -122,7 +123,7 @@ static OptionStruct desc[] =
 	{"-neighbors num", "squares 4 or hexagons 6"}
 };
 
-ModeSpecOpt loop_opts =
+ENTRYPOINT ModeSpecOpt loop_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 
@@ -858,11 +859,16 @@ drawcell(ModeInfo * mi, int col, int row, int state)
 		gc = MI_GC(mi);
 		XSetForeground(MI_DISPLAY(mi), gc, lp->colors[state]);
 	} else {
+#ifdef DO_STIPPLE
 		gcv.stipple = lp->pixmaps[state];
+#endif /* DO_STIPPLE */
 		gcv.foreground = MI_WHITE_PIXEL(mi);
 		gcv.background = MI_BLACK_PIXEL(mi);
 		XChangeGC(MI_DISPLAY(mi), lp->stippledGC,
-			  GCStipple | GCForeground | GCBackground, &gcv);
+#ifdef DO_STIPPLE
+			  GCStipple |
+#endif /* DO_STIPPLE */
+                          GCForeground | GCBackground, &gcv);
 		gc = lp->stippledGC;
 	}
 	fillcell(mi, gc, col, row);
@@ -966,11 +972,16 @@ draw_state(ModeInfo * mi, int state)
 		gc = MI_GC(mi);
 		XSetForeground(display, gc, lp->colors[state]);
 	} else {
+#ifdef DO_STIPPLE
 		gcv.stipple = lp->pixmaps[state];
+#endif /* DO_STIPPLE */
 		gcv.foreground = MI_WHITE_PIXEL(mi);
 		gcv.background = MI_BLACK_PIXEL(mi);
 		XChangeGC(display, lp->stippledGC,
-			  GCStipple | GCForeground | GCBackground, &gcv);
+#ifdef DO_STIPPLE
+			  GCStipple |
+#endif /* DO_STIPPLE */
+                          GCForeground | GCBackground, &gcv);
 		gc = lp->stippledGC;
 	}
 
@@ -1016,7 +1027,6 @@ draw_state(ModeInfo * mi, int state)
 		(void) free((void *) rects);
 	}
 	free_state(lp, state);
-	XFlush(display);
 	return True;
 }
 
@@ -1408,8 +1418,8 @@ do_gen(loopstruct * lp)
 	}
 }
 
-void
-release_loop(ModeInfo * mi)
+ENTRYPOINT void
+release_loop (ModeInfo * mi)
 {
 	if (loops != NULL) {
 		int         screen;
@@ -1428,14 +1438,12 @@ release_loop(ModeInfo * mi)
 static void *stop_warning_about_triangleUnit_already;
 
 
-void
-init_loop(ModeInfo * mi)
+ENTRYPOINT void
+init_loop (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
 	int         i, size = MI_SIZE(mi);
 	loopstruct *lp;
-	XGCValues   gcv;
 
     stop_warning_about_triangleUnit_already = (void *) &triangleUnit;
 
@@ -1448,8 +1456,11 @@ init_loop(ModeInfo * mi)
 
 	lp->redrawing = 0;
 
+#ifdef DO_STIPPLE
 	if ((MI_NPIXELS(mi) < COLORS) && (lp->init_bits == 0)) {
-		if (lp->stippledGC == None) {
+          Window      window = MI_WINDOW(mi);
+          XGCValues   gcv;
+        if (lp->stippledGC == None) {
 			gcv.fill_style = FillOpaqueStippled;
 			if ((lp->stippledGC = XCreateGC(display, window,
 				 GCFillStyle, &gcv)) == None) {
@@ -1466,6 +1477,7 @@ init_loop(ModeInfo * mi)
 		LOOPBITS(stipples[8], STIPPLESIZE, STIPPLESIZE);
 		LOOPBITS(stipples[10], STIPPLESIZE, STIPPLESIZE);
 	}
+#endif /* DO_STIPPLE */
 	if (MI_NPIXELS(mi) >= COLORS) {
 		/* Maybe these colors should be randomized */
 		lp->colors[0] = MI_BLACK_PIXEL(mi);
@@ -1596,8 +1608,8 @@ init_loop(ModeInfo * mi)
 	init_adam(mi);
 }
 
-void
-draw_loop(ModeInfo * mi)
+ENTRYPOINT void
+draw_loop (ModeInfo * mi)
 {
 	int         offset, i, j;
 	unsigned char *z, *znew;
@@ -1664,8 +1676,8 @@ draw_loop(ModeInfo * mi)
 	}
 }
 
-void
-refresh_loop(ModeInfo * mi)
+ENTRYPOINT void
+refresh_loop (ModeInfo * mi)
 {
 	loopstruct *lp;
 
@@ -1677,5 +1689,7 @@ refresh_loop(ModeInfo * mi)
 	lp->redrawing = 1;
 	lp->redrawpos = lp->by * lp->ncols + lp->bx;
 }
+
+XSCREENSAVER_MODULE ("Loop", loop)
 
 #endif /* MODE_loop */

@@ -16,70 +16,59 @@
  */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
-#endif
-
-#ifdef VMS
-#include <X11/Intrinsic.h>
+static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 #endif
 
 #ifdef STANDALONE
-# define MODE_moebius
-# define PROGCLASS			"AntMaze2"
-# define HACK_INIT			init_moebius
-# define HACK_DRAW			draw_moebius
-# define HACK_RESHAPE		reshape_moebius
-# define HACK_HANDLE_EVENT	moebius_handle_event
-# define EVENT_MASK			PointerMotionMask
-# define moebius_opts		xlockmore_opts
-# define DEFAULTS			"*delay:		20000   \n"			\
-							"*showFPS:      False   \n"			\
-							"*wireframe:	False	\n"
+# define MODE_antmaze
+# define DEFAULTS	"*delay:		20000   \n"	\
+			"*showFPS:      False   \n"
+
+# define refresh_antmaze 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
 
 #endif /* !STANDALONE */
 
-#ifdef MODE_moebius
+#ifdef MODE_antmaze
 
 
-#include <GL/glu.h>
 #include "rotator.h"
 #include "gltrackball.h"
 
-#define DEF_SOLIDMOEBIUS  "False"
+#define DEF_SOLIDANTMAZE  "False"
 #define DEF_NOANTS  "False"
 
-static int  solidmoebius;
+static int  solidantmaze;
 static int  noants;
 
 static XrmOptionDescRec opts[] =
 {
-  {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "on"},
-  {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "off"},
-  {"-noants", ".moebius.noants", XrmoptionNoArg, "on"},
-  {"+noants", ".moebius.noants", XrmoptionNoArg, "off"}
+  {"-solidantmaze", ".antmaze.solidantmaze", XrmoptionNoArg, "on"},
+  {"+solidantmaze", ".antmaze.solidantmaze", XrmoptionNoArg, "off"},
+  {"-noants", ".antmaze.noants", XrmoptionNoArg, "on"},
+  {"+noants", ".antmaze.noants", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
-  {&solidmoebius, "solidmoebius", "Solidmoebius", DEF_SOLIDMOEBIUS, t_Bool},
+  {&solidantmaze, "solidantmaze", "Solidantmaze", DEF_SOLIDANTMAZE, t_Bool},
   {&noants, "noants", "Noants", DEF_NOANTS, t_Bool}
 };
 
 static OptionStruct desc[] =
 {
-	{"-/+solidmoebius", "select between a SOLID or a NET Moebius Strip"},
+	{"-/+solidantmaze", "select between a SOLID or a NET Antmaze Strip"},
 	{"-/+noants", "turn on/off walking ants"}
 };
 
-ModeSpecOpt moebius_opts =
+ENTRYPOINT ModeSpecOpt antmaze_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
-ModStruct   moebius_description =
-{"moebius", "init_moebius", "draw_moebius", "release_moebius",
- "draw_moebius", "change_moebius", NULL, &moebius_opts,
+ModStruct   antmaze_description =
+{"antmaze", "init_antmaze", "draw_antmaze", "release_antmaze",
+ "draw_antmaze", "change_antmaze", NULL, &antmaze_opts,
  1000, 1, 1, 1, 4, 1.0, "",
  "draws some ants", 0, NULL};
 
@@ -94,11 +83,24 @@ ModStruct   moebius_description =
 #define Pi                         M_PI
 #endif
 
-#define ObjMoebiusStrip 0
+#define ObjAntmazeStrip 0
 #define ObjAntBody      1
 #define MaxObj          2
 
 /*************************************************************************/
+
+#include "ants.h"
+
+#define ANTCOUNT 5
+#define PI 3.14157
+
+#define EPSILON 0.01
+#define BOARDSIZE 10
+#define BOARDCOUNT 2
+#define PARTS 20
+
+#define checkImageWidth 64
+#define checkImageHeight 64
 
 typedef struct {
   GLint       WindH, WindW;
@@ -108,37 +110,70 @@ typedef struct {
   rotator    *rot;
   trackball_state *trackball;
   Bool        button_down_p;
-} moebiusstruct;
 
-#include "ants.h"
+  int focus;
+  int currentboard;
 
-static GLfloat MaterialRed[] = {0.6, 0.0, 0.0, 1.0};
-/*static GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};*/
-static GLfloat MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
-static GLfloat MaterialGray35[] = {0.30, 0.30, 0.30, 1.0};
-static GLfloat MaterialGray4[] = {0.40, 0.40, 0.40, 1.0};
-static GLfloat MaterialOrange[] = {1.0, 0.69, 0.00, 1.0};
-static GLfloat MaterialGreen[] = {0.1, 0.4, 0.2, 1.0};
+  double antdirection[ANTCOUNT];
+  double antposition[ANTCOUNT][3];
+  int anton[ANTCOUNT];
+
+  double antvelocity[ANTCOUNT];
+  double antsize[ANTCOUNT];
+  int bposition[ANTCOUNT][2];
+  int board[BOARDCOUNT][10][10];
+
+  int part[ANTCOUNT];
+  double antpath[ANTCOUNT][PARTS][2];
+  int antpathlength[ANTCOUNT];
+
+  GLubyte checkers[checkImageWidth][checkImageHeight][3];
+
+  GLuint checktexture, brushedtexture;
+  double elevator;
+
+  double ant_step;
+  double first_ant_step;
+  int started;
+  int introduced;
+  int entroducing;
+
+  double fadeout;
+  double fadeoutspeed;
+
+  int mag;
+
+} antmazestruct;
+
+static antmazestruct *antmaze = (antmazestruct *) NULL;
+
+
+static const GLfloat MaterialRed[] = {0.6, 0.0, 0.0, 1.0};
+/*static const GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};*/
+static const GLfloat MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
+static const GLfloat MaterialGray35[] = {0.30, 0.30, 0.30, 1.0};
+static const GLfloat MaterialGray4[] = {0.40, 0.40, 0.40, 1.0};
+static const GLfloat MaterialOrange[] = {1.0, 0.69, 0.00, 1.0};
+static const GLfloat MaterialGreen[] = {0.1, 0.4, 0.2, 1.0};
 
 /* lighting variables */
-GLfloat front_shininess[] = {60.0};
-GLfloat front_specular[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat ambient[] = {0.1, 0.1, 0.1, 1.0};
-GLfloat ambient2[] = {0.0, 0.0, 0.0, 0.0};
-GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat position0[] = {1.0, 5.0, 1.0, 1.0};
-GLfloat position1[] = {-1.0, -5.0, 1.0, 1.0};
-GLfloat lmodel_ambient[] = {0.8, 0.8, 0.8, 1.0};
-GLfloat lmodel_twoside[] = {GL_TRUE};
-GLfloat spotlight_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-
-static moebiusstruct *moebius = (moebiusstruct *) NULL;
+static const GLfloat front_shininess[] = {60.0};
+static const GLfloat front_specular[] = {0.8, 0.8, 0.8, 1.0};
+static const GLfloat ambient[] = {0.1, 0.1, 0.1, 1.0};
+/*static const GLfloat ambient2[] = {0.0, 0.0, 0.0, 0.0};*/
+static const GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
+static const GLfloat position0[] = {1.0, 5.0, 1.0, 1.0};
+static const GLfloat position1[] = {-1.0, -5.0, 1.0, 1.0};
+/*static const GLfloat lmodel_ambient[] = {0.8, 0.8, 0.8, 1.0};*/
+/*static const GLfloat lmodel_twoside[] = {GL_TRUE};*/
+/*static const GLfloat spotlight_ambient[] = { 0.0, 0.0, 0.0, 1.0 };*/
+/*static const GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };*/
 
 #define NUM_SCENES      2
 
 /* filled sphere */
-static Bool mySphere(float radius) {
+static Bool mySphere(float radius) 
+{
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -152,7 +187,8 @@ static Bool mySphere(float radius) {
 
 #if 0
 /* silhouette sphere */
-static Bool mySphere2(float radius) {
+static Bool mySphere2(float radius) 
+{
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -166,7 +202,8 @@ static Bool mySphere2(float radius) {
 #endif
 
 /* textured sphere */
-static Bool mySphereTex(float radius) {
+static Bool mySphereTex(float radius) 
+{
   GLUquadricObj *quadObj;
   
   if((quadObj = gluNewQuadric()) == 0)
@@ -181,7 +218,8 @@ static Bool mySphereTex(float radius) {
 }
 
 /* filled cone */
-static Bool myCone(float radius) {
+static Bool myCone(float radius) 
+{
   GLUquadricObj *quadObj;
   
   if ((quadObj = gluNewQuadric()) == 0)
@@ -195,103 +233,37 @@ static Bool myCone(float radius) {
 /* no cone */
 static Bool myCone2(float radius) { return True; }
 
-#define ANTCOUNT 5
-#define PI 3.14157
-
-static int focus = 0;
-
 #define MATERIALS 4
-static float* antmaterial[ANTCOUNT] = 
+static const float *antmaterial[ANTCOUNT] = 
   {MaterialRed, MaterialGray35, MaterialGray4, MaterialOrange, MaterialGreen};
 
-static float* materials[MATERIALS] = 
+static const float *materials[MATERIALS] = 
   {MaterialRed, MaterialGray35, MaterialGray4, MaterialOrange};
 
-static double antdirection[ANTCOUNT] = {PI/2.0, PI/2.0, 0.0, PI/2.0, PI/2.0};
 
-static double antposition[ANTCOUNT][3] = {{-4.0, 5.0, 0.15},
-					  {-4.0, 3.0, 0.15},
-					  {-1.0, -2.0, 0.15},
-					  {-3.9, 6.0, 0.15}, 
-					  {2.0, -2.0, 0.15}};
-
-static int anton[ANTCOUNT] = {1, 0, 0, 0};
-
-static double antvelocity[ANTCOUNT] = {0.02,
-				       0.02,
-				       0.02,
-				       0.02};
-
-static double antsize[ANTCOUNT] = {1.0,
-				   1.0,
-				   1.0,
-				   1.0};
-
-#define EPSILON 0.01
-#define BOARDSIZE 10
-
-int bposition[ANTCOUNT][2] = {{0, 8},
-			      {9, 1},
-			      {1, 1},
-			      {4, 8},
-			      {2, 1},};
-
-#define BOARDCOUNT 2
-int currentboard = 0;
-
-int board[BOARDCOUNT][10][10];/*  = {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, */
-/* 		     1, 0, 1, 0, 1, 0, 1, 1, 0, 1, */
-/* 		     1, 0, 0, 0, 1, 0, 0, 0, 0, 1, */
-/* 		     1, 0, 1, 1, 0, 0, 1, 1, 0, 1, */
-/* 		     1, 0, 1, 1, 0, 1, 1, 0, 0, 1, */
-/* 		     1, 0, 1, 0, 0, 1, 0, 0, 1, 1, */
-/* 		     1, 0, 0, 0, 1, 1, 0, 1, 0, 1, */
-/* 		     1, 0, 1, 0, 1, 1, 0, 0, 0, 1, */
-/* 		     1, 0, 1, 0, 0, 0, 1, 0, 1, 1, */
-/* 		     1, 0, 1, 1, 1, 1, 1, 1, 1, 1,}; */
-
-#define PARTS 20
-int part[ANTCOUNT] = {0, 1, 5, 1, 3};
-double antpath[ANTCOUNT][PARTS][2];/*  = {{-4.0, 5.0}, */
-int antpathlength[ANTCOUNT];
-/* 				      {-4.0, 1.0}, */
-/* 				      {-2.0, 1.0}, */
-/* 				      {-2.0, 0.0}, */
-/* 				      {-1.0, 0.0}, */
-/* 				      {-1.0, -2.0}, */
-/* 				      { 0.0, -2.0}, */
-/* 				      { 0.0, -3.0}, */
-/* 				      { 3.0, -3.0}, */
-/* 				      { 3.0, -6.0},}; */
-
-#define checkImageWidth 64
-#define checkImageHeight 64
-GLubyte checkers[checkImageWidth][checkImageHeight][3];
-GLuint checktexture, brushedtexture;
-double elevator = 0.0;
-
-void makeCheckImage(void) {
+static void makeCheckImage(antmazestruct *mp) 
+{
   int i, j;
   
   for (i = 0; i < checkImageWidth; i++) {
     for (j = 0; j < checkImageHeight; j++) {
       if(((((i&0x8)==0)^((j&0x8)))==0)) {
 	int c = 102 + random()%32;
-	checkers[i][j][0] = c;
-	checkers[i][j][1] = c;
-	checkers[i][j][2] = c;
+	mp->checkers[i][j][0] = c;
+	mp->checkers[i][j][1] = c;
+	mp->checkers[i][j][2] = c;
       }
       else {
 	int c = 153 + random()%32;
-	checkers[i][j][0] = c;/*153;*/
-	checkers[i][j][1] = c;/*c;*//*0;*/
-	checkers[i][j][2] = c;/*c;*//*0;*/
+	mp->checkers[i][j][0] = c;/*153;*/
+	mp->checkers[i][j][1] = c;/*c;*//*0;*/
+	mp->checkers[i][j][2] = c;/*c;*//*0;*/
       }
     }
   }
 
-  glGenTextures(1, &checktexture);
-  glBindTexture(GL_TEXTURE_2D, checktexture);
+  glGenTextures(1, &mp->checktexture);
+  glBindTexture(GL_TEXTURE_2D, mp->checktexture);
 
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -299,11 +271,12 @@ void makeCheckImage(void) {
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
 	       checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
-	       &checkers[0][0]);
+	       &mp->checkers[0][0]);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
-void makeBrushedImage(void) {
+static void makeBrushedImage(antmazestruct *mp) 
+{
   int i, j, c;
 
   for(i = 0; i < checkImageWidth; ++i)
@@ -313,9 +286,9 @@ void makeBrushedImage(void) {
 
 /*       c = (i+j)%8==0 || (i+j+5)%8==0 ? 153 : 102; */
 
-      checkers[i][j][0] = c;
-      checkers[i][j][1] = c;
-      checkers[i][j][2] = c;
+      mp->checkers[i][j][0] = c;
+      mp->checkers[i][j][1] = c;
+      mp->checkers[i][j][2] = c;
     }
   
 /*   for (i = 0; i < checkImageWidth; i++) { */
@@ -339,8 +312,8 @@ void makeBrushedImage(void) {
 /*     } */
 /*   } */
 
-  glGenTextures(1, &brushedtexture);
-  glBindTexture(GL_TEXTURE_2D, brushedtexture);
+  glGenTextures(1, &mp->brushedtexture);
+  glBindTexture(GL_TEXTURE_2D, mp->brushedtexture);
 
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -348,11 +321,13 @@ void makeBrushedImage(void) {
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
 	       checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
-	       &checkers[0][0]);
+	       &mp->checkers[0][0]);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
-void draw_wall(double x1, double z1, double x2, double z2) {
+#if 0
+static void draw_wall(double x1, double z1, double x2, double z2) 
+{
   float x = fabs(x2 - x1)/2.0;
 
   glBegin(GL_QUADS);
@@ -412,22 +387,22 @@ void draw_wall(double x1, double z1, double x2, double z2) {
 
   glEnd();
 }
+#endif
 
-int pastfirst = 0;
-
-void draw_board(void) {
+static void draw_board(antmazestruct *mp) 
+{
 
   int i, j;
   double h = 0.5;
   double stf = 0.0625;
 
-  glBindTexture(GL_TEXTURE_2D, checktexture);
+  glBindTexture(GL_TEXTURE_2D, mp->checktexture);
 
   glBegin(GL_QUADS);
 
   for(i = 0; i < BOARDSIZE; ++i)
     for(j = 0; j < BOARDSIZE; ++j) {
-      if(board[currentboard][j][i]) {
+      if(mp->board[mp->currentboard][j][i]) {
 
 /* 	/\* draw top *\/ */
 /* 	glNormal3f(0.0, 1.0, 0.0); */
@@ -452,7 +427,7 @@ void draw_board(void) {
 	glVertex3f(i-0.5, h, j-0.5);
 
 	/* draw south face */
-	if(j == 9 || !board[currentboard][j+1][i]) {
+	if(j == 9 || !mp->board[mp->currentboard][j+1][i]) {
 	  glNormal3f(0.0, 0.0, 1.0);
 	  glTexCoord2f(0.0 + stf, 0.0 + stf);
 	  glVertex3f(i-0.5, 0.0, j+0.5);
@@ -465,7 +440,7 @@ void draw_board(void) {
 	}
 
 	/* draw north face */
-	if(j == 0 || !board[currentboard][j-1][i]) {
+	if(j == 0 || !mp->board[mp->currentboard][j-1][i]) {
 	  glNormal3f(0.0, 0.0, -1.0);
 	  glTexCoord2f(0.0 + stf, 0.0 + stf);
 	  glVertex3f(i+0.5, 0.0, j-0.5);
@@ -478,7 +453,7 @@ void draw_board(void) {
 	}
 
 	/* draw east face */
-	if(i == 9 || !board[currentboard][j][i+1]) {
+	if(i == 9 || !mp->board[mp->currentboard][j][i+1]) {
 	  glNormal3f(1.0, 0.0, 0.0);
 	  glTexCoord2f(0.0 + stf, 0.0 + stf);
 	  glVertex3f(i+0.5, 0.0, j+0.5);
@@ -491,7 +466,7 @@ void draw_board(void) {
 	}
 
 	/* draw west face */
-	if(i == 0 || !board[currentboard][j][i-1]) {
+	if(i == 0 || !mp->board[mp->currentboard][j][i-1]) {
 	  glNormal3f(-1.0, 0.0, 0.0);
 	  glTexCoord2f(0.0 + stf, 0.0 + stf);
 	  glVertex3f(i-0.5, 0.0, j-0.5);
@@ -569,12 +544,13 @@ void draw_board(void) {
 /*   glEnd(); */
 }
 
-void build_board(int b) {
+static void build_board(antmazestruct *mp, int b) 
+{
   int i, j;
 
   for(i = 0; i < BOARDSIZE; ++i)
     for(j = 0; j < BOARDSIZE; ++j)
-      board[b][i][j] = 1;
+      mp->board[b][i][j] = 1;
   
 /*   for(i = 0; i < BOARDSIZE; ++i) { */
 /*     board[0][i] = 1; */
@@ -587,19 +563,19 @@ void build_board(int b) {
 /*   board[BOARDSIZE-1][1] = 0; */
 
 
-  board[b][BOARDSIZE-1][1] = 0;
-  board[b][0][BOARDSIZE-2] = 0;
+  mp->board[b][BOARDSIZE-1][1] = 0;
+  mp->board[b][0][BOARDSIZE-2] = 0;
 
   /* build the ant paths */
-  if(currentboard == b) {
+  if(mp->currentboard == b) {
     for(i = 0; i < ANTCOUNT; ++i) {
       int sx = BOARDSIZE-2;
       int sy = 1;
       
       for(j = 0; ; ++j) {
-	board[b][sx][sy] = 0;
-	antpath[i][j][0] = sy - 5.0;
-	antpath[i][j][1] = sx - 5.0;
+	mp->board[b][sx][sy] = 0;
+	mp->antpath[i][j][0] = sy - 5.0;
+	mp->antpath[i][j][1] = sx - 5.0;
 	
 	if(random()%2) {
 	  if(sx > 1)
@@ -620,9 +596,9 @@ void build_board(int b) {
       }
       
       ++j;
-      antpath[i][j][0] = BOARDSIZE-7.0;
-      antpath[i][j][1] = -7.0;
-      antpathlength[i] = j;
+      mp->antpath[i][j][0] = BOARDSIZE-7.0;
+      mp->antpath[i][j][1] = -7.0;
+      mp->antpathlength[i] = j;
     }
   }
 
@@ -634,28 +610,33 @@ void build_board(int b) {
 }
 
 /* compute nearness */
-int near(double a[2], double b[2]) {
+static int near(double a[2], double b[2]) 
+{
   return fabs(a[0] - b[0]) < 0.5 && fabs(a[1] - b[1]) < 0.5;
 }
 
-double sign(double d) {
+static double sign(double d) 
+{
   return d < 0.0 ? -1.0 : 1.0;
 }
 
-double min(double a, double b) {
+static double min(double a, double b) 
+{
   return a < b ? a : b;
 }
 
 /* draw method for ant */
-Bool draw_ant(float *Material, int mono, int shadow,
-	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float)) {
+static Bool draw_ant(antmazestruct *mp,
+                     const float *Material, int mono, int shadow,
+	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float)) 
+{
   
-  float cos1 = cos(ant_step);
-  float cos2 = cos(ant_step + 2 * Pi / 3);
-  float cos3 = cos(ant_step + 4 * Pi / 3);
-  float sin1 = sin(ant_step);
-  float sin2 = sin(ant_step + 2 * Pi / 3);
-  float sin3 = sin(ant_step + 4 * Pi / 3);
+  float cos1 = cos(mp->ant_step);
+  float cos2 = cos(mp->ant_step + 2 * Pi / 3);
+  float cos3 = cos(mp->ant_step + 4 * Pi / 3);
+  float sin1 = sin(mp->ant_step);
+  float sin2 = sin(mp->ant_step + 2 * Pi / 3);
+  float sin3 = sin(mp->ant_step + 4 * Pi / 3);
   
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mono ? MaterialGray5 : Material);
 
@@ -783,16 +764,9 @@ Bool draw_ant(float *Material, int mono, int shadow,
   return True;
 }
 
-double ant_step = 0.0;
-double first_ant_step = 0.0;
-int started = 0;
-int introduced = 300;
-int fir = 0;
-int makenew = 1;
-int entroducing = 12;
-
-static Bool draw_moebius_strip(ModeInfo * mi) {
-  moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+static Bool draw_antmaze_strip(ModeInfo * mi) 
+{
+  antmazestruct *mp = &antmaze[MI_SCREEN(mi)];
   int i;
   int mono = MI_IS_MONO(mi);
 
@@ -812,16 +786,16 @@ static Bool draw_moebius_strip(ModeInfo * mi) {
 /*   glLightfv(GL_LIGHT1, GL_DIFFUSE, df); */
 
   /* draw board */
-  if(elevator < 1.0) {
+  if(mp->elevator < 1.0) {
     glEnable(GL_TEXTURE_2D);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray6);
     glTranslatef(-(BOARDSIZE-1)/2.0, 0.0, -(BOARDSIZE-1)/2.0);
-    draw_board();
+    draw_board(mp);
     glTranslatef(BOARDSIZE/2.0, 0.0, BOARDSIZE/2.0);
     glDisable(GL_TEXTURE_2D);
   }
 
-  introduced--;
+  mp->introduced--;
 
   glTranslatef(0.0, -0.1, 0.0);
 
@@ -830,28 +804,28 @@ static Bool draw_moebius_strip(ModeInfo * mi) {
 /*     glLightfv(GL_LIGHT0, GL_DIFFUSE, df); */
 /*     glLightfv(GL_LIGHT1, GL_DIFFUSE, df); */
 
-    if(!anton[i]) { continue; }
+    if(!mp->anton[i]) { continue; }
 
     /* determine location, move to goal */
     glPushMatrix();
     glTranslatef(0.0, 0.01, 0.0);
-    glTranslatef(antposition[i][0], antposition[i][2], antposition[i][1]);
+    glTranslatef(mp->antposition[i][0], mp->antposition[i][2], mp->antposition[i][1]);
 /*     glScalef(1.0, 0.01, 1.0); */
     glScalef(0.6, 0.01, 0.6);
-    glRotatef(180.0 + antdirection[i]*180.0/PI, 0.0, 1.0, 0.0);
+    glRotatef(180.0 + mp->antdirection[i]*180.0/PI, 0.0, 1.0, 0.0);
     glRotatef(90.0, 0.0, 0.0, 1.0);
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4fv(MaterialGrayB);
 
-    glScalef(antsize[i], antsize[i], antsize[i]);
+    glScalef(mp->antsize[i], mp->antsize[i], mp->antsize[i]);
 
     /* slow down first ant */
-    if(i == 0 && part[i] == antpathlength[i])
-      draw_ant(MaterialGrayB, mono, 1, first_ant_step, mySphere, myCone);
+    if(i == 0 && mp->part[i] == mp->antpathlength[i])
+      draw_ant(mp, MaterialGrayB, mono, 1, mp->first_ant_step, mySphere, myCone);
     else
-      draw_ant(MaterialGrayB, mono, 1, ant_step, mySphere, myCone);
+      draw_ant(mp, MaterialGrayB, mono, 1, mp->ant_step, mySphere, myCone);
 
     glPopMatrix();
 
@@ -861,12 +835,12 @@ static Bool draw_moebius_strip(ModeInfo * mi) {
     glPushMatrix();
 /*     glTranslatef(0.0, 0.18, 0.0); */
     glTranslatef(0.0, 0.12, 0.0);
-    glTranslatef(antposition[i][0], antposition[i][2], antposition[i][1]);
-    glRotatef(180.0 + antdirection[i]*180.0/PI, 0.0, 1.0, 0.0);
+    glTranslatef(mp->antposition[i][0], mp->antposition[i][2], mp->antposition[i][1]);
+    glRotatef(180.0 + mp->antdirection[i]*180.0/PI, 0.0, 1.0, 0.0);
     glRotatef(90.0, 0.0, 0.0, 1.0);
     glScalef(0.6, 0.6, 0.6);
 
-    glScalef(antsize[i], antsize[i], antsize[i]);
+    glScalef(mp->antsize[i], mp->antsize[i], mp->antsize[i]);
 
 /*     glEnable(GL_TEXTURE_2D); */
 /*     glBindTexture(GL_TEXTURE_2D, brushedtexture); */
@@ -874,18 +848,18 @@ static Bool draw_moebius_strip(ModeInfo * mi) {
 /*     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialRed); */
 
     /* slow down first ant */    
-    if(i == 0 && part[i] == antpathlength[i] && elevator > 0.0) {
+    if(i == 0 && mp->part[i] == mp->antpathlength[i] && mp->elevator > 0.0) {
       glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
       glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-      draw_ant(antmaterial[i], mono, 1, first_ant_step, mySphere, myCone);
+      draw_ant(mp, antmaterial[i], mono, 1, mp->first_ant_step, mySphere, myCone);
     }
     else {
 /*       glLightfv(GL_LIGHT0, GL_DIFFUSE, df); */
 /*       glLightfv(GL_LIGHT1, GL_DIFFUSE, df); */
 
       glEnable(GL_TEXTURE_2D);
-      glBindTexture(GL_TEXTURE_2D, brushedtexture);
-      draw_ant(antmaterial[i], mono, 1, ant_step, mySphereTex, myCone);
+      glBindTexture(GL_TEXTURE_2D, mp->brushedtexture);
+      draw_ant(mp, antmaterial[i], mono, 1, mp->ant_step, mySphereTex, myCone);
       glDisable(GL_TEXTURE_2D);
     }
 
@@ -938,30 +912,31 @@ static Bool draw_moebius_strip(ModeInfo * mi) {
 
 
   /* but the step size is the same! */
-  ant_step += 0.18;
+  mp->ant_step += 0.18;
 /*   if(ant_step > 2*Pi) { */
 /*     ant_step = 0.0; */
 /*   } */
 
-  if(ant_step > 5*Pi)
-    started = 1;
+  if(mp->ant_step > 5*Pi)
+    mp->started = 1;
 
   mp->ant_position += 1;
   return True;
 }
-#undef MoebiusDivisions
-#undef MoebiusTransversals
+#undef AntmazeDivisions
+#undef AntmazeTransversals
 
-void reshape_moebius(ModeInfo * mi, int width, int height) {
+ENTRYPOINT void reshape_antmaze(ModeInfo * mi, int width, int height) 
+{
   double h = (GLfloat) height / (GLfloat) width;  
   int size = (width / 512) + 1;
-  moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+  antmazestruct *mp = &antmaze[MI_SCREEN(mi)];
 
   glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  gluPerspective(45, 1/h, 0.001, 25.0);
+  gluPerspective(45, 1/h, 1, 25.0);
 
   glMatrixMode(GL_MODELVIEW);
 /*   glLineWidth(3.0); */
@@ -969,38 +944,36 @@ void reshape_moebius(ModeInfo * mi, int width, int height) {
   glPointSize(size);
 }
 
-double fadeout = 1.0;
-double fadeoutspeed = 0.0;
-
-void update_ants(void) {
+static void update_ants(antmazestruct *mp) 
+{
   int i;
   GLfloat df[4];
-  df[0] = df[1] = df[2] = 0.8*fadeout;
+  df[0] = df[1] = df[2] = 0.8*mp->fadeout;
   df[3] = 1.0;
 
   /* fade out */
-  if(fadeoutspeed < -0.00001) {
+  if(mp->fadeoutspeed < -0.00001) {
 
-    if(fadeout <= 0.0) {
+    if(mp->fadeout <= 0.0) {
       /* switch boards: rebuild old board, increment current */
-      currentboard = (currentboard+1)%BOARDCOUNT;
-      build_board(currentboard);
-      fadeoutspeed = 0.02;
+      mp->currentboard = (mp->currentboard+1)%BOARDCOUNT;
+      build_board(mp, mp->currentboard);
+      mp->fadeoutspeed = 0.02;
     }
     
-    fadeout += fadeoutspeed;
+    mp->fadeout += mp->fadeoutspeed;
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, df);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, df);
   }
 
   /* fade in */
-  if(fadeoutspeed > 0.0001) {
-    fadeout += fadeoutspeed;
-    if(fadeout >= 1.0) {
-      fadeout = 1.0;
-      fadeoutspeed = 0.0;
-      entroducing = 12;
+  if(mp->fadeoutspeed > 0.0001) {
+    mp->fadeout += mp->fadeoutspeed;
+    if(mp->fadeout >= 1.0) {
+      mp->fadeout = 1.0;
+      mp->fadeoutspeed = 0.0;
+      mp->entroducing = 12;
     }
     glLightfv(GL_LIGHT0, GL_DIFFUSE, df);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, df);    
@@ -1008,58 +981,58 @@ void update_ants(void) {
 
   for(i = 0; i < ANTCOUNT; ++i) {
 
-    if(!anton[i] && elevator < 1.0) {
+    if(!mp->anton[i] && mp->elevator < 1.0) {
 
       /* turn on ant */
-      if(entroducing > 0 && introduced <= 0 && random()%100 == 0) {
-	anton[i] = 1;
-	part[i] = 0;
-	antsize[i] = 0.0;
-	antposition[i][0] = -4.0;
-	antposition[i][1] = 5.0;
-	antdirection[i] = PI/2.0;
-	bposition[i][0] = 0;
-	bposition[i][1] = 8;
-	introduced = 300;
-	entroducing--;
+      if(mp->entroducing > 0 && mp->introduced <= 0 && random()%100 == 0) {
+	mp->anton[i] = 1;
+	mp->part[i] = 0;
+	mp->antsize[i] = 0.0;
+	mp->antposition[i][0] = -4.0;
+	mp->antposition[i][1] = 5.0;
+	mp->antdirection[i] = PI/2.0;
+	mp->bposition[i][0] = 0;
+	mp->bposition[i][1] = 8;
+	mp->introduced = 300;
+	mp->entroducing--;
       }
 
       continue;
     }
 
-    if(part[i] == 0 && antsize[i] < 1.0) {
-      antsize[i] += 0.02;
+    if(mp->part[i] == 0 && mp->antsize[i] < 1.0) {
+      mp->antsize[i] += 0.02;
       continue;
     }
 
-    if(part[i] > antpathlength[i] && antsize[i] > 0.0) {
-      antsize[i] -= 0.02;
-      if(antvelocity[i] > 0.0) {
-	antvelocity[i] -= 0.02;
+    if(mp->part[i] > mp->antpathlength[i] && mp->antsize[i] > 0.0) {
+      mp->antsize[i] -= 0.02;
+      if(mp->antvelocity[i] > 0.0) {
+	mp->antvelocity[i] -= 0.02;
       }
-      else { antvelocity[i] = 0.0; }
+      else { mp->antvelocity[i] = 0.0; }
 
       continue;
     }
 
-    if(part[i] > antpathlength[i] && antsize[i] <= 0.0) {
-      antvelocity[i] = 0.02;
+    if(mp->part[i] > mp->antpathlength[i] && mp->antsize[i] <= 0.0) {
+      mp->antvelocity[i] = 0.02;
       
       /* 	if(i != 0) { */
       antmaterial[i] = materials[random()%MATERIALS];
       /* 	} */
       
-      antdirection[i] = PI/2.0;
-      bposition[i][0] = 0;
-      bposition[i][1] = 8;
-      part[i] = 0;
+      mp->antdirection[i] = PI/2.0;
+      mp->bposition[i][0] = 0;
+      mp->bposition[i][1] = 8;
+      mp->part[i] = 0;
       
-      antsize[i] = 0.0;
+      mp->antsize[i] = 0.0;
       
-      anton[i] = 0;
+      mp->anton[i] = 0;
       
-      antposition[i][0] = -4.0;
-      antposition[i][1] = 5.0;
+      mp->antposition[i][0] = -4.0;
+      mp->antposition[i][1] = 5.0;
       
       /* 	/\* reset camera *\/ */
       /* 	if(i == focus) { */
@@ -1068,23 +1041,23 @@ void update_ants(void) {
       /* 	} */
       
       /* check for the end */
-      if(entroducing <= 0) {
+      if(mp->entroducing <= 0) {
 	int ao = 0, z = 0;
 	for(z = 0; z < ANTCOUNT; ++z) {
-	  if(anton[z]) { ao = 1; break; }
+	  if(mp->anton[z]) { ao = 1; break; }
 	}
 
 	if(ao == 0) {
-	  fadeoutspeed = -0.02;
+	  mp->fadeoutspeed = -0.02;
 	}
       }
 
     }
     
     /* near goal, bend path towards next step */
-    if(near(antposition[i], antpath[i][part[i]])) {
+    if(near(mp->antposition[i], mp->antpath[i][mp->part[i]])) {
       
-      ++part[i];
+      ++mp->part[i];
 
 /*       /\* special first ant *\/ */
 /*       if(i == 0 && part[i] > antpathlength[i]) { */
@@ -1160,8 +1133,8 @@ void update_ants(void) {
     else {
       
       /* difference */
-      double dx = antpath[i][part[i]][0] - antposition[i][0];
-      double dz = - antpath[i][part[i]][1] + antposition[i][1];
+      double dx = mp->antpath[i][mp->part[i]][0] - mp->antposition[i][0];
+      double dz = - mp->antpath[i][mp->part[i]][1] + mp->antposition[i][1];
       double theta, ideal;
 
       if(dz > EPSILON)
@@ -1169,25 +1142,26 @@ void update_ants(void) {
       else
 	theta = dx > EPSILON ? 0.0 : PI;
       
-      ideal = theta - antdirection[i];
+      ideal = theta - mp->antdirection[i];
       if(ideal < -Pi/2.0)
 	ideal += Pi;
 
       /* compute correction */
       {
         double dt = sign(ideal) * min(fabs(ideal), PI/90.0);
-        antdirection[i] += dt;
-        if(antdirection[i] > 2.0*PI)
-          antdirection[i] = 0.0;
+        mp->antdirection[i] += dt;
+        if(mp->antdirection[i] > 2.0*PI)
+          mp->antdirection[i] = 0.0;
       }
     }
     
-    antposition[i][0] += antvelocity[i] * cos(antdirection[i]);
-    antposition[i][1] += antvelocity[i] * sin(-antdirection[i]);
+    mp->antposition[i][0] += mp->antvelocity[i] * cos(mp->antdirection[i]);
+    mp->antposition[i][1] += mp->antvelocity[i] * sin(-mp->antdirection[i]);
   }
 }
 
-static void pinit(void) {
+static void pinit(antmazestruct *mp) 
+{
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   
@@ -1216,7 +1190,7 @@ static void pinit(void) {
   glFrontFace(GL_CCW);
   glCullFace(GL_BACK);
   
-  /* moebius */
+  /* antmaze */
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 
@@ -1225,11 +1199,11 @@ static void pinit(void) {
   glDisable(GL_TEXTURE_2D);
 
   /* setup textures */
-  makeCheckImage();
-  makeBrushedImage();
+  makeCheckImage(mp);
+  makeBrushedImage(mp);
 
-  build_board(0);
-  build_board(1);
+  build_board(mp, 0);
+  build_board(mp, 1);
 
 /*   makeCheckImage(); */
 /*   glPixelStorei(GL_UNPACK_ALIGNMENT, 1); */
@@ -1247,21 +1221,22 @@ static void pinit(void) {
 /*   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular); */
 }
 
-void release_moebius(ModeInfo * mi) {
-  if(moebius) {
-	free((void *) moebius);
-	moebius = (moebiusstruct *) NULL;
+ENTRYPOINT void release_antmaze(ModeInfo * mi) 
+{
+  if(antmaze) {
+	free((void *) antmaze);
+	antmaze = (antmazestruct *) NULL;
   }
   FreeAllGL(mi);
 }
 
-int mag = 4.0;
 #define MAX_MAGNIFICATION 10
 #define max(a, b) a < b ? b : a
 #define min(a, b) a < b ? a : b
 
-Bool moebius_handle_event (ModeInfo *mi, XEvent *event) {
-  moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+ENTRYPOINT Bool antmaze_handle_event (ModeInfo *mi, XEvent *event) 
+{
+  antmazestruct *mp = &antmaze[MI_SCREEN(mi)];
 
   switch(event->xany.type) {
   case ButtonPress:
@@ -1276,15 +1251,15 @@ Bool moebius_handle_event (ModeInfo *mi, XEvent *event) {
       break;
 
     case Button3:
-      focus = (focus + 1) % ANTCOUNT;
+      mp->focus = (mp->focus + 1) % ANTCOUNT;
       break;
       
     case Button4:
-      mag = max(mag-1, 1);
+      mp->mag = max(mp->mag-1, 1);
       break;
 
     case Button5:
-      mag = min(mag+1, MAX_MAGNIFICATION);
+      mp->mag = min(mp->mag+1, MAX_MAGNIFICATION);
       break;
     }
 
@@ -1314,43 +1289,107 @@ Bool moebius_handle_event (ModeInfo *mi, XEvent *event) {
   return True;
 }
 
-void init_moebius(ModeInfo * mi) {
+ENTRYPOINT void init_antmaze(ModeInfo * mi) 
+{
   double rot_speed = 0.3;
+  int i;
 
-  moebiusstruct *mp;
+  antmazestruct *mp;
   
-  if (moebius == NULL) {
-	if ((moebius = (moebiusstruct *) calloc(MI_NUM_SCREENS(mi),
-						sizeof (moebiusstruct))) == NULL)
+  if (antmaze == NULL) {
+	if ((antmaze = (antmazestruct *) calloc(MI_NUM_SCREENS(mi),
+						sizeof (antmazestruct))) == NULL)
 	  return;
   }
-  mp = &moebius[MI_SCREEN(mi)];
+  mp = &antmaze[MI_SCREEN(mi)];
   mp->step = NRAND(90);
   mp->ant_position = NRAND(90);
+
+
+  mp->antdirection[0] = PI/2.0;
+  mp->antdirection[1] = PI/2.0;
+  mp->antdirection[2] = 0;
+  mp->antdirection[3] = PI/2.0;
+  mp->antdirection[4] = PI/2.0;
+
+  mp->antposition[0][0] = -4.0;
+  mp->antposition[0][1] =  5.0;
+  mp->antposition[0][1] =  0.15;
+
+  mp->antposition[1][0] = -4.0;
+  mp->antposition[1][1] =  3.0;
+  mp->antposition[1][1] =  0.15;
+
+  mp->antposition[2][0] = -1.0;
+  mp->antposition[2][1] = -2.0;
+  mp->antposition[2][1] =  0.15;
+
+  mp->antposition[3][0] = -3.9;
+  mp->antposition[3][1] =  6.0;
+  mp->antposition[3][1] =  0.15;
+
+  mp->antposition[4][0] =  2.0;
+  mp->antposition[4][1] = -2.0;
+  mp->antposition[4][1] =  0.15;
+
+  
+
+  for (i = 0; i < ANTCOUNT; i++) {
+    mp->antvelocity[i] = 0.02;
+    mp->antsize[i] = 1.0;
+    mp->anton[i] = 0;
+  }
+
+  mp->bposition[0][0] = 0;
+  mp->bposition[0][1] = 8;
+
+  mp->bposition[1][0] = 9;
+  mp->bposition[1][1] = 1;
+
+  mp->bposition[2][0] = 1;
+  mp->bposition[2][1] = 1;
+
+  mp->bposition[3][0] = 4;
+  mp->bposition[3][1] = 8;
+
+  mp->bposition[4][0] = 2;
+  mp->bposition[4][1] = 1;
+
+  mp->part[0] = 0;
+  mp->part[1] = 1;
+  mp->part[2] = 5;
+  mp->part[3] = 1;
+  mp->part[4] = 3;
+
+  mp->introduced = 0;
+  mp->entroducing = 12;
+  mp->fadeout = 1.0;
+  mp->mag = 4.0;
 
   mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
   mp->trackball = gltrackball_init ();
   
   if ((mp->glx_context = init_GL(mi)) != NULL) {
-    reshape_moebius(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    reshape_antmaze(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     glDrawBuffer(GL_BACK);
-    pinit();
+    pinit(mp);
   } 
   else
     MI_CLEARWINDOW(mi);
 }
 
-void draw_moebius(ModeInfo * mi) {
+ENTRYPOINT void draw_antmaze(ModeInfo * mi) 
+{
   double h = (GLfloat) MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
 
-  moebiusstruct *mp;
+  antmazestruct *mp;
   
   Display    *display = MI_DISPLAY(mi);
   Window      window = MI_WINDOW(mi);
   
-  if(!moebius)
+  if(!antmaze)
 	return;
-  mp = &moebius[MI_SCREEN(mi)];
+  mp = &antmaze[MI_SCREEN(mi)];
   
   MI_IS_DRAWN(mi) = True;
   
@@ -1369,7 +1408,7 @@ void draw_moebius(ModeInfo * mi) {
   glLoadIdentity();
 
 /*   h = (3*MI_HEIGHT(mi)/4) / (3*MI_WIDTH(mi)/4); */
-  gluPerspective(45, 1/h, 0.001, 25.0);
+  gluPerspective(45, 1/h, 1, 25.0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1377,15 +1416,15 @@ void draw_moebius(ModeInfo * mi) {
   glPushMatrix();
 
   /* follow focused ant */
-  glTranslatef(0.0, 0.0, -mag - 5.0);
-  glRotatef(20.0+5.0*sin(ant_step/40.0), 1.0, 0.0, 0.0);
+  glTranslatef(0.0, 0.0, -mp->mag - 5.0);
+  glRotatef(20.0+5.0*sin(mp->ant_step/40.0), 1.0, 0.0, 0.0);
 /*   glTranslatef(0.0,  */
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0)),  */
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0))); */
 
   gltrackball_rotate(mp->trackball);
 
-  glRotatef(ant_step*0.6, 0.0, 1.0, 0.0);
+  glRotatef(mp->ant_step*0.6, 0.0, 1.0, 0.0);
 
 /*   glRotatef(90.0, 0.0, 0.0, 1.0); */
 
@@ -1393,8 +1432,8 @@ void draw_moebius(ModeInfo * mi) {
   /*-elevator*/
 
   /* sync */
-  if(!draw_moebius_strip(mi)) {
-    release_moebius(mi);
+  if(!draw_antmaze_strip(mi)) {
+    release_antmaze(mi);
     return;
   }
 
@@ -1408,18 +1447,18 @@ void draw_moebius(ModeInfo * mi) {
   glViewport((17*MI_WIDTH(mi))/32, MI_HEIGHT(mi)/2, MI_WIDTH(mi)/2, 3*MI_HEIGHT(mi)/8);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, 1/h, 0.001, 25.0);
+  gluPerspective(45, 1/h, 1, 25.0);
   glMatrixMode(GL_MODELVIEW);
     
   /* twist scene */
   glTranslatef(0.0, 0.0, -16.0);
   glRotatef(60.0, 1.0, 0.0, 0.0);
-  glRotatef(-15.0 + ant_step/10.0, 0.0, 1.0, 0.0);
+  glRotatef(-15.0 + mp->ant_step/10.0, 0.0, 1.0, 0.0);
   gltrackball_rotate(mp->trackball);
 
   /* sync */
-  if(!draw_moebius_strip(mi)) {
-    release_moebius(mi);
+  if(!draw_antmaze_strip(mi)) {
+    release_antmaze(mi);
     return;
   }
 
@@ -1430,13 +1469,13 @@ void draw_moebius(ModeInfo * mi) {
   glViewport((5*MI_WIDTH(mi))/8, MI_HEIGHT(mi)/8, (11*MI_WIDTH(mi))/32, 3*MI_HEIGHT(mi)/8);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, 1/h, 0.001, 25.0);
+  gluPerspective(45, 1/h, 1, 25.0);
   glMatrixMode(GL_MODELVIEW);
     
   /* twist scene */
   glTranslatef(0.0, 0.0, -1.6);
   glRotatef(30.0, 1.0, 0.0, 0.0);
-  glRotatef(ant_step, 0.0, 1.0, 0.0);
+  glRotatef(mp->ant_step, 0.0, 1.0, 0.0);
   glRotatef(90.0, 0.0, 0.0, 1.0);
   
 /*   /\* draw ant shadow *\/ */
@@ -1455,8 +1494,8 @@ void draw_moebius(ModeInfo * mi) {
   glEnable(GL_TEXTURE_2D);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-  glBindTexture(GL_TEXTURE_2D, brushedtexture);
-  draw_ant(MaterialGray35, 0, 1, ant_step/2.0, mySphereTex, myCone2);
+  glBindTexture(GL_TEXTURE_2D, mp->brushedtexture);
+  draw_ant(mp, MaterialGray35, 0, 1, mp->ant_step/2.0, mySphereTex, myCone2);
   glDisable(GL_TEXTURE_2D);
 
   glPopMatrix();
@@ -1498,13 +1537,15 @@ void draw_moebius(ModeInfo * mi) {
   
   glXSwapBuffers(display, window);
   
-  update_ants();
+  update_ants(mp);
 
   mp->step += 0.025;
 }
 
-void change_moebius(ModeInfo * mi) {
-  moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+#ifndef STANDALONE
+ENTRYPOINT void change_antmaze(ModeInfo * mi) 
+{
+  antmazestruct *mp = &antmaze[MI_SCREEN(mi)];
   
   if (!mp->glx_context)
 	return;
@@ -1512,5 +1553,8 @@ void change_moebius(ModeInfo * mi) {
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
   pinit();
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE ("AntMaze", antmaze)
 
 #endif

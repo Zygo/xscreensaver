@@ -16,21 +16,23 @@
 
   <hgroup>
     <select id="align">
-      <option id="left"   _label="Flush Left Text"  arg-set="-left"/>
+      <option id="left"   _label="Flush Left Text"  arg-set="-alignment left"/>
       <option id="center" _label="Centered Text"/>
-      <option id="right"  _label="Flush Right Text" arg-set="-right"/>
+      <option id="right"  _label="Flush Right Text" arg-set="-alignment right"/>
     </select>
 
     <boolean id="wrap"   _label="Wrap Long Lines" arg-unset="-no-wrap"/>
   </hgroup>
 
-  <file id="program" _label="Text Program" arg="-program %"/>
+<!--  <file id="program" _label="Text Program" arg="-program %"/> -->
 
-  <number id="size" type="spinbutton" arg="-size %"
-           _label="Font Point Size" low="-1" high="10" default="-1"/>
+  <hgroup>
+    <number id="size" type="spinbutton" arg="-size %"
+             _label="Font Point Size" low="-1" high="10" default="-1"/>
 
-  <number id="columns" type="spinbutton" arg="-columns %"
-           _label="Text Columns" low="-1" high="200" default="-1"/>
+    <number id="columns" type="spinbutton" arg="-columns %"
+             _label="or, Text Columns" low="-1" high="200" default="-1"/>
+  </hgroup>
 
   <number id="lines" type="spinbutton" arg="-lines %"
            _label="Text Lines" low="4" high="1000" default="125"/>
@@ -42,21 +44,21 @@
   <hgroup>
     <boolean id="smooth" _label="Anti-aliased Lines" arg-unset="-no-smooth"/>
     <boolean id="fade"   _label="Thick Lines"        arg-unset="-no-thick"/>
+    <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
   </hgroup>
 
-  <boolean id="texture" _label="Texture-Mapped Font" arg-unset="-no-texture"/>
-  <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  <hgroup>
+   <boolean id="texture" _label="Texture-Mapped Font" arg-unset="-no-textures"/>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-text />
 
   <_description>
 Draws a stream of text slowly scrolling into the distance at an
 angle, over a star field, like at the beginning of the movie of the
 same name.  
 
-The text can be the output of a program or the contents of a file or
-URL, as configured on the "Advanced" tab of the main Screensaver
-Preferences window.
-
-Written by Jamie Zawinski and Claudio Matauoka.
+Written by Jamie Zawinski and Claudio Matauoka; 2001.
   </_description>
 </screensaver>

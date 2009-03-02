@@ -10,6 +10,9 @@
    implied warranty.
 */
 
+#ifndef __STONERVIEW_OSC_H__
+#define __STONERVIEW_OSC_H__
+
 /* This defines the osc_t object, which generates a stream of
    numbers. It is the heart of the StonerSound/StonerView engine.
     
@@ -152,17 +155,21 @@ typedef struct osc_struct {
   } u;
 } osc_t;
 
-extern osc_t *new_osc_constant(int val);
-extern osc_t *new_osc_bounce(int min, int max, int step);
-extern osc_t *new_osc_wrap(int min, int max, int step);
-extern osc_t *new_osc_phaser(int phaselen);
-extern osc_t *new_osc_randphaser(int minphaselen, int maxphaselen);
-extern osc_t *new_osc_velowrap(int min, int max, osc_t *step);
-extern osc_t *new_osc_linear(osc_t *base, osc_t *diff);
-extern osc_t *new_osc_buffer(osc_t *val);
-extern osc_t *new_osc_multiplex(osc_t *sel, osc_t *ox0, osc_t *ox1, 
+extern osc_t *new_osc_constant(stonerview_state *, int val);
+extern osc_t *new_osc_bounce(stonerview_state *, int min, int max, int step);
+extern osc_t *new_osc_wrap(stonerview_state *, int min, int max, int step);
+extern osc_t *new_osc_phaser(stonerview_state *, int phaselen);
+extern osc_t *new_osc_randphaser(stonerview_state *,
+                                 int minphaselen, int maxphaselen);
+extern osc_t *new_osc_velowrap(stonerview_state *, 
+                               int min, int max, osc_t *step);
+extern osc_t *new_osc_linear(stonerview_state *, osc_t *base, osc_t *diff);
+extern osc_t *new_osc_buffer(stonerview_state *st, osc_t *val);
+extern osc_t *new_osc_multiplex(stonerview_state *, 
+                                osc_t *sel, osc_t *ox0, osc_t *ox1, 
   osc_t *ox2, osc_t *ox3);
 
-extern int osc_get(osc_t *osc, int el);
-extern void osc_increment(void);
+extern int osc_get(stonerview_state *, osc_t *osc, int el);
+extern void osc_increment(stonerview_state *);
 
+#endif /* __STONERVIEW_OSC_H__ */

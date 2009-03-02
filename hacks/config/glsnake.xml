@@ -27,15 +27,12 @@
 
   <boolean id="labels" _label="Show Titles" arg-unset="-no-titles"/>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws a simulation of the Rubik's Snake puzzle.
-Written by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett.
+
+Written by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett; 2002.
   </_description>
 </screensaver>

@@ -9,9 +9,10 @@ SphereEversion draws an animation of a sphere being turned inside out.
 A sphere can be turned inside out, without any tears, sharp creases or
 discontinuities, if the surface of the sphere is allowed to intersect
 itself.  This program animates what is known as the Thurston Eversion.
-Written by Nathaniel Thurston and Michael McGuffin.  This program is
-not included with the XScreenSaver package, but if you don't have it
-already, you can find it at
+This program is not included with the XScreenSaver package, but if you
+don't have it already, you can find it at
 &lt;http://www.dgp.utoronto.ca/~mjmcguff/eversion/&gt;.
+
+Written by Nathaniel Thurston and Michael McGuffin; 2001.
   </_description>
 </screensaver>

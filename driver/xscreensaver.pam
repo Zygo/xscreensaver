@@ -1,7 +1,10 @@
 #%PAM-1.0
 
+# Fedora Core 5:
+auth       include	system-auth
+
 # Fedora Core 2:
-auth       required	pam_stack.so service=system-auth
+#auth       required	pam_stack.so service=system-auth
 
 # Red Hat 7.3:
 #auth       required	/lib/security/pam_stack.so service=system-auth

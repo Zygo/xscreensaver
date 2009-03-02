@@ -66,12 +66,14 @@
     <boolean id="explain" _label="Explain modes" arg-set="-explain"/>
    </vgroup>
    <vgroup>
-    <boolean id="wrap" _label="Wrap the screen" arg-unset="-wrap 0"/>
-    <boolean id="db" _label="Use Double Buffering" arg-unset="-no-db"/>
+    <boolean id="wrap" _label="Wrap the screen" arg-unset="-no-wrap"/>
+<!--    <boolean id="db" _label="Use Double Buffering" arg-unset="-no-db"/> -->
    </vgroup>
   </hgroup>
 
   <_description>
-Draws zooming chains of sinusoidal spots.  Written by Ashton Trey Belew.
+Draws zooming chains of sinusoidal spots.
+
+Written by Ashton Trey Belew; 2001.
   </_description>
 </screensaver>

@@ -44,23 +44,21 @@ static const char sccsid[] = "@(#)vines.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_vines
-#define PROGCLASS "Vines"
-#define HACK_INIT init_vines
-#define HACK_DRAW draw_vines
-#define vines_opts xlockmore_opts
-#define DEFAULTS "*delay: 200000 \n" \
- "*count: 0 \n" \
- "*ncolors: 64 \n"
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+# define MODE_vines
+# define DEFAULTS	"*delay: 200000 \n" \
+					"*count: 0 \n" \
+					"*ncolors: 64 \n"
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# define reshape_vines 0
+# define vines_handle_event 0
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_vines
 
-ModeSpecOpt vines_opts =
+ENTRYPOINT ModeSpecOpt vines_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -85,17 +83,20 @@ typedef struct {
 	int         ang;
 	int         centerx;
 	int         centery;
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
 } vinestruct;
 
 static vinestruct *vines = (vinestruct *) NULL;
 
-void
+ENTRYPOINT void
 refresh_vines(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }				/* refresh_vines */
 
-void
+ENTRYPOINT void
 init_vines(ModeInfo * mi)
 {
 	vinestruct *fp;
@@ -112,10 +113,12 @@ init_vines(ModeInfo * mi)
 	fp->length = 0;
 	fp->iterations = 30 + NRAND(100);
 
+#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
+#endif
 }				/* init_vines */
 
-void
+ENTRYPOINT void
 draw_vines(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -127,11 +130,18 @@ draw_vines(ModeInfo * mi)
 		return;
 	fp = &vines[MI_SCREEN(mi)];
 
+#ifdef STANDALONE
+    if (fp->eraser) {
+      fp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), fp->eraser);
+      return;
+    }
+#endif
+
 	/* MI_IS_DRAWN(mi) = True; */
 	if (fp->i >= fp->length) {
 		if (--(fp->iterations) == 0) {
 #ifdef STANDALONE
-	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+	  fp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), fp->eraser);
 #endif /* STANDALONE */
 			init_vines(mi);
 		}
@@ -176,7 +186,7 @@ draw_vines(ModeInfo * mi)
 	}
 }				/* draw_vines */
 
-void
+ENTRYPOINT void
 release_vines(ModeInfo * mi)
 {
 	if (vines != NULL) {
@@ -184,5 +194,8 @@ release_vines(ModeInfo * mi)
 		vines = (vinestruct *) NULL;
 	}
 }				/* release_vines */
+
+
+XSCREENSAVER_MODULE ("Vines", vines)
 
 #endif /* MODE_vines */

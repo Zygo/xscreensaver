@@ -32,9 +32,13 @@
            _label="x" low="1" high="100" default="5"/>
   </hgroup>
 
+  <xscreensaver-image />
+
   <_description>
 Zooms in on a part of the screen and then moves around.  With the
--lenses option the result is like looking through many overlapping
-lenses rather than just a simple zoom.  Written by James Macnicol.
+"Lenses" option, the result is like looking through many overlapping
+lenses rather than just a simple zoom.
+
+Written by James Macnicol; 2001.
   </_description>
 </screensaver>

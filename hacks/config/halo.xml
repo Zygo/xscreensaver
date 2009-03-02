@@ -24,12 +24,9 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="100"/>
 
-  <!-- #### -cycle-delay [100000] -->
-  <!-- #### -no-cycle -->
-
   <_description>
-This draws trippy psychedelic circular patterns that hurt to look at.
-It can also animate the control-points, but that takes a lot of CPU
-and bandwidth.  Written by Jamie Zawinski.
+Draws trippy psychedelic circular patterns that hurt to look at.
+
+Written by Jamie Zawinski; 1993.
   </_description>
 </screensaver>

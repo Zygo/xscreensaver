@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.18 2002/01/17 02:16:04 jwz Exp $*/
+/*$Id: bubbles.c,v 1.28 2006/03/13 11:41:31 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -39,13 +39,12 @@
  * Internet E-mail : j-macnicol@adfa.edu.au
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <math.h>
-#include "screenhack.h"
-
 #include <limits.h>
-
-#include <stdio.h>
-#include <string.h>
 
 #ifndef VMS
 # include <sys/wait.h>
@@ -58,6 +57,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#include "screenhack.h"
 #include "yarandom.h"
 #include "bubbles.h"
 #include "xpm-pixmap.h"
@@ -70,14 +71,7 @@
  * Public variables 
  */
 
-extern void init_default_bubbles(void);
-extern int num_default_bubbles;
-extern char **default_bubbles[];
-static int drop_bubble( Bubble *bb );
-
-char *progclass = "Bubbles";
-
-char *defaults [] = {
+static const char *bubbles_defaults [] = {
   ".background:		black",
   ".foreground:		white",
   "*simple:		false",
@@ -85,13 +79,13 @@ char *defaults [] = {
   "*delay:		800",
   "*quiet:		false", 
   "*nodelay:		false",
-  "*drop:		false",
+  "*mode:		float",
   "*trails:		false",
   "*3D:			false",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec bubbles_options [] = {
   { "-simple",          ".simple",      XrmoptionNoArg, "true" },
 #ifdef FANCY_BUBBLES
   { "-broken",          ".broken",      XrmoptionNoArg, "true" },
@@ -100,8 +94,9 @@ XrmOptionDescRec options [] = {
   { "-nodelay",         ".nodelay",     XrmoptionNoArg, "true" },
   { "-3D",          ".3D",      XrmoptionNoArg, "true" },
   { "-delay",           ".delay",       XrmoptionSepArg, 0 },
-  { "-drop",            ".drop",        XrmoptionNoArg, "true" },
-  { "-rise",            ".rise",        XrmoptionNoArg, "true" },
+  { "-mode",            ".mode",        XrmoptionSepArg, 0 },
+  { "-drop",            ".mode",        XrmoptionNoArg, "drop" },
+  { "-rise",            ".mode",        XrmoptionNoArg, "rise" },
   { "-trails",          ".trails",      XrmoptionNoArg, "true" },
   { 0, 0, 0, 0 }
 };
@@ -110,66 +105,59 @@ XrmOptionDescRec options [] = {
  * Private variables 
  */
 
-static Bubble **mesh;
-static int mesh_length;
-static int mesh_width;
-static int mesh_height;
-static int mesh_cells;
+struct state {
+  Display *dpy;
+  Window window;
 
-static int **adjacent_list;
+  Bubble **mesh;
+  int mesh_length;
+  int mesh_width;
+  int mesh_height;
+  int mesh_cells;
 
-static int screen_width;
-static int screen_height;
-static int screen_depth;
-static unsigned int default_fg_pixel, default_bg_pixel;
-/* 
- * I know it's not elegant to save this stuff in global variables
- * but we need it for the signal handler.
- */
-static Display *defdsp;
-static Window defwin;
-static Colormap defcmap;
-static Visual *defvisual;
+  int **adjacent_list;
 
-/* For simple mode only */
-static int bubble_min_radius;
-static int bubble_max_radius;
-static long *bubble_areas;
-static int *bubble_droppages;
-static GC draw_gc, erase_gc;
+  int screen_width;
+  int screen_height;
+  int screen_depth;
+  unsigned int default_fg_pixel, default_bg_pixel;
+
+  int bubble_min_radius;	/* For simple mode only */
+  int bubble_max_radius;
+  long *bubble_areas;
+  int *bubble_droppages;
+  GC draw_gc, erase_gc;
 
 #ifdef FANCY_BUBBLES
-static int num_bubble_pixmaps;
-static Bubble_Step **step_pixmaps;
+  int num_bubble_pixmaps;
+  Bubble_Step **step_pixmaps;
 #endif
 
-/* Options stuff */
-#ifdef FANCY_BUBBLES
-static Bool simple = False;
-#else
-static Bool simple = True;
-#endif
-static Bool broken = False;
-static Bool quiet = False;
-static Bool threed = False;
-static Bool drop = False;
-static Bool trails = False;
-static int drop_dir;
-static int delay;
+  Bool simple;
+  Bool broken;
+  Bool quiet;
+  Bool threed;
+  Bool drop;
+  Bool trails;
+  int drop_dir;
+  int delay;
+};
+
+static int drop_bubble( struct state *st, Bubble *bb );
 
 /* 
  * To prevent forward references, some stuff is up here 
  */
 
 static long
-calc_bubble_area(int r)
+calc_bubble_area(struct state *st, int r)
 /* Calculate the area of a bubble of radius r */
 {
 #ifdef DEBUG
   printf("%d %g\n", r,
 	 10.0 * PI * (double)r * (double)r * (double)r);
 #endif /* DEBUG */
-  if (threed)
+  if (st->threed)
     return (long)(10.0 * PI * (double)r * (double)r * (double)r);
   else
     return (long)(10.0 * PI * (double)r * (double)r);
@@ -208,7 +196,7 @@ turned off if DEBUG isn't set. */
   if (bb == (Bubble *)NULL)
     return 1;
 #ifdef DEBUG
-  if ((bb->cell_index < 0) || (bb->cell_index > mesh_cells)) {
+  if ((bb->cell_index < 0) || (bb->cell_index > st->mesh_cells)) {
     fprintf(stderr, "cell_index = %d\n", bb->cell_index);
     die_bad_bubble(bb);
   }
@@ -216,11 +204,11 @@ turned off if DEBUG isn't set. */
     fprintf(stderr, "Magic = %d\n", bb->magic);
     die_bad_bubble(bb);
   }
-  if (simple) {
-    if ((bb->x < 0) || (bb->x > screen_width) ||
-	(bb->y < 0) || (bb->y > screen_height) ||
-	(bb->radius < bubble_min_radius) || (bb->radius >
-					     bubble_max_radius)) {
+  if (st->simple) {
+    if ((bb->x < 0) || (bb->x > st->screen_width) ||
+	(bb->y < 0) || (bb->y > st->screen_height) ||
+	(bb->radius < st->bubble_min_radius) || (bb->radius >
+					     st->bubble_max_radius)) {
       fprintf(stderr,
 	      "radius = %d, x = %d, y = %d, magic = %d, cell index = %d\n",
 	      bb->radius, bb->x, bb->y, bb->magic, bb->cell_index);
@@ -228,10 +216,10 @@ turned off if DEBUG isn't set. */
     }
 #ifdef FANCY_BUBBLES
   } else {
-    if ((bb->x < 0) || (bb->x > screen_width) ||
-	(bb->y < 0) || (bb->y > screen_height) ||
-	(bb->radius < step_pixmaps[0]->radius) || 
-	(bb->radius > step_pixmaps[num_bubble_pixmaps-1]->radius)) {
+    if ((bb->x < 0) || (bb->x > st->screen_width) ||
+	(bb->y < 0) || (bb->y > st->screen_height) ||
+	(bb->radius < st->step_pixmaps[0]->radius) || 
+	(bb->radius > st->step_pixmaps[st->num_bubble_pixmaps-1]->radius)) {
       fprintf(stderr,
 	      "radius = %d, x = %d, y = %d, magic = %d, cell index = %d\n",
 	      bb->radius, bb->x, bb->y, bb->magic, bb->cell_index);
@@ -280,18 +268,18 @@ add_bubble_to_list(Bubble **list, Bubble *bb)
 
 
 static void 
-init_mesh (void)
+init_mesh (struct state *st)
 /* Setup the mesh of bubbles */
 {
   int i;
 
-  mesh = (Bubble **)xmalloc(mesh_cells * sizeof(Bubble *));
-  for (i = 0; i < mesh_cells; i++)
-    mesh[i] = (Bubble *)NULL;
+  st->mesh = (Bubble **)xmalloc(st->mesh_cells * sizeof(Bubble *));
+  for (i = 0; i < st->mesh_cells; i++)
+    st->mesh[i] = (Bubble *)NULL;
 }
 
 static int
-cell_to_mesh(int x, int y)
+cell_to_mesh(struct state *st, int x, int y)
 /* convert cell coordinates to mesh index */
 {
 #ifdef DEBUG
@@ -300,31 +288,31 @@ cell_to_mesh(int x, int y)
     exit(1);
   }
 #endif
-  return ((mesh_width * y) + x);
+  return ((st->mesh_width * y) + x);
 }
 
 static void 
-mesh_to_cell(int mi, int *cx, int *cy)
+mesh_to_cell(struct state *st, int mi, int *cx, int *cy)
 /* convert mesh index into cell coordinates */
 {
-  *cx = mi % mesh_width;
-  *cy = mi / mesh_width;
+  *cx = mi % st->mesh_width;
+  *cy = mi / st->mesh_width;
 }
 
 static int
-pixel_to_mesh(int x, int y)
+pixel_to_mesh(struct state *st, int x, int y)
 /* convert screen coordinates into mesh index */
 {
-  return cell_to_mesh((x / mesh_length), (y / mesh_length));
+  return cell_to_mesh(st, (x / st->mesh_length), (y / st->mesh_length));
 }
 
 static int
-verify_mesh_index(int x, int y)
+verify_mesh_index(struct state *st, int x, int y)
 /* check to see if (x,y) is in the mesh */
 {
-  if ((x < 0) || (y < 0) || (x >= mesh_width) || (y >= mesh_height))
+  if ((x < 0) || (y < 0) || (x >= st->mesh_width) || (y >= st->mesh_height))
     return (-1);
-  return (cell_to_mesh(x, y));
+  return (cell_to_mesh(st, x, y));
 }
 
 #ifdef DEBUG
@@ -342,7 +330,7 @@ print_adjacents(int *adj)
 #endif /* DEBUG */
 
 static void 
-add_to_mesh(Bubble *bb)
+add_to_mesh(struct state *st, Bubble *bb)
 /* Add the given bubble to the mesh by sticking it on the front of the
 list.  bb is already allocated so no need to malloc() anything, just
 adjust pointers. */
@@ -354,48 +342,48 @@ adjust pointers. */
   }
 #endif /* DEBUG */
 
-  add_bubble_to_list(&mesh[bb->cell_index], bb);
+  add_bubble_to_list(&st->mesh[bb->cell_index], bb);
 }
 
 #ifdef DEBUG
 static void 
-print_mesh (void)
+print_mesh (struct state *st)
 /* Print the contents of the mesh */
 {
   int i;
 
-  for (i = 0; i < mesh_cells; i++) {
-    if (! null_bubble(mesh[i])) {
+  for (i = 0; i < st->mesh_cells; i++) {
+    if (! null_bubble(st->mesh[i])) {
       printf("Mesh cell %d\n", i);
-      print_bubble_list(mesh[i]);
+      print_bubble_list(st->mesh[i]);
     }
   }
 }
 
 static void 
-valid_mesh (void)
+valid_mesh (struct state *st)
 /* Check to see if the mesh is Okay.  For debugging only. */
 {
   int i;
   Bubble *b;
 
-  for (i = 0; i < mesh_cells; i++) {
-    b = mesh[i];
+  for (i = 0; i < st->mesh_cells; i++) {
+    b = st->mesh[i];
     while (! null_bubble(b))
       b = b->next;
   }
 }
 
 static int
-total_bubbles (void)
+total_bubbles (struct state *st)
 /* Count how many bubbles there are in total.  For debugging only. */
 {
   int rv = 0;
   int i;
   Bubble *b;
 
-  for (i = 0; i < mesh_cells; i++) {
-    b = mesh[i];
+  for (i = 0; i < st->mesh_cells; i++) {
+    b = st->mesh[i];
     while (! null_bubble(b)) {
       rv++;
       b = b->next;
@@ -407,31 +395,31 @@ total_bubbles (void)
 #endif /* DEBUG */
 
 static void 
-calculate_adjacent_list (void)
+calculate_adjacent_list (struct state *st)
 /* Calculate the list of cells adjacent to a particular cell for use
    later. */
 {
   int i; 
   int ix, iy;
 
-  adjacent_list = (int **)xmalloc(mesh_cells * sizeof(int *));
-  for (i = 0; i < mesh_cells; i++) {
-    adjacent_list[i] = (int *)xmalloc(9 * sizeof(int));
-    mesh_to_cell(i, &ix, &iy);
-    adjacent_list[i][0] = verify_mesh_index(--ix, --iy);
-    adjacent_list[i][1] = verify_mesh_index(++ix, iy);
-    adjacent_list[i][2] = verify_mesh_index(++ix, iy);
-    adjacent_list[i][3] = verify_mesh_index(ix, ++iy);
-    adjacent_list[i][4] = verify_mesh_index(ix, ++iy);
-    adjacent_list[i][5] = verify_mesh_index(--ix, iy);
-    adjacent_list[i][6] = verify_mesh_index(--ix, iy);
-    adjacent_list[i][7] = verify_mesh_index(ix, --iy);
-    adjacent_list[i][8] = i;
+  st->adjacent_list = (int **)xmalloc(st->mesh_cells * sizeof(int *));
+  for (i = 0; i < st->mesh_cells; i++) {
+    st->adjacent_list[i] = (int *)xmalloc(9 * sizeof(int));
+    mesh_to_cell(st, i, &ix, &iy);
+    st->adjacent_list[i][0] = verify_mesh_index(st, --ix, --iy);
+    st->adjacent_list[i][1] = verify_mesh_index(st, ++ix, iy);
+    st->adjacent_list[i][2] = verify_mesh_index(st, ++ix, iy);
+    st->adjacent_list[i][3] = verify_mesh_index(st, ix, ++iy);
+    st->adjacent_list[i][4] = verify_mesh_index(st, ix, ++iy);
+    st->adjacent_list[i][5] = verify_mesh_index(st, --ix, iy);
+    st->adjacent_list[i][6] = verify_mesh_index(st, --ix, iy);
+    st->adjacent_list[i][7] = verify_mesh_index(st, ix, --iy);
+    st->adjacent_list[i][8] = i;
   }
 }
 
 static void
-adjust_areas (void)
+adjust_areas (struct state *st)
 /* Adjust areas of bubbles so we don't get overflow in weighted_mean() */
 {
   double maxvalue;
@@ -440,43 +428,43 @@ adjust_areas (void)
   int i;
 
 #ifdef FANCY_BUBBLES
-  if (simple)
-    maxarea = bubble_areas[bubble_max_radius+1];
+  if (st->simple)
+    maxarea = st->bubble_areas[st->bubble_max_radius+1];
   else
-    maxarea = step_pixmaps[num_bubble_pixmaps]->area;
+    maxarea = st->step_pixmaps[st->num_bubble_pixmaps]->area;
 #else /* !FANCY_BUBBLES */
-  maxarea = bubble_areas[bubble_max_radius+1];
+  maxarea = st->bubble_areas[st->bubble_max_radius+1];
 #endif /* !FANCY_BUBBLES */
-  maxvalue = (double)screen_width * 2.0 * (double)maxarea;
+  maxvalue = (double)st->screen_width * 2.0 * (double)maxarea;
   factor = (long)ceil(maxvalue / (double)LONG_MAX);
   if (factor > 1) {
     /* Overflow will occur in weighted_mean().  We must divide areas
        each by factor so it will never do so. */
 #ifdef FANCY_BUBBLES
-    if (simple) {
-      for (i = bubble_min_radius; i <= bubble_max_radius+1; i++) {
-	bubble_areas[i] /= factor;
-	if (bubble_areas[i] == 0)
-	  bubble_areas[i] = 1;
+    if (st->simple) {
+      for (i = st->bubble_min_radius; i <= st->bubble_max_radius+1; i++) {
+	st->bubble_areas[i] /= factor;
+	if (st->bubble_areas[i] == 0)
+	  st->bubble_areas[i] = 1;
       }
     } else {
-      for (i = 0; i <= num_bubble_pixmaps; i++) {
+      for (i = 0; i <= st->num_bubble_pixmaps; i++) {
 #ifdef DEBUG
-	printf("area = %ld", step_pixmaps[i]->area);
+	printf("area = %ld", st->step_pixmaps[i]->area);
 #endif /* DEBUG */
-	step_pixmaps[i]->area /= factor;
-	if (step_pixmaps[i]->area == 0)
-	  step_pixmaps[i]->area = 1;
+	st->step_pixmaps[i]->area /= factor;
+	if (st->step_pixmaps[i]->area == 0)
+	  st->step_pixmaps[i]->area = 1;
 #ifdef DEBUG
-	printf("-> %ld\n", step_pixmaps[i]->area);
+	printf("-> %ld\n", st->step_pixmaps[i]->area);
 #endif /* DEBUG */
       }
     }
 #else /* !FANCY_BUBBLES */
-    for (i = bubble_min_radius; i <= bubble_max_radius+1; i++) {
-      bubble_areas[i] /= factor;
-      if (bubble_areas[i] == 0)
-	bubble_areas[i] = 1;
+    for (i = st->bubble_min_radius; i <= st->bubble_max_radius+1; i++) {
+      st->bubble_areas[i] /= factor;
+      if (st->bubble_areas[i] == 0)
+	st->bubble_areas[i] = 1;
     }
 #endif /* !FANCY_BUBBLES */
   }
@@ -493,7 +481,7 @@ adjust_areas (void)
  */
 
 static Bubble *
-new_bubble (void)
+new_bubble (struct state *st)
 /* Add a new bubble at some random position on the screen of the smallest
 size. */
 {
@@ -505,27 +493,27 @@ size. */
     exit(1);
   }
 
-  if (simple) {
-    rv->radius = bubble_min_radius;
-    rv->area = bubble_areas[bubble_min_radius];
+  if (st->simple) {
+    rv->radius = st->bubble_min_radius;
+    rv->area = st->bubble_areas[st->bubble_min_radius];
 #ifdef FANCY_BUBBLES
   } else {
     rv->step = 0;
-    rv->radius = step_pixmaps[0]->radius;
-    rv->area = step_pixmaps[0]->area;
+    rv->radius = st->step_pixmaps[0]->radius;
+    rv->area = st->step_pixmaps[0]->area;
 #endif /* FANCY_BUBBLES */
   }
   rv->visible = 0;
   rv->magic = BUBBLE_MAGIC;
-  rv->x = random() % screen_width;
-  rv->y = random() % screen_height;
-  rv->cell_index = pixel_to_mesh(rv->x, rv->y);
+  rv->x = random() % st->screen_width;
+  rv->y = random() % st->screen_height;
+  rv->cell_index = pixel_to_mesh(st, rv->x, rv->y);
 
   return rv;
 }
 
 static void 
-show_bubble(Bubble *bb)
+show_bubble(struct state *st, Bubble *bb)
 /* paint the bubble on the screen */
 {
   if (null_bubble(bb)) {
@@ -536,18 +524,18 @@ show_bubble(Bubble *bb)
   if (! bb->visible) {
     bb->visible = 1;
 
-    if (simple) {
-      XDrawArc(defdsp, defwin, draw_gc, (bb->x - bb->radius),
+    if (st->simple) {
+      XDrawArc(st->dpy, st->window, st->draw_gc, (bb->x - bb->radius),
 	       (bb->y - bb->radius), bb->radius*2, bb->radius*2, 0,
 	       360*64);  
     } else {
 #ifdef FANCY_BUBBLES
-      XSetClipOrigin(defdsp, step_pixmaps[bb->step]->draw_gc, 
+      XSetClipOrigin(st->dpy, st->step_pixmaps[bb->step]->draw_gc, 
 		     (bb->x - bb->radius),
 		     (bb->y - bb->radius));
       
-      XCopyArea(defdsp, step_pixmaps[bb->step]->ball, defwin, 
-		step_pixmaps[bb->step]->draw_gc,
+      XCopyArea(st->dpy, st->step_pixmaps[bb->step]->ball, st->window, 
+		st->step_pixmaps[bb->step]->draw_gc,
 		0, 0, (bb->radius * 2), 
 		(bb->radius * 2),  
 		(bb->x - bb->radius),
@@ -558,7 +546,7 @@ show_bubble(Bubble *bb)
 }
 
 static void 
-hide_bubble(Bubble *bb)
+hide_bubble(struct state *st, Bubble *bb)
 /* erase the bubble */
 {
   if (null_bubble(bb)) {
@@ -569,17 +557,17 @@ hide_bubble(Bubble *bb)
   if (bb->visible) {
     bb->visible = 0;
 
-    if (simple) {
-      XDrawArc(defdsp, defwin, erase_gc, (bb->x - bb->radius),
+    if (st->simple) {
+      XDrawArc(st->dpy, st->window, st->erase_gc, (bb->x - bb->radius),
 	       (bb->y - bb->radius), bb->radius*2, bb->radius*2, 0,
 	       360*64);
     } else {
 #ifdef FANCY_BUBBLES
-      if (! broken) {
-	XSetClipOrigin(defdsp, step_pixmaps[bb->step]->erase_gc, 
+      if (! st->broken) {
+	XSetClipOrigin(st->dpy, st->step_pixmaps[bb->step]->erase_gc, 
 		       (bb->x - bb->radius), (bb->y - bb->radius));
 	
-	XFillRectangle(defdsp, defwin, step_pixmaps[bb->step]->erase_gc,
+	XFillRectangle(st->dpy, st->window, st->step_pixmaps[bb->step]->erase_gc,
 		       (bb->x - bb->radius),
 		       (bb->y - bb->radius),
 		       (bb->radius * 2),
@@ -591,7 +579,7 @@ hide_bubble(Bubble *bb)
 }
 
 static void 
-delete_bubble_in_mesh(Bubble *bb, int keep_bubble)
+delete_bubble_in_mesh(struct state *st, Bubble *bb, int keep_bubble)
 /* Delete an individual bubble, adjusting list of bubbles around it.
    If keep_bubble is true then the bubble isn't actually deleted.  We
    use this to allow bubbles to change mesh cells without reallocating,
@@ -604,15 +592,15 @@ delete_bubble_in_mesh(Bubble *bb, int keep_bubble)
   } else if ((!null_bubble(bb->prev)) &&
 	     (null_bubble(bb->next))) {
     bb->prev->next = (Bubble *)NULL;
-    bb->next = mesh[bb->cell_index];
+    bb->next = st->mesh[bb->cell_index];
   } else if ((null_bubble(bb->prev)) &&
 	     (!null_bubble(bb->next))) {
     bb->next->prev = (Bubble *)NULL;
-    mesh[bb->cell_index] = bb->next;
-    bb->next = mesh[bb->cell_index];
+    st->mesh[bb->cell_index] = bb->next;
+    bb->next = st->mesh[bb->cell_index];
   } else {
     /* Only item on list */
-    mesh[bb->cell_index] = (Bubble *)NULL;
+    st->mesh[bb->cell_index] = (Bubble *)NULL;
   }		 
   if (! keep_bubble)
     free(bb);
@@ -626,7 +614,7 @@ ulongsqrint(int x)
 }
 
 static Bubble *
-get_closest_bubble(Bubble *bb)
+get_closest_bubble(struct state *st, Bubble *bb)
 /* Find the closest bubble touching the this bubble, NULL if none are
    touching. */
 {
@@ -648,14 +636,14 @@ get_closest_bubble(Bubble *bb)
   for (i = 0; i < 9; i++) {
     /* There is a bug here where bb->cell_index is negaitve.. */
 #ifdef DEBUG
-    if ((bb->cell_index < 0) || (bb->cell_index >= mesh_cells)) {
+    if ((bb->cell_index < 0) || (bb->cell_index >= st->mesh_cells)) {
       fprintf(stderr, "bb->cell_index = %d\n", bb->cell_index);
       exit(1);
     }
 #endif /* DEBUG */
 /*    printf("%d,", bb->cell_index); */
-    if (adjacent_list[bb->cell_index][i] != -1) {
-      tmp = mesh[adjacent_list[bb->cell_index][i]];
+    if (st->adjacent_list[bb->cell_index][i] != -1) {
+      tmp = st->mesh[st->adjacent_list[bb->cell_index][i]];
       while (! null_bubble(tmp)) {
 	if (tmp != bb) {
 	  dx = tmp->x - bb->x;
@@ -679,7 +667,7 @@ get_closest_bubble(Bubble *bb)
 
 #ifdef DEBUG
 static void
-ldr_barf (void)
+ldr_barf (struct state *st)
 {
 }
 #endif /* DEBUG */
@@ -730,7 +718,7 @@ weighted_mean(int n1, int n2, long w1, long w2)
 }
 
 static int
-bubble_eat(Bubble *diner, Bubble *food)
+bubble_eat(struct state *st, Bubble *diner, Bubble *food)
 /* The diner eats the food.  Returns true (1) if the diner still exists */
 { 
   int i;
@@ -750,72 +738,72 @@ bubble_eat(Bubble *diner, Bubble *food)
      would then not have to redraw bubbles which don't change in
      size. */
 
-  hide_bubble(diner);
-  hide_bubble(food);
+  hide_bubble(st, diner);
+  hide_bubble(st, food);
   diner->x = weighted_mean(diner->x, food->x, diner->area, food->area);
   diner->y = weighted_mean(diner->y, food->y, diner->area, food->area);
-  newmi = pixel_to_mesh(diner->x, diner->y);
+  newmi = pixel_to_mesh(st, diner->x, diner->y);
   diner->area += food->area;
-  delete_bubble_in_mesh(food, DELETE_BUBBLE);
+  delete_bubble_in_mesh(st, food, DELETE_BUBBLE);
 
-  if (drop) {
-	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
-	  diner->area = bubble_areas[bubble_max_radius];
+  if (st->drop) {
+	if ((st->simple) && (diner->area > st->bubble_areas[st->bubble_max_radius])) {
+	  diner->area = st->bubble_areas[st->bubble_max_radius];
 	}
 #ifdef FANCY_BUBBLES
-	if ((! simple) && (diner->area > step_pixmaps[num_bubble_pixmaps]->area)) {
-	  diner->area = step_pixmaps[num_bubble_pixmaps]->area;
+	if ((! st->simple) && (diner->area > st->step_pixmaps[st->num_bubble_pixmaps]->area)) {
+	  diner->area = st->step_pixmaps[st->num_bubble_pixmaps]->area;
 	}
 #endif /* FANCY_BUBBLES */
   }
   else {
-	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
-	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
+	if ((st->simple) && (diner->area > st->bubble_areas[st->bubble_max_radius])) {
+	  delete_bubble_in_mesh(st, diner, DELETE_BUBBLE);
 	  return 0;
 	}
 #ifdef FANCY_BUBBLES
-	if ((! simple) && (diner->area > 
-					   step_pixmaps[num_bubble_pixmaps]->area)) {
-	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
+	if ((! st->simple) && (diner->area > 
+					   st->step_pixmaps[st->num_bubble_pixmaps]->area)) {
+	  delete_bubble_in_mesh(st, diner, DELETE_BUBBLE);
 	  return 0;
 	}
 #endif /* FANCY_BUBBLES */
   }
 
-  if (simple) {
-    if (diner->area > bubble_areas[diner->radius + 1]) {
+  if (st->simple) {
+    if (diner->area > st->bubble_areas[diner->radius + 1]) {
       /* Move the bubble to a new radius */
       i = diner->radius;
-      while ((i < bubble_max_radius - 1) && (diner->area > bubble_areas[i+1]))
+      while ((i < st->bubble_max_radius - 1) && (diner->area > st->bubble_areas[i+1]))
 		++i;
       diner->radius = i;
     }
-    show_bubble(diner);
+    show_bubble(st, diner);
 #ifdef FANCY_BUBBLES
   } else {
-    if (diner->area > step_pixmaps[diner->step+1]->area) {
+    if (diner->area > st->step_pixmaps[diner->step+1]->area) {
       i = diner->step;
-      while ((i < num_bubble_pixmaps - 1) && (diner->area > step_pixmaps[i+1]->area))
+      while ((i < st->num_bubble_pixmaps - 1) && (diner->area > st->step_pixmaps[i+1]->area))
 		++i;
       diner->step = i;
-      diner->radius = step_pixmaps[diner->step]->radius;
+      diner->radius = st->step_pixmaps[diner->step]->radius;
     }
-    show_bubble(diner);
+    show_bubble(st, diner);
 #endif /* FANCY_BUBBLES */
   }
 
   /* Now adjust locations and cells if need be */
   if (newmi != diner->cell_index) {
-    delete_bubble_in_mesh(diner, KEEP_BUBBLE);
+    delete_bubble_in_mesh(st, diner, KEEP_BUBBLE);
     diner->cell_index = newmi;
-    add_to_mesh(diner);
+    add_to_mesh(st, diner);
   }
 
   return 1;
 }
 
 static int
-merge_bubbles(Bubble *b1, Bubble *b2)
+merge_bubbles(struct state *st, Bubble *b1, Bubble *b2)
 /* These two bubbles merge into one.  If the first one wins out return
 1 else return 2.  If there is no winner (it explodes) then return 0 */
 {
@@ -832,13 +820,13 @@ merge_bubbles(Bubble *b1, Bubble *b2)
 #endif /* DEBUG */
 
   if (b1 == b2) {
-    hide_bubble(b1);
-    delete_bubble_in_mesh(b1, DELETE_BUBBLE);
+    hide_bubble(st, b1);
+    delete_bubble_in_mesh(st, b1, DELETE_BUBBLE);
     return 0;
   }
 
   if (b1size > b2size) {
-    switch (bubble_eat(b1, b2)) {
+    switch (bubble_eat(st, b1, b2)) {
     case 0:
       return 0;
       break;
@@ -849,7 +837,7 @@ merge_bubbles(Bubble *b1, Bubble *b2)
       break;
     }
   } else if (b1size < b2size) {
-    switch (bubble_eat(b2, b1)) {
+    switch (bubble_eat(st, b2, b1)) {
     case 0:
       return 0;
       break;
@@ -861,7 +849,7 @@ merge_bubbles(Bubble *b1, Bubble *b2)
     }
   } else {
     if ((random() % 2) == 0) {
-      switch (bubble_eat(b1, b2)) {
+      switch (bubble_eat(st, b1, b2)) {
       case 0:
 	return 0;
 	break;
@@ -872,7 +860,7 @@ merge_bubbles(Bubble *b1, Bubble *b2)
 	break;
       }
     } else {
-      switch (bubble_eat(b2, b1)) {
+      switch (bubble_eat(st, b2, b1)) {
       case 0:
 	return 0;
 	break;
@@ -889,7 +877,7 @@ merge_bubbles(Bubble *b1, Bubble *b2)
 }
 
 static void 
-insert_new_bubble(Bubble *tmp)
+insert_new_bubble(struct state *st, Bubble *tmp)
 /* Calculates which bubbles are eaten when a new bubble tmp is
    inserted.  This is called recursively in case when a bubble grows
    it eats others.  Careful to pick out disappearing bubbles. */
@@ -905,7 +893,7 @@ insert_new_bubble(Bubble *tmp)
 #endif /* DEBUG */
   
   nextbub = tmp;
-  touch = get_closest_bubble(nextbub);
+  touch = get_closest_bubble(st, nextbub);
   if (null_bubble(touch))
 	return;
 
@@ -913,7 +901,7 @@ insert_new_bubble(Bubble *tmp)
 
 	/* Merge all touching bubbles */
 	while (! null_bubble(touch)) {
-	  switch (merge_bubbles(nextbub, touch)) {
+	  switch (merge_bubbles(st, nextbub, touch)) {
 	  case 2:
 		/* touch ate nextbub and survived */
 		nextbub = touch;
@@ -937,31 +925,31 @@ insert_new_bubble(Bubble *tmp)
 
 	  /* Check to see if there are any other bubbles still in the area
 		 and if we need to do this all over again for them. */
-	  touch = get_closest_bubble(nextbub);
+	  touch = get_closest_bubble(st, nextbub);
 	}
 	
 	if (null_bubble(nextbub))
 	  break;
 
 	/* Shift bubble down.  Break if we run off the screen. */
-	if (drop) {
-	  if (drop_bubble( nextbub ) == -1)
+	if (st->drop) {
+	  if (drop_bubble( st, nextbub ) == -1)
 		break;
 	}
 
 	/* Check to see if there are any other bubbles still in the area
 	   and if we need to do this all over again for them. */
-	touch = get_closest_bubble(nextbub);
+	touch = get_closest_bubble(st, nextbub);
 	if (null_bubble(touch)) {
 	  /* We also continue every so often if we're dropping and the bubble is at max size */
-	  if (drop) {
-		if (simple) {
-		  if ((nextbub->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0))
+	  if (st->drop) {
+		if (st->simple) {
+		  if ((nextbub->area >= st->bubble_areas[st->bubble_max_radius - 1]) && (random() % 2 == 0))
 			continue;
 		}
 #ifdef FANCY_BUBBLES
 		else {
-		  if ((nextbub->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
+		  if ((nextbub->step >= st->num_bubble_pixmaps - 1) && (random() % 2 == 0))
 			continue;
 		}
 #endif /* FANCY_BUBBLES */
@@ -974,57 +962,57 @@ insert_new_bubble(Bubble *tmp)
 
 
 static void
-leave_trail( Bubble *bb ) 
+leave_trail(struct state *st,  Bubble *bb ) 
 {
   Bubble *tmp;
 
-  tmp = new_bubble();
+  tmp = new_bubble(st);
   tmp->x = bb->x;
-  tmp->y = bb->y - ((bb->radius + 10) * drop_dir);
-  tmp->cell_index = pixel_to_mesh(tmp->x, tmp->y);
-  add_to_mesh(tmp);
-  insert_new_bubble(tmp);
-  show_bubble( tmp );	
+  tmp->y = bb->y - ((bb->radius + 10) * st->drop_dir);
+  tmp->cell_index = pixel_to_mesh(st, tmp->x, tmp->y);
+  add_to_mesh(st, tmp);
+  insert_new_bubble(st, tmp);
+  show_bubble( st, tmp );	
 }
 
 
 static int
-drop_bubble( Bubble *bb )
+drop_bubble( struct state *st, Bubble *bb )
 {
   int newmi;
 
-  hide_bubble( bb );
+  hide_bubble( st, bb );
 
-  if (simple)
-	(bb->y) += (bubble_droppages[bb->radius] * drop_dir);
+  if (st->simple)
+	(bb->y) += (st->bubble_droppages[bb->radius] * st->drop_dir);
 #ifdef FANCY_BUBBLES
   else
-	(bb->y) += (step_pixmaps[bb->step]->droppage * drop_dir);
+	(bb->y) += (st->step_pixmaps[bb->step]->droppage * st->drop_dir);
 #endif /* FANCY_BUBBLES */
-  if ((bb->y < 0) || (bb->y > screen_height)) {
-	delete_bubble_in_mesh( bb, DELETE_BUBBLE );
+  if ((bb->y < 0) || (bb->y > st->screen_height)) {
+	delete_bubble_in_mesh( st, bb, DELETE_BUBBLE );
 	return -1;
   }
 
-  show_bubble( bb );
+  show_bubble( st, bb );
 
   /* Now adjust locations and cells if need be */
-  newmi = pixel_to_mesh(bb->x, bb->y);
+  newmi = pixel_to_mesh(st, bb->x, bb->y);
   if (newmi != bb->cell_index) {
-    delete_bubble_in_mesh(bb, KEEP_BUBBLE);
+    delete_bubble_in_mesh(st, bb, KEEP_BUBBLE);
     bb->cell_index = newmi;
-    add_to_mesh(bb);
+    add_to_mesh(st, bb);
   }
 
-  if (trails) {
-	if (simple) {
-	  if ((bb->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0)) 
-		leave_trail( bb );
+  if (st->trails) {
+	if (st->simple) {
+	  if ((bb->area >= st->bubble_areas[st->bubble_max_radius - 1]) && (random() % 2 == 0)) 
+		leave_trail( st, bb );
 	}
 #ifdef FANCY_BUBBLES
 	else { 
-	  if ((bb->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
-		leave_trail( bb );
+	  if ((bb->step >= st->num_bubble_pixmaps - 1) && (random() % 2 == 0))
+		leave_trail( st, bb );
 	}
 #endif /* FANCY_BUBBLES */
   }
@@ -1094,7 +1082,7 @@ extrapolate(int i1, int i2)
 }
 
 static void 
-make_pixmap_array(Bubble_Step *list)
+make_pixmap_array(struct state *st, Bubble_Step *list)
 /* From a linked list of bubbles construct the array step_pixmaps */
 {
   Bubble_Step *tmp = list;
@@ -1108,25 +1096,25 @@ make_pixmap_array(Bubble_Step *list)
     exit(1);
   }
 
-  num_bubble_pixmaps = 1;
+  st->num_bubble_pixmaps = 1;
   while(tmp->next != (Bubble_Step *)NULL) {
     tmp = tmp->next;
-    ++num_bubble_pixmaps;
+    ++st->num_bubble_pixmaps;
   }
 
-  if (num_bubble_pixmaps < 2) {
+  if (st->num_bubble_pixmaps < 2) {
     fprintf(stderr, "Must be at least two bubbles in file\n");
     exit(1);
   }
 
-  step_pixmaps = (Bubble_Step **)xmalloc((num_bubble_pixmaps + 1) * 
+  st->step_pixmaps = (Bubble_Step **)xmalloc((st->num_bubble_pixmaps + 1) * 
 					 sizeof(Bubble_Step *));
 
   /* Copy them blindly into the array for sorting. */
   ind = 0;
   tmp = list;
   do {
-    step_pixmaps[ind++] = tmp;
+    st->step_pixmaps[ind++] = tmp;
     tmp = tmp->next;
   } while(tmp != (Bubble_Step *)NULL);
 
@@ -1134,45 +1122,45 @@ make_pixmap_array(Bubble_Step *list)
      bubble hangs around and doesn't pop immediately.  It's radius and area
      are found by extrapolating from the largest two bubbles with pixmaps. */
 
-  step_pixmaps[num_bubble_pixmaps] = 
+  st->step_pixmaps[st->num_bubble_pixmaps] = 
     (Bubble_Step *)xmalloc(sizeof(Bubble_Step));
-  step_pixmaps[num_bubble_pixmaps]->radius = INT_MAX;
+  st->step_pixmaps[st->num_bubble_pixmaps]->radius = INT_MAX;
 
-  pixmap_sort(step_pixmaps, (num_bubble_pixmaps + 1));
+  pixmap_sort(st->step_pixmaps, (st->num_bubble_pixmaps + 1));
 
 #ifdef DEBUG
-  if (step_pixmaps[num_bubble_pixmaps]->radius != INT_MAX) {
+  if (st->step_pixmaps[st->num_bubble_pixmaps]->radius != INT_MAX) {
     fprintf(stderr, "pixmap_sort() screwed up make_pixmap_array\n");
   }
 #endif /* DEBUG */
 
-  step_pixmaps[num_bubble_pixmaps]->radius = 
-    extrapolate(step_pixmaps[num_bubble_pixmaps-2]->radius,
-		step_pixmaps[num_bubble_pixmaps-1]->radius);
-  step_pixmaps[num_bubble_pixmaps]->area = 
-    calc_bubble_area(step_pixmaps[num_bubble_pixmaps]->radius);
+  st->step_pixmaps[st->num_bubble_pixmaps]->radius = 
+    extrapolate(st->step_pixmaps[st->num_bubble_pixmaps-2]->radius,
+		st->step_pixmaps[st->num_bubble_pixmaps-1]->radius);
+  st->step_pixmaps[st->num_bubble_pixmaps]->area = 
+    calc_bubble_area(st, st->step_pixmaps[st->num_bubble_pixmaps]->radius);
   
 
 #ifdef DEBUG
   /* Now check for correct order */
-  for (ind = 0; ind < num_bubble_pixmaps; ind++) {
+  for (ind = 0; ind < st->num_bubble_pixmaps; ind++) {
     if (prevrad > 0) {
-      if (step_pixmaps[ind]->radius < prevrad) {
+      if (st->step_pixmaps[ind]->radius < prevrad) {
 	fprintf(stderr, "Pixmaps not in ascending order of radius\n");
 	exit(1);
       }
     }
-    prevrad = step_pixmaps[ind]->radius;
+    prevrad = st->step_pixmaps[ind]->radius;
   }
 #endif /* DEBUG */
 
   /* Now populate the droppage values */
-  for (ind = 0; ind < num_bubble_pixmaps; ind++)
-	  step_pixmaps[ind]->droppage = MAX_DROPPAGE * ind / num_bubble_pixmaps;
+  for (ind = 0; ind < st->num_bubble_pixmaps; ind++)
+	  st->step_pixmaps[ind]->droppage = MAX_DROPPAGE * ind / st->num_bubble_pixmaps;
 }
 
 static void
-make_pixmap_from_default(char **pixmap_data, Bubble_Step *bl)
+make_pixmap_from_default(struct state *st, char **pixmap_data, Bubble_Step *bl)
 /* Read pixmap data which has been compiled into the program and a pointer
  to which has been passed. 
 
@@ -1196,27 +1184,26 @@ changes made to either should be propagated onwards! */
 #ifdef FANCY_BUBBLES
   {
     int w, h;
-    bl->ball = xpm_data_to_pixmap (defdsp, defwin, (char **) pixmap_data,
+    bl->ball = xpm_data_to_pixmap (st->dpy, st->window, (char **) pixmap_data,
                                    &w, &h, &bl->shape_mask);
     bl->radius = MAX(w, h) / 2;
-    bl->area = calc_bubble_area(bl->radius);
+    bl->area = calc_bubble_area(st, bl->radius);
   }
 #endif /* FANCY_BUBBLES */
 
-  gcv.plane_mask = AllPlanes;
-  gcv.foreground = default_fg_pixel;
+  gcv.foreground = st->default_fg_pixel;
   gcv.function = GXcopy;
-  bl->draw_gc = XCreateGC (defdsp, defwin, GCForeground, &gcv);
-  XSetClipMask(defdsp, bl->draw_gc, bl->shape_mask);
+  bl->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  XSetClipMask(st->dpy, bl->draw_gc, bl->shape_mask);
   
-  gcv.foreground = default_bg_pixel;
+  gcv.foreground = st->default_bg_pixel;
   gcv.function = GXcopy;
-  bl->erase_gc = XCreateGC (defdsp, defwin, GCForeground, &gcv);
-  XSetClipMask(defdsp, bl->erase_gc, bl->shape_mask);  
+  bl->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  XSetClipMask(st->dpy, bl->erase_gc, bl->shape_mask);
 }
 
 static void 
-default_to_pixmaps (void)
+default_to_pixmaps (struct state *st)
 /* Make pixmaps out of default ball data stored in bubbles_default.c */
 {
   int i;
@@ -1229,7 +1216,7 @@ default_to_pixmaps (void)
   for (i = 0; i < num_default_bubbles; i++) {
     pixpt = default_bubbles[i];
     newpix = (Bubble_Step *)xmalloc(sizeof(Bubble_Step));
-    make_pixmap_from_default(pixpt, newpix);
+    make_pixmap_from_default(st, pixpt, newpix);
     /* Now add to list */
     if (pixmap_list == (Bubble_Step *)NULL) {
       pixmap_list = newpix;
@@ -1243,7 +1230,7 @@ default_to_pixmaps (void)
   }
   
   /* Finally construct step_pixmaps[] */
-  make_pixmap_array(pixmap_list);
+  make_pixmap_array(st, pixmap_list);
 }
 
 #endif /* FANCY_BUBBLES */
@@ -1255,118 +1242,123 @@ default_to_pixmaps (void)
 
 
 static void 
-get_resources(Display *dpy, Window window)
+get_resources(struct state *st)
 /* Get the appropriate X resources and warn about any inconsistencies. */
 {
   Bool nodelay, rise;
   XWindowAttributes xgwa;
   Colormap cmap;
-  XGetWindowAttributes (dpy, window, &xgwa);
+  char *s;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
   cmap = xgwa.colormap;
 
-  threed = get_boolean_resource("3D", "Boolean");
-  quiet = get_boolean_resource("quiet", "Boolean");
-  simple = get_boolean_resource("simple", "Boolean");
+  st->threed = get_boolean_resource(st->dpy, "3D", "Boolean");
+  st->quiet = get_boolean_resource(st->dpy, "quiet", "Boolean");
+  st->simple = get_boolean_resource(st->dpy, "simple", "Boolean");
   /* Forbid rendered bubbles on monochrome displays */
-  if ((mono_p) && (! simple)) {
-    if (! quiet)
+  if ((mono_p) && (! st->simple)) {
+    if (! st->quiet)
       fprintf(stderr,
 	      "Rendered bubbles not supported on monochrome displays\n");
-    simple = True;
+    st->simple = True;
   }
-  delay = get_integer_resource("delay", "Integer");
-  nodelay = get_boolean_resource("nodelay", "Boolean");
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  nodelay = get_boolean_resource(st->dpy, "nodelay", "Boolean");
   if (nodelay)
-    delay = 0;
-  if (delay < 0)
-    delay = 0;
+    st->delay = 0;
+  if (st->delay < 0)
+    st->delay = 0;
 
-  drop = get_boolean_resource("drop", "Boolean");
-  rise = get_boolean_resource("rise", "Boolean");
-  trails = get_boolean_resource("trails", "Boolean");
-  if (drop && rise) {
-	fprintf( stderr, "Sorry, bubbles can't both drop and rise\n" );
-	exit(1);
-  }
-  drop_dir = (drop ? 1 : -1);
-  if (drop || rise)
-	drop = 1;
+  s = get_string_resource (st->dpy, "mode", "Mode");
+  rise = False;
+  if (!s || !*s || !strcasecmp (s, "float"))
+    ;
+  else if (!strcasecmp (s, "rise"))
+    rise = True;
+  else if (!strcasecmp (s, "drop"))
+    st->drop = True;
+  else
+    fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
 
-  default_fg_pixel = get_pixel_resource ("foreground", "Foreground", dpy,
-					 cmap);
-  default_bg_pixel = get_pixel_resource ("background", "Background", dpy,
-					 cmap);
+  st->trails = get_boolean_resource(st->dpy, "trails", "Boolean");
+  st->drop_dir = (st->drop ? 1 : -1);
+  if (st->drop || rise)
+	st->drop = 1;
 
-  if (simple) {
+  st->default_fg_pixel = get_pixel_resource (st->dpy,
+					 cmap, "foreground", "Foreground");
+  st->default_bg_pixel = get_pixel_resource (st->dpy,
+					 cmap, "background", "Background");
+
+  if (st->simple) {
     /* This is easy */
-    broken = get_boolean_resource("broken", "Boolean");
-    if (broken)
-      if (! quiet)
+    st->broken = get_boolean_resource(st->dpy, "broken", "Boolean");
+    if (st->broken)
+      if (! st->quiet)
 	fprintf(stderr, "-broken not available in simple mode\n");
   } else {
 #ifndef FANCY_BUBBLES
-    simple = 1;
+    st->simple = 1;
 #else  /* FANCY_BUBBLES */
-    broken = get_boolean_resource("broken", "Boolean");
+    st->broken = get_boolean_resource(st->dpy, "broken", "Boolean");
 #endif /* FANCY_BUBBLES */
   }
 }
 
-static void
-init_bubbles (Display *dpy, Window window)
+static void *
+bubbles_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
   int i;
 
-  defdsp = dpy;
-  defwin = window;
+  st->dpy = dpy;
+  st->window = window;
 
-  get_resources(dpy, window);
+  get_resources(st);
 
-  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
 #ifdef DEBUG
   printf("sizof(int) on this platform is %d\n", sizeof(int));
   printf("sizof(long) on this platform is %d\n", sizeof(long));
 #endif /* DEBUG */
 
-  screen_width = xgwa.width;
-  screen_height = xgwa.height;
-  screen_depth = xgwa.depth;
-  defcmap = xgwa.colormap;
-  defvisual = xgwa.visual;
+  st->screen_width = xgwa.width;
+  st->screen_height = xgwa.height;
+  st->screen_depth = xgwa.depth;
 
-  if (simple) {
+  if (st->simple) {
     /* These are pretty much plucked out of the air */
-    bubble_min_radius = (int)(0.006*(double)(MIN(screen_width, 
-						 screen_height)));
-    bubble_max_radius = (int)(0.045*(double)(MIN(screen_width,
-						 screen_height)));
+    st->bubble_min_radius = (int)(0.006*(double)(MIN(st->screen_width, 
+						 st->screen_height)));
+    st->bubble_max_radius = (int)(0.045*(double)(MIN(st->screen_width,
+						 st->screen_height)));
     /* Some trivial values */
-    if (bubble_min_radius < 1)
-      bubble_min_radius = 1;
-    if (bubble_max_radius <= bubble_min_radius)
-      bubble_max_radius = bubble_min_radius + 1;
+    if (st->bubble_min_radius < 1)
+      st->bubble_min_radius = 1;
+    if (st->bubble_max_radius <= st->bubble_min_radius)
+      st->bubble_max_radius = st->bubble_min_radius + 1;
 
-    mesh_length = (2 * bubble_max_radius) + 3;
+    st->mesh_length = (2 * st->bubble_max_radius) + 3;
 
     /* store area of each bubble of certain radius as number of 1/10s of
        a pixel area.  PI is defined in <math.h> */
-    bubble_areas = (long *)xmalloc((bubble_max_radius + 2) * sizeof(int));
-    for (i = 0; i < bubble_min_radius; i++)
-      bubble_areas[i] = 0;
-    for (i = bubble_min_radius; i <= (bubble_max_radius+1); i++)
-      bubble_areas[i] = calc_bubble_area(i);
+    st->bubble_areas = (long *)xmalloc((st->bubble_max_radius + 2) * sizeof(int));
+    for (i = 0; i < st->bubble_min_radius; i++)
+      st->bubble_areas[i] = 0;
+    for (i = st->bubble_min_radius; i <= (st->bubble_max_radius+1); i++)
+      st->bubble_areas[i] = calc_bubble_area(st, i);
 
 	/* Now populate the droppage values */
-    bubble_droppages = (int *)xmalloc((bubble_max_radius + 2) * sizeof(int));
-    for (i = 0; i < bubble_min_radius; i++)
-      bubble_droppages[i] = 0;
-    for (i = bubble_min_radius; i <= (bubble_max_radius+1); i++)
-      bubble_droppages[i] = MAX_DROPPAGE * (i - bubble_min_radius) / (bubble_max_radius - bubble_min_radius);
+    st->bubble_droppages = (int *)xmalloc((st->bubble_max_radius + 2) * sizeof(int));
+    for (i = 0; i < st->bubble_min_radius; i++)
+      st->bubble_droppages[i] = 0;
+    for (i = st->bubble_min_radius; i <= (st->bubble_max_radius+1); i++)
+      st->bubble_droppages[i] = MAX_DROPPAGE * (i - st->bubble_min_radius) / (st->bubble_max_radius - st->bubble_min_radius);
 
-    mesh_length = (2 * bubble_max_radius) + 3;
+    st->mesh_length = (2 * st->bubble_max_radius) + 3;
   } else {
 #ifndef FANCY_BUBBLES
     fprintf(stderr,
@@ -1375,57 +1367,71 @@ init_bubbles (Display *dpy, Window window)
 #else  /* FANCY_BUBBLES */
     /* Make sure all #ifdef sort of things have been taken care of in
        get_resources(). */
-    default_to_pixmaps();
+    default_to_pixmaps(st);
 
     /* Set mesh length */
-    mesh_length = (2 * step_pixmaps[num_bubble_pixmaps-1]->radius) + 3;
+    st->mesh_length = (2 * st->step_pixmaps[st->num_bubble_pixmaps-1]->radius) + 3;
 #endif /* FANCY_BUBBLES */
 
     /* Am I missing something in here??? */
   }
 
-  mesh_width = (screen_width / mesh_length) + 1;
-  mesh_height = (screen_height / mesh_length) + 1;
-  mesh_cells = mesh_width * mesh_height;
-  init_mesh();
+  st->mesh_width = (st->screen_width / st->mesh_length) + 1;
+  st->mesh_height = (st->screen_height / st->mesh_length) + 1;
+  st->mesh_cells = st->mesh_width * st->mesh_height;
+  init_mesh(st);
 
-  calculate_adjacent_list();
+  calculate_adjacent_list(st);
 
-  adjust_areas();
+  adjust_areas(st);
 
   /* Graphics contexts for simple mode */
-  if (simple) {
-    gcv.foreground = default_fg_pixel;
-    draw_gc = XCreateGC (dpy, window, GCForeground, &gcv);
-    gcv.foreground = default_bg_pixel;
-    erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
+  if (st->simple) {
+    gcv.foreground = st->default_fg_pixel;
+    st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+    gcv.foreground = st->default_bg_pixel;
+    st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
   }
 
-  XClearWindow (dpy, window);
+  XClearWindow (st->dpy, st->window);
+
+# ifndef FANCY_BUBBLES
+  st->simple = True;
+# endif
+
+  return st;
 }
 
-static void 
-bubbles (Display *dpy, Window window)
+static unsigned long
+bubbles_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
   Bubble *tmp;
 
-  tmp = new_bubble();
-  add_to_mesh(tmp);
-  insert_new_bubble(tmp);
-
-  XSync (dpy, False);
+  tmp = new_bubble(st);
+  add_to_mesh(st, tmp);
+  insert_new_bubble(st, tmp);
+  return st->delay;
 }
 
 
-void 
-screenhack (Display *dpy, Window window)
+static void
+bubbles_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  init_bubbles (dpy, window);
-  while (1) {
-    bubbles (dpy, window);
-    screenhack_handle_events (dpy);
-    if (delay)
-      usleep(delay);
-  }
 }
 
+static Bool
+bubbles_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+bubbles_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("Bubbles", bubbles)

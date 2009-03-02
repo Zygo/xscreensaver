@@ -15,25 +15,16 @@
  * tennessy@cs.ubc.ca
  */
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-#define PROGCLASS	    "AntInspect"
-#define HACK_INIT	    init_antinspect
-#define HACK_DRAW	    draw_antinspect
-#define HACK_RESHAPE	    reshape_antinspect
-#define HACK_HANDLE_EVENT   antinspect_handle_event
-#define EVENT_MASK	    PointerMotionMask
-#define antinspect_opts	    xlockmore_opts
 #define DEFAULTS	    "*delay:   20000   \n" \
 			    "*showFPS: False   \n"
 
+# define refresh_antinspect 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
 #endif
 
-#include <GL/glu.h>
 #include "gltrackball.h"
 
 #define DEF_SHADOWS  "True"
@@ -53,7 +44,7 @@ static OptionStruct desc[] = {
   {"-/+shadows", "turn on/off ant shadows"}
 };
 
-ModeSpecOpt antinspect_opts = {sizeof opts / sizeof opts[0], 
+ENTRYPOINT ModeSpecOpt antinspect_opts = {sizeof opts / sizeof opts[0], 
 			    opts, 
 			    sizeof vars / sizeof vars[0], 
 			    vars, 
@@ -89,24 +80,27 @@ typedef struct {
   GLXContext *glx_context;
   trackball_state *trackball;
   Bool        button_down_p;
+  int linewidth;
+  float ant_step;
+
 } antinspectstruct;
 
-static float front_shininess[] = {60.0};
-static float front_specular[] =  {0.7, 0.7, 0.7, 1.0};
-static float ambient[] = {0.0, 0.0, 0.0, 1.0};
-static float diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] =  {0.7, 0.7, 0.7, 1.0};
+static const float ambient[] = {0.0, 0.0, 0.0, 1.0};
+static const float diffuse[] = {1.0, 1.0, 1.0, 1.0};
 static float position0[] = {0.0, 3.0, 0.0, 1.0};
-static float position1[] = {-1.0, -3.0, 1.0, 0.0};
-static float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] = {GL_TRUE};
+static const float position1[] = {-1.0, -3.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
-static float MaterialRed[] =     {0.6, 0.0, 0.0, 1.0};
-static float MaterialOrange[] =  {1.0, 0.69, 0.00, 1.0};
-static float MaterialGray[] =    {0.2, 0.2, 0.2, 1.0};
-static float MaterialBlack[] =   {0.1, 0.1, 0.1, 0.4};
-static float MaterialShadow[] =   {0.3, 0.3, 0.3, 0.3};
-static float MaterialGray5[] =   {0.5, 0.5, 0.5, 0.3};
-static float MaterialGray6[] =   {0.6, 0.6, 0.6, 1.0};
+static const float MaterialRed[] =     {0.6, 0.0, 0.0, 1.0};
+static const float MaterialOrange[] =  {1.0, 0.69, 0.00, 1.0};
+static const float MaterialGray[] =    {0.2, 0.2, 0.2, 1.0};
+static const float MaterialBlack[] =   {0.1, 0.1, 0.1, 0.4};
+static const float MaterialShadow[] =   {0.3, 0.3, 0.3, 0.3};
+static const float MaterialGray5[] =   {0.5, 0.5, 0.5, 0.3};
+static const float MaterialGray6[] =   {0.6, 0.6, 0.6, 1.0};
 
 static antinspectstruct *antinspect = (antinspectstruct *) NULL;
 
@@ -116,9 +110,10 @@ enum {X, Y, Z, W};
 enum {A, B, C, D};
 
 /* create a matrix that will project the desired shadow */
-void shadowmatrix(GLfloat shadowMat[4][4],
-		  GLfloat groundplane[4],
-		  GLfloat lightpos[4]) {
+static void shadowmatrix(GLfloat shadowMat[4][4],
+                         const GLfloat groundplane[4],
+                         const GLfloat lightpos[4]) 
+{
   GLfloat dot;
 
   /* find dot product between light position vector and ground plane normal */
@@ -148,10 +143,11 @@ void shadowmatrix(GLfloat shadowMat[4][4],
   shadowMat[3][3] = dot - lightpos[W] * groundplane[W];
 }
 
-GLfloat ground[4] = {0.0, 1.0, 0.0, -0.00001};
+static const GLfloat ground[4] = {0.0, 1.0, 0.0, -0.00001};
 
 /* simple filled sphere */
-static Bool mySphere(float radius) {
+static Bool mySphere(float radius) 
+{
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -164,7 +160,8 @@ static Bool mySphere(float radius) {
 }
 
 /* caged sphere */
-static Bool mySphere2(float radius) {
+static Bool mySphere2(float radius) 
+{
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -177,22 +174,22 @@ static Bool mySphere2(float radius) {
 }
 
 /* null cone */
-static Bool myCone2(float radius) { 
+static Bool myCone2(float radius) 
+{ 
   return True; 
 }
 
-int linewidth = 1;
-static float ant_step = 0;
-
 /* draw an ant */
-static Bool draw_antinspect_ant(antinspectstruct * mp, float *Material, int mono,
-			     Bool (*sphere)(float), Bool (*cone)(float)) {
-  float       cos1 = cos(ant_step);
-  float       cos2 = cos(ant_step + 2 * Pi / 3);
-  float       cos3 = cos(ant_step + 4 * Pi / 3);
-  float       sin1 = sin(ant_step);
-  float       sin2 = sin(ant_step + 2 * Pi / 3);
-  float       sin3 = sin(ant_step + 4 * Pi / 3);
+static Bool draw_antinspect_ant(antinspectstruct * mp, 
+                                const float *Material, int mono,
+                                Bool (*sphere)(float), Bool (*cone)(float)) 
+{
+  float       cos1 = cos(mp->ant_step);
+  float       cos2 = cos(mp->ant_step + 2 * Pi / 3);
+  float       cos3 = cos(mp->ant_step + 4 * Pi / 3);
+  float       sin1 = sin(mp->ant_step);
+  float       sin2 = sin(mp->ant_step + 2 * Pi / 3);
+  float       sin3 = sin(mp->ant_step + 4 * Pi / 3);
   
   if (mono)
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray5);
@@ -335,16 +332,16 @@ static Bool draw_antinspect_ant(antinspectstruct * mp, float *Material, int mono
 /* only works with 3 right now */
 #define ANTCOUNT 3
 
-float MaterialBen[4] = {0.25, 0.30, 0.46, 1.0};
+static const float MaterialBen[4] = {0.25, 0.30, 0.46, 1.0};
 
-static float* antmaterial[ANTCOUNT] = 
+static const float* antmaterial[ANTCOUNT] = 
   {MaterialRed, MaterialBen, MaterialOrange};
 static double antposition[ANTCOUNT] = {0.0, 120.0, 240.0};
-static double antvelocity[ANTCOUNT] = {0.3, 0.3, 0.3};
-static double antsphere[ANTCOUNT] = {1.2, 1.2, 1.2};
+static const double antvelocity[ANTCOUNT] = {0.3, 0.3, 0.3};
+static const double antsphere[ANTCOUNT] = {1.2, 1.2, 1.2};
 
 /* permutations */
-static double antorder[6][ANTCOUNT] = {{0, 1, 2},
+static const double antorder[6][ANTCOUNT] = {{0, 1, 2},
 				       {0, 2, 1},
 				       {2, 0, 1},
 				       {2, 1, 0},
@@ -352,7 +349,8 @@ static double antorder[6][ANTCOUNT] = {{0, 1, 2},
 				       {1, 0, 2}};
 
 /* draw the scene */
-static Bool draw_antinspect_strip(ModeInfo * mi) {
+static Bool draw_antinspect_strip(ModeInfo * mi) 
+{
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
   int         i, j;
   int         mono = MI_IS_MONO(mi);
@@ -438,7 +436,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi) {
 
       /* draw sphere */
       glRotatef(-20.0, 1.0, 0.0, 0.0);
-      glRotatef(-ant_step*2, 0.0, 0.0, 1.0);
+      glRotatef(-mp->ant_step*2, 0.0, 0.0, 1.0);
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialShadow);
       mySphere2(1.2);
 
@@ -479,7 +477,7 @@ static Bool draw_antinspect_strip(ModeInfo * mi) {
 
     /* draw sphere */
     glRotatef(-20.0, 1.0, 0.0, 0.0);
-    glRotatef(-ant_step*2, 0.0, 0.0, 1.0);
+    glRotatef(-mp->ant_step*2, 0.0, 0.0, 1.0);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mono ? MaterialGray5 : antmaterial[i]);
     mySphere2(1.2);
     glEnable(GL_BLEND);
@@ -494,16 +492,17 @@ static Bool draw_antinspect_strip(ModeInfo * mi) {
   }
 
   /* but the step size is the same! */
-  ant_step += 0.2;
+  mp->ant_step += 0.2;
   
   mp->ant_position += 1;
   return True;
 }
 
-void reshape_antinspect(ModeInfo * mi, int width, int height) {
+ENTRYPOINT void reshape_antinspect(ModeInfo * mi, int width, int height) 
+{
   double h = (GLfloat) height / (GLfloat) width;  
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
-  linewidth = (width / 512) + 1;
+  mp->linewidth = (width / 512) + 1;
 
   glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -512,11 +511,12 @@ void reshape_antinspect(ModeInfo * mi, int width, int height) {
   gluPerspective(45, 1/h, 7.0, 20.0);
 
   glMatrixMode(GL_MODELVIEW);
-  glLineWidth(linewidth);
-  glPointSize(linewidth);
+  glLineWidth(mp->linewidth);
+  glPointSize(mp->linewidth);
 }
 
-static void pinit(void) {
+static void pinit(void) 
+{
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   
@@ -543,7 +543,8 @@ static void pinit(void) {
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
-void release_antinspect(ModeInfo * mi) {
+ENTRYPOINT void release_antinspect(ModeInfo * mi) 
+{
   if(antinspect) {
 	free((void *) antinspect);
 	antinspect = (antinspectstruct *) NULL;
@@ -551,7 +552,8 @@ void release_antinspect(ModeInfo * mi) {
   FreeAllGL(mi);
 }
 
-Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) {
+ENTRYPOINT Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) 
+{
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
   
   if(event->xany.type == ButtonPress && event->xbutton.button == Button1) {
@@ -584,7 +586,8 @@ Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) {
   return False;
 }
 
-void init_antinspect(ModeInfo * mi) {
+ENTRYPOINT void init_antinspect(ModeInfo * mi) 
+{
   antinspectstruct *mp;
   
   if(antinspect == NULL) {
@@ -608,7 +611,8 @@ void init_antinspect(ModeInfo * mi) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void draw_antinspect(ModeInfo * mi) {
+ENTRYPOINT void draw_antinspect(ModeInfo * mi) 
+{
   antinspectstruct *mp;
   
   Display    *display = MI_DISPLAY(mi);
@@ -633,7 +637,7 @@ void draw_antinspect(ModeInfo * mi) {
      the antbubble */
   glTranslatef(0.0, 0.0, -10.0);
   gltrackball_rotate(mp->trackball);
-  glRotatef((15.0/2.0 + 15.0*sin(ant_step/100.0)), 1.0, 0.0, 0.0);
+  glRotatef((15.0/2.0 + 15.0*sin(mp->ant_step/100.0)), 1.0, 0.0, 0.0);
   glRotatef(30.0, 1.0, 0.0, 0.0);
   glRotatef(180.0, 0.0, 1.0, 0.0);
   
@@ -652,7 +656,9 @@ void draw_antinspect(ModeInfo * mi) {
   mp->step += 0.025;
 }
 
-void change_antinspect(ModeInfo * mi) {
+#ifndef STANDALONE
+ENTRYPOINT void change_antinspect(ModeInfo * mi) 
+{
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
   
   if (!mp->glx_context)
@@ -661,4 +667,7 @@ void change_antinspect(ModeInfo * mi) {
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
   pinit();
 }
+#endif /* !STANDALONE */
 
+
+XSCREENSAVER_MODULE ("AntInspect", antinspect)

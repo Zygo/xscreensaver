@@ -10,30 +10,7 @@
  * implied warranty.
  */
 
-#include <X11/Intrinsic.h>
 #include <math.h> /* for log2 */
-
-extern XtAppContext app;
-
-#define PROGCLASS	"TimeTunnel"
-#define HACK_INIT	init_tunnel
-#define HACK_DRAW	draw_tunnel
-#define HACK_RESHAPE	reshape_tunnel
-#define HACK_HANDLE_EVENT tunnel_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_START	"0.00"
-#define DEF_DILATE	"1.00"
-#define DEF_END		"27.79"
-#define DEF_LOCKLOGO	"False"
-#define DEF_TUNONLY	"False"
-#define DEF_REVERSE	"False"
-#define DEF_FOG		"True"
-#define DEF_TEXTURE     "True"
-#define MAX_TEXTURE 10
-#define CYL_LEN	    	14.0
-#define DIAMOND_LEN	10.0
 
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*count:        30          \n" \
@@ -44,6 +21,8 @@ extern XtAppContext app;
 
 
 
+# define refresh_tunnel 0
+# define release_tunnel 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -51,11 +30,22 @@ extern XtAppContext app;
 #include "colors.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include <ctype.h>
-#include <sys/time.h> /* for time based animations */
+
+
+#define DEF_START	"0.00"
+#define DEF_DILATE	"1.00"
+#define DEF_END		"27.79"
+#define DEF_LOCKLOGO	"False"
+#define DEF_DRAWLOGO	"True"
+#define DEF_REVERSE	"False"
+#define DEF_FOG		"True"
+#define DEF_TEXTURE     "True"
+#define MAX_TEXTURE 10
+#define CYL_LEN	    	14.0
+#define DIAMOND_LEN	10.0
 
 static float start, end, dilate;
-static Bool do_texture, tunonly, wire, reverse, do_fog;
+static Bool do_texture, drawlogo, wire, reverse, do_fog;
 #ifdef GET_SUED_BY_THE_BBC
 static Bool locklogo;
 #endif
@@ -68,7 +58,8 @@ static XrmOptionDescRec opts[] = {
 #ifdef GET_SUED_BY_THE_BBC
   {"-locklogo"	, ".locklogo",  XrmoptionNoArg, "true" },
 #endif
-  {"-tunonly"	, ".tunonly",   XrmoptionNoArg, "true" },
+  {"-logo"	, ".drawlogo",   XrmoptionNoArg, "true" },
+  {"+logo"	, ".drawlogo",   XrmoptionNoArg, "false" },
   {"-reverse"	, ".reverse",   XrmoptionNoArg, "true" },
   {"-fog"	, ".fog",  	XrmoptionNoArg, "false" },
 };
@@ -81,29 +72,27 @@ static argtype vars[] = {
 #ifdef GET_SUED_BY_THE_BBC
   {&locklogo,     "locklogo",   "LockLogo", DEF_LOCKLOGO  , t_Bool},
 #endif
-  {&tunonly,     "tunonly",   "TunnelOnly", DEF_TUNONLY  , t_Bool},
+  {&drawlogo,     "drawlogo",   "DrawLogo", DEF_DRAWLOGO  , t_Bool},
   {&reverse,     "reverse",   "Reverse", DEF_REVERSE  , t_Bool},
   {&do_fog,     "fog",   "Fog", DEF_FOG  , t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt tunnel_opts = {countof(opts), opts, countof(vars), vars, NULL};
 #include "xpm-ximage.h"
-#include "../../utils/images/logo-180.xpm"
-#include "../images/tunnelstar.xpm"
-#include "../images/timetunnel0.xpm"
-#include "../images/timetunnel1.xpm"
-#include "../images/timetunnel2.xpm"
+#include "images/logo-180.xpm"
+#include "images/tunnelstar.xpm"
+#include "images/timetunnel0.xpm"
+#include "images/timetunnel1.xpm"
+#include "images/timetunnel2.xpm"
 #ifdef GET_SUED_BY_THE_BBC
-# include "../images/tardis.xpm"
-# include "../images/whologo.xpm"
-# include "../images/whohead1.xpm"
-/* #include "../images/whohead_psy.xpm" */
+# include "images/tardis.xpm"
+# include "images/whologo.xpm"
+# include "images/whohead1.xpm"
+/* #include "images/whohead_psy.xpm" */
 # endif /* GET_SUED_BY_THE_BBC */
 
 
 #ifdef USE_GL /* whole file */
-
-#include <GL/glu.h>
 
 /* ANIMATION CONTROLS */
 /* an effect is a collection of floating point variables that vary with time.
@@ -139,8 +128,9 @@ typedef struct {
 static tunnel_configuration *tconf = NULL;
 
 /* allocate memory and populate effect with knot data */
-void init_effect(effect_t *e, int numk, int kwidth, 
-	float dir, float *data ) {
+static void init_effect(effect_t *e, int numk, int kwidth, 
+	float dir, float *data ) 
+{
 	int i, j;
 
 	e->numknots = numk;	
@@ -157,7 +147,7 @@ void init_effect(effect_t *e, int numk, int kwidth,
    Knots are linerally interpolated to yield float values, depending on
    knot width.  knot format is [time, data, data, data...].
    Data can be alpha, zvalue, etc. */
-void init_effects(effect_t *e, int effectnum)
+static void init_effects(effect_t *e, int effectnum)
 {
 	/* effect 1: wall tunnel. percent closed */
 	float e1d[6][2] = 
@@ -307,7 +297,8 @@ void init_effects(effect_t *e, int effectnum)
 
 
 /* set fog parameters, controlled by effect */
-void update_fog(float color, float density, float start, float end) {
+static void update_fog(float color, float density, float start, float end) 
+{
 		GLfloat col[4];
 	
 		col[0] = col[1] = col[2] = color;
@@ -323,7 +314,8 @@ void update_fog(float color, float density, float start, float end) {
 /* set effect's floating point data values by linearally interpolating
 between two knots whose times bound the current time: eff_time */
 
-void update_knots(effect_t *e, float eff_time) {
+static void update_knots(effect_t *e, float eff_time) 
+{
 	int i, j;
 	float timedelta, lowknot, highknot, *curknot, *nextknot;
 
@@ -351,7 +343,7 @@ void update_knots(effect_t *e, float eff_time) {
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_tunnel (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -374,7 +366,7 @@ reshape_tunnel (ModeInfo *mi, int width, int height)
 
 
 
-Bool
+ENTRYPOINT Bool
 tunnel_handle_event (ModeInfo *mi, XEvent *event)
 {
   tunnel_configuration *tc = &tconf[MI_SCREEN(mi)];
@@ -414,7 +406,7 @@ tunnel_handle_event (ModeInfo *mi, XEvent *event)
   return False;
 }
 
-void setTexParams(void)
+static void setTexParams(void)
 {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -423,13 +415,13 @@ void setTexParams(void)
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
-void update_animation(tunnel_configuration *tc) {
+static void update_animation(tunnel_configuration *tc) {
 
 	/* time based, of course*/
 	/* shift texture based on elapsed time since previous call*/
-	static struct timeval tv;
-	static struct timezone tz;
-	static int elapsed_usecs, elapsed_secs, i;
+	struct timeval tv;
+	struct timezone tz;
+	int elapsed_usecs, elapsed_secs, i;
 	float computed_timeshift;
 
 	/* get new animation time */
@@ -484,7 +476,7 @@ void update_animation(tunnel_configuration *tc) {
 /* draw a textured(tex) quad at a certain depth (z), and certain alpha (alpha), 
 with aspect ratio (aspect), and blending mode (blend_mode) of either adding
 or subtracting.  if alpha is zero or less, nothing happens */
-void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float alpha, float aspect,
+static void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float alpha, float aspect,
 		GLuint tex, int blend_mode)
 {
 
@@ -535,7 +527,7 @@ void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float alpha, fl
 /* draw a time tunnel.  used for both cylender and diamond tunnels.
    uses texture shifter (indexed by shiftnum) to simulate motion.
    tunnel does not move, and is acutally a display list.  if alpha = 0, skip */
-void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int texnum, int listnum, int shiftnum)
+static void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int texnum, int listnum, int shiftnum)
 {
 	if (alpha > 0.0) {
 		if (listnum  ==  tc->diamondlist)
@@ -568,7 +560,7 @@ void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int texnum, i
 grows to outline of tardis.  percent is how complete
 tardis outline is.  cap is to draw cap for nice fog effects */
 
-void make_wall_tunnel(ModeInfo *mi, tunnel_configuration *tc, float percent, float cap)
+static void make_wall_tunnel(ModeInfo *mi, tunnel_configuration *tc, float percent, float cap)
 {
 	/* tardis is about 2x1, so wrap tex around, starting at the base*/
 	/* tex coords are:
@@ -616,7 +608,7 @@ l|      |r
         	glBindTexture(GL_TEXTURE_2D, tc->texture_binds[0]);
 #endif
 	glColor3f(1.0, 1.0, 0.0);
-	if (cap > 0.0 && percent > 0.0 && ! tunonly && do_fog) {
+	if (cap > 0.0 && percent > 0.0 && drawlogo && do_fog) {
   		mi->polygon_count += 6;
 		glBegin(GL_TRIANGLE_FAN);
 		glVertex3f(0.0, 0.0, zdepth);
@@ -827,7 +819,7 @@ l|      |r
 /* wraps an int to between min and max.
    Kind of like the remainder when devided by (max - min).
    Used to create torus mapping on square array */
-int wrapVal(int val, int min, int max)
+static int wrapVal(int val, int min, int max)
 {
 	int ret;
 
@@ -851,9 +843,9 @@ int wrapVal(int val, int min, int max)
 
 */
 
-float mylog2(float x) { return ( log(x) / log(2));}
+static float mylog2(float x) { return ( log(x) / log(2));}
 
-static void LoadTexture(ModeInfo * mi, char **fn, unsigned int texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
+static void LoadTexture(ModeInfo * mi, char **fn, GLuint texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
 {
 	/* looping and temporary array index variables */
 	int ix, iy, bx, by, indx, indy, boxsize, cchan, tmpidx, dtaidx;
@@ -865,7 +857,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, unsigned int texbind, int blur
 
         XImage *teximage;    /* Texture data */
 
-	rescale = FALSE;
+	rescale = False;
 
 	boxsize = 2;
 	boxdiv = 1.0 / ( boxsize * 2.0 + 1.0) / ( boxsize * 2.0 + 1.0);
@@ -883,14 +875,14 @@ static void LoadTexture(ModeInfo * mi, char **fn, unsigned int texbind, int blur
 	tmpfa = mylog2((float) teximage->width);
 	bx = 2 << (int) (tmpfa -1);
 	if (bx != teximage->width) {
-		rescale = TRUE;
+		rescale = True;
 		if ((tmpfa - (int) tmpfa) >  0.5849)
 			bx = bx * 2;
 	}
 	tmpfa = mylog2((float) teximage->height);
 	by = 2 << (int) (tmpfa - 1);
 	if (by != teximage->height) {
-		rescale = TRUE;
+		rescale = True;
 		if ((tmpfa - (int) tmpfa) >  0.5849)
 			by = by * 2;
 	}
@@ -996,7 +988,8 @@ static void LoadTexture(ModeInfo * mi, char **fn, unsigned int texbind, int blur
 /* creates cylender for time tunnel. sides, zmin, zmax, rad(ius) obvious.
    stretch scales texture coords; makes tunnel go slower the larger it is.
    not drawn, but put into display list. */
-void makecyl(int sides, float zmin, float zmax, float rad, float stretch) {
+static void makecyl(int sides, float zmin, float zmax, float rad, float stretch) 
+{
 	int i;
 	float theta;
 
@@ -1033,7 +1026,7 @@ void makecyl(int sides, float zmin, float zmax, float rad, float stretch) {
 	glEnd();
 }
 
-void 
+ENTRYPOINT void 
 init_tunnel (ModeInfo *mi)
 {
   int i;
@@ -1080,7 +1073,7 @@ init_tunnel (ModeInfo *mi)
 
   if (wire) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	do_texture = FALSE;
+	do_texture = False;
   }
 
   if (do_texture)
@@ -1088,27 +1081,27 @@ init_tunnel (ModeInfo *mi)
           glGenTextures(MAX_TEXTURE, tc->texture_binds);
 	  
 	  /*LoadTexture(*mi, **fn, texbind, bluralpha, bw_color,  anegative, onealpha)*/
-          LoadTexture(mi, timetunnel0_xpm, tc->texture_binds[0], 0, 0.0, FALSE, FALSE);
-          LoadTexture(mi, timetunnel1_xpm, tc->texture_binds[2], 0, 0.0, FALSE, FALSE);
-          LoadTexture(mi, timetunnel2_xpm, tc->texture_binds[5], 0, 0.0, FALSE, FALSE);
-          LoadTexture(mi, tunnelstar_xpm, tc->texture_binds[4], 0, 0.0, FALSE, FALSE);
+          LoadTexture(mi, timetunnel0_xpm, tc->texture_binds[0], 0, 0.0, False, False);
+          LoadTexture(mi, timetunnel1_xpm, tc->texture_binds[2], 0, 0.0, False, False);
+          LoadTexture(mi, timetunnel2_xpm, tc->texture_binds[5], 0, 0.0, False, False);
+          LoadTexture(mi, tunnelstar_xpm, tc->texture_binds[4], 0, 0.0, False, False);
 # ifdef GET_SUED_BY_THE_BBC
 	  if (locklogo) {
 # endif /* GET_SUED_BY_THE_BBC */
-          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[3],  0,0.0, FALSE, FALSE);
+          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[3],  0,0.0, False, False);
 		tc->texture_binds[1] = tc->texture_binds[3];
 		tc->texture_binds[6] = tc->texture_binds[3];
 		tc->texture_binds[8] = tc->texture_binds[3];
 		/* negative */
-          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[9],  2,1.0, TRUE, TRUE);
+          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[9],  2,1.0, True, True);
 # ifdef GET_SUED_BY_THE_BBC
 	 } else {
-          	LoadTexture(mi, whologo_xpm, tc->texture_binds[3],  0,0.0, FALSE, FALSE);
-          	LoadTexture(mi, tardis_xpm, tc->texture_binds[1], 0, 0.0 ,FALSE, FALSE);
-          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[6], 0, 1.0, FALSE, FALSE);
-          	/* LoadTexture(mi, whohead_psy_xpm, tc->texture_binds[8], 1, 0.7, FALSE, FALSE); */
+          	LoadTexture(mi, whologo_xpm, tc->texture_binds[3],  0,0.0, False, False);
+          	LoadTexture(mi, tardis_xpm, tc->texture_binds[1], 0, 0.0 ,False, False);
+          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[6], 0, 1.0, False, False);
+          	/* LoadTexture(mi, whohead_psy_xpm, tc->texture_binds[8], 1, 0.7, False, False); */
 		/* negative */
-          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[9], 2, 1.0, TRUE, TRUE);
+          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[9], 2, 1.0, True, True);
 	  }
 # endif /* GET_SUED_BY_THE_BBC */
           glEnable(GL_TEXTURE_2D);
@@ -1146,7 +1139,7 @@ init_tunnel (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 draw_tunnel (ModeInfo *mi)
 {
   tunnel_configuration *tc = &tconf[MI_SCREEN(mi)];
@@ -1156,6 +1149,8 @@ draw_tunnel (ModeInfo *mi)
 
   if (!tc->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tc->glx_context));
 
   glShadeModel(GL_SMOOTH);
 
@@ -1188,7 +1183,7 @@ draw_tunnel (ModeInfo *mi)
 
   glEnable(GL_BLEND);
   draw_cyl(mi, tc, tc->effects[6].state[0], 5, tc->diamondlist, 2); 
-  if (! tunonly)
+  if (drawlogo)
   	draw_sign(mi, tc,tc->effects[12].state[0], tc->effects[12].state[1],  1.0 / 1.33, 9, 1); 
   glDisable(GL_BLEND);
   /* then tardis tunnel */
@@ -1200,13 +1195,13 @@ draw_tunnel (ModeInfo *mi)
 
        /*void draw_sign(mi, tc,z,alpha,aspect,tex,blendmode)*/
   /* tardis */
-  if (! tunonly)
+  if (drawlogo)
   	draw_sign(mi, tc, tc->effects[2].state[0], tc->effects[2].state[1], 2.0, 1, 0);
   /* logo */
-  if (! tunonly)
+  if (drawlogo)
   	draw_sign(mi, tc, tc->effects[5].state[0], tc->effects[5].state[1], 1.0, 3, 0);
   /*who head brite*/
-  if (! tunonly)
+  if (drawlogo)
   	draw_sign(mi, tc,1.0, tc->effects[10].state[0],  1.0 / 1.33, 6, 2);
   /*who head psychadelic REMOVED*/
   /* draw_sign(mi, tc,1.0, tc->effects[11].state[0],  1.0 / 1.33, 8, 0); */
@@ -1216,7 +1211,7 @@ draw_tunnel (ModeInfo *mi)
   draw_sign(mi, tc,  tc->effects[8].state[0],  tc->effects[8].state[0],  1.0, 4, 1);
  
   /* normal head */
-  if (! tunonly)
+  if (drawlogo)
   	draw_sign(mi, tc,1.0, tc->effects[9].state[0], 1.0 /  1.33, 6, 0);
 
   /* --- end composite image assembly --- */
@@ -1230,5 +1225,7 @@ draw_tunnel (ModeInfo *mi)
   check_gl_error("drawing done, calling swap buffers");
   glXSwapBuffers(dpy, window);
 }
+
+XSCREENSAVER_MODULE_2 ("TimeTunnel", timetunnel, tunnel)
 
 #endif /* USE_GL */

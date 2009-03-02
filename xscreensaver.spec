@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 4.24
+%define	version 5.00
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -15,6 +15,7 @@ Buildroot:	%{_tmppath}/%{name}-root
 
 %package base
 Summary: A minimal installation of xscreensaver.
+Summary(fr): Une installation minimale de xscreensaver.
 Group: Amusements/Graphics
 BuildRequires:	bc
 BuildRequires:	gettext
@@ -37,11 +38,13 @@ Obsoletes: xscreensaver
 
 %package extras
 Summary: An enhanced set of screensavers.
+Summary(fr): Un jeu étendu d'économiseurs d'écran.
 Group: Amusements/Graphics
 Requires: xscreensaver-base
 
 %package gl-extras
 Summary: An enhanced set of screensavers that require OpenGL.
+Summary(fr): Un jeu étendu d'économiseurs d'écran qui nécessitent OpenGL.
 Group: Amusements/Graphics
 Requires: xscreensaver-base
 Obsoletes: xscreensaver-gl
@@ -50,11 +53,21 @@ Obsoletes: xscreensaver-gl
 A modular screen saver and locker for the X Window System.
 More than 200 display modes are included in this package.
 
+%description -l fr
+Un économiseur d'écran modulaire pour le système X Window.
+Plus de 200 modes d'affichages sont inclus dans ce paquet.
+
 %description base
 A modular screen saver and locker for the X Window System.
 This package contains the bare minimum needed to blank and
 lock your screen.  The graphical display modes are the
 "xscreensaver-extras" and "xscreensaver-gl-extras" packages.
+
+%description -l fr base 
+Un économiseur d'écran modulaire pour le système X Window.
+Ce paquet contient le minimum vital pour éteindre et verouiller
+votre écran. Les modes d'affichages graphiques sont inclus
+dans les paquets "xscreensaver-extras" et "xscreensaver-gl-extras".
 
 %description extras
 A modular screen saver and locker for the X Window System.
@@ -62,11 +75,21 @@ This package contains a variety of graphical screen savers for
 your mind-numbing, ambition-eroding, time-wasting, hypnotized
 viewing pleasure.
 
+%description -l fr extras
+Un économiseur d'écran modulaire pour le système X Window.
+Ce paquet contient une pléthore d'économiseurs d'écran graphiques
+pour votre plaisir des yeux.
+
 %description gl-extras
 A modular screen saver and locker for the X Window System.
 This package contains a variety of OpenGL-based (3D) screen
 savers for your mind-numbing, ambition-eroding, time-wasting,
 hypnotized viewing pleasure.
+
+%description -l fr gl-extras
+Un économiseur d'écran modulaire pour le système X Window.
+Ce paquet contient une pléthore d'économiseurs d'écran basés sur OpenGL (3D)
+pour votre plaisir des yeux.
 
 %prep
 %setup -q
@@ -154,11 +177,15 @@ rm -rf ${RPM_BUILD_ROOT}
 %post base
 # This part runs on the end user's system, when the RPM is installed.
 
-pids=`/sbin/pidof xscreensaver`
-if [ -n "$pids" ]; then
-  echo "sending SIGHUP to running xscreensaver ($pids)..." >&2
-  kill -HUP $pids
-fi
+# This will cause the screen to unlock, which annoys people.  So, nevermind:
+# people will just have to remember to re-launch it themselves, like they
+# have to do with any other daemon they've upgraded.
+#
+#pids=`/sbin/pidof xscreensaver`
+#if [ -n "$pids" ]; then
+#  echo "sending SIGHUP to running xscreensaver ($pids)..." >&2
+#  kill -HUP $pids
+#fi
 
 %files -f base.files base
 %defattr(-,root,root)
@@ -168,3 +195,7 @@ fi
 
 %files -f gl-extras.files gl-extras
 %defattr(-,root,root)
+
+%changelog
+* Fri Nov  4  2005 Eric Lassauge <lassauge@users.sf.net>
+- Updated french translations

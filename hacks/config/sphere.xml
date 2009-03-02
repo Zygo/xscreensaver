@@ -14,8 +14,8 @@
             low="1" high="255" default="64"/>
 
   <_description>
-Another of the classic screenhacks of the distant past, this one
-draws shaded spheres in multiple colors.  This hack traces its
-lineage back to Tom Duff in 1982.
+Draws shaded spheres in multiple colors.
+
+Written by Tom Duff and Jamie Zawinski; 1982, 1997.
   </_description>
 </screensaver>

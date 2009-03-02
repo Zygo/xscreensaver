@@ -33,7 +33,8 @@
           low="1" high="100" default="1"/>
 
   <_description>
-Draws a colorful random-walk, in various forms.  Written by Rick
-Campbell.
+Draws a colorful random-walk, in various forms.
+
+Written by Rick Campbell; 1999.
   </_description>
 </screensaver>

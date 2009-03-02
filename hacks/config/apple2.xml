@@ -5,13 +5,16 @@
  <command arg="-root"/>
 
  <select id="mode">
-  <option id="random"    _label="Random Mode"/>
-  <option id="text"      _label="Text Mode"              arg-set="-text"/>
-  <option id="slideshow" _label="Slideshow Mode"         arg-set="-slideshow"/>
-  <option id="basic"     _label="Basic Programming Mode" arg-set="-basic"/>
+  <option id="random"    _label="Choose display mode randomly"/>
+  <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
+  <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
+  <option id="basic"     _label="Run BASIC programs"     arg-set="-mode basic"/>
  </select>
 
- <file id="program" _label="Text Program" arg="-program %"/>
+<!-- <file id="program" _label="Text Program" arg="-program %"/> -->
+
+ <xscreensaver-image />
+ <xscreensaver-text />
 
  <_description>
 
@@ -19,18 +22,12 @@ Simulates an original Apple ][ Plus computer in all its 1979 glory.  It
 also reproduces the appearance of display on a color television set of
 the period.
 
-In "Text Mode", it displays the output of a program, or the contents
-of a file or URL, as configured on the "Advanced" tab of the main
-Screensaver Preferences window.
-
-In "Slideshow Mode", it chooses a number of images from the image
-source you configured into XScreenSaver and displays them within the
-limitations of the Apple ][ display hardware.  (Six available colors
-in hi-res mode!)
-
 In "Basic Programming Mode", a simulated user types in a BASIC program
-and runs it.
+and runs it.  In "Text Mode", it displays the output of a program, or
+the contents of a file or URL.  In "Slideshow Mode", it chooses random
+images and displays them within the limitations of the Apple ][
+display hardware.  (Six available colors in hi-res mode!)
 
-By Trevor Blackwell.
+Written by Trevor Blackwell; 2003.
   </_description>
 </screensaver>

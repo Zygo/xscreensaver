@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002, 2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002, 2004, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,11 +13,13 @@
 
 #include "screenhack.h"
 #include <stdio.h>
-#include <X11/Xutil.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
 #endif
+
+#undef countof
+#define countof(x) (sizeof(x)/sizeof(*(x)))
 
 typedef struct {
   int which;
@@ -26,6 +28,7 @@ typedef struct {
   int rez;
   int speed;
   int scroll_tick;
+  unsigned int value;
   unsigned char *data;
   int count_zero;
 } scroller;
@@ -35,7 +38,7 @@ typedef struct {
   Window window;
   XWindowAttributes xgwa;
   GC draw_gc, erase_gc, text_gc;
-  XFontStruct *font;
+  XFontStruct *fonts[4];
   int border;
 
   enum { SEED_RAM, SEED_RANDOM, SEED_FILE } seed_mode;
@@ -52,11 +55,16 @@ typedef struct {
   XShmSegmentInfo shm_info;
 # endif
 
+  int delay;
+
 } state;
 
 
-state *
-init_memscroller (Display *dpy, Window window)
+static void reshape_memscroller (state *st);
+
+
+static void *
+memscroller_init (Display *dpy, Window window)
 {
   int i;
   XGCValues gcv;
@@ -64,8 +72,9 @@ init_memscroller (Display *dpy, Window window)
   char *s;
   st->dpy = dpy;
   st->window = window;
+  st->delay = get_integer_resource (dpy, "delay", "Integer");
+
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
-  XSelectInput(st->dpy, st->window, ExposureMask);
 
   /* Fill up the colormap with random colors.
      We don't actually use these explicitly, but in 8-bit mode,
@@ -77,53 +86,43 @@ init_memscroller (Display *dpy, Window window)
                           colors, &ncolors, True, True, 0, False);
   }
 
-  st->border = get_integer_resource ("borderSize", "BorderSize");
+  st->border = get_integer_resource (dpy, "borderSize", "BorderSize");
 
   {
-    char *fontname = get_string_resource ("font", "Font");
-    st->font = XLoadQueryFont (dpy, fontname);
-
-    if (!st->font)
+    int i;
+    int nfonts = countof (st->fonts);
+    for (i = nfonts-1; i >= 0; i--)
       {
-	static const char *fonts[] = {
-          "-*-courier-medium-r-*-*-*-1400-*-*-p-*-*-*",
-          "-*-courier-medium-r-*-*-*-600-*-*-p-*-*-*",
-          "-*-utopia-*-r-*-*-*-1400-*-*-p-*-*-*",
-          "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*",
-          "-*-utopia-*-r-*-*-*-240-*-*-p-*-*-*",
-          "-*-helvetica-*-r-*-*-*-240-*-*-p-*-*-*",
-          "-*-*-*-r-*-*-*-240-*-*-m-*-*-*",
-          "fixed", 0 };
-        i = 0;
-        while (fonts[i])
+        char *fontname;
+        char res[20];
+        sprintf (res, "font%d", i+1);
+        fontname = get_string_resource (dpy, res, "Font");
+        st->fonts[i] = XLoadQueryFont (dpy, fontname);
+        if (!st->fonts[i] && i < nfonts-1)
           {
-            st->font = XLoadQueryFont (dpy, fonts[i]);
-            if (st->font) break;
-            i++;
+            fprintf (stderr, "%s: unable to load font: \"%s\"\n",
+                     progname, fontname);
+            st->fonts[i] = st->fonts[i+1];
           }
-        if (st->font)
-          fprintf (stderr, "%s: couldn't load font \"%s\", using \"%s\"\n",
-                   progname, fontname, fonts[i]);
-        else
-          {
-            fprintf(stderr, "%s: couldn't load any font\n", progname);
-            exit(-1);
-          }
+      }
+    if (!st->fonts[0])
+      {
+        fprintf (stderr, "%s: unable to load any fonts!", progname);
+        exit (1);
       }
   }
 
   gcv.line_width = st->border;
 
-  gcv.background = get_pixel_resource("background", "Background",
-                                      st->dpy, st->xgwa.colormap);
-  gcv.foreground = get_pixel_resource("textColor", "Foreground",
-                                      st->dpy, st->xgwa.colormap);
-  gcv.font = st->font->fid;
+  gcv.background = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                      "background", "Background");
+  gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                      "textColor", "Foreground");
   st->text_gc = XCreateGC (st->dpy, st->window,
-                           GCForeground|GCBackground|GCFont, &gcv);
+                           GCForeground|GCBackground, &gcv);
 
-  gcv.foreground = get_pixel_resource("foreground", "Foreground",
-                                      st->dpy, st->xgwa.colormap);
+  gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap,
+                                      "foreground", "Foreground");
   st->draw_gc = XCreateGC (st->dpy, st->window,
                            GCForeground|GCBackground|GCLineWidth,
                            &gcv);
@@ -132,7 +131,7 @@ init_memscroller (Display *dpy, Window window)
                             GCForeground|GCBackground, &gcv);
 
 
-  s = get_string_resource ("drawMode", "DrawMode");
+  s = get_string_resource (dpy, "drawMode", "DrawMode");
   if (!s || !*s || !strcasecmp (s, "color"))
     st->draw_mode = DRAW_COLOR;
   else if (!strcasecmp (s, "mono"))
@@ -147,7 +146,7 @@ init_memscroller (Display *dpy, Window window)
   s = 0;
 
 
-  st->filename = get_string_resource ("filename", "Filename");
+  st->filename = get_string_resource (dpy, "filename", "Filename");
 
   if (!st->filename ||
       !*st->filename ||
@@ -175,7 +174,7 @@ init_memscroller (Display *dpy, Window window)
 
       sc->image = 0;
 # ifdef HAVE_XSHM_EXTENSION
-      st->shm_p = get_boolean_resource ("useSHM", "Boolean");
+      st->shm_p = get_boolean_resource (dpy, "useSHM", "Boolean");
       if (st->shm_p)
         {
           sc->image = create_xshm_image (st->dpy, st->xgwa.visual,
@@ -203,6 +202,7 @@ init_memscroller (Display *dpy, Window window)
         }
     }
 
+  reshape_memscroller (st);
   return st;
 }
 
@@ -279,13 +279,28 @@ more_bits (state *st, scroller *sc)
   static unsigned char *lomem = 0;
   static unsigned char *himem = 0;
   unsigned char r, g, b;
-  unsigned int v;
 
-  /* Pack bytes as RGBR so that we don't have to worry about actually
-     figuring out the color channel order.
+  /* vv: Each incoming byte rolls through all 4 bytes of this (it is sc->value)
+         This is the number displayed at the top.
+     pv: the pixel color value.  incoming bytes land in R,G,B, or maybe just G.
+   */
+  unsigned int vv, pv;
+
+  unsigned int rmsk = st->scrollers[0].image->red_mask;
+  unsigned int gmsk = st->scrollers[0].image->green_mask;
+  unsigned int bmsk = st->scrollers[0].image->blue_mask;
+  unsigned int amsk = ~(rmsk | gmsk | bmsk);
+
+  vv = sc->value;
+
+  /* Pack RGB into a pixel according to the XImage component masks;
+     set the remaining bits to 1 for the benefit of HAVE_COCOA alpha.
    */
 # undef PACK
-# define PACK(r,g,b) ((r) | ((g) << 8) | ((b) << 16) | ((r) << 24))
+# define PACK() ((((r << 24) | (r << 16) | (r << 8) | r) & rmsk) | \
+                 (((g << 24) | (g << 16) | (g << 8) | g) & gmsk) | \
+                 (((b << 24) | (b << 16) | (b << 8) | b) & bmsk) | \
+                 amsk)
 
   switch (st->seed_mode)
     {
@@ -301,14 +316,31 @@ more_bits (state *st, scroller *sc)
         sc->data = lomem;
 
 # ifdef HAVE_SBRK  /* re-get it each time through */
+      /* "The brk and sbrk functions are historical curiosities left over
+         from earlier days before the advent of virtual memory management."
+            -- sbrk(2) man page on MacOS
+       */
       himem = ((unsigned char *) sbrk(0)) - (2 * sizeof(void *));
 # endif
 
-      /* I don't understand what's going on there, but on MacOS X,
-         we're getting insane values for lomem and himem.  Is there
-         more than one heap? */
-      if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF)
+      if (!lomem || !himem) 
+        {
+          /* bad craziness! give up! */
+          st->seed_mode = SEED_RANDOM;
+          return 0;
+        }
+
+      /* I don't understand what's going on there, but on MacOS X, we're
+         getting insane values for lomem and himem (both Xlib and HAVE_COCOA).
+         Does malloc() draw from more than one heap? */
+      if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF) {
+# if 0
+        fprintf (stderr, "%s: wonky: 0x%08x - 0x%08x = 0x%08x\n", progname,
+                 (unsigned long) himem,  (unsigned long) lomem,
+                 (unsigned long) himem - (unsigned long) lomem);
+# endif
         himem = lomem + 0xFFFF;
+      }
 
       if (lomem >= himem) abort();
 
@@ -322,21 +354,23 @@ more_bits (state *st, scroller *sc)
           r = *sc->data++;
           g = *sc->data++;
           b = *sc->data++;
+          vv = (vv << 24) | (r << 16) | (g << 8) | b;
           break;
         case DRAW_MONO:
           r = 0;
           g = *sc->data++;
           b = 0;
+          vv = (vv << 8) | g;
           break;
         default:
           abort();
         }
 
-      v = PACK(r,g,b);
+      pv = PACK();
 
       /* avoid having many seconds of blackness: truncate zeros at 24K.
        */
-      if (v == 0)
+      if (vv == 0)
         sc->count_zero++;
       else
         sc->count_zero = 0;
@@ -346,23 +380,23 @@ more_bits (state *st, scroller *sc)
       break;
 
     case SEED_RANDOM:
-      v = random();
+      vv = random();
       switch (st->draw_mode)
         {
         case DRAW_COLOR:
-          r = (v >> 16) & 0xFF;
-          g = (v >>  8) & 0xFF;
-          b = (v      ) & 0xFF;
+          r = (vv >> 16) & 0xFF;
+          g = (vv >>  8) & 0xFF;
+          b = (vv      ) & 0xFF;
           break;
         case DRAW_MONO:
           r = 0;
-          g = v & 0xFF;
+          g = vv & 0xFF;
           b = 0;
           break;
         default:
           abort();
         }
-      v = PACK(r,g,b);
+      pv = PACK();
       break;
 
     case SEED_FILE:
@@ -394,17 +428,19 @@ more_bits (state *st, scroller *sc)
             GETC(r);
             GETC(g);
             GETC(b);
+            vv = (vv << 24) | (r << 16) | (g << 8) | b;
             break;
           case DRAW_MONO:
             r = 0;
             GETC(g);
             b = 0;
+            vv = (vv << 8) | g;
             break;
           default:
             abort();
           }
 # undef GETC
-        v = PACK(r,g,b);
+        pv = PACK();
       }
       break;
 
@@ -413,45 +449,59 @@ more_bits (state *st, scroller *sc)
     }
 
 # undef PACK
-  return v;
+
+  sc->value = vv;
+  return pv;
 }
 
 
 static void
-draw_string (state *st, unsigned int n)
+draw_string (state *st)
 {
   char buf[40];
   int direction, ascent, descent;
-  XCharStruct overall;
-  int x, y, w, h;
   int bot = st->scrollers[0].rect.y;
   const char *fmt = "%08X";
+  int i;
 
-  sprintf (buf, fmt, 0);
-  XTextExtents (st->font, buf, strlen(buf), 
-                &direction, &ascent, &descent, &overall);
-  sprintf (buf, "%08X", n);
+  /* Draw the first font that fits.
+   */
+  for (i = 0; i < countof (st->fonts); i++)
+    {
+      XCharStruct overall;
+      int x, y, w, h;
 
-  w = overall.width;
-  h = st->font->ascent + st->font->descent + 1;
-  x = (st->xgwa.width - w) / 2;
-  y = (bot - h) / 2;
+      if (! st->fonts[i]) continue;
 
-  if (y + h + 10 > bot) return;
+      sprintf (buf, fmt, 0);
+      XTextExtents (st->fonts[i], buf, strlen(buf), 
+                    &direction, &ascent, &descent, &overall);
+      sprintf (buf, "%08X", st->scrollers[0].value);
 
-  XFillRectangle (st->dpy, st->window, st->erase_gc,
-                  x-w, y, w*3, h);
-  XDrawString (st->dpy, st->window, st->text_gc,
-               x, y + st->font->ascent, buf, strlen(buf));
+      w = overall.width;
+      h = ascent + descent + 1;
+      x = (st->xgwa.width - w) / 2;
+      y = (bot - h) / 2;
+
+      if (y + h + 10 <= bot)
+        {
+          XSetFont (st->dpy, st->text_gc, st->fonts[i]->fid);
+          XFillRectangle (st->dpy, st->window, st->erase_gc,
+                          x-w, y, w*3, h);
+          XDrawString (st->dpy, st->window, st->text_gc,
+                       x, y + ascent, buf, strlen(buf));
+          break;
+        }
+    }
 }
 
 
-static void
-draw_memscroller (state *st)
+static unsigned long
+memscroller_draw (Display *dpy, Window window, void *closure)
 {
+  state *st = (state *) closure;
   int i;
-
-  draw_string (st, *((unsigned int *) st->scrollers[0].image->data));
+  draw_string (st);
 
   for (i = 0; i < st->nscrollers; i++)
     {
@@ -500,45 +550,50 @@ draw_memscroller (state *st)
                        sc->rect.width, sc->rect.height);
         }
     }
+
+  return st->delay;
 }
+
 
 static void
-handle_events (state *st)
+memscroller_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  XSync (st->dpy, False);
-  while (XPending (st->dpy))
-    {
-      XEvent event;
-      XNextEvent (st->dpy, &event);
-      if (event.xany.type == ConfigureNotify ||
-          event.xany.type == Expose)
-        {
-          XClearWindow (st->dpy, st->window);
-          reshape_memscroller (st);
-        }
+  state *st = (state *) closure;
+  XClearWindow (st->dpy, st->window);
+  reshape_memscroller (st);
+}
 
-      screenhack_handle_event (st->dpy, &event);
-    }
+static Bool
+memscroller_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
 }
 
 
-
-char *progclass = "MemScroller";
+static void
+memscroller_free (Display *dpy, Window window, void *closure)
+{
+}
 
-char *defaults [] = {
+
+static const char *memscroller_defaults [] = {
   ".background:		   black",
   "*drawMode:		   color",
   "*filename:		   (RAM)",
   ".textColor:		   #00FF00",
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
-  ".font:		   -*-courier-medium-r-*-*-*-1400-*-*-m-*-*-*",
+  ".font1:		   -*-courier-medium-r-*-*-*-1400-*-*-m-*-*-*",
+  ".font2:		   -*-courier-medium-r-*-*-*-600-*-*-m-*-*-*",
+  ".font3:		   -*-courier-medium-r-*-*-*-180-*-*-m-*-*-*",
+  ".font4:		   fixed",
   "*delay:		   10000",
   "*offset:		   0",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec memscroller_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-font",		".font",		XrmoptionSepArg, 0 },
   { "-filename",	".filename",		XrmoptionSepArg, 0 },
@@ -549,18 +604,4 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-
-void
-screenhack (Display *dpy, Window window)
-{
-  state *st = init_memscroller (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-  reshape_memscroller (st);
-  while (1)
-    {
-      draw_memscroller (st);
-      XSync (dpy, False);
-      handle_events (st);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("MemScroller", memscroller)

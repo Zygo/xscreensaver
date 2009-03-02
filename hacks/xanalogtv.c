@@ -24,16 +24,23 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <math.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h> /* for XtDatabase in hack_resources() */
+#endif
+
 #include "screenhack.h"
 #include "xpm-pixmap.h"
 #include "analogtv.h"
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Intrinsic.h>
 
 #include "images/logo-50.xpm"
 
@@ -42,13 +49,47 @@
 
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-static analogtv *tv=NULL;
+enum {
+  N_CHANNELS=12, /* Channels 2 through 13 on VHF */
+  MAX_MULTICHAN=2,
+  MAX_STATIONS=6
+}; 
 
-analogtv_font ugly_font;
+typedef struct chansetting_s {
+
+  analogtv_reception recs[MAX_MULTICHAN];
+  double noise_level;
+  Bool image_loaded_p;
+  char *filename;  /* mostly unused */
+  int dur;
+} chansetting;
+
+
+struct state {
+  Display *dpy;
+  Window window;
+  analogtv *tv;
+  analogtv_font ugly_font;
+  struct timeval basetime;
+
+  int n_stations;
+  analogtv_input *stations[MAX_STATIONS];
+  Bool image_loading_p;
+
+  int curinputi;
+  int change_ticks;
+  chansetting chansettings[N_CHANNELS];
+  chansetting *cs;
+
+  int change_now;
+
+};
+
 
 static void
 update_smpte_colorbars(analogtv_input *input)
 {
+  struct state *st = (struct state *) input->client_data;
   int col;
   int xpos, ypos;
   int black_ntsc[4];
@@ -122,20 +163,21 @@ update_smpte_colorbars(analogtv_input *input)
                                            space is provided" */
       localname[24]=0; /* limit length */
 
-      analogtv_draw_string_centered(input, &ugly_font, localname,
+      analogtv_draw_string_centered(input, &st->ugly_font, localname,
                                     xpos, ypos, black_ntsc);
     }
   }
-  ypos += ugly_font.char_h*5/2;
+  ypos += st->ugly_font.char_h*5/2;
 
-  analogtv_draw_xpm(tv, input,
+  analogtv_draw_xpm(st->tv, input,
                     logo_50_xpm, xpos - 100, ypos);
 
   ypos += 58;
 
 #if 0
-  analogtv_draw_string_centered(input, &ugly_font, "Please Stand By", xpos, ypos);
-  ypos += ugly_font.char_h*4;
+  analogtv_draw_string_centered(input, &st->ugly_font,
+                                "Please Stand By", xpos, ypos);
+  ypos += st->ugly_font.char_h*4;
 #endif
 
   {
@@ -146,7 +188,7 @@ update_smpte_colorbars(analogtv_input *input)
     /* Y2K: It is OK for this to use a 2-digit year because it's simulating a
        TV display and is purely decorative. */
     strftime(timestamp, sizeof(timestamp)-1, "%y.%m.%d %H:%M:%S ", tm);
-    analogtv_draw_string_centered(input, &ugly_font, timestamp,
+    analogtv_draw_string_centered(input, &st->ugly_font, timestamp,
                                   xpos, ypos, black_ntsc);
   }
 
@@ -192,17 +234,17 @@ draw_color_square(analogtv_input *input)
 }
 #endif
 
-char *progclass = "XAnalogTV";
-
-char *defaults [] = {
-  ".background:	     black",
-  ".foreground:	     white",
-  "*delay:	     5",
+static const char *xanalogtv_defaults [] = {
+  ".background:	        black",
+  ".foreground:	        white",
+  "*delay:	        5",
+  "*grabDesktopImages:  False",   /* HAVE_COCOA */
+  "*chooseRandomImages: True",    /* HAVE_COCOA */
   ANALOGTV_DEFAULTS
   0,
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec xanalogtv_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
@@ -220,28 +262,13 @@ char **test_patterns[] = {
 #endif
 
 
-enum {
-  N_CHANNELS=12, /* Channels 2 through 13 on VHF */
-  MAX_MULTICHAN=2
-}; 
-
-typedef struct chansetting_s {
-
-  analogtv_reception recs[MAX_MULTICHAN];
-  double noise_level;
-
-  int dur;
-} chansetting;
-
-static struct timeval basetime;
-
 static int
-getticks(void)
+getticks(struct state *st)
 {
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return ((tv.tv_sec - basetime.tv_sec)*1000 +
-          (tv.tv_usec - basetime.tv_usec)/1000);
+  return ((tv.tv_sec - st->basetime.tv_sec)*1000 +
+          (tv.tv_usec - st->basetime.tv_usec)/1000);
 }
 
 
@@ -252,8 +279,9 @@ getticks(void)
    on all the others (or colorbars, if no imageDirectory is set.)
  */
 static void
-hack_resources (void)
+hack_resources (Display *dpy)
 {
+#ifndef HAVE_COCOA
   static int count = -1;
   count++;
 
@@ -261,51 +289,103 @@ hack_resources (void)
     return;
   else if (count == 1)
     {
+      XrmDatabase db = XtDatabase (dpy);
       char *res = "desktopGrabber";
-      char *val = get_string_resource (res, "DesktopGrabber");
+      char *val = get_string_resource (dpy, res, "DesktopGrabber");
       char buf1[255];
       char buf2[255];
       XrmValue value;
-      sprintf (buf1, "%.100s.%.100s", progclass, res);
+      sprintf (buf1, "%.100s.%.100s", progname, res);
       sprintf (buf2, "%.200s -no-desktop", val);
       value.addr = buf2;
       value.size = strlen(buf2);
       XrmPutResource (&db, buf1, "String", &value);
     }
+#endif /* HAVE_COCOA */
 }
 
 
-int
-analogtv_load_random_image(analogtv *it, analogtv_input *input)
+static void analogtv_load_random_image(struct state *);
+
+
+static void image_loaded_cb (Screen *screen, Window window, Drawable pixmap,
+                             const char *name, XRectangle *geometry,
+                             void *closure)
 {
-  Pixmap pixmap;
-  XImage *image=NULL;
+  /* When an image has just been loaded, store it into the first available
+     channel.  If there are other unloaded channels, then start loading
+     another image.
+  */
+  struct state *st = (struct state *) closure;
+  int i;
+  int this = -1;
+  int next = -1;
+
+  if (!st->image_loading_p) abort();  /* only one at a time... */
+  st->image_loading_p = False;
+
+  for (i = 0; i < MAX_STATIONS; i++) {
+    if (! st->chansettings[i].image_loaded_p) {
+      if (this == -1) this = i;
+      else if (next == -1) next = i;
+    }
+  }
+  if (this == -1) abort();  /* no unloaded stations? */
+
+  /* Load this image into the next channel. */
+  {
+    analogtv_input *input = st->stations[this];
+    int width=ANALOGTV_PIC_LEN;
+    int height=width*3/4;
+    XImage *image = XGetImage (st->dpy, pixmap, 0, 0,
+                               width, height, ~0L, ZPixmap);
+    XFreePixmap(st->dpy, pixmap);
+
+    analogtv_setup_sync(input, 1, (random()%20)==0);
+    analogtv_load_ximage(st->tv, input, image);
+    if (image) XDestroyImage(image);
+    st->chansettings[this].image_loaded_p = True;
+#if 0
+    if (name) {
+      const char *s = strrchr (name, '/');
+      if (s) s++;
+      else s = name;
+      st->chansettings[this].filename = strdup (s);
+    }
+    fprintf(stderr, "%s: loaded channel %d, %s\n", progname, this, 
+            st->chansettings[this].filename);
+#endif
+  }
+
+  /* If there are still unloaded stations, fire off another loader. */
+  if (next != -1)
+    analogtv_load_random_image (st);
+}
+
+
+/* Queues a single image for loading.  Only load one at a time.
+   The image is done loading when st->img_loader is null and
+   it->loaded_image is a pixmap.
+ */
+static void
+analogtv_load_random_image(struct state *st)
+{
   int width=ANALOGTV_PIC_LEN;
   int height=width*3/4;
-  int rc;
+  Pixmap p;
 
-  pixmap=XCreatePixmap(it->dpy, it->window, width, height, it->visdepth);
-  XSync(it->dpy, False);
-  hack_resources();
-  load_random_image(it->screen, it->window, pixmap, NULL, NULL);
-  image = XGetImage(it->dpy, pixmap, 0, 0, width, height, ~0L, ZPixmap);
-  XFreePixmap(it->dpy, pixmap);
+  if (st->image_loading_p)  /* a load is already in progress */
+    return;
 
-  /* Make sure the window's background is not set to None, and get the
-     grabbed bits (if any) off it as soon as possible. */
-  XSetWindowBackground (it->dpy, it->window,
-                        get_pixel_resource ("background", "Background",
-                                            it->dpy, it->xgwa.colormap));
-  XClearWindow (it->dpy, it->window);
-
-  analogtv_setup_sync(input, 1, (random()%20)==0);
-  rc=analogtv_load_ximage(it, input, image);
-  if (image) XDestroyImage(image);
-  XSync(it->dpy, False);
-  return rc;
+  st->image_loading_p = True;
+  p = XCreatePixmap(st->dpy, st->window, width, height, st->tv->visdepth);
+  hack_resources(st->dpy);
+  load_image_async (st->tv->xgwa.screen, st->window, p, image_loaded_cb, st);
 }
 
-int
+
+#if 0
+static int
 analogtv_load_xpm(analogtv *it, analogtv_input *input, char **xpm)
 {
   Pixmap pixmap;
@@ -319,22 +399,29 @@ analogtv_load_xpm(analogtv *it, analogtv_input *input, char **xpm)
   XFreePixmap(it->dpy, pixmap);
   rc=analogtv_load_ximage(it, input, image);
   if (image) XDestroyImage(image);
-  XSync(it->dpy, False);
   return rc;
 }
-
-enum { MAX_STATIONS = 6 };
-static int n_stations;
-static analogtv_input *stations[MAX_STATIONS];
+#endif
 
 
-void add_stations(void)
+static void add_stations(struct state *st)
 {
-  while (n_stations < MAX_STATIONS) {
+  while (st->n_stations < MAX_STATIONS) {
     analogtv_input *input=analogtv_input_allocate();
-    stations[n_stations++]=input;
+    st->stations[st->n_stations++]=input;
+    input->client_data = st;
+  }
+}
 
-    if (n_stations==1) {
+
+static void load_station_images(struct state *st)
+{
+  int i;
+  for (i = 0; i < MAX_STATIONS; i++) {
+    analogtv_input *input = st->stations[i];
+
+    st->chansettings[i].image_loaded_p = True;
+    if (i == 0) {   /* station 0 is always colorbars */
       input->updater = update_smpte_colorbars;
       input->do_teletext=1;
     }
@@ -347,65 +434,62 @@ void add_stations(void)
     }
 #endif
     else {
-      analogtv_load_random_image(tv, input);
+      analogtv_load_random_image(st);
       input->do_teletext=1;
+      st->chansettings[i].image_loaded_p = False;
     }
   }
 }
 
 
-void
-screenhack (Display *dpy, Window window)
+static void *
+xanalogtv_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
-  int curinputi;
-  int change_ticks;
-  int using_mouse=0;
-  int change_now;
-  chansetting chansettings[N_CHANNELS];
-  chansetting *cs;
   int last_station=42;
-  int delay = get_integer_resource("delay", "Integer");
+  int delay = get_integer_resource(dpy, "delay", "Integer");
   if (delay < 1) delay = 1;
 
-  analogtv_make_font(dpy, window, &ugly_font, 7, 10, "6x10");
+  analogtv_make_font(dpy, window, &st->ugly_font, 7, 10, "6x10");
   
-  tv=analogtv_allocate(dpy, window);
-  tv->event_handler = screenhack_handle_event;
+  st->dpy = dpy;
+  st->window = window;
+  st->tv=analogtv_allocate(dpy, window);
 
-  add_stations();
+  add_stations(st);
 
-  analogtv_set_defaults(tv, "");
-  tv->need_clear=1;
+  analogtv_set_defaults(st->tv, "");
+  st->tv->need_clear=1;
 
   if (random()%4==0) {
-    tv->tint_control += pow(frand(2.0)-1.0, 7) * 180.0;
+    st->tv->tint_control += pow(frand(2.0)-1.0, 7) * 180.0;
   }
   if (1) {
-    tv->color_control += frand(0.3);
+    st->tv->color_control += frand(0.3);
   }
 
   for (i=0; i<N_CHANNELS; i++) {
-    memset(&chansettings[i], 0, sizeof(chansetting));
+    memset(&st->chansettings[i], 0, sizeof(chansetting));
 
-    chansettings[i].noise_level = 0.06;
-    chansettings[i].dur = 1000*delay;
+    st->chansettings[i].noise_level = 0.06;
+    st->chansettings[i].dur = 1000*delay;
 
     if (random()%6==0) {
-      chansettings[i].dur=600;
+      st->chansettings[i].dur=600;
     }
     else {
       int stati;
       for (stati=0; stati<MAX_MULTICHAN; stati++) {
-        analogtv_reception *rec=&chansettings[i].recs[stati];
+        analogtv_reception *rec=&st->chansettings[i].recs[stati];
         int station;
         while (1) {
-          station=random()%n_stations;
+          station=random()%st->n_stations;
           if (station!=last_station) break;
           if ((random()%10)==0) break;
         }
         last_station=station;
-        rec->input = stations[station];
+        rec->input = st->stations[station];
         rec->level = pow(frand(1.0), 3.0) * 2.0 + 0.05;
         rec->ofs=random()%ANALOGTV_SIGNAL_LEN;
         if (random()%3) {
@@ -425,60 +509,109 @@ screenhack (Display *dpy, Window window)
     }
   }
 
-  gettimeofday(&basetime,NULL);
+  gettimeofday(&st->basetime,NULL);
 
-  curinputi=0;
-  cs=&chansettings[curinputi];
-  change_ticks = cs->dur + 1500;
+  st->curinputi=0;
+  st->cs = &st->chansettings[st->curinputi];
+  st->change_ticks = st->cs->dur + 1500;
 
-  tv->powerup=0.0;
-  while (1) {
-    int curticks=getticks();
-    double curtime=curticks*0.001;
+  st->tv->powerup=0.0;
 
-    change_now=0;
-    if (analogtv_handle_events(tv)) {
-      using_mouse=1;
-      change_now=1;
-    }
-    if (change_now || (!using_mouse && curticks>=change_ticks 
-                       && tv->powerup > 10.0)) {
-      curinputi=(curinputi+1)%N_CHANNELS;
-      cs=&chansettings[curinputi];
-      change_ticks = curticks + cs->dur;
-      /* Set channel change noise flag */
-      tv->channel_change_cycles=200000;
-    }
+  load_station_images(st);
 
-    for (i=0; i<MAX_MULTICHAN; i++) {
-      analogtv_reception *rec=&cs->recs[i];
-      analogtv_input *inp=rec->input;
-      if (!inp) continue;
-
-      if (inp->updater) {
-        inp->next_update_time = curtime;
-        (inp->updater)(inp);
-      }
-      rec->ofs += rec->freqerr;
-    }
-
-    tv->powerup=curtime;
-
-    analogtv_init_signal(tv, cs->noise_level);
-    for (i=0; i<MAX_MULTICHAN; i++) {
-      analogtv_reception *rec=&cs->recs[i];
-      analogtv_input *inp=rec->input;
-      if (!inp) continue;
-
-      analogtv_reception_update(rec);
-      analogtv_add_signal(tv, rec);
-    }
-    analogtv_draw(tv);
-  }
-
-  XSync(dpy, False);
-  XClearWindow(dpy, window);
-  
-  if (tv) analogtv_release(tv);
+  return st;
 }
 
+static unsigned long
+xanalogtv_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int i;
+
+  int curticks=getticks(st);
+  double curtime=curticks*0.001;
+
+  if (st->change_now || 
+      (curticks >= st->change_ticks && st->tv->powerup > 10.0)) {
+    st->change_now = 0;
+    st->curinputi=(st->curinputi+1)%N_CHANNELS;
+    st->cs = &st->chansettings[st->curinputi];
+#if 0
+    fprintf (stderr, "%s: channel %d, %s\n", progname, st->curinputi,
+             st->cs->filename);
+#endif
+    st->change_ticks = curticks + st->cs->dur;
+    /* Set channel change noise flag */
+    st->tv->channel_change_cycles=200000;
+  }
+
+  for (i=0; i<MAX_MULTICHAN; i++) {
+    analogtv_reception *rec = &st->cs->recs[i];
+    analogtv_input *inp=rec->input;
+    if (!inp) continue;
+
+    if (inp->updater) {
+      inp->next_update_time = curtime;
+      (inp->updater)(inp);
+    }
+    rec->ofs += rec->freqerr;
+  }
+
+  st->tv->powerup=curtime;
+
+  analogtv_init_signal(st->tv, st->cs->noise_level);
+  for (i=0; i<MAX_MULTICHAN; i++) {
+    analogtv_reception *rec = &st->cs->recs[i];
+    analogtv_input *inp=rec->input;
+    if (!inp) continue;
+
+    analogtv_reception_update(rec);
+    analogtv_add_signal(st->tv, rec);
+  }
+  analogtv_draw(st->tv);
+  return 10000;
+}
+
+static void
+xanalogtv_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  analogtv_reconfigure(st->tv);
+}
+
+static Bool
+xanalogtv_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  struct state *st = (struct state *) closure;
+
+  if (event->type == ButtonPress)
+    {
+      st->change_now = 1;
+      return True;
+    }
+  else if (event->type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        {
+          st->change_now = 1;
+          return True;
+        }
+    }
+
+  return False;
+}
+
+static void
+xanalogtv_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  analogtv_release(st->tv);
+  free (st);
+}
+
+
+XSCREENSAVER_MODULE ("XAnalogTV", xanalogtv)

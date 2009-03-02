@@ -40,16 +40,13 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS     "Galaxy"
-# define HACK_INIT     init_galaxy
-# define HACK_DRAW     draw_galaxy
-# define galaxy_opts    xlockmore_opts
-# define DEFAULTS "*delay:  100  \n"   \
-     "*count:  -5   \n"   \
-     "*cycles:  250  \n"   \
-     "*size:   -3   \n"   \
-     "*ncolors:  64  \n"
+# define DEFAULTS	"*delay:  20000  \n"   \
+					"*count:  -5     \n"   \
+					"*cycles:  250   \n"   \
+					"*ncolors:  64   \n"
 # define UNIFORM_COLORS
+# define reshape_galaxy 0
+# define galaxy_handle_event 0
 # include "xlockmore.h"    /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"     /* from the xlockmore distribution */
@@ -57,31 +54,39 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 
 static Bool tracks;
 static Bool spin;
+static Bool dbufp;
 
 #define DEF_TRACKS "True"
 #define DEF_SPIN   "True"
+#define DEF_DBUF   "True"
 
 static XrmOptionDescRec opts[] =
 {
  {"-tracks", ".galaxy.tracks", XrmoptionNoArg, "on"},
  {"+tracks", ".galaxy.tracks", XrmoptionNoArg, "off"},
  {"-spin",   ".galaxy.spin",   XrmoptionNoArg, "on"},
- {"+spin",   ".galaxy.spin",   XrmoptionNoArg, "off"}
+ {"+spin",   ".galaxy.spin",   XrmoptionNoArg, "off"},
+ {"-dbuf",   ".galaxy.dbuf",   XrmoptionNoArg, "on"},
+ {"+dbuf",   ".galaxy.dbuf",   XrmoptionNoArg, "off"},
 };
 
 static argtype vars[] =
 {
  {&tracks, "tracks", "Tracks", DEF_TRACKS, t_Bool},
- {&spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool}
+ {&spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
+ {&dbufp,  "dbuf",   "Dbuf",   DEF_DBUF,   t_Bool}, 
 };
 
 static OptionStruct desc[] =
 {
  {"-/+tracks", "turn on/off star tracks"},
- {"-/+spin",   "do/don't spin viewpoint"}
+ {"-/+spin",   "do/don't spin viewpoint"},
+ {"-/+dbuf",   "turn on/off double buffering."},
 };
 
-ModeSpecOpt galaxy_opts = { 4, opts, 2, vars, desc };
+ENTRYPOINT ModeSpecOpt galaxy_opts =
+{sizeof opts / sizeof opts[0], opts,
+ sizeof vars / sizeof vars[0], vars, desc};
 
 
 #define FLOATRAND ((double) LRAND() / ((double) MAXRAND))
@@ -112,9 +117,9 @@ ModeSpecOpt galaxy_opts = { 4, opts, 2, vars, desc };
 
 
 #define COLORBASE  16
-  /* Colors for stars start here */
-#define COLORSTEP  (NUMCOLORS/COLORBASE) /* NUMCOLORS / COLORBASE colors
-per galaxy */
+/* colors per galaxy */
+/* #define COLORSTEP  (NUMCOLORS/COLORBASE) */
+# define COLORSTEP (MI_NCOLORS(mi)/COLORBASE)
 
 
 typedef struct {
@@ -295,7 +300,7 @@ gp->f_hititerations);
 #endif /*0 */
 }
 
-void
+ENTRYPOINT void
 init_galaxy(ModeInfo * mi)
 {
  unistruct  *gp;
@@ -307,6 +312,10 @@ init_galaxy(ModeInfo * mi)
  }
  gp = &universes[MI_SCREEN(mi)];
 
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  dbufp = False;
+# endif
+
  gp->f_hititerations = MI_CYCLES(mi);
 
  gp->scale = (double) (MI_WIN_WIDTH(mi) + MI_WIN_HEIGHT(mi)) / 8.0;
@@ -315,115 +324,121 @@ init_galaxy(ModeInfo * mi)
  startover(mi);
 }
 
-void
+ENTRYPOINT void
 draw_galaxy(ModeInfo * mi)
 {
- Display    *display = MI_DISPLAY(mi);
- Window      window = MI_WINDOW(mi);
- GC          gc = MI_GC(mi);
- unistruct  *gp = &universes[MI_SCREEN(mi)];
- double      d, eps, cox, six, cor, sir;  /* tmp */
- int         i, j, k; /* more tmp */
-    XPoint    *dummy = NULL;
+  Display    *display = MI_DISPLAY(mi);
+  Window      window = MI_WINDOW(mi);
+  GC          gc = MI_GC(mi);
+  unistruct  *gp = &universes[MI_SCREEN(mi)];
+  double      d, eps, cox, six, cor, sir;  /* tmp */
+  int         i, j, k; /* more tmp */
+  XPoint    *dummy = NULL;
 
- if(spin){
-  gp->rot_y += 0.01;
-  gp->rot_x += 0.004;
- }
+  if (! dbufp)
+    XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 
- cox = COSF(gp->rot_y);
- six = SINF(gp->rot_y);
-    cor = COSF(gp->rot_x);
-    sir = SINF(gp->rot_x);
-
-    eps = 1/(EPSILON * sqrt_EPSILON * DELTAT * DELTAT * QCONS);
-
- for (i = 0; i < gp->ngalaxies; ++i) {
-  Galaxy     *gt = &gp->galaxies[i];
-
-  for (j = 0; j < gp->galaxies[i].nstars; ++j) {
-   Star       *st = &gt->stars[j];
-   XPoint     *newp = &gt->newpoints[j];
-   double      v0 = st->vel[0];
-   double      v1 = st->vel[1];
-   double      v2 = st->vel[2];
-
-   for (k = 0; k < gp->ngalaxies; ++k) {
-    Galaxy     *gtk = &gp->galaxies[k];
-    double      d0 = gtk->pos[0] - st->pos[0];
-    double      d1 = gtk->pos[1] - st->pos[1];
-    double      d2 = gtk->pos[2] - st->pos[2];
-
-    d = d0 * d0 + d1 * d1 + d2 * d2;
-    if (d > EPSILON)
-     d = gt->mass / (d * sqrt(d)) * DELTAT * DELTAT * QCONS;
-    else
-        d = gt->mass * eps;
-    v0 += d0 * d;
-    v1 += d1 * d;
-    v2 += d2 * d;
-   }
-
-   st->vel[0] = v0;
-   st->vel[1] = v1;
-   st->vel[2] = v2;
-
-   st->pos[0] += v0;
-   st->pos[1] += v1;
-   st->pos[2] += v2;
-
-   newp->x = (short) (((cox * st->pos[0]) - (six * st->pos[2])) *
-gp->scale) + gp->midx;
-   newp->y = (short) (((cor * st->pos[1]) - (sir * ((six * st->pos[0]) +
-(cox * st->pos[2])))) * gp->scale) + gp->midy;
-
+  if(spin){
+    gp->rot_y += 0.01;
+    gp->rot_x += 0.004;
   }
 
-  for (k = i + 1; k < gp->ngalaxies; ++k) {
-   Galaxy     *gtk = &gp->galaxies[k];
-   double      d0 = gtk->pos[0] - gt->pos[0];
-   double      d1 = gtk->pos[1] - gt->pos[1];
-   double      d2 = gtk->pos[2] - gt->pos[2];
+  cox = COSF(gp->rot_y);
+  six = SINF(gp->rot_y);
+  cor = COSF(gp->rot_x);
+  sir = SINF(gp->rot_x);
 
-   d = d0 * d0 + d1 * d1 + d2 * d2;
-   if (d > EPSILON)
-    d = gt->mass * gt->mass / (d * sqrt(d)) * DELTAT * QCONS;
-   else
-    d = gt->mass * gt->mass / (EPSILON * sqrt_EPSILON) * DELTAT * QCONS;
+  eps = 1/(EPSILON * sqrt_EPSILON * DELTAT * DELTAT * QCONS);
 
-   d0 *= d;
-   d1 *= d;
-   d2 *= d;
-   gt->vel[0] += d0 / gt->mass;
-   gt->vel[1] += d1 / gt->mass;
-   gt->vel[2] += d2 / gt->mass;
-   gtk->vel[0] -= d0 / gtk->mass;
-   gtk->vel[1] -= d1 / gtk->mass;
-   gtk->vel[2] -= d2 / gtk->mass;
+  for (i = 0; i < gp->ngalaxies; ++i) {
+    Galaxy     *gt = &gp->galaxies[i];
+
+    for (j = 0; j < gp->galaxies[i].nstars; ++j) {
+      Star       *st = &gt->stars[j];
+      XPoint     *newp = &gt->newpoints[j];
+      double      v0 = st->vel[0];
+      double      v1 = st->vel[1];
+      double      v2 = st->vel[2];
+
+      for (k = 0; k < gp->ngalaxies; ++k) {
+        Galaxy     *gtk = &gp->galaxies[k];
+        double      d0 = gtk->pos[0] - st->pos[0];
+        double      d1 = gtk->pos[1] - st->pos[1];
+        double      d2 = gtk->pos[2] - st->pos[2];
+
+        d = d0 * d0 + d1 * d1 + d2 * d2;
+        if (d > EPSILON)
+          d = gt->mass / (d * sqrt(d)) * DELTAT * DELTAT * QCONS;
+        else
+          d = gt->mass * eps;
+        v0 += d0 * d;
+        v1 += d1 * d;
+        v2 += d2 * d;
+      }
+
+      st->vel[0] = v0;
+      st->vel[1] = v1;
+      st->vel[2] = v2;
+
+      st->pos[0] += v0;
+      st->pos[1] += v1;
+      st->pos[2] += v2;
+
+      newp->x = (short) (((cox * st->pos[0]) - (six * st->pos[2])) *
+                         gp->scale) + gp->midx;
+      newp->y = (short) (((cor * st->pos[1]) - (sir * ((six * st->pos[0]) +
+                                                       (cox * st->pos[2]))))
+                         * gp->scale) + gp->midy;
+
+    }
+
+    for (k = i + 1; k < gp->ngalaxies; ++k) {
+      Galaxy     *gtk = &gp->galaxies[k];
+      double      d0 = gtk->pos[0] - gt->pos[0];
+      double      d1 = gtk->pos[1] - gt->pos[1];
+      double      d2 = gtk->pos[2] - gt->pos[2];
+
+      d = d0 * d0 + d1 * d1 + d2 * d2;
+      if (d > EPSILON)
+        d = gt->mass * gt->mass / (d * sqrt(d)) * DELTAT * QCONS;
+      else
+        d = gt->mass * gt->mass / (EPSILON * sqrt_EPSILON) * DELTAT * QCONS;
+
+      d0 *= d;
+      d1 *= d;
+      d2 *= d;
+      gt->vel[0] += d0 / gt->mass;
+      gt->vel[1] += d1 / gt->mass;
+      gt->vel[2] += d2 / gt->mass;
+      gtk->vel[0] -= d0 / gtk->mass;
+      gtk->vel[1] -= d1 / gtk->mass;
+      gtk->vel[2] -= d2 / gtk->mass;
+    }
+
+    gt->pos[0] += gt->vel[0] * DELTAT;
+    gt->pos[1] += gt->vel[1] * DELTAT;
+    gt->pos[2] += gt->vel[2] * DELTAT;
+
+    if (dbufp) {
+      XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+      XDrawPoints(display, window, gc, gt->oldpoints, gt->nstars,
+                  CoordModeOrigin);
+    }
+    XSetForeground(display, gc, MI_PIXEL(mi, COLORSTEP * gt->galcol));
+    XDrawPoints(display, window, gc, gt->newpoints, gt->nstars,
+                CoordModeOrigin);
+
+    dummy = gt->oldpoints;
+    gt->oldpoints = gt->newpoints;
+    gt->newpoints = dummy;
   }
 
-  gt->pos[0] += gt->vel[0] * DELTAT;
-  gt->pos[1] += gt->vel[1] * DELTAT;
-  gt->pos[2] += gt->vel[2] * DELTAT;
-
-         XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
-  XDrawPoints(display, window, gc, gt->oldpoints, gt->nstars,
-CoordModeOrigin);
-  XSetForeground(display, gc, MI_PIXEL(mi, COLORSTEP * gt->galcol));
-         XDrawPoints(display, window, gc, gt->newpoints, gt->nstars,
-CoordModeOrigin);
-
-         dummy = gt->oldpoints;
-  gt->oldpoints = gt->newpoints;
-  gt->newpoints = dummy;
- }
-
- gp->step++;
- if (gp->step > gp->f_hititerations * 4)
-  startover(mi);
+  gp->step++;
+  if (gp->step > gp->f_hititerations * 4)
+    startover(mi);
 }
 
-void
+ENTRYPOINT void
 release_galaxy(ModeInfo * mi)
 {
  if (universes != NULL) {
@@ -436,8 +451,10 @@ release_galaxy(ModeInfo * mi)
  }
 }
 
-void
+ENTRYPOINT void
 refresh_galaxy(ModeInfo * mi)
 {
  /* Do nothing, it will refresh by itself */
 }
+
+XSCREENSAVER_MODULE ("Galaxy", galaxy)

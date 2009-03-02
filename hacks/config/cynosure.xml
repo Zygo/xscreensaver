@@ -19,9 +19,8 @@
 
 
   <_description>
-A hack similar to `greynetic', but less frenetic.  The first
-implementation was by Stephen Linhart; then Ozymandias G. Desiderata
-wrote a Java applet clone.  That clone was discovered by Jamie
-Zawinski, and ported to C for inclusion here.
+Random dropshadowed rectangles pop onto the screen in lockstep.
+
+Written by Ozymandias G. Desiderata, Jamie Zawinski, and Stephen Linhart; 1998.
   </_description>
 </screensaver>

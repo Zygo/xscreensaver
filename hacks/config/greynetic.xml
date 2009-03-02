@@ -10,7 +10,8 @@
           convert="invert"/>
 
   <_description>
-This draws random colored and stippled rectangles.  Written by Jamie
-Zawinski.
+Draws random colored, stippled and transparent rectangles.
+
+Written by Jamie Zawinski; 1992.
   </_description>
 </screensaver>

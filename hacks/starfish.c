@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,18 +10,8 @@
  */
 
 #include <math.h>
-#include <time.h>
-#include <sys/time.h> /* for gettimeofday() */
 #include "screenhack.h"
 #include "spline.h"
-
-
-static Colormap cmap;
-static Bool cycle_p;
-static XColor *colors;
-static int ncolors;
-static int fg_index;
-static GC gc;
 
 #define SCALE        1000	/* fixed-point math, for sub-pixel motion */
 
@@ -34,7 +24,6 @@ enum starfish_mode {
   zoom
 };
   
-
 struct starfish {
   enum starfish_mode mode;
   Bool blob_p;
@@ -53,21 +42,45 @@ struct starfish {
   int n_prev;
 };
 
+
+struct state {
+  Display *dpy;
+  Window window;
+
+  Colormap cmap;
+  XColor *colors;
+  int ncolors;
+  int fg_index;
+  GC gc;
+
+  int delay, delay2, duration, direction, blob_p;
+
+  Bool done_once;
+  Bool initted;
+  unsigned long black, white;
+
+  long tick;
+  time_t start_time;
+
+  struct starfish *starfish;
+};
+
+
 static struct starfish *
-make_starfish (int maxx, int maxy, int size)
+make_starfish (struct state *st, int maxx, int maxy, int size)
 {
   struct starfish *s = (struct starfish *) calloc(1, sizeof(*s));
   int i;
   int mid;
 
-  s->blob_p = get_boolean_resource ("blob", "Blob");
-  s->elasticity = SCALE * get_float_resource ("thickness", "Thickness");
+  s->blob_p = st->blob_p;
+  s->elasticity = SCALE * get_float_resource (st->dpy, "thickness", "Thickness");
 
   if (s->elasticity == 0)
     /* bell curve from 0-15, avg 7.5 */
     s->elasticity = RAND(5*SCALE) + RAND(5*SCALE) + RAND(5*SCALE);
 
-  s->rotv = get_float_resource ("rotation", "Rotation");
+  s->rotv = get_float_resource (st->dpy, "rotation", "Rotation");
   if (s->rotv == -1)
     /* bell curve from 0-12 degrees, avg 6 */
     s->rotv = frand(4) + frand(4) + frand(4);
@@ -88,10 +101,10 @@ make_starfish (int maxx, int maxy, int size)
     size *= frand(0.35) + frand(0.35) + 0.3;
 
   {
-    static char skips[] = { 2, 2, 2, 2,
-			    3, 3, 3,
-			    6, 6,
-			    12 };
+    static const char skips[] = { 2, 2, 2, 2,
+                                  3, 3, 3,
+                                  6, 6,
+                                  12 };
     s->skip = skips[random() % sizeof(skips)];
   }
 
@@ -116,12 +129,12 @@ make_starfish (int maxx, int maxy, int size)
   s->th = frand(M_PI+M_PI) * RANDSIGN();
 
   {
-    static char sizes[] = { 3, 3, 3, 3, 3,
-			    4, 4, 4, 4,
-			    5, 5, 5, 5, 5, 5,
-			    8, 8, 8,
-			    10,
-			    35 };
+    static const char sizes[] = { 3, 3, 3, 3, 3,
+                                  4, 4, 4, 4,
+                                  5, 5, 5, 5, 5, 5,
+                                  8, 8, 8,
+                                  10,
+                                  35 };
     int nsizes = sizeof(sizes);
     if (s->skip > 3)
       nsizes -= 4;
@@ -264,7 +277,7 @@ spin_starfish (struct starfish *s)
 
 
 static void
-draw_starfish (Display *dpy, Drawable drawable, GC gc, struct starfish *s,
+draw_starfish (struct state *st, Drawable drawable, GC this_gc, struct starfish *s,
 	   Bool fill_p)
 {
   compute_closed_spline (s->spline);
@@ -278,8 +291,8 @@ draw_starfish (Display *dpy, Drawable drawable, GC gc, struct starfish *s,
       memcpy (points+i, s->prev, (j * sizeof(*points)));
 
       if (s->blob_p)
-	XClearWindow (dpy, drawable);
-      XFillPolygon (dpy, drawable, gc, points, i+j, Complex, CoordModeOrigin);
+	XClearWindow (st->dpy, drawable);
+      XFillPolygon (st->dpy, drawable, this_gc, points, i+j, Complex, CoordModeOrigin);
       free (points);
 
       free (s->prev);
@@ -295,7 +308,7 @@ draw_starfish (Display *dpy, Drawable drawable, GC gc, struct starfish *s,
     {
       int i;
       for (i = 0; i < s->npoints; i++)
-	XDrawLine (dpy, drawable, gc, s->x/SCALE, s->y/SCALE,
+	XDrawLine (st->dpy, drawable, this_gc, s->x/SCALE, s->y/SCALE,
 		   s->spline->control_x[i], s->spline->control_y[i]);
     }
 #endif
@@ -303,236 +316,221 @@ draw_starfish (Display *dpy, Drawable drawable, GC gc, struct starfish *s,
 
 
 static struct starfish *
-make_window_starfish (Display *dpy, Window window)
+make_window_starfish (struct state *st)
 {
   XWindowAttributes xgwa;
   int size;
-  Bool blob_p = get_boolean_resource ("blob", "Blob");
-  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
   size = (xgwa.width < xgwa.height ? xgwa.width : xgwa.height);
-  if (blob_p) size /= 2;
+  if (st->blob_p) size /= 2;
   else size *= 1.3;
-  return make_starfish (xgwa.width, xgwa.height, size);
+  return make_starfish (st, xgwa.width, xgwa.height, size);
 }
 
 
 static struct starfish *
-init_starfish (Display *dpy, Window window)
+reset_starfish (struct state *st)
 {
-  static Bool first_time = True;
   XGCValues gcv;
+  unsigned int flags = 0;
   XWindowAttributes xgwa;
-  Bool blob_p = get_boolean_resource ("blob", "Blob");
-  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-  cmap = xgwa.colormap;
-  cycle_p = get_boolean_resource ("cycle", "Cycle");
+  st->cmap = xgwa.colormap;
 
-  if (!first_time)
+  if (st->done_once)
     {
-      if (colors && ncolors)
-	free_colors (dpy, cmap, colors, ncolors);
-      if (colors)
-	free (colors);
-      colors = 0;
+      if (st->colors && st->ncolors)
+	free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
+      if (st->colors)
+	free (st->colors);
+      st->colors = 0;
     }
 
-  ncolors = get_integer_resource ("colors", "Colors");
-  if (ncolors < 2) ncolors = 2;
-  if (ncolors <= 2) mono_p = True;
+  st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+  if (st->ncolors < 2) st->ncolors = 2;
+  if (st->ncolors <= 2) mono_p = True;
 
   if (mono_p)
-    colors = 0;
+    st->colors = 0;
   else
-    colors = (XColor *) malloc(sizeof(*colors) * (ncolors+1));
-
-  if (mono_p || blob_p)
-    cycle_p = False;
+    st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
 
   if (mono_p)
     ;
   else if (random() % 3)
-    make_smooth_colormap (dpy, xgwa.visual, cmap, colors, &ncolors,
-			  True, &cycle_p, True);
+    make_smooth_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+			  True, 0, True);
   else
-    make_uniform_colormap (dpy, xgwa.visual, cmap, colors, &ncolors,
-			   True, &cycle_p, True);
+    make_uniform_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+			   True, 0, True);
 
-  if (ncolors < 2) ncolors = 2;
-  if (ncolors <= 2) mono_p = True;
+  if (st->ncolors < 2) st->ncolors = 2;
+  if (st->ncolors <= 2) mono_p = True;
 
-  if (mono_p) cycle_p = False;
+  st->fg_index = 0;
 
-  fg_index = 0;
-
-  if (!mono_p && !blob_p)
+  if (!mono_p && !st->blob_p)
     {
-      gcv.foreground = colors[fg_index].pixel;
-      XSetWindowBackground (dpy, window, gcv.foreground);
+      flags |= GCForeground;
+      gcv.foreground = st->colors[st->fg_index].pixel;
+      XSetWindowBackground (st->dpy, st->window, gcv.foreground);
     }
 
-  if (first_time)
+  if (!st->done_once)
     {
-      XClearWindow (dpy, window);
-      first_time = False;
+      XClearWindow (st->dpy, st->window);
+      st->done_once = 1;
     }
 
+  flags |= GCFillRule;
   gcv.fill_rule = EvenOddRule;
-  gc = XCreateGC (dpy, window, GCForeground | GCFillRule, &gcv);
+  st->gc = XCreateGC (st->dpy, st->window, flags, &gcv);
 
-  return make_window_starfish (dpy, window);
+  return make_window_starfish (st);
 }
 
 
 
 static void
-run_starfish (Display *dpy, Window window, struct starfish *s)
+run_starfish (struct state *st, struct starfish *s)
 {
   throb_starfish (s);
   spin_starfish (s);
-  draw_starfish (dpy, window, gc, s, False);
+  draw_starfish (st, st->window, st->gc, s, False);
 
   if (mono_p)
     {
-      static Bool init = False;
-      static unsigned long black, white;
-      if (!init)
+      if (!st->initted)
 	{
-	  black = get_pixel_resource ("background", "Background", dpy, cmap);
-	  white = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-	  init = True;
-	  fg_index = white;
-	  XSetForeground (dpy, gc, fg_index);
+	  st->black = get_pixel_resource (st->dpy, st->cmap, "background", "Background");
+	  st->white = get_pixel_resource (st->dpy, st->cmap, "foreground", "Foreground");
+	  st->initted = True;
+	  st->fg_index = st->white;
+	  XSetForeground (st->dpy, st->gc, st->fg_index);
 	}
       else if (!s->blob_p)
 	{
-	  fg_index = (fg_index == black ? white : black);
-	  XSetForeground (dpy, gc, fg_index);
+	  st->fg_index = (st->fg_index == st->black ? st->white : st->black);
+	  XSetForeground (st->dpy, st->gc, st->fg_index);
 	}
     }
   else
     {
-      fg_index = (fg_index + 1) % ncolors;
-      XSetForeground (dpy, gc, colors [fg_index].pixel);
+      st->fg_index = (st->fg_index + 1) % st->ncolors;
+      XSetForeground (st->dpy, st->gc, st->colors [st->fg_index].pixel);
     }
 }
 
+
+static void *
+starfish_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  char *s;
+  st->dpy = dpy;
+  st->window = window;
+  st->delay = get_integer_resource (st->dpy, "delay", "Delay");
+  st->delay2 = get_integer_resource (st->dpy, "delay2", "Delay") * 1000000;
+/*  st->duration = get_seconds_resource (st->dpy, "duration", "Seconds");*/
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+  st->direction = (random() % 1) ? 1 : -1;
+
+  s = get_string_resource (st->dpy, "mode", "Mode");
+  if (s && !strcasecmp (s, "blob"))
+    st->blob_p = True;
+  else if (s && !strcasecmp (s, "zoom"))
+    st->blob_p = False;
+  else if (!s || !*s || !strcasecmp (s, "random"))
+    st->blob_p = !(random() % 3);
+  else
+    fprintf (stderr, "%s: mode must be blob, zoom, or random", progname);
+
+  if (st->blob_p)
+    st->delay *= 3;
+
+  st->starfish = reset_starfish (st);
+  return st;
+}
+
+static unsigned long
+starfish_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  struct starfish *s = st->starfish;
+  time_t now;
+
+  run_starfish (st, s);
+
+  if (st->duration > 0)
+    {
+      if (st->start_time == 0)
+        st->start_time = time ((time_t) 0);
+      now = time ((time_t) 0);
+      if (st->start_time + st->duration < now)
+        {
+          st->start_time = now;
+
+          free_starfish (s);
+
+          /* Every now and then, pick new colors; otherwise, just build
+             a new starfish with the current colors. */
+          if (! (random () % 10))
+            s = reset_starfish (st);
+          else
+            s = make_window_starfish (st);
+        }
+    }
+
+  return st->delay;
+}
+
+static void
+starfish_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+starfish_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+starfish_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
 
 
 
-char *progclass = "Starfish";
 
-char *defaults [] = {
+static const char *starfish_defaults [] = {
   ".background:		black",
   ".foreground:		white",
   "*delay:		10000",
-  "*cycleDelay:		100000",
   "*thickness:		0",		/* pixels, 0 = random */
   "*rotation:		-1",		/* degrees, -1 = "random" */
   "*colors:		200",
-  "*cycle:		true",
   "*duration:		30",
   "*delay2:		5",
-  "*blob:		false",
+  "*mode:		random",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec starfish_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-delay2",		".delay2",	XrmoptionSepArg, 0 },
-  { "-cycle-delay",	".cycleDelay",	XrmoptionSepArg, 0 },
   { "-thickness",	".thickness",	XrmoptionSepArg, 0 },
   { "-rotation",	".rotation",	XrmoptionSepArg, 0 },
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
-  { "-cycle",		".cycle",	XrmoptionNoArg, "True" },
-  { "-no-cycle",	".cycle",	XrmoptionNoArg, "False" },
   { "-duration",	".duration",	XrmoptionSepArg, 0 },
-  { "-blob",		".blob",	XrmoptionNoArg, "True" },
-  { "-no-blob",		".blob",	XrmoptionNoArg, "False" },
+  { "-mode",		".mode",	XrmoptionSepArg, 0 },
+  { "-blob",		".mode",	XrmoptionNoArg, "blob" },
+  { "-zoom",		".mode",	XrmoptionNoArg, "zoom" },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  struct starfish *s = init_starfish (dpy, window);
-  int delay = get_integer_resource ("delay", "Delay");
-  int delay2 = get_integer_resource ("delay2", "Delay") * 1000000;
-  int cycle_delay = get_integer_resource ("cycleDelay", "Delay");
-  int duration = get_seconds_resource ("duration", "Seconds");
-  Bool blob_p = get_boolean_resource ("blob", "Blob");
-  time_t start = time ((time_t) 0);
-  time_t now;
-  int direction = (random() % 1) ? 1 : -1;
-
-  if (blob_p)
-    delay *= 3;
-
-  while (1)
-    {
-      run_starfish (dpy, window, s);
-      XSync (dpy, False);
-
-      screenhack_handle_events (dpy);
-      if (cycle_p && cycle_delay)
-	{
-	  if (cycle_delay <= delay)
-	    {
-	      int i = 0;
-	      while (i < delay)
-		{
-		  rotate_colors (dpy, cmap, colors, ncolors, direction);
-		  usleep(cycle_delay);
-		  i += cycle_delay;
-		}
-	    }
-	  else
-	    {
-	      static long tick = 0;
-	      if (tick >= cycle_delay)
-		{
-		  rotate_colors (dpy, cmap, colors, ncolors, direction);
-		  tick = 0;
-		}
-	      if (delay)
-		usleep(delay);
-	      tick += delay;
-	    }
-
-	  if (! (random() % 1000))
-	    direction = -direction;
-	}
-      else if (delay)
-	usleep (delay);
-
-      if (duration > 0)
-	{
-	  now = time ((time_t) 0);
-	  if (start + duration < now)
-	    {
-	      start = now;
-
-	      free_starfish (s);
-
-	      if (delay2 && !blob_p && cycle_p)
-		{
-		  int i = 0;
-		  while (i < delay2)
-		    {
-		      rotate_colors (dpy, cmap, colors, ncolors, direction);
-                      screenhack_handle_events (dpy);
-		      usleep(cycle_delay);
-		      i += cycle_delay;
-		    }
-		}
-
-	      /* Every now and then, pick new colors; otherwise, just build
-		 a new starfish with the current colors. */
-	      if (! (random () % 10))
-		s = init_starfish (dpy, window);
-	      else
-		s = make_window_starfish(dpy, window);
-	    }
-	}
-    }
-}
+XSCREENSAVER_MODULE ("Starfish", starfish)

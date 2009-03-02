@@ -26,8 +26,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-char *progclass = "Critical";
-
 
 typedef struct {
   int width, height;		/* in cells */
@@ -40,36 +38,41 @@ typedef struct {
 } CriticalSettings;
 
 
-CriticalModel * model_allocate (int w, int h);
-void model_initialize (CriticalModel *model);
+/* Number of screens that should be drawn before reinitializing the
+   model, and count of the number of screens done so far. */
 
-/* Options this module understands.  */
-XrmOptionDescRec options[] = {
-  { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-colorscheme",	".colorscheme",	XrmoptionSepArg, 0 },
-  { "-restart",		".restart",	XrmoptionSepArg, 0 },
-  { "-cellsize",	".cellsize",	XrmoptionSepArg, 0 },
-  { "-batchcount",	".batchcount",  XrmoptionSepArg, 0 },
-  { "-trail",		".trail",	XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }		/* end */
+struct state {
+  Display *dpy;
+  Window window;
+
+  int n_restart, i_restart;
+  XWindowAttributes	wattr;
+  CriticalModel		*model;
+  int			batchcount;
+  XPoint		*history; /* in cell coords */
+  long			delay_usecs;
+  GC			fgc, bgc;
+  XGCValues		gcv;
+  CriticalSettings	settings;
+
+  int			d_n_colors;
+  XColor			*d_colors;
+  int			lines_per_color;
+  int			d_i_color;
+  int			d_pos;
+  int			d_wrapped;
+
+  int d_i_batch;
+  eraser_state *eraser;
+
 };
 
 
-/* Default xrm resources. */
-char *defaults[] = {
-  ".background:			black",
-  "*colorscheme:		smooth",
-  "*delay:			10000", 
-  "*ncolors:			64",
-  "*restart:			8",
-  "*batchcount:			1500",
-  "*trail:			50",
-  0				/* end */
-};
+static CriticalModel * model_allocate (int w, int h);
+static void model_initialize (CriticalModel *);
 
 
-int
+static int
 clip (int low, int val, int high)
 {
   if (val < low)
@@ -84,23 +87,23 @@ clip (int low, int val, int high)
 /* Allocate an return a new simulation model datastructure.
  */
 
-CriticalModel *
+static CriticalModel *
 model_allocate (int model_w, int model_h)
 {
-  CriticalModel		*model;
+  CriticalModel		*mm;
 
-  model = malloc (sizeof (CriticalModel));
-  if (!model)
+  mm = malloc (sizeof (CriticalModel));
+  if (!mm)
     return 0;
 
-  model->width = model_w;
-  model->height = model_h;
+  mm->width = model_w;
+  mm->height = model_h;
 
-  model->cells = malloc (sizeof (unsigned short) * model_w * model_h);
-  if (!model->cells)
+  mm->cells = malloc (sizeof (unsigned short) * model_w * model_h);
+  if (!mm->cells)
     return 0;
 
-  return model;
+  return mm;
 }
 
 
@@ -123,14 +126,14 @@ model_allocate (int model_w, int model_h)
 */
 
 
-void
-model_initialize (CriticalModel *model)
+static void
+model_initialize (CriticalModel *mm)
 {
   int i;
   
-  for (i = model->width * model->height - 1; i >= 0; i--)
+  for (i = mm->width * mm->height - 1; i >= 0; i--)
     {
-      model->cells[i] = (unsigned short) random ();
+      mm->cells[i] = (unsigned short) random ();
     }
 }
 
@@ -143,7 +146,7 @@ model_initialize (CriticalModel *model)
    Neighbours that fall off the edge of the model are simply
    ignored. */
 static void
-model_step (CriticalModel *model, XPoint *ptop)
+model_step (CriticalModel *mm, XPoint *ptop)
 {
   int			x, y, i;
   int			dx, dy;
@@ -153,12 +156,12 @@ model_step (CriticalModel *model, XPoint *ptop)
   /* Find the top cell */
   top_value = 0;
   i = 0;
-  for (y = 0; y < model->height; y++)
-    for (x = 0; x < model->width; x++)
+  for (y = 0; y < mm->height; y++)
+    for (x = 0; x < mm->width; x++)
       {
-	if (model->cells[i] >= top_value)
+	if (mm->cells[i] >= top_value)
 	  {
-	    top_value = model->cells[i];
+	    top_value = mm->cells[i];
 	    top_x = x;
 	    top_y = y;
 	  }
@@ -168,17 +171,17 @@ model_step (CriticalModel *model, XPoint *ptop)
   /* Replace it and its neighbours with new random values */
   for (dy = -1; dy <= 1; dy++)
     {
-      int y = top_y + dy;
-      if (y < 0  ||  y >= model->height)
+      int yy = top_y + dy;
+      if (yy < 0  ||  yy >= mm->height)
 	continue;
       
       for (dx = -1; dx <= 1; dx++)
 	{
-	  int x = top_x + dx;
-	  if (x < 0  ||  x >= model->width)
+	  int xx = top_x + dx;
+	  if (xx < 0  ||  xx >= mm->width)
 	    continue;
 	  
-	  model->cells[y * model->width + x] = (unsigned short) random();
+	  mm->cells[yy * mm->width + xx] = (unsigned short) random();
 	}
     }
 
@@ -189,16 +192,14 @@ model_step (CriticalModel *model, XPoint *ptop)
 
 /* Construct and return in COLORS and N_COLORS a new set of colors,
    depending on the resource settings.  */
-void
-setup_colormap (Display *dpy, XWindowAttributes *wattr,
-		XColor **colors,
-		int *n_colors)
+static void
+setup_colormap (struct state *st, XColor **colors, int *n_colors)
 {
   Bool			writable;
   char const *		color_scheme;
 
   /* Make a colormap */
-  *n_colors = get_integer_resource ("ncolors", "Integer");
+  *n_colors = get_integer_resource (st->dpy, "ncolors", "Integer");
   if (*n_colors < 3)
     *n_colors = 3;
   
@@ -211,26 +212,26 @@ setup_colormap (Display *dpy, XWindowAttributes *wattr,
     }
 
   writable = False;
-  color_scheme = get_string_resource ("colorscheme", "ColorScheme");
+  color_scheme = get_string_resource (st->dpy, "colorscheme", "ColorScheme");
   
   if (!strcmp (color_scheme, "random"))
     {
-      make_random_colormap (dpy, wattr->visual,
-			    wattr->colormap,
+      make_random_colormap (st->dpy, st->wattr.visual,
+			    st->wattr.colormap,
 			    *colors, n_colors,
 			    True, True, &writable, True);
     }
   else if (!strcmp (color_scheme, "smooth"))
     {
-      make_smooth_colormap (dpy, wattr->visual,
-			    wattr->colormap,
+      make_smooth_colormap (st->dpy, st->wattr.visual,
+			    st->wattr.colormap,
 			    *colors, n_colors,
 			    True, &writable, True);
     }
   else 
     {
-      make_uniform_colormap (dpy, wattr->visual,
-			     wattr->colormap,
+      make_uniform_colormap (st->dpy, st->wattr.visual,
+			     st->wattr.colormap,
 			     *colors, n_colors, True,
 			     &writable, True);
     }
@@ -239,10 +240,9 @@ setup_colormap (Display *dpy, XWindowAttributes *wattr,
 
 /* Free allocated colormap created by setup_colormap. */
 static void
-free_colormap (Display *dpy, XWindowAttributes *wattr,
-               XColor **colors, int n_colors)
+free_colormap (struct state *st, XColor **colors, int n_colors)
 {
-  free_colors (dpy, wattr->colormap, *colors, n_colors);
+  free_colors (st->dpy, st->wattr.colormap, *colors, n_colors);
   free (*colors);
 }
 
@@ -250,155 +250,201 @@ free_colormap (Display *dpy, XWindowAttributes *wattr,
 
 /* Draw one step of the hack.  Positions are cell coordinates. */
 static void
-draw_step (CriticalSettings *settings,
-	   Display *dpy, Window window, GC gc,
-	   int pos, XPoint *history)
+draw_step (struct state *st, GC gc, int pos)
 {
-  int cell_size = settings->cell_size;
+  int cell_size = st->settings.cell_size;
   int half = cell_size/2;
-  int old_pos = (pos + settings->trail - 1) % settings->trail;
+  int old_pos = (pos + st->settings.trail - 1) % st->settings.trail;
   
-  pos = pos % settings->trail;
+  pos = pos % st->settings.trail;
 
-  XDrawLine (dpy, window, gc, 
-	     history[pos].x * cell_size + half,
-	     history[pos].y * cell_size + half,
-	     history[old_pos].x * cell_size + half,
-	     history[old_pos].y * cell_size + half);
+  XDrawLine (st->dpy, st->window, gc, 
+	     st->history[pos].x * cell_size + half,
+	     st->history[pos].y * cell_size + half,
+	     st->history[old_pos].x * cell_size + half,
+	     st->history[old_pos].y * cell_size + half);
 }
 
 
 
-/* Display a self-organizing criticality screen hack.  The program
-   runs indefinately on the root window. */
-void
-screenhack (Display *dpy, Window window)
+static void *
+critical_init (Display *dpy, Window window)
 {
-  int			n_colors;
-  XColor		*colors;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int			model_w, model_h;
-  CriticalModel		*model;
-  int			lines_per_color = 10;
-  int			i_color = 0;
-  long			delay_usecs;
-  int			batchcount;
-  XPoint		*history; /* in cell coords */
-  int			pos = 0;
-  int			wrapped = 0;
-  GC			fgc, bgc;
-  XGCValues		gcv;
-  XWindowAttributes	wattr;
-  CriticalSettings	settings;
-
-  /* Number of screens that should be drawn before reinitializing the
-     model, and count of the number of screens done so far. */
-  int			n_restart, i_restart;
+  st->dpy = dpy;
+  st->window = window;
 
   /* Find window attributes */
-  XGetWindowAttributes (dpy, window, &wattr);
+  XGetWindowAttributes (st->dpy, st->window, &st->wattr);
 
-  batchcount = get_integer_resource ("batchcount", "Integer");
-  if (batchcount < 5)
-    batchcount = 5;
+  st->batchcount = get_integer_resource (st->dpy, "batchcount", "Integer");
+  if (st->batchcount < 5)
+    st->batchcount = 5;
+
+  st->lines_per_color = 10;
 
   /* For the moment the model size is just fixed -- making it vary
      with the screen size just makes the hack boring on large
      screens. */
   model_w = 80;
-  settings.cell_size = wattr.width / model_w;
-  model_h = wattr.height / settings.cell_size;
+  st->settings.cell_size = st->wattr.width / model_w;
+  model_h = st->wattr.height / st->settings.cell_size;
 
   /* Construct the initial model state. */
 
-  settings.trail = clip(2, get_integer_resource ("trail", "Integer"), 1000);
+  st->settings.trail = clip(2, get_integer_resource (st->dpy, "trail", "Integer"), 1000);
   
-  history = malloc (sizeof history[0] * settings.trail);
-  if (!history)
+  st->history = calloc (st->settings.trail, sizeof (st->history[0]));
+  if (!st->history)
     {
       fprintf (stderr, "critical: "
 	       "couldn't allocate trail history of %d cells\n",
-	       settings.trail);
-      return;
+	       st->settings.trail);
+      abort();
     }
 
-  model = model_allocate (model_w, model_h);
-  if (!model)
+  st->model = model_allocate (model_w, model_h);
+  if (!st->model)
     {
       fprintf (stderr, "critical: error preparing the model\n");
-      return;
+      abort();
     }
   
   /* make a black gc for the background */
-  gcv.foreground = get_pixel_resource ("background", "Background",
-				       dpy, wattr.colormap);
-  bgc = XCreateGC (dpy, window, GCForeground, &gcv);
+  st->gcv.foreground = get_pixel_resource (st->dpy, st->wattr.colormap,
+                                       "background", "Background");
+  st->bgc = XCreateGC (st->dpy, st->window, GCForeground, &st->gcv);
 
-  fgc = XCreateGC (dpy, window, 0, &gcv);
+  st->fgc = XCreateGC (st->dpy, st->window, 0, &st->gcv);
 
-  delay_usecs = get_integer_resource ("delay", "Integer");
-  n_restart = get_integer_resource ("restart", "Integer");
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (dpy, st->fgc, False);
+  jwxyz_XSetAntiAliasing (dpy, st->bgc, False);
+#endif
+
+  st->delay_usecs = get_integer_resource (st->dpy, "delay", "Integer");
+  st->n_restart = get_integer_resource (st->dpy, "restart", "Integer");
     
-  /* xscreensaver will kill or stop us when the user does something
-   * that deserves attention. */
-  i_restart = 0;
-  
-  while (1) {
-    int i_batch;
+  setup_colormap (st, &st->d_colors, &st->d_n_colors);
+  model_initialize (st->model);
+  model_step (st->model, &st->history[0]);
+  st->d_pos = 1;
+  st->d_wrapped = 0;
+  st->i_restart = 0;
+  st->d_i_batch = st->batchcount;
 
-    if (i_restart == 0)
-      {
-	/* Time to start a new simulation, this one has probably got
-	   to be a bit boring. */
-	setup_colormap (dpy, &wattr, &colors, &n_colors);
-	erase_full_window (dpy, window);
-	model_initialize (model);
-	model_step (model, &history[0]);
-	pos = 1;
-	wrapped = 0;
-      }
-    
-    for (i_batch = batchcount; i_batch; i_batch--)
-      {
-	/* Set color */
-	if ((i_batch % lines_per_color) == 0)
-	  {
-	    i_color = (i_color + 1) % n_colors;
-	    gcv.foreground = colors[i_color].pixel;
-	    XChangeGC (dpy, fgc, GCForeground, &gcv);
-	  }
-	
-	assert(pos >= 0 && pos < settings.trail);
-	model_step (model, &history[pos]);
-
-	draw_step (&settings, dpy, window, fgc, pos, history);
-
-	/* we use the history as a ring buffer, but don't start erasing until
-	   we've wrapped around once. */
-	if (++pos >= settings.trail)
-	  {
-	    pos -= settings.trail;
-	    wrapped = 1;
-	  }
-
-	if (wrapped)
-	  {
-	    draw_step (&settings, dpy, window, bgc, pos+1, history);
-	  }
-
-	XSync (dpy, False); 
-	screenhack_handle_events (dpy);
-	
-	if (delay_usecs)
-	  usleep (delay_usecs);
-
-      }
-    
-    i_restart = (i_restart + 1) % n_restart;
-
-    if (i_restart == 0)
-      {
-	/* Clean up after completing a simulation. */
-	free_colormap (dpy, &wattr, &colors, n_colors);
-      }
-  }
+  return st;
 }
+
+static unsigned long
+critical_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->eraser) {
+    st->eraser = erase_window (st->dpy, st->window, st->eraser);
+    return st->delay_usecs;
+  }
+
+  /* for (d_i_batch = batchcount; d_i_batch; d_i_batch--) */
+    {
+      /* Set color */
+      if ((st->d_i_batch % st->lines_per_color) == 0)
+        {
+          st->d_i_color = (st->d_i_color + 1) % st->d_n_colors;
+          st->gcv.foreground = st->d_colors[st->d_i_color].pixel;
+          XChangeGC (st->dpy, st->fgc, GCForeground, &st->gcv);
+        }
+	
+      assert(st->d_pos >= 0 && st->d_pos < st->settings.trail);
+      model_step (st->model, &st->history[st->d_pos]);
+
+      draw_step (st, st->fgc, st->d_pos);
+
+      /* we use the history as a ring buffer, but don't start erasing until
+         we've d_wrapped around once. */
+      if (++st->d_pos >= st->settings.trail)
+        {
+          st->d_pos -= st->settings.trail;
+          st->d_wrapped = 1;
+        }
+
+      if (st->d_wrapped)
+        {
+          draw_step (st, st->bgc, st->d_pos+1);
+        }
+
+    }
+    
+  st->d_i_batch--;
+  if (st->d_i_batch < 0)
+    st->d_i_batch = st->batchcount;
+  else
+    return st->delay_usecs;
+
+  st->i_restart = (st->i_restart + 1) % st->n_restart;
+
+  if (st->i_restart == 0)
+    {
+      /* Time to start a new simulation, this one has probably got
+         to be a bit boring. */
+      free_colormap (st, &st->d_colors, st->d_n_colors);
+      setup_colormap (st, &st->d_colors, &st->d_n_colors);
+      st->eraser = erase_window (st->dpy, st->window, st->eraser);
+      model_initialize (st->model);
+      model_step (st->model, &st->history[0]);
+      st->d_pos = 1;
+      st->d_wrapped = 0;
+      st->d_i_batch = st->batchcount;
+    }
+
+  return st->delay_usecs;
+}
+
+static void
+critical_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+critical_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+critical_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+/* Options this module understands.  */
+static XrmOptionDescRec critical_options[] = {
+  { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-colorscheme",	".colorscheme",	XrmoptionSepArg, 0 },
+  { "-restart",		".restart",	XrmoptionSepArg, 0 },
+  { "-batchcount",	".batchcount",  XrmoptionSepArg, 0 },
+  { "-trail",		".trail",	XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }		/* end */
+};
+
+
+/* Default xrm resources. */
+static const char *critical_defaults[] = {
+  ".background:			black",
+  "*colorscheme:		smooth",
+  "*delay:			10000", 
+  "*ncolors:			64",
+  "*restart:			8",
+  "*batchcount:			1500",
+  "*trail:			50",
+  0				/* end */
+};
+
+
+XSCREENSAVER_MODULE ("Critical", critical)

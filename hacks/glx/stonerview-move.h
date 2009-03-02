@@ -10,14 +10,22 @@
    implied warranty.
 */
 
+#ifndef __STONERVIEW_MOVE_H__
+#define __STONERVIEW_MOVE_H__
+
 typedef struct elem_struct {
   GLfloat pos[3];
   GLfloat vervec[2];
   GLfloat col[4];
 } elem_t;
 
-extern elem_t elist[];
+extern void init_move(stonerview_state *);
+extern void final_move(stonerview_state *);
+extern void move_increment(stonerview_state *);
 
-extern int init_move(void);
-extern void final_move(void);
-extern void move_increment(void);
+
+extern stonerview_state * init_view(int wireframe_p);
+extern void win_draw(stonerview_state *);
+extern void win_release(stonerview_state *);
+
+#endif /* __STONERVIEW_MOVE_H__ */

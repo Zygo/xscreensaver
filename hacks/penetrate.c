@@ -1,5 +1,4 @@
-/* Copyright (c) 1999
- *  Adam Miller adum@aya.yale.edu
+/* Copyright (c) 1999 Adam Miller adum@aya.yale.edu
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,7 +30,6 @@
 #define kSleepTime 10000 
 
 #define font_height(font)	  	(font->ascent + font->descent)
-#define FONT_NAME			"-*-times-*-*-*-*-80-*-*-*-*-*-*-*"
 
 #define kCityPause 500000
 #define kLevelPause 1
@@ -39,26 +37,6 @@
 #define kFirstBonus 5000
 #define kMinRate 30
 #define kMaxRadius 100
-
-static XFontStruct *font, *scoreFont;
-static GC draw_gc, erase_gc, level_gc;
-static unsigned int default_fg_pixel;
-static XColor scoreColor;
-
-int bgrowth;
-int lrate = 80, startlrate;
-long loop = 0;
-long score = 0, highscore = 0;
-long nextBonus = kFirstBonus;
-int numBonus = 0;
-int bround = 0;
-long lastLaser = 0;
-int gamez = 0;
-int aim = 180;
-int econpersen = 0;
-int choosypersen = 0;
-int carefulpersen = 0;
-int smart = 0;
 
 typedef struct {
   int alive;
@@ -110,19 +88,52 @@ typedef struct {
 #define kMissileSpeed 0.003
 #define kLaserSpeed (kMissileSpeed * 6)
 
-Missile missile[kMaxMissiles];
-Boom boom[kMaxBooms];
-City city[kNumCities];
-Laser laser[kMaxLasers];
-int blive[kNumCities];
 
-static void Explode(int x, int y, int max, XColor color, int oflaser)
+struct state {
+  Display *dpy;
+  Window window;
+
+   XFontStruct *font, *scoreFont;
+   GC draw_gc, erase_gc, level_gc;
+   unsigned int default_fg_pixel;
+   XColor scoreColor;
+
+   int bgrowth;
+   int lrate, startlrate;
+   long loop;
+   long score, highscore;
+   long nextBonus;
+   int numBonus;
+   int bround;
+   long lastLaser;
+   int gamez;
+   int aim;
+   int econpersen;
+   int choosypersen;
+   int carefulpersen;
+   int smart;
+   Colormap cmap;
+
+   Missile missile[kMaxMissiles];
+   Boom boom[kMaxBooms];
+   City city[kNumCities];
+   Laser laser[kMaxLasers];
+   int blive[kNumCities];
+
+   int level, levMissiles, levFreq;
+
+   int draw_xlim, draw_ylim;
+   int draw_reset;
+};
+
+
+static void Explode(struct state *st, int x, int y, int max, XColor color, int oflaser)
 {
   int i;
   Boom *m = 0;
   for (i=0;i<kMaxBooms;i++)
-	 if (!boom[i].alive) {
-		m = &boom[i];
+	 if (!st->boom[i].alive) {
+		m = &st->boom[i];
 		break;
 	 }
   if (!m)
@@ -140,14 +151,13 @@ static void Explode(int x, int y, int max, XColor color, int oflaser)
   m->oflaser = oflaser;
 }
 
-static void launch (int xlim, int ylim,
-	Display *dpy, Colormap cmap, int src)
+static void launch (struct state *st, int xlim, int ylim, int src)
 {
   int i;
   Missile *m = 0, *msrc;
   for (i=0;i<kMaxMissiles;i++)
-	 if (!missile[i].alive) {
-		m = &missile[i];
+	 if (!st->missile[i].alive) {
+		m = &st->missile[i];
 		break;
 	 }
   if (!m)
@@ -161,7 +171,9 @@ static void launch (int xlim, int ylim,
   m->jenis = random() % 360;
   m->splits = 0;
   if (m->jenis < 50) {
-	 m->splits = random() % ((int) (ylim * 0.4));
+    int j = ylim * 0.4;
+    if (j)
+	 m->splits = random() % j;
 	 if (m->splits < ylim * 0.08)
 		m->splits = 0;
   }
@@ -169,7 +181,7 @@ static void launch (int xlim, int ylim,
   /* special if we're from another missile */
   if (src >= 0) {
 	 int dc = random() % (kNumCities - 1);
-	 msrc = &missile[src];
+	 msrc = &st->missile[src];
 	 if (dc == msrc->dcity)
 		dc++;
 	 m->dcity = dc;
@@ -181,7 +193,7 @@ static void launch (int xlim, int ylim,
   }
   else
 	 m->dcity = random() % kNumCities;
-  m->endx = city[m->dcity].x + (random() % 20) - 10;
+  m->endx = st->city[m->dcity].x + (random() % 20) - 10;
   m->x = m->startx;
   m->y = m->starty;
   m->enemies = 0;
@@ -190,8 +202,8 @@ static void launch (int xlim, int ylim,
 	 hsv_to_rgb (m->jenis, 1.0, 1.0,
 					 &m->color.red, &m->color.green, &m->color.blue);
 	 m->color.flags = DoRed | DoGreen | DoBlue;
-	 if (!XAllocColor (dpy, cmap, &m->color)) {
-		m->color.pixel = WhitePixel (dpy, DefaultScreen (dpy));
+	 if (!XAllocColor (st->dpy, st->cmap, &m->color)) {
+		m->color.pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
 		m->color.red = m->color.green = m->color.blue = 0xFFFF;
 	 }
   }
@@ -200,8 +212,7 @@ static void launch (int xlim, int ylim,
 #define kExpHelp 0.2
 #define kSpeedDiff 3.5
 #define kMaxToGround 0.75
-static int fire(int xlim, int ylim,
-	Display *dpy, Window window, Colormap cmap)
+static int fire(struct state *st, int xlim, int ylim)
 {
   int i, j, cnt = 0;
   int dcity;
@@ -216,19 +227,19 @@ static int fire(int xlim, int ylim,
   int deepest = 0;
   int misnum = 0;
 
-  choosy = (random() % 100) < choosypersen;
-  economic = (random() % 100) < econpersen;
-  careful = (random() % 100) < carefulpersen;
+  choosy = (random() % 100) < st->choosypersen;
+  economic = (random() % 100) < st->econpersen;
+  careful = (random() % 100) < st->carefulpersen;
 
   /* count our cities */
   for (i=0;i<kNumCities;i++)
-	 livecity += city[i].alive;
+	 livecity += st->city[i].alive;
   if (livecity == 0)
 	 return 1;  /* no guns */
 
   for (i=0;i<kMaxLasers;i++)
-	 if (!laser[i].alive) {
-		m = &laser[i];
+	 if (!st->laser[i].alive) {
+		m = &st->laser[i];
 		break;
 	 }
   if (!m)
@@ -238,10 +249,10 @@ static int fire(int xlim, int ylim,
   if (choosy) {
 	 int choo = 0;
 	 for (j=0;j<kMaxMissiles;j++) {
-		mis = &missile[j];
+		mis = &st->missile[j];
 		if (!mis->alive || (mis->y > ytargetmin))
 		  continue;
-		if (city[mis->dcity].alive)
+		if (st->city[mis->dcity].alive)
 		  choo++;
 	 }
 	 if (choo == 0)
@@ -249,11 +260,11 @@ static int fire(int xlim, int ylim,
   }
 
   for (j=0;j<kMaxMissiles;j++) {
-	 mis = &missile[j];
+	 mis = &st->missile[j];
 	 suitor[j] = 0;
 	 if (!mis->alive || (mis->y > ytargetmin))
 		continue;
-	 if (choosy && (city[mis->dcity].alive == 0))
+	 if (choosy && (st->city[mis->dcity].alive == 0))
 		continue;
 	 ey = mis->starty + ((float) (mis->endy - mis->starty)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
 	 if (ey > ylim * kMaxToGround)
@@ -265,27 +276,27 @@ static int fire(int xlim, int ylim,
   /* count missiles that are on target and not being targeted */
   if (choosy && economic)
 	 for (j=0;j<kMaxMissiles;j++)
-		if (suitor[j] && missile[j].enemies == 0)
+		if (suitor[j] && st->missile[j].enemies == 0)
 		  untargeted++;
 
   if (economic)
 	 for (j=0;j<kMaxMissiles;j++) {
 		if (suitor[j] && cnt > 1)
-		  if (missile[j].enemies > 0)
-			 if (missile[j].enemies > 1 || untargeted == 0) {
+		  if (st->missile[j].enemies > 0)
+			 if (st->missile[j].enemies > 1 || untargeted == 0) {
 				suitor[j] = 0;
 				cnt--;
 			 }
 		/* who's closest? biggest threat */
-		if (suitor[j] && missile[j].y > deepest)
-		  deepest = missile[j].y;
+		if (suitor[j] && st->missile[j].y > deepest)
+		  deepest = st->missile[j].y;
 	 }
 
   if (deepest > 0 && careful) {
 	 /* only target deepest missile */
 	 cnt = 1;
 	 for (j=0;j<kMaxMissiles;j++)
-		if (suitor[j] && missile[j].y != deepest)
+		if (suitor[j] && st->missile[j].y != deepest)
 		  suitor[j] = 0;
   }
 
@@ -295,7 +306,7 @@ static int fire(int xlim, int ylim,
   for (j=0;j<kMaxMissiles;j++)
 	 if (suitor[j])
 		if (cnt-- == 0) {
-		  mis = &missile[j];
+		  mis = &st->missile[j];
 		  misnum = j;
 		  break;
 		}
@@ -305,17 +316,17 @@ static int fire(int xlim, int ylim,
 
   dcity = random() % livecity;
   for (j=0;j<kNumCities;j++)
-	 if (city[j].alive)
+	 if (st->city[j].alive)
 		if (dcity-- == 0) {
 		  dcity = j;
 		  break;
 		}
-  m->startx = city[dcity].x;
+  m->startx = st->city[dcity].x;
   m->starty = ylim;
   ex = mis->startx + ((float) (mis->endx - mis->startx)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
   ey = mis->starty + ((float) (mis->endy - mis->starty)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
-  m->endx = ex + random() % 16 - 8 + (random() % aim) - aim / 2;
-  m->endy = ey + random() % 16 - 8 + (random() % aim) - aim / 2;
+  m->endx = ex + random() % 16 - 8 + (random() % st->aim) - st->aim / 2;
+  m->endy = ey + random() % 16 - 8 + (random() % st->aim) - st->aim / 2;
   if (ey > ylim * kMaxToGround)
 	 return 0;  /* too far down */
   mis->enemies++;
@@ -341,162 +352,167 @@ static int fire(int xlim, int ylim,
 	 m->color.green = 0xFFFF;
 	 m->color.red = 0xFFFF;
 	 m->color.flags = DoRed | DoGreen | DoBlue;
-	 if (!XAllocColor (dpy, cmap, &m->color)) {
-		m->color.pixel = WhitePixel (dpy, DefaultScreen (dpy));
+	 if (!XAllocColor (st->dpy, st->cmap, &m->color)) {
+		m->color.pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
 		m->color.red = m->color.green = m->color.blue = 0xFFFF;
 	 }
   }
   return 1;
 }
 
-static Colormap
-init_penetrate(Display *dpy, Window window)
+static void *
+penetrate_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
   /*char *fontname =   "-*-new century schoolbook-*-r-*-*-*-380-*-*-*-*-*-*"; */
   char *fontname =   "-*-courier-*-r-*-*-*-380-*-*-*-*-*-*";
-  char **list;
-  int foo;
-  Colormap cmap;
   XGCValues gcv;
   XWindowAttributes xgwa;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
 
-  if (get_string_resource("smart","String")!=NULL && get_string_resource("smart","String")[0]!=0)
-	 smart = 1;
-  bgrowth = get_integer_resource ("bgrowth", "Integer");
-  lrate = get_integer_resource ("lrate", "Integer");
-  if (bgrowth < 0) bgrowth = 2;
-  if (lrate < 0) lrate = 2;
-  startlrate = lrate;
+  st->dpy = dpy;
+  st->window = window;
 
-  if (!fontname || !(font = XLoadQueryFont(dpy, fontname))) {
-	 list = XListFonts(dpy, FONT_NAME, 32767, &foo);
-	 for (i = 0; i < foo; i++)
-		if ((font = XLoadQueryFont(dpy, list[i])))
-		  break;
-	 if (!font) {
-		fprintf (stderr, "%s: Can't find a large font.", progname);
-	    exit (1);
-	 }
-	 XFreeFontNames(list);
-  }
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->cmap = xgwa.colormap;
 
-  if (!(scoreFont = XLoadQueryFont(dpy, "-*-times-*-r-*-*-*-180-*-*-*-*-*-*")))
+  st->lrate = 80;
+  st->nextBonus = kFirstBonus;
+  st->aim = 180;
+
+  st->smart = get_boolean_resource(st->dpy, "smart","Boolean");
+  st->bgrowth = get_integer_resource (st->dpy, "bgrowth", "Integer");
+  st->lrate = get_integer_resource (st->dpy, "lrate", "Integer");
+  if (st->bgrowth < 0) st->bgrowth = 2;
+  if (st->lrate < 0) st->lrate = 2;
+  st->startlrate = st->lrate;
+
+  if (!fontname || !*fontname)
+    fprintf (stderr, "%s: no font specified.\n", progname);
+  st->font = XLoadQueryFont(st->dpy, fontname);
+  if (!st->font)
+    fprintf (stderr, "%s: could not load font %s.\n", progname, fontname);
+
+  if (!(st->scoreFont = XLoadQueryFont(st->dpy, "-*-times-*-r-*-*-*-180-*-*-*-*-*-*")))
 	 fprintf(stderr, "%s: Can't load Times font.", progname);
 
   for (i = 0; i < kMaxMissiles; i++)
-    missile[i].alive = 0;
+    st->missile[i].alive = 0;
 
   for (i = 0; i < kMaxLasers; i++)
-    laser[i].alive = 0;
+    st->laser[i].alive = 0;
 
   for (i = 0; i < kMaxBooms; i++)
-    boom[i].alive = 0;
+    st->boom[i].alive = 0;
 
   for (i = 0; i < kNumCities; i++) {
-	 City *m = &city[i];
+	 City *m = &st->city[i];
     m->alive = 1;
 	 m->color.red = m->color.green = m->color.blue = 0xFFFF;
 	 m->color.blue = 0x1111; m->color.green = 0x8888;
 	 m->color.flags = DoRed | DoGreen | DoBlue;
-	 if (!XAllocColor (dpy, cmap, &m->color)) {
-		m->color.pixel = WhitePixel (dpy, DefaultScreen (dpy));
+	 if (!XAllocColor (st->dpy, st->cmap, &m->color)) {
+		m->color.pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
 		m->color.red = m->color.green = m->color.blue = 0xFFFF;
 	 }
   }
 
-  gcv.foreground = default_fg_pixel =
-    get_pixel_resource("foreground", "Foreground", dpy, cmap);
-  gcv.font = scoreFont->fid;
-  draw_gc = XCreateGC(dpy, window, GCForeground | GCFont, &gcv);
-  gcv.font = font->fid;
-  level_gc = XCreateGC(dpy, window, GCForeground | GCFont, &gcv);
-  XSetForeground (dpy, level_gc, city[0].color.pixel);
-  gcv.foreground = get_pixel_resource("background", "Background", dpy, cmap);
-  erase_gc = XCreateGC(dpy, window, GCForeground, &gcv);
+  gcv.foreground = st->default_fg_pixel =
+    get_pixel_resource(st->dpy, st->cmap, "foreground", "Foreground");
+  gcv.font = st->scoreFont->fid;
+  st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground | GCFont, &gcv);
+  gcv.font = st->font->fid;
+  st->level_gc = XCreateGC(st->dpy, st->window, GCForeground | GCFont, &gcv);
+  XSetForeground (st->dpy, st->level_gc, st->city[0].color.pixel);
+  gcv.foreground = get_pixel_resource(st->dpy, st->cmap, "background", "Background");
+  st->erase_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+
+# ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (st->dpy, st->erase_gc, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->draw_gc, False);
+# endif
+
 
   /* make a gray color for score */
   if (!mono_p) {
-	 scoreColor.red = scoreColor.green = scoreColor.blue = 0xAAAA;
-	 scoreColor.flags = DoRed | DoGreen | DoBlue;
-	 if (!XAllocColor (dpy, cmap, &scoreColor)) {
-		scoreColor.pixel = WhitePixel (dpy, DefaultScreen (dpy));
-		scoreColor.red = scoreColor.green = scoreColor.blue = 0xFFFF;
+	 st->scoreColor.red = st->scoreColor.green = st->scoreColor.blue = 0xAAAA;
+	 st->scoreColor.flags = DoRed | DoGreen | DoBlue;
+	 if (!XAllocColor (st->dpy, st->cmap, &st->scoreColor)) {
+		st->scoreColor.pixel = WhitePixel (st->dpy, DefaultScreen (st->dpy));
+		st->scoreColor.red = st->scoreColor.green = st->scoreColor.blue = 0xFFFF;
 	 }
   }
 
-  XClearWindow(dpy, window);
-  return cmap;
+  XClearWindow(st->dpy, st->window);
+  return st;
 }
 
-static void DrawScore(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void DrawScore(struct state *st, int xlim, int ylim)
 {
   char buf[16];
   int width, height;
-  sprintf(buf, "%ld", score);
-  width = XTextWidth(scoreFont, buf, strlen(buf));
-  height = font_height(scoreFont);
-  XSetForeground (dpy, draw_gc, scoreColor.pixel);
-  XFillRectangle(dpy, window, erase_gc,
+  sprintf(buf, "%ld", st->score);
+  width = XTextWidth(st->scoreFont, buf, strlen(buf));
+  height = font_height(st->scoreFont);
+  XSetForeground (st->dpy, st->draw_gc, st->scoreColor.pixel);
+  XFillRectangle(st->dpy, st->window, st->erase_gc,
 				  xlim - width - 6, ylim - height - 2, width + 6, height + 2);
-  XDrawString(dpy, window, draw_gc, xlim - width - 2, ylim - 2,
+  XDrawString(st->dpy, st->window, st->draw_gc, xlim - width - 2, ylim - 2,
 		    buf, strlen(buf));
 
-  sprintf(buf, "%ld", highscore);
-  width = XTextWidth(scoreFont, buf, strlen(buf));
-  XFillRectangle(dpy, window, erase_gc,
+  sprintf(buf, "%ld", st->highscore);
+  width = XTextWidth(st->scoreFont, buf, strlen(buf));
+  XFillRectangle(st->dpy, st->window, st->erase_gc,
 				  4, ylim - height - 2, width + 4, height + 2);
-  XDrawString(dpy, window, draw_gc, 4, ylim - 2,
+  XDrawString(st->dpy, st->window, st->draw_gc, 4, ylim - 2,
 		    buf, strlen(buf));
 }
 
-static void AddScore(Display *dpy, Window window, Colormap cmap, int xlim, int ylim, long dif)
+static void AddScore(struct state *st, int xlim, int ylim, long dif)
 {
   int i, sumlive = 0;
   for (i=0;i<kNumCities;i++)
-	 sumlive += city[i].alive;
+	 sumlive += st->city[i].alive;
   if (sumlive == 0)
 	 return;   /* no cities, not possible to score */
 
-  score += dif;
-  if (score > highscore)
-	 highscore = score;
-  DrawScore(dpy, window, cmap, xlim, ylim);
+  st->score += dif;
+  if (st->score > st->highscore)
+	 st->highscore = st->score;
+  DrawScore(st, xlim, ylim);
 }
 
-static void DrawCity(Display *dpy, Window window, Colormap cmap, int x, int y, XColor col)
+static void DrawCity(struct state *st, int x, int y, XColor col)
 {
-	 XSetForeground (dpy, draw_gc, col.pixel);
-	 XFillRectangle(dpy, window, draw_gc,
+	 XSetForeground (st->dpy, st->draw_gc, col.pixel);
+	 XFillRectangle(st->dpy, st->window, st->draw_gc,
 				  x - 30, y - 40, 60, 40);
-	 XFillRectangle(dpy, window, draw_gc,
+	 XFillRectangle(st->dpy, st->window, st->draw_gc,
 						 x - 20, y - 50, 10, 10);
-	 XFillRectangle(dpy, window, draw_gc,
+	 XFillRectangle(st->dpy, st->window, st->draw_gc,
 				  x + 10, y - 50, 10, 10);
 }
 
-static void DrawCities(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void DrawCities(struct state *st, int xlim, int ylim)
 {
   int i, x;
   for (i = 0; i < kNumCities; i++) {
-	 City *m = &city[i];
+	 City *m = &st->city[i];
 	 if (!m->alive)
 		continue;
 	 x = (i + 1) * (xlim / (kNumCities + 1));
 	 m->x = x;
 
-	 DrawCity(dpy, window, cmap, x, ylim, m->color);
+	 DrawCity(st, x, ylim, m->color);
   }
 }
 
-static void LoopMissiles(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void LoopMissiles(struct state *st, int xlim, int ylim)
 {
   int i, j, max = 0;
   for (i = 0; i < kMaxMissiles; i++) {
 	 int old_x, old_y;
-	 Missile *m = &missile[i];
+	 Missile *m = &st->missile[i];
 	 if (!m->alive)
 		continue;
 	 old_x = m->x;
@@ -507,28 +523,28 @@ static void LoopMissiles(Display *dpy, Window window, Colormap cmap, int xlim, i
 
       /* erase old one */
 
-	 XSetLineAttributes(dpy, draw_gc, 4, 0,0,0);
-    XSetForeground (dpy, draw_gc, m->color.pixel);
-	 XDrawLine(dpy, window, draw_gc,
+	 XSetLineAttributes(st->dpy, st->draw_gc, 4, 0,0,0);
+    XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
+	 XDrawLine(st->dpy, st->window, st->draw_gc,
 				  old_x, old_y, m->x, m->y);
 
 	 /* maybe split off a new missile? */
 	 if (m->splits && (m->y > m->splits)) {
 		m->splits = 0;
-		launch(xlim, ylim, dpy, cmap, i);
+		launch(st, xlim, ylim, i);
 	 }
 	 
 	 if (m->y >= ylim) {
 		m->alive = 0;
-		if (city[m->dcity].alive) {
-		  city[m->dcity].alive = 0;
-		  Explode(m->x, m->y, kBoomRad * 2, m->color, 0);
+		if (st->city[m->dcity].alive) {
+		  st->city[m->dcity].alive = 0;
+		  Explode(st, m->x, m->y, kBoomRad * 2, m->color, 0);
 		}
 	 }
 
 	 /* check hitting explosions */
 	 for (j=0;j<kMaxBooms;j++) {
-		Boom *b = &boom[j];
+		Boom *b = &st->boom[j];
 		if (!b->alive)
 		  continue;
 		else {
@@ -538,18 +554,17 @@ static void LoopMissiles(Display *dpy, Window window, Colormap cmap, int xlim, i
 		  if ((dx < r) && (dy < r))
 			 if (dx * dx + dy * dy < r * r) {
 				m->alive = 0;
-				max = b->max + bgrowth - kBoomRad;
-				AddScore(dpy, window, cmap, xlim, ylim, SCORE_MISSILE);
+				max = b->max + st->bgrowth - kBoomRad;
+				AddScore(st, xlim, ylim, SCORE_MISSILE);
 		  }
 		}
 	 }
 
 	 if (m->alive == 0) {
-		int old_x, old_y;
 		float my_pos;
 		/* we just died */
-		Explode(m->x, m->y, kBoomRad + max, m->color, 0);
-		XSetLineAttributes(dpy, erase_gc, 4, 0,0,0);
+		Explode(st, m->x, m->y, kBoomRad + max, m->color, 0);
+		XSetLineAttributes(st->dpy, st->erase_gc, 4, 0,0,0);
 		/* In a perfect world, we could simply erase a line from
 		   (m->startx, m->starty) to (m->x, m->y). This is not a
 		   perfect world. */
@@ -559,7 +574,7 @@ static void LoopMissiles(Display *dpy, Window window, Colormap cmap, int xlim, i
 		while (my_pos <= m->pos) {
 			m->x = m->startx + ((float) (m->endx - m->startx)) * my_pos;
 			m->y = m->starty + ((float) (m->endy - m->starty)) * my_pos;
-			XDrawLine(dpy, window, erase_gc, old_x, old_y, m->x, m->y);
+			XDrawLine(st->dpy, st->window, st->erase_gc, old_x, old_y, m->x, m->y);
 			old_x = m->x;
 			old_y = m->y;
 			my_pos += kMissileSpeed;
@@ -568,18 +583,18 @@ static void LoopMissiles(Display *dpy, Window window, Colormap cmap, int xlim, i
   }
 }
 
-static void LoopLasers(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void LoopLasers(struct state *st, int xlim, int ylim)
 {
   int i, j, miny = ylim * 0.8;
   int x, y;
   for (i = 0; i < kMaxLasers; i++) {
-	 Laser *m = &laser[i];
+	 Laser *m = &st->laser[i];
 	 if (!m->alive)
 		continue;
 
 	 if (m->oldx != -1) {
-		 XSetLineAttributes(dpy, erase_gc, 2, 0,0,0);
-		 XDrawLine(dpy, window, erase_gc,
+		 XSetLineAttributes(st->dpy, st->erase_gc, 2, 0,0,0);
+		 XDrawLine(st->dpy, st->window, st->erase_gc,
 				  m->oldx2, m->oldy2, m->oldx, m->oldy);
 	 }
 
@@ -594,9 +609,9 @@ static void LoopLasers(Display *dpy, Window window, Colormap cmap, int xlim, int
 	 m->oldx = x;
 	 m->oldy = y;
 
-	 XSetLineAttributes(dpy, draw_gc, 2, 0,0,0);
-    XSetForeground (dpy, draw_gc, m->color.pixel);
-	 XDrawLine(dpy, window, draw_gc,
+	 XSetLineAttributes(st->dpy, st->draw_gc, 2, 0,0,0);
+    XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
+	 XDrawLine(st->dpy, st->window, st->draw_gc,
 				  m->x, m->y, x, y);
 
 	 m->oldx2 = m->x;
@@ -611,7 +626,7 @@ static void LoopLasers(Display *dpy, Window window, Colormap cmap, int xlim, int
 	 /* check hitting explosions */
 	 if (m->y < miny)
 		for (j=0;j<kMaxBooms;j++) {
-		  Boom *b = &boom[j];
+		  Boom *b = &st->boom[j];
 		  if (!b->alive)
 			 continue;
 		  else {
@@ -624,41 +639,41 @@ static void LoopLasers(Display *dpy, Window window, Colormap cmap, int xlim, int
 				if (dx * dx + dy * dy < r * r) {
 				  m->alive = 0;
 				  /* one less enemy on this missile -- it probably didn't make it */
-				  if (missile[m->target].alive)
-					 missile[m->target].enemies--;
+				  if (st->missile[m->target].alive)
+					 st->missile[m->target].enemies--;
 				}
 		  }
 		}
 	 
 	 if (m->alive == 0) {
 		/* we just died */
-		XDrawLine(dpy, window, erase_gc,
+		XDrawLine(st->dpy, st->window, st->erase_gc,
 				  m->x, m->y, x, y);
-		Explode(m->x, m->y, kBoomRad, m->color, 1);
+		Explode(st, m->x, m->y, kBoomRad, m->color, 1);
 	 }
   }
 }
 
-static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void LoopBooms(struct state *st, int xlim, int ylim)
 {
   int i;
   for (i = 0; i < kMaxBooms; i++) {
-	 Boom *m = &boom[i];
+	 Boom *m = &st->boom[i];
 	 if (!m->alive)
 		continue;
 	 
-	 if (loop & 1) {
+	 if (st->loop & 1) {
 		if (m->outgoing) {
 		  m->rad++;
 		  if (m->rad >= m->max)
 			 m->outgoing = 0;
-		  XSetLineAttributes(dpy, draw_gc, 1, 0,0,0);
-		  XSetForeground (dpy, draw_gc, m->color.pixel);
-		  XDrawArc(dpy, window, draw_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
+		  XSetLineAttributes(st->dpy, st->draw_gc, 1, 0,0,0);
+		  XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
+		  XDrawArc(st->dpy, st->window, st->draw_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
 		}
 		else {
-		  XSetLineAttributes(dpy, erase_gc, 1, 0,0,0);
-		  XDrawArc(dpy, window, erase_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
+		  XSetLineAttributes(st->dpy, st->erase_gc, 1, 0,0,0);
+		  XDrawArc(st->dpy, st->window, st->erase_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
 		  m->rad--;
 		  if (m->rad <= 0)
 			 m->alive = 0;
@@ -667,131 +682,127 @@ static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int 
   }
 }
 
-int level = 0, levMissiles, levFreq;
 
 /* after they die, let's change a few things */
-static void Improve(void)
+static void Improve(struct state *st)
 {
-  if (smart)
+  if (st->smart)
 	 return;
-  if (level > 20)
+  if (st->level > 20)
 	 return;  /* no need, really */
-  aim -= 4;
-  if (level <= 2) aim -= 8;
-  if (level <= 5) aim -= 6;
-  if (gamez < 3)
-	 aim -= 10;
-  carefulpersen += 6;
-  choosypersen += 4;
-  if (level <= 5) choosypersen += 3;
-  econpersen += 4;
-  lrate -= 2;
-  if (startlrate < kMinRate) {
-	 if (lrate < startlrate)
-		lrate = startlrate;
+  st->aim -= 4;
+  if (st->level <= 2) st->aim -= 8;
+  if (st->level <= 5) st->aim -= 6;
+  if (st->gamez < 3)
+	 st->aim -= 10;
+  st->carefulpersen += 6;
+  st->choosypersen += 4;
+  if (st->level <= 5) st->choosypersen += 3;
+  st->econpersen += 4;
+  st->lrate -= 2;
+  if (st->startlrate < kMinRate) {
+	 if (st->lrate < st->startlrate)
+		st->lrate = st->startlrate;
   }
   else {
-	 if (lrate < kMinRate)
-		lrate = kMinRate;
+	 if (st->lrate < kMinRate)
+		st->lrate = kMinRate;
   }
-  if (level <= 5) econpersen += 3;
-  if (aim < 1) aim = 1;
-  if (choosypersen > 100) choosypersen = 100;
-  if (carefulpersen > 100) carefulpersen = 100;
-  if (econpersen > 100) econpersen = 100;
+  if (st->level <= 5) st->econpersen += 3;
+  if (st->aim < 1) st->aim = 1;
+  if (st->choosypersen > 100) st->choosypersen = 100;
+  if (st->carefulpersen > 100) st->carefulpersen = 100;
+  if (st->econpersen > 100) st->econpersen = 100;
 }
 
-static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int ylim)
+static void NewLevel(struct state *st, int xlim, int ylim)
 {
   char buf[32];
   int width, i, sumlive = 0;
   int liv[kNumCities];
   int freecity = 0;
 
-  if (level == 0) {
-	 level++;
+  if (st->level == 0) {
+	 st->level++;
 	 goto END_LEVEL;
   }
 
   /* check for a free city */
-  if (score >= nextBonus) {
-	 numBonus++;
-	 nextBonus += kFirstBonus * numBonus;
+  if (st->score >= st->nextBonus) {
+	 st->numBonus++;
+	 st->nextBonus += kFirstBonus * st->numBonus;
 	 freecity = 1;
   }
 
   for (i=0;i<kNumCities;i++) {
-	 if (bround)
-		city[i].alive = blive[i];
-	 liv[i] = city[i].alive;
+	 if (st->bround)
+		st->city[i].alive = st->blive[i];
+	 liv[i] = st->city[i].alive;
 	 sumlive += liv[i];
-	 if (!bround)
-		city[i].alive = 0;
+	 if (!st->bround)
+		st->city[i].alive = 0;
   }
 
   /* print out screen */
-  XFillRectangle(dpy, window, erase_gc,
+  XFillRectangle(st->dpy, st->window, st->erase_gc,
 				  0, 0, xlim, ylim);
-  if (bround)
+  if (st->bround)
 	 sprintf(buf, "Bonus Round Over");
   else {
 	 if (sumlive || freecity)
-		sprintf(buf, "Level %d Cleared", level);
+		sprintf(buf, "Level %d Cleared", st->level);
 	 else
 		sprintf(buf, "GAME OVER");
   }
-  if (level > 0) {
-	 width = XTextWidth(font, buf, strlen(buf));
-	 XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(font) / 2,
+  if (st->level > 0) {
+	 width = XTextWidth(st->font, buf, strlen(buf));
+	 XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(st->font) / 2,
 					 buf, strlen(buf));
-	 XSync(dpy, False);
-         screenhack_handle_events(dpy);
-	 sleep(1);
+	 XSync(st->dpy, False);
+	 usleep(1000000);
   }
 
-  if (!bround) {
+  if (!st->bround) {
 	 if (sumlive || freecity) {
 		int sumwidth;
 		/* draw live cities */
-		XFillRectangle(dpy, window, erase_gc,
+		XFillRectangle(st->dpy, st->window, st->erase_gc,
 							0, ylim - 100, xlim, 100);
 
-		sprintf(buf, "X %ld", level * 100L);
+		sprintf(buf, "X %ld", st->level * 100L);
 		/* how much they get */
-		sumwidth = XTextWidth(font, buf, strlen(buf));
+		sumwidth = XTextWidth(st->font, buf, strlen(buf));
 		/* add width of city */
 		sumwidth += 60;
 		/* add spacer */
 		sumwidth += 40;
-		DrawCity(dpy, window, cmap, xlim / 2 - sumwidth / 2 + 30, ylim * 0.70, city[0].color);
-		XDrawString(dpy, window, level_gc, xlim / 2 - sumwidth / 2 + 40 + 60, ylim * 0.7, buf, strlen(buf));
+		DrawCity(st, xlim / 2 - sumwidth / 2 + 30, ylim * 0.70, st->city[0].color);
+		XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - sumwidth / 2 + 40 + 60, ylim * 0.7, buf, strlen(buf));
 		for (i=0;i<kNumCities;i++) {
 		  if (liv[i]) {
-			 city[i].alive = 1;
-			 AddScore(dpy, window, cmap, xlim, ylim, 100 * level);
-			 DrawCities(dpy, window, cmap, xlim, ylim);
-			 XSync(dpy, False);
-                         screenhack_handle_events(dpy);
+			 st->city[i].alive = 1;
+			 AddScore(st, xlim, ylim, 100 * st->level);
+			 DrawCities(st, xlim, ylim);
+			 XSync(st->dpy, False);
 			 usleep(kCityPause);
 		  }
 		}
 	 }
 	 else {
 		/* we're dead */
-                screenhack_handle_events(dpy);
-		sleep(3);
-                screenhack_handle_events(dpy);
+		usleep(3000000);
+
 		/* start new */
-		gamez++;
-		Improve();
+		st->gamez++;
+		Improve(st);
 		for (i=0;i<kNumCities;i++)
-		  city[i].alive = 1;
-		level = 0;
-		loop = 1;
-		score = 0;
-		nextBonus = kFirstBonus;
-		numBonus = 0;
-		DrawCities(dpy, window, cmap, xlim, ylim);
+		  st->city[i].alive = 1;
+		st->level = 0;
+		st->loop = 1;
+		st->score = 0;
+		st->nextBonus = kFirstBonus;
+		st->numBonus = 0;
+		DrawCities(st, xlim, ylim);
 	 }
   }
 
@@ -799,150 +810,167 @@ static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int y
   if (freecity && sumlive < 5) {
 	 int ncnt = random() % (5 - sumlive) + 1;
 	 for (i=0;i<kNumCities;i++)
-		if (!city[i].alive)
+		if (!st->city[i].alive)
 		  if (!--ncnt)
-			 city[i].alive = 1;
+			 st->city[i].alive = 1;
 	 strcpy(buf, "Bonus City");
-	 width = XTextWidth(font, buf, strlen(buf));
-	 XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 4, buf, strlen(buf));
-	 DrawCities(dpy, window, cmap, xlim, ylim);
-	 XSync(dpy, False);
-         screenhack_handle_events(dpy);
-	 sleep(1);
+	 width = XTextWidth(st->font, buf, strlen(buf));
+	 XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 4, buf, strlen(buf));
+	 DrawCities(st, xlim, ylim);
+	 XSync(st->dpy, False);
+	 usleep(1000000);
   }
 
-  XFillRectangle(dpy, window, erase_gc,
+  XFillRectangle(st->dpy, st->window, st->erase_gc,
 					  0, 0, xlim, ylim - 100);
   
-  if (!bround)
-	 level++;
-  if (level == 1) {
-	 nextBonus = kFirstBonus;
+  if (!st->bround)
+	 st->level++;
+  if (st->level == 1) {
+	 st->nextBonus = kFirstBonus;
   }
 
-  if (level > 3 && (level % 5 == 1)) {
-	 if (bround) {
-		bround = 0;
-		DrawCities(dpy, window, cmap, xlim, ylim);
+  if (st->level > 3 && (st->level % 5 == 1)) {
+	 if (st->bround) {
+		st->bround = 0;
+		DrawCities(st, xlim, ylim);
 	 }
 	 else {
 		/* bonus round */
-		bround = 1;
-		levMissiles = 20 + level * 10;
-		levFreq = 10;
+		st->bround = 1;
+		st->levMissiles = 20 + st->level * 10;
+		st->levFreq = 10;
 		for (i=0;i<kNumCities;i++)
-		  blive[i] = city[i].alive;
+		  st->blive[i] = st->city[i].alive;
 		sprintf(buf, "Bonus Round");
-		width = XTextWidth(font, buf, strlen(buf));
-		XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(font) / 2, buf, strlen(buf));
-		XSync(dpy, False);
-                screenhack_handle_events(dpy);
-		sleep(1);
-		XFillRectangle(dpy, window, erase_gc,
+		width = XTextWidth(st->font, buf, strlen(buf));
+		XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(st->font) / 2, buf, strlen(buf));
+		XSync(st->dpy, False);
+		usleep(1000000);
+		XFillRectangle(st->dpy, st->window, st->erase_gc,
 							0, 0, xlim, ylim - 100);
 	 }
   }
 
  END_LEVEL: ;
 
-  if (!bround) {
-	 levMissiles = 5 + level * 3;
-	 if (level > 5)
-		levMissiles += level * 5;
+  if (!st->bround) {
+	 st->levMissiles = 5 + st->level * 3;
+	 if (st->level > 5)
+		st->levMissiles += st->level * 5;
 	 /*  levMissiles = 2; */
-	 levFreq = 120 - level * 5;
-	 if (levFreq < 30)
-		levFreq = 30;
+	 st->levFreq = 120 - st->level * 5;
+	 if (st->levFreq < 30)
+		st->levFreq = 30;
   }
 
   /* ready to fire */
-  lastLaser = 0;
+  st->lastLaser = 0;
 }
 
-static void penetrate(Display *dpy, Window window, Colormap cmap)
-{
-  XWindowAttributes xgwa;
-  static int xlim, ylim;
 
-  XGetWindowAttributes(dpy, window, &xgwa);
-  xlim = xgwa.width;
-  ylim = xgwa.height;
+static unsigned long
+penetrate_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  XWindowAttributes xgwa;
+
+  if (st->draw_reset)
+    {
+      st->draw_reset = 0;
+      DrawCities(st, st->draw_xlim, st->draw_ylim);
+    }
+
+  XGetWindowAttributes(st->dpy, st->window, &xgwa);
+  st->draw_xlim = xgwa.width;
+  st->draw_ylim = xgwa.height;
 
   /* see if just started */
-  if (loop == 0) {
-	 if (smart) {
-		choosypersen = econpersen = carefulpersen = 100;
-		lrate = kMinRate; aim = 1;
+  if (st->loop == 0) {
+	 if (st->smart) {
+		st->choosypersen = st->econpersen = st->carefulpersen = 100;
+		st->lrate = kMinRate; st->aim = 1;
 	 }
-	 NewLevel(dpy, window, cmap, xlim, ylim);
-	 DrawScore(dpy, window, cmap, xlim, ylim);
+	 NewLevel(st, st->draw_xlim, st->draw_ylim);
+	 DrawScore(st, st->draw_xlim, st->draw_ylim);
   }
 
-  loop++;
+  st->loop++;
 
-  if (levMissiles == 0) {
+  if (st->levMissiles == 0) {
 	 /* see if anything's still on the screen, to know when to end level */
 	 int i;
 	 for (i=0;i<kMaxMissiles;i++)
-		if (missile[i].alive)
+		if (st->missile[i].alive)
 		  goto END_CHECK;
 	 for (i=0;i<kMaxBooms;i++)
-		if (boom[i].alive)
+		if (st->boom[i].alive)
 		  goto END_CHECK;
 	 for (i=0;i<kMaxLasers;i++)
-		if (laser[i].alive)
+		if (st->laser[i].alive)
 		  goto END_CHECK;
 	 /* okay, nothing's alive, start end of level countdown */
-         screenhack_handle_events(dpy);
-	 sleep(kLevelPause);
-	 NewLevel(dpy, window, cmap, xlim, ylim);
-	 return;
+	 usleep(kLevelPause*1000000);
+	 NewLevel(st, st->draw_xlim, st->draw_ylim);
+         goto END;
   END_CHECK: ;
   }
-  else if ((random() % levFreq) == 0) {
-	 launch(xlim, ylim, dpy, cmap, -1);
-	 levMissiles--;
+  else if ((random() % st->levFreq) == 0) {
+	 launch(st, st->draw_xlim, st->draw_ylim, -1);
+	 st->levMissiles--;
   }
 
-  if (loop - lastLaser >= lrate) {
-	 if (fire(xlim, ylim, dpy, window, cmap))
-		lastLaser = loop;
+  if (st->loop - st->lastLaser >= st->lrate) {
+	 if (fire(st, st->draw_xlim, st->draw_ylim))
+		st->lastLaser = st->loop;
   }
 
-  XSync(dpy, False);
-  screenhack_handle_events(dpy);
-  if (kSleepTime)
-	 usleep(kSleepTime);
+  if ((st->loop & 7) == 0)
+    st->draw_reset = 1;
 
-  if ((loop & 7) == 0)
-	 DrawCities(dpy, window, cmap, xlim, ylim);
-  LoopMissiles(dpy, window, cmap, xlim, ylim);
-  LoopLasers(dpy, window, cmap, xlim, ylim);
-  LoopBooms(dpy, window, cmap, xlim, ylim);
+  LoopMissiles(st, st->draw_xlim, st->draw_ylim);
+  LoopLasers(st, st->draw_xlim, st->draw_ylim);
+  LoopBooms(st, st->draw_xlim, st->draw_ylim);
+
+ END:
+  return kSleepTime;
 }
 
-char *progclass = "Penetrate";
+static void
+penetrate_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
 
-char *defaults [] = {
+static Bool
+penetrate_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+penetrate_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *penetrate_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*bgrowth:	5",
   "*lrate:	80",
+  "*smart:	False",
   "*geometry:	800x500",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec penetrate_options [] = {
   { "-bgrowth",		".bgrowth",	XrmoptionSepArg, 0 },
   { "-lrate",		".lrate",	XrmoptionSepArg, 0 },
-	{"-smart", ".smart", XrmoptionIsArg,0},
+  {"-smart",            ".smart",       XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  Colormap cmap = init_penetrate(dpy, window);
-  while (1)
-    penetrate(dpy, window, cmap);
-}
+XSCREENSAVER_MODULE ("Penetrate", penetrate)

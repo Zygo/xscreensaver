@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,6 +26,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/param.h>   /* for PATH_MAX */
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -66,6 +67,11 @@
 #include "prefs.h"
 #include "resources.h"
 
+/* don't use realpath() on fedora system */
+#ifdef _FORTIFY_SOURCE
+#undef HAVE_REALPATH
+#endif
+
 
 extern char *progname;
 extern char *progclass;
@@ -73,9 +79,9 @@ extern const char *blurb (void);
 
 
 
-static void get_screenhacks (saver_preferences *p);
+static void get_screenhacks (Display *, saver_preferences *);
 static char *format_command (const char *cmd, Bool wrap_p);
-static void merge_system_screenhacks (saver_preferences *p,
+static void merge_system_screenhacks (Display *, saver_preferences *,
                                       screenhack **system_list, int count);
 static void stop_the_insanity (saver_preferences *p);
 
@@ -97,8 +103,8 @@ chase_symlinks (const char *file)
       if (realpath (file, buf))
         return strdup (buf);
 
-      sprintf (buf, "%.100s: realpath %.200s", blurb(), file);
-      perror(buf);
+/*      sprintf (buf, "%.100s: realpath %.200s", blurb(), file);
+      perror(buf);*/
     }
 # endif /* HAVE_REALPATH */
   return 0;
@@ -203,9 +209,9 @@ init_file_tmp_name (void)
 }
 
 static int
-get_byte_resource (char *name, char *class)
+get_byte_resource (Display *dpy, char *name, char *class)
 {
-  char *s = get_string_resource (name, class);
+  char *s = get_string_resource (dpy, name, class);
   char *s2 = s;
   int n = 0;
   if (!s) return 0;
@@ -632,7 +638,8 @@ write_entry (FILE *out, const char *key, const char *value)
 }
 
 int
-write_init_file (saver_preferences *p, const char *version_string,
+write_init_file (Display *dpy,
+                 saver_preferences *p, const char *version_string,
                  Bool verbose_p)
 {
   int status = -1;
@@ -700,10 +707,10 @@ write_init_file (saver_preferences *p, const char *version_string,
     }
 
   /* Kludge, since these aren't in the saver_preferences struct... */
-  visual_name = get_string_resource ("visualID", "VisualID");
+  visual_name = get_string_resource (dpy, "visualID", "VisualID");
   programs = 0;
-  overlay_stderr_p = get_boolean_resource ("overlayStderr", "Boolean");
-  stderr_font = get_string_resource ("font", "Font");
+  overlay_stderr_p = get_boolean_resource (dpy, "overlayStderr", "Boolean");
+  stderr_font = get_string_resource (dpy, "font", "Font");
 
   i = 0;
   {
@@ -713,7 +720,7 @@ write_init_file (saver_preferences *p, const char *version_string,
 
     for (j = 0; j < p->screenhacks_count; j++)
       {
-        hack_strings[j] = format_hack (p->screenhacks[j], True);
+        hack_strings[j] = format_hack (dpy, p->screenhacks[j], True);
         i += strlen (hack_strings[j]);
         i += 2;
       }
@@ -771,11 +778,7 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("timeout")		type = pref_time, t = p->timeout;
       CHECK("cycle")		type = pref_time, t = p->cycle;
       CHECK("lock")		type = pref_bool, b = p->lock_p;
-# if 0 /* #### not ready yet */
-      CHECK("lockVTs")		type = pref_bool, b = p->lock_vt_p;
-# else
-      CHECK("lockVTs")		continue;  /* don't save */
-# endif
+      CHECK("lockVTs")		continue;  /* don't save, unused */
       CHECK("lockTimeout")	type = pref_time, t = p->lock_timeout;
       CHECK("passwdTimeout")	type = pref_time, t = p->passwd_timeout;
       CHECK("visualID")		type = pref_str,  s =    visual_name;
@@ -784,7 +787,11 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("timestamp")	type = pref_bool, b = p->timestamp_p;
       CHECK("splash")		type = pref_bool, b = p->splash_p;
       CHECK("splashDuration")	type = pref_time, t = p->splash_duration;
+# ifdef QUAD_MODE
       CHECK("quad")		type = pref_bool, b = p->quad_p;
+# else  /* !QUAD_MODE */
+      CHECK("quad")		continue;  /* don't save */
+# endif /* !QUAD_MODE */
       CHECK("demoCommand")	type = pref_str,  s = p->demo_command;
       CHECK("prefsCommand")	type = pref_str,  s = p->prefs_command;
 /*    CHECK("helpURL")		type = pref_str,  s = p->help_url; */
@@ -1001,7 +1008,7 @@ free_screenhack_list (screenhack **list, int count)
    and so on.
  */
 void
-load_init_file (saver_preferences *p)
+load_init_file (Display *dpy, saver_preferences *p)
 {
   static Bool first_time = True;
   
@@ -1016,7 +1023,7 @@ load_init_file (saver_preferences *p)
          Then clear it out so that it will be parsed again later, after
          the init file has been read.
        */
-      get_screenhacks (p);
+      get_screenhacks (dpy, p);
       system_default_screenhacks = p->screenhacks;
       system_default_screenhack_count = p->screenhacks_count;
       p->screenhacks = 0;
@@ -1028,63 +1035,69 @@ load_init_file (saver_preferences *p)
 
   first_time = False;
 
-  p->xsync_p	    = get_boolean_resource ("synchronous", "Synchronous");
-  p->verbose_p	    = get_boolean_resource ("verbose", "Boolean");
-  p->timestamp_p    = get_boolean_resource ("timestamp", "Boolean");
-  p->lock_p	    = get_boolean_resource ("lock", "Boolean");
-  p->lock_vt_p	    = get_boolean_resource ("lockVTs", "Boolean");
-  p->fade_p	    = get_boolean_resource ("fade", "Boolean");
-  p->unfade_p	    = get_boolean_resource ("unfade", "Boolean");
-  p->fade_seconds   = 1000 * get_seconds_resource ("fadeSeconds", "Time");
-  p->fade_ticks	    = get_integer_resource ("fadeTicks", "Integer");
-  p->install_cmap_p = get_boolean_resource ("installColormap", "Boolean");
-  p->nice_inferior  = get_integer_resource ("nice", "Nice");
-  p->inferior_memory_limit = get_byte_resource ("memoryLimit", "MemoryLimit");
-  p->splash_p       = get_boolean_resource ("splash", "Boolean");
-  p->quad_p         = get_boolean_resource ("quad", "Boolean");
-  p->capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
-  p->ignore_uninstalled_p = get_boolean_resource ("ignoreUninstalledPrograms",
+  p->xsync_p	    = get_boolean_resource (dpy, "synchronous", "Synchronous");
+  p->verbose_p	    = get_boolean_resource (dpy, "verbose", "Boolean");
+  p->timestamp_p    = get_boolean_resource (dpy, "timestamp", "Boolean");
+  p->lock_p	    = get_boolean_resource (dpy, "lock", "Boolean");
+  p->fade_p	    = get_boolean_resource (dpy, "fade", "Boolean");
+  p->unfade_p	    = get_boolean_resource (dpy, "unfade", "Boolean");
+  p->fade_seconds   = 1000 * get_seconds_resource (dpy, "fadeSeconds", "Time");
+  p->fade_ticks	    = get_integer_resource (dpy, "fadeTicks", "Integer");
+  p->install_cmap_p = get_boolean_resource (dpy, "installColormap", "Boolean");
+  p->nice_inferior  = get_integer_resource (dpy, "nice", "Nice");
+  p->inferior_memory_limit = get_byte_resource (dpy, "memoryLimit",
+                                                "MemoryLimit");
+  p->splash_p       = get_boolean_resource (dpy, "splash", "Boolean");
+# ifdef QUAD_MODE
+  p->quad_p         = get_boolean_resource (dpy, "quad", "Boolean");
+# endif
+  p->capture_stderr_p = get_boolean_resource (dpy, "captureStderr", "Boolean");
+  p->ignore_uninstalled_p = get_boolean_resource (dpy, 
+                                                  "ignoreUninstalledPrograms",
                                                   "Boolean");
 
-  p->initial_delay   = 1000 * get_seconds_resource ("initialDelay", "Time");
-  p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");
-  p->timeout         = 1000 * get_minutes_resource ("timeout", "Time");
-  p->lock_timeout    = 1000 * get_minutes_resource ("lockTimeout", "Time");
-  p->cycle           = 1000 * get_minutes_resource ("cycle", "Time");
-  p->passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
-  p->pointer_timeout = 1000 * get_seconds_resource ("pointerPollTime", "Time");
-  p->pointer_hysteresis = get_integer_resource ("pointerHysteresis","Integer");
-  p->notice_events_timeout = 1000*get_seconds_resource("windowCreationTimeout",
+  p->initial_delay   = 1000 * get_seconds_resource (dpy, "initialDelay", "Time");
+  p->splash_duration = 1000 * get_seconds_resource (dpy, "splashDuration", "Time");
+  p->timeout         = 1000 * get_minutes_resource (dpy, "timeout", "Time");
+  p->lock_timeout    = 1000 * get_minutes_resource (dpy, "lockTimeout", "Time");
+  p->cycle           = 1000 * get_minutes_resource (dpy, "cycle", "Time");
+  p->passwd_timeout  = 1000 * get_seconds_resource (dpy, "passwdTimeout", "Time");
+  p->pointer_timeout = 1000 * get_seconds_resource (dpy, "pointerPollTime", "Time");
+  p->pointer_hysteresis = get_integer_resource (dpy, "pointerHysteresis","Integer");
+  p->notice_events_timeout = 1000*get_seconds_resource(dpy,
+                                                       "windowCreationTimeout",
 						       "Time");
 
-  p->dpms_enabled_p  = get_boolean_resource ("dpmsEnabled", "Boolean");
-  p->dpms_standby    = 1000 * get_minutes_resource ("dpmsStandby", "Time");
-  p->dpms_suspend    = 1000 * get_minutes_resource ("dpmsSuspend", "Time");
-  p->dpms_off        = 1000 * get_minutes_resource ("dpmsOff",     "Time");
+  p->dpms_enabled_p  = get_boolean_resource (dpy, "dpmsEnabled", "Boolean");
+  p->dpms_standby    = 1000 * get_minutes_resource (dpy, "dpmsStandby", "Time");
+  p->dpms_suspend    = 1000 * get_minutes_resource (dpy, "dpmsSuspend", "Time");
+  p->dpms_off        = 1000 * get_minutes_resource (dpy, "dpmsOff",     "Time");
 
-  p->grab_desktop_p  = get_boolean_resource ("grabDesktopImages",  "Boolean");
-  p->grab_video_p    = get_boolean_resource ("grabVideoFrames",    "Boolean");
-  p->random_image_p  = get_boolean_resource ("chooseRandomImages", "Boolean");
-  p->image_directory = get_string_resource  ("imageDirectory",
+  p->grab_desktop_p  = get_boolean_resource (dpy, "grabDesktopImages",  "Boolean");
+  p->grab_video_p    = get_boolean_resource (dpy, "grabVideoFrames",    "Boolean");
+  p->random_image_p  = get_boolean_resource (dpy, "chooseRandomImages", "Boolean");
+  p->image_directory = get_string_resource  (dpy,
+                                             "imageDirectory",
                                              "ImageDirectory");
 
-  p->text_literal = get_string_resource ("textLiteral", "TextLiteral");
-  p->text_file    = get_string_resource ("textFile",    "TextFile");
-  p->text_program = get_string_resource ("textProgram", "TextProgram");
-  p->text_url     = get_string_resource ("textURL",     "TextURL");
+  p->text_literal = get_string_resource (dpy, "textLiteral", "TextLiteral");
+  p->text_file    = get_string_resource (dpy, "textFile",    "TextFile");
+  p->text_program = get_string_resource (dpy, "textProgram", "TextProgram");
+  p->text_url     = get_string_resource (dpy, "textURL",     "TextURL");
 
-  p->shell = get_string_resource ("bourneShell", "BourneShell");
+  p->shell = get_string_resource (dpy, "bourneShell", "BourneShell");
 
-  p->demo_command = get_string_resource("demoCommand", "URL");
-  p->prefs_command = get_string_resource("prefsCommand", "URL");
-  p->help_url = get_string_resource("helpURL", "URL");
-  p->load_url_command = get_string_resource("loadURL", "LoadURL");
-  p->new_login_command = get_string_resource("newLoginCommand",
+  p->demo_command = get_string_resource(dpy, "demoCommand", "URL");
+  p->prefs_command = get_string_resource(dpy, "prefsCommand", "URL");
+  p->help_url = get_string_resource(dpy, "helpURL", "URL");
+  p->load_url_command = get_string_resource(dpy, "loadURL", "LoadURL");
+  p->new_login_command = get_string_resource(dpy,
+                                             "newLoginCommand",
                                              "NewLoginCommand");
 
   /* If "*splash" is unset, default to true. */
   {
-    char *s = get_string_resource ("splash", "Boolean");
+    char *s = get_string_resource (dpy, "splash", "Boolean");
     if (s)
       free (s);
     else
@@ -1093,40 +1106,43 @@ load_init_file (saver_preferences *p)
 
   /* If "*grabDesktopImages" is unset, default to true. */
   {
-    char *s = get_string_resource ("grabDesktopImages", "Boolean");
+    char *s = get_string_resource (dpy, "grabDesktopImages", "Boolean");
     if (s)
       free (s);
     else
       p->grab_desktop_p = True;
   }
 
-  p->use_xidle_extension = get_boolean_resource ("xidleExtension","Boolean");
+  p->use_xidle_extension = get_boolean_resource (dpy, "xidleExtension","Boolean");
 #if 0 /* ignore this, it is evil. */
-  p->use_mit_saver_extension = get_boolean_resource ("mitSaverExtension",
+  p->use_mit_saver_extension = get_boolean_resource (dpy, 
+                                                     "mitSaverExtension",
 						     "Boolean");
 #endif
-  p->use_sgi_saver_extension = get_boolean_resource ("sgiSaverExtension",
+  p->use_sgi_saver_extension = get_boolean_resource (dpy,
+                                                     "sgiSaverExtension",
 						     "Boolean");
-  p->use_proc_interrupts = get_boolean_resource ("procInterrupts", "Boolean");
+  p->use_proc_interrupts = get_boolean_resource (dpy,
+                                                 "procInterrupts", "Boolean");
 
   p->getviewport_full_of_lies_p =
-    get_boolean_resource ("GetViewPortIsFullOfLies", "Boolean");
+    get_boolean_resource (dpy, "GetViewPortIsFullOfLies", "Boolean");
 
-  get_screenhacks (p);                /* Parse the "programs" resource. */
+  get_screenhacks (dpy, p);             /* Parse the "programs" resource. */
 
   {
-    char *s = get_string_resource ("selected", "Integer");
+    char *s = get_string_resource (dpy, "selected", "Integer");
     if (!s || !*s)
       p->selected_hack = -1;
     else
-      p->selected_hack = get_integer_resource ("selected", "Integer");
+      p->selected_hack = get_integer_resource (dpy, "selected", "Integer");
     if (s) free (s);
     if (p->selected_hack < 0 || p->selected_hack >= p->screenhacks_count)
       p->selected_hack = -1;
   }
 
   {
-    char *s = get_string_resource ("mode", "Mode");
+    char *s = get_string_resource (dpy, "mode", "Mode");
     if      (s && !strcasecmp (s, "one"))         p->mode = ONE_HACK;
     else if (s && !strcasecmp (s, "blank"))       p->mode = BLANK_ONLY;
     else if (s && !strcasecmp (s, "off"))         p->mode = DONT_BLANK;
@@ -1136,7 +1152,7 @@ load_init_file (saver_preferences *p)
   }
 
   {
-    char *s = get_string_resource ("textMode", "TextMode");
+    char *s = get_string_resource (dpy, "textMode", "TextMode");
     if      (s && !strcasecmp (s, "url"))         p->tmode = TEXT_URL;
     else if (s && !strcasecmp (s, "literal"))     p->tmode = TEXT_LITERAL;
     else if (s && !strcasecmp (s, "file"))        p->tmode = TEXT_FILE;
@@ -1147,7 +1163,7 @@ load_init_file (saver_preferences *p)
 
   if (system_default_screenhack_count)  /* note: first_time is also true */
     {
-      merge_system_screenhacks (p, system_default_screenhacks,
+      merge_system_screenhacks (dpy, p, system_default_screenhacks,
                                 system_default_screenhack_count);
       free_screenhack_list (system_default_screenhacks,
                             system_default_screenhack_count);
@@ -1174,7 +1190,7 @@ load_init_file (saver_preferences *p)
    This does *not* actually save the file.
  */
 static void
-merge_system_screenhacks (saver_preferences *p,
+merge_system_screenhacks (Display *dpy, saver_preferences *p,
                           screenhack **system_list, int system_count)
 {
   /* Yeah yeah, this is an N^2 operation, but I don't have hashtables handy,
@@ -1191,11 +1207,12 @@ merge_system_screenhacks (saver_preferences *p,
         {
           char *name;
           if (!system_list[i]->name)
-            system_list[i]->name = make_hack_name (system_list[i]->command);
+            system_list[i]->name = make_hack_name (dpy, 
+                                                   system_list[i]->command);
 
           name = p->screenhacks[j]->name;
           if (!name)
-            name = make_hack_name (p->screenhacks[j]->command);
+            name = make_hack_name (dpy, p->screenhacks[j]->command);
 
           matched_p = !strcasecmp (name, system_list[i]->name);
 
@@ -1237,7 +1254,7 @@ merge_system_screenhacks (saver_preferences *p,
 
 #if 0
           fprintf (stderr, "%s: noticed new hack: %s\n", blurb(),
-                   (nh->name ? nh->name : make_hack_name (nh->command)));
+                   (nh->name ? nh->name : make_hack_name (dpy, nh->command)));
 #endif
         }
     }
@@ -1348,7 +1365,7 @@ format_command (const char *cmd, Bool wrap_p)
    by looking for "hacks.XYZ.name", where XYZ is the program.)
  */
 char *
-make_hack_name (const char *shell_command)
+make_hack_name (Display *dpy, const char *shell_command)
 {
   char *s = strdup (shell_command);
   char *s2;
@@ -1373,7 +1390,7 @@ make_hack_name (const char *shell_command)
     s[50] = 0;
 
   sprintf (res_name, "hacks.%s.name", s);		/* resource? */
-  s2 = get_string_resource (res_name, res_name);
+  s2 = get_string_resource (dpy, res_name, res_name);
   if (s2)
     {
       free (s);
@@ -1397,14 +1414,14 @@ make_hack_name (const char *shell_command)
 
 
 char *
-format_hack (screenhack *hack, Bool wrap_p)
+format_hack (Display *dpy, screenhack *hack, Bool wrap_p)
 {
   int tab = 32;
   int size;
   char *h2, *out, *s;
   int col = 0;
 
-  char *def_name = make_hack_name (hack->command);
+  char *def_name = make_hack_name (dpy, hack->command);
 
   /* Don't ever write out a name for a hack if it's the same as the default.
    */
@@ -1475,7 +1492,7 @@ format_hack (screenhack *hack, Bool wrap_p)
 
 
 static void
-get_screenhacks (saver_preferences *p)
+get_screenhacks (Display *dpy, saver_preferences *p)
 {
   int i, j;
   int start = 0;
@@ -1483,10 +1500,10 @@ get_screenhacks (saver_preferences *p)
   int size;
   char *d;
 
-  d = get_string_resource ("monoPrograms", "MonoPrograms");
+  d = get_string_resource (dpy, "monoPrograms", "MonoPrograms");
   if (d && !*d) { free(d); d = 0; }
   if (!d)
-    d = get_string_resource ("colorPrograms", "ColorPrograms");
+    d = get_string_resource (dpy, "colorPrograms", "ColorPrograms");
   if (d && !*d) { free(d); d = 0; }
 
   if (d)
@@ -1497,7 +1514,7 @@ get_screenhacks (saver_preferences *p)
       free(d);
     }
 
-  d = get_string_resource ("programs", "Programs");
+  d = get_string_resource (dpy, "programs", "Programs");
 
   free_screenhack_list (p->screenhacks, p->screenhacks_count);
   p->screenhacks = 0;
@@ -1592,6 +1609,13 @@ stop_the_insanity (saver_preferences *p)
   if (p->dpms_suspend != 0 &&
       p->dpms_standby > p->dpms_suspend)
     p->dpms_standby = p->dpms_suspend;
+
+  /* These fixes above ignores the case
+     suspend = 0 and standby > off ...
+   */
+  if (p->dpms_off != 0 &&
+      p->dpms_standby > p->dpms_off)
+    p->dpms_standby = p->dpms_off;
 
 
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */

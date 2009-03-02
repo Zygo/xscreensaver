@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="xmatrix" _label="Xmatrix">
+<screensaver name="xmatrix" _label="XMatrix">
 
   <command arg="-root"/>
 
@@ -11,15 +11,16 @@
 
   <select id="mode">
     <option id="matrix" _label="Matrix Encoding"/>
-    <option id="binary" _label="Binary Encoding"      arg-set="-binary"/>
-    <option id="hex"    _label="Hexadecimal Encoding" arg-set="-hexadecimal"/>
-    <option id="dna"    _label="Genetic Encoding"     arg-set="-dna"/>
+    <option id="binary" _label="Binary Encoding"      arg-set="-mode binary"/>
+    <option id="hex"    _label="Hexadecimal Encoding" arg-set="-mode hex"/>
+    <option id="dna"    _label="Genetic Encoding"     arg-set="-mode dna"/>
+    <option id="pipe"   _label="Piped ASCII Text"     arg-set="-mode pipe"/>
   </select>
 
   <select id="fill">
     <option id="both"   _label="Synergistic Algorithm"/>
-    <option id="top"    _label="Slider Algorithm"    arg-set="-top"/>
-    <option id="bottom" _label="Expansion Algorithm" arg-set="-bottom"/>
+    <option id="top"    _label="Slider Algorithm"    arg-set="-insert top"/>
+    <option id="bottom" _label="Expansion Algorithm" arg-set="-insert bottom"/>
   </select>
 
   <number id="delay" type="slider" arg="-delay %"
@@ -32,11 +33,13 @@
           low="1" high="100" default="75"/>
 
   <hgroup>
-   <boolean id="trace" _label="Run Trace Program" arg-set="-trace"/>
-   <boolean id="knock" _label="Knock Knock" arg-set="-knock-knock"/>
+   <boolean id="trace" _label="Run Trace Program" arg-unset="-no-trace"/>
+   <boolean id="knock" _label="Knock Knock"       arg-unset="-no-knock-knock"/>
   </hgroup>
 
   <string id="phone" _label="Phone Number" arg="-phone %"/>
+
+  <xscreensaver-text />
 
   <_description>
 Draws dropping characters similar to what is seen on the computer 
@@ -45,6 +48,6 @@ monitors in "The Matrix".
 See also "glmatrix" for a 3D rendering of the similar effect that
 appeared in the title sequence of the movie.
 
-Written by Jamie Zawinski.
+Written by Jamie Zawinski; 1999.
   </_description>
 </screensaver>

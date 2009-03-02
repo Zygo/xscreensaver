@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,7 +43,6 @@
    Oh, for an alpha channel... maybe I should rewrite this in GL.  Then the
    blobs could have thickness, and curved edges with specular reflections...
  */
-
 
 #define SCALE       10000  /* fixed-point math, for sub-pixel motion */
 #define DEF_COUNT   12	   /* When planes and count are 0, how many blobs. */
@@ -91,11 +90,12 @@ struct goop {
   GC window_gc;
   Bool additive_p;
   Bool cmap_p;
+  int delay;
 };
 
 
 static struct blob *
-make_blob (int maxx, int maxy, int size)
+make_blob (Display *dpy, int maxx, int maxy, int size)
 {
   struct blob *b = (struct blob *) calloc(1, sizeof(*b));
   int i;
@@ -111,9 +111,9 @@ make_blob (int maxx, int maxy, int size)
   if (b->min_r < (5*SCALE)) b->min_r = (5*SCALE);
   mid = ((b->min_r + b->max_r) / 2);
 
-  b->torque       = get_float_resource ("torque", "Torque");
-  b->elasticity   = SCALE * get_float_resource ("elasticity", "Elasticity");
-  b->max_velocity = SCALE * get_float_resource ("maxVelocity", "MaxVelocity");
+  b->torque       = get_float_resource (dpy, "torque", "Torque");
+  b->elasticity   = SCALE * get_float_resource (dpy, "elasticity", "Elasticity");
+  b->max_velocity = SCALE * get_float_resource (dpy, "maxVelocity", "MaxVelocity");
 
   b->x = RAND(maxx);
   b->y = RAND(maxy);
@@ -259,15 +259,21 @@ make_layer (Display *dpy, Window window, int width, int height, int nblobs)
   blob_max = (width < height ? width : height) / 2;
   blob_min = (blob_max * 2) / 3;
   for (i = 0; i < layer->nblobs; i++)
-    layer->blobs[i] = make_blob (width, height,
+    layer->blobs[i] = make_blob (dpy, width, height,
 				 (random() % (blob_max-blob_min)) + blob_min);
 
   layer->pixmap = XCreatePixmap (dpy, window, width, height, 1);
   layer->gc = XCreateGC (dpy, layer->pixmap, 0, &gcv);
 
+# ifdef HAVE_COCOA
+  jwxyz_XSetAlphaAllowed (dpy, layer->gc, True);
+# endif /* HAVE_COCOA */
+
   return layer;
 }
 
+
+#ifndef HAVE_COCOA
 static void
 draw_layer_plane (Display *dpy, struct layer *layer, int width, int height)
 {
@@ -279,6 +285,7 @@ draw_layer_plane (Display *dpy, struct layer *layer, int width, int height)
       draw_blob (dpy, layer->pixmap, layer->gc, layer->blobs[i], True);
     }
 }
+#endif /* !HAVE_COCOA */
 
 
 static void
@@ -304,32 +311,42 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   int i;
   struct goop *goop = (struct goop *) calloc(1, sizeof(*goop));
   XGCValues gcv;
-  int nblobs = get_integer_resource ("count", "Count");
+  int nblobs = get_integer_resource (dpy, "count", "Count");
 
   unsigned long *plane_masks = 0;
+# ifndef HAVE_COCOA
   unsigned long base_pixel = 0;
+# endif
+  char *s;
 
-  goop->mode = (get_boolean_resource("xor", "Xor")
-		? xor
-		: (get_boolean_resource("transparent", "Transparent")
-		   ? transparent
-		   : opaque));
+  s = get_string_resource (dpy, "mode", "Mode");
+  goop->mode = transparent;
+  if (!s || !*s || !strcasecmp (s, "transparent"))
+    ;
+  else if (!strcasecmp (s, "opaque"))
+    goop->mode = opaque;
+  else if (!strcasecmp (s, "xor"))
+    goop->mode = xor;
+  else
+    fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
+
+  goop->delay = get_integer_resource (dpy, "delay", "Integer");
 
   goop->width = width;
   goop->height = height;
 
-
-  goop->nlayers = get_integer_resource ("planes", "Planes");
+  goop->nlayers = get_integer_resource (dpy, "planes", "Planes");
   if (goop->nlayers <= 0)
     goop->nlayers = (random() % (depth-2)) + 2;
   goop->layers = (struct layer **) malloc(sizeof(*goop->layers)*goop->nlayers);
 
-  goop->additive_p = get_boolean_resource ("additive", "Additive");
+  goop->additive_p = get_boolean_resource (dpy, "additive", "Additive");
   goop->cmap_p = has_writable_cells (screen, visual);
 
   if (mono_p && goop->mode == transparent)
     goop->mode = opaque;
 
+# ifndef HAVE_COCOA
   /* Try to allocate some color planes before committing to nlayers.
    */
   if (goop->mode == transparent)
@@ -348,6 +365,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 	  goop->mode = opaque;
 	}
     }
+# endif /* !HAVE_COCOA */
 
   {
     int lblobs[32];
@@ -362,22 +380,27 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 				    (nblobs > 0 ? nblobs : lblobs[i]));
   }
 
+# ifndef HAVE_COCOA
   if (goop->mode == transparent && plane_masks)
     {
       for (i = 0; i < goop->nlayers; i++)
 	goop->layers[i]->pixel = base_pixel | plane_masks[i];
       goop->background = base_pixel;
     }
+# endif /* !HAVE_COCOA */
+
   if (plane_masks)
     free (plane_masks);
 
+# ifndef HAVE_COCOA
   if (goop->mode != transparent)
+# endif /* !HAVE_COCOA */
     {
       XColor color;
       color.flags = DoRed|DoGreen|DoBlue;
 
       goop->background =
-	get_pixel_resource ("background", "Background", dpy,cmap);
+	get_pixel_resource (dpy,cmap, "background", "Background");
 
       for (i = 0; i < goop->nlayers; i++)
 	{
@@ -390,6 +413,17 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 	  else
 	    goop->layers[i]->pixel =
 	      WhitePixelOfScreen(DefaultScreenOfDisplay(dpy));
+# ifdef HAVE_COCOA
+          if (goop->mode == transparent)
+            {
+              /* give a non-opaque alpha to the color */
+              unsigned long pixel = goop->layers[i]->pixel;
+              unsigned long amask = BlackPixelOfScreen (0);
+              unsigned long a = (0xBBBBBBBB & amask);
+              pixel = (pixel & (~amask)) | a;
+              goop->layers[i]->pixel = pixel;
+            }
+# endif /* HAVE_COCOA */
 	}
     }
 
@@ -397,31 +431,36 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 				(goop->mode == xor ? 1L : depth));
 
   gcv.background = goop->background;
-  gcv.foreground = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  gcv.line_width = get_integer_resource ("thickness","Thickness");
+  gcv.foreground = get_pixel_resource (dpy, cmap, "foreground", "Foreground");
+  gcv.line_width = get_integer_resource (dpy, "thickness","Thickness");
   goop->pixmap_gc = XCreateGC (dpy, goop->pixmap, GCLineWidth, &gcv);
   goop->window_gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 
+# ifdef HAVE_COCOA
+  jwxyz_XSetAlphaAllowed (dpy, goop->pixmap_gc, True);
+# endif /* HAVE_COCOA */
+  
   return goop;
 }
 
-static struct goop *
-init_goop (Display *dpy, Window window)
+static void *
+goop_init (Display *dpy, Window window)
 {
   XWindowAttributes xgwa;
   XGetWindowAttributes (dpy, window, &xgwa);
-
   return make_goop (xgwa.screen, xgwa.visual, window, xgwa.colormap,
 		    xgwa.width, xgwa.height, xgwa.depth);
 }
 
-static void
-run_goop (Display *dpy, Window window, struct goop *goop)
+static unsigned long
+goop_draw (Display *dpy, Window window, void *closure)
 {
-  int i, j;
+  struct goop *goop = (struct goop *) closure;
+  int i;
 
   switch (goop->mode)
     {
+# ifndef HAVE_COCOA
     case transparent:
 
       for (i = 0; i < goop->nlayers; i++)
@@ -437,6 +476,7 @@ run_goop (Display *dpy, Window window, struct goop *goop)
 
       if (!goop->cmap_p && !goop->additive_p)
         {
+          int j;
           for (i = 0; i < goop->nlayers; i++)
             for (j = 0; j < goop->layers[i]->nblobs; j++)
               draw_blob (dpy, goop->pixmap, goop->pixmap_gc,
@@ -454,6 +494,7 @@ run_goop (Display *dpy, Window window, struct goop *goop)
       XCopyArea (dpy, goop->pixmap, window, goop->window_gc, 0, 0,
 		 goop->width, goop->height, 0, 0);
       break;
+#endif /* !HAVE_COCOA */
 
     case xor:
       XSetFunction (dpy, goop->pixmap_gc, GXcopy);
@@ -470,6 +511,9 @@ run_goop (Display *dpy, Window window, struct goop *goop)
 		  goop->width, goop->height, 0, 0, 1L);
       break;
 
+# ifdef HAVE_COCOA
+    case transparent:
+# endif
     case opaque:
     case outline:
       XSetForeground (dpy, goop->pixmap_gc, goop->background);
@@ -490,37 +534,55 @@ run_goop (Display *dpy, Window window, struct goop *goop)
       abort ();
       break;
     }
+  return goop->delay;
 }
 
-
-char *progclass = "Goop";
+static void
+goop_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  /* #### write me */
+}
 
-char *defaults [] = {
+static Bool
+goop_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+goop_free (Display *dpy, Window window, void *closure)
+{
+}
+
+
+
+
+static const char *goop_defaults [] = {
   ".background:		black",
-  ".foreground:		white",
+  ".foreground:		yellow",
   "*delay:		12000",
-  "*transparent:	true",
   "*additive:		true",
-  "*xor:		false",
+  "*mode:		transparent",
   "*count:		0",
   "*planes:		0",
   "*thickness:		5",
   "*torque:		0.0075",
-  "*elasticity:		1.8",
-  "*maxVelocity:	1.2",
+  "*elasticity:		0.9",
+  "*maxVelocity:	0.5",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec goop_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-planes",		".planes",	XrmoptionSepArg, 0 },
-  { "-transparent",	".transparent",	XrmoptionNoArg, "True" },
-  { "-non-transparent",	".transparent",	XrmoptionNoArg, "False" },
+  { "-mode",		".mode",	XrmoptionSepArg, 0 },
+  { "-xor",		".mode",	XrmoptionNoArg, "xor" },
+  { "-transparent",	".mode",	XrmoptionNoArg, "transparent" },
+  { "-opaque",		".mode",	XrmoptionNoArg, "opaque" },
   { "-additive",	".additive",	XrmoptionNoArg, "True" },
   { "-subtractive",	".additive",	XrmoptionNoArg, "false" },
-  { "-xor",		".xor",		XrmoptionNoArg, "true" },
-  { "-no-xor",		".xor",		XrmoptionNoArg, "false" },
   { "-thickness",	".thickness",	XrmoptionSepArg, 0 },
   { "-torque",		".torque",	XrmoptionSepArg, 0 },
   { "-elasticity",	".elasticity",	XrmoptionSepArg, 0 },
@@ -528,16 +590,4 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  struct goop *g = init_goop (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-  while (1)
-    {
-      run_goop (dpy, window, g);
-      XSync (dpy, False);
-      screenhack_handle_events (dpy);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Goop", goop)

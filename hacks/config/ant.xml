@@ -45,8 +45,10 @@
 
   <_description>
 A cellular automaton that is really a two-dimensional Turing machine:
-as the heads (``ants'') walk along the screen, they change pixel
+as the heads ("ants") walk along the screen, they change pixel
 values in their path.  Then, as they pass over changed pixels, their
-behavior is influenced.  Written by David Bagley.
+behavior is influenced.
+
+Written by David Bagley; 1997.
   </_description>
 </screensaver>

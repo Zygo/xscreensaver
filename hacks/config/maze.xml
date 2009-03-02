@@ -46,8 +46,10 @@
   <!-- #### -surround-color [slateblue] -->
 
   <_description>
-This is the ancient X maze demo, modified to work with xscreensaver.
-It generates a random maze, then solves it with visual feedback.
-Originally by Jim Randell; modified by a cast of thousands.
+This generates random mazes (with various different algorithms), and
+then solves them.  Backtracking and look-ahead paths are displayed in
+different colors.
+
+Written by Jim Randell and many others; 1992.
   </_description>
 </screensaver>

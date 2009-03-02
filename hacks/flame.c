@@ -58,50 +58,64 @@
 #define MAXLEV 4
 #define MAXKINDS  10
 
-static double f[2][3][MAXLEV];	/* three non-homogeneous transforms */
-static int max_total;
-static int max_levels;
-static int max_points;
-static int cur_level;
-static int variation;
-static int snum;
-static int anum;
-static int num_points;
-static int total_points;
-static int pixcol;
-static int ncolors;
-static XColor *colors;
-static XPoint points [POINT_BUFFER_SIZE];
-static GC gc;
+struct state {
+  Display *dpy;
+  Window window;
 
-static int delay, delay2;
-static int width, height;
+  double f[2][3][MAXLEV];	/* three non-homogeneous transforms */
+  int max_total;
+  int max_levels;
+  int max_points;
+  int cur_level;
+  int variation;
+  int snum;
+  int anum;
+  int num_points;
+  int total_points;
+  int pixcol;
+  int ncolors;
+  XColor *colors;
+  XPoint points [POINT_BUFFER_SIZE];
+  GC gc;
+
+  int delay, delay2;
+  int width, height;
+
+  short lasthalf;
+
+  int flame_alt;
+  int do_reset;
+};
+
 
 static short
-halfrandom (int mv)
+halfrandom (struct state *st, int mv)
 {
-  static short lasthalf = 0;
   unsigned long r;
 
-  if (lasthalf)
+  if (st->lasthalf)
     {
-      r = lasthalf;
-      lasthalf = 0;
+      r = st->lasthalf;
+      st->lasthalf = 0;
     }
   else
     {
       r = random ();
-      lasthalf = r >> 16;
+      st->lasthalf = r >> 16;
     }
   return (r % mv);
 }
 
-static void
-init_flame (Display *dpy, Window window)
+static void *
+flame_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
   Colormap cmap;
+
+  st->dpy = dpy;
+  st->window = window;
 
 #if defined(SIGFPE) && defined(SIG_IGN)
   /* No doubt a better fix would be to track down where the NaN is coming
@@ -111,80 +125,79 @@ init_flame (Display *dpy, Window window)
   signal (SIGFPE, SIG_IGN);
 #endif
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-  width = xgwa.width;
-  height = xgwa.height;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->width = xgwa.width;
+  st->height = xgwa.height;
   cmap = xgwa.colormap;
 
-  max_points = get_integer_resource ("iterations", "Integer");
-  if (max_points <= 0) max_points = 100;
+  st->max_points = get_integer_resource (st->dpy, "iterations", "Integer");
+  if (st->max_points <= 0) st->max_points = 100;
 
-  max_levels = max_points;
+  st->max_levels = st->max_points;
 
-  max_total = get_integer_resource ("points", "Integer");
-  if (max_total <= 0) max_total = 10000;
+  st->max_total = get_integer_resource (st->dpy, "points", "Integer");
+  if (st->max_total <= 0) st->max_total = 10000;
 
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 0) delay = 0;
-  delay2 = get_integer_resource ("delay2", "Integer");
-  if (delay2 < 0) delay2 = 0;
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  if (st->delay < 0) st->delay = 0;
+  st->delay2 = get_integer_resource (st->dpy, "delay2", "Integer");
+  if (st->delay2 < 0) st->delay2 = 0;
 
-  variation = random() % MAXKINDS;
+  st->variation = random() % MAXKINDS;
 
   if (mono_p)
-    ncolors = 0;
+    st->ncolors = 0;
   else
     {
-      ncolors = get_integer_resource ("colors", "Integer");
-      if (ncolors <= 0) ncolors = 128;
-      colors = (XColor *) malloc ((ncolors+1) * sizeof (*colors));
-      make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap, colors, &ncolors,
+      st->ncolors = get_integer_resource (st->dpy, "colors", "Integer");
+      if (st->ncolors <= 0) st->ncolors = 128;
+      st->colors = (XColor *) malloc ((st->ncolors+1) * sizeof (*st->colors));
+      make_smooth_colormap (st->dpy, xgwa.visual, xgwa.colormap, st->colors, &st->ncolors,
 			    True, 0, True);
-      if (ncolors <= 2)
-	mono_p = True, ncolors = 0;
+      if (st->ncolors <= 2)
+	mono_p = True, st->ncolors = 0;
     }
 
-  gcv.foreground = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-  gcv.background = get_pixel_resource ("background", "Background", dpy, cmap);
+  gcv.foreground = get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
+  gcv.background = get_pixel_resource (st->dpy, cmap, "background", "Background");
 
   if (! mono_p)
     {
-      pixcol = halfrandom (ncolors);
-      gcv.foreground = (colors [pixcol].pixel);
+      st->pixcol = halfrandom (st, st->ncolors);
+      gcv.foreground = (st->colors [st->pixcol].pixel);
     }
 
-  gc = XCreateGC (dpy, window, GCForeground | GCBackground, &gcv);
+  st->gc = XCreateGC (st->dpy, st->window, GCForeground | GCBackground, &gcv);
+  return st;
 }
 
 static int
-recurse (double x, double y, int l, Display *dpy, Window win)
+recurse (struct state *st, double x, double y, int l, Display *dpy, Window win)
 {
   int xp, yp, i;
   double nx, ny;
 
-  if (l == max_levels)
+  if (l == st->max_levels)
     {
-      total_points++;
-      if (total_points > max_total) /* how long each fractal runs */
+      st->total_points++;
+      if (st->total_points > st->max_total) /* how long each fractal runs */
 	return 0;
 
       if (x > -1.0 && x < 1.0 && y > -1.0 && y < 1.0)
 	{
-	  xp = points[num_points].x = (int) ((width / 2) * (x + 1.0));
-	  yp = points[num_points].y = (int) ((height / 2) * (y + 1.0));
-	  num_points++;
-	  if (num_points >= POINT_BUFFER_SIZE)
+	  xp = st->points[st->num_points].x = (int) ((st->width / 2) * (x + 1.0));
+	  yp = st->points[st->num_points].y = (int) ((st->height / 2) * (y + 1.0));
+	  st->num_points++;
+	  if (st->num_points >= POINT_BUFFER_SIZE)
 	    {
-	      XDrawPoints (dpy, win, gc, points, num_points, CoordModeOrigin);
-	      num_points = 0;
-	      /* if (delay) usleep (delay); */
-	      /* XSync (dpy, False); */
+	      XDrawPoints (st->dpy, win, st->gc, st->points, st->num_points, CoordModeOrigin);
+	      st->num_points = 0;
 	    }
 	}
     }
   else
     {
-      for (i = 0; i < snum; i++)
+      for (i = 0; i < st->snum; i++)
 	{
 
 	  /* Scale back when values get very large. Spot sez:
@@ -194,11 +207,11 @@ recurse (double x, double y, int l, Display *dpy, Window win)
 	  if ((abs(x) > 1.0E5) || (abs(y) > 1.0E5))
 	    x = x / y;
 
-	  nx = f[0][0][i] * x + f[0][1][i] * y + f[0][2][i];
-	  ny = f[1][0][i] * x + f[1][1][i] * y + f[1][2][i];
-	  if (i < anum)
+	  nx = st->f[0][0][i] * x + st->f[0][1][i] * y + st->f[0][2][i];
+	  ny = st->f[1][0][i] * x + st->f[1][1][i] * y + st->f[1][2][i];
+	  if (i < st->anum)
 	    {
-	      switch (variation)
+	      switch (st->variation)
 		{
 		case 0:	/* sinusoidal */
 		  nx = sin(nx);
@@ -315,60 +328,65 @@ recurse (double x, double y, int l, Display *dpy, Window win)
 		  ny = sin(ny);
 		}
 	    }
-	  if (!recurse (nx, ny, l + 1, dpy, win))
+	  if (!recurse (st, nx, ny, l + 1, st->dpy, win))
 	    return 0;
 	}
     }
   return 1;
 }
 
-
-static void
-flame (Display *dpy, Window window)
+static unsigned long
+flame_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
   int i, j, k;
-  static int alt = 0;
+  unsigned long this_delay = st->delay;
 
-  if (!(cur_level++ % max_levels))
+  if (st->do_reset)
     {
-      if (delay2) usleep (delay2);
-      XClearWindow (dpy, window);
-      alt = !alt;
+      st->do_reset = 0;
+      XClearWindow (st->dpy, st->window);
+    }
 
-      variation = random() % MAXKINDS;
+  if (!(st->cur_level++ % st->max_levels))
+    {
+      st->do_reset = 1;
+      this_delay = st->delay2;
+      st->flame_alt = !st->flame_alt;
+      st->variation = random() % MAXKINDS;
     }
   else
     {
-      if (ncolors > 2)
+      if (st->ncolors > 2)
 	{
-	  XSetForeground (dpy, gc, colors [pixcol].pixel);
-	  if (--pixcol < 0)
-	    pixcol = ncolors - 1;
+	  XSetForeground (st->dpy, st->gc, st->colors [st->pixcol].pixel);
+	  if (--st->pixcol < 0)
+	    st->pixcol = st->ncolors - 1;
 	}
     }
 
   /* number of functions */
-  snum = 2 + (cur_level % (MAXLEV - 1));
+  st->snum = 2 + (st->cur_level % (MAXLEV - 1));
 
   /* how many of them are of alternate form */
-  if (alt)
-    anum = 0;
+  if (st->flame_alt)
+    st->anum = 0;
   else
-    anum = halfrandom (snum) + 2;
+    st->anum = halfrandom (st, st->snum) + 2;
 
   /* 6 coefs per function */
-  for (k = 0; k < snum; k++)
+  for (k = 0; k < st->snum; k++)
     {
       for (i = 0; i < 2; i++)
 	for (j = 0; j < 3; j++)
-	  f[i][j][k] = ((double) (random() & 1023) / 512.0 - 1.0);
+	  st->f[i][j][k] = ((double) (random() & 1023) / 512.0 - 1.0);
     }
-  num_points = 0;
-  total_points = 0;
-  (void) recurse (0.0, 0.0, 0, dpy, window);
-  XDrawPoints (dpy, window, gc, points, num_points, CoordModeOrigin);
-  XSync (dpy, False);
-  if (delay) usleep (delay);
+  st->num_points = 0;
+  st->total_points = 0;
+  recurse (st, 0.0, 0.0, 0, st->dpy, st->window);
+  XDrawPoints (st->dpy, st->window, st->gc, st->points, st->num_points, CoordModeOrigin);
+
+  return this_delay;
 }
 
 
@@ -392,9 +410,7 @@ int matherr(x)
 
 
 
-char *progclass = "Flame";
-
-char *defaults [] = {
+static const char *flame_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*colors:	64",
@@ -405,7 +421,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec flame_options [] = {
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { "-iterations",	".iterations",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
@@ -414,13 +430,24 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
+static void
+flame_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  init_flame (dpy, window);
-  while (1)
-    {
-      flame (dpy, window);
-      screenhack_handle_events (dpy);
-    }
 }
+
+static Bool
+flame_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+flame_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("Flame", flame)
+

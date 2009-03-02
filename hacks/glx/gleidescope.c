@@ -42,11 +42,6 @@
  *									the edge when zooming and moving.
  */
 
-#include <X11/Intrinsic.h>
-#include "colors.h"
-
-#include "xpm-ximage.h"
-
 /*
 **----------------------------------------------------------------------------
 ** Defines
@@ -54,19 +49,13 @@
 */
 
 #ifdef STANDALONE
-# define PROGCLASS				"gleidescope"
-# define HACK_INIT				init_gleidescope
-# define HACK_DRAW				draw_gleidescope
-# define HACK_RESHAPE			reshape_gleidescope
-# define HACK_HANDLE_EVENT		gleidescope_handle_event
-# define EVENT_MASK				PointerMotionMask
-# define gleidescope_opts		xlockmore_opts
 # define DEFAULTS \
 		"*delay:		20000		\n"	\
 		"*showFPS:		False		\n"	\
 		"*size:			-1			\n"	\
 		"*useSHM:		True		\n"
 
+# define refresh_gleidescope 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -74,9 +63,13 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
+#include "colors.h"
+#include "xpm-ximage.h"
+#include "grab-ximage.h"
 
 /* acd TODO should all these be in gleidestruct? */
+/* they can't be, because of the idiotic way the xlockmore "argtype vars"
+   interface works. -jwz */
 #ifdef GRAB
 static Bool		grab;			/* grab images */
 #endif
@@ -84,23 +77,13 @@ static Bool		move;			/* moving camera */
 static Bool		nomove;			/* no moving camera */
 static Bool		rotate;			/* rotate in place */
 static Bool		norotate;		/* no rotate in place */
-static int		size = -1;		/* size */
 static Bool		zoom;			/* zooming camera */
 static Bool		nozoom;			/* no zooming camera */
 static char		*image;			/* name of texture to load */
 static int		duration;		/* length of time to display grabbed image */
 
 #define	MAX_TANGLE_VEL	2.0
-
-static float	tangle = 0;			/* texture angle */
-static float	tangle_vel = 0.0;	/* texture velocity */
-static float	tangle_acc = 0.0;	/* texture acceleration */
-
 #define	MAX_RANGLE_VEL	1.5
-
-static float	rangle = 0;			/* rotate angle */
-static float	rangle_vel = 0.0;	/* rotate velocity */
-static float	rangle_acc = 0.0;	/* rotate acceleration */
 
 static XrmOptionDescRec opts[] =
 {
@@ -149,7 +132,7 @@ static OptionStruct desc[] = {
 	{"-duration",	"length of time texture will be used"},
 };
 
-ModeSpecOpt gleidescope_opts = {
+ENTRYPOINT ModeSpecOpt gleidescope_opts = {
 	sizeof opts / sizeof opts[0], opts,
 	sizeof vars / sizeof vars[0], vars,
 	desc
@@ -193,6 +176,26 @@ typedef struct {
 	GLint			fade;
 	time_t			start_time;
 	Bool			button_down_p;
+
+    int		size;
+
+    float	tangle;		/* texture angle */
+    float	tangle_vel;	/* texture velocity */
+    float	tangle_acc;	/* texture acceleration */
+
+    float	rangle;		/* rotate angle */
+    float	rangle_vel;	/* rotate velocity */
+    float	rangle_acc;	/* rotate acceleration */
+
+    /* mouse */
+    int xstart;
+    int ystart;
+    double xmouse;
+    double ymouse;
+
+    Bool mipmap_p;
+    Bool waiting_for_image_p;
+
 } gleidestruct;
 
 #define	XOFFSET	(0.8660254f)	/* sin 60' */
@@ -210,9 +213,9 @@ generate_grid(int size)
 
 	int	i, x, y;
 
-	size--;
+	gp->size--;
 
-	i = size;
+	i = gp->size;
 	for (y = -size ; y <= size ; y++) {
 		for (x = -i ; x <= i ; x += 2) {
 			printf("{XOFFSET * %d, YOFFSET * %d, 0},\n", x, y);
@@ -228,7 +231,7 @@ generate_grid(int size)
 }
 #endif
 
-hex_t hex[] = {
+static const hex_t hex[] = {
 	/* edges of size 7 */
 	/* number of hexagons required to cover screen depends on camera distance */
 	/* at a distance of 10 this is just about enough. */
@@ -381,10 +384,11 @@ hex_t hex[] = {
 
 static	gleidestruct *gleidescope = NULL;
 
+#if 0
 /*
  *load defaults in config structure
  */
-void setdefaultconfig(void)
+static void setdefaultconfig(void)
 {
 #ifdef GRAB
 	grab = False;
@@ -394,13 +398,9 @@ void setdefaultconfig(void)
 	zoom = False;
 	image = NULL;
 }
+#endif
 
-static int xstart;
-static int ystart;
-static double xmouse = 0.0;
-static double ymouse = 0.0;
-
-Bool
+ENTRYPOINT Bool
 gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 {
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
@@ -417,8 +417,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
                 event->xbutton.button == Button3)
 			{
 				/* store initial values of mouse */
-				xstart = event->xbutton.x;
-				ystart = event->xbutton.y;
+				gp->xstart = event->xbutton.x;
+				gp->ystart = event->xbutton.y;
 
 				/* button is down */
 				gp->button_down_p = True;
@@ -454,10 +454,10 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 			if (gp->button_down_p)
 			{
 				/* update mouse position */
-				xmouse += (double)(event->xmotion.x - xstart) / MI_WIDTH(mi);
-				ymouse += (double)(event->xmotion.y - ystart) / MI_HEIGHT(mi);
-				xstart = event->xmotion.x;
-				ystart = event->xmotion.y;
+				gp->xmouse += (double)(event->xmotion.x - gp->xstart) / MI_WIDTH(mi);
+				gp->ymouse += (double)(event->xmotion.y - gp->ystart) / MI_HEIGHT(mi);
+				gp->xstart = event->xmotion.x;
+				gp->ystart = event->xmotion.y;
 
 				return True;
 			}
@@ -467,33 +467,41 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 	return False;
 }
 
-#include "grab-ximage.h"
+
+static void
+image_loaded_cb (const char *filename, XRectangle *geometry,
+                 int image_width, int image_height, 
+                 int texture_width, int texture_height,
+                 void *closure)
+{
+  gleidestruct *gp = (gleidestruct *) closure;
+
+  gp->max_tx = (GLfloat) image_width  / texture_width;
+  gp->max_ty = (GLfloat) image_height / texture_height;
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (gp->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
+
+  gp->waiting_for_image_p = False;
+  gp->start_time = time ((time_t *) 0);
+}
+
 
 static void
 getSnapshot(ModeInfo *mi, GLuint name)
 {
-    Bool mipmap_p = True;
-	int     iw, ih, tw, th;
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 
 	if (MI_IS_WIREFRAME(mi))
 		return;
 
-	glBindTexture (GL_TEXTURE_2D, name);
-    if (! screen_to_texture (mi->xgwa.screen, mi->window, 0, 0,
-                             mipmap_p, NULL, NULL, &iw, &ih, &tw, &th))
-      exit (1);
-
-    gp->max_tx = (GLfloat) iw / tw;
-    gp->max_ty = (GLfloat) ih / th;
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                     (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
-
-	/* remember time of last image change */
-	gp->start_time = time ((time_t *) 0);
+    gp->mipmap_p = True;
+    load_texture_async (mi->xgwa.screen, mi->window,
+                        *gp->glx_context, 0, 0, gp->mipmap_p, 
+                        name, image_loaded_cb, gp);
 }
+
 
 static void
 setup_file_texture (ModeInfo *mi, char *filename, GLuint name)
@@ -580,10 +588,10 @@ draw_hexagons(ModeInfo *mi, int translucency, GLuint texture)
 	t1x = gp->max_tx / 2;
 	t1y = gp->max_ty / 2;
 	/* t2 rotates */
-	t2x = (gp->max_tx / 2) * (1 + cos((ymouse * 2 * M_PI) + (tangle * M_PI / 180)));
-	t2y = (gp->max_ty / 2) * (1 + sin((ymouse * 2 * M_PI) + (tangle * M_PI / 180)));
+	t2x = (gp->max_tx / 2) * (1 + cos((gp->ymouse * 2 * M_PI) + (gp->tangle * M_PI / 180)));
+	t2y = (gp->max_ty / 2) * (1 + sin((gp->ymouse * 2 * M_PI) + (gp->tangle * M_PI / 180)));
 	/* t3 is always 60' further around than t2 */
-	tangle2 = (ymouse * 2 * M_PI) + (tangle * M_PI / 180) + (M_PI * 2 / 6);
+	tangle2 = (gp->ymouse * 2 * M_PI) + (gp->tangle * M_PI / 180) + (M_PI * 2 / 6);
 	t3x = (gp->max_tx / 2) * (1 + (cos(tangle2)));
 	t3y = (gp->max_ty / 2) * (1 + (sin(tangle2)));
 	/* NB image is flipped vertically hence: */
@@ -718,16 +726,16 @@ draw(ModeInfo * mi)
 	}
 
 	/* size is changed in pinit() to be distance from plane */
-	size = MI_SIZE(mi);
-	if (size > 10) {
-		size = 10;
+	gp->size = MI_SIZE(mi);
+	if (gp->size > 10) {
+		gp->size = 10;
 	}
-	if (size < -1) {
-		size = -1;
+	if (gp->size < -1) {
+		gp->size = -1;
 	}
-	if (size != -1) {
+	if (gp->size != -1) {
 		/* user defined size */
-		v1.z = size;
+		v1.z = gp->size;
 	} else if (zoom) {
 		/* max distance given by adding the constant and the multiplier */
 		v1.z = 5.0 + 4.0 * sin(z_angle);
@@ -742,18 +750,18 @@ draw(ModeInfo * mi)
 		float	new_rangle_vel = 0.0;
 
 		/* update camera rotation angle and velocity */
-		rangle += rangle_vel;
-		new_rangle_vel = rangle_vel + rangle_acc;
+		gp->rangle += gp->rangle_vel;
+		new_rangle_vel = gp->rangle_vel + gp->rangle_acc;
 		if (new_rangle_vel > -MAX_RANGLE_VEL && new_rangle_vel < MAX_RANGLE_VEL)
 		{
 			/* new velocity is within limits */
-			rangle_vel = new_rangle_vel;
+			gp->rangle_vel = new_rangle_vel;
 		}
 
 		/* randomly change twisting speed */
 		if ((random() % 1000) < 1)
 		{
-			rangle_acc = frand(0.002) - 0.001;
+			gp->rangle_acc = frand(0.002) - 0.001;
 		}
 	}
 
@@ -767,8 +775,8 @@ draw(ModeInfo * mi)
 	gluLookAt(
 			v1.x, v1.y, v1.z,
 			v1.x, v1.y, 0.0,
-			sin((xmouse * M_PI * 2) + rangle * M_PI / 180),
-			cos((xmouse * M_PI * 2) + rangle * M_PI / 180),
+			sin((gp->xmouse * M_PI * 2) + gp->rangle * M_PI / 180),
+			cos((gp->xmouse * M_PI * 2) + gp->rangle * M_PI / 180),
 			0.0);
 #endif
 
@@ -807,20 +815,20 @@ draw(ModeInfo * mi)
 	{
 		float		new_tangle_vel = 0.0;
 
-		tangle += tangle_vel;
+		gp->tangle += gp->tangle_vel;
 
 		/* work out new texture angle velocity */
-		new_tangle_vel = tangle_vel + tangle_acc;
+		new_tangle_vel = gp->tangle_vel + gp->tangle_acc;
 		if (new_tangle_vel > -MAX_TANGLE_VEL && new_tangle_vel < MAX_TANGLE_VEL)
 		{
 			/* new velocity is inside limits */
-			tangle_vel = new_tangle_vel;
+			gp->tangle_vel = new_tangle_vel;
 		}
 
 		/* randomly change texture angle acceleration */
 		if ((random() % 1000) < 1)
 		{
-			tangle_acc = frand(0.002) - 0.001;
+			gp->tangle_acc = frand(0.002) - 0.001;
 		}
 	}
 
@@ -830,7 +838,7 @@ draw(ModeInfo * mi)
 /* 
  * new window size or exposure 
  */
-void reshape_gleidescope(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_gleidescope(ModeInfo *mi, int width, int height)
 {
 	GLfloat		h = (GLfloat) height / (GLfloat) width;
 
@@ -922,32 +930,32 @@ pinit(ModeInfo * mi)
 	gp->cam_z_phase = random() % 360;
 
 	/* initial angular speeds */
-	rangle_vel = frand(0.2) - 0.1;
-	tangle_vel = frand(0.2) - 0.1;
-	rangle_acc = frand(0.002) - 0.001;
-	tangle_acc = frand(0.002) - 0.001;
+	gp->rangle_vel = frand(0.2) - 0.1;
+	gp->tangle_vel = frand(0.2) - 0.1;
+	gp->rangle_acc = frand(0.002) - 0.001;
+	gp->tangle_acc = frand(0.002) - 0.001;
 
     /* jwz */
     {
       GLfloat speed = 15;
-      rangle_vel *= speed;
-      tangle_vel *= speed;
-      rangle_acc *= speed;
-      tangle_acc *= speed;
+      gp->rangle_vel *= speed;
+      gp->tangle_vel *= speed;
+      gp->rangle_acc *= speed;
+      gp->tangle_acc *= speed;
     }
 
 	/* distance is 11 - size */
-	if (size != -1) {
+	if (gp->size != -1) {
 		if (zoom) {
 			fprintf(stderr, "-size given. ignoring -zoom.\n");
 			zoom = False;
 		}
-		if (size < 1) {
-			size = 1;
-		} else if (size >= 10) {
-			size = 10;
+		if (gp->size < 1) {
+			gp->size = 1;
+		} else if (gp->size >= 10) {
+			gp->size = 10;
 		}
-		size = 11 - size;
+		gp->size = 11 - gp->size;
 	}
 
 #ifdef DEBUG
@@ -955,7 +963,7 @@ printf("phases [%d, %d, %d]\n", gp->cam_x_phase, gp->cam_y_phase, gp->cam_z_phas
 #endif
 }
 
-void
+ENTRYPOINT void
 init_gleidescope(ModeInfo * mi)
 {
 	gleidestruct *gp;
@@ -970,6 +978,7 @@ init_gleidescope(ModeInfo * mi)
 	}
 	gp = &gleidescope[screen];
 	gp->window = MI_WINDOW(mi);
+    gp->size = -1;
 
 	if ((gp->glx_context = init_GL(mi)) != NULL) {
 
@@ -985,7 +994,7 @@ init_gleidescope(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 draw_gleidescope(ModeInfo * mi)
 {
 	gleidestruct	*gp = &gleidescope[MI_SCREEN(mi)];
@@ -995,6 +1004,9 @@ draw_gleidescope(ModeInfo * mi)
 
 	if (!gp->glx_context)
 		return;
+
+    /* Just keep running before the texture has come in. */
+    /* if (gp->waiting_for_image_p) return; */
 
 	glDrawBuffer(GL_BACK);
 
@@ -1024,7 +1036,7 @@ draw_gleidescope(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_gleidescope(ModeInfo * mi)
 {
 	if (gleidescope != NULL) {
@@ -1047,5 +1059,7 @@ release_gleidescope(ModeInfo * mi)
 	
 	FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Gleidescope", gleidescope)
 
 #endif

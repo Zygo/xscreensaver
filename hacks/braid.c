@@ -31,27 +31,25 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_braid
-#define PROGCLASS "Braid"
-#define HACK_INIT init_braid
-#define HACK_DRAW draw_braid
-#define braid_opts xlockmore_opts
-#define DEFAULTS "*delay: 1000 \n" \
- "*count: 15 \n" \
- "*cycles: 100 \n" \
- "*size: -7 \n" \
- "*ncolors: 64 \n"
-#define UNIFORM_COLORS
-#include "xlockmore.h"
-#include "erase.h"
+# define MODE_braid
+# define DEFAULTS  "*delay: 1000 \n" \
+				   "*count: 15 \n" \
+				   "*cycles: 100 \n" \
+				   "*size: -7 \n" \
+				   "*ncolors: 64 \n"
+# define UNIFORM_COLORS
+# define reshape_braid 0
+# define braid_handle_event 0
+# include "xlockmore.h"
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"
-
+# include "xlock.h"
+# define ENTRYPOINT /**/
 #endif /* STANDALONE */
 
 #ifdef MODE_braid
 
-ModeSpecOpt braid_opts =
+ENTRYPOINT ModeSpecOpt braid_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -102,6 +100,9 @@ typedef struct {
 	float       top, bottom, left, right;
 	int         age;
 	int         color_direction;
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
 } braidtype;
 
 static braidtype *braids = (braidtype *) NULL;
@@ -161,7 +162,7 @@ applywordbackto(braidtype * braid, int string, int position)
 	return c;
 }
 
-void
+ENTRYPOINT void
 init_braid(ModeInfo * mi)
 {
 	braidtype  *braid;
@@ -183,7 +184,9 @@ init_braid(ModeInfo * mi)
 	/* jwz: go in the other direction sometimes. */
 	braid->color_direction = ((LRAND() & 1) ? 1 : -1);
 
+#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
+#endif
 
 	min_length = (braid->center_x > braid->center_y) ?
 		braid->center_y : braid->center_x;
@@ -265,7 +268,7 @@ init_braid(ModeInfo * mi)
 			braid->components[i] *= -1;
 }
 
-void
+ENTRYPOINT void
 draw_braid(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -282,6 +285,13 @@ draw_braid(ModeInfo * mi)
 	if (braids == NULL)
 		return;
 	braid = &braids[MI_SCREEN(mi)];
+
+#ifdef STANDALONE
+    if (braid->eraser) {
+      braid->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), braid->eraser);
+      return;
+    }
+#endif
 
 	MI_IS_DRAWN(mi) = True;
 	XSetLineAttributes(display, MI_GC(mi), braid->linewidth,
@@ -430,13 +440,13 @@ draw_braid(ModeInfo * mi)
 
 	if (++braid->age > MI_CYCLES(mi)) {
 #ifdef STANDALONE
-	  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+      braid->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), braid->eraser);
 #endif
 		init_braid(mi);
 	}
 }
 
-void
+ENTRYPOINT void
 release_braid(ModeInfo * mi)
 {
 	if (braids != NULL) {
@@ -445,10 +455,12 @@ release_braid(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_braid(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Braid", braid)
 
 #endif /* MODE_braid */

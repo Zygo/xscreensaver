@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,19 +13,14 @@
  */
 
 #include <math.h>
-#include "screenhack.h"
+#include "screenhackI.h"
 #include "apple2.h"
-#include <time.h>
-#include <sys/time.h>
-#include <X11/Intrinsic.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
 #endif
 
 #define DEBUG
-
-extern XtAppContext app;
 
 /*
  * Implementation notes
@@ -233,8 +228,8 @@ a2_hplot(apple2_state_t *st, int hcolor, int x, int y)
   if (y<0 || y>=192 || x<0 || x>=280) return;
 
   for (run=0; run<2 && x<280; run++) {
-    u_char *vidbyte = &st->hireslines[y][x/7];
-    u_char whichbit=1<<(x%7);
+    unsigned char *vidbyte = &st->hireslines[y][x/7];
+    unsigned char whichbit=1<<(x%7);
     int masked_bit;
 
     *vidbyte = (*vidbyte & 0x7f) | highbit;
@@ -308,7 +303,7 @@ void
 a2_plot(apple2_state_t *st, int color, int x, int y)
 {
   int textrow=y/2;
-  u_char byte;
+  unsigned char byte;
 
   if (x<0 || x>=40 || y<0 || y>=48) return;
 
@@ -358,7 +353,7 @@ a2_init_memory_active(apple2_sim_t *sim)
     case 1:
       n=random()%500;
       for (i=0; i<n && addr<0x4000; i++) {
-        u_char rb=((random()%6==0 ? 0 : random()%16) |
+        unsigned char rb=((random()%6==0 ? 0 : random()%16) |
                    ((random()%5==0 ? 0 : random()%16)<<4));
         a2_poke(st, addr++, rb);
       }
@@ -396,10 +391,33 @@ a2_init_memory_active(apple2_sim_t *sim)
 }
 
 
+#if 1  /* jwz: since MacOS doesn't have "6x10", I dumped this font to an XBM...
+        */
+
+#include "images/apple2font.xbm"
+
+static void
+a2_make_font(apple2_sim_t *sim)
+{
+  Pixmap text_pm = XCreatePixmapFromBitmapData (sim->dpy, sim->window,
+                                                (char *) apple2_font_bits,
+                                                apple2_font_width,
+                                                apple2_font_height,
+                                                1, 0, 1);
+  if (apple2_font_width != 64*7) abort();
+  if (apple2_font_height != 8) abort();
+  sim->text_im = XGetImage(sim->dpy, text_pm, 0, 0, 
+                           apple2_font_width, apple2_font_height,
+                           ~0L, ZPixmap);
+  XFreePixmap(sim->dpy, text_pm);
+}
+
+#else /* 0 */
+
 /* This table lists fixes for characters that differ from the standard 6x10
    font. Each encodes a pixel, as (charindex*7 + x) + (y<<10) + (value<<15)
    where value is 0 for white and 1 for black. */
-static unsigned short a2_fixfont[] = {
+static const unsigned short a2_fixfont[] = {
   /* Fix $ */  0x8421, 0x941d,
   /* Fix % */  0x8024, 0x0028, 0x8425, 0x0426, 0x0825, 0x1027, 0x1426, 0x9427,
                0x1824, 0x9828,
@@ -470,7 +488,7 @@ a2_make_font(apple2_sim_t *sim)
     abort();
   }
 
-  text_pm=XCreatePixmap(sim->dpy, sim->window, 64*7, 8, sim->dec->xgwa.depth);
+  text_pm=XCreatePixmap(sim->dpy, sim->window, 64*7, 8, 1);
 
   memset(&gcv, 0, sizeof(gcv));
   gcv.foreground=1;
@@ -492,6 +510,16 @@ a2_make_font(apple2_sim_t *sim)
       XDrawString(sim->dpy, text_pm, gc, x, y, &c, 1);
     }
   }
+
+# if 0
+  for (i=0; a2_fixfont[i]; i++) {
+    XSetForeground (sim->dpy, gc, (a2_fixfont[i]>>15)&1);
+    XDrawPoint(sim->dpy, text_pm, gc, a2_fixfont[i]&0x3ff,
+              (a2_fixfont[i]>>10)&0xf);
+  }
+  XWriteBitmapFile(sim->dpy, "/tmp/a2font.xbm", text_pm, 64*7, 8, -1, -1);
+# endif
+
   sim->text_im = XGetImage(sim->dpy, text_pm, 0, 0, 64*7, 8, ~0L, ZPixmap);
   XFreeGC(sim->dpy, gc);
   XFreePixmap(sim->dpy, text_pm);
@@ -503,26 +531,24 @@ a2_make_font(apple2_sim_t *sim)
   }
 }
 
+#endif /* 0 */
 
-void
-apple2(Display *dpy, Window window, int delay,
-       void (*controller)(apple2_sim_t *sim,
-                          int *stepno,
-                          double *next_actiontime))
+apple2_sim_t *
+apple2_start(Display *dpy, Window window, int delay,
+             void (*controller)(apple2_sim_t *sim,
+                                int *stepno,
+                                double *next_actiontime))
 {
-  int i,textrow,row,col,stepno;
-  int c;
-  double next_actiontime;
   apple2_sim_t *sim;
 
-  sim=(apple2_sim_t *)calloc(1,sizeof(apple2_state_t));
+  sim=(apple2_sim_t *)calloc(1,sizeof(apple2_sim_t));
   sim->dpy = dpy;
   sim->window = window;
   sim->delay = delay;
+  sim->controller = controller;
 
   sim->st = (apple2_state_t *)calloc(1,sizeof(apple2_state_t));
   sim->dec = analogtv_allocate(dpy, window);
-  sim->dec->event_handler = screenhack_handle_event;
   sim->inp = analogtv_input_allocate();
 
   sim->reception.input = sim->inp;
@@ -545,15 +571,15 @@ apple2(Display *dpy, Window window, int delay,
 
   a2_make_font(sim);
 
-  stepno=0;
+  sim->stepno=0;
   a2_goto(sim->st,23,0);
 
   if (random()%2==0) sim->basetime_tv.tv_sec -= 1; /* random blink phase */
-  next_actiontime=0.0;
+  sim->next_actiontime=0.0;
 
   sim->curtime=0.0;
-  next_actiontime=sim->curtime;
-  (*controller)(sim, &stepno, &next_actiontime);
+  sim->next_actiontime=sim->curtime;
+  sim->controller (sim, &sim->stepno, &sim->next_actiontime);
 
 # ifdef GETTIMEOFDAY_TWO_ARGS
   gettimeofday(&sim->basetime_tv, NULL);
@@ -561,8 +587,18 @@ apple2(Display *dpy, Window window, int delay,
   gettimeofday(&sim->basetime_tv);
 # endif
 
-  while (1) {
+  return sim;
+}
+
+int
+apple2_one_frame (apple2_sim_t *sim)
+{
     double blinkphase;
+    int i;
+    int textrow;
+
+    if (sim->stepno==A2CONTROLLER_DONE)
+      goto DONE;  /* when caller says we're done, be done, dammit! */
 
     {
       struct timeval curtime_tv;
@@ -578,18 +614,6 @@ apple2(Display *dpy, Window window, int delay,
         sim->dec->powerup=sim->curtime;
     }
 
-    if (analogtv_handle_events(sim->dec)) {
-      sim->typing=NULL;
-      sim->printing=NULL;
-      stepno=A2CONTROLLER_FREE;
-      next_actiontime = sim->curtime;
-      (*controller)(sim, &stepno, &next_actiontime);
-      stepno=0;
-      sim->controller_data=NULL;
-      sim->st->gr_mode=0;
-      continue;
-    }
-
     blinkphase=sim->curtime/0.8;
 
     /* The blinking rate was controlled by 555 timer with a resistor/capacitor
@@ -603,9 +627,10 @@ apple2(Display *dpy, Window window, int delay,
       /* For every row with blinking text, set the changed flag. This basically
          works great except with random screen garbage in text mode, when we
          end up redrawing the whole screen every second */
+      int row, col;
       for (row=(sim->st->gr_mode ? 20 : 0); row<24; row++) {
         for (col=0; col<40; col++) {
-          c=sim->st->textlines[row][col];
+          int c=sim->st->textlines[row][col];
           if ((c & 0xc0) == 0x40) {
             downcounter=4;
             break;
@@ -617,8 +642,8 @@ apple2(Display *dpy, Window window, int delay,
       }
     }
 
-    if (sim->curtime >= delay)
-      stepno = A2CONTROLLER_DONE;
+    if (sim->curtime >= sim->delay)
+      sim->stepno = A2CONTROLLER_DONE;
 
     if (sim->printing) {
       int nlcnt=0;
@@ -640,7 +665,7 @@ apple2(Display *dpy, Window window, int delay,
       }
       if (!*sim->printing) sim->printing=NULL;
     }
-    else if (sim->curtime >= next_actiontime) {
+    else if (sim->curtime >= sim->next_actiontime) {
       if (sim->typing) {
 
         int c;
@@ -653,22 +678,33 @@ apple2(Display *dpy, Window window, int delay,
         else {
           a2_printc(sim->st, c);
           if (c=='\r' || c=='\n') {
-            next_actiontime = sim->curtime;
+            sim->next_actiontime = sim->curtime;
           }
           else if (c==010) {
-            next_actiontime = sim->curtime + 0.1;
+            sim->next_actiontime = sim->curtime + 0.1;
           }
           else {
-            next_actiontime = (sim->curtime +
+            sim->next_actiontime = (sim->curtime +
                                (((random()%1000)*0.001 + 0.3) *
                                 sim->typing_rate));
           }
         }
       } else {
-        next_actiontime=sim->curtime;
+        sim->next_actiontime = sim->curtime;
 
-        (*controller)(sim, &stepno, &next_actiontime);
-        if (stepno==A2CONTROLLER_DONE) goto finished;
+        sim->controller (sim, &sim->stepno, &sim->next_actiontime);
+
+        if (sim->stepno==A2CONTROLLER_DONE) {
+
+        DONE:
+          sim->stepno=A2CONTROLLER_FREE;
+          sim->controller (sim, &sim->stepno, &sim->next_actiontime);
+
+          XClearWindow(sim->dpy, sim->window);
+
+          /* #### free sim? */
+          return 0;
+        }
 
       }
     }
@@ -678,6 +714,7 @@ apple2(Display *dpy, Window window, int delay,
     analogtv_setup_frame(sim->dec);
 
     for (textrow=0; textrow<24; textrow++) {
+      int row;
       for (row=textrow*8; row<textrow*8+8; row++) {
 
         /* First we generate the pattern that the video circuitry shifts out
@@ -691,6 +728,7 @@ apple2(Display *dpy, Window window, int delay,
 
         if ((sim->st->gr_mode&A2_GR_HIRES) &&
             (row<160 || (sim->st->gr_mode&A2_GR_FULL))) {
+          int col;
 
           /* Emulate the mysterious pink line, due to a bit getting
              stuck in a shift register between the end of the last
@@ -701,7 +739,7 @@ apple2(Display *dpy, Window window, int delay,
           }
 
           for (col=0; col<40; col++) {
-            u_char b=sim->st->hireslines[row][col];
+            unsigned char b=sim->st->hireslines[row][col];
             int shift=(b&0x80)?0:1;
 
             /* Each of the low 7 bits in hires mode corresponded to 2 dot
@@ -716,8 +754,9 @@ apple2(Display *dpy, Window window, int delay,
         }
         else if ((sim->st->gr_mode&A2_GR_LORES) &&
                  (row<160 || (sim->st->gr_mode&A2_GR_FULL))) {
+          int col;
           for (col=0; col<40; col++) {
-            u_char nib=((sim->st->textlines[textrow][col] >> (((row/4)&1)*4))
+            unsigned char nib=((sim->st->textlines[textrow][col] >> (((row/4)&1)*4))
                         & 0xf);
             /* The low or high nybble was shifted out one bit at a time. */
             for (i=0; i<14; i++) {
@@ -729,9 +768,10 @@ apple2(Display *dpy, Window window, int delay,
           }
         }
         else {
+          int col;
           for (col=0; col<40; col++) {
             int rev;
-            c=sim->st->textlines[textrow][col]&0xff;
+            int c=sim->st->textlines[textrow][col]&0xff;
             /* hi bits control inverse/blink as follows:
                0x00: inverse
                0x40: blink
@@ -756,17 +796,12 @@ apple2(Display *dpy, Window window, int delay,
     analogtv_reception_update(&sim->reception);
     analogtv_add_signal(sim->dec, &sim->reception);
     analogtv_draw(sim->dec);
-  }
-
- finished:
-
-  stepno=A2CONTROLLER_FREE;
-  (*controller)(sim, &stepno, &next_actiontime);
-
-  XSync(sim->dpy, False);
-  XClearWindow(sim->dpy, sim->window);
+ 
+    return 1;
 }
 
+
+#if 0
 void
 a2controller_test(apple2_sim_t *sim, int *stepno, double *next_actiontime)
 {
@@ -810,3 +845,4 @@ a2controller_test(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     break;
   }
 }
+#endif

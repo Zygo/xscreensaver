@@ -17,28 +17,17 @@
           _label="Number of trees" _low-label="Desert" _high-label="Forest"
           low="0" high="20" default="5"/>
 
-  <select id="render">
-    <option id="normal" _label="Normal"/>
-    <option id="solid" _label="Untextured" arg-set="-no-texture"/>
-    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
-  </select>
-
-  <select id="movement">
-    <option id="wander" _label="Wander"/>
-    <option id="still" _label="Still" arg-set="-no-wander"/>
-    <option id="trackmouse" _label="Track mouse" arg-set="-trackmouse"/>
-  </select>
-
-  <boolean id="fog"   _label="Fog" arg-set="-fog"/>
-  <boolean id="shadow"  _label="No shadow" arg-set="-no-shadow"/>
-
+  <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
+  <boolean id="tex"     _label="Textures"  arg-unset="-no-texture"/>
+  <boolean id="shadow"  _label="Shadows"   arg-unset="-no-shadows"/>
+  <boolean id="fog"     _label="Fog"         arg-set="-fog"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws an animation of sprinkling fire-like 3D triangles in a landscape
-filled with trees.  Requires OpenGL, and a machine with fast hardware
-support for texture maps.
+filled with trees.  
 
-Written by Eric Lassauge &lt;lassauge@users.sourceforge.net&gt;.
+Written by Eric Lassauge; 2002.
   </_description>
 </screensaver>

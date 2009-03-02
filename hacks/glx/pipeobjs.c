@@ -14,13 +14,9 @@ static const char sccsid[] = "@(#)pipeobjs.c	4.04 97/07/28 xlockmore";
 
 #ifdef USE_GL
 
-#ifdef STANDALONE
-#include <GL/glx.h>
-#endif
-#include <GL/gl.h>
 #include "buildlwo.h"
 
-static GLfloat BigValve_PNTS[] =
+static const GLfloat BigValve_PNTS[] =
 {
 	(GLfloat) 0.756788, (GLfloat) 0.614672, (GLfloat) - 0.000000,
 	(GLfloat) 0.779498, (GLfloat) 0.599497, (GLfloat) - 0.000000,
@@ -740,7 +736,7 @@ static GLfloat BigValve_PNTS[] =
 	(GLfloat) 0.800000, (GLfloat) - 0.038268, (GLfloat) - 0.092388,
 };
 
-static GLfloat BigValve_normals[] =
+static const GLfloat BigValve_normals[] =
 {
 	(GLfloat) - 1.000000, (GLfloat) 0.000000, (GLfloat) - 0.000000,
 	(GLfloat) - 0.000000, (GLfloat) 0.195090, (GLfloat) - 0.980785,
@@ -1364,7 +1360,7 @@ static GLfloat BigValve_normals[] =
 	(GLfloat) 0.553716, (GLfloat) 0.828696, (GLfloat) - 0.081619,
 };
 
-static unsigned short int BigValve_POLS[] =
+static const unsigned short int BigValve_POLS[] =
 {
 	16, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 1, 4, 700,
 	701, 685, 684, 1, 4, 701, 702, 686, 685, 1, 4, 702, 703, 687, 686, 1, 4, 703, 704, 688,
@@ -1565,7 +1561,7 @@ struct lwo  LWO_BigValve =
 	BigValve_PNTS, BigValve_normals, BigValve_POLS, 0L
 };
 
-static GLfloat Bolts3D_PNTS[] =
+static const GLfloat Bolts3D_PNTS[] =
 {
 	(GLfloat) - 0.160704, (GLfloat) 0.399000, (GLfloat) 0.600000,
 	(GLfloat) - 0.160704, (GLfloat) 0.399000, (GLfloat) - 0.500000,
@@ -1601,7 +1597,7 @@ static GLfloat Bolts3D_PNTS[] =
 	(GLfloat) 0.169922, (GLfloat) 0.399000, (GLfloat) 0.500000,
 };
 
-static GLfloat Bolts3D_normals[] =
+static const GLfloat Bolts3D_normals[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 1.000000, (GLfloat) 0.000000,
 	(GLfloat) 0.709703, (GLfloat) 0.704502, (GLfloat) 0.000000,
@@ -1623,7 +1619,7 @@ static GLfloat Bolts3D_normals[] =
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) - 1.000000,
 };
 
-static unsigned short int Bolts3D_POLS[] =
+static const unsigned short int Bolts3D_POLS[] =
 {
       4, 16, 31, 14, 0, 1, 4, 31, 29, 12, 14, 1, 4, 29, 26, 10, 12, 1, 4, 26,
 	24, 8, 10, 1, 4, 24, 23, 6, 8, 1, 4, 23, 21, 4, 6, 1, 4, 21, 19, 2,
@@ -1640,7 +1636,7 @@ struct lwo  LWO_Bolts3D =
 	Bolts3D_PNTS, Bolts3D_normals, Bolts3D_POLS, 0L
 };
 
-static GLfloat GuageConnector_PNTS[] =
+static const GLfloat GuageConnector_PNTS[] =
 {
 	(GLfloat) 0.200000, (GLfloat) 0.400000, (GLfloat) - 0.000000,
 	(GLfloat) 0.200000, (GLfloat) 0.800000, (GLfloat) - 0.000000,
@@ -1796,7 +1792,7 @@ static GLfloat GuageConnector_PNTS[] =
 	(GLfloat) 0.191342, (GLfloat) 0.871360, (GLfloat) 0.056214,
 };
 
-static GLfloat GuageConnector_normals[] =
+static const GLfloat GuageConnector_normals[] =
 {
 	(GLfloat) 0.991445, (GLfloat) 0.000000, (GLfloat) - 0.130526,
 	(GLfloat) 0.923880, (GLfloat) 0.000000, (GLfloat) - 0.382683,
@@ -1874,7 +1870,7 @@ static GLfloat GuageConnector_normals[] =
 	(GLfloat) - 0.000000, (GLfloat) 1.000000, (GLfloat) - 0.000000,
 };
 
-static unsigned short int GuageConnector_POLS[] =
+static const unsigned short int GuageConnector_POLS[] =
 {
     4, 1, 120, 121, 3, 1, 5, 3, 121, 122, 123, 5, 1, 4, 5, 123, 124, 6, 1, 4,
 6, 124, 125, 9, 1, 5, 9, 125, 126, 127, 10, 1, 4, 10, 127, 128, 12, 1, 4, 14,
@@ -1910,7 +1906,7 @@ struct lwo  LWO_GuageConnector =
 	GuageConnector_PNTS, GuageConnector_normals, GuageConnector_POLS, 0L
 };
 
-static GLfloat GuageDial_PNTS[] =
+static const GLfloat GuageDial_PNTS[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 0.050000, (GLfloat) 0.300000,
 	(GLfloat) 0.019134, (GLfloat) 0.046194, (GLfloat) 0.300000,
@@ -1949,7 +1945,7 @@ static GLfloat GuageDial_PNTS[] =
 	(GLfloat) 0.000000, (GLfloat) - 0.373300, (GLfloat) 0.275000,
 };
 
-static GLfloat GuageDial_normals[] =
+static const GLfloat GuageDial_normals[] =
 {
 	(GLfloat) - 0.000000, (GLfloat) - 0.000000, (GLfloat) 1.000000,
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
@@ -1971,7 +1967,7 @@ static GLfloat GuageDial_normals[] =
 	(GLfloat) - 0.195089, (GLfloat) 0.980786, (GLfloat) - 0.000000,
 };
 
-static unsigned short int GuageDial_POLS[] =
+static const unsigned short int GuageDial_POLS[] =
 {
 	3, 11, 6, 34, 1, 16, 0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15,
 	16, 17, 1, 4, 18, 19, 1, 0, 1, 4, 19, 20, 2, 1, 1, 4, 20, 21, 3, 2,
@@ -1988,7 +1984,7 @@ struct lwo  LWO_GuageDial =
 	GuageDial_PNTS, GuageDial_normals, GuageDial_POLS, 0L
 };
 
-static GLfloat GuageFace_PNTS[] =
+static const GLfloat GuageFace_PNTS[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 1.783300, (GLfloat) 0.200000,
 	(GLfloat) - 0.087791, (GLfloat) 1.774653, (GLfloat) 0.200000,
@@ -2024,12 +2020,12 @@ static GLfloat GuageFace_PNTS[] =
 	(GLfloat) 0.087791, (GLfloat) 1.774653, (GLfloat) 0.200000,
 };
 
-static GLfloat GuageFace_normals[] =
+static const GLfloat GuageFace_normals[] =
 {
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
 };
 
-static unsigned short int GuageFace_POLS[] =
+static const unsigned short int GuageFace_POLS[] =
 {
 32, 0, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14,
 	13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1,
@@ -2042,7 +2038,7 @@ struct lwo  LWO_GuageFace =
 	GuageFace_PNTS, GuageFace_normals, GuageFace_POLS, 0L
 };
 
-static GLfloat GuageHead_PNTS[] =
+static const GLfloat GuageHead_PNTS[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 1.833300, (GLfloat) 0.333330,
 	(GLfloat) 0.097545, (GLfloat) 1.823693, (GLfloat) 0.333330,
@@ -2174,7 +2170,7 @@ static GLfloat GuageHead_PNTS[] =
 	(GLfloat) 0.087791, (GLfloat) 1.774653, (GLfloat) 0.200000,
 };
 
-static GLfloat GuageHead_normals[] =
+static const GLfloat GuageHead_normals[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
 	(GLfloat) 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
@@ -2307,7 +2303,7 @@ static GLfloat GuageHead_normals[] =
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) - 1.000000,
 };
 
-static unsigned short int GuageHead_POLS[] =
+static const unsigned short int GuageHead_POLS[] =
 {
 	3, 67, 3, 4, 1, 3, 68, 67, 4, 1, 3, 68, 4, 5, 1, 3, 69, 68, 5, 1,
 	3, 70, 69, 5, 1, 3, 70, 5, 6, 1, 3, 70, 6, 7, 1, 3, 71, 70, 7, 1,
@@ -2355,7 +2351,7 @@ struct lwo  LWO_GuageHead =
 	GuageHead_PNTS, GuageHead_normals, GuageHead_POLS, 0L
 };
 
-static GLfloat PipeBetweenBolts_PNTS[] =
+static const GLfloat PipeBetweenBolts_PNTS[] =
 {
 	(GLfloat) 0.000000, (GLfloat) 0.500000, (GLfloat) 0.500000,
 	(GLfloat) 0.129410, (GLfloat) 0.482963, (GLfloat) 0.500000,
@@ -2407,7 +2403,7 @@ static GLfloat PipeBetweenBolts_PNTS[] =
 	(GLfloat) - 0.129410, (GLfloat) 0.482963, (GLfloat) - 0.500000,
 };
 
-static GLfloat PipeBetweenBolts_normals[] =
+static const GLfloat PipeBetweenBolts_normals[] =
 {
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
 	(GLfloat) 0.130526, (GLfloat) 0.991445, (GLfloat) 0.000000,
@@ -2437,7 +2433,7 @@ static GLfloat PipeBetweenBolts_normals[] =
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) - 1.000000,
 };
 
-static unsigned short int PipeBetweenBolts_POLS[] =
+static const unsigned short int PipeBetweenBolts_POLS[] =
 {
 	24, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
 	19, 20, 21, 22, 23, 1, 4, 24, 25, 1, 0, 1, 4, 25, 26, 2, 1, 1, 4, 26,
@@ -2458,7 +2454,7 @@ struct lwo  LWO_PipeBetweenBolts =
    PipeBetweenBolts_PNTS, PipeBetweenBolts_normals, PipeBetweenBolts_POLS, 0L
 };
 
-static GLfloat ElbowBolts_PNTS[] =
+static const GLfloat ElbowBolts_PNTS[] =
 {
 	(GLfloat) 0.273122, (GLfloat) - 0.600000, (GLfloat) - 0.403061,
 	(GLfloat) 0.273122, (GLfloat) 0.403061, (GLfloat) - 0.600000,
@@ -2750,7 +2746,7 @@ static GLfloat ElbowBolts_PNTS[] =
 	(GLfloat) - 0.273122, (GLfloat) - 0.660000, (GLfloat) - 0.403061,
 };
 
-static GLfloat ElbowBolts_normals[] =
+static const GLfloat ElbowBolts_normals[] =
 {
 	(GLfloat) - 0.000000, (GLfloat) - 0.000000, (GLfloat) 1.000000,
 	(GLfloat) 0.500000, (GLfloat) 0.866026, (GLfloat) 0.000000,
@@ -2946,7 +2942,7 @@ static GLfloat ElbowBolts_normals[] =
 	(GLfloat) 0.000000, (GLfloat) - 1.000000, (GLfloat) - 0.000000,
 };
 
-static unsigned short int ElbowBolts_POLS[] =
+static const unsigned short int ElbowBolts_POLS[] =
 {
 	6, 241, 242, 245, 246, 248, 251, 1, 4, 253, 254, 242, 241, 1, 4, 254, 257, 245, 242, 1,
 	4, 257, 258, 246, 245, 1, 4, 258, 260, 248, 246, 1, 4, 260, 262, 251, 248, 1, 4, 262,
@@ -3020,7 +3016,7 @@ struct lwo  LWO_ElbowBolts =
 	ElbowBolts_PNTS, ElbowBolts_normals, ElbowBolts_POLS, 0L
 };
 
-static GLfloat ElbowCoins_PNTS[] =
+static const GLfloat ElbowCoins_PNTS[] =
 {
 	(GLfloat) 0.000000, (GLfloat) - 0.520000, (GLfloat) - 0.500000,
 	(GLfloat) 0.097545, (GLfloat) - 0.520000, (GLfloat) - 0.490393,
@@ -3152,7 +3148,7 @@ static GLfloat ElbowCoins_PNTS[] =
 	(GLfloat) - 0.097545, (GLfloat) 0.490393, (GLfloat) - 0.600000,
 };
 
-static GLfloat ElbowCoins_normals[] =
+static const GLfloat ElbowCoins_normals[] =
 {
 	(GLfloat) - 0.000000, (GLfloat) 0.000000, (GLfloat) 1.000000,
 	(GLfloat) 0.098017, (GLfloat) 0.995185, (GLfloat) 0.000000,
@@ -3224,7 +3220,7 @@ static GLfloat ElbowCoins_normals[] =
 	(GLfloat) - 0.000000, (GLfloat) - 1.000000, (GLfloat) - 0.000000,
 };
 
-static unsigned short int ElbowCoins_POLS[] =
+static const unsigned short int ElbowCoins_POLS[] =
 {
 	32, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82,
  83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 1, 4, 96, 97, 65, 64, 1,

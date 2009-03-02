@@ -47,18 +47,11 @@ struct glb_config glb_config =
 };
 
 #ifdef STANDALONE
-#define PROGCLASS "Bubble3D"
-#define HACK_INIT init_bubble3d
-#define HACK_RESHAPE reshape_bubble3d
-#define HACK_DRAW draw_bubble3d
-#define bubble3d_opts xlockmore_opts
-
 # define DEFAULTS	"*delay:	10000   \n"	\
 			"*showFPS:      False   \n"
 
-#define DEF_TRANSPARENT "False"
-#define DEF_COLOR "random"
-
+# define refresh_bubble3d 0
+# define bubble3d_handle_event 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -66,6 +59,10 @@ struct glb_config glb_config =
 #endif
 
 #ifdef USE_GL
+
+
+#define DEF_TRANSPARENT "True"
+#define DEF_COLOR "random"
 
 static Bool transparent_p;
 static char *bubble_color_str;
@@ -84,7 +81,7 @@ static argtype vars[] = {
   {&bubble_color_str,        "bubblecolor", "BubbleColor", DEF_COLOR, t_String},
 };
 
-ModeSpecOpt bubble3d_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt bubble3d_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   bubbles3d_description =
@@ -149,7 +146,7 @@ init(struct context *c)
 	c->draw_context = glb_draw_init();
 }
 
-void
+ENTRYPOINT void
 reshape_bubble3d(ModeInfo *mi, int w, int h)
 {
 	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
@@ -167,7 +164,7 @@ do_display(struct context *c)
 	glb_draw_step(c->draw_context);
 }
 
-void
+ENTRYPOINT void
 init_bubble3d(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -176,7 +173,7 @@ init_bubble3d(ModeInfo * mi)
 	struct context *c;
 
 	if (contexts == 0) {
-		contexts = (struct context *) malloc(sizeof (struct context) * MI_NUM_SCREENS(mi));
+		contexts = (struct context *) calloc(sizeof (struct context), MI_NUM_SCREENS(mi));
 
 		if (contexts == 0)
 			return;
@@ -194,7 +191,7 @@ init_bubble3d(ModeInfo * mi)
 		MI_CLEARWINDOW(mi);
 }
 
-void
+ENTRYPOINT void
 draw_bubble3d(ModeInfo * mi)
 {
 	struct context *c = &contexts[MI_SCREEN(mi)];
@@ -217,23 +214,30 @@ draw_bubble3d(ModeInfo * mi)
 	glXSwapBuffers(display, window);
 }
 
-void
+#ifndef STANDALONE
+ENTRYPOINT void
 change_bubble3d(ModeInfo * mi)
 {
 	/* nothing */
 }
+#endif /* !STANDALONE */
 
-void
+ENTRYPOINT void
 release_bubble3d(ModeInfo * mi)
 {
-	struct context *c = &contexts[MI_SCREEN(mi)];
-
-	if (contexts != 0) {
-		glb_draw_end(c->draw_context);
-		(void) free((void *) contexts);
-		contexts = 0;
-	}
-	FreeAllGL(mi);
+  if (contexts) {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+      struct context *c = &contexts[screen];
+      if (c->draw_context)
+        glb_draw_end(c->draw_context);
+    }
+    free (contexts);
+    contexts = 0;
+  }
+  FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Bubble3D", bubble3d)
 
 #endif /* USE_GL */

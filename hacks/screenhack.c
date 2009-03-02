@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,19 +16,69 @@
    The idea being that, when writing a graphics hack, you can just link
    with this .o to get all of the uninteresting junk out of the way.
 
-   -  create a procedure `screenhack(dpy, window)'
+   Create a few static global procedures and variables:
 
-   -  create a variable `char *progclass' which names this program's
-      resource class.
+      static void *YOURNAME_init (Display *, Window);
 
-   -  create a variable `char defaults []' for the default resources, and
-      null-terminate it.
+          Return an opaque structure representing your drawing state.
 
-   -  create a variable `XrmOptionDescRec options[]' for the command-line,
-      and null-terminate it.
+      static unsigned long YOURNAME_draw (Display *, Window, void *closure);
 
-   And that's it...
+          Draw one frame.
+          The `closure' arg is your drawing state, that you created in `init'.
+          Return the number of microseconds to wait until the next frame.
+
+          This should return in some small fraction of a second. 
+          Do not call `usleep' or loop excessively.  For long loops, use a
+          finite state machine.
+
+      static void YOURNAME_reshape (Display *, Window, void *closure,
+				    unsigned int width, unsigned int height);
+
+          Called when the size of the window changes with the new size.
+
+      static Bool YOURNAME_event (Display *, Window, void *closure,
+				  XEvent *event);
+
+          Called when a keyboard or mouse event arrives.
+          Return True if you handle it in some way, False otherwise.
+
+      static void YOURNAME_event (Display *, Window, void *closure);
+
+           Called when you are done: free everything you've allocated,
+           including your private `state' structure.
+
+      static char YOURNAME_defaults [] = { "...", "...", ... , 0 };
+
+           This variable is an array of strings, your default resources.
+           Null-terminate the list.
+
+      static XrmOptionDescRec YOURNAME_options[] = { { ... }, ... { 0,0,0,0 } }
+
+           This variable describes your command-line options.
+           Null-terminate the list.
+
+      Finally , invoke the XSCREENSAVER_MODULE() macro to tie it all together.
+
+   Additional caveats:
+
+      - Make sure that all functions in your module are static (check this
+        by running "nm -g" on the .o file).
+
+      - Do not use global variables: all such info must be stored in the
+        private `state' structure.
+
+      - Do not static function-local variables, either.  Put it in `state'.
+
+        Assume that there are N independent runs of this code going in the
+        same address space at the same time: they must not affect each other.
+
+      - Don't forget to write an XML file to describe the user interface
+        of your screen saver module.  See .../hacks/config/README for details.
  */
+
+#define DEBUG_TIMING
+#define DEBUG_PAIR
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
@@ -36,7 +86,6 @@
 #include <X11/CoreP.h>
 #include <X11/Shell.h>
 #include <X11/StringDefs.h>
-#include <X11/Xutil.h>
 #include <X11/keysym.h>
 
 #ifdef __sgi
@@ -52,9 +101,14 @@
 #else
 # include "xmu.h"
 #endif
-#include "screenhack.h"
+
+#include "screenhackI.h"
 #include "version.h"
 #include "vroot.h"
+#include "change_locale.h"
+#if HAVE_SETLOCALE
+#include <locale.h>
+#endif
 
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.
@@ -68,10 +122,15 @@
 #endif
 
 
-char *progname;
-XrmDatabase db;
-XtAppContext app;
-Bool mono_p;
+/* This is defined by the SCREENHACK_MAIN() macro via screenhack.h.
+ */
+extern struct xscreensaver_function_table *xscreensaver_function_table;
+
+
+const char *progname;   /* used by hacks in error messages */
+const char *progclass;  /* used by ../utils/resources.c */
+Bool mono_p;		/* used by hacks */
+
 
 static XrmOptionDescRec default_options [] = {
   { "-root",	".root",		XrmoptionNoArg, "True" },
@@ -81,6 +140,10 @@ static XrmOptionDescRec default_options [] = {
   { "-noinstall",".installColormap",	XrmoptionNoArg, "False" },
   { "-visual",	".visualID",		XrmoptionSepArg, 0 },
   { "-window-id", ".windowID",		XrmoptionSepArg, 0 },
+
+# ifdef DEBUG_PAIR
+  { "-pair",	".pair",		XrmoptionNoArg, "True" },
+# endif /* DEBUG_PAIR */
   { 0, 0, 0, 0 }
 };
 
@@ -99,9 +162,36 @@ static XrmOptionDescRec *merged_options;
 static int merged_options_size;
 static char **merged_defaults;
 
+static void 
+reset_locale (void)
+{
+#ifdef HAVE_SETLOCALE
+  const char *current_locale = setlocale(LC_ALL, "");
+  const char *cmp_locale;
+  int j = 0;
+
+  while ((cmp_locale = change_locale[j]))
+    {
+      if (!strncmp(current_locale, cmp_locale, strlen(cmp_locale)))
+	{
+	  setlocale(LC_ALL, "C");
+	  break;
+	}
+      j++;
+    }
+#endif /* HAVE_SETLOCALE */
+}
+
+
 static void
 merge_options (void)
 {
+  struct xscreensaver_function_table *ft = xscreensaver_function_table;
+
+  const XrmOptionDescRec *options = ft->options;
+  const char * const *defaults    = ft->defaults;
+  const char *progclass           = ft->progclass;
+
   int def_opts_size, opts_size;
   int def_defaults_size, defaults_size;
 
@@ -173,22 +263,15 @@ MapNotify_event_p (Display *dpy, XEvent *event, XPointer window)
 }
 
 
-#ifdef XLOCKMORE
-extern void pre_merge_options (void);
-#endif
-
-
 static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW;
 
 /* Dead-trivial event handling: exits if "q" or "ESC" are typed.
    Exit if the WM_PROTOCOLS WM_DELETE_WINDOW ClientMessage is received.
+   Returns False if the screen saver should now terminate.
  */
-void
-screenhack_handle_event (Display *dpy, XEvent *event)
+static Bool
+screenhack_handle_event_1 (Display *dpy, XEvent *event)
 {
-  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-
   switch (event->xany.type)
     {
     case KeyPress:
@@ -200,7 +283,7 @@ screenhack_handle_event (Display *dpy, XEvent *event)
             c == 'Q' ||
             c == 3 ||	/* ^C */
             c == 27)	/* ESC */
-          exit (0);
+          return False;  /* exit */
         else if (! (keysym >= XK_Shift_L && keysym <= XK_Hyper_R))
           XBell (dpy, 0);  /* beep for non-chord keys */
       }
@@ -228,55 +311,25 @@ screenhack_handle_event (Display *dpy, XEvent *event)
           }
         else
           {
-            exit (0);
+            return False;  /* exit */
           }
       }
       break;
     }
-}
-
-
-void
-screenhack_handle_events (Display *dpy)
-{
-  while (XPending (dpy))
-    {
-      XEvent event;
-      XNextEvent (dpy, &event);
-      screenhack_handle_event (dpy, &event);
-    }
+  return True;
 }
 
 
 static Visual *
 pick_visual (Screen *screen)
 {
-#ifdef USE_GL
-  /* If we're linking against GL (that is, this is the version of screenhack.o
-     that the GL hacks will use, which is different from the one that the
-     non-GL hacks will use) then try to pick the "best" visual by interrogating
-     the GL library instead of by asking Xlib.  GL knows better.
-   */
-  Visual *v = 0;
-  char *string = get_string_resource ("visualID", "VisualID");
-  char *s;
+  struct xscreensaver_function_table *ft = xscreensaver_function_table;
 
-  if (string)
-    for (s = string; *s; s++)
-      if (isupper (*s)) *s = _tolower (*s);
-
-  if (!string || !*string ||
-      !strcmp (string, "gl") ||
-      !strcmp (string, "best") ||
-      !strcmp (string, "color") ||
-      !strcmp (string, "default"))
-    v = get_gl_visual (screen);		/* from ../utils/visual-gl.c */
-
-  if (string)
-    free (string);
-  if (v)
-    return v;
-#endif /* USE_GL */
+  if (ft->pick_visual_hook)
+    {
+      Visual *v = ft->pick_visual_hook (screen);
+      if (v) return v;
+    }
 
   return get_visual_resource (screen, "visualID", "VisualID", False);
 }
@@ -291,7 +344,10 @@ static void
 visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
                 Bool window_p)
 {
-  char *visual_string = get_string_resource ("visualID", "VisualID");
+  struct xscreensaver_function_table *ft = xscreensaver_function_table;
+
+  char *visual_string = get_string_resource (DisplayOfScreen (screen),
+                                             "visualID", "VisualID");
   Visual *desired_visual = pick_visual (screen);
   char win[100];
   char why[100];
@@ -329,7 +385,8 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
 
   if (visual == DefaultVisualOfScreen (screen) &&
       has_writable_cells (screen, visual) &&
-      get_boolean_resource ("installColormap", "InstallColormap"))
+      get_boolean_resource (DisplayOfScreen (screen),
+                            "installColormap", "InstallColormap"))
     {
       fprintf (stderr, "%s: ignoring `-install' because of `%s'.\n",
                progname, why);
@@ -337,10 +394,11 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
                progname, win, (unsigned long) cmap);
     }
 
-# ifdef USE_GL
-  if (!validate_gl_visual (stderr, screen, win, visual))
-    exit (1);
-# endif /* USE_GL */
+  if (ft->validate_visual_hook)
+    {
+      if (! ft->validate_visual_hook (screen, win, visual))
+        exit (1);
+    }
 }
 
 
@@ -374,28 +432,320 @@ fix_fds (void)
 }
 
 
+#ifdef DEBUG_TIMING
+
+static void
+check_timing (unsigned long delay)
+{
+  static unsigned long frame_count = 0;
+  static unsigned long delay_sum = 0;
+  static struct timeval prev1 = { 0, };
+  static struct timeval prev2 = { 0, };
+  struct timeval now;
+  double uprev1, uprev2, unow;
+
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday (&now, 0);
+# else
+  gettimeofday (&now);
+# endif
+
+  if (prev1.tv_sec == 0)
+    prev1 = prev2 = now;
+
+  frame_count++;
+
+  uprev1 = prev1.tv_sec + ((double) prev1.tv_usec * 0.000001);
+  uprev2 = prev2.tv_sec + ((double) prev2.tv_usec * 0.000001);
+  unow   =  now.tv_sec  + ((double)   now.tv_usec * 0.000001);
+
+  if (unow >= uprev1 + 1.5)
+    fprintf (stderr,
+             "%s: warning: blocked event processing for %.1f secs!\n",
+             progname, unow - uprev1);
+  prev1 = now;
+
+  if (unow >= uprev2 + 10.0)
+    {
+      double fps   = frame_count / (unow - uprev2);
+      double elapsed = unow - uprev2;
+      double slept = (delay_sum * 0.000001);
+      double sleep_ratio = slept / elapsed;
+
+      if (sleep_ratio < 0.10) {
+        fprintf (stderr, 
+                 "%s: warning: only %.0f%% idle over the"
+                 " last %2.0f secs (at %.1f FPS)\n",
+                 progname, 100 * sleep_ratio, elapsed, fps);
+      }
+
+      prev2 = now;
+      frame_count = 0;
+      delay_sum = 0;
+    }
+
+  delay_sum += delay;
+}
+
+#else  /* !DEBUG_TIMING */
+# define check_timing(delay) /**/
+#endif /* !DEBUG_TIMING */
+
+static Boolean
+screenhack_table_handle_events (Display *dpy,
+                                const struct xscreensaver_function_table *ft,
+                                Window window, void *closure
+#ifdef DEBUG_PAIR
+                                , Window window2, void *closure2
+#endif
+                                )
+{
+  XtAppContext app = XtDisplayToApplicationContext (dpy);
+
+  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+
+  while (XPending (dpy))
+    {
+      XEvent event;
+      XNextEvent (dpy, &event);
+
+      if (event.xany.type == ConfigureNotify)
+        {
+          if (event.xany.window == window)
+            ft->reshape_cb (dpy, window, closure,
+                            event.xconfigure.width, event.xconfigure.height);
+#ifdef DEBUG_PAIR
+          if (event.xany.window == window2)
+            ft->reshape_cb (dpy, window2, closure2,
+                            event.xconfigure.width, event.xconfigure.height);
+#endif
+        }
+      else if (event.xany.type == ClientMessage ||
+               (! (event.xany.window == window
+                   ? ft->event_cb (dpy, window, closure, &event)
+#ifdef DEBUG_PAIR
+                   : event.xany.window == window2
+                   ? ft->event_cb (dpy, window2, closure2, &event)
+#endif
+                   : 0)))
+        if (! screenhack_handle_event_1 (dpy, &event))
+          return False;
+
+      if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+    }
+  return True;
+}
+
+
+static Boolean
+usleep_and_process_events (Display *dpy,
+                           const struct xscreensaver_function_table *ft,
+                           Window window, void *closure, unsigned long delay
+#ifdef DEBUG_PAIR
+                         , Window window2, void *closure2, unsigned long delay2
+#endif
+                           )
+{
+  do {
+    unsigned long quantum = 100000;  /* 1/10th second */
+    if (quantum > delay) 
+      quantum = delay;
+    delay -= quantum;
+
+    XSync (dpy, False);
+    if (quantum > 0)
+      usleep (quantum);
+
+    check_timing (quantum);
+
+    /* The above isn't quite right in pair-mode: we always run both windows
+       with the timing of window 2.  But, it's just a debugging hack, so
+       that doesn't really matter that much... */
+
+    if (! screenhack_table_handle_events (dpy, ft, window, closure
+#ifdef DEBUG_PAIR
+                                          , window2, closure2
+#endif
+                                          ))
+      return False;
+  } while (delay > 0);
+
+  return True;
+}
+
+
+static void
+run_screenhack_table (Display *dpy, 
+                      Window window,
+# ifdef DEBUG_PAIR
+                      Window window2,
+# endif
+                      const struct xscreensaver_function_table *ft)
+{
+
+  /* Kludge: even though the init_cb functions are declared to take 2 args,
+     actually call them with 3, for the benefit of xlockmore_init() and
+     xlockmore_setup().
+   */
+  void *(*init_cb) (Display *, Window, void *) = 
+    (void *(*) (Display *, Window, void *)) ft->init_cb;
+
+  void *closure = init_cb (dpy, window, ft->setup_arg);
+
+#ifdef DEBUG_PAIR
+  void *closure2 = 0;
+  if (window2) closure2 = init_cb (dpy, window2, ft->setup_arg);
+#endif
+
+  if (! closure)  /* if it returns nothing, it can't possibly be re-entrant. */
+    abort();
+
+  while (1)
+    {
+      unsigned long delay = ft->draw_cb (dpy, window, closure);
+#ifdef DEBUG_PAIR
+      unsigned long delay2;
+      if (window2) delay2 = ft->draw_cb (dpy, window2, closure2);
+#endif
+
+      if (! usleep_and_process_events (dpy, ft,
+                                       window, closure, delay
+#ifdef DEBUG_PAIR
+                                       , window2, closure2, delay2
+#endif
+                                       ))
+        break;
+    }
+
+  ft->free_cb (dpy, window, closure);
+
+#ifdef DEBUG_PAIR
+  if (window2)
+    ft->free_cb (dpy, window2, closure2);
+#endif
+}
+
+
+static Widget
+make_shell (Screen *screen, Widget toplevel, int width, int height)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  Visual *visual = pick_visual (screen);
+  Boolean def_visual_p = (toplevel && 
+                          visual == DefaultVisualOfScreen (screen));
+
+  if (width  <= 0) width  = 600;
+  if (height <= 0) height = 480;
+
+# ifdef USE_GL
+  if (!validate_gl_visual (stderr, screen, "window", visual))
+    exit (1);
+# endif /* USE_GL */
+
+  if (def_visual_p)
+    {
+      Window window;
+      XtVaSetValues (toplevel,
+                     XtNmappedWhenManaged, False,
+                     XtNwidth, width,
+                     XtNheight, height,
+                     XtNinput, True,  /* for WM_HINTS */
+                     NULL);
+      XtRealizeWidget (toplevel);
+      window = XtWindow (toplevel);
+
+      if (get_boolean_resource (dpy, "installColormap", "InstallColormap"))
+        {
+          Colormap cmap = 
+            XCreateColormap (dpy, window, DefaultVisualOfScreen (screen),
+                             AllocNone);
+          XSetWindowColormap (dpy, window, cmap);
+        }
+    }
+  else
+    {
+      unsigned int bg, bd;
+      Widget new;
+      Colormap cmap = XCreateColormap (dpy, VirtualRootWindowOfScreen(screen),
+                                       visual, AllocNone);
+      bg = get_pixel_resource (dpy, cmap, "background", "Background");
+      bd = get_pixel_resource (dpy, cmap, "borderColor", "Foreground");
+
+      new = XtVaAppCreateShell (progname, progclass,
+                                topLevelShellWidgetClass, dpy,
+                                XtNmappedWhenManaged, False,
+                                XtNvisual, visual,
+                                XtNdepth, visual_depth (screen, visual),
+                                XtNwidth, width,
+                                XtNheight, height,
+                                XtNcolormap, cmap,
+                                XtNbackground, (Pixel) bg,
+                                XtNborderColor, (Pixel) bd,
+                                XtNinput, True,  /* for WM_HINTS */
+                                NULL);
+
+      if (!toplevel)  /* kludge for the second window in -pair mode... */
+        XtVaSetValues (new, XtNx, 0, XtNy, 550, NULL);
+
+      XtRealizeWidget (new);
+      toplevel = new;
+    }
+
+  return toplevel;
+}
+
+static void
+init_window (Display *dpy, Widget toplevel, const char *title)
+{
+  Window window;
+  XWindowAttributes xgwa;
+  XtPopup (toplevel, XtGrabNone);
+  XtVaSetValues (toplevel, XtNtitle, title, NULL);
+
+  /* Select KeyPress, and announce that we accept WM_DELETE_WINDOW.
+   */
+  window = XtWindow (toplevel);
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XSelectInput (dpy, window,
+                (xgwa.your_event_mask | KeyPressMask |
+                 ButtonPressMask | ButtonReleaseMask));
+  XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
+                   PropModeReplace,
+                   (unsigned char *) &XA_WM_DELETE_WINDOW, 1);
+}
+
+
 int
 main (int argc, char **argv)
 {
+  struct xscreensaver_function_table *ft = xscreensaver_function_table;
+
+  XWindowAttributes xgwa;
   Widget toplevel;
   Display *dpy;
   Window window;
-  Screen *screen;
-  Visual *visual;
-  Colormap cmap;
+# ifdef DEBUG_PAIR
+  Window window2 = 0;
+  Widget toplevel2 = 0;
+# endif
+  XtAppContext app;
   Bool root_p;
   Window on_window = 0;
   XEvent event;
-  Boolean dont_clear /*, dont_map */;
+  Boolean dont_clear;
   char version[255];
 
   fix_fds();
+  reset_locale();
 
   progname = argv[0];   /* reset later */
+  progclass = ft->progclass;
 
-#ifdef XLOCKMORE
-  pre_merge_options ();
-#endif
+  if (ft->setup_cb)
+    ft->setup_cb (ft, ft->setup_arg);
+
   merge_options ();
 
 #ifdef __sgi
@@ -413,14 +763,15 @@ main (int argc, char **argv)
   toplevel = XtAppInitialize (&app, progclass, merged_options,
 			      merged_options_size, &argc, argv,
 			      merged_defaults, 0, 0);
-  dpy = XtDisplay (toplevel);
-  screen = XtScreen (toplevel);
-  db = XtDatabase (dpy);
 
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
+  dpy = XtDisplay (toplevel);
+
+  XtGetApplicationNameAndClass (dpy,
+                                (char **) &progname,
+                                (char **) &progclass);
 
   /* half-assed way of avoiding buffer-overrun attacks. */
-  if (strlen (progname) >= 100) progname[100] = 0;
+  if (strlen (progname) >= 100) ((char *) progname)[100] = 0;
 
   XSetErrorHandler (screenhack_ehandler);
 
@@ -483,7 +834,7 @@ main (int argc, char **argv)
               const char *opt = merged_options [i].option;
               const char *res = merged_options [i].specifier + 1;
               const char *val = merged_options [i].value;
-              char *s = get_string_resource ((char *) res, (char *) res);
+              char *s = get_string_resource (dpy, (char *) res, (char *) res);
 
               if (s)
                 {
@@ -512,31 +863,31 @@ main (int argc, char **argv)
       exit (help_p ? 0 : 1);
     }
 
-  dont_clear = get_boolean_resource ("dontClearRoot", "Boolean");
-/*dont_map = get_boolean_resource ("dontMapWindow", "Boolean"); */
-  mono_p = get_boolean_resource ("mono", "Boolean");
+  free (merged_options);
+  free (merged_defaults);
+  merged_options = 0;
+  merged_defaults = 0;
+
+  dont_clear = get_boolean_resource (dpy, "dontClearRoot", "Boolean");
+  mono_p = get_boolean_resource (dpy, "mono", "Boolean");
   if (CellsOfScreen (DefaultScreenOfDisplay (dpy)) <= 2)
     mono_p = True;
 
-  root_p = get_boolean_resource ("root", "Boolean");
+  root_p = get_boolean_resource (dpy, "root", "Boolean");
 
   {
-    char *s = get_string_resource ("windowID", "WindowID");
+    char *s = get_string_resource (dpy, "windowID", "WindowID");
     if (s && *s)
-      on_window = get_integer_resource ("windowID", "WindowID");
+      on_window = get_integer_resource (dpy, "windowID", "WindowID");
     if (s) free (s);
   }
 
   if (on_window)
     {
-      XWindowAttributes xgwa;
       window = (Window) on_window;
       XtDestroyWidget (toplevel);
       XGetWindowAttributes (dpy, window, &xgwa);
-      cmap = xgwa.colormap;
-      visual = xgwa.visual;
-      screen = xgwa.screen;
-      visual_warning (screen, window, visual, cmap, True);
+      visual_warning (xgwa.screen, window, xgwa.visual, xgwa.colormap, True);
 
       /* Select KeyPress and resize events on the external window.
        */
@@ -554,114 +905,51 @@ main (int argc, char **argv)
     }
   else if (root_p)
     {
-      XWindowAttributes xgwa;
       window = VirtualRootWindowOfScreen (XtScreen (toplevel));
       XtDestroyWidget (toplevel);
       XGetWindowAttributes (dpy, window, &xgwa);
-      cmap = xgwa.colormap;
-      visual = xgwa.visual;
-      visual_warning (screen, window, visual, cmap, False);
+      visual_warning (xgwa.screen, window, xgwa.visual, xgwa.colormap, False);
     }
   else
     {
-      Boolean def_visual_p;
-      visual = pick_visual (screen);
+      Widget new = make_shell (XtScreen (toplevel), toplevel,
+                               toplevel->core.width,
+                               toplevel->core.height);
+      if (new != toplevel)
+        {
+          XtDestroyWidget (toplevel);
+          toplevel = new;
+        }
 
-# ifdef USE_GL
-      if (!validate_gl_visual (stderr, screen, "window", visual))
-        exit (1);
-# endif /* USE_GL */
+      init_window (dpy, toplevel, version);
+      window = XtWindow (toplevel);
+      XGetWindowAttributes (dpy, window, &xgwa);
 
-      if (toplevel->core.width <= 0)
-	toplevel->core.width = 600;
-      if (toplevel->core.height <= 0)
-	toplevel->core.height = 480;
-
-      def_visual_p = (visual == DefaultVisualOfScreen (screen));
-
-      if (!def_visual_p)
-	{
-	  unsigned int bg, bd;
-	  Widget new;
-
-	  cmap = XCreateColormap (dpy, VirtualRootWindowOfScreen(screen),
-				  visual, AllocNone);
-	  bg = get_pixel_resource ("background", "Background", dpy, cmap);
-	  bd = get_pixel_resource ("borderColor", "Foreground", dpy, cmap);
-
-	  new = XtVaAppCreateShell (progname, progclass,
-				    topLevelShellWidgetClass, dpy,
-				    XtNmappedWhenManaged, False,
-				    XtNvisual, visual,
-				    XtNdepth, visual_depth (screen, visual),
-				    XtNwidth, toplevel->core.width,
-				    XtNheight, toplevel->core.height,
-				    XtNcolormap, cmap,
-				    XtNbackground, (Pixel) bg,
-				    XtNborderColor, (Pixel) bd,
-				    XtNinput, True,  /* for WM_HINTS */
-				    NULL);
-	  XtDestroyWidget (toplevel);
-	  toplevel = new;
-	  XtRealizeWidget (toplevel);
-	  window = XtWindow (toplevel);
-	}
-      else
-	{
-	  XtVaSetValues (toplevel,
-                         XtNmappedWhenManaged, False,
-                         XtNinput, True,  /* for WM_HINTS */
-                         NULL);
-	  XtRealizeWidget (toplevel);
-	  window = XtWindow (toplevel);
-
-	  if (get_boolean_resource ("installColormap", "InstallColormap"))
-	    {
-	      cmap = XCreateColormap (dpy, window,
-				   DefaultVisualOfScreen (XtScreen (toplevel)),
-				      AllocNone);
-	      XSetWindowColormap (dpy, window, cmap);
-	    }
-	  else
-	    {
-	      cmap = DefaultColormap (dpy, DefaultScreen (dpy));
-	    }
-	}
-
-/*
-      if (dont_map)
-	{
-	  XtVaSetValues (toplevel, XtNmappedWhenManaged, False, NULL);
-	  XtRealizeWidget (toplevel);
-	}
-      else
-*/
-	{
-	  XtPopup (toplevel, XtGrabNone);
-	}
-
-      XtVaSetValues(toplevel, XtNtitle, version, NULL);
-
-      /* For screenhack_handle_events(): select KeyPress, and
-         announce that we accept WM_DELETE_WINDOW. */
-      {
-        XWindowAttributes xgwa;
-        XGetWindowAttributes (dpy, window, &xgwa);
-        XSelectInput (dpy, window,
-                      (xgwa.your_event_mask | KeyPressMask |
-                       ButtonPressMask | ButtonReleaseMask));
-        XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
-                         PropModeReplace,
-                         (unsigned char *) &XA_WM_DELETE_WINDOW, 1);
-      }
+# ifdef DEBUG_PAIR
+      if (get_boolean_resource (dpy, "pair", "Boolean"))
+        {
+          toplevel2 = make_shell (xgwa.screen, 0,
+                                  toplevel->core.width,
+                                  toplevel->core.height);
+          init_window (dpy, toplevel2, version);
+          window2 = XtWindow (toplevel2);
+        }
+# endif /* DEBUG_PAIR */
     }
 
   if (!dont_clear)
     {
-      XSetWindowBackground (dpy, window,
-			    get_pixel_resource ("background", "Background",
-						dpy, cmap));
+      unsigned int bg = get_pixel_resource (dpy, xgwa.colormap,
+                                            "background", "Background");
+      XSetWindowBackground (dpy, window, bg);
       XClearWindow (dpy, window);
+# ifdef DEBUG_PAIR
+      if (window2)
+        {
+          XSetWindowBackground (dpy, window2, bg);
+          XClearWindow (dpy, window2);
+        }
+# endif
     }
 
   if (!root_p && !on_window)
@@ -676,6 +964,14 @@ main (int argc, char **argv)
 # undef ya_rand_init
   ya_rand_init (0);
 
-  screenhack (dpy, window); /* doesn't return */
+  run_screenhack_table (dpy, window, 
+# ifdef DEBUG_PAIR
+                        window2,
+# endif
+                        ft);
+
+  XtDestroyWidget (toplevel);
+  XtDestroyApplicationContext (app);
+
   return 0;
 }

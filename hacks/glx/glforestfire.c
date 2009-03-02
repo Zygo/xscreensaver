@@ -75,19 +75,16 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 
 
 #ifdef STANDALONE	/* xscreensaver mode */
-#define PROGCLASS 	"Fire"
-#define HACK_INIT 	init_fire
-#define HACK_DRAW 	draw_fire
-#define HACK_RESHAPE 	reshape_fire
-#define fire_opts 	xlockmore_opts
 #define DEFAULTS "*delay:     10000 \n" \
 		"*count: 	800 \n" \
 		"*size:           0 \n" \
 		"*showFPS:    False \n" \
 		"*wireframe:  False \n"	\
 
+# define refresh_fire 0
 #define MODE_fire
 #include "xlockmore.h"		/* from the xscreensaver distribution */
+#include "gltrackball.h"
 #else				/* !STANDALONE */
 #include "xlock.h"		/* from the xlockmore distribution */
 #include "visgl.h"
@@ -97,11 +94,7 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 
 #define MINSIZE 32
 
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-
-#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( HAVE_XPM )
+#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined(STANDALONE)
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
 #include "xpm-ximage.h"
 #define I_HAVE_XPM
@@ -160,17 +153,14 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 #define DEF_FOG		"False"
 #define DEF_SHADOWS	"True"
 #define DEF_FRAMERATE	"False"
-#define DEF_TRACKMOUSE  "False"
 #define DEF_WANDER	"True"
 #define DEF_TREES	"5"
 #define MAX_TREES	20
 static Bool do_texture;
 static Bool do_fog;
 static Bool do_shadows;
-static Bool do_trackmouse;
 static Bool do_wander;
 static int num_trees;
-static int frame = 0;
 static XFontStruct *mode_font = None;
 
 static XrmOptionDescRec opts[] = {
@@ -180,8 +170,6 @@ static XrmOptionDescRec opts[] = {
     {"+fog", ".fire.fog", XrmoptionNoArg, "off"},
     {"-shadows", ".fire.shadows", XrmoptionNoArg, "on"},
     {"+shadows", ".fire.shadows", XrmoptionNoArg, "off"},
-    {"-trackmouse", ".fire.trackmouse", XrmoptionNoArg, "on"},
-    {"+trackmouse", ".fire.trackmouse", XrmoptionNoArg, "off"},
     {"-wander", ".fire.wander", XrmoptionNoArg, "on"},
     {"+wander", ".fire.wander", XrmoptionNoArg, "off"},
     {"-trees", ".fire.trees", XrmoptionSepArg, 0},
@@ -193,7 +181,6 @@ static argtype vars[] = {
     {&do_texture,    "texture",    "Texture",    DEF_TEXTURE,    t_Bool},
     {&do_fog,        "fog",        "Fog",        DEF_FOG,        t_Bool},
     {&do_shadows,    "shadows",    "Shadows",    DEF_SHADOWS,    t_Bool},
-    {&do_trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool},
     {&do_wander,     "wander",     "Wander",     DEF_WANDER,     t_Bool},
     {&num_trees,     "trees",      "Trees",      DEF_TREES,      t_Int},
 };
@@ -202,12 +189,11 @@ static OptionStruct desc[] = {
     {"-/+texture", "turn on/off texturing"},
     {"-/+fog", "turn on/off fog"},
     {"-/+shadows", "turn on/off shadows"},
-    {"-/+trackmouse", "turn on/off the tracking of the mouse"},
     {"-/+wander", "turn on/off wandering"},
     {"-trees num", "number of trees (0 disables)"},
 };
 
-ModeSpecOpt fire_opts =
+ENTRYPOINT ModeSpecOpt fire_opts =
  { sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc };
 
 #ifdef USE_MODULES
@@ -251,13 +237,13 @@ typedef struct {
 } rain;
 
 /* colors */
-static float black[3]    = { 0.0, 0.0, 0.0 }; /* shadow color */
-static float partcol1[3] = { 1.0, 0.2, 0.0 }; /* initial color: red-ish */
-static float partcol2[3] = { 1.0, 1.0, 0.0 }; /* blending color: yellow-ish */
-static float fogcolor[4] = { 0.9, 0.9, 1.0, 1.0 };
+static const GLfloat black[3]    = { 0.0, 0.0, 0.0 }; /* shadow color */
+static const GLfloat partcol1[3] = { 1.0, 0.2, 0.0 }; /* initial color: red-ish */
+static const GLfloat partcol2[3] = { 1.0, 1.0, 0.0 }; /* blending color: yellow-ish */
+static const GLfloat fogcolor[4] = { 0.9, 0.9, 1.0, 1.0 };
 
 /* ground */
-static float q[4][3] = {
+static const float q[4][3] = {
     {-DIMP, 0.0, -DIMP},
     {DIMP, 0.0, -DIMP},
     {DIMP, 0.0, DIMP},
@@ -265,7 +251,7 @@ static float q[4][3] = {
 };
 
 /* ground texture */
-static float qt[4][2] = {
+static const float qt[4][2] = {
     {-DIMTP, -DIMTP},
     {DIMTP, -DIMTP},
     {DIMTP, DIMTP},
@@ -315,6 +301,11 @@ typedef struct {
     float v;			/* observer velocity */
     float alpha;		/* observer angles */
     float beta;
+
+    trackball_state *trackball;
+    Bool button_down_p;
+    int frame;
+
 } firestruct;
 
 /* array of firestruct indexed by screen number */
@@ -363,7 +354,8 @@ static float vrnd(void)
 /* initialise new fire particle */
 static void setnewpart(firestruct * fs, part * p)
 {
-    float a, vi[3], *c;
+    float a, vi[3];
+    const float *c;
 
     p->age = 0;
 
@@ -525,44 +517,6 @@ static void calcposobs(firestruct * fs)
     }
 }
 
-/* track the mouse in a joystick manner : not perfect but it works */
-static void trackmouse(ModeInfo * mi)
-{
-    firestruct *fs = &fire[MI_SCREEN(mi)];
-    /* we keep static values (not per screen) for the mouse stuff: in general you have only one mouse :-> */
-    static int max[2] = { 0, 0 };
-    static int min[2] = { 0x7fffffff, 0x7fffffff }, center[2];
-    Window r, c;
-    int rx, ry, cx, cy;
-    unsigned int m;
-
-    (void) XQueryPointer(MI_DISPLAY(mi), MI_WINDOW(mi),
-			 &r, &c, &rx, &ry, &cx, &cy, &m);
-
-    if (max[0] < cx)
-	max[0] = cx;
-    if (min[0] > cx)
-	min[0] = cx;
-    center[0] = (max[0] + min[0]) / 2;
-
-    if (max[1] < cy)
-	max[1] = cy;
-    if (min[1] > cy)
-	min[1] = cy;
-    center[1] = (max[1] + min[1]) / 2;
-
-    if (fabs(center[0] - (float) cx) > 0.1 * (max[0] - min[0]))
-	fs->alpha += 2.5 * (center[0] - (float) cx) / (max[0] - min[0]);
-    if (fabs(center[1] - (float) cy) > 0.1 * (max[1] - min[1]))
-	fs->beta += 2.5 * (center[1] - (float) cy) / (max[1] - min[1]);
-
-    /* oops: can't get those buttons */
-    if (m & Button4Mask)
-	fs->v += 0.01;
-    if (m & Button5Mask)
-	fs->v -= 0.01;
-
-}
 
 /* initialise textures */
 static void inittextures(ModeInfo * mi)
@@ -681,11 +635,7 @@ static Bool inittree(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-#ifndef STANDALONE
-static void Reshape(ModeInfo * mi)
-#else
-void reshape_fire(ModeInfo * mi, int width, int height)
-#endif
+ENTRYPOINT void reshape_fire(ModeInfo * mi, int width, int height)
 {
 
     firestruct *fs = &fire[MI_SCREEN(mi)];
@@ -717,20 +667,17 @@ static void DrawFire(ModeInfo * mi)
     firestruct *fs = &fire[MI_SCREEN(mi)];
     Bool wire = MI_IS_WIREFRAME(mi);
 
-    if (do_trackmouse && !MI_IS_ICONIC(mi))
-	trackmouse(mi);
-
-    if (do_wander)
+    if (do_wander && !fs->button_down_p)
     {
 	GLfloat x, y, z;
 
 #       define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
+        ((((1 + sin((fs->frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
 
         x = SINOID(0.031, 0.85);
         y = SINOID(0.017, 0.25);
         z = SINOID(0.023, 0.85);
-        frame++;
+        fs->frame++;
         fs->obs[0] = x + DEF_OBS[0];
         fs->obs[1] = y + DEF_OBS[1];
         fs->obs[2] = z + DEF_OBS[2];
@@ -750,11 +697,16 @@ static void DrawFire(ModeInfo * mi)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();
-    calcposobs(fs);
-    gluLookAt(fs->obs[0], fs->obs[1], fs->obs[2],
-	      fs->obs[0] + fs->dir[0], fs->obs[1] + fs->dir[1],
-	      fs->obs[2] + fs->dir[2], 0.0, 1.0, 0.0);
 
+    calcposobs(fs);
+
+    gltrackball_rotate (fs->trackball);
+
+    gluLookAt(fs->obs[0], fs->obs[1], fs->obs[2],
+              fs->obs[0] + fs->dir[0], 
+              fs->obs[1] + fs->dir[1],
+              fs->obs[2] + fs->dir[2],
+              0.0, 1.0, 0.0);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -979,7 +931,7 @@ free_fire(firestruct *fs)
  *-----------------------------------------------------------------------------
  */
 
-void
+ENTRYPOINT void
 init_fire(ModeInfo * mi)
 {
     firestruct *fs;
@@ -1017,8 +969,7 @@ init_fire(ModeInfo * mi)
     else
     	fs->num_trees = 0;
 
-    /* check wander/trackmouse */
-    if (do_trackmouse && do_wander) do_wander = 0;
+    fs->trackball = gltrackball_init ();
 
     /* xlock GL stuff */
     if ((fs->glx_context = init_GL(mi)) != NULL) {
@@ -1043,7 +994,7 @@ init_fire(ModeInfo * mi)
  *    Called by the mainline code periodically to update the display.
  *-----------------------------------------------------------------------------
  */
-void draw_fire(ModeInfo * mi)
+ENTRYPOINT void draw_fire(ModeInfo * mi)
 {
     firestruct *fs = &fire[MI_SCREEN(mi)];
 
@@ -1076,7 +1027,7 @@ void draw_fire(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-void release_fire(ModeInfo * mi)
+ENTRYPOINT void release_fire(ModeInfo * mi)
 {
     if (fire != NULL) {
     int screen;
@@ -1094,7 +1045,53 @@ void release_fire(ModeInfo * mi)
     FreeAllGL(mi);
 }
 
-void change_fire(ModeInfo * mi)
+ENTRYPOINT Bool
+fire_handle_event (ModeInfo *mi, XEvent *event)
+{
+  firestruct *fs = &fire[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      fs->button_down_p = True;
+      event->xbutton.x = MI_WIDTH(mi)  - event->xbutton.x; /* kludge! */
+      event->xbutton.y = MI_HEIGHT(mi) - event->xbutton.y;
+      gltrackball_start (fs->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      fs->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (fs->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           fs->button_down_p)
+    {
+      event->xmotion.x = MI_WIDTH(mi)  - event->xmotion.x; /* kludge! */
+      event->xmotion.y = MI_HEIGHT(mi) - event->xmotion.y;
+      gltrackball_track (fs->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+#ifndef STANDALONE
+ENTRYPOINT void change_fire(ModeInfo * mi)
 {
     firestruct *fs = &fire[MI_SCREEN(mi)];
 
@@ -1127,4 +1124,8 @@ void change_fire(ModeInfo * mi)
 		       fs->eject_r, fs->ridtri);
     }
 }
+#endif /* !STANDALONE */
+
+XSCREENSAVER_MODULE_2 ("GLForestFire", glforestfire, fire)
+
 #endif /* MODE_fire */

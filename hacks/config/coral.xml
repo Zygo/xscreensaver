@@ -6,11 +6,11 @@
 
   <number id="delay2" type="slider" arg="-delay2 %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="1" high="500000" default="1000"
+          low="1" high="500000" default="20000"
           convert="invert"/>
 
   <number id="delay" type="slider" arg="-delay %"
-          _label="Duration" _low-label="1 Second" _high-label="1 Minute"
+          _label="Linger" _low-label="1 Second" _high-label="1 Minute"
           low="1" high="60" default="5"/>
 
   <number id="density" type="slider" arg="-density %"
@@ -23,6 +23,8 @@
           low="1" high="100" default="20"/>
 
   <_description>
-Simulates coral growth, albeit somewhat slowly.  Written by Frederick Roeber.
+Simulates coral growth, albeit somewhat slowly.
+
+Written by Frederick Roeber; 1997.
   </_description>
 </screensaver>

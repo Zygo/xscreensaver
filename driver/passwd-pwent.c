@@ -104,6 +104,11 @@ static char *encrypted_user_passwd = 0;
 # define ROOT "root"
 #endif
 
+#ifndef VMS
+Bool pwent_priv_init (int argc, char **argv, Bool verbose_p);
+Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
+Bool pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
+#endif
 
 
 #ifndef VMS

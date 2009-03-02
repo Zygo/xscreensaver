@@ -39,6 +39,8 @@
 ERROR, do not include that here
 #endif
 
+extern void screenhack_usleep (unsigned long usecs); /* suppress warning */
+
 void
 screenhack_usleep (unsigned long usecs)
 {

@@ -109,7 +109,6 @@ WhalePilot(fishRec * fish, float whalespeed, Bool whaledir)
 void
 SharkPilot(fishRec * fish, float sharkspeed)
 {
-	static int  sign = 1;
 	float       X, Y, Z, tpsi, ttheta, thetal;
 
 	fish->xt = 60000.0;
@@ -157,9 +156,9 @@ SharkPilot(fishRec * fish, float sharkspeed)
 		}
 	} else {
 		if (NRAND(100) > 98) {
-			sign = 1 - sign;
+			fish->sign = (fish->sign < 0 ? 1 : -1);
 		}
-		fish->psi += sign;
+		fish->psi += (fish->sign ? 1 : -1);
 		if (fish->psi > 180.0) {
 			fish->psi -= 360.0;
 		}

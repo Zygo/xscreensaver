@@ -36,10 +36,12 @@ typedef struct {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
+  int delay;
 
   Pixmap b, ba;	/* double-buffer to reduce flicker */
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   XdbeBackBuffer backb;
+  Bool dbeclear_p;
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
   GC draw_gc;		/* most of the balls */
@@ -70,7 +72,6 @@ typedef struct {
   Bool random_sizes_p;  /* Whether balls should be various sizes up to max. */
   Bool shake_p;		/* Whether to mess with gravity when things settle. */
   Bool dbuf;            /* Whether we're using double buffering. */
-  Bool dbeclear_p;      /* ? */
   float shake_threshold;
   int time_since_shake;
 
@@ -82,6 +83,9 @@ typedef struct {
   int collision_count;
   char fps_str[1024];
   
+  int time_tick;
+  struct timeval last_time;
+
 } b_state;
 
 
@@ -103,32 +107,8 @@ draw_fps_string (b_state *state)
 static void
 window_origin (Display *dpy, Window window, int *x, int *y)
 {
-  Window root, parent, *kids;
-  unsigned int nkids;
-  XWindowAttributes xgwa;
-  int wx, wy;
-  XGetWindowAttributes (dpy, window, &xgwa);
-
-  wx = xgwa.x;
-  wy = xgwa.y;
-
-  kids = 0;
-  *x = 0;
-  *y = 0;
-
-  if (XQueryTree (dpy, window, &root, &parent, &kids, &nkids))
-    {
-      if (parent && parent != root)
-        {
-          int px, py;
-          window_origin (dpy, parent, &px, &py);
-          wx += px;
-          wy += py;
-        }
-    }
-  if (kids) XFree (kids);
-  *x = wx;
-  *y = wy;
+  XTranslateCoordinates (dpy, window, RootWindow (dpy, DefaultScreen (dpy)),
+                         0, 0, x, y, &window);
 }
 
 
@@ -230,8 +210,8 @@ recolor (b_state *state)
 
 /* Initialize the state structure and various X data.
  */
-static b_state *
-init_balls (Display *dpy, Window window)
+static void *
+fluidballs_init (Display *dpy, Window window)
 {
   int i;
   float extx, exty;
@@ -239,17 +219,21 @@ init_balls (Display *dpy, Window window)
   XGCValues gcv;
 
   state->dpy = dpy;
-
   state->window = window;
+  state->delay = get_integer_resource (dpy, "delay", "Integer");
 
   check_window_moved (state);
 
-  state->dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
-  state->dbeclear_p = get_boolean_resource ("useDBEClear", "Boolean");
+  state->dbuf = get_boolean_resource (dpy, "doubleBuffer", "Boolean");
+
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  state->dbuf = False;
+# endif
 
   if (state->dbuf)
     {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      state->dbeclear_p = get_boolean_resource (dpy, "useDBEClear", "Boolean");
       if (state->dbeclear_p)
         state->b = xdbe_get_backbuffer (dpy, window, XdbeBackground);
       else
@@ -272,19 +256,21 @@ init_balls (Display *dpy, Window window)
 
   /* Select ButtonRelease events on the external window, if no other app has
      already selected it (only one app can select it at a time: BadAccess. */
+#if 0
   if (! (state->xgwa.all_event_masks & ButtonReleaseMask))
     XSelectInput (state->dpy, state->window,
                   state->xgwa.your_event_mask | ButtonReleaseMask);
+#endif
 
-  gcv.foreground = get_pixel_resource("foreground", "Foreground",
-                                      state->dpy, state->xgwa.colormap);
-  gcv.background = get_pixel_resource("background", "Background",
-                                      state->dpy, state->xgwa.colormap);
+  gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                      "foreground", "Foreground");
+  gcv.background = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                      "background", "Background");
   state->draw_gc = XCreateGC (state->dpy, state->b,
                               GCForeground|GCBackground, &gcv);
 
-  gcv.foreground = get_pixel_resource("mouseForeground", "MouseForeground",
-                                      state->dpy, state->xgwa.colormap);
+  gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                      "mouseForeground", "MouseForeground");
   state->draw_gc2 = XCreateGC (state->dpy, state->b,
                                GCForeground|GCBackground, &gcv);
 
@@ -302,43 +288,58 @@ init_balls (Display *dpy, Window window)
   extx = state->xmax - state->xmin;
   exty = state->ymax - state->ymin;
 
-  state->count = get_integer_resource ("count", "Count");
+  state->count = get_integer_resource (dpy, "count", "Count");
   if (state->count < 1) state->count = 20;
 
-  state->max_radius = get_float_resource ("size", "Size") / 2;
+  state->max_radius = get_float_resource (dpy, "size", "Size") / 2;
   if (state->max_radius < 1.0) state->max_radius = 1.0;
 
-  state->random_sizes_p = get_boolean_resource ("random", "Random");
+  state->random_sizes_p = get_boolean_resource (dpy, "random", "Random");
 
-  state->accx = get_float_resource ("wind", "Wind");
+  /* If the initial window size is too small to hold all these balls,
+     make fewer of them...
+   */
+  {
+    float r = (state->random_sizes_p
+               ? state->max_radius * 0.7
+               : state->max_radius);
+    float ball_area = M_PI * r * r;
+    float balls_area = state->count * ball_area;
+    float window_area = state->xgwa.width * state->xgwa.height;
+    window_area *= 0.75;  /* don't pack it completely full */
+    if (balls_area > window_area)
+      state->count = window_area / ball_area;
+  }
+
+  state->accx = get_float_resource (dpy, "wind", "Wind");
   if (state->accx < -1.0 || state->accx > 1.0) state->accx = 0;
 
-  state->accy = get_float_resource ("gravity", "Gravity");
+  state->accy = get_float_resource (dpy, "gravity", "Gravity");
   if (state->accy < -1.0 || state->accy > 1.0) state->accy = 0.01;
 
-  state->e = get_float_resource ("elasticity", "Elacitcity");
+  state->e = get_float_resource (dpy, "elasticity", "Elacitcity");
   if (state->e < 0.2 || state->e > 1.0) state->e = 0.97;
 
-  state->tc = get_float_resource ("timeScale", "TimeScale");
+  state->tc = get_float_resource (dpy, "timeScale", "TimeScale");
   if (state->tc <= 0 || state->tc > 10) state->tc = 1.0;
 
-  state->shake_p = get_boolean_resource ("shake", "Shake");
-  state->shake_threshold = get_float_resource ("shakeThreshold",
+  state->shake_p = get_boolean_resource (dpy, "shake", "Shake");
+  state->shake_threshold = get_float_resource (dpy, "shakeThreshold",
                                                "ShakeThreshold");
 
-  state->fps_p = get_boolean_resource ("doFPS", "DoFPS");
+  state->fps_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
   if (state->fps_p)
     {
       XFontStruct *font;
-      char *fontname = get_string_resource ("font", "Font");
+      char *fontname = get_string_resource (dpy, "font", "Font");
       const char *def_font = "fixed";
       if (!fontname || !*fontname) fontname = (char *)def_font;
       font = XLoadQueryFont (dpy, fontname);
       if (!font) font = XLoadQueryFont (dpy, def_font);
       if (!font) exit(-1);
       gcv.font = font->fid;
-      gcv.foreground = get_pixel_resource("textColor", "Foreground",
-                                          state->dpy, state->xgwa.colormap);
+      gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
+                                          "textColor", "Foreground");
       state->font_gc = XCreateGC(dpy, state->b,
                                  GCFont|GCForeground|GCBackground, &gcv);
       state->font_height = font->ascent + font->descent;
@@ -420,13 +421,11 @@ shake (b_state *state)
 static void
 check_wall_clock (b_state *state, float max_d)
 {
-  static int tick = 0;
   state->frame_count++;
   
-  if (tick++ > 20)  /* don't call gettimeofday() too often -- it's slow. */
+  if (state->time_tick++ > 20)  /* don't call gettimeofday() too often -- it's slow. */
     {
       struct timeval now;
-      static struct timeval last = { 0, 0 };
 # ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;
       gettimeofday(&now, &tzp);
@@ -434,19 +433,19 @@ check_wall_clock (b_state *state, float max_d)
       gettimeofday(&now);
 # endif
 
-      if (last.tv_sec == 0)
-        last = now;
+      if (state->last_time.tv_sec == 0)
+        state->last_time = now;
 
-      tick = 0;
-      if (now.tv_sec == last.tv_sec)
+      state->time_tick = 0;
+      if (now.tv_sec == state->last_time.tv_sec)
         return;
 
-      state->time_since_shake += (now.tv_sec - last.tv_sec);
+      state->time_since_shake += (now.tv_sec - state->last_time.tv_sec);
 
       if (state->fps_p) 
 	{
 	  float elapsed = ((now.tv_sec  + (now.tv_usec  / 1000000.0)) -
-			   (last.tv_sec + (last.tv_usec / 1000000.0)));
+			   (state->last_time.tv_sec + (state->last_time.tv_usec / 1000000.0)));
 	  float fps = state->frame_count / elapsed;
 	  float cps = state->collision_count / elapsed;
 	  
@@ -459,7 +458,7 @@ check_wall_clock (b_state *state, float max_d)
 
       state->frame_count = 0;
       state->collision_count = 0;
-      last = now;
+      state->last_time = now;
     }
 }
 
@@ -472,6 +471,10 @@ repaint_balls (b_state *state)
   int x1a, x2a, y1a, y2a;
   int x1b, x2b, y1b, y2b;
   float max_d = 0;
+
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  XClearWindow (state->dpy, state->b);
+#endif
 
   for (a=1; a <= state->count; a++)
     {
@@ -486,11 +489,10 @@ repaint_balls (b_state *state)
       x2b = (state->px[a] + state->r[a] - state->xmin);
       y2b = (state->py[a] + state->r[a] - state->ymin);
 
-      if (!state->dbeclear_p
+#ifndef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-          || !state->backb
+      if (!state->dbeclear_p || !state->backb)
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-	  )
 	{
 /*	  if (x1a != x1b || y1a != y1b)   -- leaves turds if we optimize this */
 	    {
@@ -500,6 +502,8 @@ repaint_balls (b_state *state)
 			0, 360*64);
 	    }
 	}
+#endif /* !HAVE_COCOA */
+
       if (state->mouse_ball == a)
         gc = state->draw_gc2;
       else
@@ -523,7 +527,11 @@ repaint_balls (b_state *state)
       state->opy[a] = state->py[a];
     }
 
-  if (state->fps_p && state->dbeclear_p) 
+  if (state->fps_p
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      && (state->backb ? state->dbeclear_p : 1)
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+      )
     draw_fps_string(state);
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
@@ -689,58 +697,74 @@ update_balls (b_state *state)
 
 /* Handle X events, specifically, allow a ball to be picked up with the mouse.
  */
-static void
-handle_events (b_state *state)
+static Bool
+fluidballs_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
-  XSync (state->dpy, False);
-  while (XPending (state->dpy))
+  b_state *state = (b_state *) closure;
+
+  if (event->xany.type == ButtonPress)
     {
-      XEvent event;
-      XNextEvent (state->dpy, &event);
-      if (event.xany.type == ButtonPress)
-        {
-          int i;
-          float fmx = event.xbutton.x_root;
-          float fmy = event.xbutton.y_root;
-          if (state->mouse_ball != 0)  /* second down-click?  drop the ball. */
-            {
-              state->mouse_ball = 0;
-              return;
-            }
-          else
-            for (i=1; i <= state->count; i++)
-              {
-                float d = ((state->px[i] - fmx) * (state->px[i] - fmx) +
-                           (state->py[i] - fmy) * (state->py[i] - fmy));
-                float r = state->r[i];
-                if (d < r*r)
-                  {
-                    state->mouse_ball = i;
-                    return;
-                  }
-              }
-        }
-      else if (event.xany.type == ButtonRelease)   /* drop the ball */
+      int i, rx, ry;
+      XTranslateCoordinates (dpy, window, RootWindow (dpy, DefaultScreen(dpy)),
+                             event->xbutton.x, event->xbutton.y, &rx, &ry,
+                             &window);
+
+      if (state->mouse_ball != 0)  /* second down-click?  drop the ball. */
         {
           state->mouse_ball = 0;
-          return;
+          return True;
         }
-      else if (event.xany.type == ConfigureNotify)
-        {
-          /* This is redundant, since we poll this every iteration. */
-          check_window_moved (state);
-        }
-
-      screenhack_handle_event (state->dpy, &event);
+      else
+        for (i=1; i <= state->count; i++)
+          {
+            float d = ((state->px[i] - rx) * (state->px[i] - rx) +
+                       (state->py[i] - ry) * (state->py[i] - ry));
+            float r = state->r[i];
+            if (d < r*r)
+              {
+                state->mouse_ball = i;
+                return True;
+              }
+          }
+      return True;
     }
+  else if (event->xany.type == ButtonRelease)   /* drop the ball */
+    {
+      state->mouse_ball = 0;
+      return True;
+    }
+
+  return False;
 }
 
-
-char *progclass = "FluidBalls";
+static unsigned long
+fluidballs_draw (Display *dpy, Window window, void *closure)
+{
+  b_state *state = (b_state *) closure;
+  repaint_balls(state);
+  update_balls(state);
+  return state->delay;
+}
 
-char *defaults [] = {
+static void
+fluidballs_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static void
+fluidballs_free (Display *dpy, Window window, void *closure)
+{
+  b_state *state = (b_state *) closure;
+  free (state);
+}
+
+
+static const char *fluidballs_defaults [] = {
   ".background:		black",
+  ".foreground:		yellow",
   ".textColor:		yellow",
+  "*mouseForeground:	white",
   ".font:		-*-helvetica-*-r-*-*-*-180-*-*-p-*-*-*",
   "*delay:		10000",
   "*count:		300",
@@ -761,7 +785,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec fluidballs_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-size",		".size",	XrmoptionSepArg, 0 },
@@ -774,25 +798,12 @@ XrmOptionDescRec options [] = {
   { "-shake",		".shake",	XrmoptionNoArg, "True" },
   { "-no-shake",	".shake",	XrmoptionNoArg, "False" },
   { "-random",		".random",	XrmoptionNoArg, "True" },
+  { "-no-random",	".random",	XrmoptionNoArg, "False" },
   { "-nonrandom",	".random",	XrmoptionNoArg, "False" },
   { "-db",		".doubleBuffer", XrmoptionNoArg,  "True" },
   { "-no-db",		".doubleBuffer", XrmoptionNoArg,  "False" },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  b_state *state = init_balls(dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
 
-  while (1)
-    {
-      repaint_balls(state);
-      update_balls(state);
-
-      XSync (dpy, False);
-      handle_events (state);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("Fluidballs", fluidballs)

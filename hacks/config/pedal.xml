@@ -18,8 +18,9 @@
 
   <_description>
 This is sort of a combination spirograph/string-art.  It generates a
-large, complex polygon, and lets the X server do the bulk of the work
-by giving it an even/odd winding rule.  Written by Dale Moore, based
-on some ancient PDP-11 code.
+large, complex polygon, and renders it by filling using an even/odd
+winding rule.
+
+Written by Dale Moore; 1995.
   </_description>
 </screensaver>

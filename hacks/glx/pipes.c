@@ -43,18 +43,14 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Pipes"
-# define HACK_INIT					init_pipes
-# define HACK_DRAW					draw_pipes
-# define HACK_RESHAPE				reshape_pipes
-# define pipes_opts					xlockmore_opts
 # define DEFAULTS	"*delay:		10000   \n"			\
 					"*count:		2       \n"			\
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
-	               	"*fpsSolid:     True    \n"		    \
-
+	               	"*fpsSolid:     True    \n"
+# define refresh_pipes 0
+# define pipes_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -62,7 +58,6 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
 #include "buildlwo.h"
 
 #define DEF_FACTORY     "2"
@@ -105,7 +100,7 @@ static OptionStruct desc[] =
 	{"-/+db", "turn on/off double buffering"}
 };
 
-ModeSpecOpt pipes_opts =
+ENTRYPOINT ModeSpecOpt pipes_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -155,10 +150,11 @@ typedef struct {
 	int         system_length;
 	int         turncounter;
 	Window      window;
-	float      *system_color;
+	const float *system_color;
 	GLfloat     initial_rotation;
 	GLuint      valve, bolts, betweenbolts, elbowbolts, elbowcoins;
 	GLuint      guagehead, guageface, guagedial, guageconnector;
+    int         reset;
 	GLXContext *glx_context;
 } pipesstruct;
 
@@ -166,43 +162,25 @@ extern struct lwo LWO_BigValve, LWO_PipeBetweenBolts, LWO_Bolts3D;
 extern struct lwo LWO_GuageHead, LWO_GuageFace, LWO_GuageDial, LWO_GuageConnector;
 extern struct lwo LWO_ElbowBolts, LWO_ElbowCoins;
 
-static float front_shininess[] =
-{60.0};
-static float front_specular[] =
-{0.7, 0.7, 0.7, 1.0};
-static float ambient0[] =
-{0.4, 0.4, 0.4, 1.0};
-static float diffuse0[] =
-{1.0, 1.0, 1.0, 1.0};
-static float ambient1[] =
-{0.2, 0.2, 0.2, 1.0};
-static float diffuse1[] =
-{0.5, 0.5, 0.5, 1.0};
-static float position0[] =
-{1.0, 1.0, 1.0, 0.0};
-static float position1[] =
-{-1.0, -1.0, 1.0, 0.0};
-static float lmodel_ambient[] =
-{0.5, 0.5, 0.5, 1.0};
-static float lmodel_twoside[] =
-{GL_TRUE};
+static const float front_shininess[] = {60.0};
+static const float front_specular[] = {0.7, 0.7, 0.7, 1.0};
+static const float ambient0[] = {0.4, 0.4, 0.4, 1.0};
+static const float diffuse0[] = {1.0, 1.0, 1.0, 1.0};
+static const float ambient1[] = {0.2, 0.2, 0.2, 1.0};
+static const float diffuse1[] = {0.5, 0.5, 0.5, 1.0};
+static const float position0[] = {1.0, 1.0, 1.0, 0.0};
+static const float position1[] = {-1.0, -1.0, 1.0, 0.0};
+static const float lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+static const float lmodel_twoside[] = {GL_TRUE};
 
-static float MaterialRed[] =
-{0.7, 0.0, 0.0, 1.0};
-static float MaterialGreen[] =
-{0.1, 0.5, 0.2, 1.0};
-static float MaterialBlue[] =
-{0.0, 0.0, 0.7, 1.0};
-static float MaterialCyan[] =
-{0.2, 0.5, 0.7, 1.0};
-static float MaterialYellow[] =
-{0.7, 0.7, 0.0, 1.0};
-static float MaterialMagenta[] =
-{0.6, 0.2, 0.5, 1.0};
-static float MaterialWhite[] =
-{0.7, 0.7, 0.7, 1.0};
-static float MaterialGray[] =
-{0.2, 0.2, 0.2, 1.0};
+static const float MaterialRed[] = {0.7, 0.0, 0.0, 1.0};
+static const float MaterialGreen[] = {0.1, 0.5, 0.2, 1.0};
+static const float MaterialBlue[] = {0.0, 0.0, 0.7, 1.0};
+static const float MaterialCyan[] = {0.2, 0.5, 0.7, 1.0};
+static const float MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};
+static const float MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+static const float MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};
+static const float MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
 
 static pipesstruct *pipes = NULL;
 
@@ -497,7 +475,7 @@ MakeShape(ModeInfo * mi, int newdir)
 	}
 }
 
-void
+ENTRYPOINT void
 reshape_pipes(ModeInfo * mi, int width, int height)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
@@ -631,8 +609,8 @@ pinit(ModeInfo * mi, int zera)
 	pp->nowdir = SelectNeighbor(mi);
 }
 
-void
-init_pipes(ModeInfo * mi)
+ENTRYPOINT void
+init_pipes (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 	pipesstruct *pp;
@@ -693,8 +671,8 @@ init_pipes(ModeInfo * mi)
 	}
 }
 
-void
-draw_pipes(ModeInfo * mi)
+ENTRYPOINT void
+draw_pipes (ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
@@ -706,6 +684,17 @@ draw_pipes(ModeInfo * mi)
 
 	if (!pp->glx_context)
 		return;
+
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+
+    if (pp->reset) {
+      if (--pp->reset) {
+        /* Would be nice to fade to black here, by drawing successive quads
+           over the whole scene with gamma. */
+        return;
+      }
+      pinit(mi, 1);
+    }
 
 	glPushMatrix();
 
@@ -743,9 +732,9 @@ draw_pipes(ModeInfo * mi)
 		/* If the maximum number of system was drawn, restart (clearing the screen), */
 		/* else start a new system. */
 		if (++pp->system_number > pp->number_of_systems) {
-          if (!mi->fps_p)
-            sleep(1);
-			pinit(mi, 1);
+          /* pause doing nothing for N seconds before clearing the screen. */
+          int secs = 3;
+          pp->reset = secs * 1000000 / MI_PAUSE(mi);
 		} else {
 			pinit(mi, 0);
 		}
@@ -980,8 +969,9 @@ draw_pipes(ModeInfo * mi)
     if (mi->fps_p) do_fps (mi);
 }
 
-void
-change_pipes(ModeInfo * mi)
+#ifndef STANDALONE
+ENTRYPOINT void
+change_pipes (ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
@@ -991,9 +981,11 @@ change_pipes(ModeInfo * mi)
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
 	pinit(mi, 1);
 }
+#endif /* !STANDALONE */
 
-void
-release_pipes(ModeInfo * mi)
+
+ENTRYPOINT void
+release_pipes (ModeInfo * mi)
 {
 	if (pipes != NULL) {
 		int         screen;
@@ -1034,5 +1026,7 @@ release_pipes(ModeInfo * mi)
 	}
 	FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Pipes", pipes)
 
 #endif

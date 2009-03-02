@@ -35,30 +35,13 @@
  *
  */
 
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-# define PROGCLASS          "Jigglypuff"
-# define HACK_INIT          init_jigglypuff
-# define HACK_DRAW          draw_jigglypuff
-# define HACK_RESHAPE       reshape_jigglypuff
-# define HACK_HANDLE_EVENT  jigglypuff_handle_event
-# define EVENT_MASK         PointerMotionMask 
-# define jigglypuff_opts    xlockmore_opts
-
-#define DEF_COLOR           "cycle"
-#define DEF_SHININESS       "100"
-#define DEF_COMPLEXITY      "2"
-#define DEF_SPEED           "500"
-#define DEF_DISTANCE        "100"
-#define DEF_HOLD            "800"
-#define DEF_SPHERISM        "75"
-#define DEF_DAMPING         "500"
-
 # define DEFAULTS           "*delay: 20000\n" \
                             "*showFPS: False\n" \
                             "*wireframe: False\n" \
 
+# define refresh_jigglypuff 0
+# define release_jigglypuff 0
 # include "xlockmore.h"
 #else
 # include "xlock.h"
@@ -73,7 +56,16 @@
 #include "../images/jigglymap.xpm"
 
 #ifdef USE_GL
-#include <GL/gl.h>
+
+
+#define DEF_COLOR           "cycle"
+#define DEF_SHININESS       "100"
+#define DEF_COMPLEXITY      "2"
+#define DEF_SPEED           "500"
+#define DEF_DISTANCE        "100"
+#define DEF_HOLD            "800"
+#define DEF_SPHERISM        "75"
+#define DEF_DAMPING         "500"
 
 #ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
@@ -145,7 +137,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {&random_parms, "random", "Random", "False", t_Bool},
+    {&random_parms, "random", "Random", "True", t_Bool},
     {&do_tetrahedron, "tetra", "Tetra", "False", t_Bool},
     {&spooky, "spooky", "Spooky", "0", t_Int},
     {&color, "color", "Color", DEF_COLOR, t_String},
@@ -161,7 +153,7 @@ static argtype vars[] = {
 #undef countof
 #define countof(x) ((int)(sizeof(x)/sizeof(*(x))))
 
-ModeSpecOpt jigglypuff_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt jigglypuff_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #define COLOR_STYLE_NORMAL    0
 #define COLOR_STYLE_CYCLE     1
@@ -171,7 +163,7 @@ ModeSpecOpt jigglypuff_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #define CLOWNBARF_NCOLORS 5
 
-static GLfloat clownbarf_colors[CLOWNBARF_NCOLORS][4] = {
+static const GLfloat clownbarf_colors[CLOWNBARF_NCOLORS][4] = {
     {0.7, 0.7, 0.0, 1.0},
     {0.8, 0.1, 0.1, 1.0},
     {0.1, 0.1, 0.8, 1.0},
@@ -179,7 +171,7 @@ static GLfloat clownbarf_colors[CLOWNBARF_NCOLORS][4] = {
     {0.0, 0.0, 0.0, 1.0}
 };
 
-static GLfloat flowerbox_colors[4][4] = {
+static const GLfloat flowerbox_colors[4][4] = {
     {0.7, 0.7, 0.0, 1.0},
     {0.9, 0.0, 0.0, 1.0},
     {0.0, 0.9, 0.0, 1.0},
@@ -224,7 +216,7 @@ struct solid {
 struct face {
     solid *s;
     hedge *start;
-    GLfloat *color;
+    const GLfloat *color;
     face *next;
 };
 
@@ -355,7 +347,7 @@ static inline hedge *partner(hedge *h) {
     }
 }
 
-vertex *vertex_new(solid *s, vector v)
+static vertex *vertex_new(solid *s, vector v)
 {
     vertex *vtx = (vertex*)malloc(sizeof(vertex));
 
@@ -374,7 +366,7 @@ vertex *vertex_new(solid *s, vector v)
  * i.e. it is a helper for the split_* functions, which
  * maintain the consistency of the solid.
  */
-hedge *hedge_new(hedge *hafter, vertex *vtx)
+static hedge *hedge_new(hedge *hafter, vertex *vtx)
 {
     hedge *h = (hedge*)malloc(sizeof(hedge));
     
@@ -392,7 +384,7 @@ hedge *hedge_new(hedge *hafter, vertex *vtx)
     return h;
 }
 
-edge *edge_new(solid *s)
+static edge *edge_new(solid *s)
 {
     edge *e = (edge*)malloc(sizeof(edge));
     if(!e) {
@@ -406,7 +398,7 @@ edge *edge_new(solid *s)
     return e;
 }
 
-face *face_new(solid *s, hedge *h)
+static face *face_new(solid *s, hedge *h)
 {
     face *f = (face*)malloc(sizeof(face));
     if(!f) {
@@ -434,7 +426,7 @@ face *face_new(solid *s, hedge *h)
  *    the vertex returned will have h==<the new halfedge>.
  */
 
-vertex *vertex_split(hedge *h, vector v)
+static vertex *vertex_split(hedge *h, vector v)
 {
     hedge *h2, *hn1, *hn2;
     vertex *vtxn;
@@ -464,7 +456,7 @@ vertex *vertex_split(hedge *h, vector v)
     return vtxn;
 }
 
-face *face_split(face *f, hedge *h1, hedge *h2)
+static face *face_split(face *f, hedge *h1, hedge *h2)
 {
     hedge *hn1, *hn2, *tmp;
     edge *en;
@@ -508,7 +500,7 @@ face *face_split(face *f, hedge *h1, hedge *h2)
     return fn;
 }
 
-solid *solid_new(vector where) 
+static solid *solid_new(vector where) 
 {
     solid *s = (solid*)malloc(sizeof(solid));
     face *f1, *f2;
@@ -545,7 +537,7 @@ solid *solid_new(vector where)
 }
 
 /* This is all the code directly related to constructing the jigglypuff */
-void face_tessel2(face *f)
+static void face_tessel2(face *f)
 {
     hedge *h1=f->start->prev, *h2=f->start->next;
     
@@ -566,7 +558,7 @@ void face_tessel2(face *f)
  * added at the head of the list. If that ever changes,
  * this is borked. 
  */
-void solid_tesselate(solid *s) 
+static void solid_tesselate(solid *s) 
 {
     edge *e = s->edges;
     face *f = s->faces;
@@ -583,7 +575,7 @@ void solid_tesselate(solid *s)
     }
 }
 		
-void solid_spherify(solid * s, coord size) 
+static void solid_spherify(solid * s, coord size) 
 {
     vertex *vtx = s->vertices;
 
@@ -593,7 +585,7 @@ void solid_spherify(solid * s, coord size)
     }
 }
 
-solid *tetrahedron(jigglystruct *js) 
+static solid *tetrahedron(jigglystruct *js) 
 {
     solid *s;
     vertex *vtx;
@@ -628,7 +620,7 @@ solid *tetrahedron(jigglystruct *js)
     return s;
 }
 
-solid *tesselated_tetrahedron(coord size, int iter, jigglystruct *js) {
+static solid *tesselated_tetrahedron(coord size, int iter, jigglystruct *js) {
     solid *s = tetrahedron(js);
     int i;
 
@@ -700,7 +692,7 @@ static inline void face_render(face *f, jigglystruct *js)
     glEnd();
 }
 
-void jigglypuff_render(jigglystruct *js) 
+static void jigglypuff_render(jigglystruct *js) 
 {
     face *f = js->shape->faces;
     vertex *vtx = js->shape->vertices;
@@ -720,7 +712,7 @@ void jigglypuff_render(jigglystruct *js)
 /* stable distance when subdivs == 4 */
 #define STABLE_DISTANCE 0.088388347648
 
-void update_shape(jigglystruct *js)
+static void update_shape(jigglystruct *js)
 {
     vertex *vtx = js->shape->vertices;
     edge *e = js->shape->edges;
@@ -764,7 +756,7 @@ void update_shape(jigglystruct *js)
 
 /* These are the various initialization routines */
 
-void init_texture(ModeInfo *mi)
+static void init_texture(ModeInfo *mi)
 {
     XImage *img = xpm_to_ximage(mi->dpy, mi->xgwa.visual,
 			       mi->xgwa.colormap, jigglymap_xpm);
@@ -776,7 +768,7 @@ void init_texture(ModeInfo *mi)
     XDestroyImage(img);
 }
 
-void setup_opengl(ModeInfo *mi, jigglystruct *js)
+static void setup_opengl(ModeInfo *mi, jigglystruct *js)
 {
     const GLfloat lpos0[4] = {-12, 8, 12, 0};
     const GLfloat lpos1[4] = {7, -5, 0, 0};
@@ -829,7 +821,7 @@ void setup_opengl(ModeInfo *mi, jigglystruct *js)
     }
 }
 
-int parse_color(jigglystruct *js)
+static int parse_color(jigglystruct *js)
 {
     unsigned int r, g, b;
     if(!strcmp(color, "clownbarf")) {
@@ -870,7 +862,7 @@ int parse_color(jigglystruct *js)
     return 1;
 }
 
-void randomize_parameters(jigglystruct *js) {
+static void randomize_parameters(jigglystruct *js) {
     do_tetrahedron = random() & 1;
     js->do_wireframe = !(random() & 3);
     js->color_style = random() % 5;
@@ -899,7 +891,7 @@ void randomize_parameters(jigglystruct *js) {
     damping = (random() % 800) + 50;
 }    
 
-void calculate_parameters(jigglystruct *js, int subdivs) {
+static void calculate_parameters(jigglystruct *js, int subdivs) {
     /* try to compensate for the inherent instability at
      * low complexity. */
     float dist_factor = (subdivs == 6) ? 2 : (subdivs == 5) ? 1 : 0.5;
@@ -917,7 +909,7 @@ void calculate_parameters(jigglystruct *js, int subdivs) {
 
 /* The screenhack related functions begin here */
 
-Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
 {
     jigglystruct *js = &jss[MI_SCREEN(mi)];
     
@@ -949,7 +941,7 @@ Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
     return False;
 }
 
-void reshape_jigglypuff(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_jigglypuff(ModeInfo *mi, int width, int height)
 {
     GLfloat aspect = (GLfloat)width / (GLfloat)height;
 
@@ -960,7 +952,7 @@ void reshape_jigglypuff(ModeInfo *mi, int width, int height)
 /*    glTranslatef(0, 0, -10);*/
 }
 
-void draw_jigglypuff(ModeInfo *mi)
+ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
 {
     jigglystruct *js = &jss[MI_SCREEN(mi)];
     
@@ -1005,7 +997,7 @@ void draw_jigglypuff(ModeInfo *mi)
     glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
-void init_jigglypuff(ModeInfo *mi)
+ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
 {
     jigglystruct *js;
     int subdivs;
@@ -1038,6 +1030,9 @@ void init_jigglypuff(ModeInfo *mi)
     if(random_parms)
 	randomize_parameters(js);
 
+    js->angle = frand(180);
+    js->axis  = frand(M_PI);
+
     js->shape = tesselated_tetrahedron(1, subdivs, js);
 
     if(!do_tetrahedron)
@@ -1064,13 +1059,8 @@ void init_jigglypuff(ModeInfo *mi)
 	   js->do_wireframe, js->spooky, js->color_style, js->shininess);*/
 }
 
-/* This is the end of the file */
+XSCREENSAVER_MODULE ("Jigglypuff", jigglypuff)
 
 #endif /* USE_GL */
 
-
-
-
-
-
-
+/* This is the end of the file */

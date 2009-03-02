@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2003
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2003, 2006
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -11,6 +11,10 @@
  */
 
 #include "screenhack.h"
+
+#ifndef HAVE_COCOA
+# define DO_STIPPLE
+#endif
 
 #define NBITS 12
 
@@ -31,6 +35,7 @@
  * # include <X11/bitmaps/vlines3>
 */
 
+#ifdef DO_STIPPLE
 #define stipple_width  16
 #define stipple_height 4
 static unsigned char stipple_bits[] = {
@@ -82,37 +87,59 @@ static char vlines2_bits[] = { 0x01};
 #define vlines3_height 1
 static char vlines3_bits[] = { 0x02};
 
+#endif /* DO_STIPPLE */
+
+struct state {
+  Display *dpy;
+  Window window;
+
+  Pixmap pixmaps [NBITS];
+
+  GC gc;
+  int delay;
+  unsigned long fg, bg, pixels [512];
+  int npixels;
+  int xlim, ylim;
+  Colormap cmap;
+};
 
 
-
-static Pixmap pixmaps [NBITS];
-static GC gc;
-static int delay;
-static unsigned long fg, bg, pixels [512];
-static int npixels;
-
-static void
-init_greynetic (Display *dpy, Window window)
+static void *
+greynetic_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+# ifdef DO_STIPPLE
   int i;
+# endif /* DO_STIPPLE */
   XGCValues gcv;
   XWindowAttributes xgwa;
-  Colormap cmap;
-  XGetWindowAttributes (dpy, window, &xgwa);
-  cmap = xgwa.colormap;
-  npixels = 0;
-  gcv.foreground= fg= get_pixel_resource("foreground","Foreground", dpy, cmap);
-  gcv.background= bg= get_pixel_resource("background","Background", dpy, cmap);
+  st->dpy = dpy;
+  st->window = window;
+
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->xlim = xgwa.width;
+  st->ylim = xgwa.height;
+  st->cmap = xgwa.colormap;
+  st->npixels = 0;
+  gcv.foreground= st->fg= get_pixel_resource(st->dpy, st->cmap, "foreground","Foreground");
+  gcv.background= st->bg= get_pixel_resource(st->dpy, st->cmap, "background","Background");
+
+  st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  if (st->delay < 0) st->delay = 0;
+
+# ifndef DO_STIPPLE
+  st->gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+#  ifdef HAVE_COCOA /* allow non-opaque alpha components in pixel values */
+  jwxyz_XSetAlphaAllowed (st->dpy, st->gc, True);
+#  endif /* HAVE_COCOA */
+# else /* DO_STIPPLE */
   gcv.fill_style= FillOpaqueStippled;
-  gc = XCreateGC (dpy, window, GCForeground|GCBackground|GCFillStyle, &gcv);
-
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 0) delay = 0;
-
+  st->gc = XCreateGC (st->dpy, st->window, GCForeground|GCBackground|GCFillStyle, &gcv);
+  
   i = 0;
-#define BITS(n,w,h) \
-  pixmaps [i++] = \
-    XCreatePixmapFromBitmapData (dpy, window, (char *) n, w, h, 1, 0, 1)
+# define BITS(n,w,h) \
+  st->pixmaps [i++] = \
+    XCreatePixmapFromBitmapData (st->dpy, st->window, (char *) n, w, h, 1, 0, 1)
 
   BITS (stipple_bits, stipple_width, stipple_height);
   BITS (cross_weave_bits, cross_weave_width, cross_weave_height);
@@ -126,102 +153,128 @@ init_greynetic (Display *dpy, Window window)
   BITS (root_weave_bits, root_weave_width, root_weave_height);
   BITS (vlines2_bits, vlines2_width, vlines2_height);
   BITS (vlines3_bits, vlines3_width, vlines3_height);
+# endif /* DO_STIPPLE */
+  return st;
 }
 
-static void
-greynetic (Display *dpy, Window window)
+static unsigned long
+greynetic_draw (Display *dpy, Window window, void *closure)
 {
-  static int tick = 500, xlim, ylim;
-  static Colormap cmap;
+  struct state *st = (struct state *) closure;
   int x, y, w=0, h=0, i;
   XGCValues gcv;
-  if (tick++ == 500)
-    {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
-      tick = 0;
-      xlim = xgwa.width;
-      ylim = xgwa.height;
-      cmap = xgwa.colormap;
-    }
+
   for (i = 0; i < 10; i++) /* minimize area, but don't try too hard */
     {
-      w = 50 + random () % (xlim - 50);
-      h = 50 + random () % (ylim - 50);
-      if (w + h < xlim && w + h < ylim)
+      w = 50 + random () % (st->xlim - 50);
+      h = 50 + random () % (st->ylim - 50);
+      if (w + h < st->xlim && w + h < st->ylim)
 	break;
     }
-  x = random () % (xlim - w);
-  y = random () % (ylim - h);
-  gcv.stipple = pixmaps [random () % NBITS];
+  x = random () % (st->xlim - w);
+  y = random () % (st->ylim - h);
+# ifdef DO_STIPPLE
+  gcv.stipple = st->pixmaps [random () % NBITS];
+# endif /* !DO_STIPPLE */
   if (mono_p)
     {
     MONO:
       if (random () & 1)
-	gcv.foreground = fg, gcv.background = bg;
+	gcv.foreground = st->fg, gcv.background = st->bg;
       else
-	gcv.foreground = bg, gcv.background = fg;
+	gcv.foreground = st->bg, gcv.background = st->fg;
     }
   else
     {
       XColor fgc, bgc;
-      if (npixels == sizeof (pixels) / sizeof (unsigned long))
+      if (st->npixels == sizeof (st->pixels) / sizeof (unsigned long))
 	goto REUSE;
       fgc.flags = bgc.flags = DoRed|DoGreen|DoBlue;
       fgc.red = random ();
       fgc.green = random ();
       fgc.blue = random ();
+# ifdef DO_STIPPLE
       bgc.red = random ();
       bgc.green = random ();
       bgc.blue = random ();
-      if (! XAllocColor (dpy, cmap, &fgc))
+# endif /* DO_STIPPLE */
+
+      if (! XAllocColor (st->dpy, st->cmap, &fgc))
 	goto REUSE;
-      pixels [npixels++] = fgc.pixel;
+      st->pixels [st->npixels++] = fgc.pixel;
       gcv.foreground = fgc.pixel;
-      if (! XAllocColor (dpy, cmap, &bgc))
+# ifdef DO_STIPPLE
+      if (! XAllocColor (st->dpy, st->cmap, &bgc))
 	goto REUSE;
-      pixels [npixels++] = bgc.pixel;
+      st->pixels [st->npixels++] = bgc.pixel;
       gcv.background = bgc.pixel;
+# endif /* DO_STIPPLE */
       goto DONE;
     REUSE:
-      if (npixels <= 0)
+      if (st->npixels <= 0)
 	{
 	  mono_p = 1;
 	  goto MONO;
 	}
-      gcv.foreground = pixels [random () % npixels];
-      gcv.background = pixels [random () % npixels];
+      gcv.foreground = st->pixels [random () % st->npixels];
+# ifdef DO_STIPPLE
+      gcv.background = st->pixels [random () % st->npixels];
+# endif /* DO_STIPPLE */
     DONE:
       ;
+
+# ifdef HAVE_COCOA
+      {
+        /* give a non-opaque alpha to the color */
+        unsigned long pixel = gcv.foreground;
+        unsigned long amask = BlackPixelOfScreen (0);
+        unsigned long a = (random() & amask);
+        pixel = (pixel & (~amask)) | a;
+        gcv.foreground = pixel;
+      }
+# endif /* !HAVE_COCOA */
     }
-  XChangeGC (dpy, gc, GCStipple|GCForeground|GCBackground, &gcv);
-  XFillRectangle (dpy, window, gc, x, y, w, h);
-  XSync (dpy, False);
+# ifndef DO_STIPPLE
+  XChangeGC (st->dpy, st->gc, GCForeground, &gcv);
+# else  /* DO_STIPPLE */
+  XChangeGC (st->dpy, st->gc, GCStipple|GCForeground|GCBackground, &gcv);
+# endif /* DO_STIPPLE */
+  XFillRectangle (st->dpy, st->window, st->gc, x, y, w, h);
+  return st->delay;
 }
 
 
-char *progclass = "Greynetic";
-
-char *defaults [] = {
+static const char *greynetic_defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*delay:	10000",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec greynetic_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
+static void
+greynetic_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
 {
-  init_greynetic (dpy, window);
-  while (1)
-    {
-      greynetic (dpy, window);
-      screenhack_handle_events (dpy);
-      if (delay) usleep (delay);
-    }
+  struct state *st = (struct state *) closure;
+  st->xlim = w;
+  st->ylim = h;
 }
+
+static Bool
+greynetic_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+greynetic_free (Display *dpy, Window window, void *closure)
+{
+}
+
+XSCREENSAVER_MODULE ("Greynetic", greynetic)
+

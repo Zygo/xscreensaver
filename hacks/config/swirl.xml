@@ -16,11 +16,11 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+<!--  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/> -->
 
   <_description>
-More flowing, swirly patterns. This version is by M.  Dobie and R.
-Taylor, but you might have seen a Mac program similar to this called
-FlowFazer.  There is also a cool Java applet of a similar concept.
+Flowing, swirly patterns.
+
+Written by M.  Dobie and R. Taylor; 1997.
   </_description>
 </screensaver>

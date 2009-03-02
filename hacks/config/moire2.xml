@@ -17,10 +17,10 @@
             _label="Thickness" low="0" high="100" default="0"/>
 
   <_description>
-Another example of the fun you can have with moire
-interference patterns; this hack generates fields of concentric
-circles or ovals, and combines the planes with various operations.
-The planes are moving independently of one another, causing the
-interference lines to ``spray.''  Written by Jamie Zawinski.
+Generates fields of concentric circles or ovals, and combines the
+planes with various operations.  The planes are moving independently
+of one another, causing the interference lines to spray.
+
+Written by Jamie Zawinski; 1998.
   </_description>
 </screensaver>

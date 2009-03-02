@@ -49,8 +49,13 @@
  * Much mucking with by:
  * Gavin Bell
  */
-#include "config.h"
+
 #include <math.h>
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "trackball.h"
 
 /*
@@ -68,7 +73,7 @@
 static float tb_project_to_sphere(float, float, float);
 static void normalize_quat(float [4]);
 
-void
+static void
 vzero(float *v)
 {
     v[0] = 0.0;
@@ -76,7 +81,7 @@ vzero(float *v)
     v[2] = 0.0;
 }
 
-void
+static void
 vset(float *v, float x, float y, float z)
 {
     v[0] = x;
@@ -84,7 +89,7 @@ vset(float *v, float x, float y, float z)
     v[2] = z;
 }
 
-void
+static void
 vsub(const float *src1, const float *src2, float *dst)
 {
     dst[0] = src1[0] - src2[0];
@@ -92,7 +97,7 @@ vsub(const float *src1, const float *src2, float *dst)
     dst[2] = src1[2] - src2[2];
 }
 
-void
+static void
 vcopy(const float *v1, float *v2)
 {
     register int i;
@@ -100,7 +105,7 @@ vcopy(const float *v1, float *v2)
         v2[i] = v1[i];
 }
 
-void
+static void
 vcross(const float *v1, const float *v2, float *cross)
 {
     float temp[3];
@@ -111,13 +116,13 @@ vcross(const float *v1, const float *v2, float *cross)
     vcopy(temp, cross);
 }
 
-float
+static float
 vlength(const float *v)
 {
     return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
-void
+static void
 vscale(float *v, float div)
 {
     v[0] *= div;
@@ -125,19 +130,19 @@ vscale(float *v, float div)
     v[2] *= div;
 }
 
-void
+static void
 vnormal(float *v)
 {
     vscale(v,1.0/vlength(v));
 }
 
-float
+static float
 vdot(const float *v1, const float *v2)
 {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-void
+static void
 vadd(const float *src1, const float *src2, float *dst)
 {
     dst[0] = src1[0] + src2[0];

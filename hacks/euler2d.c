@@ -41,19 +41,17 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_euler2d
-#define PROGCLASS "Euler2d"
-#define HACK_INIT init_euler2d
-#define HACK_DRAW draw_euler2d
-#define euler2d_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
-"*count: 1024 \n" \
-"*cycles: 3000 \n" \
-"*ncolors: 64 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_euler2d
+# define DEFAULTS	"*delay:   10000 \n" \
+					"*count:   1024  \n" \
+					"*cycles:  3000  \n" \
+					"*ncolors: 64    \n"
+# define reshape_euler2d 0
+# define euler2d_handle_event 0
+# define SMOOTH_COLORS
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_euler2d
@@ -84,7 +82,7 @@ static OptionStruct desc[] =
   {"-eulerpower power", "power of interaction law for points for Euler2d"},
 };
 
-ModeSpecOpt euler2d_opts =
+ENTRYPOINT ModeSpecOpt euler2d_opts =
 {sizeof opts / sizeof opts[0], opts,
  sizeof vars / sizeof vars[0], vars, desc};
 
@@ -504,8 +502,8 @@ free_euler2d(euler2dstruct *sp)
 	deallocate(sp->mod_dp2, double);
 }
 
-void
-init_euler2d(ModeInfo * mi)
+ENTRYPOINT void
+init_euler2d (ModeInfo * mi)
 {
 #define nr_rotates 18 /* how many rotations to try to fill as much of screen as possible - must be even number */
 	euler2dstruct *sp;
@@ -527,6 +525,10 @@ init_euler2d(ModeInfo * mi)
 			return;
 	}
 	sp = &euler2ds[MI_SCREEN(mi)];
+
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi),  False);
+#endif
 
 	sp->boundary_color = NRAND(MI_NPIXELS(mi));
 	sp->hide_vortex = NRAND(4) != 0;
@@ -744,8 +746,8 @@ init_euler2d(ModeInfo * mi)
 	}
 }
 
-void
-draw_euler2d(ModeInfo * mi)
+ENTRYPOINT void
+draw_euler2d (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
@@ -853,8 +855,8 @@ draw_euler2d(ModeInfo * mi)
 
 }
 
-void
-release_euler2d(ModeInfo * mi)
+ENTRYPOINT void
+release_euler2d (ModeInfo * mi)
 {
 	if (euler2ds != NULL) {
 		int         screen;
@@ -866,10 +868,12 @@ release_euler2d(ModeInfo * mi)
 	}
 }
 
-void
-refresh_euler2d(ModeInfo * mi)
+ENTRYPOINT void
+refresh_euler2d (ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE ("Euler2d", euler2d)
 
 #endif /* MODE_euler2d */

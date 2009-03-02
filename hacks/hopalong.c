@@ -52,20 +52,17 @@ static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
 
 #ifdef STANDALONE
 #define MODE_hop
-#define PROGCLASS "Hop"
-#define HACK_INIT init_hop
-#define HACK_DRAW draw_hop
-#define hop_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*count: 1000 \n" \
- "*cycles: 2500 \n" \
- "*ncolors: 200 \n"
-#define SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#include "erase.h"
+#define DEFAULTS	"*delay: 10000 \n" \
+					"*count: 1000 \n" \
+					"*cycles: 2500 \n" \
+					"*ncolors: 200 \n"
+# define SMOOTH_COLORS
+# define reshape_hop 0
+# define hop_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
+# include "erase.h"
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
-
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_hop
@@ -148,7 +145,7 @@ static OptionStruct desc[] =
 	{"-/+sine", "turn on/off sine format"}
 };
 
-ModeSpecOpt hop_opts =
+ENTRYPOINT ModeSpecOpt hop_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -187,11 +184,14 @@ typedef struct {
 	int         count;
 	int         bufsize;
 	XPoint     *pointBuffer;	/* pointer for XDrawPoints */
+#ifdef STANDALONE
+  eraser_state *eraser;
+#endif
 } hopstruct;
 
 static hopstruct *hops = (hopstruct *) NULL;
 
-void
+ENTRYPOINT void
 init_hop(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -386,14 +386,16 @@ init_hop(ModeInfo * mi)
 			return;
 	}
 
+#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
+#endif
 
 	XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	hp->count = 0;
 }
 
 
-void
+ENTRYPOINT void
 draw_hop(ModeInfo * mi)
 {
 	double      oldj, oldi;
@@ -404,6 +406,15 @@ draw_hop(ModeInfo * mi)
 	if (hops == NULL)
 		return;
 	hp = &hops[MI_SCREEN(mi)];
+
+#ifdef STANDALONE
+    if (hp->eraser) {
+      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+      return;
+    }
+#endif
+
+
 	if (hp->pointBuffer == NULL)
 		return;
 	xp = hp->pointBuffer;
@@ -532,13 +543,13 @@ draw_hop(ModeInfo * mi)
 		    hp->pointBuffer, hp->bufsize, CoordModeOrigin);
 	if (++hp->count > MI_CYCLES(mi)) {
 #ifdef STANDALONE
-	    erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
+      hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
 #endif /* STANDALONE */
 		init_hop(mi);
 	}
 }
 
-void
+ENTRYPOINT void
 release_hop(ModeInfo * mi)
 {
 	if (hops != NULL) {
@@ -555,10 +566,12 @@ release_hop(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_hop(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+XSCREENSAVER_MODULE_2 ("Hopalong", hopalong, hop)
 
 #endif /* MODE_hop */

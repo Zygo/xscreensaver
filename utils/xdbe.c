@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1998, 1999 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998, 1999, 2006
+ *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,7 +53,7 @@ xdbe_get_backbuffer (Display *dpy, Window window,
   XErrorHandler old_handler;
   int maj, min;
 
-  if (!get_boolean_resource("useDBE", "Boolean"))
+  if (!get_boolean_resource(dpy, "useDBE", "Boolean"))
     return 0;
 
   if (!XdbeQueryExtension (dpy, &maj, &min))

@@ -121,7 +121,6 @@ $ twang		:== $'mydir'twang
 $ vermiculate	:== $'mydir'vermiculate
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
-$ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
 $ worm		:== $'mydir'worm
@@ -134,7 +133,6 @@ $ xmatrix	:== $'mydir'xmatrix
 $ xrayswarm	:== $'mydir'xrayswarm
 $ xspirograph	:== $'mydir'xspirograph
 $ xsublim	:== $'mydir'xsublim
-$ xteevee	:== $'mydir'xteevee
 $ zoom		:== $'mydir'zoom
 $ set def [-.DRIVER]
 $ mydir  = mydisk+f$directory()

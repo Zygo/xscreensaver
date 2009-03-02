@@ -83,16 +83,15 @@ If one of these are hit penrose will reinitialize.
 
 #ifdef STANDALONE
 #define MODE_penrose
-#define PROGCLASS "Penrose"
-#define HACK_INIT init_penrose
-#define HACK_DRAW draw_penrose
-#define penrose_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
- "*size: 40 \n" \
- "*ncolors: 64 \n"
-#include "xlockmore.h"		/* from the xscreensaver distribution */
+#define DEFAULTS	"*delay: 10000 \n" \
+					"*size: 40 \n" \
+					"*ncolors: 64 \n"
+# define refresh_penrose 0
+# define reshape_penrose 0
+# define penrose_handle_event 0
+# include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
-#include "xlock.h"		/* from the xlockmore distribution */
+# include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef MODE_penrose
@@ -115,7 +114,7 @@ static OptionStruct desc[] =
 	{"-/+ammann", "turn on/off Ammann lines"}
 };
 
-ModeSpecOpt penrose_opts =
+ENTRYPOINT ModeSpecOpt penrose_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
@@ -255,21 +254,6 @@ typedef struct {
 } forced_pool_c;
 
 
-/* This is the data related to the tiling of one screen. */
-typedef struct {
-	int         width, height;
-	XPoint      origin;
-	int         edge_length;
-	fringe_c    fringe;
-	forced_pool_c forced;
-	int         done, failures;
-	unsigned long thick_color, thin_color;
-	int         busyLoop;
-	Bool        ammann;
-} tiling_c;
-
-static tiling_c *tilings = (tiling_c *) NULL;
-
 /* The tiles are listed in counterclockwise order. */
 typedef struct {
 	vertex_type_c tiles[MAX_TILES_PER_VERTEX];
@@ -321,6 +305,25 @@ static angle_c vtype_angles[] =
 #define vtype_angle( v) (vtype_angles[ v])
 
 
+/* This is the data related to the tiling of one screen. */
+typedef struct {
+	int         width, height;
+	XPoint      origin;
+	int         edge_length;
+	fringe_c    fringe;
+	forced_pool_c forced;
+	int         done, failures;
+	unsigned long thick_color, thin_color;
+	int         busyLoop;
+	Bool        ammann;
+    float       ammann_r;
+    fcoord_c    fived_table[5];
+} tiling_c;
+
+static tiling_c *tilings = (tiling_c *) NULL;
+
+
+
 /* Direction angle of an edge. */
 static      angle_c
 vertex_dir(ModeInfo * mi, fringe_node_c * vertex, unsigned side)
@@ -354,8 +357,7 @@ vertex_dir(ModeInfo * mi, fringe_node_c * vertex, unsigned side)
 static void
 add_unit_vec(angle_c dir, int *fived)
 {
-	static int  dir2i[] =
-	{0, 3, 1, 4, 2};
+	static const int dir2i[] = {0, 3, 1, 4, 2};
 
 	while (dir < 0)
 		dir += 10;
@@ -374,9 +376,6 @@ add_unit_vec(angle_c dir, int *fived)
 static void
 fived_to_loc(int fived[], tiling_c * tp, XPoint *pt)
 {
-	static fcoord_c fived_table[5] =
-	{
-		{.0, .0}};
 	float       fifth = 8 * atan(1.) / 5;
 	register int i;
 	register float r;
@@ -385,15 +384,15 @@ fived_to_loc(int fived[], tiling_c * tp, XPoint *pt)
 	*pt = tp->origin;
 	offset.x = 0.0;
 	offset.y = 0.0;
-	if (fived_table[0].x == .0)
+	if (tp->fived_table[0].x == .0)
 		for (i = 0; i < 5; i++) {
-			fived_table[i].x = cos(fifth * i);
-			fived_table[i].y = sin(fifth * i);
+			tp->fived_table[i].x = cos(fifth * i);
+			tp->fived_table[i].y = sin(fifth * i);
 		}
 	for (i = 0; i < 5; i++) {
 		r = fived[i] * tp->edge_length;
-		offset.x += r * fived_table[i].x;
-		offset.y -= r * fived_table[i].y;
+		offset.x += r * tp->fived_table[i].x;
+		offset.y -= r * tp->fived_table[i].y;
 	}
 	(*pt).x += (int) (offset.x + .5);
 	(*pt).y += (int) (offset.y + .5);
@@ -426,7 +425,7 @@ free_penrose(tiling_c * tp)
 
 
 /* Called to init the mode. */
-void
+ENTRYPOINT void
 init_penrose(ModeInfo * mi)
 {
 	tiling_c   *tp;
@@ -691,12 +690,11 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 		   fail miserably on a b&w display. */
 
 		if ((vtype & VT_TYPE_MASK) == VT_THICK) {
-			static float r = .0;
 
-			if (r == .0) {
+			if (tp->ammann_r == .0) {
 				float       pi10 = 2 * atan(1.) / 5;
 
-				r = 1 - sin(pi10) / (2 * sin(3 * pi10));
+				tp->ammann_r = 1 - sin(pi10) / (2 * sin(3 * pi10));
 			}
 			if (MI_NPIXELS(mi) > 2)
 				XSetForeground(display, gc, MI_PIXEL(mi, tp->thin_color));
@@ -705,10 +703,10 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 				XSetLineAttributes(display, gc, 1, LineOnOffDash, CapNotLast, JoinMiter);
 			}
 			XDrawLine(display, window, gc,
-			      (int) (r * pts[3].x + (1 - r) * pts[0].x + .5),
-			      (int) (r * pts[3].y + (1 - r) * pts[0].y + .5),
-			      (int) (r * pts[1].x + (1 - r) * pts[0].x + .5),
-			     (int) (r * pts[1].y + (1 - r) * pts[0].y + .5));
+			      (int) (tp->ammann_r * pts[3].x + (1 - tp->ammann_r) * pts[0].x + .5),
+			      (int) (tp->ammann_r * pts[3].y + (1 - tp->ammann_r) * pts[0].y + .5),
+			      (int) (tp->ammann_r * pts[1].x + (1 - tp->ammann_r) * pts[0].x + .5),
+			     (int) (tp->ammann_r * pts[1].y + (1 - tp->ammann_r) * pts[0].y + .5));
 			if (MI_NPIXELS(mi) <= 2)
 				XSetLineAttributes(display, gc, 1, LineSolid, CapNotLast, JoinMiter);
 		} else {
@@ -1256,7 +1254,7 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 }
 
 /* One step of the growth algorithm. */
-void
+ENTRYPOINT void
 draw_penrose(ModeInfo * mi)
 {
 	int         i = 0, n;
@@ -1330,7 +1328,7 @@ draw_penrose(ModeInfo * mi)
 
 
 /* Total clean-up. */
-void
+ENTRYPOINT void
 release_penrose(ModeInfo * mi)
 {
 	if (tilings != NULL) {
@@ -1342,5 +1340,7 @@ release_penrose(ModeInfo * mi)
 		tilings = (tiling_c *) NULL;
 	}
 }
+
+XSCREENSAVER_MODULE ("Penrose", penrose)
 
 #endif /* MODE_penrose */

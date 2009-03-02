@@ -25,22 +25,17 @@
     <option id="light" _label="Use Lighting"/>
   </select>
 
-  <select id="render">
-    <option id="wire"  _label="Wireframe" arg-set="-wire"/>
-    <option id="solid" _label="Solid"/>
-  </select>
-
   <!-- #### -texture -->
   <!-- #### -texture_quality -->
   <!-- #### -mipmap -->
 
-  <file id="bitmap" _label="Texture Image" arg="-bitmap %"/>
-
+  <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws various rotating extruded shapes that twist around, lengthen,
-and turn inside out.  Created by David Konerding from the samples
-that come with the GL Extrusion library by Linas Vepstas.
+and turn inside out.
+
+Written by Linas Vepstas, David Konerding, and Jamie Zawinski; 1999.
   </_description>
 </screensaver>

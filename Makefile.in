@@ -7,16 +7,19 @@ VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 SUBDIRS		= utils driver hacks hacks/glx po
-TARFILES	= README README.VMS README.debugging INSTALL \
+SUBDIRS2	= $(SUBDIRS) OSX
+TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
 		  config.sub makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.spec \
+		  xscreensaver.xcodeproj/project.pbxproj
 
 TAR		= tar
 
-MAKE_SUBDIR = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
+MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2);do (cd $$dir; $(MAKE) $@) || exit 5; done
 
 default::
 	@$(MAKE_SUBDIR)
@@ -40,17 +43,19 @@ depend::
 	@$(MAKE_SUBDIR)
 distdepend::
 	@$(MAKE) update_spec_version
-	@$(MAKE_SUBDIR)
+	@$(MAKE_SUBDIR2)
 	@cd po ; $(MAKE) generate_potfiles_in
 
 TAGS:: tags
 tags::
 	@$(MAKE_SUBDIR)
+
 clean::
-	@$(MAKE_SUBDIR)
+	@$(MAKE_SUBDIR2)
+
 distclean:: clean
 	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
-	@$(MAKE_SUBDIR)
+	@$(MAKE_SUBDIR2)
 
 dist:: tar
 
@@ -60,14 +65,13 @@ tar::
   sh config.status ;							    \
   rm -f configure ;							    \
   $(MAKE) configure ;							    \
-  $(MAKE) distdepend ;							    \
-  NAME=`sed -n								    \
-  's/[^0-9]*\([0-9]\.[0-9][0-9]*[0-9]*\).*/xscreensaver-\1/p'		    \
-	utils/version.h` ;						    \
+  $(MAKE) version-date distdepend ;					    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
+  NAME="xscreensaver-$$VERS" ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
   FILES= ;								    \
   ADIR=archive/ ;							    \
-  for subdir in $(SUBDIRS) ; do						    \
+  for subdir in $(SUBDIRS2) ; do					    \
     d=`pwd` ;								    \
     cd $$subdir ;							    \
     FILES="$$FILES `$(MAKE) echo_tarfiles				    \
@@ -160,6 +164,22 @@ bump_version:: bump-version
 tick-version:: bump-version
 tick_version:: bump-version
 
+version-date::
+	@								    \
+  SRC=utils/version.h ;							    \
+  D=`date '+%d-%b-%Y'`;							    \
+  TMP=/tmp/bv.$$ ;							    \
+  sed -e "s/([0-9][^()]*)/($$D)/" < $$SRC > $$TMP ;			    \
+  echo -n "Updating date in $$SRC to \"$$D\"... " ;			    \
+  if cmp -s $$SRC $$TMP ; then						    \
+    echo "unchanged." ;							    \
+  else									    \
+    cat $$TMP > $$SRC ;							    \
+    echo "done." ;							    \
+  fi ;									    \
+  rm -f $$TMP
+
+
 update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
@@ -208,7 +228,7 @@ rpm::
 
 test-tar::
 	@								    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
   D=xscreensaver-$$VERS ;						    \
   ADIR=archive/ ;							    \
   NAME="$${ADIR}$$D.tar.gz" ;						    \
@@ -254,19 +274,28 @@ test-tar::
 									    \
   chmod -R u+w .
 
+dmg::
+	cd OSX ; $(MAKE) release dmg
 
 www::
 	@								    \
   DEST=$$HOME/www/xscreensaver ;					    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
   HEAD="xscreensaver-$$VERS" ;						    \
   ADIR=archive/ ;							    \
   BNAME="$$HEAD.tar.gz" ;						    \
   NAME="$$ADIR$$BNAME" ;						    \
   DNAME="$$DEST/$$HEAD.tar.gz" ;					    \
+  BNAME2="$$HEAD.dmg" ;							    \
+  NAME2="$$ADIR$$BNAME2" ;						    \
+  DNAME2="$$DEST/$$HEAD.dmg" ;						    \
 									    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  if [ ! -f $$NAME2 ]; then						    \
+    echo "$$NAME2 does not exist!  Did you forget to \`make dmg'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
   chmod a-w $$NAME ;							    \
@@ -277,12 +306,20 @@ www::
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
+  if [ -f $$DNAME2 ]; then						    \
+    echo -n "WARNING: $$DNAME2 already exists!  Overwrite? ";		    \
+    read line;								    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
   cp -p $$NAME $$DNAME ;						    \
-  chmod u+w $$DNAME ;							    \
+  cp -p $$NAME2 $$DNAME2 ;						    \
+  chmod u+w $$DNAME $$DNAME2 ;						    \
   cd $$DEST ;								    \
 									    \
   TMP=/tmp/xd.$$$$ ;							    \
-  sed "s/xscreensaver-[0-9]\.[0-9][0-9]*/$$HEAD/g" download.html > $$TMP ;  \
+  sed "s/xscreensaver-5\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ;  \
   echo '' ;								    \
   diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
@@ -297,11 +334,12 @@ www::
   else									    \
     set -x ;								    \
   fi ;									    \
-  cvs add -kb $$BNAME ;							    \
+true  cvs add -kb $$BNAME $$BNAME2 ;					    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \
-  (cd ..; $(MAKE) xscreensaver/changelog.html );			    \
+  (cd ..; $(MAKE) xscreensaver/changelog.html				    \
+		  xscreensaver/screenshots/index.html );		    \
   cvs diff -U0 changelog.html ;						    \
   set +x ;								    \
 									    \

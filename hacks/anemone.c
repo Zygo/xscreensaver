@@ -25,10 +25,6 @@
   +----------------------------------------------------------------------*/
 
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "screenhack.h"
 
@@ -50,32 +46,11 @@
 #define TRUE 1
 #define FALSE 0
 
-static Display *dpy;
-static Window window;
-
-static Pixmap b,ba,bb;
-
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-static  XdbeBackBuffer backb;
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-
-static int
-arms,                       /* number of arms */
-  finpoints;                  /* final number of points in each array. */
-static long delay;              /* usecs to wait between updates. */
-
-static int         scrWidth, scrHeight;
-static GC          gcDraw, gcClear;
 
 typedef struct {
   double x,y,z;
   int sx,sy,sz;
 } vPend;
-
-typedef unsigned short bool;
-
-static bool dbuf;
-static int width;
 
 typedef struct {
   long col;
@@ -84,18 +59,39 @@ typedef struct {
   unsigned short rate;
 } appDef;
 
-static vPend *vPendage;  /* 3D representation of appendages */
-static appDef *appD;  /* defaults */
-static vPend *vCurr, *vNext;
-static appDef *aCurr;
+struct state {
+  Display *dpy;
+  Pixmap b, ba, bb;
 
-static double turn, turndelta;
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  XdbeBackBuffer backb;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
-static int    mx, my;            /* max screen coordinates. */
-static int withdraw;
+  int arms;                       /* number of arms */
+  int finpoints;                  /* final number of points in each array. */
+  long delay;              /* usecs to wait between updates. */
 
-static    XGCValues         gcv;
-static    Colormap          cmap;
+  int scrWidth, scrHeight;
+  GC gcDraw, gcClear;
+
+  Bool dbuf;
+  int width;
+
+  vPend *vPendage;  /* 3D representation of appendages */
+  appDef *appD;  /* defaults */
+  vPend *vCurr, *vNext;
+  appDef *aCurr;
+
+  double turn, turndelta;
+
+  int mx, my;            /* max screen coordinates. */
+  int withdraw;
+
+  XGCValues gcv;
+  Colormap cmap;
+  XColor *colors;
+  int ncolors;
+};
 
 
 
@@ -103,33 +99,7 @@ static    Colormap          cmap;
   |  PUBLIC DATA                                                           |
   +-----------------------------------------------------------------------*/
 
-char *progclass = "Anemone";
 
-char *defaults [] = {
-  ".background: black",
-  "*arms: 128",
-  "*width: 2",
-  "*finpoints: 64",
-  "*delay: 40000",
-  "*withdraw: 1200",
-  "*turnspeed: 50",
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  "*useDBE:		True",
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-  0
-};
-
-
-XrmOptionDescRec options [] = {
-  { "-arms",        ".arms",        XrmoptionSepArg, 0 },
-  { "-finpoints",   ".finpoints",   XrmoptionSepArg, 0 },
-  { "-delay",       ".delay",       XrmoptionSepArg, 0 },
-  { "-width",       ".width",       XrmoptionSepArg, 0 },
-  { "-withdraw",    ".withdraw",    XrmoptionSepArg, 0 },
-  { "-turnspeed",   ".turnspeed",   XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
-};
-int options_size = (sizeof (options) / sizeof (options[0]));
 
 /*-----------------------------------------------------------------------+
   |  PRIVATE FUNCTIONS                                                     |
@@ -149,7 +119,7 @@ xmalloc(size_t size)
 
 
 static void
-initAppendages(void)
+initAppendages(struct state *st)
 {
   int    i;
   /*int    marginx, marginy; */
@@ -158,8 +128,8 @@ initAppendages(void)
 
   double x,y,z,dist;
 
-  mx = scrWidth - 1;
-  my = scrHeight - 1;
+  st->mx = st->scrWidth - 1;
+  st->my = st->scrHeight - 1;
 
   /* each appendage will have: colour,
      number of points, and a grow or shrink indicator */
@@ -168,129 +138,144 @@ initAppendages(void)
   /* each appendage needs virtual coords (x,y,z) with y and z combining to
      give the screen y */
 
-  vPendage = (vPend *) xmalloc((finpoints + 1) * sizeof(vPend) * arms);
-  appD = (appDef *) xmalloc(sizeof(appDef) * arms);
+  st->vPendage = (vPend *) xmalloc((st->finpoints + 1) * sizeof(vPend) * st->arms);
+  st->appD = (appDef *) xmalloc(sizeof(appDef) * st->arms);
 
 
-  for (i = 0; i < arms; i++) {
-    aCurr = appD + i;
-    vCurr = vPendage + (finpoints + 1) * i;
-    vNext = vCurr + 1;
+  for (i = 0; i < st->arms; i++) {
+    st->aCurr = st->appD + i;
+    st->vCurr = st->vPendage + (st->finpoints + 1) * i;
+    st->vNext = st->vCurr + 1;
 
-    aCurr->col = (long)RND(256)*RND(256)+32768;
-    aCurr->numpt = 1;
-    aCurr->growth=finpoints/2+RND(finpoints/2);
-    aCurr->rate=RND(11)*RND(11);
+    st->aCurr->col = st->colors[random() % st->ncolors].pixel;
+    st->aCurr->numpt = 1;
+    st->aCurr->growth = st->finpoints / 2 + RND(st->finpoints / 2);
+    st->aCurr->rate = RND(11) * RND(11);
 
-    dist=1.;
+    dist = 1.;
 
     do {
-      x=(1-RND(1001)/500);
-      y=(1-RND(1001)/500);
-      z=(1-RND(1001)/500);
-      dist=x*x+y*y+z*z;
-    } while (dist>=1.);
+      x = (1 - RND(1001) / 500);
+      y = (1 - RND(1001) / 500);
+      z = (1 - RND(1001) / 500);
+      dist = x * x + y * y + z * z;
+    } while (dist >= 1.);
 
-    vCurr->x=x*200;
-    vCurr->y=my/2+y*200;
-    vCurr->z=0+z*200;
+    st->vCurr->x = x * 200;
+    st->vCurr->y = st->my / 2 + y * 200;
+    st->vCurr->z = 0 + z * 200;
 
     /* start the arm going outwards */
-    vCurr->sx=vCurr->x/5;
-    vCurr->sy=(vCurr->y-my/2)/5;
-    vCurr->sz=(vCurr->z)/5;
+    st->vCurr->sx = st->vCurr->x / 5;
+    st->vCurr->sy = (st->vCurr->y - st->my / 2) / 5;
+    st->vCurr->sz = (st->vCurr->z) / 5;
 
     
-    vNext->x=vCurr->x+vCurr->sx;
-    vNext->y=vCurr->y+vCurr->sy;
-    vNext->z=vCurr->z+vCurr->sz;
+    st->vNext->x = st->vCurr->x + st->vCurr->sx;
+    st->vNext->y = st->vCurr->y + st->vCurr->sy;
+    st->vNext->z = st->vCurr->z + st->vCurr->sz;
   }
 }
 
-static void
-initAnemone(void)
+static void *
+anemone_init (Display *disp, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XWindowAttributes wa;
 
-  turn = 0.;
+  st->dpy = disp;
+  st->turn = 0.;
   
-  width = get_integer_resource("width", "Integer");
-  arms = get_integer_resource("arms", "Integer");
-  finpoints = get_integer_resource("finpoints", "Integer");
-  delay = get_integer_resource("delay", "Integer");
-  withdraw = get_integer_resource("withdraw", "Integer");
-  turndelta = get_float_resource("turnspeed", "float")/100000;
+  st->width = get_integer_resource(st->dpy, "width", "Integer");
+  st->arms = get_integer_resource(st->dpy, "arms", "Integer");
+  st->finpoints = get_integer_resource(st->dpy, "finpoints", "Integer");
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  st->withdraw = get_integer_resource(st->dpy, "withdraw", "Integer");
+  st->turndelta = get_float_resource(st->dpy, "turnspeed", "float") / 100000;
 
-  dbuf=TRUE;
+  st->dbuf = TRUE;
 
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  st->dbuf = False;
+# endif
 
-  b=ba=bb=0;	/* double-buffer to reduce flicker */
+  st->b = st->ba = st->bb = 0;	/* double-buffer to reduce flicker */
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-  b = backb = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+  st->b = st->backb = xdbe_get_backbuffer (st->dpy, window, XdbeUndefined);
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 
-  XGetWindowAttributes(dpy, window, &wa);
-  scrWidth = wa.width;
-  scrHeight = wa.height;
-  cmap = wa.colormap;
-  gcDraw = XCreateGC(dpy, window, GCForeground, &gcv);
-  gcv.foreground = get_pixel_resource("background", "Background", dpy, cmap);
-  gcClear = XCreateGC(dpy, window, GCForeground, &gcv);
+  XGetWindowAttributes(st->dpy, window, &wa);
+  st->scrWidth = wa.width;
+  st->scrHeight = wa.height;
+  st->cmap = wa.colormap;
 
-  if (dbuf) {
-    if (!b)
+  st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+  st->ncolors += 3;
+  st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+  make_smooth_colormap (st->dpy, wa.visual, st->cmap, st->colors, &st->ncolors,
+                        True, 0, True);
+
+  st->gcDraw = XCreateGC(st->dpy, window, 0, &st->gcv);
+  st->gcv.foreground = get_pixel_resource(st->dpy, st->cmap,
+                                          "background", "Background");
+  st->gcClear = XCreateGC(st->dpy, window, GCForeground, &st->gcv);
+
+  if (st->dbuf) {
+    if (!st->b)
       {
-	ba = XCreatePixmap (dpy, window, scrWidth, scrHeight, wa.depth);
-	bb = XCreatePixmap (dpy, window, scrWidth, scrHeight, wa.depth);
-	b = ba;
+	st->ba = XCreatePixmap (st->dpy, window, st->scrWidth, st->scrHeight, wa.depth);
+	st->bb = XCreatePixmap (st->dpy, window, st->scrWidth, st->scrHeight, wa.depth);
+	st->b = st->ba;
       }
   }
   else
     {	
-      b = window;
+      st->b = window;
     }
 
-  if (ba) XFillRectangle (dpy, ba, gcClear, 0, 0, scrWidth, scrHeight);
-  if (bb) XFillRectangle (dpy, bb, gcClear, 0, 0, scrWidth, scrHeight);
+  if (st->ba) XFillRectangle (st->dpy, st->ba, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
+  if (st->bb) XFillRectangle (st->dpy, st->bb, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
 
-  XClearWindow(dpy, window);
-  XSetLineAttributes(dpy, gcDraw,  width, LineSolid, CapRound, JoinBevel);
+  XClearWindow(st->dpy, window);
+  XSetLineAttributes(st->dpy, st->gcDraw,  st->width, LineSolid, CapRound, JoinBevel);
 
-  initAppendages();
+  initAppendages(st);
+
+  return st;
 }
 
 
 static void
-createPoints(void)
+createPoints(struct state *st)
 {
   int i;
-  int withdrawall=RND(withdraw);
+  int withdrawall = RND(st->withdraw);
 
-  for (i = 0; i< arms; i++) {
-    aCurr = appD + i;
+  for (i = 0; i< st->arms; i++) {
+    st->aCurr = st->appD + i;
     if (!withdrawall) {
-      aCurr->growth=-finpoints;
-      turndelta=-turndelta;
+      st->aCurr->growth = -st->finpoints;
+      st->turndelta = -st->turndelta;
     }
 
-    else if (withdrawall<11) aCurr->growth=-aCurr->numpt;
+    else if (withdrawall<11) st->aCurr->growth = -st->aCurr->numpt;
 
-    else if (RND(100)<aCurr->rate) {
-      if (aCurr->growth>0) {
-	if (!(--aCurr->growth)) aCurr->growth=-RND(finpoints)-1;
-	vCurr = vPendage + (finpoints + 1) * i + aCurr->numpt-1;
-	if (aCurr->numpt<finpoints - 1) {
+    else if (RND(100)<st->aCurr->rate) {
+      if (st->aCurr->growth>0) {
+	if (!(--st->aCurr->growth)) st->aCurr->growth = -RND(st->finpoints) - 1;
+	st->vCurr = st->vPendage + (st->finpoints + 1) * i + st->aCurr->numpt - 1;
+	if (st->aCurr->numpt<st->finpoints - 1) {
 	  /* add a piece */	
-	  vNext=vCurr + 1;
-	  aCurr->numpt++;
-	  vNext->sx=vCurr->sx+RND(3)-1;
-	  vNext->sy=vCurr->sy+RND(3)-1;
-	  vNext->sz=vCurr->sz+RND(3)-1;
-	  vCurr=vNext+1;
-	  vCurr->x=vNext->x+vNext->sx;
-	  vCurr->y=vNext->y+vNext->sy;
-	  vCurr->z=vNext->z+vNext->sz;
+	  st->vNext = st->vCurr + 1;
+	  st->aCurr->numpt++;
+	  st->vNext->sx = st->vCurr->sx + RND(3) - 1;
+	  st->vNext->sy = st->vCurr->sy + RND(3) - 1;
+	  st->vNext->sz = st->vCurr->sz + RND(3) - 1;
+	  st->vCurr = st->vNext + 1;
+	  st->vCurr->x = st->vNext->x + st->vNext->sx;
+	  st->vCurr->y = st->vNext->y + st->vNext->sy;
+	  st->vCurr->z = st->vNext->z + st->vNext->sz;
 	}
       }
     }
@@ -299,116 +284,154 @@ createPoints(void)
 
 
 static void
-drawImage(Drawable curr_window, double sint, double cost)
+drawImage(struct state *st, Drawable curr_window, double sint, double cost)
 {
-  int q,numpt,mx2=mx/2;
-  double cx,cy,cz,nx=0,ny=0,nz=0;
+  int q,numpt,mx2 = st->mx / 2;
+  double cx,cy,cz,nx = 0,ny = 0,nz = 0;
 
-  if ((numpt=aCurr->numpt)==1) return;
-  XSetForeground(dpy, gcDraw, aCurr->col);
+  if ((numpt = st->aCurr->numpt)==1) return;
+  XSetForeground(st->dpy, st->gcDraw, st->aCurr->col);
     
-  vNext=vCurr+1;
+  st->vNext = st->vCurr + 1;
 
-  cx=vCurr->x;
-  cy=vCurr->y;
-  cz=vCurr->z;
+  cx = st->vCurr->x;
+  cy = st->vCurr->y;
+  cz = st->vCurr->z;
 
 
-  for (q = 0; q < numpt-1; q++) {
-    nx=vNext->x+2-RND(5);
-    ny=vNext->y+2-RND(5);
-    nz=vNext->z+2-RND(5);
+  for (q = 0; q < numpt - 1; q++) {
+    nx = st->vNext->x + 2 - RND(5);
+    ny = st->vNext->y + 2 - RND(5);
+    nz = st->vNext->z + 2 - RND(5);
 
-    XDrawLine(dpy, curr_window, gcDraw,mx2+cx*cost-cz*sint, cy, mx2+nx*cost-nz*sint, ny);
-    vCurr++;
-    vNext++;
+    XDrawLine(st->dpy, curr_window, st->gcDraw,
+              mx2 + cx * cost - cz * sint, cy,
+              mx2 + nx * cost - nz * sint, ny);
+    st->vCurr++;
+    st->vNext++;
 
-    cx=nx;
-    cy=ny;
-    cz=nz;
+    cx = nx;
+    cy = ny;
+    cz = nz;
   }
-  XSetLineAttributes(dpy, gcDraw, width*3, LineSolid, CapRound, JoinBevel);
-  XDrawLine(dpy, curr_window, gcDraw,mx/2+cx*cost-cz*sint, cy, mx/2+nx*cost-nz*sint, ny);
-  XSetLineAttributes(dpy, gcDraw, width, LineSolid, CapRound, JoinBevel);
+  XSetLineAttributes(st->dpy, st->gcDraw, st->width * 3,
+                     LineSolid, CapRound, JoinBevel);
+  XDrawLine(st->dpy, curr_window, st->gcDraw,
+            st->mx / 2 + cx * cost - cz * sint, cy,
+            st->mx / 2 + nx * cost - nz * sint, ny);
+  XSetLineAttributes(st->dpy, st->gcDraw, st->width,
+                     LineSolid, CapRound, JoinBevel);
 
 }
 
 static void
-animateAnemone(Drawable curr_window)
+animateAnemone(struct state *st, Drawable curr_window)
 {
   int i;
-  double sint=sin(turn),cost=cos(turn);
+  double sint = sin(st->turn),cost = cos(st->turn);
 
-  aCurr = appD;
-  for (i = 0; i< arms; i++) {
-    vCurr=vPendage + (finpoints + 1) * i;
-    if (RND(25)<aCurr->rate) {
-      if (aCurr->growth<0) {
-	aCurr->numpt-=aCurr->numpt>1;
-	if (!(++aCurr->growth)) aCurr->growth=RND(finpoints-aCurr->numpt)+1;
+  st->aCurr = st->appD;
+  for (i = 0; i< st->arms; i++) {
+    st->vCurr = st->vPendage + (st->finpoints + 1) * i;
+    if (RND(25)<st->aCurr->rate) {
+      if (st->aCurr->growth<0) {
+	st->aCurr->numpt -= st->aCurr->numpt>1;
+	if (!(++st->aCurr->growth)) st->aCurr->growth = RND(st->finpoints - st->aCurr->numpt) + 1;
       }
     }
-    drawImage(curr_window, sint, cost);
-    turn+=turndelta;
-    aCurr++;
+    drawImage(st, curr_window, sint, cost);
+    st->turn += st->turndelta;
+    st->aCurr++;
   }
-  createPoints();
-  usleep(delay);
+  createPoints(st);
 
-  if (turn>=TWO_PI) turn-=TWO_PI;
+  if (st->turn >= TWO_PI) st->turn -= TWO_PI;
 }
 
-/*-----------------------------------------------------------------------+
-  |  PUBLIC FUNCTIONS                                                      |
-  +-----------------------------------------------------------------------*/
-
-void
-screenhack(Display *disp, Window win)
+static unsigned long
+anemone_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
 
-  dpy=disp;
-  window=win;
+    XFillRectangle (st->dpy, st->b, st->gcClear, 0, 0, st->scrWidth, st->scrHeight);
 
-  initAnemone();
-  for (;;) {
-
-    XFillRectangle (dpy, b, gcClear, 0, 0, scrWidth, scrHeight);
-
-    animateAnemone(b);
+    animateAnemone(st, st->b);
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-    if (backb)
+    if (st->backb)
       {
 	XdbeSwapInfo info[1];
 	info[0].swap_window = window;
 	info[0].swap_action = XdbeUndefined;
-	XdbeSwapBuffers (dpy, info, 1);
+	XdbeSwapBuffers (st->dpy, info, 1);
       }
     else
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-      if (dbuf)
+      if (st->dbuf)
 	{
-	  XCopyArea (dpy, b, window, gcClear, 0, 0,
-		     scrWidth, scrHeight, 0, 0);
-	  b = (b == ba ? bb : ba);
+	  XCopyArea (st->dpy, st->b, window, st->gcClear, 0, 0,
+		     st->scrWidth, st->scrHeight, 0, 0);
+	  st->b = (st->b == st->ba ? st->bb : st->ba);
 	}
 
-    screenhack_handle_events (dpy);
-  }
+    return st->delay;
+}
 
+
+static void
+anemone_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  /* need to re-make pixmaps too...
+  struct state *st = (struct state *) closure;
+  st->scrWidth = w;
+  st->scrHeight = h;
+  */
+}
+
+static Bool
+anemone_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+anemone_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  if (st->vPendage) free (st->vPendage);
+  if (st->appD) free (st->appD);
+  free (st);
 }
 
 
 
+static const char *anemone_defaults [] = {
+  ".background: black",
+  "*arms: 128",
+  "*width: 2",
+  "*finpoints: 64",
+  "*delay: 40000",
+  "*withdraw: 1200",
+  "*turnspeed: 50",
+  "*colors: 20",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  "*useDBE:		True",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+  0
+};
 
 
+static XrmOptionDescRec anemone_options [] = {
+  { "-arms",        ".arms",        XrmoptionSepArg, 0 },
+  { "-finpoints",   ".finpoints",   XrmoptionSepArg, 0 },
+  { "-delay",       ".delay",       XrmoptionSepArg, 0 },
+  { "-width",       ".width",       XrmoptionSepArg, 0 },
+  { "-withdraw",    ".withdraw",    XrmoptionSepArg, 0 },
+  { "-turnspeed",   ".turnspeed",   XrmoptionSepArg, 0 },
+  { "-colors",      ".colors",      XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 }
+};
 
 
-
-
-
-
-
-
-
-
+XSCREENSAVER_MODULE ("Anemone", anemone)

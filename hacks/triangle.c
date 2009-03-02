@@ -46,19 +46,17 @@ static const char sccsid[] = "@(#)triangle.c	4.04 97/07/28 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS "Triangle"
-# define HACK_INIT init_triangle
-# define HACK_DRAW draw_triangle
-# define triangle_opts xlockmore_opts
 # define DEFAULTS	"*delay: 10000 \n"	\
 					"*ncolors: 128 \n"
 # define SMOOTH_COLORS
+# define reshape_triangle 0
+# define triangle_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */
 #endif /* STANDALONE */
 
-ModeSpecOpt triangle_opts =
+ENTRYPOINT ModeSpecOpt triangle_opts =
 {0, NULL, 0, NULL, NULL};
 
 #define MAX_STEPS 8
@@ -217,8 +215,8 @@ draw_mesh(ModeInfo * mi, trianglestruct * tp, int d, int count)
 	}
 }
 
-void
-init_triangle(ModeInfo * mi)
+ENTRYPOINT void
+init_triangle (ModeInfo * mi)
 {
 	trianglestruct *tp;
 	short      *tmp;
@@ -277,8 +275,8 @@ init_triangle(ModeInfo * mi)
 		}
 }
 
-void
-draw_triangle(ModeInfo * mi)
+ENTRYPOINT void
+draw_triangle (ModeInfo * mi)
 {
 	trianglestruct *tp = &triangles[MI_SCREEN(mi)];
 	int         d, d2, i, j, delta;
@@ -296,10 +294,7 @@ draw_triangle(ModeInfo * mi)
 #else
 			if (tp->stage == -1)
 			  {
-				XSync(MI_DISPLAY(mi), False);
-				usleep(2000000);
 				XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-# if 1
 				if (!mono_p)
 				  {
 					free_colors(mi->dpy, mi->xgwa.colormap, mi->colors,
@@ -309,7 +304,6 @@ draw_triangle(ModeInfo * mi)
 										  mi->colors, &mi->npixels,
 										  True, &mi->writable_p, True);
 				  }
-# endif /* 0 */
 			  }
 #endif
 		}
@@ -347,7 +341,7 @@ draw_triangle(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_triangle(ModeInfo * mi)
 {
 	if (triangles != NULL) {
@@ -356,8 +350,10 @@ release_triangle(ModeInfo * mi)
 	}
 }
 
-void
-refresh_triangle(ModeInfo * mi)
+ENTRYPOINT void
+refresh_triangle (ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+XSCREENSAVER_MODULE ("Triangle", triangle)

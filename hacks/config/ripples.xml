@@ -36,11 +36,15 @@
             _low-label="Colors    Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
-  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/>
+<!--  <boolean id="shm" _label="Use Shared Memory" arg-unset="-no-shm"/> -->
+
+  <xscreensaver-image />
 
   <_description>
 This draws rippling interference patterns like splashing water.
 With the -water option, it manipulates your desktop image to look
-like something is dripping into it.  Written by Tom Hammersley.
+like something is dripping into it.
+
+Written by Tom Hammersley; 1999.
   </_description>
 </screensaver>

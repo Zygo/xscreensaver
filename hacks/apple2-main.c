@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,15 +13,23 @@
  * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include <ctype.h>
-#include "screenhack.h"
-#include "apple2.h"
-#include <X11/Xutil.h>
-#include <X11/Intrinsic.h>
 
-#define XK_MISCELLANY
-#include <X11/keysymdef.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifndef HAVE_COCOA
+# define XK_MISCELLANY
+# include <X11/keysymdef.h>
+# include <X11/Xutil.h>
+# include <X11/Intrinsic.h>
+#endif
 
 #ifdef HAVE_FORKPTY
 # include <sys/ioctl.h>
@@ -33,6 +41,9 @@
 # endif
 #endif /* HAVE_FORKPTY */
 
+#include "screenhack.h"
+#include "apple2.h"
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -41,9 +52,7 @@
 
 #define DEBUG
 
-extern XtAppContext app;
-
-Time subproc_relaunch_delay = 3000;
+static Time subproc_relaunch_delay = 3000;
 
 
 /* Given a bitmask, returns the position and width of the field.
@@ -221,8 +230,8 @@ pick_a2_subimage (Display *dpy, Window window, XImage *in,
       dw = (in->width  - fromw) / 2;   /* near the center! */
       dh = (in->height - fromh) / 2;
 
-      fromx = (random() % dw) + (dw/2);
-      fromy = (random() % dh) + (dh/2);
+      fromx = (dw <= 0 ? 0 : (random() % dw) + (dw/2));
+      fromy = (dh <= 0 ? 0 : (random() % dh) + (dh/2));
     }
 
   scale_image (dpy, window, in,
@@ -519,13 +528,24 @@ a2_dither (unsigned int *in, unsigned char *out, int w, int h)
 #endif
 }
 
+typedef struct slideshow_data_s {
+  int slideno;
+  int render_img_lineno;
+  unsigned char *render_img;
+  char *img_filename;
+  Bool image_loading_p;
+} slideshow_data;
 
-static unsigned char *
-load_image (Display *dpy, Window window, char **image_filename_r)
+
+static void
+image_loaded_cb (Screen *screen, Window window, Drawable p,
+                 const char *name, XRectangle *geometry,
+                 void *closure)
 {
+  Display *dpy = DisplayOfScreen (screen);
+  apple2_sim_t *sim = (apple2_sim_t *) closure;
+  slideshow_data *mine = (slideshow_data *) sim->controller_data;
   XWindowAttributes xgwa;
-  Pixmap p;
-
   int w = 280;
   int h = 192;
   XImage *image;
@@ -539,18 +559,10 @@ load_image (Display *dpy, Window window, char **image_filename_r)
     }
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  p = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-  load_random_image (xgwa.screen, window, p, image_filename_r, NULL);
+
   image = XGetImage (dpy, p, 0, 0, xgwa.width, xgwa.height, ~0, ZPixmap);
   XFreePixmap (dpy, p);
   p = 0;
-
-  /* Make sure the window's background is not set to None, and get the
-     grabbed bits (if any) off it as soon as possible. */
-  XSetWindowBackground (dpy, window,
-                        get_pixel_resource ("background", "Background",
-                                            dpy, xgwa.colormap));
-  XClearWindow (dpy, window);
 
   /* Scale the XImage down to Apple][ size, and convert it to a 32bpp
      image (regardless of whether it started as TrueColor/PseudoColor.)
@@ -562,17 +574,19 @@ load_image (Display *dpy, Window window, char **image_filename_r)
   a2_dither (buf32, buf8, w, h);
 
   free (buf32);
-  return buf8;
+
+  mine->image_loading_p = False;
+  mine->img_filename = (name ? strdup (name) : 0);
+  mine->render_img = buf8;
 }
 
 
-char *progclass = "Apple2";
 
-char *defaults [] = {
+static const char *apple2_defaults [] = {
   ".background:		   black",
   ".foreground:		   white",
   "*mode:		   random",
-  "*duration:		   20",
+  "*duration:		   60",
   "*program:		   xscreensaver-text --cols 40",
   "*metaSendsESC:	   True",
   "*swapBSDEL:		   True",
@@ -587,7 +601,8 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec apple2_options [] = {
+  { "-mode",		".mode",		XrmoptionSepArg, 0 },
   { "-slideshow",	".mode",		XrmoptionNoArg,  "slideshow" },
   { "-basic",	        ".mode",		XrmoptionNoArg,  "basic" },
   { "-text",     	".mode",		XrmoptionNoArg,  "text" },
@@ -609,21 +624,16 @@ XrmOptionDescRec options [] = {
   to avoid the pause while it loads.
  */
 
-void slideshow_controller(apple2_sim_t *sim, int *stepno,
-                          double *next_actiontime)
+static void slideshow_controller(apple2_sim_t *sim, int *stepno,
+                                 double *next_actiontime)
 {
   apple2_state_t *st=sim->st;
   int i;
-  struct mydata {
-    int slideno;
-    int render_img_lineno;
-    u_char *render_img;
-    char *img_filename;
-  } *mine;
+  slideshow_data *mine;
 
   if (!sim->controller_data)
-    sim->controller_data = calloc(sizeof(struct mydata),1);
-  mine=(struct mydata *) sim->controller_data;
+    sim->controller_data = calloc (1, sizeof(*mine));
+  mine = (slideshow_data *) sim->controller_data;
 
   switch(*stepno) {
 
@@ -639,17 +649,35 @@ void slideshow_controller(apple2_sim_t *sim, int *stepno,
     a2_goto(st,23,0);
     a2_printc(st,']');
 
-    *next_actiontime += 4.0;
     *stepno=10;
+    break;
 
   case 10:
-    mine->render_img = load_image (sim->dpy, sim->window, &mine->img_filename);
-    if (st->gr_mode) {
-      *stepno=30;
-    } else {
-      *stepno=20;
+    {
+      XWindowAttributes xgwa;
+      Pixmap p;
+      XGetWindowAttributes (sim->dpy, sim->window, &xgwa);
+      p = XCreatePixmap (sim->dpy, sim->window, xgwa.width, xgwa.height, 
+                         xgwa.depth);
+      mine->image_loading_p = True;
+      load_image_async (xgwa.screen, sim->window, p, image_loaded_cb, sim);
+
+      /* pause with a blank screen for a bit, while the image loads in the
+         background. */
+      *next_actiontime += 2.0;
+      *stepno=11;
     }
-    *next_actiontime += 3.0;
+    break;
+
+  case 11:
+    if (! mine->image_loading_p) {  /* image is finally loaded */
+      if (st->gr_mode) {
+        *stepno=30;
+      } else {
+        *stepno=20;
+      }
+      *next_actiontime += 3.0;
+    }
     break;
 
   case 20:
@@ -726,7 +754,9 @@ void slideshow_controller(apple2_sim_t *sim, int *stepno,
   case 50:
     st->gr_mode |= A2_GR_FULL;
     *stepno=60;
-    *next_actiontime += sim->delay;
+    /* Note that sim->delay is sometimes "infinite" in this controller.
+       These images are kinda dull anyway, so don't leave it on too long. */
+    *next_actiontime += 2;
     break;
 
   case 60:
@@ -761,8 +791,9 @@ void slideshow_controller(apple2_sim_t *sim, int *stepno,
 #define NPAR 16
 
 struct terminal_controller_data {
+  Display *dpy;
   FILE *pipe;
-  int pipe_id;
+  XtInputId pipe_id;
   pid_t pid;
   int input_available_p;
   XtIntervalId timeout_id;
@@ -802,8 +833,9 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (struct terminal_controller_data *mine)
 {
+  XtAppContext app = XtDisplayToApplicationContext (mine->dpy);
   char buf[255];
-  char *oprogram = get_string_resource ("program", "Program");
+  char *oprogram = get_string_resource (mine->dpy, "program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 10);
 
   strcpy (program, "( ");
@@ -813,7 +845,7 @@ launch_text_generator (struct terminal_controller_data *mine)
   if (mine->pipe) abort();
 
 # ifdef HAVE_FORKPTY
-  if (get_boolean_resource ("usePty", "Boolean"))
+  if (get_boolean_resource (mine->dpy, "usePty", "Boolean"))
     {
       int fd;
       struct winsize ws;
@@ -903,6 +935,7 @@ terminal_closegen(struct terminal_controller_data *mine)
 static int
 terminal_read(struct terminal_controller_data *mine, unsigned char *buf, int n)
 {
+  XtAppContext app = XtDisplayToApplicationContext (mine->dpy);
   int rc;
   if (mine->fake_nl) {
     buf[0]='\n';
@@ -946,6 +979,7 @@ static unsigned int
 do_icccm_meta_key_stupidity (Display *dpy)
 {
   unsigned int modbits = 0;
+# ifndef HAVE_COCOA
   int i, j, k;
   XModifierKeymap *modmap = XGetModifierMapping (dpy);
   for (i = 3; i < 8; i++)
@@ -963,6 +997,7 @@ do_icccm_meta_key_stupidity (Display *dpy)
         XFree (syms);
       }
   XFreeModifiermap (modmap);
+# endif /* HAVE_COCOA */
   return modbits;
 }
 
@@ -1013,6 +1048,7 @@ terminal_keypress_handler (Display *dpy, XEvent *event, void *data)
 
   event->xany.type = 0;  /* do not process this event further */
 
+  mine->dpy = dpy;
   return 0;
 }
 
@@ -1416,7 +1452,7 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
   GNU/Linux dammit) occupies an entire screen on the Apple ][.
 */
 
-void
+static void
 terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
 {
   apple2_state_t *st=sim->st;
@@ -1427,13 +1463,13 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
   if (!sim->controller_data)
     sim->controller_data=calloc(sizeof(struct terminal_controller_data),1);
   mine=(struct terminal_controller_data *) sim->controller_data;
+  mine->dpy = sim->dpy;
 
-  mine->meta_sends_esc_p = get_boolean_resource ("metaSendsESC", "Boolean");
-  mine->swap_bs_del_p    = get_boolean_resource ("swapBSDEL",    "Boolean");
-  mine->fast_p           = get_boolean_resource ("fast",         "Boolean");
-
-  sim->dec->key_handler = terminal_keypress_handler;
-  sim->dec->key_data = mine;
+  mine->meta_sends_esc_p = get_boolean_resource (mine->dpy, "metaSendsESC",
+                                                 "Boolean");
+  mine->swap_bs_del_p    = get_boolean_resource (mine->dpy, "swapBSDEL", 
+                                                 "Boolean");
+  mine->fast_p           = get_boolean_resource (mine->dpy, "fast", "Boolean");
 
   switch(*stepno) {
 
@@ -1493,7 +1529,7 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
 struct basic_controller_data {
   int prog_line;
   int x,y,k;
-  char **progtext;
+  const char * const * progtext;
   int progstep;
   char *rep_str;
   int rep_pos;
@@ -1505,7 +1541,7 @@ struct basic_controller_data {
   Adding more programs is easy. Just add a listing here and to all_programs,
   then add the state machine to actually execute it to basic_controller.
  */
-static char *moire_program[]={
+static const char * const moire_program[]={
   "10 HGR2\n",
   "20 FOR Y = 0 TO 190 STEP 2\n",
   "30 HCOLOR=4 : REM BLACK\n",
@@ -1522,7 +1558,7 @@ static char *moire_program[]={
   NULL
 };
 
-static char *sinewave_program[] = {
+static const char * const sinewave_program[] = {
   "10 HGR\n",
   "25 K=0\n",
   "30 FOR X = 0 TO 279\n",
@@ -1538,14 +1574,14 @@ static char *sinewave_program[] = {
 };
 
 #if 0
-static char *dumb_program[]={
+static const char * const dumb_program[]={
   "10 PRINT \"APPLE ][ ROOLZ! TRS-80 DROOLZ!\"\n",
   "20 GOTO 10\n",
   NULL
 };
 #endif
 
-static char *random_lores_program[]={
+static const char * const random_lores_program[]={
   "1 REM APPLE ][ SCREEN SAVER\n",
   "10 GR\n",
   "100 COLOR= RND(1)*16\n",
@@ -1570,7 +1606,7 @@ static char *random_lores_program[]={
 
 static char typo_map[256];
 
-int make_typo(char *out_buf, char *orig, char *err_buf)
+static int make_typo(char *out_buf, const char *orig, char *err_buf)
 {
   int i,j;
   int errc;
@@ -1650,7 +1686,7 @@ int make_typo(char *out_buf, char *orig, char *err_buf)
         break;
       }
 
-    if (random()%10==0 && strlen(p)>=4 && (errc=typo_map[(int)(u_char)p[0]])) {
+    if (random()%10==0 && strlen(p)>=4 && (errc=typo_map[(int)(unsigned char)p[0]])) {
       int remain=strlen(p);
       int past=random()%(remain-2)+1;
       memmove(p+past+past, p, remain+1);
@@ -1664,8 +1700,8 @@ int make_typo(char *out_buf, char *orig, char *err_buf)
   return success;
 }
 
-struct {
-  char **progtext;
+static const struct {
+  const char * const * progtext;
   int progstep;
 } all_programs[]={
   {moire_program, 100},
@@ -1674,7 +1710,7 @@ struct {
   {random_lores_program, 500},
 };
 
-void
+static void
 basic_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
 {
   apple2_state_t *st=sim->st;
@@ -1853,42 +1889,43 @@ basic_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
 
 }
 
-void (*controllers[])(apple2_sim_t *sim, int *stepno,
-                      double *next_actiontime) = {
+static void (* const controllers[]) (apple2_sim_t *sim, int *stepno,
+                                     double *next_actiontime) = {
   slideshow_controller,
   terminal_controller,
   basic_controller
 };
 
-void
-screenhack (Display *dpy, Window window)
+
+
+struct state {
+  int duration;
+  Bool random_p;
+  apple2_sim_t *sim;
+  void (*controller) (apple2_sim_t *sim, int *stepno, double *next_actiontime);
+};
+
+
+static void *
+apple2_init (Display *dpy, Window window)
 {
-  int duration = get_integer_resource ("duration", "Integer");
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   char *s;
-  void (*controller)(apple2_sim_t *sim, int *stepno, double *next_actiontime);
-  Bool random_p = False;
 
-  controller = 0;
-  if (duration < 1) duration = 1;
+  st->duration = get_integer_resource (dpy, "duration", "Integer");
 
-  if (!get_boolean_resource ("root", "Boolean"))
-    {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
-      XSelectInput (dpy, window,
-                    xgwa.your_event_mask |
-                    KeyPressMask | ButtonPressMask | ExposureMask);
-    }
+  st->controller = 0;
+  if (st->duration < 1) st->duration = 1;
 
-  s = get_string_resource ("mode", "Mode");
+  s = get_string_resource (dpy, "mode", "Mode");
   if (!s || !*s || !strcasecmp(s, "random"))
-    random_p = True;
+    st->random_p = True;
   else if (!strcasecmp(s, "text"))
-     controller = terminal_controller;
+     st->controller = terminal_controller;
   else if (!strcasecmp(s, "slideshow"))
-     controller = slideshow_controller;
+     st->controller = slideshow_controller;
   else if (!strcasecmp(s, "basic"))
-     controller = basic_controller;
+     st->controller = basic_controller;
   else
     {
       fprintf (stderr, "%s: mode must be text, slideshow, or random; not %s\n",
@@ -1897,15 +1934,66 @@ screenhack (Display *dpy, Window window)
     }
   if (s) free (s);
 
-  if (controller == terminal_controller)
-    duration = 999999;  /* this one runs "forever" */
+  if (! st->random_p) {
+    if (st->controller == terminal_controller ||
+        st->controller == slideshow_controller)
+      st->duration = 999999;  /* these run "forever" */
+  }
 
-  while (1)
-    {
-      if (random_p)
-        controller = controllers[random() % (countof(controllers))];
-
-      apple2 (dpy, window, duration, controller);
-      XSync (dpy, False);
-    }
+  return st;
 }
+
+static unsigned long
+apple2_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+
+  if (! st->sim) {
+    if (st->random_p)
+      st->controller = controllers[random() % (countof(controllers))];
+    st->sim = apple2_start (dpy, window, st->duration, st->controller);
+  }
+
+  if (! apple2_one_frame (st->sim)) {
+    st->sim = 0;
+  }
+
+  return 10000;
+}
+
+static void
+apple2_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  analogtv_reconfigure (st->sim->dec);
+}
+
+static Bool
+apple2_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  struct state *st = (struct state *) closure;
+
+  if (st->controller == terminal_controller &&
+      event->xany.type == KeyPress) {
+    terminal_keypress_handler (dpy, event, st->sim->controller_data);
+    return True;
+  }
+
+  return False;
+}
+
+static void
+apple2_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  if (st->sim) {
+    st->sim->stepno = A2CONTROLLER_DONE;
+    if (apple2_one_frame (st->sim))
+      abort();  /* should have freed! */
+  }
+  free (st);
+}
+
+
+XSCREENSAVER_MODULE ("Apple2", apple2)

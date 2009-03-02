@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="DNAlogo" _label="DNA Logo">
+
+  <command arg="-root"/>
+
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+DNA Lounge
+
+        375 Eleventh Street
+        San Francisco, CA
+        94107
+
+http://www.dnalounge.com/
+
+Written by Jamie Zawinski; 2001.
+  </_description>
+</screensaver>

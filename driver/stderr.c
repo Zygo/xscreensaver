@@ -1,5 +1,5 @@
 /* stderr.c --- capturing stdout/stderr output onto the screensaver window.
- * xscreensaver, Copyright (c) 1991-1998, 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -113,7 +113,7 @@ print_stderr_1 (saver_screen_info *ssi, char *string)
 
   if (! ssi->stderr_font)
     {
-      char *font_name = get_string_resource ("font", "Font");
+      char *font_name = get_string_resource (dpy, "font", "Font");
       if (!font_name) font_name = strdup ("fixed");
       ssi->stderr_font = XLoadQueryFont (dpy, font_name);
       if (! ssi->stderr_font) ssi->stderr_font = XLoadQueryFont (dpy, "fixed");
@@ -129,7 +129,7 @@ print_stderr_1 (saver_screen_info *ssi, char *string)
       Colormap cmap = ssi->cmap;
 
       if (!ssi->stderr_overlay_window &&
-	  get_boolean_resource("overlayStderr", "Boolean"))
+	  get_boolean_resource(dpy, "overlayStderr", "Boolean"))
 	{
 	  make_stderr_overlay_window (ssi);
 	  if (ssi->stderr_overlay_window)
@@ -138,8 +138,8 @@ print_stderr_1 (saver_screen_info *ssi, char *string)
 	    cmap = ssi->stderr_cmap;
 	}
 
-      fg = get_pixel_resource ("overlayTextForeground","Foreground",dpy,cmap);
-      bg = get_pixel_resource ("overlayTextBackground","Background",dpy,cmap);
+      fg = get_pixel_resource (dpy,cmap,"overlayTextForeground","Foreground");
+      bg = get_pixel_resource (dpy,cmap,"overlayTextBackground","Background");
       gcv.font = ssi->stderr_font->fid;
       gcv.foreground = fg;
       gcv.background = bg;
@@ -378,7 +378,7 @@ initialize_stderr (saver_info *si)
   real_stderr = stderr;
   real_stdout = stdout;
 
-  stderr_dialog_p = get_boolean_resource ("captureStderr", "Boolean");
+  stderr_dialog_p = get_boolean_resource (si->dpy, "captureStderr", "Boolean");
 
   if (!stderr_dialog_p)
     return;

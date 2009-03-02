@@ -24,6 +24,10 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
  * See sproingiewrap.c
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #ifdef STANDALONE
 # include "xlockmoreI.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -32,9 +36,14 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 
 #ifdef USE_GL
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef HAVE_COCOA
+# include <OpenGL/glu.h>
+#else
+# include <GL/glu.h>
+#endif
+
 #include "gllist.h"
+#include "sproingies.h"
 
 #define MAXSPROING 100
 #define T_COUNT 40
@@ -49,8 +58,8 @@ typedef struct {
 	int         rotx, roty, dist, wireframe, flatshade, groundlevel,
 	            maxsproingies, mono;
 	int         sframe, target_rx, target_ry, target_dist, target_count;
-	struct gllist *sproingies[6];
-	struct gllist *SproingieBoom;
+	const struct gllist *sproingies[6];
+	const struct gllist *SproingieBoom;
 	GLuint TopsSides;
 	struct sPosColor *positions;
 } sp_instance;
@@ -58,15 +67,13 @@ typedef struct {
 static sp_instance *si_list = NULL;
 static int  active_screens = 0;
 
-void        SproingieSwap(void);
-
-extern struct gllist *s1_1;
-extern struct gllist *s1_2;
-extern struct gllist *s1_3;
-extern struct gllist *s1_4;
-extern struct gllist *s1_5;
-extern struct gllist *s1_6;
-extern struct gllist *s1_b;
+extern const struct gllist *s1_1;
+extern const struct gllist *s1_2;
+extern const struct gllist *s1_3;
+extern const struct gllist *s1_4;
+extern const struct gllist *s1_5;
+extern const struct gllist *s1_6;
+extern const struct gllist *s1_b;
 
 static int
 myrand(int range)
@@ -512,7 +519,7 @@ RenderSproingie(int t, sp_instance * si)
 			(si->wireframe ? 0.0 : 0.1);
 		glClipPlane(GL_CLIP_PLANE0, clipplane);
 /**		glCallList(si->sproingies[0]);*/
-/**/	renderList(si->sproingies[0]);
+/**/	renderList(si->sproingies[0], si->wireframe);
 		glDisable(GL_CLIP_PLANE0);
 	} else if (thisSproingie->frame >= BOOM_FRAME) {
 		glTranslatef((GLfloat) (thisSproingie->x) + 0.5,
@@ -532,7 +539,7 @@ RenderSproingie(int t, sp_instance * si)
  * PURIFY 4.0.1 reports an unitialized memory read on the next line when using
  * MesaGL 2.2.  This has been tracked to MesaGL 2.2 src/points.c line 313. */
 /**		glCallList(si->SproingieBoom);*/
-/**/	renderList(si->SproingieBoom);
+/**/	renderList(si->SproingieBoom, si->wireframe);
 		glPointSize(1.0);
 		if (!si->wireframe) {
 			glEnable(GL_LIGHTING);
@@ -542,12 +549,12 @@ RenderSproingie(int t, sp_instance * si)
 			     (GLfloat) (thisSproingie->y - 1), (GLfloat) (thisSproingie->z - 1));
 		glRotatef((GLfloat) - 90.0, 0.0, 1.0, 0.0);
 /**		glCallList(si->sproingies[thisSproingie->frame - 6]);*/
-/**/	renderList(si->sproingies[thisSproingie->frame - 6]);
+/**/	renderList(si->sproingies[thisSproingie->frame - 6], si->wireframe);
 	} else {
 		glTranslatef((GLfloat) (thisSproingie->x), (GLfloat) (thisSproingie->y),
 			     (GLfloat) (thisSproingie->z));
 /**		glCallList(si->sproingies[thisSproingie->frame]);*/
-/**/	renderList(si->sproingies[thisSproingie->frame]);
+/**/	renderList(si->sproingies[thisSproingie->frame], si->wireframe);
 	}
 
 	glPopMatrix();
@@ -657,15 +664,13 @@ DisplaySproingies(int screen,int pause)
 
 	glPopMatrix();
 	glFlush();
-
-	SproingieSwap();
 }
 
 void
 NextSproingieDisplay(int screen,int pause)
 {
 	NextSproingie(screen);
-        if (pause) usleep(pause);
+/*        if (pause) usleep(pause);  don't do this! -jwz */
 	DisplaySproingies(screen,pause);
 }
 

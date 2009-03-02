@@ -57,7 +57,7 @@ Minimum number of objects used in a random juggling pattern. 3 - \fBmaxobj\fP.
 Used to determine maximum throw weight in random siteswap.  Options refer to
 minimum height increment and maximum height increment.  Maximum weight chosen
 will lie between \fBmaxobj\fP + \fBminhinc\fP and \fBmaxobj\fP + \fBmaxhinc\fP.
-Defaults: \fBminhinc\fP=2 and \fBmaxhinc\fP=6.
+Defaults: \fBminhinc\fP=1 and \fBmaxhinc\fP=6.
 .TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.

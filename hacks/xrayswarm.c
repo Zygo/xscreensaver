@@ -41,10 +41,17 @@ from the X Consortium.
 */
 
 #include <math.h>
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <sys/time.h>
 #include "screenhack.h"
-#include "config.h"
 
+#ifdef HAVE_COCOA
+# define HAVE_GETTIMEOFDAY 1
+#endif
 
 /**********************************************************************
  *								       
@@ -52,29 +59,17 @@ from the X Consortium.
  *
  **********************************************************************/
 
-char *progclass="xrayswarm";
-
-char *defaults [] ={
+static const char *xrayswarm_defaults [] ={
 	".background:		black",
 	"*delay:		0",
 	0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec xrayswarm_options [] = {
 	{"-delay",".delay",XrmoptionSepArg,0},
 	{0,0,0,0}
 };
 
-static unsigned char colors[768];
-
-static Display *dpy;
-static Window win;
-static GC fgc[256];
-static GC cgc;
-static int xsize, ysize;
-static int xc, yc;
-static unsigned long delay;
-static float maxx, maxy;
 
 /**********************************************************************
  *								       
@@ -105,42 +100,75 @@ typedef struct _sbug {
 #define COLOR_SCHIZO 5
 #define NUM_SCHEMES 6 /* too many schizos; don't use last 2 */  
 
-static float dt = 0.3;
-static float targetVel = 0.03;
-static float targetAcc = 0.02;
-static float maxVel = 0.05;
-static float maxAcc = 0.03;
-static float noise = 0.01;
-static float minVelMultiplier = 0.5;
 
-static int nbugs = -1;
-static int ntargets = -1;
-static int trailLen = -1;
 
-/* vars dependent on those above */
-static float dtInv;
-static float halfDtSq;
-static float targetVelSq;
-static float maxVelSq;
-static float minVelSq;
-static float minVel;
+struct state {
+  Display *dpy;
+  Window win;
 
-static bug bugs[MAX_BUGS];
-static bug targets[MAX_TARGETS];
-static int head = 0;
-static int tail = 0;
-static int colorScheme = -1;
-static float changeProb = 0.08;
+  unsigned char colors[768];
 
-static int grayIndex[MAX_TRAIL_LEN];
-static int redIndex[MAX_TRAIL_LEN];
-static int blueIndex[MAX_TRAIL_LEN];
-static int graySIndex[MAX_TRAIL_LEN];
-static int redSIndex[MAX_TRAIL_LEN];
-static int blueSIndex[MAX_TRAIL_LEN];
-static int randomIndex[MAX_TRAIL_LEN];
-static int numColors;
-static int numRandomColors;
+  GC fgc[256];
+  GC cgc;
+  int xsize, ysize;
+  int xc, yc;
+  unsigned long delay;
+  float maxx, maxy;
+
+  float dt;
+  float targetVel;
+  float targetAcc;
+  float maxVel;
+  float maxAcc;
+  float noise;
+  float minVelMultiplier;
+
+  int nbugs;
+  int ntargets;
+  int trailLen;
+
+  float dtInv;
+  float halfDtSq;
+  float targetVelSq;
+  float maxVelSq;
+  float minVelSq;
+  float minVel;
+
+  bug bugs[MAX_BUGS];
+  bug targets[MAX_TARGETS];
+  int head;
+  int tail;
+  int colorScheme;
+  float changeProb;
+
+  int grayIndex[MAX_TRAIL_LEN];
+  int redIndex[MAX_TRAIL_LEN];
+  int blueIndex[MAX_TRAIL_LEN];
+  int graySIndex[MAX_TRAIL_LEN];
+  int redSIndex[MAX_TRAIL_LEN];
+  int blueSIndex[MAX_TRAIL_LEN];
+  int randomIndex[MAX_TRAIL_LEN];
+  int numColors;
+  int numRandomColors;
+
+  int checkIndex;
+  int rsc_callDepth;
+  int rbc_callDepth;
+
+  float draw_fps;
+  float draw_timePerFrame, draw_elapsed;
+  int *draw_targetColorIndex, *draw_colorIndex;
+  int draw_targetStartColor, draw_targetNumColors;
+  int draw_startColor, draw_numColors;
+  double draw_start, draw_end;
+  int draw_cnt;
+  int draw_sleepCount;
+  int draw_delayAccum;
+  int draw_nframes;
+
+  struct timeval startupTime;
+};
+
 
 typedef struct {
   float dt;
@@ -157,7 +185,8 @@ typedef struct {
   int changeProb;
 } bugParams;
 
-bugParams good1 = {
+#if 0
+static const bugParams good1 = {
   0.3,  /* dt */
   0.03,  /* targetVel */
   0.02,  /* targetAcc */
@@ -171,349 +200,372 @@ bugParams good1 = {
   0.15  /* changeProb */
 };
 
-bugParams *goodParams[] = { 
+static const bugParams *goodParams[] = { 
 &good1
 };
 
-int numParamSets = 1;
+static int numParamSets = 1;
+#endif
 
-void initCMap(void) {
+static void initCMap(struct state *st)
+{
   int i, n;
   int temp;
 
   n = 0;
 
   /* color 0 is black */
-  colors[n++] = 0;
-  colors[n++] = 0;
-  colors[n++] = 0;
+  st->colors[n++] = 0;
+  st->colors[n++] = 0;
+  st->colors[n++] = 0;
 
   /* color 1 is red */
-  colors[n++] = 255;
-  colors[n++] = 0;
-  colors[n++] = 0;
+  st->colors[n++] = 255;
+  st->colors[n++] = 0;
+  st->colors[n++] = 0;
 
   /* color 2 is green */
-  colors[n++] = 255;
-  colors[n++] = 0;
-  colors[n++] = 0;
+  st->colors[n++] = 255;
+  st->colors[n++] = 0;
+  st->colors[n++] = 0;
 
   /* color 3 is blue */
-  colors[n++] = 255;
-  colors[n++] = 0;
-  colors[n++] = 0;
+  st->colors[n++] = 255;
+  st->colors[n++] = 0;
+  st->colors[n++] = 0;
 
   /* start greyscale colors at 4; 16 levels */
   for (i = 0; i < 16; i++) {
     temp = i*16;
     if (temp > 255) temp = 255;
-    colors[n++] = 255 - temp;
-    colors[n++] = 255 - temp;
-    colors[n++] = 255 - temp;
+    st->colors[n++] = 255 - temp;
+    st->colors[n++] = 255 - temp;
+    st->colors[n++] = 255 - temp;
   }
 
   /* start red fade at 20; 16 levels */
   for (i = 0; i < 16; i++) {
     temp = i*16;
     if (temp > 255) temp = 255;
-    colors[n++] = 255 - temp;
-    colors[n++] = 255 - pow(i/16.0+0.001, 0.3)*255;
-    colors[n++] = 65 - temp/4;
+    st->colors[n++] = 255 - temp;
+    st->colors[n++] = 255 - pow(i/16.0+0.001, 0.3)*255;
+    st->colors[n++] = 65 - temp/4;
   }
 
   /* start blue fade at 36; 16 levels */
   for (i = 0; i < 16; i++) {
     temp = i*16;
     if (temp > 255) temp = 255;
-    colors[n++] = 32 - temp/8;
-    colors[n++] = 180 - pow(i/16.0+0.001, 0.3)*180;
-    colors[n++] = 255 - temp;
+    st->colors[n++] = 32 - temp/8;
+    st->colors[n++] = 180 - pow(i/16.0+0.001, 0.3)*180;
+    st->colors[n++] = 255 - temp;
   }
 
   /* random colors start at 52 */
-  numRandomColors = MAX_TRAIL_LEN;
+  st->numRandomColors = MAX_TRAIL_LEN;
 
-  colors[n] = random()&255; n++;
-  colors[n] = random()&255; n++;
-  colors[n] = colors[n-2]/2 + colors[n-3]/2; n++;
+  st->colors[n] = random()&255; n++;
+  st->colors[n] = random()&255; n++;
+  st->colors[n] = st->colors[n-2]/2 + st->colors[n-3]/2; n++;
 
-  for (i = 0; i < numRandomColors; i++) {
-    colors[n] = (colors[n-3] + (random()&31) - 16)&255; n++;
-    colors[n] = (colors[n-3] + (random()&31) - 16)&255; n++;
-    colors[n] = colors[n-2]/(float)(i+2) + colors[n-3]/(float)(i+2); n++;
+  for (i = 0; i < st->numRandomColors; i++) {
+    st->colors[n] = (st->colors[n-3] + (random()&31) - 16)&255; n++;
+    st->colors[n] = (st->colors[n-3] + (random()&31) - 16)&255; n++;
+    st->colors[n] = st->colors[n-2]/(float)(i+2) + st->colors[n-3]/(float)(i+2); n++;
   }
   
-  numColors = n/3 + 1;
+  st->numColors = n/3 + 1;
 }
 
-static int initGraphics(void) {
+static int initGraphics(struct state *st)
+{
   XGCValues xgcv;
   XWindowAttributes xgwa;
-  XSetWindowAttributes xswa;
+/*  XSetWindowAttributes xswa;*/
   Colormap cmap;
   XColor color;
   int n, i;
   
-  initCMap();
+  initCMap(st);
 
-  XGetWindowAttributes(dpy,win,&xgwa);
+  XGetWindowAttributes(st->dpy,st->win,&xgwa);
   cmap=xgwa.colormap;
-  xswa.backing_store=Always;
-  XChangeWindowAttributes(dpy,win,CWBackingStore,&xswa);
+/*  xswa.backing_store=Always;
+  XChangeWindowAttributes(st->dpy,st->win,CWBackingStore,&xswa);*/
   xgcv.function=GXcopy;
 
-  delay = get_integer_resource("delay","Integer");
+  st->delay = get_integer_resource(st->dpy, "delay","Integer");
   
-  xgcv.foreground=get_pixel_resource ("background", "Background", dpy, cmap);
-  fgc[0]=XCreateGC(dpy, win, GCForeground|GCFunction,&xgcv);
+  xgcv.foreground=get_pixel_resource (st->dpy, cmap, "background", "Background");
+  st->fgc[0]=XCreateGC(st->dpy, st->win, GCForeground|GCFunction,&xgcv);
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (st->dpy, st->fgc[0], False);
+#endif
   
   n=0;
   if (mono_p) {
-    xgcv.foreground=get_pixel_resource ("foreground", "Foreground", dpy, cmap);
-    fgc[1]=XCreateGC(dpy,win,GCForeground|GCFunction,&xgcv);
-    for (i=0;i<numColors;i+=2) fgc[i]=fgc[0];
-    for (i=1;i<numColors;i+=2) fgc[i]=fgc[1];
+    xgcv.foreground=get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
+    st->fgc[1]=XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (st->dpy, st->fgc[1], False);
+#endif
+    for (i=0;i<st->numColors;i+=2) st->fgc[i]=st->fgc[0];
+    for (i=1;i<st->numColors;i+=2) st->fgc[i]=st->fgc[1];
   } else {
-    for (i = 0; i < numColors; i++) {
-      color.red=colors[n++]<<8;
-      color.green=colors[n++]<<8;
-      color.blue=colors[n++]<<8;
+    for (i = 0; i < st->numColors; i++) {
+      color.red=st->colors[n++]<<8;
+      color.green=st->colors[n++]<<8;
+      color.blue=st->colors[n++]<<8;
       color.flags=DoRed|DoGreen|DoBlue;
-      XAllocColor(dpy,cmap,&color);
+      XAllocColor(st->dpy,cmap,&color);
       xgcv.foreground=color.pixel;
-      fgc[i] = XCreateGC(dpy, win, GCForeground | GCFunction,&xgcv);
+      st->fgc[i] = XCreateGC(st->dpy, st->win, GCForeground | GCFunction,&xgcv);
+#ifdef HAVE_COCOA
+      jwxyz_XSetAntiAliasing (st->dpy, st->fgc[i], False);
+#endif
     }
   }
-  cgc = XCreateGC(dpy,win,GCForeground|GCFunction,&xgcv);
-  XSetGraphicsExposures(dpy,cgc,False);
+  st->cgc = XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
+  XSetGraphicsExposures(st->dpy,st->cgc,False);
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (st->dpy, st->cgc, False);
+#endif
 
-  xsize = xgwa.width;
-  ysize = xgwa.height;
-  xc = xsize >> 1;
-  yc = ysize >> 1;
+  st->xsize = xgwa.width;
+  st->ysize = xgwa.height;
+  st->xc = st->xsize >> 1;
+  st->yc = st->ysize >> 1;
 
-  maxx = 1.0;
-  maxy = ysize/(float)xsize;
+  st->maxx = 1.0;
+  st->maxy = st->ysize/(float)st->xsize;
 
-  if (colorScheme < 0) colorScheme = random()%NUM_SCHEMES;
+  if (st->colorScheme < 0) st->colorScheme = random()%NUM_SCHEMES;
 
   return True;
 }
 
-static void initBugs(void) {
+static void initBugs(struct state *st)
+{
   register bug *b;
   int i;
 
-  head = tail = 0;
+  st->head = st->tail = 0;
 
-  memset((char *)bugs, 0,MAX_BUGS*sizeof(bug));
-  memset((char *)targets, 0, MAX_TARGETS*sizeof(bug));
+  memset((char *)st->bugs, 0,MAX_BUGS*sizeof(bug));
+  memset((char *)st->targets, 0, MAX_TARGETS*sizeof(bug));
 
-  if (ntargets < 0) ntargets = (0.25+frand(0.75)*frand(1))*MAX_TARGETS;
-  if (ntargets < 1) ntargets = 1;
+  if (st->ntargets < 0) st->ntargets = (0.25+frand(0.75)*frand(1))*MAX_TARGETS;
+  if (st->ntargets < 1) st->ntargets = 1;
 
-  if (nbugs < 0) nbugs = (0.25+frand(0.75)*frand(1))*MAX_BUGS;
-  if (nbugs <= ntargets) nbugs = ntargets+1;
+  if (st->nbugs < 0) st->nbugs = (0.25+frand(0.75)*frand(1))*MAX_BUGS;
+  if (st->nbugs <= st->ntargets) st->nbugs = st->ntargets+1;
 
-  if (trailLen < 0) {
-    trailLen = (1.0 - frand(0.6)*frand(1))*MAX_TRAIL_LEN;
+  if (st->trailLen < 0) {
+    st->trailLen = (1.0 - frand(0.6)*frand(1))*MAX_TRAIL_LEN;
   }
 
-  if (nbugs > MAX_BUGS) nbugs = MAX_BUGS;
-  if (ntargets > MAX_TARGETS) ntargets = MAX_TARGETS;
-  if (trailLen > MAX_TRAIL_LEN) trailLen = MAX_TRAIL_LEN;
+  if (st->nbugs > MAX_BUGS) st->nbugs = MAX_BUGS;
+  if (st->ntargets > MAX_TARGETS) st->ntargets = MAX_TARGETS;
+  if (st->trailLen > MAX_TRAIL_LEN) st->trailLen = MAX_TRAIL_LEN;
 
-  b = bugs;
-  for (i = 0; i < nbugs; i++, b++) {
-    b->pos[0] = frand(maxx);
-    b->pos[1] = frand(maxy);
-    b->vel[0] = frand(maxVel/2);
-    b->vel[1] = frand(maxVel/2);
+  b = st->bugs;
+  for (i = 0; i < st->nbugs; i++, b++) {
+    b->pos[0] = frand(st->maxx);
+    b->pos[1] = frand(st->maxy);
+    b->vel[0] = frand(st->maxVel/2);
+    b->vel[1] = frand(st->maxVel/2);
 
-    b->hist[head][0] = b->pos[0]*xsize;
-    b->hist[head][1] = b->pos[1]*xsize;
-    b->closest = &targets[random()%ntargets];
+    b->hist[st->head][0] = b->pos[0]*st->xsize;
+    b->hist[st->head][1] = b->pos[1]*st->xsize;
+    b->closest = &st->targets[random()%st->ntargets];
   }
 
-  b = targets;
-  for (i = 0; i < ntargets; i++, b++) {
-    b->pos[0] = frand(maxx);
-    b->pos[1] = frand(maxy);
+  b = st->targets;
+  for (i = 0; i < st->ntargets; i++, b++) {
+    b->pos[0] = frand(st->maxx);
+    b->pos[1] = frand(st->maxy);
 
-    b->vel[0] = frand(targetVel/2);
-    b->vel[1] = frand(targetVel/2);
+    b->vel[0] = frand(st->targetVel/2);
+    b->vel[1] = frand(st->targetVel/2);
 
-    b->hist[head][0] = b->pos[0]*xsize;
-    b->hist[head][1] = b->pos[1]*xsize;
+    b->hist[st->head][0] = b->pos[0]*st->xsize;
+    b->hist[st->head][1] = b->pos[1]*st->xsize;
   }
 }
 
-static void pickNewTargets(void) {
+static void pickNewTargets(struct state *st)
+{
   register int i;
   register bug *b;
 
-  b = bugs;
-  for (i = 0; i < nbugs; i++, b++) {
-    b->closest = &targets[random()%ntargets];
+  b = st->bugs;
+  for (i = 0; i < st->nbugs; i++, b++) {
+    b->closest = &st->targets[random()%st->ntargets];
   }
 }
 
 #if 0
-static void addBugs(int numToAdd) {
+static void addBugs(int numToAdd)
+{
   register bug *b;
   int i;
 
-  if (numToAdd + nbugs > MAX_BUGS) numToAdd = MAX_BUGS-nbugs;
+  if (numToAdd + st->nbugs > MAX_BUGS) numToAdd = MAX_BUGS-st->nbugs;
   else if (numToAdd < 0) numToAdd = 0;
 
   for (i = 0; i < numToAdd; i++) {
-    b = &bugs[random()%nbugs];
-    memcpy((char *)&bugs[nbugs+i], (char *)b, sizeof(bug));
-    b->closest = &targets[random()%ntargets];
+    b = &st->bugs[random()%st->nbugs];
+    memcpy((char *)&st->bugs[st->nbugs+i], (char *)b, sizeof(bug));
+    b->closest = &st->targets[random()%st->ntargets];
   }
 
-  nbugs += numToAdd;
+  st->nbugs += numToAdd;
 }
 
-static void addTargets(int numToAdd) {
+static void addTargets(int numToAdd)
+{
   register bug *b;
   int i;
 
-  if (numToAdd + ntargets > MAX_TARGETS) numToAdd = MAX_TARGETS-ntargets;
+  if (numToAdd + st->ntargets > MAX_TARGETS) numToAdd = MAX_TARGETS-st->ntargets;
   else if (numToAdd < 0) numToAdd = 0;
 
   for (i = 0; i < numToAdd; i++) {
-    b = &targets[random()%ntargets];
-    memcpy((char *)&targets[ntargets+i], (char *)b, sizeof(bug));
-    b->closest = &targets[random()%ntargets];
+    b = &st->targets[random()%st->ntargets];
+    memcpy((char *)&st->targets[st->ntargets+i], (char *)b, sizeof(bug));
+    b->closest = &st->targets[random()%st->ntargets];
   }
 
-  ntargets += numToAdd;
+  st->ntargets += numToAdd;
 }
 #endif
 
-static void computeConstants(void) {
-  halfDtSq = dt*dt*0.5;
-  dtInv = 1.0/dt;
-  targetVelSq = targetVel*targetVel;
-  maxVelSq = maxVel*maxVel;
-  minVel = maxVel*minVelMultiplier;
-  minVelSq = minVel*minVel;
+static void computeConstants(struct state *st)
+{
+  st->halfDtSq = st->dt*st->dt*0.5;
+  st->dtInv = 1.0/st->dt;
+  st->targetVelSq = st->targetVel*st->targetVel;
+  st->maxVelSq = st->maxVel*st->maxVel;
+  st->minVel = st->maxVel*st->minVelMultiplier;
+  st->minVelSq = st->minVel*st->minVel;
 }
 
-void computeColorIndices(void) {
+static void computeColorIndices(struct state *st)
+{
   int i;
   int schizoLength;
 
   /* note: colors are used in *reverse* order! */
 
   /* grayscale */
-  for (i = 0; i < trailLen; i++) {
-    grayIndex[trailLen-1-i] = 4 + i*16.0/trailLen + 0.5;
-    if (grayIndex[trailLen-1-i] > 19) grayIndex[trailLen-1-i] = 19;
+  for (i = 0; i < st->trailLen; i++) {
+    st->grayIndex[st->trailLen-1-i] = 4 + i*16.0/st->trailLen + 0.5;
+    if (st->grayIndex[st->trailLen-1-i] > 19) st->grayIndex[st->trailLen-1-i] = 19;
   }
 
   /* red */
-  for (i = 0; i < trailLen; i++) {
-    redIndex[trailLen-1-i] = 20 + i*16.0/trailLen + 0.5;
-    if (redIndex[trailLen-1-i] > 35) redIndex[trailLen-1-i] = 35;
+  for (i = 0; i < st->trailLen; i++) {
+    st->redIndex[st->trailLen-1-i] = 20 + i*16.0/st->trailLen + 0.5;
+    if (st->redIndex[st->trailLen-1-i] > 35) st->redIndex[st->trailLen-1-i] = 35;
   }
 
   /* blue */
-  for (i = 0; i < trailLen; i++) {
-    blueIndex[trailLen-1-i] = 36 + i*16.0/trailLen + 0.5;
-    if (blueIndex[trailLen-1-i] > 51) blueIndex[trailLen-1-i] = 51;
+  for (i = 0; i < st->trailLen; i++) {
+    st->blueIndex[st->trailLen-1-i] = 36 + i*16.0/st->trailLen + 0.5;
+    if (st->blueIndex[st->trailLen-1-i] > 51) st->blueIndex[st->trailLen-1-i] = 51;
   }
 
   /* gray schizo - same as gray*/
-  for (i = 0; i < trailLen; i++) {
-    graySIndex[trailLen-1-i] = 4 + i*16.0/trailLen + 0.5;
-    if (graySIndex[trailLen-1-i] > 19) graySIndex[trailLen-1-i] = 19;
+  for (i = 0; i < st->trailLen; i++) {
+    st->graySIndex[st->trailLen-1-i] = 4 + i*16.0/st->trailLen + 0.5;
+    if (st->graySIndex[st->trailLen-1-i] > 19) st->graySIndex[st->trailLen-1-i] = 19;
   }
 
-  schizoLength = trailLen/4;
+  schizoLength = st->trailLen/4;
   if (schizoLength < 3) schizoLength = 3;
   /* red schizo */
-  for (i = 0; i < trailLen; i++) {
+  for (i = 0; i < st->trailLen; i++) {
     /*    redSIndex[trailLen-1-i] = 
 	  20 + 16.0*(i%schizoLength)/(schizoLength-1.0) + 0.5;*/
-    redSIndex[trailLen-1-i] = 20 + i*16.0/trailLen + 0.5;
-    if (redSIndex[trailLen-1-i] > 35) redSIndex[trailLen-1-i] = 35;
+    st->redSIndex[st->trailLen-1-i] = 20 + i*16.0/st->trailLen + 0.5;
+    if (st->redSIndex[st->trailLen-1-i] > 35) st->redSIndex[st->trailLen-1-i] = 35;
   }
 
-  schizoLength = trailLen/2;
+  schizoLength = st->trailLen/2;
   if (schizoLength < 3) schizoLength = 3;
   /* blue schizo is next */
-  for (i = 0; i < trailLen; i++) {
-    blueSIndex[trailLen-1-i] = 
+  for (i = 0; i < st->trailLen; i++) {
+    st->blueSIndex[st->trailLen-1-i] = 
       36 + 16.0*(i%schizoLength)/(schizoLength-1.0) + 0.5;
-    if (blueSIndex[trailLen-1-i] > 51) blueSIndex[trailLen-1-i] = 51;
+    if (st->blueSIndex[st->trailLen-1-i] > 51) st->blueSIndex[st->trailLen-1-i] = 51;
   }
 
   /* random is next */
-  for (i = 0; i < trailLen; i++) {
-    randomIndex[i] = 52 + random()%(numRandomColors);
+  for (i = 0; i < st->trailLen; i++) {
+    st->randomIndex[i] = 52 + random()%(st->numRandomColors);
   }
 }
 
 #if 0
-static void setParams(bugParams *p) {
-  dt = p->dt;
-  targetVel = p->targetVel;
-  targetAcc = p->targetAcc;
-  maxVel = p->maxVel;
-  maxAcc = p->maxAcc;
-  noise = p->noise;
+static void setParams(bugParams *p)
+{
+  st->dt = p->dt;
+  st->targetVel = p->targetVel;
+  st->targetAcc = p->targetAcc;
+  st->maxVel = p->maxVel;
+  st->maxAcc = p->maxAcc;
+  st->noise = p->noise;
 
-  nbugs = p->nbugs;
-  ntargets = p->ntargets;
-  trailLen = p->trailLen;
-  colorScheme = p->colorScheme;
-  changeProb = p->changeProb;
+  st->nbugs = p->nbugs;
+  st->ntargets = p->ntargets;
+  st->trailLen = p->trailLen;
+  st->colorScheme = p->colorScheme;
+  st->changeProb = p->changeProb;
   computeConstants();
   computeColorIndices();
 }
 #endif
 
-static void drawBugs(int *tColorIdx, int tci0, int tnc,
-		     int *colorIdx, int ci0, int nc) {
+static void drawBugs(struct state *st, int *tColorIdx, int tci0, int tnc,
+		     int *colorIdx, int ci0, int nc)
+{
   register bug *b;
   register int i, j;
   int temp;
 
-  if (((head+1)%trailLen) == tail) {
+  if (((st->head+1)%st->trailLen) == st->tail) {
     /* first, erase last segment of bugs if necessary */
-    temp = (tail+1) % trailLen;
+    temp = (st->tail+1) % st->trailLen;
     
-    b = bugs;
-    for (i = 0; i < nbugs; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
-		b->hist[tail][0], b->hist[tail][1],
+    b = st->bugs;
+    for (i = 0; i < st->nbugs; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
+		b->hist[st->tail][0], b->hist[st->tail][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
   
-    b = targets;
-    for (i = 0; i < ntargets; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
-		b->hist[tail][0], b->hist[tail][1],
+    b = st->targets;
+    for (i = 0; i < st->ntargets; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
+		b->hist[st->tail][0], b->hist[st->tail][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
-    tail = (tail+1)%trailLen;
+    st->tail = (st->tail+1)%st->trailLen;
   }
   
-  for (j = tail; j != head; j = temp) {
-    temp = (j+1)%trailLen;
+  for (j = st->tail; j != st->head; j = temp) {
+    temp = (j+1)%st->trailLen;
 
-    b = bugs;
-    for (i = 0; i < nbugs; i++, b++) {
-      XDrawLine(dpy, win, fgc[colorIdx[ci0]],
+    b = st->bugs;
+    for (i = 0; i < st->nbugs; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[colorIdx[ci0]],
 		b->hist[j][0], b->hist[j][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
     
-    b = targets;
-    for (i = 0; i < ntargets; i++, b++) {
-      XDrawLine(dpy, win, fgc[tColorIdx[tci0]],
+    b = st->targets;
+    for (i = 0; i < st->ntargets; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[tColorIdx[tci0]],
 		b->hist[j][0], b->hist[j][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
@@ -522,74 +574,75 @@ static void drawBugs(int *tColorIdx, int tci0, int tnc,
   }
 }
 
-static void clearBugs(void) {
+static void clearBugs(struct state *st)
+{
   register bug *b;
   register int i, j;
   int temp;
 
-  tail = tail-1;
-  if (tail < 0) tail = trailLen-1;
+  st->tail = st->tail-1;
+  if (st->tail < 0) st->tail = st->trailLen-1;
 
-  if (((head+1)%trailLen) == tail) {
+  if (((st->head+1)%st->trailLen) == st->tail) {
     /* first, erase last segment of bugs if necessary */
-    temp = (tail+1) % trailLen;
+    temp = (st->tail+1) % st->trailLen;
     
-    b = bugs;
-    for (i = 0; i < nbugs; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
-		b->hist[tail][0], b->hist[tail][1],
+    b = st->bugs;
+    for (i = 0; i < st->nbugs; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
+		b->hist[st->tail][0], b->hist[st->tail][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
   
-    b = targets;
-    for (i = 0; i < ntargets; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
-		b->hist[tail][0], b->hist[tail][1],
+    b = st->targets;
+    for (i = 0; i < st->ntargets; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
+		b->hist[st->tail][0], b->hist[st->tail][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
-    tail = (tail+1)%trailLen;
+    st->tail = (st->tail+1)%st->trailLen;
   }
   
-  for (j = tail; j != head; j = temp) {
-    temp = (j+1)%trailLen;
+  for (j = st->tail; j != st->head; j = temp) {
+    temp = (j+1)%st->trailLen;
 
-    b = bugs;
-    for (i = 0; i < nbugs; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
+    b = st->bugs;
+    for (i = 0; i < st->nbugs; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
 		b->hist[j][0], b->hist[j][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
     
-    b = targets;
-    for (i = 0; i < ntargets; i++, b++) {
-      XDrawLine(dpy, win, fgc[0],
+    b = st->targets;
+    for (i = 0; i < st->ntargets; i++, b++) {
+      XDrawLine(st->dpy, st->win, st->fgc[0],
 		b->hist[j][0], b->hist[j][1],
 		b->hist[temp][0], b->hist[temp][1]);
     }
   }
 }
 
-void updateState(void) {
+static void updateState(struct state *st)
+{
   register int i;
   register bug *b;
   register float ax, ay, temp;
   float theta;
-  static int checkIndex = 0;
   bug *b2;
   int j;
 
-  head = (head+1)%trailLen;
+  st->head = (st->head+1)%st->trailLen;
   
   for (j = 0; j < 5; j++) {
     /* update closets bug for the bug indicated by checkIndex */
-    checkIndex = (checkIndex+1)%nbugs;
-    b = &bugs[checkIndex];
+    st->checkIndex = (st->checkIndex+1)%st->nbugs;
+    b = &st->bugs[st->checkIndex];
 
     ax = b->closest->pos[0] - b->pos[0];
     ay = b->closest->pos[1] - b->pos[1];
     temp = ax*ax + ay*ay;
-    for (i = 0; i < ntargets; i++) {
-      b2 = &targets[i];
+    for (i = 0; i < st->ntargets; i++) {
+      b2 = &st->targets[i];
       if (b2 == b->closest) continue;
       ax = b2->pos[0] - b->pos[0];
       ay = b2->pos[1] - b->pos[1];
@@ -603,19 +656,19 @@ void updateState(void) {
   
   /* update target state */
 
-  b = targets;
-  for (i = 0; i < ntargets; i++, b++) {
+  b = st->targets;
+  for (i = 0; i < st->ntargets; i++, b++) {
     theta = frand(6.28);
-    ax = targetAcc*cos(theta);
-    ay = targetAcc*sin(theta);
+    ax = st->targetAcc*cos(theta);
+    ay = st->targetAcc*sin(theta);
 
-    b->vel[0] += ax*dt;
-    b->vel[1] += ay*dt;
+    b->vel[0] += ax*st->dt;
+    b->vel[1] += ay*st->dt;
 
     /* check velocity */
     temp = sq(b->vel[0]) + sq(b->vel[1]);
-    if (temp > targetVelSq) {
-      temp = targetVel/sqrt(temp);
+    if (temp > st->targetVelSq) {
+      temp = st->targetVel/sqrt(temp);
       /* save old vel for acc computation */
       ax = b->vel[0];
       ay = b->vel[1];
@@ -625,53 +678,53 @@ void updateState(void) {
       b->vel[1] *= temp;
       
       /* update acceleration */
-      ax = (b->vel[0]-ax)*dtInv;
-      ay = (b->vel[1]-ay)*dtInv;
+      ax = (b->vel[0]-ax)*st->dtInv;
+      ay = (b->vel[1]-ay)*st->dtInv;
     }
 
     /* update position */
-    b->pos[0] += b->vel[0]*dt + ax*halfDtSq;
-    b->pos[1] += b->vel[1]*dt + ay*halfDtSq;
+    b->pos[0] += b->vel[0]*st->dt + ax*st->halfDtSq;
+    b->pos[1] += b->vel[1]*st->dt + ay*st->halfDtSq;
 
     /* check limits on targets */
     if (b->pos[0] < 0) {
       /* bounce */
       b->pos[0] = -b->pos[0];
       b->vel[0] = -b->vel[0];
-    } else if (b->pos[0] >= maxx) {
+    } else if (b->pos[0] >= st->maxx) {
       /* bounce */
-      b->pos[0] = 2*maxx-b->pos[0];
+      b->pos[0] = 2*st->maxx-b->pos[0];
       b->vel[0] = -b->vel[0];
     }
     if (b->pos[1] < 0) {
       /* bounce */
       b->pos[1] = -b->pos[1];
       b->vel[1] = -b->vel[1];
-    } else if (b->pos[1] >= maxy) {
+    } else if (b->pos[1] >= st->maxy) {
       /* bounce */
-      b->pos[1] = 2*maxy-b->pos[1];
+      b->pos[1] = 2*st->maxy-b->pos[1];
       b->vel[1] = -b->vel[1];
     }
 
-    b->hist[head][0] = b->pos[0]*xsize;
-    b->hist[head][1] = b->pos[1]*xsize;
+    b->hist[st->head][0] = b->pos[0]*st->xsize;
+    b->hist[st->head][1] = b->pos[1]*st->xsize;
   }
 
   /* update bug state */
-  b = bugs;
-  for (i = 0; i < nbugs; i++, b++) {
-    theta = atan2(b->closest->pos[1] - b->pos[1] + frand(noise),
-		  b->closest->pos[0] - b->pos[0] + frand(noise));
-    ax = maxAcc*cos(theta);
-    ay = maxAcc*sin(theta);
+  b = st->bugs;
+  for (i = 0; i < st->nbugs; i++, b++) {
+    theta = atan2(b->closest->pos[1] - b->pos[1] + frand(st->noise),
+		  b->closest->pos[0] - b->pos[0] + frand(st->noise));
+    ax = st->maxAcc*cos(theta);
+    ay = st->maxAcc*sin(theta);
 
-    b->vel[0] += ax*dt;
-    b->vel[1] += ay*dt;
+    b->vel[0] += ax*st->dt;
+    b->vel[1] += ay*st->dt;
 
     /* check velocity */
     temp = sq(b->vel[0]) + sq(b->vel[1]);
-    if (temp > maxVelSq) {
-      temp = maxVel/sqrt(temp);
+    if (temp > st->maxVelSq) {
+      temp = st->maxVel/sqrt(temp);
 
       /* save old vel for acc computation */
       ax = b->vel[0];
@@ -682,10 +735,10 @@ void updateState(void) {
       b->vel[1] *= temp;
       
       /* update acceleration */
-      ax = (b->vel[0]-ax)*dtInv;
-      ay = (b->vel[1]-ay)*dtInv;
-    } else if (temp < minVelSq) {
-      temp = minVel/sqrt(temp);
+      ax = (b->vel[0]-ax)*st->dtInv;
+      ay = (b->vel[1]-ay)*st->dtInv;
+    } else if (temp < st->minVelSq) {
+      temp = st->minVel/sqrt(temp);
 
       /* save old vel for acc computation */
       ax = b->vel[0];
@@ -696,186 +749,188 @@ void updateState(void) {
       b->vel[1] *= temp;
       
       /* update acceleration */
-      ax = (b->vel[0]-ax)*dtInv;
-      ay = (b->vel[1]-ay)*dtInv;
+      ax = (b->vel[0]-ax)*st->dtInv;
+      ay = (b->vel[1]-ay)*st->dtInv;
     }
 
     /* update position */
-    b->pos[0] += b->vel[0]*dt + ax*halfDtSq;
-    b->pos[1] += b->vel[1]*dt + ay*halfDtSq;
+    b->pos[0] += b->vel[0]*st->dt + ax*st->halfDtSq;
+    b->pos[1] += b->vel[1]*st->dt + ay*st->halfDtSq;
 
     /* check limits on targets */
     if (b->pos[0] < 0) {
       /* bounce */
       b->pos[0] = -b->pos[0];
       b->vel[0] = -b->vel[0];
-    } else if (b->pos[0] >= maxx) {
+    } else if (b->pos[0] >= st->maxx) {
       /* bounce */
-      b->pos[0] = 2*maxx-b->pos[0];
+      b->pos[0] = 2*st->maxx-b->pos[0];
       b->vel[0] = -b->vel[0];
     }
     if (b->pos[1] < 0) {
       /* bounce */
       b->pos[1] = -b->pos[1];
       b->vel[1] = -b->vel[1];
-    } else if (b->pos[1] >= maxy) {
+    } else if (b->pos[1] >= st->maxy) {
       /* bounce */
-      b->pos[1] = 2*maxy-b->pos[1];
+      b->pos[1] = 2*st->maxy-b->pos[1];
       b->vel[1] = -b->vel[1];
     }
 
-    b->hist[head][0] = b->pos[0]*xsize;
-    b->hist[head][1] = b->pos[1]*xsize;
+    b->hist[st->head][0] = b->pos[0]*st->xsize;
+    b->hist[st->head][1] = b->pos[1]*st->xsize;
   }
 }
 
-void mutateBug(int which) {
+static void mutateBug(struct state *st, int which)
+{
   int i, j;
 
   if (which == 0) {
     /* turn bug into target */
-    if (ntargets < MAX_TARGETS-1 && nbugs > 1) {
-      i = random() % nbugs;
-      memcpy((char *)&targets[ntargets], (char *)&bugs[i], sizeof(bug));
-      memcpy((char *)&bugs[i], (char *)&bugs[nbugs-1], sizeof(bug));
-      targets[ntargets].pos[0] = frand(maxx);
-      targets[ntargets].pos[1] = frand(maxy);
-      nbugs--;
-      ntargets++;
+    if (st->ntargets < MAX_TARGETS-1 && st->nbugs > 1) {
+      i = random() % st->nbugs;
+      memcpy((char *)&st->targets[st->ntargets], (char *)&st->bugs[i], sizeof(bug));
+      memcpy((char *)&st->bugs[i], (char *)&st->bugs[st->nbugs-1], sizeof(bug));
+      st->targets[st->ntargets].pos[0] = frand(st->maxx);
+      st->targets[st->ntargets].pos[1] = frand(st->maxy);
+      st->nbugs--;
+      st->ntargets++;
 
-      for (i = 0; i < nbugs; i += ntargets) {
-	bugs[i].closest = &targets[ntargets-1];
+      for (i = 0; i < st->nbugs; i += st->ntargets) {
+	st->bugs[i].closest = &st->targets[st->ntargets-1];
       }
     }
   } else {
     /* turn target into bug */
-    if (ntargets > 1 && nbugs < MAX_BUGS-1) {
+    if (st->ntargets > 1 && st->nbugs < MAX_BUGS-1) {
       /* pick a target */
-      i = random() % ntargets;
+      i = random() % st->ntargets;
 
       /* copy state into a new bug */
-      memcpy((char *)&bugs[nbugs], (char *)&targets[i], sizeof(bug));
-      ntargets--;
+      memcpy((char *)&st->bugs[st->nbugs], (char *)&st->targets[i], sizeof(bug));
+      st->ntargets--;
 
       /* pick a target for the new bug */
-      bugs[nbugs].closest = &targets[random()%ntargets];
+      st->bugs[st->nbugs].closest = &st->targets[random()%st->ntargets];
 
-      for (j = 0; j < nbugs; j++) {
-	if (bugs[j].closest == &targets[ntargets]) {
-	  bugs[j].closest = &targets[i];
-	} else if (bugs[j].closest == &targets[i]) {
-	  bugs[j].closest = &targets[random()%ntargets];
+      for (j = 0; j < st->nbugs; j++) {
+	if (st->bugs[j].closest == &st->targets[st->ntargets]) {
+	  st->bugs[j].closest = &st->targets[i];
+	} else if (st->bugs[j].closest == &st->targets[i]) {
+	  st->bugs[j].closest = &st->targets[random()%st->ntargets];
 	}
       }
-      nbugs++;
+      st->nbugs++;
       
       /* copy the last ntarget into the one we just deleted */
-      memcpy(&targets[i], (char *)&targets[ntargets], sizeof(bug));
+      memcpy(&st->targets[i], (char *)&st->targets[st->ntargets], sizeof(bug));
     }
   }
 }
 
-void mutateParam(float *param) {
+static void mutateParam(float *param)
+{
   *param *= 0.75+frand(0.5);
 }
 
-void randomSmallChange(void) {
+static void randomSmallChange(struct state *st)
+{
   int whichCase = 0;
-  static int callDepth = 0;
 
   whichCase = random()%11;
 
-  if (++callDepth > 10) {
-    callDepth--;
+  if (++st->rsc_callDepth > 10) {
+    st->rsc_callDepth--;
     return;
   }
   
   switch(whichCase) {
   case 0:
     /* acceleration */
-    mutateParam(&maxAcc);
+    mutateParam(&st->maxAcc);
     break;
 
   case 1:
     /* target acceleration */
-    mutateParam(&targetAcc);
+    mutateParam(&st->targetAcc);
     break;
 
   case 2:
     /* velocity */
-    mutateParam(&maxVel);
+    mutateParam(&st->maxVel);
     break;
 
   case 3: 
     /* target velocity */
-    mutateParam(&targetVel);
+    mutateParam(&st->targetVel);
     break;
 
   case 4:
     /* noise */
-    mutateParam(&noise);
+    mutateParam(&st->noise);
     break;
 
   case 5:
     /* minVelMultiplier */
-    mutateParam(&minVelMultiplier);
+    mutateParam(&st->minVelMultiplier);
     break;
     
   case 6:
   case 7:
     /* target to bug */
-    if (ntargets < 2) break;
-    mutateBug(1);
+    if (st->ntargets < 2) break;
+    mutateBug(st, 1);
     break;
 
   case 8:
     /* bug to target */
-    if (nbugs < 2) break;
-    mutateBug(0);
-    if (nbugs < 2) break;
-    mutateBug(0);
+    if (st->nbugs < 2) break;
+    mutateBug(st, 0);
+    if (st->nbugs < 2) break;
+    mutateBug(st, 0);
     break;
 
   case 9:
     /* color scheme */
-    colorScheme = random()%NUM_SCHEMES;
-    if (colorScheme == RANDOM_SCHIZO || colorScheme == COLOR_SCHIZO) {
+    st->colorScheme = random()%NUM_SCHEMES;
+    if (st->colorScheme == RANDOM_SCHIZO || st->colorScheme == COLOR_SCHIZO) {
       /* don't use these quite as much */
-      colorScheme = random()%NUM_SCHEMES;
+      st->colorScheme = random()%NUM_SCHEMES;
     }
     break;
 
   default:
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
   }
 
-  if (minVelMultiplier < 0.3) minVelMultiplier = 0.3;
-  else if (minVelMultiplier > 0.9) minVelMultiplier = 0.9;
-  if (noise < 0.01) noise = 0.01;
-  if (maxVel < 0.02) maxVel = 0.02;
-  if (targetVel < 0.02) targetVel = 0.02;
-  if (targetAcc > targetVel*0.7) targetAcc = targetVel*0.7;
-  if (maxAcc > maxVel*0.7) maxAcc = maxVel*0.7;
-  if (targetAcc > targetVel*0.7) targetAcc = targetVel*0.7;
-  if (maxAcc < 0.01) maxAcc = 0.01;
-  if (targetAcc < 0.005) targetAcc = 0.005;
+  if (st->minVelMultiplier < 0.3) st->minVelMultiplier = 0.3;
+  else if (st->minVelMultiplier > 0.9) st->minVelMultiplier = 0.9;
+  if (st->noise < 0.01) st->noise = 0.01;
+  if (st->maxVel < 0.02) st->maxVel = 0.02;
+  if (st->targetVel < 0.02) st->targetVel = 0.02;
+  if (st->targetAcc > st->targetVel*0.7) st->targetAcc = st->targetVel*0.7;
+  if (st->maxAcc > st->maxVel*0.7) st->maxAcc = st->maxVel*0.7;
+  if (st->targetAcc > st->targetVel*0.7) st->targetAcc = st->targetVel*0.7;
+  if (st->maxAcc < 0.01) st->maxAcc = 0.01;
+  if (st->targetAcc < 0.005) st->targetAcc = 0.005;
 
-  computeConstants();
-  callDepth--;
+  computeConstants(st);
+  st->rsc_callDepth--;
 }
 
-void randomBigChange(void) {
-  static int whichCase = 0;
-  static int callDepth = 0;
+static void randomBigChange(struct state *st)
+{
+  int whichCase = 0;
   int temp;
 
   whichCase = random()%4;
   
-  if (++callDepth > 3) {
-    callDepth--;
+  if (++st->rbc_callDepth > 3) {
+    st->rbc_callDepth--;
     return;
   }
 
@@ -883,114 +938,117 @@ void randomBigChange(void) {
   case 0:
     /* trail length */
     temp = (random()%(MAX_TRAIL_LEN-25)) + 25;
-    clearBugs();
-    trailLen = temp;
-    computeColorIndices();
-    initBugs();
+    clearBugs(st);
+    st->trailLen = temp;
+    computeColorIndices(st);
+    initBugs(st);
     break;
 
   case 1:  
     /* Whee! */
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
-    randomSmallChange();
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
+    randomSmallChange(st);
     break;
 
   case 2:
-    clearBugs();
-    initBugs();
+    clearBugs(st);
+    initBugs(st);
     break;
     
   case 3:
-    pickNewTargets();
+    pickNewTargets(st);
     break;
     
   default:
-    temp = random()%ntargets;
-    targets[temp].pos[0] += frand(maxx/4)-maxx/8;
-    targets[temp].pos[1] += frand(maxy/4)-maxy/8;
+    temp = random()%st->ntargets;
+    st->targets[temp].pos[0] += frand(st->maxx/4)-st->maxx/8;
+    st->targets[temp].pos[1] += frand(st->maxy/4)-st->maxy/8;
     /* updateState() will fix bounds */
     break;
   }
 
-  callDepth--;
+  st->rbc_callDepth--;
 }
 
-void updateColorIndex(int **tColorIdx, int *tci0, int *tnc,
-		      int **colorIdx, int *ci0, int *nc) {
-  switch(colorScheme) {
+static void updateColorIndex(struct state *st, 
+                             int **tColorIdx, int *tci0, int *tnc,
+		      int **colorIdx, int *ci0, int *nc)
+{
+  switch(st->colorScheme) {
   case COLOR_TRAILS:
-    *tColorIdx = redIndex;
+    *tColorIdx = st->redIndex;
     *tci0 = 0;
-    *tnc = trailLen;
-    *colorIdx = blueIndex;
+    *tnc = st->trailLen;
+    *colorIdx = st->blueIndex;
     *ci0 = 0;
-    *nc = trailLen;
+    *nc = st->trailLen;
     break;
 
   case GRAY_SCHIZO:
-    *tColorIdx = graySIndex;
-    *tci0 = head;
-    *tnc = trailLen;
-    *colorIdx = graySIndex;
-    *ci0 = head;
-    *nc = trailLen;
+    *tColorIdx = st->graySIndex;
+    *tci0 = st->head;
+    *tnc = st->trailLen;
+    *colorIdx = st->graySIndex;
+    *ci0 = st->head;
+    *nc = st->trailLen;
     break;
 
   case COLOR_SCHIZO:
-    *tColorIdx = redSIndex;
-    *tci0 = head;
-    *tnc = trailLen;
-    *colorIdx = blueSIndex;
-    *ci0 = head;
-    *nc = trailLen;
+    *tColorIdx = st->redSIndex;
+    *tci0 = st->head;
+    *tnc = st->trailLen;
+    *colorIdx = st->blueSIndex;
+    *ci0 = st->head;
+    *nc = st->trailLen;
     break;
 
   case GRAY_TRAILS:
-    *tColorIdx = grayIndex;
+    *tColorIdx = st->grayIndex;
     *tci0 = 0;
-    *tnc = trailLen;
-    *colorIdx = grayIndex;
+    *tnc = st->trailLen;
+    *colorIdx = st->grayIndex;
     *ci0 = 0;
-    *nc = trailLen;
+    *nc = st->trailLen;
     break;
 
   case RANDOM_TRAILS:
-    *tColorIdx = redIndex;
+    *tColorIdx = st->redIndex;
     *tci0 = 0;
-    *tnc = trailLen;
-    *colorIdx = randomIndex;
+    *tnc = st->trailLen;
+    *colorIdx = st->randomIndex;
     *ci0 = 0;
-    *nc = trailLen;
+    *nc = st->trailLen;
     break;
 
   case RANDOM_SCHIZO:
-    *tColorIdx = redIndex;
-    *tci0 = head;
-    *tnc = trailLen;
-    *colorIdx = randomIndex;
-    *ci0 = head;
-    *nc = trailLen;
+    *tColorIdx = st->redIndex;
+    *tci0 = st->head;
+    *tnc = st->trailLen;
+    *colorIdx = st->randomIndex;
+    *ci0 = st->head;
+    *nc = st->trailLen;
     break;
   }
 }
 
 #if HAVE_GETTIMEOFDAY
-static struct timeval startupTime;
-static void initTime(void) {
+static void initTime(struct state *st)
+{
 #if GETTIMEOFDAY_TWO_ARGS
-  gettimeofday(&startupTime, NULL);
+  gettimeofday(&st->startupTime, NULL);
 #else
-  gettimeofday(&startupTime);
+  gettimeofday(&st->startupTime);
 #endif
 }
 
-static double getTime(void) {
+static double getTime(struct state *st)
+{
   struct timeval t;
   float f;
 #if GETTIMEOFDAY_TWO_ARGS
@@ -998,123 +1056,158 @@ static double getTime(void) {
 #else
   gettimeofday(&t);
 #endif
-  t.tv_sec -= startupTime.tv_sec;
+  t.tv_sec -= st->startupTime.tv_sec;
   f = ((double)t.tv_sec) + t.tv_usec*1e-6;
   return f;
 }
 #endif
 
-void screenhack(Display *d, Window w) {
-  int nframes, i;
-  float fps;
-  float timePerFrame, elapsed;
-  int *targetColorIndex, *colorIndex;
-  int targetStartColor, targetNumColors;
-  int startColor, numColors;
-  double start, end;
-  int cnt;
-  int sleepCount = 0;
-  int delayAccum = 0;
+static void *
+xrayswarm_init (Display *d, Window w)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  int i;
 
-  dpy = d;
-  win = w;
+  st->dpy = d;
+  st->win = w;
 
-  if (!initGraphics()) return;
+  st->dt = 0.3;
+  st->targetVel = 0.03;
+  st->targetAcc = 0.02;
+  st->maxVel = 0.05;
+  st->maxAcc = 0.03;
+  st->noise = 0.01;
+  st->minVelMultiplier = 0.5;
 
-  computeConstants();
-  initBugs();
-  initTime();
-  computeColorIndices();
+  st->nbugs = -1;
+  st->ntargets = -1;
+  st->trailLen = -1;
 
-  if (changeProb > 0) {
+  st->colorScheme = /* -1 */  2;
+  st->changeProb = 0.08;
+
+  if (!initGraphics(st)) abort();
+
+  computeConstants(st);
+  initBugs(st);
+  initTime(st);
+  computeColorIndices(st);
+
+  if (st->changeProb > 0) {
     for (i = random()%5+5; i >= 0; i--) {
-      randomSmallChange();
+      randomSmallChange(st);
     }
   }
 
-  nframes = 0;
+  return st;
+}
+
+static unsigned long
+xrayswarm_draw (Display *d, Window w, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  unsigned long this_delay = st->delay;
+
 #if HAVE_GETTIMEOFDAY
-  start = getTime();
+  st->draw_start = getTime(st);
 #endif
 
-  while (1) {
-    if (delay > 0) {
-      cnt = 2;
-      dt = DESIRED_DT/2;
+    if (st->delay > 0) {
+      st->draw_cnt = 2;
+      st->dt = DESIRED_DT/2;
     } else {
-      cnt = 1;
-      dt = DESIRED_DT;
+      st->draw_cnt = 1;
+      st->dt = DESIRED_DT;
     }
 
-    for (; cnt > 0; cnt--) {
-      updateState();
-      updateColorIndex(&targetColorIndex, &targetStartColor, &targetNumColors,
-		       &colorIndex, &startColor, &numColors);
-      drawBugs(targetColorIndex, targetStartColor, targetNumColors,
-	       colorIndex, startColor, numColors);
-      XSync(dpy, False);
-      screenhack_handle_events (dpy);
+    for (; st->draw_cnt > 0; st->draw_cnt--) {
+      updateState(st);
+      updateColorIndex(st, &st->draw_targetColorIndex, &st->draw_targetStartColor, &st->draw_targetNumColors,
+		       &st->draw_colorIndex, &st->draw_startColor, &st->draw_numColors);
+      drawBugs(st, st->draw_targetColorIndex, st->draw_targetStartColor, st->draw_targetNumColors,
+	       st->draw_colorIndex, st->draw_startColor, st->draw_numColors);
     }
 #if HAVE_GETTIMEOFDAY
-    end = getTime();
-    nframes++;
+    st->draw_end = getTime(st);
+    st->draw_nframes++;
 
-    if (end > start+0.5) {
-      if (frand(1.0) < changeProb) randomSmallChange();
-      if (frand(1.0) < changeProb*0.3) randomBigChange();
-      elapsed = end-start;
+    if (st->draw_end > st->draw_start+0.5) {
+      if (frand(1.0) < st->changeProb) randomSmallChange(st);
+      if (frand(1.0) < st->changeProb*0.3) randomBigChange(st);
+      st->draw_elapsed = st->draw_end-st->draw_start;
 	
-      timePerFrame = elapsed/nframes - delay*1e-6;
-      fps = nframes/elapsed;
+      st->draw_timePerFrame = st->draw_elapsed/st->draw_nframes - st->delay*1e-6;
+      st->draw_fps = st->draw_nframes/st->draw_elapsed;
       /*
       printf("elapsed: %.3f\n", elapsed);
       printf("fps: %.1f  secs per frame: %.3f  delay: %f\n", 
 	     fps, timePerFrame, delay);
       */
 
-      if (fps > MAX_FPS) {
-	delay = (1.0/MAX_FPS - (timePerFrame + delay*1e-6))*1e6;
-      } else if (dt*fps < MIN_FPS*DESIRED_DT) {
+      if (st->draw_fps > MAX_FPS) {
+	st->delay = (1.0/MAX_FPS - (st->draw_timePerFrame + st->delay*1e-6))*1e6;
+      } else if (st->dt*st->draw_fps < MIN_FPS*DESIRED_DT) {
 	/* need to speed things up somehow */
-	if (0 && nbugs > 10) {
+	if (0 && st->nbugs > 10) {
 	  /*printf("reducing bugs to improve speed.\n");*/
-	  clearBugs();
-	  nbugs *= fps/MIN_FPS;
-	  if (ntargets >= nbugs/2) mutateBug(1);
-	} else if (0 && dt < 0.3) {
+	  clearBugs(st);
+	  st->nbugs *= st->draw_fps/MIN_FPS;
+	  if (st->ntargets >= st->nbugs/2) mutateBug(st, 1);
+	} else if (0 && st->dt < 0.3) {
 	  /*printf("increasing dt to improve speed.\n");*/
-	  dt *= MIN_FPS/fps;
-	  computeConstants();
-	} else if (trailLen > 10) {
+	  st->dt *= MIN_FPS/st->draw_fps;
+	  computeConstants(st);
+	} else if (st->trailLen > 10) {
 	  /*printf("reducing trail length to improve speed.\n");*/
-	  clearBugs();
-	  trailLen = trailLen * (fps/MIN_FPS);
-	  if (trailLen < 10) trailLen = 10;
-	  computeColorIndices();
-	  initBugs();
+	  clearBugs(st);
+	  st->trailLen = st->trailLen * (st->draw_fps/MIN_FPS);
+	  if (st->trailLen < 10) st->trailLen = 10;
+	  computeColorIndices(st);
+	  initBugs(st);
 	}
       }
 
-      start = getTime();
-      nframes = 0;
+      st->draw_start = getTime(st);
+      st->draw_nframes = 0;
     }
 #else
-    if (frand(1) < changeProb*2/100.0) randomSmallChange();
-    if (frand(1) < changeProb*0.3/100.0) randomBigChange();
+    if (frand(1) < st->changeProb*2/100.0) randomSmallChange(st);
+    if (frand(1) < st->changeProb*0.3/100.0) randomBigChange(st);
 #endif
     
-    if (delay > 10000) usleep(delay);
-    else {
-      delayAccum += delay;
-      if (delayAccum > 10000) {
-	usleep(delayAccum);
-	delayAccum = 0;
-	sleepCount = 0;
+    if (st->delay <= 10000) {
+      st->draw_delayAccum += st->delay;
+      if (st->draw_delayAccum > 10000) {
+	this_delay = st->draw_delayAccum;
+	st->draw_delayAccum = 0;
+	st->draw_sleepCount = 0;
       }
-      if (++sleepCount > 2) {
-	sleepCount = 0;
-	usleep(10000);
+      if (++st->draw_sleepCount > 2) {
+	st->draw_sleepCount = 0;
+        this_delay = 10000;
       }
     }
-  }
+
+    return this_delay;
 }
+
+static void
+xrayswarm_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+xrayswarm_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+xrayswarm_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+XSCREENSAVER_MODULE ("XRaySwarm", xrayswarm)

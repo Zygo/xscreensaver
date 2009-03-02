@@ -103,14 +103,15 @@ INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 SRCS		= alpha.c colors.c fade.c grabscreen.c grabclient.c hsv.c \
 		  overlay.c resources.c spline.c usleep.c visual.c \
 		  visual-gl.c xmu.c logo.c yarandom.c erase.c \
-		  xshm.c xdbe.c colorbars.c
+		  xshm.c xdbe.c colorbars.c minixpm.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
 		  overlay.o resources.o spline.o usleep.o visual.o \
 		  visual-gl.o xmu.o logo.o yarandom.o erase.o \
-		  xshm.o xdbe.o colorbars.o
+		  xshm.o xdbe.o colorbars.o minixpm.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
-		  yarandom.h erase.h xshm.h xdbe.h colorbars.h xscreensaver-intl.h
+		  yarandom.h erase.h xshm.h xdbe.h colorbars.h minixpm.h \
+		  xscreensaver-intl.h
 STAR		= *
 LOGOS		= images/$(STAR).xpm \
 		  images/$(STAR).png \
@@ -231,6 +232,7 @@ colors.o: $(srcdir)/utils.h
 colors.o: $(srcdir)/visual.h
 colors.o: $(srcdir)/yarandom.h
 erase.o: ../config.h
+erase.o: $(srcdir)/erase.h
 erase.o: $(srcdir)/resources.h
 erase.o: $(srcdir)/usleep.h
 erase.o: $(srcdir)/utils.h
@@ -260,9 +262,12 @@ hsv.o: $(srcdir)/utils.h
 logo.o: ../config.h
 logo.o: $(srcdir)/images/logo-180.xpm
 logo.o: $(srcdir)/images/logo-50.xpm
+logo.o: $(srcdir)/minixpm.h
 logo.o: $(srcdir)/resources.h
 logo.o: $(srcdir)/utils.h
 logo.o: $(srcdir)/visual.h
+minixpm.o: ../config.h
+minixpm.o: $(srcdir)/minixpm.h
 overlay.o: ../config.h
 overlay.o: $(srcdir)/utils.h
 overlay.o: $(srcdir)/visual.h

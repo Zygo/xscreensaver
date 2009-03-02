@@ -32,6 +32,9 @@ Project pieces against the board with dark blend.
 .B \-reflections
 Reflect pieces in light board squares.
 .TP 8
+.B \-classic
+Use the original low-polygon piece models.
+.TP 8
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.

@@ -74,136 +74,22 @@ struct hyper_state
   double hs_ref_cx, hs_ref_cy, hs_ref_cz, hs_ref_cw;
   double hs_ref_dx, hs_ref_dy, hs_ref_dz, hs_ref_dw;
   GC hs_color_gcs[8][8];
+  GC black_gc;
   char hs_moved[POINT_COUNT];
   struct point_state hs_points[POINT_COUNT];
+  int roted;
 };
 
 static const struct point_info point_table[POINT_COUNT];
 static const struct line_info line_table[LINE_COUNT];
 
-static struct hyper_state hyper_state;
-
-static void init (struct hyper_state *hs);
-static void hyper (struct hyper_state *hs);
-static void check_events (struct hyper_state *hs);
 static void set_sizes (struct hyper_state *hs, int width, int height);
 
-
-char *progclass = "Hyperball";
-
-char *defaults[] =
+static void *
+hyperball_init (Display *dpy, Window win)
 {
-  "*observer-z: 3",
-  "*delay: 20000",
-  "*xy: 3",
-  "*xz: 5",
-  "*yw: 10",
-  "*yz: 0",
-  "*xw: 0",
-  "*zw: 0",
-  ".background:	black",
-  ".foreground:	white",
-  "*color00:#FF66BE",
-  "*color10:#FFA300",
-  "*color20:#BEDC00",
-  "*color30:#12FB00",
-  "*color40:#00F9BE",
-  "*color50:#12D5FF",
-  "*color60:#BE9AFF",
-  "*color70:#FF5FFF",
-  "*color01:#FF5BAA",
-  "*color11:#F09200",
-  "*color21:#AAC500",
-  "*color31:#10E100",
-  "*color41:#00DFAA",
-  "*color51:#10BFFF",
-  "*color61:#AA8AFF",
-  "*color71:#F055FF",
-  "*color02:#EE529A",
-  "*color12:#D98400",
-  "*color22:#9AB200",
-  "*color32:#0ECB00",
-  "*color42:#00C99A",
-  "*color52:#0EADE7",
-  "*color62:#9A7DFF",
-  "*color72:#D94DE7",
-  "*color03:#DA4B8C",
-  "*color13:#C67900",
-  "*color23:#8CA300",
-  "*color33:#0DBA00",
-  "*color43:#00B88C",
-  "*color53:#0D9ED3",
-  "*color63:#8C72EA",
-  "*color73:#C646D3",
-  "*color04:#C84581",
-  "*color14:#B66F00",
-  "*color24:#819600",
-  "*color34:#0CAB00",
-  "*color44:#00A981",
-  "*color54:#0C91C2",
-  "*color64:#8169D7",
-  "*color74:#B641C2",
-  "*color05:#B94078",
-  "*color15:#A96700",
-  "*color25:#788B00",
-  "*color35:#0B9E00",
-  "*color45:#009D78",
-  "*color55:#0B86B3",
-  "*color65:#7861C7",
-  "*color75:#A93CB3",
-  "*color06:#AC3C6F",
-  "*color16:#9D6000",
-  "*color26:#6F8100",
-  "*color36:#0A9300",
-  "*color46:#00926F",
-  "*color56:#0A7DA7",
-  "*color66:#6F5AB9",
-  "*color76:#9D38A7",
-  "*color07:#A13868",
-  "*color17:#935900",
-  "*color27:#687900",
-  "*color37:#0A8A00",
-  "*color47:#008868",
-  "*color57:#0A759C",
-  "*color67:#6854AD",
-  "*color77:#93349C",
-  0,
-};
+  struct hyper_state *hs = (struct hyper_state *) calloc (1, sizeof(*hs));
 
-XrmOptionDescRec options [] =
-{
-  { "-observer-z",	".observer-z",	XrmoptionSepArg, 0 },
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-xw",		".xw",		XrmoptionSepArg, 0 },
-  { "-xy",		".xy",		XrmoptionSepArg, 0 },
-  { "-xz",		".xz",		XrmoptionSepArg, 0 },
-  { "-yw",		".yw",		XrmoptionSepArg, 0 },
-  { "-yz",		".yz",		XrmoptionSepArg, 0 },
-  { "-zw",		".zw",		XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 },
-};
-
-
-void
-screenhack (Display *d, Window w)
-{
-  struct hyper_state *hs;
-
-  hs = &hyper_state;
-  hs->hs_display = d;
-  hs->hs_window = w;
-
-  init (hs);
-
-  hyper (hs);
-}
-
-
-static void
-init (struct hyper_state *hs)
-{
-  Display *dpy;
-  Window win;
   XGCValues gcv;
   Colormap cmap;
   /* double xy, xz, yz, xw, yw, zw; */
@@ -211,42 +97,32 @@ init (struct hyper_state *hs)
   float observer_z;
   int delay;
 
-  dpy = hs->hs_display;
-  win = hs->hs_window;
+  hs->hs_display = dpy;
+  hs->hs_window = win;
 
-  observer_z = get_float_resource ("observer-z", "Float");
+  observer_z = get_float_resource (dpy, "observer-z", "Float");
   if (observer_z < 1.125)
     observer_z = 1.125;
   hs->hs_observer_z = observer_z;
 
   {
-    int root;
     XWindowAttributes wa;
-    int width;
-    int height;
-
-    root = get_boolean_resource("root", "Boolean");
     XGetWindowAttributes (dpy, win, &wa);
-    XSelectInput(dpy, win, root ? ExposureMask :
-		 wa.your_event_mask | ExposureMask | ButtonPressMask);
-
-    width = wa.width;
-    height = wa.height;
     cmap = wa.colormap;
-    set_sizes (hs, width, height);
+    set_sizes (hs, wa.width, wa.height);
   }
 
-  hs->hs_angle_xy = get_float_resource ("xy", "Float") * ANGLE_SCALE;
-  hs->hs_angle_xz = get_float_resource ("xz", "Float") * ANGLE_SCALE;
-  hs->hs_angle_yz = get_float_resource ("yz", "Float") * ANGLE_SCALE;
-  hs->hs_angle_xw = get_float_resource ("xw", "Float") * ANGLE_SCALE;
-  hs->hs_angle_yw = get_float_resource ("yw", "Float") * ANGLE_SCALE;
-  hs->hs_angle_zw = get_float_resource ("zw", "Float") * ANGLE_SCALE;
+  hs->hs_angle_xy = get_float_resource (dpy, "xy", "Float") * ANGLE_SCALE;
+  hs->hs_angle_xz = get_float_resource (dpy, "xz", "Float") * ANGLE_SCALE;
+  hs->hs_angle_yz = get_float_resource (dpy, "yz", "Float") * ANGLE_SCALE;
+  hs->hs_angle_xw = get_float_resource (dpy, "xw", "Float") * ANGLE_SCALE;
+  hs->hs_angle_yw = get_float_resource (dpy, "yw", "Float") * ANGLE_SCALE;
+  hs->hs_angle_zw = get_float_resource (dpy, "zw", "Float") * ANGLE_SCALE;
 
-  delay = get_integer_resource ("delay", "Integer");
+  delay = get_integer_resource (dpy, "delay", "Integer");
   hs->hs_delay = delay;
 
-  bg_pixel = get_pixel_resource ("background", "Background", dpy, cmap);
+  bg_pixel = get_pixel_resource (dpy, cmap, "background", "Background");
 
   if (mono_p)
     {
@@ -257,7 +133,7 @@ init (struct hyper_state *hs)
       gcv.function = GXcopy;
       gcv.foreground = bg_pixel;
       black_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
-      fg_pixel = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+      fg_pixel = get_pixel_resource (dpy, cmap, "foreground", "Foreground");
       gcv.foreground = fg_pixel;
       white_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
       hs->hs_color_gcs[0][0] = black_gc;
@@ -268,7 +144,12 @@ init (struct hyper_state *hs)
       int col;
       int dep;
 
-      gcv.function = GXxor;
+      gcv.function = GXcopy;
+
+      gcv.foreground = get_pixel_resource (dpy, cmap,
+                                           "background", "Background");
+      hs->black_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
+
       for (col = 0; col < 8; col++)
 	for (dep = 0; dep < 8; dep++)
 	  {
@@ -277,8 +158,8 @@ init (struct hyper_state *hs)
 	    GC color_gc;
 
 	    sprintf (buffer, "color%d%d", col, dep);
-	    fg_pixel = get_pixel_resource (buffer, "Foreground", dpy, cmap);
-	    gcv.foreground = fg_pixel ^ bg_pixel;
+	    fg_pixel = get_pixel_resource (dpy, cmap, buffer, "Foreground");
+	    gcv.foreground = fg_pixel /*^ bg_pixel*/;
 	    color_gc = XCreateGC (dpy, win, GCForeground|GCFunction, &gcv);
 	    hs->hs_color_gcs[col][dep] = color_gc;
 	  }
@@ -325,350 +206,325 @@ init (struct hyper_state *hs)
   cos_zw = cos (zw), sin_zw = sin (zw);
   hs->hs_cos_zw = cos_zw, hs->hs_sin_zw = sin_zw;
   }
+
+  return hs;
 }
 
 
-static void
-hyper (struct hyper_state *hs)
+static unsigned long
+hyperball_draw (Display *dpy, Window window, void *closure)
 {
-  int roted;
+  struct hyper_state *hs = (struct hyper_state *) closure;
 
-  roted = 0;
+  int icon;
+  int resize;
+  int redraw;
+  int stop;
+  int delay;
 
-  for (;;)
-    {
-      int icon;
-      int resize;
-      int redraw;
-      int stop;
-      int delay;
+  icon = hs->hs_icon;
+  resize = hs->hs_resize;
+  if (icon || !(hs->roted | resize))
+    goto skip1;
 
-      check_events (hs);
+#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  XClearWindow (dpy, window);
+#endif
 
-      icon = hs->hs_icon;
-      resize = hs->hs_resize;
-      if (icon || !(roted | resize))
-	goto skip1;
+  {
+    int pc;
+    const struct point_info *point_ptr;
+    struct point_state *point_state;
+    float observer_z;
+    float unit_scale;
+    float offset_x;
+    float offset_y;
+    char *mark_ptr;
 
+    pc = POINT_COUNT;
+    point_ptr = &point_table[0];
+    point_state = &hs->hs_points[0];
+    mark_ptr = &hs->hs_moved[0];
+
+    while (--pc >= 0)
       {
-	int pc;
-	const struct point_info *point_ptr;
-	struct point_state *point_state;
-	float observer_z;
-	float unit_scale;
-	float offset_x;
-	float offset_y;
-	char *mark_ptr;
+        double pos_a;
+        double pos_b;
+        double pos_c;
+        double pos_d;
+        double az, bz, cz, dz;
+        double sum_z;
+        double ax, bx, cx, dx;
+        double sum_x;
+        double ay, by, cy, dy;
+        double sum_y;
+        double mul;
+        int old_x;
+        int old_y;
+        int old_dep;
+        double xf;
+        double yf;
+        int new_x;
+        int new_y;
+        int new_dep;
+        int mov;
 
-	pc = POINT_COUNT;
-	point_ptr = &point_table[0];
-	point_state = &hs->hs_points[0];
-	mark_ptr = &hs->hs_moved[0];
-
-	while (--pc >= 0)
-	  {
-	    double pos_a;
-	    double pos_b;
-	    double pos_c;
-	    double pos_d;
-	    double az, bz, cz, dz;
-	    double sum_z;
-	    double ax, bx, cx, dx;
-	    double sum_x;
-	    double ay, by, cy, dy;
-	    double sum_y;
-	    double mul;
-	    int old_x;
-	    int old_y;
-	    int old_dep;
-	    double xf;
-	    double yf;
-	    int new_x;
-	    int new_y;
-	    int new_dep;
-	    int mov;
-
-	    pos_a = point_ptr->pg_a;
-	    pos_b = point_ptr->pg_b;
-	    pos_c = point_ptr->pg_c;
-	    pos_d = point_ptr->pg_d;
-	    point_ptr++;
-	    az = hs->hs_ref_az; bz = hs->hs_ref_bz; cz = hs->hs_ref_cz; dz = hs->hs_ref_dz;
-	    ax = hs->hs_ref_ax; bx = hs->hs_ref_bx; cx = hs->hs_ref_cx; dx = hs->hs_ref_dx;
-	    ay = hs->hs_ref_ay; by = hs->hs_ref_by; cy = hs->hs_ref_cy; dy = hs->hs_ref_dy;
-	    sum_z = pos_a * az + pos_b * bz + pos_c * cz + pos_d * dz;
-	    observer_z = hs->hs_observer_z;
-	    unit_scale = hs->hs_unit_scale;
-	    sum_x = pos_a * ax + pos_b * bx + pos_c * cx + pos_d * dx;
-	    sum_y = pos_a * ay + pos_b * by + pos_c * cy + pos_d * dy;
-	    mul = unit_scale / (observer_z - sum_z);
-	    offset_x = hs->hs_offset_x;
-	    offset_y = hs->hs_offset_y;
-	    old_x = point_state->new_x;
-	    old_y = point_state->new_y;
-	    old_dep = point_state->new_dep;
-	    xf = sum_x * mul + offset_x;
-	    yf = sum_y * mul + offset_y;
-	    new_x = (int)rint(xf);
-	    new_y = (int)rint(yf);
-	    new_dep = (int)floor(sum_z * -128.0) + 128;
-	    point_state->old_x = old_x;
-	    point_state->old_y = old_y;
-	    point_state->old_dep = old_dep;
-	    point_state->new_x = new_x;
-	    point_state->new_y = new_y;
-	    point_state->new_dep = new_dep;
-	    point_state++;
-	    mov = new_x != old_x || new_y != old_y || new_dep != old_dep;
-	    *mark_ptr = mov;
-	    mark_ptr++;
-	  }
+        pos_a = point_ptr->pg_a;
+        pos_b = point_ptr->pg_b;
+        pos_c = point_ptr->pg_c;
+        pos_d = point_ptr->pg_d;
+        point_ptr++;
+        az = hs->hs_ref_az; bz = hs->hs_ref_bz; cz = hs->hs_ref_cz; dz = hs->hs_ref_dz;
+        ax = hs->hs_ref_ax; bx = hs->hs_ref_bx; cx = hs->hs_ref_cx; dx = hs->hs_ref_dx;
+        ay = hs->hs_ref_ay; by = hs->hs_ref_by; cy = hs->hs_ref_cy; dy = hs->hs_ref_dy;
+        sum_z = pos_a * az + pos_b * bz + pos_c * cz + pos_d * dz;
+        observer_z = hs->hs_observer_z;
+        unit_scale = hs->hs_unit_scale;
+        sum_x = pos_a * ax + pos_b * bx + pos_c * cx + pos_d * dx;
+        sum_y = pos_a * ay + pos_b * by + pos_c * cy + pos_d * dy;
+        mul = unit_scale / (observer_z - sum_z);
+        offset_x = hs->hs_offset_x;
+        offset_y = hs->hs_offset_y;
+        old_x = point_state->new_x;
+        old_y = point_state->new_y;
+        old_dep = point_state->new_dep;
+        xf = sum_x * mul + offset_x;
+        yf = sum_y * mul + offset_y;
+        new_x = (int)rint(xf);
+        new_y = (int)rint(yf);
+        new_dep = (int)floor(sum_z * -128.0) + 128;
+        point_state->old_x = old_x;
+        point_state->old_y = old_y;
+        point_state->old_dep = old_dep;
+        point_state->new_x = new_x;
+        point_state->new_y = new_y;
+        point_state->new_dep = new_dep;
+        point_state++;
+        mov = new_x != old_x || new_y != old_y || new_dep != old_dep;
+        *mark_ptr = mov;
+        mark_ptr++;
       }
+  }
 
-    skip1:
-      icon = hs->hs_icon;
-      redraw = hs->hs_redraw;
-      if (icon || !(roted | redraw))
-	goto skip2;
+ skip1:
+  icon = hs->hs_icon;
+  redraw = hs->hs_redraw;
+  if (icon || !(hs->roted | redraw))
+    goto skip2;
 
+  {
+    int lc;
+    const struct line_info *li_ptr;
+    int mono;
+    Window win = hs->hs_window;
+
+    lc = LINE_COUNT;
+    li_ptr = &line_table[0];
+    mono = mono_p;
+
+    while (--lc >= 0)
       {
-	int lc;
-	const struct line_info *li_ptr;
-	int mono;
-	Display *dpy;
-	Window win;
+        int ip;
+        int iq;
+        int col;
+        int mov_p;
+        int mov_q;
+        struct point_state *sp;
+        struct point_state *sq;
+        int p_x;
+        int p_y;
+        int q_x;
+        int q_y;
+        GC erase_gc;
+        GC draw_gc;
+        int old_sum;
+        int new_sum;
+        int old_dep;
+        int new_dep;
 
-	lc = LINE_COUNT;
-	li_ptr = &line_table[0];
-	mono = mono_p;
-	dpy = hs->hs_display;
-	win = hs->hs_window;
+        ip = li_ptr->li_ip;
+        iq = li_ptr->li_iq;
+        col = li_ptr->li_color;
+        li_ptr++;
+        mov_p = hs->hs_moved[ip];
+        mov_q = hs->hs_moved[iq];
+        if (!(redraw | mov_p | mov_q))
+          continue;
 
-	while (--lc >= 0)
-	  {
-	    int ip;
-	    int iq;
-	    int col;
-	    int mov_p;
-	    int mov_q;
-	    struct point_state *sp;
-	    struct point_state *sq;
-	    int p_x;
-	    int p_y;
-	    int q_x;
-	    int q_y;
-	    GC erase_gc;
-	    GC draw_gc;
-	    int old_sum;
-	    int new_sum;
-	    int old_dep;
-	    int new_dep;
+        sp = &hs->hs_points[ip];
+        sq = &hs->hs_points[iq];
 
-	    ip = li_ptr->li_ip;
-	    iq = li_ptr->li_iq;
-	    col = li_ptr->li_color;
-	    li_ptr++;
-	    mov_p = hs->hs_moved[ip];
-	    mov_q = hs->hs_moved[iq];
-	    if (!(redraw | mov_p | mov_q))
-	      continue;
+        if (mono)
+          {
+            erase_gc = hs->hs_color_gcs[0][0];
+            draw_gc = hs->hs_color_gcs[0][1];
+          }
+        else
+          {
+            GC *row;
 
-	    sp = &hs->hs_points[ip];
-	    sq = &hs->hs_points[iq];
+            old_sum = sp->old_dep + sq->old_dep;
+            new_sum = sp->new_dep + sq->new_dep;
+            row = &hs->hs_color_gcs[col][0];
+            old_dep = old_sum >> 6;
+            new_dep = new_sum >> 6;
+            erase_gc = hs->black_gc;
+            draw_gc = row[new_dep];
+          }
 
-	    if (mono)
-	      {
-		erase_gc = hs->hs_color_gcs[0][0];
-		draw_gc = hs->hs_color_gcs[0][1];
-	      }
-	    else
-	      {
-		GC *row;
+        if (!redraw && erase_gc)
+          {
+            p_x = sp->old_x;
+            p_y = sp->old_y;
+            q_x = sq->old_x;
+            q_y = sq->old_y;
+            XDrawLine (dpy, win, erase_gc, p_x, p_y, q_x, q_y);
+          }
 
-		old_sum = sp->old_dep + sq->old_dep;
-		new_sum = sp->new_dep + sq->new_dep;
-		row = &hs->hs_color_gcs[col][0];
-		old_dep = old_sum >> 6;
-		new_dep = new_sum >> 6;
-		erase_gc = row[old_dep];
-		draw_gc = row[new_dep];
-	      }
-
-	    if (!redraw)
-	      {
-		p_x = sp->old_x;
-		p_y = sp->old_y;
-		q_x = sq->old_x;
-		q_y = sq->old_y;
-		XDrawLine (dpy, win, erase_gc, p_x, p_y, q_x, q_y);
-	      }
-
-	    p_x = sp->new_x;
-	    p_y = sp->new_y;
-	    q_x = sq->new_x;
-	    q_y = sq->new_y;
-	    XDrawLine (dpy, win, draw_gc, p_x, p_y, q_x, q_y);
-	  }
-
-	XFlush (dpy);
+        p_x = sp->new_x;
+        p_y = sp->new_y;
+        q_x = sq->new_x;
+        q_y = sq->new_y;
+        XDrawLine (dpy, win, draw_gc, p_x, p_y, q_x, q_y);
       }
+  }
 
-    skip2:
-      stop = hs->hs_stop;
-      roted = 0;
-      if (stop)
-	goto skip3;
+ skip2:
+  stop = hs->hs_stop;
+  hs->roted = 0;
+  if (stop)
+    goto skip3;
 
-      roted = 1;
+  hs->roted = 1;
 
-      {
-	double cos_a;
-	double sin_a;
-	double old_u;
-	double old_v;
-	double new_u;
-	double new_v;
+  {
+    double cos_a;
+    double sin_a;
+    double old_u;
+    double old_v;
+    double new_u;
+    double new_v;
 
- /* If you get error messages about the following forms, and you think you're
-    using an ANSI C conforming compiler, then you're mistaken.  Possibly you're
-    mixing an ANSI compiler with a non-ANSI preprocessor, or vice versa.
-    Regardless, your system is broken; it's not a bug in this program.
-  */
+    /* If you get error messages about the following forms, and you think you're
+       using an ANSI C conforming compiler, then you're mistaken.  Possibly you're
+       mixing an ANSI compiler with a non-ANSI preprocessor, or vice versa.
+       Regardless, your system is broken; it's not a bug in this program.
+    */
 #if defined(__STDC__) || defined(__ANSI_CPP__)
 
-#define rotate(name,dim0,dim1) \
-  old_u = hs->hs_ref_##name##dim0; \
-  old_v = hs->hs_ref_##name##dim1; \
-  new_u = old_u * cos_a + old_v * sin_a; \
-  new_v = old_v * cos_a - old_u * sin_a; \
-  hs->hs_ref_##name##dim0 = new_u; \
-  hs->hs_ref_##name##dim1 = new_v;
+#define rotate(name,dim0,dim1)                  \
+    old_u = hs->hs_ref_##name##dim0;            \
+    old_v = hs->hs_ref_##name##dim1;            \
+    new_u = old_u * cos_a + old_v * sin_a;      \
+    new_v = old_v * cos_a - old_u * sin_a;      \
+    hs->hs_ref_##name##dim0 = new_u;            \
+    hs->hs_ref_##name##dim1 = new_v;
 
-#define rotates(dim0,dim1) \
-  if (hs->hs_sin_##dim0##dim1 != 0) { \
-    cos_a = hs->hs_cos_##dim0##dim1; \
-    sin_a = hs->hs_sin_##dim0##dim1; \
-    rotate(a, dim0, dim1); \
-    rotate(b, dim0, dim1); \
-    rotate(c, dim0, dim1); \
-    rotate(d, dim0, dim1); \
-  }
+#define rotates(dim0,dim1)                      \
+    if (hs->hs_sin_##dim0##dim1 != 0) {         \
+      cos_a = hs->hs_cos_##dim0##dim1;          \
+      sin_a = hs->hs_sin_##dim0##dim1;          \
+      rotate(a, dim0, dim1);                    \
+      rotate(b, dim0, dim1);                    \
+      rotate(c, dim0, dim1);                    \
+      rotate(d, dim0, dim1);                    \
+    }
 
 #else /* !__STDC__, courtesy of Andreas Luik <luik@isa.de> */
 
-#define rotate(name,dim0,dim1,cos,sin) \
-  old_u = hs->hs_ref_/**/name/**/dim0; \
-  old_v = hs->hs_ref_/**/name/**/dim1; \
-  new_u = old_u * cos_a + old_v * sin_a; \
-  new_v = old_v * cos_a - old_u * sin_a; \
-  hs->hs_ref_/**/name/**/dim0 = new_u; \
-  hs->hs_ref_/**/name/**/dim1 = new_v;
+#define rotate(name,dim0,dim1,cos,sin)          \
+    old_u = hs->hs_ref_/**/name/**/dim0;        \
+    old_v = hs->hs_ref_/**/name/**/dim1;        \
+    new_u = old_u * cos_a + old_v * sin_a;      \
+    new_v = old_v * cos_a - old_u * sin_a;      \
+    hs->hs_ref_/**/name/**/dim0 = new_u;        \
+    hs->hs_ref_/**/name/**/dim1 = new_v;
 
-#define rotates(dim0,dim1) \
-  if (hs->hs_sin_/**/dim0/**/dim1 != 0) { \
-    cos_a = hs->hs_cos_/**/dim0/**/dim1; \
-    sin_a = hs->hs_sin_/**/dim0/**/dim1; \
-    rotate(a, dim0, dim1); \
-    rotate(b, dim0, dim1); \
-    rotate(c, dim0, dim1); \
-    rotate(d, dim0, dim1); \
-  }
+#define rotates(dim0,dim1)                      \
+    if (hs->hs_sin_/**/dim0/**/dim1 != 0) {     \
+      cos_a = hs->hs_cos_/**/dim0/**/dim1;      \
+      sin_a = hs->hs_sin_/**/dim0/**/dim1;      \
+      rotate(a, dim0, dim1);                    \
+      rotate(b, dim0, dim1);                    \
+      rotate(c, dim0, dim1);                    \
+      rotate(d, dim0, dim1);                    \
+    }
 
 #endif
 
-	rotates (x, y);
-	rotates (x, z);
-	rotates (y, z);
-	rotates (x, w);
-	rotates (y, w);
-	rotates (z, w);
-      }
+    rotates (x, y);
+    rotates (x, z);
+    rotates (y, z);
+    rotates (x, w);
+    rotates (y, w);
+    rotates (z, w);
+  }
 
-    skip3:
-      /* stop = hs->hs_stop; */
-      delay = hs->hs_delay;
-      if (stop && delay < 10000)
-	delay = 10000;
-      if (delay > 0)
-	usleep (delay);
-    }
+ skip3:
+  /* stop = hs->hs_stop; */
+  delay = hs->hs_delay;
+  if (stop && delay < 10000)
+    delay = 10000;
+
+  hs->hs_redraw = 0;
+  hs->hs_resize = 0;
+
+  return delay;
 }
 
 
-static void
-check_events (struct hyper_state *hs)
+static Bool
+hyperball_event (Display *dpy, Window win, void *closure, XEvent *event)
 {
-  Display *dpy;
-  int count;
-  int ic;
-  int resize;
-  Window win;
-  int redraw;
+  struct hyper_state *hs = (struct hyper_state *) closure;
 
-  dpy = hs->hs_display;
-  count = XEventsQueued (dpy, QueuedAfterReading);
-  ic = count;
-  hs->hs_resize = 0;
   hs->hs_redraw = 0;
 
-  while (--ic >= 0)
+  switch (event->type)
     {
-      XEvent	e;
+    case Expose:
+      hs->hs_icon = 0;
+      hs->hs_redraw = 1;
+      break;
 
-      XNextEvent (dpy, &e);
+    case ButtonPress:
+      switch (event->xbutton.button)
+        {
+        case 2:
+          hs->hs_stop = !hs->hs_stop;
+          break;
+        default:
+          break;
+        }
+      break;
 
-      switch (e.type)
-	{
-	case Expose:
-	  hs->hs_icon = 0;
-	  hs->hs_redraw = 1;
-	  break;
+#ifndef HAVE_COCOA
+    case UnmapNotify:
+      hs->hs_icon = 1;
+      hs->hs_redraw = 0;
+      break;
+#endif
 
-	case ConfigureNotify:
-	  hs->hs_icon = 0;
-	  hs->hs_resize = 1;
-	  hs->hs_redraw = 1;
-	  break;
-
-	case ButtonPress:
-	  switch (e.xbutton.button)
-	    {
-	    case 2:
-	      hs->hs_stop = !hs->hs_stop;
-	      break;
-	    default:
-	      break;
-	    }
-	  break;
-
-	case UnmapNotify:
-	  hs->hs_icon = 1;
-	  hs->hs_redraw = 0;
-	  break;
-
-	default:
-	  screenhack_handle_event(dpy, &e);
-	  break;
-	}
+    default:
+      break;
     }
 
-  resize = hs->hs_resize;
-  win = hs->hs_window;
-  if (resize)
-    {
-      XWindowAttributes wa;
-      int width;
-      int height;
-
-      XGetWindowAttributes (dpy, win, &wa);
-      width = wa.width;
-      height = wa.height;
-      set_sizes (hs, width, height);
-    }
-
-  redraw = hs->hs_redraw;
-  if (redraw)
+  if (hs->hs_redraw)
     XClearWindow (dpy, win);
+
+  return False;
+}
+
+static void
+hyperball_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  hs->hs_icon = 0;
+  hs->hs_resize = 1;
+  hs->hs_redraw = 1;
+  set_sizes (hs, w, h);
+  XClearWindow (dpy, window);
 }
 
 
@@ -693,6 +549,12 @@ set_sizes (struct hyper_state *hs, int width, int height)
   hs->hs_unit_scale = (float)unit_scale;
 }
 
+static void
+hyperball_free (Display *dpy, Window window, void *closure)
+{
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  free (hs);
+}
 
 /* data */
 
@@ -2504,3 +2366,97 @@ static const struct line_info line_table[LINE_COUNT] =
     { 569, 599, 7, },
 };
 
+
+static const char *hyperball_defaults[] =
+{
+  "*observer-z: 3",
+  "*delay: 20000",
+  "*xy: 3",
+  "*xz: 5",
+  "*yw: 10",
+  "*yz: 0",
+  "*xw: 0",
+  "*zw: 0",
+  ".background:	black",
+  ".foreground:	white",
+  "*color00:#FF66BE",
+  "*color10:#FFA300",
+  "*color20:#BEDC00",
+  "*color30:#12FB00",
+  "*color40:#00F9BE",
+  "*color50:#12D5FF",
+  "*color60:#BE9AFF",
+  "*color70:#FF5FFF",
+  "*color01:#FF5BAA",
+  "*color11:#F09200",
+  "*color21:#AAC500",
+  "*color31:#10E100",
+  "*color41:#00DFAA",
+  "*color51:#10BFFF",
+  "*color61:#AA8AFF",
+  "*color71:#F055FF",
+  "*color02:#EE529A",
+  "*color12:#D98400",
+  "*color22:#9AB200",
+  "*color32:#0ECB00",
+  "*color42:#00C99A",
+  "*color52:#0EADE7",
+  "*color62:#9A7DFF",
+  "*color72:#D94DE7",
+  "*color03:#DA4B8C",
+  "*color13:#C67900",
+  "*color23:#8CA300",
+  "*color33:#0DBA00",
+  "*color43:#00B88C",
+  "*color53:#0D9ED3",
+  "*color63:#8C72EA",
+  "*color73:#C646D3",
+  "*color04:#C84581",
+  "*color14:#B66F00",
+  "*color24:#819600",
+  "*color34:#0CAB00",
+  "*color44:#00A981",
+  "*color54:#0C91C2",
+  "*color64:#8169D7",
+  "*color74:#B641C2",
+  "*color05:#B94078",
+  "*color15:#A96700",
+  "*color25:#788B00",
+  "*color35:#0B9E00",
+  "*color45:#009D78",
+  "*color55:#0B86B3",
+  "*color65:#7861C7",
+  "*color75:#A93CB3",
+  "*color06:#AC3C6F",
+  "*color16:#9D6000",
+  "*color26:#6F8100",
+  "*color36:#0A9300",
+  "*color46:#00926F",
+  "*color56:#0A7DA7",
+  "*color66:#6F5AB9",
+  "*color76:#9D38A7",
+  "*color07:#A13868",
+  "*color17:#935900",
+  "*color27:#687900",
+  "*color37:#0A8A00",
+  "*color47:#008868",
+  "*color57:#0A759C",
+  "*color67:#6854AD",
+  "*color77:#93349C",
+  0,
+};
+
+static XrmOptionDescRec hyperball_options [] =
+{
+  { "-observer-z",	".observer-z",	XrmoptionSepArg, 0 },
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
+  { "-xw",		".xw",		XrmoptionSepArg, 0 },
+  { "-xy",		".xy",		XrmoptionSepArg, 0 },
+  { "-xz",		".xz",		XrmoptionSepArg, 0 },
+  { "-yw",		".yw",		XrmoptionSepArg, 0 },
+  { "-yz",		".yz",		XrmoptionSepArg, 0 },
+  { "-zw",		".zw",		XrmoptionSepArg, 0 },
+  { 0, 0, 0, 0 },
+};
+
+XSCREENSAVER_MODULE ("HyperBall", hyperball)

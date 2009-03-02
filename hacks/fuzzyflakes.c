@@ -39,8 +39,11 @@ typedef struct _flake_var
 } FlakeVariable;
 
 /* Struct containing the atrributes to our flakes */
-static struct _flake
+typedef struct _flake
 {
+   Display *dpy;
+   Window window;
+
    int                 Arms;
    int                 Thickness;
    int                 BorderThickness;
@@ -64,8 +67,6 @@ static struct _flake
    XGCValues           GCValues;
    unsigned long       GCFlags;
    GC                  GCVar;
-   Display            *DisplayVar;
-   Window              WindowVar;
    XWindowAttributes   XGWA;
    struct _dbevar
    {
@@ -77,17 +78,17 @@ static struct _flake
 /*
  *This gets the pixel resource for a color: #ffffff
  */
-unsigned int
-FuzzyFlakesColorResource(char *Color)
+static unsigned int
+FuzzyFlakesColorResource(Flake *flake, char *Color)
 {
    XColor              color;
 
-   if (!XParseColor(Flake.DisplayVar, Flake.XGWA.colormap, Color, &color))
+   if (!XParseColor(flake->dpy, flake->XGWA.colormap, Color, &color))
      {
 	fprintf(stderr, "%s: can't parse color %s", progname, Color);
 	return 0;
      }
-   if (!XAllocColor(Flake.DisplayVar, Flake.XGWA.colormap, &color))
+   if (!XAllocColor(flake->dpy, flake->XGWA.colormap, &color))
      {
 	fprintf(stderr, "%s: can't allocate color %s", progname, Color);
 	return 0;
@@ -102,7 +103,7 @@ FuzzyFlakesColorResource(char *Color)
  * her site is http://beautifulfreak.net/
  */
 static int
-FuzzyFlakesColorHelper(void)
+FuzzyFlakesColorHelper(Flake *flake)
 {
    unsigned int        iR, iG, iB;
    unsigned int        iR0, iG0, iB0;
@@ -119,11 +120,11 @@ FuzzyFlakesColorHelper(void)
 
    /* First convert from hex to dec */
    /* while splitting up the RGB values */
-   if (!XParseColor(Flake.DisplayVar, Flake.XGWA.colormap,
-                    Flake.Colors.Back, &color))
+   if (!XParseColor(flake->dpy, flake->XGWA.colormap,
+                    flake->Colors.Back, &color))
      {
 	fprintf(stderr, "%s: can't parse color %s", progname,
-                Flake.Colors.Back);
+                flake->Colors.Back);
 	return 1;
      }
    iR = color.red   >> 8;
@@ -299,263 +300,313 @@ FuzzyFlakesColorHelper(void)
    iG1 = nG1 * 255;
    iB1 = nB1 * 255;
 
-   Flake.Colors.Fore = malloc(sizeof(unsigned char) * 8);
-   Flake.Colors.Bord = malloc(sizeof(unsigned char) * 8);
+   flake->Colors.Fore = malloc(sizeof(unsigned char) * 8);
+   flake->Colors.Bord = malloc(sizeof(unsigned char) * 8);
 
-   sprintf(Flake.Colors.Fore, "#%02X%02X%02X", iR0, iG0, iB0);
-   sprintf(Flake.Colors.Bord, "#%02X%02X%02X", iR1, iG1, iB1);
+   sprintf(flake->Colors.Fore, "#%02X%02X%02X", iR0, iG0, iB0);
+   sprintf(flake->Colors.Bord, "#%02X%02X%02X", iR1, iG1, iB1);
 
    return 0;
 }
 
 static void
-FuzzyFlakesInit(Display * dpy, Window window)
+FuzzyFlakesInit(Flake *flake)
 {
    int                 i, j;
    XWindowAttributes   xgwa;
    Colormap            cmap;
 
-   XGetWindowAttributes(dpy, window, &xgwa);
+   XGetWindowAttributes(flake->dpy, flake->window, &xgwa);
    cmap = xgwa.colormap;
-   Flake.XGWA = xgwa;
-   Flake.DB.b = Flake.DB.ba = Flake.DB.bb = 0;
-   Flake.DB.dbuf = get_boolean_resource("doubleBuffer", "Boolean");
+   flake->XGWA = xgwa;
+   flake->DB.b = flake->DB.ba = flake->DB.bb = 0;
+   flake->DB.dbuf = get_boolean_resource(flake->dpy, "doubleBuffer", "Boolean");
 
-   if (Flake.DB.dbuf)
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+   flake->DB.dbuf = False;
+# endif
+
+   if (flake->DB.dbuf)
      {
-	Flake.DB.ba =
-	   XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-	Flake.DB.bb =
-	   XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-	Flake.DB.b = Flake.DB.ba;
+	flake->DB.ba =
+	   XCreatePixmap(flake->dpy, flake->window, xgwa.width, xgwa.height, xgwa.depth);
+	flake->DB.bb =
+	   XCreatePixmap(flake->dpy, flake->window, xgwa.width, xgwa.height, xgwa.depth);
+	flake->DB.b = flake->DB.ba;
      }
    else
      {
-	Flake.DB.b = window;
+	flake->DB.b = flake->window;
      }
 
-   Flake.DisplayVar = dpy;
-   Flake.WindowVar = window;
-   Flake.Arms = get_integer_resource("arms", "Integer");
-   Flake.Thickness = get_integer_resource("thickness", "Integer");
-   Flake.BorderThickness = get_integer_resource("bthickness", "Integer");
-   Flake.Radius = get_integer_resource("radius", "Integer");
+   flake->Arms = get_integer_resource(flake->dpy, "arms", "Integer");
+   flake->Thickness = get_integer_resource(flake->dpy, "thickness", "Integer");
+   flake->BorderThickness = get_integer_resource(flake->dpy, "bthickness", "Integer");
+   flake->Radius = get_integer_resource(flake->dpy, "radius", "Integer");
 
-   Flake.Density = get_integer_resource("density", "Integer");
-   Flake.Layers = get_integer_resource("layers", "Integer");
-   Flake.FallingSpeed = get_integer_resource("fallingspeed", "Integer");
-   Flake.Delay = get_integer_resource("delay", "Integer");
-   if (Flake.RandomColors == True)
-      Flake.RandomColors = get_boolean_resource("randomColors", "Boolean");
+   flake->Density = get_integer_resource(flake->dpy, "density", "Integer");
+   flake->Layers = get_integer_resource(flake->dpy, "layers", "Integer");
+   flake->FallingSpeed = get_integer_resource(flake->dpy, "fallingspeed", "Integer");
+   flake->Delay = get_integer_resource(flake->dpy, "delay", "Integer");
+   if (flake->RandomColors == True)
+      flake->RandomColors = get_boolean_resource(flake->dpy, "randomColors", "Boolean");
 
-   if (Flake.Delay < 0)
-      Flake.Delay = 0;
+   if (flake->Delay < 0)
+      flake->Delay = 0;
 
-   if (!Flake.Colors.Back)
+   if (!flake->Colors.Back)
      {
-	Flake.Colors.Back = get_string_resource("color", "Color");
-	if (!FuzzyFlakesColorResource(Flake.Colors.Back))
+	flake->Colors.Back = get_string_resource(flake->dpy, "color", "Color");
+	if (!FuzzyFlakesColorResource(flake, flake->Colors.Back))
 	  {
 	     fprintf(stderr, " reverting to random\n");
-	     Flake.RandomColors = True;
+	     flake->RandomColors = True;
 	  }
 
-	if (Flake.RandomColors)
+	if (flake->RandomColors)
 	  {
-	     if (Flake.Colors.Back)
-		free(Flake.Colors.Back);
-	     Flake.Colors.Back = malloc(sizeof(unsigned char) * 8);
-	     sprintf(Flake.Colors.Back, "#%X%X%X%X%X%X", random() % 16,
+	     if (flake->Colors.Back)
+		free(flake->Colors.Back);
+	     flake->Colors.Back = malloc(sizeof(unsigned char) * 8);
+	     sprintf(flake->Colors.Back, "#%X%X%X%X%X%X", random() % 16,
 		     random() % 16, random() % 16, random() % 16, random() % 16,
 		     random() % 16);
 	  }
 
 	/*
 	 * Here we establish our colormap based on what is in
-	 * Flake.Colors.Back
+	 * flake->Colors.Back
 	 */
-	if (FuzzyFlakesColorHelper())
+	if (FuzzyFlakesColorHelper(flake))
 	  {
 	     fprintf(stderr, " reverting to random\n");
-	     if (Flake.Colors.Back)
-		free(Flake.Colors.Back);
-	     Flake.Colors.Back = malloc(sizeof(unsigned char) * 8);
-	     sprintf(Flake.Colors.Back, "#%X%X%X%X%X%X", random() % 16,
+	     if (flake->Colors.Back)
+		free(flake->Colors.Back);
+	     flake->Colors.Back = malloc(sizeof(unsigned char) * 8);
+	     sprintf(flake->Colors.Back, "#%X%X%X%X%X%X", random() % 16,
 		     random() % 16, random() % 16, random() % 16, random() % 16,
 		     random() % 16);
-	     FuzzyFlakesColorHelper();
+	     FuzzyFlakesColorHelper(flake);
 	  }
 
-	Flake.ForeColor = FuzzyFlakesColorResource(Flake.Colors.Fore);
-	Flake.BackColor = FuzzyFlakesColorResource(Flake.Colors.Back);
-	Flake.BordColor = FuzzyFlakesColorResource(Flake.Colors.Bord);
+	flake->ForeColor = FuzzyFlakesColorResource(flake, flake->Colors.Fore);
+	flake->BackColor = FuzzyFlakesColorResource(flake, flake->Colors.Back);
+	flake->BordColor = FuzzyFlakesColorResource(flake, flake->Colors.Bord);
 
-	Flake.GCValues.foreground = Flake.ForeColor;
-	Flake.GCValues.background = Flake.BackColor;
-	Flake.RandomColors = False;
+	flake->GCValues.foreground = flake->ForeColor;
+	flake->GCValues.background = flake->BackColor;
+	flake->RandomColors = False;
      }
 
-   Flake.GCValues.line_width = Flake.Thickness;
-   Flake.GCValues.line_style = LineSolid;
-   Flake.GCValues.cap_style = CapProjecting;
-   Flake.GCValues.join_style = JoinMiter;
-   Flake.GCFlags |= (GCLineWidth | GCLineStyle | GCCapStyle | GCJoinStyle);
+   flake->GCValues.line_width = flake->Thickness;
+   flake->GCValues.cap_style = CapProjecting;
+   flake->GCValues.join_style = JoinMiter;
+   flake->GCFlags |= (GCLineWidth | GCCapStyle | GCJoinStyle);
 
-   Flake.GCVar =
-      XCreateGC(Flake.DisplayVar, Flake.WindowVar, Flake.GCFlags,
-		&Flake.GCValues);
+   flake->GCVar =
+      XCreateGC(flake->dpy, flake->window, flake->GCFlags,
+		&flake->GCValues);
 
-   Flake.Density = Flake.XGWA.width / 200 * Flake.Density;
-   Flake.Flakes = malloc(sizeof(FlakeVariable **) * Flake.Layers);
-   for (i = 1; i <= Flake.Layers; i++)
+   flake->Density = flake->XGWA.width / 200 * flake->Density;
+   flake->Flakes = malloc(sizeof(FlakeVariable **) * flake->Layers);
+   for (i = 1; i <= flake->Layers; i++)
      {
-	Flake.Flakes[i - 1] = malloc(sizeof(FlakeVariable *) * Flake.Density);
-	for (j = 0; j < Flake.Density; j++)
+	flake->Flakes[i - 1] = malloc(sizeof(FlakeVariable *) * flake->Density);
+	for (j = 0; j < flake->Density; j++)
 	  {
-	     Flake.Flakes[i - 1][j] = malloc(sizeof(FlakeVariable));
-	     Flake.Flakes[i - 1][j]->XPos = random() % Flake.XGWA.width;
-	     Flake.Flakes[i - 1][j]->YPos = random() % Flake.XGWA.height;
-	     Flake.Flakes[i - 1][j]->Angle = random() % 360 * (M_PI / 180);
-	     Flake.Flakes[i - 1][j]->Ticks = random() % 360;
-	     Flake.Flakes[i - 1][j]->XOffset = random() % Flake.XGWA.height;
+	     flake->Flakes[i - 1][j] = malloc(sizeof(FlakeVariable));
+	     flake->Flakes[i - 1][j]->XPos = random() % flake->XGWA.width;
+	     flake->Flakes[i - 1][j]->YPos = random() % flake->XGWA.height;
+	     flake->Flakes[i - 1][j]->Angle = random() % 360 * (M_PI / 180);
+	     flake->Flakes[i - 1][j]->Ticks = random() % 360;
+	     flake->Flakes[i - 1][j]->XOffset = random() % flake->XGWA.height;
 	  }
      }
 }
 
 static void
-FuzzyFlakesFreeFlake(void)
+FuzzyFlakesFreeFlake(Flake *flake)
 {
    int                 i, j;
 
-   for (i = 1; i <= Flake.Layers; i++)
+   for (i = 1; i <= flake->Layers; i++)
      {
-	for (j = 0; j < Flake.Density; j++)
+	for (j = 0; j < flake->Density; j++)
 	  {
-	     free(Flake.Flakes[i - 1][j]);
+	     free(flake->Flakes[i - 1][j]);
 	  }
-	free(Flake.Flakes[i - 1]);
+	free(flake->Flakes[i - 1]);
      }
 
-   XFreePixmap(Flake.DisplayVar, Flake.DB.bb);
-   XFreePixmap(Flake.DisplayVar, Flake.DB.ba);
+   if (flake->DB.bb) XFreePixmap(flake->dpy, flake->DB.bb);
+   if (flake->DB.ba) XFreePixmap(flake->dpy, flake->DB.ba);
 }
 
 static void
-FuzzyFlakesResizeTest(void)
-{
-   XWindowAttributes   xgwa;
-
-   XGetWindowAttributes(Flake.DisplayVar, Flake.WindowVar, &xgwa);
-   if (Flake.XGWA.width != xgwa.width || Flake.XGWA.height != xgwa.height)
-     {
-	FuzzyFlakesFreeFlake();
-	FuzzyFlakesInit(Flake.DisplayVar, Flake.WindowVar);
-     }
-}
-
-static void
-FuzzyFlakesMove(void)
+FuzzyFlakesMove(Flake *flake)
 {
    int                 i, j;
 
-   for (i = 1; i <= Flake.Layers; i++)
+   for (i = 1; i <= flake->Layers; i++)
      {
-	for (j = 0; j < Flake.Density; j++)
+	for (j = 0; j < flake->Density; j++)
 	  {
 	     FlakeVariable      *FlakeVar;
 
-	     FlakeVar = Flake.Flakes[i - 1][j];
+	     FlakeVar = flake->Flakes[i - 1][j];
 	     FlakeVar->Ticks++;
 	     FlakeVar->YPos =
-		FlakeVar->YPos + ((double)Flake.FallingSpeed) / 10 / i;
+		FlakeVar->YPos + ((double)flake->FallingSpeed) / 10 / i;
 	     FlakeVar->TrueX =
 		(sin
 		 (FlakeVar->XOffset +
-		  FlakeVar->Ticks * (M_PI / 180) * ((double)Flake.FallingSpeed /
+		  FlakeVar->Ticks * (M_PI / 180) * ((double)flake->FallingSpeed /
 						    10))) * 10 + FlakeVar->XPos;
 	     FlakeVar->Angle =
-		FlakeVar->Angle + 0.005 * ((double)Flake.FallingSpeed / 10);
-	     if (FlakeVar->YPos - Flake.Radius > Flake.XGWA.height)
+		FlakeVar->Angle + 0.005 * ((double)flake->FallingSpeed / 10);
+	     if (FlakeVar->YPos - flake->Radius > flake->XGWA.height)
 	       {
 		  FlakeVar->Ticks = 0;
-		  FlakeVar->YPos = 0 - Flake.Radius;
+		  FlakeVar->YPos = 0 - flake->Radius;
 	       }
 	  }
      }
 }
 
 static void
-FuzzyFlakesDrawFlake(int XPos, int YPos, double AngleOffset, int Layer)
+FuzzyFlakesDrawFlake(Flake *flake, int XPos, int YPos, double AngleOffset, int Layer)
 {
    int                 i;
    double              x, y, Angle, Radius;
 
    /* calculate the shrink factor debending on which layer we are drawing atm */
-   Radius = (double)(Flake.Radius - Layer * 5);
+   Radius = (double)(flake->Radius - Layer * 5);
    /* draw the flake one arm at a time */
-   for (i = 1; i <= Flake.Arms; i++)
+   for (i = 1; i <= flake->Arms; i++)
      {
 	int                 Diameter;
 
-	Diameter = (Flake.BorderThickness * 2 + Flake.Thickness) / Layer;
+	Diameter = (flake->BorderThickness * 2 + flake->Thickness) / Layer;
 	/* compute the angle of this arm of the flake */
-	Angle = ((2 * M_PI) / Flake.Arms) * i + AngleOffset;
+	Angle = ((2 * M_PI) / flake->Arms) * i + AngleOffset;
 	/* calculate the x and y dispositions for this arm */
 	y = (int)(sin(Angle) * Radius);
 	x = (int)(cos(Angle) * Radius);
 	/* draw the base for the arm */
-	Flake.GCValues.line_width = Diameter;
-	XFreeGC(Flake.DisplayVar, Flake.GCVar);
-	Flake.GCVar =
-	   XCreateGC(Flake.DisplayVar, Flake.DB.b, Flake.GCFlags,
-		     &Flake.GCValues);
-	XSetForeground(Flake.DisplayVar, Flake.GCVar, Flake.BordColor);
-	XDrawLine(Flake.DisplayVar, Flake.DB.b, Flake.GCVar, XPos, YPos,
+	flake->GCValues.line_width = Diameter;
+	XFreeGC(flake->dpy, flake->GCVar);
+	flake->GCVar =
+	   XCreateGC(flake->dpy, flake->DB.b, flake->GCFlags,
+		     &flake->GCValues);
+	XSetForeground(flake->dpy, flake->GCVar, flake->BordColor);
+	XDrawLine(flake->dpy, flake->DB.b, flake->GCVar, XPos, YPos,
 		  XPos + x, YPos + y);
      }
    /* draw the flake one arm at a time */
-   for (i = 1; i <= Flake.Arms; i++)
+   for (i = 1; i <= flake->Arms; i++)
      {
 	/* compute the angle of this arm of the flake */
-	Angle = ((2 * M_PI) / Flake.Arms) * i + AngleOffset;
+	Angle = ((2 * M_PI) / flake->Arms) * i + AngleOffset;
 	/* calculate the x and y dispositions for this arm */
 	y = (int)(sin(Angle) * Radius);
 	x = (int)(cos(Angle) * Radius);
 	/* draw the inside of the arm */
-	Flake.GCValues.line_width = Flake.Thickness / Layer;
-	XFreeGC(Flake.DisplayVar, Flake.GCVar);
-	Flake.GCVar =
-	   XCreateGC(Flake.DisplayVar, Flake.DB.b, Flake.GCFlags,
-		     &Flake.GCValues);
-	XSetForeground(Flake.DisplayVar, Flake.GCVar, Flake.ForeColor);
-	XDrawLine(Flake.DisplayVar, Flake.DB.b, Flake.GCVar, XPos, YPos,
+	flake->GCValues.line_width = flake->Thickness / Layer;
+	XFreeGC(flake->dpy, flake->GCVar);
+	flake->GCVar =
+	   XCreateGC(flake->dpy, flake->DB.b, flake->GCFlags,
+		     &flake->GCValues);
+	XSetForeground(flake->dpy, flake->GCVar, flake->ForeColor);
+	XDrawLine(flake->dpy, flake->DB.b, flake->GCVar, XPos, YPos,
 		  XPos + x, YPos + y);
      }
 }
 
 static void
-FuzzyFlakes(Display * dpy, Window window)
+FuzzyFlakes(Flake *flake)
 {
    int                 i, j;
 
-   FuzzyFlakesMove();
-   XSetForeground(Flake.DisplayVar, Flake.GCVar, Flake.BackColor);
-   XFillRectangle(Flake.DisplayVar, Flake.DB.b, Flake.GCVar, 0, 0,
-		  Flake.XGWA.width, Flake.XGWA.height);
-   for (i = Flake.Layers; i >= 1; i--)
+   FuzzyFlakesMove(flake);
+   XSetForeground(flake->dpy, flake->GCVar, flake->BackColor);
+   XFillRectangle(flake->dpy, flake->DB.b, flake->GCVar, 0, 0,
+		  flake->XGWA.width, flake->XGWA.height);
+   for (i = flake->Layers; i >= 1; i--)
      {
-	for (j = 0; j < Flake.Density; j++)
+	for (j = 0; j < flake->Density; j++)
 	  {
-	     FuzzyFlakesDrawFlake(Flake.Flakes[i - 1][j]->TrueX,
-				  Flake.Flakes[i - 1][j]->YPos,
-				  Flake.Flakes[i - 1][j]->Angle, i);
+	     FuzzyFlakesDrawFlake(flake,
+                                  flake->Flakes[i - 1][j]->TrueX,
+				  flake->Flakes[i - 1][j]->YPos,
+				  flake->Flakes[i - 1][j]->Angle, i);
 	  }
      }
 
 }
 
-char               *progclass = "FuzzyFlakes";
-char               *defaults[] = {
+static void *
+fuzzyflakes_init (Display *dpy, Window window)
+{
+   Flake *flake = (Flake *) calloc (1, sizeof(*flake));
+   flake->dpy = dpy;
+   flake->window = window;
+
+   /* This is needed even if it is going to be set to false */
+   flake->RandomColors = True;
+
+   /* set up our colors amoung many other things */
+   FuzzyFlakesInit(flake);
+
+   return flake;
+}
+
+static unsigned long
+fuzzyflakes_draw (Display *dpy, Window window, void *closure)
+{
+  Flake *flake = (Flake *) closure;
+
+  FuzzyFlakes(flake);
+  if (flake->DB.dbuf)
+    {
+      XCopyArea(flake->dpy, flake->DB.b, flake->window,
+                flake->GCVar, 0, 0, flake->XGWA.width, flake->XGWA.height,
+                0, 0);
+      flake->DB.b =
+        (flake->DB.b == flake->DB.ba ? flake->DB.bb : flake->DB.ba);
+    }
+
+  return flake->Delay;
+}
+
+static void
+fuzzyflakes_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  Flake *flake = (Flake *) closure;
+
+  if (flake->XGWA.width != w || flake->XGWA.height != h)
+    {
+      FuzzyFlakesFreeFlake(flake);
+      FuzzyFlakesInit(flake);
+    }
+}
+
+static Bool
+fuzzyflakes_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+fuzzyflakes_free (Display *dpy, Window window, void *closure)
+{
+  Flake *flake = (Flake *) closure;
+  FuzzyFlakesFreeFlake(flake);
+  free(flake);
+}
+
+
+static const char *fuzzyflakes_defaults[] = {
    "*color:	#efbea5",
    "*arms:	5",
    "*thickness:	10",
@@ -570,69 +621,21 @@ char               *defaults[] = {
    0
 };
 
-XrmOptionDescRec    options[] = {
-   {
-    "-color", ".color", XrmoptionSepArg, 0},
-   {
-    "-arms", ".arms", XrmoptionSepArg, 0},
-   {
-    "-thickness", ".thickness", XrmoptionSepArg, 0},
-   {
-    "-bthickness", ".bthickness", XrmoptionSepArg, 0},
-   {
-    "-radius", ".radius", XrmoptionSepArg, 0},
-   {
-    "-layers", ".layers", XrmoptionSepArg, 0},
-   {
-    "-density", ".density", XrmoptionSepArg, 0},
-   {
-    "-speed", ".fallingspeed", XrmoptionSepArg, 0},
-   {
-    "-delay", ".delay", XrmoptionSepArg, 0},
-   {
-    "-db", ".doubleBuffer", XrmoptionNoArg, "True"},
-   {
-    "-no-db", ".doubleBuffer", XrmoptionNoArg, "False"},
-   {
-    "-random-colors", ".randomColors", XrmoptionNoArg, "True"},
-   {
-    0, 0, 0, 0}
+static XrmOptionDescRec fuzzyflakes_options[] = {
+   { "-color", ".color", XrmoptionSepArg, 0},
+   { "-arms", ".arms", XrmoptionSepArg, 0},
+   { "-thickness", ".thickness", XrmoptionSepArg, 0},
+   { "-bthickness", ".bthickness", XrmoptionSepArg, 0},
+   { "-radius", ".radius", XrmoptionSepArg, 0},
+   { "-layers", ".layers", XrmoptionSepArg, 0},
+   { "-density", ".density", XrmoptionSepArg, 0},
+   { "-speed", ".fallingspeed", XrmoptionSepArg, 0},
+   { "-delay", ".delay", XrmoptionSepArg, 0},
+   { "-db", ".doubleBuffer", XrmoptionNoArg, "True"},
+   { "-no-db", ".doubleBuffer", XrmoptionNoArg, "False"},
+   { "-random-colors", ".randomColors", XrmoptionNoArg, "True"},
+   { 0, 0, 0, 0}
 };
 
-void
-screenhack(Display * dpy, Window window)
-{
-   register int        tick = 0;
 
-   /* This is needed even if it is going to be set to false */
-   Flake.RandomColors = True;
-
-   /* set up our colors amoung many other things */
-   FuzzyFlakesInit(dpy, window);
-
-   while (1)
-     {
-	/* Test every 50 ticks for a screen resize */
-	tick++;
-	if (tick == 50)
-	  {
-	     FuzzyFlakesResizeTest();
-	     tick = 0;
-	  }
-	FuzzyFlakes(dpy, Flake.DB.b);
-	if (Flake.DB.dbuf)
-	  {
-	     XCopyArea(Flake.DisplayVar, Flake.DB.b, Flake.WindowVar,
-		       Flake.GCVar, 0, 0, Flake.XGWA.width, Flake.XGWA.height,
-		       0, 0);
-	     Flake.DB.b =
-		(Flake.DB.b == Flake.DB.ba ? Flake.DB.bb : Flake.DB.ba);
-	  }
-	screenhack_handle_events(dpy);
-	XSync(dpy, False);
-	if (Flake.Delay)
-	   usleep(Flake.Delay);
-     }
-}
-
-/* EOF */
+XSCREENSAVER_MODULE ("FuzzyFlakes", fuzzyflakes)

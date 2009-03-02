@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998, 2002, 2006
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,144 +15,144 @@
 
 #include "screenhack.h"
 #include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
 
-static XColor colors[255];
-static int ncolors = 0;
-static int max_depth = 0;
-static int min_height = 0;
-static int min_width = 0;
+struct state {
+  XColor colors[255];
+  int ncolors;
+  int max_depth;
+  int min_height;
+  int min_width;
+  int delay;
+  XWindowAttributes xgwa;
+  GC fgc, bgc;
+  int current_color;
+};
 
 static void
-deco (Display *dpy,
-      Window window,
-      Colormap cmap,
-      GC fgc, GC bgc,
+deco (Display *dpy, Window window, struct state *st,
       int x, int y, int w, int h, int depth)
 {
-  if (((random() % max_depth) < depth) || (w < min_width) || (h < min_height))
+  if (((random() % st->max_depth) < depth) || (w < st->min_width) || (h < st->min_height))
     {
       if (!mono_p)
 	{
-	  static int current_color = 0;
-	  if (++current_color >= ncolors)
-	    current_color = 0;
-	  XSetForeground(dpy, bgc, colors[current_color].pixel);
+	  if (++st->current_color >= st->ncolors)
+	    st->current_color = 0;
+	  XSetForeground(dpy, st->bgc, st->colors[st->current_color].pixel);
 	}
-      XFillRectangle (dpy, window, bgc, x, y, w, h);
-      XDrawRectangle (dpy, window, fgc, x, y, w, h);
+      XFillRectangle (dpy, window, st->bgc, x, y, w, h);
+      XDrawRectangle (dpy, window, st->fgc, x, y, w, h);
     }
   else
     {
       if (random() & 1)
 	{
-	  deco (dpy, window, cmap, fgc, bgc, x, y, w/2, h, depth+1);
-	  deco (dpy, window, cmap, fgc, bgc, x+w/2, y, w/2, h, depth+1);
+	  deco (dpy, window, st, x, y, w/2, h, depth+1);
+	  deco (dpy, window, st, x+w/2, y, w/2, h, depth+1);
 	}
       else
 	{
-	  deco (dpy, window, cmap, fgc, bgc, x, y, w, h/2, depth+1);
-	  deco (dpy, window, cmap, fgc, bgc, x, y+h/2, w, h/2, depth+1);
+	  deco (dpy, window, st, x, y, w, h/2, depth+1);
+	  deco (dpy, window, st, x, y+h/2, w, h/2, depth+1);
 	}
     }
 }
 
-
-char *progclass = "Deco";
+static void *
+deco_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  XGCValues gcv;
 
-char *defaults [] = {
+  st->delay = get_integer_resource (dpy, "delay", "Integer");
+
+  st->max_depth = get_integer_resource (dpy, "maxDepth", "Integer");
+  if (st->max_depth < 1) st->max_depth = 1;
+  else if (st->max_depth > 1000) st->max_depth = 1000;
+
+  st->min_width = get_integer_resource (dpy, "minWidth", "Integer");
+  if (st->min_width < 2) st->min_width = 2;
+  st->min_height = get_integer_resource (dpy, "minHeight", "Integer");
+  if (st->min_height < 2) st->min_height = 2;
+
+  XGetWindowAttributes (dpy, window, &st->xgwa);
+
+  gcv.foreground = get_pixel_resource(dpy, st->xgwa.colormap,
+                                      "foreground", "Foreground");
+  st->fgc = XCreateGC (dpy, window, GCForeground, &gcv);
+
+  gcv.foreground = get_pixel_resource(dpy, st->xgwa.colormap,
+                                      "background", "Background");
+  st->bgc = XCreateGC (dpy, window, GCForeground, &gcv);
+
+  st->ncolors = get_integer_resource (dpy, "ncolors", "Integer");
+
+  make_random_colormap (dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors,
+			False, True, 0, True);
+
+  if (st->ncolors <= 2)
+    mono_p = True;
+
+  if (!mono_p)
+    {
+      GC tmp = st->fgc;
+      st->fgc = st->bgc;
+      st->bgc = tmp;
+    }
+
+  return st;
+}
+
+static unsigned long
+deco_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  XFillRectangle (dpy, window, st->bgc, 0, 0, st->xgwa.width, st->xgwa.height);
+  deco (dpy, window, st, 0, 0, st->xgwa.width, st->xgwa.height, 0);
+  return 1000000 * st->delay;
+}
+
+static void
+deco_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->xgwa.width = w;
+  st->xgwa.height = h;
+}
+
+static Bool
+deco_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+deco_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *deco_defaults [] = {
   ".background:		black",
   ".foreground:		white",
   "*maxDepth:		12",
   "*minWidth:		20",
   "*minHeight:		20",
-  "*cycle:		False",
   "*delay:		5",
-  "*cycleDelay:		1000000",
   "*ncolors:		64",
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec deco_options [] = {
   { "-max-depth",	".maxDepth",	XrmoptionSepArg, 0 },
   { "-min-width",	".minWidth",	XrmoptionSepArg, 0 },
   { "-min-height",	".minHeight",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
-  { "-cycle",		".cycle",	XrmoptionNoArg, "True" },
-  { "-no-cycle",	".cycle",	XrmoptionNoArg, "False" },
-  { "-cycle-delay",	".cycleDelay",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
-void
-screenhack (Display *dpy, Window window)
-{
-  GC fgc, bgc;
-  XGCValues gcv;
-  XWindowAttributes xgwa;
-  int delay = get_integer_resource ("delay", "Integer");
-  int cycle_delay = get_integer_resource ("cycleDelay", "Integer");
-  Bool writable = get_boolean_resource ("cycle", "Boolean");
-
-  max_depth = get_integer_resource ("maxDepth", "Integer");
-  if (max_depth < 1) max_depth = 1;
-  else if (max_depth > 1000) max_depth = 1000;
-
-  min_width = get_integer_resource ("minWidth", "Integer");
-  if (min_width < 2) min_width = 2;
-  min_height = get_integer_resource ("minHeight", "Integer");
-  if (min_height < 2) min_height = 2;
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-
-  gcv.foreground = get_pixel_resource("foreground", "Foreground",
-				      dpy, xgwa.colormap);
-  fgc = XCreateGC (dpy, window, GCForeground, &gcv);
-
-  gcv.foreground = get_pixel_resource("background", "Background",
-				      dpy, xgwa.colormap);
-  bgc = XCreateGC (dpy, window, GCForeground, &gcv);
-
-  ncolors = get_integer_resource ("ncolors", "Integer");
-
-  make_random_colormap (dpy, xgwa.visual, xgwa.colormap, colors, &ncolors,
-			False, True, &writable, True);
-
-  if (ncolors <= 2)
-    mono_p = True;
-
-  if (!mono_p)
-    {
-      GC tmp = fgc;
-      fgc = bgc;
-      bgc = tmp;
-    }
-
-  while (1)
-    {
-      XGetWindowAttributes (dpy, window, &xgwa);
-      XFillRectangle(dpy, window, bgc, 0, 0, xgwa.width, xgwa.height);
-      deco (dpy, window, xgwa.colormap, fgc, bgc,
-	    0, 0, xgwa.width, xgwa.height, 0);
-      XSync (dpy, False);
-      screenhack_handle_events (dpy);
-
-      if (!delay) continue;
-      if (!writable)
-	sleep (delay);
-      else
-	{
-	  time_t start = time((time_t) 0);
-	  while (start - delay < time((time_t) 0))
-	    {
-	      rotate_colors (dpy, xgwa.colormap, colors, ncolors, 1);
-              XSync (dpy, False);
-              screenhack_handle_events (dpy);
-	      if (cycle_delay)
-		usleep (cycle_delay);
-	    }
-	}
-    }
-}
+XSCREENSAVER_MODULE ("Deco", deco)

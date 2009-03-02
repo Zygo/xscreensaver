@@ -24,14 +24,16 @@
             _label="Length of trails" _low-label="Short" _high-label="Long"
             low="-20" high="-2" default="-10" convert="invert"/>
 
-  <boolean id="rotate" _label="turn on/off rotating around attractor." arg-unset="-no-rotate"/>
-  <boolean id="ride"   _label="turn on/off ride in the flow." arg-unset="-no-ride"/>
-  <boolean id="box"    _label="turn on/off bounding box."  arg-unset="-no-box"/>
-  <boolean id="periodic" _label="turn on/off periodic attractors." arg-unset="-no-periodic"/>
-  <boolean id="search" _label="turn on/off search for new attractors." arg-unset="-no-search"/>
-  <boolean id="dbuf" _label="turn on/off double buffering." arg-unset="-no-dbuf"/>
+  <boolean id="rotate" _label="Rotating around attractor" arg-unset="-no-rotate"/>
+  <boolean id="ride"   _label="Ride in the flow" arg-unset="-no-ride"/>
+  <boolean id="box"    _label="Draw bounding box"  arg-unset="-no-box"/>
+  <boolean id="periodic" _label="Periodic attractors" arg-unset="-no-periodic"/>
+  <boolean id="search" _label="Search for new attractors" arg-unset="-no-search"/>
+<!--  <boolean id="dbuf" _label="Double Buffer" arg-unset="-no-dbuf"/> -->
 
   <_description>
-Strange attractors formed of flows in a 3D differential equation phase space.  Written by Tim Auckland.
+Strange attractors formed of flows in a 3D differential equation phase space.
+
+Written by Tim Auckland; 1998.
   </_description>
 </screensaver>

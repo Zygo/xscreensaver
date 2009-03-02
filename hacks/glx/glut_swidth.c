@@ -8,8 +8,14 @@
 #if 0   /* for Mesa */
 # include "glutint.h"
 #else   /* for xscreensaver */
-# include "config.h"
-# include <GL/gl.h>
+# ifdef HAVE_CONFIG_H
+#  include "config.h"
+# endif
+# ifdef HAVE_COCOA
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+#endif
 # undef APIENTRY
 # define APIENTRY /**/
 #endif

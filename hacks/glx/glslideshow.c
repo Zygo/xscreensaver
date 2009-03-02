@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003-2005 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -68,15 +68,25 @@
  *   thread support at a lower level?
  */
 
-#include <X11/Intrinsic.h>
+#define DEFAULTS  "*delay:           20000                \n" \
+		  "*wireframe:       False                \n" \
+                  "*showFPS:         False                \n" \
+	          "*fpsSolid:        True                 \n" \
+	          "*useSHM:          True                 \n" \
+		  "*titleFont:       -*-times-bold-r-normal-*-180-*\n" \
+                  "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
+		  "*grabDesktopImages:   False \n" \
+		  "*chooseRandomImages:  True  \n"
 
-# define PROGCLASS "GLSlideshow"
-# define HACK_INIT init_slideshow
-# define HACK_DRAW draw_slideshow
-# define HACK_RESHAPE reshape_slideshow
-# define HACK_HANDLE_EVENT glslideshow_handle_event
-# define EVENT_MASK        (ExposureMask|VisibilityChangeMask)
-# define slideshow_opts xlockmore_opts
+# define refresh_slideshow 0
+# define release_slideshow 0
+# include "xlockmore.h"
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#ifdef USE_GL
+
 
 # define DEF_FADE_DURATION  "2"
 # define DEF_PAN_DURATION   "6"
@@ -88,30 +98,8 @@
 # define DEF_DEBUG          "False"
 # define DEF_MIPMAP         "True"
 
-#define DEFAULTS  "*delay:           20000                \n" \
-		  "*wireframe:       False                \n" \
-                  "*showFPS:         False                \n" \
-	          "*fpsSolid:        True                 \n" \
-	          "*useSHM:          True                 \n" \
-		  "*titleFont:       -*-times-bold-r-normal-*-180-*\n" \
-                  "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n"
-
-# include "xlockmore.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#ifdef USE_GL
-
-#include <GL/glu.h>
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "grab-ximage.h"
 #include "glxfonts.h"
-
-extern XtAppContext app;
 
 typedef struct {
   double x, y, w, h;
@@ -160,6 +148,7 @@ typedef struct {
   double image_load_time;	/* time when we last loaded a new image */
   double prev_frame_time;	/* time when we last drew a frame */
 
+  Bool awaiting_first_image_p;  /* Early in startup: nothing to display yet */
   Bool redisplay_needed_p;	/* Sometimes we can get away with not
                                    re-painting.  Tick this if a redisplay
                                    is required. */
@@ -175,6 +164,9 @@ typedef struct {
   GLuint font_dlist;
 
   int sprite_id, image_id;      /* debugging id counters */
+
+  double time_elapsed;
+  int frames_elapsed;
 
 } slideshow_state;
 
@@ -210,7 +202,8 @@ static XrmOptionDescRec opts[] = {
   {"-cutoff",       ".FPScutoff",     XrmoptionSepArg, 0      },
   {"-titles",       ".titles",        XrmoptionNoArg, "True"  },
   {"-letterbox",    ".letterbox",     XrmoptionNoArg, "True"  },
-  {"-clip",         ".letterbox",     XrmoptionNoArg, "False"  },
+  {"-no-letterbox", ".letterbox",     XrmoptionNoArg, "False" },
+  {"-clip",         ".letterbox",     XrmoptionNoArg, "False" },
   {"-mipmaps",      ".mipmap",        XrmoptionNoArg, "True"  },
   {"-no-mipmaps",   ".mipmap",        XrmoptionNoArg, "False" },
   {"-debug",        ".debug",         XrmoptionNoArg, "True"  },
@@ -228,12 +221,15 @@ static argtype vars[] = {
   { &do_titles,     "titles",       "Titles",       DEF_TITLES,        t_Bool},
 };
 
-ModeSpecOpt slideshow_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt slideshow_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 static const char *
 blurb (void)
 {
+# ifdef HAVE_COCOA
+  return "GLSlideshow";
+# else
   static char buf[255];
   time_t now = time ((time_t *) 0);
   char *ct = (char *) ctime (&now);
@@ -245,6 +241,7 @@ blurb (void)
   strncpy(buf+n, ct+11, 8);
   strcpy(buf+n+9, ": ");
   return buf;
+# endif
 }
 
 
@@ -279,7 +276,6 @@ alloc_image (ModeInfo *mi)
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   image *img = (image *) calloc (1, sizeof (*img));
-  Bool async_p = True;
 
   img->id = ++ss->image_id;
   img->loaded_p = False;
@@ -293,54 +289,14 @@ alloc_image (ModeInfo *mi)
 
   if (wire)
     image_loaded_cb (0, 0, 0, 0, 0, 0, img);
-  else if (async_p)
-    screen_to_texture_async (mi->xgwa.screen, mi->window, 0, 0, mipmap_p,
-                             img->texid, image_loaded_cb, img);
   else
-    {
-      char *filename = 0;
-      XRectangle geom;
-      int iw=0, ih=0, tw=0, th=0;
-      glBindTexture (GL_TEXTURE_2D, img->texid);
-
-      if (! screen_to_texture (mi->xgwa.screen, mi->window, 0, 0, mipmap_p,
-                               &filename, &geom, &iw, &ih, &tw, &th))
-        exit(1);
-      image_loaded_cb (filename, &geom, iw, ih, tw, th, img);
-      if (filename) free (filename);
-    }
+    load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context,
+                        0, 0, mipmap_p, img->texid, image_loaded_cb, img);
 
   ss->images[ss->nimages++] = img;
   if (ss->nimages >= countof(ss->images)) abort();
 
   return img;
-}
-
-
-/* Block until the first image is completely loaded.
-   We normally load images in the background, but we have nothing to draw
-   until we get that first image...
- */
-static void
-await_first_image (ModeInfo *mi)
-{
-  slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  image *img;
-  int i = 0;
-  if (ss->nimages != 0) abort();
-  img = alloc_image (mi);
-
-  while (! img->loaded_p)
-    {
-      usleep (100000);         /* check every 1/10th sec */
-      if (i++ > 600) abort();  /* if a minute has passed, we're broken */
-
-      while (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-    }
-
-  if (debug_p)
-    fprintf (stderr, "\n");
 }
 
 
@@ -931,7 +887,7 @@ draw_sprites (ModeInfo *mi)
 }
 
 
-void
+ENTRYPOINT void
 reshape_slideshow (ModeInfo *mi, int width, int height)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
@@ -959,8 +915,8 @@ reshape_slideshow (ModeInfo *mi, int width, int height)
 }
 
 
-Bool
-glslideshow_handle_event (ModeInfo *mi, XEvent *event)
+ENTRYPOINT Bool
+slideshow_handle_event (ModeInfo *mi, XEvent *event)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
@@ -1033,21 +989,21 @@ sanity_check (ModeInfo *mi)
 static void
 check_fps (ModeInfo *mi)
 {
+#ifndef HAVE_COCOA  /* always assume Cocoa is fast enough */
+
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
-  static double time_elapsed = 0;
-  static int frames_elapsed = 0;
   double start_time, end_time, wall_elapsed, frame_duration, fps;
   int i;
 
   start_time = ss->now;
   end_time = double_time();
   frame_duration = end_time - start_time;   /* time spent drawing this frame */
-  time_elapsed += frame_duration;           /* time spent drawing all frames */
-  frames_elapsed++;
+  ss->time_elapsed += frame_duration;       /* time spent drawing all frames */
+  ss->frames_elapsed++;
 
   wall_elapsed = end_time - ss->dawn_of_time;
-  fps = frames_elapsed / time_elapsed;
+  fps = ss->frames_elapsed / ss->time_elapsed;
   ss->theoretical_fps = fps;
 
   if (ss->checked_fps_p) return;
@@ -1062,7 +1018,7 @@ check_fps (ModeInfo *mi)
       if (debug_p)
         fprintf (stderr,
                  "%s: %.1f fps is fast enough (with %d frames in %.1f secs)\n",
-                 blurb(), fps, frames_elapsed, wall_elapsed);
+                 blurb(), fps, ss->frames_elapsed, wall_elapsed);
       return;
     }
 
@@ -1085,6 +1041,7 @@ check_fps (ModeInfo *mi)
 
   /* Need this in case zoom changed. */
   reshape_slideshow (mi, mi->xgwa.width, mi->xgwa.height);
+#endif /* HAVE_COCOA */
 }
 
 
@@ -1108,7 +1065,7 @@ hack_resources (void)
 }
 
 
-void
+ENTRYPOINT void
 init_slideshow (ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
@@ -1163,16 +1120,12 @@ init_slideshow (ModeInfo *mi)
   ss->dawn_of_time = ss->now;
   ss->prev_frame_time = ss->now;
 
-  await_first_image (mi);   /* wait for first image to fully load */
-
-  ss->now = double_time();
-  ss->dawn_of_time = ss->now;
-
-  new_sprite (mi);          /* start first sprite fading in */
+  ss->awaiting_first_image_p = True;
+  alloc_image (mi);
 }
 
 
-void
+ENTRYPOINT void
 draw_slideshow (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
@@ -1180,6 +1133,22 @@ draw_slideshow (ModeInfo *mi)
 
   if (!ss->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+
+  if (ss->awaiting_first_image_p)
+    {
+      image *img = ss->images[0];
+      if (!img) abort();
+      if (!img->loaded_p)
+        return;
+
+      ss->awaiting_first_image_p = False;
+      ss->dawn_of_time = double_time();
+
+      /* start the very first sprite fading in */
+      new_sprite (mi);
+    }
 
   ss->now = double_time();
 
@@ -1245,5 +1214,7 @@ draw_slideshow (ModeInfo *mi)
   ss->redisplay_needed_p = False;
   check_fps (mi);
 }
+
+XSCREENSAVER_MODULE_2 ("GLSlideshow", glslideshow, slideshow)
 
 #endif /* USE_GL */

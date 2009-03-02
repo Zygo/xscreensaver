@@ -3,7 +3,7 @@
 halo - draw circular patterns
 .SH SYNOPSIS
 .B halo
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIint\fP] [\-delay \fIusecs\fP] [\-mode seuss | ramp | random ] [\-animate] [\-colors \fIinteger\fP] [\-cycle] [\-no\-cycle] [\-cycle\-delay \fIusecs\fP] 
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIint\fP] [\-delay \fIusecs\fP] [\-mode seuss | ramp | random ] [\-animate] [\-colors \fIinteger\fP] 
 .SH DESCRIPTION
 The \fIhalo\fP program draws cool patterns based on circles.
 .SH OPTIONS
@@ -47,15 +47,6 @@ How many colors to use.  Default 100.
 If specified, then the centerpoints of the circles will bounce around.
 Otherwise, the circles will be drawn once, erased, and a new set of
 circles will be drawn.
-.TP 8
-.B \-cycle
-.TP 8
-.B \-no\-cycle
-Whether to do colormap cycling.  Default is to cycle.
-.TP 8
-.B \-cycle\-delay
-Number of microseconds between shifts of the colormap; default 100000,
-or 1/10th second.
 .SH ENVIRONMENT
 .PP
 .TP 8

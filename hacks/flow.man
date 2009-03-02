@@ -20,7 +20,7 @@ flow - strange attractors.
 .SH DESCRIPTION
 Strange attractors formed of flows in a 3D differential equation phase
 space.  Features the popular attractors described by \fBLorentz\fP,
-\fBRössler\fP, \fBBirkhoff\fP and \fBDuffing\fP, and can now discover
+\fBRoessler\fP, \fBBirkhoff\fP and \fBDuffing\fP, and can now discover
 entirely new attractors by itself.
 .SH OPTIONS
 .TP 8

@@ -31,28 +31,20 @@
  * This hack uses lookup tables for sin, cos and tan - it can do a lot
  */
 
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
-# define PROGCLASS                                      "Circuit"
-# define HACK_INIT                                      init_circuit
-# define HACK_DRAW                                      draw_circuit
-# define HACK_RESHAPE                           reshape_circuit
-# define circuit_opts                                     xlockmore_opts
-/* insert defaults here */
-
-#define DEF_SPIN        "True"
-#define DEF_SEVEN       "False"
-#define DEF_PARTS       "10"
-
 #define DEFAULTS        "*delay:   20000 \n" \
                         "*showFPS: False \n"
 
+# define refresh_circuit 0
+# define circuit_handle_event 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"                                     /* from the xlockmore distribution */
 #endif /* !STANDALONE */
+
+#define DEF_SPIN        "True"
+#define DEF_SEVEN       "False"
+#define DEF_PARTS       "10"
 
 /* lifted from lament.c */
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
@@ -61,20 +53,18 @@
 
 #ifdef USE_GL
 
-#include <GL/glu.h>
 #include "font-ximage.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static int maxparts;
-static int spin;
-static int seven;
-static int rotate;
-static int rotatespeed;
-static int uselight;
 static char *font;
-int def_parts = 10;
+static int rotatespeed;
+static int spin;
+static int rotate;
+static int uselight;
+static int seven;
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -103,7 +93,7 @@ static argtype vars[] = {
   {&seven, "seven", "Seven", DEF_SEVEN, t_Bool},
 };
 
-ModeSpecOpt circuit_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt circuit_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 ModStruct   circuit_description =
@@ -114,56 +104,15 @@ ModStruct   circuit_description =
 
 #endif
 
-
-typedef struct {
-  GLXContext *glx_context;
-  Window window;
-} Circuit;
-
-static Circuit *circuit = NULL;
-
-#include <math.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265
-#endif
-
-/* window width, height */
-int win_w, win_h;
-
-/* width and height of viewport */
-
-#define XMAX 30
-static int YMAX = 30;
-
 #define MAX_COMPONENTS 30
-
 #define MOVE_MULT 0.02
 
-static float f_rand(void) {
+static float f_rand(void)
+{
    return ((float)RAND(10000)/(float)10000);
 }
 
 #define RAND_RANGE(min, max) ((min) + (max - min) * f_rand())
-
-/* one lucky led gets to be a light source , unless -no-light*/
-int light = 0;
-int lighton = 0;
-
-/* stores refs to textures */
-static int s_refs[50];
-
-static GLfloat viewer[] = {0.0, 0.0, 14.0};
-static GLfloat lightpos[] = {7.0, 7.0, 15, 1.0};
-
-float sin_table[720];
-float cos_table[720];
-float tan_table[720];
-
-ModeInfo *modeinfo;
 
 /* used for allocating font textures */
 typedef struct {
@@ -189,7 +138,7 @@ typedef struct {
   GLfloat r, g, b; /* body colour */
 } Diode;
 
-static const char * transistortypes[] = {
+static const char * const transistortypes[] = {
   "TIP2955",
   "TIP32C",
   "LM 350T",
@@ -205,7 +154,7 @@ static const char * transistortypes[] = {
   "SC141D"
 };
 
-static const char * to92types[] = {
+static const char * const to92types[] = {
   "C\n548",
   "C\n848",
   "74\nL05",
@@ -220,7 +169,7 @@ static const char * to92types[] = {
   "LM\n35DZ",
 };
 
-static const char * smctypes[] = {
+static const char * const smctypes[] = {
   "1M-",
   "1K",
   "1F",
@@ -340,11 +289,9 @@ typedef struct {
   void * c; /* pointer to the component */
 } Component;
 
-static int band_list[12];
-  
 /* standard colour codes */
 
-static GLfloat colorcodes [12][3] = {
+static const GLfloat colorcodes [12][3] = {
   {0.0,0.0,0.0},    /* black  0 */
   {0.49,0.25,0.08}, /* brown  1 */
   {1.0,0.0,0.0},    /* red    2 */
@@ -360,7 +307,7 @@ static GLfloat colorcodes [12][3] = {
 };
 
 /* base values for components - we can multiply by 0 - 1M */
-static int values [9][2] = {
+static const int values [9][2] = {
   {1,0},
   {2,2},
   {3,3},
@@ -372,60 +319,108 @@ static int values [9][2] = {
   {9,1}
 };
 
-void DrawResistor(Resistor *);
-void DrawDiode(Diode *);
-void DrawTransistor(Transistor *);
-void DrawLED(LED *);
-void DrawIC(IC *);
-void DrawCapacitor(Capacitor *);
-void DrawDisp(Disp *);
-void DrawFuse(Fuse *);
-void DrawRCA(RCA *);
-void DrawThreeFive(ThreeFive *);
-void DrawSwitch(Switch *);
+typedef struct {
+  GLXContext *glx_context;
+  Window window;
 
-void freetexture(GLuint);
-void reorder(Component *[]);
-void circle(float, int,int);
-void bandedCylinder(float, float , GLfloat, GLfloat , GLfloat,  Band **, int);
-TexNum *fonttexturealloc(const char *, float *, float *);
-void Rect(GLfloat , GLfloat , GLfloat, GLfloat , GLfloat ,GLfloat);
-void ICLeg(GLfloat, GLfloat, GLfloat, int);
-void HoledRectangle(GLfloat, GLfloat, GLfloat, GLfloat, int);
-Resistor *NewResistor(void);
-Diode *NewDiode(void);
-Transistor *NewTransistor(void);
-LED * NewLED(void);
-Capacitor *NewCapacitor(void);
-IC* NewIC(void);
-Disp* NewDisp(void);
-Fuse *NewFuse(void);
-RCA *NewRCA(void);
-ThreeFive *NewThreeFive(void);
-Switch *NewSwitch(void);
+  int XMAX, YMAX;
+  int win_w, win_h;
+
+  /* one lucky led gets to be a light source , unless -no-light*/
+  int light;
+  int lighton;
+
+  /* stores refs to textures */
+  int s_refs[50];
+
+  GLfloat viewer[3];
+  GLfloat lightpos[4];
+
+  float sin_table[720];
+  float cos_table[720];
+  float tan_table[720];
+
+  Component *components[MAX_COMPONENTS];
+  int band_list[12];
+
+  GLfloat grid_col[3], grid_col2[3];
+
+  int display_i;
+  GLfloat rotate_angle;
+
+  char *font_strings[50]; /* max of 40 textures */
+  int font_w[50], font_h[50];
+  int font_init;
+
+  GLfloat draw_sx, draw_sy; /* bright spot co-ords */
+  int draw_sdir; /* 0 = left-right, 1 = right-left, 2 = up->dn, 3 = dn->up */
+  int draw_s; /* if spot is enabled */
+  float draw_ds; /* speed of spot */
+
+} Circuit;
+
+static Circuit *circuit = NULL;
+
+
+static void DrawResistor(Circuit *, Resistor *);
+static void DrawDiode(Circuit *, Diode *);
+static void DrawTransistor(Circuit *, Transistor *);
+static void DrawLED(Circuit *, LED *);
+static void DrawIC(Circuit *, IC *);
+static void DrawCapacitor(Circuit *, Capacitor *);
+static void DrawDisp(Circuit *, Disp *);
+static void DrawFuse(Circuit *, Fuse *);
+static void DrawRCA(Circuit *, RCA *);
+static void DrawThreeFive(Circuit *, ThreeFive *);
+static void DrawSwitch(Circuit *, Switch *);
+
+static void freetexture(Circuit *, GLuint);
+static void reorder(Component *[]);
+static void circle(Circuit *, float, int,int);
+static void bandedCylinder(Circuit *, 
+                           float, float , GLfloat, GLfloat , GLfloat,  
+                           Band **, int);
+static TexNum *fonttexturealloc(ModeInfo *, const char *, float *, float *);
+static void Rect(GLfloat , GLfloat , GLfloat, GLfloat , GLfloat ,GLfloat);
+static void ICLeg(GLfloat, GLfloat, GLfloat, int);
+static void HoledRectangle(Circuit *ci, 
+                           GLfloat, GLfloat, GLfloat, GLfloat, int);
+static Resistor *NewResistor(void);
+static Diode *NewDiode(void);
+static Transistor *NewTransistor(ModeInfo *);
+static LED * NewLED(Circuit *);
+static Capacitor *NewCapacitor(Circuit *);
+static IC* NewIC(ModeInfo *);
+static Disp* NewDisp(Circuit *);
+static Fuse *NewFuse(Circuit *);
+static RCA *NewRCA(Circuit *);
+static ThreeFive *NewThreeFive(Circuit *);
+static Switch *NewSwitch(Circuit *);
 
 /* we use trig tables to speed things up - 200 calls to sin()
  in one frame can be a bit harsh..
 */
 
-void make_tables(void) {
+static void make_tables(Circuit *ci) 
+{
 int i;
 float f;
 
   f = 360 / (M_PI * 2);
   for (i = 0 ; i < 720 ; i++) {
-    sin_table[i] = sin(i/f);
+    ci->sin_table[i] = sin(i/f);
   }
   for (i = 0 ; i < 720 ; i++) {
-    cos_table[i] = cos(i/f);
+    ci->cos_table[i] = cos(i/f);
   }
   for (i = 0 ; i < 720 ; i++) {
-    tan_table[i] = tan(i/f);
+    ci->tan_table[i] = tan(i/f);
   }
 }
 
 
-void createCylinder (float length, float radius, int endcaps, int half) 
+static void createCylinder (Circuit *ci,
+                            float length, float radius, int endcaps, int half) 
 {
   int a; /* current angle around cylinder */
   int angle, norm;
@@ -434,7 +429,7 @@ void createCylinder (float length, float radius, int endcaps, int half)
   int nsegs;
 
   glPushMatrix();
-  nsegs = radius*MAX(win_w, win_h)/20;
+  nsegs = radius*MAX(ci->win_w, ci->win_h)/20;
   nsegs = MAX(nsegs, 4);
   if (nsegs % 2)
      nsegs += 1;
@@ -443,8 +438,8 @@ void createCylinder (float length, float radius, int endcaps, int half)
   z1 = radius; y1 = 0;
   glBegin(GL_QUADS);
   for (a = 0 ; a <= angle ; a+= angle/nsegs) {
-    y2=radius*(float)sin_table[(int)a];
-    z2=radius*(float)cos_table[(int)a];
+    y2=radius*(float)ci->sin_table[(int)a];
+    z2=radius*(float)ci->cos_table[(int)a];
       glNormal3f(0, y1, z1);
       glVertex3f(0,y1,z1);
       glVertex3f(length,y1,z1);
@@ -471,8 +466,8 @@ void createCylinder (float length, float radius, int endcaps, int half)
       glBegin(GL_TRIANGLES);
       glNormal3f(norm, 0, 0);
       for (a = 0 ; a <= angle ; a+= angle/nsegs) {
-        y2=radius*(float)sin_table[(int)a];
-        z2=radius*(float)cos_table[(int)a];
+        y2=radius*(float)ci->sin_table[(int)a];
+        z2=radius*(float)ci->cos_table[(int)a];
           glVertex3f(ex,0, 0);
           glVertex3f(ex,y1,z1);
           glVertex3f(ex,y2,z2);
@@ -485,7 +480,7 @@ void createCylinder (float length, float radius, int endcaps, int half)
   glPopMatrix();
 }
 
-void circle(float radius, int segments, int half)
+static void circle(Circuit *ci, float radius, int segments, int half)
 {
   float x1 = 0, x2 = 0;
   float y1 = 0, y2 = 0;
@@ -502,8 +497,8 @@ void circle(float radius, int segments, int half)
   for(i=s;i<=t;i+=10)
   {
     float angle=i;
-    x2=radius*(float)cos_table[(int)angle];
-    y2=radius*(float)sin_table[(int)angle];
+    x2=radius*(float)ci->cos_table[(int)angle];
+    y2=radius*(float)ci->sin_table[(int)angle];
     glVertex3f(0,0,0);
     glVertex3f(0,y1,x1);
     glVertex3f(0,y2,x2);
@@ -513,11 +508,11 @@ void circle(float radius, int segments, int half)
   glEnd();
 }
 
-void wire(float len)
+static void wire(Circuit *ci, float len)
 {
-  static GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
-  static GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
-  static GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
+  GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
+  GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
+  GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
   GLfloat shin = 30;
   int n;
 
@@ -526,12 +521,13 @@ void wire(float len)
   glMaterialfv(GL_FRONT, GL_SHININESS, &shin);
   n = glIsEnabled(GL_NORMALIZE);
   if (!n) glEnable(GL_NORMALIZE);
-  createCylinder(len, 0.05, 1, 0);
+  createCylinder(ci, len, 0.05, 1, 0);
   if (!n) glDisable(GL_NORMALIZE);
   glMaterialfv(GL_FRONT, GL_SPECULAR, nospec);
 }
 
-void ring(GLfloat inner, GLfloat outer, int nsegs)
+#if 0
+static void ring(GLfloat inner, GLfloat outer, int nsegs)
 {
   GLfloat z1, z2, y1, y2;
   GLfloat Z1, Z2, Y1, Y2;
@@ -544,10 +540,10 @@ void ring(GLfloat inner, GLfloat outer, int nsegs)
   for(i=0; i <=360 ; i+= 360/nsegs)
   {
     float angle=i;
-    z2=inner*(float)sin_table[(int)angle];
-    y2=inner*(float)cos_table[(int)angle];
-    Z2=outer*(float)sin_table[(int)angle];
-    Y2=outer*(float)cos_table[(int)angle];
+    z2=inner*(float)ci->sin_table[(int)angle];
+    y2=inner*(float)ci->cos_table[(int)angle];
+    Z2=outer*(float)ci->sin_table[(int)angle];
+    Y2=outer*(float)ci->cos_table[(int)angle];
     glVertex3f(0, Y1, Z1);
     glVertex3f(0, y1, z1);
     glVertex3f(0, y2, z2);
@@ -559,13 +555,14 @@ void ring(GLfloat inner, GLfloat outer, int nsegs)
   }
   glEnd();
 }
+#endif
 
-void sphere(GLfloat r, float stacks, float slices,
+static void sphere(Circuit *ci, GLfloat r, float stacks, float slices,
              int startstack, int endstack, int startslice,
              int endslice)
 {
   GLfloat d, d1, dr, dr1, Dr, Dr1, D, D1, z1, z2, y1, y2, Y1, Z1, Y2, Z2;
-  int a, a1, b, b1, c, c1;
+  int a, a1, b, b1, c0, c1;
   GLfloat step, sstep;
 
   step = 180/stacks;
@@ -573,23 +570,23 @@ void sphere(GLfloat r, float stacks, float slices,
   a1 = startstack * step;
   b1 = startslice * sstep;
   y1 = z1 = Y1 = Z1 = 0;
-  c = (endslice / slices) * 360;
+  c0 = (endslice / slices) * 360;
   c1 = (endstack/stacks)*180;
   glBegin(GL_QUADS);
   for (a = startstack * step ; a <= c1 ; a+= step) {
-    d=sin_table[a];
-    d1=sin_table[a1];
-    D=cos_table[a];
-    D1=cos_table[a1];
+    d=ci->sin_table[a];
+    d1=ci->sin_table[a1];
+    D=ci->cos_table[a];
+    D1=ci->cos_table[a1];
     dr = d * r;
     dr1 = d1 * r;
     Dr = D * r;
     Dr1 = D1 * r;
-    for (b = b1 ; b <= c ; b+= sstep) {
-      y2=dr*sin_table[b];
-      z2=dr*cos_table[b];
-      Y2=dr1*sin_table[b];
-      Z2=dr1*cos_table[b];
+    for (b = b1 ; b <= c0 ; b+= sstep) {
+      y2=dr*ci->sin_table[b];
+      z2=dr*ci->cos_table[b];
+      Y2=dr1*ci->sin_table[b];
+      Z2=dr1*ci->cos_table[b];
         glNormal3f(Dr, y1, z1);
         glVertex3f(Dr,y1,z1);
         glNormal3f(Dr, y2, z2);
@@ -608,7 +605,7 @@ void sphere(GLfloat r, float stacks, float slices,
   glEnd();
 }
 
-int DrawComponent(Component *c)
+static int DrawComponent(Circuit *ci, Component *c)
 {
   int ret = 0; /* return 1 if component is freed */
 
@@ -629,48 +626,48 @@ int DrawComponent(Component *c)
 
  /* call object draw routine here */
    if (c->type == 0) {
-     DrawResistor(c->c);
+     DrawResistor(ci, c->c);
    } else if (c->type == 1) {
-     DrawDiode(c->c);
+     DrawDiode(ci, c->c);
    } else if (c->type == 2) {
-     DrawTransistor(c->c);
+     DrawTransistor(ci, c->c);
    } else if (c->type == 3) {
-     if (((LED *)c->c)->light && light) {
+     if (((LED *)c->c)->light && ci->light) {
        GLfloat lp[] = {0.1, 0, 0, 1};
        glEnable(GL_LIGHT1);
        glLightfv(GL_LIGHT1, GL_POSITION, lp);
      }
-     DrawLED(c->c);
+     DrawLED(ci, c->c);
    } else if (c->type == 4) {
-     DrawCapacitor(c->c);
+     DrawCapacitor(ci, c->c);
    } else if (c->type == 5) {
-     DrawIC(c->c);
+     DrawIC(ci, c->c);
    } else if (c->type == 6) {
-     DrawDisp(c->c);
+     DrawDisp(ci, c->c);
    } else if (c->type == 7) {
-     DrawFuse(c->c);
+     DrawFuse(ci, c->c);
    } else if (c->type == 8) {
-     DrawRCA(c->c);
+     DrawRCA(ci, c->c);
    } else if (c->type == 9) {
-     DrawThreeFive(c->c);
+     DrawThreeFive(ci, c->c);
    } else if (c->type == 10) {
-     DrawSwitch(c->c);
+     DrawSwitch(ci, c->c);
    }
    c->x += c->dx * MOVE_MULT;
    c->y += c->dy * MOVE_MULT;
-   if (c->x > XMAX/2 || c->x < 0 - XMAX/2 ||
-       c->y > YMAX/2 || c->y < 0 - YMAX/2) {
-        if (c->type == 3 && ((LED *)c->c)->light && light) {
+   if (c->x > ci->XMAX/2 || c->x < 0 - ci->XMAX/2 ||
+       c->y > ci->YMAX/2 || c->y < 0 - ci->YMAX/2) {
+        if (c->type == 3 && ((LED *)c->c)->light && ci->light) {
           glDisable(GL_LIGHT1);
-          light = 0; lighton = 0;
+          ci->light = 0; ci->lighton = 0;
         }
 	if (c->type == 5) {
           if (((IC *)c->c)->tnum)
-            freetexture(((IC *)c->c)->tnum);
+            freetexture(ci, ((IC *)c->c)->tnum);
 	}
 	if (c->type == 2) {
           if (((Transistor *)c->c)->tnum)
-            freetexture(((Transistor *)c->c)->tnum);
+            freetexture(ci, ((Transistor *)c->c)->tnum);
 	}
         if (c->type == 1)
           free(((Diode *)c->c)->band); /* remember to free diode band */
@@ -685,7 +682,7 @@ int DrawComponent(Component *c)
 
 /* draw a resistor */
 
-void DrawResistor(Resistor *r)
+static void DrawResistor(Circuit *ci, Resistor *r)
 {
   int i;
   GLfloat col[] = {0.74, 0.62, 0.46, 1.0};
@@ -693,58 +690,58 @@ void DrawResistor(Resistor *r)
   GLfloat shine = 30;
 
    glTranslatef(-4, 0, 0);
-   wire(3);
+   wire(ci, 3);
    glTranslatef(3, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glMaterialfv(GL_FRONT, GL_SHININESS, &shine);
-   createCylinder(1.8, 0.4, 1, 0);
+   createCylinder(ci, 1.8, 0.4, 1, 0);
    glPushMatrix();
    for (i = 0 ; i < 4 ; i++) {
      glTranslatef(0.35, 0, 0);
-     glCallList(band_list[r->b[i]]);
+     glCallList(ci->band_list[r->b[i]]);
    }
    glPopMatrix();
    glTranslatef(1.8, 0, 0);
-   wire(3);
+   wire(ci, 3);
 }
 
-void DrawRCA(RCA *rca)
+static void DrawRCA(Circuit *ci, RCA *rca)
 {
-  static GLfloat col[] = {0.6, 0.6, 0.6, 1.0}; /* metal */
-  static GLfloat red[] = {1.0, 0.0, 0.0, 1.0}; /* red */
-  static GLfloat white[] = {1.0, 1.0, 1.0, 1.0}; /* white */
-  static GLfloat spec[] = {1, 1, 1, 1}; /* glass */
+  GLfloat col[] = {0.6, 0.6, 0.6, 1.0}; /* metal */
+  GLfloat red[] = {1.0, 0.0, 0.0, 1.0}; /* red */
+  GLfloat white[] = {1.0, 1.0, 1.0, 1.0}; /* white */
+  GLfloat spec[] = {1, 1, 1, 1}; /* glass */
 
    glPushMatrix();
    glTranslatef(0.3, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMateriali(GL_FRONT, GL_SHININESS, 40);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-   createCylinder(0.7, 0.45, 0, 0);
+   createCylinder(ci, 0.7, 0.45, 0, 0);
    glTranslatef(0.4, 0, 0);
-   createCylinder(0.9, 0.15, 1, 0);
+   createCylinder(ci, 0.9, 0.15, 1, 0);
    glTranslatef(-1.9, 0, 0);
    glMateriali(GL_FRONT, GL_SHININESS, 20);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, rca->col ? white : red);
-   createCylinder(1.5, 0.6, 1, 0);
+   createCylinder(ci, 1.5, 0.6, 1, 0);
    glTranslatef(-0.9, 0, 0);
-   createCylinder(0.9, 0.25, 0, 0);
+   createCylinder(ci, 0.9, 0.25, 0, 0);
    glTranslatef(0.1, 0, 0);
-   createCylinder(0.2, 0.3, 0, 0);
+   createCylinder(ci, 0.2, 0.3, 0, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(0.2, 0.3, 1, 0);
+   createCylinder(ci, 0.2, 0.3, 1, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(0.2, 0.3, 1, 0);
+   createCylinder(ci, 0.2, 0.3, 1, 0);
    glPopMatrix();
 }
 
-void DrawSwitch(Switch *f)
+static void DrawSwitch(Circuit *ci, Switch *f)
 {
-  static GLfloat col[] = {0.6, 0.6, 0.6, 0}; /* metal */
-  static GLfloat dark[] = {0.1, 0.1, 0.1, 1.0}; /* dark */
-  static GLfloat brown[] = {0.69, 0.32, 0, 1.0}; /* brown */
-  static GLfloat spec[] = {0.9, 0.9, 0.9, 1}; /* shiny */
+  GLfloat col[] = {0.6, 0.6, 0.6, 0}; /* metal */
+  GLfloat dark[] = {0.1, 0.1, 0.1, 1.0}; /* dark */
+  GLfloat brown[] = {0.69, 0.32, 0, 1.0}; /* brown */
+  GLfloat spec[] = {0.9, 0.9, 0.9, 1}; /* shiny */
 
    glPushMatrix();
    glMaterialfv(GL_FRONT, GL_DIFFUSE, col);
@@ -756,9 +753,9 @@ void DrawSwitch(Switch *f)
    glPushMatrix();
    glRotatef(90, 1, 0, 0);
    glTranslatef(-0.5, -0.4, -0.4);
-   HoledRectangle(0.5, 0.75, 0.1, 0.15, 8);
+   HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
    glTranslatef(2, 0, 0);
-   HoledRectangle(0.5, 0.75, 0.1, 0.15, 8);
+   HoledRectangle(ci, 0.5, 0.75, 0.1, 0.15, 8);
    glPopMatrix();
    Rect(0.1, -0.4, -0.25, 0.1, 0.4, 0.05);
    Rect(0.5, -0.4, -0.25, 0.1, 0.4, 0.05);
@@ -776,25 +773,25 @@ void DrawSwitch(Switch *f)
 }
 
 
-void DrawFuse(Fuse *f)
+static void DrawFuse(Circuit *ci, Fuse *f)
 {
-  static GLfloat col[] = {0.5, 0.5, 0.5, 1.0}; /* endcaps */
-  static GLfloat glass[] = {0.4, 0.4, 0.4, 0.3}; /* glass */
-  static GLfloat spec[] = {1, 1, 1, 1}; /* glass */
+  GLfloat col[] = {0.5, 0.5, 0.5, 1.0}; /* endcaps */
+  GLfloat glass[] = {0.4, 0.4, 0.4, 0.3}; /* glass */
+  GLfloat spec[] = {1, 1, 1, 1}; /* glass */
 
    glPushMatrix();
    glTranslatef(-1.8, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glMateriali(GL_FRONT, GL_SHININESS, 40);
-   createCylinder(0.8, 0.45, 1, 0);
+   createCylinder(ci, 0.8, 0.45, 1, 0);
    glTranslatef(0.8, 0, 0);
    glEnable(GL_BLEND);
    glDepthMask(GL_FALSE);
    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, glass);
    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 40);
-   createCylinder(2, 0.4, 0, 0);
-   createCylinder(2, 0.3, 0, 0);
+   createCylinder(ci, 2, 0.4, 0, 0);
+   createCylinder(ci, 2, 0.3, 0, 0);
    glDisable(GL_BLEND);
    glDepthMask(GL_TRUE);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
@@ -804,29 +801,29 @@ void DrawFuse(Fuse *f)
    glVertex3f(2, 0. ,0);
    glEnd();
    glTranslatef(2, 0, 0);
-   createCylinder(0.8, 0.45, 1, 0);
+   createCylinder(ci, 0.8, 0.45, 1, 0);
    glPopMatrix();
 }
 
 
-void DrawCapacitor(Capacitor *c)
+static void DrawCapacitor(Circuit *ci, Capacitor *c)
 {
-  static GLfloat col[] = {0, 0, 0, 0};
-  static GLfloat spec[] = {0.8, 0.8, 0.8, 0};
+  GLfloat col[] = {0, 0, 0, 0};
+  GLfloat spec[] = {0.8, 0.8, 0.8, 0};
   GLfloat brown[] = {0.84, 0.5, 0};
-  static GLfloat shine = 40;
+  GLfloat shine = 40;
 
   glPushMatrix();
   if (c->type) {
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, brown);
-    sphere(c->width, 15, 15, 0, 4 ,0, 15);
+    sphere(ci, c->width, 15, 15, 0, 4 ,0, 15);
     glTranslatef(1.35*c->width, 0, 0);
-    sphere(c->width, 15, 15, 11, 15, 0, 15);
+    sphere(ci, c->width, 15, 15, 11, 15, 0, 15);
     glRotatef(90, 0, 0, 1);
     glTranslatef(0, 0.7*c->width, 0.3*c->width);
-    wire(3*c->width);
+    wire(ci, 3*c->width);
     glTranslatef(0, 0, -0.6*c->width);
-    wire(3*c->width);
+    wire(ci, 3*c->width);
   } else {
     glTranslatef(0-c->length*2, 0, 0);
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
@@ -844,37 +841,37 @@ void DrawCapacitor(Capacitor *c)
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(1.0, 1.0);
-    createCylinder(3.0*c->length, 0.8*c->width, 1, 0);
+    createCylinder(ci, 3.0*c->length, 0.8*c->width, 1, 0);
     glDisable(GL_POLYGON_OFFSET_FILL);
     col[0] = 0.7;
     col[1] = 0.7;
     col[2] = 0.7;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
-    circle(0.6*c->width, 30, 0);
+    circle(ci, 0.6*c->width, 30, 0);
     col[0] = 0;
     col[1] = 0;
     col[2] = 0;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
     glTranslatef(3.0*c->length, 0.0, 0);
-    circle(0.6*c->width, 30, 0);
+    circle(ci, 0.6*c->width, 30, 0);
     glTranslatef(0, 0.4*c->width, 0);
-    wire(3*c->length);
+    wire(ci, 3*c->length);
     glTranslatef(0.0, -0.8*c->width, 0);
-    wire(3.3*c->length);
+    wire(ci, 3.3*c->length);
   }
   glPopMatrix();
 }
 
-void DrawLED(LED *l)
+static void DrawLED(Circuit *ci, LED *l)
 {
   GLfloat col[] = {0, 0, 0, 0.6};
   GLfloat black[] = {0, 0, 0, 0.6};
 
   col[0] = l->r; col[1] = l->g; col[2] = l->b;
-  if (l->light && light) {
+  if (l->light && ci->light) {
     GLfloat dir[] = {-1, 0, 0};
     glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, dir);
-    if (!lighton) {
+    if (!ci->lighton) {
       glLightfv(GL_LIGHT1, GL_SPECULAR, col);
       glLightfv(GL_LIGHT1, GL_AMBIENT, black);
       col[0] /= 1.5; col[1] /= 1.5; col[2] /= 1.5;
@@ -884,7 +881,7 @@ void DrawLED(LED *l)
       glLighti(GL_LIGHT1, GL_LINEAR_ATTENUATION, (GLfloat)0); 
       glLighti(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, (GLfloat)0); 
       glLighti(GL_LIGHT1, GL_SPOT_EXPONENT, (GLint) 20);
-      lighton = 1;
+      ci->lighton = 1;
     }
   }
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
@@ -896,13 +893,13 @@ void DrawLED(LED *l)
     glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
   }
   glTranslatef(-0.9, 0, 0);
-  createCylinder(1.2, 0.3, 0, 0);
-  if (l->light && light) {
+  createCylinder(ci, 1.2, 0.3, 0, 0);
+  if (l->light && ci->light) {
     glDisable(GL_LIGHTING);
     glColor3fv(col);
   }
-  sphere(0.3, 7, 7, 3, 7, 0, 7);
-  if (l->light && light) {
+  sphere(ci, 0.3, 7, 7, 3, 7, 0, 7);
+  if (l->light && ci->light) {
     glEnable(GL_LIGHTING);
   } else {
     glDepthMask(GL_TRUE);
@@ -910,29 +907,30 @@ void DrawLED(LED *l)
   }
 
   glTranslatef(1.2, 0, 0);
-  createCylinder(0.1, 0.38, 1, 0);
+  createCylinder(ci, 0.1, 0.38, 1, 0);
   glTranslatef(-0.3, 0.15, 0);
-  wire(3);
+  wire(ci, 3);
   glTranslatef(0, -0.3, 0);
-  wire(3.3);
+  wire(ci, 3.3);
   if (random() % 50 == 25) {
     if (l->light) {
-      l->light = 0; light = 0; lighton = 0;
+      l->light = 0; ci->light = 0; ci->lighton = 0;
       glDisable(GL_LIGHT1);
-    } else if (!light) {
-      l->light = 1; light = 1;
+    } else if (!ci->light) {
+      l->light = 1; 
+      ci->light = 1;
     }
   }
 }
 
 
-void DrawThreeFive(ThreeFive *d)
+static void DrawThreeFive(Circuit *ci, ThreeFive *d)
 {
   GLfloat shine = 40;
-  GLfloat dark[] = {0.3, 0.3, 0.3, 0};
-  GLfloat light[] = {0.6, 0.6, 0.6, 0};
-  GLfloat cream[] = {0.8, 0.8, 0.6, 0};
-  GLfloat spec[] = {0.7, 0.7, 0.7, 0};
+  GLfloat const dark[] = {0.3, 0.3, 0.3, 0};
+  GLfloat const light[] = {0.6, 0.6, 0.6, 0};
+  GLfloat const cream[] = {0.8, 0.8, 0.6, 0};
+  GLfloat const spec[] = {0.7, 0.7, 0.7, 0};
 
    glPushMatrix();
    glMaterialfv(GL_FRONT, GL_SHININESS, &shine);
@@ -940,25 +938,25 @@ void DrawThreeFive(ThreeFive *d)
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    
    glTranslatef(-2.0, 0, 0);
-   createCylinder(0.7, 0.2, 0, 0);
+   createCylinder(ci, 0.7, 0.2, 0, 0);
    glTranslatef(0.7, 0, 0);
-   createCylinder(1.3, 0.4, 1, 0);
+   createCylinder(ci, 1.3, 0.4, 1, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light);
    glTranslatef(1.3, 0, 0);
-   createCylinder(1.3, 0.2, 0, 0);
+   createCylinder(ci, 1.3, 0.2, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, dark);
    glTranslatef(0.65, 0, 0);
-   createCylinder(0.15, 0.21, 0, 0);
+   createCylinder(ci, 0.15, 0.21, 0, 0);
    glTranslatef(0.3, 0, 0);
-   createCylinder(0.15, 0.21, 0, 0);
+   createCylinder(ci, 0.15, 0.21, 0, 0);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light);
    glTranslatef(0.4, 0, 0);
-   sphere(0.23, 7, 7, 0, 5, 0, 7);
+   sphere(ci, 0.23, 7, 7, 0, 5, 0, 7);
 
    glPopMatrix();
 }
 
-void DrawDiode(Diode *d)
+static void DrawDiode(Circuit *ci, Diode *d)
 {
   GLfloat shine = 40;
   GLfloat col[] = {0.3, 0.3, 0.3, 0};
@@ -969,15 +967,15 @@ void DrawDiode(Diode *d)
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glTranslatef(-4, 0, 0);
-   wire(3);
+   wire(ci, 3);
    glTranslatef(3, 0, 0);
-   bandedCylinder(0.3, 1.5, d->r, d->g, d->b, &(d->band), 1);
+   bandedCylinder(ci, 0.3, 1.5, d->r, d->g, d->b, &(d->band), 1);
    glTranslatef(1.5, 0, 0);
-   wire(3);
+   wire(ci, 3);
    glPopMatrix();
 }
 
-void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
+static void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
             GLfloat t)
 {
   GLfloat yh;
@@ -1027,7 +1025,7 @@ void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
 
 /* IC pins */
 
-void ICLeg(GLfloat x, GLfloat y, GLfloat z, int dir)
+static void ICLeg(GLfloat x, GLfloat y, GLfloat z, int dir)
 {
   if (dir) {
     Rect(x-0.1, y, z, 0.1, 0.1, 0.02);
@@ -1042,7 +1040,7 @@ void ICLeg(GLfloat x, GLfloat y, GLfloat z, int dir)
 }
 
 
-void DrawIC(IC *c)
+static void DrawIC(Circuit *ci, IC *c)
 {
   GLfloat w, h, d;
   int z;
@@ -1148,11 +1146,11 @@ void DrawIC(IC *c)
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col2);
     glTranslatef(-w+0.3, h-0.3, 0.1);
     glRotatef(90, 0, 1, 0);
-    circle(0.1, 7, 0);
+    circle(ci, 0.1, 7, 0);
     glPopMatrix();
 }
 
-void DrawDisp(Disp *d)
+static void DrawDisp(Circuit *ci, Disp *d)
 {
   GLfloat col[] = {0.8, 0.8, 0.8, 1.0}; /* body colour */
   GLfloat front[] = {0.2, 0.2, 0.2, 1.0}; /* front colour */
@@ -1163,7 +1161,7 @@ void DrawDisp(Disp *d)
   GLfloat spec[] = {0.6, 0.6, 0.6, 0};
   GLfloat lcol[] = {0.4, 0.4, 0.4, 0};
   GLfloat shine = 40;
-  static GLfloat vdata_h[6][2] = {
+  static const GLfloat vdata_h[6][2] = {
     {0, 0},
     {0.1, 0.1},
     {0.9, 0.1},
@@ -1171,7 +1169,7 @@ void DrawDisp(Disp *d)
     {0.9, -0.1},
     {0.1, -0.1}
   };
-  static GLfloat vdata_v[6][2] = {
+  static const GLfloat vdata_v[6][2] = {
     {0.27, 0},
     {0.35, -0.1},
     {0.2, -0.9},
@@ -1180,7 +1178,7 @@ void DrawDisp(Disp *d)
     {0.15, -0.15}
   };
 
-  static GLfloat seg_start[7][2] = {
+  static const GLfloat seg_start[7][2] = {
     {0.55, 2.26},
     {1.35, 2.26},
     {1.2, 1.27},
@@ -1190,7 +1188,7 @@ void DrawDisp(Disp *d)
     {0.39, 1.24}
   };
 
-  static int nums[10][7] = {
+  static const int nums[10][7] = {
     {1, 1, 1, 1, 1, 1, 0}, /* 0 */
     {0, 1, 1, 0, 0, 0, 0}, /* 1 */
     {1, 1, 0, 1, 1, 0, 1}, /* 2 */
@@ -1254,7 +1252,9 @@ void DrawDisp(Disp *d)
    }
 }
 
-void HoledRectangle(GLfloat w, GLfloat h, GLfloat d, GLfloat radius, int p)
+static void HoledRectangle(Circuit *ci, 
+                           GLfloat w, GLfloat h, GLfloat d, GLfloat radius,
+                           int p)
 {
   int step, a;
   GLfloat x1, y1, x2, y2;
@@ -1268,15 +1268,15 @@ void HoledRectangle(GLfloat w, GLfloat h, GLfloat d, GLfloat radius, int p)
   side1 = h/2;
   glBegin(GL_QUADS);
   for (a = 0 ; a <= 360 ; a+= step) {
-    y2=radius*(float)sin_table[(int)a];
-    x2=radius*(float)cos_table[(int)a];
+    y2=radius*(float)ci->sin_table[(int)a];
+    x2=radius*(float)ci->cos_table[(int)a];
 
     if (a < 45 || a > 315) {
       xr = side;
-      yr = side1 * tan_table[a];
+      yr = side1 * ci->tan_table[a];
       nx = 1; ny = 0;
     } else if (a <= 135 || a >= 225) {
-      xr = side/tan_table[a];
+      xr = side/ci->tan_table[a];
       if (a >= 225) {
        yr = -side1;
        xr = 0 - xr;
@@ -1287,7 +1287,7 @@ void HoledRectangle(GLfloat w, GLfloat h, GLfloat d, GLfloat radius, int p)
      }
     } else {
       xr = -side;
-      yr = -side1 * tan_table[a];
+      yr = -side1 * ci->tan_table[a];
       nx = -1; ny = 0;
     }
 
@@ -1322,11 +1322,11 @@ void HoledRectangle(GLfloat w, GLfloat h, GLfloat d, GLfloat radius, int p)
   glEnd();
 }
 
-void DrawTransistor(Transistor *t)
+static void DrawTransistor(Circuit *ci, Transistor *t)
 {
-  static GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
-  static GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
-  static GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
+  GLfloat col[] = {0.3, 0.3, 0.3, 1.0};
+  GLfloat spec[] = {0.9, 0.9, 0.9, 1.0};
+  GLfloat nospec[] = {0.4, 0.4, 0.4, 1.0};
   GLfloat shin = 30;
 
   glPushMatrix();
@@ -1341,7 +1341,7 @@ void DrawTransistor(Transistor *t)
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col);
     glRotatef(90, 0, 1, 0);
     glRotatef(90, 0, 0, 1);
-    createCylinder(1.0, 0.4, 1, 1);
+    createCylinder(ci, 1.0, 0.4, 1, 1);
     Rect(0, -0.2, 0.4, 1, 0.2, 0.8);
 /* Draw the markings */
     glEnable(GL_TEXTURE_2D);
@@ -1363,11 +1363,11 @@ void DrawTransistor(Transistor *t)
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glTranslatef(-2, 0, -0.2);
-    wire(2);
+    wire(ci, 2);
     glTranslatef(0, 0, 0.2);
-    wire(2);
+    wire(ci, 2);
     glTranslatef(0, 0, 0.2);
-    wire(2);
+    wire(ci, 2);
   } else if (t->type == 0) { /* TO-220 Style */
     float mult, y1, y2;
     mult = 1.5*t->th/t->tw;
@@ -1398,15 +1398,15 @@ void DrawTransistor(Transistor *t)
     Rect(0, 0, -0.5, 1.5, 1.5, 0.30);
     if (!glIsEnabled(GL_NORMALIZE)) glEnable(GL_NORMALIZE);
     glTranslatef(0.75, 1.875, -0.55);
-    HoledRectangle(1.5, 0.75, 0.25, 0.2, 8);
+    HoledRectangle(ci, 1.5, 0.75, 0.25, 0.2, 8);
     glMaterialfv(GL_FRONT, GL_SPECULAR, nospec);
     glTranslatef(-0.375, -1.875, 0);
     glRotatef(90, 0, 0, -1);
-    wire(2);
+    wire(ci, 2);
     glTranslatef(0, 0.375, 0);
-    wire(2);
+    wire(ci, 2);
     glTranslatef(0, 0.375, 0);
-    wire(2);
+    wire(ci, 2);
   } else {              /* SMC transistor */
 /* Draw the body */
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col);
@@ -1445,8 +1445,9 @@ void DrawTransistor(Transistor *t)
   glPopMatrix();
 }
 
-Component * NewComponent(void)
+static Component * NewComponent(ModeInfo *mi)
 {
+  Circuit *ci = &circuit[MI_SCREEN(mi)];
   Component *c;
   float rnd;
 
@@ -1454,32 +1455,32 @@ Component * NewComponent(void)
   c->angle = RAND_RANGE(0,360);
   rnd = f_rand();
   if (rnd < 0.25) { /* come from the top */
-     c->y = YMAX/2;
-     c->x = RAND_RANGE(0, XMAX) - XMAX/2;
+     c->y = ci->YMAX/2;
+     c->x = RAND_RANGE(0, ci->XMAX) - ci->XMAX/2;
      if (c->x > 0)
        c->dx = 0 - RAND_RANGE(0.5, 2);
      else 
        c->dx = RAND_RANGE(0.5, 2);
      c->dy = 0 - RAND_RANGE(0.5, 2);
   } else if (rnd < 0.5) { /* come from the bottom */
-     c->y = 0 - YMAX/2;
-     c->x = RAND_RANGE(0, XMAX) - XMAX/2;
+     c->y = 0 - ci->YMAX/2;
+     c->x = RAND_RANGE(0, ci->XMAX) - ci->XMAX/2;
      if (c->x > 0)
        c->dx = 0 - RAND_RANGE(0.5, 2);
      else 
        c->dx = RAND_RANGE(0.5, 2);
      c->dy = RAND_RANGE(0.5, 2);
   } else if (rnd < 0.75) { /* come from the left */
-     c->x = 0 - XMAX/2;
-     c->y = RAND_RANGE(0, YMAX) - YMAX/2;
+     c->x = 0 - ci->XMAX/2;
+     c->y = RAND_RANGE(0, ci->YMAX) - ci->YMAX/2;
      c->dx = RAND_RANGE(0.5, 2);
      if (c->y > 0)
        c->dy = 0 - RAND_RANGE(0.5, 2);
      else 
        c->dy = RAND_RANGE(0.5, 2);
   } else { /* come from the right */
-     c->x = XMAX/2;
-     c->y = RAND_RANGE(0, YMAX) - YMAX/2;
+     c->x = ci->XMAX/2;
+     c->y = RAND_RANGE(0, ci->YMAX) - ci->YMAX/2;
      c->dx =  0 - RAND_RANGE(0.5, 2);
      if (c->y > 0)
        c->dy = 0 - RAND_RANGE(0.5, 2);
@@ -1507,47 +1508,47 @@ Component * NewComponent(void)
       c->norm = 1; /* some diodes shine */
     c->type = 1;
   } else if (rnd < 3) {
-    c->c = NewTransistor();
+    c->c = NewTransistor(mi);
     c->norm = 1;
     c->type = 2;
   } else if (rnd < 4) {
-    c->c = NewCapacitor();
+    c->c = NewCapacitor(ci);
     c->norm = 1;
     c->type = 4;
   } else if (rnd < 5) {
-    c->c = NewIC();
+    c->c = NewIC(mi);
     c->type = 5;
     c->norm = 1;
   } else if (rnd < 6) {
-    c->c = NewLED();
+    c->c = NewLED(ci);
     c->type = 3;
     c->norm = 1;
     c->alpha = 1;
   } else if (rnd < 7) {
-    c->c = NewFuse();
+    c->c = NewFuse(ci);
     c->norm = 1;
     c->type = 7;
     c->alpha = 1;
   } else if (rnd < 8) {
-    c->c = NewRCA();
+    c->c = NewRCA(ci);
     c->norm = 1;
     c->type = 8;
   } else if (rnd < 9) {
-    c->c = NewThreeFive();
+    c->c = NewThreeFive(ci);
     c->norm = 1;
     c->type = 9;
   } else if (rnd < 10) {
-    c->c = NewSwitch();
+    c->c = NewSwitch(ci);
     c->norm = 1;
     c->type = 10;
   } else {
-    c->c = NewDisp();
+    c->c = NewDisp(ci);
     c->type = 6;
   }
   return c;
 }
 
-Transistor *NewTransistor(void)
+static Transistor *NewTransistor(ModeInfo *mi)
 {
   Transistor *t;
   float texfg[] = {0.7, 0.7, 0.7, 1.0};
@@ -1559,7 +1560,7 @@ Transistor *NewTransistor(void)
   t->type = (random() % 3);
   if (t->type == 0) {
     val = transistortypes[random() % countof(transistortypes)];
-    tn = fonttexturealloc(val, texfg, texbg);
+    tn = fonttexturealloc(mi, val, texfg, texbg);
     if (tn == NULL) {
       fprintf(stderr, "Error getting a texture for a string!\n");
       t->tnum = 0;
@@ -1570,7 +1571,7 @@ Transistor *NewTransistor(void)
     }
   } else if (t->type == 2) {
     val = smctypes[random() % countof(smctypes)];
-    tn = fonttexturealloc(val, texfg, texbg);
+    tn = fonttexturealloc(mi, val, texfg, texbg);
     if (tn == NULL) {
       fprintf(stderr, "Error getting a texture for a string!\n");
       t->tnum = 0;
@@ -1581,7 +1582,7 @@ Transistor *NewTransistor(void)
     }
   } else if (t->type == 1) {
     val = to92types[random() % countof(to92types)];
-    tn = fonttexturealloc(val, texfg, texbg);
+    tn = fonttexturealloc(mi, val, texfg, texbg);
     if (tn == NULL) {
       fprintf(stderr, "Error getting a texture for a string!\n");
       t->tnum = 0;
@@ -1595,7 +1596,7 @@ Transistor *NewTransistor(void)
   return t;
 }
 
-Capacitor *NewCapacitor(void)
+static Capacitor *NewCapacitor(Circuit *ci)
 {
   Capacitor *c;
 
@@ -1612,7 +1613,7 @@ Capacitor *NewCapacitor(void)
 
 /* 7 segment display */
 
-Disp *NewDisp(void)
+static Disp *NewDisp(Circuit *ci)
 {
   Disp *d;
 
@@ -1625,7 +1626,7 @@ Disp *NewDisp(void)
 }
 
 
-IC *NewIC(void)
+static IC *NewIC(ModeInfo *mi)
 {
   IC *c;
   int pins;
@@ -1664,7 +1665,7 @@ IC *NewIC(void)
   val = ictypes[types[random() % n]].val;
   str = malloc(strlen(val) + 1 + 4 + 1); /* add space for production date */
   sprintf(str, "%s\n%02d%02d", val, (int)RAND_RANGE(80, 100), (int)RAND_RANGE(1,53));
-  tn = fonttexturealloc(str, texfg, texbg);
+  tn = fonttexturealloc(mi, str, texfg, texbg);
   free(str);
   if (tn == NULL) {
     fprintf(stderr, "Error allocating font texture for '%s'\n", val);
@@ -1678,7 +1679,7 @@ IC *NewIC(void)
   return c;
 }
 
-LED *NewLED(void)
+static LED *NewLED(Circuit *ci)
 {
   LED *l;
   float r;
@@ -1686,8 +1687,8 @@ LED *NewLED(void)
   l = malloc(sizeof(LED));
   r = f_rand();
   l->light = 0;
-  if (!light && (f_rand() < 0.4)) {
-     light = 1;
+  if (!ci->light && (f_rand() < 0.4)) {
+     ci->light = 1;
      l->light = 1;
   }
   if (r < 0.2) {
@@ -1704,7 +1705,7 @@ LED *NewLED(void)
   return l;
 }
 
-Fuse *NewFuse(void)
+static Fuse *NewFuse(Circuit *ci)
 {
   Fuse *f;
 
@@ -1712,7 +1713,7 @@ Fuse *NewFuse(void)
   return f;
 }
 
-RCA *NewRCA(void)
+static RCA *NewRCA(Circuit *ci)
 {
   RCA *r;
 
@@ -1721,7 +1722,7 @@ RCA *NewRCA(void)
   return r;
 }
 
-ThreeFive *NewThreeFive(void)
+static ThreeFive *NewThreeFive(Circuit *ci)
 {
   ThreeFive *r;
 
@@ -1729,7 +1730,7 @@ ThreeFive *NewThreeFive(void)
   return r;
 }
 
-Switch *NewSwitch(void)
+static Switch *NewSwitch(Circuit *ci)
 {
   Switch *s;
 
@@ -1738,7 +1739,7 @@ Switch *NewSwitch(void)
   return s;
 }
 
-Diode *NewDiode(void)
+static Diode *NewDiode(void)
 {
   Band *b;
   Diode *ret;
@@ -1763,7 +1764,7 @@ Diode *NewDiode(void)
 }
 
 
-Resistor  * NewResistor(void)
+static Resistor  * NewResistor(void)
 {
   int v, m, t; /* value, multiplier, tolerance */
   Resistor *ret;
@@ -1785,7 +1786,7 @@ Resistor  * NewResistor(void)
   return ret;
 }
 
-void makebandlist(void)
+static void makebandlist(Circuit *ci)
 {
   int i;
   GLfloat col[] = {0,0,0,0};
@@ -1793,22 +1794,24 @@ void makebandlist(void)
   GLfloat shine = 40;
 
    for (i = 0 ; i < 12 ; i++) {
-     band_list[i] = glGenLists(i);
-     glNewList(band_list[i], GL_COMPILE);
+     ci->band_list[i] = glGenLists(i);
+     glNewList(ci->band_list[i], GL_COMPILE);
      col[0] = colorcodes[i][0];
      col[1] = colorcodes[i][1];
      col[2] = colorcodes[i][2];
      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shine);
-     createCylinder(0.1, 0.42, 0, 0);
+     createCylinder(ci, 0.1, 0.42, 0, 0);
      glEndList();
   }
 }
   
 
-void bandedCylinder(float radius, float l, GLfloat r, GLfloat g, GLfloat bl, 
-                        Band **b, int nbands)
+static void bandedCylinder(Circuit *ci, 
+                           float radius, float l, 
+                           GLfloat r, GLfloat g, GLfloat bl, 
+                           Band **b, int nbands)
 {
   int n; /* band number */
   int p = 0; /* prev number + 1; */
@@ -1816,177 +1819,171 @@ void bandedCylinder(float radius, float l, GLfloat r, GLfloat g, GLfloat bl,
 
    col[0] = r; col[1] = g; col[2] = bl;
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
-   createCylinder(l, radius, 1, 0); /* body */
+   createCylinder(ci, l, radius, 1, 0); /* body */
    for (n = 0 ; n < nbands ; n++) {
      glPushMatrix();
      glTranslatef(b[n]->pos*l, 0, 0);
      col[0] = b[n]->r; col[1] = b[n]->g; col[2] = b[n]->b;
      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
-     createCylinder(b[n]->len*l, radius*1.05, 0, 0); /* band */
+     createCylinder(ci, b[n]->len*l, radius*1.05, 0, 0); /* band */
      glPopMatrix();
      p = n+1;
    }
 }
 
-void drawgrid(void)
+static void drawgrid(Circuit *ci)
 {
   GLfloat x, y;
-  static GLfloat col[] = {0, 0.25, 0.05};
-  static GLfloat col2[] = {0, 0.125, 0.05};
   GLfloat col3[] = {0, 0.8, 0};
-  static GLfloat sx, sy; /* bright spot co-ords */
-  static int sdir; /* 0 = left-right, 1 = right-left, 2 = up->dn, 3 = dn->up */
-  static int s = 0; /* if spot is enabled */
-  static float ds; /* speed of spot */
 
-  if (!s) {
+  if (!ci->draw_s) {
      if (f_rand() < ((rotate) ? 0.05 : 0.01)) {
-       sdir = RAND_RANGE(0, 4);
-       ds = RAND_RANGE(0.4, 0.8);
-       switch (sdir) {
+       ci->draw_sdir = RAND_RANGE(0, 4);
+       ci->draw_ds = RAND_RANGE(0.4, 0.8);
+       switch (ci->draw_sdir) {
           case 0:
-           sx = -XMAX/2;
-           sy = ((int)RAND_RANGE(0, YMAX/2))*2 - YMAX/2;
+           ci->draw_sx = -ci->XMAX/2;
+           ci->draw_sy = ((int)RAND_RANGE(0, ci->YMAX/2))*2 - ci->YMAX/2;
            break;
           case 1:
-           sx = XMAX/2;
-           sy = ((int)RAND_RANGE(0, YMAX/2))*2 - YMAX/2;
+           ci->draw_sx = ci->XMAX/2;
+           ci->draw_sy = ((int)RAND_RANGE(0, ci->YMAX/2))*2 - ci->YMAX/2;
            break;
           case 2:
-           sy = YMAX/2;
-           sx = ((int)RAND_RANGE(0, XMAX/2))*2 - XMAX/2;
+           ci->draw_sy = ci->YMAX/2;
+           ci->draw_sx = ((int)RAND_RANGE(0, ci->XMAX/2))*2 - ci->XMAX/2;
            break;
           case 3:
-           sy = -YMAX/2;
-           sx = ((int)RAND_RANGE(0, XMAX/2))*2 - XMAX/2;
+           ci->draw_sy = -ci->YMAX/2;
+           ci->draw_sx = ((int)RAND_RANGE(0, ci->XMAX/2))*2 - ci->XMAX/2;
            break;
         }
-        s = 1;
+        ci->draw_s = 1;
       }
   } else if (!rotate) {
-    if (col[1] < 0.25) {
-      col[1] += 0.025; col[2] += 0.005;
-      col2[1] += 0.015 ; col2[2] += 0.005;
+    if (ci->grid_col[1] < 0.25) {
+      ci->grid_col[1] += 0.025; ci->grid_col[2] += 0.005;
+      ci->grid_col2[1] += 0.015 ; ci->grid_col2[2] += 0.005;
     }
   }
 
   glDisable(GL_LIGHTING);
-  if (s) {
+  if (ci->draw_s) {
     glColor3fv(col3);
     glPushMatrix();
-    glTranslatef(sx, sy, -10);
-    sphere(0.1, 10, 10, 0, 10, 0, 10);
-    if (sdir == 0) 
-      glTranslatef(-ds, 0, 0);
-    if (sdir == 1) 
-      glTranslatef(ds, 0, 0);
-    if (sdir == 2) 
-      glTranslatef(0, ds, 0);
-    if (sdir == 3) 
-      glTranslatef(0, -ds, 0);
-    sphere(0.05, 10, 10, 0, 10, 0, 10);
+    glTranslatef(ci->draw_sx, ci->draw_sy, -10);
+    sphere(ci, 0.1, 10, 10, 0, 10, 0, 10);
+    if (ci->draw_sdir == 0) 
+      glTranslatef(-ci->draw_ds, 0, 0);
+    if (ci->draw_sdir == 1) 
+      glTranslatef(ci->draw_ds, 0, 0);
+    if (ci->draw_sdir == 2) 
+      glTranslatef(0, ci->draw_ds, 0);
+    if (ci->draw_sdir == 3) 
+      glTranslatef(0, -ci->draw_ds, 0);
+    sphere(ci, 0.05, 10, 10, 0, 10, 0, 10);
     glPopMatrix();
-    if (sdir == 0) {
-       sx += ds;
-       if (sx > XMAX/2)
-         s = 0;
+    if (ci->draw_sdir == 0) {
+       ci->draw_sx += ci->draw_ds;
+       if (ci->draw_sx > ci->XMAX/2)
+         ci->draw_s = 0;
     }
-    if (sdir == 1) {
-       sx -= ds;
-       if (sx < -XMAX/2)
-         s = 0;
+    if (ci->draw_sdir == 1) {
+       ci->draw_sx -= ci->draw_ds;
+       if (ci->draw_sx < -ci->XMAX/2)
+         ci->draw_s = 0;
     }
-    if (sdir == 2) {
-       sy -= ds;
-       if (sy < YMAX/2)
-         s = 0;
+    if (ci->draw_sdir == 2) {
+       ci->draw_sy -= ci->draw_ds;
+       if (ci->draw_sy < ci->YMAX/2)
+         ci->draw_s = 0;
     }
-    if (sdir == 3) {
-       sy += ds;
-       if (sy > YMAX/2)
-         s = 0;
+    if (ci->draw_sdir == 3) {
+       ci->draw_sy += ci->draw_ds;
+       if (ci->draw_sy > ci->YMAX/2)
+         ci->draw_s = 0;
     }
   } else if (!rotate) {
-    if (col[1] > 0) {
-      col[1] -= 0.0025; col[2] -= 0.0005;
-      col2[1] -= 0.0015 ; col2[2] -= 0.0005;
+    if (ci->grid_col[1] > 0) {
+      ci->grid_col[1] -= 0.0025; ci->grid_col[2] -= 0.0005;
+      ci->grid_col2[1] -= 0.0015 ; ci->grid_col2[2] -= 0.0005;
     }
   }
-  for (x = -XMAX/2 ; x <= XMAX/2 ; x+= 2) {
-    glColor3fv(col);
+  for (x = -ci->XMAX/2 ; x <= ci->XMAX/2 ; x+= 2) {
+    glColor3fv(ci->grid_col);
     glBegin(GL_LINES);
-     glVertex3f(x, YMAX/2, -10);
-     glVertex3f(x, -YMAX/2, -10);
-     glColor3fv(col2);
-     glVertex3f(x-0.02, YMAX/2, -10);
-     glVertex3f(x-0.02, -YMAX/2, -10);
-     glVertex3f(x+0.02, YMAX/2, -10);
-     glVertex3f(x+0.02, -YMAX/2, -10);
+     glVertex3f(x, ci->YMAX/2, -10);
+     glVertex3f(x, -ci->YMAX/2, -10);
+     glColor3fv(ci->grid_col2);
+     glVertex3f(x-0.02, ci->YMAX/2, -10);
+     glVertex3f(x-0.02, -ci->YMAX/2, -10);
+     glVertex3f(x+0.02, ci->YMAX/2, -10);
+     glVertex3f(x+0.02, -ci->YMAX/2, -10);
     glEnd();
   }
-  for (y = -YMAX/2 ; y <= YMAX/2 ; y+= 2) {
-    glColor3fv(col);
+  for (y = -ci->YMAX/2 ; y <= ci->YMAX/2 ; y+= 2) {
+    glColor3fv(ci->grid_col);
     glBegin(GL_LINES);
-     glVertex3f(-XMAX/2, y, -10);
-     glVertex3f(XMAX/2, y, -10);
-     glColor3fv(col2);
-     glVertex3f(-XMAX/2, y-0.02, -10);
-     glVertex3f(XMAX/2, y-0.02, -10);
-     glVertex3f(-XMAX/2, y+0.02, -10);
-     glVertex3f(XMAX/2, y+0.02, -10);
+     glVertex3f(-ci->XMAX/2, y, -10);
+     glVertex3f(ci->XMAX/2, y, -10);
+     glColor3fv(ci->grid_col2);
+     glVertex3f(-ci->XMAX/2, y-0.02, -10);
+     glVertex3f(ci->XMAX/2, y-0.02, -10);
+     glVertex3f(-ci->XMAX/2, y+0.02, -10);
+     glVertex3f(ci->XMAX/2, y+0.02, -10);
     glEnd();
   }
   glEnable(GL_LIGHTING);
 }
 
-void display(void)
+static void display(ModeInfo *mi)
 {
-  static Component *c[MAX_COMPONENTS];
-  static int i = 0;
+  Circuit *ci = &circuit[MI_SCREEN(mi)];
   GLfloat light_sp[] = {0.8, 0.8, 0.8, 1.0};
   GLfloat black[] = {0, 0, 0, 1.0};
-  static GLfloat rotate_angle = 0; /*  when 'rotate' is enabled */
   int j;
 
-  if (i == 0) {
-    for (i = 0 ; i < maxparts ; i++) {
-      c[i] = NULL;
+  if (ci->display_i == 0) {
+    for (ci->display_i = 0 ; ci->display_i < maxparts ; ci->display_i++) {
+      ci->components[ci->display_i] = NULL;
     }
   } 
   glEnable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-  gluLookAt(viewer[0], viewer[1], viewer[2], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  gluLookAt(ci->viewer[0], ci->viewer[1], ci->viewer[2], 
+            0.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0);
   glPushMatrix();
   if (rotate) {
-     glRotatef(rotate_angle, 0, 0, 1);
-     rotate_angle += 0.01 * (float)rotatespeed;
-     if (rotate_angle >= 360) rotate_angle = 0;
+     glRotatef(ci->rotate_angle, 0, 0, 1);
+     ci->rotate_angle += 0.01 * (float)rotatespeed;
+     if (ci->rotate_angle >= 360) ci->rotate_angle = 0;
   }
-  glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+  glLightfv(GL_LIGHT0, GL_POSITION, ci->lightpos);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_sp);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_sp);
   glLighti(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat)1); 
   glLighti(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat)0.5); 
   glLighti(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat)0); 
-  drawgrid();
+  drawgrid(ci);
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, light_sp);
   if (f_rand() < 0.05) {
     for (j = 0 ; j < maxparts ; j++) {
-      if (c[j] == NULL) {
-        c[j] = NewComponent();
+      if (ci->components[j] == NULL) {
+        ci->components[j] = NewComponent(mi);
         j = maxparts;
       }
     }
-    reorder(&c[0]);
+    reorder(&ci->components[0]);
   }
   for (j = 0 ; j < maxparts ; j++) {
      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, black);
      glMaterialfv(GL_FRONT, GL_EMISSION, black);
      glMaterialfv(GL_FRONT, GL_SPECULAR, black);
-     if (c[j] != NULL) {
-       if (DrawComponent(c[j])) {
-        free(c[j]); c[j] = NULL;
+     if (ci->components[j] != NULL) {
+       if (DrawComponent(ci, ci->components[j])) {
+        free(ci->components[j]); ci->components[j] = NULL;
        }
      }
   }
@@ -1994,50 +1991,51 @@ void display(void)
   glFlush();
 }
 
-void freetexture (GLuint texture) {
-  s_refs[texture]--;
-  if (s_refs[texture] < 1) {
+static void freetexture (Circuit *ci, GLuint texture) 
+{
+  ci->s_refs[texture]--;
+  if (ci->s_refs[texture] < 1) {
     glDeleteTextures(1, &texture);
   }
 }
 
-TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
+static TexNum * fonttexturealloc (ModeInfo *mi,
+                                  const char *str, float *fg, float *bg)
 {
-  static char *strings[50]; /* max of 40 textures */
-  static int w[50], h[50];
+  Circuit *ci = &circuit[MI_SCREEN(mi)];
   int i, status;
-  static int init;
   XImage *ximage;
   char *c;
   TexNum *t;
 
-  if (init == 0) {
+  if (ci->font_init == 0) {
     for (i = 0 ; i < 50 ; i++) {
-      strings[i] = NULL;
-      s_refs[i] = 0;
-      w[i] = 0; h[i] = 0;
+      ci->font_strings[i] = NULL;
+      ci->s_refs[i] = 0;
+      ci->font_w[i] = 0; ci->font_h[i] = 0;
     }
-    init++;
+    ci->font_init++;
   }
   for (i = 0 ; i < 50 ; i++) {
-    if (!s_refs[i] && strings[i]) {
-      free (strings[i]);
-      strings[i] = NULL;
+    if (!ci->s_refs[i] && ci->font_strings[i]) {
+      free (ci->font_strings[i]);
+      ci->font_strings[i] = NULL;
     }
-    if (strings[i] && !strcmp(str, strings[i])) { /* if one matches */
+    if (ci->font_strings[i] && !strcmp(str, ci->font_strings[i])) { /* if one matches */
       t = malloc(sizeof(TexNum));
-      t->w = w[i]; t->h = h[i];
+      t->w = ci->font_w[i]; t->h = ci->font_h[i];
       t->num = i;
-      s_refs[i]++;
+      ci->s_refs[i]++;
       return t;
     }
   }
+
   /* at this point we need to make the new texture */
-  ximage = text_to_ximage (modeinfo->xgwa.screen,
-                           modeinfo->xgwa.visual,
+  ximage = text_to_ximage (mi->xgwa.screen,
+                           mi->xgwa.visual,
                            font, str,
                            fg, bg);
-  for (i = 0 ; strings[i] != NULL ; i++) { /* set i to the next unused value */
+  for (i = 0 ; ci->font_strings[i] != NULL ; i++) { /* set i to the next unused value */
      if (i > 49) {
         fprintf(stderr, "Texture cache full!\n");
         free(ximage->data);
@@ -2046,6 +2044,7 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
         return NULL;
      }
   }
+
   glBindTexture(GL_TEXTURE_2D, i);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -2067,20 +2066,20 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
   t = malloc(sizeof(TexNum));
   t->w = ximage->width;
   t->h = ximage->height;
-  w[i] = t->w; h[i] = t->h;
+  ci->font_w[i] = t->w; ci->font_h[i] = t->h;
   free(ximage->data);
   ximage->data = 0;
   XFree (ximage);
   c = malloc(strlen(str)+1);
   strncpy(c, str, strlen(str)+1);
-  strings[i] = c;
-  s_refs[i]++;
+  ci->font_strings[i] = c;
+  ci->s_refs[i]++;
   t->num = i;
   return t;
 }
 
 /* ensure transparent components are at the end */
-void reorder(Component *c[])
+static void reorder(Component *c[])
 {
   int i, j, k;
   Component *c1[MAX_COMPONENTS];
@@ -2116,40 +2115,53 @@ void reorder(Component *c[])
   }
 }
 
-void reshape_circuit(ModeInfo *mi, int width, int height)
+ENTRYPOINT void reshape_circuit(ModeInfo *mi, int width, int height)
 {
+ Circuit *ci = &circuit[MI_SCREEN(mi)];
  GLfloat h = (GLfloat) height / (GLfloat) width;
  glViewport(0,0,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
  glFrustum(-1.0,1.0,-h,h,1.5,35.0);
  glMatrixMode(GL_MODELVIEW);
- win_h = height; win_w = width;
- YMAX = XMAX * h;
+ ci->win_h = height; 
+ ci->win_w = width;
+ ci->YMAX = ci->XMAX * h;
 }
 
 
-void init_circuit(ModeInfo *mi)
+ENTRYPOINT void init_circuit(ModeInfo *mi)
 {
 int screen = MI_SCREEN(mi);
-Circuit *c;
+Circuit *ci;
 
  if (circuit == NULL) {
    if ((circuit = (Circuit *) calloc(MI_NUM_SCREENS(mi),
                                         sizeof(Circuit))) == NULL)
           return;
  }
- c = &circuit[screen];
- c->window = MI_WINDOW(mi);
+ ci = &circuit[screen];
+ ci->window = MI_WINDOW(mi);
 
+ ci->XMAX = ci->YMAX = 30;
+ ci->viewer[2] = 14;
+ ci->lightpos[0] = 7;
+ ci->lightpos[1] = 7;
+ ci->lightpos[2] = 15;
+ ci->lightpos[3] = 1;
 
- if ((c->glx_context = init_GL(mi)) != NULL) {
+ ci->grid_col[1] = 0.25;
+ ci->grid_col[2] = 0.05;
+ ci->grid_col2[1] = 0.125;
+ ci->grid_col2[2] = 0.05;
+
+ if ((ci->glx_context = init_GL(mi)) != NULL) {
       reshape_circuit(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
  } else {
      MI_CLEARWINDOW(mi);
  }
  if (uselight == 0)
-    light = 1;
+    ci->light = 1;
  glClearColor(0.0,0.0,0.0,0.0);
  glShadeModel(GL_SMOOTH);
  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
@@ -2157,37 +2169,38 @@ Circuit *c;
  glEnable(GL_LIGHTING);
  glEnable(GL_LIGHT0);
  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
- make_tables();
- makebandlist();
+ make_tables(ci);
+ makebandlist(ci);
  
 }
 
-void draw_circuit(ModeInfo *mi)
+ENTRYPOINT void draw_circuit(ModeInfo *mi)
 {
-  Circuit *c = &circuit[MI_SCREEN(mi)];
+  Circuit *ci = &circuit[MI_SCREEN(mi)];
   Window w = MI_WINDOW(mi);
   Display *disp = MI_DISPLAY(mi);
 
-  if (!c->glx_context)
+  if (!ci->glx_context)
       return;
- modeinfo = mi;
 
- glXMakeCurrent(disp, w, *(c->glx_context));
+ glXMakeCurrent(disp, w, *(ci->glx_context));
 
-  display();
+  display(mi);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
 }
 
-void release_circuit(ModeInfo *mi)
+ENTRYPOINT void release_circuit(ModeInfo *mi)
 {
   if (circuit != NULL) {
    (void) free((void *) circuit);
    circuit = NULL;
   }
-  FreeAllGL(MI);
+  FreeAllGL(mi);
 }
+
+XSCREENSAVER_MODULE ("Circuit", circuit)
 
 #endif

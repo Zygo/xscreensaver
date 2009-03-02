@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2003, 2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2003, 2005, 2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,16 +13,25 @@
  * Requires a system with scalable fonts.  (X's font handing sucks.  A lot.)
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <math.h>
+
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include "screenhack.h"
-#include <X11/Intrinsic.h>
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 #include "xdbe.h"
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-
-extern XtAppContext app;
-
 
 typedef struct {
   char *text;
@@ -69,10 +78,10 @@ typedef struct {
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   XdbeBackBuffer backb;
+  Bool dbeclear_p;
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
   Bool dbuf;            /* Whether we're using double buffering. */
-  Bool dbeclear_p;      /* ? */
 
   int border_width;     /* size of the font outline */
   char *charset;        /* registry and encoding for font lookups */
@@ -80,14 +89,16 @@ typedef struct {
   double linger;	/* multiplier for how long to leave words on screen */
   Bool trails_p;
   Bool debug_p;
+  int debug_metrics_p;
   enum { PAGE, SCROLL } mode;
 
   char *font_override;  /* if -font was specified on the cmd line */
 
   FILE *pipe;
+  XtIntervalId timer_id;
   XtInputId pipe_id;
   Time subproc_relaunch_delay;
-  Bool input_available_p;
+  /* Bool input_available_p; */
 
   char buf [40];	/* this only needs to be as big as one "word". */
   int buf_tail;
@@ -97,11 +108,38 @@ typedef struct {
   Bool spawn_p;		/* whether it is time to create a new sentence */
   int latest_sentence;
 
+  unsigned long frame_delay;
+
+  int id_tick;
+
 } state;
 
 
 static void launch_text_generator (state *);
 static void drain_input (state *s);
+
+
+static int
+pick_font_size (state *s)
+{
+  double scale = s->xgwa.height / 1024.0;  /* shrink for small windows */
+  int min, max, r, pixel;
+
+  min = scale * 24;
+  max = scale * 260;
+
+  if (min < 10) min = 10;
+  if (max < 30) max = 30;
+
+  r = ((max-min)/3)+1;
+
+  pixel = min + ((random() % r) + (random() % r) + (random() % r));
+
+  if (s->mode == SCROLL)  /* scroll mode likes bigger fonts */
+    pixel *= 1.5;
+
+  return pixel;
+}
 
 
 /* Finds the set of scalable fonts on the system; picks one;
@@ -111,13 +149,15 @@ static void drain_input (state *s);
 static Bool
 pick_font_1 (state *s, sentence *se)
 {
+  Bool ok = False;
   char pattern[1024];
+
+# ifndef HAVE_COCOA /* real Xlib */
   char **names = 0;
   char **names2 = 0;
   XFontStruct *info = 0;
   int count = 0, count2 = 0;
   int i;
-  Bool ok = False;
 
   if (se->font)
     {
@@ -212,23 +252,7 @@ pick_font_1 (state *s, sentence *se)
 #undef INT
 #undef STR
 
-    {
-      double scale = s->xgwa.height / 1024.0;  /* shrink for small windows */
-      int min, max, r;
-
-      min = scale * 24;
-      max = scale * 260;
-
-      if (min < 10) min = 10;
-      if (max < 30) max = 30;
-
-      r = ((max-min)/3)+1;
-
-      pixel = min + ((random() % r) + (random() % r) + (random() % r));
-
-      if (s->mode == SCROLL)  /* scroll mode likes bigger fonts */
-        pixel *= 1.5;
-    }
+    pixel = pick_font_size (s);
 
 #if 0
     /* Occasionally change the aspect ratio of the font, by increasing
@@ -278,6 +302,21 @@ pick_font_1 (state *s, sentence *se)
 
   XFreeFontInfo (names2, info, count2);
   XFreeFontNames (names);
+
+# else  /* HAVE_COCOA */
+
+  if (s->font_override)
+    sprintf (pattern, "%.200s", s->font_override);
+  else
+    {
+      const char *family = "random";
+      const char *weight = ((random() % 2)  ? "normal" : "bold");
+      const char *slant  = ((random() % 2)  ? "o" : "r");
+      int size = 10 * pick_font_size (s);
+      sprintf (pattern, "*-%s-%s-%s-*-%d-*", family, weight, slant, size);
+    }
+  ok = True;
+# endif /* HAVE_COCOA */
 
   if (! ok) return False;
 
@@ -344,11 +383,13 @@ get_word_text (state *s)
   char *result = 0;
   int lfs = 0;
 
+  drain_input (s);
+
   if (unread_word_text)
     {
-      char *s = unread_word_text;
+      start = unread_word_text;
       unread_word_text = 0;
-      return s;
+      return start;
     }
 
   /* Skip over whitespace at the beginning of the buffer,
@@ -399,9 +440,6 @@ get_word_text (state *s)
       s->buf_tail -= n;
     }
 
-  /* See if there is more to be read, now that there's room in the buffer. */
-  drain_input (s);
-
   return result;
 }
 
@@ -421,6 +459,12 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
 
   w = (word *) calloc (1, sizeof(*w));
   XTextExtents (se->font, txt, strlen(txt), &dir, &ascent, &descent, &overall);
+
+  /* Leave a little more slack */
+  overall.lbearing -= (bw * 2);
+  overall.rbearing += (bw * 2);
+  overall.ascent   += (bw * 2);
+  overall.descent  += (bw * 2);
 
   w->width    = overall.rbearing - overall.lbearing + bw + bw;
   w->height   = overall.ascent   + overall.descent  + bw + bw;
@@ -482,6 +526,39 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
                           0, 0, w->width-1, w->height-1);
         }
 
+#if 0
+      if (s->debug_p)
+        {
+          /* bounding box (behind *each* character) */
+          char *ss;
+          int x = 0;
+          for (ss = txt; *ss; ss++)
+            {
+              XTextExtents (se->font, ss, 1, &dir, &ascent, &descent, &overall);
+              XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
+                              x, w->ascent - overall.ascent, 
+                              overall.width, 
+                              overall.ascent + overall.descent);
+              XDrawRectangle (s->dpy, w->mask,   gc1,
+                              x, w->ascent - overall.ascent, 
+                              overall.width,
+                              overall.ascent + overall.descent);
+
+              XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
+                              x - overall.lbearing, w->ascent - overall.ascent, 
+                              overall.rbearing, 
+                              overall.ascent + overall.descent);
+              XDrawRectangle (s->dpy, w->mask,   gc1,
+                              x - overall.lbearing, w->ascent - overall.ascent, 
+                              overall.rbearing,
+                              overall.ascent + overall.descent);
+
+
+              x += overall.width;
+            }
+        }
+#endif
+
       /* Draw foreground text */
       XDrawString (s->dpy, w->pixmap, gc1, -w->lbearing, w->ascent,
                    txt, strlen(txt));
@@ -498,7 +575,7 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
 
       if (s->debug_p)
         {
-          XSetFunction (s->dpy, gc1, GXset);
+          XSetFunction (s->dpy, gc1, GXcopy);
           if (w->ascent != w->height)
             {
               /* baseline (on top of the characters) */
@@ -546,14 +623,13 @@ free_word (state *s, word *w)
 
 
 static sentence *
-new_sentence (state *s)
+new_sentence (state *st, state *s)
 {
-  static int id = 0;
   XGCValues gcv;
   sentence *se = (sentence *) calloc (1, sizeof (*se));
   se->fg_gc = XCreateGC (s->dpy, s->b, 0, &gcv);
   se->anim_state = IN;
-  se->id = ++id;
+  se->id = ++st->id_tick;
   return se;
 }
 
@@ -1116,7 +1192,7 @@ more_sentences (state *s)
       sentence *se = s->sentences[i];
       if (! se)
         {
-          se = new_sentence (s);
+          se = new_sentence (s, s);
           populate_sentence (s, se);
           if (se->nwords > 0)
             s->spawn_p = False, any = True;
@@ -1265,13 +1341,98 @@ draw_sentence (state *s, sentence *se)
 }
 
 
+static unsigned long
+fontglide_draw_metrics (state *s)
+{
+  char txt[2];
+  char *fn = (s->font_override ? s->font_override : "fixed");
+  XFontStruct *font = XLoadQueryFont (s->dpy, fn);
+  XCharStruct c, overall;
+  int dir, ascent, descent;
+  int x, y;
+  GC gc;
+  unsigned long red   = 0xFFFF0000;  /* so shoot me */
+  unsigned long green = 0xFF00FF00;
+  unsigned long blue  = 0xFF6666FF;
+  int i;
+
+  txt[0] = s->debug_metrics_p;
+  txt[1] = 0;
+
+  gc = XCreateGC (s->dpy, s->window, 0, 0);
+  XSetFont (s->dpy, gc, font->fid);
+
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (s->dpy, gc, False);
+#endif
+
+  XTextExtents (font, txt, strlen(txt), 
+                &dir, &ascent, &descent, &overall);
+  c = font->per_char[((unsigned char *) txt)[0] - font->min_char_or_byte2];
+
+  XClearWindow (s->dpy, s->window);
+
+  x = (s->xgwa.width  - overall.width) / 2;
+  y = (s->xgwa.height - (2 * (ascent + descent))) / 2;
+
+  for (i = 0; i < 2; i++)
+    {
+      XCharStruct cc = (i == 0 ? c : overall);
+      int x1 = 20;
+      int x2 = s->xgwa.width - 40;
+      int x3 = s->xgwa.width;
+
+      XSetForeground (s->dpy, gc, red);
+      XDrawLine (s->dpy, s->window, gc, 0, y - ascent,  x3, y - ascent);
+      XDrawLine (s->dpy, s->window, gc, 0, y + descent, x3, y + descent);
+
+      XSetForeground (s->dpy, gc, green);
+      /* ascent, baseline, descent */
+      XDrawLine (s->dpy, s->window, gc, x1, y - cc.ascent,  x2, y - cc.ascent);
+      XDrawLine (s->dpy, s->window, gc, x1, y, x2, y);
+      XDrawLine (s->dpy, s->window, gc, x1, y + cc.descent, x2, y + cc.descent);
+
+      /* origin, width */
+      XSetForeground (s->dpy, gc, blue);
+      XDrawLine (s->dpy, s->window, gc,
+                 x, y - ascent  - 10,
+                 x, y + descent + 10);
+      XDrawLine (s->dpy, s->window, gc,
+                 x + cc.width, y - ascent  - 10,
+                 x + cc.width, y + descent + 10);
+
+      /* lbearing, rbearing */
+      XSetForeground (s->dpy, gc, green);
+      XDrawLine (s->dpy, s->window, gc,
+                 x + cc.lbearing, y - ascent,
+                 x + cc.lbearing, y + descent);
+      XDrawLine (s->dpy, s->window, gc,
+                 x + cc.rbearing, y - ascent,
+                 x + cc.rbearing, y + descent);
+
+      XSetForeground (s->dpy, gc, WhitePixelOfScreen (s->xgwa.screen));
+      XDrawString (s->dpy, s->window, gc, x, y, txt, strlen(txt));
+
+      y += (ascent + descent) * 2;
+    }
+
+  XFreeGC (s->dpy, gc);
+  XFreeFont (s->dpy, font);
+  return s->frame_delay;
+}
+
+
 /* Render all the words to the screen, and run the animation one step.
    Clear screen first, swap buffers after.
  */
-static void
-draw_fontglide (state *s)
+static unsigned long
+fontglide_draw (Display *dpy, Window window, void *closure)
 {
+  state *s = (state *) closure;
   int i;
+
+  if (s->debug_metrics_p)
+    return fontglide_draw_metrics (closure);
 
   if (s->spawn_p)
     more_sentences (s);
@@ -1298,36 +1459,10 @@ draw_fontglide (state *s)
       XCopyArea (s->dpy, s->b, s->window, s->bg_gc,
 		 0, 0, s->xgwa.width, s->xgwa.height, 0, 0);
     }
+
+  return s->frame_delay;
 }
 
-
-static void
-handle_events (state *s)
-{
-  while (XPending (s->dpy))
-    {
-      XEvent event;
-      XNextEvent (s->dpy, &event);
-
-      if (event.xany.type == ConfigureNotify)
-        {
-          XGetWindowAttributes (s->dpy, s->window, &s->xgwa);
-
-          if (s->dbuf && (s->ba))
-            {
-              XFreePixmap (s->dpy, s->ba);
-              s->ba = XCreatePixmap (s->dpy, s->window, 
-				     s->xgwa.width, s->xgwa.height,
-				     s->xgwa.depth);
-              XFillRectangle (s->dpy, s->ba, s->bg_gc, 0, 0, 
-                              s->xgwa.width, s->xgwa.height);
-              s->b = s->ba;
-            }
-        }
-
-      screenhack_handle_event (s->dpy, &event);
-    }
-}
 
 
 
@@ -1338,15 +1473,15 @@ handle_events (state *s)
 static void
 subproc_cb (XtPointer closure, int *source, XtInputId *id)
 {
-  state *s = (state *) closure;
-  s->input_available_p = True;
+  /* state *s = (state *) closure; */
+  /* s->input_available_p = True; */
 }
 
 
 static void
 launch_text_generator (state *s)
 {
-  char *oprogram = get_string_resource ("program", "Program");
+  char *oprogram = get_string_resource (s->dpy, "program", "Program");
   char *program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
@@ -1358,7 +1493,8 @@ launch_text_generator (state *s)
   if ((s->pipe = popen (program, "r")))
     {
       s->pipe_id =
-        XtAppAddInput (app, fileno (s->pipe),
+        XtAppAddInput (XtDisplayToApplicationContext (s->dpy), 
+                       fileno (s->pipe),
                        (XtPointer) (XtInputReadMask | XtInputExceptMask),
                        subproc_cb, (XtPointer) s);
     }
@@ -1373,7 +1509,27 @@ static void
 relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 {
   state *s = (state *) closure;
+  if (!s->timer_id) abort();
+  s->timer_id = 0;
   launch_text_generator (s);
+}
+
+
+/* whether there is data available to be read on the file descriptor
+ */
+static int
+input_available_p (int fd)
+{
+  struct timeval tv = { 0, };
+  fd_set fds;
+# if 0
+  /* This breaks on BSD, which uses bzero() in the definition of FD_ZERO */
+  FD_ZERO (&fds);
+# else
+  memset (&fds, 0, sizeof(fds));
+# endif
+  FD_SET (fd, &fds);
+  return select (fd+1, &fds, NULL, NULL, &tv);
 }
 
 
@@ -1383,16 +1539,16 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 static void
 drain_input (state *s)
 {
-  /* allow subproc_cb() to run, if the select() down in Xt says that
-     input is available.  This tells us whether we can read() without
-     blocking. */
-  if (! s->input_available_p)
-    if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-      XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+  XtAppContext app = XtDisplayToApplicationContext (s->dpy);
 
   if (! s->pipe) return;
-  if (! s->input_available_p) return;
-  s->input_available_p = False;
+
+  /* if (! s->input_available_p) return; */
+  /* s->input_available_p = False; */
+
+  if (! input_available_p (fileno (s->pipe)))
+    return;
+
 
   if (s->buf_tail < sizeof(s->buf) - 2)
     {
@@ -1427,9 +1583,10 @@ drain_input (state *s)
           s->buf[s->buf_tail] = 0;
 
           /* Set up a timer to re-launch the subproc in a bit. */
-          XtAppAddTimeOut (app, s->subproc_relaunch_delay,
-                           relaunch_generator_timer,
-                           (XtPointer) s);
+          if (s->timer_id) abort();
+          s->timer_id = XtAppAddTimeOut (app, s->subproc_relaunch_delay,
+                                         relaunch_generator_timer,
+                                         (XtPointer) s);
         }
     }
 }
@@ -1437,43 +1594,49 @@ drain_input (state *s)
 
 /* Window setup and resource loading */
 
-static state *
-init_fontglide (Display *dpy, Window window)
+static void *
+fontglide_init (Display *dpy, Window window)
 {
   XGCValues gcv;
   state *s = (state *) calloc (1, sizeof(*s));
   s->dpy = dpy;
   s->window = window;
+  s->frame_delay = get_integer_resource (dpy, "delay", "Integer");
 
   XGetWindowAttributes (s->dpy, s->window, &s->xgwa);
 
-  s->font_override = get_string_resource ("font", "Font");
+  s->font_override = get_string_resource (dpy, "font", "Font");
   if (s->font_override && (!*s->font_override || *s->font_override == '('))
     s->font_override = 0;
 
-  s->charset = get_string_resource ("fontCharset", "FontCharset");
-  s->border_width = get_integer_resource ("fontBorderWidth", "Integer");
+  s->charset = get_string_resource (dpy, "fontCharset", "FontCharset");
+  s->border_width = get_integer_resource (dpy, "fontBorderWidth", "Integer");
   if (s->border_width < 0 || s->border_width > 20)
     s->border_width = 1;
 
-  s->speed = get_float_resource ("speed", "Float");
+  s->speed = get_float_resource (dpy, "speed", "Float");
   if (s->speed <= 0 || s->speed > 200)
     s->speed = 1;
 
-  s->linger = get_float_resource ("linger", "Float");
+  s->linger = get_float_resource (dpy, "linger", "Float");
   if (s->linger <= 0 || s->linger > 200)
     s->linger = 1;
 
-  s->debug_p = get_boolean_resource ("debug", "Debug");
-  s->trails_p = get_boolean_resource ("trails", "Trails");
+  s->trails_p = get_boolean_resource (dpy, "trails", "Trails");
+  s->debug_p = get_boolean_resource (dpy, "debug", "Debug");
+  s->debug_metrics_p = (get_boolean_resource (dpy, "debugMetrics", "Debug")
+                        ? 'y' : 0);
 
-  s->dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
-  s->dbeclear_p = get_boolean_resource ("useDBEClear", "Boolean");
+  s->dbuf = get_boolean_resource (dpy, "doubleBuffer", "Boolean");
+
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+  s->dbuf = False;
+# endif
 
   if (s->trails_p) s->dbuf = False;  /* don't need it in this case */
 
   {
-    char *ss = get_string_resource ("mode", "Mode");
+    char *ss = get_string_resource (dpy, "mode", "Mode");
     if (!ss || !*ss || !strcasecmp (ss, "random"))
       s->mode = ((random() % 2) ? SCROLL : PAGE);
     else if (!strcasecmp (ss, "scroll"))
@@ -1491,6 +1654,7 @@ init_fontglide (Display *dpy, Window window)
   if (s->dbuf)
     {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      s->dbeclear_p = get_boolean_resource (dpy, "useDBEClear", "Boolean");
       if (s->dbeclear_p)
         s->b = xdbe_get_backbuffer (dpy, window, XdbeBackground);
       else
@@ -1511,13 +1675,14 @@ init_fontglide (Display *dpy, Window window)
       s->b = s->window;
     }
 
-  gcv.foreground = get_pixel_resource ("background", "Background",
-                                       s->dpy, s->xgwa.colormap);
+  gcv.foreground = get_pixel_resource (s->dpy, s->xgwa.colormap,
+                                       "background", "Background");
   s->bg_gc = XCreateGC (s->dpy, s->b, GCForeground, &gcv);
 
   s->subproc_relaunch_delay = 2 * 1000;
 
-  launch_text_generator (s);
+  if (! s->debug_metrics_p)
+    launch_text_generator (s);
 
   s->nsentences = 5; /* #### */
   s->sentences = (sentence **) calloc (s->nsentences, sizeof (sentence *));
@@ -1527,10 +1692,75 @@ init_fontglide (Display *dpy, Window window)
 }
 
 
-
-char *progclass = "FontGlide";
+static Bool
+fontglide_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  state *s = (state *) closure;
 
-char *defaults [] = {
+  if (! s->debug_metrics_p)
+    return False;
+  else if (event->xany.type == ButtonPress)
+    {
+      s->debug_metrics_p++;
+      if (s->debug_metrics_p > 255)
+        s->debug_metrics_p = ' ';
+      else if (s->debug_metrics_p > 127 &&
+               s->debug_metrics_p < 159)
+        s->debug_metrics_p = 160;
+      return True;
+    }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c)
+        s->debug_metrics_p = (unsigned char) c;
+      return !!c;
+    }
+  else
+    return False;
+}
+
+
+static void
+fontglide_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  state *s = (state *) closure;
+  XGetWindowAttributes (s->dpy, s->window, &s->xgwa);
+
+  if (s->dbuf && (s->ba))
+    {
+      XFreePixmap (s->dpy, s->ba);
+      s->ba = XCreatePixmap (s->dpy, s->window, 
+                             s->xgwa.width, s->xgwa.height,
+                             s->xgwa.depth);
+      XFillRectangle (s->dpy, s->ba, s->bg_gc, 0, 0, 
+                      s->xgwa.width, s->xgwa.height);
+      s->b = s->ba;
+    }
+}
+
+static void
+fontglide_free (Display *dpy, Window window, void *closure)
+{
+  state *s = (state *) closure;
+
+  if (s->pipe_id)
+    XtRemoveInput (s->pipe_id);
+  if (s->pipe)
+    pclose (s->pipe);
+  if (s->timer_id)
+    XtRemoveTimeOut (s->timer_id);
+
+  /* #### there's more to free here */
+
+  free (s);
+}
+
+
+static const char *fontglide_defaults [] = {
   ".background:		#000000",
   ".foreground:		#DDDDDD",
   ".borderColor:	#555555",
@@ -1544,6 +1774,7 @@ char *defaults [] = {
   "*linger:             1.0",
   "*trails:             False",
   "*debug:              False",
+  "*debugMetrics:       False",
   "*doubleBuffer:	True",
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:		True",
@@ -1552,7 +1783,8 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = {
+static XrmOptionDescRec fontglide_options [] = {
+  { "-mode",		".mode",	    XrmoptionSepArg, 0 },
   { "-scroll",		".mode",	    XrmoptionNoArg, "scroll" },
   { "-page",		".mode",	    XrmoptionNoArg, "page"   },
   { "-random",		".mode",	    XrmoptionNoArg, "random" },
@@ -1568,21 +1800,9 @@ XrmOptionDescRec options [] = {
   { "-db",		".doubleBuffer",    XrmoptionNoArg,  "True"  },
   { "-no-db",		".doubleBuffer",    XrmoptionNoArg,  "False" },
   { "-debug",		".debug",           XrmoptionNoArg,  "True"  },
+  { "-debug-metrics",	".debugMetrics",    XrmoptionNoArg,  "True"  },
   { 0, 0, 0, 0 }
 };
 
 
-void
-screenhack (Display *dpy, Window window)
-{
-  state *s = init_fontglide (dpy, window);
-  int delay = get_integer_resource ("delay", "Integer");
-
-  while (1)
-    {
-      handle_events (s);
-      draw_fontglide (s);
-      XSync (dpy, False);
-      if (delay) usleep (delay);
-    }
-}
+XSCREENSAVER_MODULE ("FontGlide", fontglide)

@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY DEFAULT_TEXT_FILE OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS login_manager_tmp pkg_config gnome_open_program gnome_url_show_program INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS XINERAMA_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM NEW_LOGIN_COMMAND NEW_LOGIN_COMMAND_P DEFAULT_IMAGES_P DEFAULT_IMAGE_DIRECTORY DEFAULT_TEXT_FILE OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR HACKDIR_FULL GTK_DATADIR PO_DATADIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -855,12 +855,15 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
 
+
 Installation options:
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
                           Default: `PREFIX/libexec/xscreensaver/'
   --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
                           Default: `PREFIX/share/xscreensaver/config/'
+  --with-x-app-defaults=DIR
+			   Where to install xscreensaver configuration file.
 
 Except where noted, all of the --with options below can also take a
 directory argument: for example, `--with-motif=/opt/Motif'.  That would
@@ -1540,9 +1543,6 @@ echo "command line was: $0 $@"
 
 
 
-
-
-
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
@@ -1665,6 +1665,22 @@ perl_version_cmd='print $]'
 # Try and find the app-defaults directory.
 # It sucks that autoconf doesn't do this already...
 #
+
+
+###############################################################################
+#
+#       Handle the --with-x-app-defaults option HERE
+#
+###############################################################################
+
+
+# Check whether --with-x-app-defaults or --without-x-app-defaults was given.
+if test "${with_x_app_defaults+set}" = set; then
+  withval="$with_x_app_defaults"
+  ac_cv_x_app_defaults="$withval"
+else
+  eval ac_x_app_defaults="$withval"
+fi;
 
 
 
@@ -2836,7 +2852,7 @@ fi
   if test -n "$GCC"; then
     echo "$as_me:$LINENO: result: Turning on gcc compiler warnings." >&5
 echo "${ECHO_T}Turning on gcc compiler warnings." >&6
-    CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs"
+    CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes"
     OBJCC="$OBJCC -Wall"
     # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
     # and then perhaps we can do without -pedantic?
@@ -4909,6 +4925,108 @@ done
 
 
 for ac_func in sigaction syslog realpath setrlimit
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+choke me
+#else
+char (*f) () = $ac_func;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != $ac_func;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_var=no"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
+for ac_func in setlocale
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -9738,6 +9856,11 @@ fi
 # canonicalize slashes.
 HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
+# Expand HACKDIR as HACKDIR_FULL
+eval HACKDIR_FULL=${HACKDIR}
+eval HACKDIR_FULL=${HACKDIR_FULL}
+eval HACKDIR_FULL=${HACKDIR_FULL}
+
 # This option used to be called --enable-subdir; make sure that is no longer
 # used, since configure brain-damagedly ignores unknown --enable options.
 
@@ -9758,6 +9881,7 @@ fi
 ###############################################################################
 #
 #       Handle the --with-configdir option
+#       Help for --with-x-app-defaults option added..
 #
 ###############################################################################
 
@@ -12152,6 +12276,13 @@ fi;
 
 if test "$with_proc_interrupts" = yes; then
 
+  # Note that we may be building in an environment (e.g. Debian buildd chroot)
+  # without a proper /proc filesystem. If /proc/interrupts exists, then we'll
+  # check that it has the bits we need, but otherwise we'll just go on faith.
+  #
+  have_proc_interrupts=yes
+
+  if test -f /proc/interrupts; then
    echo "$as_me:$LINENO: checking whether /proc/interrupts contains keyboard data" >&5
 echo $ECHO_N "checking whether /proc/interrupts contains keyboard data... $ECHO_C" >&6
 if test "${ac_cv_have_proc_interrupts+set}" = set; then
@@ -12166,6 +12297,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_have_proc_interrupts" >&5
 echo "${ECHO_T}$ac_cv_have_proc_interrupts" >&6
    have_proc_interrupts=$ac_cv_have_proc_interrupts
+  fi
 
   if test "$have_proc_interrupts" = yes; then
     cat >>confdefs.h <<\_ACEOF
@@ -12218,46 +12350,6 @@ _ACEOF
 
   fi
 fi
-
-
-###############################################################################
-#
-#       The --enable-vt-locking option
-#
-###############################################################################
-
-#ac_vt_lockswitch=no
-#AC_ARG_ENABLE(vt-locking,[
-#  --enable-vt-locking     Compile in support for locking Virtual Terminals.
-#                          This is the default if the system supports it, and
-#                          if locking support is included (--enable-locking.)
-#  --disable-vt-locking    Do not allow locking of VTs, even if locking is
-#                          enabled.],
-#  [enable_vt_locking="$enableval"],[enable_vt_locking=yes])
-#if test "$enable_vt_locking" = yes; then
-#
-#  AC_CACHE_CHECK([for the VT_LOCKSWITCH ioctl], ac_cv_vt_lockswitch,
-#   [AC_TRY_COMPILE([#include <fcntl.h>
-#                   #include <sys/ioctl.h>
-#                   #include <sys/vt.h>],
-#                  [int x = VT_LOCKSWITCH; int y = VT_UNLOCKSWITCH;],
-#                  [ac_cv_vt_lockswitch=yes],
-#                  [ac_cv_vt_lockswitch=no])])
-#  ac_vt_lockswitch=$ac_cv_vt_lockswitch
-#
-#elif test "$enable_vt_locking" = no; then
-#  true
-#else
-#  echo "error: must be yes or no: --enable-vt-locking=$enable_vt_locking"
-#  exit 1
-#fi
-#
-#if test "$ac_vt_lockswitch" = yes; then
-#  AC_DEFINE(HAVE_VT_LOCKSWITCH)
-#  # the VT_LOCKSWITCH ioctl can only be used when running as root.
-#  # #### but it doesn't work yet, so don't worry about that for now.
-##  need_setuid=yes
-#fi
 
 
 ###############################################################################
@@ -16121,7 +16213,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16128 "configure"
+#line 16220 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -17821,6 +17913,10 @@ if test "$have_motif" = yes -a "$have_xpm" = yes ; then
   fi
 fi
 
+if test "$XPM_LIBS" = "" ; then
+  XPM_LIBS=$(MINIXPM)
+fi
+
 
 ###############################################################################
 #
@@ -19424,9 +19520,9 @@ fi;
 case "$with_textfile" in
   /*)
     # absolute path
-    echo "$as_me:$LINENO: checking for image directory $with_textfile" >&5
-echo $ECHO_N "checking for image directory $with_textfile... $ECHO_C" >&6
-    if test -d "$with_textfile" ; then
+    echo "$as_me:$LINENO: checking for text file $with_textfile" >&5
+echo $ECHO_N "checking for text file $with_textfile... $ECHO_C" >&6
+    if test -f "$with_textfile" ; then
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
     else
@@ -19464,7 +19560,7 @@ echo "${ECHO_T}no" >&6
   ;;
 
   *)
-    echo "error: must be an absolute path: --with-image-directory=$with_textfile_req"
+    echo "error: must be an absolute path: --with-text-file=$with_textfile_req"
     exit 1
   ;;
 esac
@@ -19715,6 +19811,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
 
 
 
@@ -20537,6 +20634,7 @@ s,@GNOME24@,$GNOME24,;t t
 s,@GNOME22@,$GNOME22,;t t
 s,@NOGNOME@,$NOGNOME,;t t
 s,@HACKDIR@,$HACKDIR,;t t
+s,@HACKDIR_FULL@,$HACKDIR_FULL,;t t
 s,@GTK_DATADIR@,$GTK_DATADIR,;t t
 s,@PO_DATADIR@,$PO_DATADIR,;t t
 s,@HACK_CONF_DIR@,$HACK_CONF_DIR,;t t
@@ -21687,6 +21785,7 @@ if test "$do_dir_warning" = no; then
   fi
   echo "User programs will be installed in ${bindir}/"
   echo "Screen savers will be installed in ${HACKDIR}/"
-  echo "Configuration will be installed in ${HACK_CONF_DIR}/"
+  echo "Hack configurations will be installed in ${HACK_CONF_DIR}/"
+  echo "Saver configuration will be installed in ${APPDEFAULTS}/"
   echo ''
 fi

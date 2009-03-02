@@ -28,22 +28,20 @@ static const char sccsid[] = "@(#)lightning.c	5.00 2000/11/01 xlockmore";
  */
 
 #ifdef STANDALONE
-#define MODE_lightning
-#define PROGCLASS "Lightning"
-#define HACK_INIT init_lightning
-#define HACK_DRAW draw_lightning
-#define lightning_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
-                 "*ncolors: 64  \n"
-#define BRIGHT_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
+# define MODE_lightning
+# define DEFAULTS "*delay: 10000 \n" \
+                  "*ncolors: 64  \n"
+# define BRIGHT_COLORS
+# define reshape_lightning 0
+# define lightning_handle_event 0
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_lightning
 
-ModeSpecOpt lightning_opts =
+ENTRYPOINT ModeSpecOpt lightning_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
@@ -514,8 +512,8 @@ wiggle_line(XPoint * p, int number, int amount)
 
 /*------------------------------------------------------------------------*/
 
-void
-init_lightning(ModeInfo * mi)
+ENTRYPOINT void
+init_lightning (ModeInfo * mi)
 {
 	Storm      *st;
 
@@ -536,8 +534,8 @@ init_lightning(ModeInfo * mi)
 
 /*------------------------------------------------------------------------*/
 
-void
-draw_lightning(ModeInfo * mi)
+ENTRYPOINT void
+draw_lightning (ModeInfo * mi)
 {
 	int         i;
 	Storm      *st;
@@ -594,7 +592,7 @@ draw_lightning(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 release_lightning(ModeInfo * mi)
 {
 	if (Helga != NULL) {
@@ -603,10 +601,13 @@ release_lightning(ModeInfo * mi)
 	}
 }
 
-void
+ENTRYPOINT void
 refresh_lightning(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+XSCREENSAVER_MODULE ("Lightning", lightning)
+
 
 #endif /* MODE_lightning */

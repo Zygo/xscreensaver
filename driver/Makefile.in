@@ -152,27 +152,31 @@ DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 
 SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(UTILS_SRC)/logo.c $(UTILS_SRC)/yarandom.c \
+		  $(UTILS_SRC)/minixpm.c \
 		  $(DEMO_UTIL_SRCS)
 SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/minixpm.o \
 		  $(DEMO_UTIL_OBJS)
 
 GETIMG_SRCS_1	= xscreensaver-getimage.c
 GETIMG_OBJS_1	= xscreensaver-getimage.o
 
 GETIMG_SRCS	= $(GETIMG_SRCS_1) \
-		  $(UTILS_SRC)/colorbars.o $(UTILS_SRC)/resources.o \
-		  $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/visual.o \
-		  $(UTILS_SRC)/usleep.o $(UTILS_SRC)/hsv.o \
-		  $(UTILS_SRC)/colors.o $(UTILS_SRC)/grabscreen.o \
-		  $(UTILS_SRC)/logo.o prefs.o $(XMU_SRCS)
+		  $(UTILS_BIN)/colorbars.o $(UTILS_BIN)/resources.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabscreen.o \
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o prefs.o \
+		  $(XMU_SRCS)
 
 GETIMG_OBJS	= $(GETIMG_OBJS_1) \
 		  $(UTILS_BIN)/colorbars.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabscreen.o \
-		  $(UTILS_BIN)/logo.o prefs.o $(XMU_OBJS)
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o prefs.o \
+		  $(XMU_OBJS)
 
 SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c exec.c \
 		  xset.c splash.c setuid.c stderr.c
@@ -219,7 +223,7 @@ SCRIPTS_OSX	= xscreensaver-getimage-desktop
 SCRIPTS		= $(SCRIPTS_1) @SCRIPTS_OSX@
 
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
-		  xscreensaver.h prefs.h remote.h \
+		  xscreensaver.h prefs.h remote.h exec.h \
 		  demo-Gtk-widgets.h demo-Gtk-stubs.h demo-Gtk-support.h \
 		  demo-Gtk-conf.h
 MEN_1		= xscreensaver.man xscreensaver-demo.man \
@@ -366,7 +370,7 @@ munge-scripts: $(SCRIPTS)
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
 	U=$(UTILS_SRC)/version.h ;					\
-	V=`sed -n 's/.*\([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
 	T=/tmp/xs$$$$.$(mansuffix) ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
 	echo "installing man pages: $$TH" ;				\
@@ -377,6 +381,8 @@ install-man: $(MEN)
 									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  manbase=`echo $$man | sed 's/\.man$$//'` ;	\
+	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;	\
 	  sed -e "s/^\.TH.*/$$TH/"					\
 	      -e 's/^\(\.BR xscr.*(\)[^()]\(.*\)/\1$(mansuffix)\2/'	\
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
@@ -616,7 +622,7 @@ clean:
 	XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 
 distclean: clean
-	-rm -f Makefile XScreenSaver.ad XScreenSaver-Xm.ad \
+	-rm -f Makefile XScreenSaver.ad \
 	TAGS *~ "#"* screensaver-properties.desktop
 
 # Adds all current dependencies to Makefile
@@ -659,23 +665,24 @@ distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 # have a version skew between the app-defaults file and the executable.
 # Also update hacks/config/README in the same way.
 update_ad_version::
-	@files="XScreenSaver.ad.in ../hacks/config/README" ;		    \
-	U=$(UTILS_SRC)/version.h ;					    \
-	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	D=`date '+%d-%b-%Y'` ;						    \
-	for S in $$files ; do						    \
-	  T=/tmp/xs.$$$$ ;						    \
-	  sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
-	      -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"   \
-	    < $$S > $$T ;						    \
-	  if cmp -s $$S $$T ; then					    \
-	    true ;							    \
-	  else								    \
-	    cat $$T > $$S ;						    \
-	    echo "updated $$S to $$V $$D" ;				    \
-	  fi ;								    \
-	done ;								    \
-	rm $$T
+	@								    \
+  files="XScreenSaver.ad.in ../hacks/config/README ../OSX/bindist.rtf" ;    \
+  U=$(UTILS_SRC)/version.h ;						    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;		    \
+  D=`date '+%d-%b-%Y'` ;						    \
+  for S in $$files ; do							    \
+    T=/tmp/xs.$$$$ ;							    \
+    sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*[ab]*[0-9]*\(.*\)/\1$$V\2/"  \
+        -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"	    \
+      < $$S > $$T ;							    \
+    if cmp -s $$S $$T ; then						    \
+      true ;								    \
+    else								    \
+      cat $$T > $$S ;							    \
+      echo "updated $$S to $$V $$D" ;					    \
+    fi ;								    \
+  done ;								    \
+  rm $$T
 
 TAGS: tags
 tags:
@@ -714,6 +721,7 @@ $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
 $(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
+$(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/colorbars.o:	$(UTILS_SRC)/colorbars.c
 
@@ -867,6 +875,7 @@ dpms.o: ../config.h
 dpms.o: $(srcdir)/prefs.h
 dpms.o: $(srcdir)/xscreensaver.h
 exec.o: ../config.h
+exec.o: $(srcdir)/exec.h
 lock.o: ../config.h
 lock.o: $(srcdir)/prefs.h
 lock.o: $(srcdir)/xscreensaver.h
@@ -886,6 +895,7 @@ stderr.o: ../config.h
 stderr.o: $(srcdir)/prefs.h
 stderr.o: $(srcdir)/xscreensaver.h
 subprocs.o: ../config.h
+subprocs.o: $(srcdir)/exec.h
 subprocs.o: $(srcdir)/prefs.h
 subprocs.o: $(srcdir)/xscreensaver.h
 test-apm.o: ../config.h

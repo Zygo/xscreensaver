@@ -9,10 +9,11 @@
           low="1" high="60" default="5"/>
 
   <number id="layers" type="spinbutton" arg="-layers %"
-          _label="Layers" low="1" high="100" default="1"/>
+          _label="Layers" low="1" high="10" default="2"/>
 
   <_description>
 Simulates that pen-in-nested-plastic-gears toy from your childhood.
-By Rohit Singh.
+
+Written by Rohit Singh; 2000.
   </_description>
 </screensaver>

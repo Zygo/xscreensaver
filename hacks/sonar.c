@@ -1,4 +1,12 @@
 /* sonar.c --- Simulate a sonar screen.
+ * Copyright (C) 1998-2006 by Stephen Martin and Jamie Zawinski
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
  *
  * This is an implementation of a general purpose reporting tool in the
  * format of a Sonar display. It is designed such that a sensor is read
@@ -16,10 +24,16 @@
  * because, unfortunately, different systems have different ways of creating
  * these sorts of packets.
  *
- * Also: creating an ICMP socket is a privileged operation, so the program
- * needs to be installed SUID root if you want to use the ping mode.  If you
- * check the code you will see that this privilige is given up immediately
- * after the socket is created.
+ * In order to use the ping sensor on most systems, this program must be
+ * installed as setuid root, so that it can create an ICMP RAW socket.  Root
+ * privileges are disavowed shortly after startup (just after connecting to
+ * the X server and reading the resource database) so this is *believed* to
+ * be a safe thing to do, but it is usually recommended that you have as few
+ * setuid programs around as possible, on general principles.
+ *
+ * It is not necessary to make it setuid on MacOS systems, because on those
+ * systems, unprivileged programs can ping by using ICMP DGRAM sockets
+ * instead of ICMP RAW.
  *
  * It should be easy to extend this code to support other sorts of sensors.
  * Some ideas:
@@ -28,20 +42,10 @@
  *   - plot the process table, by process size, cpu usage, or total time;
  *   - plot the logged on users by idle time or cpu usage.
  *
- * Copyright (C) 1998, 2001
- *  by Stephen Martin (smartin@vanderfleet-martin.net).
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
- * implied warranty.
- *
- * $Revision: 1.39 $
+ * $Revision: 1.57 $
  *
  * Version 1.0 April 27, 1998.
- * - Initial version
+ * - Initial version, by Stephen Martin <smartin@vanderfleet-martin.net>
  * - Submitted to RedHat Screensaver Contest
  * 
  * Version 1.1 November 3, 1998.
@@ -76,6 +80,7 @@
  * - Now need to define HAVE_PING to compile in the ping stuff.
  */
 
+
 /* These are computed by configure now:
    #define HAVE_ICMP
    #define HAVE_ICMPHDR
@@ -92,6 +97,8 @@
 #include "screenhack.h"
 #include "colors.h"
 #include "hsv.h"
+
+#undef usleep /* conflicts with unistd.h on OSX */
 
 #if defined(HAVE_ICMP) || defined(HAVE_ICMPHDR)
 # include <unistd.h>
@@ -188,7 +195,10 @@ typedef struct Bogie {
  * This contains all of the runtime information about the sonar scope.
  */
 
-typedef struct {
+typedef struct ping_target ping_target;
+
+typedef struct sonar_info sonar_info;
+struct sonar_info {
     Display *dpy;		/* The X display */
     Window win;			/* The window */
     GC hi, 			/* The leading edge of the sweep */
@@ -213,31 +223,30 @@ typedef struct {
 
     int TTL;			/* The number of ticks that bogies are visible
                                    on the screen before they fade away. */
-} sonar_info;
+
+  ping_target *last_ptr;
+
+  Bogie *(*sensor)(sonar_info *, void *); /* The current sensor */
+  void *sensor_info;			  /* Information about the sensor */
+
+};
 
 static Bool debug_p = False;
 static Bool resolve_p = True;
 static Bool times_p = True;
 
 
-/* 
- * Variables to support the differnt Sonar modes.
- */
-
-Bogie *(*sensor)(sonar_info *, void *);	/* The current sensor */
-void *sensor_info;			/* Information about the sensor */
-
 /*
  * A list of targets to ping.
  */
 
-typedef struct ping_target {
+struct ping_target {
     char *name;			/* The name of the target */
 #ifdef HAVE_PING
     struct sockaddr address;	/* The address of the target */
 #endif /* HAVE_PING */
     struct ping_target *next;	/* The next one in the list */
-} ping_target;
+};
 
 
 #ifdef HAVE_PING
@@ -288,65 +297,7 @@ typedef struct {
     char *teamBID;		/* The identifier for bogies in team B */
 } sim_info;
 
-/* Name of the Screensaver hack */
 
-char *progclass="sonar";
-
-/* Application Defaults */
-
-char *defaults [] = {
-    ".background:      #000000",
-    ".sweepColor:      #00FF00",
-    "*delay:	       100000",
-    "*scopeColor:      #003300",
-    "*gridColor:       #00AA00",
-    "*textColor:       #FFFF00",
-    "*ttl:             90",
-    "*mode:            default",
-    "*font:            fixed",
-    "*sweepDegrees:    30",
-
-    "*textSteps:       80",	/* npixels */
-    "*sweepSegments:   80",	/* npixels */
-
-    "*pingTimeout:     3000",
-
-    "*teamAName:       F18",
-    "*teamBName:       MIG",
-    "*teamACount:      4",
-    "*teamBCount:      4",
-
-    "*ping:	       default",
-    "*resolve:	       true",
-    "*showTimes:       true",
-    ".debug:	       false",
-    0
-};
-
-/* Options passed to this program */
-
-XrmOptionDescRec options [] = {
-    {"-background",   ".background",   XrmoptionSepArg, 0 },
-    {"-sweep-color",  ".sweepColor",   XrmoptionSepArg, 0 },
-    {"-scope-color",  ".scopeColor",   XrmoptionSepArg, 0 },
-    {"-grid-color",   ".gridColor",    XrmoptionSepArg, 0 },
-    {"-text-color",   ".textColor",    XrmoptionSepArg, 0 },
-    {"-ttl",          ".ttl",          XrmoptionSepArg, 0 },
-    {"-font",         ".font",         XrmoptionSepArg, 0 },
-#ifdef HAVE_PING
-    {"-ping-timeout", ".pingTimeout",  XrmoptionSepArg, 0 },
-#endif /* HAVE_PING */
-    {"-team-a-name",   ".teamAName",   XrmoptionSepArg, 0 },
-    {"-team-b-name",   ".teamBName",   XrmoptionSepArg, 0 },
-    {"-team-a-count",  ".teamACount",  XrmoptionSepArg, 0 },
-    {"-team-b-count",  ".teamBCount",  XrmoptionSepArg, 0 },
-
-    {"-ping",          ".ping",        XrmoptionSepArg, 0 },
-    {"-no-dns",        ".resolve",     XrmoptionNoArg, "False" },
-    {"-no-times",      ".showTimes",   XrmoptionNoArg, "False" },
-    {"-debug",         ".debug",       XrmoptionNoArg, "True" },
-    { 0, 0, 0, 0 }
-};
 
 /*
  * Create a new Bogie and set some initial values.
@@ -681,12 +632,28 @@ readPingHostsFile(char *fname)
 	return NULL;
     }
 
+    /* Kludge: on OSX, variables have not been expanded in the command
+       line arguments, so as a special case, allow the string to begin
+       with literal "$HOME/" or "~/".
+
+       This is so that the "Known Hosts" menu item in sonar.xml works.
+     */
+    if (!strncmp(fname, "~/", 2) || !strncmp(fname, "$HOME/", 6)) {
+      char *s = strchr (fname, '/');
+      strcpy (buf, getenv("HOME"));
+      strcat (buf, s);
+      fname = buf;
+    }
+
     /* Open the file */
 
     if ((fp = fopen(fname, "r")) == NULL) {
 	char msg[1024];
-	sprintf(msg, "%s: unable to open host file %s", progname, fname);
-	perror(msg);
+        sprintf(msg, "%s: unable to open host file %s", progname, fname);
+#ifdef HAVE_COCOA
+        if (debug_p)  /* on OSX don't syslog this */
+#endif
+          perror(msg);
 	return NULL;
     }
 
@@ -782,7 +749,7 @@ delete_duplicate_hosts (ping_target *list)
       struct sockaddr_in *i1 = (struct sockaddr_in *) &(rest->address);
       unsigned long ip1 = i1->sin_addr.s_addr;
 
-      static ping_target *rest2;
+      ping_target *rest2;
       for (rest2 = rest; rest2; rest2 = rest2->next)
         {
           if (rest2 && rest2->next)
@@ -944,13 +911,20 @@ subnetHostsList(unsigned long n_base, int subnet_width)
  *    A newly allocated ping_info structure or null if an error occured.
  */
 
-static ping_target *parse_mode (Bool ping_works_p);
+static ping_target *parse_mode (sonar_info *, Bool ping_works_p);
+
+/* yes, there is only one, even when multiple savers are running in the
+   same address space - since we can only open this socket before dropping
+   privs.
+ */
+static int global_icmpsock = 0;
 
 static ping_info *
-init_ping(void) 
+init_ping(sonar_info *si)
 {
 
   Bool socket_initted_p = False;
+  Bool socket_raw_p = False;
 
     /* Local Variables */
 
@@ -973,11 +947,34 @@ init_ping(void)
        that causes "SELinux" to log spurious warnings when running with the
        "strict" policy.  So to avoid that, we just don't try unless we
        know it will work.
+
+       On MacOS X, we can avoid the whole problem by using a
+       non-privileged datagram instead of a raw socket.
      */
-    if (geteuid() == 0 &&
-        (pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0) {
+    if (global_icmpsock) {
+      pi->icmpsock = global_icmpsock;
       socket_initted_p = True;
+      if (debug_p)
+        fprintf (stderr, "%s: re-using icmp socket\n", progname);
+
+    } else if ((pi->icmpsock = 
+                socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)) >= 0) {
+      socket_initted_p = True;
+
+    } else if (geteuid() == 0 &&
+               (pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0) {
+        socket_initted_p = True;
+        socket_raw_p = True;
     }
+
+    if (socket_initted_p) {
+      global_icmpsock = pi->icmpsock;
+      socket_initted_p = True;
+      if (debug_p)
+        fprintf (stderr, "%s: opened %s icmp socket\n", progname,
+                 (socket_raw_p ? "raw" : "dgram"));
+    } else if (debug_p)
+      fprintf (stderr, "%s: unable to open icmp socket\n", progname);
 
     /* Disavow privs */
 
@@ -986,11 +983,11 @@ init_ping(void)
 
     pi->pid = getpid() & 0xFFFF;
     pi->seq = 0;
-    pi->timeout = get_integer_resource("pingTimeout", "PingTimeout");
+    pi->timeout = get_integer_resource(si->dpy, "pingTimeout", "PingTimeout");
 
     /* Generate a list of targets */
 
-    pi->targets = parse_mode (socket_initted_p);
+    pi->targets = parse_mode (si, socket_initted_p);
     pi->targets = delete_duplicate_hosts (pi->targets);
 
 
@@ -1385,25 +1382,24 @@ ping(sonar_info *si, void *vpi)
      */
 
     ping_info *pi = (ping_info *) vpi;
-    static ping_target *ptr = NULL;
 
     int tick = si->current * -1 + 1;
-    if ((ptr == NULL) && (tick == 1))
-	ptr = pi->targets;
+    if ((si->last_ptr == NULL) && (tick == 1))
+	si->last_ptr = pi->targets;
 
     if (pi->numtargets <= 90) {
 	int xdrant = 90 / pi->numtargets;
 	if ((tick % xdrant) == 0) {
-	    if (ptr != (ping_target *) 0) {
-		sendping(pi, ptr);
-		ptr = ptr->next;
+	    if (si->last_ptr != (ping_target *) 0) {
+		sendping(pi, si->last_ptr);
+		si->last_ptr = si->last_ptr->next;
 	    }
 	}
 
     } else if (pi->numtargets > 90) {
-	if (ptr != (ping_target *) 0) {
-	    sendping(pi, ptr);
-	    ptr = ptr->next;
+	if (si->last_ptr != (ping_target *) 0) {
+	    sendping(pi, si->last_ptr);
+	    si->last_ptr = si->last_ptr->next;
 	}
     }
 
@@ -1436,14 +1432,17 @@ delta(struct timeval *then, struct timeval *now)
  * Initialize the simulation mode.
  */
 
-static sim_info *
-init_sim(void) 
-{
+#define BELLRAND(x) (((random()%(x)) + (random()%(x)) + (random()%(x)))/3)
 
+static sim_info *
+init_sim(Display *dpy) 
+{
     /* Local Variables */
 
     sim_info *si;
     int i;
+
+    int maxdist = 20;  /* larger than this is off the (log) display */
 
     /* Create the simulation info structure */
 
@@ -1454,14 +1453,14 @@ init_sim(void)
 
     /* Team A */
 
-    si->numA = get_integer_resource("teamACount", "TeamACount");
+    si->numA = get_integer_resource(dpy, "teamACount", "TeamACount");
     if ((si->teamA = (sim_target *)calloc(si->numA, sizeof(sim_target)))
 	== NULL) {
 	free(si);
 	fprintf(stderr, "%s: Out of Memory\n", progname);
 	return NULL;
     }
-    si->teamAID = get_string_resource("teamAName", "TeamAName");
+    si->teamAID = get_string_resource(dpy, "teamAName", "TeamAName");
     for (i = 0; i < si->numA; i++) {
 	if ((si->teamA[i].name = (char *) malloc(strlen(si->teamAID) + 4))
 	    == NULL) {
@@ -1471,20 +1470,20 @@ init_sim(void)
 	}
 	sprintf(si->teamA[i].name, "%s%03d", si->teamAID, i+1);
 	si->teamA[i].nexttick = random() % 90;
-	si->teamA[i].nextdist = random() % 100;
+	si->teamA[i].nextdist = BELLRAND(maxdist);
 	si->teamA[i].movedonsweep = -1;
     }
 
     /* Team B */
 
-    si->numB = get_integer_resource("teamBCount", "TeamBCount");
+    si->numB = get_integer_resource(dpy, "teamBCount", "TeamBCount");
     if ((si->teamB = (sim_target *)calloc(si->numB, sizeof(sim_target)))
 	== NULL) {
 	free(si);
 	fprintf(stderr, "%s: Out of Memory\n", progname);
 	return NULL;
     }
-    si->teamBID = get_string_resource("teamBName", "TeamBName");
+    si->teamBID = get_string_resource(dpy, "teamBName", "TeamBName");
     for (i = 0; i < si->numB; i++) {
 	if ((si->teamB[i].name = (char *) malloc(strlen(si->teamBID) + 4))
 	    == NULL) {
@@ -1494,7 +1493,7 @@ init_sim(void)
 	}
 	sprintf(si->teamB[i].name, "%s%03d", si->teamBID, i+1);
 	si->teamB[i].nexttick = random() % 90;
-	si->teamB[i].nextdist = random() % 100;
+	si->teamB[i].nextdist = BELLRAND(maxdist);
 	si->teamB[i].movedonsweep = -1;
     }
 
@@ -1512,13 +1511,15 @@ scope_mask (Display *dpy, Window win, sonar_info *si)
 {
   XGCValues gcv;
   Pixmap mask = XCreatePixmap(dpy, win, si->width, si->height, 1);
-  GC gc = XCreateGC (dpy, mask, 0, &gcv);
-  XSetFunction (dpy, gc, GXclear);
+  GC gc;
+  gcv.foreground = 0;
+  gc = XCreateGC (dpy, mask, GCForeground, &gcv);
   XFillRectangle (dpy, mask, gc, 0, 0, si->width, si->height);
-  XSetFunction (dpy, gc, GXset);
+  XSetForeground (dpy, gc, 1);
   XFillArc(dpy, mask, gc, si->minx, si->miny, 
            si->maxx - si->minx, si->maxy - si->miny,
            0, 360 * 64);
+  XFreeGC (dpy, gc);
   return mask;
 }
 
@@ -1540,137 +1541,14 @@ reshape (sonar_info *si)
   si->radius = si->maxx - si->centrex;
 
   /* Install the clip mask... */
-  mask = scope_mask (si->dpy, si->win, si);
-  XSetClipMask(si->dpy, si->text, mask);
-  XSetClipMask(si->dpy, si->erase, mask);
-  XFreePixmap (si->dpy, mask); /* it's been copied into the GCs */
+  if (! debug_p) {
+    mask = scope_mask (si->dpy, si->win, si);
+    XSetClipMask(si->dpy, si->text, mask);
+    XSetClipMask(si->dpy, si->erase, mask);
+    XFreePixmap (si->dpy, mask); /* it's been copied into the GCs */
+  }
 }
 
-/*
- * Initialize the Sonar.
- *
- * Args:
- *    dpy - The X display.
- *    win - The X window;
- *
- * Returns:
- *   A sonar_info strcuture or null if memory allocation problems occur.
- */
-
-static sonar_info *
-init_sonar(Display *dpy, Window win) 
-{
-
-    /* Local Variables */
-
-    XGCValues gcv;
-    XWindowAttributes xwa;
-    sonar_info *si;
-    XColor start, end;
-    int h1, h2;
-    double s1, s2, v1, v2;
-
-    /* Create the Sonar information structure */
-
-    if ((si = (sonar_info *) calloc(1, sizeof(sonar_info))) == NULL) {
-	fprintf(stderr, "%s: Out of memory\n", progname);
-	return NULL;
-    }
-
-    /* Initialize the structure for the current environment */
-
-    si->dpy = dpy;
-    si->win = win;
-    si->visible = NULL;
-
-    XGetWindowAttributes(dpy, win, &xwa);
-    si->cmap = xwa.colormap;
-
-    si->current = 0;
-    si->sweepnum = 0;
-
-    /* Get the font */
-
-    if (((si->font = XLoadQueryFont(dpy, get_string_resource ("font", "Font")))
-	 == NULL) &&
-	((si->font = XLoadQueryFont(dpy, "fixed")) == NULL)) {
-	fprintf(stderr, "%s: can't load an appropriate font\n", progname);
-	return NULL;
-    }
-
-    /* Get the delay between animation frames */
-
-    si->delay = get_integer_resource ("delay", "Integer");
-
-    if (si->delay < 0) si->delay = 0;
-    si->TTL = get_integer_resource("ttl", "TTL");
-
-    /* Create the Graphics Contexts that will be used to draw things */
-
-    gcv.foreground = 
-	get_pixel_resource ("sweepColor", "SweepColor", dpy, si->cmap);
-    si->hi = XCreateGC(dpy, win, GCForeground, &gcv);
-    gcv.font = si->font->fid;
-    si->text = XCreateGC(dpy, win, GCForeground|GCFont, &gcv);
-    gcv.foreground = get_pixel_resource("scopeColor", "ScopeColor",
-					dpy, si->cmap);
-    si->erase = XCreateGC (dpy, win, GCForeground, &gcv);
-    gcv.foreground = get_pixel_resource("gridColor", "GridColor",
-					dpy, si->cmap);
-    si->grid = XCreateGC (dpy, win, GCForeground, &gcv);
-
-    reshape (si);
-
-    /* Compute pixel values for fading text on the display */
-
-    XParseColor(dpy, si->cmap, 
-		get_string_resource("textColor", "TextColor"), &start);
-    XParseColor(dpy, si->cmap, 
-		get_string_resource("scopeColor", "ScopeColor"), &end);
-
-    rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
-    rgb_to_hsv (end.red, end.green, end.blue, &h2, &s2, &v2);
-
-    si->text_steps = get_integer_resource("textSteps", "TextSteps");
-    if (si->text_steps < 0 || si->text_steps > 255)
-      si->text_steps = 10;
-
-    si->text_colors = (XColor *) calloc(si->text_steps, sizeof(XColor));
-    make_color_ramp (dpy, si->cmap,
-                     h1, s1, v1,
-                     h2, s2, v2,
-                     si->text_colors, &si->text_steps,
-                     False, True, False);
-
-    /* Compute the pixel values for the fading sweep */
-
-    XParseColor(dpy, si->cmap, 
-                get_string_resource("sweepColor", "SweepColor"), &start);
-
-    rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
-
-    si->sweep_degrees = get_integer_resource("sweepDegrees", "Degrees");
-    if (si->sweep_degrees <= 0) si->sweep_degrees = 20;
-    if (si->sweep_degrees > 350) si->sweep_degrees = 350;
-
-    si->sweep_segs = get_integer_resource("sweepSegments", "SweepSegments");
-    if (si->sweep_segs < 1 || si->sweep_segs > 255)
-      si->sweep_segs = 255;
-
-    si->sweep_colors = (XColor *) calloc(si->sweep_segs, sizeof(XColor));
-    make_color_ramp (dpy, si->cmap,
-                     h1, s1, v1,
-                     h2, s2, v2,
-                     si->sweep_colors, &si->sweep_segs,
-                     False, True, False);
-
-    if (si->sweep_segs <= 0)
-      si->sweep_segs = 1;
-
-    /* Done */
-
-    return si;
-}
 
 /*
  * Update the location of a simulated bogie.
@@ -1955,8 +1833,12 @@ Sonar(sonar_info *si, Bogie *bl)
 
 	if (((bp->tick == si->current) && (++bp->age >= bp->ttl)) ||
 	    (findNode(bl, bp->name) != NULL)) {
+
+#ifndef HAVE_COCOA    /* we repaint every frame: no need to erase */
 	    DrawBogie(si, 0, bp->name, bp->desc, bp->tick,
 		      bp->distance, bp->ttl, bp->age);
+#endif /* HAVE_COCOA */
+
 	    if (prev == NULL)
 		si->visible = bp->next;
 	    else
@@ -1970,22 +1852,25 @@ Sonar(sonar_info *si, Bogie *bl)
     /* Draw the sweep */
 
     {
-      int seg_deg = (si->sweep_degrees * 64) / si->sweep_segs;
       int start_deg = si->current * 4 * 64;
+      int end_deg   = start_deg + (si->sweep_degrees * 64);
+      int seg_deg = (end_deg - start_deg) / si->sweep_segs;
       if (seg_deg <= 0) seg_deg = 1;
-      for (i = 0; i < si->sweep_segs; i++) {
-	XSetForeground(si->dpy, si->hi, si->sweep_colors[i].pixel);
-	XFillArc(si->dpy, si->win, si->hi, si->minx, si->miny, 
-		 si->maxx - si->minx, si->maxy - si->miny,
-                 start_deg + (i * seg_deg),
-                 seg_deg);
-      }
 
       /* Remove the trailing wedge the sonar */
       XFillArc(si->dpy, si->win, si->erase, si->minx, si->miny, 
                si->maxx - si->minx, si->maxy - si->miny, 
-               start_deg + (i * seg_deg),
-               (4 * 64));
+               end_deg, 
+               4 * 64);
+
+      for (i = 0; i < si->sweep_segs; i++) {
+        int ii = si->sweep_segs - i - 1;
+	XSetForeground (si->dpy, si->hi, si->sweep_colors[ii].pixel);
+	XFillArc (si->dpy, si->win, si->hi, si->minx, si->miny, 
+                  si->maxx - si->minx, si->maxy - si->miny,
+                  start_deg,
+                  seg_deg * (ii + 1));
+      }
     }
 
     /* Move the new targets to the visible list */
@@ -2011,11 +1896,13 @@ Sonar(sonar_info *si, Bogie *bl)
 
 
 static ping_target *
-parse_mode (Bool ping_works_p)
+parse_mode (sonar_info *si, Bool ping_works_p)
 {
-  char *source = get_string_resource ("ping", "Ping");
+  char *source = get_string_resource (si->dpy, "ping", "Ping");
   char *token, *end;
+#ifdef HAVE_PING
   char dummy;
+#endif
 
   ping_target *hostlist = 0;
 
@@ -2023,6 +1910,7 @@ parse_mode (Bool ping_works_p)
 
   if (!*source || !strcmp (source, "default"))
     {
+      free (source);
 # ifdef HAVE_PING
       if (ping_works_p)		/* if root or setuid, ping will work. */
         source = strdup("subnet/29,/etc/hosts");
@@ -2090,7 +1978,9 @@ parse_mode (Bool ping_works_p)
         {
           new = subnetHostsList(0, m);
         }
-      else if (*token == '.' || *token == '/' || !stat (token, &st))
+      else if (*token == '.' || *token == '/' || 
+               *token == '$' || *token == '~' ||
+               !stat (token, &st))
         {
           /* file name
            */
@@ -2111,7 +2001,7 @@ parse_mode (Bool ping_works_p)
           nn->next = hostlist;
           hostlist = new;
 
-          sensor = ping;
+          si->sensor = ping;
         }
 #endif /* HAVE_PING */
 
@@ -2122,108 +2012,279 @@ parse_mode (Bool ping_works_p)
         token++;
     }
 
+  free (source);
   return hostlist;
 }
 
 
-static void
-handle_events (sonar_info *si)
-{
-  while (XPending (si->dpy))
-    {
-      XEvent event;
-      XNextEvent (si->dpy, &event);
-
-      if (event.xany.type == ConfigureNotify)
-        {
-          XClearWindow (si->dpy, si->win);
-          reshape (si);
-        }
-
-      screenhack_handle_event (si->dpy, &event);
-    }
-}
-
-
-
 /*
- * Main screen saver hack.
+ * Initialize the Sonar.
  *
  * Args:
  *    dpy - The X display.
- *    win - The X window.
+ *    win - The X window;
+ *
+ * Returns:
+ *   A sonar_info strcuture or null if memory allocation problems occur.
  */
 
-void 
-screenhack(Display *dpy, Window win) 
+static void *
+sonar_init (Display *dpy, Window win)
 {
-
     /* Local Variables */
 
+    XGCValues gcv;
+    XWindowAttributes xwa;
     sonar_info *si;
-    struct timeval start, finish;
-    Bogie *bl;
-    long sleeptime;
+    XColor start, end;
+    int h1, h2;
+    double s1, s2, v1, v2;
 
-    debug_p = get_boolean_resource ("debug", "Debug");
-    resolve_p = get_boolean_resource ("resolve", "Resolve");
-    times_p = get_boolean_resource ("showTimes", "ShowTimes");
+    debug_p = get_boolean_resource (dpy, "debug", "Debug");
+    resolve_p = get_boolean_resource (dpy, "resolve", "Resolve");
+    times_p = get_boolean_resource (dpy, "showTimes", "ShowTimes");
 
-    sensor = 0;
+    /* Create the Sonar information structure */
+
+    if ((si = (sonar_info *) calloc(1, sizeof(sonar_info))) == NULL) {
+	fprintf(stderr, "%s: Out of memory\n", progname);
+        exit (1);
+    }
+
+    /* Initialize the structure for the current environment */
+
+    si->dpy = dpy;
+    si->win = win;
+    si->visible = NULL;
+
+    XGetWindowAttributes(dpy, win, &xwa);
+    si->cmap = xwa.colormap;
+
+    si->current = 0;
+    si->sweepnum = 0;
+
+    /* Get the font */
+
+    {
+      char *fn = get_string_resource (dpy, "font", "Font");
+      if (((si->font = XLoadQueryFont(dpy, fn)) == NULL) &&
+          ((si->font = XLoadQueryFont(dpy, "fixed")) == NULL)) {
+	fprintf(stderr, "%s: can't load an appropriate font\n", progname);
+        exit (1);
+      }
+      if (fn) free (fn);
+    }
+
+    /* Get the delay between animation frames */
+
+    si->delay = get_integer_resource (dpy, "delay", "Integer");
+
+    if (si->delay < 0) si->delay = 0;
+    si->TTL = get_integer_resource(dpy, "ttl", "TTL");
+
+    /* Create the Graphics Contexts that will be used to draw things */
+
+    gcv.foreground = 
+	get_pixel_resource (dpy, si->cmap, "sweepColor", "SweepColor");
+    si->hi = XCreateGC(dpy, win, GCForeground, &gcv);
+    gcv.font = si->font->fid;
+    si->text = XCreateGC(dpy, win, GCForeground|GCFont, &gcv);
+    gcv.foreground = get_pixel_resource(dpy, si->cmap,
+                                        "scopeColor", "ScopeColor");
+    si->erase = XCreateGC (dpy, win, GCForeground, &gcv);
+    gcv.foreground = get_pixel_resource(dpy, si->cmap,
+                                        "gridColor", "GridColor");
+    si->grid = XCreateGC (dpy, win, GCForeground, &gcv);
+
+    reshape (si);
+
+    /* Compute pixel values for fading text on the display */
+    {
+      char *s = get_string_resource(dpy, "textColor", "TextColor");
+      XParseColor(dpy, si->cmap, s, &start);
+      if (s) free (s);
+      s = get_string_resource(dpy, "scopeColor", "ScopeColor");
+      XParseColor(dpy, si->cmap, s, &end);
+      if (s) free (s);
+    }
+
+    rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
+    rgb_to_hsv (end.red, end.green, end.blue, &h2, &s2, &v2);
+
+    si->text_steps = get_integer_resource(dpy, "textSteps", "TextSteps");
+    if (si->text_steps < 0 || si->text_steps > 255)
+      si->text_steps = 10;
+
+    si->text_colors = (XColor *) calloc(si->text_steps, sizeof(XColor));
+    make_color_ramp (dpy, si->cmap,
+                     h1, s1, v1,
+                     h2, s2, v2,
+                     si->text_colors, &si->text_steps,
+                     False, True, False);
+
+    /* Compute the pixel values for the fading sweep */
+
+    {
+      char *s = get_string_resource(dpy, "sweepColor", "SweepColor");
+      XParseColor(dpy, si->cmap, s, &start);
+      if (s) free (s);
+    }
+
+    rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
+
+    si->sweep_degrees = get_integer_resource(dpy, "sweepDegrees", "Degrees");
+    if (si->sweep_degrees <= 0) si->sweep_degrees = 20;
+    if (si->sweep_degrees > 350) si->sweep_degrees = 350;
+
+    si->sweep_segs = get_integer_resource(dpy, "sweepSegments", "SweepSegments");
+    if (si->sweep_segs < 1 || si->sweep_segs > 255)
+      si->sweep_segs = 255;
+
+    si->sweep_colors = (XColor *) calloc(si->sweep_segs, sizeof(XColor));
+    make_color_ramp (dpy, si->cmap,
+                     h1, s1, v1,
+                     h2, s2, v2,
+                     si->sweep_colors, &si->sweep_segs,
+                     False, True, False);
+
+    if (si->sweep_segs <= 0)
+      si->sweep_segs = 1;
+
+
 # ifdef HAVE_PING
-    /* init_ping() will fail if not root, so checking the effective uid
-       isn't necessary -- except that on some systems, it makes some
-       SELinux bullshit show up in syslog, which gets people's panties
-       in a bunch. */
-    if (geteuid () == 0)
-      sensor_info = (void *) init_ping();
-    else
-      sensor_info = 0;
+    si->sensor_info = (void *) init_ping(si);
 # else  /* !HAVE_PING */
-    sensor_info = 0;
-    parse_mode (0);  /* just to check argument syntax */
+    parse_mode (dpy, 0);  /* just to check argument syntax */
 # endif /* !HAVE_PING */
 
-    if (sensor == 0)
+    if (!si->sensor)
       {
-        sensor = simulator;
-        if ((sensor_info = (void *) init_sim()) == NULL)
+        si->sensor = simulator;
+        si->sensor_info = (void *) init_sim(dpy);
+        if (! si->sensor_info)
           exit(1);
       }
 
-    if ((si = init_sonar(dpy, win)) == (sonar_info *) 0)
-	exit(1);
+    /* Done */
 
-
-    /* Sonar loop */
-
-    while (1) {
-
-	/* Call the sensor and display the results */
-
-# ifdef GETTIMEOFDAY_TWO_ARGS
-	gettimeofday(&start, (struct timezone *) 0);
-# else
-	gettimeofday(&start);
-# endif
-	bl = sensor(si, sensor_info);
-	Sonar(si, bl);
-
-        /* Set up and sleep for the next one */
-
-	si->current = (si->current - 1) % 90;
-	if (si->current == 0)
-	  si->sweepnum++;
-	XSync (dpy, False);
-# ifdef GETTIMEOFDAY_TWO_ARGS
-	gettimeofday(&finish, (struct timezone *) 0);
-# else
-	gettimeofday(&finish);
-# endif
-	sleeptime = si->delay - delta(&start, &finish);
-        handle_events (si);
-	if (sleeptime > 0L)
-	    usleep(sleeptime);
-
-    }
+    return si;
 }
+
+
+static unsigned long
+sonar_draw (Display *dpy, Window window, void *closure)
+{
+  sonar_info *si = (sonar_info *) closure;
+  Bogie *bl;
+  struct timeval start, finish;
+  long delay;
+
+# ifdef HAVE_COCOA  /* repaint the whole window so that antialiasing works */
+  XClearWindow (dpy,window);
+  XFillRectangle (dpy, window, si->erase, 0, 0, si->width, si->height);
+# endif
+
+  /* Call the sensor and display the results */
+
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday(&start, (struct timezone *) 0);
+# else
+  gettimeofday(&start);
+# endif
+  bl = si->sensor(si, si->sensor_info);
+  Sonar(si, bl);
+
+  /* Set up and sleep for the next one */
+
+  si->current = (si->current - 1) % 90;
+  if (si->current == 0)
+    si->sweepnum++;
+
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday(&finish, (struct timezone *) 0);
+# else
+  gettimeofday(&finish);
+# endif
+
+  delay = si->delay - delta(&start, &finish);
+  if (delay < 0) delay = 0;
+  return delay;
+}
+
+
+static void
+sonar_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  sonar_info *si = (sonar_info *) closure;
+  XClearWindow (si->dpy, si->win);
+  reshape (si);
+}
+
+static Bool
+sonar_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+sonar_free (Display *dpy, Window window, void *closure)
+{
+}
+
+
+
+static const char *sonar_defaults [] = {
+    ".background:      #000000",
+    ".sweepColor:      #00FF00",
+    "*delay:	       100000",
+    "*scopeColor:      #003300",
+    "*gridColor:       #00AA00",
+    "*textColor:       #FFFF00",
+    "*ttl:             90",
+    "*mode:            default",
+    "*font:            fixed",
+    "*sweepDegrees:    30",
+
+    "*textSteps:       80",	/* npixels */
+    "*sweepSegments:   80",	/* npixels */
+
+    "*pingTimeout:     3000",
+
+    "*teamAName:       F18",
+    "*teamBName:       MIG",
+    "*teamACount:      4",
+    "*teamBCount:      4",
+
+    "*ping:	       default",
+    "*resolve:	       true",
+    "*showTimes:       true",
+    ".debug:	       false",
+    0
+};
+
+static XrmOptionDescRec sonar_options [] = {
+    {"-background",   ".background",   XrmoptionSepArg, 0 },
+    {"-sweep-color",  ".sweepColor",   XrmoptionSepArg, 0 },
+    {"-scope-color",  ".scopeColor",   XrmoptionSepArg, 0 },
+    {"-grid-color",   ".gridColor",    XrmoptionSepArg, 0 },
+    {"-text-color",   ".textColor",    XrmoptionSepArg, 0 },
+    {"-ttl",          ".ttl",          XrmoptionSepArg, 0 },
+    {"-font",         ".font",         XrmoptionSepArg, 0 },
+#ifdef HAVE_PING
+    {"-ping-timeout", ".pingTimeout",  XrmoptionSepArg, 0 },
+#endif /* HAVE_PING */
+    {"-team-a-name",   ".teamAName",   XrmoptionSepArg, 0 },
+    {"-team-b-name",   ".teamBName",   XrmoptionSepArg, 0 },
+    {"-team-a-count",  ".teamACount",  XrmoptionSepArg, 0 },
+    {"-team-b-count",  ".teamBCount",  XrmoptionSepArg, 0 },
+
+    {"-ping",          ".ping",        XrmoptionSepArg, 0 },
+    {"-no-dns",        ".resolve",     XrmoptionNoArg, "False" },
+    {"-no-times",      ".showTimes",   XrmoptionNoArg, "False" },
+    {"-debug",         ".debug",       XrmoptionNoArg, "True" },
+    { 0, 0, 0, 0 }
+};
+
+
+XSCREENSAVER_MODULE ("Sonar", sonar)

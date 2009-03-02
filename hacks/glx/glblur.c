@@ -22,26 +22,12 @@
  *    http://nehe.gamedev.net/tutorials/lesson.asp?l=36
  */
 
-#include <X11/Intrinsic.h>
-
-extern XtAppContext app;
-
-#define PROGCLASS	"GLBlur"
-#define HACK_INIT	init_glblur
-#define HACK_DRAW	draw_glblur
-#define HACK_RESHAPE	reshape_glblur
-#define HACK_HANDLE_EVENT glblur_handle_event
-#define EVENT_MASK      PointerMotionMask
-#define sws_opts	xlockmore_opts
-
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "True"
-#define DEF_BLURSIZE    "15"
-
 #define DEFAULTS	"*delay:    10000 \n" \
 			"*showFPS:  False \n" \
 	               	"*fpsSolid: True  \n"
 
+# define refresh_glblur 0
+# define release_glblur 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -58,8 +44,9 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#include <GL/glu.h>
-
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "True"
+#define DEF_BLURSIZE    "15"
 
 typedef struct metaball metaball;
 
@@ -115,12 +102,12 @@ static argtype vars[] = {
   {&blursize,  "blurSize","BlurSize", DEF_BLURSIZE,  t_Int},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt glblur_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 /* Window management, etc
  */
-void
+ENTRYPOINT void
 reshape_glblur (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -352,7 +339,7 @@ overlay_blur_texture (ModeInfo *mi)
 /* Startup initialization
  */
 
-Bool
+ENTRYPOINT Bool
 glblur_handle_event (ModeInfo *mi, XEvent *event)
 {
   glblur_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -393,7 +380,7 @@ glblur_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-void 
+ENTRYPOINT void 
 init_glblur (ModeInfo *mi)
 {
   glblur_configuration *bp;
@@ -455,6 +442,7 @@ init_glblur (ModeInfo *mi)
         if      (*s == 'x' || *s == 'X') spinx = True;
         else if (*s == 'y' || *s == 'Y') spiny = True;
         else if (*s == 'z' || *s == 'Z') spinz = True;
+        else if (*s == '0') ;
         else
           {
             fprintf (stderr,
@@ -502,18 +490,18 @@ init_glblur (ModeInfo *mi)
 
 /* Render one frame
  */
-void
+ENTRYPOINT void
 draw_glblur (ModeInfo *mi)
 {
   glblur_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
 
-  static GLfloat color0[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color1[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color2[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat color3[4] = {0.0, 0.0, 0.0, 1.0};
-  static GLfloat spec[4]   = {1.0, 1.0, 1.0, 1.0};
+  GLfloat color0[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color1[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color2[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat color3[4] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat spec[4]   = {1.0, 1.0, 1.0, 1.0};
 
   double rx, ry, rz;
   double px, py, pz;
@@ -521,6 +509,8 @@ draw_glblur (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   /* Decide what we're drawing
    */
@@ -578,6 +568,7 @@ draw_glblur (ModeInfo *mi)
     glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, spec);
 
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color0);
+
     glCallList (bp->obj_dlist0);
 
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color1);
@@ -640,5 +631,6 @@ draw_glblur (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
+XSCREENSAVER_MODULE ("GLBlur", glblur)
 
 #endif /* USE_GL */

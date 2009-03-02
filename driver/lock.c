@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -37,13 +37,6 @@
   static void hp_lock_reset (saver_info *si, Bool lock_p);
 #endif /* HAVE_XHPDISABLERESET */
 
-#ifdef HAVE_VT_LOCKSWITCH
-# include <fcntl.h>
-# include <sys/ioctl.h>
-# include <sys/vt.h>
-  static void linux_lock_vt_switch (saver_info *si, Bool lock_p);
-#endif /* HAVE_VT_LOCKSWITCH */
-
 #ifdef HAVE_XF86VMODE
 # include <X11/extensions/xf86vmode.h>
   static void xfree_lock_mode_switch (saver_info *si, Bool lock_p);
@@ -58,6 +51,11 @@
 #ifdef _VROOT_H_
 ERROR!  You must not include vroot.h in this file.
 #endif
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h> /* for hostname info */
+#endif /* HAVE_UNAME */
+#include <ctype.h>
 
 #ifndef VMS
 # include <pwd.h>
@@ -109,6 +107,9 @@ struct passwd_dialog_data {
   char *user_string;
   char *passwd_string;
   char *login_label;
+  char *uname_label;
+
+  Bool show_uname_p;
 
   XFontStruct *heading_font;
   XFontStruct *body_font;
@@ -116,6 +117,7 @@ struct passwd_dialog_data {
   XFontStruct *passwd_font;
   XFontStruct *date_font;
   XFontStruct *button_font;
+  XFontStruct *uname_font;
 
   Pixel foreground;
   Pixel background;
@@ -144,6 +146,7 @@ struct passwd_dialog_data {
   Dimension thermo_field_height;
 
   Pixmap logo_pixmap;
+  Pixmap logo_clipmask;
   int logo_npixels;
   unsigned long *logo_pixels;
 
@@ -195,20 +198,21 @@ make_passwd_window (saver_info *si)
 
   pw->ratio = 1.0;
 
-  pw->show_stars_p = get_boolean_resource("passwd.asterisks", "Boolean");
+  pw->show_stars_p = get_boolean_resource(si->dpy, "passwd.asterisks", 
+					  "Boolean");
   
-  pw->heading_label = get_string_resource ("passwd.heading.label",
+  pw->heading_label = get_string_resource (si->dpy, "passwd.heading.label",
 					   "Dialog.Label.Label");
-  pw->body_label = get_string_resource ("passwd.body.label",
+  pw->body_label = get_string_resource (si->dpy, "passwd.body.label",
 					"Dialog.Label.Label");
-  pw->user_label = get_string_resource ("passwd.user.label",
+  pw->user_label = get_string_resource (si->dpy, "passwd.user.label",
 					"Dialog.Label.Label");
-  pw->passwd_label = get_string_resource ("passwd.passwd.label",
+  pw->passwd_label = get_string_resource (si->dpy, "passwd.passwd.label",
 					  "Dialog.Label.Label");
-  pw->login_label = get_string_resource ("passwd.login.label",
+  pw->login_label = get_string_resource (si->dpy, "passwd.login.label",
                                          "Dialog.Button.Label");
 
-  pw->date_label = get_string_resource ("dateFormat", "DateFormat");
+  pw->date_label = get_string_resource (si->dpy, "dateFormat", "DateFormat");
 
   if (!pw->heading_label)
     pw->heading_label = strdup("ERROR: RESOURCES NOT INSTALLED CORRECTLY");
@@ -227,45 +231,75 @@ make_passwd_window (saver_info *si)
     pw->heading_label = s;
   }
 
+  /* Get hostname info */
+  pw->uname_label = strdup(""); /* Initialy, write nothing */
+
+# ifdef HAVE_UNAME
+  {
+    struct utsname uts;
+
+    if (uname (&uts) == 0)
+      {
+#if 0 /* Get the full hostname */
+	{
+	  char *s;
+	  if ((s = strchr(uts.nodename, '.')))
+	    *s = 0;
+	}
+#endif
+	char *s = strdup (uts.nodename);
+	free (pw->uname_label);
+	pw->uname_label = s;
+      }
+  }
+# endif
+
   pw->user_string = strdup (p && p->pw_name ? p->pw_name : "???");
   pw->passwd_string = strdup("");
 
-  f = get_string_resource ("passwd.headingFont", "Dialog.Font");
+  f = get_string_resource (si->dpy, "passwd.headingFont", "Dialog.Font");
   pw->heading_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->heading_font) pw->heading_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource ("passwd.buttonFont", "Dialog.Font");
+  f = get_string_resource (si->dpy, "passwd.buttonFont", "Dialog.Font");
   pw->button_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->button_font) pw->button_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("passwd.bodyFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "passwd.bodyFont", "Dialog.Font");
   pw->body_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->body_font) pw->body_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("passwd.labelFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "passwd.labelFont", "Dialog.Font");
   pw->label_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->label_font) pw->label_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("passwd.passwdFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "passwd.passwdFont", "Dialog.Font");
   pw->passwd_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->passwd_font) pw->passwd_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  f = get_string_resource("passwd.dateFont", "Dialog.Font");
+  f = get_string_resource(si->dpy, "passwd.dateFont", "Dialog.Font");
   pw->date_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->date_font) pw->date_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
-  pw->foreground = get_pixel_resource ("passwd.foreground",
-				       "Dialog.Foreground",
-				       si->dpy, cmap);
-  pw->background = get_pixel_resource ("passwd.background",
-				       "Dialog.Background",
-				       si->dpy, cmap);
+  f = get_string_resource(si->dpy, "passwd.unameFont", "Dialog.Font");
+  pw->uname_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
+  if (!pw->uname_font) pw->uname_font = XLoadQueryFont (si->dpy, "fixed");
+  if (f) free (f);
+  
+  pw->show_uname_p = get_boolean_resource(si->dpy, "passwd.uname", "Boolean");
+
+  pw->foreground = get_pixel_resource (si->dpy, cmap,
+				       "passwd.foreground",
+				       "Dialog.Foreground" );
+  pw->background = get_pixel_resource (si->dpy, cmap,
+				       "passwd.background",
+				       "Dialog.Background" );
 
   if (pw->foreground == pw->background)
     {
@@ -274,40 +308,40 @@ make_passwd_window (saver_info *si)
       pw->background = WhitePixelOfScreen (screen);
     }
 
-  pw->passwd_foreground = get_pixel_resource ("passwd.text.foreground",
-					      "Dialog.Text.Foreground",
-					      si->dpy, cmap);
-  pw->passwd_background = get_pixel_resource ("passwd.text.background",
-					      "Dialog.Text.Background",
-					      si->dpy, cmap);
-  pw->button_foreground = get_pixel_resource ("splash.Button.foreground",
-                                              "Dialog.Button.Foreground",
-                                              si->dpy, cmap);
-  pw->button_background = get_pixel_resource ("splash.Button.background",
-                                              "Dialog.Button.Background",
-                                              si->dpy, cmap);
-  pw->thermo_foreground = get_pixel_resource ("passwd.thermometer.foreground",
-					      "Dialog.Thermometer.Foreground",
-					      si->dpy, cmap);
-  pw->thermo_background = get_pixel_resource ("passwd.thermometer.background",
-					      "Dialog.Thermometer.Background",
-					      si->dpy, cmap);
-  pw->shadow_top = get_pixel_resource ("passwd.topShadowColor",
-				       "Dialog.Foreground",
-				       si->dpy, cmap);
-  pw->shadow_bottom = get_pixel_resource ("passwd.bottomShadowColor",
-					  "Dialog.Background",
-					  si->dpy, cmap);
+  pw->passwd_foreground = get_pixel_resource (si->dpy, cmap,
+					      "passwd.text.foreground",
+					      "Dialog.Text.Foreground" );
+  pw->passwd_background = get_pixel_resource (si->dpy, cmap,
+					      "passwd.text.background",
+					      "Dialog.Text.Background" );
+  pw->button_foreground = get_pixel_resource (si->dpy, cmap, 
+					      "splash.Button.foreground",
+                                              "Dialog.Button.Foreground" );
+  pw->button_background = get_pixel_resource (si->dpy, cmap,
+ 					      "splash.Button.background",
+                                              "Dialog.Button.Background" );
+  pw->thermo_foreground = get_pixel_resource (si->dpy, cmap,
+					      "passwd.thermometer.foreground",
+					      "Dialog.Thermometer.Foreground" );
+  pw->thermo_background = get_pixel_resource ( si->dpy, cmap,
+					      "passwd.thermometer.background",
+					      "Dialog.Thermometer.Background" );
+  pw->shadow_top = get_pixel_resource ( si->dpy, cmap,
+				       "passwd.topShadowColor",
+				       "Dialog.Foreground" );
+  pw->shadow_bottom = get_pixel_resource (si->dpy, cmap, 
+					  "passwd.bottomShadowColor",
+					  "Dialog.Background" );
 
-  pw->logo_width = get_integer_resource ("passwd.logo.width",
+  pw->logo_width = get_integer_resource (si->dpy, "passwd.logo.width",
 					 "Dialog.Logo.Width");
-  pw->logo_height = get_integer_resource ("passwd.logo.height",
+  pw->logo_height = get_integer_resource (si->dpy, "passwd.logo.height",
 					  "Dialog.Logo.Height");
-  pw->thermo_width = get_integer_resource ("passwd.thermometer.width",
+  pw->thermo_width = get_integer_resource (si->dpy, "passwd.thermometer.width",
 					   "Dialog.Thermometer.Width");
-  pw->internal_border = get_integer_resource ("passwd.internalBorderWidth",
+  pw->internal_border = get_integer_resource (si->dpy, "passwd.internalBorderWidth",
 					      "Dialog.InternalBorderWidth");
-  pw->shadow_width = get_integer_resource ("passwd.shadowThickness",
+  pw->shadow_width = get_integer_resource (si->dpy, "passwd.shadowThickness",
 					   "Dialog.ShadowThickness");
 
   if (pw->logo_width == 0)  pw->logo_width = 150;
@@ -329,6 +363,16 @@ make_passwd_window (saver_info *si)
 		  &direction, &ascent, &descent, &overall);
     if (overall.width > pw->width) pw->width = overall.width;
     pw->height += ascent + descent;
+
+    /* Measure the uname_label. */
+    if ((strlen(pw->uname_label)) && pw->show_uname_p)
+      {
+	XTextExtents (pw->uname_font,
+		      pw->uname_label, strlen(pw->uname_label),
+		      &direction, &ascent, &descent, &overall);
+	if (overall.width > pw->width) pw->width = overall.width;
+	pw->height += ascent + descent;
+      }
 
     /* Measure the body_label. */
     XTextExtents (pw->body_font,
@@ -470,7 +514,7 @@ make_passwd_window (saver_info *si)
     if (pw->y < y) pw->y = y;
   }
 
-  pw->border_width = get_integer_resource ("passwd.borderWidth",
+  pw->border_width = get_integer_resource (si->dpy, "passwd.borderWidth",
                                            "Dialog.BorderWidth");
 
   si->passwd_dialog =
@@ -490,7 +534,7 @@ make_passwd_window (saver_info *si)
                                        si->passwd_dialog, cmap,
                                        pw->background, 
                                        &pw->logo_pixels, &pw->logo_npixels,
-                                       0, True);
+                                       &pw->logo_clipmask, True);
 
   /* Before mapping the window, save the bits that are underneath the
      rectangle the window will occlude.  When we lower the window, we
@@ -553,6 +597,9 @@ draw_passwd_window (saver_info *si)
                        (pw->shadow_width * 4)))) +
             pw->date_font->ascent + pw->date_font->descent);
 
+  if ((strlen(pw->uname_label)) && pw->show_uname_p)
+    height += (pw->uname_font->ascent + pw->uname_font->descent); /* for uname */
+
   if (pw->login_button_p)
     height += ((pw->button_font->ascent + pw->button_font->descent) * 2 +
                2 * pw->shadow_width);
@@ -580,7 +627,19 @@ draw_passwd_window (saver_info *si)
   XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y1,
 	       pw->heading_label, strlen(pw->heading_label));
 
-  /* text below top heading
+  /* uname below top heading
+   */
+  if ((strlen(pw->uname_label)) && pw->show_uname_p)
+    {
+      XSetFont (si->dpy, gc1, pw->uname_font->fid);
+      y1 += spacing + pw->uname_font->ascent + pw->uname_font->descent;
+      sw = string_width (pw->uname_font, pw->uname_label);
+      x2 = (x1 + ((x3 - x1 - sw) / 2));
+      XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y1,
+		   pw->uname_label, strlen(pw->uname_label));
+    }
+
+  /* text below uname
    */
   XSetFont (si->dpy, gc1, pw->body_font->fid);
   y1 += spacing + pw->body_font->ascent + pw->body_font->descent;
@@ -735,6 +794,8 @@ draw_passwd_window (saver_info *si)
       XGetGeometry (si->dpy, pw->logo_pixmap, &root, &x, &y, &w, &h, &bw, &d);
       XSetForeground (si->dpy, gc1, pw->foreground);
       XSetBackground (si->dpy, gc1, pw->background);
+      XSetClipMask (si->dpy, gc1, pw->logo_clipmask);
+      XSetClipOrigin (si->dpy, gc1, x1 + ((x2 - (int)w) / 2), y1 + ((y2 - (int)h) / 2));
       if (d == 1)
         XCopyPlane (si->dpy, pw->logo_pixmap, si->passwd_dialog, gc1,
                     0, 0, w, h,
@@ -995,6 +1056,7 @@ destroy_passwd_window (saver_info *si)
   if (pw->login_label)   free (pw->login_label);
   if (pw->user_string)   free (pw->user_string);
   if (pw->passwd_string) free (pw->passwd_string);
+  if (pw->uname_label)   free (pw->uname_label);
 
   if (pw->heading_font) XFreeFont (si->dpy, pw->heading_font);
   if (pw->body_font)    XFreeFont (si->dpy, pw->body_font);
@@ -1002,6 +1064,7 @@ destroy_passwd_window (saver_info *si)
   if (pw->passwd_font)  XFreeFont (si->dpy, pw->passwd_font);
   if (pw->date_font)    XFreeFont (si->dpy, pw->date_font);
   if (pw->button_font)  XFreeFont (si->dpy, pw->button_font);
+  if (pw->uname_font)   XFreeFont (si->dpy, pw->uname_font);
 
   if (pw->foreground != black && pw->foreground != white)
     XFreeColors (si->dpy, cmap, &pw->foreground, 1, 0L);
@@ -1026,6 +1089,8 @@ destroy_passwd_window (saver_info *si)
 
   if (pw->logo_pixmap)
     XFreePixmap (si->dpy, pw->logo_pixmap);
+  if (pw-> logo_clipmask)
+    XFreePixmap (si->dpy, pw->logo_clipmask);
   if (pw->logo_pixels)
     {
       if (pw->logo_npixels)
@@ -1131,67 +1196,6 @@ xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
 }
 #endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
 
-
-
-
-/* This function enables and disables the C-Sh-F1 ... F12 hot-keys,
-   which, on Linux systems, switches to another virtual console.
-   We'd like the whole screen/keyboard to be locked, not just one
-   virtual console, so this function disables that while the X
-   screen is locked.
-
-   Unfortunately, this doesn't work -- this ioctl only works when
-   called by root, and we have disavowed our privileges long ago.
- */
-#ifdef HAVE_VT_LOCKSWITCH
-static void
-linux_lock_vt_switch (saver_info *si, Bool lock_p)
-{
-  saver_preferences *p = &si->prefs;
-  static Bool vt_locked_p = False;
-  const char *dev_console = "/dev/console";
-  int fd;
-
-  if (lock_p == vt_locked_p)
-    return;
-
-  if (lock_p && !p->lock_vt_p)
-    return;
-
-  fd = open (dev_console, O_RDWR);
-  if (fd < 0)
-    {
-      char buf [255];
-      sprintf (buf, "%s: couldn't %s VTs: %s", blurb(),
-	       (lock_p ? "lock" : "unlock"),
-	       dev_console);
-#if 1 /* #### doesn't work yet, so don't bother complaining */
-      perror (buf);
-#endif
-      return;
-    }
-
-  if (ioctl (fd, (lock_p ? VT_LOCKSWITCH : VT_UNLOCKSWITCH)) == 0)
-    {
-      vt_locked_p = lock_p;
-
-      if (p->verbose_p)
-	fprintf (stderr, "%s: %s VTs\n", blurb(),
-		 (lock_p ? "locked" : "unlocked"));
-    }
-  else
-    {
-      char buf [255];
-      sprintf (buf, "%s: couldn't %s VTs: ioctl", blurb(),
-	       (lock_p ? "lock" : "unlock"));
-#if 0 /* #### doesn't work yet, so don't bother complaining */
-      perror (buf);
-#endif
-    }
-
-  close (fd);
-}
-#endif /* HAVE_VT_LOCKSWITCH */
 
 
 /* This function enables and disables the C-Alt-Plus and C-Alt-Minus
@@ -1648,9 +1652,6 @@ set_locked_p (saver_info *si, Bool locked_p)
 
 #ifdef HAVE_XHPDISABLERESET
   hp_lock_reset (si, locked_p);                 /* turn off/on C-Sh-Reset */
-#endif
-#ifdef HAVE_VT_LOCKSWITCH
-  linux_lock_vt_switch (si, locked_p);          /* turn off/on C-Alt-F1 */
 #endif
 #ifdef HAVE_XF86VMODE
   xfree_lock_mode_switch (si, locked_p);        /* turn off/on C-Alt-Plus */

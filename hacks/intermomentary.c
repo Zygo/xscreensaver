@@ -32,21 +32,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
-#include <stdio.h>
-#include <sys/time.h>
-
-#ifndef MAX_WIDTH
-#include <limits.h>
-#define MAX_WIDTH SHRT_MAX
-#endif
-
-#ifdef TIME_ME
-#include <time.h>
-#endif
-
-#include <math.h>
-
 #include "hsv.h"
 
 /* this program goes faster if some functions are inline.  The following is
@@ -100,10 +85,26 @@ struct field {
 
     /* Offscreen image we draw to */
     Pixmap off_map;
-    unsigned long int *off_alpha;
+    unsigned char *off_alpha;
 };
 
-static void *xrealloc(void *p, size_t size) {
+
+struct state {
+  Display *dpy;
+  Window window;
+
+  struct field *f;
+  GC fgc, copygc;
+  XWindowAttributes xgwa;
+  int draw_delay;
+
+  XColor *colors;
+  int ncolors;
+};
+
+
+static void *xrealloc(void *p, size_t size) 
+{
     void *ret;
     if ((ret = realloc(p, size)) == NULL) {
 	fprintf(stderr, "%s: out of memory\n", progname);
@@ -112,7 +113,8 @@ static void *xrealloc(void *p, size_t size) {
     return ret;
 }
 
-struct field *init_field(void) {
+static struct field *init_field(void) 
+{
     struct field *f = xrealloc(NULL, sizeof(struct field));
     f->height = 0;
     f->width = 0;
@@ -132,7 +134,8 @@ struct field *init_field(void) {
 /* Quick-ref to pixels in the alpha map */
 #define ref_pixel(f, x, y)   ((f)->off_alpha[(y) * (f)->width + (x)])
 
-inline void make_disc(struct field *f, float x, float y, float vx, float vy, float r) {
+static inline void make_disc(struct field *f, float x, float y, float vx, float vy, float r) 
+{
     /* Synthesis of Disc::Disc and PxRider::PxRider */
     Disc *nd;
     int ix;
@@ -163,71 +166,19 @@ inline void make_disc(struct field *f, float x, float y, float vx, float vy, flo
     }
 }
 
-inline void point2rgb(int depth, unsigned long c, unsigned short int *r, 
-                      unsigned short int *g, unsigned short int *b) {
-    switch(depth) {
-        case 32:
-        case 24:
-            *g = (c & 0xff00) >> 8; 
-            *r = (c & 0xff0000) >> 16; 
-            *b = c & 0xff; 
-            break;
-        case 16:
-            *g = ((c >> 5) & 0x3f) << 2;
-            *r = ((c >> 11) & 0x1f) << 3; 
-            *b = (c & 0x1f) << 3; 
-            break;
-        case 15:
-            *g = ((c >> 5) & 0x1f) << 3;
-            *r = ((c >> 10) & 0x1f) << 3;
-            *b = (c & 0x1f) << 3;
-            break;
-    }
-}
-
-inline unsigned long rgb2point(int depth, unsigned short int r, 
-                               unsigned short int g, unsigned short int b) {
-    unsigned long ret = 0;
-
-    switch(depth) {
-        case 32:
-            ret = 0xff000000;
-        case 24:
-            ret |= (r << 16) | (g << 8) | b;
-            break;
-        case 16:
-            ret = ((r>>3) << 11) | ((g>>2)<<5) | (b>>3);
-            break;
-        case 15:
-            ret = ((r>>3) << 10) | ((g>>3)<<5) | (b>>3);
-            break;
-    }
-
-    return ret;
-}
 
 /* alpha blended point drawing */
-inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, struct field *f) {
+static inline unsigned long
+trans_point(struct state *st,
+            int x1, int y1, unsigned char myc, float a, struct field *f) 
+{
     if ((x1 >= 0) && (x1 < f->width) && (y1 >= 0) && (y1 < f->height)) {
         if (a >= 1.0) {
             ref_pixel(f, x1, y1) = myc;
         } else {
-            unsigned short int or = 0, og = 0, ob = 0;
-            unsigned short int r = 0, g = 0, b = 0;
-            unsigned short int nr, ng, nb;
-            unsigned long c;
-
-            c = ref_pixel(f, x1, y1);
-            point2rgb(f->visdepth, c, &or, &og, &ob);
-            point2rgb(f->visdepth, myc, &r, &g, &b);
-
-            nr = or + (r - or) * a;
-            ng = og + (g - og) * a;
-            nb = ob + (b - ob) * a;
-
-            c = rgb2point(f->visdepth, nr, ng, nb);
+            unsigned long c = ref_pixel(f, x1, y1);
+            c = c + (myc - c) * a;
             ref_pixel(f, x1, y1) = c;
-
             return c;
         }
     }
@@ -235,7 +186,15 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, str
     return 0;
 }
 
-inline void move_disc(struct field *f, int dnum) {
+static inline unsigned long
+get_pixel (struct state *st, unsigned char v)
+{
+  return st->colors [v * (st->ncolors-1) / 255].pixel;
+}
+
+
+static inline void move_disc(struct field *f, int dnum) 
+{
     Disc *d = &(f->discs[dnum]);
 
     /* add velocity to position */
@@ -257,7 +216,10 @@ inline void move_disc(struct field *f, int dnum) {
         d->r += 0.1;
 }
 
-inline void draw_glowpoint(Display *dpy, Window window, GC fgc, struct field *f, float px, float py) {
+static inline void 
+draw_glowpoint(struct state *st, Drawable drawable, 
+               GC fgc, struct field *f, float px, float py) 
+{
     int i, j;
     float a;
     unsigned long c;
@@ -266,21 +228,22 @@ inline void draw_glowpoint(Display *dpy, Window window, GC fgc, struct field *f,
         for (j =- 2; j < 3; j++) {
             a = 0.8 - i * i * 0.1 - j * j * 0.1;
 
-            c = trans_point(px+i, py+j, f->fgcolor, a, f);
-            XSetForeground(dpy, fgc, c);
-            XDrawPoint(dpy, window, fgc, px + i, py + j);
-            XSetForeground(dpy, fgc, f->fgcolor);
+            c = trans_point(st, px+i, py+j, 255, a, f);
+            XSetForeground(st->dpy, fgc, get_pixel (st, c));
+            XDrawPoint(st->dpy, drawable, fgc, px + i, py + j);
+            XSetForeground(st->dpy, fgc, f->fgcolor);
         }
     }
 }
 
-inline void moverender_rider(Display *dpy, Window window, GC fgc, struct field *f, PxRider *rid, 
-                             float x, float y, float r) {
+static inline void 
+moverender_rider(struct state *st, Drawable drawable, 
+                 GC fgc, struct field *f, PxRider *rid, 
+                 float x, float y, float r) 
+{
     float px, py;
     unsigned long int c;
-    unsigned short int cr, cg, cb;
-    int ch;
-    double cs, cv;
+    double cv;
 
     /* add velocity to theta */
     rid->t = fmod((rid->t + rid->vt + M_PI), (2 * M_PI)) - M_PI;
@@ -301,29 +264,29 @@ inline void moverender_rider(Display *dpy, Window window, GC fgc, struct field *
     /* max brightness seems to be 0.003845 */
 
     c = ref_pixel(f, (int) px, (int) py);
-    point2rgb(f->visdepth, c, &cr, &cg, &cb);
-    rgb_to_hsv(cr, cg, cb, &ch, &cs, &cv);
+    cv = c / 255.0;
 
     /* guestimated - 40 is 18% of 255, so scale this to 0.0 to 0.003845 */
     if (cv > 0.0006921) {
-        draw_glowpoint(dpy, window, fgc, f, px, py); 
+        draw_glowpoint(st, drawable, fgc, f, px, py); 
 
         rid->mycharge = 0.003845;
     } else {
         rid->mycharge *= 0.98;
 
-        hsv_to_rgb(ch, cs, rid->mycharge, &cr, &cg, &cb);
-        c = rgb2point(f->visdepth, cr, cg, cb);
+        c = 255 * rid->mycharge;
 
-        trans_point(px, py, c, 0.5, f);
+        trans_point(st, px, py, c, 0.5, f);
 
-        XSetForeground(dpy, fgc, c);
-        XDrawPoint(dpy, window, fgc, px, py);
-        XSetForeground(dpy, fgc, f->fgcolor);
+        XSetForeground(st->dpy, fgc, get_pixel(st, c));
+        XDrawPoint(st->dpy, drawable, fgc, px, py);
+        XSetForeground(st->dpy, fgc, f->fgcolor);
     }
 }
 
-inline void render_disc(Display *dpy, Window window, GC fgc, struct field *f, int dnum) {
+static inline void 
+render_disc(struct state *st, Drawable drawable, GC fgc, struct field *f, int dnum) 
+{
     Disc *di = &(f->discs[dnum]);
     int n, m;
     float dx, dy, d;
@@ -360,15 +323,15 @@ inline void render_disc(Display *dpy, Window window, GC fgc, struct field *f, in
                 
                 /* p3a and p3b might be identical, ignore this case for now */
                 /* XPutPixel(f->off_map, p3ax, p3ay, f->fgcolor); */
-                c = trans_point(p3ax, p3ay, f->fgcolor, 0.75, f);
-                XSetForeground(dpy, fgc, c);
-                XDrawPoint(dpy, window, fgc, p3ax, p3ay);
+                c = trans_point(st, p3ax, p3ay, 255, 0.75, f);
+                XSetForeground(st->dpy, fgc, get_pixel (st, c));
+                XDrawPoint(st->dpy, drawable, fgc, p3ax, p3ay);
 
                 /* XPutPixel(f->off_map, p3bx, p3by, f->fgcolor); */
-                c = trans_point(p3bx, p3by, f->fgcolor, 0.75, f);
-                XSetForeground(dpy, fgc, c);
-                XDrawPoint(dpy, window, fgc, p3bx, p3by);
-                XSetForeground(dpy, fgc, f->fgcolor);
+                c = trans_point(st, p3bx, p3by, 255, 0.75, f);
+                XSetForeground(st->dpy, fgc, get_pixel (st, c));
+                XDrawPoint(st->dpy, drawable, fgc, p3bx, p3by);
+                XSetForeground(st->dpy, fgc, f->fgcolor);
             }
         }
 
@@ -376,163 +339,234 @@ inline void render_disc(Display *dpy, Window window, GC fgc, struct field *f, in
 
     /* Render all the pixel riders */
     for (m = 0; m < di->numr; m++) {
-        moverender_rider(dpy, window, fgc, f, &(di->pxRiders[m]), 
+        moverender_rider(st, drawable, fgc, f, &(di->pxRiders[m]), 
                          di->x, di->y, di->r);
     }
 }
 
-char *progclass = "InterMomentary";
-
-char *defaults[] = {
-    ".background: black",
-    ".foreground: white",
-    "*drawDelay: 30000",
-    "*numDiscs: 85",
-    "*maxRiders: 40",
-    "*maxRadius: 100",
-    0
-};
-
-XrmOptionDescRec options[] = {
-    {"-background", ".background", XrmoptionSepArg, 0},
-    {"-foreground", ".foreground", XrmoptionSepArg, 0},
-    {"-draw-delay", ".drawDelay", XrmoptionSepArg, 0},
-    {"-num-discs", ".numDiscs", XrmoptionSepArg, 0},
-    {"-max-riders", ".maxRiders", XrmoptionSepArg, 0},
-    {"-max-radius", ".maxRadius", XrmoptionSepArg, 0},
-    {0, 0, 0, 0}
-};
-
-void build_img(Display *dpy, Window window, struct field *f) {
+static void build_img(Display *dpy, Window window, struct field *f) 
+{
     if (f->off_alpha) {
         free(f->off_alpha);
         f->off_alpha = NULL;
 
         /* Assume theres also an off pixmap */
-        XFreePixmap(dpy, f->off_map);
+        if (f->off_map != window)
+          XFreePixmap(dpy, f->off_map);
     }
 
-    f->off_alpha = (unsigned long *) xrealloc(f->off_alpha, sizeof(unsigned long) * 
-                                              f->width * f->height);
+    f->off_alpha = (unsigned char *) 
+      xrealloc(f->off_alpha, sizeof(unsigned char) * f->width * f->height);
 
-    memset(f->off_alpha, f->bgcolor, sizeof(unsigned long) * f->width * f->height);
+    memset(f->off_alpha, 0, sizeof(unsigned char) * f->width * f->height);
 
+# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+    f->off_map = window;
+# else
     f->off_map = XCreatePixmap(dpy, window, f->width, f->height, f->visdepth);
+# endif
 
 }
 
-inline void blank_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, struct field *f) {
-    memset(f->off_alpha, f->bgcolor, sizeof(unsigned long) * f->width * f->height);
+static inline void blank_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, struct field *f) 
+{
+    memset(f->off_alpha, 0, sizeof(unsigned char) * f->width * f->height);
 
     XSetForeground(dpy, fgc, f->bgcolor);
     XFillRectangle(dpy, window, fgc, 0, 0, xgwa.width, xgwa.height);
     XSetForeground(dpy, fgc, f->fgcolor);
 }
 
-void screenhack(Display * dpy, Window window)
+
+static void *
+intermomentary_init (Display *dpy, Window window)
 {
-    struct field *f = init_field();
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
 
 #ifdef TIME_ME
     time_t start_time = time(NULL);
 #endif
 
-    int draw_delay = 0;
     int tempx;
-
-    GC fgc, copygc;
     XGCValues gcv;
-    XWindowAttributes xgwa;
 
-    draw_delay = (get_integer_resource("drawDelay", "Integer"));
-    f->maxrider = (get_integer_resource("maxRiders", "Integer"));
-    f->maxradius = (get_integer_resource("maxRadius", "Integer"));
-    f->initial_discs = (get_integer_resource("numDiscs", "Integer"));
+    st->dpy = dpy;
+    st->window = window;
 
-    if (f->initial_discs <= 10) {
+    XGetWindowAttributes(dpy, window, &st->xgwa);
+ 
+    st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
+    st->ncolors++;
+    st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
+
+    gcv.foreground = get_pixel_resource(dpy, st->xgwa.colormap,
+                                        "foreground", "Foreground");
+    gcv.background = get_pixel_resource(dpy, st->xgwa.colormap,
+                                        "background", "Background");
+
+    {
+      XColor fgc, bgc;
+      int fgh, bgh;
+      double fgs, fgv, bgs, bgv;
+      fgc.pixel = gcv.foreground;
+      bgc.pixel = gcv.background;
+      XQueryColor (st->dpy, st->xgwa.colormap, &fgc);
+      XQueryColor (st->dpy, st->xgwa.colormap, &bgc);
+      rgb_to_hsv (fgc.red, fgc.green, fgc.blue, &fgh, &fgs, &fgv);
+      rgb_to_hsv (bgc.red, bgc.green, bgc.blue, &bgh, &bgs, &bgv);
+#if 0
+      bgh = fgh;
+      bgs = fgs;
+      bgv = fgv / 10.0;
+#endif
+      make_color_ramp (st->dpy, st->xgwa.colormap,
+                       bgh, bgs, bgv,
+                       fgh, fgs, fgv,
+                       st->colors, &st->ncolors,
+                       False, /* closed */
+                       True, False);
+    }
+
+    st->f = init_field();
+
+    st->f->height = st->xgwa.height;
+    st->f->width = st->xgwa.width;
+    st->f->visdepth = st->xgwa.depth;
+
+    st->draw_delay = (get_integer_resource(dpy, "drawDelay", "Integer"));
+    st->f->maxrider = (get_integer_resource(dpy, "maxRiders", "Integer"));
+    st->f->maxradius = (get_integer_resource(dpy, "maxRadius", "Integer"));
+    st->f->initial_discs = (get_integer_resource(dpy, "numDiscs", "Integer"));
+
+    if (st->f->initial_discs <= 10) {
         fprintf(stderr, "%s: Initial discs must be greater than 10\n", progname);
-        return;
+        exit (1);
     }
 
-    if (f->maxradius <= 30) {
+    if (st->f->maxradius <= 30) {
         fprintf(stderr, "%s: Max radius must be greater than 30\n", progname);
-        return;
+        exit (1);
     }
 
-    if (f->maxrider <= 10) {
+    if (st->f->maxrider <= 10) {
         fprintf(stderr, "%s: Max riders must be greater than 10\n", progname);
-        return;
+        exit (1);
     }
     
-    XGetWindowAttributes(dpy, window, &xgwa);
+    st->fgc = XCreateGC(dpy, window, GCForeground, &gcv);
+    st->copygc = XCreateGC(dpy, window, GCForeground, &gcv);
 
-    f->height = xgwa.height;
-    f->width = xgwa.width;
-    f->visdepth = xgwa.depth;
- 
-    gcv.foreground = get_pixel_resource("foreground", "Foreground",
-					dpy, xgwa.colormap);
-    gcv.background = get_pixel_resource("background", "Background",
-					dpy, xgwa.colormap);
-    fgc = XCreateGC(dpy, window, GCForeground, &gcv);
-    copygc = XCreateGC(dpy, window, GCForeground, &gcv);
-
-    f->fgcolor = gcv.foreground;
-    f->bgcolor = gcv.background;
+    st->f->fgcolor = gcv.foreground;
+    st->f->bgcolor = gcv.background;
 
     /* Initialize stuff */
-    build_img(dpy, window, f);
+    build_img(dpy, window, st->f);
 
-    for (tempx = 0; tempx < f->initial_discs; tempx++) {
+    for (tempx = 0; tempx < st->f->initial_discs; tempx++) {
         float fx, fy, x, y, r;
         int bt;
 
         /* Arrange in anti-collapsing circle */
-        fx = 0.4 * f->width * cos((2 * M_PI) * tempx / f->initial_discs);
-        fy = 0.4 * f->height * sin((2 * M_PI) * tempx / f->initial_discs);
-        x = frand(f->width / 2) + fx;
-        y = frand(f->height / 2) + fy;
-        r = 5 + frand(f->maxradius);
+        fx = 0.4 * st->f->width * cos((2 * M_PI) * tempx / st->f->initial_discs);
+        fy = 0.4 * st->f->height * sin((2 * M_PI) * tempx / st->f->initial_discs);
+        x = frand(st->f->width / 2) + fx;
+        y = frand(st->f->height / 2) + fy;
+        r = 5 + frand(st->f->maxradius);
         bt = 1;
 
         if ((random() % 100) < 50)
             bt = -1;
 
-        make_disc(f, x, y, bt * fx / 1000.0, bt * fy / 1000.0, r);
+        make_disc(st->f, x, y, bt * fx / 1000.0, bt * fy / 1000.0, r);
         
     }
     
-    while (1) {
-        if ((f->cycles % 10) == 0) {
-            /* Restart if the window size changes */
-            XGetWindowAttributes(dpy, window, &xgwa);
-
-            if (f->height != xgwa.height || f->width != xgwa.width) {
-                f->height = xgwa.height;
-                f->width = xgwa.width;
-                f->visdepth = xgwa.depth;
-
-                build_img(dpy, window, f);
-            }
-        }
-
-        blank_img(dpy, f->off_map, xgwa, fgc, f);
-        for (tempx = 0; tempx < f->num; tempx++) {
-            move_disc(f, tempx);
-            render_disc(dpy, f->off_map, fgc, f, tempx);
-        }
-
-        XSetFillStyle(dpy, copygc, FillTiled);
-        XSetTile(dpy, copygc, f->off_map);
-        XFillRectangle(dpy, window, copygc, 0, 0, f->width, f->height);
-
-        f->cycles++;
-
-/*        XSync(dpy, False); */
-
-        screenhack_handle_events(dpy);
-
-        if (draw_delay)
-            usleep(draw_delay);
-    }
+    return st;
 }
+
+static unsigned long
+intermomentary_draw (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  int tempx;
+
+  if ((st->f->cycles % 10) == 0) {
+    /* Restart if the window size changes */
+    XGetWindowAttributes(dpy, window, &st->xgwa);
+
+    if (st->f->height != st->xgwa.height || st->f->width != st->xgwa.width) {
+      st->f->height = st->xgwa.height;
+      st->f->width = st->xgwa.width;
+      st->f->visdepth = st->xgwa.depth;
+
+      build_img(dpy, window, st->f);
+    }
+  }
+
+  blank_img(dpy, st->f->off_map, st->xgwa, st->fgc, st->f);
+  for (tempx = 0; tempx < st->f->num; tempx++) {
+    move_disc(st->f, tempx);
+    render_disc(st, st->f->off_map, st->fgc, st->f, tempx);
+  }
+
+#if 0
+  XSetFillStyle(dpy, st->copygc, FillTiled);
+  XSetTile(dpy, st->copygc, st->f->off_map);
+  XFillRectangle(dpy, window, st->copygc, 0, 0, st->f->width, st->f->height);
+#else
+  if (st->f->off_map != window)
+    XCopyArea (dpy, st->f->off_map, window, st->copygc, 0, 0, 
+               st->f->width, st->f->height, 0, 0);
+
+#endif
+
+  st->f->cycles++;
+
+  return st->draw_delay;
+}
+
+
+static void
+intermomentary_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
+
+static Bool
+intermomentary_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+intermomentary_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  free (st);
+}
+
+
+static const char *intermomentary_defaults[] = {
+    ".background: black",
+    ".foreground: yellow",
+    "*drawDelay: 30000",
+    "*numDiscs: 85",
+    "*maxRiders: 40",
+    "*maxRadius: 100",
+    "*colors: 256",
+    0
+};
+
+static XrmOptionDescRec intermomentary_options[] = {
+    {"-background", ".background", XrmoptionSepArg, 0},
+    {"-foreground", ".foreground", XrmoptionSepArg, 0},
+    {"-draw-delay", ".drawDelay", XrmoptionSepArg, 0},
+    {"-num-discs", ".numDiscs", XrmoptionSepArg, 0},
+    {"-max-riders", ".maxRiders", XrmoptionSepArg, 0},
+    {"-max-radius", ".maxRadius", XrmoptionSepArg, 0},
+    { "-colors",    ".colors",    XrmoptionSepArg, 0 },
+    {0, 0, 0, 0}
+};
+
+
+XSCREENSAVER_MODULE ("Intermomentary", intermomentary)

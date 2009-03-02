@@ -130,26 +130,18 @@ static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
 #undef MEMTEST
 
 #ifdef STANDALONE
-#define MODE_juggle
-#define PROGCLASS "Juggle"
-#define HACK_INIT init_juggle
-#define HACK_DRAW draw_juggle
-#define HACK_RESHAPE reshape_juggle
-#define _no_HACK_FREE release_juggle
-#define juggle_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n" \
-"*count: 200 \n" \
-"*cycles: 1000 \n" \
-"*ncolors: 32 \n" \
-"*font: -*-times-bold-r-normal-*-180-*\n"
-#undef SMOOTH_COLORS
-#include "xlockmore.h"		/* in xscreensaver distribution */
-#define MI_DELAY(MI)	((MI)->pause)
-# ifndef MI_DEPTH
-#  define MI_DEPTH MI_WIN_DEPTH
-# endif
+# define MODE_juggle
+# define DEFAULTS	"*delay:   10000 \n" \
+					"*count:   200   \n" \
+					"*cycles:  1000  \n" \
+					"*ncolors: 32    \n" \
+					"*font:    -*-times-bold-r-normal-*-180-*\n"
+# define refresh_juggle 0
+# define juggle_handle_event 0
+# undef SMOOTH_COLORS
+# include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-#include "xlock.h"		/* in xlockmore distribution */
+# include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
 #ifdef MODE_juggle
@@ -163,7 +155,7 @@ static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
 }
 #endif
 
-#define DEF_PATTERN "." /* All patterns */
+#define DEF_PATTERN "random" /* All patterns */
 #define DEF_TAIL "1" /* No trace */
 #ifdef UNI
 /* Maybe a ROLA BOLA would be at a better angle for viewing */
@@ -259,7 +251,7 @@ static OptionStruct desc[] =
   { "-only",           "Turn off all objects but the named one." },
 };
 
-ModeSpecOpt juggle_opts =
+ENTRYPOINT ModeSpecOpt juggle_opts =
   { XtNumber(opts), opts, XtNumber(vars), vars, desc };
 
 #ifdef USE_MODULES
@@ -273,14 +265,7 @@ ModStruct   juggle_description = {
 #endif
 
 #ifdef USE_XVMSUTILS
-#include <X11/unix_time.h>
-#endif
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#if HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
+# include <X11/unix_time.h>
 #endif
 
 /* Note: All "lengths" are scaled by sp->scale = MI_HEIGHT/480.  All
@@ -488,29 +473,6 @@ typedef struct trajectory {
 } Trajectory;
 
 
-/* Jugglestruct: per-screen global data.  The master Wander, Object
- * and Trajectory lists are anchored here. */
-typedef struct {
-  double        scale;
-  Wander       *wander;
-  double        cx;
-  double        Gr;
-  Trajectory   *head;
-  Arm           arm[2][2];
-  char         *pattern;
-  int           count;
-  int           num_balls;
-  time_t        begintime; /* should make 'time' usable for at least 48 days
-							on a 32-bit machine */
-  unsigned long time; /* millisecond timer*/
-  ObjType       objtypes;
-  Object       *objects;
-} jugglestruct;
-
-static jugglestruct *juggles = (jugglestruct *) NULL;
-
-static XFontStruct *mode_font = None;
-
 /*******************
  * Pattern Library *
  *******************/
@@ -524,7 +486,9 @@ typedef struct {
 /* Patterns should be given in Adam notation so the generator can
    concatenate them safely.  Null descriptions are ok.  Height
    notation will be displayed automatically.  */
-static patternstruct portfolio[] = {
+/* Can't const this because it is qsorted.  This *should* be reentrant,
+   I think... */
+static /*const*/ patternstruct portfolio[] = {
   {"[+2 1]", /* +3 1 */ "Typical 2 ball juggler"},
   {"[2 0]", /* 4 0 */ "2 in 1 hand"},
   {"[2 0 1]", /* 5 0 1 */},
@@ -609,13 +573,39 @@ static patternstruct portfolio[] = {
 
 };
 
+
+
 typedef struct { int start; int number; } PatternIndex;
 
-static struct {
+struct patternindex {
   int minballs;
   int maxballs;
   PatternIndex index[XtNumber(portfolio)];
-} patternindex;
+};
+
+
+/* Jugglestruct: per-screen global data.  The master Wander, Object
+ * and Trajectory lists are anchored here. */
+typedef struct {
+  double        scale;
+  Wander       *wander;
+  double        cx;
+  double        Gr;
+  Trajectory   *head;
+  Arm           arm[2][2];
+  char         *pattern;
+  int           count;
+  int           num_balls;
+  time_t        begintime; /* should make 'time' usable for at least 48 days
+							on a 32-bit machine */
+  unsigned long time; /* millisecond timer*/
+  ObjType       objtypes;
+  Object       *objects;
+  struct patternindex patternindex;
+  XFontStruct *mode_font;
+} jugglestruct;
+
+static jugglestruct *juggles = (jugglestruct *) NULL;
 
 /*******************
  * list management *
@@ -696,6 +686,10 @@ free_juggle(jugglestruct *sp) {
   if(sp->pattern != NULL) {
 	free(sp->pattern);
 	sp->pattern = NULL;
+  }
+  if (sp->mode_font!=None) {
+	XFreeFontInfo(NULL,sp->mode_font,1);
+	sp->mode_font = None;
   }
 }
 
@@ -1697,6 +1691,7 @@ static int get_num_balls(const char *j)
   int balls = 0;
   const char *p;
   int h = 0;
+  if (!j) abort();
   for (p = j; *p; p++) {
 	if (*p >= '0' && *p <='9') { /* digit */
 	  h = 10*h + (*p - '0');
@@ -2299,8 +2294,8 @@ show_bball(ModeInfo *mi, unsigned long color, Trace *s)
  **************************************************************************/
 
 
-void
-release_juggle(ModeInfo * mi)
+ENTRYPOINT void
+release_juggle (ModeInfo * mi)
 {
   if (juggles != NULL) {
 	int screen;
@@ -2309,10 +2304,6 @@ release_juggle(ModeInfo * mi)
 	  free_juggle(&juggles[screen]);
 	free(juggles);
 	juggles = (jugglestruct *) NULL;
-  }
-  if (mode_font!=None) {
-	XFreeFontInfo(NULL,mode_font,1);
-	mode_font = None;
   }
 }
 
@@ -2364,10 +2355,10 @@ refill_juggle(ModeInfo * mi)
 		default:
 		  break; /* NO-OP */
 		}
-		if (new_balls < patternindex.minballs) {
+		if (new_balls < sp->patternindex.minballs) {
 		  new_balls += 2;
 		}
-		if (new_balls > patternindex.maxballs) {
+		if (new_balls > sp->patternindex.maxballs) {
 		  new_balls -= 2;
 		}
 		if (new_balls < sp->num_balls) {
@@ -2378,10 +2369,10 @@ refill_juggle(ModeInfo * mi)
 	  }
 
 	  count += t;
-	  if (NRAND(2) && patternindex.index[sp->num_balls].number) {
+	  if (NRAND(2) && sp->patternindex.index[sp->num_balls].number) {
 		/* Pick from PortFolio */
-		int p = patternindex.index[sp->num_balls].start +
-		  NRAND(patternindex.index[sp->num_balls].number);
+		int p = sp->patternindex.index[sp->num_balls].start +
+		  NRAND(sp->patternindex.index[sp->num_balls].number);
 		if (!program(mi, portfolio[p].pattern, portfolio[p].name, t))
 		  return;
 	  } else {
@@ -2450,7 +2441,8 @@ refill_juggle(ModeInfo * mi)
   if(MI_IS_DEBUG(mi)) dump(sp);
 #endif
 }
-void
+
+static void
 change_juggle(ModeInfo * mi)
 {
   jugglestruct *sp = NULL;
@@ -2482,20 +2474,24 @@ change_juggle(ModeInfo * mi)
 
 }
 
-#ifdef STANDALONE
-/* Used by xscreensaver.  xlock just uses init_juggle */
-void
-reshape_juggle(ModeInfo * mi, int width, int height)
+ENTRYPOINT void
+init_juggle (ModeInfo * mi)
 {
-  init_juggle(mi);
-}
-#endif
-
-void
-init_juggle(ModeInfo * mi)
-{
-  jugglestruct *sp;
+  jugglestruct *sp = 0;
   int i;
+
+  if (juggles == NULL) { /* First-time initialisation */
+
+	/* allocate jugglestruct */
+	if ((juggles =
+		 (jugglestruct *)calloc(MI_NUM_SCREENS(mi),
+								sizeof (jugglestruct))) == NULL) {
+	  release_juggle(mi);
+	  return;
+	}
+  }
+
+  sp = &juggles[MI_SCREEN(mi)];
 
   if (only && *only && strcmp(only, " ")) {
     balls = clubs = torches = knives = rings = bballs = False;
@@ -2515,53 +2511,7 @@ init_juggle(ModeInfo * mi)
     }
   }
 
-  if (pattern != NULL && *pattern == '.') {
-	pattern = NULL;
-  }
-  if (pattern == NULL && patternindex.maxballs == 0) {
-	/* pattern list needs indexing */
-	int nelements = XtNumber(portfolio);
-	int numpat = 0;
-
-	/* sort according to number of balls */
-	qsort((void*)portfolio, nelements,
-		  sizeof(portfolio[1]), compare_num_balls);
-
-	/* last pattern has most balls */
-	patternindex.maxballs = get_num_balls(portfolio[nelements - 1].pattern);
-	/* run through sorted list, indexing start of each group
-	   and number in group */
-	patternindex.maxballs = 1;
-	for (i = 0; i < nelements; i++) {
-	  int b = get_num_balls(portfolio[i].pattern);
-	  if (b > patternindex.maxballs) {
-		patternindex.index[patternindex.maxballs].number = numpat;
-		if(numpat == 0) patternindex.minballs = b;
-		patternindex.maxballs = b;
-		numpat = 1;
-		patternindex.index[patternindex.maxballs].start = i;
-	  } else {
-		numpat++;
-	  }
-	}
-	patternindex.index[patternindex.maxballs].number = numpat;
-  }
-
-  /* Clean up the Screen.  Don't use MI_CLEARWINDOW(mi), since we may
-	 only be resizing and then we won't all those special effects. */
-  XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-
-  if (juggles == NULL) { /* First-time initialisation */
-
-	/* allocate jugglestruct */
-	if ((juggles =
-		 (jugglestruct *)calloc(MI_NUM_SCREENS(mi),
-								sizeof (jugglestruct))) == NULL) {
-	  release_juggle(mi);
-	  return;
-	}
-
-	sp = &juggles[MI_SCREEN(mi)];
+  if (sp->head == 0) {  /* first time initializing this juggler */
 
 	sp->count = ABS(MI_COUNT(mi));
 	if (sp->count == 0)
@@ -2569,9 +2519,9 @@ init_juggle(ModeInfo * mi)
 
 	/* record start time */
 	sp->begintime = time(NULL);
-	if(patternindex.maxballs > 0) {
-	  sp->num_balls = patternindex.minballs +
-		NRAND(patternindex.maxballs - patternindex.minballs);
+	if(sp->patternindex.maxballs > 0) {
+	  sp->num_balls = sp->patternindex.minballs +
+		NRAND(sp->patternindex.maxballs - sp->patternindex.minballs);
 	}
 
 	show_figure(mi, MI_WHITE_PIXEL(mi), True); /* Draw figure.  Also discovers
@@ -2610,28 +2560,72 @@ init_juggle(ModeInfo * mi)
 
 	sp->pattern =  strdup(""); /* Initialise saved pattern with
 								  free-able memory */
-
-	/* Set up programme */
-	change_juggle(mi);
-
   }
+
+  sp = &juggles[MI_SCREEN(mi)];
+
+  if (pattern &&
+      (!*pattern ||
+       !strcasecmp (pattern, ".") ||
+       !strcasecmp (pattern, "random")))
+	pattern = NULL;
+
+  if (pattern == NULL && sp->patternindex.maxballs == 0) {
+	/* pattern list needs indexing */
+	int nelements = XtNumber(portfolio);
+	int numpat = 0;
+
+	/* sort according to number of balls */
+	qsort((void*)portfolio, nelements,
+		  sizeof(portfolio[1]), compare_num_balls);
+
+	/* last pattern has most balls */
+	sp->patternindex.maxballs = get_num_balls(portfolio[nelements - 1].pattern);
+	/* run through sorted list, indexing start of each group
+	   and number in group */
+	sp->patternindex.maxballs = 1;
+	for (i = 0; i < nelements; i++) {
+	  int b = get_num_balls(portfolio[i].pattern);
+	  if (b > sp->patternindex.maxballs) {
+		sp->patternindex.index[sp->patternindex.maxballs].number = numpat;
+		if(numpat == 0) sp->patternindex.minballs = b;
+		sp->patternindex.maxballs = b;
+		numpat = 1;
+		sp->patternindex.index[sp->patternindex.maxballs].start = i;
+	  } else {
+		numpat++;
+	  }
+	}
+	sp->patternindex.index[sp->patternindex.maxballs].number = numpat;
+  }
+
+  /* Set up programme */
+  change_juggle(mi);
+
+  /* Clean up the Screen.  Don't use MI_CLEARWINDOW(mi), since we may
+	 only be resizing and then we won't all those special effects. */
+  XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 
   /* Only put things here that won't interrupt the programme during
 	 a window resize */
-
-  sp = &juggles[MI_SCREEN(mi)];
 
   /* Use MIN so that users can resize in interesting ways, eg
 	 narrow windows for tall patterns, etc */
   sp->scale = MIN(MI_HEIGHT(mi)/480.0, MI_WIDTH(mi)/160.0);
 
-  if(describe && mode_font == None) { /* Check to see if there's room to describe patterns. */
-	mode_font = XQueryFont(MI_DISPLAY(mi), XGContextFromGC(MI_GC(mi)));
+  if(describe && !sp->mode_font) { /* Check to see if there's room to describe patterns. */
+	sp->mode_font = XQueryFont(MI_DISPLAY(mi), XGContextFromGC(MI_GC(mi)));
   }
 }
 
-void
-draw_juggle(ModeInfo * mi)
+ENTRYPOINT void
+reshape_juggle (ModeInfo * mi, int width, int height)
+{
+  init_juggle(mi);
+}
+
+ENTRYPOINT void
+draw_juggle (ModeInfo * mi)
 {
   Trajectory *traj = NULL;
   Object *o = NULL;
@@ -2645,6 +2639,13 @@ draw_juggle(ModeInfo * mi)
   sp = &juggles[MI_SCREEN(mi)];
 
   MI_IS_DRAWN(mi) = True;
+
+#ifdef HAVE_COCOA
+  /* Don't worry about flicker, trust Quartz's double-buffering.
+     This is a fast fix for the pixel-turds I can't track down...
+   */
+  XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
 
   /* Update timer */
   if (real) {
@@ -2778,8 +2779,13 @@ draw_juggle(ModeInfo * mi)
   if(pattern != NULL && strcmp(sp->pattern, pattern) != 0 ) {
 	/* Erase old name */
 	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
+# if 0
 	XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
 				0, 20, sp->pattern, strlen(sp->pattern));
+# else
+    XFillRectangle(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
+                   0, 0, MI_WIDTH(mi), 25);
+# endif
 	free(sp->pattern);
 	sp->pattern = strdup(pattern);
 
@@ -2788,12 +2794,12 @@ draw_juggle(ModeInfo * mi)
 					 MI_SCREEN(mi), sp->pattern);
 	}
   }
-  if(mode_font != None &&
-	 XTextWidth(mode_font, sp->pattern, strlen(sp->pattern)) < MI_WIDTH(mi)) {
+  if(sp->mode_font != None &&
+	 XTextWidth(sp->mode_font, sp->pattern, strlen(sp->pattern)) < MI_WIDTH(mi)) {
 	/* Redraw once a cycle, in case it's obscured or it changed */
 	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WHITE_PIXEL(mi));
-	XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-				0, 20, sp->pattern, strlen(sp->pattern));
+	XDrawImageString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
+                     0, 20, sp->pattern, strlen(sp->pattern));
   }
 
 #ifdef MEMTEST
@@ -2808,5 +2814,7 @@ draw_juggle(ModeInfo * mi)
 	init_juggle(mi);
   }
 }
+
+XSCREENSAVER_MODULE ("Juggle", juggle)
 
 #endif /* MODE_juggle */

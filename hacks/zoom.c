@@ -12,8 +12,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include <X11/Xutil.h>
-#include <sys/time.h>
 
 #ifndef MIN
 #define MIN(a, b) (((a) < (b))?(a):(b))
@@ -29,20 +27,30 @@
 #define X_PERIOD 45000.0
 #define Y_PERIOD 36000.0
 
-static int sizex, sizey;
+struct state {
+  Display *dpy;
+  Window window;
 
-static int delay;
-static int pixwidth, pixheight, pixspacex, pixspacey, lensoffsetx, lensoffsety;
-static Bool lenses;
+  int sizex, sizey;
 
-static GC window_gc;
+  int delay;
+  int pixwidth, pixheight, pixspacex, pixspacey, lensoffsetx, lensoffsety;
+  Bool lenses;
 
-static XImage *orig_map;
-static Pixmap pm;
+  GC window_gc;
 
-static int tlx, tly, s;
+  XImage *orig_map;
+  Pixmap pm;
 
-static long currentTimeInMs(void)
+  int tlx, tly, s;
+
+  int sinusoid_offset;
+
+  async_load_state *img_loader;
+};
+
+
+static long currentTimeInMs(struct state *st)
 { 
   struct timeval curTime;
 #ifdef GETTIMEOFDAY_TWO_ARGS
@@ -54,8 +62,10 @@ static long currentTimeInMs(void)
   return curTime.tv_sec*1000 + curTime.tv_usec/1000.0;
 }
 
-static void init_hack(Display *dpy, Window window)
+static void *
+zoom_init (Display *dpy, Window window)
 {
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
   XWindowAttributes xgwa;
   Colormap cmap;
@@ -63,110 +73,154 @@ static void init_hack(Display *dpy, Window window)
   long gcflags;
   int nblocksx, nblocksy;
 
-  XGetWindowAttributes(dpy, window, &xgwa);
-  sizex = xgwa.width;
-  sizey = xgwa.height;
+  st->dpy = dpy;
+  st->window = window;
+  XGetWindowAttributes(st->dpy, st->window, &xgwa);
+  st->sizex = xgwa.width;
+  st->sizey = xgwa.height;
   cmap = xgwa.colormap;
-  fg = get_pixel_resource("foreground", "Foreground", dpy, cmap);
-  bg = get_pixel_resource("background", "Background", dpy, cmap);
+  fg = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
+  bg = get_pixel_resource(st->dpy, cmap, "background", "Background");
 
-  delay = get_integer_resource("delay", "Integer");
-  if (delay < 1)
-    delay = 1;
-  pixwidth = get_integer_resource("pixwidth", "Integer");
-  if (pixwidth < 1)
-    pixwidth = 1;
-  pixheight = get_integer_resource("pixheight", "Integer");
-  if (pixheight < 1)
-    pixheight = 1;
-  pixspacex = get_integer_resource("pixspacex", "Integer");
-  if (pixspacex < 0)
-    pixspacex = 0;
-  pixspacey = get_integer_resource("pixspacey", "Integer");
-  if (pixspacey < 0)
-    pixspacey = 0;
-  lenses = get_boolean_resource("lenses", "Boolean");
-  lensoffsetx = get_integer_resource("lensoffsetx", "Integer");
-  lensoffsetx = MAX(0, MIN(pixwidth, lensoffsetx));
-  lensoffsety = get_integer_resource("lensoffsety", "Integer");
-  lensoffsety = MAX(0, MIN(pixwidth, lensoffsety));
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  if (st->delay < 1)
+    st->delay = 1;
+  st->pixwidth = get_integer_resource(st->dpy, "pixwidth", "Integer");
+  if (st->pixwidth < 1)
+    st->pixwidth = 1;
+  st->pixheight = get_integer_resource(st->dpy, "pixheight", "Integer");
+  if (st->pixheight < 1)
+    st->pixheight = 1;
+  st->pixspacex = get_integer_resource(st->dpy, "pixspacex", "Integer");
+  if (st->pixspacex < 0)
+    st->pixspacex = 0;
+  st->pixspacey = get_integer_resource(st->dpy, "pixspacey", "Integer");
+  if (st->pixspacey < 0)
+    st->pixspacey = 0;
+  st->lenses = get_boolean_resource(st->dpy, "lenses", "Boolean");
+  st->lensoffsetx = get_integer_resource(st->dpy, "lensoffsetx", "Integer");
+  st->lensoffsetx = MAX(0, MIN(st->pixwidth, st->lensoffsetx));
+  st->lensoffsety = get_integer_resource(st->dpy, "lensoffsety", "Integer");
+  st->lensoffsety = MAX(0, MIN(st->pixwidth, st->lensoffsety));
 
   gcv.function = GXcopy;
   gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCForeground|GCFunction;
   gcv.foreground = bg;
-  if (!lenses && use_subwindow_mode_p(xgwa.screen, window))       /* see grabscreen.c */
+  if (!st->lenses && use_subwindow_mode_p(xgwa.screen, st->window))       /* see grabscreen.c */
     gcflags |= GCSubwindowMode;
-  window_gc = XCreateGC(dpy, window, gcflags, &gcv);
+  st->window_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
 
-  orig_map = NULL;
-  pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  load_random_image (xgwa.screen, window, pm, NULL, NULL);
+  st->orig_map = NULL;
+  st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
 
-  if (!lenses) {
-    orig_map = XGetImage(dpy, pm, 0, 0, sizex, sizey, ~0L, ZPixmap);
-    XFreePixmap(dpy, pm);
-    pm = 0;
-  }
+  XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
+  XSetWindowBackground(st->dpy, st->window, bg);
+
+  st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                            st->pm, 0, 0);
 
   /* We might have needed this to grab the image, but if we leave this set
      to GCSubwindowMode, then we'll *draw* right over subwindows too. */
-  XSetSubwindowMode (dpy, window_gc, ClipByChildren);
+  XSetSubwindowMode (st->dpy, st->window_gc, ClipByChildren);
 
 
-  XFillRectangle(dpy, window, window_gc, 0, 0, sizex, sizey);
-  XSetWindowBackground(dpy, window, bg);
-
-  nblocksx = (int)ceil((double)sizex / (double)(pixwidth + pixspacex));
-  nblocksy = (int)ceil((double)sizey / (double)(pixheight + pixspacey));
-  if (lenses)
-    s = MAX((nblocksx - 1) * lensoffsetx + pixwidth, 
-	    (nblocksy - 1) * lensoffsety + pixheight) * 2;
+  nblocksx = (int)ceil((double)st->sizex / (double)(st->pixwidth + st->pixspacex));
+  nblocksy = (int)ceil((double)st->sizey / (double)(st->pixheight + st->pixspacey));
+  if (st->lenses)
+    st->s = MAX((nblocksx - 1) * st->lensoffsetx + st->pixwidth, 
+	    (nblocksy - 1) * st->lensoffsety + st->pixheight) * 2;
   else
-    s = MAX(nblocksx, nblocksy) * 2;
+    st->s = MAX(nblocksx, nblocksy) * 2;
+
+  st->sinusoid_offset = random();
+
+  return st;
 }
 
-static void onestep(Display *dpy, Window window)
+static unsigned long
+zoom_draw (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
   unsigned x, y, i, j;
 
   long now;
 
+  if (st->img_loader)   /* still loading */
+    {
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      if (! st->img_loader) {  /* just finished */
+        XClearWindow (st->dpy, st->window);
+        if (!st->lenses) {
+          st->orig_map = XGetImage(st->dpy, st->pm, 0, 0, st->sizex, st->sizey, ~0L, ZPixmap);
+          XFreePixmap(st->dpy, st->pm);
+          st->pm = 0;
+        }
+      }
+      return st->delay;
+    }
+
 #define nrnd(x) (random() % (x))
 
-  now = currentTimeInMs();
+  now = currentTimeInMs(st);
+  now += st->sinusoid_offset;  /* don't run multiple screens in lock-step */
 
   /* find new x,y */
-  tlx = ((1. + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0)
-    * (sizex - s/2) /* -s/4 */ + MINX;
-  tly = ((1. + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0)
-    * (sizey - s/2) /* -s/4 */ + MINY;
+  st->tlx = ((1. + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0)
+    * (st->sizex - st->s/2) /* -s/4 */ + MINX;
+  st->tly = ((1. + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0)
+    * (st->sizey - st->s/2) /* -s/4 */ + MINY;
 
-  if (lenses) {
-    for (x = i = 0; x < sizex; x += (pixwidth + pixspacex), ++i)
-      for (y = j = 0; y < sizey; y += (pixheight + pixspacey), ++j) {
-	XCopyArea(dpy, pm /* src */, window /* dest */, window_gc,
-		  tlx + i * lensoffsetx /* src_x */, 
-		  tly + j * lensoffsety /* src_y */,
-		  pixwidth, pixheight,
+  if (st->lenses) {
+    for (x = i = 0; x < st->sizex; x += (st->pixwidth + st->pixspacex), ++i)
+      for (y = j = 0; y < st->sizey; y += (st->pixheight + st->pixspacey), ++j) {
+	XCopyArea(st->dpy, st->pm /* src */, st->window /* dest */, st->window_gc,
+		  st->tlx + i * st->lensoffsetx /* src_x */, 
+		  st->tly + j * st->lensoffsety /* src_y */,
+		  st->pixwidth, st->pixheight,
 		  x /* dest_x */, y /* dest_y */);
       }
   } else {
-    for (x = i = 0; x < sizex; x += (pixwidth + pixspacex), ++i)
-      for (y = j = 0; y < sizey; y += (pixheight + pixspacey), ++j) {
-	XSetForeground(dpy, window_gc, XGetPixel(orig_map, tlx+i, tly+j));
-	XFillRectangle(dpy, window, window_gc, 
-		       i * (pixwidth + pixspacex),
-		       j * (pixheight + pixspacey), pixwidth, pixheight);
+    for (x = i = 0; x < st->sizex; x += (st->pixwidth + st->pixspacex), ++i)
+      for (y = j = 0; y < st->sizey; y += (st->pixheight + st->pixspacey), ++j) {
+	XSetForeground(st->dpy, st->window_gc, XGetPixel(st->orig_map, st->tlx+i, st->tly+j));
+	XFillRectangle(st->dpy, st->window, st->window_gc, 
+		       i * (st->pixwidth + st->pixspacex),
+		       j * (st->pixheight + st->pixspacey), st->pixwidth, st->pixheight);
       }
   }
+
+  return st->delay;
 }
 
-char *progclass = "Zoom";
+static void
+zoom_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+}
 
-char *defaults[] = {
+static Bool
+zoom_event (Display *dpy, Window window, void *closure, XEvent *event)
+{
+  return False;
+}
+
+static void
+zoom_free (Display *dpy, Window window, void *closure)
+{
+  struct state *st = (struct state *) closure;
+  XFreeGC (st->dpy, st->window_gc);
+  if (st->orig_map) XDestroyImage (st->orig_map);
+  if (st->pm) XFreePixmap (st->dpy, st->pm);
+  free (st);
+}
+
+
+static const char *zoom_defaults[] = {
   "*dontClearRoot: True",
+  ".foreground: white",
+  ".background: black",
 #ifdef __sgi /* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID: Best",
 #endif
@@ -181,7 +235,7 @@ char *defaults[] = {
   0
 };
 
-XrmOptionDescRec options[] = {
+static XrmOptionDescRec zoom_options[] = {
   { "-lenses", ".lenses", XrmoptionNoArg, "true" },
   { "-delay", ".delay", XrmoptionSepArg, 0 },
   { "-pixwidth", ".pixwidth", XrmoptionSepArg, 0 },
@@ -193,14 +247,4 @@ XrmOptionDescRec options[] = {
   { 0, 0, 0, 0 }
 };
 
-void screenhack(Display *dpy, Window window)
-{
-  init_hack(dpy, window);
-  while (1) {
-    onestep(dpy, window);
-    XSync(dpy, False);
-    if (delay)
-      usleep(delay);
-    screenhack_handle_events(dpy);
-  }
-}
+XSCREENSAVER_MODULE ("Zoom", zoom)
