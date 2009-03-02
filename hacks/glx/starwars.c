@@ -240,6 +240,31 @@ strip (char *s, Bool leading, Bool trailing)
 }
 
 
+/* The GLUT font only has ASCII characters in them, so do what we can to
+   convert Latin1 characters to the nearest ASCII equivalent... 
+ */
+static void
+latin1_to_ascii (char *s)
+{
+  unsigned char *us = (unsigned char *) s;
+  const unsigned char ascii[95] = {
+    '!', 'C', '#', '#', 'Y', '|', 'S', '_', 'C', '?', '<', '=', '-', 'R', '_',
+    '?', '?', '2', '3', '\'','u', 'P', '.', ',', '1', 'o', '>', '?', '?', '?',
+    '?', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'C', 'E', 'E', 'E', 'E', 'I', 'I',
+    'I', 'I', 'D', 'N', 'O', 'O', 'O', 'O', 'O', 'x', '0', 'U', 'U', 'U', 'U',
+    'Y', 'p', 'S', 'a', 'a', 'a', 'a', 'a', 'a', 'e', 'c', 'e', 'e', 'e', 'e',
+    'i', 'i', 'i', 'i', 'o', 'n', 'o', 'o', 'o', 'o', 'o', '/', 'o', 'u', 'u',
+    'u', 'u', 'y', 'p', 'y' };
+  while (*us)
+    {
+      if (*us >= 161)
+        *us = ascii[*us - 161];
+      else if (*us > 127)
+        *us = '?';
+      us++;
+    }
+}
+
 
 /* Subprocess.
    (This bit mostly cribbed from phosphor.c)
@@ -428,6 +453,7 @@ get_more_lines (sws_configuration *sc)
           sc->lines[sc->total_lines] = (char *) malloc (L+1);
           memcpy (sc->lines[sc->total_lines], sc->buf, L);
           sc->lines[sc->total_lines][L] = 0;
+          latin1_to_ascii (sc->lines[sc->total_lines]);
 
           {
             char *t = sc->lines[sc->total_lines];

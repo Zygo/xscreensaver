@@ -1,4 +1,4 @@
-/* menger, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
+/* menger, Copyright (c) 2001, 2002, 2004 Jamie Zawinski <jwz@jwz.org>
  *         Copyright (c) 2002 Aurelien Jacobs <aurel@gnuage.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -79,6 +79,10 @@ struct saver_info {
 # ifdef HAVE_SGI_SAVER_EXTENSION
   int sgi_saver_ext_event_number;
   int sgi_saver_ext_error_number;
+# endif
+# ifdef HAVE_RANDR
+  int randr_event_number;
+  int randr_error_number;
 # endif
 
 
@@ -299,6 +303,9 @@ extern Bool query_sgi_saver_extension (saver_info *);
 #ifdef HAVE_XIDLE_EXTENSION
 extern Bool query_xidle_extension (saver_info *);
 #endif
+#ifdef HAVE_RANDR
+extern Bool query_randr_extension (saver_info *);
+#endif
 #ifdef HAVE_PROC_INTERRUPTS
 extern Bool query_proc_interrupts_available (saver_info *, const char **why);
 #endif
@@ -318,6 +325,7 @@ extern void raise_window (saver_info *si,
 			    Bool dont_clear);
 extern Bool blank_screen (saver_info *si);
 extern void unblank_screen (saver_info *si);
+extern void resize_screensaver_window (saver_info *si);
 
 extern void get_screen_viewport (saver_screen_info *ssi,
                                  int *x_ret, int *y_ret,

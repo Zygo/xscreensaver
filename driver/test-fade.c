@@ -1,5 +1,5 @@
 /* test-fade.c --- playing with colormap and/or gamma fading.
- * xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -106,7 +106,7 @@ main (int argc, char **argv)
 
       fprintf(stderr, "%s: out...", progname);
       fflush(stderr);
-      fade_screens (dpy, current_maps, 0, seconds, ticks, True, False);
+      fade_screens (dpy, current_maps, 0, 0, seconds, ticks, True, False);
       fprintf(stderr, "done.\n");
       fflush(stderr);
 
@@ -114,7 +114,7 @@ main (int argc, char **argv)
 
       fprintf(stderr,"%s: in...", progname);
       fflush(stderr);
-      fade_screens (dpy, current_maps, 0, seconds, ticks, False, False);
+      fade_screens (dpy, current_maps, 0, 0, seconds, ticks, False, False);
       fprintf(stderr, "done.\n");
       fflush(stderr);
 

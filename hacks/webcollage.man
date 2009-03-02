@@ -24,6 +24,7 @@ webcollage - decorate the screen with random images from the web
 [\-background \fIbg\fP]
 [\-no-output]
 [\-urls-only]
+[\-imagemap \fIfilename-base\fP]
 [\-size \fIWxH\fP]
 [\-filter \fIcommand\fP]
 [\-filter2 \fIcommand\fP]
@@ -100,6 +101,13 @@ with \fB\-verbose\fP.
 If this option is specified, then no composite output image will be
 generated: instead, a list of image URLs will be printed on stdout.
 .TP 8
+.B \-imagemap \fIfilename-base\fP
+If this option is specified, then instead of writing an image to the
+root window, two files will be created: "\fIbase\fP.html" and "\fIbase\fP.jpg".
+The JPEG will be the collage; the HTML file will include that image, and
+an image-map making the sub-images be linked to the pages on which they
+were found (just like \fIhttp://www.jwz.org/webcollage/\fP.)
+.TP 8
 .B \-filter \fIcommand\fP
 Filter all source images through this command.  The command must take
 a PPM file on stdin, and write a new PPM file to stdout.  One good 
@@ -160,27 +168,18 @@ to get the default HTTP proxy host and port.
 .I /usr/share/lib/dict/words,\fP
 or
 .I /usr/share/dict/words
-to find the random words to feed to search engines.
-.PP
-.I http://image.altavista.com/,
-.I http://images.google.com/,
-.I http://news.yahoo.com/
-.I http://random.yahoo.com/bin/ryl,
-and
-.I http://lycospro.lycos.com/,
+to find the random words to feed to certain search engines.
+
+    \fIhttp://www.altavista.com/image/randomlink\fP,
+    \fIhttp://random.yahoo.com/fast/ryl\fP,
+    \fIhttp://www.livejournal.com/stats/latest-img.bml\fP, and
+    \fIhttp://news.yahoo.com/\fP
 to find random web pages.
+.SH BOOBIES
+The Internet being what it is, absolutely anything might show up in the
+collage including -- quite possibly -- pornography, or even nudity.
 .SH BUGS
-When drawing on the root window, it always uses the default colormap.
-This is actually a limitation of xv.  But regardless, when using this
-program with xscreensaver, it must be given the \fBdefault-n\fP 
-visual specification (see the
-.BR xscreensaver (1)
-manual for more details.)
-
 Animating GIFs are not supported: only the first frame will be used.
-
-Too many of the images that it finds are text, not pictures.  This is 
-because most of the web is pictures of text.  Which is pretty sad.
 .SH UPGRADES
 The latest version of webcollage can be found as a part of
 xscreensaver, at 
@@ -210,7 +209,7 @@ DriftNet:
 .BR EtherPEG ,
 .BR EtherPeek
 .SH COPYRIGHT
-Copyright \(co 1998-2002 by Jamie Zawinski.  Permission to use, copy, modify,
+Copyright \(co 1998-2004 by Jamie Zawinski.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is
 hereby granted without fee, provided that the above copyright notice appear
 in all copies and that both that copyright notice and this permission notice

@@ -8,7 +8,7 @@
           _label="URL Timeout" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="30"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="30" default="1"
           convert="invert"/>

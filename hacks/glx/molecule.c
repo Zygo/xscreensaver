@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001, 2004 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001-2004 Jamie Zawinski <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -921,7 +921,7 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
 }
 
 
-static void
+static int
 parse_pdb_file (molecule *m, const char *name)
 {
   FILE *in;
@@ -935,7 +935,7 @@ parse_pdb_file (molecule *m, const char *name)
       char *buf = (char *) malloc(1024 + strlen(name));
       sprintf(buf, "%s: error reading \"%s\"", progname, name);
       perror(buf);
-      exit (1);
+      return -1;
     }
 
   buf = (char *) malloc (buf_size);
@@ -955,7 +955,7 @@ parse_pdb_file (molecule *m, const char *name)
     {
       fprintf (stderr, "%s: file %s contains no atomic coordinates!\n",
                progname, name);
-      exit (1);
+      return -1;
     }
 
   if (!m->nbonds && do_bonds)
@@ -964,6 +964,8 @@ parse_pdb_file (molecule *m, const char *name)
                progname, name);
       do_bonds = 0;
     }
+
+  return 0;
 }
 
 
@@ -1086,20 +1088,9 @@ load_molecules (ModeInfo *mi)
   Bool verbose_p = False;
   int i;
 
-  if (!molecule_str || !*molecule_str ||
-      !strcmp(molecule_str, "(default)"))	/* do the builtins */
-    {
-      mc->nmolecules = countof(builtin_pdb_data);
-      mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
-      for (i = 0; i < mc->nmolecules; i++)
-        {
-          char name[100];
-          sprintf (name, "<builtin-%d>", i);
-          if (verbose_p) fprintf (stderr, "%s: reading %s\n", progname, name);
-          parse_pdb_data (&mc->molecules[i], builtin_pdb_data[i], name, 1);
-        }
-    }
-  else						/* Load a file */
+  mc->nmolecules = 0;
+  if (molecule_str && *molecule_str && 
+      strcmp(molecule_str, "(default)"))	/* try external PDB files */
     {
       /* The -molecule option can point to a .pdb file, or to
          a directory of them.
@@ -1108,6 +1099,7 @@ load_molecules (ModeInfo *mi)
       int nfiles = 0;
       int list_size = 0;
       char **files = 0;
+      int molecule_ctr;
 
       if (!stat (molecule_str, &st) &&
           S_ISDIR (st.st_mode))
@@ -1164,11 +1156,8 @@ load_molecules (ModeInfo *mi)
           closedir (pdb_dir);
 
           if (nfiles == 0)
-            {
-              fprintf (stderr, "%s: no .pdb files in directory %s\n",
-                       progname, molecule_str);
-              exit (1);
-            }
+            fprintf (stderr, "%s: no .pdb files in directory %s\n",
+                     progname, molecule_str);
         }
       else
         {
@@ -1181,30 +1170,46 @@ load_molecules (ModeInfo *mi)
 
       mc->nmolecules = nfiles;
       mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
+      molecule_ctr = 0;
       for (i = 0; i < mc->nmolecules; i++)
         {
           if (verbose_p)
             fprintf (stderr, "%s: reading %s\n", progname, files[i]);
-          parse_pdb_file (&mc->molecules[i], files[i]);
-
-          if ((wire || !do_atoms) &&
-              !do_labels &&
-              mc->molecules[i].nbonds == 0)
+          if (!parse_pdb_file (&mc->molecules[molecule_ctr], files[i]))
             {
-              /* If we're not drawing atoms (e.g., wireframe mode), and
-                 there is no bond info, then make sure labels are turned on,
-                 or we'll be looking at a black screen... */
-              fprintf (stderr, "%s: %s: no bonds: turning -label on.\n",
-                       progname, files[i]);
-              do_labels = 1;
-            }
-
-          free (files[i]);
-          files[i] = 0;
+              if ((wire || !do_atoms) &&
+                  !do_labels &&
+                  mc->molecules[molecule_ctr].nbonds == 0)
+                {
+                  /* If we're not drawing atoms (e.g., wireframe mode), and
+                     there is no bond info, then make sure labels are turned
+                     on, or we'll be looking at a black screen... */
+                  fprintf (stderr, "%s: %s: no bonds: turning -label on.\n",
+                           progname, files[i]);
+                  do_labels = 1;
+                }
+              free (files[i]);
+	      files[i] = 0;
+              molecule_ctr++;
+	    }
         }
 
       free (files);
       files = 0;
+      mc->nmolecules = molecule_ctr;
+    }
+
+  if (mc->nmolecules == 0)	/* do the builtins if no files */
+    {
+      mc->nmolecules = countof(builtin_pdb_data);
+      mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
+      for (i = 0; i < mc->nmolecules; i++)
+        {
+          char name[100];
+          sprintf (name, "<builtin-%d>", i);
+          if (verbose_p) fprintf (stderr, "%s: reading %s\n", progname, name);
+          parse_pdb_data (&mc->molecules[i], builtin_pdb_data[i], name, 1);
+        }
     }
 
   for (i = 0; i < mc->nmolecules; i++)

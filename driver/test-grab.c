@@ -1,5 +1,5 @@
 /* test-uid.c --- playing with grabs.
- * xscreensaver, Copyright (c) 1999 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1999, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -50,7 +50,7 @@ main (int argc, char **argv)
   kstatus = XGrabKeyboard (dpy, w, True,
                            GrabModeSync, GrabModeAsync,
                            CurrentTime);
-  fprintf (stderr, "%s: grabbing keyboard on 0x%x... %s.\n",
+  fprintf (stderr, "%s: grabbing keyboard on 0x%lx... %s.\n",
            progname, (unsigned long) w,
            (kstatus == GrabSuccess ? "GrabSuccess" :
             kstatus == AlreadyGrabbed ? "AlreadyGrabbed" :
@@ -62,7 +62,7 @@ main (int argc, char **argv)
   mstatus = XGrabPointer (dpy, w, True, ALL_POINTER_EVENTS,
                           GrabModeAsync, GrabModeAsync, None,
                           cursor, CurrentTime);
-  fprintf (stderr, "%s: grabbing mouse on 0x%x... %s.\n",
+  fprintf (stderr, "%s: grabbing mouse on 0x%lx... %s.\n",
            progname, (unsigned long) w,
            (mstatus == GrabSuccess ? "GrabSuccess" :
             mstatus == AlreadyGrabbed ? "AlreadyGrabbed" :

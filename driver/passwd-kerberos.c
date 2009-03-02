@@ -1,7 +1,6 @@
 /* kpasswd.c --- verify kerberos passwords.
  * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-1997, 1998, 2000, 2003
- *  Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -203,14 +202,14 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
     sprintf(newtkfile, "/tmp/xscrn-%i.XXXXXX", getpid());
 
-    if( (fh = mkstemp(newtktfile)) < 0)
+    if( (fh = mkstemp(newtkfile)) < 0)
     {
-        free(newtktfile);
+        free(newtkfile);
         return(False);
     }
     if( fchmod(fh, 0600) < 0)
     {
-        free(newtktfile);
+        free(newtkfile);
         return(False);
     }
 

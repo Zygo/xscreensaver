@@ -30,6 +30,7 @@
                        "*showFPS:       False       \n" \
 		       "*wireframe:	False     \n"	\
 		       "*reflections:	True     \n"	\
+		       "*shadows:	True     \n"	\
 
 # include "xlockmore.h"
 
@@ -51,15 +52,18 @@ static XrmOptionDescRec opts[] = {
   {"-rotate", ".chess.rotate", XrmoptionNoArg, (caddr_t) "true" },
   {"+reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "false" },
   {"-reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "true" },
+  {"+shadows", ".chess.shadows", XrmoptionNoArg, (caddr_t) "false" },
+  {"-shadows", ".chess.shadows", XrmoptionNoArg, (caddr_t) "true" },
   {"+smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "false" },
   {"-smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "true" },
 };
 
-int rotate, reflections, smooth;
+int rotate, reflections, smooth, shadows;
 
 static argtype vars[] = {
   {&rotate,      "rotate",      "Rotate",      "True", t_Bool},
   {&reflections, "reflections", "Reflections", "True", t_Bool},
+  {&shadows, "shadows", "Shadows", "True", t_Bool},
   {&smooth,      "smooth",      "Smooth",      "True", t_Bool},
 };
 
@@ -94,11 +98,15 @@ static Chesscreen *qs = NULL;
 
 #define BOARDSIZE 8
 
+static float MaterialShadow[] =   {0.0, 0.0, 0.0, 0.3};
+
+
+
 /** definition of white/black (orange/gray) colors */
 GLfloat colors[2][3] = 
   { 
     {1.0, 0.5, 0.0},
-    {0.5, 0.5, 0.5},
+    {0.6, 0.6, 0.6},
   };
 
 #define WHITES 5
@@ -106,11 +114,11 @@ GLfloat colors[2][3] =
 /* i prefer silvertip */
 GLfloat whites[WHITES][3] = 
   {
-    {1.0, 0.5, 0.0},
-    {0.9, 0.6, 0.9},
+    {1.0, 0.55, 0.1},
+    {0.8, 0.52, 0.8},
     {0.43, 0.54, 0.76},
     {0.8, 0.8, 0.8},
-    {0.15, 0.77, 0.54},
+    {0.35, 0.60, 0.35},
   };
 
 #include "chessgames.h"
@@ -131,11 +139,68 @@ void build_colors(void) {
   colors[0][2] = whites[oldwhite][2];
 }
 
+/* road texture */
+#define checkImageWidth 16
+#define checkImageHeight 16
+GLubyte checkImage[checkImageWidth][checkImageHeight][3];
+GLuint piecetexture, boardtexture;
+
+/* build piece texture */
+void make_piece_texture(void) {
+  int i, j, c;
+
+  for (i = 0; i < checkImageWidth; i++) {
+    for (j = 0; j < checkImageHeight; j++) {
+      c = ((j%2) == 0 || i%2 == 0) ? 240 : 180+random()%16;
+      checkImage[i][j][0] = (GLubyte) c;
+      checkImage[i][j][1] = (GLubyte) c;
+      checkImage[i][j][2] = (GLubyte) c;
+    }
+  }
+
+  glGenTextures(1, &piecetexture);
+  glBindTexture(GL_TEXTURE_2D, piecetexture);
+
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+  glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
+	       checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+	       &checkImage[0][0]);
+}
+
+/* build board texture (uniform noise in [180,180+50]) */
+void make_board_texture(void) {
+  int i, j, c;
+
+  for (i = 0; i < checkImageWidth; i++) {
+    for (j = 0; j < checkImageHeight; j++) {
+      c = 180 + random()%51;
+      checkImage[i][j][0] = (GLubyte) c;
+      checkImage[i][j][1] = (GLubyte) c;
+      checkImage[i][j][2] = (GLubyte) c;
+    }
+  }
+
+  glGenTextures(1, &boardtexture);
+  glBindTexture(GL_TEXTURE_2D, boardtexture);
+
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+  glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
+	       checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+	       &checkImage[0][0]);
+}
+
 /* yay its c */
 int mpiece = 0, tpiece, steps = 0, done = 1;
 double from[2], to[2];
 double dx, dz;
 int moving = 0, take = 0, mc = 0, count = 99, wire = 0;
+double theta = 0.0;
 
 /** handle X event (trackball) */
 Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
@@ -166,7 +231,7 @@ Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
 GLfloat position[] = { 0.0, 5.0, 5.0, 1.0 };
 GLfloat position2[] = { 5.0, 5.0, 5.0, 1.0 };
 GLfloat diffuse2[] = {1.0, 1.0, 1.0, 1.0};
-GLfloat ambient2[] = {0.6, 0.6, 0.6, 1.0};
+GLfloat ambient2[] = {0.7, 0.7, 0.7, 1.0};
 GLfloat shininess[] = {60.0};
 GLfloat specular[] = {0.4, 0.4, 0.4, 1.0};
 
@@ -187,7 +252,7 @@ void setup_lights(void) {
   glEnable(GL_LIGHT1);
 }
 
-/** draw pieces */
+/* draw pieces */
 void drawPieces(void) {
   int i, j;
 
@@ -208,19 +273,45 @@ void drawPieces(void) {
   glTranslatef(0.0, 0.0, -1.0*BOARDSIZE);
 }
 
-/** draw a moving piece */
-void drawMovingPiece(void) {
+/* draw pieces */
+void drawPiecesShadow(void) {
+  int i, j;
+
+  for(i = 0; i < BOARDSIZE; ++i) {
+    for(j = 0; j < BOARDSIZE; ++j) {
+      if(game.board[i][j]) {	
+	glColor4f(0.0, 0.0, 0.0, 0.4);
+	glCallList(game.board[i][j]%PIECES);
+      }
+      
+      glTranslatef(1.0, 0.0, 0.0);
+    }
+    
+    glTranslatef(-1.0*BOARDSIZE, 0.0, 1.0);
+  }
+
+  glTranslatef(0.0, 0.0, -1.0*BOARDSIZE);
+}
+
+/* draw a moving piece */
+void drawMovingPiece(int shadow) {
   int piece = mpiece % PIECES;
 
   glPushMatrix();
-  glColor3fv(colors[mpiece/PIECES]);
+
+  if(shadow) glColor4fv(MaterialShadow);
+  else glColor3fv(colors[mpiece/PIECES]);
 
   /** assume a queening.  should be more general */
   if((mpiece == PAWN  && fabs(to[0]) < 0.01) || 
      (mpiece == BPAWN && fabs(to[0]-7.0) < 0.01)) {
     glTranslatef(from[1]+steps*dx, 0.0, from[0]+steps*dz);
-    glColor4f(colors[mpiece/7][0], colors[mpiece/7][1], colors[mpiece/7][2],
+
+    glColor4f(shadow ? MaterialShadow[0] : colors[mpiece/7][0], 
+	      shadow ? MaterialShadow[1] : colors[mpiece/7][1], 
+	      shadow ? MaterialShadow[2] : colors[mpiece/7][2],
 	      (fabs(50.0-steps))/50.0);
+
     piece = steps < 50 ? PAWN : QUEEN;
 
     /* what a kludge */
@@ -235,12 +326,10 @@ void drawMovingPiece(void) {
 		 steps < 50 ? from[0] : to[0]);
 
     mult = steps < 10 
-      ? (1.0 - steps / 10.0) 
-      : 100 - steps < 10 
-      ? specular[0] * (1.0 - (100 - steps) / 10.0) 
-      : 0.0;
+      ? (1.0 - steps / 10.0) : 100 - steps < 10 
+      ? (1.0 - (100 - steps) / 10.0) : 0.0;
 
-    shine[0] = 0.0;/*mult*shininess[0];*/
+    shine[0] = mult*shininess[0];
     spec[0] = mult*specular[0];
     spec[1] = mult*specular[1];
     spec[2] = mult*specular[2];
@@ -248,8 +337,11 @@ void drawMovingPiece(void) {
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shine);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
 
-    glColor4f(colors[mpiece/7][0], colors[mpiece/7][1], colors[mpiece/7][2],
+    glColor4f(shadow ? MaterialShadow[0] : colors[mpiece/7][0], 
+	      shadow ? MaterialShadow[1] : colors[mpiece/7][1], 
+	      shadow ? MaterialShadow[2] : colors[mpiece/7][2],
 	      fabs(49-steps)/49.0);
+
     glScalef(fabs(49-steps)/49.0, fabs(49-steps)/49.0, fabs(49-steps)/49.0);
   }
   else
@@ -270,11 +362,13 @@ void drawMovingPiece(void) {
 }
 
 /** code to squish a taken piece */
-void drawTakePiece(void) {
+void drawTakePiece(int shadow) {
   if(!wire)
     glEnable(GL_BLEND);
 
-  glColor4f(colors[tpiece/7][0], colors[tpiece/7][1], colors[tpiece/7][2],
+  glColor4f(shadow ? MaterialShadow[0] : colors[tpiece/7][0], 
+	    shadow ? MaterialShadow[1] : colors[tpiece/7][1], 
+	    shadow ? MaterialShadow[0] : colors[tpiece/7][2],
             (100-1.6*steps)/100.0);
 
   glTranslatef(to[1], 0.0, to[0]);
@@ -289,6 +383,8 @@ void drawTakePiece(void) {
     glDisable(GL_BLEND);
 }
 
+double mod = 1.4;
+
 /** draw board */
 void drawBoard(void) {
   int i, j;
@@ -297,13 +393,27 @@ void drawBoard(void) {
 
   for(i = 0; i < BOARDSIZE; ++i)
     for(j = 0; j < BOARDSIZE; ++j) {
+      double ma1 = (i+j)%2 == 0 ? mod*i : 0.0;
+      double mb1 = (i+j)%2 == 0 ? mod*j : 0.0;
+      double ma2 = (i+j)%2 == 0 ? mod*(i+1.0) : 0.01;
+      double mb2 = (i+j)%2 == 0 ? mod*(j+1.0) : 0.01;
+
       /*glColor3fv(colors[(i+j)%2]);*/
       glColor4f(colors[(i+j)%2][0], colors[(i+j)%2][1],
 		colors[(i+j)%2][2], 0.65);
+      
       glNormal3f(0.0, 1.0, 0.0);
+/*       glTexCoord2f(mod*i, mod*(j+1.0)); */
+      glTexCoord2f(ma1, mb2);
       glVertex3f(i, 0.0, j + 1.0);
+/*       glTexCoord2f(mod*(i+1.0), mod*(j+1.0)); */
+      glTexCoord2f(ma2, mb2);
       glVertex3f(i + 1.0, 0.0, j + 1.0);
+      glTexCoord2f(ma2, mb1);
+/*       glTexCoord2f(mod*(i+1.0), mod*j); */
       glVertex3f(i + 1.0, 0.0, j);
+      glTexCoord2f(ma1, mb1);
+/*       glTexCoord2f(mod*i, mod*j); */
       glVertex3f(i, 0.0, j);
     }
 
@@ -317,13 +427,69 @@ void drawBoard(void) {
   glEnd();
 }
 
-double theta = 0.0;
-
 void draw_pieces(void) {
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, piecetexture);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  glColor4f(0.5, 0.5, 0.5, 1.0);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialShadow);
+
   drawPieces();
-  if(moving) drawMovingPiece();
-  if(take) drawTakePiece();
+  if(moving) drawMovingPiece(0);
+  if(take) drawTakePiece(0);
+  glDisable(GL_TEXTURE_2D);
 }
+
+void draw_shadow_pieces(void) {
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, piecetexture);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  
+  drawPiecesShadow();
+  if(moving) drawMovingPiece(shadows);
+  if(take) drawTakePiece(shadows);
+  glDisable(GL_TEXTURE_2D);
+}
+
+enum {X, Y, Z, W};
+enum {A, B, C, D};
+
+/* create a matrix that will project the desired shadow */
+void shadowmatrix(GLfloat shadowMat[4][4],
+		  GLfloat groundplane[4],
+		  GLfloat lightpos[4]) {
+  GLfloat dot;
+
+  /* find dot product between light position vector and ground plane normal */
+  dot = groundplane[X] * lightpos[X] +
+        groundplane[Y] * lightpos[Y] +
+        groundplane[Z] * lightpos[Z] +
+        groundplane[W] * lightpos[W];
+
+  shadowMat[0][0] = dot - lightpos[X] * groundplane[X];
+  shadowMat[1][0] = 0.f - lightpos[X] * groundplane[Y];
+  shadowMat[2][0] = 0.f - lightpos[X] * groundplane[Z];
+  shadowMat[3][0] = 0.f - lightpos[X] * groundplane[W];
+
+  shadowMat[X][1] = 0.f - lightpos[Y] * groundplane[X];
+  shadowMat[1][1] = dot - lightpos[Y] * groundplane[Y];
+  shadowMat[2][1] = 0.f - lightpos[Y] * groundplane[Z];
+  shadowMat[3][1] = 0.f - lightpos[Y] * groundplane[W];
+
+  shadowMat[X][2] = 0.f - lightpos[Z] * groundplane[X];
+  shadowMat[1][2] = 0.f - lightpos[Z] * groundplane[Y];
+  shadowMat[2][2] = dot - lightpos[Z] * groundplane[Z];
+  shadowMat[3][2] = 0.f - lightpos[Z] * groundplane[W];
+
+  shadowMat[X][3] = 0.f - lightpos[W] * groundplane[X];
+  shadowMat[1][3] = 0.f - lightpos[W] * groundplane[Y];
+  shadowMat[2][3] = 0.f - lightpos[W] * groundplane[Z];
+  shadowMat[3][3] = dot - lightpos[W] * groundplane[W];
+}
+
+GLfloat ground[4] = {0.0, 1.0, 0.0, -0.00001};
 
 /** reflectionboard */
 void draw_reflections(void) {
@@ -386,7 +552,7 @@ void display(Chesscreen *c) {
 
   position[0] = 4.0 + 1.0*-sin(theta*100*M_PI/180.0);
   position[2] = 4.0 + 1.0*cos(theta*100*M_PI/180.0);
-  position[1] = 8.0;
+  position[1] = 5.0;
 
   position2[0] = 4.0 + 8.0*-sin(theta*100*M_PI/180.0);
   position2[2] = 4.0 + 8.0*cos(theta*100*M_PI/180.0);
@@ -406,7 +572,33 @@ void display(Chesscreen *c) {
       glEnable(GL_BLEND);
     }
 
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, boardtexture);
     drawBoard();
+    glDisable(GL_TEXTURE_2D);
+
+    if(shadows) {
+      /* render shadows */
+      GLfloat m[4][4];
+      shadowmatrix(m, ground, position);
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialShadow);
+      glEnable(GL_BLEND);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_DEPTH_TEST);
+      
+      /* display ant shadow */
+      glPushMatrix();
+      glTranslatef(0.0, 0.001, 0.0);
+      glMultMatrixf(m[0]);
+      glTranslatef(0.5, 0.01, 0.5);
+      draw_shadow_pieces();
+      glPopMatrix();      
+
+      glEnable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+      glEnable(GL_DEPTH_TEST);
+    }
 
     if(reflections)
       glDisable(GL_BLEND);
@@ -462,6 +654,8 @@ void init_chess(ModeInfo *mi) {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
+  make_piece_texture();
+  make_board_texture();
   gen_model_lists();
 
   if(!wire) {
@@ -525,6 +719,9 @@ void draw_chess(ModeInfo *mi) {
       while(newgame == oldgame)
 	newgame = random()%GAMES;
 
+      /* mod the mod */
+      mod = 0.6 + (random()%20)/10.0;
+
       /* same old game */
       oldgame = newgame;
       game = games[oldgame];
@@ -544,8 +741,8 @@ void draw_chess(ModeInfo *mi) {
 	     done == 1 ? 1.0+0.1*count : 100.0/count);
     glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 
 	     done == 1 ? 1.0+0.1*count : 100.0/count);
-    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.15);
-    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.15);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.14);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.14);
   }
 
   display(c);

@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.29 $
+ * $Revision: 1.32 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -436,6 +436,31 @@ findNode(Bogie *bl, char *name)
 
 #ifdef HAVE_PING
 
+/* Packs an IP address quad into bigendian network order. */
+static unsigned long
+pack_addr (unsigned int a, unsigned int b, unsigned int c, unsigned int d)
+{
+  unsigned long i = (((a & 255) << 24) |
+                     ((b & 255) << 16) |
+                     ((c & 255) <<  8) |
+                     ((d & 255)      ));
+  return htonl (i);
+}
+
+/* Unpacks an IP address quad from bigendian network order. */
+static void
+unpack_addr (unsigned long addr,
+             unsigned int *a, unsigned int *b,
+             unsigned int *c, unsigned int *d)
+{
+  addr = ntohl (addr);
+  *a = (addr >> 24) & 255;
+  *b = (addr >> 16) & 255;
+  *c = (addr >>  8) & 255;
+  *d = (addr      ) & 255;
+}
+
+
 /*
  * Lookup the address for a ping target;
  *
@@ -452,24 +477,17 @@ lookupHost(ping_target *target)
   struct hostent *hent;
   struct sockaddr_in *iaddr;
 
-  int iip[4];
+  unsigned int ip[4];
   char c;
 
   iaddr = (struct sockaddr_in *) &(target->address);
   iaddr->sin_family = AF_INET;
 
-  if (4 == sscanf(target->name, "%d.%d.%d.%d%c",
-                  &iip[0], &iip[1], &iip[2], &iip[3], &c))
+  if (4 == sscanf (target->name, " %u.%u.%u.%u %c",
+                   &ip[0], &ip[1], &ip[2], &ip[3], &c))
     {
       /* It's an IP address.
        */
-      unsigned char ip[4];
-
-      ip[0] = iip[0];
-      ip[1] = iip[1];
-      ip[2] = iip[2];
-      ip[3] = iip[3];
-
       if (ip[3] == 0)
         {
           if (debug_p > 1)
@@ -478,11 +496,10 @@ lookupHost(ping_target *target)
           return 0;
         }
 
-      iaddr->sin_addr.s_addr = ((ip[3] << 24) |
-                                (ip[2] << 16) |
-                                (ip[1] <<  8) |
-                                (ip[0]));
-      hent = gethostbyaddr ((const char *) ip, 4, AF_INET);
+      iaddr->sin_addr.s_addr = pack_addr (ip[0], ip[1], ip[2], ip[3]);
+      hent = gethostbyaddr ((const char *) &iaddr->sin_addr.s_addr,
+                            sizeof(iaddr->sin_addr.s_addr),
+                            AF_INET);
 
       if (debug_p > 1)
         fprintf (stderr, "%s:   %s => %s\n",
@@ -497,6 +514,16 @@ lookupHost(ping_target *target)
     {
       /* It's a host name.
        */
+
+
+      /* don't waste time being confused by non-hostname tokens
+         in .ssh/known_hosts */
+      if (!strcmp (target->name, "ssh-rsa") ||
+          !strcmp (target->name, "ssh-dsa") ||
+          !strcmp (target->name, "ssh-dss") ||
+          strlen (target->name) >= 80)
+        return 0;
+
       hent = gethostbyname (target->name);
       if (!hent)
         {
@@ -509,12 +536,12 @@ lookupHost(ping_target *target)
               sizeof(iaddr->sin_addr));
 
       if (debug_p > 1)
-        fprintf (stderr, "%s:   %s => %d.%d.%d.%d\n",
-                 progname, target->name,
-                 iaddr->sin_addr.s_addr       & 255,
-                 iaddr->sin_addr.s_addr >>  8 & 255,
-                 iaddr->sin_addr.s_addr >> 16 & 255,
-                 iaddr->sin_addr.s_addr >> 24 & 255);
+        {
+          unsigned int a, b, c, d;
+          unpack_addr (iaddr->sin_addr.s_addr, &a, &b, &c, &d);
+          fprintf (stderr, "%s:   %s => %d.%d.%d.%d\n",
+                   progname, target->name, a, b, c, d);
+        }
     }
   return 1;
 }
@@ -524,11 +551,9 @@ static void
 print_host (FILE *out, unsigned long ip, const char *name)
 {
   char ips[50];
-  sprintf (ips, "%lu.%lu.%lu.%lu",
-           (ip)       & 255,
-           (ip >>  8) & 255,
-           (ip >> 16) & 255,
-           (ip >> 24) & 255);
+  unsigned int a, b, c, d;
+  unpack_addr (ip, &a, &b, &c, &d);		/* ip is in network order */
+  sprintf (ips, "%u.%u.%u.%u", a, b, c, d);
   if (!name || !*name) name = "<unknown>";
   fprintf (out, "%-16s %s\n", ips, name);
 }
@@ -568,13 +593,12 @@ newHost(char *name)
     if (! lookupHost(target))
 	goto target_init_error;
 
-    /* Don't ever use loopback (127.0.0) hosts */
+    /* Don't ever use loopback (127.0.0.x) hosts */
     {
       struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
       unsigned long ip = iaddr->sin_addr.s_addr;
-      if ((ip         & 255) == 127 &&
-          ((ip >>  8) & 255) == 0 &&
-          ((ip >> 16) & 255) == 0)
+
+      if ((ntohl (ip) & 0xFFFFFF00L) == 0x7f000000L)  /* 127.0.0 */
         {
           if (debug_p)
             fprintf (stderr, "%s:   ignoring loopback host %s\n",
@@ -764,16 +788,17 @@ delete_duplicate_hosts (ping_target *list)
 
 /*
  * Generate a list ping targets consisting of all of the entries on
- * the same subnet.
+ * the same subnet.  'base' ip is in network order; 0 means localhost.
  *
  * Returns:
  *    A list of all of the hosts on this net.
  */
 
 static ping_target *
-subnetHostsList(int base, int subnet_width) 
+subnetHostsList(unsigned long n_base, int subnet_width)
 {
-    unsigned long mask;
+    unsigned long h_mask;   /* host order */
+    unsigned long h_base;   /* host order */
 
     /* Local Variables */
 
@@ -822,54 +847,56 @@ subnetHostsList(int base, int subnet_width)
 
     /* Construct targets for all addresses in this subnet */
 
-    mask = 0;
+    h_mask = 0;
     for (i = 0; i < subnet_width; i++)
-      mask |= (1L << (31-i));
+      h_mask |= (1L << (31-i));
 
     /* If no base IP specified, assume localhost. */
-    if (base == 0)
-      base = ((((unsigned char) hent->h_addr_list[0][0]) << 24) |
-              (((unsigned char) hent->h_addr_list[0][1]) << 16) |
-              (((unsigned char) hent->h_addr_list[0][2]) <<  8) |
-              (((unsigned char) hent->h_addr_list[0][3])));
+    if (n_base == 0)
+      n_base = pack_addr (hent->h_addr_list[0][0],
+                          hent->h_addr_list[0][1],
+                          hent->h_addr_list[0][2],
+                          hent->h_addr_list[0][3]);
+    h_base = ntohl (n_base);
 
-    if (base == ((127 << 24) | 1))
+    if (h_base == 0x7F000001L)   /* 127.0.0.1 in host order */
       {
+        unsigned int a, b, c, d;
+        unpack_addr (n_base, &a, &b, &c, &d);
         fprintf (stderr,
                  "%s: unable to determine local subnet address: \"%s\"\n"
-                 "       resolves to loopback address %d.%d.%d.%d.\n",
-                 progname, hostname,
-                 (base >> 24) & 255, (base >> 16) & 255,
-                 (base >>  8) & 255, (base      ) & 255);
+                 "       resolves to loopback address %u.%u.%u.%u.\n",
+                 progname, hostname, a, b, c, d);
         return NULL;
       }
 
     for (i = 255; i >= 0; i--) {
-        int ip = (base & 0xFFFFFF00) | i;
+        unsigned int a, b, c, d;
+        int ip = (h_base & 0xFFFFFF00L) | i;     /* host order */
       
-        if ((ip & mask) != (base & mask))   /* not in the mask range at all */
+        if ((ip & h_mask) != (h_base & h_mask))  /* not in mask range at all */
           continue;
-        if ((ip & ~mask) == 0)              /* broadcast address */
+        if ((ip & ~h_mask) == 0)                 /* broadcast address */
           continue;
-        if ((ip & ~mask) == ~mask)          /* broadcast address */
+        if ((ip & ~h_mask) == ~h_mask)           /* broadcast address */
           continue;
 
-        sprintf (address, "%d.%d.%d.%d", 
-                 (ip>>24)&255, (ip>>16)&255, (ip>>8)&255, (ip)&255);
+        unpack_addr (htonl (ip), &a, &b, &c, &d);
+        sprintf (address, "%u.%u.%u.%u", a, b, c, d);
 
         if (debug_p > 1)
-          fprintf(stderr, "%s:  subnet: %s (%d.%d.%d.%d & %d.%d.%d.%d / %d)\n",
-                  progname,
-                  address,
-                  (int) (base>>24)&255,
-                  (int) (base>>16)&255,
-                  (int) (base>> 8)&255,
-                  (int) (base&mask&255),
-                  (int) (mask>>24)&255,
-                  (int) (mask>>16)&255,
-                  (int) (mask>> 8)&255,
-                  (int) (mask&255),
-                  (int) subnet_width);
+          {
+            unsigned int aa, ab, ac, ad;
+            unsigned int ma, mb, mc, md;
+            unpack_addr (htonl (h_base & h_mask), &aa, &ab, &ac, &ad);
+            unpack_addr (htonl (h_mask),          &ma, &mb, &mc, &md);
+            fprintf (stderr,
+                     "%s:  subnet: %s (%u.%u.%u.%u & %u.%u.%u.%u / %d)\n",
+                     progname, address,
+                     aa, ab, ac, ad,
+                     ma, mb, mc, md,
+                     subnet_width);
+          }
 
         p = address + strlen(address) + 1;
 	sprintf(p, "%d", i);
@@ -1220,10 +1247,13 @@ getping(sonar_info *si, ping_info *pi)
           if (4 == sscanf(name, " %d.%d.%d.%d %c",
                           &iip[0], &iip[1], &iip[2], &iip[3], &c))
             {
-              unsigned char ip[4];
+              struct sockaddr_in iaddr;
               struct hostent *h;
-              ip[0] = iip[0]; ip[1] = iip[1]; ip[2] = iip[2]; ip[3] = iip[3];
-              h = gethostbyaddr ((char *) ip, 4, AF_INET);
+              iaddr.sin_addr.s_addr = pack_addr (iip[0],iip[1],iip[2],iip[3]);
+              h = gethostbyaddr ((const char *) &iaddr.sin_addr.s_addr,
+                                 sizeof(iaddr.sin_addr.s_addr),
+                                 AF_INET);
+
               if (h && h->h_name && *h->h_name)
                 {
                   free (name);
@@ -1942,7 +1972,7 @@ parse_mode (Bool ping_works_p)
           /* subnet: A.B.C.D/M
              subnet: A.B.C/M
            */
-          unsigned long ip = (n0 << 24) | (n1 << 16) | (n2 << 8) | n3;
+          unsigned long ip = pack_addr (n0, n1, n2, n3);
           new = subnetHostsList(ip, m);
         }
       else if (4 == sscanf (token, "%u.%u.%u.%u %c", &n0, &n1, &n2, &n3, &d))

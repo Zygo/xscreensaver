@@ -121,6 +121,12 @@
  */
 #undef HAVE_XINERAMA
 
+/*  Define this if you have the Resize and Rotate extension.  This is standard
+ *  on sufficiently-recent XFree86 systems, and possibly elsewhere.  (It's
+ *  available if the file /usr/include/X11/extensions/Xrandr.h exists.)
+ */
+#undef HAVE_RANDR
+
 /* Define this if you have the XF86MiscSetGrabKeysState function (which allows
    the Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash key sequences to be temporarily
    disabled.  Sadly, it doesn't affect Ctrl-Alt-BS or Ctrl-Alt-F1.)
@@ -400,6 +406,12 @@
 
 /* Define if you have the forkpty function.  */
 #undef HAVE_FORKPTY
+
+/* Define if you have the <pty.h> header file.  */
+#undef HAVE_PTY_H
+
+/* Define if you have the <util.h> header file.  */
+#undef HAVE_UTIL_H
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H

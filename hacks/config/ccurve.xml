@@ -4,11 +4,11 @@
 
   <command arg="-root"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Delay" _low-label="0 seconds" _high-label="1 minute"
           low="0" high="60" default="1"/>
 
-  <number id="speed" type="slider" arg="-pause %"
+  <number id="pause" type="slider" arg="-pause %"
           _label="Duration" _low-label="1 second" _high-label="1 minute"
           low="1" high="60" default="3"/>
 

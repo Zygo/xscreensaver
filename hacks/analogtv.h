@@ -1,4 +1,4 @@
-/* analogtv, Copyright (c) 2003 Trevor Blackwell <tlb@tlb.org>
+/* analogtv, Copyright (c) 2003, 2004 Trevor Blackwell <tlb@tlb.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

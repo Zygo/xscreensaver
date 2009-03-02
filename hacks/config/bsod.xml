@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
           low="5" high="120" default="30"/>
 
@@ -13,6 +13,7 @@
      <boolean id="windows"    _label="Windows 3.1"  arg-unset="-no-windows"/>
      <boolean id="nt"         _label="Windows NT"   arg-unset="-no-nt"/>
      <boolean id="2k"         _label="Windows 2000" arg-unset="-no-2k"/>
+     <boolean id="msdos"      _label="MS-DOS"       arg-unset="-no-msdos"/>
      <boolean id="mac"        _label="Sad Mac"      arg-unset="-no-mac"/>
      <boolean id="mac1"       _label="Mac Bomb"     arg-unset="-no-mac1"/>
      <boolean id="macsbug"    _label="MacsBug"      arg-unset="-no-macsbug"/>

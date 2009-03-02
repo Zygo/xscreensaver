@@ -7,7 +7,7 @@
   <number id="count" type="spinbutton" arg="-count %"
           _label="Count" low="0" high="20" default="1"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="20000" default="10000"
           convert="invert"/>

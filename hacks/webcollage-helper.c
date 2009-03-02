@@ -1,5 +1,5 @@
 /* webcollage-helper --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002, 2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
@@ -59,11 +60,111 @@ load_pixbuf (const char *file)
   return pb;
 }
 
+
+static void
+bevel_image (GdkPixbuf **pbP, int bevel_pct,
+             int x, int y, int w, int h)
+{
+  GdkPixbuf *pb = *pbP;
+
+  int bevel_size = (w > h ? h : w) * (bevel_pct / 100.0);
+
+  if (bevel_size < 10)    /* too small to bother */
+    return;
+
+  /* Ensure the pixbuf has an alpha channel. */
+  if (! gdk_pixbuf_get_has_alpha (pb))
+    {
+      GdkPixbuf *pb2 = gdk_pixbuf_add_alpha (pb, FALSE, 0, 0, 0);
+      gdk_pixbuf_unref (pb);
+      pb = pb2;
+    }
+
+  {
+    guchar *data = gdk_pixbuf_get_pixels (pb);
+    guchar *line;
+    int rs = gdk_pixbuf_get_rowstride (pb);
+    int ch = gdk_pixbuf_get_n_channels (pb);
+    int xx, yy;
+    double *ramp = (double *) malloc (sizeof(*ramp) * (bevel_size + 1));
+
+    if (!ramp)
+      {
+        fprintf (stderr, "%s: out of memory (%d)\n", progname, bevel_size);
+        exit (1);
+      }
+
+    for (xx = 0; xx <= bevel_size; xx++)
+      {
+
+# if 0  /* linear */
+        ramp[xx] = xx / (double) bevel_size;
+
+# else /* sinusoidal */
+        double p = (xx / (double) bevel_size);
+        double s = sin (p * M_PI / 2);
+        ramp[xx] = s;
+# endif
+      }
+
+    line = data + (rs * y);
+    for (yy = 0; yy < h; yy++)
+      {
+        guchar *p = line + (x * ch);
+        for (xx = 0; xx < w; xx++)
+          {
+            double rx, ry, r;
+
+            if (xx < bevel_size)           rx = ramp[xx];
+            else if (xx >= w - bevel_size) rx = ramp[w - xx - 1];
+            else rx = 1;
+
+            if (yy < bevel_size)           ry = ramp[yy];
+            else if (yy >= h - bevel_size) ry = ramp[h - yy - 1];
+            else ry = 1;
+
+            r = rx * ry;
+            if (r != 1)
+              p[ch-1] *= r;
+
+            /* p[0]=p[1]=p[2]=0; / * #### */
+
+            p += ch;
+          }
+        line += rs;
+      }
+
+#if 0  /* show the ramp */
+    for (xx = 0; xx < bevel_size * 2; xx++)
+      {
+        int ii = (256 * (xx >= bevel_size ? 1 : ramp[xx]));
+        int yy;
+        for (yy = 0; yy < ii; yy++)
+          {
+            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 0] = 0;
+            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 1] = 0;
+            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 2] = 0;
+            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 3] = 255;
+          }
+      }
+#endif
+
+    free (ramp);
+
+    if (verbose_p)
+      fprintf (stderr, "%s: added %d%% bevel (%d px)\n", progname,
+               bevel_pct, bevel_size);
+  }
+
+  *pbP = pb;
+}
+
+
 static void
 paste (const char *paste_file,
        const char *base_file,
        double from_scale,
-       double opacity,
+       double opacity, int bevel_pct,
        int from_x, int from_y, int to_x, int to_y,
        int w, int h)
 {
@@ -183,7 +284,11 @@ paste (const char *paste_file,
       }
   }
 
-  if (opacity == 1.0)
+  if (bevel_pct > 0)
+    bevel_image (&paste_pb, bevel_pct,
+                 from_x, from_y, w, h);
+
+  if (opacity == 1.0 && bevel_pct == 0)
     gdk_pixbuf_copy_area (paste_pb,
                           from_x, from_y, w, h,
                           base_pb,
@@ -329,7 +434,7 @@ main (int argc, char **argv)
   int i;
   char *paste_file, *base_file, *s, dummy;
   double from_scale, opacity;
-  int from_x, from_y, to_x, to_y, w, h;
+  int from_x, from_y, to_x, to_y, w, h, bevel_pct;
 
   i = 0;
   progname = argv[i++];
@@ -362,6 +467,8 @@ main (int argc, char **argv)
   s = argv[i++]; if (1 != sscanf (s, " %d %c", &w, &dummy)) usage();
   s = argv[i++]; if (1 != sscanf (s, " %d %c", &h, &dummy)) usage();
 
+  bevel_pct = 10; /* #### */
+
   if (w < 0) usage();
   if (h < 0) usage();
 
@@ -370,7 +477,7 @@ main (int argc, char **argv)
 #endif /* HAVE_GTK2 */
 
   paste (paste_file, base_file,
-         from_scale, opacity,
+         from_scale, opacity, bevel_pct,
          from_x, from_y, to_x, to_y,
          w, h);
   exit (0);

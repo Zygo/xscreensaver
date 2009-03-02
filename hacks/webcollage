@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2003 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2004 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -17,8 +17,15 @@
 #
 #     webcollage -root
 #     webcollage -root -filter 'vidwhacker -stdin -stdout'
-
-
+#
+#
+# You can see this in action at http://www.jwz.org/webcollage/ --
+# it auto-reloads about once a minute.  To make a page similar to
+# that on your own system, do this:
+#
+#     webcollage -size '800x600' -imagemap $HOME/www/webcollage/index
+#
+#
 # If you have the "driftnet" program installed, webcollage can display a
 # collage of images sniffed off your local ethernet, instead of pulled out
 # of search engines: in that way, your screensaver can display the images
@@ -53,16 +60,17 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.108 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
+my $version = q{ $Revision: 1.114 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2004" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
-    "            http://www.jwz.org/xscreensaver/\n";
+    "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  77, "altavista",  \&pick_from_alta_vista_random_link,
-                        14, "yahoorand",  \&pick_from_yahoo_random_link,
-                         9, "yahoonews",  \&pick_from_yahoo_news_text,
+my @search_methods = (  72, "altavista",  \&pick_from_alta_vista_random_link,
+                        10, "livejournal", \&pick_from_livejournal_images,
+                        10, "yahoorand",  \&pick_from_yahoo_random_link,
+                         8, "yahoonews",  \&pick_from_yahoo_news_text,
 
                      # Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!
@@ -214,6 +222,7 @@ my $min_gif_area = (120 * 120);
 
 my $no_output_p = 0;
 my $urls_only_p = 0;
+my $imagemap_base = undef;
 
 my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
 
@@ -260,6 +269,11 @@ sub get_document_1 {
 
   my ($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
   $path = "" unless $path;
+
+  if (!$url_proto || !$serverstring) {
+    LOG (($verbose_net || $verbose_load), "unparsable URL: $url");
+    return ();
+  }
 
   my ($them,$port) = split(/:/, $serverstring);
   $port = 80 unless $port;
@@ -548,9 +562,9 @@ sub pick_image_from_body {
   # randomly from the set of images on the web.  All the logic here for
   # rejecting some images is really a set of heuristics for rejecting
   # images that are not really images: for rejecting *text* that is in
-  # GIF/JPEG form.  I don't want text, I want pictures, and I want the
-  # content of the pictures to be randomly selected from among all the
-  # available content.
+  # GIF/JPEG/PNG form.  I don't want text, I want pictures, and I want
+  # the content of the pictures to be randomly selected from among all
+  # the available content.
   #
   # So, filtering out "dirty" pictures by looking for "dirty" keywords
   # would be wrong: dirty pictures exist, like it or not, so webcollage
@@ -630,7 +644,7 @@ sub pick_image_from_body {
       }
 
       # skip non-image
-      if ( ! m@[.](gif|jpg|jpeg|pjpg|pjpeg)$@io ) {
+      if ( ! m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@io ) {
         next;
       }
 
@@ -679,9 +693,9 @@ sub pick_image_from_body {
       $urls[++$#urls] = $url;
       $unique_urls{$url}++;
 
-      # jpegs are preferable to gifs.
+      # JPEGs are preferable to GIFs and PNGs.
       $_ = $url;
-      if ( ! m@[.]gif$@io ) {
+      if ( ! m@[.](gif|png)$@io ) {
         $urls[++$#urls] = $url;
       }
 
@@ -794,6 +808,24 @@ sub url_unquote {
   my ($s) = @_;
   $s =~ s/[+]/ /g;
   $s =~ s/%([a-z0-9]{2})/chr(hex($1))/ige;
+  return $s;
+}
+
+sub html_quote {
+  my ($s) = @_;
+  $s =~ s/&/&amp;/gi;
+  $s =~ s/</&lt;/gi;
+  $s =~ s/>/&gt;/gi;
+  $s =~ s/\"/&quot;/gi;
+  return $s;
+}
+
+sub html_unquote {
+  my ($s) = @_;
+  $s =~ s/&lt;/</gi;       # far from exhaustive...
+  $s =~ s/&gt;/</gi;
+  $s =~ s/&quot;/\"/gi;
+  $s =~ s/&amp;/&/gi;
   return $s;
 }
 
@@ -1180,7 +1212,7 @@ sub pick_from_google_images {
 ############################################################################
 #
 # Pick images by feeding random *numbers* into Google Image Search.
-# By jwz, suggested by from Ian O'Donnell.
+# By jwz, suggested by Ian O'Donnell.
 #
 ############################################################################
 
@@ -1309,6 +1341,8 @@ my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
 sub pick_from_hotbot_text {
   my ( $timeout ) = @_;
 
+  $last_search = $hotbot_search_url;   # for warnings
+
   # lycos seems to always give us back dictionaries and word lists if
   # we search for more than one word...
   #
@@ -1351,6 +1385,8 @@ my $lycos_search_url = "http://search.lycos.com/default.asp" .
 
 sub pick_from_lycos_text {
   my ( $timeout ) = @_;
+
+  $last_search = $lycos_search_url;   # for warnings
 
   # lycos seems to always give us back dictionaries and word lists if
   # we search for more than one word...
@@ -1404,6 +1440,8 @@ my $yahoo_news_url = "http://search.news.yahoo.com/search/news" .
 sub pick_from_yahoo_news_text {
   my ( $timeout ) = @_;
 
+  $last_search = $yahoo_news_url;   # for warnings
+
   my $words = random_words(0);
   my $search_url = $yahoo_news_url . $words;
 
@@ -1425,6 +1463,50 @@ sub pick_from_yahoo_news_text {
 }
 
 
+
+############################################################################
+#
+# Pick images from LiveJournal's list of recently-posted images.
+#
+############################################################################
+
+my $livejournal_img_url = "http://www.livejournal.com/stats/latest-img.bml";
+
+# livejournal
+sub pick_from_livejournal_images {
+  my ( $timeout ) = @_;
+
+  $last_search = $livejournal_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($livejournal_img_url, undef, $timeout);
+  return () unless $body;
+
+  my @candidates = ();
+
+  $body =~ s/\n/ /gs;
+  $body =~ s/(<recent-image)\b/\n$1/gsi;
+
+  foreach (split (/\n/, $body)) {
+    next unless (m/^<recent-image\b/);
+    next unless (m/\bIMG=[\'\"]([^\'\"]+)[\'\"]/si);
+    my $img = html_unquote ($1);
+    next unless (m/\bURL=[\'\"]([^\'\"]+)[\'\"]/si);
+    my $page = html_unquote ($1);
+    my @pair = ($img, $page);
+    LOG ($verbose_filter, "  candidate: $img");
+    push @candidates, \@pair;
+  }
+
+  return () if ($#candidates == -1);
+
+  my $i = int(rand($#candidates+1));
+  my ($img, $page) = @{$candidates[$i]};
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
+       ": $img");
+
+  return ($page, $img);
+}
 
 
 ############################################################################
@@ -1893,14 +1975,29 @@ sub jpeg_size {
   return ();
 }
 
-# Given the raw body of a GIF or JPEG document, returns the dimensions of
-# the image.
+# Given the raw body of a PNG document, returns the dimensions of the image.
+#
+sub png_size {
+  my ($body) = @_;
+  return () unless ($body =~ m/^\211PNG\r/);
+  my ($bits) = ($body =~ m/^.{12}(.{12})/s);
+  return () unless defined ($bits);
+  return () unless ($bits =~ /^IHDR/);
+  my ($ign, $w, $h) = unpack("a4N2", $bits);
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
+# of the image.
 #
 sub image_size {
   my ($body) = @_;
   my ($w, $h) = gif_size ($body);
   if ($w && $h) { return ($w, $h); }
-  return jpeg_size ($body);
+  ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  return png_size ($body);
 }
 
 
@@ -1981,6 +2078,11 @@ my $filter_cmd = undef;
 my $post_filter_cmd = undef;
 my $background = undef;
 
+my @imagemap_areas = ();
+my $imagemap_html_tmp = undef;
+my $imagemap_jpg_tmp = undef;
+
+
 my $img_width;            # size of the image being generated.
 my $img_height;
 
@@ -1988,6 +2090,8 @@ my $delay = 2;
 
 sub x_cleanup {
   unlink $image_ppm, $image_tmp1, $image_tmp2;
+  unlink $imagemap_html_tmp, $imagemap_jpg_tmp
+    if (defined ($imagemap_html_tmp));
 }
 
 
@@ -2023,9 +2127,9 @@ sub nontrapping_system {
 }
 
 
-# Given the URL of a GIF or JPEG image, and the body of that image, writes a
-# PPM to the given output file.  Returns the width/height of the image if
-# successful.
+# Given the URL of a GIF, JPEG, or PNG image, and the body of that image,
+# writes a PPM to the given output file.  Returns the width/height of the
+# image if successful.
 #
 sub image_to_pnm {
   my ($url, $body, $output) = @_;
@@ -2037,9 +2141,12 @@ sub image_to_pnm {
   } elsif ((@_ = jpeg_size ($body))) {
     ($w, $h) = @_;
     $cmd = "djpeg";
+  } elsif ((@_ = png_size ($body))) {
+    ($w, $h) = @_;
+    $cmd = "pngtopnm";
   } else {
     LOG (($verbose_pbm || $verbose_load),
-         "not a GIF or JPG" .
+         "not a GIF, JPG, or PNG" .
          (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
           ? " (looks like HTML)" : "") .
          ": $url");
@@ -2155,7 +2262,9 @@ sub x_or_pbm_output {
 
   if (!defined($webcollage_helper)) {
     # Only need these others if we don't have the helper.
-    @progs = (@progs, "giftopnm", "djpeg", "pnmpaste", "pnmscale", "pnmcut");
+    @progs = (@progs,
+              "giftopnm", "pngtopnm", "djpeg",
+              "pnmpaste", "pnmscale", "pnmcut");
   }
 
   foreach (@progs) {
@@ -2221,13 +2330,17 @@ sub x_or_pbm_output {
       ($iw, $ih) = @_;
       $cmd = "djpeg |";
 
+    } elsif ((@_ = png_size ($body))) {
+      ($iw, $ih) = @_;
+      $cmd = "pngtopnm |";
+
     } elsif ($body =~ m/^P\d\n(\d+) (\d+)\n/) {
       $iw = $1;
       $ih = $2;
       $cmd = "";
 
     } else {
-      error "$bgimage is not a GIF, JPEG, or PPM.";
+      error "$bgimage is not a GIF, JPEG, PNG, or PPM.";
     }
 
     my $x = int (($img_width  - $iw) / 2);
@@ -2288,7 +2401,7 @@ sub paste_image {
     ($iw, $ih) = image_size ($body);
     if (!$iw || !$ih) {
       LOG (($verbose_pbm || $verbose_load),
-           "not a GIF or JPG" .
+           "not a GIF, JPG, or PNG" .
            (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
             ? " (looks like HTML)" : "") .
            ": $img");
@@ -2341,7 +2454,7 @@ sub paste_image {
     return 0 unless ($iw && $ih);
   }
 
-  my $target_w = $img_width;
+  my $target_w = $img_width;   # max rectangle into which the image must fit
   my $target_h = $img_height;
 
   my $cmd = "";
@@ -2349,25 +2462,27 @@ sub paste_image {
 
 
   # Usually scale the image to fit on the screen -- but sometimes scale it
-  # to fit on half or a quarter of the screen.  Note that we don't merely
-  # scale it to fit, we instead cut it in half until it fits -- that should
-  # give a wider distribution of sizes.
+  # to fit on half or a quarter of the screen.  (We do this by reducing the
+  # size of the target rectangle.)  Note that the image is not merely scaled
+  # to fit; we instead cut the image in half repeatedly until it fits in the
+  # target rectangle -- that gives a wider distribution of sizes.
   #
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; $scale /= 2; }
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; $scale /= 2; }
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; } # reduce target rect
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
 
   if ($iw > $target_w || $ih > $target_h) {
     while ($iw > $target_w ||
            $ih > $target_h) {
       $iw = int($iw / 2);
       $ih = int($ih / 2);
+      $scale /= 2;
     }
     if ($iw <= 10 || $ih <= 10) {
       LOG ($verbose_pbm, "scaling to ${iw}x$ih would have been bogus.");
       return 0;
     }
 
-    LOG ($verbose_pbm, "scaling to ${iw}x$ih");
+    LOG ($verbose_pbm, "scaling to ${iw}x$ih ($scale)");
 
     $cmd .= " | pnmscale -xsize $iw -ysize $ih";
   }
@@ -2454,7 +2569,7 @@ sub paste_image {
   # If any cropping needs to happen, add pnmcut.
   #
   if ($crop_x != 0   || $crop_y != 0 ||
-        $crop_w != $iw || $crop_h != $ih) {
+      $crop_w != $iw || $crop_h != $ih) {
     $iw = $crop_w;
     $ih = $crop_h;
     $cmd .= " | pnmcut $crop_x $crop_y $iw $ih";
@@ -2568,9 +2683,115 @@ sub paste_image {
   print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n"
     if ($verbose_imgmap);
 
+  if ($imagemap_base) {
+    update_imagemap ($base, $x, $y, $iw, $ih,
+                     $image_ppm, $img_width, $img_height);
+  }
+
   clearlog();
 
   return 1;
+}
+
+
+sub update_imagemap {
+  my ($url, $x, $y, $w, $h, $image_ppm, $image_width, $image_height) = @_;
+
+  $current_state = "imagemap";
+
+  my $max_areas = 200;
+
+  $url = html_quote ($url);
+  my $x2 = $x + $w;
+  my $y2 = $y + $h;
+  my $area = "<AREA SHAPE=RECT COORDS=\"$x,$y,$x2,$y2\" HREF=\"$url\">";
+  unshift @imagemap_areas, $area;	# put one on the front
+  if ($#imagemap_areas >= $max_areas) {
+    pop @imagemap_areas;		# take one off the back.
+  }
+
+  LOG ($verbose_pbm, "area: $x,$y,$x2,$y2 (${w}x$h)");
+
+  my $map_name = $imagemap_base;
+  $map_name =~ s@^.*/@@;
+  $map_name = 'collage' if ($map_name eq '');
+
+  my $imagemap_html = $imagemap_base . ".html";
+  my $imagemap_jpg  = $imagemap_base . ".jpg";
+
+  if (!defined ($imagemap_html_tmp)) {
+    $imagemap_html_tmp = $imagemap_html . sprintf (".%08x", rand(0xffffffff));
+    $imagemap_jpg_tmp  = $imagemap_jpg  . sprintf (".%08x", rand(0xffffffff));
+  }
+
+  # Read the imagemap html file (if any) to get a template.
+  #
+  my $template_html = '';
+  {
+    local *IN;
+    if (open (IN, "<$imagemap_html")) {
+      while (<IN>) { $template_html .= $_; }
+      close IN;
+      LOG ($verbose_pbm, "read template $imagemap_html");
+    }
+
+    if ($template_html =~ m/^\s*$/s) {
+      $template_html = ("<MAP NAME=\"$map_name\"></MAP>\n" .
+                        "<IMG SRC=\"$imagemap_base.jpg\"" .
+                        " USEMAP=\"$map_name\">\n");
+      LOG ($verbose_pbm, "created dummy template");
+    }
+  }
+
+  # Write the jpg to a tmp file
+  #
+  {
+   #my $cmd = "cjpeg < $image_ppm > $imagemap_jpg_tmp";
+    my $cmd = "cp -p $image_ppm $imagemap_jpg_tmp";
+    my $rc = nontrapping_system ($cmd);
+    if ($rc != 0) {
+      error ("imagemap jpeg failed: \"$cmd\"\n");
+    }
+  }
+
+  # Write the html to a tmp file
+  #
+  {
+    my $body = $template_html;
+    my $areas = join ("\n\t", @imagemap_areas);
+    my $map = ("<MAP NAME=\"$map_name\">\n\t$areas\n</MAP>");
+    my $img = ("<IMG SRC=\"$imagemap_base.jpg\" " .
+               "BORDER=0 " .
+               "WIDTH=$image_width HEIGHT=$image_height " .
+               "USEMAP=\"#$map_name\">");
+    $body =~ s@(<MAP\s+NAME=\"[^\"]*\"\s*>).*?(</MAP>)@$map@is;
+    $body =~ s@<IMG\b[^<>]*\bUSEMAP\b[^<>]*>@$img@is;
+
+    # if there are magic webcollage spans in the html, update those too.
+    #
+    {
+      my @st = stat ($imagemap_jpg_tmp);
+      my $date = strftime("%d-%b-%Y %l:%M:%S %p %Z", localtime($st[9]));
+      my $size = int(($st[7] / 1024) + 0.5) . "K";
+      $body =~ s@(<SPAN\s+CLASS=\"webcollage_date\">).*?(</SPAN>)@$1$date$2@si;
+      $body =~ s@(<SPAN\s+CLASS=\"webcollage_size\">).*?(</SPAN>)@$1$size$2@si;
+    }
+
+    local *OUT;
+    open (OUT, ">$imagemap_html_tmp") || error ("$imagemap_html_tmp: $!");
+    print OUT $body                   || error ("$imagemap_html_tmp: $!");
+    close OUT                         || error ("$imagemap_html_tmp: $!");
+    LOG ($verbose_pbm, "wrote $imagemap_html_tmp");
+  }
+
+  # Rename the two tmp files to the real files
+  #
+  rename ($imagemap_html_tmp, $imagemap_html) ||
+    error "renaming $imagemap_html_tmp to $imagemap_html";
+  LOG ($verbose_pbm, "wrote $imagemap_html");
+  rename ($imagemap_jpg_tmp,  $imagemap_jpg) ||
+    error "renaming $imagemap_jpg_tmp to $imagemap_jpg";
+  LOG ($verbose_pbm, "wrote $imagemap_jpg");
 }
 
 
@@ -2621,6 +2842,9 @@ sub main {
       $no_output_p = 1;
     } elsif ($_ eq "-urls-only") {
       $urls_only_p = 1;
+      $no_output_p = 1;
+    } elsif ($_ eq "-imagemap") {
+      $imagemap_base = shift @ARGV;
       $no_output_p = 1;
     } elsif ($_ eq "-verbose") {
       $verbose++;
@@ -2676,8 +2900,9 @@ sub main {
     } else {
       print STDERR "$copyright\nusage: $progname " .
               "[-root] [-display dpy] [-verbose] [-debug which]\n" .
-        "\t\t  [-timeout secs] [-delay secs] [-filter cmd] [-filter2 cmd]\n" .
-        "\t\t  [-no-output] [-urls-only] [-background color] [-size WxH]\n" .
+        "\t\t  [-timeout secs] [-delay secs] [-size WxH]\n" .
+        "\t\t  [-no-output] [-urls-only] [-imagemap filename]\n" .
+        "\t\t  [-filter cmd] [-filter2 cmd] [-background color]\n" .
         "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
         "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
         "\n";

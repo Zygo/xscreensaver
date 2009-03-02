@@ -15,7 +15,7 @@
   <boolean id="xsymmetry" _label="With X Symmetry" arg-unset="-no-xsymmetry"/>
   <boolean id="ysymmetry" _label="With Y Symmetry" arg-set="-ysymmetry"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Duration" _low-label="1 Second" _high-label="1 Minute"
           low="1" high="60" default="5"/>
 

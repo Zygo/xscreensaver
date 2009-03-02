@@ -251,12 +251,17 @@ engine_type engines[] = {
 #define ENG engines[engineType]
 
 /* given a number of cylinders and an included angle, finds matching engine */
-int find_engine(const char *name)
+int
+find_engine(char *name)
 {
   unsigned int i;
+  char *s;
 
   if (!name || !*name || !strcasecmp (name, "(none)"))
     return (random() % countof(engines));
+
+  for (s = name; *s; s++)
+    if (*s == '-' || *s == '_') *s = ' ';
 
   for (i = 0; i < countof(engines); i++) {
     if (!strcasecmp(name, engines[i].engineName))

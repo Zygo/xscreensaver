@@ -5,7 +5,7 @@
   <command arg="-root"/>
   <command arg="-randomize"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="20000" default="1000"
           convert="invert"/>

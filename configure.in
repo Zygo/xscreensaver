@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997-2003 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
 #
 
 AC_PREREQ(2.52)
@@ -193,7 +193,7 @@ AC_DEFUN(AC_NO_OBJECTIVE_C,
 ###############################################################################
 
 AC_DEFUN(AC_PROG_INSTALL_DIRS,
- [AC_CACHE_CHECK([whether \"\${INSTALL} -d\" creates intermediate directories],
+ [AC_CACHE_CHECK([whether "\${INSTALL} -d" creates intermediate directories],
     ac_cv_install_d_creates_dirs,
     [ac_cv_install_d_creates_dirs=no
      rm -rf conftestdir
@@ -209,7 +209,7 @@ AC_DEFUN(AC_PROG_INSTALL_DIRS,
     ])
 
   if test "$ac_cv_install_d_creates_dirs" = no ; then
-    AC_CACHE_CHECK([whether \"mkdir -p\" creates intermediate directories],
+    AC_CACHE_CHECK([whether "mkdir -p" creates intermediate directories],
       ac_cv_mkdir_p_creates_dirs,
       [ac_cv_mkdir_p_creates_dirs=no
        rm -rf conftestdir
@@ -844,7 +844,7 @@ fi
 AC_PATH_XTRA
 
 if test "$have_x" != yes; then
-  AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try \`$0 --help'.)
+  AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try `$0 --help'.)
 fi
 
 AC_PATH_X_APP_DEFAULTS
@@ -957,7 +957,7 @@ AC_ARG_WITH(hackdir,[
 Installation options:
 
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: \`PREFIX/lib/xscreensaver/'],
+                          Default: `PREFIX/lib/xscreensaver/'],
   [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
 
 if test x"$with_hackdir" = xyes; then
@@ -1002,8 +1002,8 @@ with_configdir_req=unspecified
 AC_ARG_WITH(configdir,
 [  --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
-                          Default: \`GNOMEPREFIX/control-center/screensavers/'
-                          or \`PREFIX/lib/xscreensaver/config/', depending on
+                          Default: `GNOMEPREFIX/control-center/screensavers/'
+                          or `PREFIX/lib/xscreensaver/config/', depending on
                           whether GNOME is available.
 ],
   [with_configdir="$withval"; with_configdir_req="$withval"],
@@ -1039,7 +1039,7 @@ have_sgi=no
 with_sgi_req=unspecified
 AC_ARG_WITH(sgi-ext,
 [Except where noted, all of the --with options below can also take a
-directory argument: for example, \`--with-motif=/opt/Motif'.  That would
+directory argument: for example, `--with-motif=/opt/Motif'.  That would
 cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
 to be added to the -L list, assuming those directories exist.  
 
@@ -1379,6 +1379,63 @@ if test "$with_xf86gamma" = yes; then
 
 elif test "$with_xf86gamma" != no; then
   echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the RANDR (Resize and Rotate) server extension.
+#
+#       We need this to detect when the resolution of the desktop
+#       has changed out from under us (this is a newer, different
+#       mechanism than the XF86VMODE virtual viewports.)
+#
+###############################################################################
+
+have_randr=no
+with_randr_req=unspecified
+AC_ARG_WITH(randr-ext,
+[  --with-randr-ext        Include support for the X Resize+Rotate extension.],
+  [with_randr="$withval"; with_randr_req="$withval"],[with_randr=yes])
+
+HANDLE_X_PATH_ARG(with_randr, --with-randr-ext, RANDR)
+
+if test "$with_randr" = yes; then
+
+  # first check for Randr.h
+  AC_CHECK_X_HEADER(X11/extensions/Xrandr.h, [have_randr=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the XRR code in the libraries
+  if test "$have_randr" = yes; then
+
+    # RANDR probably needs -lXrender
+    xrender_libs=
+    AC_CHECK_X_LIB(Xrender, XRenderSetSubpixelOrder,
+                   [xrender_libs="-lXrender"], [true], -lXext -lX11)
+
+    # first look for RANDR in -lXext
+    have_randr=no
+    AC_CHECK_X_LIB(Xext, XRRGetScreenInfo,
+                   [have_randr=yes; SAVER_LIBS="$SAVER_LIBS $xrender_libs"],
+                   [true], $xrender_libs -lXext -lX11)
+
+    # if that failed, look in -lXrandr
+    if test "$have_randr" = no; then
+      AC_CHECK_X_LIB(Xrandr, XRRGetScreenInfo,
+             [have_randr=yes; SAVER_LIBS="$SAVER_LIBS -lXrandr $xrender_libs"],
+                     [true], $xrender_libs -lXext -lX11)
+    fi
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_randr" = yes; then
+    AC_DEFINE(HAVE_RANDR)
+  fi
+
+elif test "$with_randr" != no; then
+  echo "error: must be yes or no: --with-randr-ext=$with_randr"
   exit 1
 fi
 
@@ -3191,16 +3248,10 @@ fi
 ###############################################################################
 
 PTY_LIBS=
-have_ptys=no
-AC_CHECK_X_HEADER(pty.h, [have_ptys=yes])
-if test "$have_ptys" = yes; then
-  # we have the header, now check for the library
-  have_ptys=no
-  AC_CHECK_X_LIB(util, forkpty,
-                 [have_ptys=yes
-                  PTY_LIBS="-lutil"
-                  AC_DEFINE(HAVE_FORKPTY)])
-fi
+AC_CHECK_HEADERS(pty.h util.h)
+AC_CHECK_X_LIB(util, forkpty,
+               [PTY_LIBS="-lutil"
+                AC_DEFINE(HAVE_FORKPTY)])
 
 
 ###############################################################################
@@ -3337,7 +3388,7 @@ AC_ARG_WITH(fortune,[
   --with-fortune=PROGRAM  Some demos are able to run an external program and
                           display its text; this names the program to use by
                           default (though it can be overridden with X
-                          resources.)  Default is \"/usr/games/fortune\".],
+                          resources.)  Default is "/usr/games/fortune".],
   [with_fortune_req="$withval"; with_fortune="$withval"],[with_fortune=yes])
 
 if test "$with_fortune" = no || test "$with_fortune" = yes ; then
@@ -3424,7 +3475,7 @@ AC_DEFINE_UNQUOTED(FORTUNE_PROGRAM, "$ac_cv_fortune_program")
 setuid_hacks_default=no
 setuid_hacks="$setuid_hacks_default"
 AC_ARG_WITH(setuid-hacks,
-[  --with-setuid-hacks     Allow some demos to be installed \`setuid root'
+[  --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 ],
   [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
@@ -3811,6 +3862,10 @@ fi
 
 if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
   warn 'The XF86VMODE extension was requested, but was not found.'
+fi
+
+if test "$with_randr_req" = yes -a "$have_randr" = no ; then
+  warn 'The RANDR extension was requested, but was not found.'
 fi
 
 if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
@@ -4222,7 +4277,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (175+ different executables) will"
+  echo "      The various graphics demos (180+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,6 +41,10 @@
 #ifdef HAVE_SGI_SAVER_EXTENSION
 #include <X11/extensions/XScreenSaver.h>
 #endif /* HAVE_SGI_SAVER_EXTENSION */
+
+#ifdef HAVE_RANDR
+#include <X11/extensions/Xrandr.h>
+#endif /* HAVE_RANDR */
 
 #include "xscreensaver.h"
 
@@ -871,6 +875,42 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	  }
 	else
 #endif /* HAVE_SGI_SAVER_EXTENSION */
+
+#ifdef HAVE_RANDR
+        if (event.type == (si->randr_event_number + RRScreenChangeNotify))
+          {
+            /* The Resize and Rotate extension sends an event when the
+               size, rotation, or refresh rate of the screen has changed. */
+
+            XRRScreenChangeNotifyEvent *xrr_event =
+              (XRRScreenChangeNotifyEvent *) &event;
+            int screen = XRRRootToScreen (si->dpy, xrr_event->window);
+
+            if (p->verbose_p)
+              {
+                if (si->screens[screen].width  == xrr_event->width &&
+                    si->screens[screen].height == xrr_event->height)
+                  fprintf (stderr,
+                          "%s: %d: no-op screen size change event (%dx%d)\n",
+                           blurb(), screen,
+                           xrr_event->width, xrr_event->height);
+                else
+                  fprintf (stderr,
+                       "%s: %d: screen size changed from %dx%d to %dx%d\n",
+                           blurb(), screen,
+                           si->screens[screen].width,
+                           si->screens[screen].height,
+                           xrr_event->width, xrr_event->height);
+              }
+
+            /* Inform Xlib that it's ok to update its data structures. */
+            XRRUpdateConfiguration (&event);
+
+            /* Resize the existing xscreensaver windows and cached ssi data. */
+            resize_screensaver_window (si);
+          }
+        else
+#endif /* HAVE_RANDR */
 
           /* Just some random event.  Let the Widgets handle it, if desired. */
 	  dispatch_event (si, &event);

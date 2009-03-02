@@ -11,7 +11,7 @@
            _label="Timeout" _low-label="Small" _high-label="Large"
           low="0" high="1000" default="100"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="600000" default="400000"
           convert="invert"/>

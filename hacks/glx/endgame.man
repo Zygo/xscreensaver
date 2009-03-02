@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "May 2002"
+.TH XScreenSaver 1 "5-May-2004"
 .SH NAME
 endgame \- endgame chess screensaver
 .SH SYNOPSIS
@@ -22,6 +22,12 @@ wireframe mode might be to your liking.
 .TP 8
 .B \-install
 Install a private colormap for the window.
+.TP 8
+.B \-shadows
+Project pieces against the board with dark blend.
+.TP 8
+.B \-reflections
+Reflect pieces in light board squares.
 .TP 8
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,

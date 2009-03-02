@@ -6,12 +6,12 @@
 
   <number id="wait" type="slider" arg="-wait %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="1" high="30" default="9999999"
+          low="1" high="30" default="1"
           convert="invert"/>
 
   <number id="timewarp" type="slider" arg="-timewarp %"
           _label="Time Warp" _low-label="Real Time" _high-label="Fast"
-          low="1" high="100000" default="0"/>
+          low="1" high="100000" default="1"/>
 
   <hgroup>
    <select id="body">
@@ -57,7 +57,7 @@
     <option id="sun"       _label="From Sun"/>
     <option id="mercury"   _label="From Mercury"   arg-set="-origin mercury"/>
     <option id="venus"     _label="From Venus"     arg-set="-origin venus"/>
-    <option id="earth"     _label="From Earth"     arg-set="-origin venus"/>
+    <option id="earth"     _label="From Earth"     arg-set="-origin earth"/>
     <option id="moon"      _label="From Moon"      arg-set="-origin moon"/>
     <option id="mars"      _label="From Mars"      arg-set="-origin mars"/>
     <option id="phobos"    _label="From Phobos"    arg-set="-origin phobos"/>

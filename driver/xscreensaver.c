@@ -1034,6 +1034,10 @@ initialize_server_extensions (saver_info *si)
                  blurb());
     }
 
+#ifdef HAVE_RANDR
+  query_randr_extension (si);
+#endif
+
   if (!system_has_proc_interrupts_p)
     {
       si->using_proc_interrupts = False;
@@ -2115,7 +2119,17 @@ analyze_display (saver_info *si)
         False
 #     endif
    }, { "XINERAMA",                             "Xinerama",
+#     ifdef HAVE_XINERAMA
         True
+#     else
+        False
+#     endif
+   }, { "RANDR",                                "Resize-and-Rotate",
+#     ifdef HAVE_RANDR
+        True
+#     else
+        False
+#     endif
    }, { "Apple-DRI",                            "Apple-DRI (XDarwin)",
         True
    },

@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-1999 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -119,10 +119,12 @@ LOCK_OBJS_1	= lock.o passwd.o
 NOLOCK_SRCS_1	= lock.c
 NOLOCK_OBJS_1	= lock.o
 
-TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c \
-		  test-apm.c test-fade.c test-xinerama.c xdpyinfo.c
-TEST_EXES	= test-passwd   test-uid   test-xdpms   test-grab \
-		  test-apm   test-fade   test-xinerama   xdpyinfo
+TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
+		  test-apm.c    test-fade.c test-xinerama.c test-vp.c   \
+	          test-randr.c  xdpyinfo.c
+TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
+		  test-apm      test-fade   test-xinerama   test-vp     \
+		  test-randr    xdpyinfo
 
 MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
@@ -924,6 +926,14 @@ test-xinerama: test-xinerama.o
 	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(LIBS) $(X_LIBS) $(SAVER_LIBS)\
 	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
+test-vp: test-vp.o
+	$(CC) $(LDFLAGS) -o $@ test-vp.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+test-randr: test-randr.o
+	$(CC) $(LDFLAGS) -o $@ test-randr.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
 test-grab: test-grab.o
 	$(CC) $(LDFLAGS) -o $@ test-grab.o $(SAVER_LIBS)
 
@@ -1000,7 +1010,9 @@ test-passwd.o: ../config.h
 test-passwd.o: $(srcdir)/prefs.h
 test-passwd.o: XScreenSaver_ad.h
 test-passwd.o: $(srcdir)/xscreensaver.h
+test-randr.o: ../config.h
 test-uid.o: ../config.h
+test-vp.o: ../config.h
 test-xdpms.o: ../config.h
 test-xinerama.o: ../config.h
 timers.o: ../config.h

@@ -4,19 +4,19 @@
 
   <command arg="-root"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="30000"
+          low="0" high="50000" default="20000"
           convert="invert"/>
 
   <number id="count" type="spinbutton" arg="-parts %"
           _label="Parts" low="1" high="50" default="10"/>
 
-  <boolean id="rotate" _label="Spin" arg-unset="-no-spin"/>
+  <boolean id="spin"   _label="Spin" arg-unset="-no-spin"/>
 
   <boolean id="rotate" _label="Rotate" arg-set="-rotate"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="speed" type="slider" arg="-rotate-speed %"
           _label="Rotation Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="100" default="1"/>
 
