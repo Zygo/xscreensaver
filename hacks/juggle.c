@@ -100,7 +100,6 @@ so the answer is to do a single 661 and then drop straight down to (5).
  into the Adam notation, [*] which means 'lose the current ball'.]
 */
 
-#define STANDALONE
 #ifdef STANDALONE
 #define MODE_juggle
 #define PROGCLASS "Juggle"

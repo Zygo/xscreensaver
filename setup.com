@@ -39,6 +39,7 @@ $ galaxy	:== $'mydir'galaxy
 $ goop		:== $'mydir'goop
 $ grav		:== $'mydir'grav
 $ greynetic	:== $'mydir'greynetic
+$ halftone	:== $'mydir'halftone
 $ halo		:== $'mydir'halo
 $ helix		:== $'mydir'helix
 $ hopalong	:== $'mydir'hopalong

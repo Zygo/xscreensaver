@@ -1,496 +1,520 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Free Software Foundation, Inc.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# xscreensaver ja.po.
+# Copyright (C) 2002 Free Software Foundation, Inc.
+# Takeshi Aihana <aihana@gnome.gr.jp>, 2002.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: xscreensaver 4.03\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2002-06-10 01:27+0900\n"
+"Last-Translator: Takeshi Aihana <aihana@gnome.gr.jp>\n"
+"Language-Team: Japanese <translation@gnome.gr.jp>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
-msgstr ""
+msgstr "参照..."
 
 #: driver/demo-Gtk-conf.c:1021
 msgid "Select file."
-msgstr ""
+msgstr "ファイルを選択して下さい。"
 
 #: driver/demo-Gtk-support.c:121
 #, c-format
 msgid "Couldn't find pixmap file: %s"
-msgstr ""
+msgstr "Pixmap ファイルが見つかりませんでした: %s"
 
 #: driver/demo-Gtk-support.c:130
 #, c-format
 msgid "Error loading pixmap file: %s"
-msgstr ""
+msgstr "Pixmap ファイルを読み込む際にエラーが発生しました: %s"
 
 #: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
-#, fuzzy
 msgid "XScreenSaver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "XScreenSaver"
 
 #: driver/demo-Gtk-widgets.c:176
 msgid "_File"
-msgstr ""
+msgstr "ファイル(_F)"
 
 #: driver/demo-Gtk-widgets.c:196 driver/xscreensaver-demo.glade.h:93
 msgid "_Blank Screen Now"
-msgstr ""
+msgstr "XScreenSaver の起動(_B)"
 
 #: driver/demo-Gtk-widgets.c:205 driver/xscreensaver-demo.glade.h:2
 msgid ""
 "Activate the XScreenSaver daemon now (locking the screen if so configured.)"
 msgstr ""
+"XScreenSaver デーモンを今すぐ有効にします (画面ロックの設定が有効な場合は、画"
+"面をロックします)。"
 
 #: driver/demo-Gtk-widgets.c:209 driver/xscreensaver-demo.glade.h:97
 msgid "_Lock Screen Now"
-msgstr ""
+msgstr "画面のロック(_L)"
 
 #: driver/demo-Gtk-widgets.c:218 driver/xscreensaver-demo.glade.h:51
 msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
-msgstr ""
+msgstr "画面を今すぐロックします (画面ロックの設定が無効な場合でも)。"
 
 #: driver/demo-Gtk-widgets.c:222 driver/xscreensaver-demo.glade.h:96
 msgid "_Kill Daemon"
-msgstr ""
+msgstr "デーモンの強制終了(_K)"
 
 #: driver/demo-Gtk-widgets.c:231 driver/xscreensaver-demo.glade.h:71
 msgid "Tell the running XScreenSaver daemon to exit."
-msgstr ""
+msgstr "起動中の XScreenSaver デーモンを終了します。"
 
 #: driver/demo-Gtk-widgets.c:235 driver/xscreensaver-demo.glade.h:98
 msgid "_Restart Daemon"
-msgstr ""
+msgstr "デーモンの再起動(_R)"
 
 #: driver/demo-Gtk-widgets.c:244 driver/xscreensaver-demo.glade.h:49
 msgid "Kill and re-launch the XScreenSaver daemon."
-msgstr ""
+msgstr "XScreenSaver デーモンを強制終了して、再び起動します。"
 
 #: driver/demo-Gtk-widgets.c:257 driver/xscreensaver-demo.glade.h:95
 msgid "_Exit"
-msgstr ""
+msgstr "終了(_E)"
 
 #: driver/demo-Gtk-widgets.c:266 driver/xscreensaver-demo.glade.h:33
 msgid ""
 "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
 "running in the background.)"
 msgstr ""
+"XScreenSaver デモ・プログラムを終了します (但し XScreenSaver デーモンはバック"
+"グラウンドで実行したままです)。"
 
 #: driver/demo-Gtk-widgets.c:270
 msgid "_Help"
-msgstr ""
+msgstr "ヘルプ(_H)"
 
 #: driver/demo-Gtk-widgets.c:290 driver/xscreensaver-demo.glade.h:92
 msgid "_About..."
-msgstr ""
+msgstr "情報(_A)..."
 
 #: driver/demo-Gtk-widgets.c:299 driver/xscreensaver-demo.glade.h:30
 msgid "Display version information."
-msgstr ""
+msgstr "バージョン情報を表示します。"
 
 #: driver/demo-Gtk-widgets.c:303 driver/xscreensaver-demo.glade.h:94
 msgid "_Documentation..."
-msgstr ""
+msgstr "ドキュメント(_D)..."
 
 #: driver/demo-Gtk-widgets.c:312 driver/xscreensaver-demo.glade.h:38
 msgid "Go to the documentation on the XScreenSaver web page."
-msgstr ""
+msgstr "XScreenSaver のウェブサイトにジャンプします。"
 
 #: driver/demo-Gtk-widgets.c:342 driver/xscreensaver-demo.glade.h:18
 msgid "Cycle After"
-msgstr ""
+msgstr "繰り返す周期: "
 
 #: driver/demo-Gtk-widgets.c:364 driver/xscreensaver-demo.glade.h:78
 msgid "Whether a password should be required to un-blank the screen."
 msgstr ""
+"画面をロックする周期です (画面ロックを解除する場合はパスワードが必要です)。"
 
 #: driver/demo-Gtk-widgets.c:366 driver/xscreensaver-demo.glade.h:50
 msgid "Lock Screen After"
-msgstr ""
+msgstr "画面ロックの起動: "
 
 #: driver/demo-Gtk-widgets.c:374 driver/xscreensaver-demo.glade.h:8
 msgid "Blank After"
-msgstr ""
+msgstr "XScreenSaver の起動: "
 
 #: driver/demo-Gtk-widgets.c:397 driver/demo-Gtk-widgets.c:447
 #: driver/demo-Gtk-widgets.c:461 driver/demo-Gtk-widgets.c:1010
 #: driver/xscreensaver-demo.glade.h:43
 msgid "How long before the monitor goes completely black."
-msgstr ""
+msgstr "自動的に XScreenSaver を起動するまでの時間です。"
 
 #: driver/demo-Gtk-widgets.c:401 driver/demo-Gtk-widgets.c:413
 #: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
 #: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
 #: driver/xscreensaver-demo.glade.h:99
 msgid "minutes"
-msgstr ""
+msgstr "分後"
 
 #: driver/demo-Gtk-widgets.c:476 driver/demo-Gtk.c:2336
 #: driver/xscreensaver-demo.glade.h:58
 msgid "Preview"
-msgstr ""
+msgstr "プレビュー"
 
 #: driver/demo-Gtk-widgets.c:484 driver/xscreensaver-demo.glade.h:21
 msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
 msgstr ""
+"指定したスクリーンセーバーを全画面モードでデモします (解除する場合はマウスを"
+"クリックして下さい)。"
 
 #: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
-msgstr ""
+msgstr "設定..."
 
 #: driver/demo-Gtk-widgets.c:494 driver/xscreensaver-demo.glade.h:17
 msgid "Customization and explanation of the selected screen saver."
-msgstr ""
+msgstr "指定したスクリーンセーバーの紹介とそのカスタマイズです。"
 
 #: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
 msgid "Mode:"
-msgstr ""
+msgstr "モード:"
 
 #: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
-#, fuzzy
 msgid "Disable Screen Saver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "スクリーンセーバーを無効にする"
 
 #: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
 msgid "Blank Screen Only"
-msgstr ""
+msgstr "ブランク・スクリーンのみ"
 
 #: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
-#, fuzzy
 msgid "Only One Screen Saver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "一つのスクリーンセーバーのみ"
 
 #: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
-#, fuzzy
 msgid "Random Screen Saver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "ランダムなスクリーンセーバー"
 
 #: driver/demo-Gtk-widgets.c:565 driver/xscreensaver-demo.glade.h:75
 msgid "Use"
-msgstr ""
+msgstr "ON"
 
 #: driver/demo-Gtk-widgets.c:585 driver/xscreensaver-demo.glade.h:63
-#, fuzzy
 msgid "Screen Saver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "スクリーンセーバー名"
 
 #: driver/demo-Gtk-widgets.c:638 driver/xscreensaver-demo.glade.h:91
 msgid "\\/"
-msgstr ""
+msgstr "\\/"
 
 #: driver/demo-Gtk-widgets.c:646 driver/xscreensaver-demo.glade.h:61
 msgid ""
 "Run the next screen saver in the list in full-screen mode (click the mouse "
 "to return.)"
 msgstr ""
+"一つ次のスクリーンセーバーを全画面モードで起動します (解除する場合はマウスを"
+"クリックして下さい)。"
 
 #: driver/demo-Gtk-widgets.c:648
 msgid "/\\"
-msgstr ""
+msgstr "/\\"
 
 #: driver/demo-Gtk-widgets.c:656 driver/xscreensaver-demo.glade.h:62
 msgid ""
 "Run the previous screen saver in the list in full-screen mode (click the "
 "mouse to return.)"
 msgstr ""
+"一つ前のスクリーンセーバーを全画面モードで起動します (解除する場合はマウスを"
+"クリックして下さい)。"
 
 #: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
 #: driver/xscreensaver-demo.glade.h:22
 msgid "Description"
-msgstr ""
+msgstr "説明"
 
 #: driver/demo-Gtk-widgets.c:685 driver/xscreensaver-demo.glade.h:26
 msgid "Display Modes"
-msgstr ""
+msgstr "表示モード"
 
 #: driver/demo-Gtk-widgets.c:701 driver/xscreensaver-demo.glade.h:23
 msgid "Diagnostics"
-msgstr ""
+msgstr "診断オプション"
 
 #: driver/demo-Gtk-widgets.c:745 driver/xscreensaver-demo.glade.h:80
 msgid "Whether the daemon should print lots of debugging information."
-msgstr ""
+msgstr "デーモンに詳細なデバッグ情報を表示させるかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:747 driver/xscreensaver-demo.glade.h:76
 msgid "Verbose Diagnostics"
-msgstr ""
+msgstr "診断情報を詳細にする"
 
 #: driver/demo-Gtk-widgets.c:762 driver/xscreensaver-demo.glade.h:79
 msgid ""
 "Whether any error output of the display modes should be redirected to the "
 "screen."
 msgstr ""
+"指定した表示モードのエラー出力を画面に表示するかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
 msgid "Display Subprocess Errors"
-msgstr ""
+msgstr "表示モードのエラーを表示する"
 
 #: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
 msgid ""
 "Whether the splash screen (with the version number and `Help' button) should "
 "be momentarily displayed when the daemon first starts up."
 msgstr ""
+"初めてデーモンを起動した時に、('ヘルプ' ボタンをクリックして表示される) スプ"
+"ラッシュスクリーンを一瞬表示させるかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:781 driver/xscreensaver-demo.glade.h:28
 msgid "Display Splash Screen at Startup"
-msgstr ""
+msgstr "起動時にスプラッシュスクリーンを表示する"
 
 #: driver/demo-Gtk-widgets.c:790 driver/xscreensaver-demo.glade.h:15
 msgid "Colormaps"
-msgstr ""
+msgstr "カラーマップ"
 
 #: driver/demo-Gtk-widgets.c:834 driver/xscreensaver-demo.glade.h:88
 msgid ""
 "Whether to install a private colormap when running in 8-bit mode on the "
 "default Visual."
 msgstr ""
+"デフォルトの表示として 8-bit モードで起動する場合、個人のカラーマップをインス"
+"トールするかどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:836 driver/xscreensaver-demo.glade.h:48
 msgid "Install Colormap"
-msgstr ""
+msgstr "カラーマップをインストールする"
 
 #: driver/demo-Gtk-widgets.c:859 driver/xscreensaver-demo.glade.h:86
 msgid ""
 "Whether the screen should slowly fade to black when the screen saver "
 "activates."
 msgstr ""
+"スクリーンセーバーが有効になったら、スクリーンをゆっくりとフェードインするか"
+"どうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:861 driver/xscreensaver-demo.glade.h:36
 msgid "Fade To Black When Blanking"
-msgstr ""
+msgstr "スクリーンセーバーをフェードインする"
 
 #: driver/demo-Gtk-widgets.c:876 driver/xscreensaver-demo.glade.h:85
 msgid ""
 "Whether the screen should slowly fade in from black when the screen saver "
 "deactivates."
 msgstr ""
+"スクリーンセーバーが無効になったら、スクリーンをゆっくりとフェードアウトする"
+"かどうかを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:878 driver/xscreensaver-demo.glade.h:35
 msgid "Fade From Black When Unblanking"
-msgstr ""
+msgstr "スクリーンセーバーをフェードアウトする"
 
 #: driver/demo-Gtk-widgets.c:904 driver/xscreensaver-demo.glade.h:34
 msgid "Fade Duration"
-msgstr ""
+msgstr "フェードする時間: "
 
 #: driver/demo-Gtk-widgets.c:922 driver/xscreensaver-demo.glade.h:44
 msgid "How long it should take for the screen to fade in and out."
-msgstr ""
+msgstr "スクリーンをフェードイン/アウトする間隔を指定して下さい。"
 
 #: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
 msgid "seconds"
-msgstr ""
+msgstr "秒間"
 
 #: driver/demo-Gtk-widgets.c:936 driver/xscreensaver-demo.glade.h:27
 msgid "Display Power Management"
-msgstr ""
+msgstr "モニタのパワーマネージメント"
 
 #: driver/demo-Gtk-widgets.c:980 driver/xscreensaver-demo.glade.h:84
 msgid "Whether the monitor should be powered down after a while."
-msgstr ""
+msgstr "モニタの電源を OFF にする場合に選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:982 driver/xscreensaver-demo.glade.h:57
 msgid "Power Management Enabled"
-msgstr ""
+msgstr "パワーマネージメントを有効にする"
 
 #: driver/demo-Gtk-widgets.c:1050 driver/xscreensaver-demo.glade.h:55
 msgid "Off After"
-msgstr ""
+msgstr "電源 OFF: "
 
 #: driver/demo-Gtk-widgets.c:1063 driver/xscreensaver-demo.glade.h:70
 msgid "Suspend After"
-msgstr ""
+msgstr "サスペンド: "
 
 #: driver/demo-Gtk-widgets.c:1076 driver/xscreensaver-demo.glade.h:68
 msgid "Standby After"
-msgstr ""
+msgstr "スタンバイ: "
 
 #: driver/demo-Gtk-widgets.c:1099 driver/xscreensaver-demo.glade.h:45
 msgid "How long until the monitor goes into power-saving mode."
-msgstr ""
+msgstr "パワーセービング・モードに移行するまでの時間を指定して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1113 driver/xscreensaver-demo.glade.h:46
 msgid "How long until the monitor powers down."
-msgstr ""
+msgstr "モニタの電源を OFF にするまでの時間を指定して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1117 driver/xscreensaver-demo.glade.h:47
 msgid "Image Manipulation"
-msgstr ""
+msgstr "画像の操作"
 
 #: driver/demo-Gtk-widgets.c:1161 driver/xscreensaver-demo.glade.h:81
 msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
+"画像の操作モード (お使いのデスクトップ上の画像に対する操作) を許可するかどう"
+"かを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
-msgstr ""
+msgstr "デスクトップ画像を操作対象にする"
 
 #: driver/demo-Gtk-widgets.c:1178 driver/xscreensaver-demo.glade.h:82
 msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
 msgstr ""
+"画像の操作モードで (可能ならば) システムのビデオ入力を対象にするかどうかを選"
+"択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1180 driver/xscreensaver-demo.glade.h:40
 msgid "Grab Video Frames"
-msgstr ""
+msgstr "ビデオ入力を操作対象にする"
 
 #: driver/demo-Gtk-widgets.c:1195 driver/xscreensaver-demo.glade.h:83
 msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
 msgstr ""
+"画像の操作モードで、ローカルディスクにある画像をランダムに取得するかどうかを"
+"選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
-msgstr ""
+msgstr "画像をランダムに選択する:"
 
 #: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
 msgid "The directory from which images will be randomly chosen."
-msgstr ""
+msgstr "ランダムに取得する画像が格納されているディレクトリを選択して下さい。"
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
-msgstr ""
+msgstr "参照"
 
 #: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
 #: driver/xscreensaver-demo.glade.h:3
 msgid "Advanced"
-msgstr ""
+msgstr "オプション"
 
 #: driver/demo-Gtk-widgets.c:1438 driver/xscreensaver-demo.glade.h:90
 msgid "XScreenSaver: Mode-Specific Settings"
-msgstr ""
+msgstr "XScreenSaver: モード指定の設定"
 
 #: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: driver/demo-Gtk-widgets.c:1489 driver/xscreensaver-demo.glade.h:66
 msgid "Standard"
-msgstr ""
+msgstr "標準"
 
 #: driver/demo-Gtk-widgets.c:1526 driver/xscreensaver-demo.glade.h:77
 msgid "Visual:"
-msgstr ""
+msgstr "表示:"
 
 #: driver/demo-Gtk-widgets.c:1544 driver/demo-Gtk-widgets.c:1567
 #: driver/demo-Gtk.c:1318 driver/demo-Gtk.c:2355
 #: driver/xscreensaver-demo.glade.h:5
 msgid "Any"
-msgstr ""
+msgstr "任せる"
 
 #: driver/demo-Gtk-widgets.c:1545 driver/xscreensaver-demo.glade.h:7
 msgid "Best"
-msgstr ""
+msgstr "最適"
 
 #: driver/demo-Gtk-widgets.c:1546 driver/xscreensaver-demo.glade.h:19
 msgid "Default"
-msgstr ""
+msgstr "デフォルト"
 
 #: driver/demo-Gtk-widgets.c:1547 driver/xscreensaver-demo.glade.h:20
 msgid "Default-N"
-msgstr ""
+msgstr "デフォルト-N"
 
 #: driver/demo-Gtk-widgets.c:1548 driver/xscreensaver-demo.glade.h:37
 msgid "GL"
-msgstr ""
+msgstr "GL"
 
 #: driver/demo-Gtk-widgets.c:1549 driver/xscreensaver-demo.glade.h:74
 msgid "TrueColor"
-msgstr ""
+msgstr "TrueColor"
 
 #: driver/demo-Gtk-widgets.c:1550 driver/xscreensaver-demo.glade.h:59
 msgid "PseudoColor"
-msgstr ""
+msgstr "PseudoColor"
 
 #: driver/demo-Gtk-widgets.c:1551 driver/xscreensaver-demo.glade.h:69
 msgid "StaticGray"
-msgstr ""
+msgstr "StaticGray"
 
 #: driver/demo-Gtk-widgets.c:1552 driver/xscreensaver-demo.glade.h:42
 msgid "GrayScale"
-msgstr ""
+msgstr "グレースケール"
 
 #: driver/demo-Gtk-widgets.c:1553 driver/xscreensaver-demo.glade.h:24
 msgid "DirectColor"
-msgstr ""
+msgstr "DirectColor"
 
 #: driver/demo-Gtk-widgets.c:1554 driver/xscreensaver-demo.glade.h:14
 msgid "Color"
-msgstr ""
+msgstr "色"
 
 #: driver/demo-Gtk-widgets.c:1555 driver/xscreensaver-demo.glade.h:41
 msgid "Gray"
-msgstr ""
+msgstr "グレー"
 
 #: driver/demo-Gtk-widgets.c:1556 driver/xscreensaver-demo.glade.h:53
 msgid "Mono"
-msgstr ""
+msgstr "単色"
 
 #: driver/demo-Gtk-widgets.c:1566 driver/xscreensaver-demo.glade.h:72
 msgid ""
 "The X visual type that this demo will require.  If that visual is available "
 "it will be used, otherwise, this demo will not be run."
 msgstr ""
+"このデモで要求される X の表示形式です。その表示が有効の場合はそれを使用します"
+"が、それ以外はデモを起動しません。"
 
 #: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
-msgstr ""
+msgstr "コマンドライン:"
 
 #: driver/demo-Gtk-widgets.c:1641 driver/xscreensaver-demo.glade.h:31
 msgid "Documentation..."
-msgstr ""
+msgstr "ドキュメント..."
 
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
 msgstr ""
+"このスクリーンセーバーのマニュアル (存在するならば) を表示する場合はここをク"
+"リックして下さい。"
 
 #: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
-msgstr ""
+msgstr "拡張オプション >>"
 
 #: driver/demo-Gtk-widgets.c:1682 driver/xscreensaver-demo.glade.h:32
 msgid "Edit the command line directly."
-msgstr ""
+msgstr "直接、コマンドラインを編集します。"
 
 #: driver/demo-Gtk-widgets.c:1684 driver/xscreensaver-demo.glade.h:67
 msgid "Standard <<"
-msgstr ""
+msgstr "標準オプション <<"
 
 #: driver/demo-Gtk-widgets.c:1692 driver/xscreensaver-demo.glade.h:6
 msgid "Back to the graphical configuration options."
-msgstr ""
+msgstr "標準の設定に戻ります。"
 
 #: driver/demo-Gtk-widgets.c:1703 driver/demo-Gtk.c:587
 #: driver/xscreensaver-demo.glade.h:54
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: driver/demo-Gtk-widgets.c:1712 driver/xscreensaver-demo.glade.h:11
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: driver/demo-Gtk.c:511
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
-msgstr ""
+msgstr "更新情報については http://www.jwz.org/xscreensaver/ を参照して下さい。"
 
 #: driver/demo-Gtk.c:517
-#, c-format
-msgid "Copyright � 1991-2002 %s"
-msgstr ""
+#, fuzzy, c-format
+msgid "Copyright  1991-2002 %s"
+msgstr "Copyright  1991-2002 %s"
 
 #: driver/demo-Gtk.c:624
 msgid ""
@@ -498,6 +522,9 @@ msgid ""
 "\n"
 "No Help URL has been specified.\n"
 msgstr ""
+"Error:\n"
+"\n"
+"ヘルプの URL が指定されていません。\n"
 
 #: driver/demo-Gtk.c:710
 msgid ""
@@ -506,6 +533,10 @@ msgid ""
 "The xscreensaver daemon did not start up properly.\n"
 "\n"
 msgstr ""
+"Error:\n"
+"\n"
+"XScreenSaver デーモンが正しく起動されていません。\n"
+"\n"
 
 #: driver/demo-Gtk.c:716
 msgid ""
@@ -525,10 +556,25 @@ msgid ""
 "You shouldn't run X as root. Instead, you should log in as a\n"
 "normal user, and `su' as necessary."
 msgstr ""
+"root 権限で起動中です。アクセスコントロールが有効になっているので\n"
+"XScreenSaver はお使いの X サーバと通信することが不可能になることを\n"
+"意味します。次のコマンドを実行してみて下さい:\n"
+"\n"
+"                        xhost +localhost\n"
+"\n"
+"その後にメニューの 'ファイル - デーモンの再起動' を選択して下さい。\n"
+"\n"
+"アクセスコントロールを無効にすると、お使いのスクリーンに\n"
+"アクセスするために誰もがこのマシンにログインできてしまいます。\n"
+"これはセキュリティ問題に配慮した対策です。\n"
+"詳細は XScreenSaver マニュアルと FAQ を参照して下さい。\n"
+"\n"
+"root 権限で X サーバを起動しないで下さい。必要であれば、\n"
+"一般ユーザでログインして 'su' コマンドで代用して下さい。"
 
 #: driver/demo-Gtk.c:732
 msgid "Please check your $PATH and permissions."
-msgstr ""
+msgstr "環境変数 $PATH とその権限を確認して下さい。"
 
 #: driver/demo-Gtk.c:767
 msgid ""
@@ -536,6 +582,9 @@ msgid ""
 "\n"
 "Couldn't determine init file name!\n"
 msgstr ""
+"Error:\n"
+"\n"
+"初期化ファイル名を特定できませんでした！\n"
 
 #: driver/demo-Gtk.c:772
 #, c-format
@@ -544,6 +593,9 @@ msgid ""
 "\n"
 "Couldn't write %s\n"
 msgstr ""
+"Error:\n"
+"\n"
+"%s に書き込めませんでした。\n"
 
 #: driver/demo-Gtk.c:831
 msgid ""
@@ -551,6 +603,9 @@ msgid ""
 "\n"
 "no `manualCommand' resource set."
 msgstr ""
+"Error:\n"
+"\n"
+"リソース 'manualCommand' がセットされていません。"
 
 #: driver/demo-Gtk.c:1001
 #, c-format
@@ -559,6 +614,9 @@ msgid ""
 "\n"
 "Unparsable time format: \"%s\"\n"
 msgstr ""
+"Error:\n"
+"\n"
+"時刻の書式を解析できません: \"%s\"\n"
 
 #: driver/demo-Gtk.c:1528
 #, c-format
@@ -567,23 +625,25 @@ msgid ""
 "\n"
 "Directory does not exist: \"%s\"\n"
 msgstr ""
+"Error:\n"
+"\n"
+"ディレクトリが存在しません: \"%s\"\n"
 
 #: driver/demo-Gtk.c:2053
 msgid "Descriptions not available: no XML support compiled in."
-msgstr ""
+msgstr "説明が有効ではありません: XML サポートでコンパイルされていません。"
 
 #: driver/demo-Gtk.c:2058
 msgid "No description available."
-msgstr ""
+msgstr "有効な説明はありません。"
 
 #: driver/demo-Gtk.c:2307
 msgid "Blank Screen"
-msgstr ""
+msgstr "ブランク・スクリーン"
 
 #: driver/demo-Gtk.c:2313
-#, fuzzy
 msgid "Screen Saver Disabled"
-msgstr "�����꡼�󥻡��С�"
+msgstr "スクリーンセーバーは無効です"
 
 #: driver/demo-Gtk.c:2473
 #, c-format
@@ -592,14 +652,17 @@ msgid ""
 "\n"
 "file \"%s\" has changed, reloading.\n"
 msgstr ""
+"Warning:\n"
+"\n"
+"ファイル \"%s\" が変更されました。再読込みします。\n"
 
 #: driver/demo-Gtk.c:2540
 msgid "No Preview"
-msgstr ""
+msgstr "プレビューは"
 
 #: driver/demo-Gtk.c:2540
 msgid "Available"
-msgstr ""
+msgstr "無効です。"
 
 #: driver/demo-Gtk.c:3210
 #, c-format
@@ -609,6 +672,10 @@ msgid ""
 "The XScreenSaver daemon doesn't seem to be running\n"
 "on display \"%s\".  Launch it now?"
 msgstr ""
+"Warning:\n"
+"\n"
+"ディスプレイ \"%s\" 上で XScreenSaver デーモンが\n"
+"起動されていないようです。起動しますか？"
 
 #: driver/demo-Gtk.c:3220
 #, c-format
@@ -628,6 +695,20 @@ msgid ""
 "\n"
 "Restart the xscreensaver daemon now?\n"
 msgstr ""
+"Warning:\n"
+"\n"
+"%s をユーザ \"%s\" (ホスト \"%s\" ) で起動しました。\n"
+"但しディスプレイ \"%s\" では、既に XScreenSaver が\n"
+"ユーザ \"%s\" (ホスト \"%s\") で起動中です。\n"
+"\n"
+"使用するユーザが異なるので、${HOME}/.xscreensaver ファイルを\n"
+"同時に読み書きすることはできません。\n"
+"そのため %s は正しく動作しません。\n"
+"\n"
+"%s を \"%s\" として再起動するか、\n"
+"XScreenSaver を \"%s\" で再起動してみて下さい。\n"
+"\n"
+"XScreenSaver デモを再起動しますか？\n"
 
 #: driver/demo-Gtk.c:3245
 #, c-format
@@ -644,6 +725,17 @@ msgid ""
 "\n"
 "Restart the daemon on \"%s\" as \"%s\" now?\n"
 msgstr ""
+"Warning:\n"
+"\n"
+"%s をユーザ \"%s\" (ホスト \"%s\") で起動しました。\n"
+"但しディスプレイ \"%s\" では、既に XScreenSaver が\n"
+"ユーザ \"%s\" (ホスト \"%s\") で起動中です。\n"
+"\n"
+"この二つのマシンの間でファイルシステムを共有していない\n"
+"(つまり、~%s/.xscreensaver ファイルを同時に参照できない) 場合は\n"
+"%s は正しく動作しません。\n"
+"\n"
+"XScreenSaver デーモンを \"%s\" 上で \"%s\" から再起動しますか？\n"
 
 #: driver/demo-Gtk.c:3267
 #, c-format
@@ -656,24 +748,30 @@ msgid ""
 "\n"
 "Restart the xscreensaver daemon now?\n"
 msgstr ""
+"Warning:\n"
+"\n"
+"これは %s バージョン %s です。\n"
+"但しディスプレイ \"%s\" では、既にバージョン %s が\n"
+"起動中です。これは問題を引き起こします。\n"
+"\n"
+"XScreenSaver デーモンを再起動しますか？\n"
 
 #: driver/demo-Gtk.c:3636
 #, c-format
 msgid "%s: unknown option: %s\n"
-msgstr ""
+msgstr "%s: 不明なオプション: %s\n"
 
 #: driver/screensaver-properties.desktop.in.h:1
 msgid "Configure the settings of the screensaver."
-msgstr "�����꡼�󥻡��С�������"
+msgstr "XScreenSaver の設定"
 
 #: driver/screensaver-properties.desktop.in.h:2
-#, fuzzy
 msgid "Screensaver"
-msgstr "�����꡼�󥻡��С�"
+msgstr "スクリーンセーバー"
 
 #: driver/xscreensaver-demo.glade.h:1
 msgid "/\");"
-msgstr ""
+msgstr "/\");"
 
 #: hacks/config/ant.xml.h:1
 msgid ""
@@ -1364,7 +1462,7 @@ msgid "Stars"
 msgstr ""
 
 #: hacks/config/blitspin.xml.h:1
-msgid "90� Rotation Speed"
+msgid "90 Rotation Speed"
 msgstr ""
 
 #: hacks/config/blitspin.xml.h:2
@@ -2520,9 +2618,8 @@ msgid "Mesh Density"
 msgstr ""
 
 #: hacks/config/gflux.xml.h:10
-#, fuzzy
 msgid "Screen Image"
-msgstr "�����꡼�󥻡��С�"
+msgstr "スクリーンの画像"
 
 #: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
 msgid "Wave Speed"
@@ -4413,7 +4510,7 @@ msgid "Swirl"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:1
-msgid "0�"
+msgid "0"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:2
@@ -4421,7 +4518,7 @@ msgid "5 Minute Tick Marks"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:3
-msgid "90�"
+msgid "90"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:4
@@ -4995,3 +5092,140 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Copyright  1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"
+
+#, fuzzy
+#~ msgid "Choose _Random Image:"
+#~ msgstr "画像をランダムに選択する:"
+
+#, fuzzy
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "表示モードのエラーを表示する"
+
+#, fuzzy
+#~ msgid "Display _Splash Screen at Startup"
+#~ msgstr "起動時にスプラッシュスクリーンを表示する"
+
+#, fuzzy
+#~ msgid "F_ade Duration"
+#~ msgstr "フェードする時間: "
+
+#, fuzzy
+#~ msgid "Fade from Black When _Unblanking"
+#~ msgstr "スクリーンセーバーをフェードアウトする"
+
+#, fuzzy
+#~ msgid "Fade to Black when _Blanking"
+#~ msgstr "スクリーンセーバーをフェードインする"
+
+#, fuzzy
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "デスクトップ画像を操作対象にする"
+
+#, fuzzy
+#~ msgid "Grab _Video Frames"
+#~ msgstr "ビデオ入力を操作対象にする"
+
+#, fuzzy
+#~ msgid "Install _Colormap"
+#~ msgstr "カラーマップをインストールする"
+
+#, fuzzy
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr "プレビューは"
+
+#, fuzzy
+#~ msgid "Preview of screen saver"
+#~ msgstr "スクリーンセーバーを無効にする"
+
+#, fuzzy
+#~ msgid "Stand_by After"
+#~ msgstr "スタンバイ: "
+
+#, fuzzy
+#~ msgid "Sus_pend After"
+#~ msgstr "サスペンド: "
+
+#, fuzzy
+#~ msgid "_Advanced"
+#~ msgstr "オプション"
+
+#, fuzzy
+#~ msgid "_Advanced >>"
+#~ msgstr "拡張オプション >>"
+
+#, fuzzy
+#~ msgid "_Blank After"
+#~ msgstr "XScreenSaver の起動: "
+
+#, fuzzy
+#~ msgid "_Browse"
+#~ msgstr "参照"
+
+#, fuzzy
+#~ msgid "_Command Line:"
+#~ msgstr "コマンドライン:"
+
+#, fuzzy
+#~ msgid "_Cycle After"
+#~ msgstr "繰り返す周期: "
+
+#, fuzzy
+#~ msgid "_Display Modes"
+#~ msgstr "表示モード"
+
+#, fuzzy
+#~ msgid "_Lock Screen After"
+#~ msgstr "画面ロックの起動: "
+
+#, fuzzy
+#~ msgid "_Mode:"
+#~ msgstr "モード:"
+
+#, fuzzy
+#~ msgid "_Off After"
+#~ msgstr "電源 OFF: "
+
+#, fuzzy
+#~ msgid "_Power Management Enabled"
+#~ msgstr "パワーマネージメントを有効にする"
+
+#, fuzzy
+#~ msgid "_Preview"
+#~ msgstr "プレビュー"
+
+#, fuzzy
+#~ msgid "_Quit"
+#~ msgstr "終了(_E)"
+
+#, fuzzy
+#~ msgid "_Settings..."
+#~ msgstr "設定..."
+
+#, fuzzy
+#~ msgid "_Standard <<"
+#~ msgstr "標準オプション <<"
+
+#, fuzzy
+#~ msgid "_Verbose Dialognostics"
+#~ msgstr "診断情報を詳細にする"
+
+#, fuzzy
+#~ msgid "_Visual:"
+#~ msgstr "表示:"
+
+#, fuzzy
+#~ msgid "no preview"
+#~ msgstr "プレビューは"
+
+#, fuzzy
+#~ msgid "preview"
+#~ msgstr "プレビュー"
+
+#~ msgid "Copyright 息 1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"

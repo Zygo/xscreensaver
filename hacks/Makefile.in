@@ -13,8 +13,9 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 mandir		= @mandir@
-man1dir		= $(mandir)/man1
+# maybe this should be 6 (games)?
 mansuffix	= 1
+manNdir		= $(mandir)/man$(mansuffix)
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
@@ -95,7 +96,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
-		  anemone.c
+		  anemone.c halftone.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -119,7 +120,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
-		  anemone.o
+		  anemone.o halftone.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -135,7 +136,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
-		  juggle polyominoes thornbird  fluidballs anemone \
+		  juggle polyominoes thornbird  fluidballs anemone halftone \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -176,7 +177,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          wander.man webcollage.man whirlwindwarp.man whirlygig.man \
 	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
 	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
-	          zoom.man
+	          zoom.man halftone.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  config/README \
@@ -273,15 +274,15 @@ munge-scripts: $(SCRIPTS)
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	if [ ! -d $(install_prefix)$(man1dir) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(man1dir) ;			\
+	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
 	 fi ;								\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(install_prefix)$(man1dir)/$$instname ;			\
+	   $(install_prefix)$(manNdir)/$$instname ;			\
 	  $(INSTALL_DATA) $(srcdir)/$$man				\
-	    $(install_prefix)$(man1dir)/$$instname ;			\
+	    $(install_prefix)$(manNdir)/$$instname ;			\
 	done
 
 install-xml:
@@ -306,8 +307,8 @@ uninstall-man:
 	@men="$(MEN)" ;							\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(man1dir)/$$instname ;		\
-	  rm -f $(install_prefix)$(man1dir)/$$instname ;		\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname ;		\
+	  rm -f $(install_prefix)$(manNdir)/$$instname ;		\
 	done
 
 uninstall-xml:
@@ -674,8 +675,8 @@ ccurve:		ccurve.o	$(HACK_OBJS) $(COL) $(SPL)
 blaster:	blaster.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-bumps:		bumps.o		$(HACK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS)
+bumps:		bumps.o		$(HACK_OBJS) $(GRAB) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
 
 ripples:	ripples.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB) $(HACK_LIBS)
@@ -721,6 +722,9 @@ fluidballs:	fluidballs.o	$(HACK_OBJS)
 
 anemone:	anemone.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
+
+halftone:	halftone.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -884,6 +888,7 @@ braid.o: $(srcdir)/xlockmore.h
 bsod.o: ../config.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/atari.xbm
+bsod.o: $(srcdir)/images/hmac.xpm
 bsod.o: $(srcdir)/images/macbomb.xbm
 bsod.o: $(srcdir)/images/mac.xbm
 bsod.o: $(srcdir)/screenhack.h
@@ -1016,6 +1021,8 @@ grav.o: $(srcdir)/xlockmoreI.h
 grav.o: $(srcdir)/xlockmore.h
 greynetic.o: ../config.h
 greynetic.o: $(srcdir)/screenhack.h
+halftone.o: ../config.h
+halftone.o: $(srcdir)/screenhack.h
 halo.o: ../config.h
 halo.o: $(srcdir)/screenhack.h
 helix.o: ../config.h

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2000 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2000, 2002 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,7 +67,7 @@ main (int argc, char **argv)
   visual = get_gl_visual (screen);
 
   if (visual)
-    printf ("0x%x\n", XVisualIDFromVisual (visual));
+    printf ("0x%x\n", (unsigned int) XVisualIDFromVisual (visual));
   else
     printf ("none\n");
 

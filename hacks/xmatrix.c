@@ -129,6 +129,7 @@ typedef struct {
   m_cell *cursor;
   m_feeder *feeders;
   int nspinners;
+  Bool knock_knock_p;
   Bool small_p;
   Bool insert_top_p, insert_bottom_p;
   m_mode mode;
@@ -369,6 +370,8 @@ init_matrix (Display *dpy, Window window)
 
   if (insert)
     free (insert);
+
+  state->knock_knock_p = get_boolean_resource ("knockKnock", "KnockKnock");
 
   mode = get_string_resource ("mode", "Mode");
   if (mode && !strcasecmp(mode, "trace"))
@@ -771,7 +774,7 @@ roll_state (m_state *state)
       break;
 
     case MATRIX:
-      if (! (random() % 5000))
+      if (state->knock_knock_p && (! (random() % 5000)))
         {
           state->mode = KNOCK0;
           flip_images (state);
@@ -937,6 +940,7 @@ char *defaults [] = {
   "*tracePhone:            (212) 555-0690",
   "*spinners:		   5",
   "*density:		   75",
+  "*knockKnock:		   False",
   0
 };
 
@@ -953,6 +957,7 @@ XrmOptionDescRec options [] = {
   { "-dna",		".mode",		XrmoptionNoArg, "DNA" },
   { "-binary",		".mode",		XrmoptionNoArg, "binary" },
   { "-hexadecimal",	".mode",		XrmoptionNoArg, "hexadecimal"},
+  { "-knock-knock",	".knockKnock",		XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };
 

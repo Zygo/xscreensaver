@@ -191,91 +191,82 @@ parse_image_data(ModeInfo *mi)
 }
 
 
-/* Computing normal vectors (thanks to Nat Friedman <ndf@mit.edu>)
+typedef struct {
+  double x,y,z;
+} XYZ;
+
+static void
+normalize (XYZ *p)
+{
+  double length;
+  length = sqrt (p->x * p->x +
+                 p->y * p->y +
+                 p->z * p->z);
+  if (length != 0)
+    {
+      p->x /= length;
+      p->y /= length;
+      p->z /= length;
+    }
+  else
+    {
+      p->x = 0;
+      p->y = 0;
+      p->z = 0;
+    }
+}
+
+/* Calculate the unit normal at p given two other points p1,p2 on the
+   surface. The normal points in the direction of p1 crossproduct p2
  */
-
-typedef struct vector {
-  GLfloat x, y, z;
-} vector;
-
-typedef struct plane {
-  vector p1, p2, p3;
-} plane;
-
-static void
-vector_set(vector *v, GLfloat x, GLfloat y, GLfloat z)
+static XYZ
+calc_normal (XYZ p, XYZ p1, XYZ p2)
 {
-  v->x = x;
-  v->y = y;
-  v->z = z;
+  XYZ n, pa, pb;
+  pa.x = p1.x - p.x;
+  pa.y = p1.y - p.y;
+  pa.z = p1.z - p.z;
+  pb.x = p2.x - p.x;
+  pb.y = p2.y - p.y;
+  pb.z = p2.z - p.z;
+  n.x = pa.y * pb.z - pa.z * pb.y;
+  n.y = pa.z * pb.x - pa.x * pb.z;
+  n.z = pa.x * pb.y - pa.y * pb.x;
+  normalize (&n);
+  return (n);
 }
 
-static void
-vector_cross(vector v1, vector v2, vector *v3)
-{
-  v3->x = (v1.y * v2.z) - (v1.z * v2.y);
-  v3->y = (v1.z * v2.x) - (v1.x * v2.z);
-  v3->z = (v1.x * v2.y) - (v1.y * v2.x);
-}
-
-static void
-vector_subtract(vector v1, vector v2, vector *res)
-{
-  res->x = v1.x - v2.x;
-  res->y = v1.y - v2.y;
-  res->z = v1.z - v2.z;
-}
-
-static void
-plane_normal(plane p, vector *n)
-{
-  vector v1, v2;
-  vector_subtract(p.p1, p.p2, &v1);
-  vector_subtract(p.p1, p.p3, &v2);
-  vector_cross(v2, v1, n);
-}
 
 static void
 do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
 	  GLfloat x2, GLfloat y2, GLfloat z2,
 	  GLfloat x3, GLfloat y3, GLfloat z3)
 {
-  plane plane;
-  vector n;
-  vector_set(&plane.p1, x1, y1, z1);
-  vector_set(&plane.p2, x2, y2, z2);
-  vector_set(&plane.p3, x3, y3, z3);
-  plane_normal(plane, &n);
-  n.x = -n.x; n.y = -n.y; n.z = -n.z;
+  XYZ p1, p2, p3, p;
+  p1.x = x1; p1.y = y1; p1.z = z1;
+  p2.x = x2; p2.y = y2; p2.z = z2;
+  p3.x = x3; p3.y = y3; p3.z = z3;
 
-  glNormal3f(n.x, n.y, n.z);
+  p = calc_normal (p1, p2, p3);
+
+  glNormal3f (p.x, p.y, p.z);
 
 #ifdef DEBUG
   /* Draw a line in the direction of this face's normal. */
   {
-    GLfloat ax = n.x > 0 ? n.x : -n.x;
-    GLfloat ay = n.y > 0 ? n.y : -n.y;
-    GLfloat az = n.z > 0 ? n.z : -n.z;
-    GLfloat mx = (x1 + x2 + x3) / 3;
-    GLfloat my = (y1 + y2 + y3) / 3;
-    GLfloat mz = (z1 + z2 + z3) / 3;
-    GLfloat xx, yy, zz;
-
-    GLfloat max = ax > ay ? ax : ay;
-    if (az > max) max = az;
-    max *= 2;
-    xx = n.x / max;
-    yy = n.y / max;
-    zz = n.z / max;
-
+    glPushMatrix();
+    glTranslatef ((x1 + x2 + x3) / 3,
+                  (y1 + y2 + y3) / 3,
+                  (z1 + z2 + z3) / 3);
+    glScalef (0.5, 0.5, 0.5);
     glBegin(GL_LINE_LOOP);
-    glVertex3f(mx, my, mz);
-    glVertex3f(mx+xx, my+yy, mz+zz);
+    glVertex3f(0, 0, 0);
+    glVertex3f(p.x, p.y, p.z);
     glEnd();
+    glPopMatrix();
   }
 #endif /* DEBUG */
 }
-
 
 
 /* Shorthand utilities for making faces, with proper normals.

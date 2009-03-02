@@ -1,4 +1,4 @@
-# Auto-generated: Tue Jun 11 02:09:09 PDT 2002
+# Auto-generated: Wed Oct 23 20:26:20 PDT 2002
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -54,6 +54,7 @@ hacks/config/forest.xml
 hacks/config/galaxy.xml
 hacks/config/gears.xml
 hacks/config/gflux.xml
+hacks/config/glblur.xml
 hacks/config/glforestfire.xml
 hacks/config/glplanet.xml
 hacks/config/glsnake.xml
@@ -62,6 +63,7 @@ hacks/config/goban.xml
 hacks/config/goop.xml
 hacks/config/grav.xml
 hacks/config/greynetic.xml
+hacks/config/halftone.xml
 hacks/config/halo.xml
 hacks/config/helix.xml
 hacks/config/hopalong.xml

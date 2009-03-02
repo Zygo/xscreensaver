@@ -18,6 +18,9 @@
  *  [10/01/99] - Shane Smit: Creation
  *  [10/08/99] - Shane Smit: Port to C. (Ick)
  *  [03/08/02] - Shane Smit: New movement code.
+ *  [09/12/02] - Shane Smit: MIT-SHM XImages.
+ * 							 Thanks to Kennett Galbraith <http://www.Alpha-II.com/>
+ * 							 for code optimization.
  */
 
 
@@ -28,6 +31,10 @@
 #include <math.h>
 #include "screenhack.h"
 #include <X11/Xutil.h>
+
+#ifdef HAVE_XSHM_EXTENSION
+#include "xshm.h"
+#endif /* HAVE_XSHM_EXTENSION */
 
 
 /* Defines: */
@@ -51,12 +58,15 @@ char *defaults [] = {
   ".foreground: white",
   "*color:		random",
   "*colorcount:	64",
-  "*delay:		50000",
+  "*delay:		30000",
   "*soften:		1",
   "*invert:		FALSE",
 #ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
-   "*visualID:		Best",
+  "*visualID:	Best",
 #endif
+#ifdef HAVE_XSHM_EXTENSION
+  "*useSHM:		True",
+#endif /* HAVE_XSHM_EXTENSION */
   0
 };
 
@@ -66,6 +76,11 @@ XrmOptionDescRec options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-soften",		".soften",		XrmoptionSepArg, 0 },
   { "-invert",		".invert",		XrmoptionNoArg, "TRUE" },
+#ifdef HAVE_XSHM_EXTENSION
+  { "-shm",			".useSHM",		XrmoptionNoArg, "True" },
+  { "-no-shm",		".useSHM",		XrmoptionNoArg, "False" },
+#endif /* HAVE_XSHM_EXTENSION */
+
   { 0, 0, 0, 0 }
 };
 
@@ -75,7 +90,8 @@ XrmOptionDescRec options [] = {
 typedef struct
 {
 	uint8_ *aLightMap;
-	uint16_ nDiameter, nRadius;
+	uint16_ nFalloffDiameter, nFalloffRadius;
+	uint16_ nLightDiameter, nLightRadius;
 	float nAccelX, nAccelY;
 	float nAccelMax;
 	float nVelocityX, nVelocityY;
@@ -95,10 +111,15 @@ typedef struct
 	Display *pDisplay;
 	Window Win;
 	GC GraphicsContext;
-	XColor *aXColors;
+	uint32_ *aColors;
 	XImage *pXImage;
+#ifdef HAVE_XSHM_EXTENSION
+	XShmSegmentInfo XShmInfo;
+	Bool	bUseShm;
+#endif /* HAVE_XSHM_EXTENSION */
 
 	uint8_ nColorCount;				/* Number of colors used. */
+	uint8_ bytesPerPixel;
 	uint16_ iWinWidth, iWinHeight;
 	uint16_ *aBumpMap;				/* The actual bump map. */
 

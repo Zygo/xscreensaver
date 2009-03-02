@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,6 +41,8 @@ struct saver_preferences {
   Bool verbose_p;		/* whether to print out lots of status info */
   Bool timestamp_p;		/* whether to mark messages with a timestamp */
   Bool capture_stderr_p;	/* whether to redirect stdout/stderr  */
+  Bool ignore_uninstalled_p;	/* whether to avoid displaying or complaining
+                                   about hacks that are not on $PATH */
   Bool debug_p;			/* pay no mind to the man behind the curtain */
   Bool xsync_p;			/* whether XSynchronize has been called */
 

@@ -1,17 +1,85 @@
-2002-05-25  Jacob Berkman  <jacob@ximian.com>
+2002-06-18  Carlos Perello Marin <carlos@gnome-db.org>
 
-	* Makefile.in.in (MKINSTALLDIRS): maybe fix build
+	* INFO, xscreensaver.pot: Updated from 4.0.5 release.
+	
+2002-06-16  Carlos Perello Marin <carlos@gnome-db.org>
 
+	* INFO: Added extra info. I will take all translations from here, you
+	don't need to send me it by mail.
+
+2002-06-16  Pablo Saratxaga  <pablo@mandrakesoft.com>
+
+	* vi.po: Added Vietnamese file
+
+2002-06-14  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+
+2002-06-14  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+
+2002-06-12  Abel Cheung  <maddog@linux.org.hk>
+
+	* zh_TW.po: New traditional Chinese translation.
+
+2002-06-09  Takeshi Aihana <aihana@gnome.gr.jp>
+
+	* ja.po: Added as Japanese translation.
+
+2002-06-06  Christian Rose  <menthos@menthos.com>
+
+	* sv.po: Added from xscreensaver module.
+
+2002-06-06  Ole Laursen  <olau@hardworking.dk>
+
+	* da.po: Added and halfway-updated from xscreensaver module.
+
+2002-06-06  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
+
+	* et.po: Added from xscreensaver module.
+
+2002-06-06  Carlos Perello Marin <carlos@gnome-db.org>
+
+	* es.po,nl.po,no.po,pt.po,sk.po,zh_CN.po: Added from xscreensaver
+	module.
+	* xscreensaver.pot: Added from latest release (4.04.2).
+	* INFO: Added info about this module.
+
+2002-06-04  Vincent van Adrighem <V.vanAdrighem@dirck.mine.nu>
+
+        * nl.po: Added Dutch translation.
+
+2002-05-26  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-25  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-23  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-23  Wang Jian  <lark@linux.net.cn>
+
+	* zh_CN.po: Backported Simplified Chinese translation from HEAD.
+
+2002-05-19  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+						
 2002-05-17  Wang Jian  <lark@linux.net.cn>
 
 	* zh_CN.po: Added Simplified Chinese translation by
 	He Qiangqiang <carton@linux.net.cn>.
+
+2002-05-11  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+        * sk.po: Backported Slovak translation from HEAD.
 	
-2002-05-06  jacob berkman  <jacob@ximian.com>
-
-	* POTFILES.in: update
-
-2002-05-01  Germán Poo-Caamaño  <gpoo@ubiobio.cl>
+2002-05-01  Germ-Aán Poo-Caamaño  <gpoo@ubiobio.cl>$)B
 
 	* es.po: Updated Spanish translation from
 	Guillermo Movia <gmovia@hotpop.com> and converted to UTF-8
@@ -24,7 +92,7 @@
 
         * pt.po: Added Portuguese translation.
 
-2002-04-26  Tõivo Leedjärv  <toivo@linux.ee>
+2002-04-26  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
 
         * et.po: Updated Estonian translation.
 
@@ -32,17 +100,9 @@
 
 	* da.po: Updated Danish translation.
 
-2002-04-22  Jacob Berkman  <jacob@ximian.com>
-
-	* POTFILES.in: add cubenetic.xml (marcel telka <marcel@telka.sk>
-
 2002-04-21  Kjartan Maraas  <kmaraas@gnome.org>
 
-	* no.po: Updated Norwegian (bokmål) translation.
-
-2002-04-19  jacob berkman  <jacob@ximian.com>
-
-	* POTFILES.in: add some files
+	* no.po: Updated Norwegian (bokm-Aål) translation.$)B
 
 2002-04-08  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
 
@@ -81,11 +141,6 @@
 
 	* sk.po: Added initial Slovak translation Marcel Telka <marcel@telka.sk>.
 
-2002-03-24  jacob berkman  <jacob@ximian.com>
-
-	* POTFILES.in: remove demo-Gtk-widgets.c, add demo-Gtk.c (not a
-	permanent fix)
-
 2002-03-23  Ole Laursen  <olau@hardworking.dk>
 
 	* da.po: Added Danish translation.
@@ -95,13 +150,9 @@
 	* pl.po: Updated Polish translation by
 	GNOME PL Team <translators@gnome.pl>.
 
-2002-03-22  Tõivo Leedjärv  <toivo@linux.ee>
+2002-03-22  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
 
 	* et.po: Added Estonian translation.
-
-2002-03-19  jacob berkman  <jacob@ximian.com>
-
-	* POTFILES.in: add xscreensaver-demo.glade2
 
 2002-03-18  Vincent van Adrighem <V.vanAdrighem@dirck.mine.nu>
 
@@ -109,7 +160,7 @@
 	
 2002-03-18  Kjartan Maraas  <kmaraas@gnome.org>
 
-	* no.po: Updated Norwegian (bokmål) translation.
+	* no.po: Updated Norwegian (bokm-Aål) translation.$)B
 	
 2002-03-18  Valek Filippov  <frob@df.ru>
 
@@ -119,11 +170,6 @@
 
 	* fr.po: Updated French translation.
 
-2002-03-18  Carlos Perelló Marín <carlos@gnome-db.org>
+2002-03-18  Carlos Perell-Aó Marín <carlos@gnome-db.org>$)B
 
 	* es.po: Fixed a dup string.
-	* POTFILES.in: Added missing files.
-
-2002-03-15  jacob berkman  <jacob@ximian.com>
-
-	* Makefile.in.in (DESTDIR): set to $(install_prefix)

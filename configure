@@ -2361,7 +2361,7 @@ fi
   if test -n "$GCC"; then
     echo "$as_me:$LINENO: result: Turning on gcc compiler warnings." >&5
 echo "${ECHO_T}Turning on gcc compiler warnings." >&6
-    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs -Wno-format"
+    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs"
   else
     case "$host" in
       *-irix5* |*-irix6.0-3* )
@@ -6276,9 +6276,7 @@ _ACEOF
 
 
 
-# #### no sign of  en_GB
-#ALL_LINGUAS="ca de en_GB et fr it ko pl sv da es fi hu ja no pt pt_BR ru wa"
-ALL_LINGUAS="ca de et fr it ko pl sv da es fi hu ja no pt pt_BR ru wa"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -12494,6 +12492,7 @@ _ACEOF
     else
       if test -n "$ac_gtk_version_string" ; then
         gtk2_halfassed="$ac_gtk_version_string"
+        gtk2_halfassed_lib="$req"
       fi
     fi
 
@@ -12919,7 +12918,7 @@ fi
 
 
   GNOME_DATADIR=""
-  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+  if test "$have_gtk" = yes; then
     if test -n "$pkg_config"; then
       if test "$have_gtk2" = yes; then
         GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
@@ -12960,9 +12959,11 @@ fi
 
 # Check for the Gnome Help Browser.
 #
-if test "$have_gnome" = yes; then
-  # Extract the first word of "gnome-help-browser", so it can be a program name with args.
-set dummy gnome-help-browser; ac_word=$2
+if test "$have_gtk" = yes; then
+  for ac_prog in yelp gnome-help-browser
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_prog_have_gnome_help+set}" = set; then
@@ -12978,14 +12979,13 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_have_gnome_help="yes"
+    ac_cv_prog_have_gnome_help="$ac_prog"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
 done
 done
 
-  test -z "$ac_cv_prog_have_gnome_help" && ac_cv_prog_have_gnome_help="no"
 fi
 fi
 have_gnome_help=$ac_cv_prog_have_gnome_help
@@ -12997,8 +12997,13 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-else
-  have_gnome_help=no
+  test -n "$have_gnome_help" && break
+done
+test -n "$have_gnome_help" || have_gnome_help="no"
+
+  if test "$have_gnome_help" != no; then
+    have_gnome_help=yes
+  fi
 fi
 
 
@@ -14516,7 +14521,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 14525 "configure"
+#line 14530 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -14730,7 +14735,9 @@ echo "${ECHO_T}not found ($d: no such directory)" >&6
 
 GLE_LIBS=""
 
-if test "$with_gle" = yes; then
+if test "$have_gl" = no ; then
+ true
+elif test "$with_gle" = yes; then
 
 
   ac_save_CPPFLAGS="$CPPFLAGS"
@@ -17527,9 +17534,56 @@ else
 fi
 
 
+# Set PO_DATADIR to something sensible.
+#
+echo "$as_me:$LINENO: checking for locale directory" >&5
+echo $ECHO_N "checking for locale directory... $ECHO_C" >&6
+if test -n "$GNOME_DATADIR" ; then
+  PO_DATADIR="$GNOME_DATADIR"
+elif test "$have_gtk" = yes; then
+  if test -n "$pkg_config"; then
+    if test "$have_gtk2" = yes; then
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    else
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+`
+    fi
+  else
+    PO_DATADIR=`$gtk_config --prefix`
+  fi
+  PO_DATADIR="$PO_DATADIR/share"
+fi
+
+if test -z "$PO_DATADIR" ; then
+  #
+  # #### Total fucking kludge --
+  # Map /build/prefix/usr/X11R6/share/ to /build/prefix/usr/share/
+  # but of course we need to expand all the nested variables to do that...
+  #
+  dd=$datadir
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  PO_DATADIR=`echo $dd | sed 's@/X11R6/@/@'`
+fi
+
+echo "$as_me:$LINENO: result: $PO_DATADIR/locale" >&5
+echo "${ECHO_T}$PO_DATADIR/locale" >&6
+
+
 # canonicalize slashes.
 HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
 
+# gcc 3.0 likes to issue this warning for every file:
+#
+# cc1: warning: changing search order for system directory "/usr/local/include"
+# cc1: warning:   as it has already been specified as a non-system directory
+#
+# Yay.  We can only avoid that by deleting "-I${prefix}/include" from the list.
+# Which *should* be totally redundant, and thus an ok thing to delete?
+#
+INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 
 
 ###############################################################################
@@ -17537,6 +17591,7 @@ HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
 
 
 
@@ -18286,6 +18341,7 @@ s,@GNOMEHELP_N@,$GNOMEHELP_N,;t t
 s,@HACKDIR@,$HACKDIR,;t t
 s,@GNOME_DATADIR@,$GNOME_DATADIR,;t t
 s,@GLADE_DATADIR@,$GLADE_DATADIR,;t t
+s,@PO_DATADIR@,$PO_DATADIR,;t t
 s,@GNOME_PANELDIR@,$GNOME_PANELDIR,;t t
 s,@HACK_CONF_DIR@,$HACK_CONF_DIR,;t t
 s,@GTK_EXTRA_OBJS@,$GTK_EXTRA_OBJS,;t t
@@ -18958,10 +19014,12 @@ elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
 fi
 
 if test "$gtk2_halfassed" != no ; then
-  warnL "GTK version $gtk2_halfassed was found, but some other supporting"
-  warn2 "libraries were not, so GTK 2.x can't be used.  Please"
-  warn2 "read the above output and the \`config.log' file to see"
-  warn2 "which libraries are missing."
+  warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
+  warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
+  v="$ac_gtk_version_string"
+  warn2 "GTK $v is also installed, so it will be used instead."
+  warn2 "Please read the above output and the \`config.log' file"
+  warn2 "for more details."
 fi
 
 
@@ -18999,6 +19057,12 @@ if test "$have_gtk" = yes ; then
     warn2 'will not be available.  Specify the location of the XML'
     warn2 'library through the --with-xml option to configure.'
   fi
+fi
+
+if test "$have_gtk" = yes -a "$have_gdk_pixbuf" = no ; then
+  warn  "GTK is being used, but the GDK-Pixbuf library and/or"
+  warn2 "headers were not found.  That can't be good.  Please"
+  warn2 "install the GDK-Pixbuf development kit and re-configure."
 fi
 
 if test "$have_motif" = yes -a "$have_lesstif" = yes ; then

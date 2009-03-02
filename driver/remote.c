@@ -278,13 +278,13 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
                     }
 
                 if (any && nhacks == 1)
-                  fprintf (stdout, " (hack #%d)\n", data[2]);
+                  fprintf (stdout, " (hack #%d)\n", (int) data[2]);
                 else if (any)
                   {
                     fprintf (stdout, " (hacks: ");
                     for (i = 0; i < nhacks; i++)
                       {
-                        fprintf (stdout, "#%d", data[2 + i]);
+                        fprintf (stdout, "#%d", (int) data[2 + i]);
                         if (i != nhacks-1)
                           fputs (", ", stdout);
                       }

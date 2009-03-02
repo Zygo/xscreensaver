@@ -12,10 +12,24 @@
 # software for any purpose.  It is provided "as is" without express or
 # implied warranty.
 
+
 # To run this as a display mode with xscreensaver, add this to `programs':
 #
 #   default-n:  webcollage -root                                        \n\
 #   default-n:  webcollage -root -filter 'vidwhacker -stdin -stdout'    \n\
+
+
+# If you have the "driftnet" program installed, webcollage can display a
+# collage of images sniffed off your local ethernet, instead of pulled out
+# of search engines: in that way, your screensaver can display the images
+# that your co-workers are downloading!
+#
+# Driftnet is available here: http://www.ex-parrot.com/~chris/driftnet/
+# Use it like so:
+#
+#   default-n:  webcollage -root -driftnet                             \n\
+#
+# Driftnet is the Unix implementation of the MacOS "EtherPEG" program.
 
 
 require 5;
@@ -33,9 +47,13 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 use POSIX qw(strftime);
 
+use bytes;  # Larry can take Unicode and shove it up his ass sideways.
+            # Perl 5.8.0 causes us to start getting incomprehensible
+            # errors about UTF-8 all over the place without this.
+
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.93 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.96 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -581,8 +599,7 @@ sub pick_image_from_body {
       } elsif ( ! m@^[^/:?]+:@ ) {
         $_ = "$base$link";
         s@/\./@/@g;
-        while (s@/\.\./@/@g) {
-        }
+        1 while (s@/[^/]+/\.\./@/@g);
       }
 
       # skip non-http

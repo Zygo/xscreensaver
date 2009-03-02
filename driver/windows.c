@@ -119,7 +119,7 @@ grab_kbd(saver_info *si, Window w, int screen_no)
     }
 
   if (p->verbose_p)
-    fprintf(stderr, "%s: %d: grabbing keyboard on 0x%x... %s.\n",
+    fprintf(stderr, "%s: %d: grabbing keyboard on 0x%lx... %s.\n",
 	    blurb(), screen_no, (unsigned long) w, grab_string(status));
   return status;
 }
@@ -139,7 +139,7 @@ grab_mouse (saver_info *si, Window w, Cursor cursor, int screen_no)
     }
 
   if (p->verbose_p)
-    fprintf(stderr, "%s: %d: grabbing mouse on 0x%x... %s.\n",
+    fprintf(stderr, "%s: %d: grabbing mouse on 0x%lx... %s.\n",
 	    blurb(), screen_no, (unsigned long) w, grab_string(status));
   return status;
 }
@@ -151,7 +151,7 @@ ungrab_kbd(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabKeyboard(si->dpy, CurrentTime);
   if (p->verbose_p)
-    fprintf(stderr, "%s: %d: ungrabbing keyboard (was 0x%x).\n",
+    fprintf(stderr, "%s: %d: ungrabbing keyboard (was 0x%lx).\n",
             blurb(), si->keyboard_grab_screen,
             (unsigned long) si->keyboard_grab_window);
   si->keyboard_grab_window = 0;
@@ -164,7 +164,7 @@ ungrab_mouse(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabPointer(si->dpy, CurrentTime);
   if (p->verbose_p)
-    fprintf(stderr, "%s: %d: ungrabbing mouse (was 0x%x).\n",
+    fprintf(stderr, "%s: %d: ungrabbing mouse (was 0x%lx).\n",
             blurb(), si->mouse_grab_screen,
             (unsigned long) si->mouse_grab_window);
   si->mouse_grab_window = 0;

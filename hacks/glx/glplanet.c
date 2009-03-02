@@ -167,6 +167,7 @@ ModStruct   planet_description =
 /* structure for holding the planet data */
 typedef struct {
   GLuint platelist;
+  GLuint latlonglist;
   GLuint starlist;
   int screen_width, screen_height;
   GLXContext *glx_context;
@@ -594,6 +595,8 @@ init_planet (ModeInfo * mi)
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK); 
 
+  /* construct the polygons of the planet
+   */
   gp->platelist = glGenLists(1);
   glNewList (gp->platelist, GL_COMPILE);
   glColor3f (1,1,1);
@@ -602,15 +605,27 @@ init_planet (ModeInfo * mi)
   glRotatef (90, 1, 0, 0);
   unit_sphere (resolution, resolution, wire);
   mi->polygon_count += resolution*resolution;
-#if 0
-  if (!wire)
-    {
-      glDisable(GL_LIGHTING);
-      glScalef(1.01,1.01,1.01);
-      unit_sphere (12, 24, 1);
-      glEnable(GL_LIGHTING);
-    }
-#endif
+  glPopMatrix ();
+  glEndList();
+
+  /* construct the polygons of the latitude/longitude/axis lines.
+   */
+  gp->latlonglist = glGenLists(1);
+  glNewList (gp->latlonglist, GL_COMPILE);
+  glPushMatrix ();
+  if (do_texture) glDisable (GL_TEXTURE_2D);
+  if (do_light)   glDisable (GL_LIGHTING);
+  glColor3f (0.1, 0.3, 0.1);
+  glScalef (RADIUS, RADIUS, RADIUS);
+  glScalef (1.01, 1.01, 1.01);
+  glRotatef (90, 1, 0, 0);
+  unit_sphere (12, 24, 1);
+  glBegin(GL_LINES);
+  glVertex3f(0, -2, 0);
+  glVertex3f(0,  2, 0);
+  glEnd();
+  if (do_light)   glEnable(GL_LIGHTING);
+  if (do_texture) glEnable(GL_TEXTURE_2D);
   glPopMatrix ();
   glEndList();
 }
@@ -662,6 +677,8 @@ draw_planet (ModeInfo * mi)
     }
 
   glCallList (gp->platelist);
+  if (gp->button_down_p)
+    glCallList (gp->latlonglist);
   glPopMatrix();
 
   if (mi->fps_p) do_fps (mi);

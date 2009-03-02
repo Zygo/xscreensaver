@@ -215,7 +215,8 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
   if (status != 0)
     {
       char buf[1024];
-      sprintf (buf, "%s: shmdt(0x%x) failed", progname, shm_info->shmaddr);
+      sprintf (buf, "%s: shmdt(0x%lx) failed", progname,
+               (unsigned long) shm_info->shmaddr);
       perror(buf);
     }
 #ifdef DEBUG

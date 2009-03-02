@@ -707,7 +707,7 @@ static void Init(ModeInfo * mi)
 		       MI_NAME(mi),
 		       polygons[object].shortname,
 		       spheres,
-		       MI_CYCLES(mi),
+		       (int) MI_CYCLES(mi),
 		       do_texture ? "on" : "off"
 			);
     }
@@ -855,7 +855,7 @@ void change_sballs(ModeInfo * mi)
 		       MI_NAME(mi),
 		       polygons[object].shortname,
 		       spheres,
-		       MI_CYCLES(mi),
+		       (int) MI_CYCLES(mi),
 		       do_texture ? "on" : "off"
 			);
     }

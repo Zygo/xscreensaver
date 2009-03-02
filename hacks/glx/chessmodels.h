@@ -1,4 +1,7 @@
 /*
+ * models for the xss chess screensavers
+ * hacked from:
+ *
  * glChess - A 3D chess interface
  *
  * Copyright (C) 2002  Robert  Ancell <bob27@users.sourceforge.net>
@@ -18,6 +21,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/* ugggggggly */
+#define PIECES    7
+#define NONE      0
+#define KING      1
+#define QUEEN     2
+#define BISHOP    3 
+#define KNIGHT    4 
+#define ROOK      5
+#define PAWN      6 
+#define BKING     8
+#define BQUEEN    9
+#define BBISHOP  10 
+#define BKNIGHT  11
+#define BROOK    12
+#define BPAWN    13 
 
 void revolve_line(double *, double *, double, int);
 void gen_model_lists(void);

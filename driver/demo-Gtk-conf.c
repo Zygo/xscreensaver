@@ -67,6 +67,8 @@
 extern const char *blurb (void);
 
 
+const char *hack_configuration_path = HACK_CONFIGURATION_PATH;
+
 static gboolean debug_p = FALSE;
 
 
@@ -990,7 +992,7 @@ file_sel_ok (GtkWidget *button, gpointer user_data)
 {
   GtkWidget *entry = GTK_WIDGET (user_data);
   GtkWidget *dialog = button;
-  char *path;
+  const char *path;
   while (dialog->parent)
     dialog = dialog->parent;
   gtk_widget_hide (dialog);
@@ -1016,7 +1018,7 @@ static void
 browse_button_cb (GtkButton *button, gpointer user_data)
 {
   GtkWidget *entry = GTK_WIDGET (user_data);
-  char *text = gtk_entry_get_text (GTK_ENTRY (entry));
+  const char *text = gtk_entry_get_text (GTK_ENTRY (entry));
   GtkFileSelection *selector =
     GTK_FILE_SELECTION (gtk_file_selection_new (_("Select file.")));
 
@@ -1696,7 +1698,7 @@ static conf_data *
 load_configurator_1 (const char *program, const char *arguments,
                      gboolean verbose_p)
 {
-  const char *dir = HACK_CONFIGURATION_PATH;
+  const char *dir = hack_configuration_path;
   int L = strlen (dir);
   char *file;
   char *s;

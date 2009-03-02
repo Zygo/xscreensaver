@@ -238,7 +238,7 @@ static int xsublim_Ss_Handler(Display* handle_Display,
 	}
 	if (Xsublim_Ss_Handler == NULL)
 	{
-		fprintf(stderr,"%x: ",progname);
+		fprintf(stderr,"%s: ",progname);
 		abort();
 	}
 	return (*Xsublim_Ss_Handler)(handle_Display,handle_Error);

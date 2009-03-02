@@ -254,8 +254,13 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
          failure and blunder along; it shouldn't matter.
+
+         Note: this used to be PAM_REFRESH_CRED instead of
+         PAM_REINITIALIZE_CRED, but Jason Heiss <jheiss@ee.washington.edu>
+         says that the Linux PAM library ignores that one, and only refreshes
+         credentials when using PAM_REINITIALIZE_CRED.
        */
-      int status2 = pam_setcred (pamh, PAM_REFRESH_CRED);
+      int status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
       if (verbose_p)
         fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
                  blurb(), status2, PAM_STRERROR(pamh, status2));

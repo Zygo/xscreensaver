@@ -302,9 +302,9 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
   for (i = 0; i < si->nscreens; i++)
     fprintf (real_stderr, "%s: screen %d: 0x%x, 0x%x, 0x%x\n",
              blurb(), i,
-             RootWindowOfScreen (si->screens[i].screen),
-             si->screens[i].real_vroot,
-             si->screens[i].screensaver_window);
+             (unsigned int) RootWindowOfScreen (si->screens[i].screen),
+             (unsigned int) si->screens[i].real_vroot,
+             (unsigned int) si->screens[i].screensaver_window);
 
   fprintf (real_stderr, "\n"
 	   "#######################################"
@@ -1206,6 +1206,7 @@ main_loop (saver_info *si)
 }
 
 static void analyze_display (saver_info *si);
+static void fix_fds (void);
 
 int
 main (int argc, char **argv)
@@ -1218,6 +1219,8 @@ main (int argc, char **argv)
 
   memset(si, 0, sizeof(*si));
   global_si_kludge = si;	/* I hate C so much... */
+
+  fix_fds();
 
 # undef ya_rand_init
   ya_rand_init (0);
@@ -1277,6 +1280,36 @@ main (int argc, char **argv)
   return 0;
 }
 
+static void
+fix_fds (void)
+{
+  /* Bad Things Happen if stdin, stdout, and stderr have been closed
+     (as by the `sh incantation "xscreensaver >&- 2>&-").  When you do
+     that, the X connection gets allocated to one of these fds, and
+     then some random library writes to stderr, and random bits get
+     stuffed down the X pipe, causing "Xlib: sequence lost" errors.
+     So, we cause the first three file descriptors to be open to
+     /dev/null if they aren't open to something else already.  This
+     must be done before any other files are opened (or the closing
+     of that other file will again free up one of the "magic" first
+     three FDs.)
+
+     We do this by opening /dev/null three times, and then closing
+     those fds, *unless* any of them got allocated as #0, #1, or #2,
+     in which case we leave them open.  Gag.
+
+     Really, this crap is technically required of *every* X program,
+     if you want it to be robust in the face of "2>&-".
+   */
+  int fd0 = open ("/dev/null", O_RDWR);
+  int fd1 = open ("/dev/null", O_RDWR);
+  int fd2 = open ("/dev/null", O_RDWR);
+  if (fd0 > 2) close (fd0);
+  if (fd1 > 2) close (fd1);
+  if (fd2 > 2) close (fd2);
+}
+
+
 
 /* Processing ClientMessage events.
  */
@@ -1316,7 +1349,7 @@ XGetAtomName_safe (Display *dpy, Atom atom)
   else
     {
       char buf[100];
-      sprintf (buf, "<<undefined atom 0x%04X>>", (unsigned long) atom);
+      sprintf (buf, "<<undefined atom 0x%04X>>", (unsigned int) atom);
       return strdup (buf);
     }
 }

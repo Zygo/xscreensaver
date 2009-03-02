@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.05
-!                              11-Jun-2002
+!                              version 4.06
+!                              23-Oct-2002
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -53,8 +53,9 @@
 *splash:		True
 *splashDuration:	0:00:05
 *visualID:		default
-
 *captureStderr: 	True
+*ignoreUninstalledPrograms: False
+
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
 *overlayStderr:		True
@@ -77,13 +78,14 @@
 
 ! This is how the "Help" button loads URLs (/bin/sh syntax.)
 ! The "helpURL" will be substituted for up to two occurrences of "%s".
-*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'
+@GNOMEHELP_N@*loadURL: mozilla '%s' || netscape '%s'
+@GNOMEHELP_Y@*loadURL: gnome-url-show '%s' || gnome-moz-remote --newwin '%s'
 
 ! This is what the "Manual" button in xscreensaver-demo runs (/bin/sh syntax.)
-@GNOMEHELP_N@*manualCommand: xterm +sb -fg black -bg gray75 -T '%s manual' \
-@GNOMEHELP_N@        -e /bin/sh -c 'man "%s" || read foo'
+@GNOMEHELP_N@*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+@GNOMEHELP_N@        -e /bin/sh -c 'man "%s" ; read foo'
 ! For GNOME systems:
-@GNOMEHELP_Y@*manualCommand: gnome-help-browser 'man:%s'
+@GNOMEHELP_Y@*manualCommand: yelp 'man:%s' || gnome-help-browser 'man:%s'
 
 
 ! The format used for printing the date and time in the password dialog box
@@ -95,10 +97,10 @@
 ! *dateFormat:		%H:%M
 
 
-! Turning on "installColormap" interacts erratically with twm and tvtwm,
-! but seems to work fine with mwm and olwm.  Try it and see.  If your
-! screen turns some color other than black, the window manager is buggy,
-! and you need to set this resource to False (or get a WM that works.)
+! Turning on "installColormap" on 8-bit systems interacts erratically with
+! twm and tvtwm, but seems to work fine with mwm and olwm.  Try it and see.
+! If your screen turns some color other than black, the window manager is
+! buggy, and you need to set this resource to False (or get a WM that works.)
 !
 *installColormap:	True
 
@@ -282,6 +284,7 @@
 - 	                	thornbird -root				    \n\
  	                	fluidballs -root			    \n\
  	                	anemone -root				    \n\
+ 	                	halftone -root				    \n\
   color: 			bubbles -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
@@ -331,6 +334,7 @@
 @GL_KLUDGE@ GL:			lavalite -root				    \n\
 @GL_KLUDGE@ GL:			queens -root				    \n\
 @GL_KLUDGE@ GL:			endgame -root				    \n\
+-	   GL:			glblur -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -340,7 +344,8 @@
                                   -markerfile earth -wait 1 -timewarp 400   \n\
 -				xmountains -b -M -Z 0 -r 1		    \n\
 -	"XMountains (top)"	xmountains -b -M -Z 0 -r 1 -m		    \n\
--                               xaos -fullscreen -autopilot                   \
+-                               xaos -root -autopilot -nogui -delay 10000     \
+                                  -maxframerate 30                            \
                                   -incoloring -1 -outcoloring -1            \n\
 -				xfishtank -d -s                             \n\
 -				xsnow                                       \n\
@@ -609,6 +614,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.rotzoomer.name:      RotZoomer
 *hacks.stonerview.name:     StonerView
 *hacks.starwars.name:       StarWars
+*hacks.glblur.name:         GLBlur
 *hacks.gltext.name:         GLText
 *hacks.dangerball.name:     DangerBall
 *hacks.whirlygig.name:      WhirlyGig

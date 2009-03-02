@@ -899,7 +899,7 @@ max_bottle_radius (lavalite_configuration *bp)
 static GLfloat
 bottle_radius_at (lavalite_configuration *bp, GLfloat z)
 {
-  GLfloat topz = -999, botz = -999, topr, botr;
+  GLfloat topz = -999, botz = -999, topr = 0, botr = 0;
   lamp_geometry *slice;
   GLfloat ratio;
 

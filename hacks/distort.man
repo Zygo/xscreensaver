@@ -62,7 +62,9 @@ Specify the number of distortion zones.
 .TP 8
 .B \-swamp
 Instead of letting zones wander around, let small zones pop up like
-bubbles in a swamp and leave permanent distortion.
+bubbles in a swamp and leave permanent distortion.  \fBWARNING:\fP
+this option uses a \fIcolossal\fP amount of memory: keep the \fI\-radius\fP
+small when using \fI\-swamp\fP.
 .TP 8
 .B \-bounce
 Let zones wander around and bounce off the window border. This is the

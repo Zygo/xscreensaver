@@ -1483,7 +1483,7 @@ msgstr "Estrelas"
 #: hacks/config/blitspin.xml.h:1
 #, fuzzy
 msgid "90° Rotation Speed"
-msgstr "Velocidade Rotação 90"
+msgstr "Velocidade Rotação"
 
 #: hacks/config/blitspin.xml.h:2
 msgid "Bitmap to rotate"
@@ -1882,6 +1882,7 @@ msgid "Seeds"
 msgstr "Sementes"
 
 #: hacks/config/coral.xml.h:11
+#, fuzzy
 msgid ""
 "Simulates coral growth, albeit somewhat slowly. This image doesn't really do "
 "it justice. Written by Frederick Roeber."
@@ -4323,6 +4324,7 @@ msgid "With Y Symmetry"
 msgstr "Com Simetria Y"
 
 #: hacks/config/rotor.xml.h:1
+#, fuzzy
 msgid ""
 "Another ancient xlock demo, this one by Tom Lawrence. It draws a line "
 "segment moving along a complex spiraling curve. I tweaked this to generate "
@@ -5584,26 +5586,172 @@ msgstr ""
 "resultado é como olhar através de várias lentes sobrepostas em vez de um "
 "simples zoom. Escrito por James Macnicol."
 
+#, fuzzy
+#~ msgid "Copyright Â© 1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"
+
+#~ msgid "*"
+#~ msgstr "*"
+
+#, fuzzy
+#~ msgid "Choose _Random Image:"
+#~ msgstr "Seleccionar Imagem Aleatória:"
+
+#, fuzzy
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "Erros do Subprocesso de Monitor"
+
+#, fuzzy
+#~ msgid "Display _Splash Screen at Startup"
+#~ msgstr "Mo_strar Ecrã de Logo ao Iniciar"
+
+#, fuzzy
+#~ msgid "F_ade Duration"
+#~ msgstr "Duração Desbotar"
+
+#, fuzzy
+#~ msgid "Fade from Black When _Unblanking"
+#~ msgstr "Desbotar de Preto ao Retomar"
+
+#, fuzzy
+#~ msgid "Fade to Black when _Blanking"
+#~ msgstr "Desbotar Para Preto ao Iniciar"
+
+#, fuzzy
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "Capturar Imagens Ambiente Trabalho"
+
+#, fuzzy
+#~ msgid "Grab _Video Frames"
+#~ msgstr "Capturar Frames Vídeo"
+
+#, fuzzy
+#~ msgid "Install _Colormap"
+#~ msgstr "Instalar Mapa Cores"
+
+#, fuzzy
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr "sem Previsão"
+
+#~ msgid "Preview of screen saver"
+#~ msgstr "Previsão da protecção de ecrã"
+
+#, fuzzy
+#~ msgid "Stand_by After"
+#~ msgstr "Poupança Energia Após"
+
+#, fuzzy
+#~ msgid "Sus_pend After"
+#~ msgstr "Suspender Após"
+
+#~ msgid "_Advanced"
+#~ msgstr "_Avançado"
+
+#, fuzzy
+#~ msgid "_Advanced >>"
+#~ msgstr "Avançado >>"
+
+#, fuzzy
+#~ msgid "_Blank After"
+#~ msgstr "Preto Após"
+
+#, fuzzy
+#~ msgid "_Browse"
+#~ msgstr "Pesquisar"
+
+#, fuzzy
+#~ msgid "_Command Line:"
+#~ msgstr "Linha Comando:"
+
+#, fuzzy
+#~ msgid "_Cycle After"
+#~ msgstr "Ciclar Após"
+
+#, fuzzy
+#~ msgid "_Display Modes"
+#~ msgstr "Modos do Monitor"
+
+#, fuzzy
+#~ msgid "_Lock Screen After"
+#~ msgstr "Trancar Ecrã Após"
+
+#, fuzzy
+#~ msgid "_Mode:"
+#~ msgstr "Modo:"
+
+#, fuzzy
+#~ msgid "_Off After"
+#~ msgstr "Desligado Após"
+
+#, fuzzy
+#~ msgid "_Power Management Enabled"
+#~ msgstr "Gestão de Energia Activa"
+
+#, fuzzy
+#~ msgid "_Preview"
+#~ msgstr "Prever"
+
+#, fuzzy
+#~ msgid "_Quit"
+#~ msgstr "_Sair"
+
+#, fuzzy
+#~ msgid "_Settings..."
+#~ msgstr "Definições..."
+
+#, fuzzy
+#~ msgid "_Standard <<"
+#~ msgstr "Standard <<"
+
+#, fuzzy
+#~ msgid "_Verbose Dialognostics"
+#~ msgstr "Diagnóstico Completo"
+
+#, fuzzy
+#~ msgid "_Visual:"
+#~ msgstr "Visual:"
+
+#~ msgid "dialog1"
+#~ msgstr "diálogo1"
+
+#, fuzzy
+#~ msgid "no preview"
+#~ msgstr "prever"
+
+#~ msgid "preview"
+#~ msgstr "prever"
+
+#, fuzzy
+#~ msgid "Anemone"
+#~ msgstr "Demon"
+
+#, fuzzy
+#~ msgid "90 deg Rotation Speed"
+#~ msgstr "Velocidade Rotação 90"
+
+#, fuzzy
+#~ msgid "Endgame"
+#~ msgstr "Motor"
+
+#, fuzzy
+#~ msgid "10"
+#~ msgstr "1"
+
+#, fuzzy
+#~ msgid "Max Blobs"
+#~ msgstr "Bomba Mac"
+
+#, fuzzy
+#~ msgid "Random Lamp Style"
+#~ msgstr "Derreter Aleatoriamente"
+
 #~ msgid "Advanced &gt;&gt;"
 #~ msgstr "Avançado &gt;&gt;"
 
 #~ msgid "Standard &lt;&lt;"
 #~ msgstr "Standard &lt;&lt;"
-
-#~ msgid "*"
-#~ msgstr "*"
-
-#~ msgid "Preview of screen saver"
-#~ msgstr "Previsão da protecção de ecrã"
-
-#~ msgid "_Advanced"
-#~ msgstr "_Avançado"
-
-#~ msgid "dialog1"
-#~ msgstr "diálogo1"
-
-#~ msgid "preview"
-#~ msgstr "prever"
 
 #~ msgid "MacOS"
 #~ msgstr "MacOS"

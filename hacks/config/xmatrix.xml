@@ -31,7 +31,10 @@
           _label="Density" _low-label="Sparse" _high-label="Full"
           low="1" high="100" default="75"/>
 
-  <boolean id="trace" _label="Run Trace Program" arg-set="-trace"/>
+  <hgroup>
+   <boolean id="trace" _label="Run Trace Program" arg-set="-trace"/>
+   <boolean id="knock" _label="Knock Knock" arg-set="-knock-knock"/>
+  </hgroup>
 
   <string id="phone" _label="Phone Number" arg="-phone %"/>
 

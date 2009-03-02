@@ -19,6 +19,7 @@
 #include "resources.h"  /* for get_string_resource() */
 #include "visual.h"
 
+#include <string.h>
 #include <X11/Xutil.h>
 
 extern char *progname;

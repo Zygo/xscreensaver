@@ -87,9 +87,9 @@ while [ -n "$1" ]; do
       Install="TRUE"
       ;;
     -lock)
-      if [ ! -f "/etc/shadow" ]; then      
+#      if [ ! -f "/etc/shadow" ]; then      
         lockmode="-lock-mode"
-      fi
+#      fi
       ;;
 #    -allow-root)
 #      echo "Not yet supported"
