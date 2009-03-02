@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="skytentacles" _label="SkyTentacles">
+
+  <command arg="-root"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Tentacles" _low-label="1" _high-label="20"
+          low="1" high="20" default="9"/>
+
+ <hgroup>
+  <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame Rate" _low-label="Slow" _high-label="Fast"
+           low="0" high="100000" default="30000"
+           convert="invert"/>
+
+   <number id="length" type="slider" arg="-length %"
+           _label="Length" _low-label="Short" _high-label="Long"
+           low="1.0" high="20.0" default="9.0"/>
+
+   <number id="wiggliness" type="slider" arg="-wiggliness %"
+           _label="Wiggliness" _low-label="Low" _high-label="High"
+           low="0.1" high="1.0" default="0.35"/>
+
+    <hgroup>
+     <number id="slices" type="spinbutton" arg="-slices %"
+             _label="Slices" low="1" high="50" default="32"/>
+     <number id="segments" type="spinbutton" arg="-segments %"
+             _label="Segments" low="1" high="50" default="32"/>
+    </hgroup>
+
+  </vgroup>
+
+  <vgroup>
+   <number id="speed" type="slider" arg="-speed %"
+           _label="Speed" _low-label="Slow" _high-label="Fast"
+           low="0.1" high="20.0" default="1.0"/>
+
+   <number id="thickness" type="slider" arg="-thickness %"
+           _label="Thickness" _low-label="Thin" _high-label="Thick"
+           low="0.1" high="5.0" default="1.0"/>
+
+   <number id="flexibility" type="slider" arg="-flexibility %"
+           _label="Flexibility" _low-label="Low" _high-label="High"
+           low="0.1" high="1.0" default="0.35"/>
+
+    <hgroup>
+     <boolean id="smooth" _label="Smooth" arg-unset="-no-smooth"/>
+     <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+    </hgroup>
+
+   </vgroup>
+  </hgroup>
+
+
+  <_description>
+There is a tentacled abomination in the sky.   From above you it devours.
+
+Written by Jamie Zawinski; 2008.
+  </_description>
+</screensaver>

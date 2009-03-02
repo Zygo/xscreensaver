@@ -1,0 +1,62 @@
+.TH XScreenSaver 1 "25-Nov-97" "X Version 11"
+.SH NAME
+jigsaw - permute the screen image like a jigsaw puzzle
+.SH SYNOPSIS
+.B jigsaw
+[\-display \fIhost:display.screen\fP] [\-background \fIcolor\fP]
+[\-delay \fIusecs\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+.SH DESCRIPTION
+The \fIjigsaw\fP program takes an image, carves it up into
+a jigsaw puzzle, shuffles it, and then solves it.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
+.SH OPTIONS
+.I jigsaw
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How long to wait between shuffling pieces; default 70000, or 0.07 seconds.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright \(co 1997 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 25-Nov-97.

@@ -1,0 +1,1017 @@
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
+# the `../configure' script generates `driver/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .m .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ..
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
+localedir	= $(datadir)/locale
+mandir		= @mandir@
+libexecdir	= @libexecdir@
+mansuffix	= 1
+manNdir		= $(mandir)/man$(mansuffix)
+
+INTLTOOL_MERGE	= @INTLTOOL_MERGE@
+
+GTK_DATADIR	= @GTK_DATADIR@
+GTK_APPDIR	= $(GTK_DATADIR)/applications
+GTK_ICONDIR	= $(GTK_DATADIR)/pixmaps
+GTK_GLADEDIR	= $(GTK_DATADIR)/xscreensaver/glade
+HACK_CONF_DIR	= @HACK_CONF_DIR@
+
+CC		= @CC@
+OBJCC		= @OBJCC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= @DEFS@
+INTL_DEFS	= -DLOCALEDIR=\"$(localedir)\"
+SUBP_DEFS	= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
+GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GTK_GLADEDIR)"'
+CONF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"'
+
+LIBS		= @LIBS@
+INTL_LIBS	= @INTLLIBS@
+JPEG_LIBS	= @JPEG_LIBS@
+PERL		= @PERL@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT  = @INSTALL_SCRIPT@
+INSTALL_SETUID  = @INSTALL_SETUID@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+XMU_LIBS	= @XMU_LIBS@
+XPM_LIBS	= @XPM_LIBS@
+
+# Note:
+#
+# X_LIBS would more properly be called X_LDFLAGS (it contains the -L args.)
+# X_PRE_LIBS contains extra libraries you have to link against on some systems,
+#         and that must come before -lX11.  (e.g., -lSM and -lICE.)
+# X_EXTRA_LIBS contains extra libraries needed by X that aren't a part of X.
+#         (e.g., -lsocket, -lnsl, etc.)
+#
+# I think (but am not totally sure) that LIBS is also really "LDFLAGS".
+#
+# SAVER_LIBS is the link line for "xscreensaver", and
+# CMD_LIBS is the link line for "xscreensaver-command".
+# GETIMG_LIBS is the link line for "xscreensaver-getimage".
+
+
+AD_DIR		= @APPDEFAULTS@
+PAM_DIR		= /etc/pam.d
+PAM_CONF	= /etc/pam.conf
+
+UTILS_SRC	= $(srcdir)/../utils
+UTILS_BIN	= ../utils
+
+INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
+
+MOTIF_SRCS	= demo-Xm.c demo-Xm-widgets.c
+MOTIF_OBJS	= demo-Xm.o demo-Xm-widgets.o
+
+GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c \
+		  demo-Gtk-widgets.c demo-Gtk-support.c
+GTK_EXTRA_OBJS  = demo-Gtk-widgets.o demo-Gtk-support.o
+GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o @GTK_EXTRA_OBJS@
+
+PWENT_SRCS	= passwd-pwent.c
+PWENT_OBJS	= passwd-pwent.o
+
+KERBEROS_SRCS	= passwd-kerberos.c
+KERBEROS_OBJS	= passwd-kerberos.o
+
+PAM_SRCS	= passwd-pam.c
+PAM_OBJS	= passwd-pam.o
+
+PWHELPER_SRCS	= passwd-helper.c
+PWHELPER_OBJS	= passwd-helper.o
+
+LOCK_SRCS_1	= lock.c passwd.c
+LOCK_OBJS_1	= lock.o passwd.o
+NOLOCK_SRCS_1	= lock.c
+NOLOCK_OBJS_1	= lock.o
+
+TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
+		  test-apm.c    test-fade.c test-xinerama.c test-vp.c   \
+	          test-randr.c  xdpyinfo.c  test-mlstring.c test-screens.c
+TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
+		  test-apm      test-fade   test-xinerama   test-vp     \
+		  test-randr    xdpyinfo    test-mlstring   test-screens
+
+MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
+GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
+XML_LIBS	= @XML_LIBS@
+
+XDPMS_LIBS	= @XDPMS_LIBS@
+XINERAMA_LIBS	= @XINERAMA_LIBS@
+
+PASSWD_SRCS	= @PASSWD_SRCS@
+PASSWD_OBJS	= @PASSWD_OBJS@
+PASSWD_LIBS	= @PASSWD_LIBS@
+
+LOCK_SRCS	= @LOCK_SRCS@
+LOCK_OBJS	= @LOCK_OBJS@
+
+XMU_SRCS	= @XMU_SRCS@
+XMU_OBJS	= @XMU_OBJS@
+
+GL_SRCS		= @SAVER_GL_SRCS@
+GL_OBJS		= @SAVER_GL_OBJS@
+GL_LIBS		= @SAVER_GL_LIBS@
+
+ICON_SRC        = $(UTILS_SRC)/images
+LOGO		= $(ICON_SRC)/logo-50.xpm
+GTK_ICONS	= $(ICON_SRC)/screensaver-*.png
+
+DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c $(XMU_SRCS)
+DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/visual.o $(XMU_OBJS)
+
+SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
+		  $(UTILS_SRC)/logo.c $(UTILS_SRC)/yarandom.c \
+		  $(UTILS_SRC)/minixpm.c \
+		  $(DEMO_UTIL_SRCS)
+SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/minixpm.o \
+		  $(DEMO_UTIL_OBJS)
+
+GETIMG_SRCS_1	= xscreensaver-getimage.c
+GETIMG_OBJS_1	= xscreensaver-getimage.o
+
+GETIMG_SRCS	= $(GETIMG_SRCS_1) \
+		  $(UTILS_BIN)/colorbars.o $(UTILS_BIN)/resources.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabscreen.o \
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o prefs.o \
+		  $(XMU_SRCS)
+
+GETIMG_OBJS	= $(GETIMG_OBJS_1) \
+		  $(UTILS_BIN)/colorbars.o $(UTILS_BIN)/resources.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabscreen.o \
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o prefs.o \
+		  $(XMU_OBJS)
+
+SAVER_SRCS_1	= xscreensaver.c windows.c screens.c timers.c subprocs.c \
+		  exec.c xset.c splash.c setuid.c stderr.c mlstring.c
+SAVER_OBJS_1	= xscreensaver.o windows.o screens.o timers.o subprocs.o \
+		  exec.o xset.o splash.o setuid.o stderr.o mlstring.o
+
+SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c dpms.c $(LOCK_SRCS) \
+		  $(SAVER_UTIL_SRCS) $(GL_SRCS)
+SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o dpms.o $(LOCK_OBJS) \
+		  $(SAVER_UTIL_OBJS) $(GL_OBJS)
+
+CMD_SRCS	= remote.c xscreensaver-command.c
+CMD_OBJS	= remote.o xscreensaver-command.o
+
+DEMO_SRCS_1	= prefs.c dpms.c
+DEMO_OBJS_1	= prefs.o dpms.o
+
+DEMO_SRCS	= $(DEMO_SRCS_1) remote.c exec.c $(DEMO_UTIL_SRCS)
+DEMO_OBJS	= $(DEMO_OBJS_1) remote.o exec.o $(DEMO_UTIL_OBJS)
+
+PDF2JPEG_SRCS	= pdf2jpeg.m
+PDF2JPEG_OBJS	= pdf2jpeg.o
+PDF2JPEG_LIBS	= -framework Cocoa
+
+SAVER_LIBS	= $(LIBS) $(X_LIBS) $(XMU_LIBS) @SAVER_LIBS@ \
+		  $(XDPMS_LIBS) $(XINERAMA_LIBS) $(GL_LIBS) $(X_PRE_LIBS) \
+		  -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
+		  $(PASSWD_LIBS)
+
+CMD_LIBS	= $(LIBS) $(X_LIBS) \
+		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
+
+GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) $(JPEG_LIBS) \
+		  $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS)
+
+EXES		= xscreensaver xscreensaver-command xscreensaver-demo \
+		  xscreensaver-getimage @EXES_OSX@
+EXES2		= @ALL_DEMO_PROGRAMS@
+EXES_OSX	= pdf2jpeg
+
+SCRIPTS_1	= xscreensaver-getimage-file xscreensaver-getimage-video \
+		  xscreensaver-text
+SCRIPTS_OSX	= xscreensaver-getimage-desktop
+SCRIPTS		= $(SCRIPTS_1) @SCRIPTS_OSX@
+
+HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
+		  xscreensaver.h prefs.h remote.h exec.h \
+		  demo-Gtk-widgets.h demo-Gtk-stubs.h demo-Gtk-support.h \
+		  demo-Gtk-conf.h auth.h mlstring.h types.h
+MEN_1		= xscreensaver.man xscreensaver-demo.man \
+		  xscreensaver-command.man \
+		  xscreensaver-text.man \
+		  xscreensaver-getimage.man \
+		  xscreensaver-getimage-file.man \
+		  xscreensaver-getimage-video.man
+MEN_OSX		= xscreensaver-getimage-desktop.man pdf2jpeg.man
+MEN		= $(MEN_1) @MEN_OSX@
+
+EXTRAS		= README Makefile.in \
+		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam \
+		  xscreensaver-demo.glade2 xscreensaver-demo.glade2p \
+		  screensaver-properties.desktop.in \
+		  .gdbinit
+VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
+		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
+		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
+
+TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
+		  $(MOTIF_SRCS) $(GTK_SRCS) $(PWENT_SRCS) $(PWHELPER_SRCS) \
+		  $(KERBEROS_SRCS) $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) \
+		  $(CMD_SRCS) $(GETIMG_SRCS_1) $(PDF2JPEG_SRCS) $(HDRS) \
+		  $(SCRIPTS_1) $(SCRIPTS_OSX) $(MEN_1) $(MEN_OSX) \
+		  $(TEST_SRCS)
+
+
+default: $(EXES)
+all: $(EXES) $(EXES2)
+tests: $(TEST_EXES)
+
+install:   install-program   install-ad    install-scripts \
+	   install-gnome     install-man   install-xml install-pam
+uninstall: uninstall-program uninstall-ad  \
+	   uninstall-gnome   uninstall-man uninstall-xml  
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
+		install
+
+install-program: $(EXES)
+	@if [ ! -d $(install_prefix)$(bindir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			\
+	 fi
+	@inst="$(INSTALL_PROGRAM)" ;					\
+	if [ @NEED_SETUID@ = yes ]; then				\
+	   me=`PATH="$$PATH:/usr/ucb" whoami` ;				\
+	   if [ "$$me" = root ]; then					\
+	     inst="$(INSTALL_SETUID)" ;					\
+	   else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: xscreensaver has been compiled with support for shadow"     ;\
+ $$e "           passwords.  If your system actually uses shadow passwords," ;\
+ $$e "           then xscreensaver must be installed as a setuid root"	     ;\
+ $$e "           program in order for locking to work.  To do this, you"     ;\
+ $$e "           must run 'make install' as 'root', not as '$$me'."	     ;\
+ $$e ""									     ;\
+ $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
+ $$e "           means that locking might not work.  (Try it and see.)"	     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	   fi ; 							      \
+	fi ;								      \
+	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
+	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
+	@for exe in xscreensaver-command xscreensaver-demo	           \
+		    xscreensaver-getimage @EXES_OSX@ ; do	           \
+	  echo $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
+	       $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
+	 done
+
+install-ad: XScreenSaver.ad
+	@if [ ! -d $(install_prefix)$(AD_DIR) ]; then			      \
+	  $(INSTALL_DIRS) $(install_prefix)$(AD_DIR) ;			      \
+	 fi
+	@-echo $(INSTALL_DATA) XScreenSaver.ad				      \
+	  $(install_prefix)$(AD_DIR)/XScreenSaver ;			      \
+	if $(INSTALL_DATA) XScreenSaver.ad				      \
+	  $(install_prefix)$(AD_DIR)/XScreenSaver ; then		      \
+	  true ;							      \
+	else								      \
+	  e=echo ;							      \
+	  if [ -f $(install_prefix)$(AD_DIR)/XScreenSaver ]; then	      \
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
+ $$e "           That file exists, and is unwritable.  It is probably from"  ;\
+ $$e "           an older version of xscreensaver, and could cause things"   ;\
+ $$e "           to malfunction.  Please delete it!"			     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	    exit 1 ;							      \
+	  else								      \
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
+ $$e "           The directory is unwritable.  This is probably ok;"	     ;\
+ $$e "           xscreensaver should work without that file."		     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	    exit 0 ;							      \
+	  fi								      \
+	fi
+
+install-scripts: $(SCRIPTS) munge-scripts
+	@for program in $(SCRIPTS); do					\
+	  if [ -r $$program ] ; then					\
+	    p=$$program ;						\
+	  else								\
+	    p=$(srcdir)/$$program ;					\
+	  fi ;								\
+	  echo $(INSTALL_SCRIPT) $$p					\
+	    $(install_prefix)$(bindir)/$$program ;			\
+	  $(INSTALL_SCRIPT) $$p						\
+	    $(install_prefix)$(bindir)/$$program ;			\
+	done
+
+munge-scripts: $(SCRIPTS)
+	@tmp=/tmp/mf.$$$$ ;						\
+	perl="${PERL}" ;						\
+	rm -f $$tmp ;							\
+	for program in $(SCRIPTS); do					\
+	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
+	      < $(srcdir)/$$program > $$tmp ;				\
+	  if cmp -s $(srcdir)/$$program $$tmp ; then			\
+	    true ;							\
+	  else								\
+	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
+	    cat $$tmp > ./$$program ;					\
+	  fi ;								\
+	done ;								\
+	rm -f $$tmp
+
+# When installing man pages, we install "foo.man" as "foo.N" and update
+# the .TH line in the installed file with one like
+#
+#     .TH XScreenSaver N "V.VV (DD-MMM-YYYY)" "X Version 11"
+#
+# where N is the manual section suffix.
+#
+install-man: $(MEN)
+	@men="$(MEN)" ;							\
+	U=$(UTILS_SRC)/version.h ;					\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	echo "installing man pages: $$TH" ;				\
+									\
+	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
+	 fi ;								\
+									\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  manbase=`echo $$man | sed 's/\.man$$//'` ;	\
+	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;	\
+	  sed -e "s/^\.TH.*/$$TH/"					\
+	      -e 's/^\(\.BR xscr.*(\)[^()]\(.*\)/\1$(mansuffix)\2/'	\
+	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
+	    < $(srcdir)/$$man > $$T ;					\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
+	   $(install_prefix)$(manNdir)/$$instname ;			\
+	  $(INSTALL_DATA) $$T						\
+	    $(install_prefix)$(manNdir)/$$instname ;			\
+	done ;								\
+	rm -f $$T
+
+uninstall-program:
+	@for program in $(EXES) $(SCRIPTS); do				\
+	  echo rm -f $(install_prefix)$(bindir)/$$program ;		\
+	  rm -f $(install_prefix)$(bindir)/$$program ;			\
+	done
+
+uninstall-ad:
+	rm -f $(install_prefix)$(AD_DIR)/XScreenSaver
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	done
+
+install-pam:
+	@src="$(srcdir)/xscreensaver.pam" ;				\
+	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
+	   < ../config.h` ;						\
+	dir="$(install_prefix)$(PAM_DIR)" ;				\
+	conf="$(PAM_CONF)" ;						\
+									\
+	if [ -d $$dir ] ; then						\
+									\
+	  if [ -f $$dir/xdm ]; then					\
+	    src2=$$dir/xdm ;						\
+	  elif [ -f $$dir/login ]; then					\
+	    src2=$$dir/login ;						\
+	  fi ;								\
+									\
+	  if [ -z "$$src2" ]; then					\
+	    echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	    $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	  else								\
+	    src="xscreensaver.pam.$$$$" ;				\
+	    echo "grep '^#%\|^auth' $$src2 > $$src" ;			\
+	          grep '^#%\|^auth' $$src2 > $$src ;			\
+	    echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	         $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	    echo rm -f $$src ;						\
+	         rm -f $$src ;						\
+	  fi ;								\
+									\
+	  if [ ! -f $$dir/$$dest ]; then				\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  However, we were unable to"  ;\
+ $$e "           install the file $$dir/$$dest.  PAM is unlikely"	     ;\
+ $$e "           to work without this file (and old-style password"	     ;\
+ $$e "           authentication will be used instead, which may or may not"  ;\
+ $$e "           work.)"						     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	  fi ;								\
+	elif [ -f $$conf -a "x$$dest" != "x" ]; then			\
+	  if ( grep $$dest $$conf >/dev/null ); then			\
+	   echo "$$conf unchanged: already has an entry for $$dest" ;   \
+	  else								\
+	    src="pam.conf.$$$$" ;					\
+	    echo "grep -v $$dest $$conf > $$src" ;			\
+	          grep -v $$dest $$conf > $$src ;			\
+	    extras=`sed -n "s/^login\(.*auth.*\)$$/$$dest\1/p" $$conf`; \
+	    echo "$$extras" >> $$src ;					\
+	    if [ "x$$extras" = "x" ]; then				\
+	      echo "Error: no login rules in $$conf?" >&2 ;		\
+	    else							\
+	      echo "adding $$dest rules to $$src:" ;			\
+	      echo "$$extras" | sed 's/^/	/' ;			\
+	    fi ; 							\
+	    echo $(INSTALL_DATA) $$src $$conf ;				\
+	         $(INSTALL_DATA) $$src $$conf ;				\
+	    echo rm -f $$src ;						\
+	         rm -f $$src ;						\
+	  fi ;								\
+	  if ( grep $$dest $$conf >/dev/null ); then			\
+	    echo ;							\
+	  else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  However, we were unable to"  ;\
+ $$e "           install xscreensaver rules in the file $$conf."	     ;\
+ $$e "           PAM is unlikely to work without this (and old-style"        ;\
+ $$e "           password authentication will be used instead, which may"    ;\
+ $$e "           or may not work.)"					     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	  fi ;								\
+	fi
+
+# screensaver-properties.desktop
+# into /usr/share/applications/
+install-gnome:: screensaver-properties.desktop
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
+	   if [ ! -d "$(install_prefix)$(GTK_APPDIR)" ]; then		      \
+	     echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
+		  $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
+	   fi								     ;\
+	   name2=xscreensaver-properties.desktop			     ;\
+	   echo $(INSTALL_DATA) screensaver-properties.desktop		      \
+		  $(install_prefix)$(GTK_APPDIR)/$$name2		     ;\
+		$(INSTALL_DATA) screensaver-properties.desktop		      \
+		  $(install_prefix)$(GTK_APPDIR)/$$name2		     ;\
+	 fi
+
+
+# xscreensaver.xpm
+# into /usr/share/pixmaps/
+install-gnome:: $(LOGO)
+	@if [ "$(GTK_DATADIR)" != "" ]; then                                  \
+           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+           fi                                                                ;\
+	   target=xscreensaver.xpm                                           ;\
+	   echo $(INSTALL_DATA) $(LOGO)					      \
+	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+	        $(INSTALL_DATA) $(LOGO)					      \
+	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+        fi
+
+# ../utils/images/screensaver-*.png
+# into /usr/share/xscreensaver/glade/
+install-gnome::
+	@if [ "$(GTK_DATADIR)" != "" ]; then                                 \
+           if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then               \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
+           fi                                                                ;\
+	   for target in $(GTK_ICONS) ; do				      \
+	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
+	     echo $(INSTALL_DATA) $$target				      \
+	          $(install_prefix)$(GTK_GLADEDIR)/$$dest		     ;\
+	          $(INSTALL_DATA) $$target				      \
+	          $(install_prefix)$(GTK_GLADEDIR)/$$dest		     ;\
+	   done								     ;\
+        fi
+
+# xscreensaver-demo.glade2
+# into /usr/share/xscreensaver/glade/
+install-gnome:: xscreensaver-demo.glade2
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
+	  if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then		      \
+	    echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
+	         $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
+	  fi								     ;\
+	  target=xscreensaver-demo.glade2				     ;\
+	  echo $(INSTALL_DATA) $(srcdir)/$$target                             \
+	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
+	  if   $(INSTALL_DATA) $(srcdir)/$$target                             \
+	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
+	    then true                                                        ;\
+          else                                                                \
+	    e=echo ;                                                          \
+ $$e ""                                                                      ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $$target into"			     ;\
+ $$e "           $(install_prefix)$(GTK_GLADEDIR)/."                         ;\
+ $$e "           Without this file, xscreensaver-demo will not"              ;\
+ $$e "           be able to run properly."                                   ;\
+ $$e "  ####################################################################";\
+ $$e ""                                                                      ;\
+             exit 1 ;                                                         \
+	   fi ;                                                               \
+	 fi
+
+
+# screensaver-properties.desktop
+# into /usr/share/applications/
+uninstall-gnome::
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
+          f=xscreensaver-properties.desktop                                  ;\
+          echo rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
+               rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
+        fi
+
+# xscreensaver.xpm
+# into /usr/share/pixmaps/
+uninstall-gnome::
+	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
+	  target=xscreensaver.xpm                                            ;\
+	  echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
+	       rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
+	 fi
+
+# ../utils/images/screensaver-*.png
+# into /usr/share/xscreensaver/glade/
+uninstall-gnome::
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
+	   for target in $(GTK_ICONS) ; do				      \
+	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
+	     echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$dest              ;\
+	          rm -f $(install_prefix)$(GTK_GLADEDIR)/$$dest              ;\
+	   done								     ;\
+        fi
+
+# xscreensaver-demo.glade2
+# into /usr/share/xscreensaver/glade/
+uninstall-gnome:: xscreensaver-demo.glade2
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
+	  target=xscreensaver-demo.glade2				     ;\
+	  echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
+	       rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
+	 fi
+
+# /usr/share/xscreensaver/config/README
+install-xml:
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 if [ ! -d $$dest ]; then					\
+	   $(INSTALL_DIRS) $$dest ;					\
+	 fi ;								\
+	 src=$(srcdir)/../hacks/config ;				\
+	 echo $(INSTALL_DATA) $$src/README $$dest/README ;		\
+	      $(INSTALL_DATA) $$src/README $$dest/README
+
+
+# /usr/share/xscreensaver/config/README
+uninstall-xml:
+	rm -f $(install_prefix)$(HACK_CONF_DIR)/README
+
+clean:
+	-rm -f *.o a.out core $(EXES) $(EXES2) $(TEST_EXES) \
+	XScreenSaver_ad.h XScreenSaver_Xm_ad.h
+
+distclean: clean
+	-rm -f Makefile XScreenSaver.ad \
+	TAGS *~ "#"* screensaver-properties.desktop
+
+# Adds all current dependencies to Makefile
+depend: XScreenSaver_ad.h XScreenSaver_Xm_ad.h
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SAVER_SRCS) $(CMD_SRCS) $(GETIMG_SRCS_1)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) -I$(ICON_SRC) $(DEFS) $(DEPEND_DEFINES)		    \
+	$(CFLAGS) $(X_CFLAGS) --					    \
+	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(GTK_SRCS) $(GETIMG_SRCS_1)	    \
+	$(PWENT_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS)		    \
+	$(TEST_SRCS) 2>/dev/null |					    \
+	sort -d |							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e '/^#.*/d'						    \
+	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@$$.*\(XScreenSaver_ad\)@\1@g'			    \
+	      -e 's@$$.*\(XScreenSaver_Xm_ad\)@\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config\.h\)@ \1@g' ;		    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+# Updates the version number in the app-defaults file to be in sync with 
+# the version number in version.h.  This is so people can tell when they
+# have a version skew between the app-defaults file and the executable.
+# Also update hacks/config/README in the same way.
+update_ad_version::
+	@								    \
+  files="XScreenSaver.ad.in ../hacks/config/README ../OSX/bindist.rtf" ;    \
+  U=$(UTILS_SRC)/version.h ;						    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;		    \
+  D=`date '+%d-%b-%Y'` ;						    \
+  for S in $$files ; do							    \
+    T=/tmp/xs.$$$$ ;							    \
+    sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*[ab]*[0-9]*\(.*\)/\1$$V\2/"  \
+        -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"	    \
+      < $$S > $$T ;							    \
+    if cmp -s $$S $$T ; then						    \
+      true ;								    \
+    else								    \
+      cat $$T > $$S ;							    \
+      echo "updated $$S to $$V $$D" ;					    \
+    fi ;								    \
+  done ;								    \
+  rm $$T
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@$(MAKE) XScreenSaver_ad.h XScreenSaver_Xm_ad.h 2>&1 >/dev/null
+	@echo $(TARFILES)
+
+check_men:
+	@badmen="" ;							\
+	 for exe in $(EXES); do						\
+	   if ! [ -f $(srcdir)/$$exe.man ]; then			\
+	     badmen="$$badmen $$exe" ;					\
+	   fi ;								\
+	 done ;								\
+	 if [ -n "$$badmen" ]; then					\
+	   echo "" ;							\
+	   echo "Warning: The following programs have no manuals:" ;	\
+	   echo "" ;							\
+	   for m in $$badmen ; do					\
+	     echo "    $$m" ;						\
+	   done ;							\
+	   echo "" ;							\
+	 fi
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/fade.o:		$(UTILS_SRC)/fade.c
+$(UTILS_BIN)/overlay.o:		$(UTILS_SRC)/overlay.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
+$(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/colorbars.o:	$(UTILS_SRC)/colorbars.c
+
+$(SAVER_UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+.m.o:
+	$(OBJCC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+# subprocs takes an extra -D option.
+subprocs.o: subprocs.c
+	$(CC) -c $(INCLUDES) $(SUBP_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  $(srcdir)/subprocs.c
+
+# demo-Gtk takes extra -D options, and an extra -I option.
+demo-Gtk.o: demo-Gtk.c
+	$(CC) -c $(INCLUDES) $(SUBP_DEFS) -I$(ICON_SRC) \
+	  $(GTK_DEFS) $(INTL_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  $(srcdir)/demo-Gtk.c
+
+# demo-Gtk-conf takes an extra -D option.
+demo-Gtk-conf.o: demo-Gtk-conf.c
+	$(CC) -c $(INCLUDES) $(CONF_DEFS) $(GTK_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  $(srcdir)/demo-Gtk-conf.c
+
+
+# How we build the default app-defaults file into the program.
+#
+XScreenSaver_ad.h: XScreenSaver.ad
+	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > XScreenSaver_ad.h
+
+XScreenSaver_Xm_ad.h: XScreenSaver-Xm.ad
+	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver-Xm.ad > XScreenSaver_Xm_ad.h
+
+@INTLTOOL_DESKTOP_RULE@
+
+# The executables linked in this directory.
+#
+xscreensaver: $(SAVER_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(SAVER_OBJS) $(SAVER_LIBS)
+
+xscreensaver-command: $(CMD_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(CMD_OBJS) $(CMD_LIBS)
+
+
+xscreensaver-demo: @PREFERRED_DEMO_PROGRAM@
+	@if [ "@PREFERRED_DEMO_PROGRAM@" = "" ]; then			\
+	  echo "WARNING: neither GTK nor Motif are available,"		\
+	       "therefore no xscreensaver-demo!"		      ; \
+	  rm -f $@@EXEEXT@					      ;	\
+	else								\
+	  echo cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
+	       cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
+	fi
+
+xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) \
+	$(MOTIF_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) -lXt -lX11 \
+	$(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
+
+xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(GTK_OBJS) $(LIBS) $(X_LIBS) \
+	$(GTK_LIBS) $(XPM_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
+	-lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
+
+demo-Gtk.o: XScreenSaver_ad.h
+demo-Xm.o:  XScreenSaver_Xm_ad.h
+
+xscreensaver-getimage: $(GETIMG_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm
+
+pdf2jpeg: $(PDF2JPEG_OBJS)
+	$(OBJCC) $(LDFLAGS) -o $@ $(PDF2JPEG_OBJS) $(PDF2JPEG_LIBS) -lm
+
+
+TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PASSWD_OBJS) \
+	 subprocs.o setuid.o splash.o prefs.o mlstring.o exec.o \
+	$(SAVER_UTIL_OBJS)
+test-passwd.o: XScreenSaver_ad.h
+
+test-passwd: $(TEST_PASSWD_OBJS) XScreenSaver_ad.h
+	$(CC) $(LDFLAGS) -o $@ $(TEST_PASSWD_OBJS) $(SAVER_LIBS)
+
+test-uid: test-uid.o
+	$(CC) $(LDFLAGS) -o $@ test-uid.o
+
+test-xdpms: test-xdpms.o
+	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(LIBS) $(X_LIBS) $(XDPMS_LIBS) \
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+test-xinerama: test-xinerama.o
+	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
+	$(X_PRE_LIBS) $(XINERAMA_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+test-vp: test-vp.o
+	$(CC) $(LDFLAGS) -o $@ test-vp.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+test-randr: test-randr.o
+	$(CC) $(LDFLAGS) -o $@ test-randr.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
+test-grab: test-grab.o
+	$(CC) $(LDFLAGS) -o $@ test-grab.o $(SAVER_LIBS)
+
+test-apm: test-apm.o
+	$(CC) $(LDFLAGS) -o $@ test-apm.o $(SAVER_LIBS) -lapm
+
+test-mlstring.o: mlstring.c
+test-mlstring: test-mlstring.o
+	$(CC) -DTEST $(LDFLAGS) -o $@ test-mlstring.o $(SAVER_LIBS)
+
+TEST_FADE_OBJS = test-fade.o $(UTILS_SRC)/fade.o $(DEMO_UTIL_OBJS)
+test-fade: test-fade.o $(UTILS_BIN)/fade.o
+	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(SAVER_LIBS)
+
+TEST_SCREENS_OBJS = test-screens.o $(DEMO_UTIL_OBJS)
+test-screens.o: screens.c
+test-screens: test-screens.o
+	$(CC) $(LDFLAGS) -o $@ $(TEST_SCREENS_OBJS) $(SAVER_LIBS)
+
+
+xdpyinfo.o: xdpyinfo.c
+	$(CC) -c $(INCLUDES) -DHAVE_GLX $(CFLAGS) $(X_CFLAGS) \
+	  $(srcdir)/xdpyinfo.c
+
+xdpyinfo: xdpyinfo.o
+	$(CC) $(LDFLAGS) -o $@ xdpyinfo.o \
+		$(LIBS) $(X_LIBS) @GL_LIBS@ \
+		$(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS) -lm
+
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+demo-Gtk-conf.o: ../config.h
+demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
+demo-Gtk.o: XScreenSaver_ad.h
+demo-Gtk.o: ../config.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
+demo-Gtk.o: $(srcdir)/prefs.h
+demo-Gtk.o: $(srcdir)/remote.h
+demo-Gtk.o: $(srcdir)/types.h
+demo-Gtk.o: $(UTILS_SRC)/images/logo-180.xpm
+demo-Gtk.o: $(UTILS_SRC)/images/logo-50.xpm
+demo-Gtk.o: $(UTILS_SRC)/resources.h
+demo-Gtk.o: $(UTILS_SRC)/usleep.h
+demo-Gtk.o: $(UTILS_SRC)/version.h
+demo-Gtk.o: $(UTILS_SRC)/visual.h
+demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
+demo-Gtk-support.o: ../config.h
+demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
+demo-Gtk-widgets.o: ../config.h
+demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-stubs.h
+demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-support.h
+demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-widgets.h
+demo-Xm.o: ../config.h
+demo-Xm-widgets.o: ../config.h
+dpms.o: ../config.h
+dpms.o: $(srcdir)/prefs.h
+dpms.o: $(srcdir)/types.h
+dpms.o: $(srcdir)/xscreensaver.h
+exec.o: ../config.h
+exec.o: $(srcdir)/exec.h
+lock.o: $(srcdir)/auth.h
+lock.o: ../config.h
+lock.o: $(srcdir)/mlstring.h
+lock.o: $(srcdir)/prefs.h
+lock.o: $(srcdir)/types.h
+lock.o: $(UTILS_SRC)/resources.h
+lock.o: $(srcdir)/xscreensaver.h
+mlstring.o: $(srcdir)/mlstring.h
+passwd.o: $(srcdir)/auth.h
+passwd.o: ../config.h
+passwd.o: $(srcdir)/prefs.h
+passwd.o: $(srcdir)/types.h
+passwd.o: $(srcdir)/xscreensaver.h
+passwd-pwent.o: ../config.h
+prefs.o: ../config.h
+prefs.o: $(srcdir)/prefs.h
+prefs.o: $(srcdir)/types.h
+prefs.o: $(UTILS_SRC)/resources.h
+remote.o: ../config.h
+remote.o: $(srcdir)/remote.h
+screens.o: ../config.h
+screens.o: $(srcdir)/prefs.h
+screens.o: $(srcdir)/types.h
+screens.o: $(UTILS_SRC)/visual.h
+screens.o: $(srcdir)/xscreensaver.h
+setuid.o: ../config.h
+setuid.o: $(srcdir)/prefs.h
+setuid.o: $(srcdir)/types.h
+setuid.o: $(srcdir)/xscreensaver.h
+splash.o: ../config.h
+splash.o: $(srcdir)/prefs.h
+splash.o: $(srcdir)/types.h
+splash.o: $(UTILS_SRC)/resources.h
+splash.o: $(srcdir)/xscreensaver.h
+stderr.o: ../config.h
+stderr.o: $(srcdir)/prefs.h
+stderr.o: $(srcdir)/types.h
+stderr.o: $(UTILS_SRC)/resources.h
+stderr.o: $(UTILS_SRC)/visual.h
+stderr.o: $(srcdir)/xscreensaver.h
+subprocs.o: ../config.h
+subprocs.o: $(srcdir)/exec.h
+subprocs.o: $(srcdir)/prefs.h
+subprocs.o: $(srcdir)/types.h
+subprocs.o: $(UTILS_SRC)/visual.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
+subprocs.o: $(srcdir)/xscreensaver.h
+test-apm.o: ../config.h
+test-fade.o: ../config.h
+test-fade.o: $(srcdir)/prefs.h
+test-fade.o: $(srcdir)/types.h
+test-fade.o: $(UTILS_SRC)/fade.h
+test-fade.o: $(srcdir)/xscreensaver.h
+test-grab.o: ../config.h
+test-mlstring.o: $(srcdir)/mlstring.c
+test-mlstring.o: $(srcdir)/mlstring.h
+test-passwd.o: XScreenSaver_ad.h
+test-passwd.o: $(srcdir)/auth.h
+test-passwd.o: ../config.h
+test-passwd.o: $(srcdir)/prefs.h
+test-passwd.o: $(srcdir)/types.h
+test-passwd.o: $(UTILS_SRC)/resources.h
+test-passwd.o: $(UTILS_SRC)/version.h
+test-passwd.o: $(UTILS_SRC)/visual.h
+test-passwd.o: $(srcdir)/xscreensaver.h
+test-randr.o: ../config.h
+test-screens.o: ../config.h
+test-screens.o: $(srcdir)/prefs.h
+test-screens.o: $(srcdir)/screens.c
+test-screens.o: $(srcdir)/types.h
+test-screens.o: $(UTILS_SRC)/visual.h
+test-screens.o: $(srcdir)/xscreensaver.h
+test-uid.o: ../config.h
+test-vp.o: ../config.h
+test-xdpms.o: ../config.h
+test-xinerama.o: ../config.h
+timers.o: ../config.h
+timers.o: $(srcdir)/prefs.h
+timers.o: $(srcdir)/types.h
+timers.o: $(srcdir)/xscreensaver.h
+windows.o: ../config.h
+windows.o: $(srcdir)/prefs.h
+windows.o: $(srcdir)/types.h
+windows.o: $(UTILS_SRC)/fade.h
+windows.o: $(UTILS_SRC)/visual.h
+windows.o: $(srcdir)/xscreensaver.h
+xscreensaver-command.o: ../config.h
+xscreensaver-command.o: $(srcdir)/remote.h
+xscreensaver-command.o: $(UTILS_SRC)/version.h
+xscreensaver-getimage.o: ../config.h
+xscreensaver-getimage.o: XScreenSaver_ad.h
+xscreensaver-getimage.o: $(srcdir)/prefs.h
+xscreensaver-getimage.o: $(srcdir)/types.h
+xscreensaver-getimage.o: $(UTILS_SRC)/colorbars.h
+xscreensaver-getimage.o: $(UTILS_SRC)/grabscreen.h
+xscreensaver-getimage.o: $(UTILS_SRC)/resources.h
+xscreensaver-getimage.o: $(UTILS_SRC)/utils.h
+xscreensaver-getimage.o: $(UTILS_SRC)/version.h
+xscreensaver-getimage.o: $(UTILS_SRC)/visual.h
+xscreensaver-getimage.o: $(UTILS_SRC)/vroot.h
+xscreensaver-getimage.o: $(UTILS_SRC)/yarandom.h
+xscreensaver.o: XScreenSaver_ad.h
+xscreensaver.o: $(srcdir)/auth.h
+xscreensaver.o: ../config.h
+xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: $(srcdir)/types.h
+xscreensaver.o: $(UTILS_SRC)/resources.h
+xscreensaver.o: $(UTILS_SRC)/usleep.h
+xscreensaver.o: $(UTILS_SRC)/version.h
+xscreensaver.o: $(UTILS_SRC)/visual.h
+xscreensaver.o: $(UTILS_SRC)/yarandom.h
+xscreensaver.o: $(srcdir)/xscreensaver.h
+xset.o: ../config.h
+xset.o: $(srcdir)/prefs.h
+xset.o: $(srcdir)/types.h
+xset.o: $(srcdir)/xscreensaver.h
+

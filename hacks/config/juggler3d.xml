@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="juggler3d" _label="Juggler3D">
+  <command arg="-root"/>
+
+	<number id="speed" type="slider" arg="-speed %" _label="Juggling Speed"
+		_low-label="Slow" _high-label="Fast" low="0.5" high="5.0" default="2.2"/>
+		  
+	<number id="trans" type="slider" arg="-trans %" _label="Juggler Horizontal Speed"
+		_low-label="Slow" _high-label="Fast" low="0.05" high="2.0" default="0.1"/>
+
+	<number id="spin" type="slider" arg="-spin %" _label="Juggler Spin Speed"
+		_low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
+
+	<number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min Objects"
+          low="3" high="35" default="8"/>
+
+	<number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max Objects"
+          low="3" high="35" default="8"/>		  
+
+	<number id="minhinc" type="spinbutton" arg="-minhinc %" _label="Min Height"
+          low="1" high="31" default="2"/>
+		  
+	<number id="maxhinc" type="spinbutton" arg="-maxhinc %" _label="Max Height"
+          low="1" high="31" default="6"/>		  
+
+	<boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+	<boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+	<_description>
+3D simulation of a juggler performing with balls, clubs and rings.  
+
+Written by Brian Apps; 2005.
+	</_description>
+</screensaver>

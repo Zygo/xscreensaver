@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="attraction" _label="Attraction">
+
+  <command arg="-root"/>
+
+  <hgroup>
+  <select id="mode">
+    <option id="balls"    _label="Balls"    arg-set="-mode balls"/>
+    <option id="lines"    _label="Lines"    arg-set="-mode lines"/>
+    <option id="tails"    _label="Tails"    arg-set="-mode tails"/>
+    <option id="polygons" _label="Polygons" arg-set="-mode polygons"/>
+    <option id="splines"  _label="Splines"  arg-set="-mode splines"/>
+    <option id="fsplines" _label="Filled Splines"
+					    arg-set="-mode filled-splines"/>
+  </select>
+
+  <select id="wallmode">
+    <option id="walls"   _label="Bounce Off Walls"/>
+    <option id="nowalls" _label="Ignore Screen Edges" arg-set="-nowalls"/>
+  </select>
+
+  </hgroup>
+
+  <hgroup>
+    <number id="points" type="spinbutton" arg="-points %"
+              _label="Ball Count" low="0" high="200" default="0"/>
+    <number id="size" type="slider" arg="-size %"
+              _low-label="Ball Mass" _high-label="High"
+              low="0" high="100" default="0"/>
+  </hgroup>
+
+  <number id="viscosity" type="slider" arg="-viscosity %"
+          _label="Environmental Viscosity"
+          _low-label="Low" _high-label="High"
+          low="0.0" high="1.0" default="1.0"
+          convert="invert"/>
+
+  <number id="threshold" type="slider" arg="-threshold %"
+          _label="Repulsion Threshold"
+          _low-label="Small" _high-label="Large"
+          low="0" high="600" default="200"/>
+
+  <number id="segments" type="slider" arg="-segments %"
+          _label="Trail Length" _low-label="Short" _high-label="Long"
+          low="2" high="1000" default="500"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="40000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+<!--
+  <number id="color_contrast" type="slider" arg="-color-shift %"
+          _label="Color Contrast" _low-label="Low" _high-label="High"
+           low="0" high="25" default="3"/>
+-->
+
+  <hgroup>
+    <boolean id="orbit" _label="Orbital Mode" arg-set="-orbit"/>
+    <number id="radius" type="spinbutton" arg="-radius %"
+              _label="Radius" low="0" high="1000" default="0"/>
+    <number id="vmult" type="slider" arg="-vmult %"
+            _low-label="Outward" _high-label="Inward"
+             low="-5.0" high="5.0" default="0.9"/>
+  </hgroup>
+
+  <!-- #### -vx [?] -->
+  <!-- #### -vy [?] -->
+  <!-- #### -glow -->
+  <!-- #### -nomaxspeed -->
+  <!-- #### -correct-bounce -->
+  <!-- #### -graphmode [none] -->
+
+  <_description>
+
+Uses a simple simple motion model to generate many different display
+modes.  The control points attract each other up to a certain
+distance, and then begin to repel each other.  The
+attraction/repulsion is proportional to the distance between any two
+particles, similar to the strong and weak nuclear forces.
+
+Written by Jamie Zawinski and John Pezaris; 1992.
+  </_description>
+</screensaver>

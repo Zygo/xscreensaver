@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="blitspin" _label="BlitSpin">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Fuzzy Rotation Speed" _low-label="Slow" _high-label="Fast"
+          low="1" high="800000" default="500000"
+          convert="invert"/>
+
+  <number id="delay2" type="slider" arg="-delay2 %"
+          _label="90 deg Rotation Speed" _low-label="Slow" _high-label="Fast"
+          low="1" high="800000" default="500000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
+<!--  <file id="bitmap" _label="Bitmap to rotate" arg="-bitmap %"/> -->
+
+  <xscreensaver-image />
+
+  <_description>
+
+Repeatedly rotates a bitmap by 90 degrees by using logical operations:
+the bitmap is divided into quadrants, and the quadrants are shifted
+clockwise.  Then the same thing is done again with progressively
+smaller quadrants, except that all sub-quadrants of a given size are
+rotated in parallel.  As you watch it, the image appears to dissolve
+into static and then reconstitute itself, but rotated.
+
+Written by Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

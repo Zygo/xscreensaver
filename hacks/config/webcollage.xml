@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="webcollage" _label="WebCollage">
+
+  <command arg="-root"/>
+
+  <number id="timeout" type="slider" arg="-timeout %"
+          _low-label="URL Timeout:     2 secs" _high-label="2 min"
+          low="2" high="120" default="30"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _low-label="Delay:                    None" _high-label="30 secs"
+          low="0" high="30" default="2"/>
+
+  <number id="opacity" type="slider" arg="-opacity %"
+          _low-label="Opacity:      Transparent" _high-label="Solid"
+          low="0.1" high="1.0" default="0.85"/>
+
+  <string id="filter"  _label="Per-Image Filter Program" arg="-filter %"/>
+
+  <string id="filter2" _label="Overall Filter Program" arg="-filter2 %"/>
+
+<!-- <file id="dictionary" _label="Dictionary File" arg="-dictionary %"/> -->
+
+  <_description>
+This program makes collages out of random images pulled off of the
+World Wide Web.  It finds these images by doing random web searches,
+and then extracting images from the returned pages.  It can also be
+set up to filter the images through the "VidWhacker" program.
+
+WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY.
+
+The Internet being what it is, absolutely anything might show up in the
+collage including -- quite possibly -- pornography, or even nudity.
+Please act accordingly.
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>

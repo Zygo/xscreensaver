@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xmatrix" _label="XMatrix">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <select id="size">
+     <option id="font1" _label="Small Font"  arg-set="-small"/>
+     <option id="font2" _label="Large Font"/>
+   </select>
+
+   <select id="mode">
+     <option id="matrix" _label="Matrix Encoding"/>
+     <option id="binary" _label="Binary Encoding"      arg-set="-mode binary"/>
+     <option id="hex"    _label="Hexadecimal Encoding" arg-set="-mode hex"/>
+     <option id="dna"    _label="Genetic Encoding"     arg-set="-mode dna"/>
+     <option id="pipe"   _label="Piped ASCII Text"     arg-set="-mode pipe"/>
+   </select>
+
+   <select id="fill">
+     <option id="both"   _label="Synergistic Algorithm"/>
+     <option id="top"    _label="Slider Algorithm"    arg-set="-insert top"/>
+     <option id="bottom" _label="Expansion Algorithm" arg-set="-insert bottom"/>
+   </select>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="trace" _label="Run Trace Program" arg-unset="-no-trace"/>
+   <boolean id="knock" _label="Knock Knock"       arg-unset="-no-knock-knock"/>
+   <string id="phone" _label="Phone Number" arg="-phone %"/>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0" high="20000" default="10000"
+            convert="invert"/>
+   </vgroup>
+
+   <vgroup>
+    <number id="density" type="slider" arg="-density %"
+            _label="Density" _low-label="Sparse" _high-label="Full"
+            low="1" high="100" default="75"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-text />
+
+  <_description>
+Draws dropping characters similar to what is seen on the computer 
+monitors in "The Matrix".
+
+See also "glmatrix" for a 3D rendering of the similar effect that
+appeared in the title sequence of the movie.
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>

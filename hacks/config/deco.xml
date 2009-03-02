@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="deco" _label="Deco">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Duration" _low-label="1 Second" _high-label="1 Minute"
+          low="1" high="60" default="5"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <number id="maxdepth" type="spinbutton" arg="-max-depth %"
+            _label="Max Depth" low="1" high="40" default="12"/>
+
+  <boolean id="smooth-colors" _label="Smooth Colors" arg-set="-smooth-colors"/>
+  <boolean id="golden-ratio" _label="Golden Ratio" arg-set="-golden-ratio"/>
+  <boolean id="mondrian" _label="Mondrian" arg-set="-mondrian"/>
+
+  <hgroup>
+  <number id="minwidth" type="spinbutton" arg="-min-width %"
+            _label="Min Size" low="1" high="100" default="20"/>
+
+  <number id="minheight" type="spinbutton" arg="-min-height %"
+            _label="x" low="1" high="100" default="20"/>
+  </hgroup>
+
+  <_description>
+Subdivides and colors rectangles randomly.  It looks kind of
+like Brady-Bunch-era rec-room wall paneling. 
+
+Written by Jamie Zawinski and Michael Bayne; 1997.
+  </_description>
+</screensaver>
