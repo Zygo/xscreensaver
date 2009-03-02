@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.33 $
+ * $Revision: 1.37 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -174,6 +174,7 @@ static long delta(struct timeval *, struct timeval *);
 
 typedef struct Bogie {
     char *name;			/* The name of the thing being displayed */
+    char *desc;			/* Beneath the name (e.g., ping time) */
     int distance;		/* The distance to this thing (0 - 100) */
     int tick;			/* The tick that it was found on */
     int ttl;			/* The time to live */
@@ -216,6 +217,7 @@ typedef struct {
 
 static Bool debug_p = False;
 static Bool resolve_p = True;
+static Bool times_p = True;
 
 
 /* 
@@ -316,6 +318,7 @@ char *defaults [] = {
 
     "*ping:	       default",
     "*resolve:	       true",
+    "*showTimes:       true",
     ".debug:	       false",
     0
 };
@@ -340,6 +343,7 @@ XrmOptionDescRec options [] = {
 
     {"-ping",          ".ping",        XrmoptionSepArg, 0 },
     {"-no-dns",        ".resolve",     XrmoptionNoArg, "False" },
+    {"-no-times",      ".showTimes",   XrmoptionNoArg, "False" },
     {"-debug",         ".debug",       XrmoptionNoArg, "True" },
     { 0, 0, 0, 0 }
 };
@@ -1221,6 +1225,8 @@ getping(sonar_info *si, ping_info *pi)
 	ip = (struct ip *) packet;
         iphdrlen = IP_HDRLEN(ip) << 2;
 	icmph = (struct ICMP *) &packet[iphdrlen];
+	then  = (struct timeval *) &packet[iphdrlen + sizeof(struct ICMP)];
+
 
 	/* Was the packet a reply?? */
 
@@ -1246,6 +1252,12 @@ getping(sonar_info *si, ping_info *pi)
 	    return bl;
 	}
 
+# if 0  /* Don't need to do this -- the host names are already as
+           resolved as they're going to get.  (We stored the resolved
+           name in the outgoing ping packet, so that same string just
+           came back to us.)
+         */
+
         /* If the name is an IP addr, try to resolve it. */
         {
           int iip[4];
@@ -1270,6 +1282,7 @@ getping(sonar_info *si, ping_info *pi)
                 }
             }
         }
+# endif /* 0 */
 
 	/* Create the new Bogie and add it to the list we are building */
 
@@ -1278,13 +1291,48 @@ getping(sonar_info *si, ping_info *pi)
 	new->next = bl;
 	bl = new;
 
-	/* Compute the round trip time */
+        {
+          float msec = delta(then, &now) / 1000.0;
 
-	then =  (struct timeval *) &packet[iphdrlen +
-					  sizeof(struct ICMP)];
-	new->distance = delta(then, &now) / 100;
-	if (new->distance == 0)
-		new->distance = 2; /* HACK */
+          if (times_p)
+            {
+              if (new->desc) free (new->desc);
+              new->desc = (char *) malloc (30);
+              if      (msec > 99) sprintf (new->desc, "    %.0f ms   ", msec);
+              else if (msec >  9) sprintf (new->desc, "    %.1f ms   ", msec);
+              else if (msec >  1) sprintf (new->desc, "    %.2f ms   ", msec);
+              else                sprintf (new->desc, "    %.3f ms   ", msec);
+            }
+
+          if (debug_p && times_p)  /* print ping-like stuff to stdout */
+            {
+              struct sockaddr_in *iaddr = (struct sockaddr_in *) &from;
+              unsigned int a, b, c, d;
+              char ipstr[20];
+              char *s = strdup (new->desc);
+              char *s2 = s, *s3 = s;
+              while (*s2 == ' ') s2++;
+              s3 = strchr (s2, ' ');
+              if (s3) *s3 = 0;
+
+              unpack_addr (iaddr->sin_addr.s_addr, &a, &b, &c, &d);
+              sprintf (ipstr, "%d.%d.%d.%d", a, b, c, d);
+
+              fprintf (stdout,
+                       "%3d bytes from %28s: "
+                       "icmp_seq=%-4d ttl=%d time=%s ms\n",
+                       result,
+                       name,
+                       /*ipstr,*/
+                       ICMP_SEQ(icmph), si->TTL, s2);
+              free (s);
+            }
+
+          /* Don't put anyone *too* close to the center of the screen. */
+          msec += 0.6;
+
+          new->distance = msec * 10;
+        }
       }
     }
 
@@ -1452,6 +1500,29 @@ scope_mask (Display *dpy, Window win, sonar_info *si)
 }
 
 
+static void
+reshape (sonar_info *si)
+{
+  XWindowAttributes xgwa;
+  Pixmap mask;
+  XGetWindowAttributes(si->dpy, si->win, &xgwa);
+  si->width = xgwa.width;
+  si->height = xgwa.height;
+  si->centrex = si->width / 2;
+  si->centrey = si->height / 2;
+  si->maxx = si->centrex + MY_MIN(si->centrex, si->centrey) - 10;
+  si->minx = si->centrex - MY_MIN(si->centrex, si->centrey) + 10;
+  si->maxy = si->centrey + MY_MIN(si->centrex, si->centrey) - 10;
+  si->miny = si->centrey - MY_MIN(si->centrex, si->centrey) + 10;
+  si->radius = si->maxx - si->centrex;
+
+  /* Install the clip mask... */
+  mask = scope_mask (si->dpy, si->win, si);
+  XSetClipMask(si->dpy, si->text, mask);
+  XSetClipMask(si->dpy, si->erase, mask);
+  XFreePixmap (si->dpy, mask); /* it's been copied into the GCs */
+}
+
 /*
  * Initialize the Sonar.
  *
@@ -1488,17 +1559,10 @@ init_sonar(Display *dpy, Window win)
     si->dpy = dpy;
     si->win = win;
     si->visible = NULL;
+
     XGetWindowAttributes(dpy, win, &xwa);
     si->cmap = xwa.colormap;
-    si->width = xwa.width;
-    si->height = xwa.height;
-    si->centrex = si->width / 2;
-    si->centrey = si->height / 2;
-    si->maxx = si->centrex + MY_MIN(si->centrex, si->centrey) - 10;
-    si->minx = si->centrex - MY_MIN(si->centrex, si->centrey) + 10;
-    si->maxy = si->centrey + MY_MIN(si->centrex, si->centrey) - 10;
-    si->miny = si->centrey - MY_MIN(si->centrex, si->centrey) + 10;
-    si->radius = si->maxx - si->centrex;
+
     si->current = 0;
     si->sweepnum = 0;
 
@@ -1532,13 +1596,7 @@ init_sonar(Display *dpy, Window win)
 					dpy, si->cmap);
     si->grid = XCreateGC (dpy, win, GCForeground, &gcv);
 
-    /* Install the clip mask... */
-    {
-      Pixmap mask = scope_mask (dpy, win, si);
-      XSetClipMask(dpy, si->text, mask);
-      XSetClipMask(dpy, si->erase, mask);
-      XFreePixmap (dpy, mask); /* it's been copied into the GCs */
-    }
+    reshape (si);
 
     /* Compute pixel values for fading text on the display */
 
@@ -1683,7 +1741,7 @@ simulator(sonar_info *si, void *vinfo)
  */
 
 static int
-computeStringX(sonar_info *si, char *label, int x) 
+computeStringX(sonar_info *si, const char *label, int x) 
 {
 
     int width = XTextWidth(si->font, label, strlen(label));
@@ -1701,14 +1759,12 @@ computeStringX(sonar_info *si, char *label, int x)
  *    The y coordinate of the start of the label.
  */
 
-/* TODO: Add smarts to keep label in sonar screen */
-
 static int
 computeStringY(sonar_info *si, int y) 
 {
 
-    int fheight = si->font->ascent + si->font->descent;
-    return y + 5 + fheight;
+    int fheight = si->font->ascent /* + si->font->descent */;
+    return y + fheight;
 }
 
 /*
@@ -1725,8 +1781,8 @@ computeStringY(sonar_info *si, int y)
  */
 
 static void
-DrawBogie(sonar_info *si, int draw, char *name, int degrees, 
-	  int distance, int ttl, int age) 
+DrawBogie(sonar_info *si, int draw, const char *name, const char *desc,
+          int degrees, int distance, int ttl, int age) 
 {
 
     /* Local Variables */
@@ -1769,9 +1825,21 @@ DrawBogie(sonar_info *si, int draw, char *name, int degrees,
   /* Draw (or erase) the Bogie */
 
     XFillArc(si->dpy, si->win, gc, x, y, 5, 5, 0, 360 * 64);
+
+    x += 3;  /* move away from the dot */
+    y += 7;
+    y = computeStringY(si, y);
     XDrawString(si->dpy, si->win, gc,
-		computeStringX(si, name, x),
-		computeStringY(si, y), name, strlen(name));
+                computeStringX(si, name, x), y,
+                name, strlen(name));
+
+    if (desc && *desc)
+      {
+        y = computeStringY(si, y);
+        XDrawString(si->dpy, si->win, gc,
+                    computeStringX(si, desc, x), y,
+                    desc, strlen(desc));
+      }
 }
 
 
@@ -1864,7 +1932,7 @@ Sonar(sonar_info *si, Bogie *bl)
 
 	if (((bp->tick == si->current) && (++bp->age >= bp->ttl)) ||
 	    (findNode(bl, bp->name) != NULL)) {
-	    DrawBogie(si, 0, bp->name, bp->tick,
+	    DrawBogie(si, 0, bp->name, bp->desc, bp->tick,
 		      bp->distance, bp->ttl, bp->age);
 	    if (prev == NULL)
 		si->visible = bp->next;
@@ -1909,7 +1977,8 @@ Sonar(sonar_info *si, Bogie *bl)
 
     for (bp = si->visible; bp != NULL; bp = bp->next) {
 	if (bp->age < bp->ttl)		/* grins */
-	   DrawBogie(si, 1, bp->name, bp->tick, bp->distance, bp->ttl,bp->age);
+	   DrawBogie(si, 1, bp->name, bp->desc,
+                     bp->tick, bp->distance, bp->ttl,bp->age);
     }
 
     /* Redraw the grid */
@@ -2034,6 +2103,25 @@ parse_mode (Bool ping_works_p)
 }
 
 
+static void
+handle_events (sonar_info *si)
+{
+  while (XPending (si->dpy))
+    {
+      XEvent event;
+      XNextEvent (si->dpy, &event);
+
+      if (event.xany.type == ConfigureNotify)
+        {
+          XClearWindow (si->dpy, si->win);
+          reshape (si);
+        }
+
+      screenhack_handle_event (si->dpy, &event);
+    }
+}
+
+
 
 /*
  * Main screen saver hack.
@@ -2056,6 +2144,7 @@ screenhack(Display *dpy, Window win)
 
     debug_p = get_boolean_resource ("debug", "Debug");
     resolve_p = get_boolean_resource ("resolve", "Resolve");
+    times_p = get_boolean_resource ("showTimes", "ShowTimes");
 
     sensor = 0;
 # ifdef HAVE_PING
@@ -2102,7 +2191,7 @@ screenhack(Display *dpy, Window win)
 	gettimeofday(&finish);
 # endif
 	sleeptime = si->delay - delta(&start, &finish);
-        screenhack_handle_events (dpy);
+        handle_events (si);
 	if (sleeptime > 0L)
 	    usleep(sleeptime);
 

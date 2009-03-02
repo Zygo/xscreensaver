@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002, 2005 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -72,4 +72,38 @@ gltrackball_rotate (trackball_state *ts)
   GLfloat m[4][4];
   build_rotmatrix (m, ts->q);
   glMultMatrixf (&m[0][0]);
+}
+
+
+# define Button4 4  /* X11/Xlib.h */
+# define Button5 5
+
+/* Call this when a mouse-wheel click is detected.
+   Clicks act like horizontal or vertical drags.
+   Percent is the length of the drag as a percentage of the screen size.
+   Button is 'Button4' or 'Button5'.
+ */
+void
+gltrackball_mousewheel (trackball_state *ts,
+                        int button, int percent, int horizontal_p)
+{
+  int up_p;
+  double move;
+  switch (button) {
+    case Button4: up_p = 1; break;
+    case Button5: up_p = 0; break;
+  default: abort(); break;
+  }
+
+  if (horizontal_p) up_p = !up_p;
+
+  move = (up_p
+          ? 1.0 - (percent / 100.0)
+          : 1.0 + (percent / 100.0));
+
+  gltrackball_start (ts, 50, 50, 100, 100);
+  if (horizontal_p)
+    gltrackball_track (ts, 50*move, 50, 100, 100);
+  else
+    gltrackball_track (ts, 50, 50*move, 100, 100);
 }

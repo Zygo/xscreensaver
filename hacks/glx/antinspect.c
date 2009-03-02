@@ -555,7 +555,7 @@ void release_antinspect(ModeInfo * mi) {
 Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) {
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
   
-  if(event->xany.type == ButtonPress && event->xbutton.button & Button1) {
+  if(event->xany.type == ButtonPress && event->xbutton.button == Button1) {
 	mp->button_down_p = True;
 	gltrackball_start(mp->trackball,
 					  event->xbutton.x, event->xbutton.y,
@@ -563,10 +563,18 @@ Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) {
 	return True;
   }
   else if(event->xany.type == ButtonRelease && 
-		  event->xbutton.button & Button1) {
+		  event->xbutton.button == Button1) {
 	mp->button_down_p = False;
 	return True;
   }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (mp->trackball, event->xbutton.button, 5,
+                              !event->xbutton.state);
+      return True;
+    }
   else if(event->xany.type == MotionNotify && mp->button_down_p) {
 	gltrackball_track (mp->trackball,
 					   event->xmotion.x, event->xmotion.y,

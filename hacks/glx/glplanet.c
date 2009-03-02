@@ -183,25 +183,6 @@ typedef struct {
 static planetstruct *planets = NULL;
 
 
-static inline void
-normalize(GLfloat v[3])
-{
-  GLfloat d = (GLfloat) sqrt((double) (v[0] * v[0] +
-                                       v[1] * v[1] +
-                                       v[2] * v[2]));
-  if (d != 0)
-    {
-      v[0] /= d;
-      v[1] /= d;
-      v[2] /= d;
-	}
-  else
-    {
-      v[0] = v[1] = v[2] = 0;
-	}
-}
-
-
 /* Set up and enable texturing on our object */
 static void
 setup_xpm_texture (ModeInfo *mi, char **xpm_data)
@@ -467,7 +448,7 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       gp->button_down_p = True;
       gltrackball_start (gp->trackball,
@@ -476,9 +457,17 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       gp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&

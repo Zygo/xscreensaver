@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2001, 2003
+/* xscreensaver, Copyright (c) 1997, 1998, 2001, 2003, 2005
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -150,7 +150,7 @@ read_screen (Display *dpy, Window window, int *widthP, int *heightP)
 
   p = XCreatePixmap(dpy, window, *widthP, *heightP, xgwa.depth);
   XClearWindow(dpy, window);
-  load_random_image (xgwa.screen, window, p, NULL);
+  load_random_image (xgwa.screen, window, p, NULL, NULL);
   XClearWindow(dpy, window);
 
   return p;

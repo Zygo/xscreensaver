@@ -18,6 +18,7 @@ webcollage - decorate the screen with random images from the web
 .B webcollage
 [\-display \fIhost:display.screen\fP]
 [\-root]
+[\-window\-id \fIid\fP]
 [\-verbose]
 [\-timeout \fIsecs\fP]
 [\-delay \fIsecs\fP]
@@ -26,6 +27,7 @@ webcollage - decorate the screen with random images from the web
 [\-urls-only]
 [\-imagemap \fIfilename-base\fP]
 [\-size \fIWxH\fP]
+[\-opacity \fIratio\fP]
 [\-filter \fIcommand\fP]
 [\-filter2 \fIcommand\fP]
 [\-http\-proxy host[:port]]
@@ -36,15 +38,6 @@ The \fIwebcollage\fP program pulls random image off of the World Wide Web
 and scatters them on the root window.  One satisfied customer described it
 as "a nonstop pop culture brainbath."  This program finds its images by
 doing random web searches, and extracting images from the returned pages.
-It places the images on the root window by using the
-.BR giftopnm (1),
-.BR djpeg (1),
-and
-.BR xli (1),
-.BR xv (1),
-or
-.BR xloadimage (1)
-tools.
 
 \fIwebcollage\fP is written in
 .BR perl (1)
@@ -66,6 +59,20 @@ accepts the following options:
 Draw on the root window.  This option is manditory, if output is being
 produced: drawing to a window other than the root window is not yet
 supported.
+
+Images are placed on the root window by using one of the
+.BR xscreensaver-getimage (1),
+.BR chbg (1),
+.BR xv (1),
+.BR xli (1),
+or
+.BR xloadimage (1)
+programs (whichever is available.)
+.TP 8
+.B \-window\-id \fIid\fP
+Draw to the indicated window instead; this only works if the
+.BR xscreensaver-getimage (1)
+program is installed.
 .TP 8
 .B \-verbose \fRor\fP \-v
 Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
@@ -89,8 +96,14 @@ a color name, a hexadecimal RGB specification in the form '#rrggbb', or
 the name of a PPM file.
 .TP 8
 .B \-size \fIWxH\fP
-Normally, the output image will be made to be the size of the screen.
-This lets you specify the desired size.
+Normally, the output image will be made to be the size of the
+screen (or target window.)  This lets you specify the desired size.
+.TP 8
+.B \-opacity \fIratio\fP
+How transparently to paste the images together, with 0.0 meaning
+"completely transparent" and 1.0 meaning "opaque."  Default 0.85.
+A value of around 0.3 will produce an interestingly blurry image
+after a while.
 .TP 8
 .B \-no-output
 If this option is specified, then no composite output image will be
@@ -130,6 +143,11 @@ environment variables.
 Webcollage normally looks at the system's default spell-check dictionary
 to generate words to feed into the search engines.  You can specify an
 alternate dictionary with this option.
+
+Note that by default, webcollage searches for images using several
+different methods, not all of which involve dictionary words, so
+using a "topical" dictionary file will not, in itself, be as effective
+as you might be hoping.
 .TP 8
 .B \-driftnet \fI[ args ]\fP
 .BR driftnet (1)
@@ -173,7 +191,7 @@ to find the random words to feed to certain search engines.
     \fIhttp://www.altavista.com/image/randomlink\fP,
     \fIhttp://random.yahoo.com/fast/ryl\fP,
     \fIhttp://www.livejournal.com/stats/latest-img.bml\fP, and
-    \fIhttp://news.yahoo.com/\fP
+    \fIhttp://www.google.com/\fP
 to find random web pages.
 .SH BOOBIES
 The Internet being what it is, absolutely anything might show up in the
@@ -209,7 +227,7 @@ DriftNet:
 .BR EtherPEG ,
 .BR EtherPeek
 .SH COPYRIGHT
-Copyright \(co 1998-2004 by Jamie Zawinski.  Permission to use, copy, modify,
+Copyright \(co 1998-2005 by Jamie Zawinski.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is
 hereby granted without fee, provided that the above copyright notice appear
 in all copies and that both that copyright notice and this permission notice
@@ -217,4 +235,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@jwz.org>, 24-May-98.
+Jamie Zawinski <jwz@jwz.org>, 24-May-1998.

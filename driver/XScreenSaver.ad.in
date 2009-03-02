@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.19
-!                              16-Dec-2004
+!                              version 4.20
+!                              23-Feb-2005
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -77,19 +77,37 @@ GetViewPortIsFullOfLies: False
 ! This is what the "Prefs" button on the splash screen runs (/bin/sh syntax.)
 *prefsCommand: xscreensaver-demo -prefs
 
-! This is the URL that the "Help" button on the splash screen loads.
+! This is the URL loaded by the "Help" button on the splash screen,
+! and by the "Documentation" menu item in xscreensaver-demo.
 *helpURL: http://www.jwz.org/xscreensaver/man.html
 
-! This is how the "Help" button loads URLs (/bin/sh syntax.)
-! The "helpURL" will be substituted for up to two occurrences of "%s".
-@GNOMEHELP_N@*loadURL: mozilla '%s' || netscape '%s'
-@GNOMEHELP_Y@*loadURL: gnome-url-show '%s' || gnome-moz-remote --newwin '%s'
-
-! This is what the "Manual" button in xscreensaver-demo runs (/bin/sh syntax.)
-@GNOMEHELP_N@*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
-@GNOMEHELP_N@        -e /bin/sh -c 'man "%s" ; read foo'
-! For GNOME systems:
-@GNOMEHELP_Y@*manualCommand: yelp 'man:%s' || gnome-help-browser 'man:%s'
+! loadURL       -- how the "Help" buttons load the helpURL (/bin/sh syntax.)
+! manualCommand -- how the "Documentation" buttons display man pages.
+!
+! And there are so very many options to choose from!
+!
+!   Gnome 2.4, 2.6: (yelp can't display man pages, as of 2.6.3)
+!
+@GNOME24@*loadURL: gnome-open '%s'
+@GNOME24@*manualCommand: gnome-terminal --title '%s manual' \
+@GNOME24@		--command '/bin/sh -c "man %s; read foo"'
+!
+!   Gnome 2.2:
+!
+@GNOME22@*loadURL: gnome-url-show '%s'
+@GNOME22@*manualCommand: gnome-terminal --title '%s manual' \
+@GNOME22@		--command '/bin/sh -c "man %s; read foo"'
+!
+!   Gnome 1.4:
+!
+!	*loadURL: gnome-moz-remote --newwin '%s'
+!	*manualCommand: gnome-help-browser 'man:%s'
+!
+!   non-Gnome systems:
+!
+@NOGNOME@*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'
+@NOGNOME@*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+@NOGNOME@		    -e /bin/sh -c 'man "%s" ; read foo'
 
 
 ! The format used for printing the date and time in the password dialog box
@@ -282,8 +300,11 @@ GetViewPortIsFullOfLies: False
 				anemotaxis -root			    \n\
 				memscroller -root			    \n\
 				substrate -root				    \n\
+	 "Substrate (circles)"  substrate -root -circle-percent 33          \n\
 				intermomentary -root			    \n\
 				fireworkx -root				    \n\
+				fiberlamp -root				    \n\
+				boxfit -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -360,8 +381,9 @@ GetViewPortIsFullOfLies: False
 -	   GL:                  antinspect -root                            \n\
 @GL_KLUDGE@ GL:			providence -root			    \n\
 @GL_KLUDGE@ GL:	"Pinion (large gears)"	pinion -root			    \n\
-@GL_KLUDGE@ GL:	"Pinion (small gears)"	pinion -root -size 0.2		    \n\
-@GL_KLUDGE@ GL:			pinion -root				    \n\
+@GL_KLUDGE@ GL:	"Pinion (small gears)"	pinion -root -size 0.2 -scroll 0.3  \n\
+@GL_KLUDGE@ GL:			boing -root -lighting -smooth		    \n\
+-	   GL:                  carousel -root                             \n
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -432,7 +454,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2004 by
+*splash.body.label:		Copyright © 1991-2005 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -625,6 +647,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.blinkbox.name:       BlinkBox
 *hacks.fuzzyflakes.name:    FuzzyFlakes
 *hacks.memscroller.name:    MemScroller
+*hacks.boxfit.name:         BoxFit
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

@@ -25,7 +25,8 @@
 #define EVENT_MASK	    PointerMotionMask
 #define antspotlight_opts	    xlockmore_opts
 #define DEFAULTS	    "*delay:   20000   \n" \
-			    "*showFPS: False   \n"
+			    "*showFPS: False   \n" \
+                            "*useSHM:  True    \n"
 
 #include "xlockmore.h"
 #else
@@ -58,19 +59,11 @@ ModStruct   antspotlight_description = {
 #define Pi M_PI
 #endif
 
-int winw, winh;
-int tw, th; /* texture width, height */
-int tx, ty;
 GLfloat max_tx, max_ty;
-#define QW 12
-#define QH 12
-GLfloat qw = QW, qh = QH; /* for the quad we'll draw */
-GLfloat qx = -6 , qy = 6;
 int mono = 0, wire = 0, ticks = 0;
 GLuint screentexture;
 
 typedef struct {
-  GLint       WindH, WindW;
   GLXContext *glx_context;
   rotator    *rot;
   trackball_state *trackball;
@@ -86,7 +79,8 @@ static antspotlightstruct *antspotlight = (antspotlightstruct *) NULL;
 
 /* draw method for ant */
 Bool draw_ant(GLfloat *Material, int mono, int shadow, 
-	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float)) {
+	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float))
+{
   
   float cos1 = cos(ant_step);
   float cos2 = cos(ant_step + 2 * Pi / 3);
@@ -219,7 +213,8 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 }
 
 /* filled sphere */
-static Bool mySphere(float radius) {
+static Bool mySphere(float radius)
+{
   GLUquadricObj *quadObj;
   
   if((quadObj = gluNewQuadric()) == 0)
@@ -233,7 +228,8 @@ static Bool mySphere(float radius) {
 }
 
 /* silhouette sphere */
-static Bool mySphere2(float radius) {
+static Bool mySphere2(float radius)
+{
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -255,7 +251,8 @@ double boardsize = 8.0;
 
 GLfloat spot_direction[3];
 
-void draw_board(void) {
+void draw_board(void)
+{
   int i, j;
   double cutoff = Pi/3.0;
   double center[3];
@@ -292,6 +289,7 @@ void draw_board(void) {
 
     glBegin(GL_TRIANGLE_STRIP);
     glNormal3f(0.0, 1.0, 0.0);
+
     glTexCoord2f(centertex[0], centertex[1]);
     glVertex3f(center[0], 0.01, center[2]);
 
@@ -308,7 +306,7 @@ void draw_board(void) {
       point[2] = center[2] - fj*sin(theta1);
 
       tex[0] = (boardsize/2.0+point[0]) * max_tx / boardsize;
-      tex[1] = max_ty - ((boardsize/2.0+point[2]) * max_ty / boardsize);
+      tex[1] = (boardsize/2.0+point[2]) * max_ty / boardsize;
 
       glTexCoord2f(tex[0], tex[1]);
       glVertex3f(point[0], point[1], point[2]);
@@ -318,7 +316,7 @@ void draw_board(void) {
       point[2] = center[2] - fj*sin(theta2);
 
       tex[0] = (boardsize/2.0+point[0]) * max_tx / boardsize;
-      tex[1] = max_ty - ((boardsize/2.0+point[2]) * max_ty / boardsize);
+      tex[1] = (boardsize/2.0+point[2]) * max_ty / boardsize;
 
       glTexCoord2f(tex[0], tex[1]);
       glVertex3f(point[0], point[1], point[2]);
@@ -331,14 +329,16 @@ void draw_board(void) {
 }
 
 /* return euclidean distance between two points */
-double distance(double x[3], double y[3]) {
+double distance(double x[3], double y[3])
+{
   double dx = x[0] - y[0];
   double dz = x[2] - y[2];
   return sqrt(dx*dx + dz*dz);
 }
 
 /* determine a new goal */
-void find_goal(void) {
+void find_goal(void)
+{
   do {
     ant->goal[0] = random()%((int)(boardsize+0.5)-2) - boardsize/2.0 + 1.0;
     ant->goal[1] = 0.0;
@@ -348,7 +348,8 @@ void find_goal(void) {
 }
 
 /* construct our ant */
-void build_ant(void) {
+void build_ant(void)
+{
   ant = (Ant *) malloc(sizeof (Ant));
   ant->position[0] = 0.0;
   ant->position[1] = 0.0;
@@ -362,25 +363,30 @@ void build_ant(void) {
 
 #define EPSILON 0.01
 
-double sign(double d) {
+double sign(double d)
+{
   return d < 0.0 ? -1.0 : 1.0;
 }
 
-double min(double a, double b) {
+double min(double a, double b)
+{
   return a < b ? a : b;
 }
 
-double max(double a, double b) {
+double max(double a, double b)
+{
   return a > b ? a : b;
 }
 
 /* find a new goal and reset steps */
-void reset_ant(void) {
+void reset_ant(void)
+{
   find_goal();
 }
 
 /* draw ant composed of skeleton and glass */
-void show_ant(void) {
+void show_ant(void)
+{
 
   glPushMatrix();
 
@@ -404,7 +410,8 @@ void show_ant(void) {
   glPopMatrix();
 }
 
-void draw_antspotlight_strip(ModeInfo *mi) {
+void draw_antspotlight_strip(ModeInfo *mi)
+{
 
   /* compute spotlight position and direction */
   GLfloat light1_position[4];
@@ -483,12 +490,11 @@ void draw_antspotlight_strip(ModeInfo *mi) {
     ant->step -= 2*Pi;
 }
 
-void reshape_antspotlight(ModeInfo * mi, int width, int height) {
+void reshape_antspotlight(ModeInfo * mi, int width, int height)
+{
   double h = (GLfloat) height / (GLfloat) width;  
   int size = 2;
-  antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
-
-  glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
+  glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
@@ -512,7 +518,8 @@ GLfloat lmodel_twoside[] = {GL_TRUE};
 GLfloat spotlight_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
 GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
 
-static void pinit(void) {
+static void pinit(void)
+{
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   
@@ -553,7 +560,8 @@ static void pinit(void) {
 }
 
 /* cleanup routine */
-void release_antspotlight(ModeInfo * mi) {
+void release_antspotlight(ModeInfo * mi)
+{
 
   if(antspotlight) {
     free((void *) antspotlight);
@@ -569,7 +577,8 @@ int mag = 1;
 #define min(a, b) a < b ? a : b
 
 /* event handling */
-Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event) {
+Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
+{
   antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
 
   switch(event->xany.type) {
@@ -620,62 +629,28 @@ Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event) {
 }
 
 /* get screenshot */
-void get_snapshot(ModeInfo *modeinfo) {
-  XImage *ximage;
-  int status;
+void get_snapshot(ModeInfo *modeinfo)
+{
+  Bool mipmap_p = True;
+  int iw, ih, tw, th;
 
-  if(MI_IS_WIREFRAME(modeinfo))
+  if (MI_IS_WIREFRAME(modeinfo))
     return;
 
-  ximage = screen_to_ximage(modeinfo->xgwa.screen, modeinfo->window, NULL);
+  if (! screen_to_texture (modeinfo->xgwa.screen, modeinfo->window, 0, 0,
+                           mipmap_p, NULL, NULL, &iw, &ih, &tw, &th))
+    exit (1);
 
-  qw = QW; qh = QH;
-  tw = modeinfo->xgwa.width;
-  th = modeinfo->xgwa.height;
-  
-#if 0  /* jwz: this makes the image start off the bottom right of the screen */
-  qx += (qw*tw/winw);
-  qy -= (qh*th/winh);
-#endif
+  max_tx = (GLfloat) iw / tw;
+  max_ty = (GLfloat) ih / th;
 
-  qw *= (GLfloat)tw/winw;
-  qh *= (GLfloat)th/winh;
-
-  max_tx = (GLfloat) tw / (GLfloat) ximage->width;
-  max_ty = (GLfloat) th / (GLfloat) ximage->height;
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-  
-  clear_gl_error();
-  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
-			     ximage->width, ximage->height,
-			     GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-  
-  if (!status && glGetError())
-    /* Some implementations of gluBuild2DMipmaps(), but set a GL error anyway.
-       We could just call check_gl_error(), but that would exit. */
-    status = -1;
-  
-  if(status) {
-    const unsigned char *s = gluErrorString(status);
-    fprintf(stderr, "%s: error mipmapping %dx%d texture: %s\n",
-	    progname, ximage->width, ximage->height,
-	    (s ? s : (unsigned char *) "(unknown)"));
-    fprintf(stderr, "%s: turning on -wireframe.\n", progname);
-    MI_IS_WIREFRAME(modeinfo) = 1;
-    clear_gl_error();
-  }
-  check_gl_error("mipmapping");  /* should get a return code instead of a
-				    GL error, but just in case... */
-  
-  free(ximage->data);
-  ximage->data = 0;
-  XDestroyImage (ximage);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 }
 
-void init_antspotlight(ModeInfo *mi) {
+void init_antspotlight(ModeInfo *mi)
+{
   double rot_speed = 0.3;
 
   antspotlightstruct *mp;
@@ -710,7 +685,8 @@ void init_antspotlight(ModeInfo *mi) {
 /*   glEndList(); */
 }
 
-void draw_antspotlight(ModeInfo * mi) {
+void draw_antspotlight(ModeInfo * mi)
+{
   antspotlightstruct *mp;
   
   Display    *display = MI_DISPLAY(mi);
@@ -757,7 +733,8 @@ void draw_antspotlight(ModeInfo * mi) {
   glXSwapBuffers(display, window);
 }
 
-void change_antspotlight(ModeInfo * mi) {
+void change_antspotlight(ModeInfo * mi)
+{
   antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
   
   if (!mp->glx_context)

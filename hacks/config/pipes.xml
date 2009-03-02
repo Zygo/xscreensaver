@@ -29,7 +29,7 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="10000" default="100"
+          low="0" high="80000" default="10000"
           convert="invert"/>
 
   <boolean id="fisheye" _label="Fisheye Lens" arg-unset="-no-fisheye"/>

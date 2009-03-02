@@ -230,8 +230,6 @@ text_to_ximage (Screen *screen, Visual *visual,
                      XGetPixel (ximage1, x, y2) ? fg : bg);
       }
 
-    free (ximage1->data);
-    ximage1->data = 0;
     XDestroyImage (ximage1);
 
 #if 0

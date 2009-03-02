@@ -300,14 +300,20 @@ klein_handle_event (ModeInfo *mi, XEvent *event)
 {
 	kleinstruct *kp = &klein[MI_SCREEN(mi)];
 
-	if (event->xany.type == ButtonPress && event->xbutton.button & Button1) {
+	if (event->xany.type == ButtonPress && event->xbutton.button == Button1) {
 			kp->button_down_p = True;
 			gltrackball_start (kp->trackball, event->xbutton.x, event->xbutton.y, MI_WIDTH (mi), MI_HEIGHT (mi));
 			return True;
-	} else if (event->xany.type == ButtonRelease && event->xbutton.button & Button1) {
+	} else if (event->xany.type == ButtonRelease && event->xbutton.button == Button1) {
 			kp->button_down_p = False;
 			return True;
-	} else if (event->xany.type == MotionNotify && kp->button_down_p) {
+	} else if (event->xany.type == ButtonPress &&
+               (event->xbutton.button == Button4 ||
+                event->xbutton.button == Button5)) {
+      gltrackball_mousewheel (kp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    } else if (event->xany.type == MotionNotify && kp->button_down_p) {
 			gltrackball_track (kp->trackball, event->xmotion.x, event->xmotion.y, MI_WIDTH (mi), MI_HEIGHT (mi));
 			return True;
 	}

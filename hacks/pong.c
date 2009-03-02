@@ -1,6 +1,13 @@
 /* pong, Copyright (c) 2003 Jeremy English <jenglish@myself.com>
  * A pong screen saver
  *
+ * Modified by Brian Sawicki <sawicki@imsa.edu> to fix a small bug.
+ * Before this fix after a certain point the paddles would be too
+ * small for the program to effectively hit the ball.  The score would
+ * then skyrocket as the paddles missed most every time. Added a max
+ * so that once a paddle gets 10 the entire game restarts.  Special
+ * thanks to Scott Zager for some help on this.
+ *
  * Modified by Trevor Blackwell <tlb@tlb.org> to use analogtv.[ch] display.
  * Also added gradual acceleration of the ball, shrinking of paddles, and
  * scorekeeping.
@@ -88,6 +95,27 @@ hit_top_bottom(void)
 }
 
 void
+new_game(void)
+{
+  /* Starts a Whole New Game*/
+  ball.x = PONG_W/2;
+  ball.y = PONG_H/2;
+  bx = m_unit;
+  by = m_unit;
+
+  l_paddle.wait = 1;
+  l_paddle.lock = 0;
+  r_paddle.wait = 0;
+  r_paddle.lock = 0;
+  paddle_rate = m_unit-1;
+  r_paddle.score = 0;
+  l_paddle.score = 0;
+
+  l_paddle.h = PONG_H/4;
+  r_paddle.h = PONG_H/4;
+}
+
+void
 start_game(void)
 {
   /*Init the ball*/
@@ -124,6 +152,9 @@ hit_paddle(void)
       else
         {
           r_paddle.score++;
+          if (r_paddle.score >=10)
+                new_game();
+          else 
           start_game();
         }
     }
@@ -143,6 +174,9 @@ hit_paddle(void)
       else
         {
           l_paddle.score++;
+          if (l_paddle.score >= 10)
+                new_game();
+          else
           start_game();
         }
     }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997 
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 2005 
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -110,7 +110,7 @@ init_decay (Display *dpy, Window window)
   sizex = xgwa.width;
   sizey = xgwa.height;
 
-  load_random_image (xgwa.screen, window, window, NULL);
+  load_random_image (xgwa.screen, window, window, NULL, NULL);
   
   if (mode == MELT || mode == STRETCH) {
     /* make sure screen eventually turns background color */

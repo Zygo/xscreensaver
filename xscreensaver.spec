@@ -1,10 +1,9 @@
 %define	name		xscreensaver
-%define	version		4.19
+%define	version		4.20
 %define	release		1
 %define	epoch		1
 %define	x11_prefix	/usr/X11R6
 %define	gnome_prefix	/usr
-%define	kde_prefix	/usr
 %define gnome_datadir	%{gnome_prefix}/share
 
 # By default, builds the basic, non-GL package.
@@ -34,7 +33,7 @@ Buildroot:	%{_tmppath}/%{name}-%{version}-root
 A modular screen saver and locker for the X Window System.
 Highly customizable: allows the use of any program that
 can draw on the root window as a display mode.
-More than 180 display modes are included in this package.
+More than 190 display modes are included in this package.
 %{?USE_GL:See also the xscreensaver-gl package, which}
 %{?USE_GL:includes optional OpenGL display modes.}
 
@@ -42,7 +41,7 @@ More than 180 display modes are included in this package.
 Un économiseur d'écran et verrouillage modulaire pour X-Window.
 Hautement configurable: permet l'utilisation de n'importe quel programme
 qui peut dessiner dans la fenêtre root.
-Plus de 180 modes d'affichage sont inclus dans ce paquet.
+Plus de 190 modes d'affichage sont inclus dans ce paquet.
 %{?USE_GL:Voir aussi le paquet xscreensaver-gl, qui inclut}
 %{?USE_GL:des modules optionnels OpenGL.}
 
@@ -101,8 +100,6 @@ archdir=`./config.guess`
 # We have to make sure these directories exist,
 # or nothing will be installed into them.
 #
-export KDEDIR=%{kde_prefix}
-mkdir -p $RPM_BUILD_ROOT$KDEDIR/bin
 mkdir -p $RPM_BUILD_ROOT%{gnome_datadir}
 mkdir -p $RPM_BUILD_ROOT/etc/pam.d
 
@@ -127,13 +124,12 @@ list_files() {
 }
 
 # Collect the names of the non-GL executables and scripts...
-# (Including the names of all of the Gnome, KDE, and L10N-related files,
+# (Including the names of all of the Gnome and L10N-related files,
 # whereever they might have gotten installed...)
 # For the translation catalogs, prepend an appropriate %lang(..) tag.
 #
 (  cd    hacks ; list_files install ; \
-   cd ../driver; list_files install-program install-scripts \
-                            install-gnome install-kde ; \
+   cd ../driver; list_files install-program install-scripts install-gnome ; \
  ( cd ../po;     list_files install | grep '\.' \
     | sed 's@^\(.*/\([^/]*\)/LC.*\)$@%lang(\2) \1@' ) \
 ) > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl

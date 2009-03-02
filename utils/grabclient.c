@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2001, 2003, 2004
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -188,6 +187,41 @@ get_name (Display *dpy, Window window)
     return 0;
 }
 
+static Bool
+get_geometry (Display *dpy, Window window, XRectangle *ret)
+{
+  Atom type;
+  int format;
+  unsigned long nitems, bytesafter;
+  unsigned char *name = 0;
+  Atom atom = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_GEOMETRY, False);
+  int x, y;
+  unsigned int w, h;
+  if (XGetWindowProperty (dpy, window, atom,
+                          0, 1024, False, XA_STRING,
+                          &type, &format, &nitems, &bytesafter,
+                          &name)
+      == Success
+      && type != None)
+    {
+      int flags = XParseGeometry ((char *) name, &x, &y, &w, &h);
+      /* Require all four, and don't allow negative positions. */
+      if (flags == (XValue|YValue|WidthValue|HeightValue))
+        {
+          ret->x = x;
+          ret->y = y;
+          ret->width  = w;
+          ret->height = h;
+          return True;
+        }
+      else
+        return False;
+    }
+  else
+    return False;
+}
+
+
 
 static void
 hack_subproc_environment (Display *dpy)
@@ -261,7 +295,7 @@ fork_exec_wait (const char *command)
 
 typedef struct {
   void (*callback) (Screen *, Window, Drawable,
-                    const char *name, void *closure);
+                    const char *name, XRectangle *geom, void *closure);
   Screen *screen;
   Window window;
   Drawable drawable;
@@ -278,7 +312,8 @@ static void
 fork_exec_cb (const char *command,
               Screen *screen, Window window, Drawable drawable,
               void (*callback) (Screen *, Window, Drawable,
-                                const char *name, void *closure),
+                                const char *name, XRectangle *geom,
+                                void *closure),
               void *closure)
 {
   grabclient_data *data;
@@ -356,14 +391,18 @@ static void
 finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
 {
   grabclient_data *data = (grabclient_data *) closure;
+  Display *dpy = DisplayOfScreen (data->screen);
   char *name;
+  XRectangle geom = { 0, 0, 0, 0 };
 
   XtRemoveInput (*id);
 
-  name = get_name (DisplayOfScreen (data->screen), data->window);
+  name = get_name (dpy, data->window);
+  get_geometry (dpy, data->window, &geom);
+
   data->callback (data->screen, data->window, data->drawable,
-                  name, data->closure);
-  free (name);
+                  name, &geom, data->closure);
+  if (name) free (name);
 
   fclose (data->read_pipe);
   memset (data, 0, sizeof (*data));
@@ -377,9 +416,11 @@ finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
 static void
 load_random_image_1 (Screen *screen, Window window, Drawable drawable,
                      void (*callback) (Screen *, Window, Drawable,
-                                       const char *name, void *closure),
+                                       const char *name, XRectangle *geom,
+                                       void *closure),
                      void *closure,
-                     char **name_ret)
+                     char **name_ret,
+                     XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   char *grabber = get_string_resource ("desktopGrabber", "DesktopGrabber");
@@ -430,6 +471,8 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
       fork_exec_wait (cmd);
       if (name_ret)
         *name_ret = get_name (dpy, window);
+      if (geom_ret)
+        get_geometry (dpy, window, geom_ret);
     }
 
   free (cmd);
@@ -444,10 +487,11 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
 void
 fork_load_random_image (Screen *screen, Window window, Drawable drawable,
                         void (*callback) (Screen *, Window, Drawable,
-                                          const char *name, void *closure),
+                                          const char *name, XRectangle *geom,
+                                          void *closure),
                         void *closure)
 {
-  load_random_image_1 (screen, window, drawable, callback, closure, 0);
+  load_random_image_1 (screen, window, drawable, callback, closure, 0, 0);
 }
 
 
@@ -458,9 +502,9 @@ fork_load_random_image (Screen *screen, Window window, Drawable drawable,
  */
 void
 load_random_image (Screen *screen, Window window, Drawable drawable,
-                   char **name_ret)
+                   char **name_ret, XRectangle *geom_ret)
 {
-  load_random_image_1 (screen, window, drawable, 0, 0, name_ret);
+  load_random_image_1 (screen, window, drawable, 0, 0, name_ret, geom_ret);
 }
 
 #else  /* DEBUG */

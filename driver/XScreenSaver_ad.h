@@ -40,8 +40,9 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: gnome-url-show '%s' || gnome-moz-remote --newwin '%s'",
-"*manualCommand: yelp 'man:%s' || gnome-help-browser 'man:%s'",
+"*loadURL: gnome-open '%s'",
+"*manualCommand: gnome-terminal --title '%s manual' \
+		--command '/bin/sh -c \"man %s; read foo\"'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -207,8 +208,11 @@
 				anemotaxis -root			    \\n\
 				memscroller -root			    \\n\
 				substrate -root				    \\n\
+	 \"Substrate (circles)\"  substrate -root -circle-percent 33          \\n\
 				intermomentary -root			    \\n\
 				fireworkx -root				    \\n\
+				fiberlamp -root				    \\n\
+				boxfit -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -234,7 +238,7 @@
 -	   GL:	   \"Pulsar (textures)\"					      \
 				  pulsar -root -texture -mipmap		      \
 				  -texture_quality -light -fog		    \\n\
--	   GL:			extrusion -root				    \\n\
+	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
 	   GL:			menger -root				    \\n\
 	   GL:	 \"GFlux\"	gflux -root				    \\n\
@@ -285,9 +289,10 @@
 -	   GL:                  antinspect -root                            \\n\
 	   GL:			providence -root			    \\n\
 	   GL:	\"Pinion (large gears)\"	pinion -root			    \\n\
-	   GL:	\"Pinion (small gears)\"	pinion -root -size 0.2		    \\n\
-	   GL:			pinion -root				    \\n\
-									      \
+	   GL:	\"Pinion (small gears)\"	pinion -root -size 0.2 -scroll 0.3  \\n\
+	   GL:			boing -root -lighting -smooth		    \\n\
+-	   GL:                  carousel -root                             \\n",
+"									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
 				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
@@ -337,7 +342,7 @@
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwd.thermometer.width:	8",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2004 by",
+"*splash.body.label:		Copyright © 1991-2005 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -502,4 +507,5 @@
 "*hacks.blinkbox.name:       BlinkBox",
 "*hacks.fuzzyflakes.name:    FuzzyFlakes",
 "*hacks.memscroller.name:    MemScroller",
+"*hacks.boxfit.name:         BoxFit",
 "*hacks.documentation.isInstalled: True",

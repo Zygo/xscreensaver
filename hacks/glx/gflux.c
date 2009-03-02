@@ -61,7 +61,8 @@
                                         "*waveChange:   50      \n" \
                                         "*waveHeight:  0.8      \n" \
                                         "*waveFreq:    3.0      \n" \
-                                        "*zoom:        1.0      \n" 
+                                        "*zoom:        1.0      \n" \
+                                        "*useSHM:      True     \n" 
 
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -77,10 +78,6 @@
 #else  /* VMS */
 #  include <Xmu/Drawing.h>
 # endif /* VMS */
-#endif
-
-#ifdef HAVE_PPM
-#include <ppm.h>
 #endif
 
 #undef countof
@@ -99,7 +96,7 @@
 #include "gltrackball.h"
 
 
-static enum {wire=0,solid,light,checker,textured,grab} _draw; /* draw style */
+static enum {wire=0,solid,light,checker,grab} _draw; /* draw style */
 static int _squares = 19;                                 /* grid size */
 static int _resolution = 4;                    /* wireframe resolution */
 static int _flat = 0;
@@ -196,26 +193,17 @@ typedef struct {
     double dispy[MAXWAVES];
     double dispx[MAXWAVES];
     GLfloat colour[3];
-    int imageWidth;
-    int imageHeight;
-#ifdef HAVE_PPM
-	pixval imageMax;
-    pixel **image;
-#else
-	int imageMax;
-	GLubyte *image;
-#endif
     GLuint texName;
     GLfloat tex_xscale;
     GLfloat tex_yscale;
+    XRectangle img_geom;
+    int img_width, img_height;
     void (*drawFunc)(void);
 } gfluxstruct;
 static gfluxstruct *gflux = NULL;
 
 /* prototypes */
 void initLighting(void);
-void initTexture(void);
-void loadTexture(void);
 void grabTexture(void);
 void createTexture(void);
 void displaySolid(void);            /* drawFunc implementations */
@@ -242,7 +230,7 @@ Bool
 gflux_handle_event (ModeInfo *mi, XEvent *event)
 {
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       button_down_p = True;
       gltrackball_start (trackball,
@@ -251,9 +239,17 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
@@ -335,21 +331,12 @@ void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
       gflux->drawFunc = (displayTexture);
       glEnable(GL_DEPTH_TEST);
       createTexture();
-      initTexture();
-      initLighting();
-    break;
-	case textured :
-      gflux->drawFunc = (displayTexture);
-      glEnable(GL_DEPTH_TEST);
-      loadTexture();
-      initTexture();
       initLighting();
     break;
 	case grab :
       gflux->drawFunc = (displayTexture);
       glEnable(GL_DEPTH_TEST);
       grabTexture();
-      initTexture();
       initLighting();
     break;
     case wire :
@@ -387,7 +374,6 @@ void init_gflux(ModeInfo * mi)
       else if (!strcasecmp (s, "solid"))   _draw = solid;
       else if (!strcasecmp (s, "light"))   _draw = light;
       else if (!strcasecmp (s, "checker")) _draw = checker;
-      else if (!strcasecmp (s, "stdin"))   _draw = textured;
       else if (!strcasecmp (s, "grab"))    _draw = grab;
       else
         {
@@ -412,7 +398,6 @@ void init_gflux(ModeInfo * mi)
 /* cleanup code */
 void release_gflux(ModeInfo * mi)
 {
-    if(gflux->image!=NULL) free(gflux->image);
     if(gflux->glx_context!=NULL) free(gflux->glx_context);
     if (gflux != NULL) {
         (void) free((void *) gflux);
@@ -421,273 +406,55 @@ void release_gflux(ModeInfo * mi)
     FreeAllGL(mi);
 }
 
-#ifdef HAVE_PPM
 
-/* load pnm from stdin using pnm libs */
-void loadTexture(void)
-{
-    FILE *file = stdin;
-	gflux->image = ppm_readppm( file, 
-			&(gflux->imageHeight), &(gflux->imageWidth), &(gflux->imageMax) );
-}
-
-/* creates an image for texture mapping */
-void createTexture(void)
-{
-    int i,j,c;
-    pixel **result;
-
-	gflux->imageHeight = gflux->imageWidth = 8;
-
-	result = ppm_allocarray(gflux->imageHeight,gflux->imageWidth);
-    for(i=0;i<gflux->imageHeight;i++) {
-        for(j=0;j<gflux->imageWidth;j++) {
-            c = (((i)%2 ^ (j)%2) ? 100 : 200 );
-			PPM_ASSIGN( result[i][j] , c, c, c );
-        }
-    }
-	gflux->image = result;
-}
-
-/* specifies image as texture */    
-void initTexture(void)
-{
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glGenTextures(1, &gflux->texName);
-	glBindTexture(GL_TEXTURE_2D, gflux->texName);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    clear_gl_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gflux->imageWidth,
-			gflux->imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, *(gflux->image));
-    check_gl_error("texture");
-}
-
-#else /* HAVE_PPM FALSE */
-
-#define presult(A,B,C) (*(result+(A)*(gflux->imageWidth)*4+(B)*4+(C)))
-void loadTexture(void)
-{
-    int i, j, levels, width, height;
-    int red,green,blue;
-    char s[4];
-    int ppmType=0;
-    FILE *file = stdin;
-    GLubyte *result;
-
-    fgets(s,4,file);
-
-    if(!strncmp(s,"P6",2)) ppmType=6;
-    if(!strncmp(s,"P5",2)) ppmType=5;
-    if(!strncmp(s,"P3",2)) ppmType=3;
-    if(!strncmp(s,"P2",2)) ppmType=2;
-    if(!ppmType)exit(1);
-
-    while((i=getc(file))=='#')
-    {
-        while(getc(file)!='\n');
-    }
-    ungetc(i,file);
-
-    fscanf(file,"%d %d %d",&width,&height,&levels);
-
-    result = malloc(sizeof(GLubyte)*4*width*height);
-    gflux->imageWidth = width;
-    gflux->imageHeight = height;
-
-    switch(ppmType) {
-        case 2 :    /* ASCII grey */
-            for(i=0;i<height;i++) {
-                for(j=0;j<width;j++) {
-                    fscanf(file,"%d",&red);
-                    presult(j,i,0) = red;
-                    presult(j,i,1) = red;
-                    presult(j,i,2) = red;
-                }
-            }
-            break;
-        case 3 :    /* ASCII rgb */
-            for(i=0;i<height;i++) {
-                for(j=0;j<width;j++) {
-                   fscanf(file,"%d %d %d",&red,&green,&blue);
-                    presult(j,i,0) = red;
-                    presult(j,i,1) = green;
-                    presult(j,i,2) = blue;
-                }
-            }
-            break;
-        case 5 :    /* Binary grey */
-            getc(file); /* seems nessessary */
-            for(i=0;i<height;i++) {
-                for(j=0;j<width;j++) {
-                    red = getc(file);
-                    presult(j,i,0) = red;
-                    presult(j,i,1) = red;
-                    presult(j,i,2) = red;
-                }
-            }
-        break;
-        case 6 :    /* Binary rgb */
-            getc(file); /* seems nessessary */
-            for(i=0;i<height;i++) {
-                for(j=0;j<width;j++) {
-                    red = getc(file);
-                    green = getc(file);
-                    blue = getc(file);
-                    presult(j,i,0) = red;
-                    presult(j,i,1) = green;
-                    presult(j,i,2) = blue;
-                }
-            }
-        break;
-    }
-    gflux->image = result;
-}
 
 void createTexture(void)
 {
-    int i,j,c;
-    GLubyte *result;
+  int size = 4;
+  unsigned int data[] = { 0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA,
+                          0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF,
+                          0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA,
+                          0xAAAAAAAA, 0xFFFFFFFF, 0xAAAAAAAA, 0xFFFFFFFF };
 
-    gflux->imageHeight = gflux->imageWidth = 8;
+  gflux->tex_xscale = size;
+  gflux->tex_yscale = size;
 
-    result = malloc(sizeof(GLubyte)*4*gflux->imageHeight*gflux->imageWidth);
-    for(i=0;i<gflux->imageHeight;i++) {
-        for(j=0;j<gflux->imageWidth;j++) {
-            c = (((i)%2 ^ (j)%2) ? 100 : 200 );
-            presult(i,j,0) = (GLubyte) c;
-            presult(i,j,1) = (GLubyte) c;
-            presult(i,j,2) = (GLubyte) c;
-            presult(i,j,3) = (GLubyte) 255;
-        }
-    }
-    gflux->image = result;
+  glGenTextures (1, &gflux->texName);
+  glBindTexture (GL_TEXTURE_2D, gflux->texName);
+
+  glTexImage2D (GL_TEXTURE_2D, 0, 3, size, size, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
-
-/* specifies image as texture */
-void initTexture(void)
-{
-    clear_gl_error();
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glGenTextures(1, &gflux->texName);
-    glBindTexture(GL_TEXTURE_2D, gflux->texName);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    check_gl_error("texture parameter");
-
-    /* Bail out if the texture is too large. */
-    {
-      GLint width;
-      glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
-                   gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_2D, 0,
-                                GL_TEXTURE_WIDTH, &width);
-      if (width <= 0)
-        {
-          glGetIntegerv (GL_MAX_TEXTURE_SIZE, &width);
-          fprintf (stderr,
-                   "%s: texture too large (%dx%d -- probable max %dx%d)\n",
-                   progname, gflux->imageWidth, gflux->imageHeight,
-                   width, width);
-          return;
-        }
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
-            gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, gflux->image);
-    check_gl_error("texture creation");
-}
-
-#undef presult
-#endif
 
 
 void
 grabTexture(void)
 {
-  int real_width  = gflux->modeinfo->xgwa.width;
-  int real_height = gflux->modeinfo->xgwa.height;
-  XImage *ximage = screen_to_ximage (gflux->modeinfo->xgwa.screen,
-                                     gflux->window,
-                                     NULL);
-  Bool bigimage = False;
-  int size = 0;
+  Bool mipmap_p = True;
+  int iw, ih, tw, th;
 
-  if (ximage->width > 1280 ||   /* that's too damned big... */
-      ximage->height > 1280)
-    {
-      Display *dpy = gflux->modeinfo->dpy;
-      Visual *v = gflux->modeinfo->xgwa.visual;
-      int real_size = (ximage->width < ximage->height ?
-                       real_width : real_height);
-      XImage *x2;
-      int x, y, xoff, yoff;
-      size = (ximage->width < ximage->height ?
-              ximage->width : ximage->height);
-      bigimage = True;
+  if (MI_IS_WIREFRAME(gflux->modeinfo))
+    return;
 
-      if (size > 1024) size = 1024;
+  if (! screen_to_texture (gflux->modeinfo->xgwa.screen,
+                           gflux->modeinfo->window, 0, 0, mipmap_p,
+                           NULL, &gflux->img_geom, &iw, &ih, &tw, &th))
+    exit (1);
 
-      x2 = XCreateImage (dpy, v, 32, ZPixmap, 0, 0, size, size, 32, 0);
-      xoff = (real_width  > size ? (random() % (real_width  - size)) : 0);
-      yoff = (real_height > size ? (random() % (real_height - size)) : 0);
-
-# if 0
-      fprintf(stderr, "%s: cropping texture from %dx%d to %dx%d @ %d,%d\n",
-              progname, ximage->width, ximage->height, x2->width, x2->height,
-              xoff, yoff);
-# endif
-      x2->data = ximage->data;  /* we can reuse the same array */
-      for (y = 0; y < x2->height; y++)
-        for (x = 0; x < x2->width; x++)
-          XPutPixel (x2, x, y, XGetPixel (ximage, x+xoff, y+yoff));
-
-      real_width = real_height = real_size;
-      ximage->data = 0;
-      XDestroyImage (ximage);
-      ximage = x2;
-    }
-
-  /* Add a border. */
-  {
-    unsigned long gray = 0xAAAAAAAAL;  /* so shoot me */
-    int width  = (bigimage ? size : real_width);
-    int height = (bigimage ? size : real_height);
-    int i;
-    for (i = 0; i < real_height; i++)
-      {
-        XPutPixel (ximage, 0, i, gray);
-        XPutPixel (ximage, width-1, i, gray);
-      }
-    for (i = 0; i < real_width; i++)
-      {
-        XPutPixel (ximage, i, 0, gray);
-        XPutPixel (ximage, i, height-1, gray);
-      }
-  }
-
-  gflux->imageWidth  = ximage->width;
-  gflux->imageHeight = ximage->height;
-  gflux->image = (GLubyte *) ximage->data;
-
-  if (bigimage)  /* don't scale really large images */
-    {
-      gflux->tex_xscale = 1;
-      gflux->tex_yscale = 1;
-    }
-  else
-    {
-      gflux->tex_xscale = ((GLfloat) real_width  / (GLfloat) ximage->width);
-      gflux->tex_yscale = ((GLfloat) real_height / (GLfloat) ximage->height);
-    }
-
-  ximage->data = 0;
-  XDestroyImage (ximage);
+  gflux->tex_xscale =  (GLfloat) iw / tw;
+  gflux->tex_yscale = -(GLfloat) ih / th;
+  gflux->img_width  = iw;
+  gflux->img_height = ih;
+   
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 }
 
 
@@ -745,6 +512,31 @@ void displayTexture(void)
     double xs = gflux->tex_xscale;
     double ys = gflux->tex_yscale;
 
+    double minx, miny, maxx, maxy;
+    double minu, minv;
+
+#if 0
+    minx = (GLfloat) gflux->img_geom.x / gflux->img_width;
+    miny = (GLfloat) gflux->img_geom.y / gflux->img_height;
+    maxx = ((GLfloat) (gflux->img_geom.x + gflux->img_geom.width) /
+            gflux->img_width);
+    maxy = ((GLfloat) (gflux->img_geom.y + gflux->img_geom.height) /
+            gflux->img_height);
+    minu = minx;
+    minv = miny;
+    minx = (minx * 2) - 1;
+    miny = (miny * 2) - 1;
+    maxx = (maxx * 2) - 1;
+    maxy = (maxy * 2) - 1;
+#else
+    minx = -1;
+    miny = -1;
+    maxx = 1;
+    maxy = 1;
+    minv = 0;
+    minu = 0;
+#endif
+
 	glMatrixMode (GL_TEXTURE);
 	glLoadIdentity ();
 	glTranslatef(-1,-1,0);
@@ -752,10 +544,10 @@ void displayTexture(void)
 	glMatrixMode (GL_MODELVIEW);
 
     glLoadIdentity();
+    userRot();
     glRotatef(anglex,1,0,0);
     glRotatef(angley,0,1,0);
     glRotatef(anglez,0,0,1);
-    userRot();
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -767,13 +559,11 @@ void displayTexture(void)
 
 	glColor3f(0.5,0.5,0.5);
  
-    for(x=-1,u= 0;x<0.9999;x+=dx,u+=du) {
+    for(x = minx, u = minu; x < maxx - 0.01; x += dx, u += du) {
         glBegin(GL_QUAD_STRIP);
-        for(y=-1,v= 0;y<=1;y+=dy,v+=dv) {
+        for (y = miny, v = minv; y <= maxy + 0.01; y += dy, v += dv) {
             z = getGrid(x,y,time);
-        /*  genColour(z);
-            glColor3fv(gflux->colour);
-        */  glTexCoord2f(u*xs,v*ys);
+            glTexCoord2f(u*xs,v*ys);
             glNormal3f(
                 getGrid(x+dx,y,time)-getGrid(x-dx,y,time),
                 getGrid(x,y+dy,time)-getGrid(x,y-dy,time),
@@ -782,9 +572,7 @@ void displayTexture(void)
             glVertex3f(x,y,z);
 
             z = getGrid(x+dx,y,time);
-        /*  genColour(z);
-            glColor3fv(gflux->colour);
-        */  glTexCoord2f((u+du)*xs,v*ys);
+            glTexCoord2f((u+du)*xs,v*ys);
             glNormal3f(
                 getGrid(x+dx+dx,y,time)-getGrid(x,y,time),
                 getGrid(x+dx,y+dy,time)-getGrid(x+dx,y-dy,time),
@@ -794,6 +582,29 @@ void displayTexture(void)
         }
         glEnd();
     }
+
+    /* Draw a border around the grid.
+     */
+    glColor3f(0.4, 0.4, 0.4);
+    glDisable(GL_TEXTURE_2D);
+    glEnable (GL_LINE_SMOOTH);
+
+    glBegin(GL_LINE_LOOP);
+    y = miny;
+    for (x = minx; x <= maxx; x += dx)
+      glVertex3f (x, y, getGrid (x, y, time));
+    x = maxx;
+    for (y = miny; y <= maxy; y += dy)
+      glVertex3f (x, y, getGrid (x, y, time));
+    y = maxy;
+    for (x = maxx; x >= minx; x -= dx)
+      glVertex3f (x, y, getGrid (x, y, time));
+    x = minx;
+    for (y = maxy; y >= miny; y -= dy)
+      glVertex3f (x, y, getGrid (x, y, time));
+
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
 
     if (! button_down_p) {
       time -= _speed;

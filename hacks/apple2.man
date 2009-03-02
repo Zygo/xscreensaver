@@ -91,7 +91,7 @@ apple2 -text \\
        -program 'cat /usr/src/linux*/README | fold -sw40'
 apple2 -text -program 'ping apple.com'
 apple2 -text -program 'ps -e'
-apple2 -text -program 'od -txCz -w7 /dev/random'
+apple2 -text -program 'od -txCz -w7 /dev/urandom'
 apple2 -text -program 'cat /dev/random'
 apple2 -text -fast -program 'xemacs -nw -q -f life'
 apple2 -text -fast \\
@@ -103,7 +103,7 @@ and
 .BR gnome-terminal (1)
 terminal emulators:
 .EX
-apple2 -fast -program tcsh
+apple2 -text -fast -program tcsh
 .EE
 .TP 8
 .B \-pty

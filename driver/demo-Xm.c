@@ -385,10 +385,11 @@ doc_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
     }
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
-				  (strlen (p->help_url) * 2) + 20);
+				  (strlen (p->help_url) * 4) + 20);
   strcpy (help_command, "( ");
   sprintf (help_command + strlen(help_command),
-           p->load_url_command, p->help_url, p->help_url);
+           p->load_url_command,
+           p->help_url, p->help_url, p->help_url, p->help_url);
   strcat (help_command, " ) &");
   system (help_command);
   free (help_command);
@@ -674,7 +675,7 @@ manual_cb (Widget button, XtPointer client_data, XtPointer ignored)
   cmd = get_string_resource ("manualCommand", "ManualCommand");
   if (cmd)
     {
-      char *cmd2 = (char *) malloc (strlen (cmd) + strlen (name2) + 100);
+      char *cmd2 = (char *) malloc (strlen (cmd) + (strlen (name2) * 4) + 100);
       strcpy (cmd2, "( ");
       sprintf (cmd2 + strlen (cmd2),
                cmd,

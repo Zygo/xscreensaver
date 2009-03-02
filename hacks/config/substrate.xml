@@ -18,6 +18,10 @@
   <number id="sandg" type="slider" arg="-sand-grains %"
           _label="Sandgrains" _low-label="Few" _high-label="Lots"
           low="16" high="128" default="64" />
+
+  <number id="curve" type="slider" arg="-circle-percent %"
+          _label="Circle Percentage" _low-label="0%" _high-label="100%"
+          low="0" high="100" default="0" />
   
   <boolean id="wire" _label="Wireframe only" arg-set="-wireframe" />
 

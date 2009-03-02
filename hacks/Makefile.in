@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -103,7 +103,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
 		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
-		  intermomentary.c fireworkx.c
+		  intermomentary.c fireworkx.c fiberlamp.c boxfit.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -132,7 +132,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
 		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
-		  intermomentary.o fireworkx.o
+		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -152,7 +152,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
-		  intermomentary fireworkx \
+		  intermomentary fireworkx fiberlamp boxfit \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -199,7 +199,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
-		  intermomentary.man fireworkx.man
+		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -287,10 +287,7 @@ munge-scripts: $(SCRIPTS)
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
 	      < $(srcdir)/$$program > $$tmp ;				\
-	  if cmp -s $(srcdir)/$$program $$tmp ; then			\
-	    echo "$$program unchanged" ;				\
-	    true ;							\
-	  else								\
+	  if ! cmp -s $(srcdir)/$$program $$tmp ; then			\
 	    echo "$$program: setting interpreter to $$perl" ;		\
 	    cat $$tmp > ./$$program ;					\
 	  fi ;								\
@@ -512,6 +509,10 @@ $(UTIL_OBJS):
 screenhack-xlock.o: screenhack.c
 	$(CC) -o $@ -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) \
 	-DXLOCKMORE $(srcdir)/screenhack.c
+
+# Make sure these are regenerated when the version number ticks.
+screenhack.o: $(UTILS_SRC)/version.h
+screenhack-xlock.o: $(UTILS_SRC)/version.h
 
 # Some abbreviations to keep the lines short...
 XPM		= xpm-pixmap.o
@@ -809,6 +810,7 @@ fireworkx:	fireworkx.o	 $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
+
 # The rules for those hacks which follow the `xlockmore' API.
 #
 
@@ -930,6 +932,11 @@ PACOBJS=pacman_ai.o pacman_level.o
 pacman:		pacman.o 	$(PACOBJS) $(XLOCK_OBJS) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(PACOBJS) $(XLOCK_OBJS) $(XPM) $(XPM_LIBS)
 
+fiberlamp:	fiberlamp.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+boxfit:		boxfit.o	 $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 # These are not like the others.
 #
@@ -981,6 +988,8 @@ bouboule.o: ../config.h
 bouboule.o: $(srcdir)/screenhack.h
 bouboule.o: $(srcdir)/xlockmore.h
 bouboule.o: $(srcdir)/xlockmoreI.h
+boxfit.o: ../config.h
+boxfit.o: $(srcdir)/screenhack.h
 braid.o: ../config.h
 braid.o: $(srcdir)/screenhack.h
 braid.o: $(srcdir)/xlockmore.h
@@ -1097,6 +1106,10 @@ fadeplot.o: ../config.h
 fadeplot.o: $(srcdir)/screenhack.h
 fadeplot.o: $(srcdir)/xlockmore.h
 fadeplot.o: $(srcdir)/xlockmoreI.h
+fiberlamp.o: ../config.h
+fiberlamp.o: $(srcdir)/screenhack.h
+fiberlamp.o: $(srcdir)/xlockmore.h
+fiberlamp.o: $(srcdir)/xlockmoreI.h
 fireworkx.o: ../config.h
 fireworkx.o: $(srcdir)/screenhack.h
 flag.o: ../config.h

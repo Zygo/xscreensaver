@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999-2004
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999-2005
 #  by Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
@@ -63,13 +63,13 @@ INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../.. @INCLUDES@
 UTIL_SRCS	= $(UTILS_SRC)/colors.c $(UTILS_SRC)/hsv.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/visual-gl.c \
-		  $(UTILS_SRC)/yarandom.c
+		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/xshm.c
 UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
-		   $(UTILS_SRC)/yarandom.o
+		   $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o
 
-SRCS		= xscreensaver-gl-helper.c \
+SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
@@ -96,9 +96,11 @@ SRCS		= xscreensaver-gl-helper.c \
 		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
-		  antinspect.c providence.c pinion.c
+		  antinspect.c providence.c pinion.c boing.c texfont.c \
+		  carousel.c
 
-OBJS		= xscreensaver-gl-helper.o \
+
+OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
@@ -125,7 +127,8 @@ OBJS		= xscreensaver-gl-helper.o \
 		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
-		  antinspect.o providence.o pinion.o
+		  antinspect.o providence.o pinion.o boing.o texfont.o \
+		  carousel.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -136,11 +139,12 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
-		  antinspect providence pinion
+		  antinspect providence pinion boing carousel
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
-GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o
+XSHM_OBJS	= $(UTILS_BIN)/xshm.o
+GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o fps.o $(HACK_BIN)/xlockmore.o \
@@ -154,7 +158,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
 		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
-		  ants.h polyhedra.h
+		  ants.h polyhedra.h normals.h glxfonts.h texfont.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -169,9 +173,10 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubestorm.man glknots.man blocktube.man flipflop.man \
 		  antspotlight.man polytopes.man gleidescope.man \
 		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
-		  antinspect.man providence.man pinion.man
+		  antinspect.man providence.man pinion.man boing.man \
+		  carousel.man
 MEN		= @GL_MEN@
-EXTRAS		= README Makefile.in dxf2gl.pl
+EXTRAS		= README Makefile.in dxf2gl.pl starwars.txt
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
 
@@ -344,12 +349,14 @@ distdepend:: check_men check_xml
 # to the rules in their own Makefile...
 #
 $(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
+$(UTILS_BIN)/grabclient.o:	$(UTILS_SRC)/grabclient.c
 $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
 $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 
 $(UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
@@ -383,13 +390,16 @@ screenhack-gl.o: $(HACK_SRC)/screenhack.c
 CC_HACK		= $(CC) $(LDFLAGS)
 
 TRACK_OBJS=rotator.o trackball.o gltrackball.o
+HACK_TRACK_OBJS=$(HACK_OBJS) $(TRACK_OBJS)
+HACK_GRAB_OBJS=$(HACK_OBJS) $(GRAB_OBJS)
+HACK_TRACK_GRAB_OBJS=$(HACK_TRACK_OBJS) $(GRAB_OBJS)
 
 ATLANTIS_OBJS = $(HACK_OBJS) dolphin.o shark.o swim.o whale.o xpm-ximage.o
 atlantis:	atlantis.o	$(ATLANTIS_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(ATLANTIS_OBJS) $(XPM_LIBS)
 
 ATUNNEL_OBJS = $(HACK_OBJS) tunnel_draw.o xpm-ximage.o
-atunnel:	atunnel.o $(ATUNNEL_OBJS)
+atunnel:	atunnel.o	$(ATUNNEL_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(ATUNNEL_OBJS) $(XPM_LIBS)
 
 cage:		cage.o		$(HACK_OBJS)
@@ -398,18 +408,17 @@ cage:		cage.o		$(HACK_OBJS)
 FLURRY_OBJS_1 = flurry-smoke.o flurry-spark.o flurry-star.o flurry-texture.o
 FLURRY_OBJS = $(FLURRY_OBJS_1) $(HACK_OBJS)
 
-flurry:		flurry.o $(FLURRY_OBJS)
+flurry:		flurry.o	$(FLURRY_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(FLURRY_OBJS) $(HACK_LIBS) -lm
 
-gears:		gears.o		$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+gears:		gears.o		$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-moebius:	moebius.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+moebius:	moebius.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-pipes:		pipes.o		$(HACK_OBJS) pipeobjs.o buildlwo.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) pipeobjs.o buildlwo.o \
-	  $(HACK_LIBS)
+pipes:		pipes.o		pipeobjs.o buildlwo.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	pipeobjs.o buildlwo.o $(HACK_OBJS) $(HACK_LIBS)
 
 superquadrics:	superquadrics.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -417,7 +426,7 @@ superquadrics:	superquadrics.o	$(HACK_OBJS)
 morph3d:	morph3d.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-rubik:		rubik.o	$(HACK_OBJS)
+rubik:		rubik.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 stairs:		stairs.o	$(HACK_OBJS)
@@ -425,134 +434,135 @@ stairs:		stairs.o	$(HACK_OBJS)
 
 SPROINGIES = sproingiewrap.o gllist.o \
 	     s1_1.o s1_2.o s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o
-sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
+sproingies: sproingies.o	$(HACK_OBJS) $(SPROINGIES)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
 
-lament:		lament.o	$(TRACK_OBJS) xpm-ximage.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
+LAMENTOBJS = $(HACK_TRACK_OBJS) xpm-ximage.o normals.o
+lament:		lament.o	$(LAMENTOBJS)
+	$(CC_HACK) -o $@ $@.o	$(LAMENTOBJS) $(XPM_LIBS)
 
-B3D = b_sphere.o b_draw.o b_lockglue.o
-bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(B3D) $(HACK_LIBS)
+B3D_OBJS = b_sphere.o b_draw.o b_lockglue.o $(HACK_OBJS)
+bubble3d:	bubble3d.o	$(B3D_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(B3D_OBJS) $(HACK_LIBS)
 
-PLANETHACKS=sphere.o xpm-ximage.o $(TRACK_OBJS)
-glplanet:	glplanet.o	$(PLANETHACKS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(PLANETHACKS) $(HACK_OBJS) $(XPM_LIBS)
+PLANET_OBJS=sphere.o xpm-ximage.o $(HACK_TRACK_OBJS)
+glplanet:	glplanet.o	$(PLANET_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(PLANET_OBJS) $(XPM_LIBS)
 
 pulsar:		pulsar.o	$(HACK_OBJS) xpm-ximage.o
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
 EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
 	extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
-	extrusion-taper.o extrusion-twistoid.o xpm-ximage.o $(TRACK_OBJS)
-extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $(EXTRUSION_OBJS) $(HACK_OBJS) $(XPM_LIBS) $(GLE_LIBS)
+	extrusion-taper.o extrusion-twistoid.o xpm-ximage.o \
+	$(HACK_TRACK_OBJS)
+extrusion:			$(EXTRUSION_OBJS)
+	$(CC_HACK) -o $@	$(EXTRUSION_OBJS) $(XPM_LIBS) $(GLE_LIBS)
 
-sierpinski3d:	sierpinski3d.o	$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+sierpinski3d:	sierpinski3d.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-gflux:		gflux.o		$(HACK_OBJS) $(TRACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
+gflux:		gflux.o		$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-SW_OBJS=starwars.o glut_stroke.o glut_swidth.o
-starwars:	$(SW_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $(SW_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+SW_OBJS=starwars.o glut_stroke.o glut_swidth.o texfont.o $(HACK_OBJS)
+starwars:			$(SW_OBJS)
+	$(CC_HACK) -o $@	$(SW_OBJS) $(HACK_LIBS)
 
-GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o tube.o $(TRACK_OBJS)
-gltext:	$(GLT_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $(GLT_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o tube.o $(HACK_TRACK_OBJS)
+gltext:				$(GLT_OBJS)
+	$(CC_HACK) -o $@	$(GLT_OBJS) $(HACK_LIBS)
 
-DB_OBJS=sphere.o tube.o $(TRACK_OBJS)
-dangerball:	dangerball.o	$(DB_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+DB_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+dangerball:	dangerball.o	$(DB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
 
-circuit:	circuit.o	$(HACK_OBJS) font-ximage.o
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) font-ximage.o $(HACK_LIBS)
+circuit:	circuit.o	font-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   font-ximage.o $(HACK_OBJS) $(HACK_LIBS)
 
-menger:		menger.o	$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+menger:		menger.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-engine:		engine.o	$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+engine:		engine.o	glxfonts.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-flipscreen3d:	flipscreen3d.o	$(HACK_OBJS) $(GRAB_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+flipscreen3d:	flipscreen3d.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-glsnake:	glsnake.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+glsnake:	glsnake.o	glxfonts.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	glxfonts.o $(HACK_OBJS) $(HACK_LIBS)
 
 boxed:		boxed.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-glforestfire:	glforestfire.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+glforestfire:	glforestfire.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
-sballs:		sballs.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+sballs:		sballs.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
-cubenetic:	cubenetic.o	$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+cubenetic:	cubenetic.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-spheremonics:	spheremonics.o	$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+spheremonics:	spheremonics.o	normals.o glxfonts.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-LLOBJS=marching.o xpm-ximage.o $(TRACK_OBJS) $(HACK_OBJS)
-lavalite:	lavalite.o	$(LLOBJS)
-	$(CC_HACK) -o $@ $@.o	$(LLOBJS)  $(XPM_LIBS)
+LL_OBJS=marching.o xpm-ximage.o normals.o $(HACK_TRACK_OBJS)
+lavalite:	lavalite.o	$(LL_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(LL_OBJS) $(XPM_LIBS)
 
-queens:		queens.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+queens:		queens.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-CHESSOBJS=chessmodels.o $(TRACK_OBJS) $(HACK_OBJS)
-endgame:	endgame.o	$(CHESSOBJS)
-	$(CC_HACK) -o $@ $@.o   $(CHESSOBJS) $(HACK_LIBS)
+endgame:	endgame.o	chessmodels.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   chessmodels.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-glblur:	glblur.o		$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+glblur:	glblur.o		$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-TOASTOBJS1=\
+TOAST_OBJS=\
   toaster.o toaster_base.o toaster_handle.o toaster_handle2.o \
   toaster_jet.o toaster_knob.o toaster_slots.o toaster_wing.o \
-  toast.o toast2.o
-TOASTOBJS=flyingtoasters.o gllist.o $(TOASTOBJS1) xpm-ximage.o
-flyingtoasters:	$(TOASTOBJS)	      $(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $(TOASTOBJS) $(TRACK_OBJS) $(HACK_OBJS) $(XPM_LIBS)
+  toast.o toast2.o \
+  flyingtoasters.o gllist.o xpm-ximage.o $(HACK_TRACK_OBJS)
+flyingtoasters:			$(TOAST_OBJS)
+	$(CC_HACK) -o $@	$(TOAST_OBJS) $(XPM_LIBS)
 
-COWOBJS1=\
-  cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o
-COWOBJS=bouncingcow.o gllist.o $(COWOBJS1) xpm-ximage.o
-bouncingcow:	$(COWOBJS)	    $(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $(COWOBJS) $(TRACK_OBJS) $(HACK_OBJS) $(XPM_LIBS)
+COW_OBJS=\
+  cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o \
+  bouncingcow.o gllist.o xpm-ximage.o $(HACK_TRACK_OBJS)
+bouncingcow:			$(COW_OBJS)	    
+	$(CC_HACK) -o $@	$(COW_OBJS) $(XPM_LIBS)
 
-glslideshow:	glslideshow.o	$(HACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
+glslideshow:	glslideshow.o	glxfonts.o $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	glxfonts.o $(HACK_GRAB_OBJS) $(HACK_LIBS)
 
-jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(TRACK_OBJS) $(XPM_LIBS)
+jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_TRACK_OBJS) $(XPM_LIBS)
 
-klein:		klein.o		$(HACK_OBJS) $(TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+klein:		klein.o		$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 hypertorus:	hypertorus.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-glmatrix:	glmatrix.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+glmatrix:	glmatrix.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
-cubestorm:	cubestorm.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+cubestorm:	cubestorm.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-glknots:	glknots.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+glknots:	glknots.o	tube.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	tube.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-blocktube:	blocktube.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+blocktube:	blocktube.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
-flipflop:	flipflop.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+flipflop:	flipflop.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-antspotlight:	antspotlight.o	$(TRACK_OBJS) $(GRAB_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(GRAB_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+antspotlight:	antspotlight.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
 polytopes:	polytopes.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -561,8 +571,8 @@ polytopes:	polytopes.o	$(HACK_OBJS)
 #
 STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
 	    $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/usleep.o
-stonerview:	$(STONER_OBJS)
-	$(CC_HACK) -o $@ $(STONER_OBJS) $(HACK_LIBS)
+stonerview:			$(STONER_OBJS)
+	$(CC_HACK) -o $@	$(STONER_OBJS) $(HACK_LIBS)
 
 molecules.h:
 	@tmp=molecules.h.$$$$ ;						\
@@ -575,15 +585,15 @@ molecules.h:
 	done ;								\
 	mv $$tmp molecules.h
 
-MOLECULEOBJS=sphere.o tube.o $(TRACK_OBJS)
-molecule:	molecule.o	$(MOLECULEOBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(MOLECULEOBJS) $(HACK_OBJS) $(HACK_LIBS)
+MOLECULE_OBJS=sphere.o tube.o glxfonts.o $(HACK_TRACK_OBJS)
+molecule:	molecule.o	$(MOLECULE_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(MOLECULE_OBJS) $(HACK_LIBS)
 
-gleidescope:	gleidescope.o xpm-ximage.o $(HACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o xpm-ximage.o $(HACK_OBJS) $(GRAB_OBJS) $(XPM_LIBS)
+gleidescope:	gleidescope.o	xpm-ximage.o $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_GRAB_OBJS) $(XPM_LIBS)
 
-mirrorblob:	mirrorblob.o	$(HACK_OBJS) $(GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(XPM_LIBS)
+mirrorblob:	mirrorblob.o	$(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(XPM_LIBS)
 
 blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
@@ -591,21 +601,27 @@ blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
 noof:	noof.o			$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-PH_OBJS=polyhedra-gl.o $(TRACK_OBJS)
-polyhedra:	polyhedra.o 	$(PH_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(PH_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+PH_OBJS=polyhedra-gl.o normals.o glxfonts.o $(HACK_TRACK_OBJS)
+polyhedra:	polyhedra.o 	$(PH_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PH_OBJS) $(HACK_LIBS)
 
-antinspect:	antinspect.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+antinspect:	antinspect.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-providence:	providence.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+providence:	providence.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-pinion:		pinion.o	$(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+pinion:		pinion.o	normals.o glxfonts.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-dnalogo:	dnalogo.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+carousel:	carousel.o	texfont.o $(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -640,6 +656,8 @@ b_lockglue.o: ../../config.h
 blocktube.o: ../../config.h
 blocktube.o: $(HACK_SRC)/images/blocktube.xpm
 blocktube.o: $(srcdir)/xpm-ximage.h
+boing.o: ../../config.h
+boing.o: $(srcdir)/gltrackball.h
 bouncingcow.o: ../../config.h
 bouncingcow.o: $(srcdir)/gllist.h
 bouncingcow.o: $(srcdir)/gltrackball.h
@@ -654,6 +672,11 @@ bubble3d.o: ../../config.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: ../../config.h
 cage.o: $(srcdir)/e_textures.h
+carousel.o: ../../config.h
+carousel.o: $(srcdir)/gltrackball.h
+carousel.o: $(srcdir)/grab-ximage.h
+carousel.o: $(srcdir)/rotator.h
+carousel.o: $(srcdir)/texfont.h
 chessmodels.o: $(srcdir)/chessmodels.h
 circuit.o: ../../config.h
 circuit.o: $(srcdir)/font-ximage.h
@@ -681,12 +704,14 @@ endgame.o: ../../config.h
 endgame.o: $(srcdir)/gltrackball.h
 engine.o: ../../config.h
 engine.o: $(srcdir)/gltrackball.h
+engine.o: $(srcdir)/glxfonts.h
 engine.o: $(srcdir)/rotator.h
 extrusion-helix2.o: ../../config.h
 extrusion-helix3.o: ../../config.h
 extrusion-helix4.o: ../../config.h
 extrusion-joinoffset.o: ../../config.h
 extrusion.o: ../../config.h
+extrusion.o: $(srcdir)/gltrackball.h
 extrusion.o: $(srcdir)/rotator.h
 extrusion.o: $(srcdir)/xpm-ximage.h
 extrusion-screw.o: ../../config.h
@@ -757,8 +782,10 @@ glplanet.o: $(srcdir)/rotator.h
 glplanet.o: $(srcdir)/sphere.h
 glplanet.o: $(srcdir)/xpm-ximage.h
 glslideshow.o: ../../config.h
+glslideshow.o: $(srcdir)/glxfonts.h
 glslideshow.o: $(srcdir)/grab-ximage.h
 glsnake.o: ../../config.h
+glsnake.o: $(srcdir)/glxfonts.h
 gltext.o: ../../config.h
 gltext.o: $(srcdir)/gltrackball.h
 gltext.o: $(srcdir)/glut_roman.h
@@ -772,6 +799,8 @@ glut_stroke.o: ../../config.h
 glut_stroke.o: $(srcdir)/glutstroke.h
 glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
+glxfonts.o: ../../config.h
+glxfonts.o: $(srcdir)/glxfonts.h
 grab-ximage.o: ../../config.h
 hypertorus.o: ../../config.h
 jigglypuff.o: ../../config.h
@@ -784,6 +813,7 @@ klein.o: $(srcdir)/rotator.h
 lament.o: ../../config.h
 lament.o: $(srcdir)/gltrackball.h
 lament.o: $(HACK_SRC)/images/lament.xpm
+lament.o: $(srcdir)/normals.h
 lament.o: $(srcdir)/rotator.h
 lament.o: $(srcdir)/xpm-ximage.h
 lavalite.o: ../../config.h
@@ -793,6 +823,7 @@ lavalite.o: $(srcdir)/rotator.h
 lavalite.o: $(srcdir)/xpm-ximage.h
 marching.o: ../../config.h
 marching.o: $(srcdir)/marching.h
+marching.o: $(srcdir)/normals.h
 menger.o: ../../config.h
 menger.o: $(srcdir)/gltrackball.h
 menger.o: $(srcdir)/rotator.h
@@ -804,19 +835,26 @@ moebius.o: $(srcdir)/gltrackball.h
 moebius.o: $(srcdir)/rotator.h
 molecule.o: ../../config.h
 molecule.o: $(srcdir)/gltrackball.h
+molecule.o: $(srcdir)/glxfonts.h
 molecule.o: molecules.h
 molecule.o: $(srcdir)/rotator.h
 molecule.o: $(srcdir)/sphere.h
 molecule.o: $(srcdir)/tube.h
 morph3d.o: ../../config.h
 noof.o: ../../config.h
+normals.o: ../../config.h
+normals.o: $(srcdir)/normals.h
 pinion.o: ../../config.h
 pinion.o: $(srcdir)/gltrackball.h
+pinion.o: $(srcdir)/glxfonts.h
+pinion.o: $(srcdir)/normals.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(srcdir)/buildlwo.h
 pipes.o: ../../config.h
 polyhedra-gl.o: ../../config.h
 polyhedra-gl.o: $(srcdir)/gltrackball.h
+polyhedra-gl.o: $(srcdir)/glxfonts.h
+polyhedra-gl.o: $(srcdir)/normals.h
 polyhedra-gl.o: $(srcdir)/polyhedra.h
 polyhedra-gl.o: $(srcdir)/rotator.h
 polyhedra.o: ../../config.h
@@ -848,6 +886,8 @@ sierpinski3d.o: $(srcdir)/gltrackball.h
 sierpinski3d.o: $(srcdir)/rotator.h
 spheremonics.o: ../../config.h
 spheremonics.o: $(srcdir)/gltrackball.h
+spheremonics.o: $(srcdir)/glxfonts.h
+spheremonics.o: $(srcdir)/normals.h
 spheremonics.o: $(srcdir)/rotator.h
 sphere.o: ../../config.h
 sproingies.o: ../../config.h
@@ -858,6 +898,7 @@ stairs.o: $(srcdir)/e_textures.h
 starwars.o: ../../config.h
 starwars.o: $(srcdir)/glut_roman.h
 starwars.o: $(srcdir)/glutstroke.h
+starwars.o: $(srcdir)/texfont.h
 stonerview-move.o: ../../config.h
 stonerview-move.o: $(srcdir)/stonerview-move.h
 stonerview-move.o: $(srcdir)/stonerview-osc.h
@@ -871,6 +912,8 @@ stonerview-view.o: $(srcdir)/stonerview-osc.h
 superquadrics.o: ../../config.h
 swim.o: $(srcdir)/atlantis.h
 swim.o: ../../config.h
+texfont.o: ../../config.h
+texfont.o: $(srcdir)/texfont.h
 toast2.o: $(srcdir)/gllist.h
 toaster_base.o: $(srcdir)/gllist.h
 toaster_handle2.o: $(srcdir)/gllist.h

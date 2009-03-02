@@ -48,7 +48,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 # define HACK_DRAW					draw_pipes
 # define HACK_RESHAPE				reshape_pipes
 # define pipes_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		100     \n"			\
+# define DEFAULTS	"*delay:		10000   \n"			\
 					"*count:		2       \n"			\
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
@@ -211,7 +211,7 @@ static pipesstruct *pipes = NULL;
 
 
 static void
-MakeTube(int direction)
+MakeTube(ModeInfo *mi, int direction)
 {
 	float       an;
 	float       SINan_3, COSan_3;
@@ -232,6 +232,7 @@ MakeTube(int direction)
 		glNormal3f((COSan_3 = cos(an) / 3.0), (SINan_3 = sin(an) / 3.0), 0.0);
 		glVertex3f(COSan_3, SINan_3, one_third);
 		glVertex3f(COSan_3, SINan_3, -one_third);
+        mi->polygon_count++;
 	}
 	glEnd();
 }
@@ -312,6 +313,7 @@ myElbow(ModeInfo * mi, int bolted)
 			glVertex3fv(p1);
 			glNormal3fv(n0);
 			glVertex3fv(p0);
+            mi->polygon_count++;
 			glEnd();
 		}
 	}
@@ -324,8 +326,10 @@ myElbow(ModeInfo * mi, int bolted)
 		glRotatef(90.0, 0.0, 1.0, 0.0);
 		glTranslatef(0.0, one_third, one_third);
 		glCallList(pp->elbowcoins);
+        mi->polygon_count += LWO_ElbowCoins.num_pnts/3;
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
 		glCallList(pp->elbowbolts);
+        mi->polygon_count += LWO_ElbowBolts.num_pnts/3;
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
 		glPopMatrix();
 		glFrontFace(GL_CCW);
@@ -397,8 +401,10 @@ MakeValve(ModeInfo * mi, int newdir)
 	}
 	glFrontFace(GL_CW);
 	glCallList(pp->betweenbolts);
+    mi->polygon_count += LWO_PipeBetweenBolts.num_pnts/3;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
 	glCallList(pp->bolts);
+    mi->polygon_count += LWO_Bolts3D.num_pnts/3;
 	if (!MI_IS_MONO(mi)) {
 		if (pp->system_color == MaterialRed) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, NRAND(2) ? MaterialYellow : MaterialBlue);
@@ -421,6 +427,7 @@ MakeValve(ModeInfo * mi, int newdir)
 	}
 	glRotatef((GLfloat) (NRAND(90)), 1.0, 0.0, 0.0);
 	glCallList(pp->valve);
+    mi->polygon_count += LWO_BigValve.num_pnts/3;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
 	glFrontFace(GL_CCW);
 }
@@ -446,11 +453,14 @@ MakeGuage(ModeInfo * mi, int newdir)
 	if ((newdir == dirLEFT) || (newdir == dirRIGHT))
 		glRotatef(90.0, 0.0, 1.0, 0.0);
 	glCallList(pp->betweenbolts);
+    mi->polygon_count += LWO_PipeBetweenBolts.num_pnts/3;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
 	glCallList(pp->bolts);
+    mi->polygon_count += LWO_Bolts3D.num_pnts/3;
 	glPopMatrix();
 
 	glCallList(pp->guageconnector);
+    mi->polygon_count += LWO_GuageConnector.num_pnts/3;
 	glPushMatrix();
 	glTranslatef(0.0, 1.33333, 0.0);
 	/* Do not change the above to 1 + ONE_THIRD, because */
@@ -458,14 +468,17 @@ MakeGuage(ModeInfo * mi, int newdir)
 	glRotatef(NRAND(270) + 45.0, 0.0, 0.0, -1.0);
 	/* Random rotation for the dial.  I love it. */
 	glCallList(pp->guagedial);
+    mi->polygon_count += LWO_GuageDial.num_pnts/3;
 	glPopMatrix();
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
 	glCallList(pp->guagehead);
+    mi->polygon_count += LWO_GuageHead.num_pnts/3;
 
 	/* GuageFace is drawn last, in case of low-res depth buffers. */
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialWhite);
 	glCallList(pp->guageface);
+    mi->polygon_count += LWO_GuageFace.num_pnts/3;
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
 	glFrontFace(GL_CCW);
@@ -479,7 +492,7 @@ MakeShape(ModeInfo * mi, int newdir)
 	switch (NRAND(2)) {
 		case 1:
 			if (!MakeGuage(mi, newdir))
-				MakeTube(newdir);
+				MakeTube(mi, newdir);
 			break;
 		default:
 			MakeValve(mi, newdir);
@@ -507,6 +520,9 @@ pinit(ModeInfo * mi, int zera)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 	int         X, Y, Z;
+
+    if (zera)
+      mi->polygon_count = 0;
 
 	glClearDepth(1.0);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -771,7 +787,7 @@ draw_pipes(ModeInfo * mi)
 		if ((pp->counter > 1) && (NRAND(100) < factory)) {
 			MakeShape(mi, newdir);
 		} else {
-			MakeTube(newdir);
+			MakeTube(mi, newdir);
 		}
 		glPopMatrix();
 	} else {
@@ -955,7 +971,7 @@ draw_pipes(ModeInfo * mi)
 
 	/* Cells'face pipe */
 	glTranslatef(((pp->PX + OPX) / 2.0 - 16) / 3.0 * 4.0, ((pp->PY + OPY) / 2.0 - 12) / 3.0 * 4.0, ((pp->PZ + OPZ) / 2.0 - 16) / 3.0 * 4.0);
-	MakeTube(newdir);
+	MakeTube(mi, newdir);
 
 	glPopMatrix();
 

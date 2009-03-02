@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003, 2004
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003, 2004, 2005
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -27,23 +27,32 @@
 
    If it is from a file, then it will be returned in `filename_return'.
    filename_return may be NULL; also, NULL may be returned (e.g., if
-   it's a screenshot or video capture.)
+   it's a screenshot or video capture.)  You are responsible for
+   freeing this string.
+
+   The size and position of the image is returned in `geometry_return'.
+   The image will generally have been scaled up to fit the window, but
+   if a loaded file had a different aspect ratio than the window, it
+   will have been centered, and the returned coords will describe that.
 
    Many colors may be allocated from the window's colormap.
  */
 extern void load_random_image (Screen *screen,
                                Window top_level_window,
                                Drawable target_window_or_pixmap, 
-                               char **filename_return);
+                               char **filename_return,
+                               XRectangle *geometry_return);
 
 /* Like the above, but loads the image in the background and runs the
-   given callback once it has been loaded.
+   given callback once it has been loaded.  Copy `name' if you want
+   to keep it.
  */
 extern void fork_load_random_image (Screen *screen, Window window,
                                     Drawable drawable,
                                     void (*callback) (Screen *, Window,
                                                       Drawable,
                                                       const char *name,
+                                                      XRectangle *geometry,
                                                       void *closure),
                                     void *closure);
 
@@ -65,8 +74,9 @@ extern Bool top_level_window_p(Screen *screen, Window window);
 /* Don't call this: this is for the "xscreensaver-getimage" program only. */
 extern void grab_screen_image_internal (Screen *, Window);
 
-/* Don't use this: this is how "xscreensaver-getimage" and "grabclient.c"
+/* Don't use these: this is how "xscreensaver-getimage" and "grabclient.c"
    pass the file name around. */
 #define XA_XSCREENSAVER_IMAGE_FILENAME "_SCREENSAVER_IMAGE_FILENAME"
+#define XA_XSCREENSAVER_IMAGE_GEOMETRY "_SCREENSAVER_IMAGE_GEOMETRY"
 
 #endif /* __GRABSCREEN_H__ */

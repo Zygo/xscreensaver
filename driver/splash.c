@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -854,8 +854,9 @@ do_help (saver_info *si)
     }
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
-				  (strlen (p->help_url) * 2) + 10);
-  sprintf (help_command, p->load_url_command, p->help_url, p->help_url);
+				  (strlen (p->help_url) * 4) + 10);
+  sprintf (help_command, p->load_url_command,
+           p->help_url, p->help_url, p->help_url, p->help_url);
   fork_and_exec (si, help_command, "URL-loading");
   free (help_command);
 }

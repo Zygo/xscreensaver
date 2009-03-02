@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -665,9 +665,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2004 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-2005 %s"), s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2004 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-2005 %s"), s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
@@ -789,10 +789,11 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
     }
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
-				  (strlen (p->help_url) * 2) + 20);
+				  (strlen (p->help_url) * 4) + 20);
   strcpy (help_command, "( ");
   sprintf (help_command + strlen(help_command),
-           p->load_url_command, p->help_url, p->help_url);
+           p->load_url_command,
+           p->help_url, p->help_url, p->help_url, p->help_url);
   strcat (help_command, " ) &");
   system (help_command);
   free (help_command);
@@ -984,7 +985,7 @@ manual_cb (GtkButton *button, gpointer user_data)
   cmd = get_string_resource ("manualCommand", "ManualCommand");
   if (cmd)
     {
-      char *cmd2 = (char *) malloc (strlen (cmd) + strlen (name2) + 100);
+      char *cmd2 = (char *) malloc (strlen (cmd) + (strlen (name2) * 4) + 100);
       strcpy (cmd2, "( ");
       sprintf (cmd2 + strlen (cmd2),
                cmd,
@@ -2442,6 +2443,7 @@ populate_prefs_page (state *s)
 
   {
     Bool found_any_writable_cells = False;
+    Bool fading_possible = False;
     Bool dpms_supported = False;
 
     Display *dpy = GDK_DISPLAY();
@@ -2457,8 +2459,9 @@ populate_prefs_page (state *s)
 	  }
       }
 
+    fading_possible = found_any_writable_cells;
 #ifdef HAVE_XF86VMODE_GAMMA
-    found_any_writable_cells = True;  /* if we can gamma fade, go for it */
+    fading_possible = True;
 #endif
 
 #ifdef HAVE_DPMS_EXTENSION
@@ -2495,14 +2498,14 @@ populate_prefs_page (state *s)
 
     /* Colormaps
      */
-    SENSITIZE ("cmap_frame",      found_any_writable_cells);
+    SENSITIZE ("cmap_frame",      found_any_writable_cells || fading_possible);
     SENSITIZE ("install_button",  found_any_writable_cells);
-    SENSITIZE ("fade_button",     found_any_writable_cells);
-    SENSITIZE ("unfade_button",   found_any_writable_cells);
+    SENSITIZE ("fade_button",     fading_possible);
+    SENSITIZE ("unfade_button",   fading_possible);
 
-    SENSITIZE ("fade_label",      (found_any_writable_cells &&
+    SENSITIZE ("fade_label",      (fading_possible &&
                                    (p->fade_p || p->unfade_p)));
-    SENSITIZE ("fade_spinbutton", (found_any_writable_cells &&
+    SENSITIZE ("fade_spinbutton", (fading_possible &&
                                    (p->fade_p || p->unfade_p)));
 
 # undef SENSITIZE

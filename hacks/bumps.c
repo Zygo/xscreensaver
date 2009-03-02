@@ -313,7 +313,7 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
     p = XCreatePixmap(pBumps->pDisplay, pBumps->Win,
                       pXWinAttribs->width, pXWinAttribs->height,
                       pXWinAttribs->depth);
-    load_random_image (pXWinAttribs->screen, pBumps->Win, p, NULL);
+    load_random_image (pXWinAttribs->screen, pBumps->Win, p, NULL, NULL);
 
 	pScreenImage = XGetImage( pBumps->pDisplay, p, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
     XFreePixmap (pBumps->pDisplay, p);

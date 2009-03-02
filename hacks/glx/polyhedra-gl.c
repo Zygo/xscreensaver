@@ -53,6 +53,8 @@ extern XtAppContext app;
 #include "xlockmore.h"
 #include <GL/glu.h>
 
+#include "glxfonts.h"
+#include "normals.h"
 #include "polyhedra.h"
 #include "colors.h"
 #include "rotator.h"
@@ -123,52 +125,6 @@ ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
 
-typedef struct {
-  double x,y,z;
-} XYZ;
-
-static void
-normalize (XYZ *p)
-{
-  double length;
-  length = sqrt (p->x * p->x +
-                 p->y * p->y +
-                 p->z * p->z);
-  if (length != 0)
-    {
-      p->x /= length;
-      p->y /= length;
-      p->z /= length;
-    }
-  else
-    {
-      p->x = 0;
-      p->y = 0;
-      p->z = 0;
-    }
-}
-
-/* Calculate the unit normal at p given two other points p1,p2 on the
-   surface. The normal points in the direction of p1 crossproduct p2
- */
-static XYZ
-calc_normal (XYZ p, XYZ p1, XYZ p2)
-{
-  XYZ n, pa, pb;
-  pa.x = p1.x - p.x;
-  pa.y = p1.y - p.y;
-  pa.z = p1.z - p.z;
-  pb.x = p2.x - p.x;
-  pb.y = p2.y - p.y;
-  pb.z = p2.z - p.z;
-  n.x = pa.y * pb.z - pa.z * pb.y;
-  n.y = pa.z * pb.x - pa.x * pb.z;
-  n.z = pa.x * pb.y - pa.y * pb.x;
-  normalize (&n);
-  return (n);
-}
-
-
 /* Calculate the normals at each vertex of a face, and use the sum to
    decide which normal to assign to the entire face.  This also solves
    problems caused by nonconvex faces, in most (but not all) cases.
@@ -196,7 +152,7 @@ kludge_normal (int n, const int *indices, const point *points)
     normal.z += p.z;
   }
 
-  normalize(&normal);
+  /*normalize(&normal);*/
   if (normal.x == 0 && normal.y == 0 && normal.z == 0) {
     glNormal3f (p.x, p.y, p.z);
   } else {
@@ -204,136 +160,16 @@ kludge_normal (int n, const int *indices, const point *points)
   }
 }
 
-static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-180-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
-
 
 static void
 load_fonts (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
-  load_font (mi, "titleFont",  &bp->xfont1, &bp->font1_dlist);
-  load_font (mi, "titleFont2", &bp->xfont2, &bp->font2_dlist);
-  load_font (mi, "titleFont3", &bp->xfont3, &bp->font3_dlist);
+  load_font (mi->dpy, "titleFont",  &bp->xfont1, &bp->font1_dlist);
+  load_font (mi->dpy, "titleFont2", &bp->xfont2, &bp->font2_dlist);
+  load_font (mi->dpy, "titleFont3", &bp->xfont3, &bp->font3_dlist);
 }
 
-
-static int
-string_width (XFontStruct *f, const char *c)
-{
-  int w = 0;
-  while (*c)
-    {
-      int cc = *((unsigned char *) c);
-      w += (f->per_char
-            ? f->per_char[cc-f->min_char_or_byte2].rbearing
-            : f->min_bounds.rbearing);
-      c++;
-    }
-  return w;
-}
-
-static void
-print_title_string (ModeInfo *mi, const char *string,
-                    GLfloat x, GLfloat y,
-                    XFontStruct *font, int font_dlist)
-{
-  GLfloat line_height = font->ascent + font->descent;
-  GLfloat sub_shift = (line_height * 0.3);
-  int cw = string_width (font, "m");
-  int tabs = cw * 7;
-
-  y -= line_height;
-
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    {
-      glLoadIdentity();
-
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      {
-        int i;
-        int x2 = x;
-        Bool sub_p = False;
-        glLoadIdentity();
-
-        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
-
-        glColor3f (0.8, 0.8, 0);
-
-        glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          {
-            char c = string[i];
-            if (c == '\n')
-              {
-                glRasterPos2f (x, (y -= line_height));
-                x2 = x;
-              }
-            else if (c == '\t')
-              {
-                x2 -= x;
-                x2 = ((x2 + tabs) / tabs) * tabs;  /* tab to tab stop */
-                x2 += x;
-                glRasterPos2f (x2, y);
-              }
-            else if (c == '[' && (isdigit (string[i+1])))
-              {
-                sub_p = True;
-                glRasterPos2f (x2, (y -= sub_shift));
-              }
-            else if (c == ']' && sub_p)
-              {
-                sub_p = False;
-                glRasterPos2f (x2, (y += sub_shift));
-              }
-            else
-              {
-                glCallList (font_dlist + (int)(c));
-                x2 += (font->per_char
-                       ? font->per_char[c - font->min_char_or_byte2].width
-                       : font->min_bounds.width);
-              }
-          }
-      }
-      glPopMatrix();
-    }
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-  }
-  glPopAttrib();
-
-  glMatrixMode(GL_MODELVIEW);
-}
 
 
 static void
@@ -341,10 +177,12 @@ startup_blurb (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   const char *s = "Computing polyhedra...";
-  print_title_string (mi, s,
-                      mi->xgwa.width - (string_width (bp->xfont1, s) + 40),
-                      10 + bp->xfont1->ascent + bp->xfont1->descent,
-                      bp->xfont1, bp->font1_dlist);
+  glColor3f (0.8, 0.8, 0);
+  print_gl_string (mi->dpy, bp->xfont1, bp->font1_dlist,
+                   mi->xgwa.width, mi->xgwa.height,
+                   mi->xgwa.width - (string_width (bp->xfont1, s) + 40),
+                   mi->xgwa.height - 10,
+                   s);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -385,7 +223,7 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       bp->button_down_p = True;
       gltrackball_start (bp->trackball,
@@ -394,9 +232,17 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       bp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == KeyPress)
@@ -472,9 +318,11 @@ new_label (ModeInfo *mi)
         else
           f = bp->xfont3, fl = bp->font3_dlist;		       /* tiny font */
 
-        print_title_string (mi, label,
-                            10, mi->xgwa.height - 10,
-                            f, fl);
+        glColor3f (0.8, 0.8, 0);
+        print_gl_string (mi->dpy, f, fl,
+                         mi->xgwa.width, mi->xgwa.height,
+                         10, mi->xgwa.height - 10,
+                         label);
       }
     }
   glEndList ();

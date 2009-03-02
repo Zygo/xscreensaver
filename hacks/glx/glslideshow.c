@@ -1,11 +1,10 @@
-/* glslideshow, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003-2005 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
- * First version Copyright (c) 2002, 2003 Mike Oliphant (oliphant@gtk.org)
- * based on flipscreen3d, Copyright (C) 2001 Ben Buxton (bb@cactii.net).
- *
- * Almost entirely rewritten by jwz, 21-Jun-2003.
+ * Originally written by Mike Oliphant <oliphant@gtk.org> (c) 2002, 2003.
+ * Rewritten by jwz, 21-Jun-2003.
+ * Rewritten by jwz again, 6-Feb-2005.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,60 +14,61 @@
  * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
+ *****************************************************************************
+ *
  * TODO:
- *
- * - Resizing the window makes everything go black forevermore.  No idea why.
- *
  *
  * - When a new image is loaded, there is a glitch: animation pauses during
  *   the period when we're loading the image-to-fade-in.  On fast (2GHz)
- *   machines, this stutter is short but noticable (usually less than half a
+ *   machines, this stutter is short but noticable (usually around 1/10th
  *   second.)  On slower machines, it can be much more pronounced.
+ *   This turns out to be hard to fix...
  *
- *   In xscreensaver 4.17, I added the new functions fork_load_random_image()
- *   and fork_screen_to_ximage() to make it possible to do image loading in
- *   the background, in an attempt to solve this (the idea being to only swap
- *   in the new image once it has been loaded.)  Using those routines, we
- *   continue animating while the file system is being searched for an image
- *   file; while that image data is read, parsed, and decompressed; while that
- *   data is placed on a Pixmap in the X server.
+ *   Image loading happens in three stages:
  *
- *   However, two things still happen in the "parent" (glslideshow) process:
- *   converting that server-side Pixmap to a client-side XImage (XGetImage);
- *   and converting that XImage to an OpenGL texture (gluBuild2DMipmaps).
- *   It's possible that some new code would allow us to do the Pixmap-to-XImage
- *   conversion in the forked process (feed it back upstream through a pipe or
- *   SHM segment or something); however, it turns out that significant
- *   parent-process image-loading time is being spent in gluBuild2DMipmaps().
+ *    1: Fork a process and run xscreensaver-getimage in the background.
+ *       This writes image data to a server-side X pixmap.
  *
- *   So, the next step would be to figure out some way to create a texture on
- *   the other end of the fork that would be usable by the parent process.  Is
- *   that even possible?  Is it possible to use a single GLX context in a
- *   multithreaded way like that?  (Or use a second GLX context, but allow the
- *   two contexts to share data?)
+ *    2: When that completes, a callback informs us that the pixmap is ready.
+ *       We must then download the pixmap data from the server with XGetImage
+ *       (or XShmGetImage.)
  *
- *   Another question remains: is the stalling happening in the GL/GLX
- *   libraries, or are we actually seeing a stall on the graphics pipeline?
- *   If the latter, then no amount of threading would help, because the
- *   bottleneck is pushing the bits from system memory to the graphics card.
+ *    3: Once we have the bits, we must convert them from server-native bitmap
+ *       layout to 32 bit RGBA in client-endianness, to make them usable as
+ *       OpenGL textures.
  *
- *   How does Apple do this with their MacOSX slideshow screen saver?  Perhaps
- *   it's easier for them because their OpenGL libraries have thread support
- *   at a lower level?
+ *    4: We must actually construct a texture.
  *
+ *   So, the speed of step 1 doesn't really matter, since that happens in
+ *   the background.  But steps 2, 3, and 4 happen in *this* process, and
+ *   cause the visible glitch.
  *
- * - Even if the glitch was solved, there's still a bug in the background
- *   loading of images: as soon as the image comes in, we slap it into place
- *   in the target quad.  This can lead to an image being changed while it is
- *   still being drawn, if that quad happens to be visible already.  Instead,
- *   when the callback goes off, we should make sure to load it into the
- *   invisible quad, or if both are visible, we should wait until one goes
- *   invisible and then load it there (in other words, wait for the next
- *   fade-out to end.)
+ *   Step 2 can't be moved to another process without opening a second
+ *   connection to the X server, which is pretty heavy-weight.  (That would
+ *   be possible, though; the other process could open an X connection,
+ *   retrieve the pixmap, and feed it back to us through a pipe or
+ *   something.)
+ *
+ *   Step 3 might be able to be optimized by coding tuned versions of
+ *   grab-ximage.c:copy_ximage() for the most common depths and bit orders.
+ *   (Or by moving it into the other process along with step 2.)
+ *
+ *   Step 4 is the hard one, though.  It might be possible to speed up this
+ *   step if there is some way to allow two GL processes share texture
+ *   data.  Unless, of course, all the time being consumed by step 4 is
+ *   because the graphics pipeline is flooded, in which case, that other
+ *   process would starve the screen anyway.
+ *
+ *   Is it possible to use a single GLX context in a multithreaded way?
+ *   Or use a second GLX context, but allow the two contexts to share data?
+ *   I can't find any documentation about this.
+ *
+ *   How does Apple do this with their MacOSX slideshow screen saver?
+ *   Perhaps it's easier for them because their OpenGL libraries have
+ *   thread support at a lower level?
  */
 
 #include <X11/Intrinsic.h>
-
 
 # define PROGCLASS "GLSlideshow"
 # define HACK_INIT init_slideshow
@@ -84,19 +84,24 @@
 # define DEF_ZOOM           "75"
 # define DEF_FPS_CUTOFF     "5"
 # define DEF_TITLES         "False"
+# define DEF_LETTERBOX      "True"
 # define DEF_DEBUG          "False"
+# define DEF_MIPMAP         "True"
 
 #define DEFAULTS  "*delay:           20000                \n" \
                   "*fadeDuration:  " DEF_FADE_DURATION   "\n" \
                   "*panDuration:   " DEF_PAN_DURATION    "\n" \
                   "*imageDuration: " DEF_IMAGE_DURATION  "\n" \
                   "*zoom:          " DEF_ZOOM            "\n" \
+		  "*titles:        " DEF_TITLES          "\n" \
                   "*FPScutoff:     " DEF_FPS_CUTOFF      "\n" \
-	          "*debug   :      " DEF_DEBUG           "\n" \
+	          "*letterbox:     " DEF_LETTERBOX       "\n" \
+	          "*debug:         " DEF_DEBUG           "\n" \
+	          "*mipmap:        " DEF_MIPMAP          "\n" \
 		  "*wireframe:       False                \n" \
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
-		  "*titles:        " DEF_TITLES  "\n" \
+	          "*useSHM:          True                 \n" \
 		  "*titleFont:       -*-times-bold-r-normal-*-180-*\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n"
 
@@ -113,51 +118,72 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "grab-ximage.h"
+#include "glxfonts.h"
+
+extern XtAppContext app;
 
 typedef struct {
-  GLfloat x, y, w, h;
+  double x, y, w, h;
 } rect;
 
 typedef struct {
-  GLuint texid;			   /* which texture to draw */
-  enum { IN, OUT, DEAD } state;    /* how to draw it */
-  rect from, to;		   /* the journey this quad is taking */
-  char *title;
-} gls_quad;
+  ModeInfo *mi;
+  int id;			   /* unique number for debugging */
+  char *title;			   /* the filename of this image */
+  int w, h;			   /* size in pixels of the image */
+  int tw, th;			   /* size in pixels of the texture */
+  XRectangle geom;		   /* where in the image the bits are */
+  Bool loaded_p;		   /* whether the image has finished loading */
+  Bool used_p;			   /* whether the image has yet appeared
+                                      on screen */
+  GLuint texid;			   /* which texture contains the image */
+  int refcount;			   /* how many sprites refer to this image */
+} image;
+
+
+typedef enum { NEW, IN, FULL, OUT, DEAD } sprite_state;
+
+typedef struct {
+  int id;			   /* unique number for debugging */
+  image *img;			   /* which image this animation displays */
+  GLfloat opacity;		   /* how to render it */
+  double start_time;		   /* when this animation began */
+  rect from, to, current;	   /* the journey this image is taking */
+  sprite_state state;		   /* the state we're in right now */
+  sprite_state prev_state;	   /* the state we were in previously */
+  double state_time;		   /* time of last state change */
+  int frame_count;		   /* frames since last state change */
+} sprite;
 
 
 typedef struct {
   GLXContext *glx_context;
-  time_t start_time;		/* when we started displaying this image */
+  int nimages;			/* how many images are loaded or loading now */
+  image *images[10];		/* pointers to the images */
 
-  int motion_frames;            /* how many frames each pan takes */
-  int fade_frames;              /* how many frames fading in/out takes */
-
-  gls_quad quads[2];		/* the (up to) 2 quads we animate */
-  GLuint texids[2];		/* textures: "old" and "new" */
-  GLuint current_texid;         /* the "new" one */
-
-  int img_w, img_h;		/* Size (pixels) of currently-loaded image */
+  int nsprites;			/* how many sprites are animating right now */
+  sprite *sprites[10];		/* pointers to the live sprites */
 
   double now;			/* current time in seconds */
-  double pan_start_time;	/* when this pan began */
-  double image_start_time;	/* when this image was loaded */
   double dawn_of_time;		/* when the program launched */
+  double image_load_time;	/* time when we last loaded a new image */
+  double prev_frame_time;	/* time when we last drew a frame */
 
   Bool redisplay_needed_p;	/* Sometimes we can get away with not
                                    re-painting.  Tick this if a redisplay
                                    is required. */
+  Bool change_now_p;		/* Set when the user clicks to ask for a new
+                                   image right now. */
 
   GLfloat fps;                  /* approximate frame rate we're achieving */
-  int pan_frame_count;		/* More frame-rate stats */
-  int fade_frame_count;
-  Bool low_fps_p;		/* Whether we have compensated for a low
+  GLfloat theoretical_fps;      /* maximum frame rate that might be possible */
+  Bool checked_fps_p;		/* Whether we have checked for a low
                                    frame rate. */
 
-  Bool fork_p;			/* threaded image loading; #### still buggy */
-
-  XFontStruct *xfont;
+  XFontStruct *xfont;		/* for printing image file names */
   GLuint font_dlist;
+
+  int sprite_id, image_id;      /* debugging id counters */
 
 } slideshow_state;
 
@@ -176,19 +202,27 @@ static int zoom;            /* How far in to zoom when panning, in percent of
                              */
 static int fps_cutoff;      /* If the frame-rate falls below this, turn off
                                zooming.*/
+static Bool letterbox_p;    /* When a loaded image is not the same aspect
+                               ratio as the window, whether to display black
+                               bars.
+                             */
+static Bool mipmap_p;	    /* Use mipmaps instead of single textures. */
 static Bool do_titles;	    /* Display image titles. */
 static Bool debug_p;	    /* Be loud and do weird things. */
 
 
 static XrmOptionDescRec opts[] = {
-  {"-fade",     ".slideshow.fadeDuration",  XrmoptionSepArg, 0     },
-  {"-pan",      ".slideshow.panDuration",   XrmoptionSepArg, 0     },
-  {"-duration", ".slideshow.imageDuration", XrmoptionSepArg, 0     },
-  {"-zoom",     ".slideshow.zoom",          XrmoptionSepArg, 0     },
-  {"-cutoff",   ".slideshow.FPScutoff",     XrmoptionSepArg, 0     },
-  {"-titles",   ".slideshow.titles",        XrmoptionNoArg, "True" },
-  {"+titles",   ".slideshow.titles",        XrmoptionNoArg, "True" },
-  {"-debug",    ".slideshow.debug",         XrmoptionNoArg, "True" },
+  {"-fade",         ".fadeDuration",  XrmoptionSepArg, 0      },
+  {"-pan",          ".panDuration",   XrmoptionSepArg, 0      },
+  {"-duration",     ".imageDuration", XrmoptionSepArg, 0      },
+  {"-zoom",         ".zoom",          XrmoptionSepArg, 0      },
+  {"-cutoff",       ".FPScutoff",     XrmoptionSepArg, 0      },
+  {"-titles",       ".titles",        XrmoptionNoArg, "True"  },
+  {"-letterbox",    ".letterbox",     XrmoptionNoArg, "True"  },
+  {"-clip",         ".letterbox",     XrmoptionNoArg, "False"  },
+  {"-mipmaps",      ".mipmap",        XrmoptionNoArg, "True"  },
+  {"-no-mipmaps",   ".mipmap",        XrmoptionNoArg, "False" },
+  {"-debug",        ".debug",         XrmoptionNoArg, "True"  },
 };
 
 static argtype vars[] = {
@@ -196,6 +230,8 @@ static argtype vars[] = {
   { &pan_seconds,   "panDuration",  "PanDuration",  DEF_PAN_DURATION,   t_Int},
   { &image_seconds, "imageDuration","ImageDuration",DEF_IMAGE_DURATION, t_Int},
   { &zoom,          "zoom",         "Zoom",         DEF_ZOOM,           t_Int},
+  { &mipmap_p,      "mipmap",       "Mipmap",       DEF_MIPMAP,        t_Bool},
+  { &letterbox_p,   "letterbox",    "Letterbox",    DEF_LETTERBOX,     t_Bool},
   { &fps_cutoff,    "FPScutoff",    "FPSCutoff",    DEF_FPS_CUTOFF,     t_Int},
   { &debug_p,       "debug",        "Debug",        DEF_DEBUG,         t_Bool},
   { &do_titles,     "titles",       "Titles",       DEF_TITLES,        t_Bool},
@@ -238,250 +274,641 @@ double_time (void)
 }
 
 
-static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-180-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
+static void image_loaded_cb (const char *filename, XRectangle *geom,
+                             int image_width, int image_height,
+                             int texture_width, int texture_height,
+                             void *closure);
 
 
-static void
-print_title_string (ModeInfo *mi, const char *string, GLfloat x, GLfloat y)
-{
-  slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  XFontStruct *font = ss->xfont;
-  GLfloat line_height = font->ascent + font->descent;
-
-  y -= line_height;
-
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    {
-      glLoadIdentity();
-
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      {
-        unsigned int i;
-        int x2 = x;
-        glLoadIdentity();
-
-        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
-
-        glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          {
-            char c = string[i];
-            if (c == '\n')
-              {
-                glRasterPos2f (x, (y -= line_height));
-                x2 = x;
-              }
-            else
-              {
-                glCallList (ss->font_dlist + (int)(c));
-                x2 += (font->per_char
-                       ? font->per_char[c - font->min_char_or_byte2].width
-                       : font->min_bounds.width);
-              }
-          }
-      }
-      glPopMatrix();
-    }
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-  }
-  glPopAttrib();
-
-  glMatrixMode(GL_MODELVIEW);
-}
-
-
-static void
-draw_quad (ModeInfo *mi, gls_quad *q)
+/* Allocate an image structure and start a file loading in the background.
+ */
+static image *
+alloc_image (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
-  GLfloat ratio;
-  rect current;
-  GLfloat opacity;
+  image *img = (image *) calloc (1, sizeof (*img));
+  Bool async_p = True;
+
+  img->id = ++ss->image_id;
+  img->loaded_p = False;
+  img->used_p = False;
+  img->mi = mi;
+
+  glGenTextures (1, &img->texid);
+  if (img->texid <= 0) abort();
+
+  ss->image_load_time = ss->now;
+
+  if (wire)
+    image_loaded_cb (0, 0, 0, 0, 0, 0, img);
+  else if (async_p)
+    screen_to_texture_async (mi->xgwa.screen, mi->window, 0, 0, mipmap_p,
+                             img->texid, image_loaded_cb, img);
+  else
+    {
+      char *filename = 0;
+      XRectangle geom;
+      int iw=0, ih=0, tw=0, th=0;
+      glBindTexture (GL_TEXTURE_2D, img->texid);
+
+      if (! screen_to_texture (mi->xgwa.screen, mi->window, 0, 0, mipmap_p,
+                               &filename, &geom, &iw, &ih, &tw, &th))
+        exit(1);
+      image_loaded_cb (filename, &geom, iw, ih, tw, th, img);
+      if (filename) free (filename);
+    }
+
+  ss->images[ss->nimages++] = img;
+  if (ss->nimages >= countof(ss->images)) abort();
+
+  return img;
+}
+
+
+/* Block until the first image is completely loaded.
+   We normally load images in the background, but we have nothing to draw
+   until we get that first image...
+ */
+static void
+await_first_image (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  image *img;
+  int i = 0;
+  if (ss->nimages != 0) abort();
+  img = alloc_image (mi);
+
+  while (! img->loaded_p)
+    {
+      usleep (100000);         /* check every 1/10th sec */
+      if (i++ > 600) abort();  /* if a minute has passed, we're broken */
+
+      while (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+    }
+
+  if (debug_p)
+    fprintf (stderr, "\n");
+}
+
+
+/* Callback that tells us that the texture has been loaded.
+ */
+static void
+image_loaded_cb (const char *filename, XRectangle *geom,
+                 int image_width, int image_height,
+                 int texture_width, int texture_height,
+                 void *closure)
+{
+  image *img = (image *) closure;
+  ModeInfo *mi = img->mi;
+  /* slideshow_state *ss = &sss[MI_SCREEN(mi)]; */
+
+  int wire = MI_IS_WIREFRAME(mi);
+
+  if (wire)
+    {
+      img->w = MI_WIDTH (mi) * (0.5 + frand (1.0));
+      img->h = MI_HEIGHT (mi);
+      img->geom.width  = img->w;
+      img->geom.height = img->h;
+      goto DONE;
+    }
+
+  if (image_width == 0 || image_height == 0)
+    exit (1);
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  img->w  = image_width;
+  img->h  = image_height;
+  img->tw = texture_width;
+  img->th = texture_height;
+  img->geom = *geom;
+  img->title = (filename ? strdup (filename) : 0);
+
+  if (img->title)   /* strip filename to part after last /. */
+    {
+      char *s = strrchr (img->title, '/');
+      if (s) strcpy (img->title, s+1);
+    }
+
+  if (debug_p)
+    fprintf (stderr, "%s: loaded   img %2d: \"%s\"\n",
+             blurb(), img->id, (img->title ? img->title : "(null)"));
+ DONE:
+
+  img->loaded_p = True;
+}
+
+
+
+/* Free the image and texture, after nobody is referencing it.
+ */
+static void
+destroy_image (ModeInfo *mi, image *img)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  Bool freed_p = False;
+  int i;
+
+  if (!img) abort();
+  if (!img->loaded_p) abort();
+  if (!img->used_p) abort();
+  if (img->texid <= 0) abort();
+  if (img->refcount != 0) abort();
+
+  for (i = 0; i < ss->nimages; i++)		/* unlink it from the list */
+    if (ss->images[i] == img)
+      {
+        int j;
+        for (j = i; j < ss->nimages-1; j++)	/* pull remainder forward */
+          ss->images[j] = ss->images[j+1];
+        ss->images[j] = 0;
+        ss->nimages--;
+        freed_p = True;
+        break;
+      }
+
+  if (!freed_p) abort();
+
+  if (debug_p)
+    fprintf (stderr, "%s: unloaded img %2d: \"%s\"\n",
+             blurb(), img->id, (img->title ? img->title : "(null)"));
+
+  if (img->title) free (img->title);
+  glDeleteTextures (1, &img->texid);
+  free (img);
+}
+
+
+/* Return an image to use for a sprite.
+   If it's time for a new one, get a new one.
+   Otherwise, use an old one.
+   Might return 0 if the machine is really slow.
+ */
+static image *
+get_image (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  image *img = 0;
+  double now = ss->now;
+  Bool want_new_p = (ss->change_now_p ||
+                     ss->image_load_time + image_seconds <= now);
+  image *new_img = 0;
+  image *old_img = 0;
+  image *loading_img = 0;
+  int i;
+
+  for (i = 0; i < ss->nimages; i++)
+    {
+      image *img2 = ss->images[i];
+      if (!img2) abort();
+      if (!img2->loaded_p)
+        loading_img = img2;
+      else if (!img2->used_p)
+        new_img = img2;
+      else
+        old_img = img2;
+    }
+
+  if (want_new_p && new_img)
+    img = new_img, new_img = 0, ss->change_now_p = False;
+  else if (old_img)
+    img = old_img, old_img = 0;
+  else if (new_img)
+    img = new_img, new_img = 0, ss->change_now_p = False;
+
+  /* Make sure that there is always one unused image in the pipe.
+   */
+  if (!new_img && !loading_img)
+    alloc_image (mi);
+
+  return img;
+}
+
+
+/* Pick random starting and ending positions for the given sprite.
+ */
+static void
+randomize_sprite (ModeInfo *mi, sprite *sp)
+{
+  int vp_w = MI_WIDTH(mi);
+  int vp_h = MI_HEIGHT(mi);
+  int img_w = sp->img->geom.width;
+  int img_h = sp->img->geom.height;
+  int min_w, min_h, max_w, max_h;
+  double ratio = (double) img_h / img_w;
+
+  if (letterbox_p)
+    {
+      min_w = img_w;
+      min_h = img_h;
+    }
+  else
+    {
+      if (img_w < vp_w)
+        {
+          min_w = vp_w;
+          min_h = img_h * (float) vp_w / img_w;
+        }
+      else
+        {
+          min_w = img_w * (float) vp_h / img_h;
+          min_h = vp_h;
+        }
+    }
+
+  max_w = min_w * 100 / zoom;
+  max_h = min_h * 100 / zoom;
+
+  sp->from.w = min_w + frand ((max_w - min_w) * 0.4);
+  sp->to.w   = max_w - frand ((max_w - min_w) * 0.4);
+  sp->from.h = sp->from.w * ratio;
+  sp->to.h   = sp->to.w   * ratio;
+
+  if (zoom == 100)	/* only one box, and it is centered */
+    {
+      sp->from.x = (sp->from.w > vp_w
+                    ? -(sp->from.w - vp_w) / 2
+                    :  (vp_w - sp->from.w) / 2);
+      sp->from.y = (sp->from.h > vp_h
+                    ? -(sp->from.h - vp_h) / 2
+                    :  (vp_h - sp->from.h) / 2);
+      sp->to = sp->from;
+    }
+  else			/* position both boxes randomly */
+    {
+      sp->from.x = (sp->from.w > vp_w
+                    ? -frand (sp->from.w - vp_w)
+                    :  frand (vp_w - sp->from.w));
+      sp->from.y = (sp->from.h > vp_h
+                    ? -frand (sp->from.h - vp_h)
+                    :  frand (vp_h - sp->from.h));
+      sp->to.x   = (sp->to.w > vp_w
+                    ? -frand (sp->to.w - vp_w)
+                    :  frand (vp_w - sp->to.w));
+      sp->to.y   = (sp->to.h > vp_h
+                    ? -frand (sp->to.h - vp_h)
+                    :  frand (vp_h - sp->to.h));
+    }
+
+  if (random() & 1)
+    {
+      rect swap = sp->to;
+      sp->to = sp->from;
+      sp->from = swap;
+    }
+
+  /* Make sure the aspect ratios are within 0.0001 of each other.
+   */
+  if ((int) (0.5 + (sp->from.w * 1000 / sp->from.h)) !=
+      (int) (0.5 + (sp->to.w   * 1000 / sp->to.h)))
+    abort();
+
+  sp->from.x /= vp_w;
+  sp->from.y /= vp_h;
+  sp->from.w /= vp_w;
+  sp->from.h /= vp_h;
+  sp->to.x   /= vp_w;
+  sp->to.y   /= vp_h;
+  sp->to.w   /= vp_w;
+  sp->to.h   /= vp_h;
+}
+
+
+/* Allocate a new sprite and start its animation going.
+ */
+static sprite *
+new_sprite (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  image *img = get_image (mi);
+  sprite *sp;
+
+  if (!img)
+    {
+      /* Oops, no images yet!  The machine is probably hurting bad.
+         Let's give it some time before thrashing again. */
+      usleep (250000);
+      return 0;
+    }
+
+  sp = (sprite *) calloc (1, sizeof (*sp));
+  sp->id = ++ss->sprite_id;
+  sp->start_time = ss->now;
+  sp->state_time = sp->start_time;
+  sp->state = sp->prev_state = NEW;
+  sp->img = img;
+
+  sp->img->refcount++;
+  sp->img->used_p = True;
+
+  ss->sprites[ss->nsprites++] = sp;
+  if (ss->nsprites >= countof(ss->sprites)) abort();
+
+  randomize_sprite (mi, sp);
+
+  return sp;
+}
+
+
+/* Free the given sprite, and decrement the reference count on its image.
+ */
+static void
+destroy_sprite (ModeInfo *mi, sprite *sp)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  Bool freed_p = False;
+  image *img;
+  int i;
+
+  if (!sp) abort();
+  if (sp->state != DEAD) abort();
+  img = sp->img;
+  if (!img) abort();
+  if (!img->loaded_p) abort();
+  if (!img->used_p) abort();
+  if (img->refcount <= 0) abort();
+
+  for (i = 0; i < ss->nsprites; i++)		/* unlink it from the list */
+    if (ss->sprites[i] == sp)
+      {
+        int j;
+        for (j = i; j < ss->nsprites-1; j++)	/* pull remainder forward */
+          ss->sprites[j] = ss->sprites[j+1];
+        ss->sprites[j] = 0;
+        ss->nsprites--;
+        freed_p = True;
+        break;
+      }
+
+  if (!freed_p) abort();
+  free (sp);
+  sp = 0;
+
+  img->refcount--;
+  if (img->refcount < 0) abort();
+  if (img->refcount == 0)
+    destroy_image (mi, img);
+}
+
+
+/* Updates the sprite for the current frame of the animation based on
+   its creation time compared to the current wall clock.
+ */
+static void
+tick_sprite (ModeInfo *mi, sprite *sp)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  image *img = sp->img;
+  double now = ss->now;
   double secs;
-  GLfloat texw = 0;
-  GLfloat texh = 0;
+  double ratio;
+  rect prev_rect = sp->current;
+  GLfloat prev_opacity = sp->opacity;
 
-  if (q->state == DEAD)
-    return;
+  if (! sp->img) abort();
+  if (! img->loaded_p) abort();
 
-  secs = ss->now - ss->pan_start_time;
-
-  if (q->state == OUT)
-    secs += pan_seconds;
-
+  secs = now - sp->start_time;
   ratio = secs / (pan_seconds + fade_seconds);
+  if (ratio > 1) ratio = 1;
 
-  current.x = q->from.x + ratio * (q->to.x - q->from.x);
-  current.y = q->from.y + ratio * (q->to.y - q->from.y);
-  current.w = q->from.w + ratio * (q->to.w - q->from.w);
-  current.h = q->from.h + ratio * (q->to.h - q->from.h);
+  sp->current.x = sp->from.x + ratio * (sp->to.x - sp->from.x);
+  sp->current.y = sp->from.y + ratio * (sp->to.y - sp->from.y);
+  sp->current.w = sp->from.w + ratio * (sp->to.w - sp->from.w);
+  sp->current.h = sp->from.h + ratio * (sp->to.h - sp->from.h);
+
+  sp->prev_state = sp->state;
 
   if (secs < fade_seconds)
-    opacity = secs / (GLfloat) fade_seconds;    /* fading in or out... */
+    {
+      sp->state = IN;
+      sp->opacity = secs / (GLfloat) fade_seconds;
+    }
   else if (secs < pan_seconds)
-    opacity = 1;				/* panning opaquely. */
+    {
+      sp->state = FULL;
+      sp->opacity = 1;
+    }
+  else if (secs < pan_seconds + fade_seconds)
+    {
+      sp->state = OUT;
+      sp->opacity = 1 - ((secs - pan_seconds) / (GLfloat) fade_seconds);
+    }
   else
-    opacity = 1 - ((secs - pan_seconds) /
-                   (GLfloat) fade_seconds);    /* fading in or out... */
+    {
+      sp->state = DEAD;
+      sp->opacity = 0;
+    }
 
-  if (q->state == OUT && opacity < 0.0001)
-    q->state = DEAD;
+  if (sp->state != sp->prev_state &&
+      (sp->prev_state == IN ||
+       sp->prev_state == FULL))
+    {
+      double secs = now - sp->state_time;
+
+      if (debug_p)
+        fprintf (stderr,
+                 "%s: %s %3d frames %2.0f sec %5.1f fps (%.1f fps?)\n",
+                 blurb(),
+                 (sp->prev_state == IN ? "fade" : "pan "),
+                 sp->frame_count,
+                 secs,
+                 sp->frame_count / secs,
+                 ss->theoretical_fps);
+
+      sp->state_time = now;
+      sp->frame_count = 0;
+    }
+
+  sp->frame_count++;
+
+  if (sp->state != DEAD &&
+      (prev_rect.x != sp->current.x ||
+       prev_rect.y != sp->current.y ||
+       prev_rect.w != sp->current.w ||
+       prev_rect.h != sp->current.h ||
+       prev_opacity != sp->opacity))
+    ss->redisplay_needed_p = True;
+}
+
+
+/* Draw the given sprite at the phase of its animation dictated by
+   its creation time compared to the current wall clock.
+ */
+static void
+draw_sprite (ModeInfo *mi, sprite *sp)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  image *img = sp->img;
+
+  if (! sp->img) abort();
+  if (! img->loaded_p) abort();
 
   glPushMatrix();
+  {
+    glTranslatef (sp->current.x, sp->current.y, 0);
+    glScalef (sp->current.w, sp->current.h, 1);
 
-  glTranslatef (current.x, current.y, 0);
-  glScalef (current.w, current.h, 1);
+    if (wire)			/* Draw a grid inside the box */
+      {
+        GLfloat dy = 0.1;
+        GLfloat dx = dy * img->w / img->h;
+        GLfloat x, y;
 
-  if (!wire)
-    {
-      texw = mi->xgwa.width  / (GLfloat) ss->img_w;
-      texh = mi->xgwa.height / (GLfloat) ss->img_h;
+        if (sp->id & 1)
+          glColor4f (sp->opacity, 0, 0, 1);
+        else
+          glColor4f (0, 0, sp->opacity, 1);
 
-      glEnable (GL_TEXTURE_2D);
-      glEnable (GL_BLEND);
-      glBindTexture (GL_TEXTURE_2D, q->texid);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glDepthMask (GL_FALSE);
+        glBegin(GL_LINES);
+        glVertex3f (0, 0, 0); glVertex3f (1, 1, 0);
+        glVertex3f (1, 0, 0); glVertex3f (0, 1, 0);
 
-      /* Draw the texture quad
-       */
-      glColor4f (1, 1, 1, opacity);
-      glNormal3f (0, 0, 1);
-      glBegin (GL_QUADS);
-      glTexCoord2f (0,    0);    glVertex3f (0, 0, 0);
-      glTexCoord2f (0,    texh); glVertex3f (0, 1, 0);
-      glTexCoord2f (texw, texh); glVertex3f (1, 1, 0);
-      glTexCoord2f (texw, 0);    glVertex3f (1, 0, 0);
-      glEnd();
-
-      glDisable (GL_TEXTURE_2D);
-      glDisable (GL_BLEND);
-    }
-
-  if (wire)
-    glColor4f ((q->texid == ss->texids[0] ? opacity : 0), 0,
-               (q->texid == ss->texids[0] ? 0 : opacity),
-               opacity);
-  else
-    glColor4f (1, 1, 1, opacity);
-
-
-  /* Draw a grid inside the box
-   */
-  if (wire)
-    {
-      GLfloat d = 0.1;
-      GLfloat x, y;
-      glBegin(GL_LINES);
-      glVertex3f (0, 0, 0); glVertex3f (1, 1, 0);
-      glVertex3f (1, 0, 0); glVertex3f (0, 1, 0);
-
-      for (y = 0; y < 1+d; y += d)
-        for (x = 0; x < 1+d; x += d)
+        for (y = 0; y < 1+dy; y += dy)
           {
-            glVertex3f (0, y, 0); glVertex3f (1, y, 0);
-            glVertex3f (x, 0, 0); glVertex3f (x, 1, 0);
+            GLfloat yy = (y > 1 ? 1 : y);
+            for (x = 0.5; x < 1+dx; x += dx)
+              {
+                GLfloat xx = (x > 1 ? 1 : x);
+                glVertex3f (0, xx, 0); glVertex3f (1, xx, 0);
+                glVertex3f (yy, 0, 0); glVertex3f (yy, 1, 0);
+              }
+            for (x = 0.5; x > -dx; x -= dx)
+              {
+                GLfloat xx = (x < 0 ? 0 : x);
+                glVertex3f (0, xx, 0); glVertex3f (1, xx, 0);
+                glVertex3f (yy, 0, 0); glVertex3f (yy, 1, 0);
+              }
           }
-      glEnd();
-    }
+        glEnd();
+      }
+    else			/* Draw the texture quad */
+      {
+        GLfloat texw  = img->geom.width  / (GLfloat) img->tw;
+        GLfloat texh  = img->geom.height / (GLfloat) img->th;
+        GLfloat texx1 = img->geom.x / (GLfloat) img->tw;
+        GLfloat texy1 = img->geom.y / (GLfloat) img->th;
+        GLfloat texx2 = texx1 + texw;
+        GLfloat texy2 = texy1 + texh;
 
-  if (do_titles &&
-      q->state != DEAD &&
-      q->title && *q->title)
-    {
-      /* #### this is wrong -- I really want to draw this with
-         "1,1,1,opacity", so that the text gets laid down on top
-         of the image with alpha, but that doesn't work, and I
-         don't know why...
-       */
-      glColor4f (opacity, opacity, opacity, 1);
-      print_title_string (mi, q->title,
-                          10, mi->xgwa.height - 10);
-    }
+        glBindTexture (GL_TEXTURE_2D, img->texid);
+        glColor4f (1, 1, 1, sp->opacity);
+        glNormal3f (0, 0, 1);
+        glBegin (GL_QUADS);
+        glTexCoord2f (texx1, texy2); glVertex3f (0, 0, 0);
+        glTexCoord2f (texx2, texy2); glVertex3f (1, 0, 0);
+        glTexCoord2f (texx2, texy1); glVertex3f (1, 1, 0);
+        glTexCoord2f (texx1, texy1); glVertex3f (0, 1, 0);
+        glEnd();
 
+        if (debug_p)		/* Draw a border around the image */
+          {
+            if (!wire) glDisable (GL_TEXTURE_2D);
+
+            if (sp->id & 1)
+              glColor4f (sp->opacity, 0, 0, 1);
+            else
+              glColor4f (0, 0, sp->opacity, 1);
+
+            glBegin (GL_LINE_LOOP);
+            glVertex3f (0, 0, 0);
+            glVertex3f (0, 1, 0);
+            glVertex3f (1, 1, 0);
+            glVertex3f (1, 0, 0);
+            glEnd();
+
+            if (!wire) glEnable (GL_TEXTURE_2D);
+          }
+      }
+
+
+    if (do_titles &&
+        img->title && *img->title)
+      {
+        int x = 10;
+        int y = mi->xgwa.height - 10;
+        glColor4f (0, 0, 0, sp->opacity);   /* cheap-assed dropshadow */
+        print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
+                         mi->xgwa.width, mi->xgwa.height, x, y,
+                         img->title);
+        x++; y++;
+        glColor4f (1, 1, 1, sp->opacity);
+        print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
+                         mi->xgwa.width, mi->xgwa.height, x, y,
+                         img->title);
+      }
+  }
   glPopMatrix();
 
   if (debug_p)
     {
+      if (!wire) glDisable (GL_TEXTURE_2D);
+
+      if (sp->id & 1)
+        glColor4f (1, 0, 0, 1);
+      else
+        glColor4f (0, 0, 1, 1);
+
       /* Draw the "from" and "to" boxes
        */
-      glColor4f ((q->texid == ss->texids[0] ? opacity : 0), 0,
-                 (q->texid == ss->texids[0] ? 0 : opacity),
-                 opacity);
-
       glBegin (GL_LINE_LOOP);
-      glVertex3f (q->from.x,             q->from.y,             0);
-      glVertex3f (q->from.x + q->from.w, q->from.y,             0);
-      glVertex3f (q->from.x + q->from.w, q->from.y + q->from.h, 0);
-      glVertex3f (q->from.x,             q->from.y + q->from.h, 0);
+      glVertex3f (sp->from.x,              sp->from.y,              0);
+      glVertex3f (sp->from.x + sp->from.w, sp->from.y,              0);
+      glVertex3f (sp->from.x + sp->from.w, sp->from.y + sp->from.h, 0);
+      glVertex3f (sp->from.x,              sp->from.y + sp->from.h, 0);
       glEnd();
 
       glBegin (GL_LINE_LOOP);
-      glVertex3f (q->to.x,               q->to.y,               0);
-      glVertex3f (q->to.x + q->to.w,     q->to.y,               0);
-      glVertex3f (q->to.x + q->to.w,     q->to.y + q->to.h,     0);
-      glVertex3f (q->to.x,               q->to.y + q->to.h,     0);
+      glVertex3f (sp->to.x,                sp->to.y,                0);
+      glVertex3f (sp->to.x + sp->to.w,     sp->to.y,                0);
+      glVertex3f (sp->to.x + sp->to.w,     sp->to.y + sp->to.h,     0);
+      glVertex3f (sp->to.x,                sp->to.y + sp->to.h,     0);
       glEnd();
+
+      if (!wire) glEnable (GL_TEXTURE_2D);
     }
 }
 
 
 static void
-draw_quads (ModeInfo *mi)
+tick_sprites (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  GLfloat s, o;
+  int i;
+  for (i = 0; i < ss->nsprites; i++)
+      tick_sprite (mi, ss->sprites[i]);
+}
+
+
+static void
+draw_sprites (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
   int i;
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
-
-  s = (100.0 / zoom);
-  o = (1-s)/2;
-  glTranslatef (o, o, 0);
-  glScalef (s, s, s);
-
-  for (i = 0; i < countof(ss->quads); i++)
-    draw_quad (mi, &ss->quads[i]);
-
+  for (i = 0; i < ss->nsprites; i++)
+    draw_sprite (mi, ss->sprites[i]);
   glPopMatrix();
 
-  if (debug_p)
+  if (debug_p)				/* draw a white box (the "screen") */
     {
+      int wire = MI_IS_WIREFRAME(mi);
+
+      if (!wire) glDisable (GL_TEXTURE_2D);
+
       glColor4f (1, 1, 1, 1);
       glBegin (GL_LINE_LOOP);
       glVertex3f (0, 0, 0);
@@ -489,305 +916,9 @@ draw_quads (ModeInfo *mi)
       glVertex3f (1, 1, 0);
       glVertex3f (1, 0, 0);
       glEnd();
+
+      if (!wire) glEnable (GL_TEXTURE_2D);
     }
-}
-
-
-/* Re-randomize the state of the given quad.
- */
-static void
-reset_quad (ModeInfo *mi, gls_quad *q)
-{
-/*  slideshow_state *ss = &sss[MI_SCREEN(mi)];*/
-
-  GLfloat mid_w = (zoom / 100.0);
-  GLfloat mid_h = (zoom / 100.0);
-  GLfloat mid_x = (1 - mid_w) / 2;
-  GLfloat mid_y = (1 - mid_h) / 2;
-
-  GLfloat small = mid_w + frand ((1 - mid_w) * 0.3);
-#if 0
-  GLfloat large = small + frand ((1 - small) / 2) + ((1 - small) / 2);
-#else
-  GLfloat large = small + frand (1 - small);
-#endif
-
-  if (q->state != DEAD)
-    abort();    /* we should only be resetting a quad when it's not visible. */
-
-  /* Possible box sizes range between "zoom" and "100%".
-     Pick a small box size, and a large box size.
-     Assign each a random position within the 1x1 box,
-     such that they encompass the middle "zoom" percentage.
-     One of those is the start, and one is the end.
-     Each frame will transition between one and the other.
-   */
-
-  if (random() & 1)
-    {
-      q->from.w = small; q->from.h = small;
-      q->to.w   = large; q->to.h   = large;
-    }
-  else
-    {
-      q->from.w = large; q->from.h = large;
-      q->to.w   = small; q->to.h   = small;
-    }
-
-  q->from.x = mid_x - frand (q->from.w - mid_w);
-  q->from.y = mid_y - frand (q->from.h - mid_h);
-  q->to.x   = mid_x - frand (q->to.w - mid_w);
-  q->to.y   = mid_y - frand (q->to.w - mid_h);
-
-  q->state = IN;
-}
-
-
-/* Shrinks the XImage by a factor of two.
- */
-static void
-shrink_image (ModeInfo *mi, XImage *ximage)
-{
-  int w2 = ximage->width/2;
-  int h2 = ximage->height/2;
-  int x, y;
-  XImage *ximage2;
-
-  if (w2 <= 32 || h2 <= 32)   /* let's not go crazy here, man. */
-    return;
-
-  if (debug_p)
-    fprintf (stderr, "%s: debug: shrinking image %dx%d -> %dx%d\n",
-             blurb(), ximage->width, ximage->height, w2, h2);
-
-  ximage2 = XCreateImage (MI_DISPLAY (mi), mi->xgwa.visual,
-                          32, ZPixmap, 0, 0,
-                          w2, h2, 32, 0);
-  ximage2->data = (char *) calloc (h2, ximage2->bytes_per_line);
-  if (!ximage2->data)
-    {
-      fprintf (stderr, "%s: out of memory (scaling %dx%d image to %dx%d)\n",
-               blurb(), ximage->width, ximage->height, w2, h2);
-      exit (1);
-    }
-  for (y = 0; y < h2; y++)
-    for (x = 0; x < w2; x++)
-      XPutPixel (ximage2, x, y, XGetPixel (ximage, x*2, y*2));
-  free (ximage->data);
-  *ximage = *ximage2;
-  ximage2->data = 0;
-  XFree (ximage2);
-}
-
-
-/* Load a new image into a texture for the given quad.
- */
-static void
-load_quad_1 (ModeInfo *mi, gls_quad *q, XImage *ximage,
-             const char *filename, double start_time, double cvt_time)
-{
-  slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  int status;
-  int max_reduction = 7;
-  int err_count = 0;
-  int wire = MI_IS_WIREFRAME(mi);
-  double load_time=0, mipmap_time=0;   /* for debugging messages */
-
-  /* if (q->state != DEAD) abort(); */
-
-  /* Figure out which texid is currently in use, and pick the other one.
-   */
-  {
-    GLuint tid = 0;
-    int i;
-    if (ss->current_texid == 0)
-      tid = ss->texids[0];
-    else
-      for (i = 0; i < countof(ss->texids); i++)
-        if (ss->texids[i] != ss->current_texid)
-          {
-            tid = ss->texids[i];
-            break;
-          }
-
-    if (tid == 0) abort();   /* both textures in use by visible quads? */
-    q->texid = tid;
-    ss->current_texid = tid;
-  }
-
-  if (wire)
-    goto DONE;
-
-  if (q->title) free (q->title);
-  q->title = (filename ? strdup (filename) : 0);
-
-  if (q->title)   /* strip filename to part after last /. */
-    {
-      char *s = strrchr (q->title, '/');
-      if (s) strcpy (q->title, s+1);
-    }
-
-  if (debug_p)
-    {
-      fprintf (stderr, "%s: debug: loaded    image %d: \"%s\"\n",
-               blurb(), q->texid, (q->title ? q->title : "(null)"));
-      load_time = double_time();
-    }
-
-  glBindTexture (GL_TEXTURE_2D, q->texid);
-  glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                   GL_LINEAR_MIPMAP_LINEAR);
-  
-  ss->img_w = ximage->width;
-  ss->img_h = ximage->height;
-
- AGAIN:
-
-  clear_gl_error();
-  status = gluBuild2DMipmaps (GL_TEXTURE_2D, 3,
-                              ximage->width, ximage->height,
-                              GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-  
-  if(!status && glGetError())
-   /* Some implementations of gluBuild2DMipmaps(), but set a GL error anyway.
-      We could just call check_gl_error(), but that would exit. */
-    status = -1;
-
-  if (status)
-    {
-      char buf[100];
-      const char *s = (char *) gluErrorString (status);
-
-      if (!s || !*s)
-        {
-          sprintf (buf, "unknown error %d", status);
-          s = buf;
-        }
-
-      clear_gl_error();
-
-      if (++err_count > max_reduction)
-        {
-          fprintf(stderr,
-                  "\n"
-                  "%s: %dx%d texture failed, even after reducing to %dx%d:\n"
-                  "%s: GLU said: \"%s\".\n"
-                  "%s: probably this means "
-                  "\"your video card is worthless and weak\"?\n\n",
-                  blurb(), MI_WIDTH(mi), MI_HEIGHT(mi),
-                  ximage->width, ximage->height,
-                  blurb(), s,
-                  blurb());
-          exit (1);
-        }
-      else
-        {
-          if (debug_p)
-            fprintf (stderr, "%s: debug: mipmap error (%dx%d): %s\n",
-                     blurb(), ximage->width, ximage->height, s);
-          shrink_image (mi, ximage);
-          goto AGAIN;
-        }
-    }
-
-  check_gl_error("mipmapping");  /* should get a return code instead of a
-				    GL error, but just in case... */
-
-  free(ximage->data);
-  ximage->data = 0;
-  XDestroyImage(ximage);
-
-  if (debug_p)
-    {
-      fprintf (stderr, "%s: debug: mipmapped image %d: %dx%d\n",
-               blurb(), q->texid, mi->xgwa.width, mi->xgwa.height);
-      mipmap_time = double_time();
-    }
-
-  if (cvt_time == 0)
-    cvt_time = load_time;
-  if (debug_p)
-    fprintf (stderr,
-             "%s: debug: load time elapsed: %.2f + %.2f + %.2f = %.2f sec\n",
-             blurb(),
-             cvt_time    - start_time,
-             load_time   - cvt_time,
-             mipmap_time - load_time,
-             mipmap_time - start_time);
-
- DONE:
-
-  /* Re-set "now" so that time spent loading the image file does not count
-     against the time remaining in this stage of the animation: image loading,
-     if it takes a perceptible amount of time, will cause the animation to
-     pause, but will not cause it to drop frames.
-   */
-  ss->now = double_time ();
-  ss->image_start_time = ss->now;
-
-  ss->redisplay_needed_p = True;
-}
-
-
-static void slideshow_load_cb (Screen *, Window, XImage *,
-                               const char *filename, void *closure,
-                               double cvt_time);
-
-typedef struct {
-  ModeInfo *mi;
-  gls_quad *q;
-  double start_time;
-} img_load_closure;
-
-
-/* Load a new image into a texture for the given quad.
- */
-static void
-load_quad (ModeInfo *mi, gls_quad *q)
-{
-  slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  img_load_closure *data;
-
-  if (debug_p)
-    fprintf (stderr, "%s: debug: loading   image %d: %dx%d\n",
-             blurb(), q->texid, mi->xgwa.width, mi->xgwa.height);
-
-  if (q->state != DEAD) abort();
-  if (q->title) free (q->title);
-  q->title = 0;
-
-  if (MI_IS_WIREFRAME(mi))
-    return;
-
-  data = (img_load_closure *) calloc (1, sizeof(*data));
-  data->mi = mi;
-  data->q = q;
-  data->start_time = double_time();
-
-  if (ss->fork_p)
-    {
-      fork_screen_to_ximage (mi->xgwa.screen, mi->window,
-                             slideshow_load_cb, data);
-    }
-  else
-    {
-      char *title = 0;
-      XImage *ximage = screen_to_ximage (mi->xgwa.screen, mi->window, &title);
-      slideshow_load_cb (mi->xgwa.screen, mi->window, ximage, title, data, 0);
-    }
-}
-
-
-static void
-slideshow_load_cb (Screen *screen, Window window, XImage *ximage,
-                   const char *filename, void *closure, double cvt_time)
-{
-  img_load_closure *data = (img_load_closure *) closure;
-  load_quad_1 (data->mi, data->q, ximage, filename,
-               data->start_time, cvt_time);
-  memset (data, 0, sizeof (*data));
-  free (data);
 }
 
 
@@ -824,15 +955,33 @@ glslideshow_handle_event (ModeInfo *mi, XEvent *event)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
-  if (event->xany.type == Expose ||
-      event->xany.type == GraphicsExpose ||
-      event->xany.type == VisibilityNotify)
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
     {
-      if (debug_p)
-        fprintf (stderr, "%s: debug: exposure\n", blurb());
-      ss->redisplay_needed_p = True;
+      ss->change_now_p = True;
       return True;
     }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ' || c == '\r' || c == '\n' || c == '\t')
+        {
+          ss->change_now_p = True;
+          return True;
+        }
+    }
+  else if (event->xany.type == Expose ||
+           event->xany.type == GraphicsExpose ||
+           event->xany.type == VisibilityNotify)
+    {
+      ss->redisplay_needed_p = True;
+      if (debug_p)
+        fprintf (stderr, "%s: exposure\n", blurb());
+      return False;
+    }
+
   return False;
 }
 
@@ -864,8 +1013,69 @@ sanity_check (ModeInfo *mi)
   if (zoom == 100 && pan_seconds < image_seconds)
     pan_seconds = image_seconds;
 
+  /* No need to use mipmaps if we're not changing the image size much */
+  if (zoom >= 80) mipmap_p = False;
+
   if      (fps_cutoff < 0)  fps_cutoff = 0;
   else if (fps_cutoff > 30) fps_cutoff = 30;
+}
+
+
+static void
+check_fps (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+
+  static double time_elapsed = 0;
+  static int frames_elapsed = 0;
+  double start_time, end_time, wall_elapsed, frame_duration, fps;
+  int i;
+
+  start_time = ss->now;
+  end_time = double_time();
+  frame_duration = end_time - start_time;   /* time spent drawing this frame */
+  time_elapsed += frame_duration;           /* time spent drawing all frames */
+  frames_elapsed++;
+
+  wall_elapsed = end_time - ss->dawn_of_time;
+  fps = frames_elapsed / time_elapsed;
+  ss->theoretical_fps = fps;
+
+  if (ss->checked_fps_p) return;
+
+  if (wall_elapsed <= 8)    /* too early to be sure */
+    return;
+
+  ss->checked_fps_p = True;
+
+  if (fps >= fps_cutoff)
+    {
+      if (debug_p)
+        fprintf (stderr,
+                 "%s: %.1f fps is fast enough (with %d frames in %.1f secs)\n",
+                 blurb(), fps, frames_elapsed, wall_elapsed);
+      return;
+    }
+
+  fprintf (stderr,
+           "%s: only %.1f fps!  Turning off pan/fade to compensate...\n",
+           blurb(), fps);
+  zoom = 100;
+  fade_seconds = 0;
+
+  sanity_check (mi);
+
+  for (i = 0; i < ss->nsprites; i++)
+    {
+      sprite *sp = ss->sprites[i];
+      randomize_sprite (mi, sp);
+      sp->state = FULL;
+    }
+
+  ss->redisplay_needed_p = True;
+
+  /* Need this in case zoom changed. */
+  reshape_slideshow (mi, mi->xgwa.width, mi->xgwa.height);
 }
 
 
@@ -895,7 +1105,6 @@ init_slideshow (ModeInfo *mi)
   int screen = MI_SCREEN(mi);
   slideshow_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
-  int i;
   
   if (sss == NULL) {
     if ((sss = (slideshow_state *)
@@ -911,132 +1120,46 @@ init_slideshow (ModeInfo *mi)
   }
 
   if (debug_p)
-    fprintf (stderr, "%s: debug: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
+    fprintf (stderr, "%s: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
              blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
 
   sanity_check(mi);
 
   if (debug_p)
-    fprintf (stderr, "%s: debug: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
+    fprintf (stderr, "%s: pan: %d; fade: %d; img: %d; zoom: %d%%\n\n",
              blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
+
+  glDisable (GL_LIGHTING);
+  glDisable (GL_DEPTH_TEST);
+  glDepthMask (GL_FALSE);
+  glEnable (GL_CULL_FACE);
+  glCullFace (GL_BACK);
 
   if (! wire)
     {
+      glEnable (GL_TEXTURE_2D);
       glShadeModel (GL_SMOOTH);
-      glPolygonMode (GL_FRONT_AND_BACK,GL_FILL);
-      glEnable (GL_DEPTH_TEST);
-      glEnable (GL_CULL_FACE);
-      glCullFace (GL_FRONT);
-      glDisable (GL_LIGHTING);
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
-
-  ss->now = double_time ();
-  ss->dawn_of_time = ss->now;
 
   if (debug_p) glLineWidth (3);
 
-  ss->pan_start_time   = ss->now;
-  ss->image_start_time = ss->now;
-
-  load_font (mi, "titleFont", &ss->xfont, &ss->font_dlist);
-
-  for (i = 0; i < countof(ss->texids); i++)
-    glGenTextures (1, &ss->texids[i]);
-  ss->current_texid = 0;
-
-  for (i = 0; i < countof(ss->quads); i++)
-    {
-      gls_quad *q = &ss->quads[i];
-      q->texid = ss->current_texid;
-      q->state = DEAD;
-      reset_quad (mi, q);
-      q->state = DEAD;
-    }
+  load_font (mi->dpy, "titleFont", &ss->xfont, &ss->font_dlist);
 
   if (debug_p)
     hack_resources();
 
-  load_quad (mi, &ss->quads[0]);
-  ss->quads[0].state = IN;
+  ss->now = double_time();
+  ss->dawn_of_time = ss->now;
+  ss->prev_frame_time = ss->now;
 
-  ss->image_start_time -= pan_seconds;  /* fudge needed for first image */
+  await_first_image (mi);   /* wait for first image to fully load */
 
-  ss->redisplay_needed_p = True;
+  ss->now = double_time();
+  ss->dawn_of_time = ss->now;
 
-  ss->fork_p = 0; /* #### buggy */
-
-}
-
-
-/* Call this each time we change from one state to another.
-   It gathers statistics on the frame rate of the previous state,
-   and if it's bad, turn things off (under the assumption that
-   we're running on sucky hardware.)
- */
-static void
-ponder_state_change (ModeInfo *mi)
-{
-  slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  const char *which;
-  int frames, secs;
-  GLfloat fps;
-
-  if (ss->fade_frame_count && ss->pan_frame_count)
-    abort();  /* one of these should be zero! */
-  else if (ss->fade_frame_count)   /* just finished fading */
-    {
-      which = "faded ";
-      secs = fade_seconds;
-      frames = ss->fade_frame_count;
-      ss->fade_frame_count = 0;
-    }
-  else if (ss->pan_frame_count)   /* just finished panning */
-    {
-      which = "panned";
-      secs = pan_seconds;
-      frames = ss->pan_frame_count;
-      ss->pan_frame_count = 0;
-    }
-  else
-    return;  /* One of those should be non-zero! Maybe we just started,
-                and the machine is insanely slow. */
-
-  fps = frames / (GLfloat) secs;
-
-  if (debug_p)
-    fprintf (stderr, "%s: debug: %s %3d frames %2d sec %4.1f fps\n",
-             blurb(), which, frames, secs, fps);
-
-
-  if (fps < fps_cutoff && !ss->low_fps_p)   /* oops, this computer sucks! */
-    {
-      int i;
-
-      fprintf (stderr,
-               "%s: only %.1f fps!  Turning off pan/fade to compensate...\n",
-               blurb(), fps);
-      zoom = 100;
-      fade_seconds = 0;
-      ss->low_fps_p = True;
-
-      sanity_check (mi);
-
-      /* Reset all quads, and mark only #0 as active. */
-      for (i = 0; i < countof(ss->quads); i++)
-        {
-          gls_quad *q = &ss->quads[i];
-          q->state = DEAD;
-          reset_quad (mi, q);
-          q->texid = ss->current_texid;
-          q->state = (i == 0 ? IN : DEAD);
-        }
-
-      ss->pan_start_time = ss->now;
-      ss->redisplay_needed_p = True;
-
-      /* Need this in case zoom changed. */
-      reshape_slideshow (mi, mi->xgwa.width, mi->xgwa.height);
-    }
+  new_sprite (mi);          /* start first sprite fading in */
 }
 
 
@@ -1044,114 +1167,74 @@ void
 draw_slideshow (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  Window w = MI_WINDOW(mi);
-  double secs;
+  int i;
 
   if (!ss->glx_context)
     return;
 
-  if (zoom < 100)
-    ss->redisplay_needed_p = True;
-
-  /* States:
-      0: - A invisible,  B invisible
-         - A fading in,  B invisible
-
-      1: - A opaque,     B invisible
-         - A fading out, B fading in
-         - A invisible, gets reset
-         - A invisible,  B opaque
-
-      2: - A invisible,  B opaque
-         - A fading in,  B fading out
-         - B invisible, gets reset
-         - A opaque,     B invisible (goto 1)
-  */
-
   ss->now = double_time();
 
-  secs = ss->now - ss->pan_start_time;
+  /* Each sprite has three states: fading in, full, fading out.
+     The in/out states overlap like this:
 
-  if (secs < fade_seconds)
+     iiiiiiFFFFFFFFFFFFoooooo  . . . . . . . . . . . . . . . . . 
+     . . . . . . . . . iiiiiiFFFFFFFFFFFFoooooo  . . . . . . . .
+     . . . . . . . . . . . . . . . . . . iiiiiiFFFFFFFFFFFFooooo
+
+     So as soon as a sprite goes into the "out" state, we create
+     a new sprite (in the "in" state.)
+   */
+
+  if (ss->nsprites > 2) abort();
+
+  /* If a sprite is just entering the fade-out state,
+     then add a new sprite in the fade-in state.
+   */
+  for (i = 0; i < ss->nsprites; i++)
     {
-      /* We are in the midst of a fade:
-         one quad is fading in, the other is fading out.
-         (If this is the very first time, then the one
-         fading out is already out.)
-       */
-      ss->redisplay_needed_p = True;
-      ss->fade_frame_count++;
-
-      if (! ((ss->quads[0].state == IN && ss->quads[1].state == OUT) ||
-             (ss->quads[1].state == IN && ss->quads[0].state == OUT) ||
-             (ss->quads[0].state == IN && ss->quads[1].state == DEAD)))
-        abort();
+      sprite *sp = ss->sprites[i];
+      if (sp->state != sp->prev_state &&
+          sp->state == (fade_seconds == 0 ? DEAD : OUT))
+        new_sprite (mi);
     }
-  else if (secs < pan_seconds)
-    {
-      /* One quad is visible and in motion, the other is not.
-      */
-      if (ss->fade_frame_count != 0)  /* we just switched from fade to pan */
-        ponder_state_change (mi);
-      ss->pan_frame_count++;
-    }
-  else
-    {
-      /* One quad is visible and in motion, the other is not.
-         It's time to begin fading the visible one out, and the
-         invisible one in.  (Reset the invisible one first.)
-       */
-      gls_quad *vq, *iq;
 
-      ponder_state_change (mi);
+  tick_sprites (mi);
 
-      if (ss->quads[0].state == IN)
+  /* Now garbage collect the dead sprites.
+   */
+  for (i = 0; i < ss->nsprites; i++)
+    {
+      sprite *sp = ss->sprites[i];
+      if (sp->state == DEAD)
         {
-          vq = &ss->quads[0];
-          iq = &ss->quads[1];
+          destroy_sprite (mi, sp);
+          i--;
         }
-      else
-        {
-          vq = &ss->quads[1];
-          iq = &ss->quads[0];
-        }
-
-      if (vq->state != IN)   abort();
-
-      /* I don't understand why sometimes iq is still OUT and not DEAD. */
-      if (iq->state == OUT)  iq->state = DEAD;
-      if (iq->state != DEAD) abort();
-
-      vq->state = OUT;
-
-      if (ss->image_start_time + image_seconds <= ss->now)
-        load_quad (mi, iq);
-
-      reset_quad (mi, iq);               /* fade invisible in */
-      iq->texid = ss->current_texid;     /* make sure we're using latest img */
-
-      ss->pan_start_time = ss->now;
-
-      if (! ((ss->quads[0].state == IN && ss->quads[1].state == OUT) ||
-             (ss->quads[1].state == IN && ss->quads[0].state == OUT)))
-        abort();
     }
 
-  ss->fps = fps_1 (mi);
+  /* We can only ever end up with no sprites at all if the machine is
+     being really slow and we hopped states directly from FULL to DEAD
+     without passing OUT... */
+  if (ss->nsprites == 0)
+    new_sprite (mi);
 
   if (!ss->redisplay_needed_p)
     return;
-  else if (debug_p && zoom == 100)
-    fprintf (stderr, "%s: debug: drawing (%d)\n", blurb(),
-             (int) (ss->now - ss->dawn_of_time));
 
-  draw_quads (mi);
-  ss->redisplay_needed_p = False;
+  if (debug_p && ss->now - ss->prev_frame_time > 1)
+    fprintf (stderr, "%s: static screen for %.1f secs\n",
+             blurb(), ss->now - ss->prev_frame_time);
 
-  if (mi->fps_p) fps_2(mi);
+  draw_sprites (mi);
+
+  ss->fps = fps_1 (mi);
+  if (mi->fps_p) fps_2 (mi);
 
   glFinish();
-  glXSwapBuffers (MI_DISPLAY (mi), w);
+  glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
+  ss->prev_frame_time = ss->now;
+  ss->redisplay_needed_p = False;
+  check_fps (mi);
 }
 
 #endif /* USE_GL */

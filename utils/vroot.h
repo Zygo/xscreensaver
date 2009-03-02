@@ -60,6 +60,12 @@
  * Jamie Zawinski <jwz@jwz.org>, 3-Sep-2003
  * - if the environment variable "XSCREENSAVER_WINDOW" is set, use that
  *   as the root window instead of searching for __SWM_VROOT.
+ *
+ * Jamie Zawinski <jwz@jwz.org>, 14-Aug-2004
+ * - changes to get gcc to stop whining about "type punning".
+ *
+ * Jamie Zawinski <jwz@jwz.org>, 16-Dec-2004
+ * - fixed that last fix.
  */
 
 #ifndef _VROOT_H_
@@ -68,7 +74,7 @@
 
 #if !defined(lint) && !defined(SABER)
 static const char vroot_rcsid[] =
- "#Id: vroot.h,v 1.5 2003/09/04 01:04:38 jwz Exp #" "\n"
+ "#Id: vroot.h,v 1.8 2004/12/16 05:33:54 jwz Exp #" "\n"
  "#Id: vroot.h,v 1.4 1991/09/30 19:23:16 stolcke Exp stolcke #";
 #endif
 
@@ -124,7 +130,7 @@ VirtualRootWindowOfScreen(screen) Screen *screen;
 					&nitems, &bytesafter,
 					&newRoot) == Success
 				    && newRoot) {
-				    root = (Window) *newRoot;
+				    root = *((Window *) newRoot);
 				    break;
 				}
 			}

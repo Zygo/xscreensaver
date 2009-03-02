@@ -27,10 +27,11 @@
 # define screenflip_opts                                     xlockmore_opts
 /* insert defaults here */
 
-#define DEFAULTS       "*delay:       20000       \n" \
-                        "*showFPS:       False       \n" \
-                        "*rotate:       True       \n" \
-			"*wireframe:	False	\n"	\
+#define DEFAULTS "*delay:     20000 \n" \
+                 "*showFPS:   False \n" \
+                 "*rotate:    True  \n" \
+                 "*wireframe: False \n" \
+                 "*useSHM:    True  \n"
 
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -51,6 +52,7 @@ int rotate;
 int winw, winh;
 int tw, th; /* texture width, height */
 int tx, ty;
+GLfloat min_tx, min_ty;
 GLfloat max_tx, max_ty;
 
 #define QW 12
@@ -118,7 +120,7 @@ Bool
 screenflip_handle_event (ModeInfo *mi, XEvent *event)
 {
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       button_down_p = True;
       gltrackball_start (trackball,
@@ -127,9 +129,17 @@ screenflip_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
@@ -149,7 +159,6 @@ screenflip_handle_event (ModeInfo *mi, XEvent *event)
 void showscreen(int frozen, int wire)
 {
   static GLfloat r = 1, g = 1, b = 1, a = 1;
-  GLfloat qxw, qyh;
   GLfloat x, y, w, h;
   /* static int stretch; */
   static GLfloat stretch_val_x = 0, stretch_val_y = 0;
@@ -172,10 +181,10 @@ void showscreen(int frozen, int wire)
   if (stretch_val_dy == 0 && !frozen && !(random() % 25))
     stretch_val_dy = (float)(random() % 100) / 5000;
     
-  qxw = qx+qw;
-  qyh = qy-qh;
-  x = qx; y = qy;
-  w = qxw; h = qyh;
+  x = qx;
+  y = qy;
+  w = qx+qw;
+  h = qy-qh;
 
   if (!frozen) {
      w *= sin (stretch_val_x) + 1;
@@ -212,33 +221,16 @@ void showscreen(int frozen, int wire)
   glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
 
   glNormal3f(0, 0, 1);
-
-  glTexCoord2f(0, max_ty);
-  glVertex3f(x, y, 0);
-
-  glTexCoord2f(max_tx, max_ty);
-  glVertex3f(w, y, 0);
-
-  glTexCoord2f(max_tx, 0);
-  glVertex3f(w, h, 0);
-
-  glTexCoord2f(0, 0);
-  glVertex3f(x, h, 0);
+  glTexCoord2f(max_tx, max_ty); glVertex3f(w, h, 0);
+  glTexCoord2f(max_tx, min_ty); glVertex3f(w, y, 0);
+  glTexCoord2f(min_tx, min_ty); glVertex3f(x, y, 0);
+  glTexCoord2f(min_tx, max_ty); glVertex3f(x, h, 0);
 
   glNormal3f(0, 0, -1);
-
-  glTexCoord2f(0, max_ty);
-  glVertex3f(x, y, -0.05);
-
-  glTexCoord2f(0, 0);
-  glVertex3f(x, h, -0.05);
-
-  glTexCoord2f(max_tx, 0);
-  glVertex3f(w, h, -0.05);
-
-  glTexCoord2f(max_tx, max_ty);
-  glVertex3f(w, y, -0.05);
-
+  glTexCoord2f(min_tx, min_ty); glVertex3f(x, y, -0.05);
+  glTexCoord2f(max_tx, min_ty); glVertex3f(w, y, -0.05);
+  glTexCoord2f(max_tx, max_ty); glVertex3f(w, h, -0.05);
+  glTexCoord2f(min_tx, max_ty); glVertex3f(x, h, -0.05);
   glEnd();
 
 
@@ -399,60 +391,30 @@ void reshape_screenflip(ModeInfo *mi, int width, int height)
 
 void getSnapshot (ModeInfo *modeinfo)
 {
-  XImage *ximage;
-  int status;
+  Bool mipmap_p = True;
+  XRectangle geom;
+  int iw, ih;
 
   if (MI_IS_WIREFRAME(modeinfo))
     return;
 
- ximage = screen_to_ximage (modeinfo->xgwa.screen, modeinfo->window, NULL);
+  if (! screen_to_texture (modeinfo->xgwa.screen, modeinfo->window, 0, 0,
+                           mipmap_p, NULL, &geom, &iw, &ih, &tw, &th))
+    exit (1);
 
-  qw = QW; qh = QH;
-  tw = modeinfo->xgwa.width;
-  th = modeinfo->xgwa.height;
+  min_tx = (GLfloat) geom.x / tw;
+  min_ty = (GLfloat) geom.y / th;
+  max_tx = (GLfloat) (geom.x + geom.width)  / tw;
+  max_ty = (GLfloat) (geom.y + geom.height) / th;
 
-#if 0  /* jwz: this makes the image start off the bottom right of the screen */
-  qx += (qw*tw/winw);
-  qy -= (qh*th/winh);
-#endif
+  qx = -QW/2 + ((GLfloat) geom.x * QW / iw);
+  qy =  QH/2 - ((GLfloat) geom.y * QH / ih);
+  qw = QW * ((GLfloat) geom.width  / iw);
+  qh = QH * ((GLfloat) geom.height / ih);
 
-  qw *= (GLfloat)tw/winw;
-  qh *= (GLfloat)th/winh;
-
-  max_tx = (GLfloat) tw / (GLfloat) ximage->width;
-  max_ty = (GLfloat) th / (GLfloat) ximage->height;
-
-
- glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
- glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-
- clear_gl_error();
- status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
-                            ximage->width, ximage->height,
-                            GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-
- if (!status && glGetError())
-   /* Some implementations of gluBuild2DMipmaps(), but set a GL error anyway.
-      We could just call check_gl_error(), but that would exit. */
-   status = -1;
-
- if (status)
-   {
-     const char *s = (char *) gluErrorString (status);
-     fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
-              progname, ximage->width, ximage->height,
-              (s ? s : "(unknown)"));
-     fprintf (stderr, "%s: turning on -wireframe.\n", progname);
-     MI_IS_WIREFRAME(modeinfo) = 1;
-     clear_gl_error();
-   }
- check_gl_error("mipmapping");  /* should get a return code instead of a
-                                   GL error, but just in case... */
-
- free(ximage->data);
- ximage->data = 0;
- XDestroyImage (ximage);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 }
 
 void init_screenflip(ModeInfo *mi)
@@ -485,7 +447,7 @@ void init_screenflip(ModeInfo *mi)
      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
      glEnable(GL_DEPTH_TEST);
      glEnable(GL_CULL_FACE);
-     glCullFace(GL_FRONT);
+     glCullFace(GL_BACK);
      glDisable(GL_LIGHTING);
    }
 

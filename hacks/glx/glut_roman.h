@@ -1,5 +1,7 @@
-
-/* GENERATED FILE -- DO NOT MODIFY */
+/* Roman simplex stroke font copyright (c) 1989, 1990, 1991
+ * by Sun Microsystems, Inc. and the X Consortium.
+ * Originally part of the GLUT library by Mark J. Kilgard.
+ */
 
 #include "glutstroke.h"
 

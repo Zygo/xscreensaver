@@ -68,7 +68,7 @@ pre_merge_options (void)
   /* Add extra args, if they're mentioned in the defaults... */
   {
     char *args[] = { "-count", "-cycles", "-delay", "-ncolors",
-		     "-size", "-wireframe", "-use3d", "-useSHM",
+		     "-size", "-font", "-wireframe", "-use3d", "-useSHM",
                      "-showFPS" };
     for (j = 0; j < countof(args); j++)
       if (strstr(app_defaults, args[j]+1))
@@ -376,6 +376,32 @@ xlockmore_screenhack (Display *dpy, Window window,
   else if (mi.pause > 100000000)
     mi.pause = 100000000;
   orig_pause = mi.pause;
+
+  /* If this hack uses fonts (meaning, mentioned "font" in DEFAULTS)
+     then load it. */
+  {
+    char *name = get_string_resource ("font", "Font");
+    if (name)
+      {
+        XFontStruct *f = XLoadQueryFont (dpy, name);
+        const char *def1 = "-*-times-bold-r-normal-*-180-*";
+        const char *def2 = "fixed";
+        if (!f)
+          {
+            fprintf (stderr, "%s: font %s does not exist, using %s\n",
+                     progname, name, def1);
+            f = XLoadQueryFont (dpy, def1);
+          }
+        if (!f)
+          {
+            fprintf (stderr, "%s: font %s does not exist, using %s\n",
+                     progname, def1, def2);
+            f = XLoadQueryFont (dpy, def2);
+          }
+        if (f) XSetFont (dpy, mi.gc, f->fid);
+        if (f) XFreeFont (dpy, f);
+      }
+  }
 
   xlockmore_read_resources ();
 

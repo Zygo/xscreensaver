@@ -21,9 +21,7 @@
    needed, anyway.)
 
    If you don't have man pages for this extension, see
-   http://www.physik.uni-regensburg.de/~scs22156/sofie-0.2/mit-shm.html
-   or in the R6 sources as "xc/doc/specs/Xext/mit-shm.ms", for example,
-   ftp://ftp.x.org/pub/R6.4/xc/doc/specs/Xext/mit-shm.ms
+   http://www.x.org/X11R6.8.1/docs/Xext/
 
    (This document seems not to ever remain available on the web in one place
    for very long; you can search for it by the title, "MIT-SHM -- The MIT

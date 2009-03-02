@@ -458,7 +458,7 @@ gasket_handle_event (ModeInfo *mi, XEvent *event)
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       gp->button_down_p = True;
       gltrackball_start (gp->trackball,
@@ -467,9 +467,17 @@ gasket_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       gp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&

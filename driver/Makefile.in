@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -238,7 +238,6 @@ EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
 		  xscreensaver-demo.glade2p \
 		  screensaver-properties.desktop.in \
 		  screensaver-properties-capplet \
-		  xscreensaver.kss.in \
 		  .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
@@ -257,9 +256,9 @@ all: $(EXES) $(EXES2)
 tests: $(TEST_EXES)
 
 install:   install-program   install-ad    install-scripts \
-	   install-gnome     install-kde   install-man   @INSTALL_PAM@
+	   install-gnome     install-man   @INSTALL_PAM@
 uninstall: uninstall-program uninstall-ad  \
-	   uninstall-gnome   uninstall-kde uninstall-man
+	   uninstall-gnome   uninstall-man
 
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
@@ -677,42 +676,6 @@ uninstall-gnome::
 	          rm -f $(install_prefix)$(GLADE_DATADIR)/$$dest             ;\
 	   done								     ;\
         fi
-
-# xscreensaver.kss
-install-kde:
-	@src="xscreensaver.kss" ;					      \
-	if [ "$$KDEDIR" != "" ]; then					      \
-	  dir="$(install_prefix)$$KDEDIR/bin" ;				      \
-	  dest="$$dir/$$src" ;						      \
-	  echo $(INSTALL_SCRIPT) $$src $$dest ;				      \
-	  if $(INSTALL_SCRIPT) $$src $$dest ; then			      \
-	    true ;							      \
-	  else								      \
-	    e=echo ;							      \
- $$e ""									     ;\
- $$e "  ####################################################################";\
- $$e "  Warning: unable to install $$dest"				     ;\
-	    if [ ! -d $(install_prefix)$$KDEDIR ]; then			      \
- $$e "           $(install_prefix)$$KDEDIR (\$$KDEDIR) does not exist."	     ;\
-	    elif [ ! -d $(install_prefix)$$KDEDIR/bin ]; then		      \
- $$e "           $(install_prefix)$$KDEDIR/bin (\$$KDEDIR/bin) does not exist.";\
-	    elif [ -f $$dest ]; then					      \
- $$e "           That file exists, and is unwritable."			     ;\
-	    else							      \
- $$e "           The directory is unwritable."				     ;\
-	    fi								     ;\
- $$e "  ####################################################################";\
- $$e ""									     ;\
-	    exit 1 ;							      \
-	  fi ;								      \
-	fi
-
-uninstall-kde:
-	@if [ "$$KDEDIR" != "" ]; then					\
-	  dest="$(install_prefix)$$KDEDIR/bin/xscreensaver.kss" ;	\
-	  echo rm -f $$dest ;						\
-	  rm -f $$dest ;						\
-	fi
 
 clean:
 	-rm -f *.o a.out core $(EXES) $(EXES2) $(TEST_EXES) XScreenSaver_ad.h

@@ -68,6 +68,7 @@
 #include "colors.h"
 #include "sphere.h"
 #include "tube.h"
+#include "glxfonts.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -250,54 +251,11 @@ sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
 
 
 static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-180-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
-
-
-static void
 load_fonts (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-  load_font (mi, "atomFont",  &mc->xfont1, &mc->font1_dlist);
-  load_font (mi, "titleFont", &mc->xfont2, &mc->font2_dlist);
-}
-
-
-static int
-string_width (XFontStruct *f, const char *c)
-{
-  int w = 0;
-  while (*c)
-    {
-      int cc = *((unsigned char *) c);
-      w += (f->per_char
-            ? f->per_char[cc-f->min_char_or_byte2].rbearing
-            : f->min_bounds.rbearing);
-      c++;
-    }
-  return w;
+  load_font (mi->dpy, "atomFont",  &mc->xfont1, &mc->font1_dlist);
+  load_font (mi->dpy, "titleFont", &mc->xfont2, &mc->font2_dlist);
 }
 
 
@@ -559,76 +517,6 @@ ensure_bounding_box_visible (ModeInfo *mi)
 }
 
 
-static void
-print_title_string (ModeInfo *mi, const char *string,
-                    GLfloat x, GLfloat y, XFontStruct *font)
-{
-  molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-  GLfloat line_height = font->ascent + font->descent;
-  GLfloat sub_shift = (line_height * 0.3);
-
-  y -= line_height;
-
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    {
-      glLoadIdentity();
-
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      {
-        int i;
-        int x2 = x;
-        Bool sub_p = False;
-        glLoadIdentity();
-
-        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
-
-        set_atom_color (mi, 0, True);
-
-        glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          {
-            char c = string[i];
-            if (c == '\n')
-              {
-                glRasterPos2f (x, (y -= line_height));
-                x2 = x;
-              }
-            else if (c == '(' && (isdigit (string[i+1])))
-              {
-                sub_p = True;
-                glRasterPos2f (x2, (y -= sub_shift));
-              }
-            else if (c == ')' && sub_p)
-              {
-                sub_p = False;
-                glRasterPos2f (x2, (y += sub_shift));
-              }
-            else
-              {
-                glCallList (mc->font2_dlist + (int)(c));
-                x2 += (font->per_char
-                       ? font->per_char[c - font->min_char_or_byte2].width
-                       : font->min_bounds.width);
-              }
-          }
-      }
-      glPopMatrix();
-    }
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-  }
-  glPopAttrib();
-
-  glMatrixMode(GL_MODELVIEW);
-}
-
 
 /* Constructs the GL shapes of the current molecule
  */
@@ -710,9 +598,13 @@ build_molecule (ModeInfo *mi)
     draw_bounding_box (mi);
 
   if (do_titles && m->label && *m->label)
-    print_title_string (mi, m->label,
-                        10, mi->xgwa.height - 10,
-                        mc->xfont2);
+    {
+      set_atom_color (mi, 0, True);
+      print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
+                       mi->xgwa.width, mi->xgwa.height,
+                       10, mi->xgwa.height - 10,
+                       m->label);
+    }
 }
 
 
@@ -1038,7 +930,7 @@ generate_molecule_formula (molecule *m)
       free (counts[i].atom);
       s += strlen (s);
       if (counts[i].count > 1)
-        sprintf (s, "(%d)", counts[i].count);
+        sprintf (s, "[%d]", counts[i].count);  /* use [] to get subscripts */
       s += strlen (s);
       i++;
     }
@@ -1274,10 +1166,10 @@ startup_blurb (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   const char *s = "Constructing molecules...";
-  print_title_string (mi, s,
-                      mi->xgwa.width - (string_width (mc->xfont2, s) + 40),
-                      10 + mc->xfont2->ascent + mc->xfont2->descent,
-                      mc->xfont2);
+  print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
+                   mi->xgwa.width, mi->xgwa.height,
+                   10, mi->xgwa.height - 10,
+                   s);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -1288,7 +1180,7 @@ molecule_handle_event (ModeInfo *mi, XEvent *event)
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       mc->button_down_p = True;
       gltrackball_start (mc->trackball,
@@ -1297,10 +1189,32 @@ molecule_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       mc->button_down_p = False;
       return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (mc->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        {
+          GLfloat speed = 4.0;
+          mc->mode = 1;
+          mc->mode_tick = 10 * speed;
+          return True;
+        }
     }
   else if (event->xany.type == MotionNotify &&
            mc->button_down_p)

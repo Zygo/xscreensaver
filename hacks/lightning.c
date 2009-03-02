@@ -33,7 +33,8 @@ static const char sccsid[] = "@(#)lightning.c	5.00 2000/11/01 xlockmore";
 #define HACK_INIT init_lightning
 #define HACK_DRAW draw_lightning
 #define lightning_opts xlockmore_opts
-#define DEFAULTS "*delay: 10000 \n"
+#define DEFAULTS "*delay: 10000 \n" \
+                 "*ncolors: 64  \n"
 #define BRIGHT_COLORS
 #include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */

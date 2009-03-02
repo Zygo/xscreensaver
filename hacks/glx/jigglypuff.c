@@ -931,16 +931,24 @@ Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
     jigglystruct *js = &jss[MI_SCREEN(mi)];
     
     if(event->xany.type == ButtonPress &&
-       event->xbutton.button & Button1) {
+       event->xbutton.button == Button1) {
 	js->button_down = 1;
 	gltrackball_start(js->trackball, event->xbutton.x, event->xbutton.y,
 			  MI_WIDTH(mi), MI_HEIGHT(mi));
 	return True;
     }
     else if(event->xany.type == ButtonRelease &&
-	    event->xbutton.button & Button1) {
+	    event->xbutton.button == Button1) {
 	js->button_down = 0;
 	return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (js->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
     }
     else if(event->xany.type == MotionNotify && js->button_down) {
 	gltrackball_track(js->trackball, event->xmotion.x, event->xmotion.y,

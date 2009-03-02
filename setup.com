@@ -13,6 +13,7 @@ $ barcode	:== $'mydir'barcode
 $ blaster	:== $'mydir'blaster
 $ blitspin	:== $'mydir'blitspin
 $ bouboule	:== $'mydir'bouboule
+$ boxfit	:== $'mydir'boxfit
 $ braid		:== $'mydir'braid
 $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
@@ -35,6 +36,7 @@ $ epicycle	:== $'mydir'epicycle
 $ eruption	:== $'mydir'eruption
 $ euler2d	:== $'mydir'euler2d
 $ fadeplot	:== $'mydir'fadeplot
+$ fiberlamp	:== $'mydir'fiberlamp
 $ fireworkx	:== $'mydir'fireworkx
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame

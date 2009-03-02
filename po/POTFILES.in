@@ -1,4 +1,4 @@
-# Auto-generated: Mon Oct  4 16:24:15 RDT 2004
+# Auto-generated: Wed Dec 22 12:47:56 RST 2004
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -58,6 +58,7 @@ hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
 hacks/config/fireflies.xml
+hacks/config/fireworkx.xml
 hacks/config/flag.xml
 hacks/config/flame.xml
 hacks/config/flipflop.xml
@@ -95,6 +96,7 @@ hacks/config/hypertorus.xml
 hacks/config/ifs.xml
 hacks/config/imsmap.xml
 hacks/config/interference.xml
+hacks/config/intermomentary.xml
 hacks/config/jigglypuff.xml
 hacks/config/jigsaw.xml
 hacks/config/juggle.xml
@@ -133,6 +135,7 @@ hacks/config/penrose.xml
 hacks/config/petri.xml
 hacks/config/phosphor.xml
 hacks/config/piecewise.xml
+hacks/config/pinion.xml
 hacks/config/pipes.xml
 hacks/config/polyhedra.xml
 hacks/config/polyominoes.xml
@@ -172,6 +175,7 @@ hacks/config/starfish.xml
 hacks/config/starwars.xml
 hacks/config/stonerview.xml
 hacks/config/strange.xml
+hacks/config/substrate.xml
 hacks/config/superquadrics.xml
 hacks/config/swirl.xml
 hacks/config/t3d.xml

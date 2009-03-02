@@ -245,7 +245,7 @@ knot_handle_event (ModeInfo *mi, XEvent *event)
   knot_configuration *bp = &bps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       bp->button_down_p = True;
       gltrackball_start (bp->trackball,
@@ -254,9 +254,17 @@ knot_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       bp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&

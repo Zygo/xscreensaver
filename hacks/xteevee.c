@@ -364,7 +364,7 @@ void screenhack(Display* x_Disp,Window x_Win)
 
 	/* Grab the screen to give us time to do whatever we want */
 	XGetWindowAttributes(x_Disp,x_Win,&x_WinAttr);
-        load_random_image (x_WinAttr.screen, x_Win, x_Win, NULL);
+        load_random_image (x_WinAttr.screen, x_Win, x_Win, NULL, NULL);
 
 	x_GcVal.subwindow_mode = IncludeInferiors;
 	x_Gc = XCreateGC(x_Disp,x_Win,GCSubwindowMode,&x_GcVal);

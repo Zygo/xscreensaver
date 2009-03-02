@@ -97,6 +97,8 @@ extern XtAppContext app;
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
+#include "glxfonts.h"
+#include "normals.h"
 #include "colors.h"
 #include "rotator.h"
 #include "gltrackball.h"
@@ -105,10 +107,6 @@ extern XtAppContext app;
 #ifdef USE_GL /* whole file */
 
 #include <GL/glu.h>
-
-typedef struct {
-   double x,y,z;
-} XYZ;
 
 typedef struct {
   GLXContext *glx_context;
@@ -134,6 +132,7 @@ typedef struct {
 
   XFontStruct *font;
   GLuint font_list;
+  int change_tick;
 
 } spheremonics_configuration;
 
@@ -262,46 +261,6 @@ sphere_eval (double theta, double phi, int *m)
   p.z = r * sin(phi) * sin(theta);
 
   return (p);
-}
-
-
-/* Normalise a vector */
-static void
-normalize (XYZ *p)
-{
-  double length;
-  length = sqrt(p->x * p->x + p->y * p->y + p->z * p->z);
-  if (length != 0) {
-    p->x /= length;
-    p->y /= length;
-    p->z /= length;
-  } else {
-    p->x = 0;
-    p->y = 0;
-    p->z = 0;
-  }       
-}
-
-/*-------------------------------------------------------------------------
-        Calculate the unit normal at p given two other points 
-        p1,p2 on the surface. The normal points in the direction 
-        of p1 crossproduct p2
- */
-static XYZ
-calc_normal (XYZ p, XYZ p1, XYZ p2)
-{
-  XYZ n, pa, pb;
-  pa.x = p1.x - p.x;
-  pa.y = p1.y - p.y;
-  pa.z = p1.z - p.z;
-  pb.x = p2.x - p.x;
-  pb.y = p2.y - p.y;
-  pb.z = p2.z - p.z;
-  n.x = pa.y * pb.z - pa.z * pb.y;
-  n.y = pa.z * pb.x - pa.x * pb.z;
-  n.z = pa.x * pb.y - pa.y * pb.x;
-  normalize (&n);
-  return (n);
 }
 
 
@@ -738,66 +697,6 @@ generate_spheremonics (ModeInfo *mi)
 
 
 
-static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-140-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
-
-static void
-draw_label (ModeInfo *mi, const char *s)
-{
-  spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
-  unsigned int i;
-  
-  glPushAttrib(GL_TRANSFORM_BIT | GL_ENABLE_BIT);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_DEPTH_TEST);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-  gluOrtho2D(0, mi->xgwa.width, 0, mi->xgwa.height);
-  glColor3f(1.0, 1.0, 0.0);
-
-  glRasterPos2f (10,
-                 (mi->xgwa.height
-                  - 10
-                  - (cc->font->ascent + cc->font->descent)));
-  for (i = 0; i < strlen(s); i++)
-    glCallList (cc->font_list + (int)s[i]);
-
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glPopAttrib();
-}
-
-
-
-
 void 
 init_spheremonics (ModeInfo *mi)
 {
@@ -864,7 +763,7 @@ init_spheremonics (ModeInfo *mi)
 
   cc->resolution = res;
 
-  load_font (mi, "labelfont", &cc->font, &cc->font_list);
+  load_font (mi->dpy, "labelfont", &cc->font, &cc->font_list);
 
   cc->dlist = glGenLists(1);
   cc->dlist2 = glGenLists(1);
@@ -890,7 +789,7 @@ spheremonics_handle_event (ModeInfo *mi, XEvent *event)
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       cc->button_down_p = True;
       gltrackball_start (cc->trackball,
@@ -899,10 +798,30 @@ spheremonics_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       cc->button_down_p = False;
       return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (cc->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        {
+          cc->change_tick = duration;
+          return True;
+        }
     }
   else if (event->xany.type == MotionNotify &&
            cc->button_down_p)
@@ -978,16 +897,20 @@ draw_spheremonics (ModeInfo *mi)
                 : "%d %d %d %d %d %d %d %d"),
                cc->m[0], cc->m[1], cc->m[2], cc->m[3],
                cc->m[4], cc->m[5], cc->m[6], cc->m[7]);
-      draw_label (mi, buf);
+
+      glColor3f(1.0, 1.0, 0.0);
+      print_gl_string (mi->dpy, cc->font, cc->font_list,
+                       mi->xgwa.width, mi->xgwa.height,
+                       10, mi->xgwa.height - 10,
+                       buf);
     }
 
   if (!static_parms)
     {
-      static int tick = 0;
-      if (tick++ >= duration && !cc->button_down_p)
+      if (cc->change_tick++ >= duration && !cc->button_down_p)
         {
           generate_spheremonics(mi);
-          tick = 0;
+          cc->change_tick = 0;
           cc->mesher = -1;  /* turn off the mesh when switching objects */
         }
     }

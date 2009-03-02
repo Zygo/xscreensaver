@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002, 2005 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,6 +36,14 @@ extern void gltrackball_track (trackball_state *, int x, int y, int w, int h);
    this does something analagous to glRotatef().
  */
 extern void gltrackball_rotate (trackball_state *);
+
+/* Call this when a mouse-wheel click is detected.
+   Clicks act like horizontal or vertical drags.
+   Percent is the length of the drag as a percentage of the screen size.
+   Button is 'Button4' or 'Button5'.
+ */
+void gltrackball_mousewheel (trackball_state *ts,
+                             int button, int percent, int horizontal_p);
 
 #endif /* __GLTRACKBALL_H__ */
 
