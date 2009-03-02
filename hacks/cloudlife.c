@@ -73,6 +73,13 @@ struct field
     f->width = 0;
     f->cell_size = get_integer_resource("cellSize", "Integer");
     f->max_age = get_integer_resource("maxAge", "Integer");
+
+    if (f->max_age > 255) {
+      fprintf (stderr, "%s: max-age must be < 256 (not %d)\n", progname,
+               f->max_age);
+      exit (1);
+    }
+
     f->cells = NULL;
     f->new_cells = NULL;
     return f;
@@ -81,15 +88,14 @@ struct field
 void 
 resize_field(struct field * f, unsigned int w, unsigned int h)
 {
+    int s = w * h * sizeof(unsigned char);
     f->width = w;
     f->height = h;
 
-    f->cells = xrealloc(f->cells,
-			w * sizeof(unsigned char) * 
-                        h * sizeof(unsigned char));
-    f->new_cells =
-	xrealloc(f->new_cells,
-		 w * sizeof(unsigned char) * h * sizeof(unsigned char));
+    f->cells = xrealloc(f->cells, s);
+    f->new_cells = xrealloc(f->new_cells, s);
+    memset(f->cells, 0, s);
+    memset(f->new_cells, 0, s);
 }
 
 inline unsigned char 
@@ -202,8 +208,8 @@ do_tick(struct field * f)
 	    count += *new_cell_at(f, x, y) = is_alive(f, x, y);
 	}
     }
-    memcpy(f->cells, f->new_cells, f->width * sizeof(unsigned char) *
-	   f->height * sizeof(unsigned char));
+    memcpy(f->cells, f->new_cells, f->width * f->height *
+           sizeof(unsigned char));
     return count;
 }
 

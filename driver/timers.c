@@ -386,11 +386,17 @@ pointer_moved_p (saver_screen_info *ssi, Bool mods_p)
       distance > 0)
     moved_p = True;
 
-  if (ssi->poll_mouse_last_root_x == -1 ||
-      ssi->poll_mouse_last_root_y == -1 ||
-      root_x == -1 ||
-      root_y == -1)
-    moved_p = True;
+  /* If the mouse is not on this screen but used to be, that's motion.
+     If the mouse was not on this screen, but is now, that's motion.
+   */
+  {
+    Bool on_screen_p  = (root_x != -1 && root_y != -1);
+    Bool was_on_screen_p = (ssi->poll_mouse_last_root_x != -1 &&
+                            ssi->poll_mouse_last_root_y != -1);
+
+    if (on_screen_p != was_on_screen_p)
+      moved_p = True;
+  }
 
   if (p->debug_p && (distance != 0 || moved_p))
     {
@@ -404,7 +410,7 @@ pointer_moved_p (saver_screen_info *ssi, Bool mods_p)
                  ssi->poll_mouse_last_root_y);
       fprintf (stderr, " -> ");
       if (root_x == -1)
-        fprintf (stderr, "off screen.");
+        fprintf (stderr, "off screen");
       else
         fprintf (stderr, "%d,%d", root_x, root_y);
       if (ssi->poll_mouse_last_root_x != -1 && root_x != -1)

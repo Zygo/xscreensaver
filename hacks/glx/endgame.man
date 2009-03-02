@@ -3,8 +3,14 @@
 endgame \- endgame chess screensaver
 .SH SYNOPSIS
 .B endgame
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-display \fIhost:display.screen\fP]
+[\-window]
+[\-root]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fImicroseconds\fP]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 endgame replays a brilliant chess ending
 .SH OPTIONS
@@ -16,9 +22,6 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
-.TP 8
-.B \-wire
-wireframe mode might be to your liking.
 .TP 8
 .B \-install
 Install a private colormap for the window.
@@ -32,6 +35,9 @@ Reflect pieces in light board squares.
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-wireframe
+Render in wireframe instead of solid.
 .B \-fps
 Display a running tally of how many frames per second are being rendered.
 In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 

@@ -36,11 +36,11 @@ Specify how fast the dots should cycle vertically.
 Try out values from .01 to 4000. Random by default.
 .TP 8
 .B \-xamplitude \flfactor\fP
-Specify the horizonatal amplitude.
+Specify the horizontal amplitude.
 Try out values from .01 to 10. Defaults to 1.0.
 .TP 8
 .B \-yamplitude \flfactor\fP
-Specify the horizonatal amplitude.
+Specify the horizontal amplitude.
 Try out values from .01 to 10. Defaults to 1.0.
 .TP 8
 .B \-whirlies \fla number\fP

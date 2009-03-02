@@ -8,6 +8,8 @@ bubble3d - 3d rising bubbles.
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
+[\-transparent]
+[\-color \fIcolor\fP]
 [\-fps]
 .SH DESCRIPTION
 Draws a stream of rising, undulating 3D bubbles, rising toward the top of
@@ -23,6 +25,13 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
+.TP 8
+.B \-transparent
+Draw transparent bubbles instead of solid ones.
+.TP 8
+.B \-color \fIcolor\fP
+Draw bubbles of the specified color.  "Random" means a different color
+for each bubble.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 15000 (0.015 seconds.).

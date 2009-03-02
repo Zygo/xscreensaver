@@ -20,13 +20,12 @@
 				   * implementation. If you have an accelerated
 				   * graphics card, set this to 0.
 				 */
-#define GLB_USE_BLENDING     0	/* Use alpha feature to create see-through
-				   * bubbles.
-				 */
 #define GLB_VERTICES_EPSILON 0.0005	/* How close are identical vertices? */
 
 /* Configuration structure. */
 struct glb_config {
+	int         transparent_p;	/* Whether to use alpha blending */
+
 	int         subdivision_depth;	/* Controls how many triangles are in
 					 * each bubble. 2 and 3 are good values.
 					 */
@@ -60,6 +59,8 @@ struct glb_config {
 	GLfloat     screen_top;	/* Top of screen. */
 	GLfloat     bg_colour[4];	/* Background colour. */
 	GLfloat     bubble_colour[4];	/* Colour of the bubbles. */
+
+	int         polygon_count;
 };
 
 extern struct glb_config glb_config;

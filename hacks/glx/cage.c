@@ -156,9 +156,9 @@ static cagestruct *cage = (cagestruct *) NULL;
 #define PlankThickness  0.15
 
 static Bool 
-draw_woodplank(cagestruct * cp)
+draw_woodplank(cagestruct * cp, int wire)
 {
-	glBegin(GL_QUADS);
+	glBegin(wire ? GL_LINES : GL_QUADS);
 	glNormal3f(0, 0, 1);
 	glTexCoord2f(0, 0);
 	glVertex3f(-PlankWidth, -PlankHeight, PlankThickness);
@@ -219,74 +219,74 @@ draw_woodplank(cagestruct * cp)
 }
 
 static Bool
-draw_impossiblecage(cagestruct * cp)
+draw_impossiblecage(cagestruct * cp, int wire)
 {
 	glPushMatrix();
 	glRotatef(90, 0, 1, 0);
 	glTranslatef(0.0, PlankHeight - PlankWidth, -PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 0, 1);
 	glTranslatef(0.0, PlankHeight - PlankWidth, PlankWidth - PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 1, 0);
 	glTranslatef(0.0, PlankWidth - PlankHeight, -PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glTranslatef(0.0, PlankWidth - PlankHeight, 3 * PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 0, 1);
 	glTranslatef(0.0, PlankWidth - PlankHeight, PlankWidth - PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glTranslatef(0.0, PlankWidth - PlankHeight, PlankWidth - 3 * PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glTranslatef(0.0, PlankHeight - PlankWidth, 3 * PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 0, 1);
 	glTranslatef(0.0, PlankHeight - PlankWidth, PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glTranslatef(0.0, PlankHeight - PlankWidth, PlankWidth - 3 * PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 1, 0);
 	glTranslatef(0.0, PlankHeight - PlankWidth, PlankWidth + PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 0, 1);
 	glTranslatef(0.0, PlankWidth - PlankHeight, PlankThickness - PlankWidth);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(90, 0, 1, 0);
 	glTranslatef(0.0, PlankWidth - PlankHeight, PlankWidth + PlankThickness);
-	if (!draw_woodplank(cp))
+	if (!draw_woodplank(cp, wire))
 		return False;
 	glPopMatrix();
 	return True;
@@ -312,8 +312,12 @@ static void
 pinit(ModeInfo *mi)
 {
 	int status;
+
 	glClearDepth(1.0);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
+
+    if (MI_IS_WIREFRAME(mi))
+      return;
 
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
@@ -440,7 +444,7 @@ draw_cage(ModeInfo * mi)
 	glRotatef(cp->step * 100, 0, 0, 1);
 	glRotatef(25 + cos(cp->step * 5) * 6, 1, 0, 0);
 	glRotatef(204.5 - sin(cp->step * 5) * 8, 0, 1, 0);
-	if (!draw_impossiblecage(cp)) {
+	if (!draw_impossiblecage(cp, MI_IS_WIREFRAME(mi))) {
 		release_cage(mi);
 		return;
 	}

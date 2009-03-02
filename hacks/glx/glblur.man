@@ -12,7 +12,6 @@ glblur - 3D radial blur texture fields
 [\-no-wander]
 [\-no-spin]
 [\-spin \fI[XYZ]\fP]
-[\-wireframe]
 [\-fps]
 .SH DESCRIPTION
 This program draws a box and a few line segments, and generates a 
@@ -50,9 +49,6 @@ Around which axes should the object spin?
 .TP 8
 .B \-no-spin
 None.
-.TP 8
-.B \-wireframe
-Render in wireframe instead of solid.
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.

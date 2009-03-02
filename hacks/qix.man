@@ -75,7 +75,7 @@ This implies \fI\-mono\fP, in that only two colors can be used.
 .B \-transparent
 If this is specified, and \fI\-count\fP is greater than 1, then each qix
 will be drawn in one color, and when they overlap, the colors will be mixed.
-This looks best in conjuction with \fI\-solid\fP.
+This looks best in conjunction with \fI\-solid\fP.
 .TP 8
 .B \-non\-transparent
 Turns off \fI\-transparent\fP.

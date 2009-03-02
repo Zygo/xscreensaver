@@ -11,6 +11,9 @@
 
 #include "screenhack.h"
 
+enum { DOWN = 0, LEFT, UP, RIGHT };
+enum { VERTICAL, HORIZONTAL };
+
 static int grid_size;
 static int pix_inc;
 static int hole_x, hole_y;
@@ -201,7 +204,7 @@ init_slide (Display *dpy, Window window)
     }
 
   XSync (dpy, False);
-  if (delay2) usleep (delay2 * 2);
+  if (delay2) usleep (delay2);
  for (i = 0; i < grid_size; i += pix_inc)
    {
      XPoint points [3];
@@ -239,42 +242,40 @@ init_slide (Display *dpy, Window window)
 		  xoff + grid_size * hole_x,
 		  yoff + grid_size * hole_y,
 		  grid_size, grid_size);
+
+  XSync (dpy, False);
+  if (delay2) usleep (delay2);
 }
 
 static void
 slide1 (Display *dpy, Window window)
 {
   /* this code is a total kludge, but who cares, it works... */
- int i, x, y, ix, iy, dx, dy, dir, w, h, size, inc;
+ int rnd, i, x, y, ix, iy, dx, dy, dir, w, h, size, inc;
  static int last = -1;
- do {
-   dir = random () % 4;
-   switch (dir)
-     {
-     case 0: dx = 0,  dy = 1;  break;
-     case 1: dx = -1, dy = 0;  break;
-     case 2: dx = 0,  dy = -1; break;
-     case 3: dx = 1,  dy = 0;  break;
-     default: abort ();
-     }
- } while (dir == last ||
-	  hole_x + dx < 0 || hole_x + dx >= grid_w ||
-	  hole_y + dy < 0 || hole_y + dy >= grid_h);
- if (grid_w > 1 && grid_h > 1)
-   last = (dir == 0 ? 2 : dir == 2 ? 0 : dir == 1 ? 3 : 1);
 
- switch (dir)
-   {
-   case 0: size = 1 + (random()%(grid_h - hole_y - 1)); h = size; w = 1; break;
-   case 1: size = 1 + (random()%hole_x); 	        w = size; h = 1; break;
-   case 2: size = 1 + (random()%hole_y);	        h = size; w = 1; break;
-   case 3: size = 1 + (random()%(grid_w - hole_x - 1)); w = size; h = 1; break;
-   default: abort ();
+ if (last == -1) last = random () % 2;
+
+/* alternate between horizontal and vertical slides */
+/* note that dir specifies the direction the _hole_ moves, not the tiles */
+ if (last == VERTICAL) {
+   if ((rnd = random () % (grid_w - 1)) < hole_x) {
+     dx = -1; dir = LEFT;  hole_x -= rnd;
+   } else {
+     dx =  1; dir = RIGHT; rnd -= hole_x;
    }
-
- if (dx == -1) hole_x -= (size - 1);
- else if (dy == -1) hole_y -= (size - 1);
-
+   dy = 0; w = size = rnd + 1; h = 1;
+   last = HORIZONTAL;
+ } else {
+   if ((rnd = random () % (grid_h - 1)) < hole_y) {
+     dy = -1; dir = UP;    hole_y -= rnd;
+   } else {
+     dy =  1; dir = DOWN;  rnd -= hole_y;
+   }
+   dx = 0; h = size = rnd + 1; w = 1;
+   last = VERTICAL;
+ }
+ 
  ix = x = xoff + (hole_x + dx) * grid_size;
  iy = y = yoff + (hole_y + dy) * grid_size;
  inc = pix_inc;
@@ -300,14 +301,14 @@ slide1 (Display *dpy, Window window)
      y -= dy * inc;
      switch (dir)
        {
-       case 0: XFillRectangle (dpy, window, gc,
+       case DOWN: XFillRectangle (dpy, window, gc,
 			       ix, y + grid_size * h, grid_size * w, iy - y);
 	 break;
-       case 1: XFillRectangle (dpy, window, gc, ix, iy, x - ix, grid_size * h);
+       case LEFT: XFillRectangle (dpy, window, gc, ix, iy, x - ix, grid_size * h);
 	 break;
-       case 2: XFillRectangle (dpy, window, gc, ix, iy, grid_size * w, y - iy);
+       case UP: XFillRectangle (dpy, window, gc, ix, iy, grid_size * w, y - iy);
 	 break;
-       case 3: XFillRectangle (dpy, window, gc,
+       case RIGHT: XFillRectangle (dpy, window, gc,
 			       x + grid_size * w, iy, ix - x, grid_size * h);
 	 break;
        }
@@ -317,10 +318,10 @@ slide1 (Display *dpy, Window window)
    }
  switch (dir)
    {
-   case 0: hole_y += size; break;
-   case 1: hole_x--; break;
-   case 2: hole_y--; break;
-   case 3: hole_x += size; break;
+   case DOWN: hole_y += size; break;
+   case LEFT: hole_x--; break;
+   case UP: hole_y--; break;
+   case RIGHT: hole_x += size; break;
    }
 }
 

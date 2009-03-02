@@ -17,13 +17,15 @@ gltext - draws text spinning around in 3D
 .SH SYNOPSIS
 .B gltext
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
 [\-text \fIstring\fP]
 [\-program \fIcommand\fP]
 [\-wander] [\-no-wander]
 [\-spin \fIaxes\fP]
 [\-no-spin]
 [\-front] [\-no\-front]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 The \fIgltext\fP program draws some text spinning around in 3D, using
 a font that appears to be made of solid tubes.  
@@ -69,11 +71,6 @@ If specified, this overrides \fI\-text\fP.
 The program will be re-run every 5 seconds to re-generate the text.
 It should run quickly, and shouldn't generate too much text.
 .TP 8
-.B \-fps
-Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
-your GL performance.
-.TP 8
 .B \-wander
 Move the text around the screen.  This is the default.
 .TP 8
@@ -95,6 +92,14 @@ always face mostly forward so that the text is easily readable.
 .TP 8
 .B \-no\-front
 Allow spins to go all the way around or upside down.  This is the default.
+.TP 8
+.B \-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
 .SH ENVIRONMENT
 .PP
 .TP 8

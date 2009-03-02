@@ -1978,7 +1978,7 @@ unblank_screen (saver_info *si)
 
   /* If the focus window does has a non-default colormap, then install
      that colormap as well.  (On SGIs, this will cause both the root map
-     and the focus map to be installed simultaniously.  It'd be nice to
+     and the focus map to be installed simultaneously.  It'd be nice to
      pick up the other colormaps that had been installed, too; perhaps
      XListInstalledColormaps could be used for that?)
    */

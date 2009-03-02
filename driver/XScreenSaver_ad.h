@@ -13,7 +13,7 @@
 "*grabDesktopImages:	True",
 "*grabVideoFrames:	False",
 "*chooseRandomImages:	True",
-"*imageDirectory:	/usr/share/backgrounds/images/",
+"*imageDirectory:	/Library/Desktop Pictures/",
 "*nice:			10",
 "*memoryLimit:		0",
 "*lock:			False",
@@ -31,7 +31,7 @@
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
-"*textFile:		/usr/X11R6/lib/X11/doc/README",
+"*textFile:		/usr/X11R6/README",
 "*textProgram:		fortune",
 "*textURL:		http://www.livejournal.com/stats/latest-rss.bml",
 "*overlayTextForeground:	#FFFF00",
@@ -45,11 +45,10 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: gnome-open '%s'",
-"*manualCommand: gnome-terminal --title '%s manual' \
-		--command '/bin/sh -c \"man %s; read foo\"'",
+"*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'",
+"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+		    -e /bin/sh -c 'man \"%s\" ; read foo'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
-"*newLoginCommand:	/bin/false",
 "*installColormap:	True",
 "*programs:								      \
 		 \"Qix (solid)\" 	qix -root -solid -segments 100		    \\n\
@@ -216,6 +215,7 @@
 				substrate -root				    \\n\
 	 \"Substrate (circles)\"  substrate -root -circle-percent 33          \\n\
 				intermomentary -root			    \\n\
+				interaggregate -root			    \\n\
 				fireworkx -root				    \\n\
 				fiberlamp -root				    \\n\
 				boxfit -root				    \\n\
@@ -298,6 +298,10 @@
 	   GL:			boing -root -lighting -smooth		    \\n\
 -	   GL:                  carousel -root                              \\n\
 	   GL:			fliptext -root				    \\n\
+-	   GL:                  antmaze -root                               \\n\
+	   GL:			tangram -root				    \\n\
+	   GL:			crackberg -root -flat -lit -crack	      \
+				 -color random				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -349,6 +353,7 @@
 "*passwd.user.label:		Username:",
 "*passwd.passwd.label:		Password:",
 "*passwd.thermometer.width:	8",
+"*passwd.asterisks:              True",
 "*splash.heading.label:		XScreenSaver %s",
 "*splash.body.label:		Copyright © 1991-2005 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",

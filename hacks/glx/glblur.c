@@ -38,11 +38,9 @@ extern XtAppContext app;
 #define DEF_WANDER      "True"
 #define DEF_BLURSIZE    "15"
 
-#define DEFAULTS	"*delay:	10000       \n" \
-			"*showFPS:      False       \n" \
-	               	"*fpsSolid:     True	    \n" \
-			"*wireframe:    False       \n" \
-
+#define DEFAULTS	"*delay:    10000 \n" \
+			"*showFPS:  False \n" \
+	               	"*fpsSolid: True  \n"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

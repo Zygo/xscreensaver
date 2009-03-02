@@ -29,7 +29,7 @@ Draw on the root window.
 Number of Fibers.  10 - 500.  Default: 500.
 .TP 8
 .B \-cycles \fInumber\fP
-Number of cycles before the lamp is knowcked sideways.  100 - 10000.
+Number of cycles before the lamp is knocked sideways.  100 - 10000.
 Default: 10000.
 .TP 8
 .B \-delay \fInumber\fP

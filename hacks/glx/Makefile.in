@@ -100,8 +100,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
 		  antinspect.c providence.c pinion.c boing.c texfont.c \
-		  carousel.c fliptext.c
-
+		  carousel.c fliptext.c antmaze.c tangram.c tangram_shapes.c \
+		  crackberg.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -131,7 +131,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
 		  antinspect.o providence.o pinion.o boing.o texfont.o \
-		  carousel.o fliptext.o
+		  carousel.o fliptext.o antmaze.o tangram.o tangram_shapes.o \
+		  crackberg.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -142,7 +143,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
-		  antinspect providence pinion boing carousel fliptext
+		  antinspect providence pinion boing carousel fliptext \
+		  antmaze tangram crackberg
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -161,7 +163,8 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
 		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
-		  ants.h polyhedra.h normals.h glxfonts.h texfont.h
+		  ants.h polyhedra.h normals.h glxfonts.h texfont.h \
+		  tangram_shapes.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -177,7 +180,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  antspotlight.man polytopes.man gleidescope.man \
 		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
 		  antinspect.man providence.man pinion.man boing.man \
-		  carousel.man fliptext.man
+		  carousel.man fliptext.man antmaze.man tangram.man \
+		  crackberg.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl starwars.txt
 
@@ -221,17 +225,34 @@ install-program:: $(EXES)
 	   done ;							\
 	 fi
 
+# When installing man pages, we install "foo.man" as "foo.N" and update
+# the .TH line in the installed file with one like
+#
+#     .TH XScreenSaver N "V.VV (DD-MMM-YYYY)" "X Version 11"
+#
+# where N is the manual section suffix.
+#
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	 idir="$(install_prefix)$(manNdir)" ;				\
-	 if [ ! -d $$idir ]; then					\
-	  $(INSTALL_DIRS) $$idir ;					\
+	U=$(UTILS_SRC)/version.h ;					\
+	V=`sed -n 's/.*\([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	echo "installing man pages: $$TH" ;				\
+									\
+	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
 	 fi ;								\
-	 for man in $$men; do						\
-	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	   echo $(INSTALL_DATA) $(srcdir)/$$man $$idir/$$instname ;	\
-		$(INSTALL_DATA) $(srcdir)/$$man $$idir/$$instname ;	\
-	 done
+									\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  sed "s/^\.TH.*/$$TH/" < $(srcdir)/$$man > $$T ;		\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
+	   $(install_prefix)$(manNdir)/$$instname ;			\
+	  $(INSTALL_DATA) $$T						\
+	    $(install_prefix)$(manNdir)/$$instname ;			\
+	done ;								\
+	rm -f $$T
 
 install-xml:
 	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
@@ -266,11 +287,10 @@ uninstall-program::
 
 uninstall-man:
 	@men="$(MEN)" ;							\
-	 idir="$(install_prefix)$(manNdir)" ;				\
-	 for man in $$men; do						\
-	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	   echo rm -f $$idir/$$instname ;				\
-		rm -f $$idir/$$instname ;				\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
 	done
 
 uninstall-xml:
@@ -646,6 +666,15 @@ carousel:	carousel.o	texfont.o $(HACK_TRACK_GRAB_OBJS)
 fliptext:	fliptext.o	texfont.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_OBJS) $(HACK_LIBS)
 
+antmaze:	antmaze.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+tangram:	tangram.o	tangram_shapes.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	tangram_shapes.o $(HACK_OBJS) $(HACK_LIBS)
+
+crackberg:	crackberg.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
 dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
@@ -655,6 +684,10 @@ dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 
 antinspect.o: ../../config.h
 antinspect.o: $(srcdir)/gltrackball.h
+antmaze.o: $(srcdir)/ants.h
+antmaze.o: ../../config.h
+antmaze.o: $(srcdir)/gltrackball.h
+antmaze.o: $(srcdir)/rotator.h
 antspotlight.o: $(srcdir)/ants.h
 antspotlight.o: ../../config.h
 antspotlight.o: $(srcdir)/gltrackball.h
@@ -712,6 +745,7 @@ cow_hoofs.o: $(srcdir)/gllist.h
 cow_horns.o: $(srcdir)/gllist.h
 cow_tail.o: $(srcdir)/gllist.h
 cow_udder.o: $(srcdir)/gllist.h
+crackberg.o: ../../config.h
 cubenetic.o: ../../config.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h
@@ -931,15 +965,17 @@ stonerview-move.o: ../../config.h
 stonerview-move.o: $(srcdir)/stonerview-move.h
 stonerview-move.o: $(srcdir)/stonerview-osc.h
 stonerview.o: ../../config.h
+stonerview.o: $(srcdir)/stonerview-move.h
 stonerview-osc.o: ../../config.h
 stonerview-osc.o: $(srcdir)/stonerview-osc.h
-stonerview.o: $(srcdir)/stonerview-move.h
 stonerview-view.o: ../../config.h
 stonerview-view.o: $(srcdir)/stonerview-move.h
 stonerview-view.o: $(srcdir)/stonerview-osc.h
 superquadrics.o: ../../config.h
 swim.o: $(srcdir)/atlantis.h
 swim.o: ../../config.h
+tangram.o: ../../config.h
+tangram.o: $(srcdir)/tangram_shapes.h
 texfont.o: ../../config.h
 texfont.o: $(srcdir)/texfont.h
 toast2.o: $(srcdir)/gllist.h

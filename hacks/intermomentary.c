@@ -30,6 +30,7 @@
  * implied warranty.
  */
 
+#include <math.h>
 #include "screenhack.h"
 #include <X11/Xutil.h>
 #include <stdio.h>
@@ -211,8 +212,8 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, str
         if (a >= 1.0) {
             ref_pixel(f, x1, y1) = myc;
         } else {
-            unsigned short int or, og, ob;
-            unsigned short int r, g, b;
+            unsigned short int or = 0, og = 0, ob = 0;
+            unsigned short int r = 0, g = 0, b = 0;
             unsigned short int nr, ng, nb;
             unsigned long c;
 

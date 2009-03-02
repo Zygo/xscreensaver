@@ -4,12 +4,14 @@ gflux \- rippling surface graphics hack
 .SH SYNOPSIS
 .B gflux
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
 [\-squares \fInum\fP] [\-resolution \fInum\fP] [\-mode \fImode\fP]
 [\-flat \fInum\fP] [\-speed \fInum\fP]
 [\-rotationx \fInum\fP] [\-rotationy \fInum\fP] [\-rotationz \fInum\fP]
 [\-waves \fInum\fP] [\-waveChange \fInum\fP] [\-waveHeight \fInum\fP]
 [\-waveFreq \fInum\fP] [\-zoom \fInum\fP]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 The \fIgflux\fP program draws a colourfull animated rippling square rotating in 3D space.
 .SH OPTIONS
@@ -49,6 +51,9 @@ and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
 file; see
 .BR xscreensaver-demo (1)
 for more details.
+.TP 8
+.B \-wireframe
+Same as "-mode wire".
 .TP 8
 .B \-flat \fInum\fP\fP
 0 for smooth shading 1 for flat. default 0

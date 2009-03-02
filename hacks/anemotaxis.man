@@ -25,7 +25,7 @@ source releases particles that drift with constant velocity in one
 direction and walk randomly in the other direction. The searcher knows
 if it hit a particle, and if so, particle's position one time step
 earlier (local wind direction). The program paints sources and
-particles released by them as well as trajectories of serchers who are
+particles released by them as well as trajectories of searchers who are
 trying to capture the sources.
 .SH OPTIONS
 .TP 8

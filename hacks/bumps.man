@@ -3,9 +3,15 @@
 bumps - move distorting spotlight around desktop
 .SH SYNOPSIS
 .B bumps
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP]
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fIusecs\fP]
 .SH DESCRIPTION
 The \fIbumps\fP program takes an image and exposes small, distorted
 sections of it as if through an odd wandering spotlight beam.
@@ -40,9 +46,6 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
-.TP 8
-.B \-radius \fIpixels\fP
-Radius of the spotlight in pixels.
 .SH ENVIRONMENT
 .PP
 .TP 8

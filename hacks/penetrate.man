@@ -77,7 +77,7 @@ Set the initial rate of laser fire.
 Have the computer player skip the learning process.
 .SH BUGS
 The layout of the screen isn't quite the same as the game this program
-tries to emulate.  In this this program, the missles come out of the
+tries to emulate.  In this this program, the missiles come out of the
 cities; when really, there are supposed to be three missile bases on
 hills, with the cities in the valleys between them.
 

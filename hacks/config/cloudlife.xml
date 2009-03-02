@@ -11,7 +11,7 @@
 
   <number id="maxage" type="slider" arg="-max-age %"
           _label="Max Age" _low-label="Young" _high-label="Old"
-          low="2" high="200" default="64"/>
+          low="2" high="255" default="64"/>
 
   <number id="density" type="slider" arg="-initial-density %"
           _label="Initial Density" _low-label="Low" _high-label="High"

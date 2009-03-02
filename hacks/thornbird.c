@@ -6,7 +6,7 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 #endif
 
 /*-
- * Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Procket.com>
+ * Copyright (c) 1996 by Tim Auckland <tda10.geo@yahoo.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,

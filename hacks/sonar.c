@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.37 $
+ * $Revision: 1.38 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -950,9 +950,18 @@ init_ping(void)
 	goto ping_init_error;
     }
 
-    /* Create the ICMP socket */
+    /* Create the ICMP socket.  Do this before dropping privs.
 
-    if ((pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0) {
+       Raw sockets can only be opened by root (or setuid root), so we
+       only try to do this when the effective uid is 0.
+
+       We used to just always try, and notice the failure.  But apparently
+       that causes "SELinux" to log spurious warnings when running with the
+       "strict" policy.  So to avoid that, we just don't try unless we
+       know it will work.
+     */
+    if (geteuid() == 0 &&
+        (pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0) {
       socket_initted_p = True;
     }
 

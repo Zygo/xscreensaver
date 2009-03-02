@@ -775,7 +775,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	  /* Use the same hack that's running on screen 0.
              (Assumes this function was called on screen 0 first.)
            */
-          ssi->current_hack = si->screens[0].current_hack;
+          new_hack = si->screens[0].current_hack;
 	}
       else  /* (p->mode == RANDOM_HACKS) */
 	{

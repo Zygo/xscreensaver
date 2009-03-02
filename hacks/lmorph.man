@@ -5,8 +5,8 @@ lmorph \- morphing lines
 .B lmorph
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP] [\-figtype \fItype\fP]
 .SH DESCRIPTION
-The \fIlmorph\fP program shows smooth and non-linear morphing between
-1D curves.
+The \fIlmorph\fP program generates random spline-ish line drawings and
+morphs between them.
 .SH OPTIONS
 .I lmorph
 accepts the following options:

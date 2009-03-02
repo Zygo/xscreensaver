@@ -107,7 +107,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
 		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
-		  intermomentary.c fireworkx.c fiberlamp.c boxfit.c
+		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
+		  boxfit.c interaggregate.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -136,7 +137,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
 		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
-		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o
+		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
+		  interaggregate.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -156,7 +158,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
-		  intermomentary fireworkx fiberlamp boxfit \
+		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -203,7 +205,8 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
-		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man
+		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
+		  interaggregate.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -292,24 +295,40 @@ munge-scripts: $(SCRIPTS)
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
 	      < $(srcdir)/$$program > $$tmp ;				\
 	  if ! cmp -s $(srcdir)/$$program $$tmp ; then			\
-	    echo "$$program: setting interpreter to $$perl" ;		\
+	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
 	    cat $$tmp > ./$$program ;					\
 	  fi ;								\
 	done ;								\
 	rm -f $$tmp
 
+# When installing man pages, we install "foo.man" as "foo.N" and update
+# the .TH line in the installed file with one like
+#
+#     .TH XScreenSaver N "V.VV (DD-MMM-YYYY)" "X Version 11"
+#
+# where N is the manual section suffix.
+#
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
+	U=$(UTILS_SRC)/version.h ;					\
+	V=`sed -n 's/.*\([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	echo "installing man pages: $$TH" ;				\
+									\
 	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
 	 fi ;								\
+									\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  sed "s/^\.TH.*/$$TH/" < $(srcdir)/$$man > $$T ;		\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(manNdir)/$$instname ;			\
-	  $(INSTALL_DATA) $(srcdir)/$$man				\
+	  $(INSTALL_DATA) $$T						\
 	    $(install_prefix)$(manNdir)/$$instname ;			\
-	done
+	done ;								\
+	rm -f $$T
 
 install-xml:
 	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
@@ -334,8 +353,8 @@ uninstall-man:
 	@men="$(MEN)" ;							\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(manNdir)/$$instname ;		\
-	  rm -f $(install_prefix)$(manNdir)/$$instname ;		\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	  rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
 	done
 
 uninstall-xml:
@@ -811,6 +830,9 @@ substrate:	substrate.o	$(HACK_OBJS)
 intermomentary:	intermomentary.o $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+interaggregate:	interaggregate.o $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
+
 fireworkx:	fireworkx.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
@@ -964,12 +986,12 @@ anemotaxis.o: $(srcdir)/screenhack.h
 ant.o: $(srcdir)/automata.h
 ant.o: ../config.h
 ant.o: $(srcdir)/screenhack.h
-ant.o: $(srcdir)/xlockmore.h
 ant.o: $(srcdir)/xlockmoreI.h
+ant.o: $(srcdir)/xlockmore.h
 apollonian.o: ../config.h
 apollonian.o: $(srcdir)/screenhack.h
-apollonian.o: $(srcdir)/xlockmore.h
 apollonian.o: $(srcdir)/xlockmoreI.h
+apollonian.o: $(srcdir)/xlockmore.h
 apple2-main.o: $(srcdir)/analogtv.h
 apple2-main.o: $(srcdir)/apple2.h
 apple2-main.o: ../config.h
@@ -990,15 +1012,15 @@ blitspin.o: $(srcdir)/screenhack.h
 blitspin.o: $(srcdir)/xpm-pixmap.h
 bouboule.o: ../config.h
 bouboule.o: $(srcdir)/screenhack.h
-bouboule.o: $(srcdir)/xlockmore.h
 bouboule.o: $(srcdir)/xlockmoreI.h
+bouboule.o: $(srcdir)/xlockmore.h
 boxfit.o: ../config.h
 boxfit.o: $(srcdir)/screenhack.h
 boxfit.o: $(srcdir)/xpm-pixmap.h
 braid.o: ../config.h
 braid.o: $(srcdir)/screenhack.h
-braid.o: $(srcdir)/xlockmore.h
 braid.o: $(srcdir)/xlockmoreI.h
+braid.o: $(srcdir)/xlockmore.h
 bsod.o: $(srcdir)/analogtv.h
 bsod.o: $(srcdir)/apple2.h
 bsod.o: ../config.h
@@ -1074,8 +1096,8 @@ critical.o: ../config.h
 critical.o: $(srcdir)/screenhack.h
 crystal.o: ../config.h
 crystal.o: $(srcdir)/screenhack.h
-crystal.o: $(srcdir)/xlockmore.h
 crystal.o: $(srcdir)/xlockmoreI.h
+crystal.o: $(srcdir)/xlockmore.h
 cynosure.o: ../config.h
 cynosure.o: $(srcdir)/screenhack.h
 decayscreen.o: ../config.h
@@ -1087,68 +1109,68 @@ deluxe.o: $(srcdir)/screenhack.h
 demon.o: $(srcdir)/automata.h
 demon.o: ../config.h
 demon.o: $(srcdir)/screenhack.h
-demon.o: $(srcdir)/xlockmore.h
 demon.o: $(srcdir)/xlockmoreI.h
+demon.o: $(srcdir)/xlockmore.h
 discrete.o: ../config.h
 discrete.o: $(srcdir)/screenhack.h
-discrete.o: $(srcdir)/xlockmore.h
 discrete.o: $(srcdir)/xlockmoreI.h
+discrete.o: $(srcdir)/xlockmore.h
 distort.o: ../config.h
 distort.o: $(srcdir)/screenhack.h
 drift.o: ../config.h
 drift.o: $(srcdir)/screenhack.h
-drift.o: $(srcdir)/xlockmore.h
 drift.o: $(srcdir)/xlockmoreI.h
+drift.o: $(srcdir)/xlockmore.h
 epicycle.o: ../config.h
 epicycle.o: $(srcdir)/screenhack.h
 eruption.o: ../config.h
 eruption.o: $(srcdir)/screenhack.h
 euler2d.o: ../config.h
 euler2d.o: $(srcdir)/screenhack.h
-euler2d.o: $(srcdir)/xlockmore.h
 euler2d.o: $(srcdir)/xlockmoreI.h
+euler2d.o: $(srcdir)/xlockmore.h
 fadeplot.o: ../config.h
 fadeplot.o: $(srcdir)/screenhack.h
-fadeplot.o: $(srcdir)/xlockmore.h
 fadeplot.o: $(srcdir)/xlockmoreI.h
+fadeplot.o: $(srcdir)/xlockmore.h
 fiberlamp.o: ../config.h
 fiberlamp.o: $(srcdir)/screenhack.h
-fiberlamp.o: $(srcdir)/xlockmore.h
 fiberlamp.o: $(srcdir)/xlockmoreI.h
+fiberlamp.o: $(srcdir)/xlockmore.h
 fireworkx.o: ../config.h
 fireworkx.o: $(srcdir)/screenhack.h
 flag.o: ../config.h
 flag.o: $(srcdir)/images/bob.xbm
 flag.o: $(srcdir)/screenhack.h
-flag.o: $(srcdir)/xlockmore.h
 flag.o: $(srcdir)/xlockmoreI.h
+flag.o: $(srcdir)/xlockmore.h
 flag.o: $(srcdir)/xpm-pixmap.h
 flame.o: ../config.h
 flame.o: $(srcdir)/screenhack.h
 flow.o: ../config.h
 flow.o: $(srcdir)/screenhack.h
-flow.o: $(srcdir)/xlockmore.h
 flow.o: $(srcdir)/xlockmoreI.h
+flow.o: $(srcdir)/xlockmore.h
 fluidballs.o: ../config.h
 fluidballs.o: $(srcdir)/screenhack.h
 fontglide.o: ../config.h
 fontglide.o: $(srcdir)/screenhack.h
 forest.o: ../config.h
 forest.o: $(srcdir)/screenhack.h
-forest.o: $(srcdir)/xlockmore.h
 forest.o: $(srcdir)/xlockmoreI.h
+forest.o: $(srcdir)/xlockmore.h
 fuzzyflakes.o: ../config.h
 fuzzyflakes.o: $(srcdir)/screenhack.h
 galaxy.o: ../config.h
 galaxy.o: $(srcdir)/screenhack.h
-galaxy.o: $(srcdir)/xlockmore.h
 galaxy.o: $(srcdir)/xlockmoreI.h
+galaxy.o: $(srcdir)/xlockmore.h
 goop.o: ../config.h
 goop.o: $(srcdir)/screenhack.h
 grav.o: ../config.h
 grav.o: $(srcdir)/screenhack.h
-grav.o: $(srcdir)/xlockmore.h
 grav.o: $(srcdir)/xlockmoreI.h
+grav.o: $(srcdir)/xlockmore.h
 greynetic.o: ../config.h
 greynetic.o: $(srcdir)/screenhack.h
 halftone.o: ../config.h
@@ -1159,8 +1181,8 @@ helix.o: ../config.h
 helix.o: $(srcdir)/screenhack.h
 hopalong.o: ../config.h
 hopalong.o: $(srcdir)/screenhack.h
-hopalong.o: $(srcdir)/xlockmore.h
 hopalong.o: $(srcdir)/xlockmoreI.h
+hopalong.o: $(srcdir)/xlockmore.h
 hyperball.o: ../config.h
 hyperball.o: $(srcdir)/screenhack.h
 hypercube.o: ../config.h
@@ -1169,6 +1191,8 @@ ifs.o: ../config.h
 ifs.o: $(srcdir)/screenhack.h
 imsmap.o: ../config.h
 imsmap.o: $(srcdir)/screenhack.h
+interaggregate.o: ../config.h
+interaggregate.o: $(srcdir)/screenhack.h
 interference.o: ../config.h
 interference.o: $(srcdir)/screenhack.h
 intermomentary.o: ../config.h
@@ -1213,39 +1237,39 @@ jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_w_h.xbm
 jigsaw.o: $(srcdir)/screenhack.h
 juggle.o: ../config.h
 juggle.o: $(srcdir)/screenhack.h
-juggle.o: $(srcdir)/xlockmore.h
 juggle.o: $(srcdir)/xlockmoreI.h
+juggle.o: $(srcdir)/xlockmore.h
 julia.o: ../config.h
 julia.o: $(srcdir)/screenhack.h
-julia.o: $(srcdir)/xlockmore.h
 julia.o: $(srcdir)/xlockmoreI.h
+julia.o: $(srcdir)/xlockmore.h
 kaleidescope.o: ../config.h
 kaleidescope.o: $(srcdir)/screenhack.h
 kumppa.o: ../config.h
 kumppa.o: $(srcdir)/screenhack.h
 laser.o: ../config.h
 laser.o: $(srcdir)/screenhack.h
-laser.o: $(srcdir)/xlockmore.h
 laser.o: $(srcdir)/xlockmoreI.h
+laser.o: $(srcdir)/xlockmore.h
 lightning.o: ../config.h
 lightning.o: $(srcdir)/screenhack.h
-lightning.o: $(srcdir)/xlockmore.h
 lightning.o: $(srcdir)/xlockmoreI.h
+lightning.o: $(srcdir)/xlockmore.h
 lisa.o: ../config.h
 lisa.o: $(srcdir)/screenhack.h
-lisa.o: $(srcdir)/xlockmore.h
 lisa.o: $(srcdir)/xlockmoreI.h
+lisa.o: $(srcdir)/xlockmore.h
 lissie.o: ../config.h
 lissie.o: $(srcdir)/screenhack.h
-lissie.o: $(srcdir)/xlockmore.h
 lissie.o: $(srcdir)/xlockmoreI.h
+lissie.o: $(srcdir)/xlockmore.h
 lmorph.o: ../config.h
 lmorph.o: $(srcdir)/screenhack.h
 loop.o: $(srcdir)/automata.h
 loop.o: ../config.h
 loop.o: $(srcdir)/screenhack.h
-loop.o: $(srcdir)/xlockmore.h
 loop.o: $(srcdir)/xlockmoreI.h
+loop.o: $(srcdir)/xlockmore.h
 maze.o: ../config.h
 maze.o: $(srcdir)/screenhack.h
 memscroller.o: ../config.h
@@ -1260,8 +1284,8 @@ moire.o: ../config.h
 moire.o: $(srcdir)/screenhack.h
 mountain.o: ../config.h
 mountain.o: $(srcdir)/screenhack.h
-mountain.o: $(srcdir)/xlockmore.h
 mountain.o: $(srcdir)/xlockmoreI.h
+mountain.o: $(srcdir)/xlockmore.h
 munch.o: ../config.h
 munch.o: $(srcdir)/screenhack.h
 nerverot.o: ../config.h
@@ -1329,8 +1353,8 @@ pacman.o: $(srcdir)/pacman_ai.h
 pacman.o: $(srcdir)/pacman.h
 pacman.o: $(srcdir)/pacman_level.h
 pacman.o: $(srcdir)/screenhack.h
-pacman.o: $(srcdir)/xlockmore.h
 pacman.o: $(srcdir)/xlockmoreI.h
+pacman.o: $(srcdir)/xlockmore.h
 pacman.o: $(srcdir)/xpm-pixmap.h
 pedal.o: ../config.h
 pedal.o: $(srcdir)/screenhack.h
@@ -1338,8 +1362,8 @@ penetrate.o: ../config.h
 penetrate.o: $(srcdir)/screenhack.h
 penrose.o: ../config.h
 penrose.o: $(srcdir)/screenhack.h
-penrose.o: $(srcdir)/xlockmore.h
 penrose.o: $(srcdir)/xlockmoreI.h
+penrose.o: $(srcdir)/xlockmore.h
 petri.o: ../config.h
 petri.o: $(srcdir)/screenhack.h
 phosphor.o: ../config.h
@@ -1348,8 +1372,8 @@ piecewise.o: ../config.h
 piecewise.o: $(srcdir)/screenhack.h
 polyominoes.o: ../config.h
 polyominoes.o: $(srcdir)/screenhack.h
-polyominoes.o: $(srcdir)/xlockmore.h
 polyominoes.o: $(srcdir)/xlockmoreI.h
+polyominoes.o: $(srcdir)/xlockmore.h
 pong.o: $(srcdir)/analogtv.h
 pong.o: ../config.h
 pong.o: $(srcdir)/screenhack.h
@@ -1369,8 +1393,8 @@ rorschach.o: ../config.h
 rorschach.o: $(srcdir)/screenhack.h
 rotor.o: ../config.h
 rotor.o: $(srcdir)/screenhack.h
-rotor.o: $(srcdir)/xlockmore.h
 rotor.o: $(srcdir)/xlockmoreI.h
+rotor.o: $(srcdir)/xlockmore.h
 rotzoomer.o: ../config.h
 rotzoomer.o: $(srcdir)/screenhack.h
 screenhack.o: ../config.h
@@ -1379,26 +1403,26 @@ shadebobs.o: ../config.h
 shadebobs.o: $(srcdir)/screenhack.h
 sierpinski.o: ../config.h
 sierpinski.o: $(srcdir)/screenhack.h
-sierpinski.o: $(srcdir)/xlockmore.h
 sierpinski.o: $(srcdir)/xlockmoreI.h
+sierpinski.o: $(srcdir)/xlockmore.h
 slidescreen.o: ../config.h
 slidescreen.o: $(srcdir)/screenhack.h
 slip.o: ../config.h
 slip.o: $(srcdir)/screenhack.h
-slip.o: $(srcdir)/xlockmore.h
 slip.o: $(srcdir)/xlockmoreI.h
+slip.o: $(srcdir)/xlockmore.h
 sonar.o: ../config.h
 sonar.o: $(srcdir)/screenhack.h
 speedmine.o: ../config.h
 speedmine.o: $(srcdir)/screenhack.h
 sphere.o: ../config.h
 sphere.o: $(srcdir)/screenhack.h
-sphere.o: $(srcdir)/xlockmore.h
 sphere.o: $(srcdir)/xlockmoreI.h
+sphere.o: $(srcdir)/xlockmore.h
 spiral.o: ../config.h
 spiral.o: $(srcdir)/screenhack.h
-spiral.o: $(srcdir)/xlockmore.h
 spiral.o: $(srcdir)/xlockmoreI.h
+spiral.o: $(srcdir)/xlockmore.h
 spotlight.o: ../config.h
 spotlight.o: $(srcdir)/screenhack.h
 squiral.o: ../config.h
@@ -1407,24 +1431,24 @@ starfish.o: ../config.h
 starfish.o: $(srcdir)/screenhack.h
 strange.o: ../config.h
 strange.o: $(srcdir)/screenhack.h
-strange.o: $(srcdir)/xlockmore.h
 strange.o: $(srcdir)/xlockmoreI.h
+strange.o: $(srcdir)/xlockmore.h
 substrate.o: ../config.h
 substrate.o: $(srcdir)/screenhack.h
 swirl.o: ../config.h
 swirl.o: $(srcdir)/screenhack.h
-swirl.o: $(srcdir)/xlockmore.h
 swirl.o: $(srcdir)/xlockmoreI.h
+swirl.o: $(srcdir)/xlockmore.h
 t3d.o: ../config.h
 t3d.o: $(srcdir)/screenhack.h
 thornbird.o: ../config.h
 thornbird.o: $(srcdir)/screenhack.h
-thornbird.o: $(srcdir)/xlockmore.h
 thornbird.o: $(srcdir)/xlockmoreI.h
+thornbird.o: $(srcdir)/xlockmore.h
 triangle.o: ../config.h
 triangle.o: $(srcdir)/screenhack.h
-triangle.o: $(srcdir)/xlockmore.h
 triangle.o: $(srcdir)/xlockmoreI.h
+triangle.o: $(srcdir)/xlockmore.h
 truchet.o: ../config.h
 truchet.o: $(srcdir)/screenhack.h
 twang.o: ../config.h
@@ -1433,8 +1457,8 @@ vermiculate.o: ../config.h
 vermiculate.o: $(srcdir)/screenhack.h
 vines.o: ../config.h
 vines.o: $(srcdir)/screenhack.h
-vines.o: $(srcdir)/xlockmore.h
 vines.o: $(srcdir)/xlockmoreI.h
+vines.o: $(srcdir)/xlockmore.h
 wander.o: ../config.h
 wander.o: $(srcdir)/screenhack.h
 webcollage-helper.o: ../config.h
@@ -1446,8 +1470,8 @@ wormhole.o: ../config.h
 wormhole.o: $(srcdir)/screenhack.h
 worm.o: ../config.h
 worm.o: $(srcdir)/screenhack.h
-worm.o: $(srcdir)/xlockmore.h
 worm.o: $(srcdir)/xlockmoreI.h
+worm.o: $(srcdir)/xlockmore.h
 xanalogtv.o: $(srcdir)/analogtv.h
 xanalogtv.o: ../config.h
 xanalogtv.o: $(srcdir)/screenhack.h

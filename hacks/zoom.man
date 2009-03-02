@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "20-Nov-2000" "X Version 11"
 .SH NAME
-zoom - wander around magified desktop
+zoom - wander around magnified desktop
 .SH SYNOPSIS
 .B zoom
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
@@ -63,13 +63,13 @@ Amount of black space between magnified pixels (X direction).
 Amount of black space between magnified pixels (Y direction).
 .TP 8
 .B \-lensoffsetx \fIpixels\fP
-Distance in X direction between consective copied regions (only effective
+Distance in X direction between consecutive copied regions (only effective
 when 
 .I -lenses
 used).
 .TP 8
 .B \-lensoffsety \fIpixels\fP
-Distance in Y direction between consective copied regions (only effective
+Distance in Y direction between consecutive copied regions (only effective
 when 
 .I -lenses
 used).

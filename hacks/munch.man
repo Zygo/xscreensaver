@@ -23,11 +23,11 @@ munch - munching squares screen hack
 .SH DESCRIPTION
 The
 .I munch
-program preforms the munching squares hack until killed.  It picks square
+program performs the munching squares hack until killed.  It picks square
 size, position, and gravity randomly; configurable options are listed
 below.
 .PP
-The munching squares hack cosists of drawing Y = X XOR T for a range of X
+The munching squares hack consists of drawing Y = X XOR T for a range of X
 and T over and over until all the possible combinations of X and T have
 come up.  It was reportedly discovered by Jackson Wright in 1962 and took 5
 instructions of PDP-6 code.

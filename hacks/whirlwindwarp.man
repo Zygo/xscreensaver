@@ -31,10 +31,10 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-points \fIinteger\fP
-The number of stars plotted (default 300).
+The number of stars plotted (default 400).
 .TP 8
 .B \-tails \fIinteger\fP
-The length of the tail of each star (default 5).
+The length of the tail of each star (default 8).
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -6,7 +6,7 @@ glsnake \- OpenGL enhanced Rubik's Snake cyclewaster.
 .B glsnake
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
-[\-wireframe] [\-scarycolour]
+[\-wireframe] [\-altcolour]
 [\-velocity \fIangular\fP]
 [\-explode \fIdistance\fP]
 [\-statictime \fImilliseconds\fP]
@@ -41,7 +41,7 @@ your GL performance.
 .B \-wireframe
 Display the snake in wireframe mode, rather than the default solid mode.
 .TP 8
-.B \-scarycolour
+.B \-altcolour
 Use the alternate colour scheme for the snake.  Shape identification using
 colour will be disabled.
 .TP 8

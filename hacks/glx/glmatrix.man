@@ -11,6 +11,8 @@ glmatrix - simulates the title sequence effect of the movie
 [\-small | \-large]
 [\-trace]
 [\-phone \fInumber\fP]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 The \fIglmatrix\fP program draws dropping characters similar to what
 is seen in the title sequence of the Wachowski brothers' film,
@@ -65,6 +67,9 @@ Instead of displaying Matrix glyphs, display hexadecimal digits.
 .B \-dna\fP
 Instead of displaying Matrix glyphs, display genetic code
 (guanine, adenine, thymine, and cytosine.)
+.TP 8
+.B \-wireframe
+Just draw boxes instead of textured characters.
 .TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.

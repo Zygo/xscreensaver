@@ -10,7 +10,7 @@ extrusion - various rotating extruded shapes.
 [\-delay \fInumber\fP]
 [\-name \fIwhich\fP]
 [\-no-light]
-[\-wire]
+[\-wireframe]
 [\-fps]
 .SH DESCRIPTION
 Draws various rotating extruded shapes that twist around, lengthen, and
@@ -40,7 +40,7 @@ Whether to light the scene, or use flat coloring.
 .B \-bitmap \fIfile\fP
 The texture map to use.
 .TP 8
-.B \-wire
+.B \-wireframe
 Render in wireframe instead of solid.
 .TP 8
 .B \-fps | \-no-fps

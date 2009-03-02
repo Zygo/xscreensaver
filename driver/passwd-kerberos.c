@@ -75,7 +75,7 @@
  static char realm[REALM_SZ];
  static char  name[ANAME_SZ];
  static char  inst[INST_SZ];
- static char *tk_file;
+ static const char *tk_file;
 #endif /* !HAVE_DARWIN */
 
 
@@ -222,7 +222,7 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     des_string_to_key(typed_passwd, mitkey);
 
     if (krb_get_in_tkt(name, inst, realm, "krbtgt", realm, DEFAULT_TKT_LIFE,
-		       key_to_key, NULL, mitkey) != 0) {
+		       key_to_key, NULL, (char *) mitkey) != 0) {
 	success = False;
     } else {
 	success = True;

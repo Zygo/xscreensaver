@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2002, 2005 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -76,7 +76,7 @@ my $man_suffix = (".SH ENVIRONMENT\n" .
                   ".SH AUTHOR\n" .
                   "%AUTHOR%.\n");
 
-sub xml2man {
+sub xml2man($) {
   my ($exe) = @_;
   my $cfgdir = (-d "config" ? "config" : "../config");
   my $xml = "$cfgdir/$exe.xml";
@@ -220,18 +220,18 @@ sub xml2man {
 }
 
 
-sub error {
-  ($_) = @_;
-  print STDERR "$progname: $_\n";
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
   exit 1;
 }
 
-sub usage {
+sub usage() {
   print STDERR "usage: $progname [--verbose] programs...\n";
   exit 1;
 }
 
-sub main {
+sub main() {
   my @progs = ();
   while ($_ = $ARGV[0]) {
     shift @ARGV;
@@ -246,5 +246,5 @@ sub main {
   foreach (@progs) { xml2man($_); }
 }
 
-main;
+main();
 exit 0;

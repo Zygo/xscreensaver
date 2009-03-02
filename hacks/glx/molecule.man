@@ -1,15 +1,13 @@
 .TH XScreenSaver 1 "13-Mar-01" "X Version 11"
 .SH NAME
-molecule - draws 3D moleclear structures
+molecule - draws 3D molecular structures
 .SH SYNOPSIS
 .B gltext
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
 [\-wander] [\-no-wander]
 [\-spin \fIaxes\fP]
 [\-no-spin]
-[\-wire]
-[\-verbose]
 [\-timeout \fIseconds\fP]
 [\-labels] [\-no-labels]
 [\-titles] [\-no-titles]
@@ -17,6 +15,9 @@ molecule - draws 3D moleclear structures
 [\-bonds] [\-no-bonds]
 [\-shells] [\-no-shells]
 [\-molecule \fIfile-or-directory\fP]
+[\-verbose]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 The \fImolecule\fP program draws several different representations of
 molecules.  Some common molecules are built in, and it can read PDB
@@ -100,7 +101,7 @@ Do not draw electron shells.  This is the default.
 .B \-shell\-alpha
 When drawing shells, how transparent to make them.  Default 0.4.
 .TP 8
-.B \-wire
+.B \-wireframe
 Draw a wireframe rendition of the molecule: this will consist only of
 single-pixel lines for the bonds, and text labels where the atoms go.
 This will be very fast.

@@ -2267,7 +2267,7 @@ display_is_on_console_p (saver_info *si)
 void
 check_for_leaks (const char *where)
 {
-#ifdef HAVE_SBRK
+#if defined(HAVE_SBRK) && defined(LEAK_PARANOIA)
   static unsigned long last_brk = 0;
   int b = (unsigned long) sbrk(0);
   if (last_brk && last_brk < b)

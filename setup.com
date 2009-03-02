@@ -57,6 +57,7 @@ $ hyperball	:== $'mydir'hyperball
 $ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
+$ interaggregate	:== $'mydir'interaggregate
 $ interference	:== $'mydir'interference
 $ intermomentary	:== $'mydir'intermomentary
 $ jigsaw	:== $'mydir'jigsaw
@@ -74,8 +75,8 @@ $ maze		:== $'mydir'maze
 $ memscroller	:== $'mydir'memscroller
 $ metaballs	:== $'mydir'metaballs
 $ mismunch	:== $'mydir'mismunch
-$ moire2	:== $'mydir'moire2
 $ moire		:== $'mydir'moire
+$ moire2	:== $'mydir'moire2
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ nerverot	:== $'mydir'nerverot
@@ -123,8 +124,8 @@ $ wander	:== $'mydir'wander
 $ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
-$ wormhole	:== $'mydir'wormhole
 $ worm		:== $'mydir'worm
+$ wormhole	:== $'mydir'wormhole
 $ xanalogtv	:== $'mydir'xanalogtv
 $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack

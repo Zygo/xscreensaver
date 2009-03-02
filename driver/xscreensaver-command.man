@@ -117,10 +117,8 @@ this to activate the screensaver with a particular graphics demo.  (The first
 element in the list is numbered 1, not 0.)
 .TP 8
 .B \-exit
-Causes the xscreensaver process to exit gracefully.  This is roughly the same
-as killing the process with
-.BR kill (1),
-but it is easier, since you don't need to first figure out the pid.  
+Causes the xscreensaver process to exit gracefully.  
+This does nothing if the display is currently locked.
 
 .B Warning:
 never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
@@ -210,7 +208,7 @@ while (<IN>) {
     }
 }
 .EE
-Note that LOCK might come either with or without a preceeding BLANK
+Note that LOCK might come either with or without a preceding BLANK
 (depending on whether the lock-timeout is non-zero), so the above program
 keeps track of both of them.
 .SH STOPPING GRAPHICS

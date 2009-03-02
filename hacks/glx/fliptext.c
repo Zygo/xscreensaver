@@ -461,6 +461,8 @@ make_line (fliptext_configuration *sc, Bool skip_blanks_p)
   ln->width = sc->font_scale * texture_string_width (sc->texfont, s, 0);
   ln->height = sc->font_scale * sc->line_height;
 
+  memcpy (ln->color, sc->color, sizeof(ln->color));
+
   sc->nlines++;
   if (sc->lines_size <= sc->nlines)
     {
@@ -568,10 +570,10 @@ draw_line (ModeInfo *mi, line *line)
 static void
 tick_line (fliptext_configuration *sc, line *line)
 {
-  int stagger = 60;            /* frames of delay between line spin-outs */
+  int stagger = 30;            /* frames of delay between line spin-outs */
   int slide   = 600;           /* frames in a slide in/out */
   int linger  = 0;             /* frames to pause with no motion */
-  double i;
+  double i, ii;
 
   if (line->state >= DEAD) abort();
   if (++line->step >= line->steps)
@@ -581,6 +583,9 @@ tick_line (fliptext_configuration *sc, line *line)
 
       if (linger == 0 && line->state == LINGER)
         line->state++;
+
+      if (sc->anim_type != SPIN)
+        stagger *= 2;
 
       switch (line->state)
         {
@@ -602,7 +607,7 @@ tick_line (fliptext_configuration *sc, line *line)
           break;
 
         case IN:
-          memset (line->color, 0, sizeof (line->color));
+          line->color[3] = 0;
           switch (sc->anim_type)
             {
             case SCROLL_BOTTOM:		/* entering state BOTTOM IN */
@@ -646,7 +651,6 @@ tick_line (fliptext_configuration *sc, line *line)
           break;
 
         case OUT:
-          memcpy (sc->color, line->color, sizeof(line->color));
           switch (sc->anim_type)
             {
             case SCROLL_BOTTOM:		/* entering state BOTTOM OUT */
@@ -684,7 +688,6 @@ tick_line (fliptext_configuration *sc, line *line)
           break;
 
         case LINGER:
-          memcpy (sc->color, line->color, sizeof(line->color));
           line->from = line->to;
           line->steps = linger;
           break;
@@ -701,19 +704,20 @@ tick_line (fliptext_configuration *sc, line *line)
     case IN:
     case OUT:
       i = (double) line->step / line->steps;
-      if (line->state == IN) i = 1-i;
-      i = i * i;
-      if (line->state == IN) i = 1-i;
 
-      line->color[0] = sc->color[0] * (line->state == IN ? i : 1-i);
-      line->color[1] = sc->color[1] * (line->state == IN ? i : 1-i);
-      line->color[2] = sc->color[2] * (line->state == IN ? i : 1-i);
-      line->color[3] = sc->color[3] * (line->state == IN ? i : 1-i);
+      /* Move along the path exponentially, slow side towards the middle. */
+      if (line->state == OUT)
+        ii = i * i;
+      else
+        ii = 1 - ((1-i) * (1-i));
 
-      line->current.x = line->from.x + (i * (line->to.x - line->from.x));
-      line->current.y = line->from.y + (i * (line->to.y - line->from.y));
-      line->current.z = line->from.z + (i * (line->to.z - line->from.z));
-      line->cth = line->fth + (i * (line->tth - line->fth));
+      line->current.x = line->from.x + (ii * (line->to.x - line->from.x));
+      line->current.y = line->from.y + (ii * (line->to.y - line->from.y));
+      line->current.z = line->from.z + (ii * (line->to.z - line->from.z));
+      line->cth = line->fth + (ii * (line->tth - line->fth));
+
+      if (line->state == OUT) ii = 1-ii;
+      line->color[3] = sc->color[3] * ii;
       break;
 
     case HESITATE:
@@ -741,7 +745,7 @@ reset_lines (ModeInfo *mi)
   sc->rotation.y = 5 - BELLRAND(10);
   sc->rotation.z = 5 - BELLRAND(10);
 
-  switch (random() % 7)
+  switch (random() % 8)
     {
     case 0:  sc->anim_type = SCROLL_TOP;    break;
     case 1:  sc->anim_type = SCROLL_BOTTOM; break;
@@ -776,7 +780,10 @@ reset_lines (ModeInfo *mi)
   maxy -= maxh/2;
 
   sc->mid.x = minx + frand (maxx - minx);
-  sc->mid.y = miny + frand (maxy - miny);
+  if (sc->anim_type == SPIN)
+    sc->mid.y = miny + BELLRAND (maxy - miny);
+  else
+    sc->mid.y = miny + frand (maxy - miny);
 
   sc->in.x  = BELLRAND(sc->right_margin * 2) - sc->right_margin;
   sc->out.x = BELLRAND(sc->right_margin * 2) - sc->right_margin;

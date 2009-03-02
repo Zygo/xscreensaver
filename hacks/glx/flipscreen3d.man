@@ -9,6 +9,7 @@ flipscreen3d - rotates an image of the screen through 3 dimensions.
 [\-root]
 [\-delay \fInumber\fP]
 [\-no-rotate]
+[\-wireframe]
 [\-fps]
 .SH DESCRIPTION
 Grabs an image of the desktop, turns it into a GL texture map, and spins it
@@ -30,6 +31,9 @@ Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
 .B \-rotate | \-no-rotate
 Whether to rotate.
+.TP 8
+.B \-wireframe
+Just render boxes instead of textures (for debugging).
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.

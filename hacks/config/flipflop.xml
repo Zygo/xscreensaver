@@ -10,7 +10,7 @@
           convert="invert"/>
 
   <select id="render">
-    <option id="solid"    _label="Solid Tiles" arg-set="-no-texture"/>
+    <option id="solid"    _label="Solid Tiles"/>
     <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
   </select>
 

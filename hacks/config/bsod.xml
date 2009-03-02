@@ -18,6 +18,7 @@
      <boolean id="atari"      _label="Atari"        arg-set="-atari"/>
      <boolean id="apple2"     _label="Apple II"     arg-unset="-no-apple2"/>
      <boolean id="nvidia"     _label="Nvidia"       arg-unset="-no-nvidia"/>
+     <boolean id="os2"      _label="OS/2"        arg-unset="-no-os2"/>
    </vgroup>
    <vgroup>
      <boolean id="mac"        _label="Sad Mac"      arg-unset="-no-mac"/>

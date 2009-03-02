@@ -7,8 +7,10 @@ cage - Escher's impossible cage, for xscreensaver.
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
-[-delay \fInumber\fP]
-[-fps]
+[\-delay \fInumber\fP]
+[\-mono]
+[\-wireframe]
+[\-fps]
 .SH DESCRIPTION
 This draws Escher's "Impossible Cage", a 3d analog of a moebius strip,
 and rotates it in three dimensions.
@@ -26,6 +28,12 @@ Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 25000 (0.03 seconds.).
+.TP 8
+.B \-mono
+Render solid instead of textured.
+.TP 8
+.B \-wireframe
+Render in wireframe instead of textured.
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.

@@ -1377,7 +1377,9 @@ find_dead_regions(void)
 	  if((x < logo_x || x > logo_x + logo_width / grid_width) ||
 	     (y < logo_y || y > logo_y + logo_height / grid_height))
 	  {
-	    if (!(maze[x][y] & WALL_ANY))
+            /* if we are completely surrounded by walls, just draw the
+               inside part */
+            if ((maze[x][y] & WALL_ANY) == WALL_ANY)
 	      XFillRectangle(dpy, win, ugc,
 			     border_x + bw + grid_width * x,
 			     border_y + bw + grid_height * y,

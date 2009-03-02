@@ -62,54 +62,31 @@ glb_draw_init(void)
 		     glb_config.bg_colour[1],
 		     glb_config.bg_colour[2],
 		     glb_config.bg_colour[3]);
-#if 0
+
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glb_config.bubble_colour);
-#else
-	{
-		/* 
-		 * E. Lassauge - 98/06/29
-		 * Yeahh, cool ! Now that I know how to have random colors I 
-		 * patch this pretty beautiful mode too !!
-		 */
-		GLfloat     fred, fgreen, fblue;
-		GLfloat     params[4];
-
-		fred = ((float) (NRAND(100)) / 100.0);
-		fgreen = ((float) (NRAND(100)) / 100.0);
-		/* I keep more blue */
-		fblue = ((float) (NRAND(50)) / 100.0) + 0.50;
-
-		params[0] = fred;
-		params[1] = fgreen;
-		params[2] = fblue;
-		/* For the moment don't play with ALPHA channel */
-		params[3] = glb_config.bubble_colour[3];
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, params);
-	}
-#endif
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mat_emission);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
 
-#if GLB_USE_BLENDING
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#endif
+        if (glb_config.transparent_p)
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
 	glEnable(GL_LIGHT2);
-#if GLB_USE_BLENDING
-	glEnable(GL_BLEND);
-#else
-	glEnable(GL_DEPTH_TEST);
-#endif
+
+        if (glb_config.transparent_p)
+          glEnable(GL_BLEND);
+        else
+          glEnable(GL_DEPTH_TEST);
+
 	glEnable(GL_AUTO_NORMAL);
 	glEnable(GL_NORMALIZE);
 
-#if GLB_USE_BLENDING
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-#endif
+        if (glb_config.transparent_p)
+          glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position[0]);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse[0]);

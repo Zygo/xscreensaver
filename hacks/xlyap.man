@@ -119,7 +119,7 @@ Specifies the output filename to be used. If the -o option is given, this
 file will automatically be written out at the completion of the drawing.
 If it is not specified, a default filename of lyap.out is used and only
 written if the 'f' or 'F' keys are pressed during a run. The format of the
-output file is PPM for color and PGM for monochrom. The parameters used to
+output file is PPM for color and PGM for monochrome. The parameters used to
 calculate the picture are included as comments at the beginning of the output
 file.
 .TP

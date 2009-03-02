@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright (c) 1998-2004 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2005 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.25 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.28 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -35,6 +35,7 @@ my $screen_width = -1;
 
 my $displayer = "xscreensaver-getimage -root -file";
 
+sub which($);
 
 # apparently some versions of netpbm call it "pamoil" instead of "pgmoil"...
 #
@@ -114,28 +115,22 @@ my @filters = (
 );
 
 
-sub error {
-  ($_) = @_;
-  print STDERR "$progname: $_\n";
-  exit 1;
-}
-
 # Any files on this list will be deleted at exit.
 #
 my @all_tmpfiles = ();
 
-sub exit_cleanup {
+sub exit_cleanup() {
   print STDERR "$progname: delete tmp files\n" if ($verbose);
   unlink @all_tmpfiles;
 }
 
-sub signal_cleanup {
+sub signal_cleanup() {
   my ($sig) = @_;
   print STDERR "$progname: caught SIG$sig\n" if ($verbose);
   exit 1;
 }
 
-sub init_signals {
+sub init_signals() {
 
   $SIG{HUP}  = \&signal_cleanup;
   $SIG{INT}  = \&signal_cleanup;
@@ -151,11 +146,9 @@ sub init_signals {
 END { exit_cleanup(); }
 
 
-
-
 # returns the full path of the named program, or undef.
 #
-sub which {
+sub which($) {
   my ($prog) = @_;
   foreach (split (/:/, $ENV{PATH})) {
     if (-x "$_/$prog") {
@@ -168,7 +161,7 @@ sub which {
 
 # Choose random foreground and background colors
 #
-sub randcolors {
+sub randcolors() {
   return sprintf ("#%02x%02x%02x-#%02x%02x%02x",
                   int(rand()*60),
                   int(rand()*60),
@@ -180,7 +173,7 @@ sub randcolors {
 
 
 
-sub filter_subst {
+sub filter_subst($$$@) {
   my ($filter, $width, $height, @tmpfiles) = @_;
   my $colors = randcolors();
   $filter =~ s/\bWIDTH\b/$width/g;
@@ -192,7 +185,7 @@ sub filter_subst {
     $i++;
   }
   if ($filter =~ m/([A-Z]+)/) {
-    error "internal error: what is \"$1\"?";
+    error ("internal error: what is \"$1\"?");
   }
   $filter =~ s/  +/ /g;
   return $filter;
@@ -200,14 +193,14 @@ sub filter_subst {
 
 # Frobnicate the image in some random way.
 #
-sub frob_ppm {
+sub frob_ppm($) {
   my ($ppm_data) = @_;
   $_ = $ppm_data;
 
-  error "0-length data" if (!defined($ppm_data) || $ppm_data eq  "");
-  error "not a PPM file" unless (m/^P\d\n/s);
+  error ("0-length data") if (!defined($ppm_data) || $ppm_data eq  "");
+  error ("not a PPM file") unless (m/^P\d\n/s);
   my ($width, $height) = m/^P\d\n(\d+) (\d+)\n/s;
-  error "got a bogus PPM" unless ($width && $height);
+  error ("got a bogus PPM") unless ($width && $height);
 
   my $tmpdir = $ENV{TMPDIR};
   $tmpdir = "/tmp" unless $tmpdir;
@@ -255,13 +248,13 @@ sub frob_ppm {
 }
 
 
-sub read_config {
+sub read_config() {
   my $conf = "$ENV{HOME}/.xscreensaver";
 
   my $had_dir = defined($imagedir);
 
   local *IN;
-  open (IN, "<$conf") ||  error "reading $conf: $!";
+  open (IN, "<$conf") ||  error ("reading $conf: $!");
   while (<IN>) {
     if (!$imagedir && m/^imageDirectory:\s+(.*)\s*$/i) { $imagedir = $1; }
     elsif (m/^grabVideoFrames:\s+true\s*$/i)     { $video_p = 1; }
@@ -276,14 +269,14 @@ sub read_config {
   $imagedir = undef unless ($imagedir && $imagedir ne '');
 
   if (!$file_p && !$video_p) {
-#    error "neither grabVideoFrames nor chooseRandomImages are set\n\t" .
+#    error ("neither grabVideoFrames nor chooseRandomImages are set\n\t") .
 #      "in $conf; $progname requires one or both."
     $file_p = 1;
   }
 
   if ($file_p) {
-    error "no imageDirectory set in $conf" unless $imagedir;
-    error "imageDirectory $imagedir doesn't exist" unless (-d $imagedir);
+    error ("no imageDirectory set in $conf") unless $imagedir;
+    error ("imageDirectory $imagedir doesn't exist") unless (-d $imagedir);
   }
 
   if ($verbose > 1) {
@@ -295,7 +288,7 @@ sub read_config {
 }
 
 
-sub get_ppm {
+sub get_ppm() {
   if ($use_stdin) {
     print STDERR "$progname: reading from stdin\n" if ($verbose > 1);
     my $ppm = "";
@@ -314,7 +307,7 @@ sub get_ppm {
     elsif ($file_p)  { $do_file_p = 1; }
     elsif ($video_p) { $do_file_p = 0; }
     else {
-      error "internal error: not grabbing files or video?";
+      error ("internal error: not grabbing files or video?");
     }
 
     my $v = ($verbose <= 1 ? "" : "-" . ("v" x ($verbose-1)));
@@ -332,7 +325,7 @@ sub get_ppm {
       print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
       my $fn = `$cmd`;
       $fn =~ s/\n$//s;
-      error "didn't get a file?" if ($fn eq "");
+      error ("didn't get a file?") if ($fn eq "");
 
       print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
 
@@ -344,7 +337,9 @@ sub get_ppm {
       elsif ($fn =~ m/\.tiff?/i) { $cmd = "tifftopnm < \"$fn\""; }
       elsif ($fn =~ m/\.p[bgp]m/i) { return `cat \"$fn\"`; }
       else {
-        error "unrecognized file extension on $fn";
+        print STDERR "$progname: $fn: unrecognized file extension\n";
+        # go around the loop and get another
+        return undef;
       }
 
       print STDERR "$progname: converting with: $cmd\n" if ($verbose > 1);
@@ -355,12 +350,12 @@ sub get_ppm {
 
       print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
       $ppm = `$cmd`;
-      error "no data?" if ($ppm eq "");
-      error "not a PPM file" unless ($ppm =~ m/^P\d\n/s);
+      error ("no data?") if ($ppm eq "");
+      error ("not a PPM file") unless ($ppm =~ m/^P\d\n/s);
 
       $_ = $ppm;
       my ($width, $height) = m/^P\d\n(\d+) (\d+)\n/s;
-      error "got a bogus PPM" unless ($width && $height);
+      error ("got a bogus PPM") unless ($width && $height);
       print STDERR "$progname: grabbed ${width}x$height PPM\n"
         if ($verbose > 1);
       $_ = 0;
@@ -370,11 +365,11 @@ sub get_ppm {
   }
 }
 
-sub dispose_ppm {
+sub dispose_ppm($) {
   my ($ppm) = @_;
 
-  error "0-length data" if (!defined($ppm) || $ppm eq  "");
-  error "not a PPM file" unless ($ppm =~ m/^P\d\n/s);
+  error ("0-length data") if (!defined($ppm) || $ppm eq  "");
+  error ("not a PPM file") unless ($ppm =~ m/^P\d\n/s);
 
   if ($use_stdout) {
     print STDERR "$progname: writing to stdout\n" if ($verbose > 1);
@@ -387,7 +382,7 @@ sub dispose_ppm {
     local *OUT;
     unlink $fn;
     push @all_tmpfiles, $fn;
-    open (OUT, ">$fn") || error "writing $fn: $!";
+    open (OUT, ">$fn") || error ("writing $fn: $!");
     print OUT $ppm;
     close OUT;
 
@@ -412,7 +407,7 @@ sub dispose_ppm {
 
 my $stdin_ppm = undef;
 
-sub vidwhack {
+sub vidwhack() {
   my $ppm;
   if ($use_stdin) {
     if (!defined($stdin_ppm)) {
@@ -436,7 +431,13 @@ sub vidwhack {
 }
 
 
-sub usage {
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
+}
+
+sub usage() {
   print STDERR "VidWhacker, Copyright (c) 2001 Jamie Zawinski <jwz\@jwz.org>\n";
   print STDERR "            http://www.jwz.org/xscreensaver/";
   print STDERR "\n";
@@ -447,7 +448,7 @@ sub usage {
   exit 1;
 }
 
-sub main {
+sub main() {
   while ($_ = $ARGV[0]) {
     shift @ARGV;
     if ($_ eq "--verbose") { $verbose++; }
@@ -494,5 +495,5 @@ sub main {
   }
 }
 
-main;
+main();
 exit 0;

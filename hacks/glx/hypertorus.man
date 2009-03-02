@@ -10,7 +10,7 @@ hypertorus - Draws a hypertorus that rotates in 4d
 [\-root]
 [\-delay \fIusecs\fP]
 [\-fps]
-[\-mesh]
+[\-wireframe]
 [\-surface]
 [\-transparent]
 [\-solid]
@@ -73,7 +73,7 @@ animation.  Default 25000, or 1/40th second.
 The following three options are mutually exclusive.  They determine
 how the torus is displayed.
 .TP 8
-.B \-mesh
+.B \-wireframe
 Display the torus as a wireframe mesh.
 .TP 8
 .B \-surface

@@ -7,7 +7,7 @@ static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
 #endif
 
 /*-
- * Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Procket.com>
+ * Copyright (c) 1996 by Tim Auckland <tda10.geo@yahoo.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,

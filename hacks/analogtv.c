@@ -887,7 +887,7 @@ analogtv_sync(analogtv *it)
 {
   int cur_hsync=it->cur_hsync;
   int cur_vsync=it->cur_vsync;
-  int lineno;
+  int lineno = 0;
   int i,j;
   double osc,filt;
   double *sp;

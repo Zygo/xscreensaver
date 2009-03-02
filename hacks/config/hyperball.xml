@@ -9,9 +9,11 @@
           low="0" high="20000" default="20000"
           convert="invert"/>
 
+<!--
   <number id="z" type="slider" arg="-observer-z %"
           _label="Zoom" _low-label="Near" _high-label="Far"
           low="1.125" high="10.0" default="3.0"/>
+-->
 
   <hgroup>
     <vgroup>

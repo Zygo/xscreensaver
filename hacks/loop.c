@@ -1140,7 +1140,7 @@ static void
 init_adam(ModeInfo * mi)
 {
 	loopstruct *lp = &loops[MI_SCREEN(mi)];
-	XPoint      start, dirx, diry;
+	XPoint      start = { 0, 0 }, dirx = { 0, 0 }, diry = { 0, 0 };
 	int         i, j, dir;
 
 #ifdef DELAYDEBUGLOOP
