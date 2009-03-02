@@ -1,0 +1,68 @@
+.TH XScreenSaver 1 "03-Jun-2001 (3.33)" "X Version 11"
+.SH NAME
+xscreensaver-getimage - put some randomly-selected image on the root window
+.SH SYNOPSIS
+.B xscreensaver-getimage
+[\-display \fIhost:display.screen\fP] [\--verbose] window-id
+.SH DESCRIPTION
+The \fIxscreensaver\-getimage\fP program is a helper program for the
+xscreensaver hacks that manipulate images.  This is not a user-level
+command.
+
+This program selects a random image, and puts it on the specified
+window.  This image might be a snapshot of the desktop; or a frame
+captured from the system's video input; or a randomly-selected image
+from disk.
+.SH OPTIONS
+.I xscreensaver-getimage
+reads the \fI~/.xscreensaver\fP file for configuration information.
+It uses these settings:
+.TP 4
+.B grabDesktopImages
+Whether it is acceptable to grab snapshots of the desktop.
+The security paranoid might want to turn this off, to avoid letting
+people see (but not touch!) your desktop while the screen is locked.
+.TP 4
+.B grabVideoFrames
+Whether it is acceptable to grab frames of video from the system's video
+input.  Grabbing of video is done by invoking the
+.BR xscreensaver-getimage-video (1)
+program.
+.TP 4
+.B chooseRandomImages
+Whether it is acceptable to display random images found on disk.
+Selection and loading of images is done by invoking the
+.BR xscreensaver-getimage-file (1)
+program.
+.TP 4
+.B imageDirectory
+When loading images from disk, this is the directory to search.
+The directory will be searched recursively, and all files in it are 
+assumed to be images.
+.PP
+If none of the three options are set to True, then video
+colorbars will be displayed instead.
+.SH BUGS
+If the target window is not the root window, then this program 
+will \fIalways\fP grab a desktop image.  This means that if an 
+image-manipulating xscreensaver mode is run in a normal window,
+it will always operate on a desktop image; it's only when it is
+run in \fI-root\fP mode (or when invoked by xscreensaver) that
+it will load image files or grab video.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-demo (1)
+.BR xscreensaver\-getimage\-file (1)
+.BR xscreensaver\-getimage\-video (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Apr-01
