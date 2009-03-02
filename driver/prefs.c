@@ -244,6 +244,7 @@ static const char * const prefs[] = {
   "timestamp",
   "splash",
   "splashDuration",
+  "quad",
   "demoCommand",
   "prefsCommand",
   "helpURL",
@@ -767,6 +768,7 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("timestamp")	type = pref_bool, b = p->timestamp_p;
       CHECK("splash")		type = pref_bool, b = p->splash_p;
       CHECK("splashDuration")	type = pref_time, t = p->splash_duration;
+      CHECK("quad")		type = pref_bool, b = p->quad_p;
       CHECK("demoCommand")	type = pref_str,  s = p->demo_command;
       CHECK("prefsCommand")	type = pref_str,  s = p->prefs_command;
 /*    CHECK("helpURL")		type = pref_str,  s = p->help_url; */
@@ -1004,6 +1006,7 @@ load_init_file (saver_preferences *p)
   p->nice_inferior  = get_integer_resource ("nice", "Nice");
   p->inferior_memory_limit = get_byte_resource ("memoryLimit", "MemoryLimit");
   p->splash_p       = get_boolean_resource ("splash", "Boolean");
+  p->quad_p         = get_boolean_resource ("quad", "Boolean");
   p->capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
   p->ignore_uninstalled_p = get_boolean_resource ("ignoreUninstalledPrograms",
                                                   "Boolean");

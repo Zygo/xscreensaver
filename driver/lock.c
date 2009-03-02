@@ -949,8 +949,8 @@ xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
   if (error_handler_hit_p) status = 666;
 
   if (p->verbose_p && status != MiscExtGrabStateSuccess)
-    fprintf (stderr, "%s: error: XF86MiscSetGrabKeysState returned %s\n",
-             blurb(),
+    fprintf (stderr, "%s: error: XF86MiscSetGrabKeysState(%d) returned %s\n",
+             blurb(), !lock_p,
              (status == MiscExtGrabStateSuccess ? "MiscExtGrabStateSuccess" :
               status == MiscExtGrabStateLocked  ? "MiscExtGrabStateLocked"  :
               status == MiscExtGrabStateAlready ? "MiscExtGrabStateAlready" :
@@ -1050,7 +1050,7 @@ xfree_lock_mode_switch (saver_info *si, Bool lock_p)
   if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
     return;
 
-  for (screen = 0; screen < si->nscreens; screen++)
+  for (screen = 0; screen < (si->xinerama_p ? 1 : si->nscreens); screen++)
     {
       XSync (si->dpy, False);
       old_handler = XSetErrorHandler (ignore_all_errors_ehandler);

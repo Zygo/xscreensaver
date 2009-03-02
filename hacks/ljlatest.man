@@ -1,0 +1,90 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "17-Jun-99" "X Version 11"
+.SH NAME
+ljlatest - prints the most recent public posts on livejournal.com.
+.SH SYNOPSIS
+.B ljlatest
+[\--verbose]
+[\--count \fIN\fP]
+[\--columns \fIN\fP]
+[\--images]
+[\fIurl\fP]
+.SH DESCRIPTION
+The \fIljlatest\fP script reads the most recent public posts made to
+livejournal.com, and prints them on stdout, after doing a rudimentary
+conversion of HTML to plain text.
+
+This is intended as a replacement for
+.BR fortune (1)
+for use with those
+.BR xscreensaver (1)
+programs that run an external program to generate text.  For example:
+.EX
+phosphor -scale 2 -program 'ljlatest --cols 40'
+starwars -program ljlatest
+.EE
+.SH OPTIONS
+.I ljlatest
+accepts the following options:
+.TP 8
+.B \-\-count \fIN\fP
+How many entries to print; the default is to print all that are available
+in the LiveJournal RSS file (a few hundred.)
+.TP 8
+.B \-\-columns \fIN\fP or \-\-cols \fIN\fP
+Where to wrap lines; default 72 columns.
+.TP 8
+.B \-\-images
+Instead of printing the plain text of the recent entries, print HTML of all
+of the inlined images in the recent entries.  Using this option, you can
+create an HTML page of images recently posted to LiveJournal.
+.TP 8
+.B \-\-verbose \fRor\fP \-v
+Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
+amount of output.
+.TP 8
+.B \fIurl\fP
+Which URL to load; default:
+    http://www.livejournal.com/stats/latest-rss.bml
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B http_proxy\fR or \fPHTTP_PROXY
+to get the default HTTP proxy host and port.
+.SH BUGS
+This program makes it seem like morons have invaded your screen saver.
+
+The output is always ISO-8859-1, regardless of locale.
+.SH SEE ALSO
+.I http://www.livejournal.com/,
+.BR xscreensaver (1),
+.BR fortune (1),
+.BR phosphor (1),
+.BR starwars (1),
+.BR dadadodo (1),
+.BR webcollage (1),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2003 by Jamie Zawinski.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 30-Aug-2003.

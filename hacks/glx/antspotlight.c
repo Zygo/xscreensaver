@@ -84,7 +84,7 @@ static antspotlightstruct *antspotlight = (antspotlightstruct *) NULL;
 #define NUM_SCENES      2
 
 /* draw method for ant */
-Bool draw_ant(float *Material, int mono, int shadow, 
+Bool draw_ant(GLfloat *Material, int mono, int shadow, 
 	      float ant_step, Bool (*sphere)(float), Bool (*cone)(float)) {
   
   float cos1 = cos(ant_step);

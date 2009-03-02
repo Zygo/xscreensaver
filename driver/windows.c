@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,11 +46,6 @@
 #ifdef HAVE_XF86VMODE
 # include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_XF86VMODE */
-
-#ifdef HAVE_XINERAMA
-# include <X11/extensions/Xinerama.h>
-#endif /* HAVE_XINERAMA */
-
 
 /* This file doesn't need the Xt headers, so stub these types out... */
 #undef XtPointer
@@ -463,6 +458,17 @@ save_real_vroot (saver_screen_info *ssi)
       int format;
       unsigned long nitems, bytesafter;
       Window *vrootP = 0;
+      int j;
+
+      /* Skip this window if it is the xscreensaver window of any other
+         screen (this can happen in the Xinerama case.)
+       */
+      for (j = 0; j < si->nscreens; j++)
+        {
+          saver_screen_info *ssi2 = &si->screens[j];
+          if (kids[i] == ssi2->screensaver_window)
+            goto SKIP;
+        }
 
       if (XGetWindowProperty (dpy, kids[i], XA_VROOT, 0, 1, False, XA_WINDOW,
 			      &type, &format, &nitems, &bytesafter,
@@ -481,6 +487,8 @@ save_real_vroot (saver_screen_info *ssi)
 	}
       ssi->real_vroot = kids [i];
       ssi->real_vroot_value = *vrootP;
+    SKIP:
+      ;
     }
 
   XSync (dpy, False);
@@ -915,57 +923,57 @@ get_screen_viewport (saver_screen_info *ssi,
   int dot;
   XF86VidModeModeLine ml;
   int x, y;
-  Bool xinerama_p;
-  Bool placement_only_p = (target_x != -1 && target_y != -1);
+  Bool xinerama_p = si->xinerama_p;
 
-#ifdef HAVE_XINERAMA
-  xinerama_p = (XineramaQueryExtension (si->dpy, &event, &error) &&
-                XineramaIsActive (si->dpy));
-#else  /* !HAVE_XINERAMA */
+#ifndef HAVE_XINERAMA
   /* Even if we don't have the client-side Xinerama lib, check to see if
      the server supports Xinerama, so that we know to ignore the VidMode
      extension -- otherwise a server crash could result.  Yay. */
   xinerama_p = XQueryExtension (si->dpy, "XINERAMA", &error, &event, &error);
-  
 #endif /* !HAVE_XINERAMA */
 
 #ifdef HAVE_XINERAMA
-  if (xinerama_p && placement_only_p)
+  if (xinerama_p)
     {
-      int nscreens = 0;
-      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
-      if (xsi)
+      int mouse_p = (target_x != -1 && target_y != -1);
+      int which = -1;
+      int i;
+
+      /* If a mouse position wasn't passed in, assume we're talking about
+         this screen. */
+      if (!mouse_p)
         {
-          /* Find the screen that contains the mouse. */
-          int which = -1;
-          int i;
-          for (i = 0; i < nscreens; i++)
-            {
-              if (target_x >= xsi[i].x_org &&
-                  target_y >= xsi[i].y_org &&
-                  target_x < xsi[i].x_org + xsi[i].width &&
-                  target_y < xsi[i].y_org + xsi[i].height)
-                which = i;
-              if (verbose_p)
-                {
-                  fprintf (stderr, "%s: %d: xinerama vp: %dx%d+%d+%d",
-                           blurb(), i,
-                           xsi[which].width, xsi[which].height,
-                           xsi[i].x_org, xsi[i].y_org);
-                  if (which == i)
-                    fprintf (stderr, "; mouse at %d,%d",
-                             target_x, target_y);
-                  fprintf (stderr, ".\n");
-                }
-            }
-          if (which == -1) which = 0;  /* didn't find it?  Use the first. */
-          *x_ret = xsi[which].x_org;
-          *y_ret = xsi[which].y_org;
-          *w_ret = xsi[which].width;
-          *h_ret = xsi[which].height;
-          XFree (xsi);
-          return;
+          target_x = ssi->x;
+          target_y = ssi->y;
         }
+
+      /* Find the Xinerama rectangle that contains the mouse position. */
+      for (i = 0; i < si->nscreens; i++)
+        {
+          if (target_x >= si->screens[i].x &&
+              target_y >= si->screens[i].y &&
+              target_x <  si->screens[i].x + si->screens[i].width &&
+              target_y <  si->screens[i].y + si->screens[i].height)
+            which = i;
+        }
+      if (which == -1) which = 0;  /* didn't find it?  Use the first. */
+      *x_ret = si->screens[which].x;
+      *y_ret = si->screens[which].y;
+      *w_ret = si->screens[which].width;
+      *h_ret = si->screens[which].height;
+
+      if (verbose_p)
+        {
+          fprintf (stderr, "%s: %d: xinerama vp: %dx%d+%d+%d",
+                   blurb(), which,
+                   si->screens[which].width, si->screens[which].height,
+                   si->screens[which].x, si->screens[which].y);
+          if (mouse_p)
+            fprintf (stderr, "; mouse at %d,%d", target_x, target_y);
+          fprintf (stderr, ".\n");
+        }
+
+      return;
     }
 #endif /* HAVE_XINERAMA */
 
@@ -1273,7 +1281,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   attrs.backing_pixel = ssi->black_pixel;
   attrs.border_pixel = ssi->black_pixel;
 
-  if (p->debug_p) width = width / 2;
+  if (p->debug_p && !p->quad_p) width = width / 2;
 
   if (!p->verbose_p || printed_visual_info)
     ;
@@ -1481,7 +1489,8 @@ raise_window (saver_info *si,
 
       /* Note!  The server is grabbed, and this will take several seconds
 	 to complete! */
-      fade_screens (si->dpy, current_maps, current_windows,
+      fade_screens (si->dpy, current_maps,
+                    current_windows, si->nscreens,
 		    p->fade_seconds/1000, p->fade_ticks, True, !dont_clear);
 
       free(current_maps);
@@ -1535,33 +1544,34 @@ int
 mouse_screen (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
+  Window pointer_root, pointer_child;
+  int root_x, root_y, win_x, win_y;
+  unsigned int mask;
+  int i;
 
   if (si->nscreens == 1)
     return 0;
-  else
-    {
-      int i;
-      for (i = 0; i < si->nscreens; i++)
-        {
-          saver_screen_info *ssi = &si->screens[i];
-          Window pointer_root, pointer_child;
-          int root_x, root_y, win_x, win_y;
-          unsigned int mask;
-          if (XQueryPointer (si->dpy,
-                             RootWindowOfScreen (ssi->screen),
-                             &pointer_root, &pointer_child,
-                             &root_x, &root_y, &win_x, &win_y, &mask))
-            {
-              if (p->verbose_p)
-                fprintf (stderr, "%s: mouse is on screen %d of %d\n",
-                         blurb(), i, si->nscreens);
-              return i;
-            }
-        }
 
-      /* couldn't figure out where the mouse is?  Oh well. */
-      return 0;
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      if (XQueryPointer (si->dpy, RootWindowOfScreen (ssi->screen),
+                         &pointer_root, &pointer_child,
+                         &root_x, &root_y, &win_x, &win_y, &mask) &&
+          root_x >= ssi->x &&
+          root_y >= ssi->y &&
+          root_x <  ssi->x + ssi->width &&
+          root_y <  ssi->y + ssi->height)
+        {
+          if (p->verbose_p)
+            fprintf (stderr, "%s: mouse is on screen %d of %d\n",
+                     blurb(), i, si->nscreens);
+          return i;
+        }
     }
+
+  /* couldn't figure out where the mouse is?  Oh well. */
+  return 0;
 }
 
 
@@ -1602,8 +1612,8 @@ blank_screen (saver_info *si)
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
-
-      save_real_vroot (ssi);
+      if (ssi->real_screen_p)
+        save_real_vroot (ssi);
       store_vroot_property (si->dpy,
 			    ssi->screensaver_window,
 			    ssi->screensaver_window);
@@ -1678,8 +1688,8 @@ unblank_screen (saver_info *si)
       XUngrabServer (si->dpy);
       XSync (si->dpy, False);			/* ###### (danger over) */
 
-
-      fade_screens (si->dpy, 0, current_windows,
+      fade_screens (si->dpy, 0,
+                    current_windows, si->nscreens,
 		    p->fade_seconds/1000, p->fade_ticks,
 		    False, False);
 

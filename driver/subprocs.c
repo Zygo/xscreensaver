@@ -934,10 +934,15 @@ hack_subproc_environment (saver_screen_info *ssi)
      be the screen on which this particular hack is running -- not the display
      specification which the driver itself is using, since the driver ignores
      its screen number and manages all existing screens.
+
+     Likewise, store a window ID in $XSCREENSAVER_WINDOW -- this will allow
+     us to (eventually) run multiple hacks in Xinerama mode, where each hack
+     has the same $DISPLAY but a different piece of glass.
    */
   saver_info *si = ssi->global;
   const char *odpy = DisplayString (si->dpy);
-  char *ndpy = (char *) malloc(strlen(odpy) + 20);
+  char *ndpy = (char *) malloc (strlen(odpy) + 20);
+  char *nssw = (char *) malloc (40);
   char *s;
 
   strcpy (ndpy, "DISPLAY=");
@@ -949,14 +954,23 @@ hack_subproc_environment (saver_screen_info *ssi)
   while (isdigit(*s)) s++;			/* skip over dpy number */
   while (*s == '.') s++;			/* skip over dot */
   if (s[-1] != '.') *s++ = '.';			/* put on a dot */
-  sprintf(s, "%d", ssi->number);		/* put on screen number */
+  sprintf(s, "%d", ssi->real_screen_number);	/* put on screen number */
+
+  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX",
+           (unsigned long) ssi->screensaver_window);
 
   /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
      any more, right?  It's not Posix, but everyone seems to have it. */
 #ifdef HAVE_PUTENV
   if (putenv (ndpy))
     abort ();
-  /* do not free(ndpy) -- see above. */
+  if (putenv (nssw))
+    abort ();
+
+  /* don't free ndpy/nssw -- some implementations of putenv (BSD 4.4,
+     glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
+     do not.  So we must leak it (and/or the previous setting). Yay.
+   */
 #endif /* HAVE_PUTENV */
 }
 

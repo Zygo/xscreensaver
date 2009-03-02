@@ -127,6 +127,7 @@ ModStruct blocktube_description =
      "A shifting tunnel of reflective blocks", 0, NULL};
 #endif /* USE_MODULES */
 
+#if defined( I_HAVE_XPM )
 static Bool LoadGLTextures(ModeInfo *mi)
 {
     Bool status;
@@ -149,6 +150,7 @@ static Bool LoadGLTextures(ModeInfo *mi)
     }
     return status;
 }
+#endif
 
 static void newTargetColor(void)
 {

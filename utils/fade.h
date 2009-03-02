@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-1997, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,7 +15,7 @@
 extern Colormap copy_colormap (Screen *, Visual *, Colormap from, Colormap to);
 extern void blacken_colormap (Screen *, Colormap cmap);
 extern void fade_screens (Display *dpy,
-			  Colormap *cmaps, Window *black_windows,
+			  Colormap *cmaps, Window *black_windows, int nwindows,
 			  int seconds, int ticks,
 			  Bool out_p, Bool clear_windows);
 #endif /* __FADE_H__ */

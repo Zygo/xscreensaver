@@ -219,7 +219,7 @@
 -	   GL:	   \"Pulsar (textures)\"					      \
 				  pulsar -root -texture -mipmap		      \
 				  -texture_quality -light -fog		    \\n\
-	   GL:			extrusion -root				    \\n\
+-	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
 	   GL:			menger -root				    \\n\
 	   GL:	 \"GFlux\"	gflux -root				    \\n\

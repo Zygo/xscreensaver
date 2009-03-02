@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,6 +57,8 @@ struct saver_preferences {
 
   Bool install_cmap_p;		/* whether we should use our own colormap
 				   when using the screen's default visual. */
+
+  Bool quad_p;			/* whether to run four savers per monitor */
 
   screenhack **screenhacks;	/* the programs to run */
   int screenhacks_count;

@@ -135,6 +135,8 @@ enum {
 /* from exec.c */
 extern void exec_command (const char *shell, const char *command, int nice);
 
+static void hack_subproc_environment (Window preview_window_id, Bool debug_p);
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -3439,6 +3441,8 @@ launch_preview_subproc (state *s)
       {
         close (ConnectionNumber (GDK_DISPLAY()));
 
+        hack_subproc_environment (id, s->debug_p);
+
         usleep (250000);  /* pause for 1/4th second before launching, to give
                              the previous program time to die and flush its X
                              buffer, so we don't get leftover turds on the
@@ -3526,6 +3530,29 @@ hack_environment (state *s)
       if (s->debug_p)
         fprintf (stderr, "%s: added \"%s\" to $PATH\n", blurb(), def_path);
     }
+}
+
+
+static void
+hack_subproc_environment (Window preview_window_id, Bool debug_p)
+{
+  /* Store a window ID in $XSCREENSAVER_WINDOW -- this isn't strictly
+     necessary yet, but it will make programs work if we had invoked
+     them with "-root" and not with "-window-id" -- which, of course,
+     doesn't happen.
+   */
+  char *nssw = (char *) malloc (40);
+  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%X", (unsigned int) preview_window_id);
+
+  /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
+     any more, right?  It's not Posix, but everyone seems to have it. */
+  if (putenv (nssw))
+    abort ();
+
+  if (debug_p)
+    fprintf (stderr, "%s: %s\n", blurb(), nssw);
+
+  /* do not free(nssw) -- see above */
 }
 
 
@@ -4034,6 +4061,7 @@ main (int argc, char **argv)
   Widget toplevel_shell;
   char *real_progname = argv[0];
   char *window_title;
+  char *geom = 0;
   Bool crapplet_p = False;
   char *str;
 
@@ -4127,6 +4155,21 @@ main (int argc, char **argv)
             argv[j] = argv[j+1];
           argc--;
           i--;
+        }
+      else if (argv[i] &&
+               argc > i+1 &&
+               *argv[i+1] &&
+               (!strcmp(argv[i], "-geometry") ||
+                !strcmp(argv[i], "-geom") ||
+                !strcmp(argv[i], "-geo") ||
+                !strcmp(argv[i], "-g")))
+        {
+          int j;
+          geom = argv[i+1];
+          for (j = i; j < argc; j++)  /* remove them from the list */
+            argv[j] = argv[j+2];
+          argc -= 2;
+          i -= 2;
         }
       else if (argv[i] &&
                argc > i+1 &&
@@ -4285,7 +4328,8 @@ main (int argc, char **argv)
         ;
       else
 	{
-	  fprintf (stderr, _("%s: unknown option: %s\n"), real_progname, argv[i]);
+	  fprintf (stderr, _("%s: unknown option: %s\n"), real_progname,
+                   argv[i]);
           fprintf (stderr, "%s: %s\n", real_progname, usage);
           exit (1);
 	}
@@ -4496,6 +4540,9 @@ main (int argc, char **argv)
   free (window_title);
   window_title = 0;
 
+  /* After picking the default size, allow -geometry to override it. */
+  if (geom)
+    gtk_window_parse_geometry (GTK_WINDOW (s->toplevel_widget), geom);
 
   gtk_widget_show (s->toplevel_widget);
   init_icon (GTK_WIDGET (s->toplevel_widget)->window);  /* after `show' */

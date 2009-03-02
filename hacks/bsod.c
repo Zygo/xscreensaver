@@ -2216,6 +2216,7 @@ vms (Display *dpy, Window window, int delay)
     "\n"
     };
   char *args[8];
+  int ids[3];
 
   XGetWindowAttributes (dpy, window, &xgwa);
   ts = make_scrolling_window (dpy, window, "VMS", False);
@@ -2240,17 +2241,22 @@ vms (Display *dpy, Window window, int delay)
   strcpy (args[0], sysname);
   args[0][5] = 0;
 
+  /* Pick three numbers, 1-9, no overlaps. */
+  ids[0] = 1 + (random() % 9);
+  do { ids[1] = 1 + (random() % 9); } while (ids[1]==ids[0]);
+  do { ids[2] = 1 + (random() % 9); } while (ids[2]==ids[0] || ids[2]==ids[1]);
+
   i = strlen(args[0])-1;
   if (i < 6) i++;
-  args[0][i] = '1' + (random() % 9);
+  args[0][i] = '0' + ids[0];
   args[0][i+1] = 0;
 
   for (s = args[0]; *s; s++)
     if (isalpha(*s)) *s = toupper (*s);
 
   args[1] = strdup (args[0]);
-  args[2] = strdup (args[0]); args[2][i] = '1' + (random() % 9);
-  args[3] = strdup (args[0]); args[3][i] = '1' + (random() % 9);
+  args[2] = strdup (args[0]); args[2][i] = '0' + ids[1];
+  args[3] = strdup (args[0]); args[3][i] = '0' + ids[2];
 
   args[4] = strdup (args[1]);
   args[5] = strdup (args[2]);

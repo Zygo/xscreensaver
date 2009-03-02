@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2 -*-                                             */
 /*****************************************************************************/
 /**                   Copyright 1991 by Andreas Stolcke                     **/
 /**               Copyright 1990 by Solbourne Computer Inc.                 **/
@@ -52,13 +53,23 @@
  * - replaced all NULL's with properly cast 0's, 5/6/91
  * - free children list (suggested by Mark Martin <mmm@cetia.fr>), 5/16/91
  * - include X11/Xlib.h and support RootWindowOfScreen, too 9/17/91
+ *
+ * Jamie Zawinski <jwz@jwz.org>, 28-Apr-1997
+ * - use ANSI C
+ *
+ * Jamie Zawinski <jwz@jwz.org>, 3-Sep-2003
+ * - if the environment variable "XSCREENSAVER_WINDOW" is set, use that
+ *   as the root window instead of searching for __SWM_VROOT.
  */
 
 #ifndef _VROOT_H_
 #define _VROOT_H_
+#define _XSCREENSAVER_VROOT_H_
 
 #if !defined(lint) && !defined(SABER)
-static const char vroot_rcsid[] = "#Id: vroot.h,v 1.4 1991/09/30 19:23:16 stolcke Exp stolcke #";
+static const char vroot_rcsid[] =
+ "#Id: vroot.h,v 1.5 2003/09/04 01:04:38 jwz Exp #" "\n"
+ "#Id: vroot.h,v 1.4 1991/09/30 19:23:16 stolcke Exp stolcke #";
 #endif
 
 #include <X11/X.h>
@@ -81,6 +92,19 @@ VirtualRootWindowOfScreen(screen) Screen *screen;
 		int i;
 		Window rootReturn, parentReturn, *children;
 		unsigned int numChildren;
+
+    /* first check for a hex or decimal window ID in the environment */
+    const char *xss_id = getenv("XSCREENSAVER_WINDOW");
+    if (xss_id && *xss_id) {
+      unsigned long id = 0;
+      char c;
+      if (1 == sscanf (xss_id, " 0x%lx %c", &id, &c) ||
+          1 == sscanf (xss_id, " %lu %c",   &id, &c)) {
+        root = (Window) id;
+        save_screen = screen;
+        return root;
+      }
+    }
 
 		root = RootWindowOfScreen(screen);
 

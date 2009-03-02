@@ -295,7 +295,11 @@ think (void)
     return 0;
 }
 
-#define MAXLINES 40
+#define MAXLINES 25
+
+#undef BUFSIZ
+#define BUFSIZ ((MAXLINES + 1) * 100)
+
 
 static void
 talk(int force_erase)
@@ -363,7 +367,7 @@ talk(int force_erase)
 	  (void) strcpy(args[height], p);
 	  if (height == MAXLINES - 1)
 	    {
-	      puts("Message too long!");
+	      /* puts("Message too long!"); */
 	      break;
 	    }
 	  p = p2 + 1;

@@ -133,7 +133,6 @@ xscreensaver_window_p (Display *dpy, Window window)
 
 /* Whether the given window is:
    - the real root window;
-   - the virtual root window;
    - a direct child of the root window;
    - a direct child of the window manager's decorations.
  */
@@ -142,11 +141,7 @@ top_level_window_p (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
   Window root, parent, *kids;
-  Window vroot = VirtualRootWindowOfScreen(screen);
   unsigned int nkids;
-
-  if (window == vroot)
-    return True;
 
   if (!XQueryTree (dpy, window, &root, &parent, &kids, &nkids))
     return False;
@@ -154,8 +149,8 @@ top_level_window_p (Screen *screen, Window window)
   if (window == root)
     return True;
 
-  /* If our direct parent is the root (or *a* root), then yes. */
-  if (parent == root || parent == vroot)
+  /* If our direct parent is the real root window, then yes. */
+  if (parent == root)
     return True;
   else
     {
@@ -181,7 +176,6 @@ top_level_window_p (Screen *screen, Window window)
    */
   return False;
 }
-
 
 
 static Bool error_handler_hit_p = False;
@@ -231,7 +225,7 @@ install_screen_colormaps (Screen *screen)
 {
   int i;
   Display *dpy = DisplayOfScreen (screen);
-  Window vroot, real_root;
+  Window real_root;
   Window parent, *kids = 0;
   unsigned int nkids = 0;
 
@@ -239,8 +233,8 @@ install_screen_colormaps (Screen *screen)
   old_ehandler = XSetErrorHandler (BadWindow_ehandler);
   error_handler_hit_p = False;
 
-  vroot = VirtualRootWindowOfScreen (screen);
-  if (XQueryTree (dpy, vroot, &real_root, &parent, &kids, &nkids))
+  real_root = XRootWindowOfScreen (screen);  /* not vroot */
+  if (XQueryTree (dpy, real_root, &real_root, &parent, &kids, &nkids))
     for (i = 0; i < nkids; i++)
       {
 	XWindowAttributes xgwa;

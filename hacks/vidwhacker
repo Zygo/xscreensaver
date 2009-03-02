@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright (c) 1998-2001 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2003 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -44,11 +44,12 @@ my $screen_width = -1;
 # If you add other programs to this list, please let me know!
 #
 my @displayer_programs = (
-  "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
-  "           -rfg black -rbg black",
-  "xli        -quiet -fullscreen -onroot -center -border black",
-  "xloadimage -quiet -fullscreen -onroot -center -border black",
-  "chbg       -once -xscreensaver -max_grow 4",
+  "xscreensaver-getimage -root -file",
+# "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
+# "           -rfg black -rbg black",
+# "xli        -quiet -fullscreen -onroot -center -border black",
+# "xloadimage -quiet -fullscreen -onroot -center -border black",
+# "chbg       -once -xscreensaver -max_grow 4",
 
 # this lame program wasn't built with vroot.h:
 # "xsri       -scale -keep-aspect -center-horizontal -center-vertical",

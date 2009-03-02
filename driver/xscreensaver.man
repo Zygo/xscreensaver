@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "14-Aug-2003 (4.12)" "X Version 11"
+.TH XScreenSaver 1 "07-Sep-2003 (4.13)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -238,6 +238,10 @@ Whether to display a splash screen at startup.  Default true.
 .TP 8
 .B splashDuration\fP (class \fBTime\fP)
 How long the splash screen should remain visible; default 5 seconds.
+.TP 8
+.B quad\fP (class \fBBoolean\fP)
+If true, then \fIfour\fP screensavers will be run on each monitor.
+Use at your own risk!
 .TP 8
 .B helpURL\fP (class \fBURL\fP)
 The splash screen has a \fIHelp\fP button on it.  When you press it, it will

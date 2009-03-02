@@ -531,16 +531,6 @@ msgstr "Bỏ qua"
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
 msgstr "Để cập nhật, xem tại:  http://www.jwz.org/xscreensaver/"
 
-#: driver/demo-Gtk.c:608
-#, c-format
-msgid "Copyright © 1991-2002 %s"
-msgstr "Copyright © 1991-2002 %s"
-
-#: driver/demo-Gtk.c:610
-#, c-format
-msgid "Copyright  1991-2002 %s"
-msgstr "Copyright (c) 1991-2002 %s"
-
 #: driver/demo-Gtk.c:726
 msgid ""
 "Error:\n"
@@ -5358,7 +5348,3 @@ msgstr ""
 "Phóng to một phần màn hình rồi di chuyển quanh. Với tùy chọn đa ống "
 "kính, kết quả thấy được như là nhìn qua nhiều lớp thấu kính chứ không "
 "phải qua một thấu kính đơn thuần. Do James Macnicol viết."
-
-#~ msgid "Copyright  1991-2002 %s"
-#~ msgstr "Copyright  1991-2002 %s"
-

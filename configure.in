@@ -1880,7 +1880,7 @@ User interface options:
 
   --with-motif            Use the Motif toolkit for the user interface
                           (not recommended.)],
-  [with_motif="$withval"; with_motif_req="$withval"],[with_motif=yes])
+  [with_motif="$withval"; with_motif_req="$withval"],[with_motif=no])
 
 HANDLE_X_PATH_ARG(with_motif, --with-motif, Motif)
 
@@ -3374,7 +3374,7 @@ if test \! -z "$libdir" ; then
 fi
 
 
-PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
+PREFERRED_DEMO_PROGRAM=''
 ALL_DEMO_PROGRAMS=
 if test "$have_motif" = yes; then
   PREFERRED_DEMO_PROGRAM=xscreensaver-demo-Xm
@@ -3710,10 +3710,30 @@ if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
 fi
 
+motif_warn2() {
+  warn2 'Though the Motif front-end to xscreensaver is still'
+  warn2 'maintained, it is no longer being updated with new'
+  warn2 'features: all new development on the xscreensaver-demo'
+  warn2 'program is happening in the GTK version, and not in the'
+  warn2 'Motif version.  It is recommended that you build against'
+  warn2 'GTK instead of Motif.  See <http://www.gtk.org/>.'
+}
 
 if test "$have_motif" = no -a "$have_gtk" = no; then
-  warnL "Neither Motif nor Gtk seem to be available;"
-  warn2 "the \`xscreensaver-demo' program requires one of these."
+
+  if test "$with_motif" = yes; then
+    warnL "Neither the GTK nor Motif libraries were found; the"
+    warn2 "\`xscreensaver-demo' program requires one of these."
+    echo ''
+    motif_warn2
+  else
+    warnL "The GTK libraries do not seem to be available; the"
+    warn2 "\`xscreensaver-demo' program requires them."
+    echo ''
+    warn2 'You can use Motif or Lesstif instead of GTK (use the'
+    warn2 "\`--with-motif' option) but that is NOT recommended."
+    motif_warn2
+  fi
 
 elif test "$with_motif_req" = yes -a "$have_motif" = no ; then
   warnL "Use of Motif was requested, but it wasn't found;"
@@ -3732,13 +3752,10 @@ elif test "$jurassic_gtk" = yes ; then
     warnL "Gtk was found on this system, but it is version $v;"
   fi
 
-  warn2 "Gtk $pref_gtk or newer is required.  Motif will be used instead."
+  warn2 "Gtk $pref_gtk or newer is required."
 
 elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
   warnL "Use of Gtk was requested, but it wasn't found."
-  if test "$have_motif" = yes; then
-    warn2 "Motif will be used instead."
-  fi
 fi
 
 if test "$gtk2_halfassed" != no ; then
@@ -3818,12 +3835,7 @@ fi
 if test "$have_motif" = yes -a "$have_gtk" = no ; then
   warn  'Motif is being used, and GTK is not.'
   echo  ''
-  warn2 'Though the Motif front-end to xscreensaver is still'
-  warn2 'maintained, it is no longer being updated with new'
-  warn2 'features: all new development on the xscreensaver-demo'
-  warn2 'program is happening in the GTK version, and not in the'
-  warn2 'Motif version.  It is recommended that you build against'
-  warn2 'GTK instead of Motif.  See <http://www.gtk.org/>.'
+  motif_warn2
 fi
 
 

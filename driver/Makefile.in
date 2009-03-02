@@ -116,9 +116,9 @@ NOLOCK_SRCS_1	= lock.c
 NOLOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c \
-		  test-apm.c test-fade.c xdpyinfo.c
+		  test-apm.c test-fade.c test-xinerama.c xdpyinfo.c
 TEST_EXES	= test-passwd   test-uid   test-xdpms   test-grab \
-		  test-apm   test-fade   xdpyinfo
+		  test-apm   test-fade   test-xinerama   xdpyinfo
 
 MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
@@ -338,12 +338,13 @@ munge-scripts: $(SCRIPTS)
 	perl="${PERL}" ;						\
 	rm -f $$tmp ;							\
 	for program in $(SCRIPTS); do					\
-	  echo "adjusting location of perl in $$program..." ;		\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
 	      < $(srcdir)/$$program > $$tmp ;				\
 	  if cmp -s $(srcdir)/$$program $$tmp ; then			\
+	    echo "$$program unchanged" ;				\
 	    true ;							\
 	  else								\
+	    echo "$$program: setting interpreter to $$perl" ;		\
 	    cat $$tmp > ./$$program ;					\
 	  fi ;								\
 	done ;								\
@@ -866,8 +867,14 @@ xscreensaver-command: $(CMD_OBJS)
 
 
 xscreensaver-demo: @PREFERRED_DEMO_PROGRAM@
-	cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@
-#	$(INSTALL_PROGRAM) @PREFERRED_DEMO_PROGRAM@ $@
+	@if [ "@PREFERRED_DEMO_PROGRAM@" = "" ]; then			\
+	  echo "WARNING: neither GTK nor Motif are available,"		\
+	       "therefore no xscreensaver-demo!"		      ; \
+	  rm -f $@@EXEEXT@					      ;	\
+	else								\
+	  echo cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
+	       cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
+	fi
 
 xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) \
@@ -898,6 +905,10 @@ test-xdpms: test-xdpms.o
 	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(LIBS) $(X_LIBS) $(XDPMS_LIBS) \
 	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
+test-xinerama: test-xinerama.o
+	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(LIBS) $(X_LIBS) $(SAVER_LIBS)\
+	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+
 test-grab: test-grab.o
 	$(CC) $(LDFLAGS) -o $@ test-grab.o $(SAVER_LIBS)
 
@@ -925,23 +936,20 @@ xdpyinfo: xdpyinfo.o
 
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
-demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
 demo-Gtk.o: $(srcdir)/prefs.h
 demo-Gtk.o: $(srcdir)/remote.h
+demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk-support.o: ../config.h
 demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: ../config.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-stubs.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-widgets.h
-demo-Xm.o: XScreenSaver_ad.h
 demo-Xm.o: ../config.h
-demo-Xm.o: $(srcdir)/prefs.h
-demo-Xm.o: $(srcdir)/remote.h
 demo-Xm-widgets.o: ../config.h
 dpms.o: ../config.h
 dpms.o: $(srcdir)/prefs.h
@@ -973,12 +981,13 @@ test-fade.o: ../config.h
 test-fade.o: $(srcdir)/prefs.h
 test-fade.o: $(srcdir)/xscreensaver.h
 test-grab.o: ../config.h
-test-passwd.o: XScreenSaver_ad.h
 test-passwd.o: ../config.h
 test-passwd.o: $(srcdir)/prefs.h
+test-passwd.o: XScreenSaver_ad.h
 test-passwd.o: $(srcdir)/xscreensaver.h
 test-uid.o: ../config.h
 test-xdpms.o: ../config.h
+test-xinerama.o: ../config.h
 timers.o: ../config.h
 timers.o: $(srcdir)/prefs.h
 timers.o: $(srcdir)/xscreensaver.h
@@ -990,9 +999,9 @@ xscreensaver-command.o: $(srcdir)/remote.h
 xscreensaver-getimage.o: ../config.h
 xscreensaver-getimage.o: XScreenSaver_ad.h
 xscreensaver-getimage.o: $(srcdir)/prefs.h
-xscreensaver.o: XScreenSaver_ad.h
 xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: XScreenSaver_ad.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
 xset.o: ../config.h
 xset.o: $(srcdir)/prefs.h

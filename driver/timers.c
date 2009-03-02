@@ -339,6 +339,8 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
       int root_x, root_y, x, y;
       unsigned int mask;
 
+      if (!ssi->real_screen_p) continue;
+
       if (!XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
                           &root_x, &root_y, &x, &y, &mask))
         {
