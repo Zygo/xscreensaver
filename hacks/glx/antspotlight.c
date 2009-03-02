@@ -67,6 +67,7 @@ GLfloat max_tx, max_ty;
 GLfloat qw = QW, qh = QH; /* for the quad we'll draw */
 GLfloat qx = -6 , qy = 6;
 int mono = 0, wire = 0, ticks = 0;
+GLuint screentexture;
 
 typedef struct {
   GLint       WindH, WindW;
@@ -140,7 +141,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   if(!shadow) {
     glBegin(GL_POINTS);
-    glColor3fv(mono ? MaterialGray6 : MaterialRed);
+    glColor3fv(mono ? MaterialGray6 : MaterialGray5);
     glVertex3f(0.40, 0.70, 0.40);
     glVertex3f(0.40, 0.70, -0.40);
     glEnd();
@@ -202,10 +203,7 @@ Bool draw_ant(GLfloat *Material, int mono, int shadow,
 
   if(!shadow) {
     glBegin(GL_POINTS);
-    if(mono)
-      glColor3fv(MaterialGray8);
-    else
-      glColor3fv(MaterialMagenta);
+    glColor3fv(MaterialGray5);
     glVertex3f(-0.20 + 0.05 * cos1, 0.25 + 0.1 * sin1, 0.45);
     glVertex3f(-0.20 + 0.05 * cos2, 0.00 + 0.1 * sin2, 0.45);
     glVertex3f(-0.20 + 0.05 * cos3, -0.25 + 0.1 * sin3, 0.45);
@@ -240,7 +238,7 @@ static Bool mySphere2(float radius) {
 
   if((quadObj = gluNewQuadric()) == 0)
 	return False;
-  gluQuadricDrawStyle(quadObj, (GLenum) GLU_SILHOUETTE);
+  gluQuadricDrawStyle(quadObj, (GLenum) GLU_LINE);
   gluSphere(quadObj, radius, 16, 8);
   gluDeleteQuadric(quadObj);
 
@@ -264,6 +262,7 @@ void draw_board(void) {
   double centertex[2];
 
   glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, screentexture);
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray6);
 
   /* draw mesh */
@@ -345,7 +344,7 @@ void find_goal(void) {
     ant->goal[1] = 0.0;
     ant->goal[2] = random()%((int)(boardsize+0.5)-2) - boardsize/2.0 + 1.0;
   }
-  while(distance(ant->position, ant->goal) < 1.0);
+  while(distance(ant->position, ant->goal) < 2.0);
 }
 
 /* construct our ant */
@@ -698,7 +697,10 @@ void init_antspotlight(ModeInfo *mi) {
   else
     MI_CLEARWINDOW(mi);
 
+  glGenTextures(1, &screentexture);
+  glBindTexture(GL_TEXTURE_2D, screentexture);
   get_snapshot(mi);
+
   build_ant();
   mono = MI_IS_MONO(mi);
   wire = MI_IS_WIREFRAME(mi);
@@ -732,7 +734,7 @@ void draw_antspotlight(ModeInfo * mi) {
   /* position camera */
 
   /* follow focused ant */
-  glTranslatef(0.0, 0.0, -10.0 - mag);
+  glTranslatef(0.0, 0.0, -6.0 - mag);
   glRotatef(35.0, 1.0, 0.0, 0.0);
   gltrackball_rotate(mp->trackball);
   glTranslatef(-ant->position[0], ant->position[1], -ant->position[2]);

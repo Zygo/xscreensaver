@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001, 2002, 2003 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2004 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1479,8 +1479,7 @@ get_image (Screen *screen,
       video_p = False;
       image_p = True;
     }
-
-  if (!dir || !*dir)
+  else if (!dir || !*dir)
     {
       if (verbose_p && image_p)
         fprintf (stderr,

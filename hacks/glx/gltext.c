@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001, 2002, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -152,6 +152,32 @@ gl_init (ModeInfo *mi)
 }
 
 
+/* The GLUT font only has ASCII characters in them, so do what we can to
+   convert Latin1 characters to the nearest ASCII equivalent... 
+ */
+static void
+latin1_to_ascii (char *s)
+{
+  unsigned char *us = (unsigned char *) s;
+  const unsigned char ascii[95] = {
+    '!', 'C', '#', '#', 'Y', '|', 'S', '_', 'C', '?', '<', '=', '-', 'R', '_',
+    '?', '?', '2', '3', '\'','u', 'P', '.', ',', '1', 'o', '>', '?', '?', '?',
+    '?', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'C', 'E', 'E', 'E', 'E', 'I', 'I',
+    'I', 'I', 'D', 'N', 'O', 'O', 'O', 'O', 'O', 'x', '0', 'U', 'U', 'U', 'U',
+    'Y', 'p', 'S', 'a', 'a', 'a', 'a', 'a', 'a', 'e', 'c', 'e', 'e', 'e', 'e',
+    'i', 'i', 'i', 'i', 'o', 'n', 'o', 'o', 'o', 'o', 'o', '/', 'o', 'u', 'u',
+    'u', 'u', 'y', 'p', 'y' };
+  while (*us)
+    {
+      if (*us >= 161)
+        *us = ascii[*us - 161];
+      else if (*us > 127)
+        *us = '?';
+      us++;
+    }
+}
+
+
 static void
 parse_text (ModeInfo *mi)
 {
@@ -211,6 +237,8 @@ parse_text (ModeInfo *mi)
       if (!*tp->text)
         sprintf (tp->text, "strftime error:\n%s", text_fmt);
     }
+
+  latin1_to_ascii (tp->text);
 }
 
 

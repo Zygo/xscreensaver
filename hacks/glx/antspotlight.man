@@ -23,9 +23,14 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
+.TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.
-In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+.TP 8
+.B \-delay \fImicroseconds\fP
+The delay specified by this option affects the speed of the animation (and the
+computation workload on the machine).   You can use \fB\-delay 0\fP in 
+conjunction with \fB\-fps\fP, and this can be an interesting benchmark of 
 your GL performance.
 .SH ENVIRONMENT
 .PP

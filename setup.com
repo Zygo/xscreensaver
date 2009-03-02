@@ -40,6 +40,7 @@ $ flow		:== $'mydir'flow
 $ fluidballs	:== $'mydir'fluidballs
 $ fontglide	:== $'mydir'fontglide
 $ forest	:== $'mydir'forest
+$ fuzzyflakes	:== $'mydir'fuzzyflakes
 $ galaxy	:== $'mydir'galaxy
 $ goop		:== $'mydir'goop
 $ grav		:== $'mydir'grav

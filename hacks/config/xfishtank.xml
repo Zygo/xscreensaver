@@ -5,11 +5,11 @@
   <command arg="-d"/>
   <command arg="-s"/>
 
-  <number id="speed" type="slider" arg="-i %"
+  <number id="aspeed" type="slider" arg="-i %"
             _label="Animation Speed" _low-label="Slow" _high-label="Fast"
             low="0.0" high="1.0" default="0.2"/>
 
-  <number id="speed" type="slider" arg="-r %"
+  <number id="fspeed" type="slider" arg="-r %"
             _label="Fish Speed" _low-label="Slow" _high-label="Fast"
             low="0.0" high="1.0" default="0.2"/>
 

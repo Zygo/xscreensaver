@@ -6,7 +6,6 @@
 
   <!-- #### write me -->
 
-  <command arg="-root"/>
   <command arg="-autopilot"/>
   <command arg="-nogui"/>
   <command arg="-delay 10000"/>

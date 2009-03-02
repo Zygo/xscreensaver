@@ -54,7 +54,6 @@ typedef struct _ball {
   int h;
 } Ball;
 
-static int delay;
 Paddle l_paddle;
 Paddle r_paddle;
 Ball ball;
@@ -254,9 +253,6 @@ init_pong (Display *dpy, Window window)
 #if 0
   }
 #endif
-
-  delay = get_integer_resource ("delay", "Integer");
-  if (delay < 0) delay = 0;
 
   /*Init the paddles*/
   l_paddle.x = 8;
@@ -480,7 +476,6 @@ char *progclass = "pong";
 char *defaults [] = {
   ".background: black",
   ".foreground: white",
-  "*delay:	10000",
   "*speed:      6",
   ANALOGTV_DEFAULTS
   "*TVContrast:      150",
@@ -488,7 +483,6 @@ char *defaults [] = {
 };
 
 XrmOptionDescRec options [] = {
-  { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-percent",         ".percent",     XrmoptionSepArg, 0 },
   { "-speed",           ".speed",     XrmoptionSepArg, 0 },
   ANALOGTV_OPTIONS

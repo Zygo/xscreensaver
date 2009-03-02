@@ -1,4 +1,4 @@
-/* dangerball, Copyright (c) 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>
+/* dangerball, Copyright (c) 2001-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

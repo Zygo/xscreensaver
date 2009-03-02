@@ -36,6 +36,7 @@
 "*mitSaverExtension:	False",
 "*xidleExtension:	True",
 "*procInterrupts:	True",
+"GetViewPortIsFullOfLies: False",
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
@@ -202,6 +203,7 @@
 				pong -root				    \\n\
 				wormhole -root				    \\n\
 				pacman -root				    \\n\
+				fuzzyflakes -root			    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -245,7 +247,7 @@
 	   GL:			glsnake -root				    \\n\
 	   GL:			boxed -root				    \\n\
 	   GL:	\"GLForestFire\"		glforestfire -root		    \\n\
--	   GL:	\"GLForestFire (rain)\"	glforestfire -root -rain	    \\n\
+-	   GL:	\"GLForestFire (rain)\"	glforestfire -root -count 0	    \\n\
 	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
 	   GL:			spheremonics -root			    \\n\
@@ -258,8 +260,8 @@
 	   GL:			bouncingcow -root			    \\n\
 	   GL:			jigglypuff -root -random		    \\n\
 	   GL:			klein -root -random			    \\n\
-	   GL:	\"HyperTorus (striped)\"	hypertorus -root		    \\n\
-	   GL:	\"HyperTorus (solid)\"	hypertorus -root -solid -transp	    \\n\
+	   GL:	\"HyperTorus (striped)\" hypertorus -root			    \\n\
+	   GL:	\"HyperTorus (solid)\"   hypertorus -root -solid -transparent \\n\
 	   GL:			glmatrix -root				    \\n\
 	   GL:			cubestorm -root				    \\n\
 	   GL:			glknots -root				    \\n\
@@ -274,6 +276,7 @@
                                 mirrorblob -root -colour -no-texture	    \\n\
 	   GL:			blinkbox -root				    \\n\
 	   GL:			noof -root				    \\n\
+	   GL:			polyhedra -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -292,7 +295,9 @@
 -				electricsheep                               \\n\
 -				cosmos -root                                \\n\
 -	   GL:                  sphereEversion --root                       \\n\
--	   GL:                  fireflies -root                             \\n",
+-	   GL:                  fireflies -root                             \\n\
+-	   GL:                  antinspect -root                            \\n\
+-	   GL:                  providence -root                            \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.initialDelay:		0:00:00",
 "XScreenSaver.windowCreationTimeout:	0:00:30",
@@ -487,4 +492,5 @@
 "*hacks.fontglide.name:      FontGlide",
 "*hacks.mirrorblob.name:     MirrorBlob",
 "*hacks.blinkbox.name:       BlinkBox",
+"*hacks.fuzzyflakes.name:    FuzzyFlakes",
 "*hacks.documentation.isInstalled: True",

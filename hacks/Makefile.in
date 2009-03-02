@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -101,7 +101,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
-		  mismunch.c pacman.c
+		  mismunch.c pacman.c fuzzyflakes.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -128,7 +128,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
 		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
-		  mismunch.o pacman.p
+		  mismunch.o pacman.o fuzzyflakes.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -147,7 +147,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
-		  pacman \
+		  pacman fuzzyflakes \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -192,7 +192,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          zoom.man halftone.man eruption.man metaballs.man \
 		  barcode.man piecewise.man cloudlife.man ljlatest.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
-		  wormhole.man mismunch.man pacman.man
+		  wormhole.man mismunch.man pacman.man fuzzyflakes.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -782,6 +782,11 @@ wormhole: 	wormhole.o	$(HACK_OBJS)
 mismunch:	mismunch.o	$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
+fuzzyflakes:	fuzzyflakes.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+
+
 # The rules for those hacks which follow the `xlockmore' API.
 #
 
@@ -1087,6 +1092,8 @@ forest.o: ../config.h
 forest.o: $(srcdir)/screenhack.h
 forest.o: $(srcdir)/xlockmore.h
 forest.o: $(srcdir)/xlockmoreI.h
+fuzzyflakes.o: ../config.h
+fuzzyflakes.o: $(srcdir)/screenhack.h
 galaxy.o: ../config.h
 galaxy.o: $(srcdir)/screenhack.h
 galaxy.o: $(srcdir)/xlockmore.h

@@ -17,7 +17,7 @@
           _label="Length" _low-label="Short" _high-label="Long"
           low="100" high="100000" default="25000"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Sustain" _low-label="0 Seconds" _high-label="1 Minute"
           low="0" high="60" default="1"/>
 

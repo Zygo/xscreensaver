@@ -24,7 +24,7 @@
            _label="Friction" _low-label="Clay" _high-label="Rubber"
           low="0.2" high="1.0" default="0.97"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="100000" default="10000"
           convert="invert"/>

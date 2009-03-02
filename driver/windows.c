@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,6 +46,10 @@
 #ifdef HAVE_XF86VMODE
 # include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_XF86VMODE */
+
+#ifdef HAVE_XINERAMA
+# include <X11/extensions/Xinerama.h>
+#endif /* HAVE_XINERAMA */
 
 /* This file doesn't need the Xt headers, so stub these types out... */
 #undef XtPointer
@@ -166,6 +170,55 @@ ungrab_mouse(saver_info *si)
 }
 
 
+/* Apparently there is this program called "rdesktop" which is a windows
+   terminal server client for Unix.  It would seem that this program holds
+   the keyboard GRABBED the whole time it has focus!  This is, of course,
+   completely idiotic: the whole point of grabbing is to get events when
+   you do *not* have focus, so grabbing *only when* you have focus is
+   completely redundant -- unless your goal is to make xscreensaver not
+   able to ever lock the screen when your program is running.
+
+   If xscreensaver blanks while rdesktop still has a keyboard grab, then
+   when we try to prompt for the password, we won't get the characters:
+   they'll be typed into rdesktop.
+
+   Perhaps rdesktop will release its keyboard grab if it loses focus?
+   What the hell, let's give it a try.  If we fail to grab the keyboard
+   four times in a row, we forcibly set focus to "None" and try four
+   more times.  (We don't touch focus unless we're already having a hard
+   time getting a grab.)
+ */
+static void
+nuke_focus (saver_info *si, int screen_no)
+{
+  saver_preferences *p = &si->prefs;
+  Window focus = 0;
+  int rev = 0;
+
+  XGetInputFocus (si->dpy, &focus, &rev);
+
+  if (p->verbose_p)
+    {
+      char w[255], r[255];
+
+      if      (focus == PointerRoot) strcpy (w, "PointerRoot");
+      else if (focus == None)        strcpy (w, "None");
+      else    sprintf (w, "0x%lx", (unsigned long) focus);
+
+      if      (rev == RevertToParent)      strcpy (r, "RevertToParent");
+      else if (rev == RevertToPointerRoot) strcpy (r, "RevertToPointerRoot");
+      else if (rev == RevertToNone)        strcpy (r, "RevertToNone");
+      else    sprintf (r, "0x%x", rev);
+
+      fprintf (stderr, "%s: %d: removing focus from %s / %s.\n",
+               blurb(), screen_no, w, r);
+    }
+
+  XSetInputFocus (si->dpy, None, RevertToNone, CurrentTime);
+  XSync (si->dpy, False);
+}
+
+
 static Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
                          int screen_no)
@@ -173,6 +226,9 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
   Status mstatus = 0, kstatus = 0;
   int i;
   int retries = 4;
+  Bool focus_fuckus = False;
+
+ AGAIN:
 
   for (i = 0; i < retries; i++)
     {
@@ -186,8 +242,17 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
     }
 
   if (kstatus != GrabSuccess)
-    fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
-             blurb(), grab_string(kstatus));
+    {
+      fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
+               blurb(), grab_string(kstatus));
+
+      if (! focus_fuckus)
+        {
+          focus_fuckus = True;
+          nuke_focus (si, screen_no);
+          goto AGAIN;
+        }
+    }
 
   for (i = 0; i < retries; i++)
     {
@@ -917,22 +982,23 @@ get_screen_viewport (saver_screen_info *ssi,
   int w = WidthOfScreen (ssi->screen);
   int h = HeightOfScreen (ssi->screen);
 
-#ifdef HAVE_XF86VMODE
+# ifdef HAVE_XF86VMODE
   saver_info *si = ssi->global;
+  saver_preferences *p = &si->prefs;
   int event, error;
   int dot;
   XF86VidModeModeLine ml;
   int x, y;
   Bool xinerama_p = si->xinerama_p;
 
-#ifndef HAVE_XINERAMA
+#  ifndef HAVE_XINERAMA
   /* Even if we don't have the client-side Xinerama lib, check to see if
      the server supports Xinerama, so that we know to ignore the VidMode
      extension -- otherwise a server crash could result.  Yay. */
   xinerama_p = XQueryExtension (si->dpy, "XINERAMA", &error, &event, &error);
-#endif /* !HAVE_XINERAMA */
+#  endif /* !HAVE_XINERAMA */
 
-#ifdef HAVE_XINERAMA
+#  ifdef HAVE_XINERAMA
   if (xinerama_p)
     {
       int mouse_p = (target_x != -1 && target_y != -1);
@@ -975,7 +1041,7 @@ get_screen_viewport (saver_screen_info *ssi,
 
       return;
     }
-#endif /* HAVE_XINERAMA */
+#  endif /* HAVE_XINERAMA */
 
   if (!xinerama_p &&  /* Xinerama + VidMode = broken. */
       XF86VidModeQueryExtension (si->dpy, &event, &error) &&
@@ -1025,6 +1091,45 @@ get_screen_viewport (saver_screen_info *ssi,
                *w_ret, *h_ret, *x_ret, *y_ret);
 
 
+      if (p->getviewport_full_of_lies_p)
+        {
+          /* XF86VidModeGetViewPort() tends to be full of lies on laptops
+             that have a docking station or external monitor that runs in
+             a different resolution than the laptop's screen:
+
+                 http://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=81593
+                 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=208417
+                 http://bugs.xfree86.org/show_bug.cgi?id=421
+
+             The XFree86 developers have closed the bug. As far as I can
+             tell, their reason for this was, "this is an X server bug,
+             but it's pretty hard to fix. Therefore, we are closing it."
+
+             So, now there's a preference item for those unfortunate users to
+             tell us not to trust a word that XF86VidModeGetViewPort() says.
+           */
+          static int warned_once = 0;
+          if (!warned_once && verbose_p)
+            {
+              warned_once = 1;
+              fprintf (stderr,
+                  "%s: %d: XF86VidModeGetViewPort() says vp is %dx%d+%d+%d;\n"
+                  "%s: %d:     assuming that is a pack of lies;\n"
+                  "%s: %d:     using %dx%d+0+0 instead.\n",
+                       blurb(), ssi->number,
+                       *w_ret, *h_ret, *x_ret, *y_ret,
+                       blurb(), ssi->number,
+                       blurb(), ssi->number, w, h);
+            }
+
+          *x_ret = 0;
+          *y_ret = 0;
+          *w_ret = w;
+          *h_ret = h;
+          return;
+        }
+
+
       /* Apparently, though the server stores the X position in increments of
          1 pixel, it will only make changes to the *display* in some other
          increment.  With XF86_SVGA on a Thinkpad, the display only updates
@@ -1052,7 +1157,7 @@ get_screen_viewport (saver_screen_info *ssi,
          will still look pretty stupid -- for example, "slidescreen" will cut
          off the left and right edges of the grid, etc.
       */
-# define FUDGE 16
+#  define FUDGE 16
       if (x > 0 && x < w - ml.hdisplay)  /* not at left edge or right edge */
         {
           /* Round X position down to next lower multiple of FUDGE.
@@ -1061,7 +1166,7 @@ get_screen_viewport (saver_screen_info *ssi,
           *x_ret = ((x - 1) / FUDGE) * FUDGE;
           *w_ret += (FUDGE * 2);
         }
-# undef FUDGE
+#  undef FUDGE
 
       if (*x_ret != x ||
           *y_ret != y ||
@@ -1076,7 +1181,7 @@ get_screen_viewport (saver_screen_info *ssi,
       return;
     }
 
-#endif /* HAVE_XF86VMODE */
+# endif /* HAVE_XF86VMODE */
 
   *x_ret = 0;
   *y_ret = 0;
@@ -1430,6 +1535,131 @@ initialize_screensaver_window (saver_info *si)
   int i;
   for (i = 0; i < si->nscreens; i++)
     initialize_screensaver_window_1 (&si->screens[i]);
+}
+
+
+/* Called when the RANDR (Resize and Rotate) extension tells us that the
+   size of the screen has changed while the screen was blanked.  If we
+   don't do this, then the screen saver will no longer fully fill the
+   screen, and some of the underlying desktop may be visible.
+ */
+void
+resize_screensaver_window (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  int i;
+
+  /* First update the size info in the saver_screen_info structs.
+   */
+
+# ifdef HAVE_XINERAMA
+  if (si->xinerama_p)
+    {
+      /* As of XFree86 4.3.0, the RANDR and XINERAMA extensions cannot coexist.
+         However, maybe they will someday, so I'm guessing that the right thing
+         to do in that case will be to re-query the Xinerama rectangles after
+         a RANDR size change is received: presumably, if the resolution of one
+         or more of the monitors has changed, then the Xinerama rectangle
+         corresponding to that monitor will also have been updated.
+       */
+      int nscreens;
+      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
+      if (nscreens != si->nscreens) abort();
+      if (!xsi) abort();
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          if (p->verbose_p &&
+              (ssi->x      != xsi[i].x_org ||
+               ssi->y      != xsi[i].y_org ||
+               ssi->width  != xsi[i].width ||
+               ssi->height != xsi[i].height))
+            fprintf (stderr,
+                   "%s: %d: resize xinerama from %dx%d+%d+%d to %dx%d+%d+%d\n",
+                     blurb(), i,
+                     ssi->width,   ssi->height,   ssi->x,       ssi->y,
+                     xsi[i].width, xsi[i].height, xsi[i].x_org, xsi[i].y_org);
+
+          ssi->x      = xsi[i].x_org;
+          ssi->y      = xsi[i].y_org;
+          ssi->width  = xsi[i].width;
+          ssi->height = xsi[i].height;
+        }
+      XFree (xsi);
+    }
+  else
+# endif /* HAVE_XINERAMA */
+    {
+      /* Not Xinerama -- get the real sizes of the root windows. */
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          XWindowAttributes xgwa;
+          XGetWindowAttributes (si->dpy, RootWindowOfScreen (ssi->screen),
+                                &xgwa);
+
+          if (p->verbose_p &&
+              (ssi->x      != xgwa.x ||
+               ssi->y      != xgwa.y ||
+               ssi->width  != xgwa.width ||
+               ssi->height != xgwa.height))
+            fprintf (stderr,
+                     "%s: %d: resize screen from %dx%d+%d+%d to %dx%d+%d+%d\n",
+                     blurb(), i,
+                     ssi->width, ssi->height, ssi->x, ssi->y,
+                     xgwa.width, xgwa.height, xgwa.x, xgwa.y);
+
+          ssi->x      = xgwa.x;
+          ssi->y      = xgwa.y;
+          ssi->width  = xgwa.width;
+          ssi->height = xgwa.height;
+        }
+    }
+
+  /* Next, ensure that the screensaver windows are the right size, taking
+     into account both the new size of the screen in question's root window,
+     and any viewport within that.
+   */
+
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      XWindowAttributes xgwa;
+      XWindowChanges changes;
+      int x, y, width, height;
+      unsigned int changesmask = CWX|CWY|CWWidth|CWHeight|CWBorderWidth;
+
+      XGetWindowAttributes (si->dpy, ssi->screensaver_window, &xgwa);
+      get_screen_viewport (ssi, &x, &y, &width, &height, -1, -1,
+                           (p->verbose_p && !si->screen_blanked_p));
+      if (xgwa.x == x &&
+          xgwa.y == y &&
+          xgwa.width  == width &&
+          xgwa.height == height)
+        continue;  /* no change! */
+
+      changes.x = x;
+      changes.y = y;
+      changes.width  = width;
+      changes.height = height;
+      changes.border_width = 0;
+
+      if (p->debug_p && !p->quad_p) changes.width = changes.width / 2;
+
+      if (p->verbose_p)
+        fprintf (stderr,
+                 "%s: %d: resize 0x%lx from %dx%d+%d+%d to %dx%d+%d+%d\n",
+                 blurb(), i, (unsigned long) ssi->screensaver_window,
+                 xgwa.width, xgwa.height, xgwa.x, xgwa.y,
+                 width, height, x, y);
+      if (! safe_XConfigureWindow (si->dpy, ssi->screensaver_window,
+                                   changesmask, &changes))
+        {
+          fprintf (stderr,
+    "%s: %d: someone horked our saver window (0x%lx)!  Unable to resize it!\n",
+                   blurb(), i, (unsigned long) ssi->screensaver_window);
+        }
+    }
 }
 
 

@@ -65,7 +65,7 @@ there's no need to recompile or reinstall anything.
 Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing
 magic about these: they are just programs that draw on the root window.
-More than 175 such programs are included.  For details, see the
+More than 180 such programs are included.  For details, see the
 xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -76,6 +76,24 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.15:   * New hacks, `polyhedra', `fuzzyflakes', `antinspect',
+                        and `providence'.
+                      * Minor updates to `webcollage', `bsod', `endgame',
+                        `antspotlight', `xmatrix', and `glmatrix'.
+                      * Added support for the RANDR (Resize and Rotate)
+                        extension to detect when the size of the desktop has
+                        been changed while xscreensaver is already running.
+                      * Possibly-futile attempt to work around "rdesktop"
+                        focus/grab idiocy.
+                      * Made `xscreensaver-getimage -file' still work even if
+                        imageDirectory is unset.
+                      * Convert Latin1 to ASCII in `starwars' and `phosphor'
+                        (since the GLUT font only has ASCII glyphs.)
+                      * Fixed randomization in `noof'.
+                      * Added "GetViewPortIsFullOfLies" preference to work
+                        around longstanding XFree86 bug #421.
+                      * Made `sonar' subnet pinging work properly on bigendian
+                        machines (e.g., PPC.)
 Changes since 4.14:   * New hacks, `wormhole', `mismunch', `noof', and
                         `pacman'.
                       * `phosphor' and `apple2' include vt100 emulators now:

@@ -264,6 +264,8 @@ xml_get_float (xmlNodePtr node, const xmlChar *name, gboolean *floatpP)
 static void sanity_check_parameter (const char *filename,
                                     const xmlChar *node_name,
                                     parameter *p);
+static void sanity_check_text_node (const char *filename,
+                                    const xmlNodePtr node);
 
 /* Allocates and returns a new `parameter' object based on the
    properties in the given XML node.  Returns 0 if there's nothing
@@ -293,6 +295,12 @@ make_parameter (const char *filename, xmlNodePtr node)
   else if (!strcmp (name, "file"))         p->type = FILENAME;
   else if (!strcmp (name, "number"))       p->type = SPINBUTTON;
   else if (!strcmp (name, "select"))       p->type = SELECT;
+  else if (node->type == XML_TEXT_NODE)
+    {
+      sanity_check_text_node (filename, node);
+      free (p);
+      return 0;
+    }
   else
     {
       if (debug_p)
@@ -376,6 +384,11 @@ make_select_option (const char *filename, xmlNodePtr node)
 {
   if (node->type == XML_COMMENT_NODE)
     return 0;
+  else if (node->type == XML_TEXT_NODE)
+    {
+      sanity_check_text_node (filename, node);
+      return 0;
+    }
   else if (node->type != XML_ELEMENT_NODE)
     {
       if (debug_p)
@@ -557,6 +570,78 @@ sanity_check_parameter (const char *filename, const xmlChar *node_name,
 # undef WARN
 }
 
+/* "text" nodes show up for all the non-tag text in the file, including
+   all the newlines between tags.  Warn if there is text there that
+   is not whitespace.
+ */
+static void
+sanity_check_text_node (const char *filename, const xmlNodePtr node)
+{
+  const char *body = (const char *) node->content;
+  if (node->type != XML_TEXT_NODE) abort();
+  while (isspace (*body)) body++;
+  if (*body)
+    fprintf (stderr, "%s: WARNING: %s: random text present: \"%s\"\n",
+             blurb(), filename, body);
+}
+
+
+/* Returns a list of strings, every switch mentioned in the parameters.
+   The strings must be freed.
+ */
+static GList *
+get_all_switches (const char *filename, GList *parms)
+{
+  GList *switches = 0;
+  GList *p;
+  for (p = parms; p; p = p->next)
+    {
+      parameter *pp = (parameter *) p->data;
+
+      if (pp->type == SELECT)
+        {
+          GList *list2 = get_all_switches (filename, pp->options);
+          switches = g_list_concat (switches, list2);
+        }
+      if (pp->arg && *pp->arg)
+        switches = g_list_append (switches, strdup ((char *) pp->arg));
+      if (pp->arg_set && *pp->arg_set)
+        switches = g_list_append (switches, strdup ((char *) pp->arg_set));
+      if (pp->arg_unset && *pp->arg_unset)
+        switches = g_list_append (switches, strdup ((char *) pp->arg_unset));
+    }
+  return switches;
+}
+
+
+/* Ensures that no switch is mentioned more than once.
+ */
+static void
+sanity_check_parameters (const char *filename, GList *parms)
+{
+  GList *list = get_all_switches (filename, parms);
+  GList *p;
+  for (p = list; p; p = p->next)
+    {
+      char *sw = (char *) p->data;
+      GList *p2;
+
+      if (*sw != '-' && *sw != '+')
+        fprintf (stderr, "%s: %s: switch does not begin with hyphen \"%s\"\n",
+                 blurb(), filename, sw);
+
+      for (p2 = p->next; p2; p2 = p2->next)
+        {
+          const char *sw2 = (const char *) p2->data;
+          if (!strcmp (sw, sw2))
+            fprintf (stderr, "%s: %s: duplicate switch \"%s\"\n",
+                     blurb(), filename, sw);
+        }
+
+      free (sw);
+    }
+  g_list_free (list);
+}
 
 
 /* Helper for make_parameters()
@@ -618,7 +703,8 @@ make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent)
     {
       if (node->type == XML_ELEMENT_NODE &&
           !strcmp ((char *) node->name, "screensaver"))
-        return make_parameters_1 (filename, node->xmlChildrenNode, parent, &row);
+        return make_parameters_1 (filename, node->xmlChildrenNode,
+                                  parent, &row);
     }
   return 0;
 }
@@ -1360,7 +1446,7 @@ parse_command_line_into_parameters (const char *filename,
       char *option = rest->data;
       rest->data = 0;
 
-      if (option[0] != '-')
+      if (option[0] != '-' && option[0] != '+')
         {
           if (debug_p)
             fprintf (stderr, "%s: WARNING: %s: not a switch: \"%s\"\n",
@@ -1783,6 +1869,7 @@ load_configurator_1 (const char *program, const char *arguments,
       gtk_widget_show (table);
 
       parms = make_parameters (file, doc->xmlRootNode, table);
+      sanity_check_parameters (file, parms);
 
       xmlFreeDoc (doc);
 

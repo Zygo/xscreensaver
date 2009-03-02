@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999, 2000
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999-2004
 #  by Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
@@ -95,7 +95,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c \
 		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
-		  mirrorblob.c blinkbox.c noof.c
+		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
+		  antinspect.c providence.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -123,7 +124,8 @@ OBJS		= xscreensaver-gl-helper.o \
 		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o \
 		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
-		  mirrorblob.o blinkbox.o noof.o
+		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
+		  antinspect.o providence.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -133,7 +135,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
-		  gleidescope mirrorblob blinkbox noof
+		  gleidescope mirrorblob blinkbox noof polyhedra \
+		  antinspect providence
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -151,7 +154,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
 		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
-		  ants.h
+		  ants.h polyhedra.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -165,7 +168,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  jigglypuff.man klein.man hypertorus.man glmatrix.man \
 		  cubestorm.man glknots.man blocktube.man flipflop.man \
 		  antspotlight.man polytopes.man gleidescope.man \
-		  mirrorblob.man blinkbox.man noof.man
+		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
+		  antinspect.man providence.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -587,6 +591,16 @@ blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
 noof:	noof.o			$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
+PH_OBJS=polyhedra-gl.o $(TRACK_OBJS)
+polyhedra:	polyhedra.o 	$(PH_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PH_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+antinspect:	antinspect.o	$(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+providence:	providence.o	$(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
 dnalogo:	dnalogo.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
@@ -594,6 +608,8 @@ dnalogo:	dnalogo.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
 #
 # DO NOT DELETE: updated by make distdepend
 
+antinspect.o: ../../config.h
+antinspect.o: $(srcdir)/gltrackball.h
 antspotlight.o: $(srcdir)/ants.h
 antspotlight.o: ../../config.h
 antspotlight.o: $(srcdir)/gltrackball.h
@@ -791,7 +807,15 @@ noof.o: ../../config.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(srcdir)/buildlwo.h
 pipes.o: ../../config.h
+polyhedra-gl.o: ../../config.h
+polyhedra-gl.o: $(srcdir)/gltrackball.h
+polyhedra-gl.o: $(srcdir)/polyhedra.h
+polyhedra-gl.o: $(srcdir)/rotator.h
+polyhedra.o: ../../config.h
+polyhedra.o: $(srcdir)/polyhedra.h
 polytopes.o: ../../config.h
+providence.o: ../../config.h
+providence.o: $(srcdir)/gltrackball.h
 pulsar.o: ../../config.h
 pulsar.o: $(srcdir)/xpm-ximage.h
 queens.o: ../../config.h

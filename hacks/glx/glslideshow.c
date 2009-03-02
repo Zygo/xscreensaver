@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -816,7 +816,8 @@ ponder_state_change (ModeInfo *mi)
       ss->pan_frame_count = 0;
     }
   else
-    abort();  /* one of these should be non-zero! */
+    return;  /* One of those should be non-zero! Maybe we just started,
+                and the machine is insanely slow. */
 
   fps = frames / (GLfloat) secs;
 

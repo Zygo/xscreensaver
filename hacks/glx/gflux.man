@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "July 2000"
+.TH XScreenSaver 1 "May 2004"
 .SH NAME
 gflux \- rippling surface graphics hack
 .SH SYNOPSIS

@@ -10,7 +10,7 @@
   <number id="gridsize" type="spinbutton" arg="-gridsize %"
           _label="Magnification" low="1" high="20" default="4"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Anim Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="50000" default="30000"
           convert="invert"/>

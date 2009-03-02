@@ -8,7 +8,7 @@
 
   <file id="bitmap" _label="Bitmap for Flag" arg="-bitmap %"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="60000" default="50000"
           convert="invert"/>

@@ -1055,10 +1055,10 @@ draw_blob (void)
                 glArrayElement(index3);
                 glEnd();
 
-                lower = floorf((x - 0.5) * row_data[y - 1].num_x_points
-                               / (float)row_data[y].num_x_points);
-                upper = floorf((x + 0.5) * row_data[y - 1].num_x_points
-                               / (float)row_data[y].num_x_points);
+                lower = ((x - 0.5) * row_data[y - 1].num_x_points
+                         / (float)row_data[y].num_x_points);
+                upper = ((x + 0.5) * row_data[y - 1].num_x_points
+                         / (float)row_data[y].num_x_points);
 
                 if (upper > lower)
                 {

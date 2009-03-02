@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <number id="Speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Fast" _high-label="Slow"
           low="0" high="50000" default="30000"/>
 

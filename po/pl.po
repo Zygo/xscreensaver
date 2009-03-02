@@ -9,7 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: xscreensaver\n"
-"POT-Creation-Date: 2003-07-24 19:05+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-03-03 14:11+0100\n"
 "PO-Revision-Date: 2002-06-05 17:30+0200\n"
 "Last-Translator: GNOME PL Team <translators@gnome.pl>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -17,11 +18,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: driver/demo-Gtk-conf.c:731
+#: driver/demo-Gtk-conf.c:732
 msgid "Browse..."
 msgstr "Przeglądaj..."
 
-#: driver/demo-Gtk-conf.c:1023
+#: driver/demo-Gtk-conf.c:1024
 msgid "Select file."
 msgstr "Wybór pliku"
 
@@ -40,215 +41,215 @@ msgstr "Błąd przy wczytywaniu pliku z piksmapą: %s"
 msgid "reason: %s\n"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
+#: driver/demo-Gtk-widgets.c:161 driver/xscreensaver-demo.glade.h:89
 #: driver/xscreensaver-demo.glade2.h:65
 msgid "XScreenSaver"
 msgstr "XScreenSaver"
 
-#: driver/demo-Gtk-widgets.c:176 driver/xscreensaver-demo.glade2.h:76
+#: driver/demo-Gtk-widgets.c:182 driver/xscreensaver-demo.glade2.h:76
 msgid "_File"
 msgstr "_Plik"
 
-#: driver/demo-Gtk-widgets.c:196 driver/xscreensaver-demo.glade.h:93
+#: driver/demo-Gtk-widgets.c:202 driver/xscreensaver-demo.glade.h:93
 #: driver/xscreensaver-demo.glade2.h:70
 msgid "_Blank Screen Now"
 msgstr "Za_czernij ekran"
 
-#: driver/demo-Gtk-widgets.c:205 driver/xscreensaver-demo.glade.h:2
+#: driver/demo-Gtk-widgets.c:211 driver/xscreensaver-demo.glade.h:2
 msgid ""
 "Activate the XScreenSaver daemon now (locking the screen if so configured.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:209 driver/xscreensaver-demo.glade.h:97
+#: driver/demo-Gtk-widgets.c:215 driver/xscreensaver-demo.glade.h:97
 #: driver/xscreensaver-demo.glade2.h:80
 msgid "_Lock Screen Now"
 msgstr "Za_blokuj ekran"
 
-#: driver/demo-Gtk-widgets.c:218 driver/xscreensaver-demo.glade.h:51
+#: driver/demo-Gtk-widgets.c:224 driver/xscreensaver-demo.glade.h:51
 msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:222 driver/xscreensaver-demo.glade.h:96
+#: driver/demo-Gtk-widgets.c:228 driver/xscreensaver-demo.glade.h:96
 #: driver/xscreensaver-demo.glade2.h:78
 msgid "_Kill Daemon"
 msgstr "Zakończ _demona"
 
-#: driver/demo-Gtk-widgets.c:231 driver/xscreensaver-demo.glade.h:71
+#: driver/demo-Gtk-widgets.c:237 driver/xscreensaver-demo.glade.h:71
 msgid "Tell the running XScreenSaver daemon to exit."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:235 driver/xscreensaver-demo.glade.h:98
+#: driver/demo-Gtk-widgets.c:241 driver/xscreensaver-demo.glade.h:98
 #: driver/xscreensaver-demo.glade2.h:86
 msgid "_Restart Daemon"
 msgstr "_Uruchom ponownie demona"
 
-#: driver/demo-Gtk-widgets.c:244 driver/xscreensaver-demo.glade.h:49
+#: driver/demo-Gtk-widgets.c:250 driver/xscreensaver-demo.glade.h:49
 msgid "Kill and re-launch the XScreenSaver daemon."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:257 driver/xscreensaver-demo.glade.h:95
+#: driver/demo-Gtk-widgets.c:263 driver/xscreensaver-demo.glade.h:95
 msgid "_Exit"
 msgstr "Za_kończ"
 
-#: driver/demo-Gtk-widgets.c:266 driver/xscreensaver-demo.glade.h:33
+#: driver/demo-Gtk-widgets.c:272 driver/xscreensaver-demo.glade.h:33
 msgid ""
 "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
 "running in the background.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:270 driver/xscreensaver-demo.glade2.h:77
+#: driver/demo-Gtk-widgets.c:276 driver/xscreensaver-demo.glade2.h:77
 msgid "_Help"
 msgstr "Pomo_c"
 
-#: driver/demo-Gtk-widgets.c:290 driver/xscreensaver-demo.glade.h:92
+#: driver/demo-Gtk-widgets.c:296 driver/xscreensaver-demo.glade.h:92
 #: driver/xscreensaver-demo.glade2.h:66
 msgid "_About..."
 msgstr "_Informacje o..."
 
-#: driver/demo-Gtk-widgets.c:299 driver/xscreensaver-demo.glade.h:30
+#: driver/demo-Gtk-widgets.c:305 driver/xscreensaver-demo.glade.h:30
 msgid "Display version information."
 msgstr "Wyświetla informacje na temat wersji."
 
-#: driver/demo-Gtk-widgets.c:303 driver/xscreensaver-demo.glade.h:94
+#: driver/demo-Gtk-widgets.c:309 driver/xscreensaver-demo.glade.h:94
 #: driver/xscreensaver-demo.glade2.h:75
 msgid "_Documentation..."
 msgstr "_Dokumentacja..."
 
-#: driver/demo-Gtk-widgets.c:312 driver/xscreensaver-demo.glade.h:38
+#: driver/demo-Gtk-widgets.c:318 driver/xscreensaver-demo.glade.h:38
 msgid "Go to the documentation on the XScreenSaver web page."
 msgstr "Przechodzi do dokumentacji na stronie www programu XScreenSaver."
 
-#: driver/demo-Gtk-widgets.c:342 driver/xscreensaver-demo.glade.h:18
+#: driver/demo-Gtk-widgets.c:348 driver/xscreensaver-demo.glade.h:18
 msgid "Cycle After"
 msgstr "Zmiana wygaszacza po"
 
-#: driver/demo-Gtk-widgets.c:364 driver/xscreensaver-demo.glade.h:78
+#: driver/demo-Gtk-widgets.c:370 driver/xscreensaver-demo.glade.h:78
 #: driver/xscreensaver-demo.glade2.h:54
 msgid "Whether a password should be required to un-blank the screen."
 msgstr "Określa, czy przed przywróceniem obrazu wymagane jest podanie hasła."
 
-#: driver/demo-Gtk-widgets.c:366 driver/xscreensaver-demo.glade.h:50
+#: driver/demo-Gtk-widgets.c:372 driver/xscreensaver-demo.glade.h:50
 msgid "Lock Screen After"
 msgstr "Blokowanie ekranu po"
 
-#: driver/demo-Gtk-widgets.c:374 driver/xscreensaver-demo.glade.h:8
+#: driver/demo-Gtk-widgets.c:380 driver/xscreensaver-demo.glade.h:8
 msgid "Blank After"
 msgstr "Zaczernianie ekranu po"
 
-#: driver/demo-Gtk-widgets.c:397 driver/demo-Gtk-widgets.c:447
-#: driver/demo-Gtk-widgets.c:461 driver/demo-Gtk-widgets.c:1010
+#: driver/demo-Gtk-widgets.c:403 driver/demo-Gtk-widgets.c:453
+#: driver/demo-Gtk-widgets.c:467 driver/demo-Gtk-widgets.c:1016
 #: driver/xscreensaver-demo.glade.h:43
 msgid "How long before the monitor goes completely black."
 msgstr "Okres, po którym obraz gaśnie zupełnie."
 
-#: driver/demo-Gtk-widgets.c:401 driver/demo-Gtk-widgets.c:413
-#: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
-#: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
+#: driver/demo-Gtk-widgets.c:407 driver/demo-Gtk-widgets.c:419
+#: driver/demo-Gtk-widgets.c:431 driver/demo-Gtk-widgets.c:1020
+#: driver/demo-Gtk-widgets.c:1032 driver/demo-Gtk-widgets.c:1044
 #: driver/xscreensaver-demo.glade.h:99 driver/xscreensaver-demo.glade2.h:92
 msgid "minutes"
 msgstr "min."
 
-#: driver/demo-Gtk-widgets.c:476 driver/demo-Gtk.c:2831
+#: driver/demo-Gtk-widgets.c:482 driver/demo-Gtk.c:2837
 #: driver/xscreensaver-demo.glade.h:58
 msgid "Preview"
 msgstr "Podgląd"
 
-#: driver/demo-Gtk-widgets.c:484 driver/xscreensaver-demo.glade.h:21
+#: driver/demo-Gtk-widgets.c:490 driver/xscreensaver-demo.glade.h:21
 #: driver/xscreensaver-demo.glade2.h:12
 msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
+#: driver/demo-Gtk-widgets.c:492 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
 msgstr "Ustawienia..."
 
-#: driver/demo-Gtk-widgets.c:494 driver/xscreensaver-demo.glade.h:17
+#: driver/demo-Gtk-widgets.c:500 driver/xscreensaver-demo.glade.h:17
 #: driver/xscreensaver-demo.glade2.h:9
 msgid "Customization and explanation of the selected screen saver."
 msgstr "Dostosowywanie i konfiguracja wybranego wygaszacza ekranu."
 
-#: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
+#: driver/demo-Gtk-widgets.c:521 driver/xscreensaver-demo.glade.h:52
 msgid "Mode:"
 msgstr "Tryb:"
 
-#: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
+#: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:25
 #: driver/xscreensaver-demo.glade2.h:16
 msgid "Disable Screen Saver"
 msgstr "Bez wygaszacza ekranu"
 
-#: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
+#: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:9
 #: driver/xscreensaver-demo.glade2.h:5
 msgid "Blank Screen Only"
 msgstr "Czarny ekran"
 
-#: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
+#: driver/demo-Gtk-widgets.c:545 driver/xscreensaver-demo.glade.h:56
 #: driver/xscreensaver-demo.glade2.h:42
 msgid "Only One Screen Saver"
 msgstr "Jeden wygaszacz ekranu"
 
-#: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
+#: driver/demo-Gtk-widgets.c:548 driver/xscreensaver-demo.glade.h:60
 #: driver/xscreensaver-demo.glade2.h:44
 msgid "Random Screen Saver"
 msgstr "Losowy wygaszacz ekranu"
 
-#: driver/demo-Gtk-widgets.c:565 driver/demo-Gtk.c:2120
+#: driver/demo-Gtk-widgets.c:571 driver/demo-Gtk.c:2126
 #: driver/xscreensaver-demo.glade.h:75
 msgid "Use"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:585 driver/demo-Gtk.c:2130
+#: driver/demo-Gtk-widgets.c:591 driver/demo-Gtk.c:2136
 #: driver/xscreensaver-demo.glade.h:63
 msgid "Screen Saver"
 msgstr "Wygaszacz ekranu"
 
-#: driver/demo-Gtk-widgets.c:638 driver/xscreensaver-demo.glade.h:91
+#: driver/demo-Gtk-widgets.c:644 driver/xscreensaver-demo.glade.h:91
 msgid "\\/"
 msgstr "\\/"
 
-#: driver/demo-Gtk-widgets.c:646 driver/xscreensaver-demo.glade.h:61
+#: driver/demo-Gtk-widgets.c:652 driver/xscreensaver-demo.glade.h:61
 #: driver/xscreensaver-demo.glade2.h:45
 msgid ""
 "Run the next screen saver in the list in full-screen mode (click the mouse "
 "to return.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:648
+#: driver/demo-Gtk-widgets.c:654
 msgid "/\\"
 msgstr "/\\"
 
-#: driver/demo-Gtk-widgets.c:656 driver/xscreensaver-demo.glade.h:62
+#: driver/demo-Gtk-widgets.c:662 driver/xscreensaver-demo.glade.h:62
 #: driver/xscreensaver-demo.glade2.h:46
 msgid ""
 "Run the previous screen saver in the list in full-screen mode (click the "
 "mouse to return.)"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
+#: driver/demo-Gtk-widgets.c:664 driver/demo-Gtk-widgets.c:1607
 #: driver/xscreensaver-demo.glade.h:22 driver/xscreensaver-demo.glade2.h:13
 msgid "Description"
 msgstr "Opis"
 
-#: driver/demo-Gtk-widgets.c:685 driver/xscreensaver-demo.glade.h:26
+#: driver/demo-Gtk-widgets.c:691 driver/xscreensaver-demo.glade.h:26
 msgid "Display Modes"
 msgstr "Tryby wyświetlania"
 
-#: driver/demo-Gtk-widgets.c:701 driver/xscreensaver-demo.glade.h:23
+#: driver/demo-Gtk-widgets.c:707 driver/xscreensaver-demo.glade.h:23
 #: driver/xscreensaver-demo.glade2.h:14
 msgid "Diagnostics"
 msgstr "Diagnostyka"
 
-#: driver/demo-Gtk-widgets.c:745 driver/xscreensaver-demo.glade.h:80
+#: driver/demo-Gtk-widgets.c:751 driver/xscreensaver-demo.glade.h:80
 #: driver/xscreensaver-demo.glade2.h:56
 msgid "Whether the daemon should print lots of debugging information."
 msgstr "Określa czy demon powinien wypisywać wiele informacji diagnostycznych."
 
-#: driver/demo-Gtk-widgets.c:747 driver/xscreensaver-demo.glade.h:76
+#: driver/demo-Gtk-widgets.c:753 driver/xscreensaver-demo.glade.h:76
 msgid "Verbose Diagnostics"
 msgstr "Szczegółowa diagnostyka"
 
-#: driver/demo-Gtk-widgets.c:762 driver/xscreensaver-demo.glade.h:79
+#: driver/demo-Gtk-widgets.c:768 driver/xscreensaver-demo.glade.h:79
 #: driver/xscreensaver-demo.glade2.h:55
 msgid ""
 "Whether any error output of the display modes should be redirected to the "
@@ -257,11 +258,11 @@ msgstr ""
 "Określa czy wyjście diagnostyczne trybów wyświetlania powinno być "
 "przekierowywane na ekran."
 
-#: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
+#: driver/demo-Gtk-widgets.c:770 driver/xscreensaver-demo.glade.h:29
 msgid "Display Subprocess Errors"
 msgstr "Wyświetlanie błędów procesów potomnych"
 
-#: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
+#: driver/demo-Gtk-widgets.c:785 driver/xscreensaver-demo.glade.h:87
 #: driver/xscreensaver-demo.glade2.h:63
 msgid ""
 "Whether the splash screen (with the version number and `Help' button) should "
@@ -270,16 +271,16 @@ msgstr ""
 "Określa czy ekran powitalny (z numerem wersji oraz przyciskiem \"Pomoc\") "
 "powinien być uruchamiany w momencie pierwszego uruchomienia demona."
 
-#: driver/demo-Gtk-widgets.c:781 driver/xscreensaver-demo.glade.h:28
+#: driver/demo-Gtk-widgets.c:787 driver/xscreensaver-demo.glade.h:28
 msgid "Display Splash Screen at Startup"
 msgstr "Wyświetlanie ekranu powitalnego przy uruchamianiu"
 
-#: driver/demo-Gtk-widgets.c:790 driver/xscreensaver-demo.glade.h:15
+#: driver/demo-Gtk-widgets.c:796 driver/xscreensaver-demo.glade.h:15
 #: driver/xscreensaver-demo.glade2.h:8
 msgid "Colormaps"
 msgstr "Palety kolorów"
 
-#: driver/demo-Gtk-widgets.c:834 driver/xscreensaver-demo.glade.h:88
+#: driver/demo-Gtk-widgets.c:840 driver/xscreensaver-demo.glade.h:88
 #: driver/xscreensaver-demo.glade2.h:64
 msgid ""
 "Whether to install a private colormap when running in 8-bit mode on the "
@@ -288,11 +289,11 @@ msgstr ""
 "Określa czy prywatne mapy kolorów będą instalowane podczas uruchamiania w 8-"
 "bitowym trybie kolorów domyślnego trybu wyświetlania"
 
-#: driver/demo-Gtk-widgets.c:836 driver/xscreensaver-demo.glade.h:48
+#: driver/demo-Gtk-widgets.c:842 driver/xscreensaver-demo.glade.h:48
 msgid "Install Colormap"
 msgstr "Instalowanie palety kolorów"
 
-#: driver/demo-Gtk-widgets.c:859 driver/xscreensaver-demo.glade.h:86
+#: driver/demo-Gtk-widgets.c:865 driver/xscreensaver-demo.glade.h:86
 #: driver/xscreensaver-demo.glade2.h:62
 msgid ""
 "Whether the screen should slowly fade to black when the screen saver "
@@ -301,11 +302,11 @@ msgstr ""
 "Określa czy ekran powinien być powoli przyciemniany, gdy aktywowany jest "
 "wygaszacz."
 
-#: driver/demo-Gtk-widgets.c:861 driver/xscreensaver-demo.glade.h:36
+#: driver/demo-Gtk-widgets.c:867 driver/xscreensaver-demo.glade.h:36
 msgid "Fade To Black When Blanking"
 msgstr "Przejście do czerni przy rozpoczęciu wygaszania"
 
-#: driver/demo-Gtk-widgets.c:876 driver/xscreensaver-demo.glade.h:85
+#: driver/demo-Gtk-widgets.c:882 driver/xscreensaver-demo.glade.h:85
 #: driver/xscreensaver-demo.glade2.h:61
 msgid ""
 "Whether the screen should slowly fade in from black when the screen saver "
@@ -314,252 +315,252 @@ msgstr ""
 "Określa czy ekran powinien powoli rozjaśniany, gdy wygaszacz jest "
 "unieaktywniany."
 
-#: driver/demo-Gtk-widgets.c:878 driver/xscreensaver-demo.glade.h:35
+#: driver/demo-Gtk-widgets.c:884 driver/xscreensaver-demo.glade.h:35
 msgid "Fade From Black When Unblanking"
 msgstr "Przejście z czerni przy zakończeniu wygaszania"
 
-#: driver/demo-Gtk-widgets.c:904 driver/xscreensaver-demo.glade.h:34
+#: driver/demo-Gtk-widgets.c:910 driver/xscreensaver-demo.glade.h:34
 msgid "Fade Duration"
 msgstr "Okres blaknięcia"
 
-#: driver/demo-Gtk-widgets.c:922 driver/xscreensaver-demo.glade.h:44
+#: driver/demo-Gtk-widgets.c:928 driver/xscreensaver-demo.glade.h:44
 #: driver/xscreensaver-demo.glade2.h:31
 msgid "How long it should take for the screen to fade in and out."
 msgstr "Czas wykonywania operacji przyciemniania i rozjaśniania ekranu."
 
-#: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
+#: driver/demo-Gtk-widgets.c:932 driver/xscreensaver-demo.glade.h:100
 #: driver/xscreensaver-demo.glade2.h:96
 msgid "seconds"
 msgstr "sekund(y)"
 
-#: driver/demo-Gtk-widgets.c:936 driver/xscreensaver-demo.glade.h:27
+#: driver/demo-Gtk-widgets.c:942 driver/xscreensaver-demo.glade.h:27
 #: driver/xscreensaver-demo.glade2.h:17
 msgid "Display Power Management"
 msgstr "Zarządzanie poborem energii ekranu"
 
-#: driver/demo-Gtk-widgets.c:980 driver/xscreensaver-demo.glade.h:84
+#: driver/demo-Gtk-widgets.c:986 driver/xscreensaver-demo.glade.h:84
 #: driver/xscreensaver-demo.glade2.h:60
 msgid "Whether the monitor should be powered down after a while."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:982 driver/xscreensaver-demo.glade.h:57
+#: driver/demo-Gtk-widgets.c:988 driver/xscreensaver-demo.glade.h:57
 msgid "Power Management Enabled"
 msgstr "Zarządzanie oszczędzaniem energii"
 
-#: driver/demo-Gtk-widgets.c:1050 driver/xscreensaver-demo.glade.h:55
+#: driver/demo-Gtk-widgets.c:1056 driver/xscreensaver-demo.glade.h:55
 msgid "Off After"
 msgstr "Wyłączenie po"
 
-#: driver/demo-Gtk-widgets.c:1063 driver/xscreensaver-demo.glade.h:70
+#: driver/demo-Gtk-widgets.c:1069 driver/xscreensaver-demo.glade.h:70
 msgid "Suspend After"
 msgstr "Stan uśpienia po"
 
-#: driver/demo-Gtk-widgets.c:1076 driver/xscreensaver-demo.glade.h:68
+#: driver/demo-Gtk-widgets.c:1082 driver/xscreensaver-demo.glade.h:68
 msgid "Standby After"
 msgstr "Stan oczekiwania po"
 
-#: driver/demo-Gtk-widgets.c:1099 driver/xscreensaver-demo.glade.h:45
+#: driver/demo-Gtk-widgets.c:1105 driver/xscreensaver-demo.glade.h:45
 #: driver/xscreensaver-demo.glade2.h:33
 msgid "How long until the monitor goes into power-saving mode."
 msgstr "Okres, po którym monitor przechodzi w tryb oszczędzania energii."
 
-#: driver/demo-Gtk-widgets.c:1113 driver/xscreensaver-demo.glade.h:46
+#: driver/demo-Gtk-widgets.c:1119 driver/xscreensaver-demo.glade.h:46
 #: driver/xscreensaver-demo.glade2.h:34
 msgid "How long until the monitor powers down."
 msgstr "Okres, po którym monitor jest wyłączany."
 
-#: driver/demo-Gtk-widgets.c:1117 driver/xscreensaver-demo.glade.h:47
+#: driver/demo-Gtk-widgets.c:1123 driver/xscreensaver-demo.glade.h:47
 #: driver/xscreensaver-demo.glade2.h:35
 msgid "Image Manipulation"
 msgstr "Operacje na obrazie"
 
-#: driver/demo-Gtk-widgets.c:1161 driver/xscreensaver-demo.glade.h:81
+#: driver/demo-Gtk-widgets.c:1167 driver/xscreensaver-demo.glade.h:81
 #: driver/xscreensaver-demo.glade2.h:57
 msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
+#: driver/demo-Gtk-widgets.c:1169 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1178 driver/xscreensaver-demo.glade.h:82
+#: driver/demo-Gtk-widgets.c:1184 driver/xscreensaver-demo.glade.h:82
 msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1180 driver/xscreensaver-demo.glade.h:40
+#: driver/demo-Gtk-widgets.c:1186 driver/xscreensaver-demo.glade.h:40
 msgid "Grab Video Frames"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1195 driver/xscreensaver-demo.glade.h:83
+#: driver/demo-Gtk-widgets.c:1201 driver/xscreensaver-demo.glade.h:83
 #: driver/xscreensaver-demo.glade2.h:59
 msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
+#: driver/demo-Gtk-widgets.c:1203 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
 msgstr "Wybór losowego obrazu:"
 
-#: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
+#: driver/demo-Gtk-widgets.c:1236 driver/xscreensaver-demo.glade.h:73
 #: driver/xscreensaver-demo.glade2.h:52
 msgid "The directory from which images will be randomly chosen."
 msgstr "Katalog, z którego losowo wybierane będą obrazy."
 
-#: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
+#: driver/demo-Gtk-widgets.c:1238 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
 msgstr "Przeglądaj"
 
-#: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
+#: driver/demo-Gtk-widgets.c:1246 driver/demo-Gtk-widgets.c:1599
 #: driver/xscreensaver-demo.glade.h:3 driver/xscreensaver-demo.glade2.h:2
 msgid "Advanced"
 msgstr "Zaawansowane"
 
-#: driver/demo-Gtk-widgets.c:1438 driver/xscreensaver-demo.glade.h:90
+#: driver/demo-Gtk-widgets.c:1444 driver/xscreensaver-demo.glade.h:90
 msgid "XScreenSaver: Mode-Specific Settings"
 msgstr "XScreenSaver: ustawienia zależne od trybu"
 
-#: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
+#: driver/demo-Gtk-widgets.c:1466 driver/xscreensaver-demo.glade.h:64
 #: driver/xscreensaver-demo.glade2.h:47
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: driver/demo-Gtk-widgets.c:1489 driver/xscreensaver-demo.glade.h:66
+#: driver/demo-Gtk-widgets.c:1495 driver/xscreensaver-demo.glade.h:66
 #: driver/xscreensaver-demo.glade2.h:49
 msgid "Standard"
 msgstr "Standardowe"
 
-#: driver/demo-Gtk-widgets.c:1526 driver/xscreensaver-demo.glade.h:77
+#: driver/demo-Gtk-widgets.c:1532 driver/xscreensaver-demo.glade.h:77
 msgid "Visual:"
 msgstr "Tryb wyświetlania:"
 
-#: driver/demo-Gtk-widgets.c:1544 driver/demo-Gtk-widgets.c:1567
-#: driver/demo-Gtk.c:1518 driver/demo-Gtk.c:2850
+#: driver/demo-Gtk-widgets.c:1550 driver/demo-Gtk-widgets.c:1573
+#: driver/demo-Gtk.c:1533 driver/demo-Gtk.c:2856
 #: driver/xscreensaver-demo.glade.h:5 driver/xscreensaver-demo.glade2.h:3
 msgid "Any"
 msgstr "Dowolny"
 
-#: driver/demo-Gtk-widgets.c:1545 driver/xscreensaver-demo.glade.h:7
+#: driver/demo-Gtk-widgets.c:1551 driver/xscreensaver-demo.glade.h:7
 #: driver/xscreensaver-demo.glade2.h:4
 msgid "Best"
 msgstr "Najlepszy"
 
-#: driver/demo-Gtk-widgets.c:1546 driver/xscreensaver-demo.glade.h:19
+#: driver/demo-Gtk-widgets.c:1552 driver/xscreensaver-demo.glade.h:19
 #: driver/xscreensaver-demo.glade2.h:10
 msgid "Default"
 msgstr "Domyślny"
 
-#: driver/demo-Gtk-widgets.c:1547 driver/xscreensaver-demo.glade.h:20
+#: driver/demo-Gtk-widgets.c:1553 driver/xscreensaver-demo.glade.h:20
 #: driver/xscreensaver-demo.glade2.h:11
 msgid "Default-N"
 msgstr "Domyślny-N"
 
-#: driver/demo-Gtk-widgets.c:1548 driver/xscreensaver-demo.glade.h:37
+#: driver/demo-Gtk-widgets.c:1554 driver/xscreensaver-demo.glade.h:37
 #: driver/xscreensaver-demo.glade2.h:23
 msgid "GL"
 msgstr "GL"
 
-#: driver/demo-Gtk-widgets.c:1549 driver/xscreensaver-demo.glade.h:74
+#: driver/demo-Gtk-widgets.c:1555 driver/xscreensaver-demo.glade.h:74
 #: driver/xscreensaver-demo.glade2.h:53
 #, fuzzy
 msgid "TrueColor"
 msgstr "Kolory"
 
-#: driver/demo-Gtk-widgets.c:1550 driver/xscreensaver-demo.glade.h:59
+#: driver/demo-Gtk-widgets.c:1556 driver/xscreensaver-demo.glade.h:59
 #: driver/xscreensaver-demo.glade2.h:43
 msgid "PseudoColor"
 msgstr "Paletowy"
 
-#: driver/demo-Gtk-widgets.c:1551 driver/xscreensaver-demo.glade.h:69
+#: driver/demo-Gtk-widgets.c:1557 driver/xscreensaver-demo.glade.h:69
 #: driver/xscreensaver-demo.glade2.h:50
 #, fuzzy
 msgid "StaticGray"
 msgstr "Schody"
 
-#: driver/demo-Gtk-widgets.c:1552 driver/xscreensaver-demo.glade.h:42
+#: driver/demo-Gtk-widgets.c:1558 driver/xscreensaver-demo.glade.h:42
 #: driver/xscreensaver-demo.glade2.h:27
 msgid "GrayScale"
 msgstr "Odcienie szarości"
 
-#: driver/demo-Gtk-widgets.c:1553 driver/xscreensaver-demo.glade.h:24
+#: driver/demo-Gtk-widgets.c:1559 driver/xscreensaver-demo.glade.h:24
 #: driver/xscreensaver-demo.glade2.h:15
 msgid "DirectColor"
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1554 driver/xscreensaver-demo.glade.h:14
+#: driver/demo-Gtk-widgets.c:1560 driver/xscreensaver-demo.glade.h:14
 #: driver/xscreensaver-demo.glade2.h:7
 msgid "Color"
 msgstr "Kolor"
 
-#: driver/demo-Gtk-widgets.c:1555 driver/xscreensaver-demo.glade.h:41
+#: driver/demo-Gtk-widgets.c:1561 driver/xscreensaver-demo.glade.h:41
 #: driver/xscreensaver-demo.glade2.h:26
 msgid "Gray"
 msgstr "Odcienie szarości"
 
-#: driver/demo-Gtk-widgets.c:1556 driver/xscreensaver-demo.glade.h:53
+#: driver/demo-Gtk-widgets.c:1562 driver/xscreensaver-demo.glade.h:53
 #: driver/xscreensaver-demo.glade2.h:37
 msgid "Mono"
 msgstr "Monochromatyczny"
 
-#: driver/demo-Gtk-widgets.c:1566 driver/xscreensaver-demo.glade.h:72
+#: driver/demo-Gtk-widgets.c:1572 driver/xscreensaver-demo.glade.h:72
 msgid ""
 "The X visual type that this demo will require.  If that visual is available "
 "it will be used, otherwise, this demo will not be run."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
+#: driver/demo-Gtk-widgets.c:1575 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
 msgstr "Wiersz polecenia:"
 
-#: driver/demo-Gtk-widgets.c:1641 driver/xscreensaver-demo.glade.h:31
+#: driver/demo-Gtk-widgets.c:1647 driver/xscreensaver-demo.glade.h:31
 msgid "Documentation..."
 msgstr "Dokumentacja..."
 
-#: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
+#: driver/demo-Gtk-widgets.c:1655 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
+#: driver/demo-Gtk-widgets.c:1680 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
 msgstr "Zaawansowane >>"
 
-#: driver/demo-Gtk-widgets.c:1682 driver/xscreensaver-demo.glade.h:32
+#: driver/demo-Gtk-widgets.c:1688 driver/xscreensaver-demo.glade.h:32
 msgid "Edit the command line directly."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1684 driver/xscreensaver-demo.glade.h:67
+#: driver/demo-Gtk-widgets.c:1690 driver/xscreensaver-demo.glade.h:67
 msgid "Standard <<"
 msgstr "Standardowe <<"
 
-#: driver/demo-Gtk-widgets.c:1692 driver/xscreensaver-demo.glade.h:6
+#: driver/demo-Gtk-widgets.c:1698 driver/xscreensaver-demo.glade.h:6
 msgid "Back to the graphical configuration options."
 msgstr ""
 
-#: driver/demo-Gtk-widgets.c:1703 driver/demo-Gtk.c:727
+#: driver/demo-Gtk-widgets.c:1709 driver/demo-Gtk.c:736
 #: driver/xscreensaver-demo.glade.h:54
 msgid "OK"
 msgstr "OK"
 
-#: driver/demo-Gtk-widgets.c:1712 driver/xscreensaver-demo.glade.h:11
+#: driver/demo-Gtk-widgets.c:1718 driver/xscreensaver-demo.glade.h:11
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: driver/demo-Gtk.c:632
+#: driver/demo-Gtk.c:644
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
 msgstr "Aktualizacji szukaj na witrynie http://www.jwz.org/xscreensaver/"
 
-#: driver/demo-Gtk.c:765
+#: driver/demo-Gtk.c:774
 msgid ""
 "Error:\n"
 "\n"
 "No Help URL has been specified.\n"
 msgstr ""
 
-#: driver/demo-Gtk.c:851
+#: driver/demo-Gtk.c:860
 msgid ""
 "Error:\n"
 "\n"
@@ -567,7 +568,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: driver/demo-Gtk.c:857
+#: driver/demo-Gtk.c:872
 msgid ""
 "You are running as root.  This usually means that xscreensaver\n"
 "was unable to contact your X server because access control is\n"
@@ -586,11 +587,11 @@ msgid ""
 "normal user, and `su' as necessary."
 msgstr ""
 
-#: driver/demo-Gtk.c:873
+#: driver/demo-Gtk.c:888
 msgid "Please check your $PATH and permissions."
 msgstr ""
 
-#: driver/demo-Gtk.c:908
+#: driver/demo-Gtk.c:923
 msgid ""
 "Error:\n"
 "\n"
@@ -600,7 +601,7 @@ msgstr ""
 "\n"
 "Nie można określić nazwy pliku inicjującego!\n"
 
-#: driver/demo-Gtk.c:913
+#: driver/demo-Gtk.c:928
 #, c-format
 msgid ""
 "Error:\n"
@@ -608,14 +609,14 @@ msgid ""
 "Couldn't write %s\n"
 msgstr ""
 
-#: driver/demo-Gtk.c:972
+#: driver/demo-Gtk.c:987
 msgid ""
 "Error:\n"
 "\n"
 "no `manualCommand' resource set."
 msgstr ""
 
-#: driver/demo-Gtk.c:1153
+#: driver/demo-Gtk.c:1168
 #, c-format
 msgid ""
 "Error:\n"
@@ -623,7 +624,7 @@ msgid ""
 "Unparsable time format: \"%s\"\n"
 msgstr ""
 
-#: driver/demo-Gtk.c:1818
+#: driver/demo-Gtk.c:1824
 #, c-format
 msgid ""
 "Error:\n"
@@ -634,23 +635,28 @@ msgstr ""
 "\n"
 "Katalog nie istnieje: \"%s\"\n"
 
-#: driver/demo-Gtk.c:2532
+#: driver/demo-Gtk.c:2538
 msgid "Descriptions not available: no XML support compiled in."
 msgstr "Opisy nie są dostępne: brak wkompilowanej obsługi XML."
 
-#: driver/demo-Gtk.c:2537
+#: driver/demo-Gtk.c:2543
 msgid "No description available."
 msgstr "Brak opisu."
 
-#: driver/demo-Gtk.c:2802
+#: driver/demo-Gtk.c:2808
 msgid "Blank Screen"
 msgstr "Pusty ekran"
 
-#: driver/demo-Gtk.c:2808
+#: driver/demo-Gtk.c:2814
 msgid "Screen Saver Disabled"
 msgstr "Bez wygaszacza ekranu"
 
-#: driver/demo-Gtk.c:2996
+#: driver/demo-Gtk.c:2847
+#, c-format
+msgid "%s: %.100s Settings"
+msgstr ""
+
+#: driver/demo-Gtk.c:3002
 #, c-format
 msgid ""
 "Warning:\n"
@@ -661,23 +667,23 @@ msgstr ""
 "\n"
 "Plik \"%s\" został zmieniony, zostaje wczytany ponownie.\n"
 
-#: driver/demo-Gtk.c:3078
+#: driver/demo-Gtk.c:3084
 msgid "No Preview"
 msgstr "Brak podglądu"
 
-#: driver/demo-Gtk.c:3078
+#: driver/demo-Gtk.c:3084
 msgid "Available"
 msgstr "Dostępny"
 
-#: driver/demo-Gtk.c:3079
+#: driver/demo-Gtk.c:3085
 msgid "Not"
 msgstr ""
 
-#: driver/demo-Gtk.c:3079
+#: driver/demo-Gtk.c:3085
 msgid "Installed"
 msgstr ""
 
-#: driver/demo-Gtk.c:3780
+#: driver/demo-Gtk.c:3811
 #, c-format
 msgid ""
 "Warning:\n"
@@ -691,7 +697,7 @@ msgstr ""
 "XScreenSaver, powiązany z ekranem \"%s\".\n"
 "Czy chcesz go teraz uruchomić?"
 
-#: driver/demo-Gtk.c:3790
+#: driver/demo-Gtk.c:3821
 #, c-format
 msgid ""
 "Warning:\n"
@@ -724,7 +730,7 @@ msgstr ""
 "\n"
 "Czy chcesz teraz ponownie uruchomić program demona xscreensaver?\n"
 
-#: driver/demo-Gtk.c:3815
+#: driver/demo-Gtk.c:3846
 #, c-format
 msgid ""
 "Warning:\n"
@@ -752,7 +758,7 @@ msgstr ""
 "Czy chcesz teraz ponownie uruchomić program demona xscreensaver\n"
 "na komputerze \"%s\" jako użytkownik \"%s\"?\n"
 
-#: driver/demo-Gtk.c:3837
+#: driver/demo-Gtk.c:3868
 #, c-format
 msgid ""
 "Warning:\n"
@@ -771,12 +777,12 @@ msgstr ""
 "\n"
 "Czy chcesz teraz ponownie uruchomić program demona xscreensaver?\n"
 
-#: driver/demo-Gtk.c:4272
+#: driver/demo-Gtk.c:4325
 #, c-format
 msgid "%s: unknown option: %s\n"
 msgstr "%s: nieznana opcja: %s\n"
 
-#: driver/demo-Gtk.c:4335
+#: driver/demo-Gtk.c:4389
 #, fuzzy
 msgid "Screensaver Preferences"
 msgstr "Wygaszacz ekranu"
@@ -976,9 +982,10 @@ msgid "Arms"
 msgstr ""
 
 #: hacks/config/anemone.xml.h:3 hacks/config/ant.xml.h:6
-#: hacks/config/apollonian.xml.h:5 hacks/config/atlantis.xml.h:4
-#: hacks/config/attraction.xml.h:8 hacks/config/atunnel.xml.h:3
-#: hacks/config/barcode.xml.h:4 hacks/config/blaster.xml.h:3
+#: hacks/config/antspotlight.xml.h:3 hacks/config/apollonian.xml.h:5
+#: hacks/config/atlantis.xml.h:4 hacks/config/attraction.xml.h:8
+#: hacks/config/atunnel.xml.h:3 hacks/config/barcode.xml.h:4
+#: hacks/config/blaster.xml.h:3 hacks/config/blinkbox.xml.h:5
 #: hacks/config/blitspin.xml.h:4 hacks/config/blocktube.xml.h:4
 #: hacks/config/bouboule.xml.h:3 hacks/config/bouncingcow.xml.h:6
 #: hacks/config/boxed.xml.h:4 hacks/config/braid.xml.h:4
@@ -996,19 +1003,20 @@ msgstr ""
 #: hacks/config/epicycle.xml.h:5 hacks/config/eruption.xml.h:5
 #: hacks/config/euler2d.xml.h:3 hacks/config/extrusion.xml.h:3
 #: hacks/config/fadeplot.xml.h:4 hacks/config/flag.xml.h:2
-#: hacks/config/flame.xml.h:6 hacks/config/flipscreen3d.xml.h:1
-#: hacks/config/flow.xml.h:4 hacks/config/fluidballs.xml.h:5
-#: hacks/config/flyingtoasters.xml.h:5 hacks/config/forest.xml.h:1
+#: hacks/config/flame.xml.h:6 hacks/config/flipflop.xml.h:1
+#: hacks/config/flipscreen3d.xml.h:1 hacks/config/flow.xml.h:4
+#: hacks/config/fluidballs.xml.h:5 hacks/config/flyingtoasters.xml.h:5
+#: hacks/config/fontglide.xml.h:4 hacks/config/forest.xml.h:1
 #: hacks/config/galaxy.xml.h:3 hacks/config/gears.xml.h:2
 #: hacks/config/gflux.xml.h:6 hacks/config/glblur.xml.h:4
 #: hacks/config/glforestfire.xml.h:4 hacks/config/glknots.xml.h:3
 #: hacks/config/glmatrix.xml.h:8 hacks/config/glplanet.xml.h:2
-#: hacks/config/glsnake.xml.h:5 hacks/config/gltext.xml.h:3
+#: hacks/config/glsnake.xml.h:6 hacks/config/gltext.xml.h:3
 #: hacks/config/goop.xml.h:4 hacks/config/grav.xml.h:2
 #: hacks/config/greynetic.xml.h:1 hacks/config/halo.xml.h:2
 #: hacks/config/hopalong.xml.h:9 hacks/config/hyperball.xml.h:2
 #: hacks/config/hypercube.xml.h:2 hacks/config/hypertorus.xml.h:6
-#: hacks/config/ifs.xml.h:1 hacks/config/interference.xml.h:5
+#: hacks/config/ifs.xml.h:1 hacks/config/interference.xml.h:7
 #: hacks/config/jigglypuff.xml.h:6 hacks/config/jigsaw.xml.h:3
 #: hacks/config/juggle.xml.h:3 hacks/config/julia.xml.h:2
 #: hacks/config/kaleidescope.xml.h:2 hacks/config/klein.xml.h:2
@@ -1018,13 +1026,16 @@ msgstr ""
 #: hacks/config/lissie.xml.h:3 hacks/config/lmorph.xml.h:3
 #: hacks/config/loop.xml.h:1 hacks/config/maze.xml.h:4
 #: hacks/config/menger.xml.h:3 hacks/config/metaballs.xml.h:4
+#: hacks/config/mirrorblob.xml.h:12 hacks/config/mismunch.xml.h:2
 #: hacks/config/moebius.xml.h:3 hacks/config/moire2.xml.h:2
 #: hacks/config/molecule.xml.h:10 hacks/config/morph3d.xml.h:3
 #: hacks/config/mountain.xml.h:2 hacks/config/munch.xml.h:3
-#: hacks/config/nerverot.xml.h:9 hacks/config/penetrate.xml.h:3
+#: hacks/config/nerverot.xml.h:9 hacks/config/noof.xml.h:2
+#: hacks/config/pacman.xml.h:1 hacks/config/penetrate.xml.h:3
 #: hacks/config/penrose.xml.h:6 hacks/config/petri.xml.h:5
-#: hacks/config/phosphor.xml.h:3 hacks/config/piecewise.xml.h:4
+#: hacks/config/phosphor.xml.h:4 hacks/config/piecewise.xml.h:4
 #: hacks/config/pipes.xml.h:5 hacks/config/polyominoes.xml.h:2
+#: hacks/config/polytopes.xml.h:11 hacks/config/pong.xml.h:1
 #: hacks/config/popsquares.xml.h:3 hacks/config/pulsar.xml.h:11
 #: hacks/config/pyro.xml.h:4 hacks/config/qix.xml.h:7
 #: hacks/config/queens.xml.h:1 hacks/config/rd-bomb.xml.h:9
@@ -1038,15 +1049,16 @@ msgstr ""
 #: hacks/config/spotlight.xml.h:2 hacks/config/sproingies.xml.h:2
 #: hacks/config/squiral.xml.h:4 hacks/config/stairs.xml.h:1
 #: hacks/config/starfish.xml.h:3 hacks/config/starwars.xml.h:6
-#: hacks/config/strange.xml.h:2 hacks/config/superquadrics.xml.h:4
+#: hacks/config/strange.xml.h:1 hacks/config/superquadrics.xml.h:4
 #: hacks/config/swirl.xml.h:2 hacks/config/t3d.xml.h:6
 #: hacks/config/thornbird.xml.h:2 hacks/config/triangle.xml.h:1
 #: hacks/config/truchet.xml.h:1 hacks/config/twang.xml.h:3
 #: hacks/config/vines.xml.h:1 hacks/config/webcollage.xml.h:4
-#: hacks/config/worm.xml.h:3 hacks/config/xearth.xml.h:7
-#: hacks/config/xfishtank.xml.h:3 hacks/config/xflame.xml.h:4
-#: hacks/config/xjack.xml.h:1 hacks/config/xmatrix.xml.h:5
-#: hacks/config/xmountains.xml.h:1 hacks/config/xrayswarm.xml.h:2
+#: hacks/config/worm.xml.h:3 hacks/config/wormhole.xml.h:2
+#: hacks/config/xearth.xml.h:7 hacks/config/xfishtank.xml.h:3
+#: hacks/config/xflame.xml.h:4 hacks/config/xjack.xml.h:1
+#: hacks/config/xmatrix.xml.h:5 hacks/config/xmountains.xml.h:1
+#: hacks/config/xplanet.xml.h:8 hacks/config/xrayswarm.xml.h:2
 #: hacks/config/zoom.xml.h:2
 msgid "Fast"
 msgstr "Szybkie"
@@ -1059,7 +1071,7 @@ msgstr "Szybkie"
 #: hacks/config/lisa.xml.h:3 hacks/config/pedal.xml.h:4
 #: hacks/config/petri.xml.h:7 hacks/config/qix.xml.h:8
 #: hacks/config/thornbird.xml.h:3 hacks/config/whirlwindwarp.xml.h:1
-#: hacks/config/xfishtank.xml.h:4
+#: hacks/config/wormhole.xml.h:3 hacks/config/xfishtank.xml.h:4
 msgid "Few"
 msgstr ""
 
@@ -1079,25 +1091,26 @@ msgstr ""
 #: hacks/config/galaxy.xml.h:6 hacks/config/grav.xml.h:4
 #: hacks/config/halo.xml.h:4 hacks/config/hopalong.xml.h:15
 #: hacks/config/ifs.xml.h:3 hacks/config/imsmap.xml.h:9
-#: hacks/config/interference.xml.h:11 hacks/config/julia.xml.h:6
+#: hacks/config/interference.xml.h:14 hacks/config/julia.xml.h:6
 #: hacks/config/kaleidescope.xml.h:5 hacks/config/laser.xml.h:6
 #: hacks/config/lightning.xml.h:3 hacks/config/lisa.xml.h:5
 #: hacks/config/lissie.xml.h:6 hacks/config/loop.xml.h:4
-#: hacks/config/metaballs.xml.h:6 hacks/config/moire.xml.h:5
-#: hacks/config/moire2.xml.h:3 hacks/config/mountain.xml.h:4
-#: hacks/config/nerverot.xml.h:15 hacks/config/pedal.xml.h:6
-#: hacks/config/penrose.xml.h:7 hacks/config/petri.xml.h:11
-#: hacks/config/polyominoes.xml.h:5 hacks/config/qix.xml.h:14
-#: hacks/config/rd-bomb.xml.h:12 hacks/config/ripples.xml.h:7
-#: hacks/config/rocks.xml.h:5 hacks/config/rotor.xml.h:6
-#: hacks/config/shadebobs.xml.h:5 hacks/config/sierpinski.xml.h:4
-#: hacks/config/slip.xml.h:4 hacks/config/sphere.xml.h:3
-#: hacks/config/spiral.xml.h:6 hacks/config/squiral.xml.h:9
-#: hacks/config/starfish.xml.h:5 hacks/config/strange.xml.h:5
-#: hacks/config/swirl.xml.h:3 hacks/config/thornbird.xml.h:4
-#: hacks/config/triangle.xml.h:3 hacks/config/vines.xml.h:2
-#: hacks/config/whirlwindwarp.xml.h:4 hacks/config/worm.xml.h:4
-#: hacks/config/xearth.xml.h:12 hacks/config/xfishtank.xml.h:8
+#: hacks/config/metaballs.xml.h:6 hacks/config/mismunch.xml.h:4
+#: hacks/config/moire.xml.h:5 hacks/config/moire2.xml.h:3
+#: hacks/config/mountain.xml.h:4 hacks/config/nerverot.xml.h:15
+#: hacks/config/pedal.xml.h:6 hacks/config/penrose.xml.h:7
+#: hacks/config/petri.xml.h:11 hacks/config/polyominoes.xml.h:5
+#: hacks/config/qix.xml.h:14 hacks/config/rd-bomb.xml.h:12
+#: hacks/config/ripples.xml.h:7 hacks/config/rocks.xml.h:5
+#: hacks/config/rotor.xml.h:6 hacks/config/shadebobs.xml.h:5
+#: hacks/config/sierpinski.xml.h:4 hacks/config/slip.xml.h:4
+#: hacks/config/sphere.xml.h:3 hacks/config/spiral.xml.h:6
+#: hacks/config/squiral.xml.h:9 hacks/config/starfish.xml.h:5
+#: hacks/config/strange.xml.h:2 hacks/config/swirl.xml.h:3
+#: hacks/config/thornbird.xml.h:4 hacks/config/triangle.xml.h:3
+#: hacks/config/vines.xml.h:2 hacks/config/whirlwindwarp.xml.h:4
+#: hacks/config/worm.xml.h:4 hacks/config/xearth.xml.h:12
+#: hacks/config/xfishtank.xml.h:8
 msgid "Many"
 msgstr "Wiele"
 
@@ -1115,7 +1128,7 @@ msgstr "Wiele"
 #: hacks/config/galaxy.xml.h:7 hacks/config/grav.xml.h:5
 #: hacks/config/halo.xml.h:6 hacks/config/hopalong.xml.h:17
 #: hacks/config/ifs.xml.h:4 hacks/config/imsmap.xml.h:10
-#: hacks/config/interference.xml.h:12 hacks/config/julia.xml.h:7
+#: hacks/config/interference.xml.h:15 hacks/config/julia.xml.h:7
 #: hacks/config/laser.xml.h:8 hacks/config/lightning.xml.h:4
 #: hacks/config/lisa.xml.h:6 hacks/config/lissie.xml.h:7
 #: hacks/config/loop.xml.h:5 hacks/config/metaballs.xml.h:10
@@ -1127,14 +1140,15 @@ msgstr "Wiele"
 #: hacks/config/sierpinski.xml.h:5 hacks/config/slip.xml.h:5
 #: hacks/config/sphere.xml.h:4 hacks/config/spiral.xml.h:8
 #: hacks/config/squiral.xml.h:10 hacks/config/starfish.xml.h:6
-#: hacks/config/strange.xml.h:6 hacks/config/swirl.xml.h:5
+#: hacks/config/strange.xml.h:3 hacks/config/swirl.xml.h:5
 #: hacks/config/thornbird.xml.h:5 hacks/config/triangle.xml.h:4
 #: hacks/config/vines.xml.h:3 hacks/config/worm.xml.h:5
 #: hacks/config/xearth.xml.h:17 hacks/config/xfishtank.xml.h:9
 msgid "Number of Colors"
 msgstr "Liczba kolorów"
 
-#: hacks/config/anemone.xml.h:7 hacks/config/pyro.xml.h:8
+#: hacks/config/anemone.xml.h:7 hacks/config/fireflies.xml.h:32
+#: hacks/config/pyro.xml.h:8
 #, fuzzy
 msgid "Often"
 msgstr "Otwarcie"
@@ -1144,9 +1158,10 @@ msgid "Rarely"
 msgstr ""
 
 #: hacks/config/anemone.xml.h:9 hacks/config/ant.xml.h:15
-#: hacks/config/apollonian.xml.h:11 hacks/config/atlantis.xml.h:13
-#: hacks/config/attraction.xml.h:26 hacks/config/atunnel.xml.h:6
-#: hacks/config/barcode.xml.h:6 hacks/config/blaster.xml.h:8
+#: hacks/config/antspotlight.xml.h:5 hacks/config/apollonian.xml.h:11
+#: hacks/config/atlantis.xml.h:13 hacks/config/attraction.xml.h:26
+#: hacks/config/atunnel.xml.h:6 hacks/config/barcode.xml.h:6
+#: hacks/config/blaster.xml.h:8 hacks/config/blinkbox.xml.h:7
 #: hacks/config/blitspin.xml.h:7 hacks/config/blocktube.xml.h:9
 #: hacks/config/bouboule.xml.h:8 hacks/config/bouncingcow.xml.h:10
 #: hacks/config/boxed.xml.h:6 hacks/config/braid.xml.h:11
@@ -1164,19 +1179,20 @@ msgstr ""
 #: hacks/config/epicycle.xml.h:10 hacks/config/eruption.xml.h:19
 #: hacks/config/euler2d.xml.h:14 hacks/config/extrusion.xml.h:11
 #: hacks/config/fadeplot.xml.h:8 hacks/config/flag.xml.h:7
-#: hacks/config/flame.xml.h:14 hacks/config/flipscreen3d.xml.h:6
-#: hacks/config/flow.xml.h:13 hacks/config/fluidballs.xml.h:18
-#: hacks/config/flyingtoasters.xml.h:11 hacks/config/forest.xml.h:5
+#: hacks/config/flame.xml.h:14 hacks/config/flipflop.xml.h:5
+#: hacks/config/flipscreen3d.xml.h:6 hacks/config/flow.xml.h:13
+#: hacks/config/fluidballs.xml.h:18 hacks/config/flyingtoasters.xml.h:11
+#: hacks/config/fontglide.xml.h:13 hacks/config/forest.xml.h:5
 #: hacks/config/galaxy.xml.h:10 hacks/config/gears.xml.h:7
 #: hacks/config/gflux.xml.h:12 hacks/config/glblur.xml.h:14
 #: hacks/config/glforestfire.xml.h:14 hacks/config/glknots.xml.h:17
 #: hacks/config/glmatrix.xml.h:18 hacks/config/glplanet.xml.h:6
 #: hacks/config/glsnake.xml.h:12 hacks/config/gltext.xml.h:13
 #: hacks/config/goop.xml.h:10 hacks/config/grav.xml.h:8
-#: hacks/config/greynetic.xml.h:3 hacks/config/halo.xml.h:9
+#: hacks/config/greynetic.xml.h:3 hacks/config/halo.xml.h:10
 #: hacks/config/hopalong.xml.h:21 hacks/config/hyperball.xml.h:8
 #: hacks/config/hypercube.xml.h:7 hacks/config/hypertorus.xml.h:13
-#: hacks/config/ifs.xml.h:5 hacks/config/interference.xml.h:14
+#: hacks/config/ifs.xml.h:5 hacks/config/interference.xml.h:17
 #: hacks/config/jigglypuff.xml.h:16 hacks/config/jigsaw.xml.h:5
 #: hacks/config/juggle.xml.h:7 hacks/config/julia.xml.h:8
 #: hacks/config/kaleidescope.xml.h:7 hacks/config/klein.xml.h:7
@@ -1186,13 +1202,16 @@ msgstr ""
 #: hacks/config/lissie.xml.h:9 hacks/config/lmorph.xml.h:11
 #: hacks/config/loop.xml.h:7 hacks/config/maze.xml.h:14
 #: hacks/config/menger.xml.h:16 hacks/config/metaballs.xml.h:13
+#: hacks/config/mirrorblob.xml.h:19 hacks/config/mismunch.xml.h:10
 #: hacks/config/moebius.xml.h:7 hacks/config/moire2.xml.h:6
 #: hacks/config/molecule.xml.h:22 hacks/config/morph3d.xml.h:6
 #: hacks/config/mountain.xml.h:7 hacks/config/munch.xml.h:7
-#: hacks/config/nerverot.xml.h:20 hacks/config/penetrate.xml.h:6
+#: hacks/config/nerverot.xml.h:20 hacks/config/noof.xml.h:5
+#: hacks/config/pacman.xml.h:5 hacks/config/penetrate.xml.h:6
 #: hacks/config/penrose.xml.h:11 hacks/config/petri.xml.h:23
-#: hacks/config/phosphor.xml.h:6 hacks/config/piecewise.xml.h:9
+#: hacks/config/phosphor.xml.h:7 hacks/config/piecewise.xml.h:9
 #: hacks/config/pipes.xml.h:15 hacks/config/polyominoes.xml.h:10
+#: hacks/config/polytopes.xml.h:20 hacks/config/pong.xml.h:4
 #: hacks/config/popsquares.xml.h:5 hacks/config/pulsar.xml.h:15
 #: hacks/config/pyro.xml.h:13 hacks/config/qix.xml.h:19
 #: hacks/config/queens.xml.h:4 hacks/config/rd-bomb.xml.h:17
@@ -1206,23 +1225,25 @@ msgstr ""
 #: hacks/config/spotlight.xml.h:4 hacks/config/sproingies.xml.h:6
 #: hacks/config/squiral.xml.h:14 hacks/config/stairs.xml.h:3
 #: hacks/config/starfish.xml.h:8 hacks/config/starwars.xml.h:12
-#: hacks/config/strange.xml.h:7 hacks/config/superquadrics.xml.h:8
+#: hacks/config/strange.xml.h:4 hacks/config/superquadrics.xml.h:8
 #: hacks/config/swirl.xml.h:6 hacks/config/t3d.xml.h:11
 #: hacks/config/thornbird.xml.h:7 hacks/config/triangle.xml.h:5
 #: hacks/config/truchet.xml.h:2 hacks/config/twang.xml.h:9
 #: hacks/config/vines.xml.h:4 hacks/config/webcollage.xml.h:7
-#: hacks/config/worm.xml.h:7 hacks/config/xearth.xml.h:22
-#: hacks/config/xfishtank.xml.h:10 hacks/config/xflame.xml.h:5
-#: hacks/config/xjack.xml.h:2 hacks/config/xmatrix.xml.h:15
-#: hacks/config/xmountains.xml.h:4 hacks/config/xrayswarm.xml.h:3
+#: hacks/config/worm.xml.h:7 hacks/config/wormhole.xml.h:5
+#: hacks/config/xearth.xml.h:22 hacks/config/xfishtank.xml.h:10
+#: hacks/config/xflame.xml.h:5 hacks/config/xjack.xml.h:2
+#: hacks/config/xmatrix.xml.h:15 hacks/config/xmountains.xml.h:4
+#: hacks/config/xplanet.xml.h:59 hacks/config/xrayswarm.xml.h:3
 #: hacks/config/zoom.xml.h:6
 msgid "Slow"
 msgstr "Wolne"
 
 #: hacks/config/anemone.xml.h:10 hacks/config/ant.xml.h:17
-#: hacks/config/apollonian.xml.h:12 hacks/config/attraction.xml.h:28
-#: hacks/config/atunnel.xml.h:7 hacks/config/barcode.xml.h:7
-#: hacks/config/blaster.xml.h:9 hacks/config/blocktube.xml.h:11
+#: hacks/config/antspotlight.xml.h:6 hacks/config/apollonian.xml.h:12
+#: hacks/config/attraction.xml.h:28 hacks/config/atunnel.xml.h:7
+#: hacks/config/barcode.xml.h:7 hacks/config/blaster.xml.h:9
+#: hacks/config/blinkbox.xml.h:8 hacks/config/blocktube.xml.h:11
 #: hacks/config/bouboule.xml.h:9 hacks/config/braid.xml.h:12
 #: hacks/config/bubble3d.xml.h:6 hacks/config/bubbles.xml.h:11
 #: hacks/config/bumps.xml.h:5 hacks/config/cage.xml.h:6
@@ -1238,29 +1259,32 @@ msgstr "Wolne"
 #: hacks/config/eruption.xml.h:20 hacks/config/euler2d.xml.h:15
 #: hacks/config/extrusion.xml.h:13 hacks/config/fadeplot.xml.h:10
 #: hacks/config/flag.xml.h:9 hacks/config/flame.xml.h:15
-#: hacks/config/flipscreen3d.xml.h:7 hacks/config/flow.xml.h:16
-#: hacks/config/fluidballs.xml.h:20 hacks/config/forest.xml.h:6
-#: hacks/config/galaxy.xml.h:11 hacks/config/glblur.xml.h:17
-#: hacks/config/glforestfire.xml.h:15 hacks/config/glplanet.xml.h:8
-#: hacks/config/gltext.xml.h:15 hacks/config/goop.xml.h:11
-#: hacks/config/grav.xml.h:9 hacks/config/greynetic.xml.h:4
-#: hacks/config/halo.xml.h:10 hacks/config/hopalong.xml.h:23
-#: hacks/config/hyperball.xml.h:9 hacks/config/hypercube.xml.h:8
-#: hacks/config/ifs.xml.h:6 hacks/config/jigsaw.xml.h:7
-#: hacks/config/juggle.xml.h:8 hacks/config/julia.xml.h:10
-#: hacks/config/kaleidescope.xml.h:8 hacks/config/klein.xml.h:8
-#: hacks/config/kumppa.xml.h:9 hacks/config/lament.xml.h:7
-#: hacks/config/laser.xml.h:11 hacks/config/lavalite.xml.h:30
-#: hacks/config/lightning.xml.h:6 hacks/config/lisa.xml.h:9
-#: hacks/config/lissie.xml.h:11 hacks/config/lmorph.xml.h:12
-#: hacks/config/loop.xml.h:9 hacks/config/menger.xml.h:18
-#: hacks/config/metaballs.xml.h:15 hacks/config/moebius.xml.h:10
-#: hacks/config/moire2.xml.h:7 hacks/config/molecule.xml.h:24
-#: hacks/config/morph3d.xml.h:7 hacks/config/mountain.xml.h:8
-#: hacks/config/munch.xml.h:9 hacks/config/nerverot.xml.h:22
-#: hacks/config/penrose.xml.h:12 hacks/config/petri.xml.h:25
-#: hacks/config/phosphor.xml.h:7 hacks/config/piecewise.xml.h:11
-#: hacks/config/pipes.xml.h:16 hacks/config/polyominoes.xml.h:11
+#: hacks/config/flipflop.xml.h:7 hacks/config/flipscreen3d.xml.h:7
+#: hacks/config/flow.xml.h:16 hacks/config/fluidballs.xml.h:20
+#: hacks/config/forest.xml.h:6 hacks/config/galaxy.xml.h:11
+#: hacks/config/glblur.xml.h:17 hacks/config/glforestfire.xml.h:15
+#: hacks/config/glplanet.xml.h:8 hacks/config/gltext.xml.h:15
+#: hacks/config/goop.xml.h:11 hacks/config/grav.xml.h:9
+#: hacks/config/greynetic.xml.h:4 hacks/config/halo.xml.h:11
+#: hacks/config/hopalong.xml.h:23 hacks/config/hyperball.xml.h:9
+#: hacks/config/hypercube.xml.h:8 hacks/config/ifs.xml.h:6
+#: hacks/config/jigsaw.xml.h:7 hacks/config/juggle.xml.h:8
+#: hacks/config/julia.xml.h:10 hacks/config/kaleidescope.xml.h:8
+#: hacks/config/klein.xml.h:8 hacks/config/kumppa.xml.h:9
+#: hacks/config/lament.xml.h:7 hacks/config/laser.xml.h:11
+#: hacks/config/lavalite.xml.h:30 hacks/config/lightning.xml.h:6
+#: hacks/config/lisa.xml.h:9 hacks/config/lissie.xml.h:11
+#: hacks/config/lmorph.xml.h:12 hacks/config/loop.xml.h:9
+#: hacks/config/menger.xml.h:18 hacks/config/metaballs.xml.h:15
+#: hacks/config/mirrorblob.xml.h:21 hacks/config/mismunch.xml.h:12
+#: hacks/config/moebius.xml.h:10 hacks/config/moire2.xml.h:7
+#: hacks/config/molecule.xml.h:24 hacks/config/morph3d.xml.h:7
+#: hacks/config/mountain.xml.h:8 hacks/config/munch.xml.h:9
+#: hacks/config/nerverot.xml.h:22 hacks/config/noof.xml.h:6
+#: hacks/config/pacman.xml.h:6 hacks/config/penrose.xml.h:12
+#: hacks/config/petri.xml.h:25 hacks/config/phosphor.xml.h:8
+#: hacks/config/piecewise.xml.h:11 hacks/config/pipes.xml.h:16
+#: hacks/config/polyominoes.xml.h:11 hacks/config/pong.xml.h:5
 #: hacks/config/popsquares.xml.h:6 hacks/config/pulsar.xml.h:17
 #: hacks/config/qix.xml.h:22 hacks/config/queens.xml.h:6
 #: hacks/config/rotor.xml.h:12 hacks/config/rubik.xml.h:11
@@ -1271,7 +1295,7 @@ msgstr "Wolne"
 #: hacks/config/spheremonics.xml.h:22 hacks/config/spiral.xml.h:10
 #: hacks/config/spotlight.xml.h:5 hacks/config/sproingies.xml.h:8
 #: hacks/config/squiral.xml.h:16 hacks/config/stairs.xml.h:5
-#: hacks/config/starfish.xml.h:9 hacks/config/strange.xml.h:8
+#: hacks/config/starfish.xml.h:9 hacks/config/strange.xml.h:5
 #: hacks/config/superquadrics.xml.h:10 hacks/config/swirl.xml.h:7
 #: hacks/config/t3d.xml.h:13 hacks/config/thornbird.xml.h:8
 #: hacks/config/triangle.xml.h:6 hacks/config/truchet.xml.h:3
@@ -1280,7 +1304,8 @@ msgstr "Wolne"
 #: hacks/config/worm.xml.h:8 hacks/config/xearth.xml.h:25
 #: hacks/config/xflame.xml.h:6 hacks/config/xjack.xml.h:3
 #: hacks/config/xmatrix.xml.h:18 hacks/config/xmountains.xml.h:5
-#: hacks/config/xrayswarm.xml.h:4 hacks/config/zoom.xml.h:7
+#: hacks/config/xplanet.xml.h:60 hacks/config/xrayswarm.xml.h:4
+#: hacks/config/zoom.xml.h:7
 msgid "Speed"
 msgstr "Tempo"
 
@@ -1290,8 +1315,8 @@ msgstr ""
 
 #: hacks/config/anemone.xml.h:12 hacks/config/cubestorm.xml.h:11
 #: hacks/config/deluxe.xml.h:10 hacks/config/glknots.xml.h:19
-#: hacks/config/lmorph.xml.h:13 hacks/config/starfish.xml.h:11
-#: hacks/config/thornbird.xml.h:9
+#: hacks/config/lmorph.xml.h:13 hacks/config/pong.xml.h:7
+#: hacks/config/starfish.xml.h:11 hacks/config/thornbird.xml.h:9
 msgid "Thick"
 msgstr ""
 
@@ -1302,8 +1327,8 @@ msgstr "Grubość"
 
 #: hacks/config/anemone.xml.h:14 hacks/config/cubestorm.xml.h:12
 #: hacks/config/deluxe.xml.h:11 hacks/config/glknots.xml.h:21
-#: hacks/config/lmorph.xml.h:14 hacks/config/starfish.xml.h:12
-#: hacks/config/thornbird.xml.h:11
+#: hacks/config/lmorph.xml.h:14 hacks/config/pong.xml.h:8
+#: hacks/config/starfish.xml.h:12 hacks/config/thornbird.xml.h:11
 msgid "Thin"
 msgstr ""
 
@@ -1322,9 +1347,9 @@ msgstr ""
 #: hacks/config/fadeplot.xml.h:12 hacks/config/flag.xml.h:13
 #: hacks/config/flame.xml.h:16 hacks/config/flow.xml.h:18
 #: hacks/config/forest.xml.h:8 hacks/config/galaxy.xml.h:13
-#: hacks/config/grav.xml.h:11 hacks/config/halo.xml.h:12
+#: hacks/config/grav.xml.h:11 hacks/config/halo.xml.h:13
 #: hacks/config/hopalong.xml.h:25 hacks/config/ifs.xml.h:8
-#: hacks/config/imsmap.xml.h:15 hacks/config/interference.xml.h:16
+#: hacks/config/imsmap.xml.h:15 hacks/config/interference.xml.h:19
 #: hacks/config/julia.xml.h:12 hacks/config/laser.xml.h:12
 #: hacks/config/lightning.xml.h:8 hacks/config/lisa.xml.h:12
 #: hacks/config/lissie.xml.h:13 hacks/config/loop.xml.h:12
@@ -1336,7 +1361,7 @@ msgstr ""
 #: hacks/config/shadebobs.xml.h:12 hacks/config/sierpinski.xml.h:12
 #: hacks/config/slip.xml.h:12 hacks/config/sphere.xml.h:8
 #: hacks/config/spiral.xml.h:12 hacks/config/squiral.xml.h:18
-#: hacks/config/starfish.xml.h:14 hacks/config/strange.xml.h:11
+#: hacks/config/starfish.xml.h:14 hacks/config/strange.xml.h:8
 #: hacks/config/swirl.xml.h:9 hacks/config/thornbird.xml.h:13
 #: hacks/config/triangle.xml.h:8 hacks/config/vines.xml.h:7
 #: hacks/config/worm.xml.h:9 hacks/config/xearth.xml.h:28
@@ -1386,13 +1411,14 @@ msgstr "Komórki czterokątne"
 #: hacks/config/demon.xml.h:5 hacks/config/discrete.xml.h:3
 #: hacks/config/distort.xml.h:5 hacks/config/fadeplot.xml.h:5
 #: hacks/config/flag.xml.h:4 hacks/config/flow.xml.h:7
-#: hacks/config/fluidballs.xml.h:12 hacks/config/halftone.xml.h:8
-#: hacks/config/hopalong.xml.h:13 hacks/config/interference.xml.h:8
-#: hacks/config/julia.xml.h:5 hacks/config/lissie.xml.h:4
-#: hacks/config/loop.xml.h:2 hacks/config/moire.xml.h:4
-#: hacks/config/piecewise.xml.h:5 hacks/config/rd-bomb.xml.h:11
-#: hacks/config/rorschach.xml.h:5 hacks/config/rubik.xml.h:4
-#: hacks/config/sierpinski.xml.h:3 hacks/config/slip.xml.h:3
+#: hacks/config/fluidballs.xml.h:12 hacks/config/gleidescope.xml.h:7
+#: hacks/config/halftone.xml.h:8 hacks/config/hopalong.xml.h:13
+#: hacks/config/interference.xml.h:11 hacks/config/julia.xml.h:5
+#: hacks/config/lissie.xml.h:4 hacks/config/loop.xml.h:2
+#: hacks/config/moire.xml.h:4 hacks/config/piecewise.xml.h:5
+#: hacks/config/rd-bomb.xml.h:11 hacks/config/rorschach.xml.h:5
+#: hacks/config/rubik.xml.h:4 hacks/config/sierpinski.xml.h:3
+#: hacks/config/slip.xml.h:3
 msgid "Large"
 msgstr "Duże"
 
@@ -1417,14 +1443,14 @@ msgstr "Komórki sześciokątne"
 #: hacks/config/demon.xml.h:9 hacks/config/discrete.xml.h:8
 #: hacks/config/distort.xml.h:12 hacks/config/fadeplot.xml.h:9
 #: hacks/config/flag.xml.h:8 hacks/config/flow.xml.h:15
-#: hacks/config/fluidballs.xml.h:19 hacks/config/halftone.xml.h:14
-#: hacks/config/hopalong.xml.h:22 hacks/config/interference.xml.h:15
-#: hacks/config/julia.xml.h:9 hacks/config/lissie.xml.h:10
-#: hacks/config/loop.xml.h:8 hacks/config/metaballs.xml.h:14
-#: hacks/config/moire.xml.h:9 hacks/config/piecewise.xml.h:10
-#: hacks/config/rd-bomb.xml.h:18 hacks/config/rorschach.xml.h:8
-#: hacks/config/rubik.xml.h:10 hacks/config/sierpinski.xml.h:8
-#: hacks/config/slip.xml.h:8
+#: hacks/config/fluidballs.xml.h:19 hacks/config/gleidescope.xml.h:12
+#: hacks/config/halftone.xml.h:14 hacks/config/hopalong.xml.h:22
+#: hacks/config/interference.xml.h:18 hacks/config/julia.xml.h:9
+#: hacks/config/lissie.xml.h:10 hacks/config/loop.xml.h:8
+#: hacks/config/metaballs.xml.h:14 hacks/config/moire.xml.h:9
+#: hacks/config/piecewise.xml.h:10 hacks/config/rd-bomb.xml.h:18
+#: hacks/config/rorschach.xml.h:8 hacks/config/rubik.xml.h:10
+#: hacks/config/sierpinski.xml.h:8 hacks/config/slip.xml.h:8
 msgid "Small"
 msgstr "Małe"
 
@@ -1449,6 +1475,47 @@ msgstr "Linie"
 #: hacks/config/ant.xml.h:21
 msgid "Twelve Sided Cells"
 msgstr "Komórki dwunastokątne"
+
+#: hacks/config/antspotlight.xml.h:1
+#, fuzzy
+msgid "AntSpotlight"
+msgstr "Reflektor"
+
+#: hacks/config/antspotlight.xml.h:2
+msgid ""
+"Antspotlight draws an ant (with a headlight) who walks on top of an image of "
+"your desktop or other image. Written by Blair Tennessy."
+msgstr ""
+
+#: hacks/config/antspotlight.xml.h:4 hacks/config/atlantis.xml.h:11
+#: hacks/config/atunnel.xml.h:5 hacks/config/blocktube.xml.h:8
+#: hacks/config/boxed.xml.h:5 hacks/config/bubble3d.xml.h:4
+#: hacks/config/cage.xml.h:3 hacks/config/circuit.xml.h:9
+#: hacks/config/cubenetic.xml.h:21 hacks/config/cubestorm.xml.h:7
+#: hacks/config/dangerball.xml.h:4 hacks/config/endgame.xml.h:4
+#: hacks/config/engine.xml.h:14 hacks/config/extrusion.xml.h:10
+#: hacks/config/flipflop.xml.h:4 hacks/config/flipscreen3d.xml.h:5
+#: hacks/config/fluidballs.xml.h:17 hacks/config/flurry.xml.h:9
+#: hacks/config/flyingtoasters.xml.h:10 hacks/config/gears.xml.h:6
+#: hacks/config/gflux.xml.h:11 hacks/config/glblur.xml.h:13
+#: hacks/config/gleidescope.xml.h:10 hacks/config/glforestfire.xml.h:13
+#: hacks/config/glknots.xml.h:16 hacks/config/glmatrix.xml.h:17
+#: hacks/config/glplanet.xml.h:5 hacks/config/glslideshow.xml.h:18
+#: hacks/config/glsnake.xml.h:10 hacks/config/gltext.xml.h:12
+#: hacks/config/hypertorus.xml.h:12 hacks/config/jigglypuff.xml.h:15
+#: hacks/config/klein.xml.h:6 hacks/config/lament.xml.h:5
+#: hacks/config/lavalite.xml.h:26 hacks/config/menger.xml.h:15
+#: hacks/config/mirrorblob.xml.h:18 hacks/config/moebius.xml.h:6
+#: hacks/config/molecule.xml.h:21 hacks/config/morph3d.xml.h:5
+#: hacks/config/noof.xml.h:4 hacks/config/pipes.xml.h:14
+#: hacks/config/polytopes.xml.h:18 hacks/config/pulsar.xml.h:14
+#: hacks/config/queens.xml.h:3 hacks/config/rubik.xml.h:6
+#: hacks/config/sballs.xml.h:12 hacks/config/sierpinski3d.xml.h:6
+#: hacks/config/spheremonics.xml.h:18 hacks/config/sproingies.xml.h:4
+#: hacks/config/stairs.xml.h:2 hacks/config/starwars.xml.h:11
+#: hacks/config/superquadrics.xml.h:7
+msgid "Show Frames-per-Second"
+msgstr "Wyświetlanie liczby klatek na sekundę"
 
 #: hacks/config/apollonian.xml.h:1
 msgid "Apollonian"
@@ -1481,6 +1548,47 @@ msgstr ""
 #, fuzzy
 msgid "Shallow"
 msgstr "Wolne"
+
+#: hacks/config/apple2.xml.h:1
+msgid "Apple ]["
+msgstr ""
+
+#: hacks/config/apple2.xml.h:2
+msgid "Basic Programming Mode"
+msgstr ""
+
+#: hacks/config/apple2.xml.h:3 hacks/config/halo.xml.h:8
+#: hacks/config/imsmap.xml.h:11
+msgid "Random Mode"
+msgstr "Losowy tryb"
+
+#: hacks/config/apple2.xml.h:4
+msgid ""
+"Simulates an original Apple ][ Plus computer in all its 1979 glory. It also "
+"reproduces the appearance of display on a color television set of the "
+"period. In \"Text Mode\", it displays the output of a command (e.g., "
+"\"fortune\".) In \"Slideshow Mode\", it chooses a number of images from the "
+"image source you configured into XScreenSaver and displays them within the "
+"limitations of the Apple ][ display hardware. (Six available colors in hi-"
+"res mode!) In \"Basic Programming Mode\", a simulated user types in a BASIC "
+"program and runs it. By Trevor Blackwell."
+msgstr ""
+
+#: hacks/config/apple2.xml.h:5
+msgid "Slideshow Mode"
+msgstr ""
+
+#: hacks/config/apple2.xml.h:6
+#, fuzzy
+msgid "Text Mode"
+msgstr "Plik tekstowy"
+
+#: hacks/config/apple2.xml.h:7 hacks/config/fontglide.xml.h:15
+#: hacks/config/noseguy.xml.h:7 hacks/config/phosphor.xml.h:9
+#: hacks/config/starwars.xml.h:17
+#, fuzzy
+msgid "Text Program"
+msgstr "Program"
 
 #: hacks/config/atlantis.xml.h:1
 msgid "Agressive"
@@ -1518,33 +1626,6 @@ msgstr "Tempo ruchu rekina"
 msgid "Shimmering Water"
 msgstr "Migocząca woda"
 
-#: hacks/config/atlantis.xml.h:11 hacks/config/atunnel.xml.h:5
-#: hacks/config/blocktube.xml.h:8 hacks/config/boxed.xml.h:5
-#: hacks/config/bubble3d.xml.h:4 hacks/config/cage.xml.h:3
-#: hacks/config/circuit.xml.h:9 hacks/config/cubenetic.xml.h:21
-#: hacks/config/cubestorm.xml.h:7 hacks/config/dangerball.xml.h:4
-#: hacks/config/endgame.xml.h:4 hacks/config/engine.xml.h:14
-#: hacks/config/extrusion.xml.h:10 hacks/config/flipscreen3d.xml.h:5
-#: hacks/config/fluidballs.xml.h:17 hacks/config/flurry.xml.h:9
-#: hacks/config/flyingtoasters.xml.h:10 hacks/config/gears.xml.h:6
-#: hacks/config/gflux.xml.h:11 hacks/config/glblur.xml.h:13
-#: hacks/config/glforestfire.xml.h:13 hacks/config/glknots.xml.h:16
-#: hacks/config/glmatrix.xml.h:17 hacks/config/glplanet.xml.h:5
-#: hacks/config/glslideshow.xml.h:18 hacks/config/glsnake.xml.h:10
-#: hacks/config/gltext.xml.h:12 hacks/config/hypertorus.xml.h:12
-#: hacks/config/jigglypuff.xml.h:15 hacks/config/klein.xml.h:6
-#: hacks/config/lament.xml.h:5 hacks/config/lavalite.xml.h:26
-#: hacks/config/menger.xml.h:15 hacks/config/moebius.xml.h:6
-#: hacks/config/molecule.xml.h:21 hacks/config/morph3d.xml.h:5
-#: hacks/config/pipes.xml.h:14 hacks/config/pulsar.xml.h:14
-#: hacks/config/queens.xml.h:3 hacks/config/rubik.xml.h:6
-#: hacks/config/sballs.xml.h:12 hacks/config/sierpinski3d.xml.h:6
-#: hacks/config/spheremonics.xml.h:18 hacks/config/sproingies.xml.h:4
-#: hacks/config/stairs.xml.h:2 hacks/config/starwars.xml.h:11
-#: hacks/config/superquadrics.xml.h:7
-msgid "Show Frames-per-Second"
-msgstr "Wyświetlanie liczby klatek na sekundę"
-
 #: hacks/config/atlantis.xml.h:12
 msgid "Shy"
 msgstr ""
@@ -1554,11 +1635,11 @@ msgstr ""
 #: hacks/config/gears.xml.h:8 hacks/config/glblur.xml.h:15
 #: hacks/config/glplanet.xml.h:7 hacks/config/glsnake.xml.h:13
 #: hacks/config/gltext.xml.h:14 hacks/config/menger.xml.h:17
-#: hacks/config/molecule.xml.h:23 hacks/config/munch.xml.h:8
-#: hacks/config/sierpinski3d.xml.h:9 hacks/config/speedmine.xml.h:14
-#: hacks/config/spheremonics.xml.h:21 hacks/config/sproingies.xml.h:7
-#: hacks/config/stairs.xml.h:4 hacks/config/stonerview.xml.h:2
-#: hacks/config/superquadrics.xml.h:9
+#: hacks/config/mismunch.xml.h:11 hacks/config/molecule.xml.h:23
+#: hacks/config/munch.xml.h:8 hacks/config/sierpinski3d.xml.h:9
+#: hacks/config/speedmine.xml.h:14 hacks/config/spheremonics.xml.h:21
+#: hacks/config/sproingies.xml.h:7 hacks/config/stairs.xml.h:4
+#: hacks/config/stonerview.xml.h:2 hacks/config/superquadrics.xml.h:9
 msgid "Solid"
 msgstr "Jednolity"
 
@@ -1574,21 +1655,22 @@ msgid "Whale Speed"
 msgstr "Tempo ruchu wieloryba"
 
 #: hacks/config/atlantis.xml.h:17 hacks/config/atunnel.xml.h:10
-#: hacks/config/blocktube.xml.h:13 hacks/config/boxed.xml.h:8
-#: hacks/config/cage.xml.h:8 hacks/config/cubestorm.xml.h:14
-#: hacks/config/dangerball.xml.h:11 hacks/config/extrusion.xml.h:19
+#: hacks/config/blinkbox.xml.h:9 hacks/config/blocktube.xml.h:13
+#: hacks/config/boxed.xml.h:8 hacks/config/cage.xml.h:8
+#: hacks/config/cubestorm.xml.h:14 hacks/config/dangerball.xml.h:11
+#: hacks/config/extrusion.xml.h:19 hacks/config/flipflop.xml.h:8
 #: hacks/config/flyingtoasters.xml.h:14 hacks/config/gears.xml.h:11
 #: hacks/config/glblur.xml.h:20 hacks/config/glforestfire.xml.h:20
 #: hacks/config/glknots.xml.h:23 hacks/config/glplanet.xml.h:11
-#: hacks/config/glsnake.xml.h:16 hacks/config/gltext.xml.h:18
+#: hacks/config/glsnake.xml.h:15 hacks/config/gltext.xml.h:18
 #: hacks/config/jigglypuff.xml.h:25 hacks/config/lament.xml.h:9
 #: hacks/config/lavalite.xml.h:32 hacks/config/menger.xml.h:21
-#: hacks/config/moebius.xml.h:11 hacks/config/molecule.xml.h:26
-#: hacks/config/pulsar.xml.h:20 hacks/config/sballs.xml.h:18
-#: hacks/config/sierpinski3d.xml.h:12 hacks/config/speedmine.xml.h:18
-#: hacks/config/spheremonics.xml.h:26 hacks/config/sproingies.xml.h:10
-#: hacks/config/stairs.xml.h:7 hacks/config/stonerview.xml.h:4
-#: hacks/config/superquadrics.xml.h:12
+#: hacks/config/mirrorblob.xml.h:24 hacks/config/moebius.xml.h:11
+#: hacks/config/molecule.xml.h:26 hacks/config/pulsar.xml.h:20
+#: hacks/config/sballs.xml.h:18 hacks/config/sierpinski3d.xml.h:12
+#: hacks/config/speedmine.xml.h:18 hacks/config/spheremonics.xml.h:26
+#: hacks/config/sproingies.xml.h:10 hacks/config/stairs.xml.h:7
+#: hacks/config/stonerview.xml.h:4 hacks/config/superquadrics.xml.h:12
 msgid "Wireframe"
 msgstr "Szkielet"
 
@@ -1613,7 +1695,7 @@ msgid "Bounce Off Walls"
 msgstr ""
 
 #: hacks/config/attraction.xml.h:6 hacks/config/hopalong.xml.h:1
-#: hacks/config/interference.xml.h:3 hacks/config/qix.xml.h:2
+#: hacks/config/interference.xml.h:5 hacks/config/qix.xml.h:2
 #: hacks/config/wander.xml.h:3
 msgid "Color Contrast"
 msgstr "Wartość kontrastu kolorów"
@@ -1633,15 +1715,14 @@ msgstr "Krzywe"
 #: hacks/config/glslideshow.xml.h:13 hacks/config/goop.xml.h:6
 #: hacks/config/halftone.xml.h:7 hacks/config/hopalong.xml.h:10
 #: hacks/config/hyperball.xml.h:3 hacks/config/hypercube.xml.h:3
-#: hacks/config/interference.xml.h:6 hacks/config/jigglypuff.xml.h:8
+#: hacks/config/interference.xml.h:8 hacks/config/jigglypuff.xml.h:8
 #: hacks/config/kumppa.xml.h:4 hacks/config/lavalite.xml.h:12
 #: hacks/config/nerverot.xml.h:11 hacks/config/petri.xml.h:8
 #: hacks/config/pyro.xml.h:5 hacks/config/qix.xml.h:10
 #: hacks/config/speedmine.xml.h:5 hacks/config/spheremonics.xml.h:6
 #: hacks/config/spiral.xml.h:4 hacks/config/squiral.xml.h:6
-#: hacks/config/strange.xml.h:3 hacks/config/superquadrics.xml.h:5
-#: hacks/config/t3d.xml.h:7 hacks/config/twang.xml.h:5
-#: hacks/config/wander.xml.h:8
+#: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:7
+#: hacks/config/twang.xml.h:5 hacks/config/wander.xml.h:8
 msgid "High"
 msgstr "Wysoka"
 
@@ -1676,15 +1757,16 @@ msgstr "Linie"
 #: hacks/config/attraction.xml.h:16 hacks/config/blocktube.xml.h:5
 #: hacks/config/braid.xml.h:6 hacks/config/cynosure.xml.h:5
 #: hacks/config/drift.xml.h:8 hacks/config/eruption.xml.h:11
-#: hacks/config/euler2d.xml.h:6 hacks/config/galaxy.xml.h:5
+#: hacks/config/euler2d.xml.h:6 hacks/config/fireflies.xml.h:21
+#: hacks/config/fontglide.xml.h:8 hacks/config/galaxy.xml.h:5
 #: hacks/config/juggle.xml.h:5 hacks/config/klein.xml.h:4
 #: hacks/config/laser.xml.h:5 hacks/config/menger.xml.h:4
-#: hacks/config/metaballs.xml.h:5 hacks/config/munch.xml.h:4
-#: hacks/config/nerverot.xml.h:13 hacks/config/petri.xml.h:9
-#: hacks/config/polyominoes.xml.h:4 hacks/config/rotor.xml.h:5
-#: hacks/config/shadebobs.xml.h:4 hacks/config/sierpinski3d.xml.h:3
-#: hacks/config/spheremonics.xml.h:7 hacks/config/wander.xml.h:10
-#: hacks/config/whirlwindwarp.xml.h:3
+#: hacks/config/metaballs.xml.h:5 hacks/config/mismunch.xml.h:3
+#: hacks/config/munch.xml.h:4 hacks/config/nerverot.xml.h:13
+#: hacks/config/petri.xml.h:9 hacks/config/polyominoes.xml.h:4
+#: hacks/config/rotor.xml.h:5 hacks/config/shadebobs.xml.h:4
+#: hacks/config/sierpinski3d.xml.h:3 hacks/config/spheremonics.xml.h:7
+#: hacks/config/wander.xml.h:10 hacks/config/whirlwindwarp.xml.h:3
 msgid "Long"
 msgstr "Długie"
 
@@ -1694,15 +1776,14 @@ msgstr "Długie"
 #: hacks/config/glslideshow.xml.h:15 hacks/config/goop.xml.h:7
 #: hacks/config/halftone.xml.h:9 hacks/config/hopalong.xml.h:14
 #: hacks/config/hyperball.xml.h:6 hacks/config/hypercube.xml.h:5
-#: hacks/config/interference.xml.h:9 hacks/config/jigglypuff.xml.h:11
+#: hacks/config/interference.xml.h:12 hacks/config/jigglypuff.xml.h:11
 #: hacks/config/kumppa.xml.h:6 hacks/config/lavalite.xml.h:14
 #: hacks/config/nerverot.xml.h:14 hacks/config/petri.xml.h:10
 #: hacks/config/pyro.xml.h:7 hacks/config/qix.xml.h:13
 #: hacks/config/speedmine.xml.h:6 hacks/config/spheremonics.xml.h:8
 #: hacks/config/spiral.xml.h:5 hacks/config/squiral.xml.h:8
-#: hacks/config/strange.xml.h:4 hacks/config/superquadrics.xml.h:6
-#: hacks/config/t3d.xml.h:8 hacks/config/twang.xml.h:7
-#: hacks/config/wander.xml.h:11
+#: hacks/config/superquadrics.xml.h:6 hacks/config/t3d.xml.h:8
+#: hacks/config/twang.xml.h:7 hacks/config/wander.xml.h:11
 msgid "Low"
 msgstr "Niska"
 
@@ -1719,6 +1800,7 @@ msgid "Polygons"
 msgstr "Wielokąty"
 
 #: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
+#: hacks/config/xplanet.xml.h:55
 msgid "Radius"
 msgstr "Promień"
 
@@ -1730,9 +1812,10 @@ msgstr "Prz_esunięcie progowe:"
 #: hacks/config/attraction.xml.h:25 hacks/config/blocktube.xml.h:7
 #: hacks/config/braid.xml.h:10 hacks/config/cynosure.xml.h:8
 #: hacks/config/drift.xml.h:11 hacks/config/eruption.xml.h:18
-#: hacks/config/euler2d.xml.h:12 hacks/config/galaxy.xml.h:8
-#: hacks/config/klein.xml.h:5 hacks/config/laser.xml.h:9
-#: hacks/config/menger.xml.h:14 hacks/config/metaballs.xml.h:12
+#: hacks/config/euler2d.xml.h:12 hacks/config/fireflies.xml.h:34
+#: hacks/config/galaxy.xml.h:8 hacks/config/klein.xml.h:5
+#: hacks/config/laser.xml.h:9 hacks/config/menger.xml.h:14
+#: hacks/config/metaballs.xml.h:12 hacks/config/mismunch.xml.h:8
 #: hacks/config/munch.xml.h:6 hacks/config/nerverot.xml.h:19
 #: hacks/config/petri.xml.h:22 hacks/config/polyominoes.xml.h:9
 #: hacks/config/rotor.xml.h:9 hacks/config/shadebobs.xml.h:8
@@ -1745,7 +1828,7 @@ msgstr "Krótkie"
 msgid "Splines"
 msgstr "Krzywe"
 
-#: hacks/config/attraction.xml.h:30
+#: hacks/config/attraction.xml.h:30 hacks/config/fireflies.xml.h:42
 msgid "Tails"
 msgstr "Warkocze"
 
@@ -1827,6 +1910,30 @@ msgstr "Roboty"
 msgid "Stars"
 msgstr "Gwiazdy"
 
+#: hacks/config/blinkbox.xml.h:1
+msgid "BlinkBox"
+msgstr ""
+
+#: hacks/config/blinkbox.xml.h:2
+#, fuzzy
+msgid "Box Size"
+msgstr "Maksymalny rozmiar"
+
+#: hacks/config/blinkbox.xml.h:3
+msgid "Dissolve"
+msgstr ""
+
+#: hacks/config/blinkbox.xml.h:4 hacks/config/phosphor.xml.h:3
+#, fuzzy
+msgid "Fade"
+msgstr "Płomień"
+
+#: hacks/config/blinkbox.xml.h:6
+msgid ""
+"Shows a ball contained inside of a bounding box. Colored blocks blink in "
+"when the ball hits the edges. Written by Jeremy English."
+msgstr ""
+
 #: hacks/config/blitspin.xml.h:1
 #, fuzzy
 msgid "90 deg Rotation Speed"
@@ -1902,7 +2009,7 @@ msgstr "Liczba punktów"
 
 #: hacks/config/bouboule.xml.h:10
 msgid ""
-"This draws what looks like a spinning, deforming baloon with varying-sized "
+"This draws what looks like a spinning, deforming balloon with varying-sized "
 "spots painted on its invisible surface. Written by Jeremie Petit."
 msgstr ""
 
@@ -1912,11 +2019,12 @@ msgstr ""
 
 #: hacks/config/bouncingcow.xml.h:2 hacks/config/boxed.xml.h:1
 #: hacks/config/cubestorm.xml.h:1 hacks/config/flyingtoasters.xml.h:3
-#: hacks/config/gears.xml.h:1 hacks/config/gflux.xml.h:1
-#: hacks/config/glknots.xml.h:1 hacks/config/glmatrix.xml.h:1
-#: hacks/config/jigglypuff.xml.h:1 hacks/config/pyro.xml.h:1
-#: hacks/config/rd-bomb.xml.h:6 hacks/config/rocks.xml.h:1
-#: hacks/config/starwars.xml.h:1 hacks/config/xfishtank.xml.h:1
+#: hacks/config/fontglide.xml.h:1 hacks/config/gears.xml.h:1
+#: hacks/config/gflux.xml.h:1 hacks/config/glknots.xml.h:1
+#: hacks/config/glmatrix.xml.h:1 hacks/config/jigglypuff.xml.h:1
+#: hacks/config/pyro.xml.h:1 hacks/config/rd-bomb.xml.h:6
+#: hacks/config/rocks.xml.h:1 hacks/config/starwars.xml.h:1
+#: hacks/config/wormhole.xml.h:1 hacks/config/xfishtank.xml.h:1
 msgid "Animation Speed"
 msgstr "Tempo animacji"
 
@@ -1978,18 +2086,19 @@ msgstr ""
 #: hacks/config/drift.xml.h:2 hacks/config/epicycle.xml.h:3
 #: hacks/config/eruption.xml.h:3 hacks/config/euler2d.xml.h:1
 #: hacks/config/flame.xml.h:5 hacks/config/galaxy.xml.h:2
-#: hacks/config/glsnake.xml.h:4 hacks/config/helix.xml.h:3
+#: hacks/config/glsnake.xml.h:5 hacks/config/helix.xml.h:3
 #: hacks/config/hopalong.xml.h:2 hacks/config/imsmap.xml.h:6
 #: hacks/config/klein.xml.h:1 hacks/config/laser.xml.h:2
 #: hacks/config/menger.xml.h:2 hacks/config/metaballs.xml.h:3
-#: hacks/config/moire.xml.h:3 hacks/config/molecule.xml.h:9
-#: hacks/config/munch.xml.h:2 hacks/config/nerverot.xml.h:8
-#: hacks/config/pedal.xml.h:3 hacks/config/penrose.xml.h:5
-#: hacks/config/polyominoes.xml.h:1 hacks/config/rorschach.xml.h:3
-#: hacks/config/rotzoomer.xml.h:5 hacks/config/shadebobs.xml.h:2
-#: hacks/config/sierpinski3d.xml.h:1 hacks/config/spheremonics.xml.h:4
-#: hacks/config/starfish.xml.h:2 hacks/config/vidwhacker.xml.h:3
-#: hacks/config/wander.xml.h:7 hacks/config/xspirograph.xml.h:3
+#: hacks/config/mismunch.xml.h:1 hacks/config/moire.xml.h:3
+#: hacks/config/molecule.xml.h:9 hacks/config/munch.xml.h:2
+#: hacks/config/nerverot.xml.h:8 hacks/config/pedal.xml.h:3
+#: hacks/config/penrose.xml.h:5 hacks/config/polyominoes.xml.h:1
+#: hacks/config/rorschach.xml.h:3 hacks/config/rotzoomer.xml.h:5
+#: hacks/config/shadebobs.xml.h:2 hacks/config/sierpinski3d.xml.h:1
+#: hacks/config/spheremonics.xml.h:4 hacks/config/starfish.xml.h:2
+#: hacks/config/vidwhacker.xml.h:3 hacks/config/wander.xml.h:7
+#: hacks/config/xspirograph.xml.h:3
 msgid "Duration"
 msgstr "Okres"
 
@@ -2043,56 +2152,64 @@ msgid "HPUX"
 msgstr ""
 
 #: hacks/config/bsod.xml.h:11
+msgid "HVX/GCOS6"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:12
 #, fuzzy
 msgid "Linux"
 msgstr "Sparc Linux"
 
-#: hacks/config/bsod.xml.h:12
+#: hacks/config/bsod.xml.h:13
 msgid "Mac Bomb"
 msgstr ""
 
-#: hacks/config/bsod.xml.h:13
+#: hacks/config/bsod.xml.h:14
 msgid "MacOS X"
 msgstr ""
 
-#: hacks/config/bsod.xml.h:14
+#: hacks/config/bsod.xml.h:15
 msgid "MacsBug"
 msgstr ""
 
-#: hacks/config/bsod.xml.h:15
+#: hacks/config/bsod.xml.h:16
 msgid "NCD X Terminal"
 msgstr "NCD X Terminal"
 
-#: hacks/config/bsod.xml.h:16
+#: hacks/config/bsod.xml.h:17
 msgid "OS/390"
 msgstr ""
 
-#: hacks/config/bsod.xml.h:17
+#: hacks/config/bsod.xml.h:18
 msgid "SCO"
 msgstr "SCO"
 
-#: hacks/config/bsod.xml.h:18
+#: hacks/config/bsod.xml.h:19
 msgid "Sad Mac"
 msgstr ""
 
-#: hacks/config/bsod.xml.h:19
+#: hacks/config/bsod.xml.h:20
 msgid "Solaris"
 msgstr "Solaris"
 
-#: hacks/config/bsod.xml.h:20
+#: hacks/config/bsod.xml.h:21
 msgid "Sparc Linux"
 msgstr "Sparc Linux"
 
-#: hacks/config/bsod.xml.h:21
+#: hacks/config/bsod.xml.h:22
+msgid "VMS"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:23
 msgid "Windows 2000"
 msgstr "Windows 2000"
 
-#: hacks/config/bsod.xml.h:22
+#: hacks/config/bsod.xml.h:24
 #, fuzzy
 msgid "Windows 3.1"
 msgstr "Windows"
 
-#: hacks/config/bsod.xml.h:23
+#: hacks/config/bsod.xml.h:25
 msgid "Windows NT"
 msgstr "Windows NT"
 
@@ -2227,6 +2344,7 @@ msgid "Parts"
 msgstr "Części"
 
 #: hacks/config/circuit.xml.h:7 hacks/config/flipscreen3d.xml.h:4
+#: hacks/config/gleidescope.xml.h:9
 msgid "Rotate"
 msgstr ""
 
@@ -2283,9 +2401,9 @@ msgid "Compass"
 msgstr "Kompas"
 
 #: hacks/config/compass.xml.h:2 hacks/config/deluxe.xml.h:3
-#: hacks/config/interference.xml.h:4 hacks/config/kumppa.xml.h:2
-#: hacks/config/nerverot.xml.h:6 hacks/config/piecewise.xml.h:3
-#: hacks/config/pipes.xml.h:4
+#: hacks/config/fontglide.xml.h:3 hacks/config/interference.xml.h:6
+#: hacks/config/kumppa.xml.h:2 hacks/config/nerverot.xml.h:6
+#: hacks/config/piecewise.xml.h:3 hacks/config/pipes.xml.h:4
 msgid "Double Buffer"
 msgstr "Podwójne buforowanie"
 
@@ -2533,7 +2651,8 @@ msgid ""
 "fill space. Written by Jamie Zawinski."
 msgstr ""
 
-#: hacks/config/cubestorm.xml.h:5 hacks/config/glknots.xml.h:6
+#: hacks/config/cubestorm.xml.h:5 hacks/config/fontglide.xml.h:9
+#: hacks/config/glknots.xml.h:6
 #, fuzzy
 msgid "Motion Speed"
 msgstr "Tempo rotacji"
@@ -2802,6 +2921,10 @@ msgid "Lissojous Figures"
 msgstr ""
 
 #: hacks/config/electricsheep.xml.h:1
+msgid "ElectricSheep"
+msgstr "Elektryczna Owca"
+
+#: hacks/config/electricsheep.xml.h:2
 msgid ""
 "ElectricSheep is an xscreensaver module that displays mpeg video of an "
 "animated fractal flame. In the background, it contributes render cycles to "
@@ -2812,33 +2935,33 @@ msgid ""
 "org/&gt;."
 msgstr ""
 
-#: hacks/config/electricsheep.xml.h:2
+#: hacks/config/electricsheep.xml.h:3
 msgid "Frame Rate"
 msgstr ""
 
-#: hacks/config/electricsheep.xml.h:3
+#: hacks/config/electricsheep.xml.h:4
 #, fuzzy
 msgid "Hide Sheep"
 msgstr "Tempo"
 
-#: hacks/config/electricsheep.xml.h:4
+#: hacks/config/electricsheep.xml.h:5
 msgid "Megabytes of Local Sheep Storage"
 msgstr ""
 
-#: hacks/config/electricsheep.xml.h:5
+#: hacks/config/electricsheep.xml.h:6
 msgid "Nickname"
 msgstr ""
 
-#: hacks/config/electricsheep.xml.h:6
+#: hacks/config/electricsheep.xml.h:7
 msgid "Repititions of each Sheep"
 msgstr ""
 
-#: hacks/config/electricsheep.xml.h:7
+#: hacks/config/electricsheep.xml.h:8
 #, fuzzy
 msgid "Standalone"
 msgstr "Standardowe"
 
-#: hacks/config/electricsheep.xml.h:8
+#: hacks/config/electricsheep.xml.h:9
 msgid "URL"
 msgstr ""
 
@@ -3024,7 +3147,7 @@ msgstr "Helix 4"
 msgid "Join Offset"
 msgstr "Przesunięcie"
 
-#: hacks/config/extrusion.xml.h:8
+#: hacks/config/extrusion.xml.h:8 hacks/config/polytopes.xml.h:16
 msgid "Random Object"
 msgstr "Losowy obiekt"
 
@@ -3066,6 +3189,197 @@ msgstr ""
 msgid "FadePlot"
 msgstr "Gasnący Punkt"
 
+#: hacks/config/fireflies.xml.h:1
+msgid "10 times"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:2
+msgid ""
+"A bunch of fireflies chase a few baits around the screen, leaving colorful "
+"tails which get blown around by the wind. Written by Matt Perry. This "
+"program is not included with the XScreenSaver package, but if you don't have "
+"it already, you can find it at &lt;http://somewhere.fscked.org/fireflies/"
+"&gt;."
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:3
+msgid "Add some fireflies"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:4
+msgid "Bait accel"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:5
+#, fuzzy
+msgid "Bait speed"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:6
+msgid "Color cycle speed"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:7
+#, fuzzy
+msgid "Draw baits"
+msgstr "Rysowanie atomów"
+
+#: hacks/config/fireflies.xml.h:8
+#, fuzzy
+msgid "Faded colors"
+msgstr "Drugi kolor"
+
+#: hacks/config/fireflies.xml.h:9
+msgid "Fast Forward speed"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:10
+#, fuzzy
+msgid "Fireflies"
+msgstr "_Plik"
+
+#: hacks/config/fireflies.xml.h:11
+msgid "Firefly accel"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:12
+msgid "Firefly size"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:13
+#, fuzzy
+msgid "Firefly speed"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:14
+#, fuzzy
+msgid "Frames per sec"
+msgstr "Wyświetlanie liczby klatek na sekundę"
+
+#: hacks/config/fireflies.xml.h:15
+msgid "Glow factor"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:16
+#, fuzzy
+msgid "Half"
+msgstr "Halo"
+
+#: hacks/config/fireflies.xml.h:17
+#, fuzzy
+msgid "Huge"
+msgstr "Potężna czcionka"
+
+#: hacks/config/fireflies.xml.h:18 hacks/config/fluidballs.xml.h:10
+msgid "Hurricane"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:19
+msgid "Invisible"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:20
+msgid "Kill some fireflies"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:22
+msgid "Make all swarms do something"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:23
+msgid "Matrix (pause and rotate)"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:24
+#, fuzzy
+msgid "Maximum baits"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:25
+#, fuzzy
+msgid "Maximum flies"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:26
+msgid "Merge two swarms"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:27
+#, fuzzy
+msgid "Minimum baits"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:28
+#, fuzzy
+msgid "Minimum flies"
+msgstr "Tempo animacji"
+
+#: hacks/config/fireflies.xml.h:29
+#, fuzzy
+msgid "Narrow"
+msgstr "Blisko"
+
+#: hacks/config/fireflies.xml.h:30
+#, fuzzy
+msgid "Never"
+msgstr "Blisko"
+
+#: hacks/config/fireflies.xml.h:31
+msgid "Normal swarm motion"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:33
+msgid "Opaque"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:35
+msgid "Split a swarm"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:36 hacks/config/fluidballs.xml.h:21
+#: hacks/config/glforestfire.xml.h:16
+#, fuzzy
+msgid "Still"
+msgstr "Styl"
+
+#: hacks/config/fireflies.xml.h:37
+msgid "Swarm bursts into rainbow               "
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:38
+msgid "Swarm comes to a halt"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:39
+msgid "Swarm does loops"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:40
+msgid "Swarm hyperspeed"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:41
+msgid "Swarm tails glow"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:43
+msgid "Tiny"
+msgstr ""
+
+#: hacks/config/fireflies.xml.h:44
+#, fuzzy
+msgid "Wide"
+msgstr "Windows"
+
+#: hacks/config/fireflies.xml.h:45 hacks/config/fluidballs.xml.h:23
+#, fuzzy
+msgid "Wind"
+msgstr "Windows"
+
+#: hacks/config/fireflies.xml.h:46
+msgid "Wind picks up"
+msgstr ""
+
 #: hacks/config/flag.xml.h:1
 msgid "Bitmap for Flag"
 msgstr "Bitmapa na fladze"
@@ -3093,8 +3407,9 @@ msgstr ""
 msgid "0 Seconds"
 msgstr "0 sekund"
 
-#: hacks/config/flame.xml.h:2 hacks/config/glslideshow.xml.h:2
-#: hacks/config/maze.xml.h:2
+#: hacks/config/flame.xml.h:2 hacks/config/gleidescope.xml.h:1
+#: hacks/config/glslideshow.xml.h:2 hacks/config/maze.xml.h:2
+#: hacks/config/mirrorblob.xml.h:1
 msgid "10 Seconds"
 msgstr "10 sekund"
 
@@ -3115,6 +3430,21 @@ msgstr "Płomień"
 #: hacks/config/flame.xml.h:13
 msgid "Number of Fractals"
 msgstr "Liczba fraktali"
+
+#: hacks/config/flipflop.xml.h:2
+msgid "FlipFlop"
+msgstr ""
+
+#: hacks/config/flipflop.xml.h:3
+msgid ""
+"Flipflop draws a grid of 3D colored tiles that change positions with each "
+"other. Written by Kevin Ogden."
+msgstr ""
+
+#: hacks/config/flipflop.xml.h:6
+#, fuzzy
+msgid "Solid Tiles"
+msgstr "Jednolite podłoże"
 
 #: hacks/config/flipscreen3d.xml.h:2
 msgid "Flipscreen3d"
@@ -3187,10 +3517,6 @@ msgstr "Piłki"
 msgid "Friction"
 msgstr "_Czynność"
 
-#: hacks/config/fluidballs.xml.h:10
-msgid "Hurricane"
-msgstr ""
-
 #: hacks/config/fluidballs.xml.h:11
 msgid "Jupiter"
 msgstr ""
@@ -3212,19 +3538,9 @@ msgstr "Bąble"
 msgid "Shake Box"
 msgstr ""
 
-#: hacks/config/fluidballs.xml.h:21 hacks/config/glforestfire.xml.h:16
-#, fuzzy
-msgid "Still"
-msgstr "Styl"
-
 #: hacks/config/fluidballs.xml.h:22
 msgid "Various Ball Sizes"
 msgstr ""
-
-#: hacks/config/fluidballs.xml.h:23
-#, fuzzy
-msgid "Wind"
-msgstr "Windows"
 
 #: hacks/config/flurry.xml.h:1
 msgid "Binary"
@@ -3256,8 +3572,9 @@ msgstr ""
 msgid "RGB"
 msgstr ""
 
-#: hacks/config/flurry.xml.h:8 hacks/config/jigglypuff.xml.h:13
-#: hacks/config/sballs.xml.h:10 hacks/config/whirlygig.xml.h:12
+#: hacks/config/flurry.xml.h:8 hacks/config/fontglide.xml.h:12
+#: hacks/config/jigglypuff.xml.h:13 hacks/config/sballs.xml.h:10
+#: hacks/config/whirlygig.xml.h:12
 msgid "Random"
 msgstr "Losowa"
 
@@ -3296,7 +3613,7 @@ msgstr ""
 
 #: hacks/config/flyingtoasters.xml.h:7 hacks/config/glslideshow.xml.h:16
 #: hacks/config/jigglypuff.xml.h:12 hacks/config/juggle.xml.h:6
-#: hacks/config/pipes.xml.h:10
+#: hacks/config/mirrorblob.xml.h:16 hacks/config/pipes.xml.h:10
 msgid "None"
 msgstr "Brak"
 
@@ -3320,6 +3637,45 @@ msgstr "Jednolite podłoże"
 msgid "Swarm"
 msgstr "XRaySwarm"
 
+#: hacks/config/fontglide.xml.h:2
+#, fuzzy
+msgid "Brief"
+msgstr "Drift"
+
+#: hacks/config/fontglide.xml.h:5
+#, fuzzy
+msgid "Font Border Thickness"
+msgstr "Grubość linii"
+
+#: hacks/config/fontglide.xml.h:6
+msgid "FontGlide"
+msgstr ""
+
+#: hacks/config/fontglide.xml.h:7
+msgid "Horizontally scrolling text"
+msgstr ""
+
+#: hacks/config/fontglide.xml.h:10
+msgid "Pages of text"
+msgstr ""
+
+#: hacks/config/fontglide.xml.h:11
+msgid ""
+"Puts text on the screen using large characters that glide in from the edges, "
+"assemble, then disperse. Alternately, it can simply scroll whole sentences "
+"from right to left. By Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/fontglide.xml.h:14
+#, fuzzy
+msgid "Text Linger"
+msgstr "Wiersze tekstu"
+
+#: hacks/config/fontglide.xml.h:16
+#, fuzzy
+msgid "Vapor Trails"
+msgstr "Warkocze"
+
 #: hacks/config/forest.xml.h:2 hacks/config/glforestfire.xml.h:6
 msgid "Forest"
 msgstr "Las"
@@ -3336,9 +3692,10 @@ msgstr "Galaktyka"
 
 #: hacks/config/galaxy.xml.h:9 hacks/config/lisa.xml.h:7
 #: hacks/config/lissie.xml.h:8 hacks/config/loop.xml.h:6
-#: hacks/config/penrose.xml.h:10 hacks/config/rotor.xml.h:10
-#: hacks/config/rubik.xml.h:8 hacks/config/sproingies.xml.h:5
-#: hacks/config/wander.xml.h:13 hacks/config/worm.xml.h:6
+#: hacks/config/penrose.xml.h:10 hacks/config/pong.xml.h:3
+#: hacks/config/rotor.xml.h:10 hacks/config/rubik.xml.h:8
+#: hacks/config/sproingies.xml.h:5 hacks/config/wander.xml.h:13
+#: hacks/config/worm.xml.h:6
 msgid "Size"
 msgstr "Rozmiar"
 
@@ -3400,7 +3757,7 @@ msgstr "Gęstość"
 msgid "Screen Image"
 msgstr "Wygaszacz ekranu"
 
-#: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
+#: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:21
 msgid "Wave Speed"
 msgstr "Tempo ruchu fali"
 
@@ -3431,6 +3788,47 @@ msgid ""
 "support. It will hurt your machine bad."
 msgstr ""
 
+#: hacks/config/gleidescope.xml.h:2 hacks/config/glslideshow.xml.h:6
+#: hacks/config/mirrorblob.xml.h:3
+#, fuzzy
+msgid "5 Minutes"
+msgstr "1 minuta"
+
+#: hacks/config/gleidescope.xml.h:3
+msgid ""
+"An OpenGL kaleidescope that operates on your desktop image, or on image "
+"files loaded from disk. Written by andrew dean."
+msgstr ""
+
+#: hacks/config/gleidescope.xml.h:4
+#, fuzzy
+msgid "Gleidescope"
+msgstr "Kalejdoskop"
+
+#: hacks/config/gleidescope.xml.h:5
+#, fuzzy
+msgid "Image Duration"
+msgstr "Okres blaknięcia"
+
+#: hacks/config/gleidescope.xml.h:6
+#, fuzzy
+msgid "Image file"
+msgstr "Plik z obrazem"
+
+#: hacks/config/gleidescope.xml.h:8
+#, fuzzy
+msgid "Move"
+msgstr "Więcej"
+
+#: hacks/config/gleidescope.xml.h:11
+msgid "Size of tube"
+msgstr ""
+
+#: hacks/config/gleidescope.xml.h:13 hacks/config/hyperball.xml.h:16
+#: hacks/config/hypercube.xml.h:16 hacks/config/zoom.xml.h:8
+msgid "Zoom"
+msgstr "Powiększenie"
+
 #: hacks/config/glforestfire.xml.h:2
 msgid "Desert"
 msgstr "Pustynia"
@@ -3439,7 +3837,7 @@ msgstr "Pustynia"
 msgid ""
 "Draws an animation of sprinkling fire-like 3D triangles in a landscape "
 "filled with trees. Requires OpenGL, and a machine with fast hardware support "
-"for texture maps. Written by Eric Lassauge &lt;lassauge@mail.dotcom.fr&gt;."
+"for texture maps. Written by Eric Lassauge &lt;lassauge@free.fr&gt;."
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:5 hacks/config/glmatrix.xml.h:9
@@ -3572,19 +3970,15 @@ msgid "Image File"
 msgstr "Plik z obrazem"
 
 #: hacks/config/glslideshow.xml.h:4 hacks/config/rd-bomb.xml.h:5
+#: hacks/config/xplanet.xml.h:4
 #, no-c-format
 msgid "100%"
 msgstr "100%"
 
 #: hacks/config/glslideshow.xml.h:5 hacks/config/glsnake.xml.h:2
-#: hacks/config/penrose.xml.h:2
+#: hacks/config/mirrorblob.xml.h:2 hacks/config/penrose.xml.h:2
 msgid "30 Seconds"
 msgstr "30 sekund"
-
-#: hacks/config/glslideshow.xml.h:6
-#, fuzzy
-msgid "5 Minutes"
-msgstr "1 minuta"
 
 #: hacks/config/glslideshow.xml.h:8
 #, no-c-format
@@ -3595,7 +3989,7 @@ msgstr ""
 msgid "Always show at least this much of the image:"
 msgstr ""
 
-#: hacks/config/glslideshow.xml.h:10
+#: hacks/config/glslideshow.xml.h:10 hacks/config/mirrorblob.xml.h:6
 #, fuzzy
 msgid "Crossfade Duration:"
 msgstr "Okres blaknięcia"
@@ -3611,10 +4005,13 @@ msgstr ""
 #: hacks/config/glslideshow.xml.h:14
 msgid ""
 "Loads a random sequence of images and smoothly scans and zooms around in "
-"each, fading from pan to pan. You can set the directory from which images "
-"are loaded on the \"Advanced\" tab. This program requires a good video card "
-"capable of supporting large textures. Written by Jamie Zawinski and Mike "
-"Oliphant."
+"each, fading from pan to pan. To tell it where to find the images to "
+"display, go to the \"Advanced\" tab on the Screensaver Preferences window. "
+"Select \"Choose Random Images\", and enter your image directory in the text "
+"field right below that. (Note: not the the \"Advanced\" button at the bottom "
+"of this window: the one on the other window.) This program requires a good "
+"video card capable of supporting large textures. Written by Jamie Zawinski "
+"and Mike Oliphant."
 msgstr ""
 
 #: hacks/config/glslideshow.xml.h:17
@@ -3623,6 +4020,11 @@ msgid "Pan/Zoom Duration:"
 msgstr "Okres blaknięcia"
 
 #: hacks/config/glslideshow.xml.h:19
+#, fuzzy
+msgid "Show Image Titles"
+msgstr "Plik z obrazem"
+
+#: hacks/config/glslideshow.xml.h:20 hacks/config/mirrorblob.xml.h:22
 msgid "Time until loading a new image:"
 msgstr ""
 
@@ -3631,32 +4033,33 @@ msgid "1"
 msgstr "1"
 
 #: hacks/config/glsnake.xml.h:3
+#, fuzzy
+msgid "Angular Velocity"
+msgstr "Tempo"
+
+#: hacks/config/glsnake.xml.h:4
 msgid ""
 "Draws a simulation of the Rubik's Snake puzzle. Written by Jamie Wilkinson, "
 "Andrew Bennetts, and Peter Aylett."
 msgstr ""
 
-#: hacks/config/glsnake.xml.h:6
+#: hacks/config/glsnake.xml.h:7
 msgid "GlSnake"
 msgstr "GlSnake"
 
-#: hacks/config/glsnake.xml.h:7
+#: hacks/config/glsnake.xml.h:8
 #, fuzzy
 msgid "Loose"
 msgstr "Mysz"
 
-#: hacks/config/glsnake.xml.h:8
+#: hacks/config/glsnake.xml.h:9
 #, fuzzy
 msgid "Packing"
 msgstr "Pakiety"
 
-#: hacks/config/glsnake.xml.h:9
-#, fuzzy
-msgid "Scary Colors"
-msgstr "Drugi kolor"
-
 #: hacks/config/glsnake.xml.h:11
-msgid "Show Labels"
+#, fuzzy
+msgid "Show Titles"
 msgstr "Wyświetlanie etykiet"
 
 #: hacks/config/glsnake.xml.h:14
@@ -3664,17 +4067,15 @@ msgstr "Wyświetlanie etykiet"
 msgid "Tight"
 msgstr "Prawa"
 
-#: hacks/config/glsnake.xml.h:15 hacks/config/rocks.xml.h:13
-msgid "Velocity"
+#: hacks/config/glsnake.xml.h:16
+#, fuzzy
+msgid "Y Angular Velocity"
 msgstr "Tempo"
 
 #: hacks/config/glsnake.xml.h:17
-msgid "Y Rotation"
-msgstr "Obrót Y"
-
-#: hacks/config/glsnake.xml.h:18
-msgid "Z Rotation"
-msgstr "Obrót Z"
+#, fuzzy
+msgid "Z Angular Velocity"
+msgstr "Tempo"
 
 #: hacks/config/gltext.xml.h:1
 msgid ""
@@ -3839,15 +4240,16 @@ msgstr "Halo"
 msgid "Number of Circles"
 msgstr "Liczba okręgów"
 
-#: hacks/config/halo.xml.h:7 hacks/config/imsmap.xml.h:11
-msgid "Random Mode"
+#: hacks/config/halo.xml.h:7
+#, fuzzy
+msgid "Ramp Mode"
 msgstr "Losowy tryb"
 
-#: hacks/config/halo.xml.h:8
+#: hacks/config/halo.xml.h:9
 msgid "Seuss Mode"
 msgstr ""
 
-#: hacks/config/halo.xml.h:11
+#: hacks/config/halo.xml.h:12
 msgid ""
 "This draws trippy psychedelic circular patterns that hurt to look at. It can "
 "also animate the control-points, but that takes a lot of CPU and bandwidth. "
@@ -3932,7 +4334,9 @@ msgstr "Hiperkula"
 msgid ""
 "Hyperball is to hypercube as dodecahedron is to cube: this displays a 2D "
 "projection of the sequence of 3D objects which are the projections of the 4D "
-"analog to the dodecahedron. Written by Joe Keane."
+"analog to the dodecahedron. Technically, it is a \"120 cell polytope.\" "
+"Written by Joe Keane. See also the \"polytopes\" hack for a more general "
+"version of this using OpenGL."
 msgstr ""
 
 #: hacks/config/hyperball.xml.h:7 hacks/config/hypercube.xml.h:6
@@ -3963,11 +4367,6 @@ msgstr "Obrót YZ"
 msgid "ZW Rotation"
 msgstr "Obrót ZW"
 
-#: hacks/config/hyperball.xml.h:16 hacks/config/hypercube.xml.h:16
-#: hacks/config/zoom.xml.h:8
-msgid "Zoom"
-msgstr "Powiększenie"
-
 #: hacks/config/hypercube.xml.h:4
 msgid "Hypercube"
 msgstr "Hiperkostka"
@@ -3980,14 +4379,16 @@ msgid ""
 "touching four others; a hypercube is composed of eight cubes, each touching "
 "six others. To make it easier to visualize the rotation, it uses a different "
 "color for the edges of each face. Don't think about it too long, or your "
-"brain will melt. Written by Joe Keane, Fritz Mueller, and Jamie Zawinski."
+"brain will melt. Written by Joe Keane, Fritz Mueller, and Jamie Zawinski. "
+"See also the \"polytopes\" hack for a more general version of this using "
+"OpenGL."
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:1
+#: hacks/config/hypertorus.xml.h:1 hacks/config/polytopes.xml.h:1
 msgid "-4.0"
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:2
+#: hacks/config/hypertorus.xml.h:2 hacks/config/polytopes.xml.h:5
 msgid "4.0"
 msgstr ""
 
@@ -4000,24 +4401,24 @@ msgstr ""
 msgid "Color Wheel"
 msgstr "Kolor"
 
-#: hacks/config/hypertorus.xml.h:5
+#: hacks/config/hypertorus.xml.h:5 hacks/config/polytopes.xml.h:10
 #, fuzzy
 msgid "Display Speed"
 msgstr "Wybór"
 
-#: hacks/config/hypertorus.xml.h:7
+#: hacks/config/hypertorus.xml.h:7 hacks/config/polytopes.xml.h:12
 msgid "Orthographic 3d"
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:8
+#: hacks/config/hypertorus.xml.h:8 hacks/config/polytopes.xml.h:13
 msgid "Orthographic 4d"
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:9
+#: hacks/config/hypertorus.xml.h:9 hacks/config/polytopes.xml.h:14
 msgid "Perspective 3d"
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:10
+#: hacks/config/hypertorus.xml.h:10 hacks/config/polytopes.xml.h:15
 msgid "Perspective 4d"
 msgstr ""
 
@@ -4030,7 +4431,8 @@ msgstr ""
 msgid "Solid Object"
 msgstr "Losowy obiekt"
 
-#: hacks/config/hypertorus.xml.h:15 hacks/config/pulsar.xml.h:16
+#: hacks/config/hypertorus.xml.h:15 hacks/config/mirrorblob.xml.h:20
+#: hacks/config/polytopes.xml.h:21 hacks/config/pulsar.xml.h:16
 msgid "Solid Surface"
 msgstr "Jednolita powierzchnia"
 
@@ -4042,7 +4444,7 @@ msgid ""
 "and Higher Dimensions\", Scientific American Library, 1990."
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:17
+#: hacks/config/hypertorus.xml.h:17 hacks/config/polytopes.xml.h:23
 #, fuzzy
 msgid "Transparent Surface"
 msgstr "Przezroczystość"
@@ -4051,37 +4453,37 @@ msgstr "Przezroczystość"
 msgid "Two-Sided"
 msgstr ""
 
-#: hacks/config/hypertorus.xml.h:19
+#: hacks/config/hypertorus.xml.h:19 hacks/config/polytopes.xml.h:24
 #, fuzzy
 msgid "WX Rotation Speed"
 msgstr "Tempo rotacji"
 
-#: hacks/config/hypertorus.xml.h:20
+#: hacks/config/hypertorus.xml.h:20 hacks/config/polytopes.xml.h:25
 #, fuzzy
 msgid "WY Rotation Speed"
 msgstr "Tempo rotacji"
 
-#: hacks/config/hypertorus.xml.h:21
+#: hacks/config/hypertorus.xml.h:21 hacks/config/polytopes.xml.h:26
 #, fuzzy
 msgid "WZ Rotation Speed"
 msgstr "Tempo rotacji"
 
-#: hacks/config/hypertorus.xml.h:22
+#: hacks/config/hypertorus.xml.h:22 hacks/config/polytopes.xml.h:27
 #, fuzzy
 msgid "Wireframe Mesh"
 msgstr "Szkielet"
 
-#: hacks/config/hypertorus.xml.h:23
+#: hacks/config/hypertorus.xml.h:23 hacks/config/polytopes.xml.h:28
 #, fuzzy
 msgid "XY Rotation Speed"
 msgstr "Tempo rotacji"
 
-#: hacks/config/hypertorus.xml.h:24
+#: hacks/config/hypertorus.xml.h:24 hacks/config/polytopes.xml.h:29
 #, fuzzy
 msgid "XZ Rotation Speed"
 msgstr "Tempo rotacji"
 
-#: hacks/config/hypertorus.xml.h:25
+#: hacks/config/hypertorus.xml.h:25 hacks/config/polytopes.xml.h:30
 #, fuzzy
 msgid "YZ Rotation Speed"
 msgstr "Tempo rotacji"
@@ -4127,30 +4529,43 @@ msgid ""
 msgstr ""
 
 #: hacks/config/interference.xml.h:1
+#, fuzzy
+msgid "0"
+msgstr "100%"
+
+#: hacks/config/interference.xml.h:2
+msgid "360"
+msgstr ""
+
+#: hacks/config/interference.xml.h:3
 msgid "Anim Speed"
 msgstr "Tempo animacji"
 
-#: hacks/config/interference.xml.h:2
+#: hacks/config/interference.xml.h:4
 msgid ""
 "Another color-field hack, this one works by computing decaying sinusoidal "
 "waves, and allowing them to interfere with each other as their origins move. "
 "Written by Hannu Mallat."
 msgstr ""
 
-#: hacks/config/interference.xml.h:7
+#: hacks/config/interference.xml.h:9
+msgid "Hue"
+msgstr ""
+
+#: hacks/config/interference.xml.h:10
 msgid "Interference"
 msgstr "Interferencja"
 
-#: hacks/config/interference.xml.h:10 hacks/config/t3d.xml.h:9
+#: hacks/config/interference.xml.h:13 hacks/config/t3d.xml.h:9
 #: hacks/config/xearth.xml.h:11 hacks/config/zoom.xml.h:5
 msgid "Magnification"
 msgstr "Powiększenie"
 
-#: hacks/config/interference.xml.h:13
+#: hacks/config/interference.xml.h:16
 msgid "Number of Waves"
 msgstr "Liczba fal"
 
-#: hacks/config/interference.xml.h:17
+#: hacks/config/interference.xml.h:20
 msgid "Wave Size"
 msgstr "Rozmiar fali"
 
@@ -4608,6 +5023,95 @@ msgstr "Piłki"
 msgid "Number of MetaBalls"
 msgstr "Liczba fraktali"
 
+#: hacks/config/mirrorblob.xml.h:4
+msgid "Blobby"
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:5 hacks/config/nerverot.xml.h:2
+#, fuzzy
+msgid "Calm"
+msgstr "Koral"
+
+#: hacks/config/mirrorblob.xml.h:7
+msgid ""
+"Draws a wobbly blob that distorts the image behind it. Requires OpenGL "
+"hardware acceleration for nice animation. Written by Jon Dowdall."
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:8
+#, fuzzy
+msgid "Enable Background Image"
+msgstr "Jednolite tło"
+
+#: hacks/config/mirrorblob.xml.h:9
+#, fuzzy
+msgid "Enable Colouring"
+msgstr "Mgła"
+
+#: hacks/config/mirrorblob.xml.h:10
+msgid "Enable Reflected Image"
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:11
+#, fuzzy
+msgid "Enable Walls"
+msgstr "Mgła"
+
+#: hacks/config/mirrorblob.xml.h:13
+#, fuzzy
+msgid "Field Points"
+msgstr "Punkty"
+
+#: hacks/config/mirrorblob.xml.h:14
+#, fuzzy
+msgid "Freaky"
+msgstr "_Plik"
+
+#: hacks/config/mirrorblob.xml.h:15
+msgid "MirrorBlob"
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:17
+msgid "Offset Texture Coordinates"
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:23
+msgid "Very Freaky"
+msgstr ""
+
+#: hacks/config/mirrorblob.xml.h:25
+#, fuzzy
+msgid "X Resolution"
+msgstr "Obrót"
+
+#: hacks/config/mirrorblob.xml.h:26
+#, fuzzy
+msgid "Y Resolution"
+msgstr "Obrót"
+
+#: hacks/config/mismunch.xml.h:5
+msgid "Mismunch"
+msgstr ""
+
+#: hacks/config/mismunch.xml.h:6
+msgid ""
+"Munching errors! This is a creatively broken misimplementation of the "
+"classic munching squares graphics hack. Written by Steven Hazel."
+msgstr ""
+
+#: hacks/config/mismunch.xml.h:7
+msgid "One"
+msgstr ""
+
+#: hacks/config/mismunch.xml.h:9
+msgid "Simultaneous Squares"
+msgstr ""
+
+#: hacks/config/mismunch.xml.h:13 hacks/config/munch.xml.h:10
+#: hacks/config/qix.xml.h:26
+msgid "XOR"
+msgstr "XOR"
+
 #: hacks/config/moebius.xml.h:1
 msgid ""
 "Another M. C. Escher hack by Marcelo Vianna, this one draws ``Moebius Strip "
@@ -4699,8 +5203,8 @@ msgid "Molecule"
 msgstr "Molekuła"
 
 #: hacks/config/molecule.xml.h:13
-msgid "PDB File"
-msgstr "Plik PDB"
+msgid "PDB File or Directory"
+msgstr ""
 
 #: hacks/config/morph3d.xml.h:1
 msgid ""
@@ -4734,19 +5238,10 @@ msgstr ""
 msgid "Munch"
 msgstr ""
 
-#: hacks/config/munch.xml.h:10 hacks/config/qix.xml.h:26
-msgid "XOR"
-msgstr "XOR"
-
 #: hacks/config/nerverot.xml.h:1
 #, fuzzy
 msgid "Blot Count"
 msgstr "Liczba:"
-
-#: hacks/config/nerverot.xml.h:2
-#, fuzzy
-msgid "Calm"
-msgstr "Koral"
 
 #: hacks/config/nerverot.xml.h:3
 msgid "Changes"
@@ -4789,6 +5284,14 @@ msgstr "Jednolity"
 msgid "Spastic"
 msgstr "Proste"
 
+#: hacks/config/noof.xml.h:1
+msgid "Draws some rotatey patterns, using OpenGL. Written by Mark Kilgard."
+msgstr ""
+
+#: hacks/config/noof.xml.h:3
+msgid "Noof"
+msgstr ""
+
 #: hacks/config/noseguy.xml.h:1
 msgid ""
 "A little man with a big nose wanders around your screen saying things. The "
@@ -4813,14 +5316,24 @@ msgstr "Facet z nosem"
 msgid "Text File"
 msgstr "Plik tekstowy"
 
-#: hacks/config/noseguy.xml.h:7 hacks/config/phosphor.xml.h:8
-#: hacks/config/starwars.xml.h:17
-#, fuzzy
-msgid "Text Program"
-msgstr "Program"
-
 #: hacks/config/noseguy.xml.h:8
 msgid "Use Text Below"
+msgstr ""
+
+#: hacks/config/pacman.xml.h:2
+#, fuzzy
+msgid "Pacman"
+msgstr "Pakiety"
+
+#: hacks/config/pacman.xml.h:3
+#, fuzzy
+msgid "Player Size"
+msgstr "Rozmiar kafla"
+
+#: hacks/config/pacman.xml.h:4
+msgid ""
+"Simulates a game of Pac-Man on a randomly-created level. Written by Edwin de "
+"Jong."
 msgstr ""
 
 #: hacks/config/pedal.xml.h:7
@@ -4961,18 +5474,21 @@ msgid ""
 msgstr ""
 
 #: hacks/config/phosphor.xml.h:2
-#, fuzzy
-msgid "Fade"
-msgstr "Płomień"
+msgid "Dump pipe"
+msgstr ""
 
-#: hacks/config/phosphor.xml.h:4
+#: hacks/config/phosphor.xml.h:5
 msgid "Phosphor"
 msgstr "Fosfor"
 
-#: hacks/config/phosphor.xml.h:5
+#: hacks/config/phosphor.xml.h:6
 #, fuzzy
 msgid "Scale"
 msgstr "Skalowana"
+
+#: hacks/config/phosphor.xml.h:10
+msgid "Use PTY"
+msgstr ""
 
 #: hacks/config/piecewise.xml.h:1
 msgid "Color shifting speed"
@@ -5024,7 +5540,7 @@ msgid ""
 "probably seen this GL hack. This version is by Marcelo Vianna."
 msgstr ""
 
-#: hacks/config/pipes.xml.h:9
+#: hacks/config/pipes.xml.h:9 hacks/config/wormhole.xml.h:4
 #, fuzzy
 msgid "Lots"
 msgstr "Układ"
@@ -5061,6 +5577,64 @@ msgstr "Wielokąty"
 msgid ""
 "Repeatedly attempts to completely fill a rectangle with irregularly-shaped "
 "puzzle pieces. Written by Stephen Montgomery-Smith."
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:2
+msgid "120-Cell"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:3
+msgid "16-Cell (Hyper-Octahedron)"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:4
+msgid "24-Cell"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:6
+msgid "5-Cell (Hyper-Tetrahedron)"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:7
+msgid "600-Cell"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:8
+msgid "8-Cell (Hypercube / Tesseract)"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:9
+msgid "Colors By 4D Depth"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:17
+msgid "Regular 4D Polytopes"
+msgstr ""
+
+#: hacks/config/polytopes.xml.h:19
+#, fuzzy
+msgid "Single Color"
+msgstr "Kolory"
+
+#: hacks/config/polytopes.xml.h:22
+msgid ""
+"This program shows one of the six regular 4D polytopes rotating in 4D. "
+"Written by Carsten Steger, inspired by H.S.M Coxeter's book \"Regular "
+"Polytopes\", 3rd Edition, Dover Publications, Inc., 1973, and Thomas "
+"Banchoff's book \"Beyond the Third Dimension: Geometry, Computer Graphics, "
+"and Higher Dimensions\", Scientific American Library, 1990."
+msgstr ""
+
+#: hacks/config/pong.xml.h:2
+#, fuzzy
+msgid "Pong"
+msgstr "Długie"
+
+#: hacks/config/pong.xml.h:6
+msgid ""
+"The pong program simulates an ancient Pong home video game, as well as "
+"various artifacts from displaying it on a color TV set. Written by Jeremy "
+"English and Trevor Blackwell."
 msgstr ""
 
 #: hacks/config/popsquares.xml.h:1
@@ -5337,6 +5911,10 @@ msgid ""
 "glasses! Mostly written by Jamie Zawinski."
 msgstr ""
 
+#: hacks/config/rocks.xml.h:13
+msgid "Velocity"
+msgstr "Tempo"
+
 #: hacks/config/rorschach.xml.h:7
 msgid "Rorschach"
 msgstr ""
@@ -5428,7 +6006,7 @@ msgstr ""
 msgid ""
 "Draws an animation of textured balls spinning like crazy in GL. Requires "
 "OpenGL, and a machine with fast hardware support for texture maps. Written "
-"by Eric Lassauge &lt;lassauge@mail.dotcom.fr&gt;."
+"by Eric Lassauge &lt;lassauge@free.fr&gt;."
 msgstr ""
 
 #: hacks/config/sballs.xml.h:5
@@ -5463,7 +6041,7 @@ msgstr ""
 
 #: hacks/config/shadebobs.xml.h:11
 msgid ""
-"This draws smoothly-shaded oscilating oval patterns, that look something "
+"This draws smoothly-shaded oscillating oval patterns, that look something "
 "like vapor trails or neon tubes. Written by Shane Smit."
 msgstr ""
 
@@ -5666,8 +6244,8 @@ msgstr "Spirala"
 
 #: hacks/config/spotlight.xml.h:1
 msgid ""
-"Draws a spotlight scanning across a black screen, illumnating the underlying "
-"desktop when it passes. Written by Rick Schultz."
+"Draws a spotlight scanning across a black screen, illuminating the "
+"underlying desktop when it passes. Written by Rick Schultz."
 msgstr ""
 
 #: hacks/config/spotlight.xml.h:6
@@ -5830,16 +6408,11 @@ msgstr ""
 msgid "StonerView"
 msgstr ""
 
-#: hacks/config/strange.xml.h:1
-#, fuzzy
-msgid "Curviness"
-msgstr "Krzywa C"
-
-#: hacks/config/strange.xml.h:9
+#: hacks/config/strange.xml.h:6
 msgid "Strange"
 msgstr ""
 
-#: hacks/config/strange.xml.h:10
+#: hacks/config/strange.xml.h:7
 msgid ""
 "This draws strange attractors: it's a colorful, unpredictably-animating "
 "field of dots that swoops and twists around. The motion is very nice. "
@@ -6152,6 +6725,39 @@ msgid ""
 "Theiling."
 msgstr ""
 
+#: hacks/config/wormhole.xml.h:6
+#, fuzzy
+msgid "Star speed"
+msgstr "Tempo ruchu rekina"
+
+#: hacks/config/wormhole.xml.h:7
+msgid "Stars Created"
+msgstr ""
+
+#: hacks/config/wormhole.xml.h:8
+#, fuzzy
+msgid "Wormhole"
+msgstr "Robal"
+
+#: hacks/config/wormhole.xml.h:9
+msgid ""
+"Wormhole simulates flying through a colored wormhole in space. Written by "
+"Jon Rafkind."
+msgstr ""
+
+#: hacks/config/xanalogtv.xml.h:1
+msgid "XAnalogTV"
+msgstr ""
+
+#: hacks/config/xanalogtv.xml.h:2
+msgid ""
+"XAnalogTV shows a detailed simulation of an old TV set showing various test "
+"patterns, with various picture artifacts like snow, bloom, distortion, "
+"ghosting, and hash noise. It also simulates the TV warming up. It will cycle "
+"through 12 channels, some with images you give it, and some with color bars "
+"or nothing but static. By Trevor Blackwell."
+msgstr ""
+
 #: hacks/config/xaos.xml.h:1
 msgid "XaoS"
 msgstr "XaoS"
@@ -6215,7 +6821,7 @@ msgstr ""
 msgid "Bright"
 msgstr "Prawa"
 
-#: hacks/config/xearth.xml.h:2
+#: hacks/config/xearth.xml.h:2 hacks/config/xplanet.xml.h:7
 msgid "Date/Time Stamp"
 msgstr ""
 
@@ -6231,16 +6837,16 @@ msgstr ""
 msgid "Label Cities"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:9
+#: hacks/config/xearth.xml.h:9 hacks/config/xplanet.xml.h:49
 msgid "Lower Left"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:10
+#: hacks/config/xearth.xml.h:10 hacks/config/xplanet.xml.h:50
 #, fuzzy
 msgid "Lower Right"
 msgstr "Prawa"
 
-#: hacks/config/xearth.xml.h:13
+#: hacks/config/xearth.xml.h:13 hacks/config/xplanet.xml.h:51
 msgid "Mercator Projection"
 msgstr ""
 
@@ -6256,11 +6862,11 @@ msgstr "Bez gwiazd"
 msgid "North/South Rotation"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:18
+#: hacks/config/xearth.xml.h:18 hacks/config/xplanet.xml.h:53
 msgid "Orthographic Projection"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:19
+#: hacks/config/xearth.xml.h:19 hacks/config/xplanet.xml.h:56
 msgid "Real Time"
 msgstr ""
 
@@ -6281,15 +6887,15 @@ msgstr "Odstępy"
 msgid "Terminator   Blurry"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:27
+#: hacks/config/xearth.xml.h:27 hacks/config/xplanet.xml.h:61
 msgid "Time Warp"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:29
+#: hacks/config/xearth.xml.h:29 hacks/config/xplanet.xml.h:62
 msgid "Upper Left"
 msgstr ""
 
-#: hacks/config/xearth.xml.h:30
+#: hacks/config/xearth.xml.h:30 hacks/config/xplanet.xml.h:63
 #, fuzzy
 msgid "Upper Right"
 msgstr "Prawa"
@@ -6300,7 +6906,8 @@ msgid ""
 "in space, correctly shaded for the current position of the Sun. Written by "
 "Kirk Johnson. This is not included with the XScreenSaver package, but if you "
 "don't have it already, you can find it at &lt;http://www.cs.colorado.edu/"
-"~tuna/xearth/&gt;."
+"~tuna/xearth/&gt;. There is also a similar (but more recent) program called "
+"xplanet to be found at &lt;http://xplanet.sourceforge.net/&gt;."
 msgstr ""
 
 #: hacks/config/xearth.xml.h:32
@@ -6433,6 +7040,360 @@ msgstr ""
 msgid "Xmountains"
 msgstr "Xmountains"
 
+#: hacks/config/xplanet.xml.h:2
+#, fuzzy, no-c-format
+msgid "0%"
+msgstr "100%"
+
+#: hacks/config/xplanet.xml.h:5
+msgid "Ancient Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:6
+msgid "Azimuthal Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:9
+msgid "From Ariel"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:10
+msgid "From Callisto"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:11
+msgid "From Charon"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:12
+msgid "From Deimos"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:13
+msgid "From Dione"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:14
+msgid "From Earth"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:15
+msgid "From Enceladus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:16
+msgid "From Europa"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:17
+msgid "From Ganymede"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:18
+msgid "From Hyperion"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:19
+msgid "From Iapetus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:20
+msgid "From Io"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:21
+msgid "From Jupiter"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:22
+msgid "From Major"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:23
+msgid "From Mars"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:24
+msgid "From Mercury"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:25
+msgid "From Mimas"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:26
+msgid "From Miranda"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:27
+#, fuzzy
+msgid "From Moon"
+msgstr "Losowy ruch"
+
+#: hacks/config/xplanet.xml.h:28
+msgid "From Neptune"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:29
+msgid "From Nereid"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:30
+msgid "From Oberon"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:31
+msgid "From Phobos"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:32
+msgid "From Phoebe"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:33
+msgid "From Pluto"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:34
+#, fuzzy
+msgid "From Random"
+msgstr "Losowa"
+
+#: hacks/config/xplanet.xml.h:35
+msgid "From Rhea"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:36
+msgid "From Saturn"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:37
+msgid "From Sun"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:38
+msgid "From Tethys"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:39
+msgid "From Titan"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:40
+msgid "From Titania"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:41
+#, fuzzy
+msgid "From Triton"
+msgstr "_Czynność"
+
+#: hacks/config/xplanet.xml.h:42
+msgid "From Umbriel"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:43
+msgid "From Uranus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:44
+msgid "From Venus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:45
+msgid "Hemisphere Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:46
+msgid "Lambert Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:47
+msgid "Latitude"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:48
+#, fuzzy
+msgid "Longitude"
+msgstr "Długie"
+
+#: hacks/config/xplanet.xml.h:52
+msgid "Mollweide Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:54
+msgid "Peters Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:57
+msgid "Rectangular Projection"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:58
+msgid "Render as a Globe"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:64
+msgid "View Ariel"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:65
+msgid "View Callisto"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:66
+msgid "View Charon"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:67
+msgid "View Deimos"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:68
+msgid "View Dione"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:69
+#, fuzzy
+msgid "View Earth"
+msgstr "Xearth"
+
+#: hacks/config/xplanet.xml.h:70
+msgid "View Enceladus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:71
+msgid "View Europa"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:72
+msgid "View Ganymede"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:73
+msgid "View Hyperion"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:74
+msgid "View Iapetus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:75
+msgid "View Io"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:76
+msgid "View Jupiter"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:77
+msgid "View Major"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:78
+msgid "View Mars"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:79
+msgid "View Mercury"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:80
+msgid "View Mimas"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:81
+msgid "View Miranda"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:82
+#, fuzzy
+msgid "View Moon"
+msgstr "Ruch liniowy"
+
+#: hacks/config/xplanet.xml.h:83
+msgid "View Neptune"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:84
+msgid "View Nereid"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:85
+msgid "View Oberon"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:86
+msgid "View Phobos"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:87
+msgid "View Phoebe"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:88
+msgid "View Pluto"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:89
+#, fuzzy
+msgid "View Random"
+msgstr "Losowa"
+
+#: hacks/config/xplanet.xml.h:90
+msgid "View Rhea"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:91
+msgid "View Saturn"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:92
+msgid "View Sun"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:93
+msgid "View Tethys"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:94
+msgid "View Titan"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:95
+msgid "View Titania"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:96
+msgid "View Triton"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:97
+msgid "View Umbriel"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:98
+msgid "View Uranus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:99
+msgid "View Venus"
+msgstr ""
+
+#: hacks/config/xplanet.xml.h:100
+#, fuzzy
+msgid "Xplanet"
+msgstr "Panel"
+
+#: hacks/config/xplanet.xml.h:101
+msgid ""
+"Xplanet draws an image of the Earth, as seen from your favorite vantage "
+"point in space, correctly shaded for the current position of the Sun. "
+"Written by Hari Nair. This is not included with the XScreenSaver package, "
+"but if you don't have it already, you can find it at &lt;http://xplanet."
+"sourceforge.net/&gt;."
+msgstr ""
+
 #: hacks/config/xrayswarm.xml.h:1
 msgid ""
 "Draws a few swarms of critters flying around the screen, with nicely faded "
@@ -6509,14 +7470,28 @@ msgid ""
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
 
+#, fuzzy
+#~ msgid "Scary Colors"
+#~ msgstr "Drugi kolor"
+
+#~ msgid "Y Rotation"
+#~ msgstr "Obrót Y"
+
+#~ msgid "Z Rotation"
+#~ msgstr "Obrót Z"
+
+#~ msgid "PDB File"
+#~ msgstr "Plik PDB"
+
+#, fuzzy
+#~ msgid "Curviness"
+#~ msgstr "Krzywa C"
+
 #~ msgid "Configure the settings of the screensaver."
 #~ msgstr "Konfiguracja ustawień wygaszacza ekranu."
 
 #~ msgid "Preview of screen saver"
 #~ msgstr "Podgląd wygaszacza ekranu"
-
-#~ msgid "ElectricSheep"
-#~ msgstr "Elektryczna Owca"
 
 #, fuzzy
 #~ msgid "Sandpaper"

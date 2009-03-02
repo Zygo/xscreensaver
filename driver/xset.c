@@ -1,5 +1,5 @@
 /* xset.c --- interacting with server extensions and the builtin screensaver.
- * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -151,6 +151,39 @@ query_xidle_extension (saver_info *si)
   int event_number;
   int error_number;
   return XidleQueryExtension (si->dpy, &event_number, &error_number);
+}
+
+#endif /* HAVE_XIDLE_EXTENSION */
+
+
+
+/* Resize and Rotate server extension hackery.
+ */
+
+#ifdef HAVE_RANDR
+
+# include <X11/extensions/Xrandr.h>
+
+Bool
+query_randr_extension (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  Bool ok = XRRQueryExtension (si->dpy,
+                               &si->randr_event_number,
+                               &si->randr_error_number);
+  if (ok)
+    {
+      int nscreens = ScreenCount (si->dpy);  /* number of *real* screens */
+      int i;
+
+      if (p->verbose_p)
+	fprintf (stderr, "%s: selecting RANDR events\n", blurb());
+      for (i = 0; i < nscreens; i++)
+        XRRSelectInput (si->dpy, RootWindow (si->dpy, i),
+                        RRScreenChangeNotifyMask);
+    }
+
+  return ok;
 }
 
 #endif /* HAVE_XIDLE_EXTENSION */

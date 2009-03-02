@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
  * Thanks goes also to Brian Paul for making it possible and inexpensive
  * to use OpenGL at home.
  *
- * My e-mail address is lassauge@mail.dotcom.fr
+ * My e-mail address is lassauge@sourceforge.net
  *
  * Eric Lassauge  (May-13-1998)
  *
@@ -57,7 +57,6 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
  *                        Add support for -/+ wireframe (t'was so easy to do!)
  *
  * TODO : 
- *        - add a sort of background image or random bg color
  *        - better handling of sizes and speeds
  *        - test standalone and module modes
  *        - purify it (!)
@@ -155,7 +154,8 @@ static argtype vars[] =
 static OptionStruct desc[] =
 {
 	{"-whalespeed num", "speed of whales and the dolphin"},
-	{"-texture num",    "whether to introduce water-like distortion"}
+	{"-texture",        "whether to introduce water-like distortion"},
+	{"-gradient",       "whether to introduce gradient-filled background"},
 };
 
 ModeSpecOpt atlantis_opts =

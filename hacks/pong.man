@@ -1,11 +1,11 @@
-.TH XScreenSaver 1 "" "X Version 11"
+.TH XScreenSaver 1 "5-May-2004" "X Version 11"
 .SH NAME
 pong - Pong Home Video Game Emulator
 .SH SYNOPSIS
 .B pong
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIseconds\fP]
+[\-visual \fIvisual\fP]
 .SH DESCRIPTION
 The
 .I pong 
@@ -30,9 +30,6 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
-.TP 8
-.B \-delay \fIdelay\fP
-The delay between displaying one crash and another.
 .SH ENVIRONMENT
 .PP
 .TP 8

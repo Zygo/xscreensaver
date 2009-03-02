@@ -15,14 +15,14 @@
  * Copyright 2003 Blair Tennessy
 */
 
-static GLfloat MaterialRed[] = {0.6, 0.0, 0.0, 1.0};
+/* static GLfloat MaterialRed[] = {0.6, 0.0, 0.0, 1.0}; */
 /*static GLfloat MaterialPurple[] = {0.6, 0.2, 0.5, 1.0};*/
 /*static GLfloat MaterialOrange[] = {1.0, 0.69, 0.00, 1.0};*/
 /*static GLfloat MaterialGreen[] = {0.1, 0.5, 0.2, 0.2};*/
 /*static GLfloat MaterialBlue[] = {0.4, 0.4, 0.8, 1.0};*/
 /*static GLfloat MaterialCyan[] = {0.2, 0.5, 0.7, 1.0};*/
 /*static GLfloat MaterialYellow[] = {0.7, 0.7, 0.0, 1.0};*/
-static GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+/* static GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0}; */
 /*static GLfloat MaterialWhite[] = {0.7, 0.7, 0.7, 1.0};*/
 static GLfloat MaterialGray[] = {0.2, 0.2, 0.2, 1.0};
 static GLfloat MaterialGrayB[] = {0.1, 0.1, 0.1, 0.5};
@@ -30,7 +30,7 @@ static GLfloat MaterialGrayB[] = {0.1, 0.1, 0.1, 0.5};
 
 static GLfloat MaterialGray5[] = {0.5, 0.5, 0.5, 1.0};
 static GLfloat MaterialGray6[] = {0.6, 0.6, 0.6, 1.0};
-static GLfloat MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
+/* static GLfloat MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};*/
 
 typedef struct {
 

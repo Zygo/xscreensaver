@@ -12,7 +12,7 @@
    <option id="grab"    _label="Screen Image"        arg-set="-mode grab"/>
   </select>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Animation Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="50000" default="20000"
           convert="invert"/>

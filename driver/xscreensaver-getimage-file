@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001, 2002, 2003, 2004 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,34 +24,18 @@
 # Created: 12-Apr-01.
 
 require 5;
-#require v5.6;
 use diagnostics;
 use strict;
 
 use POSIX;
 use Fcntl;
 
-# Apparently the "old way" to get S_ISLNK and friends is to do this:
-#
-use POSIX ':fcntl_h';
-
-# But apparently the "new way" is to do this:
-#
-#  use Fcntl ':mode';
-#
-# but of course that will generate an error on "old" (pre-5.6?) Perl versions.
-# So we do it like this instead:
-#
-BEGIN {
-  if (! defined(&S_ISLNK)) {  # perhaps defined by "POSIX"?
-    require Fcntl;
-    import  Fcntl ':mode';    # if not, look for it in "Fcntl".
-  }
-}
+use POSIX ':fcntl_h';				# S_ISLNK was here in Perl 5.6
+import Fcntl ':mode' unless defined &S_ISLNK;	# but it is here in Perl 5.8
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.15 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -142,8 +126,8 @@ sub find_all_files {
       next;
     }
 
-    next if ($seen_inodes{$ino}); # break symlink loops
-    $seen_inodes{$ino} = 1;
+    next if ($seen_inodes{"$dev:$ino"}); # break symlink loops
+    $seen_inodes{"$dev:$ino"} = 1;
 
     if (S_ISDIR($mode)) {
       push @dirs, $file;
@@ -223,9 +207,10 @@ sub find_and_display {
 
 
 sub usage {
-  print STDERR "usage: $progname [--verbose] [--name] directory\n";
-  print STDERR "Puts a randomly selected image on the root window.\n";
-  print STDERR "With --name, merely prints the filename to stdout.\n";
+  print STDERR "usage: $progname [--verbose] [--name] file-or-directory\n\n" .
+  "       Puts the given image file (or a randomly selected image from the\n" .
+  "       given directory) on the root window.  If --name is specified,\n" .
+  "       just prints the selected filename to stdout instead.\n\n";
   exit 1;
 }
 
@@ -253,6 +238,7 @@ sub main {
   } elsif (-f $dir) {
     display_file ($dir, $displayer);
   } else {
+    print STDERR "$progname: $dir does not exist\n";
     usage();
   }
 }

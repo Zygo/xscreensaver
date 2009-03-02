@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.15
-!                              26-Feb-2004
+!                              version 4.16
+!                              12-May-2004
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -66,6 +66,10 @@
 *mitSaverExtension:	False
 *xidleExtension:	True
 *procInterrupts:	True
+
+! Set this to True if you are experiencing longstanding XFree86 bug #421
+! (xscreensaver not covering the whole screen)
+GetViewPortIsFullOfLies: False
 
 ! This is what the "Demo" button on the splash screen runs (/bin/sh syntax.)
 *demoCommand: xscreensaver-demo
@@ -274,6 +278,7 @@
 				pong -root				    \n\
 				wormhole -root				    \n\
 				pacman -root				    \n\
+				fuzzyflakes -root			    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -317,7 +322,7 @@
 @GL_KLUDGE@ GL:			glsnake -root				    \n\
 @GL_KLUDGE@ GL:			boxed -root				    \n\
 @GL_KLUDGE@ GL:	"GLForestFire"		glforestfire -root		    \n\
--	   GL:	"GLForestFire (rain)"	glforestfire -root -rain	    \n\
+-	   GL:	"GLForestFire (rain)"	glforestfire -root -count 0	    \n\
 @GL_KLUDGE@ GL:			sballs -root				    \n\
 @GL_KLUDGE@ GL:			cubenetic -root				    \n\
 @GL_KLUDGE@ GL:			spheremonics -root			    \n\
@@ -330,8 +335,8 @@
 @GL_KLUDGE@ GL:			bouncingcow -root			    \n\
 @GL_KLUDGE@ GL:			jigglypuff -root -random		    \n\
 @GL_KLUDGE@ GL:			klein -root -random			    \n\
-@GL_KLUDGE@ GL:	"HyperTorus (striped)"	hypertorus -root		    \n\
-@GL_KLUDGE@ GL:	"HyperTorus (solid)"	hypertorus -root -solid -transp	    \n\
+@GL_KLUDGE@ GL:	"HyperTorus (striped)" hypertorus -root			    \n\
+@GL_KLUDGE@ GL:	"HyperTorus (solid)"   hypertorus -root -solid -transparent \n\
 @GL_KLUDGE@ GL:			glmatrix -root				    \n\
 @GL_KLUDGE@ GL:			cubestorm -root				    \n\
 @GL_KLUDGE@ GL:			glknots -root				    \n\
@@ -346,6 +351,7 @@
                                 mirrorblob -root -colour -no-texture	    \n\
 @GL_KLUDGE@ GL:			blinkbox -root				    \n\
 @GL_KLUDGE@ GL:			noof -root				    \n\
+@GL_KLUDGE@ GL:			polyhedra -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -364,7 +370,9 @@
 -				electricsheep                               \n\
 -				cosmos -root                                \n\
 -	   GL:                  sphereEversion --root                       \n\
--	   GL:                  fireflies -root                             \n
+-	   GL:                  fireflies -root                             \n\
+-	   GL:                  antinspect -root                            \n\
+-	   GL:                  providence -root                            \n
 
 
 
@@ -607,6 +615,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.fontglide.name:      FontGlide
 *hacks.mirrorblob.name:     MirrorBlob
 *hacks.blinkbox.name:       BlinkBox
+*hacks.fuzzyflakes.name:    FuzzyFlakes
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

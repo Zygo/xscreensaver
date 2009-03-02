@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -93,6 +93,8 @@ struct saver_preferences {
   Bool use_mit_saver_extension;
   Bool use_sgi_saver_extension;
   Bool use_proc_interrupts;
+
+  Bool getviewport_full_of_lies_p; /* XFree86 bug #421 */
 
   char *shell;			/* where to find /bin/sh */
 

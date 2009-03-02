@@ -1,4 +1,4 @@
-# Auto-generated: Thu Jan 29 17:47:32 RST 2004
+# Auto-generated: Wed Mar  3 13:46:35 RST 2004
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -111,6 +111,7 @@ hacks/config/maze.xml
 hacks/config/menger.xml
 hacks/config/metaballs.xml
 hacks/config/mirrorblob.xml
+hacks/config/mismunch.xml
 hacks/config/moebius.xml
 hacks/config/moire.xml
 hacks/config/moire2.xml
@@ -119,7 +120,9 @@ hacks/config/morph3d.xml
 hacks/config/mountain.xml
 hacks/config/munch.xml
 hacks/config/nerverot.xml
+hacks/config/noof.xml
 hacks/config/noseguy.xml
+hacks/config/pacman.xml
 hacks/config/pedal.xml
 hacks/config/penetrate.xml
 hacks/config/penrose.xml
@@ -178,6 +181,7 @@ hacks/config/webcollage.xml
 hacks/config/whirlwindwarp.xml
 hacks/config/whirlygig.xml
 hacks/config/worm.xml
+hacks/config/wormhole.xml
 hacks/config/xanalogtv.xml
 hacks/config/xaos.xml
 hacks/config/xdaliclock.xml
@@ -188,6 +192,7 @@ hacks/config/xjack.xml
 hacks/config/xlyap.xml
 hacks/config/xmatrix.xml
 hacks/config/xmountains.xml
+hacks/config/xplanet.xml
 hacks/config/xrayswarm.xml
 hacks/config/xsnow.xml
 hacks/config/xspirograph.xml

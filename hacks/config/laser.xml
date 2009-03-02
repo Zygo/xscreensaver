@@ -11,7 +11,7 @@
            _label="Duration" _low-label="Short" _high-label="Long"
           low="0" high="2000" default="200"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="60000" default="40000"
           convert="invert"/>

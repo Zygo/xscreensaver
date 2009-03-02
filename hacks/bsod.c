@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2940,6 +2940,72 @@ apple2crash (Display* dpy, Window window, int delay)
   apple2 (dpy, window, delay, a2controller_crash);
 }
 
+/* MS-DOS, by jwz
+ */
+static void
+msdos (Display *dpy, Window window, int delay)
+{
+  XWindowAttributes xgwa;
+  scrolling_window *ts;
+
+  int delay1 = 10000;
+  int delay2 = 200000;
+
+# define CURSOR "_\b \b"
+# define CURSOR2 CURSOR CURSOR CURSOR
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  ts = make_scrolling_window (dpy, window, "MSDOS", False);
+
+  XClearWindow(dpy, window);
+
+  scrolling_puts (ts, "C:\\WINDOWS>", delay1);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, CURSOR2 "dir a:", delay2);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, "\nNot ready reading drive A\nAbort, Retry, Fail?",
+                  delay1);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, CURSOR2 "f", delay2);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, "\n\n\nNot ready reading drive A\nAbort, Retry, Fail?",
+                  delay1);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, CURSOR2 "f", delay2);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, "\nVolume in drive A has no label\n\n"
+                  "Not ready reading drive A\nAbort, Retry, Fail?",
+                  delay1);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, CURSOR2 "a", delay2);
+  if (bsod_sleep(dpy, 1)) goto DONE;
+
+  scrolling_puts (ts, "\n\nC:\\WINDOWS>", delay1);
+
+  {
+    time_t start = time((time_t *) 0);
+    while (start + delay > time((time_t *) 0))
+      if (scrolling_puts (ts, CURSOR, delay2))
+        break;
+  }
+
+ DONE:
+  XClearWindow(dpy, window);
+
+# undef CURSOR
+# undef CURSOR2
+}
+
+
+
+
 char *progclass = "BSOD";
 
 char *defaults [] = {
@@ -2966,6 +3032,7 @@ char *defaults [] = {
   "*doOS390:               True",
   "*doVMS:		   True",
   "*doHVX:		   True",
+  "*doMSDOS:		   True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -3055,6 +3122,11 @@ char *defaults [] = {
   ".VMS.foreground:	   White",
   ".VMS.background:	   Black",
 
+  ".MSDOS.font:		   9x15bold",
+  ".MSDOS.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".MSDOS.foreground:	   White",
+  ".MSDOS.background:	   Black",
+
   ANALOGTV_DEFAULTS
 
 #ifdef HAVE_XSHM_EXTENSION
@@ -3106,6 +3178,8 @@ XrmOptionDescRec options [] = {
   { "-no-os390",	".doOS390",		XrmoptionNoArg,  "False" },
   { "-vms",		".doVMS",		XrmoptionNoArg,  "True"  },
   { "-no-vms",		".doVMS",		XrmoptionNoArg,  "False" },
+  { "-msdos",		".doMSDOS",		XrmoptionNoArg,  "True"  },
+  { "-no-msdos",	".doMSDOS",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -3135,6 +3209,7 @@ static struct {
   { "OS390",		os390 },
   { "Apple2",		apple2crash },
   { "VMS",		vms },
+  { "MSDOS",		msdos },
 };
 
 

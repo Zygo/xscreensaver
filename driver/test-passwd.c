@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998, 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,6 +89,12 @@ idle_timer (XtPointer closure, XtIntervalId *id)
   XPutBackEvent (si->dpy, &fake_event);
 }
 
+
+#ifdef __GNUC__
+ __extension__     /* shut up about "string length is greater than the length
+                      ISO C89 compilers are required to support" when including
+                      the .ad file... */
+#endif
 
 static char *fallback[] = {
 #include "XScreenSaver_ad.h"

@@ -856,15 +856,15 @@ Optional Packages:
 Installation options:
 
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: \`PREFIX/lib/xscreensaver/'
+                          Default: `PREFIX/lib/xscreensaver/'
   --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
-                          Default: \`GNOMEPREFIX/control-center/screensavers/'
-                          or \`PREFIX/lib/xscreensaver/config/', depending on
+                          Default: `GNOMEPREFIX/control-center/screensavers/'
+                          or `PREFIX/lib/xscreensaver/config/', depending on
                           whether GNOME is available.
 
 Except where noted, all of the --with options below can also take a
-directory argument: for example, \`--with-motif=/opt/Motif'.  That would
+directory argument: for example, `--with-motif=/opt/Motif'.  That would
 cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
 to be added to the -L list, assuming those directories exist.
 
@@ -884,6 +884,7 @@ Screen blanking and idle-detection options:
   --with-xinerama-ext     Include support for the XINERAMA extension.
   --with-xf86vmode-ext    Include support for XFree86 virtual screens.
   --with-xf86gamma-ext    Include support for XFree86 gamma fading.
+  --with-randr-ext        Include support for the X Resize+Rotate extension.
   --with-proc-interrupts  Include support for consulting the /proc/interrupts
                           file to notice keyboard activity.
   --with-pam              Include support for PAM (Pluggable Auth Modules.)
@@ -923,8 +924,8 @@ Graphics options:
   --with-fortune=PROGRAM  Some demos are able to run an external program and
                           display its text; this names the program to use by
                           default (though it can be overridden with X
-                          resources.)  Default is \"/usr/games/fortune\".
-  --with-setuid-hacks     Allow some demos to be installed \`setuid root'
+                          resources.)  Default is "/usr/games/fortune".
+  --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 
 
@@ -3156,8 +3157,8 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
-echo "$as_me:$LINENO: checking whether \\"\${INSTALL} -d\\" creates intermediate directories" >&5
-echo $ECHO_N "checking whether \\"\${INSTALL} -d\\" creates intermediate directories... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking whether \"\${INSTALL} -d\" creates intermediate directories" >&5
+echo $ECHO_N "checking whether \"\${INSTALL} -d\" creates intermediate directories... $ECHO_C" >&6
 if test "${ac_cv_install_d_creates_dirs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -10881,6 +10882,398 @@ fi
 
 ###############################################################################
 #
+#       Check for the RANDR (Resize and Rotate) server extension.
+#
+#       We need this to detect when the resolution of the desktop
+#       has changed out from under us (this is a newer, different
+#       mechanism than the XF86VMODE virtual viewports.)
+#
+###############################################################################
+
+have_randr=no
+with_randr_req=unspecified
+
+# Check whether --with-randr-ext or --without-randr-ext was given.
+if test "${with_randr_ext+set}" = set; then
+  withval="$with_randr_ext"
+  with_randr="$withval"; with_randr_req="$withval"
+else
+  with_randr=yes
+fi;
+
+
+   case "$with_randr" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     echo "$as_me:$LINENO: checking for RANDR headers" >&5
+echo $ECHO_N "checking for RANDR headers... $ECHO_C" >&6
+     d=$with_randr/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     echo "$as_me:$LINENO: checking for RANDR libs" >&5
+echo $ECHO_N "checking for RANDR libs... $ECHO_C" >&6
+     d=$with_randr/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     # replace the directory string with "yes".
+     with_randr_req="yes"
+     with_randr=$with_randr_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-randr-ext must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_randr" = yes; then
+
+  # first check for Randr.h
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  echo "$as_me:$LINENO: checking for X11/extensions/Xrandr.h" >&5
+echo $ECHO_N "checking for X11/extensions/Xrandr.h... $ECHO_C" >&6
+if test "${ac_cv_header_X11_extensions_Xrandr_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <X11/Xlib.h>
+
+#include <X11/extensions/Xrandr.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_header_X11_extensions_Xrandr_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_header_X11_extensions_Xrandr_h=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_Xrandr_h" >&5
+echo "${ECHO_T}$ac_cv_header_X11_extensions_Xrandr_h" >&6
+if test $ac_cv_header_X11_extensions_Xrandr_h = yes; then
+  have_randr=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+
+  # if that succeeded, then check for the XRR code in the libraries
+  if test "$have_randr" = yes; then
+
+    # RANDR probably needs -lXrender
+    xrender_libs=
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for XRenderSetSubpixelOrder in -lXrender" >&5
+echo $ECHO_N "checking for XRenderSetSubpixelOrder in -lXrender... $ECHO_C" >&6
+if test "${ac_cv_lib_Xrender_XRenderSetSubpixelOrder+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXrender -lXext -lX11 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XRenderSetSubpixelOrder ();
+int
+main ()
+{
+XRenderSetSubpixelOrder ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xrender_XRenderSetSubpixelOrder=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xrender_XRenderSetSubpixelOrder=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xrender_XRenderSetSubpixelOrder" >&5
+echo "${ECHO_T}$ac_cv_lib_Xrender_XRenderSetSubpixelOrder" >&6
+if test $ac_cv_lib_Xrender_XRenderSetSubpixelOrder = yes; then
+  xrender_libs="-lXrender"
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+
+    # first look for RANDR in -lXext
+    have_randr=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for XRRGetScreenInfo in -lXext" >&5
+echo $ECHO_N "checking for XRRGetScreenInfo in -lXext... $ECHO_C" >&6
+if test "${ac_cv_lib_Xext_XRRGetScreenInfo+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXext $xrender_libs -lXext -lX11 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XRRGetScreenInfo ();
+int
+main ()
+{
+XRRGetScreenInfo ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xext_XRRGetScreenInfo=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xext_XRRGetScreenInfo=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XRRGetScreenInfo" >&5
+echo "${ECHO_T}$ac_cv_lib_Xext_XRRGetScreenInfo" >&6
+if test $ac_cv_lib_Xext_XRRGetScreenInfo = yes; then
+  have_randr=yes; SAVER_LIBS="$SAVER_LIBS $xrender_libs"
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+
+    # if that failed, look in -lXrandr
+    if test "$have_randr" = no; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for XRRGetScreenInfo in -lXrandr" >&5
+echo $ECHO_N "checking for XRRGetScreenInfo in -lXrandr... $ECHO_C" >&6
+if test "${ac_cv_lib_Xrandr_XRRGetScreenInfo+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXrandr $xrender_libs -lXext -lX11 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XRRGetScreenInfo ();
+int
+main ()
+{
+XRRGetScreenInfo ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xrandr_XRRGetScreenInfo=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xrandr_XRRGetScreenInfo=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xrandr_XRRGetScreenInfo" >&5
+echo "${ECHO_T}$ac_cv_lib_Xrandr_XRRGetScreenInfo" >&6
+if test $ac_cv_lib_Xrandr_XRRGetScreenInfo = yes; then
+  have_randr=yes; SAVER_LIBS="$SAVER_LIBS -lXrandr $xrender_libs"
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+    fi
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_randr" = yes; then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_RANDR 1
+_ACEOF
+
+  fi
+
+elif test "$with_randr" != no; then
+  echo "error: must be yes or no: --with-randr-ext=$with_randr"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       Check for XF86MiscSetGrabKeysState (but only bother if we are already
 #	using other XF86 stuff.)
 #
@@ -15560,7 +15953,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 15569 "configure"
+#line 15962 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -17593,25 +17986,23 @@ fi
 ###############################################################################
 
 PTY_LIBS=
-have_ptys=no
 
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  if test "${ac_cv_header_pty_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for pty.h" >&5
-echo $ECHO_N "checking for pty.h... $ECHO_C" >&6
-if test "${ac_cv_header_pty_h+set}" = set; then
+
+for ac_header in pty.h util.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_pty_h" >&5
-echo "${ECHO_T}$ac_cv_header_pty_h" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 else
   # Is the header compilable?
-echo "$as_me:$LINENO: checking pty.h usability" >&5
-echo $ECHO_N "checking pty.h usability... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -17620,7 +18011,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <pty.h>
+#include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -17646,8 +18037,8 @@ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
 echo "${ECHO_T}$ac_header_compiler" >&6
 
 # Is the header present?
-echo "$as_me:$LINENO: checking pty.h presence" >&5
-echo $ECHO_N "checking pty.h presence... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -17655,7 +18046,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <pty.h>
+#include <$ac_header>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -17688,10 +18079,10 @@ echo "${ECHO_T}$ac_header_preproc" >&6
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc in
   yes:no )
-    { echo "$as_me:$LINENO: WARNING: pty.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: pty.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: pty.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: pty.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------ ##
@@ -17702,12 +18093,12 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
   no:yes )
-    { echo "$as_me:$LINENO: WARNING: pty.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: pty.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: pty.h: check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: pty.h: check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: pty.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: pty.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------ ##
@@ -17718,26 +18109,26 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-echo "$as_me:$LINENO: checking for pty.h" >&5
-echo $ECHO_N "checking for pty.h... $ECHO_C" >&6
-if test "${ac_cv_header_pty_h+set}" = set; then
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_cv_header_pty_h=$ac_header_preproc
+  eval "$as_ac_Header=$ac_header_preproc"
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_pty_h" >&5
-echo "${ECHO_T}$ac_cv_header_pty_h" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 
 fi
-if test $ac_cv_header_pty_h = yes; then
-  have_ptys=yes
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
 fi
 
+done
 
-  CPPFLAGS="$ac_save_CPPFLAGS"
-if test "$have_ptys" = yes; then
-  # we have the header, now check for the library
-  have_ptys=no
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -17810,9 +18201,8 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_util_forkpty" >&5
 echo "${ECHO_T}$ac_cv_lib_util_forkpty" >&6
 if test $ac_cv_lib_util_forkpty = yes; then
-  have_ptys=yes
-                  PTY_LIBS="-lutil"
-                  cat >>confdefs.h <<\_ACEOF
+  PTY_LIBS="-lutil"
+                cat >>confdefs.h <<\_ACEOF
 #define HAVE_FORKPTY 1
 _ACEOF
 
@@ -17822,7 +18212,6 @@ fi
   LDFLAGS="$ac_save_LDFLAGS"
 #  LIBS="$ac_save_LIBS"
 
-fi
 
 
 ###############################################################################
@@ -20575,6 +20964,10 @@ if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
   warn 'The XF86VMODE extension was requested, but was not found.'
 fi
 
+if test "$with_randr_req" = yes -a "$have_randr" = no ; then
+  warn 'The RANDR extension was requested, but was not found.'
+fi
+
 if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
 fi
@@ -20989,7 +21382,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (175+ different executables) will"
+  echo "      The various graphics demos (180+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

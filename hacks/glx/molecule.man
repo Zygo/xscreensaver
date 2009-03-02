@@ -27,7 +27,7 @@ molecule - draws 3D moleclear structures
 [\-titles] [\-no-titles]
 [\-atoms] [\-no-atoms]
 [\-bonds] [\-no-bonds]
-[\-molecule \fIfilename\fP]
+[\-molecule \fIfile-or-directory\fP]
 .SH DESCRIPTION
 The \fImolecule\fP program draws several different representations of
 molecules.  Some common molecules are built in, and it can read PDB

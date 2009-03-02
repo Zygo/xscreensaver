@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998, 2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -278,6 +278,7 @@ static const char * const prefs[] = {
   "sgiSaverExtension",
   "mitSaverExtension",
   "xidleExtension",
+  "GetViewPortIsFullOfLies",
   "procInterrupts",
   "overlayStderr",
   "overlayTextBackground",	/* not saved -- X resources only */
@@ -813,6 +814,8 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("mitSaverExtension")type = pref_bool, b=p->use_mit_saver_extension;
       CHECK("xidleExtension")	type = pref_bool, b = p->use_xidle_extension;
       CHECK("procInterrupts")	type = pref_bool, b = p->use_proc_interrupts;
+      CHECK("GetViewPortIsFullOfLies")  type = pref_bool,
+					b = p->getviewport_full_of_lies_p;
       CHECK("overlayStderr")	type = pref_bool, b = overlay_stderr_p;
       CHECK("overlayTextBackground") continue;  /* don't save */
       CHECK("overlayTextForeground") continue;  /* don't save */
@@ -1064,6 +1067,9 @@ load_init_file (saver_preferences *p)
   p->use_sgi_saver_extension = get_boolean_resource ("sgiSaverExtension",
 						     "Boolean");
   p->use_proc_interrupts = get_boolean_resource ("procInterrupts", "Boolean");
+
+  p->getviewport_full_of_lies_p =
+    get_boolean_resource ("GetViewPortIsFullOfLies", "Boolean");
 
   get_screenhacks (p);                /* Parse the "programs" resource. */
 

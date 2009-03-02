@@ -1,6 +1,6 @@
 /* lavalite --- 3D Simulation a Lava Lite, written by jwz.
  *
- * This software Copyright (c) 2002 Jamie Zawinski <jwz@jwz.org>
+ * This software Copyright (c) 2002-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

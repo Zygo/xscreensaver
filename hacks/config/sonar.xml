@@ -4,7 +4,17 @@
 
   <command arg="-root"/>
 
-  <string id="ping" _label="Ping Subnet" arg="-ping %"/>
+  <select id="ping">
+   <option id="none" _label="Ping mode..."/>
+   <option id="24" _label="Ping subnet/24 (254 hosts)" arg-set="-ping subnet/24"/>
+   <option id="25" _label="Ping subnet/25 (126 hosts)" arg-set="-ping subnet/25"/>
+   <option id="26" _label="Ping subnet/26 (62 hosts)"  arg-set="-ping subnet/26"/>
+   <option id="27" _label="Ping subnet/27 (31 hosts)"  arg-set="-ping subnet/27"/>
+   <option id="28" _label="Ping subnet/28 (14 hosts)"  arg-set="-ping subnet/28"/>
+   <option id="29" _label="Ping subnet/29 (6 hosts)"   arg-set="-ping subnet/29"/>
+   <option id="30" _label="Ping subnet/30 (2 hosts)"   arg-set="-ping subnet/30"/>
+   <option id="ssh" _label="Ping known hosts"   arg-set="-ping /etc/hosts,$HOME/.ssh/known_hosts,$HOME/.ssh/known_hosts2"/>
+  </select>
 
   <hgroup>
     <number id="acount" type="spinbutton" arg="-team-a-count %"
@@ -21,20 +31,12 @@
   <!-- #### -ping-timeout [3000] -->
   <!-- #### -ttl [90] -->
 
-  <!-- #### -font [fixed] -->
-  <!-- #### -background [#000000] -->
-  <!-- #### -sweep-color [#00FF00] -->
-  <!-- #### -scope-color [#003300] -->
-  <!-- #### -grid-color [#00AA00] -->
-  <!-- #### -text-color [#FFFF00] -->
-
   <_description>
-This program draws a simulation of a sonar screen.  Written by
-default, it displays a random assortment of ``bogies'' on the screen,
-but if compiled properly, it can ping (pun intended) your local
+This program draws a simulation of a sonar screen.  By default,
+it displays a random assortment of ``bogies'' on the screen, but if
+installed as "setuid root", it can ping (pun intended) your local
 network, and actually plot the proximity of the other hosts on your
-network to you.  It would be easy to make it monitor other sources of
-data, too.  (Processes?  Active network connections?  CPU usage per
-user?)  Written by Stephen Martin.
+network to you.  Written by Stephen Martin and Jamie Zawinski.
+
   </_description>
 </screensaver>
