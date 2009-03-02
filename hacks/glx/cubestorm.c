@@ -1,4 +1,4 @@
-/* cubestorm, Copyright (c) 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* cubestorm, Copyright (c) 2003-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,6 +34,7 @@
 #define DEF_SPEED       "1.0"
 #define DEF_THICKNESS   "0.06"
 #define DEF_COUNT       "4"
+#define DEF_DBUF        "False"
 
 typedef struct {
   rotator *rot;
@@ -61,6 +62,7 @@ static Bool do_spin;
 static Bool do_wander;
 static GLfloat speed;
 static GLfloat thickness;
+static Bool dbuf_p;
 
 static XrmOptionDescRec opts[] = {
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
@@ -68,7 +70,9 @@ static XrmOptionDescRec opts[] = {
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" },
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
-  { "-thickness", ".thickness",  XrmoptionSepArg, 0 },
+  { "-db",     ".doubleBuffer", XrmoptionNoArg, "True"},
+  { "+db",     ".doubleBuffer", XrmoptionNoArg, "False"},
+  { "-thickness", ".thickness", XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -76,6 +80,7 @@ static argtype vars[] = {
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
   {&thickness, "thickness", "Thickness",  DEF_THICKNESS,  t_Float},
+  {&dbuf_p, "doubleBuffer", "DoubleBuffer", DEF_DBUF, t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt cube_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -195,7 +200,9 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
                               !!event->xbutton.state);
@@ -308,6 +315,7 @@ init_cube (ModeInfo *mi)
   draw_faces (mi);
   glEndList ();
 
+  glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -410,7 +418,8 @@ draw_cube (ModeInfo *mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
 
-  glXSwapBuffers(dpy, window);
+  if (dbuf_p)
+    glXSwapBuffers(dpy, window);
 }
 
 XSCREENSAVER_MODULE_2 ("CubeStorm", cubestorm, cube)

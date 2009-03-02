@@ -4,55 +4,73 @@
 
   <command arg="-root"/>
 
+  <number id="seeds" type="spinbutton" arg="-seeds %"
+          _label="Seeds" low="1" high="15" default="1"/>
+
+  <hgroup>
   <number id="maxcells" type="slider" arg="-maxcells %"
-          _label="Max. number of cells" _low-label="Few" _high-label="Many"
+          _label="Max cells" _low-label="Few" _high-label="Many"
           low="50" high="5000" default="800"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="radius" type="slider" arg="-radius %"
           _label="Cell radius" _low-label="Small" _high-label="Huge"
           low="5" high="80" default="40"/>
-  
-  <number id="seeds" type="spinbutton" arg="-seeds %"
-          _label="Seeds" low="1" high="15" default="1"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="minfood" type="slider" arg="-minfood %"
-          _label="Min. amount of food" _low-label="Small" _high-label="A lot"
+          _label="Min food" _low-label="Starve" _high-label="Gorge"
           low="0" high="100" default="5"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="maxfood" type="slider" arg="-maxfood %"
-          _label="Max. amount of food" _low-label="Small" _high-label="A lot"
+          _label="Max food" _low-label="Starve" _high-label="Gorge"
           low="10" high="100" default="20"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="divideage" type="slider" arg="-divideage %"
           _label="Cell division" _low-label="Quick" _high-label="Slow"
           low="1" high="100" default="20"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="mindist" type="slider" arg="-mindist %"
           _label="Min. distance" _low-label="Small" _high-label="Large"
           low="1.0" high="3.0" default="1.4"/>
+  </hgroup>
 
-  <boolean id="keepold" _label="Keep dead cells" arg-set="-keepold"/>
-  
+  <hgroup>
   <number id="delay" type="slider" arg="-delay %"
           _label="Animation Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="50000" default="20000"
           convert="invert"/>
-  
+  </hgroup>
+
+  <hgroup>
   <number id="pause" type="slider" arg="-pause %"
           _label="Pause at end" _low-label="Short" _high-label="Long"
           low="0" high="400" default="20"/>
-  
+  </hgroup>
+
   <select id="quality">
     <option id="q0" _label="Lowest sphere detail"  arg-set="-quality 0"/>
     <option id="q1" _label="Medium sphere detail"  arg-set="-quality 1"/>
     <option id="q2" _label="Normal sphere detail"  arg-set="-quality 2"/>
-    <option id="q3" _label="More sphere detail"    arg-set="-quality 3"/>
+    <option id="q3" _label="More sphere detail"/>
     <option id="q4" _label="Highest sphere detail" arg-set="-quality 4"/>
   </select>
-  
+
+  <hgroup>
+  <boolean id="keepold" _label="Keep dead cells" arg-set="-keepold"/>
+
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
-  
+
   <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
 
   <xscreensaver-image />
 

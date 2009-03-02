@@ -4,7 +4,7 @@
  *
  * version 1.0 - June 6, 2002
  *
- * Copyright (C) 2002-2007 Blair Tennessy (tennessb@unbc.ca)
+ * Copyright (C) 2002-2008 Blair Tennessy (tennessb@unbc.ca)
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -122,7 +122,7 @@ static const GLfloat whites[WHITES][3] =
     {1.0, 0.55, 0.1},
     {0.8, 0.52, 0.8},
     {0.43, 0.54, 0.76},
-    {0.8, 0.8, 0.8},
+    {0.2, 0.2, 0.2},
     {0.35, 0.60, 0.35},
   };
 
@@ -211,7 +211,9 @@ ENTRYPOINT Bool chess_handle_event (ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (cs->trackball, event->xbutton.button, 5,
                               !event->xbutton.state);

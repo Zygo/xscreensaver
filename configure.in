@@ -232,6 +232,9 @@ AH_TEMPLATE([PAM_STRERROR_TWO_ARGS],
 	    [Define if you have PAM and pam_strerror() requires two
 	    arguments.])
 
+AH_TEMPLATE([HAVE_SIGTIMEDWAIT],
+	    [Define to 1 if you have the `sigtimedwait' function.])
+
 AH_TEMPLATE([HAVE_SHADOW_PASSWD],
 	    [Define this if your system uses 'shadow' passwords, that is, the
 	    passwords live in /etc/shadow instead of /etc/passwd, and one
@@ -350,8 +353,8 @@ AC_DEFUN(AC_PROG_CC_ANSI,
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
     CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes"
     OBJCC="$OBJCC -Wall"
-    # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
-    # and then perhaps we can do without -pedantic?
+    # As of gcc 3.4, we have "-Wdeclaration-after-statement"
+    # and so perhaps now we can do without -pedantic?
   else
     case "$host" in
       *-irix5* |*-irix6.[0-3]* )
@@ -371,7 +374,36 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 
 ###############################################################################
 #
-#       Functions to figure out how to disable // comments in ANSI C code.
+#       Check for availability of various gcc command-line options.
+#
+###############################################################################
+
+AC_DEFUN(AC_CHECK_GCC_ARG,
+ [if test -n "$GCC"; then
+   AC_CACHE_CHECK([whether gcc accepts [$2]],
+     ac_cv_gcc_accepts_[$1],
+    [rm -rf conftest.$ac_ext
+     touch conftest.$ac_ext
+     if ( ( gcc -c [$2] conftest.$ac_ext -o/dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_[$1]=no
+     else
+       ac_cv_gcc_accepts_[$1]=yes
+     fi])
+   ac_gcc_accepts_[$1]="$ac_cv_gcc_accepts_[$1]"
+  fi
+])
+
+AC_DEFUN(AC_NO_LONG_STRING_WARNINGS,
+         [AC_CHECK_GCC_ARG(no_overlength, -Wno-overlength-strings)])
+
+AC_DEFUN(AC_NO_MISPLACED_DECLARATIONS,
+         [AC_CHECK_GCC_ARG(no_decl_after, -Wdeclaration-after-statement)])
+
+
+###############################################################################
+#
+#       Function to figure out how to disable // comments in ANSI C code.
 #
 #       (With recent gcc, this is done with "-std=c89".  With older gcc, this
 #       is done by passing "-lang-c89" to cpp, by passing "-Wp,-lang-c89" to
@@ -390,18 +422,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 ###############################################################################
 
 AC_DEFUN(AC_GCC_ACCEPTS_STD,
- [if test -n "$GCC"; then
-   AC_CACHE_CHECK([whether gcc accepts -std],
-     ac_cv_gcc_accepts_std,
-    [if ( ( gcc -E -std=c89 - </dev/null >/dev/null ) 2>&1 | \
-          grep unrecognized >/dev/null ); then
-       ac_cv_gcc_accepts_std=no
-     else
-       ac_cv_gcc_accepts_std=yes
-     fi])
-   ac_gcc_accepts_std="$ac_cv_gcc_accepts_std"
-  fi
-])
+         [AC_CHECK_GCC_ARG(std, -std=c89)])
 
 AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
  [if test -n "$GCC"; then
@@ -443,18 +464,7 @@ AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
 ###############################################################################
 
 AC_DEFUN(AC_GCC_ACCEPTS_NO_CPP_PRECOMP,
- [if test -n "$GCC"; then
-   AC_CACHE_CHECK([whether gcc accepts -no-cpp-precomp],
-     ac_cv_gcc_accepts_no_cpp_precomp,
-    [if ( ( gcc -E -no-cpp-precomp - </dev/null >/dev/null ) 2>&1 | \
-          grep unrecognized >/dev/null ); then
-       ac_cv_gcc_accepts_no_cpp_precomp=no
-     else
-       ac_cv_gcc_accepts_no_cpp_precomp=yes
-     fi])
-   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
-  fi
-])
+         [AC_CHECK_GCC_ARG(no_cpp_precomp, -no-cpp-precomp)])
 
 AC_DEFUN(AC_NO_OBJECTIVE_C,
  [if test -n "$GCC"; then
@@ -1101,8 +1111,10 @@ test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
 # random compiler setup
 AC_CANONICAL_HOST
 AC_PROG_CC_ANSI
-AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
+AC_NO_LONG_STRING_WARNINGS
+AC_NO_MISPLACED_DECLARATIONS
 AC_NO_OBJECTIVE_C
+AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
@@ -1777,7 +1789,15 @@ fi
 AC_ARG_ENABLE(locking,[Screen locking options:
   --enable-locking        Compile in support for locking the display.
   --disable-locking       Do not allow locking at all.],
-  [enable_locking="$enableval"],[enable_locking=yes])
+  [enable_locking="$enableval"],
+  [if test "$ac_macosx" = yes; then
+    # We can't lock on MacOS X, so default to not compiling in support for it.
+    # But allow --enable-locking to override that, so I can debug Linux locking
+    # under MacOS X11.
+    enable_locking=no
+   else
+    enable_locking=yes
+   fi])
 if test "$enable_locking" = yes; then
   true
 elif test "$enable_locking" = no; then
@@ -1785,16 +1805,6 @@ elif test "$enable_locking" = no; then
 else
   echo "error: must be yes or no: --enable-locking=$enable_locking"
   exit 1
-fi
-
-# We can't lock on MacOS X, so don't even bother compiling in support for it.
-#
-if test "$ac_macosx" = yes; then
-  if test "$enable_locking" = yes; then
-    AC_MSG_RESULT(locking disabled: it doesn't work on MacOS X)
-    enable_locking=no
-    AC_DEFINE(NO_LOCKING)
-  fi
 fi
 
 
@@ -1811,7 +1821,7 @@ if test "$enable_root_passwd" = yes; then
   AC_DEFINE(ALLOW_ROOT_PASSWD)
   true
 elif test "$enable_root_passwd" != no; then
-  echo "error: something wrong with root-passwd option. Check configure.in ."
+  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
   exit 1
 fi
 
@@ -1866,26 +1876,30 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
 
     # On Linux, sigtimedwait() is in libc; on Solaris, it's in librt.
     have_timedwait=no
-    AC_CHECK_LIB(c, sigtimedwait, [have_timedwait=yes])
+    AC_CHECK_LIB(c, sigtimedwait,
+                 [have_timedwait=yes
+                  AC_DEFINE(HAVE_SIGTIMEDWAIT)])
     if test "$have_timedwait" = no ; then
-      AC_CHECK_LIB(rt, sigtimedwait, [PASSWD_LIBS="${PASSWD_LIBS} -lrt"])
+      AC_CHECK_LIB(rt, sigtimedwait, [have_timedwait=yes
+                                      AC_DEFINE(HAVE_SIGTIMEDWAIT)
+                                      PASSWD_LIBS="${PASSWD_LIBS} -lrt"])
     fi
 
     AC_MSG_CHECKING(how to call pam_strerror)
     AC_CACHE_VAL(ac_cv_pam_strerror_args,
-     [AC_TRY_COMPILE([#include <stdio.h>
-                      #include <stdlib.h>
-                      #include <security/pam_appl.h>],
-                     [pam_handle_t *pamh = 0;
-                      char *s = pam_strerror(pamh, PAM_SUCCESS);],
-                     [ac_pam_strerror_args=2],
-                     [AC_TRY_COMPILE([#include <stdio.h>
-                                      #include <stdlib.h>
-                                      #include <security/pam_appl.h>],
-                                     [char *s =
-                                       pam_strerror(PAM_SUCCESS);],
-                                     [ac_pam_strerror_args=1],
-                                     [ac_pam_strerror_args=0])])
+     [AC_TRY_X_COMPILE([#include <stdio.h>
+                        #include <stdlib.h>
+                        #include <security/pam_appl.h>],
+                       [pam_handle_t *pamh = 0;
+                        char *s = pam_strerror(pamh, PAM_SUCCESS);],
+                       [ac_pam_strerror_args=2],
+                       [AC_TRY_X_COMPILE([#include <stdio.h>
+                                          #include <stdlib.h>
+                                          #include <security/pam_appl.h>],
+                                         [char *s =
+                                           pam_strerror(PAM_SUCCESS);],
+                                         [ac_pam_strerror_args=1],
+                                         [ac_pam_strerror_args=0])])
       ac_cv_pam_strerror_args=$ac_pam_strerror_args])
     ac_pam_strerror_args=$ac_cv_pam_strerror_args
     if test "$ac_pam_strerror_args" = 1 ; then
@@ -2287,6 +2301,9 @@ if test -n "$with_login_manager_req" ; then
  fi
 
   case "$with_login_manager_req" in
+    no)
+      with_login_manager=""
+    ;;
     /*)
       # absolute path
       set dummy $with_login_manager_req ; login_manager_tmp=$2
@@ -4114,13 +4131,20 @@ if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
 fi
 
+if test "$ac_macosx" = yes ; then
+  if test "$enable_locking" = yes ; then
+    warn  "You have specified --enable-locking on MacOS X."
+    warn2 "THIS DOES NOT WORK!  Don't do this!"
+  fi
+fi
+
 
 # You are in a twisty maze of namespaces and syntaxes, all alike.
 # Fuck the skull of Unix.
 #
 bindir=`eval eval eval eval eval eval eval echo $bindir`
 HACKDIR=`eval eval eval eval eval eval eval echo $HACKDIR`
-HACKDIR_CONF_DIR=`eval eval eval eval eval eval eval echo $HACKDIR_CONF_DIR`
+HACK_CONF_DIR=`eval eval eval eval eval eval eval echo $HACK_CONF_DIR`
 
 # canonicalize slashes.
 bindir=`echo  "${bindir}"              | sed 's@/$@@;s@//*@/@g'`

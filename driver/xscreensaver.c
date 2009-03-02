@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -228,7 +228,7 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2006 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-2008 by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
   All xscreensaver configuration is via the `~/.xscreensaver' file.\n\
   Rather than editing that file by hand, just run `xscreensaver-demo':\n\
@@ -693,7 +693,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2006 "
+	     "%s %s, copyright (c) 1991-2008 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 
@@ -755,6 +755,111 @@ print_lock_failure_banner (saver_info *si)
 }
 
 
+#ifdef HAVE_XINERAMA
+
+static Bool
+screens_overlap_p (XineramaScreenInfo *a, XineramaScreenInfo *b)
+{
+  /* Two rectangles overlap if the max of the tops is less than the
+     min of the bottoms and the max of the lefts is less than the min
+     of the rights.
+   */
+# undef MAX
+# undef MIN
+# define MAX(A,B) ((A)>(B)?(A):(B))
+# define MIN(A,B) ((A)<(B)?(A):(B))
+
+  int maxleft  = MAX(a->x_org, b->x_org);
+  int maxtop   = MAX(a->y_org, b->y_org);
+  int minright = MIN(a->x_org + a->width  - 1, b->x_org + b->width);
+  int minbot   = MIN(a->y_org + a->height - 1, b->y_org + b->height);
+  return (maxtop < minbot && maxleft < minright);
+}
+
+
+/* Go through the list of Xinerama screen descriptions, and mark the
+   ones that appear to be insane, so that we don't use them.
+ */
+static void
+check_xinerama_sanity (int count, Bool verbose_p, XineramaScreenInfo *xsi)
+{
+  static Bool printed_p = False;
+  int i, j;
+  char err[1024];
+  *err = 0;
+
+# define X1 xsi[i].x_org
+# define X2 xsi[j].x_org
+# define Y1 xsi[i].y_org
+# define Y2 xsi[j].y_org
+# define W1 xsi[i].width
+# define W2 xsi[j].width
+# define H1 xsi[i].height
+# define H2 xsi[j].height
+
+# define WHINE() do {                                                        \
+    if (verbose_p) {                                                         \
+      if (! printed_p) {                                                     \
+        fprintf (stderr, "%s: compensating for Xinerama braindamage:\n",     \
+                 blurb());                                                   \
+        printed_p = True;                                                    \
+      }                                                                      \
+      fprintf (stderr, "%s:   %d: %s\n", blurb(), xsi[i].screen_number,err); \
+    }                                                                        \
+    xsi[i].screen_number = -1;                                               \
+  } while(0)
+
+  /* If a screen is enclosed by any other screen, that's insane.
+   */
+  for (i = 0; i < count; i++)
+    for (j = 0; j < count; j++)
+      if (i != j &&
+          xsi[i].screen_number >= 0 &&
+          xsi[j].screen_number >= 0 &&
+          X1 >= X2 && Y1 >= Y2 && (X1+W1) <= (X2+W2) && (X1+H1) <= (X2+H2))
+        {
+          sprintf (err, "%dx%d+%d+%d enclosed by %dx%d+%d+%d",
+                   W1, H1, X1, Y1,
+                   W2, H2, X2, Y2);
+          WHINE();
+          continue;
+        }
+
+  /* After checking for enclosure, check for other lossage against earlier
+     screens.  We do enclosure first so that we make sure to pick the
+     larger one.
+   */
+  for (i = 0; i < count; i++)
+    for (j = 0; j < i; j++)
+      {
+        if (xsi[i].screen_number < 0) continue; /* already marked */
+
+        *err = 0;
+        if (X1 == X2 && Y1 == Y2 && W1 == W2 && H1 == H2)
+          sprintf (err, "%dx%d+%d+%d duplicated", W1, H1, X1, Y1);
+
+        else if (screens_overlap_p (&xsi[i], &xsi[j]))
+          sprintf (err, "%dx%d+%d+%d overlaps %dx%d+%d+%d",
+                   W1, H1, X1, Y1,
+                   W2, H2, X2, Y2);
+
+        if (*err) WHINE();
+      }
+
+# undef X1
+# undef X2
+# undef Y1
+# undef Y2
+# undef W1
+# undef W2
+# undef H1
+# undef H2
+}
+
+#endif /* HAVE_XINERAMA */
+
+
+
 /* Examine all of the display's screens, and populate the `saver_screen_info'
    structures.  Make sure this is called after hack_environment() sets $PATH.
  */
@@ -782,20 +887,27 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
 
   if (si->xinerama_p)
     {
-      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &si->nscreens);
+      int nscreens = 0;
+      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
       if (!xsi)
         si->xinerama_p = False;
       else
         {
+          int j = 0;
           si->screens = (saver_screen_info *)
-            calloc(sizeof(saver_screen_info), si->nscreens);
-          for (i = 0; i < si->nscreens; i++)
+            calloc(sizeof(saver_screen_info), nscreens);
+          check_xinerama_sanity (nscreens, si->prefs.verbose_p, xsi);
+          for (i = 0; i < nscreens; i++)
             {
-              si->screens[i].x      = xsi[i].x_org;
-              si->screens[i].y      = xsi[i].y_org;
-              si->screens[i].width  = xsi[i].width;
-              si->screens[i].height = xsi[i].height;
+              if (xsi[i].screen_number < 0)  /* deemed insane */
+                continue;
+              si->screens[j].x      = xsi[i].x_org;
+              si->screens[j].y      = xsi[i].y_org;
+              si->screens[j].width  = xsi[i].width;
+              si->screens[j].height = xsi[i].height;
+              j++;
             }
+          si->nscreens = j;
           XFree (xsi);
         }
       si->default_screen = &si->screens[0];
@@ -1589,6 +1701,17 @@ clientmessage_response (saver_info *si, Window w, Bool error,
 static void
 bogus_clientmessage_warning (saver_info *si, XEvent *event)
 {
+#if 0  /* Oh, fuck it.  GNOME likes to spew random ClientMessages at us
+          all the time.  This is presumably indicative of an error in
+          the sender of that ClientMessage: if we're getting it and 
+          ignoring it, then it's not reaching the intended recipient.
+          But people complain to me about this all the time ("waaah!
+          xscreensaver is printing to it's stderr and that gets my
+          panties all in a bunch!")  And I'm sick of hearing about it.
+          So we'll just ignore these messages and let GNOME go right
+          ahead and continue to stumble along in its malfunction.
+        */
+
   saver_preferences *p = &si->prefs;
   char *str = XGetAtomName_safe (si->dpy, event->xclient.message_type);
   Window w = event->xclient.window;
@@ -1649,7 +1772,10 @@ bogus_clientmessage_warning (saver_info *si, XEvent *event)
   fprintf (stderr, "%s: %d: for window 0x%lx (%s)\n",
            blurb(), screen, (unsigned long) w, wdesc);
   if (str) XFree (str);
+
+#endif /* 0 */
 }
+
 
 Bool
 handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
@@ -2154,11 +2280,7 @@ analyze_display (saver_info *si)
       j = strlen (buf);
       strcat (buf, exts[i].desc);
       if (!exts[i].useful_p)
-        {
-          int k = j + 18;
-          while (strlen (buf) < k) strcat (buf, " ");
-          strcat (buf, "<-- not supported at compile time!");
-        }
+        strcat (buf, " (disabled at compile time)");
       fprintf (stderr, "%s\n", buf);
     }
 
@@ -2236,6 +2358,8 @@ display_is_on_console_p (saver_info *si)
 	not_on_console = False;
       else if (gethostname (localname, sizeof (localname)))
 	not_on_console = True;  /* can't find hostname? */
+      else if (!strncmp (dpyname, "/tmp/launch-", 12))  /* MacOS X launchd */
+	not_on_console = False;
       else
 	{
 	  /* We have to call gethostbyname() on the result of gethostname()

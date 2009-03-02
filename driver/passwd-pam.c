@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -237,11 +237,17 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
 
   PAM_NO_DELAY(pamh);
 
+  if (verbose_p)
+    fprintf (stderr, "%s:   pam_authenticate (...) ...\n", blurb());
+
   timeout.tv_sec = 0;
   timeout.tv_nsec = 1;
   set = block_sigchld();
   status = pam_authenticate (pamh, 0);
+# ifdef HAVE_SIGTIMEDWAIT
   sigtimedwait (&set, NULL, &timeout);
+  /* #### What is the portable thing to do if we don't have it? */
+# endif /* HAVE_SIGTIMEDWAIT */
   unblock_sigchld();
 
   if (verbose_p)
@@ -302,7 +308,13 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
                  (status2 == PAM_SUCCESS ? "Success" : "Failure"));
     }
 
-  si->unlock_state = (status == PAM_SUCCESS) ? ul_success : ul_fail;
+  if (status == PAM_SUCCESS)
+    si->unlock_state = ul_success;	     /* yay */
+  else if (si->unlock_state == ul_cancel ||
+           si->unlock_state == ul_time)
+    ;					     /* more specific failures ok */
+  else
+    si->unlock_state = ul_fail;		     /* generic failure */
 }
 
 
@@ -382,9 +394,12 @@ pam_conversation (int nmsgs,
   struct auth_response *authresp = 0;
   struct pam_response *pam_responses;
   saver_info *si = (saver_info *) vsaver_info;
+  Bool verbose_p;
 
   /* On SunOS 5.6, the `closure' argument always comes in as random garbage. */
   si = (saver_info *) suns_pam_implementation_blows;
+
+  verbose_p = si->prefs.verbose_p;
 
   /* Converting the PAM prompts into the XScreenSaver native format.
    * It was a design goal to collapse (INFO,PROMPT) pairs from PAM
@@ -401,22 +416,39 @@ pam_conversation (int nmsgs,
   if (!pam_responses || !messages)
     goto end;
 
+  if (verbose_p)
+    fprintf (stderr, "%s:     pam_conversation (", blurb());
+
   for (i = 0; i < nmsgs; ++i)
     {
+      if (verbose_p && i > 0) fprintf (stderr, ", ");
+
       messages[i].msg = msg[i]->msg;
 
-      /* Default fallback of PROMPT_ECHO */
-      messages[i].type = 
-	msg[i]->msg_style == PAM_PROMPT_ECHO_OFF
-	? AUTH_MSGTYPE_PROMPT_NOECHO
-	: msg[i]->msg_style == PAM_PROMPT_ECHO_ON
-	  ? AUTH_MSGTYPE_PROMPT_ECHO
-	  : msg[i]->msg_style == PAM_ERROR_MSG
-	    ? AUTH_MSGTYPE_ERROR
-	    : msg[i]->msg_style == PAM_TEXT_INFO
-	      ? AUTH_MSGTYPE_INFO
-	      : AUTH_MSGTYPE_PROMPT_ECHO;
+      switch (msg[i]->msg_style) {
+      case PAM_PROMPT_ECHO_OFF: messages[i].type = AUTH_MSGTYPE_PROMPT_NOECHO;
+        if (verbose_p) fprintf (stderr, "ECHO_OFF");
+        break;
+      case PAM_PROMPT_ECHO_ON:  messages[i].type = AUTH_MSGTYPE_PROMPT_ECHO;
+        if (verbose_p) fprintf (stderr, "ECHO_ON");
+        break;
+      case PAM_ERROR_MSG:       messages[i].type = AUTH_MSGTYPE_ERROR;
+        if (verbose_p) fprintf (stderr, "ERROR_MSG");
+        break;
+      case PAM_TEXT_INFO:       messages[i].type = AUTH_MSGTYPE_INFO;
+        if (verbose_p) fprintf (stderr, "TEXT_INFO");
+        break;
+      default:                  messages[i].type = AUTH_MSGTYPE_PROMPT_ECHO;
+        if (verbose_p) fprintf (stderr, "PROMPT_ECHO");
+        break;
+      }
+
+      if (verbose_p) 
+        fprintf (stderr, "=\"%s\"", msg[i]->msg ? msg[i]->msg : "(null)");
     }
+
+  if (verbose_p)
+    fprintf (stderr, ") ...\n");
 
   ret = si->unlock_cb(nmsgs, messages, &authresp, si);
 
@@ -432,6 +464,10 @@ end:
 
   if (authresp)
     free(authresp);
+
+  if (verbose_p)
+    fprintf (stderr, "%s:     pam_conversation (...) ==> %s\n", blurb(),
+             (ret == 0 ? "PAM_SUCCESS" : "PAM_CONV_ERR"));
 
   if (ret == 0)
     {

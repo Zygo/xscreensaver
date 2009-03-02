@@ -23,8 +23,19 @@
 # include <unistd.h>
 #endif
 
+#ifndef VMS
+# include <pwd.h>		/* for getpwuid() */
+#else /* VMS */
+# include "vms-pwd.h"
+#endif /* VMS */
+
+#ifdef HAVE_SYSLOG
+# include <syslog.h>
+#endif /* HAVE_SYSLOG */
+
 #include <X11/Intrinsic.h>
 
+#include "xscreensaver.h"
 #include "auth.h"
 
 extern const char *blurb(void);
@@ -159,6 +170,9 @@ try_unlock_password(saver_info *si,
 
   memset(&message, 0, sizeof(message));
 
+  if (verbose_p)
+    fprintf(stderr, "%s: non-PAM password auth.\n", blurb());
+
   /* Call the auth_conv function with "Password:", then feed
    * the result into valid_p()
    */
@@ -170,12 +184,60 @@ try_unlock_password(saver_info *si,
   if (!response)
     return;
 
-  si->unlock_state = valid_p(response->response, verbose_p) ? ul_success : ul_fail;
+  if (valid_p (response->response, verbose_p))
+    si->unlock_state = ul_success;	       /* yay */
+  else if (si->unlock_state == ul_cancel ||
+           si->unlock_state == ul_time)
+    ;					       /* more specific failures ok */
+  else
+    si->unlock_state = ul_fail;		       /* generic failure */
 
   if (response->response)
     free(response->response);
   free(response);
 }
+
+
+/* Write a password failure to the system log.
+ */
+static void
+do_syslog (saver_info *si, Bool verbose_p)
+{
+# ifdef HAVE_SYSLOG
+  struct passwd *pw = getpwuid (getuid ());
+  char *d = DisplayString (si->dpy);
+  char *u = (pw && pw->pw_name ? pw->pw_name : "???");
+  int opt = 0;
+  int fac = 0;
+
+#  ifdef LOG_PID
+  opt = LOG_PID;
+#  endif
+
+#  if defined(LOG_AUTHPRIV)
+  fac = LOG_AUTHPRIV;
+#  elif defined(LOG_AUTH)
+  fac = LOG_AUTH;
+#  else
+  fac = LOG_DAEMON;
+#  endif
+
+  if (!d) d = "";
+
+#  undef FMT
+#  define FMT "FAILED LOGIN %d ON DISPLAY \"%s\", FOR \"%s\""
+
+  if (verbose_p)
+    fprintf (stderr, "%s: syslog: " FMT "\n", blurb(), 
+             si->unlock_failures, d, u);
+
+  openlog (progname, opt, fac);
+  syslog (LOG_NOTICE, FMT, si->unlock_failures, d, u);
+  closelog ();
+
+# endif /* HAVE_SYSLOG */
+}
+
 
 
 /**
@@ -229,6 +291,12 @@ xss_authenticate(saver_info *si, Bool verbose_p)
 
   if (verbose_p)
     fprintf(stderr, "%s: All authentication mechanisms failed.\n", blurb());
+
+  if (si->unlock_state == ul_fail)
+    {
+      si->unlock_failures++;
+      do_syslog (si, verbose_p);
+    }
 
 DONE:
   if (si->auth_finished_cb)

@@ -1052,15 +1052,14 @@ hreffify (NSText *nstext)
   }
 }
 
-/* Makes the first word of the text be bold.
+/* Makes the text up to the first comma be bold.
  */
 static void
 boldify (NSText *nstext)
 {
   NSString *text = [nstext string];
-  NSRange r = [text rangeOfCharacterFromSet:
-                      [NSCharacterSet whitespaceCharacterSet]];
-  r.length = r.location;
+  NSRange r = [text rangeOfString:@"," options:0];
+  r.length = r.location+1;
   r.location = 0;
 
   NSFont *font = [nstext font];
@@ -1475,7 +1474,7 @@ fix_contentview_size (NSView *parent)
 //          f.origin.y + f.size.height, [kid class]);
   }
   
-  if (maxx < 350) maxx = 350;   // leave room for the NSText paragraph...
+  if (maxx < 400) maxx = 400;   // leave room for the NSText paragraph...
   
   /* Now that we know the width of the window, set the width of the NSText to
      that, so that it can decide what its height needs to be.
@@ -1495,10 +1494,29 @@ fix_contentview_size (NSView *parent)
   miny = f.origin.y - LINE_SPACING;
   [text setFrame:f];
   
-  // Stop second-guessing us on sizing now.  Size is now locked.
+  // Lock the width of the field and unlock the height, and let it resize
+  // once more, to compute the proper height of the text for that width.
+  //
   [(NSText *) text setHorizontallyResizable:NO];
+  [(NSText *) text setVerticallyResizable:YES];
+  [(NSText *) text sizeToFit];
+
+  // Now lock the height too: no more resizing this text field.
+  //
   [(NSText *) text setVerticallyResizable:NO];
-  
+
+  // Now reposition the top edge of the text field to be back where it
+  // was before we changed the height.
+  //
+  float oh = f.size.height;
+  f = [text frame];
+  float dh = f.size.height - oh;
+  f.origin.y += dh;
+  [text setFrame:f];
+
+  // Also adjust the parent height by the change in height of the text field.
+  miny -= dh;
+
 //  NSLog(@"text new: %3.0f x %3.0f @ %3.0f %3.0f  %3.0f  %@",
 //        f.size.width, f.size.height, f.origin.x, f.origin.y,
 //        f.origin.y + f.size.height, [text class]);
@@ -1634,7 +1652,19 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   rect.origin.y += rect.size.height;
   NSBox *pbox = [[NSBox alloc] initWithFrame:rect];
   [pbox setTitlePosition:NSNoTitle];
-  [pbox setBorderType:NSNoBorder];
+  [pbox setBorderType:NSBezelBorder];
+
+  {
+    NSRect f = [panel frame];
+    int screen_height = 800 - 64;
+    if (f.size.height > screen_height) {
+      NSLog(@"%@ height was %.0f; clipping to %d", 
+          [panel class], f.size.height, screen_height);
+      f.size.height = screen_height;
+      [panel setFrame:f];
+    }
+  }
+
   [pbox addSubview:panel];
   [pbox addSubview:bbox];
   [pbox sizeToFit];

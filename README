@@ -38,6 +38,24 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.04:   * New hacks, `cubicgrid', `hypnowheel', and
+                        `lcdscrub' (which isn't really a screen saver).
+                      * Updates to `m6502' and `gears'.
+                      * Fixed double-buffering problems in `cubestorm' and
+                        `noof'.
+                      * Better handling of horizontal scroll wheels.
+                      * Attempt to work around latest Xinerama braindamage:
+                        if the server reports overlapping screens, use the
+                        largest non-overlapping rectangles available.
+                      * Don't warning about receipt of bogus ClientMessages,
+                        since Gnome's just never going to stop sending those.
+                      * Worked around MacOS 10.5 perl bug that caused the
+                        text-displaying hacks to fail on some systems.
+                      * Hopefully fixed font-related System Preferences crashes
+                        in MacOS savers.
+                      * The recent PAM changes broke the "Caps Lock" warning
+                        in the password dialog, the failed login warnings, and
+                        syslogging.  Fixed all that.
 Changes since 5.03:   * Fixed a possible crash in the unlock dialog (more
                         fallout from the recent PAM changes...)
                       * New hacks, `moebiusgears', `abstractile', and

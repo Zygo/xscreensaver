@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -581,7 +581,7 @@ run_screenhack_table (Display *dpy,
     {
       unsigned long delay = ft->draw_cb (dpy, window, closure);
 #ifdef DEBUG_PAIR
-      unsigned long delay2;
+      unsigned long delay2 = 0;
       if (window2) delay2 = ft->draw_cb (dpy, window2, closure2);
 #endif
 

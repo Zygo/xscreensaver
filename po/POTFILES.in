@@ -1,4 +1,4 @@
-# Auto-generated: Tue Nov 13 00:39:40 PST 2007
+# Auto-generated: Sat Mar  1 21:34:50 PST 2008
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -47,6 +47,7 @@ hacks/config/crystal.xml
 hacks/config/cube21.xml
 hacks/config/cubenetic.xml
 hacks/config/cubestorm.xml
+hacks/config/cubicgrid.xml
 hacks/config/cwaves.xml
 hacks/config/cynosure.xml
 hacks/config/dangerball.xml
@@ -107,6 +108,7 @@ hacks/config/hopalong.xml
 hacks/config/hyperball.xml
 hacks/config/hypercube.xml
 hacks/config/hypertorus.xml
+hacks/config/hypnowheel.xml
 hacks/config/ifs.xml
 hacks/config/imsmap.xml
 hacks/config/interaggregate.xml
@@ -123,6 +125,7 @@ hacks/config/kumppa.xml
 hacks/config/lament.xml
 hacks/config/laser.xml
 hacks/config/lavalite.xml
+hacks/config/lcdscrub.xml
 hacks/config/lightning.xml
 hacks/config/lisa.xml
 hacks/config/lissie.xml

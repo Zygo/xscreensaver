@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -83,6 +83,11 @@
 
 #ifndef M_PI_2
 # define M_PI_2 1.5707963267
+#endif
+
+#ifndef Button6
+# define Button6 6
+# define Button7 7
 #endif
 
 #include "yarandom.h"

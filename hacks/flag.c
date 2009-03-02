@@ -407,6 +407,7 @@ init_flag(ModeInfo * mi)
 	fp = &flags[MI_SCREEN(mi)];
 
 	make_flag_bits(mi);
+    if (!fp->image) abort();
 
 	fp->width = MI_WIN_WIDTH(mi);
 	fp->height = MI_WIN_HEIGHT(mi);
@@ -476,6 +477,7 @@ draw_flag(ModeInfo * mi)
 	Window      window = MI_WINDOW(mi);
 	flagstruct *fp = &flags[MI_SCREEN(mi)];
 
+    if (!fp->image) abort();
     if (fp->cache == window) {  /* not double-buffering */
       XClearWindow (display, window);
     } else if (fp->width <= MAXW(fp) || fp->height <= MAXH(fp)) {

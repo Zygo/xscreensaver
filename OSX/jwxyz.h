@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -377,7 +377,6 @@ extern int XTextExtents (XFontStruct *, const char *, int length,
                          XCharStruct *overall_ret);
 extern int XTextWidth (XFontStruct *, const char *, int length);
 extern int XSetFont (Display *, GC, Font);
-extern Font XGContextFromGC (GC);
 
 extern Pixmap XCreatePixmap (Display *, Drawable,
                              unsigned int width, unsigned int height,

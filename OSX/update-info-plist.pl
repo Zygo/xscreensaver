@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2008 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,11 +19,11 @@
 # Created:  8-Mar-2006.
 
 require 5;
-use diagnostics;
+#use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 

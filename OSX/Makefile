@@ -17,16 +17,39 @@ distclean:
 
 distdepend:: update_plist_version
 
-debug:
+debug: distdepend
 	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Debug   build
 
-release::
+release:: distdepend
 	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Release build
+
+release:: check_versions
 
 release:: sign
 
 sign:
 	codesign -vfs 'Jamie Zawinski' build/Release/*.saver
+
+check_versions:
+	@\
+  SRC=../utils/version.h ;						\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		\
+  DIR=build/Release ;							\
+  RESULT=0 ;								\
+  for S in $$DIR/*.saver ; do						\
+   for P in $$S/Contents/Info.plist ; do				\
+     V2=`perl -0000 -n -e						\
+	'm@<key>CFBundleVersion</key>\s*<string>(.*?)</string>@si 	\
+	 && print $$1' < $$P` ;						\
+     if [ "$$V2" != "$$V" ] ; then					\
+       echo "Wrong version: $$S ($$V2)" ;				\
+       RESULT=1 ;							\
+     fi ;								\
+   done ;								\
+  done ;								\
+  if [ "$$RESULT" = 0 ]; then echo "Versions match ($$V2)" ; fi ;	\
+  exit $$RESULT
+
 
 echo_tarfiles:
 	@echo `find . \
@@ -58,7 +81,7 @@ update_plist_version:
   rm $$T
 
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
-dmg::
+dmg:: distdepend check_versions
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \

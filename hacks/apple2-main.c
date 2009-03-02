@@ -944,7 +944,10 @@ terminal_read(struct terminal_controller_data *mine, unsigned char *buf, int n)
     return 1;
   }
 
-  if (!mine->input_available_p) return 0;
+  if (!mine || 
+      !mine->input_available_p ||
+      !mine->pipe)
+    return 0;
 
   rc=read (fileno (mine->pipe), (void *) buf, n);
   if (rc>0) mine->lastc=buf[rc-1];

@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1241,9 +1241,9 @@ get_best_gl_visual (saver_screen_info *ssi)
 
         execvp (av[0], av);			/* shouldn't return. */
 
-        if (errno != ENOENT || si->prefs.verbose_p)
+        if (errno != ENOENT /* || si->prefs.verbose_p */ )
           {
-            /* Ignore "no such file or directory" errors, unless verbose.
+            /* Ignore "no such file or directory" errors.
                Issue all other exec errors, though. */
             sprintf (buf, "%s: running %s", blurb(), av[0]);
             perror (buf);

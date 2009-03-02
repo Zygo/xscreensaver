@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1193,7 +1193,10 @@ query_proc_interrupts_available (saver_info *si, const char **why)
 
   f = fopen (PROC_INTERRUPTS, "r");
   if (!f)
-    return False;
+    {
+      if (why) *why = "does not exist";
+      return False;
+    }
 
   fclose (f);
   return True;

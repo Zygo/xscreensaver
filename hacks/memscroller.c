@@ -336,8 +336,8 @@ more_bits (state *st, scroller *sc)
       if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF) {
 # if 0
         fprintf (stderr, "%s: wonky: 0x%08x - 0x%08x = 0x%08x\n", progname,
-                 (unsigned long) himem,  (unsigned long) lomem,
-                 (unsigned long) himem - (unsigned long) lomem);
+                 (unsigned int) himem,  (unsigned int) lomem,
+                 (unsigned int) himem - (unsigned int) lomem);
 # endif
         himem = lomem + 0xFFFF;
       }
@@ -584,9 +584,9 @@ static const char *memscroller_defaults [] = {
   ".textColor:		   #00FF00",
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
-  ".font1:		   -*-courier-medium-r-*-*-*-1400-*-*-m-*-*-*",
-  ".font2:		   -*-courier-medium-r-*-*-*-600-*-*-m-*-*-*",
-  ".font3:		   -*-courier-medium-r-*-*-*-180-*-*-m-*-*-*",
+  ".font1:		   -*-courier-bold-r-*-*-*-1400-*-*-m-*-*-*",
+  ".font2:		   -*-courier-bold-r-*-*-*-600-*-*-m-*-*-*",
+  ".font3:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".font4:		   fixed",
   "*delay:		   10000",
   "*offset:		   0",

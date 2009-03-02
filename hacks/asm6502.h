@@ -46,7 +46,8 @@ enum {
   MAX_CMD_LEN = 4, /* Each assembly command is 3 characeters long */
 /* The stack works from the top down in page $100 to $1ff */
   STACK_TOP = 0x1ff,
-  STACK_BOTTOM = 0x100 
+  STACK_BOTTOM = 0x100, 
+  PROG_START = 0x600 /* The default entry point for the program */
 };
 
 typedef enum{
@@ -117,6 +118,7 @@ struct machine_6502 {
   Bit8 regP;
   Bit16 regPC; /* A pair of 8 bit registers */
   Bit16 regSP;
+  Bit16 defaultCodePC;
   Bit8 memory[MEM_64K];
   BOOL runForever;
   int labelPtr;
@@ -139,16 +141,21 @@ void destroy6502(machine_6502 *machine);
 
 /* eval_file() - Compiles and runs a file until the program is
    finished */
-void eval_file(machine_6502 *machine, char *filename, 
+void eval_file(machine_6502 *machine, const char *filename, 
 	       Plotter plot, void *plotterState);
 
 /* start_eval_file() - Compile the file and execute the first
    instruction */
-void start_eval_file(machine_6502 *machine, char *filename, 
+void start_eval_file(machine_6502 *machine, const char *filename, 
 		     Plotter plot, void *plotterState);
 
+/* XXX
 void start_eval_binary(machine_6502 *machine, Bit8 *program,
 		       unsigned int proglen,
+		       Plotter plot, void *plotterState);
+*/
+
+void start_eval_string(machine_6502 *machine, const char *code,
 		       Plotter plot, void *plotterState);
 
 /* next_eval() - Execute the next insno of machine instructions */
@@ -158,12 +165,17 @@ void next_eval(machine_6502 *machine, int insno);
 void hexDump(machine_6502 *machine, Bit16 start, 
 	     Bit16 numbytes, FILE *output);
 
+/* Disassemble() - Prints the assembly code for the program currently
+   loaded in memory.*/
+void disassemble(machine_6502 *machine, FILE *output);
+
 /* trace() - Prints to output the current value of registers, the
    current nmemonic, memory address and value. */
 void trace(machine_6502 *machine, FILE *output);
 
 /* save_program() - Writes a binary file of the program loaded in
    memory. */
-void save_program(machine_6502 *machine, char *filename);
-
+/* XXX
+void save_program(machine_6502 *machine, const char *filename);
+*/
 #endif /* __ASM6502_H__ */

@@ -692,7 +692,7 @@ tags:
 	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
 
 echo_tarfiles:
-	@$(MAKE) XScreenSaver_ad.h XScreenSaver_Xm_ad.h 2>&1 >&/dev/null
+	@$(MAKE) XScreenSaver_ad.h XScreenSaver_Xm_ad.h 2>&1 >/dev/null
 	@echo $(TARFILES)
 
 check_men:
@@ -901,7 +901,11 @@ lock.o: $(srcdir)/types.h
 lock.o: $(UTILS_SRC)/resources.h
 lock.o: $(srcdir)/xscreensaver.h
 mlstring.o: $(srcdir)/mlstring.h
+passwd.o: $(srcdir)/auth.h
 passwd.o: ../config.h
+passwd.o: $(srcdir)/prefs.h
+passwd.o: $(srcdir)/types.h
+passwd.o: $(srcdir)/xscreensaver.h
 passwd-pwent.o: ../config.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h

@@ -136,7 +136,6 @@ typedef struct {
 	float diskHeight;
 	float *diskPos;				/* pre-computed disk positions on rods */
 	Disk *disk;
-	float speed;
 	GLint floorList;
 	GLint baseList;
 	GLint poleList;

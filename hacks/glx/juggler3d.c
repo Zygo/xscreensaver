@@ -1,4 +1,4 @@
-/* Juggler3D, Copyright (c) 2005 Brian Apps <brian@jugglesaver.co.uk>
+/* Juggler3D, Copyright (c) 2005-2008 Brian Apps <brian@jugglesaver.co.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2101,7 +2101,9 @@ ENTRYPOINT Bool juggler3d_handle_event(ModeInfo* mi, XEvent* pEvent)
     }
     else if (pEvent->xany.type == ButtonPress &&
              (pEvent->xbutton.button == Button4 ||
-              pEvent->xbutton.button == Button5))
+              pEvent->xbutton.button == Button5 ||
+              pEvent->xbutton.button == Button6 ||
+              pEvent->xbutton.button == Button7))
     {
       gltrackball_mousewheel (pState->trackball, pEvent->xbutton.button, 2,
                               !pEvent->xbutton.state);

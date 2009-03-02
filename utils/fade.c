@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -155,6 +155,28 @@ fade_screens (Display *dpy, Colormap *cmaps,
       goto AGAIN;
     }
 }
+
+
+static void
+sleep_from (struct timeval *now, struct timeval *then, long usecs_per_step)
+{
+  /* If several seconds have passed, the machine must have been asleep
+     or thrashing or something.  Don't sleep in that case, to avoid
+     overflowing and sleeping for an unconscionably long time.  This
+     function should only be sleeping for very short periods.
+   */
+  if (now->tv_sec - then->tv_sec < 5)
+    {
+      long diff = (((now->tv_sec - then->tv_sec) * 1000000) +
+                   now->tv_usec - then->tv_usec);
+      if (usecs_per_step > diff)
+        usleep (usecs_per_step - diff);
+    }
+
+  then->tv_sec  = now->tv_sec;
+  then->tv_usec = now->tv_usec;
+}
+
 
 
 /* The business with `cmaps_per_screen' is to fake out the SGI 8-bit video
@@ -329,14 +351,7 @@ fade_screens_1 (Display *dpy, Colormap *cmaps,
 
       /* If we haven't already used up our alotted time, sleep to avoid
 	 changing the colormap too fast. */
-      {
-	long diff = (((now.tv_sec - then.tv_sec) * 1000000) +
-		     now.tv_usec - then.tv_usec);
-	then.tv_sec = now.tv_sec;
-	then.tv_usec = now.tv_usec;
-	if (usecs_per_step > diff)
-	  usleep (usecs_per_step - diff);
-      }
+      sleep_from (&now, &then, usecs_per_step);
     }
 
  DONE:
@@ -530,14 +545,7 @@ sgi_gamma_fade (Display *dpy,
 
 	  /* If we haven't already used up our alotted time, sleep to avoid
 	     changing the colormap too fast. */
-	  {
-	    long diff = (((now.tv_sec - then.tv_sec) * 1000000) +
-			 now.tv_usec - then.tv_usec);
-	    then.tv_sec = now.tv_sec;
-	    then.tv_usec = now.tv_usec;
-	    if (usecs_per_step > diff)
-	      usleep (usecs_per_step - diff);
-	  }
+          sleep_from (&now, &then, usecs_per_step);
 	}
     }
   
@@ -757,14 +765,7 @@ xf86_gamma_fade (Display *dpy,
 
 	  /* If we haven't already used up our alotted time, sleep to avoid
 	     changing the colormap too fast. */
-	  {
-	    long diff = (((now.tv_sec - then.tv_sec) * 1000000) +
-			 now.tv_usec - then.tv_usec);
-	    then.tv_sec = now.tv_sec;
-	    then.tv_usec = now.tv_usec;
-	    if (usecs_per_step > diff)
-	      usleep (usecs_per_step - diff);
-	  }
+          sleep_from (&now, &then, usecs_per_step);
 	}
     }
   

@@ -105,7 +105,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  tangram_shapes.c crackberg.c glhanoi.c cube21.c \
 		  timetunnel.c juggler3d.c topblock.c glschool.c \
 		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
-		  moebiusgears.c lockward.c
+		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -139,7 +139,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  tangram_shapes.o crackberg.o glhanoi.o cube21.o \
 		  timetunnel.o juggler3d.o topblock.o glschool.o \
 		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
-		  moebiusgears.o lockward.o
+		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -153,7 +153,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  antinspect providence pinion boing carousel fliptext \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
-		  lockward
+		  lockward cubicgrid hypnowheel
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -195,7 +195,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  carousel.man fliptext.man antmaze.man tangram.man \
 		  crackberg.man glhanoi.man cube21.man timetunnel.man \
 		  juggler3d.man topblock.man glschool.man glcells.man \
-		  voronoi.man moebiusgears.man lockward.man
+		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
+		  hypnowheel.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
@@ -722,6 +723,11 @@ voronoi:	voronoi.o	$(HACK_OBJS)
 lockward:	lockward.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
+cubicgrid:	cubicgrid.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+hypnowheel:	hypnowheel.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1026,6 +1032,20 @@ cubestorm.o: $(UTILS_SRC)/xshm.h
 cubestorm.o: $(UTILS_SRC)/yarandom.h
 cubestorm.o: $(HACK_SRC)/xlockmoreI.h
 cubestorm.o: $(HACK_SRC)/xlockmore.h
+cubicgrid.o: ../../config.h
+cubicgrid.o: $(srcdir)/gltrackball.h
+cubicgrid.o: $(srcdir)/rotator.h
+cubicgrid.o: $(HACK_SRC)/screenhackI.h
+cubicgrid.o: $(UTILS_SRC)/colors.h
+cubicgrid.o: $(UTILS_SRC)/grabscreen.h
+cubicgrid.o: $(UTILS_SRC)/hsv.h
+cubicgrid.o: $(UTILS_SRC)/resources.h
+cubicgrid.o: $(UTILS_SRC)/usleep.h
+cubicgrid.o: $(UTILS_SRC)/visual.h
+cubicgrid.o: $(UTILS_SRC)/xshm.h
+cubicgrid.o: $(UTILS_SRC)/yarandom.h
+cubicgrid.o: $(HACK_SRC)/xlockmoreI.h
+cubicgrid.o: $(HACK_SRC)/xlockmore.h
 dangerball.o: ../../config.h
 dangerball.o: $(srcdir)/gltrackball.h
 dangerball.o: $(srcdir)/rotator.h
@@ -1476,6 +1496,19 @@ hypertorus.o: $(UTILS_SRC)/xshm.h
 hypertorus.o: $(UTILS_SRC)/yarandom.h
 hypertorus.o: $(HACK_SRC)/xlockmoreI.h
 hypertorus.o: $(HACK_SRC)/xlockmore.h
+hypnowheel.o: ../../config.h
+hypnowheel.o: $(srcdir)/rotator.h
+hypnowheel.o: $(HACK_SRC)/screenhackI.h
+hypnowheel.o: $(UTILS_SRC)/colors.h
+hypnowheel.o: $(UTILS_SRC)/grabscreen.h
+hypnowheel.o: $(UTILS_SRC)/hsv.h
+hypnowheel.o: $(UTILS_SRC)/resources.h
+hypnowheel.o: $(UTILS_SRC)/usleep.h
+hypnowheel.o: $(UTILS_SRC)/visual.h
+hypnowheel.o: $(UTILS_SRC)/xshm.h
+hypnowheel.o: $(UTILS_SRC)/yarandom.h
+hypnowheel.o: $(HACK_SRC)/xlockmoreI.h
+hypnowheel.o: $(HACK_SRC)/xlockmore.h
 involute.o: ../../config.h
 involute.o: $(srcdir)/involute.h
 involute.o: $(srcdir)/normals.h

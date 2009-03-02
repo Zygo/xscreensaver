@@ -399,7 +399,9 @@ draw_noof (ModeInfo *mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
 
-  glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
+/* For some reason this hack screws up on Cocoa if we try to double-buffer it.
+   It looks fine single-buffered, so let's just do that. */
+/*  glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi)); */
 }
 
 
@@ -442,13 +444,13 @@ init_noof (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-    bp = &bps[MI_SCREEN(mi)];
   }
 
   bp = &bps[MI_SCREEN(mi)];
 
   bp->glx_context = init_GL(mi);
 
+  glDrawBuffer(GL_FRONT);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glEnable(GL_LINE_SMOOTH);
   glShadeModel(GL_FLAT);

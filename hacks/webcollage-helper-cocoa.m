@@ -1,5 +1,5 @@
 /* webcollage-helper-cocoa --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -240,7 +240,7 @@ paste (const char *paste_file,
                progname, paste_file, paste_w, paste_h);
     }
 
-  if (bevel_pct > 0)
+  if (bevel_pct > 0 && paste_w > 5 && paste_h > 5)
     bevel_image (paste_img, bevel_pct,
                  from_x, from_y, w, h, 
                  from_scale);
