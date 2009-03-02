@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flipscreen3d" _label="Flipscreen3d">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+  <boolean id="rotate" _label="Rotate" arg-unset="-no-rotate"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+
+  </_description>
+</screensaver>

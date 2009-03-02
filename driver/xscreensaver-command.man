@@ -1,0 +1,266 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "02-Jan-2002 (4.00)" "X Version 11"
+.SH NAME
+xscreensaver-command - control a running xscreensaver process
+.SH SYNOPSIS
+.B xscreensaver-command
+[\-display \fIhost:display.screen\fP] \
+[\-help] \
+[\-demo] \
+[\-prefs] \
+[\-activate] \
+[\-deactivate] \
+[\-cycle] \
+[\-next] \
+[\-prev] \
+[\-select \fIn\fP] \
+[\-exit] \
+[\-restart] \
+[\-lock] \
+[\-throttle] \
+[\-unthrottle] \
+[\-version] \
+[\-time] \
+[\-watch]
+.SH DESCRIPTION
+The \fIxscreensaver\-command\fP program controls a running \fIxscreensaver\fP
+process by sending it client-messages.
+
+.BR xscreensaver (1)
+has a client-server model: the xscreensaver process is a
+daemon that runs in the background; it is controlled by other
+foreground programs such as \fIxscreensaver-command\fP and
+.BR xscreensaver\-demo (1).
+
+This program, \fIxscreensaver-command\fP, is a command-line-oriented tool; the 
+.BR xscreensaver\-demo (1).
+program is a graphical tool.
+.SH OPTIONS
+.I xscreensaver-command
+accepts the following command-line options:
+.TP 8
+.B \-help
+Prints a brief summary of command-line options.
+.TP 8
+.B \-demo
+This just launches the
+.BR xscreensaver\-demo (1)
+program, in which one can experiment with the various graphics hacks
+available, and edit parameters.
+.TP 8
+.B \-demo \fP\fInumber\fP
+When the \fI\-demo\fP option is followed by an integer, it instructs 
+the \fIxscreensaver\fP daemon to run that hack, and wait for the user
+to click the mouse before deactivating (i.e., mouse motion does not
+deactivate.)  This is the mechanism by which
+.BR xscreensaver\-demo (1)
+communicates with the
+.BR xscreensaver (1)
+daemon.  (The first hack in the list is numbered 1, not 0.)
+.TP 8
+.B \-prefs
+Like the no-argument form of \fI\-demo\fP, but brings up that program's
+Preferences panel by default.
+.TP 8
+.B \-activate
+Tell xscreensaver to turn on immediately (that is, blank the screen, as if
+the user had been idle for long enough.)  The screensaver will deactivate as
+soon as there is any user activity, as usual.
+
+It is useful to run this from a menu; you may wish to run it as
+.EX
+sleep 5 ; xscreensaver-command -activate
+.EE
+to be sure that you have time to take your hand off the mouse before
+the screensaver comes on.  (Because if you jiggle the mouse, xscreensaver
+will notice, and deactivate.)
+.TP 8
+.B \-deactivate
+If the screensaver is active (the screen is blanked), this command will
+deactivate it just as if there had been keyboard or mouse activity.  
+If locking is enabled, then the screensaver will prompt for a password
+as usual.
+.TP 8
+.B \-cycle
+If the screensaver is active (the screen is blanked), then stop the current
+graphics demo and run a new one (chosen randomly.)
+.TP 8
+.B \-next
+This is like either \fI\-activate\fP or \fI\-cycle\fP, depending on which is
+more appropriate, except that the graphics hack that will be run is the next
+one in the list, instead of a randomly-chosen one.  In other words, 
+repeatedly executing -next will cause the xscreensaver process to invoke each
+graphics demo sequentially.  (Though using the \fI\-demo\fP option is probably
+an easier way to accomplish that.)
+.TP 8
+.B \-prev
+This is like \fI\-next\fP, but cycles in the other direction.
+.TP 8
+.B \-select \fInumber\fP
+Like \fI\-activate\fP, but runs the \fIN\fPth element in the list of hacks.
+By knowing what is in the \fIprograms\fP list, and in what order, you can use
+this to activate the screensaver with a particular graphics demo.  (The first
+element in the list is numbered 1, not 0.)
+.TP 8
+.B \-exit
+Causes the xscreensaver process to exit gracefully.  This is roughly the same
+as killing the process with
+.BR kill (1),
+but it is easier, since you don't need to first figure out the pid.  
+
+.B Warning:
+never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
+active.  If you are using a virtual root window manager, that can leave
+things in an inconsistent state, and you may need to restart your window
+manager to repair the damage.
+.TP 8
+.B \-lock
+Tells the running xscreensaver process to lock the screen immediately.  
+This is like \fI\-activate\fP, but forces locking as well, even if locking
+is not the default (that is, even if xscreensaver's \fIlock\fP resource is
+false, and even if the \fIlockTimeout\fP resource is non-zero.)
+
+Note that locking doesn't work unless the \fIxscreensaver\fP process is
+running as you.  See 
+.BR xscreensaver (1)
+for details.
+.TP 8
+.B \-throttle
+Temporarily switch to ``blank screen'' mode, and don't run any display modes
+at all, until the screensaver is next de-activated.  This is useful if you're
+using a machine remotely, and you find that some display modes are using too
+much CPU.  
+
+(If you want to do this \fIpermanently\fP, that is, you want the screen saver
+to only blank the screen and not run demos at all, then set the \fIprograms\fP
+resource to an empty list:  See
+.BR xscreensaver (1)
+for details.)
+.TP 8
+.B \-unthrottle
+Turn `-throttle' mode off and resume normal behavior.
+.TP 8
+.B \-version
+Prints the version of xscreensaver that is currently running on the display:
+that is, the actual version number of the running xscreensaver background 
+process, rather than the version number of xscreensaver-command.  (To see
+the version number of \fIxscreensaver-command\fP itself, use 
+the \fI\-help\fP option.)
+.TP 8
+.B \-time
+Prints the time at which the screensaver last activated or 
+deactivated (roughly, how long the user has been idle or non-idle: but 
+not quite, since it only tells you when the screen became blanked or
+un-blanked.)
+.TP 8
+.B \-restart
+Causes the screensaver process to exit and then restart with the same command
+line arguments as last time.  Do this after you've changed the resource
+database, to cause xscreensaver to notice the changes.
+
+.B Warning:
+if you have a \fI.xscreensaver\fP file, this might not do what you 
+expect.  You're probably better off killing the existing 
+xscreensaver (with \fIxscreensaver\-command -exit\fP) and then
+launching it again.
+
+The important point is, you need to make sure that the xscreensaver 
+process is running as you.  If it's not, it won't be reading the 
+right \fI.xscreensaver\fP file.
+.TP 8
+.B \-watch
+Prints a line each time the screensaver changes state: when the screen
+blanks, locks, unblanks, or when the running hack is changed.  This option
+never returns; it is intended for use by shell scripts that want to react to
+the screensaver in some way.  An example of its output would be:
+.EX
+BLANK Fri Nov  5 01:57:22 1999
+RUN 34
+RUN 79
+RUN 16
+LOCK Fri Nov  5 01:57:22 1999
+RUN 76
+RUN 12
+UNBLANK Fri Nov  5 02:05:59 1999
+.EE
+The above shows the screensaver activating, running three different
+hacks, then locking (perhaps because the lock-timeout went off) then
+unblanking (because the user became active, and typed the correct
+password.)  The hack numbers are their index in the `programs'
+list (starting with 1, not 0, as for the \fI\-select\fP command.)
+
+For example, suppose you want to run a program that turns down the volume
+on your machine when the screen blanks, and turns it back up when the screen
+un-blanks.  You could do that by running a Perl program like the following
+in the background.  The following program tracks the output of 
+the \fI\-watch\fP command and reacts accordingly:
+.EX
+#!/usr/bin/perl
+
+my $blanked = 0;
+open (IN, "xscreensaver-command -watch |");
+while (<IN>) {
+    if (m/^(BLANK|LOCK)/) {
+        if (!$blanked) {
+            system "sound-off";
+            $blanked = 1;
+        }
+    } elsif (m/^UNBLANK/) {
+        system "sound-on";
+        $blanked = 0;
+    }
+}
+.EE
+Note that LOCK might come either with or without a preceeding BLANK
+(depending on whether the lock-timeout is non-zero), so the above program
+keeps track of both of them.
+.SH DIAGNOSTICS
+If an error occurs while communicating with the \fIxscreensaver\fP daemon, or
+if the daemon reports an error, a diagnostic message will be printed to
+stderr, and \fIxscreensaver-command\fP will exit with a non-zero value.  If
+the command is accepted, an indication of this will be printed to stdout, and
+the exit value will be zero.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the host and display number of the screen whose saver is
+to be manipulated.
+.TP 8
+.B PATH
+to find the executable to restart (for the \fI\-restart\fP command).  
+Note that this variable is consulted in the environment of 
+the \fIxscreensaver\fP process, not the \fIxscreensaver-command\fP process.
+.SH UPGRADES
+The latest version of
+.BR xscreensaver (1)
+and related tools can always be found at http://www.jwz.org/xscreensaver/
+.SH "SEE ALSO"
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-demo (1)
+.SH COPYRIGHT
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001
+by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted without
+fee, provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+Please let me know if you find any bugs or make any improvements.

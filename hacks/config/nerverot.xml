@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="nerverot" _label="NerveRot">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="iters" type="slider" arg="-max-iters %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="100" high="8000" default="1200"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Blot Count" low="0" high="1000" default="250"/>
+
+  <number id="linewidth" type="spinbutton" arg="-line-width %"
+          _label="Line Thickness" low="0" high="100" default="0"/>
+
+  <number id="event" type="slider" arg="-event-chance %"
+          _label="Changes" _low-label="Seldom" _high-label="Frequent"
+           low="0.0" high="1.0" default="0.2"/>
+
+  <number id="nervous" type="slider" arg="-nervousness %"
+          _label="Nervousness" _low-label="Calm" _high-label="Spastic"
+           low="0.0" high="1.0" default="0.3"/>
+
+  <number id="mnr" type="slider" arg="-max-nerve-radius %"
+          _label="Crunchiness" _low-label="Low" _high-label="High"
+           low="0.0" high="1.0" default="0.7"/>
+
+  <!-- #### -iter-amt [0.01] -->
+  <!-- #### -min-scale [0.6] -->
+  <!-- #### -max-scale [1.75] -->
+  <!-- #### -min-radius [3] -->
+  <!-- #### -max-radius [25] -->
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="4"/>
+
+  <boolean id="db" _label="Double Buffer" arg-unset="-db"/>
+
+  <_description>
+Draws different shapes composed of nervously vibrating squiggles,
+as if seen through a camera operated by a monkey on crack.
+By Dan Bornstein.
+  </_description>
+</screensaver>
