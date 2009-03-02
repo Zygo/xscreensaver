@@ -1,0 +1,91 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../../iconfig.h"
+
+UTILDIR = $(top_srcdir)/xlock/
+MODEDIR = $(top_srcdir)/modes/
+GLDIR = $(top_srcdir)/modes/glx/
+UTILOBJDIR = ../../xlock/
+MODEOBJDIR = ../
+GLOBJDIR = ./
+
+DM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+DG = $(GLDIR)
+DOG = $(GLOBJDIR)
+OM = $(O)$(S)$(DM)
+OU = $(O)$(S)$(DOU)
+OG = $(O)$(S)$(DOG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+CXG = $(CX) $(DG)
+
+XCOMM  List of object files
+#ifdef GLLibrary
+#ifdef XpmLibrary
+XLOCKXPMGLOBJS = $(DOG)lament$(O)
+#endif
+#ifdef Unstable
+XLOCKUNSTABLEGLOBJS = $(DOG)skewb$(O)
+#endif
+#ifdef CPPCompiler
+#ifndef Modules
+XLOCKCPPGLOBJS = $(DOG)invert$(OG)i_figureeight$(O)$(S)\
+$(DOG)i_linkage$(OG)i_sphere$(OG)i_spline$(O)$(S)\
+$(DOG)i_threejet$(OG)i_threejetvec$(O)$(S)\
+$(DOG)i_twojet$(OG)i_twojetvec$(O)
+#endif
+#if defined(TtfLibrary) && defined(GlttLibrary) && defined(Unstable)
+XLOCKUNSTABLETEXTGLOBJS = $(DOG)text3d$(O)
+#endif
+#endif
+XLOCKNORMGLOBJS = $(DOG)cage$(OG)gears$(O)$(S)\
+$(DOG)moebius$(OG)morph3d$(O)$(S)\
+$(DOG)rubik$(OG)stairs$(OG)superquadrics$(O)
+#ifndef Modules
+XLOCKMULTGLOBJS = $(DOG)buildlwo$(OG)pipes$(OG)pipeobjs$(O)$(S)\
+$(DOG)sproingies$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DOG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)$(S)\
+$(DOG)atlantis$(OG)dolphin$(OG)shark$(OG)swim$(OG)whale$(O)$(S)\
+$(DOG)bubble3d$(OG)b_draw$(OG)b_sphere$(OG)b_lockglue$(O)
+#endif
+XLOCKGLOBJS = $(XLOCKNORMGLOBJS)$(S)$(XLOCKMULTGLOBJS)$(S)\
+$(XLOCKXPMGLOBJS)$(S)$(XLOCKCPPGLOBJS)$(S)\
+$(XLOCKUNSTABLEGLOBJS)$(S)$(XLOCKUNSTABLETEXTGLOBJS)
+#endif
+XCOMM default target
+#ifdef Modules
+MODULES = $(XLOCKGLOBJS:.o=.xlk)
+
+EXTRA_LDOPTIONS += $(MODULEFLAGS)
+
+all:: $(XLOCKMODULES)
+
+InstallMultiple($(MODULES), $(DEF_MODULEPATH))
+
+$(MODULES) : %.xlk:%.o
+	$(RM) $@
+	$(CCLINK) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $<
+
+clean::
+	$(RM) $(MODULES)
+
+#else
+all:: $(XLOCKGLOBJS)
+#endif
+
+XLOCKINC = -I. -I../.. -I../../xlock
+
+DependTarget()
+LintTarget()
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean

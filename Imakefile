@@ -1,0 +1,65 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Imakefile	4.16 2000/01/17 xlockmore
+XCOMM Many "ideas" taken from xscreensaver-1.34 by Jamie Zawinski.
+XCOMM
+
+VER = xlockmore
+DISTVER = xlockmore-4.16
+
+SUBDIRS = xlock modes/glx modes xmlock
+
+MAKE_SUBDIR = for dir in $(SUBDIRS) ; do ( cd $$dir ; $(MAKE) $@ \
+CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)" \
+BINDIR="$(BINDIR)" XAPPLOADDIR="$(XAPPLOADDIR)") ; done
+
+SUB_MAKEFILES = xlock/Makefile modes/glx/Makefile modes/Makefile xmlock/Makefile
+
+all::
+	@echo ""                  ; \
+	echo "        ==========================================================" ; \
+	echo ""                   ; \
+	echo "        Did you read and edit iconfig.h? " ; \
+	echo "           Otherwise it will assume a minimum configuration." ; \
+	echo "        Run \"make depend\" if you can not find \"decay.xbm\"." ; \
+	echo ""                   ; \
+	echo "        ==========================================================" ; \
+	echo ""
+
+
+all:: $(SUB_MAKEFILES)
+	@$(MAKE_SUBDIR)
+
+install:: all
+	@$(MAKE_SUBDIR)
+
+install.man:: all
+	@$(MAKE_SUBDIR)
+
+install.ad:: all
+	@$(MAKE_SUBDIR)
+
+clean::
+	@$(MAKE_SUBDIR)
+
+depend::
+	@$(MAKE_SUBDIR)
+
+distclean : clean
+	@$(MAKE_SUBDIR)
+	-rm -f Makefile config.status config.cache config.log config.h
+
+Makefiles:: $(SUB_MAKEFILES)
+
+xlock/Makefile : Imakefile iconfig.h
+	cd xlock  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/xlock
+
+modes/glx/Makefile : modes/glx/Imakefile iconfig.h
+	cd modes/glx ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/modes/glx
+
+modes/Makefile : modes/Imakefile iconfig.h
+	cd modes  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/modes
+
+xmlock/Makefile : xmlock/Imakefile iconfig.h
+	cd xmlock  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/xmlock

@@ -1,0 +1,18 @@
+This is a facility for the maintainer to populate
+the launchers with all the modes.
+
+Written by Charles Vidal <vidalc@club-internet.fr>
+
+README             This file
+lmode.h            The modes
+genlauncher.pl
+xlockgen.lex
+
+To compile xlockgen.lex
+lex xlockgen.lex
+# Lex
+gcc lex.yy.c -o xlockgen -ll
+# Flex
+gcc lex.yy.c -o xlockgen -lfl
+
+Then run genlauncher.pl on the genlauncher directory
