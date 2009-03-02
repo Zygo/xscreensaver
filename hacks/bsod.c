@@ -2100,8 +2100,6 @@ linux_fsck (Display *dpy, Window window, int delay)
 static void
 hpux (Display* dpy, Window window, int delay)
 {
-  GC gc;
-  XGCValues gcv;
   XWindowAttributes xgwa;
   scrolling_window *ts;
   const char *sysname;
@@ -2180,6 +2178,7 @@ hpux (Display* dpy, Window window, int delay)
 
   XGetWindowAttributes (dpy, window, &xgwa);
   ts = make_scrolling_window (dpy, window, "HPUX", False);
+  XClearWindow(dpy,window);
   ts->columns = 10000;  /* never wrap */
   ts->sub_x = 0;
   ts->sub_y = 0;
@@ -2198,10 +2197,6 @@ hpux (Display* dpy, Window window, int delay)
   }
 # endif	/* !HAVE_UNAME */
 
-  gcv.foreground = get_pixel_resource ("HPUX.foreground", "HPUX.Foreground",
-                                       dpy, xgwa.colormap);
-  gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
-  XFillRectangle (dpy, window, gc, 0, 0, xgwa.width, xgwa.height);
   if (bsod_sleep (dpy, 1))
     goto DONE;
   
@@ -3854,6 +3849,7 @@ char *defaults [] = {
   "*doSolaris:             True",
   "*doHPUX:                True",
   "*doApple2:              True",
+  "*doOS390:               True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -3919,8 +3915,8 @@ char *defaults [] = {
 
   ".HPUX.font:		   9x15bold",
   ".HPUX.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".HPUX.foreground:	   Black",
-  ".HPUX.background:	   White",
+  ".HPUX.foreground:	   White",
+  ".HPUX.background:	   Black",
 
   ".OS390.font:		   9x15bold",
   ".OS390.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",

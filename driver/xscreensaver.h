@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -374,7 +374,11 @@ extern void maybe_reload_init_file (saver_info *);
    ======================================================================= */
 
 extern void handle_signals (saver_info *si);
-extern void block_sigchld (void);
+#ifdef HAVE_SIGACTION
+ extern sigset_t block_sigchld (void);
+#else  /* !HAVE_SIGACTION */
+ extern int block_sigchld (void);
+#endif /* !HAVE_SIGACTION */
 extern void unblock_sigchld (void);
 extern void hack_environment (saver_info *si);
 extern void hack_subproc_environment (saver_screen_info *ssi);

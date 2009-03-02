@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,10 +52,12 @@ extern char *blurb(void);
 #include <pwd.h>
 #include <grp.h>
 #include <security/pam_appl.h>
+#include <signal.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 
-extern void block_sigchld (void);
+extern sigset_t block_sigchld (void);
 extern void unblock_sigchld (void);
 
 /* blargh */
@@ -179,6 +181,8 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   struct pam_conv pc;
   struct pam_closure c;
   char *user = 0;
+  sigset_t set;
+  struct timespec timeout;
 
   struct passwd *p = getpwuid (getuid ());
   if (!p) return False;
@@ -242,8 +246,10 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
   PAM_NO_DELAY(pamh);
 
-  block_sigchld();
+  timeout.tv_nsec = 1;
+  set = block_sigchld();
   status = pam_authenticate (pamh, 0);
+  sigtimedwait (&set, NULL, &timeout);
   unblock_sigchld();
 
   if (verbose_p)
@@ -279,7 +285,12 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   if (status != PAM_SUCCESS) goto DONE;
 
   PAM_NO_DELAY(pamh);
+
+  set = block_sigchld();
   status = pam_authenticate (pamh, 0);
+  sigtimedwait(&set, NULL, &timeout);
+  unblock_sigchld();
+
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
              blurb(), status, PAM_STRERROR(pamh, status));

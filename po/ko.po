@@ -5384,3 +5384,7 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Copyright  1991-2002 %s"
+#~ msgstr "Copyright 1991-2002 %s"

@@ -155,6 +155,10 @@ bump-version::
   echo "overwrote $$SRC"; 						    \
   ls -lFd $$SRC
 
+bump_version:: bump-version
+tick-version:: bump-version
+tick_version:: bump-version
+
 update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
@@ -307,3 +311,12 @@ www::
   fi ;									    \
 									    \
   cvs commit -m "$$VERS"
+
+count::
+	@ \
+  echo -n "Current hack count: " ; \
+  ( ( cd hacks;     make -s INSTALL=true install-program install-scripts ) ; \
+    ( cd hacks/glx; make -s INSTALL=true install-program ) ) | \
+    grep true | \
+    grep -v helper | \
+    wc -l

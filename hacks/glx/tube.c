@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,7 +17,7 @@
 #include "tube.h"
 
 static void
-unit_tube (int faces, Bool smooth, Bool wire)
+unit_tube (int faces, Bool smooth, Bool caps_p, Bool wire)
 {
   int i;
   GLfloat step = M_PI * 2 / faces;
@@ -70,26 +70,27 @@ unit_tube (int faces, Bool smooth, Bool wire)
 
   /* End caps
    */
-  for (z = 0; z <= 1; z++)
-    {
-      glFrontFace(z == 0 ? GL_CCW : GL_CW);
-      glNormal3f(0, (z == 0 ? -1 : 1), 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire) glVertex3f(0, z, 0);
-      for (i = 0, th = 0; i <= faces; i++)
-        {
-          GLfloat x = cos (th);
-          GLfloat y = sin (th);
-          glVertex3f(x, z, y);
-          th += step;
-        }
-      glEnd();
-    }
+  if (caps_p)
+    for (z = 0; z <= 1; z++)
+      {
+        glFrontFace(z == 0 ? GL_CCW : GL_CW);
+        glNormal3f(0, (z == 0 ? -1 : 1), 0);
+        glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+        if (! wire) glVertex3f(0, z, 0);
+        for (i = 0, th = 0; i <= faces; i++)
+          {
+            GLfloat x = cos (th);
+            GLfloat y = sin (th);
+            glVertex3f(x, z, y);
+            th += step;
+          }
+        glEnd();
+      }
 }
 
 
 static void
-unit_cone (int faces, Bool smooth, Bool wire)
+unit_cone (int faces, Bool smooth, Bool cap_p, Bool wire)
 {
   int i;
   GLfloat step = M_PI * 2 / faces;
@@ -129,18 +130,21 @@ unit_cone (int faces, Bool smooth, Bool wire)
 
   /* End cap
    */
-  glFrontFace(GL_CCW);
-  glNormal3f(0, -1, 0);
-  glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-  if (! wire) glVertex3f(0, 0, 0);
-  for (i = 0, th = 0; i <= faces; i++)
+  if (cap_p)
     {
-      GLfloat x = cos (th);
-      GLfloat y = sin (th);
-      glVertex3f(x, 0, y);
-      th += step;
+      glFrontFace(GL_CCW);
+      glNormal3f(0, -1, 0);
+      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+      if (! wire) glVertex3f(0, 0, 0);
+      for (i = 0, th = 0; i <= faces; i++)
+        {
+          GLfloat x = cos (th);
+          GLfloat y = sin (th);
+          glVertex3f(x, 0, y);
+          th += step;
+        }
+      glEnd();
     }
-  glEnd();
 }
 
 
@@ -148,7 +152,7 @@ static void
 tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
         GLfloat x2, GLfloat y2, GLfloat z2,
         GLfloat diameter, GLfloat cap_size,
-        int faces, Bool smooth, Bool wire,
+        int faces, Bool smooth, Bool caps_p, Bool wire,
         Bool cone_p)
 {
   GLfloat length, X, Y, Z;
@@ -180,9 +184,9 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
     }
 
   if (cone_p)
-    unit_cone (faces, smooth, wire);
+    unit_cone (faces, smooth, caps_p, wire);
   else
-    unit_tube (faces, smooth, wire);
+    unit_tube (faces, smooth, caps_p, wire);
 
   glPopMatrix();
 }
@@ -192,9 +196,10 @@ void
 tube (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
-      int faces, Bool smooth, Bool wire)
+      int faces, Bool smooth, Bool caps_p, Bool wire)
 {
-  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size, faces, smooth, wire,
+  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
+          faces, smooth, caps_p, wire,
           False);
 }
 
@@ -203,8 +208,9 @@ void
 cone (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
-      int faces, Bool smooth, Bool wire)
+      int faces, Bool smooth, Bool cap_p, Bool wire)
 {
-  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size, faces, smooth, wire,
+  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
+          faces, smooth, cap_p, wire,
           True);
 }

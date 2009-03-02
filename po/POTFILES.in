@@ -1,4 +1,4 @@
-# Auto-generated: Tue May 20 05:57:07 PDT 2003
+# Auto-generated: Mon Jun 23 16:14:14 PDT 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -15,6 +15,7 @@ hacks/config/atunnel.xml
 hacks/config/barcode.xml
 hacks/config/blaster.xml
 hacks/config/blitspin.xml
+hacks/config/blocktube.xml
 hacks/config/bouboule.xml
 hacks/config/bouncingcow.xml
 hacks/config/boxed.xml
@@ -33,6 +34,7 @@ hacks/config/cosmos.xml
 hacks/config/critical.xml
 hacks/config/crystal.xml
 hacks/config/cubenetic.xml
+hacks/config/cubestorm.xml
 hacks/config/cynosure.xml
 hacks/config/dangerball.xml
 hacks/config/decayscreen.xml
@@ -63,6 +65,8 @@ hacks/config/gears.xml
 hacks/config/gflux.xml
 hacks/config/glblur.xml
 hacks/config/glforestfire.xml
+hacks/config/glknots.xml
+hacks/config/glmatrix.xml
 hacks/config/glplanet.xml
 hacks/config/glslideshow.xml
 hacks/config/glsnake.xml
@@ -77,6 +81,7 @@ hacks/config/helix.xml
 hacks/config/hopalong.xml
 hacks/config/hyperball.xml
 hacks/config/hypercube.xml
+hacks/config/hypertorus.xml
 hacks/config/ifs.xml
 hacks/config/imsmap.xml
 hacks/config/interference.xml

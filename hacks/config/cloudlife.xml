@@ -23,7 +23,7 @@
 
   <_description>
 
-Generates cloud-like formations based on a variant of Conway's Life The
+Generates cloud-like formations based on a variant of Conway's Life. The
 difference is that cells have a maximum age, after which they count as
 3 for populating the next generation.  This makes long-lived formations
 explode instead of just sitting there burning a hole in your screen.

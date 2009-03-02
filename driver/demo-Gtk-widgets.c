@@ -718,7 +718,7 @@ create_xscreensaver_demo (void)
   gtk_container_add (GTK_CONTAINER (diag_frame), diag_hbox);
   gtk_container_set_border_width (GTK_CONTAINER (diag_hbox), 8);
 
-  diag_logo = create_pixmap (xscreensaver_demo, "screensaver-diagnostic.xpm");
+  diag_logo = create_pixmap (xscreensaver_demo, "screensaver-diagnostic.png");
   gtk_widget_set_name (diag_logo, "diag_logo");
   gtk_widget_ref (diag_logo);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "diag_logo", diag_logo,
@@ -807,7 +807,7 @@ create_xscreensaver_demo (void)
   gtk_container_add (GTK_CONTAINER (cmap_frame), cmap_hbox);
   gtk_container_set_border_width (GTK_CONTAINER (cmap_hbox), 8);
 
-  cmap_logo = create_pixmap (xscreensaver_demo, "screensaver-colorselector.xpm");
+  cmap_logo = create_pixmap (xscreensaver_demo, "screensaver-colorselector.png");
   gtk_widget_set_name (cmap_logo, "cmap_logo");
   gtk_widget_ref (cmap_logo);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cmap_logo", cmap_logo,
@@ -953,7 +953,7 @@ create_xscreensaver_demo (void)
   gtk_container_add (GTK_CONTAINER (dpms_frame), dpms_hbox);
   gtk_container_set_border_width (GTK_CONTAINER (dpms_hbox), 8);
 
-  dpms_logo = create_pixmap (xscreensaver_demo, "screensaver-power.xpm");
+  dpms_logo = create_pixmap (xscreensaver_demo, "screensaver-power.png");
   gtk_widget_set_name (dpms_logo, "dpms_logo");
   gtk_widget_ref (dpms_logo);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "dpms_logo", dpms_logo,
@@ -1134,7 +1134,7 @@ create_xscreensaver_demo (void)
   gtk_container_add (GTK_CONTAINER (grab_frame), grab_hbox);
   gtk_container_set_border_width (GTK_CONTAINER (grab_hbox), 8);
 
-  img_logo = create_pixmap (xscreensaver_demo, "screensaver-snap.xpm");
+  img_logo = create_pixmap (xscreensaver_demo, "screensaver-snap.png");
   gtk_widget_set_name (img_logo, "img_logo");
   gtk_widget_ref (img_logo);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "img_logo", img_logo,
@@ -1502,7 +1502,7 @@ create_xscreensaver_settings_dialog (void)
   gtk_widget_show (opt_table);
   gtk_container_add (GTK_CONTAINER (opt_notebook), opt_table);
 
-  cmd_logo = create_pixmap (xscreensaver_settings_dialog, "screensaver-cmndln.xpm");
+  cmd_logo = create_pixmap (xscreensaver_settings_dialog, "screensaver-cmndln.png");
   gtk_widget_set_name (cmd_logo, "cmd_logo");
   gtk_widget_ref (cmd_logo);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_settings_dialog), "cmd_logo", cmd_logo,

@@ -196,11 +196,21 @@ static GLfloat flowerbox_colors[4][4] = {
 };
 
 #ifdef DEBUG
+# ifdef __GNUC__ /* GCC style */
 #define _DEBUG(msg, args...) do { \
     fprintf(stderr, "%s : %d : " msg ,__FILE__,__LINE__ ,##args); \
 } while(0)
+# else /* C99 standard style */
+#define _DEBUG(msg, ...) do { \
+    fprintf(stderr, "%s : %d : " msg ,__FILE__,__LINE__,__VA_ARGS__); \
+} while(0)
+# endif
 #else
+# ifdef __GNUC__ /* GCC style */
 #define _DEBUG(msg, args...)
+# else /* C99 standard style */
+#define _DEBUG(msg, ...)
+# endif
 #endif
 
 /* This is all the half-edge b-rep code (as well as basic geometry) */
@@ -346,7 +356,7 @@ static inline hedge *partner(hedge *h) {
 	return h->e->left;
     }
     else {
-	_DEBUG("Inconsistent edge detected. Presumably, this is a bug. Exiting.\n");
+	_DEBUG("Inconsistent edge detected. Presumably, this is a bug. Exiting.\n", NULL);
 	exit(-1);
     }
 }
@@ -375,7 +385,7 @@ hedge *hedge_new(hedge *hafter, vertex *vtx)
     hedge *h = (hedge*)malloc(sizeof(hedge));
     
     if(!h) {
-	_DEBUG("Out of memory in hedge_new()\n");
+	_DEBUG("Out of memory in hedge_new()\n",NULL);
 	return NULL;
     }
     h->f = hafter->f;
@@ -392,7 +402,7 @@ edge *edge_new(solid *s)
 {
     edge *e = (edge*)malloc(sizeof(edge));
     if(!e) {
-	_DEBUG("Out of memory in edge_new()\n");
+	_DEBUG("Out of memory in edge_new()\n",NULL);
 	exit(-1);
     }
     e->next = s->edges;
@@ -406,7 +416,7 @@ face *face_new(solid *s, hedge *h)
 {
     face *f = (face*)malloc(sizeof(face));
     if(!f) {
-	_DEBUG("Out of memory in face_new()");
+	_DEBUG("Out of memory in face_new()",NULL);
 	exit(-1);
     }
     f->s = s;
@@ -467,11 +477,11 @@ face *face_split(face *f, hedge *h1, hedge *h2)
     face *fn;
 
     if(h1->f != f || h2->f != f) {
-	_DEBUG("Whoah, cap'n, yer usin' a bad halfedge!\n");
+	_DEBUG("Whoah, cap'n, yer usin' a bad halfedge!\n",NULL);
 	exit(-1);
     }
     if(h1 == h2) {
-	_DEBUG("Trying to split a face at a single vertex\n");
+	_DEBUG("Trying to split a face at a single vertex\n",NULL);
 	exit(-1);
     }
     /* close the loops */
@@ -776,9 +786,9 @@ void setup_opengl(ModeInfo *mi, jigglystruct *js)
 {
     const GLfloat lpos0[4] = {-12, 8, 12, 0};
     const GLfloat lpos1[4] = {7, -5, 0, 0};
-    const GLfloat lcol0[4] = {0.7, 0.7, 0.65, 1};
-    const GLfloat lcol1[4] = {0.3, 0.2, 0.1, 1};
-    const GLfloat scolor[4]= {0.9, 0.9, 0.9, 0.5};
+    const GLfloat lcol0[4] = {0.7f, 0.7f, 0.65f, 1};
+    const GLfloat lcol1[4] = {0.3f, 0.2f, 0.1f, 1};
+    const GLfloat scolor[4]= {0.9f, 0.9f, 0.9f, 0.5f};
 
     glDrawBuffer(GL_BACK);
     glClearColor(0, 0, 0, 0);

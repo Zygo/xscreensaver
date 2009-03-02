@@ -11,6 +11,7 @@ engine - draws a 3D four-stroke engine.
 [\-delay \fInumber\fP]
 [\-no-move]
 [\-no-spin]
+[\-no-title]
 [\-fps]
 .SH DESCRIPTION
 Draws a simple four-stroke engine that floats around the screen.
@@ -52,6 +53,9 @@ Whether the object should spin.
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.
+.TP 8
+.B \-title | \-no-title
+Whether to display the name of the engine being rendered.
 .SH ENVIRONMENT
 .PP
 .TP 8

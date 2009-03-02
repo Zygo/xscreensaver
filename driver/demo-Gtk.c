@@ -431,7 +431,8 @@ warning_dialog (GtkWidget *parent, const char *message,
   while (parent && !parent->window)
     parent = parent->parent;
 
-  if (!GTK_WIDGET (parent)->window) /* too early to pop up transient dialogs */
+  if (!parent ||
+      !GTK_WIDGET (parent)->window) /* too early to pop up transient dialogs */
     {
       fprintf (stderr, "%s: too early for dialog?\n", progname);
       return;
@@ -769,7 +770,6 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   sprintf (help_command + strlen(help_command),
            p->load_url_command, p->help_url, p->help_url);
   strcat (help_command, " ) &");
-fprintf(stderr, "## %s\n", help_command);
   system (help_command);
   free (help_command);
 }

@@ -24,6 +24,7 @@
    <option id="9" _label="Jaguar XKE (12 cylinders, V)" arg-set="-engine 'Jaguar XKE'"/>
   </select>
 
+  <boolean id="titles" _label="Show Engine Name" arg-set="-titles"/>
   <hgroup>
     <boolean id="wander" _label="Wander" arg-unset="-no-move"/>
     <boolean id="spin" _label="Spin" arg-unset="-no-spin"/>

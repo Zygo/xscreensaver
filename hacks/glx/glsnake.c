@@ -457,15 +457,15 @@ void calc_snake_metrics(glsnake_configuration * bp)
     y += GETSCALAR(prev_dest_dir, Y_MASK);
     z += GETSCALAR(prev_dest_dir, Z_MASK);
 
-    switch ((int) bp->node[i].dest_angle) {
-      case (int) (ZERO * 90.0):
+    switch ((int) (bp->node[i].dest_angle / 90.0)) {
+      case ZERO:
         dest_dir = -prev_src_dir;
         break;
-      case (int) (PIN * 90.0):
+      case PIN:
         dest_dir = prev_src_dir;
         break;
-      case (int) (RIGHT * 90.):
-      case (int) (LEFT * 90.0):
+      case RIGHT:
+      case LEFT:
         dest_dir = cross_product(prev_src_dir, prev_dest_dir);
         if (bp->node[i].dest_angle == (int) (RIGHT * 90.0))
           dest_dir = -dest_dir;

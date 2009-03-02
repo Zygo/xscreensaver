@@ -906,7 +906,7 @@ Random Screen Saver
 	    <widget>
 	      <class>GtkPixmap</class>
 	      <name>diag_logo</name>
-	      <filename>screensaver-diagnostic.xpm</filename>
+	      <filename>screensaver-diagnostic.png</filename>
 	      <xalign>0.5</xalign>
 	      <yalign>0</yalign>
 	      <xpad>0</xpad>
@@ -1040,7 +1040,7 @@ Random Screen Saver
 	    <widget>
 	      <class>GtkPixmap</class>
 	      <name>cmap_logo</name>
-	      <filename>screensaver-colorselector.xpm</filename>
+	      <filename>screensaver-colorselector.png</filename>
 	      <xalign>0.5</xalign>
 	      <yalign>0</yalign>
 	      <xpad>0</xpad>
@@ -1286,7 +1286,7 @@ Random Screen Saver
 	    <widget>
 	      <class>GtkPixmap</class>
 	      <name>dpms_logo</name>
-	      <filename>screensaver-power.xpm</filename>
+	      <filename>screensaver-power.png</filename>
 	      <xalign>0.5</xalign>
 	      <yalign>0</yalign>
 	      <xpad>0</xpad>
@@ -1685,7 +1685,7 @@ Random Screen Saver
 	    <widget>
 	      <class>GtkPixmap</class>
 	      <name>img_logo</name>
-	      <filename>screensaver-snap.xpm</filename>
+	      <filename>screensaver-snap.png</filename>
 	      <xalign>0.5</xalign>
 	      <yalign>0</yalign>
 	      <xpad>0</xpad>
@@ -2105,7 +2105,7 @@ Random Screen Saver
 	    <widget>
 	      <class>GtkPixmap</class>
 	      <name>cmd_logo</name>
-	      <filename>screensaver-cmndln.xpm</filename>
+	      <filename>screensaver-cmndln.png</filename>
 	      <xalign>0.5</xalign>
 	      <yalign>0.5</yalign>
 	      <xpad>4</xpad>

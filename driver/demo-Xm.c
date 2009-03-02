@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,7 +157,7 @@ ensure_selected_item_visible (Widget list)
       XtVaGetValues (list,
 		     XmNtopItemPosition, &top,
 		     XmNvisibleItemCount, &visible,
-		     0);
+		     NULL);
       if (pos_list[0] >= top + visible)
 	{
 	  int pos = pos_list[0] - visible + 1;
@@ -554,16 +554,16 @@ apply_changes_and_save (Widget widget)
   if (which < 0) return -1;
 
 # ifdef HAVE_XMCOMBOBOX
-  XtVaGetValues (vis, XmNtextField, &text, 0);
+  XtVaGetValues (vis, XmNtextField, &text, NULL);
   if (!text)
     /* If we can't get at the text field of this combo box, we're screwed. */
     abort();
-  XtVaGetValues (text, XmNvalue, &visual, 0);
+  XtVaGetValues (text, XmNvalue, &visual, NULL);
 
 # else /* !HAVE_XMCOMBOBOX */
-  XtVaGetValues (vis, XmNsubMenuId, &menu, 0);
-  XtVaGetValues (menu, XmNnumChildren, &nkids, XmNchildren, &kids, 0);
-  XtVaGetValues (menu, XmNmenuHistory, &selected_item, 0);
+  XtVaGetValues (vis, XmNsubMenuId, &menu, NULL);
+  XtVaGetValues (menu, XmNnumChildren, &nkids, XmNchildren, &kids, NULL);
+  XtVaGetValues (menu, XmNmenuHistory, &selected_item, NULL);
   if (selected_item)
     for (i = 0; i < nkids; i++)
       if (kids[i] == selected_item)
@@ -572,8 +572,8 @@ apply_changes_and_save (Widget widget)
   visual = visual_menu[i];
 # endif /* !HAVE_XMCOMBOBOX */
 
-  XtVaGetValues (enabled, XmNset, &enabled_p, 0);
-  XtVaGetValues (cmd, XtNvalue, &command, 0);
+  XtVaGetValues (enabled, XmNset, &enabled_p, NULL);
+  XtVaGetValues (cmd, XtNvalue, &command, NULL);
 
   if (maybe_reload_init_file (widget, pair) != 0)
     return 1;
@@ -789,18 +789,18 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
 
 # define SECONDS(field, name) \
   v = 0; \
-  XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, 0); \
+  XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, NULL); \
   hack_time_text (button, v, (field), True)
 
 # define MINUTES(field, name) \
   v = 0; \
-  XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, 0); \
+  XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, NULL); \
   hack_time_text (button, v, (field), False)
 
 # define INTEGER(field, name) do { \
     unsigned int value; \
     char c; \
-    XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, 0); \
+    XtVaGetValues (name_to_widget (button, (name)), XtNvalue, &v, NULL); \
     if (! *v) \
       ; \
     else if (sscanf (v, "%u%c", &value, &c) != 1) \
@@ -814,7 +814,7 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
   } while(0)
 
 # define CHECKBOX(field, name) \
-  XtVaGetValues (name_to_widget (button, (name)), XmNset, &field, 0)
+  XtVaGetValues (name_to_widget (button, (name)), XmNset, &field, NULL)
 
   MINUTES (&p2->timeout,        "timeoutText");
   MINUTES (&p2->cycle,          "cycleText");
@@ -981,28 +981,28 @@ populate_prefs_page (Widget top, prefs_pair *pair)
   char s[100];
 
   format_time (s, p->timeout);
-  XtVaSetValues (name_to_widget (top, "timeoutText"),     XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "timeoutText"),     XmNvalue, s, NULL);
   format_time (s, p->cycle);
-  XtVaSetValues (name_to_widget (top, "cycleText"),       XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "cycleText"),       XmNvalue, s, NULL);
   format_time (s, p->lock_timeout);
-  XtVaSetValues (name_to_widget (top, "lockText"),        XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "lockText"),        XmNvalue, s, NULL);
   format_time (s, p->passwd_timeout);
-  XtVaSetValues (name_to_widget (top, "passwdText"),      XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "passwdText"),      XmNvalue, s, NULL);
   format_time (s, p->fade_seconds);
-  XtVaSetValues (name_to_widget (top, "fadeSecondsText"), XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "fadeSecondsText"), XmNvalue, s, NULL);
   sprintf (s, "%u", p->fade_ticks);
-  XtVaSetValues (name_to_widget (top, "fadeTicksText"),   XmNvalue, s, 0);
+  XtVaSetValues (name_to_widget (top, "fadeTicksText"),   XmNvalue, s, NULL);
 
   XtVaSetValues (name_to_widget (top, "verboseToggle"),
-                 XmNset, p->verbose_p, 0);
+                 XmNset, p->verbose_p, NULL);
   XtVaSetValues (name_to_widget (top, "cmapToggle"),
-                 XmNset, p->install_cmap_p, 0);
+                 XmNset, p->install_cmap_p, NULL);
   XtVaSetValues (name_to_widget (top, "fadeToggle"),
-                 XmNset, p->fade_p, 0);
+                 XmNset, p->fade_p, NULL);
   XtVaSetValues (name_to_widget (top, "unfadeToggle"),
-                 XmNset, p->unfade_p, 0);
+                 XmNset, p->unfade_p, NULL);
   XtVaSetValues (name_to_widget (top, "lockToggle"),
-                 XmNset, p->lock_p, 0);
+                 XmNset, p->lock_p, NULL);
 
 
   {
@@ -1025,19 +1025,19 @@ populate_prefs_page (Widget top, prefs_pair *pair)
 #endif
 
     XtVaSetValues (name_to_widget (top, "fadeSecondsLabel"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "fadeTicksLabel"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "fadeSecondsText"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "fadeTicksText"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "cmapToggle"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "fadeToggle"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
     XtVaSetValues (name_to_widget (top, "unfadeToggle"), XtNsensitive,
-                           found_any_writable_cells, 0);
+                           found_any_writable_cells, NULL);
   }
 }
 
@@ -1051,7 +1051,7 @@ sensitize_demo_widgets (Widget toplevel, Bool sensitive_p)
   for (i = 0; i < sizeof(names)/countof(*names); i++)
     {
       Widget w = name_to_widget (toplevel, names[i]);
-      XtVaSetValues (w, XtNsensitive, sensitive_p, 0);
+      XtVaSetValues (w, XtNsensitive, sensitive_p, NULL);
     }
 
   /* I don't know how to handle these yet... */
@@ -1060,7 +1060,7 @@ sensitize_demo_widgets (Widget toplevel, Bool sensitive_p)
     for (i = 0; i < sizeof(names2)/countof(*names2); i++)
       {
         Widget w = name_to_widget (toplevel, names2[i]);
-        XtVaSetValues (w, XtNsensitive, FALSE, 0);
+        XtVaSetValues (w, XtNsensitive, FALSE, NULL);
       }
   }
 }
@@ -1150,7 +1150,7 @@ pixmapify_buttons (Widget toplevel)
   symbols[0].name = "background";
   symbols[0].pixel = 0;
   symbols[1].name = 0;
-  XtVaGetValues (up, XmNbackground, &xc, 0);
+  XtVaGetValues (up, XmNbackground, &xc, NULL);
   XQueryColor (dpy, xgwa.colormap, &xc);
   sprintf (color, "#%04X%04X%04X", xc.red, xc.green, xc.blue);
   symbols[0].value = color;
@@ -1194,8 +1194,8 @@ pixmapify_buttons (Widget toplevel)
       return;
     }
 
-  XtVaSetValues (up, XmNlabelType, XmPIXMAP, XmNlabelPixmap, up_pixmap, 0);
-  XtVaSetValues (dn, XmNlabelType, XmPIXMAP, XmNlabelPixmap, down_pixmap, 0);
+  XtVaSetValues (up, XmNlabelType, XmPIXMAP, XmNlabelPixmap, up_pixmap, NULL);
+  XtVaSetValues (dn, XmNlabelType, XmPIXMAP, XmNlabelPixmap, down_pixmap,NULL);
 
 #endif /* HAVE_XPM */
 }
@@ -1330,13 +1330,13 @@ populate_demo_window (Widget toplevel, int which, prefs_pair *pair)
   XmString xmstr;
 
   xmstr = XmStringCreate (pretty_name, XmSTRING_DEFAULT_CHARSET);
-  XtVaSetValues (frameL, XmNlabelString, xmstr, 0);
+  XtVaSetValues (frameL, XmNlabelString, xmstr, NULL);
   XmStringFree (xmstr);
 
-  XtVaSetValues (doc, XmNvalue, doc_string, 0);
-  XtVaSetValues (cmd, XmNvalue, (hack ? hack->command : ""), 0);
+  XtVaSetValues (doc, XmNvalue, doc_string, NULL);
+  XtVaSetValues (cmd, XmNvalue, (hack ? hack->command : ""), NULL);
 
-  XtVaSetValues (enabled, XmNset, (hack ? hack->enabled_p : False), 0);
+  XtVaSetValues (enabled, XmNset, (hack ? hack->enabled_p : False), NULL);
 
   i = 0;
   if (hack && hack->visual && *hack->visual)
@@ -1348,21 +1348,21 @@ populate_demo_window (Widget toplevel, int which, prefs_pair *pair)
   {
 # ifdef HAVE_XMCOMBOBOX
     Widget text = 0;
-    XtVaGetValues (vis, XmNtextField, &text, 0);
-    XtVaSetValues (vis, XmNselectedPosition, i, 0);
+    XtVaGetValues (vis, XmNtextField, &text, NULL);
+    XtVaSetValues (vis, XmNselectedPosition, i, NULL);
     if (i < 0)
-      XtVaSetValues (text, XmNvalue, hack->visual, 0);
+      XtVaSetValues (text, XmNvalue, hack->visual, NULL);
 # else /* !HAVE_XMCOMBOBOX */
     Cardinal nkids;
     Widget *kids;
     Widget menu;
 
-    XtVaGetValues (vis, XmNsubMenuId, &menu, 0);
+    XtVaGetValues (vis, XmNsubMenuId, &menu, NULL);
     if (!menu) abort ();
-    XtVaGetValues (menu, XmNnumChildren, &nkids, XmNchildren, &kids, 0);
+    XtVaGetValues (menu, XmNnumChildren, &nkids, XmNchildren, &kids, NULL);
     if (!kids) abort();
     if (i < nkids)
-      XtVaSetValues (vis, XmNmenuHistory, kids[i], 0);
+      XtVaSetValues (vis, XmNmenuHistory, kids[i], NULL);
 # endif /* !HAVE_XMCOMBOBOX */
   }
 
@@ -1407,7 +1407,7 @@ maybe_reload_init_file (Widget widget, prefs_pair *pair)
       which = selected_hack_number (widget);
       list = name_to_widget (widget, "list");
 
-      XtVaSetValues (list, XmNitemCount, 0, 0);
+      XtVaSetValues (list, XmNitemCount, 0, NULL);
 
       populate_hack_list (widget, pair);
 
@@ -1478,12 +1478,12 @@ sanity_check_resources (Widget toplevel)
       const char *name = XtName(w);
       XmString xm = 0;
       char *label = 0;
-      XtVaGetValues (w, XmNlabelString, &xm, 0);
+      XtVaGetValues (w, XmNlabelString, &xm, NULL);
       if (xm) XmStringGetLtoR (xm, XmSTRING_DEFAULT_CHARSET, &label);
       if (w && (!label || !strcmp (name, label)))
         {
           xm = XmStringCreate ("ERROR", XmSTRING_DEFAULT_CHARSET);
-          XtVaSetValues (w, XmNlabelString, xm, 0);
+          XtVaSetValues (w, XmNlabelString, xm, NULL);
         }
     }
 }
@@ -1501,17 +1501,17 @@ hack_button_sizes (Widget toplevel)
   Widget down = name_to_widget (toplevel, "down");
   Dimension w1, w2;
 
-  XtVaGetValues (demo, XmNwidth, &w1, 0);
-  XtVaGetValues (man,  XmNwidth, &w2, 0);
-  XtVaSetValues ((w1 > w2 ? man : demo), XmNwidth, (w1 > w2 ? w1 : w2), 0);
+  XtVaGetValues (demo, XmNwidth, &w1, NULL);
+  XtVaGetValues (man,  XmNwidth, &w2, NULL);
+  XtVaSetValues ((w1 > w2 ? man : demo), XmNwidth, (w1 > w2 ? w1 : w2), NULL);
 
-  XtVaGetValues (ok,   XmNwidth, &w1, 0);
-  XtVaGetValues (can,  XmNwidth, &w2, 0);
-  XtVaSetValues ((w1 > w2 ? can : ok), XmNwidth, (w1 > w2 ? w1 : w2), 0);
+  XtVaGetValues (ok,   XmNwidth, &w1, NULL);
+  XtVaGetValues (can,  XmNwidth, &w2, NULL);
+  XtVaSetValues ((w1 > w2 ? can : ok), XmNwidth, (w1 > w2 ? w1 : w2), NULL);
 
-  XtVaGetValues (up,   XmNwidth, &w1, 0);
-  XtVaGetValues (down, XmNwidth, &w2, 0);
-  XtVaSetValues ((w1 > w2 ? down : up), XmNwidth, (w1 > w2 ? w1 : w2), 0);
+  XtVaGetValues (up,   XmNwidth, &w1, NULL);
+  XtVaGetValues (down, XmNwidth, &w2, NULL);
+  XtVaSetValues ((w1 > w2 ? down : up), XmNwidth, (w1 > w2 ? w1 : w2), NULL);
 }
 
 
@@ -1808,7 +1808,7 @@ main (int argc, char **argv)
     *s2 = 0;
     *s4 = 0;
     sprintf (title, "%.50s %.50s, %.50s", progclass, s1, s3);
-    XtVaSetValues (toplevel_shell, XtNtitle, title, 0);
+    XtVaSetValues (toplevel_shell, XtNtitle, title, NULL);
     free (v);
   }
 
@@ -1828,7 +1828,7 @@ main (int argc, char **argv)
   ensure_selected_item_visible (name_to_widget (toplevel_shell, "list"));
 
   XSync (dpy, False);
-  XtVaSetValues (toplevel_shell, XmNallowShellResize, False, 0);
+  XtVaSetValues (toplevel_shell, XmNallowShellResize, False, NULL);
 
 
   /* Handle the -prefs command-line argument. */
@@ -1841,7 +1841,7 @@ main (int argc, char **argv)
       Cardinal nkids = 0;
       if (!tabber) abort();
   
-      XtVaGetValues (tabber, XmNnumChildren, &nkids, XmNchildren, &kids, 0);
+      XtVaGetValues (tabber, XmNnumChildren, &nkids, XmNchildren, &kids, NULL);
       if (!kids) abort();
       if (nkids > 0)
         XtUnmanageChildren (kids, nkids);

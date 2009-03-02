@@ -31,6 +31,7 @@ GNOME_PANELDIR1 = $(GNOME_DATADIR)/gnome/apps/Settings/Desktop
 GNOME_PANELDIR2	= $(GNOME_DATADIR)/applications
 GNOME_PANELDIR	= @GNOME_PANELDIR@
 GLADE_DATADIR	= @GLADE_DATADIR@
+GNOME_ICONDIR	= $(GNOME_DATADIR)/pixmaps
 GNOME_BINDIR	= $(bindir)
 HACK_CONF_DIR	= @HACK_CONF_DIR@
 
@@ -141,7 +142,7 @@ GL_LIBS		= @SAVER_GL_LIBS@
 
 ICON_SRC        = $(UTILS_SRC)/images
 LOGO		= $(ICON_SRC)/logo-50.xpm
-GTK_ICONS	= $(ICON_SRC)/screensaver-*.xpm
+GTK_ICONS	= $(ICON_SRC)/screensaver-*.png
 
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c
@@ -556,20 +557,27 @@ install-gnome:: screensaver-properties-capplet
 	 fi
 
 # xscreensaver.xpm
+# into /usr/share/pixmaps/
 install-gnome:: $(LOGO)
-	@if [ "$(GLADE_DATADIR)" != "" ]; then                                  \
-           if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then                \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"          ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GLADE_DATADIR)"          ;\
+	@if [ "$(GNOME_DATADIR)" != "" ]; then                                \
+           if [ ! -d "$(install_prefix)$(GNOME_ICONDIR)" ]; then              \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GNOME_ICONDIR)"        ;\
            fi                                                                ;\
 	   target=xscreensaver.xpm                                           ;\
 	   echo $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GLADE_DATADIR)/$$target		     ;\
+	          $(install_prefix)$(GNOME_ICONDIR)/$$target		     ;\
 	        $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GLADE_DATADIR)/$$target		     ;\
+	          $(install_prefix)$(GNOME_ICONDIR)/$$target		     ;\
         fi
 
-# ../utils/images/screensaver-*.xpm
+# ../utils/images/screensaver-*.png
+# into /usr/share/xscreensaver/
+#
+# Should these really go in GLADE_DATADIR (/usr/share/xscreensaver/)
+# or should they instead go in GNOME_ICONDIR (/usr/share/pixmaps/)?
+# Does it matter?
+#
 install-gnome::
 	@if [ "$(GLADE_DATADIR)" != "" ]; then                                \
            if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then              \
@@ -586,6 +594,7 @@ install-gnome::
         fi
 
 # xscreensaver-demo.glade2
+# into /usr/share/xscreensaver/
 install-gnome:: xscreensaver-demo.glade2
 	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
 	  if [ ! -d "$(install_prefix)$(GLADE_DATADIR)" ]; then		      \
@@ -614,6 +623,7 @@ install-gnome:: xscreensaver-demo.glade2
 
 
 # screensaver-properties.desktop
+# into /usr/share/gnome/apps/Settings/Desktop/
 uninstall-gnome::
 	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
           f=screensaver-properties.desktop                                   ;\
@@ -628,6 +638,7 @@ uninstall-gnome::
         fi
 
 # screensaver-properties-capplet
+# into /usr/X11R6/bin/
 uninstall-gnome::
 	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
 	  program=screensaver-properties-capplet			     ;\
@@ -636,14 +647,16 @@ uninstall-gnome::
 	 fi
 
 # xscreensaver.xpm
+# into /usr/share/pixmaps/
 uninstall-gnome::
-	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
+	@if [ "$(GNOME_ICONDIR)" != "" ]; then				      \
 	  target=xscreensaver.xpm                                            ;\
-	  echo rm -f $(install_prefix)$(GLADE_DATADIR)/$$target                ;\
-	       rm -f $(install_prefix)$(GLADE_DATADIR)/$$target                ;\
+	  echo rm -f $(install_prefix)$(GNOME_ICONDIR)/$$target              ;\
+	       rm -f $(install_prefix)$(GNOME_ICONDIR)/$$target              ;\
 	 fi
 
-# xscreensaver.xpm
+# ../utils/images/screensaver-*.png
+# into /usr/share/xscreensaver/
 uninstall-gnome::
 	@if [ "$(GLADE_DATADIR)" != "" ]; then				      \
 	   for target in $(GTK_ICONS) ; do				      \
@@ -653,6 +666,7 @@ uninstall-gnome::
 	   done								     ;\
         fi
 
+# xscreensaver.kss
 install-kde:
 	@src="xscreensaver.kss" ;					      \
 	if [ "$$KDEDIR" != "" ]; then					      \

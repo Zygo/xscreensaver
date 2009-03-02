@@ -181,7 +181,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
 	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
 	          zoom.man halftone.man eruption.man metaballs.man \
-		  barcode.man piecewise.man
+		  barcode.man piecewise.man cloudlife.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  config/README \
@@ -1291,10 +1291,6 @@ xlockmore.o: $(srcdir)/xlockmoreI.h
 xlyap.o: ../config.h
 xlyap.o: $(srcdir)/screenhack.h
 xmatrix.o: ../config.h
-xmatrix.o: $(srcdir)/images/matrix0b.xbm
-xmatrix.o: $(srcdir)/images/matrix0b.xpm
-xmatrix.o: $(srcdir)/images/matrix0.xbm
-xmatrix.o: $(srcdir)/images/matrix0.xpm
 xmatrix.o: $(srcdir)/images/matrix1b.xbm
 xmatrix.o: $(srcdir)/images/matrix1b.xpm
 xmatrix.o: $(srcdir)/images/matrix1.xbm

@@ -26,7 +26,7 @@
 #define END_ARC 23040
 
 struct info {
-    Bool writable; /* Is the screen writable */
+/*    Bool writable; / * Is the screen writable */
     double xspeed; /* A factor to modify the horizontal movement */
     double yspeed; /* A factor to modify vertical movement */
     double xamplitude;
@@ -432,14 +432,17 @@ screenhack (Display *display, Window window)
     fgc = XCreateGC (display, b, GCForeground, &gcv);
     gcv.foreground = get_pixel_resource("background", "Background", display, xgwa.colormap);
     bgc = XCreateGC (display, b, GCForeground, &gcv);
-    make_uniform_colormap (display, xgwa.visual, xgwa.colormap, colors, &ncolors, True, &info->writable, True);
+    {
+      Bool writable_p = False;
+    make_uniform_colormap (display, xgwa.visual, xgwa.colormap, colors, &ncolors, True, &writable_p, True);
+    }
 
     if (ba) XFillRectangle (display, ba, bgc, 0, 0, xgwa.width, xgwa.height);
 
         /* info is a structure holding all the random pieces of information I may want to 
            pass to my baby functions -- much of it I may never use, but it is nice to
            have around just in case I want it to make a funky function funkier */
-    info->writable = get_boolean_resource ("cycle", "Boolean");
+/*    info->writable = get_boolean_resource ("cycle", "Boolean"); */
     info->xspeed = get_float_resource("xspeed" , "Float");
     info->yspeed = get_float_resource("yspeed" , "Float");
     info->xamplitude = get_float_resource("xamplitude", "Float");
@@ -663,7 +666,7 @@ screenhack (Display *display, Window window)
         else
             current_time = current_time + info->speed;
         screenhack_handle_events(display);
-        if (!info->writable)
+/*        if (!info->writable) */
             usleep(10000);
     }   /*  End the while loop! */
     free(info);

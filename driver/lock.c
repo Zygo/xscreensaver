@@ -882,6 +882,16 @@ destroy_passwd_window (saver_info *si)
 }
 
 
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
 #ifdef HAVE_XHPDISABLERESET
 /* This function enables and disables the C-Sh-Reset hot-key, which
    normally resets the X server (logging out the logged-in user.)
@@ -927,7 +937,16 @@ static void
 xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
 {
   saver_preferences *p = &si->prefs;
-  int status = XF86MiscSetGrabKeysState (si->dpy, !lock_p);
+  int status;
+
+  XErrorHandler old_handler;
+  XSync (si->dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+  XSync (si->dpy, False);
+  status = XF86MiscSetGrabKeysState (si->dpy, !lock_p);
+  XSync (si->dpy, False);
+  if (error_handler_hit_p) status = 666;
 
   if (p->verbose_p && status != MiscExtGrabStateSuccess)
     fprintf (stderr, "%s: error: XF86MiscSetGrabKeysState returned %s\n",
@@ -935,7 +954,12 @@ xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
              (status == MiscExtGrabStateSuccess ? "MiscExtGrabStateSuccess" :
               status == MiscExtGrabStateLocked  ? "MiscExtGrabStateLocked"  :
               status == MiscExtGrabStateAlready ? "MiscExtGrabStateAlready" :
+              status == 666 ? "an X error" :
               "unknown value"));
+
+  XSync (si->dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (si->dpy, False);
 }
 #endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
 
@@ -1011,9 +1035,6 @@ linux_lock_vt_switch (saver_info *si, Bool lock_p)
  */
 #ifdef HAVE_XF86VMODE
 
-static int ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error);
-static Bool vp_got_error = False;
-
 static void
 xfree_lock_mode_switch (saver_info *si, Bool lock_p)
 {
@@ -1033,10 +1054,11 @@ xfree_lock_mode_switch (saver_info *si, Bool lock_p)
     {
       XSync (si->dpy, False);
       old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+      error_handler_hit_p = False;
       status = XF86VidModeLockModeSwitch (si->dpy, screen, lock_p);
       XSync (si->dpy, False);
       XSetErrorHandler (old_handler);
-      if (vp_got_error) status = False;
+      if (error_handler_hit_p) status = False;
 
       if (status)
         any_mode_locked_p = lock_p;
@@ -1052,14 +1074,6 @@ xfree_lock_mode_switch (saver_info *si, Bool lock_p)
                  blurb(), screen, (lock_p ? "locked" : "unlocked"));
     }
 }
-
-static int
-ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
-{
-  vp_got_error = True;
-  return 0;
-}
-
 #endif /* HAVE_XF86VMODE */
 
 

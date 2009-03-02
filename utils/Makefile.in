@@ -113,6 +113,7 @@ HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  yarandom.h erase.h xshm.h xdbe.h colorbars.h xscreensaver-intl.h
 STAR		= *
 LOGOS		= images/$(STAR).xpm \
+		  images/$(STAR).png \
 		  images/$(STAR).gif \
 		  images/$(STAR).eps
 EXTRAS		= README Makefile.in ad2c

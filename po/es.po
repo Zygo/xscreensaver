@@ -5917,5 +5917,9 @@ msgstr ""
 "lenses el resultado es similar a mirar a través de varios lentes "
 "superpuestos mas que un simple acercamiento. Escrito por James Macnicol."
 
+#, fuzzy
+#~ msgid "Copyright  1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"
+
 #~ msgid "Copyright (C) 1991-2002 %s"
 #~ msgstr "Copyright (C) 1991-2002 %s"

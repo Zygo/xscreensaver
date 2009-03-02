@@ -331,8 +331,10 @@ Trace(FRACTAL * F, F_PT xo, F_PT yo)
 	Cur = Cur_F->Components;
 	for (i = Cur_F->Nb_Simi; i; --i, Cur++) {
 		Transform(Cur, xo, yo, &x, &y);
-		Buf->x = F->Lx + (x * F->Lx / (UNIT * 2));
-		Buf->y = F->Ly - (y * F->Ly / (UNIT * 2));
+		/* Buf->x = F->Lx + (x * F->Lx / (UNIT * 2)); */
+		/* Buf->y = F->Ly - (y * F->Ly / (UNIT * 2)); */
+        Buf->x = (UNIT * 2 + x) * F->Lx / (UNIT * 2);
+        Buf->y = (UNIT * 2 - y) * F->Ly / (UNIT * 2);
 		Buf++;
 		Cur_Pt++;
 

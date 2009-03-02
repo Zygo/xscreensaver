@@ -39,7 +39,12 @@
   <string id="phone" _label="Phone Number" arg="-phone %"/>
 
   <_description>
-A rendition of the text scrolls seen in the movie ``The Matrix.''
+Draws dropping characters similar to what is seen on the computer 
+monitors in "The Matrix".
+
+See also "glmatrix" for a 3D rendering of the similar effect that
+appeared in the title sequence of the movie.
+
 Written by Jamie Zawinski.
   </_description>
 </screensaver>

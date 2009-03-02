@@ -617,10 +617,10 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
       #
       if test -f /usr/dt/include/Xm/Xm.h ; then
         X_CFLAGS="$X_CFLAGS -I/usr/dt/include"
-        X_LIBS="$X_LIBS -L/usr/dt/lib -R:/usr/dt/lib"
+        MOTIF_LIBS="$MOTIF_LIBS -L/usr/dt/lib -R/usr/dt/lib"
 
         # Some versions of Slowlaris Motif require -lgen.  But not all.  Why?
-        AC_CHECK_LIB(gen, regcmp, [X_LIBS="$X_LIBS -lgen"])
+        AC_CHECK_LIB(gen, regcmp, [MOTIF_LIBS="$MOTIF_LIBS -lgen"])
       fi
 
     ;;
@@ -1180,7 +1180,8 @@ if test "$with_dpms" = yes; then
 
   # first check for dpms.h
   AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes],,
-                    [#include <X11/Xlib.h>])
+                    [#include <X11/Xlib.h>
+		     #include <X11/Xmd.h>])
 
   # if that succeeded, then check for the DPMS code in the libraries
   if test "$have_dpms" = yes; then
@@ -1591,10 +1592,29 @@ if test "$enable_locking" = yes -a "$with_kerberos" = yes; then
   fi
 
   if test "$ac_cv_kerberos5" = yes ; then
-    have_kerberos=yes
-    have_kerberos5=yes
-    AC_DEFINE(HAVE_KERBEROS)
-    AC_DEFINE(HAVE_KERBEROS5)
+
+    # Andrew Snare <ajs@pigpond.com> wrote:
+    #
+    # You were assuming that if kerberosV (krb5) was found, then kerberosIV
+    # (krb4) was also available.  This turns out not to be the case with
+    # mit-krb-1.2.7; apparently backwards-compatibility with KerberosIV
+    # is optional.
+    #
+    # So, disable kerberosV support if libkrb4 can't be found.
+    # This is not the best solution, but it makes the compile not fail.
+    #
+    AC_CHECK_X_LIB(krb4, krb_get_tf_realm,
+                   [have_kerberos=yes],
+                   [have_kerberos=no])
+    if test "$have_kerberos" = yes ; then
+      have_kerberos5=yes
+      AC_DEFINE(HAVE_KERBEROS)
+      AC_DEFINE(HAVE_KERBEROS5)
+    else
+      have_kerberos5=no
+      AC_MSG_WARN([Cannot find compat lib (libkrb4) needed to use Kerberos 5])
+    fi
+
   fi
 
   if test "$have_kerberos5" = yes ; then
@@ -1979,7 +1999,6 @@ if test "$with_gtk" = yes; then
     # the new way...
     # run pkg-config based tests.
     #
-
     pkgs=''
     pkg_check_version() {
       if test "$ok" = yes ; then
@@ -2005,11 +2024,14 @@ if test "$with_gtk" = yes; then
       fi
     }
 
+    AC_MSG_RESULT(checking for GTK 2.x with pkg-config based tests...)
+
     ok="yes"
-    pkg_check_version     gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
-    pkg_check_version  gmodule-2.0  2.0.0
-    pkg_check_version   libxml-2.0  2.4.6
-    pkg_check_version libglade-2.0  1.99.0
+    pkg_check_version       gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
+    pkg_check_version    gmodule-2.0  2.0.0
+    pkg_check_version     libxml-2.0  2.4.6
+    pkg_check_version   libglade-2.0  1.99.0
+#   pkg_check_version gdk_pixbuf      0.1
     have_gtk="$ok"
 
     if test "$have_gtk" = yes; then
@@ -2026,10 +2048,13 @@ if test "$with_gtk" = yes; then
       #
       # we don't have GTK 2.  Let's look for GTK 1.
       #
+      AC_MSG_RESULT(checking for GTK 1.x with pkg-config based tests...)
+
       pkgs=''
       ok="yes"
-      pkg_check_version gtk+ 1.2           ; ac_gtk_version_string="$vers"
-      pkg_check_version glib 1.0
+      pkg_check_version gtk+       1.2     ; ac_gtk_version_string="$vers"
+      pkg_check_version glib       1.0
+      pkg_check_version gdk_pixbuf 0.1
       have_gtk="$ok"
 
       # Now check for Gnome...
@@ -2074,6 +2099,7 @@ if test "$with_gtk" = yes; then
     # the old way...
     # run {gnome,gtk}-config based tests.
     #
+    AC_MSG_RESULT(checking for GTK 1.x with gtk-config based tests...)
 
     AC_PATH_PROGS(glib_config,  glib12-config glib-config,,  $gtk_path)
     AC_PATH_PROGS(gtk_config,   gtk12-config  gtk-config,,   $gtk_path)
@@ -2893,6 +2919,7 @@ if test "$with_gdk_pixbuf" = yes; then
       #
       # we don't have Gtk; or we have Gtk 2.x.  Check for pixbuf 2.x.
       #
+      AC_MSG_RESULT(checking for gdk_pixbuf 2.x with gtk-config based tests...)
       pkg_check_version gdk-pixbuf-2.0      2.0.0
       pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
       have_gdk_pixbuf="$ok"
@@ -2907,8 +2934,9 @@ if test "$with_gdk_pixbuf" = yes; then
       if test "$have_gdk_pixbuf2" = no; then
         pkgs=''
         ok="yes"
-        pkg_check_version gdk-pixbuf      0.0
-        pkg_check_version gdk-pixbuf-xlib 0.0
+      AC_MSG_RESULT(checking for gdk_pixbuf 1.x with gtk-config based tests...)
+        pkg_check_version gdk_pixbuf      0.0
+        pkg_check_version gdk_pixbuf_xlib 0.0
         have_gdk_pixbuf="$ok"
       fi
     fi
@@ -2932,6 +2960,8 @@ if test "$with_gdk_pixbuf" = yes; then
     # that we don't have to look for gdk-pixbuf-config -- in Gnome 1.4,
     # pkg-config exists, but doesn't know about pixbuf.
     #
+
+   AC_MSG_RESULT(checking for gdk_pixbuf with gdk-pixbuf-config based tests...)
 
     # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
     # look in /foo/bin/ for for gdk-pixbuf-config.
@@ -4060,7 +4090,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (150+ different executables) will"
+  echo "      The various graphics demos (160+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

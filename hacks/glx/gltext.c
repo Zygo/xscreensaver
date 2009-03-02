@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -355,7 +355,7 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
                     coord->x, coord->y, 0,
                     tube_width,
                     tube_width * 0.15,
-                    TUBE_FACES, smooth, wire);
+                    TUBE_FACES, smooth, True, wire);
             lx = coord->x;
             ly = coord->y;
           }

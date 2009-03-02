@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -37,7 +37,11 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
   extern GLXContext *init_GL (ModeInfo *);
   extern void clear_gl_error (void);
   extern void check_gl_error (const char *type);
+
   extern void do_fps (ModeInfo *);
+  extern GLfloat fps_1 (ModeInfo *);
+  extern void    fps_2 (ModeInfo *);
+
 # define FreeAllGL(dpy) /* */
 #endif /* !USE_GL */
 

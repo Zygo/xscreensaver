@@ -59,7 +59,7 @@ there's no need to recompile or reinstall anything.
 Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing
 magic about these: they are just programs that draw on the root window.
-More than 150 such programs are included.  For details, see the
+More than 160 such programs are included.  For details, see the
 xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -70,12 +70,21 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.10:   * New hacks, `hypertorus', `cubestorm', `glknots',
+                        `blocktube', and `glmatrix'.
+                      * Updates to `cloudlife', `engine', `xmatrix', and
+                        `sonar'.
+                      * Rewrote `glslideshow': it should work on somewhat
+                        wimpier video cards now.
+                      * Various portability tweaks.
 Changes since 4.09:   * New hacks, `cloudlife' and `klein'.
                       * Added Apple ][+, HPUX, and OS/390 sessions to BSOD.
                       * Added some Matrix Reloaded text to `xmatrix'.
                       * Updates to `webcollage', `eruption', `jigglypuff',
                         `metaballs', and `endgame'.
-                      * Completely ignore the `memoryLimit' setting now.
+                      * Completely ignore the `memoryLimit' setting now,
+                        since it was still causing people GL grief.
+                      * Various minor fixes.
 Changes since 4.08:   * New hacks, `flyingtoasters', `bouncingcow',
                         `jigglypuff', and `glslideshow'.
                       * More models in `engine'.

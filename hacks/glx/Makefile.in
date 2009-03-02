@@ -92,7 +92,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  toaster_handle2.c toaster_jet.c toaster_knob.c \
 		  toaster_slots.c toaster_wing.c toast.c toast2.c \
 		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
-		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c
+		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c \
+		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -117,7 +118,8 @@ OBJS		= xscreensaver-gl-helper.o \
 		  toaster_handle2.o toaster_jet.o toaster_knob.o \
 		  toaster_slots.o toaster_wing.o toast.o toast2.o \
 		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
-		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o
+		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o \
+		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -125,7 +127,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
-		  glslideshow jigglypuff klein
+		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
+		  glknots blocktube
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -153,7 +156,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
 		  endgame.man flurry.man glblur.man atunnel.man \
 		  flyingtoasters.man bouncingcow.man glslideshow.man \
-		  jigglypuff.man klein.man
+		  jigglypuff.man klein.man hypertorus.man glmatrix.man \
+		  cubestorm.man glknots.man blocktube.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -517,6 +521,20 @@ jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_OBJS) $(TRACK_OBJS)
 klein:		klein.o		$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
+hypertorus:	hypertorus.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+glmatrix:	glmatrix.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+cubestorm:	cubestorm.o	$(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+glknots:	glknots.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+blocktube:	blocktube.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(HACK_LIBS) $(XPM_LIBS)
 
 # This one works differently (it's not xlock-like.)
 #
@@ -561,6 +579,9 @@ b_draw.o: $(srcdir)/bubble3d.h
 b_draw.o: ../../config.h
 b_lockglue.o: $(srcdir)/bubble3d.h
 b_lockglue.o: ../../config.h
+blocktube.o: ../../config.h
+blocktube.o: $(HACK_SRC)/images/blocktube.xpm
+blocktube.o: $(srcdir)/xpm-ximage.h
 bouncingcow.o: ../../config.h
 bouncingcow.o: $(srcdir)/gllist.h
 bouncingcow.o: $(srcdir)/gltrackball.h
@@ -587,6 +608,9 @@ cow_udder.o: $(srcdir)/gllist.h
 cubenetic.o: ../../config.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h
+cubestorm.o: ../../config.h
+cubestorm.o: $(srcdir)/gltrackball.h
+cubestorm.o: $(srcdir)/rotator.h
 dangerball.o: ../../config.h
 dangerball.o: $(srcdir)/gltrackball.h
 dangerball.o: $(srcdir)/rotator.h
@@ -650,7 +674,15 @@ glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm
 glforestfire.o: $(srcdir)/xpm-ximage.h
+glknots.o: ../../config.h
+glknots.o: $(srcdir)/gltrackball.h
+glknots.o: $(srcdir)/rotator.h
+glknots.o: $(srcdir)/tube.h
 gllist.o: $(srcdir)/gllist.h
+glmatrix.o: ../../config.h
+glmatrix.o: $(srcdir)/gllist.h
+glmatrix.o: $(HACK_SRC)/images/matrix3.xpm
+glmatrix.o: $(srcdir)/xpm-ximage.h
 glplanet.o: ../../config.h
 glplanet.o: $(srcdir)/gltrackball.h
 glplanet.o: $(HACK_SRC)/images/earth.xpm
@@ -674,6 +706,7 @@ glut_stroke.o: $(srcdir)/glutstroke.h
 glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
 grab-ximage.o: ../../config.h
+hypertorus.o: ../../config.h
 jigglypuff.o: ../../config.h
 jigglypuff.o: $(srcdir)/gltrackball.h
 jigglypuff.o: $(HACK_SRC)/images/jigglymap.xpm
