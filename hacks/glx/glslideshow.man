@@ -12,6 +12,7 @@ glslideshow - slideshow of images using smooth zooming and fades
 [\-zoom \fIpercent\fP]
 [\-delay \fIusecs\fP]
 [\-cutoff \fIint\fP]
+[\-titles]
 [\-fps]
 [\-debug]
 [\-wireframe]
@@ -66,6 +67,9 @@ then, if the low frame rates persist, fading.)  Default 5.
 The idea here is that if your machine can't maintain a decent frame
 rate, then it must not have fast 3D hardware, so we might as well
 behave in a simpler manner.  Set this to 0 to disable this check.
+.TP 8
+.B \-titles
+Whether to print the file name of the current image in the upper left corner.
 .TP 8
 .B \-fps
 Whether to show a frames-per-second display at the bottom of the screen.

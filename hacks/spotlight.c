@@ -111,7 +111,7 @@ init_hack (Display *dpy, Window window)
 
   /* grab screen to pixmap */
   pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  load_random_image (xgwa.screen, window, pm);
+  load_random_image (xgwa.screen, window, pm, NULL);
   XClearWindow(dpy, window);
   XFlush (dpy);
 

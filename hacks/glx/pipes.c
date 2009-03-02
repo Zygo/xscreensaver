@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* pipes --- 3D selfbuiding pipe system */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
-
 #endif
 
 /*-

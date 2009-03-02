@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* morph3d --- Shows 3D morphing objects */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
-
 #endif
 
 #undef DEBUG_CULL_FACE

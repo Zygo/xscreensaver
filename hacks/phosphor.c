@@ -450,7 +450,6 @@ static void
 set_cursor (p_state *state, Bool on)
 {
   if (set_cursor_1 (state, on))
-;
     {
       if (state->cursor_timer)
         XtRemoveTimeOut (state->cursor_timer);

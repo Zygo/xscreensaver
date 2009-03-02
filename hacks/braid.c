@@ -4,9 +4,8 @@
  *           a rotational pattern
  */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

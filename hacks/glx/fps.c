@@ -186,8 +186,8 @@ fps_1 (ModeInfo *mi)
   static int last_ifps = -1;
   static GLfloat last_fps = -1;
   static int frame_count = 0;
-  static struct timeval prev = { 0, };
-  static struct timeval now  = { 0, };
+  static struct timeval prev = { 0, 0 };
+  static struct timeval now  = { 0, 0 };
 
   if (!initted_p)
     {

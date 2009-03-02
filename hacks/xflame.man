@@ -4,7 +4,9 @@ xflame - draws animated flames
 .SH SYNOPSIS
 .B xflame
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-hspread \fIint\fP] [\-vspread \fIint\fP]
+[\-visual \fIvisual\fP]
+[\-foreground \fIcolor\fP]
+[\-hspread \fIint\fP] [\-vspread \fIint\fP]
 [\-residual \fIint\fP] [\-variance \fIint\fP] [\-vartrend \fIint\fP] 
 [\-bloom \| \-no\-bloom] 
 [\-bitmap \fIxbm\-file\fP] [\-baseline \fIint\fP]
@@ -28,6 +30,9 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-foreground \fIcolor\fP\fP or \fB\-fg\fP \fIcolor\fP\fP
+The color of the flames; default red.  (The background color is always black.)
 .TP 8
 .B \-bitmap \fIfilename\fP\fP
 Specifies the bitmap file to use (a monochrome XBM file.)

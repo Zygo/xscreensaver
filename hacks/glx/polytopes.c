@@ -1,8 +1,7 @@
 /* polytopes --- Shows one of the six regular polytopes rotating in 4d */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
-
 #endif
 
 /* Copyright (c) 2003 Carsten Steger <carsten@mirsanmir.org>. */

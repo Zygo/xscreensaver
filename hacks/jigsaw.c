@@ -150,7 +150,7 @@ read_screen (Display *dpy, Window window, int *widthP, int *heightP)
 
   p = XCreatePixmap(dpy, window, *widthP, *heightP, xgwa.depth);
   XClearWindow(dpy, window);
-  load_random_image (xgwa.screen, window, p);
+  load_random_image (xgwa.screen, window, p, NULL);
   XClearWindow(dpy, window);
 
   return p;

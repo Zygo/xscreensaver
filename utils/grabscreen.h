@@ -25,16 +25,16 @@
    desktop, or from the system's video input, depending on user
    preferences.
 
+   If it is from a file, then it will be returned in `filename_return'.
+   filename_return may be NULL; also, NULL may be returned (e.g., if
+   it's a screenshot or video capture.)
+
    Many colors may be allocated from the window's colormap.
  */
 extern void load_random_image (Screen *screen,
                                Window top_level_window,
-                               Drawable target_window_or_pixmap);
-
-
-/* Uh, don't call this. */
-extern void grab_screen_image (Screen *, Window);
-
+                               Drawable target_window_or_pixmap, 
+                               char **filename_return);
 
 /* Whether one should use GCSubwindowMode when drawing on this window
    (assuming a screen image has been grabbed onto it.)  Yes, this is a
@@ -48,5 +48,13 @@ extern Bool use_subwindow_mode_p(Screen *screen, Window window);
    - a direct child of the window manager's decorations.
  */
 extern Bool top_level_window_p(Screen *screen, Window window);
+
+
+/* Don't call this: this is for the "xscreensaver-getimage" program only. */
+extern void grab_screen_image_internal (Screen *, Window);
+
+/* Don't use this: this is how "xscreensaver-getimage" and "grabclient.c"
+   pass the file name around. */
+#define XA_XSCREENSAVER_IMAGE_FILENAME "_SCREENSAVER_IMAGE_FILENAME"
 
 #endif /* __GRABSCREEN_H__ */

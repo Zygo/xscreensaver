@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*-
  * swirl --- swirly color-cycling patterns.
  */
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 #endif
 

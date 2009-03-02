@@ -2,9 +2,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* worm --- draw wiggly worms */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)worm.c	4.04 97/07/28 xlockmore";
-
 #endif
 
 /*-

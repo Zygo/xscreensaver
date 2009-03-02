@@ -223,7 +223,7 @@ use_subwindow_mode_p(Screen *screen, Window window)
 static void
 install_screen_colormaps (Screen *screen)
 {
-  int i;
+  unsigned int i;
   Display *dpy = DisplayOfScreen (screen);
   Window real_root;
   Window parent, *kids = 0;
@@ -260,7 +260,7 @@ install_screen_colormaps (Screen *screen)
 
 
 void
-grab_screen_image (Screen *screen, Window window)
+grab_screen_image_internal (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;

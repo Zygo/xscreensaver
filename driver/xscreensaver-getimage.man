@@ -1,18 +1,23 @@
-.TH XScreenSaver 1 "07-Sep-2003 (4.13)" "X Version 11"
+.TH XScreenSaver 1 "25-Oct-2003 (4.14)" "X Version 11"
 .SH NAME
 xscreensaver-getimage - put some randomly-selected image on the root window
 .SH SYNOPSIS
 .B xscreensaver-getimage
-[\-display \fIhost:display.screen\fP] [\--verbose] window-id
+[\-display \fIhost:display.screen\fP] [\--verbose] window-id [pixmap-id]
 .SH DESCRIPTION
 The \fIxscreensaver\-getimage\fP program is a helper program for the
 xscreensaver hacks that manipulate images.  This is not a user-level
 command.
 
 This program selects a random image, and puts it on the specified
-window.  This image might be a snapshot of the desktop; or a frame
-captured from the system's video input; or a randomly-selected image
-from disk.
+window or pixmap.  This image might be a snapshot of the desktop; or
+a frame captured from the system's video input; or a randomly-selected
+image from disk.
+
+If only a window ID is specified, the image will be painted there.
+If both a window ID and a pixmap ID are specified, then the image will
+be painted on the pixmap; and the window \fImay\fP be modified as a
+side-effect.
 .SH OPTIONS
 .I xscreensaver-getimage
 reads the \fI~/.xscreensaver\fP file for configuration information.
@@ -43,12 +48,9 @@ assumed to be images.
 If none of the three options are set to True, then video
 colorbars will be displayed instead.
 .SH BUGS
-If the target window is not the root window, then this program 
-will \fIalways\fP grab a desktop image.  This means that if an 
-image-manipulating xscreensaver mode is run in a normal window,
-it will always operate on a desktop image; it's only when it is
-run in \fI-root\fP mode (or when invoked by xscreensaver) that
-it will load image files or grab video.
+When grabbing desktop images, the \fIwindow\fP argument will be unmapped
+and have its contents modified, causing flicker.  (This does not happen
+when loading image files or video frames.)
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

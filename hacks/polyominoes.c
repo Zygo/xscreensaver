@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* polyominoes --- Shows attempts to place polyominoes into a rectangle */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)polyominoes.c 5.01 2000/12/18 xlockmore";
-
 #endif
 
 /*

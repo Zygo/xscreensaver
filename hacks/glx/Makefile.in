@@ -94,7 +94,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
 		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c \
 		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
-		  flipflop.c antspotlight.c polytopes.c
+		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
+		  mirrorblob.c blinkbox.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -121,7 +122,8 @@ OBJS		= xscreensaver-gl-helper.o \
 		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
 		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o \
 		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
-		  flipflop.o antspotlight.o polytopes.o
+		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
+		  mirrorblob.o blinkbox.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -130,7 +132,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
-		  glknots blocktube flipflop antspotlight polytopes
+		  glknots blocktube flipflop antspotlight polytopes \
+		  gleidescope mirrorblob blinkbox
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -161,7 +164,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  flyingtoasters.man bouncingcow.man glslideshow.man \
 		  jigglypuff.man klein.man hypertorus.man glmatrix.man \
 		  cubestorm.man glknots.man blocktube.man flipflop.man \
-		  antspotlight.man polytopes.man
+		  antspotlight.man polytopes.man gleidescope.man \
+		  mirrorblob.man blinkbox.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -378,11 +382,11 @@ TRACK_OBJS=rotator.o trackball.o gltrackball.o
 
 ATLANTIS_OBJS = $(HACK_OBJS) dolphin.o shark.o swim.o whale.o xpm-ximage.o
 atlantis:	atlantis.o	$(ATLANTIS_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(ATLANTIS_OBJS) $(HACK_LIBS) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(ATLANTIS_OBJS) $(XPM_LIBS)
 
 ATUNNEL_OBJS = $(HACK_OBJS) tunnel_draw.o xpm-ximage.o
 atunnel:	atunnel.o $(ATUNNEL_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(ATUNNEL_OBJS) $(HACK_LIBS) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o   $(ATUNNEL_OBJS) $(XPM_LIBS)
 
 cage:		cage.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -432,7 +436,7 @@ glplanet:	glplanet.o	$(PLANETHACKS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(PLANETHACKS) $(HACK_OBJS) $(XPM_LIBS)
 
 pulsar:		pulsar.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(HACK_LIBS) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
 EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
 	extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
@@ -538,7 +542,7 @@ glknots:	glknots.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
 blocktube:	blocktube.o	$(HACK_OBJS) xpm-ximage.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(HACK_LIBS) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
 flipflop:	flipflop.o	$(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
@@ -552,7 +556,7 @@ polytopes:	polytopes.o	$(HACK_OBJS)
 # This one works differently (it's not xlock-like.)
 #
 STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
-	    $(UTILS_BIN)/yarandom.o
+	    $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/usleep.o
 stonerview:	$(STONER_OBJS)
 	$(CC_HACK) -o $@ $(STONER_OBJS) $(HACK_LIBS)
 
@@ -571,8 +575,17 @@ MOLECULEOBJS=sphere.o tube.o $(TRACK_OBJS)
 molecule:	molecule.o	$(MOLECULEOBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(MOLECULEOBJS) $(HACK_OBJS) $(HACK_LIBS)
 
-dnalogo:	dnalogo.o	tube.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   tube.o $(HACK_OBJS) $(HACK_LIBS)
+gleidescope:	gleidescope.o xpm-ximage.o $(HACK_OBJS) $(GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o xpm-ximage.o $(HACK_OBJS) $(GRAB_OBJS) $(XPM_LIBS)
+
+mirrorblob:	mirrorblob.o	$(HACK_OBJS) $(GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(XPM_LIBS)
+
+blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
+
+dnalogo:	dnalogo.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   tube.o $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -595,6 +608,8 @@ atunnel.o: $(srcdir)/tunnel_draw.h
 atunnel.o: $(srcdir)/xpm-ximage.h
 b_draw.o: $(srcdir)/bubble3d.h
 b_draw.o: ../../config.h
+blinkbox.o: ../../config.h
+blinkbox.o: $(srcdir)/sphere.h
 b_lockglue.o: $(srcdir)/bubble3d.h
 b_lockglue.o: ../../config.h
 blocktube.o: ../../config.h
@@ -694,6 +709,9 @@ gflux.o: $(srcdir)/grab-ximage.h
 glblur.o: ../../config.h
 glblur.o: $(srcdir)/gltrackball.h
 glblur.o: $(srcdir)/rotator.h
+gleidescope.o: ../../config.h
+gleidescope.o: $(srcdir)/grab-ximage.h
+gleidescope.o: $(srcdir)/xpm-ximage.h
 glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm
@@ -753,6 +771,8 @@ marching.o: $(srcdir)/marching.h
 menger.o: ../../config.h
 menger.o: $(srcdir)/gltrackball.h
 menger.o: $(srcdir)/rotator.h
+mirrorblob.o: ../../config.h
+mirrorblob.o: $(srcdir)/grab-ximage.h
 moebius.o: ../../config.h
 moebius.o: $(srcdir)/e_textures.h
 moebius.o: $(srcdir)/gltrackball.h

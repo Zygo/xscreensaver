@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* loop --- Chris Langton's self-producing loops */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
-
 #endif
 
 /*-

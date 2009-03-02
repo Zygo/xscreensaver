@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* fire --- 3D fire or rain landscape */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 #endif
 

@@ -279,7 +279,10 @@ maintainer-clean: distclean
 	rm -f $(GMOFILES)
 
 depend:
-distdepend: generate_potfiles_in update-po $(DISTFILES)
+# fuck off.  love, jwz.
+#distdepend: generate_potfiles_in update-po $(DISTFILES)
+distdepend::
+
 
 # jwz: Generates po/POTFILES.in by examining the source tree:
 # that way we don't have to keep this list up to date as files are added.

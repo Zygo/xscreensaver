@@ -110,7 +110,7 @@ init_decay (Display *dpy, Window window)
   sizex = xgwa.width;
   sizey = xgwa.height;
 
-  load_random_image (xgwa.screen, window, window);
+  load_random_image (xgwa.screen, window, window, NULL);
   
   if (mode == MELT || mode == STRETCH) {
     /* make sure screen eventually turns background color */

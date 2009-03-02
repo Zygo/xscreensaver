@@ -9,10 +9,6 @@
           low="0" high="20000" default="2000"
           convert="invert"/>
 
-  <number id="curve" type="slider" arg="-curve %"
-            _label="Curviness" _low-label="Low" _high-label="High"
-            low="1" high="50" default="10"/>
-
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="100"/>

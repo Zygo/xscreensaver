@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* galaxy --- spinning galaxies */
 /* #include<math.h>*/
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 #endif
 

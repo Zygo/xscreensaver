@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*-
  * julia --- continuously varying Julia set.
  */
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 #endif
 

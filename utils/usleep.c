@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1997
+/* xscreensaver, Copyright (c) 1992, 1996, 1997, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -20,6 +20,10 @@
 
 #ifdef __STDC__
 # include <stdlib.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif
 
 #if defined(VMS)

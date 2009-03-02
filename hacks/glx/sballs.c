@@ -1,6 +1,6 @@
 /* sballs --- balls spinning like crazy in GL */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 #endif
 

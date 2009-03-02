@@ -621,7 +621,8 @@ grabTexture(void)
   int real_width  = gflux->modeinfo->xgwa.width;
   int real_height = gflux->modeinfo->xgwa.height;
   XImage *ximage = screen_to_ximage (gflux->modeinfo->xgwa.screen,
-                                     gflux->window);
+                                     gflux->window,
+                                     NULL);
   Bool bigimage = False;
   int size = 0;
 

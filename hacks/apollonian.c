@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* apollonian --- Apollonian Circles */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
 #endif
 

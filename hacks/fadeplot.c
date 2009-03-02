@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* fadeplot --- a fading plot of sine squared */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

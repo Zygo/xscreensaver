@@ -1,0 +1,149 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "30-Oct-99" "X Version 11"
+.SH NAME
+apple2 - Apple ][ display emulator
+.SH SYNOPSIS
+.B apple2
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fIseconds\fP]
+[\-program \fIcommand to run\fP]
+[\-text] [\-slideshow] [\-basic]
+.SH DESCRIPTION
+The
+.I apple2 
+program simulates an original Apple ][ Plus computer in all its 1979
+glory. It also reproduces the appearance of display on a color
+television set of the period.
+.PP
+There are 3 modes: text, slideshow, and basic. Normally it chooses a
+mode randomly, but you can override with the \fI\-text\fP,
+\fI\-slideshow\fP, or \fI\-basic\fP options.
+.PP
+In text mode it displays the output of a command (by default your
+system's fortune program, but can be overridden with -program).
+.PP
+In slideshow mode it chooses a number of images from the image source
+you configured into XScreenSaver and displays them within the
+limitations of the Apple ][ display hardware. With only 6 available
+colors, you can only make out the general shape of the pictures.
+.PP
+In basic mode a simulated user types in a Basic program and runs it.
+
+.SH OPTIONS
+.I apple2
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fIdelay\fP
+The delay between displaying one crash and another.
+.TP 8
+.B \-text
+Choose text mode
+.TP 8
+.B \-slideshow
+Choose slideshow mode
+.TP 8
+.B \-basic
+Choose basic mode
+.TP 8
+.B \-program \fIsh-command\fP
+In text mode, the command to run to generate the text to display. This
+option may be any string acceptable to /bin/sh. The program will be
+run at the end of a pipe, and any characters that it prints to
+\fIstdout\fP will be printed on the Apple ][ display. If the program
+exits, it will be launched again after 3 seconds.  Default:
+.BR fortune (1).
+
+Note that apple2 is \fInot\fP a terminal emulator: programs that try
+to directly address the screen will not do what you might expect. It
+merely draws the characters on the screen left to right, top to
+bottom. Lines wrap when they reach the right edge, and the screen
+scrolls when characters reach the bottom.
+
+In other words, programs like
+.BR fortune (1)
+will work, but programs like
+.BR top (1)
+won't.
+
+For example:
+.EX
+apple2 -text -program 'cat /usr/src/linux*/README | fold -sw40'
+apple2 -text -program 'ping apple.com'
+apple2 -text -program 'ps -e'
+apple2 -text -program 'od -txCz -w7 /dev/random'
+.EE
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+Notable X resources supported include the following which correspond
+to standard TV controls:
+.BR analogTVTint ,
+.BR analogTVColor ,
+.BR analogTVBrightness , 
+and
+.BR analogTVContrast
+which correspond to standard TV controls. They range from 0 to
+100,except for tint which is an angle between -180 and +180.
+.SH TRADEMARKS
+Apple ][ and Applesoft are trademarks of Apple Computer.
+
+.SH SEE ALSO
+.BR xscreensaver (1),
+.BR bsod (1),
+.BR fortune (1),
+.BR phosphor (1),
+.BR starwars (1),
+.BR ljlatest (1),
+.BR dadadodo (1),
+.BR webcollage (1),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2002-2003 by Trevor Blackwell.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Television and Apple ][ emulation by Trevor Blackwell <tlb@tlb.org>.
+Slideshow and text mode by Jamie Zawinski <jwz@jwz.org>.

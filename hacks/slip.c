@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* slip --- lots of slipping blits */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)slip.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-
@@ -113,7 +112,7 @@ prepare_screen(ModeInfo * mi, slipstruct * sp)
 #ifdef STANDALONE			  /* jwz -- sometimes hack the desktop image! */
 	if (halfrandom(sp, 2) == 0) {
       load_random_image (DefaultScreenOfDisplay(display),
-				  MI_WINDOW(mi), MI_WINDOW(mi));
+				  MI_WINDOW(mi), MI_WINDOW(mi), NULL);
 	}
 #endif
 

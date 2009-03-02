@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* rubik --- Shows an auto-solving Rubik's cube */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
-
 #endif
 
 /*-

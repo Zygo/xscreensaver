@@ -71,12 +71,11 @@ won't.
 
 Some examples:
 .EX
-starwars -columns 30 -program \\
-  'wget -qO- http://webcrawler.com/cgi-bin/SearchTicker'
-starwars -columns 76 -program 'cat /usr/src/linux/README'
+starwars -columns 76 -program 'cat /usr/src/linux*/README'
 starwars -program 'ping www.starwars.com'
 starwars -no-wrap -left -program 'finger @gnu.org'
 starwars -no-wrap -left -program 'ps -ef'
+starwars -no-wrap -left -program 'od -txC /dev/random'
 .EE
 .TP 8
 .B \-size \fIinteger\fP
@@ -138,8 +137,17 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
-.BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.BR fortune (1),
+.BR phosphor (1),
+.BR apple2 (1),
+.BR fontglide (1),
+.BR ljlatest (1),
+.BR dadadodo (1),
+.BR webcollage (1),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
 .SH COPYRIGHT
 Copyright \(co 1998-2001 by Jamie Zawinski and Claudio Matsuoka.
 Permission to use, copy, modify, distribute, and sell this software and

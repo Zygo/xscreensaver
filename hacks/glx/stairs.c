@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* stairs --- Infinite Stairs, and Escher-like scene. */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
-
 #endif
 
 #undef DEBUG_LISTS

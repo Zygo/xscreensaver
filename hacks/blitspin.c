@@ -94,7 +94,7 @@ read_screen (Display *dpy, Window window, int *widthP, int *heightP)
   gcv.function = GXcopy;
   gc = XCreateGC (dpy, window, GCFunction, &gcv);
 
-  load_random_image (xgwa.screen, window, p);
+  load_random_image (xgwa.screen, window, p, NULL);
 
   /* Reset the window's background color... */
   XSetWindowBackground (dpy, window,

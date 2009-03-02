@@ -307,7 +307,7 @@ char *defaults [] = {
 XrmOptionDescRec options [] = {   
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
   { "-subdelay",        ".subdelay",            XrmoptionSepArg, 0 },
-  { 0 },
+  { 0,			0,			0,		 0 },
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
 

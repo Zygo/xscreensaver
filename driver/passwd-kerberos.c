@@ -161,12 +161,14 @@ kerberos_lock_init (int argc, char **argv, Bool verbose_p)
    we are. Calling it ive_got_your_local_function_right_here_buddy()
    would have been rude.
  */
+#ifndef HAVE_DARWIN
 static int 
 key_to_key(char *user, char *instance, char *realm, char *passwd, C_Block key)
 {
   memcpy(key, passwd, sizeof(des_cblock));
   return (0);
 }
+#endif /* !HAVE_DARWIN */
 
 /* Called to see if the user's typed password is valid. We do this by asking
    the kerberos server for a ticket and checking to see if it gave us one.

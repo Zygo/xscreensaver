@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* moebius --- Moebius Strip II, an Escher-like GL scene with ants. */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
-
 #endif
 
 /*-

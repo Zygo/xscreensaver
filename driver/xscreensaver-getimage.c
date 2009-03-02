@@ -65,6 +65,13 @@
 #endif
 
 
+#ifdef __APPLE__
+  /* On MacOSX / XDarwin, the usual X11 mechanism of getting a screen shot
+     doesn't work, and we need to use an external program. */
+# define USE_EXTERNAL_SCREEN_GRABBER
+#endif
+
+
 #ifdef __GNUC__
  __extension__     /* shut up about "string length is greater than the length
                       ISO C89 compilers are required to support" when including
@@ -85,9 +92,14 @@ XtAppContext app;
 
 extern void grabscreen_verbose (void);
 
+typedef enum {
+  GRAB_DESK, GRAB_VIDEO, GRAB_FILE, GRAB_BARS
+} grab_type;
 
-#define GETIMAGE_VIDEO_PROGRAM "xscreensaver-getimage-video"
-#define GETIMAGE_FILE_PROGRAM  "xscreensaver-getimage-file"
+
+#define GETIMAGE_VIDEO_PROGRAM   "xscreensaver-getimage-video"
+#define GETIMAGE_FILE_PROGRAM    "xscreensaver-getimage-file"
+#define GETIMAGE_SCREEN_PROGRAM  "xscreensaver-getimage-desktop"
 
 const char *
 blurb (void)
@@ -266,6 +278,60 @@ compute_image_scaling (int src_w, int src_h,
   if (verbose_p)
     fprintf (stderr, "%s: displaying %dx%d image at %d,%d.\n",
              progname, src_w, src_h, destx, desty);
+}
+
+
+/* Scales an XImage, modifying it in place.
+   This doesn't do dithering or smoothing, so it might have artifacts.
+   If out of memory, returns False, and the XImage will have been
+   destroyed and freed.
+ */
+static Bool
+scale_ximage (Screen *screen, Visual *visual,
+              XImage *ximage, int new_width, int new_height)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  int depth = visual_depth (screen, visual);
+  int x, y;
+  double xscale, yscale;
+
+  XImage *ximage2 = XCreateImage (dpy, visual, depth,
+                                  ZPixmap, 0, 0,
+                                  new_width, new_height, 8, 0);
+  ximage2->data = (char *) calloc (ximage2->height, ximage2->bytes_per_line);
+
+  if (!ximage2->data)
+    {
+      fprintf (stderr, "%s: out of memory scaling %dx%d image to %dx%d\n",
+               progname,
+               ximage->width, ximage->height,
+               ximage2->width, ximage2->height);
+      if (ximage->data) free (ximage->data);
+      if (ximage2->data) free (ximage2->data);
+      ximage->data = 0;
+      ximage2->data = 0;
+      XDestroyImage (ximage);
+      XDestroyImage (ximage2);
+      return False;
+    }
+
+  /* Brute force scaling... */
+  xscale = (double) ximage->width  / ximage2->width;
+  yscale = (double) ximage->height / ximage2->height;
+  for (y = 0; y < ximage2->height; y++)
+    for (x = 0; x < ximage2->width; x++)
+      XPutPixel (ximage2, x, y,
+                 XGetPixel (ximage, x * xscale, y * yscale));
+
+  free (ximage->data);
+  ximage->data = 0;
+
+  (*ximage) = (*ximage2);
+
+  ximage2->data = 0;
+  XDestroyImage (ximage2);
+
+  return True;
 }
 
 
@@ -869,59 +935,6 @@ read_jpeg_ximage (Screen *screen, Visual *visual, Drawable drawable,
 }
 
 
-/* Scales an XImage, modifying it in place.
-   If out of memory, returns False, and the XImage will have been
-   destroyed and freed.
- */
-static Bool
-scale_ximage (Screen *screen, Visual *visual,
-              XImage *ximage, int new_width, int new_height)
-{
-  Display *dpy = DisplayOfScreen (screen);
-  int depth = visual_depth (screen, visual);
-  int x, y;
-  double xscale, yscale;
-
-  XImage *ximage2 = XCreateImage (dpy, visual, depth,
-                                  ZPixmap, 0, 0,
-                                  new_width, new_height, 8, 0);
-  ximage2->data = (char *) calloc (ximage2->height, ximage2->bytes_per_line);
-
-  if (!ximage2->data)
-    {
-      fprintf (stderr, "%s: out of memory scaling %dx%d image to %dx%d\n",
-               progname,
-               ximage->width, ximage->height,
-               ximage2->width, ximage2->height);
-      if (ximage->data) free (ximage->data);
-      if (ximage2->data) free (ximage2->data);
-      ximage->data = 0;
-      ximage2->data = 0;
-      XDestroyImage (ximage);
-      XDestroyImage (ximage2);
-      return False;
-    }
-
-  /* Brute force scaling... */
-  xscale = (double) ximage->width  / ximage2->width;
-  yscale = (double) ximage->height / ximage2->height;
-  for (y = 0; y < ximage2->height; y++)
-    for (x = 0; x < ximage2->width; x++)
-      XPutPixel (ximage2, x, y,
-                 XGetPixel (ximage, x * xscale, y * yscale));
-
-  free (ximage->data);
-  ximage->data = 0;
-
-  (*ximage) = (*ximage2);
-
-  ximage2->data = 0;
-  XDestroyImage (ximage2);
-
-  return True;
-}
-
-
 /* Reads the given image file and renders it on the Drawable, using JPEG lib.
    Returns False if it fails.
  */
@@ -1058,7 +1071,7 @@ display_file (Screen *screen, Window window, Drawable drawable,
    to run.
  */
 static char *
-get_filename_1 (Screen *screen, const char *directory, Bool video_p,
+get_filename_1 (Screen *screen, const char *directory, grab_type type,
                 Bool verbose_p)
 {
   Display *dpy = DisplayOfScreen (screen);
@@ -1069,20 +1082,34 @@ get_filename_1 (Screen *screen, const char *directory, Bool video_p,
   char *av[20];
   int ac = 0;
 
-  if (!video_p)
+  switch (type)
     {
+    case GRAB_FILE:
       av[ac++] = GETIMAGE_FILE_PROGRAM;
       if (verbose_p)
         av[ac++] = "--verbose";
       av[ac++] = "--name";
       av[ac++] = (char *) directory;
-    }
-  else
-    {
+      break;
+
+    case GRAB_VIDEO:
       av[ac++] = GETIMAGE_VIDEO_PROGRAM;
       if (verbose_p)
         av[ac++] = "--verbose";
       av[ac++] = "--name";
+      break;
+
+# ifdef USE_EXTERNAL_SCREEN_GRABBER
+    case GRAB_DESK:
+      av[ac++] = GETIMAGE_SCREEN_PROGRAM;
+      if (verbose_p)
+        av[ac++] = "--verbose";
+      av[ac++] = "--name";
+      break;
+# endif
+
+    default:
+      abort();
     }
   av[ac] = 0;
 
@@ -1171,7 +1198,7 @@ get_filename_1 (Screen *screen, const char *directory, Bool video_p,
 static char *
 get_filename (Screen *screen, const char *directory, Bool verbose_p)
 {
-  return get_filename_1 (screen, directory, False, verbose_p);
+  return get_filename_1 (screen, directory, GRAB_FILE, verbose_p);
 }
 
 
@@ -1181,8 +1208,19 @@ get_filename (Screen *screen, const char *directory, Bool verbose_p)
 static char *
 get_video_filename (Screen *screen, Bool verbose_p)
 {
-  return get_filename_1 (screen, 0, True, verbose_p);
+  return get_filename_1 (screen, 0, GRAB_VIDEO, verbose_p);
 }
+
+/* Grabs a desktop image to a file, and returns a pathname to that file.
+   Delete that file when you are done with it (and free the string.)
+ */
+# ifdef USE_EXTERNAL_SCREEN_GRABBER
+static char *
+get_desktop_filename (Screen *screen, Bool verbose_p)
+{
+  return get_filename_1 (screen, 0, GRAB_DESK, verbose_p);
+}
+#endif /* USE_EXTERNAL_SCREEN_GRABBER */
 
 
 /* Grabs a video frame, and renders it on the Drawable.
@@ -1218,6 +1256,118 @@ display_video (Screen *screen, Window window, Drawable drawable,
 }
 
 
+/* Grabs a desktop screen shot onto the window and the drawable.
+   If the window and drawable are not the same size, the image in
+   the drawable is scaled to fit.
+   Returns False if it fails.
+ */
+static Bool
+display_desktop (Screen *screen, Window window, Drawable drawable,
+                 Bool verbose_p)
+{
+# ifdef USE_EXTERNAL_SCREEN_GRABBER
+
+  Display *dpy = DisplayOfScreen (screen);
+  Bool top_p = top_level_window_p (screen, window);
+  char *filename;
+  Bool status;
+
+  if (top_p)
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: unmapping 0x%lx.\n", progname,
+                 (unsigned long) window);
+      XUnmapWindow (dpy, window);
+      XSync (dpy, False);
+    }
+
+  filename = get_desktop_filename (screen, verbose_p);
+
+  if (top_p)
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: mapping 0x%lx.\n", progname,
+                 (unsigned long) window);
+      XMapRaised (dpy, window);
+      XSync (dpy, False);
+    }
+
+  if (!filename)
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: desktop grab failed.\n", progname);
+      return False;
+    }
+
+  status = display_file (screen, window, drawable, filename, verbose_p);
+
+  if (unlink (filename))
+    {
+      char buf[512];
+      sprintf (buf, "%s: rm %.100s", progname, filename);
+      perror (buf);
+    }
+  else if (verbose_p)
+    fprintf (stderr, "%s: rm %s\n", progname, filename);
+
+  if (filename) free (filename);
+  return status;
+
+# else /* !USE_EXTERNAL_SCREEN_GRABBER */
+
+  Display *dpy = DisplayOfScreen (screen);
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  Window root;
+  int px, py;
+  unsigned int pw, ph, pbw, pd;
+  int srcx, srcy, destx, desty, w2, h2;
+
+  if (verbose_p)
+    {
+      fprintf (stderr, "%s: grabbing desktop image\n", progname);
+      grabscreen_verbose();
+    }
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XGetGeometry (dpy, drawable, &root, &px, &py, &pw, &ph, &pbw, &pd);
+
+  grab_screen_image_internal (screen, window);
+
+  compute_image_scaling (xgwa.width, xgwa.height,
+                         pw, ph, verbose_p,
+                         &srcx, &srcy, &destx, &desty, &w2, &h2);
+
+  if (pw == w2 && ph == h2)  /* it fits -- just copy server-side pixmaps */
+    {
+      GC gc = XCreateGC (dpy, drawable, 0, &gcv);
+      XCopyArea (dpy, window, drawable, gc,
+                 0, 0, xgwa.width, xgwa.height, 0, 0);
+      XFreeGC (dpy, gc);
+    }
+  else  /* size mismatch -- must scale client-side images to fit drawable */
+    {
+      XImage *ximage = XGetImage (dpy, window, 0, 0, xgwa.width, xgwa.height,
+                                  ~0L, ZPixmap);
+      GC gc;
+      if (!ximage ||
+          !scale_ximage (xgwa.screen, xgwa.visual, ximage, w2, h2))
+        return False;
+      gc = XCreateGC (dpy, drawable, 0, &gcv);
+      clear_drawable (screen, drawable);
+      XPutImage (dpy, drawable, gc, ximage, 
+                 srcx, srcy, destx, desty, ximage->width, ximage->height);
+      XDestroyImage (ximage);
+      XFreeGC (dpy, gc);
+    }
+
+  XSync (dpy, False);
+  return True;
+
+# endif /* !USE_EXTERNAL_SCREEN_GRABBER */
+}
+
+
 /* Grabs an image (from a file, video, or the desktop) and renders it on
    the Drawable.  If `file' is specified, always use that file.  Otherwise,
    select randomly, based on the other arguments.
@@ -1233,9 +1383,10 @@ get_image (Screen *screen,
            const char *file)
 {
   Display *dpy = DisplayOfScreen (screen);
-  enum { do_desk, do_video, do_image, do_bars } which = do_bars;
+  grab_type which = GRAB_BARS;
   int count = 0;
   struct stat st;
+  const char *file_prop = 0;
 
   if (! drawable_window_p (dpy, window))
     {
@@ -1271,6 +1422,10 @@ get_image (Screen *screen,
 
 # if !(defined(HAVE_GDK_PIXBUF) || defined(HAVE_JPEGLIB))
   image_p = False;    /* can't load images from files... */
+#  ifdef USE_EXTERNAL_SCREEN_GRABBER
+  desk_p = False;     /* ...or from desktops grabbed to files. */
+#  endif
+
   if (file)
     {
       fprintf (stderr,
@@ -1302,12 +1457,15 @@ get_image (Screen *screen,
 #  error Error!  This file definitely needs vroot.h!
 # endif
 
-  /* We can grab desktop images if:
+  /* We can grab desktop images (using the normal X11 method) if:
        - the window is the real root window;
        - the window is a toplevel window.
-     We cannot grab desktop images if:
+     We cannot grab desktop images that way if:
        - the window is a non-top-level window.
+
+     Using the MacOS X way, desktops are just like loaded image files.
    */
+# ifndef USE_EXTERNAL_SCREEN_GRABBER
   if (desk_p)
     {
       if (!top_level_window_p (screen, window))
@@ -1319,6 +1477,7 @@ get_image (Screen *screen,
                      progname, (unsigned int) window);
         }
     }
+# endif /* !USE_EXTERNAL_SCREEN_GRABBER */
 
   count = 0;
   if (desk_p)  count++;
@@ -1326,16 +1485,16 @@ get_image (Screen *screen,
   if (image_p) count++;
 
   if (count == 0)
-    which = do_bars;
+    which = GRAB_BARS;
   else
     {
       int i = 0;
       while (1)  /* loop until we get one that's permitted */
         {
           which = (random() % 3);
-          if (which == do_desk  && desk_p)  break;
-          if (which == do_video && video_p) break;
-          if (which == do_image && image_p) break;
+          if (which == GRAB_DESK  && desk_p)  break;
+          if (which == GRAB_VIDEO && video_p) break;
+          if (which == GRAB_FILE  && image_p) break;
           if (++i > 200) abort();
         }
     }
@@ -1343,12 +1502,12 @@ get_image (Screen *screen,
 
   /* If we're to search a directory to find an image file, do so now.
    */
-  if (which == do_image && !file)
+  if (which == GRAB_FILE && !file)
     {
       file = get_filename (screen, dir, verbose_p);
       if (!file)
         {
-          which = do_bars;
+          which = GRAB_BARS;
           if (verbose_p)
             fprintf (stderr, "%s: no image files found.\n", progname);
         }
@@ -1356,48 +1515,54 @@ get_image (Screen *screen,
 
   /* Now actually render something.
    */
-  if (which == do_bars)
+  switch (which)
     {
-      XWindowAttributes xgwa;
-    COLORBARS:
-      if (verbose_p)
-        fprintf (stderr, "%s: drawing colorbars.\n", progname);
-      XGetWindowAttributes (dpy, window, &xgwa);
-      draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
-                      0, 0, 0, 0);
-      XSync (dpy, False);
-    }
-  else if (which == do_desk)
-    {
-      GC gc;
-      XGCValues gcv;
-      XWindowAttributes xgwa;
+    case GRAB_BARS:
+      {
+        XWindowAttributes xgwa;
+      COLORBARS:
+        if (verbose_p)
+          fprintf (stderr, "%s: drawing colorbars.\n", progname);
+        XGetWindowAttributes (dpy, window, &xgwa);
+        draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
+                        0, 0, 0, 0);
+        XSync (dpy, False);
+      }
+      break;
 
-      if (verbose_p)
-        {
-          fprintf (stderr, "%s: grabbing desktop image\n", progname);
-          grabscreen_verbose();
-        }
-      gc = XCreateGC (dpy, drawable, 0, &gcv);
-      XGetWindowAttributes (dpy, window, &xgwa);
-      grab_screen_image (screen, window);
-      XCopyArea (dpy, window, drawable, gc,
-                 0, 0, xgwa.width, xgwa.height, 0, 0);
-      XFreeGC (dpy, gc);
-      XSync (dpy, False);
-    }
-  else if (which == do_image)
-    {
+    case GRAB_DESK:
+      if (! display_desktop (screen, window, drawable, verbose_p))
+        goto COLORBARS;
+      file_prop = "desktop";
+      break;
+
+    case GRAB_FILE:
       if (! display_file (screen, window, drawable, file, verbose_p))
         goto COLORBARS;
-    }
-  else if (which == do_video)
-    {
+      file_prop = file;
+      break;
+
+    case GRAB_VIDEO:
       if (! display_video (screen, window, drawable, verbose_p))
         goto COLORBARS;
+      file_prop = "video";
+      break;
+
+    default:
+      abort();
+      break;
     }
-  else
-    abort();
+
+  {
+    Atom a = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
+    if (file_prop && *file_prop)
+      XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
+                       (unsigned char *) file_prop, strlen(file_prop));
+    else
+      XDeleteProperty (dpy, window, a);
+  }
+
+  XSync (dpy, False);
 }
 
 

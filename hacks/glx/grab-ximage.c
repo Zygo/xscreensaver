@@ -100,7 +100,7 @@ bigendian (void)
    extra byte set to 0xFF.
  */
 XImage *
-screen_to_ximage (Screen *screen, Window window)
+screen_to_ximage (Screen *screen, Window window, char **filename_return)
 {
   Display *dpy = DisplayOfScreen (screen);
   Pixmap pixmap = 0;
@@ -113,7 +113,7 @@ screen_to_ximage (Screen *screen, Window window)
   win_height = xgwa.height;
 
   pixmap = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-  load_random_image (screen, window, pixmap);
+  load_random_image (screen, window, pixmap, filename_return);
 
   /* GL texture sizes must be powers of two. */
   tex_width  = to_pow2(win_width);

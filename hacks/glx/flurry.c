@@ -37,9 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* flurry */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
-
 #endif
 
 /*-
@@ -107,8 +106,12 @@ static double gTimeCounter = 0.0;
 
 double currentTime(void) {
   struct timeval tv;
-
-  gettimeofday(&tv, NULL);
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&tv, &tzp);
+# else
+  gettimeofday(&tv);
+# endif
 
   return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
 }

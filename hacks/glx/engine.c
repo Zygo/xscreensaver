@@ -253,7 +253,7 @@ engine_type engines[] = {
 /* given a number of cylinders and an included angle, finds matching engine */
 int find_engine(const char *name)
 {
-  int i;
+  unsigned int i;
 
   if (!name || !*name || !strcasecmp (name, "(none)"))
     return (random() % countof(engines));
@@ -762,8 +762,8 @@ void makeshaft (void)
 {
   int i;
   int j;
-  const static float crankThick = 0.2;
-  const static float crankDiam = 0.3;
+  static const float crankThick = 0.2;
+  static const float crankDiam = 0.3;
 
   i = glGenLists(1);
   glNewList(i, GL_COMPILE);
@@ -866,7 +866,7 @@ print_title_string (ModeInfo *mi, const char *string, GLfloat x, GLfloat y)
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       {
-        int i;
+        unsigned int i;
         int x2 = x;
         glLoadIdentity();
 

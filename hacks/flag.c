@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*-
  * flag --- a waving flag
  */
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 #endif
 

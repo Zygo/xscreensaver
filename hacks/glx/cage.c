@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* cage --- the Impossible Cage, an Escher like scene. */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
-
 #endif
 
 /*-

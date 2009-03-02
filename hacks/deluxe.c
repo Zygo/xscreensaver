@@ -335,9 +335,9 @@ screenhack (Display *dpy, Window window)
 
   while (1)
     {
-      if (!dbeclear_p ||
+      if (!dbeclear_p
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-          !backb
+          || !backb
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
           )
         XFillRectangle (dpy, b, erase_gc, 0, 0, xgwa.width, xgwa.height);

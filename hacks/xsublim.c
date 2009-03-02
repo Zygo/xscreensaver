@@ -231,26 +231,7 @@ void xsublim_Sig_Catch(int sig_Number)
 	Xsublim_Sig_Last = sig_Number;
 }
 
-/* Get the screensaver's window ============================================ */
-static XErrorHandler Xsublim_Ss_Handler = NULL;
-static int           Xsublim_Ss_Status;
-
 /* This was all basically swiped from driver/remote.c and util/vroot.h */
-static int xsublim_Ss_Handler(Display* handle_Display,
-            XErrorEvent* handle_Error)
-{
-	if (handle_Error->error_code == BadWindow)
-	{
-		Xsublim_Ss_Status = BadWindow;
-		return 0;
-	}
-	if (Xsublim_Ss_Handler == NULL)
-	{
-		fprintf(stderr,"%s: ",progname);
-		abort();
-	}
-	return (*Xsublim_Ss_Handler)(handle_Display,handle_Error);
-}
 static Window xsublim_Ss_GetWindow(Display* ss_Display)
 {
   Screen *s = DefaultScreenOfDisplay (ss_Display);

@@ -1,7 +1,7 @@
 /*
  * endgame -- plays through a chess game ending.  enjoy.
  *
- * Copyright (C) 2002 Blair Tennessy (tennessb@unbc.ca)
+ * Copyright (C) 2002 Blair Tennessy (tennessy@cs.ubc.ca)
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,15 +35,13 @@ typedef struct {
       in case the move promotes a pawn, we assume a queening.
       (see drawMovingPiece())
 
-      whats lacking? 
-      castling, en passant, under-promotions.  hack at will.
-      more games!  feel free to encode favorites!
-      and this moves[40][4] junk.  i love c!
+      what's lacking? 
+      castling, en passant, under-promotions.
   */
   int moves[40][4];
 } ChessGame;
 
-#define GAMES 3
+#define GAMES 7
 ChessGame games[GAMES] = {
   
   /** 
@@ -170,7 +168,176 @@ ChessGame games[GAMES] = {
       {0, 0, 0, 0}, /* mull it over... */
       {0, 0, 3, 1}
     }    
-  }
+  },
+
+  /** 
+      game 4: 
+
+      M.B. Newman
+      White to play and win.
+      
+      "Chess Amateur"
+      1913
+  */
+  {
+    {
+      {      0,      0,      0,      0,  BQUEEN,      0,      0,      0},
+      {BKNIGHT,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,   PAWN},
+      {  BKING,      0, BISHOP,      0,  KNIGHT,      0,      0,      0},
+      {  PAWN,       0,      0,      0,  KNIGHT,      0,      0,      0},
+      {     0,       0,      0,      0,       0,      0,      0,      0},
+      {  KING,       0,      0,      0,       0,      0,      0,      0},
+    },
+    
+    15,
+
+    { 
+      {4, 2, 3, 1},
+      {0, 4, 3, 1}, /* queen wins bishop */
+      {4, 4, 5, 2},
+      {4, 0, 5, 0}, /* king takes pawn */
+      {5, 2, 3, 1}, /* knight takes queen, check */
+      {1, 0, 3, 1}, /* knight takes knight */
+      {3, 7, 2, 7}, /* pawn advances */
+      {3, 1, 2, 3},
+      {5, 4, 4, 2},
+      {2, 3, 4, 2},
+      {2, 7, 1, 7}, /* pawn advances */
+      {4, 2, 2, 3},
+      {1, 7, 0, 7},
+      {0, 0, 0, 0},
+      {0, 0, 5, 0}
+    }    
+  },
+
+  /** 
+      game 5:
+
+      V.A. Korolikov
+      White to play and win
+      
+      First Prize - "Truda"
+      1935
+  */
+  {
+    {
+      {      0,      0, BISHOP,      0,       0,      0,      0,       0},
+      {  BPAWN,   ROOK,      0,      0,       0,      0,      0,       0},
+      {      0,      0,  BPAWN,   PAWN,       0,  BKING,      0,       0},
+      {      0,      0,      0,      0,       0,      0,      0,       0},
+      {      0,      0,      0,      0,       0,      0,   KING, BBISHOP},
+      {      0,      0,      0,      0,   BPAWN,      0,   PAWN,      0},
+      {      0,      0,      0,      0,       0,  BPAWN,      0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+    },
+    
+    21,
+
+    { 
+      {2, 3, 1, 3}, /* pawn to q7 */
+      {2, 5, 1, 4}, /* cover with king */
+      {1, 1, 0, 1},
+      {4, 7, 5, 6}, /* bishop takes pawn */
+      {0, 1, 0, 0}, /* r - r8 */
+      {6, 5, 7, 5}, /* queened */
+      {1, 3, 0, 3}, /* white pawn promoted */
+      {1, 4, 0, 3}, /* king takes queen */
+      {0, 2, 2, 0}, /* discovered check */
+      {5, 6, 0, 1}, /* pull back bishop */
+      {2, 0, 7, 5}, /* bishop takes queen */
+      {0, 3, 1, 2},
+      {7, 5, 2, 0}, /* save rook */
+      {5, 4, 6, 4},
+      {2, 0, 6, 4}, /* bishop takes pawn */
+      {1, 2, 1, 1}, /* king moves in */
+      {6, 4, 5, 5},
+      {1, 1, 0, 0},
+      {5, 5, 2, 2},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}
+    }    
+  },
+
+  /** 
+      game 6:
+
+      T.B. Gorgiev
+      White to play and win
+      
+      First Prize - "64"
+      1929
+  */
+  {
+    {
+      {      0,      0,      0,      0,       0,      0, KNIGHT,       0},
+      {  BKNIGHT,    0,      0,      0,       0,      0,      0,       0},
+      {      0,      0,      0,  BKING, BKNIGHT,      0,      0,       0},
+      {   KING,      0,      0,      0,       0,      0,      0,       0},
+      {      0,      0,      0,      0,       0,      0, KNIGHT,       0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,      0,      0,  BISHOP,      0,      0,      0},
+    },
+    
+    13,
+
+    { 
+      {3, 0, 2, 1}, /* king on move */
+      {1, 0, 0, 2}, /* check */
+      {2, 1, 1, 1},
+      {0, 2, 1, 4}, /* knight moves on */
+      {7, 4, 5, 6}, /* bishop puts king in check */
+      {2, 3, 1, 3}, /* king moves back */
+      {0, 6, 2, 5}, /* knight moves in, check */
+      {1, 3, 0, 3}, /* king moves back queen */
+      {5, 6, 1, 2}, /* bishop - b7 ch!! */
+      {2, 4, 1, 2}, /* black knight takes bishop */
+      {4, 6, 3, 4}, /* knight to k5 */
+      {0, 0, 0, 0}, /* mate */
+      {0, 0, 0, 0}
+    }    
+  },
+
+  /** 
+      game 7:
+
+      K. A. L. Kubbel
+      White to play and win
+      
+      "Schachmatny Listok"
+      1922
+  */
+  {
+    {
+      {      0, KNIGHT,      0,      0,       0,      0,       0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+      {   KING,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,      0,  BKING,       0,      0,      0,      0},
+      {      0,      0,      0,  BPAWN,       0,      0,      0, BISHOP},
+      {  BPAWN,      0,      0,      0,       0,      0,      0,      0},
+      {      0,      0,   PAWN,   PAWN,       0,      0,      0,      0},
+      {      0,      0,      0,      0,       0,      0,      0,      0},
+    },
+    
+    12,
+
+    { 
+      {0, 1, 2, 2}, /* kt-b6 */
+      {3, 3, 2, 2}, /* k x kt */
+      {4, 7, 2, 5}, /* b-b6 */
+      {2, 2, 3, 3}, /* king back to original position */
+      {6, 3, 5, 3}, /* p-q3! */
+      {5, 0, 6, 0}, /* p-r7 */
+      {6, 2, 4, 2}, /* p-b4ch */
+      {3, 3, 3, 2}, /* king moves, black cannot capture in passing */
+      {2, 0, 1, 1}, /* k-kt7! */
+      {6, 0, 7, 0}, /* promo */
+      {2, 5, 1, 4}, /* mate */
+      {0, 0, 3, 2},
+    }    
+  },
 };
 
 #endif /* __CHESSGAMES_H__ */

@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* triangle --- create a triangle-mountain */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)triangle.c	4.04 97/07/28 xlockmore";
-
 #endif
 
 /*-
