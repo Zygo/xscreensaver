@@ -10,9 +10,18 @@ rotzoomer - animated rotations and scalings of portions of the screen
 [\-shm | \-no\-shm]
 [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
 .SH DESCRIPTION
-The \fIrotzoomer\fP program grabs an image of the screen, then picks
-rectangles and draws scaled and rotated animations of that part of
-the screen.
+The \fIrotzoomer\fP program grabs an image, then picks
+rectangles and draws scaled and rotated animations of that 
+section.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
 .SH OPTIONS
 .I rotzoomer
 accepts the following options:
@@ -56,7 +65,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 2001 by Claudio Matsuoka.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

@@ -71,6 +71,21 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.31:   * The image-manipulating hacks (`slidescreen', etc.) can
+                        now operate on randomly chosen image files from disk,
+                        or on frames captured from the system's video input,
+                        instead of (or in addition to) manipulating images of
+                        the desktop.
+                      * Rewrote `vidwhacker' to use the new image-grabbing
+                        mechanism.
+                      * Made fading work on TrueColor XFree86 4.x systems.
+                      * Fixed a subtle rendering bug in `atlantis' (the fish
+                        were inside out!)
+                      * Made `atlantis' have a texture simulating light
+                        reflections from the surface of the ocean.
+                      * Fixed up label placement in `molecule'.
+                      * Better color bars in `xteevee'.
+                      * Made `install-strip' not try to strip scripts.
 Changes since 3.30:   * Put in more sensible defaults for DPMS, and updated
                         the documentation to reflect the fact that all your
                         DPMS settings are now belong to xscreensaver.

@@ -537,6 +537,9 @@ char *defaults [] = {
   ".foreground:		Gray40",
   "*delay:		70000",
   "*delay2:		5",
+#ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
+  "*visualID:		Best",
+#endif
   0
 };
 

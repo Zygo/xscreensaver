@@ -73,18 +73,7 @@ create_xscreensaver_demo (void)
   GtkWidget *demo_tab;
   GtkWidget *options_vbox;
   GtkWidget *options_table;
-  GtkWidget *blanking_frame;
-  GtkWidget *blanking_table;
-  GtkWidget *lock_text;
-  GtkWidget *cycle_text;
-  GtkWidget *timeout_text;
-  GtkWidget *timeout_label;
-  GtkWidget *cycle_label;
-  GtkWidget *lock_label;
-  GtkWidget *blanking_dummy;
-  GtkWidget *blanking_hr;
-  GtkWidget *lock_button_eventbox;
-  GtkWidget *lock_button;
+  GtkWidget *options_table_2;
   GtkWidget *dpms_frame;
   GtkWidget *dpms_table;
   GtkWidget *dpms_off_text;
@@ -96,26 +85,50 @@ create_xscreensaver_demo (void)
   GtkWidget *dpms_dummy;
   GtkWidget *dpms_button_eventbox;
   GtkWidget *dpms_button;
-  GtkWidget *diag_frame;
-  GtkWidget *diag_table;
-  GtkWidget *verbose_button_eventbox;
-  GtkWidget *verbose_button;
-  GtkWidget *capture_button_eventbox;
-  GtkWidget *capture_button;
-  GtkWidget *splash_button_eventbox;
-  GtkWidget *splash_button;
   GtkWidget *cmap_frame;
   GtkWidget *cmap_table;
   GtkWidget *fade_text;
   GtkWidget *cmap_dummy;
   GtkWidget *fade_label;
-  GtkWidget *cmap_hr;
   GtkWidget *install_button_eventbox;
   GtkWidget *install_button;
   GtkWidget *fade_button_eventbox;
   GtkWidget *fade_button;
   GtkWidget *unfade_button_eventbox;
   GtkWidget *unfade_button;
+  GtkWidget *cmap_hr;
+  GtkWidget *options_table_1;
+  GtkWidget *grab_frame;
+  GtkWidget *grab_table;
+  GtkWidget *grab_image_eventbox;
+  GtkWidget *grab_image_button;
+  GtkWidget *image_browse_button;
+  GtkWidget *grab_video_eventbox;
+  GtkWidget *grab_video_button;
+  GtkWidget *grab_desk_eventbox;
+  GtkWidget *grab_desk_button;
+  GtkWidget *grab_dummy;
+  GtkWidget *image_text;
+  GtkWidget *blanking_frame;
+  GtkWidget *blanking_table;
+  GtkWidget *lock_text;
+  GtkWidget *cycle_text;
+  GtkWidget *timeout_text;
+  GtkWidget *timeout_label;
+  GtkWidget *cycle_label;
+  GtkWidget *lock_label;
+  GtkWidget *blanking_dummy;
+  GtkWidget *lock_button_eventbox;
+  GtkWidget *lock_button;
+  GtkWidget *blanking_hr;
+  GtkWidget *diag_frame;
+  GtkWidget *diag_table;
+  GtkWidget *splash_button_eventbox;
+  GtkWidget *splash_button;
+  GtkWidget *capture_button_eventbox;
+  GtkWidget *capture_button;
+  GtkWidget *verbose_button_eventbox;
+  GtkWidget *verbose_button;
   GtkWidget *options_tab;
   GtkAccelGroup *accel_group;
   GtkTooltips *tooltips;
@@ -128,7 +141,6 @@ create_xscreensaver_demo (void)
   gtk_widget_set_name (xscreensaver_demo, "xscreensaver_demo");
   gtk_object_set_data (GTK_OBJECT (xscreensaver_demo), "xscreensaver_demo", xscreensaver_demo);
   gtk_window_set_title (GTK_WINDOW (xscreensaver_demo), "XScreenSaver");
-  gtk_window_set_default_size (GTK_WINDOW (xscreensaver_demo), 600, 400);
   gtk_window_set_policy (GTK_WINDOW (xscreensaver_demo), TRUE, TRUE, FALSE);
   gtk_window_set_wmclass (GTK_WINDOW (xscreensaver_demo), "xscreensaver", "XScreenSaver");
 
@@ -600,146 +612,23 @@ create_xscreensaver_demo (void)
   gtk_widget_show (options_vbox);
   gtk_container_add (GTK_CONTAINER (notebook), options_vbox);
 
-  options_table = gtk_table_new (2, 2, TRUE);
+  options_table = gtk_table_new (1, 2, TRUE);
   gtk_widget_set_name (options_table, "options_table");
   gtk_widget_ref (options_table);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "options_table", options_table,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (options_table);
   gtk_box_pack_start (GTK_BOX (options_vbox), options_table, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (options_table), 10);
-  gtk_table_set_row_spacings (GTK_TABLE (options_table), 2);
 
-  blanking_frame = gtk_frame_new ("Blanking and Locking:");
-  gtk_widget_set_name (blanking_frame, "blanking_frame");
-  gtk_widget_ref (blanking_frame);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_frame", blanking_frame,
+  options_table_2 = gtk_table_new (2, 1, FALSE);
+  gtk_widget_set_name (options_table_2, "options_table_2");
+  gtk_widget_ref (options_table_2);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "options_table_2", options_table_2,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (blanking_frame);
-  gtk_table_attach (GTK_TABLE (options_table), blanking_frame, 0, 1, 0, 1,
+  gtk_widget_show (options_table_2);
+  gtk_table_attach (GTK_TABLE (options_table), options_table_2, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (blanking_frame), 10);
-
-  blanking_table = gtk_table_new (5, 3, FALSE);
-  gtk_widget_set_name (blanking_table, "blanking_table");
-  gtk_widget_ref (blanking_table);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_table", blanking_table,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (blanking_table);
-  gtk_container_add (GTK_CONTAINER (blanking_frame), blanking_table);
-  gtk_container_set_border_width (GTK_CONTAINER (blanking_table), 10);
-  gtk_table_set_row_spacings (GTK_TABLE (blanking_table), 2);
-  gtk_table_set_col_spacings (GTK_TABLE (blanking_table), 10);
-
-  lock_text = gtk_entry_new_with_max_length (8);
-  gtk_widget_set_name (lock_text, "lock_text");
-  gtk_widget_ref (lock_text);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_text", lock_text,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (lock_text);
-  gtk_table_attach (GTK_TABLE (blanking_table), lock_text, 1, 2, 4, 5,
-                    (GtkAttachOptions) (0),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, lock_text, "How long after the screen saver has activated until a password will be required (if  `Require Password' is also set.)", NULL);
-
-  cycle_text = gtk_entry_new_with_max_length (8);
-  gtk_widget_set_name (cycle_text, "cycle_text");
-  gtk_widget_ref (cycle_text);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cycle_text", cycle_text,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (cycle_text);
-  gtk_table_attach (GTK_TABLE (blanking_table), cycle_text, 1, 2, 1, 2,
-                    (GtkAttachOptions) (0),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, cycle_text, "How long each demo will be run before moving on to another.", NULL);
-
-  timeout_text = gtk_entry_new_with_max_length (8);
-  gtk_widget_set_name (timeout_text, "timeout_text");
-  gtk_widget_ref (timeout_text);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "timeout_text", timeout_text,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (timeout_text);
-  gtk_table_attach (GTK_TABLE (blanking_table), timeout_text, 1, 2, 0, 1,
-                    (GtkAttachOptions) (0),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, timeout_text, "How long until the screen saver activates and begins running demos.", NULL);
-
-  timeout_label = gtk_label_new ("Blank After:");
-  gtk_widget_set_name (timeout_label, "timeout_label");
-  gtk_widget_ref (timeout_label);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "timeout_label", timeout_label,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (timeout_label);
-  gtk_table_attach (GTK_TABLE (blanking_table), timeout_label, 0, 1, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (timeout_label), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (timeout_label), 1, 0.5);
-
-  cycle_label = gtk_label_new ("Cycle After:");
-  gtk_widget_set_name (cycle_label, "cycle_label");
-  gtk_widget_ref (cycle_label);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cycle_label", cycle_label,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (cycle_label);
-  gtk_table_attach (GTK_TABLE (blanking_table), cycle_label, 0, 1, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (cycle_label), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (cycle_label), 1, 0.5);
-
-  lock_label = gtk_label_new ("Lock After:");
-  gtk_widget_set_name (lock_label, "lock_label");
-  gtk_widget_ref (lock_label);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_label", lock_label,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (lock_label);
-  gtk_table_attach (GTK_TABLE (blanking_table), lock_label, 0, 1, 4, 5,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (lock_label), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (lock_label), 1, 0.5);
-
-  blanking_dummy = gtk_label_new ("");
-  gtk_widget_set_name (blanking_dummy, "blanking_dummy");
-  gtk_widget_ref (blanking_dummy);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_dummy", blanking_dummy,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (blanking_dummy);
-  gtk_table_attach (GTK_TABLE (blanking_table), blanking_dummy, 2, 3, 4, 5,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (blanking_dummy), GTK_JUSTIFY_LEFT);
-
-  blanking_hr = gtk_hseparator_new ();
-  gtk_widget_set_name (blanking_hr, "blanking_hr");
-  gtk_widget_ref (blanking_hr);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_hr", blanking_hr,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (blanking_hr);
-  gtk_table_attach (GTK_TABLE (blanking_table), blanking_hr, 0, 3, 2, 3,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-
-  lock_button_eventbox = gtk_event_box_new ();
-  gtk_widget_set_name (lock_button_eventbox, "lock_button_eventbox");
-  gtk_widget_ref (lock_button_eventbox);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_button_eventbox", lock_button_eventbox,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (lock_button_eventbox);
-  gtk_table_attach (GTK_TABLE (blanking_table), lock_button_eventbox, 0, 3, 3, 4,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-  gtk_tooltips_set_tip (tooltips, lock_button_eventbox, "Whether a password should be required to unblank the screen.", NULL);
-
-  lock_button = gtk_check_button_new_with_label ("Require Password");
-  gtk_widget_set_name (lock_button, "lock_button");
-  gtk_widget_ref (lock_button);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_button", lock_button,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (lock_button);
-  gtk_container_add (GTK_CONTAINER (lock_button_eventbox), lock_button);
 
   dpms_frame = gtk_frame_new ("Display Power Management:");
   gtk_widget_set_name (dpms_frame, "dpms_frame");
@@ -747,8 +636,8 @@ create_xscreensaver_demo (void)
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "dpms_frame", dpms_frame,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (dpms_frame);
-  gtk_table_attach (GTK_TABLE (options_table), dpms_frame, 1, 2, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
+  gtk_table_attach (GTK_TABLE (options_table_2), dpms_frame, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
   gtk_container_set_border_width (GTK_CONTAINER (dpms_frame), 10);
 
@@ -863,94 +752,14 @@ create_xscreensaver_demo (void)
   gtk_container_add (GTK_CONTAINER (dpms_button_eventbox), dpms_button);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dpms_button), TRUE);
 
-  diag_frame = gtk_frame_new ("Diagnostics:");
-  gtk_widget_set_name (diag_frame, "diag_frame");
-  gtk_widget_ref (diag_frame);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "diag_frame", diag_frame,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (diag_frame);
-  gtk_table_attach (GTK_TABLE (options_table), diag_frame, 0, 1, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (diag_frame), 10);
-
-  diag_table = gtk_table_new (3, 1, FALSE);
-  gtk_widget_set_name (diag_table, "diag_table");
-  gtk_widget_ref (diag_table);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "diag_table", diag_table,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (diag_table);
-  gtk_container_add (GTK_CONTAINER (diag_frame), diag_table);
-  gtk_container_set_border_width (GTK_CONTAINER (diag_table), 10);
-  gtk_table_set_row_spacings (GTK_TABLE (diag_table), 2);
-  gtk_table_set_col_spacings (GTK_TABLE (diag_table), 10);
-
-  verbose_button_eventbox = gtk_event_box_new ();
-  gtk_widget_set_name (verbose_button_eventbox, "verbose_button_eventbox");
-  gtk_widget_ref (verbose_button_eventbox);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "verbose_button_eventbox", verbose_button_eventbox,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (verbose_button_eventbox);
-  gtk_table_attach (GTK_TABLE (diag_table), verbose_button_eventbox, 0, 1, 0, 1,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-  gtk_tooltips_set_tip (tooltips, verbose_button_eventbox, "Whether the daemon should print lots of debugging information.", NULL);
-
-  verbose_button = gtk_check_button_new_with_label ("Verbose Diagnostics");
-  gtk_widget_set_name (verbose_button, "verbose_button");
-  gtk_widget_ref (verbose_button);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "verbose_button", verbose_button,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (verbose_button);
-  gtk_container_add (GTK_CONTAINER (verbose_button_eventbox), verbose_button);
-
-  capture_button_eventbox = gtk_event_box_new ();
-  gtk_widget_set_name (capture_button_eventbox, "capture_button_eventbox");
-  gtk_widget_ref (capture_button_eventbox);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "capture_button_eventbox", capture_button_eventbox,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (capture_button_eventbox);
-  gtk_table_attach (GTK_TABLE (diag_table), capture_button_eventbox, 0, 1, 1, 2,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-  gtk_tooltips_set_tip (tooltips, capture_button_eventbox, "Whether the stdout and stderr streams of graphics demos should be displayed on the xscreensaver window.", NULL);
-
-  capture_button = gtk_check_button_new_with_label ("Display Subprocess Errors");
-  gtk_widget_set_name (capture_button, "capture_button");
-  gtk_widget_ref (capture_button);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "capture_button", capture_button,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (capture_button);
-  gtk_container_add (GTK_CONTAINER (capture_button_eventbox), capture_button);
-
-  splash_button_eventbox = gtk_event_box_new ();
-  gtk_widget_set_name (splash_button_eventbox, "splash_button_eventbox");
-  gtk_widget_ref (splash_button_eventbox);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "splash_button_eventbox", splash_button_eventbox,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (splash_button_eventbox);
-  gtk_table_attach (GTK_TABLE (diag_table), splash_button_eventbox, 0, 1, 2, 3,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, splash_button_eventbox, "Whether the splash screen (with the version number and `Help' button) should be momentarily displayed when the daemon first starts up.", NULL);
-
-  splash_button = gtk_check_button_new_with_label ("Display Splash Screen at Startup");
-  gtk_widget_set_name (splash_button, "splash_button");
-  gtk_widget_ref (splash_button);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "splash_button", splash_button,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (splash_button);
-  gtk_container_add (GTK_CONTAINER (splash_button_eventbox), splash_button);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (splash_button), TRUE);
-
-  cmap_frame = gtk_frame_new ("Colormaps: (8-bit displays only)");
+  cmap_frame = gtk_frame_new ("Colormaps:");
   gtk_widget_set_name (cmap_frame, "cmap_frame");
   gtk_widget_ref (cmap_frame);
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cmap_frame", cmap_frame,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (cmap_frame);
-  gtk_table_attach (GTK_TABLE (options_table), cmap_frame, 1, 2, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
+  gtk_table_attach (GTK_TABLE (options_table_2), cmap_frame, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
   gtk_container_set_border_width (GTK_CONTAINER (cmap_frame), 10);
 
@@ -998,16 +807,6 @@ create_xscreensaver_demo (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_label_set_justify (GTK_LABEL (fade_label), GTK_JUSTIFY_RIGHT);
   gtk_misc_set_alignment (GTK_MISC (fade_label), 1, 0.5);
-
-  cmap_hr = gtk_hseparator_new ();
-  gtk_widget_set_name (cmap_hr, "cmap_hr");
-  gtk_widget_ref (cmap_hr);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cmap_hr", cmap_hr,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (cmap_hr);
-  gtk_table_attach (GTK_TABLE (cmap_table), cmap_hr, 0, 3, 1, 2,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
 
   install_button_eventbox = gtk_event_box_new ();
   gtk_widget_set_name (install_button_eventbox, "install_button_eventbox");
@@ -1066,6 +865,347 @@ create_xscreensaver_demo (void)
   gtk_widget_show (unfade_button);
   gtk_container_add (GTK_CONTAINER (unfade_button_eventbox), unfade_button);
 
+  cmap_hr = gtk_hseparator_new ();
+  gtk_widget_set_name (cmap_hr, "cmap_hr");
+  gtk_widget_ref (cmap_hr);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cmap_hr", cmap_hr,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (cmap_hr);
+  gtk_table_attach (GTK_TABLE (cmap_table), cmap_hr, 0, 3, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 2);
+
+  options_table_1 = gtk_table_new (3, 1, FALSE);
+  gtk_widget_set_name (options_table_1, "options_table_1");
+  gtk_widget_ref (options_table_1);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "options_table_1", options_table_1,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (options_table_1);
+  gtk_table_attach (GTK_TABLE (options_table), options_table_1, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
+
+  grab_frame = gtk_frame_new ("Image Manipulation:");
+  gtk_widget_set_name (grab_frame, "grab_frame");
+  gtk_widget_ref (grab_frame);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_frame", grab_frame,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_frame);
+  gtk_table_attach (GTK_TABLE (options_table_1), grab_frame, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (grab_frame), 10);
+
+  grab_table = gtk_table_new (4, 3, FALSE);
+  gtk_widget_set_name (grab_table, "grab_table");
+  gtk_widget_ref (grab_table);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_table", grab_table,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_table);
+  gtk_container_add (GTK_CONTAINER (grab_frame), grab_table);
+  gtk_container_set_border_width (GTK_CONTAINER (grab_table), 10);
+
+  grab_image_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (grab_image_eventbox, "grab_image_eventbox");
+  gtk_widget_ref (grab_image_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_image_eventbox", grab_image_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_image_eventbox);
+  gtk_table_attach (GTK_TABLE (grab_table), grab_image_eventbox, 0, 3, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_tooltips_set_tip (tooltips, grab_image_eventbox, "Whether the image-manipulating modes should operate on random images loaded from disk.", NULL);
+
+  grab_image_button = gtk_check_button_new_with_label ("Choose Random Image:");
+  gtk_widget_set_name (grab_image_button, "grab_image_button");
+  gtk_widget_ref (grab_image_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_image_button", grab_image_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_image_button);
+  gtk_container_add (GTK_CONTAINER (grab_image_eventbox), grab_image_button);
+
+  image_browse_button = gtk_button_new_with_label ("Browse");
+  gtk_widget_set_name (image_browse_button, "image_browse_button");
+  gtk_widget_ref (image_browse_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "image_browse_button", image_browse_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (image_browse_button);
+  gtk_table_attach (GTK_TABLE (grab_table), image_browse_button, 2, 3, 3, 4,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 4, 0);
+
+  grab_video_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (grab_video_eventbox, "grab_video_eventbox");
+  gtk_widget_ref (grab_video_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_video_eventbox", grab_video_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_video_eventbox);
+  gtk_table_attach (GTK_TABLE (grab_table), grab_video_eventbox, 0, 3, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_tooltips_set_tip (tooltips, grab_video_eventbox, "Whether the image-manipulating modes should operate on images captured from the system's video input (if there is one).", NULL);
+
+  grab_video_button = gtk_check_button_new_with_label ("Grab Video Frames");
+  gtk_widget_set_name (grab_video_button, "grab_video_button");
+  gtk_widget_ref (grab_video_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_video_button", grab_video_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_video_button);
+  gtk_container_add (GTK_CONTAINER (grab_video_eventbox), grab_video_button);
+
+  grab_desk_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (grab_desk_eventbox, "grab_desk_eventbox");
+  gtk_widget_ref (grab_desk_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_desk_eventbox", grab_desk_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_desk_eventbox);
+  gtk_table_attach (GTK_TABLE (grab_table), grab_desk_eventbox, 0, 3, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_tooltips_set_tip (tooltips, grab_desk_eventbox, "Whether the image-manipulating modes should be allowed to operate on an image of your desktop.", NULL);
+
+  grab_desk_button = gtk_check_button_new_with_label ("Grab Desktop Images");
+  gtk_widget_set_name (grab_desk_button, "grab_desk_button");
+  gtk_widget_ref (grab_desk_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_desk_button", grab_desk_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_desk_button);
+  gtk_container_add (GTK_CONTAINER (grab_desk_eventbox), grab_desk_button);
+
+  grab_dummy = gtk_label_new ("");
+  gtk_widget_set_name (grab_dummy, "grab_dummy");
+  gtk_widget_ref (grab_dummy);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "grab_dummy", grab_dummy,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (grab_dummy);
+  gtk_table_attach (GTK_TABLE (grab_table), grab_dummy, 0, 1, 3, 4,
+                    (GtkAttachOptions) (GTK_SHRINK | GTK_FILL),
+                    (GtkAttachOptions) (GTK_SHRINK), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (grab_dummy), GTK_JUSTIFY_LEFT);
+  gtk_misc_set_padding (GTK_MISC (grab_dummy), 8, 0);
+
+  image_text = gtk_entry_new ();
+  gtk_widget_set_name (image_text, "image_text");
+  gtk_widget_ref (image_text);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "image_text", image_text,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (image_text);
+  gtk_table_attach (GTK_TABLE (grab_table), image_text, 1, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_SHRINK | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, image_text, "The directory from which images will be randomly chosen.", NULL);
+
+  blanking_frame = gtk_frame_new ("Blanking and Locking:");
+  gtk_widget_set_name (blanking_frame, "blanking_frame");
+  gtk_widget_ref (blanking_frame);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_frame", blanking_frame,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (blanking_frame);
+  gtk_table_attach (GTK_TABLE (options_table_1), blanking_frame, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (blanking_frame), 10);
+
+  blanking_table = gtk_table_new (5, 3, FALSE);
+  gtk_widget_set_name (blanking_table, "blanking_table");
+  gtk_widget_ref (blanking_table);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_table", blanking_table,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (blanking_table);
+  gtk_container_add (GTK_CONTAINER (blanking_frame), blanking_table);
+  gtk_container_set_border_width (GTK_CONTAINER (blanking_table), 10);
+  gtk_table_set_row_spacings (GTK_TABLE (blanking_table), 2);
+  gtk_table_set_col_spacings (GTK_TABLE (blanking_table), 10);
+
+  lock_text = gtk_entry_new_with_max_length (8);
+  gtk_widget_set_name (lock_text, "lock_text");
+  gtk_widget_ref (lock_text);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_text", lock_text,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (lock_text);
+  gtk_table_attach (GTK_TABLE (blanking_table), lock_text, 1, 2, 4, 5,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, lock_text, "How long after the screen saver has activated until a password will be required (if  `Require Password' is also set.)", NULL);
+
+  cycle_text = gtk_entry_new_with_max_length (8);
+  gtk_widget_set_name (cycle_text, "cycle_text");
+  gtk_widget_ref (cycle_text);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cycle_text", cycle_text,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (cycle_text);
+  gtk_table_attach (GTK_TABLE (blanking_table), cycle_text, 1, 2, 1, 2,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, cycle_text, "How long each demo will be run before moving on to another.", NULL);
+
+  timeout_text = gtk_entry_new_with_max_length (8);
+  gtk_widget_set_name (timeout_text, "timeout_text");
+  gtk_widget_ref (timeout_text);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "timeout_text", timeout_text,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (timeout_text);
+  gtk_table_attach (GTK_TABLE (blanking_table), timeout_text, 1, 2, 0, 1,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, timeout_text, "How long until the screen saver activates and begins running demos.", NULL);
+
+  timeout_label = gtk_label_new ("Blank After:");
+  gtk_widget_set_name (timeout_label, "timeout_label");
+  gtk_widget_ref (timeout_label);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "timeout_label", timeout_label,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (timeout_label);
+  gtk_table_attach (GTK_TABLE (blanking_table), timeout_label, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (timeout_label), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (timeout_label), 1, 0.5);
+
+  cycle_label = gtk_label_new ("Cycle After:");
+  gtk_widget_set_name (cycle_label, "cycle_label");
+  gtk_widget_ref (cycle_label);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cycle_label", cycle_label,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (cycle_label);
+  gtk_table_attach (GTK_TABLE (blanking_table), cycle_label, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (cycle_label), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (cycle_label), 1, 0.5);
+
+  lock_label = gtk_label_new ("Lock After:");
+  gtk_widget_set_name (lock_label, "lock_label");
+  gtk_widget_ref (lock_label);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_label", lock_label,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (lock_label);
+  gtk_table_attach (GTK_TABLE (blanking_table), lock_label, 0, 1, 4, 5,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (lock_label), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (lock_label), 1, 0.5);
+
+  blanking_dummy = gtk_label_new ("");
+  gtk_widget_set_name (blanking_dummy, "blanking_dummy");
+  gtk_widget_ref (blanking_dummy);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_dummy", blanking_dummy,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (blanking_dummy);
+  gtk_table_attach (GTK_TABLE (blanking_table), blanking_dummy, 2, 3, 4, 5,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (blanking_dummy), GTK_JUSTIFY_LEFT);
+
+  lock_button_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (lock_button_eventbox, "lock_button_eventbox");
+  gtk_widget_ref (lock_button_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_button_eventbox", lock_button_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (lock_button_eventbox);
+  gtk_table_attach (GTK_TABLE (blanking_table), lock_button_eventbox, 0, 3, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_tooltips_set_tip (tooltips, lock_button_eventbox, "Whether a password should be required to unblank the screen.", NULL);
+
+  lock_button = gtk_check_button_new_with_label ("Require Password");
+  gtk_widget_set_name (lock_button, "lock_button");
+  gtk_widget_ref (lock_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "lock_button", lock_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (lock_button);
+  gtk_container_add (GTK_CONTAINER (lock_button_eventbox), lock_button);
+
+  blanking_hr = gtk_hseparator_new ();
+  gtk_widget_set_name (blanking_hr, "blanking_hr");
+  gtk_widget_ref (blanking_hr);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "blanking_hr", blanking_hr,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (blanking_hr);
+  gtk_table_attach (GTK_TABLE (blanking_table), blanking_hr, 0, 3, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 2);
+
+  diag_frame = gtk_frame_new ("Diagnostics:");
+  gtk_widget_set_name (diag_frame, "diag_frame");
+  gtk_widget_ref (diag_frame);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "diag_frame", diag_frame,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (diag_frame);
+  gtk_table_attach (GTK_TABLE (options_table_1), diag_frame, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (diag_frame), 10);
+
+  diag_table = gtk_table_new (3, 1, FALSE);
+  gtk_widget_set_name (diag_table, "diag_table");
+  gtk_widget_ref (diag_table);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "diag_table", diag_table,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (diag_table);
+  gtk_container_add (GTK_CONTAINER (diag_frame), diag_table);
+  gtk_container_set_border_width (GTK_CONTAINER (diag_table), 10);
+  gtk_table_set_row_spacings (GTK_TABLE (diag_table), 2);
+  gtk_table_set_col_spacings (GTK_TABLE (diag_table), 10);
+
+  splash_button_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (splash_button_eventbox, "splash_button_eventbox");
+  gtk_widget_ref (splash_button_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "splash_button_eventbox", splash_button_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (splash_button_eventbox);
+  gtk_table_attach (GTK_TABLE (diag_table), splash_button_eventbox, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, splash_button_eventbox, "Whether the splash screen (with the version number and `Help' button) should be momentarily displayed when the daemon first starts up.", NULL);
+
+  splash_button = gtk_check_button_new_with_label ("Display Splash Screen at Startup");
+  gtk_widget_set_name (splash_button, "splash_button");
+  gtk_widget_ref (splash_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "splash_button", splash_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (splash_button);
+  gtk_container_add (GTK_CONTAINER (splash_button_eventbox), splash_button);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (splash_button), TRUE);
+
+  capture_button_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (capture_button_eventbox, "capture_button_eventbox");
+  gtk_widget_ref (capture_button_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "capture_button_eventbox", capture_button_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (capture_button_eventbox);
+  gtk_table_attach (GTK_TABLE (diag_table), capture_button_eventbox, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, capture_button_eventbox, "Whether the stdout and stderr streams of graphics demos should be displayed on the xscreensaver window.", NULL);
+
+  capture_button = gtk_check_button_new_with_label ("Display Subprocess Errors");
+  gtk_widget_set_name (capture_button, "capture_button");
+  gtk_widget_ref (capture_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "capture_button", capture_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (capture_button);
+  gtk_container_add (GTK_CONTAINER (capture_button_eventbox), capture_button);
+
+  verbose_button_eventbox = gtk_event_box_new ();
+  gtk_widget_set_name (verbose_button_eventbox, "verbose_button_eventbox");
+  gtk_widget_ref (verbose_button_eventbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "verbose_button_eventbox", verbose_button_eventbox,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (verbose_button_eventbox);
+  gtk_table_attach (GTK_TABLE (diag_table), verbose_button_eventbox, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, verbose_button_eventbox, "Whether the daemon should print lots of debugging information.", NULL);
+
+  verbose_button = gtk_check_button_new_with_label ("Verbose Diagnostics");
+  gtk_widget_set_name (verbose_button, "verbose_button");
+  gtk_widget_ref (verbose_button);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "verbose_button", verbose_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (verbose_button);
+  gtk_container_add (GTK_CONTAINER (verbose_button_eventbox), verbose_button);
+
   options_tab = gtk_label_new ("Screensaver Options");
   gtk_widget_set_name (options_tab, "options_tab");
   gtk_widget_ref (options_tab);
@@ -1122,27 +1262,6 @@ create_xscreensaver_demo (void)
   gtk_signal_connect (GTK_OBJECT (manual), "clicked",
                       GTK_SIGNAL_FUNC (manual_cb),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (lock_text), "activate",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (lock_text), "focus_out_event",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (cycle_text), "activate",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (cycle_text), "focus_out_event",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (timeout_text), "activate",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (timeout_text), "focus_out_event",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (lock_button), "toggled",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
   gtk_signal_connect (GTK_OBJECT (dpms_off_text), "activate",
                       GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
@@ -1164,15 +1283,6 @@ create_xscreensaver_demo (void)
   gtk_signal_connect (GTK_OBJECT (dpms_button), "toggled",
                       GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (verbose_button), "toggled",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (capture_button), "toggled",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (splash_button), "toggled",
-                      GTK_SIGNAL_FUNC (pref_changed_cb),
-                      NULL);
   gtk_signal_connect (GTK_OBJECT (fade_text), "activate",
                       GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
@@ -1186,6 +1296,54 @@ create_xscreensaver_demo (void)
                       GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (unfade_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (grab_image_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (image_browse_button), "clicked",
+                      GTK_SIGNAL_FUNC (browse_image_dir_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (grab_video_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (grab_desk_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (image_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (image_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (cycle_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (cycle_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (timeout_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (timeout_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (splash_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (capture_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (verbose_button), "toggled",
                       GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
 

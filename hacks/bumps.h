@@ -53,6 +53,9 @@ char *defaults [] = {
   "*delay:		50000",
   "*soften:		1",
   "*invert:		FALSE",
+#ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
+   "*visualID:		Best",
+#endif
   0
 };
 

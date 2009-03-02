@@ -50,9 +50,10 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
                 unsigned long transparent_color,
                 unsigned const char * const * data,
                 int *width_ret, int *height_ret,
-                unsigned long **pixels_ret, int *npixels_ret)
+                unsigned long **pixels_ret, int *npixels_ret,
+                unsigned char **mask_ret)
 {
-  int w, h, ncolors, nbytes;
+  int w, w8, h, ncolors, nbytes;
   char c;
   int i;
   struct {
@@ -72,6 +73,19 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
   if (nbytes != 1)
     abort();
   data++;
+
+  w8 = (w + 8) / 8;
+
+  if (mask_ret)
+    {
+      int s = (w8 * h) + 1;
+      *mask_ret = (char *) malloc (s);
+      if (!*mask_ret)
+        mask_ret = 0;
+      else
+        memset (*mask_ret, 255, s);
+    }
+
   for (i = 0; i < ncolors; i++)
     {
       const unsigned char *line = *data;
@@ -160,6 +174,9 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
               int p = rmap[*line++];
               XPutPixel (ximage, x, y,
                          (p == 255 ? transparent_color : pixels[p]));
+
+              if (p == 255 && mask_ret)
+                (*mask_ret)[(y * w8) + (x >> 3)] &= (~(1 << (x % 8)));
             }
         }
     }
@@ -180,6 +197,7 @@ Pixmap
 xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
                    unsigned long background_color,
                    unsigned long **pixels_ret, int *npixels_ret,
+                   Pixmap *mask_ret,
                    Bool big_p)
 {
   int npixels, iw, ih;
@@ -187,12 +205,15 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
   XImage *image;
   Pixmap p = 0;
   XWindowAttributes xgwa;
+  unsigned char *mask = 0;
+
   XGetWindowAttributes (dpy, window, &xgwa);
 
   image = parse_xpm_data (dpy, xgwa.visual, xgwa.colormap, xgwa.depth,
                           background_color,
                           (big_p ? logo_180_xpm : logo_50_xpm),
-                          &iw, &ih, &pixels, &npixels);
+                          &iw, &ih, &pixels, &npixels,
+                          (mask_ret ? &mask : 0));
   if (image)
     {
       XGCValues gcv;
@@ -202,6 +223,13 @@ xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
       XPutImage (dpy, p, gc, image, 0, 0, 0, 0, iw, ih);
       XDestroyImage (image);
       XFreeGC (dpy, gc);
+
+      if (mask_ret && mask)
+        {
+          *mask_ret = XCreatePixmapFromBitmapData (dpy, window, mask,
+                                                   iw, ih, 1L, 0L, 1);
+          free (mask);
+        }
     }
   return p;
 }

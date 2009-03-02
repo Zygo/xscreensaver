@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,10 +9,10 @@
  * implied warranty.
  */
 
-#ifndef __SGIVIDEO_H__
-# ifdef HAVE_SGI_VIDEO
+#ifndef __COLORBARS_H__
+#define __COLORBARS_H__
 
-Bool grab_video_frame(Screen *screen, Visual *visual, Drawable dest);
+extern void draw_colorbars (Display *dpy, Window window,
+                            int x, int y, int width, int height);
 
-# endif /* HAVE_SGI_VIDEO */
-#endif /* __SGIVIDEO_H__ */
+#endif /* __COLORBARS_H__ */

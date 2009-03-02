@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "29-Mar-2001 (3.31)" "X Version 11"
+.TH XScreenSaver 1 "15-Apr-2001 (3.32)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -162,6 +162,34 @@ activation) then a password would be required.  The default is 0, meaning
 that if locking is enabled, then a password will be required as soon as the 
 screen blanks.
 .TP 4
+.B Grab Desktop Images
+Some of the graphics hacks manipulate images.  If this option is selected,
+then they are allowed to manipulate the desktop image, that is, a display
+mode might draw a picture of your desktop melting, or being distorted in
+some way.  The security-paranoid might want to disable this option, because
+if it is set, it means that the windows on your desktop will occasionally
+be visible while your screen is locked.  Others will not be able 
+to \fIdo\fP anything, but they may be able to \fIsee\fP whatever you
+left on your screen.
+.TP 4
+.B Grab Video Frames
+If your system has a video capture card, selecting this option will allow
+the image-manipulating modes to capture a frame of video to operate on.
+.TP 4
+.B Choose Random Image
+If this option is set, then the image-manipulating modes will select a
+random image file from disk, from the directory you specify in the text
+entry field.  That directory will be recursively searched for files,
+and it is assumed that all the files under that directory are images.
+
+If more than one of these options are selected, then one will be chosen at
+random.  If none of them are selected, then an image of video colorbars will
+be used instead.  
+
+(All three of these options work by invoking the
+.BR xscreensaver\-getimage (1)
+program, which is what actually does the work.)
+.TP 4
 .B Verbose Diagnostics
 Whether to print lots of debugging information.
 .TP 4
@@ -215,16 +243,15 @@ on a per-demo basis.
 .TP 4
 .B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
-of the screen will fade to black instead of simply winking out.  This only
-works on displays with writable colormaps, that is, if the screen's default
-visual is a PseudoColor visual.  A fade will also be done when
+of the screen will fade to black instead of simply winking out.  (Note:
+this doesn't work with all X servers.)  A fade will also be done when
 switching graphics hacks (when the \fICycle After\fP expires.)
 .TP 4
 .B Unfade From Black When Unblanking
 The complement to \fIFade Colormap\fP: if selected, then when the screensaver
 deactivates, the original contents of the screen will fade in from black
-instead of appearing immediately.  This only works on displays with writable
-colormaps, and when \fIFade Colormap\fP is also selected.
+instead of appearing immediately.  This is only done if \fIFade Colormap\fP
+is also selected.
 .TP 4
 .B Fade Duration
 When fading or unfading are selected, this controls how long the fade will
@@ -278,7 +305,8 @@ http://www.jwz.org/xscreensaver/
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR xscreensaver\-command (1)
+.BR xscreensaver\-command (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell

@@ -3,12 +3,24 @@
 distort \- distort the content of the screen in interesting ways
 .SH SYNOPSIS
 .B distort
-[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP] [\-speed \fIint\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect] [\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
+[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP]
+[\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP]
+[\-speed \fIint\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect]
+[\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
 .SH DESCRIPTION
-The \fIdistort\fP program lets circular zones of distortion wander
-randomly around its window, apparently distorting what is under them
-due to the window's pseudo-transparency. The mode of distortion and
-the overall behaviour of the zones can be influenced in various ways.
+The \fIdistort\fP program takes an image and lets circular zones of
+distortion wander randomly around it, distorting what is under them.
+The mode of distortion and the overall behaviour of the zones can be
+influenced in various ways.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
 .SH OPTIONS
 .I distort
 accepts the following options:
@@ -88,7 +100,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 1998 by Jonas Munsin and Jamie Zawinski.  Permission to use, 
 copy, modify, distribute, and sell this software and its documentation for

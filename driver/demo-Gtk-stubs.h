@@ -76,11 +76,13 @@ notebook_switch_page_cb                (GtkNotebook     *notebook,
                                         gpointer         user_data);
 
 void
-pref_changed_cb                        (GtkNotebook     *notebook,
-                                        GtkNotebookPage *page,
-                                        gint             page_num,
+pref_changed_cb                        (GtkToggleButton *togglebutton,
                                         gpointer         user_data);
 
 void
 enabled_cb                             (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);
+
+void
+browse_image_dir_cb                    (GtkButton       *button,
                                         gpointer         user_data);

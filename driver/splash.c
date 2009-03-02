@@ -363,7 +363,7 @@ make_splash_dialog (saver_info *si)
   sp->logo_pixmap = xscreensaver_logo (si->dpy, si->splash_dialog, cmap,
                                        sp->background, 
                                        &sp->logo_pixels, &sp->logo_npixels,
-                                       True);
+                                       0, True);
 
   XMapRaised (si->dpy, si->splash_dialog);
   XSync (si->dpy, False);

@@ -46,7 +46,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
       ;;
 
       *-dec-* )
-        AC_MSG_RESULT(DEC: adding -std1)
+        AC_MSG_RESULT(DEC: adding -std1 -ieee)
         CC="$CC -std1"
       ;;
 
@@ -745,6 +745,13 @@ AC_PROG_INSTALL
 AC_PROG_INSTALL_DIRS
 AC_PROG_MAKE_SET
 
+# By default, autoconf sets INSTALL_SCRIPT to '${INSTALL_PROGRAM}'.
+# That's wrong: it should be set to '${INSTALL}', so that one can
+# implement the "install-strip" target properly (strip executables,
+# but do not try to strip scripts.)
+#
+INSTALL_SCRIPT='${INSTALL}'
+
 # random libc stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h)
@@ -792,13 +799,11 @@ AC_CHECK_X_HEADER(X11/Xmu/Error.h, [have_xmu=yes])
 if test "$have_xmu" = no ; then
   XMU_SRCS='$(UTILS_SRC)/xmu.c'
   XMU_OBJS='$(UTILS_BIN)/xmu.o'
+  XMU_LIBS=''
 else
   XMU_SRCS=''
   XMU_OBJS=''
-  SAVER_LIBS="-lXmu $SAVER_LIBS"
-  HACK_LIBS="-lXmu $HACK_LIBS"
-  MOTIF_LIBS="-lXmu $MOTIF_LIBS"
-  GTK_LIBS="-lXmu $GTK_LIBS"
+  XMU_LIBS='-lXmu'
   AC_DEFINE(HAVE_XMU)
 fi
 
@@ -1087,7 +1092,7 @@ fi
 
 ###############################################################################
 #
-#       Check for the XF86VMODE server extension.
+#       Check for the XF86VMODE server extension (for virtual screens.)
 #
 ###############################################################################
 
@@ -1120,6 +1125,54 @@ if test "$with_xf86vmode" = yes; then
 
 elif test "$with_xf86vmode" != no; then
   echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XF86VMODE server extension (for gamma fading.)
+#
+###############################################################################
+
+have_xf86gamma=no
+with_xf86gamma_req=unspecified
+AC_ARG_WITH(xf86gamma-ext,
+[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
+  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
+  [with_xf86gamma=yes])
+
+HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
+
+if test "$with_xf86gamma" = yes; then
+
+  # first check for xf86vmode.h, if we haven't already
+  if test "$have_xf86vmode" = yes; then
+    have_xf86gamma=yes
+  else
+    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes])
+  fi
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
+                  [have_xf86gamma=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # pull in the lib, if we haven't already
+  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xf86gamma" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+  fi
+
+elif test "$with_xf86gamma" != no; then
+  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
   exit 1
 fi
 
@@ -2330,38 +2383,6 @@ fi
 
 ###############################################################################
 #
-#       Check for the SGI Iris Video Library.
-#
-###############################################################################
-
-have_sgivideo=no
-with_sgivideo_req=unspecified
-AC_ARG_WITH(sgivideo,
-[  --with-sgivideo         Include support for SGI's Iris Video Library.],
-  [with_sgivideo="$withval"; with_sgivideo_req="$withval"],
-  [with_sgivideo=yes])
-
-HANDLE_X_PATH_ARG(with_sgivideo, --with-sgivideo, Iris Video)
-
-if test "$with_sgivideo" = yes; then
-  AC_CHECK_X_HEADER(dmedia/vl.h, have_sgivideo=yes)
-  if test "$have_sgivideo" = yes; then
-    have_sgivideo=no
-    AC_CHECK_LIB(vl, vlOpenVideo, [have_sgivideo=yes])
-    if test "$have_sgivideo" = yes; then
-      SGI_VIDEO_OBJS="$(UTILS_BIN)/sgivideo.o"
-      SGI_VIDEO_LIBS="-lvl"
-      AC_DEFINE(HAVE_SGI_VIDEO)
-    fi
-  fi
-elif test "$with_sgivideo" != no; then
-  echo "error: must be yes or no: --with-sgivideo=$with_sgivideo"
-  exit 1
-fi
-
-
-###############################################################################
-#
 #       Check for a program to generate random text.
 #
 #       Zippy is funnier than the idiocy generally spat out by `fortune',
@@ -2597,7 +2618,7 @@ else
   LOCK_OBJS='$(NOLOCK_OBJS_1)'
 fi
 
-INSTALL_SETUID='$(INSTALL) $(SUID_FLAGS)'
+INSTALL_SETUID='$(INSTALL_PROGRAM) $(SUID_FLAGS)'
 
 if test "$need_setuid" = yes; then
   NEED_SETUID=yes
@@ -2653,13 +2674,12 @@ AC_SUBST(SETUID_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)
-AC_SUBST(SGI_VIDEO_OBJS)
-AC_SUBST(SGI_VIDEO_LIBS)
 
 AC_SUBST(PASSWD_SRCS)
 AC_SUBST(PASSWD_OBJS)
 AC_SUBST(XMU_SRCS)
 AC_SUBST(XMU_OBJS)
+AC_SUBST(XMU_LIBS)
 AC_SUBST(SAVER_GL_SRCS)
 AC_SUBST(SAVER_GL_OBJS)
 AC_SUBST(SAVER_GL_LIBS)
@@ -2936,10 +2956,6 @@ if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
 fi
 
-if test "$with_sgivideo_req" = yes -a "$have_sgivideo" = no ; then
-  warn 'Use of the Iris Video Library was requested, but it was not found.'
-fi
-
 if test -n "$with_zippy_req"; then
   if test "$with_zippy_req" != "$ac_cv_zippy_program" ; then
     warnL "$with_zippy_req was requested as the Zippy program,"
@@ -3000,7 +3016,7 @@ do_dir_warning=no
 # M4 sucks!!
 changequote(X,Y)
 rpmv=`(rpm -qv xscreensaver) 2>&- | \
-      sed 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/'`
+      sed -n 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/p'`
 changequote([,])
 
 if test \! -z "$rpmv" ; then

@@ -98,6 +98,8 @@ typedef struct {
 	fishRec     momWhale;
 	fishRec     babyWhale;
 	fishRec     dolph;
+
+        XImage     *texture;	   /* water distortion overlay bits */
 } atlantisstruct;
 
 extern void FishTransform(fishRec *);

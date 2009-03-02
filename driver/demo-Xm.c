@@ -1012,6 +1012,10 @@ populate_prefs_page (Widget top, prefs_pair *pair)
 	  }
       }
 
+#ifdef HAVE_XF86VMODE_GAMMA
+    found_any_writable_cells = True;  /* if we can gamma fade, go for it */
+#endif
+
     XtVaSetValues (name_to_widget (top, "fadeSecondsLabel"), XtNsensitive,
                            found_any_writable_cells, 0);
     XtVaSetValues (name_to_widget (top, "fadeTicksLabel"), XtNsensitive,

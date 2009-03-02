@@ -222,6 +222,10 @@ static const char * const prefs[] = {
   "dpmsStandby",
   "dpmsSuspend",
   "dpmsOff",
+  "grabDesktopImages",
+  "grabVideoFrames",
+  "chooseRandomImages",
+  "imageDirectory",
   "",
   "programs",
   "",
@@ -495,6 +499,9 @@ write_entry (FILE *out, const char *key, const char *value)
   fprintf(out, "%s:", key);
   col = strlen(key) + 1;
 
+  if (strlen(key) > 14)
+    col = tab_to (out, col, 20);
+
   while (1)
     {
       if (!programs_p)
@@ -724,10 +731,17 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("captureStderr")	type = pref_bool, b = p->capture_stderr_p;
       CHECK("captureStdout")	continue;  /* don't save */
       CHECK("font")		type = pref_str,  s =    stderr_font;
+
       CHECK("dpmsEnabled")	type = pref_bool, b = p->dpms_enabled_p;
       CHECK("dpmsStandby")	type = pref_time, t = p->dpms_standby;
       CHECK("dpmsSuspend")	type = pref_time, t = p->dpms_suspend;
       CHECK("dpmsOff")		type = pref_time, t = p->dpms_off;
+
+      CHECK("grabDesktopImages") type =pref_bool, b = p->grab_desktop_p;
+      CHECK("grabVideoFrames")   type =pref_bool, b = p->grab_video_p;
+      CHECK("chooseRandomImages")type =pref_bool, b = p->random_image_p;
+      CHECK("imageDirectory")    type =pref_str,  s = p->image_directory;
+
       CHECK("programs")		type = pref_str,  s =    programs;
       CHECK("pointerPollTime")	type = pref_time, t = p->pointer_timeout;
       CHECK("windowCreationTimeout")type=pref_time,t= p->notice_events_timeout;
@@ -924,9 +938,15 @@ load_init_file (saver_preferences *p)
 						       "Time");
 
   p->dpms_enabled_p  = get_boolean_resource ("dpmsEnabled", "Boolean");
-  p->dpms_standby    = 1000 * get_seconds_resource ("dpmsStandby", "Time");
-  p->dpms_suspend    = 1000 * get_seconds_resource ("dpmsSuspend", "Time");
-  p->dpms_off        = 1000 * get_seconds_resource ("dpmsOff",     "Time");
+  p->dpms_standby    = 1000 * get_minutes_resource ("dpmsStandby", "Time");
+  p->dpms_suspend    = 1000 * get_minutes_resource ("dpmsSuspend", "Time");
+  p->dpms_off        = 1000 * get_minutes_resource ("dpmsOff",     "Time");
+
+  p->grab_desktop_p  = get_boolean_resource ("grabDesktopImages",  "Boolean");
+  p->grab_video_p    = get_boolean_resource ("grabVideoFrames",    "Boolean");
+  p->random_image_p  = get_boolean_resource ("chooseRandomImages", "Boolean");
+  p->image_directory = get_string_resource  ("imageDirectory",
+                                             "ImageDirectory");
 
   p->shell = get_string_resource ("bourneShell", "BourneShell");
 
@@ -943,6 +963,15 @@ load_init_file (saver_preferences *p)
       free (s);
     else
       p->splash_p = True;
+  }
+
+  /* If "*grabDesktopImages" is unset, default to true. */
+  {
+    char *s = get_string_resource ("grabDesktopImages", "Boolean");
+    if (s)
+      free (s);
+    else
+      p->grab_desktop_p = True;
   }
 
   p->use_xidle_extension = get_boolean_resource ("xidleExtension","Boolean");

@@ -3,9 +3,24 @@
 zoom - wander around magified desktop
 .SH SYNOPSIS
 .B zoom
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-lenses] [\-pixwidth \fIpixels\fP] [\-pixheight \fIpixels\fP] [\-pixspacex \fIpixels\fP] [\-pixspacey \fIpixels\fP] [\-lensoffsetx \fIpixels\fP] [\-lensoffsety \fIpixels\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-lenses]
+[\-pixwidth \fIpixels\fP] [\-pixheight \fIpixels\fP]
+[\-pixspacex \fIpixels\fP] [\-pixspacey \fIpixels\fP]
+[\-lensoffsetx \fIpixels\fP] [\-lensoffsety \fIpixels\fP]
 .SH DESCRIPTION
-The \fIzoom\fP program magnifies a portion of the desktop and moves around.
+The \fIzoom\fP program takes an image, magnifies it, and scrolls around
+it, fatbits-style.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
 .SH OPTIONS
 .I zoom
 accepts the following options:
@@ -70,7 +85,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 2000 by James Macnicol.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

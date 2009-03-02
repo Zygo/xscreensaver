@@ -100,15 +100,17 @@ X_CFLAGS	= @X_CFLAGS@
 
 INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 
-SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
-		  resources.c spline.c usleep.c visual.c visual-gl.c xmu.c \
-		  logo.c yarandom.c erase.c sgivideo.c xshm.c xdbe.c
-OBJS		= alpha.o colors.o fade.o grabscreen.o hsv.o overlay.o \
-		  resources.o spline.o usleep.o visual.o visual-gl.o xmu.o \
-		  logo.o yarandom.o erase.o sgivideo.o xshm.o xdbe.o
+SRCS		= alpha.c colors.c fade.c grabscreen.c grabclient.c hsv.c \
+		  overlay.c resources.c spline.c usleep.c visual.c \
+		  visual-gl.c xmu.c logo.c yarandom.c erase.c \
+		  xshm.c xdbe.c colorbars.c
+OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
+		  overlay.o resources.o spline.o usleep.o visual.o \
+		  visual-gl.o xmu.o logo.o yarandom.o erase.o \
+		  xshm.o xdbe.o colorbars.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
-		  yarandom.h erase.h sgivideo.h xshm.h xdbe.h
+		  yarandom.h erase.h xshm.h xdbe.h colorbars.h
 LOGOS		= logo-180.gif logo-180.xpm logo-50.gif logo-50.xpm \
 		  logo-big.gif logo.eps
 EXTRAS		= README Makefile.in ad2c
@@ -231,10 +233,14 @@ grabscreen.o: $(srcdir)/yarandom.h
 grabscreen.o: $(srcdir)/usleep.h
 grabscreen.o: $(srcdir)/colors.h
 grabscreen.o: $(srcdir)/grabscreen.h
-grabscreen.o: $(srcdir)/sgivideo.h
 grabscreen.o: $(srcdir)/visual.h
 grabscreen.o: $(srcdir)/resources.h
 grabscreen.o: $(srcdir)/vroot.h
+grabclient.o: $(srcdir)/utils.h
+grabclient.o: ../config.h
+grabclient.o: $(srcdir)/grabscreen.h
+grabclient.o: $(srcdir)/resources.h
+grabclient.o: $(srcdir)/vroot.h
 hsv.o: $(srcdir)/utils.h
 hsv.o: ../config.h
 hsv.o: $(srcdir)/hsv.h
@@ -268,11 +274,6 @@ erase.o: ../config.h
 erase.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/usleep.h
 erase.o: $(srcdir)/resources.h
-sgivideo.o: $(srcdir)/utils.h
-sgivideo.o: ../config.h
-sgivideo.o: $(srcdir)/sgivideo.h
-sgivideo.o: $(srcdir)/resources.h
-sgivideo.o: $(srcdir)/visual.h
 xshm.o: $(srcdir)/utils.h
 xshm.o: ../config.h
 xshm.o: $(srcdir)/xshm.h
@@ -281,4 +282,8 @@ xdbe.o: $(srcdir)/utils.h
 xdbe.o: ../config.h
 xdbe.o: $(srcdir)/xdbe.h
 xdbe.o: $(srcdir)/resources.h
+colorbars.o: $(srcdir)/utils.h
+colorbars.o: ../config.h
+colorbars.o: $(srcdir)/resources.h
+colorbars.o: $(srcdir)/colorbars.h
 
