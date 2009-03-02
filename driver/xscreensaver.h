@@ -97,7 +97,9 @@ struct saver_info {
   int keyboard_grab_screen;	/* The screen number the keyboard grab is on */
   Bool fading_possible_p;	/* Whether fading to/from black is possible. */
   Bool throttled_p;             /* Whether we should temporarily just blank
-                                   the screen, not run hacks. */
+                                   the screen, not run hacks. (Deprecated:
+                                   users should use "xset dpms force off"
+                                   instead.) */
   time_t blank_time;		/* The time at which the screen was blanked
                                    (if currently blanked) or unblanked (if
                                    not blanked.) */

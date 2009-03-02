@@ -11,8 +11,12 @@
 #		with Sun sed, of course.
 #	7 Jan 1992: matthew@sunpix.East.Sun.COM (Matthew Stier)
 #		Escape quotes after escaping backslashes.
+#       22 Oct 2004: jwz:
+#		Convert CR to LF.
 #
 
+#sed 's/\r/\n/g' "$@" |
+perl -npe 's/\r/\n/g' < "$@" |
 sed '
 /^!/d
 /^$/d
@@ -35,4 +39,4 @@ s/\\n/\\\\n/g
 s/\\t/\\\\t/g
 s/\\f/\\\\f/g
 s/\\b/\\\\b/g
-b test' "$@"
+b test'

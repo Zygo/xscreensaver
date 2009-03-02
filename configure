@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config glib_config gtk_config gnome_config have_gnome_help xml_config gdk_pixbuf_config fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config have_gnome_help fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -860,9 +860,9 @@ Installation options:
                           Default: `PREFIX/lib/xscreensaver/'
   --with-configdir=DIR    Where to install the data files that describe each
                           of the display modes to the GUI.
-                          Default: `GNOMEPREFIX/control-center/screensavers/'
+                          Default: `GTK_PREFIX/control-center/screensavers/'
                           or `PREFIX/lib/xscreensaver/config/', depending on
-                          whether GNOME is available.
+                          whether GTK is available.
 
 Except where noted, all of the --with options below can also take a
 directory argument: for example, `--with-motif=/opt/Motif'.  That would
@@ -896,27 +896,20 @@ Screen blanking and idle-detection options:
 
 User interface options:
 
+  --with-gtk              Use the Gtk toolkit for the user interface.
   --with-motif            Use the Motif toolkit for the user interface
                           (not recommended.)
-  --with-gtk              Use the Gtk toolkit for the user interface.
-  --with-gnome            Include support for the Gnome 1.x Control Center.
-                          (This option is not needed with GTK 2.x / Gnome 2.x.)
-
-  --with-xml              The XML toolkit is needed for some parts of
-                          the Gtk interface.  Without it, the configuration
-                          interface will be much less featureful.
 
 Graphics options:
 
   --with-gl               Build those demos which depend on OpenGL.
   --with-gle              Build those demos which depend on GLE
                           (the OpenGL "extrusion" library.)
-  --with-xpm              Include support for XPM files in some demos.
-                          (Not needed if Pixbuf is used.)
   --with-pixbuf           Include support for the GDK-Pixbuf library in some
                           demos, which will make it possible for them to read
-                          GIF, JPEG, and PNG files as well.  (The path here is
-			  ignored if GTK 2.x is being used.)
+                          GIF, JPEG, and PNG files as well.
+  --with-xpm              Include support for XPM files in some demos.
+                          (Not needed if Pixbuf is used.)
   --with-jpeg             Include support for the JPEG library.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
@@ -2594,6 +2587,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
   if test -z "$GCC"; then
+    # not using GCC
     echo "$as_me:$LINENO: checking how to request ANSI compilation" >&5
 echo $ECHO_N "checking how to request ANSI compilation... $ECHO_C" >&6
     case "$host" in
@@ -2607,16 +2601,23 @@ echo "${ECHO_T}HPUX: adding -Ae" >&6
 echo "${ECHO_T}AIX: adding -qlanglvl=ansi -qhalt=e" >&6
         CC="$CC -qlanglvl=ansi -qhalt=e"
       ;;
-
       *-dec-* )
         echo "$as_me:$LINENO: result: DEC: adding -std1 -ieee" >&5
 echo "${ECHO_T}DEC: adding -std1 -ieee" >&6
         CC="$CC -std1"
       ;;
-
       *)
         echo "$as_me:$LINENO: result: no idea" >&5
 echo "${ECHO_T}no idea" >&6
+      ;;
+    esac
+  else
+    # using GCC
+    case "$host" in
+      *-solaris*)
+        echo "$as_me:$LINENO: result: Solaris: adding -D__EXTENSIONS__" >&5
+echo "${ECHO_T}Solaris: adding -D__EXTENSIONS__" >&6
+        CC="$CC -D__EXTENSIONS__"
       ;;
     esac
   fi
@@ -12417,7 +12418,7 @@ if test "${ac_cv_have_proc_interrupts+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_cv_have_proc_interrupts=no
-     if grep keyboard /proc/interrupts >/dev/null 2>&1 ; then
+     if grep 'keyboard\|i8042' /proc/interrupts >/dev/null 2>&1 ; then
        ac_cv_have_proc_interrupts=yes
      fi
 
@@ -14601,6 +14602,320 @@ esac
 
 ###############################################################################
 #
+#       Check for -lgtk (and Gnome stuff)
+#
+###############################################################################
+
+have_gtk=no
+with_gtk_req=unspecified
+
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  with_gtk="$withval"; with_gtk_req="$withval"
+else
+  with_gtk=yes
+fi;
+
+# if --with-gtk=/directory/ was specified, remember that directory so that
+# we can also look for the `gtk-config' program in that directory.
+case "$with_gtk" in
+  /*)
+    gtk_dir="$with_gtk"
+    ;;
+  *)
+    gtk_dir=""
+    ;;
+esac
+
+
+   case "$with_gtk" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     echo "$as_me:$LINENO: checking for Gtk headers" >&5
+echo $ECHO_N "checking for Gtk headers... $ECHO_C" >&6
+     d=$with_gtk/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     echo "$as_me:$LINENO: checking for Gtk libs" >&5
+echo $ECHO_N "checking for Gtk libs... $ECHO_C" >&6
+     d=$with_gtk/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     # replace the directory string with "yes".
+     with_gtk_req="yes"
+     with_gtk=$with_gtk_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-gtk must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_gtk" != yes -a "$with_gtk" != no ; then
+  echo "error: must be yes or no: --with-gtk=$with_gtk"
+  exit 1
+fi
+
+
+parse_gtk_version_string() {
+  # M4 sucks!!
+
+  maj=`echo $ac_gtk_version_string | sed -n 's/\..*//p'`
+  min=`echo $ac_gtk_version_string | sed -n 's/[^.]*\.\([^.]*\).*/\1/p'`
+
+  ac_gtk_version=`echo "$maj * 1000 + $min" | bc`
+  if test -z "$ac_gtk_version"; then
+    ac_gtk_version=unknown
+    ac_gtk_version_string=unknown
+  fi
+}
+
+# Find pkg-config... (need this for both gtk and gdk_pixbuf.)
+# if the user specified --with-gtk=/foo/ then look there.
+#
+gtk_path="$PATH"
+if test ! -z "$gtk_dir"; then
+  # canonicalize slashes.
+  foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+  gtk_path="$foo:$gtk_path"
+fi
+
+for ac_prog in pkg-config
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_pkg_config+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $pkg_config in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_pkg_config="$pkg_config" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $gtk_path
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_pkg_config="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+pkg_config=$ac_cv_path_pkg_config
+
+if test -n "$pkg_config"; then
+  echo "$as_me:$LINENO: result: $pkg_config" >&5
+echo "${ECHO_T}$pkg_config" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$pkg_config" && break
+done
+
+
+if test -z "$pkg_config" ; then
+  { echo "$as_me:$LINENO: WARNING: pkg-config not found!" >&5
+echo "$as_me: WARNING: pkg-config not found!" >&2;}
+  pkg_config="false"
+fi
+
+
+# Utility function for running pkg-config-based tests...
+#
+pkgs=''
+pkg_check_version() {
+  if test "$ok" = yes ; then
+    req="$1"
+    min="$2"
+    echo "$as_me:$LINENO: checking for $req" >&5
+echo $ECHO_N "checking for $req... $ECHO_C" >&6
+    if $pkg_config --exists "$req" ; then
+      vers=`$pkg_config --modversion "$req"`
+      if $pkg_config --exists "$req >= $min" ; then
+        echo "$as_me:$LINENO: result: $vers" >&5
+echo "${ECHO_T}$vers" >&6
+        pkgs="$pkgs $req"
+        return 1
+      else
+        echo "$as_me:$LINENO: result: $vers (wanted >= $min)" >&5
+echo "${ECHO_T}$vers (wanted >= $min)" >&6
+        ok=no
+        return 0
+      fi
+    else
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      ok=no
+      return 0
+    fi
+  fi
+}
+
+
+jurassic_gtk=no
+gtk_halfassed=no
+
+if test "$with_gtk" = yes; then
+  have_gtk=no
+
+  ok="yes"
+  pkg_check_version            gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
+  pkg_check_version         gmodule-2.0  2.0.0
+  pkg_check_version          libxml-2.0  2.4.6
+  pkg_check_version        libglade-2.0  2.0.0
+  pkg_check_version      gdk-pixbuf-2.0  2.0.0
+  pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
+  have_gtk="$ok"
+
+  if test "$have_gtk" = no; then
+    if test -n "$ac_gtk_version_string" ; then
+      gtk_halfassed="$ac_gtk_version_string"
+      gtk_halfassed_lib="$req"
+    fi
+  fi
+
+  if test "$have_gtk" = yes; then
+    parse_gtk_version_string
+    jurassic_gtk=no
+  fi
+
+  if test "$have_gtk" = yes; then
+    echo "$as_me:$LINENO: checking for Gtk includes" >&5
+echo $ECHO_N "checking for Gtk includes... $ECHO_C" >&6
+if test "${ac_cv_gtk_config_cflags+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_gtk_config_cflags=`$pkg_config --cflags $pkgs`
+fi
+echo "$as_me:$LINENO: result: $ac_cv_gtk_config_cflags" >&5
+echo "${ECHO_T}$ac_cv_gtk_config_cflags" >&6
+    echo "$as_me:$LINENO: checking for Gtk libs" >&5
+echo $ECHO_N "checking for Gtk libs... $ECHO_C" >&6
+if test "${ac_cv_gtk_config_libs+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_gtk_config_libs=`$pkg_config --libs $pkgs`
+fi
+echo "$as_me:$LINENO: result: $ac_cv_gtk_config_libs" >&5
+echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
+  fi
+  ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
+  ac_gtk_config_libs=$ac_cv_gtk_config_libs
+
+  GTK_EXTRA_OBJS=""
+  GNOME_DATADIR=""
+  GNOME_PANELDIR='$(GNOME_PANELDIR2)'
+  if test "$have_gtk" = yes; then
+    GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    GNOME_DATADIR="$GNOME_DATADIR/share"
+  fi
+
+  if test "$have_gtk" = yes; then
+    INCLUDES="$INCLUDES $ac_gtk_config_cflags"
+    GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK2 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_XML 1
+_ACEOF
+
+  fi
+
+fi
+
+
+# Check for the Gnome Help Browser.
+#
+if test "$have_gtk" = yes; then
+  for ac_prog in yelp gnome-help-browser
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_have_gnome_help+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$have_gnome_help"; then
+  ac_cv_prog_have_gnome_help="$have_gnome_help" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_have_gnome_help="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+have_gnome_help=$ac_cv_prog_have_gnome_help
+if test -n "$have_gnome_help"; then
+  echo "$as_me:$LINENO: result: $have_gnome_help" >&5
+echo "${ECHO_T}$have_gnome_help" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$have_gnome_help" && break
+done
+test -n "$have_gnome_help" || have_gnome_help="no"
+
+  if test "$have_gnome_help" != no; then
+    have_gnome_help=yes
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for -lXm.
 #
 ###############################################################################
@@ -14804,1405 +15119,6 @@ fi
 
 
   CPPFLAGS="$ac_save_CPPFLAGS"
-fi
-
-
-###############################################################################
-#
-#       Check for -lgtk (and Gnome stuff)
-#
-###############################################################################
-
-have_gtk=no
-have_gtk2=no
-with_gtk_req=unspecified
-
-# Check whether --with-gtk or --without-gtk was given.
-if test "${with_gtk+set}" = set; then
-  withval="$with_gtk"
-  with_gtk="$withval"; with_gtk_req="$withval"
-else
-  with_gtk=yes
-fi;
-
-# if --with-gtk=/directory/ was specified, remember that directory so that
-# we can also look for the `gtk-config' program in that directory.
-case "$with_gtk" in
-  /*)
-    gtk_dir="$with_gtk"
-    ;;
-  *)
-    gtk_dir=""
-    ;;
-esac
-
-
-   case "$with_gtk" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     echo "$as_me:$LINENO: checking for Gtk headers" >&5
-echo $ECHO_N "checking for Gtk headers... $ECHO_C" >&6
-     d=$with_gtk/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     echo "$as_me:$LINENO: checking for Gtk libs" >&5
-echo $ECHO_N "checking for Gtk libs... $ECHO_C" >&6
-     d=$with_gtk/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     # replace the directory string with "yes".
-     with_gtk_req="yes"
-     with_gtk=$with_gtk_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-gtk must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_gtk" != yes -a "$with_gtk" != no ; then
-  echo "error: must be yes or no: --with-gtk=$with_gtk"
-  exit 1
-fi
-
-have_gnome=no
-with_gnome_req=unspecified
-
-# Check whether --with-gnome or --without-gnome was given.
-if test "${with_gnome+set}" = set; then
-  withval="$with_gnome"
-  with_gnome="$withval"; with_gnome_req="$withval"
-else
-  with_gnome=yes
-fi;
-
-# if --with-gnome=/directory/ was specified, remember that directory so that
-# we can also look for the `gnome-config' program in that directory.
-case "$with_gnome" in
-  /*)
-    gnome_dir="$with_gnome"
-    ;;
-  *)
-    gnome_dir=""
-    ;;
-esac
-
-
-   case "$with_gnome" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     echo "$as_me:$LINENO: checking for Gnome headers" >&5
-echo $ECHO_N "checking for Gnome headers... $ECHO_C" >&6
-     d=$with_gnome/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     echo "$as_me:$LINENO: checking for Gnome libs" >&5
-echo $ECHO_N "checking for Gnome libs... $ECHO_C" >&6
-     d=$with_gnome/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     # replace the directory string with "yes".
-     with_gnome_req="yes"
-     with_gnome=$with_gnome_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-gnome must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_gnome" != yes -a "$with_gnome" != no ; then
-  echo "error: must be yes or no: --with-gnome=$with_gnome"
-  exit 1
-fi
-
-parse_gtk_version_string() {
-  # M4 sucks!!
-
-  maj=`echo $ac_gtk_version_string | sed -n 's/\..*//p'`
-  min=`echo $ac_gtk_version_string | sed -n 's/[^.]*\.\([^.]*\).*/\1/p'`
-
-  ac_gtk_version=`echo "$maj * 1000 + $min" | bc`
-  if test -z "$ac_gtk_version"; then
-    ac_gtk_version=unknown
-    ac_gtk_version_string=unknown
-  fi
-}
-
-
-jurassic_gtk=no
-gtk2_halfassed=no
-
-if test "$with_gtk" = yes; then
-  have_gtk=no
-
-  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
-  # look in /foo/bin/ for glib-config, gtk-config, and gnome-config.
-  #
-  gtk_path="$PATH"
-
-  if test ! -z "$gtk_dir"; then
-    # canonicalize slashes.
-    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-    gtk_path="$foo:$gtk_path"
-  fi
-
-  if test ! -z "$gnome_dir"; then
-    # canonicalize slashes.
-    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
-    gtk_path="$foo:$gtk_path"
-  fi
-
-  for ac_prog in pkg-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_pkg_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $pkg_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_pkg_config="$pkg_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $gtk_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_pkg_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-pkg_config=$ac_cv_path_pkg_config
-
-if test -n "$pkg_config"; then
-  echo "$as_me:$LINENO: result: $pkg_config" >&5
-echo "${ECHO_T}$pkg_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$pkg_config" && break
-done
-
-
-  if test -n "$pkg_config" ; then
-    #
-    # the new way...
-    # run pkg-config based tests.
-    #
-    pkgs=''
-    pkg_check_version() {
-      if test "$ok" = yes ; then
-        req="$1"
-        min="$2"
-        echo "$as_me:$LINENO: checking for $req" >&5
-echo $ECHO_N "checking for $req... $ECHO_C" >&6
-        if $pkg_config --exists "$req" ; then
-          vers=`$pkg_config --modversion "$req"`
-          if $pkg_config --exists "$req >= $min" ; then
-            echo "$as_me:$LINENO: result: $vers" >&5
-echo "${ECHO_T}$vers" >&6
-            pkgs="$pkgs $req"
-            return 1
-          else
-            echo "$as_me:$LINENO: result: $vers (wanted >= $min)" >&5
-echo "${ECHO_T}$vers (wanted >= $min)" >&6
-            ok=no
-            return 0
-          fi
-        else
-          echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-          ok=no
-          return 0
-        fi
-      fi
-    }
-
-    echo "$as_me:$LINENO: result: checking for GTK 2.x with pkg-config based tests..." >&5
-echo "${ECHO_T}checking for GTK 2.x with pkg-config based tests..." >&6
-
-    ok="yes"
-    pkg_check_version       gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
-    pkg_check_version    gmodule-2.0  2.0.0
-    pkg_check_version     libxml-2.0  2.4.6
-    pkg_check_version   libglade-2.0  1.99.0
-#   pkg_check_version gdk_pixbuf      0.1
-    have_gtk="$ok"
-
-    if test "$have_gtk" = yes; then
-      have_gtk2=yes
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_GTK2 1
-_ACEOF
-
-    else
-      if test -n "$ac_gtk_version_string" ; then
-        gtk2_halfassed="$ac_gtk_version_string"
-        gtk2_halfassed_lib="$req"
-      fi
-    fi
-
-    if test "$have_gtk" = no; then
-      #
-      # we don't have GTK 2.  Let's look for GTK 1.
-      #
-      echo "$as_me:$LINENO: result: checking for GTK 1.x with pkg-config based tests..." >&5
-echo "${ECHO_T}checking for GTK 1.x with pkg-config based tests..." >&6
-
-      pkgs=''
-      ok="yes"
-      pkg_check_version gtk+       1.2     ; ac_gtk_version_string="$vers"
-      pkg_check_version glib       1.0
-      pkg_check_version gdk_pixbuf 0.1
-      have_gtk="$ok"
-
-      # Now check for Gnome...
-      #
-      if test "$have_gtk" = yes -a "$with_gnome" = yes; then
-        old_pkgs="$pkgs"
-        ok=yes
-        pkg_check_version capplet    1.0
-        pkg_check_version gnomeui    1.0
-        pkg_check_version gdk_pixbuf 0.1
-        have_gnome="$ok"
-
-        if test "$have_gnome" = no; then
-          pkgs="$old_pkgs"
-        else
-          cat >>confdefs.h <<\_ACEOF
-#define HAVE_CRAPPLET 1
-_ACEOF
-
-        fi
-      fi
-    fi
-
-    if test "$have_gtk" = yes; then
-      parse_gtk_version_string
-      jurassic_gtk=no
-    else
-      have_gnome=no
-    fi
-
-    if test "$have_gtk" = yes; then
-      echo "$as_me:$LINENO: checking for Gtk includes" >&5
-echo $ECHO_N "checking for Gtk includes... $ECHO_C" >&6
-if test "${ac_cv_gtk_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gtk_config_cflags=`$pkg_config --cflags $pkgs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gtk_config_cflags" >&5
-echo "${ECHO_T}$ac_cv_gtk_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for Gtk libs" >&5
-echo $ECHO_N "checking for Gtk libs... $ECHO_C" >&6
-if test "${ac_cv_gtk_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gtk_config_libs=`$pkg_config --libs $pkgs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gtk_config_libs" >&5
-echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
-    fi
-    ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
-    ac_gtk_config_libs=$ac_cv_gtk_config_libs
-
-    ac_gnome_config_cflags=$ac_gtk_config_cflags
-    ac_gnome_config_libs=$ac_gtk_config_libs
-
-  else
-    #
-    # the old way...
-    # run {gnome,gtk}-config based tests.
-    #
-    echo "$as_me:$LINENO: result: checking for GTK 1.x with gtk-config based tests..." >&5
-echo "${ECHO_T}checking for GTK 1.x with gtk-config based tests..." >&6
-
-    for ac_prog in glib12-config glib-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_glib_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $glib_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_glib_config="$glib_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $gtk_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_glib_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-glib_config=$ac_cv_path_glib_config
-
-if test -n "$glib_config"; then
-  echo "$as_me:$LINENO: result: $glib_config" >&5
-echo "${ECHO_T}$glib_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$glib_config" && break
-done
-
-    for ac_prog in gtk12-config  gtk-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_gtk_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $gtk_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_gtk_config="$gtk_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $gtk_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_gtk_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-gtk_config=$ac_cv_path_gtk_config
-
-if test -n "$gtk_config"; then
-  echo "$as_me:$LINENO: result: $gtk_config" >&5
-echo "${ECHO_T}$gtk_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$gtk_config" && break
-done
-
-
-    if test "$with_gnome" = yes; then
-      for ac_prog in gnome-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_gnome_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $gnome_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_gnome_config="$gnome_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $gtk_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_gnome_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-gnome_config=$ac_cv_path_gnome_config
-
-if test -n "$gnome_config"; then
-  echo "$as_me:$LINENO: result: $gnome_config" >&5
-echo "${ECHO_T}$gnome_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$gnome_config" && break
-done
-
-    fi
-
-    if test -n "$glib_config" -a  -n "$gtk_config" ; then
-      have_gtk=yes
-      if test "$with_gnome" = yes -a -n "$gnome_config" ; then
-        have_gnome=yes
-      fi
-    fi
-
-    if test "$have_gtk" = yes; then
-      echo "$as_me:$LINENO: checking Gtk version number" >&5
-echo $ECHO_N "checking Gtk version number... $ECHO_C" >&6
-if test "${ac_cv_gtk_version_string+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gtk_version_string=`$gtk_config --version`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gtk_version_string" >&5
-echo "${ECHO_T}$ac_cv_gtk_version_string" >&6
-      ac_gtk_version_string=$ac_cv_gtk_version_string
-      parse_gtk_version_string
-    fi
-
-    if test "$have_gtk" = yes; then
-      if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
-      then
-        have_gtk=no
-        have_gnome=no
-        jurassic_gtk=yes
-      fi
-    fi
-
-    if test "$have_gtk" = yes; then
-      echo "$as_me:$LINENO: checking for Gtk includes" >&5
-echo $ECHO_N "checking for Gtk includes... $ECHO_C" >&6
-if test "${ac_cv_gtk_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gtk_config_cflags=`$gtk_config --cflags`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gtk_config_cflags" >&5
-echo "${ECHO_T}$ac_cv_gtk_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for Gtk libs" >&5
-echo $ECHO_N "checking for Gtk libs... $ECHO_C" >&6
-if test "${ac_cv_gtk_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gtk_config_libs=`$gtk_config --libs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gtk_config_libs" >&5
-echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
-    fi
-    ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
-    ac_gtk_config_libs=$ac_cv_gtk_config_libs
-
-    # Check for Gnome Capplet support.
-    # Note that this is only needed with Gnome 1.x, not Gnome 2.x.
-    # In a Gnome 2.x world, libcapplet will not exist.
-    # (In fact, this likely won't even be checked, since in a Gnome 2.x
-    # world, we will probably be up in the "$pkg_config" branch instead
-    # of here in the "$gnome_config" branch.)
-    #
-    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-      gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
-      echo "$as_me:$LINENO: checking for Gnome capplet includes" >&5
-echo $ECHO_N "checking for Gnome capplet includes... $ECHO_C" >&6
-      if test "${ac_cv_gnome_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if ( $gnome_config --cflags $gnome_config_libs 2>&1 | \
-              grep Unknown >/dev/null ) ; then
-           ac_cv_gnome_config_cflags=''
-         else
-          ac_cv_gnome_config_cflags=`$gnome_config --cflags $gnome_config_libs`
-         fi
-fi
-
-      ac_gnome_config_cflags=$ac_cv_gnome_config_cflags
-      if test "$ac_gnome_config_cflags" = "" ; then
-        have_gnome=no
-        echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-      else
-        echo "$as_me:$LINENO: result: $ac_gnome_config_cflags" >&5
-echo "${ECHO_T}$ac_gnome_config_cflags" >&6
-      fi
-    fi
-
-    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-      echo "$as_me:$LINENO: checking for Gnome capplet libs" >&5
-echo $ECHO_N "checking for Gnome capplet libs... $ECHO_C" >&6
-      if test "${ac_cv_gnome_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if ( $gnome_config --libs $gnome_config_libs 2>&1 |
-              grep Unknown >/dev/null ) ; then
-           ac_cv_gnome_config_libs=''
-         else
-           ac_cv_gnome_config_libs=`$gnome_config --libs $gnome_config_libs`
-         fi
-fi
-
-      ac_gnome_config_libs=$ac_cv_gnome_config_libs
-      if test "$ac_gnome_config_libs" = "" ; then
-        have_gnome=no
-        echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-      else
-        echo "$as_me:$LINENO: result: $ac_gnome_config_libs" >&5
-echo "${ECHO_T}$ac_gnome_config_libs" >&6
-      fi
-    fi
-
-    # If we have Gnome, then override the gtk-config values with
-    # the gnome-config values.
-    #
-    if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-      ac_gtk_config_cflags=$ac_gnome_config_cflags
-      ac_gtk_config_libs=$ac_gnome_config_libs
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_CRAPPLET 1
-_ACEOF
-
-    fi
-
-  fi   # end of {gnome,gtk}-config based tests
-
-  if test "$have_gtk" = yes -a "$have_gtk2" = no; then
-    # check for this function that was not in libcapplet 1.2.
-    # (only needed in Gnome/Gtk 1.x, not Gnome/Gtk 2.x)
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for capplet_widget_changes_are_immediate in -lcapplet" >&5
-echo $ECHO_N "checking for capplet_widget_changes_are_immediate in -lcapplet... $ECHO_C" >&6
-if test "${ac_cv_lib_capplet_capplet_widget_changes_are_immediate+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcapplet $ac_gnome_config_libs $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char capplet_widget_changes_are_immediate ();
-int
-main ()
-{
-capplet_widget_changes_are_immediate ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_capplet_capplet_widget_changes_are_immediate=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_capplet_capplet_widget_changes_are_immediate=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_capplet_capplet_widget_changes_are_immediate" >&5
-echo "${ECHO_T}$ac_cv_lib_capplet_capplet_widget_changes_are_immediate" >&6
-if test $ac_cv_lib_capplet_capplet_widget_changes_are_immediate = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_CRAPPLET_IMMEDIATE 1
-_ACEOF
-
-else
-  true
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-
-  GNOME_DATADIR=""
-  if test "$have_gtk" = yes; then
-    if test -n "$pkg_config"; then
-      if test "$have_gtk2" = yes; then
-        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-      else
-        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+`
-      fi
-    else
-      GNOME_DATADIR=`$gtk_config --prefix`
-    fi
-    GNOME_DATADIR="$GNOME_DATADIR/share"
-  fi
-
-  # .desktop files go in different places in Gnome 1.x and Gnome 2.x...
-  if test "$have_gtk2" = yes; then
-    GNOME_PANELDIR='$(GNOME_PANELDIR2)'
-  else
-    GNOME_PANELDIR='$(GNOME_PANELDIR1)'
-  fi
-
-
-  if test "$have_gtk" = yes; then
-    INCLUDES="$INCLUDES $ac_gtk_config_cflags"
-    GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_GTK 1
-_ACEOF
-
-
-    if test "$have_gtk2" = yes; then
-      GTK_EXTRA_OBJS=""
-    else
-      GTK_EXTRA_OBJS="\$(GTK_EXTRA_OBJS)"
-    fi
-  fi
-
-fi
-
-
-# Check for the Gnome Help Browser.
-#
-if test "$have_gtk" = yes; then
-  for ac_prog in yelp gnome-help-browser
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_have_gnome_help+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$have_gnome_help"; then
-  ac_cv_prog_have_gnome_help="$have_gnome_help" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_have_gnome_help="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-have_gnome_help=$ac_cv_prog_have_gnome_help
-if test -n "$have_gnome_help"; then
-  echo "$as_me:$LINENO: result: $have_gnome_help" >&5
-echo "${ECHO_T}$have_gnome_help" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$have_gnome_help" && break
-done
-test -n "$have_gnome_help" || have_gnome_help="no"
-
-  if test "$have_gnome_help" != no; then
-    have_gnome_help=yes
-  fi
-fi
-
-
-###############################################################################
-#
-#       Check for -lxml
-#
-###############################################################################
-
-have_xml=no
-with_xml_req=unspecified
-xml_halfassed=no
-
-# Check whether --with-xml or --without-xml was given.
-if test "${with_xml+set}" = set; then
-  withval="$with_xml"
-  with_xml="$withval"; with_xml_req="$withval"
-else
-  with_xml=yes
-fi;
-
-# if --with-xml=/directory/ was specified, remember that directory so that
-# we can also look for the `xml-config' program in that directory.
-case "$with_xml" in
-  /*)
-    xml_dir="$with_xml"
-    ;;
-  *)
-    xml_dir=""
-    ;;
-esac
-
-
-   case "$with_xml" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     echo "$as_me:$LINENO: checking for XML headers" >&5
-echo $ECHO_N "checking for XML headers... $ECHO_C" >&6
-     d=$with_xml/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     echo "$as_me:$LINENO: checking for XML libs" >&5
-echo $ECHO_N "checking for XML libs... $ECHO_C" >&6
-     d=$with_xml/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     # replace the directory string with "yes".
-     with_xml_req="yes"
-     with_xml=$with_xml_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xml must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_xml" != yes -a "$with_xml" != no ; then
-  echo "error: must be yes or no: --with-xml=$with_xml"
-  exit 1
-fi
-
-if test "$with_xml" = yes; then
-  have_xml=no
-  have_old_xml=no
-
-  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
-  # look in /foo/bin/ for for xml-config.
-  #
-  xml_path="$PATH"
-
-  if test ! -z "$gtk_dir"; then
-    # canonicalize slashes.
-    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-    xml_path="$foo:$xml_path"
-  fi
-
-  if test ! -z "$gnome_dir"; then
-    # canonicalize slashes.
-    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
-    xml_path="$foo:$xml_path"
-  fi
-
-  if test -n "$pkg_config" ; then
-    #
-    # the new way...
-    # run pkg-config based tests.
-    #
-    pkgs=""
-    ok="yes"
-
-    # If we have Gtk 2.x, then *only* XML 2.x will work.
-    # If we have Gtk 1.x, or don't have Gtk at all, then
-    # either XML 1.x or 2.x will work.
-
-    # First check for XML 2.x.
-    #
-    pkg_check_version libxml-2.0 2.4.6
-
-    # If that didn't work (we don't have XML 2.x) and we *don't* have
-    # Gtk 2.x, then check to see if we have XML 1.x
-    #
-    if test "$ok" = no -a "$have_gtk2" = no; then
-      ok=yes
-      pkg_check_version libxml 1.0
-    fi
-
-    have_xml="$ok"
-
-    if test "$have_xml" = yes; then
-      echo "$as_me:$LINENO: checking for XML includes" >&5
-echo $ECHO_N "checking for XML includes... $ECHO_C" >&6
-if test "${ac_cv_xml_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_xml_config_cflags=`$pkg_config --cflags $pkgs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_xml_config_cflags" >&5
-echo "${ECHO_T}$ac_cv_xml_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for XML libs" >&5
-echo $ECHO_N "checking for XML libs... $ECHO_C" >&6
-if test "${ac_cv_xml_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_xml_config_libs=`$pkg_config --libs $pkgs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_xml_config_libs" >&5
-echo "${ECHO_T}$ac_cv_xml_config_libs" >&6
-      ac_xml_config_cflags=$ac_cv_xml_config_cflags
-      ac_xml_config_libs=$ac_cv_xml_config_libs
-    fi
-
-  else
-    #
-    # the old way...
-    # run {xml2,xml}-config based tests.
-    #
-
-    for ac_prog in xml2-config xml-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_xml_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $xml_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_xml_config="$xml_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $xml_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_xml_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-xml_config=$ac_cv_path_xml_config
-
-if test -n "$xml_config"; then
-  echo "$as_me:$LINENO: result: $xml_config" >&5
-echo "${ECHO_T}$xml_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$xml_config" && break
-done
-
-
-    # If we found the xml-config program, run it to get flags.
-    #
-    if test -n "$xml_config" ; then
-      echo "$as_me:$LINENO: checking for XML includes" >&5
-echo $ECHO_N "checking for XML includes... $ECHO_C" >&6
-if test "${ac_cv_xml_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_xml_config_cflags=`$xml_config --cflags`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_xml_config_cflags" >&5
-echo "${ECHO_T}$ac_cv_xml_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for XML libs" >&5
-echo $ECHO_N "checking for XML libs... $ECHO_C" >&6
-if test "${ac_cv_xml_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_xml_config_libs=`$xml_config --libs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_xml_config_libs" >&5
-echo "${ECHO_T}$ac_cv_xml_config_libs" >&6
-      ac_xml_config_cflags=$ac_cv_xml_config_cflags
-      ac_xml_config_libs=$ac_cv_xml_config_libs
-    fi
-
-    ac_save_xml_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_xml_config_cflags"
-
-    # first try <libxml/parser.h> which is the new way...
-    #
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  echo "$as_me:$LINENO: checking for libxml/xmlIO.h" >&5
-echo $ECHO_N "checking for libxml/xmlIO.h... $ECHO_C" >&6
-if test "${ac_cv_header_libxml_xmlIO_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <libxml/parser.h>
-
-#include <libxml/xmlIO.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_header_libxml_xmlIO_h=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_header_libxml_xmlIO_h=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_libxml_xmlIO_h" >&5
-echo "${ECHO_T}$ac_cv_header_libxml_xmlIO_h" >&6
-if test $ac_cv_header_libxml_xmlIO_h = yes; then
-  have_xml=yes
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-    # if that didn't work, then try just <parser.h> which is the old way...
-    #
-    if test "$have_xml" = no; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  echo "$as_me:$LINENO: checking for xmlIO.h" >&5
-echo $ECHO_N "checking for xmlIO.h... $ECHO_C" >&6
-if test "${ac_cv_header_xmlIO_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <parser.h>
-
-#include <xmlIO.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_header_xmlIO_h=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_header_xmlIO_h=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_xmlIO_h" >&5
-echo "${ECHO_T}$ac_cv_header_xmlIO_h" >&6
-if test $ac_cv_header_xmlIO_h = yes; then
-  have_xml=yes; have_old_xml=yes
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-    fi
-
-    CPPFLAGS="$ac_save_xml_CPPFLAGS"
-  fi
-
-
-  have_zlib=no
-  if test "$have_xml" = yes; then
-    # we have the XML headers; now make sure zlib is around.
-    # yes, it's stupid we have to do this too, but there is
-    # dependency screwage in Gnome.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for zlibVersion in -lz" >&5
-echo $ECHO_N "checking for zlibVersion in -lz... $ECHO_C" >&6
-if test "${ac_cv_lib_z_zlibVersion+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lz  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char zlibVersion ();
-int
-main ()
-{
-zlibVersion ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_z_zlibVersion=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_z_zlibVersion=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_z_zlibVersion" >&5
-echo "${ECHO_T}$ac_cv_lib_z_zlibVersion" >&6
-if test $ac_cv_lib_z_zlibVersion = yes; then
-  have_zlib=yes
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    if test "$have_zlib" = no; then
-      xml_halfassed=yes
-      have_xml=no
-    fi
-  fi
-
-  if test "$have_xml" = yes; then
-    # we have the header, now check for the library
-    have_xml=no
-    xml_halfassed=yes
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  echo "$as_me:$LINENO: checking for xmlParseChunk in -lc" >&5
-echo $ECHO_N "checking for xmlParseChunk in -lc... $ECHO_C" >&6
-if test "${ac_cv_lib_c_xmlParseChunk+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lc $ac_xml_config_libs $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char xmlParseChunk ();
-int
-main ()
-{
-xmlParseChunk ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_c_xmlParseChunk=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_c_xmlParseChunk=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_c_xmlParseChunk" >&5
-echo "${ECHO_T}$ac_cv_lib_c_xmlParseChunk" >&6
-if test $ac_cv_lib_c_xmlParseChunk = yes; then
-  have_xml=yes
-                    xml_halfassed=no
-                    XML_LIBS="$ac_xml_config_libs"
-                    cat >>confdefs.h <<\_ACEOF
-#define HAVE_XML 1
-_ACEOF
-
-else
-  true
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  if test "$have_xml" = yes; then
-    INCLUDES="$INCLUDES $ac_xml_config_cflags"
-    GTK_LIBS="$GTK_LIBS $ac_xml_config_libs"
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_XML 1
-_ACEOF
-
-    if test "$have_old_xml" = yes; then
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_OLD_XML_HEADERS 1
-_ACEOF
-
-    fi
-  fi
-
 fi
 
 
@@ -17299,7 +16215,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 17308 "configure"
+#line 16224 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -18058,152 +16974,13 @@ elif test "$with_gle" != no; then
 fi
 
 
-
-###############################################################################
-#
-#       Check for -lXpm.
-#
-###############################################################################
-
-have_xpm=no
-with_xpm_req=unspecified
-
-# Check whether --with-xpm or --without-xpm was given.
-if test "${with_xpm+set}" = set; then
-  withval="$with_xpm"
-  with_xpm="$withval"; with_xpm_req="$withval"
-else
-  with_xpm=yes
-fi;
-
-
-   case "$with_xpm" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     echo "$as_me:$LINENO: checking for XPM headers" >&5
-echo $ECHO_N "checking for XPM headers... $ECHO_C" >&6
-     d=$with_xpm/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     echo "$as_me:$LINENO: checking for XPM libs" >&5
-echo $ECHO_N "checking for XPM libs... $ECHO_C" >&6
-     d=$with_xpm/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       echo "$as_me:$LINENO: result: $d" >&5
-echo "${ECHO_T}$d" >&6
-     else
-       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-echo "${ECHO_T}not found ($d: no such directory)" >&6
-     fi
-
-     # replace the directory string with "yes".
-     with_xpm_req="yes"
-     with_xpm=$with_xpm_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xpm must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_xpm" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  echo "$as_me:$LINENO: checking for X11/xpm.h" >&5
-echo $ECHO_N "checking for X11/xpm.h... $ECHO_C" >&6
-if test "${ac_cv_header_X11_xpm_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <X11/xpm.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_header_X11_xpm_h=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_header_X11_xpm_h=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_X11_xpm_h" >&5
-echo "${ECHO_T}$ac_cv_header_X11_xpm_h" >&6
-if test $ac_cv_header_X11_xpm_h = yes; then
-  have_xpm=yes
-                    cat >>confdefs.h <<\_ACEOF
-#define HAVE_XPM 1
-_ACEOF
-
-                    XPM_LIBS="-lXpm"
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-elif test "$with_xpm" != no; then
-  echo "error: must be yes or no: --with-xpm=$with_xpm"
-  exit 1
-fi
-
-# See comment near $motif_requires_xpm, above.
-# Need to do this here, after both Motif and XPM have been checked for.
-#
-if test "$have_motif" = yes -a "$have_xpm" = yes ; then
-  if test "$motif_requires_xpm" = yes ; then
-    MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
-  fi
-fi
-
 ###############################################################################
 #
 #       Check for -lgdk_pixbuf.
+#       These tests are for gdk_pixbuf usage of the hacks,
+#       not xscreensaver-demo (thus we have to test again to get
+#       the libraries right: don't want to pull in all of GTK
+#       for the hacks.)
 #
 ###############################################################################
 
@@ -18281,50 +17058,16 @@ fi
 
 if test "$with_gdk_pixbuf" = yes; then
   have_gdk_pixbuf=no
-  have_gdk_pixbuf2=no
 
-  if test -n "$pkg_config" ; then
-    #
-    # the new way...
-    # run pkg-config based tests.
-    #
-    pkgs=''
-    ok="yes"
+  pkgs=''
+  ok="yes"
 
-    # If we have Gtk 2.x, then *only* gdk-pixbuf 2.x will work.
-    # If we have Gtk 1.x, then *only* gdk-pixbuf 1.x will work.
-    # If we don't have Gtk at all, then either will work.
+  pkg_check_version gdk-pixbuf-2.0      2.0.0
+  pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+  have_gdk_pixbuf="$ok"
 
-    if test "$have_gtk" = no -o "$have_gtk2" = yes; then
-      #
-      # we don't have Gtk; or we have Gtk 2.x.  Check for pixbuf 2.x.
-      #
-      echo "$as_me:$LINENO: result: checking for gdk_pixbuf 2.x with gtk-config based tests..." >&5
-echo "${ECHO_T}checking for gdk_pixbuf 2.x with gtk-config based tests..." >&6
-      pkg_check_version gdk-pixbuf-2.0      2.0.0
-      pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
-      have_gdk_pixbuf="$ok"
-      have_gdk_pixbuf2="$ok"
-    fi
-
-    if test "$have_gtk" = no -o "$have_gtk2" = no; then
-      #
-      # we don't have Gtk; or we have Gtk 1.x.
-      # If we don't have pixbuf 2.x, then check for pixbuf 1.x.
-      #
-      if test "$have_gdk_pixbuf2" = no; then
-        pkgs=''
-        ok="yes"
-      echo "$as_me:$LINENO: result: checking for gdk_pixbuf 1.x with gtk-config based tests..." >&5
-echo "${ECHO_T}checking for gdk_pixbuf 1.x with gtk-config based tests..." >&6
-        pkg_check_version gdk_pixbuf      0.0
-        pkg_check_version gdk_pixbuf_xlib 0.0
-        have_gdk_pixbuf="$ok"
-      fi
-    fi
-
-    if test "$have_gdk_pixbuf" = yes; then
-      echo "$as_me:$LINENO: checking for gdk-pixbuf includes" >&5
+  if test "$have_gdk_pixbuf" = yes; then
+    echo "$as_me:$LINENO: checking for gdk-pixbuf includes" >&5
 echo $ECHO_N "checking for gdk-pixbuf includes... $ECHO_C" >&6
 if test "${ac_cv_gdk_pixbuf_config_cflags+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -18333,7 +17076,7 @@ else
 fi
 echo "$as_me:$LINENO: result: $ac_cv_gdk_pixbuf_config_cflags" >&5
 echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for gdk-pixbuf libs" >&5
+    echo "$as_me:$LINENO: checking for gdk-pixbuf libs" >&5
 echo $ECHO_N "checking for gdk-pixbuf libs... $ECHO_C" >&6
 if test "${ac_cv_gdk_pixbuf_config_libs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -18342,130 +17085,17 @@ else
 fi
 echo "$as_me:$LINENO: result: $ac_cv_gdk_pixbuf_config_libs" >&5
 echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
-    fi
-    ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
-    ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
   fi
+  ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
+  ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
 
 
-  if test "$have_gdk_pixbuf" = no; then
-    #
-    # the old way...
-    # run gdk-pixbuf-config based tests.
-    # note that we can't assume that the existence of "pkg-config" means
-    # that we don't have to look for gdk-pixbuf-config -- in Gnome 1.4,
-    # pkg-config exists, but doesn't know about pixbuf.
-    #
-
-   echo "$as_me:$LINENO: result: checking for gdk_pixbuf with gdk-pixbuf-config based tests..." >&5
-echo "${ECHO_T}checking for gdk_pixbuf with gdk-pixbuf-config based tests..." >&6
-
-    # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
-    # look in /foo/bin/ for for gdk-pixbuf-config.
-    #
-    gdk_pixbuf_path="$PATH"
-
-    if test ! -z "$gtk_dir"; then
-      # canonicalize slashes.
-      foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-      gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
-    fi
-
-    if test ! -z "$gnome_dir"; then
-      # canonicalize slashes.
-      foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
-      gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
-    fi
-
-    for ac_prog in gdk-pixbuf-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_gdk_pixbuf_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $gdk_pixbuf_config in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_gdk_pixbuf_config="$gdk_pixbuf_config" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $gdk_pixbuf_path
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_gdk_pixbuf_config="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-gdk_pixbuf_config=$ac_cv_path_gdk_pixbuf_config
-
-if test -n "$gdk_pixbuf_config"; then
-  echo "$as_me:$LINENO: result: $gdk_pixbuf_config" >&5
-echo "${ECHO_T}$gdk_pixbuf_config" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$gdk_pixbuf_config" && break
-done
-
-
-    # If we found the gdk-pixbuf-config program, run it to get flags.
-    #
-    if test -n "$gdk_pixbuf_config" ; then
-      echo "$as_me:$LINENO: checking for gdk-pixbuf includes" >&5
-echo $ECHO_N "checking for gdk-pixbuf includes... $ECHO_C" >&6
-if test "${ac_cv_gdk_pixbuf_config_cflags+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gdk_pixbuf_config_cflags=`$gdk_pixbuf_config --cflags`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gdk_pixbuf_config_cflags" >&5
-echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_cflags" >&6
-      echo "$as_me:$LINENO: checking for gdk-pixbuf libs" >&5
-echo $ECHO_N "checking for gdk-pixbuf libs... $ECHO_C" >&6
-if test "${ac_cv_gdk_pixbuf_config_libs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_gdk_pixbuf_config_libs=`$gdk_pixbuf_config --libs`
-fi
-echo "$as_me:$LINENO: result: $ac_cv_gdk_pixbuf_config_libs" >&5
-echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
-
-      # note that "gdk-pixbuf-config --libs" produces a link line including
-      # -lgdk_pixbuf, but there's no way to get it to produce one that also
-      # includes -lgdk_pixbuf_xlib.  Since we don't know *exactly* what the
-      # name of the library will be, construct it with sed...
-      # M4 sucks!!
-
-      ac_cv_gdk_pixbuf_config_libs=`echo $ac_cv_gdk_pixbuf_config_libs | \
-       sed 's@ \(-lgdk_pixbuf\([-_a-zA-Z0-9.]*\)\) @ \1 -lgdk_pixbuf_xlib\2 @'`
-
-
-      ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
-      ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
-    fi
-  fi
-
-  ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
-
-  if test "$have_gdk_pixbuf" = no; then
+  if test "$have_gdk_pixbuf" = yes; then
     #
     # we appear to have pixbuf; check for headers/libs to be sure.
     #
+    ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
 
     have_gdk_pixbuf=no
 
@@ -18931,14 +17561,16 @@ fi
   CPPFLAGS="$ac_save_CPPFLAGS"
       fi
     fi
+    CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
   fi
-
-  CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
 
   if test "$have_gdk_pixbuf" = yes; then
     # we have the headers, now check for the libraries
     have_gdk_pixbuf=no
     gdk_pixbuf_halfassed=yes
+
+    echo "$as_me:$LINENO: result: checking for gdk_pixbuf usability..." >&5
+echo "${ECHO_T}checking for gdk_pixbuf usability..." >&6
 
     # library A...
 
@@ -19134,7 +17766,151 @@ fi
 _ACEOF
 
   else
-    have_gdk_pixbuf2=no
+    echo "$as_me:$LINENO: result: checking for gdk_pixbuf usability... no" >&5
+echo "${ECHO_T}checking for gdk_pixbuf usability... no" >&6
+  fi
+fi
+
+
+###############################################################################
+#
+#       Check for -lXpm.
+#
+###############################################################################
+
+have_xpm=no
+with_xpm_req=unspecified
+
+# Check whether --with-xpm or --without-xpm was given.
+if test "${with_xpm+set}" = set; then
+  withval="$with_xpm"
+  with_xpm="$withval"; with_xpm_req="$withval"
+else
+  with_xpm=yes
+fi;
+
+
+   case "$with_xpm" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     echo "$as_me:$LINENO: checking for XPM headers" >&5
+echo $ECHO_N "checking for XPM headers... $ECHO_C" >&6
+     d=$with_xpm/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     echo "$as_me:$LINENO: checking for XPM libs" >&5
+echo $ECHO_N "checking for XPM libs... $ECHO_C" >&6
+     d=$with_xpm/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       echo "$as_me:$LINENO: result: $d" >&5
+echo "${ECHO_T}$d" >&6
+     else
+       echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
+echo "${ECHO_T}not found ($d: no such directory)" >&6
+     fi
+
+     # replace the directory string with "yes".
+     with_xpm_req="yes"
+     with_xpm=$with_xpm_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-xpm must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_xpm" = yes; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  echo "$as_me:$LINENO: checking for X11/xpm.h" >&5
+echo $ECHO_N "checking for X11/xpm.h... $ECHO_C" >&6
+if test "${ac_cv_header_X11_xpm_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <X11/Xlib.h>
+
+#include <X11/xpm.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_header_X11_xpm_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_header_X11_xpm_h=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_X11_xpm_h" >&5
+echo "${ECHO_T}$ac_cv_header_X11_xpm_h" >&6
+if test $ac_cv_header_X11_xpm_h = yes; then
+  have_xpm=yes
+                    cat >>confdefs.h <<\_ACEOF
+#define HAVE_XPM 1
+_ACEOF
+
+                    XPM_LIBS="-lXpm $XPM_LIBS"
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+elif test "$with_xpm" != no; then
+  echo "error: must be yes or no: --with-xpm=$with_xpm"
+  exit 1
+fi
+
+# See comment near $motif_requires_xpm, above.
+# Need to do this here, after both Motif and XPM have been checked for.
+#
+if test "$have_motif" = yes -a "$have_xpm" = yes ; then
+  if test "$motif_requires_xpm" = yes ; then
+    MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
   fi
 fi
 
@@ -20974,20 +19750,12 @@ fi
 # It should usually be "/usr/share/pixmaps/", but we can't just use
 # "$(prefix)/share/pixmaps" because that would usually result in
 # "/usr/X11R6/share/pixmaps/", which is wrong.  It needs to be the
-# Gnome/Gtk prefix, not the overall prefix.
+# Gtk prefix, not the overall prefix.
 #
 if test -n "$GNOME_DATADIR" ; then
   GLADE_DATADIR='$(GNOME_DATADIR)/xscreensaver'
 elif test "$have_gtk" = yes; then
-  if test -n "$pkg_config"; then
-    if test "$have_gtk2" = yes; then
-      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-    else
-      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+`
-    fi
-  else
-    GLADE_DATADIR=`$gtk_config --prefix`
-  fi
+  GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
   GLADE_DATADIR="$GLADE_DATADIR/share/xscreensaver"
 else
   GLADE_DATADIR=''
@@ -21001,15 +19769,7 @@ echo $ECHO_N "checking for locale directory... $ECHO_C" >&6
 if test -n "$GNOME_DATADIR" ; then
   PO_DATADIR="$GNOME_DATADIR"
 elif test "$have_gtk" = yes; then
-  if test -n "$pkg_config"; then
-    if test "$have_gtk2" = yes; then
-      PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
-    else
-      PO_DATADIR=`$pkg_config --variable=prefix gtk+`
-    fi
-  else
-    PO_DATADIR=`$gtk_config --prefix`
-  fi
+  PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
   PO_DATADIR="$PO_DATADIR/share"
 fi
 
@@ -21815,12 +20575,7 @@ s,@POFILES@,$POFILES,;t t
 s,@POSUB@,$POSUB,;t t
 s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
 s,@pkg_config@,$pkg_config,;t t
-s,@glib_config@,$glib_config,;t t
-s,@gtk_config@,$gtk_config,;t t
-s,@gnome_config@,$gnome_config,;t t
 s,@have_gnome_help@,$have_gnome_help,;t t
-s,@xml_config@,$xml_config,;t t
-s,@gdk_pixbuf_config@,$gdk_pixbuf_config,;t t
 s,@fortune_tmp@,$fortune_tmp,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@PREFERRED_DEMO_PROGRAM@,$PREFERRED_DEMO_PROGRAM,;t t
@@ -22620,6 +21375,19 @@ if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
 fi
 
+
+if test "$gtk_halfassed" != no ; then
+  warnL "GTK version $gtk_halfassed was found, but at least one supporting"
+  warn2 "library ($gtk_halfassed_lib) was not, so GTK can't be used."
+  warn2 "Perhaps some of the development packages are not installed?"
+  if test "$have_gtk" = yes ; then
+    v="$ac_gtk_version_string"
+    warn2 "GTK $v is also installed, so it will be used instead."
+    warn2 "Please read the above output and the \`config.log' file"
+    warn2 "for more details."
+  fi
+fi
+
 motif_warn2() {
   warn2 'Though the Motif front-end to xscreensaver is still'
   warn2 'maintained, it is no longer being updated with new'
@@ -22639,10 +21407,10 @@ if test "$have_motif" = no -a "$have_gtk" = no; then
   else
     warnL "The GTK libraries do not seem to be available; the"
     warn2 "\`xscreensaver-demo' program requires them."
-    echo ''
-    warn2 'You can use Motif or Lesstif instead of GTK (use the'
-    warn2 "\`--with-motif' option) but that is NOT recommended."
-    motif_warn2
+#   echo ''
+#   warn2 'You can use Motif or Lesstif instead of GTK (use the'
+#   warn2 "\`--with-motif' option) but that is NOT recommended."
+#   motif_warn2
   fi
 
 elif test "$with_motif_req" = yes -a "$have_motif" = no ; then
@@ -22651,7 +21419,7 @@ elif test "$with_motif_req" = yes -a "$have_motif" = no ; then
 
 elif test "$jurassic_gtk" = yes ; then
 
-  pref_gtk=1.2
+  pref_gtk=2.0
 
   v="$ac_gtk_version_string"
   if test "$with_gtk_req" = yes -a "$ac_gtk_version" = "unknown" ; then
@@ -22668,56 +21436,6 @@ elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
   warnL "Use of Gtk was requested, but it wasn't found."
 fi
 
-if test "$gtk2_halfassed" != no ; then
-  warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
-  warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
-  if test "$have_gtk" = yes ; then
-    v="$ac_gtk_version_string"
-    warn2 "GTK $v is also installed, so it will be used instead."
-    warn2 "Please read the above output and the \`config.log' file"
-    warn2 "for more details."
-  fi
-fi
-
-
-if test "$with_gnome_req" = yes -a "$have_gnome" = no \
-        -a "$have_gtk2" = no; then
-  # don't issue this warning if we have GTK2 -- in that case, the
-  # Gnome-specific code isn't needed.
-  warn  'Use of the Gnome Control Panel was requested, but the necessary'
-  warn2 'headers and/or libraries were not found.'
-fi
-
-if test "$have_gtk" = yes ; then
-  if test "$have_xml" = no ; then
-    if test "$with_xml_req" = yes ; then
-      warn  'Use of the XML library was requested, but the necessary'
-      warn2 'headers and/or libraries were not found.'
-    else
-      warn  'GTK is being used, but the XML library was not found.'
-    fi
-
-    if test "$xml_halfassed" = yes ; then
-
-      if test "$have_zlib" = yes ; then
-        which="XML libraries"
-      else
-        which="\`zlib' library"
-      fi
-
-      echo ''
-      warn2 'More specifically, we found the headers, but not the'
-      warn2 "$which; so either XML is half-installed on this"
-      warn2 "system, or something else went wrong.  The \`config.log'"
-      warn2 'file might contain some clues.'
-    fi
-
-    echo ''
-    warn2 "Without XML, the per-display-mode \`Settings' dialogs"
-    warn2 'will not be available.  Specify the location of the XML'
-    warn2 'library through the --with-xml option to configure.'
-  fi
-fi
 
 if test "$have_gtk" = yes -a "$have_gdk_pixbuf" = no ; then
   warn  "GTK is being used, but the GDK-Pixbuf library and/or"
@@ -22759,8 +21477,16 @@ if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
 fi
 
-if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no || \
-   test "$gdk_pixbuf_halfassed" = yes; then
+if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
+   test "$have_gdk_pixbuf" = no -a "$have_xpm" = no ; then
+
+  if test "$with_gdk_pixbuf_req" = yes ; then
+    true
+  elif test "$with_gdk_pixbuf_req" = no ; then
+    warnL 'The GDK-Pixbuf library is not being used.'
+  else
+    warnL 'The GDK-Pixbuf library was not found.'
+  fi
 
   if test "$with_xpm_req" = yes -o "$have_xpm" = yes ; then
     true
@@ -22770,12 +21496,8 @@ if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no || \
     warnL 'The XPM library was not found.'
   fi
 
-  if test "$with_gdk_pixbuf_req" = yes ; then
-    true
-  elif test "$with_gdk_pixbuf_req" = no ; then
-    warnL 'The GDK-Pixbuf library is not being used.'
-  else
-    warnL 'The GDK-Pixbuf library was not found.'
+  if test "$have_gdk_pixbuf" = no -a "$have_xpm" = yes ; then
+    warn2 'The XPM library is being used instead.'
   fi
 
   if test "$gdk_pixbuf_halfassed" = yes ; then
@@ -22787,15 +21509,10 @@ if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no || \
   fi
 
   echo ''
-  warn2 'Some of the demos will not be as colorful as they'
-  warn2 'could be.  You should consider installing Pixbuf or'
-  warn2 'XPM and re-running configure.  The Pixbuf library is'
-  warn2 'a part of GNOME.  The XPM library comes with most'
-  warn2 'X11 installations; you can also find it at the X11'
-  warn2 'archive sites, such as <http://sunsite.unc.edu/>.'
-  echo  ''
-  warn2 'GDK-Pixbuf is recommended over XPM, as it provides'
-  warn2 'support for more image formats.'
+  warn2 'Some of the demos will not use images as much as they could.'
+  warn2 'You should consider installing GDK-Pixbuf and re-running'
+  warn2 'configure.  (GDK-Pixbuf is recommended over XPM, as it'
+  warn2 'provides support for more image formats.)'
 fi
 
 
@@ -23004,7 +21721,8 @@ if test \! -z "$rpmv" ; then
   echo ""
   warn2 "Alternately, you could build this version of xscreensaver"
   warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
-  warn2 "file is included.  See the RPM documentation for more info."
+  warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
+  warn2 "See the RPM documentation for more info."
   echo ""
 
   if test "$rpmbdir" = "$rpmhdir" ; then

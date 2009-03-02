@@ -87,6 +87,14 @@ phosphor -program 'xemacs -nw -q -f life'
 phosphor -scale 5 -geom =1280x1024 \\
          -program 'xemacs -nw -q --eval "(hanoi 5)"'
 .EE
+If you have the
+.BR festival (1)
+text-to-speech system installed, you can have it read the screen as
+phosphor prints it:
+.EX
+phosphor -program \\
+         'fortune | tee /dev/stderr | festival --tts'
+.EE
 You can also use \fIphosphor\fP as a lo-fi replacement for the
 .BR xterm (1)
 and

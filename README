@@ -76,6 +76,16 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.18:   * New hacks, `substrate', `intermomentary', `fireworkx',
+                        and `pinion'.
+                      * New version of `flow'.
+                      * Made /proc/interrupts work again on Linux 2.6.
+                      * Made `analogtv' not hog the CPU.
+                      * Made analogtv-based hacks work properly on PPC/ARM.
+                      * Fixed a bad memory leak in `piecewise'.
+                      * Minor updates to `sonar', `molecule', `glmatrix',
+                        `galaxy', and `webcollage'.
+                      * Removed support for GTK 1.x (everyone uses 2.x now.)
 Changes since 4.17:   * Oops, pay no attention to the man behind the curtain.
 Changes since 4.16:   * New hacks, `anemotaxis' and `memscroller'.
                       * Fixed a bad bug that caused `vidwhacker' to never die.

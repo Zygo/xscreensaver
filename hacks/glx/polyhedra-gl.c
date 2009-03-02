@@ -502,10 +502,10 @@ new_polyhedron (ModeInfo *mi)
      correctly (e.g., for the "pentagrammic concave deltohedron").
    */
   GLUtesselator *tobj = gluNewTess();
-  gluTessCallback (tobj, GLU_TESS_BEGIN,  (_GLUfuncptr) &glBegin);
-  gluTessCallback (tobj, GLU_TESS_END,    (_GLUfuncptr) &glEnd);
-  gluTessCallback (tobj, GLU_TESS_VERTEX, (_GLUfuncptr) &glVertex3dv);
-  gluTessCallback (tobj, GLU_TESS_ERROR,  (_GLUfuncptr) &tess_error);
+  gluTessCallback (tobj, GLU_TESS_BEGIN,  (void (*) (void)) &glBegin);
+  gluTessCallback (tobj, GLU_TESS_END,    (void (*) (void)) &glEnd);
+  gluTessCallback (tobj, GLU_TESS_VERTEX, (void (*) (void)) &glVertex3dv);
+  gluTessCallback (tobj, GLU_TESS_ERROR,  (void (*) (void)) &tess_error);
 
   mi->polygon_count = 0;
 

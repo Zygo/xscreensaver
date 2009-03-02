@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "14-Aug-2004 (4.18)" "X Version 11"
+.TH XScreenSaver 1 "16-Dec-2004 (4.19)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -29,8 +29,6 @@ xscreensaver-command - control a running xscreensaver process
 \-exit | \
 \-restart | \
 \-lock | \
-\-throttle | \
-\-unthrottle | \
 \-version | \
 \-time | \
 \-watch]
@@ -141,21 +139,6 @@ running as you.  See
 .BR xscreensaver (1)
 for details.
 .TP 8
-.B \-throttle
-Temporarily switch to ``blank screen'' mode, and don't run any display modes
-at all, until the screensaver is next de-activated.  This is useful if you're
-using a machine remotely, and you find that some display modes are using too
-much CPU.  
-
-(If you want to do this \fIpermanently\fP, that is, you want the screen saver
-to only blank the screen and not run demos at all, then set the \fImode\fP
-preference to "blank":  See
-.BR xscreensaver (1)
-for details.)
-.TP 8
-.B \-unthrottle
-Turn `-throttle' mode off and resume normal behavior.
-.TP 8
 .B \-version
 Prints the version of xscreensaver that is currently running on the display:
 that is, the actual version number of the running xscreensaver background 
@@ -230,6 +213,26 @@ while (<IN>) {
 Note that LOCK might come either with or without a preceeding BLANK
 (depending on whether the lock-timeout is non-zero), so the above program
 keeps track of both of them.
+.SH STOPPING GRAPHICS
+If xscreensaver is running, but you want it to stop running screen hacks
+(e.g., if you are logged in remotely, and you want the console to remain
+locked but just be black, with no graphics processes running) you can 
+accomplish that by simply powering down the monitor remotely.  In a
+minute or so, xscreensaver will notice that the monitor is off, and
+will stop running screen hacks.  You can power off the monitor like so:
+.EX
+xset dpms force off
+.EE
+See the
+.BR xset (1)
+manual for more info.
+
+You can also use
+.BR xscreensaver-demo (1)
+to make the monitor power down after a few hours, meaning that xscreensaver
+will run graphics until it has been idle for the length of time you
+specified; and after that, the monitor will power off, and screen hacks
+will stop being run.
 .SH DIAGNOSTICS
 If an error occurs while communicating with the \fIxscreensaver\fP daemon, or
 if the daemon reports an error, a diagnostic message will be printed to
@@ -253,8 +256,9 @@ The latest version of
 and related tools can always be found at http://www.jwz.org/xscreensaver/
 .SH "SEE ALSO"
 .BR X (1),
-.BR xscreensaver (1)
-.BR xscreensaver\-demo (1)
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xset (1)
 .SH COPYRIGHT
 Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell

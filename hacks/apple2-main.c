@@ -678,7 +678,10 @@ void slideshow_controller(apple2_sim_t *sim, int *stepno,
         if (dot) *dot=0;
       }
       if (strlen(basename)>20) basename[20]=0;
-      for (s=basename; *s; s++) *s = toupper (*s);
+      for (s=basename; *s; s++) {
+        *s = toupper (*s);
+        if (*s <= ' ') *s = '_';
+      }
       sprintf(sim->typing_buf, "BLOAD %s\n", basename);
       sim->typing = sim->typing_buf;
 

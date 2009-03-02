@@ -1041,23 +1041,35 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
           0:  309453991   timer
           1:    4771729   keyboard
    
-       but on later kernels with MP machines, it looks like this:
+       but in Linux 2.2 and 2.4 kernels with MP machines, it looks like this:
 
                    CPU0       CPU1
           0:    1671450    1672618    IO-APIC-edge  timer
           1:      13037      13495    IO-APIC-edge  keyboard
 
+       and in Linux 2.6, it's gotten even goofier: now there are two lines
+       labelled "i8042".  One of them is the keyboard, and one of them is
+       the PS/2 mouse -- and of course, you can't tell them apart, except
+       by wiggling the mouse and noting which one changes:
+
+                   CPU0       CPU1
+          1:      32051      30864    IO-APIC-edge  i8042
+         12:     476577     479913    IO-APIC-edge  i8042
+
        Joy!  So how are we expected to parse that?  Well, this code doesn't
-       parse it: it saves the last line with the string "keyboard" in it, and
-       does a string-comparison to note when it has changed.
+       parse it: it saves the first line with the string "keyboard" (or
+       "i8042") in it, and does a string-comparison to note when it has
+       changed.  If there are two "i8042" lines, we assume the first is
+       the keyboard and the second is the mouse (doesn't matter which is
+       which, really, as long as we don't compare them against each other.)
 
-   Thanks to Nat Friedman <nat@nat.org> for figuring out all of this crap.
+   Thanks to Nat Friedman <nat@nat.org> for figuring out most of this crap.
 
-   Note that this only checks for lines with "keyboard" or "PS/2 Mouse" in
-   them.  If you have a serial mouse, it won't detect that, it will only detect
-   keyboard activity.  That's because there's no way to tell the difference
-   between a serial mouse and a general serial port, and it would be somewhat
-   unfortunate to have the screensaver turn off when the modem on COM1 burped.
+   Note that if you have a serial or USB mouse, or a USB keyboard, it won't
+   detect it.  That's because there's no way to tell the difference between a
+   serial mouse and a general serial port, and all USB devices look the same
+   from here.  It would be somewhat unfortunate to have the screensaver turn
+   off when the modem on COM1 burped, or when a USB disk was accessed.
  */
 
 
@@ -1100,6 +1112,7 @@ proc_interrupts_activity_p (saver_info *si)
   char new_line[sizeof(last_kbd_line)];
   Bool checked_kbd = False, kbd_changed = False;
   Bool checked_ptr = False, ptr_changed = False;
+  int i8042_count = 0;
 
   if (!f0)
     {
@@ -1146,10 +1159,14 @@ proc_interrupts_activity_p (saver_info *si)
       goto FAIL;
     }
 
-  /* Now read through the pseudo-file until we find the "keyboard" line. */
+  /* Now read through the pseudo-file until we find the "keyboard",
+     "PS/2 mouse", or "i8042" lines. */
 
   while (fgets (new_line, sizeof(new_line)-1, f1))
     {
+      Bool i8042_p = !!strstr (new_line, "i8042");
+      if (i8042_p) i8042_count++;
+
       if (strchr (new_line, ','))
         {
           /* Ignore any line that has a comma on it: this is because
@@ -1163,14 +1180,24 @@ proc_interrupts_activity_p (saver_info *si)
              to ignore any shared IRQs.
            */
         }
-      else if (!checked_kbd && strstr (new_line, "keyboard"))
+      else if (!checked_kbd &&
+               (strstr (new_line, "keyboard") ||
+                (i8042_p && i8042_count == 1)))
         {
+          /* Assume the keyboard interrupt is the line that says "keyboard",
+             or the *first* line that says "i8042".
+           */
           kbd_changed = (*last_kbd_line && !!strcmp (new_line, last_kbd_line));
           strcpy (last_kbd_line, new_line);
           checked_kbd = True;
         }
-      else if (!checked_ptr && strstr (new_line, "PS/2 Mouse"))
+      else if (!checked_ptr &&
+               (strstr (new_line, "PS/2 Mouse") ||
+                (i8042_p && i8042_count == 2)))
         {
+          /* Assume the mouse interrupt is the line that says "PS/2 mouse",
+             or the *second* line that says "i8042".
+           */
           ptr_changed = (*last_ptr_line && !!strcmp (new_line, last_ptr_line));
           strcpy (last_ptr_line, new_line);
           checked_ptr = True;

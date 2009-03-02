@@ -852,7 +852,7 @@ void
 analogtv_setup_sync(analogtv_input *input, int do_cb, int do_ssavi)
 {
   int i,lineno,vsync;
-  char *sig;
+  signed char *sig;
 
   int synclevel = do_ssavi ? ANALOGTV_WHITE_LEVEL : ANALOGTV_SYNC_LEVEL;
 
@@ -1566,6 +1566,9 @@ analogtv_draw(analogtv *it)
 #endif
 
   XSync(it->dpy,0);
+
+  /* Small delay to avoid hogging the CPU. */
+  usleep (10000);
 }
 
 analogtv_input *
@@ -1720,9 +1723,9 @@ void analogtv_add_signal(analogtv *it, analogtv_reception *rec)
   double *ps=it->rx_signal;
   double *pe=it->rx_signal + ANALOGTV_SIGNAL_LEN;
   double *p=ps;
-  char *ss=&inp->signal[0][0];
-  char *se=&inp->signal[0][0] + ANALOGTV_SIGNAL_LEN;
-  char *s=ss + ((unsigned)rec->ofs % ANALOGTV_SIGNAL_LEN);
+  signed char *ss=&inp->signal[0][0];
+  signed char *se=&inp->signal[0][0] + ANALOGTV_SIGNAL_LEN;
+  signed char *s=ss + ((unsigned)rec->ofs % ANALOGTV_SIGNAL_LEN);
   int i;
   int ec=it->channel_change_cycles;
   double level=rec->level;

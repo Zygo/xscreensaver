@@ -846,6 +846,9 @@ sanity_check (ModeInfo *mi)
   if (zoom < 1) zoom = 1;           /* zoom is a positive percentage */
   else if (zoom > 100) zoom = 100;
 
+  if (zoom == 100)		    /* with no zooming, there is no panning */
+    pan_seconds = 0;
+
   if (pan_seconds < fade_seconds)   /* pan is inclusive of fade */
     pan_seconds = fade_seconds;
 
@@ -955,6 +958,8 @@ init_slideshow (ModeInfo *mi)
 
   load_quad (mi, &ss->quads[0]);
   ss->quads[0].state = IN;
+
+  ss->image_start_time -= pan_seconds;  /* fudge needed for first image */
 
   ss->redisplay_needed_p = True;
 

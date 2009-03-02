@@ -38,8 +38,11 @@ typedef struct {
   XFontStruct *font;
   int border;
 
-  enum { SEED_RAM, SEED_RANDOM } seed_mode;
+  enum { SEED_RAM, SEED_RANDOM, SEED_FILE } seed_mode;
   enum { DRAW_COLOR, DRAW_MONO } draw_mode;
+
+  char *filename;
+  FILE *in;
 
   int nscrollers;
   scroller *scrollers;
@@ -141,26 +144,23 @@ init_memscroller (Display *dpy, Window window)
       exit (1);
     }
   if (s) free (s);
-
-
-  s = get_string_resource ("seedMode", "SeedMode");
-  if (!s || !*s ||
-      !strcasecmp (s, "ram") ||
-      !strcasecmp (s, "mem") ||
-      !strcasecmp (s, "memory"))
-    st->seed_mode = SEED_RAM;
-  else if (!strcasecmp (s, "rand") ||
-           !strcasecmp (s, "random"))
-    st->seed_mode = SEED_RANDOM;
-  else
-    {
-      fprintf (stderr, "%s: seedMode must be 'RAM' or 'random', not '%s'\n",
-               progname, s);
-      exit (1);
-    }
-  if (s) free (s);
   s = 0;
 
+
+  st->filename = get_string_resource ("filename", "Filename");
+
+  if (!st->filename ||
+      !*st->filename ||
+      !strcasecmp (st->filename, "(ram)") ||
+      !strcasecmp (st->filename, "(mem)") ||
+      !strcasecmp (st->filename, "(memory)"))
+    st->seed_mode = SEED_RAM;
+  else if (st->filename &&
+           (!strcasecmp (st->filename, "(rand)") ||
+            !strcasecmp (st->filename, "(random)")))
+    st->seed_mode = SEED_RANDOM;
+  else
+    st->seed_mode = SEED_FILE;
 
   st->nscrollers = 3;
   st->scrollers = (scroller *) calloc (st->nscrollers, sizeof(scroller));
@@ -253,6 +253,26 @@ reshape_memscroller (state *st)
 
 
 
+static void
+open_file (state *st)
+{
+  if (st->in)
+    {
+      fclose (st->in);
+      st->in = 0;
+    }
+
+  st->in = fopen (st->filename, "r");
+  if (!st->in)
+    {
+      char buf[1024];
+      sprintf (buf, "%s: %s", progname, st->filename);
+      perror (buf);
+      exit (1);
+    }
+}
+
+
 static unsigned int
 more_bits (state *st, scroller *sc)
 {
@@ -283,6 +303,12 @@ more_bits (state *st, scroller *sc)
 # ifdef HAVE_SBRK  /* re-get it each time through */
       himem = ((unsigned char *) sbrk(0)) - (2 * sizeof(void *));
 # endif
+
+      /* I don't understand what's going on there, but on MacOS X,
+         we're getting insane values for lomem and himem.  Is there
+         more than one heap? */
+      if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF)
+        himem = lomem + 0xFFFF;
 
       if (lomem >= himem) abort();
 
@@ -337,6 +363,49 @@ more_bits (state *st, scroller *sc)
           abort();
         }
       v = PACK(r,g,b);
+      break;
+
+    case SEED_FILE:
+      {
+        int i;
+
+  /* this one returns only bytes from the file */
+# define GETC(V) \
+            do { \
+              i = fgetc (st->in); \
+            } while (i == EOF \
+                     ? (open_file (st), 1) \
+                     : 0); \
+            V = i
+
+  /* this one returns a null at EOF -- else we hang on zero-length files */
+# undef GETC
+# define GETC(V) \
+            i = fgetc (st->in); \
+            if (i == EOF) { i = 0; open_file (st); } \
+            V = i
+
+        if (!st->in)
+          open_file (st);
+
+        switch (st->draw_mode)
+          {
+          case DRAW_COLOR:
+            GETC(r);
+            GETC(g);
+            GETC(b);
+            break;
+          case DRAW_MONO:
+            r = 0;
+            GETC(g);
+            b = 0;
+            break;
+          default:
+            abort();
+          }
+# undef GETC
+        v = PACK(r,g,b);
+      }
       break;
 
     default:
@@ -459,7 +528,7 @@ char *progclass = "MemScroller";
 char *defaults [] = {
   ".background:		   black",
   "*drawMode:		   color",
-  "*seedMode:		   ram",
+  "*filename:		   (RAM)",
   ".textColor:		   #00FF00",
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
@@ -472,10 +541,11 @@ char *defaults [] = {
 XrmOptionDescRec options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-font",		".font",		XrmoptionSepArg, 0 },
-  { "-color",		".drawMode",		XrmoptionNoArg, "color"  },
-  { "-mono",		".drawMode",		XrmoptionNoArg, "mono"   },
-  { "-ram",		".seedMode",		XrmoptionNoArg, "ram"    },
-  { "-random",		".seedMode",		XrmoptionNoArg, "random" },
+  { "-filename",	".filename",		XrmoptionSepArg, 0 },
+  { "-color",		".drawMode",		XrmoptionNoArg, "color"    },
+  { "-mono",		".drawMode",		XrmoptionNoArg, "mono"     },
+  { "-ram",		".filename",		XrmoptionNoArg, "(RAM)"    },
+  { "-random",		".filename",		XrmoptionNoArg, "(RANDOM)" },
   { 0, 0, 0, 0 }
 };
 

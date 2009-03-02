@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.32 $
+ * $Revision: 1.33 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -215,6 +215,7 @@ typedef struct {
 } sonar_info;
 
 static Bool debug_p = False;
+static Bool resolve_p = True;
 
 
 /* 
@@ -314,6 +315,7 @@ char *defaults [] = {
     "*teamBCount:      4",
 
     "*ping:	       default",
+    "*resolve:	       true",
     ".debug:	       false",
     0
 };
@@ -337,6 +339,7 @@ XrmOptionDescRec options [] = {
     {"-team-b-count",  ".teamBCount",  XrmoptionSepArg, 0 },
 
     {"-ping",          ".ping",        XrmoptionSepArg, 0 },
+    {"-no-dns",        ".resolve",     XrmoptionNoArg, "False" },
     {"-debug",         ".debug",       XrmoptionNoArg, "True" },
     { 0, 0, 0, 0 }
 };
@@ -497,9 +500,12 @@ lookupHost(ping_target *target)
         }
 
       iaddr->sin_addr.s_addr = pack_addr (ip[0], ip[1], ip[2], ip[3]);
-      hent = gethostbyaddr ((const char *) &iaddr->sin_addr.s_addr,
-                            sizeof(iaddr->sin_addr.s_addr),
-                            AF_INET);
+      if (resolve_p)
+        hent = gethostbyaddr ((const char *) &iaddr->sin_addr.s_addr,
+                              sizeof(iaddr->sin_addr.s_addr),
+                              AF_INET);
+      else
+        hent = 0;
 
       if (debug_p > 1)
         fprintf (stderr, "%s:   %s => %s\n",
@@ -1250,9 +1256,12 @@ getping(sonar_info *si, ping_info *pi)
               struct sockaddr_in iaddr;
               struct hostent *h;
               iaddr.sin_addr.s_addr = pack_addr (iip[0],iip[1],iip[2],iip[3]);
-              h = gethostbyaddr ((const char *) &iaddr.sin_addr.s_addr,
-                                 sizeof(iaddr.sin_addr.s_addr),
-                                 AF_INET);
+              if (resolve_p)
+                h = gethostbyaddr ((const char *) &iaddr.sin_addr.s_addr,
+                                   sizeof(iaddr.sin_addr.s_addr),
+                                   AF_INET);
+              else
+                h = 0;
 
               if (h && h->h_name && *h->h_name)
                 {
@@ -2046,6 +2055,7 @@ screenhack(Display *dpy, Window win)
     long sleeptime;
 
     debug_p = get_boolean_resource ("debug", "Debug");
+    resolve_p = get_boolean_resource ("resolve", "Resolve");
 
     sensor = 0;
 # ifdef HAVE_PING

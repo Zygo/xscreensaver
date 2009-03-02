@@ -3,7 +3,7 @@
 noseguy - a little guy with a big nose wanders around being witty
 .SH SYNOPSIS
 .B noseguy
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-text-foreground \fIcolor\fP] [\-text-background \fIcolor\fP] [\-font \fIfont\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-mode \fImode\fP] [\-program \fIprogram\fP] [\-filename \file\fP] [\-text \fItext\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-text-foreground \fIcolor\fP] [\-text-background \fIcolor\fP] [\-font \fIfont\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-mode \fImode\fP] [\-program \fIprogram\fP] [\-filename \fIfile\fP] [\-text \fItext\fP]
 .SH DESCRIPTION
 A little man with a big nose and a hat runs around spewing out messages to
 the screen.  This code (and its bitmaps) were extracted from the \fIxnlock\fP

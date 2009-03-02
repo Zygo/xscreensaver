@@ -33,9 +33,12 @@ use Fcntl;
 use POSIX ':fcntl_h';				# S_ISLNK was here in Perl 5.6
 import Fcntl ':mode' unless defined &S_ISLNK;	# but it is here in Perl 5.8
 
+use bytes;  # Larry can take Unicode and shove it up his ass sideways.
+            # Perl 5.8.0 causes us to start getting incomprehensible
+            # errors about UTF-8 all over the place without this.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.16 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.18 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -317,7 +320,7 @@ sub jpeg_size {
 #
 sub png_size {
   my ($body) = @_;
-  return () unless ($body =~ m/^\211PNG\r/);
+  return () unless ($body =~ m/^\211PNG\r/s);
   my ($bits) = ($body =~ m/^.{12}(.{12})/s);
   return () unless defined ($bits);
   return () unless ($bits =~ /^IHDR/);
@@ -349,6 +352,7 @@ sub image_file_size {
     print STDERR "$progname: $file: $!\n" if ($verbose);
     return undef;
   }
+  binmode (IN);  # Larry can take Unicode and shove it up his ass sideways.
   while (<IN>) {
     $body .= $_;
     last if (length($body) > 1024 * 100);  # the first 100k should be enough

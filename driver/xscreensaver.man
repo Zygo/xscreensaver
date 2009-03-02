@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "14-Aug-2004 (4.18)" "X Version 11"
+.TH XScreenSaver 1 "16-Dec-2004 (4.19)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -748,6 +748,9 @@ In this situation, the \fIxscreensaver\fP process will probably be running
 as user \fIgdm\fP instead of \fIroot\fP.  You can configure the settings
 for this nobody-logged-in state (timeouts, DPMS, etc.) by editing
 the \fI~gdm/.xscreensaver\fP file.
+
+To get gdm to run the BackgroundProgram, you may need to switch it from
+the "Graphical Greeter" to the "Standard Greeter".
 .SH USING KDE (K DESKTOP ENVIRONMENT)
 I understand that KDE has invented their own wrapper around xscreensaver,
 that is inferior to 

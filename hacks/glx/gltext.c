@@ -54,6 +54,10 @@ extern XtAppContext app;
 #include <sys/time.h>
 #include <ctype.h>
 
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif /* HAVE_LOCALE_H */
+
 #ifdef USE_GL /* whole file */
 
 #ifdef HAVE_UNAME
@@ -280,6 +284,10 @@ init_text (ModeInfo *mi)
 {
   text_configuration *tp;
   int i;
+
+# ifdef HAVE_SETLOCALE
+  setlocale (LC_TIME, "");      /* for strftime() calls */
+# endif
 
   if (!tps) {
     tps = (text_configuration *)

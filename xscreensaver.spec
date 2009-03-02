@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		4.18
+%define	version		4.19
 %define	release		1
 %define	epoch		1
 %define	x11_prefix	/usr/X11R6
@@ -164,7 +164,7 @@ chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
 %post
 # This part runs on the end user's system, when the RPM is installed.
 
-pids=`pidof xscreensaver`
+pids=`/sbin/pidof xscreensaver`
 if [ -n "$pids" ]; then
   echo "sending SIGHUP to running xscreensaver ($pids)..." >&2
   kill -HUP $pids

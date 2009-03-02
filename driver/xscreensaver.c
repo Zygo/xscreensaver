@@ -1950,6 +1950,12 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     }
   else if (type == XA_THROTTLE)
     {
+      /* The THROTTLE command is deprecated -- it predates the XDPMS
+         extension.  Instead of using -throttle, users should instead
+         just power off the monitor (e.g., "xset dpms force off".)
+         In a few minutes, xscreensaver will notice that the monitor
+         is off, and cease running hacks.
+       */
       if (si->throttled_p)
 	clientmessage_response (si, window, True,
                                 "THROTTLE ClientMessage received, but "

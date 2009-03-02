@@ -231,7 +231,7 @@ disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
 
   /* I suspect (but am not sure) that DontAllowExposures might have
      something to do with powering off the monitor as well, at least
-     on some systems that don't support XDPMS?  Who know... */
+     on some systems that don't support XDPMS?  Who knows... */
   desired_allow_exp = AllowExposures;
 
   if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
@@ -255,6 +255,12 @@ disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
        */
       desired_server_timeout = 0;
     }
+
+  /* XSetScreenSaver() generates BadValue if either timeout parameter
+     exceeds 15 bits (signed short.)  That is 09:06:07.
+   */
+  if (desired_server_timeout  > 0x7FFF) desired_server_timeout  = 0x7FFF;
+  if (desired_server_interval > 0x7FFF) desired_server_interval = 0x7FFF;
 
   if (desired_server_timeout != current_server_timeout ||
       desired_server_interval != current_server_interval ||

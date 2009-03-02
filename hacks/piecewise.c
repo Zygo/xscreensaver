@@ -370,6 +370,7 @@ void event_insert(event **eq, event *e) {
   if (!*eq) {
     e->l = e->r = 0;
     *eq = e;
+    return; /* avoid leak */
     }
 
   event_cut_y = e->y;
@@ -381,6 +382,8 @@ void event_insert(event **eq, event *e) {
       e->r = 0;             /* doing this instead of dying might be dangerous */
       (*eq)->l = e;           
       }
+    else
+      free(e); /* don't leak! */
     }
   else if (e->y < (*eq)->y) {
     e->l = (*eq)->l;
@@ -478,7 +481,7 @@ void fringe_intersect(event **eq, double y, fringe *lo, fringe *hi) {
   #define CHECK(xi, yi) (y <= yi && ((xi < lo->c->x) ^ lo->side) && ((xi < hi->c->x) ^ hi->side))
 
   #define ADD_CROSS(xi, yi, ilo, ihi) {  \
-    e = malloc(sizeof(event));           \
+    e = malloc(sizeof(event));   /* #### LEAK */        \
     e->kind = CROSS;                     \
     e->x = xi; e->y = yi;                \
     e->lo = ilo; e->hi = ihi;            \
@@ -786,6 +789,25 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
   };
 
+static void
+check_for_leaks (void)
+{
+#ifdef HAVE_SBRK
+  static unsigned long early_brk = 0;
+  unsigned long max = 30 * 1024 * 1024;  /* 30 MB */
+  int b = (unsigned long) sbrk(0);
+  if (early_brk == 0)
+    early_brk = b;
+  else if (b > early_brk + max)
+    {
+      fprintf (stderr, "%s: leaked %lu MB -- aborting!\n",
+               progname, ((b - early_brk) >> 20));
+      exit (1);
+    }
+#endif /* HAVE_SBRK */
+}
+
+
 void screenhack(Display *dpy, Window window) {
   int i;
   Bool dbuf;
@@ -888,5 +910,6 @@ void screenhack(Display *dpy, Window window) {
     screenhack_handle_events(dpy);
     if (delay)
       usleep(delay);
+    check_for_leaks();
     }
   }

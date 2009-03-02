@@ -96,7 +96,7 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*geometry:	600x900     \n" \
+			"*geometry:	600x900\n"      \
 			"*count:      " DEF_COUNT " \n" \
 			"*style:      " DEF_STYLE " \n" \
 			"*speed:      " DEF_SPEED " \n" \

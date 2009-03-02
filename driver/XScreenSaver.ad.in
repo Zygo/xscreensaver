@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.18
-!                              14-Aug-2004
+!                              version 4.19
+!                              16-Dec-2004
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -281,6 +281,9 @@ GetViewPortIsFullOfLies: False
 				fuzzyflakes -root			    \n\
 				anemotaxis -root			    \n\
 				memscroller -root			    \n\
+				substrate -root				    \n\
+				intermomentary -root			    \n\
+				fireworkx -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -354,6 +357,11 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			blinkbox -root				    \n\
 @GL_KLUDGE@ GL:			noof -root				    \n\
 @GL_KLUDGE@ GL:			polyhedra -root				    \n\
+-	   GL:                  antinspect -root                            \n\
+@GL_KLUDGE@ GL:			providence -root			    \n\
+@GL_KLUDGE@ GL:	"Pinion (large gears)"	pinion -root			    \n\
+@GL_KLUDGE@ GL:	"Pinion (small gears)"	pinion -root -size 0.2		    \n\
+@GL_KLUDGE@ GL:			pinion -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -372,9 +380,7 @@ GetViewPortIsFullOfLies: False
 -				electricsheep                               \n\
 -				cosmos -root                                \n\
 -	   GL:                  sphereEversion --root                       \n\
--	   GL:                  fireflies -root                             \n\
--	   GL:                  antinspect -root                            \n\
--	   GL:                  providence -root                            \n
+-	   GL:                  fireflies -root                             \n
 
 
 
