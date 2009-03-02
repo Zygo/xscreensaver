@@ -78,6 +78,10 @@
  static const char *tk_file;
 #endif /* !HAVE_DARWIN */
 
+/* warning suppression: duplicated in passwd.c */
+extern Bool kerberos_lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
+
 
 /* Called at startup to grab user, instance, and realm information
    from the user's ticketfile (remember, name.inst@realm). Since we're

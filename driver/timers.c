@@ -264,14 +264,18 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
     }
   else
     {
+      int i;
       maybe_reload_init_file (si);
-      kill_screenhack (si);
+      for (i = 0; i < si->nscreens; i++)
+        kill_screenhack (&si->screens[i]);
+
+      raise_window (si, True, True, False);
 
       if (!si->throttled_p)
-        spawn_screenhack (si, False);
+        for (i = 0; i < si->nscreens; i++)
+          spawn_screenhack (&si->screens[i]);
       else
         {
-          raise_window (si, True, True, False);
           if (p->verbose_p)
             fprintf (stderr, "%s: not launching new hack (throttled.)\n",
                      blurb());
@@ -1010,28 +1014,17 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
         if (event.type == (si->randr_event_number + RRScreenChangeNotify))
           {
             /* The Resize and Rotate extension sends an event when the
-               size, rotation, or refresh rate of the screen has changed. */
-
+               size, rotation, or refresh rate of any screen has changed.
+             */
             XRRScreenChangeNotifyEvent *xrr_event =
               (XRRScreenChangeNotifyEvent *) &event;
-            /* XRRRootToScreen is in Xrandr.h 1.4, 2001/06/07 */
-            int screen = XRRRootToScreen (si->dpy, xrr_event->window);
 
             if (p->verbose_p)
               {
-                if (si->screens[screen].width  == xrr_event->width &&
-                    si->screens[screen].height == xrr_event->height)
-                  fprintf (stderr,
-                          "%s: %d: no-op screen size change event (%dx%d)\n",
-                           blurb(), screen,
-                           xrr_event->width, xrr_event->height);
-                else
-                  fprintf (stderr,
-                       "%s: %d: screen size changed from %dx%d to %dx%d\n",
-                           blurb(), screen,
-                           si->screens[screen].width,
-                           si->screens[screen].height,
-                           xrr_event->width, xrr_event->height);
+                /* XRRRootToScreen is in Xrandr.h 1.4, 2001/06/07 */
+                int screen = XRRRootToScreen (si->dpy, xrr_event->window);
+                fprintf (stderr, "%s: %d: screen change event received\n",
+                         blurb(), screen);
               }
 
 # ifdef RRScreenChangeNotifyMask
@@ -1040,7 +1033,15 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 # endif /* RRScreenChangeNotifyMask */
 
             /* Resize the existing xscreensaver windows and cached ssi data. */
-            resize_screensaver_window (si);
+            if (update_screen_layout (si))
+              {
+                if (p->verbose_p)
+                  {
+                    fprintf (stderr, "%s: new layout:\n", blurb());
+                    describe_monitor_layout (si);
+                  }
+                resize_screensaver_window (si);
+              }
           }
         else
 #endif /* HAVE_RANDR */
@@ -1401,11 +1402,13 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
       if (screenhack_running_p (si) &&
           !monitor_powered_on_p (si))
 	{
+          int i;
 	  if (si->prefs.verbose_p)
 	    fprintf (stderr,
 		     "%s: X says monitor has powered down; "
 		     "killing running hacks.\n", blurb());
-	  kill_screenhack (si);
+          for (i = 0; i < si->nscreens; i++)
+            kill_screenhack (&si->screens[i]);
 	}
 
       /* Re-schedule this timer.  The watchdog timer defaults to a bit less

@@ -59,6 +59,8 @@ struct state {
   int sweep;
   int delay;
   int anim;
+  int duration;
+  time_t start_time;
 
   async_load_state *img_loader;
 
@@ -264,6 +266,7 @@ init_hack (struct state *st)
 {
   int i;
 
+  st->start_time = time ((time_t) 0);
   st->zoom_box = calloc (st->num_zoom, sizeof (struct zoom_area *));
   for (i = 0; i < st->num_zoom; i++) {
     st->zoom_box[i] = create_zoom (st);
@@ -294,6 +297,16 @@ rotzoomer_draw (Display *disp, Window win, void *closure)
       }
       return st->delay;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    XWindowAttributes xgwa;
+    XGetWindowAttributes(st->dpy, st->window, &xgwa);
+    st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                              st->window, 0, 0);
+    st->start_time = time ((time_t) 0);
+    return st->delay;
+  }
 
   for (i = 0; i < st->num_zoom; i++) {
     if (st->move || st->sweep)
@@ -395,6 +408,9 @@ rotzoomer_init (Display *dpy, Window window)
 
   st->anim = get_boolean_resource (st->dpy, "anim", "Boolean");
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+  if (st->delay < 0) st->delay = 0;
+  if (st->duration < 1) st->duration = 1;
 
   /* In sweep or static mode, we want only one box */
   if (st->sweep || !st->anim)
@@ -403,6 +419,8 @@ rotzoomer_init (Display *dpy, Window window)
   /* Can't have static sweep mode */
   if (!st->anim)
     st->sweep = 0;
+
+  st->start_time = time ((time_t) 0);
 
   setup_X (st);
 
@@ -441,6 +459,7 @@ static const char *rotzoomer_defaults[] = {
   "*mode: stationary",
   "*numboxes: 2",
   "*delay: 10",
+  "*duration: 120",
   0
 };
 
@@ -454,6 +473,7 @@ static XrmOptionDescRec rotzoomer_options[] = {
   { "-anim",	".anim",	XrmoptionNoArg, "True"  },
   { "-no-anim",	".anim",	XrmoptionNoArg, "False" },
   { "-delay",	".delay",	XrmoptionSepArg, 0      },
+  {"-duration",	".duration",	XrmoptionSepArg, 0      },
   { "-n",	".numboxes",	XrmoptionSepArg, 0      },
   { 0, 0, 0, 0 }
 };

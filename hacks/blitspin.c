@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,7 @@ struct state {
   GC SET, CLR, CPY, IOR, AND, XOR;
   GC gc;
   int delay, delay2;
+  int duration;
   Pixmap bitmap;
   unsigned int fg, bg;
 
@@ -47,6 +48,7 @@ struct state {
   int first_time;
   int last_w, last_h;
 
+  time_t start_time;
   Bool loaded_p;
   async_load_state *img_loader;
 };
@@ -71,8 +73,23 @@ blitspin_draw (Display *dpy, Window window, void *closure)
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+
+      if (!st->img_loader) { /* just finished */
+        st->first_time = 0;
+        st->loaded_p = False;
+        st->qwad = -1;
+        st->start_time = time ((time_t) 0);
+      }
+
       return this_delay;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    /* Start it loading, but keep rotating the old image until it arrives. */
+    st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
+                                              st->bitmap, 0, 0);
+  }
 
   if (! st->loaded_p) {
     blitspin_init_2 (st);
@@ -95,21 +112,21 @@ blitspin_draw (Display *dpy, Window window, void *closure)
 
   /* for (st->qwad = st->size>>1; st->qwad > 0; st->qwad>>=1) */
 
-  copy_all_to   (st->mask,       0,       0, st->temp, st->CPY);  /* 1 */
-  copy_all_to   (st->mask,       0,    st->qwad, st->temp, st->IOR);  /* 2 */
-  copy_all_to   (st->self,       0,       0, st->temp, st->AND);  /* 3 */
-  copy_all_to   (st->temp,       0,       0, st->self, st->XOR);  /* 4 */
-  copy_all_from (st->temp,    st->qwad,       0, st->self, st->XOR);  /* 5 */
-  copy_all_from (st->self,    st->qwad,       0, st->self, st->IOR);  /* 6 */
-  copy_all_to   (st->temp,    st->qwad,       0, st->self, st->XOR);  /* 7 */
-  copy_all_to   (st->self,       0,       0, st->temp, st->CPY);  /* 8 */
-  copy_all_from (st->temp,    st->qwad,    st->qwad, st->self, st->XOR);  /* 9 */
-  copy_all_to   (st->mask,       0,       0, st->temp, st->AND);  /* A */
-  copy_all_to   (st->temp,       0,       0, st->self, st->XOR);  /* B */
-  copy_all_to   (st->temp,    st->qwad,    st->qwad, st->self, st->XOR);  /* C */
-  copy_all_from (st->mask, st->qwad>>1, st->qwad>>1, st->mask, st->AND);  /* D */
-  copy_all_to   (st->mask,    st->qwad,       0, st->mask, st->IOR);  /* E */
-  copy_all_to   (st->mask,       0,    st->qwad, st->mask, st->IOR);  /* F */
+  copy_all_to  (st->mask, 0,        0,        st->temp, st->CPY);  /* 1 */
+  copy_all_to  (st->mask, 0,        st->qwad, st->temp, st->IOR);  /* 2 */
+  copy_all_to  (st->self, 0,        0,        st->temp, st->AND);  /* 3 */
+  copy_all_to  (st->temp, 0,        0,        st->self, st->XOR);  /* 4 */
+  copy_all_from(st->temp, st->qwad, 0,        st->self, st->XOR);  /* 5 */
+  copy_all_from(st->self, st->qwad, 0,        st->self, st->IOR);  /* 6 */
+  copy_all_to  (st->temp, st->qwad, 0,        st->self, st->XOR);  /* 7 */
+  copy_all_to  (st->self, 0,        0,        st->temp, st->CPY);  /* 8 */
+  copy_all_from(st->temp, st->qwad,           st->qwad, st->self,st->XOR);/*9*/
+  copy_all_to  (st->mask, 0,        0,        st->temp, st->AND);  /* A */
+  copy_all_to  (st->temp, 0,        0,        st->self, st->XOR);  /* B */
+  copy_all_to  (st->temp, st->qwad, st->qwad, st->self, st->XOR);  /* C */
+  copy_all_from(st->mask, st->qwad>>1,st->qwad>>1,st->mask,st->AND); /* D */
+  copy_all_to  (st->mask, st->qwad, 0,        st->mask, st->IOR);  /* E */
+  copy_all_to  (st->mask, 0,        st->qwad, st->mask, st->IOR);  /* F */
   display (st, st->self);
 
   st->qwad >>= 1;
@@ -155,8 +172,13 @@ blitspin_init (Display *d_arg, Window w_arg)
                                "background", "Background");
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   st->delay2 = get_integer_resource (st->dpy, "delay2", "Integer");
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
   if (st->delay < 0) st->delay = 0;
   if (st->delay2 < 0) st->delay2 = 0;
+  if (st->duration < 1) st->duration = 1;
+
+  st->start_time = time ((time_t) 0);
+
   bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
   if (! bitmap_name || !*bitmap_name)
     bitmap_name = "(default)";
@@ -164,6 +186,9 @@ blitspin_init (Display *d_arg, Window w_arg)
   if (!strcasecmp (bitmap_name, "(default)") ||
       !strcasecmp (bitmap_name, "default"))
 # ifdef HAVE_COCOA
+    /* I don't understand why it doesn't work with color images on OSX.
+       I guess "kCGBlendModeDarken" is not close enough to being "GXand".
+     */
     bitmap_name = "(builtin)";
 # else
     bitmap_name = "(screen)";
@@ -237,11 +262,23 @@ blitspin_init_2 (struct state *st)
   XFillRectangle (st->dpy, st->self, st->gc, 0, 0, st->size, st->size);
   XSetForeground (st->dpy, st->gc, st->fg);
 
+#if 0
+#ifdef HAVE_COCOA
+  jwxyz_XSetAntiAliasing (st->dpy, st->gc,  False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->SET, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->CLR, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->CPY, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->IOR, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->AND, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->XOR, False);
+#endif /* HAVE_COCOA */
+#endif
+
   XCopyArea (st->dpy, st->bitmap, st->self, st->CPY, 0, 0, 
              st->width, st->height,
 	     (st->size - st->width)  >> 1,
              (st->size - st->height) >> 1);
-  XFreePixmap(st->dpy, st->bitmap);
+/*  XFreePixmap(st->dpy, st->bitmap);*/
 
   st->qwad = -1;
   st->first_time = 1;
@@ -299,6 +336,7 @@ static const char *blitspin_defaults [] = {
   ".foreground:	white",
   "*delay:	500000",
   "*delay2:	500000",
+  "*duration:	120",
   "*bitmap:	(default)",
   "*geometry:	512x512",
   0
@@ -307,6 +345,7 @@ static const char *blitspin_defaults [] = {
 static XrmOptionDescRec blitspin_options [] = {
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-delay2",		".delay2",	XrmoptionSepArg, 0 },
+  { "-duration",	".duration",	XrmoptionSepArg, 0 },
   { "-bitmap",		".bitmap",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };

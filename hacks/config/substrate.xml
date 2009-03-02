@@ -5,7 +5,7 @@
   <command arg="-root"/>
 
   <number id="init" type="spinbutton" arg="-initial-cracks %"
-          _label="Initial Cracks" low="2" high="15" default="3"/>
+          _label="Initial Cracks" low="3" high="15" default="3"/>
 
   <number id="speed" type="slider" arg="-growth-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"

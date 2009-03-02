@@ -18,8 +18,9 @@ xscreensaver - extensible screen saver framework, plus locking
 .B xscreensaver
 [\-display \fIhost:display.screen\fP] \
 [\-verbose] \
+[\-no\-splash] \
 [\-no\-capture\-stderr] \
-[\-no\-splash]
+[\-log \fIfilename\fP]
 .SH DESCRIPTION
 The \fIxscreensaver\fP program waits until the keyboard and mouse have been 
 idle for a period, and then runs a graphics demo chosen at random.  It 
@@ -42,11 +43,9 @@ The
 program pops up a dialog box that lets you configure the screen saver,
 and experiment with the various display modes.
 
-.B Note:
-unlike
-.BR xlock (1),
-xscreensaver has a client-server model: the \fIxscreensaver\fP program is a
-daemon that runs in the background; it is controlled by the foreground
+.B Note that xscreensaver has a client-server model:
+the \fIxscreensaver\fP program is a daemon that runs in the background;
+it is controlled by the foreground
 .BR xscreensaver-demo (1)
 and
 .BR xscreensaver-command (1)
@@ -106,7 +105,345 @@ When settings are changed in the Preferences dialog box (see above)
 the current settings will be written to the \fI.xscreensaver\fP file.
 (The \fI.Xdefaults\fP file and the app-defaults file will never be
 written by xscreensaver itself.)
+.SH COMMAND-LINE OPTIONS
+.I xscreensaver
+also accepts a few command-line options, mostly for use when debugging:
+for normal operation, you should configure things via the \fI~/.xscreensaver\fP
+file.
+.TP 8
+.B \-display \fIhost:display.screen\fP
+The X display to use.  For displays with multiple screens, XScreenSaver
+will manage all screens on the display simultaniously.
+.TP 8
+.B \-verbose
+Same as setting the \fIverbose\fP resource to \fItrue\fP: print diagnostics
+on stderr and on the xscreensaver window.
+.TP 8
+.B \-no-capture-stderr
+Do not redirect the stdout and stderr streams to the xscreensaver window
+itself.  If xscreensaver is crashing, you might need to do this in order
+to see the error message.
+.TP 8
+.B \-log \fIfilename\fP
+This is exactly the same as redirecting stdout and stderr to the given
+file (for append).  This is useful when reporting bugs.
+.SH HOW IT WORKS
+When it is time to activate the screensaver, a full-screen black window is
+created on each screen of the display.  Each window is created in such a way
+that, to any subsequently-created programs, it will appear to be a ``virtual
+root'' window.  Because of this, any program which draws on the root 
+window (and which understands virtual roots) can be used as a screensaver.
+The various graphics demos are, in fact, just standalone programs that
+know how to draw on the provided window.
+
+When the user becomes active again, the screensaver windows are unmapped, and
+the running subprocesses are killed by sending them \fBSIGTERM\fP.  This is 
+also how the subprocesses are killed when the screensaver decides that it's
+time to run a different demo: the old one is killed and a new one is launched.
+
+You can control a running screensaver process by using the
+.BR xscreensaver\-command (1)
+program (which see.)
+.SH POWER MANAGEMENT
+Modern X servers contain support to power down the monitor after an idle
+period.  If the monitor has powered down, then \fIxscreensaver\fP will
+notice this (after a few minutes), and will not waste CPU by drawing 
+graphics demos on a black screen.  An attempt will also be made to
+explicitly power the monitor back up as soon as user activity is detected.
+
+The \fI~/.xscreensaver\fP file controls the configuration of your
+display's power management settings: if you have used
+.BR xset (1)
+to change your power management settings, then xscreensaver will
+override those changes with the values specified 
+in \fI~/.xscreensaver\fP (or with its built-in defaults, if there
+is no \fI~/.xscreensaver\fP file yet.)
+
+To change your power management settings, run
+.BR xscreensaver\-demo (1)
+and change the various timeouts through the user interface.
+Alternately, you can edit the \fI~/.xscreensaver\fP file directly.
+
+If the power management section is grayed out in the
+.BR xscreensaver\-demo (1)
+window,  then that means that your X server does not support
+the XDPMS extension, and so control over the monitor's power state
+is not available.
+
+If you're using a laptop, don't be surprised if changing the DPMS
+settings has no effect: many laptops have monitor power-saving behavior
+built in at a very low level that is invisible to Unix and X.  On such
+systems, you can typically adjust the power-saving delays only by
+changing settings in the BIOS in some hardware-specific way.
+
+If DPMS seems not to be working with XFree86, make sure the "DPMS"
+option is set in your \fI/etc/X11/XF86Config\fP file.  See the
+.BR XF86Config (5)
+manual for details.
+.SH USING GNOME
+For many years, GNOME shipped \fIxscreensaver\fP as-is, and
+everything just worked out of the box.  Recently, however, they've
+been re-inventing the wheel again in the form of "gnome-screensaver".
+
+To replace gnome-screensaver with xscreensaver:
+.RS 4
+.TP 3
+\fB1: Turn off gnome-screensaver.\fP
+Open ``System / Preferences / Screensaver'' and uncheck both boxes.
+.TP 3
+\fB2: Stop gnome-screensaver from launching at login.\fP
+Run the command:
+.EX
+gconftool-2 --type boolean -s \\
+/apps/gnome_settings_daemon/screensaver/start_screensaver \\
+false
+.EE
+Or, just uninstall the "gnome-screensaver" package entirely.
+.TP 3
+\fB3: Launch xscreensaver at login.\fP
+Open ``System / Preferences / Sessions / Startup Programs''.
+Click ``Add'' and type ``xscreensaver''.
+.TP 3
+\fB4: Tell Preferences to use the xscreensaver configurator.\fP
+Edit \fI/usr/share/applications/gnome-screensaver-preferences.desktop\fP
+and change the \fIExec=\fP line to say
+    Exec=xscreensaver-demo
+.TP 3
+\fB5: Make ``System / Quit / Lock Screen'' use xscreensaver.\fP
+Run the command:
+.EX
+sudo ln -sf /usr/bin/xscreensaver-command \\
+            /usr/bin/gnome-screensaver-command
+.EE
+.SH USING KDE
+KDE also has invented their own screen saver framework instead of
+simply using xscreensaver.  To replace the KDE screen saver with
+xscreensaver, do the following:
+.RS 4
+.TP 3
+\fB1: Turn off KDE's screen saver.\fP
+Open the ``\fIControl Center\fP'' and
+select the ``\fIAppearance & Themes / Screensaver\fP'' page.
+Un-check ``\fIStart Automatically\fP''.
+.TP 3
+\fB2: Find your Autostart directory.\fP
+Open the ``\fISystem Administration -> Paths\fP'' page,
+and see what your ``Autostart path'' is set to: it will
+probably be \fI~/.kde/Autostart/\fP or something similar.
+.TP 3
+\fB3: Make xscreensaver be an Autostart program.\fP
+Create a .desktop file in your autostart directory 
+called \fIxscreensaver.desktop\fP that contains the following five lines:
+.EX
+[Desktop Entry]
+Exec=xscreensaver
+Name=XScreensaver
+Type=Application
+X-KDE-StartupNotify=false
+.EE
+.TP 3
+\fB4: Make the various "lock session" buttons call xscreensaver.\fP
+Replace the file \fI/usr/bin/kdesktop_lock\fP (or 
+possibly \fI/usr/kde/3.5/bin/kdesktop_lock\fP)
+with these two lines:
+.EX
+#!/bin/sh
+xscreensaver-command -lock
+.EE
+Make sure the file is executable (chmod a+x).
+.RE
 .PP
+Now use xscreensaver normally, controlling it via the usual
+.BR xscreensaver-demo (1)
+and
+.BR xscreensaver-command (1)
+mechanisms.
+.SH USING GDM
+You can run \fIxscreensaver\fP from your 
+.BR gdm (1)
+session, so that the screensaver will run even when nobody is logged 
+in on the console.  To do this, run
+.BR gdmconfig (1)
+and on the \fIBackground\fP page, type the 
+command \fB"xscreensaver -nosplash"\fP into the \fIBackground Program\fP
+field.  That will cause gdm to run xscreensaver while nobody is logged
+in, and kill it as soon as someone does log in.  (The user will then
+be responsible for starting xscreensaver on their own, if they want.)
+
+Another way to accomplish the same thing is to edit the
+file \fI/etc/X11/gdm/gdm.conf\fP to include:
+.EX
+BackgroundProgram=xscreensaver -nosplash
+RunBackgroundProgramAlways=true
+.EE
+In this situation, the \fIxscreensaver\fP process will probably be running
+as user \fIgdm\fP instead of \fIroot\fP.  You can configure the settings
+for this nobody-logged-in state (timeouts, DPMS, etc.) by editing
+the \fI~gdm/.xscreensaver\fP file.
+
+To get gdm to run the BackgroundProgram, you may need to switch it from
+the "Graphical Greeter" to the "Standard Greeter".
+
+It is safe to run \fIxscreensaver\fP as root (as \fIxdm\fP is likely to do.)
+If run as root, \fIxscreensaver\fP changes its effective user and group ids 
+to something safe (like \fI"nobody"\fP) before connecting to the X server
+or launching user-specified programs.
+
+An unfortunate side effect of this (important) security precaution is that
+it may conflict with cookie-based authentication.
+
+If you get "connection refused" errors when running \fIxscreensaver\fP
+from \fIgdm\fP, then this probably means that you have
+.BR xauth (1)
+or some other security mechanism turned on.  For information on the
+X server's access control mechanisms, see the man pages for
+.BR X (1),
+.BR Xsecurity (1),
+.BR xauth (1),
+and
+.BR xhost (1).
+.SH BUGS
+Bugs?  There are no bugs.  Ok, well, maybe.  If you find one, please let
+me know.  http://www.jwz.org/xscreensaver/bugs.html explains how to
+construct the most useful bug reports.
+.TP 8
+.B Locking and XDM
+If xscreensaver has been launched from 
+.BR xdm (1)
+before anyone has logged in, you will need to kill and then restart the
+xscreensaver daemon after you have logged in, or you will be confused by
+the results.  (For example, locking won't work, and your \fI~/.xscreensaver\fP
+file will be ignored.)
+
+When you are logged in, you want the \fIxscreensaver\fP daemon to be 
+running under \fIyour\fP user id, not as root or some other user.
+
+If it has already been started by \fIxdm\fP, you can kill it by sending
+it the \fBexit\fP command, and then re-launching it as you, by putting
+something like the following in your personal X startup script:
+.EX
+xscreensaver-command -exit
+xscreensaver &
+.EE
+The ``\fIUsing XDM(1)\fP'' section, above, goes into more detail, and explains
+how to configure the system to do this for all users automatically.
+.TP 8
+.B Locking and root logins
+In order for it to be safe for xscreensaver to be launched by \fIxdm\fP,
+certain precautions had to be taken, among them that xscreensaver never
+runs as \fIroot\fP.  In particular, if it is launched as root (as \fIxdm\fP
+is likely to do), xscreensaver will disavow its privileges, and switch 
+itself to a safe user id (such as \fInobody\fP.)
+
+An implication of this is that if you log in as \fIroot\fP on the console, 
+xscreensaver will refuse to lock the screen (because it can't tell
+the difference between \fIroot\fP being logged in on the console, and a
+normal user being logged in on the console but xscreensaver having been 
+launched by the
+.BR xdm (1)
+.I Xsetup
+file.)
+
+The solution to this is simple: you shouldn't be logging in on the console
+as \fIroot\fP in the first place!  (What, are you crazy or something?)  
+
+Proper Unix hygiene dictates that you should log in as yourself, and
+.BR su (1)
+to \fIroot\fP as necessary.  People who spend their day logged in
+as \fIroot\fP are just begging for disaster.
+.TP 8
+.B XAUTH and XDM
+For xscreensaver to work when launched by
+.BR xdm (1),
+programs running on the local machine as user \fI"nobody"\fP must be
+able to connect to the X server.  This means that if you want to run
+xscreensaver on the console while nobody is logged in, you may need
+to disable cookie-based access control (and allow all users who can log
+in to the local machine to connect to the display.)  
+
+You should be sure that this is an acceptable thing to do in your
+environment before doing it.  See the ``\fIUsing XDM(1)\fP'' section, 
+above, for more details.
+.TP 8
+.B Passwords
+If you get an error message at startup like ``couldn't get password
+of \fIuser\fP'' then this probably means that you're on a system in which 
+the
+.BR getpwent (3)
+library routine can only be effectively used by root.  If this is the case, 
+then \fIxscreensaver\fP must be installed as setuid to root in order for
+locking to work.  Care has been taken to make this a safe thing to do.  
+
+It also may mean that your system uses shadow passwords instead of the standard
+.BR getpwent (3)
+interface; in that case, you may need to change some options 
+with \fIconfigure\fP and recompile.
+
+If you change your password after xscreensaver has been launched, it will
+continue using your old password to unlock the screen until xscreensaver
+is restarted.  On some systems, it may accept \fIboth\fP your old and new
+passwords.  So, after you change your password, you'll have to do
+.EX
+xscreensaver-command -restart
+.EE
+to make \fIxscreensaver\fP notice.
+.TP 8
+.B PAM Passwords
+If your system uses PAM (Pluggable Authentication Modules), then in order
+for xscreensaver to use PAM properly, PAM must be told about xscreensaver.
+The xscreensaver installation process should update the PAM data (on Linux,
+by creating the file \fI/etc/pam.d/xscreensaver\fP for you, and on Solaris, 
+by telling you what lines to add to the \fI/etc/pam.conf\fP file.)  
+
+If the PAM configuration files do not know about xscreensaver, then 
+you \fImight\fP be in a situation where xscreensaver will refuse to ever
+unlock the screen.
+
+This is a design flaw in PAM (there is no way for a client to tell the
+difference between PAM responding ``I have never heard of your module,''
+and responding, ``you typed the wrong password.'')  As far as I can tell,
+there is no way for xscreensaver to automatically work around this, or
+detect the problem in advance, so if you have PAM, make sure it is
+configured correctly!
+.TP 8
+.B Machine Load
+Although this program ``nices'' the subprocesses that it starts, 
+graphics-intensive subprograms can still overload the machine by causing
+the X server process itself (which is not ``niced'') to consume many
+cycles.  Care has been taken in all the modules shipped with xscreensaver
+to sleep periodically, and not run full tilt, so as not to cause
+appreciable load.
+
+However, if you are running the OpenGL-based screen savers on a machine
+that does not have a video card with 3D acceleration, they \fIwill\fP
+make your machine slow, despite
+.BR nice (1).
+
+Your options are: don't use the OpenGL display modes; or, collect the
+spare change hidden under the cushions of your couch, and use it to
+buy a video card manufactured after 1998.  (It doesn't even need to be
+\fIfast\fP 3D hardware: the problem will be fixed if there is any
+3D hardware \fIat all.\fP)
+.TP 8
+.B XFree86's Magic Keystrokes
+The XFree86 X server traps certain magic keystrokes before client programs ever
+see them.  Two that are of note are Ctrl+Alt+Backspace, which causes 
+the X server to exit; and Ctrl+Alt+F\fIn\fP, which switches virtual consoles.
+The X server will respond to these keystrokes even if xscreensaver has the
+screen locked.  Depending on your setup, you might consider this a problem.
+
+Unfortunately, there is no way for xscreensaver itself to override the
+interpretation of these keys.  If you want to disable Ctrl+Alt+Backspace
+globally, you need to set the \fIDontZap\fP flag in 
+your \fI/etc/X11/XF86Config\fP file.  To globally disable VT switching,
+you can set the \fIDontVTSwitch\fP flag.  See the
+.BR XF86Config (5)
+manual for details.
+.SH X RESOURCES
+These are the X resources use by the \fIxscreensaver\fP program.
+You probably won't need to change these manually (that's what the
+.BR xscreensaver\-demo (1)
+program is for).
 .TP 8
 .B timeout\fP (class \fBTime\fP)
 The screensaver will activate (blank the screen) after the keyboard and
@@ -238,10 +575,6 @@ Whether to display a splash screen at startup.  Default true.
 .TP 8
 .B splashDuration\fP (class \fBTime\fP)
 How long the splash screen should remain visible; default 5 seconds.
-.TP 8
-.B quad\fP (class \fBBoolean\fP)
-If true, then \fIfour\fP screensavers will be run on each monitor.
-Use at your own risk!
 .TP 8
 .B helpURL\fP (class \fBURL\fP)
 The splash screen has a \fIHelp\fP button on it.  When you press it, it will
@@ -542,620 +875,17 @@ is true.  Default: Black.
 The pathname of the shell that \fIxscreensaver\fP uses to start subprocesses.
 This must be whatever your local variant of \fB/bin/sh\fP is: in particular,
 it must not be \fBcsh\fP.
-.SH COMMAND-LINE OPTIONS
-.I xscreensaver
-also accepts a few command-line options, mostly for use when debugging:
-for normal operation, you should configure things via the \fI~/.xscreensaver\fP
-file.
-.TP 8
-.B \-display \fIhost:display.screen\fP
-The X display to use.  For displays with multiple screens, XScreenSaver
-will manage all screens on the display simultaniously.
-.TP 8
-.B \-verbose
-Same as setting the \fIverbose\fP resource to \fItrue\fP: print diagnostics
-on stderr and on the xscreensaver window.
-.TP 8
-.B \-no-capture-stderr
-Same as setting the \fIcaptureStderr\fP resource to \fIfalse\fP: do not
-redirect the stdout and stderr streams to the xscreensaver window itself.
-If xscreensaver is crashing, you might need to do this in order to see
-the error message.
-.SH HOW IT WORKS
-When it is time to activate the screensaver, a full-screen black window is
-created on each screen of the display.  Each window is created in such a way
-that, to any subsequently-created programs, it will appear to be a ``virtual
-root'' window.  Because of this, any program which draws on the root 
-window (and which understands virtual roots) can be used as a screensaver.
-
-When the user becomes active again, the screensaver windows are unmapped, and
-the running subprocesses are killed by sending them \fBSIGTERM\fP.  This is 
-also how the subprocesses are killed when the screensaver decides that it's
-time to run a different demo: the old one is killed and a new one is launched.
-
-Before launching a subprocess, \fIxscreensaver\fP stores an appropriate value
-for \fB$DISPLAY\fP in the environment that the child will receive.  (This is
-so that if you start \fIxscreensaver\fP with a \fI-display\fP argument, the
-programs which \fIxscreensaver\fP launches will draw on the same display;
-and so that the child will end up drawing on the appropriate screen of a
-multi-headed display.)
-
-When the screensaver turns off, or is killed, care is taken to restore 
-the ``real'' virtual root window if there is one.  Because of this, it is
-important that you not kill the screensaver process with \fIkill -9\fP if
-you are running a virtual-root window manager.  If you kill it with \-9,
-you may need to restart your window manager to repair the damage.  This
-isn't an issue if you aren't running a virtual-root window manager.
-
-For all the gory details, see the commentary at the top of xscreensaver.c.
-
-You can control a running screensaver process by using the
-.BR xscreensaver\-command (1)
-program (which see.)
-.SH POWER MANAGEMENT
-Modern X servers contain support to power down the monitor after an idle
-period.  If the monitor has powered down, then \fIxscreensaver\fP will
-notice this (after a few minutes), and will not waste CPU by drawing 
-graphics demos on a black screen.  An attempt will also be made to
-explicitly power the monitor back up as soon as user activity is detected.
-
-As of version 3.28 (Feb 2001), the \fI~/.xscreensaver\fP file controls the
-configuration of your display's power management settings: if you have
-used
-.BR xset (1)
-to change your power management settings, then xscreensaver will
-override those changes with the values specified 
-in \fI~/.xscreensaver\fP (or with its built-in defaults, if there
-is no \fI~/.xscreensaver\fP file yet.)
-
-To change your power management settings, run
-.BR xscreensaver\-demo (1)
-and change the various timeouts through the user interface.
-Alternately, you can edit the \fI~/.xscreensaver\fP file directly.
-
-If the power management section is grayed out in the
-.BR xscreensaver\-demo (1)
-window,  then that means that your X server does not support
-the XDPMS extension, and so control over the monitor's power state
-is not available.
-
-If you're using a laptop, don't be surprised if changing the DPMS
-settings has no effect: many laptops have monitor power-saving behavior
-built in at a very low level that is invisible to Unix and X.  On such
-systems, you can typically adjust the power-saving delays only by
-changing settings in the BIOS in some hardware-specific way.
-
-If DPMS seems not to be working with XFree86, make sure the "DPMS"
-option is set in your \fI/etc/X11/XF86Config\fP file.  See the
-.BR XF86Config (5)
-manual for details.
-.SH USING XDM(1)
-You can run \fIxscreensaver\fP from your 
-.BR xdm (1)
-session, so that the screensaver will run even when nobody is logged 
-in on the console.
-
-The trick to using xscreensaver with \fIxdm\fP is this: keep in mind the 
-two very different states in which xscreensaver will be running:
-.RS 4
-.TP 3
-.B 1: Nobody logged in.
-
-If you're thinking of running xscreensaver from XDM at all, then it's 
-probably because you want graphics demos to be running on the console
-when nobody is logged in there.  In this case, xscreensaver will function
-only as a screen saver, not a screen locker: it doesn't make sense
-for xscreensaver to lock the screen, since nobody is logged in yet!
-The only thing on the screen is the XDM login prompt.
-.TP 3
-.B 2: Somebody logged in.
-
-Once someone has logged in through the XDM login window, the situation is
-very different.  For example: now it makes sense to lock the screen (and
-prompt for the logged in user's password); and now xscreensaver should
-consult that user's \fI~/.xscreensaver\fP file; and so on.
-.RE
-
-The difference between these two states comes down to a question of,
-which user is the \fIxscreensaver\fP process running as?  For the first
-state, it doesn't matter.  If you start \fIxscreensaver\fP in the usual
-XDM way, then xscreensaver will probably end up running as root, which 
-is fine for the first case (the ``nobody logged in'' case.)
-
-However, once someone is logged in, running as root is no longer fine:
-because xscreensaver will be consulting root's \fI.xscreensaver\fP file
-instead of that of the logged in user, and won't be prompting for the
-logged in user's password, and so on.  (This is not a security problem,
-it's just not what you want.)
-
-So, once someone has logged in, you want xscreensaver to be running as that
-user.  The way to accomplish this is to kill the old xscreensaver process
-and start a new one (as the new user.)
-
-The simplest way to accomplish all of this is as follows:
-.RS 4
-.TP 3
-.B 1: Launch xscreensaver before anyone logs in.
-
-To the file \fI/usr/lib/X11/xdm/Xsetup\fP, add the lines
-.EX
-xhost +localhost
-xscreensaver-command -exit
-xscreensaver &
-.EE
-This will run xscreensaver as root, over the XDM login window.
-Moving the mouse will cause the screen to un-blank, and allow the user
-to type their password at XDM to log in.
-.TP 3
-.B 2: Restart xscreensaver when someone logs in.
-
-Near the top of the file \fI/usr/lib/X11/xdm/Xsession\fP, add those same lines:
-.EX
-xscreensaver-command -exit
-xscreensaver &
-.EE
-When someone logs in, this will kill off the existing (root) xscreensaver
-process, and start a new one, running as the user who has just logged in.
-If the user's .xscreensaver file requests locking, they'll get it.  They
-will also get their own choice of timeouts, and graphics demos, and so on.
-
-Alternately, each user could just put those lines in their 
-personal \fI~/.xsession\fP files.
-.RE
-
-Make sure you have \fB$PATH\fP set up correctly in the \fIXsetup\fP 
-and \fIXsession\fP scripts, or \fIxdm\fP won't be able to 
-find \fIxscreensaver\fP, and/or \fIxscreensaver\fP won't be able to 
-find its graphics demos.
-
-(If your system does not seem to be executing the \fIXsetup\fP file, you
-may need to configure it to do so: the traditional way to do this is
-to make that file the value of the \fIDisplayManager*setup\fP resource
-in the \fI/usr/lib/X11/xdm/xdm-config\fP file.  See the man page for
-.BR xdm (1)
-for more details.)
-
-It is safe to run \fIxscreensaver\fP as root (as \fIxdm\fP is likely to do.)  
-If run as root, \fIxscreensaver\fP changes its effective user and group ids 
-to something safe (like \fI"nobody"\fP) before connecting to the X server
-or launching user-specified programs.
-
-An unfortunate side effect of this (important) security precaution is that
-it may conflict with cookie-based authentication.
-
-If you get "connection refused" errors when running \fIxscreensaver\fP
-from \fIxdm\fP, then this probably means that you have
-.BR xauth (1)
-or some other security mechanism turned on.  One way around this is to
-add \fB"xhost\ +localhost"\fP to \fIXsetup\fP, just before \fIxscreensaver\fP
-is launched.  
-
-Note that this will give access to the X server to anyone capable of logging
-in to the local machine, so in some environments, this might not be 
-appropriate.  If turning off file-system-based access control is not
-acceptable, then running \fIxscreensaver\fP from the \fIXsetup\fP file
-might not be possible, and xscreensaver will only work when running as
-a normal, unprivileged user.
-
-For more information on the X server's access control mechanisms, see the
-man pages for
-.BR X (1),
-.BR Xsecurity (1),
-.BR xauth (1),
-and
-.BR xhost (1).
-.SH USING GDM(1)
-Using xscreensaver with
-.BR gdm (1)
-is easy, because gdm has a configuration tool.  Just fire up
-.BR gdmconfig (1)
-and on the \fIBackground\fP page, type \fB"xscreensaver -nosplash"\fP into
-the \fIBackground Program\fP field.  That will cause gdm to run xscreensaver
-while nobody is logged in, and kill it as soon as someone does log in.
-(The user will then be responsible for starting xscreensaver on their
-own, if they want.)
-
-Another way to accomplish the same thing is to edit the
-file \fI/etc/X11/gdm/gdm.conf\fP to include:
-.EX
-BackgroundProgram=xscreensaver -nosplash
-RunBackgroundProgramAlways=true
-.EE
-In this situation, the \fIxscreensaver\fP process will probably be running
-as user \fIgdm\fP instead of \fIroot\fP.  You can configure the settings
-for this nobody-logged-in state (timeouts, DPMS, etc.) by editing
-the \fI~gdm/.xscreensaver\fP file.
-
-To get gdm to run the BackgroundProgram, you may need to switch it from
-the "Graphical Greeter" to the "Standard Greeter".
-.SH USING KDE (K DESKTOP ENVIRONMENT)
-I understand that KDE has invented their own wrapper around xscreensaver,
-that is inferior to 
-.BR xscreensaver-demo (1)
-in any number of ways.  I've never actually seen it, but I'm told that
-this is the way you disable it:
-.RS 4
-.TP 3
-\fB1: Switch off KDE's screen saver.\fP
-Open the ``\fIControl Center\fP'' and
-select the ``\fIAppearance & Themes -> Screensaver\fP'' page.
-Turn off the ``\fIStart Automatically\fP'' checkbox.
-.TP 3
-\fB2: Find your Autostart directory.\fP
-Open the ``\fISystem Administration -> Paths\fP'' page,
-and see what your ``Autostart path'' is set to: it will
-probably be \fI~/.kde/Autostart/\fP or something similar.
-.TP 3
-\fB3: Make xscreensaver be an Autostart program.\fP
-Create a .desktop file in your autostart directory 
-called \fIxscreensaver.desktop\fP that contains the following five lines:
-.EX
-[Desktop Entry]
-Exec=xscreensaver
-Name=XScreensaver
-Type=Application
-X-KDE-StartupNotify=false
-.EE
-.TP 3
-\fB4: Make the various "lock session" buttons call xscreensaver.\fP
-Replace the file \fI/usr/bin/kdesktop_lock\fP (or 
-possibly \fI/usr/kde/3.5/bin/kdesktop_lock\fP)
-with these two lines:
-.EX
-#!/bin/sh
-xscreensaver-command -lock
-.EE
-Make sure the file is executable (chmod a+x).
-.RE
-.PP
-Now use xscreensaver normally, controlling it via the usual
-.BR xscreensaver-demo (1)
-and
-.BR xscreensaver-command (1)
-mechanisms.
-.SH USING CDE (COMMON DESKTOP ENVIRONMENT)
-The easiest way to use \fIxscreensaver\fP on a system with CDE is to simply
-switch off the built-in CDE screensaver, and use \fIxscreensaver\fP instead;
-and second, to tell the front panel to run 
-.BR xscreensaver\-command (1)
-with the \fI\-lock\fP option when the \fILock\fP icon is clicked.
-
-To accomplish this involves five steps:
-.RS 4
-.TP 3
-\fB1: Switch off CDE's locker\fP
-Do this by turning off ``\fIScreen Saver and Screen Lock\fP'' in the
-Screen section of the Style Manager.
-.TP 3
-\fB2: Edit sessionetc\fP
-Edit the file \fI~/.dt/sessions/sessionetc\fP and add to it the line
-.EX
-xscreensaver &
-.EE
-And make sure the sessionetc file is executable.
-This will cause \fIxscreensaver\fP to be launched when you log in.
-(As always, make sure that xscreensaver and the graphics demos are on
-your \fB$PATH\fP; the path needs to be set in \fI.cshrc\fP 
-and/or \fI.dtprofile\fP, not \fI.login\fP.)
-.TP 3
-\fB3: Create XScreenSaver.dt\fP
-Create a file called \fI~/.dt/types/XScreenSaver.dt\fP with the following
-contents:
-.EX
-ACTION XScreenSaver
-{
-  LABEL         XScreenSaver
-  TYPE          COMMAND
-  EXEC_STRING   xscreensaver-command -lock
-  ICON          Dtkey
-  WINDOW_TYPE   NO_STDIO
-}
-.EE
-This defines a ``lock'' command for the CDE front panel, that knows how
-to talk to \fIxscreensaver\fP.
-.TP 3
-\fB4: Create Lock.fp\fP
-Create a file called \fI~/.dt/types/Lock.fp\fP with the following
-contents:
-.EX
-CONTROL Lock
-{
-  TYPE             icon
-  CONTAINER_NAME   Switch
-  CONTAINER_TYPE   SWITCH
-  POSITION_HINTS   1
-  ICON             Fplock
-  LABEL            Lock
-  PUSH_ACTION      XScreenSaver
-  HELP_TOPIC       FPOnItemLock
-  HELP_VOLUME      FPanel
-}
-.EE
-This associates the CDE front panel ``Lock'' icon with the lock command
-we just defined in step 3.
-.TP 3
-\fB5: Restart\fP
-Select ``\fIRestart Workspace Manager\fP'' from the popup menu to make
-your changes take effect.  If things seem not to be working, check the
-file \fI~/.dt/errorlog\fP for error messages.
-.RE
-.SH USING HP VUE (VISUAL USER ENVIRONMENT)
-Since CDE is a descendant of VUE, the instructions for using xscreensaver
-under VUE are similar to the above:
-.RS 4
-.TP 3
-\fB1: Switch off VUE's locker\fP
-Open the ``\fIStyle Manager\fP'' and select ``\fIScreen\fP.''
-Turn off ``\fIScreen Saver and Screen Lock\fP'' option.
-.TP 3
-\fB2: Make sure you have a Session\fP
-Next, go to the Style Manager's, ``\fIStartup\fP'' page.
-Click on ``\fISet Home Session\fP'' to create a session, then 
-on ``\fIReturn to Home Session\fP'' to select this session each
-time you log in.
-.TP 3
-\fB3: Edit vue.session\fP
-Edit the file \fI~/.vue/sessions/home/vue.session\fP and add to it
-the line
-.EX
-vuesmcmd -screen 0 -cmd "xscreensaver"
-.EE
-This will cause \fIxscreensaver\fP to be launched when you log in.
-(As always, make sure that xscreensaver and the graphics demos are on
-your \fB$PATH\fP; the path needs to be set in \fI.cshrc\fP
-and/or \fI.profile\fP, not \fI.login\fP.)
-.TP 3
-\fB3: Edit vuewmrc\fP
-Edit the file \fI~/.vue/vuewmrc\fP and add (or change) the Lock control:
-.EX
-CONTROL Lock
-{
-  TYPE         button
-  IMAGE        lock
-  PUSH_ACTION  f.exec "xscreensaver-command -lock"
-  HELP_TOPIC   FPLock
-}
-.EE
-This associates the VUE front panel ``Lock'' icon with the xscreensaver 
-lock command.
-.RE
-.PP
-.SH BUGS
-Bugs?  There are no bugs.  Ok, well, maybe.  If you find one, please let
-me know.  http://www.jwz.org/xscreensaver/bugs.html explains how to
-construct the most useful bug reports.
-.TP 8
-.B Locking and XDM
-If xscreensaver has been launched from 
-.BR xdm (1)
-before anyone has logged in, you will need to kill and then restart the
-xscreensaver daemon after you have logged in, or you will be confused by
-the results.  (For example, locking won't work, and your \fI~/.xscreensaver\fP
-file will be ignored.)
-
-When you are logged in, you want the \fIxscreensaver\fP daemon to be 
-running under \fIyour\fP user id, not as root or some other user.
-
-If it has already been started by \fIxdm\fP, you can kill it by sending
-it the \fBexit\fP command, and then re-launching it as you, by putting
-something like the following in your personal X startup script:
-.EX
-xscreensaver-command -exit
-xscreensaver &
-.EE
-The ``\fIUsing XDM(1)\fP'' section, above, goes into more detail, and explains
-how to configure the system to do this for all users automatically.
-.TP 8
-.B Locking and root logins
-In order for it to be safe for xscreensaver to be launched by \fIxdm\fP,
-certain precautions had to be taken, among them that xscreensaver never
-runs as \fIroot\fP.  In particular, if it is launched as root (as \fIxdm\fP
-is likely to do), xscreensaver will disavow its privileges, and switch 
-itself to a safe user id (such as \fInobody\fP.)
-
-An implication of this is that if you log in as \fIroot\fP on the console, 
-xscreensaver will refuse to lock the screen (because it can't tell
-the difference between \fIroot\fP being logged in on the console, and a
-normal user being logged in on the console but xscreensaver having been 
-launched by the
-.BR xdm (1)
-.I Xsetup
-file.)
-
-The solution to this is simple: you shouldn't be logging in on the console
-as \fIroot\fP in the first place!  (What, are you crazy or something?)  
-
-Proper Unix hygiene dictates that you should log in as yourself, and
-.BR su (1)
-to \fIroot\fP as necessary.  People who spend their day logged in
-as \fIroot\fP are just begging for disaster.
-.TP 8
-.B XAUTH and XDM
-For xscreensaver to work when launched by
-.BR xdm (1),
-programs running on the local machine as user \fI"nobody"\fP must be
-able to connect to the X server.  This means that if you want to run
-xscreensaver on the console while nobody is logged in, you may need
-to disable cookie-based access control (and allow all users who can log
-in to the local machine to connect to the display.)  
-
-You should be sure that this is an acceptable thing to do in your
-environment before doing it.  See the ``\fIUsing XDM(1)\fP'' section, 
-above, for more details.
-.TP 8
-.B Passwords
-If you get an error message at startup like ``couldn't get password
-of \fIuser\fP'' then this probably means that you're on a system in which 
-the
-.BR getpwent (3)
-library routine can only be effectively used by root.  If this is the case, 
-then \fIxscreensaver\fP must be installed as setuid to root in order for
-locking to work.  Care has been taken to make this a safe thing to do.  
-
-It also may mean that your system uses shadow passwords instead of the standard
-.BR getpwent (3)
-interface; in that case, you may need to change some options 
-with \fIconfigure\fP and recompile.
-
-If you change your password after xscreensaver has been launched, it will
-continue using your old password to unlock the screen until xscreensaver
-is restarted.  On some systems, it may accept \fIboth\fP your old and new
-passwords.  So, after you change your password, you'll have to do
-.EX
-xscreensaver-command -restart
-.EE
-to make \fIxscreensaver\fP notice.
-.TP 8
-.B PAM Passwords
-If your system uses PAM (Pluggable Authentication Modules), then in order
-for xscreensaver to use PAM properly, PAM must be told about xscreensaver.
-The xscreensaver installation process should update the PAM data (on Linux,
-by creating the file \fI/etc/pam.d/xscreensaver\fP for you, and on Solaris, 
-by telling you what lines to add to the \fI/etc/pam.conf\fP file.)  
-
-If the PAM configuration files do not know about xscreensaver, then 
-you \fImight\fP be in a situation where xscreensaver will refuse to ever
-unlock the screen.
-
-This is a design flaw in PAM (there is no way for a client to tell the
-difference between PAM responding ``I have never heard of your module,''
-and responding, ``you typed the wrong password.'')  As far as I can tell,
-there is no way for xscreensaver to automatically work around this, or
-detect the problem in advance, so if you have PAM, make sure it is
-configured correctly!
-.TP 8
-.B Colormap lossage: TWM
-The \fBinstallColormap\fP option doesn't work very well with the
-.BR twm (1)
-window manager and its descendants, on 8-bit screens.
-
-There is a race condition between the screensaver and this window manager,
-which can result in the screensaver's colormap not getting installed
-properly, meaning the graphics hacks will appear in essentially random
-colors.  (If the screen goes white instead of black, this is probably why.)
-
-The
-.BR mwm (1)
-and
-.BR olwm (1)
-window managers don't have this problem.  The race condition exists
-because X (really, ICCCM) does not provide a way for an OverrideRedirect 
-window to have its own colormap, short of grabbing the server (which is 
-neither a good idea, nor really possible with the current design.)  What 
-happens is that, as soon as xscreensaver installs its colormap, \fBtwm\fP 
-responds to the resultant \fBColormapNotify\fP event by re-installing the 
-default colormap.  Apparently, \fBtwm\fP doesn't \fIalways\fP do this; it 
-seems to do it regularly if the screensaver is activated from a menu item, 
-but seems to not do it if the screensaver comes on of its own volition, or 
-is activated from another console.  
-.RS 8
-.TP 4
-.B Attention, window manager authors!
-You should only call
-.BR XInstallColormap (3)
-in response to user events.  That is, it is appropriate to install a colormap
-in response to \fBFocusIn\fP, \fBFocusOut\fP, \fBEnterNotify\fP, 
-and \fBLeaveNotify\fP events; but it is not appropriate to call it in
-response to \fBColormapNotify\fP events.  If you install colormaps in
-response to \fIapplication\fP actions as well as in response to \fIuser\fP
-actions, then you create the situation where it is impossible for 
-override-redirect applications (such as xscreensaver) to display their
-windows in the proper colors.
-.RE
-.TP 8
-.B Colormap lossage: XV, XAnim, XEarth
-Some programs don't operate properly on visuals other than the default one,
-or with colormaps other than the default one.  See the discussion of the
-magic "default-n" visual name in the description of the \fBprograms\fP 
-resource in the \fIConfiguration\fP section.  When programs only work with
-the default colormap, you need to use a syntax like this:
-.EX
-   default-n: xv -root image-1.gif -quit  \\n\\
-   default-n: xearth -nostars -wait 0     \\n\\
-.EE
-It would also work to turn off the \fBinstallColormap\fP option altogether,
-but that would deny extra colors to those programs that \fIcan\fP take
-advantage of them.
-.TP 8
-.B Machine Load
-Although this program ``nices'' the subprocesses that it starts, 
-graphics-intensive subprograms can still overload the machine by causing
-the X server process itself (which is not ``niced'') to consume many
-cycles.  Care has been taken in all the modules shipped with xscreensaver
-to sleep periodically, and not run full tilt, so as not to cause
-appreciable load.
-
-However, if you are running the OpenGL-based screen savers on a machine
-that does not have a video card with 3D acceleration, they \fIwill\fP
-make your machine slow, despite
-.BR nice (1).
-
-Your options are: don't use the OpenGL display modes; or, collect the
-spare change hidden under the cushions of your couch, and use it to
-buy a video card manufactured after 1998.  (It doesn't even need to be
-\fIfast\fP 3D hardware: the problem will be fixed if there is any
-3D hardware \fIat all.\fP)
-.TP 8
-.B XFree86's Magic Keystrokes
-The XFree86 X server traps certain magic keystrokes before client programs ever
-see them.  Two that are of note are Ctrl+Alt+Backspace, which causes 
-the X server to exit; and Ctrl+Alt+F\fIn\fP, which switches virtual consoles.
-The X server will respond to these keystrokes even if xscreensaver has the
-screen locked.  Depending on your setup, you might consider this a problem.
-
-Unfortunately, there is no way for xscreensaver itself to override the
-interpretation of these keys.  If you want to disable Ctrl+Alt+Backspace
-globally, you need to set the \fIDontZap\fP flag in 
-your \fI/etc/X11/XF86Config\fP file.  To globally disable VT switching,
-you can set the \fIDontVTSwitch\fP flag.  See the
-.BR XF86Config (5)
-manual for details.
-.TP 8
-.B MIT Extension and Fading
-The \fBMIT-SCREEN-SAVER\fP extension is junk.  Don't use it.
-
-When using the \fBMIT-SCREEN-SAVER\fP extension in conjunction with 
-the \fBfade\fP option, you'll notice an unattractive flicker just before 
-the fade begins.  This is because the server maps a black window just before 
-it tells the \fIxscreensaver\fP process to activate.  The \fIxscreensaver\fP 
-process immediately unmaps that window, but this results in a flicker.  I 
-haven't figured a way  to get around this; it seems to be a fundamental
-property of the (mis-) design of this server extension.
-
-It sure would be nice if someone would implement the \fBSGI SCREEN_SAVER\fP
-extension in XFree86; it's dead simple, and works far better than the
-over-engineered and broken \fBMIT-SCREEN-SAVER\fP extension.
-.TP 8
-.B Keyboard LEDs
-If \fIprocInterrupts\fP is on (which is the default on Linux systems) and
-you're using some program that toggles the state of your keyboard LEDs,
-xscreensaver won't work right: turning those LEDs on or off causes a 
-keyboard interrupt, which xscreensaver will interpret as user activity.
-So if you're using such a program, set the \fIprocInterrupts\fP resource
-to False.
-.TP 8
-.B Extensions
-If you are not making use of one of the server extensions (\fBXIDLE\fP,
-\fBSGI SCREEN_SAVER\fP, or \fBMIT-SCREEN-SAVER\fP), then it is possible, in 
-rare situations, for \fIxscreensaver\fP to interfere with event propagation 
-and make another X program malfunction.  For this to occur, that other
-application would need to \fInot\fP select \fBKeyPress\fP events on its 
-non-leaf windows within the first 30 seconds of their existence, but then 
-select for them later.  In this case, that client \fImight\fP fail to receive 
-those events.  This isn't very likely, since programs generally select a
-constant set of events immediately after creating their windows and then 
-don't change them, but this is the reason that it's a good idea to install 
-and use one of the server extensions instead, to work around this shortcoming
-in the X protocol.
-
-In all these years, I've not heard of even a single case of this happening,
-but it is theoretically possible, so I'm mentioning it for completeness...
 .SH ENVIRONMENT
 .PP
 .TP 8
 .B DISPLAY
 to get the default host and display number, and to inform the sub-programs
 of the screen on which to draw.
+.TP 8
+.B XSCREENSAVER_WINDOW
+Passed to sub-programs to indicate the ID of the window on which they
+should draw on.  This is necessary on Xinerama/RANDR systems where
+multiple physical monitors share a single X11 "Screen".
 .TP 8
 .B PATH
 to find the sub-programs to run.
@@ -1183,13 +913,14 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
 Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2003, 2004, 2005 by Jamie Zawinski.  Permission to use,
-copy, modify, distribute, and sell this software and its documentation for
-any purpose is hereby granted without fee, provided that the above copyright
-notice appear in all copies and that both that copyright notice and this
-permission notice appear in supporting documentation.  No representations are
-made about the suitability of this software for any purpose.  It is provided
-"as is" without express or implied warranty.
+2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software
+and its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@jwz.org>.  Written in late 1991; version 1.0 posted
 to comp.sources.x on 17-Aug-1992.

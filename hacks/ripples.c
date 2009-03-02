@@ -90,6 +90,8 @@ struct state {
   int draw_count;
 
   int iterations, delay, rate, box, oily, stir, fluidity;
+  int duration;
+  time_t start_time;
 
   void (*draw_transparent) (struct state *st, short *src);
 
@@ -529,6 +531,7 @@ setup_X(struct state *st)
 
     st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                               st->window, 0, 0);
+    st->start_time = time ((time_t) 0);
   } else {
     XGCValues gcv;
 
@@ -951,6 +954,7 @@ ripples_init (Display *disp, Window win)
   st->window = win;
   st->iterations = 0;
   st->delay = get_integer_resource(disp, "delay", "Integer");
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
   st->rate = get_integer_resource(disp, "rate", "Integer");
   st->box = get_integer_resource(disp, "box", "Integer");
   st->oily = get_boolean_resource(disp, "oily", "Boolean");
@@ -963,6 +967,8 @@ ripples_init (Display *disp, Window win)
 #endif /* HAVE_XSHM_EXTENSION */
   st->light = get_integer_resource(disp, "light", "Integer");
 
+  if (st->delay < 0) st->delay = 0;
+  if (st->duration < 1) st->duration = 1;
   if (st->fluidity <= 1) st->fluidity = 1;
   if (st->fluidity > 16) st->fluidity = 16; /* 16 = sizeof(short) */
   if (st->light < 0) st->light = 0;
@@ -1021,11 +1027,22 @@ ripples_draw (Display *dpy, Window window, void *closure)
       if (! st->img_loader) {  /* just finished */
         XWindowAttributes xgwa;
         XGetWindowAttributes(st->dpy, st->window, &xgwa);
+        st->start_time = time ((time_t) 0);
         st->orig_map = XGetImage (st->dpy, st->window, 0, 0, 
                                   xgwa.width, xgwa.height,
                                   ~0L, ZPixmap);
         init_ripples(st, 0, -SPLASH); /* Start off without any drops */
       }
+      return st->delay;
+    }
+
+    if (!st->img_loader &&
+        st->start_time + st->duration < time ((time_t) 0)) {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes(st->dpy, st->window, &xgwa);
+      st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                                st->window, 0, 0);
+      st->start_time = time ((time_t) 0);
       return st->delay;
     }
 
@@ -1071,6 +1088,7 @@ static const char *ripples_defaults[] =
   "*colors:		200",
   "*dontClearRoot:	True",
   "*delay:		50000",
+  "*duration:		120",
   "*rate:	 	5",
   "*box:	 	0",
   "*water: 		False",
@@ -1092,6 +1110,7 @@ static XrmOptionDescRec ripples_options[] =
   { "-colors",	".colors",	XrmoptionSepArg, 0},
   { "-colours",	".colors",	XrmoptionSepArg, 0},
   {"-delay",	".delay",	XrmoptionSepArg, 0},
+  {"-duration",	".duration",	XrmoptionSepArg, 0 },
   {"-rate",	".rate",	XrmoptionSepArg, 0},
   {"-box",	".box",		XrmoptionSepArg, 0},
   {"-water",	".water",	XrmoptionNoArg, "True"},

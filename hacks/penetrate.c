@@ -365,8 +365,8 @@ penetrate_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
-  /*char *fontname =   "-*-new century schoolbook-*-r-*-*-*-380-*-*-*-*-*-*"; */
-  char *fontname =   "-*-courier-*-r-*-*-*-380-*-*-*-*-*-*";
+  const char *levelfont = "-*-courier-*-r-*-*-*-380-*-*-*-*-*-*";
+  const char *scorefont = "-*-times-*-r-*-*-*-180-*-*-*-*-*-*";
   XGCValues gcv;
   XWindowAttributes xgwa;
 
@@ -387,14 +387,23 @@ penetrate_init (Display *dpy, Window window)
   if (st->lrate < 0) st->lrate = 2;
   st->startlrate = st->lrate;
 
-  if (!fontname || !*fontname)
-    fprintf (stderr, "%s: no font specified.\n", progname);
-  st->font = XLoadQueryFont(st->dpy, fontname);
-  if (!st->font)
-    fprintf (stderr, "%s: could not load font %s.\n", progname, fontname);
+  st->font = XLoadQueryFont(st->dpy, levelfont);
+  if (!st->font) {
+    fprintf (stderr, "%s: could not load font %s.\n", progname, levelfont);
+    st->font = XLoadQueryFont(st->dpy, scorefont);
+    if (! st->font)
+      st->font = XLoadQueryFont(st->dpy, "fixed");
+    if (! st->font) abort();
+  }
 
-  if (!(st->scoreFont = XLoadQueryFont(st->dpy, "-*-times-*-r-*-*-*-180-*-*-*-*-*-*")))
-	 fprintf(stderr, "%s: Can't load Times font.", progname);
+  st->scoreFont = XLoadQueryFont(st->dpy, scorefont);
+  if (!st->scoreFont) {
+    fprintf (stderr, "%s: could not load font %s.\n", progname, scorefont);
+    st->scoreFont = XLoadQueryFont(st->dpy, levelfont);
+    if (! st->scoreFont)
+      st->scoreFont = XLoadQueryFont(st->dpy, "fixed");
+    if (! st->scoreFont) abort();
+  }
 
   for (i = 0; i < kMaxMissiles; i++)
     st->missile[i].alive = 0;

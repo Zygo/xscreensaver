@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1999-2005 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright (c) 1999-2008 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -44,7 +44,7 @@ depend::
 distdepend::
 	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR2)
-	@cd po ; $(MAKE) generate_potfiles_in
+	@cd po ; $(MAKE) update-po
 
 TAGS:: tags
 tags::
@@ -326,16 +326,18 @@ www::
   diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
 									    \
-  OLDEST=`ls xscreensaver*.tar.gz | head -1` ;				    \
-  /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
-  read line;								    \
-  if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
-    set -x ;								    \
-    rm $$OLDEST ;							    \
-    cvs remove $$OLDEST ;						    \
-  else									    \
-    set -x ;								    \
-  fi ;									    \
+  for EXT in tar.gz dmg ; do						    \
+    OLDEST=`ls xscreensaver*.$$EXT | head -n 1` ;			    \
+    /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
+    read line;								    \
+    if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
+      set -x ;								    \
+      rm $$OLDEST ;							    \
+      cvs remove $$OLDEST ;						    \
+    else								    \
+      set -x ;								    \
+    fi ;								    \
+  done ;								    \
   cvs add -kb $$BNAME $$BNAME2 ;					    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
@@ -353,22 +355,6 @@ www::
 									    \
   cvs commit -m "$$VERS"
 
-check_years::
-	@for file in `find . -name '*.*' \
-		\! -name '*~' \! -name '*.o' \! -name '*.gz' \! -name '*.Z' \
-		\! -name '*.po' \! -name 'config.*'  \! -name '*.glade*' \
-		\! -name '*.m4' \! -name '*.pdb' \! -name '*.xpm' \
-		\! -name '*.jpg' \! -name '*.gif' \! -name '*.eps' \
-		\! -name '*.png' \! -name '*.tif' \! -name '*.bak' \
-		| sort` \
-	; do \
-	  y=`date -r "$$file" '+%Y'` ; \
-	  if ! ( grep "\b$$y\b" $$file >/dev/null ); then \
-	    if ( grep "opyright\|(c)\|\.BR" $$file >/dev/null ); then \
-	      echo "$$file		does not mention $$y" ; \
-	    fi ; \
-	  fi ; \
-	done
 
 count::
 	@ \

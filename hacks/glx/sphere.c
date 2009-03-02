@@ -1,4 +1,4 @@
-/* sphere, Copyright (c) 2002 Paul Bourke <pbourke@swin.edu.au>
+/* sphere, Copyright (c) 2002, 2008 Paul Bourke <pbourke@swin.edu.au>
  * Utility function to create a unit sphere in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -32,9 +32,10 @@
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
-void
+int
 unit_sphere (int stacks, int slices, int wire_p)
 {
+  int polys = 0;
   int i,j;
   double theta1, theta2, theta3;
   XYZ e, p;
@@ -53,7 +54,7 @@ unit_sphere (int stacks, int slices, int wire_p)
       glBegin (GL_POINTS);
       glVertex3f (c.x, c.y, c.z);
       glEnd();
-      return;
+      return 1;
     }
 
   glFrontFace(GL_CW);
@@ -99,7 +100,9 @@ unit_sphere (int stacks, int slices, int wire_p)
                         2*j / (double)stacks2);
           glVertex3f (p.x, p.y, p.z);
           if (wire_p) lb = p;
+          polys++;
         }
       glEnd();
     }
+  return polys;
 }

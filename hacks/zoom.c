@@ -30,10 +30,12 @@
 struct state {
   Display *dpy;
   Window window;
+  Screen *screen;
 
   int sizex, sizey;
 
   int delay;
+  int duration;
   int pixwidth, pixheight, pixspacex, pixspacey, lensoffsetx, lensoffsety;
   Bool lenses;
 
@@ -46,6 +48,7 @@ struct state {
 
   int sinusoid_offset;
 
+  time_t start_time;
   async_load_state *img_loader;
 };
 
@@ -76,6 +79,7 @@ zoom_init (Display *dpy, Window window)
   st->dpy = dpy;
   st->window = window;
   XGetWindowAttributes(st->dpy, st->window, &xgwa);
+  st->screen = xgwa.screen;
   st->sizex = xgwa.width;
   st->sizey = xgwa.height;
   cmap = xgwa.colormap;
@@ -85,6 +89,9 @@ zoom_init (Display *dpy, Window window)
   st->delay = get_integer_resource(st->dpy, "delay", "Integer");
   if (st->delay < 1)
     st->delay = 1;
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+  if (st->duration < 1)
+    st->duration = 1;
   st->pixwidth = get_integer_resource(st->dpy, "pixwidth", "Integer");
   if (st->pixwidth < 1)
     st->pixwidth = 1;
@@ -118,6 +125,7 @@ zoom_init (Display *dpy, Window window)
   XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
   XSetWindowBackground(st->dpy, st->window, bg);
 
+  st->start_time = time ((time_t) 0);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                             st->pm, 0, 0);
 
@@ -152,14 +160,22 @@ zoom_draw (Display *dpy, Window window, void *closure)
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
       if (! st->img_loader) {  /* just finished */
         XClearWindow (st->dpy, st->window);
+        st->start_time = time ((time_t) 0);
         if (!st->lenses) {
           st->orig_map = XGetImage(st->dpy, st->pm, 0, 0, st->sizex, st->sizey, ~0L, ZPixmap);
-          XFreePixmap(st->dpy, st->pm);
-          st->pm = 0;
+/*          XFreePixmap(st->dpy, st->pm);
+          st->pm = 0;*/
         }
       }
       return st->delay;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    st->img_loader = load_image_async_simple (0, st->screen, st->window,
+                                              st->pm, 0, 0);
+    return st->delay;
+  }
 
 #define nrnd(x) (random() % (x))
 
@@ -220,12 +236,13 @@ zoom_free (Display *dpy, Window window, void *closure)
 static const char *zoom_defaults[] = {
   "*dontClearRoot: True",
   ".foreground: white",
-  ".background: black",
+  ".background: #111111",
 #ifdef __sgi /* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID: Best",
 #endif
   "*lenses:      false",
   "*delay:       10000",
+  "*duration:    120",
   "*pixwidth:    10",
   "*pixheight:   10",
   "*pixspacex:   2",
@@ -238,6 +255,7 @@ static const char *zoom_defaults[] = {
 static XrmOptionDescRec zoom_options[] = {
   { "-lenses", ".lenses", XrmoptionNoArg, "true" },
   { "-delay", ".delay", XrmoptionSepArg, 0 },
+  { "-duration",  ".duration", XrmoptionSepArg, 0 },
   { "-pixwidth", ".pixwidth", XrmoptionSepArg, 0 },
   { "-pixheight", ".pixheight", XrmoptionSepArg, 0 },
   { "-pixspacex", ".pixspacex", XrmoptionSepArg, 0 },

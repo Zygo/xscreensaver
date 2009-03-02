@@ -301,6 +301,7 @@
 	   GL:			hypnowheel -root			    \\n\
 	   GL:	\"Hypnowheel (dense)\"	hypnowheel -root -count 3 -layers 50 \\n\
 	   GL:	\"Hypnowheel (trifoil)\"	hypnowheel -root -count 3 -layers 2 -speed 9 -twist 9 -wander \\n\
+	   GL:			skytentacles -root			    \\n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \\n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -417,4 +418,6 @@
 "*hacks.moebiusgears.name:   MoebiusGears",
 "*hacks.cubicgrid.name:      CubicGrid",
 "*hacks.lcdscrub.name:       LCDscrub",
+"*hacks.hypnowheel.name:     HypnoWheel",
+"*hacks.skytentacles.name:   SkyTentacles",
 "*hacks.documentation.isInstalled: True",

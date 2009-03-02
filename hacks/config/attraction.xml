@@ -4,6 +4,7 @@
 
   <command arg="-root"/>
 
+  <hgroup>
   <select id="mode">
     <option id="balls"    _label="Balls"    arg-set="-mode balls"/>
     <option id="lines"    _label="Lines"    arg-set="-mode lines"/>
@@ -18,6 +19,8 @@
     <option id="walls"   _label="Bounce Off Walls"/>
     <option id="nowalls" _label="Ignore Screen Edges" arg-set="-nowalls"/>
   </select>
+
+  </hgroup>
 
   <hgroup>
     <number id="points" type="spinbutton" arg="-points %"
@@ -51,12 +54,14 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
+<!--
   <number id="color_contrast" type="slider" arg="-color-shift %"
           _label="Color Contrast" _low-label="Low" _high-label="High"
            low="0" high="25" default="3"/>
+-->
 
-  <boolean id="orbit" _label="Orbital Mode" arg-set="-orbit"/>
   <hgroup>
+    <boolean id="orbit" _label="Orbital Mode" arg-set="-orbit"/>
     <number id="radius" type="spinbutton" arg="-radius %"
               _label="Radius" low="0" high="1000" default="0"/>
     <number id="vmult" type="slider" arg="-vmult %"

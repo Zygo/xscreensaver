@@ -1,5 +1,5 @@
 /* exec.c --- executes a program in *this* pid, without an intervening process.
- * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -181,8 +181,7 @@ exec_command (const char *shell, const char *command, int nice_level)
   int hairy_p;
 
 #ifndef VMS
-  if (nice != 0)
-    nice_process (nice_level);
+  nice_process (nice_level);
 
   hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"=");
   /* note: = is in the above because of the sh syntax "FOO=bar cmd". */

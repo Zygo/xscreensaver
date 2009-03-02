@@ -5,7 +5,10 @@ spotlight - move spotlight around desktop
 .B spotlight
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP]
+[\-visual \fIvisual\fP]
+[\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
+[\-radius \fIpixels\fP]
 .SH DESCRIPTION
 The \fIspotlight\fP program takes an image and exposes small sections
 of it as if through a wandering spotlight beam.
@@ -40,6 +43,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-radius \fIpixels\fP
 Radius of the spotlight in pixels.

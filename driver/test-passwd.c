@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -63,21 +63,6 @@ void shutdown_stderr (saver_info *si) { }
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;
-
-void
-get_screen_viewport (saver_screen_info *ssi,
-                     int *x_ret, int *y_ret,
-                     int *w_ret, int *h_ret,
-                     int tx, int ty,
-                     Bool verbose_p)
-{
-  *x_ret = 0;
-  *y_ret = 0;
-  *w_ret = WidthOfScreen (ssi->screen);
-  *h_ret = HeightOfScreen (ssi->screen);
-
-  if (*w_ret > *h_ret * 2) *w_ret /= 2;  /* xinerama kludge */
-}
 
 void
 idle_timer (XtPointer closure, XtIntervalId *id)
@@ -230,8 +215,6 @@ main (int argc, char **argv)
         visual_depth(si->default_screen->screen,
                      si->default_screen->current_visual);
 
-      /* I could call get_screen_viewport(), but it is not worthwhile.
-       * These are used by the save_under pixmap. */
       ssip.width = WidthOfScreen(ssip.screen);
       ssip.height = HeightOfScreen(ssip.screen);
 
@@ -245,6 +228,9 @@ main (int argc, char **argv)
 
   pw = getpwuid (getuid ());
   si->user = strdup (pw->pw_name);
+
+/*  si->nscreens = 0;
+  si->screens = si->default_screen = 0; */
 
   while (1)
     {

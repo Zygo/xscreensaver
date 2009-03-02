@@ -56,9 +56,13 @@ The XScreenSaver API
       yoursavername_free     -- Free everything you've allocated.
       yoursavername_reshape  -- Called when the window is resized.
       yoursavername_event    -- Called when a keyboard or mouse event happens.
-                                The "reshape" and "event" functions are only
-                                called when running in a window (not as a
-                                screen saver). It's ok for them to do nothing.
+
+      The "event" function will only be called when running in a window
+      (not as a screen saver).  The "reshape" event will be called when the
+      window size changes, or (as a screen saver) when the display size
+      changes as a result of a RANDR event (e.g., plugging in a new monitor).
+
+      It's ok for both the "event" and "resize" functions to do nothing.
 
   - All other functions should be static.
 

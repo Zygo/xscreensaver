@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -170,6 +170,10 @@ make_splash_dialog (saver_info *si)
     return;
 
   ssi = &si->screens[mouse_screen (si)];
+
+  if (!ssi || !ssi->screen)
+    return;    /* WTF?  Trying to splash while no screens connected? */
+
   cmap = DefaultColormapOfScreen (ssi->screen);
 
   sp = (splash_dialog_data *) calloc (1, sizeof(*sp));
@@ -376,7 +380,7 @@ make_splash_dialog (saver_info *si)
   attrs.event_mask = (ExposureMask | ButtonPressMask | ButtonReleaseMask);
 
   {
-    int sx, sy, w, h;
+    int sx = 0, sy = 0, w, h;
     int mouse_x = 0, mouse_y = 0;
 
     {
@@ -393,7 +397,10 @@ make_splash_dialog (saver_info *si)
         }
     }
 
-    get_screen_viewport (ssi, &sx, &sy, &w, &h, mouse_x, mouse_y, False);
+    x = ssi->x;
+    y = ssi->y;
+    w = ssi->width;
+    h = ssi->height;
     if (si->prefs.debug_p) w /= 2;
     x = sx + (((w + sp->width)  / 2) - sp->width);
     y = sy + (((h + sp->height) / 2) - sp->height);

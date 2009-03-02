@@ -7,6 +7,12 @@
   <hgroup>
     <number id="count" type="spinbutton" arg="-count %"
             _label="Number of Images:" low="1" high="20" default="7"/>
+    <select id="mode">
+      <option id="tiltxy"  _label="Tilt In/Out and Left/Right"/>
+      <option id="tiltx"   _label="Tilt In/Out Only"     arg-set="-tilt x"/>
+      <option id="tilty"   _label="Tilt Left/Right Only" arg-set="-tilt y"/>
+      <option id="notilt"  _label="No Tilting"           arg-set="-tilt 0"/>
+    </select>
   </hgroup>
 
   <number id="duration" type="slider" arg="-duration %"
@@ -22,13 +28,6 @@
           _label="Frame Rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
-
-  <select id="mode">
-    <option id="tiltxy"  _label="Tilt In/Out and Left/Right"/>
-    <option id="tiltx"   _label="Tilt In/Out Only"     arg-set="-tilt x"/>
-    <option id="tilty"   _label="Tilt Left/Right Only" arg-set="-tilt y"/>
-    <option id="notilt"  _label="No Tilting"           arg-set="-tilt 0"/>
-  </select>
 
   <xscreensaver-image />
 

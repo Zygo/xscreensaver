@@ -8,6 +8,7 @@ ripples - interference patterns.
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
+[\-duration \fIsecs\fP]
 [\-rate \fInumber\fP]
 [\-fluidity \fInumber\fP]
 [\-light \fInumber\fP]
@@ -35,6 +36,9 @@ Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 50000 (0.05 seconds.).
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-rate \fInumber\fP
 Drizzle.  1 - 100.  Default: 5.

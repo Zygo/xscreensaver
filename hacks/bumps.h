@@ -57,6 +57,7 @@ static const char *bumps_defaults [] = {
   "*color:		random",
   "*colorcount:	64",
   "*delay:		30000",
+  "*duration:	120",
   "*soften:		1",
   "*invert:		FALSE",
 #ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
@@ -71,6 +72,7 @@ static const char *bumps_defaults [] = {
 static XrmOptionDescRec bumps_options [] = {
   { "-color",		".color",		XrmoptionSepArg, 0 },
   { "-colorcount",	".colorcount",	XrmoptionSepArg, 0 },
+  { "-duration",	".duration",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-soften",		".soften",		XrmoptionSepArg, 0 },
   { "-invert",		".invert",		XrmoptionNoArg, "TRUE" },
@@ -106,6 +108,7 @@ typedef struct
 	/* XWindows specific variables. */
 	Display *dpy;
 	Window Win;
+	Screen *screen;
         Pixmap source;
 	GC GraphicsContext;
 	XColor *xColors;
@@ -123,6 +126,8 @@ typedef struct
 	SSpotLight SpotLight;
 
         int delay;
+        int duration;
+        time_t start_time;
 
         async_load_state *img_loader;
 } SBumps;

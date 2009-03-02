@@ -1,5 +1,5 @@
 /* test-randr.c --- playing with the Resize And Rotate extension.
- * xscreensaver, Copyright (c) 2004, 2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2004-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -233,6 +233,43 @@ main (int argc, char **argv)
           fprintf(stderr, "%s:   XRRGetScreenInfo(dpy, %d) ==> NULL\n",
                   blurb(), i);
         }
+
+
+# ifdef HAVE_RANDR_12
+      if (major > 1 || (major == 1 && minor >= 2))
+        {
+          int j;
+          XRRScreenResources *res = 
+            XRRGetScreenResources (dpy, RootWindow (dpy, i));
+          fprintf (stderr, "\n");
+          for (j = 0; j < res->noutput; j++)
+            {
+              int k;
+              XRROutputInfo *rroi = 
+                XRRGetOutputInfo (dpy, res, res->outputs[j]);
+              fprintf (stderr, "%s:   Output %d: %s: %s (%d)\n", blurb(), j,
+                       rroi->name,
+                       (rroi->connection == RR_Disconnected ? "disconnected" :
+                        rroi->connection == RR_UnknownConnection ? "unknown" :
+                        "connected"),
+                       (int) rroi->crtc);
+              for (k = 0; k < rroi->ncrtc; k++)
+                {
+                  XRRCrtcInfo *crtci = XRRGetCrtcInfo (dpy, res, 
+                                                       rroi->crtcs[k]);
+                  fprintf(stderr, "%s:   %c CRTC %d (%d): %dx%d+%d+%d\n", 
+                          blurb(),
+                          (rroi->crtc == rroi->crtcs[k] ? '+' : ' '),
+                          k, (int) rroi->crtcs[k],
+                          crtci->width, crtci->height, crtci->x, crtci->y);
+                  XRRFreeCrtcInfo (crtci);
+                }
+              XRRFreeOutputInfo (rroi);
+              fprintf (stderr, "\n");
+            }
+          XRRFreeScreenResources (res);
+        }
+# endif /* HAVE_RANDR_12 */
     }
 
   if (major > 0)

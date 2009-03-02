@@ -851,7 +851,7 @@ fork_and_exec (saver_screen_info *ssi, const char *command)
     case 0:
       close (ConnectionNumber (si->dpy));	/* close display fd */
       limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
-      hack_subproc_environment (ssi);		/* set $DISPLAY */
+      hack_subproc_environment (ssi->screen, ssi->screensaver_window);
 
       if (p->verbose_p)
         fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
@@ -878,13 +878,21 @@ fork_and_exec (saver_screen_info *ssi, const char *command)
 }
 
 
-static void
-spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
+void
+spawn_screenhack (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  raise_window (si, first_time_p, True, False);
   XFlush (si->dpy);
+
+  if (!monitor_powered_on_p (si))
+    {
+      if (si->prefs.verbose_p)
+        fprintf (stderr,
+                 "%s: %d: X says monitor has powered down; "
+                 "not launching a hack.\n", blurb(), ssi->number);
+      return;
+    }
 
   if (p->screenhacks_count)
     {
@@ -1017,55 +1025,28 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	  break;
 	}
     }
+
+  store_saver_status (si);  /* store current hack number */
 }
 
 
 void
-spawn_screenhack (saver_info *si, Bool first_time_p)
+kill_screenhack (saver_screen_info *ssi)
 {
-  if (monitor_powered_on_p (si))
-    {
-      int i;
-      for (i = 0; i < si->nscreens; i++)
-        {
-          saver_screen_info *ssi = &si->screens[i];
-          spawn_screenhack_1 (ssi, first_time_p);
-        }
-    }
-  else if (si->prefs.verbose_p)
-    fprintf (stderr,
-             "%s: X says monitor has powered down; "
-             "not launching a hack.\n", blurb());
-
-  store_saver_status (si);  /* store current hack numbers */
+  saver_info *si = ssi->global;
+  if (ssi->pid)
+    kill_job (si, ssi->pid, SIGTERM);
+  ssi->pid = 0;
 }
 
 
 void
-kill_screenhack (saver_info *si)
-{
-  int i;
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      if (ssi->pid)
-	kill_job (si, ssi->pid, SIGTERM);
-      ssi->pid = 0;
-    }
-}
-
-
-void
-suspend_screenhack (saver_info *si, Bool suspend_p)
+suspend_screenhack (saver_screen_info *ssi, Bool suspend_p)
 {
 #ifdef SIGSTOP	/* older VMS doesn't have it... */
-  int i;
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      if (ssi->pid)
-	kill_job (si, ssi->pid, (suspend_p ? SIGSTOP : SIGCONT));
-    }
+  saver_info *si = ssi->global;
+  if (ssi->pid)
+    kill_job (si, ssi->pid, (suspend_p ? SIGSTOP : SIGCONT));
 #endif /* SIGSTOP */
 }
 
@@ -1137,7 +1118,7 @@ hack_environment (saver_info *si)
 
 
 void
-hack_subproc_environment (saver_screen_info *ssi)
+hack_subproc_environment (Screen *screen, Window saver_window)
 {
   /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
      the spawned processes inherit is correct.  First, it must be on the same
@@ -1152,8 +1133,8 @@ hack_subproc_environment (saver_screen_info *ssi)
      us to (eventually) run multiple hacks in Xinerama mode, where each hack
      has the same $DISPLAY but a different piece of glass.
    */
-  saver_info *si = ssi->global;
-  const char *odpy = DisplayString (si->dpy);
+  Display *dpy = DisplayOfScreen (screen);
+  const char *odpy = DisplayString (dpy);
   char *ndpy = (char *) malloc (strlen(odpy) + 20);
   char *nssw = (char *) malloc (40);
   char *s, *c;
@@ -1170,10 +1151,9 @@ hack_subproc_environment (saver_screen_info *ssi)
   while (isdigit(*s)) s++;			/* skip over dpy number */
   while (*s == '.') s++;			/* skip over dot */
   if (s[-1] != '.') *s++ = '.';			/* put on a dot */
-  sprintf(s, "%d", ssi->real_screen_number);	/* put on screen number */
+  sprintf(s, "%d", screen_number (screen));	/* put on screen number */
 
-  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX",
-           (unsigned long) ssi->screensaver_window);
+  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX", (unsigned long) saver_window);
 
   /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
      any more, right?  It's not Posix, but everyone seems to have it. */
@@ -1194,9 +1174,8 @@ hack_subproc_environment (saver_screen_info *ssi)
 /* GL crap */
 
 Visual *
-get_best_gl_visual (saver_screen_info *ssi)
+get_best_gl_visual (saver_info *si, Screen *screen)
 {
-  saver_info *si = ssi->global;
   pid_t forked;
   int fds [2];
   int in, out;
@@ -1216,6 +1195,11 @@ get_best_gl_visual (saver_screen_info *ssi)
 
   in = fds [0];
   out = fds [1];
+
+  block_sigchld();   /* This blocks it in the parent and child, to avoid
+                        racing.  It is never unblocked in the child before
+                        the child exits, but that doesn't matter.
+                      */
 
   switch ((int) (forked = fork ()))
     {
@@ -1237,7 +1221,7 @@ get_best_gl_visual (saver_screen_info *ssi)
             perror ("could not dup() a new stdout:");
             return 0;
           }
-        hack_subproc_environment (ssi);		/* set $DISPLAY */
+        hack_subproc_environment (screen, 0);	/* set $DISPLAY */
 
         execvp (av[0], av);			/* shouldn't return. */
 
@@ -1270,6 +1254,8 @@ get_best_gl_visual (saver_screen_info *ssi)
         /* Wait for the child to die. */
         waitpid (-1, &wait_status, 0);
 
+        unblock_sigchld();   /* child is dead and waited, unblock now. */
+
         if (1 == sscanf (buf, "0x%lx %c", &v, &c))
           result = (int) v;
 
@@ -1291,12 +1277,13 @@ get_best_gl_visual (saver_screen_info *ssi)
           }
         else
           {
-            Visual *v = id_to_visual (ssi->screen, result);
+            Visual *v = id_to_visual (screen, result);
             if (si->prefs.verbose_p)
               fprintf (stderr, "%s: %d: %s: GL visual is 0x%X%s.\n",
-                       blurb(), ssi->number,
+                       blurb(), screen_number (screen),
                        av[0], result,
-                       (v == ssi->default_visual ? " (default)" : ""));
+                       (v == DefaultVisualOfScreen (screen)
+                        ? " (default)" : ""));
             return v;
           }
       }

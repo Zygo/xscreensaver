@@ -49,7 +49,7 @@ without ever returning any data.)
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
-Default 100000, or about 1/10th second.
+Default 10000.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -105,7 +105,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  tangram_shapes.c crackberg.c glhanoi.c cube21.c \
 		  timetunnel.c juggler3d.c topblock.c glschool.c \
 		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
-		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c
+		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c \
+		  skytentacles.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -139,7 +140,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  tangram_shapes.o crackberg.o glhanoi.o cube21.o \
 		  timetunnel.o juggler3d.o topblock.o glschool.o \
 		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
-		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o
+		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o \
+		  skytentacles.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -153,7 +155,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  antinspect providence pinion boing carousel fliptext \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
-		  lockward cubicgrid hypnowheel
+		  lockward cubicgrid hypnowheel skytentacles
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -196,7 +198,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  crackberg.man glhanoi.man cube21.man timetunnel.man \
 		  juggler3d.man topblock.man glschool.man glcells.man \
 		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
-		  hypnowheel.man
+		  hypnowheel.man skytentacles.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
@@ -728,6 +730,9 @@ cubicgrid:	cubicgrid.o	$(HACK_TRACK_OBJS)
 
 hypnowheel:	hypnowheel.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+skytentacles:	skytentacles.o normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o  normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1876,6 +1881,21 @@ sierpinski3d.o: $(UTILS_SRC)/xshm.h
 sierpinski3d.o: $(UTILS_SRC)/yarandom.h
 sierpinski3d.o: $(HACK_SRC)/xlockmoreI.h
 sierpinski3d.o: $(HACK_SRC)/xlockmore.h
+skytentacles.o: ../../config.h
+skytentacles.o: $(srcdir)/gltrackball.h
+skytentacles.o: $(srcdir)/normals.h
+skytentacles.o: $(srcdir)/rotator.h
+skytentacles.o: $(HACK_SRC)/screenhackI.h
+skytentacles.o: $(UTILS_SRC)/colors.h
+skytentacles.o: $(UTILS_SRC)/grabscreen.h
+skytentacles.o: $(UTILS_SRC)/hsv.h
+skytentacles.o: $(UTILS_SRC)/resources.h
+skytentacles.o: $(UTILS_SRC)/usleep.h
+skytentacles.o: $(UTILS_SRC)/visual.h
+skytentacles.o: $(UTILS_SRC)/xshm.h
+skytentacles.o: $(UTILS_SRC)/yarandom.h
+skytentacles.o: $(HACK_SRC)/xlockmoreI.h
+skytentacles.o: $(HACK_SRC)/xlockmore.h
 spheremonics.o: ../../config.h
 spheremonics.o: $(srcdir)/gltrackball.h
 spheremonics.o: $(srcdir)/glxfonts.h

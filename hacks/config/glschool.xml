@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="glschool" _label="glschool">
+<screensaver name="glschool" _label="GLSchool">
 
 	<command arg="-root"/>
 
@@ -15,10 +15,12 @@
 	<number id="CenterFact" type="slider" arg="-centerfact %" _label="Centering" _low-label="None" _high-label="High" low="0" high="1.0" default="0.1"/>
 	<number id="TargetFact" type="slider" arg="-targetfact %" _label="Goal Following" _low-label="None" _high-label="High" low="0" high="400" default="80"/>
 
+        <hgroup>
 	<boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
 	<boolean id="fog"    _label="Fog" arg-set="-fog"/>
 	<boolean id="drawgoal" _label="Draw Goal" arg-set="-drawgoal"/>
 	<boolean id="drawbbox" _label="Draw Bounding Box" arg-set="-drawbbox"/>
+        </hgroup>
 	<boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
 	<_description>

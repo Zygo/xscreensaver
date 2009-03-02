@@ -32,9 +32,13 @@
 struct state {
   Display *dpy;
   Window window;
+  Screen *screen;
 
   int sizex, sizey; /* screen size */
-  int delay;        /* in case it's too fast... */
+  int delay;
+  int duration;
+  time_t start_time;
+
   GC window_gc;
 #ifdef DEBUG
   GC white_gc;
@@ -96,6 +100,7 @@ spotlight_init (Display *dpy, Window window)
   st->first_p = True;
 
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->screen = xgwa.screen;
   st->sizex = xgwa.width;
   st->sizey = xgwa.height;
   cmap = xgwa.colormap;
@@ -105,6 +110,8 @@ spotlight_init (Display *dpy, Window window)
   /* read parameters, keep em sane */
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   if (st->delay < 1) st->delay = 1;
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+  if (st->duration < 1) st->duration = 1;
   st->radius = get_integer_resource (st->dpy, "radius", "Integer");
   if (st->radius < 0) st->radius = 125;
 
@@ -129,7 +136,6 @@ spotlight_init (Display *dpy, Window window)
 #endif
   st->window_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
-  /* grab screen to pixmap */
   st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
   XClearWindow(st->dpy, st->window);
 
@@ -152,6 +158,7 @@ spotlight_init (Display *dpy, Window window)
   clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window, st->pm,
                                             0, 0);
+  st->start_time = time ((time_t) 0);
 
   gcv.foreground = 0L;
   clip_gc = XCreateGC(st->dpy, clip_pm, gcflags, &gcv);
@@ -193,8 +200,18 @@ onestep (struct state *st, Bool first_p)
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      if (! st->img_loader) {  /* just finished */
+        st->start_time = time ((time_t) 0);
+      }
       return;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    st->img_loader = load_image_async_simple (0, st->screen, st->window,
+                                              st->pm, 0, 0);
+    return;
+  }
 
 #define nrnd(x) (random() % (x))
 
@@ -293,12 +310,14 @@ static const char *spotlight_defaults [] = {
 #endif
 
   "*delay:			10000",
+  "*duration:			120",
   "*radius:			125",
   0
 };
 
 static XrmOptionDescRec spotlight_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
+  { "-duration",	".duration",		XrmoptionSepArg, 0 },
   { "-radius",		".radius",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };

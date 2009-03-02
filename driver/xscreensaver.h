@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,7 +67,10 @@ extern void monitor_power_on (saver_info *si);
    blanking
    ======================================================================= */
 
+extern Bool update_screen_layout (saver_info *si);
 extern void initialize_screensaver_window (saver_info *si);
+extern void initialize_screen_root_widget (saver_screen_info *ssi);
+
 extern void raise_window (saver_info *si,
 			    Bool inhibit_fade, Bool between_hacks_p,
 			    Bool dont_clear);
@@ -156,12 +159,12 @@ extern void handle_signals (saver_info *si);
 #endif /* !HAVE_SIGACTION */
 extern void unblock_sigchld (void);
 extern void hack_environment (saver_info *si);
-extern void hack_subproc_environment (saver_screen_info *ssi);
+extern void hack_subproc_environment (Screen *, Window saver_window);
 extern void init_sigchld (void);
-extern void spawn_screenhack (saver_info *si, Bool first_time_p);
+extern void spawn_screenhack (saver_screen_info *ssi);
 extern pid_t fork_and_exec (saver_screen_info *ssi, const char *command);
-extern void kill_screenhack (saver_info *si);
-extern void suspend_screenhack (saver_info *si, Bool suspend_p);
+extern void kill_screenhack (saver_screen_info *ssi);
+extern void suspend_screenhack (saver_screen_info *ssi, Bool suspend_p);
 extern Bool screenhack_running_p (saver_info *si);
 extern void emergency_kill_subproc (saver_info *si);
 extern Bool select_visual (saver_screen_info *ssi, const char *visual_name);
@@ -174,6 +177,7 @@ extern const char *signal_name (int signal);
 
 extern FILE *real_stderr;
 extern FILE *real_stdout;
+extern void stderr_log_file (saver_info *si);
 extern void initialize_stderr (saver_info *si);
 extern void reset_stderr (saver_screen_info *ssi);
 extern void clear_stderr (saver_screen_info *ssi);
@@ -194,8 +198,13 @@ extern int BadWindow_ehandler (Display *dpy, XErrorEvent *error);
 extern Bool window_exists_p (Display *dpy, Window window);
 extern char *timestring (void);
 extern Bool display_is_on_console_p (saver_info *si);
-extern Visual *get_best_gl_visual (saver_screen_info *ssi);
+extern Visual *get_best_gl_visual (saver_info *si, Screen *screen);
 extern void check_for_leaks (const char *where);
+extern void describe_monitor_layout (saver_info *si);
+
+#ifdef HAVE_XF86VMODE
+Bool safe_XF86VidModeGetViewPort (Display *, int, int *, int *);
+#endif /* HAVE_XF86VMODE */
 
 extern Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;

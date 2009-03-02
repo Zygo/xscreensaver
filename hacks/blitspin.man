@@ -6,7 +6,7 @@ blitspin - rotate a bitmap in an interesting way
 [\-display \fIhost:display.screen\fP]
 [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root]
 [\-mono] [\-install] [\-visual \fIvisual\fP] [\-bitmap \fIfilename\fP]
-[\-delay \fIusecs\fP] [\-delay2 \fIusecs\fP]
+[\-delay \fIusecs\fP] [\-delay2 \fIusecs\fP] [\-duration \fIsecs\fP]
 .SH DESCRIPTION
 The \fIblitspin\fP program repeatedly rotates a bitmap by 90 degrees by
 using logical operations: the bitmap is divided into quadrants, and the
@@ -56,12 +56,13 @@ and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP file;
 see
 .BR xscreensaver-demo (1)
 for more details.
-.PP
 .TP 8
 .B \-delay \fImicroseconds\fP
 How long to delay between steps of the rotation process, in microseconds.
 Default is 500000, one-half second.
-.PP
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-delay2 \fImicroseconds\fP
 How long to delay between each 90-degree rotation, in microseconds.

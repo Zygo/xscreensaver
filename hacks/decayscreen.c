@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,9 +43,11 @@ struct state {
 
   int sizex, sizey;
   int delay;
+  int duration;
   GC gc;
   int mode;
-  int iterations;
+  int random_p;
+  time_t start_time;
 
   int fuzz_toggle;
   const int *current_bias;
@@ -69,6 +71,18 @@ struct state {
 #define STRETCH		12
 #define FUZZ		13
 
+static void
+decayscreen_load_image (struct state *st)
+{
+  XWindowAttributes xgwa;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  st->sizex = xgwa.width;
+  st->sizey = xgwa.height;
+  if (st->img_loader) abort();
+  st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                            st->window, 0, 0);
+}
+
 static void *
 decayscreen_init (Display *dpy, Window window)
 {
@@ -81,6 +95,7 @@ decayscreen_init (Display *dpy, Window window)
 
   st->dpy = dpy;
   st->window = window;
+  st->random_p = 0;
 
   s = get_string_resource(st->dpy, "mode", "Mode");
   if      (s && !strcmp(s, "shuffle")) st->mode = SHUFFLE;
@@ -100,12 +115,15 @@ decayscreen_init (Display *dpy, Window window)
   else {
     if (s && *s && !!strcmp(s, "random"))
       fprintf(stderr, "%s: unknown mode %s\n", progname, s);
+    st->random_p = 1;
     st->mode = random() % (FUZZ+1);
   }
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
-
   if (st->delay < 0) st->delay = 0;
+
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+  if (st->duration < 1) st->duration = 1;
 
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
@@ -119,14 +137,8 @@ decayscreen_init (Display *dpy, Window window)
     gcflags |= GCSubwindowMode;
   st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
-  st->sizex = xgwa.width;
-  st->sizey = xgwa.height;
-
-  if (st->mode == MELT || st->mode == STRETCH)
-    st->iterations = 1;    /* slow down for smoother melting */
-
-  st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
-                                            st->window, 0, 0);
+  st->start_time = time ((time_t) 0);
+  decayscreen_load_image (st);
 
   return st;
 }
@@ -161,11 +173,21 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
         st->img_loader = load_image_async_simple (st->img_loader, 
                                                   0, 0, 0, 0, 0);
         if (! st->img_loader) {  /* just finished */
+
+          st->start_time = time ((time_t) 0);
+          if (st->random_p)
+            st->mode = random() % (FUZZ+1);
+
           if (st->mode == MELT || st->mode == STRETCH)
             /* make sure screen eventually turns background color */
             XDrawLine (st->dpy, st->window, st->gc, 0, 0, st->sizex, 0); 
         }
       return st->delay;
+    }
+
+    if (!st->img_loader &&
+        st->start_time + st->duration < time ((time_t) 0)) {
+      decayscreen_load_image (st);
     }
 
     switch (st->mode) {
@@ -324,12 +346,14 @@ static const char *decayscreen_defaults [] = {
 
   "*delay:			10000",
   "*mode:			random",
+  "*duration:			120",
   0
 };
 
 static XrmOptionDescRec decayscreen_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-mode",		".mode",		XrmoptionSepArg, 0 },
+  { "-duration",	".duration",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 

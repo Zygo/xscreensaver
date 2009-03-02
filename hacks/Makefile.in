@@ -152,7 +152,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
 		  webcollage-helper-cocoa.o m6502.0 asm6502.o abstractile.o \
-		  lcdscrub.c 
+		  lcdscrub.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -222,7 +222,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
-		  lcdscrub
+		  lcdscrub.man
 STAR		= *
 EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 		  euler2d.tex \
@@ -1186,6 +1186,7 @@ bsod.o: $(srcdir)/apple2.h
 bsod.o: ../config.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/atari.xbm
+bsod.o: $(srcdir)/images/atm.xbm
 bsod.o: $(srcdir)/images/hmac.xpm
 bsod.o: $(srcdir)/images/macbomb.xbm
 bsod.o: $(srcdir)/images/mac.xbm

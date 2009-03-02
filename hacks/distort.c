@@ -61,6 +61,9 @@ struct state {
   struct coo xy_coo[10];
 
   int delay, radius, speed, number, blackhole, vortex, magnify, reflect, slow;
+  int duration;
+  time_t start_time;
+
   XWindowAttributes xgwa;
   GC gc;
   unsigned long black_pixel;
@@ -115,9 +118,13 @@ distort_init (Display *dpy, Window window)
     st->window = window;
 
 	st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+    st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
 	st->radius = get_integer_resource(st->dpy, "radius", "Integer");
 	st->speed = get_integer_resource(st->dpy, "speed", "Integer");
 	st->number = get_integer_resource(st->dpy, "number", "Integer");
+
+    if (st->delay < 0) st->delay = 0;
+    if (st->duration < 1) st->duration = 1;
 
 #ifdef HAVE_XSHM_EXTENSION
 	st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
@@ -277,6 +284,7 @@ distort_init (Display *dpy, Window window)
 
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
                                               st->window, 0, 0);
+    st->start_time = time ((time_t) 0);
     return st;
 }
 
@@ -284,6 +292,8 @@ static void
 distort_finish_loading (struct state *st)
 {
     int i;
+
+    st->start_time = time ((time_t) 0);
 
 	st->buffer_map = 0;
 	st->orig_map = XGetImage(st->dpy, st->window, 0, 0, st->xgwa.width, st->xgwa.height,
@@ -747,10 +757,18 @@ distort_draw (Display *dpy, Window window, void *closure)
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
-      if (! st->img_loader)  /* just finished */
+      if (! st->img_loader) {  /* just finished */
         distort_finish_loading (st);
+      }
       return st->delay;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
+                                              st->window, 0, 0);
+    return st->delay;
+  }
 
   for (k = 0; k < st->number; k++) {
     st->effect(st,k);
@@ -795,6 +813,7 @@ static const char *distort_defaults [] = {
 #endif
 
 	"*delay:			20000",
+    "*duration:			120",
 	"*radius:			0",
 	"*speed:			0",
 	"*number:			0",
@@ -812,6 +831,7 @@ static const char *distort_defaults [] = {
 
 static XrmOptionDescRec distort_options [] = {
   { "-delay",     ".delay",       XrmoptionSepArg, 0 },
+  { "-duration",  ".duration",	  XrmoptionSepArg, 0 },
   { "-radius",    ".radius",      XrmoptionSepArg, 0 },
   { "-speed",     ".speed",       XrmoptionSepArg, 0 },
   { "-number",    ".number",      XrmoptionSepArg, 0 },

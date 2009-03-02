@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,6 +25,7 @@ struct state {
   int xoff, yoff;
   int grid_w, grid_h;
   int delay, delay2;
+  int duration;
   GC gc;
   unsigned long fg, bg;
   int max_width, max_height;
@@ -36,6 +37,7 @@ struct state {
   int draw_last;
   int draw_initted;
 
+  time_t start_time;
   async_load_state *img_loader;
 };
 
@@ -54,6 +56,7 @@ slidescreen_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                             st->window, 0, 0);
+  st->start_time = time ((time_t) 0);
 
   visual = xgwa.visual;
   st->max_width = xgwa.width;
@@ -61,6 +64,7 @@ slidescreen_init (Display *dpy, Window window)
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   st->delay2 = get_integer_resource (st->dpy, "delay2", "Integer");
+  st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
   st->grid_size = get_integer_resource (st->dpy, "gridSize", "Integer");
   st->pix_inc = get_integer_resource (st->dpy, "pixelIncrement", "Integer");
 
@@ -72,6 +76,7 @@ slidescreen_init (Display *dpy, Window window)
 
   if (st->delay < 0) st->delay = 0;
   if (st->delay2 < 0) st->delay2 = 0;
+  if (st->duration < 1) st->duration = 1;
   if (st->pix_inc < 1) st->pix_inc = 1;
   if (st->grid_size < 1) st->grid_size = 1;
 
@@ -303,10 +308,23 @@ slidescreen_draw (Display *dpy, Window window, void *closure)
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
-      if (! st->img_loader)  /* just finished */
+      if (! st->img_loader) {  /* just finished */
+        st->start_time = time ((time_t) 0);
         draw_grid (st);
+      }
       return st->delay;
     }
+
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    XWindowAttributes xgwa;
+    XGetWindowAttributes(st->dpy, st->window, &xgwa);
+    st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
+                                              st->window, 0, 0);
+    st->start_time = time ((time_t) 0);
+    st->draw_initted = 0;
+    return st->delay;
+  }
 
   if (! st->draw_initted)
     {
@@ -441,6 +459,7 @@ static const char *slidescreen_defaults [] = {
   "*internalBorderWidth:	4",
   "*delay:			50000",
   "*delay2:			1000000",
+  "*duration:			120",
   0
 };
 
@@ -450,6 +469,7 @@ static XrmOptionDescRec slidescreen_options [] = {
   { "-increment",	".pixelIncrement",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-delay2",		".delay2",		XrmoptionSepArg, 0 },
+  {"-duration",		".duration",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 

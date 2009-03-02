@@ -14,6 +14,10 @@
           low="1" high="800000" default="500000"
           convert="invert"/>
 
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
 <!--  <file id="bitmap" _label="Bitmap to rotate" arg="-bitmap %"/> -->
 
   <xscreensaver-image />

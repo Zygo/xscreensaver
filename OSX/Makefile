@@ -28,7 +28,9 @@ release:: check_versions
 release:: sign
 
 sign:
-	codesign -vfs 'Jamie Zawinski' build/Release/*.saver
+	@for f in build/Release/*.saver ; do \
+	  codesign -vfs 'Jamie Zawinski' $$f ; \
+	 done
 
 check_versions:
 	@\

@@ -2060,6 +2060,9 @@ echo "command line was: $0 $@"
 
 
 
+
+
+
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
@@ -2096,6 +2099,10 @@ done
 
 
 
+# Need to disable Objective C extensions in ANSI C on MacOS X to work
+# around an Apple-specific gcc bug.
+#
+
 
 ###############################################################################
 #
@@ -2114,18 +2121,6 @@ done
 #       have another.
 #
 #       So, I give up, let's just use -pedantic.
-#
-###############################################################################
-
-
-
-
-
-
-###############################################################################
-#
-#       Function to figure out how to turn off Objective C on MacOS X.
-#       (We have to do this to work around an Apple-specific gcc bug.)
 #
 ###############################################################################
 
@@ -3455,6 +3450,7 @@ else
        ac_cv_gcc_accepts_no_overlength=no
      else
        ac_cv_gcc_accepts_no_overlength=yes
+       CC="$CC -Wno-overlength-strings"
      fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_overlength" >&5
@@ -3475,6 +3471,7 @@ else
        ac_cv_gcc_accepts_no_decl_after=no
      else
        ac_cv_gcc_accepts_no_decl_after=yes
+       CC="$CC -Wdeclaration-after-statement"
      fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_decl_after" >&5
@@ -3483,7 +3480,6 @@ echo "${ECHO_T}$ac_cv_gcc_accepts_no_decl_after" >&6; }
   fi
 
 if test -n "$GCC"; then
-   if test -n "$GCC"; then
    { echo "$as_me:$LINENO: checking whether gcc accepts -no-cpp-precomp" >&5
 echo $ECHO_N "checking whether gcc accepts -no-cpp-precomp... $ECHO_C" >&6; }
 if test "${ac_cv_gcc_accepts_no_cpp_precomp+set}" = set; then
@@ -3496,18 +3492,12 @@ else
        ac_cv_gcc_accepts_no_cpp_precomp=no
      else
        ac_cv_gcc_accepts_no_cpp_precomp=yes
+       CC="$CC -no-cpp-precomp"
      fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_cpp_precomp" >&5
 echo "${ECHO_T}$ac_cv_gcc_accepts_no_cpp_precomp" >&6; }
    ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
-  fi
-
-   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
-     { echo "$as_me:$LINENO: result: Disabling Objective C extensions in ANSI C code." >&5
-echo "${ECHO_T}Disabling Objective C extensions in ANSI C code." >&6; }
-     CC="$CC -no-cpp-precomp"
-   fi
   fi
 
 if test -n "$GCC"; then
@@ -3524,6 +3514,7 @@ else
        ac_cv_gcc_accepts_std=no
      else
        ac_cv_gcc_accepts_std=yes
+       CC="$CC -std=c89"
      fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_std" >&5
@@ -3552,7 +3543,8 @@ echo "${ECHO_T}Disabling C++ comments in ANSI C code." >&6; }
      # before they were in the ANSI C 99 spec...  (gcc 2.96 permits //
      # with -std=gnu89 but not with -std=c89.)
      #
-     CC="$CC -std=c89 -U__STRICT_ANSI__"
+     # $CC already contains "-std=c89" via AC_GCC_ACCEPTS_STD
+     CC="$CC -U__STRICT_ANSI__"
    else
      # The old way:
      CC="$CC -Wp,-lang-c89"
@@ -12140,7 +12132,7 @@ echo "${ECHO_T}not found ($d: no such directory)" >&6; }
 
 if test "$with_randr" = yes; then
 
-  # first check for Randr.h
+  # first check for Xrandr.h
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then
@@ -12489,7 +12481,103 @@ fi
 #define HAVE_RANDR 1
 _ACEOF
 
+
+    # Now check for version 1.2 in the same libs.
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { echo "$as_me:$LINENO: checking for XRRGetOutputInfo in -lc" >&5
+echo $ECHO_N "checking for XRRGetOutputInfo in -lc... $ECHO_C" >&6; }
+if test "${ac_cv_lib_c_XRRGetOutputInfo+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc $SAVER_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XRRGetOutputInfo ();
+int
+main ()
+{
+return XRRGetOutputInfo ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -rf conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -rf conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_c_XRRGetOutputInfo=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_c_XRRGetOutputInfo=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_c_XRRGetOutputInfo" >&5
+echo "${ECHO_T}$ac_cv_lib_c_XRRGetOutputInfo" >&6; }
+if test $ac_cv_lib_c_XRRGetOutputInfo = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_RANDR_12 1
+_ACEOF
+
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+
 
 elif test "$with_randr" != no; then
   echo "error: must be yes or no: --with-randr-ext=$with_randr"
@@ -16673,7 +16761,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16680 "configure"
+#line 16768 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -19890,9 +19978,11 @@ echo "${ECHO_T}no" >&6; }
 
     #### Could use some more defaults here...
     for f in \
-      "/usr/X11R6/lib/X11/doc/README"		\
-      "/usr/share/doc/xserver-common/copyright"	\
-      "/usr/X11R6/README"			\
+      "/usr/X11R6/lib/X11/doc/README"		   \
+      "/usr/share/doc/xserver-common/copyright"	   \
+      "/usr/share/doc/xserver-xorg-core/copyright" \
+      "/usr/X11R6/README"			   \
+      "/usr/share/doc/debian/debian-manifesto"     \
     ; do
       if test -z "$with_textfile"; then
         { echo "$as_me:$LINENO: checking for text file $f" >&5
@@ -21883,8 +21973,9 @@ if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
   pgl="$preferred_mesagl"
 
   if test "$ac_mesagl_version" = unknown; then
-    warnL "Unable to determine the MesaGL version number!"
-    warn2 "Make sure you are using version $preferred_mesagl or newer."
+    true
+    # warnL "Unable to determine the MesaGL version number!"
+    # warn2 "Make sure you are using version $preferred_mesagl or newer."
 
   elif test \! "$ac_mesagl_version" -gt 2006; then
     warnL "MesaGL version number is $mgv --"
@@ -22035,7 +22126,7 @@ if test -z "$RPM_PACKAGE_VERSION" ; then
 
   if test \! -z "$rpmv" ; then
     rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
-    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/attraction$@\1@p'`
+    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/popsquares$@\1@p'`
 
     warning=no
     warnL "There is already an installed RPM of xscreensaver $rpmv"
@@ -22057,6 +22148,33 @@ if test -z "$RPM_PACKAGE_VERSION" ; then
     fi
   fi
 fi
+
+# Also warn if there's a Debian package installed.
+#
+debnames="xscreensaver xscreensaver-data xscreensaver-data-extra"
+debv=''
+for dpkg in $debnames ; do
+  if test -z "$debv"; then
+    debv=`dpkg -s $dpkg 2>/dev/null | sed -n 's/^Version: \(.*\)$/\1/p'`
+  fi
+done
+
+if test \! -z "$debv" ; then
+  debbdir=`dpkg -L $debnames 2>/dev/null | \
+            sed -n 's@^\(.*/bin/\)xscreensaver$@\1@p'`
+  debhdir=`dpkg -L $debnames 2>/dev/null | \
+            sed -n 's@^\(.*/\)popsquares$@\1@p'`
+  if test -z "$debbdir" ; then debbdir='???'; fi
+  if test -z "$debhdir" ; then debhdir='???'; fi
+
+  warning=no
+  warnL "There is already an installed dpkg of xscreensaver"
+  warn2 "version \"$debv\" on this system."
+  echo ""
+  warn2 "The dpkg was installed in $debbdir,"
+  warn2 "with demos in $debhdir."
+fi
+
 
 if test "${bindir}" = "${HACKDIR}" ; then
   do_dir_warning=yes

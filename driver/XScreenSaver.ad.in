@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.05
-!                              01-Mar-2008
+!                              version 5.06
+!                              16-Jul-2008
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -125,7 +125,8 @@ GetViewPortIsFullOfLies: False
 
 
 ! This command is executed by the "New Login" button on the lock dialog.
-! (That button does not appear if this program does not exist.)
+! (That button does not appear on the dialog if this program does not exist.)
+! For Gnome: probably "gdmflexiserver -ls".  KDE, probably "kdmctl reserve".
 !
 @NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
 
@@ -400,6 +401,7 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			hypnowheel -root			    \n\
 @GL_KLUDGE@ GL:	"Hypnowheel (dense)"	hypnowheel -root -count 3 -layers 50 \n\
 @GL_KLUDGE@ GL:	"Hypnowheel (trifoil)"	hypnowheel -root -count 3 -layers 2 -speed 9 -twist 9 -wander \n\
+@GL_KLUDGE@ GL:			skytentacles -root			    \n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -546,6 +548,8 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.moebiusgears.name:   MoebiusGears
 *hacks.cubicgrid.name:      CubicGrid
 *hacks.lcdscrub.name:       LCDscrub
+*hacks.hypnowheel.name:     HypnoWheel
+*hacks.skytentacles.name:   SkyTentacles
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True
