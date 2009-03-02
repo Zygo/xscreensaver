@@ -48,20 +48,7 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 # define DEF_TEXT					""
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 
-# ifdef HAVE_XPM
-#  include <X11/xpm.h>
-#  ifndef PIXEL_ALREADY_TYPEDEFED
-#   define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-#  endif
-# endif
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-# else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif /* HAVE_XMU */
+#include "xpm-pixmap.h"
 
 #include "images/bob.xbm"
 
@@ -219,100 +206,18 @@ make_flag_bits(ModeInfo *mi)
 	  *bitmap_name &&
 	  !!strcmp(bitmap_name, "(default)"))
 	{
-#ifdef HAVE_XPM
-	  Window window = MI_WINDOW(mi);
-	  XWindowAttributes xgwa;
-	  XpmAttributes xpmattrs;
-	  int result;
 	  Pixmap bitmap = 0;
-	  int width = 0, height = 0;
-	  xpmattrs.valuemask = 0;
+      int width = 0;
+      int height = 0;
 
-	  XGetWindowAttributes (dpy, window, &xgwa);
-
-# ifdef XpmCloseness
-	  xpmattrs.valuemask |= XpmCloseness;
-	  xpmattrs.closeness = 40000;
-# endif
-# ifdef XpmVisual
-	  xpmattrs.valuemask |= XpmVisual;
-	  xpmattrs.visual = xgwa.visual;
-# endif
-# ifdef XpmDepth
-	  xpmattrs.valuemask |= XpmDepth;
-	  xpmattrs.depth = xgwa.depth;
-# endif
-# ifdef XpmColormap
-	  xpmattrs.valuemask |= XpmColormap;
-	  xpmattrs.colormap = xgwa.colormap;
-# endif
-
-	  /* Uh, we don't need these now.  We use the colors from the xpm.
-		 It kinda sucks that we already allocated them. */
-	  XFreeColors(dpy, xgwa.colormap, mi->pixels, mi->npixels, 0L);
-
-	  result = XpmReadFileToPixmap (dpy, window, bitmap_name, &bitmap, 0,
-									&xpmattrs);
-	  switch (result)
-		{
-		case XpmColorError:
-		  fprintf (stderr, "%s: warning: xpm color substitution performed\n",
-				   progname);
-		  /* fall through */
-		case XpmSuccess:
-		  width = xpmattrs.width;
-		  height = xpmattrs.height;
-		  break;
-		case XpmFileInvalid:
-		case XpmOpenFailed:
-		  bitmap = 0;
-		  break;
-		case XpmColorFailed:
-		  fprintf (stderr, "%s: xpm: color allocation failed\n", progname);
-		  exit (-1);
-		case XpmNoMemory:
-		  fprintf (stderr, "%s: xpm: out of memory\n", progname);
-		  exit (-1);
-		default:
-		  fprintf (stderr, "%s: xpm: unknown error code %d\n", progname,
-				   result);
-		  exit (-1);
-		}
-
+      bitmap = xpm_file_to_pixmap (dpy, MI_WINDOW (mi), bitmap_name,
+                                   &width, &height, 0);
 	  if (bitmap)
 		{
 		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, ~0L,
 								ZPixmap);
 		  XFreePixmap(dpy, bitmap);
 		}
-	  else
-#endif /* HAVE_XPM */
-
-#ifdef HAVE_XMU
-		{
-		  int width, height, xh, yh;
-		  Pixmap bitmap =
-			XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy),
-								 bitmap_name, 0, 0, &width, &height, &xh, &yh);
-		  if (!bitmap)
-			{
-			  fprintf(stderr, "%s: unable to load bitmap file %s\n",
-					  progname, bitmap_name);
-			  exit (1);
-			}
-		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height,
-								1L, XYPixmap);
-		  XFreePixmap(dpy, bitmap);
-		}
-
-#else  /* !XMU */
-      fprintf (stderr,
-			   "%s: your vendor doesn't ship the standard Xmu library.\n",
-			   progname);
-      fprintf (stderr, "\tWe can't load XBM files without it.\n");
-      exit (1);
-#endif /* !XMU */
-
 	}
   else if (text && *text)
 	{

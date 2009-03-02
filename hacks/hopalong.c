@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * hop --- real plane fractals.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* hop --- real plane fractals */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)hop.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1988-91 by Patrick J. Naughton.
+/*-
+ * Copyright (c) 1991 by Patrick J. Naughton.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,54 +22,54 @@ static const char sccsid[] = "@(#)hop.c	4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * Changes of David Bagley <bagleyd@bigfoot.com>
- * 24-Jun-97: EJK and RR functions stolen from xmartin2.2
- *            Ed Kubaitis <ejk@ux2.cso.uiuc.edu> ejk functions and xmartin 
- *            Renaldo Recuerdo rr function, generalized exponent version
+ * Changes in xlockmore distribution
+ * 01-Nov-2000: Allocation checks
+ * 24-Jun-1997: EJK and RR functions stolen from xmartin2.2
+ *              Ed Kubaitis <ejk@ux2.cso.uiuc.edu> ejk functions and xmartin
+ *              Renaldo Recuerdo rr function, generalized exponent version
  *              of the Barry Martin's square root function
- * 10-May-97: jwz@jwz.org: ported from xlockmore 4.03a10 to be a 
- *			  standalone program and thus usable with xscreensaver
- *			  (I threw away my 1992 port and started over.)
- * 27-Jul-95: added Peter de Jong's hop from Scientific American
- *            July 87 p. 111.  Sometimes they are amazing but there are a
- *            few duds (I did not see a pattern in the parameters).
- * 29-Mar-95: changed name from hopalong to hop
- * 09-Dec-94: added Barry Martin's sine hop
- *
- * (12-Aug-92: jwz@lucid.com: made xlock version run standalone.)
- *
- * Changes of Patrick J. Naughton
- * 29-Oct-90: fix bad (int) cast.
- * 29-Jul-90: support for multiple screens.
- * 08-Jul-90: new timing and colors and new algorithm for fractals.
- * 15-Dec-89: Fix for proper skipping of {White,Black}Pixel() in colors.
- * 08-Oct-89: Fixed long standing typo bug in RandomInitHop();
- *	      Fixed bug in memory allocation in init_hop();
- *	      Moved seconds() to an extern.
- *	      Got rid of the % mod since .mod is slow on a sparc.
- * 20-Sep-89: Lint.
- * 31-Aug-88: Forked from xlock.c for modularity.
- * 23-Mar-88: Coded HOPALONG routines from Scientific American Sept. 86 p. 14.
- *            Hopalong was attributed to Barry Martin of Aston University
- *            (Birmingham, England)
+ * 10-May-1997: Compatible with xscreensaver
+ * 27-Jul-1995: added Peter de Jong's hop from Scientific American
+ *              July 87 p. 111.  Sometimes they are amazing but there are a
+ *              few duds (I did not see a pattern in the parameters).
+ * 29-Mar-1995: changed name from hopalong to hop
+ * 09-Dec-1994: added Barry Martin's sine hop
+ * Changes in original xlock
+ * 29-Oct-1990: fix bad (int) cast.
+ * 29-Jul-1990: support for multiple screens.
+ * 08-Jul-1990: new timing and colors and new algorithm for fractals.
+ * 15-Dec-1989: Fix for proper skipping of {White,Black}Pixel() in colors.
+ * 08-Oct-1989: Fixed long standing typo bug in RandomInitHop();
+ *	            Fixed bug in memory allocation in init_hop();
+ *	            Moved seconds() to an extern.
+ *	            Got rid of the % mod since .mod is slow on a sparc.
+ * 20-Sep-1989: Lint.
+ * 31-Aug-1988: Forked from xlock.c for modularity.
+ * 23-Mar-1988: Coded HOPALONG routines from Scientific American Sept. 86 p. 14.
+ *              Hopalong was attributed to Barry Martin of Aston University
+ *              (Birmingham, England)
  */
 
+
 #ifdef STANDALONE
-# define PROGCLASS					"Hopalong"
-# define HACK_INIT					init_hop
-# define HACK_DRAW					draw_hop
-# define HACK_FREE					release_hop
-# define hop_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		10000   \n"			\
-					"*count:		1000    \n"			\
-					"*cycles:		2500    \n"			\
-					"*ncolors:		200     \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-# include "erase.h"
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_hop
+#define PROGCLASS "Hop"
+#define HACK_INIT init_hop
+#define HACK_DRAW draw_hop
+#define hop_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*count: 1000 \n" \
+ "*cycles: 2500 \n" \
+ "*ncolors: 200 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#include "erase.h"
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+
+#endif /* STANDALONE */
+
+#ifdef MODE_hop
 
 #define DEF_MARTIN "False"
 #define DEF_POPCORN "False"
@@ -95,56 +97,56 @@ static Bool sine;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-martin", ".hop.martin", XrmoptionNoArg, (caddr_t) "on"},
-	{"+martin", ".hop.martin", XrmoptionNoArg, (caddr_t) "off"},
-	{"-popcorn", ".hop.popcorn", XrmoptionNoArg, (caddr_t) "on"},
-	{"+popcorn", ".hop.popcorn", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk1", ".hop.ejk1", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk1", ".hop.ejk1", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk2", ".hop.ejk2", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk2", ".hop.ejk2", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk3", ".hop.ejk3", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk3", ".hop.ejk3", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk4", ".hop.ejk4", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk4", ".hop.ejk4", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk5", ".hop.ejk5", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk5", ".hop.ejk5", XrmoptionNoArg, (caddr_t) "off"},
-	{"-ejk6", ".hop.ejk6", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ejk6", ".hop.ejk6", XrmoptionNoArg, (caddr_t) "off"},
-	{"-rr", ".hop.rr", XrmoptionNoArg, (caddr_t) "on"},
-	{"+rr", ".hop.rr", XrmoptionNoArg, (caddr_t) "off"},
-	{"-jong", ".hop.jong", XrmoptionNoArg, (caddr_t) "on"},
-	{"+jong", ".hop.jong", XrmoptionNoArg, (caddr_t) "off"},
-	{"-sine", ".hop.sine", XrmoptionNoArg, (caddr_t) "on"},
-	{"+sine", ".hop.sine", XrmoptionNoArg, (caddr_t) "off"}
+	{(char *) "-martin", (char *) ".hop.martin", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+martin", (char *) ".hop.martin", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-popcorn", (char *) ".hop.popcorn", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+popcorn", (char *) ".hop.popcorn", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk1", (char *) ".hop.ejk1", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk1", (char *) ".hop.ejk1", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk2", (char *) ".hop.ejk2", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk2", (char *) ".hop.ejk2", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk3", (char *) ".hop.ejk3", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk3", (char *) ".hop.ejk3", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk4", (char *) ".hop.ejk4", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk4", (char *) ".hop.ejk4", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk5", (char *) ".hop.ejk5", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk5", (char *) ".hop.ejk5", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-ejk6", (char *) ".hop.ejk6", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ejk6", (char *) ".hop.ejk6", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-rr", (char *) ".hop.rr", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+rr", (char *) ".hop.rr", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-jong", (char *) ".hop.jong", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+jong", (char *) ".hop.jong", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-sine", (char *) ".hop.sine", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+sine", (char *) ".hop.sine", XrmoptionNoArg, (caddr_t) "off"}
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & martin, "martin", "Martin", DEF_MARTIN, t_Bool},
-	{(caddr_t *) & popcorn, "popcorn", "Popcorn", DEF_POPCORN, t_Bool},
-	{(caddr_t *) & ejk1, "ejk1", "EJK1", DEF_EJK1, t_Bool},
-	{(caddr_t *) & ejk2, "ejk2", "EJK2", DEF_EJK2, t_Bool},
-	{(caddr_t *) & ejk3, "ejk3", "EJK3", DEF_EJK3, t_Bool},
-	{(caddr_t *) & ejk4, "ejk4", "EJK4", DEF_EJK4, t_Bool},
-	{(caddr_t *) & ejk5, "ejk5", "EJK5", DEF_EJK5, t_Bool},
-	{(caddr_t *) & ejk6, "ejk6", "EJK6", DEF_EJK6, t_Bool},
-	{(caddr_t *) & rr, "rr", "RR", DEF_RR, t_Bool},
-	{(caddr_t *) & jong, "jong", "Jong", DEF_JONG, t_Bool},
-	{(caddr_t *) & sine, "sine", "Sine", DEF_SINE, t_Bool}
+	{(caddr_t *) & martin, (char *) "martin", (char *) "Martin", (char *) DEF_MARTIN, t_Bool},
+	{(caddr_t *) & popcorn, (char *) "popcorn", (char *) "Popcorn", (char *) DEF_POPCORN, t_Bool},
+	{(caddr_t *) & ejk1, (char *) "ejk1", (char *) "EJK1", (char *) DEF_EJK1, t_Bool},
+	{(caddr_t *) & ejk2, (char *) "ejk2", (char *) "EJK2", (char *) DEF_EJK2, t_Bool},
+	{(caddr_t *) & ejk3, (char *) "ejk3", (char *) "EJK3", (char *) DEF_EJK3, t_Bool},
+	{(caddr_t *) & ejk4, (char *) "ejk4", (char *) "EJK4", (char *) DEF_EJK4, t_Bool},
+	{(caddr_t *) & ejk5, (char *) "ejk5", (char *) "EJK5", (char *) DEF_EJK5, t_Bool},
+	{(caddr_t *) & ejk6, (char *) "ejk6", (char *) "EJK6", (char *) DEF_EJK6, t_Bool},
+	{(caddr_t *) & rr, (char *) "rr", (char *) "RR", (char *) DEF_RR, t_Bool},
+	{(caddr_t *) & jong, (char *) "jong", (char *) "Jong", (char *) DEF_JONG, t_Bool},
+	{(caddr_t *) & sine, (char *) "sine", (char *) "Sine", (char *) DEF_SINE, t_Bool}
 };
 static OptionStruct desc[] =
 {
-	{"-/+martin", "turn on/off sqrt format"},
-	{"-/+popcorn", "turn on/off Clifford A. Pickover's popcorn format"},
-	{"-/+ejk1", "turn on/off ejk1 format"},
-	{"-/+ejk2", "turn on/off ejk2 format"},
-	{"-/+ejk3", "turn on/off ejk3 format"},
-	{"-/+ejk4", "turn on/off ejk4 format"},
-	{"-/+ejk5", "turn on/off ejk5 format"},
-	{"-/+ejk6", "turn on/off ejk6 format"},
-	{"-/+rr", "turn on/off rr format"},
-	{"-/+jong", "turn on/off jong format"},
-	{"-/+sine", "turn on/off sine format"}
+	{(char *) "-/+martin", (char *) "turn on/off sqrt format"},
+	{(char *) "-/+popcorn", (char *) "turn on/off Clifford A. Pickover's popcorn format"},
+	{(char *) "-/+ejk1", (char *) "turn on/off ejk1 format"},
+	{(char *) "-/+ejk2", (char *) "turn on/off ejk2 format"},
+	{(char *) "-/+ejk3", (char *) "turn on/off ejk3 format"},
+	{(char *) "-/+ejk4", (char *) "turn on/off ejk4 format"},
+	{(char *) "-/+ejk5", (char *) "turn on/off ejk5 format"},
+	{(char *) "-/+ejk6", (char *) "turn on/off ejk6 format"},
+	{(char *) "-/+rr", (char *) "turn on/off rr format"},
+	{(char *) "-/+jong", (char *) "turn on/off jong format"},
+	{(char *) "-/+sine", (char *) "turn on/off sine format"}
 };
 
 ModeSpecOpt hop_opts =
@@ -153,7 +155,7 @@ ModeSpecOpt hop_opts =
 #ifdef USE_MODULES
 ModStruct   hop_description =
 {"hop", "init_hop", "draw_hop", "release_hop",
- "refresh_hop", "init_hop", NULL, &hop_opts,
+ "refresh_hop", "init_hop", (char *) NULL, &hop_opts,
  10000, 1000, 2500, 1, 64, 1.0, "",
  "Shows real plane iterated fractals", 0, NULL};
 
@@ -188,15 +190,15 @@ typedef struct {
 	XPoint     *pointBuffer;	/* pointer for XDrawPoints */
 } hopstruct;
 
-static hopstruct *hops = NULL;
+static hopstruct *hops = (hopstruct *) NULL;
 
 void
 init_hop(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	hopstruct  *hp;
 	double      range;
+	hopstruct  *hp;
 
 	if (hops == NULL) {
 		if ((hops = (hopstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -379,8 +381,11 @@ init_hop(ModeInfo * mi)
 		hp->pix = NRAND(MI_NPIXELS(mi));
 	hp->bufsize = MI_COUNT(mi);
 
-	if (!hp->pointBuffer)
-		hp->pointBuffer = (XPoint *) malloc(hp->bufsize * sizeof (XPoint));
+	if (hp->pointBuffer == NULL) {
+		if ((hp->pointBuffer = (XPoint *) malloc(hp->bufsize *
+				sizeof (XPoint))) == NULL)
+			return;
+	}
 
 	MI_CLEARWINDOW(mi);
 
@@ -392,13 +397,20 @@ init_hop(ModeInfo * mi)
 void
 draw_hop(ModeInfo * mi)
 {
-	hopstruct  *hp = &hops[MI_SCREEN(mi)];
 	double      oldj, oldi;
-	XPoint     *xp = hp->pointBuffer;
-	int         k = hp->bufsize;
+	XPoint     *xp;
+	int         k;
+	hopstruct  *hp;
+
+	if (hops == NULL)
+		return;
+	hp = &hops[MI_SCREEN(mi)];
+	if (hp->pointBuffer == NULL)
+		return;
+	xp = hp->pointBuffer;
+	k = hp->bufsize;
 
 	MI_IS_DRAWN(mi) = True;
-
 	hp->inc++;
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_PIXEL(mi, hp->pix));
@@ -536,12 +548,11 @@ release_hop(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			hopstruct  *hp = &hops[screen];
 
-			if (hp->pointBuffer)
+			if (hp->pointBuffer != NULL)
 				(void) free((void *) hp->pointBuffer);
 		}
-
 		(void) free((void *) hops);
-		hops = NULL;
+		hops = (hopstruct *) NULL;
 	}
 }
 
@@ -550,3 +561,5 @@ refresh_hop(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_hop */

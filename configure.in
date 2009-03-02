@@ -934,15 +934,12 @@ else
   # there must be a better way than this...
   if test -z "`echo $with_configdir | sed 's@^/.*@@'`" ; then
     # absolute path
-    CONFIGDIR=$with_configdir
+    HACK_CONF_DIR=$with_configdir
   else
     # relative path
-    CONFIGDIR="\${exec_prefix}$with_configdir"
+    HACK_CONF_DIR="\${exec_prefix}$with_configdir"
   fi
 fi
-
-# canonicalize slashes.
-CONFIGDIR=`echo "${CONFIGDIR}" | sed 's@/$@@;s@//*@/@g'`
 
 
 
@@ -1516,8 +1513,8 @@ if test "$enable_locking" = yes -a "$with_kerberos" = yes; then
     # (who got it from amu@mit.edu)
     PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcrypt -lcom_err"
   elif test "$have_kerberos" = yes ; then
-    # from Tim Showalter <tjs+@andrew.cmu.edu>
-    PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes"
+    # from Tim Showalter <tjs@psaux.com> for FreeBSD 4.2
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes -lcom_err"
   fi
 
   if test "$have_kerberos" = yes ; then
@@ -1904,7 +1901,7 @@ if test "$with_gtk" = yes; then
   # Check for Gnome Capplet support.
   #
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-    gnome_config_libs="gtk capplet gnomeui xml"
+    gnome_config_libs="gtk capplet gnomeui xml gdk_pixbuf"
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
       [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
@@ -1953,6 +1950,11 @@ if test "$with_gtk" = yes; then
     ac_gtk_config_cflags=$ac_gnome_config_cflags
     ac_gtk_config_libs=$ac_gnome_config_libs
     AC_DEFINE(HAVE_CRAPPLET)
+
+    # check for this function that was not in libcapplet 1.2.
+    AC_CHECK_X_LIB(capplet, capplet_widget_changes_are_immediate,
+                   [AC_DEFINE(HAVE_CRAPPLET_IMMEDIATE)], [true],
+                   $ac_gnome_config_libs)
   fi
 
 
@@ -1982,6 +1984,7 @@ fi
 
 have_xml=no
 with_xml_req=unspecified
+xml_halfassed=no
 AC_ARG_WITH(xml,
 [  --with-xml              The XML toolkit is needed for some parts of
                           the Gtk interface.],
@@ -2013,8 +2016,10 @@ if test "$with_xml" = yes; then
   if test "$have_xml" = yes; then
     # we have the header, now check for the library
     have_xml=no
+    xml_halfassed=yes
     AC_CHECK_X_LIB(xml, xmlParseChunk,
                    [have_xml=yes
+                    xml_halfassed=no
                     XML_LIBS="-lxml"
                     AC_DEFINE(HAVE_XML)])
   fi
@@ -2444,6 +2449,92 @@ fi
 
 ###############################################################################
 #
+#       Check for -lgdk_pixbuf.
+#
+###############################################################################
+
+have_gdk_pixbuf=no
+with_gdk_pixbuf_req=unspecified
+AC_ARG_WITH(pixbuf,
+[  --with-pixbuf           Include support for the GDK-Pixbuf library in some
+                          demos, which will make it possible for them to read
+                          GIF, JPEG, and PNG files as well.],
+  [with_gdk_pixbuf="$withval"; with_gdk_pixbuf_req="$withval"],
+  [with_gdk_pixbuf=yes])
+
+HANDLE_X_PATH_ARG(with_gdk_pixbuf, --with-pixbuf, GDK_PIXBUF)
+
+if test "$with_gdk_pixbuf" = yes; then
+
+  if test "$have_gtk" = yes; then
+
+    ac_save_gdk_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_gtk_config_cflags"
+
+    have_gdk_pixbuf=no
+    AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf.h, [have_gdk_pixbuf=yes])
+    if test "$have_gdk_pixbuf" = yes; then
+      have_gdk_pixbuf=no
+      AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf-xlib.h, [have_gdk_pixbuf=yes])
+    fi
+
+    CPPFLAGS="$ac_save_gdk_CPPFLAGS"
+
+    if test "$have_gdk_pixbuf" = yes; then
+      AC_DEFINE(HAVE_GDK_PIXBUF)
+      XPM_LIBS="-lgdk_pixbuf -lgdk_pixbuf_xlib"
+    fi
+  fi
+
+elif test "$with_gdk_pixbuf" != no; then
+  echo "error: must be yes or no: --with-pixbuf=$with_gdk_pixbuf"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for -ljpeg
+#
+###############################################################################
+
+have_jpeg=no
+with_jpeg_req=unspecified
+jpeg_halfassed=no
+AC_ARG_WITH(jpeg,
+[  --with-jpeg             Include support for the JPEG library in some demos,
+                          which will make it possible for them to read JPEG
+                          files as well.],
+  [with_jpeg="$withval"; with_jpeg_req="$withval"],
+  [with_jpeg=yes])
+
+HANDLE_X_PATH_ARG(with_jpeg, --with-jpeg, JPEG)
+
+if test "$with_jpeg" != yes -a "$with_jpeg" != no ; then
+  echo "error: must be yes or no: --with-jpeg=$with_jpeg"
+  exit 1
+fi
+
+if test "$with_jpeg" = yes; then
+
+  have_jpeg=no
+  AC_CHECK_X_HEADER(jpeglib.h, [have_jpeg=yes])
+
+  if test "$have_jpeg" = yes; then
+    # we have the header, now check for the library
+    have_jpeg=no
+    jpeg_halfassed=yes
+    AC_CHECK_X_LIB(jpeg, jpeg_start_compress,
+                   [have_jpeg=yes
+                    jpeg_halfassed=no
+                    JPEG_LIBS="-ljpeg"
+                    AC_DEFINE(HAVE_JPEGLIB)])
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for the XSHM server extension.
 #
 ###############################################################################
@@ -2451,7 +2542,7 @@ fi
 have_xshm=no
 with_xshm_req=unspecified
 AC_ARG_WITH(xshm-ext,
-[  --with-xshm-ext         Include support for the XSHM extension.],
+[  --with-xshm-ext         Include support for the Shared Memory extension.],
   [with_xshm="$withval"; with_xshm_req="$withval"],[with_xshm=yes])
 
 HANDLE_X_PATH_ARG(with_xshm, --with-xshm-ext, XSHM)
@@ -2761,6 +2852,10 @@ else
   GLE_KLUDGE="-${tab}   "
 fi
 
+if test "$have_jpeg" = yes -a "$have_gdk_pixbuf" = yes; then
+ JPEG_EXES='$(JPEG_EXES)'
+fi
+
 
 # Another substitution in the XScreenSaver.ad.in file:
 #
@@ -2783,6 +2878,10 @@ if test -z "$HACK_CONF_DIR" ; then
   fi
 fi
 
+# canonicalize slashes.
+HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
+
+
 
 ###############################################################################
 #
@@ -2798,6 +2897,7 @@ AC_SUBST(SAVER_LIBS)
 AC_SUBST(MOTIF_LIBS)
 AC_SUBST(GTK_LIBS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(JPEG_LIBS)
 AC_SUBST(HACK_LIBS)
 AC_SUBST(XPM_LIBS)
 AC_SUBST(GL_LIBS)
@@ -2820,6 +2920,7 @@ AC_SUBST(SAVER_GL_OBJS)
 AC_SUBST(SAVER_GL_LIBS)
 AC_SUBST(LOCK_SRCS)
 AC_SUBST(LOCK_OBJS)
+AC_SUBST(JPEG_EXES)
 AC_SUBST(GL_EXES)
 AC_SUBST(GL_UTIL_EXES)
 AC_SUBST(GL_MEN)
@@ -2980,17 +3081,33 @@ if test "$with_gnome_req" = yes -a "$have_gnome" = no ; then
   warn2 'headers and/or libraries were not found.'
 fi
 
-if test "$with_xml_req" = yes -a "$have_xml" = no ; then
-  warn  'Use of the XML library was requested, but the necessary'
-  warn2 'headers and/or libraries were not found.'
-elif test "$have_gtk" = yes -a "$have_xml" = no ; then
-  warn  'GTK is being used, but the XML library was not found.'
-  warn2 'Some functionality will be disabled.'
+if test "$have_gtk" = yes ; then
+  if test "$have_xml" = no ; then
+    if test "$with_xml_req" = yes ; then
+      warn  'Use of the XML library was requested, but the necessary'
+      warn2 'headers and/or libraries were not found.'
+    else
+      warn  'GTK is being used, but the XML library was not found.'
+    fi
+
+    if test "$xml_halfassed" = yes ; then
+      echo ''
+      warn2 'More specifically, we found the headers, but not the'
+      warn2 'libraries; so either XML is half-installed on this'
+      warn2 "system, or something else went wrong.  The \`config.log'"
+      warn2 'file might contain some clues.'
+    fi
+
+    echo ''
+    warn2 "Without XML, the per-display-mode \`Settings' dialogs"
+    warn2 'will not be available.  Specify the location of the XML'
+    warn2 'library through the --with-xml option to configure.'
+  fi
 fi
 
 if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
 
-  preferred_lesstif=0.86
+  preferred_lesstif=0.92
 
   if test "$lesstif_version" = unknown; then
     warnL "Unable to determine the LessTif version number!"
@@ -3007,22 +3124,77 @@ if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
 fi
 
 
+if test "$have_motif" = yes -a "$have_gtk" = no ; then
+  warn  'Motif is being used, and GTK is not.'
+  echo  ''
+  warn2 'Though the Motif front-end to xscreensaver is still'
+  warn2 'maintained, it is no longer being updated with new'
+  warn2 'features: all new development on the xscreensaver-demo'
+  warn2 'program is happening in the GTK version, and not in the'
+  warn2 'Motif version.  It is recommended that you build against'
+  warn2 'GTK instead of Motif.  See <http://www.gtk.org/>.'
+fi
 
-if test "$have_xpm" = no ; then
+
+if test "$with_xpm_req" = yes ; then
+  warnL 'Use of XPM was requested, but it was not found.'
+fi
+
+if test "$with_gdk_pixbuf_req" = yes ; then
+  warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
+fi
+
+if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no; then
+
   if test "$with_xpm_req" = yes ; then
-    warnL 'Use of XPM was requested, but it was not found.'
+    true
   elif test "$with_xpm_req" = no ; then
-    noteL 'The XPM library is not being used.'
+    warnL 'The XPM library is not being used.'
   else
-    noteL 'The XPM library was not found.'
+    warnL 'The XPM library was not found.'
+  fi
+
+  if test "$with_gdk_pixbuf_req" = yes ; then
+    true
+  elif test "$with_gdk_pixbuf_req" = no ; then
+    warnL 'The GDK-Pixbuf library is not being used.'
+  else
+    warnL 'The GDK-Pixbuf library was not found.'
   fi
 
   echo ''
   warn2 'Some of the demos will not be as colorful as they'
-  warn2 'could be.  You might want to consider installing XPM'
-  warn2 'and re-running configure.  (Remember to delete the'
-  warn2 'config.cache file first.)  You can find XPM at most'
-  warn2 'X11 archive sites, such as <http://sunsite.unc.edu/>.'
+  warn2 'could be.  You should consider installing Pixbuf or'
+  warn2 'XPM and re-running configure.  (Remember to delete'
+  warn2 'the config.cache file first.)  The Pixbuf library is'
+  warn2 'a part of GNOME.  The XPM library comes with most'
+  warn2 'X11 installations; you can also find it at the X11'
+  warn2 'archive sites, such as <http://sunsite.unc.edu/>.'
+  echo  ''
+  warn2 'GDK-Pixbuf is recommended over XPM, as it provides'
+  warn2 'support for more image formats.'
+fi
+
+
+if test "$have_jpeg" = no ; then
+  if test "$with_jpeg_req" = yes ; then
+    warnL 'Use of libjpeg was requested, but it was not found.'
+  elif test "$with_jpeg_req" = no ; then
+    noteL 'The JPEG library is not being used.'
+  else
+    noteL 'The JPEG library was not found.'
+  fi
+
+  if test "$jpeg_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'library; so either JPEG is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  warn2 "This means the \`webcollage' program will be much slower."
 fi
 
 
@@ -3197,10 +3369,10 @@ if test \! -z "$rpmv" ; then
   echo ""
 
   if test "$rpmbdir" = "$rpmhdir" ; then
-    warn2 "The RPM version was installed in $rpmbdir."
+    warn2 "The RPM version was installed in $rpmbdir/."
   else
-    warn2 "The RPM version was installed in $rpmbdir,"
-    warn2 "with demos in $rpmhdir."
+    warn2 "The RPM version was installed in $rpmbdir/,"
+    warn2 "with demos in $rpmhdir/."
   fi
 
   do_dir_warning=yes
@@ -3217,10 +3389,10 @@ if test "$do_dir_warning" = yes; then
   echo ""
   echo '      When you run "make install", the "xscreensaver",'
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
-  echo "      will be installed in ${bindir}."
+  echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (120+ different executables) will"
-  echo "      also be installed in ${HACKDIR}."
+  echo "      The various graphics demos (140+ different executables) will"
+  echo "      also be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere"
   echo "      (for example, in a dedicated directory) you should re-run"

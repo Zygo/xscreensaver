@@ -87,11 +87,16 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
+#include <ctype.h>
 #include <GL/glu.h>
 #include <sys/stat.h>
 #include "glutstroke.h"
 #include "glut_roman.h"
 #define GLUT_FONT (&glutStrokeRoman)
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>
+#endif /* HAVE_UNAME */
 
 
 typedef struct {
@@ -258,15 +263,32 @@ launch_text_generator (sws_configuration *sc)
 
   if (!strcasecmp(oprogram, "(default)"))
     {
+      oprogram = FORTUNE_PROGRAM;
+
 #ifdef __linux__
-      static int done_once = 0;
-      struct stat st;
-      char *cmd = "cat /usr/src/linux/README";
-      if (!(done_once++) && !stat (cmd+4, &st))
-        oprogram = cmd;
-      else
-#endif
-        oprogram = FORTUNE_PROGRAM;
+      {
+        static int done_once = 0;
+        if (!done_once)
+          {
+            struct utsname uts;
+            struct stat st;
+            done_once = 1;
+            if (uname (&uts) == 0)
+              {
+                static char cmd[200];
+                char *s;
+                /* strip version at the first non-digit-dash-dot, to
+                   lose any "SMP" crap at the end. */
+                for (s = uts.release; *s; s++)
+                  if (!isdigit(*s) && *s != '.' && *s != '-')
+                    *s = 0;
+                sprintf (cmd, "cat /usr/src/linux-%s/README", uts.release);
+                if (!stat (cmd+4, &st))
+                  oprogram = cmd;
+              }
+          }
+      }
+#endif /* __linux__ */
     }
 
  program = (char *) malloc (strlen (oprogram) + 10);

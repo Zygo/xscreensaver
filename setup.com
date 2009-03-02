@@ -4,6 +4,7 @@ $ set def [.HACKS]
 $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
 $ ant		:== $'mydir'ant
+$ apollonian	:== $'mydir'apollonian
 $ attraction	:== $'mydir'attraction
 $ blaster	:== $'mydir'blaster
 $ blitspin	:== $'mydir'blitspin
@@ -26,6 +27,7 @@ $ discrete	:== $'mydir'discrete
 $ distort	:== $'mydir'distort
 $ drift		:== $'mydir'drift
 $ epicycle	:== $'mydir'epicycle
+$ euler2d	:== $'mydir'euler2d
 $ fadeplot	:== $'mydir'fadeplot
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
@@ -44,6 +46,7 @@ $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
 $ interference	:== $'mydir'interference
 $ jigsaw	:== $'mydir'jigsaw
+$ juggle	:== $'mydir'juggle
 $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
 $ kumppa	:== $'mydir'kumppa
@@ -65,6 +68,7 @@ $ penetrate	:== $'mydir'penetrate
 $ penrose	:== $'mydir'penrose
 $ petri		:== $'mydir'petri
 $ phosphor	:== $'mydir'phosphor
+$ polyominoes	:== $'mydir'polyominoes
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
 $ rd-bomb	:== $'mydir'rd-bomb
@@ -87,11 +91,14 @@ $ starfish	:== $'mydir'starfish
 $ strange	:== $'mydir'strange
 $ swirl		:== $'mydir'swirl
 $ t3d		:== $'mydir't3d
+$ thornbird	:== $'mydir'thornbird
 $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet
+$ twang		:== $'mydir'twang
 $ vermiculate	:== $'mydir'vermiculate
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
+$ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
 $ worm		:== $'mydir'worm

@@ -109,6 +109,7 @@ static argtype vars[] = {
 ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #include "xpm-ximage.h"
+
 #include "../images/lament.xpm"
 
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))

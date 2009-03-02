@@ -11,7 +11,7 @@
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="20"/>
+            low="1" high="20" default="20"/>
 
   <_description>
 This draws fractal trees.  Written by Peter Baumung.  Everybody loves

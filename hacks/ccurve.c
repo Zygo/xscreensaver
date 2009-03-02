@@ -644,6 +644,8 @@ char *progclass = "Ccurve";
 
 char *defaults [] =
 {
+    ".background:  black",
+    ".foreground:  white",
     ".delay:      1",
     ".pause:      3",
     ".limit: 200000",

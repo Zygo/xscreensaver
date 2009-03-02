@@ -2,7 +2,8 @@
 /* lissie --- the Lissajous worm */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)lissie.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)lissie.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
 /*-
@@ -24,29 +25,42 @@ static const char sccsid[] = "@(#)lissie.c	4.04 97/07/28 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: Compatible with xscreensaver
- * 18-Aug-96: added refresh-hook.
- * 01-May-96: written.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 18-Aug-1996: added refresh-hook.
+ * 01-May-1996: written.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS "Lissie"
-# define HACK_INIT init_lissie
-# define HACK_DRAW draw_lissie
-# define lissie_opts xlockmore_opts
-# define DEFAULTS	"*delay:   10000 \n"	\
-					"*count:   1     \n"	\
-					"*cycles:  2000  \n"	\
-					"*size:   -200   \n"	\
-					"*ncolors: 64    \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"		/* in xscreensaver distribution */
+#define MODE_lissie
+#define PROGCLASS "Lissie"
+#define HACK_INIT init_lissie
+#define HACK_DRAW draw_lissie
+#define lissie_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*count: 1 \n" \
+ "*cycles: 20000 \n" \
+ "*size: -200 \n" \
+ "*ncolors: 200 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-# include "xlock.h"		/* in xlockmore distribution */
+#include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
+#ifdef MODE_lissie
+
 ModeSpecOpt lissie_opts =
-{0, NULL, 0, NULL, NULL};
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   lissie_description =
+{"lissie", "init_lissie", "draw_lissie", "release_lissie",
+ "refresh_lissie", "init_lissie", (char *) NULL, &lissie_opts,
+ 10000, 1, 2000, -200, 64, 0.6, "",
+ "Shows lissajous worms", 0, NULL};
+
+#endif
 
 #define MINSIZE 1
 
@@ -81,17 +95,18 @@ typedef struct {
 	int         xi, yi, ri, rx, ry, len, pos;
 	int         redrawing, redrawpos;
 	XPoint      loc[MAXLISSIELEN];
-	int         color;
+	unsigned long color;
 } lissiestruct;
 
 typedef struct {
+	Bool        painted;
 	int         width, height;
 	int         nlissies;
 	lissiestruct *lissie;
 	int         loopcount;
 } lissstruct;
 
-static lissstruct *lisses = NULL;
+static lissstruct *lisses = (lissstruct *) NULL;
 
 
 static void
@@ -127,16 +142,16 @@ drawlissie(ModeInfo * mi, lissiestruct * lissie)
 	lissie->loc[p].y = lissie->yi + (int) (sin(lissie->ty) * lissie->ry);
 
 	/* Mask */
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	Lissie(oldp);
 
 	/* Redraw */
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(display, gc, MI_PIXEL(mi, lissie->color));
-		if (++lissie->color >= MI_NPIXELS(mi))
+		if (++lissie->color >= (unsigned) MI_NPIXELS(mi))
 			lissie->color = 0;
 	} else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	Lissie(p);
 	if (lissie->redrawing) {
 		int         i;
@@ -165,7 +180,7 @@ initlissie(ModeInfo * mi, lissiestruct * lissie)
 	if (MI_NPIXELS(mi) > 2)
 		lissie->color = NRAND(MI_NPIXELS(mi));
 	else
-		lissie->color = MI_WIN_WHITE_PIXEL(mi);
+		lissie->color = MI_WHITE_PIXEL(mi);
 	/* Initialize parameters */
 	if (size < -MINSIZE)
 		lissie->ri = NRAND(MIN(-size, MAX(MINSIZE,
@@ -214,14 +229,14 @@ init_lissie(ModeInfo * mi)
 	}
 	lp = &lisses[MI_SCREEN(mi)];
 
-	lp->width = MI_WIN_WIDTH(mi);
-	lp->height = MI_WIN_HEIGHT(mi);
+	lp->width = MI_WIDTH(mi);
+	lp->height = MI_HEIGHT(mi);
 
-	lp->nlissies = MI_BATCHCOUNT(mi);
+	lp->nlissies = MI_COUNT(mi);
 	if (lp->nlissies < -MINLISSIES) {
 		if (lp->lissie) {
 			(void) free((void *) lp->lissie);
-			lp->lissie = NULL;
+			lp->lissie = (lissiestruct *) NULL;
 		}
 		lp->nlissies = NRAND(-lp->nlissies - MINLISSIES + 1) + MINLISSIES;
 	} else if (lp->nlissies < MINLISSIES)
@@ -229,9 +244,14 @@ init_lissie(ModeInfo * mi)
 
 	lp->loopcount = 0;
 
-	if (!lp->lissie)
-		lp->lissie = (lissiestruct *) calloc(lp->nlissies, sizeof (lissiestruct));
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	if (lp->lissie == NULL)
+		if ((lp->lissie = (lissiestruct *) calloc(lp->nlissies,
+				sizeof (lissiestruct))) == NULL)
+			return;
+
+	MI_CLEARWINDOW(mi);
+	lp->painted = False;
+
 	for (ball = 0; ball < (unsigned char) lp->nlissies; ball++)
 		initlissie(mi, &lp->lissie[ball]);
 
@@ -240,14 +260,24 @@ init_lissie(ModeInfo * mi)
 void
 draw_lissie(ModeInfo * mi)
 {
-	lissstruct *lp = &lisses[MI_SCREEN(mi)];
 	register unsigned char ball;
+	lissstruct *lp;
 
-	if (++lp->loopcount > MI_CYCLES(mi))
+	if (lisses == NULL)
+		return;
+	lp = &lisses[MI_SCREEN(mi)];
+	if (lp->lissie == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
+
+	if (++lp->loopcount > MI_CYCLES(mi)) {
 		init_lissie(mi);
-	else
+	} else {
+		lp->painted = True;
 		for (ball = 0; ball < (unsigned char) lp->nlissies; ball++)
 			drawlissie(mi, &lp->lissie[ball]);
+	}
 }
 
 void
@@ -259,26 +289,35 @@ release_lissie(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			lissstruct *lp = &lisses[screen];
 
-			if (lp->lissie) {
+			if (lp->lissie != NULL) {
 				(void) free((void *) lp->lissie);
-				lp->lissie = NULL;
+				/* lp->lissie = NULL; */
 			}
 		}
 		(void) free((void *) lisses);
-		lisses = NULL;
+		lisses = (lissstruct *) NULL;
 	}
 }
 
 void
 refresh_lissie(ModeInfo * mi)
 {
-	if (lisses != NULL) {
-		lissstruct *lp = &lisses[MI_SCREEN(mi)];
-		int         i;
+	int         i;
+	lissstruct *lp;
 
+	if (lisses == NULL)
+		return;
+	lp = &lisses[MI_SCREEN(mi)];
+	if (lp->lissie == NULL)
+		return;
+
+	if (lp->painted) {
+		MI_CLEARWINDOW(mi);
 		for (i = 0; i < lp->nlissies; i++) {
 			lp->lissie[i].redrawing = 1;
 			lp->lissie[i].redrawpos = 0;
 		}
 	}
 }
+
+#endif /* MODE_lissie */

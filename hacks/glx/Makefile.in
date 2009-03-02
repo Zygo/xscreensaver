@@ -78,7 +78,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
 		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c \
 		  gltext.c molecule.c dangerball.c sphere.c tube.c circuit.c \
-		  menger.c engine.c flipscreen3d.c font-ximage.c grab-ximage.c
+		  menger.c engine.c flipscreen3d.c font-ximage.c \
+		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -93,12 +94,14 @@ OBJS		= xscreensaver-gl-helper.o \
 		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
 		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
 		  gltext.o molecule.o dangerball.o sphere.o tube.o circuit.o \
-		  menger.o engine.o flipscreen3d.o font-ximage.o grab-ximage.o
+		  menger.o engine.o flipscreen3d.o font-ximage.o \
+	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
-		  dangerball circuit menger engine flipscreen3d
+		  dangerball circuit menger engine flipscreen3d glsnake boxed \
+		  glforestfire sballs
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -112,10 +115,11 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o fps.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/colors.o
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
-		  grab-ximage.h font-ximage.h tube.h sphere.h \
+		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h glut_roman.h
 GL_MEN		= gflux.man lament.man starwars.man gltext.man \
-		  molecule.man xscreensaver-gl-helper.man
+		  molecule.man xscreensaver-gl-helper.man glsnake.man \
+		  glforestfire.man sballs.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -369,6 +373,17 @@ engine:		engine.o	$(HACK_OBJS)
 flipscreen3d:	flipscreen3d.o	$(HACK_OBJS) $(GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
 
+glsnake:	glsnake.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+boxed:		boxed.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+glforestfire:	glforestfire.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+sballs:		sballs.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
 # This one works differently (it's not xlock-like.)
 #
@@ -503,4 +518,15 @@ flipscreen3d.o: ../../config.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
 font-ximage.o: ../../config.h
 grab-ximage.o: ../../config.h
+glsnake.o: ../../config.h
+boxed.o: $(srcdir)/boxed.h
+boxed.o: ../../config.h
+glforestfire.o: ../../config.h
+glforestfire.o: $(srcdir)/xpm-ximage.h
+glforestfire.o: $(HACK_SRC)/images/ground.xpm
+glforestfire.o: $(HACK_SRC)/images/tree.xpm
+sballs.o: ../../config.h
+sballs.o: $(srcdir)/xpm-ximage.h
+sballs.o: $(HACK_SRC)/images/sball.xpm
+sballs.o: $(HACK_SRC)/images/sball-bg.xpm
 

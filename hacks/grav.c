@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * grav --- simulation of a planetary system.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* grav --- planets spinning around a pulsar */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1993 Greg Bowering <gb@pobox.com>
+/*-
+ * Copyright (c) 1993 by Greg Boewring <gb@pobox.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,25 +21,66 @@ static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * Revision history:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 11-Jul-94: color version
- * 06-Oct-93: by Greg Bowering <gb@pobox.com>
+ * Revision History:
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 11-Jul-1994: color version
+ * 06-Oct-1993: Written by Greg Bowering <gb@pobox.com>
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Grav"
-# define HACK_INIT					init_grav
-# define HACK_DRAW					draw_grav
-# define grav_opts					xlockmore_opts
-# define DEFAULTS	"*count:		12    \n"			\
-					"*delay:		10000 \n"			\
-					"*ncolors:		64   \n"
-# define BRIGHT_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_grav
+#define PROGCLASS "Grav"
+#define HACK_INIT init_grav
+#define HACK_DRAW draw_grav
+#define grav_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*count: 12 \n" \
+ "*ncolors: 64 \n"
+#define BRIGHT_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+
+#endif /* STANDALONE */
+
+#ifdef MODE_grav
+
+#define DEF_DECAY "False"	/* Damping for decaying orbits */
+#define DEF_TRAIL "False"	/* For trails (works good in mono only) */
+
+static Bool decay;
+static Bool trail;
+
+static XrmOptionDescRec opts[] =
+{
+	{(char *) "-decay", (char *) ".grav.decay", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+decay", (char *) ".grav.decay", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-trail", (char *) ".grav.trail", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+trail", (char *) ".grav.trail", XrmoptionNoArg, (caddr_t) "off"}
+};
+static argtype vars[] =
+{
+	{(caddr_t *) & decay, (char *) "decay", (char *) "Decay", (char *) DEF_DECAY, t_Bool},
+	{(caddr_t *) & trail, (char *) "trail", (char *) "Trail", (char *) DEF_TRAIL, t_Bool}
+};
+static OptionStruct desc[] =
+{
+	{(char *) "-/+decay", (char *) "turn on/off decaying orbits"},
+	{(char *) "-/+trail", (char *) "turn on/off trail dots"}
+};
+
+ModeSpecOpt grav_opts =
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
+
+#ifdef USE_MODULES
+ModStruct   grav_description =
+{"grav", "init_grav", "draw_grav", "release_grav",
+ "refresh_grav", "init_grav", (char *) NULL, &grav_opts,
+ 10000, -12, 1, 1, 64, 1.0, "",
+ "Shows orbiting planets", 0, NULL};
+
+#endif
 
 #define GRAV			-0.02	/* Gravitational constant */
 #define DIST			16.0
@@ -80,35 +123,9 @@ static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
 
 #define FLOATRAND(min,max)	((min)+(LRAND()/MAXRAND)*((max)-(min)))
 
-#define DEF_DECAY "False"	/* Damping for decaying orbits */
-#define DEF_TRAIL "False"	/* For trails (works good in mono only) */
-
-static Bool decay;
-static Bool trail;
-
-static XrmOptionDescRec opts[] =
-{
-	{"-decay", ".grav.decay", XrmoptionNoArg, (caddr_t) "on"},
-	{"+decay", ".grav.decay", XrmoptionNoArg, (caddr_t) "off"},
-	{"-trail", ".grav.trail", XrmoptionNoArg, (caddr_t) "on"},
-	{"+trail", ".grav.trail", XrmoptionNoArg, (caddr_t) "off"}
-};
-static argtype vars[] =
-{
-	{(caddr_t *) & decay, "decay", "Decay", DEF_DECAY, t_Bool},
-	{(caddr_t *) & trail, "trail", "Trail", DEF_TRAIL, t_Bool}
-};
-static OptionStruct desc[] =
-{
-	{"-/+decay", "turn on/off decaying orbits"},
-	{"-/+trail", "turn on/off trail dots"}
-};
-
-ModeSpecOpt grav_opts = { 4, opts, 2, vars, desc };
-
 typedef struct {
-	double        P[DIMENSIONS], V[DIMENSIONS], A[DIMENSIONS];
-	int           xi, yi, ri;
+	double      P[DIMENSIONS], V[DIMENSIONS], A[DIMENSIONS];
+	int         xi, yi, ri;
 	unsigned long colors;
 } planetstruct;
 
@@ -119,7 +136,7 @@ typedef struct {
 	planetstruct *planets;
 } gravstruct;
 
-static gravstruct *gravs = NULL;
+static gravstruct *gravs = (gravstruct *) NULL;
 
 static void
 init_planet(ModeInfo * mi, planetstruct * planet)
@@ -132,7 +149,7 @@ init_planet(ModeInfo * mi, planetstruct * planet)
 	if (MI_NPIXELS(mi) > 2)
 		planet->colors = MI_PIXEL(mi, NRAND(MI_NPIXELS(mi)));
 	else
-		planet->colors = MI_WIN_WHITE_PIXEL(mi);
+		planet->colors = MI_WHITE_PIXEL(mi);
 	/* Initialize positions */
 	POS(X) = FLOATRAND(-XR, XR);
 	POS(Y) = FLOATRAND(-YR, YR);
@@ -200,7 +217,7 @@ draw_planet(ModeInfo * mi, planetstruct * planet)
 		planet->xi = planet->yi = -1;
 
 	/* Mask */
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	Planet(gp->x, gp->y);
 	if (trail) {
 		XSetForeground(display, gc, planet->colors);
@@ -221,8 +238,8 @@ init_grav(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	gravstruct *gp;
 	unsigned char ball;
+	gravstruct *gp;
 
 	if (gravs == NULL) {
 		if ((gravs = (gravstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -231,28 +248,31 @@ init_grav(ModeInfo * mi)
 	}
 	gp = &gravs[MI_SCREEN(mi)];
 
-	gp->width = MI_WIN_WIDTH(mi);
-	gp->height = MI_WIN_HEIGHT(mi);
+	gp->width = MI_WIDTH(mi);
+	gp->height = MI_HEIGHT(mi);
 
 	gp->sr = STARRADIUS;
 
-	gp->nplanets = MI_BATCHCOUNT(mi);
+	gp->nplanets = MI_COUNT(mi);
 	if (gp->nplanets < 0) {
 		if (gp->planets) {
 			(void) free((void *) gp->planets);
-			gp->planets = NULL;
+			gp->planets = (planetstruct *) NULL;
 		}
 		gp->nplanets = NRAND(-gp->nplanets) + 1;	/* Add 1 so its not too boring */
 	}
-	if (!gp->planets)
-		gp->planets = (planetstruct *) calloc(gp->nplanets, sizeof (planetstruct));
+	if (gp->planets == NULL) {
+		if ((gp->planets = (planetstruct *) calloc(gp->nplanets,
+				sizeof (planetstruct))) == NULL)
+			return;
+	}
 
-	XClearWindow(display, MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 
 	if (MI_NPIXELS(mi) > 2)
 		gp->starcolor = MI_PIXEL(mi, NRAND(MI_NPIXELS(mi)));
 	else
-		gp->starcolor = MI_WIN_WHITE_PIXEL(mi);
+		gp->starcolor = MI_WHITE_PIXEL(mi);
 	for (ball = 0; ball < (unsigned char) gp->nplanets; ball++)
 		init_planet(mi, &gp->planets[ball]);
 
@@ -268,11 +288,18 @@ draw_grav(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
-	gravstruct *gp = &gravs[MI_SCREEN(mi)];
 	register unsigned char ball;
+	gravstruct *gp;
 
+	if (gravs == NULL)
+			return;
+	gp = &gravs[MI_SCREEN(mi)];
+	if (gp->planets == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	/* Mask centrepoint */
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	XDrawArc(display, window, gc,
 		 gp->width / 2 - gp->sr / 2, gp->height / 2 - gp->sr / 2, gp->sr, gp->sr,
 		 0, 23040);
@@ -311,12 +338,14 @@ release_grav(ModeInfo * mi)
 				(void) free((void *) gp->planets);
 		}
 		(void) free((void *) gravs);
-		gravs = NULL;
+		gravs = (gravstruct *) NULL;
 	}
 }
 
 void
 refresh_grav(ModeInfo * mi)
 {
-	/* Do nothing, it will refresh by itself */
+	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_grav */

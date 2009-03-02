@@ -217,6 +217,8 @@ onestep (Display *dpy, Window window)
 char *progclass = "Spotlight";
 
 char *defaults [] = {
+  ".background:			black",
+  ".foreground:			white",
   "*dontClearRoot:		True",
 
 #ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */

@@ -16,6 +16,7 @@
 #include "utils.h"
 
 #include <X11/Intrinsic.h>
+#include <ctype.h>
 #include <errno.h>
 
 #ifdef HAVE_XMU
@@ -32,6 +33,7 @@
 #include "grabscreen.h"
 #include "resources.h"
 #include "colorbars.h"
+#include "visual.h"
 #include "prefs.h"
 #include "vroot.h"
 
@@ -129,6 +131,10 @@ get_image (Screen *screen, Window window, Bool verbose_p)
   enum { do_desk, do_video, do_image, do_bars } which = do_bars;
   int count = 0;
 
+  XWindowAttributes xgwa;
+  XGetWindowAttributes (dpy, window, &xgwa);
+  screen = xgwa.screen;
+
   if (verbose_p)
     {
       fprintf (stderr, "%s: grabDesktopImages:  %s\n",
@@ -195,13 +201,17 @@ get_image (Screen *screen, Window window, Bool verbose_p)
   if (count == 0)
     which = do_bars;
   else
-    while (1)  /* loop until we get one that's permitted */
-      {
-        which = (random() % 3);
-        if (which == do_desk  && desk_p)  break;
-        if (which == do_video && video_p) break;
-        if (which == do_image && image_p) break;
-      }
+    {
+      int i = 0;
+      while (1)  /* loop until we get one that's permitted */
+        {
+          which = (random() % 3);
+          if (which == do_desk  && desk_p)  break;
+          if (which == do_video && video_p) break;
+          if (which == do_image && image_p) break;
+          if (++i > 200) abort();
+        }
+    }
 
   if (which == do_desk)
     {
@@ -215,8 +225,6 @@ get_image (Screen *screen, Window window, Bool verbose_p)
     }
   else if (which == do_bars)
     {
-      XWindowAttributes xgwa;
-      XGetWindowAttributes (dpy, window, &xgwa);
       if (verbose_p)
         fprintf (stderr, "%s: drawing colorbars\n", progname);
       draw_colorbars (dpy, window, 0, 0, xgwa.width, xgwa.height);
@@ -271,8 +279,20 @@ get_image (Screen *screen, Window window, Bool verbose_p)
       {
         const char *odpy = DisplayString (dpy);
         char *ndpy = (char *) malloc(strlen(odpy) + 20);
+        char *s;
+        int screen_no = screen_number (screen);  /* might not be default now */
+
         strcpy (ndpy, "DISPLAY=");
-        strcat (ndpy, odpy);
+        s = ndpy + strlen(ndpy);
+        strcpy (s, odpy);
+
+        while (*s && *s != ':') s++;		/* skip to colon */
+        while (*s == ':') s++;			/* skip over colons */
+        while (isdigit(*s)) s++;		/* skip over dpy number */
+        while (*s == '.') s++;			/* skip over dot */
+        if (s[-1] != '.') *s++ = '.';		/* put on a dot */
+        sprintf(s, "%d", screen_no);		/* put on screen number */
+
         if (putenv (ndpy))
           abort ();
       }

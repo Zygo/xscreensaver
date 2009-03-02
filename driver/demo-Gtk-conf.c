@@ -32,6 +32,11 @@
 
 #include "demo-Gtk-conf.h"
 
+#if (LIBXML_VERSION >= 20000)  /* illiteracy finally fixed */
+# define childs children
+# define root   children
+#endif
+ 
 extern const char *blurb (void);
 
 

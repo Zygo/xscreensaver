@@ -2,12 +2,12 @@
 /* discrete --- chaotic mappings */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)discrete.c 4.10 98/04/24 xlockmore";
+static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
 
 #endif
 
 /*-
- * Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Sun.COM>
+ * Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Procket.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -27,36 +27,37 @@ static const char sccsid[] = "@(#)discrete.c 4.10 98/04/24 xlockmore";
  * Map" and the "Bird in a Thornbush" fractal.
  *
  * Revision History:
- * 31-Jul-97: Ported to xlockmore-4
- * 08-Aug-96: Adapted from hop.c Copyright (c) 1991 by Patrick J. Naughton.
+ * 01-Nov-2000: Allocation checks
+ * 31-Jul-1997: Ported to xlockmore-4
+ * 08-Aug-1996: Adapted from hop.c Copyright (c) 1991 by Patrick J. Naughton.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS		"Discrete"
-# define HACK_INIT		init_discrete
-# define HACK_DRAW		draw_discrete
-# define discrete_opts	xlockmore_opts
-# define SMOOTH_COLORS
-# define BRIGHT_COLORS
-# define DEFAULTS		"*delay:  1000 \n" \
-						"*count:  4096 \n" \
-						"*cycles: 2500 \n" \
-						"*ncolors: 100 \n"
-
-# include "xlockmore.h"		/* in xscreensaver distribution */
-# include "erase.h"
-
+#define MODE_discrete
+#define PROGCLASS "Discrete"
+#define HACK_INIT init_discrete
+#define HACK_DRAW draw_discrete
+#define discrete_opts xlockmore_opts
+#define DEFAULTS "*delay: 1000 \n" \
+ "*count: 4096 \n" \
+ "*cycles: 2500 \n" \
+ "*ncolors: 100 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#include "erase.h"
 #else /* STANDALONE */
-# include "xlock.h"		/* in xlockmore distribution */
+#include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
+#ifdef MODE_discrete
+
 ModeSpecOpt discrete_opts =
-{0, NULL, 0, NULL, NULL};
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
 ModStruct   discrete_description =
 {"discrete", "init_discrete", "draw_discrete", "release_discrete",
- "refresh_discrete", "init_discrete", NULL, &discrete_opts,
+ "refresh_discrete", "init_discrete", (char *) NULL, &discrete_opts,
  1000, 4096, 2500, 1, 64, 1.0, "",
  "Shows various discrete maps", 0, NULL};
 
@@ -69,7 +70,7 @@ enum ftypes {
 /*#define TEST STANDARD */
 
 #define BIASES 18
-static int  bias[BIASES] =
+static enum ftypes bias[BIASES] =
 {
 	STANDARD, STANDARD, STANDARD, STANDARD,
 	SQRT, SQRT, SQRT, SQRT,
@@ -101,7 +102,7 @@ typedef struct {
 	XPoint     *pointBuffer;	/* pointer for XDrawPoints */
 } discretestruct;
 
-static discretestruct *discretes = NULL;
+static discretestruct *discretes = (discretestruct *) NULL;
 
 void
 init_discrete(ModeInfo * mi)
@@ -116,7 +117,6 @@ init_discrete(ModeInfo * mi)
 			return;
 	}
 	hp = &discretes[MI_SCREEN(mi)];
-
 
 	hp->maxx = MI_WIDTH(mi);
 	hp->maxy = MI_HEIGHT(mi);
@@ -239,12 +239,15 @@ init_discrete(ModeInfo * mi)
 	hp->pix = 0;
 	hp->inc = 0;
 
-	if (hp->pointBuffer == NULL)
-		hp->pointBuffer = (XPoint *) malloc(MI_COUNT(mi) * sizeof (XPoint));
+	if (hp->pointBuffer == NULL) {
+		hp->pointBuffer = (XPoint *) malloc(sizeof (XPoint) * MI_COUNT(mi));
+		/* if fails will check later */
+	}
 
 	/* Clear the background. */
 	MI_CLEARWINDOW(mi);
 
+	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WHITE_PIXEL(mi));
 	hp->count = 0;
 }
 
@@ -255,17 +258,25 @@ draw_discrete(ModeInfo * mi)
 	Display    *dsp = MI_DISPLAY(mi);
 	Window      win = MI_WINDOW(mi);
 	double      oldj, oldi;
-	int         batchcount = MI_COUNT(mi);
+	int         count = MI_COUNT(mi);
 	int         cycles = MI_CYCLES(mi);
 	int         k;
 	XPoint     *xp;
 	GC          gc = MI_GC(mi);
-	discretestruct *hp = &discretes[MI_SCREEN(mi)];
+	discretestruct *hp;
 
-	k = batchcount;
+	if (discretes == NULL)
+		return;
+	hp = &discretes[MI_SCREEN(mi)];
+	if (hp->pointBuffer == NULL)
+		return;
+
+	k = count;
 	xp = hp->pointBuffer;
 
 	hp->inc++;
+
+	MI_IS_DRAWN(mi) = True;
 
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(dsp, gc, MI_PIXEL(mi, hp->pix));
@@ -289,18 +300,18 @@ draw_discrete(ModeInfo * mi)
 #endif
 #define HD
 #ifdef HD
-					if (k < batchcount / 4) {
-						hp->i = ((double) k / batchcount) * 8 - 1;
+					if (k < count / 4) {
+						hp->i = ((double) k / count) * 8 - 1;
 						hp->j = 1;
-					} else if (k < batchcount / 2) {
+					} else if (k < count / 2) {
 						hp->i = 1;
-						hp->j = 3 - ((double) k / batchcount) * 8;
-					} else if (k < 3 * batchcount / 4) {
-						hp->i = 5 - ((double) k / batchcount) * 8;
+						hp->j = 3 - ((double) k / count) * 8;
+					} else if (k < 3 * count / 4) {
+						hp->i = 5 - ((double) k / count) * 8;
 						hp->j = -1;
 					} else {
 						hp->i = -1;
-						hp->j = ((double) k / batchcount) * 8 - 7;
+						hp->j = ((double) k / count) * 8 - 7;
 					}
 					for (i = 1; i < (hp->inc % 15); i++) {
 						oldj = hp->j;
@@ -370,6 +381,8 @@ draw_discrete(ModeInfo * mi)
 				hp->i = ((LRAND() < MAXRAND / 2) ? -1 : 1) *
 					sqrt(((oldi - hp->a) +
 					      sqrt((oldi - hp->a) * (oldi - hp->a) + (oldj - hp->b) * (oldj - hp->b))) / 2);
+				if (hp->i < 0.00000001 && hp->i > -0.00000001)
+					hp->i = (hp->i > 0.0) ? 0.00000001 : -0.00000001;
 				hp->j = (oldj - hp->b) / (2 * hp->i);
 				break;
 		}
@@ -377,7 +390,7 @@ draw_discrete(ModeInfo * mi)
 		xp->y = hp->maxy / 2 - (int) ((hp->j - hp->jc) * hp->js);
 		xp++;
 	}
-	XDrawPoints(dsp, win, gc, hp->pointBuffer, batchcount, CoordModeOrigin);
+	XDrawPoints(dsp, win, gc, hp->pointBuffer, count, CoordModeOrigin);
 	if (++hp->count > cycles) {
 #ifdef STANDALONE
 		erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
@@ -395,11 +408,13 @@ release_discrete(ModeInfo * mi)
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 			discretestruct *hp = &discretes[screen];
 
-			if (hp->pointBuffer != NULL)
+			if (hp->pointBuffer != NULL) {
 				(void) free((void *) hp->pointBuffer);
+				/* hp->pointBuffer = NULL; */
+			}
 		}
 		(void) free((void *) discretes);
-		discretes = NULL;
+		discretes = (discretestruct *) NULL;
 	}
 }
 
@@ -408,3 +423,5 @@ refresh_discrete(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_discrete */

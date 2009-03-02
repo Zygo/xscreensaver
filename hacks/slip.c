@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * slip --- lots of blits.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* slip --- lots of slipping blits */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)slip.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)slip.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1992 by Scott Draves (spot@cs.cmu.edu)
+/*-
+ * Copyright (c) 1992 by Scott Draves <spot@cs.cmu.edu>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,27 +21,39 @@ static const char sccsid[] = "@(#)slip.c	4.00 97/01/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * Revision History:
- * 12-May-97: jwz@jwz.org: turned into a standalone program.
- * 01-Dec-95: Patched for VMS <joukj@alpha.chem.uva.nl>.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Jamie Zawinski <jwz@jwz.org> compatible with xscreensaver
+ * 01-Dec-1995: Patched for VMS <joukj@hrem.stm.tudelft.nl>
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Slip"
-# define HACK_INIT					init_slip
-# define HACK_DRAW					draw_slip
-# define slip_opts					xlockmore_opts
-# define DEFAULTS	"*count:		35    \n"			\
-					"*cycles:		50    \n"			\
-					"*delay:		50000 \n"			\
-					"*ncolors:		200   \n"
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_slip
+#define PROGCLASS "Slip"
+#define HACK_INIT init_slip
+#define HACK_DRAW draw_slip
+#define slip_opts xlockmore_opts
+#define DEFAULTS "*delay: 50000 \n" \
+ "*count: 35 \n" \
+ "*cycles: 50 \n" \
+ "*ncolors: 200 \n"
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+#endif /* STANDALONE */
 
-ModeSpecOpt slip_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_slip
+
+ModeSpecOpt slip_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   slip_description =
+{"slip", "init_slip", "draw_slip", "release_slip",
+ "init_slip", "init_slip", (char *) NULL, &slip_opts,
+ 50000, 35, 50, 1, 64, 1.0, "",
+ "Shows slipping blits", 0, NULL};
+
+#endif
 
 typedef struct {
 	int         width, height;
@@ -47,40 +61,40 @@ typedef struct {
 	int         blit_width, blit_height;
 	int         mode;
 	int         first_time;
-    int         backwards;
+	int         backwards;
+	short       lasthalf;
+	int         stage;
+	unsigned long r;
 } slipstruct;
-static slipstruct *slips = NULL;
+static slipstruct *slips = (slipstruct *) NULL;
 
 static short
-halfrandom(int mv)
+halfrandom(slipstruct *sp, int mv)
 {
-	static short lasthalf = 0;
 	unsigned long r;
 
-	if (lasthalf) {
-		r = lasthalf;
-		lasthalf = 0;
+	if (sp->lasthalf) {
+		r = sp->lasthalf;
+		sp->lasthalf = 0;
 	} else {
 		r = LRAND();
-		lasthalf = r >> 16;
+		sp->lasthalf = (short) (r >> 16);
 	}
 	return r % mv;
 }
 
 static int
-erandom(int mv)
+erandom(slipstruct *sp, int mv)
 {
-	static int  stage = 0;
-	static unsigned long r;
 	int         res;
 
-	if (0 == stage) {
-		r = LRAND();
-		stage = 7;
+	if (0 == sp->stage) {
+		sp->r = LRAND();
+		sp->stage = 7;
 	}
-	res = r & 0xf;
-	r = r >> 4;
-	stage--;
+	res = (int) (sp->r & 0xf);
+	sp->r = sp->r >> 4;
+	sp->stage--;
 	if (res & 8)
 		return res & mv;
 	else
@@ -88,60 +102,59 @@ erandom(int mv)
 }
 
 static void
-prepare_screen(ModeInfo * mi, slipstruct * s)
+prepare_screen(ModeInfo * mi, slipstruct * sp)
 {
 
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	int         i, n, w = s->width / 20;
-	int         not_solid = halfrandom(10);
+	int         i, n, w = sp->width / 20;
+	int         not_solid = halfrandom(sp, 10);
 
 #ifdef STANDALONE			  /* jwz -- sometimes hack the desktop image! */
-	if (halfrandom(2) == 0)
-	  {
-		grab_screen_image(DefaultScreenOfDisplay (MI_DISPLAY(mi)),
-						  MI_WINDOW(mi));
-		return;
-	  }
+	if (halfrandom(sp, 2) == 0) {
+		grab_screen_image(DefaultScreenOfDisplay(display),
+				  MI_WINDOW(mi));
+	}
 #endif
 
-	s->backwards = LRAND() & 1;		/* jwz: go the other way sometimes */
+	sp->backwards = (int) (LRAND() & 1);	/* jwz: go the other way sometimes */
 
-	if (s->first_time || (0 == halfrandom(10))) {
-		XClearWindow(display, MI_WINDOW(mi));
+	if (sp->first_time || !halfrandom(sp, 10)) {
+		MI_CLEARWINDOW(mi);
 		n = 300;
 	} else {
-		if (halfrandom(5))
+		if (halfrandom(sp, 5))
 			return;
-		if (halfrandom(5))
+		if (halfrandom(sp, 5))
 			n = 100;
 		else
 			n = 2000;
 	}
 
 	if (MI_NPIXELS(mi) > 2)
-		XSetForeground(display, gc, MI_PIXEL(mi, halfrandom(MI_NPIXELS(mi))));
-	else if (halfrandom(2))
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_PIXEL(mi, halfrandom(sp, MI_NPIXELS(mi))));
+	else if (halfrandom(sp, 2))
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	else
-		XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+		XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 
 	for (i = 0; i < n; i++) {
-	  int ww = ((w/2) + halfrandom(w));
+		int         ww = ((w / 2) + halfrandom(sp, MAX(w, 1)));
+
 		if (not_solid) {
 			if (MI_NPIXELS(mi) > 2)
-				XSetForeground(display, gc, MI_PIXEL(mi, halfrandom(MI_NPIXELS(mi))));
-			else if (halfrandom(2))
-				XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+				XSetForeground(display, gc, MI_PIXEL(mi, halfrandom(sp, MI_NPIXELS(mi))));
+			else if (halfrandom(sp, 2))
+				XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 			else
-				XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+				XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 		}
 		XFillRectangle(display, MI_WINDOW(mi), gc,
-			       halfrandom(s->width - ww),
-			       halfrandom(s->height - ww),
+			       halfrandom(sp, MAX(sp->width - ww, 1)),
+			       halfrandom(sp, MAX(sp->height - ww, 1)),
 			       ww, ww);
 	}
-	s->first_time = 0;
+	sp->first_time = 0;
 }
 
 static int
@@ -167,8 +180,8 @@ init_slip(ModeInfo * mi)
 	}
 	sp = &slips[MI_SCREEN(mi)];
 
-	sp->width = MI_WIN_WIDTH(mi);
-	sp->height = MI_WIN_HEIGHT(mi);
+	sp->width = MI_WIDTH(mi);
+	sp->height = MI_HEIGHT(mi);
 
 	sp->blit_width = sp->width / 25;
 	sp->blit_height = sp->height / 25;
@@ -186,34 +199,40 @@ draw_slip(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
-	slipstruct *s = &slips[MI_SCREEN(mi)];
 	int         timer;
+	slipstruct *sp;
 
-	timer = MI_BATCHCOUNT(mi) * MI_CYCLES(mi);
+	if (slips == NULL)
+		return;
+	sp = &slips[MI_SCREEN(mi)];
+
+	timer = MI_COUNT(mi) * MI_CYCLES(mi);
+
+	MI_IS_DRAWN(mi) = True;
 
 	while (timer--) {
-		int         xi = halfrandom(s->width - s->blit_width);
-		int         yi = halfrandom(s->height - s->blit_height);
+		int         xi = halfrandom(sp, MAX(sp->width - sp->blit_width, 1));
+		int         yi = halfrandom(sp, MAX(sp->height - sp->blit_height, 1));
 		double      x, y, dx = 0, dy = 0, t, s1, s2;
 
-		if (0 == s->nblits_remaining--) {
-			static int lut[] =
+		if (0 == sp->nblits_remaining--) {
+			static int  lut[] =
 			{0, 0, 0, 1, 1, 1, 2};
 
-			prepare_screen(mi, s);
-			s->nblits_remaining = MI_BATCHCOUNT(mi) *
-				(2000 + halfrandom(1000) + halfrandom(1000));
-			if (s->mode == 2)
-				s->mode = halfrandom(2);
+			prepare_screen(mi, sp);
+			sp->nblits_remaining = MI_COUNT(mi) *
+				(2000 + halfrandom(sp, 1000) + halfrandom(sp, 1000));
+			if (sp->mode == 2)
+				sp->mode = halfrandom(sp, 2);
 			else
-				s->mode = lut[halfrandom(7)];
+				sp->mode = lut[halfrandom(sp, 7)];
 		}
-		x = (2 * xi + s->blit_width) / (double) s->width - 1;
-		y = (2 * yi + s->blit_height) / (double) s->height - 1;
+		x = (2 * xi + sp->blit_width) / (double) sp->width - 1;
+		y = (2 * yi + sp->blit_height) / (double) sp->height - 1;
 
 		/* (x,y) is in biunit square */
-		switch (s->mode) {
-			case 0:								/* rotor */
+		switch (sp->mode) {
+			case 0:	/* rotor */
 				dx = x;
 				dy = y;
 
@@ -232,16 +251,17 @@ draw_slip(ModeInfo * mi)
 				s2 = 2 * dx * dy / t;
 				dx = s1 * 5;
 				dy = s2 * 5;
-				if (s->backwards) {	/* jwz: go the other way sometimes */
+
+				if (sp->backwards) {	/* jwz: go the other way sometimes */
 					dx = -dx;
 					dy = -dy;
 				}
 				break;
-			case 1:								/* shuffle */
-				dx = erandom(3);
-				dy = erandom(3);
+			case 1:	/* shuffle */
+				dx = erandom(sp, 3);
+				dy = erandom(sp, 3);
 				break;
-			case 2:								/* explode */
+			case 2:	/* explode */
 				dx = x * 3;
 				dy = y * 3;
 				break;
@@ -251,38 +271,46 @@ draw_slip(ModeInfo * mi)
 			int         wrap;
 
 			if (qx < 0 || qy < 0 ||
-			    qx >= s->width - s->blit_width ||
-			    qy >= s->height - s->blit_height)
+			    qx >= sp->width - sp->blit_width ||
+			    qy >= sp->height - sp->blit_height)
 				continue;
 
+/*-
+Seems to cause problems using Exceed
+with PseudoColor
+X Error of failed request:  BadGC (invalid GC parameter)
+with TrueColor
+X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)
+  Major opcode of failed request:  62 (X_CopyArea)
+ */
 			XCopyArea(display, window, window, gc, xi, yi,
-				  s->blit_width, s->blit_height,
+				  sp->blit_width, sp->blit_height,
 				  qx, qy);
-
-			switch (s->mode) {
+			switch (sp->mode) {
 				case 0:
 					/* wrap */
-					wrap = s->width - (2 * s->blit_width);
-					if (qx > wrap)
+					wrap = sp->width - (2 * sp->blit_width);
+					if (qx > wrap ) {
 						XCopyArea(display, window, window, gc, qx, qy,
-						s->blit_width, s->blit_height,
+						sp->blit_width, sp->blit_height,
 							  qx - wrap, qy);
-
-					if (qx < 2 * s->blit_width)
+					}
+					if (qx < 2 * sp->blit_width) {
 						XCopyArea(display, window, window, gc, qx, qy,
-						s->blit_width, s->blit_height,
+						sp->blit_width, sp->blit_height,
 							  qx + wrap, qy);
-
-					wrap = s->height - (2 * s->blit_height);
-					if (qy > wrap)
+					}
+					wrap = sp->height - (2 * sp->blit_height);
+					if (qy > wrap) {
 						XCopyArea(display, window, window, gc, qx, qy,
-						s->blit_width, s->blit_height,
+						sp->blit_width, sp->blit_height,
 							  qx, qy - wrap);
-
-					if (qy < 2 * s->blit_height)
+					}
+					if (qy < 2 * sp->blit_height) {
 						XCopyArea(display, window, window, gc, qx, qy,
-						s->blit_width, s->blit_height,
+						sp->blit_width, sp->blit_height,
 							  qx, qy + wrap);
+					}
 					break;
 				case 1:
 				case 2:
@@ -297,6 +325,8 @@ release_slip(ModeInfo * mi)
 {
 	if (slips != NULL) {
 		(void) free((void *) slips);
-		slips = NULL;
+		slips = (slipstruct *) NULL;
 	}
 }
+
+#endif /* MODE_slip */

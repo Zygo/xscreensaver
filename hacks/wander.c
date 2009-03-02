@@ -174,6 +174,8 @@ char *progclass = "Wander";
 
 char *defaults [] =
 {
+    ".background: black",
+    ".foreground: white",
     ".advance:    1",
     ".density:    2",
     ".length:     25000",

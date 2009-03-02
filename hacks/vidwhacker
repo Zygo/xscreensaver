@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.18 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.19 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -324,6 +324,7 @@ sub get_ppm {
 
       if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
       elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < \"$fn\""; }
+      elsif ($fn =~ m/\.png/i)   { $cmd = "pngtopnm < \"$fn\""; }
       else {
         error "unrecognized file extension on $fn";
       }

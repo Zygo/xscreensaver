@@ -10,6 +10,7 @@
  */
 
 #include <math.h>
+#include <time.h>
 #include <sys/time.h> /* for gettimeofday() */
 #include "screenhack.h"
 #include "spline.h"

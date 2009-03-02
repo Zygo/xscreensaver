@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.00
-!                              02-Jan-2002
+!                              version 4.01
+!                              24-Feb-2002
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -272,6 +272,14 @@
  	            "SpeedMine"	speedmine -root				    \n\
  	            "SpeedWorm"	speedmine -root -worm			    \n\
  	                	vermiculate -root			    \n\
+ 	                	twang -root				    \n\
+ 	                	apollonian -root			    \n\
+ 	                	euler2d -root				    \n\
+	     "Euler2d (dense)"	euler2d -root -count 4000 -eulertail 400      \
+				  -ncolors 230				    \n\
+- 	                	juggle -root				    \n\
+ 	                	polyominoes -root			    \n\
+ 	                	thornbird -root				    \n\
   color: 			bubbles -root				    \n\
   default-n:			webcollage -root			    \n\
   default-n:  "WebCollage (whacked)"					      \
@@ -312,6 +320,10 @@
 @GL_KLUDGE@ GL:			circuit -root				    \n\
 @GL_KLUDGE@ GL:			engine -root				    \n\
 @GL_KLUDGE@ GL:			flipscreen3d -root			    \n\
+@GL_KLUDGE@ GL:			glsnake -root				    \n\
+@GL_KLUDGE@ GL:			boxed -root				    \n\
+@GL_KLUDGE@ GL:			glforestfire -root			    \n\
+@GL_KLUDGE@ GL:			sballs -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -319,7 +331,6 @@
 				  sunrel/38/-30				    \n\
 -				xplanetbg -xscreensaver -moonside             \
                                   -markerfile earth -wait 1 -timewarp 400   \n\
--				ssystem -fullscreen :32			    \n\
 -				xmountains -b -M -Z 0 -r 1		    \n\
 -	"XMountains (top)"	xmountains -b -M -Z 0 -r 1 -m		    \n\
 -                               xaos -fullscreen -autopilot                   \
@@ -595,9 +606,11 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.dangerball.name:     DangerBall
 *hacks.whirlygig.name:      WhirlyGig
 *hacks.speedmine.name:      SpeedMine
+*hacks.glsnake.name:        GLSnake
+*hacks.glforestfire.name:   GLForestFire
+*hacks.sballs.name:         SBalls
 *hacks.xdaliclock.name:     XDaliClock
 *hacks.xplanetbg.name:      XPlanet
-*hacks.ssystem.name:        SSystem
 *hacks.xaos.name:           XaoS
 *hacks.xfishtank.name:      XFishTank
 *hacks.electricsheep.name:  ElectricSheep

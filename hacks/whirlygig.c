@@ -16,7 +16,7 @@
 #include <math.h>
 #include "screenhack.h"
 
-#define NCOLORS 1000
+#define NCOLORS 100
 #define FULL_CYCLE 429496729
 #define START_ARC 0
 #define END_ARC 23040

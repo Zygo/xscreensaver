@@ -1,6 +1,5 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * penrose --- quasiperiodic tilings.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* penrose --- quasiperiodic tilings */
 
 /*  As reported in News of the Weird:
 
@@ -19,12 +18,13 @@
                                 http://www.nine.org/notw/notw.html
  */
 
-
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)penrose.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)penrose.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1996 by Timo Korvola <tkorvola@dopey.hut.fi>
+/*-
+ * Copyright (c) 1996 by Timo Korvola <tkorvola@dopey.hut.fi>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -39,8 +39,10 @@ static const char sccsid[] = "@(#)penrose.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 09-Sep-96: Written.  */
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Jamie Zawinski <jwz@jwz.org> compatible with xscreensaver
+ * 09-Sep-1996: Written.
+ */
 
 /*-
 Be careful, this probably still has a few bugs (many of which may only
@@ -63,7 +65,7 @@ If one of these are hit penrose will reinitialize.
  * untiled area.  Whenever this is in danger of happening, we just
  * do not add the tile, hoping for a better random choice the next
  * time.  Second, when choosing a vertex randomly, we will take
- * one that lies withing the viewport if available.  If this seems to
+ * one that lies within the viewport if available.  If this seems to
  * cause enclosures in the forced rule case, we will allow invisible
  * vertices to be chosen.
  *
@@ -73,21 +75,58 @@ If one of these are hit penrose will reinitialize.
  * horizontally or vertically or forced rule choice has failed 100
  * times due to areas about to become enclosed.
  *
+ * Introductory info:
+ * Science News March 23 1985 Vol 127, No. 12
+ * Science News July 16 1988 Vol 134, No. 3
+ * The Economist Sept 17 1988 pg. 100
+ *
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Penrose"
-# define HACK_INIT					init_penrose
-# define HACK_DRAW					draw_penrose
-# define penrose_opts				xlockmore_opts
-# define DEFAULTS	"*delay:		10000 \n"			\
-					"*size:			40    \n"			\
-					"*ncolors:		64   \n"
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+#define MODE_penrose
+#define PROGCLASS "Penrose"
+#define HACK_INIT init_penrose
+#define HACK_DRAW draw_penrose
+#define penrose_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*size: 40 \n" \
+ "*ncolors: 64 \n"
+#include "xlockmore.h"		/* from the xscreensaver distribution */
+#else /* !STANDALONE */
+#include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
+#ifdef MODE_penrose
+
+#define DEF_AMMANN  "False"
+
+static Bool ammann;
+
+static XrmOptionDescRec opts[] =
+{
+	{(char *) "-ammann", (char *) ".penrose.ammann", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+ammann", (char *) ".penrose.ammann", XrmoptionNoArg, (caddr_t) "off"}
+};
+static argtype vars[] =
+{
+	{(caddr_t *) & ammann, (char *) "ammann", (char *) "Ammann", (char *) DEF_AMMANN, t_Bool}
+};
+static OptionStruct desc[] =
+{
+	{(char *) "-/+ammann", (char *) "turn on/off Ammann lines"}
+};
+
+ModeSpecOpt penrose_opts =
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
+
+#ifdef USE_MODULES
+ModStruct   penrose_description =
+{"penrose", "init_penrose", "draw_penrose", "release_penrose",
+ "init_penrose", "init_penrose", (char *) NULL, &penrose_opts,
+ 10000, 1, 1, -40, 64, 1.0, "",
+ "Shows Penrose's quasiperiodic tilings", 0, NULL};
+
+#endif
 
 /*-
  * Annoyingly the ANSI C library people have reserved all identifiers
@@ -102,36 +141,12 @@ If one of these are hit penrose will reinitialize.
  * vertex rules only allow at most seven tiles to meet at a vertex.
  */
 
+#define CELEBRATE 31415		/* This causes a pause, an error occurred. */
+#define COMPLETION 3141		/* This causes a pause, tiles filled up screen. */
+
 #define MAX_TILES_PER_VERTEX 7
 #define N_VERTEX_RULES 8
-#define ALLOC_NODE( type) ((type *)malloc( sizeof( type)))
-#define DEF_AMMANN  "False"
-
-static Bool ammann;
-
-/* How long in seconds should we wait before starting a new tiling? */
-static long redo_delay = 3;
-static long redo_delay_usec;
-
-static XrmOptionDescRec opts[] =
-{
-	{"-ammann", ".penrose.ammann", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ammann", ".penrose.ammann", XrmoptionNoArg, (caddr_t) "off"},
-	{"-redoDelay", ".penrose.redoDelay", XrmoptionSepArg, NULL}
-};
-static argtype vars[] =
-{
-	{(caddr_t *) & ammann, "ammann", "Ammann", DEF_AMMANN, t_Bool},
-	{(caddr_t *) & redo_delay, "redoDelay", "RedoDelay", "3", t_Int}
-};
-static OptionStruct desc[] =
-{
-	{"-/+ammann", "turn on/off Ammann lines"},
-	{"-redoDelay", "delay between new tilings"}
-};
-
-ModeSpecOpt penrose_opts = { 3, opts, 2, vars, desc };
-
+#define ALLOC_NODE(type) (type *)malloc(sizeof (type))
 
 /*-
  * These are used to specify directions.  They can also be used in bit
@@ -180,7 +195,7 @@ typedef unsigned char vertex_type_c;
  * to fill.
  *
  * Here we use a doubly chained ring-like structure as vertices often need
- * to be removed or inserted (they are kept in geometrical order 
+ * to be removed or inserted (they are kept in geometrical order
  * circling the tiled area counterclockwise).  The ring is refered to by
  * a pointer to one more or less random node.  When deleting nodes one
  * must make sure that this pointer continues to refer to a valid
@@ -249,11 +264,12 @@ typedef struct {
 	fringe_c    fringe;
 	forced_pool_c forced;
 	int         done, failures;
-	int         thick_color, thin_color;
+	unsigned long thick_color, thin_color;
+	int         busyLoop;
+	Bool        ammann;
 } tiling_c;
 
-static tiling_c *tilings;	/* = {0} */
-
+static tiling_c *tilings = (tiling_c *) NULL;
 
 /* The tiles are listed in counterclockwise order. */
 typedef struct {
@@ -323,14 +339,14 @@ vertex_dir(ModeInfo * mi, fringe_node_c * vertex, unsigned side)
 				return (2 * i + 5) % 10;
 		}
 	tp->done = True;
-	if (MI_WIN_IS_VERBOSE(mi)) {
+	if (MI_IS_VERBOSE(mi)) {
 		(void) fprintf(stderr,
-		   "Weirdness in vertex_dir (this has been reported)\n");
+		       "Weirdness in vertex_dir (this has been reported)\n");
 		for (i = 0; i < 5; i++)
 			(void) fprintf(stderr, "v2->fived[%d]=%d, vertex->fived[%d]=%d\n",
-				      i, v2->fived[i], i, vertex->fived[i]);
+				       i, v2->fived[i], i, vertex->fived[i]);
 	}
-	MI_PAUSE(mi) = redo_delay_usec;
+	tp->busyLoop = CELEBRATE;
 	return 0;
 }
 
@@ -356,8 +372,8 @@ add_unit_vec(angle_c dir, int *fived)
  * This computes screen coordinates from 5D representation.  Note that X
  * uses left-handed coordinates (y increases downwards).
  */
-static      XPoint
-fived_to_loc(int fived[], tiling_c * tp)
+static void
+fived_to_loc(int fived[], tiling_c * tp, XPoint *pt)
 {
 	static fcoord_c fived_table[5] =
 	{
@@ -365,10 +381,11 @@ fived_to_loc(int fived[], tiling_c * tp)
 	float       fifth = 8 * atan(1.) / 5;
 	register int i;
 	register float r;
-	register fcoord_c offset =
-	{.0, .0};
-	XPoint      pt = tp->origin;
+	register fcoord_c offset;
 
+	*pt = tp->origin;
+	offset.x = 0.0;
+	offset.y = 0.0;
 	if (fived_table[0].x == .0)
 		for (i = 0; i < 5; i++) {
 			fived_table[i].x = cos(fifth * i);
@@ -379,32 +396,31 @@ fived_to_loc(int fived[], tiling_c * tp)
 		offset.x += r * fived_table[i].x;
 		offset.y -= r * fived_table[i].y;
 	}
-	pt.x += (int) (offset.x + .5);
-	pt.y += (int) (offset.y + .5);
-	return pt;
+	(*pt).x += (int) (offset.x + .5);
+	(*pt).y += (int) (offset.y + .5);
 }
 
 
 /* Mop up dynamic data for one screen. */
 static void
-release_screen(tiling_c * tp)
+free_penrose(tiling_c * tp)
 {
 	register fringe_node_c *fp1, *fp2;
 	register forced_node_c *lp1, *lp2;
 
-	if (tp->fringe.nodes == 0)
+	if (tp->fringe.nodes == NULL)
 		return;
 	fp1 = tp->fringe.nodes;
 	do {
 		fp2 = fp1;
 		fp1 = fp1->next;
-		(void) free((char *) fp2);
+		(void) free((void *) fp2);
 	} while (fp1 != tp->fringe.nodes);
-	tp->fringe.nodes = 0;
+	tp->fringe.nodes = (fringe_node_c *) NULL;
 	for (lp1 = tp->forced.first; lp1 != 0;) {
 		lp2 = lp1;
 		lp1 = lp1->next;
-		(void) free((char *) lp2);
+		(void) free((void *) lp2);
 	}
 	tp->forced.first = 0;
 }
@@ -418,18 +434,22 @@ init_penrose(ModeInfo * mi)
 	fringe_node_c *fp;
 	int         i, size;
 
-	redo_delay_usec = redo_delay * 1000000;
-
 	if (tilings == NULL) {
 		if ((tilings = (tiling_c *) calloc(MI_NUM_SCREENS(mi),
 						 sizeof (tiling_c))) == NULL)
 			return;
 	}
 	tp = &tilings[MI_SCREEN(mi)];
+
+	if (MI_IS_FULLRANDOM(mi))
+		tp->ammann = (Bool) (LRAND() & 1);
+	else
+		tp->ammann = ammann;
 	tp->done = False;
+	tp->busyLoop = 0;
 	tp->failures = 0;
-	tp->width = MI_WIN_WIDTH(mi);
-	tp->height = MI_WIN_HEIGHT(mi);
+	tp->width = MI_WIDTH(mi);
+	tp->height = MI_HEIGHT(mi);
 	if (MI_NPIXELS(mi) > 2) {
 		tp->thick_color = NRAND(MI_NPIXELS(mi));
 		/* Insure good contrast */
@@ -451,36 +471,48 @@ init_penrose(ModeInfo * mi)
 	tp->origin.x = (tp->width / 2 + NRAND(tp->width)) / 2;
 	tp->origin.y = (tp->height / 2 + NRAND(tp->height)) / 2;
 	tp->fringe.n_nodes = 2;
-	if (tp->fringe.nodes != 0)
-		release_screen(tp);
-	if (tp->fringe.nodes != 0 || tp->forced.first != 0) {
-		if (MI_WIN_IS_VERBOSE(mi)) {
+	if (tp->fringe.nodes != NULL)
+		free_penrose(tp);
+	if (tp->fringe.nodes != NULL || tp->forced.first != 0) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in init_penrose()\n");
-			(void) fprintf(stderr, "tp->fringe.nodes = 0 && tp->forced.first = 0\n");
+			(void) fprintf(stderr, "tp->fringe.nodes = NULL && tp->forced.first = 0\n");
 		}
-		release_screen(tp);	/* Try again */
+		free_penrose(tp);	/* Try again */
 		tp->done = True;
 	}
 	tp->forced.n_nodes = tp->forced.n_visible = 0;
-	fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c);
+	if ((fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c)) == NULL) {
+		free_penrose(tp);
+		return;
+	}
 	if (fp == 0) {
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in init_penrose()\n");
 			(void) fprintf(stderr, "fp = 0\n");
 		}
-		fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c);
+		if ((fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c)) == NULL) {
+			free_penrose(tp);
+			return;
+		}
 		tp->done = True;
 	}
 	/* First vertex. */
 	fp->rule_mask = (1 << N_VERTEX_RULES) - 1;
 	fp->list_ptr = 0;
-	fp->prev = fp->next = ALLOC_NODE(fringe_node_c);
+	if  ((fp->prev = fp->next = ALLOC_NODE(fringe_node_c)) == NULL) {
+		free_penrose(tp);
+		return;
+	}
 	if (fp->next == 0) {
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in init_penrose()\n");
 			(void) fprintf(stderr, "fp->next = 0\n");
 		}
-		fp->prev = fp->next = ALLOC_NODE(fringe_node_c);
+		if ((fp->prev = fp->next = ALLOC_NODE(fringe_node_c)) == NULL) {
+			free_penrose(tp);
+			return;
+		}
 		tp->done = True;
 	}
 	fp->n_tiles = 0;
@@ -495,7 +527,7 @@ init_penrose(ModeInfo * mi)
 	fp = fp->next;
 	i = NRAND(5);
 	fp->fived[i] = 2 * NRAND(2) - 1;
-	fp->loc = fived_to_loc(fp->fived, tp);
+	fived_to_loc(fp->fived, tp, &(fp->loc));
 	/* That's it!  We have created our first edge. */
 }
 
@@ -646,12 +678,12 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 		else
 			XSetForeground(display, gc, MI_PIXEL(mi, tp->thin_color));
 	} else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	XFillPolygon(display, window, gc, pts, 4, Convex, CoordModeOrigin);
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	XDrawLines(display, window, gc, pts, 5, CoordModeOrigin);
 
-	if (ammann) {
+	if (tp->ammann) {
 		/* Draw some Ammann lines for debugging purposes.  This will probably
 		   fail miserably on a b&w display. */
 
@@ -666,7 +698,7 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 			if (MI_NPIXELS(mi) > 2)
 				XSetForeground(display, gc, MI_PIXEL(mi, tp->thin_color));
 			else {
-				XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+				XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 				XSetLineAttributes(display, gc, 1, LineOnOffDash, CapNotLast, JoinMiter);
 			}
 			XDrawLine(display, window, gc,
@@ -680,7 +712,7 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 			if (MI_NPIXELS(mi) > 2)
 				XSetForeground(display, gc, MI_PIXEL(mi, tp->thick_color));
 			else {
-				XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+				XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 				XSetLineAttributes(display, gc, 1, LineOnOffDash, CapNotLast, JoinMiter);
 			}
 			XDrawLine(display, window, gc,
@@ -707,7 +739,7 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
  * might get called with an untileable vertex, causing ( n <= 1).
  * (This is what the tp->done checks for).
  *
- * A MI_PAUSE celebrates the dislocation.
+ * A delayLoop celebrates the dislocation.
  */
 static void
 check_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
@@ -718,10 +750,10 @@ check_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 
 	if (vertex->rule_mask == 0) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
-			(void) fprintf(stderr, "Dislocation occured!\n");
+		if (MI_IS_VERBOSE(mi)) {
+			(void) fprintf(stderr, "Dislocation occurred!\n");
 		}
-		MI_PAUSE(mi) = redo_delay_usec;	/* Should be able to recover */
+		tp->busyLoop = CELEBRATE;	/* Should be able to recover */
 	}
 	if (1 == find_completions(vertex, hits, n_hits, S_LEFT, 0 /*, False */ ))
 		forced_sides |= S_LEFT;
@@ -734,7 +766,7 @@ check_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 			*vertex->list_ptr = node->next;
 			if (node->next != 0)
 				node->next->vertex->list_ptr = vertex->list_ptr;
-			free(node);
+			(void) free((void *) node);
 			tp->forced.n_nodes--;
 			if (!vertex->off_screen)
 				tp->forced.n_visible--;
@@ -744,7 +776,8 @@ check_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 		forced_node_c *node;
 
 		if (vertex->list_ptr == 0) {
-			node = ALLOC_NODE(forced_node_c);
+			if ((node = ALLOC_NODE(forced_node_c)) == NULL)
+				return;
 			node->vertex = vertex;
 			node->next = tp->forced.first;
 			if (tp->forced.first != 0)
@@ -772,11 +805,11 @@ delete_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 {
 	if (tp->fringe.nodes == vertex) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in delete_penrose()\n");
 			(void) fprintf(stderr, "tp->fringe.nodes == vertex\n");
 		}
-		MI_PAUSE(mi) = redo_delay_usec;
+		tp->busyLoop = CELEBRATE;
 	}
 	if (vertex->list_ptr != 0) {
 		forced_node_c *node = *vertex->list_ptr;
@@ -784,19 +817,21 @@ delete_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 		*vertex->list_ptr = node->next;
 		if (node->next != 0)
 			node->next->vertex->list_ptr = vertex->list_ptr;
-		free(node);
+		(void) free((void *) node);
 		tp->forced.n_nodes--;
 		if (!vertex->off_screen)
 			tp->forced.n_visible--;
 	}
 	if (!vertex->off_screen)
 		tp->fringe.n_nodes--;
-	free(vertex);
+	(void) free((void *) vertex);
 }
 
 
-/* Check whether the addition of a tile of type vtype would completely fill *
-   the space available at vertex. */
+/*-
+ * Check whether the addition of a tile of type vtype would completely fill
+ * the space available at vertex.
+ */
 static int
 fills_vertex(ModeInfo * mi, vertex_type_c vtype, fringe_node_c * vertex)
 {
@@ -834,7 +869,7 @@ fringe_changes(ModeInfo * mi, fringe_node_c * vertex,
 	       fringe_node_c ** right, fringe_node_c ** far,
 	       fringe_node_c ** left)
 {
-	fringe_node_c *v, *f = NULL;
+	fringe_node_c *v, *f = (fringe_node_c *) NULL;
 	unsigned    result = FC_NEW_FAR;	/* We clear this later if necessary. */
 
 	if (far)
@@ -908,19 +943,19 @@ add_vtype(fringe_node_c * vertex, unsigned side, vertex_type_c vtype)
 static fringe_node_c *
 alloc_vertex(ModeInfo * mi, angle_c dir, fringe_node_c * from, tiling_c * tp)
 {
-	fringe_node_c *v = ALLOC_NODE(fringe_node_c);
+	fringe_node_c *v;
 
-	if (v == 0) {
+	if ((v = ALLOC_NODE(fringe_node_c)) == NULL) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
-			(void) fprintf(stderr, "Weirdness in alloc_vertex()\n");
-			(void) fprintf(stderr, "v = 0\n");
+		if (MI_IS_VERBOSE(mi)) {
+			(void) fprintf(stderr, "No memory in alloc_vertex()\n");
 		}
-		MI_PAUSE(mi) = redo_delay_usec;
+		tp->busyLoop = CELEBRATE;
+		return v;
 	}
 	*v = *from;
 	add_unit_vec(dir, v->fived);
-	v->loc = fived_to_loc(v->fived, tp);
+	fived_to_loc(v->fived, tp, &(v->loc));
 	if (v->loc.x < 0 || v->loc.y < 0
 	    || v->loc.x >= tp->width || v->loc.y >= tp->height) {
 		v->off_screen = True;
@@ -937,7 +972,7 @@ alloc_vertex(ModeInfo * mi, angle_c dir, fringe_node_c * from, tiling_c * tp)
 	return v;
 }
 
-/* 
+/*-
  * Add a tile described by vtype to the side of vertex.  This must be
  * allowed by the rules -- we do not check it here.  New vertices are
  * allocated as necessary.  The fringe and the forced vertex pool are updated.
@@ -954,9 +989,9 @@ add_tile(ModeInfo * mi,
 	tiling_c   *tp = &tilings[MI_SCREEN(mi)];
 
 	fringe_node_c
-		* left = 0,
-		*right = 0,
-		*far = 0,
+		*left = (fringe_node_c *) NULL,
+		*right = (fringe_node_c *) NULL,
+		*far = (fringe_node_c *) NULL,
 		*node;
 	unsigned    fc = fringe_changes(mi, vertex, side, vtype, &right, &far, &left);
 
@@ -971,25 +1006,29 @@ add_tile(ModeInfo * mi,
 	/* This should never occur. */
 	if (fc & FC_BAG) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_tile()\n");
 			(void) fprintf(stderr, "fc = %d, FC_BAG = %d\n", fc, FC_BAG);
 		}
 	}
 	if (side == S_LEFT) {
-		if (right == 0)
-			right = alloc_vertex(mi,
-					     vertex_dir(mi, vertex, S_LEFT) - vtype_angle(vtype), vertex, tp);
-		if (far == 0)
-			far = alloc_vertex(mi,
-					   vertex_dir(mi, left, S_RIGHT) + vtype_angle(ltype), left, tp);
+		if (right == NULL)
+			if ((right = alloc_vertex(mi, vertex_dir(mi, vertex, S_LEFT) -
+					vtype_angle(vtype), vertex, tp)) == NULL)
+				return False;
+		if (far == NULL)
+			if ((far = alloc_vertex(mi, vertex_dir(mi, left, S_RIGHT) +
+					vtype_angle(ltype), left, tp)) == NULL)
+				return False;
 	} else {
-		if (left == 0)
-			left = alloc_vertex(mi,
-					    vertex_dir(mi, vertex, S_RIGHT) + vtype_angle(vtype), vertex, tp);
-		if (far == 0)
-			far = alloc_vertex(mi,
-					   vertex_dir(mi, right, S_LEFT) - vtype_angle(rtype), right, tp);
+		if (left == NULL)
+			if ((left = alloc_vertex(mi, vertex_dir(mi, vertex, S_RIGHT) +
+					vtype_angle(vtype), vertex, tp)) == NULL)
+				return False;
+		if (far == NULL)
+			if ((far = alloc_vertex(mi, vertex_dir(mi, right, S_LEFT) -
+					vtype_angle(rtype), right, tp)) == NULL)
+				return False;
 	}
 
 	/* Having allocated the new vertices, but before joining them with
@@ -1092,7 +1131,7 @@ add_forced_tile(ModeInfo * mi, forced_node_c * node)
 	n = find_completions(node->vertex, hits, n, side, &vtype /*, True */ );
 	if (n <= 0) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_forced_tile()\n");
 			(void) fprintf(stderr, "n = %d\n", n);
 		}
@@ -1145,14 +1184,14 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 		tp->thin_color = (NRAND(2 * MI_NPIXELS(mi) / 3) + tp->thick_color +
 				  MI_NPIXELS(mi) / 6) % MI_NPIXELS(mi);
 	} else
-		tp->thick_color = tp->thin_color = MI_WIN_WHITE_PIXEL(mi);
+		tp->thick_color = tp->thin_color = MI_WHITE_PIXEL(mi);
 	n_hits = match_rules(vertex, hits, False);
 	side = NRAND(2) ? S_LEFT : S_RIGHT;
 	n = find_completions(vertex, hits, n_hits, side, vtypes /*, False */ );
 	/* One answer would mean a forced tile. */
 	if (n <= 0) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_random_tile()\n");
 			(void) fprintf(stderr, "n = %d\n", n);
 		}
@@ -1163,7 +1202,7 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 		fc = fringe_changes(mi, vertex, side, vtypes[i], &right, &far, &left);
 		if (fc & FC_BAG) {
 			tp->done = True;
-			if (MI_WIN_IS_VERBOSE(mi)) {
+			if (MI_IS_VERBOSE(mi)) {
 				(void) fprintf(stderr, "Weirdness in add_random_tile()\n");
 				(void) fprintf(stderr, "fc = %d, FC_BAG = %d\n", fc, FC_BAG);
 			}
@@ -1194,7 +1233,7 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 	}
 	if (n_good <= 0) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_random_tile()\n");
 			(void) fprintf(stderr, "n_good = %d\n", n_good);
 		}
@@ -1204,13 +1243,12 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 		while (no_good & (1 << j))
 			j++;
 
-	i = add_tile(mi, vertex, side, vtypes[j - 1]);
-	if (!i) {
+	if (!add_tile(mi, vertex, side, vtypes[j - 1])) {
 		tp->done = True;
-		if (MI_WIN_IS_VERBOSE(mi)) {
+		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_random_tile()\n");
-			(void) fprintf(stderr, "i = %d\n", i);
 		}
+		free_penrose(tp);
 	}
 }
 
@@ -1218,26 +1256,40 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 void
 draw_penrose(ModeInfo * mi)
 {
-	tiling_c   *tp = &tilings[MI_SCREEN(mi)];
 	int         i = 0, n;
-	forced_node_c *p = tp->forced.first;
+	forced_node_c *p;
+	tiling_c   *tp;
 
+	if (tilings == NULL)
+		return;
+	tp = &tilings[MI_SCREEN(mi)];
+	if (tp->fringe.nodes == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
+	p = tp->forced.first;
+	if (tp->busyLoop > 0) {
+		tp->busyLoop--;
+		return;
+	}
 	if (tp->done || tp->failures >= 100) {
 		init_penrose(mi);
 		return;
 	}
 	/* Check for the initial "2-gon". */
 	if (tp->fringe.nodes->prev == tp->fringe.nodes->next) {
-		vertex_type_c vtype = VT_TOTAL_MASK & LRAND();
+		vertex_type_c vtype = (unsigned char) (VT_TOTAL_MASK & LRAND());
 
-		XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-		(void) add_tile(mi, tp->fringe.nodes, S_LEFT, vtype);
+		MI_CLEARWINDOW(mi);
+
+		if (!add_tile(mi, tp->fringe.nodes, S_LEFT, vtype))
+			free_penrose(tp);
 		return;
 	}
 	/* No visible nodes left. */
 	if (tp->fringe.n_nodes == 0) {
 		tp->done = True;
-		MI_PAUSE(mi) = redo_delay_usec;	/* Just finished drawing */
+		tp->busyLoop = COMPLETION;	/* Just finished drawing */
 		return;
 	}
 	if (tp->forced.n_visible > 0 && tp->failures < 10) {
@@ -1255,15 +1307,15 @@ draw_penrose(ModeInfo * mi)
 		while (i++ < n)
 			p = p->next;
 	} else {
-		fringe_node_c *p = tp->fringe.nodes;
+		fringe_node_c *fringe_p = tp->fringe.nodes;
 
 		n = NRAND(tp->fringe.n_nodes);
 		i = 0;
 		for (; i <= n; i++)
 			do {
-				p = p->next;
-			} while (p->off_screen);
-		add_random_tile(p, mi);
+				fringe_p = fringe_p->next;
+			} while (fringe_p->off_screen);
+		add_random_tile(fringe_p, mi);
 		tp->failures = 0;
 		return;
 	}
@@ -1281,12 +1333,11 @@ release_penrose(ModeInfo * mi)
 	if (tilings != NULL) {
 		int         screen;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			tiling_c   *tp = &tilings[screen];
-
-			release_screen(tp);
-		}
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_penrose(&tilings[screen]);
 		(void) free((void *) tilings);
-		tilings = NULL;
+		tilings = (tiling_c *) NULL;
 	}
 }
+
+#endif /* MODE_penrose */

@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		4.00
+%define	version		4.01
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -7,7 +7,8 @@
 %define	kde_prefix	/usr
 
 %define gnome_datadir	%{gnome_prefix}/share
-%define gnome_ccdir	%{gnome_datadir}/control-center/Desktop
+%define gnome_ccdir_1	%{gnome_datadir}/control-center/Desktop
+%define gnome_ccdir_2	%{gnome_datadir}/control-center/capplets
 %define gnome_paneldir	%{gnome_datadir}/gnome/apps/Settings/Desktop
 %define gnome_icondir	%{gnome_datadir}/pixmaps
 
@@ -29,11 +30,15 @@ Vendor:		Jamie Zawinski <jwz@jwz.org>
 Source:		%{name}-%{version}.tar.gz
 Buildroot:	%{_tmppath}/%{name}-%{version}-root
 
+# This package really should be made to depend on
+# control-center >= 1.4.0.2 -OR- control-center >= 1.5.12
+# but there's no way to express that.
+
 %description
 A modular screen saver and locker for the X Window System.
 Highly customizable: allows the use of any program that
 can draw on the root window as a display mode.
-More than 120 display modes are included in this package.
+More than 140 display modes are included in this package.
 %{?USE_GL:See also the xscreensaver-gl package, which}
 %{?USE_GL:includes optional OpenGL display modes.}
 
@@ -87,7 +92,8 @@ make
 # directory instead (/usr/bin/).
 #
 mkdir -p $RPM_BUILD_ROOT%{gnome_prefix}/bin
-mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir}
+mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir_1}
+mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir_2}
 mkdir -p $RPM_BUILD_ROOT%{gnome_paneldir}
 
 # Likewise for KDE: the .kss file goes in the KDE bin directory (/usr/bin/).
@@ -144,6 +150,15 @@ install -m 4755 driver/xscreensaver $RPM_BUILD_ROOT%{x11_prefix}/bin
 #
 chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
 
+%post
+# This part runs on the end user's system, when the RPM is installed.
+
+pids=`pidof xscreensaver`
+if [ -n "$pids" ]; then
+  echo "sending SIGHUP to running xscreensaver ($pids)..." >&2
+  kill -HUP $pids
+fi
+
 %clean
 if [ -d $RPM_BUILD_ROOT    ]; then rm -r $RPM_BUILD_ROOT    ; fi
 if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
@@ -162,7 +177,8 @@ if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
 %config(missingok)  %{kde_prefix}/bin/*.kss
 
 %config(missingok)  %{gnome_prefix}/bin/*-capplet
-%config(missingok)  %{gnome_ccdir}/*.desktop
+%config(missingok)  %{gnome_ccdir_1}/*.desktop
+%config(missingok)  %{gnome_ccdir_2}/*.desktop
 %config(missingok)  %{gnome_paneldir}/*.desktop
 %config(missingok)  %{gnome_icondir}/*
 

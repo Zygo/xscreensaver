@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.20 $
+ * $Revision: 1.21 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -1153,7 +1153,12 @@ getping(sonar_info *si, ping_info *pi)
     while (! timer_expired) {
       tv.tv_usec=pi->timeout;
       tv.tv_sec=0;
+#if 0
+      /* This breaks on BSD, which uses bzero() in the definition of FD_ZERO */
       FD_ZERO(&rfds);
+#else
+      memset (&rfds, 0, sizeof(rfds));
+#endif
       FD_SET(pi->icmpsock,&rfds);
       /* only wait a little while, in case we raced with the timer expiration.
          From Valentijn Sessink <valentyn@openoffice.nl> */

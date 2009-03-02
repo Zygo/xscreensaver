@@ -132,6 +132,8 @@
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
 #include <X11/Xos.h>
+#include <time.h>
+#include <sys/time.h>
 #include <netdb.h>	/* for gethostbyname() */
 #ifdef HAVE_XMU
 # ifndef VMS
@@ -471,6 +473,16 @@ lock_initialization (saver_info *si, int *argc, char **argv)
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
     }
+
+  /* If locking is currently enabled, but the environment indicates that
+     we have been launched as GDM's "Background" program, then disable
+     locking just in case.
+   */
+  if (!si->locking_disabled_p && getenv ("RUNNING_UNDER_GDM"))
+    {
+      si->locking_disabled_p = True;
+      si->nolock_reason = "running under GDM";
+    }
 #endif /* NO_LOCKING */
 
   hack_uid (si);
@@ -523,6 +535,8 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_SCREENSAVER_RESPONSE = XInternAtom (si->dpy, "_SCREENSAVER_RESPONSE",
 					 False);
   XA_XSETROOT_ID = XInternAtom (si->dpy, "_XSETROOT_ID", False);
+  XA_ESETROOT_PMAP_ID = XInternAtom (si->dpy, "ESETROOT_PMAP_ID", False);
+  XA_XROOTPMAP_ID = XInternAtom (si->dpy, "_XROOTPMAP_ID", False);
   XA_ACTIVATE = XInternAtom (si->dpy, "ACTIVATE", False);
   XA_DEACTIVATE = XInternAtom (si->dpy, "DEACTIVATE", False);
   XA_RESTART = XInternAtom (si->dpy, "RESTART", False);
@@ -1121,6 +1135,53 @@ main_loop (saver_info *si)
 	  si->lock_id = 0;
 	}
 
+      /* It's possible that a race condition could have led to the saver
+         window being unexpectedly still mapped.  This can happen like so:
+
+          - screen is blanked
+          - hack is launched
+          - that hack tries to grab a screen image( it does this by
+            first unmapping the saver window, then remapping it.)
+          - hack unmaps window
+          - hack waits
+          - user becomes active
+          - hack re-maps window (*)
+          - driver kills subprocess
+          - driver unmaps window (**)
+
+         The race is that (*) might have been sent to the server before
+         the client process was killed, but, due to scheduling randomness,
+         might not have been received by the server until after (**).
+         In other words, (*) and (**) might happen out of order, meaning
+         the driver will unmap the window, and then after that, the
+         recently-dead client will re-map it.  This leaves the user
+         locked out (it looks like a desktop, but it's not!)
+
+         To avoid this: after un-blanking the screen, sleep for a second,
+         and then really make sure the window is unmapped.
+       */
+      {
+        int i;
+        XSync (si->dpy, False);
+        sleep (1);
+        for (i = 0; i < si->nscreens; i++)
+          {
+            saver_screen_info *ssi = &si->screens[i];
+            Window w = ssi->screensaver_window;
+            XWindowAttributes xgwa;
+            XGetWindowAttributes (si->dpy, w, &xgwa);
+            if (xgwa.map_state != IsUnmapped)
+              {
+                if (p->verbose_p)
+                  fprintf (stderr,
+                           "%s: %d: client race! emergency unmap 0x%lx.\n",
+                           blurb(), i, (unsigned long) w);
+                XUnmapWindow (si->dpy, w);
+              }
+          }
+        XSync (si->dpy, False);
+      }
+
       if (p->verbose_p)
 	fprintf (stderr, "%s: awaiting idleness.\n", blurb());
     }
@@ -1190,6 +1251,7 @@ main (int argc, char **argv)
                              False);
 
   initialize_stderr (si);
+  handle_signals (si);
 
   make_splash_dialog (si);
 
@@ -1281,6 +1343,60 @@ clientmessage_response (saver_info *si, Window w, Bool error,
   free (proto);
 }
 
+
+static void
+bogus_clientmessage_warning (saver_info *si, XEvent *event)
+{
+  char *str = XGetAtomName_safe (si->dpy, event->xclient.message_type);
+  Window w = event->xclient.window;
+  char wdesc[255];
+  int screen = 0;
+
+  *wdesc = 0;
+  for (screen = 0; screen < si->nscreens; screen++)
+    if (w == si->screens[screen].screensaver_window)
+      {
+        strcpy (wdesc, "xscreensaver");
+        break;
+      }
+    else if (w == RootWindow (si->dpy, screen))
+      {
+        strcpy (wdesc, "root");
+        break;
+      }
+
+  if (!*wdesc)
+    {
+      XErrorHandler old_handler;
+      XClassHint hint;
+      XWindowAttributes xgwa;
+      memset (&hint, 0, sizeof(hint));
+      memset (&xgwa, 0, sizeof(xgwa));
+
+      XSync (si->dpy, False);
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+      XGetClassHint (si->dpy, w, &hint);
+      XGetWindowAttributes (si->dpy, w, &xgwa);
+      XSync (si->dpy, False);
+      XSetErrorHandler (old_handler);
+      XSync (si->dpy, False);
+
+      screen = (xgwa.screen ? screen_number (xgwa.screen) : -1);
+
+      sprintf (wdesc, "%.20s / %.20s",
+               (hint.res_name  ? hint.res_name  : "(null)"),
+               (hint.res_class ? hint.res_class : "(null)"));
+      if (hint.res_name)  XFree (hint.res_name);
+      if (hint.res_class) XFree (hint.res_class);
+    }
+
+  fprintf (stderr, "%s: %d: unrecognised ClientMessage \"%s\" received\n",
+           blurb(), screen, (str ? str : "(null)"));
+  fprintf (stderr, "%s: %d: for window 0x%lx (%s)\n",
+           blurb(), screen, (unsigned long) w, wdesc);
+  if (str) XFree (str);
+}
+
 Bool
 handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 {
@@ -1291,19 +1407,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
   /* Preferences might affect our handling of client messages. */
   maybe_reload_init_file (si);
 
-  if (event->xclient.message_type != XA_SCREENSAVER)
+  if (event->xclient.message_type != XA_SCREENSAVER ||
+      event->xclient.format != 32)
     {
-      char *str;
-      str = XGetAtomName_safe (si->dpy, event->xclient.message_type);
-      fprintf (stderr, "%s: unrecognised ClientMessage type %s received\n",
-	       blurb(), (str ? str : "(null)"));
-      if (str) XFree (str);
-      return False;
-    }
-  if (event->xclient.format != 32)
-    {
-      fprintf (stderr, "%s: ClientMessage of format %d received, not 32\n",
-	       blurb(), event->xclient.format);
+      bogus_clientmessage_warning (si, event);
       return False;
     }
 
@@ -1476,17 +1583,8 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      XSync (si->dpy, False);
 	    }
 
-          fflush (stdout);
-          fflush (stderr);
-          if (real_stdout) fflush (real_stdout);
-          if (real_stderr) fflush (real_stderr);
-	  /* make sure error message shows up before exit. */
-	  if (real_stderr && stderr != real_stderr)
-	    dup2 (fileno(real_stderr), fileno(stderr));
-
-	  restart_process (si);
-	  exit (1);	/* shouldn't get here; but if restarting didn't work,
-			   make this command be the same as EXIT. */
+	  restart_process (si);  /* does not return */
+          abort();
 	}
       else
 	clientmessage_response (si, window, True,

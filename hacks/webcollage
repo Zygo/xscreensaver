@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2001 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2002 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -35,8 +35,8 @@ use POSIX qw(strftime);
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.82 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2001" .
+my $version = q{ $Revision: 1.87 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
 
@@ -56,16 +56,14 @@ my @search_methods = (  30, "imagevista", \&pick_from_alta_vista_images,
                      #   0, "hotbot",     \&pick_from_hotbot_text,
                       );
 
-#@search_methods=(100, "googleimgs",\&pick_from_google_images);
-
 # programs we can use to write to the root window (tried in ascending order.)
 #
 my @root_displayers = (
-  "xloadimage -quiet -onroot -center -border black",
-  "xli        -quiet -onroot -center -border black",
-  "xv         -root -quit -viewonly +noresetroot -rmode 5" .
+  "chbg       -once -xscreensaver -max_size 100",
+  "xv         -root -quit -viewonly -noresetroot -quick24 -rmode 5" .
   "           -rfg black -rbg black",
-  "chbg       -once -xscreensaver",
+  "xli        -quiet -onroot -center -border black",
+  "xloadimage -quiet -onroot -center -border black",
 
 # this lame program wasn't built with vroot.h:
 # "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
@@ -83,6 +81,20 @@ my %cookies = (
                            'FMxWaQV0igaB5Yi/Q/guDnLeoL.pe7i1oakSb' .
                            '/VqfdUdb2Uo27Vzt1jmPn3cpYRlTw9',
 );
+
+
+# If this is set, it's a helper program to use for pasting images together:
+# this is a lot faster and more efficient than using PPM pipelines, which is
+# what we do if this program doesn't exist.  (We check for "webcollage-helper"
+# on $PATH at startup, and set this variable appropriately.)
+#
+my $webcollage_helper = undef;
+
+
+# If we have the webcollage-helper program, then it will paste the images
+# together with transparency!  0.0 is invisible, 1.0 is totally opaque.
+#
+my $opacity = 0.85;
 
 
 # Some sites have  managed to poison the search engines.  These are they.
@@ -104,6 +116,9 @@ my %poisoners = (
   "bartleby.com"            => 1,  # Dictionary, cluttering altavista.
   "encyclopedia.com"        => 1,  # Dictionary, cluttering altavista.
   "onlinedictionary.datasegment.com" => 1,  # Dictionary, cluttering altavista.
+  "hotlinkpics.com"         => 1,  # Porn site that has poisoned imagevista
+                                   # (I don't see how they did it, though!)
+  "alwayshotels.com"        => 1,  # Poisoned Lycos pretty heavily.
 );
 
 
@@ -276,7 +291,7 @@ sub get_document_1 {
         LOG ($verbose_http, "  ==> $_");
       }
       print S $hdrs;
-      my $http = <S>;
+      my $http = <S> || "";
 
       $_  = $http;
       s/[\r\n]+$//s;
@@ -704,10 +719,12 @@ sub random_word {
 }
 
 sub random_words {
-  return (random_word . "%20" .
-          random_word . "%20" .
-          random_word . "%20" .
-          random_word . "%20" .
+  my ($or_p) = @_;
+  my $sep = ($or_p ? "%20OR%20" : "%20");
+  return (random_word . $sep .
+          random_word . $sep .
+          random_word . $sep .
+          random_word . $sep .
           random_word);
 }
 
@@ -976,7 +993,7 @@ my $alta_vista_images_url = "http://www.altavista.com/cgi-bin/query" .
 sub pick_from_alta_vista_images {
   my ( $timeout ) = @_;
 
-  my $words = random_words;
+  my $words = random_words(1);
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_images_url . $words;
 
@@ -1082,7 +1099,7 @@ my $alta_vista_url = $alta_vista_url_2;
 sub pick_from_alta_vista_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words;
+  my $words = random_words(1);
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_url . $words;
 
@@ -1137,7 +1154,7 @@ my $hotbot_search_url = "http://hotbot.lycos.com/" .
 sub pick_from_hotbot_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words;
+  my $words = random_words(0);
   my $search_url = $hotbot_search_url . $words;
 
   my ($search_hit_count, @subpages) =
@@ -1174,7 +1191,7 @@ my $lycos_search_url = "http://lycospro.lycos.com/srchpro/" .
 sub pick_from_lycos_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words;
+  my $words = random_words(0);
   my $start = int(rand(8)) * 10 + 1;
   my $search_url = $lycos_search_url . $words . "&start=$start";
 
@@ -1213,7 +1230,7 @@ my $yahoo_news_url = "http://search.news.yahoo.com/search/news_photos?" .
 sub pick_from_yahoo_news_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words;
+  my $words = random_words(1);
   my $search_url = $yahoo_news_url . $words;
 
   my ($search_hit_count, @subpages) =
@@ -1222,7 +1239,8 @@ sub pick_from_yahoo_news_text {
   my @candidates = ();
   foreach my $u (@subpages) {
     # only accept URLs on Yahoo's news site
-    next unless ($u =~ m@^http://dailynews.yahoo.com/@i);
+    next unless ($u =~ m@^http://dailynews\.yahoo\.com/@i ||
+                 $u =~ m@^http://story\.news\.yahoo\.com/@i);
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
@@ -1810,9 +1828,27 @@ my $ppm_to_root_window_cmd = undef;
 
 sub x_or_pbm_output {
 
+  # Check for our helper program, to see whether we need to use PPM pipelines.
+  #
+  $_ = "webcollage-helper";
+  if (defined ($webcollage_helper) || which ($_)) {
+    $webcollage_helper = $_ unless (defined($webcollage_helper));
+    LOG ($verbose_pbm, "found \"$webcollage_helper\"");
+    $webcollage_helper .= " -v";
+  } else {
+    LOG (($verbose_pbm || $verbose_load), "no $_ program");
+  }
+
   # make sure the various programs we execute exist, right up front.
   #
-  foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale", "pnmcut") {
+  my @progs = ("ppmmake");  # always need this one
+
+  if (!defined($webcollage_helper)) {
+    # Only need these others if we don't have the helper.
+    @progs = (@progs, "giftopnm", "djpeg", "pnmpaste", "pnmscale", "pnmcut");
+  }
+
+  foreach (@progs) {
     which ($_) || error "$_ not found on \$PATH.";
   }
 
@@ -1940,11 +1976,34 @@ sub paste_image {
 
   LOG ($verbose_pbm, "got $img (" . length($body) . ")");
 
-  my ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
-  $body = undef;
-  if (!$iw || !$ih) {
-    LOG ($verbose_pbm, "unable to make PBM from $img");
-    return 0;
+  my ($iw, $ih);
+
+  if (defined ($webcollage_helper)) {
+
+    ($iw, $ih) = image_size ($body);
+    if (!$iw || !$ih) {
+      LOG (($verbose_pbm || $verbose_load),
+           "not a GIF or JPG" .
+           (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
+            ? " (looks like HTML)" : "") .
+           ": $img");
+      $suppress_audit = 1;
+      $body = undef;
+      return 0;
+    }
+
+    local *OUT;
+    open (OUT, ">$image_tmp1") || error ("writing $image_tmp1: $!");
+    print OUT $body || error ("writing $image_tmp1: $!");
+    close OUT || error ("writing $image_tmp1: $!");
+
+  } else {
+    ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
+    $body = undef;
+    if (!$iw || !$ih) {
+      LOG ($verbose_pbm, "unable to make PBM from $img");
+      return 0;
+    }
   }
 
   record_success ($load_method, $img, $base);
@@ -1981,6 +2040,7 @@ sub paste_image {
   my $target_h = $img_height;
 
   my $cmd = "";
+  my $scale = 1.0;
 
 
   # Usually scale the image to fit on the screen -- but sometimes scale it
@@ -1988,8 +2048,8 @@ sub paste_image {
   # scale it to fit, we instead cut it in half until it fits -- that should
   # give a wider distribution of sizes.
   #
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; $scale /= 2; }
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; $scale /= 2; }
 
   if ($iw > $target_w || $ih > $target_h) {
     while ($iw > $target_w ||
@@ -2102,15 +2162,36 @@ sub paste_image {
 
   $cmd =~ s@^ *\| *@@;
 
-  $_ = "($cmd)";
-  $_ .= " < $image_tmp1 > $image_tmp2";
+  if (defined ($webcollage_helper)) {
+    $cmd = "$webcollage_helper $image_tmp1 $image_ppm " .
+                              "$scale $opacity " .
+                              "$crop_x $crop_y $x $y " .
+                              "$iw $ih";
+    $_ = $cmd;
+
+  } else {
+    # use a PPM pipeline
+    $_ = "($cmd)";
+    $_ .= " < $image_tmp1 > $image_tmp2";
+  }
 
   if ($verbose_pbm) {
     $_ = "($_) 2>&1 | sed s'/^/" . blurb() . "/'";
   } else {
     $_ .= " 2> /dev/null";
   }
+
   my $rc = nontrapping_system ($_);
+
+  if (defined ($webcollage_helper) && -z $image_ppm) {
+    LOG (1, "failed command: \"$cmd\"");
+    print STDERR "\naudit log:\n\n\n";
+    print STDERR ("#" x 78) . "\n";
+    print STDERR blurb() . "$image_ppm has zero size\n";
+    showlog();
+    print STDERR "\n\n";
+    exit (1);
+  }
 
   if ($rc != 0) {
     LOG (($verbose_pbm || $verbose_load), "failed command: \"$cmd\"");
@@ -2118,7 +2199,9 @@ sub paste_image {
     return;
   }
 
-  rename ($image_tmp2, $image_ppm) || return;
+  if (!defined ($webcollage_helper)) {
+    rename ($image_tmp2, $image_ppm) || return;
+  }
 
   my $target = "$image_ppm";
 
@@ -2231,6 +2314,24 @@ sub main {
       $http_proxy = shift @ARGV;
     } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
       $dict = shift @ARGV;
+    } elsif ($_ eq "-debug" || $_ eq "--debug") {
+      my $which = shift @ARGV;
+      my @rest = @search_methods;
+      my $ok = 0;
+      while (@rest) {
+        my $pct  = shift @rest;
+        my $name = shift @rest;
+        my $tfn  = shift @rest;
+
+        if ($name eq $which) {
+          @search_methods = (100, $name, $tfn);
+          $ok = 1;
+          last;
+        }
+      }
+      error "no such search method as \"$which\"" unless ($ok);
+      LOG (1, "DEBUG: using only \"$which\"");
+
     } else {
       print STDERR "$copyright\nusage: $progname [-root]" .
                  " [-display dpy] [-root] [-verbose] [-timeout secs]\n" .

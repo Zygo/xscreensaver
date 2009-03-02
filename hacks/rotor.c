@@ -2,7 +2,7 @@
 /* rotor --- a swirly rotor */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)rotor.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)rotor.c	5.00 2000/11/01 xlockmore";
 
 #endif
 
@@ -22,38 +22,52 @@ static const char sccsid[] = "@(#)rotor.c	4.04 97/07/28 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97:  Compatible with xscreensaver
- * 08-Mar-95: CAT stuff for ## was tripping up some C compilers.  Removed.
- * 01-Dec-93: added patch for AIXV3 from Tom McConnell
- *            <tmcconne@sedona.intel.com>
- * 11-Nov-90: put into xlock by Steve Zellers <zellers@sun.com>
- * 16-Oct-90: Received from Tom Lawrence (tcl@cs.brown.edu: 'flight' simulator)
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 08-Mar-1995: CAT stuff for ## was tripping up some C compilers.  Removed.
+ * 01-Dec-1993: added patch for AIXV3 from Tom McConnell
+ *              <tmcconne@sedona.intel.com>
+ * 11-Nov-1990: put into xlock by Steve Zellers <zellers@sun.com>
+ * 16-Oct-1990: Received from Tom Lawrence (tcl@cs.brown.edu: 'flight'
+ *               simulator)
  */
 
 #ifdef STANDALONE
-# define PROGCLASS "Rotor"
-# define HACK_INIT init_rotor
-# define HACK_DRAW draw_rotor
-# define rotor_opts xlockmore_opts
-# define DEFAULTS	"*delay:   10000 \n"	\
-					"*count:   4 \n"		\
-					"*size:   -6 \n"		\
-					"*cycles:  20 \n"		\
-					"*ncolors: 200 \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"		/* in xscreensaver distribution */
+#define MODE_rotor
+#define PROGCLASS "Rotor"
+#define HACK_INIT init_rotor
+#define HACK_DRAW draw_rotor
+#define rotor_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*count: 4 \n" \
+ "*cycles: 20 \n" \
+ "*size: -6 \n" \
+ "*ncolors: 200 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-# include "xlock.h"			/* in xlockmore distribution */
+#include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
 
+#ifdef MODE_rotor
+
 ModeSpecOpt rotor_opts =
-{0, NULL, 0, NULL, NULL};
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   rotor_description =
+{"rotor", "init_rotor", "draw_rotor", "release_rotor",
+ "refresh_rotor", "init_rotor", (char *) NULL, &rotor_opts,
+ 100, 4, 100, -6, 64, 0.3, "",
+ "Shows Tom's Roto-Rooter", 0, NULL};
+
+#endif
 
 /*-
  * A 'batchcount' of 3 or 4 works best!
  */
 
-#define MAXANGLE	3000.0	/* irrectangular (jwz: was 10000.0) */
+#define MAXANGLE	3000.0	/* irrectangular  (was 10000.0) */
 
 /* How many segments to draw per cycle when redrawing */
 #define REDRAWSTEP 3
@@ -88,17 +102,31 @@ typedef struct {
 	elem       *elements;
 	XPoint     *save;
 	int         redrawing, redrawpos;
+	int         linewidth;
 } rotorstruct;
 
-static rotorstruct *rotors = NULL;
+static rotorstruct *rotors = (rotorstruct *) NULL;
+
+static void
+free_rotor(rotorstruct *rp)
+{
+	if (rp->elements != NULL) {
+		(void) free((void *) rp->elements);
+		rp->elements = (elem *) NULL;
+	}
+	if (rp->save != NULL) {
+		(void) free((void *) rp->save);
+		rp->save = (XPoint *) NULL;
+	}
+}
 
 void
 init_rotor(ModeInfo * mi)
 {
-	rotorstruct *rp;
 	int         x;
 	elem       *pelem;
 	unsigned char wasiconified;
+	rotorstruct *rp;
 
 	if (rotors == NULL) {
 		if ((rotors = (rotorstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -110,8 +138,8 @@ init_rotor(ModeInfo * mi)
 	rp->prevcenterx = rp->centerx;
 	rp->prevcentery = rp->centery;
 
-	rp->centerx = MI_WIN_WIDTH(mi) / 2;
-	rp->centery = MI_WIN_HEIGHT(mi) / 2;
+	rp->centerx = MI_WIDTH(mi) / 2;
+	rp->centery = MI_HEIGHT(mi) / 2;
 
 	rp->redrawing = 0;
 	/*
@@ -122,7 +150,7 @@ init_rotor(ModeInfo * mi)
 	 */
 
 	wasiconified = rp->iconifiedscreen;
-	rp->iconifiedscreen = MI_WIN_IS_ICONIC(mi);
+	rp->iconifiedscreen = MI_IS_ICONIC(mi);
 
 	if (wasiconified && !rp->iconifiedscreen)
 		rp->firsttime = True;
@@ -137,21 +165,33 @@ init_rotor(ModeInfo * mi)
 		if (!rp->prevcentery)
 			rp->prevcentery = rp->centery * 12;
 
-		rp->num = MI_BATCHCOUNT(mi);
+		rp->num = MI_COUNT(mi);
 		if (rp->num < 0) {
 			rp->num = NRAND(-rp->num) + 1;
 			if (rp->elements != NULL) {
 				(void) free((void *) rp->elements);
-				rp->elements = NULL;
+				rp->elements = (elem *) NULL;
 			}
 		}
 		if (rp->elements == NULL)
-			rp->elements = (elem *) calloc(rp->num, sizeof (elem));
+			if ((rp->elements = (elem *) calloc(rp->num,
+					sizeof (elem))) == NULL) {
+				free_rotor(rp);
+				return;
+			}
 		rp->nsave = MI_CYCLES(mi);
 		if (rp->nsave <= 1)
 			rp->nsave = 2;
 		if (rp->save == NULL)
-			rp->save = (XPoint *) calloc(rp->nsave, sizeof (XPoint));
+			if ((rp->save = (XPoint *) malloc(rp->nsave *
+					sizeof (XPoint))) == NULL) {
+				free_rotor(rp);
+				return;
+			}
+		for (x = 0; x < rp->nsave; x++) {
+			rp->save[x].x = rp->centerx;
+			rp->save[x].y = rp->centery;
+		}
 
 		pelem = rp->elements;
 
@@ -175,18 +215,14 @@ init_rotor(ModeInfo * mi)
 		rp->angle = (float) NRAND((long) MAXANGLE) / 3.0;
 		rp->forward = rp->firsttime = True;
 	}
+	rp->linewidth = MI_SIZE(mi);
 
-	{
-	  int line_width = MI_SIZE(mi);
-	  if (line_width == 0)
-		line_width = -5;
-	  if (line_width < 0)
-		line_width = NRAND(-line_width)+1;
-	  XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), line_width,
-						 LineSolid, CapButt, JoinMiter);
-	}
+	if (rp->linewidth == 0)
+		rp->linewidth = 1;
+	if (rp->linewidth < 0)
+		rp->linewidth = NRAND(-rp->linewidth) + 1;
 
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 }
 
 void
@@ -194,12 +230,19 @@ draw_rotor(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	register rotorstruct *rp = &rotors[MI_SCREEN(mi)];
 	register elem *pelem;
 	int         thisx, thisy;
 	int         i;
 	int         x_1, y_1, x_2, y_2;
+	rotorstruct *rp;
 
+	if (rotors == NULL)
+		return;
+	rp = &rotors[MI_SCREEN(mi)];
+	if (rp->elements == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	if (!rp->iconifiedscreen) {
 		thisx = rp->centerx;
 		thisy = rp->centery;
@@ -207,6 +250,8 @@ draw_rotor(ModeInfo * mi)
 		thisx = rp->prevcenterx;
 		thisy = rp->prevcentery;
 	}
+	XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), rp->linewidth,
+			   LineSolid, CapButt, JoinMiter);
 	for (i = rp->num, pelem = rp->elements; --i >= 0; pelem++) {
 		if (pelem->radius_drift_max <= pelem->radius_drift_now) {
 			pelem->start_radius = pelem->end_radius;
@@ -237,7 +282,7 @@ draw_rotor(ModeInfo * mi)
 	if (rp->firsttime)
 		rp->firsttime = False;
 	else {
-		XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+		XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 
 		x_1 = (int) rp->save[rp->rotor].x;
 		y_1 = (int) rp->save[rp->rotor].y;
@@ -257,7 +302,7 @@ draw_rotor(ModeInfo * mi)
 			if (++rp->pix >= MI_NPIXELS(mi))
 				rp->pix = 0;
 		} else
-			XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+			XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 
 		x_1 = rp->lastx;
 		y_1 = rp->lasty;
@@ -317,6 +362,8 @@ draw_rotor(ModeInfo * mi)
 			}
 		}
 	}
+	XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), 1,
+			   LineSolid, CapButt, JoinMiter);
 }
 
 void
@@ -325,24 +372,25 @@ release_rotor(ModeInfo * mi)
 	if (rotors != NULL) {
 		int         screen;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			rotorstruct *rp = &rotors[screen];
-
-			if (rp->elements != NULL)
-				(void) free((void *) rp->elements);
-			if (rp->save != NULL)
-				(void) free((void *) rp->save);
-		}
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_rotor(&rotors[screen]);
 		(void) free((void *) rotors);
-		rotors = NULL;
+		rotors = (rotorstruct *) NULL;
 	}
 }
 
 void
 refresh_rotor(ModeInfo * mi)
 {
-	rotorstruct *rp = &rotors[MI_SCREEN(mi)];
+	rotorstruct *rp;
 
+	if (rotors == NULL)
+		return;
+	rp = &rotors[MI_SCREEN(mi)];
+
+	MI_CLEARWINDOW(mi);
 	rp->redrawing = 1;
 	rp->redrawpos = 1;
 }
+
+#endif /* MODE_rotor */

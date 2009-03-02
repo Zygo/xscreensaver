@@ -148,6 +148,11 @@
  */
 #undef HAVE_CRAPPLET
 
+/*  Define this if HAVE_CRAPPLET is defined, and the function
+    capplet_widget_changes_are_immediate() is available.
+ */
+#undef HAVE_CRAPPLET_IMMEDIATE
+
 /*  Define this if you have the XML library.
  */
 #undef HAVE_XML
@@ -156,6 +161,16 @@
  *  make use of this if it is available.
  */
 #undef HAVE_XPM
+
+/*  Define this if you have the GDK_Pixbuf library installed.  Some of the
+ *  demos can make use of this if it is available.
+ */
+#undef HAVE_GDK_PIXBUF
+
+/*  Define this if you have the Independent JPEG Group's JPEG library
+ *  installed.  Some of the demos can make use of this if it is available.
+ */
+#undef HAVE_JPEGLIB
 
 /*  Define this if you have the Xmu library.  This is standard part of X, and
  *  if your vendor doesn't ship it, you should report that as a bug.
@@ -367,11 +382,6 @@
 
 /* Define if you have <sys/select.h> that defines fd_set and FD_SET.  */
 #undef HAVE_SYS_SELECT_H
-
-/* Define to use sigaction() instead of signal() for SIGCHLD-related activity.
-   This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
- */
-#undef USE_SIGACTION
 
 /* Define this if you do pings with a `struct icmp' and  a `icmp_id' slot.
  */

@@ -60,7 +60,7 @@ Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing magic
 about these: they are just programs that draw on the root window.
 
-More than 120 such programs are included.  For details, see the xscreensaver
+More than 140 such programs are included.  For details, see the xscreensaver
 web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -68,7 +68,39 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
-Changes since 3.34:   * Redesigned `xscreensaver-demo' GUI.
+Changes since 4.00:   * New hacks: `twang', `glsnake', `boxed', `sballs',
+                        and `glforestfire'.
+                      * New hacks `apollonian', `euler2d', `juggle',
+                        `polyominoes' and `thornbird', from xlockmore.
+                      * Merged recent xlockmore changes into `ant', `braid',
+                        `demon', `discrete', `drift', `fadeplot', `forest',
+                        `grav', `hopalong', `ifs', `laser', `lightning',
+                        `lisa', `lissie', `loop', `mountain', `penrose',
+                        `rotor', `sierpinski', `slip', `sphere', `spiral',
+                        `strange', and `vines'.
+                      * Fixed the `gltext' bug that sometimes caused
+                        horizontal lines to vanish again.  This time for sure.
+                      * Sped up `webcollage' by adding a C helper program to
+                        replace the PPM pipeline.  It also pastes images
+                        semi-transparently now.
+                      * Added support for the gdk_pixbuf library: if this lib
+                        is available, then `blitspin', `xflame', and `flag'
+                        can load GIF, JPEG, and PNG images in addition to XPM
+                        and XBM.
+                      * Fixed a rare race condition where the desktop-grabbing
+                        hacks could sometimes leave the screen wedged, if the
+                        user moved the mouse exactly when they were grabbing
+                        the screen image (it would un-wedge the next time the
+                        saver timed out or was activated.)
+                      * Fixed incorrect colors in the screen-grabbing GL hacks
+                        (`gflux' and `flipscreen3d'.)
+                      * Made SIGHUP restart the daemon process (though using
+                        `xscreensaver-command -restart' is still the preferred
+                        way.)
+                      * Tweaks to `xspirograph'.
+                      * Minor configure and portability tweaks.
+Changes since 3.34:   * Redesigned `xscreensaver-demo' GUI: it now includes
+                        small-preview and per-hack configuration dialogs.
                       * Added three new modes of operation: `One Screen Saver',
                         `Blank Screen', and `Don't Blank' (in addition to the
                         historical `Random Screen Saver').
@@ -173,7 +205,7 @@ Changes since 3.30:   * Put in more sensible defaults for DPMS, and updated
                         is no longer needed.
                       * New versions of `rotzoomer' and `nerverot'.
                       * Fixed an OSF/1 compilation problem in `molecule'.
-Changes since 3.29:   * New hacks, `molecule' `dangerball', and `rotzoomer'.
+Changes since 3.29:   * New hacks, `molecule', `dangerball', and `rotzoomer'.
                       * New version of `gflux'.
                       * Made `gltext' able to display the current time.
                       * Fixed a floating-point-precision problem in `gltext'

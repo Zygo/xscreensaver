@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.17 2000/07/19 06:38:42 jwz Exp $*/
+/*$Id: bubbles.c,v 1.18 2002/01/17 02:16:04 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -41,7 +41,6 @@
 
 #include <math.h>
 #include "screenhack.h"
-#include "bubbles.h"
 
 #include <limits.h>
 
@@ -60,9 +59,11 @@
 # include <unistd.h>
 #endif
 #include "yarandom.h"
+#include "bubbles.h"
+#include "xpm-pixmap.h"
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
+# define FANCY_BUBBLES
 #endif
 
 /* 
@@ -92,9 +93,9 @@ char *defaults [] = {
 
 XrmOptionDescRec options [] = {
   { "-simple",          ".simple",      XrmoptionNoArg, "true" },
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   { "-broken",          ".broken",      XrmoptionNoArg, "true" },
-#endif /* HAVE_XPM */
+#endif
   { "-quiet",           ".quiet",       XrmoptionNoArg, "true" },
   { "-nodelay",         ".nodelay",     XrmoptionNoArg, "true" },
   { "-3D",          ".3D",      XrmoptionNoArg, "true" },
@@ -137,13 +138,13 @@ static long *bubble_areas;
 static int *bubble_droppages;
 static GC draw_gc, erase_gc;
 
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 static int num_bubble_pixmaps;
 static Bubble_Step **step_pixmaps;
-#endif /* HAVE_XPM */
+#endif
 
 /* Options stuff */
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 static Bool simple = False;
 #else
 static Bool simple = True;
@@ -225,7 +226,7 @@ turned off if DEBUG isn't set. */
 	      bb->radius, bb->x, bb->y, bb->magic, bb->cell_index);
       die_bad_bubble(bb);  
     }
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   } else {
     if ((bb->x < 0) || (bb->x > screen_width) ||
 	(bb->y < 0) || (bb->y > screen_height) ||
@@ -236,7 +237,7 @@ turned off if DEBUG isn't set. */
 	      bb->radius, bb->x, bb->y, bb->magic, bb->cell_index);
       die_bad_bubble(bb);  
     }
-#endif /* HAVE_XPM */
+#endif
   }
 #endif /* DEBUG */
   return 0;
@@ -438,20 +439,20 @@ adjust_areas (void)
   long factor;
   int i;
 
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   if (simple)
     maxarea = bubble_areas[bubble_max_radius+1];
   else
     maxarea = step_pixmaps[num_bubble_pixmaps]->area;
-#else
+#else /* !FANCY_BUBBLES */
   maxarea = bubble_areas[bubble_max_radius+1];
-#endif /* HAVE_XPM */
+#endif /* !FANCY_BUBBLES */
   maxvalue = (double)screen_width * 2.0 * (double)maxarea;
   factor = (long)ceil(maxvalue / (double)LONG_MAX);
   if (factor > 1) {
     /* Overflow will occur in weighted_mean().  We must divide areas
        each by factor so it will never do so. */
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
     if (simple) {
       for (i = bubble_min_radius; i <= bubble_max_radius+1; i++) {
 	bubble_areas[i] /= factor;
@@ -471,13 +472,13 @@ adjust_areas (void)
 #endif /* DEBUG */
       }
     }
-#else
+#else /* !FANCY_BUBBLES */
     for (i = bubble_min_radius; i <= bubble_max_radius+1; i++) {
       bubble_areas[i] /= factor;
       if (bubble_areas[i] == 0)
 	bubble_areas[i] = 1;
     }
-#endif /* HAVE_XPM */
+#endif /* !FANCY_BUBBLES */
   }
 #ifdef DEBUG
   printf("maxarea = %ld\n", maxarea);
@@ -507,12 +508,12 @@ size. */
   if (simple) {
     rv->radius = bubble_min_radius;
     rv->area = bubble_areas[bubble_min_radius];
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   } else {
     rv->step = 0;
     rv->radius = step_pixmaps[0]->radius;
     rv->area = step_pixmaps[0]->area;
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
   rv->visible = 0;
   rv->magic = BUBBLE_MAGIC;
@@ -540,7 +541,7 @@ show_bubble(Bubble *bb)
 	       (bb->y - bb->radius), bb->radius*2, bb->radius*2, 0,
 	       360*64);  
     } else {
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
       XSetClipOrigin(defdsp, step_pixmaps[bb->step]->draw_gc, 
 		     (bb->x - bb->radius),
 		     (bb->y - bb->radius));
@@ -551,7 +552,7 @@ show_bubble(Bubble *bb)
 		(bb->radius * 2),  
 		(bb->x - bb->radius),
 		(bb->y - bb->radius));
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
     }
   }
 }
@@ -573,7 +574,7 @@ hide_bubble(Bubble *bb)
 	       (bb->y - bb->radius), bb->radius*2, bb->radius*2, 0,
 	       360*64);
     } else {
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
       if (! broken) {
 	XSetClipOrigin(defdsp, step_pixmaps[bb->step]->erase_gc, 
 		       (bb->x - bb->radius), (bb->y - bb->radius));
@@ -584,7 +585,7 @@ hide_bubble(Bubble *bb)
 		       (bb->radius * 2),
 		       (bb->radius * 2));
       }
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
     }
   }
 }
@@ -761,24 +762,24 @@ bubble_eat(Bubble *diner, Bubble *food)
 	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
 	  diner->area = bubble_areas[bubble_max_radius];
 	}
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 	if ((! simple) && (diner->area > step_pixmaps[num_bubble_pixmaps]->area)) {
 	  diner->area = step_pixmaps[num_bubble_pixmaps]->area;
 	}
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
   else {
 	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
 	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
 	  return 0;
 	}
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 	if ((! simple) && (diner->area > 
 					   step_pixmaps[num_bubble_pixmaps]->area)) {
 	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
 	  return 0;
 	}
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
 
   if (simple) {
@@ -790,7 +791,7 @@ bubble_eat(Bubble *diner, Bubble *food)
       diner->radius = i;
     }
     show_bubble(diner);
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   } else {
     if (diner->area > step_pixmaps[diner->step+1]->area) {
       i = diner->step;
@@ -800,7 +801,7 @@ bubble_eat(Bubble *diner, Bubble *food)
       diner->radius = step_pixmaps[diner->step]->radius;
     }
     show_bubble(diner);
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
 
   /* Now adjust locations and cells if need be */
@@ -958,12 +959,12 @@ insert_new_bubble(Bubble *tmp)
 		  if ((nextbub->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0))
 			continue;
 		}
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 		else {
 		  if ((nextbub->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
 			continue;
 		}
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
       }
 	  break;
 	}
@@ -996,10 +997,10 @@ drop_bubble( Bubble *bb )
 
   if (simple)
 	(bb->y) += (bubble_droppages[bb->radius] * drop_dir);
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
   else
 	(bb->y) += (step_pixmaps[bb->step]->droppage * drop_dir);
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   if ((bb->y < 0) || (bb->y > screen_height)) {
 	delete_bubble_in_mesh( bb, DELETE_BUBBLE );
 	return -1;
@@ -1020,12 +1021,12 @@ drop_bubble( Bubble *bb )
 	  if ((bb->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0)) 
 		leave_trail( bb );
 	}
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 	else { 
 	  if ((bb->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
 		leave_trail( bb );
 	}
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
 
   return 0;
@@ -1053,7 +1054,7 @@ get_length_of_bubble_list(Bubble *bb)
  * still check for XPM, though!
  */
 
-#ifdef HAVE_XPM
+#ifdef FANCY_BUBBLES
 
 /*
  * Pixmaps without file I/O (but do have XPM)
@@ -1178,7 +1179,6 @@ make_pixmap_from_default(char **pixmap_data, Bubble_Step *bl)
  This is virtually copied verbatim from make_pixmap_from_file() above and
 changes made to either should be propagated onwards! */
 {
-  int result;
   XGCValues gcv;
 
 #ifdef DEBUG
@@ -1193,49 +1193,16 @@ changes made to either should be propagated onwards! */
     exit(1);
   }
 
-  bl->xpmattrs.valuemask = 0;
-
-#ifdef XpmCloseness
-  bl->xpmattrs.valuemask |= XpmCloseness;
-  bl->xpmattrs.closeness = 40000;
-#endif
-#ifdef XpmVisual
-  bl->xpmattrs.valuemask |= XpmVisual;
-  bl->xpmattrs.visual = defvisual;
-#endif
-#ifdef XpmDepth
-  bl->xpmattrs.valuemask |= XpmDepth;
-  bl->xpmattrs.depth = screen_depth;
-#endif
-#ifdef XpmColormap
-  bl->xpmattrs.valuemask |= XpmColormap;
-  bl->xpmattrs.colormap = defcmap;
-#endif
-
-
-  /* This is the only line which is different from make_pixmap_from_file() */
-  result = XpmCreatePixmapFromData(defdsp, defwin, pixmap_data, &bl->ball, 
-				   &bl->shape_mask, &bl->xpmattrs);
-
-  switch(result) {
-  case XpmColorError:
-    fprintf(stderr, "xpm: color substitution performed\n");
-    /* fall through */
-  case XpmSuccess:
-    bl->radius = MAX(bl->xpmattrs.width, bl->xpmattrs.height) / 2;
+#ifdef FANCY_BUBBLES
+  {
+    int w, h;
+    bl->ball = xpm_data_to_pixmap (defdsp, defwin, (char **) pixmap_data,
+                                   &w, &h, &bl->shape_mask);
+    bl->radius = MAX(w, h) / 2;
     bl->area = calc_bubble_area(bl->radius);
-    break;
-  case XpmColorFailed:
-    fprintf(stderr, "xpm: color allocation failed\n");
-    exit(1);
-  case XpmNoMemory:
-    fprintf(stderr, "xpm: out of memory\n");
-    exit(1);
-  default:
-    fprintf(stderr, "xpm: unknown error code %d\n", result);
-    exit(1);
   }
-  
+#endif /* FANCY_BUBBLES */
+
   gcv.plane_mask = AllPlanes;
   gcv.foreground = default_fg_pixel;
   gcv.function = GXcopy;
@@ -1279,7 +1246,7 @@ default_to_pixmaps (void)
   make_pixmap_array(pixmap_list);
 }
 
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
 
 
 /* 
@@ -1337,11 +1304,11 @@ get_resources(Display *dpy, Window window)
       if (! quiet)
 	fprintf(stderr, "-broken not available in simple mode\n");
   } else {
-#ifndef HAVE_XPM
+#ifndef FANCY_BUBBLES
     simple = 1;
-#else
+#else  /* FANCY_BUBBLES */
     broken = get_boolean_resource("broken", "Boolean");
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
   }
 }
 
@@ -1401,18 +1368,18 @@ init_bubbles (Display *dpy, Window window)
 
     mesh_length = (2 * bubble_max_radius) + 3;
   } else {
-#ifndef HAVE_XPM
+#ifndef FANCY_BUBBLES
     fprintf(stderr,
-	    "Bug: simple mode code not set but HAVE_XPM not defined\n");
+	    "Bug: simple mode code not set but FANCY_BUBBLES not defined\n");
     exit(1);
-#else
+#else  /* FANCY_BUBBLES */
     /* Make sure all #ifdef sort of things have been taken care of in
        get_resources(). */
     default_to_pixmaps();
 
     /* Set mesh length */
     mesh_length = (2 * step_pixmaps[num_bubble_pixmaps-1]->radius) + 3;
-#endif /* HAVE_XPM */
+#endif /* FANCY_BUBBLES */
 
     /* Am I missing something in here??? */
   }

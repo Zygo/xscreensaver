@@ -32,7 +32,7 @@
      <boolean id="mipmap" _label="Enable Texture Mipmaps" arg-set="-mipmap"/>
    </vgroup>
    <vgroup>
-     <boolean id="no-blend"  _label="Enable Blending" arg-set="-no-blend"/>
+     <boolean id="no-blend"  _label="Enable Blending" arg-unset="-no-blend"/>
      <boolean id="antialias" _label="Anti-alias Lines" arg-set="-antialias"/>
      <boolean id="texture_quality" _label="Enable Texture Filtering"
                               arg-set="-texture_quality"/>

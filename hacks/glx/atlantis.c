@@ -174,7 +174,9 @@ ModStruct   atlantis_description =
 static atlantisstruct *atlantis = NULL;
 
 #include "xpm-ximage.h"
+
 #include "../images/sea-texture.xpm"
+
 
 static void
 parse_image_data(ModeInfo *mi)

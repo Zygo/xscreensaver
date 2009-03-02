@@ -1,11 +1,39 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * sphere.c --- draw a bunch of shaded spheres
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* sphere --- a bunch of shaded spheres */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)sphere.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)sphere.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright 1988 by Sun Microsystems, Inc. Mountain View, CA.
+/*-
+ * Copyright (c) 1988 by Sun Microsystems
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * This file is provided AS IS with no warranties of any kind.  The author
+ * shall have no liability with respect to the infringement of copyrights,
+ * trade secrets or any patents by this file or any part thereof.  In no
+ * event will the author be liable for any lost revenue or profits or
+ * other special, indirect and consequential damages.
+ *
+ * Revision History:
+ * 01-Nov-2000: Allocation checks
+ * 30-May-1997: <jwz@jwz.org> made it go vertically as well as horizontally.
+ * 27-May-1997: <jwz@jwz.org> turned into a standalone program.
+ * 02-Sep-1993: xlock version David Bagley <bagleyd@tux.org>
+ * 1988: Revised to use SunView canvas instead of gfxsw Sun Microsystems
+ * 1982: Orignal Algorithm Tom Duff Lucasfilm Ltd.
+ */
+
+/*-
+ * original copyright
+ * **************************************************************************
+ * Copyright 1988 by Sun Microsystems, Inc. Mountain View, CA.
  *
  * All Rights Reserved
  *
@@ -27,30 +55,37 @@ static const char sccsid[] = "@(#)sphere.c	4.00 97/01/01 xlockmore";
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  * ***************************************************************************
- *
- * Revision History:
- * 30-May-97: jwz@jwz.org: made it go vertically as well as horizontally.
- * 27-May-97: jwz@jwz.org: turned into a standalone program.
- * 2-Sep-93: xlock version (David Bagley bagleyd@bigfoot.com)
- * 1988: Revised to use SunView canvas instead of gfxsw Sun Microsystems
- * 1982: Orignal Algorithm  Tom Duff  Lucasfilm Ltd.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Sphere"
-# define HACK_INIT					init_sphere
-# define HACK_DRAW					draw_sphere
-# define sphere_opts				xlockmore_opts
-# define DEFAULTS	"*delay:		1000    \n"			\
-					"*ncolors:		64      \n"
-# define BRIGHT_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+#define MODE_sphere
+#define PROGCLASS "Sphere"
+#define HACK_INIT init_sphere
+#define HACK_DRAW draw_sphere
+#define sphere_opts xlockmore_opts
+#define DEFAULTS "*delay: 1000 \n" \
+ "*cycles: 20 \n" \
+ "*size: 0 \n" \
+ "*ncolors: 64 \n"
+#define BRIGHT_COLORS
+#include "xlockmore.h"		/* from the xscreensaver distribution */
+#else /* !STANDALONE */
+#include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt sphere_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_sphere
+
+ModeSpecOpt sphere_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   sphere_description =
+{"sphere", "init_sphere", "draw_sphere", "release_sphere",
+ "refresh_sphere", "init_sphere", (char *) NULL, &sphere_opts,
+ 5000, 1, 20, 0, 64, 1.0, "",
+ "Shows a bunch of shaded spheres", 0, NULL};
+
+#endif
 
 /*-
  * (NX, NY, NZ) is the light source vector -- length should be 100
@@ -69,11 +104,12 @@ typedef struct {
 	int         color;
 	int         x, y;
 	int         dirx, diry;
+	int         shadowx, shadowy;
 	int         maxx, maxy;
 	XPoint     *points;
 } spherestruct;
 
-static spherestruct *spheres = NULL;
+static spherestruct *spheres = (spherestruct *) NULL;
 
 void
 init_sphere(ModeInfo * mi)
@@ -87,17 +123,23 @@ init_sphere(ModeInfo * mi)
 	}
 	sp = &spheres[MI_SCREEN(mi)];
 
-	if (sp->points) {
+	if (sp->points != NULL) {
 		(void) free((void *) sp->points);
-		sp->points = NULL;
+		sp->points = (XPoint *) NULL;
 	}
-	sp->width = MI_WIN_WIDTH(mi);
-	sp->height = MI_WIN_HEIGHT(mi);
-	sp->points = (XPoint *) malloc(sp->height * sizeof (XPoint));
+	sp->width = MAX(MI_WIDTH(mi), 4);
+	sp->height = MAX(MI_HEIGHT(mi), 4);
+	if ((sp->points = (XPoint *) malloc(MIN(sp->width, sp->height) *
+			 sizeof (XPoint))) == NULL) {
+		return;
+	}
 
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 
 	sp->dirx = 1;
+	sp->x = sp->radius;
+	sp->shadowx = (LRAND() & 1) ? 1 : -1;
+	sp->shadowy = (LRAND() & 1) ? 1 : -1;
 }
 
 void
@@ -105,19 +147,27 @@ draw_sphere(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	spherestruct *sp = &spheres[MI_SCREEN(mi)];
-	int         minx = 0, maxx = 0, miny = 0, maxy = 0, npts = 0;
+	int         sqrd, nd;
+	register int minx = 0, maxx = 0, miny = 0, maxy = 0, npts = 0;
+	spherestruct *sp;
 
+	if (spheres == NULL)
+		return;
+	sp = &spheres[MI_SCREEN(mi)];
+	if (sp->points == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	if ((sp->dirx && ABS(sp->x) >= sp->radius) ||
 	    (sp->diry && ABS(sp->y) >= sp->radius)) {
 		sp->radius = NRAND(MIN(sp->width / 2, sp->height / 2) - 1) + 1;
 
 		if (LRAND() & 1) {
-			sp->dirx = (LRAND() & 1) * 2 - 1;
+			sp->dirx = (int) (LRAND() & 1) * 2 - 1;
 			sp->diry = 0;
 		} else {
 			sp->dirx = 0;
-			sp->diry = (LRAND() & 1) * 2 - 1;
+			sp->diry = (int) (LRAND() & 1) * 2 - 1;
 		}
 		sp->x0 = NRAND(sp->width);
 		sp->y0 = NRAND(sp->height);
@@ -164,7 +214,7 @@ draw_sphere(ModeInfo * mi)
 		if (sp->x0 + sp->maxx >= sp->width)
 			maxx = sp->width - sp->x0;
 	}
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 
 	if (sp->dirx)
 		XDrawLine(display, MI_WINDOW(mi), gc,
@@ -176,26 +226,30 @@ draw_sphere(ModeInfo * mi)
 	if (MI_NPIXELS(mi) > 2)
 		XSetForeground(display, gc, MI_PIXEL(mi, sp->color));
 	else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 
-	if (sp->dirx)
+	if (sp->dirx) {
+		sqrd = sp->radius * sp->radius - sp->x * sp->x;
+		nd = NX * sp->shadowx * sp->x;
 		for (sp->y = miny; sp->y <= maxy; sp->y++)
-			if ((NRAND(sp->radius * NR)) <=
-			    (NX * sp->x + NY * sp->y + NZ *
-			     SQRT(sp->radius * sp->radius - sp->x * sp->x - sp->y * sp->y))) {
+			if ((NRAND(sp->radius * NR)) <= nd + NY * sp->shadowy * sp->y +
+			    NZ * SQRT(sqrd - sp->y * sp->y)) {
 				sp->points[npts].x = sp->x + sp->x0;
 				sp->points[npts].y = sp->y + sp->y0;
 				npts++;
 			}
-	if (sp->diry)
+	}
+	if (sp->diry) {
+		sqrd = sp->radius * sp->radius - sp->y * sp->y;
+		nd = NY * sp->shadowy * sp->y;
 		for (sp->x = minx; sp->x <= maxx; sp->x++)
-			if ((NRAND(sp->radius * NR)) <=
-			    (NX * sp->x + NY * sp->y + NZ *
-			     SQRT(sp->radius * sp->radius - sp->x * sp->x - sp->y * sp->y))) {
+			if ((NRAND(sp->radius * NR)) <= NX * sp->shadowx * sp->x + nd +
+			    NZ * SQRT(sqrd - sp->x * sp->x)) {
 				sp->points[npts].x = sp->x + sp->x0;
 				sp->points[npts].y = sp->y + sp->y0;
 				npts++;
 			}
+	}
 	XDrawPoints(display, MI_WINDOW(mi), gc, sp->points, npts, CoordModeOrigin);
 	if (sp->dirx == 1) {
 		sp->x++;
@@ -228,19 +282,26 @@ release_sphere(ModeInfo * mi)
 
 			if (sp->points) {
 				(void) free((void *) sp->points);
-				sp->points = NULL;
+				/* sp->points = NULL; */
 			}
 		}
 		(void) free((void *) spheres);
-		spheres = NULL;
+		spheres = (spherestruct *) NULL;
 	}
 }
 
 void
 refresh_sphere(ModeInfo * mi)
 {
-	spherestruct *sp = &spheres[MI_SCREEN(mi)];
+	spherestruct *sp;
 
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	if (spheres == NULL)
+		return;
+	sp = &spheres[MI_SCREEN(mi)];
+
+	MI_CLEARWINDOW(mi);
+
 	sp->x = -sp->radius;
 }
+
+#endif /* MODE_sphere */

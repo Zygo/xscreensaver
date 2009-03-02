@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * spiral --- low cpu screen design.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* spiral --- spiraling dots */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)spiral.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)spiral.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1994 Darrick Brown.
+/*-
+ * Copyright (c) 1994 by Darrick Brown.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,38 +21,48 @@ static const char sccsid[] = "@(#)spiral.c	4.00 97/01/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * Idea based on a graphics demo I saw a *LONG* time ago.
- *
- * See xlock.c for copying information.
- *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 24-Jul-95: Fix to allow cycles not to have an arbitrary value by
- *            Peter Schmitzberger (schmitz@coma.sbg.ac.at).
- * 06-Mar-95: Finished cleaning up and final testing.
- * Copyright (c) 1994 by Darrick Brown.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: jwz@jwz.org: turned into a standalone program.
+ * 24-Jul-1995: Fix to allow cycles not to have an arbitrary value by
+ *              Peter Schmitzberger (schmitz@coma.sbg.ac.at).
+ * 06-Mar-1995: Finished cleaning up and final testing.
+ * 03-Mar-1995: Cleaned up code.
+ * 12-Jul-1994: Written.
  *
- * 03-Mar-95: Cleaned up code.
- * 12-Jul-94: Written.
+ * Low CPU usage mode.
+ * Idea based on a graphics demo I saw a *LONG* time ago.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Spiral"
-# define HACK_INIT					init_spiral
-# define HACK_DRAW					draw_spiral
-# define spiral_opts				xlockmore_opts
-# define DEFAULTS	"*count:		40    \n"			\
-					"*cycles:		350   \n"			\
-					"*delay:		50000 \n"			\
-					"*ncolors:		64   \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+#define MODE_spiral
+#define PROGCLASS "Spiral"
+#define HACK_INIT init_spiral
+#define HACK_DRAW draw_spiral
+#define spiral_opts xlockmore_opts
+#define DEFAULTS "*delay: 50000 \n" \
+ "*count: 40 \n" \
+ "*cycles: 350 \n" \
+ "*ncolors: 64 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* from the xscreensaver distribution */
+#else /* !STANDALONE */
+#include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt spiral_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_spiral
+
+ModeSpecOpt spiral_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   spiral_description =
+{"spiral", "init_spiral", "draw_spiral", "release_spiral",
+ "refresh_spiral", "init_spiral", (char *) NULL, &spiral_opts,
+ 5000, -40, 350, 1, 64, 1.0, "",
+ "Shows a helical locus of points", 0, NULL};
+
+#endif
 
 #define MAXTRAIL 512		/* The length of the trail */
 #define MAXDOTS 40
@@ -61,6 +73,7 @@ ModeSpecOpt spiral_opts = {
 
 /* How many segments to draw per cycle when redrawing */
 #define REDRAWSTEP 3
+
 
 typedef struct {
 	float       hx, hy, ha, hr;
@@ -82,7 +95,7 @@ typedef struct {
 	int         redrawing, redrawpos;
 } spiralstruct;
 
-static spiralstruct *spirals = NULL;
+static spiralstruct *spirals = (spiralstruct *) NULL;
 
 static void draw_dots(ModeInfo * mi, int in);
 
@@ -122,16 +135,19 @@ init_spiral(ModeInfo * mi)
 	}
 	sp = &spirals[MI_SCREEN(mi)];
 
-	sp->width = MI_WIN_WIDTH(mi);
-	sp->height = MI_WIN_HEIGHT(mi);
+	sp->width = MI_WIDTH(mi);
+	sp->height = MI_HEIGHT(mi);
 
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 
 	/* Init */
 	sp->nlength = MI_CYCLES(mi);
 
 	if (!sp->traildots)
-		sp->traildots = (Traildots *) malloc(sp->nlength * sizeof (Traildots));
+		if ((sp->traildots = (Traildots *) malloc(sp->nlength *
+				sizeof (Traildots))) == NULL) {
+			return;
+		}
 
 	/* initialize the allocated array */
 	for (i = 0; i < sp->nlength; i++) {
@@ -167,7 +183,7 @@ init_spiral(ModeInfo * mi)
 	sp->traildots[sp->inc].hr = sp->radius;
 	sp->inc++;
 
-	sp->dots = MI_BATCHCOUNT(mi);
+	sp->dots = MI_COUNT(mi);
 	if (sp->dots < -MINDOTS)
 		sp->dots = NRAND(sp->dots - MINDOTS + 1) + MINDOTS;
 	/* Absolute minimum */
@@ -180,11 +196,18 @@ draw_spiral(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	spiralstruct *sp = &spirals[MI_SCREEN(mi)];
 	int         i, j;
+	spiralstruct *sp;
 
+	if (spirals == NULL)
+		return;
+	sp = &spirals[MI_SCREEN(mi)];
+	if (sp->traildots == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	if (sp->erase == 1) {
-		XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+		XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 		draw_dots(mi, sp->inc);
 	}
 	sp->cx += sp->dx;
@@ -252,7 +275,7 @@ draw_spiral(ModeInfo * mi)
 	if (MI_NPIXELS(mi) > 2)
 		XSetForeground(display, gc, MI_PIXEL(mi, (int) sp->colors));
 	else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	draw_dots(mi, sp->inc);
 	sp->inc++;
 
@@ -286,15 +309,22 @@ release_spiral(ModeInfo * mi)
 				(void) free((void *) sp->traildots);
 		}
 		(void) free((void *) spirals);
-		spirals = NULL;
+		spirals = (spiralstruct *) NULL;
 	}
 }
 
 void
 refresh_spiral(ModeInfo * mi)
 {
-	spiralstruct *sp = &spirals[MI_SCREEN(mi)];
+	spiralstruct *sp;
 
+	if (spirals == NULL)
+		return;
+	sp = &spirals[MI_SCREEN(mi)];
+
+	MI_CLEARWINDOW(mi);
 	sp->redrawing = 1;
 	sp->redrawpos = 0;
 }
+
+#endif /* MODE_spiral */

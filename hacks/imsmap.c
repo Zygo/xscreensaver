@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include <sys/time.h> /* for gettimeofday() */
 
 #include <X11/Xlib.h>

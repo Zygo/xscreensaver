@@ -74,13 +74,6 @@
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-# define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
-
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Drawing.h>
@@ -93,9 +86,9 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-#include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Functions for loading and storing textures */
 

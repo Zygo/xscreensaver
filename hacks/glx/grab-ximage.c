@@ -21,6 +21,7 @@
 #include <GL/gl.h>	/* only for GLfloat */
 
 #include "grabscreen.h"
+#include "visual.h"
 
 extern char *progname;
 
@@ -32,14 +33,6 @@ extern char *progname;
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-static Bool
-bigendian (void)
-{
-  union { int i; char c[sizeof(int)]; } u;
-  u.i = 1;
-  return !u.c[0];
-}
-
 /* return the next larger power of 2. */
 static int
 to_pow2 (int i)
@@ -50,6 +43,45 @@ to_pow2 (int i)
   for (j = 0; j < countof(pow2); j++)
     if (pow2[j] >= i) return pow2[j];
   abort();  /* too big! */
+}
+
+
+/* Given a bitmask, returns the position and width of the field.
+ */
+static void
+decode_mask (unsigned int mask, unsigned int *pos_ret, unsigned int *size_ret)
+{
+  int i;
+  for (i = 0; i < 32; i++)
+    if (mask & (1L << i))
+      {
+        int j = 0;
+        *pos_ret = i;
+        for (; i < 32; i++, j++)
+          if (! (mask & (1L << i)))
+            break;
+        *size_ret = j;
+        return;
+      }
+}
+
+
+/* Given a value and a field-width, expands the field to fill out 8 bits.
+ */
+static unsigned char
+spread_bits (unsigned char value, unsigned char width)
+{
+  switch (width)
+    {
+    case 8: return value;
+    case 7: return (value << 1) | (value >> 6);
+    case 6: return (value << 2) | (value >> 4);
+    case 5: return (value << 3) | (value >> 2);
+    case 4: return (value << 4) | (value);
+    case 3: return (value << 5) | (value << 2) | (value >> 2);
+    case 2: return (value << 6) | (value << 4) | (value);
+    default: abort(); break;
+    }
 }
 
 
@@ -80,6 +112,7 @@ screen_to_ximage (Screen *screen, Window window)
    */
   {
     XImage *ximage1, *ximage2;
+    XColor *colors = 0;
 
     ximage1 = XGetImage (dpy, window, 0, 0, win_width, win_height, ~0L,
                          ZPixmap);
@@ -88,6 +121,22 @@ screen_to_ximage (Screen *screen, Window window)
 
     ximage2->data = (char *) calloc (tex_height, ximage2->bytes_per_line);
 
+    {
+      Screen *dscreen = DefaultScreenOfDisplay (dpy);
+      Visual *dvisual = DefaultVisualOfScreen (dscreen);
+      if (visual_class (dscreen, dvisual) == PseudoColor ||
+          visual_class (dscreen, dvisual) == GrayScale)
+        {
+          Colormap cmap = DefaultColormapOfScreen(dscreen);
+          int ncolors = visual_cells (dscreen, dvisual);
+          int i;
+          colors = (XColor *) calloc (sizeof (*colors), ncolors+1);
+          for (i = 0; i < ncolors; i++)
+            colors[i].pixel = i;
+          XQueryColors (dpy, cmap, colors, ncolors);
+        }
+    }
+
     /* Translate the server-ordered image to a client-ordered image.
      */
     {
@@ -95,25 +144,33 @@ screen_to_ximage (Screen *screen, Window window)
       int crpos, cgpos, cbpos, capos;  /* bitfield positions */
       int srpos, sgpos, sbpos;
       int srmsk, sgmsk, sbmsk;
-      int sdepth = ximage1->depth;
+      int srsiz, sgsiz, sbsiz;
+      int i;
+
+      unsigned char spread_map[3][256];
 
       srmsk = ximage1->red_mask;
       sgmsk = ximage1->green_mask;
       sbmsk = ximage1->blue_mask;
-      if (sdepth == 32 || sdepth == 24)
-        srpos = 16, sgpos = 8, sbpos = 0;
-      else /* 15 or 16 */
-        srpos = 10, sgpos = 5, sbpos = 0;
+
+      decode_mask (srmsk, &srpos, &srsiz);
+      decode_mask (sgmsk, &sgpos, &sgsiz);
+      decode_mask (sbmsk, &sbpos, &sbsiz);
 
       /* Note that unlike X, which is endianness-agnostic (since any XImage
          can have its own specific bit ordering, with the server reversing
          things as necessary) OpenGL pretends everything is client-side, so
-         we need to pack things in the right order for the client machine.
+         we need to pack things in "RGBA" order on the client machine,
+         regardless of its endianness.
        */
-      if (bigendian())
-        crpos = 24, cgpos = 16, cbpos =  8, capos =  0;
-      else
-        crpos =  0, cgpos =  8, cbpos = 16, capos = 24;
+      crpos =  0, cgpos =  8, cbpos = 16, capos = 24;
+
+      for (i = 0; i < 256; i++)
+        {
+          spread_map[0][i] = spread_bits (i, srsiz);
+          spread_map[1][i] = spread_bits (i, sgsiz);
+          spread_map[2][i] = spread_bits (i, sbsiz);
+        }
 
       for (y = 0; y < win_height; y++)
         {
@@ -121,26 +178,37 @@ screen_to_ximage (Screen *screen, Window window)
           for (x = 0; x < win_width; x++)
             {
               unsigned long sp = XGetPixel (ximage1, x, y2);
-              unsigned char sr = (sp & srmsk) >> srpos;
-              unsigned char sg = (sp & sgmsk) >> sgpos;
-              unsigned char sb = (sp & sbmsk) >> sbpos;
+              unsigned char sr, sg, sb;
               unsigned long cp;
 
-              if (sdepth < 24)   /* spread 5 bits to 8 */
+              if (colors)
                 {
-                  sr = (sr << 3) | (sr >> 2);
-                  sg = (sg << 3) | (sg >> 2);
-                  sb = (sb << 3) | (sb >> 2);
+                  sr = colors[sp].red   & 0xFF;
+                  sg = colors[sp].green & 0xFF;
+                  sb = colors[sp].blue  & 0xFF;
                 }
+              else
+                {
+                  sr = (sp & srmsk) >> srpos;
+                  sg = (sp & sgmsk) >> sgpos;
+                  sb = (sp & sbmsk) >> sbpos;
+
+                  sr = spread_map[0][sr];
+                  sg = spread_map[1][sg];
+                  sb = spread_map[2][sb];
+                }
+
               cp = ((sr << crpos) |
                     (sg << cgpos) |
                     (sb << cbpos) |
                     (0xFF << capos));
+
               XPutPixel (ximage2, x, y, cp);
             }
         }
     }
 
+    if (colors) free (colors);
     free (ximage1->data);
     ximage1->data = 0;
     XDestroyImage (ximage1);

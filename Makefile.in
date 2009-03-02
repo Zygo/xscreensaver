@@ -174,18 +174,23 @@ rpm::
   DIR=`pwd`/rpm_build ;							   \
   ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
   ADIR=archive/ ;							   \
+  TGZ=xscreensaver-$$VERS.tar.gz ;					   \
+  if [ ! -f $${ADIR}$$TGZ ]; then					   \
+    echo "$${ADIR}$$TGZ does not exist!  Did you forget to \`make tar'?" ; \
+    exit 1 ; 								   \
+  fi ;									   \
   rm -rf /var/tmp/xscreensaver-$$VERS-root ;				   \
   rm -rf $$DIR ;							   \
   mkdir $$DIR ;								   \
   ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
-  cp -p $${ADIR}xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;		   \
+  cp -p $${ADIR}$$TGZ $$DIR/SOURCES/ ;					   \
   rpm --define "_topdir $$DIR"						   \
       --define "USE_GL yes"						   \
       -v -ba xscreensaver.spec ;					   \
   echo '' ;								   \
   echo 'RPM build complete' ;						   \
   echo '' ;								   \
-  rm -f $$DIR/xscreensaver-$$VERS.tar.gz ;				   \
+  rm -f $$DIR/$$TGZ ;							   \
   rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				   \
   mv $$DIR/SRPMS/xscreensaver*-$$VERS-*.rpm . ;				   \
   mv $$DIR/RPMS/$$ARCH/xscreensaver*-$$VERS-*.rpm . ;			   \

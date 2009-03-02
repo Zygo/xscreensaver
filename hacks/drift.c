@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * drift --- drifting recursive fractal cosmic flames.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* drift --- drifting recursive fractal cosmic flames */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)drift.c	4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1991 by Patrick J. Naughton.
+/*-
+ * Copyright (c) 1991 by Patrick J. Naughton.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,35 +22,33 @@ static const char sccsid[] = "@(#)drift.c	4.02 97/04/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 01-Jan-97: Moved new flame to drift.  Compile time options now run time.
- * 01-Jun-95: Updated by Scott Draves.
- * 27-Jun-91: vary number of functions used.
- * 24-Jun-91: fixed portability problem with integer mod (%).
- * 06-Jun-91: Written. (received from Scott Draves, spot@cs.cmu.edu).
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Jamie Zawinski <jwz@jwz.org> compatible with xscreensaver
+ * 01-Jan-1997: Moved new flame to drift.  Compile time options now run time.
+ * 01-Jun-1995: Updated by Scott Draves.
+ * 27-Jun-1991: vary number of functions used.
+ * 24-Jun-1991: fixed portability problem with integer mod (%).
+ * 06-Jun-1991: Written, received from Scott Draves <spot@cs.cmu.edu>
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Drift"
-# define HACK_INIT					init_drift
-# define HACK_DRAW					draw_drift
-# define drift_opts					xlockmore_opts
-# define DEFAULTS	"*count:		30    \n"			\
-					"*delay:		10000 \n"			\
-					"*ncolors:		200   \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-# include "erase.h"
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_drift
+#define PROGCLASS "Drift"
+#define HACK_INIT init_drift
+#define HACK_DRAW draw_drift
+#define drift_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n" \
+ "*count: 30 \n" \
+ "*ncolors: 200 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#include "erase.h"
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
 
+#endif /* STANDALONE */
 
-#define MAXBATCH1	200	/* mono */
-#define MAXBATCH2	20	/* color */
-#define FUSE		10	/* discard this many initial iterations */
-#define NMAJORVARS	7
-#define MAXLEV 10
+#ifdef MODE_drift
 
 #define DEF_GROW "False"	/* Grow fractals instead of animating one at a time,
 				   would then be like flame */
@@ -62,24 +62,39 @@ static Bool liss;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-grow", ".drift.grow", XrmoptionNoArg, (caddr_t) "on"},
-	{"+grow", ".drift.grow", XrmoptionNoArg, (caddr_t) "off"},
-	{"-liss", ".drift.trail", XrmoptionNoArg, (caddr_t) "on"},
-	{"+liss", ".drift.trail", XrmoptionNoArg, (caddr_t) "off"}
+	{(char *) "-grow", (char *) ".drift.grow", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+grow", (char *) ".drift.grow", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-liss", (char *) ".drift.trail", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+liss", (char *) ".drift.trail", XrmoptionNoArg, (caddr_t) "off"}
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & grow, "grow", "Grow", DEF_GROW, t_Bool},
-	{(caddr_t *) & liss, "liss", "Liss", DEF_LISS, t_Bool}
+	{(caddr_t *) & grow, (char *) "grow", (char *) "Grow", (char *) DEF_GROW, t_Bool},
+	{(caddr_t *) & liss, (char *) "liss", (char *) "Liss", (char *) DEF_LISS, t_Bool}
 };
 static OptionStruct desc[] =
 {
-	{"-/+grow", "turn on/off growing fractals, else they are animated"},
-	{"-/+liss", "turn on/off using lissojous figures to get points"}
+	{(char *) "-/+grow", (char *) "turn on/off growing fractals, else they are animated"},
+	{(char *) "-/+liss", (char *) "turn on/off using lissojous figures to get points"}
 };
 
-ModeSpecOpt drift_opts = { 4, opts, 2, vars, desc };
+ModeSpecOpt drift_opts =
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
+#ifdef USE_MODULES
+ModStruct   drift_description =
+{"drift", "init_drift", "draw_drift", "release_drift",
+ "refresh_drift", "init_drift", (char *) NULL, &drift_opts,
+ 10000, 30, 1, 1, 64, 1.0, "",
+ "Shows cosmic drifting flame fractals", 0, NULL};
+
+#endif
+
+#define MAXBATCH1	200	/* mono */
+#define MAXBATCH2	20	/* color */
+#define FUSE		10	/* discard this many initial iterations */
+#define NMAJORVARS	7
+#define MAXLEV 10
 
 typedef struct {
 	/* shape of current flame */
@@ -109,81 +124,81 @@ typedef struct {
 	XPoint      pts[MAXBATCH1];	/* here they are */
 	unsigned long pixcol;
 	/* when drawing in color, we have a buffer per color */
-	int         ncpoints[NUMCOLORS];
-	XPoint      cpts[NUMCOLORS][MAXBATCH2];
+	int        *ncpoints;
+	XPoint     *cpts;
 
 	double      x, y, c;
 	int         liss_time;
 	Bool        grow, liss;
+
+	short       lasthalf;
+	long        saved_random_bits;
+	int         nbits;
 } driftstruct;
 
-static driftstruct *drifts = NULL;
+static driftstruct *drifts = (driftstruct *) NULL;
 
 static short
-halfrandom(int mv)
+halfrandom(driftstruct * dp, int mv)
 {
-	static short lasthalf = 0;
 	unsigned long r;
 
-	if (lasthalf) {
-		r = lasthalf;
-		lasthalf = 0;
+	if (dp->lasthalf) {
+		r = dp->lasthalf;
+		dp->lasthalf = 0;
 	} else {
 		r = LRAND();
-		lasthalf = r >> 16;
+		dp->lasthalf = (short) (r >> 16);
 	}
 	r = r % mv;
 	return r;
 }
 
 static int
-frandom(int n)
+frandom(driftstruct * dp, int n)
 {
-	static long saved_random_bits = 0;
-	static int  nbits = 0;
 	int         result;
 
-	if (3 > nbits) {
-		saved_random_bits = LRAND();
-		nbits = 31;
+	if (3 > dp->nbits) {
+		dp->saved_random_bits = LRAND();
+		dp->nbits = 31;
 	}
 	switch (n) {
 		case 2:
-			result = saved_random_bits & 1;
-			saved_random_bits >>= 1;
-			nbits -= 1;
+			result = (int) (dp->saved_random_bits & 1);
+			dp->saved_random_bits >>= 1;
+			dp->nbits -= 1;
 			return result;
 
 		case 3:
-			result = saved_random_bits & 3;
-			saved_random_bits >>= 2;
-			nbits -= 2;
+			result = (int) (dp->saved_random_bits & 3);
+			dp->saved_random_bits >>= 2;
+			dp->nbits -= 2;
 			if (3 == result)
-				return frandom(3);
+				return frandom(dp, 3);
 			return result;
 
 		case 4:
-			result = saved_random_bits & 3;
-			saved_random_bits >>= 2;
-			nbits -= 2;
+			result = (int) (dp->saved_random_bits & 3);
+			dp->saved_random_bits >>= 2;
+			dp->nbits -= 2;
 			return result;
 
 		case 5:
-			result = saved_random_bits & 7;
-			saved_random_bits >>= 3;
-			nbits -= 3;
+			result = (int) (dp->saved_random_bits & 7);
+			dp->saved_random_bits >>= 3;
+			dp->nbits -= 3;
 			if (4 < result)
-				return frandom(5);
+				return frandom(dp, 5);
 			return result;
 		default:
 			(void) fprintf(stderr, "bad arg to frandom\n");
-			exit(1);
 	}
 	return 0;
 }
 
-#define DISTRIB_A (halfrandom(7000) + 9000)
-#define DISTRIB_B ((frandom(3) + 1) * (frandom(3) + 1) * 120000)
+#define DISTRIB_A (halfrandom(dp, 7000) + 9000)
+#define DISTRIB_B ((frandom(dp, 3) + 1) * (frandom(dp, 3) + 1) * 120000)
 #define LEN(x) (sizeof(x)/sizeof((x)[0]))
 
 static void
@@ -195,7 +210,7 @@ initmode(ModeInfo * mi, int mode)
 
 	dp->mode = mode;
 
-	dp->major_variation = halfrandom(VARIATION_LEN);
+	dp->major_variation = halfrandom(dp, VARIATION_LEN);
 	/*  0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 6 */
 	dp->major_variation = ((dp->major_variation >= VARIATION_LEN >> 1) &&
 			       (dp->major_variation < VARIATION_LEN - 1)) ?
@@ -204,11 +219,11 @@ initmode(ModeInfo * mi, int mode)
 	if (dp->grow) {
 		dp->rainbow = 0;
 		if (mode) {
-			if (!dp->color || halfrandom(8)) {
-				dp->nfractals = halfrandom(30) + 5;
+			if (!dp->color || halfrandom(dp, 8)) {
+				dp->nfractals = halfrandom(dp, 30) + 5;
 				dp->fractal_len = DISTRIB_A;
 			} else {
-				dp->nfractals = halfrandom(5) + 5;
+				dp->nfractals = halfrandom(dp, 5) + 5;
 				dp->fractal_len = DISTRIB_B;
 			}
 		} else {
@@ -221,8 +236,9 @@ initmode(ModeInfo * mi, int mode)
 		dp->rainbow = dp->color;
 		dp->fractal_len = 2000000;
 	}
-	dp->fractal_len = (dp->fractal_len * MI_BATCHCOUNT(mi)) / 20;
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	dp->fractal_len = (dp->fractal_len * MI_COUNT(mi)) / 20;
+
+	MI_CLEARWINDOW(mi);
 }
 
 static void
@@ -237,13 +253,26 @@ pick_df_coefs(ModeInfo * mi)
 		r = 1e-6;
 		for (j = 0; j < 2; j++)
 			for (k = 0; k < 3; k++) {
-				dp->df[j][k][i] = ((double) halfrandom(1000) / 500.0 - 1.0);
+				dp->df[j][k][i] = ((double) halfrandom(dp, 1000) / 500.0 - 1.0);
 				r += dp->df[j][k][i] * dp->df[j][k][i];
 			}
-		r = (3 + halfrandom(5)) * 0.01 / sqrt(r);
+		r = (3 + halfrandom(dp, 5)) * 0.01 / sqrt(r);
 		for (j = 0; j < 2; j++)
 			for (k = 0; k < 3; k++)
 				dp->df[j][k][i] *= r;
+	}
+}
+
+static void
+free_drift(driftstruct *dp)
+{
+	if (dp->ncpoints != NULL) {
+		(void) free((void *) dp->ncpoints);
+		dp->ncpoints = (int *) NULL;
+	}
+	if (dp->cpts != NULL) {
+		(void) free((void *) dp->cpts);
+		dp->cpts = (XPoint *) NULL;
 	}
 }
 
@@ -257,24 +286,40 @@ initfractal(ModeInfo * mi)
 
 	dp->fuse = FUSE;
 	dp->total_points = 0;
+
+	if (!dp->ncpoints) {
+		if ((dp->ncpoints = (int *) malloc(sizeof (int) * MI_NCOLORS(mi))) ==
+			NULL) {
+			free_drift(dp);
+			return;
+		}
+	}
+	if (!dp->cpts) {
+		if ((dp->cpts = (XPoint *) malloc(MAXBATCH2 * sizeof (XPoint) *
+			 MI_NCOLORS(mi))) == NULL) {
+			free_drift(dp);
+			return;
+		}
+	}
+
 	if (dp->rainbow)
 		for (i = 0; i < MI_NPIXELS(mi); i++)
 			dp->ncpoints[i] = 0;
 	else
 		dp->npoints = 0;
-	dp->nxforms = halfrandom(XFORM_LEN);
+	dp->nxforms = halfrandom(dp, XFORM_LEN);
 	/* 2, 2, 2, 3, 3, 3, 4, 4, 5 */
 	dp->nxforms = (dp->nxforms >= XFORM_LEN - 1) + dp->nxforms / 3 + 2;
 
 	dp->c = dp->x = dp->y = 0.0;
-	if (dp->liss && !halfrandom(10)) {
+	if (dp->liss && !halfrandom(dp, 10)) {
 		dp->liss_time = 0;
 	}
 	if (!dp->grow)
 		pick_df_coefs(mi);
 	for (i = 0; i < dp->nxforms; i++) {
 		if (NMAJORVARS == dp->major_variation)
-			dp->variation[i] = halfrandom(NMAJORVARS);
+			dp->variation[i] = halfrandom(dp, NMAJORVARS);
 		else
 			dp->variation[i] = dp->major_variation;
 		for (j = 0; j < 2; j++)
@@ -282,13 +327,13 @@ initfractal(ModeInfo * mi)
 				if (dp->liss)
 					dp->f[j][k][i] = sin(dp->liss_time * dp->df[j][k][i]);
 				else
-					dp->f[j][k][i] = ((double) halfrandom(1000) / 500.0 - 1.0);
+					dp->f[j][k][i] = ((double) halfrandom(dp, 1000) / 500.0 - 1.0);
 			}
 	}
 	if (dp->color)
-		dp->pixcol = MI_PIXEL(mi, halfrandom(MI_NPIXELS(mi)));
+		dp->pixcol = MI_PIXEL(mi, halfrandom(dp, MI_NPIXELS(mi)));
 	else
-		dp->pixcol = MI_WIN_WHITE_PIXEL(mi);
+		dp->pixcol = MI_WHITE_PIXEL(mi);
 
 }
 
@@ -305,26 +350,17 @@ init_drift(ModeInfo * mi)
 	}
 	dp = &drifts[MI_SCREEN(mi)];
 
-	dp->width = MI_WIN_WIDTH(mi);
-	dp->height = MI_WIN_HEIGHT(mi);
+	dp->width = MI_WIDTH(mi);
+	dp->height = MI_HEIGHT(mi);
 	dp->color = MI_NPIXELS(mi) > 2;
 
-	if (MI_WIN_IS_FULLRANDOM(mi)) {
-#if 1 /* jwz: even up the odds */
-	  switch ((int) (LRAND() % 3)) {
-	  case 0:   dp->grow = True;  dp->liss = False; break;
-	  case 1:   dp->grow = False; dp->liss = True;  break;
-	  default:  dp->grow = False; dp->liss = False; break;
-		/* liss and grow don't work together. */
-	  }
-#else /* 0 */
-		if (LRAND() & 1)
+	if (MI_IS_FULLRANDOM(mi)) {
+		if (NRAND(3) == 0)
 			dp->grow = True;
 		else {
 			dp->grow = False;
 			dp->liss = (Bool) (LRAND() & 1);
 		}
-#endif
 	} else {
 		dp->grow = grow;
 		if (dp->grow)
@@ -339,7 +375,7 @@ init_drift(ModeInfo * mi)
 static void
 iter(driftstruct * dp)
 {
-	int         i = frandom(dp->nxforms);
+	int         i = frandom(dp, dp->nxforms);
 	double      nx, ny, nc;
 
 
@@ -480,8 +516,8 @@ iter(driftstruct * dp)
 	/* how to check nan too?  some machines don't have finite().
 	   don't need to check ny, it'll propogate */
 	if (nx > 1e4 || nx < -1e4) {
-		nx = halfrandom(1000) / 500.0 - 1.0;
-		ny = halfrandom(1000) / 500.0 - 1.0;
+		nx = halfrandom(dp, 1000) / 500.0 - 1.0;
+		ny = halfrandom(dp, 1000) / 500.0 - 1.0;
 		dp->fuse = FUSE;
 	}
 	dp->x = nx;
@@ -529,11 +565,11 @@ draw(ModeInfo * mi, driftstruct * dp, Drawable d)
 		if (c >= npix)
 			c = npix - 1;
 		n = dp->ncpoints[c];
-		dp->cpts[c][n].x = fixed_x;
-		dp->cpts[c][n].y = fixed_y;
+		dp->cpts[c * MAXBATCH2 + n].x = fixed_x;
+		dp->cpts[c * MAXBATCH2 + n].y = fixed_y;
 		if (++dp->ncpoints[c] == MAXBATCH2) {
 			XSetForeground(display, gc, MI_PIXEL(mi, c));
-			XDrawPoints(display, d, gc, dp->cpts[c],
+			XDrawPoints(display, d, gc, &(dp->cpts[c * MAXBATCH2]),
 				    dp->ncpoints[c], CoordModeOrigin);
 			dp->ncpoints[c] = 0;
 		}
@@ -553,7 +589,7 @@ draw_flush(ModeInfo * mi, driftstruct * dp, Drawable d)
 		for (i = 0; i < npix; i++) {
 			if (dp->ncpoints[i]) {
 				XSetForeground(display, gc, MI_PIXEL(mi, i));
-				XDrawPoints(display, d, gc, dp->cpts[i],
+				XDrawPoints(display, d, gc, &(dp->cpts[i * MAXBATCH2]),
 					    dp->ncpoints[i], CoordModeOrigin);
 				dp->ncpoints[i] = 0;
 			}
@@ -572,10 +608,16 @@ void
 draw_drift(ModeInfo * mi)
 {
 	Window      window = MI_WINDOW(mi);
-	driftstruct *dp = &drifts[MI_SCREEN(mi)];
+	driftstruct *dp;
 
+	if (drifts == NULL)
+		return;
+	dp = &drifts[MI_SCREEN(mi)];
+	if (dp->ncpoints == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	dp->timer = 3000;
-
 	while (dp->timer) {
 		iter(dp);
 		draw(mi, dp, window);
@@ -587,7 +629,7 @@ draw_drift(ModeInfo * mi)
 			  sleep(4); /* #### make settable */
 			  erase_full_window(MI_DISPLAY(mi), MI_WINDOW(mi));
 #endif /* STANDALONE */
-			  initmode(mi, frandom(2));
+				initmode(mi, frandom(dp, 2));
 			}
 			initfractal(mi);
 		}
@@ -618,13 +660,19 @@ void
 release_drift(ModeInfo * mi)
 {
 	if (drifts != NULL) {
+		int         screen;
+
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_drift(&drifts[screen]);
 		(void) free((void *) drifts);
-		drifts = NULL;
+		drifts = (driftstruct *) NULL;
 	}
 }
 
 void
 refresh_drift(ModeInfo * mi)
 {
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_drift */

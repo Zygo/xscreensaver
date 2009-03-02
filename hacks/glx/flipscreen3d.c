@@ -28,6 +28,7 @@
 #define DEFAULTS       "*delay:       20000       \n" \
                         "*showFPS:       False       \n" \
                         "*rotate:       True       \n" \
+			"*wireframe:	False	\n"	\
 
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -108,7 +109,7 @@ int fadetime = 0; /* fade before regrab */
 
 
 /* draw the texture mapped quad (actually two back to back)*/
-void showscreen(int frozen)
+void showscreen(int frozen, int wire)
 {
   static GLfloat r = 1, g = 1, b = 1, a = 1;
   GLfloat qxw, qyh;
@@ -159,12 +160,15 @@ void showscreen(int frozen)
 
   glColor4f(r, g, b, a);
 
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthMask(GL_FALSE);
+  if (!wire)
+    {
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDepthMask(GL_FALSE);
+    }
 
-  glBegin(GL_QUADS);
+  glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
 
   glNormal3f(0, 0, 1);
 
@@ -275,7 +279,7 @@ void drawgrid(void)
   glEnd();
 }
 
-void display(void)
+void display(int wire)
 {
   static GLfloat rx=1, ry=1, rz=0;
   static GLfloat rot = 0;
@@ -335,7 +339,7 @@ void display(void)
   odrot = drot;
   if (rot > 360 || rot < -360) /* dont overflow rotation! */
     rot -= rot;
-  showscreen(frozen);
+  showscreen(frozen, wire);
   glPopMatrix();
   glFlush();
 }
@@ -354,6 +358,10 @@ void reshape_screenflip(ModeInfo *mi, int width, int height)
 void getSnapshot (ModeInfo *modeinfo)
 {
   XImage *ximage;
+  int status;
+
+  if (MI_IS_WIREFRAME(modeinfo))
+    return;
 
  ximage = screen_to_ximage (modeinfo->xgwa.screen, modeinfo->window);
 
@@ -361,8 +369,10 @@ void getSnapshot (ModeInfo *modeinfo)
   tw = modeinfo->xgwa.width;
   th = modeinfo->xgwa.height;
 
+#if 0  /* jwz: this makes the image start off the bottom right of the screen */
   qx += (qw*tw/winw);
   qy -= (qh*th/winh);
+#endif
 
   qw *= (GLfloat)tw/winw;
   qh *= (GLfloat)th/winh;
@@ -374,12 +384,24 @@ void getSnapshot (ModeInfo *modeinfo)
  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                   GL_LINEAR_MIPMAP_LINEAR);
- if (gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
-                       ximage->width, ximage->height,
-                       GL_RGBA, GL_UNSIGNED_BYTE, ximage->data)) {
-    printf("Error!\n");
-    exit(1);
- }
+
+ clear_gl_error();
+ status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
+                            ximage->width, ximage->height,
+                            GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+ if (status)
+   {
+     const char *s = gluErrorString (status);
+     fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
+              progname, ximage->width, ximage->height,
+              (s ? s : "(unknown)"));
+     fprintf (stderr, "%s: turning on -wireframe.\n", progname);
+     MI_IS_WIREFRAME(modeinfo) = 1;
+     clear_gl_error();
+   }
+ check_gl_error("mipmapping");  /* should get a return code instead of a
+                                   GL error, but just in case... */
+
  free(ximage->data);
  ximage->data = 0;
  XDestroyImage (ximage);
@@ -406,12 +428,16 @@ void init_screenflip(ModeInfo *mi)
  winh = MI_WIN_HEIGHT(mi);
  winw = MI_WIN_WIDTH(mi);
  glClearColor(0.0,0.0,0.0,0.0);
- glShadeModel(GL_SMOOTH);
- glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
- glEnable(GL_DEPTH_TEST);
- glEnable(GL_CULL_FACE);
- glCullFace(GL_FRONT);
- glDisable(GL_LIGHTING);
+
+ if (! MI_IS_WIREFRAME(mi))
+   {
+     glShadeModel(GL_SMOOTH);
+     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+     glEnable(GL_DEPTH_TEST);
+     glEnable(GL_CULL_FACE);
+     glCullFace(GL_FRONT);
+     glDisable(GL_LIGHTING);
+   }
 
  getSnapshot(mi);
 }
@@ -430,7 +456,7 @@ void draw_screenflip(ModeInfo *mi)
   if (regrab)
     getSnapshot(mi);
 
-  display();
+  display(MI_IS_WIREFRAME(mi));
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

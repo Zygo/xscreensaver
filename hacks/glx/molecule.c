@@ -112,6 +112,7 @@
 
 #ifdef USE_GL /* whole file */
 
+#include <stdlib.h>
 #include <ctype.h>
 #include <GL/glu.h>
 
@@ -1034,13 +1035,34 @@ parse_pdb_file (molecule *m, const char *name)
 }
 
 
+typedef struct { char *atom; int count; } atom_and_count;
+
+/* When listing the components of a molecule, the convention is to put the
+   carbon atoms first, the hydrogen atoms second, and the other atom types
+   sorted alphabetically after that (although for some molecules, the usual
+   order is different, like for NH(3), but we don't special-case those.)
+ */
+static int
+cmp_atoms (const void *aa, const void *bb)
+{
+  const atom_and_count *a = (atom_and_count *) aa;
+  const atom_and_count *b = (atom_and_count *) bb;
+  if (!a->atom) return  1;
+  if (!b->atom) return -1;
+  if (!strcmp(a->atom, "C")) return -1;
+  if (!strcmp(b->atom, "C")) return  1;
+  if (!strcmp(a->atom, "H")) return -1;
+  if (!strcmp(b->atom, "H")) return  1;
+  return strcmp (a->atom, b->atom);
+}
+
 static void
 generate_molecule_formula (molecule *m)
 {
   char *buf = (char *) malloc (m->natoms * 10);
   char *s = buf;
   int i;
-  struct { char *atom; int count; } counts[200];
+  atom_and_count counts[200];
   memset (counts, 0, sizeof(counts));
   *s = 0;
   for (i = 0; i < m->natoms; i++)
@@ -1060,6 +1082,10 @@ generate_molecule_formula (molecule *m)
         counts[j].atom = a;
       counts[j].count++;
     }
+
+  i = 0;
+  while (counts[i].atom) i++;
+  qsort (counts, i, sizeof(*counts), cmp_atoms);
 
   i = 0;
   while (counts[i].atom)

@@ -45,6 +45,8 @@
 char *progclass = "ShadeBobs";
 
 char *defaults [] = {
+  ".background: black",
+  ".foreground: white",
   "*degrees:  0",	/* default: Automatic degree calculation */
   "*color:    random",
   "*count:    4",

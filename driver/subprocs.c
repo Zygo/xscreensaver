@@ -30,10 +30,8 @@
 # include <sys/wait.h>		/* for waitpid() and associated macros */
 #endif
 
-#if (defined(HAVE_SETPRIORITY) && defined(PRIO_PROCESS)) || \
-     defined(HAVE_SETRLIMIT)
-# include <sys/resource.h>	/* for setpriority() and PRIO_PROCESS */
-				/* and also setrlimit() and RLIMIT_AS */
+#ifdef HAVE_SETRLIMIT
+# include <sys/resource.h>	/* for setrlimit() and RLIMIT_AS */
 #endif
 
 #ifdef VMS
@@ -72,44 +70,16 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
-static void
-nice_subproc (int nice_level)
-{
-  if (nice_level == 0)
-    return;
-
-#if defined(HAVE_NICE)
-  {
-    int old_nice = nice (0);
-    int n = nice_level - old_nice;
-    errno = 0;
-    if (nice (n) == -1 && errno != 0)
-      {
-	char buf [512];
-	sprintf (buf, "%s: nice(%d) failed", blurb(), n);
-	perror (buf);
-    }
-  }
-#elif defined(HAVE_SETPRIORITY) && defined(PRIO_PROCESS)
-  if (setpriority (PRIO_PROCESS, getpid(), nice_level) != 0)
-    {
-      char buf [512];
-      sprintf (buf, "%s: setpriority(PRIO_PROCESS, %lu, %d) failed",
-	       blurb(), (unsigned long) getpid(), nice_level);
-      perror (buf);
-    }
-#else
-  fprintf (stderr,
-	   "%s: don't know how to change process priority on this system.\n",
-	   blurb());
-
-#endif
-}
-
 
 /* RLIMIT_AS (called RLIMIT_VMEM on some systems) controls the maximum size
    of a process's address space, i.e., the maximal brk(2) and mmap(2) values.
    Setting this lets you put a cap on how much memory a process can allocate.
+
+   Except the "and mmap()" part kinda makes this useless, since many GL
+   implementations end up using mmap() to pull the whole frame buffer into
+   memory (or something along those lines) making it appear processes are
+   using hundreds of megabytes when in fact they're using very little, and
+   we end up capping their mallocs prematurely.  YAY!
  */
 #if defined(RLIMIT_VMEM) && !defined(RLIMIT_AS)
 # define RLIMIT_AS RLIMIT_VMEM
@@ -162,227 +132,6 @@ limit_subproc_memory (int address_space_limit, Bool verbose_p)
 
 #endif /* HAVE_SETRLIMIT && RLIMIT_AS */
 }
-
-
-
-#ifndef VMS
-
-static void
-exec_simple_command (const char *command)
-{
-  char *av[1024];
-  int ac = 0;
-  char *token = strtok (strdup(command), " \t");
-  while (token)
-    {
-      av[ac++] = token;
-      token = strtok(0, " \t");
-    }
-  av[ac] = 0;
-
-  execvp (av[0], av);			/* shouldn't return. */
-
-  {
-    char buf [512];
-    sprintf (buf, "%s: could not execute \"%s\"", blurb(), av[0]);
-    perror (buf);
-
-    if (errno == ENOENT &&
-	(token = getenv("PATH")))
-      {
-# ifndef PATH_MAX
-#  ifdef MAXPATHLEN
-#   define PATH_MAX MAXPATHLEN
-#  else
-#   define PATH_MAX 2048
-#  endif
-# endif
-	char path[PATH_MAX];
-	fprintf (stderr, "\n");
-	*path = 0;
-# if defined(HAVE_GETCWD)
-	getcwd (path, sizeof(path));
-# elif defined(HAVE_GETWD)
-	getwd (path);
-# endif
-	if (*path)
-	  fprintf (stderr, "    Current directory is: %s\n", path);
-	fprintf (stderr, "    PATH is:\n");
-	token = strtok (strdup(token), ":");
-	while (token)
-	  {
-	    fprintf (stderr, "        %s\n", token);
-	    token = strtok(0, ":");
-	  }
-	fprintf (stderr, "\n");
-      }
-  }
-  fflush(stderr);
-  fflush(stdout);
-  exit (1);	/* Note that this only exits a child fork.  */
-}
-
-
-static void
-exec_complex_command (const char *shell, const char *command)
-{
-  char *av[5];
-  int ac = 0;
-  char *command2 = (char *) malloc (strlen (command) + 10);
-  const char *s;
-  int got_eq = 0;
-  const char *after_vars;
-
-  /* Skip leading whitespace.
-   */
-  while (*command == ' ' || *command == '\t')
-    command++;
-
-  /* If the string has a series of tokens with "=" in them at them, set
-     `after_vars' to point into the string after those tokens and any
-     trailing whitespace.  Otherwise, after_vars == command.
-   */
-  after_vars = command;
-  for (s = command; *s; s++)
-    {
-      if (*s == '=') got_eq = 1;
-      else if (*s == ' ')
-        {
-          if (got_eq)
-            {
-              while (*s == ' ' || *s == '\t')
-                s++;
-              after_vars = s;
-              got_eq = 0;
-            }
-          else
-            break;
-        }
-    }
-
-  *command2 = 0;
-  strncat (command2, command, after_vars - command);
-  strcat (command2, "exec ");
-  strcat (command2, after_vars);
-
-  /* We have now done these transformations:
-     "foo -x -y"               ==>  "exec foo -x -y"
-     "BLAT=foop      foo -x"   ==>  "BLAT=foop      exec foo -x"
-     "BLAT=foop A=b  foo -x"   ==>  "BLAT=foop A=b  exec foo -x"
-   */
-
-
-  /* Invoke the shell as "/bin/sh -c 'exec prog -arg -arg ...'" */
-  av [ac++] = (char *) shell;
-  av [ac++] = "-c";
-  av [ac++] = command2;
-  av [ac]   = 0;
-
-  execvp (av[0], av);			/* shouldn't return. */
-
-  {
-    char buf [512];
-    sprintf (buf, "%s: execvp(\"%s\") failed", blurb(), av[0]);
-    perror (buf);
-    fflush(stderr);
-    fflush(stdout);
-    exit (1);	/* Note that this only exits a child fork.  */
-  }
-}
-
-#else  /* VMS */
-
-static void
-exec_vms_command (const char *command)
-{
-  system (command);
-  fflush (stderr);
-  fflush (stdout);
-  exit (1);	/* Note that this only exits a child fork.  */
-}
-
-#endif /* !VMS */
-
-
-static void
-exec_screenhack (saver_screen_info *ssi, const char *command)
-{
-  /* I don't believe what a sorry excuse for an operating system UNIX is!
-
-     - I want to spawn a process.
-     - I want to know it's pid so that I can kill it.
-     - I would like to receive a message when it dies of natural causes.
-     - I want the spawned process to have user-specified arguments.
-
-     If shell metacharacters are present (wildcards, backquotes, etc), the
-     only way to parse those arguments is to run a shell to do the parsing
-     for you.
-
-     And the only way to know the pid of the process is to fork() and exec()
-     it in the spawned side of the fork.
-
-     But if you're running a shell to parse your arguments, this gives you
-     the pid of the *shell*, not the pid of the *process* that you're
-     actually interested in, which is an *inferior* of the shell.  This also
-     means that the SIGCHLD you get applies to the shell, not its inferior.
-     (Why isn't that sufficient?  I don't remember any more, but it turns
-     out that it isn't.)
-
-     So, the only solution, when metacharacters are present, is to force the
-     shell to exec() its inferior.  What a fucking hack!  We prepend "exec "
-     to the command string, and hope it doesn't contain unquoted semicolons
-     or ampersands (we don't search for them, because we don't want to
-     prohibit their use in quoted strings (messages, for example) and parsing
-     out the various quote characters is too much of a pain.)
-
-     (Actually, Clint Wong <clint@jts.com> points out that process groups
-     might be used to take care of this problem; this may be worth considering
-     some day, except that, 1: this code works now, so why fix it, and 2: from
-     what I've seen in Emacs, dealing with process groups isn't especially
-     portable.)
-   */
-  saver_info *si = ssi->global;
-  saver_preferences *p = &si->prefs;
-
-#ifndef VMS
-  Bool hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"=");
-  /* note: = is in the above because of the sh syntax "FOO=bar cmd". */
-
-  if (getuid() == (uid_t) 0 || geteuid() == (uid_t) 0)
-    {
-      /* If you're thinking of commenting this out, think again.
-         If you do so, you will open a security hole.  Mail jwz
-         so that he may enlighten you as to the error of your ways.
-       */
-      fprintf (stderr, "%s: we're still running as root!  Disaster!\n",
-               blurb());
-      saver_exit (si, 1, 0);
-    }
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu%s.\n",
-	     blurb(), ssi->number, command,
-             (unsigned long) getpid (),
-	     (hairy_p ? " (via shell)" : ""));
-
-  if (hairy_p)
-    /* If it contains any shell metacharacters, do it the hard way,
-       and fork a shell to parse the arguments for us. */
-    exec_complex_command (p->shell, command);
-  else
-    /* Otherwise, we can just exec the program directly. */
-    exec_simple_command (command);
-
-#else /* VMS */
-  if (p->verbose_p)
-    fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
-	     blurb(), ssi->number, command, getpid());
-  exec_vms_command (command);
-#endif /* VMS */
-
-  abort();	/* that shouldn't have returned. */
-}
-
 
 
 /* Management of child processes, and de-zombification.
@@ -845,6 +594,50 @@ select_visual_of_hack (saver_screen_info *ssi, screenhack *hack)
 
 
 static void
+print_path_error (const char *program)
+{
+  char buf [512];
+  char *cmd = strdup (program);
+  char *token = strchr (cmd, ' ');
+
+  if (token) *token = 0;
+  sprintf (buf, "%s: could not execute \"%.100s\"", blurb(), cmd);
+  free (cmd);
+  perror (buf);
+
+  if (errno == ENOENT &&
+      (token = getenv("PATH")))
+    {
+# ifndef PATH_MAX
+#  ifdef MAXPATHLEN
+#   define PATH_MAX MAXPATHLEN
+#  else
+#   define PATH_MAX 2048
+#  endif
+# endif
+      char path[PATH_MAX];
+      fprintf (stderr, "\n");
+      *path = 0;
+# if defined(HAVE_GETCWD)
+      getcwd (path, sizeof(path));
+# elif defined(HAVE_GETWD)
+      getwd (path);
+# endif
+      if (*path)
+        fprintf (stderr, "    Current directory is: %s\n", path);
+      fprintf (stderr, "    PATH is:\n");
+      token = strtok (strdup(token), ":");
+      while (token)
+        {
+          fprintf (stderr, "        %s\n", token);
+          token = strtok(0, ":");
+        }
+      fprintf (stderr, "\n");
+    }
+}
+
+
+static void
 spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 {
   saver_info *si = ssi->global;
@@ -963,11 +756,18 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 
 	case 0:
 	  close (ConnectionNumber (si->dpy));	/* close display fd */
-	  nice_subproc (p->nice_inferior);	/* change process priority */
 	  limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
 	  hack_subproc_environment (ssi);	/* set $DISPLAY */
-	  exec_screenhack (ssi, hack->command);	/* this does not return */
-	  abort();
+
+          if (p->verbose_p)
+            fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
+                     blurb(), ssi->number, hack->command,
+                     (unsigned long) getpid ());
+
+	  exec_command (p->shell, hack->command, p->nice_inferior);
+          /* If that returned, we were unable to exec the subprocess. */
+          print_path_error (hack->command);
+          exit (1);  /* exits child fork */
 	  break;
 
 	default:
@@ -1251,31 +1051,33 @@ save_argv (int argc, char **argv)
 }
 
 
-/* Re-execs the process with the arguments in saved_argv.
-   Does not return unless there was an error.
+/* Re-execs the process with the arguments in saved_argv.  Does not return.
  */
 void
 restart_process (saver_info *si)
 {
+  fflush (stdout);
+  fflush (stderr);
+  shutdown_stderr (si);
   if (si->prefs.verbose_p)
     {
       int i;
-      fprintf (real_stderr, "%s: re-executing", blurb());
+      fprintf (stderr, "%s: re-executing", blurb());
       for (i = 0; saved_argv[i]; i++)
-	fprintf (real_stderr, " %s", saved_argv[i]);
-      fprintf (real_stderr, "\n");
+	fprintf (stderr, " %s", saved_argv[i]);
+      fprintf (stderr, "\n");
     }
-  describe_uids (si, real_stderr);
-  fprintf (real_stderr, "\n");
+  describe_uids (si, stderr);
+  fprintf (stderr, "\n");
 
-  fflush (real_stdout);
-  fflush (real_stderr);
+  fflush (stdout);
+  fflush (stderr);
   execvp (saved_argv [0], saved_argv);	/* shouldn't return */
   {
     char buf [512];
     sprintf (buf, "%s: could not restart process", blurb());
     perror(buf);
     fflush(stderr);
+    abort();
   }
-  XBell(si->dpy, 0);
 }

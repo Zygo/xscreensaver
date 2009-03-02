@@ -151,28 +151,25 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
         int faces, Bool smooth, Bool wire,
         Bool cone_p)
 {
-  GLfloat length, angle, a, b, c;
+  GLfloat length, X, Y, Z;
 
   if (diameter <= 0) abort();
 
-  a = (x2 - x1);
-  b = (y2 - y1);
-  c = (z2 - z1);
+  X = (x2 - x1);
+  Y = (y2 - y1);
+  Z = (z2 - z1);
 
-  length = sqrt (a*a + b*b + c*c);
-  angle = acos (a / length);
+  if (X == 0 && Y == 0 && Z == 0)
+    return;
+
+  length = sqrt (X*X + Y*Y + Z*Z);
 
   glPushMatrix();
+
   glTranslatef(x1, y1, z1);
-  glScalef (length, length, length);
-
-  if (c == 0 && b == 0)
-    glRotatef (angle / (M_PI / 180), 0, 1, 0);
-  else
-    glRotatef (angle / (M_PI / 180), 0, -c, b);
-
-  glRotatef (-90, 0, 0, 1);
-  glScalef (diameter/length, 1, diameter/length);
+  glRotatef (-atan2 (X, Y)               * (180 / M_PI), 0, 0, 1);
+  glRotatef ( atan2 (Z, sqrt(X*X + Y*Y)) * (180 / M_PI), 1, 0, 0);
+  glScalef (diameter, length, diameter);
 
   /* extend the endpoints of the tube by the cap size in both directions */
   if (cap_size != 0)
@@ -186,6 +183,7 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
     unit_cone (faces, smooth, wire);
   else
     unit_tube (faces, smooth, wire);
+
   glPopMatrix();
 }
 

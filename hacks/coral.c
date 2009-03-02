@@ -88,8 +88,8 @@ init_coral(Display *dpy, Window window)
     for( i = 0; i < seeds; i++ ) {
         int x, y;
         do {
-            x = random() % width;
-            y = random() % height;
+          x = 1 + random() % (width - 2);
+          y = 1 + random() % (height - 2);
         } while( getdot(x, y) );
 
         setdot((x-1), (y-1)); setdot(x, (y-1)); setdot((x+1), (y-1));
