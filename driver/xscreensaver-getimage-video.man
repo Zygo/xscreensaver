@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "03-Jun-2001 (3.33)" "X Version 11"
+.TH XScreenSaver 1 "25-Oct-2001 (3.34)" "X Version 11"
 .SH NAME
 xscreensaver-getimage-video - put a video frame on the root window
 .SH SYNOPSIS

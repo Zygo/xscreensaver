@@ -101,12 +101,18 @@
 
 /*  Define this if you have the functions XF86VidModeGetGamma() and
  *  XF86VidModeSetGamma(), which allow clients to change the gamma
- *  response of the monitor.  This is an XFree86 4.x thing, and probably
- *  doesn't exist elsewhere.  (It's available if the file
+ *  response of the monitor.  This is an XFree86 4.0.x thing, and
+ *  probably doesn't exist elsewhere.  (It's available if the file
  *  /usr/include/X11/extensions/xf86vmode.h exists and has stuff about
  *  gamma in it.)
  */
 #undef HAVE_XF86VMODE_GAMMA
+
+/*  Define this if you have the functions XF86VidModeGetGammaRamp() and
+ *  XF86VidModeSetGammaRamp(), which provide finer-grained control than
+ *  XF86VidMode[GS]etGamma().  These appeared in XFree86 4.1.0.
+ */
+#undef HAVE_XF86VMODE_GAMMA_RAMP
 
 /*  Define this if you have a Linux-like /proc/interrupts file which can be
  *  examined to determine when keyboard activity has occurred.

@@ -62,7 +62,7 @@
 # include <capplet-widget.h>
 #endif
 
-extern Display *gdk_display;
+#include <gdk/gdkx.h>
 
 #include "version.h"
 #include "prefs.h"
@@ -252,6 +252,9 @@ warning_dialog (GtkWidget *parent, const char *message,
   while (parent->parent)
     parent = parent->parent;
 
+  if (!GTK_WIDGET (parent)->window) /* too early to pop up transient dialogs */
+    return;
+
   head = msg;
   while (head)
     {
@@ -333,6 +336,7 @@ warning_dialog (GtkWidget *parent, const char *message,
                                  GTK_SIGNAL_FUNC (warning_dialog_dismiss_cb),
                                  (gpointer) dialog);
     }
+
   gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
                                 GTK_WIDGET (parent)->window);
 
@@ -350,7 +354,7 @@ run_cmd (GtkWidget *widget, Atom command, int arg)
   int status;
 
   apply_changes_and_save (widget);
-  status = xscreensaver_command (gdk_display, command, arg, False, &err);
+  status = xscreensaver_command (GDK_DISPLAY(), command, arg, False, &err);
   if (status < 0)
     {
       char buf [255];
@@ -374,7 +378,7 @@ run_hack (GtkWidget *widget, int which, Bool report_errors_p)
   else
     {
       char *s = 0;
-      xscreensaver_command (gdk_display, XA_DEMO, which + 1, False, &s);
+      xscreensaver_command (GDK_DISPLAY(), XA_DEMO, which + 1, False, &s);
       if (s) free (s);
     }
 }
@@ -595,7 +599,7 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
   run_cmd (GTK_WIDGET (widget), XA_RESTART, 0);
 #else
   apply_changes_and_save (GTK_WIDGET (widget));
-  xscreensaver_command (gdk_display, XA_EXIT, 0, False, NULL);
+  xscreensaver_command (GDK_DISPLAY(), XA_EXIT, 0, False, NULL);
   sleep (1);
   system ("xscreensaver -nosplash &");
 #endif
@@ -608,7 +612,7 @@ await_xscreensaver (GtkWidget *widget)
 {
   int countdown = 5;
 
-  Display *dpy = gdk_display;
+  Display *dpy = GDK_DISPLAY();
   /*  GtkWidget *dialog = 0;*/
   char *rversion = 0;
 
@@ -1045,6 +1049,8 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
 	char b[255]; \
 	sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n", line); \
 	warning_dialog (GTK_WIDGET (button), b, False, 100); \
+        if ((field)) free ((field)); \
+        (field) = strdup(line); \
       } \
    else { \
      if ((field)) free ((field)); \
@@ -1128,7 +1134,7 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
 
   if (changed)
     {
-      Display *dpy = gdk_display;
+      Display *dpy = GDK_DISPLAY();
       sync_server_dpms_settings (dpy, p->dpms_enabled_p,
                                  p->dpms_standby / 1000,
                                  p->dpms_suspend / 1000,
@@ -1405,7 +1411,7 @@ scroll_to_current_hack (GtkWidget *toplevel, prefs_pair *pair)
   int format;
   unsigned long nitems, bytesafter;
   CARD32 *data = 0;
-  Display *dpy = gdk_display;
+  Display *dpy = GDK_DISPLAY();
   int which = 0;
   GtkList *list;
 
@@ -1579,7 +1585,7 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
     Bool found_any_writable_cells = False;
     Bool dpms_supported = False;
 
-    Display *dpy = gdk_display;
+    Display *dpy = GDK_DISPLAY();
     int nscreens = ScreenCount(dpy);
     int i;
     for (i = 0; i < nscreens; i++)
@@ -2139,7 +2145,7 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 static void
 the_network_is_not_the_computer (GtkWidget *parent)
 {
-  Display *dpy = gdk_display;
+  Display *dpy = GDK_DISPLAY();
   char *rversion, *ruser, *rhost;
   char *luser, *lhost;
   char *msg = 0;
@@ -2496,7 +2502,7 @@ main (int argc, char **argv)
    */
   XtToolkitInitialize ();
   app = XtCreateApplicationContext ();
-  dpy = gdk_display;
+  dpy = GDK_DISPLAY();
   XtAppSetFallbackResources (app, defaults);
   XtDisplayInitialize (app, dpy, progname, progclass, 0, 0, &argc, argv);
   toplevel_shell = XtAppCreateShell (progname, progclass,

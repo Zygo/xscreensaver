@@ -57,6 +57,7 @@ static int iterations=100;
 #define OUT 10
 #define MELT 11
 #define STRETCH 12
+#define FUZZ 13
 
 static void
 init_decay (Display *dpy, Window window)
@@ -80,10 +81,11 @@ init_decay (Display *dpy, Window window)
   else if (s && !strcmp(s, "out")) mode = OUT;
   else if (s && !strcmp(s, "melt")) mode = MELT;
   else if (s && !strcmp(s, "stretch")) mode = STRETCH;
+  else if (s && !strcmp(s, "fuzz")) mode = FUZZ;
   else {
     if (s && *s && !!strcmp(s, "random"))
       fprintf(stderr, "%s: unknown mode %s\n", progname, s);
-    mode = random() % (STRETCH+1);
+    mode = random() % (FUZZ+1);
   }
 
   delay = get_integer_resource ("delay", "Integer");
@@ -159,6 +161,7 @@ decay1 (Display *dpy, Window window)
       case OUT:		bias = no_bias; break;
       case MELT:	bias = no_bias; break;
       case STRETCH:	bias = no_bias; break;
+      case FUZZ:	bias = no_bias; break;
      default: abort();
     }
 
@@ -171,6 +174,52 @@ decay1 (Display *dpy, Window window)
       height = nrnd(sizey - top);
       toleft = left;
       totop = top+1;
+
+    } else if (mode == FUZZ) {  /* By Vince Levey <vincel@vincel.org>;
+                                   inspired by the "melt" mode of the
+                                   "scrhack" IrisGL program by Paul Haeberli
+                                   circa 1991. */
+      static int toggle = 0;
+
+      left = nrnd(sizex - 1);
+      top  = nrnd(sizey - 1);
+      toggle = !toggle;
+      if (toggle)
+        {
+          totop = top;
+          height = 1;
+          toleft = nrnd(sizex - 1);
+          if (toleft > left)
+            {
+              width = toleft-left;
+              toleft = left;
+              left++;
+            }
+          else
+            {
+              width = left-toleft;
+              left = toleft;
+              toleft++;
+            }
+        }
+      else
+        {
+          toleft = left;
+          width = 1;
+          totop  = nrnd(sizey - 1);
+          if (totop > top)
+            {
+              height = totop-top;
+              totop = top;
+              top++;
+            }
+          else
+            {
+              height = top-totop;
+              top = totop;
+              totop++;
+            }
+        }
 
     } else {
 

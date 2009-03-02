@@ -14,7 +14,7 @@
 "*chooseRandomImages:	False",
 "*imageDirectory:	",
 "*nice:			10",
-"*memoryLimit:		50M",
+"*memoryLimit:		0",
 "*lock:			False",
 "*lockVTs:		True",
 "*verbose:		False",
@@ -171,10 +171,10 @@
 -	   \"RotZoomer (mobile)\" rotzoomer -root -move			    \\n\
 -	   \"RotZoomer (sweep)\"  rotzoomer -root -sweep			    \\n\
 				whirlwindwarp -root			    \\n\
- 	            \"WhirlyGig\"	whirlygig -root -nlines 20 -whirlies 40       \
-                                  -xspeed 0.5				    \\n\
+ 	            \"WhirlyGig\"	whirlygig -root				    \\n\
  	            \"SpeedMine\"	speedmine -root				    \\n\
  	            \"SpeedWorm\"	speedmine -root -worm			    \\n\
+ 	                	vermiculate -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -210,21 +210,25 @@
 	   GL:	 \"Molecule\"		molecule -root			    \\n\
 	   GL:	 \"Molecule (lumpy)\"	molecule -root -no-bonds -no-labels \\n\
 	   GL:			dangerball -root			    \\n\
+	   GL:			circuit -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
 				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
 				  sunrel/38/-30				    \\n\
+-				xplanetbg -xscreensaver -moonside             \
+                                  -markerfile earth -wait 1 -timewarp 400   \\n\
 -				ssystem -fullscreen :32			    \\n\
 -				xmountains -b -M -Z 0 -r 1		    \\n\
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
--                               xaos -root -autopilot -incoloring -1	      \
-                                  -nogui -outcoloring -1	            \\n\
+-                               xaos -fullscreen -autopilot                   \
+                                  -incoloring -1 -outcoloring -1            \\n\
 -				xfishtank -d -s                             \\n\
 -				xsnow                                       \\n\
 -				goban -root                                 \\n\
 -				electricsheep                               \\n\
--				cosmos -root                                \\n",
+-				cosmos -root                                \\n\
+-	   GL:                  sphereEversion --root                       \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.initialDelay:		0:00:00",
 "XScreenSaver.windowCreationTimeout:	0:00:30",
@@ -972,6 +976,10 @@ Draws zooming chains of sinusoidal spots.  Written by Ashton Trey Belew.",
 "*hacks.speedmine.documentation:                                     \
 Simulates speeding down a rocky mineshaft, or a funky dancing worm. \
 Written by Conrad Parker.",
+"*hacks.circuit.documentation:                                        \
+Animates a number of 3D electronic components.  Written by Ben Buxton.",
+"*hacks.vermiculate.documentation:                                    \
+Draws squiggly worm-like paths.  Written by Tyler Pierce.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\
@@ -984,6 +992,14 @@ point in space, correctly shaded for the current position of the Sun.	\
 Written by Kirk Johnson.  This is not included with the XScreenSaver	\
 package, but if you don't have it already, you can find it at		\
 <http://www.cs.colorado.edu/~tuna/xearth/>.",
+"*hacks.xplanetbg.name: XPlanet",
+"*hacks.xplanetbg.documentation:						\
+XPlanet is like XEarth, but with more options.  It draws an image of    \
+the Earth (or other planets!), as seen from your favorite vantage	\
+point in space, correctly shaded for the current position of the Sun.	\
+Written by Hari Nair.  This is not included with the XScreenSaver	\
+package, but if you don't have it already, you can find it at		\
+<http://xplanet.sourceforge.net/>.",
 "*hacks.ssystem.name: SSystem",
 "*hacks.ssystem.documentation:						\
 SSystem is a GL Solar System simulator.  It simulates flybys of Sun,	\
@@ -1033,3 +1049,12 @@ See that web site for configuration information.",
 "*hacks.cosmos.documentation:						\
 Draws fireworks and zooming, fading flares.  By Tom Campbell.           \
 You can find it at <http://www.mindspring.com/~campbell/cosmos/>.",
+"*hacks.sphereEversion.name: SphereEversion",
+"*hacks.sphereEversion.documentation:					\
+SphereEversion draws an animation of a sphere being turned inside out.  \
+A sphere can be turned inside out, without any tears, sharp creases or  \
+discontinuities, if the surface of the sphere is allowed to intersect   \
+itself.  This program animates what is known as the Thurston Eversion.  \
+Written by Nathaniel Thurston and Michael McGuffin.  This program is    \
+not included with the XScreenSaver package, but if you don't have it    \
+already, you can find it at <http://www.dgp.utoronto.ca/~mjmcguff/eversion/>.",

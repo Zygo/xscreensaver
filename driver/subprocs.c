@@ -137,7 +137,7 @@ limit_subproc_memory (int address_space_limit, Bool verbose_p)
   if (setrlimit (RLIMIT_AS, &r) != 0)
     {
       char buf [512];
-      sprintf (buf, "%s: setrlimit(RLIMIT_AS, {%d, %d}) failed",
+      sprintf (buf, "%s: setrlimit(RLIMIT_AS, {%lu, %lu}) failed",
                blurb(), r.rlim_cur, r.rlim_max);
       perror (buf);
       return;

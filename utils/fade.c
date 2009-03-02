@@ -606,9 +606,15 @@ sgi_whack_gamma(Display *dpy, int screen, struct screen_sgi_gamma_info *info,
 
 #include <X11/extensions/xf86vmode.h>
 
-static Bool xf86_whack_gamma(Display *dpy, int screen,
-                             XF86VidModeGamma *info, float ratio);
-static Bool xf86_check_gamma_extension (Display *dpy);
+typedef struct {
+  XF86VidModeGamma vmg;
+  int size;
+  unsigned short *r, *g, *b;
+} xf86_gamma_info;
+
+static int xf86_check_gamma_extension (Display *dpy);
+static Bool xf86_whack_gamma (Display *dpy, int screen,
+                              xf86_gamma_info *ginfo, float ratio);
 
 static int
 xf86_gamma_fade (Display *dpy,
@@ -625,27 +631,59 @@ xf86_gamma_fade (Display *dpy,
 #endif
   int i, screen;
   int status = -1;
-  XF86VidModeGamma *info = 0;
+  xf86_gamma_info *info = 0;
 
   static int ext_ok = -1;
 
   /* Only probe the extension once: the answer isn't going to change. */
   if (ext_ok == -1)
-    ext_ok = (xf86_check_gamma_extension (dpy) ? 1 : 0);
+    ext_ok = xf86_check_gamma_extension (dpy);
 
   /* If this server doesn't have the gamma extension, bug out. */
   if (ext_ok == 0)
     goto FAIL;
 
-  info = (XF86VidModeGamma *) calloc(nscreens, sizeof(*info));
+# ifndef HAVE_XF86VMODE_GAMMA_RAMP
+  if (ext_ok == 2) ext_ok = 1;  /* server is newer than client! */
+# endif
+
+  info = (xf86_gamma_info *) calloc(nscreens, sizeof(*info));
 
   /* Get the current gamma maps for all screens.
      Bug out and return -1 if we can't get them for some screen.
    */
   for (screen = 0; screen < nscreens; screen++)
     {
-      if (!XF86VidModeGetGamma(dpy, screen, &info[screen]))
-	goto FAIL;
+      if (ext_ok == 1)  /* only have gamma parameter, not ramps. */
+        {
+          if (!XF86VidModeGetGamma(dpy, screen, &info[screen].vmg))
+            goto FAIL;
+        }
+      else if (ext_ok == 2)  /* have ramps */
+        {
+          if (!XF86VidModeGetGammaRampSize(dpy, screen, &info[screen].size))
+            goto FAIL;
+          if (info[screen].size <= 0)
+            goto FAIL;
+
+          info[screen].r = (unsigned short *)
+            calloc(info[screen].size, sizeof(unsigned short));
+          info[screen].g = (unsigned short *)
+            calloc(info[screen].size, sizeof(unsigned short));
+          info[screen].b = (unsigned short *)
+            calloc(info[screen].size, sizeof(unsigned short));
+
+          if (!(info[screen].r && info[screen].g && info[screen].b))
+            goto FAIL;
+
+          if (!XF86VidModeGetGammaRamp(dpy, screen, info[screen].size,
+                                       info[screen].r,
+                                       info[screen].g,
+                                       info[screen].b))
+            goto FAIL;
+        }
+      else
+        abort();
     }
 
 #ifdef GETTIMEOFDAY_TWO_ARGS
@@ -744,35 +782,56 @@ xf86_gamma_fade (Display *dpy,
   status = 0;
 
  FAIL:
-  if (info) free(info);
+  if (info)
+    {
+      for (screen = 0; screen < nscreens; screen++)
+        {
+          if (info[screen].r) free(info[screen].r);
+          if (info[screen].g) free(info[screen].g);
+          if (info[screen].b) free(info[screen].b);
+        }
+      free(info);
+    }
 
   return status;
 }
 
 
-/* VidModeExtension version 2.0 or better is needed to do gamma. */
+/* VidModeExtension version 2.0 or better is needed to do gamma.
+   2.0 added gamma values; 2.1 added gamma ramps.
+ */
 # define XF86_VIDMODE_NAME "XFree86-VidModeExtension"
-# define XF86_VIDMODE_MIN_MAJOR 2
-# define XF86_VIDMODE_MIN_MINOR 0
+# define XF86_VIDMODE_GAMMA_MIN_MAJOR 2
+# define XF86_VIDMODE_GAMMA_MIN_MINOR 0
+# define XF86_VIDMODE_GAMMA_RAMP_MIN_MAJOR 2
+# define XF86_VIDMODE_GAMMA_RAMP_MIN_MINOR 1
 
-static Bool
+/* Returns 0 if gamma fading not available; 1 if only gamma value setting
+   is available; 2 if gamma ramps are available.
+ */
+static int
 xf86_check_gamma_extension (Display *dpy)
 {
   int op, event, error, major, minor;
 
   if (!XQueryExtension (dpy, XF86_VIDMODE_NAME, &op, &event, &error))
-    return False;  /* display doesn't have the extension. */
+    return 0;  /* display doesn't have the extension. */
 
   if (!XF86VidModeQueryVersion (dpy, &major, &minor))
-    return False;  /* unable to get version number? */
+    return 0;  /* unable to get version number? */
 
-  if (major < XF86_VIDMODE_MIN_MAJOR || 
-      (major == XF86_VIDMODE_MIN_MAJOR &&
-       minor < XF86_VIDMODE_MIN_MINOR))
-    return False;  /* extension is too old. */
+  if (major < XF86_VIDMODE_GAMMA_MIN_MAJOR || 
+      (major == XF86_VIDMODE_GAMMA_MIN_MAJOR &&
+       minor < XF86_VIDMODE_GAMMA_MIN_MINOR))
+    return 0;  /* extension is too old for gamma. */
+
+  if (major < XF86_VIDMODE_GAMMA_RAMP_MIN_MAJOR || 
+      (major == XF86_VIDMODE_GAMMA_RAMP_MIN_MAJOR &&
+       minor < XF86_VIDMODE_GAMMA_RAMP_MIN_MINOR))
+    return 1;  /* extension is too old for gamma ramps. */
 
   /* Copacetic */
-  return True;
+  return 2;
 }
 
 
@@ -783,28 +842,58 @@ xf86_check_gamma_extension (Display *dpy)
 
 
 static Bool
-xf86_whack_gamma(Display *dpy, int screen, XF86VidModeGamma *info,
+xf86_whack_gamma(Display *dpy, int screen, xf86_gamma_info *info,
                  float ratio)
 {
   Bool status;
-  XF86VidModeGamma g2;
 
   if (ratio < 0) ratio = 0;
   if (ratio > 1) ratio = 1;
 
-  g2.red   = info->red   * ratio;
-  g2.green = info->green * ratio;
-  g2.blue  = info->blue  * ratio;
+  if (info->size == 0)    /* we only have a gamma number, not a ramp. */
+    {
+      XF86VidModeGamma g2;
+
+      g2.red   = info->vmg.red   * ratio;
+      g2.green = info->vmg.green * ratio;
+      g2.blue  = info->vmg.blue  * ratio;
 
 # ifdef XF86_MIN_GAMMA
-  if (g2.red   < XF86_MIN_GAMMA) g2.red   = XF86_MIN_GAMMA;
-  if (g2.green < XF86_MIN_GAMMA) g2.green = XF86_MIN_GAMMA;
-  if (g2.blue  < XF86_MIN_GAMMA) g2.blue  = XF86_MIN_GAMMA;
+      if (g2.red   < XF86_MIN_GAMMA) g2.red   = XF86_MIN_GAMMA;
+      if (g2.green < XF86_MIN_GAMMA) g2.green = XF86_MIN_GAMMA;
+      if (g2.blue  < XF86_MIN_GAMMA) g2.blue  = XF86_MIN_GAMMA;
 # endif
 
-/* #### printf("  G %4.2f %4.2f\n", ratio, g2.red); */
+      status = XF86VidModeSetGamma (dpy, screen, &g2);
+    }
+  else
+    {
+# ifdef HAVE_XF86VMODE_GAMMA_RAMP
 
-  status = XF86VidModeSetGamma (dpy, screen, &g2);
+      unsigned short *r, *g, *b;
+      int i;
+      r = (unsigned short *) malloc(info->size * sizeof(unsigned short));
+      g = (unsigned short *) malloc(info->size * sizeof(unsigned short));
+      b = (unsigned short *) malloc(info->size * sizeof(unsigned short));
+
+      for (i = 0; i < info->size; i++)
+        {
+          r[i] = info->r[i] * ratio;
+          g[i] = info->g[i] * ratio;
+          b[i] = info->b[i] * ratio;
+        }
+
+      status = XF86VidModeSetGammaRamp(dpy, screen, info->size, r, g, b);
+
+      free (r);
+      free (g);
+      free (b);
+
+# else  /* !HAVE_XF86VMODE_GAMMA_RAMP */
+      abort();
+# endif /* !HAVE_XF86VMODE_GAMMA_RAMP */
+    }
+
   XSync(dpy, False);
   return status;
 }

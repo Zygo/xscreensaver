@@ -22,6 +22,49 @@
      - I'm not sure the text labels are being done in the best way;
        they are sometimes, but not always, occluded by spheres that
        pass in front of them. 
+
+   GENERAL OPENGL NAIVETY:
+
+       I don't understand the *right* way to place text in front of the
+       atoms.  What I'm doing now is close, but has glitches.  I think I
+       understand glPolygonOffset(), but I think it doesn't help me.
+
+       Here's how I'd phrase the problem I'm trying to solve:
+
+       - I have a bunch of spherical objects of various sizes
+       - I want a piece of text in the scene, between each object
+         and the observer
+       - the position of this text should be apparently tangential 
+         to the surface of the sphere, so that:
+         - it is never inside the sphere;
+         - but can be occluded by other objects in the scene.
+
+       So I was trying to use glPolygonOffset() to say "pretend all
+       polygons are N units deeper than they actually are" where N was
+       somewhere around the maximal radius of the objects.  Which wasn't a
+       perfect solution, but was close.  But it turns out that can't work,
+       because the second arg to glPolygonOffset() is multiplied by some
+       minimal depth quantum which is not revealed, so I can't pass it an
+       offset in scene units -- only in multiples of the quantum.  So I
+       don't know how many quanta in radius my spheres are.
+
+       I think I need to position and render the text with glRasterPos3f()
+       so that the text is influenced by the depth buffer.  If I used 2f,
+       or an explicit constant Z value, then the text would always be in
+       front of each sphere, and text would be visible for spheres that
+       were fully occluded, which isn't what I want.
+
+       So my only guess at this point is that I need to position the text
+       exactly where I want it, tangential to the spheres -- but that
+       means I need to be able to compute that XYZ position, which is
+       dependent on the position of the observer!  Which means two things:
+       first, while generating my scene, I need to take into account the
+       position of the observer, and I don't have a clue how to do that;
+       and second, it means I can't put my whole molecule in a display
+       list, because the XYZ position of the text in the scene changes at
+       every frame, as the molecule rotates.
+
+       This just *can't* be as hard as it seems!
  */
 
 #include <X11/Intrinsic.h>

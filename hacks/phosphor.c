@@ -567,6 +567,8 @@ scroll (p_state *state)
 static void
 print_char (p_state *state, int c)
 {
+  static char last_c = 0;
+
   p_cell *cell = &state->cells[state->grid_width * state->cursor_y
                               + state->cursor_x];
 
@@ -581,11 +583,16 @@ print_char (p_state *state, int c)
 
   if (c == '\r' || c == '\n')
     {
-      state->cursor_x = 0;
-      if (state->cursor_y == state->grid_height - 1)
-        scroll (state);
+      if (c == '\n' && last_c == '\r')
+        ;   /* CRLF -- do nothing */
       else
-        state->cursor_y++;
+        {
+          state->cursor_x = 0;
+          if (state->cursor_y == state->grid_height - 1)
+            scroll (state);
+          else
+            state->cursor_y++;
+        }
     }
   else if (c == '\014')
     {
@@ -611,6 +618,8 @@ print_char (p_state *state, int c)
         }
     }
   set_cursor (state, True);
+
+  last_c = c;
 }
 
 

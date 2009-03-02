@@ -46,8 +46,9 @@ The direction in which the image should tend to slide.  Legal values are
 \fIdown\fP, \fIupleft\fP, \fIdownleft\fP, \fIupright\fP, \fIdownright\fP, 
 \fIshuffle\fP (meaning perfer no particular direction), \fIin\fP (meaning
 move things toward the center), \fIout\fP (meaning move things away
-from the center), \fImelt\fP (meaning melt straight downward), 
-and \fIstretch\fP (meaning stretch the screen downward).
+from the center), \fImelt\fP (meaning melt straight 
+downward),  \fIstretch\fP (meaning stretch the screen downward),
+and \fIfuzz\fP (meaning go blurry instead of melty).
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -72,6 +72,9 @@
 # ifndef XmNtextField		/* Lesstif 0.89.4 bug */
 #  undef HAVE_XMCOMBOBOX
 # endif
+# if (XmVersion < 2001)		/* Lesstif has two personalities these days */
+#  undef HAVE_XMCOMBOBOX
+# endif
 #endif /* HAVE_XMCOMBOBOX */
 
 #include "version.h"

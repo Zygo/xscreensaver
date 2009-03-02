@@ -247,22 +247,24 @@ www::
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
   HEAD="xscreensaver-$$VERS" ;						    \
   ADIR=archive/ ;							    \
-  NAME="$$ADIR$$HEAD.tar.gz" ;						    \
+  BNAME="$$HEAD.tar.gz" ;						    \
+  NAME="$$ADIR$$BNAME" ;						    \
+  DNAME="$$DEST/$$HEAD.tar.gz" ;					    \
 									    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
   chmod a-w $$NAME ;							    \
-  if [ -f $$DEST/$$NAME ]; then						    \
-    echo -n "WARNING: $$DEST/$$NAME already exists!  Overwrite? ";	    \
+  if [ -f $$DNAME ]; then						    \
+    echo -n "WARNING: $$DNAME already exists!  Overwrite? ";		    \
     read line;								    \
     if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
-  cp -p $$NAME $$DEST/$$NAME ;						    \
-  chmod u+w $$DEST/$$NAME ;						    \
+  cp -p $$NAME $$DNAME ;						    \
+  chmod u+w $$DNAME ;							    \
   cd $$DEST ;								    \
 									    \
   TMP=/tmp/xd.$$$$ ;							    \
@@ -281,7 +283,7 @@ www::
   else									    \
     set -x ;								    \
   fi ;									    \
-  cvs add -kb $$NAME ;							    \
+  cvs add -kb $$BNAME ;							    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \

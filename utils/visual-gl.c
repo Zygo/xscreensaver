@@ -139,13 +139,18 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
 # ifdef GLX_VISUAL_CAVEAT_EXT
     if (!glXGetConfig (dpy, vi_out, GLX_VISUAL_CAVEAT_EXT, &value) &&
         value != GLX_NONE_EXT)
+#   ifdef GLX_NON_CONFORMANT_EXT
       printf ("    GLX rating:        %s\n",
               (value == GLX_NONE_EXT ? "none" :
                value == GLX_SLOW_VISUAL_EXT ? "slow" :
-#   ifdef GLX_NON_CONFORMANT_EXT
                value == GLX_NON_CONFORMANT_EXT ? "non-conformant" :
-#   endif /* GLX_NON_CONFORMANT_EXT */
                "???"));
+#   else      
+      printf ("    GLX rating:        %s\n",
+              (value == GLX_NONE_EXT ? "none" :
+               value == GLX_SLOW_VISUAL_EXT ? "slow" :
+               "???"));
+#   endif /* GLX_NON_CONFORMANT_EXT */
 # endif /* GLX_VISUAL_CAVEAT_EXT */
 
     if (!glXGetConfig (dpy, vi_out, GLX_DOUBLEBUFFER, &value))

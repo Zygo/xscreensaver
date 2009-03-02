@@ -272,9 +272,14 @@ perspective (void)
 		zfactor = (double)depth* (12.0 - TERRAIN_LENGTH/8.0) * zf;
 		for (j=0; j < TERRAIN_BREADTH; j++) {
 			jj = direction * j; MODULO(jj, TERRAIN_BREADTH);
-			xx = (worldx[i][jj]-(vertigo*xcc))/zfactor; 
-			yy = (worldy[i][j]-(vertigo*ycc))/zfactor;
-
+            /* jwz: not totally sure if this is right, but it avoids div0 */
+            if (zfactor != 0) {
+                xx = (worldx[i][jj]-(vertigo*xcc))/zfactor;
+                yy = (worldy[i][j]-(vertigo*ycc))/zfactor;
+            } else {
+                xx = 0;
+                yy = 0;
+            }
 			r = rotation_bias + (int)(vertigo*zcc); MODULO(r, ROTS);
 
 			xvals[t][j] = xoffset + width/2 +

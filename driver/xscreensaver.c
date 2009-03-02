@@ -1342,9 +1342,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      return True;
 	    }
 	}
-      clientmessage_response(si, window, True,
-			   "ClientMessage DEACTIVATE received while inactive.",
-			     "not active.");
+      clientmessage_response(si, window, False,
+     "ClientMessage DEACTIVATE received while inactive: resetting idle timer.",
+			     "not active: idle timer reset.");
+      reset_timers (si);
     }
   else if (type == XA_CYCLE)
     {

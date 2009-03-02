@@ -340,6 +340,17 @@ reshape_atlantis(ModeInfo * mi, int width, int height)
 }
 
 
+/* jwz -- this doesn't really work very well.
+
+   All I want to do is give the tank a gradient-filled background, instead
+   of just solid blue.  The following was my guess as to how to do this,
+   but it kills my frame rate.  I guess there's a more efficient way to do
+   this, but I don't see it...
+
+   I mean, all I want to do is dump some non-projected bytes into the color
+   buffer, then zero out the depth buffer.  That *can't* be expensive, can
+   it?
+ */
 static void
 clear_tank (atlantisstruct * ap)
 {

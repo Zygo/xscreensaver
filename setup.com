@@ -89,6 +89,7 @@ $ swirl		:== $'mydir'swirl
 $ t3d		:== $'mydir't3d
 $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet
+$ vermiculate	:== $'mydir'vermiculate
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
