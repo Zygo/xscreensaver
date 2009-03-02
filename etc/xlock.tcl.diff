@@ -1,0 +1,157 @@
+*** xlock.tcl	Mon May 18 14:21:15 1998
+--- xlockit.tcl	Mon May 18 14:17:47 1998
+***************
+*** 198,204 ****
+     $w insert end [lindex $i 1]
+     $w insert end "\n"
+    }
+!   lappend indxhelp [$w index current]
+    insertWithTags  $w "Options boolean" big
+     $w insert end "\n"
+    .help.f.names insert end "Options boolean"
+--- 198,204 ----
+     $w insert end [lindex $i 1]
+     $w insert end "\n"
+    }
+!   lappend indxhep [$w index current]
+    insertWithTags  $w "Options boolean" big
+     $w insert end "\n"
+    .help.f.names insert end "Options boolean"
+***************
+*** 228,234 ****
+      set w .author.frame
+  
+      label $w.msg0   -text "Author and Maintener of xlock"
+!     label $w.msg1   -text "Maintained by: David A. Bagley (bagleyd@bigfoot.com)"
+  label $w.msg2   -text "Original Author: Patrick J. Naughton (naughton@eng.sun.com)"
+  label $w.msg3   -text "Mailstop 21-14 Sun Microsystems Laboratories,"
+   label $w.msg4   -text "Inc.  Mountain View, CA  94043 15//336-1080"
+--- 228,234 ----
+      set w .author.frame
+  
+      label $w.msg0   -text "Author and Maintener of xlock"
+!     label $w.msg1   -text "Maintained by: David A. Bagley (bagleyd@hertz.njit.edu)"
+  label $w.msg2   -text "Original Author: Patrick J. Naughton (naughton@eng.sun.com)"
+  label $w.msg3   -text "Mailstop 21-14 Sun Microsystems Laboratories,"
+   label $w.msg4   -text "Inc.  Mountain View, CA  94043 15//336-1080"
+***************
+*** 437,443 ****
+  if {$bgcolor!=""} {append linecommand "-bg $bgcolor "}
+  if {$fgcolor!=""} {append linecommand "-fg $fgcolor "}
+  if {$ftname!=""} {append linecommand "-font $ftname "}
+! if {$mftname!=""} {append linecommand "-messagefont $mftname "}
+  #entry action
+  if {$usernom!=""} {append linecommand "-username $usernom "}
+  if {$passmot!=""} {append linecommand "-password $passmot "}
+--- 437,443 ----
+  if {$bgcolor!=""} {append linecommand "-bg $bgcolor "}
+  if {$fgcolor!=""} {append linecommand "-fg $fgcolor "}
+  if {$ftname!=""} {append linecommand "-font $ftname "}
+! if {$mftname!=""} {append linecommand "-mfont $mftname "}
+  #entry action
+  if {$usernom!=""} {append linecommand "-username $usernom "}
+  if {$passmot!=""} {append linecommand "-password $passmot "}
+***************
+*** 524,529 ****
+--- 524,531 ----
+  $OPTIONS add command -label "File options" -command "mkFileOption"
+  $OPTIONS add command -label "message options" -command "mkMessage"
+  
++ $OPTIONS add command -label "message options" -command "mkMessage"
++ 
+  #Color
+  menubutton .menu.button4 -text "color" -menu .menu.button4.color
+  menu .menu.button4.color
+***************
+*** 536,542 ****
+  $COLOR add command -label "Foreground options for password" -command "tk_chooseColor"
+  $COLOR add command -label "Background options for password" -command "tk_chooseColor"
+  #}
+- 
+  menubutton .menu.button3 -text "help" -menu .menu.button3.help
+  menu .menu.button3.help
+  set HELP .menu.button3.help
+--- 538,543 ----
+***************
+*** 546,582 ****
+  pack .menu.button  .menu.button2 .menu.button4 -side left
+  pack .menu.button3 -side right
+  
+  #creation de la liste
+  frame .listscrol -borderwidth 4 -relief ridge
+  set LISTSCROL .listscrol
+  scrollbar $LISTSCROL.scroll -relief sunken -command "$LISTSCROL.list yview"
+  listbox $LISTSCROL.list -yscroll  "$LISTSCROL.scroll set"
+- pack $LISTSCROL.scroll -side right -fill y
+- pack $LISTSCROL.list -side left -expand yes -fill both
+- pack $LISTSCROL -fill both
+  
+  $LISTSCROL.list  insert 0 \
+  ant ball bat blot \
+! bouboule bounce braid bubble bug \
+! cage cartoon clock coral crystal \
+! daisy dclock deco demon dilemma discrete drift \
+! eyes fadeplot flag flame flow forest \
+! galaxy gears grav goop \
+  helix hop hyper \
+  ico ifs image julia kaleid \
+  laser life life1d life3d \
+  lightning lisa lissie loop \
+! mandelbrot marquee maze moebius morph3d mountain munch nose \
+  pacman penrose petal pipes puzzle pyro \
+  qix roll rotor rubik \
+  shape sierpinski slip \
+! sphere spiral spline sproingies stairs \
+  star strange superquadrics swarm swirl \
+! thornbird triangle tube turtle \
+! vines voters \
+  wator wire world worm \
+  blank bomb random
+  
+  frame .buttons -borderwidth 4 -relief ridge
+  set BUTTON .buttons
+  button $BUTTON.launch -text "Launch"  -command "Affopts 0"
+--- 547,589 ----
+  pack .menu.button  .menu.button2 .menu.button4 -side left
+  pack .menu.button3 -side right
+  
++ #---------------------------
+  #creation de la liste
++ #---------------------------
+  frame .listscrol -borderwidth 4 -relief ridge
+  set LISTSCROL .listscrol
+  scrollbar $LISTSCROL.scroll -relief sunken -command "$LISTSCROL.list yview"
+  listbox $LISTSCROL.list -yscroll  "$LISTSCROL.scroll set"
+  
++ 
++ #---------------------------
++ #insert all modes in list
++ #---------------------------
+  $LISTSCROL.list  insert 0 \
+  ant ball bat blot \
+! bouboule bounce braid bug \
+! cartoon clock coral crystal \
+! daisy dclock deco demon dilemma drift escher eyes \
+! fadeplot flag flame forest \
+! galaxy gears geometry grav \
+  helix hop hyper \
+  ico ifs image julia kaleid \
+  laser life life1d life3d \
+  lightning lisa lissie loop \
+! mandelbrot marquee maze morph3d mountain munch nose \
+  pacman penrose petal pipes puzzle pyro \
+  qix roll rotor rubik \
+  shape sierpinski slip \
+! sphere spiral spline sproingies \
+  star strange superquadrics swarm swirl \
+! triangle tube turtle vines voters \
+  wator wire world worm \
+  blank bomb random
+  
++ pack $LISTSCROL.scroll -side right -fill y
++ pack $LISTSCROL.list -side left -expand yes -fill both
++ pack $LISTSCROL  -fill both -expand yes
++ 
+  frame .buttons -borderwidth 4 -relief ridge
+  set BUTTON .buttons
+  button $BUTTON.launch -text "Launch"  -command "Affopts 0"

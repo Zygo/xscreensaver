@@ -1,0 +1,2469 @@
+dnl Process this file with autoconf to produce a configure script.
+dnl configure.in for xlockmore.
+AC_INIT(config.h.in)
+
+PACKAGE=xlockmore
+AC_SUBST(PACKAGE)
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
+VERSION=4.10
+AC_SUBST(VERSION)
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+
+dnl Checks for programs.
+AC_ARG_WITH(gcc,
+[  --without-gcc           use CC to compile])
+
+test -n "$CC" && cc_specified=yes
+case ${with_gcc} in
+  yes ) CC=gcc ;;
+dnl yes ) CC=g++ ;;
+  no  ) CC=cc ;;
+  *   ) AC_PROG_CC;;
+dnl  *   ) AC_PROG_CXX ;;
+esac
+
+if test "${CC}" = "gcc" ; then
+  CFLAGS="${CFLAGS} -Wall"
+fi
+
+opt_purify=no
+AC_ARG_WITH(purify, [  --with-purify           configure to postprocess with purify], opt_purify=$withval)
+if test "$opt_purify" = yes; then
+  AC_MSG_RESULT([enabling purify])
+  PURIFY="purify"
+else
+  PURIFY=
+fi
+
+AC_PROG_LN_S
+AC_PROG_CPP
+AC_AIX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+ac_link_test="-L"
+# test test
+AC_MSG_CHECKING([test -h])
+if (test \! -h /) >/dev/null 2>/dev/null ; then
+  ac_link_test="-h"
+  AC_MSG_RESULT($ac_link_test)
+else
+  AC_MSG_RESULT($ac_link_test)
+fi
+
+dnl Optional features.
+dnl add copious amounts of debugging with gcc
+
+dnl Checks for header files.
+dnl AC_HEADER_STDC /* If its not ansi, its not going to go */
+AC_ISC_POSIX
+dnl AC_HEADER_SYS_WAIT
+dnl AC_CHECK_HEADERS(poll.h sys/poll.h)
+AC_CHECK_HEADERS(fcntl.h limits.h sys/select.h sys/time.h syslog.h unistd.h memory.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+dnl AC_HEADER_SYS_WAIT
+AC_TYPE_MODE_T
+AC_TYPE_UID_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+dnl AC_TYPE_GETGROUPS
+dnl AC_TYPE_SIGNAL
+dnl AC_CHECK_FUNCS(poll)
+dnl AC_CHECK_FUNCS(signal)
+AC_CHECK_FUNCS(gethostname select strdup)
+
+AC_CHECK_FUNC(seteuid, AC_DEFINE(HAVE_SETEUID),
+AC_CHECK_FUNC(setreuid, AC_DEFINE(HAVE_SETREUID)))
+
+AC_CANONICAL_HOST
+canonical=$host
+
+dnl X Window System files.
+AC_PATH_XTRA
+if test "$no_x" = yes; then
+  XLIBS=NONE
+else
+  if test -n "${x_includes}"; then
+    XLOCKINC="-I${x_includes} ${XLOCKINC}"
+    XMLOCKINC="-I${x_includes} ${XMLOCKINC}"
+    XALOCKINC="-I${x_includes} ${XALOCKINC}"
+  fi
+  XLIBS="${x_libraries}"
+  if test -n "${x_libraries}"; then
+    XLOCK_LDFLAGS="/usr/lib:${x_libraries}"
+    XMLOCK_LDFLAGS="/usr/lib:${x_libraries}"
+    XALOCK_LDFLAGS="/usr/lib:${x_libraries}"
+    XLOCKLIBPATHS="-L${x_libraries} ${XLOCKLIBPATHS}"
+    XMLOCKLIBPATHS="-L${x_libraries} ${XMLOCKLIBPATHS}"
+    XALOCKLIBPATHS="-L${x_libraries} ${XALOCKLIBPATHS}"
+  fi
+  XLOCKLIBS="${X_PRE_LIBS} ${X_EXTRA_LIBS} ${XLOCKLIBS}"
+  XMLOCKLIBS="-lXt ${XMLOCKLIBS}"
+  XALOCKLIBS="-lXt ${XALOCKLIBS}"
+dnl AC_DEFINE(X11) /* If there is no X, its not going to go */
+fi
+
+# Try and find the app-defaults directory.
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS_XMKMF,
+  [
+  rm -fr conftestdir
+  if mkdir conftestdir; then
+    cd conftestdir
+    # Make sure to not put "make" in the Imakefile rules, since we grep it out.
+    cat > Imakefile <<'EOF'
+acfindx:
+  @echo 'ac_x_app_defaults="${XAPPLOADDIR}"'
+EOF
+    if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
+      # GNU make sometimes prints "make[1]: Entering...", which'd confuse us.
+      eval `${MAKE-make} acfindx 2>/dev/null | grep -v make`
+    fi
+    cd ..
+    rm -fr conftestdir
+  fi])
+
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS_DIRECT,
+[  # Look for the directory under a standard set of common directories.
+  # Check X11 before X11Rn because it's often a symlink to the current release.
+  for ac_dir in         \
+	${prefix}/lib/X11/app-defaults \
+	${prefix}/lib/app-defaults \
+	${prefix}/lib/X11R6/app-defaults \
+	${prefix}/lib/X11R6/X11/app-defaults \
+	${prefix}/lib/X11R5/app-defaults \
+	${prefix}/lib/X11R5/X11/app-defaults \
+	${prefix}/lib/X11R4/app-defaults \
+	${prefix}/lib/X11R4/X11/app-defaults \
+		\
+    /usr/X11/lib/app-defaults     \
+    /usr/X11R6/lib/app-defaults     \
+    /usr/X11R6/lib/X11/app-defaults   \
+    /usr/X11R5/lib/app-defaults     \
+    /usr/X11R5/lib/X11/app-defaults   \
+    /usr/X11R4/lib/app-defaults     \
+    /usr/X11R4/lib/X11/app-defaults   \
+            \
+    /usr/lib/X11/app-defaults     \
+    /usr/lib/X11R6/app-defaults     \
+    /usr/lib/X11R5/app-defaults     \
+    /usr/lib/X11R4/app-defaults     \
+            \
+    /usr/local/X11/lib/app-defaults   \
+    /usr/local/X11R6/lib/app-defaults   \
+    /usr/local/X11R6/lib/X11/app-defaults   \
+    /usr/local/X11R5/lib/app-defaults   \
+    /usr/local/X11R5/lib/X11/app-defaults   \
+    /usr/local/X11R4/lib/app-defaults   \
+    /usr/local/X11R4/lib/X11/app-defaults   \
+            \
+    /usr/local/lib/X11/app-defaults   \
+    /usr/local/lib/X11R6/app-defaults   \
+    /usr/local/lib/X11R6/X11/app-defaults \
+    /usr/local/lib/X11R5/app-defaults   \
+    /usr/local/lib/X11R5/X11/app-defaults \
+    /usr/local/lib/X11R4/app-defaults   \
+    /usr/local/lib/X11R4/X11/app-defaults \
+            \
+    /usr/X386/lib/X11/app-defaults    \
+    /usr/x386/lib/X11/app-defaults    \
+    /usr/XFree86/lib/X11/app-defaults   \
+            \
+    /usr/lib/X11/app-defaults     \
+    /usr/local/lib/X11/app-defaults   \
+    /usr/unsupported/lib/X11/app-defaults \
+    /usr/athena/lib/X11/app-defaults    \
+    /usr/local/x11r5/lib/X11/app-defaults \
+    /usr/lpp/Xamples/lib/X11/app-defaults \
+    /lib/usr/lib/X11/app-defaults   \
+            \
+    /usr/openwin/lib/app-defaults   \
+    /usr/openwin/lib/X11/app-defaults   \
+    /usr/openwin/share/lib/app-defaults   \
+    /usr/openwin/share/lib/X11/app-defaults \
+            \
+    /X11R6/lib/app-defaults     \
+    /X11R5/lib/app-defaults     \
+    /X11R4/lib/app-defaults     \
+    ; \
+  do
+    if test -d "$ac_dir"; then
+      ac_x_app_defaults=$ac_dir
+      break
+    fi
+  done
+])
+
+
+AC_DEFUN(AC_PATH_X_APP_DEFAULTS,
+  [AC_REQUIRE_CPP()
+    AC_CACHE_CHECK([for X app-defaults directory], ac_cv_x_app_defaults,
+     [AC_PATH_X_APP_DEFAULTS_XMKMF
+      AC_PATH_X_APP_DEFAULTS_DIRECT
+      if test x"$ac_x_app_defaults" = x; then
+        ac_cv_x_app_defaults="/usr/lib/X11/app-defaults"
+      else
+        # Record where we found app-defaults for the cache.
+        ac_cv_x_app_defaults="$ac_x_app_defaults"
+      fi])
+    eval ac_x_app_defaults="$ac_cv_x_app_defaults"])
+
+AC_PATH_X_APP_DEFAULTS
+
+APPDEFAULTS=$ac_x_app_defaults
+
+AC_ARG_WITH(includes, [  --with-includes=DIR     search include DIR for optional packages below])
+case "x$withval" in
+x/*|x.*)
+  extra_include=$withval
+  AC_MSG_RESULT([adding $extra_include to include search path for following packages])
+  if test ! -d $extra_include; then
+    AC_MSG_RESULT([Warning: Directory $extra_include does not exist])
+  fi
+  ;;
+*)
+  extra_include=""
+  ;;
+esac
+
+AC_ARG_WITH(libraries, [  --with-libraries=DIR    search library DIR for optional packages below])
+case "x$withval" in
+x/*|x.*)
+  extra_lib=$withval
+  AC_MSG_RESULT([adding $extra_lib to library search path for following packages])
+  if test ! -d $extra_lib; then
+    AC_MSG_RESULT([Warning: Directory $extra_lib does not exist])
+  fi
+  ;;
+*)
+  extra_lib=""
+  ;;
+esac
+
+dnl Xm MOTIF Motif motif
+
+AC_DEFUN(AC_PATH_MOTIF_DIRECT,
+[test -z "$motif_direct_test_library" && motif_direct_test_library=Xm
+test -z "$motif_direct_test_function" && motif_direct_test_function=XmCreatePushButton
+test -z "$motif_direct_test_include" && motif_direct_test_include=Xm/Xm.h
+  for ac_dir in               \
+    /usr/include/Motif1.2     \
+    /usr/Motif1.2/include     \
+                              \
+    /usr/motif/include        \
+                              \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11R4/include        \
+                              \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+    /usr/include/X11R4        \
+                              \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+    /usr/local/X11R4/include  \
+                              \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+    /usr/local/include/X11R4  \
+                              \
+    /usr/X11/include          \
+    /usr/include/X11          \
+    /usr/local/X11/include    \
+    /usr/local/include/X11    \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include/X11  \
+                              \
+    /usr/dt/include           \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/athena/include       \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$motif_direct_test_include"; then
+      no_motif= ac_motif_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$motif_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_motif_includes" | sed s/include/lib/` \
+    /usr/lib/Motif1.2     \
+    /usr/Motif1.2/lib     \
+                          \
+    /usr/motif/lib        \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X11/lib          \
+    /usr/lib/X11          \
+    /usr/local/X11/lib    \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${motif_direct_test_library}.$ac_extension; then
+      no_motif= ac_motif_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_MOTIF,
+[AC_REQUIRE_CPP()dnl
+
+motif_includes=NONE
+motif_libraries=NONE
+
+AC_MSG_CHECKING(for Motif)
+AC_ARG_WITH(motif, [  --without-motif         disable Motif (for xmlock)])
+if test "x$with_motif" = xno; then
+  no_motif=yes
+else
+  if test "x$motif_includes" != xNONE && test "x$motif_libraries" != xNONE; then
+    no_motif=
+  else
+AC_CACHE_VAL(ac_cv_path_motif,
+[# One or both of these vars are not set, and there is no cached value.
+no_motif=yes
+AC_PATH_MOTIF_DIRECT
+
+if test "$no_motif" = yes; then
+  ac_cv_path_motif="no_motif=yes"
+else
+  ac_cv_path_motif="no_motif= ac_motif_includes=$ac_motif_includes ac_motif_libraries=$ac_motif_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_motif"
+fi # with_motif != no
+
+if test "$no_motif" = yes; then
+  AC_MSG_RESULT(no)
+  XMLOCK=""
+  INSTALL_XMLOCK=""
+  UNINSTALL_XMLOCK=""
+else
+  XMLOCKLIBS="-lXm ${XMLOCKLIBS}"
+  XMLOCK="xmlock"
+  INSTALL_XMLOCK="install_xmlock"
+  UNINSTALL_XMLOCK="uninstall_xmlock"
+  test "x$motif_includes" = xNONE && motif_includes=$ac_motif_includes
+  test "x$motif_libraries" = xNONE && motif_libraries=$ac_motif_libraries
+  ac_cv_path_motif="no_motif= ac_motif_includes=$motif_includes ac_motif_libraries=$motif_libraries"
+  AC_MSG_RESULT([libraries $motif_libraries, headers $motif_includes])
+fi
+])
+
+AC_PATH_MOTIF
+
+if test "x$motif_libraries" != x && test "x$motif_libraries" != xNONE ; then
+  XMLOCK_LDFLAGS="${XMLOCK_LDFLAGS}:$motif_libraries"
+  XMLOCKLIBPATHS="${XMLOCKLIBPATHS} -L$motif_libraries"
+fi
+if test "x$motif_includes" != x && test "x$motif_includes" != xNONE ; then
+  XMLOCKINC="${XMLOCKINC} -I$motif_includes"
+fi
+
+dnl Xaw ATHENA Athena athena
+
+AC_DEFUN(AC_PATH_ATHENA_DIRECT,
+[test -z "$athena_direct_test_library" && athena_direct_test_library=Xaw
+test -z "$athena_direct_test_function" && athena_direct_test_function=XawInitializeWidgetSet
+test -z "$athena_direct_test_include" && athena_direct_test_include=X11/Xaw/XawInit.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11R4/include        \
+                              \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+    /usr/include/X11R4        \
+                              \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+    /usr/local/X11R4/include  \
+                              \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+    /usr/local/include/X11R4  \
+                              \
+    /usr/X11/include          \
+    /usr/include/X11          \
+    /usr/local/X11/include    \
+    /usr/local/include/X11    \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include/X11  \
+                              \
+    /usr/dt/include           \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/athena/include       \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+                              \
+    /usr/openwin/include      \
+    /usr/openwin/share/include \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$athena_direct_test_include"; then
+      no_athena= ac_athena_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$athena_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_athena_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X11/lib          \
+    /usr/lib/X11          \
+    /usr/local/X11/lib    \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+                          \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${athena_direct_test_library}.$ac_extension; then
+      no_athena= ac_athena_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_ATHENA,
+[AC_REQUIRE_CPP()dnl
+
+athena_includes=NONE
+athena_libraries=NONE
+
+AC_MSG_CHECKING(for Athena)
+AC_ARG_WITH(athena, [  --without-athena        disable Athena (for xalock)])
+if test "x$with_athena" = xno; then
+  no_athena=yes
+else
+  if test "x$athena_includes" != xNONE && test "x$athena_libraries" != xNONE; then
+    no_athena=
+  else
+AC_CACHE_VAL(ac_cv_path_athena,
+[# One or both of these vars are not set, and there is no cached value.
+no_athena=yes
+AC_PATH_ATHENA_DIRECT
+
+if test "$no_athena" = yes; then
+  ac_cv_path_athena="no_athena=yes"
+else
+  ac_cv_path_athena="no_athena= ac_athena_includes=$ac_athena_includes ac_athena_libraries=$ac_athena_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_athena"
+fi # with_athena != no
+
+if test "$no_athena" = yes; then
+  AC_MSG_RESULT(no)
+  XALOCK=""
+  INSTALL_XALOCK=""
+  UNINSTALL_XALOCK=""
+else
+  XALOCKLIBS="-lXaw ${XALOCKLIBS}"
+  XALOCK="xalock"
+  INSTALL_XALOCK="install_xalock"
+  UNINSTALL_XALOCK="uninstall_xalock"
+  test "x$athena_includes" = xNONE && athena_includes=$ac_athena_includes
+  test "x$athena_libraries" = xNONE && athena_libraries=$ac_athena_libraries
+  ac_cv_path_athena="no_athena= ac_athena_includes=$athena_includes ac_athena_libraries=$athena_libraries"
+  AC_MSG_RESULT([libraries $athena_libraries, headers $athena_includes])
+fi
+])
+
+AC_PATH_ATHENA
+
+if test "x$athena_libraries" != x && test "x$athena_libraries" != xNONE ; then
+  XALOCK_LDFLAGS="${XALOCK_LDFLAGS}:$athena_libraries"
+  XALOCKLIBPATHS="${XALOCKLIBPATHS} -L$athena_libraries"
+fi
+if test "x$athena_includes" != x && test "x$athena_includes" != xNONE ; then
+  XALOCKINC="${XALOCKINC} -I$athena_includes"
+fi
+
+dnl sx
+
+AC_DEFUN(AC_PATH_SX_DIRECT,
+[test -z "$sx_direct_test_library" && sx_direct_test_library=sx
+test -z "$sx_direct_test_function" && sx_direct_test_function=OpenWindow
+test -z "$sx_direct_test_include" && sx_direct_test_include=X11/libsx.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11R4/include        \
+                              \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+    /usr/include/X11R4        \
+                              \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+    /usr/local/X11R4/include  \
+                              \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+    /usr/local/include/X11R4  \
+                              \
+    /usr/X11/include          \
+    /usr/include/X11          \
+    /usr/local/X11/include    \
+    /usr/local/include/X11    \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include/X11  \
+                              \
+    /usr/dt/include           \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/athena/include       \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$sx_direct_test_include"; then
+      no_sx= ac_sx_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$sx_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_sx_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X11/lib          \
+    /usr/lib/X11          \
+    /usr/local/X11/lib    \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${sx_direct_test_library}.$ac_extension; then
+      no_sx= ac_sx_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_SX,
+[AC_REQUIRE_CPP()dnl
+
+sx_includes=NONE
+sx_libraries=NONE
+
+AC_MSG_CHECKING(for sx)
+AC_ARG_WITH(sx, [  --without-sx            disable sx (for xalock)])
+if test "x$with_sx" = xno; then
+  no_sx=yes
+else
+  if test "x$sx_includes" != xNONE && test "x$sx_libraries" != xNONE; then
+    no_sx=
+  else
+AC_CACHE_VAL(ac_cv_path_sx,
+[# One or both of these vars are not set, and there is no cached value.
+no_sx=yes
+AC_PATH_SX_DIRECT
+
+if test "$no_sx" = yes; then
+  ac_cv_path_sx="no_sx=yes"
+else
+  ac_cv_path_sx="no_sx= ac_sx_includes=$ac_sx_includes ac_sx_libraries=$ac_sx_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_sx"
+fi # with_sx != no
+
+if test "$no_sx" = yes; then
+  AC_MSG_RESULT(no)
+  XALOCK=""
+  INSTALL_XALOCK=""
+  UNINSTALL_XALOCK=""
+else
+  XALOCKLIBS="-lsx ${XALOCKLIBS}"
+  XALOCK="xalock"
+  INSTALL_XALOCK="install_xalock"
+  UNINSTALL_XALOCK="uninstall_xalock"
+  test "x$sx_includes" = xNONE && sx_includes=$ac_sx_includes
+  test "x$sx_libraries" = xNONE && sx_libraries=$ac_sx_libraries
+  ac_cv_path_sx="no_sx= ac_sx_includes=$sx_includes ac_sx_libraries=$sx_libraries"
+  AC_MSG_RESULT([libraries $sx_libraries, headers $sx_includes])
+fi
+])
+
+AC_PATH_SX
+
+if test "x$sx_libraries" != x && test "x$sx_libraries" != xNONE ; then
+dnl In front because we do not want to pick up the internal Solaris lib
+  XALOCK_LDFLAGS="$sx_libraries:${XALOCK_LDFLAGS}"
+  XALOCKLIBPATHS="-L$sx_libraries ${XALOCKLIBPATHS}"
+fi
+if test "x$sx_includes" != x && test "x$sx_includes" != xNONE ; then
+  XALOCKINC="${XALOCKINC} -I$sx_includes"
+fi
+
+dnl Xmu EDITRES Editres editres
+
+AC_DEFUN(AC_PATH_EDITRES_DIRECT,
+[test -z "$editres_direct_test_library" && editres_direct_test_library=Xmu
+test -z "$editres_direct_test_function" && editres_direct_test_function=_XEditResCheckMessages
+test -z "$editres_direct_test_include" && editres_direct_test_include=X11/Xmu/Editres.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11R4/include        \
+    /usr/X11/include          \
+                              \
+    /usr/include/X11          \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+    /usr/include/X11R4        \
+                              \
+    /usr/local/X11/include    \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+    /usr/local/X11R4/include  \
+                              \
+    /usr/local/include/X11    \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+    /usr/local/include/X11R4  \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include      \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/athena/include       \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+                              \
+    /usr/openwin/include      \
+    /usr/openwin/share/include \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$editres_direct_test_include"; then
+      no_editres= ac_editres_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$editres_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_editres_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11/lib          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11/lib    \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11    \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+    /lib/usr/lib/X11      \
+                          \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${editres_direct_test_library}.$ac_extension; then
+      no_editres= ac_editres_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_EDITRES,
+[AC_REQUIRE_CPP()dnl
+
+editres_includes=NONE
+editres_libraries=NONE
+
+AC_MSG_CHECKING(for Editres)
+AC_ARG_WITH(editres, [  --without-editres       disable debugger (for x?lock)])
+if test "x$with_editres" = xno; then
+  no_editres=yes
+else
+  if test "x$editres_includes" != xNONE && test "x$editres_libraries" != xNONE; then
+    no_editres=
+  else
+AC_CACHE_VAL(ac_cv_path_editres,
+[# One or both of these vars are not set, and there is no cached value.
+no_editres=yes
+AC_PATH_EDITRES_DIRECT
+
+if test "$no_editres" = yes; then
+  ac_cv_path_editres="no_editres=yes"
+else
+  ac_cv_path_editres="no_editres= ac_editres_includes=$ac_editres_includes ac_editres_libraries=$ac_editres_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_editres"
+fi # with_editres != no
+
+if test "$no_editres" = yes; then
+  AC_MSG_RESULT(no)
+else
+  AC_DEFINE(USE_XMU)
+  XMLOCKLIBS="-lXmu ${XMLOCKLIBS}"
+  XALOCKLIBS="-lXmu ${XALOCKLIBS}"
+  test "x$editres_includes" = xNONE && editres_includes=$ac_editres_includes
+  test "x$editres_libraries" = xNONE && editres_libraries=$ac_editres_libraries
+  ac_cv_path_editres="no_editres= ac_editres_includes=$editres_includes ac_editres_libraries=$editres_libraries"
+  AC_MSG_RESULT([libraries $editres_libraries, headers $editres_includes])
+fi
+])
+
+AC_PATH_EDITRES
+
+if test "x$editres_libraries" != x && test "x$editres_libraries" != xNONE ; then
+  XMLOCK_LDFLAGS="${XMLOCK_LDFLAGS}:$editres_libraries"
+  XALOCK_LDFLAGS="${XALOCK_LDFLAGS}:$editres_libraries"
+  XMLOCKLIBPATHS="${XMLOCKLIBPATHS} -L$editres_libraries"
+  XALOCKLIBPATHS="${XALOCKLIBPATHS} -L$editres_libraries"
+fi
+if test "x$editres_includes" != x && test "x$editres_includes" != xNONE ; then
+  XMLOCKINC="${XMLOCKINC} -I$editres_includes"
+  XALOCKINC="${XALOCKINC} -I$editres_includes"
+fi
+
+xpm=no
+dnl Xpm XPM xpm
+
+AC_DEFUN(AC_PATH_XPM_DIRECT,
+[test -z "$xpm_direct_test_library" && xpm_direct_test_library=Xpm
+test -z "$xpm_direct_test_function" && xpm_direct_test_function=XpmCreateImageFromData
+test -z "$xpm_direct_test_include" && xpm_direct_test_include=xpm.h
+  for ac_dir in                   \
+    /usr/X11R6/include/X11        \
+    /usr/X11R5/include/X11        \
+    /usr/X11R4/include/X11        \
+    /usr/X11/include/X11          \
+                                  \
+    /usr/include/X11/X11          \
+    /usr/include/X11R6/X11        \
+    /usr/include/X11R5/X11        \
+    /usr/include/X11R4/X11        \
+                                  \
+    /usr/local/X11/include/X11    \
+    /usr/local/X11R6/include/X11  \
+    /usr/local/X11R5/include/X11  \
+    /usr/local/X11R4/include/X11  \
+                                  \
+    /usr/local/include/X11/X11    \
+    /usr/local/include/X11R6/X11  \
+    /usr/local/include/X11R5/X11  \
+    /usr/local/include/X11R4/X11  \
+                                  \
+    /usr/X386/include/X11         \
+    /usr/x386/include/X11         \
+    /usr/XFree86/include/X11/X11  \
+                                  \
+    /usr/local/include/X11        \
+    /usr/include/X11              \
+    /usr/unsupported/include/X11  \
+    /usr/athena/include/X11       \
+    /usr/local/x11r5/include/X11  \
+    /usr/lpp/Xamples/include/X11  \
+                                  \
+    /usr/openwin/include/X11      \
+    /usr/openwin/share/include/X11 \
+    /usr/openwin/include          \
+                                  \
+    /usr/include/Vk               \
+    $extra_include                \
+    $extra_include/X11            \
+    ; \
+  do
+    if test -r "$ac_dir/$xpm_direct_test_include"; then
+      no_xpm= ac_xpm_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$xpm_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_xpm_includes" | sed s%/X11$%% | sed s/include/lib/` \
+                          \
+    /usr/X11/lib          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11/lib    \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11    \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+    /lib/usr/lib/X11      \
+                          \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${xpm_direct_test_library}.$ac_extension; then
+      no_xpm= ac_xpm_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_XPM,
+[AC_REQUIRE_CPP()dnl
+
+xpm_includes=NONE
+xpm_libraries=NONE
+
+AC_MSG_CHECKING(for XPM)
+AC_ARG_WITH(xpm, [  --without-xpm           enable color pixmap XPM mode(s)])
+if test "x$with_xpm" = xno; then
+  no_xpm=yes
+else
+  if test "x$xpm_includes" != xNONE && test "x$xpm_libraries" != xNONE; then
+    no_xpm=
+  else
+AC_CACHE_VAL(ac_cv_path_xpm,
+[# One or both of these vars are not set, and there is no cached value.
+no_xpm=yes
+AC_PATH_XPM_DIRECT
+
+if test "$no_xpm" = yes; then
+  ac_cv_path_xpm="no_xpm=yes"
+else
+  ac_cv_path_xpm="no_xpm= ac_xpm_includes=$ac_xpm_includes ac_xpm_libraries=$ac_xpm_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_xpm"
+fi # with_xpm != no
+
+if test "$no_xpm" = yes; then
+  AC_MSG_RESULT(no)
+  XPM="#"
+else
+  xpm=yes
+  AC_DEFINE(USE_XPMINC)
+  XLOCKLIBS="${XLOCKLIBS} -lXpm"
+  XMLOCKLIBS="-lXpm ${XMLOCKLIBS}"
+  test "x$xpm_includes" = xNONE && xpm_includes=$ac_xpm_includes
+  test "x$xpm_libraries" = xNONE && xpm_libraries=$ac_xpm_libraries
+  ac_cv_path_xpm="no_xpm= ac_xpm_includes=$xpm_includes ac_xpm_libraries=$xpm_libraries"
+  AC_MSG_RESULT([libraries $xpm_libraries, headers $xpm_includes])
+  XPM=""
+fi
+])
+
+AC_PATH_XPM
+
+if test "x$xpm_libraries" != x && test "x$xpm_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$xpm_libraries"
+  XMLOCK_LDFLAGS="${XMLOCK_LDFLAGS}:$xpm_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$xpm_libraries"
+  XMLOCKLIBPATHS="${XMLOCKLIBPATHS} -L$xpm_libraries"
+fi
+if test "x$xpm_includes" != x && test "x$xpm_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$xpm_includes"
+fi
+
+gl=no
+dnl OpenGL opengl
+
+dnl test -z "$opengl_direct_test_library" && opengl_direct_test_library=opengl
+AC_DEFUN(AC_PATH_OPENGL_DIRECT,
+[test -z "$opengl_direct_test_library" && opengl_direct_test_library=GL
+test -z "$opengl_direct_test_library" && opengl_direct_test_library=GLU
+test -z "$opengl_direct_test_function" && opengl_direct_test_function=glXCreateContext
+test -z "$opengl_direct_test_include" && opengl_direct_test_include=GL/gl.h
+  for ac_dir in               \
+    /usr/include              \
+    /usr/openwin/include      \
+    /usr/openwin/share/include \
+    $extra_include            \
+    ; \
+  do
+# Make sure this is not MesaGL
+    if test -r "$ac_dir/$opengl_direct_test_include" && test ! -r "$ac_dir/GL/xmesa.h"; then
+      no_opengl= ac_opengl_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$opengl_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_opengl_includes" | sed s/include/lib/` \
+                          \
+    /usr/lib              \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+# Make sure its not a symbolic link to MesaGL library
+
+    if test -r $ac_dir/lib${opengl_direct_test_library}.$ac_extension && test ! $ac_link_test $ac_dir/lib${opengl_direct_test_library}.$ac_extension && test ! -r $ac_dir/libMesa${opengl_direct_test_library}.$ac_extension; then
+      no_opengl= ac_opengl_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_OPENGL,
+[AC_REQUIRE_CPP()dnl
+
+opengl_includes=NONE
+opengl_libraries=NONE
+
+AC_MSG_CHECKING(for OpenGL)
+AC_ARG_WITH(opengl, [  --without-opengl        disable 3D OpenGL (for GL modes)])
+if test "x$with_opengl" = xno; then
+  no_opengl=yes
+else
+  if test "x$opengl_includes" != xNONE && test "x$opengl_libraries" != xNONE; then
+    no_opengl=
+  else
+AC_CACHE_VAL(ac_cv_path_opengl,
+[# One or both of these vars are not set, and there is no cached value.
+no_opengl=yes
+AC_PATH_OPENGL_DIRECT
+
+if test "$no_opengl" = yes; then
+  ac_cv_path_opengl="no_opengl=yes"
+else
+  ac_cv_path_opengl="no_opengl= ac_opengl_includes=$ac_opengl_includes ac_opengl_libraries=$ac_opengl_libraries"
+
+fi])dnl
+  fi
+  eval "$ac_cv_path_opengl"
+fi # with_opengl != no
+
+if test "$no_opengl" = yes; then
+  AC_MSG_RESULT(no)
+else
+  gl=yes
+  AC_DEFINE(USE_GL)
+  XLOCKLIBS="${XLOCKLIBS} -lGL -lGLU"
+  test "x$opengl_includes" = xNONE && opengl_includes=$ac_opengl_includes
+  test "x$opengl_libraries" = xNONE && opengl_libraries=$ac_opengl_libraries
+  case "${canonical}" in
+    *-*-solaris2* )
+      AC_DEFINE(SUN_OGL_NO_VERTEX_MACROS)
+      if test "x$opengl_includes" = "x/usr/include"; then
+        opengl_includes=""
+      fi
+    ;;
+    *-*-irix5* | *-*-irix6* )
+      XLOCKLIBS="${XLOCKLIBS} -lgl"
+    ;;
+  esac
+  ac_cv_path_opengl="no_opengl= ac_opengl_includes=$opengl_includes ac_opengl_libraries=$opengl_libraries"
+  AC_MSG_RESULT([libraries $opengl_libraries, headers $opengl_includes])
+  GL=""
+fi
+])
+
+AC_PATH_OPENGL
+
+if test "x$opengl_libraries" != x && test "x$opengl_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$opengl_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$opengl_libraries"
+fi
+if test "x$opengl_includes" != x && test "x$opengl_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$opengl_includes"
+fi
+
+dnl MesaGL mesagl
+
+dnl test -z "$mesagl_direct_test_library" && mesagl_direct_test_library=MesaGLU
+AC_DEFUN(AC_PATH_MESAGL_DIRECT,
+[test -z "$mesagl_direct_test_library" && mesagl_direct_test_library=MesaGL
+test -z "$mesagl_direct_test_library" && mesagl_direct_test_library=MesaGLU
+test -z "$mesagl_direct_test_function" && mesagl_direct_test_function=glXCreateContext
+test -z "$mesagl_direct_test_include" && mesagl_direct_test_include=GL/gl.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11/include          \
+                              \
+    /usr/include/X11          \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+                              \
+    /usr/local/X11/include    \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+                              \
+    /usr/local/include/X11    \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include/X11  \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+                              \
+    /usr/openwin/include      \
+    /usr/openwin/share/include \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$mesagl_direct_test_include"; then
+      no_mesagl= ac_mesagl_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$mesagl_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_mesagl_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11/lib          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+                          \
+    /usr/lib/X11          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+                          \
+    /usr/local/X11/lib    \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+                          \
+    /usr/local/lib/X11    \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/athena/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+    /lib/usr/lib/X11      \
+                          \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${mesagl_direct_test_library}.$ac_extension; then
+      no_mesagl= ac_mesagl_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_MESAGL,
+[AC_REQUIRE_CPP()dnl
+
+mesagl_includes=NONE
+mesagl_libraries=NONE
+
+AC_MSG_CHECKING(for MesaGL)
+AC_ARG_WITH(mesagl, [  --without-mesagl        disable 3D MesaGL (for GL modes)])
+if test "x$with_mesagl" = xno; then
+  no_mesagl=yes
+else
+  if test "x$mesagl_includes" != xNONE && test "x$mesagl_libraries" != xNONE; then
+    no_mesagl=
+  else
+AC_CACHE_VAL(ac_cv_path_mesagl,
+[# One or both of these vars are not set, and there is no cached value.
+no_mesagl=yes
+AC_PATH_MESAGL_DIRECT
+
+if test "$no_mesagl" = yes; then
+  ac_cv_path_mesagl="no_mesagl=yes"
+else
+  ac_cv_path_mesagl="no_mesagl= ac_mesagl_includes=$ac_mesagl_includes ac_mesagl_libraries=$ac_mesagl_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_mesagl"
+fi # with_mesagl != no
+
+if test "$no_mesagl" = yes; then
+  AC_MSG_RESULT(no)
+  GL="#"
+else
+  if test "$gl" = no; then
+    gl=yes
+    AC_DEFINE(USE_GL)
+    XLOCKLIBS="${XLOCKLIBS} -lMesaGL -lMesaGLU"
+    test "x$mesagl_includes" = xNONE && mesagl_includes=$ac_mesagl_includes
+    test "x$mesagl_libraries" = xNONE && mesagl_libraries=$ac_mesagl_libraries
+    case "${canonical}" in
+      *-*-solaris2* )
+        if test "x$mesagl_includes" = "x/usr/include"; then
+          mesagl_includes=""
+        fi
+      ;;
+    esac
+    ac_cv_path_mesagl="no_mesagl= ac_mesagl_includes=$mesagl_includes ac_mesagl_libraries=$mesagl_libraries"
+    AC_MSG_RESULT([libraries $mesagl_libraries, headers $mesagl_includes])
+    AC_MSG_RESULT(!!!WARNING!!! Known security hole with MesaGL < 3.0 if setuid root)
+  	GL=""
+	else  
+    AC_MSG_RESULT(ignored - using OpenGL)
+  fi
+fi
+])
+
+AC_PATH_MESAGL
+
+if test "x$mesagl_libraries" != x && test "x$mesagl_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="$mesagl_libraries:${XLOCK_LDFLAGS}"
+  XLOCKLIBPATHS="-L$mesagl_libraries ${XLOCKLIBPATHS}"
+fi
+if test "x$mesagl_includes" != x && test "x$mesagl_includes" != xNONE ; then
+  XLOCKINC="-I$mesagl_includes ${XLOCKINC}"
+fi
+
+dnl DTSAVER DtSaver dtsaver DtSvc
+
+AC_DEFUN(AC_PATH_DTSAVER_DIRECT,
+[test -z "$dtsaver_direct_test_library" && dtsaver_direct_test_library=DtSvc
+test -z "$dtsaver_direct_test_function" && dtsaver_direct_test_function=DtSaverGetWindows
+test -z "$dtsaver_direct_test_include" && dtsaver_direct_test_include=Dt/Saver.h
+  for ac_dir in            \
+    /usr/dt/include        \
+    $extra_include         \
+    ; \
+  do
+    if test -r "$ac_dir/$dtsaver_direct_test_include"; then
+      no_dtsaver= ac_dtsaver_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$dtsaver_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_dtsaver_includes" | sed s/include/lib/` \
+    $extra_lib         \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${dtsaver_direct_test_library}.$ac_extension; then
+      no_dtsaver= ac_dtsaver_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_DTSAVER,
+[AC_REQUIRE_CPP()dnl
+
+dtsaver_includes=NONE
+dtsaver_libraries=NONE
+
+AC_MSG_CHECKING(for DtSaver)
+AC_ARG_WITH(dtsaver, [  --without-dtsaver       disable -dtsaver option])
+if test "x$with_dtsaver" = xno; then
+  no_dtsaver=yes
+else
+  if test "x$dtsaver_includes" != xNONE && test "x$dtsaver_libraries" != xNONE; then
+    no_dtsaver=
+  else
+AC_CACHE_VAL(ac_cv_path_dtsaver,
+[# One or both of these vars are not set, and there is no cached value.
+no_dtsaver=yes
+AC_PATH_DTSAVER_DIRECT
+
+if test "$no_dtsaver" = yes; then
+  ac_cv_path_dtsaver="no_dtsaver=yes"
+else
+  ac_cv_path_dtsaver="no_dtsaver= ac_dtsaver_includes=$ac_dtsaver_includes ac_dtsaver_libraries=$ac_dtsaver_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_dtsaver"
+fi # with_dtsaver != no
+
+if test "$no_dtsaver" = yes; then
+  AC_MSG_RESULT(no)
+else
+  AC_DEFINE(USE_DTSAVER)
+  XLOCKLIBS="${XLOCKLIBS} -lDtSvc"
+  test "x$dtsaver_includes" = xNONE && dtsaver_includes=$ac_dtsaver_includes
+  test "x$dtsaver_libraries" = xNONE && dtsaver_libraries=$ac_dtsaver_libraries
+  ac_cv_path_dtsaver="no_dtsaver= ac_dtsaver_includes=$dtsaver_includes ac_dtsaver_libraries=$dtsaver_libraries"
+  AC_MSG_RESULT([libraries $dtsaver_libraries, headers $dtsaver_includes])
+fi
+])
+
+AC_PATH_DTSAVER
+
+if test "x$dtsaver_libraries" != x && test "x$dtsaver_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$dtsaver_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$dtsaver_libraries"
+fi
+if test "x$dtsaver_includes" != x && test "x$dtsaver_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$dtsaver_includes"
+fi
+
+dnl Xdpms DPMS
+
+AC_DEFUN(AC_PATH_DPMS_DIRECT,
+[test -z "$dpms_direct_test_library" && dpms_direct_test_library=Xdpms
+test -z "$dpms_direct_test_function" && dpms_direct_test_function=DPMSSetTimeouts
+test -z "$dpms_direct_test_include" && dpms_direct_test_include=X11/extensions/dpms.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11R4/include        \
+                              \
+    /usr/include/X11R6        \
+    /usr/include/X11R5        \
+    /usr/include/X11R4        \
+                              \
+    /usr/local/X11R6/include  \
+    /usr/local/X11R5/include  \
+    /usr/local/X11R4/include  \
+                              \
+    /usr/local/include/X11R6  \
+    /usr/local/include/X11R5  \
+    /usr/local/include/X11R4  \
+                              \
+    /usr/X11/include          \
+    /usr/include/X11          \
+    /usr/local/X11/include    \
+    /usr/local/include/X11    \
+                              \
+    /usr/X386/include         \
+    /usr/x386/include         \
+    /usr/XFree86/include/X11  \
+                              \
+    /usr/dt/include           \
+                              \
+    /usr/local/include        \
+    /usr/include              \
+    /usr/unsupported/include  \
+    /usr/dpms/include       \
+    /usr/local/x11r5/include  \
+    /usr/lpp/Xamples/include  \
+                              \
+    /usr/openwin/include      \
+    /usr/openwin/share/include \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$dpms_direct_test_include"; then
+      no_dpms= ac_dpms_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$dpms_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_dpms_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11R4/lib        \
+                          \
+    /usr/lib/X11R6        \
+    /usr/lib/X11R5        \
+    /usr/lib/X11R4        \
+                          \
+    /usr/local/X11R6/lib  \
+    /usr/local/X11R5/lib  \
+    /usr/local/X11R4/lib  \
+                          \
+    /usr/local/lib/X11R6  \
+    /usr/local/lib/X11R5  \
+    /usr/local/lib/X11R4  \
+                          \
+    /usr/X11/lib          \
+    /usr/lib/X11          \
+    /usr/local/X11/lib    \
+                          \
+    /usr/X386/lib         \
+    /usr/x386/lib         \
+    /usr/XFree86/lib/X11  \
+                          \
+    /usr/lib              \
+    /usr/local/lib        \
+    /usr/unsupported/lib  \
+    /usr/dpms/lib       \
+    /usr/local/x11r5/lib  \
+    /usr/lpp/Xamples/lib  \
+                          \
+    /usr/openwin/lib      \
+    /usr/openwin/share/lib \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${dpms_direct_test_library}.$ac_extension; then
+      no_dpms= ac_dpms_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_DPMS,
+[AC_REQUIRE_CPP()dnl
+
+dpms_includes=NONE
+dpms_libraries=NONE
+
+AC_MSG_CHECKING(for DPMS)
+AC_ARG_WITH(dpms, [  --without-dpms        disable DPMS (for xalock)])
+if test "x$with_dpms" = xno; then
+  no_dpms=yes
+else
+  if test "x$dpms_includes" != xNONE && test "x$dpms_libraries" != xNONE; then
+    no_dpms=
+  else
+AC_CACHE_VAL(ac_cv_path_dpms,
+[# One or both of these vars are not set, and there is no cached value.
+no_dpms=yes
+AC_PATH_DPMS_DIRECT
+
+if test "$no_dpms" = yes; then
+  ac_cv_path_dpms="no_dpms=yes"
+else
+  ac_cv_path_dpms="no_dpms= ac_dpms_includes=$ac_dpms_includes ac_dpms_libraries=$ac_dpms_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_dpms"
+fi # with_dpms != no
+
+if test "$no_dpms" = yes; then
+  AC_MSG_RESULT(no)
+else
+  AC_DEFINE(USE_DPMS)
+  XLOCKLIBS="${XLOCKLIBS} -lXdpms"
+  test "x$dpms_includes" = xNONE && dpms_includes=$ac_dpms_includes
+  test "x$dpms_libraries" = xNONE && dpms_libraries=$ac_dpms_libraries
+  ac_cv_path_dpms="no_dpms= ac_dpms_includes=$dpms_includes ac_dpms_libraries=$dpms_libraries"
+  AC_MSG_RESULT([libraries $dpms_libraries, headers $dpms_includes])
+fi
+])
+
+AC_PATH_DPMS
+
+if test "x$dpms_libraries" != x && test "x$dpms_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$dpms_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$dpms_libraries"
+fi
+if test "x$dpms_includes" != x && test "x$dpms_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$dpms_includes"
+fi
+
+sound=no
+dnl RPLAY RPlay rplay
+
+AC_DEFUN(AC_PATH_RPLAY_DIRECT,
+[test -z "$rplay_direct_test_library" && rplay_direct_test_library=rplay
+test -z "$rplay_direct_test_function" && rplay_direct_test_function=rplay_open_default
+test -z "$rplay_direct_test_include" && rplay_direct_test_include=rplay.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11/include          \
+    /usr/local/include        \
+    /usr/include              \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$rplay_direct_test_include"; then
+      no_rplay= ac_rplay_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$rplay_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_rplay_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11/lib          \
+    /usr/lib              \
+    /usr/local/lib        \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${rplay_direct_test_library}.$ac_extension; then
+      no_rplay= ac_rplay_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_RPLAY,
+[AC_REQUIRE_CPP()dnl
+
+rplay_includes=NONE
+rplay_libraries=NONE
+
+AC_MSG_CHECKING(for RPLAY)
+AC_ARG_WITH(rplay, [  --without-rplay         disable RPLAY sounds])
+if test "x$with_rplay" = xno; then
+  no_rplay=yes
+else
+  if test "x$rplay_includes" != xNONE && test "x$rplay_libraries" != xNONE; then
+    no_rplay=
+  else
+AC_CACHE_VAL(ac_cv_path_rplay,
+[# One or both of these vars are not set, and there is no cached value.
+no_rplay=yes
+AC_PATH_RPLAY_DIRECT
+
+if test "$no_rplay" = yes; then
+  ac_cv_path_rplay="no_rplay=yes"
+else
+  ac_cv_path_rplay="no_rplay= ac_rplay_includes=$ac_rplay_includes ac_rplay_libraries=$ac_rplay_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_rplay"
+fi # with_rplay != no
+
+if test "$no_rplay" = yes; then
+  AC_MSG_RESULT(no)
+else
+dnl  solaris26=no
+dnl  case "${canonical}" in
+dnl    *-*-solaris2.6 )
+dnl    	solaris26=yes
+dnl    ;;
+dnl  esac
+dnl  if test "$CC" = gcc && test "$solaris26" = yes; then
+dnl    AC_MSG_RESULT(ignored - problems here with gcc and solaris2.6)
+dnl  else
+    sound=yes
+    AC_DEFINE(USE_RPLAY)
+    XLOCKLIBS="${XLOCKLIBS} -lrplay"
+    test "x$rplay_includes" = xNONE && rplay_includes=$ac_rplay_includes
+    test "x$rplay_libraries" = xNONE && rplay_libraries=$ac_rplay_libraries
+    ac_cv_path_rplay="no_rplay= ac_rplay_includes=$rplay_includes ac_rplay_libraries=$rplay_libraries"
+    AC_MSG_RESULT([libraries $rplay_libraries, headers $rplay_includes])
+dnl  fi
+fi
+])
+
+AC_PATH_RPLAY
+
+if test "x$rplay_libraries" != x && test "x$rplay_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$rplay_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$rplay_libraries"
+fi
+if test "x$rplay_includes" != x && test "x$rplay_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$rplay_includes"
+fi
+
+dnl NAS audio
+
+AC_DEFUN(AC_PATH_NAS_DIRECT,
+[test -z "$nas_direct_test_library" && nas_direct_test_library=audio
+test -z "$nas_direct_test_function" && nas_direct_test_function=AuOpenServer
+test -z "$nas_direct_test_include" && nas_direct_test_include=audio/audio.h
+  for ac_dir in               \
+    /usr/X11R6/include        \
+    /usr/X11R5/include        \
+    /usr/X11/include          \
+    /usr/local/include        \
+    /usr/include              \
+    $extra_include            \
+    ; \
+  do
+    if test -r "$ac_dir/$nas_direct_test_include"; then
+      no_nas= ac_nas_includes=$ac_dir
+      break
+    fi
+  done
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$nas_direct_test_library $LIBS"
+# First see if replacing the include by lib works.
+for ac_dir in `echo "$ac_nas_includes" | sed s/include/lib/` \
+                          \
+    /usr/X11R6/lib        \
+    /usr/X11R5/lib        \
+    /usr/X11/lib          \
+    /usr/lib              \
+    /usr/local/lib        \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${nas_direct_test_library}.$ac_extension; then
+      no_nas= ac_nas_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_NAS,
+[AC_REQUIRE_CPP()dnl
+
+nas_includes=NONE
+nas_libraries=NONE
+
+AC_MSG_CHECKING(for NAS)
+AC_ARG_WITH(nas, [  --without-nas           disable NAS sounds])
+if test "x$with_nas" = xno; then
+  no_nas=yes
+else
+  if test "x$nas_includes" != xNONE && test "x$nas_libraries" != xNONE; then
+    no_nas=
+  else
+AC_CACHE_VAL(ac_cv_path_nas,
+[# One or both of these vars are not set, and there is no cached value.
+no_nas=yes
+AC_PATH_NAS_DIRECT
+
+if test "$no_nas" = yes; then
+  ac_cv_path_nas="no_nas=yes"
+else
+  ac_cv_path_nas="no_nas= ac_nas_includes=$ac_nas_includes ac_nas_libraries=$ac_nas_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_nas"
+fi # with_nas != no
+
+if test "$no_nas" = yes; then
+  AC_MSG_RESULT(no)
+else
+  if test "$sound" = no; then
+    sgi=no
+    case "${canonical}" in
+      *-*-irix5* | *-*-irix6* )
+      	sgi=yes
+      ;;
+    esac
+    if test "$sgi" = yes; then
+      AC_MSG_RESULT(ignored - problems here with audio and nas)
+    else
+      sound=yes
+      AC_DEFINE(USE_NAS)
+      XLOCKLIBS="${XLOCKLIBS} -laudio"
+dnl    XLOCKLIBS="${XLOCKLIBS} -lnas"
+      test "x$nas_includes" = xNONE && nas_includes=$ac_nas_includes
+      test "x$nas_libraries" = xNONE && nas_libraries=$ac_nas_libraries
+      ac_cv_path_nas="no_nas= ac_nas_includes=$nas_includes ac_nas_libraries=$nas_libraries"
+      AC_MSG_RESULT([libraries $nas_libraries, headers $nas_includes])
+    fi
+  else
+      AC_MSG_RESULT(ignored - using rplay)
+  fi
+fi
+])
+
+AC_PATH_NAS
+
+if test "x$nas_libraries" != x && test "x$nas_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$nas_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$nas_libraries"
+fi
+if test "x$nas_includes" != x && test "x$nas_includes" != xNONE ; then
+  XLOCKINC="${XLOCKINC} -I$nas_includes"
+fi
+
+dnl crypt CRYPT
+
+AC_DEFUN(AC_PATH_CRYPT_DIRECT,
+[test -z "$crypt_direct_test_library" && crypt_direct_test_library=crypt
+
+# Check for the libraries.
+# See if we find them without any special options.
+# Do not add to $LIBS permanently.
+ac_save_LIBS="$LIBS"
+LIBS="-l$crypt_direct_test_library $LIBS"
+for ac_dir in \
+    /usr/lib              \
+    /usr/local/lib        \
+    $extra_lib            \
+    ; \
+do
+  for ac_extension in a so sl; do
+    if test -r $ac_dir/lib${crypt_direct_test_library}.$ac_extension; then
+      no_crypt= ac_crypt_libraries=$ac_dir
+      break 2
+    fi
+  done
+done
+LIBS="$ac_save_LIBS"])
+AC_DEFUN(AC_PATH_CRYPT,
+[AC_REQUIRE_CPP()dnl
+
+crypt_libraries=NONE
+
+AC_MSG_CHECKING(for CRYPT)
+AC_ARG_WITH(crypt, [  --without-crypt         disable CRYPT])
+if test "x$with_crypt" = xno; then
+  no_crypt=yes
+else
+  if test "x$crypt_libraries" != xNONE; then
+    no_crypt=
+  else
+AC_CACHE_VAL(ac_cv_path_crypt,
+[# One or both of these vars are not set, and there is no cached value.
+no_crypt=yes
+AC_PATH_CRYPT_DIRECT
+
+if test "$no_crypt" = yes; then
+  ac_cv_path_crypt="no_crypt=yes"
+else
+  ac_cv_path_crypt="no_crypt= ac_crypt_libraries=$ac_crypt_libraries"
+fi])dnl
+  fi
+  eval "$ac_cv_path_crypt"
+fi # with_crypt != no
+
+if test "$no_crypt" = yes; then
+  AC_MSG_RESULT(no)
+else
+  XLOCKLIBS="${XLOCKLIBS} -lcrypt"
+  test "x$crypt_libraries" = xNONE && crypt_libraries=$ac_crypt_libraries
+  ac_cv_path_crypt="no_crypt= ac_crypt_libraries=$crypt_libraries"
+  AC_MSG_RESULT([libraries $crypt_libraries])
+fi
+])
+
+AC_PATH_CRYPT
+
+if test "x$crypt_libraries" != x && test "x$crypt_libraries" != xNONE ; then
+  XLOCK_LDFLAGS="${XLOCK_LDFLAGS}:$crypt_libraries"
+  XLOCKLIBPATHS="${XLOCKLIBPATHS} -L$crypt_libraries"
+fi
+
+dnl Should have a tester for XHPUX Xhp
+
+dnl Now we handle the various system dependant problems
+dnl that are not addressed in the X header files, or things dealing
+dnl with utility quirks on some systems.
+
+aixv3=no
+dirent=yes
+
+case "${canonical}" in
+
+  *-*-aix* )
+    BITMAPTYPE="ibm"
+    PIXMAPTYPE="ibm"
+    AC_DEFINE(AIXV3)
+    aixv3=yes
+    case "${canonical}" in
+      *-*-aix2* | *-*-aix3.0* | *-*-aix3.1* )
+        AC_DEFINE(LESS_THAN_AIX3_2)
+      ;;
+    esac
+  ;;
+
+  *-*-freebsd* | *-*-openbsd* | *-*-netbsd*  )
+    BITMAPTYPE="bsd"
+    PIXMAPTYPE="bsd"
+    INSTPGMFLAGS="-s -o root -m 4111"
+  ;;
+
+  *-*-dgux5* )
+    BITMAPTYPE="x11"
+    PIXMAPTYPE="x11"
+  ;;
+
+  *-*-hpux* )
+    if test "${CC}" = "cc" ; then
+      CFLAGS="${CFLAGS} -O -Aa -z -D_HPUX_SOURCE"
+      GPROF_CFLAGS="${GPROF_CFLAGS} -Aa -z -D_HPUX_SOURCE"
+    fi
+dnl    LDFLAGS=-Wl,-B,immediate
+    XLOCKLIBS="-lXhp11 ${XLOCKLIBS}"
+    AC_DEFINE(SYSV)
+    AC_DEFINE(SVR4)
+    BITMAPTYPE="hp"
+    PIXMAPTYPE="hp"
+  ;;
+
+  *-*-irix5* | *-*-irix6* )
+    if test "${CC}" = "cc" ; then
+      CFLAGS="${CFLAGS} -fullwarn"
+    fi
+    BITMAPTYPE="sgi"
+    PIXMAPTYPE="sgi"
+  ;;
+
+  *-*-linux* )
+    AC_CHECK_HEADER(elf.h, AC_DEFINE(HAVE_SHADOW))
+dnl    CFLAGS="${CFLAGS} -ansi -pedantic"
+    AC_DEFINE(linux)
+dnl    AC_DEFINE(__i386__)
+    AC_DEFINE(_POSIX_SOURCE)
+    AC_DEFINE(_BSD_SOURCE)
+    AC_DEFINE(_GNU_SOURCE)
+dnl    AC_DEFINE(DX_LOCALE)
+dnl    I heard of both... the 2nd is more common
+dnl    INSTPGMFLAGS="-s -o shadow -m 2111"
+    INSTPGMFLAGS="-s -o root -m 4111"
+    BITMAPTYPE="linux"
+    PIXMAPTYPE="linux"
+dnl if Shadow and not elf
+dnl XLOCKLIBS="${XLOCKLIBS} -lgdbm"
+  ;;
+
+  *-*-osf* )
+    BITMAPTYPE="dec"
+    PIXMAPTYPE="dec"
+    AC_MSG_CHECKING(for Digital Unix Enhanced Security)
+    if test -f /usr/sbin/rcmgr && test -f /etc/rc.config ; then
+      if test X`/usr/sbin/rcmgr get SECURITY` = XENHANCED ; then
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(OSF1_ENH_SEC)
+        AC_SUBST(OSF1_ENH_SEC)
+        XLOCKLIBS="${XLOCKLIBS} -lsecurity"
+        INSTPGMFLAGS="-s -g auth -m 2111"
+      else
+        AC_MSG_RESULT(no)
+      fi
+    fi
+  ;;
+
+  *-*-sco* )
+    BITMAPTYPE="sco"
+    PIXMAPTYPE="sco"
+    AC_DEFINE(HAVE_SHADOW)
+    AC_DEFINE(SYSV)
+  ;;
+
+  *-*-solaris2* )
+    AC_DEFINE(SOLARIS2)
+    case "${canonical}" in
+      *-*-solaris2.0* | *-*-solaris2.1* | *-*-solaris2.2* | *-*-solaris2.3* | *-*-solaris2.4* )
+        AC_DEFINE(LESS_THAN_SOLARIS2_5)
+      ;;
+    esac
+    INSTPGMFLAGS="-s -o root -m 4111"
+    AC_DEFINE(HAVE_SHADOW)
+    AC_DEFINE(SYSV)
+    AC_DEFINE(SVR4)
+    BITMAPTYPE="sun"
+    PIXMAPTYPE="sol"
+dnl    XLOCKLIBS="${XLOCKLIBS} -lsocket -lnsl -lposix4"
+    XLOCKLIBS="${XLOCKLIBS} -lposix4"
+    LIBS="${LIBS} -lsocket -lnsl -lposix4"
+		XLOCKLDFLAGS="-R${XLOCK_LDFLAGS}"
+		XMLOCKLDFLAGS="-R${XMLOCK_LDFLAGS}"
+		XALOCKLDFLAGS="-R${XALOCK_LDFLAGS}"
+  ;;
+
+  *-*-sunos4* )
+    AC_DEFINE(SUNOS4)
+    BITMAPTYPE="sun"
+    PIXMAPTYPE="sun"
+  ;;
+
+  *-*-sysv5* )
+    BITMAPTYPE="x11"
+    PIXMAPTYPE="x11"
+  ;;
+
+  *)
+    BITMAPTYPE="x11"
+    PIXMAPTYPE="x11"
+  ;;
+esac
+
+
+if test "$dirent" = yes; then
+  AC_HEADER_DIRENT
+fi
+
+AC_CHECK_FUNC(nanosleep, AC_DEFINE(HAVE_NANOSLEEP),
+AC_CHECK_FUNC(usleep, AC_DEFINE(HAVE_USLEEP)))
+
+dnl AC_CHECK_FUNCS(gettimeofday) 
+AC_MSG_CHECKING(how to call gettimeofday)
+AC_CACHE_VAL(ac_cv_gettimeofday_args,
+ [AC_TRY_COMPILE([#include <stdlib.h>
+#include <sys/time.h>],
+     [struct timeval tv; struct timezone tzp;
+      gettimeofday(&tv, &tzp);],
+     [ac_gettimeofday_args=2],
+     [AC_TRY_COMPILE([#include <stdlib.h>
+#include <sys/time.h>],
+         [struct timeval tv; gettimeofday(&tv);],
+         [ac_gettimeofday_args=1],
+         [ac_gettimeofday_args=0])])
+  ac_cv_gettimeofday_args=$ac_gettimeofday_args])
+ac_gettimeofday_args=$ac_cv_gettimeofday_args
+if test $ac_gettimeofday_args = 2 ; then
+  AC_DEFINE(HAVE_GETTIMEOFDAY)
+  AC_DEFINE(GETTIMEOFDAY_TWO_ARGS)
+  AC_MSG_RESULT(two arguments)
+elif test $ac_gettimeofday_args = 1 ; then
+  AC_DEFINE(HAVE_GETTIMEOFDAY)
+  AC_MSG_RESULT(one argument)
+else
+  AC_MSG_RESULT(unknown)
+fi
+ 
+srand=no
+AC_CHECK_FUNC(srand48, AC_DEFINE(SRAND,srand48) AC_DEFINE(LRAND,lrand48)
+  AC_DEFINE(MAXRAND,2147483648.0),
+[AC_CHECK_FUNC(srandom, AC_DEFINE(SRAND,srandom) AC_DEFINE(LRAND,random)
+  AC_DEFINE(MAXRAND,2147483648.0),
+AC_CHECK_FUNC(srand, AC_DEFINE(SRAND,srand) AC_DEFINE(LRAND,rand) srand=yes))])
+
+if test "$srand" = yes; then
+  if test "$aixv3" = yes; then
+    AC_DEFINE(MAXRAND,2147483648.0)
+  else
+    AC_DEFINE(MAXRAND,32768.0)
+  fi
+fi
+
+AC_C_INLINE
+AC_MSG_CHECKING([matherr support])
+AC_CACHE_VAL(ac_cv_c_matherr,[   
+AC_TRY_COMPILE([#define _XOPEN_SOURCE 1
+#include <math.h>], [
+struct exception x;
+x.type = DOMAIN;  
+x.type = SING; 
+], ac_cv_c_matherr=yes, ac_cv_c_matherr=no)])
+if test x"$ac_cv_c_matherr" = xyes; then    
+    AC_DEFINE(USE_MATHERR)
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+
+dnl Problems here if -I/usr/include used with gcc on Solaris
+AC_C_INLINE
+AC_MSG_CHECKING([struct sigset_t])
+AC_CACHE_VAL(ac_cv_c_sigset_t,[   
+AC_TRY_COMPILE([/*#define _XOPEN_SOURCE 1*/
+#include <signal.h>], [
+typedef struct {unsigned long __sigbits[4];} sigset_t;
+sigset_t sigmask;
+], ac_cv_c_sigset_t=yes, ac_cv_c_sigset_t=no)])
+if test x"$ac_cv_c_sigset_t" = xyes; then    
+  AC_DEFINE(HAVE_STRUCT_SIGSET_T)
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+
+AC_ARG_ENABLE(bitmapdir, [  --enable-bitmapdir=DIR  set directory for bitmaps, default is ./bitmaps],bitmap_dir=$enableval,bitmap_dir=no)
+case "x$bitmap_dir" in
+x/*|x.*)
+  AC_MSG_RESULT([setting BITMAPDIR = $enableval])
+  BITMAPDIR=$enableval
+  if test ! -d $bitmap_dir; then
+    AC_MSG_RESULT([Warning: Directory $enableval does not exist])
+  fi
+  ;;
+*)
+  BITMAPDIR='$(top_srcdir)/bitmaps'
+  bitmap_dir='$top_srcdir/bitmaps'
+  ;;
+esac
+
+AC_ARG_ENABLE(bitmaptype, [  --enable-bitmaptype=name
+                          set name for bitmap type],bitmap_type=$enableval,bitmap_type=no)
+case "x$bitmap_type" in
+xyes*|xno*)
+  ;;
+*)
+  AC_MSG_RESULT([setting BITMAPTYPE = $enableval])
+  BITMAPTYPE=$enableval
+  if test ! -f $bitmap_dir/l-$BITMAPTYPE.xbm; then
+    AC_MSG_RESULT([Warning: Bitmap $BITMAPDIR/l-$BITMAPTYPE.xbm does not exist])
+  fi
+  ;;
+esac
+
+AC_ARG_ENABLE(pixmapdir, [  --enable-pixmapdir=DIR  set directory for pixmaps, default is ./pixmaps],pixmap_dir=$enableval,pixmap_dir=no)
+case "x$pixmap_dir" in
+x/*|x.*)
+  AC_MSG_RESULT([setting PIXMAPDIR = $enableval])
+  PIXMAPDIR=$enableval
+  if test ! -d $pixmap_dir; then
+    AC_MSG_RESULT([Warning: Directory $enableval does not exist])
+  fi
+  ;;
+*)
+  PIXMAPDIR='$(top_srcdir)/pixmaps'
+  pixmap_dir='$top_srcdir/pixmaps'
+  ;;
+esac
+
+AC_ARG_ENABLE(pixmaptype, [  --enable-pixmaptype=name
+                          set name for pixmap type],pixmap_type=$enableval,pixmap_type=no)
+case "x$pixmap_type" in
+xyes*|xno*)
+  ;;
+*)
+  AC_MSG_RESULT([setting PIXMAPTYPE = $enableval])
+  PIXMAPTYPE=$enableval
+  if test ! -f $pixmap_dir/m-$PIXMAPTYPE.xpm; then
+    AC_MSG_RESULT([Warning: Pixmap $PIXMAPDIR/m-$PIXMAPTYPE.xpm does not exist])
+  fi
+  ;;
+esac
+
+AC_ARG_ENABLE(mapdir, [  --enable-mapdir=DIR     set directory for bitmaps and pixmaps],map_dir=$enableval,map_dir=no)
+case "x$map_dir" in
+x/*|x.*)
+  AC_MSG_RESULT([setting BITMAPDIR = $enableval])
+  BITMAPDIR=$enableval
+  AC_MSG_RESULT([setting PIXMAPDIR = $enableval])
+  PIXMAPDIR=$enableval
+  if test ! -d $map_dir; then
+    AC_MSG_RESULT([Warning: Directory $enableval does not exist])
+  fi
+  ;;
+*)
+  BITMAPDIR='$(top_srcdir)/bitmaps'
+  bitmap_dir='$top_srcdir/bitmaps'
+  PIXMAPDIR='$(top_srcdir)/pixmaps'
+  pixmap_dir='$top_srcdir/pixmaps'
+  ;;
+esac
+
+AC_ARG_ENABLE(maptype, [  --enable-maptype=name   set name for bitmap and pixmap type],map_type=$enableval,map_type=no)
+case "x$map_type" in
+xyes*|xno*)
+  ;;
+*)
+  AC_MSG_RESULT([setting BITMAPTYPE = $enableval])
+  BITMAPTYPE=$enableval
+  if test ! -f $map_dir/l-$BITMAPTYPE.xbm; then
+    AC_MSG_RESULT([Warning: Bitmap $BITMAPDIR/l-$BITMAPTYPE.xbm does not exist])
+  fi
+  AC_MSG_RESULT([setting PIXMAPTYPE = $enableval])
+  PIXMAPTYPE=$enableval
+  if test ! -f $map_dir/m-$PIXMAPTYPE.xpm; then
+    AC_MSG_RESULT([Warning: Pixmap $PIXMAPDIR/m-$PIXMAPTYPE.xpm does not exist])
+  fi
+  ;;
+esac
+
+if test "$sound" = no; then
+  AC_ARG_ENABLE(def_play, [  --enable-def-play=program
+                          set def-play to program that plays sounds],def_play=$enableval,def_play=no)
+  if test "$def_play" != no; then
+    AC_MSG_RESULT([defining option DEF_PLAY = "$enableval"])
+    AC_DEFINE_UNQUOTED(DEF_PLAY,"$enableval")
+  fi
+fi
+
+AC_ARG_ENABLE(vroot, [  --disable-vroot         disables xlock from being able to run in root window
+                          (some window managers have problems)],use_vroot=$enableval,use_vroot=yes)
+if test "$use_vroot" = yes; then
+  AC_MSG_RESULT([defining option USE_VROOT])
+  AC_DEFINE(USE_VROOT)
+fi
+
+AC_ARG_ENABLE(allow-root, [  --disable-allow-root    allows users to turn off allowroot (default is to
+                          always allow root to be able to unlock xlock)],allow_root=$enableval,allow_root=yes)
+if test "$allow_root" = yes; then
+  AC_MSG_RESULT([defining option ALWAYS_ALLOW_ROOT])
+  AC_DEFINE(ALWAYS_ALLOW_ROOT)
+fi
+
+AC_ARG_ENABLE(syslog, [  --enable-syslog         enable syslog logging],use_syslog=$enableval,use_syslog=no)
+if test "$use_syslog" = yes; then
+  AC_MSG_RESULT([defining option USE_SYSLOG])
+  AC_DEFINE(USE_SYSLOG)
+fi
+ 
+AC_ARG_ENABLE(multiple-user, [  --enable-multiple-user  enable multiple users],use_multiple_user=$enableval,use_multiple_user=no)
+if test "$use_multiple_user" = yes; then
+  AC_MSG_RESULT([defining option USE_MULTIPLE_USER])
+  AC_DEFINE(USE_MULTIPLE_USER)
+fi
+ 
+AC_ARG_ENABLE(multiple-root, [  --enable-multiple-root  enable multiple root users],use_multiple_root=$enableval,use_multiple_root=no)
+if test "$use_multiple_root" = yes; then
+  AC_MSG_RESULT([defining option USE_MULTIPLE_ROOT])
+  AC_DEFINE(USE_MULTIPLE_ROOT)
+fi
+ 
+AC_ARG_ENABLE(window-visibility, [  --enable-window-visibility
+                          allow a window to be displayed over xlock],use_window_visiblity=$enableval,use_window_visibility=no)
+if test "$use_window_visibility" = yes; then
+  AC_MSG_RESULT([defining option USE_WINDOW_VISIBILITY])
+  AC_DEFINE(USE_WINDOW_VISIBLITY)
+fi
+ 
+AC_ARG_ENABLE(old-event-loop, [  --enable-old-event-loop some machines may still need this
+                          (fd_set errors may be a sign)],use_old_event_loop=$enableval,use_old_event_loop=no)
+if test "$use_old_event_loop" = yes; then
+  AC_MSG_RESULT([defining option USE_OLD_EVENT_LOOP])
+  AC_DEFINE(USE_OLD_EVENT_LOOP)
+fi
+
+dnl AC_ARG_ENABLE(vmsutils, [  --enable-vmsutils       patches up old __VMS_VER < 70000000],use_vmsutils=$enableval,use_vmsutils=no)
+dnl if test "$use_vmsutils" = yes; then
+dnl   AC_MSG_RESULT([defining option USE_VMSUTILS])
+dnl   AC_DEFINE(USE_VMSUTILS)
+dnl fi
+ 
+AC_ARG_ENABLE(xlockrc, [  --enable-xlockrc        for unknown shadow passwd algorithm],use_xlockrc=$enableval,use_xlockrc=no)
+if test "$use_xlockrc" = yes; then
+  AC_MSG_RESULT([defining option USE_XLOCKRC])
+  AC_DEFINE(USE_XLOCKRC)
+fi
+ 
+AC_ARG_ENABLE(auto-logout, [  --enable-auto-logout=time
+                          enable auto-logout code for lab use (time in minutes)],use_auto_logout=$enableval,use_auto_logout=no)
+case "x$use_auto_logout" in
+x|xyes*)
+  AC_MSG_RESULT([defining option USE_AUTO_LOGOUT = 240 minutes])
+  AC_DEFINE(USE_AUTO_LOGOUT,240)
+  ;;
+x[[0-9]]*)
+  AC_MSG_RESULT([defining option USE_AUTO_LOGOUT = $enableval minutes])
+  AC_DEFINE_UNQUOTED(USE_AUTO_LOGOUT,$enableval)
+  ;;
+xno*)
+  ;;
+*)
+  AC_MSG_RESULT([Warning: Illegal time value "$use_auto_logout" given])
+  AC_MSG_RESULT([defining option USE_AUTO_LOGOUT = 240 minutes])
+  AC_DEFINE(USE_AUTO_LOGOUT,240)
+  ;;
+esac
+ 
+AC_ARG_ENABLE(default-auto-logout, [  --enable-default-auto-logout=time
+                          set default-auto-logout (time in minutes)],def_auto_logout=$enableval,def_auto_logout=no)
+case "x$def_auto_logout" in
+x|xyes*)
+  AC_MSG_RESULT([defining option DEF_AUTO_LOGOUT = 120 minutes])
+  AC_DEFINE(DEF_AUTO_LOGOUT,"120")
+  ;;
+x[[0-9]]*)
+  AC_MSG_RESULT([defining option DEF_AUTO_LOGOUT = $enableval minutes])
+  AC_DEFINE_UNQUOTED(DEF_AUTO_LOGOUT,"$enableval")
+  ;;
+xno*)
+  ;;
+*)
+  AC_MSG_RESULT([Warning: Illegal time value "$def_auto_logout" given])
+  AC_MSG_RESULT([defining option DEF_AUTO_LOGOUT = 120 minutes])
+  AC_DEFINE(DEF_AUTO_LOGOUT,"120")
+  ;;
+esac
+ 
+AC_ARG_ENABLE(button-logout, [  --enable-button-logout=time
+                          enable button logout for lab use (time in minutes)],use_button_logout=$enableval,use_button_logout=no)
+case "x$use_button_logout" in
+x|xyes*)
+  AC_MSG_RESULT([defining option USE_BUTTON_LOGOUT = 10 minutes])
+  AC_DEFINE(USE_BUTTON_LOGOUT,10)
+  ;;
+x[[0-9]]*)
+  AC_MSG_RESULT([defining option USE_BUTTON_LOGOUT = $enableval minutes])
+  AC_DEFINE_UNQUOTED(USE_BUTTON_LOGOUT,$enableval)
+  ;;
+xno*)
+  ;;
+*)
+  AC_MSG_RESULT([Warning: Illegal time value "$use_button_logout" given])
+  AC_MSG_RESULT([defining option USE_BUTTON_LOGOUT = 10 minutes])
+  AC_DEFINE(USE_BUTTON_LOGOUT,10)
+  ;;
+esac
+ 
+AC_ARG_ENABLE(default-button-logout, [  --enable-default-button-logout=time
+                          set default-button-logout (time in minutes)],def_button_logout=$enableval,def_button_logout=no)
+case "x$def_button_logout" in
+x|xyes*)
+  AC_MSG_RESULT([defining option DEF_BUTTON_LOGOUT = 5 minutes])
+  AC_DEFINE(DEF_BUTTON_LOGOUT,"5")
+  ;;
+x[[0-9]]*)
+  AC_MSG_RESULT([defining option DEF_BUTTON_LOGOUT = $enableval minutes])
+  AC_DEFINE_UNQUOTED(DEF_BUTTON_LOGOUT,"$enableval")
+  ;;
+xno*)
+  ;;
+*)
+  AC_MSG_RESULT([Warning: Illegal time value "$def_button_logout" given])
+  AC_MSG_RESULT([defining option DEF_BUTTON_LOGOUT = 5 minutes])
+  AC_DEFINE(DEF_BUTTON_LOGOUT,"5")
+  ;;
+esac
+
+AC_ARG_ENABLE(bomb, [  --disable-bomb          disable automatic logout mode],use_bomb=$enableval,use_bomb=yes)
+if test "$use_bomb" = yes; then
+  AC_MSG_RESULT([defining option USE_BOMB])
+  AC_DEFINE(USE_BOMB)
+  BOMB=""
+else
+  BOMB="#"
+fi
+
+AC_ARG_ENABLE(closedown-logout, [  --enable-closedown-logout
+                          define this one or next, with enable-auto-logout,],closedown_logout=$enableval,closedown_logout=no)
+if test "$closedown_logout" = yes; then
+  AC_MSG_RESULT([defining option CLOSEDOWN_LOGOUT])
+  AC_DEFINE(CLOSEDOWN_LOGOUT)
+fi
+ 
+AC_ARG_ENABLE(session-logout, [  --enable-session-logout  enable-button-logout, and/or enable-bomb, for xdm],session_logout=$enableval,session_logout=no)
+if test "$session_logout" = yes; then
+  AC_MSG_RESULT([defining option SESSION_LOGOUT])
+  AC_DEFINE(SESSION_LOGOUT)
+fi
+ 
+AC_ARG_ENABLE(staff-file, [  --enable-staff-file=filename
+                          set file of staff who are exempt from auto-logout],use_staff_file=$enableval,use_staff_file=no)
+case "x$use_staff_file" in
+x|xyes*)
+  AC_MSG_RESULT([defining option STAFF_FILE = "/usr/remote/etc/xlock.staff"])
+  AC_DEFINE_UNQUOTED(STAFF_FILE,"/usr/remote/etc/xlock.staff")
+  if test ! -f /usr/remote/etc/xlock.staff; then
+    AC_MSG_RESULT([Warning: File /usr/remote/etc/xlock.staff does not exist])
+  fi
+  ;;
+x/*)
+  AC_MSG_RESULT([defining option STAFF_FILE = "$enableval"])
+  AC_DEFINE_UNQUOTED(STAFF_FILE,"$enableval")
+  if test ! -f $use_staff_file; then
+    AC_MSG_RESULT([Warning: File $enableval does not exist])
+  fi
+  ;;
+esac
+ 
+AC_ARG_ENABLE(staff-netgroup, [  --enable-staff-netgroup=netgroup
+                          set netgroup of staff who are exempt from auto-logout],use_staff_netgroup=$enableval,use_staff_netgroup=no)
+if test "$use_staff_netgroup" != no; then
+  AC_MSG_RESULT([defining option STAFF_NETGROUP = "$enableval"])
+  AC_DEFINE_UNQUOTED(STAFF_NETGROUP,"$enableval")
+fi
+ 
+AC_ARG_ENABLE(kerberos4, [  --enable-kerberos4      enable Kerberos 4],kerberos4=$enableval,kerberos4=no)
+if test "$kerberos4" = yes; then
+  AC_MSG_RESULT([defining option HAVE_KRB4])
+  AC_DEFINE(HAVE_KRB4)
+  XLOCKINC="${XLOCKINC} -I/usr/athena/include"
+  XLOCKLIBS="${XLOCKLIBS} -L/usr/athena/lib -lkrb -ldes"
+fi
+
+AC_ARG_ENABLE(kerberos5, [  --enable-kerberos5      enable Kerberos 5],kerberos5=$enableval,kerberos5=no)
+if test "$kerberos5" = yes; then
+  AC_MSG_RESULT([defining option HAVE_KRB5])
+  AC_DEFINE(HAVE_KRB5)
+  XLOCKINC="${XLOCKINC} -I/opt/krb5/include"
+  XLOCKLIBS="${XLOCKLIBS} -L/opt/krb5/lib -lkrb5 -lcrypto -lcom_err"
+fi
+
+AC_ARG_ENABLE(dce_passwd, [  --enable-dce-passwd     enable DCE passwording],dce_passwd=$enableval,dce_passwd=no)
+if test "$dce_passwd" = yes; then
+  AC_MSG_RESULT([defining option DCE_PASSWD])
+  AC_DEFINE(DCE_PASSWD)
+  XLOCKINC="${XLOCKINC} -I/usr/include/reentrant"
+  XLOCKLIBS="${XLOCKLIBS} -ldce -lc_r"
+fi
+
+AC_ARG_ENABLE(pam, [  --enable-pam            enable PAM], pam=$enableval,pam=no)
+if test "$pam" = yes; then
+  AC_MSG_RESULT([defining option PAM])
+  AC_DEFINE(PAM)
+  XLOCKLIBS="${XLOCKLIBS} -lpam -ldl"
+fi
+
+AC_ARG_ENABLE(afs, [  --enable-afs            enable AIX AFS],afs=$enableval,afs=no)
+if test "afs" = yes; then
+  AC_MSG_RESULT([defining option AFS])
+  AC_DEFINE(AFS)
+  XLOCKINC="${XLOCKINC} -I/usr/afsws/include"
+  XLOCKLIBS="${XLOCKLIBS} -L/usr/afsws/lib -L/usr/afsws/lib/afs -lkauth -lubik -lprot -lrxkad -lrx -llwp -lauth -lsys -ldes -lcmd -lcom_err /usr/afsws/lib/afs/util.a -laudit"
+fi
+
+AC_ARG_ENABLE(sunos_adjunct_passwd, [  --enable-sunos-adjunct-passwd
+                          enable SUNOS Adjunct passwording],sunos_adjunct_passwd=$enableval,sunos_adjunct_passwd=no)
+if test "$sunos_adjunct_passwd" = yes; then
+  AC_MSG_RESULT([defining option SUNOS_ADJUNCT_PASSWD])
+  AC_DEFINE(SUNOS_ADJUNCT_PASSWD)
+fi
+
+AC_ARG_ENABLE(use_mb, [  --enable-use-mb         enable Xmb function series (new)],use_mb=$enableval,use_mb=no)
+if test "$use_mb" = yes; then
+  AC_MSG_RESULT([defining option USE_MB])
+  AC_DEFINE(USE_MB)
+fi
+
+AC_ARG_ENABLE(modules, [  --enable-modules        enable modules (new and experimental)],modules=$enableval,modules=no)
+if test "$modules" = yes; then
+  AC_MSG_RESULT([enabling xlk modules])
+  MODULES=""
+else
+  MODULES="#"
+fi
+
+AC_ARG_ENABLE(check, [  --enable-check          enable check (new and experimental)],check=$enableval,check=no)
+if test "$check" = yes; then
+  AC_MSG_RESULT([enabling memory debug checking])
+  CHECK=""
+else
+  CHECK="#"
+fi
+
+if test "x$INSTPGMFLAGS" != x; then
+AC_ARG_ENABLE(setuid, [  --disable-setuid        disables setuid installation if automatically chosen],setuid=$enableval,setuid=yes)
+case "x$setuid" in
+xno*)
+  INSTPGMFLAGS=""
+  AC_MSG_RESULT([no setuid/setgid install])
+  ;;
+x|xyes*)
+  AC_MSG_RESULT([defining install options (setuid/setgid) = "$INSTPGMFLAGS"])
+  ;;
+x*)
+  INSTPGMFLAGS=$enableval
+  AC_MSG_RESULT([defining install options (setuid/setgid) = "$enableval"])
+  ;;
+esac
+else
+  AC_MSG_RESULT([no setuid/setgid install])
+fi
+
+XLOCKLIBS="${XLOCKLIBPATHS} ${XLOCKLIBS} -lX11 -lXext -lm"
+XMLOCKLIBS="${XMLOCKLIBPATHS} ${XMLOCKLIBS} -lX11"
+XALOCKLIBS="${XALOCKLIBPATHS} ${XALOCKLIBS} -lX11"
+AC_SUBST(XLOCKLDFLAGS)
+AC_SUBST(XMLOCKLDFLAGS)
+AC_SUBST(XALOCKLDFLAGS)
+AC_SUBST(INSTPGMFLAGS)
+AC_SUBST(XLOCKINC)
+AC_SUBST(XMLOCKINC)
+AC_SUBST(XALOCKINC)
+AC_SUBST(XLIBS)
+AC_SUBST(BITMAPTYPE)
+AC_SUBST(PIXMAPTYPE)
+AC_SUBST(BITMAPDIR)
+AC_SUBST(PIXMAPDIR)
+AC_SUBST(XLOCKLIBS)
+AC_SUBST(XMLOCKLIBS)
+AC_SUBST(XALOCKLIBS)
+AC_SUBST(XMLOCK)
+AC_SUBST(XALOCK)
+AC_SUBST(INSTALL_XMLOCK)
+AC_SUBST(INSTALL_XALOCK)
+AC_SUBST(UNINSTALL_XMLOCK)
+AC_SUBST(UNINSTALL_XALOCK)
+AC_SUBST(APPDEFAULTS)
+AC_SUBST(LINT)
+AC_SUBST(CHECK)
+AC_SUBST(PURIFY)
+AC_SUBST(XPM)
+AC_SUBST(GL)
+AC_SUBST(BOMB)
+
+AC_CONFIG_HEADER(config.h)
+AC_OUTPUT(Makefile
+    xlock/Makefile
+    modes/Makefile
+    modes/glx/Makefile
+    xmlock/Makefile
+    xalock/Makefile
+		)
