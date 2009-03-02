@@ -1,11 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * lightning --- fractal lightning bolts.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* lightning --- fractal lightning bolds */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)lightning.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)lightning.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1996 by Keith Romberg <kromberg@saxe.com>.
+/*-
+ * Copyright (c) 1996 by Keith Romberg <kromberg@saxe.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,28 +22,38 @@ static const char sccsid[] = "@(#)lightning.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 14-Jul-96: Cleaned up code.
- * 27-Jun-96: Written and submitted by Keith Romberg <kromberg@saxe.com>.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 14-Jul-1996: Cleaned up code.
+ * 27-Jun-1996: Written and submitted by Keith Romberg <kromberg@saxe.com>.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Lightning"
-# define HACK_INIT					init_lightning
-# define HACK_DRAW					draw_lightning
-# define lightning_opts				xlockmore_opts
-# define DEFAULTS	"*delay:		10000 \n"			\
-					"*ncolors:		200   \n"
-# define BRIGHT_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_lightning
+#define PROGCLASS "Lightning"
+#define HACK_INIT init_lightning
+#define HACK_DRAW draw_lightning
+#define lightning_opts xlockmore_opts
+#define DEFAULTS "*delay: 10000 \n"
+#define BRIGHT_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+#endif /* STANDALONE */
 
-ModeSpecOpt lightning_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_lightning
 
-/*----------------------------   defines   -------------------------------*/
+ModeSpecOpt lightning_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   lightning_description =
+{"lightning", "init_lightning", "draw_lightning", "release_lightning",
+ "refresh_lightning", "init_lightning", (char *) NULL, &lightning_opts,
+ 10000, 1, 1, 1, 64, 0.6, "",
+ "Shows Keith's fractal lightning bolts", 0, NULL};
+
+#endif
 
 #define BOLT_NUMBER 4
 #define BOLT_ITERATION 4
@@ -100,10 +112,11 @@ typedef struct {
 	int         give_it_hell;
 	int         draw_time;
 	int         stage;
+	int         busyLoop;
 	unsigned long color;
 } Storm;
 
-static Storm *Helga = NULL;
+static Storm *Helga = (Storm *) NULL;
 
 /*-------------------   function prototypes  ----------------------------*/
 
@@ -113,7 +126,7 @@ static int  setup_multi_strike(void);
 static int  flashing_strike(void);
 static void flash_duration(int *start, int *end, int total_duration);
 static void random_storm(Storm * st);
-static void generate(XPoint A, XPoint B, int iter, XPoint * verts, int *index);
+static void generate(XPoint A, XPoint B, int iter, XPoint * verts, int *vert_index);
 static void create_fork(Fork * f, XPoint start, XPoint end, int level);
 
 static void first_strike(Lightning bolt, ModeInfo * mi);
@@ -123,7 +136,7 @@ static void level1_strike(Lightning bolt, ModeInfo * mi);
 static void level2_strike(Lightning bolt, ModeInfo * mi);
 
 static int  storm_active(Storm * st);
-static void update_bolt(Lightning * bolt, int time);
+static void update_bolt(Lightning * bolt, int time_now);
 static void wiggle_bolt(Lightning * bolt);
 static void wiggle_line(XPoint * p, int number, int wiggle_amount);
 
@@ -220,7 +233,7 @@ random_storm(Storm * st)
 }
 
 static void
-generate(XPoint A, XPoint B, int iter, XPoint * verts, int *index)
+generate(XPoint A, XPoint B, int iter, XPoint * verts, int *vert_index)
 {
 	XPoint      mid;
 
@@ -228,13 +241,13 @@ generate(XPoint A, XPoint B, int iter, XPoint * verts, int *index)
 	mid.y = (A.y + B.y) / 2 + NRAND(HEIGHT_VARIATION) - HEIGHT_VARIATION / 2;
 
 	if (!iter) {
-		verts[*index].x = mid.x;
-		verts[*index].y = mid.y;
-		(*index)++;
+		verts[*vert_index].x = mid.x;
+		verts[*vert_index].y = mid.y;
+		(*vert_index)++;
 		return;
 	}
-	generate(A, mid, iter - 1, verts, index);
-	generate(mid, B, iter - 1, verts, index);
+	generate(A, mid, iter - 1, verts, vert_index);
+	generate(mid, B, iter - 1, verts, vert_index);
 }
 
 /*------------------------------------------------------------------------*/
@@ -270,30 +283,30 @@ create_fork(Fork * f, XPoint start, XPoint end, int level)
 /*------------------------------------------------------------------------*/
 
 static void
-update_bolt(Lightning * bolt, int time)
+update_bolt(Lightning * bolt, int time_now)
 {
 	wiggle_bolt(bolt);
 	if ((bolt->wiggle_amount == 0) && (bolt->wiggle_number > 2))
 		bolt->wiggle_number = 0;
-	if (((time % 3) == 0))
+	if (((time_now % 3) == 0))
 		bolt->wiggle_amount++;
 
-	if (((time >= bolt->delay_time) && (time < bolt->flash_begin)) ||
-	    (time > bolt->flash_stop))
+	if (((time_now >= bolt->delay_time) && (time_now < bolt->flash_begin)) ||
+	    (time_now > bolt->flash_stop))
 		bolt->visible = 1;
 	else
 		bolt->visible = 0;
 
-	if (time == bolt->delay_time)
+	if (time_now == bolt->delay_time)
 		bolt->strike_level = FIRST_LEVEL_STRIKE;
-	else if (time == (bolt->delay_time + 1))
+	else if (time_now == (bolt->delay_time + 1))
 		bolt->strike_level = LEVEL_ONE_STRIKE;
-	else if ((time > (bolt->delay_time + 1)) &&
-		 (time <= (bolt->delay_time + bolt->flash_begin - 2)))
+	else if ((time_now > (bolt->delay_time + 1)) &&
+		 (time_now <= (bolt->delay_time + bolt->flash_begin - 2)))
 		bolt->strike_level = LEVEL_TWO_STRIKE;
-	else if (time == (bolt->delay_time + bolt->flash_begin - 1))
+	else if (time_now == (bolt->delay_time + bolt->flash_begin - 1))
 		bolt->strike_level = LEVEL_ONE_STRIKE;
-	else if (time == (bolt->delay_time + bolt->flash_stop + 1))
+	else if (time_now == (bolt->delay_time + bolt->flash_stop + 1))
 		bolt->strike_level = LEVEL_ONE_STRIKE;
 	else
 		bolt->strike_level = LEVEL_TWO_STRIKE;
@@ -324,7 +337,7 @@ first_strike(Lightning bolt, ModeInfo * mi)
 	GC          gc = MI_GC(mi);
 	int         i;
 
-	XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+	XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	XDrawLine(display, window, gc,
 	       bolt.end1.x, bolt.end1.y, bolt.middle[0].x, bolt.middle[0].y);
 	draw_line(mi, bolt.middle, BOLT_VERTICIES, gc, 0);
@@ -375,7 +388,7 @@ level1_strike(Lightning bolt, ModeInfo * mi)
 	if (MI_NPIXELS(mi) > 2)	/* color */
 		XSetForeground(display, gc, MI_PIXEL(mi, st->color));
 	else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	XDrawLine(display, window, gc,
 	bolt.end1.x - 1, bolt.end1.y, bolt.middle[0].x - 1, bolt.middle[0].y);
 	draw_line(mi, bolt.middle, BOLT_VERTICIES, gc, -1);
@@ -403,7 +416,7 @@ level1_strike(Lightning bolt, ModeInfo * mi)
 static int
 distance(XPoint a, XPoint b)
 {
-	return ((int) sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)));
+	return ((int) sqrt((double) (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)));
 }
 
 /*------------------------------------------------------------------------*/
@@ -424,7 +437,7 @@ level2_strike(Lightning bolt, ModeInfo * mi)
 	if (MI_NPIXELS(mi) > 2)
 		XSetForeground(display, gc, MI_PIXEL(mi, st->color));
 	else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	XDrawLine(display, window, gc,
 	bolt.end1.x - 2, bolt.end1.y, bolt.middle[0].x - 2, bolt.middle[0].y);
 	draw_line(mi, bolt.middle, BOLT_VERTICIES, gc, -2);
@@ -513,8 +526,8 @@ init_lightning(ModeInfo * mi)
 	}
 	st = &Helga[MI_SCREEN(mi)];
 
-	st->scr_width = MI_WIN_WIDTH(mi);
-	st->scr_height = MI_WIN_HEIGHT(mi);
+	st->scr_width = MI_WIDTH(mi);
+	st->scr_height = MI_HEIGHT(mi);
 
 	st->multi_strike = setup_multi_strike();
 	random_storm(st);
@@ -526,18 +539,25 @@ init_lightning(ModeInfo * mi)
 void
 draw_lightning(ModeInfo * mi)
 {
-	Storm      *st = &Helga[MI_SCREEN(mi)];
 	int         i;
+	Storm      *st;
 
+	if (Helga == NULL)
+		return;
+	st = &Helga[MI_SCREEN(mi)];
+	MI_IS_DRAWN(mi) = True;
 	switch (st->stage) {
 		case 0:
-			XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+			MI_IS_DRAWN(mi) = False;
+			MI_CLEARWINDOW(mi);
+			MI_IS_DRAWN(mi) = True;
+
 			st->color = NRAND(MI_NPIXELS(mi));
 			st->draw_time = 0;
 			if (storm_active(st))
 				st->stage++;
 			else
-				st->stage = 3;
+				st->stage = 4;
 			break;
 		case 1:
 			for (i = 0; i < st->multi_strike; i++) {
@@ -546,19 +566,29 @@ draw_lightning(ModeInfo * mi)
 				update_bolt(&(st->bolts[i]), st->draw_time);
 			}
 			st->draw_time++;
-			XFlush(MI_DISPLAY(mi));
-			MI_PAUSE(mi) = 60000;
 			st->stage++;
+			st->busyLoop = 0;
 			break;
 		case 2:
-			XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+			if (++st->busyLoop > 6) {
+				st->stage++;
+				st->busyLoop = 0;
+			}
+			break;
+		case 3:
+			MI_IS_DRAWN(mi) = False;
+			MI_CLEARWINDOW(mi);
+			MI_IS_DRAWN(mi) = True;
+
 			if (storm_active(st))
 				st->stage = 1;
 			else
 				st->stage++;
 			break;
-		case 3:
-			MI_PAUSE(mi) = 1000000;
+		case 4:
+			if (++st->busyLoop > 100) {
+				st->busyLoop = 0;
+			}
 			init_lightning(mi);
 			break;
 	}
@@ -569,7 +599,7 @@ release_lightning(ModeInfo * mi)
 {
 	if (Helga != NULL) {
 		(void) free((void *) Helga);
-		Helga = NULL;
+		Helga = (Storm *) NULL;
 	}
 }
 
@@ -578,3 +608,5 @@ refresh_lightning(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+#endif /* MODE_lightning */

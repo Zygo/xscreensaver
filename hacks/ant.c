@@ -5,7 +5,7 @@
  */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)ant.c	4.11 98/06/18 xlockmore";
+static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
 
 #endif
 
@@ -25,25 +25,26 @@ static const char sccsid[] = "@(#)ant.c	4.11 98/06/18 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: Compatible with xscreensaver
- * 16-Apr-97: -neighbors 3 and 8 added
- * 01-Jan-97: Updated ant.c to handle more kinds of ants.  Thanks to
- *            J Austin David <Austin.David@tlogic.com>.  Check it out in
- *            java at http://havoc.gtf.gatech.edu/austin  He thought up the
- *            new Ladder ant.
- * 04-Apr-96: -neighbors 6 runtime-time option added for hexagonal ants
- *            (bees), coded from an idea of Jim Propp's in Science News,
- *            Oct 28, 1995 VOL. 148 page 287
- * 20-Sep-95: Memory leak in ant fixed.  Now random colors.
- * 05-Sep-95: Coded from A.K. Dewdney's "Computer Recreations", Scientific
- *            American Magazine" Sep 1989 pp 180-183, Mar 1990 p 121
- *            Also used Ian Stewart's Mathematical Recreations, Scientific
- *            American Jul 1994 pp 104-107
- *            also used demon.c and life.c as a guide.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 16-Apr-1997: -neighbors 3 and 8 added
+ * 01-Jan-1997: Updated ant.c to handle more kinds of ants.  Thanks to
+ *              J Austin David <Austin.David@tlogic.com>.  Check it out in
+ *              java at http://havoc.gtf.gatech.edu/austin  He thought up the
+ *              new Ladder ant.
+ * 04-Apr-1996: -neighbors 6 runtime-time option added for hexagonal ants
+ *              (bees), coded from an idea of Jim Propp's in Science News,
+ *              Oct 28, 1995 VOL. 148 page 287
+ * 20-Sep-1995: Memory leak in ant fixed.  Now random colors.
+ * 05-Sep-1995: Coded from A.K. Dewdney's "Computer Recreations", Scientific
+ *              American Magazine" Sep 1989 pp 180-183, Mar 1990 p 121
+ *              Also used Ian Stewart's Mathematical Recreations, Scientific
+ *              American Jul 1994 pp 104-107
+ *              also used demon.c and life.c as a guide.
  */
 
 /*-
-  Species Grid     Number of Neigbors
+  Species Grid     Number of Neighbors
   ------- ----     ------------------
   Ants    Square   4 (or 8)
   Bees    Hexagon  6
@@ -53,85 +54,86 @@ static const char sccsid[] = "@(#)ant.c	4.11 98/06/18 xlockmore";
 */
 
 #ifdef STANDALONE
-# define PROGCLASS "Ant"
-# define HACK_INIT init_ant
-# define HACK_DRAW draw_ant
-# define ant_opts xlockmore_opts
-# define DEFAULTS	"*delay:   1000 \n"		\
-					"*count:  -3 \n"		\
-					"*cycles:  40000 \n"	\
-					"*size:   -12 \n"		\
-					"*ncolors: 64 \n"		\
-					"*neighbors: 0 \n"		\
-					"*sharpturn: False \n"
-# include "xlockmore.h"		/* in xscreensaver distribution */
-# include "erase.h"
+#define MODE_ant
+#define PROGCLASS "Ant"
+#define HACK_INIT init_ant
+#define HACK_DRAW draw_ant
+#define ant_opts xlockmore_opts
+#define DEFAULTS "*delay: 1000 \n" \
+ "*count: -3 \n" \
+ "*cycles: 40000 \n" \
+ "*size: -12 \n" \
+ "*ncolors: 64 \n" \
+ "*neighbors: 0 \n" \
+ "*sharpturn: False \n"
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#include "erase.h"
 #else /* STANDALONE */
-# include "xlock.h"		/* in xlockmore distribution */
+#include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
-
 #include "automata.h"
 
+#ifdef MODE_ant
+
 /*-
- * neighbors of 0 randomizes it between 3, 4 and 6.
- * 8, 9 12 are available also but not recommended.
+ * neighbors of 0 randomizes it for 3, 4, 6, 8, 12 (last 2 are less likely)
  */
 
-#ifdef STANDALONE
-static int neighbors;
-#else
-extern int  neighbors;
-#endif /* !STANDALONE */
-
+#define DEF_NEIGHBORS  "0"      /* choose random value */
 #define DEF_TRUCHET  "False"
+#define DEF_EYES  "False"
 #define DEF_SHARPTURN  "False"
-#define DEF_NEIGHBORS  "0"
 
+static int  neighbors;
 static Bool truchet;
+static Bool eyes;
 static Bool sharpturn;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-truchet", ".ant.truchet", XrmoptionNoArg, (caddr_t) "on"},
-	{"+truchet", ".ant.truchet", XrmoptionNoArg, (caddr_t) "off"},
-	{"-sharpturn", ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "on"},
-	{"+sharpturn", ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "off"},
-
-#ifdef STANDALONE
+	{(char *) "-neighbors", (char *) ".ant.neighbors", XrmoptionSepArg, (caddr_t) NULL},
+	{(char *) "-truchet", (char *) ".ant.truchet", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+truchet", (char *) ".ant.truchet", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-eyes", (char *) ".ant.eyes", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+eyes", (char *) ".ant.eyes", XrmoptionNoArg, (caddr_t) "off"},
+	{(char *) "-sharpturn", (char *) ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+sharpturn", (char *) ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "off"},
 	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, (caddr_t) 0},
 	{"+neighbors", ".ant.neighbors", XrmoptionSepArg, (caddr_t) 0}
-#endif /* STANDALONE */
-
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & truchet, "truchet", "Truchet", DEF_TRUCHET, t_Bool},
-   {(caddr_t *) & sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
-#ifdef STANDALONE
+	{(caddr_t *) & neighbors, (char *) "neighbors", (char *) "Neighbors", (char *) DEF_NEIGHBORS, t_Int},
+	{(caddr_t *) & truchet, (char *) "truchet", (char *) "Truchet", (char *) DEF_TRUCHET, t_Bool},
+	{(caddr_t *) & eyes, (char *) "eyes", (char *) "Eyes", (char *) DEF_EYES, t_Bool},
+   {(caddr_t *) & sharpturn, (char *) "sharpturn", (char *) "SharpTurn", (char *) DEF_SHARPTURN, t_Bool},
 	{(caddr_t *) & neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
-#endif /* STANDALONE */
 };
 static OptionStruct desc[] =
 {
-	{"-/+truchet", "turn on/off Truchet lines"},
-	{"-/+sharpturn", "turn on/off sharp turns (6 or 12 neighbors only)"}
+	{(char *) "-neighbors num", (char *) "squares 4 or 8, hexagons 6, triangles 3 or 12"},
+	{(char *) "-/+truchet", (char *) "turn on/off Truchet lines"},
+	{(char *) "-/+eyes", (char *) "turn on/off eyes"},
+	{(char *) "-/+sharpturn", (char *) "turn on/off sharp turns (6, 8 or 12 neighbors only)"}
 };
 
 ModeSpecOpt ant_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
-ModStruct   ant_description =
-{"ant", "init_ant", "draw_ant", "release_ant",
- "refresh_ant", "init_ant", NULL, &ant_opts,
+const ModStruct ant_description =
+{"ant",
+ "init_ant", "draw_ant", "release_ant",
+ "refresh_ant", "init_ant", (char *) NULL, &ant_opts,
  1000, -3, 40000, -12, 64, 1.0, "",
  "Shows Langton's and Turk's generalized ants", 0, NULL};
 
 #endif
 
 #define ANTBITS(n,w,h)\
-  ap->pixmaps[ap->init_bits++]=\
-  XCreatePixmapFromBitmapData(display,window,(char *)n,w,h,1,0,1)
+  if ((ap->pixmaps[ap->init_bits]=\
+  XCreatePixmapFromBitmapData(display,window,(char *)n,w,h,1,0,1))==None){\
+  free_ant(display,ap); return;} else {ap->init_bits++;}
 
 /* If you change the table you may have to change the following 2 constants */
 #define STATES 2
@@ -141,7 +143,6 @@ ModStruct   ant_description =
 #define MINSIZE 1
 #define MINRANDOMSIZE 5
 #define ANGLES 360
-
 
 typedef struct {
 	unsigned char color;
@@ -161,13 +162,15 @@ typedef struct {
 	int         generation;
 	int         xs, ys;
 	int         xb, yb;
+	int         init_dir;
 	int         nrows, ncols;
 	int         width, height;
 	unsigned char ncolors, nstates;
 	int         n;
 	int         redrawing, redrawpos;
 	int         truchet;	/* Only for Turk modes */
-	int         sharpturn;	/* Only for even neighbors > 4 (i.e. 6 and 12) */
+	int         eyes;
+	int         sharpturn;
 	statestruct machine[NUMSTIPPLES * STATES];
 	unsigned char *tape;
 	unsigned char *truchet_state;
@@ -183,13 +186,14 @@ typedef struct {
 } antfarmstruct;
 
 static char plots[] =
-{3,
-#if 1				/* Without this... this mode is misnamed... */
- 4,
+{3, 4, 6, 8,
+#ifdef NUMBER_9
+ 9,
 #endif
- 6};				/* Neighborhoods, 8 just makes a mess */
+ 12};
 
-#define NEIGHBORKINDS (long) (sizeof plots / sizeof *plots)
+#define NEIGHBORKINDS ((long) (sizeof plots / sizeof *plots))
+#define GOODNEIGHBORKINDS 3
 
 /* Relative ant moves */
 #define FS 0			/* Step */
@@ -205,7 +209,7 @@ static char plots[] =
 #define STHL 10			/* Step then turn hard left */
 #define STL 11			/* Step then turn left */
 
-static antfarmstruct *antfarms = NULL;
+static antfarmstruct *antfarms = (antfarmstruct *) NULL;
 
 /* LANGTON'S ANT (10) Chaotic after 500, Builder after 10,000 (104p) */
 /* TURK'S 100 ANT Always chaotic?, tested past 150,000,000 */
@@ -484,8 +488,8 @@ fillcell(ModeInfo * mi, GC gc, int col, int row)
 		ap->shape.hexagon[0].x = ap->xb + ccol * ap->xs;
 		ap->shape.hexagon[0].y = ap->yb + crow * ap->ys;
 		if (ap->xs == 1 && ap->ys == 1)
-			XFillRectangle(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
-			ap->shape.hexagon[0].x, ap->shape.hexagon[0].y, 1, 1);
+			XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
+			ap->shape.hexagon[0].x, ap->shape.hexagon[0].y);
 		else
 			XFillPolygon(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
 			    ap->shape.hexagon, 6, Convex, CoordModePrevious);
@@ -499,9 +503,9 @@ fillcell(ModeInfo * mi, GC gc, int col, int row)
 		ap->shape.triangle[orient][0].x = ap->xb + col * ap->xs;
 		ap->shape.triangle[orient][0].y = ap->yb + row * ap->ys;
 		if (ap->xs <= 3 || ap->ys <= 3)
-			XFillRectangle(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
+			XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), gc,
 			((orient) ? -1 : 1) + ap->shape.triangle[orient][0].x,
-				       ap->shape.triangle[orient][0].y, 1, 1);
+				       ap->shape.triangle[orient][0].y);
 		else {
 			if (orient)
 				ap->shape.triangle[orient][0].x += (ap->xs / 2 - 1);
@@ -529,7 +533,7 @@ truchetcell(ModeInfo * mi, int col, int row, int truchetstate)
 			hex.x = ap->xb + ccol * ap->xs - (int) ((double) ap->xs / 2.0) - 1;
 			hex.y = ap->yb + crow * ap->ys - (int) ((double) ap->ys / 2.0) - 1;
 			for (side = 0; side < 6; side++) {
-				if (side > 0) {
+				if (side) {
 					hex.x += ap->shape.hexagon[side].x;
 					hex.y += ap->shape.hexagon[side].y;
 				}
@@ -539,17 +543,29 @@ truchetcell(ModeInfo * mi, int col, int row, int truchetstate)
 						 ((570 - (side * 60) + fudge) % 360) * 64, (120 - 2 * fudge) * 64);
 			}
 		} else {
-
 			/* Very crude approx of Sqrt 3, so it will not cause drawing errors. */
-			hex.x = ap->xb + ccol * ap->xs - (int) ((double) ap->xs * 1.6 / 2.0);
-			hex.y = ap->yb + crow * ap->ys - (int) ((double) ap->ys * 1.6 / 2.0);
+			hex.x = ap->xb + ccol * ap->xs - (int) ((double) ap->xs * 1.6 / 2.0) - 1;
+			hex.y = ap->yb + crow * ap->ys - (int) ((double) ap->ys * 1.6 / 2.0) - 1;
 			for (side = 0; side < 6; side++) {
-				if (side > 0) {
+				if (side) {
 					hex.x += ap->shape.hexagon[side].x;
 					hex.y += ap->shape.hexagon[side].y;
 				}
 				hex2.x = hex.x + ap->shape.hexagon[side + 1].x / 2;
-				hex2.y = hex.y + ap->shape.hexagon[side + 1].y / 2;
+				hex2.y = hex.y + ap->shape.hexagon[side + 1].y / 2 + 1;
+				/* Lots of fudging here */
+				if (side == 1) {
+					hex2.x += (short) (ap->xs * 0.1 + 1);
+					hex2.y += (short) (ap->ys * 0.1 - ((ap->ys > 5) ? 1 : 0));
+				} else if (side == 2) {
+					hex2.x += (short) (ap->xs * 0.1);
+				} else if (side == 4) {
+					hex2.x += (short) (ap->xs * 0.1);
+					hex2.y += (short) (ap->ys * 0.1 - 1);
+				} else if (side == 5) {
+					hex2.x += (short) (ap->xs * 0.5);
+					hex2.y += (short) (-ap->ys * 0.3 + 1);
+				}
 				if (truchetstate == side % 3)
 					/* Crude approx of 120 deg, so it will not cause drawing errors. */
 					XDrawArc(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
@@ -561,7 +577,7 @@ truchetcell(ModeInfo * mi, int col, int row, int truchetstate)
 	} else if (ap->neighbors == 4) {
 		if (truchetstate) {
 			XDrawArc(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-				 ap->xb + ap->xs * col - ap->xs / 2+ 1,
+				 ap->xb + ap->xs * col - ap->xs / 2 + 1,
 				 ap->yb + ap->ys * row + ap->ys / 2 - 1,
 				 ap->xs - 2, ap->ys - 2,
 				 0 * 64, 90 * 64);
@@ -586,6 +602,7 @@ truchetcell(ModeInfo * mi, int col, int row, int truchetstate)
 		int         orient = (col + row) % 2;	/* O left 1 right */
 		int         side, ang;
 		int         fudge = 7;	/* fudge because the triangles are not exact */
+		double      fudge2 = 1.18;
 		XPoint      tri;
 
 		tri.x = ap->xb + col * ap->xs;
@@ -600,14 +617,16 @@ truchetcell(ModeInfo * mi, int col, int row, int truchetstate)
 				tri.x += ap->shape.triangle[orient][side].x;
 				tri.y += ap->shape.triangle[orient][side].y;
 			}
-			if (truchetstate == side % 3) {
+			if (truchetstate == side) {
 				if (orient)
 					ang = (510 - side * 120) % 360;		/* Right */
 				else
 					ang = (690 - side * 120) % 360;		/* Left */
 				XDrawArc(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-				  tri.x - ap->xs / 2, tri.y - 3 * ap->ys / 4,
-					 ap->xs, 3 * ap->ys / 2,
+				  (int) (tri.x - ap->xs * fudge2 / 2),
+          (int) (tri.y - 3 * ap->ys * fudge2 / 4),
+				  (unsigned int) (ap->xs * fudge2),
+          (unsigned int) (3 * ap->ys * fudge2 / 2),
 				  (ang + fudge) * 64, (60 - 2 * fudge) * 64);
 			}
 		}
@@ -656,48 +675,152 @@ drawtruchet(ModeInfo * mi, int col, int row,
 }
 
 static void
-draw_anant(ModeInfo * mi, int col, int row)
+draw_anant(ModeInfo * mi, int direction, int col, int row)
 {
-	XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WHITE_PIXEL(mi));
+	antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+
+	XSetForeground(display, MI_GC(mi), MI_WHITE_PIXEL(mi));
 	fillcell(mi, MI_GC(mi), col, row);
-#if 0				/* Can not see eyes */
-	{
-		antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
-		Display    *display = MI_DISPLAY(mi);
-		Window      window = MI_WINDOW(mi);
+	if (ap->eyes) {		/* Draw Eyes */
+		XSetForeground(display, MI_GC(mi), MI_BLACK_PIXEL(mi));
+		if (ap->neighbors == 6) {
+			int         ccol = 2 * col + !(row & 1), crow = 2 * row;
+			int         side, ang;
+			XPoint      hex;
 
-		if (ap->xs > 2 && ap->ys > 2) {		/* Draw Eyes */
-
-			XSetForeground(display, MI_GC(mi), MI_BLACK_PIXEL(mi));
+			if (!(ap->xs > 3 && ap->ys > 3))
+				return;
+			hex.x = ap->xb + ccol * ap->xs;
+			hex.y = ap->yb + crow * ap->ys + ap->ys / 2;
+			ang = direction * ap->neighbors / ANGLES;
+			for (side = 0; side < ap->neighbors; side++) {
+				if (side) {
+					hex.x -= ap->shape.hexagon[side].x / 2;
+					hex.y += ap->shape.hexagon[side].y / 2;
+				}
+				if (side == (ap->neighbors + ang - 2) % ap->neighbors)
+					XDrawPoint(display, window, MI_GC(mi), hex.x, hex.y);
+				if (side == (ap->neighbors + ang - 1) % ap->neighbors)
+					XDrawPoint(display, window, MI_GC(mi), hex.x, hex.y);
+			}
+		} else if (ap->neighbors == 4 || ap->neighbors == 8) {
+			if (!(ap->xs > 3 && ap->ys > 3))
+				return;
 			switch (direction) {
 				case 0:
 					XDrawPoint(display, window, MI_GC(mi),
-					    ap->xb + ap->xs - 1, ap->yb + 1);
+						ap->xb + ap->xs * (col + 1) - 3,
+					 	ap->yb + ap->ys * row + ap->ys / 2 - 2);
 					XDrawPoint(display, window, MI_GC(mi),
-						   ap->xb + ap->xs - 1, ap->yb + ap->ys - 2);
+						ap->xb + ap->xs * (col + 1) - 3,
+					 	ap->yb + ap->ys * row + ap->ys / 2);
+					break;
+				case 45:
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * (col + 1) - 4,
+						ap->yb + ap->ys * row + 1);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * (col + 1) - 3,
+						ap->yb + ap->ys * row + 2);
+					break;
+				case 90:
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + ap->xs / 2 - 2,
+						ap->yb + ap->ys * row + 1);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + ap->xs / 2,
+						ap->yb + ap->ys * row + 1);
+					break;
+				case 135:
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + 2,
+						ap->yb + ap->ys * row + 1);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + 1,
+						ap->yb + ap->ys * row + 2);
 					break;
 				case 180:
-					XDrawPoint(display, window, MI_GC(mi), ap->xb, ap->yb + 1);
-					XDrawPoint(display, window, MI_GC(mi), ap->xb, ap->yb + ap->ys - 2);
+					XDrawPoint(display, window, MI_GC(mi),
+						ap->xb + ap->xs * col + 1,
+					 	ap->yb + ap->ys * row + ap->ys / 2 - 2);
+					XDrawPoint(display, window, MI_GC(mi),
+						ap->xb + ap->xs * col + 1,
+					 	ap->yb + ap->ys * row + ap->ys / 2);
 					break;
-					if (neighbors == 4) {
-				case 90:
-						XDrawPoint(display, window, MI_GC(mi), ap->xb + 1, ap->yb);
-						XDrawPoint(display, window, MI_GC(mi),
-						ap->xb + ap->xs - 2, ap->yb);
-						break;
+				case 225:
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + 2,
+						ap->yb + ap->ys * (row + 1) - 3);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + 1,
+						ap->yb + ap->ys * (row + 1) - 4);
+					break;
 				case 270:
-						XDrawPoint(display, window, MI_GC(mi),
-							   ap->xb + 1, ap->yb + ap->ys - 1);
-						XDrawPoint(display, window, MI_GC(mi),
-							   ap->xb + ap->xs - 2, ap->yb + ap->ys - 1);
-						break;
-					}	/* else BEE */
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + ap->xs / 2 - 2,
+						ap->yb + ap->ys * (row + 1) - 3);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * col + ap->xs / 2,
+						ap->yb + ap->ys * (row + 1) - 3);
+					break;
+				case 315:
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * (col + 1) - 4,
+						ap->yb + ap->ys * (row + 1) - 3);
+					XDrawPoint(display, window, MI_GC(mi),
+					 	ap->xb + ap->xs * (col + 1) - 3,
+						ap->yb + ap->ys * (row + 1) - 4);
+					break;
 				default:
+					(void) fprintf(stderr, "wrong eyes direction %d for ant eyes\n", direction);
+			}
+		} else {		/* TRI */
+			int         orient = (col + row) % 2;	/* O left 1 right */
+			int         side, ang;
+			XPoint      tri;
+
+			if (!(ap->xs > 6 && ap->ys > 6))
+				return;
+			tri.x = ap->xb + col * ap->xs;
+			tri.y = ap->yb + row * ap->ys;
+			if (orient)
+				tri.x += (ap->xs / 6 - 1);
+			else
+				tri.x -= (ap->xs / 6 - 1);
+			ang = direction * ap->neighbors / ANGLES;
+			/* approx... does not work that well for even numbers */
+			if (
+#ifdef NUMBER_9
+			ap->neighbors == 9 ||
+#endif
+			ap->neighbors == 12) {
+#ifdef UNDER_CONSTRUCTION
+				/* Not sure why this does not work */
+				ang = ((ang + ap->neighbors / 6) / (ap->neighbors / 3)) % 3;
+#else
+				return;
+#endif
+			}
+			for (side = 0; side < 3; side++) {
+				if (side) {
+					tri.x += ap->shape.triangle[orient][side].x / 3;
+					tri.y += ap->shape.triangle[orient][side].y / 3;
+				}
+				/* Either you have the eyes in back or one eye in front */
+#if 0
+				if (side == ang)
+					XDrawPoint(display, window, MI_GC(mi), tri.x, tri.y);
+#else
+				if (side == (ang + 2) % 3)
+					XDrawPoint(display, window, MI_GC(mi), tri.x, tri.y);
+				if (side == (ang + 1) % 3)
+					XDrawPoint(display, window, MI_GC(mi), tri.x, tri.y);
+#endif
 			}
 		}
 	}
-#endif
 }
 
 #if 0
@@ -720,35 +843,36 @@ RandomSoup(mi)
 #endif
 
 static short
-fromTableDirection(unsigned char dir, int neighbors)
+fromTableDirection(unsigned char dir, int local_neighbors)
 {
+	/* Crafted to work for odd number of neighbors */
 	switch (dir) {
 		case FS:
 			return 0;
-		case TRS:
-			return (ANGLES / neighbors);
-		case THRS:
-			return (ANGLES / 2 - ANGLES / neighbors);
-		case TBS:
-			return (ANGLES / 2);
-		case THLS:
-			return (ANGLES / 2 + ANGLES / neighbors);
 		case TLS:
-			return (ANGLES - ANGLES / neighbors);
+			return (ANGLES / local_neighbors);
+		case THLS:
+			return (2 * ANGLES / local_neighbors);
+		case TBS:
+			return ((local_neighbors / 2) * ANGLES / local_neighbors);
+		case THRS:
+			return (ANGLES - 2 * ANGLES / local_neighbors);
+		case TRS:
+			return (ANGLES - ANGLES / local_neighbors);
 		case SF:
 			return ANGLES;
-		case STR:
-			return (ANGLES + ANGLES / neighbors);
-		case STHR:
-			return (3 * ANGLES / 2 - ANGLES / neighbors);
-		case STB:
-			return (3 * ANGLES / 2);
-		case STHL:
-			return (3 * ANGLES / 2 + ANGLES / neighbors);
 		case STL:
-			return (2 * ANGLES - ANGLES / neighbors);
+			return (ANGLES + ANGLES / local_neighbors);
+		case STHL:
+			return (ANGLES + 2 * ANGLES / local_neighbors);
+		case STB:
+			return (ANGLES + (local_neighbors / 2) * ANGLES / local_neighbors);
+		case STHR:
+			return (2 * ANGLES - 2 * ANGLES / local_neighbors);
+		case STR:
+			return (2 * ANGLES - ANGLES / local_neighbors);
 		default:
-			(void) fprintf(stderr, "wrong direction %d\n", dir);
+			(void) fprintf(stderr, "wrong direction %d from table\n", dir);
 	}
 	return -1;
 }
@@ -770,7 +894,7 @@ getTable(ModeInfo * mi, int i)
 			  ap->n, ap->neighbors, i, ap->ncolors, ap->nstates);
 	for (j = 0; j < total; j++) {
 		ap->machine[j].color = *patptr++;
-		if (ap->sharpturn && ap->neighbors > 4 && !(ap->neighbors % 2)) {
+		if (ap->sharpturn && ap->neighbors > 4) {
 			int         k = *patptr++;
 
 			switch (k) {
@@ -816,9 +940,9 @@ getTurk(ModeInfo * mi, int i)
 	antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
 	int         power2, j, number, total;
 
-	/* To force a number, say <i = 2;> has  i + 2 (or 4) digits in binary */
+	/* To force a number, say <i = 2;> has  i + 2 (or 4) binary digits */
 	power2 = 1 << (i + 1);
-	/* Dont want numbers which in binary are all 1's. */
+	/* Do not want numbers which in binary are all 1's. */
 	number = NRAND(power2 - 1) + power2;
 	/* To force a particular number, say <number = 10;> */
 
@@ -827,7 +951,7 @@ getTurk(ModeInfo * mi, int i)
 	total = ap->ncolors * ap->nstates;
 	for (j = 0; j < total; j++) {
 		ap->machine[j].color = (j + 1) % total;
-		if (ap->sharpturn && ap->neighbors > 4 && !(ap->neighbors % 2)) {
+		if (ap->sharpturn && ap->neighbors > 4) {
 			ap->machine[j].direction = (power2 & number) ?
 				fromTableDirection(THRS, ap->neighbors) :
 				fromTableDirection(THLS, ap->neighbors);
@@ -847,6 +971,33 @@ getTurk(ModeInfo * mi, int i)
 			       ap->n, ap->neighbors, number, ap->ncolors);
 }
 
+static void
+free_ant(Display *display, antfarmstruct *ap)
+{
+	int         shade;
+
+	if (ap->stippledGC != None) {
+		XFreeGC(display, ap->stippledGC);
+		ap->stippledGC = None;
+	}
+	for (shade = 0; shade < ap->init_bits; shade++) {
+		XFreePixmap(display, ap->pixmaps[shade]);
+	}
+	ap->init_bits = 0;
+	if (ap->tape != NULL) {
+		(void) free((void *) ap->tape);
+		ap->tape = (unsigned char *) NULL;
+	}
+	if (ap->ants != NULL) {
+		(void) free((void *) ap->ants);
+		ap->ants = (antstruct *) NULL;
+	}
+	if (ap->truchet_state != NULL) {
+		(void) free((void *) ap->truchet_state);
+		ap->truchet_state = (unsigned char *) NULL;
+	}
+}
+
 void
 init_ant(ModeInfo * mi)
 {
@@ -855,13 +1006,7 @@ init_ant(ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	antfarmstruct *ap;
 	int         col, row, dir;
-	long        i;
-
-	/* jwz sez: small sizes look like crap */
-	if (size < 0)
-	  size = NRAND(-size)+1;
-	if (size < 5)
-	  size += 5;
+	int         i;
 
 	if (antfarms == NULL) {
 		if ((antfarms = (antfarmstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -869,17 +1014,23 @@ init_ant(ModeInfo * mi)
 			return;
 	}
 	ap = &antfarms[MI_SCREEN(mi)];
+
 	ap->redrawing = 0;
 	if (MI_NPIXELS(mi) <= 2) {
 		if (ap->stippledGC == None) {
 			XGCValues   gcv;
 
 			gcv.fill_style = FillOpaqueStippled;
-			ap->stippledGC = XCreateGC(display, window, GCFillStyle, &gcv);
+			if ((ap->stippledGC = XCreateGC(display, window, GCFillStyle,
+					&gcv)) == None) {
+				free_ant(display, ap);
+				return;
+			}
 		}
 		if (ap->init_bits == 0) {
-			for (i = 1; i < NUMSTIPPLES; i++)
+			for (i = 1; i < NUMSTIPPLES; i++) {
 				ANTBITS(stipples[i], STIPPLESIZE, STIPPLESIZE);
+			}
 		}
 	}
 	ap->generation = 0;
@@ -888,7 +1039,7 @@ init_ant(ModeInfo * mi)
 		/* if ap->n is random ... the size can change */
 		if (ap->ants != NULL) {
 			(void) free((void *) ap->ants);
-			ap->ants = NULL;
+			ap->ants = (antstruct *) NULL;
 		}
 		ap->n = NRAND(-ap->n - MINANTS + 1) + MINANTS;
 	} else if (ap->n < MINANTS)
@@ -897,27 +1048,29 @@ init_ant(ModeInfo * mi)
 	ap->width = MI_WIDTH(mi);
 	ap->height = MI_HEIGHT(mi);
 
-	if (neighbors == 8 || neighbors == 9 || neighbors == 12)
-		ap->neighbors = neighbors;	/* Discourage but not deny use... */
-	else
-		for (i = 0; i < NEIGHBORKINDS; i++) {
-			if (neighbors == plots[i]) {
-				ap->neighbors = plots[i];
-				break;
-			}
-			if (i == NEIGHBORKINDS - 1) {
-				ap->neighbors = plots[NRAND(NEIGHBORKINDS)];
-				break;
-			}
+	for (i = 0; i < NEIGHBORKINDS; i++) {
+		if (neighbors == plots[i]) {
+			ap->neighbors = plots[i];
+			break;
 		}
+		if (i == NEIGHBORKINDS - 1) {
+			if (!NRAND(10)) {
+				/* Make above 6 rare */
+				ap->neighbors = plots[NRAND(NEIGHBORKINDS)];
+			} else {
+				ap->neighbors = plots[NRAND(GOODNEIGHBORKINDS)];
+			}
+			break;
+		}
+	}
 
 	if (ap->neighbors == 6) {
 		int         nccols, ncrows;
 
-		if (ap->width < 2)
-			ap->width = 2;
-		if (ap->height < 4)
-			ap->height = 4;
+		if (ap->width < 8)
+			ap->width = 8;
+		if (ap->height < 8)
+			ap->height = 8;
 		if (size < -MINSIZE) {
 			ap->ys = NRAND(MIN(-size, MAX(MINSIZE, MIN(ap->width, ap->height) /
 				      MINGRIDSIZE)) - MINSIZE + 1) + MINSIZE;
@@ -934,11 +1087,11 @@ init_ant(ModeInfo * mi)
 					       MINGRIDSIZE));
 		ap->xs = ap->ys;
 		nccols = MAX(ap->width / ap->xs - 2, 2);
-		ncrows = MAX(ap->height / ap->ys - 1, 2);
+		ncrows = MAX(ap->height / ap->ys - 1, 4);
 		ap->ncols = nccols / 2;
 		ap->nrows = 2 * (ncrows / 4);
 		ap->xb = (ap->width - ap->xs * nccols) / 2 + ap->xs / 2;
-		ap->yb = (ap->height - ap->ys * (ncrows / 2) * 2) / 2 + ap->ys;
+		ap->yb = (ap->height - ap->ys * (ncrows / 2) * 2) / 2 + ap->ys - 2;
 		for (i = 0; i < 6; i++) {
 			ap->shape.hexagon[i].x = (ap->xs - 1) * hexagonUnit[i].x;
 			ap->shape.hexagon[i].y = ((ap->ys - 1) * hexagonUnit[i].y / 2) * 4 / 3;
@@ -1011,13 +1164,14 @@ init_ant(ModeInfo * mi)
 
 	if (MI_IS_FULLRANDOM(mi)) {
 		ap->truchet = (Bool) (LRAND() & 1);
+		ap->eyes = (Bool) (LRAND() & 1);
 		ap->sharpturn = (Bool) (LRAND() & 1);
 	} else {
 		ap->truchet = truchet;
+		ap->eyes = eyes;
 		ap->sharpturn = sharpturn;
 	}
-	/* Exclude odd # of neighbors, stepping forward not defined */
-	if (!NRAND(NUMSTIPPLES) && ((ap->neighbors + 1) % 2)) {
+	if (!NRAND(NUMSTIPPLES)) {
 		getTable(mi, (int) (NRAND(NTABLES)));
 	} else
 		getTurk(mi, (int) (NRAND(NUMSTIPPLES - 1)));
@@ -1025,21 +1179,38 @@ init_ant(ModeInfo * mi)
 		for (i = 0; i < (int) ap->ncolors - 1; i++)
 			ap->colors[i] = (unsigned char) (NRAND(MI_NPIXELS(mi)) +
 			     i * MI_NPIXELS(mi)) / ((int) (ap->ncolors - 1));
-	if (ap->ants == NULL)
-		ap->ants = (antstruct *) malloc(ap->n * sizeof (antstruct));
-	if (ap->tape != NULL)
+	if (ap->ants == NULL) {
+		if ((ap->ants = (antstruct *) malloc(ap->n * sizeof (antstruct))) ==
+				NULL) {
+			free_ant(display, ap);
+			return;
+		}
+	}
+	if (ap->tape != NULL) 
 		(void) free((void *) ap->tape);
-	ap->tape = (unsigned char *)
-		calloc(ap->ncols * ap->nrows, sizeof (unsigned char));
-
+	if ((ap->tape = (unsigned char *) calloc(ap->ncols * ap->nrows,
+			sizeof (unsigned char))) == NULL) {
+		free_ant(display, ap);
+		return;
+	}
 	if (ap->truchet_state != NULL)
 		(void) free((void *) ap->truchet_state);
-	ap->truchet_state = (unsigned char *)
-		calloc(ap->ncols * ap->nrows, sizeof (unsigned char));
+	if ((ap->truchet_state = (unsigned char *) calloc(ap->ncols * ap->nrows,
+			sizeof (unsigned char))) == NULL) {
+		free_ant(display, ap);
+		return;
+	}
 
-	col = ap->ncols / 2;
 	row = ap->nrows / 2;
+	col = ap->ncols / 2;
+	if (col > 0 && ((ap->neighbors % 2) || ap->neighbors == 12) && (LRAND() & 1))
+		col--;
 	dir = NRAND(ap->neighbors) * ANGLES / ap->neighbors;
+	ap->init_dir = dir;
+#ifdef NUMBER_9
+	if (ap->neighbors == 9 && !((col + row) & 1))
+		dir = (dir + ANGLES - ANGLES / (ap->neighbors * 2)) % ANGLES;
+#endif
 	/* Have them all start in the same spot, why not? */
 	for (i = 0; i < ap->n; i++) {
 		ap->ants[i].col = col;
@@ -1047,21 +1218,26 @@ init_ant(ModeInfo * mi)
 		ap->ants[i].direction = dir;
 		ap->ants[i].state = 0;
 	}
-	draw_anant(mi, col, row);
+	draw_anant(mi, dir, col, row);
 }
 
 void
 draw_ant(ModeInfo * mi)
 {
-	antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
 	antstruct  *anant;
 	statestruct *status;
 	int         i, state_pos, tape_pos;
 	unsigned char color;
 	short       chg_dir, old_dir;
+	antfarmstruct *ap;
+
+	if (antfarms == NULL)
+		return;
+	ap = &antfarms[MI_SCREEN(mi)];
+	if (ap->ants == NULL)
+		return;
 
 	MI_IS_DRAWN(mi) = True;
-
 	ap->painted = True;
 	for (i = 0; i < ap->n; i++) {
 		anant = &ap->ants[i];
@@ -1082,7 +1258,10 @@ draw_ant(ModeInfo * mi)
 
 			if (ap->neighbors == 6) {
 				if (ap->sharpturn) {
-					a = (chg_dir / 120 == 2);
+					a = (((ANGLES + anant->direction - old_dir) % ANGLES) == 240);
+	/* should be some way of getting rid of the init_dir dependency... */
+					b = !(ap->init_dir % 120);
+					a = ((a && !b) || (b && !a));
 					drawtruchet(mi, anant->col, anant->row, status->color, a);
 				} else {
 					a = (old_dir / 60) % 3;
@@ -1106,10 +1285,16 @@ draw_ant(ModeInfo * mi)
 		}
 		anant->state = status->next;
 
-		/* If edge than wrap it */
+		/* Allow step first and turn */
 		old_dir = ((status->direction < ANGLES) ? anant->direction : old_dir);
+#if DEBUG
+		(void) printf("old_dir %d, col %d, row %d", old_dir, anant->col, anant->row);
+#endif
 		position_of_neighbor(ap, old_dir, &(anant->col), &(anant->row));
-		draw_anant(mi, anant->col, anant->row);
+#if DEBUG
+		(void) printf(", ncol %d, nrow %d\n", anant->col, anant->row);
+#endif
+		draw_anant(mi, anant->direction, anant->col, anant->row);
 	}
 	if (++ap->generation > MI_CYCLES(mi)) {
 #ifdef STANDALONE
@@ -1142,31 +1327,21 @@ release_ant(ModeInfo * mi)
 	if (antfarms != NULL) {
 		int         screen;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			antfarmstruct *ap = &antfarms[screen];
-			int         shade;
-
-			if (ap->stippledGC != None) {
-				XFreeGC(MI_DISPLAY(mi), ap->stippledGC);
-			}
-			for (shade = 0; shade < ap->init_bits; shade++)
-				XFreePixmap(MI_DISPLAY(mi), ap->pixmaps[shade]);
-			if (ap->tape != NULL)
-				(void) free((void *) ap->tape);
-			if (ap->ants != NULL)
-				(void) free((void *) ap->ants);
-			if (ap->truchet_state != NULL)
-				(void) free((void *) ap->truchet_state);
-		}
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_ant(MI_DISPLAY(mi), &antfarms[screen]);
 		(void) free((void *) antfarms);
-		antfarms = NULL;
+		antfarms = (antfarmstruct *) NULL;
 	}
 }
 
 void
 refresh_ant(ModeInfo * mi)
 {
-	antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
+	antfarmstruct *ap;
+
+	if (antfarms == NULL)
+		return;
+	ap = &antfarms[MI_SCREEN(mi)];
 
 	if (ap->painted) {
 		MI_CLEARWINDOW(mi);
@@ -1174,3 +1349,5 @@ refresh_ant(ModeInfo * mi)
 		ap->redrawpos = 0;
 	}
 }
+
+#endif /* MODE_ant */

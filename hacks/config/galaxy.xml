@@ -18,7 +18,7 @@
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="64"/>
+            low="10" high="255" default="64"/>
 
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-20" high="20" default="-3"/>

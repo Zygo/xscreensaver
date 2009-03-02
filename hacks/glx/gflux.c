@@ -76,13 +76,6 @@
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-# define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
-
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Drawing.h>
@@ -428,9 +421,11 @@ void initTexture(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gflux->imageWidth,
 			gflux->imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, *(gflux->image));
-	
+    check_gl_error("texture");
 }
 
 #else /* HAVE_PPM FALSE */

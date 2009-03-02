@@ -12,6 +12,10 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * Modified (Dec 2001) by Matthew Strait <straitm@mathcs.carleton.edu>
+ * Added -subdelay and -alwaysfinish
+ * Prevented redrawing over existing lines
  */
 
 #include <math.h>
@@ -20,8 +24,10 @@
 
 static GC 	draw_gc;
 static int 	sleep_time;
+static int 	sub_sleep_time;
 static int 	num_layers;
 static unsigned int default_fg_pixel;
+static Bool	always_finish_p;
 
 static void
 init_tsg (Display *dpy, Window window)
@@ -48,6 +54,8 @@ go (Display *dpy, Window window,
   int width, height;
   int xmid, ymid;
   int x1, y1, x2, y2;
+  float firstx = 0, firsty = 0;
+  float tmpx, tmpy;
   int theta;
   int delta;
 
@@ -62,9 +70,10 @@ go (Display *dpy, Window window,
   y1 = ymid;
 
 
-  for (theta = 1; theta < ( 360 * 100 ); theta++)
+  for (theta = 1; /* theta < ( 360 * 100 ) */; theta++) 
+                  /* see below about alwaysfinish */
     {
-	x2 = xmid + ((       radius1	          /* * * * *            */
+	tmpx = xmid + ((       radius1	          /* * * * *            */
                   - radius2        )		 /* This algo simulates	*/
                   * cos((      theta 		/* the rotation of a    */
                   * M_PI           ) 		/* circular disk inside */
@@ -78,7 +87,7 @@ go (Display *dpy, Window window,
                   / 180            )            /* of delta needs to be */
                                    );           /* given, which greatly */
 						/* adds to the beauty   */
-	y2 = ymid + (				/* of the figure.       */
+	tmpy = ymid + (				/* of the figure.       */
                      ( radius1 - radius2	/*			*/
                       ) * sin			/* Imperfection adds to */
                        (			/* beauty, symbolically */
@@ -96,14 +105,39 @@ go (Display *dpy, Window window,
                                    ) * M_PI / 180
                                     )
                                      );
-                          	
+        
+	/*makes integers from the calculated values to do the drawing*/
+	x2 = tmpx;
+	y2 = tmpy;
+
+	/*stores the first values for later reference*/
+	if(theta == 1)
+	{
+  		firstx = tmpx;
+  		firsty = tmpy;
+	}
 
         XDrawLine (dpy, window, draw_gc, x1, y1, x2, y2);
 
 	x1 = x2;
 	y1 = y2;
         XFlush (dpy);
-    }
+
+	/* compares the exact values calculated to the first
+	   exact values calculated */
+	/* this will break when nothing new is being drawn */
+	if(tmpx == firstx && tmpy == firsty && theta != 1)
+		break;
+
+	/* this will break after 36000 iterations if 
+	   the -alwaysfinish option is not specified */
+	if(!always_finish_p && theta > ( 360 * 100 ) )
+		break;
+
+	/* usleeping every time is too slow */
+	if(theta%100 == 0)
+		usleep(sub_sleep_time);
+    }	
 }
 
 
@@ -130,7 +164,7 @@ getset (Display *dpy, Window window, XColor *color, Bool *got_color)
   XClearWindow (dpy, window);
 
 
-  for(counter = 0; counter < num_layers; counter ++)
+  for(counter = 0; counter < num_layers; counter++)
   {
     divisor = ((frand (3.0) + 1) * (((random() & 1) * 2) - 1));
 
@@ -149,6 +183,7 @@ getset (Display *dpy, Window window, XColor *color, Bool *got_color)
       else
 	XSetForeground (dpy, draw_gc, default_fg_pixel);
     }
+
     go (dpy, window, radius1, -radius2, distance);
 
     /* once again, with a parameter negated, just for kicks */
@@ -163,6 +198,7 @@ getset (Display *dpy, Window window, XColor *color, Bool *got_color)
       else
 	XSetForeground (dpy, draw_gc, default_fg_pixel);
     }
+
     go (dpy, window, radius1, radius2, distance);
   }
 }
@@ -201,15 +237,20 @@ getset_go (Display *dpy, Window window)
 char *progclass = "XSpiroGraph";
 
 char *defaults [] = {
-  ".background: black",
-  "*delay:      5",
-  "*layers:     1",
+  ".background:		black",
+  "*delay:      	5",
+  "*subdelay:   	0",
+  "*layers:     	1",
+  "*alwaysfinish:	false",
   0
 };
 
 XrmOptionDescRec options [] = {   
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
-  { "-layers",          ".layers",              XrmoptionSepArg, 0 },
+  { "-subdelay",        ".subdelay",            XrmoptionSepArg, 0 },
+  { "-layers",          ".layers",        	XrmoptionSepArg, 0 },
+  { "-alwaysfinish",    ".alwaysfinish",	XrmoptionNoArg, "true"},
+  { "-noalwaysfinish",  ".alwaysfinish",	XrmoptionNoArg, "false"},
   { 0, 0, 0, 0 }
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
@@ -218,7 +259,10 @@ void
 screenhack (Display *dpy, Window window)
 {
   sleep_time = get_integer_resource("delay", "Integer");
+  sub_sleep_time = get_integer_resource("subdelay", "Integer");
   num_layers = get_integer_resource("layers", "Integer");
+  always_finish_p = get_boolean_resource ("alwaysfinish", "Boolean");
+  
   init_tsg (dpy, window);
   while (1)
    getset_go (dpy, window);

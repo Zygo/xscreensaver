@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998, 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998, 2001, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,11 +18,125 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Intrinsic.h>
 
 extern char *progname;
 
-#ifdef HAVE_XPM		/* whole file */
+
+#if defined(HAVE_GDK_PIXBUF)
+
+# include <gdk-pixbuf/gdk-pixbuf.h>
+# include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+
+
+/* Returns an XImage structure containing the bits of the given XPM image.
+   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
+   extra byte set to either 0xFF or 0x00 (based on the XPM file's mask.)
+
+   The Display and Visual arguments are used only for creating the XImage;
+   no bits are pushed to the server.
+
+   The Colormap argument is used just for parsing color names; no colors
+   are allocated.
+
+   This is the gdk_pixbuf version of this function.
+ */
+static XImage *
+xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
+                 const char *filename,
+                 char **xpm_data)
+{
+  GdkPixbuf *pb;
+  static int initted = 0;
+
+  if (!initted)
+    {
+      gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
+      xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));
+      initted = 1;
+    }
+
+  pb = (filename
+        ? gdk_pixbuf_new_from_file (filename)
+        : gdk_pixbuf_new_from_xpm_data ((const char **) xpm_data));
+  if (pb)
+    {
+      XImage *image;
+      int w = gdk_pixbuf_get_width (pb);
+      int h = gdk_pixbuf_get_height (pb);
+      guchar *row = gdk_pixbuf_get_pixels (pb);
+      int stride = gdk_pixbuf_get_rowstride (pb);
+      int chan = gdk_pixbuf_get_n_channels (pb);
+      int x, y;
+
+      image = XCreateImage (dpy, visual, 32, ZPixmap, 0, 0, w, h, 32, 0);
+      image->data = (char *) malloc(h * image->bytes_per_line);
+      if (!image->data)
+        {
+          fprintf (stderr, "%s: out of memory (%d x %d)\n", progname, w, h);
+          exit (1);
+        }
+
+      for (y = 0; y < h; y++)
+        {
+          int y2 = (h-1-y); /* Texture maps are upside down. */
+
+          guchar *i = row;
+          for (x = 0; x < w; x++)
+            {
+              unsigned long rgba = 0;
+              switch (chan) {
+              case 1:
+                rgba = ((0xFF << 24) |
+                        (*i << 16) |
+                        (*i << 8) |
+                         *i);
+                i++;
+                break;
+              case 3:
+                rgba = ((0xFF << 24) |
+                        (i[2] << 16) |
+                        (i[1] << 8) |
+                         i[0]);
+                i += 3;
+                break;
+              case 4:
+                rgba = ((i[3] << 24) |
+                        (i[2] << 16) |
+                        (i[1] << 8) |
+                         i[0]);
+                i += 4;
+                break;
+              default:
+                abort();
+                break;
+              }
+              XPutPixel (image, x, y2, rgba);
+            }
+          row += stride;
+        }
+      /* gdk_pixbuf_unref (pb);  -- #### does doing this free colors? */
+
+      return image;
+    }
+  else if (filename)
+    {
+      fprintf (stderr, "%s: unable to load %s\n", progname, filename);
+      exit (1);
+    }
+  else
+    {
+      fprintf (stderr, "%s: unable to initialize builtin texture\n", progname);
+      exit (1);
+    }
+}
+
+
+#elif defined(HAVE_XPM)
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <X11/Intrinsic.h>
 
 #include <X11/Xutil.h>
 #include <X11/xpm.h>
@@ -39,18 +153,11 @@ bigendian (void)
 }
 
 
-/* Returns an XImage structure containing the bits of the given XPM image.
-   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
-   extra byte set to either 0xFF or 0x00 (based on the XPM file's mask.)
-
-   The Display and Visual arguments are used only for creating the XImage;
-   no bits are pushed to the server.
-
-   The Colormap argument is used just for parsing color names; no colors
-   are allocated.
+/* The libxpm version of this function...
  */
-XImage *
-xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
+static XImage *
+xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
+                 const char *filename, char **xpm_data)
 {
   /* All we want to do is get RGB data out of the XPM file built in to this
      program.  This is a pain, because there is no way  (as of XPM version
@@ -72,6 +179,18 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
 
   memset (&xpm_image, 0, sizeof(xpm_image));
   memset (&xpm_info, 0, sizeof(xpm_info));
+
+  if (filename)
+    {
+      xpm_data = 0;
+      if (! XpmReadFileToData ((char *) filename, &xpm_data))
+        {
+          fprintf (stderr, "%s: unable to read XPM file %f\n",
+                   progname, filename);
+          exit (1);
+        }
+    }
+
   result = XpmCreateXpmImageFromData (xpm_data, &xpm_image, &xpm_info);
   if (result != XpmSuccess)
     {
@@ -161,13 +280,39 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
 }
 
 
-#else  /* !HAVE_XPM */
+#else  /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
 
-XImage *
-xpm_to_ximage (char **xpm_data)
+static XImage *
+xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
+                 const char *filename, char **xpm_data)
 {
-  fprintf(stderr, "%s: not compiled with XPM support.\n", progname);
+  fprintf(stderr, "%s: not compiled with XPM or Pixbuf support.\n", progname);
   exit (1);
 }
 
 #endif /* !HAVE_XPM */
+
+
+/* Returns an XImage structure containing the bits of the given XPM image.
+   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
+   extra byte set to either 0xFF or 0x00 (based on the XPM file's mask.)
+
+   The Display and Visual arguments are used only for creating the XImage;
+   no bits are pushed to the server.
+
+   The Colormap argument is used just for parsing color names; no colors
+   are allocated.
+ */
+XImage *
+xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
+{
+  return xpm_to_ximage_1 (dpy, visual, cmap, 0, xpm_data);
+}
+
+
+XImage *
+xpm_file_to_ximage (Display *dpy, Visual *visual, Colormap cmap,
+                    const char *filename)
+{
+  return xpm_to_ximage_1 (dpy, visual, cmap, filename, 0);
+}

@@ -2,10 +2,12 @@
 /* lisa --- animated full-loop lisajous figures */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)lisa.c	4.04 97/07/28 xlockmore";
+static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1997 by Caleb Cullen.
+/*-
+ * Copyright (c) 1997 by Caleb Cullen.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,9 +22,10 @@ static const char sccsid[] = "@(#)lisa.c	4.04 97/07/28 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: Compatible with xscreensaver
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
  *
- * The inspiration for this program, Lasp, was written by Adam B. Roach 
+ * The inspiration for this program, Lasp, was written by Adam B. Roach
  * in 1990, assisted by me, Caleb Cullen.  It was written first in C, then
  * in assembly, and used pre-calculated data tables to graph lisajous
  * figures on 386 machines and lower.  This version bears only superficial
@@ -34,46 +37,57 @@ static const char sccsid[] = "@(#)lisa.c	4.04 97/07/28 xlockmore";
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Lisa"
-# define HACK_INIT					init_lisa
-# define HACK_DRAW					draw_lisa
-# define lisa_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		25000   \n"			\
-					"*count:		1       \n"			\
-					"*cycles:		256     \n"			\
-					"*size:			-1      \n"			\
-					"*ncolors:		200     \n"
-# define UNIFORM_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-  void refresh_lisa(ModeInfo * mi);
-  void change_lisa(ModeInfo * mi);
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_lisa
+#define PROGCLASS "Lisa"
+#define HACK_INIT init_lisa
+#define HACK_DRAW draw_lisa
+#define lisa_opts xlockmore_opts
+#define DEFAULTS "*delay: 25000 \n" \
+ "*count: 1 \n" \
+ "*cycles: 256 \n" \
+ "*size: -1 \n" \
+ "*ncolors: 200 \n"
+#define UNIFORM_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+
+#endif /* STANDALONE */
+
+#ifdef MODE_lisa
 
 #define  DEF_ADDITIVE     "True"
 
 static Bool additive;
 
-static XrmOptionDescRec lisa_xrm_opts[] =
+static XrmOptionDescRec opts[] =
 {
-	{"-additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "True"},
-	{"+additive", ".lisa.additive", XrmoptionNoArg, (caddr_t) "False"}
+	{(char *) "-additive", (char *) ".lisa.additive", XrmoptionNoArg, (caddr_t) "True"},
+	{(char *) "+additive", (char *) ".lisa.additive", XrmoptionNoArg, (caddr_t) "False"}
 };
 
-static argtype lisa_vars[] =
+static argtype vars[] =
 {
-	{(caddr_t *) & additive, "additive", "Additive", DEF_ADDITIVE, t_Bool}
+	{(caddr_t *) & additive, (char *) "additive", (char *) "Additive", (char *) DEF_ADDITIVE, t_Bool}
 };
 
-static OptionStruct lisa_vars_desc[] =
+static OptionStruct desc[] =
 {
-	{"-/+additive", "turn on/off additive functions mode"}
+	{(char *) "-/+additive", (char *) "turn on/off additive functions mode"}
 };
 
 ModeSpecOpt lisa_opts =
-{2, lisa_xrm_opts, 1, lisa_vars, lisa_vars_desc};
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
+#ifdef USE_MODULES
+ModStruct   lisa_description =
+{"lisa", "init_lisa", "draw_lisa", "release_lisa",
+ "refresh_lisa", "change_lisa", (char *) NULL, &lisa_opts,
+ 25000, 1, 256, -1, 64, 1.0, "",
+ "Shows animated lisajous loops", 0, NULL};
+
+#endif
 
 #define  DRAWLINES    1
 #define  TWOLOOPS     1
@@ -82,12 +96,12 @@ ModeSpecOpt lisa_opts =
 #define  LISAMAXFUNCS 2
 #define  NUMSTDFUNCS  10
 #define  MAXCYCLES    3
-#define  MINLISAS 1
+#define  MINLISAS     1
 #define  lisasetcolor() \
 if (MI_NPIXELS(mi) > 2) { \
   XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_PIXEL(mi, loop->color)); \
-  if (++(loop->color) >= MI_NPIXELS(mi)) { loop->color=0; } \
-  } else { XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WIN_WHITE_PIXEL(mi)); }
+  if (++(loop->color) >= (unsigned) MI_NPIXELS(mi)) { loop->color=0; } \
+  } else { XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WHITE_PIXEL(mi)); }
 #define getRadius(context) \
   ((context->width > context->height)?context->height:context->width) * 3 / 8
 #define checkRadius(loop, context) \
@@ -105,19 +119,22 @@ typedef struct lisafunc_struct {
 } lisafuncs;
 
 typedef struct lisa_struct {
-	int         radius, color, dx, dy, nsteps, nfuncs, melting;
+	unsigned long color;
+	int         radius, dx, dy, nsteps, nfuncs, melting;
 	double      pistep, phi, theta;
 	XPoint      center, *lastpoint;
 	lisafuncs  *function[LISAMAXFUNCS];
+	int         linewidth;
 } lisas;
 
 typedef struct lisacontext_struct {
 	lisas      *lisajous;
 	int         width, height, nlisajous, loopcount;
 	int         maxcycles;
+	Bool        painted;
 } lisacons;
 
-static lisacons *Lisa = NULL;
+static lisacons *Lisa = (lisacons *) NULL;
 
 static lisafuncs Function[NUMSTDFUNCS] =
 {
@@ -154,6 +171,20 @@ static lisafuncs Function[NUMSTDFUNCS] =
 };
 
 static void
+free_lisa(lisacons *lc)
+{
+	while (lc->lisajous) {
+		int    lctr;
+
+		for (lctr = 0; lctr < lc->nlisajous; lctr++) {
+			(void) free((void *) lc->lisajous[lctr].lastpoint);
+		}
+		(void) free((void *) lc->lisajous);
+		lc->lisajous = (lisas *) NULL;
+	}
+}
+
+static Bool
 drawlisa(ModeInfo * mi, lisas * loop)
 {
 	XPoint     *np;
@@ -165,7 +196,10 @@ drawlisa(ModeInfo * mi, lisas * loop)
 	double      xprod, yprod, xsum, ysum;
 
 	/* Allocate the np array */
-	np = (XPoint *) calloc(loop->nsteps, sizeof (XPoint));
+	if ((np = (XPoint *) calloc(loop->nsteps, sizeof (XPoint))) == NULL) {
+		free_lisa(lc);
+		return False;
+	}
 
 	/* Update the center */
 	loop->center.x += loop->dx;
@@ -204,42 +238,31 @@ drawlisa(ModeInfo * mi, lisas * loop)
 					yprod += sin(lf[fctr]->ycoeff[yctr] * loop->phi);
 				if (loop->melting) {
 					if (fctr) {
-						xsum += xprod \
-							*(double) (loop->nsteps - loop->melting) \
-							/(double) loop->nsteps;
-						ysum += yprod \
-							*(double) (loop->nsteps - loop->melting) \
-							/(double) loop->nsteps;
+						xsum += xprod * (double) (loop->nsteps - loop->melting) /
+							(double) loop->nsteps;
+						ysum += yprod * (double) (loop->nsteps - loop->melting) /
+							(double) loop->nsteps;
 					} else {
-						xsum += xprod \
-							*(double) loop->melting \
-							/(double) loop->nsteps;
-						ysum += yprod \
-							*(double) loop->melting \
-							/(double) loop->nsteps;
+						xsum += xprod * (double) loop->melting / (double) loop->nsteps;
+						ysum += yprod * (double) loop->melting / (double) loop->nsteps;
 					}
 				} else {
 					xsum = xprod;
 					ysum = yprod;
 				}
 				if (!fctr) {
-					xsum = xsum \
-						*(double) loop->radius \
-						/(double) lf[fctr]->nx;
-					ysum = ysum \
-						*(double) loop->radius \
-						/(double) lf[fctr]->ny;
+					xsum = xsum * (double) loop->radius / (double) lf[fctr]->nx;
+					ysum = ysum * (double) loop->radius / (double) lf[fctr]->ny;
 				}
 			} else {
 				if (loop->melting) {
 					if (fctr) {
-						yprod = xprod = (double) loop->radius \
-							*(double) (loop->nsteps - loop->melting) \
-							/(double) (loop->nsteps);
+						yprod = xprod = (double) loop->radius *
+							(double) (loop->nsteps - loop->melting) /
+							(double) (loop->nsteps);
 					} else {
-						yprod = xprod = (double) loop->radius \
-							*(double) (loop->melting) \
-							/(double) (loop->nsteps);
+						yprod = xprod = (double) loop->radius *
+							(double) (loop->melting) / (double) (loop->nsteps);
 					}
 				} else {
 					xprod = yprod = (double) loop->radius;
@@ -271,40 +294,45 @@ drawlisa(ModeInfo * mi, lisas * loop)
 	for (pctr = 0; pctr < loop->nsteps; pctr++) {
 
 #if defined DRAWLINES
+		XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), loop->linewidth,
+				   LineSolid, CapProjecting, JoinMiter);
 		/* erase the last cycle's point */
-		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WIN_BLACK_PIXEL(mi));
-		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi), \
-			  MI_GC(mi), lp[pctr].x, lp[pctr].y, \
-			  lp[(pctr + 1) % loop->nsteps].x, \
+		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
+		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi),
+			  MI_GC(mi), lp[pctr].x, lp[pctr].y,
+			  lp[(pctr + 1) % loop->nsteps].x,
 			  lp[(pctr + 1) % loop->nsteps].y);
 
 		/* Set the new color */
 		lisasetcolor();
 
 		/* plot this cycle's point */
-		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi), \
-			  MI_GC(mi), np[pctr].x, np[pctr].y, \
-			  np[(pctr + 1) % loop->nsteps].x, \
+		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi),
+			  MI_GC(mi), np[pctr].x, np[pctr].y,
+			  np[(pctr + 1) % loop->nsteps].x,
 			  np[(pctr + 1) % loop->nsteps].y);
+		XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), 1,
+				   LineSolid, CapProjecting, JoinMiter);
 #else
 		/* erase the last cycle's point */
-		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_WIN_BLACK_PIXEL(mi));
-		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), \
+		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
+		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi),
 			   MI_GC(mi), lp[pctr].x, lp[pctr].y);
 
 		/* Set the new color */
 		lisasetcolor();
 
 		/* plot this cycle's point */
-		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), \
+		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi),
 			   MI_GC(mi), np[pctr].x, np[pctr].y);
 #endif
 	}
 	(void) free((void *) lp);
 	loop->lastpoint = np;
+	return True;
 }
 
-static void
+static Bool 
 initlisa(ModeInfo * mi, lisas * loop)
 {
 	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
@@ -316,7 +344,7 @@ initlisa(ModeInfo * mi, lisas * loop)
 	if (MI_NPIXELS(mi) > 2) {
 		loop->color = 0;
 	} else
-		loop->color = MI_WIN_WHITE_PIXEL(mi);
+		loop->color = MI_WHITE_PIXEL(mi);
 	loop->nsteps = MI_CYCLES(mi);
 	if (loop->nsteps == 0)
 		loop->nsteps = 1;
@@ -326,7 +354,7 @@ initlisa(ModeInfo * mi, lisas * loop)
 	loop->pistep = 2.0 * M_PI / (double) loop->nsteps;
 	loop->center.x = lc->width / 2;
 	loop->center.y = lc->height / 2;
-	loop->radius = MI_SIZE(mi);
+	loop->radius = (int) MI_SIZE(mi);
 	checkRadius(loop, lc);
 	loop->dx = NRAND(XVMAX);
 	loop->dy = NRAND(YVMAX);
@@ -334,8 +362,10 @@ initlisa(ModeInfo * mi, lisas * loop)
 	loop->dy++;
 	lf[0] = &Function[lc->loopcount % NUMSTDFUNCS];
 	if ((lp = loop->lastpoint = (XPoint *)
-	     calloc(loop->nsteps, sizeof (XPoint))) == NULL)
-		return;
+	     calloc(loop->nsteps, sizeof (XPoint))) == NULL) {
+		free_lisa(lc);
+		return False;
+	}
 	phase = lc->loopcount % loop->nsteps;
 
 	for (pctr = 0; pctr < loop->nsteps; pctr++) {
@@ -364,115 +394,80 @@ initlisa(ModeInfo * mi, lisas * loop)
 		lp[pctr].x = (int) ceil(xsum);
 		lp[pctr].y = (int) ceil(ysum);
 	}
+#if defined DRAWLINES
+	{
+		loop->linewidth = -8;	/* #### make this a resource */
+
+		if (loop->linewidth == 0)
+			loop->linewidth = 1;
+		if (loop->linewidth < 0)
+			loop->linewidth = NRAND(-loop->linewidth) + 1;
+		XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), loop->linewidth,
+				   LineSolid, CapProjecting, JoinMiter);
+	}
+#endif
 	for (pctr = 0; pctr < loop->nsteps; pctr++) {
 		/* Set the color */
 		lisasetcolor();
 #if defined DRAWLINES
-		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi), \
-			  MI_GC(mi), lp[pctr].x, lp[pctr].y, \
-			  lp[(pctr + 1) % loop->nsteps].x, \
+		XDrawLine(MI_DISPLAY(mi), MI_WINDOW(mi),
+			  MI_GC(mi), lp[pctr].x, lp[pctr].y,
+			  lp[(pctr + 1) % loop->nsteps].x,
 			  lp[(pctr + 1) % loop->nsteps].y);
 #else
-		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), \
+		XDrawPoint(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
 			   lp[pctr].x, lp[pctr].y);
 #endif
 	}
-
-	{
-	  int line_width = -15;  /* #### make this a resource */
-	  if (line_width == 0)
-		line_width = -8;
-	  if (line_width < 0)
-		line_width = NRAND(-line_width)+1;
-	  XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), line_width,
-						 LineSolid, CapProjecting, JoinMiter);
-	}
+#if defined DRAWLINES
+	XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), 1,
+			   LineSolid, CapProjecting, JoinMiter);
+#endif
+	return True;
 }
 
-void
-init_lisa(ModeInfo * mi)
-{
-	lisacons   *lc;
-	int         lctr;
-
-	if (Lisa == NULL) {
-		if ((Lisa = (lisacons *) calloc(MI_NUM_SCREENS(mi), sizeof (lisacons))) \
-		    == NULL)
-			return;
-	}
-	lc = &Lisa[MI_SCREEN(mi)];
-	lc->width = MI_WIN_WIDTH(mi);
-	lc->height = MI_WIN_HEIGHT(mi);
-	lc->loopcount = 0;
-	lc->nlisajous = MI_BATCHCOUNT(mi);
-	if (lc->nlisajous <= 0)
-		lc->nlisajous = 1;
-
-	if (lc->lisajous == NULL) {
-		if ((lc->lisajous = (lisas *) calloc(lc->nlisajous, sizeof (lisas))) \
-		    == NULL)
-			return;
-		XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-		for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-			initlisa(mi, &lc->lisajous[lctr]);
-			lc->loopcount++;
-		}
-	} else {
-		refresh_lisa(mi);
-	}
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-}
-
-void
-draw_lisa(ModeInfo * mi)
-{
-	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
-
-	if (++lc->loopcount > lc->maxcycles) {
-		change_lisa(mi);
-	}
-	refresh_lisa(mi);
-}
-
-void
-refresh_lisa(ModeInfo * mi)
+static void
+refreshlisa(ModeInfo * mi)
 {
 	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
 	int         lctr;
 
 	for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-		drawlisa(mi, &lc->lisajous[lctr]);
+		if (!drawlisa(mi, &lc->lisajous[lctr]))
+			return;
 	}
 }
 
 void
-release_lisa(ModeInfo * mi)
+refresh_lisa(ModeInfo * mi)
 {
 	lisacons   *lc;
-	int         lctr, sctr;
 
-	if (Lisa) {
-		for (sctr = 0; sctr < MI_NUM_SCREENS(mi); sctr++) {
-			lc = &Lisa[sctr];
-			while (lc->lisajous) {
-				for (lctr = 0; lctr < lc->nlisajous; lctr++) {
-					(void) free(lc->lisajous[lctr].lastpoint);
-				}
-				(void) free(lc->lisajous);
-				lc->lisajous = NULL;
-			}
-		}
-		(void) free(Lisa);
-		Lisa = NULL;
+	if (Lisa == NULL)
+		return;
+	lc = &Lisa[MI_SCREEN(mi)];
+	if (lc->lisajous == NULL)
+		return;
+
+	if (lc->painted) {
+		lc->painted = False;
+		MI_CLEARWINDOW(mi);
+		refreshlisa(mi);
 	}
 }
 
 void
 change_lisa(ModeInfo * mi)
 {
-	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
 	lisas      *loop;
 	int         lctr;
+	lisacons   *lc;
+
+	if (Lisa == NULL)
+		return;
+	lc = &Lisa[MI_SCREEN(mi)];
+	if (lc->lisajous == NULL)
+		return;
 
 	lc->loopcount = 0;
 	for (lctr = 0; lctr < lc->nlisajous; lctr++) {
@@ -483,3 +478,72 @@ change_lisa(ModeInfo * mi)
 		loop->nfuncs = 2;
 	}
 }
+
+void
+init_lisa(ModeInfo * mi)
+{
+	int         lctr;
+	lisacons   *lc;
+
+	if (Lisa == NULL) {
+		if ((Lisa = (lisacons *) calloc(MI_NUM_SCREENS(mi),
+				 sizeof (lisacons))) == NULL)
+			return;
+	}
+	lc = &Lisa[MI_SCREEN(mi)];
+	lc->width = MI_WIDTH(mi);
+	lc->height = MI_HEIGHT(mi);
+	lc->loopcount = 0;
+	lc->nlisajous = MI_COUNT(mi);
+	if (lc->nlisajous <= 0)
+		lc->nlisajous = 1;
+	MI_CLEARWINDOW(mi);
+	lc->painted = False;
+
+	if (lc->lisajous == NULL) {
+		if ((lc->lisajous = (lisas *) calloc(lc->nlisajous,
+				sizeof (lisas))) == NULL)
+			return;
+		for (lctr = 0; lctr < lc->nlisajous; lctr++) {
+			if (!initlisa(mi, &lc->lisajous[lctr]))
+				return;
+			lc->loopcount++;
+		}
+	} else {
+		refreshlisa(mi);
+	}
+}
+
+void
+draw_lisa(ModeInfo * mi)
+{
+	lisacons   *lc;
+
+	if (Lisa == NULL)
+		return;
+	lc = &Lisa[MI_SCREEN(mi)];
+	if (lc->lisajous == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
+	lc->painted = True;
+	if (++lc->loopcount > lc->maxcycles) {
+		change_lisa(mi);
+	}
+	refreshlisa(mi);
+}
+
+void
+release_lisa(ModeInfo * mi)
+{
+	if (Lisa) {
+		int    screen;
+
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_lisa(&Lisa[screen]);
+		(void) free(Lisa);
+		Lisa = (lisacons *) NULL;
+	}
+}
+
+#endif /* MODE_lisa */

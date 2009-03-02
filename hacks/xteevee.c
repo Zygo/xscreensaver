@@ -26,6 +26,8 @@
 #include "screenhack.h"
 #include "colorbars.h"
 #include <X11/Xutil.h>
+#include <time.h>
+#include <sys/time.h>
 
 
 /* Defines *******************************************************************/

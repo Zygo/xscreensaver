@@ -16,6 +16,7 @@
  */
 
 #include "screenhack.h"
+#include "xpm-pixmap.h"
 #include <stdio.h>
 
 extern FILE *popen (const char *, const char *);
@@ -56,9 +57,7 @@ static int state;	/* indicates states: walking or getting passwd */
 
 static void (*next_fn) (void);
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 # include "images/noseguy/nose-f1.xpm"
 # include "images/noseguy/nose-f2.xpm"
 # include "images/noseguy/nose-f3.xpm"
@@ -86,41 +85,19 @@ init_images (void)
     &left_front, &right_front, &front, &down
   };
   int i;
-#ifdef HAVE_XPM
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
+
   static char **bits[] = {
     nose_l1_xpm, nose_l2_xpm, nose_r1_xpm, nose_r2_xpm,
     nose_f2_xpm, nose_f3_xpm, nose_f1_xpm, nose_f4_xpm
   };
+
+
   for (i = 0; i < sizeof (images) / sizeof(*images); i++)
     {
-      XWindowAttributes xgwa;
-      XpmAttributes xpmattrs;
-      Pixmap pixmap = 0;
-      int result;
-      xpmattrs.valuemask = 0;
-
-      XGetWindowAttributes (dpy, window, &xgwa);
-
-# ifdef XpmCloseness
-      xpmattrs.valuemask |= XpmCloseness;
-      xpmattrs.closeness = 40000;
-# endif
-# ifdef XpmVisual
-      xpmattrs.valuemask |= XpmVisual;
-      xpmattrs.visual = xgwa.visual;
-# endif
-# ifdef XpmDepth
-      xpmattrs.valuemask |= XpmDepth;
-      xpmattrs.depth = xgwa.depth;
-# endif
-# ifdef XpmColormap
-      xpmattrs.valuemask |= XpmColormap;
-      xpmattrs.colormap = xgwa.colormap;
-# endif
-
-      result = XpmCreatePixmapFromData(dpy, window, bits[i],
-				       &pixmap, 0 /* mask */, &xpmattrs);
-      if (!pixmap || (result != XpmSuccess && result != XpmColorError))
+      Pixmap pixmap = xpm_data_to_pixmap (dpy, window, bits[i],
+                                          0, 0, 0);
+      if (!pixmap)
 	{
 	  fprintf (stderr, "%s: Can't load nose images\n", progname);
 	  exit (1);

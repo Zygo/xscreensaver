@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -270,7 +270,7 @@ struct saver_screen_info {
    server extensions and virtual roots
    ======================================================================= */
 
-extern void restore_real_vroot (saver_info *si);
+extern Bool restore_real_vroot (saver_info *si);
 extern void disable_builtin_screensaver (saver_info *, Bool unblank_screen_p);
 extern Bool ensure_no_screensaver_running (Display *, Screen *);
 
@@ -373,6 +373,7 @@ extern void maybe_reload_init_file (saver_info *);
    subprocs
    ======================================================================= */
 
+extern void handle_signals (saver_info *si);
 extern void block_sigchld (void);
 extern void unblock_sigchld (void);
 extern void hack_environment (saver_info *si);
@@ -386,6 +387,8 @@ extern void emergency_kill_subproc (saver_info *si);
 extern Bool select_visual (saver_screen_info *ssi, const char *visual_name);
 extern void store_saver_status (saver_info *si);
 extern const char *signal_name (int signal);
+extern void exec_command (const char *shell, const char *command,
+                          int nice_level);
 
 /* =======================================================================
    subprocs diagnostics
@@ -415,7 +418,7 @@ extern char *timestring (void);
 extern Bool display_is_on_console_p (saver_info *si);
 extern Visual *get_best_gl_visual (saver_screen_info *ssi);
 
-extern Atom XA_VROOT, XA_XSETROOT_ID;
+extern Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 extern Atom XA_SCREENSAVER_STATUS, XA_LOCK, XA_BLANK;
 extern Atom XA_DEMO, XA_PREFS;

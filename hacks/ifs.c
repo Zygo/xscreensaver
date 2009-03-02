@@ -1,12 +1,13 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * ifs --- Modified iterated functions system.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* ifs --- modified iterated functions system */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)ifs.c	   4.02 97/04/01 xlockmore";
+static const char sccsid[] = "@(#)ifs.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1997 by Massimino Pascal (Pascal.Massimon@ens.fr)
- *
+/*-
+ * Copyright (c) 1997 by Massimino Pascal <Pascal.Massimon@ens.fr>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,33 +21,50 @@ static const char sccsid[] = "@(#)ifs.c	   4.02 97/04/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
+ * If this mode is weird and you have an old MetroX server, it is buggy.
+ * There is a free SuSE-enhanced MetroX X server that is fine.
+ *
+ * When shown ifs, Diana Rose (4 years old) said, "It looks like dancing."
+ *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- *			  Made it render into an offscreen bitmap and then copy
- *			  that onto the screen, to reduce flicker.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: jwz@jwz.org: turned into a standalone program.
+ *              Made it render into an offscreen bitmap and then copy
+ *              that onto the screen, to reduce flicker.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"IFS"
-# define HACK_INIT					init_ifs
-# define HACK_DRAW					draw_ifs
-# define ifs_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		20000 \n"			\
-					"*ncolors:		100   \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_ifs
+#define PROGCLASS "IFS"
+#define HACK_INIT init_ifs
+#define HACK_DRAW draw_ifs
+#define ifs_opts xlockmore_opts
+#define DEFAULTS "*delay: 20000 \n" \
+ "*ncolors: 100 \n"
+#define SMOOTH_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+#endif /* STANDALONE */
 
-ModeSpecOpt ifs_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_ifs
 
-/*****************************************************/
+ModeSpecOpt ifs_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   ifs_description =
+{"ifs", "init_ifs", "draw_ifs", "release_ifs",
+ "init_ifs", "init_ifs", (char *) NULL, &ifs_opts,
+ 1000, 1, 1, 1, 64, 1.0, "",
+ "Shows a modified iterated function system", 0, NULL};
+
+#endif
+
 /*****************************************************/
 
 typedef float DBL;
-typedef short int F_PT;
+typedef int F_PT;
 
 /* typedef float               F_PT; */
 
@@ -63,18 +81,6 @@ typedef short int F_PT;
 #define MAX_DEPTH_5  3
 
 #define DBL_To_F_PT(x)  (F_PT)( (DBL)(UNIT)*(x) )
-
-/*****************************************************/
-
-static int  Max_Colors;
-static ModeInfo *The_MI;
-static F_PT Lx, Ly;
-static int  D;
-static Display *display;
-static GC   gc;
-static Window window;
-
-/*****************************************************/
 
 typedef struct Similitude_Struct SIMI;
 typedef struct Fractal_Struct FRACTAL;
@@ -98,16 +104,15 @@ struct Fractal_Struct {
 	DBL         r_mean, dr_mean, dr2_mean;
 	int         Cur_Pt, Max_Pt;
 	XPoint     *Buffer1, *Buffer2;
-    Pixmap      dbuf;	/* jwz */
-    GC          dbuf_gc;
+	Pixmap      dbuf;
+	GC          dbuf_gc;
 };
 
-static FRACTAL *Root = NULL, *Cur_F;
+static FRACTAL *Root = (FRACTAL *) NULL, *Cur_F;
 static XPoint *Buf;
 static int  Cur_Pt;
 
 
-/*****************************************************/
 /*****************************************************/
 
 static      DBL
@@ -146,11 +151,42 @@ Random_Simis(FRACTAL * F, SIMI * Cur, int i)
 	}
 }
 
+static void
+free_ifs_buffers(FRACTAL *Fractal)
+{
+	if (Fractal->Buffer1 != NULL) {
+		(void) free((void *) Fractal->Buffer1);
+		Fractal->Buffer1 = (XPoint *) NULL;
+	}
+	if (Fractal->Buffer2 != NULL) {
+		(void) free((void *) Fractal->Buffer2);
+		Fractal->Buffer2 = (XPoint *) NULL;
+	}
+}
+
+
+static void
+free_ifs(Display *display, FRACTAL *Fractal)
+{
+	free_ifs_buffers(Fractal);
+	if (Fractal->dbuf != None) {
+		XFreePixmap(display, Fractal->dbuf);
+		Fractal->dbuf = None;
+	}
+	if (Fractal->dbuf_gc != None) {
+		XFreeGC(display, Fractal->dbuf_gc);
+		Fractal->dbuf_gc = None;
+	}
+}
+
 /***************************************************************/
 
 void
 init_ifs(ModeInfo * mi)
 {
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	GC          gc = MI_GC(mi);
 	int         i;
 	FRACTAL    *Fractal;
 
@@ -162,10 +198,7 @@ init_ifs(ModeInfo * mi)
 	}
 	Fractal = &Root[MI_SCREEN(mi)];
 
-	if (Fractal->Max_Pt) {
-		free(Fractal->Buffer1);
-		free(Fractal->Buffer2);
-	}
+	free_ifs_buffers(Fractal);
 	i = (NRAND(4)) + 2;	/* Number of centers */
 	switch (i) {
 		case 3:
@@ -203,16 +236,19 @@ init_ifs(ModeInfo * mi)
 	for (i = 0; i <= Fractal->Depth + 2; ++i)
 		Fractal->Max_Pt *= Fractal->Nb_Simi;
 
-	Fractal->Buffer1 = (XPoint *) calloc(Fractal->Max_Pt, sizeof (XPoint));
-	if (Fractal->Buffer1 == NULL)
-		goto Abort;
-	Fractal->Buffer2 = (XPoint *) calloc(Fractal->Max_Pt, sizeof (XPoint));
-	if (Fractal->Buffer2 == NULL)
-		goto Abort;
-
+	if ((Fractal->Buffer1 = (XPoint *) calloc(Fractal->Max_Pt,
+			sizeof (XPoint))) == NULL) {
+		free_ifs(display, Fractal);
+		return;
+	}
+	if ((Fractal->Buffer2 = (XPoint *) calloc(Fractal->Max_Pt,
+			sizeof (XPoint))) == NULL) {
+		free_ifs(display, Fractal);
+		return;
+	}
 	Fractal->Speed = 6;
-	Fractal->Width = MI_WIN_WIDTH(mi);
-	Fractal->Height = MI_WIN_HEIGHT(mi);
+	Fractal->Width = MI_WIDTH(mi);
+	Fractal->Height = MI_HEIGHT(mi);
 	Fractal->Cur_Pt = 0;
 	Fractal->Count = 0;
 	Fractal->Lx = (Fractal->Width - 1) / 2;
@@ -221,46 +257,50 @@ init_ifs(ModeInfo * mi)
 
 	Random_Simis(Fractal, Fractal->Components, 5 * MAX_SIMI);
 
-	Fractal->dbuf = XCreatePixmap(MI_DISPLAY(mi), MI_WINDOW(mi),
-								  Fractal->Width, Fractal->Height, 1);
-	if (Fractal->dbuf)
-	  {
-		XGCValues gcv;
+#ifndef NO_DBUF
+	if (Fractal->dbuf != None)
+		XFreePixmap(display, Fractal->dbuf);
+	Fractal->dbuf = XCreatePixmap(display, window,
+				      Fractal->Width, Fractal->Height, 1);
+	/* Allocation checked */
+	if (Fractal->dbuf != None) {
+		XGCValues   gcv;
+
 		gcv.foreground = 0;
 		gcv.background = 0;
+		gcv.graphics_exposures = False;
 		gcv.function = GXcopy;
-		Fractal->dbuf_gc = XCreateGC(MI_DISPLAY(mi), Fractal->dbuf,
-									 GCForeground|GCBackground|GCFunction,
-									 &gcv);
-		XFillRectangle(MI_DISPLAY(mi), Fractal->dbuf,
-					   Fractal->dbuf_gc, 0,0, Fractal->Width, Fractal->Height);
 
-		XSetBackground(MI_DISPLAY(mi), MI_GC(mi), MI_WIN_BLACK_PIXEL(mi));
-		XSetFunction(MI_DISPLAY(mi), MI_GC(mi), GXcopy);
-	  }
+		if (Fractal->dbuf_gc != None)
+			XFreeGC(display, Fractal->dbuf_gc);
+		if ((Fractal->dbuf_gc = XCreateGC(display, Fractal->dbuf,
+				GCForeground | GCBackground | GCGraphicsExposures | GCFunction,
+				&gcv)) == None) {
+			XFreePixmap(display, Fractal->dbuf);
+			Fractal->dbuf = None;
+		} else {
+			XFillRectangle(display, Fractal->dbuf,
+			    Fractal->dbuf_gc, 0, 0, Fractal->Width, Fractal->Height);
+			XSetBackground(display, gc, MI_BLACK_PIXEL(mi));
+			XSetFunction(display, gc, GXcopy);
+		}
+	}
+#endif
+	MI_CLEARWINDOW(mi);
 
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
-	return;
+	/* don't want any exposure events from XCopyPlane */
+	XSetGraphicsExposures(display, gc, False);
 
-      Abort:
-	if (Fractal->Buffer1 != NULL)
-		free(Fractal->Buffer1);
-	if (Fractal->Buffer2 != NULL)
-		free(Fractal->Buffer2);
-	Fractal->Buffer1 = NULL;
-	Fractal->Buffer2 = NULL;
-	Fractal->Max_Pt = 0;
-	return;
 }
 
 
 /***************************************************************/
 
-#ifndef __GNUC__
-# undef inline
-# define inline /* */
+/* Should be taken care of already... but just in case */
+#if !defined( __GNUC__ ) && !defined(__cplusplus) && !defined(c_plusplus)
+#undef inline
+#define inline			/* */
 #endif
-
 static inline void
 Transform(SIMI * Simi, F_PT xo, F_PT yo, F_PT * x, F_PT * y)
 {
@@ -283,7 +323,7 @@ Transform(SIMI * Simi, F_PT xo, F_PT yo, F_PT * x, F_PT * y)
 /***************************************************************/
 
 static void
-Trace(F_PT xo, F_PT yo)
+Trace(FRACTAL * F, F_PT xo, F_PT yo)
 {
 	F_PT        x, y, i;
 	SIMI       *Cur;
@@ -291,22 +331,26 @@ Trace(F_PT xo, F_PT yo)
 	Cur = Cur_F->Components;
 	for (i = Cur_F->Nb_Simi; i; --i, Cur++) {
 		Transform(Cur, xo, yo, &x, &y);
-		Buf->x = Lx + (x * Lx / (UNIT * 2));
-		Buf->y = Ly - (y * Ly / (UNIT * 2));
+		Buf->x = F->Lx + (x * F->Lx / (UNIT * 2));
+		Buf->y = F->Ly - (y * F->Ly / (UNIT * 2));
 		Buf++;
 		Cur_Pt++;
 
-		if (D && ((x - xo) >> 4) && ((y - yo) >> 4)) {
-			D--;
-			Trace(x, y);
-			D++;
+		if (F->Depth && ((x - xo) >> 4) && ((y - yo) >> 4)) {
+			F->Depth--;
+			Trace(F, x, y);
+			F->Depth++;
 		}
 	}
 }
 
 static void
-Draw_Fractal(FRACTAL * F)
+Draw_Fractal(ModeInfo * mi)
 {
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	GC          gc = MI_GC(mi);
+	FRACTAL    *F = &Root[MI_SCREEN(mi)];
 	int         i, j;
 	F_PT        x, y, xo, yo;
 	SIMI       *Cur, *Simi;
@@ -328,9 +372,6 @@ Draw_Fractal(FRACTAL * F)
 	Cur_Pt = 0;
 	Cur_F = F;
 	Buf = F->Buffer2;
-	Lx = F->Lx;
-	Ly = F->Ly;
-	D = F->Depth;
 	for (Cur = F->Components, i = F->Nb_Simi; i; --i, Cur++) {
 		xo = Cur->Cx;
 		yo = Cur->Cy;
@@ -338,43 +379,36 @@ Draw_Fractal(FRACTAL * F)
 			if (Simi == Cur)
 				continue;
 			Transform(Simi, xo, yo, &x, &y);
-			Trace(x, y);
+			Trace(F, x, y);
 		}
 	}
 
 	/* Erase previous */
-
 	if (F->Cur_Pt) {
-		XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(The_MI));
-		if (F->dbuf)	/* jwz */
-		  {
+		XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
+		if (F->dbuf != None) {
 			XSetForeground(display, F->dbuf_gc, 0);
-/*		    XDrawPoints(display, F->dbuf, F->dbuf_gc, F->Buffer1, F->Cur_Pt,
-					    CoordModeOrigin); */
-		    XFillRectangle(display, F->dbuf, F->dbuf_gc, 0, 0,
-						   F->Width, F->Height);
-		  }
-		else
-		  XDrawPoints(display, window, gc, F->Buffer1, F->Cur_Pt,
-					  CoordModeOrigin);
+			/* XDrawPoints(display, F->dbuf, F->dbuf_gc, F->Buffer1, F->Cur_Pt,
+  				CoordModeOrigin); */
+			XFillRectangle(display, F->dbuf, F->dbuf_gc, 0, 0,
+				       F->Width, F->Height);
+		} else
+			XDrawPoints(display, window, gc, F->Buffer1, F->Cur_Pt, CoordModeOrigin);
 	}
-	if (Max_Colors < 2)
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(The_MI));
+	if (MI_NPIXELS(mi) < 2)
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	else
-		XSetForeground(display, gc, MI_PIXEL(The_MI, F->Col % Max_Colors));
+		XSetForeground(display, gc, MI_PIXEL(mi, F->Col % MI_NPIXELS(mi)));
 	if (Cur_Pt) {
-	  if (F->dbuf)
-		{
-		  XSetForeground(display, F->dbuf_gc, 1);
-		  XDrawPoints(display, F->dbuf, F->dbuf_gc, F->Buffer2, Cur_Pt,
-					  CoordModeOrigin);
-		}
-	  else
-		XDrawPoints(display, window, gc, F->Buffer2, Cur_Pt, CoordModeOrigin);
+		if (F->dbuf != None) {
+			XSetForeground(display, F->dbuf_gc, 1);
+			XDrawPoints(display, F->dbuf, F->dbuf_gc, F->Buffer2, Cur_Pt,
+				    CoordModeOrigin);
+		} else
+			XDrawPoints(display, window, gc, F->Buffer2, Cur_Pt, CoordModeOrigin);
 	}
-
-	if (F->dbuf)
-	  XCopyPlane(display, F->dbuf, window, gc, 0,0,F->Width,F->Height,0,0, 1);
+	if (F->dbuf != None)
+		XCopyPlane(display, F->dbuf, window, gc, 0, 0, F->Width, F->Height, 0, 0, 1);
 
 	F->Cur_Pt = Cur_Pt;
 	Buf = F->Buffer1;
@@ -387,17 +421,15 @@ void
 draw_ifs(ModeInfo * mi)
 {
 	int         i;
-	FRACTAL    *F;
 	DBL         u, uu, v, vv, u0, u1, u2, u3;
 	SIMI       *S, *S1, *S2, *S3, *S4;
+	FRACTAL    *F;
 
-	The_MI = mi;
-	display = MI_DISPLAY(mi);
-	window = MI_WINDOW(mi);
-	gc = MI_GC(mi);
-	Max_Colors = MI_NPIXELS(mi);
-
+	if (Root == NULL)
+		return;
 	F = &Root[MI_SCREEN(mi)];
+	if (F->Buffer1 == NULL)
+		return;
 
 	u = (DBL) (F->Count) * (DBL) (F->Speed) / 1000.0;
 	uu = u * u;
@@ -423,7 +455,9 @@ draw_ifs(ModeInfo * mi)
 		S->A2 = u0 * S1->A2 + u1 * S2->A2 + u2 * S3->A2 + u3 * S4->A2;
 	}
 
-	Draw_Fractal(F);
+	MI_IS_DRAWN(mi) = True;
+
+	Draw_Fractal(mi);
 
 	if (F->Count >= 1000 / F->Speed) {
 		S = F->Components;
@@ -459,21 +493,14 @@ draw_ifs(ModeInfo * mi)
 void
 release_ifs(ModeInfo * mi)
 {
-	int         i;
+	if (Root != NULL) {
+		int         screen;
 
-	if (Root == NULL)
-		return;
-
-	for (i = 0; i < MI_NUM_SCREENS(mi); ++i) {
-		if (Root[i].Buffer1 != NULL)
-			free(Root[i].Buffer1);
-		if (Root[i].Buffer2 != NULL)
-			free(Root[i].Buffer2);
-		if (Root[i].dbuf)
-			XFreePixmap(MI_DISPLAY(mi), Root[i].dbuf);
-		if (Root[i].dbuf_gc)
-			XFreeGC(MI_DISPLAY(mi), Root[i].dbuf_gc);
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_ifs(MI_DISPLAY(mi), &Root[screen]);
+		(void) free((void *) Root);
+		Root = (FRACTAL *) NULL;
 	}
-	free(Root);
-	Root = NULL;
 }
+
+#endif /* MODE_ifs */

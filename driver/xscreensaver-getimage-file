@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001 Jamie Zawinski <jwz@jwz.org>, all rights reserved.
+# Copyright © 2001, 2002 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -29,10 +29,10 @@ use strict;
 
 use POSIX;
 use Fcntl;
-
+use Fcntl ':mode';
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -99,8 +99,21 @@ sub find_all_files {
     next if ($file eq "core");
 
     $file = "$dir/$file";
+    my @st = stat($file);
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-        $atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
+        $atime,$mtime,$ctime,$blksize,$blocks) = @st;
+
+    if ($#st == -1) {
+      if ($verbose) {
+        my $ll = readlink $file;
+        if (defined ($ll)) {
+          print STDERR "$progname: dangling symlink: $file -> $ll\n";
+        } else {
+          print STDERR "$progname: unreadable: $file\n";
+        }
+      }
+      next;
+    }
 
     next if ($seen_inodes{$ino}); # break symlink loops
     $seen_inodes{$ino} = 1;
@@ -129,9 +142,15 @@ sub find_random_file {
 
   print STDERR "$progname: recursively reading $dir...\n" if ($verbose > 1);
   find_all_files ($dir);
-  print STDERR "$progname: found $#all_files files\n" if ($verbose > 1);
+  print STDERR "$progname: found " . ($#all_files+1) . " files\n"
+    if ($verbose > 1);
 
   @all_files = sort(@all_files);
+
+  if ($#all_files < 0) {
+    print STDERR "$progname: no files in $dir\n";
+    exit 1;
+  }
 
   my $n = int (rand ($#all_files + 1));
   my $file = $all_files[$n];

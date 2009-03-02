@@ -2,10 +2,12 @@
 /* sierpinski --- Sierpinski's triangle fractal */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
+static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1996 by Desmond Daignault
+/*-
+ * Copyright (c) 1996 by Desmond Daignault
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,31 +21,47 @@ static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
+ * Dots initially appear where they "should not".  Later they get
+ * "focused".  This is correct behavior.
+ *
  * Revision History:
- * 18-Sep-97: 3D version Antti Kuntsi <kuntsi@iki.fi>.
- * 20-May-97: Changed the name tri to sierpinski for more compatiblity
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
- * 05-Sep-96: Desmond Daignault Datatimes Incorporated
+ * 01-Nov-2000: Allocation checks
+ * 18-Sep-1997: 3D version Antti Kuntsi <kuntsi@iki.fi>.
+ * 20-May-1997: Changed the name tri to sierpinski for more compatiblity
+ * 10-May-1997: Jamie Zawinski <jwz@jwz.org> compatible with xscreensaver
+ * 05-Sep-1996: Desmond Daignault Datatimes Incorporated
  *            <tekdd@dtol.datatimes.com> .
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Sierpinski"
-# define HACK_INIT					init_sierpinski
-# define HACK_DRAW					draw_sierpinski
-# define sierpinski_opts			xlockmore_opts
-# define DEFAULTS	"*delay:		400000  \n"			\
-					"*count:		2000    \n"			\
-					"*cycles:		100     \n"			\
-					"*ncolors:		64   \n"
-# define BRIGHT_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_sierpinski
+#define PROGCLASS "Sierpinski"
+#define HACK_INIT init_sierpinski
+#define HACK_DRAW draw_sierpinski
+#define sierpinski_opts xlockmore_opts
+#define DEFAULTS "*delay: 400000 \n" \
+ "*count: 2000 \n" \
+ "*cycles: 100 \n" \
+ "*ncolors: 64 \n"
+#define BRIGHT_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+#endif /* STANDALONE */
+
+#ifdef MODE_sierpinski
 
 ModeSpecOpt sierpinski_opts =
-{0, NULL, 0, NULL, NULL};
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   sierpinski_description =
+{"sierpinski", "init_sierpinski", "draw_sierpinski", "release_sierpinski",
+ "refresh_sierpinski", "init_sierpinski", (char *) NULL, &sierpinski_opts,
+ 400000, 2000, 100, 1, 64, 1.0, "",
+ "Shows Sierpinski's triangle", 0, NULL};
+
+#endif
 
 #define MAXCORNERS 4
 
@@ -52,14 +70,14 @@ typedef struct {
 	int         time;
 	int         px, py;
 	int         total_npoints;
-  int         corners;
+	int         corners;
 	int         npoints[MAXCORNERS];
 	unsigned long colors[MAXCORNERS];
 	XPoint     *pointBuffer[MAXCORNERS];
 	XPoint      vertex[MAXCORNERS];
 } sierpinskistruct;
 
-static sierpinskistruct *tris = NULL;
+static sierpinskistruct *tris = (sierpinskistruct *) NULL;
 
 static void
 startover(ModeInfo * mi)
@@ -68,23 +86,23 @@ startover(ModeInfo * mi)
 	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
 
 	if (MI_NPIXELS(mi) > 2) {
-    if (sp->corners == 3) {
-		sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
-		sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
+		if (sp->corners == 3) {
+			sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
+			sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
 			 NRAND(2 * MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
-		sp->colors[2] = (sp->colors[0] + 4 * MI_NPIXELS(mi) / 7 +
+			sp->colors[2] = (sp->colors[0] + 4 * MI_NPIXELS(mi) / 7 +
 			 NRAND(2 * MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
-   } else if (sp->corners == 4) {
-		sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
-		sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
-			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
-		sp->colors[2] = (sp->colors[0] + 3 * MI_NPIXELS(mi) / 7 +
-			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
-		sp->colors[3] = (sp->colors[0] + 5 * MI_NPIXELS(mi) / 7 +
-			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
-   } else {
-     (void) fprintf(stderr, "colors not set for %d corners\n", sp->corners);
-	 }
+		} else if (sp->corners == 4) {
+			sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
+			sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
+			     NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+			sp->colors[2] = (sp->colors[0] + 3 * MI_NPIXELS(mi) / 7 +
+			     NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+			sp->colors[3] = (sp->colors[0] + 5 * MI_NPIXELS(mi) / 7 +
+			     NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+		} else {
+			(void) fprintf(stderr, "colors not set for %d corners\n", sp->corners);
+		}
 	}
 	for (j = 0; j < sp->corners; j++) {
 		sp->vertex[j].x = NRAND(sp->width);
@@ -93,14 +111,27 @@ startover(ModeInfo * mi)
 	sp->px = NRAND(sp->width);
 	sp->py = NRAND(sp->height);
 	sp->time = 0;
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+
+	MI_CLEARWINDOW(mi);
+}
+
+static void
+free_sierpinski(sierpinskistruct *sp)
+{
+	int corner;
+
+	for (corner = 0; corner < MAXCORNERS; corner++)
+		if (sp->pointBuffer[corner] != NULL) {
+			(void) free((void *) sp->pointBuffer[corner]);
+			sp->pointBuffer[corner] = (XPoint *) NULL;
+		}
 }
 
 void
 init_sierpinski(ModeInfo * mi)
 {
-	sierpinskistruct *sp;
 	int         i;
+	sierpinskistruct *sp;
 
 	if (tris == NULL) {
 		if ((tris = (sierpinskistruct *) calloc(MI_NUM_SCREENS(mi),
@@ -109,20 +140,23 @@ init_sierpinski(ModeInfo * mi)
 	}
 	sp = &tris[MI_SCREEN(mi)];
 
-	sp->width = MI_WIN_WIDTH(mi);
-	sp->height = MI_WIN_HEIGHT(mi);
+	sp->width = MI_WIDTH(mi);
+	sp->height = MI_HEIGHT(mi);
 
-	sp->total_npoints = MI_BATCHCOUNT(mi);
+	sp->total_npoints = MI_COUNT(mi);
 	if (sp->total_npoints < 1)
 		sp->total_npoints = 1;
-  sp->corners = MI_SIZE(mi);
+	sp->corners = MI_SIZE(mi);
 	if (sp->corners < 3 || sp->corners > 4) {
-		sp->corners = (LRAND() & 1) + 3;
+		sp->corners = (int) (LRAND() & 1) + 3;
 	}
 	for (i = 0; i < sp->corners; i++) {
 		if (!sp->pointBuffer[i])
-			sp->pointBuffer[i] = (XPoint *) malloc(sp->total_npoints *
-							    sizeof (XPoint));
+			if ((sp->pointBuffer[i] = (XPoint *) malloc(sp->total_npoints *
+					sizeof (XPoint))) == NULL) {
+				free_sierpinski(sp);
+				return;
+			}
 	}
 	startover(mi);
 }
@@ -132,12 +166,19 @@ draw_sierpinski(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
 	XPoint     *xp[MAXCORNERS];
-	int         i = 0, v;
+	int         i, v;
+	sierpinskistruct *sp;
 
+	if (tris == NULL)
+		return;
+	sp = &tris[MI_SCREEN(mi)];
+	if (sp->pointBuffer[0] == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	if (MI_NPIXELS(mi) <= 2)
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	for (i = 0; i < sp->corners; i++)
 		xp[i] = sp->pointBuffer[i];
 	for (i = 0; i < sp->total_npoints; i++) {
@@ -164,21 +205,19 @@ void
 release_sierpinski(ModeInfo * mi)
 {
 	if (tris != NULL) {
-		int         screen, i;
+		int         screen;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			for (i = 0; i < MAXCORNERS; i++)
-				if (tris[screen].pointBuffer[i] != NULL) {
-					(void) free((void *) tris[screen].pointBuffer[i]);
-				}
-		}
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_sierpinski(&tris[screen]);
 		(void) free((void *) tris);
-		tris = NULL;
+		tris = (sierpinskistruct *) NULL;
 	}
 }
 
 void
 refresh_sierpinski(ModeInfo * mi)
 {
-	/* Do nothing, it will refresh by itself */
+	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_sierpinski */

@@ -199,8 +199,8 @@ setup_colormap (Display *dpy, XWindowAttributes *wattr,
 
   /* Make a colormap */
   *n_colors = get_integer_resource ("ncolors", "Integer");
-  if (*n_colors < 2)
-    *n_colors = 2;
+  if (*n_colors < 3)
+    *n_colors = 3;
   
   *colors = (XColor *) calloc (sizeof(XColor), *n_colors);
   if (!*colors)
@@ -384,11 +384,3 @@ screenhack (Display *dpy, Window window)
     i_restart = (i_restart + 1) % n_restart;
   }
 }
-
-
-/*
- * Local variables:
- * c-indent-mode: gnu
- * compile-command "make critical && ./critical"
- * End:
- */

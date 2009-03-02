@@ -175,6 +175,14 @@
  	            \"SpeedMine\"	speedmine -root				    \\n\
  	            \"SpeedWorm\"	speedmine -root -worm			    \\n\
  	                	vermiculate -root			    \\n\
+ 	                	twang -root				    \\n\
+ 	                	apollonian -root			    \\n\
+ 	                	euler2d -root				    \\n\
+	     \"Euler2d (dense)\"	euler2d -root -count 4000 -eulertail 400      \
+				  -ncolors 230				    \\n\
+- 	                	juggle -root				    \\n\
+ 	                	polyominoes -root			    \\n\
+ 	                	thornbird -root				    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -215,6 +223,10 @@
 	   GL:			circuit -root				    \\n\
 	   GL:			engine -root				    \\n\
 	   GL:			flipscreen3d -root			    \\n\
+	   GL:			glsnake -root				    \\n\
+	   GL:			boxed -root				    \\n\
+	   GL:			glforestfire -root			    \\n\
+	   GL:			sballs -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -222,7 +234,6 @@
 				  sunrel/38/-30				    \\n\
 -				xplanetbg -xscreensaver -moonside             \
                                   -markerfile earth -wait 1 -timewarp 400   \\n\
--				ssystem -fullscreen :32			    \\n\
 -				xmountains -b -M -Z 0 -r 1		    \\n\
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
 -                               xaos -fullscreen -autopilot                   \
@@ -407,9 +418,11 @@
 "*hacks.dangerball.name:     DangerBall",
 "*hacks.whirlygig.name:      WhirlyGig",
 "*hacks.speedmine.name:      SpeedMine",
+"*hacks.glsnake.name:        GLSnake",
+"*hacks.glforestfire.name:   GLForestFire",
+"*hacks.sballs.name:         SBalls",
 "*hacks.xdaliclock.name:     XDaliClock",
 "*hacks.xplanetbg.name:      XPlanet",
-"*hacks.ssystem.name:        SSystem",
 "*hacks.xaos.name:           XaoS",
 "*hacks.xfishtank.name:      XFishTank",
 "*hacks.electricsheep.name:  ElectricSheep",

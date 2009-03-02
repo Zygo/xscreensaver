@@ -19,6 +19,8 @@
 
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>		/* for time() */
+#include <time.h>
+#include <sys/time.h>
 #include "xscreensaver.h"
 #include "resources.h"
 

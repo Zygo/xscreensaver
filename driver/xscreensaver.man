@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "02-Jan-2002 (4.00)" "X Version 11"
+.TH XScreenSaver 1 "24-Feb-2002 (4.01)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -599,6 +599,11 @@ settings has no effect: many laptops have monitor power-saving behavior
 built in at a very low level that is invisible to Unix and X.  On such
 systems, you can typically adjust the power-saving delays only by
 changing settings in the BIOS in some hardware-specific way.
+
+If DPMS seems not to be working with XFree86, make sure the "DPMS"
+option is set in your \fI/etc/X11/XF86Config\fP file.  See the
+.BR XF86Config (5)
+manual for details.
 .SH USING XDM(1)
 You can run \fIxscreensaver\fP from your 
 .BR xdm (1)
@@ -715,23 +720,20 @@ man pages for
 and
 .BR xhost (1).
 .SH USING GDM(1)
-The instructions for using \fIxscreensaver\fP with
+Using xscreensaver with
 .BR gdm (1)
-are almost the same as for using
-.BR xdm (1),
-above.  There are only two differences, really: instead 
-of editing \fI/usr/lib/X11/xdm/Xsetup\fP, edit the 
-file \fI/etc/X11/gdm/Init/Default\fP; and instead of 
-editing \fI/usr/lib/X11/xdm/Xsession\fP, edit one or all of the 
-files in the \fI/etc/X11/gdm/Sessions/\fP directory.  (Note that
-the default session (\fI/etc/X11/gdm/Sessions/Default\fP) usually
-simply executes \fI/usr/lib/X11/xdm/Xsession\fP, so be careful
-you aren't initializing xscreensaver twice.)
+is easy, because gdm has a configuration tool.  Just fire up
+.BR gdmconfig (1)
+and on the \fIBackground\fP page, type \fB"xscreensaver -nosplash"\fP into
+the \fIBackground Program\fP field.  That will cause gdm to run xscreensaver
+while nobody is logged in, and kill it as soon as someone does log in.
+(The user will then be responsible for starting xscreensaver on their
+own, if they want.)
 
-All the same caveats apply for
-.BR gdm (1)
-as for
-.BR xdm (1).
+In this situation, the \fIxscreensaver\fP process will probably be running
+as user \fIgdm\fP instead of \fIroot\fP.  You can configure the settings
+for this nobody-logged-in state (timeouts, DPMS, etc.) by editing
+the \fI~gdm/.xscreensaver\fP file.
 .SH USING CDE (COMMON DESKTOP ENVIRONMENT)
 The easiest way to use \fIxscreensaver\fP on a system with CDE is to simply
 switch off the built-in CDE screensaver, and use \fIxscreensaver\fP instead;
@@ -839,6 +841,21 @@ This associates the VUE front panel ``Lock'' icon with the xscreensaver
 lock command.
 .RE
 .PP
+.SH USING KDE (K DESKTOP ENVIRONMENT)
+I understand that KDE has invented their own wrapper around xscreensaver,
+that is inferior to 
+.BR xscreensaver-demo (1)
+in any number of ways.  I've never actually seen it.  Presumably, there is
+some way to turn off KDE's screensaver framework, and make it so that the
+usual
+.BR xscreensaver-demo (1)
+and
+.BR xscreensaver-command (1)
+mechanisms are used, in a similar way to how one can reconfigure CDE and
+VUE environments, above.
+
+But I don't know how.  If you do, please let me know, and I'll document
+it here.
 .SH ADDING TO MENUS
 The
 .BR xscreensaver-command (1)

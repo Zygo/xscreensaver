@@ -47,6 +47,8 @@ typedef unsigned char	BOOL;
 char *progclass = "Bumps";
 
 char *defaults [] = {
+  ".background: black",
+  ".foreground: white",
   "*degrees:	360",
   "*color:		random",
   "*colorcount:	64",

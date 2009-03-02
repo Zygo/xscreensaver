@@ -1337,14 +1337,27 @@ char *
 format_hack (screenhack *hack, Bool wrap_p)
 {
   int tab = 32;
-  int size = (2 * (strlen(hack->command) +
-                   (hack->visual ? strlen(hack->visual) : 0) +
-                   (hack->name ? strlen(hack->name) : 0) +
-                   tab));
-  char *h2 = (char *) malloc (size);
-  char *out = h2;
-  char *s;
+  int size;
+  char *h2, *out, *s;
   int col = 0;
+
+  char *def_name = make_hack_name (hack->command);
+
+  /* Don't ever write out a name for a hack if it's the same as the default.
+   */
+  if (hack->name && !strcmp (hack->name, def_name))
+    {
+      free (hack->name);
+      hack->name = 0;
+    }
+  free (def_name);
+
+  size = (2 * (strlen(hack->command) +
+               (hack->visual ? strlen(hack->visual) : 0) +
+               (hack->name ? strlen(hack->name) : 0) +
+               tab));
+  h2 = (char *) malloc (size);
+  out = h2;
 
   if (!hack->enabled_p) *out++ = '-';		/* write disabled flag */
 

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "02-Jan-2002 (4.00)" "X Version 11"
+.TH XScreenSaver 1 "24-Feb-2002 (4.01)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -88,10 +88,14 @@ the screensaver comes on.  (Because if you jiggle the mouse, xscreensaver
 will notice, and deactivate.)
 .TP 8
 .B \-deactivate
-If the screensaver is active (the screen is blanked), this command will
-deactivate it just as if there had been keyboard or mouse activity.  
-If locking is enabled, then the screensaver will prompt for a password
-as usual.
+This tells xscreensaver to pretend that there has just been user activity.
+This means that if the screensaver is active (the screen is blanked),
+then this command will cause the screen to un-blank as if there had been
+keyboard or mouse activity.  If the screen is locked, then the password
+dialog will pop up first, as usual.  If the screen is not blanked, then
+this simulated user activity will re-start the countdown (so, issuing
+the \fI\-deactivate\fP command periodically is \fIone\fP way to prevent
+the screen from blanking.)
 .TP 8
 .B \-cycle
 If the screensaver is active (the screen is blanked), then stop the current
@@ -252,7 +256,7 @@ and related tools can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver (1)
 .BR xscreensaver\-demo (1)
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

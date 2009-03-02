@@ -36,6 +36,8 @@
 #include <X11/Xatom.h>
 #include <X11/Xos.h>		/* for time() */
 #include <signal.h>		/* for the signal names */
+#include <time.h>
+#include <sys/time.h>
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
 # include <X11/extensions/scrnsaver.h>
@@ -65,7 +67,7 @@
 
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
-Atom XA_VROOT, XA_XSETROOT_ID;
+Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 Atom XA_SCREENSAVER_STATUS;
 
@@ -357,8 +359,12 @@ remove_vroot_property (Display *dpy, Window win)
 }
 
 
+static Bool safe_XKillClient (Display *dpy, XID id);
+
 static void
-kill_xsetroot_data (Display *dpy, Window window, Bool verbose_p)
+kill_xsetroot_data_1 (Display *dpy, Window window,
+                      Atom prop, const char *atom_name,
+                      Bool verbose_p)
 {
   Atom type;
   int format;
@@ -376,8 +382,12 @@ kill_xsetroot_data (Display *dpy, Window window, Bool verbose_p)
      delete of the _XSETROOT_ID property, and if it held a pixmap, then we
      cause the RetainPermanent resources of the client which created it
      (and which no longer exists) to be freed.
+
+     Update: it seems that Gnome and KDE do this same trick, but with the
+     properties "ESETROOT_PMAP_ID" and/or "_XROOTPMAP_ID" instead of
+     "_XSETROOT_ID".  So, we'll kill those too.
    */
-  if (XGetWindowProperty (dpy, window, XA_XSETROOT_ID, 0, 1,
+  if (XGetWindowProperty (dpy, window, prop, 0, 1,
 			  True, AnyPropertyType, &type, &format, &nitems, 
 			  &bytesafter, (unsigned char **) &dataP)
       == Success
@@ -387,20 +397,31 @@ kill_xsetroot_data (Display *dpy, Window window, Bool verbose_p)
 	  nitems == 1 && bytesafter == 0)
 	{
 	  if (verbose_p)
-	    fprintf (stderr, "%s: destroying xsetroot data (0x%lX).\n",
-		     blurb(), *dataP);
-	  XKillClient (dpy, *dataP);
+	    fprintf (stderr, "%s: destroying %s data (0x%lX).\n",
+		     blurb(), atom_name, *dataP);
+	  safe_XKillClient (dpy, *dataP);
 	}
       else
-	fprintf (stderr, "%s: deleted unrecognised _XSETROOT_ID property: \n\
-	%lu, %lu; type: %lu, format: %d, nitems: %lu, bytesafter %ld\n",
-		 blurb(), (unsigned long) dataP, (dataP ? *dataP : 0), type,
+	fprintf (stderr,
+                 "%s: deleted unrecognised %s property: \n"
+                 "\t%lu, %lu; type: %lu, format: %d, "
+                 "nitems: %lu, bytesafter %ld\n",
+		 blurb(), atom_name,
+                 (unsigned long) dataP, (dataP ? *dataP : 0), type,
 		 format, nitems, bytesafter);
     }
 }
 
 
-static void handle_signals (saver_info *si, Bool on_p);
+static void
+kill_xsetroot_data (Display *dpy, Window w, Bool verbose_p)
+{
+  kill_xsetroot_data_1 (dpy, w, XA_XSETROOT_ID, "_XSETROOT_ID", verbose_p);
+  kill_xsetroot_data_1 (dpy, w, XA_ESETROOT_PMAP_ID, "ESETROOT_PMAP_ID",
+                        verbose_p);
+  kill_xsetroot_data_1 (dpy, w, XA_XROOTPMAP_ID, "_XROOTPMAP_ID", verbose_p);
+}
+
 
 static void
 save_real_vroot (saver_screen_info *ssi)
@@ -463,7 +484,6 @@ save_real_vroot (saver_screen_info *ssi)
 
   if (ssi->real_vroot)
     {
-      handle_signals (si, True);
       remove_vroot_property (si->dpy, ssi->real_vroot);
       XSync (dpy, False);
     }
@@ -473,7 +493,7 @@ save_real_vroot (saver_screen_info *ssi)
 
 
 static Bool
-restore_real_vroot_2 (saver_screen_info *ssi)
+restore_real_vroot_1 (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
@@ -496,25 +516,18 @@ restore_real_vroot_2 (saver_screen_info *ssi)
   return False;
 }
 
-static Bool
-restore_real_vroot_1 (saver_info *si)
+Bool
+restore_real_vroot (saver_info *si)
 {
   int i;
   Bool did_any = False;
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
-      if (restore_real_vroot_2 (ssi))
+      if (restore_real_vroot_1 (ssi))
 	did_any = True;
     }
   return did_any;
-}
-
-void
-restore_real_vroot (saver_info *si)
-{
-  if (restore_real_vroot_1 (si))
-    handle_signals (si, False);
 }
 
 
@@ -603,66 +616,101 @@ restore_real_vroot_handler (int sig)
   saver_info *si = global_si_kludge;	/* I hate C so much... */
 
   signal (sig, SIG_DFL);
-  if (restore_real_vroot_1 (si))
+  if (restore_real_vroot (si))
     fprintf (real_stderr, "\n%s: %s intercepted, vroot restored.\n",
 	     blurb(), signal_name(sig));
   kill (getpid (), sig);
 }
 
 static void
-catch_signal (saver_info *si, int sig, Bool on_p)
+catch_signal (saver_info *si, int sig, RETSIGTYPE (*handler) (int))
 {
-  if (! on_p)
-    signal (sig, SIG_DFL);
-  else
+# ifdef HAVE_SIGACTION
+
+  struct sigaction a;
+  a.sa_handler = handler;
+  sigemptyset (&a.sa_mask);
+  a.sa_flags = 0;
+
+  /* On Linux 2.4.9 (at least) we need to tell the kernel to not mask delivery
+     of this signal from inside its handler, or else when we execvp() the
+     process again, it starts up with SIGHUP blocked, meaning that killing
+     it with -HUP only works *once*.  You'd think that execvp() would reset
+     all the signal masks, but it doesn't.
+   */
+#  if defined(SA_NOMASK)
+  a.sa_flags |= SA_NOMASK;
+#  elif defined(SA_NODEFER)
+  a.sa_flags |= SA_NODEFER;
+#  endif
+
+  if (sigaction (sig, &a, 0) < 0)
+# else  /* !HAVE_SIGACTION */
+  if (((long) signal (sig, handler)) == -1L)
+# endif /* !HAVE_SIGACTION */
     {
-      if (((long) signal (sig, restore_real_vroot_handler)) == -1L)
-	{
-	  char buf [255];
-	  sprintf (buf, "%s: couldn't catch %s", blurb(), signal_name(sig));
-	  perror (buf);
-	  saver_exit (si, 1, 0);
-	}
+      char buf [255];
+      sprintf (buf, "%s: couldn't catch %s", blurb(), signal_name(sig));
+      perror (buf);
+      saver_exit (si, 1, 0);
     }
 }
 
-static void
-handle_signals (saver_info *si, Bool on_p)
-{
-#if 0
-  if (on_p) fprintf (stderr, "handling signals\n");
-  else fprintf (stderr, "unhandling signals\n");
-#endif
+static RETSIGTYPE saver_sighup_handler (int sig);
 
-  catch_signal (si, SIGHUP,  on_p);
-  catch_signal (si, SIGINT,  on_p);
-  catch_signal (si, SIGQUIT, on_p);
-  catch_signal (si, SIGILL,  on_p);
-  catch_signal (si, SIGTRAP, on_p);
+void
+handle_signals (saver_info *si)
+{
+  catch_signal (si, SIGHUP, saver_sighup_handler);
+
+  catch_signal (si, SIGINT,  restore_real_vroot_handler);
+  catch_signal (si, SIGQUIT, restore_real_vroot_handler);
+  catch_signal (si, SIGILL,  restore_real_vroot_handler);
+  catch_signal (si, SIGTRAP, restore_real_vroot_handler);
 #ifdef SIGIOT
-  catch_signal (si, SIGIOT,  on_p);
+  catch_signal (si, SIGIOT,  restore_real_vroot_handler);
 #endif
-  catch_signal (si, SIGABRT, on_p);
+  catch_signal (si, SIGABRT, restore_real_vroot_handler);
 #ifdef SIGEMT
-  catch_signal (si, SIGEMT,  on_p);
+  catch_signal (si, SIGEMT,  restore_real_vroot_handler);
 #endif
-  catch_signal (si, SIGFPE,  on_p);
-  catch_signal (si, SIGBUS,  on_p);
-  catch_signal (si, SIGSEGV, on_p);
+  catch_signal (si, SIGFPE,  restore_real_vroot_handler);
+  catch_signal (si, SIGBUS,  restore_real_vroot_handler);
+  catch_signal (si, SIGSEGV, restore_real_vroot_handler);
 #ifdef SIGSYS
-  catch_signal (si, SIGSYS,  on_p);
+  catch_signal (si, SIGSYS,  restore_real_vroot_handler);
 #endif
-  catch_signal (si, SIGTERM, on_p);
+  catch_signal (si, SIGTERM, restore_real_vroot_handler);
 #ifdef SIGXCPU
-  catch_signal (si, SIGXCPU, on_p);
+  catch_signal (si, SIGXCPU, restore_real_vroot_handler);
 #endif
 #ifdef SIGXFSZ
-  catch_signal (si, SIGXFSZ, on_p);
+  catch_signal (si, SIGXFSZ, restore_real_vroot_handler);
 #endif
 #ifdef SIGDANGER
-  catch_signal (si, SIGDANGER, on_p);
+  catch_signal (si, SIGDANGER, restore_real_vroot_handler);
 #endif
 }
+
+
+static RETSIGTYPE
+saver_sighup_handler (int sig)
+{
+  saver_info *si = global_si_kludge;	/* I hate C so much... */
+
+  /* Re-establish SIGHUP handler */
+  catch_signal (si, SIGHUP, saver_sighup_handler);
+
+  fprintf (stderr, "%s: %s received: restarting...\n",
+           blurb(), signal_name(sig));
+  unblank_screen (si);
+  kill_screenhack (si);
+  XSync (si->dpy, False);
+  restart_process (si);   /* Does not return */
+  abort ();
+}
+
+
 
 void
 saver_exit (saver_info *si, int status, const char *dump_core_reason)
@@ -677,7 +725,7 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
 
   exiting = True;
   
-  vrs = restore_real_vroot_1 (si);
+  vrs = restore_real_vroot (si);
   emergency_kill_subproc (si);
   shutdown_stderr (si);
 
@@ -1088,6 +1136,24 @@ safe_XDestroyWindow (Display *dpy, Window window)
   old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
 
   XDestroyWindow (dpy, window);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (!error_handler_hit_p);
+}
+
+
+static Bool
+safe_XKillClient (Display *dpy, XID id)
+{
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  XKillClient (dpy, id);
 
   XSync (dpy, False);
   XSetErrorHandler (old_handler);

@@ -267,11 +267,18 @@ grab_screen_image (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
-  Window real_root = XRootWindowOfScreen (screen);  /* not vroot */
-  Bool root_p = (window == real_root);
-  Bool saver_p = xscreensaver_window_p (dpy, window);
+  Window real_root;
+  Bool root_p;
+  Bool saver_p;
   Bool grab_mouse_p = False;
   int unmap_time = 0;
+
+  real_root = XRootWindowOfScreen (screen);  /* not vroot */
+  root_p = (window == real_root);
+  saver_p = xscreensaver_window_p (dpy, window);
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  screen = xgwa.screen;
 
   if (saver_p)
     /* I think this is redundant, but just to be safe... */
@@ -300,15 +307,13 @@ grab_screen_image (Screen *screen, Window window)
 
   if (grab_verbose_p)
     {
-      XWindowAttributes xgwa2;
       fprintf(stderr,
               "\n%s: window 0x%08lX root: %d saver: %d grab: %d wait: %.1f\n",
               progname, (unsigned long) window,
               root_p, saver_p, grab_mouse_p, ((double)unmap_time)/1000000.0);
 
-      XGetWindowAttributes (dpy, window, &xgwa2);
       fprintf(stderr, "%s: ", progname);
-      describe_visual(stderr, screen, xgwa2.visual, False);
+      describe_visual(stderr, screen, xgwa.visual, False);
       fprintf (stderr, "\n");
     }
 
@@ -344,8 +349,6 @@ grab_screen_image (Screen *screen, Window window)
       usleep(unmap_time); /* wait for everyone to swap in and handle exposes */
     }
 
-  XGetWindowAttributes (dpy, window, &xgwa);
-
   if (!root_p)
     {
 #ifdef HAVE_READ_DISPLAY_EXTENSION
@@ -371,15 +374,13 @@ grab_screen_image (Screen *screen, Window window)
   else  /* root_p */
     {
       Pixmap pixmap;
-      XWindowAttributes xgwa;
-      XGetWindowAttributes(dpy, window, &xgwa);
       pixmap = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
 
 #ifdef HAVE_READ_DISPLAY_EXTENSION
       if (! read_display(screen, window, pixmap, True))
 #endif
 	{
-	  Window real_root = XRootWindowOfScreen (xgwa.screen); /* not vroot */
+	  Window real_root = XRootWindowOfScreen (screen); /* not vroot */
 	  XGCValues gcv;
 	  GC gc;
 

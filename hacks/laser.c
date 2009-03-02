@@ -1,41 +1,61 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * laser --- draws swinging laser beams.
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* laser --- spinning lasers */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)laser.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)laser.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Copyright (c) 1995 Pascal Pensa <pensa@aurora.unice.fr>
+/*-
+ * Copyright (c) 1995 Pascal Pensa <pensa@aurora.unice.fr>
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or
- * implied warranty.
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * This file is provided AS IS with no warranties of any kind.  The author
+ * shall have no liability with respect to the infringement of copyrights,
+ * trade secrets or any patents by this file or any part thereof.  In no
+ * event will the author be liable for any lost revenue or profits or
+ * other special, indirect and consequential damages.
  *
  * Revision History:
- * 10-May-97: jwz@jwz.org: turned into a standalone program.
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ * 1995: Written.
  */
 
 #ifdef STANDALONE
-# define PROGCLASS					"Laser"
-# define HACK_INIT					init_laser
-# define HACK_DRAW					draw_laser
-# define laser_opts					xlockmore_opts
-# define DEFAULTS	"*count:		10    \n"			\
-					"*cycles:		200   \n"			\
-					"*delay:		40000 \n"			\
-					"*ncolors:		64   \n"
-# define SMOOTH_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_laser
+#define PROGCLASS "Laser"
+#define HACK_INIT init_laser
+#define HACK_DRAW draw_laser
+#define laser_opts xlockmore_opts
+#define DEFAULTS "*delay: 40000 \n" \
+ "*count: 10 \n" \
+ "*cycles: 200 \n" \
+ "*ncolors: 64 \n"
+#define BRIGHT_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
+#endif /* STANDALONE */
 
-ModeSpecOpt laser_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_laser
+
+ModeSpecOpt laser_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   laser_description =
+{"laser", "init_laser", "draw_laser", "release_laser",
+ "refresh_laser", "init_laser", (char *) NULL, &laser_opts,
+ 20000, -10, 200, 1, 64, 1.0, "",
+ "Shows spinning lasers", 0, NULL};
+
+#endif
 
 #define MINREDRAW 3		/* Number of redrawn on each frame */
 #define MAXREDRAW 8
@@ -52,7 +72,7 @@ ModeSpecOpt laser_opts = {
 
 #define COLORSTEP 2		/* Laser color step */
 
-#define RANGE_RAND(min,max) ((min) + LRAND() % ((max) - (min)))
+#define RANGE_RAND(min,max) (int) ((min) + LRAND() % ((max) - (min)))
 
 typedef enum {
 	TOP, RIGHT, BOTTOM, LEFT
@@ -85,12 +105,25 @@ typedef struct {
 	laserstruct *laser;
 } lasersstruct;
 
-static lasersstruct *lasers = NULL;
+static lasersstruct *lasers = (lasersstruct *) NULL;
 
+static void
+free_laser(Display *display, lasersstruct *lp)
+{
+	if (lp->laser != NULL) {
+		(void) free((void *) lp->laser);
+		lp->laser = (laserstruct *) NULL;
+	}
+	if (lp->stippledGC != None) {
+		XFreeGC(display, lp->stippledGC);
+		lp->stippledGC = None;
+	}
+}
 
 void
 init_laser(ModeInfo * mi)
 {
+	Display *display = MI_DISPLAY(mi);
 	int         i, c = 0;
 	lasersstruct *lp;
 
@@ -101,34 +134,41 @@ init_laser(ModeInfo * mi)
 	}
 	lp = &lasers[MI_SCREEN(mi)];
 
-	lp->width = MI_WIN_WIDTH(mi);
-	lp->height = MI_WIN_HEIGHT(mi);
+	lp->width = MI_WIDTH(mi);
+	lp->height = MI_HEIGHT(mi);
 	lp->time = 0;
 
-	lp->ln = MI_BATCHCOUNT(mi);
+	lp->ln = MI_COUNT(mi);
 	if (lp->ln < -MINLASER) {
 		/* if lp->ln is random ... the size can change */
 		if (lp->laser != NULL) {
 			(void) free((void *) lp->laser);
-			lp->laser = NULL;
+			lp->laser = (laserstruct *) NULL;
 		}
 		lp->ln = NRAND(-lp->ln - MINLASER + 1) + MINLASER;
 	} else if (lp->ln < MINLASER)
 		lp->ln = MINLASER;
 
-	if (!lp->laser) {
-		lp->laser = (laserstruct *) malloc(lp->ln * sizeof (laserstruct));
+	if (lp->laser == NULL) {
+		if ((lp->laser = (laserstruct *) malloc(lp->ln *
+				sizeof (laserstruct))) == NULL) {
+			free_laser(display, lp);
+			return;
+		}
 	}
-	if (lp->stippledGC == NULL) {
+	if (lp->stippledGC == None) {
 		XGCValues   gcv;
 
-		gcv.foreground = MI_WIN_WHITE_PIXEL(mi);
-		gcv.background = MI_WIN_BLACK_PIXEL(mi);
-		lp->gcv_black.foreground = MI_WIN_BLACK_PIXEL(mi);
-		lp->stippledGC = XCreateGC(MI_DISPLAY(mi), MI_WINDOW(mi),
-					   GCForeground | GCBackground, &gcv);
+		gcv.foreground = MI_WHITE_PIXEL(mi);
+		gcv.background = MI_BLACK_PIXEL(mi);
+		lp->gcv_black.foreground = MI_BLACK_PIXEL(mi);
+		if ((lp->stippledGC = XCreateGC(display, MI_WINDOW(mi),
+				GCForeground | GCBackground, &gcv)) == None) {
+			free_laser(display, lp);
+			return;
+		}
 	}
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	MI_CLEARWINDOW(mi);
 
 	if (MINDIST < lp->width - MINDIST)
 		lp->cx = RANGE_RAND(MINDIST, lp->width - MINDIST);
@@ -169,13 +209,13 @@ init_laser(ModeInfo * mi)
 				l->by = NRAND(lp->height);
 		}
 
-		l->dir = LRAND() & 1;
+		l->dir = (int) (LRAND() & 1);
 		l->speed = ((RANGE_RAND(MINSPEED, MAXSPEED) * lp->width) / 1000) + 1;
 		if (MI_NPIXELS(mi) > 2) {
 			l->gcv.foreground = MI_PIXEL(mi, c);
 			c = (c + COLORSTEP) % MI_NPIXELS(mi);
 		} else
-			l->gcv.foreground = MI_WIN_WHITE_PIXEL(mi);
+			l->gcv.foreground = MI_WHITE_PIXEL(mi);
 	}
 }
 
@@ -283,9 +323,16 @@ draw_laser_once(ModeInfo * mi)
 void
 draw_laser(ModeInfo * mi)
 {
-	lasersstruct *lp = &lasers[MI_SCREEN(mi)];
 	int         i;
+	lasersstruct *lp;
 
+	if (lasers == NULL)
+		return;
+	lp = &lasers[MI_SCREEN(mi)];
+	if (lp->laser == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
 	for (i = 0; i < lp->lr; i++)
 		draw_laser_once(mi);
 
@@ -299,21 +346,17 @@ release_laser(ModeInfo * mi)
 	if (lasers != NULL) {
 		int         screen;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			lasersstruct *lp = &lasers[screen];
-
-			if (lp->laser != NULL)
-				(void) free((void *) lp->laser);
-			if (lp->stippledGC != NULL)
-				XFreeGC(MI_DISPLAY(mi), lp->stippledGC);
-		}
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_laser(MI_DISPLAY(mi), &lasers[screen]);
 		(void) free((void *) lasers);
-		lasers = NULL;
+		lasers = (lasersstruct *) NULL;
 	}
 }
 
 void
 refresh_laser(ModeInfo * mi)
 {
-	/* Do nothing, it will refresh by itself */
+	MI_CLEARWINDOW(mi);
 }
+
+#endif /* MODE_laser */

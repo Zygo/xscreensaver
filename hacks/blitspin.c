@@ -25,22 +25,8 @@
  */
 
 #include "screenhack.h"
+#include "xpm-pixmap.h"
 #include <stdio.h>
-
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-#  define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
 
 #include "images/som.xbm"
 
@@ -92,93 +78,6 @@ rotate (void)
       display (self);
     }
 }
-
-static void
-read_bitmap (char *bitmap_name, int *widthP, int *heightP)
-{
-#ifdef HAVE_XPM
-  XWindowAttributes xgwa;
-  XpmAttributes xpmattrs;
-  int result;
-  xpmattrs.valuemask = 0;
-  bitmap = 0;
-
-  XGetWindowAttributes (dpy, window, &xgwa);
-
-# ifdef XpmCloseness
-  xpmattrs.valuemask |= XpmCloseness;
-  xpmattrs.closeness = 40000;
-# endif
-# ifdef XpmVisual
-  xpmattrs.valuemask |= XpmVisual;
-  xpmattrs.visual = xgwa.visual;
-# endif
-# ifdef XpmDepth
-  xpmattrs.valuemask |= XpmDepth;
-  xpmattrs.depth = xgwa.depth;
-# endif
-# ifdef XpmColormap
-  xpmattrs.valuemask |= XpmColormap;
-  xpmattrs.colormap = xgwa.colormap;
-# endif
-
-  result = XpmReadFileToPixmap (dpy, window, bitmap_name, &bitmap, 0,
-				&xpmattrs);
-  switch (result)
-    {
-    case XpmColorError:
-      fprintf (stderr, "%s: warning: xpm color substitution performed\n",
-	       progname);
-      /* fall through */
-    case XpmSuccess:
-      *widthP = xpmattrs.width;
-      *heightP = xpmattrs.height;
-      break;
-    case XpmFileInvalid:
-    case XpmOpenFailed:
-      bitmap = 0;
-      break;
-    case XpmColorFailed:
-      fprintf (stderr, "%s: xpm: color allocation failed\n", progname);
-      exit (-1);
-    case XpmNoMemory:
-      fprintf (stderr, "%s: xpm: out of memory\n", progname);
-      exit (-1);
-    default:
-      fprintf (stderr, "%s: xpm: unknown error code %d\n", progname, result);
-      exit (-1);
-    }
-  if (! bitmap)
-#endif
-
-#ifdef HAVE_XMU
-    {
-      int xh, yh;
-      Pixmap b2;
-      bitmap = XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy), bitmap_name,
-				    0, 0, widthP, heightP, &xh, &yh);
-      if (! bitmap)
-	{
-	  fprintf (stderr, "%s: couldn't find bitmap %s\n", progname,
-		   bitmap_name);
-	  exit (1);
-	}
-      b2 = XmuCreatePixmapFromBitmap (dpy, window, bitmap, *widthP, *heightP,
-				      depth, fg, bg);
-      XFreePixmap (dpy, bitmap);
-      bitmap = b2;
-    }
-#else  /* !XMU */
-    {
-      fprintf (stderr,
-	       "%s: your vendor doesn't ship the standard Xmu library.\n",
-	       progname);
-      fprintf (stderr, "\tWe can't load XBM files without it.\n");
-      exit (1);
-    }
-#endif /* !XMU */
-}
-
 
 static Pixmap
 read_screen (Display *dpy, Window window, int *widthP, int *heightP)
@@ -262,7 +161,8 @@ init (void)
     }
   else
     {
-      read_bitmap (bitmap_name, &width, &height);
+      bitmap = xpm_file_to_pixmap (dpy, window, bitmap_name,
+                                   &width, &height, 0);
       scale_up = True; /* probably? */
     }
 
@@ -314,12 +214,10 @@ display (Pixmap pixmap)
       last_w = xgwa.width;
       last_h = xgwa.height;
     }
-#ifdef HAVE_XPM
   if (depth != 1)
     XCopyArea (dpy, pixmap, window, gc, 0, 0, size, size,
 	       (xgwa.width-size)>>1, (xgwa.height-size)>>1);
   else
-#endif
     XCopyPlane (dpy, pixmap, window, gc, 0, 0, size, size,
 		(xgwa.width-size)>>1, (xgwa.height-size)>>1, 1);
 /*

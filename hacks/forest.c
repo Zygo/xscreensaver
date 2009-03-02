@@ -1,233 +1,226 @@
-/* forest.c (aka xtree.c), Copyright (c) 1999
- *  Peter Baumung <unn6@rz.uni-karlsruhe.de>
+/* -*- Mode: C; tab-width: 4 -*- */
+/* forest --- binary trees in a fractal forest */
+
+#if !defined( lint ) && !defined( SABER )
+static const char sccsid[] = "@(#)forest.c	5.00 2000/11/01 xlockmore";
+
+#endif
+
+/*-
+ * Copyright (c) 1995 Pascal Pensa <pensa@aurora.unice.fr>
  *
- * Most code taken from
- *  xscreensaver, Copyright (c) 1992, 1995, 1997 
- *  Jamie Zawinski <jwz@netscape.com>
+ * Original idea : Guillaume Ramey <ramey@aurora.unice.fr>
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
- * implied warranty.
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * This file is provided AS IS with no warranties of any kind.  The author
+ * shall have no liability with respect to the infringement of copyrights,
+ * trade secrets or any patents by this file or any part thereof.  In no
+ * event will the author be liable for any lost revenue or profits or
+ * other special, indirect and consequential damages.
+ *
+ * Revision History:
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with xscreensaver
+ *
  */
 
-#include "config.h"
-
 #ifdef STANDALONE
-# define PROGCLASS          "Forest" /*"XTree"*/
-# define HACK_INIT          init_trees
-# define HACK_DRAW          draw_trees
-# define trees_opts         xlockmore_opts 
-# define DEFAULTS   "*delay:            500000 \n"  \
-                    "*ncolors:          20     \n"  \
-                    "*eraseSpeed:       400    \n"  \
-                    "*eraseMode:        -1     \n"  \
-                    "*installColormap   False"
-# include "xlockmore.h"     /* from the xscreensaver distribution */
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
+#define MODE_forest
+#define PROGCLASS "Forest"
+#define HACK_INIT init_forest
+#define HACK_DRAW draw_forest
+#define forest_opts xlockmore_opts
+#define DEFAULTS "*delay: 500000 \n" \
+ "*count: 100 \n" \
+ "*cycles: 200 \n" \
+ "*ncolors: 20 \n"
+#define UNIFORM_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"		/* in xlockmore distribution */
 
-ModeSpecOpt trees_opts = {0, NULL, 0, NULL, NULL};
+#endif /* STANDALONE */
+
+#ifdef MODE_forest
+
+ModeSpecOpt forest_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   forest_description =
+{"forest", "init_forest", "draw_forest", "release_forest",
+ "refresh_forest", "init_forest", (char *) NULL, &forest_opts,
+ 400000, 100, 200, 1, 64, 1.0, "",
+ "Shows binary trees of a fractal forest", 0, NULL};
+
+#endif
+
+#define MINTREES   1
+
+#define MINHEIGHT  20		/* Tree height range */
+#define MAXHEIGHT  40
+
+#define MINANGLE   15		/* (degree) angle between soon */
+#define MAXANGLE   35
+#define RANDANGLE  15		/* (degree) Max random angle from default */
+
+#define REDUCE     90		/* Height % from father */
+
+#define ITERLEVEL  10		/* Tree iteration */
+
+#define COLORSPEED  2		/* Color increment */
+
+/* degree to radian */
+#define DEGTORAD(x) (((float)(x)) * M_PI / 180.0)
+
+#define RANGE_RAND(min,max) ((min) + NRAND((max) - (min)))
 
 typedef struct {
-  int     x;
-  int     y;
-  int     thick;
-  double  size;
-  long    color;
-  int     toDo;
-  int     season;
-} treestruct;
+	int         width;
+	int         height;
+	int         time;	/* up time */
+	int         ntrees;
+} foreststruct;
 
-static treestruct *trees = NULL;
+static foreststruct *forests = (foreststruct *) NULL;
 
-XColor colors[20];
-int color;
+static void
+draw_tree(ModeInfo * mi,
+	  short int x, short int y, short int len,
+	  float a, float as, short int c, short int level)
+				/* Father's end */
+				/* Length */
+				/* color */
+				/* Height level */
+				/* Father's angle */
+				/* Father's angle step */
+{
+	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
+	GC          gc = MI_GC(mi);
+	short       x_1, y_1, x_2, y_2;
+	float       a1, a2;
 
-static long colorM[12] = {0xff0000, 0xff8000, 0xffff00, 0x80ff00,
-                          0x00ff00, 0x00ff80, 0x00ffff, 0x0080ff,
-                          0x0000ff, 0x8000ff, 0xff00ff, 0xff0080};
+	/* left */
 
-static long colorV[12] = {0x0a0000, 0x0a0500, 0x0a0a00, 0x050a00,
-                          0x000a00, 0x000a05, 0x000a0a, 0x00050a,
-                          0x00000a, 0x05000a, 0x0a000a, 0x0a0005};
+	a1 = a + as + DEGTORAD(NRAND(2 * RANDANGLE) - RANDANGLE);
 
-void init_trees(ModeInfo * mi) {
-	unsigned long			pixels[20];
-  treestruct       *tree;
-  Display          *display = MI_DISPLAY(mi);
-  GC                gc = MI_GC(mi);
-  int               i;
+	x_1 = x + (short) (COSF(a1) * ((float) len));
+	y_1 = y + (short) (SINF(a1) * ((float) len));
 
-  if (trees == NULL) {
-    trees = (treestruct *) calloc(MI_NUM_SCREENS(mi), sizeof (treestruct));
-    if (trees == NULL) {
-      return;
-    }
-		
-    if (mi->npixels > 20) {
-			printf("%d colors selected. Setting limit to 20...\n", mi->npixels);
-			mi->npixels = 20;
-		}
-			
-		if (mi->npixels < 4) {
-      for (i = 0; i < mi->npixels; i++) {
-        colors[i].red   = 65535 * (i & 1);
-        colors[i].green = 65535 * (i & 1);
-        colors[i].blue  = 65535 * (i & 1);
-        colors[i].flags = DoRed | DoGreen | DoBlue;
-      }
-    } else {
-      if (mi->npixels < 8) {
-        for (i = 0; i < mi->npixels; i++) {
-          colors[i].red   = 32768 + 4096 * (i % 4);
-          colors[i].green = 32768 + 4096 * (i % 4);
-          colors[i].blue  = 32768 + 4096 * (i % 4);
-          colors[i].flags = DoRed | DoGreen | DoBlue;
-        }
-      } else {
-        for (i = 0; i < mi->npixels; i++) {
-          colors[i].red   = 24576 + 4096 * (i % 4);
-          colors[i].green = 10240 + 2048 * (i % 4);
-          colors[i].blue  =  0;
-          colors[i].flags = DoRed | DoGreen | DoBlue;
-        }
-      }
-    }
+	/* right */
 
-    for (i = 0; i < mi->npixels; i++)
-      if (!XAllocColor(display, mi->xgwa.colormap, &colors[i])) break;
-    color = i;
+	a2 = a - as + DEGTORAD(NRAND(2 * RANDANGLE) - RANDANGLE);
 
-    XSetForeground(display, gc, colors[1].pixel);
-  }
+	x_2 = x + (short) (COSF(a2) * ((float) len));
+	y_2 = y + (short) (SINF(a2) * ((float) len));
 
-  XClearWindow(display, MI_WINDOW(mi));
-  XSetLineAttributes(display, gc, 2, LineSolid, CapButt, JoinMiter);
-  tree = &trees[MI_SCREEN(mi)];
-  tree->toDo   = 25;
-	tree->season = NRAND(12);
+	if (MI_NPIXELS(mi) > 2) {
+		XSetForeground(display, gc, MI_PIXEL(mi, c));
+		c = (c + COLORSPEED) % MI_NPIXELS(mi);
+	} else
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 
-  for (i = 4; i < mi->npixels; i++) {
-    int sIndex = (tree->season + (i-4) / 4) % 12;
-    long color = colorM[sIndex] - 2 * colorV[sIndex] * (i % 4);
-    colors[i].red = (color & 0xff0000) / 256;
-    colors[i].green = (color & 0x00ff00);
-    colors[i].blue = (color & 0x0000ff) * 256;
-    colors[i].flags = DoRed | DoGreen | DoBlue;
-  }
+	XDrawLine(display, window, gc, x, y, x_1, y_1);
+	XDrawLine(display, window, gc, x, y, x_2, y_2);
 
-	for (i = 0; i < color; i++)
-		pixels[i] = colors[i].pixel;
-			
-  XFreeColors(display, mi->xgwa.colormap, pixels, mi->npixels, 0L);
+	if (level < 2) {
+		XDrawLine(display, window, gc, x + 1, y, x_1 + 1, y_1);
+		XDrawLine(display, window, gc, x + 1, y, x_2 + 1, y_2);
+	}
+	len = (len * REDUCE * 10) / 1000;
 
-	for (i = 0; i < mi->npixels; i++)
-    if (!XAllocColor(display, mi->xgwa.colormap, &colors[i])) break;
-
-  color = i;
+	if (level < ITERLEVEL) {
+		draw_tree(mi, x_1, y_1, len, a1, as, c, level + 1);
+		draw_tree(mi, x_2, y_2, len, a2, as, c, level + 1);
+	}
 }
 
-double rRand(double a, double b) {
-  return (a+(b-a)*NRAND(10001)/10000.0);
+void
+init_forest(ModeInfo * mi)
+{
+	foreststruct *fp;
+
+	if (forests == NULL) {
+		if ((forests = (foreststruct *) calloc(MI_NUM_SCREENS(mi),
+					     sizeof (foreststruct))) == NULL)
+			return;
+	}
+	fp = &forests[MI_SCREEN(mi)];
+
+	fp->width = MI_WIDTH(mi);
+	fp->height = MI_HEIGHT(mi);
+	fp->time = 0;
+
+	fp->ntrees = MI_COUNT(mi);
+	if (fp->ntrees < -MINTREES)
+		fp->ntrees = NRAND(-fp->ntrees - MINTREES + 1) + MINTREES;
+	else if (fp->ntrees < MINTREES)
+		fp->ntrees = MINTREES;
+
+	MI_CLEARWINDOW(mi);
 }
 
-void draw_line(ModeInfo * mi,
-               int x1, int y1, int x2, int y2,
-               double angle, int widths, int widthe) {
+void
+draw_forest(ModeInfo * mi)
+{
+	Display    *display = MI_DISPLAY(mi);
+	GC          gc = MI_GC(mi);
+	short       x, y, x_2, y_2, len, c = 0;
+	float       a, as;
+	foreststruct *fp;
 
-  Display    *display = MI_DISPLAY(mi);
-  GC          gc = MI_GC(mi);
-  double      sns = 0.5*widths*sin(angle + M_PI_2);
-  double      css = 0.5*widths*cos(angle + M_PI_2);
-  double      sne = 0.5*widthe*sin(angle + M_PI_2);
-  double      cse = 0.5*widthe*cos(angle + M_PI_2);
+	if (forests == NULL)
+		return;
+	fp = &forests[MI_SCREEN(mi)];
 
-  int         xs1 = (int) (x1-sns);
-  int         xs2 = (int) (x1+sns);
-  int         ys1 = (int) (y1-css);
-  int         ys2 = (int) (y1+css);
-  int         xe1 = (int) (x2-sne);
-  int         xe2 = (int) (x2+sne);
-  int         ye1 = (int) (y2-cse);
-  int         ye2 = (int) (y2+cse);
-  int         i;
+	MI_IS_DRAWN(mi) = True;
+	if (fp->time < fp->ntrees) {
 
-  for (i = 0; i < widths; i++) {
-    if (color >= 4)
-      XSetForeground(display, gc, colors[i*4/widths].pixel);
-    XDrawLine(display, MI_WINDOW(mi), gc,
-      xs1+(xs2-xs1)*i/widths, ys1+(ys2-ys1)*i/widths,
-      xe1+(xe2-xe1)*i/widths, ye1+(ye2-ye1)*i/widths);
-  }
+		x = RANGE_RAND(0, fp->width);
+		y = RANGE_RAND(0, fp->height + MAXHEIGHT);
+		a = -M_PI / 2.0 + DEGTORAD(NRAND(2 * RANDANGLE) - RANDANGLE);
+		as = DEGTORAD(RANGE_RAND(MINANGLE, MAXANGLE));
+		len = ((RANGE_RAND(MINHEIGHT, MAXHEIGHT) * (fp->width / 20)) / 50) + 2;
+
+		if (MI_NPIXELS(mi) > 2) {
+			c = NRAND(MI_NPIXELS(mi));
+			XSetForeground(display, gc, MI_PIXEL(mi, c));
+			c = (c + COLORSPEED) % MI_NPIXELS(mi);
+		} else
+			XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
+
+		x_2 = x + (short) (COSF(a) * ((float) len));
+		y_2 = y + (short) (SINF(a) * ((float) len));
+
+		XDrawLine(display, MI_WINDOW(mi), gc, x, y, x_2, y_2);
+		XDrawLine(display, MI_WINDOW(mi), gc, x + 1, y, x_2 + 1, y_2);
+
+		draw_tree(mi, x_2, y_2, (len * REDUCE) / 100, a, as, c, 1);
+	}
+	if (++fp->time > MI_CYCLES(mi)) {
+		init_forest(mi);
+	}
 }
 
-void draw_tree_rec(ModeInfo * mi, double thick, int x, int y, double angle) {
-  treestruct *tree = &trees[MI_SCREEN(mi)];
-  Display    *display = MI_DISPLAY(mi);
-  GC          gc = MI_GC(mi);
-  int         length = (24+NRAND(12))*tree->size;
-  int         a = (int) (x - length*sin(angle));
-  int         b = (int) (y - length*cos(angle));
-  int         i;
-
-  draw_line(mi, x, y, a, b, angle, thick*tree->size, 0.68*thick*tree->size);
-
-  if (thick > 2) {
-    draw_tree_rec(mi, 0.68*thick, a, b, 0.8*angle+rRand(-0.2, 0.2));
-    if (thick < tree->thick-1) {
-      draw_tree_rec(mi, 0.68*thick, a, b, angle+rRand(0.2, 0.9));
-      draw_tree_rec(mi, 0.68*thick, (a+x)/2, (b+y)/2, angle-rRand(0.2, 0.9));
-    }
-  }
-
-  if (thick < 0.5*tree->thick) {
-  	int     nleaf = 12 + NRAND(4);
-	  XArc    leaf[16];
-    for (i = 0; i < nleaf; i++) {
-      leaf[i].x = a + (int) (tree->size * rRand(-12, 12));
-      leaf[i].y = b + (int) (tree->size * rRand(-12, 12));
-      leaf[i].width = (int) (tree->size * rRand(2, 6));
-      leaf[i].height = leaf[i].width;
-      leaf[i].angle1 = 0;
-      leaf[i].angle2 = 360 * 64;
-    }
-    if (mi->npixels >= 4)
-      XSetForeground(display, gc, colors[tree->color+NRAND(4)].pixel);
-    XFillArcs(display, MI_WINDOW(mi), gc, leaf, nleaf);
-  }
+void
+release_forest(ModeInfo * mi)
+{
+	if (forests != NULL) {
+		(void) free((void *) forests);
+		forests = (foreststruct *) NULL;
+	}
 }
 
-void draw_trees(ModeInfo * mi) {
-  treestruct *tree = &trees[MI_SCREEN(mi)];
-	int					width = MI_WIN_WIDTH(mi);
-	int					height = MI_WIN_HEIGHT(mi);
-
-  if (--(tree->toDo) == 0) {
-    usleep(3000000);
-    init_trees(mi);
-  }
-
-  tree->x        = NRAND(width);
-  tree->y        = (int) (1.25 * height * (1 - tree->toDo / 23.0));
-  tree->thick    = rRand(7, 12);
-  tree->size     = height / 480.0;
-  if (color < 8) {
-    tree->color = 0;
-  } else {
-    tree->color    = 4 * (1 + NRAND(color / 4 - 1));
-  }
-
-  draw_tree_rec(mi, tree->thick, tree->x, tree->y, rRand(-0.1, 0.1));
+void
+refresh_forest(ModeInfo * mi)
+{
+	MI_CLEARWINDOW(mi);
 }
 
-void release_trees(ModeInfo * mi) {
-  if (trees != NULL) {
-    (void) free((void *) trees);
-    trees = NULL;
-  }
-}
+#endif /* MODE_forest */

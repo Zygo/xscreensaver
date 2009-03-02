@@ -55,13 +55,6 @@
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-# define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
-
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Drawing.h>
@@ -70,7 +63,7 @@
 # endif /* VMS */
 #endif
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

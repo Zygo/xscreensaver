@@ -33,7 +33,9 @@
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
+#include <time.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 
 #include <signal.h>
@@ -90,6 +92,10 @@
 #include <string.h>
 #include <ctype.h>
 
+
+/* from exec.c */
+extern void exec_command (const char *shell, const char *command, int nice);
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -125,7 +131,6 @@ typedef struct {
   int subproc_timer_id;		/* timer to delay subproc launch */
   int subproc_check_timer_id;	/* timer to check whether it started up */
   int subproc_check_countdown;  /* how many more checks left */
-  int preview_nice_level;
 
   int *list_elt_to_hack_number;	/* table for sorting the hack list */
   int *hack_number_to_list_elt;	/* the inverse table */
@@ -2783,38 +2788,6 @@ kill_preview_subproc (state *s)
 }
 
 
-static void
-exec_program (const char *cmd, int nice_level)
-{
-  char *av[1024];
-  int ac = 0;
-  char *token = strtok (strdup(cmd), " \t");
-  while (token)
-    {
-      av[ac++] = token;
-      token = strtok(0, " \t");
-    }
-  av[ac] = 0;
-
-  nice (nice_level - nice (0));
-
-  usleep (250000);  /* pause for 1/4th second before launching, to give the
-                       previous program time to die and flush its X buffer,
-                       so we don't get leftover turds on the window. */
-
-  execvp (av[0], av);			/* shouldn't return. */
-
-  {
-    char buf [512];
-    sprintf (buf, "%s: could not execute \"%s\"", blurb(), av[0]);
-    perror (buf);
-  }
-  fflush(stderr);
-  fflush(stdout);
-  exit (1);	/* Note that this only exits a child fork.  */
-}
-
-
 /* Immediately and unconditionally launches the given process,
    after appending the -window-id option; sets running_preview_pid.
  */
@@ -2823,10 +2796,8 @@ launch_preview_subproc (state *s)
 {
   saver_preferences *p = &s->prefs;
   Window id;
-  Bool hairy_p;
   char *new_cmd;
   pid_t forked;
-  int nice_level = nice (0) - p->nice_inferior;
   const char *cmd = s->desired_preview_cmd;
 
   GtkWidget *pr = name_to_widget (s, "preview");
@@ -2855,16 +2826,6 @@ launch_preview_subproc (state *s)
       sprintf (new_cmd + strlen (new_cmd), " -window-id 0x%X", id);
     }
 
-  hairy_p = (new_cmd && !!strpbrk (new_cmd, "*?$&!<>[];`'\\\"="));
-  if (hairy_p)
-    {
-      /* Command requires a full shell?  Forget it. */
-      free (new_cmd);
-      new_cmd = 0;
-      if (s->debug_p)
-        fprintf (stderr, "%s: command is hairy: not previewing\n", blurb());
-    }
-
   kill_preview_subproc (s);
   if (! new_cmd)
     {
@@ -2886,8 +2847,16 @@ launch_preview_subproc (state *s)
     case 0:
       {
         close (ConnectionNumber (GDK_DISPLAY()));
-        exec_program (new_cmd, nice_level);
-        abort();
+
+        usleep (250000);  /* pause for 1/4th second before launching, to give
+                             the previous program time to die and flush its X
+                             buffer, so we don't get leftover turds on the
+                             window. */
+
+        exec_command (p->shell, new_cmd, p->nice_inferior);
+        /* Don't bother printing an error message when we are unable to
+           exec subprocesses; we handle that by polling the pid later. */
+        exit (1);  /* exits child fork */
         break;
 
       default:
@@ -3773,12 +3742,12 @@ main (int argc, char **argv)
       capplet = capplet_widget_new ();
 
       /* Make there be a "Close" button instead of "OK" and "Cancel" */
+# ifdef HAVE_CRAPPLET_IMMEDIATE
       capplet_widget_changes_are_immediate (CAPPLET_WIDGET (capplet));
+# endif /* HAVE_CRAPPLET_IMMEDIATE */
 
-# if 1
-        /* In crapplet-mode, take off the menubar. */
-        gtk_widget_hide (name_to_widget (s, "menubar"));
-# endif
+      /* In crapplet-mode, take off the menubar. */
+      gtk_widget_hide (name_to_widget (s, "menubar"));
 
       /* Reparent our top-level container to be a child of the capplet
          window.

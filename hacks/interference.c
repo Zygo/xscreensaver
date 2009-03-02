@@ -69,6 +69,8 @@
 char *progclass="Interference";
 
 char *defaults [] = {
+  ".background:  black",
+  ".foreground:  white",
   "*count:       3",     /* number of waves */
   "*gridsize:    4",     /* pixel size, smaller values for better resolution */
   "*ncolors:     128",   /* number of colours used */

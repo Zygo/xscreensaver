@@ -1,13 +1,9 @@
 /* bubbles.h - definitions for bubbles screensaver */
 
-/* $Id: bubbles.h,v 1.3 2000/07/19 06:38:42 jwz Exp $ */
+/* $Id: bubbles.h,v 1.4 2002/01/17 02:16:04 jwz Exp $ */
 
 #ifndef _BUBBLES_H_
 #define _BUBBLES_H_
-
-#ifdef HAVE_XPM
-#include <X11/xpm.h>
-#endif
 
 /***************************************************************************
  *   Options you might like to change to affect the program's behaviour    *
@@ -187,32 +183,31 @@ typedef struct bub Bubble;
  * better name...)
  */
 
-#ifdef HAVE_XPM
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 struct bub_step {
   int radius;
   long area;
   int droppage;
   Pixmap ball, shape_mask;
   GC draw_gc, erase_gc;
-  XpmAttributes xpmattrs;
   struct bub_step *next;
 };
 
 typedef struct bub_step Bubble_Step;
-#endif /* HAVE_XPM */
+#endif /* HAVE_XPM || HAVE_GDK_PIXBUF */
 
 /* Make sure default bubble isn't compiled when we don't have XPM
 Disable file I/O code too. */
-#ifndef HAVE_XPM
+#if !defined(HAVE_XPM) && !defined(HAVE_GDK_PIXBUF)
 # define NO_DEFAULT_BUBBLE
 # undef BUBBLES_IO
-#endif /* HAVE_XPM */
+#endif /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
 
 /* Make sure default bubble is compiled in when we have XPM and no file I/O */
-#ifdef HAVE_XPM
+#if defined(HAVE_XPM) || defined(HAVE_GDK_PIXBUF)
 # ifndef BUBBLES_IO
 #  undef NO_DEFAULT_BUBBLE
 # endif /* BUBBLES_IO */
-#endif /* HAVE_XPM */
+#endif /* HAVE_XPM || HAVE_GDK_PIXBUF */
 
 #endif /* _BUBBLES_H_ */

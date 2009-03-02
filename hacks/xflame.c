@@ -40,6 +40,7 @@
        - General cleanup and portability tweaks.
 
    * 4-Oct-99, jwz: added support for packed-24bpp (versus 32bpp.)
+   * 16-Jan-2002, jwz: added gdk_pixbuf support.
 
  */
 
@@ -48,27 +49,13 @@
 
 
 #include "screenhack.h"
+#include "xpm-pixmap.h"
 #include <X11/Xutil.h>
 #include <limits.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
 #endif /* HAVE_XSHM_EXTENSION */
-
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-#  define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-# else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif /* HAVE_XMU */
 
 #include "images/bob.xbm"
 
@@ -640,115 +627,41 @@ loadBitmap(int *w, int *h)
     }
   else  /* load a bitmap file */
     {
-#ifdef HAVE_XPM
-      XpmInfo xpm_info = { 0, };
-      XpmImage xpm_image = { 0, };
+      Pixmap pixmap =
+        xpm_file_to_pixmap (display, window, bitmap_name, &width, &height, 0);
+      XImage *image;
+      int x, y;
+      unsigned char *result, *o;
 
-      int result = XpmReadFileToXpmImage (bitmap_name, &xpm_image, &xpm_info);
-      if (result == XpmSuccess)
-        {
-          int x, y;
-          unsigned char *result, *o;
-          unsigned char *grays;
-          XWindowAttributes xgwa;
+      image = XGetImage (display, pixmap, 0, 0, width, height, ~0L, ZPixmap);
+      XFreePixmap(display, pixmap);
 
-          *w = xpm_image.width;
-          *h = xpm_image.height;
-          result = (unsigned char *) malloc ((*w) * (*h));
-          if (!result)
-            {
-              fprintf(stderr, "%s: out of memory loading %s\n",
-                      progname, bitmap_name);
-              exit (1);
-            }
+      result = (unsigned char *) malloc (width * height);
+      o = result;
+      for (y = 0; y < height; y++)
+        for (x = 0; x < width; x++)
+          {
+            int rgba = XGetPixel (image, x, y);
+            /* This is *so* not handling all the cases... */
+            int gray = (image->depth > 16
+                        ? ((((rgba >> 24) & 0xFF) +
+                            ((rgba >> 16) & 0xFF) +
+                            ((rgba >>  8) & 0xFF) +
+                            ((rgba      ) & 0xFF)) >> 2)
+                        : ((((rgba >> 12) & 0x0F) +
+                            ((rgba >>  8) & 0x0F) +
+                            ((rgba >>  4) & 0x0F) +
+                            ((rgba      ) & 0x0F)) >> 1));
+            *o++ = 255 - gray;
+          }
 
-          XGetWindowAttributes (display, window, &xgwa);
+      XFree (image->data);
+      image->data = 0;
+      XDestroyImage (image);
 
-          grays = (unsigned char *) calloc (xpm_image.ncolors+1, 1);
-          for (x = 0; x < xpm_image.ncolors; x++)
-            {
-              XColor xc;
-              XpmColor *xpmc = &xpm_image.colorTable[x];
-              char *cstring = 0;
-              if (xpmc->g_color && *xpmc->g_color)
-                cstring = xpmc->g_color;
-              else if (xpmc->g4_color && *xpmc->g4_color)
-                cstring = xpmc->g4_color;
-              else if (xpmc->c_color && *xpmc->c_color)
-                cstring = xpmc->c_color;
-              else
-                cstring = xpmc->m_color;
-
-              memset (&xc, 0, sizeof(xc));
-              if (!cstring ||
-                  !*cstring ||
-                  !XParseColor (display, xgwa.colormap, cstring, &xc))
-                grays[x] = 0;
-              else
-                grays[x] = (int) (((xc.red   * 0.299) +
-                                   (xc.green * 0.587) +
-                                   (xc.blue  * 0.114))
-                                  / 255);
-            }
-
-          o = result;
-          for (y = 0; y < *h; y++)
-            for (x = 0; x < *w; x++)
-              {
-                int color = xpm_image.data[(y * (*w)) + x];
-                if (color < 0 || color > xpm_image.ncolors) abort();
-                *o++ = grays[color];
-              }
-          return result;
-        }
-      else      /* failed to read XPM -- fall through and try XBM */
-#endif /* HAVE_XPM */
-        {
-#ifdef HAVE_XMU
-          XImage *ximage = 0;
-          int width, height, xh, yh;
-          int x, y;
-          unsigned char *result, *o;
-          Pixmap bitmap =
-            XmuLocateBitmapFile (DefaultScreenOfDisplay (display),
-                                 bitmap_name, 0, 0, &width, &height, &xh, &yh);
-          if (!bitmap)
-            {
-              fprintf(stderr, "%s: unable to load bitmap file %s\n",
-                      progname, bitmap_name);
-              exit (1);
-            }
-          ximage = XGetImage (display, bitmap, 0, 0, width, height,
-                              1L, XYPixmap);
-          XFreePixmap (display, bitmap);
-
-          if (ximage->depth != 1) abort();
-
-          *w = ximage->width;
-          *h = ximage->height;
-          result = (unsigned char *) malloc ((*w) * (*h));
-          if (!result)
-            {
-              fprintf(stderr, "%s: out of memory loading %s\n",
-                      progname, bitmap_name);
-              exit (1);
-            }
-
-          o = result;
-          for (y = 0; y < *h; y++)
-            for (x = 0; x < *w; x++)
-              *o++ = (XGetPixel(ximage, x, y) ? 255 : 0);
-
-          return result;
-
-#else  /* !XMU */
-          fprintf (stderr,
-                   "%s: your vendor doesn't ship the standard Xmu library.\n",
-                   progname);
-          fprintf (stderr, "\tWe can't load XBM files without it.\n");
-          exit (1);
-#endif /* !XMU */
-        }
+      *w = width;
+      *h = height;
+      return result;
     }
 
   *w = 0;

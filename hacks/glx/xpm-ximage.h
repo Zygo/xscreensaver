@@ -1,5 +1,5 @@
 /* xpm-ximage.h --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,5 +24,7 @@
    are allocated.
  */
 extern XImage *xpm_to_ximage (Display *, Visual *, Colormap, char **xpm_data);
+extern XImage *xpm_file_to_ximage (Display *, Visual *, Colormap,
+                                   const char *filename);
 
 #endif /* _XPM_TEXTURE_H_ */

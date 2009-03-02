@@ -51,6 +51,7 @@ HACK_PRE	= $(LIBS) $(X_LIBS)
 HACK_POST     = $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
 HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
 XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
+JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
 
 UTILS_SRC	= $(srcdir)/../utils
@@ -91,7 +92,9 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
 		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
 		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
-		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c
+		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
+		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
+		  euler2d.c juggle.c polyominoes.c thornbird.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -112,7 +115,9 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
 		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
-		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o
+		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
+		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
+		  euler2d.o juggle.o polyominoes.o thornbird.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -127,8 +132,11 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  wander spotlight critical phosphor xmatrix petri shadebobs \
 		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
-		  whirlygig speedmine vermiculate
+		  whirlygig speedmine vermiculate twang apollonian euler2d \
+		  juggle polyominoes thornbird \
+		  @JPEG_EXES@
 SEXES		= sonar
+JPEG_EXES	= webcollage-helper
 EXES		= $(NEXES) $(SEXES)
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -141,7 +149,7 @@ XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 
 HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h \
-		  bumps.h
+		  bumps.h xpm-pixmap.h
 MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  bubbles.man decayscreen.man deco.man drift.man flag.man \
 		  flame.man forest.man vines.man galaxy.man grav.man \
@@ -157,7 +165,8 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
 		  phosphor.man xmatrix.man xteevee.man xflame.man petri.man \
 		  nerverot.man zoom.man whirlwindwarp.man hyperball.man \
-		  rotzoomer.man whirlygig.man speedmine.man penetrate.man
+		  rotzoomer.man whirlygig.man speedmine.man penetrate.man \
+		  xspirograph.man twang.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  config/README \
@@ -269,11 +278,11 @@ install-xml:
 	@if [ ! -d $(install_prefix)$(HACK_CONF_DIR) ]; then		\
 	  $(INSTALL_DIRS) $(install_prefix)$(HACK_CONF_DIR) ;		\
 	 fi ;								\
-	 cd $(srcdir)/config/ ;						\
-	 for file in README $(STAR).xml ; do				\
-	   echo $(INSTALL_DATA) $$file					\
+	 files=`cd $(srcdir)/config/ ; echo README $(STAR).xml` ;	\
+	 for file in $$files ; do					\
+	   echo $(INSTALL_DATA) config/$$file				\
 	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
-	  $(INSTALL_DATA) $$file					\
+	  $(INSTALL_DATA) config/$$file					\
 	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
 	done
 
@@ -427,6 +436,7 @@ screenhack-xlock.o: screenhack.c
 	-DXLOCKMORE $(srcdir)/screenhack.c
 
 # Some abbreviations to keep the lines short...
+XPM		= xpm-pixmap.o
 ALP		= $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
@@ -454,11 +464,11 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 attraction:	attraction.o	$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
-blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM_LIBS)
+blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(XPM_LIBS)
 
-bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o 
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(XPM_LIBS)
+bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(XPM) $(XPM_LIBS)
 
 decayscreen:	decayscreen.o	$(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS)
@@ -499,8 +509,8 @@ moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
-noseguy:	noseguy.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM_LIBS)
+noseguy:	noseguy.o	$(HACK_OBJS) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
 
 pedal:		pedal.o		$(HACK_OBJS) $(HSV)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
@@ -556,8 +566,8 @@ interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(XPM_LIBS)
+bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(XPM_LIBS)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
@@ -583,8 +593,8 @@ compass:	compass.o	$(HACK_OBJS) $(DBE)
 squiral:	squiral.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-xflame:		xflame.o	$(HACK_OBJS) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(HACK_LIBS) $(XPM_LIBS)
+xflame:		xflame.o	$(HACK_OBJS) $(SHM) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(XPM) $(XPM_LIBS)
 
 wander:		wander.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
@@ -598,8 +608,8 @@ critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
 phosphor:	phosphor.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-xmatrix:	xmatrix.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS) $(XPM_LIBS)
+xmatrix:	xmatrix.o	$(HACK_OBJS) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
 
 petri:		petri.o		$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
@@ -652,6 +662,9 @@ speedmine:	speedmine.o	$(HACK_OBJS) $(COL)
 vermiculate:	vermiculate.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+twang:		twang.o		$(HACK_OBJS) $(GRAB) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -665,8 +678,8 @@ braid:		braid.o		$(XLOCK_OBJS) $(ERASE)
 drift:		drift.o		$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
-flag:		flag.o		$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(XPM_LIBS)
+flag:		flag.o		$(XLOCK_OBJS) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(XPM) $(XPM_LIBS)
 
 forest:		forest.o	$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
@@ -749,18 +762,35 @@ loop:		loop.o		$(XLOCK_OBJS)
 flow:		flow.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-discrete:	discrete.o		$(XLOCK_OBJS) $(ERASE)
+discrete:	discrete.o	$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
-crystal:	crystal.o		$(XLOCK_OBJS)
+crystal:	crystal.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+apollonian:	apollonian.o	$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+euler2d:	euler2d.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+juggle:		juggle.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+polyominoes:	polyominoes.o	$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+thornbird:	thornbird.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 
-
-# This one is not like the others.
+# These are not like the others.
 #
 xsublim:	xsublim.o	$(HACK_OBJS_1)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS_1) $(HACK_LIBS)
+
+webcollage-helper: webcollage-helper.o
+	$(CC_HACK) -o $@ $@.o	$(XPM_LIBS) $(JPEG_LIBS)
 
 
 ##############################################################################
@@ -772,6 +802,7 @@ attraction.o: $(srcdir)/screenhack.h
 attraction.o: ../config.h
 blitspin.o: $(srcdir)/screenhack.h
 blitspin.o: ../config.h
+blitspin.o: $(srcdir)/xpm-pixmap.h
 blitspin.o: $(srcdir)/images/som.xbm
 bouboule.o: $(srcdir)/xlockmore.h
 bouboule.o: ../config.h
@@ -784,6 +815,7 @@ braid.o: $(srcdir)/screenhack.h
 bubbles.o: $(srcdir)/screenhack.h
 bubbles.o: ../config.h
 bubbles.o: $(srcdir)/bubbles.h
+bubbles.o: $(srcdir)/xpm-pixmap.h
 bubbles-default.o: ../config.h
 bubbles-default.o: $(srcdir)/bubbles.h
 bubbles-default.o: $(srcdir)/images/bubbles/blood1.xpm
@@ -842,11 +874,12 @@ flag.o: $(srcdir)/xlockmore.h
 flag.o: ../config.h
 flag.o: $(srcdir)/xlockmoreI.h
 flag.o: $(srcdir)/screenhack.h
+flag.o: $(srcdir)/xpm-pixmap.h
 flag.o: $(srcdir)/images/bob.xbm
 flame.o: $(srcdir)/screenhack.h
 flame.o: ../config.h
-forest.o: ../config.h
 forest.o: $(srcdir)/xlockmore.h
+forest.o: ../config.h
 forest.o: $(srcdir)/xlockmoreI.h
 forest.o: $(srcdir)/screenhack.h
 vines.o: $(srcdir)/xlockmore.h
@@ -905,6 +938,7 @@ moire.o: $(srcdir)/screenhack.h
 moire.o: ../config.h
 noseguy.o: $(srcdir)/screenhack.h
 noseguy.o: ../config.h
+noseguy.o: $(srcdir)/xpm-pixmap.h
 noseguy.o: $(srcdir)/images/noseguy/nose-f1.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-f2.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-f3.xpm
@@ -1055,6 +1089,7 @@ truchet.o: $(srcdir)/screenhack.h
 truchet.o: ../config.h
 bsod.o: $(srcdir)/screenhack.h
 bsod.o: ../config.h
+bsod.o: $(srcdir)/xpm-pixmap.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/atari.xbm
 bsod.o: $(srcdir)/images/mac.xbm
@@ -1094,6 +1129,7 @@ squiral.o: $(srcdir)/screenhack.h
 squiral.o: ../config.h
 xflame.o: $(srcdir)/screenhack.h
 xflame.o: ../config.h
+xflame.o: $(srcdir)/xpm-pixmap.h
 xflame.o: $(srcdir)/images/bob.xbm
 wander.o: $(srcdir)/screenhack.h
 wander.o: ../config.h
@@ -1105,6 +1141,7 @@ phosphor.o: $(srcdir)/screenhack.h
 phosphor.o: ../config.h
 xmatrix.o: $(srcdir)/screenhack.h
 xmatrix.o: ../config.h
+xmatrix.o: $(srcdir)/xpm-pixmap.h
 xmatrix.o: $(srcdir)/images/matrix0.xpm
 xmatrix.o: $(srcdir)/images/matrix1.xpm
 xmatrix.o: $(srcdir)/images/matrix2.xpm
@@ -1152,4 +1189,28 @@ speedmine.o: $(srcdir)/screenhack.h
 speedmine.o: ../config.h
 vermiculate.o: $(srcdir)/screenhack.h
 vermiculate.o: ../config.h
+xpm-pixmap.o: ../config.h
+webcollage-helper.o: ../config.h
+twang.o: $(srcdir)/screenhack.h
+twang.o: ../config.h
+apollonian.o: $(srcdir)/xlockmore.h
+apollonian.o: ../config.h
+apollonian.o: $(srcdir)/xlockmoreI.h
+apollonian.o: $(srcdir)/screenhack.h
+euler2d.o: $(srcdir)/xlockmore.h
+euler2d.o: ../config.h
+euler2d.o: $(srcdir)/xlockmoreI.h
+euler2d.o: $(srcdir)/screenhack.h
+juggle.o: $(srcdir)/xlockmore.h
+juggle.o: ../config.h
+juggle.o: $(srcdir)/xlockmoreI.h
+juggle.o: $(srcdir)/screenhack.h
+polyominoes.o: $(srcdir)/xlockmore.h
+polyominoes.o: ../config.h
+polyominoes.o: $(srcdir)/xlockmoreI.h
+polyominoes.o: $(srcdir)/screenhack.h
+thornbird.o: $(srcdir)/xlockmore.h
+thornbird.o: ../config.h
+thornbird.o: $(srcdir)/xlockmoreI.h
+thornbird.o: $(srcdir)/screenhack.h
 

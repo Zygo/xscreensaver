@@ -14,6 +14,8 @@
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ *
+ * 16-Jan-02: jwz@jwz.org   gdk_pixbuf support.
  * 21-Mar-01: jwz@jwz.org   Broke sphere routine out into its own file.
  *
  * 9-Oct-98:  dek@cgl.ucsf.edu  Added stars.
@@ -28,18 +30,8 @@
  * BUGS:
  * -bounce is broken
  * 
- *   For even more spectacular results, grab the images from the "SSysten"
- *   package (http://www.msu.edu/user/kamelkev/) and do this:
- *
- *     cd ssystem-1.4/hires/
- *     foreach f ( *.jpg )
- *       djpeg $f | ppmquant 254 | ppmtoxpm > /tmp/$f:r.xpm
- *     end
- *
- *     cd /tmp
- *     foreach f ( *.xpm )
- *       glplanet -image $f
- *     end
+ *   For even more spectacular results, grab the images from the "SSystem"
+ *   package (http://www.msu.edu/user/kamelkev/) and use its JPEGs!
  */
 
 
@@ -77,13 +69,6 @@
 #ifdef USE_GL /* whole file */
 
 #include "sphere.h"
-
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# ifndef PIXEL_ALREADY_TYPEDEFED
-#  define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
-# endif
-#endif
 
 #ifdef HAVE_XMU
 # ifndef VMS
@@ -257,88 +242,25 @@ setup_file_texture (ModeInfo *mi, char *filename)
 {
   Display *dpy = mi->dpy;
   Visual *visual = mi->xgwa.visual;
+
   Colormap cmap = mi->xgwa.colormap;
+  XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
 
-#ifdef HAVE_XPM
-  {
-	char **xpm_data = 0;
-	int result = XpmReadFileToData (filename, &xpm_data);
-	switch (result) {
-	case XpmSuccess:
-	  {
-		XImage *image = xpm_to_ximage (dpy, visual, cmap, xpm_data);
+  clear_gl_error();
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+               image->width, image->height, 0,
+               GL_RGBA, GL_UNSIGNED_BYTE, image->data);
+  check_gl_error("texture");
 
-        clear_gl_error();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-					 image->width, image->height, 0,
-					 GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-        check_gl_error("texture");
+  /* setup parameters for texturing */
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
 
-		/* setup parameters for texturing */
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
-
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		return;
-	  }
-	  break;
-
-	case XpmOpenFailed:
-	  fprintf (stderr, "%s: file %s doesn't exist.\n", progname, filename);
-	  exit (-1);
-	  break;
-
-	case XpmFileInvalid:
-	  /* Fall through and try it as an XBM. */
-	  break;
-
-	case XpmNoMemory:
-	  fprintf (stderr, "%s: XPM: out of memory\n", progname);
-	  exit (-1);
-	  break;
-
-	default:
-	  fprintf (stderr, "%s: XPM: unknown error code %d\n", progname, result);
-	  exit (-1);
-	  break;
-	}
-  }
-#endif /* HAVE_XPM */
-
-#ifdef HAVE_XMU
-  {
-	planetstruct *gp = &planets[MI_SCREEN(mi)];
-	unsigned int width = 0;
-	unsigned int height = 0;
-	unsigned char *data = 0;
-	int xhot, yhot;
-	int status = XmuReadBitmapDataFromFile (filename, &width, &height, &data,
-											&xhot, &yhot);
-	if (status != Success)
-	  {
-# ifdef HAVE_XPM
-		fprintf (stderr, "%s: not an XPM file: %s\n", progname, filename);
-# endif
-		fprintf (stderr, "%s: not an XBM file: %s\n", progname, filename);
-		exit (1);
-	  }
-
-	setup_xbm_texture ((char *) data, width, height, &gp->fg, &gp->bg);
-  }
-#else  /* !XMU */
-
-# ifdef HAVE_XPM
-  fprintf (stderr, "%s: not an XPM file: %s\n", progname, filename);
-# endif
-  fprintf (stderr, "%s: your vendor doesn't ship the standard Xmu library.\n",
-		   progname);
-  fprintf (stderr, "%s: we can't load XBM files without it.\n",progname);
-  exit (1);
-#endif /* !XMU */
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 

@@ -19,19 +19,17 @@
  */
 
 #include "screenhack.h"
+#include "xpm-pixmap.h"
 #include <stdio.h>
 #include <X11/Xutil.h>
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# include "images/amiga.xpm"
-#endif
 
+#include "images/amiga.xpm"
 #include "images/atari.xbm"
 #include "images/mac.xbm"
 
 
-static void
+static int
 draw_string (Display *dpy, Window window, GC gc, XGCValues *gcv,
 	     XFontStruct *font,
 	     int xoff, int yoff,
@@ -117,6 +115,8 @@ draw_string (Display *dpy, Window window, GC gc, XGCValues *gcv,
 	}
       s++;
     }
+
+  return width * char_width;
 }
 
 
@@ -665,6 +665,8 @@ amiga (Display *dpy, Window window, int delay)
   unsigned long fg, bg, bg2;
   Pixmap pixmap = 0;
   int pix_w = 0, pix_h = 0;
+  int string_width;
+  int margin;
 
   const char *string =
     ("_Software failure.  Press left mouse button to continue.\n"
@@ -703,37 +705,10 @@ amiga (Display *dpy, Window window, int delay)
 
   height = (font->ascent + font->descent) * 6;
 
-#ifdef HAVE_XPM
-  {
-    XpmAttributes xpmattrs;
-    int result;
-    xpmattrs.valuemask = 0;
-
-# ifdef XpmCloseness
-    xpmattrs.valuemask |= XpmCloseness;
-    xpmattrs.closeness = 40000;
-# endif
-# ifdef XpmVisual
-    xpmattrs.valuemask |= XpmVisual;
-    xpmattrs.visual = xgwa.visual;
-# endif
-# ifdef XpmDepth
-    xpmattrs.valuemask |= XpmDepth;
-    xpmattrs.depth = xgwa.depth;
-# endif
-# ifdef XpmColormap
-    xpmattrs.valuemask |= XpmColormap;
-    xpmattrs.colormap = xgwa.colormap;
-# endif
-
-    result = XpmCreatePixmapFromData(dpy, window, amiga_hand,
-				     &pixmap, 0 /* mask */, &xpmattrs);
-    if (!pixmap || (result != XpmSuccess && result != XpmColorError))
-      pixmap = 0;
-    pix_w = xpmattrs.width;
-    pix_h = xpmattrs.height;
-  }
-#endif /* HAVE_XPM */
+#if defined(HAVE_GDK_PIXBUF) || defined (HAVE_XPM)
+  pixmap = xpm_data_to_pixmap (dpy, window, (char **) amiga_hand,
+                               &pix_w, &pix_h, 0);
+#endif /* HAVE_GDK_PIXBUF || HAVE_XPM */
 
   if (pixmap && xgwa.height > 600)	/* scale up the bitmap */
     {
@@ -758,18 +733,24 @@ amiga (Display *dpy, Window window, int delay)
     }
 
   XFillRectangle(dpy, window, gc2, 0, 0, xgwa.width, height);
-  draw_string(dpy, window, gc, &gcv, font, 0, 0, xgwa.width, height, string,0);
-
+  margin = font->ascent;
+  string_width = draw_string(dpy, window, gc, &gcv, font,
+                             margin, 0,
+                             xgwa.width - (margin * 2), height,
+                             string, 0);
   {
     GC gca = gc;
     while (delay > 0)
       {
-	XFillRectangle(dpy, window, gca, 0, 0, xgwa.width, font->ascent);
-	XFillRectangle(dpy, window, gca, 0, 0, font->ascent, height);
-	XFillRectangle(dpy, window, gca, xgwa.width-font->ascent, 0,
-		       font->ascent, height);
-	XFillRectangle(dpy, window, gca, 0, height-font->ascent, xgwa.width,
-		       font->ascent);
+        int x2;
+	XFillRectangle(dpy, window, gca, 0, 0, xgwa.width, margin);
+	XFillRectangle(dpy, window, gca, 0, 0, margin, height);
+        XFillRectangle(dpy, window, gca,
+                       0, height - margin, xgwa.width, margin);
+        x2 = margin + string_width;
+        if (x2 < xgwa.width - margin) x2 = xgwa.width - margin;
+        XFillRectangle(dpy, window, gca, x2, 0, margin, height);
+
 	gca = (gca == gc ? gc2 : gc);
 	XSync(dpy, False);
 	if (bsod_sleep(dpy, 1))

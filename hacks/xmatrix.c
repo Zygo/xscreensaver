@@ -42,11 +42,11 @@
  */
 
 #include "screenhack.h"
+#include "xpm-pixmap.h"
 #include <stdio.h>
 #include <X11/Xutil.h>
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 # include "images/matrix0.xpm"
 # include "images/matrix1.xpm"
 # include "images/matrix2.xpm"
@@ -144,47 +144,21 @@ typedef struct {
 static void
 load_images_1 (m_state *state, int which)
 {
-#ifdef HAVE_XPM
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
   if (!get_boolean_resource ("mono", "Boolean") &&
       state->xgwa.depth > 1)
     {
-      
+      char **bits =
+        (which == 0 ? (state->small_p ? matrix0b_xpm : matrix0_xpm) :
+         which == 1 ? (state->small_p ? matrix1b_xpm : matrix1_xpm) :
+         (state->small_p ? matrix2b_xpm : matrix2_xpm));
 
-      XpmAttributes xpmattrs;
-      int result;
-      xpmattrs.valuemask = 0;
-
-# ifdef XpmCloseness
-      xpmattrs.valuemask |= XpmCloseness;
-      xpmattrs.closeness = 40000;
-# endif
-# ifdef XpmVisual
-      xpmattrs.valuemask |= XpmVisual;
-      xpmattrs.visual = state->xgwa.visual;
-# endif
-# ifdef XpmDepth
-      xpmattrs.valuemask |= XpmDepth;
-      xpmattrs.depth = state->xgwa.depth;
-# endif
-# ifdef XpmColormap
-      xpmattrs.valuemask |= XpmColormap;
-      xpmattrs.colormap = state->xgwa.colormap;
-# endif
-
-      result = XpmCreatePixmapFromData (state->dpy, state->window,
-                (which == 0 ? (state->small_p ? matrix0b_xpm : matrix0_xpm) :
-                 which == 1 ? (state->small_p ? matrix1b_xpm : matrix1_xpm) :
-                              (state->small_p ? matrix2b_xpm : matrix2_xpm)),
-                                        &state->images[which], 0 /* mask */,
-                                        &xpmattrs);
-      if (!state->images || (result != XpmSuccess && result != XpmColorError))
-        state->images[which] = 0;
-
-      state->image_width = xpmattrs.width;
-      state->image_height = xpmattrs.height;
+      state->images[which] =
+        xpm_data_to_pixmap (state->dpy, state->window, bits,
+                            &state->image_width, &state->image_height, 0);
     }
   else
-#endif /* !HAVE_XPM */
+#endif /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
     {
       unsigned long fg, bg;
       state->image_width  = (state->small_p ? matrix0b_width :matrix0_width);

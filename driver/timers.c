@@ -21,6 +21,8 @@
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>
+#include <time.h>
+#include <sys/time.h>
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Error.h>
@@ -131,6 +133,12 @@ notice_events (saver_info *si, Window window, Bool top_p)
      the mouse or touching the keyboard, we won't know that they've been
      active, and the screensaver will come on.  That sucks, but I don't
      know how to get around it.
+
+     Since X presents mouse wheels as clicks, this applies to those, too:
+     scrolling through a document using only the mouse wheel doesn't
+     count as activity...  Fortunately, /proc/interrupts helps, on
+     systems that have it.  Oh, if it's a PS/2 mouse, not serial or USB.
+     This sucks!
    */
   XSelectInput (si->dpy, window, SubstructureNotifyMask | events);
 

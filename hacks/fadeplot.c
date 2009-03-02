@@ -1,12 +1,15 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * fadeplot.c --- some easy plotting stuff, by Bas van Gaalen, Holland, PD
- */
+/* -*- Mode: C; tab-width: 4 -*- */
+/* fadeplot --- a fading plot of sine squared */
+
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)fadeplot.c  4.04 97/07/26 xlockmore";
+static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
+
 #endif
 
-/* Converted for xlock by Charles Vidal
- * See xlock.c for copying information.
+/*-
+ * Some easy plotting stuff, by Bas van Gaalen, Holland, PD
+ *
+ * Copyright (c) 1996 by Charles Vidal
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -19,34 +22,46 @@ static const char sccsid[] = "@(#)fadeplot.c  4.04 97/07/26 xlockmore";
  * trade secrets or any patents by this file or any part thereof.  In no
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
- */
-
-/*-
- 1) Not random enough, i.e. always same starting position.
- 2) Needs to be less flashy
+ *
+ * Revision History:
+ * 01-Nov-2000: Allocation checks
+ * 10-May-1997: Compatible with screensaver
+ * 1996: Written by Charles Vidal based on work by Bas van Gaalen
  */
 
 #ifdef STANDALONE
-# define PROGCLASS			"Fadeplot"
-# define HACK_INIT			init_fadeplot
-# define HACK_DRAW			draw_fadeplot
-# define fadeplot_opts		xlockmore_opts
-# define DEFAULTS			"*count:		10      \n"			\
-							"*delay:		30000   \n"			\
-							"*cycles:		1500    \n"			\
-							"*ncolors:		64      \n"
-# define BRIGHT_COLORS
-# define UNIFORM_COLORS
-# include "xlockmore.h"				/* from the xscreensaver distribution */
+#define MODE_fadeplot
+#define PROGCLASS "Fadeplot"
+#define HACK_INIT init_fadeplot
+#define HACK_DRAW draw_fadeplot
+#define fadeplot_opts xlockmore_opts
+#define DEFAULTS "*delay: 30000 \n" \
+ "*count: 10 \n" \
+ "*cycles: 1500 \n" \
+ "*ncolors: 64 \n"
+#define BRIGHT_COLORS
+#define UNIFORM_COLORS
+#include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+#include "xlock.h"		/* in xlockmore distribution */
+
 #endif /* STANDALONE */
 
-ModeSpecOpt fadeplot_opts = {
-  0, NULL, 0, NULL, NULL };
+#ifdef MODE_fadeplot
+
+ModeSpecOpt fadeplot_opts =
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+
+#ifdef USE_MODULES
+ModStruct   fadeplot_description =
+{"fadeplot", "init_fadeplot", "draw_fadeplot", "release_fadeplot",
+ "refresh_fadeplot", "init_fadeplot", (char *) NULL, &fadeplot_opts,
+ 30000, 10, 1500, 1, 64, 0.6, "",
+ "Shows a fading plot of sine squared", 0, NULL};
+
+#endif
 
 #define MINSTEPS 1
-#define ANGLES 1000
 
 typedef struct {
 	XPoint      speed, step, factor, st;
@@ -54,23 +69,43 @@ typedef struct {
 	int         min;
 	int         width, height;
 	int         pix;
-	int         stab[ANGLES];
+	int         angles;
+	int        *stab;
 	XPoint     *pts;
 } fadeplotstruct;
 
-static fadeplotstruct *fadeplots = NULL;
+static fadeplotstruct *fadeplots = (fadeplotstruct *) NULL;
 
 static void
+free_fadeplot(fadeplotstruct *fp)
+{
+	if (fp->pts != NULL) {
+		(void) free((void *) fp->pts);
+		fp->pts = (XPoint *) NULL;
+	}
+	if (fp->stab != NULL) {
+		(void) free((void *) fp->stab);
+		fp->stab = (int *) NULL;
+	}
+}
+
+static Bool
 initSintab(ModeInfo * mi)
 {
 	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
 	int         i;
 	float       x;
 
-	for (i = 0; i < ANGLES; i++) {
-		x = SINF(i * 2 * M_PI / ANGLES);
+	fp->angles = NRAND(950) + 250;
+	if ((fp->stab = (int *) malloc(fp->angles * sizeof (int))) == NULL) {
+		free_fadeplot(fp);
+		return False;
+	}
+	for (i = 0; i < fp->angles; i++) {
+		x = SINF(2.0 * M_PI * i / fp->angles);
 		fp->stab[i] = (int) (x * ABS(x) * fp->min) + fp->min;
 	}
+	return True;
 }
 
 void
@@ -85,9 +120,9 @@ init_fadeplot(ModeInfo * mi)
 	}
 	fp = &fadeplots[MI_SCREEN(mi)];
 
-	fp->width = MI_WIN_WIDTH(mi);
-	fp->height = MI_WIN_HEIGHT(mi);
-  fp->min = MAX(MIN(fp->width, fp->height) / 2, 1);
+	fp->width = MI_WIDTH(mi);
+	fp->height = MI_HEIGHT(mi);
+	fp->min = MAX(MIN(fp->width, fp->height) / 2, 1);
 
 	fp->speed.x = 8;
 	fp->speed.y = 10;
@@ -97,37 +132,50 @@ init_fadeplot(ModeInfo * mi)
 	fp->factor.x = MAX(fp->width / (2 * fp->min), 1);
 	fp->factor.y = MAX(fp->height / (2 * fp->min), 1);
 
-	fp->nbstep = MI_BATCHCOUNT(mi);
+	fp->nbstep = MI_COUNT(mi);
 	if (fp->nbstep < -MINSTEPS) {
 		fp->nbstep = NRAND(-fp->nbstep - MINSTEPS + 1) + MINSTEPS;
 	} else if (fp->nbstep < MINSTEPS)
 		fp->nbstep = MINSTEPS;
 
-  fp->maxpts = MI_CYCLES(mi);
-  if (fp->maxpts < 1)
-    fp->maxpts = 1;
+	fp->maxpts = MI_CYCLES(mi);
+	if (fp->maxpts < 1)
+		fp->maxpts = 1;
 
-	if (fp->pts == NULL)
-		fp->pts = (XPoint *) calloc(fp->maxpts, sizeof (XPoint));
+	if (fp->pts == NULL) {
+		if ((fp->pts = (XPoint *) calloc(fp->maxpts, sizeof (XPoint))) ==
+				 NULL) {
+			free_fadeplot(fp);
+			return;
+		}
+	}
 	if (MI_NPIXELS(mi) > 2)
 		fp->pix = NRAND(MI_NPIXELS(mi));
 
-	initSintab(mi);
-
-	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
+	if (fp->stab != NULL)
+		(void) free((void *) fp->stab);
+	if (!initSintab(mi))
+		return;
+	MI_CLEARWINDOW(mi);
 }
 
 void
 draw_fadeplot(ModeInfo * mi)
 {
-	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
-	int         i, j;
-	long        temp;
+	int         i, j, temp;
+	fadeplotstruct *fp;
 
-	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
+	if (fadeplots == NULL)
+		return;
+	fp = &fadeplots[MI_SCREEN(mi)];
+	if (fp->stab == NULL)
+		return;
+
+	MI_IS_DRAWN(mi) = True;
+	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	XDrawPoints(display, window, gc, fp->pts, fp->maxpts, CoordModeOrigin);
 
 	if (MI_NPIXELS(mi) > 2) {
@@ -135,43 +183,54 @@ draw_fadeplot(ModeInfo * mi)
 		if (++fp->pix >= MI_NPIXELS(mi))
 			fp->pix = 0;
 	} else
-		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
+		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 
-		for (temp = fp->nbstep - 1; temp >= 0; temp--) {
-			j = temp;
-			for (i = 0; i < fp->maxpts / fp->nbstep; i++) {
-				fp->pts[temp * i + i].x =
-					fp->stab[(fp->st.x + fp->speed.x * j + i * fp->step.x) % ANGLES] *
-					fp->factor.x + fp->width / 2 - fp->min;
-				fp->pts[temp * i + i].y =
-					fp->stab[(fp->st.y + fp->speed.y * j + i * fp->step.y) % ANGLES] *
-					fp->factor.y + fp->height / 2 - fp->min;
-			}
+	temp = 0;
+	for (j = 0; j < fp->nbstep; j++) {
+		for (i = 0; i < fp->maxpts / fp->nbstep; i++) {
+			fp->pts[temp].x =
+				fp->stab[(fp->st.x + fp->speed.x * j + i * fp->step.x) % fp->angles] *
+				fp->factor.x + fp->width / 2 - fp->min;
+			fp->pts[temp].y =
+				fp->stab[(fp->st.y + fp->speed.y * j + i * fp->step.y) % fp->angles] *
+				fp->factor.y + fp->height / 2 - fp->min;
+			temp++;
 		}
-	XDrawPoints(display, window, gc, fp->pts, fp->maxpts, CoordModeOrigin);
+	}
+	XDrawPoints(display, window, gc, fp->pts, temp, CoordModeOrigin);
 	XFlush(display);
-	fp->st.x = (fp->st.x + fp->speed.x) % ANGLES;
-	fp->st.y = (fp->st.y + fp->speed.y) % ANGLES;
+	fp->st.x = (fp->st.x + fp->speed.x) % fp->angles;
+	fp->st.y = (fp->st.y + fp->speed.y) % fp->angles;
 	fp->temps++;
-	if ((fp->temps % (ANGLES / 2)) == 0) {
-		fp->temps = fp->temps % ANGLES * 5;
-		if ((fp->temps % (ANGLES)) == 0)
+	if ((fp->temps % (fp->angles / 2)) == 0) {
+		fp->temps = fp->temps % fp->angles * 5;
+		if ((fp->temps % (fp->angles)) == 0)
 			fp->speed.y = (fp->speed.y++) % 30 + 1;
-		if ((fp->temps % (ANGLES * 2)) == 0)
+		if ((fp->temps % (fp->angles * 2)) == 0)
 			fp->speed.x = (fp->speed.x) % 20;
-		if ((fp->temps % (ANGLES * 3)) == 0)
+		if ((fp->temps % (fp->angles * 3)) == 0)
 			fp->step.y = (fp->step.y++) % 2 + 1;
-		XClearWindow(display, window);
+
+		MI_CLEARWINDOW(mi);
 	}
 }
 void
 refresh_fadeplot(ModeInfo * mi)
 {
-
+	MI_CLEARWINDOW(mi);
 }
 
 void
 release_fadeplot(ModeInfo * mi)
 {
-	/* Do nothing, it will refresh by itself */
+	if (fadeplots != NULL) {
+		int         screen;
+
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+			free_fadeplot(&fadeplots[screen]);
+		(void) free((void *) fadeplots);
+		fadeplots = (fadeplotstruct *) NULL;
+	}
 }
+
+#endif /* MODE_fadeplot */
