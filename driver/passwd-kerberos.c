@@ -1,6 +1,7 @@
 /* kpasswd.c --- verify kerberos passwords.
  * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-1997, 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-1997, 1998, 2000
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,8 +26,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <krb.h>
-#include <des.h>
+
+#ifdef HAVE_KERBEROS5
+# include <kerberosIV/krb.h>
+# include <kerberosIV/des.h>
+#else /* !HAVE_KERBEROS5 (meaning Kerberos 4) */
+# include <krb.h>
+# include <des.h>
+#endif /* !HAVE_KERBEROS5 */
 
 #if !defined(VMS) && !defined(HAVE_ADJUNCT_PASSWD)
 # include <pwd.h>

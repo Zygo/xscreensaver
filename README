@@ -77,6 +77,18 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.23:   * Added `-ignorant' option to `maze' hack.
+                      * Updates to `critical', `bsod', `xflame', and `flow'.
+                      * Added support for Kerberos 5 (via its Kerberos 4
+                        compatibility layer.)
+                      * Fixed a bad leak in `xteevee'.
+                      * Updated `webcollage' to handle recent Altavista URL
+                        format changes.
+                      * Removed xscreensaver-demo's `Ok' and `Cancel' buttons,
+                        since they were confusing people: all changes are now
+                        instantanious.
+                      * Made xscreensaver-demo install itself into the Gnome
+                        Control Center.
 Changes since 3.22:   * Fixed some misplaced text fields in the Motif version
                         of xscreensaver-demo; fixed a crash in the Gtk version
                         that would happen if the programs list was empty.
@@ -94,7 +106,7 @@ Changes since 3.20:   * Tweaked the xscreensaver-demo UI (Gtk only.)
                         GL visual should be used with nVidia systems now.
                       * Made the Makefiles obey $install_prefix.
                       * Made the `xscreensaver.spec' file able to generate both
-                        GL and non-GL packages simultaniously.
+                        GL and non-GL packages simultaneously.
 Changes since 3.19:   * Added new hacks `ripples' and `sierpinski3d'.
                       * Made `xscreensaver-command -exit' be silent when no
                         screen saver was running (instead of complaining.)

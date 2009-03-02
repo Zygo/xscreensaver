@@ -241,6 +241,12 @@ void xteevee_Static(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
 		 x_Gc[color_Index]);
 		XFreeGC(x_Disp,x_Gc[color_Index]);
 	}
+
+	for (tile_Index = 0;tile_Index < XTEEVEE_STATIC_TILE_COUNT;
+	 tile_Index++)
+	{
+		XFreePixmap(x_Disp, tile_Tile[tile_Index]);
+	}
 }
 
 /* Vertical Roll =========================================================== */

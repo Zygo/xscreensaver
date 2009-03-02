@@ -476,6 +476,54 @@ random_squares(Display * dpy, Window window, GC gc,
   free(squares);
 }
 
+/* I first saw something like this, albeit in reverse, in an early Tetris
+   implementation for the Mac.
+    -- Torbjörn Andersson <torbjorn@dev.eurotime.se>
+ */
+
+static void
+slide_lines (Display * dpy, Window window, GC gc, int width, int height,
+             int delay, int granularity)
+{
+  int slide_old_x, slide_new_x, clear_x;
+  int x, y, dx, dy;
+
+  /* This might need some tuning. The idea is to get sensible values no
+     matter what the size of the window.
+
+     Everything moves at constant speed. Should it accelerate instead? */
+
+  granularity *= 2;
+
+  dy = MAX (1, height / granularity);
+  dx = MAX (1, width / 100);
+
+  for (x = 0; x < width; x += dx)
+    {
+      for (y = 0; y < height; y += dy)
+	{
+	  if ((y / dy) & 1)
+	    {
+	      slide_old_x = x;
+	      slide_new_x = x + dx;
+	      clear_x = x;
+	    }
+	  else
+	    {
+	      slide_old_x = dx;
+	      slide_new_x = 0;
+	      clear_x = width - x - dx;
+	    }
+
+	  XCopyArea (dpy, window, window, gc, slide_old_x, y, width - x - dx,
+		     dy, slide_new_x, y);
+	  XClearArea (dpy, window, clear_x, y, dx, dy, False);
+	}
+
+      XSync(dpy, False);
+      usleep(delay * 3);
+    }
+}
 
 static Eraser erasers[] = {
   random_lines,
@@ -488,6 +536,7 @@ static Eraser erasers[] = {
   fizzle,
   random_squares,
   spiral,
+  slide_lines,
 };
 
 

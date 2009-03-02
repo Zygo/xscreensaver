@@ -68,3 +68,15 @@ prefs_cancel_cb                        (GtkButton       *button,
 void
 manual_cb                              (GtkButton       *button,
                                         gpointer         user_data);
+
+void
+notebook_switch_page_cb                (GtkNotebook     *notebook,
+                                        GtkNotebookPage *page,
+                                        gint             page_num,
+                                        gpointer         user_data);
+
+void
+pref_changed_cb                        (GtkNotebook     *notebook,
+                                        GtkNotebookPage *page,
+                                        gint             page_num,
+                                        gpointer         user_data);

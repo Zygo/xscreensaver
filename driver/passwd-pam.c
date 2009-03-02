@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-1998, 2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -217,7 +217,17 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
              blurb(), status, PAM_STRERROR(pamh, status));
   if (status == PAM_SUCCESS)  /* Win! */
-    goto DONE;
+    {
+      /* Each time we successfully authenticate, refresh credentials,
+         for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
+         failure and blunder along; it shouldn't matter.
+       */
+      int status2 = pam_setcred (pamh, PAM_REFRESH_CRED);
+      if (verbose_p)
+        fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
+                 blurb(), status2, PAM_STRERROR(pamh, status2));
+      goto DONE;
+    }
 
   /* If that didn't work, set the user to root, and try to authenticate again.
    */

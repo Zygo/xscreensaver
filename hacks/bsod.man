@@ -72,6 +72,7 @@ hacks are displayed and which aren't.
 .BR doMacsBug ,
 .BR doSCO ,
 .BR doAtari ,
+.BR doBlitDamage ,
 and
 .BR doSparcLinux .
 Each of these is a Boolean resource, they all default to true, except for

@@ -70,6 +70,8 @@
 # endif /* VMS */
 #endif /* HAVE_XMU */
 
+#include "images/bob.xbm"
+
 #define MAX_VAL             255
 
 static Display         *display;
@@ -603,9 +605,33 @@ loadBitmap(int *w, int *h)
 {
   char *bitmap_name = get_string_resource ("bitmap", "Bitmap");
 
-  if (bitmap_name &&
-      *bitmap_name &&
-      !!strcmp(bitmap_name, "none"))
+  if (!bitmap_name ||
+      !*bitmap_name ||
+      !strcmp(bitmap_name, "none"))
+    ;
+  else if (!strcmp(bitmap_name, "(default)"))   /* use the builtin */
+    {
+      XImage *ximage;
+      unsigned char *result, *o;
+      char *bits = (char *) malloc (sizeof(bob_bits));
+      int x, y;
+      int scale = ((width > bob_width * 11) ? 2 : 1);
+ 
+      memcpy (bits, bob_bits, sizeof(bob_bits));
+      ximage = XCreateImage (display, visual, 1, XYBitmap, 0, bits,
+                             bob_width, bob_height, 8, 0);
+      ximage->byte_order = LSBFirst;
+      ximage->bitmap_bit_order = LSBFirst;
+      *w = ximage->width * scale;
+      *h = ximage->height * scale;
+      o = result = (unsigned char *) malloc ((*w * scale) * (*h * scale));
+      for (y = 0; y < *h; y++)
+        for (x = 0; x < *w; x++)
+          *o++ = (XGetPixel(ximage, x/scale, y/scale) ? 255 : 0);
+       
+      return result;
+    }
+  else  /* load a bitmap file */
     {
 #ifdef HAVE_XPM
       XpmInfo xpm_info = { 0, };
@@ -731,7 +757,7 @@ char *progclass = "XFlame";
 char *defaults [] = {
   ".background:     black",
   ".foreground:     #FFAF5F",
-  "*bitmap:         none",
+  "*bitmap:         (default)",
   "*bitmapBaseline: 20",
   "*delay:          10000",
   "*hspread:        30",

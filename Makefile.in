@@ -131,7 +131,7 @@ bump-version::
   MAJOR="$$1"; MINOR="$$2";						    \
   NEW=`echo $$MINOR + 1 | bc` ;						    \
   NEW=`echo $$NEW | sed 's/^\([0-9]\)$$/0\1/'` ;			    \
-  D=`date '+%d-%b-%y'`;							    \
+  D=`date '+%d-%b-%Y'`;							    \
   if [ ! -f xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then			    \
     echo "WARNING: xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";    \
   fi ;									    \
@@ -223,7 +223,7 @@ test-tar::
   ( cd BIN/lesstif ;							    \
     CC=cc ;								    \
     export CC ;								    \
-    ../../configure --with-motif=/usr/local/lesstif ;			    \
+    ../../configure --with-motif=/usr/local/lesstif --without-gnome ;	    \
     echo --------------------------------------------------------------- ;  \
     ( cd utils; gmake all ) ;						    \
     ( cd driver; gmake all ) ;						    \

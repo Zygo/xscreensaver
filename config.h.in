@@ -127,6 +127,11 @@
  */
 #undef HAVE_GTK
 
+/*  Define this if you have Gnome and want to build support for the 
+    xscreensaver control panel in the Gnome Control Center (gnomecc).
+ */
+#undef HAVE_CRAPPLET
+
 /*  Define this if you have the XPM library installed.  Some of the demos can
  *  make use of this if it is available.
  */
@@ -201,6 +206,11 @@
  *  need it. 
  */
 #undef HAVE_KERBEROS
+
+/* Define this if you have Kerberos 5, meaning we need to use the Kerberos 4
+ * compatibility layer.
+ */
+#undef HAVE_KERBEROS5
 
 /*  Define this if you want to use PAM (Pluggable Authentication Modules)
  *  to lock/unlock the screen, instead of standard /etc/passwd authentication.

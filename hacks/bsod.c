@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998, 2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1019,6 +1019,85 @@ macsbug (Display *dpy, Window window, int delay)
   return True;
 }
 
+
+/* blit damage
+ *
+ * by Martin Pool <mbp@samba.org>, Feb 2000.
+ *
+ * This is meant to look like the preferred failure mode of NCD
+ * Xterms.  The parameters for choosing what to copy where might not
+ * be quite right, but it looks about ugly enough.
+ */
+static Bool
+blitdamage (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xwa;
+  GC gc0;
+  int i;
+  int delta_x = 0, delta_y = 0;
+  int w, h;
+  int chunk_h, chunk_w;
+  int steps;
+  long gc_mask = 0;
+  int src_x, src_y;
+  int x, y;
+  
+  if (!get_boolean_resource("doBlitDamage", "DoBlitDamage"))
+    return False;
+
+  XGetWindowAttributes(dpy, window, &xwa);
+
+  grab_screen_image(xwa.screen, window);
+
+  w = xwa.width;
+  h = xwa.height;
+
+  gc_mask = GCForeground;
+  
+  gcv.plane_mask = random();
+  gc_mask |= GCPlaneMask;
+  
+  gc0 = XCreateGC(dpy, window, gc_mask, &gcv);
+
+  steps = 50;
+  chunk_w = w / (random() % 1 + 1);
+  chunk_h = h / (random() % 1 + 1);
+  if (random() & 0x1000) 
+    delta_y = random() % 600;
+  if (!delta_y || (random() & 0x2000))
+    delta_x = random() % 600;
+  src_x = 0; 
+  src_y = 0; 
+  x = 0;
+  y = 0;
+  
+  for (i = 0; i < steps; i++) {
+    if (x + chunk_w > w) 
+      x -= w;
+    else
+      x += delta_x;
+    
+    if (y + chunk_h > h)
+      y -= h;
+    else
+      y += delta_y;
+    
+    XCopyArea(dpy, window, window, gc0,
+	      src_x, src_y, 
+	      chunk_w, chunk_h,
+	      x, y);
+
+    bsod_sleep(dpy, 0);
+  }
+
+  bsod_sleep(dpy, delay);
+
+  XFreeGC(dpy, gc0);
+
+  return True;
+}
+
 
 
 char *progclass = "BSOD";
@@ -1034,6 +1113,7 @@ char *defaults [] = {
   "*doMacsBug:		   True",
   "*doSCO:		   True",
   "*doSparcLinux:	   False",	/* boring */
+  "*doBlitDamage:          True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -1098,7 +1178,7 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       Bool did;
-      do {  i = (random() & 0xFF) % 8; } while (i == j);
+      do {  i = (random() & 0xFF) % 9; } while (i == j);
       switch (i)
 	{
 	case 0: did = windows(dpy, window, delay, True); break;
@@ -1109,6 +1189,7 @@ screenhack (Display *dpy, Window window)
 	case 5: did = sco(dpy, window, delay); break;
 	case 6: did = sparc_linux(dpy, window, delay); break;
 	case 7: did = atari(dpy, window, delay); break;
+	case 8: did = blitdamage(dpy, window, delay); break;
 	default: abort(); break;
 	}
       loop++;

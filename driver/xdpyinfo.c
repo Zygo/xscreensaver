@@ -27,10 +27,11 @@ in this Software without prior written authorization from The Open Group.
  * GLX and Overlay support added by Jamie Zawinski <jwz@jwz.org>, 11-Nov-99
  *
  *      To compile:
- *         cc -DHAVE_GLX xdpyinfo.c -o xdpyinfo -lGL -lX11 -lXext -lm
+ *         cc -DHAVE_GLX xdpyinfo.c -o xdpyinfo -lGL -lX11 -lXext [-lXtst] -lm
  *
  *      Other defines to consider:
- *         -DHAVE_XIE -DHAVE_XTEST -DHAVE_SYNC -DHAVE_XRECORD
+ *         -DMITSHM -DHAVE_XDBE -DHAVE_XIE -DHAVE_XTEST -DHAVE_SYNC
+ *         -DHAVE_XRECORD
  */
 
 #include <X11/Xlib.h>
@@ -46,7 +47,9 @@ in this Software without prior written authorization from The Open Group.
 #ifdef HAVE_XSYNC
 #include <X11/extensions/sync.h>
 #endif /* HAVE_XSYNC */
+#ifdef HAVE_XDBE
 #include <X11/extensions/Xdbe.h>
+#endif /* HAVE_XDBE */
 #ifdef HAVE_XRECORD
 #include <X11/extensions/record.h>
 #endif /* HAVE_XRECORD */
@@ -873,6 +876,7 @@ print_mitshm_info(dpy, extname)
 }
 #endif /* MITSHM */
 
+#ifdef HAVE_XDBE
 int
 print_dbe_info(dpy, extname)
     Display *dpy;
@@ -902,6 +906,7 @@ print_dbe_info(dpy, extname)
     XdbeFreeVisualInfo(svi);
     return 1;
 }
+#endif /* HAVE_XDBE */
 
 #ifdef HAVE_XRECORD
 int
@@ -949,7 +954,9 @@ ExtensionPrintInfo known_extensions[] =
 #ifdef HAVE_XTEST
     {XTestExtensionName, print_xtest_info, False},
 #endif /* HAVE_XTEST */
+#ifdef HAVE_XDBE
     {"DOUBLE-BUFFER", print_dbe_info, False},
+#endif /* HAVE_XDBE */
 #ifdef HAVE_XRECORD
     {"RECORD", print_record_info, False}    
 #endif /* HAVE_XRECORD */

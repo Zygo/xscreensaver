@@ -1,6 +1,10 @@
 /******************************************************************************
  * [ maze ] ...
  *
+ * modified:  [ 1-04-00 ]  Johannes Keukelaar <johannes@nada.kth.se>
+ *              Added -ignorant option (not the default) to remove knowlege
+ *              of the direction in which the exit lies.
+ *
  * modified:  [ 6-28-98 ]  Zack Weinberg <zack@rabi.phys.columbia.edu>
  *
  *              Made the maze-solver somewhat more intelligent.  There are
@@ -159,7 +163,7 @@ static GC	gc, cgc, tgc, sgc, ugc, logo_gc, erase_gc;
 static Pixmap	logo_map;
 
 static int	x = 0, y = 0, restart = 0, stop = 1, state = 1, max_length;
-static int      sync_p, bridge_p;
+static int      sync_p, bridge_p, ignorant_p;
 
 static int
 check_events (void)                        /* X event handler [ rhess ] */
@@ -1434,44 +1438,60 @@ solve_maze (void)                     /* solve it with graphical feedback */
 	
 	if(!ways)
 	    goto backtrack;
-      
-	x = path[i].x - start_x;
-	y = path[i].y - start_y;
-	/* choice one */
-	if(abs(y) <= abs(x))
-	    dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
-	else
-	    dir = (y > 0) ? WALL_TOP : WALL_BOTTOM;
-	
-	if(dir & ways)
-	    goto found;
-	
-	/* choice two */
-	switch(dir)
-	{
-	case WALL_LEFT:
-	case WALL_RIGHT:
-	    dir = (y > 0) ? WALL_TOP : WALL_BOTTOM; break;
-	case WALL_TOP:
-	case WALL_BOTTOM:
-	    dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
-	}
-	
-	if(dir & ways)
-	    goto found;
-	
-	/* choice three */
-	
-	dir = (dir << 2 & WALL_ANY) | (dir >> 2 & WALL_ANY);
-	if(dir & ways)
-	    goto found;
-	
-	/* choice four */
-	dir = ways;
-	if(!dir)
-	    goto backtrack;
 
-    found:
+	if (!ignorant_p)
+	  {
+	    x = path[i].x - start_x;
+	    y = path[i].y - start_y;
+	    /* choice one */
+	    if(abs(y) <= abs(x))
+	      dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+	    else
+	      dir = (y > 0) ? WALL_TOP : WALL_BOTTOM;
+	    
+	    if(dir & ways)
+	      goto found;
+	    
+	    /* choice two */
+	    switch(dir)
+	      {
+	      case WALL_LEFT:
+	      case WALL_RIGHT:
+		dir = (y > 0) ? WALL_TOP : WALL_BOTTOM; break;
+	      case WALL_TOP:
+	      case WALL_BOTTOM:
+		dir = (x > 0) ? WALL_LEFT : WALL_RIGHT;
+	      }
+	    
+	    if(dir & ways)
+	      goto found;
+	    
+	    /* choice three */
+	    
+	    dir = (dir << 2 & WALL_ANY) | (dir >> 2 & WALL_ANY);
+	    if(dir & ways)
+	      goto found;
+	    
+	    /* choice four */
+	    dir = ways;
+	    if(!dir)
+	      goto backtrack;
+	    
+	  found:
+	  }
+	else
+	  {
+	    if(ways&WALL_TOP)
+	      dir = WALL_TOP;
+	    else if(ways&WALL_LEFT)
+	      dir = WALL_LEFT;
+	    else if(ways&WALL_BOTTOM)
+	      dir = WALL_BOTTOM;
+	    else if(ways&WALL_RIGHT)
+	      dir = WALL_RIGHT;
+	    else
+	      goto backtrack;
+	  }
 	bt = 0;
 	ways &= ~dir;  /* tried this one */
 	
@@ -1498,7 +1518,7 @@ solve_maze (void)                     /* solve it with graphical feedback */
 	    return;
 	}
 
-	if(!bt)
+	if(!bt && !ignorant_p)
 	    find_dead_regions();
 	bt = 1;
 	from = path[i-1].dir;
@@ -1565,6 +1585,8 @@ char *defaults[] = {
 };
 
 XrmOptionDescRec options[] = {
+  { "-ignorant",        ".ignorant",    XrmoptionNoArg, "True" },
+  { "-no-ignorant",     ".ignorant",    XrmoptionNoArg, "False" },
   { "-grid-size",	".gridSize",	XrmoptionSepArg, 0 },
   { "-solve-delay",	".solveDelay",	XrmoptionSepArg, 0 },
   { "-pre-delay",	".preDelay",	XrmoptionSepArg, 0 },
@@ -1600,6 +1622,7 @@ screenhack(Display *display, Window window)
   generator = get_integer_resource("generator", "Integer");
   max_length = get_integer_resource("maxLength", "Integer");
   bridge_p = get_boolean_resource("bridge", "Boolean");
+  ignorant_p = get_boolean_resource("ignorant", "Boolean");
 
   if (size < 2) size = 7 + (random () % 30);
   grid_width = grid_height = size;

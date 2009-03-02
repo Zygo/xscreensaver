@@ -176,6 +176,11 @@ grab() {
     #   streamer -o $tmp_ppm1
     #
 
+    # James Isaacs says this works for the ATI video capture card:
+    #
+    #   atitv snap $tmp_ppm1
+    #
+
   else
     echo "$0: don't know how to grab video on this OS." >&2
     clean2

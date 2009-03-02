@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "30-Jan-00 (3.23)" "X Version 11"
+.TH XScreenSaver 1 "03-Apr-2000 (3.24)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS

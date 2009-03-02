@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "13-Nov-98" "X Version 11"
+.TH XScreenSaver 1 "08 Feb 2000" "X Version 11"
 .SH NAME
 critical - Draw a system showing self-organizing criticality
 .SH SYNOPSIS
@@ -58,6 +58,9 @@ The maximum random radius increment to use.
 .B \-ncolors \fIinteger\fP
 How many colors should be allocated in the color ramp (note that this
 value interacts with \fIoffset\fP.)
+.TP 8
+.B \-trail \fIinteger\fP
+Length of the trail: between 5 and 100 is nice.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -83,5 +86,5 @@ supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 .SH AUTHOR
-Martin Pool <mbp@humbug.org.au>, 13-Nov-1998.  Based in part on the
+Martin Pool <mbp@humbug.org.au>, 1998-2000.  Based in part on the
 XScreenSaver code by Jamie Zawinski <jwz@jwz.org>.

@@ -1,3 +1,6 @@
+"#error Do not run app-defaults files through xrdb!",
+"#error That does not do what you might expect.",
+"#error Put this file in /usr/lib/X11/app-defaults/XScreenSaver instead.",
 "*timeout:		10",
 "*cycle:			10",
 "*lockTimeout:		0",
@@ -175,6 +178,7 @@
 				  -texture_quality -light -fog		    \\n\
 	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
+	   GL:			starwars -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -185,7 +189,7 @@
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
 -                               xaos -root -autopilot -incoloring -1	      \
                                   -nogui -outcoloring -1	            \\n\
--				xfishtank -d                                \\n\
+-				xfishtank -d -s                             \\n\
 -				xsnow                                       \\n\
 -				goban -root                                 \\n\
 -				electricsheep                               \\n",
@@ -334,10 +338,6 @@
 "*Cancel.rightOffset:		10",
 "*Cancel.bottomOffset:		10",
 "*hacks.documentation.isInstalled: True",
-"*hacks.grav.documentation:						\
-This program draws a simple orbital simulation.	 If you turn on		\
-trails, it looks kind of like a cloud-chamber photograph.  Written by	\
-Greg Bowering.",
 "*hacks.qix.documentation:						\
 This is the swiss army chainsaw of qix programs.  It bounces a series	\
 of line segments around the screen, and uses variations on this basic	\

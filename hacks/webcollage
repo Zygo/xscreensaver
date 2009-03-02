@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.43 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.44 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -40,9 +40,9 @@ my $image_randomizer_1 = "http://www.altavista.com/query" .
                          "?mmdo=3" .
                          "&nbq=12" .
                          "&stype=simage" .
-                         "&oart=1" .
-                         "&obw=1" .
-                         "&oshape=0" .
+                         "&iclr=1" .
+                         "&ibw=1" .
+                         "&iexc=1" .
                          "&what=web" .
                          "&q=";
 my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
@@ -565,6 +565,10 @@ sub random_word {
             $word = <IN>;   # toss partial line
             $word = <IN>;   # keep next line
         }
+	if (!$word) {
+          seek( IN, 0, 0 );
+          $word = <IN>;
+	}
         close (IN);
     }
 
@@ -579,6 +583,10 @@ sub random_word {
     $word =~ s/ally$/al/;
     $word =~ s/izes$/ize/;
     $word =~ tr/A-Z/a-z/;
+
+    if ( $word =~ s/[ \t\n\r]/\+/g ) {  # convert intra-word spaces to "+".
+      $word = "\%22$word\%22";	        # And put quotes (%22) around it.
+    }
 
     return $word;
 }

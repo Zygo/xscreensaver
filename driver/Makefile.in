@@ -16,6 +16,10 @@ mandir		= @mandir@
 man1dir		= $(mandir)/man1
 mansuffix	= 1
 
+GNOME_DATADIR	= @GNOME_DATADIR@
+GNOME_CCDIR	= $(GNOME_DATADIR)/control-center/Desktop
+GNOME_PANELDIR	= $(GNOME_DATADIR)/gnome/apps/Settings/Desktop
+
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
@@ -153,7 +157,8 @@ MEN		= xscreensaver.man xscreensaver-demo.man \
 ALL_MEN		= xscreensaver.man \
 		  xscreensaver-demo.man xscreensaver-command.man
 EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
-		  xscreensaver.kss xscreensaver-demo.glade .gdbinit
+		  xscreensaver.kss xscreensaver-demo.glade \
+		  screensaver-properties.desktop.in .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
@@ -167,8 +172,10 @@ TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
 default: $(EXES)
 all: $(EXES) $(EXES2)
 
-install:   install-program   install-ad   install-kde   install-man   @INSTALL_PAM@
-uninstall: uninstall-program uninstall-ad uninstall-kde uninstall-man
+install:   install-program   install-ad   install-gnome   install-kde   \
+	   install-man   @INSTALL_PAM@
+uninstall: uninstall-program uninstall-ad uninstall-gnome uninstall-kde \
+	   uninstall-man
 
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
@@ -315,6 +322,26 @@ install-pam:
 	  fi ;								\
 	fi
 
+install-gnome: screensaver-properties.desktop
+	@if [ "$(GNOME_DATADIR)" != "" ]; then				     \
+          echo $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+                          $(GNOME_CCDIR)/screensaver-properties.desktop    ; \
+               $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+                          $(GNOME_CCDIR)/screensaver-properties.desktop    ; \
+          echo $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+                       $(GNOME_PANELDIR)/screensaver-properties.desktop    ; \
+               $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+                       $(GNOME_PANELDIR)/screensaver-properties.desktop    ; \
+	fi
+
+uninstall-gnome:
+	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
+	  echo rm -f $(GNOME_CCDIR)/screensaver-properties.desktop          ; \
+	       rm -f $(GNOME_CCDIR)/screensaver-properties.desktop          ; \
+	  echo rm -f $(GNOME_PANELDIR)/screensaver-properties.desktop       ; \
+	       rm -f $(GNOME_PANELDIR)/screensaver-properties.desktop       ; \
+        fi
+
 install-kde:
 	@src="$(srcdir)/xscreensaver.kss" ;				      \
 	if [ "$$KDEDIR" != "" ]; then					      \
@@ -394,7 +421,7 @@ update_ad_version::
 	@S=XScreenSaver.ad.in ;						    \
 	U=$(UTILS_SRC)/version.h ;					    \
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	D=`date '+%d-%b-%y'` ;						    \
+	D=`date '+%d-%b-%Y'` ;						    \
 	echo -n "Updating version number in $$S to $$V $$D... " ;	    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
@@ -412,7 +439,7 @@ update_man_version::
 	@for S in $(MEN); do						    \
 	U=$(UTILS_SRC)/version.h ;					    \
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	V="`date '+%d-%b-%y'` ($$V)" ;					    \
+	V="`date '+%d-%b-%Y'` ($$V)" ;					    \
 	echo -n "Updating footer in $$S to \"$$V\"... " ;		    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed "s/^\(\.TH[^\"]*\)\"[^\"]*\"\(.*\)/\1\"$$V\"\2/"		    \
@@ -467,6 +494,12 @@ subprocs.o: subprocs.c
 #
 XScreenSaver_ad.h: XScreenSaver.ad
 	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver.ad > XScreenSaver_ad.h
+
+screensaver-properties.desktop: screensaver-properties.desktop.in Makefile
+	@echo generating $@... ;					\
+	sed "s%[@]bindir[@]%${bindir}%g"				\
+	  < ${srcdir}/screensaver-properties.desktop.in			\
+	  > $@
 
 # The executables linked in this directory.
 #

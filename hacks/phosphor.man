@@ -1,3 +1,16 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
 .TH XScreenSaver 1 "30-Oct-99" "X Version 11"
 .SH NAME
 phosphor - simulates an old terminal with long-sustain phosphor
@@ -61,6 +74,12 @@ In other words, programs like
 will work, but programs like
 .BR top (1)
 won't.
+
+Here's a good trick, to get phosphor to display recent web search terms:
+.EX
+phosphor -program \\
+  'wget -qO- http://webcrawler.com/cgi-bin/SearchTicker'
+.EE
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -71,6 +90,7 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
+.BR wget (1),
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT

@@ -147,7 +147,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
 		  sonar.man t3d.man squiral.man spotlight.man critical.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
-		  phosphor.man xmatrix.man xteevee.man
+		  phosphor.man xmatrix.man xteevee.man xflame.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -499,8 +499,8 @@ interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-bsod:	 	bsod.o		$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS) $(XPM_LIBS)
+bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(XPM_LIBS) $(GRAB_LIBS)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(GRAB_LIBS)
@@ -1648,6 +1648,7 @@ xflame.o: $(UTILS_SRC)/colors.h
 xflame.o: $(UTILS_SRC)/grabscreen.h
 xflame.o: $(UTILS_SRC)/visual.h
 xflame.o: $(UTILS_SRC)/xshm.h
+xflame.o: $(srcdir)/images/bob.xbm
 wander.o: $(srcdir)/screenhack.h
 wander.o: ../config.h
 wander.o: $(UTILS_SRC)/yarandom.h

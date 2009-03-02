@@ -6,6 +6,7 @@
 #  include <config.h>
 #endif
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
@@ -16,9 +17,8 @@
 #include "demo-Gtk-stubs.h"
 #include "demo-Gtk-widgets.h"
 
-
 GtkWidget*
-create_xscreensaver_demo ()
+create_xscreensaver_demo (void)
 {
   GtkWidget *xscreensaver_demo;
   GtkWidget *outer_vbox;
@@ -91,9 +91,6 @@ create_xscreensaver_demo ()
   GtkWidget *fade_button;
   GtkWidget *unfade_button;
   GtkWidget *lock_button;
-  GtkWidget *hbuttonbox3;
-  GtkWidget *prefs_ok;
-  GtkWidget *prefs_cancel;
   GtkWidget *prefs_tab;
   GtkAccelGroup *accel_group;
   GtkTooltips *tooltips;
@@ -786,33 +783,6 @@ create_xscreensaver_demo ()
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 10, 0);
 
-  hbuttonbox3 = gtk_hbutton_box_new ();
-  gtk_widget_set_name (hbuttonbox3, "hbuttonbox3");
-  gtk_widget_ref (hbuttonbox3);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "hbuttonbox3", hbuttonbox3,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (hbuttonbox3);
-  gtk_box_pack_start (GTK_BOX (prefs_hbox), hbuttonbox3, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (hbuttonbox3), 10);
-
-  prefs_ok = gtk_button_new_with_label ("OK");
-  gtk_widget_set_name (prefs_ok, "prefs_ok");
-  gtk_widget_ref (prefs_ok);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "prefs_ok", prefs_ok,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (prefs_ok);
-  gtk_container_add (GTK_CONTAINER (hbuttonbox3), prefs_ok);
-  GTK_WIDGET_SET_FLAGS (prefs_ok, GTK_CAN_DEFAULT);
-
-  prefs_cancel = gtk_button_new_with_label ("Cancel");
-  gtk_widget_set_name (prefs_cancel, "prefs_cancel");
-  gtk_widget_ref (prefs_cancel);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "prefs_cancel", prefs_cancel,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (prefs_cancel);
-  gtk_container_add (GTK_CONTAINER (hbuttonbox3), prefs_cancel);
-  GTK_WIDGET_SET_FLAGS (prefs_cancel, GTK_CAN_DEFAULT);
-
   prefs_tab = gtk_label_new ("Screensaver Options");
   gtk_widget_set_name (prefs_tab, "prefs_tab");
   gtk_widget_ref (prefs_tab);
@@ -851,6 +821,9 @@ create_xscreensaver_demo ()
   gtk_signal_connect (GTK_OBJECT (doc_menu), "activate",
                       GTK_SIGNAL_FUNC (doc_menu_cb),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (notebook), "switch_page",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (next), "clicked",
                       GTK_SIGNAL_FUNC (run_next_cb),
                       NULL);
@@ -863,11 +836,56 @@ create_xscreensaver_demo ()
   gtk_signal_connect (GTK_OBJECT (manual), "clicked",
                       GTK_SIGNAL_FUNC (manual_cb),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (prefs_ok), "clicked",
-                      GTK_SIGNAL_FUNC (prefs_ok_cb),
+  gtk_signal_connect (GTK_OBJECT (timeout_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (prefs_cancel), "clicked",
-                      GTK_SIGNAL_FUNC (prefs_cancel_cb),
+  gtk_signal_connect (GTK_OBJECT (timeout_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (cycle_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (cycle_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (fade_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (fade_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (ticks_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (ticks_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (pass_text), "activate",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (pass_text), "focus_out_event",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (verbose_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (install_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (fade_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (unfade_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (lock_button), "toggled",
+                      GTK_SIGNAL_FUNC (pref_changed_cb),
                       NULL);
 
   gtk_widget_grab_default (next);

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.23
-!                                30-Jan-00
+!                              version 3.24
+!                              03-Apr-200000
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -16,6 +16,17 @@
 ! settings for new users.  However, if you have a ".xscreensaver" file in
 ! your home directory, the settings in that file take precedence.
 
+
+! Don't hand this file to "xrdb" -- that isn't how app-defaults files work.
+! Though app-defaults files have (mostly) the same syntax as your ~/.Xdefaults
+! file, they are used differently, and if you run this file through xrdb,
+! you will probably mess things up.
+
+#error Do not run app-defaults files through xrdb!
+#error That does not do what you might expect.
+#error Put this file in /usr/lib/X11/app-defaults/XScreenSaver instead.
+
+! /* (xrdb prevention kludge: whole file)
 
 *timeout:		10
 *cycle:			10
@@ -263,6 +274,7 @@
 				  -texture_quality -light -fog		    \n\
 @GLE_KLUDGE@GL:			extrusion -root				    \n\
 @GL_KLUDGE@ GL:			sierpinski3d -root			    \n\
+@GL_KLUDGE@ GL:			starwars -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -273,7 +285,7 @@
 -	"XMountains (top)"	xmountains -b -M -Z 0 -r 1 -m		    \n\
 -                               xaos -root -autopilot -incoloring -1	      \
                                   -nogui -outcoloring -1	            \n\
--				xfishtank -d                                \n\
+-				xfishtank -d -s                             \n\
 -				xsnow                                       \n\
 -				goban -root                                 \n\
 -				electricsheep                               \n
@@ -518,11 +530,6 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 
 ! sanity check -- hands off.
 *hacks.documentation.isInstalled: True
-
-*hacks.grav.documentation:						\
-This program draws a simple orbital simulation.	 If you turn on		\
-trails, it looks kind of like a cloud-chamber photograph.  Written by	\
-Greg Bowering.
 
 *hacks.qix.documentation:						\
 This is the swiss army chainsaw of qix programs.  It bounces a series	\
@@ -1262,3 +1269,5 @@ connection to the Internet.						\
 By Scott Draves.  You can find it at <http://www.electricsheep.org/>.   \
 See that web site for configuration information.
 
+
+! (xrdb prevention kludge: whole file) */

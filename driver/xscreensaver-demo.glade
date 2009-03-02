@@ -19,9 +19,6 @@
   <main_header_file>demo-Gtk-widgets.h</main_header_file>
   <handler_source_file>demo-Gtk-stubs.c</handler_source_file>
   <handler_header_file>demo-Gtk-stubs.h</handler_header_file>
-  <support_source_file>support.c</support_source_file>
-  <support_header_file>support.h</support_header_file>
-  <translatable_strings_file></translatable_strings_file>
 </project>
 
 <widget>
@@ -226,6 +223,11 @@
       <class>GtkNotebook</class>
       <name>notebook</name>
       <can_focus>True</can_focus>
+      <signal>
+	<name>switch_page</name>
+	<handler>pref_changed_cb</handler>
+	<last_modification_time>Mon, 03 Apr 2000 02:36:24 GMT</last_modification_time>
+      </signal>
       <show_tabs>True</show_tabs>
       <show_border>True</show_border>
       <tab_pos>GTK_POS_TOP</tab_pos>
@@ -615,6 +617,16 @@ Mono
 	      <name>timeout_text</name>
 	      <tooltip>How long until the screensaver activates.</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:28:10 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:34:26 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -640,6 +652,16 @@ Mono
 	      <name>cycle_text</name>
 	      <tooltip>How long each demo will be run before moving on to another.</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -665,6 +687,16 @@ Mono
 	      <name>fade_text</name>
 	      <tooltip>How long (in seconds) it should take for the screen to fade to black (8-bit displays only.)</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -690,6 +722,16 @@ Mono
 	      <name>ticks_text</name>
 	      <tooltip>How many steps are in the fade animation (8-bit displays only.)</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -715,6 +757,16 @@ Mono
 	      <name>lock_text</name>
 	      <tooltip>How long after the screensaver has activated until a password will be required (if  `Require Password' is also set.)</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -740,6 +792,16 @@ Mono
 	      <name>pass_text</name>
 	      <tooltip>How long the password dialog will wait.</tooltip>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:29:08 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>focus_out_event</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:35:58 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>8</text_max_length>
@@ -920,6 +982,11 @@ Mono
 	      <class>GtkCheckButton</class>
 	      <name>verbose_button</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:31:53 GMT</last_modification_time>
+	      </signal>
 	      <label>Verbose</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
@@ -943,6 +1010,11 @@ Mono
 	      <class>GtkCheckButton</class>
 	      <name>install_button</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:32:25 GMT</last_modification_time>
+	      </signal>
 	      <label>Install Colormap</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
@@ -966,6 +1038,11 @@ Mono
 	      <class>GtkCheckButton</class>
 	      <name>fade_button</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:32:39 GMT</last_modification_time>
+	      </signal>
 	      <label>Fade Colormap</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
@@ -989,6 +1066,11 @@ Mono
 	      <class>GtkCheckButton</class>
 	      <name>unfade_button</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:32:51 GMT</last_modification_time>
+	      </signal>
 	      <label>Unfade Colormap</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
@@ -1012,6 +1094,11 @@ Mono
 	      <class>GtkCheckButton</class>
 	      <name>lock_button</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>toggled</name>
+		<handler>pref_changed_cb</handler>
+		<last_modification_time>Mon, 03 Apr 2000 02:33:01 GMT</last_modification_time>
+	      </signal>
 	      <label>Require Password</label>
 	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
@@ -1030,49 +1117,6 @@ Mono
 		<yfill>False</yfill>
 	      </child>
 	    </widget>
-	  </widget>
-	</widget>
-
-	<widget>
-	  <class>GtkHButtonBox</class>
-	  <name>hbuttonbox3</name>
-	  <border_width>10</border_width>
-	  <layout_style>GTK_BUTTONBOX_DEFAULT_STYLE</layout_style>
-	  <spacing>30</spacing>
-	  <child_min_width>85</child_min_width>
-	  <child_min_height>27</child_min_height>
-	  <child_ipad_x>7</child_ipad_x>
-	  <child_ipad_y>0</child_ipad_y>
-	  <child>
-	    <padding>0</padding>
-	    <expand>False</expand>
-	    <fill>False</fill>
-	  </child>
-
-	  <widget>
-	    <class>GtkButton</class>
-	    <name>prefs_ok</name>
-	    <can_default>True</can_default>
-	    <can_focus>True</can_focus>
-	    <signal>
-	      <name>clicked</name>
-	      <handler>prefs_ok_cb</handler>
-	      <last_modification_time>Mon, 08 Nov 1999 04:39:18 GMT</last_modification_time>
-	    </signal>
-	    <label>OK</label>
-	  </widget>
-
-	  <widget>
-	    <class>GtkButton</class>
-	    <name>prefs_cancel</name>
-	    <can_default>True</can_default>
-	    <can_focus>True</can_focus>
-	    <signal>
-	      <name>clicked</name>
-	      <handler>prefs_cancel_cb</handler>
-	      <last_modification_time>Mon, 08 Nov 1999 04:39:33 GMT</last_modification_time>
-	    </signal>
-	    <label>Cancel</label>
 	  </widget>
 	</widget>
       </widget>

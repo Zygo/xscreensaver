@@ -195,6 +195,26 @@ AC_DEFUN(AC_PROG_PERL,
 
 ###############################################################################
 #
+#       Function to demand "bc".  Losers.
+#
+###############################################################################
+
+AC_DEFUN(AC_DEMAND_BC,
+ [ac_bc_result=`echo 6+9 | bc 2>/dev/null`
+  AC_MSG_CHECKING([for bc])
+  if test "$ac_bc_result" = "15" ; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+    echo ''
+    AC_MSG_ERROR([Your system doesn't have \"bc\", which has been a standard
+                  part of Unix since the 1970s.  Come back when your vendor
+                  has grown a clue.])
+  fi
+ ])
+
+###############################################################################
+#
 #       Functions to check how to do ICMP PING requests.
 #
 ###############################################################################
@@ -657,6 +677,7 @@ AC_PROG_CC_ANSI
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
+AC_DEMAND_BC
 
 # stuff for Makefiles
 AC_PROG_INSTALL
@@ -1222,6 +1243,7 @@ fi
 ###############################################################################
 
 have_kerberos=no
+have_kerberos5=no
 with_kerberos_req=unspecified
 
 AC_ARG_WITH(kerberos, 
@@ -1231,21 +1253,41 @@ AC_ARG_WITH(kerberos,
 HANDLE_X_PATH_ARG(with_kerberos, --with-kerberos, Kerberos)
 
 if test "$enable_locking" = yes -a "$with_kerberos" = yes; then
-  AC_CACHE_CHECK([for Kerberos], ac_cv_kerberos,
+  AC_CACHE_CHECK([for Kerberos 4], ac_cv_kerberos,
                  [AC_TRY_X_COMPILE([#include <krb.h>],,
                                    [ac_cv_kerberos=yes],
                                    [ac_cv_kerberos=no])])
+  AC_CACHE_CHECK([for Kerberos 5], ac_cv_kerberos5,
+                 [AC_TRY_X_COMPILE([#include <kerberosIV/krb.h>],,
+                                   [ac_cv_kerberos5=yes],
+                                   [ac_cv_kerberos5=no])])
+
   if test "$ac_cv_kerberos" = yes ; then
     have_kerberos=yes
     AC_DEFINE(HAVE_KERBEROS)
+  fi
 
+  if test "$ac_cv_kerberos5" = yes ; then
+    have_kerberos=yes
+    have_kerberos5=yes
+    AC_DEFINE(HAVE_KERBEROS)
+    AC_DEFINE(HAVE_KERBEROS5)
+  fi
+
+  if test "$have_kerberos5" = yes ; then
+    # from Matt Knopp <mhat@infocalypse.netlag.com>
+    # (who got it from amu@mit.edu)
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcrypt -lcom_err"
+  elif test "$have_kerberos" = yes ; then
     # from Tim Showalter <tjs+@andrew.cmu.edu>
     PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes"
+  fi
+
+  if test "$have_kerberos" = yes ; then
     AC_CHECK_FUNC(res_search,,
       AC_CHECK_LIB(resolv,res_search,PASSWD_LIBS="${PASSWD_LIBS} -lresolv",
         AC_MSG_WARN([Can't find DNS resolver libraries needed for Kerberos])
       ))
-
   fi
 fi
 
@@ -1503,7 +1545,7 @@ fi
 
 ###############################################################################
 #
-#       Check for -lgtk.
+#       Check for -lgtk (and Gnome stuff)
 #
 ###############################################################################
 
@@ -1531,6 +1573,31 @@ if test "$with_gtk" != yes -a "$with_gtk" != no ; then
   exit 1
 fi
 
+have_gnome=no
+with_gnome_req=unspecified
+AC_ARG_WITH(gnome,
+[  --with-gnome            Include support for the Gnome Control Center.],
+  [with_gnome="$withval"; with_gnome_req="$withval"],[with_gnome=yes])
+
+# if --with-gnome=/directory/ was specified, remember that directory so that
+# we can also look for the `gnome-config' program in that directory.
+case "$with_gnome" in
+  /*)
+    gnome_dir="$with_gnome"
+    ;;
+  *)
+    gnome_dir=""
+    ;;
+esac
+
+HANDLE_X_PATH_ARG(with_gnome, --with-gnome, Gnome)
+
+if test "$with_gnome" != yes -a "$with_gnome" != no ; then
+  echo "error: must be yes or no: --with-gnome=$with_gnome"
+  exit 1
+fi
+
+
 jurassic_gtk=no
 if test "$with_gtk" = yes; then
   have_gtk=no
@@ -1543,15 +1610,29 @@ if test "$with_gtk" = yes; then
   if test ! -z "$gtk_dir"; then
     # canonicalize slashes.
     gtk_dir=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-    gtk_path="$gtk_dir:$gtk_dir:$gtk_path"
+    gtk_path="$gtk_dir:$gtk_path"
   fi
 
-  AC_PATH_PROGS(glib_config, glib-config,, $gtk_path)
-  AC_PATH_PROGS(gtk_config,  gtk-config,,  $gtk_path)
+  if test ! -z "gnome_dir"; then
+    # canonicalize slashes.
+    gnome_dir=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    gtk_path="$gnome_dir:$gtk_path"
+  fi
+
+  AC_PATH_PROGS(glib_config,  glib-config,,  $gtk_path)
+  AC_PATH_PROGS(gtk_config,   gtk-config,,   $gtk_path)
+
+  if test "$with_gnome" = yes; then
+    AC_PATH_PROGS(gnome_config, gnome-config,, $gtk_path)
+  fi
 
   if test -n "$glib_config" -a  -n "gtk_config" ; then
     have_gtk=yes
+    if test "$with_gnome" = yes -a -n "$gnome_config" ; then
+      have_gnome=yes
+    fi
   fi
+
   if test "$have_gtk" = yes; then
     AC_CACHE_CHECK([Gtk version number], ac_cv_gtk_version_string,
                    [ac_cv_gtk_version_string=`$glib_config --version`])
@@ -1569,18 +1650,81 @@ if test "$with_gtk" = yes; then
     if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
     then
       have_gtk=no
+      have_gnome=no
       jurassic_gtk=yes
     fi
   fi
+
   if test "$have_gtk" = yes; then
     AC_CACHE_CHECK([for Gtk includes], ac_cv_gtk_config_cflags,
                    [ac_cv_gtk_config_cflags=`$gtk_config --cflags`])
     AC_CACHE_CHECK([for Gtk libs], ac_cv_gtk_config_libs,
                    [ac_cv_gtk_config_libs=`$gtk_config --libs`])
-    INCLUDES="$INCLUDES $ac_cv_gtk_config_cflags"
-    GTK_LIBS="$GTK_LIBS $ac_cv_gtk_config_libs"
+  fi
+  ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
+  ac_gtk_config_libs=$ac_cv_gtk_config_libs
+
+  # Check for Gnome Capplet support.
+  #
+  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+    gnome_config_libs="capplet gnomeui"
+    AC_MSG_CHECKING(for Gnome capplet includes)
+    AC_CACHE_VAL(ac_cv_gnome_config_cflags,
+      [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
+            grep -q Unknown ) ; then
+         ac_cv_gnome_config_cflags=''
+       else
+         ac_cv_gnome_config_cflags=`$gnome_config --cflags $gnome_config_libs`
+       fi])
+    ac_gnome_config_cflags=$ac_cv_gnome_config_cflags
+    if test "$ac_gnome_config_cflags" = "" ; then
+      have_gnome=no
+      AC_MSG_RESULT(no)
+    else
+      AC_MSG_RESULT($ac_gnome_config_cflags)
+    fi
+  fi
+
+  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+    AC_MSG_CHECKING(for Gnome capplet libs)
+    AC_CACHE_VAL(ac_cv_gnome_config_libs,
+      [if ( $gnome_config --libs $gnome_config_libs 2>&1 >/dev/null |
+            grep -q Unknown ) ; then
+         ac_cv_gnome_config_libs=''
+       else
+         ac_cv_gnome_config_libs=`$gnome_config --libs $gnome_config_libs`
+       fi])
+    ac_gnome_config_libs=$ac_cv_gnome_config_libs
+    if test "$ac_gnome_config_libs" = "" ; then
+      have_gnome=no
+      AC_MSG_RESULT(no)
+    else
+      AC_MSG_RESULT($ac_gnome_config_libs)
+    fi
+  fi
+
+  GNOME_DATADIR=""
+  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+    GNOME_DATADIR=`$gnome_config --datadir`
+  fi
+
+
+  # If we have Gnome, then override the gtk-config values with 
+  # the gnome-config values.
+  #
+  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+    ac_gtk_config_cflags=$ac_gnome_config_cflags
+    ac_gtk_config_libs=$ac_gnome_config_libs
+    AC_DEFINE(HAVE_CRAPPLET)
+  fi
+
+
+  if test "$have_gtk" = yes; then
+    INCLUDES="$INCLUDES $ac_gtk_config_cflags"
+    GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
     AC_DEFINE(HAVE_GTK)
   fi
+
 fi
 
 
@@ -2429,6 +2573,7 @@ AC_SUBST(GLE_EXES)
 AC_SUBST(GLE_MEN)
 AC_SUBST(GLE_KLUDGE)
 AC_SUBST(HACKDIR)
+AC_SUBST(GNOME_DATADIR)
 
 APPDEFAULTS=$ac_x_app_defaults
 AC_SUBST(APPDEFAULTS)
@@ -2562,6 +2707,12 @@ elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
   warnL "Use of Gtk was requested, but it wasn't found;"
   warn2 "Motif will be used instead."
 
+fi
+
+
+if test "$with_gnome_req" = yes -a "$have_gnome" = no ; then
+  warn  'Use of the Gnome Control Panel was requested, but the necessary'
+  warn2 'headers and/or libraries were not found.'
 fi
 
 
@@ -2747,7 +2898,7 @@ do_dir_warning=no
 # M4 sucks!!
 changequote(X,Y)
 rpmv=`(rpm -qv xscreensaver) 2>&- | \
-      sed 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-[0-9][0-9]*$/\1/'`
+      sed 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/'`
 changequote([,])
 
 if test \! -z "$rpmv" ; then
@@ -2778,15 +2929,15 @@ fi
 
 # Warn about egregious GNOME bogosity.
 #
-if (rpm -qv control-center) >&- 2>&- ; then
-  warning=no
-  warnL "The Gnome Control Center seems to be installed."
-  echo  ""
-  warn2 "Note that simply installing this version of xscreensaver"
-  warn2 "will not cause GNOME to know about the newly-added display"
-  warn2 "modes -- GNOME is just lame that way.  Instead of using the"
-  warn2 "Control Center, try using the \`xscreensaver-demo' command."
-fi
+#if (rpm -qv control-center) >&- 2>&- ; then
+#  warning=no
+#  warnL "The Gnome Control Center seems to be installed."
+#  echo  ""
+#  warn2 "Note that simply installing this version of xscreensaver"
+#  warn2 "will not cause GNOME to know about the newly-added display"
+#  warn2 "modes -- GNOME is just lame that way.  Instead of using the"
+#  warn2 "Control Center, try using the \`xscreensaver-demo' command."
+#fi
 
 
 if test "${bindir}" = "${HACKDIR}" ; then
