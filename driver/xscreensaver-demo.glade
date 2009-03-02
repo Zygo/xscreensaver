@@ -525,7 +525,7 @@ Mono
 
 	  <widget>
 	    <class>GtkHButtonBox</class>
-	    <name>demo_cancel_hbox</name>
+	    <name>demo_manual_hbox</name>
 	    <layout_style>GTK_BUTTONBOX_DEFAULT_STYLE</layout_style>
 	    <spacing>30</spacing>
 	    <child_min_width>85</child_min_width>
@@ -541,7 +541,7 @@ Mono
 	    <widget>
 	      <class>GtkButton</class>
 	      <name>demo</name>
-	      <tooltip>Make any changes to this demo's parameters permanent, and run it in full-screen mode (click the mouse to return.)</tooltip>
+	      <tooltip>Run this one in full-screen mode (click the mouse to return.)</tooltip>
 	      <can_default>True</can_default>
 	      <can_focus>True</can_focus>
 	      <signal>
@@ -554,30 +554,16 @@ Mono
 
 	    <widget>
 	      <class>GtkButton</class>
-	      <name>apply</name>
-	      <tooltip>Make any changes to this demo's parameters permanent.</tooltip>
+	      <name>manual</name>
+	      <tooltip>Click here to read the manual for this display mode, if it has one.</tooltip>
 	      <can_default>True</can_default>
 	      <can_focus>True</can_focus>
 	      <signal>
 		<name>clicked</name>
-		<handler>apply_this_cb</handler>
-		<last_modification_time>Mon, 08 Nov 1999 04:46:59 GMT</last_modification_time>
+		<handler>manual_cb</handler>
+		<last_modification_time>Wed, 17 Nov 1999 09:43:37 GMT</last_modification_time>
 	      </signal>
-	      <label>Apply</label>
-	    </widget>
-
-	    <widget>
-	      <class>GtkButton</class>
-	      <name>cancel</name>
-	      <tooltip>Discard any changes you have made to this demo's parameters.</tooltip>
-	      <can_default>True</can_default>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>clicked</name>
-		<handler>cancel_this_cb</handler>
-		<last_modification_time>Mon, 08 Nov 1999 04:47:15 GMT</last_modification_time>
-	      </signal>
-	      <label>Cancel</label>
+	      <label>Documentation...</label>
 	    </widget>
 	  </widget>
 	</widget>

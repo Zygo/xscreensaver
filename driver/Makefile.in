@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright (c) 1997-1999 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -182,7 +182,9 @@ install-strip:
 		install
 
 install-program: $(EXES)
-	@if [ ! -d $(bindir) ]; then $(INSTALL_DIRS) $(bindir) ; fi
+	@if [ ! -d $(install_prefix)$(bindir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			\
+	 fi
 	@inst="$(INSTALL_PROGRAM)" ;					\
 	if [ @NEED_SETUID@ = yes ]; then				\
 	   me=`PATH="$$PATH:/usr/ucb" whoami` ;				\
@@ -202,24 +204,30 @@ install-program: $(EXES)
  $$e "           means that locking might not work.  (Try it and see.)"	     ;\
  $$e "  ####################################################################";\
  $$e ""									     ;\
-	   fi ; 							\
-	fi ;								\
-	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
-	$$inst xscreensaver $(bindir)/xscreensaver
-	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
-	$(INSTALL_PROGRAM) xscreensaver-demo $(bindir)/xscreensaver-demo
+	   fi ; 							      \
+	fi ;								      \
+	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
+	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
+	$(INSTALL_PROGRAM) xscreensaver-command \
+	  $(install_prefix)$(bindir)/xscreensaver-command
+	$(INSTALL_PROGRAM) xscreensaver-demo \
+	  $(install_prefix)$(bindir)/xscreensaver-demo
 
 install-ad: XScreenSaver.ad
-	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi
-	@-echo $(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver ;	      \
-	if $(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver ; then      \
+	@if [ ! -d $(install_prefix)$(AD_DIR) ]; then			      \
+	  $(INSTALL_DIRS) $(install_prefix)$(AD_DIR) ;			      \
+	 fi
+	@-echo $(INSTALL_DATA) XScreenSaver.ad				      \
+	  $(install_prefix)$(AD_DIR)/XScreenSaver ;			      \
+	if $(INSTALL_DATA) XScreenSaver.ad				      \
+	  $(install_prefix)$(AD_DIR)/XScreenSaver ; then		      \
 	  true ;							      \
 	else								      \
 	  e=echo ;							      \
-	  if [ -f $(AD_DIR)/XScreenSaver ]; then			      \
+	  if [ -f $(install_prefix)$(AD_DIR)/XScreenSaver ]; then	      \
  $$e ""									     ;\
  $$e "  ####################################################################";\
- $$e "  Warning: unable to install $(AD_DIR)/XScreenSaver"		     ;\
+ $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
  $$e "           That file exists, and is unwritable.  It is probably from"  ;\
  $$e "           an older version of xscreensaver, and could cause things"   ;\
  $$e "           to malfunction.  Please delete it!"			     ;\
@@ -229,7 +237,7 @@ install-ad: XScreenSaver.ad
 	  else								      \
  $$e ""									     ;\
  $$e "  ####################################################################";\
- $$e "  Warning: unable to install $(AD_DIR)/XScreenSaver"		     ;\
+ $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
  $$e "           The directory is unwritable.  This is probably ok;"	     ;\
  $$e "           xscreensaver should work without that file."		     ;\
  $$e "  ####################################################################";\
@@ -240,36 +248,40 @@ install-ad: XScreenSaver.ad
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
+	if [ ! -d $(install_prefix)$(man1dir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(man1dir) ;			\
+	 fi ;								\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  instname=`echo $$instname | sed 's/-old//'` ;			\
-	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
-	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
+	   $(install_prefix)$(man1dir)/$$instname ;			\
+	  $(INSTALL_DATA) $(srcdir)/$$man				\
+	    $(install_prefix)$(man1dir)/$$instname ;			\
 	done
 
 uninstall-program:
 	@for program in $(EXES); do					\
-	  echo rm -f $(bindir)/$$program ;				\
-	  rm -f $(bindir)/$$program ;					\
+	  echo rm -f $(install_prefix)$(bindir)/$$program ;		\
+	  rm -f $(install_prefix)$(bindir)/$$program ;			\
 	done
 
 uninstall-ad:
-	rm -f $(AD_DIR)/XScreenSaver
+	rm -f $(install_prefix)$(AD_DIR)/XScreenSaver
 
 uninstall-man:
 	@men="$(MEN)" ;							\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(man1dir)/$$instname ;				\
-	  rm -f $(man1dir)/$$instname ;					\
+	  echo rm -f $(install_prefix)$(man1dir)/$$instname ;		\
+	  rm -f $(install_prefix)$(man1dir)/$$instname ;		\
 	done
 
 install-pam:
 	@src="$(srcdir)/xscreensaver.pam" ;				\
 	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
 	   < ../config.h` ;						\
-	dir="$(PAM_DIR)" ;						\
+	dir="$(install_prefix)$(PAM_DIR)" ;				\
 	conf="$(PAM_CONF)" ;						\
 									\
 	if [ -d $$dir ] ; then						\
@@ -313,7 +325,7 @@ install-pam:
 install-kde:
 	@src="$(srcdir)/xscreensaver.kss" ;				      \
 	if [ "$$KDEDIR" != "" ]; then					      \
-	  dir="$$KDEDIR/bin" ;						      \
+	  dir="$(install_prefix)$$KDEDIR/bin" ;				      \
 	  dest="$$dir/xscreensaver.kss" ;				      \
 	  echo $(INSTALL_PROGRAM) $$src $$dest ;			      \
 	  if $(INSTALL_PROGRAM) $$src $$dest ; then			      \
@@ -323,10 +335,10 @@ install-kde:
  $$e ""									     ;\
  $$e "  ####################################################################";\
  $$e "  Warning: unable to install $$dest"				     ;\
-	    if [ ! -d $$KDEDIR ]; then					      \
- $$e "           $$KDEDIR (\$$KDEDIR) does not exist."			     ;\
-	    elif [ ! -d $$KDEDIR/bin ]; then				      \
- $$e "           $$KDEDIR/bin (\$$KDEDIR/bin) does not exist."		     ;\
+	    if [ ! -d $(install_prefix)$$KDEDIR ]; then			      \
+ $$e "           $(install_prefix)$$KDEDIR (\$$KDEDIR) does not exist."	     ;\
+	    elif [ ! -d $(install_prefix)$$KDEDIR/bin ]; then		      \
+ $$e "           $(install_prefix)$$KDEDIR/bin (\$$KDEDIR/bin) does not exist.";\
 	    elif [ -f $$dest ]; then					      \
  $$e "           That file exists, and is unwritable."			     ;\
 	    else							      \
@@ -340,7 +352,7 @@ install-kde:
 
 uninstall-kde:
 	@if [ "$$KDEDIR" != "" ]; then					\
-	  dest="$$KDEDIR/bin/xscreensaver.kss" ;			\
+	  dest="$(install_prefix)$$KDEDIR/bin/xscreensaver.kss" ;	\
 	  echo rm -f $$dest ;						\
 	  rm -f $$dest ;						\
 	fi

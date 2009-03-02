@@ -15,6 +15,7 @@
 
  * Revision History:
  * Tue Oct 19 22:24:47 PDT 1999    Initial creation by David Konerding
+ *                                 <dek@cgl.ucsf.edu>
  *                                                                 
  * Notes:
  * This screensaver requires the GLE ("OpenGL Tubing and Extrusion Library")

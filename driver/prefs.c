@@ -533,9 +533,11 @@ write_entry (FILE *out, const char *key, const char *value)
   free(v);
 }
 
-void
-write_init_file (saver_preferences *p, const char *version_string)
+int
+write_init_file (saver_preferences *p, const char *version_string,
+                 Bool verbose_p)
 {
+  int status = -1;
   const char *name = init_file_name();
   const char *tmp_name = init_file_tmp_name();
   char *n2 = chase_symlinks (name);
@@ -555,7 +557,7 @@ write_init_file (saver_preferences *p, const char *version_string)
 
   if (n2) name = n2;
 
-  if (p->verbose_p)
+  if (verbose_p)
     fprintf (stderr, "%s: writing \"%s\".\n", blurb(), name);
 
   unlink (tmp_name);
@@ -571,13 +573,19 @@ write_init_file (saver_preferences *p, const char *version_string)
 
   /* Give the new .xscreensaver file the same permissions as the old one;
      except ensure that it is readable and writable by owner, and not
-     executable.
+     executable.  Extra hack: if we're running as root, make the file
+     be world-readable (so that the daemon, running as "nobody", will
+     still be able to read it.)
    */
   if (stat(name, &st) == 0)
     {
       mode_t mode = st.st_mode;
-      mode |= S_IRUSR | S_IWUSR;
-      mode &= ~(S_IXUSR | S_IXGRP | S_IXOTH);
+      mode |= S_IRUSR | S_IWUSR;		/* read/write by user */
+      mode &= ~(S_IXUSR | S_IXGRP | S_IXOTH);	/* executable by none */
+
+      if (getuid() == (uid_t) 0)		/* read by group/other */
+        mode |= S_IRGRP | S_IROTH;
+
       if (fchmod (fileno(out), mode) != 0)
 	{
 	  char *buf = (char *) malloc(1024 + strlen(name));
@@ -777,6 +785,8 @@ write_init_file (saver_preferences *p, const char *version_string)
 	  /* Since the .xscreensaver file is used for IPC, let's try and make
 	     sure that the bits actually land on the disk right away. */
 	  sync ();
+
+          status = 0;    /* wrote and renamed successfully! */
 	}
     }
   else
@@ -791,6 +801,7 @@ write_init_file (saver_preferences *p, const char *version_string)
 
  END:
   if (n2) free (n2);
+  return status;
 }
 
 

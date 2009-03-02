@@ -83,7 +83,8 @@ struct saver_preferences {
 
 extern void load_init_file (saver_preferences *p);
 extern Bool init_file_changed_p (saver_preferences *p);
-extern void write_init_file (saver_preferences *p, const char *version_string);
+extern int write_init_file (saver_preferences *p, const char *version_string,
+                            Bool verbose_p);
 const char *init_file_name (void);
 
 extern screenhack *parse_screenhack (const char *line);

@@ -395,12 +395,6 @@ make_job (pid_t pid, const char *cmd)
     }
 
   while (isspace(*in)) in++;		/* skip whitespace */
-  if (first && *in == ':')		/* token was a visual name; skip it. */
-    {
-      out = name;
-      first = 0;
-      goto AGAIN;
-    }
   *out = 0;
 
   job->name = strdup(name);
@@ -771,7 +765,7 @@ select_visual_of_hack (saver_screen_info *ssi, screenhack *hack)
   saver_preferences *p = &si->prefs;
   Bool selected;
 
-  if (hack->visual && *hack->visual == ':')
+  if (hack->visual && *hack->visual)
     selected = select_visual(ssi, hack->visual);
   else
     selected = select_visual(ssi, 0);

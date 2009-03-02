@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "12-Nov-99 (3.20)" "X Version 11"
+.TH XScreenSaver 1 "18-Nov-99 (3.21)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -124,19 +124,13 @@ This is a combo-box, so you can either select an item from the popup menu,
 or type in a specific visual's hexadecimal ID.
 .TP 4
 .B Demo
-This button saves your changes and runs the demo in full-screen mode so
-that you can try it out.  Click the mouse to dismiss it.
+This button runs the demo in full-screen mode so that you can try it out.
+Click the mouse to dismiss it.
 .TP 4
-.B Apply
-This button saves your changes to your \fI~/.xscreensaver\fP file,
-where the
-.BR xscreensaver (1)
-can see them.
-.TP 4
-.B Cancel
-This button discards any unsaved changes you have made, and reverts the
-settings for the selected demo back to what they were before.  Note that
-once you hit \fIDemo\fP or \fIApply\fP, that's it!
+.B Documentation
+Since each of the display modes is actually a separate program, they each
+may have their own manual.  This opens a window viewing the man page of
+this program, if it has one.
 .SH SCREENSAVER OPTIONS TAB
 This tab lets you change various settings used by the xscreensaver daemon
 itself, rather than its sub-programs.

@@ -77,7 +77,13 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
-Changes since 3.19:   * Added new hack `ripples' and `sierpinski3d'.
+Changes since 3.20:   * Tweaked the xscreensaver-demo UI (Gtk only.)
+                      * Fixed a few visual selection bugs.  I think the proper
+                        GL visual should be used with nVidia systems now.
+                      * Made the Makefiles obey $install_prefix.
+                      * Made the `xscreensaver.spec' file able to generate both
+                        GL and non-GL packages simultaniously.
+Changes since 3.19:   * Added new hacks `ripples' and `sierpinski3d'.
                       * Made `xscreensaver-command -exit' be silent when no
                         screen saver was running (instead of complaining.)
                       * Made `webcollage' and `vidwhacker' use `xloadimage'

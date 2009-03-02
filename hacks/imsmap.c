@@ -77,6 +77,7 @@ init_map (Display *dpy, Window window)
 
       if (ncolors <= 2) ncolors = 0;
       if (ncolors == 0) mono_p = True;
+      if (ncolors > 255) ncolors = 255;  /* too many look bad */
 
       fg_pixel = get_pixel_resource ("background", "Background", dpy, cmap);
       bg_pixel = get_pixel_resource ("foreground", "Foreground", dpy, cmap);

@@ -295,7 +295,7 @@ main (int argc, char **argv)
        so if we're issuing an activation command, wait a second. */
     sleep (1);
 
-  i = xscreensaver_command (dpy, *cmd, arg, True);
+  i = xscreensaver_command (dpy, *cmd, arg, True, NULL);
   if (i < 0) exit (i);
   else exit (0);
 }

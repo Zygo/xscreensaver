@@ -461,7 +461,7 @@ text_cb (WIDGET text_widget, POINTER client_data, POINTER call_data)
 #endif /* HAVE_ATHENA */
 
       if (save)
-        write_init_file (p, short_version);
+        write_init_file (p, short_version, p->verbose_p);
 
       XSync (dpy, False);
       usleep (500000);		/* give the disk time to settle down */
@@ -661,7 +661,7 @@ quit_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
 static void
 restart_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER ignored)
 {
-  xscreensaver_command (widget_display (button), XA_RESTART, 0, False);
+  xscreensaver_command (widget_display (button), XA_RESTART, 0, False, NULL);
 }
 
 
@@ -968,7 +968,7 @@ prefs_ok_cb CB_ARGS(WIDGET button, POINTER client_data, POINTER call_data)
   p->unfade_p	    = p2->unfade_p;
   p->lock_p	    = p2->lock_p;
 
-  write_init_file (p, short_version);
+  write_init_file (p, short_version, p->verbose_p);
 }
 
 
@@ -1090,7 +1090,7 @@ static void
 run_hack (Display *dpy, int n)
 {
   if (n <= 0) abort();
-  xscreensaver_command (dpy, XA_DEMO, n, False);
+  xscreensaver_command (dpy, XA_DEMO, n, False, NULL);
 }
 
 

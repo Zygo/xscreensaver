@@ -54,11 +54,7 @@ run_this_cb                            (GtkButton       *button,
                                         gpointer         user_data);
 
 void
-apply_this_cb                          (GtkButton       *button,
-                                        gpointer         user_data);
-
-void
-cancel_this_cb                         (GtkButton       *button,
+apply_manual_cb                        (GtkButton       *button,
                                         gpointer         user_data);
 
 void
@@ -67,4 +63,8 @@ prefs_ok_cb                            (GtkButton       *button,
 
 void
 prefs_cancel_cb                        (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+manual_cb                              (GtkButton       *button,
                                         gpointer         user_data);

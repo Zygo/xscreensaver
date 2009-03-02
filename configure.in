@@ -1789,6 +1789,7 @@ fi
 have_gl=no
 ac_have_mesa_gl=no
 with_gl_req=unspecified
+gl_halfassed=no
 AC_ARG_WITH(gl,[
 Graphics options:
 
@@ -1856,6 +1857,7 @@ if test "$with_gl" = yes; then
       # we have headers, but no libs -- bail.
       have_gl=no
       ac_have_mesa_gl=no
+      gl_halfassed=yes
     else
       # linking works -- we can build the GL hacks.
       AC_DEFINE(HAVE_GL)
@@ -1962,6 +1964,7 @@ fi
 
 have_gle=no
 with_gle_req=unspecified
+gle_halfassed=no
 AC_ARG_WITH(gle,
 [  --with-gle              Build those demos which depend on GLE
                           (the OpenGL "extrusion" library.)],
@@ -1978,19 +1981,19 @@ if test "$with_gle" = yes; then
     AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no)
   fi
 
-#          /usr/local/lib/GL/libgle.a
-#          /usr/local/lib/GL/libmatrix.a
-
   if test "$have_gle" = yes ; then
     have_gle=no
+    gle_halfassed=yes
     AC_CHECK_X_LIB(gle, gleCreateGC, 
-                   [have_gle=yes; GLE_LIBS="-lgle"],
+                   [have_gle=yes; gle_halfassed=no, GLE_LIBS="-lgle"],
                    [], $GL_LIBS -lX11 -lXext -lm)
   fi
   if test "$have_gle" = yes ; then
     have_gle=no
+    gle_halfassed=yes
     AC_CHECK_X_LIB(matrix, uview_direction_d, 
-                   [have_gle=yes; GLE_LIBS="$GLE_LIBS -lmatrix"],
+                   [have_gle=yes; gle_halfassed=no, 
+                    GLE_LIBS="$GLE_LIBS -lmatrix"],
                    [], $GL_LIBS -lX11 -lXext -lm)
   fi
 
@@ -2079,10 +2082,12 @@ if test "$with_xshm" = yes; then
   #
   case "$host" in
     *-aix*)
-      have_xshm=no
-      AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
-                     [have_xshm=yes; X_EXTRA_LIBS="$X_EXTRA_LIBS -lXextSam"],
-                     [true], -lX11 -lXext -lm)
+      if [ `uname -v` -eq 3 ]; then
+        have_xshm=no
+        AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
+                       [have_xshm=yes; X_EXTRA_LIBS="$X_EXTRA_LIBS -lXextSam"],
+                       [true], -lX11 -lXext -lm)
+      fi
     ;;
   esac
 
@@ -2695,7 +2700,6 @@ if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
   fi
 fi
 
-
 if test "$have_gl" = no ; then
   if test "$with_gl_req" = yes ; then
     warnL 'Use of GL was requested, but it was not found.'
@@ -2703,6 +2707,14 @@ if test "$have_gl" = no ; then
     noteL 'The OpenGL 3D library is not being used.'
   else
     noteL 'The OpenGL 3D library was not found.'
+  fi
+
+  if test "$gl_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GL is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
   fi
 
   echo ''
@@ -2719,19 +2731,32 @@ fi
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
   if test "$with_gle_req" = yes ; then
-    warnL 'Use of GLE was requested, but it was not found.'
+    noteL 'Use of the GLE (GL Extrusion) library was requested, but'
+    warn2 'it was not found (though the OpenGL library was found, and'
+    warn2 'is being used.)'
   elif test "$with_gle_req" = no ; then
-    noteL 'The GLE (GL Extrusion) library is not being used.'
+    noteL 'The OpenGL Library is being used, but the GLE (GL Extrusion)'
+    warn2 'library is not.'
   else
-    noteL 'The GLE (GL Extrusion) library was not found.'
+    noteL 'The OpenGL Library was found, but the GLE (GL Extrusion)'
+    warn2 'was not.'
+  fi
+
+  if test "$gle_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GLE is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
   fi
 
   echo ''
-  warn2 'Some of the OpenGL (3D) demos will not be built or installed.'
-  warn2 'You might want to consider installing GLE and re-running'
-  warn2 'configure.  (Remember to delete the config.cache file first.)'
-  warn2 'You can find the GLE library at <http://www.linas.org/gle/>.'
-  warn2 'For general OpenGL info, see <http://www.opengl.org/>.'
+  warn2 'Some of the OpenGL (3D) demos (those that depend on GLE)'
+  warn2 'will not be built or installed.  You might want to consider'
+  warn2 'installing GLE and re-running configure.  (Remember to delete'
+  warn2 'the config.cache file first.)  You can find the GLE library'
+  warn2 'at <http://www.linas.org/gle/>.  For general OpenGL info,'
+  warn2 'see <http://www.opengl.org/>.'
 
 fi
 

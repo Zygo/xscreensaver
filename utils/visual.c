@@ -135,7 +135,7 @@ get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
       if (visual)
 	result = visual;
       else if (verbose_p)
-	fprintf (stderr, "%s: no visual suitable for GL.\n", progname, v);
+	fprintf (stderr, "%s: no visual suitable for GL.\n", progname);
     }
   else if (vclass == SPECIFIC_VISUAL)
     {
@@ -326,7 +326,7 @@ pick_best_gl_visual (Screen *screen)
         result = vi_out[0].visual;
     }
 
-  if (result)
+  if (!result)
     /* No half-depth TrueColor?  Ok, try for any TrueColor (the deepest.) */
     result = pick_best_visual_of_class (screen, TrueColor);
 

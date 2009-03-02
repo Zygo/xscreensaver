@@ -69,18 +69,16 @@
 
 typedef struct cell_s 
 {
-    short x;                        /*  0    - */
-    short y;                        /*  2      */
-    unsigned char col;              /*  4      */
-    unsigned char isnext;           /*  5      */
-    unsigned char nextcol;          /*  6      */
-                                    /*  7      */
-    struct cell_s *next;            /*  8    - */
-    struct cell_s *prev;            /* 12      */
-    FLOAT speed;                    /* 16    - */
-    FLOAT growth;                   /* 20 24   */
-    FLOAT nextspeed;                /* 24 32 - */
-                                    /* 28 40   */
+    unsigned char col;              /*  0      */
+    unsigned char isnext;           /*  1      */
+    unsigned char nextcol;          /*  2      */
+                                    /*  3      */
+    struct cell_s *next;            /*  4      */
+    struct cell_s *prev;            /*  8    - */
+    FLOAT speed;                    /* 12      */
+    FLOAT growth;                   /* 16 20 - */
+    FLOAT nextspeed;                /* 20 28   */
+                                    /* 24 36 - */
 } cell;
 
 static int arr_width;
@@ -115,6 +113,10 @@ static FLOAT maxlifespeed;
 static FLOAT mindeathspeed;
 static FLOAT maxdeathspeed;
 static Bool originalcolors;
+
+#define cell_x(c) (((c) - arr) % arr_width)
+#define cell_y(c) (((c) - arr) / arr_width)
+
 
 static int random_life_value (void)
 {
@@ -273,8 +275,15 @@ static void setup_display (void)
 
     count = get_integer_resource ("count", "Integer");
     if (count < 2) count = 2;
+
+    /* number of colors can't be greater than the half depth of the screen. */
     if (count > (1L << (xgwa.depth-1)))
       count = (1L << (xgwa.depth-1));
+
+    /* Actually, since cell->col is of type char, this has to be small. */
+    if (count >= (1L << ((sizeof(arr[0].col) * 8) - 1)))
+      count = (1L << ((sizeof(arr[0].col) * 8) - 1));
+
 
     if (originalcolors && (count > 8))
     {
@@ -480,8 +489,6 @@ static void setup_arr (void)
       int row = y * arr_width;
 	for (x = 0; x < arr_width; x++) 
 	{
-	    arr[row+x].x = x;
-	    arr[row+x].y = y;
 	    arr[row+x].speed = 0.0;
 	    arr[row+x].growth = 0.0;
 	    arr[row+x].col = 0;
@@ -533,7 +540,7 @@ static void killcell (cell *c)
     c->next->prev = c->prev;
     c->prev = 0;
     c->speed = 0.0;
-    drawblock (c->x, c->y, c->col);
+    drawblock (cell_x(c), cell_y(c), c->col);
 }
 
 
@@ -612,8 +619,8 @@ static void update (void)
         if (coords)
           for (i = 0; i < 4; i++)
             {
-              int x = a->x + coords[i].x;
-              int y = a->y + coords[i].y;
+              int x = cell_x(a) + coords[i].x;
+              int y = cell_y(a) + coords[i].y;
 
               if (x < 0) x = arr_width - 1;
               else if (x >= arr_width) x = 0;
@@ -638,7 +645,7 @@ static void update (void)
 	    a->speed = a->nextspeed;
 	    a->growth = 0.0;
 	    a->col = a->nextcol;
-	    drawblock (a->x, a->y, a->col + count);
+	    drawblock (cell_x(a), cell_y(a), a->col + count);
 	}
     }
 }

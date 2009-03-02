@@ -184,9 +184,9 @@ pinit(ModeInfo *mi)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
-  gp->xinc = 0.1*(1.0*rand()/RAND_MAX);
-  gp->yinc = 0.1*(1.0*rand()/RAND_MAX);
-  gp->zinc = 0.1*(1.0*rand()/RAND_MAX);
+  gp->xinc = 0.1*(1.0*random()/RAND_MAX);
+  gp->yinc = 0.1*(1.0*random()/RAND_MAX);
+  gp->zinc = 0.1*(1.0*random()/RAND_MAX);
   gp->light_colour[0] = 6.0;
   gp->light_colour[1] = 6.0;
   gp->light_colour[2] = 6.0;

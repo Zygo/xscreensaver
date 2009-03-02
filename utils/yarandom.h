@@ -25,12 +25,22 @@
 # include "vms-gtod.h"
 #endif
 
-#define random()   ya_random()
-#define srandom(i) ya_rand_init(0)
-#define RAND_MAX   0x7FFFFFFF
-
 extern unsigned int ya_random (void);
 extern void ya_rand_init (unsigned int);
+
+#define random()   ya_random()
+#define RAND_MAX   0x7FFFFFFF
+
+/*#define srandom(i) ya_rand_init(0)*/
+
+/* Define these away to keep people from using the wrong APIs in xscreensaver.
+ */
+#define rand          __ERROR_use_random_not_rand_in_xscreensaver__
+#define drand48       __ERROR_use_random_not_drand48_in_xscreensaver__
+#define srandom       __ERROR_do_not_call_srandom_in_xscreensaver__
+#define srand         __ERROR_do_not_call_srand_in_xscreensaver__
+#define srand48       __ERROR_do_not_call_srand48_in_xscreensaver__
+#define ya_rand_init  __ERROR_do_not_call_ya_rand_init_in_xscreensaver__
 
 
 #if defined (__GNUC__) && (__GNUC__ >= 2)

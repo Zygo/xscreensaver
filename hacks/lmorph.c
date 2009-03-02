@@ -378,7 +378,6 @@ initLMorph(void)
     gcClear = XCreateGC(dpy, window, GCForeground, &gcv);
     XClearWindow(dpy, window);
 
-    srandom(time(NULL));
     initPointArrays();
     aCurr = aWork[nWork = 0];
     aPrev = NULL;

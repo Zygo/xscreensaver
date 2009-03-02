@@ -27,6 +27,8 @@
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
 "*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'",
+"*manualCommand: xterm +sb -fg black -bg gray75 -T '%s manual' \
+        -e /bin/sh -c 'man \"%s\" || read'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -34,14 +36,20 @@
 	   \"Qix (transparent)\" 	qix -root -count 4 -solid -transparent	    \\n\
 		\"Qix (linear)\" 	qix -root -count 5 -solid -transparent	      \
 				  -linear -segments 250 -size 100	    \\n\
+- mono: 	   \"Qix (xor)\" 	qix -root -linear -count 5 -size 200	      \
+				  -spread 30 -segments 75 -solid -xor	    \\n\
+									      \
 	  \"Attraction (balls)\" 	attraction -root -mode balls		    \\n\
 	  \"Attraction (lines)\" 	attraction -root -mode lines -points 3	      \
 				  -segments 200				    \\n\
+-	   \"Attraction (poly)\" 	attraction -root -mode polygons		    \\n\
 	\"Attraction (splines)\" 	attraction -root -mode splines -segments      \
 				  300					    \\n\
 	\"Attraction (orbital)\" 	attraction -root -mode lines -radius 300      \
 				  -orbit -vmult 0.5			    \\n\
+									      \
 				pyro -root				    \\n\
+				rocks -root				    \\n\
 				helix -root				    \\n\
 				pedal -root				    \\n\
 				rorschach -root -offset 7		    \\n\
@@ -139,21 +147,12 @@
 				ccurve -root				    \\n\
 				blaster -root				    \\n\
 				bumps -root				    \\n\
+  color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
 				  'vidwhacker -stdin -stdout'		    \\n\
 - default-n:			vidwhacker -root			    \\n\
-									      \
-- mono: 	\"Rocks (mono)\" 	rocks -root				    \\n\
-  color:       \"Rocks (color)\" 	rocks -root -fg darksalmon		    \\n\
-- mono: 	   \"Qix (xor)\" 	qix -root -linear -count 5 -size 200	      \
-				  -spread 30 -segments 75 -solid -xor	    \\n\
-  color:   \"Attraction (poly)\" 	attraction -root -mode polygons		    \\n\
-- color:  \"Attraction (filled)\"	attraction -root -mode filled-splines	      \
-				  -segments 0				    \\n\
-- Color:  \"Attraction (glow)\"	attraction -root -glow -points 10	    \\n\
-  color: 			bubbles -root				    \\n\
 									      \
 	   GL:			gears -root				    \\n\
 	   GL:			superquadrics -root			    \\n\
@@ -174,7 +173,17 @@
 				  -texture_quality -light -fog		    \\n\
 	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
- ",
+									      \
+-				xdaliclock -root -builtin3 -cycle	    \\n\
+- default-n:			xearth -nofork -nostars -ncolors 50	      \
+				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
+				  sunrel/38/-30				    \\n\
+-				ssystem -fullscreen :32			    \\n\
+-				xmountains -b -M -Z 0 -r 1		    \\n\
+-	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
+-                               xaos -root -autopilot -incoloring -1	      \
+                                  -nogui -outcoloring -1	            \\n\
+-				xfishtank -d                                \\n",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",
 "XScreenSaver.windowCreationTimeout:	30",
@@ -885,17 +894,36 @@ like something is dripping into it.  Written by Tom Hammersley.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\
-``melting'' into their new shapes.  Written by Jamie Zawinski.",
+``melting'' into their new shapes.  Written by Jamie Zawinski.  This	\
+is not included with the XScreenSaver package, but if you don't have	\
+it already, you can find it at <http://www.jwz.org/xdaliclock/>.",
 "*hacks.xearth.documentation:						\
 XEarth draws an image of the Earth, as seen from your favorite vantage	\
 point in space, correctly shaded for the current position of the Sun.	\
-Written by Kirk Johnson.",
+Written by Kirk Johnson.  This is not included with the XScreenSaver	\
+package, but if you don't have it already, you can find it at		\
+<http://www.cs.colorado.edu/~tuna/xearth/>.",
 "*hacks.ssystem.name: SSystem",
 "*hacks.ssystem.documentation:						\
 SSystem is a GL Solar System simulator.  It simulates flybys of Sun,	\
 the nine planets and a few major satellites, with four camera modes.	\
-Written by Raul Alonso.",
+Written by Raul Alonso.  This is not included with the XScreenSaver	\
+package, but if you don't have it already, you can find it at		\
+<http://www1.las.es/~amil/ssystem/>.",
 "*hacks.xmountains.documentation:					\
 XMountains generates realistic-looking fractal terrains of snow-capped	\
 mountains near water, with either a top view or a side view.		\
-Written by Stephen Booth.",
+Written by Stephen Booth.  This is not included with the XScreenSaver	\
+package, but if you don't have it already, you can find it at		\
+<http://www.epcc.ed.ac.uk/~spb/xmountains/>.",
+"*hacks.xaos.name: XaoS",
+"*hacks.xaos.documentation:						\
+XaoS generates fast fly-through animations of the Mandelbrot and other	\
+fractal sets.  Written by Thomas Marsh and Jan Hubicka.    This is not	\
+included with the XScreenSaver package, but if you don't have it	\
+already, you can find it at <http://limax.paru.cas.cz/~hubicka/XaoS/>.",
+"*hacks.xfishtank.name: XFishTank",
+"*hacks.xfishtank.documentation:						\
+Fish!  This is not included with the XScreenSaver package, but if you	\
+don't have it already, you can find it at                               \
+<http://metalab.unc.edu/pub/Linux/X11/demos/>.",

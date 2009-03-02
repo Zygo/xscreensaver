@@ -301,7 +301,16 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
 
   if (visual_string && *visual_string)
     {
-      if (visual != desired_visual)
+      char *s;
+      for (s = visual_string; *s; s++)
+        if (isupper (*s)) *s = _tolower (*s);
+
+      if (!strcmp (visual_string, "default") ||
+          !strcmp (visual_string, "default") ||
+          !strcmp (visual_string, "best"))
+        /* don't warn about these, just silently DWIM. */
+        ;
+      else if (visual != desired_visual)
         {
           fprintf (stderr, "%s: ignoring `-visual %s' because of `%s'.\n",
                    progname, visual_string, why);
@@ -486,6 +495,7 @@ main (int argc, char **argv)
 				    XtNcolormap, cmap,
 				    XtNbackground, (Pixel) bg,
 				    XtNborderColor, (Pixel) bd,
+				    XtNinput, True,  /* for WM_HINTS */
 				    0);
 	  XtDestroyWidget (toplevel);
 	  toplevel = new;
@@ -494,7 +504,10 @@ main (int argc, char **argv)
 	}
       else
 	{
-	  XtVaSetValues (toplevel, XtNmappedWhenManaged, False, 0);
+	  XtVaSetValues (toplevel,
+                         XtNmappedWhenManaged, False,
+                         XtNinput, True,  /* for WM_HINTS */
+                         0);
 	  XtRealizeWidget (toplevel);
 	  window = XtWindow (toplevel);
 
@@ -551,7 +564,13 @@ main (int argc, char **argv)
     XIfEvent (dpy, &event, MapNotify_event_p, (XPointer) window);
 
   XSync (dpy, False);
-  srandom ((int) time ((time_t *) 0));
+
+  /* This is the one and only place that the random-number generator is
+     seeded in any screenhack.  You do not need to seed the RNG again,
+     it is done for you before your code is invoked. */
+# undef ya_rand_init
+  ya_rand_init ((int) time ((time_t *) 0));
+
   screenhack (dpy, window); /* doesn't return */
   return 0;
 }

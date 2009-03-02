@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "12-Nov-99 (3.20)" "X Version 11"
+.TH XScreenSaver 1 "18-Nov-99 (3.21)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -182,7 +182,7 @@ right \fI.xscreensaver\fP file.
 .B \-watch
 Prints a line each time the screensaver changes state: when the screen
 blanks, locks, unblanks, or when the running hack is changed.  This option
-never returns; it is intended for by shell scripts that want to react to
+never returns; it is intended for use by shell scripts that want to react to
 the screensaver in some way.  An example of its output would be:
 .EX
 BLANK Fri Nov  5 01:57:22 1999
@@ -224,7 +224,7 @@ while (<IN>) {
 .EE
 Note that LOCK might come either with or without a preceeding BLANK
 (depending on whether the lock-timeout is non-zero), so the above program
-is keeps track of both of them.
+keeps track of both of them.
 .SH DIAGNOSTICS
 If an error occurs while communicating with the \fIxscreensaver\fP daemon, or
 if the daemon reports an error, a diagnostic message will be printed to

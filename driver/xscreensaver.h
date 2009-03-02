@@ -386,6 +386,7 @@ extern FILE *real_stdout;
 extern void initialize_stderr (saver_info *si);
 extern void reset_stderr (saver_screen_info *ssi);
 extern void clear_stderr (saver_screen_info *ssi);
+extern void shutdown_stderr (saver_info *si);
 
 
 /* =======================================================================

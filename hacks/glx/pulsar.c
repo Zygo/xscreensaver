@@ -654,8 +654,8 @@ void GenerateQuad(void)
       quads[i].ty = 0.;
       quads[i].tz = -10;
 
-      quads[i].drx = drand48() * 5.;
-      quads[i].dry = drand48() * 5.;
+      quads[i].drx = random() * 5.;
+      quads[i].dry = random() * 5.;
       quads[i].drz = 0;
     }
 }

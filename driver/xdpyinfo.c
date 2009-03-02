@@ -23,10 +23,11 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
+ *
  * GLX and Overlay support added by Jamie Zawinski <jwz@jwz.org>, 11-Nov-99
  *
  *      To compile:
- *         cc -DHAVE_GLX glxdpyinfo.c -o glxdpyinfo -lGL -lX11 -lXext -lm
+ *         cc -DHAVE_GLX xdpyinfo.c -o xdpyinfo -lGL -lX11 -lXext -lm
  *
  *      Other defines to consider:
  *         -DHAVE_XIE -DHAVE_XTEST -DHAVE_SYNC -DHAVE_XRECORD

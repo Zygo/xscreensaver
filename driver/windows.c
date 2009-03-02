@@ -651,14 +651,10 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
   
   vrs = restore_real_vroot_1 (si);
   emergency_kill_subproc (si);
+  shutdown_stderr (si);
 
-  if (p->verbose_p)    /* nobody cares about this */
-    {
-      if (vrs)
-        fprintf (real_stderr, "%s: vroot restored, exiting.\n", blurb());
-      else if (p->verbose_p)
-        fprintf (real_stderr, "%s: no vroot to restore; exiting.\n", blurb());
-    }
+  if (p->verbose_p && vrs)
+    fprintf (real_stderr, "%s: old vroot restored.\n", blurb());
 
   fflush(real_stdout);
 

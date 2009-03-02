@@ -67,10 +67,9 @@ create_xscreensaver_demo ()
   GList *visual_combo_items = NULL;
   GtkWidget *combo_entry1;
   GtkWidget *demo_hline;
-  GtkWidget *demo_cancel_hbox;
+  GtkWidget *demo_manual_hbox;
   GtkWidget *demo;
-  GtkWidget *apply;
-  GtkWidget *cancel;
+  GtkWidget *manual;
   GtkWidget *demo_tab;
   GtkWidget *prefs_hbox;
   GtkWidget *prefs_frame;
@@ -535,13 +534,13 @@ create_xscreensaver_demo ()
   gtk_widget_show (demo_hline);
   gtk_box_pack_start (GTK_BOX (opts_vbox), demo_hline, FALSE, FALSE, 5);
 
-  demo_cancel_hbox = gtk_hbutton_box_new ();
-  gtk_widget_set_name (demo_cancel_hbox, "demo_cancel_hbox");
-  gtk_widget_ref (demo_cancel_hbox);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "demo_cancel_hbox", demo_cancel_hbox,
+  demo_manual_hbox = gtk_hbutton_box_new ();
+  gtk_widget_set_name (demo_manual_hbox, "demo_manual_hbox");
+  gtk_widget_ref (demo_manual_hbox);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "demo_manual_hbox", demo_manual_hbox,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (demo_cancel_hbox);
-  gtk_box_pack_start (GTK_BOX (opts_vbox), demo_cancel_hbox, FALSE, TRUE, 0);
+  gtk_widget_show (demo_manual_hbox);
+  gtk_box_pack_start (GTK_BOX (opts_vbox), demo_manual_hbox, FALSE, TRUE, 0);
 
   demo = gtk_button_new_with_label ("Demo");
   gtk_widget_set_name (demo, "demo");
@@ -549,29 +548,19 @@ create_xscreensaver_demo ()
   gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "demo", demo,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (demo);
-  gtk_container_add (GTK_CONTAINER (demo_cancel_hbox), demo);
+  gtk_container_add (GTK_CONTAINER (demo_manual_hbox), demo);
   GTK_WIDGET_SET_FLAGS (demo, GTK_CAN_DEFAULT);
-  gtk_tooltips_set_tip (tooltips, demo, "Make any changes to this demo's parameters permanent, and run it in full-screen mode (click the mouse to return.)", NULL);
+  gtk_tooltips_set_tip (tooltips, demo, "Run this one in full-screen mode (click the mouse to return.)", NULL);
 
-  apply = gtk_button_new_with_label ("Apply");
-  gtk_widget_set_name (apply, "apply");
-  gtk_widget_ref (apply);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "apply", apply,
+  manual = gtk_button_new_with_label ("Documentation...");
+  gtk_widget_set_name (manual, "manual");
+  gtk_widget_ref (manual);
+  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "manual", manual,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (apply);
-  gtk_container_add (GTK_CONTAINER (demo_cancel_hbox), apply);
-  GTK_WIDGET_SET_FLAGS (apply, GTK_CAN_DEFAULT);
-  gtk_tooltips_set_tip (tooltips, apply, "Make any changes to this demo's parameters permanent.", NULL);
-
-  cancel = gtk_button_new_with_label ("Cancel");
-  gtk_widget_set_name (cancel, "cancel");
-  gtk_widget_ref (cancel);
-  gtk_object_set_data_full (GTK_OBJECT (xscreensaver_demo), "cancel", cancel,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (cancel);
-  gtk_container_add (GTK_CONTAINER (demo_cancel_hbox), cancel);
-  GTK_WIDGET_SET_FLAGS (cancel, GTK_CAN_DEFAULT);
-  gtk_tooltips_set_tip (tooltips, cancel, "Discard any changes you have made to this demo's parameters.", NULL);
+  gtk_widget_show (manual);
+  gtk_container_add (GTK_CONTAINER (demo_manual_hbox), manual);
+  GTK_WIDGET_SET_FLAGS (manual, GTK_CAN_DEFAULT);
+  gtk_tooltips_set_tip (tooltips, manual, "Click here to read the manual for this display mode, if it has one.", NULL);
 
   demo_tab = gtk_label_new ("Graphics Demos");
   gtk_widget_set_name (demo_tab, "demo_tab");
@@ -871,11 +860,8 @@ create_xscreensaver_demo ()
   gtk_signal_connect (GTK_OBJECT (demo), "clicked",
                       GTK_SIGNAL_FUNC (run_this_cb),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (apply), "clicked",
-                      GTK_SIGNAL_FUNC (apply_this_cb),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (cancel), "clicked",
-                      GTK_SIGNAL_FUNC (cancel_this_cb),
+  gtk_signal_connect (GTK_OBJECT (manual), "clicked",
+                      GTK_SIGNAL_FUNC (manual_cb),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (prefs_ok), "clicked",
                       GTK_SIGNAL_FUNC (prefs_ok_cb),

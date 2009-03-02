@@ -24,6 +24,8 @@
 
 #define countof(x) (sizeof((x))/sizeof(*(x)))
 
+#define MAX_COLORS (1L<<13)
+
 extern ModeSpecOpt xlockmore_opts[];
 extern const char *app_defaults;
 
@@ -249,8 +251,8 @@ xlockmore_screenhack (Display *dpy, Window window,
       mi.npixels = get_integer_resource ("ncolors", "Integer");
       if (mi.npixels <= 0)
 	mi.npixels = 64;
-      else if (mi.npixels > 256)
-	mi.npixels = 256;
+      else if (mi.npixels > MAX_COLORS)
+	mi.npixels = MAX_COLORS;
 
       mi.colors = (XColor *) calloc (mi.npixels, sizeof (*mi.colors));
 

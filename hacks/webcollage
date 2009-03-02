@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.41 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.42 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -163,6 +163,9 @@ sub get_document_1 {
     $paddr   = sockaddr_in($port2, $iaddr);
 
 
+    my $head = "";
+    my $body = "";
+
     @_ =
     eval {
         local $SIG{ALRM}  = sub {
@@ -200,8 +203,6 @@ sub get_document_1 {
                  "\n");
         my $http = <S>;
 
-        my $head = "";
-        my $body = "";
         while (<S>) {
             $head .= $_;
             last if m@^[\r\n]@;
@@ -221,6 +222,8 @@ sub get_document_1 {
     die if ($@ && $@ ne "alarm\n");       # propagate errors
     if ($@) {
         # timed out
+        $head = undef;
+        $body = undef;
         return ();
     } else {
         # didn't
@@ -287,11 +290,13 @@ sub get_document {
 		    print STDERR "$progname: too many redirects " .
                         "($max_loop_count) from $orig_url\n";
 		}
+                $body = undef;
                 return ();
             }
 
         } elsif ( $http =~ m@HTTP/[0-9.]+ [4-9][0-9][0-9]@ ) {
             # http errors -- return nothing.
+            $body = undef;
             return ();
 
 	} else {
@@ -374,6 +379,8 @@ sub pick_image_from_body {
                 " \"$url\": rejecting.\n";
         }
         $rejected_urls{$url} = -1;
+        $body = undef;
+        $_ = undef;
         return ();
     }
 
@@ -396,6 +403,8 @@ sub pick_image_from_body {
                             " length $L in $url: rejecting.\n";
                     }
                     $rejected_urls{$url} = $L;
+                    $body = undef;
+                    $_ = undef;
                     return ();
                 } elsif ( $verbose > 2 ) {
                     print STDERR "$progname: keywords of length $L" .
@@ -494,6 +503,9 @@ sub pick_image_from_body {
 	}
     }
 
+    $_ = undef;
+    $body = undef;
+
     if ( $#urls == 0 ) {
 	if ( $verbose > 2 ) {
 	    print STDERR "$progname: no images on $base\n";
@@ -528,8 +540,12 @@ sub pick_from_url_randomizer {
 
     my ( $base, $body ) = get_document ($random_redirector, undef, $timeout);
 
-    return if (!$base || !$body);
+    if (!$base || !$body) {
+        $body = undef;
+        return;
+    }
     my $img = pick_image_from_body ($base, $body);
+    $body = undef;
 
     if ($img) {
         return ($base, $img, "yahoo");
@@ -607,7 +623,10 @@ sub pick_from_image_randomizer {
     my ( $base, $body ) = get_document ($search_url, undef, $timeout);
     if (defined ($timeout)) {
         $timeout -= (time - $start);
-        return () if ($timeout <= 0);
+        if ($timeout <= 0) {
+            $body = undef;
+            return ();
+        }
     }
 
     return () if (! $body);
@@ -691,6 +710,8 @@ sub pick_from_image_randomizer {
             print STDERR "$progname: found nothing on $base " .
                 "($length bytes, $href_count links).\n";
         }
+        $body = undef;
+        $_ = undef;
 	return ();
     }
 
@@ -703,12 +724,18 @@ sub pick_from_image_randomizer {
     }
 
 
+    $body = undef;
+    $_ = undef;
 
     my ( $base2, $body2 ) = get_document ($subpage, $base, $timeout);
 
-    return () if (!$base2 || !$body2);
+    if (!$base2 || !$body2) {
+        $body2 = undef;
+        return ();
+    }
 
     my $img = pick_image_from_body ($base2, $body2);
+    $body2 = undef;
 
     if ($img) {
         return ($base2, $img,
@@ -1007,12 +1034,14 @@ sub image_to_pnm {
             }
             kill ('TERM', $pid) if ($pid);
             $timed_out = 1;
+            $body = undef;
         };
 
         if (($pid = open(PIPE, "| $cmd2 > $output"))) {
             $timed_out = 0;
             alarm $cvt_timeout;
             print PIPE $body;
+            $body = undef;
             close PIPE;
 
             if ($verbose > 3) { print STDERR "$progname: awaiting $pid\n"; }
@@ -1041,10 +1070,12 @@ sub image_to_pnm {
     die if ($@ && $@ ne "alarm\n");       # propagate errors
     if ($@) {
         # timed out
+        $body = undef;
         return ();
     } else {
         # didn't
         alarm 0;
+        $body = undef;
         return @_;
     }
 }
@@ -1156,6 +1187,7 @@ sub x_output {
         $cmd .= "pnmpaste - $x $y $image_ppm > $image_tmp1";
         open (IMG, "| $cmd") || die ("running $cmd: $!\n");
         print IMG $body;
+        $body = undef;
         close (IMG);
         if ($verbose > 1) {
             print STDERR "$progname: subproc exited normally.\n";
@@ -1170,6 +1202,7 @@ sub x_output {
             my ($headers, $body) = get_document ($img, $base);
             if ($body) {
                 handle_image ($base, $img, $body, $source);
+                $body = undef;
             }
         }
         unlink $image_tmp1, $image_tmp2;
@@ -1185,6 +1218,7 @@ sub handle_image {
     }
 
     my ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
+    $body = undef;
     return 0 unless ($iw && $ih);
 
     my $ow = $iw;  # used only for error messages
@@ -1493,7 +1527,7 @@ sub main {
 
     if (!$root_p && !$no_output_p) {
         die "$copyright" .
-            "$progname: the -root argument is manditory (for now.)\n";
+            "$progname: the -root argument is mandatory (for now.)\n";
     }
 
     if (!$no_output_p && !$ENV{DISPLAY}) {

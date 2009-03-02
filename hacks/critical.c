@@ -267,8 +267,8 @@ screenhack (Display *dpy, Window window)
 
   fgc = XCreateGC (dpy, window, 0, &gcv);
 
-  x2 = rand() % model_w;
-  y2 = rand() % model_h;
+  x2 = random() % model_w;
+  y2 = random() % model_h;
 
   delay_usecs = get_integer_resource ("delay", "Integer");
   n_restart = get_integer_resource ("restart", "Integer");

@@ -19,21 +19,27 @@
  * Options
  * -delay	usleep every iteration
  * -rate	Add one drop every "rate" iterations
+ * -box         Add big square splash every "box" iters (not very good)
  * -water	Ripples on a grabbed background image
  * -foreground  Interpolate ripples between these two colors
  * -background
  * -oily	Psychedelic colours like man
  * -stir	Add a regular pattern of drops
  * -fluidity	Between 0 and 16. 16 = big drops
- * -light	Hack to add lighting effect (2 for 16bbp, 6 for 32bpp)
+ * -light	Hack to add lighting effect
  *
  * Code mainly hacked from xflame and decayscreen.
  */
 
 /* Version history:
- * Speeded up graphics with dirty buffer. Returned to using putpixel for
- * greater portability
- * Added a variety of methods for splashing screen.
+ * 13 Oct 1999: Initial hack
+ * 30 Oct 1999: Speeded up graphics with dirty buffer. Returned to using
+ *              putpixel for greater portability
+ *              Added a variety of methods for splashing screen.
+ * 31 Oct 1999: Added in lighting hack
+ * 13 Nov 1999: Speed up tweaks
+ *              Adjust "light" for different bits per colour (-water only)
+ *
  */
 
 
@@ -70,14 +76,24 @@ static char *dirty_buffer;
 #define TABLE 256
 static double cos_tab[TABLE];
 
-static double drop_dist[] = 
+/* Distribution of drops: many little ones and a few big ones. */
+static double drop_dist[] =
 {0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.6};
+
+static void (*draw_transparent)(short *src);
 
 /* How hard to hit the water */
 #define SPLASH 512
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define DIRTY 2 /* 2 = dirty, 1 = restore original pixel, 0 = leave alone */
+#define DIRTY 3 /* dirty >= 2, 1 = restore original pixel, 0 = leave alone */
+
+/* From fortune(6) */
+/* -- really weird C code to count the number of bits in a word */
+#define BITCOUNT(x)	(((BX_(x)+(BX_(x)>>4)) & 0x0F0F0F0F) % 255)
+#define BX_(x)		((x) - (((x)>>1)&0x77777777) \
+                             - (((x)>>2)&0x33333333) \
+                             - (((x)>>3)&0x11111111))
 
 
 /*      -------------------------------------------             */
@@ -118,7 +134,6 @@ draw_ripple(short *src)
       if (*dirty > 0) {
         int dx;
         if (light > 0) {
-          /* dx = ((v2 - v1) + (v4 - v3)) << light; */ /* light from left */
           dx = ((v3 - v1) + (v4 - v2)) << light; /* light from top */
         } else
           dx = 0;
@@ -134,7 +149,68 @@ draw_ripple(short *src)
 /*      -------------------------------------------             */
 
 
-static unsigned long (*bright)(int dx, unsigned long color);
+/* Uses the horizontal gradient as an offset to create a warp effect  */
+static void
+draw_transparent_vanilla(short *src)
+{
+  int across, down, pixel;
+  char *dirty = dirty_buffer;
+
+  pixel = 0;
+  for (down = 0; down < height - 2; down++, pixel += 2)
+    for (across = 0; across < width-2; across++, pixel++) {
+      int gradx, grady, gradx1, grady1;
+      int x0, x1, x2, y1, y2;
+
+      x0 = src[pixel];
+      x1 = src[pixel + 1];
+      x2 = src[pixel + 2];
+      y1 = src[pixel + width];
+      y2 = src[pixel + 2*width];
+
+      gradx = (x1 - x0);
+      grady = (y1 - x0);
+      gradx1= (x2 - x1);
+      grady1= (y2 - y1);
+      gradx1 = 1 + (gradx + gradx1) / 2;
+      grady1 = 1 + (grady + grady1) / 2;
+
+      if ((2*across+MIN(gradx,gradx1) < 0) ||
+          (2*across+MAX(gradx,gradx1) >= bigwidth)) {
+        gradx = 0;
+        gradx1= 1;
+      }
+      if ((2*down+MIN(grady,grady1) < 0) ||
+          (2*down+MAX(grady,grady1) >= bigheight)) {
+        grady = 0;
+        grady1 = 1;
+      }
+
+      if ((gradx == 0 && gradx1 == 1 && grady == 0 && grady1 == 1)) {
+        if (dirty[pixel] > 0)
+          dirty[pixel]--;
+      } else
+        dirty[pixel] = DIRTY;
+
+      if (dirty[pixel] > 0) {
+        XPutPixel(buffer_map, (across<<1),  (down<<1),
+                  XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady));
+        XPutPixel(buffer_map, (across<<1)+1,(down<<1),
+                  XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady));
+        XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
+                  XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1));
+        XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
+                  XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1));
+      }
+    }
+}
+
+
+/*      -------------------------------------------             */
+
+
+/* This builds on the above warp effect by adding in a lighting effect: */
+/* brighten pixels by an amount corresponding to the vertical gradient */
 static unsigned long rmask;
 static unsigned long gmask;
 static unsigned long bmask;
@@ -143,7 +219,7 @@ static int gshift;
 static int bshift;
 
 
-static void 
+static void
 set_mask(unsigned long color, unsigned long *mask, int *shift)
 {
   *shift = 0;
@@ -170,7 +246,7 @@ cadd(unsigned long color, int dx, unsigned long mask, int shift)
 
 
 static unsigned long
-dobright(int dx, unsigned long color)
+bright(int dx, unsigned long color)
 {
   return (cadd(color, dx, rmask, rshift) |
           cadd(color, dx, gmask, gshift) |
@@ -178,15 +254,8 @@ dobright(int dx, unsigned long color)
 }
 
 
-static unsigned long
-nobright(int dx, unsigned long color)
-{
-  return color;
-}
-
-
 static void
-draw_transparent(short *src)
+draw_transparent_light(short *src)
 {
   int across, down, pixel;
   char *dirty = dirty_buffer;
@@ -229,21 +298,33 @@ draw_transparent(short *src)
 
       if (dirty[pixel] > 0) {
         int dx;
-        if (light > 0) {
-          if (4-light >= 0)
-            dx = (grady + (src[pixel+width+1]-x1)) >> (4-light); /* light from top */
-          else
-            dx = (grady + (src[pixel+width+1]-x1)) << (light-4); /* light from top */
-        } else
-          dx = 0;
-        XPutPixel(buffer_map, (across<<1),  (down<<1),
-                  bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady)));
-        XPutPixel(buffer_map, (across<<1)+1,(down<<1),
-                  bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady)));
-        XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
-                  bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1)));
-        XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
-                  bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1)));
+
+        /* light from top */
+        if (4-light >= 0)
+          dx = (grady + (src[pixel+width+1]-x1)) >> (4-light);
+        else
+          dx = (grady + (src[pixel+width+1]-x1)) << (light-4);
+
+        if (dx != 0) {
+          XPutPixel(buffer_map, (across<<1),  (down<<1),
+                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady)));
+          XPutPixel(buffer_map, (across<<1)+1,(down<<1),
+                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady)));
+          XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
+                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1)));
+          XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
+                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1)));
+        } else {
+          /* Could use XCopyArea, but XPutPixel is faster */
+          XPutPixel(buffer_map, (across<<1),  (down<<1),
+                    XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady));
+          XPutPixel(buffer_map, (across<<1)+1,(down<<1),
+                    XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady));
+          XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
+                    XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1));
+          XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
+                    XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1));
+        }
       }
     }
 }
@@ -252,34 +333,86 @@ draw_transparent(short *src)
 /*      -------------------------------------------             */
 
 
-/*
+#if 0
+/* Doesn't go any faster and doesn't work at all colour depths */
 static void
-draw_ripple16(short *src)
+draw_transparent16l(short *src)
 {
-  int across, down;
-  unsigned short *dest;
+  int across, down, bigpix, pixel;
+  char *dirty = dirty_buffer;
+  unsigned short *buffer, *orig;
 
-  dest = (unsigned short *) buffer_map->data;
+  buffer = (unsigned short *) buffer_map->data;
+  orig = (unsigned short *) orig_map->data;
 
-  for (down = 0; down < height - 1; down++, src += 1, dest += bigwidth+2)
-    for (across = 0; across < width - 1; across++, src++) {
-      int v1, v2, v3, v4;
-      v1 = (int)*src;
-      v2 = (int)*(src + 1);
-      v3 = (int)*(src + width);
-      v4 = (int)*(src + width + 1);
-      if (!(v1 == 0 && v2 == 0 && v3 == 0 && v4 == 0)) {
-        *dest++ = map_color(v1);
-        *dest   = map_color((v1 + v2) >> 1);
-        dest   += bigwidth - 1;
-        *dest++ = map_color((v1 + v3) >> 1);
-        *dest   = map_color((v1 + v4) >> 1);
-        dest   -= bigwidth - 1;
+  for (pixel = bigpix = down = 0;
+       down < height - 2;
+       down++, pixel += 2, bigpix += bigwidth+4)
+    for (across = 0; across < width-2; across++, pixel++, bigpix+=2) {
+      int gradx, grady, gradx1, grady1;
+      int x0, x1, x2, y1, y2;
+
+      x0 = src[pixel];
+      x1 = src[pixel + 1];
+      x2 = src[pixel + 2];
+      y1 = src[pixel + width];
+      y2 = src[pixel + 2*width];
+
+      gradx = (x1 - x0);
+      grady = (y1 - x0);
+      gradx1= (x2 - x1);
+      grady1= (y2 - y1);
+      gradx1 = 1 + (gradx + gradx1) / 2;
+      grady1 = 1 + (grady + grady1) / 2;
+
+      if ((2*across+MIN(gradx,gradx1) < 0) ||
+          (2*across+MAX(gradx,gradx1) >= bigwidth)) {
+        gradx = 0;
+        gradx1= 1;
+      }
+      if ((2*down+MIN(grady,grady1) < 0) ||
+          (2*down+MAX(grady,grady1) >= bigheight)) {
+        grady = 0;
+        grady1 = 1;
+      }
+
+      if ((gradx == 0 && gradx1 == 1 && grady == 0 && grady1 == 1)) {
+        if (dirty[pixel] > 0)
+          dirty[pixel]--;
       } else
-        dest += 2;
+        dirty[pixel] = DIRTY;
+
+      if (dirty[pixel] > 0) {
+        unsigned short *dest = buffer + bigpix;
+        unsigned short *image = orig + bigpix;
+        int dx;
+
+        /* light from top */
+        if (4-light >= 0)
+          dx = (grady + (src[pixel+width+1]-x1)) >> (4-light);
+        else
+          dx = (grady + (src[pixel+width+1]-x1)) << (light-4);
+
+        grady *= bigwidth;
+        grady1*= bigwidth;
+
+        if (dx != 0) {
+          *dest++ = dobright(dx, *(image + gradx  + grady));
+          *dest   = dobright(dx, *(image + gradx1 + grady));
+          dest   += bigwidth - 1;
+          *dest++ = dobright(dx, *(image + gradx  + grady1));
+          *dest   = dobright(dx, *(image + gradx1 + grady1));
+        } else {
+          *dest++ = *(image + gradx  + grady);
+          *dest   = *(image + gradx1 + grady);
+          dest   += bigwidth - 1;
+          *dest++ = *(image + gradx  + grady1);
+          *dest   = *(image + gradx1 + grady1);
+        }
+      }
     }
 }
-*/
+#endif
 
 
 /*      -------------------------------------------             */
@@ -319,6 +452,7 @@ setup_X(Display * disp, Window win)
     gcflags = GCForeground | GCFunction;
     if (use_subwindow_mode_p(xwa.screen, window))	/* see grabscreen.c */
       gcflags |= GCSubwindowMode;
+
     gc = XCreateGC(display, window, gcflags, &gcv);
 
     grab_screen_image(xwa.screen, window);
@@ -329,12 +463,12 @@ setup_X(Display * disp, Window win)
     XGCValues gcv;
 
     gc = XCreateGC(display, window, 0, &gcv);
-    if (!gc) {
-      fprintf(stderr, "XCreateGC failed\n");
-      exit(1);
-    }
-
     orig_map = 0;
+  }
+
+  if (!gc) {
+    fprintf(stderr, "XCreateGC failed\n");
+    exit(1);
   }
 
   buffer_map = 0;
@@ -371,6 +505,9 @@ DisplayImage(void)
 #endif /* HAVE_XSHM_EXTENSION */
     XPutImage(display, window, gc, buffer_map, 0, 0, 0, 0,
 	      bigwidth, bigheight);
+
+  XSync(display,False);
+  screenhack_handle_events(display);
 }
 
 
@@ -480,11 +617,21 @@ init_oily_colors(void)
 /*      -------------------------------------------             */
 
 
+static void
+init_cos_tab(void)
+{
+  int i;
+  for (i = 0; i < TABLE; i++)
+    cos_tab[i] = cos(i * M_PI/2 / TABLE);
+}
+
+
 /* Shape of drop to add */
 static double
 sinc(double x)
 {
 #if 1
+  /* cosine hump */
   int i;
   i = (int)(x * TABLE + 0.5);
   if (i >= TABLE) i = (TABLE-1) - (i-(TABLE-1));
@@ -526,7 +673,7 @@ add_drop(ripple_mode mode, int drop)
   int newx, newy, dheight;
   int radius = MIN(width, height) / 50;
   /* Don't put drops too near the edge of the screen or they get stuck */
-  int border = 6;
+  int border = 8;
 
   switch (mode) {
   default:
@@ -593,23 +740,15 @@ init_ripples(int ndrops, int splash)
   bufferB = (short *)calloc(width * height, sizeof(*bufferB));
   temp = (short *)calloc(width * height, sizeof(*temp));
 
-  dirty_buffer = (char *)malloc(width * height);
-  memset(dirty_buffer, DIRTY, width * height);
+  dirty_buffer = (char *)calloc(width * height, sizeof(*dirty_buffer));
 
   for (i = 0; i < ndrops; i++)
     add_drop(ripple_blob, splash);
 
   if (transparent) {
     /* There's got to be a better way of doing this  XCopyArea? */
-    int across, down;
-    for (down = 0; down < bigheight-4; down++)
-      for (across = bigwidth-4; across < bigwidth; across++)
-	XPutPixel(buffer_map, across, down,
-		  XGetPixel(orig_map, across, down));
-    for (down = bigheight-4; down < bigheight; down++)
-      for (across = 0; across < bigwidth; across++)
-	XPutPixel(buffer_map, across, down,
-		  XGetPixel(orig_map, across, down));
+    memcpy(buffer_map->data, orig_map->data,
+           bigheight * buffer_map->bytes_per_line);
   } else {
     int across, down, color;
 
@@ -635,7 +774,7 @@ init_ripples(int ndrops, int splash)
 
   [ u(t+1)-2u(t)+u(t-1) ] / dt = a [ u(x+1)+u(x-1)+u(y+1)+u(y-1)-4u ] / h
 
- where dt = time step squared, h= dx*dy = mesh resolution squared.
+ where dt = time step squared, h = dx*dy = mesh resolution squared.
 
  From where u(t+1) may be calculated as:
 
@@ -677,8 +816,6 @@ ripple(int fluidity)
     toggle = 0;
   }
 
-#if 1
-  /* Traditional, squarer ripples */
   switch (count) {
   case 0: case 1:
     pixel = 1 * width + 1;
@@ -693,13 +830,16 @@ ripple(int fluidity)
     pixel = 1 * width + 1;
     for (down = 1; down < height - 1; down++, pixel += 2 * 1)
       for (across = 1; across < width - 1; across++, pixel++) {
-        int damp =
-          (temp[pixel - 1] + temp[pixel + 1] +
-           temp[pixel - width] + temp[pixel + width] +
-           temp[pixel - width - 1] + temp[pixel - width + 1] +
-           temp[pixel + width - 1] + temp[pixel + width + 1] +
-           temp[pixel]) / 9;
-        dest[pixel] = damp - (damp >> fluidity);
+        if (temp[pixel] != 0) { /* Close enough for government work */
+          int damp =
+            (temp[pixel - 1] + temp[pixel + 1] +
+             temp[pixel - width] + temp[pixel + width] +
+             temp[pixel - width - 1] + temp[pixel - width + 1] +
+             temp[pixel + width - 1] + temp[pixel + width + 1] +
+             temp[pixel]) / 9;
+          dest[pixel] = damp - (damp >> fluidity);
+        } else
+          dest[pixel] = 0;
       }
     break;
   case 2: case 3:
@@ -714,21 +854,6 @@ ripple(int fluidity)
     break;
   }
   if (++count > 3) count = 0;
-#else
-  /* Rounder ripples, but with strange cross effect in center */
-  pixel = 1 * width + 1;
-  for (down = 1; down < height - 1; down++, pixel += 2 * 1)
-    for (across = 1; across < width - 1; across++, pixel++) {
-      int grad;
-      grad =
-        (src[pixel - 1] + src[pixel + 1] +
-         src[pixel - width] + src[pixel + width] +
-         src[pixel - width - 1] + src[pixel - width + 1] +
-         src[pixel + width - 1] + src[pixel + width + 1]) / 2;
-      dest[pixel] = grad/2 - dest[pixel];
-      dest[pixel] -= (dest[pixel] >> fluidity);
-    }
-#endif
 
   if (transparent)
     draw_transparent(dest);
@@ -792,39 +917,48 @@ void screenhack(Display *disp, Window win)
   int stir = get_boolean_resource("stir", "Boolean");
   int fluidity = get_integer_resource("fluidity", "Integer");
   transparent = get_boolean_resource("water", "Boolean");
+#ifdef HAVE_XSHM_EXTENSION
   use_shm = get_boolean_resource("useSHM", "Boolean");
+#endif /* HAVE_XSHM_EXTENSION */
   light = get_integer_resource("light", "Integer");
 
   if (fluidity <= 1) fluidity = 1;
   if (fluidity > 16) fluidity = 16; /* 16 = sizeof(short) */
   if (light < 0) light = 0;
 
-  { int i;
-  for (i = 0; i < TABLE; i++)
-    cos_tab[i] = cos(i * M_PI/2 / TABLE);
-  }
-
+  init_cos_tab();
   setup_X(disp, win);
 
   ncolors = get_integer_resource ("colors", "Colors");
   if (0 == ncolors)		/* English spelling? */
     ncolors = get_integer_resource ("colours", "Colors");
+
+  if (ncolors > sizeof(ctab)/sizeof(*ctab))
+    ncolors = sizeof(ctab)/sizeof(*ctab);
+
   if (oily)
     init_oily_colors();
   else
     init_linear_colors();
 
   if (transparent && light > 0) {
-    bright = dobright;
+    int maxbits;
+    draw_transparent = draw_transparent_light;
     set_mask(visual->red_mask,   &rmask, &rshift);
     set_mask(visual->green_mask, &gmask, &gshift);
     set_mask(visual->blue_mask,  &bmask, &bshift);
-    if (rmask == 0) bright = nobright;
+    if (rmask == 0) draw_transparent = draw_transparent_vanilla;
+
+    /* Adjust the shift value "light" when we don't have 8 bits per colour */
+    maxbits = MIN(MIN(BITCOUNT(rmask), BITCOUNT(gmask)), BITCOUNT(bmask));
+    light -= 8-maxbits;
+    if (light < 0) light = 0;
   } else
-    bright = nobright;
+    draw_transparent = draw_transparent_vanilla;
 
   init_ripples(0, -SPLASH); /* Start off without any drops */
 
+  /* Main drawing loop */
   while (1) {
     if (rate > 0 && (iterations % rate) == 0)
       add_drop(ripple_blob, -SPLASH);
@@ -836,8 +970,6 @@ void screenhack(Display *disp, Window win)
     ripple(fluidity);
     DisplayImage();
 
-    XSync(display,False);
-    screenhack_handle_events(display);
     if (delay)
       usleep(delay);
 

@@ -424,8 +424,8 @@ void generate_stars(int width, int height)
 	{
 /*   	  size = (drand48()+size_range[0]) * size_range[1]/2.; */
 /*    glPointSize(size); */
-	  x = drand48()*width;
-	  y = drand48()*height;
+	  x = random()*width;
+	  y = random()*height;
 	  glVertex2f(x,y);
 	}
   glEnd();

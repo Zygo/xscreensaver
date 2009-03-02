@@ -246,7 +246,7 @@ screenhack (Display *dpy, Window window)
   int delay = get_integer_resource ("delay", "Integer");
   int ncolors = get_integer_resource ("ncolors", "Integer");
   Bool dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
-  XColor colors[255];
+  XColor *colors = 0;
   XGCValues gcv;
   GC erase_gc = 0;
   int i;
@@ -260,6 +260,8 @@ screenhack (Display *dpy, Window window)
   XGetWindowAttributes (dpy, window, &xgwa);
 
   transparent_p = get_boolean_resource("transparent", "Transparent");
+
+  colors = (XColor *) calloc (sizeof(*colors), ncolors);
 
   if (get_boolean_resource("mono", "Boolean"))
     {

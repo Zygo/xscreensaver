@@ -272,8 +272,6 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   if(!mono) {
     c->pal = calloc(c->colors, sizeof(XColor));
 
-    srand48(time(NULL));
-
     gray = get_boolean_resource("gray", "Boolean");
     if(!gray) {
       H[0] = frand(360.0); 

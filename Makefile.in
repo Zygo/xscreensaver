@@ -161,7 +161,7 @@ update_spec_version::
 	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
 	echo -n "Updating version number in $$S to \"$$V\"... " ;	    \
 	T=/tmp/xs.$$$$ ;						    \
-	sed "s/^\(Version:[^0-9]*\)\(.*\)/\1$$V/"			    \
+	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$V/"		    \
 	  < $$S > $$T ;							    \
 	if cmp -s $$S $$T ; then					    \
 	  echo "unchanged." ;						    \
@@ -172,17 +172,17 @@ update_spec_version::
 	rm $$T
 
 rpm::
-	@								    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
-  DIR=/usr/src/redhat ;							    \
-  cp -p xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;			    \
-  rpm -ba xscreensaver.spec ;						    \
-  rm -f $$DIR/xscreensaver-$$VERS.tar.gz ;				    \
-  rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				    \
-  mv $$DIR/RPMS/i386/xscreensaver-$$VERS-*.rpm . ;			    \
-  mv $$DIR/SRPMS/xscreensaver-$$VERS-*.rpm . ;				    \
-  echo '' ;								    \
-  ls -lFG xscreensaver-$$VERS-*.rpm
+	@								   \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ; \
+  DIR=/usr/src/redhat ;							   \
+  cp -p xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;			   \
+  rpm --define "USE_GL yes" -ba xscreensaver.spec ;			   \
+  rm -f $$DIR/xscreensaver-$$VERS.tar.gz ;				   \
+  rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				   \
+  mv $$DIR/SRPMS/xscreensaver*-$$VERS-*.rpm . ;				   \
+  mv $$DIR/RPMS/i386/xscreensaver*-$$VERS-*.rpm . ;			   \
+  echo '' ;								   \
+  ls -lFG xscreensaver*-$$VERS-*.rpm
 
 test-tar::
 	@								    \

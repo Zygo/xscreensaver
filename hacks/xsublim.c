@@ -458,8 +458,10 @@ int main(int argc,char* argv[])
 		signal(sig_Number,xsublim_Sig_Catch);
 	}
 
-	/* Randomize */
-	srandom((int)time((time_t*)0));
+	/* Randomize -- only need to do this here because this program
+           doesn't use the `screenhack.h' or `lockmore.h' APIs. */
+# undef ya_rand_init
+        ya_rand_init ((int) time ((time_t *) 0));
 
 	/* Handle all the X nonsense */
 #if defined(__sgi)

@@ -47,9 +47,14 @@ static char stderr_buffer [4096];
 static char *stderr_tail = 0;
 static time_t stderr_last_read = 0;
 
+static int stderr_stdout_read_fd = -1;
+
 static void make_stderr_overlay_window (saver_screen_info *);
 
 
+/* Recreates the stderr window or GCs: do this when the xscreensaver window
+   on a screen has been re-created.
+ */
 void
 reset_stderr (saver_screen_info *ssi)
 {
@@ -75,6 +80,10 @@ reset_stderr (saver_screen_info *ssi)
   ssi->stderr_cmap = 0;
 }
 
+/* Erases any stderr text overlaying the screen (if possible) and resets
+   the stderr output cursor to the upper left.  Do this when the xscreensaver
+   window is cleared.
+ */
 void
 clear_stderr (saver_screen_info *ssi)
 {
@@ -86,6 +95,8 @@ clear_stderr (saver_screen_info *ssi)
 }
 
 
+/* Draws the string on the screen's window.
+ */
 static void
 print_stderr_1 (saver_screen_info *ssi, char *string)
 {
@@ -235,6 +246,8 @@ make_stderr_overlay_window (saver_screen_info *ssi)
 }
 
 
+/* Draws the string on each screen's window as error text.
+ */
 static void
 print_stderr (saver_info *si, char *string)
 {
@@ -250,6 +263,9 @@ print_stderr (saver_info *si, char *string)
 }
 
 
+/* Polls the stderr buffer every few seconds and if it finds any text,
+   writes it on all screens.
+ */
 static void
 stderr_popup_timer_fn (XtPointer closure, XtIntervalId *id)
 {
@@ -272,6 +288,9 @@ stderr_popup_timer_fn (XtPointer closure, XtIntervalId *id)
 }
 
 
+/* Called when data becomes available on the stderr pipe.  Copies it into
+   stderr_buffer where stderr_popup_timer_fn() can find it later.
+ */
 static void
 stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
 {
@@ -280,6 +299,9 @@ stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
   int left;
   int size;
   int read_this_time = 0;
+
+  if (!fd || *fd < 0 || *fd != stderr_stdout_read_fd)
+    abort();
 
   if (stderr_tail == 0)
     stderr_tail = stderr_buffer;
@@ -333,6 +355,10 @@ stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
     }
 }
 
+/* If stderr capturing is desired, this replaces `stdout' and `stderr'
+   with a pipe, so that any output written to them will show up on the
+   screen as well as on the original value of those streams.
+ */
 void
 initialize_stderr (saver_info *si)
 {
@@ -439,6 +465,31 @@ initialize_stderr (saver_info *si)
 	}
     }
 
+  stderr_stdout_read_fd = in;
   XtAppAddInput (si->app, in, (XtPointer) XtInputReadMask, stderr_callback,
 		 (XtPointer) si);
+}
+
+
+/* If there is anything in the stderr buffer, flush it to the real stderr.
+   This does no X operations.  Call this when exiting to make sure any
+   last words actually show up.
+ */
+void
+shutdown_stderr (saver_info *si)
+{
+  if (!real_stderr || stderr_stdout_read_fd < 0)
+    return;
+
+  stderr_callback ((XtPointer) si, &stderr_stdout_read_fd, 0);
+
+  if (stderr_buffer &&
+      stderr_tail &&
+      stderr_buffer < stderr_tail)
+    {
+      *stderr_tail = 0;
+      fprintf (real_stderr, "%s", stderr_buffer);
+      fflush (real_stderr);
+      stderr_tail = stderr_buffer;
+    }
 }

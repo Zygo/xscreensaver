@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -113,34 +113,43 @@ install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 install-program: $(EXES)
-	@exes="$(EXES)" ;						\
-	if [ ! -d $(HACKDIR) ]; then $(INSTALL_DIRS) $(HACKDIR) ; fi ;	\
+	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	 fi ;								\
+	exes="$(EXES)" ;						\
 	for program in $$exes; do					\
-	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
-	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
+	  echo $(INSTALL_PROGRAM) $$program				\
+	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	  $(INSTALL_PROGRAM) $$program					\
+	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	done
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
+	if [ ! -d $(install_prefix)$(man1dir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(man1dir) ;			\
+	 fi ;								\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
-	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
+	   $(install_prefix)$(man1dir)/$$instname ;			\
+	  $(INSTALL_DATA) $(srcdir)/$$man				\
+	    $(install_prefix)$(man1dir)/$$instname ;			\
 	done
 
 uninstall-program:
-	@for program in $(EXES); do					\
-	  echo rm -f $(HACKDIR)/$$program ;				\
-	  rm -f $(HACKDIR)/$$program ;					\
+	@exes="$(EXES)" ;						\
+	for program in $$exes; do					\
+	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
+	  rm -f $(install_prefix)$(HACKDIR)/$$program ;			\
 	done
 
 uninstall-man:
 	@men="$(MEN)" ;							\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(man1dir)/$$instname ;				\
-	  rm -f $(man1dir)/$$instname ;					\
+	  echo rm -f $(install_prefix)$(man1dir)/$$instname ;		\
+	  rm -f $(install_prefix)$(man1dir)/$$instname ;		\
 	done
 
 clean:

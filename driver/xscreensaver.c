@@ -1056,7 +1056,8 @@ main (int argc, char **argv)
   memset(si, 0, sizeof(*si));
   global_si_kludge = si;	/* I hate C so much... */
 
-  srandom ((int) time ((time_t *) 0));
+# undef ya_rand_init
+  ya_rand_init ((int) time ((time_t *) 0));
 
   save_argv (argc, argv);
   set_version_string (si, &argc, argv);

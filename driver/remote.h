@@ -14,7 +14,7 @@
 #define _XSCREENSAVER_REMOTE_H_
 
 extern int xscreensaver_command (Display *dpy, Atom command, long arg,
-				 Bool verbose_p);
+				 Bool verbose_p, char **error_ret);
 
 extern void server_xscreensaver_version (Display *dpy,
 					 char **version_ret,
