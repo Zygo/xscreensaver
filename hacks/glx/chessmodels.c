@@ -69,7 +69,7 @@ void revolve_line(double *trace_r, double *trace_h, double max_ih, int rot) {
     pradius = trace_r[0] * piece_size;
     pheight = trace_h[0] * piece_size;
     
-    for(p = 0; p < npoints; ++p) {
+    for(p = 1; p < npoints; ++p) {
       radius = trace_r[p] * piece_size;
       height = trace_h[p] * piece_size;
 

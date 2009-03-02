@@ -1,6 +1,6 @@
 /* kpasswd.c --- verify kerberos passwords.
  * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-1997, 1998, 2000
+ * xscreensaver, Copyright (c) 1993-1997, 1998, 2000, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -27,7 +27,20 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef HAVE_KERBEROS5
+/* I'm not sure if this is exactly the right test...
+   Might __APPLE__ be defined if this is apple hardware, but not
+   an Apple OS?
+
+   Thanks to Jan Kujawa <kujawa@ultranet.com> for the MacOS X code.
+ */
+#ifdef __APPLE__
+# define HAVE_DARWIN
+#endif
+
+
+#if defined(HAVE_DARWIN)
+# include <Kerberos/Kerberos.h>
+#elif defined(HAVE_KERBEROS5)
 # include <kerberosIV/krb.h>
 # include <kerberosIV/des.h>
 #else /* !HAVE_KERBEROS5 (meaning Kerberos 4) */
@@ -56,10 +69,14 @@
 #define False 0
 
 /* The user information we need to store */
-static char realm[REALM_SZ];
-static char  name[ANAME_SZ];
-static char  inst[INST_SZ];
-static char *tk_file;
+#ifdef HAVE_DARWIN
+ static KLPrincipal princ;
+#else /* !HAVE_DARWIN */
+ static char realm[REALM_SZ];
+ static char  name[ANAME_SZ];
+ static char  inst[INST_SZ];
+ static char *tk_file;
+#endif /* !HAVE_DARWIN */
 
 
 /* Called at startup to grab user, instance, and realm information
@@ -83,6 +100,20 @@ static char *tk_file;
 Bool
 kerberos_lock_init (int argc, char **argv, Bool verbose_p)
 {
+# ifdef HAVE_DARWIN
+
+    KLBoolean found;
+    return ((klNoErr == (KLCacheHasValidTickets (NULL, kerberosVersion_Any,
+                                                 &found, &princ, NULL)))
+            && found);
+
+# else /* !HAVE_DARWIN */
+
+    /* Perhaps we should be doing it the Mac way (above) all the time?
+       The following code assumes Unix-style file-based Kerberos credentials
+       cache, which Mac OS X doesn't use.  But is there any real reason to
+       do it this way at all, even on other Unixen?
+     */
     int k_errno;
     
     memset(name, 0, sizeof(name));
@@ -120,6 +151,8 @@ kerberos_lock_init (int argc, char **argv, Bool verbose_p)
 
     /* success */
     return True;
+
+# endif /* !HAVE_DARWIN */
 }
 
 
@@ -145,6 +178,15 @@ key_to_key(char *user, char *instance, char *realm, char *passwd, C_Block key)
 Bool
 kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 {
+# ifdef HAVE_DARWIN
+    return (klNoErr ==
+            KLAcquireNewInitialTicketsWithPassword (princ, NULL,
+                                                    typed_passwd, NULL));
+# else /* !HAVE_DARWIN */
+
+    /* See comments in kerberos_lock_init -- should we do it the Mac Way
+       on all systems?
+     */
     C_Block mitkey;
     Bool success;
     char *newtkfile;
@@ -182,6 +224,8 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
     /* Did we verify successfully? */
     return success;
+
+# endif /* !HAVE_DARWIN */
 }
 
 #endif /* NO_LOCKING -- whole file */

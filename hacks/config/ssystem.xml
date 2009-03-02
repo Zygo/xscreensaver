@@ -18,10 +18,9 @@ vary.
 SSystem was once available at &lt;http://www1.las.es/~amil/ssystem/&gt;,
 but is now gone.  You may still be able to find copies elsewhere.
 
-SSystem has since evolved into two different programs: OpenUniverse
-(http://openuniverse.sourceforge.net/) and Celestia
-(http://www.shatters.net/celestia/).  Sadly, neither of these programs
-work with xscreensaver at all.  You are encouraged to nag their authors
-into adding xscreensaver support!
+SSystem has since evolved into Celestia, found at
+&lt;http://www.shatters.net/celestia/&gt;.  Sadly, Celestia does not work
+with xscreensaver at all.  You are encouraged to nag the authors into
+adding xscreensaver support!
   </_description>
 </screensaver>

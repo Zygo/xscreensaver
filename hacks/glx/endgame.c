@@ -468,7 +468,7 @@ void draw_chess(ModeInfo *mi) {
 
   if(done)
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 
-	     done == 1 ? 1.0+0.1*count : 99.0/count);
+	     ( done == 1 || count == 0 ) ? 1.0+0.1*count : 99.0/count);
 
   if(++count == 100) {
     if(!done) {

@@ -97,7 +97,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
-		  barcode.c
+		  barcode.c piecewise.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -122,7 +122,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
-		  barcode.o
+		  barcode.o piecewise.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -139,7 +139,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
-		  metaballs eruption popsquares barcode \
+		  metaballs eruption popsquares barcode piecewise \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -180,7 +180,8 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          wander.man webcollage.man whirlwindwarp.man whirlygig.man \
 	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
 	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
-	          zoom.man halftone.man eruption.man metaballs.man barcode.man
+	          zoom.man halftone.man eruption.man metaballs.man \
+		  barcode.man piecewise.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  config/README \
@@ -741,6 +742,9 @@ popsquares:	popsquares.o	$(HACK_OBJS) $(DBE) $(COL)
 barcode:	barcode.o	$(HACK_OBJS) $(HSV)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
 
+piecewise:	piecewise.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1174,6 +1178,8 @@ petri.o: ../config.h
 petri.o: $(srcdir)/screenhack.h
 phosphor.o: ../config.h
 phosphor.o: $(srcdir)/screenhack.h
+piecewise.o: ../config.h
+piecewise.o: $(srcdir)/screenhack.h
 polyominoes.o: ../config.h
 polyominoes.o: $(srcdir)/screenhack.h
 polyominoes.o: $(srcdir)/xlockmoreI.h

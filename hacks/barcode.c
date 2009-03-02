@@ -21,15 +21,15 @@
 #include "screenhack.h"
 #include <X11/Xutil.h>
 
+#include <time.h>
+#include <sys/time.h>
+#include <ctype.h>
 
 
 /* parameters that are user configurable */
 
 /* delay (usec) between iterations */
 static int delay;
-
-static int scroll_p;
-
 
 
 /* non-user-modifiable immutable definitions */
@@ -42,7 +42,7 @@ static int scroll_p;
 
 #define BARCODE_WIDTH (164)
 #define BARCODE_HEIGHT (69)
-#define MAX_MAG (6)
+#define MAX_MAG (7)
 
 /* width and height of the window */
 static int windowWidth;
@@ -55,6 +55,8 @@ static Screen *screen;          /* the screen to draw on */
 static Colormap cmap;           /* the colormap of the window */
 
 static GC theGC;                /* GC for drawing */
+unsigned long fg_pixel;
+static Bool button_down_p;
 
 
 
@@ -91,247 +93,281 @@ static int barcode_max;   /* the maximum number of active barcodes */
 static XImage *theImage;  /* ginormo image for drawing */
 static Bitmap *theBitmap; /* ginormo bitmap for drawing */
 
+static enum { BC_SCROLL, BC_GRID, BC_CLOCK12, BC_CLOCK24 } mode;
+
 /* a bunch of words */
 static char *words[] = 
 {
-    "abdomen",
-    "abeyance",
-    "abhorrent",
-    "abrasive",
-    "abstract",
-    "acid",
-    "addiction",
-    "alertness",
-    "Algeria",
-    "anxiety",
-    "aorta",
-    "argyle socks",
-    "attrition",
-    "bamboo",
-    "bangle",
-    "bankruptcy",
-    "baptism",
-    "beer",
-    "bellicose",
-    "bells",
-    "belly",
-    "bread",
-    "bubba",
-    "burrito",
-    "California",
-    "capybara",
-    "cardinality",
-    "caribou",
-    "carnage",
-    "chocolate",
-    "constriction",
-    "contrition",
-    "corpse",
-    "cowboy",
-    "cozy",
-    "crabapple",
-    "craziness",
-    "Death",
-    "Decker",
-    "decoded",
-    "decoy",
-    "defenestration",
-    "dependency",
-    "despair",
-    "desperation",
-    "disease",
-    "doberman",
-    "dreams",
-    "drench",
-    "drugs",
-    "easy",
-    "ebony",
-    "elliptic",
-    "eloquence",
-    "emergency",
-    "eureka",
-    "excommunicate",
-    "fat",
-    "fatherland",
-    "Faust",
-    "fear",
-    "fever",
-    "flatulence",
-    "fluff",
-    "fnord",
-    "freedom",
-    "fruit",
-    "fruit",
-    "gauche",
-    "gawk",
-    "gaze",
-    "gerbils",
-    "GOD",
-    "goggles",
-    "goobers",
-    "gorilla",
-    "halibut",
-    "handmaid",
-    "hapless",
-    "happiness",
-    "hate",
-    "helplessness",
-    "hermaphrodite",
-    "Hindi",
-    "hope",
-    "hysteria",
-    "icepick",
-    "ignorance",
-    "importance",
-    "impossibility",
-    "inkling",
-    "insurrection",
-    "intoxicant",
-    "ire",
-    "irritant",
-    "jade",
-    "jaundice",
-    "Joyce",
-    "kaput",
-    "kitchenette",
-    "kiwi",
-    "lathe",
-    "lattice",
-    "lemming",
-    "liquidation",
-    "love",
-    "lozenge",
-    "magazine",
-    "magnesium",
-    "malfunction",
-    "marmot",
-    "marshmallow",
-    "merit",
-    "mescaline",
-    "milk",
-    "mischief",
-    "mistrust",
-    "money",
-    "monkey",
-    "monkeybutter",
-    "multiple",
-    "nature",
-    "neuron",
-    "noise",
-    "nomenclature",
-    "nutria",
-    "obey",
-    "ocelot",
-    "offspring",
-    "overseer",
-    "pain",
-    "pajamas",
-    "passenger",
-    "passion",
-    "Passover",
-    "Prozac",
-    "peace",
-    "penance",
-    "persimmon",
-    "petticoat",
-    "pharmacist",
-    "pitchfork",
-    "plague",
-    "Poindexter",
-    "precept",
-    "prison",
-    "prophecy",
-    "quadratic",
-    "quagmire",
-    "quarantine",
-    "quartz",
-    "rabies",
-    "radish",
-    "rage",
-    "readout",
-    "reality",
-    "reject",
-    "rejection",
-    "respect",
-    "revolution",
-    "roadrunner",
-    "rule",
-    "sanguine",
-    "savor",
-    "scab",
-    "scalar",
-    "Scandinavia",
-    "security",
-    "sediment",
-    "sickness",
-    "silicone",
-    "slack",
-    "slander",
-    "slavery",
-    "sledgehammer",
-    "smelly socks",
-    "sorrow",
-    "stamen",
-    "standardization",
-    "subversion",
-    "suffering",
-    "surrender",
-    "surveilance",
-    "synthesis",
-    "tenant",
-    "tendril",
-    "terror",
-    "terrorism",
-    "terrorist",
-    "the unknown",
-    "toast",
-    "topography",
-    "truism",
-    "turgid",
-    "underbrush",
-    "underling",
-    "unguent",
-    "unusual",
-    "unworthy",
-    "uplink",
-    "urge",
-    "valor",
-    "variance",
-    "vastness",
-    "vaudeville",
-    "vegetarian",
-    "venom",
-    "verifiability",
-    "viagra",
-    "vibrator",
-    "victim",
-    "vignette",
-    "villainy",
-    "W.A.S.T.E.",
-    "wagon",
-    "waiver",
-    "warehouse",
-    "waste",
-    "waveform",
-    "whiffle ball",
-    "whorl",
-    "windmill",
-    "wistful",
-    "worm",
-    "worship",
-    "worship",
-    "Xanax",
-    "Xerxes",
-    "Xhosa",
-    "xylophone",
-    "yellow",
-    "yesterday",
-    "your nose",
-    "Zanzibar",
-    "zeal",
-    "zebra",
-    "zest",
-    "zinc"
+  "abdomen",
+  "abeyance",
+  "abhorrence",
+  "abrasion",
+  "abstraction",
+  "acid",
+  "addiction",
+  "alertness",
+  "Algeria",
+  "anxiety",
+  "aorta",
+  "argyle socks",
+  "attrition",
+  "axis of evil",
+  "bamboo",
+  "bangle",
+  "bankruptcy",
+  "baptism",
+  "beer",
+  "bellicosity",
+  "bells",
+  "belly",
+  "bliss",
+  "bogosity",
+  "boobies",
+  "boobs",
+  "booty",
+  "bread",
+  "bubba",
+  "burrito",
+  "California",
+  "capybara",
+  "cardinality",
+  "caribou",
+  "carnage",
+  "children",
+  "chocolate",
+  "CLONE",
+  "cock",
+  "constriction",
+  "contrition",
+  "cop",
+  "corpse",
+  "cowboy",
+  "crabapple",
+  "craziness",
+  "cthulhu",
+  "Death",
+  "decepticon",
+  "deception",
+  "Decker",
+  "decoder",
+  "decoy",
+  "defenestration",
+  "democracy",
+  "dependency",
+  "despair",
+  "desperation",
+  "disease",
+  "disease",
+  "doberman",
+  "DOOM",
+  "dreams",
+  "dreams",
+  "drugs",
+  "easy",
+  "ebony",
+  "election",
+  "eloquence",
+  "emergency",
+  "eureka",
+  "excommunication",
+  "fat",
+  "fatherland",
+  "Faust",
+  "fear",
+  "fever",
+  "filth",
+  "flatulence",
+  "fluff",
+  "fnord",
+  "freedom",
+  "fruit",
+  "fruit",
+  "futility",
+  "gerbils",
+  "GOD",
+  "goggles",
+  "goobers",
+  "gorilla",
+  "halibut",
+  "handmaid",
+  "happiness",
+  "hate",
+  "helplessness",
+  "hemorrhoid",
+  "hermaphrodite",
+  "heroin",
+  "heroine",
+  "hope",
+  "hysteria",
+  "icepick",
+  "identity",
+  "ignorance",
+  "importance",
+  "individuality",
+  "inkling",
+  "insurrection",
+  "intoxicant",
+  "ire",
+  "irritant",
+  "jade",
+  "jaundice",
+  "Joyce",
+  "kidney stone",
+  "kitchenette",
+  "kiwi",
+  "lathe",
+  "lattice",
+  "lawyer",
+  "lemming",
+  "liquidation",
+  "lobbyist",
+  "love",
+  "lozenge",
+  "magazine",
+  "magnesium",
+  "malfunction",
+  "marmot",
+  "marshmallow",
+  "merit",
+  "merkin",
+  "mescaline",
+  "milk",
+  "mischief",
+  "mistrust",
+  "money",
+  "monkey",
+  "monkeybutter",
+  "nationalism",
+  "nature",
+  "neuron",
+  "noise",
+  "nomenclature",
+  "nutria",
+  "OBEY",
+  "ocelot",
+  "offspring",
+  "overseer",
+  "pain",
+  "pajamas",
+  "passenger",
+  "passion",
+  "Passover",
+  "peace",
+  "penance",
+  "persimmon",
+  "petticoat",
+  "pharmacist",
+  "PhD",
+  "pitchfork",
+  "plague",
+  "Poindexter",
+  "politician",
+  "pony",
+  "presidency",
+  "prison",
+  "prophecy",
+  "Prozac",
+  "punishment",
+  "punk rock",
+  "punk",
+  "pussy",
+  "quagmire",
+  "quarantine",
+  "quartz",
+  "rabies",
+  "radish",
+  "rage",
+  "readout",
+  "reality",
+  "rectum",
+  "reject",
+  "rejection",
+  "respect",
+  "revolution",
+  "roadrunner",
+  "rule",
+  "savor",
+  "scab",
+  "scalar",
+  "Scandinavia",
+  "schadenfreude",
+  "security",
+  "sediment",
+  "self worth",
+  "sickness",
+  "silicone",
+  "slack",
+  "slander",
+  "slavery",
+  "sledgehammer",
+  "smegma",
+  "smelly socks",
+  "sorrow",
+  "space program",
+  "stamen",
+  "standardization",
+  "stench",
+  "subculture",
+  "subversion",
+  "suffering",
+  "surrender",
+  "surveillance",
+  "synthesis",
+  "television",
+  "tenant",
+  "tendril",
+  "terror",
+  "terrorism",
+  "terrorist",
+  "the impossible",
+  "the unknown",
+  "toast",
+  "topography",
+  "truism",
+  "turgid",
+  "underbrush",
+  "underling",
+  "unguent",
+  "unusual",
+  "uplink",
+  "urge",
+  "valor",
+  "variance",
+  "vaudeville",
+  "vector",
+  "vegetarian",
+  "venom",
+  "verifiability",
+  "viagra",
+  "vibrator",
+  "victim",
+  "vignette",
+  "villainy",
+  "W.A.S.T.E.",
+  "wagon",
+  "waiver",
+  "warehouse",
+  "waste",
+  "waveform",
+  "whiffle ball",
+  "whorl",
+  "windmill",
+  "words",
+  "worm",
+  "worship",
+  "worship",
+  "Xanax",
+  "Xerxes",
+  "Xhosa",
+  "xylophone",
+  "yellow",
+  "yesterday",
+  "your nose",
+  "Zanzibar",
+  "zeal",
+  "zebra",
+  "zest",
+  "zinc"
 };
 
 #define WORD_COUNT (sizeof(words) / sizeof(char *))
@@ -785,10 +821,10 @@ int charToDigit (char c)
  * used in place of any non-digit character */
 void drawDigitChar (Bitmap *b, int x, int y, char c)
 {
+  if (mode != BC_CLOCK24 &&
+      mode != BC_CLOCK12)
     if ((c < '0') || (c > '9'))
-    {
-	c = '0';
-    }
+      c = '0';
 
     bitmapDrawChar5x8 (b, x, y, c);
 }
@@ -881,7 +917,8 @@ void drawUpcEanSupplementalBars (Bitmap *upcBitmap, char *digits,
 	}
 	default:
 	{
-	    printf("Bad supplement\n");
+	    fprintf (stderr, "%s: bad supplement (%d digits)\n",
+                     progname, len);
 	    exit(1);
 	    break;
 	}
@@ -1004,27 +1041,46 @@ void drawUpcEBars (Bitmap *upcBitmap, char *digits, int x, int y,
     int i;
     int parityPattern = upcELastDigit[charToDigit(digits[7])];
 
+    int clockp = (mode == BC_CLOCK12 || mode == BC_CLOCK24);
+
     if (digits[0] == '1')
     {
 	parityPattern = ~parityPattern;
     }
 
     /* header */
-    bitmapVlin (upcBitmap, x, y, guardY2);
+    bitmapVlin (upcBitmap, x,     y, guardY2);
     bitmapVlin (upcBitmap, x + 2, y, guardY2);
 
     /* trailer */
-    bitmapVlin (upcBitmap, x + 46, y, guardY2);
-    bitmapVlin (upcBitmap, x + 48, y, guardY2);
-    bitmapVlin (upcBitmap, x + 50, y, guardY2);
+    bitmapVlin (upcBitmap, x + 46 + (clockp?8:0), y, guardY2);
+    bitmapVlin (upcBitmap, x + 48 + (clockp?8:0), y, guardY2);
+    bitmapVlin (upcBitmap, x + 50 + (clockp?8:0), y, guardY2);
+
+    /* clock kludge -- this draws an extra set of dividers after
+       digits 2 and 4.  This makes this *not* be a valid bar code,
+       but, it looks pretty for the clock display.
+     */
+    if (clockp)
+      {
+        bitmapVlin (upcBitmap, x + 18,     y, guardY2);
+        bitmapVlin (upcBitmap, x + 18 + 2, y, guardY2);
+
+        bitmapVlin (upcBitmap, x + 36,     y, guardY2);
+        bitmapVlin (upcBitmap, x + 36 + 2, y, guardY2);
+      }
 
     for (i = 0; i < 6; i++)
     {
 	UpcSet lset = 
 	    (parityPattern & (1 << (5 - i))) ? UPC_LEFT_B : UPC_LEFT_A;
-
+        int off = (clockp
+                   ? (i < 2 ? 0 :
+                      i < 4 ? 4 :      /* extra spacing for clock bars */
+                              8)
+                   : 0);
         drawUpcEanDigit (upcBitmap,
-			 x + 3 + i*7, 
+			 x + 3 + i*7 + off,
 			 y,
 			 barY2,
 			 digits[i + 1], 
@@ -1381,7 +1437,8 @@ void processUpcEan (char *str, Bitmap *dest)
     }
     else
     {
-	printf ("Invalid supplement (must be 2 or 5 digits)\n");
+	fprintf (stderr, "%s: invalid supplement (must be 2 or 5 digits)\n",
+                 progname);
 	exit (1);
     }
 
@@ -1414,7 +1471,8 @@ void processUpcEan (char *str, Bitmap *dest)
 	}
 	default:
 	{
-	    printf("Bad barcode\n");
+	    fprintf (stderr, "%s: bad barcode (%d digits)\n",
+                     progname, digitCount);
 	    exit(1);
 	}
     }
@@ -1464,6 +1522,7 @@ static void setup (void)
 					 display, xgwa.colormap);
     gcv.foreground = get_pixel_resource ("foreground", "Foreground",
 					 display, xgwa.colormap);
+    fg_pixel = gcv.foreground;
     theGC = XCreateGC (display, window, GCForeground|GCBackground, &gcv);
 
     theBitmap = makeBitmap(BARCODE_WIDTH * MAX_MAG, BARCODE_HEIGHT * MAX_MAG);
@@ -1687,6 +1746,100 @@ static void updateGrid (void)
 }
 
 
+/* update the model for one iteration.
+   This one draws a clock.  By jwz.  */
+static void updateClock (void)
+{
+  Barcode *b = &barcodes[0];
+  int BW = 76 /* BARCODE_WIDTH  */;
+  int BH = BARCODE_HEIGHT;
+  int mag_x, mag_y;
+  int i;
+  time_t now = time ((time_t *) 0);
+  struct tm *tm = localtime (&now);
+  XWindowAttributes xgwa;
+  int ow = windowWidth;
+  int oh = windowHeight;
+
+  XGetWindowAttributes (display, window, &xgwa);
+  windowWidth = xgwa.width;
+  windowHeight = xgwa.height;
+
+  mag_x  = windowWidth  / BW;
+  mag_y  = windowHeight / BH;
+
+  barcode_count = 1;
+
+  b->mag = (mag_x < mag_y ? mag_x : mag_y);
+
+  if (b->mag > MAX_MAG) b->mag = MAX_MAG;
+  if (b->mag < 1) b->mag = 1;
+
+  b->x = (windowWidth  - (b->mag * BW      )) / 2;
+  b->y = (windowHeight - (b->mag * (BH + 9))) / 2;
+  b->pixel = fg_pixel;
+
+  if (!button_down_p)
+    sprintf (b->code, "0%02d%02d%02d?:",
+             (mode == BC_CLOCK24
+              ? tm->tm_hour
+              : (tm->tm_hour > 12
+                 ? tm->tm_hour - 12
+                 : (tm->tm_hour == 0
+                    ? 12
+                    : tm->tm_hour))),
+             tm->tm_min,
+             tm->tm_sec);
+  else
+    sprintf (b->code, "0%02d%02d%02d?:",
+             tm->tm_year % 100, tm->tm_mon+1, tm->tm_mday);
+
+  {
+    int vstart = 9;
+    int hh = BH + vstart;
+    char expandedDigits[13];
+
+    expandedDigits[0] = '\0';
+
+    expandToUpcADigits (b->code, expandedDigits);
+    if (expandedDigits[0] != '\0')
+      b->code[7] = expandedDigits[11];
+
+    bitmapClear (theBitmap);
+    drawUpcEBars (theBitmap, b->code, 6, 9, 59, 65);
+    for (i = 0; i < 6; i++)
+      {
+        int off = (i < 2 ? 0 :
+                   i < 4 ? 4 :
+                   8);
+        drawDigitChar (theBitmap, 11 + i*7 + off, hh - 16, b->code[i+1]);
+      }
+
+    if (!button_down_p)
+      {
+#if 0
+        char *days[] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+        char *s = days[tm->tm_wday];
+        bitmapDrawString5x8 (theBitmap, (BW - strlen (s)*5) / 2, 0, s);
+#endif
+        drawDigitChar (theBitmap,  0, hh - 23, (tm->tm_hour < 12 ? 'A' : 'P'));
+        drawDigitChar (theBitmap, 68, hh - 23, 'M');
+      }
+    else
+      {
+        char s[20];
+        sprintf (s, "%03d", tm->tm_yday);
+        bitmapDrawString5x8 (theBitmap, (BW - strlen (s)*5) / 2, 0, s);
+      }
+  }
+
+  bitmapScale (b->bitmap, theBitmap, b->mag);
+
+  if (ow != windowWidth || oh != windowHeight)
+    XClearWindow (display, window);
+}
+
+
 
 /* render and display the current model */
 static void renderFrame (void)
@@ -1715,13 +1868,34 @@ static void renderFrame (void)
 /* do one iteration */
 static void oneIteration (void)
 {
-    if (scroll_p)
+    if (mode == BC_SCROLL)
       scrollModel ();
-    else
+    else if (mode == BC_GRID)
       updateGrid ();
+    else if (mode == BC_CLOCK12 || mode == BC_CLOCK24)
+      updateClock ();
+    else
+      abort();
+
     renderFrame ();
 }
 
+
+static void barcode_handle_events (Display *dpy)
+{
+  int clockp = (mode == BC_CLOCK12 || mode == BC_CLOCK24);
+  while (XPending (dpy))
+    {
+      XEvent event;
+      XNextEvent (dpy, &event);
+      if (clockp && event.xany.type == ButtonPress)
+        button_down_p = True;
+      else if (clockp && event.xany.type == ButtonRelease)
+        button_down_p = False;
+      else
+        screenhack_handle_event (dpy, &event);
+    }
+}
 
 
 /* main and options and stuff */
@@ -1730,13 +1904,18 @@ char *progclass = "Barcode";
 
 char *defaults [] = {
     ".background:	black",
-    ".foreground:	white",
+    ".foreground:	green",
     "*delay:		10000",
     0
 };
 
 XrmOptionDescRec options [] = {
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
+  { "-scroll",           ".mode",           XrmoptionNoArg, "scroll"  },
+  { "-grid",             ".mode",           XrmoptionNoArg, "grid"    },
+  { "-clock",            ".mode",           XrmoptionNoArg, "clock"   },
+  { "-clock12",          ".mode",           XrmoptionNoArg, "clock12" },
+  { "-clock24",          ".mode",           XrmoptionNoArg, "clock24" },
   { 0, 0, 0, 0 }
 };
 
@@ -1744,15 +1923,34 @@ XrmOptionDescRec options [] = {
 static void initParams (void)
 {
     int problems = 0;
+    char *s;
 
     delay = get_integer_resource ("delay", "Delay");
     if (delay < 0)
     {
-	fprintf (stderr, "error: delay must be at least 0\n");
+	fprintf (stderr, "%s: delay must be at least 0\n", progname);
 	problems = 1;
     }
 
-    scroll_p = 1;
+    s = get_string_resource ("mode", "Mode");
+    if (!s || !*s || !strcasecmp (s, "scroll"))
+      mode = BC_SCROLL;
+    else if (!strcasecmp (s, "grid"))
+      mode = BC_GRID;
+    else if (!strcasecmp (s, "clock") ||
+             !strcasecmp (s, "clock12"))
+      mode = BC_CLOCK12;
+    else if (!strcasecmp (s, "clock24"))
+      mode = BC_CLOCK24;
+    else
+      {
+	fprintf (stderr, "%s: unknown mode \"%s\"\n", progname, s);
+	problems = 1;
+      }
+    free (s);
+
+    if (mode == BC_CLOCK12 || mode == BC_CLOCK24)
+      delay = 10000;  /* only update every 1/10th second */
 
     if (problems)
     {
@@ -1774,7 +1972,7 @@ void screenhack (Display *dpy, Window win)
     {
 	oneIteration ();
         XSync (dpy, False);
-        screenhack_handle_events (dpy);
+        barcode_handle_events (dpy);
 	usleep (delay);
     }
 }

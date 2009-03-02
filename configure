@@ -1317,6 +1317,18 @@ done
 
 ###############################################################################
 #
+#       Function to figure out how to turn off Objective C on MacOS X.
+#       (We have to do this to work around an Apple-specific gcc bug.)
+#
+###############################################################################
+
+
+
+
+
+
+###############################################################################
+#
 #       Function to figure out how to create directory trees.
 #
 ###############################################################################
@@ -2422,6 +2434,32 @@ echo "${ECHO_T}Disabling C++ comments in ANSI C code." >&6
    else
      # The old way:
      CC="$CC -Wp,-lang-c89"
+   fi
+  fi
+
+if test -n "$GCC"; then
+   if test -n "$GCC"; then
+   echo "$as_me:$LINENO: checking whether gcc accepts -no-cpp-precomp" >&5
+echo $ECHO_N "checking whether gcc accepts -no-cpp-precomp... $ECHO_C" >&6
+if test "${ac_cv_gcc_accepts_no_cpp_precomp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if ( ( gcc -E -no-cpp-precomp - </dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_cpp_precomp=no
+     else
+       ac_cv_gcc_accepts_no_cpp_precomp=yes
+     fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_cpp_precomp" >&5
+echo "${ECHO_T}$ac_cv_gcc_accepts_no_cpp_precomp" >&6
+   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
+  fi
+
+   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
+     echo "$as_me:$LINENO: result: Disabling Objective C extensions in ANSI C code." >&5
+echo "${ECHO_T}Disabling Objective C extensions in ANSI C code." >&6
+     CC="$CC -no-cpp-precomp"
    fi
   fi
 
@@ -6076,6 +6114,16 @@ if test $ac_cv_lib_gen_regcmp = yes; then
   X_LIBS="$X_LIBS -lgen"
 fi
 
+      fi
+
+    ;;
+    *-darwin*)
+
+      # On MacOS X (10.x with "fink"), many things are under /sw/.
+      #
+      if test -d /sw/include ; then
+        X_CFLAGS="-I/sw/include $X_CFLAGS"
+        X_LIBS="-L/sw/lib $X_LIBS"
       fi
     ;;
   esac
@@ -11012,7 +11060,91 @@ _ACEOF
   if test "$have_kerberos5" = yes ; then
     # from Matt Knopp <mhat@infocalypse.netlag.com>
     # (who got it from amu@mit.edu)
-    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcrypt -lcom_err"
+
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcom_err"
+
+    # jwz: MacOS X uses -lkrb5, but not -lcrypt
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for crypt in -lcrypt" >&5
+echo $ECHO_N "checking for crypt in -lcrypt... $ECHO_C" >&6
+if test "${ac_cv_lib_crypt_crypt+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypt  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char crypt ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+crypt ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_crypt_crypt=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_crypt_crypt=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_crypt_crypt" >&5
+echo "${ECHO_T}$ac_cv_lib_crypt_crypt" >&6
+if test $ac_cv_lib_crypt_crypt = yes; then
+  PASSWD_LIBS="$PASSWD_LIBS -lcrypt"
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+
   elif test "$have_kerberos" = yes ; then
     # from Tim Showalter <tjs@psaux.com> for FreeBSD 4.2
     PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes -lcom_err"
@@ -12720,15 +12852,16 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_gtk_version_string" >&5
 echo "${ECHO_T}$ac_cv_gtk_version_string" >&6
       ac_gtk_version_string=$ac_cv_gtk_version_string
+      parse_gtk_version_string
     fi
 
-    parse_gtk_version_string
-
-    if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
-    then
-      have_gtk=no
-      have_gnome=no
-      jurassic_gtk=yes
+    if test "$have_gtk" = yes; then
+      if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
+      then
+        have_gtk=no
+        have_gnome=no
+        jurassic_gtk=yes
+      fi
     fi
 
     if test "$have_gtk" = yes; then
@@ -12768,7 +12901,7 @@ echo $ECHO_N "checking for Gnome capplet includes... $ECHO_C" >&6
       if test "${ac_cv_gnome_config_cflags+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if ( $gnome_config --cflags $gnome_config_libs >/dev/null 2>&1 | \
+  if ( $gnome_config --cflags $gnome_config_libs 2>&1 | \
               grep Unknown >/dev/null ) ; then
            ac_cv_gnome_config_cflags=''
          else
@@ -12793,7 +12926,7 @@ echo $ECHO_N "checking for Gnome capplet libs... $ECHO_C" >&6
       if test "${ac_cv_gnome_config_libs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if ( $gnome_config --libs $gnome_config_libs >/dev/null 2>&1 |
+  if ( $gnome_config --libs $gnome_config_libs 2>&1 |
               grep Unknown >/dev/null ) ; then
            ac_cv_gnome_config_libs=''
          else
@@ -14521,7 +14654,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 14530 "configure"
+#line 14663 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -14564,7 +14697,7 @@ EOF
          # M4 sucks!!
 
           mglv=`echo "$mglv" | sed -n \
-             's/^configure: *\([0-9][0-9]*\) \([0-9].*\)$/\1.\2/p'`
+             's/^configure: *\([0-9][0-9]*\)  *\([0-9].*\)$/\1.\2/p'`
 
 
          rm -f conftest.$ac_ext
@@ -19236,6 +19369,11 @@ fi
 
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
+
+ # nobody cares about this; don't print the warning unless it was
+ # requested and not found, or halfway-found.
+ if test "$with_gle_req" = yes -o "$gle_halfassed" = yes ; then
+
   if test "$with_gle_req" = yes ; then
     noteL 'Use of the GLE (GL Extrusion) library was requested, but'
     warn2 'it was not found (though the OpenGL library was found, and'
@@ -19263,6 +19401,7 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
   warn2 'GLE library at <http://www.linas.org/gle/>.  For general'
   warn2 'OpenGL info, see <http://www.opengl.org/>.'
 
+ fi
 fi
 
 

@@ -441,7 +441,10 @@ static void inittextures(ModeInfo * mi)
         clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		     sb->btexture->width, sb->btexture->height, 0,
-		     GL_RGBA, GL_UNSIGNED_BYTE, sb->btexture->data);
+		     GL_RGBA,
+                     /* GL_UNSIGNED_BYTE, */
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     sb->btexture->data);
         check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -472,7 +475,10 @@ static void inittextures(ModeInfo * mi)
         clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		     sb->ftexture->width, sb->ftexture->height, 0,
-		     GL_RGBA, GL_UNSIGNED_BYTE, sb->ftexture->data);
+		     GL_RGBA,
+                     /* GL_UNSIGNED_BYTE, */
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     sb->ftexture->data);
         check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -194,6 +194,7 @@ void UpdateSmoke_ScalarBase(global_info_t *global, flurry_info_t *flurry, SmokeV
     }
 }
 
+#if 0
 #ifdef __ppc__
 
 void UpdateSmoke_ScalarFrsqrte(global_info_t *global, flurry_info_t *flurry, SmokeV *s)
@@ -242,11 +243,13 @@ void UpdateSmoke_ScalarFrsqrte(global_info_t *global, flurry_info_t *flurry, Smo
                 rsquared = (dx*dx+dy*dy+dz*dz);
                 f = streamSpeed * streamSpeedCoherenceFactor;
 
-                /* mag = f / (float) sqrt(rsquared); */
-
-                /* reciprocal square-root estimate replaced above divide and call to system sqrt() */
-                asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
-                mag *= f;
+                mag = f / (float) sqrt(rsquared);
+                /*
+                    reciprocal square-root estimate replaced above divide and call to system sqrt()
+                
+                    asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
+                    mag *= f;
+                */
 
                 s->p[s->nextParticle].delta[0].f[s->nextSubParticle] -= (dx * mag);
                 s->p[s->nextParticle].delta[1].f[s->nextSubParticle] -= (dy * mag);
@@ -307,18 +310,19 @@ void UpdateSmoke_ScalarFrsqrte(global_info_t *global, flurry_info_t *flurry, Smo
                 dz = s->p[i].position[2].f[k] - flurry->spark[j]->position[2];
                 rsquared = (dx*dx+dy*dy+dz*dz);
 
-                asm("fres %0, %1" : "=f" (f) : "f" (rsquared));
-                f *= gravity*frameRateModifier;
-
+                /*
+                    asm("fres %0, %1" : "=f" (f) : "f" (rsquared)); 
+                    f *= gravity*frameRateModifier;
+                */
+                f = ( gravity  * frameRateModifier ) / rsquared;
+                
                 if((((i*4)+k) % flurry->numStreams) == j) {
                     f *= 1.0f + streamBias;
                 }
 
-                /* mag = f / (float) sqrt(rsquared); */
+                mag = f / (float) sqrt(rsquared); 
 
                 /* reciprocal square-root estimate replaced above divide and call to system sqrt() */
-                asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
-                mag *= f;
                 
                 deltax -= (dx * mag);
                 deltay -= (dy * mag);
@@ -411,8 +415,11 @@ void UpdateSmoke_VectorBase(global_info_t *global, flurry_info_t *flurry, SmokeV
                 rsquared = (dx*dx+dy*dy+dz*dz);
                 f = streamSpeed * streamSpeedCoherenceFactor;
 
-                asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
-                mag *= f;
+                mag = f / (float) sqrt(rsquared);
+                /*
+                    asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
+                    mag *= f;
+                */
 
                 s->p[s->nextParticle].delta[0].f[s->nextSubParticle] -= (dx * mag);
                 s->p[s->nextParticle].delta[1].f[s->nextSubParticle] -= (dy * mag);
@@ -623,8 +630,11 @@ void UpdateSmoke_VectorUnrolled(global_info_t *info, SmokeV *s)
                 rsquared = (dx*dx+dy*dy+dz*dz);
                 f = streamSpeed * streamSpeedCoherenceFactor;
 
-                asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
-                mag *= f;
+                mag = f / (float) sqrt(rsquared);
+                /*
+                    asm("frsqrte %0, %1" : "=f" (mag) : "f" (rsquared));
+                    mag *= f;
+                */
 
                 s->p[s->nextParticle].delta[0].f[s->nextSubParticle] -= (dx * mag);
                 s->p[s->nextParticle].delta[1].f[s->nextSubParticle] -= (dy * mag);
@@ -918,6 +928,7 @@ void UpdateSmoke_VectorUnrolled(global_info_t *info, SmokeV *s)
 }
 
 #endif
+#endif /* 0 */
 
 void DrawSmoke_Scalar(global_info_t *global, flurry_info_t *flurry, SmokeV *s, float brightness)
 {
@@ -1076,6 +1087,7 @@ void DrawSmoke_Scalar(global_info_t *global, flurry_info_t *flurry, SmokeV *s, f
 	glDrawArrays(GL_QUADS,0,si*4);
 }
 
+#if 0
 #ifdef __VEC__
 
 void DrawSmoke_Vector(global_info_t *global, flurry_info_t *flurry, SmokeV *s, float brightness)
@@ -1425,3 +1437,4 @@ void DrawSmoke_Vector(global_info_t *global, flurry_info_t *flurry, SmokeV *s, f
 }
 
 #endif
+#endif /* 0 */

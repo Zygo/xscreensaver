@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -149,13 +149,16 @@ screen_to_ximage (Screen *screen, Window window)
 
       unsigned char spread_map[3][256];
 
-      srmsk = ximage1->red_mask;
-      sgmsk = ximage1->green_mask;
-      sbmsk = ximage1->blue_mask;
+      if (colors == 0)  /* truecolor */
+        {
+          srmsk = ximage1->red_mask;
+          sgmsk = ximage1->green_mask;
+          sbmsk = ximage1->blue_mask;
 
-      decode_mask (srmsk, &srpos, &srsiz);
-      decode_mask (sgmsk, &sgpos, &sgsiz);
-      decode_mask (sbmsk, &sbpos, &sbsiz);
+          decode_mask (srmsk, &srpos, &srsiz);
+          decode_mask (sgmsk, &sgpos, &sgsiz);
+          decode_mask (sbmsk, &sbpos, &sbsiz);
+        }
 
       /* Note that unlike X, which is endianness-agnostic (since any XImage
          can have its own specific bit ordering, with the server reversing
@@ -165,11 +168,14 @@ screen_to_ximage (Screen *screen, Window window)
        */
       crpos =  0, cgpos =  8, cbpos = 16, capos = 24;
 
-      for (i = 0; i < 256; i++)
+      if (colors == 0)  /* truecolor */
         {
-          spread_map[0][i] = spread_bits (i, srsiz);
-          spread_map[1][i] = spread_bits (i, sgsiz);
-          spread_map[2][i] = spread_bits (i, sbsiz);
+          for (i = 0; i < 256; i++)
+            {
+              spread_map[0][i] = spread_bits (i, srsiz);
+              spread_map[1][i] = spread_bits (i, sgsiz);
+              spread_map[2][i] = spread_bits (i, sbsiz);
+            }
         }
 
       for (y = 0; y < win_height; y++)

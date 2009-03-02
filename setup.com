@@ -74,6 +74,7 @@ $ penetrate	:== $'mydir'penetrate
 $ penrose	:== $'mydir'penrose
 $ petri		:== $'mydir'petri
 $ phosphor	:== $'mydir'phosphor
+$ piecewise	:== $'mydir'piecewise
 $ polyominoes	:== $'mydir'polyominoes
 $ popsquares	:== $'mydir'popsquares
 $ pyro		:== $'mydir'pyro

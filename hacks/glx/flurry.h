@@ -259,9 +259,6 @@ struct _global_info_t {
   /* system values */
 	GLXContext *glx_context;
 	Window window;
-	rotator *rot;
-	trackball_state *trackball;
-	Bool button_down_p;
         int optMode;
 
 	float sys_glWidth;

@@ -1,6 +1,16 @@
 /* yarandom.c -- Yet Another Random Number Generator.
+ * Copyright (c) 1997, 1998, 2003 by Jamie Zawinski <jwz@jwz.org>
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
+ */
 
-   The unportable mess that is rand(), random(), drand48() and friends led me
+/* The unportable mess that is rand(), random(), drand48() and friends led me
    to ask Phil Karlton <karlton@netscape.com> what the Right Thing to Do was.
    He responded with this.  It is non-cryptographically secure, reasonably
    random (more so than anything that is in any C library), and very fast.

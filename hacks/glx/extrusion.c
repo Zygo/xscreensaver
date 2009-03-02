@@ -69,7 +69,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #ifdef HAVE_GLE3

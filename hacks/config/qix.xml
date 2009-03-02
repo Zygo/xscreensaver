@@ -14,8 +14,7 @@
 
   <number id="segments" type="slider" arg="-segments %"
           _label="Segments" _low-label="Few" _high-label="Many"
-          low="10" high="500" default="50"
-          convert="invert"/>
+          low="10" high="500" default="50"/>
 
   <number id="spread" type="slider" arg="-spread %"
           _label="Density" _low-label="Sparse" _high-label="Dense"

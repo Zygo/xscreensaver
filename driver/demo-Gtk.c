@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2345,6 +2345,15 @@ populate_prefs_page (state *s)
 {
   saver_preferences *p = &s->prefs;
 
+  Bool can_lock_p = True;
+
+  /* Disable all the "lock" controls if locking support was not provided
+     at compile-time, or if running on MacOS. */
+# if defined(NO_LOCKING) || defined(__APPLE__)
+  can_lock_p = False;
+# endif
+
+
   /* The file supports timeouts of less than a minute, but the GUI does
      not, so throttle the values to be at least one minute (since "0" is
      a bad rounding choice...)
@@ -2444,8 +2453,9 @@ populate_prefs_page (state *s)
 
     /* Blanking and Locking
      */
-    SENSITIZE ("lock_spinbutton", p->lock_p);
-    SENSITIZE ("lock_mlabel",     p->lock_p);
+    SENSITIZE ("lock_button",     can_lock_p);
+    SENSITIZE ("lock_spinbutton", can_lock_p && p->lock_p);
+    SENSITIZE ("lock_mlabel",     can_lock_p && p->lock_p);
 
     /* DPMS
      */
@@ -3252,7 +3262,14 @@ get_best_gl_visual (state *s)
             sprintf (buf, "%s: running %s", blurb(), av[0]);
             perror (buf);
           }
-        exit (1);                               /* exits fork */
+
+        /* Note that one must use _exit() instead of exit() in procs forked
+           off of Gtk programs -- Gtk installs an atexit handler that has a
+           copy of the X connection (which we've already closed, for safety.)
+           If one uses exit() instead of _exit(), then one sometimes gets a
+           spurious "Gdk-ERROR: Fatal IO error on X server" error message.
+        */
+        _exit (1);                              /* exits fork */
         break;
       }
     default:
@@ -3418,8 +3435,15 @@ launch_preview_subproc (state *s)
 
         exec_command (p->shell, new_cmd, p->nice_inferior);
         /* Don't bother printing an error message when we are unable to
-           exec subprocesses; we handle that by polling the pid later. */
-        exit (1);  /* exits child fork */
+           exec subprocesses; we handle that by polling the pid later.
+
+           Note that one must use _exit() instead of exit() in procs forked
+           off of Gtk programs -- Gtk installs an atexit handler that has a
+           copy of the X connection (which we've already closed, for safety.)
+           If one uses exit() instead of _exit(), then one sometimes gets a
+           spurious "Gdk-ERROR: Fatal IO error on X server" error message.
+        */
+        _exit (1);  /* exits child fork */
         break;
 
       default:
