@@ -1,0 +1,59 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../../iconfig.h"
+
+UTILDIR = $(top_srcdir)/xlock/
+MODEDIR = $(top_srcdir)/modes/
+GLDIR = $(top_srcdir)/modes/glx/
+UTILOBJDIR = ../../xlock/
+MODEOBJDIR = ../
+GLOBJDIR = ./
+
+DM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+DG = $(GLDIR)
+DOG = $(GLOBJDIR)
+OM = $(O)$(S)$(DM)
+OU = $(O)$(S)$(DOU)
+OG = $(O)$(S)$(DOG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+
+XCOMM  List of object files
+#ifdef GLLibrary
+#ifdef XpmLibrary
+#ifdef Unstable
+XLOCKUNSTABLEGLOBJS = $(DOG)lament$(O)
+#endif
+#endif
+XLOCKGLOBJS = $(DOG)cage$(OG)gears$(O)$(S)\
+$(DOG)moebius$(OG)morph3d$(O)$(S)\
+$(DOG)rubik$(OG)stairs$(OG)superquadrics$(O)$(S)\
+$(DOG)buildlwo$(OG)pipes$(OG)pipeobjs$(O)$(S)\
+$(DOG)sproingies$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DOG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)$(S)\
+$(DOG)atlantis$(OG)dolphin$(OG)shark$(OG)swim$(OG)whale$(O)$(S)\
+$(DOG)bubble3d$(OG)b_draw$(OG)b_sphere$(OG)b_lockglue$(O)$(S)\
+$(XLOCKUNSTABLEGLOBJS)
+#endif
+
+XCOMM default target
+all:: $(XLOCKGLOBJS) 
+
+DependTarget()
+
+XLOCKINC = -I. -I../.. -I../../xlock
+
+DependTarget()
+LintTarget()
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean
