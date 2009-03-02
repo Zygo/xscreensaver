@@ -71,8 +71,6 @@ extern Widget lock_time_text, passwd_time_text;
 extern Widget verbose_toggle, cmap_toggle, fade_toggle, unfade_toggle,
   lock_toggle;
 
-extern Widget splash_dialog;
-
 
 #ifdef HAVE_MOTIF
 
@@ -592,8 +590,7 @@ pop_up_dialog_box (Widget dialog, Widget form, int where)
   XtManageChild (form);
 #endif /* HAVE_MOTIF */
 
-  if (dialog != splash_dialog)
-    steal_focus_and_colormap (dialog);
+  steal_focus_and_colormap (dialog);
 }
 
 
@@ -900,6 +897,8 @@ res_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
 	}
     }
 #endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
+
+  write_init_file (si);
 }
 
 
@@ -959,7 +958,7 @@ make_resources_dialog (saver_info *si, Widget parent)
       disable_widget (lock_time_text);
       disable_widget (lock_toggle);
     }
-  if (CellsOfScreen (XtScreen (parent)) <= 2)
+  if (!si->fading_possible_p)
     {
       disable_widget (fade_text);
       disable_widget (ticks_text);
@@ -1053,6 +1052,7 @@ demo_mode (saver_info *si)
   if (p->verbose_p)
     fprintf (stderr, "%s: Demo Mode.\n", blurb());
 
+  si->selection_mode = 0;
   si->dbox_up_p = True;
   monitor_power_on (si);
   raise_window (si, True, False, False);

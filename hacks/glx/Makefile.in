@@ -59,20 +59,22 @@ UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/yarandom.o
 
-SRCS		= atlantis.c buildlwo.c cage.c dolphin.c gears.c moebius.c \
+SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
+		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl.c lament.c bubble3d.c
+		  xlock-gl.c xpm-ximage.c glplanet.c
 
-OBJS		= atlantis.o buildlwo.o cage.o dolphin.o gears.o moebius.o \
+OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
+		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl.o lament.o bubble3d.o
+		  xlock-gl.o xpm-ximage.o glplanet.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
-		  morph3d rubik atlantis lament bubble3d
+		  morph3d rubik atlantis lament bubble3d glplanet
 EXES		= @GL_EXES@
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
@@ -80,7 +82,7 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 
-HDRS		= atlantis.h buildlwo.h e_textures.h
+HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h
 MEN		= lament.man
 EXTRAS		= README Makefile.in
 
@@ -237,12 +239,16 @@ SPROINGIES = sproingiewrap.o buildlwo.o \
 sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
 
-lament:		lament.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM_LIBS)
+lament:		lament.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
 
 B3D = b_sphere.o b_draw.o b_lockglue.o
 bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(B3D) $(HACK_LIBS)
+
+glplanet:	glplanet.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
 
 ##############################################################################
 #
@@ -262,6 +268,55 @@ atlantis.o: $(UTILS_SRC)/grabscreen.h
 atlantis.o: $(UTILS_SRC)/visual.h
 atlantis.o: $(UTILS_SRC)/xshm.h
 atlantis.o: $(srcdir)/atlantis.h
+b_draw.o: $(srcdir)/bubble3d.h
+b_draw.o: $(HACK_SRC)/xlockmoreI.h
+b_draw.o: $(HACK_SRC)/screenhack.h
+b_draw.o: ../../config.h
+b_draw.o: $(UTILS_SRC)/yarandom.h
+b_draw.o: $(UTILS_SRC)/usleep.h
+b_draw.o: $(UTILS_SRC)/resources.h
+b_draw.o: $(UTILS_SRC)/hsv.h
+b_draw.o: $(UTILS_SRC)/colors.h
+b_draw.o: $(UTILS_SRC)/grabscreen.h
+b_draw.o: $(UTILS_SRC)/visual.h
+b_draw.o: $(UTILS_SRC)/xshm.h
+b_lockglue.o: $(srcdir)/bubble3d.h
+b_lockglue.o: $(HACK_SRC)/xlockmoreI.h
+b_lockglue.o: $(HACK_SRC)/screenhack.h
+b_lockglue.o: ../../config.h
+b_lockglue.o: $(UTILS_SRC)/yarandom.h
+b_lockglue.o: $(UTILS_SRC)/usleep.h
+b_lockglue.o: $(UTILS_SRC)/resources.h
+b_lockglue.o: $(UTILS_SRC)/hsv.h
+b_lockglue.o: $(UTILS_SRC)/colors.h
+b_lockglue.o: $(UTILS_SRC)/grabscreen.h
+b_lockglue.o: $(UTILS_SRC)/visual.h
+b_lockglue.o: $(UTILS_SRC)/xshm.h
+b_lockglue.o: $(HACK_SRC)/xlockmore.h
+b_sphere.o: $(srcdir)/bubble3d.h
+b_sphere.o: $(HACK_SRC)/xlockmoreI.h
+b_sphere.o: $(HACK_SRC)/screenhack.h
+b_sphere.o: ../../config.h
+b_sphere.o: $(UTILS_SRC)/yarandom.h
+b_sphere.o: $(UTILS_SRC)/usleep.h
+b_sphere.o: $(UTILS_SRC)/resources.h
+b_sphere.o: $(UTILS_SRC)/hsv.h
+b_sphere.o: $(UTILS_SRC)/colors.h
+b_sphere.o: $(UTILS_SRC)/grabscreen.h
+b_sphere.o: $(UTILS_SRC)/visual.h
+b_sphere.o: $(UTILS_SRC)/xshm.h
+bubble3d.o: $(srcdir)/bubble3d.h
+bubble3d.o: $(HACK_SRC)/xlockmoreI.h
+bubble3d.o: $(HACK_SRC)/screenhack.h
+bubble3d.o: ../../config.h
+bubble3d.o: $(UTILS_SRC)/yarandom.h
+bubble3d.o: $(UTILS_SRC)/usleep.h
+bubble3d.o: $(UTILS_SRC)/resources.h
+bubble3d.o: $(UTILS_SRC)/hsv.h
+bubble3d.o: $(UTILS_SRC)/colors.h
+bubble3d.o: $(UTILS_SRC)/grabscreen.h
+bubble3d.o: $(UTILS_SRC)/visual.h
+bubble3d.o: $(UTILS_SRC)/xshm.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: $(HACK_SRC)/xlockmore.h
 cage.o: ../../config.h
@@ -289,6 +344,20 @@ gears.o: $(UTILS_SRC)/colors.h
 gears.o: $(UTILS_SRC)/grabscreen.h
 gears.o: $(UTILS_SRC)/visual.h
 gears.o: $(UTILS_SRC)/xshm.h
+lament.o: $(HACK_SRC)/xlockmore.h
+lament.o: ../../config.h
+lament.o: $(HACK_SRC)/xlockmoreI.h
+lament.o: $(HACK_SRC)/screenhack.h
+lament.o: $(UTILS_SRC)/yarandom.h
+lament.o: $(UTILS_SRC)/usleep.h
+lament.o: $(UTILS_SRC)/resources.h
+lament.o: $(UTILS_SRC)/hsv.h
+lament.o: $(UTILS_SRC)/colors.h
+lament.o: $(UTILS_SRC)/grabscreen.h
+lament.o: $(UTILS_SRC)/visual.h
+lament.o: $(UTILS_SRC)/xshm.h
+lament.o: $(srcdir)/xpm-ximage.h
+lament.o: $(HACK_SRC)/images/lament.xpm
 moebius.o: $(HACK_SRC)/xlockmore.h
 moebius.o: ../../config.h
 moebius.o: $(HACK_SRC)/xlockmoreI.h
@@ -421,29 +490,19 @@ xlock-gl.o: $(UTILS_SRC)/grabscreen.h
 xlock-gl.o: $(UTILS_SRC)/visual.h
 xlock-gl.o: $(HACK_SRC)/xlockmoreI.h
 xlock-gl.o: $(UTILS_SRC)/xshm.h
-lament.o: $(HACK_SRC)/xlockmore.h
-lament.o: ../../config.h
-lament.o: $(HACK_SRC)/xlockmoreI.h
-lament.o: $(HACK_SRC)/screenhack.h
-lament.o: $(UTILS_SRC)/yarandom.h
-lament.o: $(UTILS_SRC)/usleep.h
-lament.o: $(UTILS_SRC)/resources.h
-lament.o: $(UTILS_SRC)/hsv.h
-lament.o: $(UTILS_SRC)/colors.h
-lament.o: $(UTILS_SRC)/grabscreen.h
-lament.o: $(UTILS_SRC)/visual.h
-lament.o: $(UTILS_SRC)/xshm.h
-lament.o: $(HACK_SRC)/images/lament.xpm
-bubble3d.o: $(srcdir)/bubble3d.h
-bubble3d.o: $(HACK_SRC)/xlockmoreI.h
-bubble3d.o: $(HACK_SRC)/screenhack.h
-bubble3d.o: ../../config.h
-bubble3d.o: $(UTILS_SRC)/yarandom.h
-bubble3d.o: $(UTILS_SRC)/usleep.h
-bubble3d.o: $(UTILS_SRC)/resources.h
-bubble3d.o: $(UTILS_SRC)/hsv.h
-bubble3d.o: $(UTILS_SRC)/colors.h
-bubble3d.o: $(UTILS_SRC)/grabscreen.h
-bubble3d.o: $(UTILS_SRC)/visual.h
-bubble3d.o: $(UTILS_SRC)/xshm.h
+xpm-ximage.o: ../../config.h
+glplanet.o: $(HACK_SRC)/xlockmore.h
+glplanet.o: ../../config.h
+glplanet.o: $(HACK_SRC)/xlockmoreI.h
+glplanet.o: $(HACK_SRC)/screenhack.h
+glplanet.o: $(UTILS_SRC)/yarandom.h
+glplanet.o: $(UTILS_SRC)/usleep.h
+glplanet.o: $(UTILS_SRC)/resources.h
+glplanet.o: $(UTILS_SRC)/hsv.h
+glplanet.o: $(UTILS_SRC)/colors.h
+glplanet.o: $(UTILS_SRC)/grabscreen.h
+glplanet.o: $(UTILS_SRC)/visual.h
+glplanet.o: $(UTILS_SRC)/xshm.h
+glplanet.o: $(HACK_SRC)/images/earth.xbm
+glplanet.o: $(srcdir)/xpm-ximage.h
 

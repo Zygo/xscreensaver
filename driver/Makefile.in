@@ -77,7 +77,7 @@ KERBEROS_OBJS	= kpasswd.o
 LOCK_SRCS_1	= lock.c
 LOCK_OBJS_1	= lock.o
 
-TEST_SRCS	= test-passwd.c test-uid.c
+TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c
 
 DIALOG_SRCS	= @DIALOG_SRCS@
 DIALOG_OBJS	= @DIALOG_OBJS@
@@ -98,9 +98,9 @@ UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/yarandom.o @XMU_OBJS@
 
 SAVER_SRCS_1	= demo.c stderr.c subprocs.c setuid.c timers.c windows.c \
-		  xscreensaver.c splash.c xset.c
+		  xscreensaver.c splash.c xset.c dotfile.c
 SAVER_OBJS_1	= demo.o stderr.o subprocs.o setuid.o timers.o windows.o \
-		  xscreensaver.o splash.o xset.o
+		  xscreensaver.o splash.o xset.o dotfile.o
 
 SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
@@ -321,11 +321,18 @@ xscreensaver-command: $(CMD_OBJS)
 
 
 TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PWENT_OBJS) $(DIALOG_OBJS) \
-	 subprocs.o setuid.o demo.o \
+	 subprocs.o setuid.o demo.o splash.o \
 	$(UTIL_OBJS)
+test-passwd.o: XScreenSaver_ad.h
 
-test-passwd: $(TEST_PASSWD_OBJS)
+test-passwd: $(TEST_PASSWD_OBJS) XScreenSaver_ad.h
 	$(CC) $(LDFLAGS) -o $@ $(TEST_PASSWD_OBJS) $(SAVER_LIBS)
+
+test-uid: test-uid.o
+	$(CC) $(LDFLAGS) -o $@ test-uid.o
+
+test-xdpms: test-xdpms.o
+	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(SAVER_LIBS)
 
 ##############################################################################
 #
@@ -359,9 +366,12 @@ xscreensaver.o: $(UTILS_SRC)/visual.h
 xscreensaver.o: XScreenSaver_ad.h
 splash.o: ../config.h
 splash.o: $(srcdir)/xscreensaver.h
-splash.o: $(UTILS_SRC)/visual.h
+splash.o: $(UTILS_SRC)/resources.h
 xset.o: ../config.h
 xset.o: $(srcdir)/xscreensaver.h
+dotfile.o: ../config.h
+dotfile.o: $(srcdir)/xscreensaver.h
+dotfile.o: $(UTILS_SRC)/resources.h
 dialogs-Xm.o: ../config.h
 dialogs-Xm.o: $(UTILS_SRC)/visual.h
 dialogs-Xaw.o: ../config.h

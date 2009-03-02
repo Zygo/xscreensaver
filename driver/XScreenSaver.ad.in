@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 2.31
-!                                02-Oct-98
+!                              version 2.34
+!                                08-Oct-98
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -16,6 +16,7 @@
 *passwdTimeout:		30
 *nice:			10
 *lock:			False
+*lockVTs:		True
 *verbose:		False
 *timestamp:		False
 *fade:			True
@@ -26,7 +27,6 @@
 *splashDuration:	5
 
 *captureStderr: 	True
-*captureStdout: 	True
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
 *overlayStderr:		True
@@ -175,7 +175,8 @@
 @GL_KLUDGE_2@	rubik -root					  	\n\
 @GL_KLUDGE_2@	atlantis -root					  	\n\
 @GL_KLUDGE_2@	lament -root					  	\n\
-@GL_KLUDGE_2@	bubble3d -root					  	\n
+@GL_KLUDGE_2@	bubble3d -root					  	\n\
+@GL_KLUDGE_2@	glplanet -root					  	\n
  
 
 ! A few of the hacks require OpenGL, and will only be built if you have it.
@@ -281,13 +282,48 @@
 !=============================================================================
 
 
+! Resources for the password and splash-screen dialog boxes.
+!
+*Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1
+*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.foreground:		#000000
+*Dialog.background:		#BFBFBF
+*Dialog.Button.foreground:	#000000
+*Dialog.Button.background:	#D0D0D0
+*Dialog.text.foreground:	#000000
+*Dialog.text.background:	#FFFFFF
+*Dialog.logo.foreground:	#FF0000
+*Dialog.logo.background:	#FFFFFF
+*Dialog.topShadowColor:		#E7E7E7
+*Dialog.bottomShadowColor:	#737373
+*Dialog.logo.width:		200
+*Dialog.logo.height:		200
+*Dialog.internalBorderWidth:	30
+*Dialog.borderWidth:		1
+*Dialog.shadowThickness:	4
+
+*passwd.heading.label:		XScreenSaver %s
+*passwd.body.label:		This display is locked.
+*passwd.user.label:		User:
+*passwd.passwd.label:		Password:
+*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
+*passwd.thermometer.width:	8
+
+*splash.heading.label:		XScreenSaver %s
+*splash.body.label:		Copyright © 1991-1998 by
+*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
+*splash.demo.label:		Demo
+*splash.prefs.label:		Prefs
+*splash.help.label:		Help
+
+
 ! Resources for the Motif dialog boxes:
 ! 
 *fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1
 *demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
-*passwdDialog*fontList:          *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
 *XmTextField.fontList:             *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
-*passwdDialog.passwdText.fontList: *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 *splashDialog*fontList:		   *-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
 *splashDialog*splashLabel1.fontList:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1
 *splashDialog*splashLabel2.fontList:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
@@ -343,18 +379,6 @@ XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF
 *resourcesDone.labelString:	OK
 *resourcesCancel.labelString:	Cancel
 
-*passwdDialog.title:		Password
-*passwdLabel1.labelString:	XScreenSaver %s
-*passwdLabel2.labelString:	This display is locked.
-*passwdLabel3.labelString:	Please type %s's password to unlock it.
-*passwdDone.labelString:	OK
-*passwdCancel.labelString:	Cancel
-
-*passwdLabel1.alignment:	ALIGNMENT_BEGINNING
-*passwdLabel2.alignment:	ALIGNMENT_BEGINNING
-*passwdLabel3.alignment:	ALIGNMENT_BEGINNING
-*rogerLabel.width:		150
-
 *splashDialog.title:		XScreenSaver
 *splashLabel1.labelString:	XScreenSaver %s
 *splashLabel2.labelString:	Copyright © 1991-1998 by
@@ -383,7 +407,6 @@ XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE
 ! 
 *demo_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
 *resources_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
-*passwd_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
 *splash_dialog*font:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *splash_dialog*splashLabel1.font:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1
 *splash_dialog*splashLabel2.font:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
@@ -410,13 +433,6 @@ XScreenSaver.resources_dialog*Text*background:		#FFFFFF
 
 *resources_dialog*Dialog.value.translations: #override\n\
 	<Key>Return: beginning-of-line()\n
-
-XScreenSaver.passwd_dialog*foreground:			#000000
-XScreenSaver.passwd_dialog*background:			#E5E5E5
-XScreenSaver.passwd_dialog*Command.background:		#D9D9D9
-XScreenSaver.passwd_dialog*Text*background:		#FFFFFF
-XScreenSaver.passwd_dialog*roger.foreground:		#CD0000
-XScreenSaver.passwd_dialog*roger.background:		#FFFFFF
 
 XScreenSaver.splash_dialog*foreground:			#000000
 XScreenSaver.splash_dialog*background:			#E5E5E5
@@ -454,19 +470,6 @@ XScreenSaver.demo_dialog*Command.internalHeight: 4
 *resources_dialog*buttonbox.lock.label:		Require Password
 *resources_dialog*done.label:			OK
 *resources_dialog*cancel.label:			Cancel
-
-*passwd_dialog*label1.label:			XScreenSaver %s
-*passwd_dialog*label2.label:			This display is locked.
-*passwd_dialog*label3.label:		Please type %s's password to unlock it.
-*passwd_dialog*ok.label:			OK
-*passwd_dialog*cancel.label:			Cancel
-*passwd_dialog*passwd_form*label.label:		
-*passwd_dialog*Dialog.label:			
-*passwd_dialog*passwd_form*Text.width:		200
-*passwd_dialog*passwd_form.borderWidth:		0
-*passwd_dialog*roger.width:			150
-*passwd_dialog*roger.height:			150
-*passwd_dialog*roger.borderWidth:		1
 
 *splash_dialog*splashLabel1.label:		XScreenSaver %s
 *splash_dialog*splashLabel2.label:		Copyright © 1991-1998 by

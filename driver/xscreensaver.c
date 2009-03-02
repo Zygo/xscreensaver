@@ -158,8 +158,9 @@ char *progclass = 0;
 XrmDatabase db = 0;
 
 
+static Atom XA_SCREENSAVER_RESPONSE;
 static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
-static Atom XA_EXIT, XA_RESTART, XA_LOCK;
+static Atom XA_EXIT, XA_RESTART, XA_LOCK, XA_SELECT;
 Atom XA_DEMO, XA_PREFS;
 
 
@@ -169,12 +170,16 @@ static XrmOptionDescRec options [] = {
   { "-lock-mode",	   ".lock",		XrmoptionNoArg, "on" },
   { "-no-lock-mode",	   ".lock",		XrmoptionNoArg, "off" },
   { "-lock-timeout",	   ".lockTimeout",	XrmoptionSepArg, 0 },
+  { "-lock-vts",	   ".lockVTs",		XrmoptionNoArg, "on" },
+  { "-no-lock-vts",	   ".lockVTs",		XrmoptionNoArg, "off" },
   { "-visual",		   ".visualID",		XrmoptionSepArg, 0 },
   { "-install",		   ".installColormap",	XrmoptionNoArg, "on" },
   { "-no-install",	   ".installColormap",	XrmoptionNoArg, "off" },
   { "-verbose",		   ".verbose",		XrmoptionNoArg, "on" },
   { "-silent",		   ".verbose",		XrmoptionNoArg, "off" },
   { "-timestamp",	   ".timestamp",	XrmoptionNoArg, "on" },
+  { "-capture-stderr",	   ".captureStderr",	XrmoptionNoArg, "on" },
+  { "-no-capture-stderr",  ".captureStderr",	XrmoptionNoArg, "off" },
   { "-xidle-extension",	   ".xidleExtension",	XrmoptionNoArg, "on" },
   { "-no-xidle-extension", ".xidleExtension",	XrmoptionNoArg, "off" },
   { "-mit-extension",	   ".mitSaverExtension",XrmoptionNoArg, "on" },
@@ -187,8 +192,9 @@ static XrmOptionDescRec options [] = {
   { "-idelay",		   ".initialDelay",	XrmoptionSepArg, 0 },
   { "-nice",		   ".nice",		XrmoptionSepArg, 0 },
 
-  /* Actually this one is built in to Xt, but just to be sure... */
-  { "-synchronous",	   ".synchronous",	XrmoptionNoArg, "on" }
+  /* Actually these are built in to Xt, but just to be sure... */
+  { "-synchronous",	   ".synchronous",	XrmoptionNoArg, "on" },
+  { "-xrm",		   NULL,		XrmoptionResArg, NULL }
 };
 
 static char *defaults[] = {
@@ -241,152 +247,393 @@ For updates, check http://www.jwz.org/xscreensaver/\n\
 }
 
 
-static char *
-reformat_hack(const char *hack)
+char *
+timestring (void)
 {
-  int i;
-  const char *in = hack;
-  int indent = 13;
-  char *h2 = (char *) malloc(strlen(in) + indent + 2);
-  char *out = h2;
-
-  while (isspace(*in)) in++;		/* skip whitespace */
-  while (*in && !isspace(*in) && *in != ':')
-    *out++ = *in++;			/* snarf first token */
-  while (isspace(*in)) in++;		/* skip whitespace */
-
-  if (*in == ':')
-    *out++ = *in++;			/* copy colon */
-  else
-    {
-      in = hack;
-      out = h2;				/* reset to beginning */
-    }
-
-  *out = 0;
-
-  while (isspace(*in)) in++;		/* skip whitespace */
-  for (i = strlen(h2); i < indent; i++)	/* indent */
-    *out++ = ' ';
-
-  while (*in) *out++ = *in++;		/* copy rest of line */
-  *out = 0;
-
-  return h2;
+  time_t now = time ((time_t *) 0);
+  char *str = (char *) ctime (&now);
+  char *nl = (char *) strchr (str, '\n');
+  if (nl) *nl = 0; /* take off that dang newline */
+  return str;
 }
-
-
-static void
-get_screenhacks (saver_info *si)
-{
-  saver_preferences *p = &si->prefs;
-  int i = 0;
-  int hacks_size = 60;
-  int size;
-  char *d;
-
-  d = get_string_resource ("monoPrograms", "MonoPrograms");
-  if (d && !*d) { free(d); d = 0; }
-  if (!d)
-    d = get_string_resource ("colorPrograms", "ColorPrograms");
-  if (d && !*d) { free(d); d = 0; }
-
-  if (d)
-    {
-      fprintf (stderr,
-       "%s: the `monoPrograms' and `colorPrograms' resources are obsolete;\n\
-	see the manual for details.\n", blurb());
-      free(d);
-    }
-
-  d = get_string_resource ("programs", "Programs");
-
-  size = d ? strlen (d) : 0;
-  p->screenhacks = (char **) malloc (sizeof (char *) * hacks_size);
-  p->screenhacks_count = 0;
-
-  while (i < size)
-    {
-      int end, start = i;
-      if (d[i] == ' ' || d[i] == '\t' || d[i] == '\n' || d[i] == 0)
-	{
-	  i++;
-	  continue;
-	}
-      if (hacks_size <= p->screenhacks_count)
-	p->screenhacks = (char **) realloc (p->screenhacks,
-					    (hacks_size = hacks_size * 2) *
-					    sizeof (char *));
-      p->screenhacks [p->screenhacks_count++] = d + i;
-      while (d[i] != 0 && d[i] != '\n')
-	i++;
-      end = i;
-      while (i > start && (d[i-1] == ' ' || d[i-1] == '\t'))
-	i--;
-      d[i] = 0;
-      i = end + 1;
-    }
-
-  /* shrink all whitespace to one space, for the benefit of the "demo"
-     mode display.  We only do this when we can easily tell that the
-     whitespace is not significant (no shell metachars).
-   */
-  for (i = 0; i < p->screenhacks_count; i++)
-    {
-      char *s = p->screenhacks [i];
-      char *s2;
-      int L = strlen (s);
-      int j, k;
-      for (j = 0; j < L; j++)
-	{
-	  switch (s[j])
-	    {
-	    case '\'': case '"': case '`': case '\\':
-	      goto DONE;
-	    case '\t':
-	      s[j] = ' ';
-	    case ' ':
-	      k = 0;
-	      for (s2 = s+j+1; *s2 == ' ' || *s2 == '\t'; s2++)
-		k++;
-	      if (k > 0)
-		{
-		  for (s2 = s+j+1; s2[k]; s2++)
-		    *s2 = s2[k];
-		  *s2 = 0;
-		}
-	      break;
-	    }
-	}
-    DONE:
-      p->screenhacks[i] = reformat_hack(s);  /* mallocs */
-    }
-
-  if (p->screenhacks_count)
-    {
-      /* Shrink down the screenhacks array to be only as big as it needs to.
-	 This doesn't really matter at all. */
-      p->screenhacks = (char **)
-	realloc (p->screenhacks, ((p->screenhacks_count + 1) *
-				  sizeof(char *)));
-      p->screenhacks [p->screenhacks_count] = 0;
-    }
-  else
-    {
-      free (p->screenhacks);
-      p->screenhacks = 0;
-    }
-}
-
 
 static Bool blurb_timestamp_p = False;   /* kludge */
 
+const char *
+blurb (void)
+{
+  if (!blurb_timestamp_p)
+    return progname;
+  else
+    {
+      static char buf[255];
+      char *ct = timestring();
+      int n = strlen(progname);
+      if (n > 100) n = 99;
+      strncpy(buf, progname, n);
+      buf[n++] = ':';
+      buf[n++] = ' ';
+      strncpy(buf+n, ct+11, 8);
+      strcpy(buf+n+9, ": ");
+      return buf;
+    }
+}
 
+
+int
+saver_ehandler (Display *dpy, XErrorEvent *error)
+{
+  saver_info *si = global_si_kludge;	/* I hate C so much... */
+
+  fprintf (real_stderr, "\n"
+	   "#######################################"
+	   "#######################################\n\n"
+	   "%s: X Error!  PLEASE REPORT THIS BUG.\n\n"
+	   "#######################################"
+	   "#######################################\n\n",
+	   blurb());
+  if (XmuPrintDefaultErrorMessage (dpy, error, real_stderr))
+    {
+      fprintf (real_stderr, "\n");
+      if (si->prefs.xsync_p)
+	{
+	  saver_exit (si, -1, "because of synchronous X Error");
+	}
+      else
+	{
+	  fprintf(real_stderr,
+		  "%s: to dump a core file, re-run with `-sync'.\n"
+		  "%s: see http://www.jwz.org/xscreensaver/bugs.html\n"
+		  "\t\tfor bug reporting information.\n\n",
+		  blurb(), blurb());
+	  saver_exit (si, -1, 0);
+	}
+    }
+  else
+    fprintf (real_stderr, " (nonfatal.)\n");
+  return 0;
+}
+
+
+/* The zillions of initializations.
+ */
+
+static void get_screenhacks (saver_info *si);
+
+
+
+/* Set progname, version, etc.  This is done very early.
+ */
 static void
+set_version_string (saver_info *si, int *argc, char **argv)
+{
+  progclass = "XScreenSaver";
+
+  /* progname is reset later, after we connect to X. */
+  progname = strrchr(argv[0], '/');
+  if (progname) progname++;
+  else progname = argv[0];
+
+  if (strlen(progname) > 100)	/* keep it short. */
+    progname[99] = 0;
+
+  /* The X resource database blows up if argv[0] has a "." in it. */
+  {
+    char *s = argv[0];
+    while ((s = strchr (s, '.')))
+      *s = '_';
+  }
+
+  si->version = (char *) malloc (5);
+  memcpy (si->version, screensaver_id + 17, 4);
+  si->version [4] = 0;
+}
+
+
+/* Initializations that potentially take place as a priveleged user:
+   If the xscreensaver executable is setuid root, then these initializations
+   are run as root, before discarding privileges.
+ */
+static void
+privileged_initialization (saver_info *si, int *argc, char **argv)
+{
+#ifdef NO_LOCKING
+  si->locking_disabled_p = True;
+  si->nolock_reason = "not compiled with locking support";
+#else /* !NO_LOCKING */
+  si->locking_disabled_p = False;
+  if (! lock_init (*argc, argv)) /* before hack_uid() for proper permissions */
+    {
+      si->locking_disabled_p = True;
+      si->nolock_reason = "error getting password";
+    }
+#endif /* NO_LOCKING */
+
+#ifndef NO_SETUID
+  hack_uid (si);
+#endif /* NO_SETUID */
+}
+
+
+/* Open the connection to the X server, and intern our Atoms.
+ */
+static Widget
+connect_to_server (saver_info *si, int *argc, char **argv)
+{
+  Widget toplevel_shell;
+
+  XSetErrorHandler (saver_ehandler);
+  toplevel_shell = XtAppInitialize (&si->app, progclass,
+				    options, XtNumber (options),
+				    argc, argv, defaults, 0, 0);
+
+  si->dpy = XtDisplay (toplevel_shell);
+  si->db = XtDatabase (si->dpy);
+  XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
+
+  if(strlen(progname) > 100)	/* keep it short. */
+    progname [99] = 0;
+
+  db = si->db;	/* resources.c needs this */
+
+  XA_VROOT = XInternAtom (si->dpy, "__SWM_VROOT", False);
+  XA_SCREENSAVER = XInternAtom (si->dpy, "SCREENSAVER", False);
+  XA_SCREENSAVER_VERSION = XInternAtom (si->dpy, "_SCREENSAVER_VERSION",False);
+  XA_SCREENSAVER_ID = XInternAtom (si->dpy, "_SCREENSAVER_ID", False);
+  XA_SCREENSAVER_TIME = XInternAtom (si->dpy, "_SCREENSAVER_TIME", False);
+  XA_SCREENSAVER_RESPONSE = XInternAtom (si->dpy, "_SCREENSAVER_RESPONSE",
+					 False);
+  XA_XSETROOT_ID = XInternAtom (si->dpy, "_XSETROOT_ID", False);
+  XA_ACTIVATE = XInternAtom (si->dpy, "ACTIVATE", False);
+  XA_DEACTIVATE = XInternAtom (si->dpy, "DEACTIVATE", False);
+  XA_RESTART = XInternAtom (si->dpy, "RESTART", False);
+  XA_CYCLE = XInternAtom (si->dpy, "CYCLE", False);
+  XA_NEXT = XInternAtom (si->dpy, "NEXT", False);
+  XA_PREV = XInternAtom (si->dpy, "PREV", False);
+  XA_SELECT = XInternAtom (si->dpy, "SELECT", False);
+  XA_EXIT = XInternAtom (si->dpy, "EXIT", False);
+  XA_DEMO = XInternAtom (si->dpy, "DEMO", False);
+  XA_PREFS = XInternAtom (si->dpy, "PREFS", False);
+  XA_LOCK = XInternAtom (si->dpy, "LOCK", False);
+
+  return toplevel_shell;
+}
+
+
+/* Handle the command-line arguments that were not handled for us by Xt.
+   Issue an error message and exit if there are unknown options.
+ */
+static void
+process_command_line (saver_info *si, int *argc, char **argv)
+{
+  int i;
+  for (i = 1; i < *argc; i++)
+    {
+      if (!strcmp (argv[i], "-debug"))
+	/* no resource for this one, out of paranoia. */
+	si->prefs.debug_p = True;
+
+      else if (!strcmp (argv[i], "-initial-demo-mode"))
+	/* This isn't an advertized option; it is used internally to implement
+	   the "Reinitialize" button on the Demo Mode window. */
+	si->demo_mode_p = True;
+
+      else if (!strcmp (argv[i], "-h") ||
+	       !strcmp (argv[i], "-help") ||
+	       !strcmp (argv[i], "--help"))
+	do_help (si);
+
+      else
+	{
+	  const char *s = argv[i];
+	  fprintf (stderr, "%s: unknown option \"%s\".  Try \"-help\".\n",
+		   blurb(), s);
+
+	  if (s[0] == '-' && s[1] == '-') s++;
+	  if (!strcmp (s, "-activate") ||
+	      !strcmp (s, "-deactivate") ||
+	      !strcmp (s, "-cycle") ||
+	      !strcmp (s, "-next") ||
+	      !strcmp (s, "-prev") ||
+	      !strcmp (s, "-exit") ||
+	      !strcmp (s, "-restart") ||
+	      !strcmp (s, "-demo") ||
+	      !strcmp (s, "-prefs") ||
+	      !strcmp (s, "-preferences") ||
+	      !strcmp (s, "-lock") ||
+	      !strcmp (s, "-version") ||
+	      !strcmp (s, "-time"))
+	    {
+	      fprintf (stderr, "\n\
+    However, %s is an option to the `xscreensaver-command' program.\n\
+    The `xscreensaver' program is a daemon that runs in the background.\n\
+    You control a running xscreensaver process by sending it messages\n\
+    with `xscreensaver-command'.  See the man pages for details,\n\
+    or check the web page: http://www.jwz.org/xscreensaver/\n\n",
+		       s);
+
+	      /* Since version 1.21 renamed the "-lock" option to "-lock-mode",
+		 suggest that explicitly. */
+	      if (!strcmp (s, "-lock"))
+		fprintf (stderr, "\
+    Or perhaps you meant either the \"-lock-mode\" or the\n\
+    \"-lock-timeout <minutes>\" options to xscreensaver?\n\n");
+	    }
+	  exit (1);
+	}
+    }
+}
+
+
+/* Print out the xscreensaver banner to the tty if applicable;
+   Issue any other warnings that are called for at this point.
+ */
+static void
+print_banner (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+
+  /* This resource gets set some time before the others, so that we know
+     whether to print the banner (and so that the banner gets printed before
+     any resource-database-related error messages.)
+   */
+  p->verbose_p = (p->debug_p || get_boolean_resource ("verbose", "Boolean"));
+
+  /* Ditto, for the locking_disabled_p message. */
+  p->lock_p = get_boolean_resource ("lock", "Boolean");
+
+  if (p->verbose_p)
+    fprintf (stderr,
+	     "%s %s, copyright (c) 1991-1998 by Jamie Zawinski <jwz@jwz.org>\n"
+	     " pid = %d.\n",
+	     blurb(), si->version, (int) getpid ());
+
+  if (p->debug_p)
+    fprintf (stderr, "\n"
+	     "%s: Warning: running in DEBUG MODE.  Be afraid.\n"
+	     "\n"
+	     "\tNote that in debug mode, the xscreensaver window will only\n"
+	     "\tcover the left half of the screen.  (The idea is that you\n"
+	     "\tcan still see debugging output in a shell, if you position\n"
+	     "\tit on the right side of the screen.)\n"
+	     "\n"
+	     "\tDebug mode is NOT SECURE.  Do not run with -debug in\n"
+	     "\tuntrusted environments.\n"
+	     "\n",
+	     blurb());
+
+  if (p->verbose_p)
+    {
+      if (!si->uid_message || !*si->uid_message)
+	describe_uids (si, stderr);
+      else
+	{
+	  if (si->orig_uid && *si->orig_uid)
+	    fprintf (stderr, "%s: initial effective uid/gid was %s.\n",
+		     blurb(), si->orig_uid);
+	  fprintf (stderr, "%s: %s\n", blurb(), si->uid_message);
+	}
+    }
+
+  /* If locking was not able to be initalized for some reason, explain why.
+     (This has to be done after we've read the lock_p resource.)
+   */
+  if (p->lock_p && si->locking_disabled_p)
+    {
+      p->lock_p = False;
+      fprintf (stderr, "%s: locking is disabled (%s).\n", blurb(),
+	       si->nolock_reason);
+      if (strstr (si->nolock_reason, "passw"))
+	fprintf (stderr, "%s: does xscreensaver need to be setuid?  "
+		 "consult the manual.\n", blurb());
+      else if (strstr (si->nolock_reason, "running as "))
+	fprintf (stderr, 
+		 "%s: locking only works when xscreensaver is launched\n"
+		 "\t by a normal, non-privileged user (e.g., not \"root\".)\n"
+		 "\t See the manual for details.\n",
+		 blurb());
+    }
+}
+
+
+/* Examine all of the display's screens, and populate the `saver_screen_info'
+   structures.
+ */
+static void
+initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
+{
+  Bool found_any_writable_cells = False;
+  int i;
+
+  si->nscreens = ScreenCount(si->dpy);
+  si->screens = (saver_screen_info *)
+    calloc(sizeof(saver_screen_info), si->nscreens);
+
+  si->default_screen = &si->screens[DefaultScreen(si->dpy)];
+
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      ssi->global = si;
+      ssi->screen = ScreenOfDisplay (si->dpy, i);
+
+      /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
+      ssi->default_visual =
+	get_visual_resource (ssi->screen, "visualID", "VisualID", False);
+
+      ssi->current_visual = ssi->default_visual;
+      ssi->current_depth = visual_depth (ssi->screen, ssi->current_visual);
+
+      if (ssi == si->default_screen)
+	/* Since this is the default screen, use the one already created. */
+	ssi->toplevel_shell = toplevel_shell;
+      else
+	/* Otherwise, each screen must have its own unmapped root widget. */
+	ssi->toplevel_shell =
+	  XtVaAppCreateShell (progname, progclass, applicationShellWidgetClass,
+			      si->dpy,
+			      XtNscreen, ssi->screen,
+			      XtNvisual, ssi->current_visual,
+			      XtNdepth,  visual_depth (ssi->screen,
+						       ssi->current_visual),
+			      0);
+
+      if (! found_any_writable_cells)
+	{
+	  /* Check to see whether fading is ever possible -- if any of the
+	     screens on the display has a PseudoColor visual, then fading can
+	     work (on at least some screens.)  If no screen has a PseudoColor
+	     visual, then don't bother ever trying to fade, because it will
+	     just cause a delay without causing any visible effect.
+	  */
+	  if (has_writable_cells (ssi->screen, ssi->current_visual) ||
+	      get_visual (ssi->screen, "PseudoColor", True, False) ||
+	      get_visual (ssi->screen, "GrayScale", True, False))
+	    found_any_writable_cells = True;
+	}
+    }
+
+  si->fading_possible_p = found_any_writable_cells;
+}
+
+
+/* Populate `saver_preferences' with the contents of the resource database.
+   Note that this may be called multiple times -- it is re-run each time
+   the ~/.xscreensaver file is reloaded.
+
+   This function can be very noisy, since it issues resource syntax errors
+   and so on.
+ */
+void
 get_resources (saver_info *si)
 {
   char *s;
   saver_preferences *p = &si->prefs;
+
+  if (si->init_file_date == 0)
+    /* The date will be 0 the first time this is called; and when this is
+       called subsequent times, the file will have already been reloaded. */
+    read_init_file (si);
 
   p->xsync_p	    = get_boolean_resource ("synchronous", "Synchronous");
   if (p->xsync_p)
@@ -395,23 +642,20 @@ get_resources (saver_info *si)
   p->verbose_p	    = get_boolean_resource ("verbose", "Boolean");
   p->timestamp_p    = get_boolean_resource ("timestamp", "Boolean");
   p->lock_p	    = get_boolean_resource ("lock", "Boolean");
+  p->lock_vt_p	    = get_boolean_resource ("lockVTs", "Boolean");
   p->fade_p	    = get_boolean_resource ("fade", "Boolean");
   p->unfade_p	    = get_boolean_resource ("unfade", "Boolean");
-  p->fade_seconds   = get_seconds_resource ("fadeSeconds", "Time");
+  p->fade_seconds   = 1000 * get_seconds_resource ("fadeSeconds", "Time");
   p->fade_ticks	    = get_integer_resource ("fadeTicks", "Integer");
   p->install_cmap_p = get_boolean_resource ("installColormap", "Boolean");
   p->nice_inferior  = get_integer_resource ("nice", "Nice");
 
-  p->initial_delay   = get_seconds_resource ("initialDelay", "Time");
+  p->initial_delay   = 1000 * get_seconds_resource ("initialDelay", "Time");
   p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");
   p->timeout         = 1000 * get_minutes_resource ("timeout", "Time");
   p->lock_timeout    = 1000 * get_minutes_resource ("lockTimeout", "Time");
   p->cycle           = 1000 * get_minutes_resource ("cycle", "Time");
-
-#ifndef NO_LOCKING
-  p->passwd_timeout = 1000 * get_seconds_resource ("passwdTimeout", "Time");
-#endif
-
+  p->passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
   p->pointer_timeout = 1000 * get_seconds_resource ("pointerPollTime", "Time");
   p->notice_events_timeout = 1000*get_seconds_resource("windowCreationTimeout",
 						       "Time");
@@ -424,6 +668,17 @@ get_resources (saver_info *si)
     if (!get_boolean_resource("splash", "Boolean"))
       p->splash_duration = 0;
   if (s) free (s);
+
+  if (p->verbose_p && !si->fading_possible_p && (p->fade_p || p->unfade_p))
+    {
+      fprintf (stderr,
+	       (si->nscreens == 1
+		? "%s: the screen has no PseudoColor or GrayScale visuals.\n"
+		: "%s: no screens have PseudoColor or GrayScale visuals.\n"),
+	       blurb());
+      fprintf (stderr, "%s: ignoring the request for fading/unfading.\n",
+	       blurb());
+    }
 
   /* don't set use_xidle_extension unless it is explicitly specified */
   if ((s = get_string_resource ("xidleExtension", "Boolean")))
@@ -464,9 +719,7 @@ get_resources (saver_info *si)
 
   /* Throttle the various timeouts to reasonable values.
    */
-#ifndef NO_LOCKING
   if (p->passwd_timeout == 0) p->passwd_timeout = 30000;	 /* 30 secs */
-#endif
   if (p->timeout < 10000) p->timeout = 10000;			 /* 10 secs */
   if (p->cycle != 0 && p->cycle < 2000) p->cycle = 2000;	 /*  2 secs */
   if (p->pointer_timeout == 0) p->pointer_timeout = 5000;	 /*  5 secs */
@@ -479,11 +732,6 @@ get_resources (saver_info *si)
   p->watchdog_timeout = p->cycle;
   if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */
   if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
-
-#ifdef NO_LOCKING
-  si->locking_disabled_p = True;
-  si->nolock_reason = "not compiled with locking support";
-#endif /* NO_LOCKING */
 
   get_screenhacks (si);
 
@@ -500,315 +748,13 @@ get_resources (saver_info *si)
 }
 
 
-char *
-timestring (void)
-{
-  time_t now = time ((time_t *) 0);
-  char *str = (char *) ctime (&now);
-  char *nl = (char *) strchr (str, '\n');
-  if (nl) *nl = 0; /* take off that dang newline */
-  return str;
-}
-
-static void initialize (saver_info *si, int argc, char **argv);
-static void main_loop (saver_info *si);
-
-int
-main (int argc, char **argv)
-{
-  saver_info si;
-  memset(&si, 0, sizeof(si));
-  global_si_kludge = &si;	/* I hate C so much... */
-  initialize (&si, argc, argv);
-  if (!si.demo_mode_p)
-    pop_splash_dialog (&si);
-  main_loop (&si);		/* doesn't return */
-  return 0;
-}
-
-
-int
-saver_ehandler (Display *dpy, XErrorEvent *error)
-{
-  saver_info *si = global_si_kludge;	/* I hate C so much... */
-
-  fprintf (real_stderr, "\n"
-	   "#######################################"
-	   "#######################################\n\n"
-	   "%s: X Error!  PLEASE REPORT THIS BUG.\n\n"
-	   "#######################################"
-	   "#######################################\n\n",
-	   blurb());
-  if (XmuPrintDefaultErrorMessage (dpy, error, real_stderr))
-    {
-      fprintf (real_stderr, "\n");
-      if (si->prefs.xsync_p)
-	{
-	  saver_exit (si, -1, "because of synchronous X Error");
-	}
-      else
-	{
-	  fprintf(real_stderr,
-		  "%s: to dump a core file, re-run with `-sync'.\n\n",
-		  blurb());
-	  saver_exit (si, -1, 0);
-	}
-    }
-  else
-    fprintf (real_stderr, " (nonfatal.)\n");
-  return 0;
-}
-
-
-const char *
-blurb (void)
-{
-  if (!blurb_timestamp_p)
-    return progname;
-  else
-    {
-      static char buf[255];
-      char *ct = timestring();
-      int n = strlen(progname);
-      if (n > 100) n = 99;
-      strncpy(buf, progname, n);
-      buf[n++] = ':';
-      buf[n++] = ' ';
-      strncpy(buf+n, ct+11, 8);
-      strcpy(buf+n+9, ": ");
-      return buf;
-    }
-}
-
+/* If any server extensions have been requested, try and initialize them.
+   Issue warnings if requests can't be honored.
+ */
 static void
-initialize_connection (saver_info *si, int argc, char **argv)
+initialize_server_extensions (saver_info *si)
 {
-  int i;
-  Widget toplevel_shell;
   saver_preferences *p = &si->prefs;
-
-  /* The X resource database blows up if argv[0] has a "." in it. */
-  {
-    char *s = argv[0];
-    while ((s = strchr (s, '.')))
-      *s = '_';
-  }
-
-  toplevel_shell = XtAppInitialize (&si->app, progclass,
-				    options, XtNumber (options),
-				    &argc, argv, defaults, 0, 0);
-
-  si->dpy = XtDisplay (toplevel_shell);
-  si->db = XtDatabase (si->dpy);
-  XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
-
-  if(strlen(progname)  > 100) progname [99] = 0;  /* keep it short. */
-
-  db = si->db;	/* resources.c needs this */
-
-  if (argc == 2 &&
-      (!strcmp (argv[1], "-h") ||
-       !strcmp (argv[1], "-help") ||
-       !strcmp (argv[1], "--help")))
-    do_help (si);
-
-  else if (argc == 2 && !strcmp (argv[1], "-debug"))
-    si->prefs.debug_p = True;  /* no resource for this one, out of paranoia. */
-
-  else if (argc > 1)
-    {
-      const char *s = argv[1];
-      fprintf (stderr, "%s: unknown option \"%s\".  Try \"-help\".\n",
-	       blurb(), s);
-
-      if (s[0] == '-' && s[1] == '-') s++;
-      if (!strcmp (s, "-activate") ||
-	  !strcmp (s, "-deactivate") ||
-	  !strcmp (s, "-cycle") ||
-	  !strcmp (s, "-next") ||
-	  !strcmp (s, "-prev") ||
-	  !strcmp (s, "-exit") ||
-	  !strcmp (s, "-restart") ||
-	  !strcmp (s, "-demo") ||
-	  !strcmp (s, "-prefs") ||
-	  !strcmp (s, "-preferences") ||
-	  !strcmp (s, "-lock") ||
-	  !strcmp (s, "-version") ||
-	  !strcmp (s, "-time"))
-	{
-	  fprintf (stderr, "\n\
-    However, %s is an option to the `xscreensaver-command' program.\n\
-    The `xscreensaver' program is a daemon that runs in the background.\n\
-    You control a running xscreensaver process by sending it messages\n\
-    with `xscreensaver-command'.  See the man pages for details,\n\
-    or check the web page: http://www.jwz.org/xscreensaver/\n\n",
-		   s);
-
-	  /* Since version 1.21 renamed the "-lock" option to "-lock-mode",
-	     suggest that explicitly. */
-	  if (!strcmp (s, "-lock"))
-	    fprintf (stderr, "\
-    Or perhaps you meant either the \"-lock-mode\" or the\n\
-    \"-lock-timeout <minutes>\" options to xscreensaver?\n\n");
-	}
-
-      exit (1);
-    }
-  get_resources (si);
-
-  if (p->lock_p && si->locking_disabled_p)
-    {
-      p->lock_p = False;
-      fprintf (stderr, "%s: locking is disabled (%s).\n", blurb(),
-	       si->nolock_reason);
-      if (strstr (si->nolock_reason, "passw"))
-	fprintf (stderr, "%s: does xscreensaver need to be setuid?  "
-		 "consult the manual.\n", blurb());
-    }
-
-  /* Defer the printing of this message until after we have loaded the
-     resources and know whether `verbose' is on.
-   */
-  if (p->verbose_p && si->uid_message)
-    {
-      if (si->orig_uid && *si->orig_uid)
-	fprintf (stderr, "%s: initial effective uid/gid was %s.\n", blurb(),
-		 si->orig_uid);
-      fprintf (stderr, "%s: %s\n", blurb(), si->uid_message);
-    }
-
-  XA_VROOT = XInternAtom (si->dpy, "__SWM_VROOT", False);
-  XA_SCREENSAVER = XInternAtom (si->dpy, "SCREENSAVER", False);
-  XA_SCREENSAVER_VERSION = XInternAtom (si->dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_ID = XInternAtom (si->dpy, "_SCREENSAVER_ID", False);
-  XA_SCREENSAVER_TIME = XInternAtom (si->dpy, "_SCREENSAVER_TIME", False);
-  XA_XSETROOT_ID = XInternAtom (si->dpy, "_XSETROOT_ID", False);
-  XA_ACTIVATE = XInternAtom (si->dpy, "ACTIVATE", False);
-  XA_DEACTIVATE = XInternAtom (si->dpy, "DEACTIVATE", False);
-  XA_RESTART = XInternAtom (si->dpy, "RESTART", False);
-  XA_CYCLE = XInternAtom (si->dpy, "CYCLE", False);
-  XA_NEXT = XInternAtom (si->dpy, "NEXT", False);
-  XA_PREV = XInternAtom (si->dpy, "PREV", False);
-  XA_EXIT = XInternAtom (si->dpy, "EXIT", False);
-  XA_DEMO = XInternAtom (si->dpy, "DEMO", False);
-  XA_PREFS = XInternAtom (si->dpy, "PREFS", False);
-  XA_LOCK = XInternAtom (si->dpy, "LOCK", False);
-
-  si->nscreens = ScreenCount(si->dpy);
-  si->screens = (saver_screen_info *)
-    calloc(sizeof(saver_screen_info), si->nscreens);
-
-  si->default_screen = &si->screens[DefaultScreen(si->dpy)];
-
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      ssi->global = si;
-      ssi->screen = ScreenOfDisplay (si->dpy, i);
-
-      /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
-      ssi->default_visual =
-	get_visual_resource (ssi->screen, "visualID", "VisualID", False);
-
-      ssi->current_visual = ssi->default_visual;
-      ssi->current_depth = visual_depth (ssi->screen, ssi->current_visual);
-
-      if (ssi == si->default_screen)
-	/* Since this is the default screen, use the one already created. */
-	ssi->toplevel_shell = toplevel_shell;
-      else
-	/* Otherwise, each screen must have its own unmapped root widget. */
-	ssi->toplevel_shell =
-	  XtVaAppCreateShell(progname, progclass, applicationShellWidgetClass,
-			     si->dpy,
-			     XtNscreen, ssi->screen,
-			     XtNvisual, ssi->current_visual,
-			     XtNdepth,  visual_depth(ssi->screen,
-						     ssi->current_visual),
-			     0);
-    }
-}
-
-
-static void
-initialize (saver_info *si, int argc, char **argv)
-{
-  int i;
-  saver_preferences *p = &si->prefs;
-  Bool initial_demo_mode_p = False;
-  si->version = (char *) malloc (5);
-  memcpy (si->version, screensaver_id + 17, 4);
-  si->version [4] = 0;
-  progname = argv[0]; /* reset later; this is for the benefit of lock_init() */
-
-  if(strlen(progname) > 100) progname[99] = 0;  /* keep it short. */
-
-#ifdef NO_LOCKING
-  si->locking_disabled_p = True;
-  si->nolock_reason = "not compiled with locking support";
-#else  /* !NO_LOCKING */
-  si->locking_disabled_p = False;
-
-# ifdef SCO
-  set_auth_parameters(argc, argv);
-# endif /* SCO */
-
-  if (! lock_init (argc, argv))	/* before hack_uid() for proper permissions */
-    {
-      si->locking_disabled_p = True;
-      si->nolock_reason = "error getting password";
-    }
-#endif  /* !NO_LOCKING */
-
-#ifndef NO_SETUID
-  hack_uid (si);
-#endif /* NO_SETUID */
-
-  progclass = "XScreenSaver";
-
-  /* remove -initial-demo-mode switch before saving argv */
-  for (i = 1; i < argc; i++)
-    while (!strcmp ("-initial-demo-mode", argv [i]))
-      {
-	int j;
-	initial_demo_mode_p = True;
-	for (j = i; j < argc; j++)
-	  argv [j] = argv [j+1];
-	argv [j] = 0;
-	argc--;
-	if (argc <= i) break;
-      }
-  save_argv (argc, argv);
-  initialize_connection (si, argc, argv);
-
-  if (p->verbose_p)
-    fprintf (stderr, "\
-%s %s, copyright (c) 1991-1998 by Jamie Zawinski <jwz@jwz.org>\n\
- pid = %d.\n", progname, si->version, (int) getpid ());
-
-  
-  for (i = 0; i < si->nscreens; i++)
-    if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
-      exit (1);
-
-  hack_environment (si);
-
-  si->demo_mode_p = initial_demo_mode_p;
-  srandom ((int) time ((time_t *) 0));
-
-  if (p->debug_p)
-    fprintf (stderr, "\n"
-	     "%s: Warning: running in DEBUG MODE.  Be afraid.\n"
-	     "\n"
-	     "\tNote that in debug mode, the xscreensaver window will only\n"
-	     "\tcover the left half of the screen.  (The idea is that you\n"
-	     "\tcan still see debugging output in a shell, if you position\n"
-	     "\tit on the right side of the screen.)\n"
-	     "\n"
-	     "\tDebug mode is NOT SECURE.  Do not run with -debug in\n"
-	     "\tuntrusted environments.\n"
-	     "\n",
-	     progname);
 
   if (p->use_sgi_saver_extension)
     {
@@ -822,8 +768,9 @@ initialize (saver_info *si, int argc, char **argv)
 	}
       else if (p->use_mit_saver_extension)
 	{
-	  fprintf (stderr, "%s: SGI SCREEN_SAVER extension used instead\
- of MIT-SCREEN-SAVER extension.\n",
+	  fprintf (stderr,
+		   "%s: SGI SCREEN_SAVER extension used instead"
+		   " of MIT-SCREEN-SAVER extension.\n",
 		   blurb());
 	  p->use_mit_saver_extension = False;
 	}
@@ -836,7 +783,8 @@ initialize (saver_info *si, int argc, char **argv)
 	}
 #else  /* !HAVE_MIT_SAVER_EXTENSION */
       fprintf (stderr,
-       "%s: not compiled with support for the SGI SCREEN_SAVER extension.\n",
+	       "%s: not compiled with support for the SGI SCREEN_SAVER"
+	       " extension.\n",
 	       blurb());
       p->use_sgi_saver_extension = False;
 #endif /* !HAVE_SGI_SAVER_EXTENSION */
@@ -848,20 +796,23 @@ initialize (saver_info *si, int argc, char **argv)
       if (! query_mit_saver_extension (si))
 	{
 	  fprintf (stderr,
-	 "%s: display %s does not support the MIT-SCREEN-SAVER extension.\n",
+		   "%s: display %s does not support the MIT-SCREEN-SAVER"
+		   " extension.\n",
 		   blurb(), DisplayString (si->dpy));
 	  p->use_mit_saver_extension = False;
 	}
       else if (p->use_xidle_extension)
 	{
 	  fprintf (stderr,
-	 "%s: MIT-SCREEN-SAVER extension used instead of XIDLE extension.\n",
+		   "%s: MIT-SCREEN-SAVER extension used instead of XIDLE"
+		   " extension.\n",
 		   blurb());
 	  p->use_xidle_extension = False;
 	}
 #else  /* !HAVE_MIT_SAVER_EXTENSION */
       fprintf (stderr,
-       "%s: not compiled with support for the MIT-SCREEN-SAVER extension.\n",
+	       "%s: not compiled with support for the MIT-SCREEN-SAVER"
+	       " extension.\n",
 	       blurb());
       p->use_mit_saver_extension = False;
 #endif /* !HAVE_MIT_SAVER_EXTENSION */
@@ -879,18 +830,10 @@ initialize (saver_info *si, int argc, char **argv)
 	  p->use_xidle_extension = False;
 	}
 #else  /* !HAVE_XIDLE_EXTENSION */
-      fprintf (stderr, "%s: not compiled with support for XIdle.\n",
-	       blurb());
+      fprintf (stderr, "%s: not compiled with support for XIdle.\n", blurb());
       p->use_xidle_extension = False;
 #endif /* !HAVE_XIDLE_EXTENSION */
     }
-
-  /* Call this only after having probed for presence of desired extension. */
-  initialize_screensaver_window (si);
-
-  init_sigchld ();
-
-  disable_builtin_screensaver (si, True);
 
   if (p->verbose_p && p->use_mit_saver_extension)
     fprintf (stderr, "%s: using MIT-SCREEN-SAVER server extension.\n",
@@ -901,52 +844,68 @@ initialize (saver_info *si, int argc, char **argv)
   if (p->verbose_p && p->use_xidle_extension)
     fprintf (stderr, "%s: using XIdle server extension.\n",
 	     blurb());
+}
 
-  initialize_stderr (si);
-  XSetErrorHandler (saver_ehandler);
 
-  if (initial_demo_mode_p)
-    /* If the user wants demo mode, don't wait around before doing it. */
-    p->initial_delay = 0;
+/* For the case where we aren't using an server extensions, select user events
+   on all the existing windows, and launch timers to select events on
+   newly-created windows as well.
 
-  if (!p->use_xidle_extension &&
-      !p->use_mit_saver_extension &&
-      !p->use_sgi_saver_extension)
+   If a server extension is being used, this does nothing.
+ */
+static void
+select_events (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  int i;
+
+  if (p->use_xidle_extension ||
+      p->use_mit_saver_extension ||
+      p->use_sgi_saver_extension)
+    return;
+
+  if (p->initial_delay && !si->demo_mode_p)
     {
-      if (p->initial_delay)
-	{
-	  if (p->verbose_p)
-	    {
-	      fprintf (stderr, "%s: waiting for %d second%s...", blurb(),
-		       (int) p->initial_delay,
-		       (p->initial_delay == 1 ? "" : "s"));
-	      fflush (stderr);
-	      fflush (stdout);
-	    }
-	  sleep (p->initial_delay);
-	  if (p->verbose_p)
-	    fprintf (stderr, " done.\n");
-	}
       if (p->verbose_p)
 	{
-	  fprintf (stderr, "%s: selecting events on extant windows...",
-		   blurb());
+	  fprintf (stderr, "%s: waiting for %d second%s...", blurb(),
+		   (int) p->initial_delay/1000,
+		   (p->initial_delay == 1000 ? "" : "s"));
 	  fflush (stderr);
 	  fflush (stdout);
 	}
-
-      /* Select events on the root windows of every screen.  This also selects
-	 for window creation events, so that new subwindows will be noticed.
-       */
-      for (i = 0; i < si->nscreens; i++)
-	start_notice_events_timer (si,
-				   RootWindowOfScreen (si->screens[i].screen));
-
+      usleep (p->initial_delay);
       if (p->verbose_p)
 	fprintf (stderr, " done.\n");
     }
+
+  if (p->verbose_p)
+    {
+      fprintf (stderr, "%s: selecting events on extant windows...", blurb());
+      fflush (stderr);
+      fflush (stdout);
+    }
+
+  /* Select events on the root windows of every screen.  This also selects
+     for window creation events, so that new subwindows will be noticed.
+   */
+  for (i = 0; i < si->nscreens; i++)
+    start_notice_events_timer (si, RootWindowOfScreen (si->screens[i].screen));
+
+  if (p->verbose_p)
+    fprintf (stderr, " done.\n");
 }
 
+
+/* Loop forever:
+
+       - wait until the user is idle;
+       - blank the screen;
+       - wait until the user is active;
+       - unblank the screen;
+       - repeat.
+
+ */
 static void
 main_loop (saver_info *si)
 {
@@ -955,6 +914,8 @@ main_loop (saver_info *si)
     {
       if (! si->demo_mode_p)
 	sleep_until_idle (si, True);
+
+      maybe_reload_init_file (si);
 
 #ifndef NO_DEMO_MODE
       if (si->demo_mode_p)
@@ -965,6 +926,7 @@ main_loop (saver_info *si)
 	  if (p->verbose_p)
 	    fprintf (stderr, "%s: user is idle; waking up at %s.\n", blurb(),
 		     timestring());
+	  maybe_reload_init_file (si);
 	  blank_screen (si);
 	  spawn_screenhack (si, True);
 	  if (p->cycle)
@@ -972,8 +934,11 @@ main_loop (saver_info *si)
 					    (XtPointer) si);
 
 #ifndef NO_LOCKING
-	  if (p->lock_p && p->lock_timeout == 0)
+	  if (p->lock_p &&
+	      !si->locking_disabled_p &&
+	      p->lock_timeout == 0)
 	    si->locked_p = True;
+
 	  if (p->lock_p && !si->locked_p)
 	    /* locked_p might be true already because of ClientMessage */
 	    si->lock_id = XtAppAddTimeOut (si->app, p->lock_timeout,
@@ -984,6 +949,7 @@ main_loop (saver_info *si)
 	PASSWD_INVALID:
 
 	  sleep_until_idle (si, False); /* until not idle */
+	  maybe_reload_init_file (si);
 
 #ifndef NO_LOCKING
 	  if (si->locked_p)
@@ -1020,6 +986,7 @@ main_loop (saver_info *si)
 	     soon as possible... */
 	  kill_screenhack (si);
 	  unblank_screen (si);
+	  si->selection_mode = 0;
 
 	  if (si->cycle_id)
 	    {
@@ -1041,13 +1008,246 @@ main_loop (saver_info *si)
     }
 }
 
+
+int
+main (int argc, char **argv)
+{
+  Widget shell;
+  saver_info the_si;
+  saver_info *si = &the_si;
+  int i;
+
+  memset(si, 0, sizeof(*si));
+  global_si_kludge = si;	/* I hate C so much... */
+
+  srandom ((int) time ((time_t *) 0));
+
+  set_version_string (si, &argc, argv);
+  save_argv (argc, argv);
+  privileged_initialization (si, &argc, argv);
+  hack_environment (si);
+
+  shell = connect_to_server (si, &argc, argv);
+  process_command_line (si, &argc, argv);
+  print_banner (si);
+  initialize_per_screen_info (si, shell);
+  get_resources (si);
+
+  for (i = 0; i < si->nscreens; i++)
+    if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
+      exit (1);
+
+  initialize_server_extensions (si);
+  initialize_screensaver_window (si);
+  select_events (si);
+  init_sigchld ();
+  disable_builtin_screensaver (si, True);
+  initialize_stderr (si);
+
+  if (!si->demo_mode_p)
+    make_splash_dialog (si);
+
+  main_loop (si);		/* doesn't return */
+  return 0;
+}
+
 
+/* Parsing the programs resource.
+ */
+
+static char *
+reformat_hack (const char *hack)
+{
+  int i;
+  const char *in = hack;
+  int indent = 13;
+  char *h2 = (char *) malloc(strlen(in) + indent + 2);
+  char *out = h2;
+
+  while (isspace(*in)) in++;		/* skip whitespace */
+  while (*in && !isspace(*in) && *in != ':')
+    *out++ = *in++;			/* snarf first token */
+  while (isspace(*in)) in++;		/* skip whitespace */
+
+  if (*in == ':')
+    *out++ = *in++;			/* copy colon */
+  else
+    {
+      in = hack;
+      out = h2;				/* reset to beginning */
+    }
+
+  *out = 0;
+
+  while (isspace(*in)) in++;		/* skip whitespace */
+  for (i = strlen(h2); i < indent; i++)	/* indent */
+    *out++ = ' ';
+
+  /* copy the rest of the line. */
+  while (*in)
+    {
+      /* shrink all whitespace to one space, for the benefit of the "demo"
+	 mode display.  We only do this when we can easily tell that the
+	 whitespace is not significant (no shell metachars).
+       */
+      switch (*in)
+	{
+	case '\'': case '"': case '`': case '\\':
+	  {
+	    /* Metachars are scary.  Copy the rest of the line unchanged. */
+	    while (*in)
+	      *out++ = *in++;
+	  }
+	  break;
+	case ' ': case '\t':
+	  {
+	    while (*in == ' ' || *in == '\t')
+	      in++;
+	    *out++ = ' ';
+	  }
+	  break;
+	default:
+	  *out++ = *in++;
+	  break;
+	}
+    }
+  *out = 0;
+
+  /* strip trailing whitespace. */
+  out = out-1;
+  while (out > h2 && (*out == ' ' || *out == '\t' || *out == '\n'))
+    *out-- = 0;
+
+  return h2;
+}
+
+
+static void
+get_screenhacks (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  int i = 0;
+  int start = 0;
+  int end = 0;
+  int size;
+  char *d;
+
+  d = get_string_resource ("monoPrograms", "MonoPrograms");
+  if (d && !*d) { free(d); d = 0; }
+  if (!d)
+    d = get_string_resource ("colorPrograms", "ColorPrograms");
+  if (d && !*d) { free(d); d = 0; }
+
+  if (d)
+    {
+      fprintf (stderr,
+       "%s: the `monoPrograms' and `colorPrograms' resources are obsolete;\n\
+	see the manual for details.\n", blurb());
+      free(d);
+    }
+
+  d = get_string_resource ("programs", "Programs");
+
+  if (p->screenhacks)
+    {
+      for (i = 0; i < p->screenhacks_count; i++)
+	if (p->screenhacks[i])
+	  free (p->screenhacks[i]);
+      free(p->screenhacks);
+      p->screenhacks = 0;
+    }
+
+  if (!d || !*d)
+    {
+      p->screenhacks_count = 0;
+      p->screenhacks = 0;
+      return;
+    }
+
+  size = strlen (d);
+
+
+  /* Count up the number of newlines (which will be equal to or larger than
+     the number of hacks.)
+   */
+  i = 0;
+  for (i = 0; d[i]; i++)
+    if (d[i] == '\n')
+      i++;
+  i++;
+
+  p->screenhacks = (char **) calloc (sizeof (char *), i+1);
+
+  /* Iterate over the lines in `d' (the string with newlines)
+     and make new strings to stuff into the `screenhacks' array.
+   */
+  p->screenhacks_count = 0;
+  while (start < size)
+    {
+      /* skip forward over whitespace. */
+      while (d[start] == ' ' || d[start] == '\t' || d[start] == '\n')
+	start++;
+
+      /* skip forward to newline or end of string. */
+      end = start;
+      while (d[end] != 0 && d[end] != '\n')
+	end++;
+
+      /* null terminate. */
+      d[end] = 0;
+
+      p->screenhacks[p->screenhacks_count++] = reformat_hack (d + start);
+      if (p->screenhacks_count >= i)
+	abort();
+
+      start = end+1;
+    }
+
+  if (p->screenhacks_count == 0)
+    {
+      free (p->screenhacks);
+      p->screenhacks = 0;
+    }
+}
+
+
+
+/* Processing ClientMessage events.
+ */
+
+static void
+clientmessage_response (saver_info *si, Window w, Bool error,
+			const char *stderr_msg,
+			const char *protocol_msg)
+{
+  char *proto;
+  int L;
+  saver_preferences *p = &si->prefs;
+  if (error || p->verbose_p)
+    fprintf (stderr, "%s: %s\n", blurb(), stderr_msg);
+
+  L = strlen(protocol_msg);
+  proto = (char *) malloc (L + 2);
+  proto[0] = (error ? '-' : '+');
+  strcpy (proto+1, protocol_msg);
+  L++;
+
+  XChangeProperty (si->dpy, w, XA_SCREENSAVER_RESPONSE, XA_STRING, 8,
+		   PropModeReplace, proto, L);
+  XSync (si->dpy, False);
+  free (proto);
+}
 
 Bool
 handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 {
   saver_preferences *p = &si->prefs;
   Atom type = 0;
+  Window window = event->xclient.window;
+
+  /* Preferences might affect our handling of client messages. */
+  maybe_reload_init_file (si);
+
   if (event->xclient.message_type != XA_SCREENSAVER)
     {
       char *str;
@@ -1069,9 +1269,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     {
       if (until_idle_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr,
-		     "%s: ACTIVATE ClientMessage received.\n", blurb());
+	  clientmessage_response(si, window, False,
+				 "ACTIVATE ClientMessage received.",
+				 "activating.");
+	  si->selection_mode = 0;
 	  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (si->dpy, ScreenSaverActive);
@@ -1082,17 +1283,17 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      return True;
 	    }
 	}
-      fprintf (stderr,
-	       "%s: ClientMessage ACTIVATE received while already active.\n",
-	       blurb());
+      clientmessage_response(si, window, True,
+		       "ClientMessage ACTIVATE received while already active.",
+			     "already active.");
     }
   else if (type == XA_DEACTIVATE)
     {
       if (! until_idle_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: DEACTIVATE ClientMessage received.\n",
-		     blurb());
+	  clientmessage_response(si, window, False,
+				 "DEACTIVATE ClientMessage received.",
+				 "deactivating.");
 	  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (si->dpy, ScreenSaverReset);
@@ -1103,31 +1304,59 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      return True;
 	    }
 	}
-      fprintf (stderr,
-	       "%s: ClientMessage DEACTIVATE received while inactive.\n",
-	       blurb());
+      clientmessage_response(si, window, True,
+			   "ClientMessage DEACTIVATE received while inactive.",
+			     "not active.");
     }
   else if (type == XA_CYCLE)
     {
       if (! until_idle_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: CYCLE ClientMessage received.\n", blurb());
+	  clientmessage_response(si, window, False,
+				 "CYCLE ClientMessage received.",
+				 "cycling.");
+	  si->selection_mode = 0;	/* 0 means randomize when its time. */
 	  if (si->cycle_id)
 	    XtRemoveTimeOut (si->cycle_id);
 	  si->cycle_id = 0;
 	  cycle_timer ((XtPointer) si, 0);
 	  return False;
 	}
-      fprintf (stderr, "%s: ClientMessage CYCLE received while inactive.\n",
-	       blurb());
+      clientmessage_response(si, window, True,
+			     "ClientMessage CYCLE received while inactive.",
+			     "not active.");
     }
   else if (type == XA_NEXT || type == XA_PREV)
     {
-      if (p->verbose_p)
-	fprintf (stderr, "%s: %s ClientMessage received.\n", blurb(),
-		(type == XA_NEXT ? "NEXT" : "PREV"));
-      si->next_mode_p = 1 + (type == XA_PREV);
+      clientmessage_response(si, window, False,
+			     (type == XA_NEXT
+			      ? "NEXT ClientMessage received."
+			      : "PREV ClientMessage received."),
+			     "cycling.");
+      si->selection_mode = (type == XA_NEXT ? -1 : -2);
+
+      if (! until_idle_p)
+	{
+	  if (si->cycle_id)
+	    XtRemoveTimeOut (si->cycle_id);
+	  si->cycle_id = 0;
+	  cycle_timer ((XtPointer) si, 0);
+	}
+      else
+	return True;
+    }
+  else if (type == XA_SELECT)
+    {
+      char buf [255];
+      char buf2 [255];
+      long which = event->xclient.data.l[1];
+
+      sprintf (buf, "SELECT %ld ClientMessage received.", which);
+      sprintf (buf2, "activating (%ld).", which);
+      clientmessage_response (si, window, False, buf, buf2);
+
+      if (which < 0) which = 0;		/* 0 == "random" */
+      si->selection_mode = which;
 
       if (! until_idle_p)
 	{
@@ -1144,8 +1373,9 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
       /* Ignore EXIT message if the screen is locked. */
       if (until_idle_p || !si->locked_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: EXIT ClientMessage received.\n", blurb());
+	  clientmessage_response (si, window, False,
+				  "EXIT ClientMessage received.",
+				  "exiting.");
 	  if (! until_idle_p)
 	    {
 	      unblank_screen (si);
@@ -1155,8 +1385,9 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	  saver_exit (si, 0, 0);
 	}
       else
-	fprintf (stderr, "%s: EXIT ClientMessage received while locked.\n",
-		 blurb());
+	clientmessage_response (si, window, True,
+				"EXIT ClientMessage received while locked.",
+				"screen is locked.");
     }
   else if (type == XA_RESTART)
     {
@@ -1165,8 +1396,9 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
        */
       if (until_idle_p || !si->locked_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: RESTART ClientMessage received.\n", blurb());
+	  clientmessage_response (si, window, False,
+				  "RESTART ClientMessage received.",
+				  "restarting.");
 	  if (! until_idle_p)
 	    {
 	      unblank_screen (si);
@@ -1183,63 +1415,75 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 			   make this command be the same as EXIT. */
 	}
       else
-	fprintf(stderr, "%s: RESTART ClientMessage received while locked.\n",
-		blurb());
+	clientmessage_response (si, window, True,
+				"RESTART ClientMessage received while locked.",
+				"screen is locked.");
     }
   else if (type == XA_DEMO)
     {
 #ifdef NO_DEMO_MODE
-      fprintf (stderr, "%s: not compiled with support for DEMO mode\n",
-	       blurb());
-#else
+      clientmessage_response (si, window, True,
+			      "not compiled with support for DEMO mode.",
+			      "demo mode not enabled.");
+#else /* !NO_DEMO_MODE */
       if (until_idle_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: DEMO ClientMessage received.\n", blurb());
+	  clientmessage_response (si, window, False,
+				  "DEMO ClientMessage received.",
+				  "Demo mode.");
 	  si->demo_mode_p = True;
 	  return True;
 	}
-      fprintf (stderr,
-	       "%s: DEMO ClientMessage received while active.\n", blurb());
-#endif
+      clientmessage_response (si, window, True,
+			      "DEMO ClientMessage received while active.",
+			      "already active.");
+#endif /* !NO_DEMO_MODE */
     }
   else if (type == XA_PREFS)
     {
 #ifdef NO_DEMO_MODE
-      fprintf (stderr, "%s: not compiled with support for DEMO mode\n",
-	       blurb());
-#else
+      clientmessage_response (si, window, True,
+			      "not compiled with support for DEMO mode.",
+			      "preferences mode not enabled.");
+#else /* !NO_DEMO_MODE */
       if (until_idle_p)
 	{
-	  if (p->verbose_p)
-	    fprintf (stderr, "%s: PREFS ClientMessage received.\n", blurb());
+	  clientmessage_response (si, window, False,
+				  "PREFS ClientMessage received.",
+				  "preferences mode.");
 	  si->demo_mode_p = (Bool) 2;  /* kludge, so sue me. */
 	  return True;
 	}
-      fprintf (stderr,
-	       "%s: PREFS ClientMessage received while active.\n", blurb());
-#endif
+      clientmessage_response (si, window, True,
+			      "PREFS ClientMessage received while active.",
+			      "already active.");
+#endif /* !NO_DEMO_MODE */
     }
   else if (type == XA_LOCK)
     {
 #ifdef NO_LOCKING
-      fprintf (stderr, "%s: not compiled with support for LOCK mode\n",
-	       blurb());
-#else
+      clientmessage_response (si, window, True,
+			      "not compiled with support for locking.",
+			      "locking not enabled.");
+#else /* !NO_LOCKING */
       if (si->locking_disabled_p)
-	fprintf (stderr,
-	       "%s: LOCK ClientMessage received, but locking is disabled.\n",
-		 blurb());
+	clientmessage_response (si, window, True,
+		      "LOCK ClientMessage received, but locking is disabled.",
+			      "locking not enabled.");
       else if (si->locked_p)
-	fprintf (stderr,
-	       "%s: LOCK ClientMessage received while already locked.\n",
-		 blurb());
+	clientmessage_response (si, window, True,
+			   "LOCK ClientMessage received while already locked.",
+				"already locked.");
       else
 	{
+	  char buf [255];
+	  char *response = (until_idle_p
+			    ? "activating and locking."
+			    : "locking.");
 	  si->locked_p = True;
-	  if (p->verbose_p) 
-	    fprintf (stderr, "%s: LOCK ClientMessage received;%s locking.\n",
-		    blurb(), until_idle_p ? " activating and" : "");
+	  si->selection_mode = 0;
+	  sprintf (buf, "LOCK ClientMessage received; %s", response);
+	  clientmessage_response (si, window, False, buf, response);
 
 	  if (si->lock_id)	/* we're doing it now, so lose the timeout */
 	    {
@@ -1260,21 +1504,30 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 		}
 	    }
 	}
-#endif
+#endif /* !NO_LOCKING */
     }
   else
     {
+      char buf [1024];
       char *str;
       str = (type ? XGetAtomName(si->dpy, type) : 0);
+
       if (str)
-	fprintf (stderr,
-		 "%s: unrecognised screensaver ClientMessage %s received\n",
-		 blurb(), str);
+	{
+	  if (strlen (str) > 80)
+	    strcpy (str+70, "...");
+	  sprintf (buf, "unrecognised screensaver ClientMessage %s received.",
+		   str);
+	  free (str);
+	}
       else
-	fprintf (stderr,
-		"%s: unrecognised screensaver ClientMessage 0x%x received\n",
-		 blurb(), (unsigned int) event->xclient.data.l[0]);
-      if (str) XFree (str);
+	{
+	  sprintf (buf,
+		   "unrecognised screensaver ClientMessage 0x%x received.",
+		   (unsigned int) event->xclient.data.l[0]);
+	}
+
+      clientmessage_response (si, window, True, buf, buf);
     }
   return False;
 }

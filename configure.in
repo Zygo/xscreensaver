@@ -39,7 +39,7 @@ AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
    AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.))
 
 case "$host" in
-  *-irix*)
+  *-irix5* |*-irix6.[0-3]* )
     if test -n "$GCC"; then
       AC_MSG_RESULT(Turning on gcc compiler warnings.)
       CC="$CC -Wall -Wstrict-prototypes -Wnested-externs -Wno-format"
@@ -144,7 +144,7 @@ fi
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv)
 AC_CHECK_FUNCS(sigaction)
 
-AC_CHECK_HEADERS(unistd.h)
+AC_CHECK_HEADERS(unistd.h crypt.h)
 
 dnl	/usr/local/src/ssh-1.2.17/putenv.c -- AC_REPLACE_FUNCS(putenv)
 
@@ -1057,6 +1057,7 @@ fi
 # check for the GL header
 #
 have_gl=no
+ac_have_mesa_gl=no
 with_gl_req=unspecified
 AC_ARG_WITH(gl,
 [  --with-gl               Build those demos which depend on OpenGL,
@@ -1352,7 +1353,6 @@ AC_DEFINE_UNQUOTED(ZIPPY_PROGRAM, "$ac_cv_zippy_program")
 
 # Allow locking to be disabled at compile-time.
 #
-have_locking=yes
 have_kerberos=no
 with_kerberos_req=unspecified
 have_shadow=no
@@ -1366,6 +1366,56 @@ Screen Locking options:
                           (this is the default.)
   --disable-locking       Do not allow locking at all.],
   [enable_locking="$enableval"],[enable_locking=yes])
+if test $enable_locking = yes; then
+  true
+elif test $enable_locking = no; then
+  AC_DEFINE(NO_LOCKING)
+else
+  echo "error: must be yes or no: --enable-locking=$enable_locking"
+  exit 1
+fi
+
+
+
+# Check to see if we can lock Virtual-Terminal switching, but allow that 
+# to be disabled at compile-time.
+#
+ac_vt_lockswitch=no
+AC_ARG_ENABLE(vt-locking,[
+  --enable-vt-locking     Compile in support for locking Virtual Terminals.
+                          This is the default if the system supports it, and
+                          if locking support is included (--enable-locking.)
+  --disable-vt-locking    Do not allow locking of VTs, even if locking is
+                          enabled.],
+  [enable_vt_locking="$enableval"],[enable_vt_locking=yes])
+if test $enable_vt_locking = yes; then
+
+  AC_MSG_CHECKING(for VT_LOCKSWITCH ioctl)
+  AC_CACHE_VAL(ac_cv_vt_lockswitch,
+   [AC_TRY_COMPILE([#include <fcntl.h>
+		    #include <sys/ioctl.h>
+		    #include <sys/vt.h>],
+		   [int x = VT_LOCKSWITCH; int y = VT_UNLOCKSWITCH;],
+		   [ac_cv_vt_lockswitch=yes],
+		   [ac_cv_vt_lockswitch=no])])
+  ac_vt_lockswitch=$ac_cv_vt_lockswitch
+  AC_MSG_RESULT($ac_vt_lockswitch)
+
+elif test $enable_locking = no; then
+  true
+else
+  echo "error: must be yes or no: --enable-vt-locking=$enable_vt_locking"
+  exit 1
+fi
+
+if test $ac_vt_lockswitch = yes; then
+  AC_DEFINE(HAVE_VT_LOCKSWITCH)
+  # the VT_LOCKSWITCH ioctl can only be used when running as root.
+  need_setuid=yes
+fi
+
+
+
 if test $enable_locking = yes; then
 
   # Check for Kerberos.
@@ -1570,11 +1620,6 @@ if test $enable_locking = yes; then
     esac
   fi
 
-elif test $enable_locking = no; then
-  AC_DEFINE(NO_LOCKING)
-else
-  echo "error: must be yes or no: --enable-locking=$enable_locking"
-  exit 1
 fi
 
 
@@ -1763,7 +1808,7 @@ fi
 
 if test $have_motif = yes -a $have_lesstif = yes ; then
 
-  preferred_lesstif=0.87
+  preferred_lesstif=0.86
 
   if test $lesstif_version = unknown; then
     warnL "Unable to determine the LessTif version number!"
@@ -1776,14 +1821,6 @@ if test $have_motif = yes -a $have_lesstif = yes ; then
     warn2 "use with XScreenSaver; it is strongly recommended"
     warn2 "that you upgrade to at least version $preferred_lesstif!"
     warn2 "See <http://www.lesstif.org/>."
-
-  elif test \! $lesstif_version -gt 86; then
-    warnL "LessTif version $lesstif_version_string is being used."
-    warn2 "LessTif versions 0.86 and earlier have a bug that"
-    warn2 "can cause a security problem with xscreensaver."
-    warn2 "If you want to use xscreensaver as a screen locker,"
-    warn2 "it is strongly recommended that you upgrade to at"
-    warn2 "least version $preferred_lesstif.  See <http://www.lesstif.org/>."
   fi
 fi
 

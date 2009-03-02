@@ -106,10 +106,8 @@ static argtype vars[] = {
 
 ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-#ifdef HAVE_XPM
-# include <X11/xpm.h>
-# include "../images/lament.xpm"
-#endif /* HAVE_XPM */
+#include "xpm-ximage.h"
+#include "../images/lament.xpm"
 
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
@@ -175,107 +173,14 @@ static lament_configuration *lcs = NULL;
 #define FACE_U 5
 #define FACE_D 1
 
-#ifdef HAVE_XPM
-static Bool
-bigendian(void)
-{
-  union { int i; char c[sizeof(int)]; } u;
-  u.i = 1;
-  return !u.c[0];
-}
-#endif /* HAVE_XPM */
-
-
 static void
 parse_image_data(ModeInfo *mi)
 {
-#ifdef HAVE_XPM
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-
-  /* All we want to do is get RGB data out of the XPM file built in to this
-     program.  This is a pain, because there is no way  (as of XPM version
-     4.6, at least) to get libXpm to make an XImage without also allocating
-     colors with XAllocColor.  So, instead, we create an XpmImage and parse
-     out the RGB values of the pixels ourselves; and construct an XImage
-     by hand.  Regardless of the depth of the visual we're using, this
-     XImage will have 32 bits per pixel, 8 each per R, G, and B.  We put
-     0xFF in the fourth slot, as GL will interpret that as "alpha".
-   */
-  XpmImage xpm_image;
-  XpmInfo xpm_info;
-  int result;
-  int x, y, i;
-  int bpl, wpl;
-  XColor colors[255];
-  
-  result = XpmCreateXpmImageFromData(lament_faces, &xpm_image, &xpm_info);
-  if (result != XpmSuccess)
-    {
-      fprintf(stderr, "%s: unable to parse xpm data (%d).\n", progname,
-	      result);
-      exit (1);
-    }
-
-  lc->texture = XCreateImage(mi->dpy, mi->xgwa.visual, 32, ZPixmap, 0, 0,
-			     xpm_image.width, xpm_image.height, 32, 0);
-
-  bpl = lc->texture->bytes_per_line;
-  wpl = bpl/4;
-
-  lc->texture->data = (char *) malloc(xpm_image.height * bpl);
-
-  /* Parse the colors in the XPM into RGB values. */
-  for (i = 0; i < xpm_image.ncolors; i++)
-    if (!XParseColor(mi->dpy, mi->xgwa.colormap,
-		     xpm_image.colorTable[i].c_color,
-		     &colors[i]))
-      {
-	fprintf(stderr, "%s: unparsable color: %s\n", progname,
-		xpm_image.colorTable[i].c_color);
-	exit(1);
-      }
-
-  /* Translate the XpmImage to an RGB XImage. */
-  {
-    int rpos, gpos, bpos, apos;  /* bitfield positions */
-
-    /* Note that unlike X, which is endianness-agnostic (since any XImage
-       can have its own specific bit ordering, with the server reversing
-       things as necessary) OpenGL pretends everything is client-side, so
-       we need to pack things in the right order for the client machine.
-     */
-    if (bigendian())
-      rpos = 24, gpos = 16, bpos =  8, apos =  0;
-    else
-      rpos =  0, gpos =  8, bpos = 16, apos = 24;
-
-    for (y = 0; y < xpm_image.height; y++)
-      {
-	int y2 = (xpm_image.height-1-y); /* Texture maps are upside down. */
-
-	unsigned int *oline = (unsigned int *) (lc->texture->data + (y *bpl));
-	unsigned int *iline = (unsigned int *) (xpm_image.data    + (y2*wpl));
-
-	for (x = 0; x < xpm_image.width; x++)
-	  {
-	    XColor *c = &colors[iline[x]];
-	    /* pack it as RGBA */
-	    oline[x] = (((c->red   >> 8) << rpos) |
-			((c->green >> 8) << gpos) |
-			((c->blue  >> 8) << bpos) |
-			(0xFF            << apos));
-	  }
-      }
-  }
-
-  /* I sure hope these only free the contents, and not the args. */
-  XpmFreeXpmImage(&xpm_image);
-  XpmFreeXpmInfo(&xpm_info);
-
-#else  /* !HAVE_XPM */
-  fprintf(stderr, "%s: not compiled with XPM support.\n", progname);
-  exit (1);
-#endif /* !HAVE_XPM */
+  lc->texture = xpm_to_ximage (mi->dpy,
+			       mi->xgwa.visual,
+			       mi->xgwa.colormap,
+			       lament_faces);
 }
 
 

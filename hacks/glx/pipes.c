@@ -640,7 +640,10 @@ init_pipes(ModeInfo * mi)
 	if ((pp->glx_context = init_GL(mi)) != NULL) {
 
 		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-		pp->initial_rotation = -10.0;
+		if (rotatepipes)
+		  pp->initial_rotation = NRAND(180); /* jwz */
+		else
+		  pp->initial_rotation = -10.0;
 		pinit(mi, 1);
 
 		if (factory > 0) {

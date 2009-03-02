@@ -1373,7 +1373,7 @@ find_dead_regions(void)
 static void
 solve_maze (void)                     /* solve it with graphical feedback */
 {
-    int i, dir, from, x, y, ways, bt;
+    int i, dir, from, x, y, ways, bt = 0;
 
     /* plug up the surrounding wall */
     maze[end_x][end_y] |= (WALL_TOP >> end_dir);

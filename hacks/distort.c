@@ -41,11 +41,12 @@ struct coo {
 };
 static struct coo xy_coo[10];
 
-static int delay, radius, speed, number, blackhole, vortex, magnify;
+static int delay, radius, speed, number, blackhole, vortex, magnify, reflect;
 static XWindowAttributes xgwa;
 static GC gc;
 static Window g_window;
-static Display *g_dpy; 
+static Display *g_dpy;
+static unsigned long black_pixel;
 
 static XImage *orig_map, *buffer_map;
 
@@ -78,14 +79,15 @@ static void init_distort(Display *dpy, Window window)
 	blackhole = get_boolean_resource("blackhole", "Boolean");
 	vortex = get_boolean_resource("vortex", "Boolean");
 	magnify = get_boolean_resource("magnify", "Boolean");
+	reflect = get_boolean_resource("reflect", "Boolean");
 	
 	if (get_boolean_resource ("swamp", "Boolean"))
 		effect = &swamp_thing;
-	if (get_boolean_resource ("bounce", "Boolean"))
+	if (get_boolean_resource ("bounce", "Boolean") || reflect)
 		effect = &move_lense;
 
 	if (effect == NULL && radius == 0 && speed == 0 && number == 0
-		&& !blackhole && !vortex && !magnify) {
+		&& !blackhole && !vortex && !magnify && !reflect) {
 /* if no cmdline options are given, randomly choose one of:
  * -radius 50 -number 4 -speed 1 -bounce
  * -radius 50 -number 4 -speed 1 -blackhole
@@ -170,6 +172,7 @@ static void init_distort(Display *dpy, Window window)
 		effect = &move_lense;
 
 	XGetWindowAttributes (dpy, window, &xgwa);
+	black_pixel = BlackPixelOfScreen( xgwa.screen );
 
 	gcv.function = GXcopy;
 	gcv.subwindow_mode = IncludeInferiors;
@@ -240,12 +243,16 @@ static void init_distort(Display *dpy, Window window)
 static void make_round_lense(int radius, int loop)
 {
 	int i, j;
+	double theta;
 
 	for (i = 0; i < 2*radius+speed+2; i++) {
 		for(j = 0; j < 2*radius+speed+2; j++) {
 			double r, d;
 			r = sqrt ((i-radius)*(i-radius)+(j-radius)*(j-radius));
-			d=r/loop;
+			if (loop == 0)
+			  d=0.0;
+			else
+			  d=r/loop;
 
 			if (r < loop-1) {
 
@@ -256,12 +263,18 @@ static void make_round_lense(int radius, int loop)
 		 * Copyright (C) 1996 Federico Mena Quintero
 		 */
 		/* 2.5 is just a constant used because it looks good :) */
-					angle = 2.5*(1-r/loop)*(1-r/loop);
+					angle = 2.5*(1-d)*(1-d);
 
-					from[i][j][0] = radius + cos(angle -
-						atan2(radius-j,-(radius-i)))*r;
-					from[i][j][1] = radius + sin(angle -
-						atan2(radius-j,-(radius-i)))*r;
+
+        /* Avoid atan2: DOMAIN error message */
+        if ((radius-j) == 0.0 && (radius-i) == 0.0)
+            theta = 0.0;
+        else
+            theta = atan2(radius-j, radius-i);
+        from[i][j][0] = radius +
+                        cos(angle - theta)*r;
+        from[i][j][1] = radius +
+                        sin(angle - theta)*r;
 
 					if (magnify) {
 						r = sin(d*M_PI_2);
@@ -290,6 +303,10 @@ static void make_round_lense(int radius, int loop)
 		}
 	}
 }
+
+#ifndef EXIT_FAILURE
+# define EXIT_FAILURE -1
+#endif
 
 static void allocate_lense(void)
 {
@@ -346,16 +363,51 @@ static void init_round_lense(void)
 void draw(int k)
 {
 	int i, j;
+	int	cx, cy;
+	int	ly, lysq, lx, ny, dist, rsq = radius * radius;
+	if (reflect) {
+		cx = cy = radius;
+		if (xy_coo[k].ymove > 0)
+			cy += speed;
+		if (xy_coo[k].xmove > 0)
+			cx += speed;
+	}
 	for(i = 0 ; i < 2*radius+speed+2; i++) {
+		if (reflect) {
+			ly = i - cy;
+			lysq = ly * ly;
+			ny = xy_coo[k].y + i;
+		}
 		for(j = 0 ; j < 2*radius+speed+2 ; j++) {
-			if (xy_coo[k].x+from[i][j][0] >= 0 &&
-					xy_coo[k].x+from[i][j][0] < xgwa.width &&
-					xy_coo[k].y+from[i][j][1] >= 0 &&
-					xy_coo[k].y+from[i][j][1] < xgwa.height)
+			if (reflect) {
+				lx = j - cx;
+				dist = lx * lx + lysq;
+				if (dist > rsq ||
+					ly < -radius || ly > radius ||
+					lx < -radius || lx > radius)
+					XPutPixel( buffer_map, j, i,
+							   XGetPixel( orig_map, xy_coo[k].x + j, ny ));
+				else if (dist == 0)
+					XPutPixel( buffer_map, j, i, black_pixel );
+				else {
+					int	x = xy_coo[k].x + cx + (lx * rsq / dist);
+					int	y = xy_coo[k].y + cy + (ly * rsq / dist);
+					if (x < 0 || x > xgwa.width ||
+						y < 0 || y > xgwa.height)
+						XPutPixel( buffer_map, j, i, black_pixel );
+					else
+						XPutPixel( buffer_map, j, i,
+								   XGetPixel( orig_map, x, y ));
+				}
+			} else if (xy_coo[k].x+from[i][j][0] >= 0 &&
+					   xy_coo[k].x+from[i][j][0] < xgwa.width &&
+					   xy_coo[k].y+from[i][j][1] >= 0 &&
+					   xy_coo[k].y+from[i][j][1] < xgwa.height) {
 				XPutPixel(buffer_map, i, j,
-						XGetPixel(orig_map,
-							xy_coo[k].x+from[i][j][0],
-							xy_coo[k].y+from[i][j][1]));
+						  XGetPixel(orig_map,
+									xy_coo[k].x+from[i][j][0],
+									xy_coo[k].y+from[i][j][1]));
+			}
 		}
 	}
 
@@ -391,11 +443,11 @@ static void move_lense(int k)
 {
 	int i;
 
-	if (xy_coo[k].x + 4*radius/2 >= xgwa.width)
+	if (xy_coo[k].x + 2*radius + speed + 2 >= xgwa.width)
 		xy_coo[k].xmove = -abs(xy_coo[k].xmove);
 	if (xy_coo[k].x <= speed) 
 		xy_coo[k].xmove = abs(xy_coo[k].xmove);
-	if (xy_coo[k].y + 4*radius/2 >= xgwa.height)
+	if (xy_coo[k].y + 2*radius + speed + 2 >= xgwa.height)
 		xy_coo[k].ymove = -abs(xy_coo[k].ymove);
 	if (xy_coo[k].y <= speed)
 		xy_coo[k].ymove = abs(xy_coo[k].ymove);
@@ -471,6 +523,7 @@ char *defaults [] = {
 	"*magnify:			False",
 	"*swamp:			False",
 	"*bounce:			False",
+	"*reflect:			False",
 	"*blackhole:		False",
 #ifdef HAVE_XSHM_EXTENSION
 	"*useSHM:			False",		/* xshm turns out not to help. */
@@ -485,6 +538,7 @@ XrmOptionDescRec options [] = {
 	{ "-number",	".number",	XrmoptionSepArg, 0 },
 	{ "-swamp",	".swamp",	XrmoptionNoArg, "True" },
 	{ "-bounce",	".bounce",	XrmoptionNoArg, "True" },
+	{ "-reflect",	".reflect",	XrmoptionNoArg, "True" },
 	{ "-vortex",	".vortex",	XrmoptionNoArg, "True" },
 	{ "-magnify",	".magnify",	XrmoptionNoArg, "True" },
 	{ "-blackhole",	".blackhole",	XrmoptionNoArg, "True" },

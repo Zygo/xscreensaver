@@ -186,7 +186,7 @@ if (stateY==rotsizeY) stateY=0;
 
 Bool make_rots(double xspeed,double yspeed)
 {
-int a,b,c,f,g,j,k,l;
+int a,b,c,f,g,j,k=0,l;
 double m,om,ok;
 double d,ix,iy;
 int maxi;
@@ -474,7 +474,7 @@ void screenhack(Display *d, Window w)
 #ifdef HAVE_XDBE_EXTENSION
 XdbeSwapInfo xdswp;
 #endif /* HAVE_XDBE_EXTENSION */
-int a,b,c,e;
+int a,b,c=0,e;
 float f;
 
 dpy=d;

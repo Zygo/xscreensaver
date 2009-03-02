@@ -22,7 +22,8 @@
 
    If you don't have man pages for this extension, see
    http://www.physik.uni-regensburg.de/~scs22156/sofie-0.2/mit-shm.html
-   or in the R6 sources as "xc/doc/specs/Xext/mit-shm.ms".
+   or in the R6 sources as "xc/doc/specs/Xext/mit-shm.ms", for example,
+   ftp://ftp.x.org/pub/R6.4/xc/doc/specs/Xext/mit-shm.ms
 
    (This document seems not to ever remain available on the web in one place
    for very long; you can search for it by the title, "MIT-SHM -- The MIT
@@ -35,14 +36,59 @@
 
 #ifdef HAVE_XSHM_EXTENSION	/* whole file */
 
+/* #define DEBUG */
+
 #include <errno.h>		/* for perror() */
 #include <X11/Xutil.h>		/* for XDestroyImage() */
 
 #include "xshm.h"
 #include "resources.h"		/* for get_string_resource() */
 
+#ifdef DEBUG
+# include <X11/Xmu/Error.h>
+#endif
 
 extern char *progname;
+
+
+/* The documentation for the XSHM extension implies that if the server
+   supports XSHM but is not the local machine, the XShm calls will return
+   False; but this turns out not to be the case.  Instead, the server
+   throws a BadAccess error.  So, we need to catch X errors around all
+   of our XSHM calls, sigh.
+ */
+
+static Bool shm_got_x_error = False;
+XErrorHandler old_handler = 0;
+static int
+shm_ehandler (Display *dpy, XErrorEvent *error)
+{
+  shm_got_x_error = True;
+
+#ifdef DEBUG
+  fprintf (stderr, "\n%s: ignoring X error from XSHM:\n", progname);
+  XmuPrintDefaultErrorMessage (dpy, error, stderr);
+  fprintf (stderr, "\n");
+#endif
+
+  return 0;
+}
+
+
+#define CATCH_X_ERROR(DPY) do {				\
+  XSync((DPY), False); 					\
+  shm_got_x_error = False;				\
+  if (old_handler != shm_ehandler)			\
+    old_handler = XSetErrorHandler (shm_ehandler);	\
+} while(0)
+
+#define UNCATCH_X_ERROR(DPY) do {			\
+  XSync((DPY), False); 					\
+  if (old_handler)					\
+    XSetErrorHandler (old_handler);			\
+    old_handler = 0;					\
+} while(0)
+
 
 XImage *
 create_xshm_image (Display *dpy, Visual *visual,
@@ -51,6 +97,7 @@ create_xshm_image (Display *dpy, Visual *visual,
 		   XShmSegmentInfo *shm_info,
 		   unsigned int width, unsigned int height)
 {
+  Status status;
   XImage *image = 0;
   if (!get_boolean_resource("useSHM", "Boolean"))
     return 0;
@@ -58,8 +105,13 @@ create_xshm_image (Display *dpy, Visual *visual,
   if (!XShmQueryExtension (dpy))
     return 0;
 
+  CATCH_X_ERROR(dpy);
   image = XShmCreateImage(dpy, visual, depth,
-			      format, data, shm_info, width, height);
+			  format, data, shm_info, width, height);
+  UNCATCH_X_ERROR(dpy);
+  if (shm_got_x_error)
+    return 0;
+
 #ifdef DEBUG
   fprintf(stderr, "\n%s: XShmCreateImage(... %d, %d)\n", progname,
 	  width, height);
@@ -92,7 +144,13 @@ create_xshm_image (Display *dpy, Visual *visual,
 	      shm_info->shmid, (int) image->data);
 #endif
 
-      if (!XShmAttach(dpy, shm_info))
+      CATCH_X_ERROR(dpy);
+      status = XShmAttach(dpy, shm_info);
+      UNCATCH_X_ERROR(dpy);
+      if (shm_got_x_error)
+	status = False;
+
+      if (!status)
 	{
 	  fprintf (stderr, "%s: XShmAttach failed!\n", progname);
 	  XDestroyImage (image);

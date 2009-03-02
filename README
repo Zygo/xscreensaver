@@ -73,6 +73,47 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 2.33:   * Fixed a bug that was making `pipes' generate way too
+			many valves.  Made the viewpoint in `pipes' be selected
+			randomly instead of always being -10 degrees.
+		      * Fixed a bug in the XSHM code, in the case where the
+			server supports the XSHM extension but is not the same
+			machine as the client.
+		      * Made `rd-bomb' default to taking up the whole screen.
+		      * Made it not try to do fading/unfading if no PseudoColor
+			visuals exist.
+		      * Initial attempt at supporting VT-locking (doesn't work
+			yet.)
+		      * Eliminated the `captureStdout' resource; now
+			`captureStderr' controls both streams.
+		      * Added `-capture-stderr' and `-no-capture-stderr'
+			command-line arguments.
+		      * Added `glplanet' hack.
+		      * When a hack is selected with `xscreensaver-command
+			-select', that hack will be used until further notice
+			(until the saver turns off, or another activation
+			command is issued.)
+Changes since 2.32:   * Made `xscreensaver-command' print error messages:
+			the xscreensaver daemon now responds to ClientMessage
+			events by writing a response message on a window
+			property, instead of just writing to its stderr.
+		      * Made the ~/.xscreensaver file be automatically reloaded
+			when the file date changes.
+		      * The password dialog and splash screen no longer depend
+			on Motif or Athena.  This should clear up a number of
+			focus problems, and is the first step on the path
+			toward moving all of the Motif/Athena/whatever code
+			out of the xscreensaver daemon, and into external
+			processes.
+		      * Don't complain about LessTif 0.86 any more, since the
+			new password dialog makes that problem go away.
+		      * Configure tweaks for Irix 6.5, SunOS 5.something.
+		      * New `-reflect' option to `distort'.
+Changes since 2.31:   * Added reading and writing of a ~/.xscreensaver file,
+			so that the Preferences panel can save its settings.
+		      * New version of `rubik'.
+		      * Added `-select N' argument to `xscreensaver-command'.
+		      * Oops, left out some of the `bubbles3d' files...
 Changes since 2.30:   * The cursor was invisible in the password dialog. Fixed.
 		      * Made configure warn against MesaGL 2.6.
 		      * Fixed X error at startup when using non-default visual.
@@ -121,7 +162,7 @@ Changes since 2.24:   * Improved motion in `rd-bomb'.
 			`swirl' hacks, which speeds them up a bit.
 		      * Added `lament' hack.
 Changes since 2.23:   * Tweaked the order of the -L options again.
-		      * Cleaned up configure's --help message.
+		      * Cleaned up configure's `--help' message.
 		      * Added `kumppa' hack.
 		      * Smarter maze-solving algorithm in `maze'.
 		      * Took `xlyap' out of the default list of hacks, since
@@ -136,12 +177,12 @@ Changes since 2.23:   * Tweaked the order of the -L options again.
 		      * Some random configure tweaks.
 		      * Added a `timestamp' resource that makes the `-verbose'
 			messages include the time at which they were printed.
-Changes since 2.22:   * The fix for SGI's "scheme" nonsense broke things, and
+Changes since 2.22:   * The fix for SGI's ``scheme'' nonsense broke things, and
 			let the user's "*background" resource show through.
 			Fixed it in a different way.
 Changes since 2.21:   * Added support for the DPMS server extension (Display
 			Power Management System.)
-		      * Made configure advertize the --enable-subdir option a
+		      * Made configure advertize the `--enable-subdir' option a
 			little more, since that seemed to cause some people
 			stress.  Also, made that directory be built into the
 			xscreensaver executable, as a hardcoded prefix to
@@ -149,11 +190,11 @@ Changes since 2.21:   * Added support for the DPMS server extension (Display
 		      * Made configure prefer the two-arg gettimeofday to the
 			one-arg version, since AIX doesn't have any prototypes.
 		      * Made it work with Xaw3d (the 3D Athena library.)
-		      * Made "make install" create directories as necessary.
+		      * Made `make install' create directories as necessary.
 		      * New version of lmorph from Sverre.
 		      * Added `crystal' and `discreet' hacks from xlockmore.
 		      * Added a new mode to `bsod'.
-Changes since 2.20:   * Made "xscreensaver-command -time" use different words.
+Changes since 2.20:   * Made `xscreensaver-command -time' use different words.
 			(It now describes the two states as "screen blanked
 			since..."  and "screen non-blanked since..." instead of
 			"active since..." and "inactive since..." which a lot
@@ -164,14 +205,14 @@ Changes since 2.20:   * Made "xscreensaver-command -time" use different words.
 			xscreensaver-command programs more obvious.
 		      * Rewrote (and reorganized) parts of the xscreensaver and
 			xscreensaver-command manual pages.
-		      * Renamed xscreensaver's "-lock" command-line option to
-			be "-lock-mode", to avoid confusion with the "-lock"
+		      * Renamed xscreensaver's `-lock' command-line option to
+			be `-lock-mode', to avoid confusion with the `-lock'
 			option to xscreensaver-command, which does a totally
 			different thing.
-		      * Removed xscreensaver's "-demo" command-line option for
-			a similar reason; use "xscreensaver-command -demo"
+		      * Removed xscreensaver's `-demo' command-line option for
+			a similar reason; use `xscreensaver-command -demo'
 			instead.
-		      * Disabled SGI's "scheme" nonsense in a better way than
+		      * Disabled SGI's ``scheme'' nonsense in a better way than
 			fully-qualifying the background colors in every single
 			hack.
 		      * Fixed some other minor cosmetic problems when *sgiMode
@@ -249,7 +290,7 @@ Changes since 2.12:   * Made `decayscreen' do directions other than down.
 Changes since 2.11:   * Added `README.debugging'.
 		      * Added `puzzle' hack.
 		      * Added `xlyap' hack.
-		      * Added "default-n" as a visual name, so that one can
+		      * Added `default-n' as a visual name, so that one can
 			have -install on by default, but turn it off for
 			certain poorly-behaved hacks (like xv.)
 		      * Added support for grabbing frames of external video
@@ -279,7 +320,7 @@ Changes since 2.07:   * New hacks `rd-bomb' and `coral'.
 		      * Fixed a bug in the -time option.
 		      * Fixed a bug in configure related to LessTif.
 Changes since 2.06:   * Minor header tweaks in windows.c and flag.c.
-		      * Made multi-architecture (VPATH) builds work properly.
+		      * Made multi-architecture ($VPATH) builds work properly.
 		      * Merged new GL stuff from xlockmore (rubik, morph3d.)
 		      * Fixed intermittent crashes in `imsmap' and `munch'.
 		      * Added `fadeplot' hack from xlockmore.

@@ -1,4 +1,4 @@
-/* setuid.c --- management of runtime priveleges.
+/* setuid.c --- management of runtime privileges.
  * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -62,15 +62,126 @@ describe_uids (saver_info *si, FILE *out)
   char *s1 = strdup (uid_gid_string (uid, gid));
   char *s2 = strdup (uid_gid_string (euid, egid));
 
-  if (si->orig_uid && *si->orig_uid)
+  if (si->orig_uid && *si->orig_uid &&
+      (!!strcmp (si->orig_uid, s1) ||
+       !!strcmp (si->orig_uid, s2)))
     fprintf (out, "%s: initial effective uid/gid was %s\n", blurb(),
 	     si->orig_uid);
+
   fprintf (out, "%s: running as %s", blurb(), s1);
   if (uid != euid || gid != egid)
     fprintf (out, "; effectively %s", s2);
   fprintf(out, "\n");
   free(s1);
   free(s2);
+}
+
+
+static int
+set_ids_by_name (struct passwd *p, struct group *g, char **message_ret)
+{
+  int uid_errno = 0;
+  int gid_errno = 0;
+  uid_t uid = p->pw_uid;
+  gid_t gid = g->gr_gid;
+
+  if (message_ret)
+    *message_ret = 0;
+
+  /* Rumor has it that some implementations of of setuid() do nothing
+     when called with -1; therefore, if the "nobody" user has a uid of
+     -1, then that would be Really Bad.  Rumor further has it that such
+     systems really ought to be using -2 for "nobody", since that works.
+     So, if we get a uid (or gid, for good measure) of -1, switch to -2
+     instead.
+   */
+  if (gid == (gid_t) -1) gid = (gid_t) -2;
+  if (uid == (uid_t) -1) uid = (uid_t) -2;
+
+  errno = 0;
+  if (setgid (gid) != 0)
+    gid_errno = errno ? errno : -1;
+
+  errno = 0;
+  if (setuid (uid) != 0)
+    uid_errno = errno ? errno : -1;
+
+  if (uid_errno == 0 && gid_errno == 0)
+    {
+      static char buf [1024];
+      sprintf (buf, "changed uid/gid to %s/%s (%ld/%ld).",
+	       p->pw_name, (g ? g->gr_name : "???"),
+	       (long) uid, (long) gid);
+      if (message_ret)
+	*message_ret = buf;
+      return 0;
+    }
+  else
+    {
+      char buf [1024];
+      if (gid_errno)
+	{
+	  sprintf (buf, "%s: couldn't set gid to %s (%ld)",
+		   blurb(),
+		   (g ? g->gr_name : "???"),
+		   (long) gid);
+	  if (gid_errno == -1)
+	    fprintf(stderr, "%s: unknown error\n", buf);
+	  else
+	    perror(buf);
+	}
+
+      if (uid_errno)
+	{
+	  sprintf (buf, "%s: couldn't set uid to %s (%ld)",
+		   blurb(),
+		   (p ? p->pw_name : "???"),
+		   (long) uid);
+	  if (uid_errno == -1)
+	    fprintf(stderr, "%s: unknown error\n", buf);
+	  else
+	    perror(buf);
+	}
+
+      return -1;
+    }
+}
+
+static int
+set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
+{
+  struct passwd *p;
+  struct group *g;
+
+  errno = 0;
+  p = getpwuid (uid);
+  if (!p)
+    {
+      char buf [1024];
+      sprintf (buf, "%s: error looking up name of user %d", blurb(),
+	       (long) uid);
+      if (errno)
+	perror (buf);
+      else
+	fprintf (stderr, "%s: unknown error.\n", buf);
+      return -1;
+    }
+
+  errno = 0;
+  g = getgrgid (gid);
+  if (!g)
+    {
+      char buf [1024];
+      sprintf (buf, "%s: error looking up name of group %d", blurb(),
+	       (long) gid);
+      if (errno)
+	perror (buf);
+      else
+	fprintf (stderr, "%s: unknown error.\n", buf);
+      return -1;
+    }
+
+  return set_ids_by_name (p, g, message_ret);
 }
 
 
@@ -83,26 +194,43 @@ describe_uids (saver_info *si, FILE *out)
 void
 hack_uid (saver_info *si)
 {
-  si->orig_uid = strdup (uid_gid_string (geteuid(), getegid()));
 
-  setgid (getgid ());
-  setuid (getuid ());
+  /* Discard privileges, and set the effective user/group ids to the
+     real user/group ids.  That is, give up our "chmod +s" rights.
+   */
+  {
+    uid_t euid = geteuid();
+    gid_t egid = getegid();
+    uid_t uid = getuid();
+    gid_t gid = getgid();
 
-  /* If we're being run as root (as from xdm) then switch the user id
-     to something safe. */
-  if (getuid () == 0)
+    si->orig_uid = strdup (uid_gid_string (euid, egid));
+
+    if (uid != euid || gid != egid)
+      if (set_ids_by_number (uid, gid, &si->uid_message) != 0)
+	saver_exit (si, 1, 0);
+  }
+
+  /* Locking can't work when running as root, because we have no way of
+     knowing what the user id of the logged in user is (so we don't know
+     whose password to prompt for.)
+   */
+  if (getuid() == (uid_t) 0)
     {
-      struct passwd *p = 0;
-      struct group *g = 0;
-      int uid_errno = 0;
-      int gid_errno = 0;
-
-      /* Locking can't work when running as root, because we have no way of
-	 knowing what the user id of the logged in user is (so we don't know
-	 whose password to prompt for.)
-       */
       si->locking_disabled_p = True;
       si->nolock_reason = "running as root";
+    }
+
+  /* If we're running as root, switch to a safer user.  This is above and
+     beyond the fact that we've disabling locking, above -- the theory is
+     that running graphics demos as root is just always a stupid thing
+     to do, since they have probably never been security reviewed and are
+     more likely to be buggy than just about any other kind of program.
+   */
+  if (getuid() == (uid_t) 0)
+    {
+      struct passwd *p;
+
       p = getpwnam ("nobody");
       if (! p) p = getpwnam ("noaccess");
       if (! p) p = getpwnam ("daemon");
@@ -114,102 +242,55 @@ hack_uid (saver_info *si)
 	  saver_exit(si, 1, 0);
 	}
 
-      g = getgrgid (p->pw_gid);
-
-      /* Rumor has it that some implementations of of setuid() do nothing
-	 when called with -1; therefore, if the "nobody" user has a uid of
-	 -1, then that would be Really Bad.  Rumor further has it that such
-	 systems really ought to be using -2 for "nobody", since that works.
-	 So, if we get a uid (or gid, for good measure) of -1, switch to -2
-	 instead.
-       */
-
-      if (p->pw_gid == -1) p->pw_gid = -2;
-      if (p->pw_uid == -1) p->pw_uid = -2;
-
-
-      /* Change the gid to be a safe one, then change the uid to be a safe
-	 one (must do it in this order, because root privs vanish when uid
-	 is changed, and after that, gid can't be changed.)
-       */
-      if (setgid (p->pw_gid) != 0)
-	gid_errno = errno ? errno : -1;
-      if (setuid (p->pw_uid) != 0)
-	uid_errno = errno ? errno : -1;
-
-      if (uid_errno == 0 && gid_errno == 0)
-	{
-	  static char buf [1024];
-	  sprintf (buf, "changed uid/gid to %s/%s (%ld/%ld).",
-		   p->pw_name, (g ? g->gr_name : "???"),
-		   (long) p->pw_uid, (long) p->pw_gid);
-	  si->uid_message = buf;
-	}
-      else
-	{
-	  char buf [1024];
-	  if (gid_errno)
-	    {
-	      sprintf (buf, "%s: couldn't set gid to %s (%ld)",
-		       blurb(),
-		       (g ? g->gr_name : "???"),
-		       (long) p->pw_gid);
-	      if (gid_errno == -1)
-		fprintf(stderr, "%s: unknown error\n", buf);
-	      else
-		perror(buf);
-	    }
-
-	  if (uid_errno)
-	    {
-	      sprintf (buf, "%s: couldn't set uid to %s (%ld)",
-		       blurb(),
-		       (p ? p->pw_name : "???"),
-		       (long) p->pw_uid);
-	      if (uid_errno == -1)
-		fprintf(stderr, "%s: unknown error\n", buf);
-	      else
-		perror(buf);
-	    }
-	}
-
-      if (uid_errno != 0)
-	{
-	  /* We'd better exit rather than continue running as root.
-	     But if we switched uid but not gid, continue running,
-	     since that doesn't really matter.  (Right?)
-	   */
-	  saver_exit (si, -1, 0);
-	}
+      if (set_ids_by_number (p->pw_uid, p->pw_gid, &si->uid_message) != 0)
+	saver_exit (si, -1, 0);
     }
-# ifndef NO_LOCKING
- else	/* disable locking if already being run as "someone else" */
-   {
-     struct passwd *p = getpwuid (getuid ());
-     if (!p ||
-	 !strcmp (p->pw_name, "root") ||
-	 !strcmp (p->pw_name, "nobody") ||
-	 !strcmp (p->pw_name, "noaccess") ||
-	 !strcmp (p->pw_name, "operator") ||
-	 !strcmp (p->pw_name, "daemon") ||
-	 !strcmp (p->pw_name, "bin") ||
-	 !strcmp (p->pw_name, "adm") ||
-	 !strcmp (p->pw_name, "sys") ||
-	 !strcmp (p->pw_name, "games"))
-       {
-	 static char buf [1024];
-	 sprintf (buf, "running as %s", p->pw_name);
-	 si->nolock_reason = buf;
-	 si->locking_disabled_p = True;
-       }
-   }
-# endif /* !NO_LOCKING */
+
+
+  /* If there's anything even remotely funny looking about the passwd struct,
+     or if we're running as some other user from the list below (a
+     non-comprehensive selection of users known to be privileged in some way,
+     and not normal end-users) then disable locking.  If it was possible,
+     switching to "nobody" would be the thing to do, but only root itself has
+     the privs to do that.
+   */
+  {
+    uid_t uid = getuid ();		/* get it again */
+    struct passwd *p = getpwuid (uid);	/* get it again */
+
+    if (!p ||
+	uid == (uid_t)  0 ||
+	uid == (uid_t) -1 ||
+	uid == (uid_t) -2 ||
+	p->pw_uid == (uid_t)  0 ||
+	p->pw_uid == (uid_t) -1 ||
+	p->pw_uid == (uid_t) -2 ||
+	!p->pw_name ||
+	!*p->pw_name ||
+	!strcmp (p->pw_name, "root") ||
+	!strcmp (p->pw_name, "nobody") ||
+	!strcmp (p->pw_name, "noaccess") ||
+	!strcmp (p->pw_name, "operator") ||
+	!strcmp (p->pw_name, "daemon") ||
+	!strcmp (p->pw_name, "bin") ||
+	!strcmp (p->pw_name, "adm") ||
+	!strcmp (p->pw_name, "sys") ||
+	!strcmp (p->pw_name, "games"))
+      {
+	static char buf [1024];
+	sprintf (buf, "running as %s",
+		 (p && p->pw_name && *p->pw_name
+		  ? p->pw_name : "<unknown>"));
+	si->nolock_reason = buf;
+	si->locking_disabled_p = True;
+	si->dangerous_uid_p = True;
+      }
+  }
 }
 
 #else  /* !NO_SETUID */
 
 void hack_uid (saver_info *si) { }
-void hack_uid_warn (saver_info *si) { }
-void describe_uids (saver_info *si) { }
+void describe_uids (saver_info *si, FILE *out) { }
 
 #endif /* NO_SETUID */

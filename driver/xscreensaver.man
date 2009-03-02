@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "02-Oct-98 (2.31)" "X Version 11"
+.TH XScreenSaver 1 "08-Oct-98 (2.34)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -28,6 +28,8 @@ xscreensaver - graphics hack and screen locker, launched when the user is idle
 [\-verbose] \
 [\-silent] \
 [\-timestamp] \
+[\-capture\-stderr] \
+[\-no\-capture\-stderr] \
 [\-splash] \
 [\-no\-splash] \
 [\-nice \fIint\fP] \
@@ -89,25 +91,26 @@ Single-clicking in the list will place the indicated program and its args
 in the text field to be edited.  Edit the arguments and hit return to run
 the program with the parameters you have specified.  (Note that these are
 one-time changes and won't be remembered; to make the changes permanent,
-you need to edit your X resource file.)
+you need to edit your \fI~/.xscreensaver\fP file by hand.)
 
 The buttons are:
 .TP 8
 .B Run Next
 Clicking this button will run the next program in the list after the 
-currently-selected one, and will scroll around to the top when it reaches
+currently-selected one, and will wrap around to the top when it reaches
 the bottom.
 .TP 8
 .B Run Previous
-Opposite of Run Next; at the top, it scrolls around to the bottom.
+Opposite of Run Next; at the top, it wraps around to the bottom.
 .TP 8
 .B Preferences
 This pops up a second dialog box, in which you have the option to 
 interactively change most of the screensaver's operational parameters,
-such as its timeouts, and whether it should lock the screen.  Changing 
-these parameters here will affect only the running \fIxscreensaver\fP
-process; to make the changes permanent, you need to edit your X resource
-file.  (See the \fIConfiguration\fP section, below.)
+such as its timeouts, and whether it should lock the screen.  When you
+click OK, your chosen settings will take effect immediately, and will
+also be saved to the \fI~/.xscreensaver\fP file in your home directory,
+so that the settings will persist next time.  (For more details, see
+the \fIConfiguration\fP section, below.)
 .TP 8
 .B Exit Demo Mode
 Returns to normal screensaver operation.
@@ -121,24 +124,37 @@ like the \fI\-restart\fP argument to
 except that when executed from this button, the screensaver will 
 automatically return to Demo Mode after restarting.
 .SH CONFIGURATION
-\fIxscreensaver\fP understands the following X resources.  The best way
-to specify these parameters is to set them in your X resource file, 
-which is usually called \fI~/.Xdefaults\fP.  For example, to set the
-default value of the \fItimeout\fP resource, you would add the following
-line to your .Xdefaults file:
+Options to \fIxscreensaver\fP are specified in one of two places: in 
+a \fI.xscreensaver\fP file in your home directory; or in the X resource
+database.  If a \fI.xscreensaver\fP file exists, it overrides any settings
+in the resource database.  
+
+The syntax of the \fI.xscreensaver\fP file is similar to that of
+the \fI.Xdefaults\fP file; for example, to set the \fItimeout\fP paramter
+in the \fI.xscreensaver\fP file, you would write the following:
+.EX
+timeout: 5
+.EE
+whereas, in the \fI.Xdefaults\fP file, you would write
 .EX
 xscreensaver.timeout: 5
 .EE
-To make the system notice this change, you might also need to run
-.BR xrdb (1):
-.EX
-xrdb < ~/.Xdefaults
-.EE
-And if xscreensaver was already running, and you would like it to notice
-your changes, you'll also have to tell the running xscreensaver process
+If you change a setting in the \fI.xscreensaver\fP file while xscreensaver
+is already running, it will notice this, and reload the file.  (The file will
+be reloaded the next time the screen saver needs to take some action, such as
+blanking or unblanking the screen, or picking a new graphics mode.)
+
+If you change a setting in your X resource database, or if you want
+xscreensaver to notice your changes immediately instead of the next time
+it wakes up, then you will need to tell the running xscreensaver process
 to re-initialize itself, like so:
 .EX
 xscreensaver-command -restart
+.EE
+Note that if you changed the \fI.Xdefaults\fP file, you might also need to run
+.BR xrdb (1):
+.EX
+xrdb < ~/.Xdefaults
 .EE
 If you want to set the system-wide defaults, then make your edits to
 the xscreensaver app-defaults file, which should have been installed
@@ -146,6 +162,11 @@ when xscreensaver itself was installed.  The app-defaults file will
 usually be named /usr/lib/X11/app-defaults/XScreenSaver, but different
 systems might keep it in a different place (for example,
 /usr/openwin/lib/app-defaults/XScreenSaver on Solaris.)
+
+When settings are changed in the Preferences dialog box (see above)
+the current settings will be written to the \fI.xscreensaver\fP file.
+(The \fI.Xdefaults\fP file and the app-defaults file will never be
+written by xscreensaver itself.)
 .PP
 .TP 8
 .B timeout\fP (class \fBTime\fP)
@@ -273,32 +294,6 @@ system, and don't increase the load unnecessarily.  The default is 10.
 .BR nice (1)
 for details.)
 .TP 8
-.B sgiSaverExtension\fP (class \fBBoolean\fP)
-There are a number of different X server extensions which can make
-xscreensaver's job easier.  The next few resources specify whether these
-extensions should be utilized if they are available.
-
-This resource controls whether the SGI \fBSCREEN_SAVER\fP server extension
-will be used to decide whether the user is idle.  This is the default 
-if \fIxscreensaver\fP has been compiled with support for this 
-extension (which is the default on SGI systems.).  If it is available, 
-the \fBSCREEN_SAVER\fP method is faster and more reliable than what will
-be done otherwise, so use it if you can.  (This extension is only available
-on Silicon Graphics systems, unfortunately.)
-.TP 8
-.B mitSaverExtension\fP (class \fBBoolean\fP)
-This resource controls whether the \fBMIT\-SCREEN\-SAVER\fP server extension
-will be used to decide whether the user is idle.  However, the default for
-this resource is \fIfalse\fP, because even if this extension is available,
-it is flaky (and it also makes the \fBfade\fP option not work properly.)
-Use of this extension is not recommended.
-.TP 8
-.B xidleExtension\fP (class \fBBoolean\fP)
-This resource controls whether the \fBXIDLE\fP server extension will be
-used to decide whether the user is idle.  This is the default 
-if \fIxscreensaver\fP has been compiled with support for this extension.
-(This extension is only available for X11R4 and X11R5 systems, unfortunately.)
-.TP 8
 .B fade\fP (class \fBBoolean\fP)
 If this is true, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  This only
@@ -324,28 +319,16 @@ may make the fades take longer than the specified \fIfadeSeconds\fP if
 your server isn't fast enough to keep up.  Default 20.
 .TP 8
 .B captureStderr\fP (class \fBBoolean\fP)
-Whether \fIxscreensaver\fP should redirect its standard-error stream to the
-window itself.  Since its nature is to take over the screen, you would not
+Whether \fIxscreensaver\fP should redirect its stdout and stderr streams to
+the window itself.  Since its nature is to take over the screen, you would not
 normally see error messages generated by xscreensaver or the sub-programs it
 runs; this resource will cause the output of all relevant programs to be
 drawn on the screensaver window itself, as well as being written to the
 controlling terminal of the screensaver driver process.  Default true.
 .TP 8
-.B captureStdout\fP (class \fBBoolean\fP)
-Like \fBcaptureStderr\fP but for the standard-output stream.  Default true.
-.TP 8
 .B font\fP (class \fBFont\fP)
-The font used for the stdout/stderr text, if \fBcaptureStdout\fP or
-\fBcaptureStderr\fP are true.  Default \fB*\-medium\-r\-*\-140\-*\-m\-*\fP
-(a 14 point fixed-width font.)
-.TP 8
-.B overlayTextForeground\fP (class \fBForeground\fP)
-The foreground color used for the stdout/stderr text, if \fBcaptureStdout\fP 
-or \fBcaptureStderr\fP are true.  Default: Yellow.
-.TP 8
-.B overlayTextBackground\fP (class \fBBackground\fP)
-The background color used for the stdout/stderr text, if \fBcaptureStdout\fP 
-or \fBcaptureStderr\fP are true.  Default: Black.
+The font used for the stdout/stderr text, if \fBcaptureStderr\fP is true.
+Default \fB*\-medium\-r\-*\-140\-*\-m\-*\fP (a 14 point fixed-width font.)
 .TP 8
 .B programs\fP (class \fBPrograms\fP)
 The graphics hacks which \fIxscreensaver\fP runs when the user is idle.
@@ -441,20 +424,15 @@ run on one, and hacks that only look good in color will show up on the other.
 Normally you won't need to change the following resources:
 .PP
 .TP 8
-.B bourneShell\fP (class \fBBourneShell\fP)
-The pathname of the shell that \fIxscreensaver\fP uses to start subprocesses.
-This must be whatever your local variant of \fB/bin/sh\fP is: in particular,
-it must not be \fBcsh\fP.
+.B pointerPollTime\fP (class \fBTime\fP)
+When server extensions are not in use, this controls how 
+frequently \fIxscreensaver\fP checks to see if the mouse position or buttons
+have changed.  Default 5 seconds.
 .TP 8
 .B windowCreationTimeout\fP (class \fBTime\fP)
 When server extensions are not in use, this controls the delay between when 
 windows are created and when \fIxscreensaver\fP selects events on them.
 Default 30 seconds.
-.TP 8
-.B pointerPollTime\fP (class \fBTime\fP)
-When server extensions are not in use, this controls how 
-frequently \fIxscreensaver\fP checks to see if the mouse position or buttons
-have changed.  Default 5 seconds.
 .TP 8
 .B initialDelay\fP (class \fBTime\fP)
 When server extensions are not in use, \fIxscreensaver\fP will wait this many
@@ -463,11 +441,50 @@ seconds before selecting events on existing windows, under the assumption that
 state may be in flux.  Default 0.  (This used to default to 30, but that was
 back in the days when slow machines and X terminals were more common...)
 .TP 8
+.B sgiSaverExtension\fP (class \fBBoolean\fP)
+There are a number of different X server extensions which can make
+xscreensaver's job easier.  The next few resources specify whether these
+extensions should be utilized if they are available.
+
+This resource controls whether the SGI \fBSCREEN_SAVER\fP server extension
+will be used to decide whether the user is idle.  This is the default 
+if \fIxscreensaver\fP has been compiled with support for this 
+extension (which is the default on SGI systems.).  If it is available, 
+the \fBSCREEN_SAVER\fP method is faster and more reliable than what will
+be done otherwise, so use it if you can.  (This extension is only available
+on Silicon Graphics systems, unfortunately.)
+.TP 8
+.B mitSaverExtension\fP (class \fBBoolean\fP)
+This resource controls whether the \fBMIT\-SCREEN\-SAVER\fP server extension
+will be used to decide whether the user is idle.  However, the default for
+this resource is \fIfalse\fP, because even if this extension is available,
+it is flaky (and it also makes the \fBfade\fP option not work properly.)
+Use of this extension is not recommended.
+.TP 8
+.B xidleExtension\fP (class \fBBoolean\fP)
+This resource controls whether the \fBXIDLE\fP server extension will be
+used to decide whether the user is idle.  This is the default 
+if \fIxscreensaver\fP has been compiled with support for this extension.
+(This extension is only available for X11R4 and X11R5 systems, unfortunately.)
+.TP 8
 .B overlayStderr\fP (class \fBBoolean\fP)
-If \fBcaptureStderr\fP or \fBcaptureStdout\fP are True, and your server 
-supports ``overlay'' visuals, then the text will be written into one of
-the higher layers instead of into the same layer as the running screenhack.
-Set this to False to disable that (though you shouldn't need to.)
+If \fBcaptureStderr\fP is True, and your server supports ``overlay'' visuals,
+then the text will be written into one of the higher layers instead of into
+the same layer as the running screenhack.  Set this to False to disable 
+that (though you shouldn't need to.)
+.TP 8
+.B overlayTextForeground\fP (class \fBForeground\fP)
+The foreground color used for the stdout/stderr text, if \fBcaptureStderr\fP
+is true.  Default: Yellow.
+.TP 8
+.B overlayTextBackground\fP (class \fBBackground\fP)
+The background color used for the stdout/stderr text, if \fBcaptureStderr\fP
+is true.  Default: Black.
+.TP 8
+.B bourneShell\fP (class \fBBourneShell\fP)
+The pathname of the shell that \fIxscreensaver\fP uses to start subprocesses.
+This must be whatever your local variant of \fB/bin/sh\fP is: in particular,
+it must not be \fBcsh\fP.
 .SH COMMAND-LINE OPTIONS
 .I xscreensaver
 also accepts the following command line options.  Except for 
@@ -513,6 +530,12 @@ Same as setting the \fIverbose\fP resource to \fIfalse\fP.
 .TP 8
 .B \-timestamp
 Same as setting the \fItimestamp\fP resource to \fItrue\fP.
+.TP 8
+.B \-capture\-stderr
+Same as setting the \fIcaptureStderr\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-capture\-stderr
+Same as setting the \fIcaptureStderr\fP resource to \fIfalse\fP.
 .TP 8
 .B \-splash
 Same as setting the \fIsplash\fP resource to \fItrue\fP.
@@ -1061,6 +1084,10 @@ of the screen on which to draw.
 .TP 8
 .B PATH
 to find the sub-programs to run.
+.TP 8
+.TP 8
+.B HOME
+for the directory in which to read and write the \fI.xscreensaver\fP file.
 .TP 8
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources

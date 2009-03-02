@@ -305,7 +305,7 @@ char *defaults [] = {
   "*verbose:	off",
   "*radius:	-1",
   "*speed:	0.0",
-  "*size:	0.66",
+  "*size:	1.0",
   "*delay:	1",
   "*colors:	-1",
 #ifdef HAVE_XSHM_EXTENSION

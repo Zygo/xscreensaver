@@ -21,6 +21,10 @@
 # include <unistd.h>
 #endif
 
+#ifdef HAVE_CRYPT_H
+# include <crypt.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -88,7 +92,7 @@
 #define False 0
 
 
-extern char *progname;
+extern const char *blurb(void);
 
 static char *encrypted_root_passwd = 0;
 static char *encrypted_user_passwd = 0;
@@ -179,7 +183,7 @@ get_encrypted_passwd(const char *user)
 
 
 /* This has to be called before we've changed our effective user ID,
-   because it might need priveleges to get at the encrypted passwords.
+   because it might need privileges to get at the encrypted passwords.
    Returns false if we weren't able to get any passwords, and therefore,
    locking isn't possible.  (It will also have written to stderr.)
  */

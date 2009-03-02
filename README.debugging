@@ -9,8 +9,8 @@
     document gives some hints for isolating them; the more information
     you can give me about the problem, the better the odds that I'll be
     able to fix it.  But, if you don't have time to go through these
-    steps, report the bug anyway -- even vague bug reports can be
-    better than no bug report at all.
+    steps, please report the bug anyway -- even vague bug reports can
+    be better than no bug report at all.
 
                                 --------
 STEP ZERO:
@@ -20,9 +20,9 @@ STEP ZERO:
 STEP ZERO, PART TWO:
 
     Do you have the most recent version?  Go make sure.
-    http://www.jwz.org/xscreensaver/
+    http://www.jwz.org/xscreensaver/.
 
-BUILDING:
+COMPILATION PROBLEMS:
 
     If you get an error running the `configure' script, the first thing
     you should try is deleting the `config.cache' file, and running again.
@@ -48,8 +48,9 @@ BUILDING:
         *  rearrange your $PATH so that the broken gcc is not on it;
 
         *  or pass $CC in the environment, like so:
-               csh:  setenv CC cc ; ./configure
-               sh:   CC=cc ; ./configure
+
+              csh:  setenv CC cc ; ./configure
+              sh:   CC=cc ; ./configure
 
     Before doing this, you'll need to nuke `config.cache'.
 
@@ -63,7 +64,7 @@ BUILDING:
     free Unixes systems, a Motif clone is available from
     http://www.lesstif.org/.
 
-RUNNING:
+RUN-TIME PROBLEMS:
 
     For runtime errors, it's important to keep in mind that there are
     two parts to xscreensaver: there is the screensaver driver process
@@ -109,13 +110,26 @@ RUNNING:
 
         *  If it dumps core, what does the core file say?  Run the
            program under a debugger, and show me the stack trace.
-           (If you don't know how to do that, that's ok.)
+           To extract a stack trace from a core file with gdb, do this:
+
+              gdb ./the-program ./core
+              bt
+
+           To extract a stack trace from a core file with dbx, do this:
+
+              dbx ./the-program ./core
+              where
+
+           If the bottom few lines of the output don't include the functions
+	   `main_loop()' and `main()', then something's wrong: are you sure
+           the core file came from that program?
 
         *  If it gets an X error, where did it come from?  Run
-           xscreensaver with the `-sync' command-line option; if -sync
-           is used, then X errors will cause xscreensaver to dump a core
-           file.  Look at the core file with a debugger and show me the
-           stack trace: were in xscreensaver did that X error come from?
+           xscreensaver with the `-sync' command-line option.  When `-sync'
+           is used, X errors will cause xscreensaver to dump a core file.
+           Look at the core file with a debugger and show me the stack trace,
+           as above: I need to know where in xscreensaver that X error came
+           from.
 
     If the problem is with the xscreensaver process itself, or if you
     can't figure out which demo is causing the problem, or if you can't
@@ -124,13 +138,12 @@ RUNNING:
 
         *  Start `xscreensaver' with the command-line arguments
 
-             -verbose -xrm '*captureStderr:false' -xrm '*captureStdout:false'
+              -verbose -no-capture-stderr
 
-           This will cause it to write a lot of debugging info to the
-           stdout and stderr of the xscreensaver process (the -verbose
-           argument turns on the diagnostics; the remaining arguments
-           prevent the data from being displayed on the screensaver
-           window as well.
+           This will cause it to write a lot of debugging info to the stderr
+           of the xscreensaver process (the `-verbose' option turns on the
+           diagnostics; the `-no-capture-stderr' option prevents the data
+           from being displayed on the screensaver window as well.)
 
            You also might want to use the `-timestamp' option, which will
            cause the xscreensaver messages to include the time at which
@@ -140,10 +153,9 @@ RUNNING:
            log information to a file and examine it later.  For example,
            you could start it from your login script like this (csh syntax):
 
-             ( cd ~/src/xscreensaver/ ; \
-               xscreensaver -sync -verbose -timestamp \
-               -xrm '*captureStderr:false' -xrm '*captureStdout:false' \
-               >>&LOG & )
+              ( cd ~/src/xscreensaver/ ; \
+                xscreensaver -sync -verbose -timestamp -no-capture-stderr \
+                >>&LOG & )
 
         *  Hackers only: If you're feeling adventurous enough to run gdb
            on the xscreensaver driver process itself, make sure you've

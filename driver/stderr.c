@@ -339,7 +339,7 @@ initialize_stderr (saver_info *si)
   int stdout_fd = 1;
   int stderr_fd = 2;
   int flags = 0;
-  Boolean stderr_dialog_p, stdout_dialog_p;
+  Boolean stderr_dialog_p;
 
   if (done) return;
   done = True;
@@ -348,9 +348,8 @@ initialize_stderr (saver_info *si)
   real_stdout = stdout;
 
   stderr_dialog_p = get_boolean_resource ("captureStderr", "Boolean");
-  stdout_dialog_p = get_boolean_resource ("captureStdout", "Boolean");
 
-  if (!stderr_dialog_p && !stdout_dialog_p)
+  if (!stderr_dialog_p)
     return;
 
   if (pipe (fds))
@@ -392,6 +391,8 @@ initialize_stderr (saver_info *si)
   if (stderr_dialog_p)
     {
       FILE *new_stderr_file;
+      FILE *new_stdout_file;
+
       new_stderr = dup (stderr_fd);
       if (new_stderr < 0)
 	{
@@ -411,11 +412,8 @@ initialize_stderr (saver_info *si)
 	  perror ("could not dup() a new stderr:");
 	  return;
 	}
-    }
 
-  if (stdout_dialog_p)
-    {
-      FILE *new_stdout_file;
+
       new_stdout = dup (stdout_fd);
       if (new_stdout < 0)
 	{

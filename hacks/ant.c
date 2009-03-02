@@ -84,6 +84,7 @@ extern int  neighbors;
 
 #define DEF_TRUCHET  "False"
 #define DEF_SHARPTURN  "False"
+#define DEF_NEIGHBORS  "0"
 
 static Bool truchet;
 static Bool sharpturn;
@@ -106,7 +107,7 @@ static argtype vars[] =
 	{(caddr_t *) & truchet, "truchet", "Truchet", DEF_TRUCHET, t_Bool},
    {(caddr_t *) & sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
 #ifdef STANDALONE
-	{(caddr_t *) & neighbors, "neighbors", "Neighbors", 0, t_Int}
+	{(caddr_t *) & neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
 #endif /* STANDALONE */
 };
 static OptionStruct desc[] =

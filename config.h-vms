@@ -4,7 +4,7 @@
 
 
 
-/* config.h.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+/* config.h.in --- xscreensaver, Copyright (c) 1998 Jamie Zawinski.
  *
  *  The best way to set these parameters is by running the included `configure'
  *  script.  That examines your system, and generates `config.h' from 
@@ -14,15 +14,21 @@
  *  that your changes will be lost if you ever run `configure' again.
  */
 
+
 /* *************************************************************************
                           CONFIGURING SERVER EXTENSIONS
    ************************************************************************* */
 
 /* Define this if you have the XReadDisplay extension (I think this is an
-   SGI-only thing; it's in <X11/extensions/readdisplay.h>.)  A couple of
-   the screenhacks will take advantage of this if it's available.
+   SGI-only thing; it's in <X11/extensions/readdisplay.h>.)  A few of the
+   screenhacks will take advantage of this if it's available.
  */
 #undef HAVE_READ_DISPLAY_EXTENSION
+
+/* Define this if you have the Iris Video Library (dmedia/vl.h on SGI.)
+   A few of the screenhacks will take advantage of this if it's available.
+ */
+#undef HAVE_SGI_VIDEO
 
 /* Define this if you have the XHPDisableReset function (an HP only thing.)
  */
@@ -85,6 +91,16 @@
  */
 #undef HAVE_SGI_SAVER_EXTENSION
 
+/*  Define this if you have the SGI-VIDEO-CONTROL extension.  This is standard
+ *  on Irix systems, and not available elsewhere.
+ */
+#undef HAVE_SGI_VC_EXTENSION
+
+/*  Define this if you have the XDPMS extension.  This is standard on
+ *  sufficiently-recent XFree86 systems, and possibly elsewhere.  (It's
+ *  available if the file /usr/include/X11/extensions/dpms.h exists.)
+ */
+#define HAVE_DPMS_EXTENSION 1
 
 
 /* *************************************************************************
@@ -93,7 +109,7 @@
 
 /*  Define this if you have Motif.
  */
-#define HAVE_MOTIF
+#define HAVE_MOTIF 1
 
 /*  Define this if you don't have Motif, but you have Athena (-Xaw).
  */
@@ -108,12 +124,12 @@
 /*  Define this if you have the XPM library installed.  Some of the demos can
  *  make use of this if it is available.
  */
-#undef HAVE_XPM
+#define HAVE_XPM 1
 
 /*  Define this if you have the Xmu library.  This is standard part of X, and
  *  if your vendor doesn't ship it, you should report that as a bug.
  */
-#define HAVE_XMU
+#define HAVE_XMU 1
 
 /*  Define this if you have OpenGL.  Some of the demos require it, so if you
  *  don't have it, then those particular demos won't be built.  (This won't
@@ -121,10 +137,19 @@
  */
 #undef HAVE_GL
 
-/*  Define this if you have GL, but it's the MesaGL variant.  (The libraries
-    have different names.)  (HAVE_GL should be defined too.)
+/*  Define this if you have OpenGL, but it's the MesaGL variant.  (The 
+    libraries have different names.)  (HAVE_GL should be defined too.)
  */
 #undef HAVE_MESA_GL
+
+/*  Define this if your version of OpenGL has the glBindTexture() routine.
+    This is the case for OpenGL 1.1, but not for OpenGL 1.0.
+ */
+#undef HAVE_GLBINDTEXTURE
+
+/*  Define this if you have the X Shared Memory Extension.
+ */
+#undef HAVE_XSHM_EXTENSION
 
 /*  Some screenhacks like to run an external program to generate random pieces
     of text; set this to the one you like ("yow" and "fortune" are the most
@@ -182,6 +207,14 @@
  */
 #undef HAVE_HPUX_PASSWD
 
+/*  Define this if you are on a system that supports the VT_LOCKSWITCH and
+    VT_UNLOCKSWITCH ioctls.  If this is defined, then when the screen is
+    locked, switching to another virtual terminal will also be prevented.
+    That is, the whole console will be locked, rather than just the VT on
+    which X is running.
+ */
+#define HAVE_VT_LOCKSWITCH 1
+
 
 /* *************************************************************************
                             OTHER C ENVIRONMENT JUNK
@@ -218,7 +251,7 @@
 #undef size_t
 
 /* Define if you have the ANSI C header files.  */
-#define STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #undef TIME_WITH_SYS_TIME
@@ -243,9 +276,23 @@
 
 /* Define if you have the uname function.  */
 #undef HAVE_UNAME
+#if (__VMS_VER >= 70000000)
+# define HAVE_UNAME 1
+#endif
 
 /* Define if you have the fcntl function.  */
 #undef HAVE_FCNTL
 
+/* Define if you have the sigaction function.  */
+#undef HAVE_SIGACTION
+
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
+
+/* Define if you have the <crypt.h> header file.  */
+#undef HAVE_CRYPT_H
+
+/* Define to use sigaction() instead of signal() for SIGCHLD-related activity.
+   This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
+ */
+#undef USE_SIGACTION

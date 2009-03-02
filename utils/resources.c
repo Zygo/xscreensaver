@@ -75,7 +75,7 @@ get_boolean_resource (char *res_name, char *res_class)
   if (!strcmp (buf,"off") || !strcmp (buf, "false") || !strcmp (buf,"no"))
     return 0;
   fprintf (stderr, "%s: %s must be boolean, not %s.\n",
-	   progname, res_class, buf);
+	   progname, res_name, buf);
   return 0;
 }
 
@@ -159,9 +159,10 @@ get_pixel_resource (char *res_name, char *res_class,
   return color.pixel;
  DEFAULT:
   if (s) free (s);
-  return (strcmp (res_class, "Background")
-	  ? WhitePixel (dpy, DefaultScreen (dpy))
-	  : BlackPixel (dpy, DefaultScreen (dpy)));
+  return ((strlen(res_class) >= 10 &&
+	   !strcmp ("Background", res_class + strlen(res_class) - 10))
+	  ? BlackPixel (dpy, DefaultScreen (dpy))
+	  : WhitePixel (dpy, DefaultScreen (dpy)));
 }
 
 

@@ -1,4 +1,4 @@
-/* uid-test.c --- playing with setuid.
+/* test-uid.c --- playing with setuid.
  * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,6 +12,11 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
+#endif
+
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif
 
 #include <ctype.h>
@@ -34,13 +39,13 @@ print(void)
 
   p = getpwuid (uid);
   g = getgrgid (gid);
-  fprintf(stderr, "real user/group: %ld/%ld (%s/%s)\n", uid, gid,
+  fprintf(stderr, "real user/group: %ld/%ld (%s/%s)\n", (long) uid, (long) gid,
 	  (p && p->pw_name ? p->pw_name : "???"),
 	  (g && g->gr_name ? g->gr_name : "???"));
 
   p = getpwuid (euid);
   g = getgrgid (egid);
-  fprintf(stderr, "eff. user/group: %ld/%ld (%s/%s)\n", euid, egid,
+  fprintf(stderr, "eff. user/group: %ld/%ld (%s/%s)\n", (long)euid, (long)egid,
 	  (p && p->pw_name ? p->pw_name : "???"),
 	  (g && g->gr_name ? g->gr_name : "???"));
 }
@@ -69,6 +74,8 @@ main (int argc, char **argv)
     {
       char *user = argv[i];
       char *group = strchr(user, '/');
+      if (!group)
+	group = strchr(user, '.');
       if (group)
 	*group++ = 0;
 

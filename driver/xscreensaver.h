@@ -26,7 +26,8 @@ extern char *progclass;
 typedef struct saver_preferences saver_preferences;
 typedef struct saver_info saver_info;
 typedef struct saver_screen_info saver_screen_info;
-
+typedef struct passwd_dialog_data passwd_dialog_data;
+typedef struct splash_dialog_data splash_dialog_data;
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -43,8 +44,9 @@ struct saver_preferences {
   Bool xsync_p;			/* whether XSynchronize has been called */
 
   Bool lock_p;			/* whether to lock as well as save */
-  Bool fade_p;			/* whether to fade to black */
-  Bool unfade_p;		/* whether to fade from black */
+  Bool lock_vt_p;		/* whether to lock VTs too, if possible */
+  Bool fade_p;			/* whether to fade to black, if possible */
+  Bool unfade_p;		/* whether to fade from black, if possible */
   int fade_seconds;		/* how long that should take */
   int fade_ticks;		/* how many ticks should be used */
 
@@ -56,14 +58,12 @@ struct saver_preferences {
 
   int nice_inferior;		/* nice value for subprocs */
 
-  int initial_delay;		/* how long to sleep after launch */
+  Time initial_delay;		/* how long to sleep after launch */
   Time splash_duration;		/* how long the splash screen stays up */
   Time timeout;			/* how much idle time before activation */
   Time lock_timeout;		/* how long after activation locking starts */
   Time cycle;			/* how long each hack should run */
-#ifndef NO_LOCKING
   Time passwd_timeout;		/* how much time before pw dialog goes down */
-#endif
   Time pointer_timeout;		/* how often to check mouse position */
   Time notice_events_timeout;	/* how long after window creation to select */
   Time watchdog_timeout;	/* how often to re-raise and re-blank screen */
@@ -89,6 +89,10 @@ struct saver_info {
   int nscreens;
   saver_screen_info *screens;
   saver_screen_info *default_screen;	/* ...on which dialogs will appear. */
+
+  time_t init_file_date;	/* The date (from stat()) of the .xscreensaver
+				   file the last time this process read or
+				   wrote it. */
 
   /* =======================================================================
      global connection info
@@ -119,10 +123,11 @@ struct saver_info {
   Bool screen_blanked_p;	/* Whether the saver is currently active. */
   Window mouse_grab_window;	/* Window holding our mouse grab */
   Window keyboard_grab_window;	/* Window holding our keyboard grab */
+  Bool fading_possible_p;	/* Whether fading to/from black is possible. */
 
 
   /* =======================================================================
-     locking and runtime priveleges
+     locking and runtime privileges
      ======================================================================= */
 
   Bool locked_p;		/* Whether the screen is currently locked. */
@@ -133,10 +138,17 @@ struct saver_info {
   char *nolock_reason;		/* This is why. */
 
   char *orig_uid;		/* What uid/gid we had at startup, before
-				   discarding priveleges. */
+				   discarding privileges. */
   char *uid_message;		/* Any diagnostics from our attempt to
-				   discard priveleges (printed only in
+				   discard privileges (printed only in
 				   -verbose mode.) */
+  Bool dangerous_uid_p;		/* Set to true if we're running as a user id
+				   which is known to not be a normal, non-
+				   privileged user. */
+
+  Window passwd_dialog;		/* The password dialog, if its up. */
+  passwd_dialog_data *pw_data;	/* Other info necessary to draw it. */
+
 
   /* =======================================================================
      demoing
@@ -146,15 +158,9 @@ struct saver_info {
   char *demo_hack;		/* The hack that has been selected from the
 				   dialog box, which should be run next. */
 
+  Window splash_dialog;		/* The splash dialog, if its up. */
+  splash_dialog_data *sp_data;	/* Other info necessary to draw it. */
 
-  /* =======================================================================
-     asking questions
-     ======================================================================= */
-
-  Bool question_up_p;		/* Whether the question dialog is currently
-				   visible. */
-  Widget question_dialog;	/* The question dialog, if any. */
-  Widget splash_dialog;		/* The splash screen window, if any. */
 
   /* =======================================================================
      timers
@@ -174,9 +180,10 @@ struct saver_info {
      remote control
      ======================================================================= */
 
-  int next_mode_p;		/* Set to 1 if the NEXT ClientMessage has just
-				   been received; set to 2 if PREV has just
-				   been received.  (#### This is nasty.) */
+  int selection_mode;		/* Set to -1 if the NEXT ClientMessage has just
+				   been received; set to -2 if PREV has just
+				   been received; set to N if SELECT has
+				   been received.  (This is kind of nasty.) */
 
   /* =======================================================================
      subprocs
@@ -303,13 +310,19 @@ extern void ungrab_keyboard_and_mouse (saver_info *si);
 
 #ifndef NO_LOCKING
 extern Bool unlock_p (saver_info *si);
-extern void create_passwd_dialog (Widget, Visual *, Colormap);
 extern Bool lock_init (int argc, char **argv);
 extern Bool passwd_valid_p (const char *typed_passwd);
-#endif
+
+extern void make_passwd_window (saver_info *si);
+extern void draw_passwd_window (saver_info *si);
+extern void update_passwd_window (saver_info *si, const char *printed_passwd,
+				  float ratio);
+extern void destroy_passwd_window (saver_info *si);
+
+#endif /* NO_LOCKING */
 
 /* =======================================================================
-   runtime priveleges
+   runtime privileges
    ======================================================================= */
 
 extern void hack_uid (saver_info *si);
@@ -318,6 +331,15 @@ extern void describe_uids (saver_info *si, FILE *out);
 /* =======================================================================
    demoing
    ======================================================================= */
+
+extern void draw_shaded_rectangle (Display *dpy, Window window,
+				   int x, int y,
+				   int width, int height,
+				   int thickness,
+				   unsigned long top_color,
+				   unsigned long bottom_color);
+extern int string_width (XFontStruct *font, char *s);
+
 
 #ifndef NO_DEMO_MODE
 extern void demo_mode (saver_info *si);
@@ -332,9 +354,9 @@ extern void format_into_label (Widget label, const char *arg);
 extern void steal_focus_and_colormap (Widget dialog);
 #endif
 
-extern void create_splash_dialog (Widget, Visual *, Colormap);
-extern void pop_splash_dialog (saver_info *si);
-extern void roger (Widget button, XtPointer client_data, XtPointer call_data);
+extern void make_splash_dialog (saver_info *si);
+extern void handle_splash_event (saver_info *si, XEvent *e);
+extern void skull (Display *, Window, GC, GC, int, int, int, int);
 
 
 /* =======================================================================
@@ -377,6 +399,16 @@ extern FILE *real_stdout;
 extern void initialize_stderr (saver_info *si);
 extern void reset_stderr (saver_screen_info *ssi);
 extern void clear_stderr (saver_screen_info *ssi);
+
+/* =======================================================================
+   the .xscreensaver file
+   ======================================================================= */
+
+extern int read_init_file (saver_info *si);
+extern int write_init_file (saver_info *si);
+extern int maybe_reload_init_file (saver_info *si);
+extern void get_resources (saver_info *si);
+
 
 /* =======================================================================
    misc

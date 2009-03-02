@@ -140,8 +140,11 @@ pre_merge_options (void)
   for (j = 0; j < xlockmore_opts->numvarsdesc; j++)
     {
       const char *def = xlockmore_opts->vars[j].def;
-      if (!def) def = "False";
-      if (def == ((char*) 1)) def = "True";
+
+      if (!def) abort();
+      if (!*def) abort();
+      if (strlen(def) > 1000) abort();
+
       s = (char *) malloc (strlen (xlockmore_opts->vars[j].name) +
 			   strlen (def) + 10);
       strcpy (s, "*");

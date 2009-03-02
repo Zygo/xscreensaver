@@ -181,7 +181,7 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   saver_info *si = (saver_info *) closure;
   saver_preferences *p = &si->prefs;
   Time how_long = p->cycle;
-  if (si->dbox_up_p || si->question_up_p)
+  if (si->dbox_up_p)
     {
       if (p->verbose_p)
 	fprintf (stderr, "%s: dialog box up; delaying hack change.\n",
@@ -190,6 +190,7 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
     }
   else
     {
+      maybe_reload_init_file (si);
       if (p->verbose_p)
 	fprintf (stderr, "%s: changing graphics hacks.\n", blurb());
       kill_screenhack (si);
@@ -244,7 +245,7 @@ reset_timers (saver_info *si)
   XtRemoveTimeOut (si->timer_id);
   si->timer_id = XtAppAddTimeOut (si->app, p->timeout, idle_timer,
 				  (XtPointer) si);
-  if (si->cycle_id) abort ();
+  if (si->cycle_id) abort ();	/* no cycle timer when inactive */
 
 #ifdef DEBUG_TIMERS
   if (p->verbose_p)
@@ -270,6 +271,7 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
   if (p->use_xidle_extension ||
       p->use_mit_saver_extension ||
       p->use_sgi_saver_extension)
+    /* If an extension is in use, we should not be polling the mouse. */
     abort ();
 
   si->check_pointer_timer_id =
@@ -315,6 +317,20 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
 
   if (active_p)
     reset_timers (si);
+}
+
+
+static void
+dispatch_event (saver_info *si, XEvent *event)
+{
+  /* If this is for the splash dialog, pass it along.
+     Note that the password dialog is handled with its own event loop,
+     so events for that window will never come through here.
+   */
+  if (si->splash_dialog && event->xany.window == si->splash_dialog)
+    handle_splash_event (si, event);
+
+  XtDispatchEvent (event);
 }
 
 
@@ -450,7 +466,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #endif /* DEBUG_TIMERS */
 
 	/* If any widgets want to handle this event, let them. */
-	XtDispatchEvent (&event);
+	dispatch_event (si, &event);
 
 	/* We got a user event */
 	if (!until_idle_p)
@@ -546,7 +562,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	else
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
-	  XtDispatchEvent (&event);
+	  dispatch_event (si, &event);
       }
     }
  DONE:
@@ -575,7 +591,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
       si->timer_id = 0;
     }
 
-  if (until_idle_p && si->cycle_id)
+  if (until_idle_p && si->cycle_id)	/* no cycle timer when inactive */
     abort ();
 
   return;

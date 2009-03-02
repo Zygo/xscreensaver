@@ -22,39 +22,39 @@
 #include <X11/Xlib.h>		/* not used for much... */
 
 #ifndef ESRCH
-#include <errno.h>
+# include <errno.h>
 #endif
 
 #include <sys/time.h>		/* sys/resource.h needs this for timeval */
 
-#ifndef VMS
-
-# include <sys/resource.h>	/* for setpriority() and PRIO_PROCESS */
+#ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
 
-#else  /* VMS */
+#if defined(HAVE_SETPRIORITY) && defined(PRIO_PROCESS)
+# include <sys/resource.h>	/* for setpriority() and PRIO_PROCESS */
+#endif
 
-# if __DECC_VER >= 50200000
-#  include <sys/wait.h>
-# endif
-
+#ifdef VMS
 # include <processes.h>
 # include <unixio.h>		/* for close */
 # include <unixlib.h>		/* for getpid */
-# define pid_t    int
-# define fork     vfork
-
+# define pid_t int
+# define fork  vfork
 #endif /* VMS */
 
 #include <signal.h>		/* for the signal names */
 
 #if !defined(SIGCHLD) && defined(SIGCLD)
-#define SIGCHLD SIGCLD
+# define SIGCHLD SIGCLD
 #endif
 
+#if 0 /* putenv() is declared in stdlib.h on modern linux systems. */
 #ifdef HAVE_PUTENV
 extern int putenv (/* const char * */);	/* getenv() is in stdlib.h... */
 #endif
+#endif
+
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 /* This file doesn't need the Xt headers, so stub these types out... */
@@ -766,11 +766,13 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	AGAIN:
 	  if (p->screenhacks_count == 1)
 	    new_hack = 0;
-	  else if (si->next_mode_p == 1)
+	  else if (si->selection_mode == -1)
 	    new_hack = (ssi->current_hack + 1) % p->screenhacks_count;
-	  else if (si->next_mode_p == 2)
+	  else if (si->selection_mode == -2)
 	    new_hack = ((ssi->current_hack + p->screenhacks_count - 1)
 			% p->screenhacks_count);
+	  else if (si->selection_mode > 0)
+	    new_hack = ((si->selection_mode - 1) % p->screenhacks_count);
 	  else
 	    while ((new_hack = random () % p->screenhacks_count)
 		   == ssi->current_hack)
@@ -797,7 +799,9 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 		goto AGAIN;
 	    }
 	}
-      si->next_mode_p = 0;
+
+      if (si->selection_mode < 0)
+	si->selection_mode = 0;
 
 
       /* If there's a visual description on the front of the command, nuke it.
@@ -927,51 +931,32 @@ screenhack_running_p (saver_info *si)
 }
 
 
-/* Restarting the xscreensaver process from scratch. */
+/* Environment variables. */
 
-static char **saved_argv;
 
+/* Modifies $PATH in the current environment, so that if DEFAULT_PATH_PREFIX
+   is defined, the xscreensaver daemon will search that directory for hacks.
+ */
 void
-save_argv (int argc, char **argv)
+hack_environment (saver_info *si)
 {
-  saved_argv = (char **) malloc ((argc + 2) * sizeof (char *));
-  saved_argv [argc] = 0;
-  while (argc--)
+#if defined(HAVE_PUTENV) && defined(DEFAULT_PATH_PREFIX)
+  static const char *def_path = DEFAULT_PATH_PREFIX;
+  if (def_path && *def_path)
     {
-      int i = strlen (argv [argc]) + 1;
-      saved_argv [argc] = (char *) malloc (i);
-      memcpy (saved_argv [argc], argv [argc], i);
+      const char *opath = getenv("PATH");
+      char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
+      strcpy (npath, "PATH=");
+      strcat (npath, def_path);
+      strcat (npath, ":");
+      strcat (npath, opath);
+
+      if (putenv (npath))
+	abort ();
     }
+#endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
 }
 
-void
-restart_process (saver_info *si)
-{
-  fflush (real_stdout);
-  fflush (real_stderr);
-  execvp (saved_argv [0], saved_argv);	/* shouldn't return */
-  {
-    char buf [512];
-    sprintf (buf, "%s: could not restart process", blurb());
-    perror(buf);
-    fflush(stderr);
-  }
-}
-
-/* Like restart_process(), but ensures that when it restarts,
-   it comes up in demo-mode. */
-void
-demo_mode_restart_process (saver_info *si)
-{
-  int i;
-  for (i = 0; saved_argv [i]; i++);
-  /* add the -initial-demo-mode switch; save_argv() left room for this. */
-  saved_argv [i] = "-initial-demo-mode";
-  saved_argv [i+1] = 0;
-  restart_process (si);		/* shouldn't return */
-  saved_argv [i] = 0;
-  XBell(si->dpy, 0);
-}
 
 static void
 hack_subproc_environment (saver_screen_info *ssi)
@@ -994,7 +979,6 @@ hack_subproc_environment (saver_screen_info *ssi)
   for (screen_number = 0; screen_number < si->nscreens; screen_number++)
     if (ssi == &si->screens[screen_number])
       break;
-  if (screen_number >= si->nscreens) abort();
 
   strcpy (ndpy, "DISPLAY=");
   s = ndpy + strlen(ndpy);
@@ -1015,23 +999,95 @@ hack_subproc_environment (saver_screen_info *ssi)
 #endif /* HAVE_PUTENV */
 }
 
+
+/* Restarting the xscreensaver process from scratch. */
+
+static char **saved_argv;
 
 void
-hack_environment (saver_info *si)
+save_argv (int argc, char **argv)
 {
-#if defined(HAVE_PUTENV) && defined(DEFAULT_PATH_PREFIX)
-  static const char *def_path = DEFAULT_PATH_PREFIX;
-  if (def_path && *def_path)
+  /* Leave room for one more argument, the -initial-demo-mode switch. */
+  saved_argv = (char **) calloc (argc+2, sizeof (char *));
+  saved_argv [argc] = 0;
+  while (argc--)
     {
-      const char *opath = getenv("PATH");
-      char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
-      strcpy (npath, "PATH=");
-      strcat (npath, def_path);
-      strcat (npath, ":");
-      strcat (npath, opath);
-
-      if (putenv (npath))
-	abort ();
+      int i = strlen (argv [argc]) + 1;
+      saved_argv [argc] = (char *) malloc (i);
+      memcpy (saved_argv [argc], argv [argc], i);
     }
-#endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
+}
+
+/* Modifies saved_argv to either contain or not contain "-initial-demo-mode".
+ */
+static void
+hack_saved_argv (Bool demo_mode_p)
+{
+  static char *demo_mode_switch = "-initial-demo-mode";
+
+  if (demo_mode_p)		/* We want the switch to be in the args. */
+    {
+      /* See if the switch is there already.  If so, we're done. */
+      int i;
+      for (i = 0; saved_argv[i]; i++)
+	if (!strcmp (saved_argv[i], demo_mode_switch))
+	  return;
+
+      /* If it wasn't there, add it to the end.  save_argv() made room. */
+      saved_argv [i] = demo_mode_switch;
+      saved_argv [i+1] = 0;
+    }
+  else				/* We want the switch to not be in the args. */
+    {
+      int i;
+      for (i = 0; saved_argv[i]; i++)
+	while (!strcmp (saved_argv [i], demo_mode_switch))
+	  {
+	    int j;
+	    for (j = i; saved_argv[j]; j++)
+	      saved_argv [j] = saved_argv [j+1];
+	  }
+    }
+}
+
+
+/* Re-execs the process with the arguments in saved_argv.
+   Does not return unless there was an error.
+ */
+static void
+restart_process_1 (saver_info *si)
+{
+  fflush (real_stdout);
+  fflush (real_stderr);
+  execvp (saved_argv [0], saved_argv);	/* shouldn't return */
+  {
+    char buf [512];
+    sprintf (buf, "%s: could not restart process", blurb());
+    perror(buf);
+    fflush(stderr);
+  }
+  XBell(si->dpy, 0);
+}
+
+
+/* Re-execs the process with the arguments in saved_argv,
+   minus -initial-demo-mode.
+   Does not return unless there was an error.
+ */
+void
+restart_process (saver_info *si)
+{
+  hack_saved_argv (True);
+  restart_process_1 (si);
+}
+
+/* Re-execs the process with the arguments in saved_argv,
+   plus -initial-demo-mode.
+   Does not return unless there was an error.
+ */
+void
+demo_mode_restart_process (saver_info *si)
+{
+  hack_saved_argv (False);
+  restart_process_1 (si);
 }

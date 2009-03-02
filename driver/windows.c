@@ -17,9 +17,6 @@
 #ifdef VMS
 # include <unixlib.h>		/* for getpid() */
 # include "vms-gtod.h"		/* for gettimeofday() */
-# if !defined(HAVE_UNAME) && (__VMS_VER >= 70000000)
-#  define HAVE_UNAME 1
-# endif /* !HAVE_UNAME */
 #endif /* VMS */
 
 # ifdef HAVE_UNAME
@@ -61,6 +58,15 @@
 #include "xscreensaver.h"
 #include "visual.h"
 #include "fade.h"
+
+
+#ifdef HAVE_VT_LOCKSWITCH
+# include <fcntl.h>
+# include <sys/ioctl.h>
+# include <sys/vt.h>
+  static void lock_vt (saver_info *si, Bool lock_p);
+#endif /* HAVE_VT_LOCKSWITCH */
+
 
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
@@ -592,6 +598,7 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
 {
   saver_preferences *p = &si->prefs;
   static Bool exiting = False;
+  Bool bugp;
   Bool vrs;
 
   if (exiting)
@@ -614,49 +621,40 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
   else if (status == 1) status = -1;
 #endif
 
+  bugp = !!dump_core_reason;
+
   if (si->prefs.debug_p && !dump_core_reason)
     dump_core_reason = "because of -debug";
 
   if (dump_core_reason)
     {
-#if 0
-      if (si->locking_disabled_p &&
-	  si->nolock_reason &&
-	  *si->nolock_reason)
-	{
-	  /* If locking is disabled, it's because xscreensaver was launched
-	     by root, and has relinquished its user id (most likely we are
-	     now running as "nobody".)  This means we won't be able to dump
-	     core, since "nobody" can't write files; so don't even try.
-	   */
-	  fprintf(real_stderr, "%s: NOT dumping core (%s)\n", blurb(),
-		  si->nolock_reason);
-	}
-      else
-#endif
-	{
-	  /* Note that the Linux man page for setuid() says If uid is
-	     different from the old effective uid, the process will be
-	     forbidden from leaving core dumps.
-	   */
+      /* Note that the Linux man page for setuid() says If uid is
+	 different from the old effective uid, the process will be
+	 forbidden from leaving core dumps.
+      */
+      char cwd[4096]; /* should really be PATH_MAX, but who cares. */
+      cwd[0] = 0;
+      fprintf(real_stderr, "%s: dumping core (%s)\n", blurb(),
+	      dump_core_reason);
 
-	  char cwd[4096]; /* should really be PATH_MAX, but who cares. */
-	  fprintf(real_stderr, "%s: dumping core (%s)\n", blurb(),
-		  dump_core_reason);
+      if (bugp)
+	fprintf(real_stderr,
+		"%s: see http://www.jwz.org/xscreensaver/bugs.html\n"
+		"\t\tfor bug reporting information.\n\n",
+		blurb());
 
 # if defined(HAVE_GETCWD)
-	  getcwd (cwd, sizeof(cwd));
+      if (!getcwd (cwd, sizeof(cwd)))
 # elif defined(HAVE_GETWD)
-	  getwd (cwd);
-# else
-	  strcpy(cwd, "unknown.");
+      if (!getwd (cwd))
 # endif
-	  fprintf (real_stderr, "%s: current directory is %s\n", blurb(), cwd);
-	  describe_uids (si, real_stderr);
+        strcpy(cwd, "unknown.");
 
-	  /* Do this to drop a core file, so that we can get a stack trace. */
-	  abort();
-	}
+      fprintf (real_stderr, "%s: current directory is %s\n", blurb(), cwd);
+      describe_uids (si, real_stderr);
+
+      /* Do this to drop a core file, so that we can get a stack trace. */
+      abort();
     }
 
   exit (status);
@@ -933,7 +931,7 @@ raise_window (saver_info *si,
   initialize_screensaver_window (si);
   reset_watchdog_timer (si, True);
 
-  if (p->fade_p && !inhibit_fade && !si->demo_mode_p)
+  if (p->fade_p && si->fading_possible_p && !inhibit_fade && !si->demo_mode_p)
     {
       Window *current_windows = (Window *)
 	calloc(sizeof(Window), si->nscreens);
@@ -972,7 +970,7 @@ raise_window (saver_info *si,
       /* Note!  The server is grabbed, and this will take several seconds
 	 to complete! */
       fade_screens (si->dpy, current_maps, current_windows,
-		    p->fade_seconds, p->fade_ticks, True, !dont_clear);
+		    p->fade_seconds/1000, p->fade_ticks, True, !dont_clear);
 
       free(current_maps);
       free(current_windows);
@@ -1054,6 +1052,11 @@ blank_screen (saver_info *si)
     }
 #endif
 
+#ifdef HAVE_VT_LOCKSWITCH
+  if (si->locked_p)
+      lock_vt (si, True);		/* turn off C-Alt-Fn */
+#endif
+
   si->screen_blanked_p = True;
 }
 
@@ -1068,7 +1071,7 @@ unblank_screen (saver_info *si)
   store_activate_time (si, True);
   reset_watchdog_timer (si, False);
 
-  if (p->unfade_p && !si->demo_mode_p)
+  if (p->unfade_p && si->fading_possible_p && !si->demo_mode_p)
     {
       Window *current_windows = (Window *)
 	calloc(sizeof(Window), si->nscreens);
@@ -1103,7 +1106,7 @@ unblank_screen (saver_info *si)
 
 
       fade_screens (si->dpy, 0, current_windows,
-		    p->fade_seconds, p->fade_ticks,
+		    p->fade_seconds/1000, p->fade_ticks,
 		    False, False);
 
       free(current_windows);
@@ -1167,6 +1170,10 @@ unblank_screen (saver_info *si)
       XHPEnableReset (si->dpy);	/* turn C-Sh-Reset back on */
       hp_locked_p = False;
     }
+#endif
+
+#ifdef HAVE_VT_LOCKSWITCH
+  lock_vt (si, False);		/* turn C-Alt-Fn back on */
 #endif
 
   /* Unmap the windows a second time, dammit -- just to avoid a race
@@ -1325,3 +1332,56 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
   return got_it;
 }
+
+
+/* VT locking */
+
+#ifdef HAVE_VT_LOCKSWITCH
+static void
+lock_vt (saver_info *si, Bool lock_p)
+{
+  saver_preferences *p = &si->prefs;
+  static Bool locked_p = False;
+  const char *dev_console = "/dev/console";
+  int fd;
+
+  if (lock_p == locked_p)
+    return;
+
+  if (lock_p && !p->lock_vt_p)
+    return;
+
+  fd = open (dev_console, O_RDWR);
+  if (fd < 0)
+    {
+      char buf [255];
+      sprintf (buf, "%s: couldn't %s VTs: %s", blurb(),
+	       (lock_p ? "lock" : "unlock"),
+	       dev_console);
+#if 0 /* #### doesn't work yet, so don't bother complaining */
+      perror (buf);
+#endif
+      return;
+    }
+
+  if (ioctl (fd, (lock_p ? VT_LOCKSWITCH : VT_UNLOCKSWITCH)) == 0)
+    {
+      locked_p = lock_p;
+
+      if (p->verbose_p)
+	fprintf (stderr, "%s: %s VTs\n", blurb(),
+		 (lock_p ? "locked" : "unlocked"));
+    }
+  else
+    {
+      char buf [255];
+      sprintf (buf, "%s: couldn't %s VTs: ioctl", blurb(),
+	       (lock_p ? "lock" : "unlock"));
+#if 0 /* #### doesn't work yet, so don't bother complaining */
+      perror (buf);
+#endif
+    }
+
+  close (fd);
+}
+#endif /* HAVE_VT_LOCKSWITCH */

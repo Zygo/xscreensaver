@@ -269,6 +269,10 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
    prototypes in any header file!  Thus, the prototypes here.  (The
    stuff in X11/extensions/dpms.h and X11/extensions/dpmsstr.h define
    the raw X protcol, they don't define the API to libXdpms.a.)
+
+   Some documentation:
+   Library:  ftp://ftp.x.org/pub/R6.4/xc/doc/specs/Xext/DPMSLib.ms
+   Protocol: ftp://ftp.x.org/pub/R6.4/xc/doc/specs/Xext/DPMS.ms
  */
 
 #ifdef HAVE_DPMS_EXTENSION
