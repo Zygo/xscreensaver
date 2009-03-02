@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+
+RANLIB=/bin/true
+M4=/usr/local/bin/m4
+LD="ld -belf"
+INSTALL="/usr/bin/X11/scoinst  -c"
+TCL_PREFIX=/usr/local
+TK_PREFIX=/usr/local
+CC="gcc -melf"
+export CC LD INSTALL RANLIB M4 TCL_PREFIX TK_PREFIX
+
+./configure-osr5
