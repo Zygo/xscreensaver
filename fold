@@ -97,7 +97,14 @@ git reset --hard genesis || exit 1
 		xscreensaver-4.23 \
 		xscreensaver-4.24 \
 		xscreensaver_4.24.orig \
+		xscreensaver_5.00 \
+		xscreensaver_5.01 \
+		xscreensaver_5.02 \
+		xscreensaver_5.03 \
+		xscreensaver_5.04 \
+		xscreensaver_5.05 \
 		xscreensaver_5.05.orig \
+		xscreensaver-5.06 \
 		xscreensaver-5.07 \
 		xscreensaver-5.08 \
 	; do 
