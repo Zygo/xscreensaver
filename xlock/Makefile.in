@@ -1,0 +1,298 @@
+# $Id : Makefile.in 4.13 1999/03/08 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+# @SET_MAKE@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@/
+BITMAPDIR = @BITMAPDIR@/
+UTILDIR = $(top_srcdir)/xlock/
+UTILOBJDIR = ./
+
+N =
+O = .o
+#O = .obj
+C = .c
+#C = .cc
+S = $(N) $(N)
+#S = ,
+
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+OU = $(O)$(S)$(DOU)
+CU = $(C) $(DU)
+
+# please define
+# C as the C source code extension
+# O as the object extension
+# S as the separator for object code
+
+
+# This debugging is new and is untested on many systems.
+@CHECK@CHECKDEF = -DDEBUG
+@CHECK@XLOCKCHECKOBJS = $(DOU)memcheck$(O)
+
+# List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(OU)parsecmd$(O)$(S)\
+$(DOU)util$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)vis$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+$(DOU)spline$(OU)sound$(OU)erase$(O)$(S)\
+$(DOU)vtlock$(OU)vtlock_proc$(O)$(S)$(XLOCKCHECKOBJS)
+
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+
+XLOCKUTILHDRS = xlock.h mode.h vroot.h ras.h version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(CU)parsecmd$(C) \
+$(DU)util$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+$(DU)vis$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+$(DU)spline$(CU)sound$(CU)erase$(C) \
+$(DU)vtlock$(CU)vtlock_proc$(C) $(XLOCKCHECKSRCS)
+
+# default target
+all : $(XLOCKUTILOBJS)
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@/man1
+xapploaddir = @APPDEFAULTS@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTPGMFLAGS = @INSTPGMFLAGS@
+
+
+#CC = cc -g
+#CC = cc -Ac -g
+#CC = cc -Xc -g
+#CC = acc -g
+#CC = CC -g
+#CC = gcc -g -Wall -ansi -pedantic
+#CC = gcc -g -Wall -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite-strings -Waggregate-return -Wmissing-prototypes -Wstrict-prototypes
+#CC = g++ -g -Wall
+CC = @CC@
+
+LINT = lint
+#LINT = alint
+
+#DEPEND = makedepend
+DEPEND = @DEPEND@
+DEPEND_FLAGS = @DEPEND_FLAGS@
+DEPEND_DEFINES = @DEPEND_DEFINES@
+
+LN_S = @LN_S@
+RM = rm -f
+RM_S = $(RM)
+ECHO = echo
+
+#BLN_S = set file/enter=[]
+#RM = delete/noconfirm/nolog
+#RM_S = set file/remove/nolog
+#ECHO = write sys$output
+
+DEFINES = -DDEF_FILESEARCHPATH=\"$(xapploaddir)/%N%C%S:$(xapploaddir)/%N%S\" $(CHECKDEF)
+DEFS = @DEFS@ $(DEFINES)
+XLOCKINC = -I. -I.. -I../.. @XLOCKINC@
+CFLAGS = @CFLAGS@
+#CFLAGS = -O
+#CFLAGS = -g
+
+#If you have purify, and want to use it, uncomment this definition or
+# run the make as `make PURIFY=purify'
+# or run configure with the --with-purify argument.
+PURIFY = @PURIFY@
+
+.SUFFIXES : $(C) $(O)
+
+$(C)$(O) :
+	$(CC) -c -o $@ $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<
+
+install :
+
+install-program :
+
+install-man :
+
+install-ad :
+
+uninstall :
+
+uninstall-program :
+
+uninstall-man :
+
+uninstall-ad :
+
+lint :
+
+xrdb :
+	xrdb $(UTILDIR)XLock.ad
+
+man :
+	nroff -man $(UTILDIR)/xlock.man | more
+
+html :
+	nroff -man < $(UTILDIR)xlock.man | man2html > $(UTILOBJDIR)xlock.html
+
+hlp :
+	(echo '1 XLOCK' ; \
+ nroff -man < $(UTILDIR)xlock.man \
+ | sed -e 's/.^H//g' -e 's/^ *Page [0-9].*//' \
+ -e 's/^ *Xlock(.*//' \
+ -e 's/^     //' \
+ -e 's/^NAME.*//;s/^SYNOPSIS//;s/^DESCRIPTION//' \
+ -e 's/\(Copyright\) .*c.*\(19\)/\1 (C) \2/' \
+ -e 's/^\([A-Z][A-Z]*\) \([A-Z][A-Z]*\)/\1_\2/' \
+ -e 's/^\([A-Z]\)/2 \1/' \
+ | more -flsu | cat ) \
+ > $(UTILOBJDIR)xlock.hlp
+
+clean :
+	$(RM) *.o core *~ *% *.bak *.orig *.rej make.log MakeOut xlock memdiag.xlock-* *.patch
+
+distclean : clean
+	$(RM) Makefile
+
+clean.all : distclean
+
+# Adds all current dependencies to Makefile
+depend :
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'              \
+	$(DEPEND_FLAGS) --                                                  \
+	$(XLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                  \
+	$(XLOCKUTILSRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend :
+	@echo updating dependencies in `pwd`/Makefile.in... ;               \
+	$(DEPEND) -w 0 -f -                                                 \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(XLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                  \
+	$(XLOCKUTILSRCS) |                                                  \
+	(                                                                   \
+	  awk '/^#.*Id : Makefile.in/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'                        \
+	      -e 's@^\.\./xlock@$$(UTILOBJDIR)@'                            \
+	      -e 's@\.\./bitmaps@$$(BITMAPDIR)@g' ;                         \
+	  echo ''                                                           \
+	) > /tmp/distdepend.$$$$ &&                                         \
+	mv Makefile.in Makefile.in.bak &&                                   \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+$(UTILOBJDIR)/xlock.o: xlock.h
+$(UTILOBJDIR)/xlock.o: ../config.h
+$(UTILOBJDIR)/xlock.o: mode.h
+$(UTILOBJDIR)/xlock.o: random.h
+$(UTILOBJDIR)/xlock.o: color.h
+$(UTILOBJDIR)/xlock.o: util.h
+$(UTILOBJDIR)/xlock.o: iostuff.h
+$(UTILOBJDIR)/xlock.o: passwd.h
+$(UTILOBJDIR)/xlock.o: $(BITMAPDIR)/mailempty.xbm
+$(UTILOBJDIR)/xlock.o: $(BITMAPDIR)/mailfull.xbm
+$(UTILOBJDIR)/xlock.o: vroot.h
+$(UTILOBJDIR)/passwd.o: xlock.h
+$(UTILOBJDIR)/passwd.o: ../config.h
+$(UTILOBJDIR)/passwd.o: mode.h
+$(UTILOBJDIR)/passwd.o: random.h
+$(UTILOBJDIR)/passwd.o: iostuff.h
+$(UTILOBJDIR)/passwd.o: passwd.h
+$(UTILOBJDIR)/resource.o: xlock.h
+$(UTILOBJDIR)/resource.o: ../config.h
+$(UTILOBJDIR)/resource.o: mode.h
+$(UTILOBJDIR)/resource.o: random.h
+$(UTILOBJDIR)/resource.o: vis.h
+$(UTILOBJDIR)/resource.o: iostuff.h
+$(UTILOBJDIR)/resource.o: version.h
+$(UTILOBJDIR)/util.o: xlock.h
+$(UTILOBJDIR)/util.o: ../config.h
+$(UTILOBJDIR)/util.o: mode.h
+$(UTILOBJDIR)/util.o: random.h
+$(UTILOBJDIR)/util.o: util.h
+$(UTILOBJDIR)/logout.o: xlock.h
+$(UTILOBJDIR)/logout.o: ../config.h
+$(UTILOBJDIR)/logout.o: mode.h
+$(UTILOBJDIR)/logout.o: random.h
+$(UTILOBJDIR)/logout.o: iostuff.h
+$(UTILOBJDIR)/mode.o: xlock.h
+$(UTILOBJDIR)/mode.o: ../config.h
+$(UTILOBJDIR)/mode.o: mode.h
+$(UTILOBJDIR)/mode.o: random.h
+$(UTILOBJDIR)/ras.o: xlock.h
+$(UTILOBJDIR)/ras.o: ../config.h
+$(UTILOBJDIR)/ras.o: mode.h
+$(UTILOBJDIR)/ras.o: random.h
+$(UTILOBJDIR)/ras.o: iostuff.h
+$(UTILOBJDIR)/ras.o: ras.h
+$(UTILOBJDIR)/xbm.o: xlock.h
+$(UTILOBJDIR)/xbm.o: ../config.h
+$(UTILOBJDIR)/xbm.o: mode.h
+$(UTILOBJDIR)/xbm.o: random.h
+$(UTILOBJDIR)/vis.o: xlock.h
+$(UTILOBJDIR)/vis.o: ../config.h
+$(UTILOBJDIR)/vis.o: mode.h
+$(UTILOBJDIR)/vis.o: random.h
+$(UTILOBJDIR)/vis.o: vis.h
+$(UTILOBJDIR)/color.o: xlock.h
+$(UTILOBJDIR)/color.o: ../config.h
+$(UTILOBJDIR)/color.o: mode.h
+$(UTILOBJDIR)/color.o: random.h
+$(UTILOBJDIR)/color.o: color.h
+$(UTILOBJDIR)/color.o: vis.h
+$(UTILOBJDIR)/iostuff.o: xlock.h
+$(UTILOBJDIR)/iostuff.o: ../config.h
+$(UTILOBJDIR)/iostuff.o: mode.h
+$(UTILOBJDIR)/iostuff.o: random.h
+$(UTILOBJDIR)/iostuff.o: vis.h
+$(UTILOBJDIR)/iostuff.o: color.h
+$(UTILOBJDIR)/iostuff.o: iostuff.h
+$(UTILOBJDIR)/iostuff.o: ras.h
+$(UTILOBJDIR)/automata.o: xlock.h
+$(UTILOBJDIR)/automata.o: ../config.h
+$(UTILOBJDIR)/automata.o: mode.h
+$(UTILOBJDIR)/automata.o: random.h
+$(UTILOBJDIR)/automata.o: automata.h
+$(UTILOBJDIR)/spline.o: xlock.h
+$(UTILOBJDIR)/spline.o: ../config.h
+$(UTILOBJDIR)/spline.o: mode.h
+$(UTILOBJDIR)/spline.o: random.h
+$(UTILOBJDIR)/spline.o: spline.h
+$(UTILOBJDIR)/sound.o: xlock.h
+$(UTILOBJDIR)/sound.o: ../config.h
+$(UTILOBJDIR)/sound.o: mode.h
+$(UTILOBJDIR)/sound.o: random.h
+$(UTILOBJDIR)/erase.o: xlock.h
+$(UTILOBJDIR)/erase.o: ../config.h
+$(UTILOBJDIR)/erase.o: mode.h
+$(UTILOBJDIR)/erase.o: random.h
+$(UTILOBJDIR)/erase.o: erase_init.h
+$(UTILOBJDIR)/erase.o: erase.h
+$(UTILOBJDIR)/erase.o: erase_debug.h
+$(UTILOBJDIR)/vtlock.o: xlock.h
+$(UTILOBJDIR)/vtlock.o: ../config.h
+$(UTILOBJDIR)/vtlock.o: mode.h
+$(UTILOBJDIR)/vtlock.o: random.h
+$(UTILOBJDIR)/vtlock_proc.o: xlock.h
+$(UTILOBJDIR)/vtlock_proc.o: ../config.h
+$(UTILOBJDIR)/vtlock_proc.o: mode.h
+$(UTILOBJDIR)/vtlock_proc.o: random.h
+

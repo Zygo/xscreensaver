@@ -1,0 +1,46 @@
+New Purify problems
+
+Solved?
+starfish line 208, 209, 517      4  (65 spline)
+  make_starfish  [starfish.c:208]     make_spline    [spline.c:69]
+  make_starfish  [starfish.c:209]
+  init_starfish  [starfish.c:517]
+kumppa solved?
+
+Unsolved
+  draw1_starfish [starfish.c:365]  compute_closed_spline [spline.c:260]
+    ...  grow_spline_points [spline.c:97]
+
+bubble3d  create_new_bubbles b_draw 167
+  glb_bubble_new [bubble3d.c:103]
+  glb_draw_init  [b_draw.c:53]
+
+------------------------------------------
+
+
+Old Purify Problems (problems are now marked in code with "PURIFY")
+
+---
+Summary of unresolved memory problems with xlockmore-4.03
+cartoon - Possible 29756 byte memory leak from XPutImage
+swirl - Possible 256 byte memory leak from XPutImage
+life - Possible 132 byte memory leak from XPutImage
+There are also some uninitialized memory reads that appear to be internal
+to X11.
+---
+
+
+SOLVED since xlockmore-4.08
+resource.c - 1 byte memory leak (Fixed since the Purify reports)
+
+SOLVED since xlockmore-4.02
+memory leaks:               galaxy.c, life3d.c
+
+MesaGL 2.3 fixes many cumulative leaks and uninitialized memory reads that
+existed in MesaGL 2.2.  This affected all GL modes.  MesaGL 2.3 or newer is
+recommended since it fixes these memory leaks and runs faster.  Cumulative
+means that the memory leaks occur each time the mode is run when in random
+mode, which is why after some time it may crash xlock since it runs out of
+available memory.
+
+Thanks to Tom Schmidt for the solaris and sunos purify logs.
