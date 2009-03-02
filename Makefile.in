@@ -127,6 +127,7 @@ bump-version::
   set - $$VERS ;							    \
   MAJOR="$$1"; MINOR="$$2";						    \
   NEW=`echo $$MINOR + 1 | bc` ;						    \
+  NEW=`echo $$NEW | sed 's/^\([0-9]\)$$/0\1/'` ;			    \
   D=`date '+%d-%b-%y'`;							    \
   if [ ! -f xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then			    \
     echo "WARNING: xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";    \
@@ -193,6 +194,7 @@ test-tar::
     echo --------------------------------------------------------------- ;  \
     ( cd utils; gmake ) ;						    \
     ( cd driver; gmake ) ;						    \
+    ( cd driver; gmake xscreensaver-demo-Xaw ) ;			    \
     echo --------------------------------------------------------------- ); \
 									    \
   ( cd BIN/lesstif ;							    \
@@ -202,9 +204,10 @@ test-tar::
     echo --------------------------------------------------------------- ;  \
     ( cd utils; gmake ) ;						    \
     ( cd driver; gmake ) ;						    \
+    ( cd driver; gmake xscreensaver-demo-Xaw ) ;			    \
     echo --------------------------------------------------------------- ); \
 									    \
-  chmod -R u+w . ;							    \
+  chmod -R u+w .
 
 
 www::
@@ -251,6 +254,7 @@ www::
 									    \
   (cd ..; $(MAKE) xscreensaver/changelog.html );			    \
   cvs diff -u0 changelog.html ;						    \
+  set +x ;								    \
 									    \
   echo -n "Ok? ";							    \
   read line;								    \

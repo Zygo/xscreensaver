@@ -23,6 +23,10 @@
 #include "xscreensaver.h"
 #include "resources.h"
 
+#ifdef HAVE_SYSLOG
+# include <syslog.h>
+#endif /* HAVE_SYSLOG */
+
 #ifdef _VROOT_H_
 ERROR!  You must not include vroot.h in this file.
 #endif
@@ -48,7 +52,7 @@ vms_passwd_valid_p(char *pw)
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 
-enum passwd_state { pw_read, pw_ok, pw_fail, pw_cancel, pw_time };
+enum passwd_state { pw_read, pw_ok, pw_null, pw_fail, pw_cancel, pw_time };
 
 struct passwd_dialog_data {
 
@@ -698,6 +702,8 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
 	;  /* already done? */
       else if (passwd_valid_p (typed_passwd))
 	pw->state = pw_ok;
+      else if (typed_passwd[0] == 0)
+	pw->state = pw_null;
       else
 	pw->state = pw_fail;
       break;
@@ -726,6 +732,7 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
 static void
 passwd_event_loop (saver_info *si)
 {
+  saver_preferences *p = &si->prefs;
   char *msg = 0;
   XEvent event;
   passwd_animate_timer ((XtPointer) si, 0);
@@ -744,8 +751,74 @@ passwd_event_loop (saver_info *si)
   switch (si->pw_data->state)
     {
     case pw_ok:   msg = 0; break;
+    case pw_null: msg = ""; break;
     case pw_time: msg = "Timed out!"; break;
     default:      msg = "Sorry!"; break;
+    }
+
+  if (si->pw_data->state == pw_fail)
+    si->unlock_failures++;
+
+  if (p->verbose_p)
+    switch (si->pw_data->state)
+      {
+      case pw_ok:
+	fprintf (stderr, "%s: password correct.\n", blurb()); break;
+      case pw_fail:
+	fprintf (stderr, "%s: password incorrect!\n", blurb()); break;
+      case pw_null:
+      case pw_cancel:
+	fprintf (stderr, "%s: password entry cancelled.\n", blurb()); break;
+      case pw_time:
+	fprintf (stderr, "%s: password entry timed out.\n", blurb()); break;
+      default: break;
+      }
+
+#ifdef HAVE_SYSLOG
+  if (si->pw_data->state == pw_fail)
+    {
+      /* If they typed a password (as opposed to just hitting return) and
+	 the password was invalid, log it.
+      */
+      struct passwd *pw = getpwuid (getuid ());
+      char *d = DisplayString (si->dpy);
+      char *u = (pw->pw_name ? pw->pw_name : "???");
+      int opt = 0;
+      int fac = 0;
+
+# ifdef LOG_PID
+      opt = LOG_PID;
+# endif
+
+# if defined(LOG_AUTHPRIV)
+      fac = LOG_AUTHPRIV;
+# elif defined(LOG_AUTH)
+      fac = LOG_AUTH;
+# else
+      fac = LOG_DAEMON;
+# endif
+
+      if (!d) d = "";
+      openlog (progname, opt, fac);
+      syslog (LOG_NOTICE, "FAILED LOGIN %d ON DISPLAY \"%s\", FOR \"%s\"",
+	      si->unlock_failures, d, u);
+      closelog ();
+    }
+#endif /* HAVE_SYSLOG */
+
+  if (si->pw_data->state == pw_ok && si->unlock_failures != 0)
+    {
+      if (si->unlock_failures == 1)
+	fprintf (real_stderr,
+		 "%s: WARNING: 1 failed attempt to unlock the screen.\n",
+		 blurb());
+      else
+	fprintf (real_stderr,
+		 "%s: WARNING: %d failed attempts to unlock the screen.\n",
+		 blurb(), si->unlock_failures);
+      fflush (real_stderr);
+
+      si->unlock_failures = 0;
     }
 
   if (msg)
@@ -765,12 +838,17 @@ passwd_event_loop (saver_info *si)
     }
 }
 
+
 Bool
 unlock_p (saver_info *si)
 {
+  saver_preferences *p = &si->prefs;
   Screen *screen = si->default_screen->screen;
   Colormap cmap = DefaultColormapOfScreen (screen);
   Bool status;
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: prompting for password.\n", blurb());
 
   if (si->pw_data || si->passwd_dialog)
     destroy_passwd_window (si);

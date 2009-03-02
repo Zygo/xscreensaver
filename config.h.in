@@ -210,6 +210,12 @@
 #undef HAVE_VT_LOCKSWITCH
 
 
+/* Define this if you the openlog(), syslog(), and closelog() functions.
+   This is used for logging failed login attempts.
+ */
+#undef HAVE_SYSLOG
+
+
 /* *************************************************************************
                             OTHER C ENVIRONMENT JUNK
    ************************************************************************* */

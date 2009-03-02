@@ -14,7 +14,7 @@
    itself.
  */
 
-#define WHICH 0
+#define WHICH 2
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -39,26 +39,20 @@ saver_info *global_si_kludge;
 
 FILE *real_stderr, *real_stdout;
 
-void reset_stderr(saver_screen_info *ssi) {}
-void clear_stderr(saver_screen_info *ssi) {}
-void reset_watchdog_timer(saver_info *si, Bool on_p) {}
 void monitor_power_on (saver_info *si) {}
-void grab_keyboard_and_mouse (saver_info *si, Window w, Cursor c) {}
-void ungrab_keyboard_and_mouse (saver_info *si) {}
-Bool select_visual (saver_screen_info *ssi, const char *v) { return False; }
-void raise_window (saver_info *si, Bool i, Bool b, Bool d) {}
-void restore_real_vroot (saver_info *si) {}
-void saver_exit (saver_info *si, int status, const char *core) { exit(status);}
-const char * signal_name(int signal) { return "???"; }
 Bool monitor_powered_on_p (saver_info *si) { return True; }
-void start_notice_events_timer (saver_info *si, Window w) {}
 void initialize_screensaver_window (saver_info *si) {}
+void raise_window (saver_info *si, Bool i, Bool b, Bool d) {}
 void blank_screen (saver_info *si) {}
 void unblank_screen (saver_info *si) {}
+Bool select_visual (saver_screen_info *ssi, const char *v) { return False; }
+Bool window_exists_p (Display *dpy, Window window) {return True;}
+void start_notice_events_timer (saver_info *si, Window w) {}
 Bool handle_clientmessage (saver_info *si, XEvent *e, Bool u) { return False; }
 int BadWindow_ehandler (Display *dpy, XErrorEvent *error) { exit(1); }
-int write_init_file (saver_info *si) { return 0;}
-Bool window_exists_p (Display *dpy, Window window) {return True;}
+const char *signal_name(int signal) { return "???"; }
+void restore_real_vroot (saver_info *si) {}
+void saver_exit (saver_info *si, int status, const char *core) { exit(status);}
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;
@@ -74,163 +68,6 @@ idle_timer (XtPointer closure, XtIntervalId *id)
   fake_event.xany.window  = 0;
   XPutBackEvent (si->dpy, &fake_event);
 }
-
-
-static char *
-reformat_hack (const char *hack)
-{
-  int i;
-  const char *in = hack;
-  int indent = 13;
-  char *h2 = (char *) malloc(strlen(in) + indent + 2);
-  char *out = h2;
-
-  while (isspace(*in)) in++;		/* skip whitespace */
-  while (*in && !isspace(*in) && *in != ':')
-    *out++ = *in++;			/* snarf first token */
-  while (isspace(*in)) in++;		/* skip whitespace */
-
-  if (*in == ':')
-    *out++ = *in++;			/* copy colon */
-  else
-    {
-      in = hack;
-      out = h2;				/* reset to beginning */
-    }
-
-  *out = 0;
-
-  while (isspace(*in)) in++;		/* skip whitespace */
-  for (i = strlen(h2); i < indent; i++)	/* indent */
-    *out++ = ' ';
-
-  /* copy the rest of the line. */
-  while (*in)
-    {
-      /* shrink all whitespace to one space, for the benefit of the "demo"
-	 mode display.  We only do this when we can easily tell that the
-	 whitespace is not significant (no shell metachars).
-       */
-      switch (*in)
-	{
-	case '\'': case '"': case '`': case '\\':
-	  {
-	    /* Metachars are scary.  Copy the rest of the line unchanged. */
-	    while (*in)
-	      *out++ = *in++;
-	  }
-	  break;
-	case ' ': case '\t':
-	  {
-	    while (*in == ' ' || *in == '\t')
-	      in++;
-	    *out++ = ' ';
-	  }
-	  break;
-	default:
-	  *out++ = *in++;
-	  break;
-	}
-    }
-  *out = 0;
-
-  /* strip trailing whitespace. */
-  out = out-1;
-  while (out > h2 && (*out == ' ' || *out == '\t' || *out == '\n'))
-    *out-- = 0;
-
-  return h2;
-}
-
-
-static void
-get_screenhacks (saver_info *si)
-{
-  saver_preferences *p = &si->prefs;
-  int i = 0;
-  int start = 0;
-  int end = 0;
-  int size;
-  char *d;
-
-  d = get_string_resource ("monoPrograms", "MonoPrograms");
-  if (d && !*d) { free(d); d = 0; }
-  if (!d)
-    d = get_string_resource ("colorPrograms", "ColorPrograms");
-  if (d && !*d) { free(d); d = 0; }
-
-  if (d)
-    {
-      fprintf (stderr,
-       "%s: the `monoPrograms' and `colorPrograms' resources are obsolete;\n\
-	see the manual for details.\n", blurb());
-      free(d);
-    }
-
-  d = get_string_resource ("programs", "Programs");
-
-  if (p->screenhacks)
-    {
-      for (i = 0; i < p->screenhacks_count; i++)
-	if (p->screenhacks[i])
-	  free (p->screenhacks[i]);
-      free(p->screenhacks);
-      p->screenhacks = 0;
-    }
-
-  if (!d || !*d)
-    {
-      p->screenhacks_count = 0;
-      p->screenhacks = 0;
-      return;
-    }
-
-  size = strlen (d);
-
-
-  /* Count up the number of newlines (which will be equal to or larger than
-     the number of hacks.)
-   */
-  i = 0;
-  for (i = 0; d[i]; i++)
-    if (d[i] == '\n')
-      i++;
-  i++;
-
-  p->screenhacks = (char **) calloc (sizeof (char *), i+1);
-
-  /* Iterate over the lines in `d' (the string with newlines)
-     and make new strings to stuff into the `screenhacks' array.
-   */
-  p->screenhacks_count = 0;
-  while (start < size)
-    {
-      /* skip forward over whitespace. */
-      while (d[start] == ' ' || d[start] == '\t' || d[start] == '\n')
-	start++;
-
-      /* skip forward to newline or end of string. */
-      end = start;
-      while (d[end] != 0 && d[end] != '\n')
-	end++;
-
-      /* null terminate. */
-      d[end] = 0;
-
-      p->screenhacks[p->screenhacks_count++] = reformat_hack (d + start);
-      if (p->screenhacks_count >= i)
-	abort();
-
-      start = end+1;
-    }
-
-  if (p->screenhacks_count == 0)
-    {
-      free (p->screenhacks);
-      p->screenhacks = 0;
-    }
-}
-
 
 
 static char *fallback[] = {
@@ -281,7 +118,7 @@ main (int argc, char **argv)
 				    0, 0);
 
   si->dpy = XtDisplay (toplevel_shell);
-  si->db = XtDatabase (si->dpy);
+  p->db = XtDatabase (si->dpy);
   si->default_screen->toplevel_shell = toplevel_shell;
   si->default_screen->screen = XtScreen(toplevel_shell);
   si->default_screen->default_visual =
@@ -290,34 +127,10 @@ main (int argc, char **argv)
   si->default_screen->screensaver_window =
     RootWindowOfScreen(si->default_screen->screen);
 
-  db = si->db;
+  db = p->db;
   XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
-  p->debug_p = True;
-  p->verbose_p = True;
-  p->timestamp_p = True;
-  p->lock_p = True;
-
-  p->fade_p	    = get_boolean_resource ("fade", "Boolean");
-  p->unfade_p	    = get_boolean_resource ("unfade", "Boolean");
-  p->fade_seconds   = 1000 * get_seconds_resource ("fadeSeconds", "Time");
-  p->fade_ticks	    = get_integer_resource ("fadeTicks", "Integer");
-  p->install_cmap_p = get_boolean_resource ("installColormap", "Boolean");
-  p->nice_inferior  = get_integer_resource ("nice", "Nice");
-
-  p->initial_delay   = 1000 * get_seconds_resource ("initialDelay", "Time");
-  p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");
-  p->timeout         = 1000 * get_minutes_resource ("timeout", "Time");
-  p->lock_timeout    = 1000 * get_minutes_resource ("lockTimeout", "Time");
-  p->cycle           = 1000 * get_minutes_resource ("cycle", "Time");
-  p->passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
-  p->passwd_timeout = 1000 * get_seconds_resource ("passwdTimeout", "Time");
-  p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");
-  p->shell = get_string_resource ("bourneShell", "BourneShell");
-  p->help_url = get_string_resource("helpURL", "URL");
-  p->load_url_command = get_string_resource("loadURL", "LoadURL");
-
-  get_screenhacks(si);
+  load_init_file (&si->prefs);
 
   while (1)
     {
@@ -346,7 +159,6 @@ main (int argc, char **argv)
 	sleep (1);
       }
 #else
-      si->demo_mode_p = True;
       make_screenhack_dialog (si);
       XtAppMainLoop(si->app);
 #endif

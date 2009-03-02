@@ -19,9 +19,15 @@
 # include "vms-gtod.h"		/* for gettimeofday() */
 #endif /* VMS */
 
-# ifdef HAVE_UNAME
-#  include <sys/utsname.h>	/* for uname() */
-# endif /* HAVE_UNAME */
+#ifndef VMS
+# include <pwd.h>		/* for getpwuid() */
+#else /* VMS */
+# include "vms-pwd.h"
+#endif /* VMS */
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>	/* for uname() */
+#endif /* HAVE_UNAME */
 
 #include <stdio.h>
 #include <X11/Xproto.h>		/* for CARD32 */
@@ -173,31 +179,34 @@ ungrab_mouse(saver_info *si)
 }
 
 
-void
+Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
 {
-  Status status;
+  Status mstatus, kstatus;
   XSync (si->dpy, False);
 
-  status = grab_kbd (si, window);
-  if (status != GrabSuccess)
+  kstatus = grab_kbd (si, window);
+  if (kstatus != GrabSuccess)
     {	/* try again in a second */
       sleep (1);
-      status = grab_kbd (si, window);
-      if (status != GrabSuccess)
+      kstatus = grab_kbd (si, window);
+      if (kstatus != GrabSuccess)
 	fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
-		 blurb(), grab_string(status));
+		 blurb(), grab_string(kstatus));
     }
 
-  status = grab_mouse (si, window, cursor);
-  if (status != GrabSuccess)
+  mstatus = grab_mouse (si, window, cursor);
+  if (mstatus != GrabSuccess)
     {	/* try again in a second */
       sleep (1);
-      status = grab_mouse (si, window, cursor);
-      if (status != GrabSuccess)
+      mstatus = grab_mouse (si, window, cursor);
+      if (mstatus != GrabSuccess)
 	fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
-		 blurb(), grab_string(status));
+		 blurb(), grab_string(mstatus));
     }
+
+  return (kstatus == GrabSuccess ||
+	  mstatus == GrabSuccess);
 }
 
 void
@@ -357,6 +366,16 @@ save_real_vroot (saver_screen_info *ssi)
   Window root = RootWindowOfScreen (screen);
   Window root2, parent, *kids;
   unsigned int nkids;
+  XErrorHandler old_handler;
+
+  /* It's possible that a window might be deleted between our call to
+     XQueryTree() and our call to XGetWindowProperty().  Don't die if
+     that happens (but just ignore that window, it's not the one we're
+     interested in anyway.)
+   */
+  XSync (dpy, False);
+  old_handler = XSetErrorHandler (BadWindow_ehandler);
+  XSync (dpy, False);
 
   ssi->real_vroot = 0;
   ssi->real_vroot_value = 0;
@@ -391,6 +410,10 @@ save_real_vroot (saver_screen_info *ssi)
       ssi->real_vroot = kids [i];
       ssi->real_vroot_value = *vrootP;
     }
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
 
   if (ssi->real_vroot)
     {
@@ -677,6 +700,71 @@ window_exists_p (Display *dpy, Window window)
 }
 
 static void
+store_saver_id (saver_screen_info *ssi)
+{
+  XClassHint class_hints;
+  saver_info *si = ssi->global;
+  unsigned long pid = (unsigned long) getpid ();
+  char buf[20];
+  struct passwd *p = getpwuid (getuid ());
+  const char *name, *host;
+  char *id;
+  
+  /* First store the name and class on the window.
+   */
+  class_hints.res_name = progname;
+  class_hints.res_class = progclass;
+  XSetClassHint (si->dpy, ssi->screensaver_window, &class_hints);
+  XStoreName (si->dpy, ssi->screensaver_window, "screensaver");
+
+  /* Then store the xscreensaver version number.
+   */
+  XChangeProperty (si->dpy, ssi->screensaver_window,
+		   XA_SCREENSAVER_VERSION,
+		   XA_STRING, 8, PropModeReplace,
+		   (unsigned char *) si->version,
+		   strlen (si->version));
+
+  /* Now store the XSCREENSAVER_ID property, that says what user and host
+     xscreensaver is running as.
+   */
+
+  if (p && p->pw_name && *p->pw_name)
+    name = p->pw_name;
+  else if (p)
+    {
+      sprintf (buf, "%lu", (unsigned long) p->pw_uid);
+      name = buf;
+    }
+  else
+    name = "???";
+
+# if defined(HAVE_UNAME)
+  {
+    struct utsname uts;
+    if (uname (&uts) < 0)
+      host = "???";
+    else
+      host = uts.nodename;
+  }
+# elif defined(VMS)
+  host = getenv("SYS$NODE");
+# else  /* !HAVE_UNAME && !VMS */
+  host = "???";
+# endif /* !HAVE_UNAME && !VMS */
+
+  id = (char *) malloc (strlen(name) + strlen(host) + 50);
+  sprintf (id, "%lu (%s@%s)", pid, name, host);
+
+  XChangeProperty (si->dpy, ssi->screensaver_window,
+		   XA_SCREENSAVER_ID, XA_STRING,
+		   8, PropModeReplace,
+		   (unsigned char *) id, strlen (id));
+  free (id);
+}
+
+
+static void
 initialize_screensaver_window_1 (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
@@ -689,12 +777,10 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
      its own set of problems...
    */
   XColor black;
-  XClassHint class_hints;
   XSetWindowAttributes attrs;
   unsigned long attrmask;
   int width = WidthOfScreen (ssi->screen);
   int height = HeightOfScreen (ssi->screen);
-  char id [2048];
   static Bool printed_visual_info = False;  /* only print the message once. */
 
   black.red = black.green = black.blue = 0;
@@ -709,7 +795,8 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     {
       if (! ssi->cmap)
 	{
-	  ssi->cmap = XCreateColormap (si->dpy, RootWindowOfScreen (ssi->screen),
+	  ssi->cmap = XCreateColormap (si->dpy,
+				       RootWindowOfScreen (ssi->screen),
 				      ssi->current_visual, AllocNone);
 	  if (! XAllocColor (si->dpy, ssi->cmap, &black)) abort ();
 	  ssi->black_pixel = black.pixel;
@@ -848,68 +935,28 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 		 blurb(), (unsigned long) ssi->screensaver_window);
     }
 
-#ifdef HAVE_MIT_SAVER_EXTENSION
-  if (!p->use_mit_saver_extension ||
-      window_exists_p (si->dpy, ssi->screensaver_window))
-    /* When using the MIT-SCREEN-SAVER extension, the window pointed to
-       by screensaver_window only exists while the saver is active.
-       So we must be careful to only try and manipulate it while it
-       exists...
-       (#### The above comment would be true if the MIT extension actually
-       worked, but it's not true today -- see `server_mit_saver_window'.)
-     */
-#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+  store_saver_id (ssi);
+
+  if (!ssi->cursor)
     {
-      class_hints.res_name = progname;
-      class_hints.res_class = progclass;
-      XSetClassHint (si->dpy, ssi->screensaver_window, &class_hints);
-      XStoreName (si->dpy, ssi->screensaver_window, "screensaver");
-      XChangeProperty (si->dpy, ssi->screensaver_window,
-		       XA_SCREENSAVER_VERSION,
-		       XA_STRING, 8, PropModeReplace,
-		       (unsigned char *) si->version,
-		       strlen (si->version));
-
-      sprintf (id, "%lu on host ", (unsigned long) getpid ());
-
-# if defined(HAVE_UNAME)
-      {
-	struct utsname uts;
-	if (uname (&uts) < 0)
-	  strcat (id, "???");
-	else
-	  strcat (id, uts.nodename);
-      }
-# elif defined(VMS)
-      strcat (id, getenv("SYS$NODE"));
-# else  /* !HAVE_UNAME && !VMS */
-      strcat (id, "???");
-# endif /* !HAVE_UNAME && !VMS */
-
-      XChangeProperty (si->dpy, ssi->screensaver_window,
-		       XA_SCREENSAVER_ID, XA_STRING,
-		       8, PropModeReplace, (unsigned char *) id, strlen (id));
-
-      if (!ssi->cursor)
-	{
-	  Pixmap bit;
-	  bit = XCreatePixmapFromBitmapData (si->dpy, ssi->screensaver_window,
-					     "\000", 1, 1,
-					     BlackPixelOfScreen (ssi->screen),
-					     BlackPixelOfScreen (ssi->screen),
-					     1);
-	  ssi->cursor = XCreatePixmapCursor (si->dpy, bit, bit, &black, &black,
-					     0, 0);
-	  XFreePixmap (si->dpy, bit);
-	}
-
-      XSetWindowBackground (si->dpy, ssi->screensaver_window,
-			    ssi->black_pixel);
-      if (si->demo_mode_p)
-	XUndefineCursor (si->dpy, ssi->screensaver_window);
-      else
-	XDefineCursor (si->dpy, ssi->screensaver_window, ssi->cursor);
+      Pixmap bit;
+      bit = XCreatePixmapFromBitmapData (si->dpy, ssi->screensaver_window,
+					 "\000", 1, 1,
+					 BlackPixelOfScreen (ssi->screen),
+					 BlackPixelOfScreen (ssi->screen),
+					 1);
+      ssi->cursor = XCreatePixmapCursor (si->dpy, bit, bit, &black, &black,
+					 0, 0);
+      XFreePixmap (si->dpy, bit);
     }
+
+  XSetWindowBackground (si->dpy, ssi->screensaver_window, ssi->black_pixel);
+
+  if (si->demoing_p)
+    XUndefineCursor (si->dpy, ssi->screensaver_window);
+  else
+    XDefineCursor (si->dpy, ssi->screensaver_window, ssi->cursor);
 }
 
 void
@@ -928,10 +975,13 @@ raise_window (saver_info *si,
   saver_preferences *p = &si->prefs;
   int i;
 
+  if (si->demoing_p)
+    inhibit_fade = True;
+
   initialize_screensaver_window (si);
   reset_watchdog_timer (si, True);
 
-  if (p->fade_p && si->fading_possible_p && !inhibit_fade && !si->demo_mode_p)
+  if (p->fade_p && p->fading_possible_p && !inhibit_fade)
     {
       Window *current_windows = (Window *)
 	calloc(sizeof(Window), si->nscreens);
@@ -1030,7 +1080,9 @@ blank_screen (saver_info *si)
   grab_keyboard_and_mouse (si,
 			   /*si->screens[0].screensaver_window,*/
 			   RootWindowOfScreen(si->screens[0].screen),
-			   (si->demo_mode_p ? 0 : si->screens[0].cursor));
+			   (si->demoing_p
+			    ? 0
+			    : si->screens[0].cursor));
 
   for (i = 0; i < si->nscreens; i++)
     {
@@ -1064,6 +1116,7 @@ void
 unblank_screen (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
+  Bool unfade_p = (p->fading_possible_p && p->unfade_p);
   int i;
 
   monitor_power_on (si);
@@ -1071,7 +1124,10 @@ unblank_screen (saver_info *si)
   store_activate_time (si, True);
   reset_watchdog_timer (si, False);
 
-  if (p->unfade_p && si->fading_possible_p && !si->demo_mode_p)
+  if (si->demoing_p)
+    unfade_p = False;
+
+  if (unfade_p)
     {
       Window *current_windows = (Window *)
 	calloc(sizeof(Window), si->nscreens);
@@ -1296,9 +1352,11 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
       if (old_w == si->mouse_grab_window)
 	{
 	  XGrabServer (si->dpy);		/* ############ DANGER! */
-	  ungrab_mouse(si);
-	  grab_mouse(si, ssi->screensaver_window,
-		     (si->demo_mode_p ? 0 : ssi->cursor));
+	  ungrab_mouse (si);
+	  grab_mouse (si, ssi->screensaver_window,
+		      (si->demoing_p
+		       ? 0
+		       : ssi->cursor));
 	  XUngrabServer (si->dpy);
 	  XSync (si->dpy, False);		/* ###### (danger over) */
 	}

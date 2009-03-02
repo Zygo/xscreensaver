@@ -37,7 +37,7 @@
 
 
 static const char *
-uid_gid_string(uid_t uid, gid_t gid)
+uid_gid_string (uid_t uid, gid_t gid)
 {
   static char buf[255];
   struct passwd *p = 0;
@@ -190,6 +190,11 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
    don't get special privileges.  (On some systems it is necessary to install
    this program as setuid root in order to read the passwd file to implement
    lock-mode.)
+
+     *** WARNING: DO NOT DISABLE ANY OF THE FOLLOWING CODE!
+         If you do so, you will open a security hole.  See the sections
+         of the xscreensaver manual titled "LOCKING AND ROOT LOGINS", 
+         and "USING XDM".
  */
 void
 hack_uid (saver_info *si)
@@ -211,9 +216,15 @@ hack_uid (saver_info *si)
 	saver_exit (si, 1, 0);
   }
 
+
   /* Locking can't work when running as root, because we have no way of
      knowing what the user id of the logged in user is (so we don't know
      whose password to prompt for.)
+
+     *** WARNING: DO NOT DISABLE THIS CODE!
+         If you do so, you will open a security hole.  See the sections
+         of the xscreensaver manual titled "LOCKING AND ROOT LOGINS",
+         and "USING XDM".
    */
   if (getuid() == (uid_t) 0)
     {
@@ -221,11 +232,18 @@ hack_uid (saver_info *si)
       si->nolock_reason = "running as root";
     }
 
+
   /* If we're running as root, switch to a safer user.  This is above and
      beyond the fact that we've disabling locking, above -- the theory is
      that running graphics demos as root is just always a stupid thing
      to do, since they have probably never been security reviewed and are
      more likely to be buggy than just about any other kind of program.
+     (And that assumes non-malicious code.  There are also attacks here.)
+
+     *** WARNING: DO NOT DISABLE THIS CODE!
+         If you do so, you will open a security hole.  See the sections
+         of the xscreensaver manual titled "LOCKING AND ROOT LOGINS", 
+         and "USING XDM".
    */
   if (getuid() == (uid_t) 0)
     {
@@ -253,6 +271,11 @@ hack_uid (saver_info *si)
      and not normal end-users) then disable locking.  If it was possible,
      switching to "nobody" would be the thing to do, but only root itself has
      the privs to do that.
+
+     *** WARNING: DO NOT DISABLE THIS CODE!
+         If you do so, you will open a security hole.  See the sections
+         of the xscreensaver manual titled "LOCKING AND ROOT LOGINS",
+         and "USING XDM".
    */
   {
     uid_t uid = getuid ();		/* get it again */

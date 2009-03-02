@@ -242,7 +242,8 @@ reset_timers (saver_info *si)
 	     blurb(), p->timeout, si->timer_id);
 #endif /* DEBUG_TIMERS */
 
-  XtRemoveTimeOut (si->timer_id);
+  if (si->timer_id)
+    XtRemoveTimeOut (si->timer_id);
   si->timer_id = XtAppAddTimeOut (si->app, p->timeout, idle_timer,
 				  (XtPointer) si);
   if (si->cycle_id) abort ();	/* no cycle timer when inactive */
@@ -468,11 +469,25 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	/* If any widgets want to handle this event, let them. */
 	dispatch_event (si, &event);
 
-	/* We got a user event */
+	/* We got a user event.
+	   If we're waiting for the user to become active, this is it.
+	   If we're waiting until the user becomes idle, reset the timers
+	   (since now we have longer to wait.)
+	 */
 	if (!until_idle_p)
-	  goto DONE;
+	  {
+	    if (si->demoing_p && event.xany.type == MotionNotify)
+	      /* When we're demoing a single hack, mouse motion doesn't
+		 cause deactivation.  Only clicks and keypresses do. */
+	      ;
+	    else
+	      /* If we're not demoing, then any activity causes deactivation.
+	       */
+	      goto DONE;
+	  }
 	else
 	  reset_timers (si);
+
 	break;
 
       default:
@@ -484,15 +499,13 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	      (XScreenSaverNotifyEvent *) &event;
 	    if (sevent->state == ScreenSaverOn)
 	      {
-# ifdef DEBUG_TIMERS
+		int i = 0;
 		if (p->verbose_p)
-		  fprintf (stderr, "%s: ScreenSaverOn event received at %s\n",
-			   blurb(), timestring ());
-# endif /* DEBUG_TIMERS */
+		  fprintf (stderr, "%s: MIT ScreenSaverOn event received.\n",
+			   blurb());
 
 		/* Get the "real" server window(s) out of the way as soon
 		   as possible. */
-		int i = 0;
 		for (i = 0; i < si->nscreens; i++)
 		  {
 		    saver_screen_info *ssi = &si->screens[i];
@@ -504,11 +517,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
 		if (sevent->kind != ScreenSaverExternal)
 		  {
-# ifdef DEBUG_TIMERS
 		    fprintf (stderr,
 			 "%s: ScreenSaverOn event wasn't of type External!\n",
 			     blurb());
-# endif /* DEBUG_TIMERS */
 		  }
 
 		if (until_idle_p)
@@ -516,20 +527,16 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	      }
 	    else if (sevent->state == ScreenSaverOff)
 	      {
-# ifdef DEBUG_TIMERS
 		if (p->verbose_p)
-		  fprintf (stderr, "%s: ScreenSaverOff event received at %s\n",
-			   blurb(), timestring ());
-# endif /* DEBUG_TIMERS */
+		  fprintf (stderr, "%s: MIT ScreenSaverOff event received.\n",
+			   blurb());
 		if (!until_idle_p)
 		  goto DONE;
 	      }
-# ifdef DEBUG_TIMERS
-	    else if (p->verbose_p)
+	    else
 	      fprintf (stderr,
-		       "%s: unknown MIT-SCREEN-SAVER event received at %s\n",
-		       blurb(), timestring ());
-# endif /* DEBUG_TIMERS */
+		       "%s: unknown MIT-SCREEN-SAVER event %d received!\n",
+		       blurb(), sevent->state);
 	  }
 	else
 
@@ -539,11 +546,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #ifdef HAVE_SGI_SAVER_EXTENSION
 	if (event.type == (si->sgi_saver_ext_event_number + ScreenSaverStart))
 	  {
-# ifdef DEBUG_TIMERS
 	    if (p->verbose_p)
-	      fprintf (stderr, "%s: ScreenSaverStart event received at %s\n",
-		       blurb(), timestring ());
-# endif /* DEBUG_TIMERS */
+	      fprintf (stderr, "%s: SGI ScreenSaverStart event received.\n",
+		       blurb());
 
 	    if (until_idle_p)
 	      goto DONE;
@@ -551,11 +556,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	else if (event.type == (si->sgi_saver_ext_event_number +
 				ScreenSaverEnd))
 	  {
-# ifdef DEBUG_TIMERS
 	    if (p->verbose_p)
-	      fprintf (stderr, "%s: ScreenSaverEnd event received at %s\n",
-		       blurb(), timestring ());
-# endif /* DEBUG_TIMERS */
+	      fprintf (stderr, "%s: SGI ScreenSaverEnd event received.\n",
+		       blurb());
 	    if (!until_idle_p)
 	      goto DONE;
 	  }
@@ -620,29 +623,28 @@ static void
 watchdog_timer (XtPointer closure, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
-  if (!si->demo_mode_p)
+
+  disable_builtin_screensaver (si, False);
+
+  if (si->screen_blanked_p)
     {
-      disable_builtin_screensaver (si, False);
-      if (si->screen_blanked_p)
-	{
-	  Bool running_p = screenhack_running_p(si);
+      Bool running_p = screenhack_running_p(si);
 
 #ifdef DEBUG_TIMERS
-	  if (si->prefs.verbose_p)
-	    fprintf (stderr, "%s: watchdog timer raising %sscreen.\n",
-		     blurb(), (running_p ? "" : "and clearing "));
+      if (si->prefs.verbose_p)
+	fprintf (stderr, "%s: watchdog timer raising %sscreen.\n",
+		 blurb(), (running_p ? "" : "and clearing "));
 #endif /* DEBUG_TIMERS */
 
-	  raise_window (si, True, True, running_p);
+      raise_window (si, True, True, running_p);
 
-	  if (!monitor_powered_on_p (si))
-	    {
-	      if (si->prefs.verbose_p)
-		fprintf (stderr,
-			 "%s: server reports that monitor has powered down; "
-			 "killing running hacks.\n", blurb());
-	      kill_screenhack (si);
-	    }
+      if (!monitor_powered_on_p (si))
+	{
+	  if (si->prefs.verbose_p)
+	    fprintf (stderr,
+		     "%s: server reports that monitor has powered down; "
+		     "killing running hacks.\n", blurb());
+	  kill_screenhack (si);
 	}
     }
 }

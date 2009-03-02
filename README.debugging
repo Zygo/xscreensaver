@@ -78,18 +78,15 @@ RUN-TIME PROBLEMS:
         *  What platform are you running on?  What does the included
            `./config.guess' shell script print?
 
-        *  Is the problem in the driver, or in the graphics hacks?
+        *  Is the problem in the driver (`xscreensaver'), the GUI
+           (`xscreensaver-demo'), or in the graphics hacks?
 
-        *  If the problem is in the driver, was the driver built using
+        *  If the problem is in the GUI, was the it built using
            Motif, Lesstif, or Athena?  Which version?
 
         *  If the problem is in one (or more) of the hacks, which ones?
-           If you're not sure, try
-
-              xscreensaver-command -demo
-
-           to go through the list of them and see which work and which
-           don't.
+           If you're not sure, try running `xscreensaver-demo' to go
+           through the list of them and see which work and which don't.
 
         *  Does the problem occur when running that hack by hand, in
            its own window (i.e., when started with no command-line args)?
@@ -138,12 +135,12 @@ RUN-TIME PROBLEMS:
 
         *  Start `xscreensaver' with the command-line arguments
 
-              -verbose -no-capture-stderr
+              -verbose -no-capture
 
            This will cause it to write a lot of debugging info to the stderr
            of the xscreensaver process (the `-verbose' option turns on the
-           diagnostics; the `-no-capture-stderr' option prevents the data
-           from being displayed on the screensaver window as well.)
+           diagnostics; the `-no-capture' option prevents the data from being
+           displayed on the screensaver window as well.)
 
            You also might want to use the `-timestamp' option, which will
            cause the xscreensaver messages to include the time at which
@@ -154,7 +151,7 @@ RUN-TIME PROBLEMS:
            you could start it from your login script like this (csh syntax):
 
               ( cd ~/src/xscreensaver/ ; \
-                xscreensaver -sync -verbose -timestamp -no-capture-stderr \
+                xscreensaver -sync -verbose -timestamp -no-capture \
                 >>&LOG & )
 
         *  Hackers only: If you're feeling adventurous enough to run gdb

@@ -33,21 +33,21 @@
 
 #include "visual.h"	/* for visual_depth() */
 
-Widget resources_dialog;
-Widget resources_form;
+Widget preferences_dialog;
+Widget preferences_form;
 Widget timeout_text;
 Widget cycle_text;
 Widget fade_text;
-Widget ticks_text;
-Widget lock_time_text;
-Widget passwd_time_text;
+Widget fade_ticks_text;
+Widget lock_timeout_text;
+Widget passwd_timeout_text;
 Widget verbose_toggle;
-Widget cmap_toggle;
+Widget install_cmap_toggle;
 Widget fade_toggle;
 Widget unfade_toggle;
 Widget lock_toggle;
-Widget res_done;
-Widget res_cancel;
+Widget prefs_done;
+Widget prefs_cancel;
 
 Widget demo_dialog;
 Widget demo_form;
@@ -68,41 +68,39 @@ static Widget buttonbox, textbox, okbox;
 
 
 void
-create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
+create_preferences_dialog(Widget parent, Visual *visual, Colormap colormap)
 {
   Widget rlabel;
   int depth = visual_depth(XtScreen(parent), visual);
 
-  resources_dialog = 
-    XtVaCreatePopupShell("resources_dialog", transientShellWidgetClass, parent,
-			 XtNtitle, NULL,
-			 XtNoverrideRedirect, TRUE,
+  preferences_dialog = 
+    XtVaCreatePopupShell("preferences_dialog", transientShellWidgetClass, parent,
 			 XtNvisual, visual,
 			 XtNcolormap, colormap,
 			 XtNdepth, depth,
 			 NULL);
 
-  resources_form =
-    XtVaCreateManagedWidget("resources_form", formWidgetClass,
-			    resources_dialog,
+  preferences_form =
+    XtVaCreateManagedWidget("preferences_form", formWidgetClass,
+			    preferences_dialog,
 			 XtNvisual, visual,
 			 XtNcolormap, colormap,
 			 XtNdepth, depth,
 			    NULL);
 
-  rlabel = XtVaCreateManagedWidget("label1", labelWidgetClass, resources_form,
+  rlabel = XtVaCreateManagedWidget("label1", labelWidgetClass, preferences_form,
 				   XtNleft, XtChainLeft,
 				   XtNright, XtChainRight,
 				   XtNtop, XtChainTop,
 				   NULL);
 
   textbox=
-    XtVaCreateManagedWidget("textbox", formWidgetClass, resources_form,
+    XtVaCreateManagedWidget("textbox", formWidgetClass, preferences_form,
 			    XtNleft, XtChainLeft,
 			    XtNfromVert, rlabel,
 			    NULL);
   okbox=
-    XtVaCreateManagedWidget("textbox", boxWidgetClass, resources_form,
+    XtVaCreateManagedWidget("textbox", boxWidgetClass, preferences_form,
 			    XtNleft, XtChainLeft,
 			    XtNright, XtChainRight,
 			    XtNfromVert, textbox,
@@ -127,29 +125,29 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 			    XtNfromVert, cycle_text,
 			    NULL);
 
-  ticks_text =
+  fade_ticks_text =
     XtVaCreateManagedWidget("ticks", dialogWidgetClass, textbox,
 			    XtNtop, XtChainTop,
 			    XtNright, XtChainRight,
 			    XtNfromHoriz, timeout_text,
 			    NULL);
 
-  lock_time_text =
+  lock_timeout_text =
     XtVaCreateManagedWidget("lockTime", dialogWidgetClass, textbox,
-			    XtNfromVert, ticks_text,
+			    XtNfromVert, fade_ticks_text,
 			    XtNright, XtChainRight,
 			    XtNfromHoriz, cycle_text,
 			    NULL);
 
-  passwd_time_text =
+  passwd_timeout_text =
     XtVaCreateManagedWidget("passwdTime", dialogWidgetClass, textbox,
-			    XtNfromVert, lock_time_text,
+			    XtNfromVert, lock_timeout_text,
 			    XtNright, XtChainRight,
 			    XtNfromHoriz, fade_text,
 			    NULL);
 
   buttonbox=
-    XtVaCreateManagedWidget("buttonbox", boxWidgetClass, resources_form,
+    XtVaCreateManagedWidget("buttonbox", boxWidgetClass, preferences_form,
 			    XtNfromVert, rlabel,
 			    XtNfromHoriz, textbox,
 			    XtNright, XtChainRight,
@@ -158,7 +156,7 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   verbose_toggle =
     XtVaCreateManagedWidget("verbose", toggleWidgetClass, buttonbox,
 			    NULL);
-  cmap_toggle =
+  install_cmap_toggle =
     XtVaCreateManagedWidget("cmap", toggleWidgetClass, buttonbox,
 			    NULL);
   fade_toggle =
@@ -172,9 +170,9 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 			    NULL);
 
 
-  res_done = XtVaCreateManagedWidget("done", commandWidgetClass, okbox,
+  prefs_done = XtVaCreateManagedWidget("done", commandWidgetClass, okbox,
 				     NULL);
-  res_cancel = XtVaCreateManagedWidget("cancel", commandWidgetClass, okbox,
+  prefs_cancel = XtVaCreateManagedWidget("cancel", commandWidgetClass, okbox,
 				       NULL);
 }
 
@@ -186,8 +184,6 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   demo_dialog = 
     XtVaCreatePopupShell("demo_dialog", transientShellWidgetClass, parent,
-			 XtNtitle, NULL,
-			 XtNoverrideRedirect, TRUE,
 			 XtNvisual, visual,
 			 XtNcolormap, colormap,
 			 XtNdepth, depth,
@@ -195,9 +191,12 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   demo_form =
     XtVaCreateManagedWidget("demo_form", formWidgetClass, demo_dialog,
-			 XtNvisual, visual,
-			 XtNcolormap, colormap,
-			 XtNdepth, depth,
+			    XtNvisual, visual,
+			    XtNcolormap, colormap,
+			    XtNdepth, depth,
+			    XtNleft, XtChainLeft,
+			    XtNright, XtChainRight,
+			    XtNtop, XtChainTop,
 			    NULL);
 
   label1 = XtVaCreateManagedWidget("label1", labelWidgetClass, demo_form,
@@ -217,6 +216,7 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
 			    XtNleft, XtChainLeft,
 			    XtNright, XtChainRight,
 			    XtNfromVert, label2,
+			    XtNresizable, True,
 			    NULL);
   viewport =
     XtVaCreateManagedWidget("viewport", viewportWidgetClass, subform,
@@ -252,6 +252,8 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
   next = XtVaCreateManagedWidget("next", commandWidgetClass, box, NULL);
   prev = XtVaCreateManagedWidget("prev", commandWidgetClass, box, NULL);
   edit = XtVaCreateManagedWidget("edit", commandWidgetClass, box, NULL);
+#if 0
   restart = XtVaCreateManagedWidget("restart", commandWidgetClass, box, NULL);
+#endif
   done = XtVaCreateManagedWidget("done", commandWidgetClass, box, NULL);
 }

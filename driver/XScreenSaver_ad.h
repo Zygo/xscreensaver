@@ -18,8 +18,10 @@
 "*overlayTextBackground:	#000000",
 "*overlayStderr:		True",
 "*font:			*-medium-r-*-140-*-m-*",
+"*demoCommand: xscreensaver-demo",
+"*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: netscape -remote 'openURL(%s)' || netscape '%s' &",
+"*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'",
 "*installColormap:	True",
 "*programs:	qix -root -solid -delay 0 -segments 100			\\n\
 		attraction -root -mode balls				\\n\
@@ -40,6 +42,7 @@
 		jigsaw -root						\\n\
 		blitspin -root -grab					\\n\
 		slip -root						\\n\
+		distort -root						\\n\
 		hypercube -root						\\n\
 		halo -root						\\n\
 		maze -root						\\n\
@@ -83,6 +86,7 @@
 		vines -root						\\n\
 		kaleidescope -root					\\n\
 		xjack -root						\\n\
+  -		xlyap -root -randomize					\\n\
 		cynosure -root						\\n\
 		flow -root						\\n\
 		epicycle -root						\\n\
@@ -92,6 +96,8 @@
 		crystal -root						\\n\
 		discrete -root						\\n\
 		kumppa -root						\\n\
+		rd-bomb -root						\\n\
+		rd-bomb -root -speed 1 -size 0.1			\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -103,9 +109,6 @@
 	color:	attraction -root -mode filled-splines -segments 0	\\n\
 	color:	attraction -root -glow -points 10			\\n\
 	color:	bubbles -root						\\n\
-									  \
-        color:  rd-bomb -root						\\n\
-        color:  rd-bomb -root -speed 1 -size 0.1			\\n\
 									  \
   PseudoColor:	qix -root -count 4 -solid -transparent			\\n\
   PseudoColor:	qix -root -count 5 -solid -transparent -linear		  \
@@ -125,6 +128,10 @@
 		bubble3d -root					  	\\n\
 		glplanet -root					  	\\n",
 " ",
+"XScreenSaver.pointerPollTime:		5",
+"XScreenSaver.initialDelay:		0",
+"XScreenSaver.windowCreationTimeout:	30",
+"XScreenSaver.bourneShell:		/bin/sh",
 "*Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1",
 "*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
@@ -159,10 +166,7 @@
 "*fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*XmTextField.fontList:             *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
-"*splashDialog*fontList:		   *-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
-"*splashDialog*splashLabel1.fontList:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1",
-"*splashDialog*splashLabel2.fontList:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*splashDialog*splashLabel3.fontList:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"*label0.fontList:                  *-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*XmDialogShell*foreground:		#000000",
 "*XmDialogShell*background:		#E5E5E5",
@@ -170,9 +174,10 @@
 "*XmDialogShell*XmTextField.background:	#FFFFFF",
 "*XmDialogShell*demoList.foreground:	#000000",
 "*XmDialogShell*demoList.background:	#FFFFFF",
-"XScreenSaver*XmDialogShell*rogerLabel.foreground:	#CD0000",
-"XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF",
 "*XmDialogShell.title:		XScreenSaver",
+"*versionWarning_popup.title:	XScreenSaver Warning",
+"*demoForm_popup.title:		XScreenSaver Demo",
+"*preferencesForm_popup.title:	XScreenSaver Preferences",
 "*allowShellResize:		True",
 "*autoUnmanage:			False",
 "*demoDialog.maxWidth:		600",
@@ -185,48 +190,42 @@
 "*next.labelString:		Run Next",
 "*prev.labelString:		Run Previous",
 "*edit.labelString:		Preferences",
-"*done.labelString:		Exit Demo Mode",
 "*restart.labelString:		Reinitialize",
-"*resourcesLabel.labelString:	XScreenSaver Parameters",
+"*done.labelString:		Quit",
+"*preferencesLabel.labelString:	XScreenSaver Parameters",
 "*timeoutLabel.labelString:	Saver Timeout",
 "*cycleLabel.labelString:	Cycle Timeout",
 "*fadeSecondsLabel.labelString:	Fade Duration",
 "*fadeTicksLabel.labelString:	Fade Ticks",
 "*lockLabel.labelString:		Lock Timeout",
 "*passwdLabel.labelString:	Password Timeout",
-"*resourcesForm*XmTextField.columns:	8",
+"*preferencesForm*XmTextField.columns:	8",
 "*verboseToggle.labelString:	Verbose",
 "*cmapToggle.labelString:	Install Colormap",
 "*fadeToggle.labelString:	Fade Colormap",
 "*unfadeToggle.labelString:	Unfade Colormap",
 "*lockToggle.labelString:	Require Password",
-"*resourcesDone.labelString:	OK",
-"*resourcesCancel.labelString:	Cancel",
-"*splashDialog.title:		XScreenSaver",
-"*splashLabel1.labelString:	XScreenSaver %s",
-"*splashLabel2.labelString:	Copyright © 1991-1998 by",
-"*splashLabel3.labelString:	Jamie Zawinski <jwz@jwz.org>",
-"*splashDemo.labelString:	Demo",
-"*splashPrefs.labelString:	Prefs",
-"*splashDialog*Help.labelString:	Help",
-"*splashLabel1.alignment:	ALIGNMENT_CENTER",
-"*splashLabel2.alignment:	ALIGNMENT_CENTER",
-"*splashLabel3.alignment:	ALIGNMENT_CENTER",
-"*splashDialog.borderWidth:	1",
-"*splashForm.shadowThickness:	4",
+"*preferencesDone.labelString:	OK",
+"*preferencesCancel.labelString:	Cancel",
 "XScreenSaver*dragInitiatorProtocolStyle: DRAG_NONE",
 "XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE",
+"*demo_dialog.title:		XScreenSaver Demo",
+"*preferences_dialog.title:	XScreenSaver Preferences",
+"*warning_dialog.title:		XScreenSaver Warning",
+"*demo_dialog.geometry:		=640x400",
 "*demo_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
-"*resources_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
-"*splash_dialog*font:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*splash_dialog*splashLabel1.font:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1",
-"*splash_dialog*splashLabel2.font:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*splash_dialog*splashLabel3.font:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"*preferences_dialog*font:	*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
 "*demo_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*resources_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"XScreenSaver.demo_dialog*List.font: \
+"*preferences_dialog*label1.font:*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"XScreenSaver*warning_dialog*label0.font:	\
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"XScreenSaver*warning_dialog*Label.font:	\
+				*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
+"XScreenSaver*warning_dialog*Command.font: \
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"XScreenSaver.demo_dialog*List.font:	\
 				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
-"XScreenSaver.demo_dialog*Text*font: \
+"XScreenSaver.demo_dialog*Text*font:	\
 				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "XScreenSaver.demo_dialog*foreground:			#000000",
 "XScreenSaver.demo_dialog*background:			#E5E5E5",
@@ -234,63 +233,52 @@
 "XScreenSaver.demo_dialog*Scrollbar.background:		#D9D9D9",
 "XScreenSaver.demo_dialog*Command.background:		#D9D9D9",
 "XScreenSaver.demo_dialog*Text*background:		#FFFFFF",
-"XScreenSaver.resources_dialog*foreground:		#000000",
-"XScreenSaver.resources_dialog*background:		#E5E5E5",
-"XScreenSaver.resources_dialog*Command.background:	#D9D9D9",
-"XScreenSaver.resources_dialog*Toggle.background:	#D9D9D9",
-"XScreenSaver.resources_dialog*Text*background:		#FFFFFF",
-"*resources_dialog*Dialog.value.translations: #override\\n\
+"XScreenSaver.preferences_dialog*foreground:		#000000",
+"XScreenSaver.preferences_dialog*background:		#E5E5E5",
+"XScreenSaver.preferences_dialog*Command.background:	#D9D9D9",
+"XScreenSaver.preferences_dialog*Toggle.background:	#D9D9D9",
+"XScreenSaver.preferences_dialog*Text*background:	#FFFFFF",
+"XScreenSaver.warning_dialog*foreground:			#000000",
+"XScreenSaver.warning_dialog*background:			#E5E5E5",
+"XScreenSaver.warning_dialog*Command.background:		#D9D9D9",
+"*preferences_dialog*Dialog.value.translations: #override\\n\
 	<Key>Return: beginning-of-line()\\n",
-"XScreenSaver.splash_dialog*foreground:			#000000",
-"XScreenSaver.splash_dialog*background:			#E5E5E5",
-"XScreenSaver.splash_dialog*Command.background:		#D9D9D9",
-"XScreenSaver.splash_dialog*Text*background:		#FFFFFF",
-"XScreenSaver.splash_dialog*roger.foreground:		#CD0000",
-"XScreenSaver.splash_dialog*roger.background:		#FFFFFF",
 "*demo_dialog*viewport.height:			200",
 "*Form.borderWidth:				0",
 "*Box.borderWidth:				0",
 "*Label.borderWidth:				0",
-"*resources_dialog*Dialog.borderWidth:		0",
+"*preferences_dialog*Dialog.borderWidth:		0",
 "*demo_dialog*next.label:			Run Next",
 "*demo_dialog*prev.label:			Run Previous",
 "*demo_dialog*edit.label:			Preferences",
-"*demo_dialog*done.label:			Exit Demo Mode",
 "*demo_dialog*restart.label:			Reinitialize",
+"*demo_dialog*done.label:			Quit",
 "XScreenSaver.demo_dialog*Command.internalWidth:  10",
 "XScreenSaver.demo_dialog*Command.internalHeight: 4",
-"*resources_dialog*timeout.label:		Saver Timeout:",
-"*resources_dialog*cycle.label:			Cycle Timeout:",
-"*resources_dialog*fade.label:			Fade Duration:",
-"*resources_dialog*ticks.label:			Fade Ticks:",
-"*resources_dialog*lockTime.label:		Lock Timeout:",
-"*resources_dialog*passwdTime.label:		Password Timeout:",
-"*resources_dialog*label1.label:			XScreenSaver Parameters",
-"*resources_dialog*buttonbox.verbose.label:	Verbose",
-"*resources_dialog*buttonbox.cmap.label:		Install Colormap",
-"*resources_dialog*buttonbox.fade.label:		Fade Colormap",
-"*resources_dialog*buttonbox.unfade.label:	Unfade Colormap",
-"*resources_dialog*buttonbox.lock.label:		Require Password",
-"*resources_dialog*done.label:			OK",
-"*resources_dialog*cancel.label:			Cancel",
-"*splash_dialog*splashLabel1.label:		XScreenSaver %s",
-"*splash_dialog*splashLabel2.label:		Copyright © 1991-1998 by",
-"*splash_dialog*splashLabel3.label:		Jamie Zawinski <jwz@jwz.org>",
-"*splash_dialog*splash_form*label.label:		",
-"*splash_dialog*Dialog.label:			",
-"*splash_dialog*splash_form.borderWidth:		0",
-"*splash_dialog*roger.width:			150",
-"*splash_dialog*roger.height:			150",
-"*splash_dialog*roger.borderWidth:		1",
-"*splash_dialog*demo.label:			Demo",
-"*splash_dialog*prefs.label:			Prefs",
-"*splash_dialog*help.label:			Help",
-"*splash_dialog.box.defaultDistance:		0",
-"*splash_dialog*splashLabel1.internalHeight:	10",
-"*splash_dialog*splashLabel1.internalWidth:	10",
-"*splash_dialog*splashLabel2.internalHeight:	0",
-"*splash_dialog*splashLabel3.internalHeight:	0",
-"XScreenSaver.pointerPollTime:		5",
-"XScreenSaver.initialDelay:		0",
-"XScreenSaver.windowCreationTimeout:	30",
-"XScreenSaver.bourneShell:		/bin/sh",
+"*preferences_dialog*timeout.label:		Saver Timeout:",
+"*preferences_dialog*cycle.label:		Cycle Timeout:",
+"*preferences_dialog*fade.label:			Fade Duration:",
+"*preferences_dialog*ticks.label:		Fade Ticks:",
+"*preferences_dialog*lockTime.label:		Lock Timeout:",
+"*preferences_dialog*passwdTime.label:		Password Timeout:",
+"XScreenSaver.preferences_dialog*Command.internalWidth:  10",
+"XScreenSaver.preferences_dialog*Command.internalHeight: 4",
+"*preferences_dialog*label1.label:		XScreenSaver Parameters",
+"*preferences_dialog*buttonbox.verbose.label:	Verbose",
+"*preferences_dialog*buttonbox.cmap.label:	Install Colormap",
+"*preferences_dialog*buttonbox.fade.label:	Fade Colormap",
+"*preferences_dialog*buttonbox.unfade.label:	Unfade Colormap",
+"*preferences_dialog*buttonbox.lock.label:	Require Password",
+"*preferences_dialog*done.label:			Ok",
+"*preferences_dialog*cancel.label:		Cancel",
+"*warning_dialog*ok.label:			Ok",
+"*warning_dialog*horizDistance:			30",
+"*warning_dialog*vertDistance:			0",
+"*warning_dialog*Label.internalWidth:		1",
+"*warning_dialog*Label.internalHeight:		0",
+"*warning_dialog*label0.horizDistance:		80",
+"*warning_dialog*label0.vertDistance:		20",
+"*warning_dialog*Command.horizDistance:		160",
+"*warning_dialog*Command.vertDistance:		20",
+"*warning_dialog*Command.internalWidth:		20",
+"*warning_dialog*Command.internalHeight:		5",

@@ -13,7 +13,6 @@
  * this version written by jwz, 4-Jun-98.
  *
  *   TODO:
- *      -  Should have a "macsbug" mode.
  *      -  Should simulate a Unix kernel panic and reboot.
  *      -  Making various boot noises would be fun, too.
  *      -  Maybe scatter some random bits across the screen,
@@ -182,7 +181,7 @@ bsod_sleep(Display *dpy, int seconds)
 }
 
 
-static void
+static Bool
 windows (Display *dpy, Window window, int delay, Bool w95p)
 {
   XGCValues gcv;
@@ -250,6 +249,9 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
    "contact your system administrator or technical support group."
      );
 
+  if (!get_boolean_resource((w95p? "doWindows" : "doNT"), "DoWindows"))
+    return False;
+
   XGetWindowAttributes (dpy, window, &xgwa);
 
   fontname = get_string_resource ((xgwa.height > 600
@@ -294,12 +296,13 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
   bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
 /* SCO OpenServer 5 panic, by Tom Kelly <tom@ancilla.toronto.on.ca>
  */
-static void
-openserver (Display *dpy, Window window, int delay)
+static Bool
+sco (Display *dpy, Window window, int delay)
 {
   XGCValues gcv;
   XWindowAttributes xgwa;
@@ -307,10 +310,11 @@ openserver (Display *dpy, Window window, int delay)
   const char *def_font = "fixed";
   XFontStruct *font;
   GC gc;
+  int lines = 1;
+  const char *s;
 
-  const char *openserver_panic =
-    ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-     "Unexpected trap in kernel mode:\n"
+  const char *sco_panic =
+    ("Unexpected trap in kernel mode:\n"
      "\n"
      "cr0 0x80010013     cr2  0x00000014     cr3 0x00000000  tlb  0x00000000\n"
      "ss  0x00071054    uesp  0x00012055     efl 0x00080888  ipl  0x00000005\n"
@@ -330,13 +334,17 @@ openserver (Display *dpy, Window window, int delay)
      "** Press Any Key to Reboot **\n"
     );
 
+  if (!get_boolean_resource("doSCO", "DoSCO"))
+    return False;
+
+  for (s = sco_panic; *s; s++) if (*s == '\n') lines++;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
   fontname = get_string_resource ((xgwa.height > 600
-				   ? "openserver.font2"
-				   : "openserver.font"),
-				  "OpenServer.Font");
+				   ? "sco.font2"
+				   : "sco.font"),
+				  "SCO.Font");
   if (!fontname || !*fontname) fontname = (char *)def_font;
   font = XLoadQueryFont (dpy, fontname);
   if (!font) font = XLoadQueryFont (dpy, def_font);
@@ -345,11 +353,11 @@ openserver (Display *dpy, Window window, int delay)
     free (fontname);
 
   gcv.font = font->fid;
-  gcv.foreground = get_pixel_resource(("openserver.foreground"),
-				      "OpenServer.Foreground",
+  gcv.foreground = get_pixel_resource(("sco.foreground"),
+				      "SCO.Foreground",
 				      dpy, xgwa.colormap);
-  gcv.background = get_pixel_resource(("openserver.background"),
-				      "OpenServer.Background",
+  gcv.background = get_pixel_resource(("sco.background"),
+				      "SCO.Background",
 				      dpy, xgwa.colormap);
   XSetWindowBackground(dpy, window, gcv.background);
   XClearWindow(dpy, window);
@@ -357,18 +365,21 @@ openserver (Display *dpy, Window window, int delay)
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
   draw_string(dpy, window, gc, &gcv, font,
-		0, 0, xgwa.width, xgwa.height, openserver_panic, 0);
+	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, 10,
+	      sco_panic, 0);
   XFreeGC(dpy, gc);
   XSync(dpy, False);
   bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
 
 /* Linux (sparc) panic, by Tom Kelly <tom@ancilla.toronto.on.ca>
  */
-static void
+static Bool
 sparc_linux (Display *dpy, Window window, int delay)
 {
   XGCValues gcv;
@@ -377,6 +388,8 @@ sparc_linux (Display *dpy, Window window, int delay)
   const char *def_font = "fixed";
   XFontStruct *font;
   GC gc;
+  int lines = 1;
+  const char *s;
 
   const char *linux_panic =
     ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -397,10 +410,13 @@ sparc_linux (Display *dpy, Window window, int delay)
 	"l4: 0000ffff l5: f0131550 l6: f012c000 l7: f0130400\n"
 	"i0: f1b13fb0 i1: 00000001 i2: 00000002 i3: 0007c000\n"
 	"i4: f01457c0 i5: 00000004 i6: f1b13f70 i7: f0015360\n"
-	"Instruction DUMP:"
-
+	"Instruction DUMP:\n"
     );
 
+  if (!get_boolean_resource("doSparcLinux", "DoSparcLinux"))
+    return False;
+
+  for (s = linux_panic; *s; s++) if (*s == '\n') lines++;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -428,15 +444,18 @@ sparc_linux (Display *dpy, Window window, int delay)
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
   draw_string(dpy, window, gc, &gcv, font,
-		0, 0, xgwa.width, xgwa.height, linux_panic, 0);
+	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, 10,
+	      linux_panic, 0);
   XFreeGC(dpy, gc);
   XSync(dpy, False);
   bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
-static void
+static Bool
 amiga (Display *dpy, Window window, int delay)
 {
   XGCValues gcv;
@@ -453,6 +472,9 @@ amiga (Display *dpy, Window window, int delay)
   const char *string =
     ("_Software failure.  Press left mouse button to continue.\n"
      "_Guru Meditation #00000003.00C01570");
+
+  if (!get_boolean_resource("doAmiga", "DoAmiga"))
+    return False;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -564,6 +586,7 @@ amiga (Display *dpy, Window window, int delay)
   XSync(dpy, False);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
 
@@ -577,7 +600,7 @@ amiga (Display *dpy, Window window, int delay)
 	Perhaps somebody else can tell you more about it..  its just
 	a quick hack :-}
  */
-static void
+static Bool
 atari (Display *dpy, Window window, int delay)
 {
 	
@@ -589,8 +612,11 @@ atari (Display *dpy, Window window, int delay)
   Pixmap pixmap = 0;
   int pix_w = atari_width;
   int pix_h = atari_height;
-  int offset = atari_width + 2;
+  int offset;
   int i, x, y;
+
+  if (!get_boolean_resource("doAtari", "DoAtari"))
+    return False;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -609,11 +635,15 @@ atari (Display *dpy, Window window, int delay)
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
   pixmap = XCreatePixmapFromBitmapData(dpy, window, (char *) atari_bits,
-				       atari_width, atari_height,
-				       gcv.foreground,
-				       gcv.background,
+				       pix_w, pix_h,
+				       gcv.foreground, gcv.background,
 				       xgwa.depth);
+  pixmap = double_pixmap(dpy, gc, xgwa.visual, xgwa.depth,
+			 pixmap, pix_w, pix_h);
+  pix_w *= 2;
+  pix_h *= 2;
 
+  offset = pix_w + 2;
   x = 5;
   y = (xgwa.height - (xgwa.height / 5));
   if (y < 0) y = 0;
@@ -635,10 +665,11 @@ atari (Display *dpy, Window window, int delay)
   bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
 
-static void
+static Bool
 mac (Display *dpy, Window window, int delay)
 {
   XGCValues gcv;
@@ -655,6 +686,9 @@ mac (Display *dpy, Window window, int delay)
 
   const char *string = ("0 0 0 0 0 0 0 F\n"
 			"0 0 0 0 0 0 0 3");
+
+  if (!get_boolean_resource("doMac", "DoMac"))
+    return False;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -682,9 +716,6 @@ mac (Display *dpy, Window window, int delay)
 				       gcv.background,
 				       xgwa.depth);
 
-  draw_string(dpy, window, gc, &gcv, font, 0, 0,
-	      xgwa.width, xgwa.height + offset, string, 0);
-
   for(i = 0; i < 2; i++)
     {
       pixmap = double_pixmap(dpy, gc, xgwa.visual, xgwa.depth,
@@ -702,14 +733,18 @@ mac (Display *dpy, Window window, int delay)
     XFreePixmap(dpy, pixmap);
   }
 
+  draw_string(dpy, window, gc, &gcv, font, 0, 0,
+	      xgwa.width, xgwa.height + offset, string, 0);
+
   XFreeGC(dpy, gc);
   XSync(dpy, False);
   bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
-static void
+static Bool
 macsbug (Display *dpy, Window window, int delay)
 {
   XGCValues gcv;
@@ -820,6 +855,9 @@ macsbug (Display *dpy, Window window, int delay)
   const char *s;
   int body_lines = 1;
 
+  if (!get_boolean_resource("doMacsBug", "DoMacsBug"))
+    return False;
+
   for (s = body; *s; s++) if (*s == '\n') body_lines++;
 
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -921,6 +959,7 @@ macsbug (Display *dpy, Window window, int delay)
   XFreeGC(dpy, gc2);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
+  return True;
 }
 
 
@@ -928,40 +967,49 @@ macsbug (Display *dpy, Window window, int delay)
 char *progclass = "BSOD";
 
 char *defaults [] = {
-  "*delay:		 30",
+  "*delay:		   30",
 
-  ".Windows.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".Windows.font2:	 -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".Windows.foreground:	 White",
-  ".Windows.background:	 Blue",
+  "*doWindows:		   True",
+  "*doNT:		   True",
+  "*doAmiga:		   True",
+  "*doMac:		   True",
+  "*doAtari:		   False",	/* boring */
+  "*doMacsBug:		   True",
+  "*doSCO:		   True",
+  "*doSparcLinux:	   False",	/* boring */
 
-  ".Amiga.font:		 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".Amiga.font2:	 -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".Amiga.foreground:	 Red",
-  ".Amiga.background:	 Black",
-  ".Amiga.background2:	 White",
+  ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".Windows.foreground:	   White",
+  ".Windows.background:	   Blue",
 
-  ".Mac.font:		 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".Mac.foreground:	 PaleTurquoise1",
-  ".Mac.background:	 Black",
+  ".Amiga.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Amiga.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".Amiga.foreground:	   Red",
+  ".Amiga.background:	   Black",
+  ".Amiga.background2:	   White",
 
-  ".Atari.foreground:	 Black",
-  ".Atari.background:	 White",
+  ".Mac.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".Mac.foreground:	   PaleTurquoise1",
+  ".Mac.background:	   Black",
 
-  ".MacsBug.font:	 -*-courier-medium-r-*-*-*-100-*-*-m-*-*-*",
-  ".MacsBug.font2:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".MacsBug.font3:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".MacsBug.foreground:	 Black",
-  ".MacsBug.background:	 White",
-  ".MacsBug.borderColor: #AAAAAA",
+  ".Atari.foreground:	   Black",
+  ".Atari.background:	   White",
+
+  ".MacsBug.font:	   -*-courier-medium-r-*-*-*-100-*-*-m-*-*-*",
+  ".MacsBug.font2:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".MacsBug.font3:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".MacsBug.foreground:	   Black",
+  ".MacsBug.background:	   White",
+  ".MacsBug.borderColor:   #AAAAAA",
   
-  ".OpenServer.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".OpenServer.font2:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".OpenServer.foreground: White",
-  ".OpenServer.background: Black",
+  ".SCO.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".SCO.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".SCO.foreground:	   White",
+  ".SCO.background:	   Black",
   
-  ".SparcLinux.font:	 -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  ".SparcLinux.font2:	 -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".SparcLinux.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".SparcLinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SparcLinux.foreground: White",
   ".SparcLinux.background: Black",
   0
@@ -972,9 +1020,11 @@ XrmOptionDescRec options [] = {
   { 0, 0, 0, 0 }
 };
 
+
 void
 screenhack (Display *dpy, Window window)
 {
+  int loop = 0;
   int i = -1;
   int j = -1;
   int delay = get_integer_resource ("delay", "Integer");
@@ -985,21 +1035,26 @@ screenhack (Display *dpy, Window window)
 
   while (1)
     {
-      while (i == j) i = random() % 8;
-      j = i;
-
+      Bool did;
+      do {  i = (random() & 0xFF) % 8; } while (i == j);
       switch (i)
 	{
-	case 0: windows(dpy, window, delay, True); break;
-	case 1: windows(dpy, window, delay, False); break;
-	case 2: amiga(dpy, window, delay); break;
-	case 3: mac(dpy, window, delay); break;
-	case 4: macsbug(dpy, window, delay); break;
-	case 5: openserver(dpy, window, delay); break;
-	case 6: sparc_linux(dpy, window, delay); break;
-	case 7: atari(dpy, window, delay); break;
+	case 0: did = windows(dpy, window, delay, True); break;
+	case 1: did = windows(dpy, window, delay, False); break;
+	case 2: did = amiga(dpy, window, delay); break;
+	case 3: did = mac(dpy, window, delay); break;
+	case 4: did = macsbug(dpy, window, delay); break;
+	case 5: did = sco(dpy, window, delay); break;
+	case 6: did = sparc_linux(dpy, window, delay); break;
+	case 7: did = atari(dpy, window, delay); break;
 	default: abort(); break;
 	}
+      loop++;
+      if (loop > 100) j = -1;
+      if (loop > 200) exit(-1);
+      if (!did) continue;
       XSync (dpy, True);
+      j = i;
+      loop = 0;
     }
 }

@@ -4,11 +4,18 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 2.34
-!                                08-Oct-98
+!                              version 3.01
+!                                24-Oct-98
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
+
+
+! These resources, when placed in the system-wide app-defaults directory
+! (e.g., /usr/lib/X11/app-defaults/XScreenSaver) will provide the default
+! settings for new users.  However, if you have a ".xscreensaver" file in
+! your home directory, the settings in that file take precedence.
+
 
 *timeout:		10
 *cycle:			10
@@ -32,11 +39,18 @@
 *overlayStderr:		True
 *font:			*-medium-r-*-140-*-m-*
 
+! This is what the "Demo" button on the splash screen runs (/bin/sh syntax.)
+*demoCommand: xscreensaver-demo
+
+! This is what the "Prefs" button on the splash screen runs (/bin/sh syntax.)
+*prefsCommand: xscreensaver-demo -prefs
+
 ! This is the URL that the "Help" button on the splash screen loads.
 *helpURL: http://www.jwz.org/xscreensaver/man.html
 
-! This is how the "Help" button loads URLs (in /bin/sh syntax.)
-*loadURL: netscape -remote 'openURL(%s)' || netscape '%s' &
+! This is how the "Help" button loads URLs (/bin/sh syntax.)
+! The "helpURL" will be substituted for up to two occurrences of "%s".
+*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'
 
 
 ! Turning on "installColormap" interacts erratically with twm and tvtwm,
@@ -55,7 +69,12 @@
 !
 ! Each line is an `sh' command.
 !
-! But, if the first word on the line is the name of a visual followed by a
+! If the first (non-blank) character on the line is "-", then that means
+! that this command is disabled: it's still in the list, but it won't ever
+! be used.  (This is just to make it easy to disable and then re-enable 
+! them later.)
+!
+! If the first word on the line is the name of a visual followed by a
 ! colon, then that visual will be used for the program, if it is available.
 ! If no such visual is available, then the program will be skipped.  In
 ! this way, you can specify that you want certain programs to run only
@@ -93,6 +112,7 @@
 		jigsaw -root						\n\
 		blitspin -root -grab					\n\
 		slip -root						\n\
+		distort -root						\n\
 		hypercube -root						\n\
 		halo -root						\n\
 		maze -root						\n\
@@ -136,6 +156,7 @@
 		vines -root						\n\
 		kaleidescope -root					\n\
 		xjack -root						\n\
+  -		xlyap -root -randomize					\n\
 		cynosure -root						\n\
 		flow -root						\n\
 		epicycle -root						\n\
@@ -145,6 +166,8 @@
 		crystal -root						\n\
 		discrete -root						\n\
 		kumppa -root						\n\
+		rd-bomb -root						\n\
+		rd-bomb -root -speed 1 -size 0.1			\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -157,26 +180,23 @@
 	color:	attraction -root -glow -points 10			\n\
 	color:	bubbles -root						\n\
 									  \
-        color:  rd-bomb -root						\n\
-        color:  rd-bomb -root -speed 1 -size 0.1			\n\
-									  \
   PseudoColor:	qix -root -count 4 -solid -transparent			\n\
   PseudoColor:	qix -root -count 5 -solid -transparent -linear		  \
 			-segments 250 -size 100				\n\
-@GL_KLUDGE_1@
-@GL_KLUDGE_2@	gears -root					  	\n\
-@GL_KLUDGE_2@	superquadrics -root				  	\n\
-@GL_KLUDGE_2@	morph3d -root					  	\n\
-@GL_KLUDGE_2@	cage -root					  	\n\
-@GL_KLUDGE_2@	moebius -root					  	\n\
-@GL_KLUDGE_2@	stairs -root					  	\n\
-@GL_KLUDGE_2@	pipes -root					  	\n\
-@GL_KLUDGE_2@	sproingies -root				  	\n\
-@GL_KLUDGE_2@	rubik -root					  	\n\
-@GL_KLUDGE_2@	atlantis -root					  	\n\
-@GL_KLUDGE_2@	lament -root					  	\n\
-@GL_KLUDGE_2@	bubble3d -root					  	\n\
-@GL_KLUDGE_2@	glplanet -root					  	\n
+									  \
+@GL_KLUDGE@	gears -root					  	\n\
+@GL_KLUDGE@	superquadrics -root				  	\n\
+@GL_KLUDGE@	morph3d -root					  	\n\
+@GL_KLUDGE@	cage -root					  	\n\
+@GL_KLUDGE@	moebius -root					  	\n\
+@GL_KLUDGE@	stairs -root					  	\n\
+@GL_KLUDGE@	pipes -root					  	\n\
+@GL_KLUDGE@	sproingies -root				  	\n\
+@GL_KLUDGE@	rubik -root					  	\n\
+@GL_KLUDGE@	atlantis -root					  	\n\
+@GL_KLUDGE@	lament -root					  	\n\
+@GL_KLUDGE@	bubble3d -root					  	\n\
+@GL_KLUDGE@	glplanet -root					  	\n
  
 
 ! A few of the hacks require OpenGL, and will only be built if you have it.
@@ -282,7 +302,14 @@
 !=============================================================================
 
 
-! Resources for the password and splash-screen dialog boxes.
+XScreenSaver.pointerPollTime:		5
+XScreenSaver.initialDelay:		0
+XScreenSaver.windowCreationTimeout:	30
+XScreenSaver.bourneShell:		/bin/sh
+
+
+! Resources for the password and splash-screen dialog boxes of
+! the "xscreensaver" daemon.
 !
 *Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1
 *Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
@@ -319,15 +346,12 @@
 *splash.help.label:		Help
 
 
-! Resources for the Motif dialog boxes:
+! Resources for the Motif dialog boxes of the "xscreensaver-demo" program.
 ! 
 *fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1
 *demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
 *XmTextField.fontList:             *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
-*splashDialog*fontList:		   *-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
-*splashDialog*splashLabel1.fontList:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1
-*splashDialog*splashLabel2.fontList:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
-*splashDialog*splashLabel3.fontList:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
+*label0.fontList:                  *-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 ! Need to fully-qualify the preceeding in the case of of *sgiMode.
 
@@ -338,11 +362,10 @@ XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 *XmDialogShell*demoList.foreground:	#000000
 *XmDialogShell*demoList.background:	#FFFFFF
 
-! Need to fully-qualify the following in the case of of *sgiMode.
-XScreenSaver*XmDialogShell*rogerLabel.foreground:	#CD0000
-XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF
-
 *XmDialogShell.title:		XScreenSaver
+*versionWarning_popup.title:	XScreenSaver Warning
+*demoForm_popup.title:		XScreenSaver Demo
+*preferencesForm_popup.title:	XScreenSaver Preferences
 *allowShellResize:		True
 *autoUnmanage:			False
 
@@ -358,10 +381,10 @@ XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF
 *next.labelString:		Run Next
 *prev.labelString:		Run Previous
 *edit.labelString:		Preferences
-*done.labelString:		Exit Demo Mode
 *restart.labelString:		Reinitialize
+*done.labelString:		Quit
 
-*resourcesLabel.labelString:	XScreenSaver Parameters
+*preferencesLabel.labelString:	XScreenSaver Parameters
 
 *timeoutLabel.labelString:	Saver Timeout
 *cycleLabel.labelString:	Cycle Timeout
@@ -369,53 +392,50 @@ XScreenSaver*XmDialogShell*rogerLabel.background:	#FFFFFF
 *fadeTicksLabel.labelString:	Fade Ticks
 *lockLabel.labelString:		Lock Timeout
 *passwdLabel.labelString:	Password Timeout
-*resourcesForm*XmTextField.columns:	8
+*preferencesForm*XmTextField.columns:	8
 
 *verboseToggle.labelString:	Verbose
 *cmapToggle.labelString:	Install Colormap
 *fadeToggle.labelString:	Fade Colormap
 *unfadeToggle.labelString:	Unfade Colormap
 *lockToggle.labelString:	Require Password
-*resourcesDone.labelString:	OK
-*resourcesCancel.labelString:	Cancel
+*preferencesDone.labelString:	OK
+*preferencesCancel.labelString:	Cancel
 
-*splashDialog.title:		XScreenSaver
-*splashLabel1.labelString:	XScreenSaver %s
-*splashLabel2.labelString:	Copyright © 1991-1998 by
-*splashLabel3.labelString:	Jamie Zawinski <jwz@jwz.org>
-*splashDemo.labelString:	Demo
-*splashPrefs.labelString:	Prefs
-*splashDialog*Help.labelString:	Help
-
-*splashLabel1.alignment:	ALIGNMENT_CENTER
-*splashLabel2.alignment:	ALIGNMENT_CENTER
-*splashLabel3.alignment:	ALIGNMENT_CENTER
-
-*splashDialog.borderWidth:	1
-*splashForm.shadowThickness:	4
 
 ! Disable Motif drag-and-drop in dialog boxes.  This is kind of pathetic, but
 ! in some older versions of Motif, most any attempt to drag cause immediate
 ! flaming death from above.  This *should* rip the legs off that bug.
+! (But sadly, Lesstif 0.86 and earlier ignore these resources *and* have
+! buggy drag-and-drop.)
 !
 XScreenSaver*dragInitiatorProtocolStyle: DRAG_NONE
 XScreenSaver*dragReceiverProtocolStyle:  DRAG_NONE
 
 
 
-! Resources for the dialog boxes using the abominable Athena widgets:
+! Resources for the Athena dialog boxes of the "xscreensaver-demo" program.
 ! 
+*demo_dialog.title:		XScreenSaver Demo
+*preferences_dialog.title:	XScreenSaver Preferences
+*warning_dialog.title:		XScreenSaver Warning
+
+! For some reason, it doesn't size correctly by itself.
+*demo_dialog.geometry:		=640x400
+
 *demo_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
-*resources_dialog*font:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
-*splash_dialog*font:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-*splash_dialog*splashLabel1.font:   *-times-bold-r-*-*-*-180-*-*-*-iso8859-1
-*splash_dialog*splashLabel2.font:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
-*splash_dialog*splashLabel3.font:   *-times-bold-r-*-*-*-140-*-*-*-iso8859-1
+*preferences_dialog*font:	*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
 *demo_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-*resources_dialog*label1.font:	*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-XScreenSaver.demo_dialog*List.font: \
+*preferences_dialog*label1.font:*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*label0.font:	\
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*Label.font:	\
+				*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1
+XScreenSaver*warning_dialog*Command.font: \
+				*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+XScreenSaver.demo_dialog*List.font:	\
 				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
-XScreenSaver.demo_dialog*Text*font: \
+XScreenSaver.demo_dialog*Text*font:	\
 				*-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 
 XScreenSaver.demo_dialog*foreground:			#000000
@@ -425,76 +445,63 @@ XScreenSaver.demo_dialog*Scrollbar.background:		#D9D9D9
 XScreenSaver.demo_dialog*Command.background:		#D9D9D9
 XScreenSaver.demo_dialog*Text*background:		#FFFFFF
 
-XScreenSaver.resources_dialog*foreground:		#000000
-XScreenSaver.resources_dialog*background:		#E5E5E5
-XScreenSaver.resources_dialog*Command.background:	#D9D9D9
-XScreenSaver.resources_dialog*Toggle.background:	#D9D9D9
-XScreenSaver.resources_dialog*Text*background:		#FFFFFF
+XScreenSaver.preferences_dialog*foreground:		#000000
+XScreenSaver.preferences_dialog*background:		#E5E5E5
+XScreenSaver.preferences_dialog*Command.background:	#D9D9D9
+XScreenSaver.preferences_dialog*Toggle.background:	#D9D9D9
+XScreenSaver.preferences_dialog*Text*background:	#FFFFFF
 
-*resources_dialog*Dialog.value.translations: #override\n\
+XScreenSaver.warning_dialog*foreground:			#000000
+XScreenSaver.warning_dialog*background:			#E5E5E5
+XScreenSaver.warning_dialog*Command.background:		#D9D9D9
+
+*preferences_dialog*Dialog.value.translations: #override\n\
 	<Key>Return: beginning-of-line()\n
-
-XScreenSaver.splash_dialog*foreground:			#000000
-XScreenSaver.splash_dialog*background:			#E5E5E5
-XScreenSaver.splash_dialog*Command.background:		#D9D9D9
-XScreenSaver.splash_dialog*Text*background:		#FFFFFF
-XScreenSaver.splash_dialog*roger.foreground:		#CD0000
-XScreenSaver.splash_dialog*roger.background:		#FFFFFF
 
 *demo_dialog*viewport.height:			200
 *Form.borderWidth:				0
 *Box.borderWidth:				0
 *Label.borderWidth:				0
-*resources_dialog*Dialog.borderWidth:		0
+*preferences_dialog*Dialog.borderWidth:		0
 
 *demo_dialog*next.label:			Run Next
 *demo_dialog*prev.label:			Run Previous
 *demo_dialog*edit.label:			Preferences
-*demo_dialog*done.label:			Exit Demo Mode
 *demo_dialog*restart.label:			Reinitialize
+*demo_dialog*done.label:			Quit
 XScreenSaver.demo_dialog*Command.internalWidth:  10
 XScreenSaver.demo_dialog*Command.internalHeight: 4
 
-*resources_dialog*timeout.label:		Saver Timeout:
-*resources_dialog*cycle.label:			Cycle Timeout:
-*resources_dialog*fade.label:			Fade Duration:
-*resources_dialog*ticks.label:			Fade Ticks:
-*resources_dialog*lockTime.label:		Lock Timeout:
-*resources_dialog*passwdTime.label:		Password Timeout:
+*preferences_dialog*timeout.label:		Saver Timeout:
+*preferences_dialog*cycle.label:		Cycle Timeout:
+*preferences_dialog*fade.label:			Fade Duration:
+*preferences_dialog*ticks.label:		Fade Ticks:
+*preferences_dialog*lockTime.label:		Lock Timeout:
+*preferences_dialog*passwdTime.label:		Password Timeout:
+XScreenSaver.preferences_dialog*Command.internalWidth:  10
+XScreenSaver.preferences_dialog*Command.internalHeight: 4
 
-*resources_dialog*label1.label:			XScreenSaver Parameters
-*resources_dialog*buttonbox.verbose.label:	Verbose
-*resources_dialog*buttonbox.cmap.label:		Install Colormap
-*resources_dialog*buttonbox.fade.label:		Fade Colormap
-*resources_dialog*buttonbox.unfade.label:	Unfade Colormap
-*resources_dialog*buttonbox.lock.label:		Require Password
-*resources_dialog*done.label:			OK
-*resources_dialog*cancel.label:			Cancel
+*preferences_dialog*label1.label:		XScreenSaver Parameters
+*preferences_dialog*buttonbox.verbose.label:	Verbose
+*preferences_dialog*buttonbox.cmap.label:	Install Colormap
+*preferences_dialog*buttonbox.fade.label:	Fade Colormap
+*preferences_dialog*buttonbox.unfade.label:	Unfade Colormap
+*preferences_dialog*buttonbox.lock.label:	Require Password
+*preferences_dialog*done.label:			Ok
+*preferences_dialog*cancel.label:		Cancel
 
-*splash_dialog*splashLabel1.label:		XScreenSaver %s
-*splash_dialog*splashLabel2.label:		Copyright © 1991-1998 by
-*splash_dialog*splashLabel3.label:		Jamie Zawinski <jwz@jwz.org>
-*splash_dialog*splash_form*label.label:		
-*splash_dialog*Dialog.label:			
-*splash_dialog*splash_form.borderWidth:		0
-*splash_dialog*roger.width:			150
-*splash_dialog*roger.height:			150
-*splash_dialog*roger.borderWidth:		1
-*splash_dialog*demo.label:			Demo
-*splash_dialog*prefs.label:			Prefs
-*splash_dialog*help.label:			Help
-*splash_dialog.box.defaultDistance:		0
-*splash_dialog*splashLabel1.internalHeight:	10
-*splash_dialog*splashLabel1.internalWidth:	10
-*splash_dialog*splashLabel2.internalHeight:	0
-*splash_dialog*splashLabel3.internalHeight:	0
+*warning_dialog*ok.label:			Ok
 
+*warning_dialog*horizDistance:			30
+*warning_dialog*vertDistance:			0
 
+*warning_dialog*Label.internalWidth:		1
+*warning_dialog*Label.internalHeight:		0
 
-! You probably won't need to change these.  They are only used if no server
-! extension is in use.
-!
-XScreenSaver.pointerPollTime:		5
-XScreenSaver.initialDelay:		0
-XScreenSaver.windowCreationTimeout:	30
-XScreenSaver.bourneShell:		/bin/sh
+*warning_dialog*label0.horizDistance:		80
+*warning_dialog*label0.vertDistance:		20
+
+*warning_dialog*Command.horizDistance:		160
+*warning_dialog*Command.vertDistance:		20
+*warning_dialog*Command.internalWidth:		20
+*warning_dialog*Command.internalHeight:		5

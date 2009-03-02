@@ -71,9 +71,6 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
-static void hack_subproc_environment (saver_screen_info *ssi);
-
-
 static void
 nice_subproc (int nice_level)
 {
@@ -248,7 +245,8 @@ exec_screenhack (saver_info *si, const char *command)
   saver_preferences *p = &si->prefs;
 
 #ifndef VMS
-  Bool hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"");
+  Bool hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"=");
+  /* note: = is in the above because of the sh syntax "FOO=bar cmd". */
 
   if (p->verbose_p)
     fprintf (stderr, "%s: spawning \"%s\" in pid %lu%s.\n",
@@ -703,6 +701,14 @@ init_sigchld (void)
 
 
 static Bool
+hack_enabled_p (const char *hack)
+{
+  const char *s = hack;
+  while (isspace(*s)) s++;
+  return (*s != '-');
+}
+
+static Bool
 select_visual_of_hack (saver_screen_info *ssi, const char *hack)
 {
   saver_info *si = ssi->global;
@@ -712,6 +718,9 @@ select_visual_of_hack (saver_screen_info *ssi, const char *hack)
   const char *in = hack;
   char *out = vis;
   while (isspace(*in)) in++;		/* skip whitespace */
+  if (*in == '-') in++;			/* skip optional "-" */
+  while (isspace(*in)) in++;		/* skip whitespace */
+
   while (!isspace(*in) && *in != ':')
     *out++ = *in++;			/* snarf first token */
   while (isspace(*in)) in++;		/* skip whitespace */
@@ -722,12 +731,12 @@ select_visual_of_hack (saver_screen_info *ssi, const char *hack)
   else
     selected = select_visual(ssi, 0);
 
-  if (!selected && (p->verbose_p || si->demo_mode_p))
+  if (!selected && (p->verbose_p || si->demoing_p))
     {
       if (*in == ':') in++;
       while (isspace(*in)) in++;
       fprintf (stderr,
-	       (si->demo_mode_p
+	       (si->demoing_p
 		? "%s: warning, no \"%s\" visual for \"%s\".\n"
 		: "%s: no \"%s\" visual; skipping \"%s\".\n"),
 	       blurb(), (vis ? vis : "???"), in);
@@ -745,61 +754,76 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
   raise_window (si, first_time_p, True, False);
   XFlush (si->dpy);
 
-  if (p->screenhacks_count || si->demo_mode_p)
+  if (p->screenhacks_count)
     {
       char *hack;
       pid_t forked;
       char buf [255];
       int new_hack;
+      int retry_count = 0;
+      Bool force = False;
 
-      if (si->demo_mode_p)
+    AGAIN:
+
+      if (p->screenhacks_count == 1)
+	/* If there is only one hack in the list, there is no choice. */
+	new_hack = 0;
+
+      else if (si->selection_mode == -1)
+	/* Select the next hack, wrapping. */
+	new_hack = (ssi->current_hack + 1) % p->screenhacks_count;
+
+      else if (si->selection_mode == -2)
+	/* Select the previous hack, wrapping. */
+	new_hack = ((ssi->current_hack + p->screenhacks_count - 1)
+		    % p->screenhacks_count);
+
+      else if (si->selection_mode > 0)
+	/* Select a specific hack, by number.  No negotiation. */
 	{
-	  hack = si->demo_hack;
-
-	  /* Ignore visual-selection failure if in demo mode. */
-	  (void) select_visual_of_hack (ssi, hack);
+	  new_hack = ((si->selection_mode - 1) % p->screenhacks_count);
+	  force = True;
 	}
       else
 	{
-	  int retry_count = 0;
-
-	AGAIN:
-	  if (p->screenhacks_count == 1)
-	    new_hack = 0;
-	  else if (si->selection_mode == -1)
-	    new_hack = (ssi->current_hack + 1) % p->screenhacks_count;
-	  else if (si->selection_mode == -2)
-	    new_hack = ((ssi->current_hack + p->screenhacks_count - 1)
-			% p->screenhacks_count);
-	  else if (si->selection_mode > 0)
-	    new_hack = ((si->selection_mode - 1) % p->screenhacks_count);
-	  else
-	    while ((new_hack = random () % p->screenhacks_count)
-		   == ssi->current_hack)
-	      ;
-	  ssi->current_hack = new_hack;
-	  hack = p->screenhacks[ssi->current_hack];
-
-	  if (!select_visual_of_hack (ssi, hack))
-	    {
-	      if (++retry_count > (p->screenhacks_count*4))
-		{
-		  /* Uh, oops.  Odds are, there are no suitable visuals,
-		     and we're looping.  Give up.  (This is totally lame,
-		     what we should do is make a list of suitable hacks at
-		     the beginning, then only loop over them.)
-		  */
-		  if (p->verbose_p)
-		    fprintf(stderr,
-			    "%s: no suitable visuals for these programs.\n",
-			    blurb());
-		  return;
-		}
-	      else
-		goto AGAIN;
-	    }
+	  /* Select a random hack (but not the one we just ran.) */
+	  while ((new_hack = random () % p->screenhacks_count)
+		 == ssi->current_hack)
+	    ;
 	}
 
+      ssi->current_hack = new_hack;
+      hack = p->screenhacks[ssi->current_hack];
+
+      /* If the hack is disabled, or there is no visual for this hack,
+	 then try again (move forward, or backward, or re-randomize.)
+	 Unless this hack was specified explicitly, in which case,
+	 use it regardless.
+       */
+      if (!force &&
+	  (!hack_enabled_p (hack) ||
+	   !select_visual_of_hack (ssi, hack)))
+	{
+	  if (++retry_count > (p->screenhacks_count*4))
+	    {
+	      /* Uh, oops.  Odds are, there are no suitable visuals,
+		 and we're looping.  Give up.  (This is totally lame,
+		 what we should do is make a list of suitable hacks at
+		 the beginning, then only loop over them.)
+	      */
+	      if (p->verbose_p)
+		fprintf(stderr,
+			"%s: no suitable visuals for these programs.\n",
+			blurb());
+	      return;
+	    }
+	  else
+	    goto AGAIN;
+	}
+
+      /* Turn off "next" and "prev" modes now, but "demo" mode is only
+	 turned off by explicit action.
+       */
       if (si->selection_mode < 0)
 	si->selection_mode = 0;
 
@@ -808,6 +832,8 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
        */
       {
 	char *in = hack;
+	while (isspace(*in)) in++;			/* skip whitespace */
+	if (*in == '-') in++;				/* skip optional "-" */
 	while (isspace(*in)) in++;			/* skip whitespace */
 	hack = in;
 	while (!isspace(*in) && *in != ':') in++;	/* snarf first token */
@@ -958,7 +984,7 @@ hack_environment (saver_info *si)
 }
 
 
-static void
+void
 hack_subproc_environment (saver_screen_info *ssi)
 {
   /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
@@ -1007,7 +1033,6 @@ static char **saved_argv;
 void
 save_argv (int argc, char **argv)
 {
-  /* Leave room for one more argument, the -initial-demo-mode switch. */
   saved_argv = (char **) calloc (argc+2, sizeof (char *));
   saved_argv [argc] = 0;
   while (argc--)
@@ -1018,45 +1043,24 @@ save_argv (int argc, char **argv)
     }
 }
 
-/* Modifies saved_argv to either contain or not contain "-initial-demo-mode".
- */
-static void
-hack_saved_argv (Bool demo_mode_p)
-{
-  static char *demo_mode_switch = "-initial-demo-mode";
-
-  if (demo_mode_p)		/* We want the switch to be in the args. */
-    {
-      /* See if the switch is there already.  If so, we're done. */
-      int i;
-      for (i = 0; saved_argv[i]; i++)
-	if (!strcmp (saved_argv[i], demo_mode_switch))
-	  return;
-
-      /* If it wasn't there, add it to the end.  save_argv() made room. */
-      saved_argv [i] = demo_mode_switch;
-      saved_argv [i+1] = 0;
-    }
-  else				/* We want the switch to not be in the args. */
-    {
-      int i;
-      for (i = 0; saved_argv[i]; i++)
-	while (!strcmp (saved_argv [i], demo_mode_switch))
-	  {
-	    int j;
-	    for (j = i; saved_argv[j]; j++)
-	      saved_argv [j] = saved_argv [j+1];
-	  }
-    }
-}
-
 
 /* Re-execs the process with the arguments in saved_argv.
    Does not return unless there was an error.
  */
-static void
-restart_process_1 (saver_info *si)
+void
+restart_process (saver_info *si)
 {
+  if (si->prefs.verbose_p)
+    {
+      int i;
+      fprintf (real_stderr, "%s: re-executing", blurb());
+      for (i = 0; saved_argv[i]; i++)
+	fprintf (real_stderr, " %s", saved_argv[i]);
+      fprintf (real_stderr, "\n");
+    }
+  describe_uids (si, real_stderr);
+  fprintf (real_stderr, "\n");
+
   fflush (real_stdout);
   fflush (real_stderr);
   execvp (saved_argv [0], saved_argv);	/* shouldn't return */
@@ -1067,27 +1071,4 @@ restart_process_1 (saver_info *si)
     fflush(stderr);
   }
   XBell(si->dpy, 0);
-}
-
-
-/* Re-execs the process with the arguments in saved_argv,
-   minus -initial-demo-mode.
-   Does not return unless there was an error.
- */
-void
-restart_process (saver_info *si)
-{
-  hack_saved_argv (True);
-  restart_process_1 (si);
-}
-
-/* Re-execs the process with the arguments in saved_argv,
-   plus -initial-demo-mode.
-   Does not return unless there was an error.
- */
-void
-demo_mode_restart_process (saver_info *si)
-{
-  hack_saved_argv (False);
-  restart_process_1 (si);
 }

@@ -40,21 +40,21 @@
 
 #include "visual.h"	/* for visual_depth() */
 
-Widget resources_dialog;
-Widget resources_form;
+Widget preferences_dialog;
+Widget preferences_form;
 Widget timeout_text;
 Widget cycle_text;
 Widget fade_text;
-Widget ticks_text;
-Widget lock_time_text;
-Widget passwd_time_text;
+Widget fade_ticks_text;
+Widget lock_timeout_text;
+Widget passwd_timeout_text;
 Widget verbose_toggle;
-Widget cmap_toggle;
+Widget install_cmap_toggle;
 Widget fade_toggle;
 Widget unfade_toggle;
 Widget lock_toggle;
-Widget res_done;
-Widget res_cancel;
+Widget prefs_done;
+Widget prefs_cancel;
 
 Widget demo_dialog;
 Widget demo_form;
@@ -72,7 +72,7 @@ Widget restart;
 Widget spacer;
 
 void
-create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
+create_preferences_dialog(Widget parent, Visual *visual, Colormap colormap)
 {
   Widget children[22];      /* Children to manage */
   Arg al[64];           /* Arg List */
@@ -95,8 +95,8 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtSetArg (al[ac], XmNcolormap, colormap); ac++;
   XtSetArg (al[ac], XmNdepth, visual_depth(XtScreen(parent), visual)); ac++;
 
-  real_dialog = XmCreatePromptDialog (parent, "resourcesForm", al, ac);
-  resources_dialog = XtParent(real_dialog);
+  real_dialog = XmCreatePromptDialog (parent, "preferencesForm", al, ac);
+  preferences_dialog = XtParent(real_dialog);
 
   w = XmSelectionBoxGetChild (real_dialog, XmDIALOG_SEPARATOR);
   if (w) XtUnmanageChild (w);
@@ -112,56 +112,56 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtSetArg (al [ac], XmNbottomAttachment, XmATTACH_FORM); ac++;
   XtSetArg (al [ac], XmNleftAttachment, XmATTACH_FORM); ac++;
   XtSetArg (al [ac], XmNrightAttachment, XmATTACH_FORM); ac++;
-  resources_form = XmCreateForm (real_dialog, "form", al, ac);
-  XtManageChild (resources_form);
+  preferences_form = XmCreateForm (real_dialog, "form", al, ac);
+  XtManageChild (preferences_form);
 
   ac = 0;
 
-  widget12 = XmCreateLabel ( resources_form, "resourcesLabel", al, ac );
-  widget13 = XmCreateSeparator ( resources_form, "separator", al, ac );
+  widget12 = XmCreateLabel ( preferences_form, "preferencesLabel", al, ac );
+  widget13 = XmCreateSeparator ( preferences_form, "separator", al, ac );
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget14 = XmCreateLabel ( resources_form, "timeoutLabel", al, ac );
+  widget14 = XmCreateLabel ( preferences_form, "timeoutLabel", al, ac );
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget15 = XmCreateLabel ( resources_form, "cycleLabel", al, ac );
+  widget15 = XmCreateLabel ( preferences_form, "cycleLabel", al, ac );
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget16 = XmCreateLabel ( resources_form, "fadeSecondsLabel", al, ac );
+  widget16 = XmCreateLabel ( preferences_form, "fadeSecondsLabel", al, ac );
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget17 = XmCreateLabel ( resources_form, "fadeTicksLabel", al, ac );
+  widget17 = XmCreateLabel ( preferences_form, "fadeTicksLabel", al, ac );
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget18 = XmCreateLabel ( resources_form, "lockLabel", al, ac );
+  widget18 = XmCreateLabel ( preferences_form, "lockLabel", al, ac );
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  widget48 = XmCreateLabel ( resources_form, "passwdLabel", al, ac );
+  widget48 = XmCreateLabel ( preferences_form, "passwdLabel", al, ac );
   ac = 0;
-  timeout_text = XmCreateTextField ( resources_form, "timeoutText", al, ac );
-  cycle_text = XmCreateTextField ( resources_form, "cycleText", al, ac );
-  fade_text = XmCreateTextField ( resources_form, "fadeSecondsText", al, ac );
-  ticks_text = XmCreateTextField ( resources_form, "fadeTicksText", al, ac );
-  lock_time_text = XmCreateTextField ( resources_form, "passwdText", al, ac );
-  passwd_time_text = XmCreateTextField ( resources_form, "lockText", al, ac );
+  timeout_text = XmCreateTextField ( preferences_form, "timeoutText", al, ac );
+  cycle_text = XmCreateTextField ( preferences_form, "cycleText", al, ac );
+  fade_text = XmCreateTextField ( preferences_form, "fadeSecondsText", al, ac);
+  fade_ticks_text = XmCreateTextField ( preferences_form, "fadeTicksText", al, ac);
+  lock_timeout_text = XmCreateTextField ( preferences_form, "passwdText", al, ac);
+  passwd_timeout_text = XmCreateTextField ( preferences_form, "lockText", al, ac);
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
-  verbose_toggle = XmCreateToggleButton ( resources_form, "verboseToggle", al, ac );
-  ac = 0;
-  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
-  cmap_toggle = XmCreateToggleButton ( resources_form, "cmapToggle", al, ac );
+  verbose_toggle = XmCreateToggleButton (preferences_form,"verboseToggle",al,ac);
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
-  fade_toggle = XmCreateToggleButton ( resources_form, "fadeToggle", al, ac );
+  install_cmap_toggle = XmCreateToggleButton ( preferences_form, "cmapToggle", al, ac);
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
-  unfade_toggle = XmCreateToggleButton ( resources_form, "unfadeToggle", al, ac );
+  fade_toggle = XmCreateToggleButton ( preferences_form, "fadeToggle", al, ac);
   ac = 0;
   XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
-  lock_toggle = XmCreateToggleButton ( resources_form, "lockToggle", al, ac );
+  unfade_toggle = XmCreateToggleButton (preferences_form,"unfadeToggle",al,ac);
   ac = 0;
-  widget29 = XmCreateSeparator ( resources_form, "separator", al, ac );
+  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
+  lock_toggle = XmCreateToggleButton ( preferences_form, "lockToggle", al, ac);
+  ac = 0;
+  widget29 = XmCreateSeparator ( preferences_form, "separator", al, ac );
 
-  res_done = XmSelectionBoxGetChild (real_dialog, XmDIALOG_OK_BUTTON);
-  res_cancel = XmSelectionBoxGetChild (real_dialog, XmDIALOG_CANCEL_BUTTON);
+  prefs_done = XmSelectionBoxGetChild (real_dialog, XmDIALOG_OK_BUTTON);
+  prefs_cancel = XmSelectionBoxGetChild (real_dialog, XmDIALOG_CANCEL_BUTTON);
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNtopOffset, 4); ac++;
@@ -226,43 +226,43 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 0); ac++;
-  XtSetArg(al[ac], XmNbottomWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNleftOffset, 20); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNrightOffset, 4); ac++;
-  XtSetArg(al[ac], XmNrightWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNrightWidget, fade_ticks_text); ac++;
   XtSetValues ( widget17,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 0); ac++;
-  XtSetArg(al[ac], XmNbottomWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNleftOffset, 19); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNrightOffset, 4); ac++;
-  XtSetArg(al[ac], XmNrightWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNrightWidget, lock_timeout_text); ac++;
   XtSetValues ( widget18,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, passwd_time_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, passwd_timeout_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 0); ac++;
-  XtSetArg(al[ac], XmNbottomWidget, passwd_time_text); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, passwd_timeout_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNleftOffset, 14); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNrightOffset, 4); ac++;
-  XtSetArg(al[ac], XmNrightWidget, passwd_time_text); ac++;
+  XtSetArg(al[ac], XmNrightWidget, passwd_timeout_text); ac++;
   XtSetValues ( widget48,al, ac );
   ac = 0;
 
@@ -306,29 +306,29 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
   XtSetArg(al[ac], XmNleftWidget, fade_text); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
-  XtSetValues ( ticks_text,al, ac );
+  XtSetValues ( fade_ticks_text,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 2); ac++;
-  XtSetArg(al[ac], XmNtopWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_NONE); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
-  XtSetArg(al[ac], XmNleftWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNleftWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
-  XtSetValues ( lock_time_text,al, ac );
+  XtSetValues ( lock_timeout_text,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 4); ac++;
-  XtSetArg(al[ac], XmNtopWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_NONE); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
-  XtSetArg(al[ac], XmNleftWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNleftWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
-  XtSetValues ( passwd_time_text,al, ac );
+  XtSetValues ( passwd_timeout_text,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
@@ -356,7 +356,7 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtSetArg(al[ac], XmNleftWidget, verbose_toggle); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNrightOffset, 20); ac++;
-  XtSetValues ( cmap_toggle,al, ac );
+  XtSetValues ( install_cmap_toggle,al, ac );
   ac = 0;
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
@@ -367,7 +367,7 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtSetArg(al[ac], XmNbottomWidget, fade_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
-  XtSetArg(al[ac], XmNleftWidget, cmap_toggle); ac++;
+  XtSetArg(al[ac], XmNleftWidget, install_cmap_toggle); ac++;
   XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNrightOffset, 20); ac++;
   XtSetValues ( fade_toggle,al, ac );
@@ -375,10 +375,10 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 0); ac++;
-  XtSetArg(al[ac], XmNbottomWidget, ticks_text); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, fade_ticks_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
   XtSetArg(al[ac], XmNleftWidget, fade_toggle); ac++;
@@ -389,10 +389,10 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 0); ac++;
-  XtSetArg(al[ac], XmNbottomWidget, lock_time_text); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, lock_timeout_text); ac++;
   XtSetArg(al[ac], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); ac++;
   XtSetArg(al[ac], XmNleftOffset, 0); ac++;
   XtSetArg(al[ac], XmNleftWidget, unfade_toggle); ac++;
@@ -403,7 +403,7 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
 
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
   XtSetArg(al[ac], XmNtopOffset, 0); ac++;
-  XtSetArg(al[ac], XmNtopWidget, passwd_time_text); ac++;
+  XtSetArg(al[ac], XmNtopWidget, passwd_timeout_text); ac++;
 
   XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_FORM); ac++;
   XtSetArg(al[ac], XmNbottomOffset, 4); ac++;
@@ -427,11 +427,11 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   children[ac++] = timeout_text;
   children[ac++] = cycle_text;
   children[ac++] = fade_text;
-  children[ac++] = ticks_text;
-  children[ac++] = lock_time_text;
-  children[ac++] = passwd_time_text;
+  children[ac++] = fade_ticks_text;
+  children[ac++] = lock_timeout_text;
+  children[ac++] = passwd_timeout_text;
   children[ac++] = verbose_toggle;
-  children[ac++] = cmap_toggle;
+  children[ac++] = install_cmap_toggle;
   children[ac++] = fade_toggle;
   children[ac++] = unfade_toggle;
   children[ac++] = lock_toggle;
@@ -440,7 +440,7 @@ create_resources_dialog(Widget parent, Visual *visual, Colormap colormap)
   XtManageChildren(children, ac);
   ac = 0;
 
-  resources_form = real_dialog;
+  preferences_form = real_dialog;
 }
 
 
@@ -522,12 +522,16 @@ create_demo_dialog(Widget parent, Visual *visual, Colormap colormap)
   prev = XmCreatePushButton ( real_dialog, "prev", al, ac );
   edit = XmCreatePushButton ( real_dialog, "edit", al, ac );
   done = XmCreatePushButton ( real_dialog, "done", al, ac );
+#if 0
   restart = XmCreatePushButton ( real_dialog, "restart", al, ac );
+#endif
   XtManageChild(next);
   XtManageChild(prev);
   XtManageChild(edit);
   XtManageChild(done);
+#if 0
   XtManageChild(restart);
+#endif
 
   ac = 0;
   XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); ac++;

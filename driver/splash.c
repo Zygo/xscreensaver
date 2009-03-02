@@ -94,48 +94,14 @@ string_width (XFontStruct *font, char *s)
 }
 
 
-static void
-send_self_clientmessage (saver_info *si, Atom command)
-{
-  Display *dpy = si->dpy;
-  Window window = si->default_screen->screensaver_window;
-  XEvent event;
-  event.xany.type = ClientMessage;
-  event.xclient.display = si->dpy;
-  event.xclient.window = window;
-  event.xclient.message_type = XA_SCREENSAVER;
-  event.xclient.format = 32;
-  memset (&event.xclient.data, 0, sizeof(event.xclient.data));
-  event.xclient.data.l[0] = (long) command;
-  if (! XSendEvent (dpy, window, False, 0L, &event))
-    fprintf (stderr, "%s: XSendEvent(dpy, 0x%x ...) failed.\n",
-	     progname, (unsigned int) window);
-}
-
-
-static void
-get_help (saver_info *si)
-{
-  saver_preferences *p = &si->prefs;
-
-  if (!p->help_url || !*p->help_url)
-    fprintf (stderr, "%s: no Help URL has been specified.\n", blurb());
-  else if (!p->load_url_command || !*p->load_url_command)
-    fprintf (stderr, "%s: no URL-loading command has been specified.\n",
-	     blurb());
-  else
-    {
-      char *buf = (char *) malloc (strlen(p->load_url_command) +
-				   (strlen(p->help_url) * 2) + 10);
-      sprintf (buf, p->load_url_command, p->help_url, p->help_url);
-      system (buf);
-    }
-}
-
 static void update_splash_window (saver_info *si);
 static void draw_splash_window (saver_info *si);
 static void destroy_splash_window (saver_info *si);
 static void unsplash_timer (XtPointer closure, XtIntervalId *id);
+
+static void do_demo (saver_info *si);
+static void do_prefs (saver_info *si);
+static void do_help (saver_info *si);
 
 
 struct splash_dialog_data {
@@ -676,9 +642,9 @@ handle_splash_event (saver_info *si, XEvent *event)
 	      destroy_splash_window (si);
 	      switch (which)
 		{
-		case 1: send_self_clientmessage (si, XA_DEMO); break;
-		case 2: send_self_clientmessage (si, XA_PREFS); break;
-		case 3: get_help (si); break;
+		case 1: do_demo (si); break;
+		case 2: do_prefs (si); break;
+		case 3: do_help (si); break;
 		default: abort();
 		}
 	    }
@@ -698,4 +664,93 @@ unsplash_timer (XtPointer closure, XtIntervalId *id)
   saver_info *si = (saver_info *) closure;
   if (si && si->sp_data)
     destroy_splash_window (si);
+}
+
+
+/* Button callbacks */
+
+#ifdef VMS
+# define pid_t int
+# define fork  vfork
+#endif /* VMS */
+
+static void
+fork_and_exec (saver_info *si, const char *command, const char *desc)
+{
+  saver_preferences *p = &si->prefs;
+  pid_t forked;
+  char buf [512];
+  char *av[5];
+  int ac;
+
+  if (!command || !*command)
+    {
+      fprintf (stderr, "%s: no %s command has been specified.\n",
+	       blurb(), desc);
+      return;
+    }
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      sprintf (buf, "%s: couldn't fork", blurb());
+      perror (buf);
+      break;
+
+    case 0:
+      close (ConnectionNumber (si->dpy));		/* close display fd */
+      hack_subproc_environment (si->default_screen);	/* set $DISPLAY */
+      ac = 0;
+      av [ac++] = (char *) p->shell;
+      av [ac++] = (char *) "-c";
+      av [ac++] = (char *) command;
+      av [ac]   = 0;
+      execvp (av[0], av);				/* shouldn't return. */
+
+      sprintf (buf, "%s: execvp(\"%s\", \"%s\", \"%s\") failed",
+	       blurb(), av[0], av[1], av[2]);
+      perror (buf);
+      fflush (stderr);
+      fflush (stdout);
+      exit (1);			 /* Note that this only exits a child fork.  */
+      break;
+
+    default:
+      /* parent fork. */
+      break;
+    }
+}
+
+
+static void
+do_demo (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  fork_and_exec (si, p->demo_command, "demo-mode");
+}
+
+static void
+do_prefs (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  fork_and_exec (si, p->prefs_command, "preferences");
+}
+
+static void
+do_help (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  char *help_command;
+
+  if (!p->help_url || !*p->help_url)
+    {
+      fprintf (stderr, "%s: no Help URL has been specified.\n", blurb());
+      return;
+    }
+
+  help_command = (char *) malloc (strlen (p->load_url_command) +
+				  (strlen (p->help_url) * 2) + 10);
+  sprintf (help_command, p->load_url_command, p->help_url, p->help_url);
+  fork_and_exec (si, help_command, "URL-loading");
+  free (help_command);
 }

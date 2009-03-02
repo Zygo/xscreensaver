@@ -14,6 +14,29 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_ATHENA_KLUDGE	/* don't ask */
+# undef HAVE_MOTIF
+# define HAVE_ATHENA 1
+#endif
+
+#include <stdlib.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifndef VMS
+# include <pwd.h>		/* for getpwuid() */
+#else /* VMS */
+# include "vms-pwd.h"
+#endif /* VMS */
+
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>	/* for uname() */
+#endif /* HAVE_UNAME */
+
+#include <stdio.h>
+
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 
@@ -27,6 +50,9 @@
 # include <Xm/Text.h>
 # include <Xm/List.h>
 # include <Xm/ToggleB.h>
+# include <Xm/MessageB.h>
+# include <Xm/LabelG.h>
+# include <Xm/RowColumn.h>
 
 #else  /* HAVE_ATHENA */
   /* Athena demo code contributed by Jon A. Christopher <jac8782@tamu.edu> */
@@ -43,18 +69,42 @@
 # include <X11/Xaw/Text.h>
 #endif /* HAVE_ATHENA */
 
-#include "xscreensaver.h"
+#include "version.h"
+#include "prefs.h"
 #include "resources.h"		/* for parse_time() */
+#include "visual.h"		/* for has_writable_cells() */
+#include "remote.h"		/* for xscreensaver_command() */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#ifdef _VROOT_H_
-ERROR!  You must not include vroot.h in this file.
-#endif
 
-static void demo_mode_hack (saver_info *si, char *);
-static void demo_mode_done (saver_info *si);
+char *progname = 0;
+char *progclass = "XScreenSaver";
+XrmDatabase db;
+
+typedef struct {
+  saver_preferences *a, *b;
+} prefs_pair;
+
+
+char *blurb (void) { return progname; }
+
+static void run_hack (Display *dpy, int n);
+
+#ifdef HAVE_ATHENA
+static saver_preferences *global_prefs_kludge = 0;    /* I hate C so much... */
+#endif /* HAVE_ATHENA */
+
+static char *short_version = 0;
+
+Atom XA_VROOT;
+Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
+Atom XA_SCREENSAVER_TIME, XA_SCREENSAVER_ID, XA_SELECT, XA_DEMO, XA_RESTART;
+
+extern void create_demo_dialog (Widget, Visual *, Colormap);
+extern void create_preferences_dialog (Widget, Visual *, Colormap);
 
 extern Widget demo_dialog;
 extern Widget label1;
@@ -63,12 +113,12 @@ extern Widget demo_form;
 extern Widget demo_list;
 extern Widget next, prev, done, restart, edit;
 
-extern Widget resources_dialog;
-extern Widget resources_form;
-extern Widget res_done, res_cancel;
-extern Widget timeout_text, cycle_text, fade_text, ticks_text;
-extern Widget lock_time_text, passwd_time_text;
-extern Widget verbose_toggle, cmap_toggle, fade_toggle, unfade_toggle,
+extern Widget preferences_dialog;
+extern Widget preferences_form;
+extern Widget prefs_done, prefs_cancel;
+extern Widget timeout_text, cycle_text, fade_text, fade_ticks_text;
+extern Widget lock_timeout_text, passwd_timeout_text;
+extern Widget verbose_toggle, install_cmap_toggle, fade_toggle, unfade_toggle,
   lock_toggle;
 
 
@@ -152,11 +202,11 @@ set_label_string (Widget label_widget, char *string)
 }
 
 
-void
+static void
 format_into_label (Widget label, const char *arg)
 {
   char *text = get_label_string (label);
-  char *buf = (char *) malloc ((text ? strlen(text) : 100) + strlen(arg) + 10);
+  char *buf = (char *) malloc ((text ? strlen(text) : 0) + strlen(arg) + 100);
 
   if (!text || !strcmp (text, XtName (label)))
       strcpy (buf, "ERROR: RESOURCES ARE NOT INSTALLED CORRECTLY");
@@ -166,119 +216,6 @@ format_into_label (Widget label, const char *arg)
     set_label_string (label, buf);
     free (buf);
     XtFree (text);
-}
-
-
-void
-steal_focus_and_colormap (Widget dialog)
-{
-  Display *dpy = XtDisplay (dialog);
-  Window window = XtWindow (dialog);
-  Colormap cmap = 0;
-  XSetInputFocus (dpy, window, RevertToParent, CurrentTime);
-
-  XtVaGetValues (dialog, XtNcolormap, &cmap, 0);
-  if (cmap)
-    XInstallColormap (dpy, cmap);
-}
-
-static void
-raise_screenhack_dialog (void)
-{
-  XMapRaised (XtDisplay (demo_dialog), XtWindow (demo_dialog));
-  if (resources_dialog)
-    XMapRaised (XtDisplay (resources_dialog), XtWindow (resources_dialog));
-  steal_focus_and_colormap (resources_dialog ? resources_dialog : demo_dialog);
-}
-
-static void
-destroy_screenhack_dialogs (saver_info *si)
-{
-  saver_screen_info *ssi = si->default_screen;
-
-  if (demo_dialog) XtDestroyWidget (demo_dialog);
-  if (resources_dialog) XtDestroyWidget (resources_dialog);
-  demo_dialog = resources_dialog = 0;
-
-  if (ssi->demo_cmap &&
-      ssi->demo_cmap != ssi->cmap &&
-      ssi->demo_cmap != DefaultColormapOfScreen (ssi->screen))
-    {
-      XFreeColormap (si->dpy, ssi->demo_cmap);
-      ssi->demo_cmap = 0;
-    }
-
-  /* Since we installed our colormap to display the dialogs properly, put
-     the old one back, so that the screensaver_window is now displayed
-     properly. */
-  if (ssi->cmap)
-    XInstallColormap (si->dpy, ssi->cmap);
-}
-
-
-static void
-text_cb (Widget text_widget, XtPointer client_data, XtPointer call_data)
-{
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
-  char *line;
-  line = get_text_string (text_widget);
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: processing text \"%s\".\n", blurb(), line);
-
-  demo_mode_hack (si, line);
-}
-
-
-#ifdef HAVE_ATHENA
-/* Bend over backwards to make hitting Return in the text field do the
-   right thing. 
-   */
-extern saver_info *global_si_kludge;
-static void text_enter (Widget w, XEvent *event, String *av, Cardinal *ac)
-{
-  text_cb (w, global_si_kludge, 0);
-}
-
-static XtActionsRec actions[] = {{"done",      text_enter}
-			        };
-static char translations[] = ("<Key>Return:	done()\n"
-			      "<Key>Linefeed:	done()\n"
-			      "Ctrl<Key>M:	done()\n"
-			      "Ctrl<Key>J:	done()\n");
-#endif /* HAVE_ATHENA */
-
-
-static void
-select_cb (Widget button, XtPointer client_data, XtPointer call_data)
-{
-  saver_info *si = (saver_info *) client_data;
-
-#ifdef HAVE_ATHENA
-  XawListReturnStruct *item = (XawListReturnStruct*)call_data;
-  XtVaSetValues(text_line, XtNstring, item->string, 0);
-
-  demo_mode_hack (si, item->string);
-  if (item->list_index >= 0)
-    si->default_screen->current_hack = item->list_index;
-
-#else  /* HAVE_MOTIF */
-  XmListCallbackStruct *lcb = (XmListCallbackStruct *) call_data;
-  char *string = 0;
-  if (lcb->item)
-    XmStringGetLtoR (lcb->item, XmSTRING_DEFAULT_CHARSET, &string);
-  set_text_string (text_line, (string ? string : ""));
-  if (lcb->reason == XmCR_DEFAULT_ACTION && string)
-    {
-      demo_mode_hack (si, string);
-      if (lcb->item_position > 0)
-	si->default_screen->current_hack = lcb->item_position - 1;
-    }
-  if (string)
-    XtFree (string);
-#endif /* HAVE_MOTIF */
-  steal_focus_and_colormap (demo_dialog);
 }
 
 
@@ -365,272 +302,326 @@ ensure_selected_item_visible (Widget list)
 }
 
 
+/* Callback for the text area:
+   - note the text the user has entered;
+   - change the corresponding element in `screenhacks';
+   - write the .xscreensaver file;
+   - tell the xscreensaver daemon to run that hack.
+ */
+static void
+text_cb (Widget text_widget, XtPointer client_data, XtPointer call_data)
+{
+  Display *dpy = XtDisplay (text_widget);
+  saver_preferences *p = (saver_preferences *) client_data;
+  char *new_text = get_text_string (text_widget);
+
+  int hack_number = -1;		/* 0-based */
+
+#ifdef HAVE_ATHENA
+  XawListReturnStruct *current = XawListShowCurrent(demo_list);
+  hack_number = current->list_index;
+#else  /* HAVE_MOTIF */
+  int *pos_list = 0;
+  int pos_count = 0;
+  if (XmListGetSelectedPos (demo_list, &pos_list, &pos_count))
+    hack_number = pos_list[0] - 1;
+  if (pos_list)
+    XtFree ((char *) pos_list);
+#endif /* HAVE_MOTIF */
+
+  ensure_selected_item_visible (demo_list);
+
+  if (hack_number < 0 || hack_number >= p->screenhacks_count)
+    {
+      set_text_string (text_widget, "");
+      XBell (dpy, 0);
+    }
+  else
+    {
+fprintf(stderr, "%d:\nold: %s\nnew: %s\n",
+	hack_number, p->screenhacks [hack_number], new_text);
+
+      if (p->screenhacks [hack_number])
+	free (p->screenhacks [hack_number]);
+      p->screenhacks [hack_number] = strdup (new_text);
+
+#ifdef HAVE_MOTIF
+
+      XmListDeselectAllItems (demo_list);
+      {
+	XmString xmstr = XmStringCreate (new_text, XmSTRING_DEFAULT_CHARSET);
+	XmListReplaceItemsPos (demo_list, &xmstr, 1, hack_number+1);
+	XmStringFree (xmstr);
+      }
+      XmListSelectPos (demo_list, hack_number+1, True);
+
+#else  /* HAVE_ATHENA */
+
+      {
+	Widget vp = XtParent(demo_list);
+	Widget sb = (vp ? XtNameToWidget(vp, "*vertical") : 0);
+	Dimension list_h = 0;
+	Position vp_x = 0, vp_y = 0;
+	float sb_top = 0;
+
+	XawListUnhighlight (demo_list);
+
+	XtVaGetValues (vp, XtNx, &vp_x, 0);
+	XtVaGetValues (sb, XtNtopOfThumb, &sb_top, 0);
+	XtVaGetValues (demo_list, XtNheight, &list_h, 0);
+	vp_y = (sb_top * list_h);
+	XtVaSetValues (demo_list,
+		       XtNlist, p->screenhacks,
+		       XtNnumberStrings, p->screenhacks_count,
+		       0);
+	XawViewportSetCoordinates (vp, vp_x, vp_y);
+	XawListHighlight (demo_list, hack_number);
+      }
+
+#endif /* HAVE_ATHENA */
+
+      write_init_file (p, short_version);
+      XSync (dpy, False);
+      usleep (500000);		/* give the disk time to settle down */
+
+      run_hack (dpy, hack_number+1);
+    }
+}
+
+
+#ifdef HAVE_ATHENA
+/* Bend over backwards to make hitting Return in the text field do the
+   right thing. 
+   */
+static void text_enter (Widget w, XEvent *event, String *av, Cardinal *ac)
+{
+  text_cb (w, global_prefs_kludge, 0);	  /* I hate C so much... */
+}
+
+static XtActionsRec actions[] = {{"done",      text_enter}
+			        };
+static char translations[] = ("<Key>Return:	done()\n"
+			      "<Key>Linefeed:	done()\n"
+			      "Ctrl<Key>M:	done()\n"
+			      "Ctrl<Key>J:	done()\n");
+#endif /* HAVE_ATHENA */
+
+
+/* Callback for the Run Next button.
+ */
 static void
 next_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Run Next\n", blurb());
-
-  {
 #ifdef HAVE_ATHENA
-  int cnt;
   XawListReturnStruct *current = XawListShowCurrent(demo_list);
-  if (current->list_index == XAW_LIST_NONE)
-    XawListHighlight(demo_list, 0);
+  int cnt;
+  XtVaGetValues (demo_list, XtNnumberStrings, &cnt, 0);
+  if (current->list_index == XAW_LIST_NONE ||
+      current->list_index + 1 >= cnt)
+    current->list_index = 0;
   else
-    {
-      XtVaGetValues(demo_list,
-		    XtNnumberStrings, &cnt,
-		    NULL);
-      if (current->list_index + 1 < cnt)
-	{
-	  current->list_index++;
-	  XawListHighlight(demo_list, current->list_index);
-	}
-    }
+    current->list_index++;
+  XawListHighlight(demo_list, current->list_index);
 
   ensure_selected_item_visible (demo_list);
   current = XawListShowCurrent(demo_list);
   XtVaSetValues(text_line, XtNstring, current->string, 0);
-  demo_mode_hack (si, current->string);
+
+  run_hack (XtDisplay (button), current->list_index + 1);
 
 #else  /* HAVE_MOTIF */
 
-  int *pos_list;
-  int pos_count;
+  saver_preferences *p = (saver_preferences *) client_data;
+  int *pos_list = 0;
+  int pos_count = 0;
+  int pos;
   if (! XmListGetSelectedPos (demo_list, &pos_list, &pos_count))
     {
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, 1, True);
+      pos = 1;
+      XmListDeselectAllItems (demo_list);	/* LessTif lossage */
+      XmListSelectPos (demo_list, pos, True);
     }
   else
     {
-      int pos = pos_list[0] + 1;
-      if (pos > si->prefs.screenhacks_count)
+      pos = pos_list[0] + 1;
+      if (pos > p->screenhacks_count)
 	pos = 1;
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
+      XmListDeselectAllItems (demo_list);	/* LessTif lossage */
       XmListSelectPos (demo_list, pos, True);
     }
-  XtFree ((char *) pos_list);
+     
   ensure_selected_item_visible (demo_list);
-  demo_mode_hack (si, get_text_string (text_line));
+  run_hack (XtDisplay (button), pos);
+  if (pos_list)
+    XtFree ((char *) pos_list);
 
 #endif /* HAVE_MOTIF */
-  }
 }
 
 
+/* Callback for the Run Previous button.
+ */
 static void
 prev_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Run Previous\n", blurb());
-
-  {
 #ifdef HAVE_ATHENA
-  XawListReturnStruct *current=XawListShowCurrent(demo_list);
-  if (current->list_index == XAW_LIST_NONE)
-    XawListHighlight(demo_list, 0);
+  XawListReturnStruct *current = XawListShowCurrent(demo_list);
+  int cnt;
+  XtVaGetValues (demo_list, XtNnumberStrings, &cnt, 0);
+  if (current->list_index == XAW_LIST_NONE ||
+      current->list_index <= 0)
+    current->list_index = cnt-1;
   else
-    {
-      if (current->list_index >= 1)
-	{
-	  current->list_index--;
-	  XawListHighlight(demo_list, current->list_index);
-	}
-    }
+    current->list_index--;
+  XawListHighlight(demo_list, current->list_index);
 
   ensure_selected_item_visible (demo_list);
   current = XawListShowCurrent(demo_list);
   XtVaSetValues(text_line, XtNstring, current->string, 0);
-  demo_mode_hack (si, current->string);
+
+  run_hack (XtDisplay (button), current->list_index + 1);
 
 #else  /* HAVE_MOTIF */
 
-  int *pos_list;
-  int pos_count;
+  saver_preferences *p = (saver_preferences *) client_data;
+  int *pos_list = 0;
+  int pos_count = 0;
+  int pos;
   if (! XmListGetSelectedPos (demo_list, &pos_list, &pos_count))
     {
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, 0, True);
+      pos = p->screenhacks_count;
+      XmListDeselectAllItems (demo_list);	/* LessTif lossage */
+      XmListSelectPos (demo_list, pos, True);
     }
   else
     {
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, pos_list [0] - 1, True);
-      XtFree ((char *) pos_list);
+      pos = pos_list[0] - 1;
+      if (pos == 0)
+	pos = p->screenhacks_count;
+      XmListDeselectAllItems (demo_list);	/* LessTif lossage */
+      XmListSelectPos (demo_list, pos, True);
     }
+     
   ensure_selected_item_visible (demo_list);
-  demo_mode_hack (si, get_text_string (text_line));
+  run_hack (XtDisplay (button), pos);
+  if (pos_list)
+    XtFree ((char *) pos_list);
 
 #endif /* HAVE_MOTIF */
-  }
 }
 
 
-static void pop_resources_dialog (saver_info *si);
-static void make_resources_dialog (saver_info *si, Widget parent);
-
+/* Callback run when a list element is double-clicked.
+ */
 static void
-edit_cb (Widget button, XtPointer client_data, XtPointer call_data)
+select_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_screen_info *ssi = si->default_screen;
-  saver_preferences *p = &si->prefs;
-  Widget parent = ssi->toplevel_shell;
+/*  saver_preferences *p = (saver_preferences *) client_data; */
 
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Preferences\n", blurb());
+#ifdef HAVE_ATHENA
+  XawListReturnStruct *item = (XawListReturnStruct*)call_data;
+  XtVaSetValues(text_line, XtNstring, item->string, 0);
+  run_hack (XtDisplay (button), item->list_index + 1);
 
-  if (! resources_dialog)
-    make_resources_dialog (si, parent);
-  pop_resources_dialog (si);
+#else  /* HAVE_MOTIF */
+  XmListCallbackStruct *lcb = (XmListCallbackStruct *) call_data;
+  char *string = 0;
+  if (lcb->item)
+    XmStringGetLtoR (lcb->item, XmSTRING_DEFAULT_CHARSET, &string);
+  set_text_string (text_line, (string ? string : ""));
+
+  if (lcb->reason == XmCR_DEFAULT_ACTION && string)
+    run_hack (XtDisplay (button), lcb->item_position);
+
+  if (string)
+    XtFree (string);
+#endif /* HAVE_MOTIF */
 }
 
+
+
+static void pop_preferences_dialog (prefs_pair *pair);
+static void make_preferences_dialog (prefs_pair *pair, Widget parent);
+
+/* Callback for the Preferences button.
+ */
 static void
-done_cb (Widget button, XtPointer client_data, XtPointer call_data)
+preferences_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  demo_mode_done (si);
+  prefs_pair *pair = (prefs_pair *) client_data;
+  Widget parent = button;
+
+  do {
+    parent = XtParent(parent);
+  } while (XtParent(parent));
+
+  if (! preferences_dialog)
+    make_preferences_dialog (pair, parent);
+  pop_preferences_dialog (pair);
+}
+
+/* Callback for the Quit button.
+ */
+static void
+quit_cb (Widget button, XtPointer client_data, XtPointer call_data)
+{
+  /* Save here?  Right now we don't need to, because we save every time
+     the text field is edited, or the Preferences OK button is pressed.
+  */
+  exit (0);
 }
 
 
+/* Callback for the (now unused) Restart button.
+ */
 static void
 restart_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Restart\n", blurb());
-  demo_mode_restart_process (si);
+  xscreensaver_command (XtDisplay (button), XA_RESTART, 0, False);
 }
 
 
-void
-pop_up_dialog_box (Widget dialog, Widget form, int where)
+static void
+pop_up_dialog_box (Widget dialog, Widget form)
 {
-  /* I'm sure this is the wrong way to pop up a dialog box, but I can't
-     figure out how else to do it.
-
-     It's important that the screensaver dialogs not get decorated or
-     otherwise reparented by the window manager, because they need to be
-     children of the *real* root window, not the WM's virtual root, in
-     order for us to guarentee that they are visible above the screensaver
-     window itself.
-   */
-  Arg av [100];
-  int ac = 0;
-  Dimension sw, sh, x, y, w, h;
-
 #ifdef HAVE_ATHENA
   XtRealizeWidget (dialog);
-#else  /* HAVE_MOTIF */
-  /* Motif likes us to realize the *child* of the shell... */
-  XtRealizeWidget (form);
-#endif /* HAVE_MOTIF */
-
-  sw = WidthOfScreen (XtScreen (dialog));
-  sh = HeightOfScreen (XtScreen (dialog));
-  ac = 0;
-  XtSetArg (av [ac], XtNwidth, &w); ac++;
-  XtSetArg (av [ac], XtNheight, &h); ac++;
-  XtGetValues (form, av, ac);
-
-  /* for debugging -- don't ask */
-  if (where >= 69)
-    {
-      where -= 69;
-      sw = (sw * 7) / 12;
-    }
-
-  switch (where)
-    {
-    case 0:	/* center it in the top-right quadrant */
-      x = (sw/2 + w) / 2 + (sw/2) - w;
-      y = (sh/2 + h) / 2 - h;
-      break;
-    case 1:	/* center it in the bottom-right quadrant */
-      x = (sw/2 + w) / 2 + (sw/2) - w;
-      y = (sh/2 + h) / 2 + (sh/2) - h;
-      break;
-    case 2:	/* center it on the screen */
-      x = (sw + w) / 2 - w;
-      y = (sh + h) / 2 - h;
-      break;
-    case 3:	/* center it in the top 2/3rds of the screen */
-      x = (sw + w) / 2 - w;
-      y = (sh*2/3 + h) / 2 - h;
-      break;
-    default:
-      abort ();
-    }
-  if (x + w > sw) x = sw - w;
-  if (y + h > sh) y = sh - h;
-  ac = 0;
-  XtSetArg (av [ac], XtNx, x); ac++;
-  XtSetArg (av [ac], XtNy, y); ac++;
-  XtSetArg (av [ac], XtNoverrideRedirect, True); ac++;
-
-#ifdef HAVE_MOTIF
-  XtSetArg (av [ac], XmNdefaultPosition, False); ac++;
-#endif /* HAVE_MOTIF */
-
-  XtSetValues (dialog, av, ac);
-  XtSetValues (form, av, ac);
-
-#ifdef HAVE_ATHENA
   XtPopup (dialog, XtGrabNone);
 #else  /* HAVE_MOTIF */
+  XtRealizeWidget (form);
   XtManageChild (form);
 #endif /* HAVE_MOTIF */
-
-  steal_focus_and_colormap (dialog);
+  XMapRaised (XtDisplay (dialog), XtWindow (dialog));
 }
 
 
-void
-make_screenhack_dialog (saver_info *si)
+static void
+make_demo_dialog (Widget toplevel_shell, prefs_pair *pair)
 {
-  saver_screen_info *ssi = si->default_screen;
-  Widget parent = ssi->toplevel_shell;
-  char **hacks = si->prefs.screenhacks;
+  saver_preferences *p =  pair->a;
+  /* saver_preferences *p2 = pair->b; */
 
-  if (ssi->demo_cmap &&
-      ssi->demo_cmap != ssi->cmap &&
-      ssi->demo_cmap != DefaultColormapOfScreen (ssi->screen))
-    {
-      XFreeColormap (si->dpy, ssi->demo_cmap);
-      ssi->demo_cmap = 0;
-    }
+  Widget parent = toplevel_shell;
+  char **hacks = p->screenhacks;
 
-  if (ssi->default_visual == DefaultVisualOfScreen (ssi->screen))
-    ssi->demo_cmap = DefaultColormapOfScreen (ssi->screen);
-  else
-    ssi->demo_cmap = XCreateColormap (si->dpy,
-				      RootWindowOfScreen (ssi->screen),
-				      ssi->default_visual, AllocNone);
+  create_demo_dialog (parent,
+		      DefaultVisualOfScreen (XtScreen (parent)),
+		      DefaultColormapOfScreen (XtScreen (parent)));
+  format_into_label (label1, short_version);
 
-  create_demo_dialog (parent, ssi->default_visual, ssi->demo_cmap);
-  format_into_label (label1, si->version);
-
-  add_button_callback (next,    next_cb,    (XtPointer) si);
-  add_button_callback (prev,    prev_cb,    (XtPointer) si);
-  add_button_callback (done,    done_cb,    (XtPointer) si);
-  add_button_callback (restart, restart_cb, (XtPointer) si);
-  add_button_callback (edit,    edit_cb,    (XtPointer) si);
+  add_button_callback (next,    next_cb,        (XtPointer) p);
+  add_button_callback (prev,    prev_cb,        (XtPointer) p);
+  add_button_callback (done,    quit_cb,        (XtPointer) p);
+  if (restart)
+    add_button_callback(restart,restart_cb,     (XtPointer) p);
+  add_button_callback (edit,    preferences_cb, (XtPointer) pair);
 
 #ifdef HAVE_MOTIF
   XtAddCallback (demo_list, XmNbrowseSelectionCallback,
-		 select_cb, (XtPointer) si);
+		 select_cb, (XtPointer) p);
   XtAddCallback (demo_list, XmNdefaultActionCallback,
-		 select_cb, (XtPointer) si);
-  XtAddCallback (text_line, XmNactivateCallback, text_cb, (XtPointer) si);
+		 select_cb, (XtPointer) p);
+  XtAddCallback (text_line, XmNactivateCallback, text_cb, (XtPointer) p);
 
   if (hacks)
     for (; *hacks; hacks++)
@@ -639,32 +630,6 @@ make_screenhack_dialog (saver_info *si)
 	XmListAddItem (demo_list, xmstr, 0);
 	XmStringFree (xmstr);
       }
-
-  /* Cause the most-recently-run hack to be selected in the list.
-     Do some voodoo to make it be roughly centered in the list (really,
-     just make it not be within +/- 5 of the top/bottom if possible.)
-   */
-  if (ssi->current_hack > 0)
-    {
-      int i = ssi->current_hack+1;
-      int top = i + 5;
-      int bot = i - 5;
-      if (bot < 1) bot = 1;
-      if (top > si->prefs.screenhacks_count)
-	top = si->prefs.screenhacks_count;
-
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, bot, False);
-      ensure_selected_item_visible (demo_list);
-
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, top, False);
-      ensure_selected_item_visible (demo_list);
-
-      XmListDeselectAllItems(demo_list);	/* LessTif lossage */
-      XmListSelectPos (demo_list, i, False);
-      ensure_selected_item_visible (demo_list);
-    }
 
 #else  /* HAVE_ATHENA */
 
@@ -682,11 +647,9 @@ make_screenhack_dialog (saver_info *si)
 
   XtVaSetValues (demo_list,
 		 XtNlist, hacks,
-		 XtNnumberStrings, si->prefs.screenhacks_count,
+		 XtNnumberStrings, p->screenhacks_count,
 		 0);
-  XtAddCallback (demo_list, XtNcallback, select_cb, si);
-  if (ssi->current_hack > 0)
-  XawListHighlight(demo_list, ssi->current_hack);
+  XtAddCallback (demo_list, XtNcallback, select_cb, p);
 
   /* Now that we've populated the list, make sure that the list is as
      wide as the dialog itself.
@@ -707,7 +670,6 @@ make_screenhack_dialog (saver_info *si)
     /* Why isn't the viewport getting centered? */
     XtVaGetValues(viewport,
 		  XtNx, &x, XtNy, &y, XtNheight, &h, XtNborderWidth, &bw, 0);
-/*    printf("%d %d %d %d\n", x, y, w, h); */
     XtConfigureWidget(viewport, x, y, w2-x-x, h, bw);
 
     /* And the text line, too. */
@@ -732,11 +694,7 @@ make_screenhack_dialog (saver_info *si)
 
 #endif /* HAVE_ATHENA */
 
-  monitor_power_on (si);
-  pop_up_dialog_box(demo_dialog, demo_form,
-		    /* for debugging -- don't ask */
-		    (si->prefs.debug_p ? 69 : 0) +
-		    0);
+  pop_up_dialog_box(demo_dialog, demo_form);
 
 #ifdef HAVE_ATHENA
   /* For Athena, have to do this after the dialog is managed. */
@@ -745,21 +703,20 @@ make_screenhack_dialog (saver_info *si)
 }
 
 
-/* the Screensaver Parameters dialog */
+/* the Preferences dialog
+ */
 
-static struct resources {
-  int timeout, cycle, secs, ticks, lock_time, passwd_time;
-  int verb, cmap, fade, unfade, lock_p;
-} res;
-
-
+/* Helper for the text fields that contain time specifications:
+   this parses the text, and does error checking.
+ */
 static void 
-hack_time_cb (Display *dpy, char *line, int *store, Bool sec_p)
+hack_time_text (Display *dpy, char *line, Time *store, Bool sec_p)
 {
   if (*line)
     {
       int value;
       value = parse_time (line, sec_p, True);
+      value *= 1000;	/* Time measures in microseconds */
       if (value < 0)
 	/*XBell (dpy, 0)*/;
       else
@@ -767,22 +724,34 @@ hack_time_cb (Display *dpy, char *line, int *store, Bool sec_p)
     }
 }
 
+
+/* Callback for text fields that hold a time that default to seconds,
+   when not fully spelled out.  client_data is an Time* where the value goes.
+ */
 static void
-res_sec_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_sec_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  hack_time_cb (XtDisplay (button), get_text_string (button),
-		(int *) client_data, True);
+  hack_time_text (XtDisplay (button), get_text_string (button),
+		(Time *) client_data, True);
 }
 
+
+/* Callback for text fields that hold a time that default to minutes,
+   when not fully spelled out.  client_data is an Time* where the value goes.
+ */
 static void
-res_min_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_min_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  hack_time_cb (XtDisplay (button), get_text_string (button),
-		(int *) client_data, False);
+  hack_time_text (XtDisplay (button), get_text_string (button),
+		(Time *) client_data, False);
 }
 
+
+/* Callback for text fields that hold an integer value.
+   client_data is an int* where the value goes.
+ */
 static void
-res_int_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_int_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
   char *line = get_text_string (button);
   int *store = (int *) client_data;
@@ -796,136 +765,88 @@ res_int_cb (Widget button, XtPointer client_data, XtPointer call_data)
     *store = value;
 }
 
+/* Callback for toggle buttons.  client_data is an Bool* where the value goes.
+ */
 static void
-res_bool_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_bool_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  int *store = (int *) client_data;
+  Bool *store = (Bool *) client_data;
 #ifdef HAVE_MOTIF
   *store = ((XmToggleButtonCallbackStruct *) call_data)->set;
 #else /* HAVE_ATHENA */
   Boolean state = FALSE;
-  XtVaGetValues (button, XtNstate, &state, NULL);
+  XtVaGetValues (button, XtNstate, &state, 0);
   *store = state;
 #endif /* HAVE_ATHENA */
 }
 
+
+/* Callback for the Cancel button on the Preferences dialog.
+ */
 static void
-res_cancel_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_cancel_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
-
-  XtDestroyWidget (resources_dialog);
-  resources_dialog = 0;
-  raise_screenhack_dialog ();
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: lowering preferences dialog.\n", blurb());
+  XtDestroyWidget (preferences_dialog);
+  preferences_dialog = 0;
+  XMapRaised (XtDisplay (demo_dialog), XtWindow (demo_dialog));
 }
 
 
+/* Callback for the OK button on the Preferences dialog.
+ */
 static void
-res_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
+prefs_ok_cb (Widget button, XtPointer client_data, XtPointer call_data)
 {
-  saver_info *si = (saver_info *) client_data;
-  saver_preferences *p = &si->prefs;
+  prefs_pair *pair = (prefs_pair *) client_data;
+  saver_preferences *p =  pair->a;
+  saver_preferences *p2 = pair->b;
 
-  res_cancel_cb (button, client_data, call_data);
+  prefs_cancel_cb (button, 0, call_data);
 
 #ifdef HAVE_ATHENA
-  /* Check all text widgets, since we don't have callbacks for these. */
-  res_min_cb (timeout_text,     (XtPointer) &res.timeout,     NULL);
-  res_min_cb (cycle_text,       (XtPointer) &res.cycle,       NULL);
-  res_sec_cb (fade_text,        (XtPointer) &res.secs,        NULL);
-  res_int_cb (ticks_text,       (XtPointer) &res.ticks,       NULL);
-  res_min_cb (lock_time_text,   (XtPointer) &res.lock_time,   NULL);
-  res_sec_cb (passwd_time_text, (XtPointer) &res.passwd_time, NULL);
+  /* Athena doesn't let us put callbacks on these widgets, so run
+     all the callbacks by hand when OK is pressed. */
+  prefs_min_cb (timeout_text,        (XtPointer) &p2->timeout,        0);
+  prefs_min_cb (cycle_text,          (XtPointer) &p2->cycle,          0);
+  prefs_sec_cb (fade_text,           (XtPointer) &p2->fade_seconds,   0);
+  prefs_int_cb (fade_ticks_text,     (XtPointer) &p2->fade_ticks,     0);
+  prefs_min_cb (lock_timeout_text,   (XtPointer) &p2->lock_timeout,   0);
+  prefs_sec_cb (passwd_timeout_text, (XtPointer) &p2->passwd_timeout, 0);
 #endif /* HAVE_ATHENA */
 
-  /* Throttle the timeouts to minimum sane values. */
-  if (res.timeout < 5) res.timeout = 5;
-  if (res.cycle < 2) res.cycle = 2;
-  if (res.passwd_time < 10) res.passwd_time = 10;
+  p->timeout	    = p2->timeout;
+  p->cycle	    = p2->cycle;
+  p->lock_timeout   = p2->lock_timeout;
+  p->passwd_timeout = p2->passwd_timeout;
+  p->fade_seconds   = p2->fade_seconds;
+  p->fade_ticks	    = p2->fade_ticks;
+  p->verbose_p	    = p2->verbose_p;
+  p->install_cmap_p = p2->install_cmap_p;
+  p->fade_p	    = p2->fade_p;
+  p->unfade_p	    = p2->unfade_p;
+  p->lock_p	    = p2->lock_p;
 
-  p->timeout = res.timeout * 1000;
-  p->cycle = res.cycle * 1000;
-  p->lock_timeout = res.lock_time * 1000;
-#ifndef NO_LOCKING
-  p->passwd_timeout = res.passwd_time * 1000;
-#endif
-  p->fade_seconds = res.secs;
-  p->fade_ticks = res.ticks;
-  p->verbose_p = res.verb;
-  p->install_cmap_p = res.cmap;
-  p->fade_p = res.fade;
-  p->unfade_p = res.unfade;
-  p->lock_p = res.lock_p;
-
-  if (p->debug_p && p->verbose_p)
-    fprintf (stderr, "%s: parameters changed:\n\
-	timeout: %d\n\tcycle:   %d\n\tlock:    %d\n\tpasswd:  %d\n\
-	fade:    %d\n\tfade:    %d\n\tverbose: %d\n\tinstall: %d\n\
-	fade:    %d\n\tunfade:  %d\n\tlock:    %d\n",
-	     blurb(), p->timeout, p->cycle, p->lock_timeout,
-#ifdef NO_LOCKING
-	     0,
-#else
-	     p->passwd_timeout,
-#endif
-	     p->fade_seconds, p->fade_ticks, p->verbose_p, p->install_cmap_p,
-	     p->fade_p, p->unfade_p, p->lock_p);
-
-
-#if defined(HAVE_MIT_SAVER_EXTENSION) || defined(HAVE_SGI_SAVER_EXTENSION)
-  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
-    {
-      /* Need to set the server timeout to the new one the user has picked.
-       */
-      int server_timeout, server_interval, prefer_blank, allow_exp;
-      XGetScreenSaver (si->dpy, &server_timeout, &server_interval,
-		       &prefer_blank, &allow_exp);
-      if (server_timeout != (p->timeout / 1000))
-	{
-	  server_timeout = (p->timeout / 1000);
-	  if (p->verbose_p)
-	    fprintf (stderr,
-		   "%s: configuring server for saver timeout of %d seconds.\n",
-		     blurb(), server_timeout);
-	  /* Leave all other parameters the same. */
-	  XSetScreenSaver (si->dpy, server_timeout, server_interval,
-			   prefer_blank, allow_exp);
-	}
-    }
-#endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
-
-  write_init_file (si);
+  write_init_file (p, short_version);
 }
 
 
 static void
-make_resources_dialog (saver_info *si, Widget parent)
+make_preferences_dialog (prefs_pair *pair, Widget parent)
 {
-  saver_screen_info *ssi = si->default_screen;
+  saver_preferences *p =  pair->a;
+  saver_preferences *p2 = pair->b;
 
-  if (ssi->demo_cmap &&
-      ssi->demo_cmap != ssi->cmap &&
-      ssi->demo_cmap != DefaultColormapOfScreen (ssi->screen))
-    {
-      XFreeColormap (si->dpy, ssi->demo_cmap);
-      ssi->demo_cmap = 0;
-    }
+  Screen *screen = XtScreen (parent);
+  Display *dpy = XtDisplay (parent);
 
-  if (ssi->default_visual == DefaultVisualOfScreen (ssi->screen))
-    ssi->demo_cmap = DefaultColormapOfScreen (ssi->screen);
-  else
-    ssi->demo_cmap = XCreateColormap (si->dpy,
-				     RootWindowOfScreen (ssi->screen),
-				     ssi->default_visual, AllocNone);
+  *p2 = *p;	/* copy all slots of p into p2. */
 
-  create_resources_dialog (parent, ssi->default_visual, ssi->demo_cmap);
+  create_preferences_dialog (parent,
+			     DefaultVisualOfScreen (screen),
+			     DefaultColormapOfScreen (screen));
 
-  add_button_callback (res_done,   res_done_cb,   (XtPointer) si);
-  add_button_callback (res_cancel, res_cancel_cb, (XtPointer) si);
+  add_button_callback (prefs_done,   prefs_ok_cb,     (XtPointer) pair);
+  add_button_callback (prefs_cancel, prefs_cancel_cb, 0);
 
 #define CB(widget,type,slot) \
 	add_text_callback ((widget), (type), (XtPointer) (slot))
@@ -934,44 +855,55 @@ make_resources_dialog (saver_info *si, Widget parent)
 
 #ifdef HAVE_MOTIF
   /* When using Athena widgets, we can't set callbacks for these,
-     so we'll check them all if "done" gets pressed.
-   */
-  CB (timeout_text,	res_min_cb,  &res.timeout);
-  CB (cycle_text,	res_min_cb,  &res.cycle);
-  CB (fade_text,	res_sec_cb,  &res.secs);
-  CB (ticks_text,	res_int_cb,  &res.ticks);
-  CB (lock_time_text,	res_min_cb,  &res.lock_time);
-  CB (passwd_time_text,	res_sec_cb,  &res.passwd_time);
+     so in that case, we run them by hand when "OK" is pressed. */
+  CB (timeout_text,		prefs_min_cb,  &p2->timeout);
+  CB (cycle_text,		prefs_min_cb,  &p2->cycle);
+  CB (fade_text,		prefs_sec_cb,  &p2->fade_seconds);
+  CB (fade_ticks_text,		prefs_int_cb,  &p2->fade_ticks);
+  CB (lock_timeout_text,	prefs_min_cb,  &p2->lock_timeout);
+  CB (passwd_timeout_text,	prefs_sec_cb,  &p2->passwd_timeout);
 #endif /* HAVE_MOTIF */
 
-  CBT (verbose_toggle,	res_bool_cb, &res.verb);
-  CBT (cmap_toggle,	res_bool_cb, &res.cmap);
-  CBT (fade_toggle,	res_bool_cb, &res.fade);
-  CBT (unfade_toggle,	res_bool_cb, &res.unfade);
-  CBT (lock_toggle,	res_bool_cb, &res.lock_p);
+  CBT (verbose_toggle,		prefs_bool_cb, &p2->verbose_p);
+  CBT (install_cmap_toggle,	prefs_bool_cb, &p2->install_cmap_p);
+  CBT (fade_toggle,		prefs_bool_cb, &p2->fade_p);
+  CBT (unfade_toggle,		prefs_bool_cb, &p2->unfade_p);
+  CBT (lock_toggle,		prefs_bool_cb, &p2->lock_p);
 #undef CB
 #undef CBT
 
-  if (si->locking_disabled_p)
-    {
-      disable_widget (passwd_time_text);
-      disable_widget (lock_time_text);
-      disable_widget (lock_toggle);
-    }
-  if (!si->fading_possible_p)
-    {
-      disable_widget (fade_text);
-      disable_widget (ticks_text);
-      disable_widget (cmap_toggle);
-      disable_widget (fade_toggle);
-      disable_widget (unfade_toggle);
-    }
+  {
+    Bool found_any_writable_cells = False;
+    int nscreens = ScreenCount(dpy);
+    int i;
+    for (i = 0; i < nscreens; i++)
+      {
+	Screen *s = ScreenOfDisplay (dpy, i);
+	if (has_writable_cells (s, DefaultVisualOfScreen (s)))
+	  {
+	    found_any_writable_cells = True;
+	    break;
+	  }
+      }
+
+    if (! found_any_writable_cells)	/* fading isn't possible */
+      {
+	disable_widget (fade_text);
+	disable_widget (fade_ticks_text);
+	disable_widget (install_cmap_toggle);
+	disable_widget (fade_toggle);
+	disable_widget (unfade_toggle);
+      }
+  }
 }
 
 
+/* Formats a `Time' into "H:MM:SS".  (Time is microseconds.)
+ */
 static void
-fmt_time (char *buf, unsigned int s, int min_p)
+format_time (char *buf, Time time)
 {
+  int s = time / 1000;
   unsigned int h = 0, m = 0;
   if (s >= 60)
     {
@@ -983,173 +915,406 @@ fmt_time (char *buf, unsigned int s, int min_p)
       h += (m / 60);
       m %= 60;
     }
-/*
-  if (min_p && h == 0 && s == 0)
-    sprintf (buf, "%u", m);
-  else if (!min_p && h == 0 && m == 0)
-    sprintf (buf, "%u", s);
-  else
-  if (h == 0)
-    sprintf (buf, "%u:%02u", m, s);
-  else
-*/
-    sprintf (buf, "%u:%02u:%02u", h, m, s);
+  sprintf (buf, "%u:%02u:%02u", h, m, s);
+}
+
+
+static void
+pop_preferences_dialog (prefs_pair *pair)
+{
+  /* saver_preferences *p =  pair->a; */
+  saver_preferences *p2 = pair->b;
+  char s[100];
+
+  format_time (s, p2->timeout);        set_text_string(timeout_text, s);
+  format_time (s, p2->cycle);          set_text_string(cycle_text, s);
+  format_time (s, p2->lock_timeout);   set_text_string(lock_timeout_text, s);
+  format_time (s, p2->passwd_timeout); set_text_string(passwd_timeout_text, s);
+  format_time (s, p2->fade_seconds);   set_text_string(fade_text, s);
+  sprintf (s, "%u", p2->fade_ticks);   set_text_string(fade_ticks_text, s);
+
+  set_toggle_button_state (verbose_toggle,	p2->verbose_p);
+  set_toggle_button_state (install_cmap_toggle, p2->install_cmap_p);
+  set_toggle_button_state (fade_toggle,		p2->fade_p);
+  set_toggle_button_state (unfade_toggle,	p2->unfade_p);
+  set_toggle_button_state (lock_toggle,		p2->lock_p);
+
+  pop_up_dialog_box (preferences_dialog, preferences_form);
+}
+
+
+static void
+run_hack (Display *dpy, int n)
+{
+  if (n <= 0) abort();
+  xscreensaver_command (dpy, XA_DEMO, n, False);
+}
+
+
+static void
+warning_dialog_dismiss_cb (Widget button, XtPointer client_data,
+			   XtPointer call_data)
+{
+  Widget shell = (Widget) client_data;
+  XtDestroyWidget (shell);
 }
 
 static void
-pop_resources_dialog (saver_info *si)
+warning_dialog (Widget parent, const char *message)
 {
-  saver_preferences *p = &si->prefs;
-  char buf [100];
+  char *msg = strdup (message);
+  char *head;
 
-  if (p->verbose_p)
-    fprintf (stderr, "%s: raising preferences dialog.\n", blurb());
+  Widget dialog = 0;
+  Widget label = 0;
+  Widget ok = 0;
+  int i = 0;
 
-  res.timeout = p->timeout / 1000;
-  res.cycle = p->cycle / 1000;
-  res.lock_time = p->lock_timeout / 1000;
-#ifndef NO_LOCKING
-  res.passwd_time = p->passwd_timeout / 1000;
-#endif
-  res.secs = p->fade_seconds;
-  res.ticks = p->fade_ticks;
-  res.verb = p->verbose_p;
-  res.cmap = p->install_cmap_p;
-  res.fade = p->fade_p;
-  res.unfade = p->unfade_p;
-  res.lock_p = (p->lock_p && !si->locking_disabled_p);
+#ifdef HAVE_MOTIF
 
-  fmt_time (buf, res.timeout, 1);     set_text_string (timeout_text, buf);
-  fmt_time (buf, res.cycle, 1);       set_text_string (cycle_text, buf);
-  fmt_time (buf, res.lock_time, 1);   set_text_string (lock_time_text, buf);
-  fmt_time (buf, res.passwd_time, 0); set_text_string (passwd_time_text, buf);
-  fmt_time (buf, res.secs, 0);        set_text_string (fade_text, buf);
-  sprintf (buf, "%u", res.ticks);     set_text_string (ticks_text, buf);
+  Widget w;
+  Widget container;
+  XmString xmstr;
+  Arg av[10];
+  int ac = 0;
 
-  set_toggle_button_state (verbose_toggle, res.verb);
-  set_toggle_button_state (cmap_toggle, res.cmap);
-  set_toggle_button_state (fade_toggle, res.fade);
-  set_toggle_button_state (unfade_toggle, res.unfade);
-  set_toggle_button_state (lock_toggle, res.lock_p);
+  ac = 0;
+  dialog = XmCreateWarningDialog (parent, "versionWarning", av, ac);
 
-  monitor_power_on (si);
-  pop_up_dialog_box (resources_dialog, resources_form,
-		     /* for debugging -- don't ask */
-		     (si->prefs.debug_p ? 69 : 0) +
-		     1);
+  w = XmMessageBoxGetChild (dialog, XmDIALOG_MESSAGE_LABEL);
+  if (w) XtUnmanageChild (w);
+  w = XmMessageBoxGetChild (dialog, XmDIALOG_CANCEL_BUTTON);
+  if (w) XtUnmanageChild (w);
+  w = XmMessageBoxGetChild (dialog, XmDIALOG_HELP_BUTTON);
+  if (w) XtUnmanageChild (w);
+
+  ok = XmMessageBoxGetChild (dialog, XmDIALOG_OK_BUTTON);
+
+  ac = 0;
+  XtSetArg (av[ac], XmNnumColumns, 1); ac++;
+  XtSetArg (av[ac], XmNorientation, XmVERTICAL); ac++;
+  XtSetArg (av[ac], XmNpacking, XmPACK_COLUMN); ac++;
+  XtSetArg (av[ac], XmNrowColumnType, XmWORK_AREA); ac++;
+  XtSetArg (av[ac], XmNspacing, 0); ac++;
+  container = XmCreateRowColumn (dialog, "container", av, ac);
+
+#else  /* HAVE_ATHENA */
+
+  Widget form;
+  dialog = XtVaCreatePopupShell("warning_dialog", transientShellWidgetClass,
+				parent, 0);
+  form = XtVaCreateManagedWidget("warning_form", formWidgetClass, dialog, 0);
+
+#endif /* HAVE_ATHENA */
+
+  head = msg;
+  while (head)
+    {
+      char name[20];
+      char *s = strchr (head, '\n');
+      if (s) *s = 0;
+
+      sprintf (name, "label%d", i++);
+
+#ifdef HAVE_MOTIF
+      xmstr = XmStringCreate (head, XmSTRING_DEFAULT_CHARSET);
+      ac = 0;
+      XtSetArg (av[ac], XmNlabelString, xmstr); ac++;
+      label = XmCreateLabelGadget (container, name, av, ac);
+      XtManageChild (label);
+      XmStringFree (xmstr);
+#else  /* HAVE_ATHENA */
+      
+      label = XtVaCreateManagedWidget (name, labelWidgetClass,
+				       form,
+				       XtNleft, XtChainLeft,
+				       XtNright, XtChainRight,
+				       XtNlabel, head,
+				       (label ? XtNfromVert : XtNtop),
+				       (label ? label : XtChainTop),
+				       0);
+
+#endif /* HAVE_ATHENA */
+
+      if (s)
+	head = s+1;
+      else
+	head = 0;
+    }
+
+#ifdef HAVE_MOTIF
+
+  XtManageChild (container);
+  XtRealizeWidget (dialog);
+  XtManageChild (dialog);
+
+#else  /* HAVE_ATHENA */
+
+  ok = XtVaCreateManagedWidget ("ok", commandWidgetClass, form,
+				XtNleft, XtChainLeft,
+				XtNbottom, XtChainBottom,
+				XtNfromVert, label,
+				0);
+
+  XtRealizeWidget (dialog);
+  XtPopup (dialog, XtGrabNone);
+
+#endif /* HAVE_ATHENA */
+
+  add_button_callback (ok, warning_dialog_dismiss_cb, dialog);
+
+  free (msg);
 }
+
 
 
 /* The main demo-mode command loop.
  */
 
-void
-demo_mode (saver_info *si)
+#if 0
+static Bool
+mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
+	XrmRepresentation *type, XrmValue *value, XPointer closure)
 {
-  saver_preferences *p = &si->prefs;
-  Bool prefs_p = (si->demo_mode_p == (Bool) 2);  /* kludge! */
-
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Demo Mode.\n", blurb());
-
-  si->selection_mode = 0;
-  si->dbox_up_p = True;
-  monitor_power_on (si);
-  raise_window (si, True, False, False);
-  make_screenhack_dialog (si);
-
-  if (prefs_p)
-    edit_cb (0, si, 0);		/* pop up preferences panel */
-
-  while (si->demo_mode_p)
+  int i;
+  for (i = 0; quarks[i]; i++)
     {
-      XEvent event;
-      XtAppNextEvent (si->app, &event);
-      switch (event.xany.type)
+      if (bindings[i] == XrmBindTightly)
+	fprintf (stderr, (i == 0 ? "" : "."));
+      else if (bindings[i] == XrmBindLoosely)
+	fprintf (stderr, "*");
+      else
+	fprintf (stderr, " ??? ");
+      fprintf(stderr, "%s", XrmQuarkToString (quarks[i]));
+    }
+
+  fprintf (stderr, ": %s\n", (char *) value->addr);
+
+  return False;
+}
+#endif
+
+static void
+the_network_is_not_the_computer (Widget parent)
+{
+  Display *dpy = XtDisplay (parent);
+  char *rversion, *ruser, *rhost;
+  char *luser, *lhost;
+  char *msg = 0;
+  struct passwd *p = getpwuid (getuid ());
+  const char *d = DisplayString (dpy);
+
+# if defined(HAVE_UNAME)
+  struct utsname uts;
+  if (uname (&uts) < 0)
+    lhost = "<UNKNOWN>";
+  else
+    lhost = uts.nodename;
+# elif defined(VMS)
+  strcpy (lhost, getenv("SYS$NODE"));
+# else  /* !HAVE_UNAME && !VMS */
+  strcat (lhost, "<UNKNOWN>");
+# endif /* !HAVE_UNAME && !VMS */
+
+  if (p && p->pw_name)
+    luser = p->pw_name;
+  else
+    luser = "???";
+
+  server_xscreensaver_version (dpy, &rversion, &ruser, &rhost);
+
+  /* Make a buffer that's big enough for a number of copies of all the
+     strings, plus some. */
+  msg = (char *) malloc (10 * ((rversion ? strlen(rversion) : 0) +
+			       (ruser ? strlen(ruser) : 0) +
+			       (rhost ? strlen(rhost) : 0) +
+			       strlen(lhost) +
+			       strlen(luser) +
+			       strlen(d) +
+			       30));
+  *msg = 0;
+
+  if (!rversion || !*rversion)
+    {
+      sprintf (msg,
+	       "Warning:\n\n"
+	       "xscreensaver doesn't seem to be running on display \"%s\".",
+	       d);
+    }
+  else if (p && ruser && *ruser && !!strcmp (ruser, p->pw_name))
+    {
+      /* Warn that the two processes are running as different users.
+       */
+      sprintf(msg,
+	       "Warning:\n\n"
+	      "%s is running as user \"%s\" on host \"%s\".\n"
+	      "But the xscreensaver managing display \"%s\"\n"
+	      "is running as user \"%s\" on host \"%s\".\n"
+	      "\n"
+	      "Since they are different users, they won't be reading/writing\n"
+	      "the same ~/.xscreensaver file, so %s isn't\n"
+	      "going to work right.\n"
+	      "\n"
+	      "Either re-run %s as \"%s\", or re-run\n"
+	      "xscreensaver as \"%s\".\n",
+	      progname, luser, lhost,
+	      d,
+	      (ruser ? ruser : "???"), (rhost ? rhost : "???"),
+	      progname,
+	      progname, (ruser ? ruser : "???"),
+	      luser);
+    }
+  else if (rhost && *rhost && !!strcmp (rhost, lhost))
+    {
+      /* Warn that the two processes are running on different hosts.
+       */
+      sprintf (msg,
+	       "Warning:\n\n"
+	       "%s is running as user \"%s\" on host \"%s\".\n"
+	       "But the xscreensaver managing display \"%s\"\n"
+	       "is running as user \"%s\" on host \"%s\".\n"
+	       "\n"
+	       "If those two machines don't share a file system (that is,\n"
+	       "if they don't see the same ~%s/.xscreensaver file) then\n"
+	       "%s won't work right.",
+	       progname, luser, lhost,
+	       d,
+	       (ruser ? ruser : "???"), (rhost ? rhost : "???"),
+	       luser,
+	       progname);
+    }
+  else if (!!strcmp (rversion, short_version))
+    {
+      /* Warn that the version numbers don't match.
+       */
+      sprintf (msg,
+	       "Warning:\n\n"
+	       "This is %s version %s.\n"
+	       "But the xscreensaver managing display \"%s\"\n"
+	       "is version %s.  This could cause problems.",
+	       progname, short_version,
+	       d,
+	       rversion);
+    }
+
+
+  if (*msg)
+    warning_dialog (parent, msg);
+
+  free (msg);
+}
+
+
+static char *defaults[] = {
+#include "XScreenSaver_ad.h"
+ 0
+};
+
+int
+main (int argc, char **argv)
+{
+  XtAppContext app;
+  prefs_pair Pair, *pair;
+  saver_preferences P, P2, *p, *p2;
+  Bool prefs = False;
+  int i;
+  Display *dpy;
+  Widget toplevel_shell;
+  char *real_progname = argv[0];
+  char *s;
+
+  s = strrchr (real_progname, '/');
+  if (s) real_progname = s+1;
+
+  p = &P;
+  p2 = &P2;
+  pair = &Pair;
+  pair->a = p;
+  pair->b = p2;
+  memset (p,  0, sizeof (*p));
+  memset (p2, 0, sizeof (*p2));
+
+  /* We must read exactly the same resources as xscreensaver.
+     That means we must have both the same progclass *and* progname,
+     at least as far as the resource database is concerned.  So,
+     put "xscreensaver" in argv[0] while initializing Xt.
+   */
+  argv[0] = "xscreensaver";
+
+  toplevel_shell = XtAppInitialize (&app, progclass, 0, 0, &argc, argv,
+				    defaults, 0, 0);
+  dpy = XtDisplay (toplevel_shell);
+  db = XtDatabase (dpy);
+  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
+
+  for (i = 1; i < argc; i++)
+    {
+      char *s = argv[i];
+      if (s[0] == '-' && s[1] == '-')
+	s++;
+      if (!strcmp (s, "-prefs"))
+	prefs = True;
+      else
 	{
-	case 0:		/* synthetic "timeout" event */
-	  break;
-
-	case ClientMessage:
-	  handle_clientmessage (si, &event, False);
-	  break;
-
-	case CreateNotify:
-	  if (!p->use_xidle_extension &&
-	      !p->use_mit_saver_extension &&
-	      !p->use_sgi_saver_extension)
-	    {
-	      start_notice_events_timer (si, event.xcreatewindow.window);
-#ifdef DEBUG_TIMERS
-	      if (p->verbose_p)
-		fprintf (stderr,
-			 "%s: starting notice_events_timer for 0x%X (%lu)\n",
-			 blurb(),
-			 (unsigned int) event.xcreatewindow.window,
-			 p->notice_events_timeout);
-#endif /* DEBUG_TIMERS */
-	    }
-	  break;
-
-	case ButtonPress:
-	case ButtonRelease:
-	  if (!XtWindowToWidget (si->dpy, event.xbutton.window))
-	    raise_screenhack_dialog ();
-	  /* fall through */
-
-	default:
-#ifdef HAVE_MIT_SAVER_EXTENSION
-	  if (event.type == si->mit_saver_ext_event_number)
-	    {
-	      /* Get the "real" server window(s) out of the way as soon
-		 as possible. */
-	      int i = 0;
-	      for (i = 0; i < si->nscreens; i++)
-		{
-		  saver_screen_info *ssi = &si->screens[i];
-		  if (ssi->server_mit_saver_window &&
-		      window_exists_p (si->dpy, ssi->server_mit_saver_window))
-		    XUnmapWindow (si->dpy, ssi->server_mit_saver_window);
-		}
-	    }
-	  else
-#endif /* HAVE_MIT_SAVER_EXTENSION */
-
-	  XtDispatchEvent (&event);
-	  break;
+	  fprintf (stderr, "usage: %s [ -display dpy-string ] [ -prefs ]\n",
+		   real_progname);
+	  exit (1);
 	}
     }
 
-  if (p->verbose_p)
-    fprintf (stderr, "%s: Demo Mode done.\n", blurb());
+  short_version = (char *) malloc (5);
+  memcpy (short_version, screensaver_id + 17, 4);
+  short_version [4] = 0;
 
-  kill_screenhack (si);
 
-  destroy_screenhack_dialogs (si);
-  initialize_screensaver_window (si);
+  /* Now that Xt has been initialized, we can set our `progname' variable
+     to something that makes more sense (like our "real" argv[0].)
+   */
+  progname = real_progname;
 
-  si->dbox_up_p = False;
-  si->demo_hack = 0;
 
-  si->demo_mode_p = True;  /* kludge to inhibit unfade... */
-  unblank_screen (si);
-  si->demo_mode_p = False;
-}
+  p->db = db;
+  p->fading_possible_p = True;
+  load_init_file (p);
+  *p2 = *p;
 
-static void
-demo_mode_hack (saver_info *si, char *hack)
-{
-  if (! si->demo_mode_p) abort ();
-  kill_screenhack (si);
-  if (! si->demo_hack)
-    blank_screen (si);
-  si->demo_hack = hack;
-  spawn_screenhack (si, False);
-  /* raise_screenhack_dialog(); */
-}
+#ifdef HAVE_ATHENA
+  global_prefs_kludge = p;	/* I hate C so much... */
+#endif /* HAVE_ATHENA */
 
-static void
-demo_mode_done (saver_info *si)
-{
-  si->demo_mode_p = False;
+#if 0
+  {
+    XrmName name = { 0 };
+    XrmClass class = { 0 };
+    int count = 0;
+    XrmEnumerateDatabase (db, &name, &class, XrmEnumAllLevels, mapper,
+			  (XtPointer) &count);
+  }
+#endif
+
+
+  XA_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
+  XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
+  XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
+  XA_SCREENSAVER_TIME = XInternAtom (dpy, "_SCREENSAVER_TIME", False);
+  XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
+  XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
+  XA_SELECT = XInternAtom (dpy, "SELECT", False);
+  XA_DEMO = XInternAtom (dpy, "DEMO", False);
+  XA_RESTART = XInternAtom (dpy, "RESTART", False);
+
+  make_demo_dialog (toplevel_shell, pair);
+
+  if (prefs)
+    {
+      make_preferences_dialog (pair, toplevel_shell);
+      pop_preferences_dialog (pair);
+    }
+
+  the_network_is_not_the_computer (preferences_dialog
+				   ? preferences_dialog
+				   : demo_dialog);
+
+  XtAppMainLoop(app);
+  exit (0);
 }

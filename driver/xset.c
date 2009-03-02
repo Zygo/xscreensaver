@@ -138,12 +138,31 @@ init_sgi_saver_extension (saver_info *si)
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
 
+/* XIDLE server extension hackery.
+ */
+
+#ifdef HAVE_XIDLE_EXTENSION
+
+# include <X11/extensions/xidle.h>
+
+Bool
+query_xidle_extension (saver_info *si)
+{
+  int event_number;
+  int error_number;
+  return XidleQueryExtension (si->dpy, &event_number, &error_number);
+}
+
+#endif /* HAVE_XIDLE_EXTENSION */
+
+
+
 /* Figuring out what the appropriate XSetScreenSaver() parameters are
    (one wouldn't expect this to be rocket science.)
  */
 
 void
-disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
+disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
 {
   saver_preferences *p = &si->prefs;
   int current_server_timeout, current_server_interval;
@@ -173,10 +192,10 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
   desired_server_interval = 0;
 
   /* I suspect (but am not sure) that DontAllowExposures might have
-     something to do with powering off the monitor as well. */
+     something to do with powering off the monitor as well, at least
+     on some systems that don't support XDPMS?  Who know... */
   desired_allow_exp = AllowExposures;
 
-#if defined(HAVE_MIT_SAVER_EXTENSION) || defined(HAVE_SGI_SAVER_EXTENSION)
   if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
     {
       desired_server_timeout = (p->timeout / 1000);
@@ -189,8 +208,13 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
 	desired_prefer_blank = DontPreferBlanking;
     }
   else
-#endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
     {
+      /* When we're not using an extension, set the server-side timeout to 0,
+	 so that the server never gets involved with screen blanking, and we
+	 do it all ourselves.  (However, when we *are* using an extension,
+	 we tell the server when to notify us, and rather than blanking the
+	 screen, the server will send us an X event telling us to blank.)
+       */
       desired_server_timeout = 0;
     }
 
@@ -199,18 +223,17 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
       desired_prefer_blank != current_prefer_blank ||
       desired_allow_exp != current_allow_exp)
     {
-      if (desired_server_timeout == 0)
+      if (unblank_screen_p)
 	fprintf (stderr,
-		 "%s%sisabling server builtin screensaver.\n"
-		 "\tYou can re-enable it with \"xset s on\".\n",
-		(p->verbose_p ? "" : blurb()),
-		(p->verbose_p ? "\n\tD" : ": d"));
+		 "%s disabling server builtin screensaver.\n"
+		 "%s: you can re-enable it with \"xset s on\".\n",
+		 blurb(), blurb());
 
       if (p->verbose_p)
-	fprintf (stderr, "%s: (xset s %d %d %s %s)\n", blurb(),
+	fprintf (stderr, "%s: (xset s %d %d; xset s %s; xset s %s)\n", blurb(),
 		 desired_server_timeout, desired_server_interval,
 		 (desired_prefer_blank ? "blank" : "noblank"),
-		 (desired_allow_exp ? "noexpose" : "expose"));
+		 (desired_allow_exp ? "expose" : "noexpose"));
 
       XSetScreenSaver (si->dpy,
 		       desired_server_timeout, desired_server_interval,
@@ -235,7 +258,7 @@ disable_builtin_screensaver (saver_info *si, Bool turn_off_p)
   }
 #endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
 
-  if (turn_off_p)
+  if (unblank_screen_p)
     /* Turn off the server builtin saver if it is now running. */
     XForceScreenSaver (si->dpy, ScreenSaverReset);
 }

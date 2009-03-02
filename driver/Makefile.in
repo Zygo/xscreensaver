@@ -61,7 +61,6 @@ UTILS_BIN	= ../utils
 
 INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
 
-PASSWD_LIBS	= @PASSWD_LIBS@
 MOTIF_SRCS	= dialogs-Xm.c
 MOTIF_OBJS	= dialogs-Xm.o
 
@@ -79,47 +78,67 @@ LOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c
 
-DIALOG_SRCS	= @DIALOG_SRCS@
-DIALOG_OBJS	= @DIALOG_OBJS@
+TOOLKIT_SRCS	= @TOOLKIT_SRCS@
+TOOLKIT_OBJS	= @TOOLKIT_OBJS@
+TOOLKIT_LIBS	= @TOOLKIT_LIBS@
+
 PASSWD_SRCS	= @PASSWD_SRCS@
 PASSWD_OBJS	= @PASSWD_OBJS@
+PASSWD_LIBS	= @PASSWD_LIBS@
+
 LOCK_SRCS	= @LOCK_SRCS@
 LOCK_OBJS	= @LOCK_OBJS@
 
-UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
+SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/xroger.c \
-		  $(UTILS_SRC)/spline.c \
-		  $(UTILS_SRC)/yarandom.c @XMU_SRCS@
-UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
+		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/yarandom.c
+SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/xroger.o \
-		  $(UTILS_BIN)/spline.o \
-		  $(UTILS_BIN)/yarandom.o @XMU_OBJS@
+		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/yarandom.o
 
-SAVER_SRCS_1	= demo.c stderr.c subprocs.c setuid.c timers.c windows.c \
-		  xscreensaver.c splash.c xset.c dotfile.c
-SAVER_OBJS_1	= demo.o stderr.o subprocs.o setuid.o timers.o windows.o \
-		  xscreensaver.o splash.o xset.o dotfile.o
+DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c
+DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/visual.o
 
-SAVER_SRCS	= $(SAVER_SRCS_1) $(DIALOG_SRCS) $(LOCK_SRCS) $(UTIL_SRCS)
-SAVER_OBJS	= $(SAVER_OBJS_1) $(DIALOG_OBJS) $(LOCK_OBJS) $(UTIL_OBJS)
+SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c \
+		  xset.c splash.c setuid.c stderr.c
+SAVER_OBJS_1	= xscreensaver.o windows.o timers.o subprocs.o \
+		  xset.o splash.o setuid.o stderr.o
 
-CMD_SRCS	= xscreensaver-command.c
-CMD_OBJS	= xscreensaver-command.o
+SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c $(LOCK_SRCS) \
+		  $(SAVER_UTIL_SRCS) @XMU_SRCS@
+SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o $(LOCK_OBJS) \
+		  $(SAVER_UTIL_OBJS) @XMU_OBJS@
+
+CMD_SRCS	= remote.c xscreensaver-command.c
+CMD_OBJS	= remote.o xscreensaver-command.o
+
+DEMO_SRCS_1	= demo.c prefs.c
+DEMO_OBJS_1	= demo.o prefs.o
+
+DEMO_SRCS	= $(DEMO_SRCS_1) remote.c \
+		  $(TOOLKIT_SRCS) $(DEMO_UTIL_SRCS)
+DEMO_OBJS	= $(DEMO_OBJS_1) remote.o \
+		  $(TOOLKIT_OBJS) $(DEMO_UTIL_OBJS)
 
 SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ \
 		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
 		  $(PASSWD_LIBS)
 
-CMD_LIBS	= $(X_LIBS) $(X_PRE_LIBS)      \
-		  -lX11 -lXext $(X_EXTRA_LIBS) \
-		  $(LIBS)
+CMD_LIBS	= $(LIBS) $(X_LIBS) \
+		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
 
-EXES		= xscreensaver xscreensaver-command
+DEMO_LIBS	= $(LIBS) $(X_LIBS) $(TOOLKIT_LIBS) \
+		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
-HDRS		= XScreenSaver_ad.h xscreensaver.h
-MEN		= xscreensaver.man xscreensaver-command.man
+EXES		= xscreensaver xscreensaver-command xscreensaver-demo
+
+HDRS		= XScreenSaver_ad.h xscreensaver.h prefs.h remote.h
+MEN		= xscreensaver.man xscreensaver-demo.man \
+		  xscreensaver-command.man
 EXTRAS		= README Makefile.in XScreenSaver.ad.in dialogs.xd .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
@@ -127,7 +146,8 @@ VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
 		  $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS) \
-		  $(LOCK_SRCS_1) $(CMD_SRCS) $(HDRS) $(TEST_SRCS) $(MEN)
+		  $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) $(HDRS) \
+		  $(TEST_SRCS) $(MEN)
 
 
 all: $(EXES)
@@ -157,13 +177,14 @@ install-program: $(EXES)
  $$e "           must run 'make install' as 'root', not as '$$me'."	     ;\
  $$e ""									     ;\
  $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
- $$e "           means that locking might not work."			     ;\
+ $$e "           means that locking might not work.  (Try it and see.)"	     ;\
  $$e ""									     ;\
 	   fi ; 							\
 	fi ;								\
 	echo $$inst xscreensaver $(bindir)/xscreensaver ;		\
 	$$inst xscreensaver $(bindir)/xscreensaver
 	$(INSTALL_PROGRAM) xscreensaver-command $(bindir)/xscreensaver-command
+	$(INSTALL_PROGRAM) xscreensaver-demo $(bindir)/xscreensaver-demo
 
 install-ad: XScreenSaver.ad
 	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi
@@ -218,7 +239,7 @@ distdepend: update_ad_version update_man_version XScreenSaver_ad.h
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
 	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS)	    \
-	$(LOCK_SRCS_1) $(CMD_SRCS) |					    \
+	$(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) $(TEST_SRCS) |	    \
 	(								    \
 	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
 	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
@@ -319,9 +340,13 @@ xscreensaver: $(SAVER_OBJS)
 xscreensaver-command: $(CMD_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(CMD_OBJS) $(CMD_LIBS)
 
+xscreensaver-demo: $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(DEMO_LIBS)
 
-TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PWENT_OBJS) $(DIALOG_OBJS) \
-	 subprocs.o setuid.o demo.o splash.o \
+
+
+TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PWENT_OBJS) $(TOOLKIT_OBJS) \
+	 subprocs.o setuid.o demo.o splash.o prefs.o \
 	$(UTIL_OBJS)
 test-passwd.o: XScreenSaver_ad.h
 
@@ -334,44 +359,68 @@ test-uid: test-uid.o
 test-xdpms: test-xdpms.o
 	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(SAVER_LIBS)
 
+
+# This kludge is so that I can build/test the Athena version of the
+# xscreensaver-demo program without having to re-run configure.
+# Normally it builds it with Motif if possible; this lets me build
+# both.
+#
+xscreensaver-demo-Xaw: $(ATHENA_OBJS) demo-Xaw.o $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ demo-Xaw.o prefs.o remote.o \
+		$(ATHENA_OBJS) $(DEMO_UTIL_OBJS) \
+		$(LIBS) $(X_LIBS) -lXaw \
+		$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+xscreensaver-demo-Xaw3d: $(ATHENA_OBJS) demo-Xaw.o $(DEMO_OBJS)
+	$(CC) $(LDFLAGS) -o $@ demo-Xaw.o prefs.o remote.o \
+		$(ATHENA_OBJS) $(DEMO_UTIL_OBJS) \
+		$(LIBS) $(X_LIBS) -lXaw3d \
+		$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
+demo-Xaw.o: demo.c XScreenSaver_ad.h
+	$(CC) -o $@ -c -DHAVE_ATHENA_KLUDGE \
+	$(INCLUDES) $(DEFS2) $(CFLAGS) $(X_CFLAGS) $<
+
+
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
 # $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
-demo.o: ../config.h
-demo.o: $(srcdir)/xscreensaver.h
-demo.o: $(UTILS_SRC)/resources.h
-stderr.o: ../config.h
-stderr.o: $(srcdir)/xscreensaver.h
-stderr.o: $(UTILS_SRC)/resources.h
-stderr.o: $(UTILS_SRC)/visual.h
-subprocs.o: ../config.h
-subprocs.o: $(srcdir)/xscreensaver.h
-subprocs.o: $(UTILS_SRC)/yarandom.h
-setuid.o: ../config.h
-setuid.o: $(srcdir)/xscreensaver.h
-timers.o: ../config.h
-timers.o: $(srcdir)/xscreensaver.h
-windows.o: ../config.h
-windows.o: $(srcdir)/xscreensaver.h
-windows.o: $(UTILS_SRC)/visual.h
-windows.o: $(UTILS_SRC)/fade.h
 xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
+xscreensaver.o: $(srcdir)/prefs.h
 xscreensaver.o: $(UTILS_SRC)/version.h
 xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(UTILS_SRC)/resources.h
 xscreensaver.o: $(UTILS_SRC)/visual.h
 xscreensaver.o: XScreenSaver_ad.h
-splash.o: ../config.h
-splash.o: $(srcdir)/xscreensaver.h
-splash.o: $(UTILS_SRC)/resources.h
+windows.o: ../config.h
+windows.o: $(srcdir)/xscreensaver.h
+windows.o: $(srcdir)/prefs.h
+windows.o: $(UTILS_SRC)/visual.h
+windows.o: $(UTILS_SRC)/fade.h
+timers.o: ../config.h
+timers.o: $(srcdir)/xscreensaver.h
+timers.o: $(srcdir)/prefs.h
+subprocs.o: ../config.h
+subprocs.o: $(srcdir)/xscreensaver.h
+subprocs.o: $(srcdir)/prefs.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
 xset.o: ../config.h
 xset.o: $(srcdir)/xscreensaver.h
-dotfile.o: ../config.h
-dotfile.o: $(srcdir)/xscreensaver.h
-dotfile.o: $(UTILS_SRC)/resources.h
+xset.o: $(srcdir)/prefs.h
+splash.o: ../config.h
+splash.o: $(srcdir)/xscreensaver.h
+splash.o: $(srcdir)/prefs.h
+splash.o: $(UTILS_SRC)/resources.h
+setuid.o: ../config.h
+setuid.o: $(srcdir)/xscreensaver.h
+setuid.o: $(srcdir)/prefs.h
+stderr.o: ../config.h
+stderr.o: $(srcdir)/xscreensaver.h
+stderr.o: $(srcdir)/prefs.h
+stderr.o: $(UTILS_SRC)/resources.h
+stderr.o: $(UTILS_SRC)/visual.h
 dialogs-Xm.o: ../config.h
 dialogs-Xm.o: $(UTILS_SRC)/visual.h
 dialogs-Xaw.o: ../config.h
@@ -379,7 +428,29 @@ dialogs-Xaw.o: $(UTILS_SRC)/visual.h
 passwd.o: ../config.h
 lock.o: ../config.h
 lock.o: $(srcdir)/xscreensaver.h
+lock.o: $(srcdir)/prefs.h
 lock.o: $(UTILS_SRC)/resources.h
+demo.o: ../config.h
+demo.o: $(UTILS_SRC)/version.h
+demo.o: $(srcdir)/prefs.h
+demo.o: $(UTILS_SRC)/resources.h
+demo.o: $(UTILS_SRC)/visual.h
+demo.o: $(srcdir)/remote.h
+demo.o: XScreenSaver_ad.h
+prefs.o: ../config.h
+prefs.o: $(srcdir)/prefs.h
+prefs.o: $(UTILS_SRC)/resources.h
+remote.o: ../config.h
+remote.o: $(srcdir)/remote.h
 xscreensaver-command.o: ../config.h
+xscreensaver-command.o: $(srcdir)/remote.h
 xscreensaver-command.o: $(UTILS_SRC)/version.h
+test-passwd.o: ../config.h
+test-passwd.o: $(srcdir)/xscreensaver.h
+test-passwd.o: $(srcdir)/prefs.h
+test-passwd.o: $(UTILS_SRC)/resources.h
+test-passwd.o: $(UTILS_SRC)/version.h
+test-passwd.o: XScreenSaver_ad.h
+test-uid.o: ../config.h
+test-xdpms.o: ../config.h
 

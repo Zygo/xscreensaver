@@ -57,6 +57,9 @@ static void move_lense(int);
 static void swamp_thing(int);
 static void new_rnd_coo(int);
 static void init_round_lense(void);
+static void (*draw) (int) = NULL;
+static void reflect_draw(int);
+static void plain_draw(int);
 
 static void init_distort(Display *dpy, Window window) 
 {
@@ -67,10 +70,10 @@ static void init_distort(Display *dpy, Window window)
 	g_window=window;
 	g_dpy=dpy;
 
-	delay = get_integer_resource ("delay", "Integer");
-	radius = get_integer_resource ("radius", "Integer");
-	speed = get_integer_resource ("speed", "Integer");
-	number = get_integer_resource ("number", "Integer");
+	delay = get_integer_resource("delay", "Integer");
+	radius = get_integer_resource("radius", "Integer");
+	speed = get_integer_resource("speed", "Integer");
+	number = get_integer_resource("number", "Integer");
 
 #ifdef HAVE_XSHM_EXTENSION
 	use_shm = get_boolean_resource("useSHM", "Boolean");
@@ -81,9 +84,9 @@ static void init_distort(Display *dpy, Window window)
 	magnify = get_boolean_resource("magnify", "Boolean");
 	reflect = get_boolean_resource("reflect", "Boolean");
 	
-	if (get_boolean_resource ("swamp", "Boolean"))
+	if (get_boolean_resource("swamp", "Boolean"))
 		effect = &swamp_thing;
-	if (get_boolean_resource ("bounce", "Boolean") || reflect)
+	if (get_boolean_resource("bounce", "Boolean"))
 		effect = &move_lense;
 
 	if (effect == NULL && radius == 0 && speed == 0 && number == 0
@@ -104,9 +107,13 @@ static void init_distort(Display *dpy, Window window)
  * -radius 50 -number 4 -speed 2 -swamp -vortex
  * -radius 50 -number 4 -speed 2 -swamp -vortex -magnify
  * -radius 50 -number 4 -speed 2 -swamp -vortex -magnify -blackhole
+ * -radius 80 -number 1 -speed 2 -reflect
+ * -radius 50 -number 3 -speed 2 -reflect
  */
 		
-		i = (random() % 15);
+		i = (random() % 17);
+
+		draw = &plain_draw;
 
 		switch (i) {
 			case 0:
@@ -151,9 +158,15 @@ static void init_distort(Display *dpy, Window window)
 			case 13:
 				radius=50;number=4;speed=2;vortex=1;magnify=1;
 				effect=&swamp_thing;break;
-			case 14: default:
+			case 14:
 				radius=50;number=4;speed=2;vortex=1;magnify=1;blackhole=1;
 				effect=&swamp_thing;break;
+			case 15:
+				radius=80;number=1;speed=2;reflect=1;
+				draw = &reflect_draw;effect = &move_lense;break;
+			case 16: default:
+				radius=50;number=4;speed=2;reflect=1;
+				draw = &reflect_draw;effect = &move_lense;break;
 		}
 
 	}
@@ -170,6 +183,12 @@ static void init_distort(Display *dpy, Window window)
 		number=1;
 	if (effect == NULL)
 		effect = &move_lense;
+	if (reflect) {
+		draw = &reflect_draw;
+		effect = &move_lense;
+	}
+	if (draw == NULL)
+		draw = &plain_draw;
 
 	XGetWindowAttributes (dpy, window, &xgwa);
 	black_pixel = BlackPixelOfScreen( xgwa.screen );
@@ -243,7 +262,6 @@ static void init_distort(Display *dpy, Window window)
 static void make_round_lense(int radius, int loop)
 {
 	int i, j;
-	double theta;
 
 	for (i = 0; i < 2*radius+speed+2; i++) {
 		for(j = 0; j < 2*radius+speed+2; j++) {
@@ -265,17 +283,16 @@ static void make_round_lense(int radius, int loop)
 		/* 2.5 is just a constant used because it looks good :) */
 					angle = 2.5*(1-d)*(1-d);
 
-
         /* Avoid atan2: DOMAIN error message */
-        if ((radius-j) == 0.0 && (radius-i) == 0.0)
-            theta = 0.0;
-        else
-            theta = atan2(radius-j, radius-i);
-        from[i][j][0] = radius +
-                        cos(angle - theta)*r;
-        from[i][j][1] = radius +
-                        sin(angle - theta)*r;
-
+					if ((radius-j) == 0.0 && (radius-i) == 0.0) {
+						from[i][j][0] = radius + cos(angle)*r;
+						from[i][j][1] = radius + sin(angle)*r;
+					} else {
+      				  	from[i][j][0] = radius +
+									cos(angle - atan2(radius-j, -(radius-i)))*r;
+			        	from[i][j][1] = radius +
+									sin(angle - atan2(radius-j, -(radius-i)))*r;
+					}
 					if (magnify) {
 						r = sin(d*M_PI_2);
 						if (blackhole && r != 0) /* blackhole effect */
@@ -290,7 +307,7 @@ static void make_round_lense(int radius, int loop)
 	 * distortion, a negative value sucks everything into a black hole
 	 */
 				/*	r = r*r; */
-					if (blackhole) /* blackhole effect */
+					if (blackhole && r != 0) /* blackhole effect */
 						r = 1/r;
 									/* bubble effect (and blackhole) */
 					from[i][j][0] = radius + (i-radius)*r;
@@ -360,53 +377,67 @@ static void init_round_lense(void)
 
 
 /* generate an XImage of from[][][] and draw it on the screen */
-void draw(int k)
+void plain_draw(int k)
+{
+	int i, j;
+	for(i = 0 ; i < 2*radius+speed+2; i++) {
+		for(j = 0 ; j < 2*radius+speed+2 ; j++) {
+			if (xy_coo[k].x+from[i][j][0] >= 0 &&
+					xy_coo[k].x+from[i][j][0] < xgwa.width &&
+					xy_coo[k].y+from[i][j][1] >= 0 &&
+					xy_coo[k].y+from[i][j][1] < xgwa.height)
+				XPutPixel(buffer_map, i, j,
+						XGetPixel(orig_map,
+							xy_coo[k].x+from[i][j][0],
+							xy_coo[k].y+from[i][j][1]));
+		}
+	}
+
+	XPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
+			2*radius+speed+2, 2*radius+speed+2);
+}
+
+/* generate an XImage from the reflect algoritm submitted by
+ * Randy Zack <randy@acucorp.com>
+ * draw really got too big and ugly so I split it up
+ * it should be possible to use the from[][] to speed it up
+ * (once I figure out the algorithm used :)
+ */
+void reflect_draw(int k)
 {
 	int i, j;
 	int	cx, cy;
 	int	ly, lysq, lx, ny, dist, rsq = radius * radius;
-	if (reflect) {
-		cx = cy = radius;
-		if (xy_coo[k].ymove > 0)
-			cy += speed;
-		if (xy_coo[k].xmove > 0)
-			cx += speed;
-	}
+
+	cx = cy = radius;
+	if (xy_coo[k].ymove > 0)
+		cy += speed;
+	if (xy_coo[k].xmove > 0)
+		cx += speed;
+
 	for(i = 0 ; i < 2*radius+speed+2; i++) {
-		if (reflect) {
-			ly = i - cy;
-			lysq = ly * ly;
-			ny = xy_coo[k].y + i;
-		}
+		ly = i - cy;
+		lysq = ly * ly;
+		ny = xy_coo[k].y + i;
 		for(j = 0 ; j < 2*radius+speed+2 ; j++) {
-			if (reflect) {
-				lx = j - cx;
-				dist = lx * lx + lysq;
-				if (dist > rsq ||
-					ly < -radius || ly > radius ||
-					lx < -radius || lx > radius)
-					XPutPixel( buffer_map, j, i,
-							   XGetPixel( orig_map, xy_coo[k].x + j, ny ));
-				else if (dist == 0)
+			lx = j - cx;
+			dist = lx * lx + lysq;
+			if (dist > rsq ||
+				ly < -radius || ly > radius ||
+				lx < -radius || lx > radius)
+				XPutPixel( buffer_map, j, i,
+						   XGetPixel( orig_map, xy_coo[k].x + j, ny ));
+			else if (dist == 0)
+				XPutPixel( buffer_map, j, i, black_pixel );
+			else {
+				int	x = xy_coo[k].x + cx + (lx * rsq / dist);
+				int	y = xy_coo[k].y + cy + (ly * rsq / dist);
+				if (x < 0 || x > xgwa.width ||
+					y < 0 || y > xgwa.height)
 					XPutPixel( buffer_map, j, i, black_pixel );
-				else {
-					int	x = xy_coo[k].x + cx + (lx * rsq / dist);
-					int	y = xy_coo[k].y + cy + (ly * rsq / dist);
-					if (x < 0 || x > xgwa.width ||
-						y < 0 || y > xgwa.height)
-						XPutPixel( buffer_map, j, i, black_pixel );
-					else
-						XPutPixel( buffer_map, j, i,
-								   XGetPixel( orig_map, x, y ));
-				}
-			} else if (xy_coo[k].x+from[i][j][0] >= 0 &&
-					   xy_coo[k].x+from[i][j][0] < xgwa.width &&
-					   xy_coo[k].y+from[i][j][1] >= 0 &&
-					   xy_coo[k].y+from[i][j][1] < xgwa.height) {
-				XPutPixel(buffer_map, i, j,
-						  XGetPixel(orig_map,
-									xy_coo[k].x+from[i][j][0],
-									xy_coo[k].y+from[i][j][1]));
+				else
+					XPutPixel( buffer_map, j, i,
+							   XGetPixel( orig_map, x, y ));
 			}
 		}
 	}
@@ -458,7 +489,7 @@ static void move_lense(int k)
 	for (i = 0; i < number; i++) {
 		if ((i != k)
 		
-/* This commented test is for rectangular lenses (not presently used) and
+/* This commented test is for rectangular lenses (not currently used) and
  * the one used is for circular ones
 		&& (abs(xy_coo[k].x - xy_coo[i].x) <= 2*radius)
 		&& (abs(xy_coo[k].y - xy_coo[i].y) <= 2*radius)) { */

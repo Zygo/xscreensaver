@@ -24,6 +24,10 @@ The most important hint is probably this:
 
 To build on VMS, see README.VMS.
 
+If you are upgrading, you might want to delete your ~/.xscreensaver file.
+If you don't, you might not see the new graphics modes.  If you are upgrading
+from version 2.* to version 3.*, definitely do delete your .xscreensaver file.
+
 If you think you've found a bug, please let me know!  No bug report is too
 small.  But first, please read the enclosed `README.debugging' file to find
 out what kind of information would be most helpful to include in your bug
@@ -73,6 +77,32 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.00:   * Some fixes to `reflect'.
+		      * Configure tweaks.
+		      * Made it log unsuccessful attempts to unlock the screen
+			to syslog.
+		      * Fixed a bug where `xscreensaver-demo' could be seeing
+			a different programs list than `xscreensaver' did.
+Changes since 2.34:   * The xscreensaver daemon no longer links against Motif
+			or Athena: demo-mode and the preferences panel are no
+			longer built in to the daemon, but are now handled by
+			an external program, `xscreensaver-demo'.
+			(I decided that this, along with the recent addition
+			of the `.xscreensaver' config file, justified bumping
+			the version number to 3.00, since this is a fairly
+			major architectural change.)
+		      * Lines in the `*programs' resource may now begin with
+			the character "-", meaning "don't run this hack."
+			In this way, it's possible to disable a hack without
+			throwing away the information about it (making it 
+			easier to change your mind later.)  Eventually the
+			preferences/demo mode GUI should represent this as a
+			checkbox or something.
+		      * Fixed a short race condition where it was possible for
+			xscreensaver to die with a BadWindow error if it was
+			blanking the screen just as another window was being
+			deleted.
+		      * Made it possible to disable specific modes in `bsod'.
 Changes since 2.33:   * Fixed a bug that was making `pipes' generate way too
 			many valves.  Made the viewpoint in `pipes' be selected
 			randomly instead of always being -10 degrees.
