@@ -1,0 +1,33 @@
+/* XPM */
+static char * image_name[] = {
+/* width height ncolors cpp */
+"50 24 3 1",
+/* colors */
+" 	c Black",
+".	c Red",
+"X	c SteelBlue",
+/* pixels */
+"                                                  ",
+" ..........                ...                    ",
+"  ..........              ...                     ",
+"   ..........            ...                      ",
+"    ..........          ...            XXXXX      ",
+"     ..........        ...           XXXXXXXXX    ",
+"      ..........      ...            XXXXXXXXX    ",
+"       ..........    ...            XXXX   XXXX   ",
+"        ..........  ...             XXX     XXX   ",
+"         ......... ...              XXX     XXX   ",
+"          ....... ...               XXX     XXX   ",
+"           ..... ....                             ",
+"            ... ......            XXXXXXXXXXXXXXX ",
+"           ... ........           XXXXXXXXXXXXXXX ",
+"          ... ..........          XXXXX XXX XXXXX ",
+"         ...   ..........         XX XX     XX XX ",
+"        ...     ..........        XX XX XXX XX XX ",
+"       ...       ..........       XX XX     XX XX ",
+"      ...         ..........      XX XX XXX XX XX ",
+"     ...           ..........     XX XX     XX XX ",
+"    ...             ..........    XX XX XXX XX XX ",
+"   ...               ..........   XXXXXXXXXXXXXXX ",
+"  ...                 ..........  XXXXXXXXXXXXXXX ",
+"                                                  "};

@@ -1,0 +1,261 @@
+****  Purify instrumented xlock/xlock (pid 4834 at Wed Aug  9 17:07:56 2000)
+  * Purify 5.1 Solaris 2 (32-bit), Copyright (C) 1992-2000 Rational Software Corp. All rights reserved. 
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: xlock/xlock -sequential -verbose -modelist all
+  * Options settings: -chain-length=25 -windows=yes -g++=yes -purify \
+    -purify-home=/opt/pure/purify-5.1-solaris2 -threads=yes \
+    -use-internal-locks=yes -thread_stack_change=0x4000 -mt_safe_malloc=yes 
+  * Command-line: xlock/xlock -sequential -verbose -modelist all
+
+****  Purify instrumented xlock/xlock (pid 4834)  ****
+Current file descriptors in use: 8
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <stdout>
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 3: "/tmp/.X11-pipe/X0", O_RDWR
+   * File info: prw-rw-rw-  1 root     root             0 Jun 16 16:09
+   * This file descriptor was allocated from:
+	_open          [libc.so.1]
+	open           [libc.so.1]
+	_X11TransSocketPIPEConnect [x11trans.c]
+	_X11TransConnect [x11trans.c]
+	_X11TransConnectDisplay [ConnDis.c]
+	XOpenDisplay   [OpenDis.c]
+	openDisplay    [resource.c:1429]
+	getResources   [resource.c:1792]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+FIU: file descriptor 4: "/etc/.name_service_door", O_RDONLY
+   * File info: ?r--r--r--  1 root     root             0 Jun 11  1999
+   * This file descriptor was allocated from:
+	_open64        [libc.so.1]
+	_nsc_trydoorcall [libc.so.1]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:491]
+	getResources   [resource.c:1990]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+FIU: file descriptor 5: "/usr/local/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 root     other           20 Oct 13  1998
+   * File position: 20
+   * This file descriptor was allocated from:
+	_open          [libc.so.1]
+	_endopen       [libc.so.1]
+	fopen          [libc.so.1]
+	my_fopen       [iostuff.c:59]
+	fullLock       [logout.c:500]
+	getResources   [resource.c:1990]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+
+****  Purify instrumented xlock/xlock (pid 4834)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 3241 bytes (0.0319%); potentially leaked: 0 bytes (0%)
+
+MLK: 1024 bytes leaked at 0x6b3120
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_compat_XY_all [nss_compat.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:923]
+	initPasswd     [passwd.c:1947]
+	main           [xlock.c:2933]
+	_start         [crt1.o]
+
+MLK: 1024 bytes leaked at 0x6b4040
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_compat_XY_all [nss_compat.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:407]
+	getCryptedUserPasswd [passwd.c:766]
+	initPasswd     [passwd.c:1939]
+	main           [xlock.c:2933]
+	_start         [crt1.o]
+
+MLK: 1024 bytes leaked at 0x6ddd90
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_compat_XY_all [nss_compat.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:407]
+	getUserName    [passwd.c:531]
+	initPasswd     [passwd.c:1924]
+	main           [xlock.c:2933]
+	_start         [crt1.o]
+
+MLK: 32 bytes leaked in 2 blocks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+  * Block of 16 bytes (2 times); last block at 0x6c5fb8
+
+MLK: 26 bytes leaked at 0x7054b0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:1201]
+	getResources   [resource.c:1946]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 24 bytes leaked at 0x6c61c0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 20 bytes leaked at 0x6bfe50
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	create_conv    [lcDefConv.c]
+	_XlcOpenConverter [lcConv.c]
+	_XrmDefaultInitParseInfo [lcRM.c]
+	NewDatabase    [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 16 bytes leaked at 0x6bff08
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 16 bytes leaked at 0x6bffc8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 15 bytes leaked at 0x6c6110
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 8 bytes leaked at 0x6c3170
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	create_conv    [lcDefConv.c]
+	_XlcOpenConverter [lcConv.c]
+	_XrmDefaultInitParseInfo [lcRM.c]
+	NewDatabase    [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 8 bytes leaked at 0x6e2cb0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XrmDefaultInitParseInfo [lcRM.c]
+	NewDatabase    [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+MLK: 4 bytes leaked at 0x6c6068
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	_start         [crt1.o]
+
+Purify Heap Analysis (combining suppressed and unsuppressed blocks)
+                         Blocks        Bytes
+              Leaked         23         3241
+  Potentially Leaked          1         8200
+              In-Use       6212     10140895
+  ----------------------------------------
+     Total Allocated       6236     10152336
+
+****  Purify instrumented xlock/xlock (pid 4834)  ****
+Thread Summary : 1 threads in existence
+  * Thread 0 [main thread]
+     Stack: (0xefffe048 0xf0000000), size = 0x1fb8
+
+****  Purify instrumented xlock/xlock (pid 4834)  ****
+  * Program exited with status code 0.
+  * 1 access error, 654 total occurrences.
+  * 3241 bytes leaked.
+  * 0 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+    6205148 code
+    672992 data/bss
+    22593540 heap (peak use)
+    6856 stack
+  * Shared library memory usage (including Purify overhead):
+    1456 libpure_solaris2_init.so.1 (shared code)
+    252 libpure_solaris2_init.so.1 (private data)
+    51619 libSM.so.6_pure_p3_c0_510_56_32 (shared code)
+    3584 libSM.so.6_pure_p3_c0_510_56_32 (private data)
+    114154 libICE.so.6_pure_p3_c0_510_56_32 (shared code)
+    12152 libICE.so.6_pure_p3_c0_510_56_32 (private data)
+    41726 libsocket.so.1_pure_p3_c0_510_56_32 (shared code)
+    3316 libsocket.so.1_pure_p3_c0_510_56_32 (private data)
+    736310 libnsl.so.1_pure_p3_c0_510_56_32 (shared code)
+    114968 libnsl.so.1_pure_p3_c0_510_56_32 (private data)
+    560976 libDtSvc.so.1_pure_p3_c0_510_56_32 (shared code)
+    22520 libDtSvc.so.1_pure_p3_c0_510_56_32 (private data)
+    2048 solaris2_threads.so_pure_p3_c0_510_56_32 (shared code)
+    8544 solaris2_threads.so_pure_p3_c0_510_56_32 (private data)
+    25835 libposix4.so.1_pure_p3_c0_510_56_32 (shared code)
+    1820 libposix4.so.1_pure_p3_c0_510_56_32 (private data)
+    844434 libX11.so.4_pure_p3_c0_510_56_32 (shared code)
+    59356 libX11.so.4_pure_p3_c0_510_56_32 (private data)
+    135413 libXext.so.0_pure_p3_c0_510_56_32 (shared code)
+    2564 libXext.so.0_pure_p3_c0_510_56_32 (private data)
+    140125 libm.so.1_pure_p3_c0_510_56_32 (shared code)
+    1332 libm.so.1_pure_p3_c0_510_56_32 (private data)
+    964709 libc.so.1_pure_p3_c0_510_56_32 (shared code)
+    31024 libc.so.1_pure_p3_c0_510_56_32 (private data)
+    2040 libdl.so.1_pure_p3_c0_510_56_32 (shared code)
+    4 libdl.so.1_pure_p3_c0_510_56_32 (private data)
+    13528 libinternal_stubs.so.1 (shared code)
+    916 libinternal_stubs.so.1 (private data)
+    16264 libmp.so.2_pure_p3_c0_510_56_32 (shared code)
+    836 libmp.so.2_pure_p3_c0_510_56_32 (private data)
+    658534 libtt.so.2_pure_p3_c0_510_56_32 (shared code)
+    47160 libtt.so.2_pure_p3_c0_510_56_32 (private data)
+    2594362 libXm.so.3_pure_p3_c0_510_56_32 (shared code)
+    182028 libXm.so.3_pure_p3_c0_510_56_32 (private data)
+    587610 libXt.so.4_pure_p3_c0_510_56_32 (shared code)
+    24908 libXt.so.4_pure_p3_c0_510_56_32 (private data)
+    35802 libaio.so.1_pure_p3_c0_510_56_32 (shared code)
+    6404 libaio.so.1_pure_p3_c0_510_56_32 (private data)

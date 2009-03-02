@@ -1,0 +1,8 @@
+#
+# This is an example of what a fvwm2(1) user might add to ~/.fvwm2rc 
+# so that xlock(1) will delete their keys from ssh-agent(1) when they
+# lock the screen and re-add them when the unlock it.
+#
+
+Key z A CM Exec xlock -nice 0 -mode life -startCmd "ssh-add -D" \
+	-pipepassCmd /usr/local/bin/xlockssh-add-keys.pl &

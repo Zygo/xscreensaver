@@ -1,0 +1,219 @@
+****  Purify instrumented xlock/xlock (pid 23512 at Thu Aug 10 17:07:33 2000)
+  * Purify 4.5.1 SunOS 4.1, Copyright (C) 1992-1999 Rational Software Corp. All rights reserved. 
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: xlock/xlock -sequential -verbose -modelist all
+  * Options settings: -chain-length=25 -windows=yes -g++=yes -purify \
+    -collector=/usr/bin/ld -purify-home=/opt/pure/purify-4.5.1-sunos4 
+
+****  Purify instrumented xlock/xlock (pid 23512)  ****
+Current file descriptors in use: 8
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <stdout>
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 3: <unnamed socket>, O_RDWR
+   * This file descriptor was allocated from:
+	socket         [rtlib.o]
+	MakeUNIXSocketConnection [libX11.so.4.10]
+	_XConnectDisplay [libX11.so.4.10]
+	XOpenDisplay   [libX11.so.4.10]
+	openDisplay    [resource.c:1429]
+	getResources   [resource.c:1792]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+FIU: file descriptor 4: "/usr/local/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 root     staff           20 Oct 13  1998
+   * File position: 20
+   * This file descriptor was allocated from:
+	open           [rtlib.o]
+	_endopen       [libc.so.1.9]
+	fopen          [libc.so.1.9]
+	my_fopen       [iostuff.c:59]
+	fullLock       [logout.c:500]
+	getResources   [resource.c:1990]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+FIU: file descriptor 5: <unnamed socket>, O_RDWR
+   * This file descriptor was allocated from:
+	socket         [rtlib.o]
+	clntudp_bufcreate [libc.so.1.9]
+	load_dom_binding [libc.so.1.9]
+	_yp_dobind_soft [libc.so.1.9]
+	_yp_dobind     [libc.so.1.9]
+	yp_match       [libc.so.1.9]
+	getnamefromyellow [libc.so.1.9]
+	matchuid       [libc.so.1.9]
+	getpwuid       [libc.so.1.9]
+	fullLock       [logout.c:491]
+	getResources   [resource.c:1990]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+
+****  Purify instrumented xlock/xlock (pid 23512)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 209 bytes (0.00308%); potentially leaked: 0 bytes (0%)
+
+MLK: 32 bytes leaked in 2 blocks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+  * Block of 16 bytes (2 times); last block at 0x6aeef8
+
+MLK: 26 bytes leaked at 0x6b5b60
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:1201]
+	getResources   [resource.c:1946]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 24 bytes leaked at 0x6af058
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x676aa8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XlcDupLocale  [libX11.so.4.10]
+	_XrmInitParseInfo [libX11.so.4.10]
+	NewDatabase    [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XlockrmParseCommand [parsecmd.c:195]
+	getResources   [resource.c:1844]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x674fe8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XlcDupLocale  [libX11.so.4.10]
+	_XrmInitParseInfo [libX11.so.4.10]
+	NewDatabase    [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1818]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x682650
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XlcDupLocale  [libX11.so.4.10]
+	_XrmInitParseInfo [libX11.so.4.10]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetStringDatabase [libX11.so.4.10]
+	getServerResources [resource.c:1606]
+	getResources   [resource.c:1794]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x696470
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XlcDupLocale  [libX11.so.4.10]
+	_XrmInitParseInfo [libX11.so.4.10]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1330]
+	getAppResources [resource.c:1677]
+	getResources   [resource.c:1791]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x6aece8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XlcDupLocale  [libX11.so.4.10]
+	_XrmInitParseInfo [libX11.so.4.10]
+	NewDatabase    [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 16 bytes leaked at 0x6aed98
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 15 bytes leaked at 0x6aefa8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 12 bytes leaked at 0x66de58
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+MLK: 4 bytes leaked at 0x67bc20
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	PutEntry       [libX11.so.4.10]
+	XrmQPutStringResource [libX11.so.4.10]
+	XrmParseCommand [libX11.so.4.10]
+	getResources   [resource.c:1860]
+	main           [xlock.c:2918]
+	start          [crt0.o]
+
+Purify Heap Analysis (combining suppressed and unsuppressed blocks)
+                         Blocks        Bytes
+              Leaked         14          221
+  Potentially Leaked          0            0
+              In-Use        380      6786713
+  ----------------------------------------
+     Total Allocated        394      6786934
+
+****  Purify instrumented xlock/xlock (pid 23512)  ****
+  * Program exited with status code 0.
+  * 0 access errors, 0 total occurrences.
+  * 209 bytes leaked.
+  * 0 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+    6012288 code
+    668912 data/bss
+    18252032 heap (peak use)
+    1904 stack
+  * Shared library memory usage (including Purify overhead):
+    688128 libX11_pure_p3_c0_451_413_U1V.so.4.10 (shared code)
+    49152 libX11_pure_p3_c0_451_413_U1V.so.4.10 (private data)
+    49152 libXext_pure_p3_c0_451_413_U1V.so.4.10 (shared code)
+    8192 libXext_pure_p3_c0_451_413_U1V.so.4.10 (private data)
+    696320 libc_pure_p3_c0_451_413_U1V.so.1.9 (shared code)
+    16384 libc_pure_p3_c0_451_413_U1V.so.1.9 (private data)
+    8192 libdl.so.1.0 (shared code)
+    8192 libdl.so.1.0 (private data)
+    8192 libinternal_stubs.so.1.0 (shared code)
+    8192 libinternal_stubs.so.1.0 (private data)
+  * Memory mapped usage:
+    4096 mmap'd at 0xef0f1000
