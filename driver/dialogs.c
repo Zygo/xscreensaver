@@ -73,19 +73,13 @@ Widget restart;
 Widget spacer;
 
 
+void
 create_passwd_dialog( parent )
 Widget parent;
 {
-	Display *display = XtDisplay ( parent );
 	Widget children[8];      /* Children to manage */
 	Arg al[64];           /* Arg List */
 	register int ac = 0;      /* Arg Count */
-	char from_s [256];    /* For font list conversion */
-	XrmValue from_value, to_value; /* ditto */
-	int fg, bg;           /* colour values for pixmaps */ 
-	XmString *list_items; /* For list items */
-	int list_item;        /* Index for list_items */
-	XmString xmstrings[15];    /* temporary storage for XmStrings */
 	Widget widget4;
 	Widget widget7;
 
@@ -216,19 +210,13 @@ Widget parent;
 
 
 
+void
 create_resources_dialog( parent )
 Widget parent;
 {
-	Display *display = XtDisplay ( parent );
 	Widget children[22];      /* Children to manage */
 	Arg al[64];           /* Arg List */
 	register int ac = 0;      /* Arg Count */
-	char from_s [256];    /* For font list conversion */
-	XrmValue from_value, to_value; /* ditto */
-	int fg, bg;           /* colour values for pixmaps */ 
-	XmString *list_items; /* For list items */
-	int list_item;        /* Index for list_items */
-	XmString xmstrings[15];    /* temporary storage for XmStrings */
 	Widget widget12;
 	Widget widget13;
 	Widget widget14;
@@ -593,18 +581,13 @@ Widget parent;
 
 
 
+void
 create_demo_dialog( parent )
 Widget parent;
 {
-	Display *display = XtDisplay ( parent );
 	Widget children[11];      /* Children to manage */
 	Arg al[64];           /* Arg List */
 	register int ac = 0;      /* Arg Count */
-	char from_s [256];    /* For font list conversion */
-	XrmValue from_value, to_value; /* ditto */
-	int fg, bg;           /* colour values for pixmaps */ 
-	XmString *list_items; /* For list items */
-	int list_item;        /* Index for list_items */
 	XmString xmstrings[15];    /* temporary storage for XmStrings */
 
 

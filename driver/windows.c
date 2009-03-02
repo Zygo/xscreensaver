@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -724,6 +724,12 @@ raise_window (inhibit_fade, between_hacks_p)
     XInstallColormap (dpy, cmap);
 }
 
+#ifdef __hpux
+ /* Calls to XHPDisableReset and XHPEnableReset must be balanced,
+    or BadAccess errors occur. */
+static Bool hp_locked_p = False;
+#endif /* __hpux */
+
 void
 blank_screen ()
 {
@@ -732,8 +738,9 @@ blank_screen ()
   raise_window (False, False);
   grab_keyboard_and_mouse ();
 #ifdef __hpux
-  if (lock_p)
+  if (lock_p && !hp_locked_p)
     XHPDisableReset (dpy);	/* turn off C-Sh-Reset */
+  hp_locked_p = True;
 #endif
 }
 
@@ -769,7 +776,8 @@ unblank_screen ()
   ungrab_keyboard_and_mouse ();
   restore_real_vroot ();
 #ifdef __hpux
-  if (lock_p)
+  if (lock_p && hp_locked_p)
     XHPEnableReset (dpy);	/* turn C-Sh-Reset back on */
+  hp_locked_p = False;
 #endif
 }

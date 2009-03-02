@@ -1,9 +1,22 @@
-.TH XScreenSaver 1 "22-mar-93" "X Version 11"
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "14-Dec-95" "X Version 11"
 .SH NAME
 attraction - interactions of opposing forces
 .SH SYNOPSIS
 .B attraction
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP] [\-mode balls | lines | polygons | splines | filled-splines | tails ] [\-color-mode cycle | random] [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP] [\-color-shift \fIdegrees\fP] [\-radius \fIint\fP] [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow] [\-orbit]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP] [\-mode balls | lines | polygons | splines | filled-splines | tails ] [\-color-mode cycle | random] [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP] [\-color-shift \fIdegrees\fP] [\-radius \fIint\fP] [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow] [\-orbit] [\-viscosity \fIfloat\fP] [\-mouse] [\-no-mouse] [\-mouse-size]
 .SH DESCRIPTION
 The \fIattraction\fP program has several visually different modes of 
 operation, all of which are based on the interactions of a set of control
@@ -115,6 +128,31 @@ to decay.
 In orbit mode, the initial velocity of the balls is multiplied by this;
 a number less than 1 will make the balls pull closer together, and a larger
 number will make them move apart.  The default is 1, meaning stability.
+.TP 8
+.B \-viscosity float
+This sets the viscosity of the hypothetical fluid through which the control
+points move; the default is 1, meaning no resistance.  Values higher than 1
+aren't interesting; lower values cause less motion.
+
+One interesting thing to try is
+.EX
+attraction -viscosity 0.8 -points 75 \\
+  -mouse -geometry =500x500
+.EE
+Give it a few seconds to settle down into a stable clump, and then move
+the mouse through it to make "waves".
+.TP 8
+.B \-mouse
+This will cause the mouse to be considered a control point; it will not be
+drawn, but it will influence the other points, so you can wave the mouse
+and influence the images being created.
+.TP 8
+.B \-no-mouse
+Turns off \fB\-mouse\fP.
+.TP 8
+.B \-mouse-size integer
+In \fB\-mouse\fP mode, this sets the mass of the mouse (analagously to the
+\fB\-size\fP parameter.)
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -136,4 +174,6 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@mcom.com>, 13-aug-92.
+Jamie Zawinski <jwz@netscape.com>, 13-aug-92.
+
+Viscosity and mouse support by Philip Edward Cutone, III.

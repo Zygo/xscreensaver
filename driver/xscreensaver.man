@@ -216,9 +216,10 @@ The background color used for the stdout/stderr text, if \fBcaptureStdout\fP
 or \fBcaptureStderr\fP are true.  Default: Black.
 .TP 8
 .B programs \fR(class \fBPrograms\fP)
-The graphics hacks which \fIxscreensaver\fP runs when the user is idle.
-The value of this resource is a string, one \fIsh\fP command per line.
-Each line must contain exactly one command -- no semicolons.
+The graphics hacks which \fIxscreensaver\fP runs when the user is idle,
+in addition to those specified in colorPrograms or monoPrograms (as 
+appropriate.)  The value of this resource is a string, one \fIsh\fP command 
+per line.  Each line must contain exactly one command -- no semicolons.
 
 When the screensaver starts up, one of these is selected at random, and
 run.  After the \fIcycle\fP period expires, it is killed, and another
@@ -328,6 +329,13 @@ screensaver will run even when nobody is logged in on the console.
 Simply add \fB"xscreensaver &"\fP to your \fI/usr/lib/X11/xdm/Xsetup\fP 
 file.  Because \fIxdm\fP grabs the keyboard, keypresses will not make 
 the screensaver deactivate, but any mouse activity will.
+.PP
+(If your system does not seem to be executing the \fIXsetup\fP file, you
+may need to configure it to do so -- the traditional way to do this is
+to make that file the value of the \fIDisplayManager*setup\fP resource
+in the \fIxdm-config\fP file.  See the man page for
+.BR xdm (1)
+for more details.)
 .PP
 Users may want to add \fB"xscreensaver-command -restart"\fP to their 
 startup scripts, so that the screensaver will be reinitialized with
@@ -534,7 +542,7 @@ permission notice appear in supporting documentation.  No representations are
 made about the suitability of this software for any purpose.  It is provided
 "as is" without express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@mcom.com>, 13-aug-92.
+Jamie Zawinski <jwz@netscape.com>, 13-aug-92.
 Please let me know if you find any bugs or make any improvements.
 
 Thanks to David Wojtowicz for implementing \fIlockTimeout\fP.

@@ -13,10 +13,10 @@
     DEFINES = R5ISMS
 #endif
        SRCS = fade.c hsv.c resources.c spline.c usleep.c xroger.c \
-              grabscreen.c visual.c
+              grabscreen.c visual.c yarandom.c
        OBJS = fade.o hsv.o resources.o spline.o usleep.o xroger.o \
-              grabscreen.o visual.o
-   TARFILES = README Imakefile ad2c $(SRCS) spline.h version.h
+              grabscreen.o visual.o yarandom.o
+   TARFILES = README Imakefile ad2c $(SRCS) spline.h yarandom.h version.h
 
 all:: $(OBJS)
 

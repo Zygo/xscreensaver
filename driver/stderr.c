@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -159,7 +159,10 @@ stderr_popup_timer_fn (closure, id)
 
 
 static void
-stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
+stderr_callback (closure, fd, id)
+     XtPointer closure;
+     int *fd;
+     XtIntervalId *id;
 {
   char *s;
   int left;

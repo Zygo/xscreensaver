@@ -3,15 +3,6 @@
  * This file is included by the various Imakefiles.
  */
 
-/*  Uncomment the following line if you have the MIT-SCREEN-SAVER extension
- *  installed.  This extension resides in .../contrib/extensions/screensaver/
- *  on the X11R6 contrib tape.  (Turning on this flag lets XScreenSaver work
- *  better with servers which support this extension; but it will still work
- *  with servers which do not suport this extension, so it's a good idea to
- *  compile in support for it if you can.)
- */
-/* #define HAVE_SAVER_EXTENSION */
-
 /*  Uncomment the following line if you have the XIDLE extension installed.
  *  This extension resides in .../contrib/extensions/xidle/ on the X11R5
  *  contrib tape.  (Turning on this flag lets XScreenSaver work better with
@@ -20,6 +11,30 @@
  *  support for it if you can.)
  */
 /* #define HAVE_XIDLE_EXTENSION */
+
+/*  Uncomment the following line if you have the MIT-SCREEN-SAVER extension
+ *  installed.  This extension resides in .../contrib/extensions/screensaver/
+ *  on the X11R6 contrib tape.
+ *
+ *  This extension does basically the same thing that the XIDLE extension does,
+ *  but there are two things wrong with it: first, because of the way the 
+ *  extension was designed, the `fade' option to XScreenSaver will be uglier:
+ *  just before the screen fades out, there will be an unattractive flicker to
+ *  black, because this extension blanks the screen *before* telling us that it
+ *  is time to do so.  Second, this extension is known to be buggy; on the
+ *  systems I use, it works, but some people have reported X server crashes as
+ *  a result of using it.  XScreenSaver uses this extension rather
+ *  conservatively, because when I tried to use any of its more complicated
+ *  features, I could get it to crash the server at the drop of a hat.
+ *
+ *  I wish someone would port the XIDLE extension to R6.  Or I wish someone
+ *  would make the MIT-SCREEN-SAVER extension not be such a piece of junk.
+ *
+ *  Note that the SGI X server also has an extension called SCREEN_SAVER.
+ *  That is a completely different extension, and XScreenSaver contains no
+ *  support for it (though it probably wouldn't be hard.)
+ */
+/* #define HAVE_SAVER_EXTENSION */
 
 /*  Uncomment the following line if you have the XPM library installed.
  *  Some of the demos can make use of this if it is available.

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,6 +141,7 @@ BadWindow_ehandler (dpy, error)
      may have been destroyed <30 seconds after it was created.
    */
   if (error->error_code == BadWindow ||
+      error->error_code == BadMatch ||
       error->error_code == BadDrawable)
     return 0;
   XmuPrintDefaultErrorMessage (dpy, error, stderr);

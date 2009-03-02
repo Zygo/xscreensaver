@@ -3,7 +3,7 @@
 halo - draw circular patterns
 .SH SYNOPSIS
 .B halo
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIint\fP] [\-delay \fIusecs\fP] [\-animate]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIint\fP] [\-delay \fIusecs\fP] [\-mode seuss | ramp | random ] [\-animate]
 .SH DESCRIPTION
 The \fIhalo\fP program draws cool patterns based on circles.
 .SH OPTIONS
@@ -28,6 +28,13 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-count \fIinteger\fP
 How many circles to draw.  Default 0, meaning random.
+.TP 8
+.B \-mode "seuss | ramp | random"
+In \fIseuss\fP mode, alternating striped curves will be drawn.
+
+In \fIramp\fP mode, a color ramp will be drawn.
+
+\fIrandom\fP means pick the mode randomly.
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
@@ -58,4 +65,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@mcom.com>, 6-jul-93.
+Jamie Zawinski <jwz@netscape.com>, 6-jul-93.

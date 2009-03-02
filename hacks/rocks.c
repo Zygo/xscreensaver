@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,12 +13,9 @@
    John Nguyen <johnn@hx.lcs.mit.edu>
  */
 
-#include "screenhack.h"
 #include <stdio.h>
 #include <math.h>
-#if __STDC__
-#include <math.h>	/* for M_PI */
-#endif
+#include "screenhack.h"
 
 #define MIN_DEPTH 2		/* rocks disappar when they get this close */
 #define MAX_DEPTH 60		/* this is where rocks appear */
@@ -148,7 +145,7 @@ init_pixmaps (dpy, window)
 {
   int i;
   XGCValues gcv;
-  GC fg_gc = 0, bg_gc;
+  GC fg_gc = 0, bg_gc = 0;
   pixmaps [0] = pixmaps [1] = 0;
   for (i = MIN_DEPTH; i < MAX_WIDTH; i++)
     {

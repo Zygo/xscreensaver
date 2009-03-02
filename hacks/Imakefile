@@ -20,16 +20,16 @@
           UTILS = ../utils
        INCLUDES = -I$(UTILS)
         DEFINES = R5ISMS XPMDEFS
-EXTRA_LOAD_FLAGS= $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm
+LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm
           HACKS = attraction.c greynetic.c helix.c hopalong.c xroger-hack.c \
                   noseguy.c pyro.c qix.c rocks.c rorschach.c blitspin.c \
                   imsmap.c slidescreen.c decayscreen.c maze.c hypercube.c \
-                  halo.c flame.c pedal.c
+                  halo.c flame.c pedal.c lmorph.c
             MEN = attraction.man greynetic.man helix.man hopalong.man \
                   noseguy.man pyro.man xroger.man qix.man rocks.man \
                   rorschach.man blitspin.man imsmap.man slidescreen.man \
                   decayscreen.man maze.man hypercube.man halo.man flame.man \
-                  pedal.man
+                  pedal.man lmorph.man
        TARFILES = README Imakefile screenhack.c $(HACKS) screenhack.h \
                   vroot.h xlock.h default.xbm $(MEN) .gdbinit noses/\*
 
@@ -42,14 +42,16 @@ echo_tarfiles:
 all:: p									 @@\
 p: deps screenhack.h ps.o $(DEPLIBS)					 @@\
 	RemoveTargetProgram($@)						 @@\
-	$(CC) -o $@ $(LDOPTIONS) deps ps.o $(LDLIBS) $(EXTRA_LOAD_FLAGS) @@\
+	$(CCENVSETUP)							   \
+	$(CC) -o $@ $(LDOPTIONS) deps ps.o $(LOCAL_LIBRARIES) $(LDLIBS)  @@\
 									 @@\
 InstallProgram(p,$(BINDIR))						 @@\
 InstallManPage(p,$(MANDIR))						 @@\
 clean::									 @@\
 	$(RM) p
 
-HOBJS=screenhack.o $(UTILS)/resources.o $(UTILS)/usleep.o $(UTILS)/visual.o
+HOBJS=screenhack.o $(UTILS)/resources.o $(UTILS)/visual.o \
+		   $(UTILS)/usleep.o $(UTILS)/yarandom.o
 
 ScreenhackTarget (qix, qix, $(HOBJS) $(UTILS)/hsv.o)
 ScreenhackTarget (helix, helix, $(HOBJS) $(UTILS)/hsv.o)
@@ -70,3 +72,4 @@ ScreenhackTarget (hypercube, hypercube, $(HOBJS))
 ScreenhackTarget (halo, halo, $(HOBJS) $(UTILS)/hsv.o)
 ScreenhackTarget (flame, flame, $(HOBJS) $(UTILS)/hsv.o)
 ScreenhackTarget (pedal, pedal, $(HOBJS) $(UTILS)/hsv.o)
+ScreenhackTarget (lmorph, lmorph, $(HOBJS))

@@ -372,11 +372,11 @@ char *progclass = "Pedal";
  * should be dark.
  */
 char *defaults [] = {
+  "Pedal.background:		black",		/* to placate SGI */
+  "Pedal.foreground:		white",
   "*delay:			5",
   "*fadedelay:			200000",
   "*maxlines:			1000",
-  "*foreground:                 white",
-  "*background:                 black",
   0
 };
 

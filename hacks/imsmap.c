@@ -49,8 +49,8 @@ initwin (dsp, win)
   enum mode_t this_mode;
   static Bool rv_p;
   static int ncolors = 0;
-  int shift;
-  double dshift;
+  int shift = 0;
+  double dshift = 0;
     
   XGCValues gcv;
 

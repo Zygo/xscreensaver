@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,8 +52,8 @@
  * 23-Mar-88: Coded HOPALONG routines from Scientific American Sept. 86 p. 14.
  */
 
-#include "screenhack.h"
 #include <math.h>
+#include "screenhack.h"
 
 static GC gc;
 static int batchcount = 1000;

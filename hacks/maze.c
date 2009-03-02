@@ -1,7 +1,9 @@
 /******************************************************************************
  * [ maze ] ...
  *
- * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@mcom.com>
+ * modified:  [ 8-11-95 ] Ed James <james@mml.mmc.com>
+ *              added fill of dead-end box to solve_maze while loop.
+ * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@netscape.com>
  *		added the XRoger logo, cleaned up resources, made
  *		grid size a parameter.
  * modified:  [ 3-3-93 ]  Jim Randell <jmr@mddjmr.fc.hp.com>
@@ -285,7 +287,7 @@ static void enter_square ();
 static void
 create_maze()             /* create a maze layout given the intiialized maze */
 {
-  register int i, newdoor;
+  register int i, newdoor = 0;
   
   do {
     move_list[sqnum].x = cur_sq_x;
@@ -564,6 +566,10 @@ solve_maze()                             /* solve it with graphical feedback */
   /* do it */
   while (1) {
     if ( ++path[i].dir >= 4 ) {
+      XFillRectangle(dpy, win, cgc,
+		     border_x + bw + grid_width * (int)(path[i].x),
+		     border_y + bw + grid_height * (int)(path[i].y),
+		     grid_width - (bw+bw), grid_height - (bw+bw));
       i--;
       draw_solid_square( (int)(path[i].x), (int)(path[i].y), 
 			(int)(path[i].dir), cgc);
@@ -613,7 +619,7 @@ enter_square(n)                            /* move into a neighboring square */
 
 
 /*
- *  jmr additions for Jamie Zawinski's <jwz@mcom.com> screensaver stuff,
+ *  jmr additions for Jamie Zawinski's <jwz@netscape.com> screensaver stuff,
  *  note that the code above this has probably been hacked about in some
  *  arbitrary way.
  */

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,6 +57,12 @@
 #include <stdlib.h>
 #endif
 
+#ifdef __hpux
+ /* Which of the ten billion standards does values.h belong to?
+    What systems always have it? */
+# include <values.h>
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xos.h>
@@ -70,26 +76,11 @@ extern XrmOptionDescRec options [];
 extern int options_size;
 extern char *defaults [];
 
-#if __STDC__
-# if (defined(SVR4) || defined(SYSV)) && !defined(__sgi)
-#  ifndef random
-    extern int rand (void);
-#   define random() rand()
-#  endif
-#  ifndef srandom
-    extern void srand (unsigned int);
-#   define srandom(i) srand((unsigned int)(i))
-#  endif
-# else /* !totally-losing-SYSV */
-#  ifndef random
-    extern long random (void);
-#  endif
-#  ifndef srandom
-    extern int srandom (unsigned int);
-#  endif
-# endif /* !totally-losing-SYSV */
-#endif /* __STDC__ */
+/* Screw it, we'll just use our own RNG.  See xscreensaver/utils/yarandom.c. */
+#include "yarandom.h"
 
+
+#undef P
 #if __STDC__
 # define P(x)x
 #else
@@ -126,11 +117,23 @@ extern Pixmap grab_screen_image P((Display *dpy, Window window, int root_p));
 extern void copy_default_colormap_contents P((Display *dpy, Colormap to_cmap,
 					      Visual *to_visual));
 
+#if defined (__GNUC__) && (__GNUC__ >= 2)
+ /* Implement frand using GCC's statement-expression extension. */
+
+# define frand(f)							\
+  ({ double tmp = (((double) random()) /				\
+		   (((double) ((unsigned int)~0)) / ((double) (f+f))));	\
+     tmp < 0 ? (-tmp) : tmp; })
+
+#else /* not GCC2 - implement frand using a global variable.*/
+
 static double _frand_tmp_;
-#define frand(f)							\
- (_frand_tmp_ = (((double) random()) / 					\
-		 (((double) ((unsigned int)~0)) / ((double) (f+f)))),	\
-  _frand_tmp_ < 0 ? (-_frand_tmp_) : _frand_tmp_)
+# define frand(f)							\
+  (_frand_tmp_ = (((double) random()) / 				\
+		  (((double) ((unsigned int)~0)) / ((double) (f+f)))),	\
+   _frand_tmp_ < 0 ? (-_frand_tmp_) : _frand_tmp_)
+
+#endif /* not GCC2 */
 
 #undef P
 #endif /* _SCREENHACK_H_ */

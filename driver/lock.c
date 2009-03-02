@@ -1,4 +1,4 @@
-/*    xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski <jwz@mcom.com>
+/*    xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,6 +8,16 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  */
+
+/* #### If anyone ever finishes the Athena locking code, remove this.
+   But until then, locking requires Motif.
+ */
+#if defined(NO_MOTIF) && !defined(NO_LOCKING)
+# define NO_LOCKING
+#endif
+
+
+#ifndef NO_LOCKING
 
 #if __STDC__
 #include <stdlib.h>
@@ -24,24 +34,41 @@
 
 #include <X11/Intrinsic.h>
 
-#if !__STDC__
-# define _NO_PROTO
-#endif
-
-#include <Xm/Xm.h>
-#include <Xm/List.h>
-#include <Xm/TextF.h>
-
 #include "xscreensaver.h"
-
-#ifndef NO_LOCKING
-
-Time passwd_timeout;
 
 extern char *screensaver_version;
 extern char *progname;
 extern XtAppContext app;
 extern Bool verbose_p;
+
+#ifdef SCO
+/* SCO has some kind of goofy, nonstandard security crap.  This stuff was
+   donated by one of their victims, I mean users, Didier Poirot <dp@chorus.fr>.
+ */
+# include <sys/security.h>
+# include <sys/audit.h>
+# include <prot.h>
+#endif
+
+#if !__STDC__
+# define _NO_PROTO
+#endif
+
+#ifdef NO_MOTIF
+
+# include <X11/StringDefs.h>
+# include <X11/Xaw/Text.h>
+# include <X11/Xaw/Label.h>
+
+#else /* Motif */
+
+# include <Xm/Xm.h>
+# include <Xm/List.h>
+# include <Xm/TextF.h>
+
+#endif /* Motif */
+
+Time passwd_timeout;
 
 extern Widget passwd_dialog;
 extern Widget passwd_form;
@@ -71,14 +98,26 @@ static char user_passwd [255];
 # define GETPW  getpwnam
 #endif
 
+#ifdef SCO
+# define PRPWTYPE struct pr_passwd *
+# define GETPRPW getprpwnam
+#endif
+
 Bool
 lock_init ()
 {
   Bool ok = True;
   char *u;
   PWTYPE p = GETPW ("root");
+
+#ifdef SCO
+  PRPWTYPE prpwd = GETPRPW ("root");
+  if (prpwd && *prpwd->ufld.fd_encrypt)
+    strcpy (root_passwd, prpwd->ufld.fd_encrypt);
+#else /* !SCO */
   if (p && p->PWSLOT && p->PWSLOT[0] != '*')
     strcpy (root_passwd, p->PWSLOT);
+#endif /* !SCO */
   else
     {
       fprintf (stderr, "%s: couldn't get root's password\n", progname);
@@ -87,9 +126,14 @@ lock_init ()
 
   /* It has been reported that getlogin() returns the wrong user id on some
      very old SGI systems... */
-  u = getlogin ();
+  u = (char *) getlogin ();
   if (u)
-    p = GETPW (u);
+    {
+#ifdef SCO
+      prpwd = GETPRPW (u);
+#endif /* SCO */
+      p = GETPW (u);
+    }
   else
     {
       /* getlogin() fails if not attached to a terminal;
@@ -103,11 +147,16 @@ lock_init ()
 #endif
     }
 
+#ifdef SCO
+  if (prpwd && *prpwd->ufld.fd_encrypt)
+    strcpy (user_passwd, prpwd->ufld.fd_encrypt);
+#else /* !SCO */
   if (p && p->PWSLOT &&
       /* p->PWSLOT[0] != '*' */		/* sensible */
       (strlen (p->PWSLOT) > 4)		/* solaris */
       )
     strcpy (user_passwd, p->PWSLOT);
+#endif /* !SCO */
   else
     {
       fprintf (stderr, "%s: couldn't get password of \"%s\"\n", progname, u);
@@ -119,9 +168,11 @@ lock_init ()
 
 
 
-#if (XmVersion >= 1002)	 /* The `destroy' bug apears to be fixed as   */
-# define DESTROY_WORKS	 /* of Motif 1.2.1, but the `verify-callback' */
-#endif			 /* bug is still present. */
+#if defined(NO_MOTIF) || (XmVersion >= 1002)
+   /* The `destroy' bug apears to be fixed as of Motif 1.2.1, but
+      the `verify-callback' bug is still present. */
+# define DESTROY_WORKS
+#endif
 
 static void
 passwd_cancel_cb (button, client_data, call_data)
@@ -147,7 +198,7 @@ passwd_done_cb (button, client_data, call_data)
     passwd_state = pw_fail;
 }
 
-#ifdef VERIFY_CALLBACK_WORKS
+#if !defined(NO_MOTIF) && defined(VERIFY_CALLBACK_WORKS)
 
   /* ####  It looks to me like adding any modifyVerify callback causes
      ####  Motif 1.1.4 to free the the TextF_Value() twice.  I can't see
@@ -215,6 +266,27 @@ static char translations[] = "<Key>:keypress()";
 #endif
 
 static void
+text_field_set_string (widget, text, position)
+     Widget widget;
+     char *text;
+     int position;
+{
+#ifdef NO_MOTIF
+  XawTextBlock block;
+  block.firstPos = 0;
+  block.length = strlen (text);
+  block.ptr = text;
+  block.format = 0;
+  XawTextReplace (widget, 0, -1, &block);
+  XawTextSetInsertionPoint (widget, position);
+#else  /* !NO_MOTIF */
+  XmTextFieldSetString (widget, text);
+  XmTextFieldSetInsertionPosition (widget, position);
+#endif /* !NO_MOTIF */
+}
+
+
+static void
 keypress (w, event, argv, argc)
      Widget w;
      XEvent *event;
@@ -239,8 +311,8 @@ keypress (w, event, argv, argc)
   s [++i] = 0;
   while (i--)
     s [i] = '*';
-  XmTextFieldSetString (passwd_text, s);
-  XmTextFieldSetInsertionPosition (passwd_text, j + 1);
+
+  text_field_set_string (passwd_text, s, j + 1);
 }
 
 static void
@@ -259,8 +331,8 @@ backspace (w, event, argv, argc)
   s [i] = 0;
   while (i--)
     s [i] = '*';
-  XmTextFieldSetString (passwd_text, s);
-  XmTextFieldSetInsertionPosition (passwd_text, j + 1);
+
+  text_field_set_string (passwd_text, s, j + 1);
 }
 
 static void
@@ -271,7 +343,7 @@ kill_line (w, event, argv, argc)
      Cardinal *argc;
 {
   memset (typed_passwd, 0, sizeof (typed_passwd));
-  XmTextFieldSetString (passwd_text, "");
+  text_field_set_string (passwd_text, "", 0);
 }
 
 static void
@@ -284,7 +356,7 @@ done (w, event, argv, argc)
   passwd_done_cb (w, 0, 0);
 }
 
-#endif /* !VERIFY_CALLBACK_WORKS */
+#endif /* !VERIFY_CALLBACK_WORKS || NO_MOTIF */
 
 static void
 format_into_label (widget, string)
@@ -293,22 +365,38 @@ format_into_label (widget, string)
 {
   char *label;
   char buf [255];
-  XmString xm_label = 0;
-  XmString new_xm_label;
   Arg av[10];
   int ac = 0;
+
+#ifdef NO_MOTIF
+  XtSetArg (av [ac], XtNlabel, &label); ac++;
+  XtGetValues (widget, av, ac);
+#else  /* Motif */
+  XmString xm_label = 0;
+  XmString new_xm_label;
   XtSetArg (av [ac], XmNlabelString, &xm_label); ac++;
   XtGetValues (widget, av, ac);
   XmStringGetLtoR (xm_label, XmSTRING_DEFAULT_CHARSET, &label);
-  if (!strcmp (label, XtName (widget)))
+#endif /* Motif */
+
+  if (!label || !strcmp (label, XtName (widget)))
     strcpy (buf, "ERROR: RESOURCES ARE NOT INSTALLED CORRECTLY");
   else
     sprintf (buf, label, string);
-  new_xm_label = XmStringCreate (buf, XmSTRING_DEFAULT_CHARSET);
+
   ac = 0;
+
+#ifdef NO_MOTIF
+  XtSetArg (av [ac], XtNlabel, buf); ac++;
+#else  /* Motif */
+  new_xm_label = XmStringCreate (buf, XmSTRING_DEFAULT_CHARSET);
   XtSetArg (av [ac], XmNlabelString, new_xm_label); ac++;
+#endif /* Motif */
+
   XtSetValues (widget, av, ac);
+#ifndef NO_MOTIF
   XmStringFree (new_xm_label);
+#endif
   XtFree (label);
 }
 
@@ -339,8 +427,8 @@ roger (button, client_data, call_data)
   if (size > 40) size -= 30;
   x = (xgwa.width - size) / 2;
   y = (xgwa.height - size) / 2;
-  XtSetArg (av [ac], XmNforeground, &fg); ac++;
-  XtSetArg (av [ac], XmNbackground, &bg); ac++;
+  XtSetArg (av [ac], XtNforeground, &fg); ac++;
+  XtSetArg (av [ac], XtNbackground, &bg); ac++;
   XtGetValues (button, av, ac);
   /* if it's black on white, swap it cause it looks better (hack hack) */
   if (fg == BlackPixelOfScreen (screen) && bg == WhitePixelOfScreen (screen))
@@ -354,6 +442,17 @@ roger (button, client_data, call_data)
   XFreeGC (dpy, draw_gc);
   XFreeGC (dpy, erase_gc);
 }
+
+#ifdef NO_MOTIF
+
+static void
+make_passwd_dialog (parent)
+     Widget parent;
+{
+  abort (); /* #### */
+}
+
+#else  /* Motif */
 
 static void
 make_passwd_dialog (parent)
@@ -374,7 +473,7 @@ make_passwd_dialog (parent)
   XtOverrideTranslations (passwd_text, XtParseTranslationTable (translations));
 #endif
 
-#if (XmVersion >= 1002)
+#if !defined(NO_MOTIF) && (XmVersion >= 1002)
   /* The focus stuff changed around; this didn't exist in 1.1.5. */
   XtVaSetValues (passwd_form, XmNinitialFocus, passwd_text, 0);
 #endif
@@ -387,6 +486,7 @@ make_passwd_dialog (parent)
   format_into_label (passwd_label1, screensaver_version);
 }
 
+#endif /* Motif */
 
 extern void idle_timer ();
 
@@ -412,13 +512,13 @@ passwd_idle_timer (junk1, junk2)
       int ac = 0;
       XGCValues gcv;
       unsigned long fg, bg;
-      XtSetArg (av [ac], XmNheight, &d); ac++;
+      XtSetArg (av [ac], XtNheight, &d); ac++;
       XtGetValues (passwd_done, av, ac);
       ac = 0;
-      XtSetArg (av [ac], XmNwidth, &x); ac++;
-      XtSetArg (av [ac], XmNheight, &y); ac++;
-      XtSetArg (av [ac], XmNforeground, &fg); ac++;
-      XtSetArg (av [ac], XmNbackground, &bg); ac++;
+      XtSetArg (av [ac], XtNwidth, &x); ac++;
+      XtSetArg (av [ac], XtNheight, &y); ac++;
+      XtSetArg (av [ac], XtNforeground, &fg); ac++;
+      XtSetArg (av [ac], XtNbackground, &bg); ac++;
       XtGetValues (passwd_form, av, ac);
       x -= d;
       y -= d;
@@ -455,7 +555,7 @@ pop_passwd_dialog (parent)
   int revert_to;
   typed_passwd [0] = 0;
   passwd_state = pw_read;
-  XmTextFieldSetString (passwd_text, "");
+  text_field_set_string (passwd_text, "", 0);
 
   XGetInputFocus (dpy, &focus, &revert_to);
 #ifndef DESTROY_WORKS
@@ -471,7 +571,7 @@ pop_passwd_dialog (parent)
   pop_up_dialog_box (passwd_dialog, passwd_form, 2);
   XtManageChild (passwd_form);
 
-#if (XmVersion < 1002)
+#if !defined(NO_MOTIF) && (XmVersion < 1002)
   /* The focus stuff changed around; this causes problems in 1.2.1
      but is necessary in 1.1.5. */
   XmProcessTraversal (passwd_text, XmTRAVERSE_CURRENT);
@@ -512,11 +612,12 @@ pop_passwd_dialog (parent)
 	case pw_cancel: lose = 0; break;
 	default: abort ();
 	}
+#ifndef NO_MOTIF
       XmProcessTraversal (passwd_cancel, 0); /* turn off I-beam */
+#endif
       if (lose)
 	{
-	  XmTextFieldSetString (passwd_text, lose);
-	  XmTextFieldSetInsertionPosition (passwd_text, strlen (lose) + 1);
+	  text_field_set_string (passwd_text, lose, strlen (lose) + 1);
 	  passwd_idle_timer_tick = 1;
 	  id = XtAppAddTimeOut (app, 3000, passwd_idle_timer, 0);
 	  while (1)
@@ -531,7 +632,7 @@ pop_passwd_dialog (parent)
 	}
     }
   memset (typed_passwd, 0, sizeof (typed_passwd));
-  XmTextFieldSetString (passwd_text, "");
+  text_field_set_string (passwd_text, "", 0);
   XtSetKeyboardFocus (parent, None);
 
 #ifdef DESTROY_WORKS

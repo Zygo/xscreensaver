@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -138,15 +138,8 @@
 #include <X11/extensions/scrnsaver.h>
 #endif /* HAVE_SAVER_EXTENSION */
 
+#include "yarandom.h"
 #include "xscreensaver.h"
-
-#if defined(SVR4) || defined(SYSV)
-# define srandom(i) srand((unsigned int)(i))
-#else
-# ifndef __linux
-extern void srandom P((int));		/* srand() is in stdlib.h... */
-# endif
-#endif
 
 extern char *get_string_resource P((char *, char *));
 extern Bool get_boolean_resource P((char *, char *));
@@ -237,9 +230,6 @@ static Atom XA_EXIT, XA_RESTART, XA_DEMO, XA_LOCK;
 #ifdef NO_MOTIF /* kludge */
 Bool demo_mode_p = 0;
 Bool dbox_up_p = 0;
-#ifndef NO_LOCKING
-Time passwd_timeout = 0;
-#endif
 #endif
 
 
@@ -253,6 +243,7 @@ static XrmOptionDescRec options [] = {
   { "-timeout",		   ".timeout",		XrmoptionSepArg, 0 },
   { "-cycle",		   ".cycle",		XrmoptionSepArg, 0 },
   { "-idelay",		   ".initialDelay",	XrmoptionSepArg, 0 },
+  { "-nice",		   ".nice",		XrmoptionSepArg, 0 },
   { "-visual",		   ".visualID",		XrmoptionSepArg, 0 },
   { "-lock-timeout",	   ".lockTimeout",	XrmoptionSepArg, 0 },
   { "-install",		   ".installColormap",	XrmoptionNoArg, "on" },
@@ -276,7 +267,7 @@ static void
 do_help P((void))
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@mcom.com>.\n\
+xscreensaver %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@netscape.com>.\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>         When the screensaver should activate.\n\
@@ -290,8 +281,8 @@ The standard Xt command-line options are accepted; other options include:\n\
     -silent                    Don't.\n\
     -xidle-extension           Use the R5 XIdle server extension.\n\
     -no-xidle-extension        Don't.\n\
-    -saver-extension           Use the R6 MIT-SCREEN-SAVER server extension.\n\
-    -no-saver-extension        Don't.\n\
+    -ss-extension              Use the R6 MIT-SCREEN-SAVER server extension.\n\
+    -no-ss-extension           Don't.\n\
     -lock                      Require a password before deactivating.\n\
     -no-lock                   Don't.\n\
     -lock-timeout <minutes>    Grace period before locking; default 0.\n\
@@ -312,7 +303,7 @@ more details.\n\n",
 #endif
 #if !defined(HAVE_XIDLE_EXTENSION) && !defined(HAVE_SAVER_EXTENSION)
   printf ("Support for the XIDLE and MIT-SCREEN-SAVER server extensions\
- was not\n\enabled at compile-time.\n");
+ was not\nenabled at compile-time.\n");
 #endif /* !HAVE_XIDLE_EXTENSION && !HAVE_SAVER_EXTENSION */
 
   fflush (stdout);
@@ -479,7 +470,7 @@ get_resources P((void))
 
   /* don't set use_saver_extension unless it is explicitly specified */
   if (get_string_resource ("saverExtension", "Boolean"))
-    use_xidle_extension = get_boolean_resource ("saverExtension", "Boolean");
+    use_saver_extension = get_boolean_resource ("saverExtension", "Boolean");
   else
 #ifdef HAVE_SAVER_EXTENSION	/* pick a default */
     use_saver_extension = True;
@@ -660,6 +651,11 @@ initialize (argc, argv)
   nolock_reason = "not compiled with locking support";
 #else
   locking_disabled_p = False;
+
+#ifdef SCO
+  set_auth_parameters(argc, argv);
+#endif
+
   if (! lock_init ())	/* before hack_uid() for proper permissions */
     {
       locking_disabled_p = True;
@@ -691,7 +687,7 @@ initialize (argc, argv)
 
   if (verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@mcom.com>.\n\
+%s %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@netscape.com>.\n\
  pid = %d.\n", progname, screensaver_version, getpid ());
   ensure_no_screensaver_running ();
 
@@ -820,7 +816,8 @@ main_loop ()
 	  blank_screen ();
 	  spawn_screenhack (True);
 	  if (cycle)
-	    cycle_id = XtAppAddTimeOut (app, cycle, (XtPointer)cycle_timer, 0);
+	    cycle_id = XtAppAddTimeOut (app, cycle,
+					(XtTimerCallbackProc)cycle_timer, 0);
 
 #ifndef NO_LOCKING
 	  if (lock_p && lock_timeout == 0)
@@ -828,7 +825,8 @@ main_loop ()
 	  if (lock_p && !locked_p)
 	    /* locked_p might be true already because of ClientMessage */
 	    lock_id = XtAppAddTimeOut (app,lock_timeout,
-				       (XtPointer)activate_lock_timer,0);
+				       (XtTimerCallbackProc)
+				       activate_lock_timer,0);
 #endif
 
 	PASSWD_INVALID:
@@ -902,7 +900,7 @@ handle_clientmessage (event, until_idle_p)
      XEvent *event;
      Bool until_idle_p;
 {
-  Atom type;
+  Atom type = 0;
   if (event->xclient.message_type != XA_SCREENSAVER)
     {
       char *str;
@@ -911,11 +909,13 @@ handle_clientmessage (event, until_idle_p)
 	       progname, (verbose_p ? "## " : ""),
 	       (str ? str : "(null)"));
       if (str) XFree (str);
+      return False;
     }
   if (event->xclient.format != 32)
     {
       fprintf (stderr, "%s: %sClientMessage of format %d received, not 32\n",
 	       progname, (verbose_p ? "## " : ""), event->xclient.format);
+      return False;
     }
   type = event->xclient.data.l[0];
   if (type == XA_ACTIVATE)
@@ -924,7 +924,15 @@ handle_clientmessage (event, until_idle_p)
 	{
 	  if (verbose_p)
 	    printf ("%s: ACTIVATE ClientMessage received.\n", progname);
-	  return True;
+	  if (use_saver_extension)
+	    {
+	      XForceScreenSaver (dpy, ScreenSaverActive);
+	      return False;
+	    }
+	  else
+	    {
+	      return True;
+	    }
 	}
       fprintf (stderr,
 	       "%s: %sClientMessage ACTIVATE received while already active.\n",
@@ -936,7 +944,15 @@ handle_clientmessage (event, until_idle_p)
 	{
 	  if (verbose_p)
 	    printf ("%s: DEACTIVATE ClientMessage received.\n", progname);
-	  return True;
+	  if (use_saver_extension)
+	    {
+	      XForceScreenSaver (dpy, ScreenSaverReset);
+	      return False;
+	    }
+	  else
+	    {
+	      return True;
+	    }
 	}
       fprintf (stderr,
 	       "%s: %sClientMessage DEACTIVATE received while inactive.\n",
@@ -1062,21 +1078,31 @@ handle_clientmessage (event, until_idle_p)
 	    }
 
 	  if (until_idle_p)
-	    return True;
+	    {
+	      if (use_saver_extension)
+		{
+		  XForceScreenSaver (dpy, ScreenSaverActive);
+		  return False;
+		}
+	      else
+		{
+		  return True;
+		}
+	    }
 	}
 #endif
     }
   else
     {
       char *str;
-      str = XGetAtomName (dpy, type);
+      str = (type ? XGetAtomName(dpy, type) : 0);
       if (str)
 	fprintf (stderr,
 		 "%s: %sunrecognised screensaver ClientMessage %s received\n",
 		 progname, (verbose_p ? "## " : ""), str);
       else
 	fprintf (stderr,
-		 "%s: %sunrecognised screensaver ClientMessage 0x%x received\n",
+		"%s: %sunrecognised screensaver ClientMessage 0x%x received\n",
 		 progname, (verbose_p ? "## " : ""),
 		 (unsigned int) event->xclient.data.l[0]);
       if (str) XFree (str);

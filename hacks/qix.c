@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -400,9 +400,21 @@ add_qline (dpy, window, cmap, qline, prev_qline, qix)
 
   if (!mono_p && !transparent_p)
     {
+      XColor desired;
       cycle_hue (&qline->color, color_shift);
       qline->color.flags = DoRed | DoGreen | DoBlue;
-      if (!XAllocColor (dpy, cmap, &qline->color))
+      desired = qline->color;
+      if (XAllocColor (dpy, cmap, &qline->color))
+	{
+	  /* XAllocColor returns the actual RGB that the hardware let us
+	     allocate.  Restore the requested values into the XColor struct
+	     so that limited-resolution hardware doesn't cause cycle_hue to
+	     get "stuck". */
+	  qline->color.red = desired.red;
+	  qline->color.green = desired.green;
+	  qline->color.blue = desired.blue;
+	}
+      else
 	{
 	  qline->color = prev_qline->color;
 	  if (!XAllocColor (dpy, cmap, &qline->color))

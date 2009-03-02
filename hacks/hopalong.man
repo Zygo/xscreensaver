@@ -66,4 +66,4 @@ supporting documentation.
 Patrick J. Naughton <naughton@eng.sun.com>, 23-mar-88.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@mcom.com>, 13-aug-92.
+Jamie Zawinski <jwz@netscape.com>, 13-aug-92.

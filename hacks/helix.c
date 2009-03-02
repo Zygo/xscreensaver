@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,10 +9,8 @@
  * implied warranty.
  */
 
+#include <math.h>
 #include "screenhack.h"
-#ifdef __STDC__
-#include <math.h>	/* for M_PI */
-#endif
 
 static double sins [360];
 static double coss [360];
@@ -196,7 +194,7 @@ char *defaults [] = {
   0
 };
 
-XrmOptionDescRec options [] = { 0 };
+XrmOptionDescRec options [] = { { 0, } };
 int options_size = 0;
 
 void

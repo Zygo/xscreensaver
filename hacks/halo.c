@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,12 +19,18 @@
  */
 
 #include "screenhack.h"
+#include <stdio.h>
 
 struct circle {
   int x, y, radius;
   int increment;
   int dx, dy;
 };
+
+static enum color_mode {
+  seuss_mode, ramp_mode, random_mode
+} cmode;
+
 
 static struct circle *circles;
 static int count, global_count;
@@ -33,7 +39,6 @@ static int width, height, global_inc;
 static int delay;
 static unsigned long fg_pixel, bg_pixel;
 static XColor fgc, bgc;
-static Bool xor_p;
 static GC draw_gc, erase_gc, copy_gc, merge_gc;
 static Bool anim_p;
 static Colormap cmap;
@@ -77,16 +82,34 @@ init_circles (dpy, window)
 {
   XGCValues gcv;
   XWindowAttributes xgwa;
+  char *mode_str = 0;
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
   global_count = get_integer_resource ("count", "Integer");
   if (global_count < 0) global_count = 0;
   global_inc = get_integer_resource ("increment", "Integer");
   if (global_inc < 0) global_inc = 0;
-  xor_p = get_boolean_resource ("xor", "Boolean");
-/*  if (mono_p) */ xor_p = True;
   anim_p = get_boolean_resource ("animate", "Boolean");
   delay = get_integer_resource ("delay", "Integer");
+  mode_str = get_string_resource ("colorMode", "ColorMode");
+  if (! mode_str) cmode = random_mode;
+  else if (!strcmp (mode_str, "seuss"))  cmode = seuss_mode;
+  else if (!strcmp (mode_str, "ramp"))   cmode = ramp_mode;
+  else if (!strcmp (mode_str, "random")) cmode = random_mode;
+  else {
+    fprintf (stderr,
+	     "%s: colorMode must be seuss, ramp, or random, not \"%s\"\n",
+	     progname, mode_str);
+    exit (1);
+  }
+
+  if (mono_p) cmode = seuss_mode;
+  if (cmode == random_mode)
+    cmode = ((random()&3) == 1) ? ramp_mode : seuss_mode;
+
+  if (cmode == ramp_mode)
+    anim_p = False;    /* This combo doesn't work right... */
+
   if (mono_p)
     {
       fg_pixel = get_pixel_resource ("foreground","Foreground", dpy, cmap);
@@ -94,8 +117,15 @@ init_circles (dpy, window)
     }
   else
     {
-      hsv_to_rgb (0,   0.5, 1.0, &fgc.red, &fgc.green, &fgc.blue);
-      hsv_to_rgb (180, 1.0, 0.7, &bgc.red, &bgc.green, &bgc.blue);
+      int r  = random() % 360;
+      int r2 = (random() % 180) + 45;
+      double fs, bs;
+      if (cmode == seuss_mode)
+	fs = 0.5, bs = 1.0;
+      else
+	fs = 1.0, bs = 0.1;
+      hsv_to_rgb (r,          fs, 1.0, &fgc.red, &fgc.green, &fgc.blue);
+      hsv_to_rgb ((r+r2)%360, bs, 0.7, &bgc.red, &bgc.green, &bgc.blue);
       XAllocColor (dpy, cmap, &fgc);
       XAllocColor (dpy, cmap, &bgc);
       fg_pixel = fgc.pixel;
@@ -110,7 +140,7 @@ init_circles (dpy, window)
 #endif
 
   pixmap = XCreatePixmap (dpy, window, width, height, 1);
-  if (xor_p)
+  if (cmode == seuss_mode)
     buffer = XCreatePixmap (dpy, window, width, height, 1);
   else
     buffer = 0;
@@ -124,7 +154,7 @@ init_circles (dpy, window)
   gcv.background = bg_pixel;
   copy_gc = XCreateGC (dpy, window, GCForeground | GCBackground, &gcv);
 
-  if (xor_p)
+  if (cmode == seuss_mode)
     {
       gcv.foreground = 1;
       gcv.background = 0;
@@ -183,10 +213,10 @@ run_circles (dpy, window)
 	    done = True;
 	}
       if (radius > 0 &&
-	  (xor_p || circles [0].increment < 0))
+	  (cmode == seuss_mode || circles [0].increment < 0))
 	XFillArc (dpy,
-		  (xor_p ? pixmap : window),
-		  (xor_p ? draw_gc : merge_gc),
+		  (cmode == seuss_mode ? pixmap : window),
+		  (cmode == seuss_mode ? draw_gc : merge_gc),
 		  circles [i].x - radius, circles [i].y - radius,
 		  radius * 2, radius * 2, 0, 360*64);
       circles [i].radius += inc;
@@ -223,12 +253,17 @@ run_circles (dpy, window)
 	  init_circles_1 (dpy, window);
 	  if (! mono_p)
 	    {
+	      XColor d1, d2;
 	      cycle_hue (&fgc, 10);
 	      cycle_hue (&bgc, 10);
 	      XFreeColors (dpy, cmap, &fgc.pixel, 1, 0);
 	      XFreeColors (dpy, cmap, &bgc.pixel, 1, 0);
+	      d1 = fgc;
+	      d2 = bgc;
 	      XAllocColor (dpy, cmap, &fgc);
 	      XAllocColor (dpy, cmap, &bgc);
+	      fgc.red = d1.red; fgc.green = d1.green; fgc.blue = d1.blue;
+	      bgc.red = d2.red; bgc.green = d2.green; bgc.blue = d2.blue;
 	      XSetForeground (dpy, copy_gc, fgc.pixel);
 	      XSetBackground (dpy, copy_gc, bgc.pixel);
 	    }
@@ -254,7 +289,7 @@ run_circles (dpy, window)
 
   if (buffer)
     XCopyPlane (dpy, pixmap, buffer, merge_gc, 0, 0, width, height, 0, 0, 1);
-  else if (!xor_p)
+  else if (cmode != seuss_mode)
     {
       static int ncolors = 0;
       static XColor *colors = 0;
@@ -319,18 +354,17 @@ char *progclass = "Halo";
 char *defaults [] = {
   "Halo.background:	black",		/* to placate SGI */
   "Halo.foreground:	white",
-/*  "*xor:	false", */
-  "*count:	0",
-  "*delay:	100000",
+  "*colorMode:		random",
+  "*count:		0",
+  "*delay:		100000",
   0
 };
 
 XrmOptionDescRec options [] = {
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
-  { "-animate",		".animate",	XrmoptionNoArg, "True" } /* ,
-  { "-xor",		".xor",		XrmoptionNoArg, "True" },
-  { "-no-xor",		".xor",		XrmoptionNoArg, "False" } */
+  { "-animate",		".animate",	XrmoptionNoArg, "True" },
+  { "-mode",		".colorMode",	XrmoptionSepArg, 0 }
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
 

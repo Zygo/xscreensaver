@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991, 1992, 1993, 1995
+ *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -80,14 +81,7 @@ extern int putenv (/* const char * */);	/* getenv() is in stdlib.h... */
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #endif
 
-# ifndef random
-#  if defined(SVR4) || defined(SYSV)
-#   define random() rand()
-#  else /* !totally-losing-SYSV */
-    extern long random();		/* rand() is in stdlib.h... */
-#  endif /* !totally-losing-SYSV */
-# endif /* random defined */
-
+#include "yarandom.h"
 #include "xscreensaver.h"
 
 /* this must be `sh', not whatever $SHELL happens to be. */

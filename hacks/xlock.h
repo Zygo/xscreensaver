@@ -5,6 +5,9 @@
 **  for xlock 2.3 and xscreensaver 1.2, 28AUG92
 **
 **
+**  Modified for xlockmore 3.0 by Anthony Thyssen <anthony@cit.gu.edu.au>
+**  on August 1995.
+**
 **  To use, just copy the appropriate file from xlock, add a target
 **  for it in the Imakefile, and do the following:
 **
@@ -38,7 +41,12 @@ static Colormap cmap;
 
 static int batchcount;
 static unsigned int delay;
+static unsigned int cycles;
 static double saturation;
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
 typedef struct {
   GC gc;
@@ -75,7 +83,8 @@ My_XGetWindowAttributes (dpy, win, xgwa)
     bg_pixel = get_pixel_resource ("background", "Background", dpy, cmap);
     if (! mono_p) {
       for (npixels = 0; npixels < i; npixels++) {
-        hsv_to_rgb ((360*npixels)/i, saturation, 1.0, &color.red, &color.green, &color.blue);
+        hsv_to_rgb ((360*npixels)/i, saturation, 1.0,
+		    &color.red, &color.green, &color.blue);
         if (! XAllocColor (dpy, cmap, &color))
           break;
         pixels[npixels] = color.pixel;
@@ -85,6 +94,9 @@ My_XGetWindowAttributes (dpy, win, xgwa)
     if (n >= 0) delay = n;
     n = get_integer_resource ("count", "Integer");
     if (n > 0) batchcount = n;
+
+    n = get_integer_resource ("cycles", "Integer");
+    if (n >= 0) cycles = n;
 
     gcv.foreground = fg_pixel;
     gcv.background = bg_pixel;
@@ -113,6 +125,8 @@ char *defaults[] = {
   "*foreground:	white",
   "*ncolors:	64",
   "*delay:	-1",
+  "*count:	-1",
+  "*cycles:	-1",
   0
 };
 
@@ -120,10 +134,11 @@ XrmOptionDescRec options[] = {
   {"-count",	".count",	XrmoptionSepArg, 0},
   {"-ncolors",	".ncolors",	XrmoptionSepArg, 0},
   {"-delay",	".delay",	XrmoptionSepArg, 0},
+  {"-cycles",   ".cycles",      XrmoptionSepArg, 0},
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
 
-#define PROGRAM(Y,Z,D,B,S) \
+#define PROGRAM(Y,Z,D,B,C,S) \
 char *progclass = Y;			\
 					\
 void screenhack (dpy, window)		\
@@ -132,15 +147,14 @@ void screenhack (dpy, window)		\
 {					\
   batchcount = B;			\
   delay = D;				\
+  cycles = C;                           \
   saturation = S;			\
   dsp = dpy;				\
 					\
+  init##Z (window);			\
   while (1) {				\
-    init##Z (window);			\
-    for (;;) {				\
-      draw##Z (window);			\
-      XSync (dpy, True);		\
-      if (delay) usleep (delay);	\
-    }					\
+    draw##Z (window);			\
+    XSync (dpy, True);			\
+    if (delay) usleep (delay);		\
   }					\
 }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,8 +47,6 @@
  */
 
 #include "screenhack.h"
-
-/*#include <math.h>*/
 
 #define POINT_BUFFER_SIZE 10
 #define MAXLEV 4
@@ -247,6 +245,23 @@ flame (dpy, window)
   XSync (dpy, True);
   if (delay) usleep (delay);
 }
+
+
+#ifdef __hpux
+/* I don't understand why this is necessary, but I'm told that this program
+   does nothing at all on HP-sUX without it.
+ */
+#undef random
+#undef srandom
+#include <math.h>
+int matherr(x)
+   register struct exception *x;
+{
+  if (x->type == PLOSS) return 1;
+  else return 0;
+}
+#endif /* __hpux */
+
 
 
 char *progclass = "Flame";

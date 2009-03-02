@@ -45,7 +45,8 @@
 		hypercube -root						\n\
 		halo -root						\n\
 		maze -root						\n\
-		flame -root						\n
+		flame -root						\n\
+		lmorph -root						\n
 
 ! Programs on this list are run only for monochrome screens.
 *monoPrograms:	qix -root -linear -count 5 -size 200 -spread 30		\
@@ -102,7 +103,7 @@
 *demoDialog.maxWidth:		600
 
 *label1.labelString:		XScreenSaver %s
-*label2.labelString: Copyright © 1991-1995 by Jamie Zawinski <jwz@mcom.com>
+*label2.labelString: Copyright © 1991-1995 by Jamie Zawinski <jwz@netscape.com>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -100,7 +100,7 @@ greynetic (dpy, window)
   gcv.stipple = pixmaps [random () % NBITS];
   if (mono_p)
     {
-      if (random () % 1)
+      if (random () & 1)
 	gcv.foreground = fg, gcv.background = bg;
       else
 	gcv.foreground = bg, gcv.background = fg;

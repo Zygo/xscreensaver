@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,9 +27,13 @@
 
 #ifdef NO_MOTIF
 # define NO_DEMO_MODE
+
+  /* #### If anyone ever finishes the Athena locking code, remove this.
+     Until then, Locking requires Motif. */
 # ifndef NO_LOCKING
 #  define NO_LOCKING
 # endif
+
 #endif
 
 extern char *progname, *progclass;

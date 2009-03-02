@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,7 +11,8 @@
 
 /* Simulation of a pair of quasi-gravitational fields, maybe sorta kinda
    a little like the strong and weak electromagnetic forces.  Derived from
-   a Lispm screensaver by John Pezaris <pz@mit.edu>.
+   a Lispm screensaver by John Pezaris <pz@mit.edu>.  Mouse control and
+   viscosity added by "Philip Edward Cutone, III" <pc2d+@andrew.cmu.edu>.
 
    John sez:
 
@@ -32,15 +33,20 @@
    The 1/r^2, -1/r^2, -10/r^2 thresholds proved not only robust but also
    interesting -- the orbs never collided and the threshold viscosity fixed
    the non-conservational problem.
+
+   Philip sez:
+   > An even normal viscosity (rather than the thresholded version to
+   > bleed excess energy) is also not interesting.
+
+   unless you make about 200 points.... set the viscosity to about .8
+   and drag the mouse through it.   it makes a nice wave which travels
+   through the field.
  */
 
-#include "screenhack.h"
-#include "spline.h"
 #include <stdio.h>
 #include <math.h>
-#if __STDC__
-#include <math.h>	/* for M_PI */
-#endif
+#include "screenhack.h"
+#include "spline.h"
 
 struct ball {
   float x, y;
@@ -65,6 +71,11 @@ static XPoint *point_stack;
 static int point_stack_size, point_stack_fp, pixel_stack_fp, pixel_stack_size;
 static unsigned long *pixel_stack;
 static unsigned int color_shift;
+
+/*flip mods for mouse interaction*/
+static Bool mouse_p;
+int mouse_x, mouse_y, mouse_mass, root_x, root_y;
+static float viscosity;
 
 static enum object_mode {
   ball_mode, line_mode, polygon_mode, spline_mode, spline_filled_mode,
@@ -121,6 +132,13 @@ init_balls (dpy, window)
   orbit_p = get_boolean_resource ("orbit", "Boolean");
   color_shift = get_integer_resource ("colorShift", "Integer");
   if (color_shift >= 360) color_shift = 5;
+
+  /*flip mods for mouse interaction*/
+  mouse_p = get_boolean_resource ("mouse", "Boolean");
+  mouse_mass = get_integer_resource ("mouseSize", "Integer");
+  mouse_mass =  mouse_mass *  mouse_mass *10;
+
+  viscosity = get_float_resource ("viscosity", "Float");
 
   mode_str = get_string_resource ("mode", "Mode");
   if (! mode_str) mode = ball_mode;
@@ -272,6 +290,7 @@ compute_force (i, dx_ret, dy_ret)
      float *dx_ret, *dy_ret;
 {
   int j;
+  float x_dist, y_dist, dist, dist2;
   *dx_ret = 0;
   *dy_ret = 0;
   for (j = 0; j < npoints; j++)
@@ -298,6 +317,28 @@ compute_force (i, dx_ret, dy_ret)
 	  *dy_ret += (frand (10.0) - 5.0);
 	}
     }
+
+  if (mouse_p)
+    {
+      x_dist = mouse_x - balls [i].x;
+      y_dist = mouse_y - balls [i].y;
+      dist2 = (x_dist * x_dist) + (y_dist * y_dist);
+      dist = sqrt (dist2);
+	
+      if (dist > 0.1) /* the balls are not overlapping */
+	{
+	  float new_acc = ((mouse_mass / dist2) *
+			   ((dist < threshold) ? -1.0 : 1.0));
+	  float new_acc_dist = new_acc / dist;
+	  *dx_ret += new_acc_dist * x_dist;
+	  *dy_ret += new_acc_dist * y_dist;
+	}
+      else
+	{		/* the balls are overlapping; move randomly */
+	  *dx_ret += (frand (10.0) - 5.0);
+	  *dy_ret += (frand (10.0) - 5.0);
+	}
+    }
 }
 
 static void
@@ -309,6 +350,15 @@ run_balls (dpy, window)
   static int tick = 500, xlim, ylim;
   static Colormap cmap;
   int i;
+
+  /*flip mods for mouse interaction*/
+  Window  root1, child1;
+  int mask;
+  if (mouse_p)
+    {
+      XQueryPointer(dpy, window, &root1, &child1,
+		    &root_x, &root_y, &mouse_x, &mouse_y, &mask);
+    }
 
   if (tick++ == 500)
     {
@@ -341,10 +391,19 @@ run_balls (dpy, window)
 	  balls[i].vx *= 0.9;
 	  balls[i].dx = 0;
 	}
+      else if (viscosity != 1)
+	{
+	  balls[i].vx *= viscosity;
+	}
+
       if (balls[i].vy > 10)
 	{
 	  balls[i].vy *= 0.9;
 	  balls[i].dy = 0;
+	}
+      else if (viscosity != 1)
+	{
+	  balls[i].vy *= viscosity;
 	}
 
       balls[i].x += balls[i].vx;
@@ -435,7 +494,7 @@ run_balls (dpy, window)
 	abort ();
       if (!mono_p)
 	{
-	  XColor color2;
+	  XColor color2, desired;
 	  color2 = balls [0].color;
 	  switch (cmode)
 	    {
@@ -451,7 +510,18 @@ run_balls (dpy, window)
 	      abort ();
 	    }
 	      
-	  if (!XAllocColor (dpy, cmap, &color2))
+	  desired = color2;
+	  if (XAllocColor (dpy, cmap, &color2))
+	    {
+	      /* XAllocColor returns the actual RGB that the hardware let us
+		 allocate.  Restore the requested values into the XColor struct
+		 so that limited-resolution hardware doesn't cause cycle_hue to
+		 get "stuck". */
+	      color2.red = desired.red;
+	      color2.green = desired.green;
+	      color2.blue = desired.blue;
+	    }
+	  else
 	    {
 	      color2 = balls [0].color;
 	      if (!XAllocColor (dpy, cmap, &balls [0].color))
@@ -569,6 +639,9 @@ char *defaults [] = {
   "*threshold:	100",
   "*delay:	10000",
   "*glow:	false",
+  "*mouseSize:	10",
+  "*mouse:	false",
+  "*viscosity:	1",
   "*orbit:	false",
   "*colorShift:	3",
   "*segments:	100",
@@ -588,6 +661,10 @@ XrmOptionDescRec options [] = {
   { "-vx",		".vx",		XrmoptionSepArg, 0 },
   { "-vy",		".vy",		XrmoptionSepArg, 0 },
   { "-vmult",		".vMult",	XrmoptionSepArg, 0 },
+  { "-mouse-size",	".mouseSize",	XrmoptionSepArg, 0 },
+  { "-mouse",		".mouse",	XrmoptionNoArg, "true" },
+  { "-nomouse",		".mouse",	XrmoptionNoArg, "false" },
+  { "-viscosity",	".viscosity",	XrmoptionSepArg, 0 },
   { "-glow",		".glow",	XrmoptionNoArg, "true" },
   { "-noglow",		".glow",	XrmoptionNoArg, "false" },
   { "-orbit",		".orbit",	XrmoptionNoArg, "true" }
