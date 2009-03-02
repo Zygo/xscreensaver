@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-1999 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -101,7 +101,7 @@ static void populate_demo_window (GtkWidget *toplevel,
                                   int which, prefs_pair *pair);
 static void populate_prefs_page (GtkWidget *top, prefs_pair *pair);
 static int apply_changes_and_save (GtkWidget *widget);
-
+static int maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair);
 
 
 /* Some random utility functions
@@ -279,9 +279,7 @@ warning_dialog (GtkWidget *parent, const char *message, int center)
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
                       label, TRUE, TRUE, 0);
 
-  ok = gtk_button_new_with_label (
-                          get_string_resource ("warning_dialog.ok.label",
-                                               "warning_dialog.Button.Label"));
+  ok = gtk_button_new_with_label ("OK");
   gtk_container_add (GTK_CONTAINER (label), ok);
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
@@ -332,7 +330,7 @@ run_hack (GtkWidget *widget, int which, Bool report_errors_p)
   if (which < 0) return;
   apply_changes_and_save (widget);
   if (report_errors_p)
-    run_cmd (widget, XA_ACTIVATE, 0);
+    run_cmd (widget, XA_DEMO, which + 1);
   else
     {
       char *s = 0;
@@ -541,6 +539,9 @@ apply_changes_and_save (GtkWidget *widget)
   unsigned long id;
 
   if (which < 0) return -1;
+
+  if (maybe_reload_init_file (widget, pair) != 0)
+    return 1;
 
   /* Sanity-check and canonicalize whatever the user typed into the combo box.
    */
@@ -1183,6 +1184,7 @@ static char *down_arrow_xpm[] = {
   "+	c #D6D6D6",
   "@	c #000000",
 
+  "               ",
   " ------------- ",
   " -+++++++++++@ ",
   "  -+++++++++@  ",
@@ -1420,6 +1422,69 @@ populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
   _selected_hack_number = which;
 }
 
+
+static void
+widget_deleter (GtkWidget *widget, gpointer data)
+{
+  /* #### Well, I want to destroy these widgets, but if I do that, they get
+     referenced again, and eventually I get a SEGV.  So instead of
+     destroying them, I'll just hide them, and leak a bunch of memory
+     every time the disk file changes.  Go go go Gtk!
+
+     #### Ok, that's a lie, I get a crash even if I just hide the widget
+     and don't ever delete it.  Fuck!
+   */
+#if 0
+  gtk_widget_destroy (widget);
+#else
+  gtk_widget_hide (widget);
+#endif
+}
+
+
+static int
+maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
+{
+  int status = 0;
+  saver_preferences *p =  pair->a;
+
+  static Bool reentrant_lock = False;
+  if (reentrant_lock) return 0;
+  reentrant_lock = True;
+
+  if (init_file_changed_p (p))
+    {
+      const char *f = init_file_name();
+      char *b;
+      int which;
+      GtkList *list;
+
+      if (!f || !*f) return 0;
+      b = (char *) malloc (strlen(f) + 1024);
+      sprintf (b,
+               "Warning:\n\n"
+               "file \"%s\" has changed, reloading.\n",
+               f);
+      warning_dialog (widget, b, 100);
+      free (b);
+
+      load_init_file (p);
+
+      which = selected_hack_number (widget);
+      list = GTK_LIST (name_to_widget (widget, "list"));
+      gtk_container_foreach (GTK_CONTAINER (list), widget_deleter, NULL);
+      populate_hack_list (widget, pair);
+      gtk_list_select_item (list, which);
+      populate_prefs_page (widget, pair);
+      populate_demo_window (widget, which, pair);
+      ensure_selected_item_visible (GTK_WIDGET (list));
+
+      status = 1;
+    }
+
+  reentrant_lock = False;
+  return status;
+}
 
 
 

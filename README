@@ -77,6 +77,10 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.21:   * Fixed some bugs in xscreensaver-demo.
+                      * Rewrote the Motif version of xscreensaver-demo to
+                        match the new Gtk version.
+                      * The Athena toolkit is no longer supported.
 Changes since 3.20:   * Tweaked the xscreensaver-demo UI (Gtk only.)
                       * Fixed a few visual selection bugs.  I think the proper
                         GL visual should be used with nVidia systems now.

@@ -119,19 +119,13 @@
  */
 #undef HAVE_MOTIF
 
+/*  Define this if you have the XmComboBox Motif widget (Motif 2.0.)
+ */
+#undef HAVE_XMCOMBOBOX
+
 /*  Define this if you have Gtk.
  */
 #undef HAVE_GTK
-
-/*  Define this if you have Athena (-Xaw).
- */
-#undef HAVE_ATHENA
-
-/*  Define this if you have Athena, and the version you have includes the
- *  XawViewportSetCoordinates function in Viewport.h (some old versions of
- *  the library didn't have this function.)
- */
-#undef HAVE_XawViewportSetCoordinates
 
 /*  Define this if you have the XPM library installed.  Some of the demos can
  *  make use of this if it is available.

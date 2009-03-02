@@ -19,11 +19,16 @@
  * high score is in the bottom left. Start with -smart to have the computer
  * player skip the learning process.
 
+ Version: 0.2
+ -- fixed an AI bug that was keeping the computer player a tad weak
+ Version: 0.1
+ -- first release
+
  */
 
 #include "screenhack.h"
 
-#define kSleepTime 10000
+#define kSleepTime 10000 
 
 #define font_height(font)	  	(font->ascent + font->descent)
 #define FONT_NAME			"-*-times-*-*-*-*-80-*-*-*-*-*-*-*"
@@ -191,6 +196,9 @@ static void launch (int xlim, int ylim,
   }
 }
 
+#define kExpHelp 0.2
+#define kSpeedDiff 3.5
+#define kMaxToGround 0.75
 static int fire(int xlim, int ylim,
 	Display *dpy, Window window, Colormap cmap)
 {
@@ -246,6 +254,9 @@ static int fire(int xlim, int ylim,
 		continue;
 	 if (choosy && (city[mis->dcity].alive == 0))
 		continue;
+	 ey = mis->starty + ((float) (mis->endy - mis->starty)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
+	 if (ey > ylim * kMaxToGround)
+		continue;  /* too far down */
 	 cnt++;
 	 suitor[j] = 1;
   }
@@ -300,13 +311,11 @@ static int fire(int xlim, int ylim,
 		}
   m->startx = city[dcity].x;
   m->starty = ylim;
-#define kExpHelp 0.2
-#define kSpeedDiff 3.5
   ex = mis->startx + ((float) (mis->endx - mis->startx)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
   ey = mis->starty + ((float) (mis->endy - mis->starty)) * (mis->pos + kExpHelp + (1.0 - mis->pos) / kSpeedDiff);
   m->endx = ex + random() % 16 - 8 + (random() % aim) - aim / 2;
   m->endy = ey + random() % 16 - 8 + (random() % aim) - aim / 2;
-  if (ey > ylim * 0.75)
+  if (ey > ylim * kMaxToGround)
 	 return 0;  /* too far down */
   mis->enemies++;
   m->target = misnum;
@@ -612,7 +621,7 @@ static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int 
 	 if (!m->alive)
 		continue;
 	 
-	 if (loop & 1) {
+	 if (loop & 1)
 		if (m->outgoing) {
 		  m->rad++;
 		  if (m->rad >= m->max)
@@ -628,7 +637,6 @@ static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int 
 		  if (m->rad <= 0)
 			 m->alive = 0;
 		}
-	 }
   }
 }
 

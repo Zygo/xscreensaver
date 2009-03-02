@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.42 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.43 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -195,12 +195,12 @@ sub get_document_1 {
             $cookie = "AV_ALL=1";
         }
 
-        print S ("GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\n" .
-                 "Host: $them\n" .
-                 "User-Agent: $progname/$version\n" .
-                 ($referer ? "Referer: $referer\n" : "") .
-                 ($cookie ? "Cookie: $cookie\n" : "") .
-                 "\n");
+        print S ("GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
+                 "Host: $them\r\n" .
+                 "User-Agent: $progname/$version\r\n" .
+                 ($referer ? "Referer: $referer\r\n" : "") .
+                 ($cookie ? "Cookie: $cookie\r\n" : "") .
+                 "\r\n");
         my $http = <S>;
 
         while (<S>) {

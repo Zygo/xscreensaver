@@ -63,14 +63,11 @@ UTILS_BIN	= ../utils
 
 INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I.. @INCLUDES@
 
-MOTIF_SRCS	= dialogs-Xm.c
-MOTIF_OBJS	= dialogs-Xm.o
+MOTIF_SRCS	= demo-Xm.c demo-Xm-widgets.c
+MOTIF_OBJS	= demo-Xm.o demo-Xm-widgets.o
 
 GTK_SRCS	= demo-Gtk.c demo-Gtk-widgets.c
 GTK_OBJS	= demo-Gtk.o demo-Gtk-widgets.o
-
-ATHENA_SRCS	= dialogs-Xaw.c
-ATHENA_OBJS	= dialogs-Xaw.o
 
 PWENT_SRCS	= passwd-pwent.c
 PWENT_OBJS	= passwd-pwent.o
@@ -89,10 +86,8 @@ NOLOCK_OBJS_1	= lock.o
 TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c \
 		  test-apm.c xdpyinfo.c
 
-MOTIF_LIBS	= @MOTIF_LIBS@
+MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@
 GTK_LIBS	= @GTK_LIBS@
-ATHENA_LIBS	= @ATHENA_LIBS@
-ATHENA3D_LIBS	= @ATHENA3D_LIBS@
 
 PASSWD_SRCS	= @PASSWD_SRCS@
 PASSWD_OBJS	= @PASSWD_OBJS@
@@ -135,10 +130,10 @@ SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o $(LOCK_OBJS) \
 CMD_SRCS	= remote.c xscreensaver-command.c
 CMD_OBJS	= remote.o xscreensaver-command.o
 
-DEMO_SRCS_1	= prefs.c demo.c $(XMU_SRCS)
-DEMO_OBJS_1	= prefs.o demo-Xm.o demo-Xaw.o $(XMU_OBJS)
+DEMO_SRCS_1	= prefs.c $(XMU_SRCS)
+DEMO_OBJS_1	= prefs.o $(XMU_OBJS)
 
-DEMO_SRCS	= prefs.c remote.c $(DEMO_UTIL_SRCS) demo.c
+DEMO_SRCS	= prefs.c remote.c $(DEMO_UTIL_SRCS)
 DEMO_OBJS	= prefs.o remote.o $(DEMO_UTIL_OBJS)
 
 SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ $(GL_LIBS) \
@@ -153,11 +148,10 @@ EXES2		= @ALL_DEMO_PROGRAMS@
 
 HDRS		= XScreenSaver_ad.h xscreensaver.h prefs.h remote.h \
 		  demo-Gtk-widgets.h demo-Gtk-stubs.h
-MEN		= xscreensaver.man @DEMO_MAN@ \
+MEN		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-command.man
 ALL_MEN		= xscreensaver.man \
-		  xscreensaver-demo.man xscreensaver-demo-old.man \
-		  xscreensaver-command.man
+		  xscreensaver-demo.man xscreensaver-command.man
 EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
 		  xscreensaver.kss xscreensaver-demo.glade .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
@@ -165,7 +159,7 @@ VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
 
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
-		  $(MOTIF_SRCS) $(GTK_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) \
+		  $(MOTIF_SRCS) $(GTK_SRCS) $(PWENT_SRCS) \
 		  $(KERBEROS_SRCS) $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) \
 		  $(CMD_SRCS) $(HDRS) $(TEST_SRCS) $(ALL_MEN)
 
@@ -253,7 +247,6 @@ install-man: $(MEN)
 	 fi ;								\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  instname=`echo $$instname | sed 's/-old//'` ;			\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(man1dir)/$$instname ;			\
 	  $(INSTALL_DATA) $(srcdir)/$$man				\
@@ -379,7 +372,7 @@ distdepend: update_ad_version update_man_version XScreenSaver_ad.h
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
-	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(GTK_SRCS) $(ATHENA_SRCS)	    \
+	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(GTK_SRCS)			    \
 	$(PWENT_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS)		    \
 	$(TEST_SRCS) |							    \
 	(								    \
@@ -487,32 +480,13 @@ xscreensaver-command: $(CMD_OBJS)
 xscreensaver-demo: @PREFERRED_DEMO_PROGRAM@
 	cp -p @PREFERRED_DEMO_PROGRAM@ $@
 
-xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS) demo-Xm.o
-	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) demo-Xm.o \
-	$(LIBS) $(X_LIBS) \
+xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) \
 	$(MOTIF_LIBS) $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
 xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(GTK_OBJS) $(LIBS) $(X_LIBS) \
 	$(GTK_LIBS) $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
-
-xscreensaver-demo-Xaw: $(DEMO_OBJS) $(ATHENA_OBJS) demo-Xaw.o
-	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(ATHENA_OBJS) demo-Xaw.o \
-	$(LIBS) $(X_LIBS) \
-	$(ATHENA_LIBS) $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
-
-xscreensaver-demo-Xaw3d: $(DEMO_OBJS) $(ATHENA_OBJS) demo-Xaw.o
-	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(ATHENA_OBJS) demo-Xaw.o \
-	$(LIBS) $(X_LIBS) \
-	$(ATHENA3D_LIBS) $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
-
-demo-Xm.o: demo.c XScreenSaver_ad.h
-	$(CC) -o $@ -c -DFORCE_MOTIF \
-	$(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $(srcdir)/demo.c
-demo-Xaw.o: demo.c XScreenSaver_ad.h
-	$(CC) -o $@ -c -DFORCE_ATHENA \
-	$(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $(srcdir)/demo.c
-
 
 
 
@@ -593,8 +567,15 @@ stderr.o: $(srcdir)/xscreensaver.h
 stderr.o: $(srcdir)/prefs.h
 stderr.o: $(UTILS_SRC)/resources.h
 stderr.o: $(UTILS_SRC)/visual.h
-dialogs-Xm.o: ../config.h
-dialogs-Xm.o: $(UTILS_SRC)/visual.h
+demo-Xm.o: ../config.h
+demo-Xm.o: $(UTILS_SRC)/version.h
+demo-Xm.o: $(srcdir)/prefs.h
+demo-Xm.o: $(UTILS_SRC)/resources.h
+demo-Xm.o: $(UTILS_SRC)/visual.h
+demo-Xm.o: $(srcdir)/remote.h
+demo-Xm.o: $(UTILS_SRC)/usleep.h
+demo-Xm.o: XScreenSaver_ad.h
+demo-Xm-widgets.o: ../config.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(UTILS_SRC)/version.h
 demo-Gtk.o: $(srcdir)/prefs.h
@@ -607,8 +588,6 @@ demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk-widgets.o: ../config.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-stubs.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-widgets.h
-dialogs-Xaw.o: ../config.h
-dialogs-Xaw.o: $(UTILS_SRC)/visual.h
 passwd-pwent.o: ../config.h
 lock.o: ../config.h
 lock.o: $(srcdir)/xscreensaver.h
@@ -618,14 +597,6 @@ passwd.o: ../config.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h
 prefs.o: $(UTILS_SRC)/resources.h
-demo.o: ../config.h
-demo.o: $(UTILS_SRC)/version.h
-demo.o: $(srcdir)/prefs.h
-demo.o: $(UTILS_SRC)/resources.h
-demo.o: $(UTILS_SRC)/visual.h
-demo.o: $(srcdir)/remote.h
-demo.o: $(UTILS_SRC)/usleep.h
-demo.o: XScreenSaver_ad.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
 xscreensaver-command.o: ../config.h

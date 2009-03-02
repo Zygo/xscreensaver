@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "18-Nov-99 (3.21)" "X Version 11"
+.TH XScreenSaver 1 "09-Dec-99 (3.22)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -25,11 +25,6 @@ daemon.
 It is essentially two things: a tool for editing the \fI~/.xscreensaver\fP
 file; and a tool for demoing the various graphics hacks that 
 the \fIxscreensaver\fP daemon will launch.
-
-.B Note:
-this manual describes the Gtk version of the \fIxscreensaver\-demo\fP
-command.  The UI of the Motif and Athena versions of \fIxscreensaver\-demo\fP
-is a bit different (for now.)
 
 The main window consists of a menu bar and two tabbed pages.  The first page
 is for editing the list of demos, and the second is for editing various other
