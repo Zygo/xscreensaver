@@ -22,6 +22,10 @@
 # include <unistd.h>
 #endif
 
+#ifdef ENABLE_NLS
+# include <locale.h>
+#endif /* ENABLE_NLS */
+
 #ifndef VMS
 # include <pwd.h>		/* for getpwuid() */
 #else /* VMS */
@@ -504,13 +508,13 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   char *vers = strdup (screensaver_id + 4);
   char *s;
   char copy[1024];
-  char *desc = "For updates, check http://www.jwz.org/xscreensaver/";
+  char *desc = _("For updates, check http://www.jwz.org/xscreensaver/");
 
   s = strchr (vers, ',');
   *s = 0;
   s += 2;
 
-  sprintf(copy, "Copyright \251 1991-2002 %s", s);
+  sprintf(copy, _("Copyright \251 1991-2002 %s"), s);
 
   sprintf (msg, "%s\n\n%s", copy, desc);
 
@@ -580,7 +584,7 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
                         hb, TRUE, TRUE, 0);
 
-    ok = gtk_button_new_with_label ("OK");
+    ok = gtk_button_new_with_label (_("OK"));
     gtk_container_add (GTK_CONTAINER (hb), ok);
 
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
@@ -617,8 +621,8 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   if (!p->help_url || !*p->help_url)
     {
       warning_dialog (s->toplevel_widget,
-                      "Error:\n\n"
-                      "No Help URL has been specified.\n", False, 100);
+                      _("Error:\n\n"
+			"No Help URL has been specified.\n"), False, 100);
       return;
     }
 
@@ -703,13 +707,13 @@ await_xscreensaver (state *s)
       Bool root_p = (geteuid () == 0);
       
       strcpy (buf, 
-              "Error:\n\n"
-              "The xscreensaver daemon did not start up properly.\n"
-              "\n");
+              _("Error:\n\n"
+		"The xscreensaver daemon did not start up properly.\n"
+		"\n"));
 
       if (root_p)
         strcat (buf,
-            "You are running as root.  This usually means that xscreensaver\n"
+	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
             "turned on.  Try running this command:\n"
             "\n"
@@ -723,9 +727,9 @@ await_xscreensaver (state *s)
             "manual and FAQ for more information.\n"
             "\n"
             "You shouldn't run X as root. Instead, you should log in as a\n"
-            "normal user, and `su' as necessary.");
+            "normal user, and `su' as necessary."));
       else
-        strcat (buf, "Please check your $PATH and permissions.");
+        strcat (buf, _("Please check your $PATH and permissions."));
 
       warning_dialog (s->toplevel_widget, buf, False, 1);
     }
@@ -760,12 +764,12 @@ demo_write_init_file (state *s, saver_preferences *p)
       const char *f = init_file_name();
       if (!f || !*f)
         warning_dialog (s->toplevel_widget,
-                        "Error:\n\nCouldn't determine init file name!\n",
+                        _("Error:\n\nCouldn't determine init file name!\n"),
                         False, 100);
       else
         {
           char *b = (char *) malloc (strlen(f) + 1024);
-          sprintf (b, "Error:\n\nCouldn't write %s\n", f);
+          sprintf (b, _("Error:\n\nCouldn't write %s\n"), f);
           warning_dialog (s->toplevel_widget, b, False, 100);
           free (b);
         }
@@ -824,7 +828,7 @@ manual_cb (GtkButton *button, gpointer user_data)
   else
     {
       warning_dialog (GTK_WIDGET (button),
-                      "Error:\n\nno `manualCommand' resource set.",
+                      _("Error:\n\nno `manualCommand' resource set."),
                       False, 100);
     }
 
@@ -994,8 +998,8 @@ hack_time_text (state *s, const char *line, Time *store, Bool sec_p)
 	{
 	  char b[255];
 	  sprintf (b,
-		   "Error:\n\n"
-		   "Unparsable time format: \"%s\"\n",
+		   _("Error:\n\n"
+		     "Unparsable time format: \"%s\"\n"),
 		   line);
 	  warning_dialog (s->toplevel_widget, b, False, 100);
 	}
@@ -1311,7 +1315,7 @@ flush_popup_changes_and_save (state *s)
     {
       gdk_beep ();				  /* unparsable */
       visual = "";
-      gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry), "Any");
+      gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry), _("Any"));
     }
 
   changed = flush_changes (s, list_elt, -1, command, visual);
@@ -1521,7 +1525,7 @@ store_image_directory (GtkWidget *button, gpointer user_data)
   if (!directory_p (path))
     {
       char b[255];
-      sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n", path);
+      sprintf (b, _("Error:\n\n" "Directory does not exist: \"%s\"\n"), path);
       warning_dialog (GTK_WIDGET (top), b, False, 100);
       return;
     }
@@ -2046,12 +2050,12 @@ populate_popup_window (state *s)
                 ? s->cdata->description
                 : 0);
 # else  /* !HAVE_XML */
-  doc_string = "Descriptions not available: no XML support compiled in.";
+  doc_string = _("Descriptions not available: no XML support compiled in.");
 # endif /* !HAVE_XML */
 
   gtk_label_set_text (doc, (doc_string
-                            ? doc_string
-                            : "No description available."));
+                            ? _(doc_string)
+                            : _("No description available.")));
 }
 
 
@@ -2300,13 +2304,13 @@ populate_demo_window (state *s, int list_elt)
   if (p->mode == BLANK_ONLY)
     {
       hack = 0;
-      pretty_name = strdup ("Blank Screen");
+      pretty_name = strdup (_("Blank Screen"));
       schedule_preview (s, 0);
     }
   else if (p->mode == DONT_BLANK)
     {
       hack = 0;
-      pretty_name = strdup ("Screen Saver Disabled");
+      pretty_name = strdup (_("Screen Saver Disabled"));
       schedule_preview (s, 0);
     }
   else
@@ -2329,7 +2333,7 @@ populate_demo_window (state *s, int list_elt)
     }
 
   if (!pretty_name)
-    pretty_name = strdup ("Preview");
+    pretty_name = strdup (_("Preview"));
 
   gtk_frame_set_label (frame1, pretty_name);
   gtk_frame_set_label (frame2, pretty_name);
@@ -2348,7 +2352,7 @@ populate_demo_window (state *s, int list_elt)
                       (hack
                        ? (hack->visual && *hack->visual
                           ? hack->visual
-                          : "Any")
+                          : _("Any"))
                        : ""));
 
   sensitize_demo_widgets (s, (hack ? True : False));
@@ -2466,8 +2470,8 @@ maybe_reload_init_file (state *s)
       if (!f || !*f) return 0;
       b = (char *) malloc (strlen(f) + 1024);
       sprintf (b,
-               "Warning:\n\n"
-               "file \"%s\" has changed, reloading.\n",
+               _("Warning:\n\n"
+		 "file \"%s\" has changed, reloading.\n"),
                f);
       warning_dialog (s->toplevel_widget, b, False, 100);
       free (b);
@@ -2533,7 +2537,7 @@ clear_preview_window (state *s)
 
   if (s->running_preview_error_p)
     {
-      const char * const lines[] = { "No Preview", "Available" };
+      const char * const lines[] = { N_("No Preview"), N_("Available") };
       int lh = p->style->font->ascent + p->style->font->descent;
       int y, i;
       gint w, h;
@@ -2542,11 +2546,11 @@ clear_preview_window (state *s)
       y += p->style->font->ascent;
       for (i = 0; i < countof(lines); i++)
         {
-          int sw = gdk_string_width (p->style->font, lines[i]);
+          int sw = gdk_string_width (p->style->font, _(lines[i]));
           int x = (w - sw) / 2;
           gdk_draw_string (window, p->style->font,
                            p->style->fg_gc[GTK_STATE_NORMAL],
-                           x, y, lines[i]);
+                           x, y, _(lines[i]));
           y += lh;
         }
     }
@@ -3203,9 +3207,9 @@ the_network_is_not_the_computer (state *s)
   if (!rversion || !*rversion)
     {
       sprintf (msg,
-	       "Warning:\n\n"
-               "The XScreenSaver daemon doesn't seem to be running\n"
-               "on display \"%s\".  Launch it now?",
+	       _("Warning:\n\n"
+		 "The XScreenSaver daemon doesn't seem to be running\n"
+		 "on display \"%s\".  Launch it now?"),
 	       d);
     }
   else if (p && ruser && *ruser && !!strcmp (ruser, p->pw_name))
@@ -3213,7 +3217,7 @@ the_network_is_not_the_computer (state *s)
       /* Warn that the two processes are running as different users.
        */
       sprintf(msg,
-	       "Warning:\n\n"
+	    _("Warning:\n\n"
 	      "%s is running as user \"%s\" on host \"%s\".\n"
 	      "But the xscreensaver managing display \"%s\"\n"
 	      "is running as user \"%s\" on host \"%s\".\n"
@@ -3225,7 +3229,7 @@ the_network_is_not_the_computer (state *s)
 	      "You should either re-run %s as \"%s\", or re-run\n"
 	      "xscreensaver as \"%s\".\n"
               "\n"
-              "Restart the xscreensaver daemon now?\n",
+              "Restart the xscreensaver daemon now?\n"),
 	      blurb(), luser, lhost,
 	      d,
 	      (ruser ? ruser : "???"), (rhost ? rhost : "???"),
@@ -3238,7 +3242,7 @@ the_network_is_not_the_computer (state *s)
       /* Warn that the two processes are running on different hosts.
        */
       sprintf (msg,
-	       "Warning:\n\n"
+	      _("Warning:\n\n"
 	       "%s is running as user \"%s\" on host \"%s\".\n"
 	       "But the xscreensaver managing display \"%s\"\n"
 	       "is running as user \"%s\" on host \"%s\".\n"
@@ -3247,7 +3251,7 @@ the_network_is_not_the_computer (state *s)
 	       "if they don't see the same ~%s/.xscreensaver file) then\n"
 	       "%s won't work right.\n"
                "\n"
-               "Restart the daemon on \"%s\" as \"%s\" now?\n",
+               "Restart the daemon on \"%s\" as \"%s\" now?\n"),
 	       blurb(), luser, lhost,
 	       d,
 	       (ruser ? ruser : "???"), (rhost ? rhost : "???"),
@@ -3260,13 +3264,13 @@ the_network_is_not_the_computer (state *s)
       /* Warn that the version numbers don't match.
        */
       sprintf (msg,
-	       "Warning:\n\n"
+	     _("Warning:\n\n"
 	       "This is %s version %s.\n"
 	       "But the xscreensaver managing display \"%s\"\n"
 	       "is version %s.  This could cause problems.\n"
-              "\n"
-              "Restart the xscreensaver daemon now?\n",
-	       blurb(), s->short_version,
+	       "\n"
+	       "Restart the xscreensaver daemon now?\n"),
+	       progname, s->short_version,
 	       d,
 	       rversion);
     }
@@ -3290,13 +3294,9 @@ demo_ehandler (Display *dpy, XErrorEvent *error)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
   fprintf (stderr, "\nX error in %s:\n", blurb());
-  if (XmuPrintDefaultErrorMessage (dpy, error, stderr))
-    {
-      kill_preview_subproc (s);
-      exit (-1);
-    }
-  else
-    fprintf (stderr, " (nonfatal.)\n");
+  XmuPrintDefaultErrorMessage (dpy, error, stderr);
+  kill_preview_subproc (s);
+  exit (-1);
   return 0;
 }
 
@@ -3349,8 +3349,7 @@ const char *usage = "[--display dpy] [--prefs]"
 # ifdef HAVE_CRAPPLET
                     " [--crapplet]"
 # endif
-                    " [--debug]";
-
+            "\n\t\t   [--debug] [--sync] [--no-xshm]";
 
 static void
 map_popup_window_cb (GtkWidget *w, gpointer user_data)
@@ -3421,6 +3420,19 @@ main (int argc, char **argv)
   char window_title[255];
   Bool crapplet_p = False;
   char *str;
+
+#ifdef ENABLE_NLS
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+  textdomain (GETTEXT_PACKAGE);
+
+# ifdef HAVE_GTK2
+  bindtextdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+# else /* ! HAVE_GTK2 */
+  if (!setlocale (LC_ALL, ""))
+    fprintf (stderr, "%s: locale not supported by C library\n", real_progname);
+# endif /* ! HAVE_GTK2 */
+
+#endif /* ENABLE_NLS */
 
   str = strrchr (real_progname, '/');
   if (str) real_progname = str+1;
@@ -3620,7 +3632,7 @@ main (int argc, char **argv)
         ;
       else
 	{
-	  fprintf (stderr, "%s: unknown option: %s\n", real_progname, argv[i]);
+	  fprintf (stderr, _("%s: unknown option: %s\n"), real_progname, argv[i]);
           fprintf (stderr, "%s: %s\n", real_progname, usage);
           exit (1);
 	}

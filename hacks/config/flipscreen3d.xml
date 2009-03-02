@@ -14,6 +14,7 @@
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-
+Grabs an image of the desktop, turns it into a GL texture map, and
+spins it around and deforms it in various ways.  Written by Ben Buxton.
   </_description>
 </screensaver>

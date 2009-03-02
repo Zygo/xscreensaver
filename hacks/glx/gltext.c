@@ -366,7 +366,7 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
   ch = &(fontinfo->ch[c]);
   if (ch)
     {
-      GLfloat lx, ly;
+      GLfloat lx=0, ly=0;
       for (i = ch->num_strokes, stroke = ch->stroke;
            i > 0; i--, stroke++) {
         for (j = stroke->num_coords, coord = stroke->coord;

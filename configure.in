@@ -1,7 +1,7 @@
 # configure.in --- xscreensaver, Copyright (c) 1997-2000 Jamie Zawinski.
 #
 
-AC_PREREQ(2.13)
+AC_PREREQ(2.53)
 AC_INIT(driver/subprocs.c)
 AC_CONFIG_HEADER(config.h)
 
@@ -23,7 +23,6 @@ for d in driver utils hacks hacks/glx ; do
     exit 1
   fi
 done
-
 
 ###############################################################################
 #
@@ -99,7 +98,7 @@ AC_DEFUN(AC_GCC_ACCEPTS_STD,
  [if test -n "$GCC"; then
    AC_CACHE_CHECK([whether gcc accepts -std],
      ac_cv_gcc_accepts_std,
-    [if ( gcc -E -std=c89 - </dev/null 2>&1 >/dev/null | \
+    [if ( gcc -E -std=c89 - </dev/null >/dev/null 2>&1 | \
           grep unrecognized >/dev/null ); then
        ac_cv_gcc_accepts_std=no
      else
@@ -153,12 +152,12 @@ AC_DEFUN(AC_PROG_INSTALL_DIRS,
     [ac_cv_install_d_creates_dirs=no
      rm -rf conftestdir
      if mkdir conftestdir; then
-       cd conftestdir >&-
-       ${INSTALL} -d `pwd`/dir1/dir2 >&- 2>&-
+       cd conftestdir 2>/dev/null
+       ${INSTALL} -d `pwd`/dir1/dir2 >/dev/null 2>&1
        if test -d dir1/dir2/. ; then
          ac_cv_install_d_creates_dirs=yes
        fi
-       cd .. >&-
+       cd .. 2>/dev/null
        rm -rf conftestdir
      fi
     ])
@@ -169,12 +168,12 @@ AC_DEFUN(AC_PROG_INSTALL_DIRS,
       [ac_cv_mkdir_p_creates_dirs=no
        rm -rf conftestdir
        if mkdir conftestdir; then
-         cd conftestdir >&-
-         mkdir -p dir1/dir2 >&- 2>&-
+         cd conftestdir 2>/dev/null
+         mkdir -p dir1/dir2 >/dev/null 2>&1
          if test -d dir1/dir2/. ; then
            ac_cv_mkdir_p_creates_dirs=yes
          fi
-         cd .. >&-
+         cd .. 2>/dev/null
          rm -rf conftestdir
        fi
       ])
@@ -369,17 +368,17 @@ AC_DEFUN(AC_CHECK_ICMPHDR,
 AC_DEFUN(AC_PATH_X_APP_DEFAULTS_XMKMF,[
   rm -fr conftestdir
   if mkdir conftestdir; then
-    cd conftestdir >&-
+    cd conftestdir 2>/dev/null
     # Make sure to not put "make" in the Imakefile rules, since we grep it out.
     cat > Imakefile <<'EOF'
 acfindx:
 	@echo 'ac_x_app_defaults="${XAPPLOADDIR}"'
 EOF
-    if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
+    if (xmkmf) >/dev/null 2>&1 && test -f Makefile; then
       # GNU make sometimes prints "make[1]: Entering...", which'd confuse us.
       eval `${MAKE-make} acfindx 2>/dev/null | grep -v make`
     fi
-    cd .. >&-
+    cd .. 2>/dev/null
     rm -fr conftestdir
   fi])
 
@@ -610,7 +609,7 @@ AC_DEFUN(AC_CHECK_X_HEADER, [
     CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  AC_CHECK_HEADER([$1], [$2])
+  AC_CHECK_HEADER([$1],[$2],[$3],[$4])
   CPPFLAGS="$ac_save_CPPFLAGS"])
 
 # Like AC_EGREP_HEADER, but it uses the already-computed -I directories.
@@ -797,6 +796,21 @@ AC_X_RANDOM_PATHS
 AC_XPOINTER
 
 
+###############################################################################
+#
+#       Gettext support
+#
+###############################################################################
+
+AC_PROG_INTLTOOL
+GETTEXT_PACKAGE=xscreensaver
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
+AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE")
+AC_SUBST(GETTEXT_PACKAGE)
+
+ALL_LINGUAS="ca de et fr it ko pl pt sv da es fi hu ja no pt pt_BR ru wa"
+AM_GLIB_GNU_GETTEXT
+
 
 ###############################################################################
 #
@@ -805,7 +819,10 @@ AC_XPOINTER
 ###############################################################################
 
 have_xmu=no
-AC_CHECK_X_HEADER(X11/Xmu/Error.h, [have_xmu=yes])
+AC_CHECK_X_HEADER(X11/Xmu/Error.h, [have_xmu=yes],,
+                  [#include <stdlib.h>
+                   #include <stdio.h>
+                   #include <X11/Intrinsic.h>])
 if test "$have_xmu" = no ; then
   XMU_SRCS='$(UTILS_SRC)/xmu.c'
   XMU_OBJS='$(UTILS_BIN)/xmu.o'
@@ -975,7 +992,8 @@ HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
 if test "$with_sgi" = yes; then
   AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
                     [have_sgi=yes
-                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)])
+                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
 
 elif test "$with_sgi" != no; then
   echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
@@ -998,7 +1016,8 @@ AC_ARG_WITH(mit-ext,
 HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
 
 if test "$with_mit" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes])
+  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes],,
+                    [#include <X11/Xlib.h>])
 
   # Now check to see if it's really in the library; XF86Free-3.3 ships
   # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
@@ -1053,7 +1072,8 @@ HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
 if test "$with_xidle" = yes; then
   AC_CHECK_X_HEADER(X11/extensions/xidle.h,
                     [have_xidle=yes
-                     AC_DEFINE(HAVE_XIDLE_EXTENSION)])
+                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
 elif test "$with_xidle" != no; then
   echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
   exit 1
@@ -1077,7 +1097,8 @@ HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
 if test "$with_sgivc" = yes; then
 
   # first check for XSGIvc.h
-  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes])
+  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
+                    [#include <X11/Xlib.h>])
 
   # if that succeeded, then check for the -lXsgivc
   if test "$have_sgivc" = yes; then
@@ -1115,7 +1136,8 @@ HANDLE_X_PATH_ARG(with_dpms, --with-dpms-ext, DPMS)
 if test "$with_dpms" = yes; then
 
   # first check for dpms.h
-  AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes])
+  AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes],,
+                    [#include <X11/Xlib.h>])
 
   # if that succeeded, then check for the DPMS code in the libraries
   if test "$have_dpms" = yes; then
@@ -1161,7 +1183,8 @@ HANDLE_X_PATH_ARG(with_xinerama, --with-xinerama-ext, XINERAMA)
 if test "$with_xinerama" = yes; then
 
   # first check for Xinerama.h
-  AC_CHECK_X_HEADER(X11/extensions/Xinerama.h, [have_xinerama=yes])
+  AC_CHECK_X_HEADER(X11/extensions/Xinerama.h, [have_xinerama=yes],,
+                    [#include <X11/Xlib.h>])
 
   # if that succeeded, then check for the XINERAMA code in the libraries
   if test "$have_xinerama" = yes; then
@@ -1208,7 +1231,8 @@ HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
 if test "$with_xf86vmode" = yes; then
 
   # first check for xf86vmode.h
-  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes])
+  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes],,
+                    [#include <X11/Xlib.h>])
 
   # if that succeeded, then check for the -lXxf86vm
   if test "$have_xf86vmode" = yes; then
@@ -1251,7 +1275,8 @@ if test "$with_xf86gamma" = yes; then
   if test "$have_xf86vmode" = yes; then
     have_xf86gamma=yes
   else
-    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes])
+    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
+                      [#include <X11/Xlib.h>])
   fi
 
   # if that succeeded, then check for the -lXxf86vm
@@ -1769,12 +1794,18 @@ if test "$with_motif" = yes; then
   AC_CHECK_X_HEADER(Xm/Xm.h,
                     [have_motif=yes
                      AC_DEFINE(HAVE_MOTIF)
-                     MOTIF_LIBS="$MOTIF_LIBS -lXm"])
+                     MOTIF_LIBS="$MOTIF_LIBS -lXm"],,
+                    [#include <stdlib.h>
+                     #include <stdio.h>
+                     #include <X11/Intrinsic.h>])
 fi
 
 
 if test "$have_motif" = yes; then
-  AC_CHECK_X_HEADER(Xm/ComboBox.h, [AC_DEFINE(HAVE_XMCOMBOBOX)])
+  AC_CHECK_X_HEADER(Xm/ComboBox.h, [AC_DEFINE(HAVE_XMCOMBOBOX)],,
+                    [#include <stdlib.h>
+                     #include <stdio.h>
+                     #include <X11/Intrinsic.h>])
 fi
 
 
@@ -1905,7 +1936,7 @@ if test "$with_gtk" = yes; then
     gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
-      [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
+      [if ( $gnome_config --cflags $gnome_config_libs >/dev/null 2>&1 | \
             grep Unknown >/dev/null ) ; then
          ac_cv_gnome_config_cflags=''
        else
@@ -1923,7 +1954,7 @@ if test "$with_gtk" = yes; then
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
     AC_MSG_CHECKING(for Gnome capplet libs)
     AC_CACHE_VAL(ac_cv_gnome_config_libs,
-      [if ( $gnome_config --libs $gnome_config_libs 2>&1 >/dev/null |
+      [if ( $gnome_config --libs $gnome_config_libs >/dev/null 2>&1 |
             grep Unknown >/dev/null ) ; then
          ac_cv_gnome_config_libs=''
        else
@@ -2011,6 +2042,7 @@ fi
 
 if test "$with_xml" = yes; then
   have_xml=no
+  have_old_xml=no
 
   # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
   # look in /foo/bin/ for for xml-config.
@@ -2044,8 +2076,32 @@ if test "$with_xml" = yes; then
 
   ac_save_xml_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $ac_xml_config_cflags"
-  AC_CHECK_X_HEADER(xmlIO.h, [have_xml=yes])
+
+  # first try <libxml/parser.h> which is the new way...
+  #
+  AC_CHECK_X_HEADER(libxml/xmlIO.h, [have_xml=yes],,
+                    [#include <libxml/parser.h>])
+
+  # if that didn't work, then try just <parser.h> which is the old way...
+  #
+  if test "$have_xml" = no; then
+    AC_CHECK_X_HEADER(xmlIO.h, [have_xml=yes; have_old_xml=yes],,
+                      [#include <parser.h>])
+  fi
+
   CPPFLAGS="$ac_save_xml_CPPFLAGS"
+
+  have_zlib=no
+  if test "$have_xml" = yes; then
+    # we have the XML headers; now make sure zlib is around.
+    # yes, it's stupid we have to do this too, but there is
+    # dependency screwage in Gnome.
+    AC_CHECK_X_LIB(z, zlibVersion, [have_zlib=yes])
+    if test "$have_zlib" = no; then
+      xml_halfassed=yes
+      have_xml=no
+    fi
+  fi
 
   if test "$have_xml" = yes; then
     # we have the header, now check for the library
@@ -2054,7 +2110,7 @@ if test "$with_xml" = yes; then
     AC_CHECK_X_LIB(xml, xmlParseChunk,
                    [have_xml=yes
                     xml_halfassed=no
-                    XML_LIBS="-lxml"
+                    XML_LIBS="$ac_xml_config_libs"
                     AC_DEFINE(HAVE_XML)],
                    [true],
                    $ac_xml_config_libs)
@@ -2064,6 +2120,9 @@ if test "$with_xml" = yes; then
     INCLUDES="$INCLUDES $ac_xml_config_cflags"
     GTK_LIBS="$GTK_LIBS $ac_xml_config_libs"
     AC_DEFINE(HAVE_XML)
+    if test "$have_old_xml" = yes; then
+      AC_DEFINE(HAVE_OLD_XML_HEADERS)
+    fi
   fi
 
 fi
@@ -2235,7 +2294,8 @@ ac_mesagl_version_string=unknown
 if test "$with_gl" = yes; then
   AC_CHECK_X_HEADER(GL/gl.h, have_gl=yes, have_gl=no)
   if test "$have_gl" = yes ; then
-    AC_CHECK_X_HEADER(GL/glx.h, have_gl=yes, have_gl=no)
+    AC_CHECK_X_HEADER(GL/glx.h, have_gl=yes, have_gl=no,
+                      [#include <GL/gl.h>])
   fi
 
   # If we have the headers, try and figure out which vendor it's from.
@@ -2327,11 +2387,21 @@ EOF
          fi
          CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
-          # M4 sucks!!
-         changequote(X,Y)
+# With autoconf 2.13 we could do this:
+#
+#        changequote(X,Y)
+#        mglv=`(eval "$ac_cpp conftest.$ac_ext") 2>&AC_FD_CC | sed -n \
+#             's/^configure:.*\([0-9][0-9]*\).*\([0-9][0-9]*\).*$/\1.\2/p'`
+#        changequote([,])
+#
+# but with autoconf 2.52+ (m4 1.4) that causes an error:
+#   m4: ERROR: Recursion limit of 1024 exceeded, use -L<N> to change it
+#
+# So, we need to use the autoconf line-noise macros @<:@ for [ and @:>@ for ]
+#
          mglv=`(eval "$ac_cpp conftest.$ac_ext") 2>&AC_FD_CC | sed -n \
-              's/^configure:.*\([0-9][0-9]*\).*\([0-9][0-9]*\).*$/\1.\2/p'`
-         changequote([,])
+              's/^configure:.*\(@<:@0-9@:>@@<:@0-9@:>@*\).*\(@<:@0-9@:>@@<:@0-9@:>@*\).*$/\1.\2/p'`
+
 
          rm -f conftest.$ac_ext
 
@@ -2390,13 +2460,16 @@ GLE_LIBS=""
 
 if test "$with_gle" = yes; then
 
-  AC_CHECK_X_HEADER(GL/gle.h, have_gle3=yes, have_gle3=no)
+  AC_CHECK_X_HEADER(GL/gle.h, have_gle3=yes, have_gle3=no,
+                    [#include <GL/gl.h>])
   if test "$have_gle3" = yes ; then
     have_gle=yes;
   else
-    AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no)
+    AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no,
+                    [#include <GL/gl.h>])
     if test "$have_gle" = yes ; then
-      AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no)
+      AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no,
+                        [#include <GL/gl.h>])
     fi
   fi
 
@@ -2470,7 +2543,8 @@ if test "$with_xpm" = yes; then
   AC_CHECK_X_HEADER(X11/xpm.h,
                    [have_xpm=yes
                     AC_DEFINE(HAVE_XPM)
-                    XPM_LIBS="-lXpm"])
+                    XPM_LIBS="-lXpm"],,
+                    [#include <X11/Xlib.h>])
 elif test "$with_xpm" != no; then
   echo "error: must be yes or no: --with-xpm=$with_xpm"
   exit 1
@@ -2650,7 +2724,8 @@ HANDLE_X_PATH_ARG(with_xshm, --with-xshm-ext, XSHM)
 if test "$with_xshm" = yes; then
 
   # first check for Xshm.h.
-  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes])
+  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes],,
+                    [#include <X11/Xlib.h>])
 
   # if that succeeded, then check for sys/ipc.h.
   if test "$have_xshm" = yes; then
@@ -2708,7 +2783,8 @@ HANDLE_X_PATH_ARG(with_xdbe, --with-xdbe-ext, DOUBLE-BUFFER)
 
 if test "$with_xdbe" = yes; then
 
-  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes])
+  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes],,
+                    [#include <X11/Xlib.h>])
   if test "$have_xdbe" = yes; then
     AC_DEFINE(HAVE_DOUBLE_BUFFER_EXTENSION)    
   fi
@@ -2740,7 +2816,8 @@ HANDLE_X_PATH_ARG(with_readdisplay, --with-readdisplay, XReadDisplay)
 
 if test "$with_readdisplay" = yes; then
   AC_CHECK_X_HEADER(X11/extensions/readdisplay.h,
-                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION))
+                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION),,
+                    [#include <X11/Xlib.h>])
 elif test "$with_readdisplay" != no; then
   echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
   exit 1
@@ -3064,6 +3141,7 @@ AC_OUTPUT(Makefile
           driver/Makefile
           hacks/Makefile
           hacks/glx/Makefile
+          po/Makefile.in
           driver/XScreenSaver.ad)
 
 ###############################################################################
@@ -3208,9 +3286,16 @@ if test "$have_gtk" = yes ; then
     fi
 
     if test "$xml_halfassed" = yes ; then
+
+      if test "$have_zlib" = yes ; then
+        which="XML libraries"
+      else
+        which="\`zlib' library"
+      fi
+
       echo ''
       warn2 'More specifically, we found the headers, but not the'
-      warn2 'libraries; so either XML is half-installed on this'
+      warn2 "$which; so either XML is half-installed on this"
       warn2 "system, or something else went wrong.  The \`config.log'"
       warn2 'file might contain some clues.'
     fi
@@ -3474,7 +3559,7 @@ do_dir_warning=no
 
 # M4 sucks!!
 changequote(X,Y)
-rpmv=`(rpm -qv xscreensaver) 2>&- | \
+rpmv=`(rpm -qv xscreensaver) 2>/dev/null | \
       sed -n 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-.*$/\1/p'`
 changequote([,])
 

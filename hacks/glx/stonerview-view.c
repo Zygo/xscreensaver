@@ -118,7 +118,7 @@ int init_view(int *argc, char *argv[])
   char *dpystr = (char *) getenv ("DISPLAY");
   char *geom = 0;
   int screen;
-  Visual *visual;
+  Visual *visual = 0;
   XWindowAttributes xgwa;
   XSetWindowAttributes xswa;
   unsigned long xswa_mask = 0;

@@ -19,8 +19,8 @@
 
 /* the arrays in which we will store the polyline */
 #define NPTS 100
-double points [NPTS][3];
-float colors [NPTS][3];
+static double points [NPTS][3];
+static float colors [NPTS][3];
 static int idx = 0;
 
 /* some utilities for filling that array */
@@ -40,8 +40,8 @@ static int idx = 0;
 
 /* the arrays in which we will store the contour */
 #define NCONTOUR 100
-double contour_points [NCONTOUR][2];
-int cidx = 0;
+static double contour_points [NCONTOUR][2];
+static int cidx = 0;
 
 /* some utilities for filling that array */
 #define C_PNT(x,y) { 			\
@@ -99,7 +99,7 @@ void InitStuff_joinoffset (void)
    gleSetJoinStyle (TUBE_JN_ANGLE | TUBE_CONTOUR_CLOSED | TUBE_JN_CAP);
 }
 
-double up_vector[3] = {1.0, 0.0, 0.0};
+static double up_vector[3] = {1.0, 0.0, 0.0};
 
 extern float lastx;
 extern float lasty;

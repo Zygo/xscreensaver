@@ -110,7 +110,7 @@ OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
 		  xshm.o xdbe.o colorbars.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
-		  yarandom.h erase.h xshm.h xdbe.h colorbars.h
+		  yarandom.h erase.h xshm.h xdbe.h colorbars.h xscreensaver-intl.h
 STAR		= *
 LOGOS		= images/$(STAR).xpm \
 		  images/$(STAR).gif \
@@ -158,10 +158,12 @@ distdepend::
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
-	$(SRCS) | 							    \
+	$(SRCS) 2>/dev/null |						    \
+	sort -d |							    \
 	(								    \
 	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
-	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	  sed -e '/^#.*/d'						    \
+	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
 	  echo ''							    \
@@ -193,7 +195,7 @@ compile_axp.com: Makefile.in
 	      c=`echo $$c | tr a-z A-Z` ;				    \
 	      echo "$(VMS_AXP_COMPILE) $$c" ;				    \
             done ;							    \
-	  ) | sort ;							    \
+	  ) | sort -d ;							    \
           echo '$$ lib/cre utils.olb_axp' ; 				    \
 	  echo '$$ lib utils.olb_axp *.obj' ; 				    \
 	  echo '$$! delete/noconf *.obj;' ; 				    \
@@ -209,83 +211,82 @@ distdepend:: compile_axp.com compile_decc.com
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
-# $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
-alpha.o: $(srcdir)/utils.h
-alpha.o: ../config.h
 alpha.o: $(srcdir)/alpha.h
-alpha.o: $(srcdir)/visual.h
+alpha.o: ../config.h
 alpha.o: $(srcdir)/hsv.h
-alpha.o: $(srcdir)/yarandom.h
 alpha.o: $(srcdir)/resources.h
-colors.o: $(srcdir)/utils.h
+alpha.o: $(srcdir)/utils.h
+alpha.o: $(srcdir)/visual.h
+alpha.o: $(srcdir)/yarandom.h
+colorbars.o: $(srcdir)/colorbars.h
+colorbars.o: ../config.h
+colorbars.o: $(srcdir)/resources.h
+colorbars.o: $(srcdir)/utils.h
+colors.o: $(srcdir)/colors.h
 colors.o: ../config.h
 colors.o: $(srcdir)/hsv.h
-colors.o: $(srcdir)/yarandom.h
+colors.o: $(srcdir)/utils.h
 colors.o: $(srcdir)/visual.h
-colors.o: $(srcdir)/colors.h
-fade.o: $(srcdir)/utils.h
+colors.o: $(srcdir)/yarandom.h
+erase.o: ../config.h
+erase.o: $(srcdir)/resources.h
+erase.o: $(srcdir)/usleep.h
+erase.o: $(srcdir)/utils.h
+erase.o: $(srcdir)/yarandom.h
 fade.o: ../config.h
-fade.o: $(srcdir)/visual.h
-fade.o: $(srcdir)/usleep.h
 fade.o: $(srcdir)/fade.h
-grabscreen.o: $(srcdir)/utils.h
-grabscreen.o: ../config.h
-grabscreen.o: $(srcdir)/yarandom.h
-grabscreen.o: $(srcdir)/usleep.h
-grabscreen.o: $(srcdir)/colors.h
-grabscreen.o: $(srcdir)/grabscreen.h
-grabscreen.o: $(srcdir)/visual.h
-grabscreen.o: $(srcdir)/resources.h
-grabscreen.o: $(srcdir)/vroot.h
-grabclient.o: $(srcdir)/utils.h
+fade.o: $(srcdir)/usleep.h
+fade.o: $(srcdir)/utils.h
+fade.o: $(srcdir)/visual.h
 grabclient.o: ../config.h
 grabclient.o: $(srcdir)/grabscreen.h
 grabclient.o: $(srcdir)/resources.h
+grabclient.o: $(srcdir)/utils.h
 grabclient.o: $(srcdir)/vroot.h
-hsv.o: $(srcdir)/utils.h
+grabscreen.o: $(srcdir)/colors.h
+grabscreen.o: ../config.h
+grabscreen.o: $(srcdir)/grabscreen.h
+grabscreen.o: $(srcdir)/resources.h
+grabscreen.o: $(srcdir)/usleep.h
+grabscreen.o: $(srcdir)/utils.h
+grabscreen.o: $(srcdir)/visual.h
+grabscreen.o: $(srcdir)/vroot.h
+grabscreen.o: $(srcdir)/yarandom.h
 hsv.o: ../config.h
 hsv.o: $(srcdir)/hsv.h
-overlay.o: $(srcdir)/utils.h
+hsv.o: $(srcdir)/utils.h
+logo.o: ../config.h
+logo.o: $(srcdir)/images/logo-180.xpm
+logo.o: $(srcdir)/images/logo-50.xpm
+logo.o: $(srcdir)/resources.h
+logo.o: $(srcdir)/utils.h
 overlay.o: ../config.h
+overlay.o: $(srcdir)/utils.h
 overlay.o: $(srcdir)/visual.h
-resources.o: $(srcdir)/utils.h
 resources.o: ../config.h
 resources.o: $(srcdir)/resources.h
-spline.o: $(srcdir)/utils.h
+resources.o: $(srcdir)/utils.h
 spline.o: ../config.h
 spline.o: $(srcdir)/spline.h
+spline.o: $(srcdir)/utils.h
 usleep.o: ../config.h
-visual.o: $(srcdir)/utils.h
+visual-gl.o: ../config.h
+visual-gl.o: $(srcdir)/utils.h
+visual-gl.o: $(srcdir)/visual.h
 visual.o: ../config.h
 visual.o: $(srcdir)/resources.h
+visual.o: $(srcdir)/utils.h
 visual.o: $(srcdir)/visual.h
-visual-gl.o: $(srcdir)/utils.h
-visual-gl.o: ../config.h
-visual-gl.o: $(srcdir)/visual.h
+xdbe.o: ../config.h
+xdbe.o: $(srcdir)/resources.h
+xdbe.o: $(srcdir)/utils.h
+xdbe.o: $(srcdir)/xdbe.h
 xmu.o: ../config.h
-logo.o: $(srcdir)/utils.h
-logo.o: ../config.h
-logo.o: $(srcdir)/resources.h
-logo.o: $(srcdir)/images/logo-50.xpm
-logo.o: $(srcdir)/images/logo-180.xpm
+xshm.o: ../config.h
+xshm.o: $(srcdir)/resources.h
+xshm.o: $(srcdir)/utils.h
+xshm.o: $(srcdir)/xshm.h
 yarandom.o: ../config.h
 yarandom.o: $(srcdir)/yarandom.h
-erase.o: $(srcdir)/utils.h
-erase.o: ../config.h
-erase.o: $(srcdir)/yarandom.h
-erase.o: $(srcdir)/usleep.h
-erase.o: $(srcdir)/resources.h
-xshm.o: $(srcdir)/utils.h
-xshm.o: ../config.h
-xshm.o: $(srcdir)/xshm.h
-xshm.o: $(srcdir)/resources.h
-xdbe.o: $(srcdir)/utils.h
-xdbe.o: ../config.h
-xdbe.o: $(srcdir)/xdbe.h
-xdbe.o: $(srcdir)/resources.h
-colorbars.o: $(srcdir)/utils.h
-colorbars.o: ../config.h
-colorbars.o: $(srcdir)/resources.h
-colorbars.o: $(srcdir)/colorbars.h
 

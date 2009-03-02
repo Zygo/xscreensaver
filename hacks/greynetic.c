@@ -89,7 +89,7 @@ greynetic (Display *dpy, Window window)
 {
   static int tick = 500, xlim, ylim;
   static Colormap cmap;
-  int x, y, w, h, i;
+  int x, y, w=0, h=0, i;
   XGCValues gcv;
   if (tick++ == 500)
     {

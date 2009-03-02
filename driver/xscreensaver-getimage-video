@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -59,6 +59,9 @@ my @programs = (
 
   "grab -type ppm -format ntsc -source 1 " .
         "-settle 0.75 -output $tmpfile",	# *BSD BT848 module
+
+  "motioneye -j $tmpfile",                      # Sony Vaio MotionEye
+						# (hardware jpeg encoder)
 
   "vidtomem -f $tmpfile 2>&- && mv $sgi_bogosity $tmpfile",  # Silicon Graphics
 );

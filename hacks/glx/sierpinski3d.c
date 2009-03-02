@@ -132,10 +132,12 @@ triangle (GLfloat x1, GLfloat y1, GLfloat z1,
 }
 
 static void
-four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which)
+four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
+             int *countP)
 {
   if (countdown <= 0)
     {
+      (*countP)++;
       if (which == 0)
         {
           glNormal3f (normals[0][0], normals[0][1], normals[0][2]);
@@ -210,25 +212,25 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which)
       corner[1] = inner[M01];
       corner[2] = inner[M02];
       corner[3] = inner[M03];
-      four_tetras (corner, wireframe_p, countdown, which);
+      four_tetras (corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M01];
       corner[1] = outer[1];
       corner[2] = inner[M12];
       corner[3] = inner[M13];
-      four_tetras (corner, wireframe_p, countdown, which);
+      four_tetras (corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M02];
       corner[1] = inner[M12];
       corner[2] = outer[2];
       corner[3] = inner[M23];
-      four_tetras (corner, wireframe_p, countdown, which);
+      four_tetras (corner, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M03];
       corner[1] = inner[M13];
       corner[2] = inner[M23];
       corner[3] = outer[3];
-      four_tetras (corner, wireframe_p, countdown, which);
+      four_tetras (corner, wireframe_p, countdown, which, countP);
     }
 }
 
@@ -238,6 +240,7 @@ compile_gasket(ModeInfo *mi, int which)
 {
   Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
+  int count;
 
   GL_VECTOR   vertex[5];
 
@@ -279,10 +282,13 @@ compile_gasket(ModeInfo *mi, int which)
   vertex[4].y = 0.0; 
   vertex[4].z = 0.0;
   
+  count = 0;
   four_tetras (vertex, wireframe_p,
                (gp->current_depth < 0
                 ? -gp->current_depth : gp->current_depth),
-               which);
+               which,
+               &count);
+  mi->polygon_count = count;
 }
 
 static void
@@ -397,6 +403,8 @@ draw(ModeInfo *mi)
       glDeleteLists (gp->gasket1, 1);
       glDeleteLists (gp->gasket2, 1);
       glDeleteLists (gp->gasket3, 1);
+
+      mi->polygon_count = 0;
       glNewList (gp->gasket0, GL_COMPILE); compile_gasket (mi, 0); glEndList();
       glNewList (gp->gasket1, GL_COMPILE); compile_gasket (mi, 1); glEndList();
       glNewList (gp->gasket2, GL_COMPILE); compile_gasket (mi, 2); glEndList();

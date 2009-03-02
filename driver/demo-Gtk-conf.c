@@ -16,6 +16,8 @@
 
 #if defined(HAVE_GTK) && defined(HAVE_XML)   /* whole file */
 
+#include <xscreensaver-intl.h>
+
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
@@ -26,16 +28,41 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <parser.h>   /* XML */
+/*
+ * Both of these workarounds can be removed when support for ancient
+ * libxml versions is dropped.  versions 1.8.11 and 2.3.4 provide the
+ * correct fixes.
+ */
+
+/* 
+ * Older libxml polluted the global headerspace, while libxml2 fixed
+ * this.  To support both old and recent libxmls, we have this
+ * workaround.
+ */
+#ifdef HAVE_OLD_XML_HEADERS
+#include <parser.h>
+#else /* ! HAVE_OLD_XML_HEADERS */
+#include <libxml/parser.h> 
+#endif /* HAVE_OLD_XML_HEADERS */
+
+/* 
+ * handle non-native spelling mistakes in earlier versions and provide
+ * the source-compat fix for this that may not be in older versions.
+ */
+#ifndef xmlChildrenNode
+# if LIBXML_VERSION >= 20000
+#  define xmlChildrenNode children
+#  define xmlRootNode children
+# else
+#  define xmlChildrenNode childs
+#  define xmlRootNode root
+# endif /* LIBXML_VERSION */
+#endif /* xmlChildrenNode */
 
 #include <gtk/gtk.h>
 
 #include "demo-Gtk-conf.h"
 
-#if (LIBXML_VERSION >= 20000)  /* illiteracy finally fixed */
-# define childs children
-# define root   children
-#endif
  
 extern const char *blurb (void);
 
@@ -289,10 +316,10 @@ make_parameter (const char *filename, xmlNodePtr node)
     }
   else if (p->type == DESCRIPTION)
     {
-      if (node->childs &&
-          node->childs->type == XML_TEXT_NODE &&
-          !node->childs->next)
-        p->string = strdup (node->childs->content);
+      if (node->xmlChildrenNode &&
+          node->xmlChildrenNode->type == XML_TEXT_NODE &&
+          !node->xmlChildrenNode->next)
+        p->string = strdup (node->xmlChildrenNode->content);
     }
 
   p->id         = xmlGetProp (node, "id");
@@ -323,7 +350,7 @@ make_parameter (const char *filename, xmlNodePtr node)
   if (p->type == SELECT)
     {
       xmlNodePtr kids;
-      for (kids = node->childs; kids; kids = kids->next)
+      for (kids = node->xmlChildrenNode; kids; kids = kids->next)
         {
           parameter *s = make_select_option (filename, kids);
           if (s)
@@ -558,7 +585,7 @@ make_parameters_1 (const char *filename, xmlNodePtr node,
           if (row)
             (*row)++;
 
-          list2 = make_parameters_1 (filename, node->childs, box, 0);
+          list2 = make_parameters_1 (filename, node->xmlChildrenNode, box, 0);
           if (list2)
             list = g_list_concat (list, list2);
         }
@@ -588,7 +615,7 @@ make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent)
     {
       if (node->type == XML_ELEMENT_NODE &&
           !strcmp (node->name, "screensaver"))
-        return make_parameters_1 (filename, node->childs, parent, &row);
+        return make_parameters_1 (filename, node->xmlChildrenNode, parent, &row);
     }
   return 0;
 }
@@ -673,7 +700,7 @@ make_parameter_widget (const char *filename,
       {
         if (label)
           {
-            GtkWidget *w = gtk_label_new (label);
+            GtkWidget *w = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             gtk_widget_show (w);
@@ -697,9 +724,9 @@ make_parameter_widget (const char *filename,
       }
     case FILENAME:
       {
-        GtkWidget *L = gtk_label_new (label ? label : "");
+        GtkWidget *L = gtk_label_new (label ? _(label) : "");
         GtkWidget *entry = gtk_entry_new ();
-        GtkWidget *button = gtk_button_new_with_label ("Browse...");
+        GtkWidget *button = gtk_button_new_with_label (_("Browse..."));
         gtk_widget_show (entry);
         gtk_widget_show (button);
         p->widget = entry;
@@ -743,7 +770,7 @@ make_parameter_widget (const char *filename,
 
         if (label)
           {
-            labelw = gtk_label_new (label);
+            labelw = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (labelw), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (labelw), 0.0, 0.5);
             gtk_widget_show (labelw);
@@ -799,7 +826,7 @@ make_parameter_widget (const char *filename,
 
         if (p->low_label)
           {
-            GtkWidget *w = gtk_label_new (p->low_label);
+            GtkWidget *w = gtk_label_new (_(p->low_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             gtk_widget_show (w);
@@ -824,7 +851,7 @@ make_parameter_widget (const char *filename,
 
         if (p->high_label)
           {
-            GtkWidget *w = gtk_label_new (p->high_label);
+            GtkWidget *w = gtk_label_new (_(p->high_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
             gtk_widget_show (w);
@@ -848,7 +875,7 @@ make_parameter_widget (const char *filename,
 
         if (label)
           {
-            GtkWidget *w = gtk_label_new (label);
+            GtkWidget *w = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             gtk_widget_show (w);
@@ -894,7 +921,7 @@ make_parameter_widget (const char *filename,
 
         if (label && row)
           {
-            GtkWidget *w = gtk_label_new (label);
+            GtkWidget *w = gtk_label_new (_(label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
             gtk_widget_show (w);
@@ -991,7 +1018,7 @@ browse_button_cb (GtkButton *button, gpointer user_data)
   GtkWidget *entry = GTK_WIDGET (user_data);
   char *text = gtk_entry_get_text (GTK_ENTRY (entry));
   GtkFileSelection *selector =
-    GTK_FILE_SELECTION (gtk_file_selection_new ("Select file."));
+    GTK_FILE_SELECTION (gtk_file_selection_new (_("Select file.")));
 
   gtk_file_selection_set_filename (selector, text);
   gtk_signal_connect (GTK_OBJECT (selector->ok_button),
@@ -1731,7 +1758,7 @@ load_configurator_1 (const char *program, const char *arguments,
       gtk_container_set_border_width (GTK_CONTAINER (table), 8);
       gtk_widget_show (table);
 
-      parms = make_parameters (file, doc->root, table);
+      parms = make_parameters (file, doc->xmlRootNode, table);
 
       xmlFreeDoc (doc);
 

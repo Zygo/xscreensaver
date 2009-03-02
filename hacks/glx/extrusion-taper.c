@@ -55,8 +55,8 @@
 
 #define NUM_PTS (25)
 
-double contour [NUM_PTS][2];
-double norms [NUM_PTS][2];
+static double contour [NUM_PTS][2];
+static double norms [NUM_PTS][2];
 
 static void init_contour (void)
 {
@@ -94,11 +94,11 @@ static void init_contour (void)
 /* =========================================================== */
 
 #define PSIZE 40
-double path[PSIZE][3];
-double twist[PSIZE];
-double taper[PSIZE];
+static double path[PSIZE][3];
+static double twist[PSIZE];
+static double taper[PSIZE];
 
-void init_taper (void) {
+static void init_taper (void) {
    int j;
    double z, deltaz;
    double ang, dang;
@@ -151,7 +151,7 @@ void InitStuff_taper (void)
 
 /* =========================================================== */
 
-void gleTaper (int ncp, 
+static void gleTaper (int ncp, 
                gleDouble contour[][2], 
                gleDouble cont_normal[][2], 
                gleDouble up[3],

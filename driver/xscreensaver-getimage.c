@@ -110,10 +110,8 @@ static int
 x_ehandler (Display *dpy, XErrorEvent *error)
 {
   fprintf (stderr, "\nX error in %s:\n", progname);
-  if (XmuPrintDefaultErrorMessage (dpy, error, stderr))
-    exit (-1);
-  else
-    fprintf (stderr, " (nonfatal.)\n");
+  XmuPrintDefaultErrorMessage (dpy, error, stderr);
+  exit (-1);
   return 0;
 }
 

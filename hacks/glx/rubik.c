@@ -1,13 +1,10 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* rubik --- Shows a auto-solving Rubik's cube */
+/* rubik --- Shows an auto-solving Rubik's cube */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
+static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 
 #endif
-
-#undef DEBUG_LISTS
-#undef LMN
 
 /*-
  * Permission to use, copy, modify, and distribute this software and its
@@ -30,76 +27,73 @@ static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
  * to use OpenGL at home.
  *
  * Since I'm not a native English speaker, my apologies for any grammatical
- * mistake.
+ * mistakes.
  *
  * My e-mail address is
- * m-vianna@usa.net
+ * mfvianna@centroin.com.br
  *
  * Marcelo F. Vianna (Jul-31-1997)
  *
  * Revision History:
- * 26-Sep-98: Added some more movement (the cube do not stays in the screen
- *            center anymore. Also fixed the scale problem imediatelly after
- *            shuffling when the puzzle is solved.
- * 08-Aug-97: Now has some internals from xrubik by David Bagley
- *            This should make it easier to add features.
- * 02-Aug-97: Now behaves more like puzzle.c: first show the cube being
- *            shuffled and then being solved. A mode specific option was added:
- *            "+/-hideshuffling" to provide the original behavior (in which
- *            only the solution is shown).
- *            The color labels corners are now rounded.
- *            Optimized the cubit() routine using glLists.
- * 01-Aug-97: Shuffling now avoids movements that undoes the previous movement
- *            and three consecutive identical moves (which is pretty stupid).
- *            improved the "cycles" option in replacement of David's hack,
- *            now rp->anglestep is a GLfloat, so this option selects the
- *            "exact" number of frames that a rotation (movement) takes to
- *            complete.
- * 30-Jul-97: Initial release, there is no algorithm to solve the puzzle,
- *            instead, it randomly shuffle the cube and then make the
- *            movements in the reverse order.
- *            The mode was written in 1 day (I got sick and had the day off).
- *            There was not much to do since I could not leave home... :)
- *
+ * 05-Apr-2002: Removed all gllist uses (fix some bug with nvidia driver)
+ * 01-Mar-2001: Added FPS stuff - Eric Lassauge <lassauge@mail.dotcom.fr>
+ * 01-Nov-2000: Allocation checks
+ * 27-Apr-1999: LxMxN stuff added.
+ * 26-Sep-1998: Added some more movement (the cube does not stay in the screen
+ *              center anymore. Also fixed the scale problem immediately after
+ *              shuffling when the puzzle is solved.
+ * 08-Aug-1997: Now has some internals from xrubik by David Bagley
+ *              This should make it easier to add features.
+ * 02-Aug-1997: Now behaves more like puzzle.c: first show the cube being
+ *              shuffled and then being solved. A mode specific option was
+ *              added:
+ *              "+/-hideshuffling" to provide the original behavior (in which
+ *              only the solution is shown).
+ *              The color labels corners are now rounded.
+ *              Optimized the cubit() routine using glLists.
+ * 01-Aug-1997: Shuffling now avoids movements that undoes the previous
+ *              movement and three consecutive identical moves (which is
+ *              pretty stupid).
+ *              improved the "cycles" option in replacement of David's hack,
+ *              now rp->anglestep is a GLfloat, so this option selects the
+ *              "exact" number of frames that a rotation (movement) takes to
+ *              complete.
+ * 30-Jul-1997: Initial release, there is no algorithm to solve the puzzle,
+ *              instead, it randomly shuffle the cube and then make the
+ *              movements in the reverse order.
+ *              The mode was written in 1 day (I got sick and had the day off).
+ *              There was not much to do since I could not leave home... :)
  */
 
 /*-
  * Color labels mapping:
  * =====================
  *
- *                       +------------+
- *                       |0-->        |
- *                       ||           |
- *                       |v           |
- *                       |   TOP(0)   |
- *                       |            |
- *                       |            |
- *                       |           8|
- *           +-----------+------------+-----------+
- *           |0-->       |0-->        |0-->       |
- *           ||          ||           ||          |
- *           |v          |v           |v          |
- *           |  LEFT(1)  |  FRONT(2)  |  RIGHT(3) |
- *           |           |            |           |
- *           |           |            |           |
- *           |          8|           8|          8|
- *           +-----------+------------+-----------+
- *                       |0-->        |
- *                       ||           |
- *                       |v           |
- *                       |  BOTTOM(4) |  rp->faces[N][X+AVSIZE*Y]=
- *                       |            |         rp->cubeLoc[N][X+AVSIZE*Y]=
- *                       |            | 
- *                       |           8|         +---+---+---+
- *                       +------------+         |   |   |   |
- *                       |0-->        |         | 0 | 1 | 2 |
- *                       ||           |         |---+---+---+
- *                       |v           |         |  xxxxx(N) |
- *                       |   BACK(5)  |         | 3 | 4 | 5 |
- *                       |            |         +---+---+---+
- *                       |            |         |   |   |  |
- *                       |           8|         | 6 | 7 | 8 |
- *                       +------------+         +---+---+---+
+ *             +-----------+
+ *             |0-->       |
+ *             ||          |
+ *             |v  TOP(0)  |
+ *             |           |
+ *             |          8|
+ * +-----------+-----------+-----------+
+ * |0-->       |0-->       |0-->       |
+ * ||          ||          ||          |
+ * |v  LEFT(1) |v FRONT(2) |v RIGHT(3) |
+ * |           |           |           |
+ * |          8|          8|          8|
+ * +-----------+-----------+-----------+
+ *             |0-->       |
+ *             ||          |
+ *             |v BOTTOM(4)|
+ *             |           |
+ *             |          8|
+ *             +-----------+             +---+---+---+
+ *             |0-->       |             | 0 | 1 | 2 |
+ *             ||          |             |--xxxxx(N)-+
+ *             |v  BACK(5) |             | 3 | 4 | 5 |
+ *             |           |             +---+---+---+
+ *             |          8|             | 6 | 7 | 8 |
+ *             +-----------+             +---+---+---+
  *
  *  Map to 3d
  *  FRONT  => X, Y
@@ -110,23 +104,20 @@ static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
  *  BOTTOM => X, Z
  */
 
-/*-
- * PURIFY 3.0a on SunOS4 reports an unitialized memory read on each of
- * the glCallList() functions below when using MesaGL 2.1.  This has
- * been fixed in MesaGL 2.2 and later releases.
- */
-
+#ifdef VMS
 /*-
  * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
  * otherwise caddr_t is not defined correctly
  */
 #include <X11/Intrinsic.h>
+#endif
 
 #ifdef STANDALONE
+# define MODE_rubik
 # define PROGCLASS	"Rubik"
 # define HACK_INIT	init_rubik
 # define HACK_DRAW	draw_rubik
-# define HACK_RESHAPE reshape_rubik
+# define HACK_RESHAPE reshape
 # define rubik_opts	xlockmore_opts
 # define DEFAULTS	"*delay: 40000 \n"		\
 					"*count: -30 \n"		\
@@ -139,26 +130,41 @@ static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
 # include "vis.h"
 #endif /* !STANDALONE */
 
-#ifdef USE_GL
+#ifdef MODE_rubik
 
+#define DEF_SIZEX     "0"
+#define DEF_SIZEY     "0"
+#define DEF_SIZEZ     "0"
 #define DEF_HIDESHUFFLING     "False"
 
+static int sizex;
+static int sizey;
+static int sizez;
 static Bool hideshuffling;
 
 static XrmOptionDescRec opts[] =
 {
-  {"-hideshuffling", ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "on"},
-  {"+hideshuffling", ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "off"}
+        {(char *) "-sizex", (char *) ".rubik.sizex", XrmoptionSepArg, (caddr_t) NULL},
+        {(char *) "-sizey", (char *) ".rubik.sizey", XrmoptionSepArg, (caddr_t) NULL},
+        {(char *) "-sizez", (char *) ".rubik.sizez", XrmoptionSepArg, (caddr_t) NULL},
+	{(char *) "-hideshuffling", (char *) ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "on"},
+	{(char *) "+hideshuffling", (char *) ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "off"}
 };
 
 static argtype vars[] =
 {
-	{(caddr_t *) & hideshuffling, "hideshuffling", "Hideshuffling", DEF_HIDESHUFFLING, t_Bool}
+	{(caddr_t *) & sizex, (char *) "sizex", (char *) "SizeX", (char *) DEF_SIZEX, t_Int},
+	{(caddr_t *) & sizey, (char *) "sizey", (char *) "SizeY", (char *) DEF_SIZEY, t_Int},
+	{(caddr_t *) & sizez, (char *) "sizez", (char *) "SizeZ", (char *) DEF_SIZEZ, t_Int},
+	{(caddr_t *) & hideshuffling, (char *) "hideshuffling", (char *) "Hideshuffling", (char *) DEF_HIDESHUFFLING, t_Bool}
 };
 
 static OptionStruct desc[] =
 {
-	{"-/+hideshuffling", "turn on/off hidden shuffle phase"}
+	{(char *) "-sizex num", (char *) "number of cubies along x axis (overrides size)"},
+	{(char *) "-sizey num", (char *) "number of cubies along y axis (overrides size)"},
+	{(char *) "-sizez num", (char *) "number of cubies along z axis (overrides size)"},
+	{(char *) "-/+hideshuffling", (char *) "turn on/off hidden shuffle phase"}
 };
 
 ModeSpecOpt rubik_opts =
@@ -167,8 +173,8 @@ ModeSpecOpt rubik_opts =
 #ifdef USE_MODULES
 ModStruct   rubik_description =
 {"rubik", "init_rubik", "draw_rubik", "release_rubik",
- "draw_rubik", "change_rubik", NULL, &rubik_opts,
- 10000, -30, 5, -6, 4, 1.0, "",
+ "draw_rubik", "change_rubik", (char *) NULL, &rubik_opts,
+ 10000, -30, 5, -6, 64, 1.0, "",
  "Shows an auto-solving Rubik's Cube", 0, NULL};
 
 #endif
@@ -190,26 +196,14 @@ ModStruct   rubik_description =
 /*************************************************************************/
 
 #define MINSIZE 2
-#ifdef LMN			/* LxMxN not completed yet... */
 #define MAXSIZEX (rp->sizex)
 #define MAXSIZEY (rp->sizey)
 #define MAXSIZEZ (rp->sizez)
-#define AVSIZE (rp->avsize)
-#define MAXSIZE (rp->maxsize)
-#define AVSIZESQ (rp->avsizeSq)
-#define MAXSIZESQ (rp->maxsizeSq)
-#else
-#define MAXSIZEX (rp->size)
-#define MAXSIZEY (rp->size)
-#define MAXSIZEZ (rp->size)
-#define AVSIZE (rp->size)
-#define MAXSIZE (rp->size)
-#define AVSIZESQ (rp->sizeSq)
-#define MAXSIZESQ (rp->sizeSq)
-#endif
+#define AVSIZE ((rp->sizex+rp->sizey+rp->sizez)/3.0)     /* Use of this should be minimized */
+#define MAXMAXSIZE (MAX(MAXSIZEX,MAX(MAXSIZEY,MAXSIZEZ)))
 #define MAXSIZEXY (MAXSIZEX*MAXSIZEY)
-#define MAXSIZEZY (MAXSIZEZ*MAXSIZEY)
-#define MAXSIZEXZ (MAXSIZEX*MAXSIZEZ)
+#define MAXSIZEYZ (MAXSIZEY*MAXSIZEZ)
+#define MAXSIZEZX (MAXSIZEZ*MAXSIZEX)
 #define LASTX (MAXSIZEX-1)
 #define LASTY (MAXSIZEY-1)
 #define LASTZ (MAXSIZEZ-1)
@@ -230,6 +224,7 @@ ModStruct   rubik_description =
 #define BOTTOM 2
 #define LEFT 3
 #define CW (MAXORIENT+1)
+#define HALF (MAXORIENT+2)
 #define CCW (2*MAXORIENT-1)
 
 #define TOP_FACE 0
@@ -240,12 +235,20 @@ ModStruct   rubik_description =
 #define BACK_FACE 5
 #define NO_FACE (MAXFACES)
 #define NO_ROTATION (2*MAXORIENT)
-#define NO_DEPTH MAXSIZE
+#define NO_DEPTH MAXMAXSIZE
 
 #define REVX(a) (MAXSIZEX - a - 1)
 #define REVY(a) (MAXSIZEY - a - 1)
 #define REVZ(a) (MAXSIZEZ - a - 1)
 
+#define CUBELEN 0.50
+#define CUBEROUND (CUBELEN-0.05)
+#define STICKERLONG (CUBEROUND-0.05)
+#define STICKERSHORT (STICKERLONG-0.05)
+#define STICKERDEPTH (CUBELEN+0.01)
+
+#define ObjCubit        0
+#define MaxObj          1
 typedef struct _RubikLoc {
 	int         face;
 	int         rotation;	/* Not used yet */
@@ -306,8 +309,6 @@ static RubikLoc slideNextRow[MAXFACES][MAXORIENT] =
 /*-
  * Examine cubie 0 on each face, its 4 movements (well only 2 since the
  * other 2 will be opposites) and translate it into slice movements).
- * Beware.. using this for NxNxN makes some assumptions that referenced
- * cubes are along the diagonal top-left to bottom-right.
  * CW = DEEP Depth CCW == SHALLOW Depth with reference to faces 0, 1, and 2
  */
 static RubikLoc rotateSlice[MAXFACES][MAXORIENT / 2] =
@@ -352,15 +353,15 @@ static int  rowToRotate[MAXFACES][MAXORIENT] =
 	{3, 0, 1, 4}
 };
 
-/* 
+/*
  * This translates a clockwise move to something more manageable
  */
 static RubikRowNext rotateToRow[MAXFACES] =	/*CW to min face */
 {
 	{1, LEFT, TOP},
-	{0, BOTTOM, LEFT},
+	{0, BOTTOM, RIGHT},
 	{0, RIGHT, BOTTOM},
-	{0, TOP, RIGHT},
+	{0, TOP, LEFT},
 	{1, RIGHT, BOTTOM},
 	{0, LEFT, TOP}
 };
@@ -370,14 +371,10 @@ typedef struct {
 	GLfloat     step;
 	RubikMove  *moves;
 	int         storedmoves;
+	int         degreeTurn;
 	int         shufflingmoves;
-#ifdef LMN			/* Under construction */
 	int         sizex, sizey, sizez;
-	int         avsize, maxsize;
-	int         avsizeSq, maxsizeSq;
-#else
-	int         size, sizeSq;
-#endif
+	float       avsize, avsizeSq;
 	int         action;
 	int         done;
 	GLfloat     anglestep;
@@ -385,8 +382,8 @@ typedef struct {
 	RubikLoc   *rowLoc[MAXORIENT];
 	RubikMove   movement;
 	GLfloat     rotatestep;
+	GLfloat     PX, PY, VX, VY;
 	GLXContext *glx_context;
-	int         AreObjectsDefined[1];
 } rubikstruct;
 
 static float front_shininess[] =
@@ -439,10 +436,8 @@ static float MaterialGray6[] =
 static float MaterialGray7[] =
 {0.7, 0.7, 0.7, 1.0};
 
-static rubikstruct *rubik = NULL;
-static GLuint objects;
+static rubikstruct *rubik = (rubikstruct *) NULL;
 
-#define ObjCubit        0
 
 static void
 pickcolor(int C, int mono)
@@ -488,265 +483,334 @@ pickcolor(int C, int mono)
 	}
 }
 
-
 static void
+faceSizes(rubikstruct * rp, int face, int * sizeOfRow, int * sizeOfColumn)
+{
+	switch (face) {
+		case 0: /* TOP */
+		case 4: /* BOTTOM */
+			*sizeOfRow = MAXSIZEX;
+			*sizeOfColumn = MAXSIZEZ;
+			break;
+		case 1: /* LEFT */
+		case 3: /* RIGHT */
+			*sizeOfRow = MAXSIZEZ;
+			*sizeOfColumn = MAXSIZEY;
+			break;
+		case 2: /* FRONT */
+		case 5: /* BACK */
+			*sizeOfRow = MAXSIZEX;
+			*sizeOfColumn = MAXSIZEY;
+			break;
+	}
+}
+
+static Bool
+checkFaceSquare(rubikstruct * rp, int face)
+{
+	int sizeOfRow, sizeOfColumn;
+
+	faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
+	return (sizeOfRow == sizeOfColumn);
+	/* Cubes can be made square with a 4x2 face where 90 degree turns
+	 * should be permitted but that is kind of complicated for me.
+	 * This can be done in 2 ways where the side of the cubies are
+	 * the same size and one where one side (the side with half the
+	 * number of cubies) is twice the size of the other.  The first is
+	 * complicated because faces of cubies can go under other faces.
+	 * The second way is similar to "banded cubes" where scotch tape
+	 * restricts the moves of some cubes.  Here you have to keep track
+	 * of the restrictions and show banded cubies graphically as one
+	 * cube.
+	 */
+}
+
+static int
+sizeFace(rubikstruct * rp, int face)
+{
+	int sizeOfRow, sizeOfColumn;
+
+	faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
+	return (sizeOfRow * sizeOfColumn);
+}
+
+static int
+sizeRow(rubikstruct * rp, int face)
+{
+	int sizeOfRow, sizeOfColumn;  /* sizeOfColumn not used */
+
+	faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
+	return sizeOfRow;
+}
+
+static Bool
+draw_stickerless_cubit(rubikstruct *rp)
+{
+	glBegin(GL_QUADS);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
+	/* Put sticker here */
+	glNormal3f(0.00, 0.00, 1.00);
+	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
+	glNormal3f(0.00, 0.00, -1.00);
+	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
+	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+	glNormal3f(-1.00, 0.00, 0.00);
+	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+	glNormal3f(1.00, 0.00, 0.00);
+	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+	glNormal3f(0.00, -1.00, 0.00);
+	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+	glNormal3f(0.00, 1.00, 0.00);
+	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+
+	/* Edges of cubit */
+	glNormal3f(-1.00, -1.00, 0.00);
+	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+	glNormal3f(1.00, 1.00, 0.00);
+	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
+	glNormal3f(-1.00, 1.00, 0.00);
+	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
+	glNormal3f(1.00, -1.00, 0.00);
+	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
+	glNormal3f(0.00, -1.00, -1.00);
+	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+	glNormal3f(0.00, 1.00, 1.00);
+	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+	glNormal3f(0.00, -1.00, 1.00);
+	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
+	glNormal3f(0.00, 1.00, -1.00);
+	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
+	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+	glNormal3f(-1.00, 0.00, -1.00);
+	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+	glNormal3f(1.00, 0.00, 1.00);
+	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
+	glNormal3f(1.00, 0.00, -1.00);
+	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
+	glNormal3f(-1.00, 0.00, 1.00);
+	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
+	glEnd();
+	glBegin(GL_TRIANGLES);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
+	/* Corners of cubit */
+	glNormal3f(1.00, 1.00, 1.00);
+	glVertex3f(CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(CUBELEN, CUBEROUND, CUBEROUND);
+	glVertex3f(CUBEROUND, CUBELEN, CUBEROUND);
+	glNormal3f(-1.00, -1.00, -1.00);
+	glVertex3f(-CUBEROUND, -CUBELEN, -CUBEROUND);
+	glVertex3f(-CUBELEN, -CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBEROUND, -CUBELEN);
+	glNormal3f(-1.00, 1.00, 1.00);
+	glVertex3f(-CUBEROUND, CUBEROUND, CUBELEN);
+	glVertex3f(-CUBEROUND, CUBELEN, CUBEROUND);
+	glVertex3f(-CUBELEN, CUBEROUND, CUBEROUND);
+	glNormal3f(1.00, -1.00, -1.00);
+	glVertex3f(CUBELEN, -CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBELEN, -CUBEROUND);
+	glVertex3f(CUBEROUND, -CUBEROUND, -CUBELEN);
+	glNormal3f(1.00, -1.00, 1.00);
+	glVertex3f(CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(CUBEROUND, -CUBELEN, CUBEROUND);
+	glVertex3f(CUBELEN, -CUBEROUND, CUBEROUND);
+	glNormal3f(-1.00, 1.00, -1.00);
+	glVertex3f(-CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBELEN, -CUBEROUND);
+	glVertex3f(-CUBEROUND, CUBEROUND, -CUBELEN);
+	glNormal3f(-1.00, -1.00, 1.00);
+	glVertex3f(-CUBEROUND, -CUBEROUND, CUBELEN);
+	glVertex3f(-CUBELEN, -CUBEROUND, CUBEROUND);
+	glVertex3f(-CUBEROUND, -CUBELEN, CUBEROUND);
+	glNormal3f(1.00, 1.00, -1.00);
+	glVertex3f(CUBELEN, CUBEROUND, -CUBEROUND);
+	glVertex3f(CUBEROUND, CUBEROUND, -CUBELEN);
+	glVertex3f(CUBEROUND, CUBELEN, -CUBEROUND);
+	glEnd();
+	return True;
+}
+
+static Bool
 draw_cubit(ModeInfo * mi,
 	   int back, int front, int left, int right, int bottom, int top)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	int         mono = MI_IS_MONO(mi);
 
-	if (!rp->AreObjectsDefined[ObjCubit]) {
-		glNewList(objects + ObjCubit, GL_COMPILE_AND_EXECUTE);
-		glBegin(GL_QUADS);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
-		glNormal3f(0.00, 0.00, 1.00);
-		glVertex3f(-0.45, -0.45, 0.50);
-		glVertex3f(0.45, -0.45, 0.50);
-		glVertex3f(0.45, 0.45, 0.50);
-		glVertex3f(-0.45, 0.45, 0.50);
-		glNormal3f(0.00, 0.00, -1.00);
-		glVertex3f(-0.45, 0.45, -0.50);
-		glVertex3f(0.45, 0.45, -0.50);
-		glVertex3f(0.45, -0.45, -0.50);
-		glVertex3f(-0.45, -0.45, -0.50);
-		glNormal3f(-1.00, 0.00, 0.00);
-		glVertex3f(-0.50, -0.45, 0.45);
-		glVertex3f(-0.50, 0.45, 0.45);
-		glVertex3f(-0.50, 0.45, -0.45);
-		glVertex3f(-0.50, -0.45, -0.45);
-		glNormal3f(1.00, 0.00, 0.00);
-		glVertex3f(0.50, -0.45, -0.45);
-		glVertex3f(0.50, 0.45, -0.45);
-		glVertex3f(0.50, 0.45, 0.45);
-		glVertex3f(0.50, -0.45, 0.45);
-		glNormal3f(0.00, -1.00, 0.00);
-		glVertex3f(0.45, -0.50, -0.45);
-		glVertex3f(0.45, -0.50, 0.45);
-		glVertex3f(-0.45, -0.50, 0.45);
-		glVertex3f(-0.45, -0.50, -0.45);
-		glNormal3f(0.00, 1.00, 0.00);
-		glVertex3f(-0.45, 0.50, -0.45);
-		glVertex3f(-0.45, 0.50, 0.45);
-		glVertex3f(0.45, 0.50, 0.45);
-		glVertex3f(0.45, 0.50, -0.45);
-		glNormal3f(-1.00, -1.00, 0.00);
-		glVertex3f(-0.45, -0.50, -0.45);
-		glVertex3f(-0.45, -0.50, 0.45);
-		glVertex3f(-0.50, -0.45, 0.45);
-		glVertex3f(-0.50, -0.45, -0.45);
-		glNormal3f(1.00, 1.00, 0.00);
-		glVertex3f(0.45, 0.50, -0.45);
-		glVertex3f(0.45, 0.50, 0.45);
-		glVertex3f(0.50, 0.45, 0.45);
-		glVertex3f(0.50, 0.45, -0.45);
-		glNormal3f(-1.00, 1.00, 0.00);
-		glVertex3f(-0.50, 0.45, -0.45);
-		glVertex3f(-0.50, 0.45, 0.45);
-		glVertex3f(-0.45, 0.50, 0.45);
-		glVertex3f(-0.45, 0.50, -0.45);
-		glNormal3f(1.00, -1.00, 0.00);
-		glVertex3f(0.50, -0.45, -0.45);
-		glVertex3f(0.50, -0.45, 0.45);
-		glVertex3f(0.45, -0.50, 0.45);
-		glVertex3f(0.45, -0.50, -0.45);
-		glNormal3f(0.00, -1.00, -1.00);
-		glVertex3f(-0.45, -0.45, -0.50);
-		glVertex3f(0.45, -0.45, -0.50);
-		glVertex3f(0.45, -0.50, -0.45);
-		glVertex3f(-0.45, -0.50, -0.45);
-		glNormal3f(0.00, 1.00, 1.00);
-		glVertex3f(-0.45, 0.45, 0.50);
-		glVertex3f(0.45, 0.45, 0.50);
-		glVertex3f(0.45, 0.50, 0.45);
-		glVertex3f(-0.45, 0.50, 0.45);
-		glNormal3f(0.00, -1.00, 1.00);
-		glVertex3f(-0.45, -0.50, 0.45);
-		glVertex3f(0.45, -0.50, 0.45);
-		glVertex3f(0.45, -0.45, 0.50);
-		glVertex3f(-0.45, -0.45, 0.50);
-		glNormal3f(0.00, 1.00, -1.00);
-		glVertex3f(-0.45, 0.50, -0.45);
-		glVertex3f(0.45, 0.50, -0.45);
-		glVertex3f(0.45, 0.45, -0.50);
-		glVertex3f(-0.45, 0.45, -0.50);
-		glNormal3f(-1.00, 0.00, -1.00);
-		glVertex3f(-0.50, -0.45, -0.45);
-		glVertex3f(-0.50, 0.45, -0.45);
-		glVertex3f(-0.45, 0.45, -0.50);
-		glVertex3f(-0.45, -0.45, -0.50);
-		glNormal3f(1.00, 0.00, 1.00);
-		glVertex3f(0.50, -0.45, 0.45);
-		glVertex3f(0.50, 0.45, 0.45);
-		glVertex3f(0.45, 0.45, 0.50);
-		glVertex3f(0.45, -0.45, 0.50);
-		glNormal3f(1.00, 0.00, -1.00);
-		glVertex3f(0.45, -0.45, -0.50);
-		glVertex3f(0.45, 0.45, -0.50);
-		glVertex3f(0.50, 0.45, -0.45);
-		glVertex3f(0.50, -0.45, -0.45);
-		glNormal3f(-1.00, 0.00, 1.00);
-		glVertex3f(-0.45, -0.45, 0.50);
-		glVertex3f(-0.45, 0.45, 0.50);
-		glVertex3f(-0.50, 0.45, 0.45);
-		glVertex3f(-0.50, -0.45, 0.45);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialGray);
-		glNormal3f(1.00, 1.00, 1.00);
-		glVertex3f(0.45, 0.45, 0.50);
-		glVertex3f(0.50, 0.45, 0.45);
-		glVertex3f(0.45, 0.50, 0.45);
-		glNormal3f(-1.00, -1.00, -1.00);
-		glVertex3f(-0.45, -0.50, -0.45);
-		glVertex3f(-0.50, -0.45, -0.45);
-		glVertex3f(-0.45, -0.45, -0.50);
-		glNormal3f(-1.00, 1.00, 1.00);
-		glVertex3f(-0.45, 0.45, 0.50);
-		glVertex3f(-0.45, 0.50, 0.45);
-		glVertex3f(-0.50, 0.45, 0.45);
-		glNormal3f(1.00, -1.00, -1.00);
-		glVertex3f(0.50, -0.45, -0.45);
-		glVertex3f(0.45, -0.50, -0.45);
-		glVertex3f(0.45, -0.45, -0.50);
-		glNormal3f(1.00, -1.00, 1.00);
-		glVertex3f(0.45, -0.45, 0.50);
-		glVertex3f(0.45, -0.50, 0.45);
-		glVertex3f(0.50, -0.45, 0.45);
-		glNormal3f(-1.00, 1.00, -1.00);
-		glVertex3f(-0.50, 0.45, -0.45);
-		glVertex3f(-0.45, 0.50, -0.45);
-		glVertex3f(-0.45, 0.45, -0.50);
-		glNormal3f(-1.00, -1.00, 1.00);
-		glVertex3f(-0.45, -0.45, 0.50);
-		glVertex3f(-0.50, -0.45, 0.45);
-		glVertex3f(-0.45, -0.50, 0.45);
-		glNormal3f(1.00, 1.00, -1.00);
-		glVertex3f(0.50, 0.45, -0.45);
-		glVertex3f(0.45, 0.45, -0.50);
-		glVertex3f(0.45, 0.50, -0.45);
-		glEnd();
-		glEndList();
-		rp->AreObjectsDefined[ObjCubit] = 1;
-#ifdef DEBUG_LISTS
-		(void) printf("Cubit drawn SLOWLY\n");
-#endif
-	} else {
-		glCallList(objects + ObjCubit);
-#ifdef DEBUG_LISTS
-		(void) printf("Cubit drawn quickly\n");
-#endif
-	}
-
+	if (!draw_stickerless_cubit(rp))
+		return False;
 	if (back != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(back, mono);
 		glNormal3f(0.00, 0.00, -1.00);
-		glVertex3f(-0.35, 0.40, -0.51);
-		glVertex3f(0.35, 0.40, -0.51);
-		glVertex3f(0.40, 0.35, -0.51);
-		glVertex3f(0.40, -0.35, -0.51);
-		glVertex3f(0.35, -0.40, -0.51);
-		glVertex3f(-0.35, -0.40, -0.51);
-		glVertex3f(-0.40, -0.35, -0.51);
-		glVertex3f(-0.40, 0.35, -0.51);
+		glVertex3f(-STICKERSHORT, STICKERLONG, -STICKERDEPTH);
+		glVertex3f(STICKERSHORT, STICKERLONG, -STICKERDEPTH);
+		glVertex3f(STICKERLONG, STICKERSHORT, -STICKERDEPTH);
+		glVertex3f(STICKERLONG, -STICKERSHORT, -STICKERDEPTH);
+		glVertex3f(STICKERSHORT, -STICKERLONG, -STICKERDEPTH);
+		glVertex3f(-STICKERSHORT, -STICKERLONG, -STICKERDEPTH);
+		glVertex3f(-STICKERLONG, -STICKERSHORT, -STICKERDEPTH);
+		glVertex3f(-STICKERLONG, STICKERSHORT, -STICKERDEPTH);
 		glEnd();
 	}
 	if (front != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(front, mono);
 		glNormal3f(0.00, 0.00, 1.00);
-		glVertex3f(-0.35, -0.40, 0.51);
-		glVertex3f(0.35, -0.40, 0.51);
-		glVertex3f(0.40, -0.35, 0.51);
-		glVertex3f(0.40, 0.35, 0.51);
-		glVertex3f(0.35, 0.40, 0.51);
-		glVertex3f(-0.35, 0.40, 0.51);
-		glVertex3f(-0.40, 0.35, 0.51);
-		glVertex3f(-0.40, -0.35, 0.51);
+		glVertex3f(-STICKERSHORT, -STICKERLONG, STICKERDEPTH);
+		glVertex3f(STICKERSHORT, -STICKERLONG, STICKERDEPTH);
+		glVertex3f(STICKERLONG, -STICKERSHORT, STICKERDEPTH);
+		glVertex3f(STICKERLONG, STICKERSHORT, STICKERDEPTH);
+		glVertex3f(STICKERSHORT, STICKERLONG, STICKERDEPTH);
+		glVertex3f(-STICKERSHORT, STICKERLONG, STICKERDEPTH);
+		glVertex3f(-STICKERLONG, STICKERSHORT, STICKERDEPTH);
+		glVertex3f(-STICKERLONG, -STICKERSHORT, STICKERDEPTH);
 		glEnd();
 	}
 	if (left != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(left, mono);
 		glNormal3f(-1.00, 0.00, 0.00);
-		glVertex3f(-0.51, -0.35, 0.40);
-		glVertex3f(-0.51, 0.35, 0.40);
-		glVertex3f(-0.51, 0.40, 0.35);
-		glVertex3f(-0.51, 0.40, -0.35);
-		glVertex3f(-0.51, 0.35, -0.40);
-		glVertex3f(-0.51, -0.35, -0.40);
-		glVertex3f(-0.51, -0.40, -0.35);
-		glVertex3f(-0.51, -0.40, 0.35);
+		glVertex3f(-STICKERDEPTH, -STICKERSHORT, STICKERLONG);
+		glVertex3f(-STICKERDEPTH, STICKERSHORT, STICKERLONG);
+		glVertex3f(-STICKERDEPTH, STICKERLONG, STICKERSHORT);
+		glVertex3f(-STICKERDEPTH, STICKERLONG, -STICKERSHORT);
+		glVertex3f(-STICKERDEPTH, STICKERSHORT, -STICKERLONG);
+		glVertex3f(-STICKERDEPTH, -STICKERSHORT, -STICKERLONG);
+		glVertex3f(-STICKERDEPTH, -STICKERLONG, -STICKERSHORT);
+		glVertex3f(-STICKERDEPTH, -STICKERLONG, STICKERSHORT);
 		glEnd();
 	}
 	if (right != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(right, mono);
 		glNormal3f(1.00, 0.00, 0.00);
-		glVertex3f(0.51, -0.35, -0.40);
-		glVertex3f(0.51, 0.35, -0.40);
-		glVertex3f(0.51, 0.40, -0.35);
-		glVertex3f(0.51, 0.40, 0.35);
-		glVertex3f(0.51, 0.35, 0.40);
-		glVertex3f(0.51, -0.35, 0.40);
-		glVertex3f(0.51, -0.40, 0.35);
-		glVertex3f(0.51, -0.40, -0.35);
+		glVertex3f(STICKERDEPTH, -STICKERSHORT, -STICKERLONG);
+		glVertex3f(STICKERDEPTH, STICKERSHORT, -STICKERLONG);
+		glVertex3f(STICKERDEPTH, STICKERLONG, -STICKERSHORT);
+		glVertex3f(STICKERDEPTH, STICKERLONG, STICKERSHORT);
+		glVertex3f(STICKERDEPTH, STICKERSHORT, STICKERLONG);
+		glVertex3f(STICKERDEPTH, -STICKERSHORT, STICKERLONG);
+		glVertex3f(STICKERDEPTH, -STICKERLONG, STICKERSHORT);
+		glVertex3f(STICKERDEPTH, -STICKERLONG, -STICKERSHORT);
 		glEnd();
 	}
 	if (bottom != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(bottom, mono);
 		glNormal3f(0.00, -1.00, 0.00);
-		glVertex3f(0.40, -0.51, -0.35);
-		glVertex3f(0.40, -0.51, 0.35);
-		glVertex3f(0.35, -0.51, 0.40);
-		glVertex3f(-0.35, -0.51, 0.40);
-		glVertex3f(-0.40, -0.51, 0.35);
-		glVertex3f(-0.40, -0.51, -0.35);
-		glVertex3f(-0.35, -0.51, -0.40);
-		glVertex3f(0.35, -0.51, -0.40);
+		glVertex3f(STICKERLONG, -STICKERDEPTH, -STICKERSHORT);
+		glVertex3f(STICKERLONG, -STICKERDEPTH, STICKERSHORT);
+		glVertex3f(STICKERSHORT, -STICKERDEPTH, STICKERLONG);
+		glVertex3f(-STICKERSHORT, -STICKERDEPTH, STICKERLONG);
+		glVertex3f(-STICKERLONG, -STICKERDEPTH, STICKERSHORT);
+		glVertex3f(-STICKERLONG, -STICKERDEPTH, -STICKERSHORT);
+		glVertex3f(-STICKERSHORT, -STICKERDEPTH, -STICKERLONG);
+		glVertex3f(STICKERSHORT, -STICKERDEPTH, -STICKERLONG);
 		glEnd();
 	}
 	if (top != NO_FACE) {
 		glBegin(GL_POLYGON);
 		pickcolor(top, mono);
 		glNormal3f(0.00, 1.00, 0.00);
-		glVertex3f(-0.40, 0.51, -0.35);
-		glVertex3f(-0.40, 0.51, 0.35);
-		glVertex3f(-0.35, 0.51, 0.40);
-		glVertex3f(0.35, 0.51, 0.40);
-		glVertex3f(0.40, 0.51, 0.35);
-		glVertex3f(0.40, 0.51, -0.35);
-		glVertex3f(0.35, 0.51, -0.40);
-		glVertex3f(-0.35, 0.51, -0.40);
+		glVertex3f(-STICKERLONG, STICKERDEPTH, -STICKERSHORT);
+		glVertex3f(-STICKERLONG, STICKERDEPTH, STICKERSHORT);
+		glVertex3f(-STICKERSHORT, STICKERDEPTH, STICKERLONG);
+		glVertex3f(STICKERSHORT, STICKERDEPTH, STICKERLONG);
+		glVertex3f(STICKERLONG, STICKERDEPTH, STICKERSHORT);
+		glVertex3f(STICKERLONG, STICKERDEPTH, -STICKERSHORT);
+		glVertex3f(STICKERSHORT, STICKERDEPTH, -STICKERLONG);
+		glVertex3f(-STICKERSHORT, STICKERDEPTH, -STICKERLONG);
 		glEnd();
 	}
+	return True;
 }
 
-
-static      RubikSlice
-convertMove(rubikstruct * rp, RubikMove move)
+/* Convert move to weird general notation */
+static void
+convertMove(rubikstruct * rp, RubikMove move, RubikSlice * slice)
 {
-	RubikSlice  slice;
 	RubikLoc    plane;
+	int         sizeOfRow, sizeOfColumn;
 
 	plane = rotateSlice[(int) move.face][move.direction % 2];
-	slice.face = plane.face;
-	slice.rotation = plane.rotation;
-	if (slice.rotation == CW)	/* I just know this to be true... */
-		slice.depth = AVSIZESQ - 1 - move.position;
-	else
-		slice.depth = move.position;
-	slice.depth = slice.depth / AVSIZE;
-	/* If slice.depth = 0 then face 0, face 1, or face 2 moves */
+	(*slice).face = plane.face;
+	(*slice).rotation = plane.rotation;
+
+	faceSizes(rp, move.face, &sizeOfRow, &sizeOfColumn);
+	if (plane.face == 1 || /* VERTICAL */
+	    (plane.face == 2 && (move.face == 1 || move.face == 3))) {
+		if ((*slice).rotation == CW)
+			(*slice).depth = sizeOfRow - 1 - move.position %
+				sizeOfRow;
+		else
+			(*slice).depth = move.position % sizeOfRow;
+	} else { /* (plane.face == 0 ||  *//* HORIZONTAL *//*
+		(plane.face == 2 && (move.face == 0 || move.face == 4))) */
+		if ((*slice).rotation == CW)
+			(*slice).depth = sizeOfColumn - 1 - move.position /
+				sizeOfRow;
+		else
+			(*slice).depth = move.position / sizeOfRow;
+	}
+	/* If (*slice).depth = 0 then face 0, face 1, or face 2 moves */
 	if (move.direction / 2)
-		slice.rotation = (plane.rotation == CW) ? CCW : CW;
-	return slice;
+		(*slice).rotation = ((*slice).rotation == CW) ? CCW : CW;
 }
 
-/* Assume for the moment that the size is at least 2 */
-static void
+/* Assume the size is at least 2, or its just not challenging... */
+static Bool
 draw_cube(ModeInfo * mi)
 {
 #define S1 1
@@ -759,6 +823,7 @@ draw_cube(ModeInfo * mi)
 #define MIDX(a) (((GLfloat)(2*a-MAXSIZEX+1))/2.0)
 #define MIDY(a) (((GLfloat)(2*a-MAXSIZEY+1))/2.0)
 #define MIDZ(a) (((GLfloat)(2*a-MAXSIZEZ+1))/2.0)
+#define DRAW_CUBIT(mi,b,f,l,r,bm,t) if (!draw_cubit(mi,b,f,l,r,bm,t)) return False
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	RubikSlice  slice;
 	GLfloat     rotatestep;
@@ -769,9 +834,10 @@ draw_cube(ModeInfo * mi)
 		slice.rotation = NO_ROTATION;
 		slice.depth = NO_DEPTH;
 	} else {
-		slice = convertMove(rp, rp->movement);
+		convertMove(rp, rp->movement, &slice);
 	}
 	rotatestep = (slice.rotation == CCW) ? rp->rotatestep : -rp->rotatestep;
+
 
 /*-
  * The glRotatef() routine transforms the coordinate system for every future
@@ -789,55 +855,55 @@ draw_cube(ModeInfo * mi)
 				glRotatef(rotatestep, 0, HALFY, 0);
 
 			glTranslatef(-HALFX, -HALFY, -HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * LASTY].face, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 			}
 			glTranslatef(0, 0, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * LASTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, -SZ);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * FIRSTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * LASTZ].face, NO_FACE);
 				for (k = 1; k < MAXSIZEZ - 1; k++) {
 					glTranslatef(0, 0, S1);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				}
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * LASTY].face,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			}
-			glTranslatef(1, 0, -SZ);
-			draw_cubit(mi,
+			glTranslatef(S1, 0, -SZ);
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * LASTY].face,
 					   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 			}
 			glTranslatef(0, 0, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * LASTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
@@ -847,49 +913,49 @@ draw_cube(ModeInfo * mi)
 				if (slice.depth == REVY(j))
 					glRotatef(rotatestep, 0, HALFY, 0);
 				glTranslatef(-HALFX, MIDY(j), -HALFZ);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * j].face, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 				for (k = 1; k < MAXSIZEZ - 1; k++) {
 					glTranslatef(0, 0, S1);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * REVY(j)].face, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * REVY(j)].face,
 					   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 				for (i = 1; i < MAXSIZEX - 1; i++) {
 					glTranslatef(1, 0, -SZ);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * j].face, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 					/* Center */
 					glTranslatef(0, 0, SZ);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * REVY(j)].face,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(S1, 0, -SZ);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * j].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
 				for (k = 1; k < MAXSIZEZ - 1; k++) {
 					glTranslatef(0, 0, S1);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * REVY(j)].face,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * REVY(j)].face,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
@@ -899,55 +965,55 @@ draw_cube(ModeInfo * mi)
 				glRotatef(rotatestep, 0, HALFY, 0);
 
 			glTranslatef(-HALFX, HALFY, -HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * FIRSTY].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * k].face);
 			}
 			glTranslatef(0, 0, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * FIRSTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * LASTZ].face);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, -SZ);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * LASTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * FIRSTZ].face);
 				for (k = 1; k < MAXSIZEZ - 1; k++) {
 					glTranslatef(0, 0, S1);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * k].face);
 				}
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * FIRSTY].face,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * LASTZ].face);
 			}
 			glTranslatef(S1, 0, -SZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * FIRSTZ].face);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, 0, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * FIRSTY].face,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * k].face);
 			}
 			glTranslatef(0, 0, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * LASTZ].face);
@@ -959,55 +1025,55 @@ draw_cube(ModeInfo * mi)
 				glRotatef(-rotatestep, HALFX, 0, 0);
 
 			glTranslatef(-HALFX, -HALFY, -HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * j].face, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(0, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, -SY, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * LASTY].face, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				for (j = 1; j < MAXSIZEY - 1; j++) {
 					glTranslatef(0, S1, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * REVY(j)].face, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * FIRSTY].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * k].face);
 			}
 			glTranslatef(0, -SY, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * LASTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * REVY(j)].face,
 					   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(0, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * FIRSTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * LASTZ].face);
@@ -1017,49 +1083,49 @@ draw_cube(ModeInfo * mi)
 				if (slice.depth == i)
 					glRotatef(-rotatestep, HALFX, 0, 0);
 				glTranslatef(MIDX(i), -HALFY, -HALFZ);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * FIRSTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * LASTZ].face, NO_FACE);
 				for (j = 1; j < MAXSIZEY - 1; j++) {
 					glTranslatef(0, S1, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * j].face, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * LASTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * FIRSTZ].face);
 				for (k = 1; k < MAXSIZEZ - 1; k++) {
 					glTranslatef(0, -SY, S1);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * REVZ(k)].face, NO_FACE);
 					/* Center */
 					glTranslatef(0, SY, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * k].face);
 				}
 				glTranslatef(0, -SY, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * LASTY].face,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * FIRSTZ].face, NO_FACE);
 				for (j = 1; j < MAXSIZEY - 1; j++) {
 					glTranslatef(0, S1, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * REVY(j)].face,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * FIRSTY].face,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * LASTZ].face);
@@ -1068,55 +1134,55 @@ draw_cube(ModeInfo * mi)
 			if (slice.depth == MAXSIZEX - 1)
 				glRotatef(-rotatestep, HALFX, 0, 0);
 			glTranslatef(HALFX, -HALFY, -HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * j].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(0, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * FIRSTZ].face);
 			for (k = 1; k < MAXSIZEZ - 1; k++) {
 				glTranslatef(0, -SY, S1);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * LASTY].face,
 					   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				for (j = 1; j < MAXSIZEY - 1; j++) {
 					glTranslatef(0, S1, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * REVY(j)].face,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * FIRSTY].face,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * k].face);
 			}
 			glTranslatef(0, -SY, S1);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * LASTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(0, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * REVY(j)].face,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(0, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * LASTZ].face);
@@ -1127,55 +1193,55 @@ draw_cube(ModeInfo * mi)
 				glRotatef(rotatestep, 0, 0, HALFZ);
 
 			glTranslatef(-HALFX, -HALFY, -HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * FIRSTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * LASTZ].face, NO_FACE);
 			}
 			glTranslatef(S1, 0, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * LASTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(-SX, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * j].face, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 				for (i = 1; i < MAXSIZEX - 1; i++) {
 					glTranslatef(S1, 0, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * j].face, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * j].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(-SX, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][FIRSTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   rp->cubeLoc[LEFT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   rp->cubeLoc[BACK_FACE][i + MAXSIZEX * LASTY].face, NO_FACE,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * FIRSTZ].face);
 			}
 			glTranslatef(S1, 0, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   rp->cubeLoc[BACK_FACE][LASTX + MAXSIZEX * LASTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * FIRSTZ].face);
@@ -1185,49 +1251,49 @@ draw_cube(ModeInfo * mi)
 				if (slice.depth == REVZ(k))
 					glRotatef(rotatestep, 0, 0, HALFZ);
 				glTranslatef(-HALFX, -HALFY, MIDZ(k));
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * LASTY].face, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				for (i = 1; i < MAXSIZEX - 1; i++) {
 					glTranslatef(S1, 0, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				}
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * LASTY].face,
 					   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * REVZ(k)].face, NO_FACE);
 				for (j = 1; j < MAXSIZEY - 1; j++) {
 					glTranslatef(-SX, S1, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * REVY(j)].face, NO_FACE,
 						   NO_FACE, NO_FACE);
 					/* Center */
 					glTranslatef(SX, 0, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * REVY(j)].face,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(-SX, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[LEFT_FACE][k + MAXSIZEZ * FIRSTY].face, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * k].face);
 				for (i = 1; i < MAXSIZEX - 1; i++) {
 					glTranslatef(S1, 0, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * k].face);
 				}
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][REVZ(k) + MAXSIZEZ * FIRSTY].face,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * k].face);
@@ -1236,60 +1302,61 @@ draw_cube(ModeInfo * mi)
 			if (slice.depth == 0)
 				glRotatef(rotatestep, 0, 0, HALFZ);
 			glTranslatef(-HALFX, -HALFY, HALFZ);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * LASTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * LASTY].face, NO_FACE,
 				   rp->cubeLoc[BOTTOM_FACE][FIRSTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * LASTY].face,
 					   NO_FACE, NO_FACE,
 					   rp->cubeLoc[BOTTOM_FACE][i + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			}
 			glTranslatef(S1, 0, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * LASTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * LASTY].face,
 				   rp->cubeLoc[BOTTOM_FACE][LASTX + MAXSIZEX * FIRSTZ].face, NO_FACE);
 			for (j = 1; j < MAXSIZEY - 1; j++) {
 				glTranslatef(-SX, S1, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * REVY(j)].face,
 					   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * REVY(j)].face, NO_FACE,
 					   NO_FACE, NO_FACE);
 				for (i = 1; i < MAXSIZEX - 1; i++) {
 					glTranslatef(S1, 0, 0);
-					draw_cubit(mi,
+					DRAW_CUBIT(mi,
 						   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * REVY(j)].face,
 						   NO_FACE, NO_FACE,
 						   NO_FACE, NO_FACE);
 				}
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * REVY(j)].face,
 					   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * REVY(j)].face,
 					   NO_FACE, NO_FACE);
 			}
 			glTranslatef(-SX, S1, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][FIRSTX + MAXSIZEX * FIRSTY].face,
 				   rp->cubeLoc[LEFT_FACE][LASTZ + MAXSIZEZ * FIRSTY].face, NO_FACE,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][FIRSTX + MAXSIZEX * LASTZ].face);
 			for (i = 1; i < MAXSIZEX - 1; i++) {
 				glTranslatef(S1, 0, 0);
-				draw_cubit(mi,
+				DRAW_CUBIT(mi,
 					   NO_FACE, rp->cubeLoc[FRONT_FACE][i + MAXSIZEX * FIRSTY].face,
 					   NO_FACE, NO_FACE,
 					   NO_FACE, rp->cubeLoc[TOP_FACE][i + MAXSIZEX * LASTZ].face);
 			}
 			glTranslatef(S1, 0, 0);
-			draw_cubit(mi,
+			DRAW_CUBIT(mi,
 				   NO_FACE, rp->cubeLoc[FRONT_FACE][LASTX + MAXSIZEX * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[RIGHT_FACE][FIRSTZ + MAXSIZEZ * FIRSTY].face,
 				   NO_FACE, rp->cubeLoc[TOP_FACE][LASTX + MAXSIZEX * LASTZ].face);
 			break;
 	}
+	return True;
 #undef S1
 }
 
@@ -1297,16 +1364,17 @@ draw_cube(ModeInfo * mi)
 static void
 readRC(rubikstruct * rp, int face, int dir, int h, int orient, int size)
 {
-	int         g;
+	int         g, sizeOfRow;
 
+	sizeOfRow = sizeRow(rp, face);
 	if (dir == TOP || dir == BOTTOM)
 		for (g = 0; g < size; g++)
 			rp->rowLoc[orient][g] =
-				rp->cubeLoc[face][g * size + h];
+				rp->cubeLoc[face][g * sizeOfRow + h];
 	else			/* dir == RIGHT || dir == LEFT */
 		for (g = 0; g < size; g++)
 			rp->rowLoc[orient][g] =
-				rp->cubeLoc[face][h * size + g];
+				rp->cubeLoc[face][h * sizeOfRow + g];
 }
 
 static void
@@ -1335,146 +1403,236 @@ reverseRC(rubikstruct * rp, int orient, int size)
 static void
 writeRC(rubikstruct * rp, int face, int dir, int h, int orient, int size)
 {
-	int         g, position;
+	int         g, position, sizeOfRow;
 
+	sizeOfRow = sizeRow(rp, face);
 	if (dir == TOP || dir == BOTTOM) {
 		for (g = 0; g < size; g++) {
-			position = g * size + h;
+			position = g * sizeOfRow + h;
 			rp->cubeLoc[face][position] = rp->rowLoc[orient][g];
 			/* DrawSquare(face, position); */
 		}
 	} else {		/* dir == RIGHT || dir == LEFT */
 		for (g = 0; g < size; g++) {
-			position = h * size + g;
+			position = h * sizeOfRow + g;
 			rp->cubeLoc[face][position] = rp->rowLoc[orient][g];
 			/* DrawSquare(face, position); */
 		}
 	}
 }
 
-static void
+static Bool
 rotateFace(rubikstruct * rp, int face, int direction)
 {
-	int         position, i, j;
-	RubikLoc   *faceLoc = NULL;
+	int         position, i, j, sizeOfRow, sizeOfColumn, sizeOnPlane;
+	RubikLoc   *faceLoc;
 
-	if ((faceLoc = (RubikLoc *) malloc(AVSIZESQ * sizeof (RubikLoc))) == NULL)
-		(void) fprintf(stderr,
-		 "Could not allocate memory for rubik face position info\n");
+	faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
+	sizeOnPlane = sizeOfRow * sizeOfColumn;
+	if ((faceLoc = (RubikLoc *) malloc(sizeOnPlane *
+			sizeof (RubikLoc))) == NULL) {
+		return False;
+	}
 	/* Read Face */
-	for (position = 0; position < AVSIZESQ; position++)
+	for (position = 0; position < sizeOnPlane; position++)
 		faceLoc[position] = rp->cubeLoc[face][position];
 	/* Write Face */
-	for (position = 0; position < AVSIZESQ; position++) {
-		i = position % AVSIZE;
-		j = position / AVSIZE;
-		rp->cubeLoc[face][position] = (direction == CW) ?
-			faceLoc[(AVSIZE - i - 1) * AVSIZE + j] :
-			faceLoc[i * AVSIZE + AVSIZE - j - 1];
+	for (position = 0; position < sizeOnPlane; position++) {
+		i = position % sizeOfRow;
+		j = position / sizeOfRow;
+		if (direction == CW)
+			rp->cubeLoc[face][position] =
+				faceLoc[(sizeOfRow - i - 1) * sizeOfRow + j];
+		else if (direction == CCW)
+			rp->cubeLoc[face][position] =
+				faceLoc[i * sizeOfRow + sizeOfColumn - j - 1];
+		else /* (direction == HALF) */
+			rp->cubeLoc[face][position] =
+				faceLoc[sizeOfRow - i - 1 + (sizeOfColumn - j - 1) * sizeOfRow];
 		rp->cubeLoc[face][position].rotation =
-			(rp->cubeLoc[face][position].rotation + direction - MAXORIENT) %
-			MAXORIENT;
+			(rp->cubeLoc[face][position].rotation +
+				direction - MAXORIENT) % MAXORIENT;
 		/* DrawSquare(face, position); */
 	}
 	if (faceLoc != NULL)
 		(void) free((void *) faceLoc);
+	return True;
 }
 
+/* Yeah this is big and ugly */
 static void
+slideRC(int face, int direction, int h, int sizeOnOppAxis,
+	int *newFace, int *newDirection, int *newH,
+	int *rotate, Bool *reverse)
+{
+	*newFace = slideNextRow[face][direction].face;
+	*rotate = slideNextRow[face][direction].rotation;
+	*newDirection = (*rotate + direction) % MAXORIENT;
+	switch (*rotate) {
+		case TOP:
+			*newH = h;
+			*reverse = False;
+			break;
+		case RIGHT:
+			if (*newDirection == TOP || *newDirection == BOTTOM) {
+				*newH = sizeOnOppAxis - 1 - h;
+				*reverse = False;
+			} else {	/* *newDirection == RIGHT || *newDirection == LEFT */
+				*newH = h;
+				*reverse = True;
+			}
+				break;
+		case BOTTOM:
+			*newH = sizeOnOppAxis - 1 - h;
+			*reverse = True;
+			break;
+		case LEFT:
+			if (*newDirection == TOP || *newDirection == BOTTOM) {
+				*newH = h;
+				*reverse = True;
+			} else {	/* *newDirection == RIGHT || *newDirection == LEFT */
+				*newH = sizeOnOppAxis - 1 - h;
+				*reverse = False;
+			}
+			break;
+		default:
+			(void) printf("slideRC: rotate %d\n", *rotate);
+			*newH = 0;
+			*reverse = False;
+	}
+}
+
+static Bool
 moveRubik(rubikstruct * rp, int face, int direction, int position)
 {
-	int         newFace, newDirection, rotate, reverse = False;
-	int         h, k, newH = 0;
-	int         i, j;
+	int         newFace, newDirection, rotate, reverse; 
+	int         h, k, newH;
+	int         i, j, sizeOfRow, sizeOfColumn, sizeOnAxis, sizeOnOppAxis;
 
+	faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
 	if (direction == CW || direction == CCW) {
 		direction = (direction == CCW) ?
 			(rotateToRow[face].direction + 2) % MAXORIENT :
 			rotateToRow[face].direction;
-		i = j = (rotateToRow[face].sideFace == RIGHT ||
-		      rotateToRow[face].sideFace == BOTTOM) ? AVSIZE - 1 : 0;
+		if (rotateToRow[face].sideFace == RIGHT) {
+			i = j = sizeOfColumn - 1;
+		} else if (rotateToRow[face].sideFace == BOTTOM) {
+			i = j = sizeOfRow - 1;
+		} else {
+			i = j = 0;
+		}
 		face = rotateToRow[face].face;
-		position = j * AVSIZE + i;
+		position = j * sizeOfRow + i;
 	}
-	i = position % AVSIZE;
-	j = position / AVSIZE;
+	i = position % sizeOfRow;
+	j = position / sizeOfRow;
 	h = (direction == TOP || direction == BOTTOM) ? i : j;
-	/* rotate sides CW or CCW */
-	if (h == AVSIZE - 1) {
+	if (direction == TOP || direction == BOTTOM) {
+		sizeOnAxis = sizeOfColumn;
+		sizeOnOppAxis = sizeOfRow;
+	} else {
+		sizeOnAxis = sizeOfRow;
+		sizeOnOppAxis = sizeOfColumn;
+	}
+	/* rotate sides CW or CCW or HALF) */
+
+	if (h == sizeOnOppAxis - 1) {
 		newDirection = (direction == TOP || direction == BOTTOM) ?
 			TOP : RIGHT;
-		if (direction == TOP || direction == RIGHT)
-			rotateFace(rp, rowToRotate[face][newDirection], CW);
-		else		/* direction == BOTTOM || direction == LEFT */
-			rotateFace(rp, rowToRotate[face][newDirection], CCW);
+		if (rp->degreeTurn == 180) {
+			if (!rotateFace(rp, rowToRotate[face][newDirection], HALF))
+				return False;
+		} else if (direction == TOP || direction == RIGHT) {
+			if (!rotateFace(rp, rowToRotate[face][newDirection], CW))
+				return False;
+		} else {		/* direction == BOTTOM || direction == LEFT */
+			if (!rotateFace(rp, rowToRotate[face][newDirection], CCW))
+				return False;
+		}
 	}
 	if (h == 0) {
 		newDirection = (direction == TOP || direction == BOTTOM) ?
 			BOTTOM : LEFT;
-		if (direction == TOP || direction == RIGHT)
-			rotateFace(rp, rowToRotate[face][newDirection], CCW);
-		else		/* direction == BOTTOM  || direction == LEFT */
-			rotateFace(rp, rowToRotate[face][newDirection], CW);
-	}
-	/* Slide rows */
-	readRC(rp, face, direction, h, 0, AVSIZE);
-	for (k = 1; k <= MAXORIENT; k++) {
-		newFace = slideNextRow[face][direction].face;
-		rotate = slideNextRow[face][direction].rotation;
-		newDirection = (rotate + direction) % MAXORIENT;
-		switch (rotate) {
-			case TOP:
-				newH = h;
-				reverse = False;
-				break;
-			case RIGHT:
-				if (newDirection == TOP || newDirection == BOTTOM) {
-					newH = AVSIZE - 1 - h;
-					reverse = False;
-				} else {	/* newDirection == RIGHT || newDirection == LEFT */
-					newH = h;
-					reverse = True;
-				}
-				break;
-			case BOTTOM:
-				newH = AVSIZE - 1 - h;
-				reverse = True;
-				break;
-			case LEFT:
-				if (newDirection == TOP || newDirection == BOTTOM) {
-					newH = h;
-					reverse = True;
-				} else {	/* newDirection == RIGHT || newDirection == LEFT */
-					newH = AVSIZE - 1 - h;
-					reverse = False;
-				}
-				break;
-			default:
-				(void) printf("moveRubik: rotate %d\n", rotate);
+		if (rp->degreeTurn == 180) {
+			if (!rotateFace(rp, rowToRotate[face][newDirection], HALF))
+				return False;
+		} else if (direction == TOP || direction == RIGHT) {
+			if (!rotateFace(rp, rowToRotate[face][newDirection], CCW))
+				return False;
+		} else {		/* direction == BOTTOM  || direction == LEFT */
+			if (!rotateFace(rp, rowToRotate[face][newDirection], CW))
+				return False;
 		}
-		if (k != MAXORIENT)
-			readRC(rp, newFace, newDirection, newH, k, AVSIZE);
-		rotateRC(rp, rotate, k - 1, AVSIZE);
+	}
+	/* Slide rows or columns */
+	readRC(rp, face, direction, h, 0, sizeOnAxis);
+	if (rp->degreeTurn == 180) {
+		int sizeOnDepthAxis;
+
+		slideRC(face, direction, h, sizeOnOppAxis,
+			&newFace, &newDirection, &newH, &rotate, &reverse);
+		sizeOnDepthAxis = sizeFace(rp, newFace) / sizeOnOppAxis;
+		readRC(rp, newFace, newDirection, newH, 1, sizeOnDepthAxis);
+		rotateRC(rp, rotate, 0, sizeOnAxis);
 		if (reverse == True)
-			reverseRC(rp, k - 1, AVSIZE);
-		writeRC(rp, newFace, newDirection, newH, k - 1, AVSIZE);
+			reverseRC(rp, 0, sizeOnAxis);
 		face = newFace;
 		direction = newDirection;
 		h = newH;
-	}
+		for (k = 2; k <= MAXORIENT + 1; k++) {
+			slideRC(face, direction, h, sizeOnOppAxis,
+				&newFace, &newDirection, &newH, &rotate, &reverse);
+			if (k != MAXORIENT && k != MAXORIENT + 1)
+				readRC(rp, newFace, newDirection, newH, k,
+					(k % 2) ? sizeOnDepthAxis : sizeOnAxis);
+			rotateRC(rp, rotate, k - 2,
+					(k % 2) ? sizeOnDepthAxis : sizeOnAxis);
+			if (k != MAXORIENT + 1)
+				rotateRC(rp, rotate, k - 1,
+					(k % 2) ? sizeOnAxis : sizeOnDepthAxis);
+			if (reverse == True) {
+				reverseRC(rp, k - 2,
+					(k % 2) ? sizeOnDepthAxis : sizeOnAxis);
+				if (k != MAXORIENT + 1)
+					reverseRC(rp, k - 1,
+						(k % 2) ? sizeOnAxis : sizeOnDepthAxis);
+			}
+			writeRC(rp, newFace, newDirection, newH, k - 2,
+				(k % 2) ? sizeOnDepthAxis : sizeOnAxis);
+			face = newFace;
+			direction = newDirection;
+			h = newH;
+		}
+	} else {
+		for (k = 1; k <= MAXORIENT; k++) {
+			slideRC(face, direction, h, sizeOnOppAxis,
+				&newFace, &newDirection, &newH, &rotate, &reverse);
+			if (k != MAXORIENT)
+				readRC(rp, newFace, newDirection, newH, k, sizeOnAxis);
+			rotateRC(rp, rotate, k - 1, sizeOnAxis);
+			if (reverse == True)
+				reverseRC(rp, k - 1, sizeOnAxis);
+			writeRC(rp, newFace, newDirection, newH, k - 1, sizeOnAxis);
+			face = newFace;
+			direction = newDirection;
+			h = newH;
+		}
+	}	
+	return True;
 }
 
 #ifdef DEBUG
 void
 printCube(rubikstruct * rp)
 {
-	int         face, position;
+	int         face, position, sizeOfRow, sizeOfColumn;
 
 	for (face = 0; face < MAXFACES; face++) {
-		for (position = 0; position < AVSIZESQ; position++) {
+		faceSizes(rp, face, &sizeOfRow, &sizeOfColumn);
+		for (position = 0; position < sizeOfRow * sizeOfColumn; position++) {
 			(void) printf("%d %d  ", rp->cubeLoc[face][position].face,
 				      rp->cubeLoc[face][position].rotation);
-			if (!((position + 1) % AVSIZE))
+			if (!((position + 1) % sizeOfRow))
 				(void) printf("\n");
 		}
 		(void) printf("\n");
@@ -1484,7 +1642,7 @@ printCube(rubikstruct * rp)
 
 #endif
 
-static void
+static Bool
 evalmovement(ModeInfo * mi, RubikMove movement)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
@@ -1493,10 +1651,10 @@ evalmovement(ModeInfo * mi, RubikMove movement)
 	printCube(rp);
 #endif
 	if (movement.face < 0 || movement.face >= MAXFACES)
-		return;
-
-	moveRubik(rp, movement.face, movement.direction, movement.position);
-
+		return True;
+	if (!moveRubik(rp, movement.face, movement.direction, movement.position))
+		return False;
+	return True;
 }
 
 static      Bool
@@ -1504,8 +1662,8 @@ compare_moves(rubikstruct * rp, RubikMove move1, RubikMove move2, Bool opp)
 {
 	RubikSlice  slice1, slice2;
 
-	slice1 = convertMove(rp, move1);
-	slice2 = convertMove(rp, move2);
+	convertMove(rp, move1, &slice1);
+	convertMove(rp, move2, &slice2);
 	if (slice1.face == slice2.face &&
 	    slice1.depth == slice2.depth) {
 		if (slice1.rotation == slice2.rotation) {	/* CW or CCW */
@@ -1519,37 +1677,58 @@ compare_moves(rubikstruct * rp, RubikMove move1, RubikMove move2, Bool opp)
 	return False;
 }
 
-static void
+static Bool
 shuffle(ModeInfo * mi)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	int         i, face, position;
 	RubikMove   move;
 
-	AVSIZE = MI_SIZE(mi);
-	if (AVSIZE < -MINSIZE)
-		AVSIZE = NRAND(-AVSIZE - MINSIZE + 1) + MINSIZE;
-	else if (AVSIZE < MINSIZE)
-		AVSIZE = MINSIZE;
-	/* Let me waste a little space for the moment */
-	/* Future cube to be LxMxN and not just NxNxN, but not done yet */
-	AVSIZESQ = AVSIZE * AVSIZE;
-#ifdef LMN
-	MAXSIZEX = AVSIZE;
-	MAXSIZEY = AVSIZE;
-	MAXSIZEZ = AVSIZE;
-	MAXSIZE = AVSIZE;
-	MAXSIZESQ = AVSIZESQ;
-#endif
+	if (sizex)
+		i = sizex;
+	else
+		i = MI_SIZE(mi);
+	if (i < -MINSIZE)
+		i = NRAND(-i - MINSIZE + 1) + MINSIZE;
+	else if (i < MINSIZE)
+		i = MINSIZE;
+
+	if (LRAND() % 2 && !sizey && !sizez) { /* Make normal (NxNxN) cubes more likely */
+		MAXSIZEX = MAXSIZEY = MAXSIZEZ = i;
+	} else {
+		MAXSIZEX = i;
+		if (sizey)
+			i = sizey;
+		else
+			i = MI_SIZE(mi);
+		if (i < -MINSIZE)
+			i = NRAND(-i - MINSIZE + 1) + MINSIZE;
+		else if (i < MINSIZE)
+			i = MINSIZE;
+		if (LRAND() % 2 && !sizez) { /* Make more MxNxN more likely than LxMxN */
+			MAXSIZEY = MAXSIZEZ = i;
+		} else {
+			MAXSIZEY = i;
+			if (sizez)
+				i = sizez;
+			else
+				i = MI_SIZE(mi);
+			if (i < -MINSIZE)
+				i = NRAND(-i - MINSIZE + 1) + MINSIZE;
+			else if (i < MINSIZE)
+				i = MINSIZE;
+			MAXSIZEZ = i;
+		}
+	}
 
 	for (face = 0; face < MAXFACES; face++) {
 		if (rp->cubeLoc[face] != NULL)
 			(void) free((void *) rp->cubeLoc[face]);
-		if ((rp->cubeLoc[face] =
-		  (RubikLoc *) malloc(AVSIZESQ * sizeof (RubikLoc))) == NULL)
-			(void) fprintf(stderr,
-				       "Could not allocate memory for rubik cube position info\n");
-		for (position = 0; position < AVSIZESQ; position++) {
+		if ((rp->cubeLoc[face] = (RubikLoc *) malloc(sizeFace(rp, face) *
+				sizeof (RubikLoc))) == NULL) {
+			return False;
+		}
+		for (position = 0; position < sizeFace(rp, face); position++) {
 			rp->cubeLoc[face][position].face = face;
 			rp->cubeLoc[face][position].rotation = TOP;
 		}
@@ -1557,24 +1736,24 @@ shuffle(ModeInfo * mi)
 	for (i = 0; i < MAXORIENT; i++) {
 		if (rp->rowLoc[i] != NULL)
 			(void) free((void *) rp->rowLoc[i]);
-		if ((rp->rowLoc[i] =
-		     (RubikLoc *) malloc(AVSIZE * sizeof (RubikLoc))) == NULL)
-			(void) fprintf(stderr,
-				       "Could not allocate memory for rubik row position info\n");
+		/* The following is reused so make it the biggest size */
+		if ((rp->rowLoc[i] = (RubikLoc *) malloc(MAXMAXSIZE *
+				sizeof (RubikLoc))) == NULL) {
+			return False;
+		}
 	}
 	rp->storedmoves = MI_COUNT(mi);
 	if (rp->storedmoves < 0) {
 		if (rp->moves != NULL)
 			(void) free((void *) rp->moves);
-		rp->moves = NULL;
+		rp->moves = (RubikMove *) NULL;
 		rp->storedmoves = NRAND(-rp->storedmoves) + 1;
 	}
 	if ((rp->storedmoves) && (rp->moves == NULL))
-		if ((rp->moves =
-		     (RubikMove *) calloc(rp->storedmoves + 1, sizeof (RubikMove))) == NULL)
-			(void) fprintf(stderr,
-			"Could not allocate memory for rubik move buffer\n");
-
+		if ((rp->moves = (RubikMove *) calloc(rp->storedmoves + 1,
+				 sizeof (RubikMove))) == NULL) {
+			return False;
+		}
 	if (MI_CYCLES(mi) <= 1) {
 		rp->anglestep = 90.0;
 	} else {
@@ -1582,46 +1761,51 @@ shuffle(ModeInfo * mi)
 	}
 
 	for (i = 0; i < rp->storedmoves; i++) {
-		int         condition;
+		Bool condition;
 
 		do {
-			move.face = NRAND(6);
-			move.direction = NRAND(4);	/* Exclude CW and CCW, its ok */
-			/*
-			 * Randomize position along diagonal, each plane gets an equal chance.
-			 * This trick will only work for NxNxN cubes
-			 * draw_cube DEPENDS on that they are chosen this way.
-			 */
-			move.position = NRAND(AVSIZE) * (AVSIZE + 1);
-
-
-			condition = 1;
-
-			if (i > 0)	/* avoid immediate undoing moves */
+			move.face = NRAND(MAXFACES);
+			move.direction = NRAND(MAXORIENT);	/* Exclude CW and CCW, its ok */
+			move.position = NRAND(sizeFace(rp, move.face));
+			rp->degreeTurn = (checkFaceSquare(rp,
+				rowToRotate[move.face][move.direction])) ? 90 : 180;
+			condition = True;
+			if (i > 0) {	/* avoid immediate undoing moves */
 				if (compare_moves(rp, move, rp->moves[i - 1], True))
-					condition = 0;
+					condition = False;
+				if (rp->degreeTurn == 180 &&
+				    compare_moves(rp, move, rp->moves[i - 1], False))
+					condition = False;
+			}
 			if (i > 1)	/* avoid 3 consecutive identical moves */
 				if (compare_moves(rp, move, rp->moves[i - 1], False) &&
 				    compare_moves(rp, move, rp->moves[i - 2], False))
-					condition = 0;
+					condition = False;
 			/*
-			   * Still some silly moves being made....
+			 * Still some silly moves being made....
 			 */
 		} while (!condition);
 		if (hideshuffling)
-			evalmovement(mi, move);
+			if (!evalmovement(mi, move))
+				return False;
 		rp->moves[i] = move;
 	}
-
+	rp->VX = 0.05;
+	if (NRAND(100) < 50)
+		rp->VX *= -1;
+	rp->VY = 0.05;
+	if (NRAND(100) < 50)
+		rp->VY *= -1;
 	rp->movement.face = NO_FACE;
 	rp->rotatestep = 0;
 	rp->action = hideshuffling ? ACTION_SOLVE : ACTION_SHUFFLE;
 	rp->shufflingmoves = 0;
 	rp->done = 0;
+	return True;
 }
 
 void
-reshape_rubik(ModeInfo * mi, int width, int height)
+reshape(ModeInfo * mi, int width, int height)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 
@@ -1631,10 +1815,9 @@ reshape_rubik(ModeInfo * mi, int width, int height)
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
 	glMatrixMode(GL_MODELVIEW);
 
-	rp->AreObjectsDefined[ObjCubit] = 0;
 }
 
-static void
+static Bool
 pinit(ModeInfo * mi)
 {
 	glClearDepth(1.0);
@@ -1660,13 +1843,50 @@ pinit(ModeInfo * mi)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 
-	shuffle(mi);
+	return (shuffle(mi));
+}
+
+static void
+free_rubik(rubikstruct *rp)
+{
+	int         i;
+
+	for (i = 0; i < MAXFACES; i++)
+		if (rp->cubeLoc[i] != NULL) {
+			(void) free((void *) rp->cubeLoc[i]);
+			rp->cubeLoc[i] = (RubikLoc *) NULL;
+		}
+	for (i = 0; i < MAXORIENT; i++)
+		if (rp->rowLoc[i] != NULL) {
+			(void) free((void *) rp->rowLoc[i]);
+			rp->rowLoc[i] = (RubikLoc *) NULL;
+		}
+	if (rp->moves != NULL) {
+		(void) free((void *) rp->moves);
+		rp->moves = (RubikMove *) NULL;
+	}
+}
+
+void
+release_rubik(ModeInfo * mi)
+{
+	if (rubik != NULL) {
+		int         screen;
+
+		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
+			rubikstruct *rp = &rubik[screen];
+
+			free_rubik(rp);
+		}
+		(void) free((void *) rubik);
+		rubik = (rubikstruct *) NULL;
+	}
+	FreeAllGL(mi);
 }
 
 void
 init_rubik(ModeInfo * mi)
 {
-	int         screen = MI_SCREEN(mi);
 	rubikstruct *rp;
 
 	if (rubik == NULL) {
@@ -1674,14 +1894,23 @@ init_rubik(ModeInfo * mi)
 					      sizeof (rubikstruct))) == NULL)
 			return;
 	}
-	rp = &rubik[screen];
+	rp = &rubik[MI_SCREEN(mi)];
 	rp->step = NRAND(90);
+	rp->PX = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;
+	rp->PY = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;
 
 	if ((rp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape_rubik(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-		objects = glGenLists(1);
-		pinit(mi);
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		glDrawBuffer(GL_BACK);
+		if (!pinit(mi)) {
+			free_rubik(rp);
+			if (MI_IS_VERBOSE(mi)) {
+				(void) fprintf(stderr,
+					"Could not allocate memory for rubik\n");
+			}
+			return;
+		}
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
@@ -1690,16 +1919,21 @@ init_rubik(ModeInfo * mi)
 void
 draw_rubik(ModeInfo * mi)
 {
-	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
+	Bool bounced = False;
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
+	rubikstruct *rp;
+
+	if (rubik == NULL)
+		return;
+	rp = &rubik[MI_SCREEN(mi)];
+	if (rp->cubeLoc[0] == NULL)
+		return;
 
 	MI_IS_DRAWN(mi) = True;
-
 	if (!rp->glx_context)
 		return;
 
-	glDrawBuffer(GL_BACK);
 	glXMakeCurrent(display, window, *(rp->glx_context));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1708,19 +1942,43 @@ draw_rubik(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-    {
-      static int frame = 0;
-      GLfloat x, y, z;
-#     define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-      x = SINOID(0.0071, 2.0);
-      y = SINOID(0.0053, 2.0);
-      z = SINOID(0.0037, 4.0);
-      frame++;
-      glTranslatef(x, y, z);
-    }
+	rp->PX += rp->VX;
+	rp->PY += rp->VY;
 
+	if (rp->PY < -1) {
+		rp->PY += (-1) - (rp->PY);
+		rp->VY = -rp->VY;
+		bounced = True;
+	}
+	if (rp->PY > 1) {
+		rp->PY -= (rp->PY) - 1;
+		rp->VY = -rp->VY;
+		bounced = True;
+	}
+	if (rp->PX < -1) {
+		rp->PX += (-1) - (rp->PX);
+		rp->VX = -rp->VX;
+		bounced = True;
+	}
+	if (rp->PX > 1) {
+		rp->PX -= (rp->PX) - 1;
+		rp->VX = -rp->VX;
+		bounced = True;
+	}
+	if (bounced) {
+		rp->VX += ((float) LRAND() / (float) MAXRAND) * 0.02 - 0.01;
+		rp->VX += ((float) LRAND() / (float) MAXRAND) * 0.02 - 0.01;
+		if (rp->VX > 0.06)
+			rp->VX = 0.06;
+		if (rp->VY > 0.06)
+			rp->VY = 0.06;
+		if (rp->VX < -0.06)
+			rp->VX = -0.06;
+		if (rp->VY < -0.06)
+			rp->VY = -0.06;
+	}
 	if (!MI_IS_ICONIC(mi)) {
+		glTranslatef(rp->PX, rp->PY, 0);
 		glScalef(Scale4Window * rp->WindH / rp->WindW, Scale4Window, Scale4Window);
 	} else {
 		glScalef(Scale4Iconic * rp->WindH / rp->WindW, Scale4Iconic, Scale4Iconic);
@@ -1730,8 +1988,11 @@ draw_rubik(ModeInfo * mi)
 	glRotatef(rp->step * 95, 0, 1, 0);
 	glRotatef(rp->step * 90, 0, 0, 1);
 
-	draw_cube(mi);
-    if (mi->fps_p) do_fps (mi);
+	if (!draw_cube(mi)) {
+		release_rubik(mi);
+		return;
+	}
+        if (MI_IS_FPS(mi)) do_fps (mi);
 	glXSwapBuffers(display, window);
 
 	if (rp->action == ACTION_SHUFFLE) {
@@ -1752,9 +2013,22 @@ draw_rubik(ModeInfo * mi)
 					rp->done = 1;
 				}
 			} else {
+				if (rp->rotatestep == 0) {
+					if (rp->movement.direction == CW || rp->movement.direction == CCW)
+						rp->degreeTurn = (checkFaceSquare(rp, rp->movement.face)) ? 90 : 180;
+					else
+						rp->degreeTurn = (checkFaceSquare(rp, rowToRotate[rp->movement.face][rp->movement.direction])) ? 90 : 180;
+				}
 				rp->rotatestep += rp->anglestep;
-				if (rp->rotatestep > 90) {
-					evalmovement(mi, rp->movement);
+				if (rp->rotatestep > rp->degreeTurn) {
+					if (!evalmovement(mi, rp->movement)) {
+						free_rubik(rp);
+						if (MI_IS_VERBOSE(mi)) {
+							(void) fprintf(stderr,
+								"Could not allocate memory for rubik\n");
+						}
+						return;
+					}
 					rp->shufflingmoves++;
 					rp->movement.face = NO_FACE;
 				}
@@ -1763,22 +2037,42 @@ draw_rubik(ModeInfo * mi)
 	} else {
 		if (rp->done) {
 			if (++rp->rotatestep > DELAY_AFTER_SOLVING)
-				shuffle(mi);
+				if (!shuffle(mi)) {
+					free_rubik(rp);
+					if (MI_IS_VERBOSE(mi)) {
+						(void) fprintf(stderr,
+							"Could not allocate memory for rubik\n");
+					}
+					return;
+				}
 		} else {
 			if (rp->movement.face == NO_FACE) {
 				if (rp->storedmoves > 0) {
 					rp->rotatestep = 0;
 					rp->movement = rp->moves[rp->storedmoves - 1];
-					rp->movement.direction = (rp->movement.direction + (MAXORIENT / 2)) %
-						MAXORIENT;
+					rp->movement.direction = (rp->movement.direction +
+						(MAXORIENT / 2)) % MAXORIENT;
 				} else {
 					rp->rotatestep = 0;
 					rp->done = 1;
 				}
 			} else {
+				if (rp->rotatestep == 0) {
+					if (rp->movement.direction == CW || rp->movement.direction == CCW)
+						rp->degreeTurn = (checkFaceSquare(rp, rp->movement.face)) ? 90 : 180;
+					else
+						rp->degreeTurn = (checkFaceSquare(rp, rowToRotate[rp->movement.face][rp->movement.direction])) ? 90 : 180;
+				}
 				rp->rotatestep += rp->anglestep;
-				if (rp->rotatestep > 90) {
-					evalmovement(mi, rp->movement);
+				if (rp->rotatestep > rp->degreeTurn) {
+					if (!evalmovement(mi, rp->movement)) {
+						free_rubik(rp);
+						if (MI_IS_VERBOSE(mi)) {
+							(void) fprintf(stderr,
+								"Could not allocate memory for rubik\n");
+						}
+						return;
+					}
 					rp->storedmoves--;
 					rp->movement.face = NO_FACE;
 				}
@@ -1796,36 +2090,22 @@ draw_rubik(ModeInfo * mi)
 void
 change_rubik(ModeInfo * mi)
 {
-	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
+	rubikstruct *rp;
+
+	if (rubik == NULL)
+		return;
+	rp = &rubik[MI_SCREEN(mi)];
 
 	if (!rp->glx_context)
 		return;
-	pinit(mi);
-}
-
-void
-release_rubik(ModeInfo * mi)
-{
-	if (rubik != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			rubikstruct *rp = &rubik[screen];
-			int         i;
-
-			for (i = 0; i < MAXFACES; i++)
-				if (rp->cubeLoc[i] != NULL)
-					(void) free((void *) rp->cubeLoc[i]);
-			for (i = 0; i < MAXORIENT; i++)
-				if (rp->rowLoc[i] != NULL)
-					(void) free((void *) rp->rowLoc[i]);
-			if (rp->moves != NULL)
-				(void) free((void *) rp->moves);
+	if (!pinit(mi)) {
+		free_rubik(rp);
+		if (MI_IS_VERBOSE(mi)) {
+			(void) fprintf(stderr,
+				"Could not allocate memory for rubik\n");
 		}
-		(void) free((void *) rubik);
-		rubik = NULL;
+		return;
 	}
-	FreeAllGL(mi);
 }
 
 #endif

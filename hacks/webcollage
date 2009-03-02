@@ -35,32 +35,36 @@ use POSIX qw(strftime);
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.87 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.90 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
 
 
 
-my @search_methods = (  30, "imagevista", \&pick_from_alta_vista_images,
-                        28, "altavista",  \&pick_from_alta_vista_text,
-                        18, "yahoorand",  \&pick_from_yahoo_random_link,
-                        14, "googleimgs", \&pick_from_google_images,
+my @search_methods = (  40, "imagevista", \&pick_from_alta_vista_images,
+                        30, "altavista",  \&pick_from_alta_vista_text,
+                        19, "yahoorand",  \&pick_from_yahoo_random_link,
+                         9, "lycos",      \&pick_from_lycos_text,
                          2, "yahoonews",  \&pick_from_yahoo_news_text,
-                         8, "lycos",      \&pick_from_lycos_text,
 
                      # Hotbot gives me "no matches" just about every time.
                      # Then I try the same URL again, and it works.  I guess
                      # it caches searches, and webcollage always busts its
                      # cache and time out?  Or it just sucks.
                      #   0, "hotbot",     \&pick_from_hotbot_text,
+
+                     # Google asked (nicely) for me to stop searching them.
+                     #   0, "googlenums", \&pick_from_google_image_numbers,
+                     #   0, "googleimgs", \&pick_from_google_images,
+
                       );
 
 # programs we can use to write to the root window (tried in ascending order.)
 #
 my @root_displayers = (
   "chbg       -once -xscreensaver -max_size 100",
-  "xv         -root -quit -viewonly -noresetroot -quick24 -rmode 5" .
+  "xv         -root -quit -viewonly +noresetroot -quick24 -rmode 5" .
   "           -rfg black -rbg black",
   "xli        -quiet -onroot -center -border black",
   "xloadimage -quiet -onroot -center -border black",
@@ -1033,7 +1037,7 @@ sub pick_from_alta_vista_images {
 
 ############################################################################
 #
-# Pick images by feeding random words into Google Image Search
+# Pick images by feeding random words into Google Image Search.
 # By Charles Gales <gales@us.ibm.com>
 #
 ############################################################################
@@ -1077,6 +1081,65 @@ sub pick_from_google_images {
 
   return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
                                 $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random *numbers* into Google Image Search.
+# By jwz, suggested by from Ian O'Donnell.
+#
+############################################################################
+
+
+# googlenums
+sub pick_from_google_image_numbers {
+  my ( $timeout ) = @_;
+
+  my $max = 9999;
+  my $number = int(rand($max));
+
+  $number = sprintf("%04d", $number)
+    if (rand() < 0.3);
+
+  my $words = "$number";
+  my $page = (int(rand(40)) + 1);
+  my $num = 20;     # 20 images per page
+  my $search_url = $google_images_url . $words;
+
+  if ($page > 1) {
+    $search_url .= "&start=" . $page*$num;	# page number
+    $search_url .= "&num="   . $num;            #images per page
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
+    next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
+
+    if ($u =~ m@^/imgres\?imgurl=(.*?)\&imgrefurl=(.*?)\&@) {
+      my $ref = $2;
+      my $img = "http://$1";
+
+      LOG ($verbose_filter, "  candidate: $ref");
+      push @candidates, $img;
+      $referers{$img} = $ref;
+    }
+  }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
 }
 
 
@@ -1571,10 +1634,12 @@ sub jpeg_size {
   while (ord($ch) != 0xDA && $i < $L) {
     # Find next marker, beginning with 0xFF.
     while (ord($ch) != 0xFF) {
+      return () if (length($body) <= $i);
       $ch = substr($body, $i, 1); $i++;
     }
     # markers can be padded with any number of 0xFF.
     while (ord($ch) == 0xFF) {
+      return () if (length($body) <= $i);
       $ch = substr($body, $i, 1); $i++;
     }
 
@@ -1586,6 +1651,7 @@ sub jpeg_size {
         ($marker != 0xC4) &&
         ($marker != 0xCC)) {  # it's a SOFn marker
       $i += 3;
+      return () if (length($body) <= $i);
       my $s = substr($body, $i, 4); $i += 4;
       my ($a,$b,$c,$d) = unpack("C"x4, $s);
       return (($c<<8|$d), ($a<<8|$b));
@@ -1593,6 +1659,7 @@ sub jpeg_size {
     } else {
       # We must skip variables, since FFs in variable names aren't
       # valid JPEG markers.
+      return () if (length($body) <= $i);
       my $s = substr($body, $i, 2); $i += 2;
       my ($c1, $c2) = unpack ("C"x2, $s);
       my $length = ($c1 << 8) | $c2;
@@ -1670,7 +1737,7 @@ my $background = undef;
 my $img_width;            # size of the image being generated.
 my $img_height;
 
-my $delay = 0;
+my $delay = 2;
 
 
 sub x_cleanup {
@@ -1978,7 +2045,13 @@ sub paste_image {
 
   my ($iw, $ih);
 
-  if (defined ($webcollage_helper)) {
+  # If we are using the webcollage-helper, then we do not need to convert this
+  # image to a PPM.  But, if we're using a filter command, we still must, since
+  # that's what the filters expect (webcollage-helper can read PPMs, so that's
+  # fine.)
+  #
+  if (defined ($webcollage_helper) &&
+      !defined ($filter_cmd)) {
 
     ($iw, $ih) = image_size ($body);
     if (!$iw || !$ih) {
@@ -2210,8 +2283,20 @@ sub paste_image {
   # cumulative.
   #
   if ($post_filter_cmd) {
+
+    my $cmd;
+
     $target = $image_tmp1;
-    $rc = nontrapping_system "($post_filter_cmd) < $image_ppm > $target";
+    if (!defined ($webcollage_helper)) {
+      $cmd = "($post_filter_cmd) < $image_ppm > $target";
+    } else {
+      # Blah, my scripts need the JPEG data, but some other folks need
+      # the PPM data -- what to do?  Ignore the problem, that's what!
+#     $cmd = "djpeg < $image_ppm | ($post_filter_cmd) > $target";
+      $cmd = "($post_filter_cmd) < $image_ppm > $target";
+    }
+
+    $rc = nontrapping_system ($cmd);
     if ($rc != 0) {
       LOG ($verbose_pbm, "filter failed: \"$post_filter_cmd\"\n");
       return;

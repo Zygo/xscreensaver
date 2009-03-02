@@ -70,6 +70,18 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.02:   * New hack, `spheremonics'.
+                      * Minor updates to `webcollage', `cage', `moebius',
+                        `morph3d', `boxed', `circuit', and `helix'.
+                      * `pulsar' and `extrusion' can now load texture JPEGs.
+                      * `rubik' now does non-square cubes.
+                      * `fluidballs' now does various sizes of balls.
+                      * `menger' and `sierpinski3d' now also show polygon
+                        counts in -fps mode.
+                      * `molecule' displays real subscripts in the formulae.
+                      * GTK internationalization/localization support.
+                      * Better detection of the various versions of libxml.
+                      * Upgraded to autoconf 2.53 (from 2.13.)
 Changes since 4.01:   * Plugged a few minor leaks in `xscreensaver' and
                         `xscreensaver-demo'.
                       * New hacks, `cubenetic' and `fluidballs'.

@@ -71,6 +71,7 @@ typedef struct ModeInfo {
   Bool is_drawn;
 
   Bool fps_p;
+  unsigned long polygon_count;  /* used only by FPS display */
 
 #ifdef HAVE_XSHM_EXTENSION
   Bool use_shm;

@@ -1592,7 +1592,7 @@ char *defaults [] = {
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".Windows.foreground:	   White",
-  ".Windows.background:	   Blue",
+  ".Windows.background:	   #0000AA",    /* EGA color 0x01. */
 
   ".Amiga.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Amiga.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -1652,6 +1652,8 @@ XrmOptionDescRec options [] = {
   { "-no-amiga",	".doAmiga",		XrmoptionNoArg,  "False" },
   { "-mac",		".doMac",		XrmoptionNoArg,  "True"  },
   { "-no-mac",		".doMac",		XrmoptionNoArg,  "False" },
+  { "-mac1",		".doMac1",		XrmoptionNoArg,  "True"  },
+  { "-no-mac1",		".doMac1",		XrmoptionNoArg,  "False" },
   { "-atari",		".doAtari",		XrmoptionNoArg,  "True"  },
   { "-no-atari",	".doAtari",		XrmoptionNoArg,  "False" },
   { "-macsbug",		".doMacsBug",		XrmoptionNoArg,  "True"  },

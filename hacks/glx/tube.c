@@ -23,7 +23,7 @@ unit_tube (int faces, Bool smooth, Bool wire)
   GLfloat step = M_PI * 2 / faces;
   GLfloat s2 = step/2;
   GLfloat th;
-  GLfloat x, y, x0, y0;
+  GLfloat x, y, x0=0, y0=0;
   int z = 0;
 
   /* side walls

@@ -705,8 +705,8 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
 	if (p->debug_p)
 	  {
-            Window root, window;
-            int x, y;
+            Window root=0, window=0;
+            int x=-1, y=-1;
             const char *type = 0;
 	    if (event.xany.type == MotionNotify)
               {

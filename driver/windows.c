@@ -175,7 +175,7 @@ static Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
                          int screen_no)
 {
-  Status mstatus, kstatus;
+  Status mstatus = 0, kstatus = 0;
   int i;
   int retries = 4;
 

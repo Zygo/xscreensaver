@@ -6,10 +6,10 @@
   <program_name>xscreensaver-demo</program_name>
   <directory></directory>
   <source_directory></source_directory>
-  <pixmaps_directory></pixmaps_directory>
+  <pixmaps_directory>../utils/images</pixmaps_directory>
   <language>C</language>
   <gnome_support>False</gnome_support>
-  <gettext_support>False</gettext_support>
+  <gettext_support>True</gettext_support>
   <use_widget_names>True</use_widget_names>
   <output_main_file>False</output_main_file>
   <output_build_files>False</output_build_files>
