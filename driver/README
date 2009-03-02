@@ -1,0 +1,6 @@
+
+This directory contains the source for xscreensaver and xscreensaver-command,
+the screensaver driver, and the program for externally controlling it.  Some
+stuff from the ../utils/ directory is used here as well.
+
+If you have compilation problems, check the parameters in ../config.h.

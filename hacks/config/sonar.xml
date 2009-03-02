@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="sonar" _label="Sonar">
+
+  <command arg="-root"/>
+
+  <string id="ping" _label="Ping Subnet" arg="-ping %"/>
+
+  <hgroup>
+    <number id="acount" type="spinbutton" arg="-team-a-count %"
+            _label="Simulation Team Members"
+            low="1" high="100" default="4"/>
+    <number id="bcount" type="spinbutton" arg="-team-b-count %"
+            _label="vs."
+            low="1" high="100" default="4"/>
+  </hgroup>
+
+  <string id="aname" _label="Team A Name" arg="-team-a-name %"/>
+  <string id="bname" _label="Team B Name" arg="-team-b-name %"/>
+
+  <!-- #### -ping-timeout [3000] -->
+  <!-- #### -ttl [90] -->
+
+  <!-- #### -font [fixed] -->
+  <!-- #### -background [#000000] -->
+  <!-- #### -sweep-color [#00FF00] -->
+  <!-- #### -scope-color [#003300] -->
+  <!-- #### -grid-color [#00AA00] -->
+  <!-- #### -text-color [#FFFF00] -->
+
+  <_description>
+This program draws a simulation of a sonar screen.  Written by
+default, it displays a random assortment of ``bogies'' on the screen,
+but if compiled properly, it can ping (pun intended) your local
+network, and actually plot the proximity of the other hosts on your
+network to you.  It would be easy to make it monitor other sources of
+data, too.  (Processes?  Active network connections?  CPU usage per
+user?)  Written by Stephen Martin.
+  </_description>
+</screensaver>
