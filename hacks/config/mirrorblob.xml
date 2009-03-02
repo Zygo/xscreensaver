@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="mirrorblob" _label="MirrorBlob">
+
+  <command arg="-root"/>
+
+  <hgroup>
+    <select id="render">
+      <option id="wire"  _label="Wireframe" arg-set="-wire"/>
+      <option id="solid" _label="Solid Surface"/>
+    </select>
+  </hgroup>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="x_res" type="slider" arg="-x_res %"
+          _label="X Resolution" low="5" high="500" default="60"/>
+
+  <number id="y_res" type="slider" arg="-y_res %"
+          _label="Y Resolution" low="5" high="500" default="32"/>
+
+  <number id="field_points" type="slider" arg="-field_points %"
+          _label="Field Points" low="0" high="50" default="10"/>
+
+  <number id="hold_frames" type="slider" arg="-hold_frames %"
+          _label="Frames Between Images" low="1" high="65536" default="10240"/>
+
+  <number id="fade_speed" type="slider" arg="-fade_speed %"
+          _label="Fade Speed" low="1" high="256" default="1"/>
+
+  <hgroup>
+    <select id="Calculation Method">
+      <option id="wire"  _label="Blobby"/>
+      <option id="calm"  _label="Calm"           arg-set="-incremental 1"/>
+      <option id="freaky"  _label="Freaky"       arg-set="-incremental 3"/>
+      <option id="vfreaky"  _label="Very Freaky" arg-set="-incremental 2"/>
+    </select>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+     <boolean id="walls" _label="Enable Walls"/>
+     <boolean id="colour" _label="Enable Colouring" arg-set="-colour"/>
+     <boolean id="texture" _label="Enable Reflected Image" arg-unset="-no-texture"/>
+     <boolean id="background" _label="Enable Background Image" arg-unset="-no-bgimage"/>
+     <boolean id="offset_texture" _label="Offset Texture Coordinates" arg-set="-offset_texture"/>
+     <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Draws a wobbly blob that distorts the image behind it.
+Requires OpenGL hardware acceleration for nice animation.
+Written by Jon Dowdall.
+  </_description>
+</screensaver>

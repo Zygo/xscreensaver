@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="moebius" _label="Moebius">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="20000"
+          convert="invert"/>
+
+  <hgroup>
+    <select id="strip">
+      <option id="solid" _label="Solid Floor" arg-set="-solidmoebius"/>
+      <option id="wire"  _label="Mesh Floor"/>
+    </select>
+
+    <select id="render">
+      <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+      <option id="solid" _label="Solid Objects"/>
+    </select>
+  </hgroup>
+
+  <boolean id="ants" _label="Draw Ants" arg-unset="-noants"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Another M. C. Escher hack by Marcelo Vianna, this one draws
+``Moebius Strip II,'' a GL image of ants walking along the surface of
+a moebius strip.
+  </_description>
+</screensaver>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="juggle" _label="Juggle">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-count %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="50" high="1000" default="150"
+          convert="invert"/>
+
+  <number id="trails" type="slider" arg="-trail %"
+          _label="Trail Length" _low-label="None" _high-label="Long"
+          low="0" high="100" default="0"/>
+
+  <boolean id="solid" _label="Checkered Balls" arg-unset="-solid"/>
+
+<!-- I can't figure out what -cycles does -->
+<!-- -pattern would be a really long, confusing option menu -->
+
+  <_description>
+Draws a juggling stick-man.  Written by Tim Auckland.
+  </_description>
+</screensaver>

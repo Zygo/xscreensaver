@@ -1,0 +1,115 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "30-Oct-99" "X Version 11"
+.SH NAME
+phosphor - simulates an old terminal with long-sustain phosphor
+.SH SYNOPSIS
+.B phosphor
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] [\-font \fIfont\fP] [\-scale \fIint\fP]
+[\-ticks \fIint\fP] [\-delay \fIusecs\fP] [\-program \fIcommand\fP]
+.SH DESCRIPTION
+The \fIphosphor\fP program draws text on the screen in a very large 
+pixelated font that looks like an old low resolution dumb tty.  The
+pixels flare and fade out as if the phosphor was very long-sustain.
+.SH OPTIONS
+.I phosphor
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-font \fIfont-name\fP
+The X font to use.  Phosphor can take any font and scale it up to pixelate
+it.  The default is \fIfixed\fP.
+.TP 8
+.B \-scale \fIint\fP
+How much to scale the font up: in other words, the size in real pixels of
+the simulated pixels.  Default 6.
+.TP 8
+.B \-ticks \fIint\fP
+The number of colors to use when fading to black.  Default 20.
+.TP 8
+.B \-delay \fIusecs\fP
+The speed of the terminal: how long to wait between drawing each character.
+Default 50000, or about 1/20th second.
+.TP 8
+.B \-program \fIsh-command\fP
+The command to run to generate the text to display.  This option may be
+any string acceptable to /bin/sh.  The program will be run at the end of
+a pipe, and any characters that it prints to \fIstdout\fP will be printed
+on phosphor's window.  The characters will be printed artificially slowly,
+as per the \fI\-delay\fP option above.  If the program exits, it will be
+launched again after 5 seconds.
+
+Note that phosphor is \fInot\fP a terminal emulator: programs that try to
+directly address the screen will not do what you might expect.  Phosphor
+merely draws the characters on the screen left to right, top to bottom.
+Lines wrap when they reach the right edge, and the screen scrolls when
+characters reach the bottom.
+
+In other words, programs like
+.BR fortune (1)
+will work, but programs like
+.BR top (1)
+won't.
+
+For example:
+.EX
+phosphor -program 'cat /usr/src/linux*/README'
+phosphor -program 'ping localhost'
+phosphor -program 'ps -e'
+phosphor -program 'od -txC -w6 /dev/random'
+.EE
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR xscreensaver (1),
+.BR fortune (1),
+.BR apple2 (1),
+.BR starwars (1),
+.BR fontglide (1),
+.BR ljlatest (1),
+.BR dadadodo (1),
+.BR webcollage (1),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 1999 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 27-Apr-99.

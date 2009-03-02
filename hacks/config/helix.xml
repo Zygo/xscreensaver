@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="helix" _label="Helix">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Duration" _low-label="1 Second" _high-label="1 Minute"
+          low="1" high="60" default="5"/>
+
+  <_description>
+This repeatedly generates spirally string-art-ish patterns.  Written
+by Jamie Zawinski.
+  </_description>
+</screensaver>
