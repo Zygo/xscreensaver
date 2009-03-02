@@ -81,6 +81,7 @@
 srcdir		= @srcdir@
 VPATH		= @srcdir@
 prefix		= @prefix@
+datarootdir	= @datarootdir@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@

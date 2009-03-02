@@ -26,12 +26,12 @@
 
 #ifdef USE_GL /* whole file */
 
-#define DEF_POINTS      "10"
+#define DEF_POINTS      "25"
 #define DEF_POINT_SIZE  "9"
 #define DEF_POINT_SPEED "1"
-#define DEF_POINT_DELAY "0.1"
+#define DEF_POINT_DELAY "0.05"
 #define DEF_ZOOM_SPEED  "1"
-#define DEF_ZOOM_DELAY  "10"
+#define DEF_ZOOM_DELAY  "15"
 
 typedef struct node {
   GLfloat x, y;
@@ -275,6 +275,7 @@ draw_cells (ModeInfo *mi)
           glColor4fv (nn->color2);
           glVertex2f (nn->x, nn->y);
           glEnd();
+          mi->polygon_count++;
         }
     }
   else
@@ -304,6 +305,7 @@ draw_cells (ModeInfo *mi)
               glVertex2f ( 0.2, 0);
               glEnd ();
               glRotatef (360.0/5, 0, 0, 1);
+              mi->polygon_count++;
             }
           glPopMatrix();
         }
@@ -464,17 +466,11 @@ init_voronoi (ModeInfo *mi)
 
   if (point_size < 0) point_size = 10;
 
-  vp->ncolors = 64;
+  vp->ncolors = 128;
   vp->colors = (XColor *) calloc (vp->ncolors, sizeof(XColor));
-#if 0
-  make_random_colormap (0, 0, 0,
-                        vp->colors, &vp->ncolors,
-                        True, False, 0, False);
-#else
   make_smooth_colormap (0, 0, 0,
                         vp->colors, &vp->ncolors,
                         False, False, False);
-#endif
 
   reshape_voronoi (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
@@ -496,10 +492,10 @@ draw_voronoi (ModeInfo *mi)
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(vp->glx_context));
 
-  glShadeModel(GL_SMOOTH);
+  glShadeModel(GL_FLAT);
   glEnable(GL_POINT_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_POLYGON_SMOOTH);
+/*  glEnable(GL_LINE_SMOOTH);*/
+/*  glEnable(GL_POLYGON_SMOOTH);*/
 
   glEnable (GL_DEPTH_TEST);
   glDepthFunc (GL_LEQUAL);

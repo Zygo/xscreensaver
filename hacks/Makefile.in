@@ -14,6 +14,7 @@ install_prefix	=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+datarootdir	= @datarootdir@
 datadir		= @datadir@
 mandir		= @mandir@
 libexecdir	= @libexecdir@
@@ -111,7 +112,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
-		  asm6502.c \
+		  asm6502.c abstractile.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -150,7 +151,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
-		  webcollage-helper-cocoa.o m6502.0 asm6502.o
+		  webcollage-helper-cocoa.o m6502.0 asm6502.o abstractile.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -171,7 +172,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
-		  celtic cwaves m6502 \
+		  celtic cwaves m6502 abstractile \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -219,7 +220,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
-		  interaggregate.man celtic.man cwaves.man
+		  interaggregate.man celtic.man cwaves.man abstractile.man
 STAR		= *
 EXTRAS		= README Makefile.in xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -858,6 +859,9 @@ cwaves:		cwaves.o	$(HACK_OBJS) $(COL)
 m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
 	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS)
 
+abstractile:	abstractile.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
 # The rules for those hacks which follow the `xlockmore' API.
 #
 
@@ -992,6 +996,16 @@ webcollage-helper: webcollage-helper.o
 #
 # DO NOT DELETE: updated by make distdepend
 
+abstractile.o: ../config.h
+abstractile.o: $(srcdir)/screenhackI.h
+abstractile.o: $(srcdir)/screenhack.h
+abstractile.o: $(UTILS_SRC)/colors.h
+abstractile.o: $(UTILS_SRC)/grabscreen.h
+abstractile.o: $(UTILS_SRC)/hsv.h
+abstractile.o: $(UTILS_SRC)/resources.h
+abstractile.o: $(UTILS_SRC)/usleep.h
+abstractile.o: $(UTILS_SRC)/visual.h
+abstractile.o: $(UTILS_SRC)/yarandom.h
 analogtv.o: $(srcdir)/analogtv.h
 analogtv.o: ../config.h
 analogtv.o: $(srcdir)/images/6x10font.xbm

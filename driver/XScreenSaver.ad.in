@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.03
-!                              17-Jul-2007
+!                              version 5.04
+!                              13-Nov-2007
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -304,6 +304,7 @@ GetViewPortIsFullOfLies: False
 				celtic -root				    \n\
 				cwaves -root				    \n\
 				m6502 -root				    \n\
+				abstractile -root			    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -392,6 +393,8 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			glschool -root				    \n\
 @GL_KLUDGE@ GL:			glcells -root				    \n\
 @GL_KLUDGE@ GL:			voronoi -root				    \n\
+@GL_KLUDGE@ GL:			moebiusgears -root			    \n\
+@GL_KLUDGE@ GL:			lockward -root				    \n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -535,6 +538,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.topblock.name:       TopBlock
 *hacks.glschool.name:       GLSchool
 *hacks.glcells.name:        GLCells
+*hacks.moebiusgears.name:   MoebiusGears
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

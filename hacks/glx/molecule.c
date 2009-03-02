@@ -12,10 +12,13 @@
 
 
 /* Documentation on the PDB file format:
+   http://www.wwpdb.org/docs.html
    http://www.rcsb.org/pdb/file_formats/pdb/pdbguide2.2/guide2.2_frame.html
 
    Good source of PDB files:
    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
+   http://www.umass.edu/microbio/rasmol/whereget.htm
+   http://www.wwpdb.org/docs.html
  */
 
 #define DEFAULTS	"*delay:	10000         \n" \
@@ -574,11 +577,10 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
             if (thickness > 0.3)
               thickness = 0.3;
 
-            tube (from->x, from->y, from->z,
-                  to->x,   to->y,   to->z,
-                  thickness, cap_size,
-                  faces, smooth, (!do_atoms || do_shells), wire);
-            polys += faces;
+            polys += tube (from->x, from->y, from->z,
+                           to->x,   to->y,   to->z,
+                           thickness, cap_size,
+                           faces, smooth, (!do_atoms || do_shells), wire);
           }
       }
 

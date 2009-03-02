@@ -25,7 +25,7 @@ To compile on a Unix system with X11:
 
 To compile on MacOS X:
 
-    Use the included XCode project.  Requires XCode 2.2 and MacOS X 10.4.0
+    Use the included XCode project.  Requires XCode 2.4 and MacOS X 10.4.0
     or newer.
 
 Interested in writing a new screen saver?
@@ -38,6 +38,17 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.03:   * Fixed a possible crash in the unlock dialog (more
+                        fallout from the recent PAM changes...)
+                      * New hacks, `moebiusgears', `abstractile', and
+                        `lockward'.
+                      * Rewrote `gears' to use better (involute) gear models,
+                        and to be more random.
+                      * Minor updates to `cwaves', `voronoi', `deco',
+                        `glcells', `rd-bomb', `fireworkx' and `webcollage'.
+                      * `pong' can now display the current time as the score.
+                      * `xmatrix -mode pipe' works better.
+                      * Minor tweaks for compilation on MacOS 10.5.0.
 Changes since 5.02:   * New hacks, `cwaves', `glcells', `m6502', and `voronoi'.
                       * Minor fixes to `bsod'.
                       * Fixed possible crash with PAM USB-dongle auth.

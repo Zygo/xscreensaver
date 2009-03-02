@@ -6,7 +6,7 @@
 
   <string id="text" _label="Text for Flag" arg="-text %"/>
 
-  <file id="bitmap" _label="Bitmap for Flag" arg="-bitmap %"/>
+<!--  <file id="bitmap" _label="Bitmap for Flag" arg="-bitmap %"/> -->
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"

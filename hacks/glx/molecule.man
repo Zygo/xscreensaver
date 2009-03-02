@@ -2,7 +2,7 @@
 .SH NAME
 molecule - draws 3D molecular structures
 .SH SYNOPSIS
-.B gltext
+.B molecule
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
 [\-wander] [\-no-wander]
@@ -142,11 +142,13 @@ stored in the RESOURCE_MANAGER property.
 .PP
 Documentation on the PDB file format:
 
+    http://www.wwpdb.org/docs.html
     http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
 
 A good source of PDB files:
 
-    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
+    http://www.umass.edu/microbio/rasmol/whereget.htm
+    http://www.wwpdb.org/docs.html
 .SH COPYRIGHT
 Copyright \(co 2001-2005 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and

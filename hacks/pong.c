@@ -12,6 +12,16 @@
  * Also added gradual acceleration of the ball, shrinking of paddles, and
  * scorekeeping.
  *
+ * Modified by Gereon Steffens <gereon@steffens.org> to add -clock and -noise
+ * options. See http://www.burovormkrijgers.nl (ugly flash site, 
+ * navigate to Portfolio/Browse/Misc/Pong Clock) for the hardware implementation 
+ * that gave me the idea. In clock mode, the score reflects the current time, and 
+ * the paddles simply stop moving when it's time for the other side to score. This 
+ * means that the display is only updated a few seconds *after* the minute actually 
+ * changes, but I think this fuzzyness fits well with the display, and since we're
+ * not displaying seconds, who cares. While I was at it, I added a -noise option
+ * to control the noisyness of the display.
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -65,12 +75,15 @@ struct state {
   Display *dpy;
   Window window;
 
+  int clock;
+
   Paddle l_paddle;
   Paddle r_paddle;
   Ball ball;
   int bx,by;
   int m_unit;
   int paddle_rate;
+  double noise;
 
   analogtv *tv;
   analogtv_input *inp;
@@ -101,6 +114,25 @@ hit_top_bottom(struct state *st)
 }
 
 static void
+reset_score(struct state * st)
+{
+  if (st->clock)
+  {
+    /* init score to current time */
+    time_t now = time(0);
+    struct tm* now_tm = localtime(&now);
+
+    st->r_paddle.score = now_tm->tm_hour;
+    st->l_paddle.score = now_tm->tm_min;
+  }
+  else
+  {
+    st->r_paddle.score = 0;
+    st->l_paddle.score = 0;
+  }
+}
+
+static void
 new_game(struct state *st)
 {
   /* Starts a Whole New Game*/
@@ -119,8 +151,7 @@ new_game(struct state *st)
   st->r_paddle.wait = 0;
   st->r_paddle.lock = 0;
   st->paddle_rate = st->m_unit-1;
-  st->r_paddle.score = 0;
-  st->l_paddle.score = 0;
+  reset_score(st);
 
   st->l_paddle.h = PONG_H/4;
   st->r_paddle.h = PONG_H/4;
@@ -167,11 +198,18 @@ hit_paddle(struct state *st)
         }
       else
         {
-          st->r_paddle.score++;
-          if (st->r_paddle.score >=10)
-                new_game(st);
-          else 
-          start_game(st);
+          if (st->clock)
+          {
+            reset_score(st);
+          }
+          else
+          {
+            st->r_paddle.score++;
+            if (st->r_paddle.score >=10)
+              new_game(st);
+            else 
+              start_game(st);
+          }
         }
     }
 
@@ -189,11 +227,18 @@ hit_paddle(struct state *st)
         }
       else
         {
-          st->l_paddle.score++;
-          if (st->l_paddle.score >= 10)
-                new_game(st);
+          if (st->clock)
+          {
+            reset_score(st);
+          }
           else
-          start_game(st);
+          {
+            st->l_paddle.score++;
+            if (st->l_paddle.score >= 10)
+              new_game(st);
+            else
+              start_game(st);
+          }
         }
     }
 }
@@ -202,89 +247,230 @@ static void *
 pong_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
+
+  int i;
+  struct {
+    int w, h;
+    char *s[10];
+  } fonts[2] = { 
+    { /* regular pong font */
+      /* If you think we haven't learned anything since the early 70s,
+         look at this font for a while */
+      4, 6, 
+        { 
+            "****"
+            "*  *"
+            "*  *"
+            "*  *"
+            "*  *"
+            "****",
+
+            "   *"
+            "   *"
+            "   *"
+            "   *"
+            "   *"
+            "   *",
+
+            "****"
+            "   *"
+            "****"
+            "*   "
+            "*   "
+            "****",
+
+            "****"
+            "   *" 
+            "****"
+            "   *"
+            "   *"
+            "****",
+
+            "*  *"
+            "*  *"
+            "****"
+            "   *"
+            "   *"
+            "   *",
+
+            "****"
+            "*   "
+            "****"
+            "   *"
+            "   *"
+            "****",
+
+            "****"
+            "*   "
+            "****"
+            "*  *"
+            "*  *"
+            "****",
+
+            "****"
+            "   *"
+            "   *"
+            "   *"
+            "   *"
+            "   *",
+
+            "****"
+            "*  *"
+            "****"
+            "*  *"
+            "*  *"
+            "****",
+
+            "****"
+            "*  *"
+            "****"
+            "   *"
+            "   *"
+            "   *"
+        } 
+    },
+    { /* pong clock font - hand-crafted double size looks better */
+      8, 12, 
+        {
+            "####### "
+            "####### "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### ",
+            
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   "
+            "   ##   ",
+
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "####### "
+            "####### "
+            "##      "
+            "##      "
+            "##      "
+            "####### "
+            "####### ",
+
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "     ## "
+            "####### "
+            "####### ",
+
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## ",
+
+            "####### "
+            "####### "
+            "##      "
+            "##      "
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "     ## "
+            "####### "
+            "####### ",
+
+            "####### "
+            "####### "
+            "##      "
+            "##      "
+            "####### "
+            "####### "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### ",
+
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## "
+            "     ## " 
+            "     ## ",
+
+            "####### "
+            "####### "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### "
+            "##   ## "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### ",
+
+            "####### "
+            "####### "
+            "##   ## "
+            "##   ## "
+            "####### "
+            "####### "
+            "     ## "
+            "     ## "
+            "     ## "
+            "####### "
+            "####### "
+
+        }
+    }
+  };
+
   st->dpy = dpy;
   st->window = window;
   st->tv=analogtv_allocate(st->dpy, st->window);
   analogtv_set_defaults(st->tv, "");
 
-  analogtv_make_font(st->dpy, st->window, &st->score_font,
-                     4, 6, NULL );
 
-  /* If you think we haven't learned anything since the early 70s,
-     look at this font for a while */
-  analogtv_font_set_char(&st->score_font, '0',
-                        "****"
-                        "*  *"
-                        "*  *"
-                        "*  *"
-                        "*  *"
-                        "****");
-  analogtv_font_set_char(&st->score_font, '1',
-                        "   *"
-                        "   *"
-                        "   *"
-                        "   *"
-                        "   *"
-                        "   *");
-  analogtv_font_set_char(&st->score_font, '2',
-                        "****"
-                        "   *"
-                        "****"
-                        "*   "
-                        "*   "
-                        "****");
-  analogtv_font_set_char(&st->score_font, '3',
-                        "****"
-                        "   *"
-                        "****"
-                        "   *"
-                        "   *"
-                        "****");
-  analogtv_font_set_char(&st->score_font, '4',
-                        "*  *"
-                        "*  *"
-                        "****"
-                        "   *"
-                        "   *"
-                        "   *");
-  analogtv_font_set_char(&st->score_font, '5',
-                        "****"
-                        "*   "
-                        "****"
-                        "   *"
-                        "   *"
-                        "****");
-  analogtv_font_set_char(&st->score_font, '6',
-                        "****"
-                        "*   "
-                        "****"
-                        "*  *"
-                        "*  *"
-                        "****");
-  analogtv_font_set_char(&st->score_font, '7',
-                        "****"
-                        "   *"
-                        "   *"
-                        "   *"
-                        "   *"
-                        "   *");
-  analogtv_font_set_char(&st->score_font, '8',
-                        "****"
-                        "*  *"
-                        "****"
-                        "*  *"
-                        "*  *"
-                        "****");
-  analogtv_font_set_char(&st->score_font, '9',
-                        "****"
-                        "*  *"
-                        "****"
-                        "   *"
-                        "   *"
-                        "   *");
+  st->clock  = get_boolean_resource(st->dpy, "clock", "Boolean");
 
-  st->score_font.y_mult *= 2;
-  st->score_font.x_mult *= 2;
+  analogtv_make_font(st->dpy, st->window, &st->score_font, 
+                     fonts[st->clock].w, fonts[st->clock].h, NULL);
+
+  for (i=0; i<10; ++i)
+  {
+    analogtv_font_set_char(&st->score_font, '0'+i, fonts[st->clock].s[i]);
+  }
 
 #ifdef OUTPUT_POS
   printf("screen(%d,%d,%d,%d)\n",0,0,PONG_W,PONG_H);
@@ -323,6 +509,16 @@ pong_init (Display *dpy, Window window)
   st->ball.h = 8;
 
   st->m_unit = get_integer_resource (st->dpy, "speed", "Integer");
+  st->noise  = get_float_resource(st->dpy, "noise", "Float");
+  st->clock  = get_boolean_resource(st->dpy, "clock", "Boolean");
+
+  if (!st->clock)
+  {
+    st->score_font.y_mult *= 2;
+    st->score_font.x_mult *= 2;
+  }
+
+  reset_score(st);
 
   start_game(st);
 
@@ -442,17 +638,20 @@ paint_score(struct state *st)
 {
   char buf[256];
 
+  char* fmt = (st->clock ? "%02d" : "%d");
+
   analogtv_draw_solid(st->inp,
                       ANALOGTV_VIS_START, ANALOGTV_VIS_END,
                       ANALOGTV_TOP, ANALOGTV_TOP + 10+ st->score_font.char_h * st->score_font.y_mult,
                       st->field_ntsc);
 
-  sprintf(buf, "%d",st->r_paddle.score%256);
+
+  sprintf(buf, fmt ,st->r_paddle.score%256);
   analogtv_draw_string(st->inp, &st->score_font, buf,
                        ANALOGTV_VIS_START + 130, ANALOGTV_TOP + 8,
                        st->score_ntsc);
 
-  sprintf(buf, "%d",st->l_paddle.score%256);
+  sprintf(buf, fmt, st->l_paddle.score%256);
   analogtv_draw_string(st->inp, &st->score_font, buf,
                        ANALOGTV_VIS_END - 200, ANALOGTV_TOP + 8,
                        st->score_ntsc);
@@ -479,13 +678,34 @@ static unsigned long
 pong_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+
+  if (st->clock)
+  {
+    time_t now = time(0);
+    struct tm* tm_now = localtime(&now);
+
+    if (st->r_paddle.score != tm_now->tm_hour)
+    {
+      /* l paddle must score */
+      st->r_paddle.wait = 1;
+    }
+    else if (st->l_paddle.score != tm_now->tm_min)
+    {
+      /* r paddle must score */
+      st->l_paddle.wait = 1;
+    }
+  }
   erase_ball(st);
 
   st->ball.x += st->bx;
   st->ball.y += st->by;
 
-  if ((random()%40)==0) {
-    if (st->bx>0) st->bx++; else st->bx--;
+  if (!st->clock)
+  {
+    /* in non-clock mode, occasionally increase ball speed */
+    if ((random()%40)==0) {
+      if (st->bx>0) st->bx++; else st->bx--;
+    }
   }
 
   if (!st->r_paddle.wait)
@@ -517,7 +737,7 @@ pong_draw (Display *dpy, Window window, void *closure)
   }
   if (1) paint_ball(st);
 
-  analogtv_init_signal(st->tv, 0.04);
+  analogtv_init_signal(st->tv, st->noise);
   analogtv_reception_update(&st->reception);
   analogtv_add_signal(st->tv, &st->reception);
   analogtv_draw(st->tv);
@@ -531,6 +751,8 @@ static const char *pong_defaults [] = {
   ".background: black",
   ".foreground: white",
   "*speed:      6",
+  "*noise:      0.04",
+  "*clock:      false",
   ANALOGTV_DEFAULTS
   "*TVContrast:      150",
   0
@@ -538,6 +760,8 @@ static const char *pong_defaults [] = {
 
 static XrmOptionDescRec pong_options [] = {
   { "-speed",           ".speed",     XrmoptionSepArg, 0 },
+  { "-noise",           ".noise",     XrmoptionSepArg, 0 },
+  { "-clock",           ".clock",     XrmoptionNoArg, "true" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -564,4 +788,4 @@ pong_free (Display *dpy, Window window, void *closure)
   free (st);
 }
 
-XSCREENSAVER_MODULE ("Pong", pong)
+XSCREENSAVER_MODULE ("pong", pong)

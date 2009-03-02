@@ -15,6 +15,7 @@ install_prefix	=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+datarootdir	= @datarootdir@
 datadir		= @datadir@
 mandir		= @mandir@
 libexecdir	= @libexecdir@
@@ -99,11 +100,12 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
 		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
-		  antinspect.c providence.c pinion.c boing.c texfont.c \
-		  carousel.c fliptext.c antmaze.c tangram.c tangram_shapes.c \
-		  crackberg.c glhanoi.c cube21.c timetunnel.c juggler3d.c \
-		  topblock.c glschool.c glschool_gl.c glschool_alg.c \
-		  glcells.c voronoi.c
+		  antinspect.c providence.c pinion.c involute.c boing.c \
+		  texfont.c carousel.c fliptext.c antmaze.c tangram.c \
+		  tangram_shapes.c crackberg.c glhanoi.c cube21.c \
+		  timetunnel.c juggler3d.c topblock.c glschool.c \
+		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
+		  moebiusgears.c lockward.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -132,11 +134,12 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
 		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
-		  antinspect.o providence.o pinion.o boing.o texfont.o \
-		  carousel.o fliptext.o antmaze.o tangram.o tangram_shapes.o \
-		  crackberg.o glhanoi.o cube21.o timetunnel.o juggler3d.o \
-		  topblock.o glschool.o glschool_gl.o glschool_alg.o \
-		  glcells.o voronoi.o
+		  antinspect.o providence.o pinion.o involute.o boing.o \
+		  texfont.o carousel.o fliptext.o antmaze.o tangram.o \
+		  tangram_shapes.o crackberg.o glhanoi.o cube21.o \
+		  timetunnel.o juggler3d.o topblock.o glschool.o \
+		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
+		  moebiusgears.o lockward.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -149,7 +152,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
 		  antinspect providence pinion boing carousel fliptext \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
-		  juggler3d topblock glschool glcells voronoi
+		  juggler3d topblock glschool glcells voronoi moebiusgears \
+		  lockward
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -171,7 +175,8 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  gltrackball.h chessmodels.h chessgames.h gllist.h flurry.h \
 		  tunnel_draw.h ants.h polyhedra.h normals.h glxfonts.h \
 		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
-		  glschool.h glschool_gl.h glschool_alg.h topblock.h
+		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
+		  involute.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -190,7 +195,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  carousel.man fliptext.man antmaze.man tangram.man \
 		  crackberg.man glhanoi.man cube21.man timetunnel.man \
 		  juggler3d.man topblock.man glschool.man glcells.man \
-		  voronoi.man
+		  voronoi.man moebiusgears.man lockward.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
@@ -467,8 +472,9 @@ FLURRY_OBJS = $(FLURRY_OBJS_1) $(HACK_OBJS)
 flurry:		flurry.o	$(FLURRY_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(FLURRY_OBJS) $(HACK_LIBS) -lm
 
-gears:		gears.o		$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+GEARS_OBJS=normals.o involute.o $(HACK_TRACK_OBJS)
+gears:		gears.o		tube.o $(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	tube.o $(GEARS_OBJS) $(HACK_LIBS)
 
 moebius:	moebius.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -659,8 +665,11 @@ antinspect:	antinspect.o	$(HACK_TRACK_OBJS)
 providence:	providence.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-pinion:		pinion.o	normals.o glxfonts.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	normals.o glxfonts.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+pinion:		pinion.o	glxfonts.o $(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	glxfonts.o $(GEARS_OBJS) $(HACK_LIBS)
+
+moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(GEARS_OBJS) $(HACK_LIBS)
 
 boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -709,6 +718,10 @@ glcells:	glcells.o	$(HACK_OBJS)
 
 voronoi:	voronoi.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+lockward:	lockward.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
 
 ##############################################################################
 #
@@ -1222,8 +1235,11 @@ fps.o: $(UTILS_SRC)/yarandom.h
 fps.o: $(HACK_SRC)/xlockmoreI.h
 gears.o: ../../config.h
 gears.o: $(srcdir)/gltrackball.h
+gears.o: $(srcdir)/involute.h
+gears.o: $(srcdir)/normals.h
 gears.o: $(srcdir)/rotator.h
 gears.o: $(HACK_SRC)/screenhackI.h
+gears.o: $(srcdir)/tube.h
 gears.o: $(UTILS_SRC)/colors.h
 gears.o: $(UTILS_SRC)/grabscreen.h
 gears.o: $(UTILS_SRC)/hsv.h
@@ -1460,6 +1476,17 @@ hypertorus.o: $(UTILS_SRC)/xshm.h
 hypertorus.o: $(UTILS_SRC)/yarandom.h
 hypertorus.o: $(HACK_SRC)/xlockmoreI.h
 hypertorus.o: $(HACK_SRC)/xlockmore.h
+involute.o: ../../config.h
+involute.o: $(srcdir)/involute.h
+involute.o: $(srcdir)/normals.h
+involute.o: $(HACK_SRC)/screenhackI.h
+involute.o: $(UTILS_SRC)/colors.h
+involute.o: $(UTILS_SRC)/grabscreen.h
+involute.o: $(UTILS_SRC)/hsv.h
+involute.o: $(UTILS_SRC)/resources.h
+involute.o: $(UTILS_SRC)/usleep.h
+involute.o: $(UTILS_SRC)/visual.h
+involute.o: $(UTILS_SRC)/yarandom.h
 jigglypuff.o: ../../config.h
 jigglypuff.o: $(srcdir)/gltrackball.h
 jigglypuff.o: $(HACK_SRC)/images/jigglymap.xpm
@@ -1535,6 +1562,18 @@ lavalite.o: $(UTILS_SRC)/yarandom.h
 lavalite.o: $(HACK_SRC)/xlockmoreI.h
 lavalite.o: $(HACK_SRC)/xlockmore.h
 lavalite.o: $(srcdir)/xpm-ximage.h
+lockward.o: ../../config.h
+lockward.o: $(HACK_SRC)/screenhackI.h
+lockward.o: $(UTILS_SRC)/colors.h
+lockward.o: $(UTILS_SRC)/grabscreen.h
+lockward.o: $(UTILS_SRC)/hsv.h
+lockward.o: $(UTILS_SRC)/resources.h
+lockward.o: $(UTILS_SRC)/usleep.h
+lockward.o: $(UTILS_SRC)/visual.h
+lockward.o: $(UTILS_SRC)/xshm.h
+lockward.o: $(UTILS_SRC)/yarandom.h
+lockward.o: $(HACK_SRC)/xlockmoreI.h
+lockward.o: $(HACK_SRC)/xlockmore.h
 marching.o: ../../config.h
 marching.o: $(srcdir)/marching.h
 marching.o: $(srcdir)/normals.h
@@ -1566,6 +1605,22 @@ mirrorblob.o: $(UTILS_SRC)/xshm.h
 mirrorblob.o: $(UTILS_SRC)/yarandom.h
 mirrorblob.o: $(HACK_SRC)/xlockmoreI.h
 mirrorblob.o: $(HACK_SRC)/xlockmore.h
+moebiusgears.o: ../../config.h
+moebiusgears.o: $(srcdir)/gltrackball.h
+moebiusgears.o: $(srcdir)/involute.h
+moebiusgears.o: $(srcdir)/normals.h
+moebiusgears.o: $(srcdir)/rotator.h
+moebiusgears.o: $(HACK_SRC)/screenhackI.h
+moebiusgears.o: $(UTILS_SRC)/colors.h
+moebiusgears.o: $(UTILS_SRC)/grabscreen.h
+moebiusgears.o: $(UTILS_SRC)/hsv.h
+moebiusgears.o: $(UTILS_SRC)/resources.h
+moebiusgears.o: $(UTILS_SRC)/usleep.h
+moebiusgears.o: $(UTILS_SRC)/visual.h
+moebiusgears.o: $(UTILS_SRC)/xshm.h
+moebiusgears.o: $(UTILS_SRC)/yarandom.h
+moebiusgears.o: $(HACK_SRC)/xlockmoreI.h
+moebiusgears.o: $(HACK_SRC)/xlockmore.h
 moebius.o: ../../config.h
 moebius.o: $(srcdir)/e_textures.h
 moebius.o: $(srcdir)/gltrackball.h
@@ -1628,6 +1683,7 @@ normals.o: $(srcdir)/normals.h
 pinion.o: ../../config.h
 pinion.o: $(srcdir)/gltrackball.h
 pinion.o: $(srcdir)/glxfonts.h
+pinion.o: $(srcdir)/involute.h
 pinion.o: $(srcdir)/normals.h
 pinion.o: $(HACK_SRC)/screenhackI.h
 pinion.o: $(UTILS_SRC)/colors.h

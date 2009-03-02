@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="gears" _label="Gears">
+<screensaver name="moebiusgears" _label="MoebiusGears">
 
   <command arg="-root"/>
 
@@ -14,19 +14,23 @@
           low="0.01" high="5.0" default="1.0"/>
 
   <number id="count" type="spinbutton" arg="-count %"
-          _label="Gear Count" low="0" high="20" default="0"/>
+          _label="Gear Count" low="13" high="99" default="15"/>
+
+  <number id="teeth" type="spinbutton" arg="-teeth %"
+          _label="Tooth Count" low="7" high="49" default="15"/>
 
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
    <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
   </hgroup>
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
-This draws sets of turning, interlocking gears, rotating in three
-dimensions.
+Draws a closed, interlinked chain of rotating gears.  The layout of
+the gears follows the path of a moebius strip.
 
 Written by Jamie Zawinski; 2007.
   </_description>

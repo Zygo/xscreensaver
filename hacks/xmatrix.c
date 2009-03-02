@@ -191,6 +191,7 @@ typedef struct {
   int grid_width, grid_height;
   int char_width, char_height;
   m_cell *cells;
+  m_cell *background;
   m_feeder *feeders;
   int nspinners;
   Bool knock_knock_p;
@@ -198,17 +199,23 @@ typedef struct {
   Bool insert_top_p, insert_bottom_p;
   Bool use_pipe_p;
   m_mode mode;
+  m_mode def_mode; /* Mode to return to after trace etc. */
 
   pid_t pid;
   FILE *pipe;
   XtInputId pipe_id;
   Bool input_available_p;
   Time subproc_relaunch_delay;
-  char buf [BUF_SIZE*2+1]; /* twice because this is a ring buffer */
+  char buf [BUF_SIZE*2+1]; /* ring buffer */
 
   Bool do_fill_buff;
   int buf_done;
   int buf_pos;
+  Bool start_reveal_back_p; /* start reveal process for pipe */
+  Bool back_text_full_p; /* is the pipe buffer (background) full ? */
+  char back_line [BUF_SIZE*2+1]; /* line buffer for background */
+  int back_pos; /* background line buffer position */
+  int back_y;
 
   signed char *tracing;
   int density;
@@ -370,32 +377,38 @@ static void
 fill_input (m_state *s)
 {
   XtAppContext app = XtDisplayToApplicationContext (s->dpy);
-  int n;
-
+  int n = 0;
+  int loadBytes;
+  if(s->buf_done > s->buf_pos){
+    loadBytes = (s->buf_done - s->buf_pos) - 1;
+  }
+  else{
+    loadBytes = ((BUF_SIZE - s->buf_pos) + s->buf_done) - 1;
+  }
   if (! s->pipe) return;
   if (! s->input_available_p) return;
   s->input_available_p = False;
 
+  if (loadBytes > 0){
   n = read (fileno (s->pipe),
             (void *) (s->buf+s->buf_pos),
-            BUF_SIZE);
+            loadBytes);
+  }
   if (n > 0)
     {
-      if (n == BUF_SIZE){
-        /* if one read wasn't enough to fill the whole buffer, then 
-           read again. This might need some work if it's too intensive. */
         s->do_fill_buff = False;
-      }
       s->buf_pos = (s->buf_pos + n);
       if(s->buf_pos > BUF_SIZE){
-        /* just in case areas overlap */
+        /* copy to start of buffer */
+        /* areas shouldn't overlap, but just in case, use memmove */
         memmove(s->buf,s->buf+BUF_SIZE,s->buf_pos-BUF_SIZE);
       }
       s->buf_pos = s->buf_pos % BUF_SIZE;
-      /*      s->input_available_p = True;*/
     }
   else
     {
+      /* Couldn't read anything from the buffer */
+      /* Assume EOF has been reached, so start again */
       s->do_fill_buff = True;
       XtRemoveInput (s->pipe_id);
       s->pipe_id = 0;
@@ -547,7 +560,6 @@ init_drain (m_state *state)
       f->y = -1;
       f->remaining = 0;
       f->throttle = 0;
-      f->pipe_loc = BUF_SIZE-1;
     }
 
   /* Turn off all the spinners, else they never go away. */
@@ -710,6 +722,8 @@ xmatrix_init (Display *dpy, Window window)
 
   state->cells = (m_cell *)
     calloc (sizeof(m_cell), state->grid_width * state->grid_height);
+  state->background = (m_cell *)
+    calloc (sizeof(m_cell), state->grid_width * state->grid_height);
   state->feeders = (m_feeder *) calloc (sizeof(m_feeder), state->grid_width);
 
   state->density = get_integer_resource (dpy, "density", "Integer");
@@ -748,42 +762,59 @@ xmatrix_init (Display *dpy, Window window)
   state->knock_knock_p = get_boolean_resource (dpy, "knockKnock", "KnockKnock");
 
   state->use_pipe_p = get_boolean_resource (dpy, "usePipe", "Boolean");
+  state->buf_pos = 1;
+  state->buf[0] = ' '; /* spacer byte in buffer (space) */
   state->buf_done = 0;
   state->do_fill_buff = True;
-
-  launch_text_generator (state);
+  state->start_reveal_back_p = False;
+  state->back_text_full_p = False;
+  state->back_y = 0;
+  state->back_pos = 0;
 
   state->mode = -1;
+  state->def_mode = MATRIX;
   mode = get_string_resource (dpy, "mode", "Mode");
   if (mode && !strcasecmp(mode, "trace"))
     set_mode (state, ((random() % 3) ? TRACE_TEXT_A : TRACE_TEXT_B));
   else if (mode && !strcasecmp(mode, "crack"))
     set_mode (state, DRAIN_NMAP);
-  else if (mode && !strcasecmp(mode, "dna"))
+  else if (mode && !strcasecmp(mode, "dna")){
     set_mode (state, DNA);
+    state->def_mode = DNA;
+  }
   else if (mode && (!strcasecmp(mode, "bin") ||
-                    !strcasecmp(mode, "binary")))
+                    !strcasecmp(mode, "binary"))){
     set_mode (state, BINARY);
+    state->def_mode = BINARY;
+  }
   else if (mode && (!strcasecmp(mode, "hex") ||
-                    !strcasecmp(mode, "hexadecimal")))
+                    !strcasecmp(mode, "hexadecimal"))){
     set_mode (state, HEX);
+    state->def_mode = HEX;
+  }
   else if (mode && (!strcasecmp(mode, "dec") ||
-                    !strcasecmp(mode, "decimal")))
+                    !strcasecmp(mode, "decimal"))){
     set_mode (state, DEC);
+    state->def_mode = DEC;
+  }
   else if (mode && (!strcasecmp(mode, "asc") ||
-                    !strcasecmp(mode, "ascii")))
+                    !strcasecmp(mode, "ascii"))){
     set_mode (state, ASCII);
-  else if (!mode || !*mode || !strcasecmp(mode, "matrix"))
-    set_mode (state, MATRIX);
-  else if (!mode || !*mode || !strcasecmp(mode, "pipe"))
+    state->def_mode = ASCII;
+  }
+  else if (mode && !strcasecmp(mode, "pipe"))
     {
       set_mode (state, ASCII);
+      state->def_mode = ASCII;
       state->use_pipe_p = True;
+      launch_text_generator (state);
     }
+  else if (!mode || !*mode || !strcasecmp(mode, "matrix"))
+    set_mode (state, MATRIX);
   else
     {
       fprintf (stderr, "%s: `mode' must be ",progname);
-      fprintf (stderr, "matrix, trace, dna, binary, ascii, or hex: ");
+      fprintf (stderr, "matrix, trace, dna, binary, ascii, hex, or pipe: ");
       fprintf (stderr, "not `%s'\n", mode);
       set_mode (state, MATRIX);
     }
@@ -803,7 +834,6 @@ insert_glyph (m_state *state, int glyph, int x, int y)
 {
   Bool bottom_feeder_p = (y >= 0);
   m_cell *from, *to;
-
   if (y >= state->grid_height)
     return;
 
@@ -835,6 +865,59 @@ insert_glyph (m_state *state, int glyph, int x, int y)
     to->glow = 0;
 }
 
+
+static void
+place_back_char (m_state *state, char textc, int x, int y){
+  if((x>=0) && (y>=0) &&
+     (x < state->grid_width) && (y < state->grid_height)){
+    m_cell *celltmp = &state->background[state->grid_width * y + x];
+    celltmp -> glyph = char_map[(unsigned char)textc] + 1;
+    if(!celltmp->glyph || (celltmp->glyph == 3)){
+      celltmp -> glyph = char_map[32] + 1; 
+    }
+    celltmp -> changed = 1;
+  } 
+}
+
+static void
+place_back_text (m_state *state, char *text, int x, int y){
+  int i;
+  for(i=0; i<strlen(text); i++){
+    place_back_char(state, text[i], x+i, y);
+  }
+}
+
+static void
+place_back_pipe (m_state *state, char textc){
+  Bool new_line = False;
+  /* gringer pipe insert */
+  state->back_line[state->back_pos] = textc;
+  if(textc == '\n'){
+    state->back_line[state->back_pos] = '\0';
+    new_line = True;
+  }
+  else if ((state->back_pos > (state->grid_width - 4)) || 
+           (state->back_pos >= BUF_SIZE)){ /* off by 1? */
+    state->back_line[++state->back_pos] = '\0';
+    new_line = True;
+  }
+  else{
+    state->back_pos++;
+  }
+  if(new_line){
+    int startx = (state->grid_width >> 1) - 
+      (strlen(state->back_line) >> 1);
+    place_back_text(state, state->back_line, 
+                    startx, state->back_y);
+    state->back_pos = 0;
+    state->back_y++;
+    if(state->back_y >= (state->grid_height - 1)){
+      state->back_y = 1;
+      state->back_text_full_p = True;
+      state->start_reveal_back_p = True;
+    }
+  }
+}
 
 static void
 feed_matrix (m_state *state)
@@ -894,14 +977,19 @@ feed_matrix (m_state *state)
     }
 
   /*get input*/
-  if(state->use_pipe_p){
+  if((state->use_pipe_p) && (!state->back_text_full_p)){
+    place_back_pipe(state, state->buf[state->buf_done]);
     state->buf_done = (state->buf_done + 1) % BUF_SIZE;
-    if(state->buf_done == 0){
+    if(state->buf_done == (state->buf_pos - 1)){
       state->do_fill_buff = True;
     }
-    if(state->do_fill_buff){
-      fill_input(state);
     }
+  if(state->buf_done == (state->buf_pos + 1)){
+    state->do_fill_buff = False;
+  }
+  else{
+    state->do_fill_buff = True;
+    fill_input(state);
   }
 
   /* Update according to current feeders. */
@@ -917,7 +1005,7 @@ feed_matrix (m_state *state)
         {
           int g;
           long rval;
-          if(state->use_pipe_p){
+          if((state->use_pipe_p) && (!state->back_text_full_p)){
             rval = (int) state->buf[f->pipe_loc];
             if(++f->pipe_loc > (BUF_SIZE-1)){
               f->pipe_loc = 0;
@@ -954,17 +1042,28 @@ redraw_cells (m_state *state, Bool active)
 {
   int x, y;
   int count = 0;
+  Bool use_back_p = False;
 
   for (y = 0; y < state->grid_height; y++)
     for (x = 0; x < state->grid_width; x++)
       {
         m_cell *cell = &state->cells[state->grid_width * y + x];
+        m_cell *back = &state->background[state->grid_width * y + x];
         Bool cursor_p = (state->cursor_on &&
                          x == state->cursor_x && 
                          y == state->cursor_y);
 
         if (cell->glyph)
           count++;
+        else {
+          if((state->start_reveal_back_p) && 
+             (back->glyph) && !(state->mode == TRACE_A || 
+                                state->mode == TRACE_B ||
+                                state->mode == TRACE_DONE)){
+            use_back_p = True;
+            cell = back;
+          }
+        }
 
         /* In trace-mode, the state of each cell is random unless we have
            a match for this digit. */
@@ -975,24 +1074,25 @@ redraw_cells (m_state *state, Bool active)
             int xx = x % strlen((char *) state->tracing);
             Bool dead_p = state->tracing[xx] > 0;
 
-            if (y == 0 && x == xx)
+            if (y == 0 && x == xx && !use_back_p)
               cell->glyph = (dead_p
                              ? state->glyph_map[state->tracing[xx]-'0'] + 1
                              : 0);
-            else if (y == 0)
+            else if (y == 0 && !use_back_p)
               cell->glyph = 0;
-            else
+            else if (!use_back_p)
               cell->glyph = (dead_p ? 0 :
                              (state->glyph_map[(random()%state->nglyphs)]
                               + 1));
-
+            if (!use_back_p)
             cell->changed = 1;
           }
 
         if (!cell->changed)
           continue;
 
-        if (cell->glyph == 0 && !cursor_p)
+
+        if (cell->glyph == 0 && !cursor_p && !use_back_p)
           XFillRectangle (state->dpy, state->window, state->erase_gc,
                           x * state->char_width,
                           y * state->char_height,
@@ -1015,10 +1115,10 @@ redraw_cells (m_state *state, Bool active)
                        x * state->char_width,
                        y * state->char_height);
           }
-
+        if (!use_back_p)
         cell->changed = 0;
 
-        if (cell->glow > 0 && state->mode != NMAP)
+        if (cell->glow > 0 && state->mode != NMAP && !use_back_p)
           {
             cell->glow--;
             cell->changed = 1;
@@ -1026,7 +1126,7 @@ redraw_cells (m_state *state, Bool active)
         else if (cell->glow < 0)
           abort();
 
-        if (cell->spinner && active)
+        if (cell->spinner && active && !use_back_p)
           {
             cell->glyph = (state->glyph_map[(random()%state->nglyphs)] + 1);
             cell->changed = 1;
@@ -1511,20 +1611,38 @@ xmatrix_draw (Display *dpy, Window window, void *closure)
       if (screen_blank_p (state))
         {
           state->typing_delay = 500000;
+          if(state->start_reveal_back_p){
+            m_cell *back, *to;
+            int x,y;
+            state->typing_delay = 5000000;
+            state->start_reveal_back_p = False;
+            state->back_text_full_p = False;
+            /* for loop to move background to foreground */
+            for (y = 0; y < state->grid_height; y++){
+              for (x = 0; x < state->grid_width; x++){
+                to = &state->cells[state->grid_width * y + x];
+                back = &state->background[state->grid_width * y + x];
+                to->glyph = back->glyph;
+                to->changed = back->changed;
+                back->glyph = 0;
+                back->changed = 0;
+              }
+            }
+          }
           switch (state->mode)
             {
             case DRAIN_TRACE_A: set_mode (state, TRACE_TEXT_A); break;
             case DRAIN_TRACE_B: set_mode (state, TRACE_TEXT_B); break;
             case DRAIN_KNOCK:   set_mode (state, KNOCK);        break;
             case DRAIN_NMAP:    set_mode (state, NMAP);         break;
-            case DRAIN_MATRIX:  set_mode (state, MATRIX);       break;
+            case DRAIN_MATRIX:  set_mode (state, state->def_mode); break;
             default:            abort();                        break;
             }
         }
       break;
 
     case TRACE_DONE:
-      set_mode (state, MATRIX);
+      set_mode (state, state->def_mode);
       break;
 
     case TRACE_TEXT_A: 
@@ -1541,9 +1659,9 @@ xmatrix_draw (Display *dpy, Window window, void *closure)
             {
             case TRACE_TEXT_A: set_mode (state, TRACE_A); break;
             case TRACE_TEXT_B: set_mode (state, TRACE_B); break;
-            case TRACE_FAIL:   set_mode (state, MATRIX);  break;
-            case KNOCK:        set_mode (state, MATRIX);  break;
-            case NMAP:         set_mode (state, MATRIX);  break;
+            case TRACE_FAIL:   set_mode (state, state->def_mode);  break;
+            case KNOCK:        set_mode (state, state->def_mode);  break;
+            case NMAP:         set_mode (state, state->def_mode);  break;
             default:           abort();                   break;
             }
         }
@@ -1552,7 +1670,9 @@ xmatrix_draw (Display *dpy, Window window, void *closure)
     default:
       abort();
     }
-
+  if (state->start_reveal_back_p){
+    set_mode (state, DRAIN_MATRIX);
+  }
   if (state->mode == MATRIX &&
       state->knock_knock_p &&
       (! (random() % 10000)))
@@ -1608,6 +1728,8 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
     {
       m_cell *ncells = (m_cell *)
         calloc (sizeof(m_cell), state->grid_width * state->grid_height);
+      m_cell *nbackground = (m_cell *)
+        calloc (sizeof(m_cell), state->grid_width * state->grid_height);
       m_feeder *nfeeders = (m_feeder *)
         calloc (sizeof(m_feeder), state->grid_width);
       int x, y, i;
@@ -1618,11 +1740,16 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
       for (y = 0; y < oh; y++)
         for (x = 0; x < ow; x++)
           if (x < ow && x < state->grid_width &&
-              y < oh && y < state->grid_height)
+              y < oh && y < state->grid_height){
             ncells[y * state->grid_width + x] =
               state->cells[y * ow + x];
+            nbackground[y * state->grid_width + x] =
+              state->background[y * ow + x];
+          }
       free (state->cells);
+      free (state->background);
       state->cells = ncells;
+      state->background = nbackground;
 
       x = (ow < state->grid_width ? ow : state->grid_width);
       for (i = 0; i < x; i++)
@@ -1645,7 +1772,10 @@ xmatrix_event (Display *dpy, Window window, void *closure, XEvent *event)
      switch (c)
        {
        case '0':
-         set_mode (state, DRAIN_MATRIX);
+         /*set_mode (state, DRAIN_MATRIX);*/
+         state->back_y = 1;
+         state->back_text_full_p = True;
+         state->start_reveal_back_p = True;
          return True;
 
        case '+': case '=': case '>': case '.':
@@ -1716,8 +1846,6 @@ xmatrix_free (Display *dpy, Window window, void *closure)
   free (state);
 }
 
-
-
 static const char *xmatrix_defaults [] = {
   ".background:		   black",
   ".foreground:		   #00AA00",

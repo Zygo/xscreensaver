@@ -1076,9 +1076,10 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 	      pw->user_entry_pixmap = 0;
 	    }
 
-	  pw->user_entry_pixmap = XCreatePixmap(si->dpy, si->passwd_dialog,
-	      rects[0].width, rects[0].height, pw->prompt_screen->current_depth);
-
+	  pw->user_entry_pixmap = 
+            XCreatePixmap (si->dpy, si->passwd_dialog,
+                           rects[0].width, rects[0].height, 
+                           DefaultDepthOfScreen (pw->prompt_screen->screen));
 
 	  XFillRectangle (si->dpy, pw->user_entry_pixmap, gc2,
 			  0, 0, rects[0].width, rects[0].height);

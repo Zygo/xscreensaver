@@ -30,7 +30,7 @@
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
-"*textFile:		/usr/X11R6/README",
+"*textFile:		",
 "*textProgram:		fortune",
 "*textURL:		http://www.livejournal.com/stats/latest-rss.bml",
 "*overlayTextForeground:	#FFFF00",
@@ -205,6 +205,7 @@
 				celtic -root				    \\n\
 				cwaves -root				    \\n\
 				m6502 -root				    \\n\
+				abstractile -root			    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -293,6 +294,8 @@
 	   GL:			glschool -root				    \\n\
 	   GL:			glcells -root				    \\n\
 	   GL:			voronoi -root				    \\n\
+	   GL:			moebiusgears -root			    \\n\
+	   GL:			lockward -root				    \\n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \\n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -406,4 +409,5 @@
 "*hacks.topblock.name:       TopBlock",
 "*hacks.glschool.name:       GLSchool",
 "*hacks.glcells.name:        GLCells",
+"*hacks.moebiusgears.name:   MoebiusGears",
 "*hacks.documentation.isInstalled: True",

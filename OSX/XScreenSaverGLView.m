@@ -156,8 +156,10 @@ init_GL (ModeInfo *mi)
   // Enable multi-threading, if possible.  This runs most OpenGL commands
   // and GPU management on a second CPU.
   {
+#   ifndef  kCGLCEMPEngine
+#    define kCGLCEMPEngine 313  // Added in MacOS 10.4.8 + XCode 2.4.
+#   endif
     CGLContextObj cctx = CGLGetCurrentContext();
-#   define kCGLCEMPEngine 313  // #### new in MacOS 10.4.8 + XCode 2.4
     CGLError err = CGLEnable (cctx, kCGLCEMPEngine);
     if (err != kCGLNoError) {
       NSLog (@"enabling multi-threaded OpenGL failed: %d", err);

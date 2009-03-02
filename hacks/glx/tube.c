@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001, 2003, 2007 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,10 +26,11 @@
 
 #include "tube.h"
 
-static void
+static int
 unit_tube (int faces, int smooth, int caps_p, int wire_p)
 {
   int i;
+  int polys = 0;
   GLfloat step = M_PI * 2 / faces;
   GLfloat s2 = step/2;
   GLfloat th;
@@ -75,6 +76,7 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
           glVertex3f(x, 1, y);
           glVertex3f(x, 0, y);
         }
+      polys++;
     }
   glEnd();
 
@@ -93,16 +95,19 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
             GLfloat y = sin (th);
             glVertex3f(x, z, y);
             th += step;
+            polys++;
           }
         glEnd();
       }
+  return polys;
 }
 
 
-static void
+static int
 unit_cone (int faces, int smooth, int cap_p, int wire_p)
 {
   int i;
+  int polys = 0;
   GLfloat step = M_PI * 2 / faces;
   GLfloat s2 = step/2;
   GLfloat th;
@@ -135,6 +140,7 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
 
       if (smooth) glNormal3f(x, 0, y);
       glVertex3f(x, 0, y);
+      polys++;
     }
   glEnd();
 
@@ -152,13 +158,15 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
           GLfloat y = sin (th);
           glVertex3f(x, 0, y);
           th += step;
+          polys++;
         }
       glEnd();
     }
+  return polys;
 }
 
 
-static void
+static int
 tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
         GLfloat x2, GLfloat y2, GLfloat z2,
         GLfloat diameter, GLfloat cap_size,
@@ -166,6 +174,7 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
         int cone_p)
 {
   GLfloat length, X, Y, Z;
+  int polys = 0;
 
   if (diameter <= 0) abort();
 
@@ -174,7 +183,7 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
   Z = (z2 - z1);
 
   if (X == 0 && Y == 0 && Z == 0)
-    return;
+    return 0;
 
   length = sqrt (X*X + Y*Y + Z*Z);
 
@@ -194,33 +203,34 @@ tube_1 (GLfloat x1, GLfloat y1, GLfloat z1,
     }
 
   if (cone_p)
-    unit_cone (faces, smooth, caps_p, wire_p);
+    polys = unit_cone (faces, smooth, caps_p, wire_p);
   else
-    unit_tube (faces, smooth, caps_p, wire_p);
+    polys = unit_tube (faces, smooth, caps_p, wire_p);
 
   glPopMatrix();
+  return polys;
 }
 
 
-void
+int
 tube (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
       int faces, int smooth, int caps_p, int wire_p)
 {
-  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
-          faces, smooth, caps_p, wire_p,
-          0);
+  return tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
+                 faces, smooth, caps_p, wire_p,
+                 0);
 }
 
 
-void
+int
 cone (GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat x2, GLfloat y2, GLfloat z2,
       GLfloat diameter, GLfloat cap_size,
       int faces, int smooth, int cap_p, int wire_p)
 {
-  tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
-          faces, smooth, cap_p, wire_p,
-          1);
+  return tube_1 (x1, y1, z1, x2, y2, z2, diameter, cap_size,
+                 faces, smooth, cap_p, wire_p,
+                 1);
 }

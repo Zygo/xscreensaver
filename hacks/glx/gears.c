@@ -1,457 +1,454 @@
-/* -*- Mode: C; tab-width: 4 -*- */
-/* gears --- 3D gear wheels */
-
-#if 0
-static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
-#endif
-
-/*-
- * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose and without fee is hereby granted,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation.
+/* gears, Copyright (c) 2007 Jamie Zawinski <jwz@jwz.org>
  *
- * This file is provided AS IS with no warranties of any kind.  The author
- * shall have no liability with respect to the infringement of copyrights,
- * trade secrets or any patents by this file or any part thereof.  In no
- * event will the author be liable for any lost revenue or profits or
- * other special, indirect and consequential damages.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
  *
- * Revision History:
- * 09-Feb-01: "Planetary" gear system added by jwz@jwz.org.
- * 10-May-97: Compatible with xscreensaver
- * 22-Mar-97: Added support for -mono mode, and monochrome X servers.
- *              Ed Mackey, emackey@netaxs.com
- * 13-Mar-97: Memory leak fix by Tom Schmidt <tschmidt@micron.com>
- * 1996: "written" by Danny Sung <dannys@ucla.edu>
- *       Based on 3-D gear wheels by Brian Paul which is in the public domain.
+ * Originally written by Brian Paul in 1996 or earlier;
+ * rewritten by jwz in Nov 2007.
  */
 
-/*-
- * PURIFY 3.0a on SunOS4 reports an unitialized memory read on each of
- * the glCallList() functions below when using MesaGL 2.1.  This has
- * been fixed in MesaGL 2.2 and later releases.
- */
+#define DEFAULTS	"*delay:	30000       \n" \
+			"*count:        0           \n" \
+			"*showFPS:      False       \n" \
+			"*wireframe:    False       \n" \
 
-#ifdef STANDALONE
-# define DEFAULTS	"*count:		1000000 \n"			\
-					"*cycles:		2       \n"			\
-					"*delay:		20000   \n"			\
-					"*showFPS:      False   \n"			\
-					"*wireframe:	False	\n"
-# include "xlockmore.h"				/* from the xscreensaver distribution */
 # define refresh_gears 0
-#else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
-#endif /* !STANDALONE */
-
-#ifdef USE_GL
-
-#include "rotator.h"
-#include "gltrackball.h"
-
+# define release_gears 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define DEF_MODE "random"
-#define DEF_SPIN "True"
+#include "xlockmore.h"
+#include "involute.h"
+#include "normals.h"
+#include "tube.h"
+#include "rotator.h"
+#include "gltrackball.h"
+#include <ctype.h>
 
-static char *mode_str;
-static int spin;
+#ifdef USE_GL /* whole file */
+
+#undef BELLRAND
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
+
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "1.0"
+
+typedef struct {
+  GLXContext *glx_context;
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
+  Bool planetary_p;
+
+  int ngears;
+  gear **gears;
+
+  GLuint armature_dlist;
+  int armature_polygons;
+
+  struct { GLfloat x1, y1, x2, y2; } bbox;
+
+} gears_configuration;
+
+static gears_configuration *bps = NULL;
+
+static Bool do_spin;
+static GLfloat speed;
+static Bool do_wander;
 
 static XrmOptionDescRec opts[] = {
-  {"-mode",      ".gears.mode", XrmoptionSepArg, 0 },
-  {"-planetary", ".gears.mode", XrmoptionNoArg, "planetary" },
-  {"-simple",    ".gears.mode", XrmoptionNoArg, "simple" },
-  {"-spin", ".gears.spin", XrmoptionNoArg, "true" },
-  {"+spin", ".gears.spin", XrmoptionNoArg, "false" },
+  { "-spin",   ".spin",   XrmoptionNoArg, "True"  },
+  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
+  { "-speed",  ".speed",  XrmoptionSepArg, 0      },
+  { "-wander", ".wander", XrmoptionNoArg, "True"  },
+  { "+wander", ".wander", XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
-  {&mode_str, "mode", "Mode", DEF_MODE, t_String},
-  {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt gears_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-#ifdef USE_MODULES
-ModStruct   gears_description =
-{"gears", "init_gears", "draw_gears", "release_gears",
- "draw_gears", "init_gears", NULL, &gears_opts,
- 1000, 1, 2, 1, 4, 1.0, "",
- "Shows GL's gears", 0, NULL};
 
-#endif
-
-#define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
-
-#ifdef SMOOTH_TUBE
-# define TUBE_FACES  20   /* how densely to render tubes */
-#else
-# define TUBE_FACES  6
-#endif
-
-
-typedef struct {
-  GLuint      gear1, gear2, gear3;
-  GLuint      gear_inner, gear_outer;
-  GLuint      armature;
-  GLfloat     angle;
-  GLXContext *glx_context;
-  Window      window;
-  rotator    *rot;
-  trackball_state *trackball;
-  Bool		  button_down_p;
-  int		  planetary_p;
-} gearsstruct;
-
-static gearsstruct *gears = NULL;
-
-/*-
- * Draw a gear wheel.  You'll probably want to call this function when
- * building a display list since we do a lot of trig here.
- *
- * Input:  inner_radius - radius of hole at center
- *         outer_radius - radius at center of teeth
- *         width - width of gear
- *         teeth - number of teeth
- *         tooth_depth - depth of tooth
- *         wire - true for wireframe mode
+/* Window management, etc
  */
-static void
-gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
-     GLint teeth, GLfloat tooth_depth, Bool wire, Bool invert)
+ENTRYPOINT void
+reshape_gears (ModeInfo *mi, int width, int height)
 {
-	GLint       i;
-	GLfloat     r0, r1, r2;
-	GLfloat     angle, da;
-	GLfloat     u, v, len;
+  GLfloat h = (GLfloat) height / (GLfloat) width;
 
-    if (!invert)
-      {
-        r0 = inner_radius;
-        r1 = outer_radius - tooth_depth / 2.0;
-        r2 = outer_radius + tooth_depth / 2.0;
-        glFrontFace(GL_CCW);
-      }
+  glViewport (0, 0, (GLint) width, (GLint) height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
+
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+
+ENTRYPOINT Bool
+gears_handle_event (ModeInfo *mi, XEvent *event)
+{
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      bp->button_down_p = True;
+      gltrackball_start (bp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      bp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           bp->button_down_p)
+    {
+      gltrackball_track (bp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+
+static void
+free_gear (gear *g)
+{
+  if (g->dlist)
+    glDeleteLists (g->dlist, 1);
+  free (g);
+}
+
+
+/* Create and return a new gear sized for placement next to or on top of
+   the given parent gear (if any.)  Returns 0 if out of memory.
+   [Mostly lifted from pinion.c]
+ */
+static gear *
+new_gear (ModeInfo *mi, gear *parent)
+{
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  gear *g = (gear *) calloc (1, sizeof (*g));
+  static unsigned long id = 0;  /* only used in debugging output */
+
+  if (!g) return 0;
+  g->id = ++id;
+
+  /* Pick the size of the teeth.
+   */
+  if (parent) /* adjascent gears need matching teeth */
+    {
+      g->tooth_w = parent->tooth_w;
+      g->tooth_h = parent->tooth_h;
+      g->tooth_slope = -parent->tooth_slope;
+    }
+  else                 /* gears that begin trains get any size they want */
+    {
+      g->tooth_w = 0.007 * (1.0 + BELLRAND(4.0));
+      g->tooth_h = 0.005 * (1.0 + BELLRAND(8.0));
+/*
+      g->tooth_slope = ((random() % 8)
+                        ? 0
+                        : 0.5 + BELLRAND(1));
+ */
+    }
+
+  /* Pick the number of teeth, and thus, the radius.
+   */
+  {
+    double c;
+
+    if (!parent || bp->ngears > 4)
+      g->nteeth = 5 + BELLRAND (20);
     else
-      {
-        r0 = outer_radius;
-        r2 = inner_radius + tooth_depth / 2.0;
-        r1 = outer_radius - tooth_depth / 2.0;
-        glFrontFace(GL_CW);
-      }
+      g->nteeth = parent->nteeth * (0.5 + BELLRAND(2));
 
-	da = 2.0 * M_PI / teeth / 4.0;
+    c = g->nteeth * g->tooth_w * 2;     /* circumference = teeth + gaps */
+    g->r = c / (M_PI * 2);              /* c = 2 pi r  */
+  }
 
-	glShadeModel(GL_FLAT);
+  g->thickness  = g->tooth_w + frand (g->r);
+  g->thickness2 = g->thickness * 0.7;
+  g->thickness3 = g->thickness;
 
-	/* This subroutine got kind of messy when I added all the checks
-	 * for wireframe mode.  A much cleaner solution that I sometimes
-	 * use is to have a variable hold the value GL_LINE_LOOP when
-	 * in wireframe mode, or hold the value GL_POLYGON otherwise.
-	 * Then I just call glBegin(that_variable), give my polygon
-	 * coordinates, and glEnd().  Pretty neat eh?  Too bad I couldn't
-	 * integrate that trick here.
-	 *                                  --Ed.
-	 */
-
-	if (!wire)
-		glNormal3f(0.0, 0.0, 1.0);
-
-	/* draw front face */
-	if (!wire)
-		glBegin(GL_QUAD_STRIP);
-	for (i = 0; i <= teeth; i++) {
-		if (wire)
-			glBegin(GL_LINES);
-		angle = i * 2.0 * M_PI / teeth;
-		glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5);
-		if (!wire) {
-			glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-			glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
-		} else {
-			glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
-			glVertex3f(r1 * cos(angle + 4 * da), r1 * sin(angle + 4 * da), width * 0.5);
-			glEnd();
-		}
-	}
-	if (!wire)
-		glEnd();
-
-	/* draw front sides of teeth */
-	if (!wire)
-		glBegin(GL_QUADS);
-	da = 2.0 * M_PI / teeth / 4.0;
-	for (i = 0; i < teeth; i++) {
-		angle = i * 2.0 * M_PI / teeth;
-
-		if (wire)
-			glBegin(GL_LINE_LOOP);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5);
-		glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), width * 0.5);
-		glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), width * 0.5);
-		glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
-		if (wire)
-			glEnd();
-	}
-	if (!wire)
-		glEnd();
-
-
-	if (!wire)
-		glNormal3f(0.0, 0.0, -1.0);
-
-	/* draw back face */
-	if (!wire)
-		glBegin(GL_QUAD_STRIP);
-	for (i = 0; i <= teeth; i++) {
-		angle = i * 2.0 * M_PI / teeth;
-		if (wire)
-			glBegin(GL_LINES);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5);
-		glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5);
-		if (!wire) {
-			glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5);
-			glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5);
-		} else {
-			glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5);
-			glVertex3f(r1 * cos(angle + 4 * da), r1 * sin(angle + 4 * da), -width * 0.5);
-			glEnd();
-		}
-	}
-	if (!wire)
-		glEnd();
-
-	/* draw back sides of teeth */
-	if (!wire)
-		glBegin(GL_QUADS);
-	da = 2.0 * M_PI / teeth / 4.0;
-	for (i = 0; i < teeth; i++) {
-		angle = i * 2.0 * M_PI / teeth;
-
-		if (wire)
-			glBegin(GL_LINE_LOOP);
-		glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5);
-		glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), -width * 0.5);
-		glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), -width * 0.5);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5);
-		if (wire)
-			glEnd();
-	}
-	if (!wire)
-		glEnd();
-
-
-	/* draw outward faces of teeth */
-	if (!wire)
-		glBegin(GL_QUAD_STRIP);
-	for (i = 0; i <= teeth; i++) {
-		angle = i * 2.0 * M_PI / teeth;
-
-        if(!invert) {
-          u = r2 * cos(angle + da) - r1 * cos(angle);
-          v = r2 * sin(angle + da) - r1 * sin(angle);
-        } else {
-          u = r2 * cos(angle + da + M_PI/2) - r1 * cos(angle + M_PI/2);
-          v = r2 * sin(angle + da + M_PI/2) - r1 * sin(angle + M_PI/2);
-        }
-
-		len = sqrt(u * u + v * v);
-		u /= len;
-		v /= len;
-		glNormal3f(v, -u, 0.0);
-
-		if (wire)
-			glBegin(GL_LINES);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5);
-		glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5);
-
-		glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), width * 0.5);
-		glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), -width * 0.5);
-
-        if(!invert)
-          glNormal3f(cos(angle), sin(angle), 0.0);
-        else
-          glNormal3f(cos(angle + M_PI/2), sin(angle + M_PI/2), 0.0);
-
-		glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), width * 0.5);
-		glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), -width * 0.5);
-
-        if(!invert) {
-          u = r1 * cos(angle + 3 * da) - r2 * cos(angle + 2 * da);
-          v = r1 * sin(angle + 3 * da) - r2 * sin(angle + 2 * da);
-        } else {
-          u = r1 * cos(angle + 3 * da + M_PI/2) - r2 * cos(angle + 2 * da + M_PI/2);
-          v = r1 * sin(angle + 3 * da + M_PI/2) - r2 * sin(angle + 2 * da + M_PI/2);
-        }
-
-		glNormal3f(v, -u, 0.0);
-
-		glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
-		glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5);
-
-        if (!invert)
-          glNormal3f(cos(angle), sin(angle), 0.0);
-        else
-          glNormal3f(cos(angle + M_PI/2), sin(angle + M_PI/2), 0.0);
-
-		if (wire)
-			glEnd();
-	}
-
-	if (!wire) {
-		glVertex3f(r1 * cos(0), r1 * sin(0), width * 0.5);
-		glVertex3f(r1 * cos(0), r1 * sin(0), -width * 0.5);
-		glEnd();
-	}
-	if (!wire)
-		glShadeModel(GL_SMOOTH);
-
-	/* draw inside radius cylinder */
-	if (!wire)
-		glBegin(GL_QUAD_STRIP);
-	for (i = 0; i <= teeth; i++) {
-		angle = i * 2.0 * M_PI / teeth;
-		if (wire)
-			glBegin(GL_LINES);
-
-        if (!invert)
-          glNormal3f(-cos(angle), -sin(angle), 0.0);
-        else
-          glNormal3f(cos(angle), sin(angle), 0.0);
-
-		glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5);
-		glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-		if (wire) {
-			glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5);
-			glVertex3f(r0 * cos(angle + 4 * da), r0 * sin(angle + 4 * da), -width * 0.5);
-			glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-			glVertex3f(r0 * cos(angle + 4 * da), r0 * sin(angle + 4 * da), width * 0.5);
-			glEnd();
-		}
-	}
-	if (!wire)
-		glEnd();
-
-}
-
-
-static void
-unit_tube (Bool wire)
-{
-  int i;
-  int faces = TUBE_FACES;
-  GLfloat step = M_PI * 2 / faces;
-  GLfloat th;
-  int z = 0;
-
-  /* side walls
+  /* Colorize
    */
-  glFrontFace(GL_CCW);
+  g->color[0] = 0.5 + frand(0.5);
+  g->color[1] = 0.5 + frand(0.5);
+  g->color[2] = 0.5 + frand(0.5);
+  g->color[3] = 1.0;
 
-# ifdef SMOOTH_TUBE
-  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
-# else
-  glBegin(wire ? GL_LINES : GL_QUADS);
-# endif
+  g->color2[0] = g->color[0] * 0.85;
+  g->color2[1] = g->color[1] * 0.85;
+  g->color2[2] = g->color[2] * 0.85;
+  g->color2[3] = g->color[3];
 
-  for (i = 0, th = 0; i <= faces; i++)
-    {
-      GLfloat x = cos (th);
-      GLfloat y = sin (th);
-      glNormal3f(x, 0, y);
-      glVertex3f(x, 0.0, y);
-      glVertex3f(x, 1.0, y);
-      th += step;
 
-# ifndef SMOOTH_TUBE
-      x = cos (th);
-      y = sin (th);
-      glVertex3f(x, 1.0, y);
-      glVertex3f(x, 0.0, y);
-# endif
-    }
-  glEnd();
-
-  /* End caps
+  /* Decide on shape of gear interior:
+     - just a ring with teeth;
+     - that, plus a thinner in-set "plate" in the middle;
+     - that, plus a thin raised "lip" on the inner plate;
+     - or, a wide lip (really, a thicker third inner plate.)
    */
-  for (z = 0; z <= 1; z++)
+  if ((random() % 10) == 0)
     {
-      glFrontFace(z == 0 ? GL_CCW : GL_CW);
-      glNormal3f(0, (z == 0 ? -1 : 1), 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire) glVertex3f(0, z, 0);
-      for (i = 0, th = 0; i <= faces; i++)
-        {
-          GLfloat x = cos (th);
-          GLfloat y = sin (th);
-          glVertex3f(x, z, y);
-          th += step;
-        }
-      glEnd();
+      /* inner_r can go all the way in; there's no inset disc. */
+      g->inner_r = (g->r * 0.1) + frand((g->r - g->tooth_h/2) * 0.8);
+      g->inner_r2 = 0;
+      g->inner_r3 = 0;
     }
-}
-
-
-static void
-tube (GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat diameter, GLfloat cap_size,
-      Bool wire)
-{
-  GLfloat length, angle, a, b, c;
-
-  if (diameter <= 0) abort();
-
-  a = (x2 - x1);
-  b = (y2 - y1);
-  c = (z2 - z1);
-
-  length = sqrt (a*a + b*b + c*c);
-  angle = acos (a / length);
-
-  glPushMatrix();
-  glTranslatef(x1, y1, z1);
-  glScalef (length, length, length);
-
-  if (c == 0 && b == 0)
-    glRotatef (angle / (M_PI / 180), 0, 1, 0);
   else
-    glRotatef (angle / (M_PI / 180), 0, -c, b);
-
-  glRotatef (-90, 0, 0, 1);
-  glScalef (diameter/length, 1, diameter/length);
-
-  /* extend the endpoints of the tube by the cap size in both directions */
-  if (cap_size != 0)
     {
-      GLfloat c = cap_size/length;
-      glTranslatef (0, -c, 0);
-      glScalef (1, 1+c+c, 1);
+      /* inner_r doesn't go in very far; inner_r2 is an inset disc. */
+      g->inner_r  = (g->r * 0.5)  + frand((g->r - g->tooth_h) * 0.4);
+      g->inner_r2 = (g->r * 0.1) + frand(g->inner_r * 0.5);
+      g->inner_r3 = 0;
+
+      if (g->inner_r2 > (g->r * 0.2))
+        {
+          int nn = (random() % 10);
+          if (nn <= 2)
+            g->inner_r3 = (g->r * 0.1) + frand(g->inner_r2 * 0.2);
+          else if (nn <= 7 && g->inner_r2 >= 0.1)
+            g->inner_r3 = g->inner_r2 - 0.01;
+        }
     }
 
-  unit_tube (wire);
-  glPopMatrix();
+  /* If we have three discs, sometimes make the middle disc be spokes.
+   */
+  if (g->inner_r3 && ((random() % 5) == 0))
+    {
+      g->spokes = 2 + BELLRAND (5);
+      g->spoke_thickness = 1 + frand(7.0);
+      if (g->spokes == 2 && g->spoke_thickness < 2)
+        g->spoke_thickness += 1;
+    }
+
+  /* Sometimes add little nubbly bits, if there is room.
+   */
+  if (g->nteeth > 5)
+    {
+      double size = 0;
+      involute_biggest_ring (g, 0, &size, 0);
+      if (size > g->r * 0.2 && (random() % 5) == 0)
+        {
+          g->nubs = 1 + (random() % 16);
+          if (g->nubs > 8) g->nubs = 1;
+        }
+    }
+
+  if (g->inner_r3 > g->inner_r2) abort();
+  if (g->inner_r2 > g->inner_r) abort();
+  if (g->inner_r  > g->r) abort();
+
+  /* Decide how complex the polygon model should be.
+   */
+  {
+    double pix = g->tooth_h * MI_HEIGHT(mi); /* approx. tooth size in pixels */
+    if (pix <= 2.5)      g->size = INVOLUTE_SMALL;
+    else if (pix <= 3.5) g->size = INVOLUTE_MEDIUM;
+    else                 g->size = INVOLUTE_LARGE;
+  }
+
+  g->base_p = !parent;
+
+  return g;
 }
 
 
-static void
-ctube (GLfloat diameter, GLfloat width, Bool wire)
+/* Given a newly-created gear, place it next to its parent in the scene,
+   with its teeth meshed and the proper velocity.  Returns False if it
+   didn't work.  (Call this a bunch of times until either it works, or
+   you decide it's probably not going to.)
+   [Mostly lifted from pinion.c]
+ */
+static Bool
+place_gear (ModeInfo *mi, gear *g, gear *parent)
 {
-  tube (0, 0,  width/2,
-        0, 0, -width/2,
-        diameter, 0, wire);
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  /* Compute this gear's velocity.
+   */
+  if (! parent)
+    {
+      g->ratio = 0.8 + BELLRAND(0.4);  /* 0.8-1.2 = 8-12rpm @ 60fps */
+      g->th = 1; /* not 0 */
+    }
+  else
+    {
+      /* Gearing ratio is the ratio of the number of teeth to previous gear
+         (which is also the ratio of the circumferences.)
+       */
+      g->ratio = (double) parent->nteeth / (double) g->nteeth;
+
+      /* Set our initial rotation to match that of the previous gear,
+         multiplied by the gearing ratio.  (This is finessed later,
+         once we know the exact position of the gear relative to its
+         parent.)
+      */
+      g->th = -(parent->th * g->ratio);
+
+      if (g->nteeth & 1)    /* rotate 1/2 tooth-size if odd number of teeth */
+        {
+          double off = (180.0 / g->nteeth);
+          if (g->th > 0)
+            g->th += off;
+          else
+            g->th -= off;
+        }
+
+      /* ratios are cumulative for all gears in the train. */
+      g->ratio *= parent->ratio;
+    }
+
+
+  if (parent)	/* Place the gear next to the parent. */
+    {
+      double r_off = parent->r + g->r;
+      int angle;
+
+      angle = (random() % 360) - 180;   /* -180 to +180 degrees */
+
+      g->x = parent->x + (cos ((double) angle * (M_PI / 180)) * r_off);
+      g->y = parent->y + (sin ((double) angle * (M_PI / 180)) * r_off);
+      g->z = parent->z;
+
+      /* avoid accidentally changing sign of "th" in the math below. */
+      g->th += (g->th > 0 ? 360 : -360);
+
+      /* Adjust the rotation of the gear so that its teeth line up with its
+         parent, based on the position of the gear and the current rotation
+         of the parent.
+       */
+      {
+        double p_c = 2 * M_PI * parent->r;  /* circumference of parent */
+        double g_c = 2 * M_PI * g->r;       /* circumference of g  */
+
+        double p_t = p_c * (angle/360.0);   /* distance travelled along
+                                               circumference of parent when
+                                               moving "angle" degrees along
+                                               parent. */
+        double g_rat = p_t / g_c;           /* if travelling that distance
+                                               along circumference of g,
+                                               ratio of g's circumference
+                                               travelled. */
+        double g_th = 360.0 * g_rat;        /* that ratio in degrees */
+
+        g->th += angle + g_th;
+      }
+    }
+
+  /* If the position we picked for this gear causes it to overlap
+     with any earlier gear in the train, give up.
+   */
+  {
+    int i;
+
+    for (i = bp->ngears-1; i >= 0; i--)
+      {
+        gear *og = bp->gears[i];
+
+        if (og == g) continue;
+        if (og == parent) continue;
+        if (g->z != og->z) continue;    /* Ignore unless on same layer */
+
+        /* Collision detection without sqrt:
+             d = sqrt(a^2 + b^2)   d^2 = a^2 + b^2
+             d < r1 + r2           d^2 < (r1 + r2)^2
+         */
+        if (((g->x - og->x) * (g->x - og->x) +
+             (g->y - og->y) * (g->y - og->y)) <
+            ((g->r + g->tooth_h + og->r + og->tooth_h) *
+             (g->r + g->tooth_h + og->r + og->tooth_h)))
+          return False;
+      }
+  }
+
+  return True;
 }
 
-static void
-arm(GLfloat length,
-    GLfloat width1, GLfloat height1,
-    GLfloat width2, GLfloat height2,
-    Bool wire)
+
+/* Make a new gear, place it next to its parent in the scene,
+   with its teeth meshed and the proper velocity.  Returns the gear;
+   or 0 if it didn't work.  (Call this a bunch of times until either
+   it works, or you decide it's probably not going to.)
+   [Mostly lifted from pinion.c]
+ */
+static gear *
+place_new_gear (ModeInfo *mi, gear *parent)
 {
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  int loop_count = 0;
+  gear *g = 0;
+
+  while (1)
+    {
+      loop_count++;
+      if (loop_count >= 100)
+        {
+          if (g)
+            free_gear (g);
+          g = 0;
+          break;
+        }
+
+      g = new_gear (mi, parent);
+      if (!g) return 0;  /* out of memory? */
+
+      if (place_gear (mi, g, parent))
+        break;
+    }
+
+  if (! g) return 0;
+
+  /* We got a gear, and it is properly positioned.
+     Insert it in the scene.
+   */
+  bp->gears[bp->ngears++] = g;
+  return g;
+}
+
+
+static int
+arm (GLfloat length,
+     GLfloat width1, GLfloat height1,
+     GLfloat width2, GLfloat height2,
+     Bool wire)
+{
+  int polys = 0;
   glShadeModel(GL_FLAT);
 
 #if 0  /* don't need these - they're embedded in other objects */
@@ -463,6 +460,7 @@ arm(GLfloat length,
   glVertex3f(-length/2,  width1/2, -height1/2);
   glVertex3f(-length/2,  width1/2,  height1/2);
   glVertex3f(-length/2, -width1/2,  height1/2);
+  polys++;
   glEnd();
 
   /* draw end 2 */
@@ -473,6 +471,7 @@ arm(GLfloat length,
   glVertex3f(length/2,  width2/2, -height2/2);
   glVertex3f(length/2,  width2/2,  height2/2);
   glVertex3f(length/2, -width2/2,  height2/2);
+  polys++;
   glEnd();
 #endif
 
@@ -484,6 +483,7 @@ arm(GLfloat length,
   glVertex3f(-length/2,  width1/2, -height1/2);
   glVertex3f( length/2,  width2/2, -height2/2);
   glVertex3f( length/2, -width2/2, -height2/2);
+  polys++;
   glEnd();
 
   /* draw bottom */
@@ -494,6 +494,7 @@ arm(GLfloat length,
   glVertex3f(-length/2,  width1/2, height1/2);
   glVertex3f( length/2,  width2/2, height2/2);
   glVertex3f( length/2, -width2/2, height2/2);
+  polys++;
   glEnd();
 
   /* draw left */
@@ -504,6 +505,7 @@ arm(GLfloat length,
   glVertex3f(-length/2, -width1/2,  height1/2);
   glVertex3f( length/2, -width2/2,  height2/2);
   glVertex3f( length/2, -width2/2, -height2/2);
+  polys++;
   glEnd();
 
   /* draw right */
@@ -514,542 +516,424 @@ arm(GLfloat length,
   glVertex3f(-length/2,  width1/2,  height1/2);
   glVertex3f( length/2,  width2/2,  height2/2);
   glVertex3f( length/2,  width2/2, -height2/2);
+  polys++;
   glEnd();
 
   glFrontFace(GL_CCW);
+
+  return polys;
+}
+
+
+static int
+ctube (GLfloat diameter, GLfloat width, Bool wire)
+{
+  tube (0, 0,  width/2,
+        0, 0, -width/2,
+        diameter, 0, 
+        32, True, True, wire);
+  return 0; /* #### */
+}
+
+static void
+armature (ModeInfo *mi)
+{
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+
+  static const GLfloat spec[4] = {1.0, 1.0, 1.0, 1.0};
+  GLfloat shiny = 128.0;
+  GLfloat color[4];
+
+  color[0] = 0.5 + frand(0.5);
+  color[1] = 0.5 + frand(0.5);
+  color[2] = 0.5 + frand(0.5);
+  color[3] = 1.0;
+
+  bp->armature_polygons = 0;
+
+  bp->armature_dlist = glGenLists (1);
+  if (! bp->armature_dlist)
+    {
+      check_gl_error ("glGenLists");
+      abort();
+    }
+
+  glNewList (bp->armature_dlist, GL_COMPILE);
+
+  glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
+  glMateriali  (GL_FRONT, GL_SHININESS, shiny);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+  glColor3f (color[0], color[1], color[2]);
+
+  glPushMatrix();
+
+  {
+    GLfloat s = bp->gears[0]->r * 2.7;
+    s = s/5.6;
+    glScalef (s, s, s);
+  }
+
+  glTranslatef (0, 0, 1.4 + bp->gears[0]->thickness);
+  glRotatef (30, 0, 0, 1);
+
+  bp->armature_polygons += ctube (0.5, 10, wire);       /* center axle */
+
+  glPushMatrix();
+  glTranslatef(0.0, 4.2, -1);
+  bp->armature_polygons += ctube (0.5, 3, wire);       /* axle 1 */
+  glTranslatef(0, 0, 1.8);
+  bp->armature_polygons += ctube (0.7, 0.7, wire);
+  glPopMatrix();
+
+  glPushMatrix();
+  glRotatef(120, 0.0, 0.0, 1.0);
+  glTranslatef(0.0, 4.2, -1);
+  bp->armature_polygons += ctube (0.5, 3, wire);       /* axle 2 */
+  glTranslatef(0, 0, 1.8);
+  bp->armature_polygons += ctube (0.7, 0.7, wire);
+  glPopMatrix();
+
+  glPushMatrix();
+  glRotatef(240, 0.0, 0.0, 1.0);
+  glTranslatef(0.0, 4.2, -1);
+  bp->armature_polygons += ctube (0.5, 3, wire);       /* axle 3 */
+  glTranslatef(0, 0, 1.8);
+  bp->armature_polygons += ctube (0.7, 0.7, wire);
+  glPopMatrix();
+
+  glTranslatef(0, 0, 1.5);			      /* center disk */
+  bp->armature_polygons += ctube (1.5, 2, wire);
+
+  glPushMatrix();
+  glRotatef(270, 0, 0, 1);
+  glRotatef(-10, 0, 1, 0);
+  glTranslatef(-2.2, 0, 0);
+  bp->armature_polygons += arm (4.0, 1.0, 0.5,
+                                2.0, 1.0, wire);	/* arm 1 */
+  glPopMatrix();
+
+  glPushMatrix();
+  glRotatef(30, 0, 0, 1);
+  glRotatef(-10, 0, 1, 0);
+  glTranslatef(-2.2, 0, 0);
+  bp->armature_polygons += arm (4.0, 1.0, 0.5,
+                                2.0, 1.0, wire);	/* arm 2 */
+  glPopMatrix();
+
+  glPushMatrix();
+  glRotatef(150, 0, 0, 1);
+  glRotatef(-10, 0, 1, 0);
+  glTranslatef(-2.2, 0, 0);
+  bp->armature_polygons += arm (4.0, 1.0, 0.5,
+                                2.0, 1.0, wire);	/* arm 3 */
+  glPopMatrix();
+
+  glPopMatrix();
+
+  glEndList ();
 }
 
 
 static void
-draw(ModeInfo * mi)
+planetary_gears (ModeInfo *mi)
 {
-	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	int         wire = MI_IS_WIREFRAME(mi);
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  gear *g0, *g1, *g2, *g3, *g4;
+  GLfloat distance = 2.02;
 
-	if (!wire) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	} else {
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
+  bp->planetary_p = True;
 
-	glPushMatrix();
+  g0 = new_gear (mi, 0);
+  g1 = new_gear (mi, 0);
+  g2 = new_gear (mi, 0);
+  g3 = new_gear (mi, 0);
+  g4 = new_gear (mi, 0);
 
-    gltrackball_rotate (gp->trackball);
+  if (! place_gear (mi, g0, 0)) abort();
+  if (! place_gear (mi, g1, 0)) abort();
+  if (! place_gear (mi, g2, 0)) abort();
+  if (! place_gear (mi, g3, 0)) abort();
+  if (! place_gear (mi, g4, 0)) abort();
 
-    if (spin)
-	  {
-		double x, y, z;
-		get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
-		glRotatef (x * 360, 1.0, 0.0, 0.0);
-		glRotatef (y * 360, 0.0, 1.0, 0.0);
-		glRotatef (z * 360, 0.0, 0.0, 1.0);
-	  }
+  g0->nteeth = 12 + (3 * (random() % 10));  /* must be multiple of 3 */
+  g0->tooth_w = g0->r / g0->nteeth;
+  g0->tooth_h = g0->tooth_w * 2.8;
 
-    if (!gp->planetary_p) {
-      glPushMatrix();
-      glTranslatef(-3.0, -2.0, 0.0);
-      glRotatef(gp->angle, 0.0, 0.0, 1.0);
-/* PURIFY 4.0.1 reports an unitialized memory read on the next line when using
-   * MesaGL 2.2 and -mono.  This has been fixed in MesaGL 2.3 and later. */
-      glCallList(gp->gear1);
-      glPopMatrix();
+# define COPY(F) g4->F = g3->F = g2->F = g1->F = g0->F
+  COPY(r);
+  COPY(th);
+  COPY(nteeth);
+  COPY(tooth_w);
+  COPY(tooth_h);
+  COPY(tooth_slope);
+  COPY(inner_r);
+  COPY(inner_r2);
+  COPY(inner_r3);
+  COPY(thickness);
+  COPY(thickness2);
+  COPY(thickness3);
+  COPY(ratio);
+  COPY(size);
+# undef COPY
 
-      glPushMatrix();
-      glTranslatef(3.1, -2.0, 0.0);
-      glRotatef(-2.0 * gp->angle - 9.0, 0.0, 0.0, 1.0);
-      glCallList(gp->gear2);
-      glPopMatrix();
+  g1->x = cos (M_PI * 2 / 3) * g1->r * distance;
+  g1->y = sin (M_PI * 2 / 3) * g1->r * distance;
 
-      glPushMatrix();
-      glTranslatef(-3.1, 4.2, 0.0);
-      glRotatef(-2.0 * gp->angle - 25.0, 0.0, 0.0, 1.0);
-      glCallList(gp->gear3);
-      glPopMatrix();
+  g2->x = cos (M_PI * 4 / 3) * g2->r * distance;
+  g2->y = sin (M_PI * 4 / 3) * g2->r * distance;
 
-    } else { /* gp->planetary_p */
+  g3->x = cos (M_PI * 6 / 3) * g3->r * distance;
+  g3->y = sin (M_PI * 6 / 3) * g3->r * distance;
 
-      glScalef(0.8, 0.8, 0.8);
+  g4->x = 0;
+  g4->y = 0;
+  g4->th = -g3->th;
 
-      glPushMatrix();
-      glTranslatef(0.0, 4.2, 0.0);
-      glRotatef(gp->angle - 7.0, 0.0, 0.0, 1.0);
-      glCallList(gp->gear1);
-      glPopMatrix();
+  g0->inverted_p  = True;
+  g0->x           = 0;
+  g0->y           = 0;
+  g0->nteeth      = g4->nteeth * 3;
+  g0->r           = g4->r * 3.05;
+  g0->inner_r     = g0->r * 0.8;
+  g0->inner_r2    = 0;
+  g0->inner_r3    = 0;
+  g0->th          = -(g4->th - (180 / g0->nteeth));
+  g0->ratio       = g4->ratio / 3;
 
-      glPushMatrix();
-      glRotatef(120, 0.0, 0.0, 1.0);
-      glTranslatef(0.0, 4.2, 0.0);
-      glRotatef(gp->angle - 7.0, 0.0, 0.0, 1.0);
-      glCallList(gp->gear2);
-      glPopMatrix();
+  g0->tooth_slope = 0;
+  g0->nubs        = 3;
+  g0->spokes      = 0;
+  g0->size        = INVOLUTE_LARGE;
 
-      glPushMatrix();
-      glRotatef(240, 0.0, 0.0, 1.0);
-      glTranslatef(0.0, 4.2, 0.0);
-      glRotatef(gp->angle - 7.0, 0.0, 0.0, 1.0);
-      glCallList(gp->gear3);
-      glPopMatrix();
+  bp->gears = (gear **) calloc (6, sizeof(**bp->gears));
+  bp->ngears = 0;
 
-      glPushMatrix();
-      glTranslatef(0.0, 0.0, 0.0);
-      glRotatef(-gp->angle, 0.0, 0.0, 1.0);
-      glCallList(gp->gear_inner);
-      glPopMatrix();
+  bp->gears[bp->ngears++] = g1;
+  bp->gears[bp->ngears++] = g2;
+  bp->gears[bp->ngears++] = g3;
+  bp->gears[bp->ngears++] = g4;
+  bp->gears[bp->ngears++] = g0;
+}
 
-      glPushMatrix();
-      glTranslatef(0.0, 0.0, 0.0);
-      glRotatef((gp->angle / 3.0) - 7.5, 0.0, 0.0, 1.0);
-      glCallList(gp->gear_outer);
-      glPopMatrix();
 
-      glPushMatrix();
-      glTranslatef(0.0, 0.0, 0.0);
-      glCallList(gp->armature);
-      glPopMatrix();
+
+
+ENTRYPOINT void 
+init_gears (ModeInfo *mi)
+{
+  gears_configuration *bp;
+  int wire = MI_IS_WIREFRAME(mi);
+  int i;
+
+  if (!bps) {
+    bps = (gears_configuration *)
+      calloc (MI_NUM_SCREENS(mi), sizeof (gears_configuration));
+    if (!bps) {
+      fprintf(stderr, "%s: out of memory\n", progname);
+      exit(1);
     }
 
-	glPopMatrix();
+    bp = &bps[MI_SCREEN(mi)];
+  }
+
+  bp = &bps[MI_SCREEN(mi)];
+
+  bp->glx_context = init_GL(mi);
+
+  reshape_gears (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
+      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
+  {
+    double spin_speed   = 0.5;
+    double wander_speed = 0.01;
+    double spin_accel   = 0.25;
+
+    bp->rot = make_rotator (do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            spin_accel,
+                            do_wander ? wander_speed : 0,
+                            True
+                            );
+    bp->trackball = gltrackball_init ();
+  }
+
+  if (!(random() % 8))
+    {
+      planetary_gears (mi);
+    }
+  else
+    {
+      gear *g = 0;
+      int total_gears = MI_COUNT (mi);
+      int i;
+      if (total_gears <= 0)
+        total_gears = 3 + abs (BELLRAND (8) - 4);  /* 3 - 7, mostly 3. */
+
+      bp->gears = (gear **) calloc (total_gears+2, sizeof(**bp->gears));
+      bp->ngears = 0;
+
+      for (i = 0; i < total_gears; i++)
+        g = place_new_gear (mi, g);
+    }
+
+
+  /* Center gears in scene. */
+  {
+    GLfloat minx=99999, miny=99999, maxx=-99999, maxy=-99999;
+    int i;
+    for (i = 0; i < bp->ngears; i++)
+      {
+        gear *g = bp->gears[i];
+        if (g->x - g->r < minx) minx = g->x - g->r;
+        if (g->x + g->r > maxx) maxx = g->x + g->r;
+        if (g->y - g->r < miny) miny = g->y - g->r;
+        if (g->y + g->r > maxy) maxy = g->y + g->r;
+      }
+    bp->bbox.x1 = minx;
+    bp->bbox.y1 = miny;
+    bp->bbox.x2 = maxx;
+    bp->bbox.y2 = maxy;
+  }
+
+  /* Now render each gear into its display list.
+   */
+  for (i = 0; i < bp->ngears; i++)
+    {
+      gear *g = bp->gears[i];
+      g->dlist = glGenLists (1);
+      if (! g->dlist)
+        {
+          check_gl_error ("glGenLists");
+          abort();
+        }
+
+      glNewList (g->dlist, GL_COMPILE);
+      g->polygons += draw_involute_gear (g, wire);
+      glEndList ();
+    }
+  if (bp->planetary_p)
+    armature (mi);
 }
 
 
-
-/* new window size or exposure */
 ENTRYPOINT void
-reshape_gears (ModeInfo *mi, int width, int height)
+draw_gears (ModeInfo *mi)
 {
-	GLfloat     h = (GLfloat) height / (GLfloat) width;
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  Display *dpy = MI_DISPLAY(mi);
+  Window window = MI_WINDOW(mi);
+  int i;
 
-	glViewport(0, 0, (GLint) width, (GLint) height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -40.0);
+  if (!bp->glx_context)
+    return;
 
-	/* The depth buffer will be cleared, if needed, before the
-	 * next frame.  Right now we just want to black the screen.
-	 */
-	glClear(GL_COLOR_BUFFER_BIT);
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
-}
+  glShadeModel(GL_SMOOTH);
 
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_CULL_FACE);
 
-static void
-pinit(ModeInfo * mi)
-{
-	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	static const GLfloat pos[4]   = {5.0, 5.0, 10.0, 1.0};
-	static const GLfloat red[4]   = {0.8, 0.1, 0.0, 1.0};
-	static const GLfloat green[4] = {0.0, 0.8, 0.2, 1.0};
-	static const GLfloat blue[4]  = {0.2, 0.2, 1.0, 1.0};
-	static const GLfloat gray[4]  = {0.5, 0.5, 0.5, 1.0};
-	static const GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
-	int         wire = MI_IS_WIREFRAME(mi);
-	int         mono = MI_IS_MONO(mi);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (!wire) {
-		glLightfv(GL_LIGHT0, GL_POSITION, pos);
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glEnable(GL_DEPTH_TEST);
-	}
-#if 0
-/*-
- * Messes up on multiscreen Pseudocolor:0 StaticGray(monochrome):1
- * 2nd time mode is run it is Grayscale on PseudoColor.
- * The code below forces monochrome on TrueColor.
- */
-	if (MI_IS_MONO(mi)) {
-		red[0] = red[1] = red[2] = 1.0;
-		green[0] = green[1] = green[2] = 1.0;
-		blue[0] = blue[1] = blue[2] = 1.0;
-	}
-#endif
+  glPushMatrix ();
 
-	/* make the gears */
+  {
+    double x, y, z;
+    get_position (bp->rot, &x, &y, &z, !bp->button_down_p);
+    glTranslatef ((x - 0.5) * 4,
+                  (y - 0.5) * 4,
+                  (z - 0.5) * 7);
 
-    if (! gp->planetary_p) {
+    gltrackball_rotate (bp->trackball);
 
-      gp->gear1 = glGenLists(1);
-      glNewList(gp->gear1, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(red);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-      }
+    get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
 
-      gear(1.0, 4.0, 1.0, 20, 0.7, wire, False);
-      glEndList();
+    /* add a little rotation for -no-spin mode */
+    x -= 0.14;
+    y -= 0.06;
 
-      gp->gear2 = glGenLists(1);
-      glNewList(gp->gear2, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(green);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-      }
-      gear(0.5, 2.0, 2.0, 10, 0.7, wire, False);
-      glEndList();
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
+  }
 
-      gp->gear3 = glGenLists(1);
-      glNewList(gp->gear3, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(blue);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-      }
-      gear(1.3, 2.0, 0.5, 10, 0.7, wire, False);
-      glEndList();
-      if (!wire)
-		glEnable(GL_NORMALIZE);
+  /* Center the scene's bounding box in the window,
+     and scale it to fit. 
+   */
+  {
+    GLfloat w = bp->bbox.x2 - bp->bbox.x1;
+    GLfloat h = bp->bbox.y2 - bp->bbox.y1;
+    GLfloat s = 10.0 / (w > h ? w : h);
+    glScalef (s, s, s);
+    glTranslatef (-(bp->bbox.x1 + w/2),
+                  -(bp->bbox.y1 + h/2),
+                  0);
+  }
 
-    } else { /* gp->planetary_p */
+  mi->polygon_count = 0;
 
-      gp->gear1 = glGenLists(1);
-      glNewList(gp->gear1, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(red);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-      }
-      gear(1.3, 2.0, 2.0, 12, 0.7, wire, False);
-      glEndList();
-
-      gp->gear2 = glGenLists(1);
-      glNewList(gp->gear2, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(green);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-      }
-      gear(1.3, 2.0, 2.0, 12, 0.7, wire, False);
-      glEndList();
-
-      gp->gear3 = glGenLists(1);
-      glNewList(gp->gear3, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(blue);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-      }
-      gear(1.3, 2.0, 2.0, 12, 0.7, wire, False);
-      glEndList();
-      if (!wire)
-		glEnable(GL_NORMALIZE);
-
-
-      gp->gear_inner = glGenLists(1);
-      glNewList(gp->gear_inner, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(blue);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-      }
-      gear(1.0, 2.0, 2.0, 12, 0.7, wire, False);
-      glEndList();
-      if (!wire)
-		glEnable(GL_NORMALIZE);
-
-
-      gp->gear_outer = glGenLists(1);
-      glNewList(gp->gear_outer, GL_COMPILE);
-      if (wire) {
-		if (mono)
-          glColor4fv(white);
-		else
-          glColor4fv(blue);
-      } else {
-		if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-		else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-      }
-      gear(5.7, 7.0, 2.0, 36, 0.7, wire, True);
-
-      /* put some nubs on the outer ring, so we can tell how it's moving */
-      glPushMatrix();
-      glTranslatef(7.0, 0, 0);
-      glRotatef(90, 0, 1, 0);
-
-      ctube(0.5, 0.5, wire);   /* nub 1 */
-      glPopMatrix();
+  for (i = 0; i < bp->ngears; i++)
+    {
+      gear *g = bp->gears[i];
 
       glPushMatrix();
-      glRotatef(120, 0, 0, 1);
-      glTranslatef(7.0, 0, 0);
-      glRotatef(90, 0, 1, 0);
-      ctube(0.5, 0.5, wire);   /* nub 2 */
-      glPopMatrix();
 
-      glPushMatrix();
-      glRotatef(240, 0, 0, 1);
-      glTranslatef(7.0, 0, 0);
-      glRotatef(90, 0, 1, 0);
-      ctube(0.5, 0.5, wire);   /* nub 3 */
-      glPopMatrix();
+      glTranslatef (g->x, g->y, g->z);
+      glRotatef (g->th, 0, 0, 1);
 
+      glCallList (g->dlist);
+      mi->polygon_count += g->polygons;
 
-      glEndList();
-      if (!wire)
-		glEnable(GL_NORMALIZE);
+      glPopMatrix ();
+    }
 
-      gp->armature = glGenLists(1);
-      glNewList(gp->armature, GL_COMPILE);
-      if (wire) {
-        if (mono)
-          glColor4fv(white);
+  if (bp->planetary_p)
+    {
+      glCallList (bp->armature_dlist);
+      mi->polygon_count += bp->armature_polygons;
+    }
+
+  glPopMatrix ();
+
+  /* spin gears */
+  if (!bp->button_down_p)
+    for (i = 0; i < bp->ngears; i++)
+      {
+        gear *g = bp->gears[i];
+        double off = g->ratio * 5 * speed;
+        if (g->th > 0)
+          g->th += off;
         else
-          glColor4fv(blue);
-      } else {
-        if (mono)
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-        else
-          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
+          g->th -= off;
       }
 
-      glTranslatef(0, 0, 1.5);
-      ctube(0.5, 10, wire);       /* center axle */
+  if (mi->fps_p) do_fps (mi);
+  glFinish();
 
-      glPushMatrix();
-      glTranslatef(0.0, 4.2, -1);
-      ctube(0.5, 3, wire);       /* axle 1 */
-      glTranslatef(0, 0, 1.8);
-      ctube(0.7, 0.7, wire);
-      glPopMatrix();
-
-      glPushMatrix();
-      glRotatef(120, 0.0, 0.0, 1.0);
-      glTranslatef(0.0, 4.2, -1);
-      ctube(0.5, 3, wire);       /* axle 2 */
-      glTranslatef(0, 0, 1.8);
-      ctube(0.7, 0.7, wire);
-      glPopMatrix();
-
-      glPushMatrix();
-      glRotatef(240, 0.0, 0.0, 1.0);
-      glTranslatef(0.0, 4.2, -1);
-      ctube(0.5, 3, wire);       /* axle 3 */
-      glTranslatef(0, 0, 1.8);
-      ctube(0.7, 0.7, wire);
-      glPopMatrix();
-
-      glTranslatef(0, 0, 1.5);      /* center disk */
-      ctube(1.5, 2, wire);
-
-      glPushMatrix();
-      glRotatef(270, 0, 0, 1);
-      glRotatef(-10, 0, 1, 0);
-      glTranslatef(-2.2, 0, 0);
-      arm(4.0, 1.0, 0.5, 2.0, 1.0, wire);		/* arm 1 */
-      glPopMatrix();
-
-      glPushMatrix();
-      glRotatef(30, 0, 0, 1);
-      glRotatef(-10, 0, 1, 0);
-      glTranslatef(-2.2, 0, 0);
-      arm(4.0, 1.0, 0.5, 2.0, 1.0, wire);		/* arm 2 */
-      glPopMatrix();
-
-      glPushMatrix();
-      glRotatef(150, 0, 0, 1);
-      glRotatef(-10, 0, 1, 0);
-      glTranslatef(-2.2, 0, 0);
-      arm(4.0, 1.0, 0.5, 2.0, 1.0, wire);		/* arm 3 */
-      glPopMatrix();
-
-      glEndList();
-      if (!wire)
-        glEnable(GL_NORMALIZE);
-    }
+  glXSwapBuffers(dpy, window);
 }
-
-
-ENTRYPOINT Bool
-gears_handle_event (ModeInfo *mi, XEvent *event)
-{
-  gearsstruct *gp = &gears[MI_SCREEN(mi)];
-
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      gp->button_down_p = True;
-      gltrackball_start (gp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      gp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
-    {
-      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           gp->button_down_p)
-    {
-      gltrackball_track (gp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-
-  return False;
-}
-
-
-ENTRYPOINT void
-init_gears (ModeInfo * mi)
-{
-	int         screen = MI_SCREEN(mi);
-
-	/*Colormap    cmap; */
-	/* Boolean     rgba, doublebuffer, cmap_installed; */
-	gearsstruct *gp;
-
-	if (gears == NULL) {
-		if ((gears = (gearsstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (gearsstruct))) == NULL)
-			return;
-	}
-	gp = &gears[screen];
-
-    if (mode_str && !strcasecmp (mode_str, "planetary"))
-      gp->planetary_p = True;
-    else if (mode_str && !strcasecmp (mode_str, "simple"))
-      gp->planetary_p = False;
-    else if (!mode_str || !*mode_str || !strcasecmp (mode_str, "random"))
-      gp->planetary_p = !(random() % 2);
-    else
-      fprintf (stderr, "%s: mode must be planetary, simple, or random", 
-               progname);
-
-	gp->window = MI_WINDOW(mi);
-
-    gp->rot = make_rotator (1, 1, 1, 1, 0, True);
-    gp->trackball = gltrackball_init ();
-
-	if ((gp->glx_context = init_GL(mi)) != NULL) {
-		reshape_gears(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-		pinit(mi);
-	} else {
-		MI_CLEARWINDOW(mi);
-	}
-}
-
-ENTRYPOINT void
-draw_gears (ModeInfo * mi)
-{
-	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
-	int         angle_incr = MI_CYCLES(mi) ? MI_CYCLES(mi) : 2;
-
-    if (gp->planetary_p)
-      angle_incr *= 3;
-
-	if (!gp->glx_context)
-		return;
-
-	glDrawBuffer(GL_BACK);
-
-	glXMakeCurrent(display, window, *(gp->glx_context));
-	draw(mi);
-
-	/* let's do something so we don't get bored */
-	gp->angle = (int) (gp->angle + angle_incr) % 360;
-
-    if (mi->fps_p) do_fps (mi);
-	glFinish();
-	glXSwapBuffers(display, window);
-}
-
-ENTRYPOINT void
-release_gears (ModeInfo * mi)
-{
-	if (gears != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			gearsstruct *gp = &gears[screen];
-
-			if (gp->glx_context) {
-				/* Display lists MUST be freed while their glXContext is current. */
-				glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
-
-				if (glIsList(gp->gear1))
-					glDeleteLists(gp->gear1, 1);
-				if (glIsList(gp->gear2))
-					glDeleteLists(gp->gear2, 1);
-				if (glIsList(gp->gear3))
-					glDeleteLists(gp->gear3, 1);
-				if (glIsList(gp->gear_inner))
-					glDeleteLists(gp->gear_inner, 1);
-				if (glIsList(gp->gear_outer))
-					glDeleteLists(gp->gear_outer, 1);
-
-			}
-		}
-		(void) free((void *) gears);
-		gears = NULL;
-	}
-	FreeAllGL(mi);
-}
-
 
 XSCREENSAVER_MODULE ("Gears", gears)
 
-/*********************************************************/
-
-#endif
+#endif /* USE_GL */

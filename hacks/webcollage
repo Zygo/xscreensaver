@@ -60,21 +60,28 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.135 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.140 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  56, "altavista",    \&pick_from_alta_vista_random_link,
-                        11, "livejournal",  \&pick_from_livejournal_images,
-                         5, "yahoorand",    \&pick_from_yahoo_random_link,
-                        10, "googlephotos", \&pick_from_google_image_photos,
-                         5, "googleimgs",   \&pick_from_google_images,
-                         3, "googlenums",   \&pick_from_google_image_numbers,
-                         2, "flickr_recent", \&pick_from_flickr_recent,
-                         8, "flickr_random", \&pick_from_flickr_random,
+my @search_methods = ( 20, "googlephotos",  \&pick_from_google_image_photos,
+                       11, "googleimgs",    \&pick_from_google_images,
+                       11, "googlenums",    \&pick_from_google_image_numbers,
+                       20, "altavista",     \&pick_from_alta_vista_random_link,
+                       13, "flickr_recent", \&pick_from_flickr_recent,
+                       10, "flickr_random", \&pick_from_flickr_random,
+                        9, "livejournal",   \&pick_from_livejournal_images,
+                        6, "yahoorand",     \&pick_from_yahoo_random_link,
+
+                     # This is a cute way to search for a certain webcams.
+                     # Not included in default methods, since these images
+                     # aren't terribly interesting by themselves.
+                     # See also "SurveillanceSaver".
+                     #
+                        0, "securitycam",   \&pick_from_security_camera,
 
                      # In Apr 2002, Google asked me to stop searching them.
                      # I asked them to add a "random link" url.  They said
@@ -396,16 +403,17 @@ sub get_document_1($$$) {
 
       if ($url =~ m@^http://www\.altavista\.com/@ ||
           $url =~ m@^http://random\.yahoo\.com/@ ||
-          $url =~ m@^http://images\.google\.com/@) {
+          $url =~ m@^http://images\.google\.com/@ ||
+          $url =~ m@^http://www\.google\.com/@) {
         # block this, you turkeys.
-        $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.5)" .
-          " Gecko/20041111 Firefox/1.0";
+        $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)" .
+          " Gecko/20070914 Firefox/2.0.0.7";
 
         # 28-Jun-2007: Google Images now emits the entire page in JS if
         # you claim to be Gecko.  They also still block "webcollage".
         # They serve non-JS for unrecognised agents, so let's try this...
         $user_agent = "NoJavascriptPlease/1.0"
-          if ($url =~ m@^http://images\.google\.com/@);
+          if ($url =~ m@^http://[a-z]+\.google\.com/@);
       }
 
       my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
@@ -1189,6 +1197,7 @@ sub pick_from_yahoo_random_link($) {
 ############################################################################
 #
 # Pick images from random pages returned by the Alta Vista Random Link
+# Note: this seems to have gotten a *lot* less random lately (2007).
 #
 ############################################################################
 
@@ -1286,6 +1295,55 @@ sub pick_from_alta_vista_images($) {
                                 $timeout, @candidates);
 }
 
+
+
+############################################################################
+#
+# Pick images from Aptix security cameras
+# Cribbed liberally from google image search code.
+# By Jason Sullivan <jasonsul@us.ibm.com>
+#
+############################################################################
+
+my $aptix_images_url = ("http://www.google.com/search" .
+                        "?q=inurl:%22jpg/image.jpg%3Fr%3D%22");
+
+# securitycam
+sub pick_from_security_camera($) {
+  my ($timeout) = @_;
+
+  my $page = (int(rand(9)) + 1);
+  my $num = 20;					# 20 images per page
+  my $search_url = $aptix_images_url;
+
+  if ($page > 1) {
+    $search_url .= "&start=" . $page*$num;	# page number
+    $search_url .= "&num="   . $num;		#images per page
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, '');
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    next if ($u =~ m@[/.]google\.com\b@i);        # skip google builtins (most links)
+    next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+    $referers{$u} = $u;
+    }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
+}
 
 
 ############################################################################
@@ -2283,8 +2341,9 @@ sub report_performance() {
     my $suc = $stats_successes{$name} || 0;
     my $pct = int($suc * 100 / $try);
     my $secs = $stats_elapsed{$name};
-    my $secs_link = int($secs / $try);
-    print STDERR sprintf ("$blurb   %-12s %4s (%d/%d);\t %2d secs/link\n",
+    my $secs_link = $secs / $try;
+    print STDERR sprintf ("$blurb %-14s %4s (%d/%d);" .
+                          "       \t %.1f secs/link\n",
                           "$name:", "$pct%", $suc, $try, $secs_link);
   }
 }

@@ -957,6 +957,7 @@ AC_DEFUN(AC_CHECK_X_HEADER, [
     CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
   AC_CHECK_HEADER([$1],[$2],[$3],[$4])
   CPPFLAGS="$ac_save_CPPFLAGS"])
 
@@ -968,6 +969,7 @@ AC_DEFUN(AC_EGREP_X_HEADER, [
     CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
   AC_EGREP_HEADER([$1], [$2], [$3], [$4])
   CPPFLAGS="$ac_save_CPPFLAGS"])
 
@@ -979,6 +981,7 @@ AC_DEFUN(AC_TRY_X_COMPILE, [
     CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
   AC_TRY_COMPILE([$1], [$2], [$3], [$4])
   CPPFLAGS="$ac_save_CPPFLAGS"])
 
@@ -1003,6 +1006,8 @@ AC_DEFUN(AC_CHECK_X_LIB, [
   # note: $X_LIBS includes $x_libraries
   LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
 
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
   AC_CHECK_LIB([$1], [$2], [$3], [$4], [$5])
   CPPFLAGS="$ac_save_CPPFLAGS"
   LDFLAGS="$ac_save_LDFLAGS"
@@ -1018,6 +1023,7 @@ AC_DEFUN(AC_TRY_X_RUN, [
     CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
   CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
   AC_TRY_RUN([$1], [$2], [$3], [$4])
   CPPFLAGS="$ac_save_CPPFLAGS"])
 
@@ -1087,6 +1093,11 @@ AC_DEFUN(HANDLE_X_PATH_ARG, [
 ###############################################################################
 ###############################################################################
 
+# WTF!  autoconf emits this *way* too late.  Do it earlier.
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+
+
 # random compiler setup
 AC_CANONICAL_HOST
 AC_PROG_CC_ANSI
@@ -1153,15 +1164,6 @@ AC_MSG_CHECKING(whether this is MacOS X)
   esac
 AC_MSG_RESULT($ac_macosx)
 
-
-if test "$ac_macosx" = yes; then
-  if test -n "$GCC"; then
-    # Without these, every link against libGL gets a bunch of useless warnings.
-    osx_crud="-bind_at_load -multiply_defined suppress"
-    AC_MSG_RESULT(adding "$osx_crud" to LDFLAGS)
-     LDFLAGS="$LDFLAGS $osx_crud"
-  fi
-fi
 
 ###############################################################################
 #
@@ -1276,9 +1278,7 @@ fi
 HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
 # Expand HACKDIR as HACKDIR_FULL
-eval HACKDIR_FULL=${HACKDIR}
-eval HACKDIR_FULL=${HACKDIR_FULL}
-eval HACKDIR_FULL=${HACKDIR_FULL}
+HACKDIR_FULL=`eval eval eval eval eval eval eval eval eval echo $HACKDIR`
 
 # This option used to be called --enable-subdir; make sure that is no longer
 # used, since configure brain-damagedly ignores unknown --enable options.
@@ -2701,13 +2701,36 @@ if test "$with_gl" = yes; then
     #
     AC_CACHE_CHECK([whether GL is really MesaGL], ac_cv_have_mesa_gl,
       [ac_cv_have_mesa_gl=no
-       AC_EGREP_X_HEADER(Mesa|MESA, GL/glx.h, [ac_cv_have_mesa_gl=yes])
-      ])
+       if test "$ac_macosx" = no; then
+         # WTF! MacOS 10.5.0 ships the Mesa GL headers!
+         # It's not really Mesa, is it?
+         AC_EGREP_X_HEADER(Mesa|MESA, GL/glx.h, [ac_cv_have_mesa_gl=yes])
+       fi])
     ac_have_mesa_gl=$ac_cv_have_mesa_gl
- 
 
     gl_lib_1=""
     GL_LIBS=""
+
+    if test "$ac_macosx" = yes; then
+
+      # Without these, every link against libGL gets a bunch of useless
+      # warnings.
+      #
+      osx_crud="-bind_at_load -multiply_defined suppress"
+      AC_MSG_RESULT(adding "$osx_crud" to GL_LIBS)
+      GL_LIBS="$GL_LIBS $osx_crud"
+      unset osx_crud
+
+      # New lossage in 10.5.0: without this, we get:
+      #   ld: cycle in dylib re-exports with /usr/X11/lib/libGL.dylib
+      #
+      osx_crud="/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+      osx_crud="-Wl,-dylib_file,${osx_crud}:${osx_crud}"
+
+      AC_MSG_RESULT(adding "$osx_crud" to GL_LIBS)
+      GL_LIBS="$GL_LIBS $osx_crud"
+      unset osx_crud
+    fi
 
 
     # Some versions of MesaGL are compiled to require -lpthread.
@@ -3606,12 +3629,7 @@ if test -z "$PO_DATADIR" ; then
   # Map /build/prefix/usr/X11R6/share/ to /build/prefix/usr/share/
   # but of course we need to expand all the nested variables to do that...
   #
-  dd=$datadir
-  eval dd=${dd}
-  eval dd=${dd}
-  eval dd=${dd}
-  eval dd=${dd}
-  eval dd=${dd}
+  dd=`eval eval eval eval eval eval eval eval eval eval eval echo $datadir`
   PO_DATADIR=`echo $dd | sed 's@/X11R6/@/@'`
 fi
 
@@ -4100,24 +4118,9 @@ fi
 # You are in a twisty maze of namespaces and syntaxes, all alike.
 # Fuck the skull of Unix.
 #
-eval bindir=${bindir}
-eval bindir=${bindir}
-eval bindir=${bindir}
-eval bindir=${bindir}
-eval bindir=${bindir}
-eval bindir=${bindir}
-eval HACKDIR=${HACKDIR}
-eval HACKDIR=${HACKDIR}
-eval HACKDIR=${HACKDIR}
-eval HACKDIR=${HACKDIR}
-eval HACKDIR=${HACKDIR}
-eval HACKDIR=${HACKDIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
-eval HACK_CONF_DIR=${HACK_CONF_DIR}
+bindir=`eval eval eval eval eval eval eval echo $bindir`
+HACKDIR=`eval eval eval eval eval eval eval echo $HACKDIR`
+HACKDIR_CONF_DIR=`eval eval eval eval eval eval eval echo $HACKDIR_CONF_DIR`
 
 # canonicalize slashes.
 bindir=`echo  "${bindir}"              | sed 's@/$@@;s@//*@/@g'`
@@ -4209,7 +4212,7 @@ if test "$do_dir_warning" = no; then
   fi
   echo "User programs will be installed in ${bindir}/"
   echo "Screen savers will be installed in ${HACKDIR}/"
-  echo "Hack configurations will be installed in ${HACK_CONF_DIR}/"
-  echo "Saver configuration will be installed in ${APPDEFAULTS}/"
+  echo "Configuration dialogs will be installed in ${HACK_CONF_DIR}/"
+  echo "System-wide default settings will be installed in ${APPDEFAULTS}/"
   echo ''
 fi
