@@ -90,6 +90,7 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_IS_VERBOSE(MI)	(MI_WIN_IS_VERBOSE(MI))
 #define MI_IS_INSTALL(MI)	(MI_WIN_IS_INSTALL(MI))
 #define MI_IS_DEBUG(MI)		(False)
+#define MI_IS_MOUSE(MI)		(False)
 
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
 

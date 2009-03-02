@@ -89,6 +89,7 @@ $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap
 $ xmatrix	:== $'mydir'xmatrix
 $ xroger	:== $'mydir'xroger
+$ xsublim	:== $'mydir'xsublim
 $ set def [-.DRIVER]
 $ mydir  = mydisk+f$directory()
 $ xscreensaver :== $'mydir'xscreensaver

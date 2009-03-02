@@ -1013,7 +1013,7 @@ add_tile(ModeInfo * mi,
 	} while (node != tp->fringe.nodes);
 
 	/* Rechain. */
-	if (!(fc & FC_CUT_THIS))
+	if (!(fc & FC_CUT_THIS)) {
 		if (side == S_LEFT) {
 			vertex->next = right;
 			right->prev = vertex;
@@ -1021,6 +1021,7 @@ add_tile(ModeInfo * mi,
 			vertex->prev = left;
 			left->next = vertex;
 		}
+	}
 	if (!(fc & FC_CUT_FAR)) {
 		if (!(fc & FC_CUT_LEFT)) {
 			far->next = left;

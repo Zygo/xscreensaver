@@ -612,7 +612,7 @@ static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int 
 	 if (!m->alive)
 		continue;
 	 
-	 if (loop & 1)
+	 if (loop & 1) {
 		if (m->outgoing) {
 		  m->rad++;
 		  if (m->rad >= m->max)
@@ -628,6 +628,7 @@ static void LoopBooms(Display *dpy, Window window, Colormap cmap, int xlim, int 
 		  if (m->rad <= 0)
 			 m->alive = 0;
 		}
+	 }
   }
 }
 

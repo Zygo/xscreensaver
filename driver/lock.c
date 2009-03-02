@@ -903,7 +903,7 @@ undo_vp_motion (saver_info *si)
      screen doesn't continue to scroll after we've reset the viewport.
    */
   XSync (si->dpy, False);
-  usleep (250);  /* 1/4 second */
+  usleep (250000);  /* 1/4 second */
   XSync (si->dpy, False);
 
   status = XF86VidModeSetViewPort (si->dpy, screen,

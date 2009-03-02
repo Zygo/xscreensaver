@@ -363,6 +363,7 @@ parse_init_file (saver_preferences *p)
       if (!p->db) abort();
       handle_entry (&p->db, key, value, name, line);
     }
+  fclose (in);
   free(buf);
 
   p->init_file_date = write_date;

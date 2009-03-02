@@ -412,7 +412,7 @@ draw_flow(ModeInfo * mi)
 
 		/* Fill the segment lists. */
 
-		if(sp->view.depth) /* perspective view has special points */
+		if(sp->view.depth) { /* perspective view has special points */
 			if(b==0){ /* point of view */
 				sp->centre.x=X(0, b);
 				sp->centre.y=Y(0, b);
@@ -476,6 +476,7 @@ draw_flow(ModeInfo * mi)
 				Z(1, b)=Z(0, 0);
 #endif
 			}
+		}
 		
 		for(i=0; i<2; i++){
 			double x=X(i,b)-sp->centre.x;

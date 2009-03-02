@@ -246,7 +246,7 @@ static void SetPalette(Display *pDisplay, Window Win, char *sColor,
 
 
 static void Initialize( Display *pDisplay, Window Win,
-                        GC *pGC, XImage *pXImage,
+                        GC *pGC, XImage **pXImage,
                         int *ncolorsP, XColor *aXColors )
 {
   XGCValues gcValues;
@@ -273,21 +273,13 @@ static void Initialize( Display *pDisplay, Window Win,
   /*  Create the GC. */
   *pGC = XCreateGC( pDisplay, Win, 0, &gcValues );
 
-  memset (pXImage, 0, sizeof(*pXImage));
-  pXImage->width = XWinAttribs.width;                   /* Width of image */
-  pXImage->height = XWinAttribs.height;                 /* Height of image */
-  pXImage->format = ZPixmap;                /* XYBitmap, XYPixmap, ZPixmap */
-
-  /* Pointer to image data */
-  pXImage->byte_order = ImageByteOrder(pDisplay);
-  pXImage->bitmap_unit = BitmapUnit(pDisplay);
-  pXImage->bitmap_bit_order = BitmapBitOrder(pDisplay);
-  pXImage->bitmap_pad = BitmapPad(pDisplay);
-  pXImage->depth = XWinAttribs.depth;
-  pXImage->bytes_per_line = 0;                /* Accelerator to next line */
-  pXImage->bits_per_pixel = bpp;
-  XInitImage( pXImage );
-  pXImage->data = calloc(pXImage->bytes_per_line, pXImage->height);
+  *pXImage = XCreateImage(pDisplay, XWinAttribs.visual,
+			  XWinAttribs.depth,
+			  ZPixmap, 0, NULL,
+			  XWinAttribs.width, XWinAttribs.height,
+			  BitmapPad(pDisplay), 0);
+  (*pXImage)->data = calloc((*pXImage)->bytes_per_line,
+			    (*pXImage)->height);
 
   /*  These are precalculations used in Execute(). */
   nMaxExtentX = ( XWinAttribs.width / 2 ) - 20;
@@ -317,7 +309,7 @@ void screenhack(Display *pDisplay, Window Win )
   GC gc;
   int ncolors = 0;
   XColor aXColors[ 256 ];
-  XImage Image;
+  XImage *pImage;
   unsigned char nShadeBobCount, iShadeBob;
   SShadeBob *aShadeBobs;
 #ifdef VERBOSE
@@ -339,7 +331,7 @@ void screenhack(Display *pDisplay, Window Win )
   printf( "Allocated %d ShadeBobs\n", nShadeBobCount );
 #endif  /*  VERBOSE */
 
-  Initialize( pDisplay, Win, &gc, &Image, &ncolors, aXColors );
+  Initialize( pDisplay, Win, &gc, &pImage, &ncolors, aXColors );
 
   for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
     InitShadeBob( &aShadeBobs[ iShadeBob ], iShadeBob % 2 );
@@ -356,7 +348,7 @@ void screenhack(Display *pDisplay, Window Win )
     {
       i = 0;
       XClearWindow (pDisplay, Win);
-      memset (Image.data, 0, Image.bytes_per_line * Image.height);
+      memset (pImage->data, 0, pImage->bytes_per_line * pImage->height);
       for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
         ResetShadeBob( &aShadeBobs[ iShadeBob ] );
       SetPalette( pDisplay, Win, sColor, &ncolors, aXColors );
@@ -364,7 +356,7 @@ void screenhack(Display *pDisplay, Window Win )
 
     for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
       Execute( &aShadeBobs[ iShadeBob ], pDisplay, Win, &gc,
-               &Image, ncolors, aXColors );
+               pImage, ncolors, aXColors );
 
     if( delay && !(i % 4) )
 		usleep(delay);
@@ -381,8 +373,8 @@ void screenhack(Display *pDisplay, Window Win )
   }
 
   free( anSinTable );
-  free( Image.data );
-  XDestroyImage( &Image );
+  free( pImage->data );
+  XDestroyImage( pImage );
   free( aShadeBobs );
 }
 

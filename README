@@ -77,6 +77,12 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.16:   * New version of `webcollage' -- deals better with
+                        corrupted images, and can use an http proxy.
+                      * New hack, `xsublim' (run it in the background,
+                        rather than adding it to the programs list.)
+                      * The xscreensaver daemon was leaking a file descriptor
+                        each time you edited your .xscreensaver file.  Fixed.
 Changes since 3.15:   * New version of `shadebobs'.
                       * Improved image selection in `webcollage', and sped it
                         up slightly.
