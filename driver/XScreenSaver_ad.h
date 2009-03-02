@@ -250,6 +250,12 @@
 	   GL:			bouncingcow -root			    \\n\
 	   GL:			jigglypuff -root -random		    \\n\
 	   GL:			klein -root -random			    \\n\
+	   GL:	\"HyperTorus (striped)\"	hypertorus -root		    \\n\
+	   GL:	\"HyperTorus (solid)\"	hypertorus -root -solid -transp	    \\n\
+	   GL:			glmatrix -root				    \\n\
+	   GL:			cubestorm -root				    \\n\
+	   GL:			glknots -root				    \\n\
+	   GL:			blocktube -root				    \\n\
 -	   GL:			glslideshow -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
@@ -431,7 +437,6 @@
 "*hacks.vidwhacker.name:     VidWhacker",
 "*hacks.morph3d.name:        Morph3D",
 "*hacks.bubble3d.name:       Bubble3D",
-"*hacks.glplanet.name:       GLPlanet",
 "*hacks.sierpinski3d.name:   Sierpinski3D",
 "*hacks.gflux.name:          GFlux",
 "*hacks.xrayswarm.name:      XRaySwarm",
@@ -439,12 +444,9 @@
 "*hacks.rotzoomer.name:      RotZoomer",
 "*hacks.stonerview.name:     StonerView",
 "*hacks.starwars.name:       StarWars",
-"*hacks.glblur.name:         GLBlur",
-"*hacks.gltext.name:         GLText",
 "*hacks.dangerball.name:     DangerBall",
 "*hacks.whirlygig.name:      WhirlyGig",
 "*hacks.speedmine.name:      SpeedMine",
-"*hacks.glsnake.name:        GLSnake",
 "*hacks.glforestfire.name:   GLForestFire",
 "*hacks.sballs.name:         SBalls",
 "*hacks.xdaliclock.name:     XDaliClock",
@@ -457,5 +459,7 @@
 "*hacks.flyingtoasters.name: FlyingToasters",
 "*hacks.bouncingcow.name:    BouncingCow",
 "*hacks.jigglypuff.name:     JigglyPuff",
-"*hacks.glslideshow.name:    GLSlideshow",
+"*hacks.hypertorus.name:     HyperTorus",
+"*hacks.cubestorm.name:      CubeStorm",
+"*hacks.blocktube.name:      BlockTube",
 "*hacks.documentation.isInstalled: True",

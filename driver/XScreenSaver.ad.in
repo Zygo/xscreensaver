@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.10
-!                              20-May-2003
+!                              version 4.11
+!                              23-Jun-2003
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -348,6 +348,12 @@
 @GL_KLUDGE@ GL:			bouncingcow -root			    \n\
 @GL_KLUDGE@ GL:			jigglypuff -root -random		    \n\
 @GL_KLUDGE@ GL:			klein -root -random			    \n\
+@GL_KLUDGE@ GL:	"HyperTorus (striped)"	hypertorus -root		    \n\
+@GL_KLUDGE@ GL:	"HyperTorus (solid)"	hypertorus -root -solid -transp	    \n\
+@GL_KLUDGE@ GL:			glmatrix -root				    \n\
+@GL_KLUDGE@ GL:			cubestorm -root				    \n\
+@GL_KLUDGE@ GL:			glknots -root				    \n\
+@GL_KLUDGE@ GL:			blocktube -root				    \n\
 -	   GL:			glslideshow -root			    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
@@ -620,7 +626,6 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.vidwhacker.name:     VidWhacker
 *hacks.morph3d.name:        Morph3D
 *hacks.bubble3d.name:       Bubble3D
-*hacks.glplanet.name:       GLPlanet
 *hacks.sierpinski3d.name:   Sierpinski3D
 *hacks.gflux.name:          GFlux
 *hacks.xrayswarm.name:      XRaySwarm
@@ -628,12 +633,9 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.rotzoomer.name:      RotZoomer
 *hacks.stonerview.name:     StonerView
 *hacks.starwars.name:       StarWars
-*hacks.glblur.name:         GLBlur
-*hacks.gltext.name:         GLText
 *hacks.dangerball.name:     DangerBall
 *hacks.whirlygig.name:      WhirlyGig
 *hacks.speedmine.name:      SpeedMine
-*hacks.glsnake.name:        GLSnake
 *hacks.glforestfire.name:   GLForestFire
 *hacks.sballs.name:         SBalls
 *hacks.xdaliclock.name:     XDaliClock
@@ -646,7 +648,9 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.flyingtoasters.name: FlyingToasters
 *hacks.bouncingcow.name:    BouncingCow
 *hacks.jigglypuff.name:     JigglyPuff
-*hacks.glslideshow.name:    GLSlideshow
+*hacks.hypertorus.name:     HyperTorus
+*hacks.cubestorm.name:      CubeStorm
+*hacks.blocktube.name:      BlockTube
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

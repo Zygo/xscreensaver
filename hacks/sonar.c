@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.23 $
+ * $Revision: 1.24 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -169,7 +169,7 @@ static long delta(struct timeval *, struct timeval *);
 /*
  * The Bogie.
  *
- * This represents an object that is visable on the scope.
+ * This represents an object that is visible on the scope.
  */
 
 typedef struct Bogie {
@@ -205,7 +205,7 @@ typedef struct {
     int width, height;		/* Window dimensions */
     int minx, miny, maxx, maxy, /* Bounds of the scope */
 	centrex, centrey, radius; /* Parts of the scope circle */
-    Bogie *visable;		/* List of visable objects */
+    Bogie *visible;		/* List of visible objects */
     int current;		/* Current position of sweep */
     int sweepnum;               /* The current id of the sweep */
     int delay;			/* how long between each frame of the anim */
@@ -362,6 +362,7 @@ newBogie(char *name, int distance, int tick, int ttl)
 
     Bogie *new;
 
+    distance *= 1000;
     /* Allocate a bogie and initialize it */
 
     if ((new = (Bogie *) calloc(1, sizeof(Bogie))) == NULL) {
@@ -1384,6 +1385,26 @@ init_sim(void)
 }
 
 /*
+ * Creates and returns a drawing mask for the scope:
+ * mask out anything outside of the disc.
+ */
+static Pixmap
+scope_mask (Display *dpy, Window win, sonar_info *si)
+{
+  XGCValues gcv;
+  Pixmap mask = XCreatePixmap(dpy, win, si->width, si->height, 1);
+  GC gc = XCreateGC (dpy, mask, 0, &gcv);
+  XSetFunction (dpy, gc, GXclear);
+  XFillRectangle (dpy, mask, gc, 0, 0, si->width, si->height);
+  XSetFunction (dpy, gc, GXset);
+  XFillArc(dpy, mask, gc, si->minx, si->miny, 
+           si->maxx - si->minx, si->maxy - si->miny,
+           0, 360 * 64);
+  return mask;
+}
+
+
+/*
  * Initialize the Sonar.
  *
  * Args:
@@ -1418,7 +1439,7 @@ init_sonar(Display *dpy, Window win)
 
     si->dpy = dpy;
     si->win = win;
-    si->visable = NULL;
+    si->visible = NULL;
     XGetWindowAttributes(dpy, win, &xwa);
     si->cmap = xwa.colormap;
     si->width = xwa.width;
@@ -1462,6 +1483,14 @@ init_sonar(Display *dpy, Window win)
     gcv.foreground = get_pixel_resource("gridColor", "GridColor",
 					dpy, si->cmap);
     si->grid = XCreateGC (dpy, win, GCForeground, &gcv);
+
+    /* Install the clip mask... */
+    {
+      Pixmap mask = scope_mask (dpy, win, si);
+      XSetClipMask(dpy, si->text, mask);
+      XSetClipMask(dpy, si->erase, mask);
+      XFreePixmap (dpy, mask); /* it's been copied into the GCs */
+    }
 
     /* Compute pixel values for fading text on the display */
 
@@ -1773,13 +1802,13 @@ Sonar(sonar_info *si, Bogie *bl)
     Bogie *bp, *prev;
     int i;
 
-    /* Check for expired tagets and remove them from the visable list */
+    /* Check for expired tagets and remove them from the visible list */
 
     prev = NULL;
-    for (bp = si->visable; bp != NULL; bp = (bp ? bp->next : 0)) {
+    for (bp = si->visible; bp != NULL; bp = (bp ? bp->next : 0)) {
 
 	/*
-	 * Remove it from the visable list if it's expired or we have
+	 * Remove it from the visible list if it's expired or we have
 	 * a new target with the same name.
 	 */
 
@@ -1790,7 +1819,7 @@ Sonar(sonar_info *si, Bogie *bl)
 	    DrawBogie(si, 0, bp->name, bp->tick,
 		      bp->distance, bp->ttl, bp->age);
 	    if (prev == NULL)
-		si->visable = bp->next;
+		si->visible = bp->next;
 	    else
 		prev->next = bp->next;
 	    freeBogie(bp);
@@ -1820,17 +1849,17 @@ Sonar(sonar_info *si, Bogie *bl)
                (4 * 64));
     }
 
-    /* Move the new targets to the visable list */
+    /* Move the new targets to the visible list */
 
     for (bp = bl; bp != (Bogie *) 0; bp = bl) {
 	bl = bl->next;
-	bp->next = si->visable;
-	si->visable = bp;
+	bp->next = si->visible;
+	si->visible = bp;
     }
 
-    /* Draw the visable targets */
+    /* Draw the visible targets */
 
-    for (bp = si->visable; bp != NULL; bp = bp->next) {
+    for (bp = si->visible; bp != NULL; bp = bp->next) {
 	if (bp->age < bp->ttl)		/* grins */
 	   DrawBogie(si, 1, bp->name, bp->tick, bp->distance, bp->ttl,bp->age);
     }

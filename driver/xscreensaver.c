@@ -795,7 +795,7 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
 			      XtNvisual, ssi->current_visual,
 			      XtNdepth,  visual_depth (ssi->screen,
 						       ssi->current_visual),
-			      0);
+			      NULL);
 
       if (! found_any_writable_cells)
 	{

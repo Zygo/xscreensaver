@@ -7,10 +7,14 @@ B glslideshow
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
-[\-delay \fInumber\fP]
-[\-no-fade]
-[\-zoom \fInumber\fP]
+[\-pan \fIseconds\fP]
+[\-fade \fIseconds\fP]
+[\-zoom \fIpercent\fP]
+[\-delay \fIusecs\fP]
+[\-cutoff \fIint\fP]
 [\-fps]
+[\-debug]
+[\-wireframe]
 .SH DESCRIPTION
 Loads a random sequence of images and smoothly scans and zooms around
 in each, fading from pan to pan.  
@@ -33,22 +37,44 @@ Draw on a newly-created window.  This is the default.
 .B \-root
 Draw on the root window.
 .TP 8
-.B \-duration \fIseconds\fP
-How long to display each image before loading a new one.
-Default 30 seconds.
+.B \-pan \fIseconds\fP
+How long each pan should last.  Default 6 seconds.
+.TP 8
+.B \-fade \fIseconds\fP
+How long each fade (in and out) should last.  Default 2 seconds.
+If set to 0, then no cross-fading will be done (all transitions
+will be jump-cuts.)
+
+Note that fades are included in the pan, so \fI\-pan\fP should
+always be longer than  \fI\-fade\fP (it is auto-corrected if not.)
+.TP 8
+.B \-zoom \fInumber\fP
+Amount to zoom and pan as a percentage. Default: 75, meaning that
+75% or more of each image will always be visible.  If set to 100%,
+then the images will always fill the screen, and no panning or 
+zooming will occur.  Images will still smoothly fade from one
+to another, however, assuming \fI\-fade\fP is non-zero.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
-.B \-fade | \-no-fade
-Whether to fade between pans.
+.B \-cutoff \fInumber\fP
+If the frame rate drops below this number of frames per second, then
+certain features will be turned off automatically (first zooming, 
+then, if the low frame rates persist, fading.)  Default 5.
+
+The idea here is that if your machine can't maintain a decent frame
+rate, then it must not have fast 3D hardware, so we might as well
+behave in a simpler manner.  Set this to 0 to disable this check.
 .TP 8
-.B \-zoom \fInumber\fP
-Amount to zoom and pan as a percentage. Default: 75, meaning that
-75% or more of each image will always be visible.
-.TP 8
-.B \-fps | \-no-fps
+.B \-fps
 Whether to show a frames-per-second display at the bottom of the screen.
+.TP 8
+.B \-debug
+Prints debugging info to stderr.
+.TP 8
+.B \-wireframe
+Instead of loading images, simply animates representative grids instead.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -64,13 +90,17 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver-getimage (1)
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2002 by Mike Oliphant. Framework based on flipscreen3d,
-Copyright \(co 2001 Ben Buxton. Permission to use, copy, modify, 
-distribute, and sell this software and its documentation for any purpose is 
-hereby granted without fee, provided that the above copyright notice appear 
-in all copies and that both that copyright notice and this permission notice
-appear in supporting documentation.  No representations are made about the 
-suitability of this software for any purpose.  It is provided "as is" without
-express or implied warranty.
+Copyright \(co 2003 by Jamie Zawinski, based on an earlier version that was
+Copyright \(co 2002 by Mike Oliphant.  Originally derived from 
+.BR flipscreen3d (1) ,
+which was Copyright \(co 2001 Ben Buxton. 
+
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
 .SH AUTHOR
-Mike Oliphant and Jamie Zawinski.
+Jamie Zawinski and Mike Oliphant.

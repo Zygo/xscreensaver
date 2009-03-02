@@ -27,6 +27,8 @@
     <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
   </select>
 
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
   <_description>
 A fleet of 3d space-age jet-powered flying toasters (and toast!)
 Inspired by the ancient Berkeley Systems After Dark flying toasters.

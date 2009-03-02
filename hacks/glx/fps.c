@@ -34,6 +34,7 @@ static int fps_text_y = 10;
 static int fps_ascent, fps_descent;
 static GLuint font_dlist;
 static Bool fps_clear_p = False;
+static char fps_string[1024];
 
 static void
 fps_init (ModeInfo *mi)
@@ -178,21 +179,21 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 }
 
 
-void
-do_fps (ModeInfo *mi)
+GLfloat
+fps_1 (ModeInfo *mi)
 {
   static Bool initted_p = False;
-  static int last_ifps = 0;
+  static int last_ifps = -1;
+  static GLfloat last_fps = -1;
   static int frame_count = 0;
   static struct timeval prev = { 0, };
   static struct timeval now  = { 0, };
-  static char msg [1024] = { 0, };
 
   if (!initted_p)
     {
       initted_p = True;
       fps_init (mi);
-      strcpy (msg, "FPS: (accumulating...)");
+      strcpy (fps_string, "FPS: (accumulating...)");
     }
 
   /* Every N frames (where N is approximately one second's worth of frames)
@@ -223,8 +224,9 @@ do_fps (ModeInfo *mi)
       prev = now;
       frame_count = 0;
       last_ifps = fps;
+      last_fps  = fps;
 
-      sprintf (msg, "FPS: %.02f", fps);
+      sprintf (fps_string, "FPS: %.02f", fps);
 
       if (mi->pause != 0)
         {
@@ -234,7 +236,8 @@ do_fps (ModeInfo *mi)
             buf[strlen(buf)-1] = 0;
           if (buf[strlen(buf)-1] == '.')
             buf[strlen(buf)-1] = 0;
-          sprintf(msg + strlen(msg), " (including %s sec/frame delay)",
+          sprintf(fps_string + strlen(fps_string),
+                  " (including %s sec/frame delay)",
                   buf);
         }
 
@@ -247,19 +250,31 @@ do_fps (ModeInfo *mi)
           else if (p >= 2048)          p >>= 10, s = "K";
 # endif
 
-          strcat (msg, "\nPolys: ");
+          strcat (fps_string, "\nPolys: ");
           if (p >= 1000000)
-            sprintf (msg + strlen(msg), "%lu,%03lu,%03lu%s",
+            sprintf (fps_string + strlen(fps_string), "%lu,%03lu,%03lu%s",
                      (p / 1000000), ((p / 1000) % 1000), (p % 1000), s);
           else if (p >= 1000)
-            sprintf (msg + strlen(msg), "%lu,%03lu%s",
+            sprintf (fps_string + strlen(fps_string), "%lu,%03lu%s",
                      (p / 1000), (p % 1000), s);
           else
-            sprintf (msg + strlen(msg), "%lu%s", p, s);
+            sprintf (fps_string + strlen(fps_string), "%lu%s", p, s);
         }
     }
 
-  /* Print the string every frame (or else nothing will show up.)
-   */
-  fps_print_string (mi, fps_text_x, fps_text_y, msg);
+  return last_fps;
+}
+
+void
+fps_2 (ModeInfo *mi)
+{
+  fps_print_string (mi, fps_text_x, fps_text_y, fps_string);
+}
+
+
+void
+do_fps (ModeInfo *mi)
+{
+  fps_1 (mi);   /* Lazily compute current FPS value, about once a second. */
+  fps_2 (mi);   /* Print the string every frame (else nothing shows up.) */
 }

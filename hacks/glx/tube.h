@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -16,11 +16,11 @@
 extern void tube (GLfloat x1, GLfloat y1, GLfloat z1,
                   GLfloat x2, GLfloat y2, GLfloat z2,
                   GLfloat diameter, GLfloat cap_size,
-                  int faces, Bool smooth, Bool wire);
+                  int faces, Bool smooth, Bool caps_p, Bool wire);
 
 extern void cone (GLfloat x1, GLfloat y1, GLfloat z1,
                   GLfloat x2, GLfloat y2, GLfloat z2,
                   GLfloat diameter, GLfloat cap_size,
-                  int faces, Bool smooth, Bool wire);
+                  int faces, Bool smooth, Bool cap_p,  Bool wire);
 
 #endif /* __TUBE_H__ */

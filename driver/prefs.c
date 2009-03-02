@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1320,6 +1320,10 @@ make_hack_name (const char *shell_command)
     s[0] -= 'a'-'A';
   if (s[0] == 'X' && s[1] >= 'a' && s[1] <= 'z')	/* (magic leading X) */
     s[1] -= 'a'-'A';
+  if (s[0] == 'G' && s[1] == 'l' && 
+      s[2] >= 'a' && s[2] <= 'z')		       /* (magic leading GL) */
+    s[1] -= 'a'-'A',
+    s[2] -= 'a'-'A';
   return s;
 }
 

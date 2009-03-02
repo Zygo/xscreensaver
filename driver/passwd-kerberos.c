@@ -31,7 +31,7 @@
    Might __APPLE__ be defined if this is apple hardware, but not
    an Apple OS?
 
-   Thanks to Jan Kujawa <kujawa@ultranet.com> for the MacOS X code.
+   Thanks to Alexei Kosut <akosut@stanford.edu> for the MacOS X code.
  */
 #ifdef __APPLE__
 # define HAVE_DARWIN

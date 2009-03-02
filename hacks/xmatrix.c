@@ -12,9 +12,12 @@
  *
  * The movie people distribute their own Windows/Mac screensaver that does
  * a similar thing, so I wrote one for Unix.  However, that version (the
- * Windows/Mac version at http://www.whatisthematrix.com/) doesn't match my
- * memory of what the screens in the movie looked like, so my `xmatrix'
- * does things differently.
+ * Windows/Mac version at http://www.whatisthematrix.com/) doesn't match
+ * what the computer screens in the movie looked like, so my `xmatrix' does
+ * things differently.
+ *
+ * See also my `glmatrix' program, which does a 3D rendering of the similar
+ * effect that appeared in the title sequence of the movies.
  *
  *
  *     ==========================================================
@@ -37,6 +40,11 @@
  *         washed out.  They also definitely scrolled a
  *         character at a time, not a pixel at a time.
  *
+ *         And keep in mind that this program emulates the
+ *         behavior of the computer screens that were visible
+ *         in the movies -- not the behavior of the effects in
+ *         the title sequences.
+ *
  *     ==========================================================
  *
  */
@@ -47,25 +55,20 @@
 #include <X11/Xutil.h>
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-# include "images/matrix0.xpm"
 # include "images/matrix1.xpm"
 # include "images/matrix2.xpm"
-# include "images/matrix0b.xpm"
 # include "images/matrix1b.xpm"
 # include "images/matrix2b.xpm"
 #endif
 
-#include "images/matrix0.xbm"
 #include "images/matrix1.xbm"
 #include "images/matrix2.xbm"
-#include "images/matrix0b.xbm"
 #include "images/matrix1b.xbm"
 #include "images/matrix2b.xbm"
 
 #define CHAR_COLS 16
 #define CHAR_ROWS 13
 #define CHAR_MAPS 3
-#define FADE_MAP  0
 #define PLAIN_MAP 1
 #define GLOW_MAP  2
 
@@ -113,17 +116,15 @@ static unsigned char char_map[256] = {
 
 #define CURSOR_GLYPH 97
 
-typedef enum { TRACE0, TRACE1, TRACE2,
-               KNOCK0, KNOCK1, KNOCK2, KNOCK3,
-               KNOCK4, KNOCK5, KNOCK6, KNOCK7,
-               NMAP0, NMAP1,
-               MATRIX, DNA, BINARY, HEX } m_mode;
+typedef enum { TRACEA1, TRACEA2,
+               TRACEB1, TRACEB2, SYSTEMFAILURE,
+               KNOCK, NMAP, MATRIX, DNA, BINARY, DEC, HEX } m_mode;
 
 typedef struct {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
-  GC draw_gc, erase_gc;
+  GC draw_gc, erase_gc, scratch_gc;
   int grid_width, grid_height;
   int char_width, char_height;
   m_cell *cells;
@@ -143,6 +144,7 @@ typedef struct {
   int nglyphs;
   int *glyph_map;
 
+  unsigned long colors[5];
 } m_state;
 
 
@@ -154,8 +156,7 @@ load_images_1 (m_state *state, int which)
       state->xgwa.depth > 1)
     {
       char **bits =
-        (which == 0 ? (state->small_p ? matrix0b_xpm : matrix0_xpm) :
-         which == 1 ? (state->small_p ? matrix1b_xpm : matrix1_xpm) :
+        (which == 1 ? (state->small_p ? matrix1b_xpm : matrix1_xpm) :
          (state->small_p ? matrix2b_xpm : matrix2_xpm));
 
       state->images[which] =
@@ -166,16 +167,15 @@ load_images_1 (m_state *state, int which)
 #endif /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
     {
       unsigned long fg, bg;
-      state->image_width  = (state->small_p ? matrix0b_width :matrix0_width);
-      state->image_height = (state->small_p ? matrix0b_height:matrix0_height);
+      state->image_width  = (state->small_p ? matrix1b_width :matrix1_width);
+      state->image_height = (state->small_p ? matrix1b_height:matrix1_height);
       fg = get_pixel_resource("foreground", "Foreground",
                               state->dpy, state->xgwa.colormap);
       bg = get_pixel_resource("background", "Background",
                               state->dpy, state->xgwa.colormap);
       state->images[which] =
         XCreatePixmapFromBitmapData (state->dpy, state->window, (char *)
-                (which == 0 ? (state->small_p ? matrix0b_bits :matrix0_bits) :
-                 which == 1 ? (state->small_p ? matrix1b_bits :matrix1_bits) :
+                (which == 1 ? (state->small_p ? matrix1b_bits :matrix1_bits) :
                               (state->small_p ? matrix2b_bits :matrix2_bits)),
                                      state->image_width, state->image_height,
                                      bg, fg, state->xgwa.depth);
@@ -186,7 +186,6 @@ load_images_1 (m_state *state, int which)
 static void
 load_images (m_state *state)
 {
-  load_images_1 (state, 0);
   load_images_1 (state, 1);
   load_images_1 (state, 2);
 }
@@ -222,7 +221,6 @@ flip_images_1 (m_state *state, int which)
 static void
 flip_images (m_state *state)
 {
-  flip_images_1 (state, 0);
   flip_images_1 (state, 1);
   flip_images_1 (state, 2);
 }
@@ -296,6 +294,7 @@ init_matrix (Display *dpy, Window window)
 {
   XGCValues gcv;
   char *insert, *mode;
+  int i;
   m_state *state = (m_state *) calloc (sizeof(*state), 1);
 
   state->dpy = dpy;
@@ -322,6 +321,26 @@ init_matrix (Display *dpy, Window window)
   gcv.foreground = gcv.background;
   state->erase_gc = XCreateGC (state->dpy, state->window,
                                GCForeground|GCBackground, &gcv);
+
+  state->scratch_gc = XCreateGC (state->dpy, state->window, 0, &gcv);
+
+  /* Allocate colors for SYSTEM FAILURE box */
+  {
+    XColor boxcolors[] = {
+      { 0, 0x0808, 0x1E1E, 0x0808, DoRed|DoGreen|DoBlue, 0 },
+      { 0, 0x5A5A, 0xD2D2, 0x5A5A, DoRed|DoGreen|DoBlue, 0 },
+      { 0, 0xE0E0, 0xF7F7, 0xE0E0, DoRed|DoGreen|DoBlue, 0 },
+      { 0, 0x5A5A, 0xD2D2, 0x5A5A, DoRed|DoGreen|DoBlue, 0 },
+      { 0, 0x0808, 0x1E1E, 0x0808, DoRed|DoGreen|DoBlue, 0 },
+    };
+  for (i = 0; i < countof(boxcolors); i++)
+    {
+      if (XAllocColor (state->dpy, state->xgwa.colormap, &boxcolors[i]))
+        state->colors[i] = boxcolors[i].pixel;
+      else
+        state->colors[i] = gcv.foreground;  /* default black */
+    }
+  }
 
   state->char_width =  state->image_width  / CHAR_COLS;
   state->char_height = state->image_height / CHAR_ROWS;
@@ -378,16 +397,20 @@ init_matrix (Display *dpy, Window window)
 
   mode = get_string_resource ("mode", "Mode");
   if (mode && !strcasecmp(mode, "trace"))
-    state->mode = TRACE0;
+    state->mode = (((random() % 3) == 0) ? TRACEB1 : TRACEA1);
   else if (mode && !strcasecmp(mode, "crack"))
-    state->mode = NMAP0;
+    state->mode = NMAP;
   else if (mode && !strcasecmp(mode, "dna"))
     state->mode = DNA;
-  else if (mode && !strcasecmp(mode, "binary"))
+  else if (mode && (!strcasecmp(mode, "bin") ||
+                    !strcasecmp(mode, "binary")))
     state->mode = BINARY;
   else if (mode && (!strcasecmp(mode, "hex") ||
                     !strcasecmp(mode, "hexadecimal")))
     state->mode = HEX;
+  else if (mode && (!strcasecmp(mode, "dec") ||
+                    !strcasecmp(mode, "decimal")))
+    state->mode = DEC;
   else if (!mode || !*mode || !strcasecmp(mode, "matrix"))
     state->mode = MATRIX;
   else
@@ -398,34 +421,35 @@ init_matrix (Display *dpy, Window window)
       state->mode = MATRIX;
     }
 
-  if (state->mode == DNA)
+  switch (state->mode)
     {
+    case DNA:
       state->glyph_map = dna_encoding;
       state->nglyphs = countof(dna_encoding);
-    }
-  else if (state->mode == BINARY)
-    {
+      break;
+    case BINARY:
       state->glyph_map = binary_encoding;
       state->nglyphs = countof(binary_encoding);
-    }
-  else if (state->mode == HEX)
-    {
+      break;
+    case DEC:
+      state->glyph_map = decimal_encoding;
+      state->nglyphs = countof(decimal_encoding);
+      break;
+    case HEX:
       state->glyph_map = hex_encoding;
       state->nglyphs = countof(hex_encoding);
-    }
-  else if (state->mode == HEX)
-    {
-      state->glyph_map = hex_encoding;
-      state->nglyphs = countof(hex_encoding);
-    }
-  else if (state->mode == TRACE0)
-    init_trace (state);
-  else if (state->mode == NMAP0)
-    ;
-  else
-    {
+      break;
+    case TRACEA1: case TRACEB1:
+      init_trace (state);
+      break;
+    case NMAP:
+      break;
+    case MATRIX:
       flip_images (state);
       init_spinners (state);
+      break;
+    default:
+      abort();
     }
 
   return state;
@@ -464,7 +488,7 @@ insert_glyph (m_state *state, int glyph, int x, int y)
   if (!to->glyph)
     ;
   else if (bottom_feeder_p)
-    to->glow = 1 + (random() % 2);
+    to->glow = 1 + (random() % (state->tracing ? 4 : 2));
   else
     to->glow = 0;
 }
@@ -477,7 +501,8 @@ feed_matrix (m_state *state)
 
   switch (state->mode)
     {
-    case TRACE2: case MATRIX: case DNA: case BINARY: case HEX:
+    case TRACEA2: case TRACEB2:
+    case MATRIX: case DNA: case BINARY: case DEC: case HEX:
       break;
     default:
       return;
@@ -529,7 +554,7 @@ redraw_cells (m_state *state, Bool active)
         if (cell->glyph)
           count++;
 
-        if (state->mode == TRACE2 && active)
+        if ((state->mode == TRACEA2 || state->mode == TRACEB2) && active)
           {
             int xx = x % strlen(state->tracing);
             Bool dead_p = state->tracing[xx] > 0;
@@ -562,8 +587,7 @@ redraw_cells (m_state *state, Bool active)
             int g = (cell == state->cursor ? CURSOR_GLYPH : cell->glyph);
             int cx = (g - 1) % CHAR_COLS;
             int cy = (g - 1) / CHAR_COLS;
-            int map = ((cell->glow > 0 || cell->spinner) ? GLOW_MAP :
-                       (cell->glow < 0) ? FADE_MAP :
+            int map = ((cell->glow != 0 || cell->spinner) ? GLOW_MAP :
                        PLAIN_MAP);
 
             XCopyArea (state->dpy, state->images[map],
@@ -584,12 +608,7 @@ redraw_cells (m_state *state, Bool active)
             cell->changed = 1;
           }
         else if (cell->glow < 0)
-          {
-            cell->glow++;
-            if (cell->glow == 0)
-              cell->glyph = 0;
-            cell->changed = 1;
-          }
+          abort();
 
         if (cell->spinner && active)
           {
@@ -684,7 +703,7 @@ handle_events (m_state *state)
           KeySym keysym;
           char c = 0;
           XLookupString (&event.xkey, &c, 1, &keysym, 0);
-          if (c == '0')
+          if (c == '0' && !state->tracing)
             {
               drain_matrix (state);
               return;
@@ -704,6 +723,38 @@ handle_events (m_state *state)
                 state->density = 0;
               else
                 return;
+            }
+          else if (c == '[' || c == '(' || c == '{')
+            {
+              state->insert_top_p    = True;
+              state->insert_bottom_p = False;
+              return;
+            }
+          else if (c == ']' || c == ')' || c == '}')
+            {
+              state->insert_top_p    = False;
+              state->insert_bottom_p = True;
+              return;
+            }
+          else if (c == '\\' || c == '|')
+            {
+              state->insert_top_p    = True;
+              state->insert_bottom_p = True;
+              return;
+            }
+          else if ((c == 't' || c == 'T') && state->mode == MATRIX)
+            {
+              state->mode = (c == 't' ? TRACEA1 : TRACEB1);
+              flip_images (state);
+              init_trace (state);
+              return;
+            }
+          else if ((c == 'c' || c == 'k') && state->mode == MATRIX)
+            {
+              drain_matrix (state);
+              state->mode = (c == 'c' ? NMAP : KNOCK);
+              flip_images (state);
+              return;
             }
         }
 
@@ -765,6 +816,10 @@ hack_text_1 (m_state *state,
   int y = *yP;
   int i = state->grid_width * y + x;
   Bool glow_p = False;
+  int long_delay_usecs = 1000000;
+
+  if (long_delay == -1)
+    long_delay = 0, long_delay_usecs /= 6;
 
   if (y >= state->grid_height-1) return;
 
@@ -775,8 +830,10 @@ hack_text_1 (m_state *state,
 
       long_delay = done_p;
               
-      if (*s == '\n')
+      if (*s == '\n' || x >= state->grid_width - 1)
         {
+          if (*s != '\n')
+            s--;
           x = 0;
           y++;
           i = state->grid_width * y + x;
@@ -824,7 +881,7 @@ hack_text_1 (m_state *state,
               cell->glyph = char_map[(unsigned char) *s] + 1;
               if (*s == ' ' || *s == '\t') cell->glyph = 0;
               cell->changed = 1;
-              cell->glow = (glow_p ? 8 : 0);
+              cell->glow = (glow_p ? 100 : 0);
               if (visible_cursor)
                 {
                   m_cell *next = &state->cells[i + 1];
@@ -849,7 +906,7 @@ hack_text_1 (m_state *state,
             }
           else
             if (long_delay)
-              matrix_usleep (state, 1000000);
+              matrix_usleep (state, long_delay_usecs);
             else
               usleep (20000);
         }
@@ -861,164 +918,258 @@ hack_text_1 (m_state *state,
 
 
 static void
-hack_text (m_state *state)
+zero_cells (m_state *state)
 {
   int i;
-  int x = 0;
-  int y = 0;
-  const char *s;
-  Bool typing_delay = False;
-  Bool transmit_delay = False;
-  Bool long_delay = False;
-  Bool visible_cursor = False;
-  switch (state->mode)
-    {
-    case TRACE0: if (state->grid_width >= 52)
-                   s = "Call trans opt: received. 2-19-98 13:24:18 REC:Log>";
-                 else
-                   s = "Call trans opt: received.\n2-19-98 13:24:18 REC:Log>";
-                 transmit_delay = True;
-                 visible_cursor = True;
-                 break;
-    case TRACE1: s = "Trace program: running";
-                 transmit_delay = True;
-                 visible_cursor = True;
-                 break;
-    case KNOCK0: s = "Wake up, Neo..."; break;
-    case KNOCK1: s = ""; break;
-    case KNOCK2: s = "The Matrix has you..."; typing_delay = True; break;
-    case KNOCK3: s = ""; break;
-    case KNOCK4: s = "Follow the white rabbit."; typing_delay = True; break;
-    case KNOCK5: s = ""; break;
-    case KNOCK6: s = "Knock, knock, Neo."; break;
-    case KNOCK7:
-    case NMAP0:
-    case NMAP1:  s = ""; break;
-
-    default: abort(); break;
-    }
-
   for (i = 0; i < state->grid_height * state->grid_width; i++)
     {
       m_cell *cell = &state->cells[i];
       cell->changed = (cell->glyph != 0);
-      cell->glyph = 0;
+      cell->glyph   = 0;
+      cell->glow    = 0;
+      cell->spinner = 0;
     }
+}
 
-  if (state->mode == NMAP0)
+
+static void
+hack_text (m_state *state)
+{
+  Bool typing_delay = False;
+  Bool transmit_delay = False;
+  Bool long_delay = False;
+  Bool visible_cursor = False;
+
+  switch (state->mode)
     {
-      /* Note that what Trinity is using here is moderately accurate:
-         She runs nmap (http://www.insecure.org/nmap/) then breaks in
-         with a (hypothetical) program called "sshnuke" that exploits
-         the (very real) SSHv1 CRC32 compensation attack detector bug
-         (http://staff.washington.edu/dittrich/misc/ssh-analysis.txt).
+    case KNOCK:
+      {
+        const char *blocks[] = {
+          "Wake up, Neo...",
+          "The Matrix has you...",
+          "Follow the white rabbit.",
+          " ",
+          "Knock, knock, Neo."
+        };
+        int nblocks = countof(blocks);
+        int j;
+        typing_delay = True;
+        transmit_delay = False;
+        long_delay = False;
+        visible_cursor = True;
+        for (j = 0; j < nblocks; j++)
+          {
+            int x = 3;
+            int y = 2;
+            const char *s = blocks[j];
+            if (!s[0] || !s[1]) typing_delay = False;
+            zero_cells (state);
+            hack_text_1 (state, &x, &y, s,
+                         typing_delay, transmit_delay, -1,
+                         visible_cursor, True);
+            matrix_usleep (state, 2000000);
+          }
+      }
+      break;
 
-         The command syntax of the power grid control software looks a
-         lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
-       */
-      const char *blocks[] = {
-        "# ",
+    case TRACEA1: case TRACEB1:
+      {
+        const char *blocks[10];
+        int j, n = 0;
 
-        "\001nmap 10.2.2.2\n",
-        "Starting nmap V. 2.54BETA25\n"
+        if (state->mode == TRACEA1)
+          blocks[n++] =
+            (state->grid_width >= 52
+             ?  "Call trans opt: received. 2-19-98 13:24:18 REC:Log>"
+             : "Call trans opt: received.\n2-19-98 13:24:18 REC:Log>");
+        else
+          blocks[n++] =
+            (state->grid_width >= 52
+             ?  "Call trans opt: received. 9-18-99 14:32:21 REC:Log>"
+             : "Call trans opt: received.\n9-18-99 14:32:21 REC:Log>");
 
-        "\010", "\010", "\010",
+        if (state->mode == TRACEB1)
+          blocks[n++] = "WARNING: carrier anomaly";
+        blocks[n++] = "Trace program: running";
 
-        "Insufficient responses for TCP sequencing (3), OS detection "
-        "may be less\n"
-        "accurate\n"
-        "Interesting ports on 10.2.2.2:\n"
-        "(The 1538 ports scanned but not shown below are in state: filtered)\n"
-        "Port       state       service\n"
-        "22/tcp     open        ssh\n"
-        "\n"
-        "No exact OS matches for host\n"
-        "\n"
-        "Nmap run completed -- 1 IP address (1 host up) scanned\n"
-        "# ",
+        typing_delay = False;
+        transmit_delay = True;
+        long_delay = True;
+        visible_cursor = True;
+        for (j = 0; j < n; j++)
+          {
+            const char *s = blocks[j];
+            int x = 0;
+            int y = 0;
+            zero_cells (state);
+            hack_text_1 (state, &x, &y, s,
+                         typing_delay, transmit_delay, long_delay,
+                         visible_cursor, True);
+          }
+        matrix_usleep (state, 1000000);
+      }
+      break;
 
-        "\001sshnuke 10.2.2.2 -rootpw=\"Z1ON0101\"\n",
+    case SYSTEMFAILURE:
+      {
+        const char *s = "SYSTEM FAILURE";
+        int i;
+        float cx = ((int)state->grid_width - (int)strlen(s)) / 2 - 0.5;
+        float cy = (state->grid_height / 2) - 1.3;
+        int x, y;
 
-        "Connecting to 10.2.2.2:ssh ... ",
+        if (cy < 0) cy = 0;
+        if (cx < 0) cx = 0;
 
-        "successful.\n"
-        "Attempting to exploit SSHv1 CRC32 ... ",
+        XFillRectangle (state->dpy, state->window, state->erase_gc,
+                        cx * state->char_width,
+                        cy * state->char_height,
+                        (strlen(s) + 1) * state->char_width,
+                        state->char_height * 1.6);
 
-        "successful.\n"
-        "Resetting root password to \"Z1ON0101\".\n",
+        for (i = -2; i < 3; i++)
+          {
+            XGCValues gcv;
+            gcv.foreground = state->colors[i + 2];
+            XChangeGC (state->dpy, state->scratch_gc, GCForeground, &gcv);
+            XDrawRectangle (state->dpy, state->window, state->scratch_gc,
+                            cx * state->char_width - i,
+                            cy * state->char_height - i,
+                            (strlen(s) + 1) * state->char_width + (2 * i),
+                            (state->char_height * 1.6) + (2 * i));
+          }
 
-        "System open: Access Level <9>\n"
-        "# ",
+        /* If we don't clear these out, part of the box may get overwritten */
+        for (i = 0; i < state->grid_height * state->grid_width; i++)
+          {
+            m_cell *cell = &state->cells[i];
+            cell->changed = 0;
+          }
 
-        "\001ssh 10.2.2.2 -l root\n",
+        x = ((int)state->grid_width - (int)strlen(s)) / 2;
+        y = (state->grid_height / 2) - 1;
+        if (y < 0) y = 0;
+        if (x < 0) x = 0;
+        hack_text_1 (state, &x, &y, s,
+                     typing_delay, transmit_delay, long_delay,
+                     visible_cursor, False);
+      }
+    break;
 
-        "root@10.2.2.2's password: ",
+    case NMAP:
+      {
+        /* Note that what Trinity is using here is moderately accurate:
+           She runs nmap (http://www.insecure.org/nmap/) then breaks in
+           with a (hypothetical) program called "sshnuke" that exploits
+           the (very real) SSHv1 CRC32 compensation attack detector bug
+           (http://staff.washington.edu/dittrich/misc/ssh-analysis.txt).
 
-        "\001\010\010\010\010\010\010\010\010\n",
+           The command syntax of the power grid control software looks a
+           lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
+        */
+        const char *blocks[] = {
+          "# ",
 
-        "\n"
-        "FFF-CONTROL> ",
+          "\001nmap 10.2.2.2\n",
+          "Starting nmap V. 2.54BETA25\n"
 
-        "\001disable grid nodes 21 - 40\n",
+          "\010", "\010", "\010",
 
-        "Warning: Disabling nodes 21-40 will disconnect sector 11 (27 nodes)\n"
-        "\n"
-        "\002         ARE YOU SURE? (y/n) ",
+          "Insufficient responses for TCP sequencing (3), OS detection "
+          "may be less accurate\n"
+          "Interesting ports on 10.2.2.2:\n"
+          "(The 1538 ports scanned but not shown below are in state: "
+          "filtered)\n"
+          "Port       state       service\n"
+          "22/tcp     open        ssh\n"
+          "\n"
+          "No exact OS matches for host\n"
+          "\n"
+          "Nmap run completed -- 1 IP address (1 host up) scanned\n"
+          "# ",
 
-        "\001\010\010y\n",
-        "\n"
-      };
+          "\001sshnuke 10.2.2.2 -rootpw=\"Z1ON0101\"\n",
 
-      int nblocks = countof(blocks);
-      int y = state->grid_height - 2;
-      int j;
+          "Connecting to 10.2.2.2:ssh ... ",
 
-      visible_cursor = True;
-      x = 0;
-      for (j = 0; j < nblocks; j++)
-        {
-          const char *s = blocks[j];
-          typing_delay = (*s == '\001');
-          if (typing_delay) s++;
+          "successful.\n"
+          "Attempting to exploit SSHv1 CRC32 ... ",
 
-          long_delay = False;
-          hack_text_1 (state, &x, &y, s,
-                       typing_delay, transmit_delay, long_delay,
-                       visible_cursor, True);
-        }
+          "successful.\n"
+          "Resetting root password to \"Z1ON0101\".\n",
 
-      typing_delay = False;
-      long_delay = False;
-      for (j = 21; j <= 40; j++)
-        {
-          char buf[100];
-          sprintf (buf, "Grid Node %d offline...\n", j);
-          hack_text_1 (state, &x, &y, buf,
-                       typing_delay, transmit_delay, long_delay,
-                       visible_cursor, True);
+          "System open: Access Level <9>\n"
+          "# ",
 
-        }
-      hack_text_1 (state, &x, &y, "\nFFF-CONTROL> ",
-                   typing_delay, transmit_delay, long_delay,
-                   visible_cursor, True);
-      return;
-    }
-  else
-    {
-      if (state->mode == TRACE0 || state->mode == TRACE1)
-        x = y = 0;
-      else
-        {
-          x = ((int)state->grid_width - (int)strlen(s)) / 2;
-          y = (state->grid_height / 2) - 1;
-          if (y < 0) y = 0;
-          if (x < 0) x = 0;
-        }
+          "\001ssh 10.2.2.2 -l root\n",
 
-      hack_text_1 (state, &x, &y, s,
-                   typing_delay, transmit_delay, long_delay,
-                   visible_cursor, False);
-    }
+          "root@10.2.2.2's password: ",
+
+          "\001\010\010\010\010\010\010\010\010\n",
+
+          "\n"
+          "RRF-CONTROL> ",
+
+          "\001disable grid nodes 21 - 40\n",
+
+          "\002Warning: Disabling nodes 21-40 will disconnect sector 11 "
+          "(27 nodes)\n"
+          "\n"
+          "\002         ARE YOU SURE? (y/n) ",
+
+          "\001\010\010y\n",
+          "\n"
+        };
+
+        int nblocks = countof(blocks);
+        int y = state->grid_height - 2;
+        int x, j;
+
+        visible_cursor = True;
+        x = 0;
+        zero_cells (state);
+        for (j = 0; j < nblocks; j++)
+          {
+            const char *s = blocks[j];
+            typing_delay = (*s == '\001');
+            if (typing_delay) s++;
+
+            long_delay = False;
+            hack_text_1 (state, &x, &y, s,
+                         typing_delay, transmit_delay, long_delay,
+                         visible_cursor, True);
+          }
+
+        typing_delay = False;
+        long_delay = False;
+        for (j = 21; j <= 40; j++)
+          {
+            char buf[100];
+            sprintf (buf, "\002Grid Node %d offline...\n", j);
+            hack_text_1 (state, &x, &y, buf,
+                         typing_delay, transmit_delay, -1,
+                         visible_cursor, True);
+
+          }
+        long_delay = True;
+        hack_text_1 (state, &x, &y, "\nRRF-CONTROL> ",
+                     typing_delay, transmit_delay, long_delay,
+                     visible_cursor, True);
+
+        /* De-glow all cells before draining them... */
+        for (j = 0; j < state->grid_height * state->grid_width; j++)
+          {
+            m_cell *cell = &state->cells[j];
+            cell->changed = (cell->glow != 0);
+            cell->glow = 0;
+          }
+      }
+    break;
+
+  default:
+    abort();
+    break;
+  }
 }
 
 
@@ -1074,17 +1225,14 @@ roll_state (m_state *state)
   int delay = 0;
   switch (state->mode)
     {
-    case TRACE0:
-      delay = 3;
-      state->mode = TRACE1;
+    case TRACEA1:
+      state->mode = TRACEA2;
+      break;
+    case TRACEB1:
+      state->mode = TRACEB2;
       break;
 
-    case TRACE1:
-      delay = 2;
-      state->mode = TRACE2;
-      break;
-
-    case TRACE2:
+    case TRACEA2:
       {
         Bool any = False;
         int i;
@@ -1102,7 +1250,7 @@ roll_state (m_state *state)
             free (state->tracing);
             state->tracing = 0;
           }
-        else if ((random() % 10) == 0)
+        else if ((random() % 20) == 0)  /* how fast numbers are discovered */
           {
             int x = random() % strlen(state->tracing);
             if (state->tracing[x] < 0)
@@ -1111,19 +1259,44 @@ roll_state (m_state *state)
         break;
       }
 
-    case KNOCK0: delay = 1; state->mode++; break; /* wake */
-    case KNOCK1: delay = 4; state->mode++; break;
-    case KNOCK2: delay = 2; state->mode++; break; /* has */
-    case KNOCK3: delay = 4; state->mode++; break;
-    case KNOCK4: delay = 2; state->mode++; break; /* rabbit */
-    case KNOCK5: delay = 4; state->mode++; break;
-    case KNOCK6: delay = 4; state->mode++; break; /* knock */
+    case TRACEB2:
+      {
+        /* reversed logic from TRACEA2 */
+        Bool any = False;
+        int i;
+        for (i = 0; i < strlen(state->tracing); i++)
+          if (state->tracing[i] > 0) any = True;
 
-    case NMAP0:  delay = 4; state->mode++; break; /* knock */
+        if ((random() % 15) == 0) {
+          if (any)
+            state->mode = SYSTEMFAILURE;
+          else
+            {
+              int x = random() % strlen(state->tracing);
+              if (state->tracing[x] < 0)
+                state->tracing[x] = -state->tracing[x];
+            }
+        }
+        break;
+      }
 
-    case KNOCK7:
-      delay = 4;
-    case NMAP1:
+    case SYSTEMFAILURE:
+      XSync (state->dpy, False);
+      matrix_usleep (state, 6000000);
+      state->mode = MATRIX;
+      state->glyph_map = matrix_encoding;
+      state->nglyphs = countof(matrix_encoding);
+      flip_images (state);
+      drain_matrix (state);
+      matrix_usleep (state, 2000000);
+      if (state->tracing) {
+        free (state->tracing);
+        state->tracing = 0;
+      }
+      break;
+
+    case KNOCK:
+    case NMAP:
       state->mode = MATRIX;
       state->glyph_map = matrix_encoding;
       state->nglyphs = countof(matrix_encoding);
@@ -1135,15 +1308,15 @@ roll_state (m_state *state)
         {
           drain_matrix (state);
           if (! (random() % 5))
-            state->mode = NMAP0;
+            state->mode = NMAP;
           else
-            state->mode = KNOCK0;
+            state->mode = KNOCK;
 
           flip_images (state);
         }
       break;
 
-    case DNA: case BINARY: case HEX:
+    case DNA: case BINARY: case DEC: case HEX:
       break;
 
     default:
@@ -1163,13 +1336,12 @@ hack_matrix (m_state *state)
 
   switch (state->mode)
     {
-    case TRACE0: case TRACE1:
-    case KNOCK0: case KNOCK1: case KNOCK2: case KNOCK3:
-    case KNOCK4: case KNOCK5: case KNOCK6: case KNOCK7:
-    case NMAP0:  case NMAP1:
+    case TRACEA1: case TRACEB1: case SYSTEMFAILURE:
+    case KNOCK: case NMAP:
       hack_text (state);
       return;
-    case TRACE2: case MATRIX: case DNA: case BINARY: case HEX:
+    case TRACEA2: case TRACEB2:
+    case MATRIX: case DNA: case BINARY: case DEC: case HEX:
       break;
     default:
       abort(); break;
@@ -1210,7 +1382,7 @@ hack_matrix (m_state *state)
       if ((random() % 4) != 0)
         f->remaining = 0;
 
-      if (state->mode == TRACE2)
+      if (state->mode == TRACEA2 || state->mode == TRACEB2)
         bottom_feeder_p = True;
       if (state->insert_top_p && state->insert_bottom_p)
         bottom_feeder_p = (random() & 1);
@@ -1223,7 +1395,7 @@ hack_matrix (m_state *state)
         f->y = -1;
     }
 
-  if (!state->mode == TRACE2 &&
+  if (!state->mode == TRACEA2 && !state->mode == TRACEB2 &&
       ! (random() % 500))
     init_spinners (state);
 }
@@ -1268,7 +1440,7 @@ char *defaults [] = {
   "*delay:		   10000",
   "*insert:		   both",
   "*mode:		   Matrix",
-  "*tracePhone:            (212) 555-0690",
+  "*tracePhone:            (312) 555-0690",
   "*spinners:		   5",
   "*density:		   75",
   "*knockKnock:		   False",
@@ -1290,6 +1462,7 @@ XrmOptionDescRec options [] = {
   { "-dna",		".mode",		XrmoptionNoArg, "DNA" },
   { "-binary",		".mode",		XrmoptionNoArg, "binary" },
   { "-hexadecimal",	".mode",		XrmoptionNoArg, "hexadecimal"},
+  { "-decimal",		".mode",		XrmoptionNoArg, "decimal"},
   { "-knock-knock",	".knockKnock",		XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };

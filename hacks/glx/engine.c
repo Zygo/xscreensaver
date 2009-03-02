@@ -35,16 +35,21 @@
 /* insert defaults here */
 
 #define DEF_ENGINE "(none)"
+#define DEF_TITLES "False"
+#define DEF_SPIN   "True"
+#define DEF_WANDER "True"
 
 #define DEFAULTS        "*delay:           10000        \n" \
                         "*showFPS:         False        \n" \
                         "*move:            True         \n" \
                         "*spin:            True         \n" \
                         "*engine:        " DEF_ENGINE  "\n" \
+			"*titles:        " DEF_TITLES  "\n" \
+			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
 
-# include "xlockmore.h"                         /* from the xscreensaver distribution */
+# include "xlockmore.h"              /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
-# include "xlock.h"                                     /* from the xlockmore distribution */
+# include "xlock.h"                  /* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #include "rotator.h"
@@ -70,19 +75,23 @@ static char *which_engine;
 static int move;
 static int movepaused = 0;
 static int spin;
+static Bool do_titles;
 
 static XrmOptionDescRec opts[] = {
-  {"-engine", ".engine.engine", XrmoptionSepArg, DEF_ENGINE },
-  {"-move", ".engine.move", XrmoptionNoArg, (caddr_t) "true" },
-  {"+move", ".engine.move", XrmoptionNoArg, (caddr_t) "false" },
-  {"-spin", ".engine.spin", XrmoptionNoArg, (caddr_t) "true" },
-  {"+spin", ".engine.spin", XrmoptionNoArg, (caddr_t) "false" },
+  {"-engine",  ".engine.engine", XrmoptionSepArg, DEF_ENGINE },
+  {"-move",    ".engine.move",   XrmoptionNoArg, (caddr_t) "True"  },
+  {"+move",    ".engine.move",   XrmoptionNoArg, (caddr_t) "False" },
+  {"-spin",    ".engine.spin",   XrmoptionNoArg, (caddr_t) "True"  },
+  {"+spin",    ".engine.spin",   XrmoptionNoArg, (caddr_t) "False" },
+  { "-titles", ".engine.titles", XrmoptionNoArg, (caddr_t) "True"  },
+  { "+titles", ".engine.titles", XrmoptionNoArg, (caddr_t) "False" },
 };
 
 static argtype vars[] = {
   {(caddr_t *) &which_engine, "engine", "Engine", DEF_ENGINE, t_String},
-  {(caddr_t *) &move, "move", "Move", "True", t_Bool},
-  {(caddr_t *) &spin, "spin", "Spin", "True", t_Bool},
+  {(caddr_t *) &move,         "move",   "Move",   DEF_WANDER, t_Bool},
+  {(caddr_t *) &spin,         "spin",   "Spin",   DEF_SPIN,   t_Bool},
+  {(caddr_t *) &do_titles,    "titles", "Titles", DEF_TITLES, t_Bool},
 };
 
 ModeSpecOpt engine_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -108,6 +117,9 @@ typedef struct {
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
+  XFontStruct *xfont;
+  GLuint font_dlist;
+  char *engine_name;
 } Engine;
 
 static Engine *engine = NULL;
@@ -175,10 +187,11 @@ float tan_table[TWOREV];
  * To avoid going completely insane, we also reorder these so the newly 
  * renumbered cylinder 0 is always first: 0-3-4-1-2-5
  *   
- * For a flat 6, the included angle is 180 degrees (0 would be a inline engine).
- * Because these are all four-stroke engines, each piston goes through
- * 720 degrees of rotation for each time the spark plug sparks, so in this case,
- * we would use the following angles:
+ * For a flat 6, the included angle is 180 degrees (0 would be a inline
+ * engine).  Because these are all four-stroke engines, each piston goes
+ * through 720 degrees of rotation for each time the spark plug sparks,
+ * so in this case, we would use the following angles:
+ *
  * cylinder     firing order     angle
  * --------     ------------     -----
  *    0               0             0
@@ -269,9 +282,10 @@ int find_engine(const char *name)
  in one frame can be a bit harsh..
 */
 
-void make_tables(void) {
-int i;
-float f;
+void make_tables(void)
+{
+  int i;
+  float f;
 
   f = ONEREV / (M_PI * 2);
   for (i = 0 ; i <= TWOREV ; i++) {
@@ -290,16 +304,17 @@ float f;
 /* angle is how far around the axis to go (up to 360) */
 
 void cylinder (GLfloat x, GLfloat y, GLfloat z, 
-    float length, float outer, float inner, int endcaps, int sang, int eang) {
-int a; /* current angle around cylinder */
-int b = 0; /* previous */
-int angle, norm, step, sangle;
-float z1, y1, z2, y2, ex=0;
-float y3, z3;
-float Z1, Y1, Z2, Y2, xl, Y3, Z3;
-GLfloat y2c[TWOREV], z2c[TWOREV];
-GLfloat ony, onz; /* previous normals */
-int nsegs, tube = 0;
+    float length, float outer, float inner, int endcaps, int sang, int eang)
+{
+  int a; /* current angle around cylinder */
+  int b = 0; /* previous */
+  int angle, norm, step, sangle;
+  float z1, y1, z2, y2, ex=0;
+  float y3, z3;
+  float Z1, Y1, Z2, Y2, xl, Y3, Z3;
+  GLfloat y2c[TWOREV], z2c[TWOREV];
+  GLfloat ony, onz; /* previous normals */
+  int nsegs, tube = 0;
 
   glPushMatrix();
   nsegs = outer*(MAX(win_w, win_h)/200);
@@ -436,7 +451,8 @@ int nsegs, tube = 0;
 }
 
 /* this is just a convenience function to make a solid rod */
-void rod (GLfloat x, GLfloat y, GLfloat z, float length, float diameter) {
+void rod (GLfloat x, GLfloat y, GLfloat z, float length, float diameter)
+{
     cylinder(x, y, z, length, diameter, diameter, 3, 0, ONEREV);
 }
 
@@ -461,10 +477,11 @@ GLvoid normal(GLfloat v1[], GLfloat v2[], GLfloat v3[],
 
 
 void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
-            GLfloat t) {
-GLfloat yh;
-GLfloat xw;
-GLfloat zt;
+            GLfloat t)
+{
+  GLfloat yh;
+  GLfloat xw;
+  GLfloat zt;
 
   yh = y+h; xw = x+w; zt = z - t;
 
@@ -507,9 +524,10 @@ GLfloat zt;
   glEnd();
 }
 
-void makepiston(void) {
-GLfloat colour[] = {0.6, 0.6, 0.6, 1.0};
-int i;
+void makepiston(void)
+{
+  GLfloat colour[] = {0.6, 0.6, 0.6, 1.0};
+  int i;
   
   i = glGenLists(1);
   glNewList(i, GL_COMPILE);
@@ -525,17 +543,19 @@ int i;
   glEndList();
 }
 
-void CrankBit(GLfloat x) {
+void CrankBit(GLfloat x)
+{
   Rect(x, -1.4, 0.5, 0.2, 1.8, 1);
   cylinder(x, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
 }
 
-void boom(GLfloat x, GLfloat y, int s) {
-static GLfloat red[] = {0, 0, 0, 0.9};
-static GLfloat lpos[] = {0, 0, 0, 1};
-static GLfloat d = 0, wd;
-int flameOut = 720/ENG.speed/ENG.cylinders;
-static int time = 0;
+void boom(GLfloat x, GLfloat y, int s)
+{
+  static GLfloat red[] = {0, 0, 0, 0.9};
+  static GLfloat lpos[] = {0, 0, 0, 1};
+  static GLfloat d = 0, wd;
+  int flameOut = 720/ENG.speed/ENG.cylinders;
+  static int time = 0;
 
   if (time == 0 && s) {
     red[0] = red[1] = 0;
@@ -575,17 +595,17 @@ static int time = 0;
   glDisable(GL_BLEND);
 }
 
-void display(Engine *e) {
-
-static int a = 0;
-GLfloat zb, yb;
-static GLfloat ln[730], yp[730], ang[730];
-static int ln_init = 0;
-static int lastPlug = 0;
-int half;
-int sides;
-int j, b;
-static float rightSide;
+void display(Engine *e)
+{
+  static int a = 0;
+  GLfloat zb, yb;
+  static GLfloat ln[730], yp[730], ang[730];
+  static int ln_init = 0;
+  static int lastPlug = 0;
+  int half;
+  int sides;
+  int j, b;
+  static float rightSide;
 
   glEnable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -672,8 +692,10 @@ static float rightSide;
 	  b = (a+HALFREV+ENG.pistonAngle[j+half]) % TWOREV; 
 	  glPushMatrix();
 	  glRotatef(ang[b], 0, 1, 0);
-	  rod(-cos_table[b], -crankWidth/2-crankOffset*(j+half), -sin_table[b], 
-		ln[b], 0.2);
+	  rod(-cos_table[b],
+              -crankWidth/2-crankOffset*(j+half),
+              -sin_table[b], 
+              ln[b], 0.2);
 	  glPopMatrix();
       }
       glPopMatrix();
@@ -736,11 +758,12 @@ static float rightSide;
   glFlush();
 }
 
-void makeshaft (void) {
-int i;
-int j;
-const static float crankThick = 0.2;
-const static float crankDiam = 0.3;
+void makeshaft (void)
+{
+  int i;
+  int j;
+  const static float crankThick = 0.2;
+  const static float crankDiam = 0.3;
 
   i = glGenLists(1);
   glNewList(i, GL_COMPILE);
@@ -757,10 +780,11 @@ const static float crankDiam = 0.3;
    */
   rod(-2, 0, 0, 2, crankDiam);
 
-  /* Each crank is crankWidth units wide and the total width of a cylinder assembly
-   * is 3.3 units. For inline engines, there is just a single crank per cylinder
-   * width.  For other engine configurations, there is a crank between each pair
-   * of adjacent cylinders on one side of the engine, so the crankOffset length is 
+  /* Each crank is crankWidth units wide and the total width of a
+   * cylinder assembly is 3.3 units. For inline engines, there is just
+   * a single crank per cylinder width.  For other engine
+   * configurations, there is a crank between each pair of adjacent
+   * cylinders on one side of the engine, so the crankOffset length is
    * halved.
    */
   crankOffset = 3.3;
@@ -793,9 +817,93 @@ const static float crankDiam = 0.3;
   glEndList();
 }
 
+static void
+load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
+{
+  const char *font = get_string_resource (res, "Font");
+  XFontStruct *f;
+  Font id;
+  int first, last;
+
+  if (!font) font = "-*-times-bold-r-normal-*-180-*";
+
+  f = XLoadQueryFont(mi->dpy, font);
+  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
+
+  id = f->fid;
+  first = f->min_char_or_byte2;
+  last = f->max_char_or_byte2;
+  
+  clear_gl_error ();
+  *dlistP = glGenLists ((GLuint) last+1);
+  check_gl_error ("glGenLists");
+  glXUseXFont(id, first, last-first+1, *dlistP + first);
+  check_gl_error ("glXUseXFont");
+
+  *fontP = f;
+}
+
+
+static void
+print_title_string (ModeInfo *mi, const char *string, GLfloat x, GLfloat y)
+{
+  Engine *e = &engine[MI_SCREEN(mi)];
+  XFontStruct *font = e->xfont;
+  GLfloat line_height = font->ascent + font->descent;
+
+  y -= line_height;
+
+  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
+                GL_ENABLE_BIT);     /* for various glDisable calls */
+  glDisable (GL_LIGHTING);
+  glDisable (GL_DEPTH_TEST);
+  {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    {
+      glLoadIdentity();
+
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      {
+        int i;
+        int x2 = x;
+        glLoadIdentity();
+
+        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
+
+        glRasterPos2f (x, y);
+        for (i = 0; i < strlen(string); i++)
+          {
+            char c = string[i];
+            if (c == '\n')
+              {
+                glRasterPos2f (x, (y -= line_height));
+                x2 = x;
+              }
+            else
+              {
+                glCallList (e->font_dlist + (int)(c));
+                x2 += (font->per_char
+                       ? font->per_char[c - font->min_char_or_byte2].width
+                       : font->min_bounds.width);
+              }
+          }
+      }
+      glPopMatrix();
+    }
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+  }
+  glPopAttrib();
+
+  glMatrixMode(GL_MODELVIEW);
+}
+
+
+
 void reshape_engine(ModeInfo *mi, int width, int height)
 {
-
  glViewport(0,0,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
@@ -807,8 +915,8 @@ void reshape_engine(ModeInfo *mi, int width, int height)
 
 void init_engine(ModeInfo *mi)
 {
-int screen = MI_SCREEN(mi);
-Engine *e;
+  int screen = MI_SCREEN(mi);
+  Engine *e;
 
  if (engine == NULL) {
    if ((engine = (Engine *) calloc(MI_NUM_SCREENS(mi),
@@ -865,11 +973,24 @@ Engine *e;
  glEnable(GL_NORMALIZE);
  make_tables();
  engineType = find_engine(which_engine);
+
+ e->engine_name = malloc(200);
+ sprintf (e->engine_name,
+          "%s\n%s%d%s",
+          engines[engineType].engineName,
+          (engines[engineType].includedAngle == 0 ? "" :
+           engines[engineType].includedAngle == 180 ? "Flat " : "V"),
+          engines[engineType].cylinders,
+          (engines[engineType].includedAngle == 0 ? " Cylinder" : "")
+          );
+
  makeshaft();
  makepiston();
+ load_font (mi, "titleFont", &e->xfont, &e->font_dlist);
 }
 
-Bool engine_handle_event (ModeInfo *mi, XEvent *event) {
+Bool engine_handle_event (ModeInfo *mi, XEvent *event)
+{
    Engine *e = &engine[MI_SCREEN(mi)];
 
    if (event->xany.type == ButtonPress &&
@@ -898,26 +1019,31 @@ Bool engine_handle_event (ModeInfo *mi, XEvent *event) {
   return False;
 }
 
-void draw_engine(ModeInfo *mi) {
-Engine *e = &engine[MI_SCREEN(mi)];
-Window w = MI_WINDOW(mi);
-Display *disp = MI_DISPLAY(mi);
+void draw_engine(ModeInfo *mi)
+{
+  Engine *e = &engine[MI_SCREEN(mi)];
+  Window w = MI_WINDOW(mi);
+  Display *disp = MI_DISPLAY(mi);
 
   if (!e->glx_context)
-      return;
+    return;
 
   glXMakeCurrent(disp, w, *(e->glx_context));
 
 
   display(e);
 
+  if (do_titles)
+    print_title_string (mi, e->engine_name,
+                        10, mi->xgwa.height - 10);
+
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
 }
 
-void release_engine(ModeInfo *mi) {
-
+void release_engine(ModeInfo *mi) 
+{
   if (engine != NULL) {
    (void) free((void *) engine);
    engine = NULL;

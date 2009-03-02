@@ -5406,5 +5406,9 @@ msgid ""
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
 
+#, fuzzy
+#~ msgid "Copyright  1991-2002 %s"
+#~ msgstr "Copyright  1991-2002 %s"
+
 #~ msgid "Copyright 息 1991-2002 %s"
 #~ msgstr "Copyright  1991-2002 %s"

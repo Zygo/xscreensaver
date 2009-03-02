@@ -10,6 +10,8 @@
  * Cloudlife only draws one pixel of each cell per tick, whether the cell is
  * alive or dead.  So gliders look like little comets.
 
+ * 20 May 2003 -- now includes color cycling and a man page.
+
  * Based on several examples from the hacks directory of: 
  
  * xscreensaver, Copyright (c) 1997, 1998, 2002 Jamie Zawinski <jwz@jwz.org>
@@ -43,14 +45,14 @@
 #define inline			/* */
 #endif
 
-typedef struct {
+struct field {
     unsigned int height;
     unsigned int width;
     unsigned int max_age;
     unsigned int cell_size;
     unsigned char *cells;
     unsigned char *new_cells;
-} field;
+};
 
 static void 
 *xrealloc(void *p, size_t size)
@@ -63,10 +65,10 @@ static void
     return ret;
 }
 
-field 
+struct field 
 *init_field(void)
 {
-    field *f = xrealloc(NULL, sizeof(field));
+    struct field *f = xrealloc(NULL, sizeof(struct field));
     f->height = 0;
     f->width = 0;
     f->cell_size = get_integer_resource("cellSize", "Integer");
@@ -77,7 +79,7 @@ field
 }
 
 void 
-resize_field(field * f, unsigned int w, unsigned int h)
+resize_field(struct field * f, unsigned int w, unsigned int h)
 {
     f->width = w;
     f->height = h;
@@ -91,14 +93,14 @@ resize_field(field * f, unsigned int w, unsigned int h)
 }
 
 inline unsigned char 
-*cell_at(field * f, unsigned int x, unsigned int y)
+*cell_at(struct field * f, unsigned int x, unsigned int y)
 {
     return (f->cells + x * sizeof(unsigned char) + 
                        y * f->width * sizeof(unsigned char));
 }
 
 inline unsigned char 
-*new_cell_at(field * f, unsigned int x, unsigned int y)
+*new_cell_at(struct field * f, unsigned int x, unsigned int y)
 {
     return (f->new_cells + x * sizeof(unsigned char) + 
                            y * f->width * sizeof(unsigned char));
@@ -106,7 +108,7 @@ inline unsigned char
 
 static void
 draw_field(Display * dpy,
-	   Window window, Colormap cmap, GC fgc, GC bgc, field * f)
+	   Window window, GC fgc, GC bgc, struct field * f)
 {
     unsigned int x, y;
     unsigned int rx, ry = 0;	/* random amount to offset the dot */
@@ -158,7 +160,7 @@ cell_value(unsigned char c, unsigned int age)
 }
 
 inline unsigned int 
-is_alive(field * f, unsigned int x, unsigned int y)
+is_alive(struct field * f, unsigned int x, unsigned int y)
 {
     unsigned int count;
     unsigned int i, j;
@@ -191,7 +193,7 @@ is_alive(field * f, unsigned int x, unsigned int y)
 }
 
 unsigned int 
-do_tick(field * f)
+do_tick(struct field * f)
 {
     unsigned int x, y;
     unsigned int count = 0;
@@ -219,7 +221,7 @@ random_cell(unsigned int p)
 }
 
 void 
-populate_field(field * f, unsigned int p)
+populate_field(struct field * f, unsigned int p)
 {
     unsigned int x, y;
 
@@ -231,7 +233,7 @@ populate_field(field * f, unsigned int p)
 }
 
 void 
-populate_edges(field * f, unsigned int p)
+populate_edges(struct field * f, unsigned int p)
 {
     unsigned int i;
 
@@ -253,8 +255,10 @@ char *defaults[] = {
     ".background:	black",
     ".foreground:	blue",
     "*cycleDelay:	25000",
+    "*cycleColors:      2",
+    "*ncolors:          64",
     "*maxAge:		64",
-    "*initialDensity:	160",
+    "*initialDensity:	30",
     "*cellSize:		3",
     0
 };
@@ -263,6 +267,8 @@ XrmOptionDescRec options[] = {
     {"-background", ".background", XrmoptionSepArg, 0},
     {"-foreground", ".foreground", XrmoptionSepArg, 0},
     {"-cycle-delay", ".cycleDelay", XrmoptionSepArg, 0},
+    {"-cycle-colors", ".cycleColors", XrmoptionSepArg, 0},
+    {"-ncolors", ".ncolors", XrmoptionSepArg, 0},
     {"-cell-size", ".cellSize", XrmoptionSepArg, 0},
     {"-initial-density", ".initialDensity", XrmoptionSepArg, 0},
     {"-max-age", ".maxAge", XrmoptionSepArg, 0},
@@ -271,23 +277,40 @@ XrmOptionDescRec options[] = {
 
 void screenhack(Display * dpy, Window window)
 {
-    field *f = init_field();
+    struct field *f = init_field();
 
 #ifdef TIME_ME
     time_t start_time = time(NULL);
 #endif
 
     unsigned int cycles = 0;
+    unsigned int colorindex = 0;  /* which color in the colormap are we on */
+    unsigned int colortimer = 0;  /* when this reaches 0, cycle to next color */
+
+    int cycle_delay;
+    int cycle_colors;
+    int ncolors;
+    int density;
 
     GC fgc, bgc;
     XGCValues gcv;
     XWindowAttributes xgwa;
+    XColor *colors = NULL;
+    Bool tmp = True;
 
-    unsigned int cycle_delay = (unsigned int)
-	get_integer_resource("cycleDelay", "Integer");
-    unsigned int density = (unsigned int)
-	get_integer_resource("initialDensity", "Integer") & 0xff;
+    cycle_delay = get_integer_resource("cycleDelay", "Integer");
+    cycle_colors = get_integer_resource("cycleColors", "Integer");
+    ncolors = get_integer_resource("ncolors", "Integer");
+    density = (get_integer_resource("initialDensity", "Integer") 
+                  % 100 * 256)/100;
+
     XGetWindowAttributes(dpy, window, &xgwa);
+
+    if (cycle_colors) {
+        colors = (XColor *) xrealloc(colors, sizeof(XColor) * (ncolors+1));
+        make_smooth_colormap (dpy, xgwa.visual, xgwa.colormap, colors, &ncolors,
+                              True, &tmp, True);
+    }
 
     gcv.foreground = get_pixel_resource("foreground", "Foreground",
 					dpy, xgwa.colormap);
@@ -298,6 +321,18 @@ void screenhack(Display * dpy, Window window)
     bgc = XCreateGC(dpy, window, GCForeground, &gcv);
 
     while (1) {
+
+        if (cycle_colors) {
+            if (colortimer == 0) {
+               colortimer = cycle_colors;
+               if( colorindex == 0 ) 
+                   colorindex = ncolors;
+               colorindex--;
+               XSetForeground(dpy, fgc, colors[colorindex].pixel);
+            }
+            colortimer--;
+        } 
+
 	XGetWindowAttributes(dpy, window, &xgwa);
 	if (f->height != xgwa.height / (1 << f->cell_size) + 2 ||
 	    f->width != xgwa.width / (1 << f->cell_size) + 2) {
@@ -309,7 +344,7 @@ void screenhack(Display * dpy, Window window)
 
 	screenhack_handle_events(dpy);
 
-	draw_field(dpy, window, xgwa.colormap, fgc, bgc, f);
+	draw_field(dpy, window, fgc, bgc, f);
 
 	if (do_tick(f) < (f->height + f->width) / 4) {
 	    populate_field(f, density);
@@ -322,7 +357,7 @@ void screenhack(Display * dpy, Window window)
 	}
 
 	XSync(dpy, False);
-
+ 
 	cycles++;
 
 	if (cycle_delay)

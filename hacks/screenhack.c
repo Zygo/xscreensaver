@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -592,7 +592,7 @@ main (int argc, char **argv)
 				    XtNbackground, (Pixel) bg,
 				    XtNborderColor, (Pixel) bd,
 				    XtNinput, True,  /* for WM_HINTS */
-				    0);
+				    NULL);
 	  XtDestroyWidget (toplevel);
 	  toplevel = new;
 	  XtRealizeWidget (toplevel);
@@ -603,7 +603,7 @@ main (int argc, char **argv)
 	  XtVaSetValues (toplevel,
                          XtNmappedWhenManaged, False,
                          XtNinput, True,  /* for WM_HINTS */
-                         0);
+                         NULL);
 	  XtRealizeWidget (toplevel);
 	  window = XtWindow (toplevel);
 
@@ -623,7 +623,7 @@ main (int argc, char **argv)
 /*
       if (dont_map)
 	{
-	  XtVaSetValues (toplevel, XtNmappedWhenManaged, False, 0);
+	  XtVaSetValues (toplevel, XtNmappedWhenManaged, False, NULL);
 	  XtRealizeWidget (toplevel);
 	}
       else
@@ -632,7 +632,7 @@ main (int argc, char **argv)
 	  XtPopup (toplevel, XtGrabNone);
 	}
 
-      XtVaSetValues(toplevel, XtNtitle, version, 0);
+      XtVaSetValues(toplevel, XtNtitle, version, NULL);
 
       /* For screenhack_handle_events(): select KeyPress, and
          announce that we accept WM_DELETE_WINDOW. */

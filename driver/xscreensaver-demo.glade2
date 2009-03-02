@@ -880,7 +880,7 @@ Installed</property>
 			  <child>
 			    <widget class="GtkImage" id="image2">
 			      <property name="visible">True</property>
-			      <property name="pixbuf">screensaver-snap.xpm</property>
+			      <property name="pixbuf">screensaver-snap.png</property>
 			      <property name="xalign">0</property>
 			      <property name="yalign">0</property>
 			      <property name="xpad">4</property>
@@ -1085,7 +1085,7 @@ Installed</property>
 			  <child>
 			    <widget class="GtkImage" id="diag_logo">
 			      <property name="visible">True</property>
-			      <property name="pixbuf">screensaver-diagnostic.xpm</property>
+			      <property name="pixbuf">screensaver-diagnostic.png</property>
 			      <property name="xalign">0.5</property>
 			      <property name="yalign">0</property>
 			      <property name="xpad">0</property>
@@ -1218,7 +1218,7 @@ Installed</property>
 			  <child>
 			    <widget class="GtkImage" id="dpms_logo">
 			      <property name="visible">True</property>
-			      <property name="pixbuf">screensaver-power.xpm</property>
+			      <property name="pixbuf">screensaver-power.png</property>
 			      <property name="xalign">0.5</property>
 			      <property name="yalign">0</property>
 			      <property name="xpad">0</property>
@@ -1553,7 +1553,7 @@ Installed</property>
 			  <child>
 			    <widget class="GtkImage" id="image5">
 			      <property name="visible">True</property>
-			      <property name="pixbuf">screensaver-colorselector.xpm</property>
+			      <property name="pixbuf">screensaver-colorselector.png</property>
 			      <property name="xalign">0.5</property>
 			      <property name="yalign">0</property>
 			      <property name="xpad">0</property>
@@ -1978,7 +1978,7 @@ Installed</property>
 		      <child>
 			<widget class="GtkImage" id="cmd_logo">
 			  <property name="visible">True</property>
-			  <property name="pixbuf">screensaver-cmndln.xpm</property>
+			  <property name="pixbuf">screensaver-cmndln.png</property>
 			  <property name="xalign">0.5</property>
 			  <property name="yalign">0.5</property>
 			  <property name="xpad">4</property>

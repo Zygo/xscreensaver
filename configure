@@ -6050,7 +6050,7 @@ case "$host" in
       #
       if test -f /usr/dt/include/Xm/Xm.h ; then
         X_CFLAGS="$X_CFLAGS -I/usr/dt/include"
-        X_LIBS="$X_LIBS -L/usr/dt/lib -R:/usr/dt/lib"
+        MOTIF_LIBS="$MOTIF_LIBS -L/usr/dt/lib -R/usr/dt/lib"
 
         # Some versions of Slowlaris Motif require -lgen.  But not all.  Why?
         echo "$as_me:$LINENO: checking for regcmp in -lgen" >&5
@@ -6109,7 +6109,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_gen_regcmp" >&5
 echo "${ECHO_T}$ac_cv_lib_gen_regcmp" >&6
 if test $ac_cv_lib_gen_regcmp = yes; then
-  X_LIBS="$X_LIBS -lgen"
+  MOTIF_LIBS="$MOTIF_LIBS -lgen"
 fi
 
       fi
@@ -9362,6 +9362,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <X11/Xlib.h>
+		     #include <X11/Xmd.h>
 
 #include <X11/extensions/dpms.h>
 _ACEOF
@@ -11151,15 +11152,114 @@ _ACEOF
   fi
 
   if test "$ac_cv_kerberos5" = yes ; then
-    have_kerberos=yes
-    have_kerberos5=yes
-    cat >>confdefs.h <<\_ACEOF
+
+    # Andrew Snare <ajs@pigpond.com> wrote:
+    #
+    # You were assuming that if kerberosV (krb5) was found, then kerberosIV
+    # (krb4) was also available.  This turns out not to be the case with
+    # mit-krb-1.2.7; apparently backwards-compatibility with KerberosIV
+    # is optional.
+    #
+    # So, disable kerberosV support if libkrb4 can't be found.
+    # This is not the best solution, but it makes the compile not fail.
+    #
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for krb_get_tf_realm in -lkrb4" >&5
+echo $ECHO_N "checking for krb_get_tf_realm in -lkrb4... $ECHO_C" >&6
+if test "${ac_cv_lib_krb4_krb_get_tf_realm+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lkrb4  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char krb_get_tf_realm ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+krb_get_tf_realm ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_krb4_krb_get_tf_realm=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_krb4_krb_get_tf_realm=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_krb4_krb_get_tf_realm" >&5
+echo "${ECHO_T}$ac_cv_lib_krb4_krb_get_tf_realm" >&6
+if test $ac_cv_lib_krb4_krb_get_tf_realm = yes; then
+  have_kerberos=yes
+else
+  have_kerberos=no
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+    if test "$have_kerberos" = yes ; then
+      have_kerberos5=yes
+      cat >>confdefs.h <<\_ACEOF
 #define HAVE_KERBEROS 1
 _ACEOF
 
-    cat >>confdefs.h <<\_ACEOF
+      cat >>confdefs.h <<\_ACEOF
 #define HAVE_KERBEROS5 1
 _ACEOF
+
+    else
+      have_kerberos5=no
+      { echo "$as_me:$LINENO: WARNING: Cannot find compat lib (libkrb4) needed to use Kerberos 5" >&5
+echo "$as_me: WARNING: Cannot find compat lib (libkrb4) needed to use Kerberos 5" >&2;}
+    fi
 
   fi
 
@@ -12684,7 +12784,6 @@ done
     # the new way...
     # run pkg-config based tests.
     #
-
     pkgs=''
     pkg_check_version() {
       if test "$ok" = yes ; then
@@ -12714,11 +12813,15 @@ echo "${ECHO_T}no" >&6
       fi
     }
 
+    echo "$as_me:$LINENO: result: checking for GTK 2.x with pkg-config based tests..." >&5
+echo "${ECHO_T}checking for GTK 2.x with pkg-config based tests..." >&6
+
     ok="yes"
-    pkg_check_version     gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
-    pkg_check_version  gmodule-2.0  2.0.0
-    pkg_check_version   libxml-2.0  2.4.6
-    pkg_check_version libglade-2.0  1.99.0
+    pkg_check_version       gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
+    pkg_check_version    gmodule-2.0  2.0.0
+    pkg_check_version     libxml-2.0  2.4.6
+    pkg_check_version   libglade-2.0  1.99.0
+#   pkg_check_version gdk_pixbuf      0.1
     have_gtk="$ok"
 
     if test "$have_gtk" = yes; then
@@ -12738,10 +12841,14 @@ _ACEOF
       #
       # we don't have GTK 2.  Let's look for GTK 1.
       #
+      echo "$as_me:$LINENO: result: checking for GTK 1.x with pkg-config based tests..." >&5
+echo "${ECHO_T}checking for GTK 1.x with pkg-config based tests..." >&6
+
       pkgs=''
       ok="yes"
-      pkg_check_version gtk+ 1.2           ; ac_gtk_version_string="$vers"
-      pkg_check_version glib 1.0
+      pkg_check_version gtk+       1.2     ; ac_gtk_version_string="$vers"
+      pkg_check_version glib       1.0
+      pkg_check_version gdk_pixbuf 0.1
       have_gtk="$ok"
 
       # Now check for Gnome...
@@ -12803,6 +12910,8 @@ echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
     # the old way...
     # run {gnome,gtk}-config based tests.
     #
+    echo "$as_me:$LINENO: result: checking for GTK 1.x with gtk-config based tests..." >&5
+echo "${ECHO_T}checking for GTK 1.x with gtk-config based tests..." >&6
 
     for ac_prog in glib12-config glib-config
 do
@@ -14760,7 +14869,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 14769 "configure"
+#line 14878 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -15668,6 +15777,8 @@ if test "$with_gdk_pixbuf" = yes; then
       #
       # we don't have Gtk; or we have Gtk 2.x.  Check for pixbuf 2.x.
       #
+      echo "$as_me:$LINENO: result: checking for gdk_pixbuf 2.x with gtk-config based tests..." >&5
+echo "${ECHO_T}checking for gdk_pixbuf 2.x with gtk-config based tests..." >&6
       pkg_check_version gdk-pixbuf-2.0      2.0.0
       pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
       have_gdk_pixbuf="$ok"
@@ -15682,8 +15793,10 @@ if test "$with_gdk_pixbuf" = yes; then
       if test "$have_gdk_pixbuf2" = no; then
         pkgs=''
         ok="yes"
-        pkg_check_version gdk-pixbuf      0.0
-        pkg_check_version gdk-pixbuf-xlib 0.0
+      echo "$as_me:$LINENO: result: checking for gdk_pixbuf 1.x with gtk-config based tests..." >&5
+echo "${ECHO_T}checking for gdk_pixbuf 1.x with gtk-config based tests..." >&6
+        pkg_check_version gdk_pixbuf      0.0
+        pkg_check_version gdk_pixbuf_xlib 0.0
         have_gdk_pixbuf="$ok"
       fi
     fi
@@ -15721,6 +15834,9 @@ echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
     # that we don't have to look for gdk-pixbuf-config -- in Gnome 1.4,
     # pkg-config exists, but doesn't know about pixbuf.
     #
+
+   echo "$as_me:$LINENO: result: checking for gdk_pixbuf with gdk-pixbuf-config based tests..." >&5
+echo "${ECHO_T}checking for gdk_pixbuf with gdk-pixbuf-config based tests..." >&6
 
     # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
     # look in /foo/bin/ for for gdk-pixbuf-config.
@@ -19637,7 +19753,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (150+ different executables) will"
+  echo "      The various graphics demos (160+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

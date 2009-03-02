@@ -294,17 +294,28 @@ static void describe_dead_child (saver_info *, pid_t, int wait_status);
 static int block_sigchld_handler = 0;
 
 
-void
+#ifdef HAVE_SIGACTION
+ sigset_t
+#else  /* !HAVE_SIGACTION */
+ int
+#endif /* !HAVE_SIGACTION */
 block_sigchld (void)
 {
 #ifdef HAVE_SIGACTION
   sigset_t child_set;
   sigemptyset (&child_set);
   sigaddset (&child_set, SIGCHLD);
+  sigaddset (&child_set, SIGPIPE);
   sigprocmask (SIG_BLOCK, &child_set, 0);
 #endif /* HAVE_SIGACTION */
 
   block_sigchld_handler++;
+
+#ifdef HAVE_SIGACTION
+  return child_set;
+#else  /* !HAVE_SIGACTION */
+  return 0;
+#endif /* !HAVE_SIGACTION */
 }
 
 void
@@ -314,6 +325,7 @@ unblock_sigchld (void)
   sigset_t child_set;
   sigemptyset(&child_set);
   sigaddset(&child_set, SIGCHLD);
+  sigaddset(&child_set, SIGPIPE);
   sigprocmask(SIG_UNBLOCK, &child_set, 0);
 #endif /* HAVE_SIGACTION */
 

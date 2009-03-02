@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		4.10
+%define	version		4.11
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -34,7 +34,7 @@ Buildroot:	%{_tmppath}/%{name}-%{version}-root
 A modular screen saver and locker for the X Window System.
 Highly customizable: allows the use of any program that
 can draw on the root window as a display mode.
-More than 150 display modes are included in this package.
+More than 160 display modes are included in this package.
 %{?USE_GL:See also the xscreensaver-gl package, which}
 %{?USE_GL:includes optional OpenGL display modes.}
 
@@ -42,7 +42,7 @@ More than 150 display modes are included in this package.
 Un économiseur d'écran et verrouillage modulaire pour X-Window.
 Hautement configurable: permet l'utilisation de n'importe quel programme
 qui peut dessiner dans la fenêtre root.
-Plus de 150 modes d'affichage sont inclus dans ce paquet.
+Plus de 160 modes d'affichage sont inclus dans ce paquet.
 %{?USE_GL:Voir aussi le paquet xscreensaver-gl, qui inclut}
 %{?USE_GL:des modules optionnels OpenGL.}
 

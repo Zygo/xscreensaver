@@ -156,7 +156,7 @@ void DrawSpark(global_info_t *info, flurry_info_t *flurry, Spark *s);
 /* int fieldIncoherence = 0; */
 /* int ifieldSpeed = 120; */
 
-static __inline__ float FastDistance2D(float x, float y)
+static /*inline*/ float FastDistance2D(float x, float y)
 {
         /* this function computes the distance from 0,0 to x,y with ~3.5% error */
 	float mn;
