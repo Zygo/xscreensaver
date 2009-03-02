@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,8 +11,11 @@
 
 #include "screenhack.h"
 #include <math.h>
+#ifdef VMS
+#define M_PI 3.14159265358979323846
+#endif
 #if __STDC__
-#include <values.h>
+#include <math.h>	/* for M_PI */
 #endif
 
 static double sins [360];
@@ -193,7 +196,7 @@ random_helix (dpy, window)
 char *progclass = "Helix";
 
 char *defaults [] = {
-  "*background: black",
+  "Helix.background: black",		/* to placate SGI */
   0
 };
 

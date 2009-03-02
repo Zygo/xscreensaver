@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992, 1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -105,7 +105,7 @@ shrapnel (parent, dpy, cmap)
   p->dx = (random () % 5000) - 2500 + parent->dx;
   p->dy = (random () % 5000) - 2500 + parent->dy;
   p->decay = (random () % 50) - 60;
-  p->size = 6000;
+  p->size = (parent->size * 2) / 3;
   p->fuse = 0;
   p->primary = False;
 
@@ -207,7 +207,7 @@ pyro (dpy, window, cmap)
 	  else
 	    XSetForeground (dpy, draw_gc, p->color.pixel);
 
-	  if (p->primary)
+	  if /*(p->primary)*/ (size > 2)
 	    XFillArc (dpy, window, draw_gc, x, y, size, size, 0, 360*64);
 	  else
 	    XFillRectangle (dpy, window, draw_gc, x, y, size, size);
@@ -231,8 +231,8 @@ pyro (dpy, window, cmap)
 char *progclass = "Pyro";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Pyro.background:	black",		/* to placate SGI */
+  "Pyro.foreground:	white",
   "*count:	100",
   "*frequency:	30",
   "*scatter:	20",

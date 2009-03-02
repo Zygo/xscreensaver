@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,9 +14,9 @@
 char *progclass = "XRoger";
 
 char *defaults [] = {
-  "*background: black",
-  "*foreground: red",
-  "*delay:	5",
+  "XRoger.background:	black",
+  "XRoger.foreground:	red",
+  "*delay:		5",
   0
 };
 
@@ -39,7 +39,7 @@ screenhack (dpy, window)
   Colormap cmap;
   GC draw_gc, erase_gc;
   unsigned int fg;
-  XColor color, color2;
+  XColor color, color2, color3;
   int delay = get_integer_resource ("delay", "Integer");
   XWindowAttributes xgwa;
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -89,9 +89,11 @@ screenhack (dpy, window)
 	    if (v >= 1.0) v = 1.0, delta = -delta;
 	    if (v <= 0.7) v = 0.7, delta = -delta;
 	    hsv_to_rgb (h, s, v, &color2.red, &color2.green, &color2.blue);
-	    if (XAllocColor (dpy, cmap, &color2))
+	    color3 = color2;
+	    if (XAllocColor (dpy, cmap, &color3))
 	      {
-		XSetForeground (dpy, draw_gc, color.pixel);
+		XSetForeground (dpy, draw_gc, color3.pixel);
+		color2.pixel = color3.pixel;
 		XFreeColors (dpy, cmap, &color.pixel, 1, 0);
 	      }
 	    color = color2;

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -221,8 +221,8 @@ hyper (xy, xz, yz, xw, yw, zw)
 char *progclass = "Hypercube";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Hypercube.background:	black",		/* to placate SGI */
+  "Hypercube.foreground:	white",
   "*color0:	red",
   "*color1:	orange",
   "*color2:	yellow",
@@ -277,7 +277,7 @@ screenhack (d, w)
   XWindowAttributes xgwa;
   Colormap cmap;
   double xy, xz, yz, xw, yw, zw;
-  unsigned long bg, pixel;
+  unsigned long bg;
 
   dpy = d;
   window = w;

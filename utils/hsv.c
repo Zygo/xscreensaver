@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,10 +16,15 @@
 #include <X11/Xlib.h>
 
 void
+#if __STDC__
+hsv_to_rgb (int h, double s, double v,
+	    unsigned short *r, unsigned short *g, unsigned short *b)
+#else
 hsv_to_rgb (h,s,v, r,g,b)
      int h;			/* 0 - 360   */
      double s, v;		/* 0.0 - 1.0 */
      unsigned short *r, *g, *b;	/* 0 - 65535 */
+#endif
 {
   double H, S, V, R, G, B;
   double p1, p2, p3;
@@ -44,10 +49,15 @@ hsv_to_rgb (h,s,v, r,g,b)
 }
 
 void
+#if __STDC__
+rgb_to_hsv (unsigned short r, unsigned short g, unsigned short b,
+	    int *h, double *s, double *v)
+#else
 rgb_to_hsv (r,g,b, h,s,v)
      unsigned short r, g, b;	/* 0 - 65535 */
      int *h;			/* 0 - 360   */
      double *s, *v;		/* 0.0 - 1.0 */
+#endif
 {
   double R, G, B, H, S, V;
   double cmax, cmin;

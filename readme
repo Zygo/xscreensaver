@@ -80,11 +80,15 @@ server extension instead of XIdle.  I didn't have time to do this before the
 deadline for the R6 contrib tape, but by the time you read this, maybe it's
 done - check a later release.
 
-The latest version of xscreensaver is on LUCID.COM and FTP.X.ORG.
+The latest version of xscreensaver is on FTP.X.ORG.
 
-	-- Jamie Zawinski <jwz@lucid.com>
+	-- Jamie Zawinski <jwz@mcom.com>
 
 
+Changes since 1.23:	Fixed some private-colormap oddities in slidescreen,
+			decayscreen, and xroger.  Fixed apparent conservation-
+			of-mass problem in pyro; made the shrapnel round.
+Changes since 1.22:	Minor tweaks for IRIX5; fixed locking race condition.
 Changes since 1.21:	Minor tweaks for X11R6.
 			Fixes for non-default visuals.
 Changes since 1.20:	Fixed bug in color blitspin; added default image.

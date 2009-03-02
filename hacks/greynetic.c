@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,7 @@
 
 #define NBITS 12
 
+#ifndef VMS
 #include <X11/bitmaps/stipple>
 #include <X11/bitmaps/cross_weave>
 #include <X11/bitmaps/dimple1>
@@ -25,6 +26,20 @@
 #include <X11/bitmaps/root_weave>
 #include <X11/bitmaps/vlines2>
 #include <X11/bitmaps/vlines3>
+#else
+#include "sys$common:[decw$include.bitmaps]stipple.xbm"
+#include "sys$common:[decw$include.bitmaps]cross_weave.xbm"
+#include "sys$common:[decw$include.bitmaps]dimple1.xbm"
+#include "sys$common:[decw$include.bitmaps]dimple3.xbm"
+#include "sys$common:[decw$include.bitmaps]flipped_gray.xbm"
+#include "sys$common:[decw$include.bitmaps]gray1.xbm"
+#include "sys$common:[decw$include.bitmaps]gray3.xbm"
+#include "sys$common:[decw$include.bitmaps]hlines2.xbm"
+#include "sys$common:[decw$include.bitmaps]light_gray.xbm"
+#include "sys$common:[decw$include.bitmaps]root_weave.xbm"
+#include "sys$common:[decw$include.bitmaps]vlines2.xbm"
+#include "sys$common:[decw$include.bitmaps]vlines3.xbm"
+#endif
 
 static Pixmap pixmaps [NBITS];
 static GC gc;
@@ -141,8 +156,8 @@ greynetic (dpy, window)
 char *progclass = "Greynetic";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Greynetic.background:	black",		/* to placate SGI */
+  "Greynetic.foreground:	white",
   "*delay:	0",
   0
 };

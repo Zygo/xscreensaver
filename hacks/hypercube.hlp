@@ -1,0 +1,89 @@
+1 HYPERCUBE 
+2D projection of a 4d object
+
+SYNOPSIS
+
+  $ hypercube [-display host:display.screen] [-foreground color] 
+              [-background color] [-color[0-7] color] [-xy float] [-xz float] 
+              [-yz float] [-xw float] [-yw float] [-zw float] 
+              [-observer-z int] [-window] [-root] [-mono] [-delay usecs]
+
+2 DESCRIPTION
+The hypercube program displays a wireframe projection of a hypercube
+which is rotating at user-specified rates around any or all of its four axes.
+
+2 OPTIONS
+hypercube accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 100000, or about 1/10th second.
+
+   -observer-z int
+How far away the observer is from the center of the cube (the cube is one
+unit per side.)  Default 5.
+
+   -color0 color
+
+   -color1 color
+
+   -color2 color
+
+   -color3 color
+
+   -color4 color
+
+   -color5 color
+
+   -color6 color
+
+   -color7 color
+The colors used to draw the line segments bordering the eight faces of
+the cube.  Some of the faces have only two of their border-lines drawn in
+the specified color, and some have all four.
+
+   -xw float
+
+   -xy float
+
+   -xz float
+
+   -yw float
+
+   -yz float
+
+   -zw float
+The amount that the cube should be rotated around the specified axis at
+each frame of the animation, expressed in radians.  These should be small
+floating-point values (less than 0.05 works best.)  Default: xy=0.01,
+xz=0.005, yw=0.01.
+
+2 ENVIRONMENT
+
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright (co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@mcom.com>, 6-dec-92.

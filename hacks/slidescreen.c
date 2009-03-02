@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992, 1993, 1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,16 +34,22 @@ init_slide (dpy, window)
   Pixmap pixmap;
   Drawable d;
   Colormap cmap;
+  Visual *visual;
 
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
+  visual = xgwa.visual;
+
+  copy_default_colormap_contents (dpy, cmap, visual);
 
   delay = get_integer_resource ("delay", "Integer");
   delay2 = get_integer_resource ("delay2", "Integer");
   grid_size = get_integer_resource ("gridSize", "Integer");
   pix_inc = get_integer_resource ("pixelIncrement", "Integer");
   border = get_integer_resource ("internalBorderWidth", "InternalBorderWidth");
-  fg = get_pixel_resource ("background", "Background", dpy, cmap);
+  fg = get_pixel_resource ("background", "Background", dpy,
+			   /* Pixels always come out of default map. */
+			   XDefaultColormapOfScreen (xgwa.screen));
   root_p = get_boolean_resource ("root", "Boolean");
 
   if (delay < 0) delay = 0;
@@ -150,6 +156,7 @@ slide1 (dpy, window)
      case 1: dx = -1, dy = 0;  break;
      case 2: dx = 0,  dy = -1; break;
      case 3: dx = 1,  dy = 0;  break;
+     default: abort ();
      }
  } while (dir == last ||
 	  hole_x + dx < 0 || hole_x + dx >= grid_w ||
@@ -163,6 +170,7 @@ slide1 (dpy, window)
    case 1: size = 1 + (random()%hole_x); 	        w = size; h = 1; break;
    case 2: size = 1 + (random()%hole_y);	        h = size; w = 1; break;
    case 3: size = 1 + (random()%(grid_w - hole_x - 1)); w = size; h = 1; break;
+   default: abort ();
    }
 
  if (dx == -1) hole_x -= (size - 1);

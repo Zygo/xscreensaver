@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,6 +64,7 @@
 #include <X11/Xos.h>
 #include "vroot.h"
 
+
 extern Bool mono_p;
 extern char *progname;
 extern char *progclass;
@@ -72,7 +73,7 @@ extern XrmOptionDescRec options [];
 extern int options_size;
 extern char *defaults [];
 
-#if __STDC__
+#if xxx__STDC__
 # if defined(SVR4) || defined(SYSV)
 #  ifndef random
     extern int rand (void);
@@ -91,6 +92,12 @@ extern char *defaults [];
 #  endif
 # endif /* !totally-losing-SYSV */
 #endif /* __STDC__ */
+
+
+#ifdef VMS
+#define random rand
+#define srandom srand
+#endif
 
 #if __STDC__
 # define P(x)x
@@ -125,6 +132,8 @@ extern void make_color_ramp P((int h1, double s1, double v1,
 			       XColor *pixels, int npixels));
 
 extern Pixmap grab_screen_image P((Display *dpy, Window window, int root_p));
+extern void copy_default_colormap_contents P((Display *dpy, Colormap to_cmap,
+					      Visual *to_visual));
 
 static double _frand_tmp_;
 #define frand(f)							\

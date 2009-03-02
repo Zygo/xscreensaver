@@ -1,0 +1,69 @@
+1 NOSEGUY 
+A little guy with a big nose wanders around being witty
+
+SYNOPSIS
+
+  $ noseguy [-display host:display.screen] [-foreground color] 
+            [-background color] [-text-foreground color] 
+            [-text-background color] [-font font] [-window] [-root] 
+            [-mode mode] [-program program] [-filename \file] [-text text]
+
+2 DESCRIPTION
+A little man with a big nose and a hat runs around spewing out messages to
+the screen.  This code (and its bitmaps) were extracted from the xnlock
+program.
+
+2 OPTIONS
+noseguy accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -font font
+The font used for the messages.
+
+   -mode program | file | string
+In program mode, the messages are gotten by running a program.
+The program used is controlled by the -program option, and 
+the .program resource.
+
+In filename mode, the message used is the contents of a file.
+The file used is controlled by the -file option, and 
+the .filename resource.
+
+In string mode, the message is whatever was specified on the 
+command line as the -text option, or in the resource database
+as the .text resource.
+
+   -program " program"
+If mode is program (the default), then this program will be
+run periodically, and its output will be the text of the messages.  The
+default program is "fortune -s", but yow is also a good choice.
+
+   -filename file
+If mode is file, then the contents of this file will be used
+for all messages.
+
+   -text string
+If mode is string, then this text will be used for all messages.
+
+2 ENVIRONMENT
+
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 COPYRIGHT
+Copyright 1985, 1990 by Dan Heller <argv@sun.com>.
+
+2 AUTHOR
+Dan Heller <argv@sun.com>, 1985.
+
+Ability to run standalone or with xscreensaver added by 
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.

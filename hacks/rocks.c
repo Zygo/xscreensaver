@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,8 +16,11 @@
 #include "screenhack.h"
 #include <stdio.h>
 #include <math.h>
+#ifdef VMS
+#define M_PI 3.14159265358979323846
+#endif
 #if __STDC__
-#include <values.h>
+#include <math.h>	/* for M_PI */
 #endif
 
 #define MIN_DEPTH 2		/* rocks disappar when they get this close */
@@ -281,8 +284,8 @@ rocks_once ()
 char *progclass = "Rocks";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Rocks.background:	black",		/* to placate SGI */
+  "Rocks.foreground:	white",
   "*count:	100",
   "*delay:	50000",
   "*speed:	100",

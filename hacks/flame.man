@@ -62,4 +62,4 @@ supporting documentation.
 Scott Graves <spot@cs.cmu.edu>, 06-Jun-91.n
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@lucid.com>, 18-Oct-93.
+Jamie Zawinski <jwz@mcom.com>, 18-Oct-93.

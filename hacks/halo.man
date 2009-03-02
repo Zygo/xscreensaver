@@ -51,4 +51,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@lucid.com>, 6-jul-93.
+Jamie Zawinski <jwz@mcom.com>, 6-jul-93.

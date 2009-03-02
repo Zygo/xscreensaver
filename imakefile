@@ -8,7 +8,7 @@
 #include "config.h"
 
        TARFILES = README Imakefile config.h screenblank.txt
-            TAR = gnutar
+            TAR = tar
        COMPRESS = compress
    COMPRESS_EXT = Z
 /**/#      COMPRESS = gzip --verbose --best
@@ -20,9 +20,9 @@ all:: utils/Makefile driver/Makefile hacks/Makefile
 	cd hacks  ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
 clean install install.man:: utils/Makefile driver/Makefile hacks/Makefile
-	cd utils  ; $(MAKE) $@
-	cd driver ; $(MAKE) $@
-	cd hacks  ; $(MAKE) $@
+	cd utils  ; $(MAKE) $@ BINDIR=$(BINDIR) XAPPLOADDIR=$(XAPPLOADDIR)
+	cd driver ; $(MAKE) $@ BINDIR=$(BINDIR) XAPPLOADDIR=$(XAPPLOADDIR)
+	cd hacks  ; $(MAKE) $@ BINDIR=$(BINDIR) XAPPLOADDIR=$(XAPPLOADDIR)
 
 Makefiles:: utils/Makefile driver/Makefile hacks/Makefile
 

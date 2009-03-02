@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -54,6 +54,7 @@ static int state;	/* indicates states: walking or getting passwd */
 
 static void (*next_fn) ();
 
+#ifndef VMS
 #include "noses/nose.0.left"
 #include "noses/nose.1.left"
 #include "noses/nose.0.right"
@@ -62,6 +63,16 @@ static void (*next_fn) ();
 #include "noses/nose.right.front"
 #include "noses/nose.front"
 #include "noses/nose.down"
+#else
+#include "noses/nose.0_left"
+#include "noses/nose.1_left"
+#include "noses/nose.0_right"
+#include "noses/nose.1_right"
+#include "noses/nose.left_front"
+#include "noses/nose.right_front"
+#include "noses/nose.front"
+#include "noses/nose.down"
+#endif
 
 static void
 init_images ()
@@ -463,7 +474,7 @@ get_words()
     switch (getwordsfrom)
     {
     case FROM_PROGRAM:
-	if (pp = popen(program, "r"))
+	if ((pp = popen(program, "r")))
 	{
 	    while (fgets(p, sizeof(buf) - strlen(buf), pp))
 	    {
@@ -505,7 +516,7 @@ get_words()
 	}
 	break;
     case FROM_FILE:
-	if (pp = fopen(filename, "r"))
+	if ((pp = fopen(filename, "r")))
 	{
 	    while (fgets(p, sizeof(buf) - strlen(buf), pp))
 	    {
@@ -543,9 +554,9 @@ get_words()
 char *progclass = "Noseguy";
 
 char *defaults [] = {
-  "*background:		black",
-  "*foreground:		white",
-  "*mode:		program",
+  "Noseguy.background:	black",		/* to placate SGI */
+  "Noseguy.foreground:	white",
+  "*mode:		string",
   "*program:		fortune -s",
   "noseguy.font:	-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
@@ -589,7 +600,7 @@ noseguy_init (d, w)
     {
 	list = XListFonts(dpy, FONT_NAME, 32767, &foo);
 	for (i = 0; i < foo; i++)
-	    if (font = XLoadQueryFont(dpy, list[i]))
+	    if ((font = XLoadQueryFont(dpy, list[i])))
 		break;
 	if (!font)
 	  {

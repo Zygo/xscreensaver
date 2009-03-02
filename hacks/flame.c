@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -97,7 +97,6 @@ init_flame (dpy, window)
      Display *dpy;
      Window window;
 {
-  int i;
   XGCValues gcv;
   XWindowAttributes xgwa;
   Colormap cmap;
@@ -253,8 +252,8 @@ flame (dpy, window)
 char *progclass = "Flame";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Flame.background:	black",		/* to placate SGI */
+  "Flame.foreground:	white",
   "*colors:	128",
   "*iterations:	25",
   "*delay:	50000",

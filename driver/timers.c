@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,13 +13,23 @@
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>
+#ifndef VMS
 #include <X11/Xmu/Error.h>
+#else
+#include "sys$common:[decw$include.xmu]Error.h"
+#endif
 
 #ifdef HAVE_XIDLE
 #include <X11/extensions/xidle.h>
 #endif
 
 #include "xscreensaver.h"
+
+#if __STDC__
+# define P(x)x
+#else
+#define P(x)()
+#endif
 
 extern XtAppContext app;
 
@@ -33,7 +43,7 @@ extern Bool dbox_up_p;
 extern Bool locked_p;
 extern Window screensaver_window;
 
-extern Bool handle_clientmessage P((/*XEvent *, Bool*/));
+extern Bool handle_clientmessage P((XEvent *, Bool));
 
 static time_t last_activity_time; /* for non-XIdle mode */
 static XtIntervalId timer_id = 0;
@@ -66,9 +76,13 @@ idle_timer (junk1, junk2)
 
 
 static void
+#if __STDC__
+notice_events (Window window, Bool top_p)
+#else
 notice_events (window, top_p)
      Window window;
      Bool top_p;
+#endif
 {
   XWindowAttributes attrs;
   unsigned long events;
@@ -181,7 +195,7 @@ activate_lock_timer (junk1, junk2)
 /* Call this when user activity (or "simulated" activity) has been noticed.
  */
 static void
-reset_timers ()
+reset_timers P((void))
 {
 #ifdef DEBUG_TIMERS
   if (verbose_p)

@@ -61,4 +61,4 @@ express or implied warranty.
 .SH AUTHOR
 Based on Lisp Machine code copyright 1988 John Nguyen <johnn@hx.lcs.mit.edu>.
 
-Ported to C and X by Jamie Zawinski <jwz@lucid.com>, 13-aug-92.
+Ported to C and X by Jamie Zawinski <jwz@mcom.com>, 13-aug-92.

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,6 +10,10 @@
  */
 
 #include <X11/Xlib.h>
+
+#if __STDC__
+static void crossbones (Display *, Window, GC, int x, int y, int w, int h);
+#endif
 
 static void
 crossbones (dpy, window, draw_gc, x, y, w, h)

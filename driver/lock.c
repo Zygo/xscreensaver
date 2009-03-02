@@ -1,4 +1,4 @@
-/*    xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@lucid.com>
+/*    xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,6 @@
 #include <shadow.h>
 #endif
 
-#include <pwd.h>
 #include <stdio.h>
 
 #include <X11/Intrinsic.h>
@@ -28,13 +27,20 @@
 # define _NO_PROTO
 #endif
 
-#include <Xm/Xm.h>
-#include <Xm/List.h>
-#include <Xm/TextF.h>
-
 #include "xscreensaver.h"
 
 #ifndef NO_LOCKING
+
+#ifndef VMS
+#include <pwd.h>
+#else
+#include "pwd.h"
+extern char *getenv();
+#endif
+
+#include <Xm/Xm.h>
+#include <Xm/List.h>
+#include <Xm/TextF.h>
 
 Time passwd_timeout;
 
@@ -59,6 +65,7 @@ static char typed_passwd [1024];
 
 static char root_passwd [255];
 static char user_passwd [255];
+static char * user_vms;
 
 #ifdef HAVE_SHADOW
 # define PWTYPE struct spwd *
@@ -75,6 +82,7 @@ lock_init ()
 {
   Bool ok = True;
   char *u;
+#ifndef VMS
   PWTYPE p = GETPW ("root");
   if (p && p->PWSLOT && p->PWSLOT[0] != '*')
     strcpy (root_passwd, p->PWSLOT);
@@ -102,6 +110,7 @@ lock_init ()
 #endif
     }
 
+
   if (p && p->PWSLOT &&
       /* p->PWSLOT[0] != '*' */		/* sensible */
       (strlen (p->PWSLOT) > 4)		/* solaris */
@@ -114,6 +123,10 @@ lock_init ()
       ok = False;
     }
   return ok;
+#else
+  return ok;
+#endif /* VMS */
+
 }
 
 
@@ -135,7 +148,9 @@ passwd_done_cb (button, client_data, call_data)
      Widget button;
      XtPointer client_data, call_data;
 {
+
   if (passwd_state != pw_read) return; /* already done */
+#ifndef VMS
   if (!strcmp ((char *) crypt (typed_passwd, user_passwd), user_passwd))
     passwd_state = pw_ok;
   /* do not allow root to have empty passwd */
@@ -144,6 +159,13 @@ passwd_done_cb (button, client_data, call_data)
     passwd_state = pw_ok;
   else
     passwd_state = pw_fail;
+#else
+   user_vms = getenv("USER");
+   if (validate_user(user_vms,typed_passwd) == 1 ) 
+       passwd_state = pw_ok;
+  else 
+       passwd_state = pw_fail;
+#endif
 }
 
 #ifdef VERIFY_CALLBACK_WORKS
@@ -381,7 +403,11 @@ make_passwd_dialog (parent)
   /* Another random thing necessary in 1.2.1 but not 1.1.5... */
   XtVaSetValues (roger_label, XmNborderWidth, 2, 0);
 
+#ifndef VMS
   pw = getpwuid (getuid ());
+#else
+  pw->pw_name = getenv("USER");
+#endif
   format_into_label (passwd_label3, (pw->pw_name ? pw->pw_name : "???"));
   format_into_label (passwd_label1, screensaver_version);
 }
@@ -481,6 +507,10 @@ pop_passwd_dialog (parent)
 
 
   XGrabServer (dpy);				/* ############ DANGER! */
+
+  /* this call to ungrab used to be in main_loop() - see comment in
+      xscreensaver.c around line 696. */
+  ungrab_keyboard_and_mouse ();
 
   while (passwd_state == pw_read)
     {

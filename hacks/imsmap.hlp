@@ -1,0 +1,58 @@
+1 IMSMAP 
+Generate fractal maps
+
+SYNOPSIS
+
+  $ imsmap [-display host:display.screen] [-foreground color] 
+           [-background color] [-window] [-root] [-mono] [-ncolors int] 
+           [-timeout seconds] [-iterations int] [-mode h|s|v|random] 
+           [-cycle] [-no-cycle]
+
+2 DESCRIPTION
+The imsmap program generates map or cloud-like patterns.  It looks
+quite different in monochrome and color.
+
+2 OPTIONS
+imsmap accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -ncolors integer
+How many colors to use.  Default 50.
+
+   -timeout integer
+How long to delay between images.  Default 10 seconds.
+
+   -iterations integer
+A measure of the resolution of the resultant image, from 0 to 7.  Default 7.
+
+   -mode hue|saturation|value|random
+The axis upon which colors should be interpolated between the foreground
+and background color.  Default random.  
+
+   -cycle
+Whether to do colormap cycling.  This is the default.
+
+   -no-cycle
+Turns -cycle off.
+
+2 ENVIRONMENT
+
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 AUTHOR
+Juergen Nickelsen <nickel@cs.tu-berlin.de>, 23-aug-92.
+
+Hacked on by Jamie Zawinski <jwz@mcom.com>, 24-aug-92.

@@ -29,6 +29,11 @@ static XWindowAttributes wattrs;
 #define signed /**/
 #endif
 
+#ifdef VMS
+#ifndef __DECC
+#define signed /**/              /* for VAX C */
+#endif
+#endif
 static unsigned long *pixels = 0, fg_pixel, bg_pixel;
 static int npixels = 0;
 static Colormap cmap;
@@ -392,8 +397,8 @@ cycle (dpy)
 char *progclass = "Imsmap";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	black",
+  "Imsmap.background:	black",		/* to placate SGI */
+  "Imsmap.foreground:	black",
   "*mode:	random",
   "*ncolors:	50",
   "*iterations:	7",

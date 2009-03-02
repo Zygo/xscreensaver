@@ -58,7 +58,7 @@
 #define _VROOT_H_
 
 #if !defined(lint) && !defined(SABER)
-static char vroot_rcsid[] = "$Id: vroot.h,v 1.4 1991/09/30 19:23:16 stolcke Exp stolcke $";
+static char vroot_rcsid[] = "$Id: vroot.h,v 1.1 1994/08/25 22:04:24 jwz Exp $";
 #endif
 
 #include <X11/X.h>

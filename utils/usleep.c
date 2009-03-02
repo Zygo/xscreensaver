@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,15 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xos.h>	/* lazy way out */
+
+#ifdef VMS
+#include <descrip.h>
+#include <stdio.h>
+extern char *progname;
+#include <lib$routines.h>
+unsigned long int statvms;
+float seconds;
+#endif
 
 /* usleep() doesn't exist everywhere, and select() is faster anyway.
  */
@@ -86,12 +95,17 @@ screenhack_usleep (usecs)
      unsigned long usecs;
 {
   int status, *bin_delta;
-  extern int SYS$SCHWDK (), SYS$HIBER (); 
-  
-  if (!deltas_set) set_deltas ();
-  bin_delta = (usecs == TICK_INTERVAL) ? &bin_tick_delta : &bin_sec_delta;
-  status = SYS$SCHDWK (0, 0, bin_delta, 0);
-  if ((status & 1)) (void) SYS$HIBER ();
+
+/*  extern int SYS$SCHWDK (), SYS$HIBER ();                               */
+/*#define TICK_INTERVAL 1000                                              */
+/*                                                                        */
+/*  if (!deltas_set) set_deltas ();                                       */
+/*  bin_delta = (usecs == TICK_INTERVAL) ? &bin_tick_delta : &bin_sec_delta; */
+/*  status = SYS$SCHDWK (0, 0, bin_delta, 0);                             */
+/*  if ((status & 1)) (void) SYS$HIBER ();                                */
+
+      seconds = ((float) usecs)/1000000.0;
+      statvms = lib$wait(&seconds);
 }
 
 #endif /*VMS */

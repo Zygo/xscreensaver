@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,8 +17,14 @@
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 
-extern int get_visual_class ();
-extern void screenhack_usleep ();
+#if __STDC__
+# define P(x)x
+#else
+# define P(x)()
+#endif
+
+extern int get_visual_class P((Display *, Visual *));
+extern void screenhack_usleep P((int));
 #define usleep screenhack_usleep
 
 #define MAX_COLORS 4096

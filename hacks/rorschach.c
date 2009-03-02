@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -112,8 +112,8 @@ hurm (dpy, window)
 char *progclass = "Rorschach";
 
 char *defaults [] = {
-  "*background:	black",
-  "*foreground:	white",
+  "Rorschach.background:	black",		/* to placate SGI */
+  "Rorschach.foreground:	white",
   "*xsymmetry:	true",
   "*ysymmetry:	false",
   "*iterations:	4000",

@@ -20,7 +20,7 @@
           UTILS = ../utils
        INCLUDES = -I$(UTILS)
         DEFINES = R5ISMS XPMDEFS
-EXTRA_LIBRARIES = $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm
+EXTRA_LOAD_FLAGS= $(XMULIB) $(XTOOLLIB) XPMLIB $(EXTENSIONLIB) $(XLIB) -lm
           HACKS = attraction.c greynetic.c helix.c hopalong.c xroger-hack.c \
                   noseguy.c pyro.c qix.c rocks.c rorschach.c blitspin.c \
                   imsmap.c slidescreen.c decayscreen.c maze.c hypercube.c \

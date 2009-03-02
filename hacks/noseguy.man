@@ -64,4 +64,4 @@ Copyright 1985, 1990 by Dan Heller <argv@sun.com>.
 Dan Heller <argv@sun.com>, 1985.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
-Jamie Zawinski <jwz@lucid.com>, 13-aug-92.
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.

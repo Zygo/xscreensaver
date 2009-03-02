@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,12 +35,23 @@
 #include <X11/Intrinsic.h>
 #include <X11/IntrinsicP.h>
 #include <X11/CoreP.h>
+#ifndef VMS
 #include <X11/Xmu/Error.h>
+#else
+#include "sys$common:[decw$include.xmu]Error.h"
+#endif
+
 #include "screenhack.h"
 
 char *progname;
 XrmDatabase db;
 Bool mono_p;
+
+#if __STDC__
+# define P(x) x
+#else
+# define P(x)()
+#endif
 
 
 static XrmOptionDescRec default_options [] = {
@@ -52,7 +63,7 @@ static XrmOptionDescRec default_options [] = {
 
 static char *default_defaults[] = {
   "*root:		false",
-  "*geometry:		500x500", /* this should be .geometry, but nooooo... */
+  "*geometry:		500x500",
   "*mono:		false",
   "*installColormap:	false",
   0
@@ -63,7 +74,7 @@ static int merged_options_size;
 static char **merged_defaults;
 
 static void
-merge_options ()
+merge_options P((void))
 {
   int options_sizeof = options_size * sizeof (options[0]);
   int defaults_size;
@@ -112,7 +123,11 @@ MapNotify_event_p (dpy, event, window)
 }
 
 
+#ifndef VMS
 void
+#else
+int
+#endif
 main (argc, argv)
      int argc;
      char **argv;

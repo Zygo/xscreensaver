@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -133,10 +133,12 @@
 
 #include "xscreensaver.h"
 
-#if defined(SVR4) || defined(SYSV)
+#if defined(SVR4) || defined(SYSV) || defined(VMS)
 # define srandom(i) srand((unsigned int)(i))
 #else
+# ifndef __linux
 extern void srandom P((int));		/* srand() is in stdlib.h... */
+# endif
 #endif
 
 extern char *get_string_resource P((char *, char *));
@@ -248,15 +250,19 @@ static XrmOptionDescRec options [] = {
 };
 
 static char *defaults[] = {
+#ifndef VMS
 #include "XScreenSaver.ad.h"
+#else
+#include "XScreenSaver_ad.h"
+#endif
  0
 };
 
 static void
-do_help ()
+do_help P((void))
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@lucid.com>.\n\
+xscreensaver %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@mcom.com>.\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>		when the screensaver should activate\n\
@@ -295,7 +301,7 @@ more details.\n\n",
 
 
 static void
-get_screenhacks ()
+get_screenhacks P((void))
 {
   char *data[3];
   int i, hacks_size = 10;
@@ -387,7 +393,7 @@ get_screenhacks ()
 
 
 static void
-get_resources ()
+get_resources P((void))
 {
   /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
   visual	  = get_visual_resource (dpy, "visualID", "VisualID");
@@ -412,7 +418,7 @@ get_resources ()
   if (passwd_timeout == 0) passwd_timeout = 30000;
 #endif
   if (timeout < 10000) timeout = 10000;
-  if (cycle < 2000) cycle = 2000;
+  if (cycle != 0 && cycle < 2000) cycle = 2000;
   if (pointer_timeout == 0) pointer_timeout = 5000;
   if (notice_events_timeout == 0) notice_events_timeout = 10000;
   if (fade_seconds == 0 || fade_ticks == 0) fade_p = False;
@@ -454,7 +460,7 @@ get_resources ()
 }
 
 char *
-timestring ()
+timestring P((void))
 {
   long now = time ((time_t *) 0);
   char *str = (char *) ctime (&now);
@@ -477,11 +483,14 @@ extern Bool unlock_p P((Widget));
 extern Bool lock_init P((void));
 #endif
 
-static void initialize ();
-static void main_loop ();
-static void initialize ();
+static void initialize P((int argc, char **argv));
+static void main_loop P((void));
 
+#ifndef VMS
 void
+#else
+int
+#endif
 main (argc, argv)
      int argc;
      char **argv;
@@ -492,9 +501,13 @@ main (argc, argv)
 
 
 static void
+#if __STDC__
+initialize_connection (int argc, char **argv)
+#else
 initialize_connection (argc, argv)
      int argc;
      char **argv;
+#endif
 {
   toplevel_shell = XtAppInitialize (&app, progclass,
 				    options, XtNumber (options),
@@ -580,7 +593,7 @@ initialize (argc, argv)
 
   if (verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@lucid.com>.\n\
+%s %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@mcom.com>.\n\
  pid = %d.\n", progname, screensaver_version, getpid ());
   ensure_no_screensaver_running ();
 
@@ -669,14 +682,15 @@ main_loop ()
 	  blank_screen ();
 	  spawn_screenhack (True);
 	  if (cycle)
-	    cycle_id = XtAppAddTimeOut (app, cycle, cycle_timer, 0);
+	    cycle_id = XtAppAddTimeOut (app, cycle, (XtPointer)cycle_timer, 0);
 
 #ifndef NO_LOCKING
 	  if (lock_p && lock_timeout == 0)
 	    locked_p = True;
 	  if (lock_p && !locked_p)
 	    /* locked_p might be true already because of ClientMessage */
-	    lock_id = XtAppAddTimeOut (app,lock_timeout,activate_lock_timer,0);
+	    lock_id = XtAppAddTimeOut (app,lock_timeout,
+				       (XtPointer)activate_lock_timer,0);
 #endif
 
 	PASSWD_INVALID:
@@ -689,7 +703,20 @@ main_loop ()
 	      Bool val;
 	      if (locking_disabled_p) abort ();
 	      dbox_up_p = True;
-	      ungrab_keyboard_and_mouse ();
+
+	      /* We used to ungrab the keyboard here, before calling unlock_p()
+		 to pop up the dialog box.  This left the keyboard ungrabbed
+		 for a small window, during an insecure state.  Bennett Todd
+		 was seeing the bahavior that, when the load was high, he could
+		 actually get characters through to a shell under the saver
+		 window (he accidentally typed his password there...)
+
+		 So the ungrab has been moved down into pop_passwd_dialog()
+		 just after the server is grabbed, closing this window
+		 entirely.
+	       */
+	      /* ungrab_keyboard_and_mouse (); */
+
 	      suspend_screenhack (True);
 	      XUndefineCursor (dpy, screensaver_window);
 	      if (verbose_p)
@@ -700,7 +727,10 @@ main_loop ()
 	      dbox_up_p = False;
 	      XDefineCursor (dpy, screensaver_window, cursor);
 	      suspend_screenhack (False);
+
+	      /* I think this grab is now redundant, but it shouldn't hurt. */
 	      grab_keyboard_and_mouse ();
+
 	      if (! val)
 		goto PASSWD_INVALID;
 	      locked_p = False;

@@ -1,0 +1,60 @@
+1 RORSCHACH 
+Simulate ink-blot patterns
+
+SYNOPSIS
+
+  $ rorschach [-display host:display.screen] [-foreground color] 
+              [-background color] [-window] [-root] [-mono] 
+              [-iterations integer] [-offset integer] [-xsymmetry] [-ysymmetry]
+
+2 DESCRIPTION
+The rorschach program draws random patterns reminiscent of the
+psychological test of same name.
+
+2 OPTIONS
+rorschach accepts the following options:
+
+   -window
+Draw on a newly-created window.  This is the default.
+
+   -root
+Draw on the root window.
+
+   -mono 
+If on a color display, pretend we're on a monochrome display.
+
+   -iterations integer
+How many dots should be drawn each time.  Default 4000.
+
+   -offset integer
+How far apart the dots should be.  Default 4 pixels.
+
+   -xsymmetry
+Whether the images should be horizontally symmetrical.  Default true.
+
+   -ysymmetry
+Whether the images should be vertically symmetrical.  Default false.
+
+2 ENVIRONMENT
+
+   DISPLAY
+to get the default host and display number.
+
+   XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+
+2 BUGS
+May call your sanity into question.
+
+2 COPYRIGHT
+Copyright (co 1992 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+2 AUTHOR
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.

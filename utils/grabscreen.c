@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992, 1993, 1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,10 +18,16 @@
 
 #if __STDC__
 #include <stdlib.h>
+#include <unistd.h>
+#endif
+
+#ifdef __DECC
+typedef char * caddr_t;
 #endif
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 static Bool
 MapNotify_event_p (dpy, event, window)
@@ -33,6 +39,10 @@ MapNotify_event_p (dpy, event, window)
 	  event->xvisibility.window == (Window) window);
 }
 
+
+#if __STDC__
+static Bool screensaver_window_p (Display *, Window);
+#endif
 
 static Bool
 screensaver_window_p (dpy, window)
@@ -114,4 +124,81 @@ grab_screen_image (dpy, window, root_p)
       XSync (dpy, True);
     }
   return pixmap;
+}
+
+
+/* When we are grabbing and manipulating a screen image, it's important that
+   we use the same colormap it originally had.  So, if the screensaver was
+   started with -install, we need to copy the contents of the default colormap
+   into the screensaver's colormap.
+ */
+void
+copy_default_colormap_contents (dpy, to_cmap, to_visual)
+     Display *dpy;
+     Colormap to_cmap;
+     Visual *to_visual;
+{
+  Screen *screen = DefaultScreenOfDisplay (dpy);
+  Visual *from_visual = DefaultVisualOfScreen (screen);
+  Colormap from_cmap = XDefaultColormapOfScreen (screen);
+
+  XColor *old_colors, *new_colors;
+  unsigned long *pixels;
+  XVisualInfo vi_in, *vi_out;
+  int out_count;
+  int from_cells, to_cells, max_cells;
+  int requested;
+  int i;
+
+  if (from_cmap == to_cmap)
+    return;
+
+  vi_in.screen = XScreenNumberOfScreen (screen);
+  vi_in.visualid = XVisualIDFromVisual (from_visual);
+  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
+			   &vi_in, &out_count);
+  if (! vi_out) abort ();
+  from_cells = vi_out [0].colormap_size;
+  XFree ((char *) vi_out);
+
+  vi_in.screen = XScreenNumberOfScreen (screen);
+  vi_in.visualid = XVisualIDFromVisual (to_visual);
+  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
+			   &vi_in, &out_count);
+  if (! vi_out) abort ();
+  to_cells = vi_out [0].colormap_size;
+  XFree ((char *) vi_out);
+
+  max_cells = (from_cells > to_cells ? to_cells : from_cells);
+
+  old_colors = (XColor *) calloc (sizeof (XColor), max_cells);
+  new_colors = (XColor *) calloc (sizeof (XColor), max_cells);
+  pixels = (unsigned long *) calloc (sizeof (unsigned long), max_cells);
+  for (i = 0; i < max_cells; i++)
+    old_colors[i].pixel = i;
+  XQueryColors (dpy, from_cmap, old_colors, max_cells);
+
+  requested = max_cells;
+  while (requested > 0)
+    {
+      if (XAllocColorCells (dpy, to_cmap, False, 0, 0, pixels, requested))
+	{
+	  /* Got all the pixels we asked for. */
+	  for (i = 0; i < requested; i++)
+	    new_colors[i] = old_colors [pixels[i]];
+	  XStoreColors (dpy, to_cmap, new_colors, requested);
+	}
+      else
+	{
+	  /* We didn't get all/any of the pixels we asked for.  This time, ask
+	     for half as many.  (If we do get all that we ask for, we ask for
+	     the same number again next time, so we only do O(log(n)) server
+	     roundtrips.) */
+	  requested = requested / 2;
+	}
+    }
+
+  free (old_colors);
+  free (new_colors);
+  free (pixels);
 }

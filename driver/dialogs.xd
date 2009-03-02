@@ -424,7 +424,7 @@ object 'label1' : XmLabel {
 object 'label2' : XmLabel {
 	arguments {
 	name = 'label2';
-	XmNlabelString= 'Copyright © 1991-1994 by Jamie Zawinski <jwz@lucid.com>';
+	XmNlabelString= 'Copyright © 1991-1994 by Jamie Zawinski <jwz@mcom.com>';
 	};
 };
 object 'text_area' : XmScrolledList {

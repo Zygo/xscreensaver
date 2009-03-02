@@ -1,7 +1,7 @@
 /******************************************************************************
  * [ maze ] ...
  *
- * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@lucid.com>
+ * modified:  [ 3-7-93 ]  Jamie Zawinski <jwz@mcom.com>
  *		added the XRoger logo, cleaned up resources, made
  *		grid size a parameter.
  * modified:  [ 3-3-93 ]  Jim Randell <jmr@mddjmr.fc.hp.com>
@@ -52,7 +52,11 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 #include  <stdio.h>
 #include  <X11/Xlib.h>
 #include  <X11/Xutil.h>
+#ifndef VMS
 #include  <X11/bitmaps/gray1>
+#else
+#include "sys$common:[decw$include.bitmaps]gray1.xbm"
+#endif
 
 #define MAX_MAZE_SIZE_X	500
 #define MAX_MAZE_SIZE_Y	500
@@ -89,7 +93,11 @@ static int logo_x, logo_y;
 # define logo_width  128
 # define logo_height 128
 #else
+#ifndef VMS
 # include  <X11/bitmaps/xlogo64>
+#else
+# include "sys$common:[decw$include.bitmaps]xlogo64.xbm"
+#endif
 # define logo_width xlogo64_width
 # define logo_height xlogo64_height
 # define logo_bits xlogo64_bits
@@ -106,7 +114,6 @@ static struct {
 static int maze_size_x, maze_size_y;
 static int sqnum, cur_sq_x, cur_sq_y, path_length;
 static int start_x, start_y, start_dir, end_x, end_y, end_dir;
-static int maze_restart_flag, random_index;
 static int grid_width, grid_height;
 
 static Display	*dpy;
@@ -116,6 +123,7 @@ static Pixmap	logo_map;
 
 static int	x = 0, y = 0, restart = 0, stop = 1, state = 1;
 
+static int
 check_events()                                  /* X event handler [ rhess ] */
 {
   XEvent	e;
@@ -162,6 +170,7 @@ check_events()                                  /* X event handler [ rhess ] */
 }
 
 
+static void
 set_maze_sizes (width, height)
      int width, height;
 {
@@ -170,6 +179,7 @@ set_maze_sizes (width, height)
 }
 
 
+static void
 initialize_maze()         /* draw the surrounding wall and start/end squares */
 {
   register int i, j, wall;
@@ -280,6 +290,7 @@ static void draw_wall ();
 static void draw_solid_square ();
 static void enter_square ();
 
+static void
 create_maze()             /* create a maze layout given the intiialized maze */
 {
   register int i, newdoor;
@@ -335,7 +346,6 @@ choose_door()                                            /* pick a new path */
   
   num_candidates = 0;
   
- topwall:
   /* top wall */
   if ( maze[cur_sq_x][cur_sq_y] & DOOR_IN_TOP )
     goto rightwall;
@@ -419,6 +429,7 @@ backup()                                                  /* back up a move */
 }
 
 
+static void
 draw_maze_border()                                  /* draw the maze outline */
 {
   register int i, j;
@@ -542,6 +553,7 @@ draw_solid_square(i, j, dir, gc)          /* draw a solid square in a square */
 }
 
 
+static void
 solve_maze()                             /* solve it with graphical feedback */
 {
   int i;
@@ -609,7 +621,7 @@ enter_square(n)                            /* move into a neighboring square */
 
 
 /*
- *  jmr additions for Jamie Zawinski's <jwz@lucid.com> screensaver stuff,
+ *  jmr additions for Jamie Zawinski's <jwz@mcom.com> screensaver stuff,
  *  note that the code above this has probably been hacked about in some
  *  arbitrary way.
  */
@@ -617,8 +629,9 @@ enter_square(n)                            /* move into a neighboring square */
 char *progclass = "Maze";
 
 char *defaults[] = {
+  "Maze.background:	black",		/* to placate SGI */
+  "Maze.foreground:	white",		/* to placate SGI */
   "*gridSize:	0",
-  "*background:	black",
   "*solveDelay:	5000",
   "*preDelay:	2000000",
   "*postDelay:	4000000",

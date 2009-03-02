@@ -34,6 +34,25 @@
 /* Lifted from InterViews */
 #define SMOOTHNESS 1.0
 
+#if __STDC__
+static void no_more_memory (void);
+static void grow_spline_points (spline* s);
+static void mid_point (double x0, double y0, double x1, double y1,
+		       double *mx, double *my);
+static int can_approx_with_line (double x0, double y0, double x2,
+				 double y2, double x3, double y3);
+static void add_line (spline* s, double x0, double y0, double x1, double y1);
+static void add_bezier_arc (spline* s,
+			    double x0, double y0, double x1, double y1,
+			    double x2, double y2, double x3, double y3);
+static void third_point (double x0, double y0, double x1, double y1,
+			 double *tx, double *ty);
+static void calc_section (spline* s, double cminus1x, double cminus1y,
+			  double cx, double cy, double cplus1x, double cplus1y,
+			  double cplus2x, double cplus2y);
+
+#endif
+
 static void
 no_more_memory ()
 {

@@ -30,7 +30,7 @@
 		helix -root						\n\
 		rorschach -root -offset 7				\n\
 		hopalong -root						\n\
-		greynetic -root						\n\
+		greynetic -root	 -delay 1000				\n\
 		xroger -root						\n\
 		imsmap -root						\n\
 		slidescreen -root					\n\
@@ -95,7 +95,7 @@
 *demoDialog.maxWidth:		600
 
 *label1.labelString:		XScreenSaver %s
-*label2.labelString: Copyright © 1991-1994 by Jamie Zawinski <jwz@lucid.com>
+*label2.labelString: Copyright © 1991-1994 by Jamie Zawinski <jwz@mcom.com>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992, 1993, 1994 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,37 +35,6 @@ static int sizex, sizey;
 static int delay;
 static GC gc;
 
-static Bool
-MapNotify_event_p (dpy, event, window)
-     Display *dpy;
-     XEvent *event;
-     XPointer window;
-{
-  return (event->xany.type == MapNotify &&
-	  event->xvisibility.window == (Window) window);
-}
-
-
-static Bool
-screensaver_window_p (dpy, window)
-     Display *dpy;
-     Window window;
-{
-  Atom type;
-  int format;
-  unsigned long nitems, bytesafter;
-  char *version;
-  if (XGetWindowProperty (dpy, window,
-			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
-			  0, 1, False, XA_STRING,
-			  &type, &format, &nitems, &bytesafter,
-			  (unsigned char **) &version)
-      == Success
-      && type != None)
-    return True;
-  return False;
-}
-
 static void
 init_decay (dpy, window)
      Display *dpy;
@@ -86,11 +55,12 @@ init_decay (dpy, window)
   gc = XCreateGC (dpy, window, GCForeground |GCFunction | GCSubwindowMode,
 		  &gcv);
 
-  pixmap = grab_screen_image (dpy, window, root_p);
-
   XGetWindowAttributes (dpy, window, &xgwa);
   sizex = xgwa.width;
   sizey = xgwa.height;
+
+  copy_default_colormap_contents (dpy, xgwa.colormap, xgwa.visual);
+  pixmap = grab_screen_image (dpy, window, root_p);
 }
 
 

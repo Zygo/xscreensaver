@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,6 +33,9 @@ extern Bool lock_p, locking_disabled_p;
 
 static void demo_mode_hack P((char *));
 static void demo_mode_done P((void));
+
+static void focus_fuckus P((Widget dialog));
+static void text_cb P((Widget button, XtPointer, XtPointer));
 
 extern void demo_mode_restart_process ();
 
@@ -241,7 +244,6 @@ make_screenhack_dialog (parent, hacks)
   Arg av[10];
   int ac;
   char *label;
-  Dimension max_w = 0;
   XmString xm_label = 0;
   XmString new_xm_label;
 

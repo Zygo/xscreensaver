@@ -468,7 +468,7 @@ permission notice appear in supporting documentation.  No representations are
 made about the suitability of this software for any purpose.  It is provided
 "as is" without express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@lucid.com>, 13-aug-92.
+Jamie Zawinski <jwz@mcom.com>, 13-aug-92.
 Please let me know if you find any bugs or make any improvements.
 
 Thanks to David Wojtowicz for implementing \fIlockTimeout\fP.

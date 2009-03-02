@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,13 @@
 extern char *progname;
 extern char *progclass;
 extern XrmDatabase db;
+
+#if __STDC__
+char *get_string_resource (char *res_name, char *res_class);
+int parse_time (char *string, Bool seconds_default_p, Bool silent_p);
+static unsigned int get_time_resource (char *res_name, char *res_class,
+				       Bool sec_p);
+#endif
 
 #ifndef isupper
 # define isupper(c)  ((c) >= 'A' && (c) <= 'Z')
@@ -150,6 +157,7 @@ parse_time (string, seconds_default_p, silent_p)
 {
   unsigned int h, m, s;
   char c;
+#ifdef __DECC
   if (3 == sscanf (string,   " %u : %2u : %2u %c", &h, &m, &s, &c))
     ;
   else if (2 == sscanf (string, " : %2u : %2u %c", &m, &s, &c) ||
@@ -159,6 +167,17 @@ parse_time (string, seconds_default_p, silent_p)
     h = m = 0;
   else if (1 == sscanf (string,          " %u %c",
 			(seconds_default_p ? &s : &m), &c))
+#else
+  if (3 == sscanf (string,   " %d : %2d : %2d %c", &h, &m, &s, &c))
+    ;
+  else if (2 == sscanf (string, " : %2d : %2d %c", &m, &s, &c) ||
+	   2 == sscanf (string,    " %d : %2d %c", &m, &s, &c))
+    h = 0;
+  else if (1 == sscanf (string,       " : %2d %c", &s, &c))
+    h = m = 0;
+  else if (1 == sscanf (string,          " %d %c",
+			(seconds_default_p ? &s : &m), &c))
+#endif
     {
       h = 0;
       if (seconds_default_p) m = 0;
