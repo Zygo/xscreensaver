@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002, 2003, 2004
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -391,6 +390,8 @@ main (int argc, char **argv)
   char version[255];
 
   fix_fds();
+
+  progname = argv[0];   /* reset later */
 
 #ifdef XLOCKMORE
   pre_merge_options ();

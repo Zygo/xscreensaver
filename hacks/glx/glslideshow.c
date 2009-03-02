@@ -89,15 +89,6 @@
 # define DEF_MIPMAP         "True"
 
 #define DEFAULTS  "*delay:           20000                \n" \
-                  "*fadeDuration:  " DEF_FADE_DURATION   "\n" \
-                  "*panDuration:   " DEF_PAN_DURATION    "\n" \
-                  "*imageDuration: " DEF_IMAGE_DURATION  "\n" \
-                  "*zoom:          " DEF_ZOOM            "\n" \
-		  "*titles:        " DEF_TITLES          "\n" \
-                  "*FPScutoff:     " DEF_FPS_CUTOFF      "\n" \
-	          "*letterbox:     " DEF_LETTERBOX       "\n" \
-	          "*debug:         " DEF_DEBUG           "\n" \
-	          "*mipmap:        " DEF_MIPMAP          "\n" \
 		  "*wireframe:       False                \n" \
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
@@ -392,6 +383,24 @@ image_loaded_cb (const char *filename, XRectangle *geom,
   img->th = texture_height;
   img->geom = *geom;
   img->title = (filename ? strdup (filename) : 0);
+
+  /* If the image's width doesn't come back as the width of the screen,
+     then the image must have been scaled down (due to insufficient
+     texture memory.)  Scale up the coordinates to stretch the image
+     to fill the window.
+   */
+  if (img->w != MI_WIDTH(mi))
+    {
+      double scale = (double) MI_WIDTH(mi) / img->w;
+      img->w  *= scale;
+      img->h  *= scale;
+      img->tw *= scale;
+      img->th *= scale;
+      img->geom.x      *= scale;
+      img->geom.y      *= scale;
+      img->geom.width  *= scale;
+      img->geom.height *= scale;
+    }
 
   if (img->title)   /* strip filename to part after last /. */
     {

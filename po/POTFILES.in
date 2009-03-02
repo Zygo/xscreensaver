@@ -1,16 +1,16 @@
-# Auto-generated: Wed Dec 22 12:47:56 RST 2004
+# Auto-generated: lun fév 28 21:48:45 CET 2005
+driver/demo-Gtk.c
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
-driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade
 driver/xscreensaver-demo.glade2
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml
-hacks/config/ant.xml
 hacks/config/antinspect.xml
 hacks/config/antspotlight.xml
+hacks/config/ant.xml
 hacks/config/apollonian.xml
 hacks/config/apple2.xml
 hacks/config/atlantis.xml
@@ -21,15 +21,18 @@ hacks/config/blaster.xml
 hacks/config/blinkbox.xml
 hacks/config/blitspin.xml
 hacks/config/blocktube.xml
+hacks/config/boing.xml
 hacks/config/bouboule.xml
 hacks/config/bouncingcow.xml
 hacks/config/boxed.xml
+hacks/config/boxfit.xml
 hacks/config/braid.xml
 hacks/config/bsod.xml
 hacks/config/bubble3d.xml
 hacks/config/bubbles.xml
 hacks/config/bumps.xml
 hacks/config/cage.xml
+hacks/config/carousel.xml
 hacks/config/ccurve.xml
 hacks/config/circuit.xml
 hacks/config/cloudlife.xml
@@ -57,6 +60,7 @@ hacks/config/eruption.xml
 hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
+hacks/config/fiberlamp.xml
 hacks/config/fireflies.xml
 hacks/config/fireworkx.xml
 hacks/config/flag.xml
@@ -119,8 +123,8 @@ hacks/config/metaballs.xml
 hacks/config/mirrorblob.xml
 hacks/config/mismunch.xml
 hacks/config/moebius.xml
-hacks/config/moire.xml
 hacks/config/moire2.xml
+hacks/config/moire.xml
 hacks/config/molecule.xml
 hacks/config/morph3d.xml
 hacks/config/mountain.xml
@@ -156,15 +160,15 @@ hacks/config/rotzoomer.xml
 hacks/config/rubik.xml
 hacks/config/sballs.xml
 hacks/config/shadebobs.xml
-hacks/config/sierpinski.xml
 hacks/config/sierpinski3d.xml
+hacks/config/sierpinski.xml
 hacks/config/slidescreen.xml
 hacks/config/slip.xml
 hacks/config/sonar.xml
 hacks/config/speedmine.xml
-hacks/config/sphere.xml
 hacks/config/sphereeversion.xml
 hacks/config/spheremonics.xml
+hacks/config/sphere.xml
 hacks/config/spiral.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml
@@ -190,8 +194,8 @@ hacks/config/wander.xml
 hacks/config/webcollage.xml
 hacks/config/whirlwindwarp.xml
 hacks/config/whirlygig.xml
-hacks/config/worm.xml
 hacks/config/wormhole.xml
+hacks/config/worm.xml
 hacks/config/xanalogtv.xml
 hacks/config/xaos.xml
 hacks/config/xdaliclock.xml

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -270,6 +270,7 @@ struct saver_screen_info {
   int poll_mouse_last_root_y;
   Window poll_mouse_last_child;
   unsigned int poll_mouse_last_mask;
+  time_t poll_mouse_last_time;
 
 
   /* =======================================================================
@@ -416,6 +417,7 @@ extern void hack_environment (saver_info *si);
 extern void hack_subproc_environment (saver_screen_info *ssi);
 extern void init_sigchld (void);
 extern void spawn_screenhack (saver_info *si, Bool first_time_p);
+extern pid_t fork_and_exec (saver_screen_info *ssi, const char *command);
 extern void kill_screenhack (saver_info *si);
 extern void suspend_screenhack (saver_info *si, Bool suspend_p);
 extern Bool screenhack_running_p (saver_info *si);

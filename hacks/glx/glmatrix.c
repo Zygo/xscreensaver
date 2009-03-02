@@ -41,15 +41,6 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*mode:       " DEF_MODE    " \n" \
-			"*speed:      " DEF_SPEED   " \n" \
-			"*clock:      " DEF_CLOCK   " \n" \
-			"*timefmt:    " DEF_TIMEFMT " \n" \
-			"*density:    " DEF_DENSITY " \n" \
-			"*fog:        " DEF_FOG     " \n" \
-			"*waves:      " DEF_WAVES   " \n" \
-			"*texture:    " DEF_TEXTURE " \n" \
-			"*rotate:     " DEF_ROTATE  " \n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

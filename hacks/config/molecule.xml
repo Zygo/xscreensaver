@@ -15,10 +15,14 @@
     <boolean id="bbox"   _label="Draw Bounding Box" arg-set="-bbox"/>
    </vgroup>
    <vgroup>
-    <boolean id="atoms"  _label="Draw Atoms" arg-unset="-no-atoms"/>
+    <boolean id="atoms"  _label="Draw Atomic Nuclei" arg-unset="-no-atoms"/>
     <boolean id="bonds"  _label="Draw Atomic Bonds" arg-unset="-no-bonds"/>
-    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+    <boolean id="shells" _label="Draw Electron Shells" arg-set="-shells"/>
    </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
   </hgroup>
 
   <number id="delay" type="slider" arg="-delay %"

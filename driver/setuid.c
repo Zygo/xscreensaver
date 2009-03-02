@@ -1,5 +1,5 @@
 /* setuid.c --- management of runtime privileges.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-1998, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,7 +41,7 @@ uid_gid_string (uid_t uid, gid_t gid)
   struct group *g = 0;
   p = getpwuid (uid);
   g = getgrgid (gid);
-  sprintf (buf, "%s/%s (%ld/%ld)",
+  sprintf (buf, "%.100s/%.100s (%ld/%ld)",
 	   (p && p->pw_name ? p->pw_name : "???"),
 	   (g && g->gr_name ? g->gr_name : "???"),
 	   (long) uid, (long) gid);
@@ -79,6 +79,7 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
 {
   int uid_errno = 0;
   int gid_errno = 0;
+  int sgs_errno = 0;
   struct passwd *p = getpwuid (uid);
   struct group  *g = getgrgid (gid);
 
@@ -97,6 +98,10 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
   if (uid == (uid_t) -1) uid = (uid_t) -2;
 
   errno = 0;
+  if (setgroups (1, &gid) < 0)
+    sgs_errno = errno ? errno : -1;
+
+  errno = 0;
   if (setgid (gid) != 0)
     gid_errno = errno ? errno : -1;
 
@@ -104,10 +109,10 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
   if (setuid (uid) != 0)
     uid_errno = errno ? errno : -1;
 
-  if (uid_errno == 0 && gid_errno == 0)
+  if (uid_errno == 0 && gid_errno == 0 && sgs_errno == 0)
     {
       static char buf [1024];
-      sprintf (buf, "changed uid/gid to %s/%s (%ld/%ld).",
+      sprintf (buf, "changed uid/gid to %.100s/%.100s (%ld/%ld).",
 	       (p && p->pw_name ? p->pw_name : "???"),
                (g && g->gr_name ? g->gr_name : "???"),
 	       (long) uid, (long) gid);
@@ -118,28 +123,49 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
   else
     {
       char buf [1024];
+      if (sgs_errno)
+	{
+	  sprintf (buf, "%s: couldn't setgroups to %.100s (%ld)",
+		   blurb(),
+		   (g && g->gr_name ? g->gr_name : "???"),
+		   (long) gid);
+	  if (sgs_errno == -1)
+	    fprintf(stderr, "%s: unknown error\n", buf);
+	  else
+            {
+              errno = sgs_errno;
+              perror(buf);
+            }
+	}
+
       if (gid_errno)
 	{
-	  sprintf (buf, "%s: couldn't set gid to %s (%ld)",
+	  sprintf (buf, "%s: couldn't set gid to %.100s (%ld)",
 		   blurb(),
 		   (g && g->gr_name ? g->gr_name : "???"),
 		   (long) gid);
 	  if (gid_errno == -1)
 	    fprintf(stderr, "%s: unknown error\n", buf);
 	  else
-	    perror(buf);
+            {
+              errno = gid_errno;
+              perror(buf);
+            }
 	}
 
       if (uid_errno)
 	{
-	  sprintf (buf, "%s: couldn't set uid to %s (%ld)",
+	  sprintf (buf, "%s: couldn't set uid to %.100s (%ld)",
 		   blurb(),
 		   (p && p->pw_name ? p->pw_name : "???"),
 		   (long) uid);
 	  if (uid_errno == -1)
 	    fprintf(stderr, "%s: unknown error\n", buf);
 	  else
-	    perror(buf);
+            {
+              errno = uid_errno;
+              perror(buf);
+            }
 	}
 
       return -1;
@@ -263,7 +289,7 @@ hack_uid (saver_info *si)
 	!strcmp (p->pw_name, "games"))
       {
 	static char buf [1024];
-	sprintf (buf, "running as %s",
+	sprintf (buf, "running as %.100s",
 		 (p && p->pw_name && *p->pw_name
 		  ? p->pw_name : "<unknown>"));
 	si->nolock_reason = buf;

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*-
  * Copyright (c) 2002 by Edwin de Jong <mauddib@gmx.net>.
  *
@@ -52,6 +53,7 @@
 #define MAXGPOS 2
 #define MAXGDIR 4
 #define MAXGWAG 2
+#define MAXGFLASH 2
 #define MINGRIDSIZE 4
 #define MINSIZE 3
 #define NOWHERE 16383
@@ -71,69 +73,102 @@
 #define GETFACTOR(x, y) ((x) > (y) ? 1 : ((x) < (y) ? -1 : 0))
 #define SIGN(x) GETFACTOR((x), 0)
 #define TRACEVECS 40
+#define PAC_DEATH_FRAMES 8
 
-typedef struct { int vx, vy; } tracevec_struct;
+#define GHOST_TRACE ( LEVWIDTH * LEVHEIGHT )
 
-typedef enum { inbox = 0, goingout, randdir, chasing, hiding } GhostState;
-typedef enum { ps_eating = 0, ps_chasing, ps_hiding, ps_random } PacmanState;
-typedef enum { GHOST_DANGER, GHOST_EATEN } GameState;
+typedef struct
+{
+    int vx, vy;
+} tracevec_struct;
 
-typedef struct {
-	unsigned int 	col, row;
-	unsigned int 	lastbox, nextcol, nextrow;
-	int		dead;
-	int		cfactor, rfactor;
-	int		cf, rf;
-	int		oldcf, oldrf;
-	int		timeleft;
-	GhostState	aistate;
-	/*int         color; */
-	int		speed;
-	XPoint	    	delta;
-	XPoint		err;
+typedef enum
+    { inbox = 0, goingout, randdir, chasing, hiding, goingin } GhostState;
+typedef enum
+    { ps_eating = 0, ps_chasing, ps_hiding, ps_random, ps_dieing } PacmanState;
+typedef enum
+{ GHOST_DANGER, GHOST_EATEN } GameState;
+
+typedef struct
+{
+    volatile unsigned int col, row;
+    unsigned int lastbox, nextcol, nextrow;
+    int dead;
+    int cfactor, rfactor;
+    int cf, rf;
+    int oldcf, oldrf;
+    volatile int timeleft;
+    GhostState aistate;
+    int speed;
+    XPoint delta;
+    XPoint err;
+    int flash_scared;
+    int trace_idx;
+    tracevec_struct trace[GHOST_TRACE];
+    int home_idx;
+    volatile int home_count;
+    tracevec_struct way_home[GHOST_TRACE];
+    volatile int wait_pos; /* a cycle before calculating the position */
+#if 0  /* Used for debugging */
+    int ndirs;
+    int oldndirs;
+#endif
+
+#if 0 /* Used for debugging */
+    char last_stat[1024];
+#endif
+
 } ghoststruct;
 
-typedef struct {
-	unsigned int	col, row;
-	unsigned int	lastbox, nextcol, nextrow;
-	int		mouthstage, mouthdirection;
-	int		cfactor, rfactor;
-	int		cf, rf;
-	int		oldcf, oldrf;
-	int		oldlx, oldly;
-	int		justate;
-	PacmanState	aistate;
-	tracevec_struct	trace[TRACEVECS];
-	int		cur_trace;
-	int		state_change;
-	int		roundscore;
-	int		speed;
-	int		lastturn;
-	XPoint	    	delta;
-	XPoint		err;
+typedef struct
+{
+    unsigned int col, row;
+    unsigned int lastbox, nextcol, nextrow;
+    int mouthstage, mouthdirection;
+    int cfactor, rfactor;
+    int cf, rf;
+    int oldcf, oldrf;
+    int oldlx, oldly;
+    int justate;
+    PacmanState aistate;
+    tracevec_struct trace[TRACEVECS];
+    int cur_trace;
+    int state_change;
+    int roundscore;
+    int speed;
+    int lastturn;
+    XPoint delta;
+    XPoint err;
+    int deaths;
+    int init_row;
 } pacmanstruct;
 
-typedef struct {
-	unsigned short 	width, height;
-	unsigned short 	nrows, ncols;
-	short 		xs, ys, xb, yb;
-	short 		incx, incy;
-	GC          	stippledGC;
-	int         	graphics_format;
-	pacmanstruct	pacman;
-	ghoststruct	*ghosts;
-	unsigned int	nghosts;
-	Pixmap      	pacmanPixmap[4][MAXMOUTH];
-        Pixmap          pacmanMask[4][MAXMOUTH];
-        Pixmap          ghostPixmap[4][MAXGDIR][MAXGWAG];
-        Pixmap          ghostMask;
-	char        	level[LEVHEIGHT * LEVWIDTH];
-	unsigned int	wallwidth;
-	unsigned int	dotsleft;
-	int		spritexs, spriteys, spritedx, spritedy;
+typedef struct
+{
+    unsigned short width, height;
+    unsigned short nrows, ncols;
+    short xs, ys, xb, yb;
+    short incx, incy;
+    GC stippledGC;
+    int graphics_format;
+    pacmanstruct pacman;
+    ghoststruct *ghosts;
+    unsigned int nghosts;
+    Pixmap pacmanPixmap[4][MAXMOUTH];
+    Pixmap pacmanMask[4][MAXMOUTH];
+    Pixmap pacman_ds[PAC_DEATH_FRAMES]; /* pacman death sequence */
+    Pixmap pacman_ds_mask[PAC_DEATH_FRAMES];
+    Pixmap ghostPixmap[4][MAXGDIR][MAXGWAG];
+    Pixmap ghostMask;
+    Pixmap s_ghostPixmap[MAXGFLASH][MAXGWAG];   /* Scared ghost Pixmaps */
+    Pixmap ghostEyes[MAXGDIR];
+    char level[LEVHEIGHT * LEVWIDTH];
+    unsigned int wallwidth;
+    unsigned int dotsleft;
+    int spritexs, spriteys, spritedx, spritedy;
 
-	GameState	gamestate;
-	unsigned int	timeleft;
+    GameState gamestate;
+    unsigned int timeleft;
 } pacmangamestruct;
 
 #define DIRVECS 4
@@ -142,5 +177,7 @@ extern pacmangamestruct *pacmangames;
 extern Bool trackmouse;
 
 typedef char lev_t[LEVHEIGHT][LEVWIDTH + 1];
+
+#define NUM_BONUS_DOTS 4
 
 #endif /* __PACMAN_H__ */

@@ -48,6 +48,13 @@
 
 #include "xscreensaver.h"
 
+#undef ABS
+#define ABS(x)((x)<0?-(x):(x))
+
+#undef MAX
+#define MAX(x,y)((x)>(y)?(x):(y))
+
+
 #ifdef HAVE_PROC_INTERRUPTS
 static Bool proc_interrupts_activity_p (saver_info *si);
 #endif /* HAVE_PROC_INTERRUPTS */
@@ -327,6 +334,114 @@ reset_timers (saver_info *si)
 }
 
 
+/* Returns true if the mouse has moved since the last time we checked.
+   Small motions (of less than "hysteresis" pixels/second) are ignored.
+ */
+static Bool
+pointer_moved_p (saver_screen_info *ssi, Bool mods_p)
+{
+  saver_info *si = ssi->global;
+  saver_preferences *p = &si->prefs;
+
+  Window root, child;
+  int root_x, root_y, x, y;
+  unsigned int mask;
+  time_t now = time ((time_t *) 0);
+  unsigned int distance, dps;
+  unsigned long seconds = 0;
+  Bool moved_p = False;
+
+  /* don't check xinerama pseudo-screens. */
+  if (!ssi->real_screen_p) return False;
+
+  if (!XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
+                      &root_x, &root_y, &x, &y, &mask))
+    {
+      /* If XQueryPointer() returns false, the mouse is not on this screen.
+       */
+      x = root_x = -1;
+      y = root_y = -1;
+      root = child = 0;
+      mask = 0;
+    }
+
+  distance = MAX (ABS (ssi->poll_mouse_last_root_x - root_x),
+                  ABS (ssi->poll_mouse_last_root_y - root_y));
+  seconds = (now - ssi->poll_mouse_last_time);
+
+
+  /* When the screen is blanked, we get MotionNotify events, but when not
+     blanked, we poll only every 5 seconds, and that's not enough resolution
+     to do hysteresis based on a 1 second interval.  So, assume that any
+     motion we've seen during the 5 seconds when our eyes were closed happened
+     in the last 1 second instead.
+   */
+  if (seconds > 1) seconds = 1;
+
+  dps = (seconds <= 0 ? distance : (distance / seconds));
+
+  /* Motion only counts if the rate is more than N pixels per second.
+   */
+  if (dps >= p->pointer_hysteresis &&
+      distance > 0)
+    moved_p = True;
+
+  if (ssi->poll_mouse_last_root_x == -1 ||
+      ssi->poll_mouse_last_root_y == -1 ||
+      root_x == -1 ||
+      root_y == -1)
+    moved_p = True;
+
+  if (p->debug_p && (distance != 0 || moved_p))
+    {
+      fprintf (stderr, "%s: %d: pointer %s", blurb(), ssi->number,
+               (moved_p ? "moved:  " : "ignored:"));
+      if (ssi->poll_mouse_last_root_x == -1)
+        fprintf (stderr, "off screen");
+      else
+        fprintf (stderr, "%d,%d",
+                 ssi->poll_mouse_last_root_x,
+                 ssi->poll_mouse_last_root_y);
+      fprintf (stderr, " -> ");
+      if (root_x == -1)
+        fprintf (stderr, "off screen.");
+      else
+        fprintf (stderr, "%d,%d", root_x, root_y);
+      if (ssi->poll_mouse_last_root_x != -1 && root_x != -1)
+        fprintf (stderr, " (%d,%d; %d/%lu=%d)",
+                 ABS(ssi->poll_mouse_last_root_x - root_x),
+                 ABS(ssi->poll_mouse_last_root_y - root_y),
+                 distance, seconds, dps);
+
+      fprintf (stderr, ".\n");
+    }
+
+  if (!moved_p &&
+      mods_p &&
+      mask != ssi->poll_mouse_last_mask)
+    {
+      moved_p = True;
+
+      if (p->debug_p)
+        fprintf (stderr, "%s: %d: modifiers changed: 0x%04x -> 0x%04x.\n",
+                 blurb(), ssi->number, ssi->poll_mouse_last_mask, mask);
+    }
+
+  si->last_activity_screen   = ssi;
+  ssi->poll_mouse_last_child = child;
+  ssi->poll_mouse_last_mask  = mask;
+
+  if (moved_p || seconds > 0)
+    {
+      ssi->poll_mouse_last_time   = now;
+      ssi->poll_mouse_last_root_x = root_x;
+      ssi->poll_mouse_last_root_y = root_y;
+    }
+
+  return moved_p;
+}
+
+
 /* When we aren't using a server extension, this timer is used to periodically
    wake up and poll the mouse position, which is possibly more reliable than
    selecting motion events on every window.
@@ -361,67 +476,8 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
-      Window root, child;
-      int root_x, root_y, x, y;
-      unsigned int mask;
-
-      if (!ssi->real_screen_p) continue;
-
-      if (!XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
-                          &root_x, &root_y, &x, &y, &mask))
-        {
-          /* If XQueryPointer() returns false, the mouse is not on this screen.
-           */
-          root_x = -1;
-          root_y = -1;
-        }
-
-      if (root_x == ssi->poll_mouse_last_root_x &&
-	  root_y == ssi->poll_mouse_last_root_y &&
-	  child  == ssi->poll_mouse_last_child &&
-	  mask   == ssi->poll_mouse_last_mask)
-	continue;
-
-      active_p = True;
-
-      if (p->debug_p)
-        {
-          if (root_x == ssi->poll_mouse_last_root_x &&
-              root_y == ssi->poll_mouse_last_root_y &&
-              child  == ssi->poll_mouse_last_child)
-            fprintf (stderr, "%s: %d: modifiers changed: 0x%04x -> 0x%04x.\n",
-                     blurb(), i, ssi->poll_mouse_last_mask, mask);
-          else
-            {
-              fprintf (stderr, "%s: %d: pointer moved: ", blurb(), i);
-              if (ssi->poll_mouse_last_root_x == -1)
-                fprintf (stderr, "off screen");
-              else
-                fprintf (stderr, "%d,%d",
-                         ssi->poll_mouse_last_root_x,
-                         ssi->poll_mouse_last_root_y);
-              fprintf (stderr, " -> ");
-              if (root_x == -1)
-                fprintf (stderr, "off screen.");
-              else
-                fprintf (stderr, "%d,%d", root_x, root_y);
-              if (ssi->poll_mouse_last_root_x == -1 || root_x == -1)
-                fprintf (stderr, ".\n");
-              else
-#   undef ABS
-#   define ABS(x)((x)<0?-(x):(x))
-                fprintf (stderr, " (%d,%d).\n",
-                         ABS(ssi->poll_mouse_last_root_x - root_x),
-                         ABS(ssi->poll_mouse_last_root_y - root_y));
-# undef ABS
-            }
-        }
-
-      si->last_activity_screen    = ssi;
-      ssi->poll_mouse_last_root_x = root_x;
-      ssi->poll_mouse_last_root_y = root_y;
-      ssi->poll_mouse_last_child  = child;
-      ssi->poll_mouse_last_mask   = mask;
+      if (pointer_moved_p (ssi, True))
+        active_p = True;
     }
 
 #ifdef HAVE_PROC_INTERRUPTS
@@ -432,7 +488,6 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
       active_p = True;
     }
 #endif /* HAVE_PROC_INTERRUPTS */
-
 
   if (active_p)
     reset_timers (si);
@@ -747,7 +802,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
             const char *type = 0;
 	    if (event.xany.type == MotionNotify)
               {
-                type = "MotionNotify";
+                /*type = "MotionNotify";*/
                 root = event.xmotion.root;
                 window = event.xmotion.window;
                 x = event.xmotion.x_root;
@@ -799,6 +854,27 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
 	/* If any widgets want to handle this event, let them. */
 	dispatch_event (si, &event);
+
+        
+        /* If we got a MotionNotify event, figure out what screen it
+           was on and poll the mouse there: if the mouse hasn't moved
+           far enough to count as "real" motion, then ignore this
+           event.
+         */
+        if (event.xany.type == MotionNotify)
+          {
+            int i;
+            for (i = 0; i < si->nscreens; i++)
+              if (event.xmotion.root ==
+                  RootWindowOfScreen (si->screens[i].screen))
+                break;
+            if (i < si->nscreens)
+              {
+                if (!pointer_moved_p (&si->screens[i], False))
+                  continue;
+              }
+          }
+
 
 	/* We got a user event.
 	   If we're waiting for the user to become active, this is it.

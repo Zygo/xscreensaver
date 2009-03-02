@@ -99,11 +99,11 @@ static void draw_splash_window (saver_info *si);
 static void destroy_splash_window (saver_info *si);
 static void unsplash_timer (XtPointer closure, XtIntervalId *id);
 
-static void do_demo (saver_info *si);
+static void do_demo (saver_screen_info *ssi);
 #ifdef PREFS_BUTTON
-static void do_prefs (saver_info *si);
+static void do_prefs (saver_screen_info *ssi);
 #endif /* PREFS_BUTTON */
-static void do_help (saver_info *si);
+static void do_help (saver_screen_info *ssi);
 
 
 struct splash_dialog_data {
@@ -690,6 +690,7 @@ void
 handle_splash_event (saver_info *si, XEvent *event)
 {
   splash_dialog_data *sp = si->sp_data;
+  saver_screen_info *ssi = sp->prompt_screen;
   int which = 0;
   if (!sp) return;
 
@@ -736,11 +737,11 @@ handle_splash_event (saver_info *si, XEvent *event)
               sp = si->sp_data;
 	      switch (which)
 		{
-		case 1: do_demo (si); break;
+		case 1: do_demo (ssi); break;
 #ifdef PREFS_BUTTON
-		case 2: do_prefs (si); break;
+		case 2: do_prefs (ssi); break;
 #endif /* PREFS_BUTTON */
-		case 3: do_help (si); break;
+		case 3: do_help (ssi); break;
 		default: abort();
 		}
 	    }
@@ -777,76 +778,49 @@ unsplash_timer (XtPointer closure, XtIntervalId *id)
 # define fork  vfork
 #endif /* VMS */
 
-static void
-fork_and_exec (saver_info *si, const char *command, const char *desc)
-{
-  saver_preferences *p = &si->prefs;
-  pid_t forked;
-  char buf [512];
-  char *av[5];
-  int ac;
-
-  if (!command || !*command)
-    {
-      fprintf (stderr, "%s: no %s command has been specified.\n",
-	       blurb(), desc);
-      return;
-    }
-
-  switch ((int) (forked = fork ()))
-    {
-    case -1:
-      sprintf (buf, "%s: couldn't fork", blurb());
-      perror (buf);
-      break;
-
-    case 0:
-      close (ConnectionNumber (si->dpy));		/* close display fd */
-      hack_subproc_environment (si->default_screen);	/* set $DISPLAY */
-      ac = 0;
-      av [ac++] = (char *) p->shell;
-      av [ac++] = (char *) "-c";
-      av [ac++] = (char *) command;
-      av [ac]   = 0;
-      execvp (av[0], av);				/* shouldn't return. */
-
-      sprintf (buf, "%s: execvp(\"%s\", \"%s\", \"%s\") failed",
-	       blurb(), av[0], av[1], av[2]);
-      perror (buf);
-      fflush (stderr);
-      fflush (stdout);
-      exit (1);			 /* Note that this only exits a child fork.  */
-      break;
-
-    default:
-      /* parent fork. */
-      break;
-    }
-}
-
 
 static void
-do_demo (saver_info *si)
+do_demo (saver_screen_info *ssi)
 {
+  saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  fork_and_exec (si, p->demo_command, "demo-mode");
+  const char *cmd = p->demo_command;
+
+  if (cmd && *cmd)
+    fork_and_exec (ssi, cmd);
+  else
+    fprintf (stderr, "%s: no demo-mode command has been specified.\n",
+             blurb());
 }
 
 #ifdef PREFS_BUTTON
 static void
-do_prefs (saver_info *si)
+do_prefs (saver_screen_info *ssi)
 {
+  saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  fork_and_exec (si, p->prefs_command, "preferences");
+  const char *cmd = p->prefs_command;
+
+  if (command && *command)
+    fork_and_exec (ssi, cmd);
+  else
+    fprintf (stderr, "%s: no preferences command has been specified.\n",
+             blurb());
 }
 #endif /* PREFS_BUTTON */
 
 static void
-do_help (saver_info *si)
+do_help (saver_screen_info *ssi)
 {
+  saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  char *help_command;
+  char *help_command = 0;
 
+  if (!p->load_url_command || !*p->load_url_command)
+    {
+      fprintf (stderr, "%s: no URL command has been specified.\n", blurb());
+      return;
+    }
   if (!p->help_url || !*p->help_url)
     {
       fprintf (stderr, "%s: no Help URL has been specified.\n", blurb());
@@ -857,6 +831,7 @@ do_help (saver_info *si)
 				  (strlen (p->help_url) * 4) + 10);
   sprintf (help_command, p->load_url_command,
            p->help_url, p->help_url, p->help_url, p->help_url);
-  fork_and_exec (si, help_command, "URL-loading");
+
+  fork_and_exec (ssi, help_command);
   free (help_command);
 }

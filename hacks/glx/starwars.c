@@ -36,7 +36,7 @@ extern XtAppContext app;
 #define HACK_RESHAPE	reshape_sws
 #define sws_opts	xlockmore_opts
 
-#define DEF_PROGRAM    "(default)"
+#define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
 #define DEF_LINES      "125"
 #define DEF_STEPS      "35"
 #define DEF_SPIN       "0.03"
@@ -50,12 +50,14 @@ extern XtAppContext app;
 #define DEF_TEXTURES   "True"
 #define DEF_DEBUG      "False"
 
-/* Utopia 480 needs a 2048x2048 texture.
-   Utopia 400 needs a 1024x1024 texture.
-   Utopia 180 needs a 512x512 texture.
-   Times 240 needs a 512x512 texture.
+/* Utopia 800 needs 64 512x512 textures (4096x4096 bitmap).
+   Utopia 720 needs 16 512x512 textures (2048x2048 bitmap).
+   Utopia 480 needs 16 512x512 textures (2048x2048 bitmap).
+   Utopia 400 needs  4 512x512 textures (1024x1024 bitmap).
+   Utopia 180 needs  1 512x512 texture.
+   Times  240 needs  1 512x512 texture.
  */
-#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-400-*-*-*-*-iso8859-1"
+#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1"
 
 #define TAB_WIDTH        8
 
@@ -63,23 +65,10 @@ extern XtAppContext app;
 #define FONT_WEIGHT       14
 #define KEEP_ASPECT
 
-#define DEFAULTS "*delay:	  40000 \n"		     \
-		 "*showFPS:	  False \n"		     \
-		 "*fpsTop:	  True \n"		     \
-		 "*program:	" DEF_PROGRAM		"\n" \
-		 "*lines:	" DEF_LINES		"\n" \
-		 "*spin:	" DEF_SPIN		"\n" \
-		 "*steps:	" DEF_STEPS		"\n" \
-		 "*smooth:	" DEF_SMOOTH		"\n" \
-		 "*thick:	" DEF_THICK		"\n" \
-		 "*fade:	" DEF_FADE		"\n" \
-		 "*textures:	" DEF_TEXTURES		"\n" \
-		 "*fontSize:	" DEF_FONT_SIZE		"\n" \
-		 "*columns:	" DEF_COLUMNS		"\n" \
-		 "*lineWrap:	" DEF_WRAP		"\n" \
-		 "*alignment:	" DEF_ALIGN		"\n" \
-		 "*font:	" DEF_FONT		"\n" \
-		 "*debug:	" DEF_DEBUG		"\n" \
+#define DEFAULTS "*delay:    40000     \n" \
+		 "*showFPS:  False     \n" \
+		 "*fpsTop:   True      \n" \
+		 "*font:   " DEF_FONT "\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -112,8 +101,10 @@ typedef struct {
   XtInputId pipe_id;
   Time subproc_relaunch_delay;
 
-  char buf [1024];
+  char *buf;
+  int buf_size;
   int buf_tail;
+
   char **lines;
   int total_lines;
 
@@ -154,7 +145,7 @@ static XrmOptionDescRec opts[] = {
   {"-spin",        ".spin",      XrmoptionSepArg, 0 },
   {"-size",	   ".fontSize",  XrmoptionSepArg, 0 },
   {"-columns",	   ".columns",   XrmoptionSepArg, 0 },
-  {"-font",        ".font",      XrmoptionSepArg, 0 },
+/*{"-font",        ".font",      XrmoptionSepArg, 0 },*/
   {"-fade",        ".fade",      XrmoptionNoArg,  "True"   },
   {"-no-fade",     ".fade",      XrmoptionNoArg,  "False"  },
   {"-textures",    ".textures",  XrmoptionNoArg,  "True"   },
@@ -297,59 +288,7 @@ static void
 launch_text_generator (sws_configuration *sc)
 {
   char *oprogram = get_string_resource ("program", "Program");
-  char *program;
-
-  if (!strcasecmp(oprogram, "(default)"))
-    {
-      oprogram = FORTUNE_PROGRAM;
-
-#if defined(__linux__) && defined(HAVE_UNAME)
-      {
-        static int done_once = 0;
-        if (!done_once)
-          {
-            struct utsname uts;
-            struct stat st;
-            done_once = 1;
-            if (uname (&uts) == 0)
-              {
-                static char cmd[200];
-                char *s;
-                /* strip version at the first non-digit-dash-dot, to
-                   lose any "SMP" crap at the end. */
-                for (s = uts.release; *s; s++)
-                  if (!isdigit(*s) && *s != '.' && *s != '-')
-                    *s = 0;
-                sprintf (cmd, "cat /usr/src/linux-%s/README", uts.release);
-                if (!stat (cmd+4, &st))
-                  oprogram = cmd;
-                else
-                  {
-                    /* kernel source not installed?  try X... */
-                    strcpy (cmd, "cat /usr/X11R6/lib/X11/doc/README");
-                    if (!stat (cmd+4, &st))
-                      oprogram = cmd;
-                  }
-              }
-          }
-      }
-#endif /* __linux__ && HAVE_UNAME */
-
-#ifdef __APPLE__   /* MacOS X + XDarwin */
-      {
-        static int done_once = 0;
-        if (!done_once)
-          {
-            struct stat st;
-            static char *cmd = "cat /usr/X11R6/README";
-            if (!stat (cmd+4, &st))
-              oprogram = cmd;
-          }
-      }
-#endif /* __APPLE__ */
-    }
-
-  program = (char *) malloc (strlen (oprogram) + 10);
+  char *program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
   strcat (program, " ) 2>&1");
@@ -382,12 +321,14 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 static void
 drain_input (sws_configuration *sc)
 {
-  if (sc->buf_tail < sizeof(sc->buf) - 2)
+  if (sc->buf_tail < sc->buf_size - 2)
     {
-      int target = sizeof(sc->buf) - sc->buf_tail - 2;
-      int n = read (fileno (sc->pipe),
-                    (void *) (sc->buf + sc->buf_tail),
-                    target);
+      int target = sc->buf_size - sc->buf_tail - 2;
+      int n = (sc->pipe
+               ? read (fileno (sc->pipe),
+                       (void *) (sc->buf + sc->buf_tail),
+                       target)
+               : 0);
       if (n > 0)
         {
           sc->buf_tail += n;
@@ -395,10 +336,13 @@ drain_input (sws_configuration *sc)
         }
       else
         {
-          XtRemoveInput (sc->pipe_id);
-          sc->pipe_id = 0;
-          pclose (sc->pipe);
-          sc->pipe = 0;
+          if (sc->pipe)
+            {
+              XtRemoveInput (sc->pipe_id);
+              sc->pipe_id = 0;
+              pclose (sc->pipe);
+              sc->pipe = 0;
+            }
 
           /* If the process didn't print a terminating newline, add one. */
           if (sc->buf_tail > 1 &&
@@ -458,10 +402,8 @@ get_more_lines (sws_configuration *sc)
       int cw;
 
       if (s >= sc->buf + sc->buf_tail)
-        {
-          /* Reached end of buffer before end of line.  Bail. */
-          return;
-        }
+        /* Reached end of buffer before end of line.  Bail. */
+        return;
 
       cw = char_width (sc, *s);
 
@@ -647,7 +589,6 @@ box (double width, double height, double depth)
   glVertex3f( width/2,   height/2, -depth/2);
   glEnd();
 
-  glEnd();
   glBegin(GL_LINES);
   glVertex3f(-width/2,   height/2,  depth/2);
   glVertex3f(-width/2,  -height/2, -depth/2);
@@ -847,6 +788,19 @@ init_sws (ModeInfo *mi)
       font_height = lh;
       glEnable(GL_ALPHA_TEST);
       glEnable (GL_TEXTURE_2D);
+
+      check_gl_error ("loading font");
+
+# ifdef GL_TEXTURE_MAX_ANISOTROPY_EXT
+      /* "Anistropic filtering helps for quadrilateral-angled textures.
+         A sharper image is accomplished by interpolating and filtering
+         multiple samples from one or more mipmaps to better approximate
+         very distorted textures.  This is the next level of filtering
+         after trilinear filtering." */
+      if (smooth_p)
+        glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16);
+      clear_gl_error();
+# endif
     }
   else
     {
@@ -883,7 +837,16 @@ init_sws (ModeInfo *mi)
   sc->line_height = font_height * sc->font_scale;
 
 
-  sc->subproc_relaunch_delay = 2 * 1000;
+  /* Buffer only two lines of text.
+     If the buffer is too big, there's a significant delay between
+     when the program launches and when the text appears, which can be
+     irritating for time-sensitive output (clock, current music, etc.)
+   */
+  sc->buf_size = target_columns * 2;
+  if (sc->buf_size < 80) sc->buf_size = 80;
+  sc->buf = (char *) calloc (1, sc->buf_size);
+
+  sc->subproc_relaunch_delay = 2 * 1000;   /* 2 seconds */
   sc->total_lines = max_lines-1;
 
   if (random() & 1)
@@ -1025,7 +988,7 @@ draw_sws (ModeInfo *mi)
       for (i = 0; i < sc->total_lines; i++)
         {
           double fade = (fade_p ? 1.0 * i / sc->total_lines : 1.0);
-          int offscreen_lines = 3;
+          int offscreen_lines = 2;
 
           double x = -0.5;
           double y =  ((sc->total_lines - (i + offscreen_lines) - 1)

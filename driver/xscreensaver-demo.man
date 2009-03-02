@@ -11,14 +11,13 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "23-Feb-2005 (4.20)" "X Version 11"
+.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
 .B xscreensaver\-demo
 [\-display \fIhost:display.screen\fP]
 [\-prefs]
-[--crapplet]
 [--debug]
 .SH DESCRIPTION
 The \fIxscreensaver\-demo\fP program is a graphical front-end for 
@@ -85,20 +84,25 @@ preview area, and some fields that let you configure screen saver behavior.
 This option menu controls the behavior of the screen saver.  The options are:
 .RS 8
 .TP 8
-.B Random Screen Saver
-When blanking the screen, select a random display mode from among those
-that are enabled and applicable.  This is the default.
+.B Disable Screen Saver
+Don't ever blank the screen, and don't ever allow the monitor to power down.
+.TP 8
+.B Blank Screen Only
+When blanking the screen, just go black: don't run any graphics hacks.
 .TP 8
 .B Only One Screen Saver
 When blanking the screen, only ever use one particular display mode (the
 one selected in the list.)
 .TP 8
-.B Blank Screen Only
-When blanking the screen, just go black: don't run any graphics hacks.
+.B Random Screen Saver
+When blanking the screen, select a random display mode from among those
+that are enabled and applicable.  This is the default.
 .TP 8
-.B Disable Screen Saver
-Don't ever blank the screen, and don't ever allow the monitor to power down.
-
+.B Random Same Saver
+This option only appears if you have multiple monitors.
+This is just like \fBRandom Screen Saver\fP, except that the \fIsame\fP
+randomly-chosen display mode will be run on all monitors, instead of a
+different one being run on each.
 .RE
 .TP 4
 .B Demo List
@@ -190,22 +194,40 @@ be used instead.
 .BR xscreensaver\-getimage (1)
 program, which is what actually does the work.)
 .TP 4
-.B Verbose Diagnostics
-Whether to print lots of debugging information.
+.B Text Manipulation
+Some of the display modes display and manipulate text.  The following
+options control how that text is generated.  (These parameters control
+the behavior of the
+.BR xscreensaver\-text (1)
+program, which is what actually does the work.)
 .TP 4
-.B Display Subprocess Errors
-If this is set, then if one of the graphics demos prints something to
-stdout or stderr, it will show up on the screen immediately (instead of
-being lost in a hidden terminal or file that you can't see.)
+.B Host Name and Time
+If this checkbox is selected, then the text used by the screen savers
+will be the local host name, date, time, and system load.
+.TP 4
+.B Text
+If this checkbox is selected, then the literal text typed in the 
+field to its right will be used.  If it contains % escape sequences,
+they will be expanded as per
+.BR strftime (2).
+.TP 4
+.B Text File
+If this checkbox is selected, then the contents of the corresponding
+file will be displayed.
+.TP 4
+.B Program
+If this checkbox is selected, then the given program will be run,
+and its output will be displayed.
+.TP 4
+.B URL
+If this checkbox is selected, then the given HTTP URL will be downloaded
+and displayed repeatedly.  If the document contains HTML, RSS, or Atom,
+it will be converted to plain-text first.
 
-If you change this option, it will only take effect the next time the
-xscreensaver daemon is restarted.  (All other settings take effect
-immediately.)
-.TP 4
-.B Display Splash Screen at Startup
-Normally when xscreensaver starts up, it briefly displays a splash dialog
-showing the version number, a \fIHelp\fP button, etc.  If this option is
-turned off, the splash screen will not be shown at all.
+Note: this re-downloads the document every time the screen saver
+runs out of text!  It might be considered abusive for you to point
+this at a web server that you do not control, as it will probably
+be hitting that server multiple times a minute.
 .TP 4
 .B Power Management Enabled
 Whether the monitor should be powered down after a period of inactivity.
@@ -234,12 +256,6 @@ If \fIPower Management Enabled\fP is selected, the monitor will fully
 power down after this much idle time.  This duration should be greater
 than or equal to \fISuspend\fP.
 .TP 4
-.B Install Colormap
-On 8-bit screens, whether to install a private colormap while the
-screensaver is active, so that the graphics hacks can get as many
-colors as possible.  This does nothing if you are running in 16-bit
-or better.
-.TP 4
 .B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  (Note:
@@ -255,6 +271,12 @@ is also selected.
 .B Fade Duration
 When fading or unfading are selected, this controls how long the fade will
 take.
+.TP 4
+.B Install Colormap
+On 8-bit screens, whether to install a private colormap while the
+screensaver is active, so that the graphics hacks can get as many
+colors as possible.  This does nothing if you are running in 16-bit
+or better.
 .PP
 There are more settings than these available, but these are the most 
 commonly used ones; see the manual for
@@ -324,6 +346,9 @@ for the directory in which to read and write the \fI.xscreensaver\fP file.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B HTTP_PROXY\fR or \fPhttp_proxy
+to get the default HTTP proxy host and port.
 .SH UPGRADES
 The latest version can always be found at 
 http://www.jwz.org/xscreensaver/
@@ -331,7 +356,8 @@ http://www.jwz.org/xscreensaver/
 .BR X (1),
 .BR xscreensaver (1),
 .BR xscreensaver\-command (1),
-.BR xscreensaver\-getimage (1)
+.BR xscreensaver\-getimage (1),
+.BR xscreensaver\-text (1)
 .SH COPYRIGHT
 Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell

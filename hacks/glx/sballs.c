@@ -49,11 +49,8 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 #define DEFAULTS 	"*delay: 	30000 \n" \
  			"*size: 	    0 \n" \
 			"*cycles:	    4 \n" \
- 			"*object: 	    0 \n" \
- 			"*trackmouse: 	False \n" \
  			"*showFPS: 	False \n" \
  			"*wireframe:  	False \n" \
- 			"*texture:  	True  \n"
 
 #define MODE_sballs
 #include "xlockmore.h"		/* from the xscreensaver distribution */

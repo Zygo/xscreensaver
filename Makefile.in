@@ -98,8 +98,6 @@ configure::
 		s/^(Configuration:)$$/\n$$1\n/m;			     \
 		s/^(Directory and file names:)$$/\n$$1\n/m;		     \
 		s/^  --sbindir=.*\n//m;					     \
-		s/^  --libexecdir.*\n//m;				     \
-		s/^  --datadir.*\n.*\n//m;				     \
 		s/^  --sysconfdir.*\n//m;				     \
 		s/^  --sharedstatedir.*\n.*\n//m;			     \
 		s/^  --localstatedir.*\n//m;				     \
@@ -123,7 +121,7 @@ configure::
 bump-version::
 	@								    \
   SRC=utils/version.h ;							    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\)\.\([0-9][0-9]*\).*/\1 \2/p' $$SRC` ;	    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\)\.\([0-9][^. ]*\).*/\1 \2/p' $$SRC` ;	    \
   set - $$VERS ;							    \
   MAJOR="$$1"; MINOR="$$2";						    \
   NEW=`echo $$MINOR + 1 | bc` ;						    \
@@ -160,10 +158,10 @@ tick_version:: bump-version
 update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
-	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
-	echo -n "Updating $$S to \"$$V\"... " ;				    \
+	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;	    \
+	echo -n "Updating $$S to \"$$VERS\"... " ;			    \
 	T=/tmp/xs.$$$$ ;						    \
-	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$V/"		    \
+	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"		    \
 	  < $$S > $$T ;							    \
 	if cmp -s $$S $$T ; then					    \
 	  echo "unchanged." ;						    \
@@ -175,7 +173,7 @@ update_spec_version::
 
 rpm::
 	@								   \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ; \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
   DIR=`pwd`/rpm_build ;							   \
   ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
   ADIR=archive/ ;							   \
@@ -205,7 +203,7 @@ rpm::
 
 test-tar::
 	@								    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
   D=xscreensaver-$$VERS ;						    \
   ADIR=archive/ ;							    \
   NAME="$${ADIR}$$D.tar.gz" ;						    \
@@ -255,7 +253,7 @@ test-tar::
 www::
 	@								    \
   DEST=$$HOME/www/xscreensaver ;					    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
   HEAD="xscreensaver-$$VERS" ;						    \
   ADIR=archive/ ;							    \
   BNAME="$$HEAD.tar.gz" ;						    \

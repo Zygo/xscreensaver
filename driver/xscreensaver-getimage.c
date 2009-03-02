@@ -1451,7 +1451,6 @@ get_image (Screen *screen,
 {
   Display *dpy = DisplayOfScreen (screen);
   grab_type which = GRAB_BARS;
-  int count = 0;
   struct stat st;
   const char *file_prop = 0;
   XRectangle geom = { 0, 0, 0, 0 };
@@ -1546,24 +1545,28 @@ get_image (Screen *screen,
     }
 # endif /* !USE_EXTERNAL_SCREEN_GRABBER */
 
-  count = 0;
-  if (desk_p)  count++;
-  if (video_p) count++;
-  if (image_p) count++;
-
-  if (count == 0)
+  if (! (desk_p || video_p || image_p))
     which = GRAB_BARS;
   else
     {
       int i = 0;
-      while (1)  /* loop until we get one that's permitted */
-        {
-          which = (random() % 3);
-          if (which == GRAB_DESK  && desk_p)  break;
-          if (which == GRAB_VIDEO && video_p) break;
-          if (which == GRAB_FILE  && image_p) break;
-          if (++i > 200) abort();
-        }
+      int n;
+      /* Loop until we get one that's permitted.
+         If files or video are permitted, do them more often
+         than desktop.
+
+             D+V+I: 10% + 45% + 45%.
+             V+I:   50% + 50%
+             D+V:   18% + 82%
+             D+I:   18% + 82%
+       */
+    AGAIN:
+      n = (random() % 100);
+      if (++i > 300) abort();
+      else if (desk_p  && n < 10) which = GRAB_DESK;   /* 10% */
+      else if (video_p && n < 55) which = GRAB_VIDEO;  /* 45% */
+      else if (image_p)           which = GRAB_FILE;   /* 45% */
+      else goto AGAIN;
     }
 
 

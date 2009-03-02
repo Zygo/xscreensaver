@@ -41,10 +41,6 @@
 
 #define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
-                        "*move:            True         \n" \
-                        "*spin:            True         \n" \
-                        "*engine:        " DEF_ENGINE  "\n" \
-			"*titles:        " DEF_TITLES  "\n" \
 			"*titleFont:  -*-times-bold-r-normal-*-180-*\n" \
 
 # include "xlockmore.h"              /* from the xscreensaver distribution */

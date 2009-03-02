@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "13-Mar-01" "X Version 11"
 .SH NAME
 molecule - draws 3D moleclear structures
@@ -28,6 +15,7 @@ molecule - draws 3D moleclear structures
 [\-titles] [\-no-titles]
 [\-atoms] [\-no-atoms]
 [\-bonds] [\-no-bonds]
+[\-shells] [\-no-shells]
 [\-molecule \fIfile-or-directory\fP]
 .SH DESCRIPTION
 The \fImolecule\fP program draws several different representations of
@@ -102,6 +90,16 @@ This is the default.
 Do not draw the bonds: instead, make the spheres for the atoms be
 larger, for a "space-filling" representation of the molecule.
 .TP 8
+.B \-shells
+Draw transparent electron shells around the atoms.  This only works
+if bonds are also being drawn.
+.TP 8
+.B \-no\-shells
+Do not draw electron shells.  This is the default.
+.TP 8
+.B \-shell\-alpha
+When drawing shells, how transparent to make them.  Default 0.4.
+.TP 8
 .B \-wire
 Draw a wireframe rendition of the molecule: this will consist only of
 single-pixel lines for the bonds, and text labels where the atoms go.
@@ -142,15 +140,14 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver (1)
 .PP
 Documentation on the PDB file format:
-.EX
-http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
-.EE
+
+    http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
+
 A good source of PDB files:
-.EX
-http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
-.EE
+
+    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
 .SH COPYRIGHT
-Copyright \(co 2001, 2004 by Jamie Zawinski.
+Copyright \(co 2001-2005 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and
 its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

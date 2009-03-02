@@ -35,12 +35,6 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*thickness:  " DEF_THICKNESS "\n" \
-			"*segments:   " DEF_SEGMENTS "\n" \
-			"*duration:   " DEF_DURATION "\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

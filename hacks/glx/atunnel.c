@@ -45,10 +45,7 @@ static const char sccsid[] = "@(#)atunnels.c	5.13 2004/05/25 xlockmore";
 # define HACK_RESHAPE		reshape_atunnels
 # define atunnels_opts		xlockmore_opts
 #define	DEFAULTS                "*delay:	10000	\n" \
-				"*showFPS:     	False	\n" \
-                                "*light:	True	\n" \
-                                "*wire:		False	\n" \
-                                "*texture:	True	\n"
+                                "*showFPS:  False   \n" \
 
 #define MODE_atunnels
 # include "xlockmore.h"		/* from the xscreensaver distribution */

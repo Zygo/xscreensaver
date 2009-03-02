@@ -70,12 +70,6 @@
  */
 #undef HAVE_XIDLE_EXTENSION
 
-/*  Define this if you have the MIT-SCREEN-SAVER extension installed.  See the
- *  caveats about this extension, above.  (It's available if the file
- *  /usr/include/X11/extensions/scrnsaver.h exists.)
- */
-#undef HAVE_MIT_SAVER_EXTENSION
-
 /*  Define this if you have the SGI SCREEN_SAVER extension.  This is standard
  *  on Irix systems, and not available elsewhere.
  */
@@ -231,12 +225,6 @@
 /*  Define this if you have the X Double Buffer Extension.
  */
 #undef HAVE_DOUBLE_BUFFER_EXTENSION
-
-/*  Some screenhacks like to run an external program to generate random pieces
-    of text; set this to the one you like.  Note that this is just the
-    default; X resources can be used to override it.
- */
-#define FORTUNE_PROGRAM "fortune"
 
 /*  Set the name of the password helper program, if any
  */

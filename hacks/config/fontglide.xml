@@ -37,6 +37,12 @@
   <_description>
 Puts text on the screen using large characters that glide in from the
 edges, assemble, then disperse.  Alternately, it can simply scroll whole 
-sentences from right to left.  By Jamie Zawinski.
+sentences from right to left.  
+
+The text can be the output of a program or the contents of a file
+or URL, as configured on the "Advanced" tab of the main Screensaver
+Preferences window.
+
+Written Jamie Zawinski.
   </_description>
 </screensaver>

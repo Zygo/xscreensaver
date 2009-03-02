@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2003, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1346,9 +1346,7 @@ static void
 launch_text_generator (state *s)
 {
   char *oprogram = get_string_resource ("program", "Program");
-  char *program;
-
-  program = (char *) malloc (strlen (oprogram) + 10);
+  char *program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
   strcat (program, " ) 2>&1");
@@ -1536,7 +1534,7 @@ char *defaults [] = {
   ".foreground:		#DDDDDD",
   ".borderColor:	#555555",
   "*delay:	        10000",
-  "*program:	      " FORTUNE_PROGRAM,
+  "*program:	        xscreensaver-text",
   "*mode:               random",
   ".font:               (default)",
   "*fontCharset:        iso8859-1",

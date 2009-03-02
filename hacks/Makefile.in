@@ -7,15 +7,22 @@
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ..
 
 install_prefix	=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+datadir		= @datadir@
 mandir		= @mandir@
+libexecdir	= @libexecdir@
 # maybe this should be 6 (games)?
 mansuffix	= 1
 manNdir		= $(mandir)/man$(mansuffix)
+
+HACKDIR		= @HACKDIR@
+HACK_CONF_DIR	= @HACK_CONF_DIR@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
@@ -36,9 +43,6 @@ INSTALL_SCRIPT  = @INSTALL_SCRIPT@
 INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
-GNOME_DATADIR	= @GNOME_DATADIR@
-HACKDIR		= @HACKDIR@
-HACK_CONF_DIR	= @HACK_CONF_DIR@
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
@@ -308,15 +312,16 @@ install-man: $(MEN)
 	done
 
 install-xml:
-	@if [ ! -d $(install_prefix)$(HACK_CONF_DIR) ]; then		\
-	  $(INSTALL_DIRS) $(install_prefix)$(HACK_CONF_DIR) ;		\
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 if [ ! -d $$dest ]; then					\
+	   $(INSTALL_DIRS) $$dest ;					\
 	 fi ;								\
-	 files=`cd $(srcdir)/config/ ; echo README $(STAR).xml` ;	\
-	 for file in $$files ; do					\
-	   echo $(INSTALL_DATA) $(srcdir)/config/$$file			\
-	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
-	  $(INSTALL_DATA) $(srcdir)/config/$$file			\
-	    $(install_prefix)$(HACK_CONF_DIR)/$$file ;			\
+	 src=$(srcdir)/config ;						\
+	 for file in $(EXES) $(SCRIPTS) ; do				\
+	   if [ -f $$src/$$file.xml ]; then				\
+	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	   fi ;								\
 	done
 
 uninstall-program:
@@ -334,10 +339,10 @@ uninstall-man:
 	done
 
 uninstall-xml:
-	@cd $(srcdir)/config/ ;						\
-	 for file in README $(STAR).xml ; do				\
-	  echo rm -f $(install_prefix)$(HACK_CONF_DIR)/$$file ;		\
-	  rm -f $(install_prefix)$(HACK_CONF_DIR)/$$file ;		\
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 for file in $(EXES) $(SCRIPTS) ; do				\
+	     echo rm -f $$dest/$$file.xml ;				\
+	          rm -f $$dest/$$file.xml ;				\
 	done
 
 clean:
@@ -806,9 +811,14 @@ substrate:	substrate.o	$(HACK_OBJS)
 intermomentary:	intermomentary.o $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-fireworkx:	fireworkx.o	 $(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
+fireworkx:	fireworkx.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+boxfit:		boxfit.o	$(HACK_OBJS) $(COL) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(GRAB) $(HACK_LIBS)
+
+ifs:		ifs.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -840,9 +850,6 @@ grav:		grav.o		$(XLOCK_OBJS)
 
 hopalong:	hopalong.o	$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
-
-ifs:		ifs.o		$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 julia:		julia.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -935,9 +942,6 @@ pacman:		pacman.o 	$(PACOBJS) $(XLOCK_OBJS) $(XPM)
 fiberlamp:	fiberlamp.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-boxfit:		boxfit.o	 $(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	 $(HACK_OBJS) $(COL) $(HACK_LIBS)
-
 # These are not like the others.
 #
 xsublim:	xsublim.o	$(HACK_OBJS_1)
@@ -990,6 +994,7 @@ bouboule.o: $(srcdir)/xlockmore.h
 bouboule.o: $(srcdir)/xlockmoreI.h
 boxfit.o: ../config.h
 boxfit.o: $(srcdir)/screenhack.h
+boxfit.o: $(srcdir)/xpm-pixmap.h
 braid.o: ../config.h
 braid.o: $(srcdir)/screenhack.h
 braid.o: $(srcdir)/xlockmore.h
@@ -1162,8 +1167,6 @@ hypercube.o: ../config.h
 hypercube.o: $(srcdir)/screenhack.h
 ifs.o: ../config.h
 ifs.o: $(srcdir)/screenhack.h
-ifs.o: $(srcdir)/xlockmore.h
-ifs.o: $(srcdir)/xlockmoreI.h
 imsmap.o: ../config.h
 imsmap.o: $(srcdir)/screenhack.h
 interference.o: ../config.h
@@ -1288,6 +1291,10 @@ pacman_level.o: $(srcdir)/screenhack.h
 pacman_level.o: $(srcdir)/xlockmoreI.h
 pacman_level.o: $(srcdir)/xpm-pixmap.h
 pacman.o: ../config.h
+pacman.o: $(srcdir)/images/pacman/eyes-d.xpm
+pacman.o: $(srcdir)/images/pacman/eyes-l.xpm
+pacman.o: $(srcdir)/images/pacman/eyes-r.xpm
+pacman.o: $(srcdir)/images/pacman/eyes-u.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-d1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-d2.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-l1.xpm
@@ -1295,11 +1302,23 @@ pacman.o: $(srcdir)/images/pacman/ghost-l2.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-mask.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-r1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-r2.xpm
+pacman.o: $(srcdir)/images/pacman/ghost-s1.xpm
+pacman.o: $(srcdir)/images/pacman/ghost-s2.xpm
+pacman.o: $(srcdir)/images/pacman/ghost-sf1.xpm
+pacman.o: $(srcdir)/images/pacman/ghost-sf2.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-u1.xpm
 pacman.o: $(srcdir)/images/pacman/ghost-u2.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-0.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-d1.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-d2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds1.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds2.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds3.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds4.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds5.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds6.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds7.xpm
+pacman.o: $(srcdir)/images/pacman/pacman-ds8.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-l1.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-l2.xpm
 pacman.o: $(srcdir)/images/pacman/pacman-r1.xpm

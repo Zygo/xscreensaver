@@ -30,22 +30,15 @@
 # define DEF_MIPMAP         "True"
 # define DEF_DEBUG          "False"
 
-#define DEF_FONT "-*-times-bold-r-normal-*-180-*"
+#define DEF_FONT "-*-times-bold-r-normal-*-240-*"
 
-#define DEFAULTS  "*count:           7                    \n" \
-		  "*delay:           10000                \n" \
-		  "*speed:         " DEF_SPEED           "\n" \
-		  "*duration:      " DEF_DURATION	 "\n" \
-		  "*titles:        " DEF_TITLES          "\n" \
-		  "*zoom:          " DEF_ZOOM            "\n" \
-		  "*tilt:          " DEF_TILT            "\n" \
-	          "*debug:         " DEF_DEBUG           "\n" \
-	          "*mipmap:        " DEF_MIPMAP          "\n" \
-		  "*wireframe:       False                \n" \
-                  "*showFPS:         False                \n" \
-	          "*fpsSolid:        True                 \n" \
-	          "*useSHM:          True                 \n" \
-		  "*font:	   " DEF_FONT		 "\n" \
+#define DEFAULTS  "*count:           7         \n" \
+		  "*delay:           10000     \n" \
+		  "*wireframe:       False     \n" \
+                  "*showFPS:         False     \n" \
+	          "*fpsSolid:        True      \n" \
+	          "*useSHM:          True      \n" \
+		  "*font:	   " DEF_FONT "\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n"
 
 # include "xlockmore.h"
@@ -130,11 +123,11 @@ static Bool debug_p;	    /* Be loud and do weird things. */
 
 static XrmOptionDescRec opts[] = {
   {"-zoom",         ".zoom",          XrmoptionNoArg, "True"  },
-  {"-no-zoom",      ".zoom",          XrmoptionNoArg, "False"  },
+  {"-no-zoom",      ".zoom",          XrmoptionNoArg, "False" },
   {"-tilt",         ".tilt",          XrmoptionSepArg, 0  },
   {"-no-tilt",      ".tilt",          XrmoptionNoArg, ""  },
   {"-titles",       ".titles",        XrmoptionNoArg, "True"  },
-  {"-no-titles",    ".titles",        XrmoptionNoArg, "True"  },
+  {"-no-titles",    ".titles",        XrmoptionNoArg, "False" },
   {"-mipmaps",      ".mipmap",        XrmoptionNoArg, "True"  },
   {"-no-mipmaps",   ".mipmap",        XrmoptionNoArg, "False" },
   {"-duration",	    ".duration",      XrmoptionSepArg, 0 },
@@ -657,11 +650,170 @@ init_carousel (ModeInfo *mi)
 }
 
 
+static void
+draw_img (ModeInfo *mi, image *img, time_t now, Bool body_p)
+{
+  carousel_state *ss = &sss[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+
+  GLfloat texw  = img->geom.width  / (GLfloat) img->tw;
+  GLfloat texh  = img->geom.height / (GLfloat) img->th;
+  GLfloat texx1 = img->geom.x / (GLfloat) img->tw;
+  GLfloat texy1 = img->geom.y / (GLfloat) img->th;
+  GLfloat texx2 = texx1 + texw;
+  GLfloat texy2 = texy1 + texh;
+  GLfloat aspect = img->geom.height / (GLfloat) img->geom.width;
+
+  glBindTexture (GL_TEXTURE_2D, img->texid);
+
+  glPushMatrix();
+
+  /* Position this image on the wheel.
+   */
+  glRotatef (img->theta, 0, 1, 0);
+  glTranslatef (0, 0, img->r);
+
+  /* Scale down the image so that all N images fit on the wheel
+     without bumping in to each other.
+  */
+  {
+    GLfloat t, s;
+    switch (ss->nimages)
+      {
+      case 1:  t = -1.0; s = 1.7; break;
+      case 2:  t = -0.8; s = 1.6; break;
+      case 3:  t = -0.4; s = 1.5; break;
+      case 4:  t = -0.2; s = 1.3; break;
+      default: t =  0.0; s = 6.0 / ss->nimages; break;
+      }
+    glTranslatef (0, 0, t);
+    glScalef (s, s, s);
+  }
+
+  /* Center this image on the wheel plane.
+   */
+  glTranslatef (-0.5, -(aspect/2), 0);
+
+  /* Move as per the "zoom in and out" setting.
+   */
+  if (zoom_p)
+    {
+      double x, y, z;
+      /* Only use the Z component of the rotator for in/out position. */
+      get_position (img->rot, &x, &y, &z, !ss->button_down_p);
+      glTranslatef (0, 0, z/2);
+    }
+
+  /* Compute the "drop in and out" state.
+   */
+  switch (img->mode)
+    {
+    case NORMAL:
+      if (!ss->button_down_p &&
+          now >= img->expires)
+        {
+          img->mode = OUT;
+          img->mode_tick = fade_ticks * speed;
+        }
+      break;
+    case OUT:
+      if (--img->mode_tick <= 0)
+        load_image (mi, img, False);
+      break;
+    case LOADING:
+      /* just wait, with the image off screen. */
+      break;
+    case IN:
+      if (--img->mode_tick <= 0)
+        img->mode = NORMAL;
+      break;
+    default:
+      abort();
+    }
+
+  /* Now drop in/out.
+   */
+  if (img->mode != NORMAL)
+    {
+      GLfloat t = (img->mode == LOADING
+                   ? -100
+                   : img->mode == OUT
+                   ? img->mode_tick / (fade_ticks * speed)
+                   : (((fade_ticks * speed) - img->mode_tick + 1) /
+                      (fade_ticks * speed)));
+      t = 5 * (1 - t);
+      if (img->from_top_p) t = -t;
+      glTranslatef (0, t, 0);
+    }
+
+  if (body_p)					/* Draw the image quad. */
+    {
+      if (! wire)
+        {
+          glColor3f (1, 1, 1);
+          glNormal3f (0, 0, 1);
+          glEnable (GL_TEXTURE_2D);
+          glBegin (GL_QUADS);
+          glNormal3f (0, 0, 1);
+          glTexCoord2f (texx1, texy2); glVertex3f (0, 0, 0);
+          glTexCoord2f (texx2, texy2); glVertex3f (1, 0, 0);
+          glTexCoord2f (texx2, texy1); glVertex3f (1, aspect, 0);
+          glTexCoord2f (texx1, texy1); glVertex3f (0, aspect, 0);
+          glEnd();
+        }
+
+      /* Draw a box around it.
+       */
+      glLineWidth (2.0);
+      glColor3f (0.5, 0.5, 0.5);
+      glDisable (GL_TEXTURE_2D);
+      glBegin (GL_LINE_LOOP);
+      glVertex3f (0, 0, 0);
+      glVertex3f (1, 0, 0);
+      glVertex3f (1, aspect, 0);
+      glVertex3f (0, aspect, 0);
+      glEnd();
+
+    }
+  else					/* Draw a title under the image. */
+    {
+      int sw, sh;
+      GLfloat scale = 0.05;
+      char *title = img->title ? img->title : "(untitled)";
+      sw = texture_string_width (ss->texfont, title, &sh);
+
+      glTranslatef (0, -scale, 0);
+
+      scale /= sh;
+      glScalef (scale, scale, scale);
+
+      glTranslatef (((1/scale) - sw) / 2, 0, 0);
+      glColor3f (1, 1, 1);
+
+      if (!wire)
+        {
+          glEnable (GL_TEXTURE_2D);
+          print_texture_string (ss->texfont, title);
+        }
+      else
+        {
+          glBegin (GL_LINE_LOOP);
+          glVertex3f (0,  0,  0);
+          glVertex3f (sw, 0,  0);
+          glVertex3f (sw, sh, 0);
+          glVertex3f (0,  sh, 0);
+          glEnd();
+        }
+    }
+
+  glPopMatrix();
+}
+
+
 void
 draw_carousel (ModeInfo *mi)
 {
   carousel_state *ss = &sss[MI_SCREEN(mi)];
-  int wire = MI_IS_WIREFRAME(mi);
   static time_t last_time = 0;
   static time_t now = 0;
   int i;
@@ -733,164 +885,17 @@ draw_carousel (ModeInfo *mi)
     glRotatef (y * 360, 0, 1, 0);
   }
 
-  /* Render and update each image on the disc.
+  /* First draw each image, then draw the titles.  Insists that you
+     draw back-to-front in order to make alpha blending work properly,
+     so we need to draw all of the 100% opaque images before drawing
+     any of the not-100%-opaque titles.
    */
   for (i = 0; i < ss->nimages; i++)
-    {
-      image *img = ss->images[i];
-      GLfloat texw  = img->geom.width  / (GLfloat) img->tw;
-      GLfloat texh  = img->geom.height / (GLfloat) img->th;
-      GLfloat texx1 = img->geom.x / (GLfloat) img->tw;
-      GLfloat texy1 = img->geom.y / (GLfloat) img->th;
-      GLfloat texx2 = texx1 + texw;
-      GLfloat texy2 = texy1 + texh;
-      GLfloat aspect = img->geom.height / (GLfloat) img->geom.width;
+    draw_img (mi, ss->images[i], now, True);
+  if (titles_p)
+    for (i = 0; i < ss->nimages; i++)
+      draw_img (mi, ss->images[i], now, False);
 
-      glBindTexture (GL_TEXTURE_2D, img->texid);
-
-      glPushMatrix();
-
-      /* Position this image on the wheel.
-       */
-      glRotatef (img->theta, 0, 1, 0);
-      glTranslatef (0, 0, img->r);
-
-      /* Scale down the image so that all N images fit on the wheel
-         without bumping in to each other.
-      */
-      {
-        GLfloat t, s;
-        switch (ss->nimages)
-          {
-          case 1:  t = -1.0; s = 1.7; break;
-          case 2:  t = -0.8; s = 1.6; break;
-          case 3:  t = -0.4; s = 1.5; break;
-          case 4:  t = -0.2; s = 1.3; break;
-          default: t =  0.0; s = 6.0 / ss->nimages; break;
-          }
-        glTranslatef (0, 0, t);
-        glScalef (s, s, s);
-      }
-
-      /* Center this image on the wheel plane.
-       */
-      glTranslatef (-0.5, -(aspect/2), 0);
-
-      /* Move as per the "zoom in and out" setting.
-       */
-      if (zoom_p)
-        {
-          double x, y, z;
-          /* Only use the Z component of the rotator for in/out position. */
-          get_position (img->rot, &x, &y, &z, !ss->button_down_p);
-          glTranslatef (0, 0, z/2);
-        }
-
-      /* Compute the "drop in and out" state.
-       */
-      switch (img->mode)
-        {
-        case NORMAL:
-          if (!ss->button_down_p &&
-              now >= img->expires)
-            {
-              img->mode = OUT;
-              img->mode_tick = fade_ticks * speed;
-            }
-          break;
-        case OUT:
-          if (--img->mode_tick <= 0)
-            load_image (mi, img, False);
-          break;
-        case LOADING:
-          /* just wait, with the image off screen. */
-          break;
-        case IN:
-          if (--img->mode_tick <= 0)
-            img->mode = NORMAL;
-          break;
-        default:
-          abort();
-        }
-
-      /* Now drop in/out.
-       */
-      if (img->mode != NORMAL)
-        {
-          GLfloat t = (img->mode == LOADING
-                       ? -100
-                       : img->mode == OUT
-                       ? img->mode_tick / (fade_ticks * speed)
-                       : (((fade_ticks * speed) - img->mode_tick + 1) /
-                          (fade_ticks * speed)));
-          t = 5 * (1 - t);
-          if (img->from_top_p) t = -t;
-          glTranslatef (0, t, 0);
-        }
-
-      /* Draw the image quad.
-       */
-      if (! wire)
-        {
-          glColor3f (1, 1, 1);
-          glNormal3f (0, 0, 1);
-          glEnable (GL_TEXTURE_2D);
-          glBegin (GL_QUADS);
-          glNormal3f (0, 0, 1);
-          glTexCoord2f (texx1, texy2); glVertex3f (0, 0, 0);
-          glTexCoord2f (texx2, texy2); glVertex3f (1, 0, 0);
-          glTexCoord2f (texx2, texy1); glVertex3f (1, aspect, 0);
-          glTexCoord2f (texx1, texy1); glVertex3f (0, aspect, 0);
-          glEnd();
-        }
-
-      /* Draw a box around it.
-       */
-      glLineWidth (2.0);
-      glColor3f (0.5, 0.5, 0.5);
-      glDisable (GL_TEXTURE_2D);
-      glBegin (GL_LINE_LOOP);
-      glVertex3f (0, 0, 0);
-      glVertex3f (1, 0, 0);
-      glVertex3f (1, aspect, 0);
-      glVertex3f (0, aspect, 0);
-      glEnd();
-
-      /* Draw a title under the image.
-       */
-      if (titles_p)
-        {
-          int sw, sh;
-          GLfloat scale = 0.05;
-          char *title = img->title ? img->title : "(untitled)";
-          sw = texture_string_width (ss->texfont, title, &sh);
-
-          glTranslatef (0, -scale, 0);
-
-          scale /= sh;
-          glScalef (scale, scale, scale);
-
-          glTranslatef (((1/scale) - sw) / 2, 0, 0);
-          glColor3f (1, 1, 1);
-
-          if (!wire)
-            {
-              glEnable (GL_TEXTURE_2D);
-              print_texture_string (ss->texfont, title);
-            }
-          else
-            {
-              glBegin (GL_LINE_LOOP);
-              glVertex3f (0,  0,  0);
-              glVertex3f (sw, 0,  0);
-              glVertex3f (sw, sh, 0);
-              glVertex3f (0,  sh, 0);
-              glEnd();
-            }
-        }
-
-      glPopMatrix();
-    }
   glPopMatrix();
 
   if (mi->fps_p) do_fps (mi);

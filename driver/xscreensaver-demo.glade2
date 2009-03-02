@@ -31,6 +31,7 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">_File</property>
 	      <property name="use_underline">True</property>
+	      <signal name="activate" handler="file_menu_cb" last_modification_time="Sun, 06 Mar 2005 21:41:13 GMT"/>
 
 	      <child>
 		<widget class="GtkMenu" id="file_menu">
@@ -201,7 +202,7 @@
 			    <widget class="GtkCheckButton" id="lock_button">
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
-			      <property name="label" translatable="yes">_Lock Screen After</property>
+			      <property name="label" translatable="yes">_Lock Screen After  </property>
 			      <property name="use_underline">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
 			      <property name="focus_on_click">True</property>
@@ -223,34 +224,9 @@
 		      </child>
 
 		      <child>
-			<widget class="GtkLabel" id="timeout_label">
-			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">_Blank After</property>
-			  <property name="use_underline">True</property>
-			  <property name="use_markup">False</property>
-			  <property name="justify">GTK_JUSTIFY_RIGHT</property>
-			  <property name="wrap">False</property>
-			  <property name="selectable">False</property>
-			  <property name="xalign">1</property>
-			  <property name="yalign">0.5</property>
-			  <property name="xpad">8</property>
-			  <property name="ypad">0</property>
-			  <property name="mnemonic_widget">timeout_spinbutton</property>
-			</widget>
-			<packing>
-			  <property name="left_attach">1</property>
-			  <property name="right_attach">2</property>
-			  <property name="top_attach">0</property>
-			  <property name="bottom_attach">1</property>
-			  <property name="x_options">fill</property>
-			  <property name="y_options"></property>
-			</packing>
-		      </child>
-
-		      <child>
 			<widget class="GtkSpinButton" id="timeout_spinbutton">
 			  <property name="visible">True</property>
-			  <property name="tooltip" translatable="yes">How long before the screensaver activates.</property>
+			  <property name="tooltip" translatable="yes">How long before the screen saver activates.</property>
 			  <property name="can_focus">True</property>
 			  <property name="climb_rate">15</property>
 			  <property name="digits">0</property>
@@ -269,75 +245,6 @@
 			  <property name="top_attach">0</property>
 			  <property name="bottom_attach">1</property>
 			  <property name="x_options">fill</property>
-			  <property name="y_options"></property>
-			</packing>
-		      </child>
-
-		      <child>
-			<widget class="GtkLabel" id="timeout_mlabel">
-			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">minutes</property>
-			  <property name="use_underline">False</property>
-			  <property name="use_markup">False</property>
-			  <property name="justify">GTK_JUSTIFY_LEFT</property>
-			  <property name="wrap">False</property>
-			  <property name="selectable">False</property>
-			  <property name="xalign">0</property>
-			  <property name="yalign">0.5</property>
-			  <property name="xpad">0</property>
-			  <property name="ypad">0</property>
-			</widget>
-			<packing>
-			  <property name="left_attach">3</property>
-			  <property name="right_attach">4</property>
-			  <property name="top_attach">0</property>
-			  <property name="bottom_attach">1</property>
-			  <property name="y_options"></property>
-			</packing>
-		      </child>
-
-		      <child>
-			<widget class="GtkLabel" id="cycle_mlabel">
-			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">minutes</property>
-			  <property name="use_underline">False</property>
-			  <property name="use_markup">False</property>
-			  <property name="justify">GTK_JUSTIFY_LEFT</property>
-			  <property name="wrap">False</property>
-			  <property name="selectable">False</property>
-			  <property name="xalign">0</property>
-			  <property name="yalign">0.5</property>
-			  <property name="xpad">0</property>
-			  <property name="ypad">0</property>
-			</widget>
-			<packing>
-			  <property name="left_attach">3</property>
-			  <property name="right_attach">4</property>
-			  <property name="top_attach">1</property>
-			  <property name="bottom_attach">2</property>
-			  <property name="y_options"></property>
-			</packing>
-		      </child>
-
-		      <child>
-			<widget class="GtkLabel" id="lock_mlabel">
-			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">minutes</property>
-			  <property name="use_underline">False</property>
-			  <property name="use_markup">False</property>
-			  <property name="justify">GTK_JUSTIFY_LEFT</property>
-			  <property name="wrap">False</property>
-			  <property name="selectable">False</property>
-			  <property name="xalign">0</property>
-			  <property name="yalign">0.5</property>
-			  <property name="xpad">0</property>
-			  <property name="ypad">0</property>
-			</widget>
-			<packing>
-			  <property name="left_attach">3</property>
-			  <property name="right_attach">4</property>
-			  <property name="top_attach">2</property>
-			  <property name="bottom_attach">3</property>
 			  <property name="y_options"></property>
 			</packing>
 		      </child>
@@ -390,6 +297,100 @@
 			  <property name="right_attach">3</property>
 			  <property name="top_attach">1</property>
 			  <property name="bottom_attach">2</property>
+			  <property name="x_options">fill</property>
+			  <property name="y_options"></property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkLabel" id="lock_mlabel">
+			  <property name="visible">True</property>
+			  <property name="label" translatable="yes">minutes</property>
+			  <property name="use_underline">False</property>
+			  <property name="use_markup">False</property>
+			  <property name="justify">GTK_JUSTIFY_LEFT</property>
+			  <property name="wrap">False</property>
+			  <property name="selectable">False</property>
+			  <property name="xalign">0</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">8</property>
+			  <property name="ypad">0</property>
+			</widget>
+			<packing>
+			  <property name="left_attach">3</property>
+			  <property name="right_attach">4</property>
+			  <property name="top_attach">2</property>
+			  <property name="bottom_attach">3</property>
+			  <property name="y_options"></property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkLabel" id="cycle_mlabel">
+			  <property name="visible">True</property>
+			  <property name="label" translatable="yes">minutes</property>
+			  <property name="use_underline">False</property>
+			  <property name="use_markup">False</property>
+			  <property name="justify">GTK_JUSTIFY_LEFT</property>
+			  <property name="wrap">False</property>
+			  <property name="selectable">False</property>
+			  <property name="xalign">0</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">8</property>
+			  <property name="ypad">0</property>
+			</widget>
+			<packing>
+			  <property name="left_attach">3</property>
+			  <property name="right_attach">4</property>
+			  <property name="top_attach">1</property>
+			  <property name="bottom_attach">2</property>
+			  <property name="y_options"></property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkLabel" id="timeout_mlabel">
+			  <property name="visible">True</property>
+			  <property name="label" translatable="yes">minutes</property>
+			  <property name="use_underline">False</property>
+			  <property name="use_markup">False</property>
+			  <property name="justify">GTK_JUSTIFY_LEFT</property>
+			  <property name="wrap">False</property>
+			  <property name="selectable">False</property>
+			  <property name="xalign">0</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">8</property>
+			  <property name="ypad">0</property>
+			</widget>
+			<packing>
+			  <property name="left_attach">3</property>
+			  <property name="right_attach">4</property>
+			  <property name="top_attach">0</property>
+			  <property name="bottom_attach">1</property>
+			  <property name="y_options"></property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkLabel" id="timeout_label">
+			  <property name="visible">True</property>
+			  <property name="label" translatable="yes">_Blank After</property>
+			  <property name="use_underline">True</property>
+			  <property name="use_markup">False</property>
+			  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+			  <property name="wrap">False</property>
+			  <property name="selectable">False</property>
+			  <property name="xalign">1</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">8</property>
+			  <property name="ypad">0</property>
+			  <property name="mnemonic_widget">timeout_spinbutton</property>
+			</widget>
+			<packing>
+			  <property name="left_attach">1</property>
+			  <property name="right_attach">2</property>
+			  <property name="top_attach">0</property>
+			  <property name="bottom_attach">1</property>
 			  <property name="x_options">fill</property>
 			  <property name="y_options"></property>
 			</packing>
@@ -491,37 +492,50 @@
 			      <property name="history">0</property>
 
 			      <child internal-child="menu">
-				<widget class="GtkMenu" id="convertwidget1">
+				<widget class="GtkMenu" id="mode_menu_popup">
 				  <property name="visible">True</property>
 
 				  <child>
-				    <widget class="GtkMenuItem" id="convertwidget2">
+				    <widget class="GtkMenuItem" id="disable_menuitem">
 				      <property name="visible">True</property>
-				      <property name="label" translatable="yes">Disable Screen Saver</property>
+				      <property name="tooltip" translatable="yes">Never blank the screen or power down the monitor.</property>
+				      <property name="label" translatable="yes">_Disable Screen Saver</property>
 				      <property name="use_underline">True</property>
 				    </widget>
 				  </child>
 
 				  <child>
-				    <widget class="GtkMenuItem" id="convertwidget3">
+				    <widget class="GtkMenuItem" id="blank_menuitem">
 				      <property name="visible">True</property>
-				      <property name="label" translatable="yes">Blank Screen Only</property>
+				      <property name="tooltip" translatable="yes">When idle or locked, blacken the screen only.</property>
+				      <property name="label" translatable="yes">_Blank Screen Only</property>
 				      <property name="use_underline">True</property>
 				    </widget>
 				  </child>
 
 				  <child>
-				    <widget class="GtkMenuItem" id="convertwidget4">
+				    <widget class="GtkMenuItem" id="one_menuitem">
 				      <property name="visible">True</property>
-				      <property name="label" translatable="yes">Only One Screen Saver</property>
+				      <property name="tooltip" translatable="yes">When idle or locked, run the display mode selected below.</property>
+				      <property name="label" translatable="yes">_Only One Screen Saver</property>
 				      <property name="use_underline">True</property>
 				    </widget>
 				  </child>
 
 				  <child>
-				    <widget class="GtkMenuItem" id="convertwidget5">
+				    <widget class="GtkMenuItem" id="random_menuitem">
 				      <property name="visible">True</property>
-				      <property name="label" translatable="yes">Random Screen Saver</property>
+				      <property name="tooltip" translatable="yes">When idle or locked, choose a random display mode from among the checked items in the list below.</property>
+				      <property name="label" translatable="yes">_Random Screen Saver</property>
+				      <property name="use_underline">True</property>
+				    </widget>
+				  </child>
+
+				  <child>
+				    <widget class="GtkMenuItem" id="random_same_menuitem">
+				      <property name="visible">True</property>
+				      <property name="tooltip" translatable="yes">When idle or locked, choose a random display mode from among the checked items in the list below.  Run that same mode on each monitor.</property>
+				      <property name="label" translatable="yes">_Same Random Savers</property>
 				      <property name="use_underline">True</property>
 				    </widget>
 				  </child>
@@ -1011,7 +1025,7 @@ Installed</property>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				    </widget>
 				    <packing>
-				      <property name="padding">0</property>
+				      <property name="padding">2</property>
 				      <property name="expand">True</property>
 				      <property name="fill">True</property>
 				    </packing>
@@ -1109,70 +1123,271 @@ Installed</property>
 			  </child>
 
 			  <child>
-			    <widget class="GtkVBox" id="diag_vbox">
+			    <widget class="GtkTable" id="text_table">
 			      <property name="visible">True</property>
+			      <property name="n_rows">5</property>
+			      <property name="n_columns">3</property>
 			      <property name="homogeneous">False</property>
-			      <property name="spacing">0</property>
+			      <property name="row_spacing">2</property>
+			      <property name="column_spacing">2</property>
 
 			      <child>
-				<widget class="GtkCheckButton" id="verbose_button">
+				<widget class="GtkRadioButton" id="text_radio">
 				  <property name="visible">True</property>
-				  <property name="tooltip" translatable="yes">Whether the daemon should print lots of debugging information.</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the text typed here.</property>
 				  <property name="can_focus">True</property>
-				  <property name="label" translatable="yes">_Verbose Diagnostics</property>
+				  <property name="label" translatable="yes">_Text</property>
 				  <property name="use_underline">True</property>
 				  <property name="relief">GTK_RELIEF_NORMAL</property>
 				  <property name="focus_on_click">True</property>
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
-				  <signal name="toggled" handler="pref_changed_cb"/>
+				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:31:44 GMT"/>
 				</widget>
 				<packing>
-				  <property name="padding">0</property>
-				  <property name="expand">False</property>
-				  <property name="fill">False</property>
+				  <property name="left_attach">0</property>
+				  <property name="right_attach">1</property>
+				  <property name="top_attach">1</property>
+				  <property name="bottom_attach">2</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
 				</packing>
 			      </child>
 
 			      <child>
-				<widget class="GtkCheckButton" id="capture_button">
+				<widget class="GtkRadioButton" id="text_file_radio">
 				  <property name="visible">True</property>
-				  <property name="tooltip" translatable="yes">Whether any error output of the display modes should be redirected to the screen.</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the contents of this file.</property>
 				  <property name="can_focus">True</property>
-				  <property name="label" translatable="yes">Display Subprocess _Errors</property>
+				  <property name="label" translatable="yes">Text _file</property>
 				  <property name="use_underline">True</property>
 				  <property name="relief">GTK_RELIEF_NORMAL</property>
 				  <property name="focus_on_click">True</property>
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
-				  <signal name="toggled" handler="pref_changed_cb"/>
+				  <property name="group">text_radio</property>
+				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:31:55 GMT"/>
 				</widget>
 				<packing>
-				  <property name="padding">0</property>
-				  <property name="expand">False</property>
-				  <property name="fill">False</property>
+				  <property name="left_attach">0</property>
+				  <property name="right_attach">1</property>
+				  <property name="top_attach">2</property>
+				  <property name="bottom_attach">3</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
 				</packing>
 			      </child>
 
 			      <child>
-				<widget class="GtkCheckButton" id="splash_button">
+				<widget class="GtkRadioButton" id="text_program_radio">
 				  <property name="visible">True</property>
-				  <property name="tooltip" translatable="yes">Whether the splash screen (with the version number and `Help' button) should be momentarily displayed when the daemon first starts up.</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the output of this program.</property>
 				  <property name="can_focus">True</property>
-				  <property name="label" translatable="yes">Display _Splash Screen at Startup</property>
+				  <property name="label" translatable="yes">_Program</property>
 				  <property name="use_underline">True</property>
 				  <property name="relief">GTK_RELIEF_NORMAL</property>
 				  <property name="focus_on_click">True</property>
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <property name="group">text_radio</property>
+				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:07 GMT"/>
 				</widget>
 				<packing>
-				  <property name="padding">0</property>
-				  <property name="expand">False</property>
-				  <property name="fill">False</property>
+				  <property name="left_attach">0</property>
+				  <property name="right_attach">1</property>
+				  <property name="top_attach">3</property>
+				  <property name="bottom_attach">4</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkRadioButton" id="text_url_radio">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the contents of this URL (HTML or RSS).</property>
+				  <property name="can_focus">True</property>
+				  <property name="label" translatable="yes">_URL</property>
+				  <property name="use_underline">True</property>
+				  <property name="relief">GTK_RELIEF_NORMAL</property>
+				  <property name="focus_on_click">True</property>
+				  <property name="active">False</property>
+				  <property name="inconsistent">False</property>
+				  <property name="draw_indicator">True</property>
+				  <property name="group">text_radio</property>
+				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:17 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">0</property>
+				  <property name="right_attach">1</property>
+				  <property name="top_attach">4</property>
+				  <property name="bottom_attach">5</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkRadioButton" id="text_host_radio">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the local host name, date, and time.</property>
+				  <property name="can_focus">True</property>
+				  <property name="label" translatable="yes">_Host Name and Time</property>
+				  <property name="use_underline">True</property>
+				  <property name="relief">GTK_RELIEF_NORMAL</property>
+				  <property name="focus_on_click">True</property>
+				  <property name="active">True</property>
+				  <property name="inconsistent">False</property>
+				  <property name="draw_indicator">True</property>
+				  <property name="group">text_radio</property>
+				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:31:32 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">0</property>
+				  <property name="right_attach">3</property>
+				  <property name="top_attach">0</property>
+				  <property name="bottom_attach">1</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkEntry" id="text_url_entry">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the contents of this URL (HTML or RSS).</property>
+				  <property name="can_focus">True</property>
+				  <property name="editable">True</property>
+				  <property name="visibility">True</property>
+				  <property name="max_length">0</property>
+				  <property name="text" translatable="yes"></property>
+				  <property name="has_frame">True</property>
+				  <property name="invisible_char" translatable="yes">*</property>
+				  <property name="activates_default">False</property>
+				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:33:10 GMT"/>
+				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:34:26 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">1</property>
+				  <property name="right_attach">3</property>
+				  <property name="top_attach">4</property>
+				  <property name="bottom_attach">5</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkButton" id="text_file_browse">
+				  <property name="visible">True</property>
+				  <property name="can_focus">True</property>
+				  <property name="label" translatable="yes">_Browse</property>
+				  <property name="use_underline">True</property>
+				  <property name="relief">GTK_RELIEF_NORMAL</property>
+				  <property name="focus_on_click">True</property>
+				  <signal name="clicked" handler="browse_text_file_cb" last_modification_time="Sun, 20 Mar 2005 01:24:38 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">2</property>
+				  <property name="right_attach">3</property>
+				  <property name="top_attach">2</property>
+				  <property name="bottom_attach">3</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkEntry" id="text_entry">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the text typed here.</property>
+				  <property name="can_focus">True</property>
+				  <property name="editable">True</property>
+				  <property name="visibility">True</property>
+				  <property name="max_length">0</property>
+				  <property name="text" translatable="yes"></property>
+				  <property name="has_frame">True</property>
+				  <property name="invisible_char" translatable="yes">*</property>
+				  <property name="activates_default">False</property>
+				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:42 GMT"/>
+				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:33:43 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">1</property>
+				  <property name="right_attach">3</property>
+				  <property name="top_attach">1</property>
+				  <property name="bottom_attach">2</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkEntry" id="text_program_entry">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the output of this program.</property>
+				  <property name="can_focus">True</property>
+				  <property name="editable">True</property>
+				  <property name="visibility">True</property>
+				  <property name="max_length">0</property>
+				  <property name="text" translatable="yes"></property>
+				  <property name="has_frame">True</property>
+				  <property name="invisible_char" translatable="yes">*</property>
+				  <property name="activates_default">False</property>
+				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:33:02 GMT"/>
+				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:34:15 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">1</property>
+				  <property name="right_attach">2</property>
+				  <property name="top_attach">3</property>
+				  <property name="bottom_attach">4</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkButton" id="text_program_browse">
+				  <property name="visible">True</property>
+				  <property name="can_focus">True</property>
+				  <property name="label" translatable="yes">_Browse</property>
+				  <property name="use_underline">True</property>
+				  <property name="relief">GTK_RELIEF_NORMAL</property>
+				  <property name="focus_on_click">True</property>
+				  <signal name="clicked" handler="browse_text_program_cb" last_modification_time="Sun, 20 Mar 2005 01:24:51 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">2</property>
+				  <property name="right_attach">3</property>
+				  <property name="top_attach">3</property>
+				  <property name="bottom_attach">4</property>
+				  <property name="x_options">fill</property>
+				  <property name="y_options"></property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkEntry" id="text_file_entry">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Text-displaying modes will display the contents of this file.</property>
+				  <property name="can_focus">True</property>
+				  <property name="editable">True</property>
+				  <property name="visibility">True</property>
+				  <property name="max_length">0</property>
+				  <property name="text" translatable="yes"></property>
+				  <property name="has_frame">True</property>
+				  <property name="invisible_char" translatable="yes">*</property>
+				  <property name="activates_default">False</property>
+				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:53 GMT"/>
+				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:33:55 GMT"/>
+				</widget>
+				<packing>
+				  <property name="left_attach">1</property>
+				  <property name="right_attach">2</property>
+				  <property name="top_attach">2</property>
+				  <property name="bottom_attach">3</property>
+				  <property name="y_options"></property>
 				</packing>
 			      </child>
 			    </widget>
@@ -1188,7 +1403,7 @@ Installed</property>
 		      <child>
 			<widget class="GtkLabel" id="label3">
 			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">Diagnostics</property>
+			  <property name="label" translatable="yes">Text Manipulation</property>
 			  <property name="use_underline">False</property>
 			  <property name="use_markup">False</property>
 			  <property name="justify">GTK_JUSTIFY_LEFT</property>
@@ -1587,38 +1802,6 @@ Installed</property>
 			      <property name="spacing">0</property>
 
 			      <child>
-				<widget class="GtkCheckButton" id="install_button">
-				  <property name="visible">True</property>
-				  <property name="tooltip" translatable="yes">Whether to install a private colormap when running in 8-bit mode on the default Visual.</property>
-				  <property name="can_focus">True</property>
-				  <property name="label" translatable="yes">Install _Colormap</property>
-				  <property name="use_underline">True</property>
-				  <property name="relief">GTK_RELIEF_NORMAL</property>
-				  <property name="focus_on_click">True</property>
-				  <property name="active">False</property>
-				  <property name="inconsistent">False</property>
-				  <property name="draw_indicator">True</property>
-				  <signal name="toggled" handler="pref_changed_cb"/>
-				</widget>
-				<packing>
-				  <property name="padding">0</property>
-				  <property name="expand">False</property>
-				  <property name="fill">False</property>
-				</packing>
-			      </child>
-
-			      <child>
-				<widget class="GtkHSeparator" id="cmap_hr">
-				  <property name="visible">True</property>
-				</widget>
-				<packing>
-				  <property name="padding">4</property>
-				  <property name="expand">False</property>
-				  <property name="fill">False</property>
-				</packing>
-			      </child>
-
-			      <child>
 				<widget class="GtkCheckButton" id="fade_button">
 				  <property name="visible">True</property>
 				  <property name="tooltip" translatable="yes">Whether the screen should slowly fade to black when the screen saver activates.</property>
@@ -1703,7 +1886,7 @@ Installed</property>
 				      <property name="mnemonic_widget">fade_spinbutton</property>
 				    </widget>
 				    <packing>
-				      <property name="padding">10</property>
+				      <property name="padding">14</property>
 				      <property name="expand">False</property>
 				      <property name="fill">False</property>
 				    </packing>
@@ -1747,11 +1930,43 @@ Installed</property>
 				      <property name="ypad">0</property>
 				    </widget>
 				    <packing>
-				      <property name="padding">0</property>
+				      <property name="padding">2</property>
 				      <property name="expand">False</property>
 				      <property name="fill">False</property>
 				    </packing>
 				  </child>
+				</widget>
+				<packing>
+				  <property name="padding">0</property>
+				  <property name="expand">False</property>
+				  <property name="fill">False</property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkHSeparator" id="cmap_hr">
+				  <property name="visible">True</property>
+				</widget>
+				<packing>
+				  <property name="padding">8</property>
+				  <property name="expand">False</property>
+				  <property name="fill">False</property>
+				</packing>
+			      </child>
+
+			      <child>
+				<widget class="GtkCheckButton" id="install_button">
+				  <property name="visible">True</property>
+				  <property name="tooltip" translatable="yes">Whether to install a private colormap when running in 8-bit mode on the default Visual.</property>
+				  <property name="can_focus">True</property>
+				  <property name="label" translatable="yes">Install _Colormap</property>
+				  <property name="use_underline">True</property>
+				  <property name="relief">GTK_RELIEF_NORMAL</property>
+				  <property name="focus_on_click">True</property>
+				  <property name="active">False</property>
+				  <property name="inconsistent">False</property>
+				  <property name="draw_indicator">True</property>
+				  <signal name="toggled" handler="pref_changed_cb"/>
 				</widget>
 				<packing>
 				  <property name="padding">0</property>
@@ -1772,7 +1987,7 @@ Installed</property>
 		      <child>
 			<widget class="GtkLabel" id="label5">
 			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">Colormaps</property>
+			  <property name="label" translatable="yes">Fading and Colormaps</property>
 			  <property name="use_underline">False</property>
 			  <property name="use_markup">False</property>
 			  <property name="justify">GTK_JUSTIFY_LEFT</property>

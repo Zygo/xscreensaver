@@ -617,6 +617,9 @@ apple2(Display *dpy, Window window, int delay,
       }
     }
 
+    if (sim->curtime >= delay)
+      stepno = A2CONTROLLER_DONE;
+
     if (sim->printing) {
       int nlcnt=0;
       while (*sim->printing) {

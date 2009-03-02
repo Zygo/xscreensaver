@@ -81,7 +81,7 @@
 #define DEFAULTS	"*delay:	20000   \n"	\
 			"*showFPS:      False   \n"     \
 			"*wireframe:	False	\n"	\
-			"*texture:	True	\n"
+
 #include "xlockmore.h"
 
 #ifdef USE_GL /* whole file */

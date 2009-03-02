@@ -171,6 +171,35 @@ pre_merge_options (void)
       strcat (s, ": ");
       strcat (s, def);
       defaults [i++] = s;
+
+      /* Go through the list of resources and print a warning if there
+         are any duplicates.
+       */
+      {
+        char *onew = strdup (xlockmore_opts->vars[j].name);
+        const char *new = onew;
+        char *s;
+        int k;
+        if ((s = strrchr (new, '.'))) new = s+1;
+        if ((s = strrchr (new, '*'))) new = s+1;
+        for (k = 0; k < i-1; k++)
+          {
+            char *oold = strdup (defaults[k]);
+            const char *old = oold;
+            if ((s = strchr (oold, ':'))) *s = 0;
+            if ((s = strrchr (old, '.'))) old = s+1;
+            if ((s = strrchr (old, '*'))) old = s+1;
+            if (!strcasecmp (old, new))
+              {
+                fprintf (stderr,
+                         "%s: duplicate resource \"%s\": "
+                         "set in both DEFAULTS and vars[]\n",
+                         progname, old);
+              }
+            free (oold);
+          }
+        free (onew);
+      }
     }
 
   defaults [i] = 0;

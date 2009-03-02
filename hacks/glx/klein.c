@@ -28,10 +28,6 @@
 # define DEFAULTS					"*delay:		20000   \n"			\
 									"*showFPS:      False   \n"			\
 									"*wireframe:	False	\n"			\
-									"*random:	   " DEF_RANDOM     "\n"	\
-									"*speed:	   " DEF_SPEED     "\n"	\
-									"*spin:        " DEF_SPIN      "\n" \
-									"*wander:      " DEF_WANDER    "\n" \
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */

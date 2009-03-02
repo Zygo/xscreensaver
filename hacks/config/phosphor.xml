@@ -28,7 +28,13 @@
 
   <_description>
 Draws a simulation of an old terminal, with large pixels and
-long-sustain phosphor. It can run any program as a source of the text
-it displays.  Written by Jamie Zawinski.
+long-sustain phosphor.  This program is also a fully-functional VT100
+emulator!  
+
+The text can be the output of a program or the contents of a file or
+URL, as configured on the "Advanced" tab of the main Screensaver
+Preferences window.
+
+Written by Jamie Zawinski.
   </_description>
 </screensaver>

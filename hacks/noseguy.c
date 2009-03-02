@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1996, 1997, 1998, 2005
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -33,7 +33,6 @@ static char *words;
 static char *get_words (void);
 static int x, y;
 static XFontStruct *font;
-static char *def_words = "I'm out running around.";
 static void walk (int dir);
 static void talk (int erase);
 static void talk_1 (void);
@@ -49,7 +48,6 @@ static char *program, *orig_program, *filename, *text;
 #define FROM_PROGRAM 2
 #define FROM_FILE    3
 #define FROM_RESRC   4
-static int getwordsfrom;
 
 #define IS_MOVING  1
 #define GET_PASSWD 2
@@ -288,9 +286,8 @@ think (void)
 	walk(FRONT);
     if (random() & 1)
     {
-	if (getwordsfrom == FROM_PROGRAM)
-	    words = get_words();
-	return 1;
+      words = get_words();
+      return 1;
     }
     return 0;
 }
@@ -346,6 +343,9 @@ talk(int force_erase)
     talking = 1;
     walk(FRONT);
     p = strcpy(buf, words);
+
+    for (p2 = p; *p2; p2++)
+      if (*p2 == '\t') *p2 = ' ';
 
     if (!(p2 = strchr(p, '\n')) || !p2[1])
       {
@@ -452,8 +452,6 @@ look (void)
 static void
 init_words (void)
 {
-  char *mode = get_string_resource ("mode", "Mode");
-
   program = get_string_resource ("program", "Program");
   filename = get_string_resource ("filename", "Filename");
   text = get_string_resource ("text", "Text");
@@ -465,31 +463,6 @@ init_words (void)
       strcpy (program, "( ");
       strcat (program, orig_program);
       strcat (program, " ) 2>&1");
-    }
-
-  if (!mode || !strcmp (mode, "program"))
-    getwordsfrom = FROM_PROGRAM;
-  else if (!strcmp (mode, "file"))
-    getwordsfrom = FROM_FILE;
-  else if (!strcmp (mode, "string"))
-    getwordsfrom = FROM_RESRC;
-  else
-    {
-      fprintf (stderr,
-	       "%s: mode must be program, file, or string, not %s\n",
-	       progname, mode);
-      exit (1);
-    }
-
-  if (getwordsfrom == FROM_PROGRAM && !program)
-    {
-      fprintf (stderr, "%s: no program specified.\n", progname);
-      exit (1);
-    }
-  if (getwordsfrom == FROM_FILE && !filename)
-    {
-      fprintf (stderr, "%s: no file specified.\n", progname);
-      exit (1);
     }
 
   words = get_words();	
@@ -506,10 +479,6 @@ get_words (void)
 
     buf[0] = '\0';
 
-    switch (getwordsfrom)
-    {
-    case FROM_PROGRAM:
-#ifndef VMS
 	if ((pp = popen(program, "r")))
 	{
 	    while (fgets(p, sizeof(buf) - strlen(buf), pp))
@@ -551,41 +520,8 @@ get_words (void)
 	else
 	{
 	    perror(program);
-	    p = def_words;
 	}
-	break;
-#endif /* VMS */
-    case FROM_FILE:
-	if ((pp = fopen(filename, "r")))
-	{
-	    while (fgets(p, sizeof(buf) - strlen(buf), pp))
-	    {
-		if (strlen(buf) + 1 < sizeof(buf))
-		    p = buf + strlen(buf);
-		else
-		    break;
-	    }
-	    (void) fclose(pp);
-	    if (! buf[0])
-	      sprintf (buf, "file \"%s\" is empty!", filename);
-	    p = buf;
-	}
-	else
-	{
-	  sprintf (buf, "couldn't read file \"%s\"!", filename);
-	  p = buf;
-	}
-	break;
-    case FROM_RESRC:
-	p = text;
-	break;
-    default:
-	p = def_words;
-	break;
-    }
 
-    if (!p || *p == '\0')
-	p = def_words;
     return p;
 }
 
@@ -594,15 +530,10 @@ get_words (void)
 char *progclass = "Noseguy";
 
 char *defaults [] = {
-  ".background:		black",
-  ".foreground:		gray80",
-#ifndef VMS
-  "*mode:		program",
-#else
-  "*mode:		string",
-#endif
-  "*program:		" FORTUNE_PROGRAM,
-  "noseguy.font:	-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
+  ".background:	 black",
+  ".foreground:	 gray80",
+  "*program:	 xscreensaver-text --cols 40 | head -15",
+  "noseguy.font: -*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
 };
 

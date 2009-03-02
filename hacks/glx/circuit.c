@@ -46,16 +46,8 @@
 #define DEF_SEVEN       "False"
 #define DEF_PARTS       "10"
 
-
-#define DEFAULTS        "*parts:      " DEF_PARTS " \n" \
-                        "*spin:       " DEF_SPIN   "\n" \
-                        "*delay:       20000       \n" \
-                        "*showFPS:       False       \n" \
-                        "*seven:      " DEF_SEVEN  "\n" \
-                        "*light:      True  \n" \
-                        "*rotate:      False\n" \
-                        "*font:      fixed\n" \
-                        "*rotatespeed:      1\n" \
+#define DEFAULTS        "*delay:   20000 \n" \
+                        "*showFPS: False \n"
 
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */

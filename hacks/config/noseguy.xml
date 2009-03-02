@@ -19,9 +19,9 @@
   <!-- #### -text-background [?] -->
 
   <_description>
-A little man with a big nose wanders around your screen saying
-things.  The things which he says can come from a file, or from an
-external program like `zippy' or `fortune'.  This was extracted from
-`xnlock' by Dan Heller.  Colorized by Jamie Zawinski.
+A little man with a big nose wanders around your screen saying things.
+The things which he says are the output of a program or the contents
+of a file or URL, as configured on the "Advanced" tab of the main
+Screensaver Preferences window.  By Dan Heller and Jamie Zawinski.
   </_description>
 </screensaver>

@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2003, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -923,7 +923,7 @@ scroll_to_current_hack (Widget toplevel, prefs_pair *pair)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  CARD32 *data = 0;
+  unsigned char *data = 0;
   Display *dpy = XtDisplay (toplevel);
   int which = 0;
   Widget list;
@@ -932,7 +932,7 @@ scroll_to_current_hack (Widget toplevel, prefs_pair *pair)
                           XA_SCREENSAVER_STATUS,
                           0, 3, False, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
-                          (unsigned char **) &data)
+                          &data)
       == Success
       && type == XA_INTEGER
       && nitems >= 3
@@ -1691,6 +1691,7 @@ demo_ehandler (Display *dpy, XErrorEvent *error)
 
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
+#include "XScreenSaver_Xm_ad.h"
  0
 };
 

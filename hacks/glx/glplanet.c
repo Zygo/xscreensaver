@@ -45,14 +45,7 @@
 # define planet_opts					xlockmore_opts
 #define DEFAULTS	"*delay:			20000   \n"	\
 					"*showFPS:			False   \n" \
-                    "*rotate:           True    \n" \
-                    "*roll:             True    \n" \
-                    "*wander:           True    \n" \
 					"*wireframe:		False	\n"	\
-					"*light:			True	\n"	\
-					"*texture:			True	\n" \
-					"*stars:			True	\n" \
-					"*image:			BUILTIN	\n" \
 					"*imageForeground:	Green	\n" \
 					"*imageBackground:	Blue	\n"
 

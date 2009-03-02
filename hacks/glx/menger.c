@@ -66,16 +66,10 @@ extern XtAppContext app;
 #define DEF_WANDER      "True"
 #define DEF_SPEED       "150"
 #define DEF_MAX_DEPTH   "3"
-#define DEF_OPTIMIZE    "True"
 
 #define DEFAULTS	"*delay:	 30000          \n" \
 			"*showFPS:       False          \n" \
 			"*wireframe:     False          \n" \
-			"*maxDepth:    " DEF_MAX_DEPTH "\n" \
-			"*speed:"        DEF_SPEED     "\n" \
-			"*optimize:"     DEF_OPTIMIZE  "\n" \
-			"*spin:        " DEF_SPIN      "\n" \
-			"*wander:      " DEF_WANDER    "\n" \
 
 
 #undef countof
@@ -118,7 +112,6 @@ static sponge_configuration *sps = NULL;
 static Bool do_spin;
 static Bool do_wander;
 static int speed;
-static Bool do_optimize;
 static int max_depth;
 
 static XrmOptionDescRec opts[] = {
@@ -127,8 +120,6 @@ static XrmOptionDescRec opts[] = {
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" },
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
-  { "-optimize", ".optimize", XrmoptionNoArg, "True" },
-  { "+optimize", ".optimize", XrmoptionNoArg, "False" },
   {"-depth",   ".maxDepth", XrmoptionSepArg, 0 },
 };
 
@@ -136,7 +127,6 @@ static argtype vars[] = {
   {&do_spin,     "spin",     "Spin",     DEF_SPIN,      t_Bool},
   {&do_wander,   "wander",   "Wander",   DEF_WANDER,    t_Bool},
   {&speed,       "speed",    "Speed",    DEF_SPEED,     t_Int},
-  {&do_optimize, "optimize", "Optimize", DEF_OPTIMIZE,  t_Bool},
   {&max_depth,   "maxDepth", "MaxDepth", DEF_MAX_DEPTH, t_Int},
 };
 

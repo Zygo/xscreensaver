@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -235,7 +235,7 @@ static const char * const prefs[] = {
   "timeout",
   "cycle",
   "lock",
-  "lockVTs",
+  "lockVTs",			/* not saved */
   "lockTimeout",
   "passwdTimeout",
   "visualID",
@@ -247,8 +247,10 @@ static const char * const prefs[] = {
   "quad",
   "demoCommand",
   "prefsCommand",
-  "helpURL",
-  "loadURL",
+  "newLoginCommand",
+  "helpURL",			/* not saved */
+  "loadURL",			/* not saved */
+  "newLoginCommand",		/* not saved */
   "nice",
   "memoryLimit",
   "fade",
@@ -269,14 +271,20 @@ static const char * const prefs[] = {
   "imageDirectory",
   "mode",
   "selected",
+  "textMode",
+  "textLiteral",
+  "textFile",
+  "textProgram",
+  "textURL",
   "",
   "programs",
   "",
   "pointerPollTime",
+  "pointerHysteresis",
   "windowCreationTimeout",
   "initialDelay",
   "sgiSaverExtension",
-  "mitSaverExtension",
+  "mitSaverExtension",		/* not saved -- obsolete */
   "xidleExtension",
   "GetViewPortIsFullOfLies",
   "procInterrupts",
@@ -776,6 +784,8 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("helpURL")		continue;  /* don't save */
 /*    CHECK("loadURL")		type = pref_str,  s = p->load_url_command; */
       CHECK("loadURL")		continue;  /* don't save */
+/*    CHECK("newLoginCommand")	type = pref_str,  s = p->new_login_command; */
+      CHECK("newLoginCommand")	continue;  /* don't save */
       CHECK("nice")		type = pref_int,  i = p->nice_inferior;
       CHECK("memoryLimit")	type = pref_byte, i = p->inferior_memory_limit;
       CHECK("fade")		type = pref_bool, b = p->fade_p;
@@ -803,15 +813,29 @@ write_init_file (saver_preferences *p, const char *version_string,
                                 s = (p->mode == ONE_HACK ? "one" :
                                      p->mode == BLANK_ONLY ? "blank" :
                                      p->mode == DONT_BLANK ? "off" :
-                                     "random");
+                                     p->mode == RANDOM_HACKS_SAME
+                                     ? "random-same"
+                                     : "random");
       CHECK("selected")         type = pref_int,  i = p->selected_hack;
+
+      CHECK("textMode")         type = pref_str,
+                                s = (p->tmode == TEXT_URL     ? "url" :
+                                     p->tmode == TEXT_LITERAL ? "literal" :
+                                     p->tmode == TEXT_FILE    ? "file" :
+                                     p->tmode == TEXT_PROGRAM ? "program" :
+                                     "date");
+      CHECK("textLiteral")      type = pref_str,  s = p->text_literal;
+      CHECK("textFile")         type = pref_str,  s = p->text_file;
+      CHECK("textProgram")      type = pref_str,  s = p->text_program;
+      CHECK("textURL")          type = pref_str,  s = p->text_url;
 
       CHECK("programs")		type = pref_str,  s =    programs;
       CHECK("pointerPollTime")	type = pref_time, t = p->pointer_timeout;
+      CHECK("pointerHysteresis")type = pref_int,  i = p->pointer_hysteresis;
       CHECK("windowCreationTimeout")type=pref_time,t= p->notice_events_timeout;
       CHECK("initialDelay")	type = pref_time, t = p->initial_delay;
       CHECK("sgiSaverExtension")type = pref_bool, b=p->use_sgi_saver_extension;
-      CHECK("mitSaverExtension")type = pref_bool, b=p->use_mit_saver_extension;
+      CHECK("mitSaverExtension") continue;  /* don't save */
       CHECK("xidleExtension")	type = pref_bool, b = p->use_xidle_extension;
       CHECK("procInterrupts")	type = pref_bool, b = p->use_proc_interrupts;
       CHECK("GetViewPortIsFullOfLies")  type = pref_bool,
@@ -869,7 +893,8 @@ write_init_file (saver_preferences *p, const char *version_string,
 	  break;
 	}
 
-      if (pr && !strcmp(pr, "mode")) fprintf(out, "\n");
+      if (pr && (!strcmp(pr, "mode") || !strcmp(pr, "textMode")))
+        fprintf(out, "\n");
 
       write_entry (out, pr, s);
     }
@@ -1021,6 +1046,7 @@ load_init_file (saver_preferences *p)
   p->cycle           = 1000 * get_minutes_resource ("cycle", "Time");
   p->passwd_timeout  = 1000 * get_seconds_resource ("passwdTimeout", "Time");
   p->pointer_timeout = 1000 * get_seconds_resource ("pointerPollTime", "Time");
+  p->pointer_hysteresis = get_integer_resource ("pointerHysteresis","Integer");
   p->notice_events_timeout = 1000*get_seconds_resource("windowCreationTimeout",
 						       "Time");
 
@@ -1035,13 +1061,19 @@ load_init_file (saver_preferences *p)
   p->image_directory = get_string_resource  ("imageDirectory",
                                              "ImageDirectory");
 
+  p->text_literal = get_string_resource ("textLiteral", "TextLiteral");
+  p->text_file    = get_string_resource ("textFile",    "TextFile");
+  p->text_program = get_string_resource ("textProgram", "TextProgram");
+  p->text_url     = get_string_resource ("textURL",     "TextURL");
+
   p->shell = get_string_resource ("bourneShell", "BourneShell");
 
   p->demo_command = get_string_resource("demoCommand", "URL");
   p->prefs_command = get_string_resource("prefsCommand", "URL");
   p->help_url = get_string_resource("helpURL", "URL");
   p->load_url_command = get_string_resource("loadURL", "LoadURL");
-
+  p->new_login_command = get_string_resource("newLoginCommand",
+                                             "NewLoginCommand");
 
   /* If "*splash" is unset, default to true. */
   {
@@ -1062,8 +1094,10 @@ load_init_file (saver_preferences *p)
   }
 
   p->use_xidle_extension = get_boolean_resource ("xidleExtension","Boolean");
+#if 0 /* ignore this, it is evil. */
   p->use_mit_saver_extension = get_boolean_resource ("mitSaverExtension",
 						     "Boolean");
+#endif
   p->use_sgi_saver_extension = get_boolean_resource ("sgiSaverExtension",
 						     "Boolean");
   p->use_proc_interrupts = get_boolean_resource ("procInterrupts", "Boolean");
@@ -1073,16 +1107,34 @@ load_init_file (saver_preferences *p)
 
   get_screenhacks (p);                /* Parse the "programs" resource. */
 
-  p->selected_hack = get_integer_resource ("selected", "Integer");
-  if (p->selected_hack < 0 || p->selected_hack >= p->screenhacks_count)
-    p->selected_hack = -1;
+  {
+    char *s = get_string_resource ("selected", "Integer");
+    if (!s || !*s)
+      p->selected_hack = -1;
+    else
+      p->selected_hack = get_integer_resource ("selected", "Integer");
+    if (s) free (s);
+    if (p->selected_hack < 0 || p->selected_hack >= p->screenhacks_count)
+      p->selected_hack = -1;
+  }
 
   {
     char *s = get_string_resource ("mode", "Mode");
-    if      (s && !strcasecmp (s, "one"))   p->mode = ONE_HACK;
-    else if (s && !strcasecmp (s, "blank")) p->mode = BLANK_ONLY;
-    else if (s && !strcasecmp (s, "off"))   p->mode = DONT_BLANK;
-    else                                    p->mode = RANDOM_HACKS;
+    if      (s && !strcasecmp (s, "one"))         p->mode = ONE_HACK;
+    else if (s && !strcasecmp (s, "blank"))       p->mode = BLANK_ONLY;
+    else if (s && !strcasecmp (s, "off"))         p->mode = DONT_BLANK;
+    else if (s && !strcasecmp (s, "random-same")) p->mode = RANDOM_HACKS_SAME;
+    else                                          p->mode = RANDOM_HACKS;
+    if (s) free (s);
+  }
+
+  {
+    char *s = get_string_resource ("textMode", "TextMode");
+    if      (s && !strcasecmp (s, "url"))         p->tmode = TEXT_URL;
+    else if (s && !strcasecmp (s, "literal"))     p->tmode = TEXT_LITERAL;
+    else if (s && !strcasecmp (s, "file"))        p->tmode = TEXT_FILE;
+    else if (s && !strcasecmp (s, "program"))     p->tmode = TEXT_PROGRAM;
+    else                                          p->tmode = TEXT_DATE;
     if (s) free (s);
   }
 
@@ -1524,12 +1576,23 @@ stop_the_insanity (saver_preferences *p)
       p->dpms_off < 10 * 1000)
     p->dpms_off      = 4 * 60 * 60 * 1000;			 /* 4 hours */
 
+  /* standby may not be greater than suspend.
+     suspend may not be greater than off.
+   */
+  if (p->dpms_standby > p->dpms_suspend) p->dpms_standby = p->dpms_suspend;
+  if (p->dpms_suspend > p->dpms_off)     p->dpms_suspend = p->dpms_off;
+
+
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */
       p->dpms_suspend == 0 &&
       p->dpms_off     == 0)
     p->dpms_enabled_p = False;
 
+
   p->watchdog_timeout = p->cycle * 0.6;
   if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */
   if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
+
+  if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
+  if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100;
 }

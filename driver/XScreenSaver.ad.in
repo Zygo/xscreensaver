@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.20
-!                              23-Feb-2005
+!                              version 4.21
+!                              20-Mar-2005
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -28,6 +28,7 @@
 
 ! /* (xrdb prevention kludge: whole file)
 
+*mode:			random
 *timeout:		0:10:00
 *cycle:			0:10:00
 *lockTimeout:		0:00:00
@@ -38,8 +39,8 @@
 *dpmsOff:		4:00:00
 *grabDesktopImages:	True
 *grabVideoFrames:	False
-*chooseRandomImages:	False
-*imageDirectory:	
+*chooseRandomImages:	@DEFAULT_IMAGES_P@
+*imageDirectory:	@DEFAULT_IMAGE_DIRECTORY@
 *nice:			10
 *memoryLimit:		0
 *lock:			False
@@ -56,6 +57,12 @@
 *captureStderr: 	True
 *ignoreUninstalledPrograms: False
 
+*textMode:		file
+*textLiteral:		XScreenSaver
+*textFile:		/usr/X11R6/lib/X11/doc/README
+*textProgram:		fortune
+*textURL:		http://www.livejournal.com/stats/latest-rss.bml
+
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
 *overlayStderr:		True
@@ -63,7 +70,6 @@
 
 ! The default is to use these extensions if available (as noted.)
 *sgiSaverExtension:	True
-*mitSaverExtension:	False
 *xidleExtension:	True
 *procInterrupts:	True
 
@@ -117,6 +123,12 @@ GetViewPortIsFullOfLies: False
 ! *dateFormat:		%I:%M %p
 ! For 24 hour time:
 ! *dateFormat:		%H:%M
+
+
+! This command is executed by the "New Login" button on the lock dialog.
+! (That button does not appear if this program does not exist.)
+!
+@NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
 
 
 ! Turning on "installColormap" on 8-bit systems interacts erratically with
@@ -339,8 +351,7 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			starwars -root				    \n\
 @GL_KLUDGE@ GL:			gltext -root				    \n\
 @GL_KLUDGE@ GL:	"GLText (clock)" gltext -text "%A%n%d %b %Y%n%r" -root	    \n\
-@GL_KLUDGE@ GL:	 "Molecule"		molecule -root			    \n\
-@GL_KLUDGE@ GL:	 "Molecule (lumpy)"	molecule -root -no-bonds -no-labels \n\
+@GL_KLUDGE@ GL:	 		molecule -root -shells			    \n\
 @GL_KLUDGE@ GL:			dangerball -root			    \n\
 @GL_KLUDGE@ GL:			circuit -root				    \n\
 @GL_KLUDGE@ GL:			engine -root				    \n\
@@ -383,7 +394,8 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:	"Pinion (large gears)"	pinion -root			    \n\
 @GL_KLUDGE@ GL:	"Pinion (small gears)"	pinion -root -size 0.2 -scroll 0.3  \n\
 @GL_KLUDGE@ GL:			boing -root -lighting -smooth		    \n\
--	   GL:                  carousel -root                             \n
+-	   GL:                  carousel -root                              \n\
+@GL_KLUDGE@ GL:			fliptext -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -414,6 +426,7 @@ GetViewPortIsFullOfLies: False
 
 
 XScreenSaver.pointerPollTime:		0:00:05
+XScreenSaver.pointerHysteresis:		10
 XScreenSaver.initialDelay:		0:00:00
 XScreenSaver.windowCreationTimeout:	0:00:30
 XScreenSaver.bourneShell:		/bin/sh
@@ -422,35 +435,38 @@ XScreenSaver.bourneShell:		/bin/sh
 ! Resources for the password and splash-screen dialog boxes of
 ! the "xscreensaver" daemon.
 !
-*Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1
+*Dialog.headingFont:		*-helvetica-bold-r-*-*-*-180-*-*-*-iso8859-1
 *Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-*Dialog.dateFont:		*-courier-medium-r-*-*-*-80-*-*-*-iso8859-1
+*Dialog.dateFont:		*-helvetica-medium-r-*-*-*-80-*-*-*-iso8859-1
+! Helvetica asterisks look terrible.
+!*passwd.passwdFont:		*-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
+*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
+
 *Dialog.foreground:		#000000
-*Dialog.background:		#D6D6D6
+*Dialog.background:		#E6E6E6
 *Dialog.Button.foreground:	#000000
-*Dialog.Button.background:	#EAEAEA
-!*Dialog.Button.background:	#D6D6D6
+*Dialog.Button.background:	#F5F5F5
 !*Dialog.Button.pointBackground: #EAEAEA
 !*Dialog.Button.clickBackground: #C3C3C3
 *Dialog.text.foreground:	#000000
 *Dialog.text.background:	#FFFFFF
-*passwd.thermometer.foreground:	#FF0000
+*passwd.thermometer.foreground:	#4464AC
 *passwd.thermometer.background:	#FFFFFF
 *Dialog.topShadowColor:		#FFFFFF
-*Dialog.bottomShadowColor:	#666666
+*Dialog.bottomShadowColor:	#CECECE
 *Dialog.logo.width:		210
 *Dialog.logo.height:		210
-*Dialog.internalBorderWidth:	30
+*Dialog.internalBorderWidth:	24
 *Dialog.borderWidth:		1
 *Dialog.shadowThickness:	2
 
 *passwd.heading.label:		XScreenSaver %s
-*passwd.body.label:		This display is locked.
-*passwd.user.label:		User:
+*passwd.body.label:		Please enter your password.
+*passwd.login.label:		New Login
+*passwd.user.label:		Username:
 *passwd.passwd.label:		Password:
-*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
@@ -458,134 +474,6 @@ XScreenSaver.bourneShell:		/bin/sh
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
-
-
-! Resources for the Motif dialog boxes of the "xscreensaver-demo" program.
-! 
-*fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1
-*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1
-*cmdText.fontList:                 *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
-*label0.fontList:                  *-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
-XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
-! above must be fully qualified to get around *sgiMode.
-
-*foreground:			#000000
-*background:			#C0C0C0
-*XmTextField.foreground:	#000000
-*XmTextField.background:	#FFFFFF
-*list.foreground:		#000000
-*list.background:		#FFFFFF
-
-*ApplicationShell.title:	XScreenSaver
-*warning.title:			XScreenSaver
-*warning_popup.title:		XScreenSaver
-*allowShellResize:		True
-*autoUnmanage:			False
-
-*menubar*file.labelString:	File
-*menubar*file.mnemonic:		F
-*file.blank.labelString:	Blank Screen Now
-*file.blank.mnemonic:		B
-*file.lock.labelString:		Lock Screen Now
-*file.lock.mnemonic:		L
-*file.kill.labelString:		Kill Daemon
-*file.kill.mnemonic:		K
-*file.restart.labelString:	Restart Daemon
-*file.restart.mnemonic:		R
-*file.exit.labelString:		Exit
-*file.exit.mnemonic:		E
-
-*menubar*edit.labelString:	Edit
-*menubar*edit.mnemonic:		E
-*edit.cut.labelString:		Cut
-*edit.cut.mnemonic:		u
-*edit.copy.labelString:		Copy
-*edit.copy.mnemonic:		C
-*edit.paste.labelString:	Paste
-*edit.paste.mnemonic:		P
-
-*menubar*help.labelString:	Help
-*menubar*help.mnemonic:		H
-*help.about.labelString:	About...
-*help.about.mnemonic:		A
-*help.docMenu.labelString:	Documentation...
-*help.docMenu.mnemonic:		D
-
-*demoTab.marginWidth:		10
-*optionsTab.marginWidth:	10
-
-*XmScrolledWindow.topOffset:	10
-*XmScrolledWindow.leftOffset:	10
-*demoTab.topOffset:		4
-*form1.bottomOffset:		10
-*form3.leftOffset:		10
-*form3.rightOffset:		10
-*frame.topOffset:		10
-*frame.bottomOffset:		10
-*enabled.topOffset:		10
-*visLabel.topOffset:		10
-*combo.topOffset:		10
-*form4.bottomOffset:		4
-*hr.bottomOffset:		4
-*XmComboBox.marginWidth:	0
-*XmComboBox.marginHeight:	0
-
-*demo.marginWidth:		30
-*demo.marginHeight:		4
-*man.marginWidth:		10
-*man.marginHeight:		4
-*down.leftOffset:		40
-*down.marginWidth:		4
-*down.marginHeight:		4
-*up.marginWidth:		4
-*up.marginHeight:		4
-*frame.traversalOn:		False
-
-*list.automaticSelection:	True
-*list.visibleItemCount:		20
-*doc.columns:			60
-*combo.columns:			11
-
-*demoTab.labelString:		Graphics Demos
-*optionsTab.labelString:	Screensaver Options
-*down.labelString:		\\/ 
-*up.labelString:		/\\ 
-*frameLabel.labelString:	
-*cmdLabel.labelString:		Command Line:
-*cmdLabel.alignment:		ALIGNMENT_BEGINNING
-*enabled.labelString:		Enabled
-*visLabel.labelString:		Visual:
-*visLabel.alignment:		ALIGNMENT_END
-*visLabel.leftOffset:		20
-*demo.labelString:		Demo
-*man.labelString:		Documentation...
-*done.labelString:		Quit
-
-*preferencesLabel.labelString:	XScreenSaver Parameters
-
-*timeoutLabel.labelString:	Saver Timeout
-*cycleLabel.labelString:	Cycle Timeout
-*fadeSecondsLabel.labelString:	Fade Duration
-*fadeTicksLabel.labelString:	Fade Ticks
-*lockLabel.labelString:		Lock Timeout
-*passwdLabel.labelString:	Password Timeout
-*preferencesForm*XmTextField.columns:	8
-
-*verboseToggle.labelString:	Verbose
-*cmapToggle.labelString:	Install Colormap
-*fadeToggle.labelString:	Fade Colormap
-*unfadeToggle.labelString:	Unfade Colormap
-*lockToggle.labelString:	Require Password
-
-
-*OK.marginWidth:		30
-*OK.marginHeight:		4
-*OK.leftOffset:			10
-*OK.bottomOffset:		10
-*Cancel.marginWidth:		30
-*Cancel.marginHeight:		4
-*Cancel.rightOffset:		10
-*Cancel.bottomOffset:		10
 
 
 !=============================================================================
@@ -648,6 +536,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.fuzzyflakes.name:    FuzzyFlakes
 *hacks.memscroller.name:    MemScroller
 *hacks.boxfit.name:         BoxFit
+*hacks.fliptext.name:       FlipText
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

@@ -98,21 +98,6 @@ extern XtAppContext app;
 			"*wireframe:    False       \n" \
 			"*geometry:	600x900\n"      \
 			"*count:      " DEF_COUNT " \n" \
-			"*style:      " DEF_STYLE " \n" \
-			"*speed:      " DEF_SPEED " \n" \
-			"*spin:       " DEF_SPIN   "\n" \
-			"*wander:     " DEF_WANDER "\n" \
-			"*resolution: " DEF_RESOLUTION "\n" \
-			"*smooth: "     DEF_SMOOTH     "\n" \
-			"*impatient:  " DEF_IMPATIENT " \n" \
-			"*lavaColor:  "	DEF_LCOLOR "\n" \
-			"*fluidColor: "	DEF_FCOLOR "\n" \
-			"*baseColor:  "	DEF_BCOLOR "\n" \
-			"*tableColor: "	DEF_TCOLOR "\n" \
-			"*fluidTexture: "	DEF_FTEX "\n" \
-			"*baseTexture:  "	DEF_BTEX "\n" \
-			"*tableTexture: "	DEF_TTEX "\n" \
-
 
 #define BLOBS_PER_GROUP 4
 

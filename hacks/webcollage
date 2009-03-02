@@ -60,19 +60,20 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.123 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.125 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  60, "altavista",    \&pick_from_alta_vista_random_link,
-                        12, "livejournal",  \&pick_from_livejournal_images,
-                         8, "yahoorand",    \&pick_from_yahoo_random_link,
-                        11, "googlephotos", \&pick_from_google_image_photos,
+my @search_methods = (  58, "altavista",    \&pick_from_alta_vista_random_link,
+                        11, "livejournal",  \&pick_from_livejournal_images,
+                         7, "yahoorand",    \&pick_from_yahoo_random_link,
+                        10, "googlephotos", \&pick_from_google_image_photos,
                          6, "googleimgs",   \&pick_from_google_images,
                          3, "googlenums",   \&pick_from_google_image_numbers,
+                         5, "flickr",       \&pick_from_flickr,
 
                      # In Apr 2002, Google asked me to stop searching them.
                      # I asked them to add a "random link" url.  They said
@@ -196,6 +197,7 @@ my %warningless_sites = (
   "img.photobucket.com"     => 1,
   "pics.livejournal.com"    => 1,
   "tinypic.com"             => 1,
+  "flickr.com"              => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -1713,6 +1715,94 @@ sub pick_from_ircimages {
 
 ############################################################################
 #
+# Pick images from Flickr's page of recently-posted photos.
+#
+############################################################################
+
+my $flickr_img_url = "http://www.flickr.com/photos/";
+
+# Like LiveJournal, the Flickr page of images tends to update slowly,
+# so remember the last N entries on it and randomly select from those.
+
+# I know that Flickr has an API (http://www.flickr.com/services/api/)
+# but it was easy enough to scrape the HTML, so I didn't bother exploring.
+
+my $flickr_cache_size = 1000;
+my @flickr_cache = (); # fifo, for ordering by age
+my %flickr_cache = (); # hash, for detecting dups
+
+
+# flickr
+sub pick_from_flickr {
+  my ( $timeout ) = @_;
+
+  my $start = 16 * int(rand(100));
+
+  $last_search = $flickr_img_url;   # for warnings
+  $last_search .= "?start=$start" if ($start > 0);
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  return () unless $body;
+
+  $body =~ s/[\r\n]/ /gs;
+  $body =~ s/(<a)\b/\n$1/gsi;
+
+  my $count = 0;
+  my $count2 = 0;
+  foreach (split (/\n/, $body)) {
+    my ($page, $thumb) = m@<A \s [^<>]* \b HREF=\"([^<>\"]+)\" [^<>]* > \s*
+                           <IMG \s [^<>]* \b SRC=\"([^<>\"]+)\" @xsi;
+    next unless defined ($thumb);
+    $page = html_unquote ($page);
+    $thumb = html_unquote ($thumb);
+
+    next unless ($thumb =~ m@^http://photos\d*\.flickr\.com/@);
+
+    my $base = "http://www.flickr.com/";
+    $page  =~ s@^/@$base@;
+    $thumb =~ s@^/@$base@;
+
+    my $img = $thumb;
+    $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
+
+    $count++;
+    next if ($flickr_cache{$img}); # already have it
+
+    my @pair = ($img, $page, $start);
+    LOG ($verbose_filter, "  candidate: $img");
+    push @flickr_cache, \@pair;
+    $flickr_cache{$img} = \@pair;
+    $count2++;
+  }
+
+  return () if ($#flickr_cache == -1);
+
+  my $n = $#flickr_cache+1;
+  my $i = int(rand($n));
+  my ($img, $page) = @{$flickr_cache[$i]};
+
+  # delete this one from @flickr_cache and from %flickr_cache.
+  #
+  @flickr_cache = ( @flickr_cache[0 .. $i-1],
+                    @flickr_cache[$i+1 .. $#flickr_cache] );
+  delete $flickr_cache{$img};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#flickr_cache >= $flickr_cache_size) {
+    my $pairP = shift @flickr_cache;
+    my $img = $pairP->[0];
+    delete $flickr_cache{$img};
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
+}
+
+
+############################################################################
+#
 # Pick images by waiting for driftnet to populate a temp dir with files.
 # Requires driftnet version 0.1.5 or later.
 # (Driftnet is a program by Chris Lightfoot that sniffs your local ethernet
@@ -2363,7 +2453,7 @@ sub image_to_pnm {
   } else {
     LOG (($verbose_pbm || $verbose_load),
          "not a GIF, JPG, or PNG" .
-         (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
+         (($body =~ m@<(base|html|head|body|script|table|a href)\b@i)
           ? " (looks like HTML)" : "") .
          ": $url");
     $suppress_audit = 1;

@@ -44,10 +44,6 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define DEFAULTS					"*delay:		20000   \n"			\
 									"*showFPS:      False   \n"			\
 									"*wireframe:	False	\n"			\
-									"*maxDepth:	   " DEF_MAXDEPTH  "\n"	\
-									"*speed:	   " DEF_SPEED     "\n"	\
-									"*spin:        " DEF_SPIN      "\n" \
-									"*wander:      " DEF_WANDER    "\n" \
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */

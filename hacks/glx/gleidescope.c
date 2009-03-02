@@ -64,12 +64,7 @@
 # define DEFAULTS \
 		"*delay:		20000		\n"	\
 		"*showFPS:		False		\n"	\
-		"*move:			False		\n"	\
-		"*rotate:		False		\n"	\
-		"*zoom:			False		\n"	\
-		"*image:		DEFAULT		\n"	\
 		"*size:			-1			\n"	\
-		"*duration:		30			\n" \
 		"*useSHM:		True		\n"
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */

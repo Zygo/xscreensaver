@@ -18,6 +18,7 @@
 #include "screenhack.h"
 #include <stdio.h>
 #include <X11/Xutil.h>
+#include "xpm-pixmap.h"
 
 #define ALIVE   1
 #define CHANGED 2
@@ -33,7 +34,7 @@ typedef struct {
   Window window;
   XWindowAttributes xgwa;
   GC gc;
-  unsigned long bg_color;
+  unsigned long fg_color, bg_color;
   int border_size;
   int spacing;
   int inc;
@@ -47,6 +48,7 @@ typedef struct {
   int nboxes;
   box *boxes;
 
+  XImage *image;
   int ncolors;
   XColor *colors;
 } state;
@@ -62,7 +64,7 @@ reset_boxes (state *st)
   st->growing_p = True;
   st->color_horiz_p = random() & 1;
 
-  if (once)
+  if (once && st->colors)
     free_colors (st->dpy, st->xgwa.colormap, st->colors, st->ncolors);
 
   if (!once)
@@ -90,9 +92,33 @@ reset_boxes (state *st)
 
   once = True;
 
-  st->ncolors = get_integer_resource ("colors", "Colors");  /* re-get this */
-  make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
-                        st->colors, &st->ncolors, True, 0, False);
+  if (st->image || get_boolean_resource ("grab", "Boolean"))
+    {
+      Pixmap p = 0;
+      if (st->image) XDestroyImage (st->image);
+      st->image = 0;
+
+      if (!get_boolean_resource ("peek", "Boolean"))
+        p = XCreatePixmap (st->dpy, st->window,
+                           st->xgwa.width, st->xgwa.height,
+                           st->xgwa.depth);
+
+      load_random_image (st->xgwa.screen, st->window,
+                         (p ? p : st->window), 0, 0);
+      st->image = XGetImage (st->dpy, (p ? p : st->window), 0, 0,
+                             st->xgwa.width, st->xgwa.height, ~0L, ZPixmap);
+      if (p) XFreePixmap (st->dpy, p);
+      XSync (st->dpy, False);
+      XSetWindowBackground (st->dpy, st->window, st->bg_color);
+      if (!p) sleep (2);
+    }
+  else
+    {
+      st->ncolors = get_integer_resource ("colors", "Colors");  /* re-get */
+      make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+                            st->colors, &st->ncolors, True, 0, False);
+    }
+
   XClearWindow (st->dpy, st->window);
 }
 
@@ -109,13 +135,18 @@ init_boxes (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
   XSelectInput (dpy, window, st->xgwa.your_event_mask | ExposureMask);
 
-  st->ncolors = get_integer_resource ("colors", "Colors");
-  if (st->ncolors < 1) st->ncolors = 1;
-  st->colors = (XColor *) malloc (sizeof(XColor) * st->ncolors);
+  if (! get_boolean_resource ("grab", "Boolean"))
+    {
+      st->ncolors = get_integer_resource ("colors", "Colors");
+      if (st->ncolors < 1) st->ncolors = 1;
+      st->colors = (XColor *) malloc (sizeof(XColor) * st->ncolors);
+    }
 
   st->inc = get_integer_resource ("growBy", "GrowBy");
   st->spacing = get_integer_resource ("spacing", "Spacing");
   st->border_size = get_integer_resource ("borderSize", "BorderSize");
+  st->fg_color = get_pixel_resource ("foreground", "Foreground",
+                                     st->dpy, st->xgwa.colormap);
   st->bg_color = get_pixel_resource ("background", "Background",
                                      st->dpy, st->xgwa.colormap);
   if (st->inc < 1) st->inc = 1;
@@ -264,7 +295,7 @@ grow_boxes (state *st)
       a = &st->boxes[st->nboxes-1];
       a->flags |= CHANGED;
 
-      for (i = 0; i < 10000; i++)
+      for (i = 0; i < 5000; i++)
         {
           a->x = inc2 + (random() % (st->xgwa.width  - inc2));
           a->y = inc2 + (random() % (st->xgwa.height - inc2));
@@ -286,18 +317,25 @@ grow_boxes (state *st)
           st->growing_p = False;
 
           XSync (st->dpy, False);
-          sleep (1);
+          sleep (2);
 
           break;
         }
 
       /* Pick colors for this box */
-      {
-        int n = (st->color_horiz_p
-                 ? (a->x * st->ncolors / st->xgwa.width)
-                 : (a->y * st->ncolors / st->xgwa.height));
-        a->fill_color   = st->colors [n % st->ncolors].pixel;
-      }
+      if (st->image)
+        {
+          int w = st->image->width;
+          int h = st->image->height;
+          a->fill_color = XGetPixel (st->image, a->x % w, a->y % h);
+        }
+      else
+        {
+          int n = (st->color_horiz_p
+                   ? (a->x * st->ncolors / st->xgwa.width)
+                   : (a->y * st->ncolors / st->xgwa.height));
+          a->fill_color   = st->colors [n % st->ncolors].pixel;
+        }
     }
 }
 
@@ -344,6 +382,9 @@ draw_boxes (state *st)
           /* When shrinking, black out an area outside of the border
              before re-drawing the box.
            */
+
+          if (b->w <= -st->inc*2 || b->h <= -st->inc*2) continue;
+
           XSetForeground (st->dpy, st->gc, st->bg_color);
           XSetLineAttributes (st->dpy, st->gc,
                               (st->inc + st->border_size) * 2,
@@ -378,8 +419,10 @@ draw_boxes (state *st)
 
       if (st->border_size > 0)
         {
-          unsigned long bd = st->colors [(b->fill_color + st->ncolors/2)
-                                         % st->ncolors].pixel;
+          unsigned int bd = (st->image
+                             ? st->fg_color
+                             : st->colors [(b->fill_color + st->ncolors/2)
+                                           % st->ncolors].pixel);
           XSetForeground (st->dpy, st->gc, bd);
           if (st->circles_p)
             XDrawArc (st->dpy, st->window, st->gc, b->x, b->y, b->w, b->h,
@@ -415,6 +458,7 @@ char *progclass = "BoxFit";
 
 char *defaults [] = {
   ".background:		   black",
+  ".foreground:		   #444444",
   "*delay:		   20000",
   "*mode:		   random",
   "*colors:		   64",
@@ -422,6 +466,8 @@ char *defaults [] = {
   "*growBy:		   1",
   "*spacing:		   1",
   "*borderSize:		   1",
+  "*grab:		   False",
+  "*peek:		   False",
   0
 };
 
@@ -435,6 +481,10 @@ XrmOptionDescRec options [] = {
   { "-circles",		".mode",		XrmoptionNoArg, "circles" },
   { "-squares",		".mode",		XrmoptionNoArg, "squares" },
   { "-random",		".mode",		XrmoptionNoArg, "random"  },
+  { "-grab",	  	".grab",		XrmoptionNoArg, "True"    },
+  { "-no-grab",  	".grab",		XrmoptionNoArg, "False"   },
+  { "-peek",	  	".peek",		XrmoptionNoArg, "True"    },
+  { "-no-peek",  	".peek",		XrmoptionNoArg, "False"   },
   { 0, 0, 0, 0 }
 };
 
