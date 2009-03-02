@@ -125,9 +125,14 @@ MakeImage(void)
 {
   XGCValues gcv;
 
+#ifdef HAVE_XSHM_EXTENSION
   shared = True;
   xim = create_xshm_image (display, visual, depth, ZPixmap, NULL,
                            &shminfo, width, height);
+#else  /* !HAVE_XSHM_EXTENSION */
+  xim = 0;
+#endif /* !HAVE_XSHM_EXTENSION */
+
   if (!xim)
     {
       shared = False;
@@ -180,10 +185,12 @@ InitColors(void)
 static void
 DisplayImage(void)
 {
+#ifdef HAVE_XSHM_EXTENSION
   if (shared)
     XShmPutImage(display, window, gc, xim, 0,(top - 1) << 1, 0,
                  (top - 1) << 1, width, height - ((top - 1) << 1), False);
   else
+#endif /* HAVE_XSHM_EXTENSION */
     XPutImage(display, window, gc, xim, 0, (top - 1) << 1, 0,
               (top - 1) << 1, width, height - ((top - 1) << 1));
 }
@@ -521,6 +528,7 @@ loadBitmap(int *w, int *h)
       *bitmap_name &&
       !!strcmp(bitmap_name, "none"))
     {
+#ifdef HAVE_XPM
       XpmInfo xpm_info = { 0, };
       XpmImage xpm_image = { 0, };
 
@@ -582,6 +590,7 @@ loadBitmap(int *w, int *h)
           return result;
         }
       else      /* failed to read XPM -- fall through and try XBM */
+#endif /* HAVE_XPM */
         {
 #ifdef HAVE_XMU
           XImage *ximage = 0;

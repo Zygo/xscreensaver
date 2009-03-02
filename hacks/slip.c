@@ -196,7 +196,7 @@ draw_slip(ModeInfo * mi)
 		double      x, y, dx = 0, dy = 0, t, s1, s2;
 
 		if (0 == s->nblits_remaining--) {
-			static      lut[] =
+			static int lut[] =
 			{0, 0, 0, 1, 1, 1, 2};
 
 			prepare_screen(mi, s);

@@ -213,7 +213,7 @@ get_encrypted_passwd(const char *user)
 #ifndef VMS
 
 Bool
-pwent_lock_init (int argc, char **argv, Bool verbose_p)
+pwent_priv_init (int argc, char **argv, Bool verbose_p)
 {
   char *u;
 
@@ -232,6 +232,17 @@ pwent_lock_init (int argc, char **argv, Bool verbose_p)
   else
     return False;
 }
+
+
+Bool
+pwent_lock_init (int argc, char **argv, Bool verbose_p)
+{
+  if (encrypted_user_passwd)
+    return True;
+  else
+    return False;
+}
+
 
 
 static Bool

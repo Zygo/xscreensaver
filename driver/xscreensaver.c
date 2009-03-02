@@ -419,12 +419,29 @@ set_version_string (saver_info *si, int *argc, char **argv)
 static void
 privileged_initialization (saver_info *si, int *argc, char **argv)
 {
+#ifndef NO_LOCKING
+  /* before hack_uid() for proper permissions */
+  lock_priv_init (*argc, argv, si->prefs.verbose_p);
+#endif /* NO_LOCKING */
+
+#ifndef NO_SETUID
+  hack_uid (si);
+#endif /* NO_SETUID */
+}
+
+
+/* Figure out what locking mechanisms are supported.
+ */
+static void
+lock_initialization (saver_info *si, int *argc, char **argv)
+{
 #ifdef NO_LOCKING
   si->locking_disabled_p = True;
   si->nolock_reason = "not compiled with locking support";
 #else /* !NO_LOCKING */
   si->locking_disabled_p = False;
-  /* before hack_uid() for proper permissions */
+
+  /* Finish initializing locking, now that we're out of privileged code. */
   if (! lock_init (*argc, argv, si->prefs.verbose_p))
     {
       si->locking_disabled_p = True;
@@ -894,7 +911,7 @@ main_loop (saver_info *si)
 
           fprintf (stderr,
                   "%s: unable to grab keyboard or mouse!  Blanking aborted.\n",
-                   blurb(), timestring ());
+                   blurb());
           continue;
         }
 
@@ -1015,6 +1032,7 @@ main (int argc, char **argv)
       exit (1);
 
   load_init_file (p);
+  lock_initialization (si, &argc, argv);
 
   if (p->xsync_p) XSynchronize (si->dpy, True);
   blurb_timestamp_p = p->timestamp_p;  /* kludge */

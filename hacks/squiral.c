@@ -219,4 +219,5 @@ XrmOptionDescRec options[] = {
     {"-ncolors", ".ncolors", XrmoptionSepArg, 0},
     {"-cycle", ".cycle", XrmoptionNoArg, "True"},
     {"-no-cycle", ".cycle", XrmoptionNoArg, "False"},
+    { 0, 0, 0, 0 }
 };

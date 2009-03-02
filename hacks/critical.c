@@ -308,12 +308,11 @@ screenhack (Display *dpy, Window window)
 		 x2 * cell_size + cell_size/2,
 		 y2 * cell_size + cell_size/2);
 
-      /* Flush changes to display, and discard any pending input --
-	 we'll never look at it anyhow, and it saves it filling up
-	 memory. */
-      XSync (dpy, True); 
+      XSync (dpy, False); 
+      screenhack_handle_events (dpy);
 
-      usleep (delay_usecs);
+      if (delay_usecs)
+        usleep (delay_usecs);
     }
 
     i_restart = (i_restart + 1) % n_restart;

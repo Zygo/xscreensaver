@@ -209,7 +209,7 @@ initColor (double r, double g, double b)
 {
   int n,n1;
   unsigned long pixels[12];
-  long dummy;
+  unsigned long dummy;
   
   cmap = xgwa.colormap;
   
@@ -293,7 +293,7 @@ initialize (void)
     if (s && *s)
       {
         double hh, ss, vv;
-        if (3 == sscanf (s, "%lf %lf %lf", &hh, &ss, &vv, &dummy)) {
+        if (3 == sscanf (s, "%lf %lf %lf %c", &hh, &ss, &vv, &dummy)) {
           hue = hh, sat = ss, val = vv;
           hsv2rgb(hue,sat,val,&r,&g,&b);
         }
@@ -816,7 +816,8 @@ screenhack (Display *d, Window w)
 {
   Window junk_win,in_win;
   
-  int px,py,junk,kb/*,wai*/;
+  int px,py,junk/*,wai*/;
+  unsigned int kb;
 /*  int act,act1,tc;*/
   double vnorm;
   /* double var=0.0; */

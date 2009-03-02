@@ -116,6 +116,8 @@
 		wander -root -advance 0 -size 10 -circles True		  \
 		  -length 10000 -reset 100000				\\n\
 		critical -root						\\n\
+		phosphor -root						\\n\
+		xmatrix -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -144,7 +146,8 @@
 		atlantis -root					  	\\n\
 		lament -root					  	\\n\
 		bubble3d -root					  	\\n\
-		glplanet -root					  	\\n",
+		glplanet -root					  	\\n\
+		pulsar -root					  	\\n",
 " ",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",

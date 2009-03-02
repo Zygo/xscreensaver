@@ -599,7 +599,7 @@ main_event(void)
 static int
 complyap(void)
 {
-  register i, bindex;
+  int i, bindex;
   double total, prod, x, dx, r;
 
   if (!run)

@@ -77,6 +77,17 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.09:   * Added `phosphor', `xmatrix', and `pulsar' hacks.
+                      * Fixed a bug in the color allocator that sometimes
+                        caused `starfish' to fall back to monochrome.
+                      * Reduced the amount of code that runs before root
+                        privileges are disavowed: "normal" and "shadow"
+                        passwords now do some initialization as root, but the
+                        PAM and Kerberos authorization schemes will be
+                        initialized while running as "nobody".  Supposedly 
+                        this closes a potential security hole when using
+                        Kerberos.
+                      * Added some more sanity checking to configure.
 Changes since 3.08:   * Added `compass', `squiral', `xflame', `wander',
                         `spotlight', and `critical' hacks.
                       * Added some new modes to `decayscreen'.

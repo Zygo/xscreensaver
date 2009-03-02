@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.09
-!                                11-Apr-99
+!                              version 3.10
+!                                27-Apr-99
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -188,6 +188,8 @@
 		wander -root -advance 0 -size 10 -circles True		  \
 		  -length 10000 -reset 100000				\n\
 		critical -root						\n\
+		phosphor -root						\n\
+		xmatrix -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -216,7 +218,8 @@
 @GL_KLUDGE@	atlantis -root					  	\n\
 @GL_KLUDGE@	lament -root					  	\n\
 @GL_KLUDGE@	bubble3d -root					  	\n\
-@GL_KLUDGE@	glplanet -root					  	\n
+@GL_KLUDGE@	glplanet -root					  	\n\
+@GL_KLUDGE@	pulsar -root					  	\n
  
 
 ! A few of the hacks require OpenGL, and will only be built if you have it.

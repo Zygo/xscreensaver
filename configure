@@ -8327,7 +8327,60 @@ eval HACKDIR=${HACKDIR}
 bindir=`echo  "${bindir}"  | sed 's@/$@@;s@//*@/@g'`
 HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
+
+# Sanity check the subdir
+for bad_choice in xscreensaver xscreensaver-demo xscreensaver-command ; do
+  if test "${HACKDIR}" = "${bindir}/${bad_choice}" ; then
+    echo ""
+    { echo "configure: error: \"--enable-subdir=${bindir}/${bad_choice}\" won't work.
+                   There will be an executable installed with that name, so
+                   that can't be the name of a directory as well.  Please
+                   re-configure with a different directory name." 1>&2; exit 1; }
+  fi
+done
+
+
+do_dir_warning=no
+
+# Now let's see if there's a previous RPM version already installed.  Blargh!
+
+# M4 sucks!!
+
+rpmv=`(rpm -qv xscreensaver) 2>&- | \
+      sed 's/^xscreensaver-\([0-9][0-9]*[.][0-9][0-9]*\)-[0-9][0-9]*$/\1/'`
+
+
+if test \! -z "$rpmv" ; then
+  rpmbdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
+  rpmhdir=`rpm -ql xscreensaver | sed -n 's@^\(.*\)/attraction$@\1@p'`
+
+  warning=no
+  warnL "There is already an installed RPM of xscreensaver $rpmv"
+  warn2 "on this system.  You might want to remove it (with"
+  warn2 '"rpm -ve xscreensaver") before running "make install"'
+  warn2 "from this directory."
+  echo ""
+  warn2 "Alternately, you could build this version of xscreensaver"
+  warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
+  warn2 "file is included.  See the RPM documentation for more info."
+  echo ""
+
+  if test "$rpmbdir" = "$rpmhdir" ; then
+    warn2 "The RPM version was installed in $rpmbdir."
+  else
+    warn2 "The RPM version was installed in $rpmbdir,"
+    warn2 "with demos in $rpmhdir."
+  fi
+
+  do_dir_warning=yes
+fi
+
+
 if test "${bindir}" = "${HACKDIR}" ; then
+  do_dir_warning=yes
+fi
+
+if test "$do_dir_warning" = yes; then
   echo ""
   echo "$warnsep"
   echo ""

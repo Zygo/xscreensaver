@@ -82,7 +82,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
 		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
-		  squiral.c xflame.c wander.c spotlight.c critical.c
+		  squiral.c xflame.c wander.c spotlight.c critical.c \
+		  phosphor.c xmatrix.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -98,7 +99,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
 		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
-		  squiral.o xflame.o wander.o spotlight.o critical.o
+		  squiral.o xflame.o wander.o spotlight.o critical.o \
+		  phosphor.o xmatrix.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -110,7 +112,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
-		  xflame wander spotlight critical
+		  xflame wander spotlight critical phosphor xmatrix
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -491,6 +493,12 @@ spotlight:	spotlight.o	$(HACK_OBJS) $(GRAB)
 
 critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
+
+phosphor:	phosphor.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+xmatrix:	xmatrix.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS) $(XPM_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1594,4 +1602,24 @@ critical.o: $(UTILS_SRC)/colors.h
 critical.o: $(UTILS_SRC)/grabscreen.h
 critical.o: $(UTILS_SRC)/visual.h
 critical.o: $(UTILS_SRC)/erase.h
+phosphor.o: $(srcdir)/screenhack.h
+phosphor.o: ../config.h
+phosphor.o: $(UTILS_SRC)/yarandom.h
+phosphor.o: $(UTILS_SRC)/usleep.h
+phosphor.o: $(UTILS_SRC)/resources.h
+phosphor.o: $(UTILS_SRC)/hsv.h
+phosphor.o: $(UTILS_SRC)/colors.h
+phosphor.o: $(UTILS_SRC)/grabscreen.h
+phosphor.o: $(UTILS_SRC)/visual.h
+xmatrix.o: $(srcdir)/screenhack.h
+xmatrix.o: ../config.h
+xmatrix.o: $(UTILS_SRC)/yarandom.h
+xmatrix.o: $(UTILS_SRC)/usleep.h
+xmatrix.o: $(UTILS_SRC)/resources.h
+xmatrix.o: $(UTILS_SRC)/hsv.h
+xmatrix.o: $(UTILS_SRC)/colors.h
+xmatrix.o: $(UTILS_SRC)/grabscreen.h
+xmatrix.o: $(UTILS_SRC)/visual.h
+xmatrix.o: $(srcdir)/images/matrix.xpm
+xmatrix.o: $(srcdir)/images/matrix.xbm
 

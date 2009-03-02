@@ -560,7 +560,8 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
 		  0,   S, V,
 		  359, S, V,
 		  colors, &ncolors,
-		  False, True, wanted_writable);
+		  False, True,
+                  (writable_pP && *writable_pP));
 
   /* If we tried for writable cells and got none, try for non-writable. */
   if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)

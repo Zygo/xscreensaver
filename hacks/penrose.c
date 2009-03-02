@@ -102,9 +102,6 @@ If one of these are hit penrose will reinitialize.
  * vertex rules only allow at most seven tiles to meet at a vertex.
  */
 
-#define CELEBRATE 31415927	/* This causes a pause, an error occurred. */
-#define COMPLETION 3141593	/* This causes a pause, an error occurred. */
-
 #define MAX_TILES_PER_VERTEX 7
 #define N_VERTEX_RULES 8
 #define ALLOC_NODE( type) ((type *)malloc( sizeof( type)))
@@ -112,21 +109,28 @@ If one of these are hit penrose will reinitialize.
 
 static Bool ammann;
 
+/* How long in seconds should we wait before starting a new tiling? */
+static long redo_delay = 3;
+static long redo_delay_usec;
+
 static XrmOptionDescRec opts[] =
 {
 	{"-ammann", ".penrose.ammann", XrmoptionNoArg, (caddr_t) "on"},
-	{"+ammann", ".penrose.ammann", XrmoptionNoArg, (caddr_t) "off"}
+	{"+ammann", ".penrose.ammann", XrmoptionNoArg, (caddr_t) "off"},
+	{"-redoDelay", ".penrose.redoDelay", XrmoptionSepArg, NULL}
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & ammann, "ammann", "Ammann", DEF_AMMANN, t_Bool}
+	{(caddr_t *) & ammann, "ammann", "Ammann", DEF_AMMANN, t_Bool},
+	{(caddr_t *) & redo_delay, "redoDelay", "RedoDelay", "3", t_Int}
 };
 static OptionStruct desc[] =
 {
-	{"-/+ammann", "turn on/off Ammann lines"}
+	{"-/+ammann", "turn on/off Ammann lines"},
+	{"-redoDelay", "delay between new tilings"}
 };
 
-ModeSpecOpt penrose_opts = { 2, opts, 1, vars, desc };
+ModeSpecOpt penrose_opts = { 3, opts, 2, vars, desc };
 
 
 /*-
@@ -326,7 +330,7 @@ vertex_dir(ModeInfo * mi, fringe_node_c * vertex, unsigned side)
 			(void) fprintf(stderr, "v2->fived[%d]=%d, vertex->fived[%d]=%d\n",
 				      i, v2->fived[i], i, vertex->fived[i]);
 	}
-	MI_PAUSE(mi) = CELEBRATE;
+	MI_PAUSE(mi) = redo_delay_usec;
 	return 0;
 }
 
@@ -413,6 +417,8 @@ init_penrose(ModeInfo * mi)
 	tiling_c   *tp;
 	fringe_node_c *fp;
 	int         i, size;
+
+	redo_delay_usec = redo_delay * 1000000;
 
 	if (tilings == NULL) {
 		if ((tilings = (tiling_c *) calloc(MI_NUM_SCREENS(mi),
@@ -715,7 +721,7 @@ check_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 		if (MI_WIN_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Dislocation occured!\n");
 		}
-		MI_PAUSE(mi) = CELEBRATE;	/* Should be able to recover */
+		MI_PAUSE(mi) = redo_delay_usec;	/* Should be able to recover */
 	}
 	if (1 == find_completions(vertex, hits, n_hits, S_LEFT, 0 /*, False */ ))
 		forced_sides |= S_LEFT;
@@ -770,7 +776,7 @@ delete_vertex(ModeInfo * mi, fringe_node_c * vertex, tiling_c * tp)
 			(void) fprintf(stderr, "Weirdness in delete_penrose()\n");
 			(void) fprintf(stderr, "tp->fringe.nodes == vertex\n");
 		}
-		MI_PAUSE(mi) = CELEBRATE;
+		MI_PAUSE(mi) = redo_delay_usec;
 	}
 	if (vertex->list_ptr != 0) {
 		forced_node_c *node = *vertex->list_ptr;
@@ -910,7 +916,7 @@ alloc_vertex(ModeInfo * mi, angle_c dir, fringe_node_c * from, tiling_c * tp)
 			(void) fprintf(stderr, "Weirdness in alloc_vertex()\n");
 			(void) fprintf(stderr, "v = 0\n");
 		}
-		MI_PAUSE(mi) = CELEBRATE;
+		MI_PAUSE(mi) = redo_delay_usec;
 	}
 	*v = *from;
 	add_unit_vec(dir, v->fived);
@@ -1230,7 +1236,7 @@ draw_penrose(ModeInfo * mi)
 	/* No visible nodes left. */
 	if (tp->fringe.n_nodes == 0) {
 		tp->done = True;
-		MI_PAUSE(mi) = COMPLETION;	/* Just finished drawing */
+		MI_PAUSE(mi) = redo_delay_usec;	/* Just finished drawing */
 		return;
 	}
 	if (tp->forced.n_visible > 0 && tp->failures < 10) {

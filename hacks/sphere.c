@@ -106,7 +106,7 @@ draw_sphere(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
 	spherestruct *sp = &spheres[MI_SCREEN(mi)];
-	register    minx = 0, maxx = 0, miny = 0, maxy = 0, npts = 0;
+	int         minx = 0, maxx = 0, miny = 0, maxy = 0, npts = 0;
 
 	if ((sp->dirx && ABS(sp->x) >= sp->radius) ||
 	    (sp->diry && ABS(sp->y) >= sp->radius)) {

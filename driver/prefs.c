@@ -800,7 +800,6 @@ load_init_file (saver_preferences *p)
    */
   if (p->passwd_timeout <= 0) p->passwd_timeout = 30000;	 /* 30 secs */
   if (p->timeout < 10000) p->timeout = 10000;			 /* 10 secs */
-  if (p->cycle < 0) p->cycle = 0;
   if (p->cycle != 0 && p->cycle < 2000) p->cycle = 2000;	 /*  2 secs */
   if (p->pointer_timeout <= 0) p->pointer_timeout = 5000;	 /*  5 secs */
   if (p->notice_events_timeout <= 0)

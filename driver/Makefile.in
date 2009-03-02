@@ -176,6 +176,7 @@ install-program: $(EXES)
 	   else								\
 	    e=echo ;							\
  $$e ""									     ;\
+ $$e "  ####################################################################";\
  $$e "  Warning: xscreensaver has been compiled with support for shadow"     ;\
  $$e "           passwords.  If your system actually uses shadow passwords," ;\
  $$e "           then xscreensaver must be installed as a setuid root"	     ;\
@@ -184,6 +185,7 @@ install-program: $(EXES)
  $$e ""									     ;\
  $$e "           For now, xscreensaver will be installed non-setuid, which"  ;\
  $$e "           means that locking might not work.  (Try it and see.)"	     ;\
+ $$e "  ####################################################################";\
  $$e ""									     ;\
 	   fi ; 							\
 	fi ;								\
@@ -194,7 +196,32 @@ install-program: $(EXES)
 
 install-ad: XScreenSaver.ad
 	@if [ ! -d $(AD_DIR) ]; then $(INSTALL_DIRS) $(AD_DIR) ; fi
-	$(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver
+	@-echo $(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver ;	      \
+	if $(INSTALL_DATA) XScreenSaver.ad $(AD_DIR)/XScreenSaver ; then      \
+	  true ;							      \
+	else								      \
+	  e=echo ;							      \
+	  if [ -f $(AD_DIR)/XScreenSaver ]; then			      \
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $(AD_DIR)/XScreenSaver"		     ;\
+ $$e "           That file exists, and is unwritable.  It is probably from"  ;\
+ $$e "           an older version of xscreensaver, and could cause things"   ;\
+ $$e "           to malfunction.  Please delete it!"			     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	    exit 1 ;							      \
+	  else								      \
+ $$e ""									     ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install $(AD_DIR)/XScreenSaver"		     ;\
+ $$e "           The directory is unwritable.  This is probably ok;"	     ;\
+ $$e "           xscreensaver should work without that file."		     ;\
+ $$e "  ####################################################################";\
+ $$e ""									     ;\
+	    exit 0 ;							      \
+	  fi								      \
+	fi
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
@@ -235,11 +262,14 @@ install-pam:
 	  if [ ! -f $$dir/$$dest ]; then				\
 	    e=echo ;							\
  $$e ""									     ;\
+ $$e "  ####################################################################";\
  $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
  $$e "           Authentication Modules (PAM).  However, we were unable to"  ;\
- $$e "           install the file $$dir/$$dest.  PAM is unlikely to work"    ;\
- $$e "           without this file (and old-style password authentication"   ;\
- $$e "           will be used instead, which may or may not work.)"	     ;\
+ $$e "           install the file $$dir/$$dest.  PAM is unlikely"	     ;\
+ $$e "           to work without this file (and old-style password"	     ;\
+ $$e "           authentication will be used instead, which may or may not"  ;\
+ $$e "           work.)"						     ;\
+ $$e "  ####################################################################";\
  $$e ""									     ;\
 	  fi ;								\
 	elif [ -f $$conf ]; then					\
@@ -248,9 +278,11 @@ install-pam:
 	  else								\
 	    e=echo ;							\
  $$e ""									     ;\
+ $$e "  ####################################################################";\
  $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
  $$e "           Authentication Modules (PAM).  To complete the installation";\
  $$e "           of PAM support, you must add this to the file $$conf:"	     ;\
+ $$e "  ####################################################################";\
  $$e ""									     ;\
 	    cat $$src | grep -v '#%' | sed "s/^/	$$dest	/" ;	\
 	    echo "";							\

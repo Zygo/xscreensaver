@@ -59,6 +59,7 @@
 
 char *progname;
 XrmDatabase db;
+XtAppContext app;
 Bool mono_p;
 
 static XrmOptionDescRec default_options [] = {
@@ -240,7 +241,6 @@ screenhack_handle_events (Display *dpy)
 int
 main (int argc, char **argv)
 {
-  XtAppContext app;
   Widget toplevel;
   Display *dpy;
   Window window;

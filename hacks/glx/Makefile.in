@@ -64,17 +64,17 @@ SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl.c xpm-ximage.c glplanet.c
+		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c
 
 OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl.o xpm-ximage.o glplanet.o
+		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
-		  morph3d rubik atlantis lament bubble3d glplanet
+		  morph3d rubik atlantis lament bubble3d glplanet pulsar
 EXES		= @GL_EXES@
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
@@ -248,6 +248,9 @@ bubble3d:	bubble3d.o	$(HACK_OBJS) $(B3D)
 
 glplanet:	glplanet.o	$(HACK_OBJS) xpm-ximage.o
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+pulsar:		pulsar.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -505,4 +508,16 @@ glplanet.o: $(UTILS_SRC)/visual.h
 glplanet.o: $(UTILS_SRC)/xshm.h
 glplanet.o: $(HACK_SRC)/images/earth.xbm
 glplanet.o: $(srcdir)/xpm-ximage.h
+pulsar.o: $(HACK_SRC)/xlockmore.h
+pulsar.o: ../../config.h
+pulsar.o: $(HACK_SRC)/xlockmoreI.h
+pulsar.o: $(HACK_SRC)/screenhack.h
+pulsar.o: $(UTILS_SRC)/yarandom.h
+pulsar.o: $(UTILS_SRC)/usleep.h
+pulsar.o: $(UTILS_SRC)/resources.h
+pulsar.o: $(UTILS_SRC)/hsv.h
+pulsar.o: $(UTILS_SRC)/colors.h
+pulsar.o: $(UTILS_SRC)/grabscreen.h
+pulsar.o: $(UTILS_SRC)/visual.h
+pulsar.o: $(UTILS_SRC)/xshm.h
 

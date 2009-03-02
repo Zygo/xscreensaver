@@ -279,6 +279,7 @@ extern void unblank_screen (saver_info *si);
 
 #ifndef NO_LOCKING
 extern Bool unlock_p (saver_info *si);
+extern Bool lock_priv_init (int argc, char **argv, Bool verbose_p);
 extern Bool lock_init (int argc, char **argv, Bool verbose_p);
 extern Bool passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 

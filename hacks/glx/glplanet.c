@@ -323,7 +323,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
 		exit (1);
 	  }
 
-	setup_xbm_texture (data, width, height, &gp->fg, &gp->bg);
+	setup_xbm_texture ((char *) data, width, height, &gp->fg, &gp->bg);
   }
 #else  /* !XMU */
 

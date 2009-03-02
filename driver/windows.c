@@ -98,11 +98,11 @@ grab_string(int status)
 {
   switch (status)
     {
-    case GrabSuccess:     return "GrabSuccess";     break;
-    case AlreadyGrabbed:  return "AlreadyGrabbed";  break;
-    case GrabInvalidTime: return "GrabInvalidTime"; break;
-    case GrabNotViewable: return "GrabNotViewable"; break;
-    case GrabFrozen:      return "GrabFrozen";      break;
+    case GrabSuccess:     return "GrabSuccess";
+    case AlreadyGrabbed:  return "AlreadyGrabbed";
+    case GrabInvalidTime: return "GrabInvalidTime";
+    case GrabNotViewable: return "GrabNotViewable";
+    case GrabFrozen:      return "GrabFrozen";
     default:
       {
 	static char foo[255];

@@ -739,7 +739,7 @@ select_visual_of_hack (saver_screen_info *ssi, const char *hack)
 	       (si->demoing_p
 		? "%s: warning, no \"%s\" visual for \"%s\".\n"
 		: "%s: no \"%s\" visual; skipping \"%s\".\n"),
-	       blurb(), (vis ? vis : "???"), in);
+	       blurb(), (*vis ? vis : "???"), in);
     }
 
   return selected;

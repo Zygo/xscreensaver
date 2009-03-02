@@ -58,6 +58,7 @@ $ noseguy	:== $'mydir'noseguy
 $ pedal		:== $'mydir'pedal
 $ penetrate	:== $'mydir'penetrate
 $ penrose	:== $'mydir'penrose
+$ phosphor	:== $'mydir'phosphor
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
 $ rd-bomb	:== $'mydir'rd-bomb
@@ -84,6 +85,7 @@ $ worm		:== $'mydir'worm
 $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap
+$ xmatrix	:== $'mydir'xmatrix
 $ xroger	:== $'mydir'xroger
 $ set def [-.DRIVER]
 $ mydir  = mydisk+f$directory()
