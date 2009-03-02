@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xlyap" _label="Xlyap">
+
+  <command arg="-root"/>
+  <command arg="-randomize"/>
+
+  <!-- #### -builtin [-1] -->
+  <!-- #### -C [1] -->
+  <!-- #### -D [50] -->
+  <!-- #### -L -->
+  <!-- #### -M [1.0] -->
+  <!-- #### -O [0] -->
+  <!-- #### -R [] -->
+  <!-- #### -S [50] -->
+  <!-- #### -a [2.0] -->
+  <!-- #### -b [2.0] -->
+  <!-- #### -c [7] -->
+  <!-- #### -F [10101010] -->
+  <!-- #### -f [abbabaab] -->
+  <!-- #### -h [] -->
+  <!-- #### -i [0.65] -->
+  <!-- #### -m [] -->
+  <!-- #### -o [] -->
+  <!-- #### -p -->
+  <!-- #### -r [65000] -->
+  <!-- #### -s [256] -->
+  <!-- #### -v -->
+  <!-- #### -w [] -->
+
+  <_description>
+This generates pretty fractal pictures by doing funky math involving
+the ``Lyapunov exponent.''  It has a cool interactive mode, too.
+Written by Ron Record.
+  </_description>
+</screensaver>
