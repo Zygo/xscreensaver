@@ -40,9 +40,7 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define HACK_DRAW					draw_gasket
 # define HACK_RESHAPE				reshape_gasket
 # define gasket_opts				xlockmore_opts
-# define DEFAULTS					"*count:		1       \n"			\
-									"*cycles:		9999    \n"			\
-									"*delay:		20000   \n"			\
+# define DEFAULTS					"*delay:		20000   \n"			\
 									"*maxDepth:		5       \n"			\
 									"*speed:		150     \n"			\
 									"*showFPS:      False   \n"			\
@@ -94,7 +92,7 @@ typedef struct {
   GLfloat d_max;			   /* max velocity */
 
   GLfloat     angle;
-  GLuint      gasket1;
+  GLuint      gasket0, gasket1, gasket2, gasket3;
   GLXContext *glx_context;
   Window      window;
 
@@ -102,7 +100,10 @@ typedef struct {
 
   int ncolors;
   XColor *colors;
-  int ccolor;
+  int ccolor0;
+  int ccolor1;
+  int ccolor2;
+  int ccolor3;
 
 } gasketstruct;
 
@@ -110,93 +111,7 @@ static gasketstruct *gasket = NULL;
 
 #include <GL/glu.h>
 
-/* static GLuint limit; */
-
-
-/* Computing normal vectors (thanks to Nat Friedman <ndf@mit.edu>)
- */
-
-typedef struct vector {
-  GLfloat x, y, z;
-} vector;
-
-typedef struct plane {
-  vector p1, p2, p3;
-} plane;
-
-static void
-vector_set(vector *v, GLfloat x, GLfloat y, GLfloat z)
-{
-  v->x = x;
-  v->y = y;
-  v->z = z;
-}
-
-static void
-vector_cross(vector v1, vector v2, vector *v3)
-{
-  v3->x = (v1.y * v2.z) - (v1.z * v2.y);
-  v3->y = (v1.z * v2.x) - (v1.x * v2.z);
-  v3->z = (v1.x * v2.y) - (v1.y * v2.x);
-}
-
-static void
-vector_subtract(vector v1, vector v2, vector *res)
-{
-  res->x = v1.x - v2.x;
-  res->y = v1.y - v2.y;
-  res->z = v1.z - v2.z;
-}
-
-static void
-plane_normal(plane p, vector *n)
-{
-  vector v1, v2;
-  vector_subtract(p.p1, p.p2, &v1);
-  vector_subtract(p.p1, p.p3, &v2);
-  vector_cross(v2, v1, n);
-}
-
-static void
-do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
-	  GLfloat x2, GLfloat y2, GLfloat z2,
-	  GLfloat x3, GLfloat y3, GLfloat z3)
-{
-  plane plane;
-  vector n;
-  vector_set(&plane.p1, x1, y1, z1);
-  vector_set(&plane.p2, x2, y2, z2);
-  vector_set(&plane.p3, x3, y3, z3);
-  plane_normal(plane, &n);
-  n.x = -n.x; n.y = -n.y; n.z = -n.z;
-
-  glNormal3f(n.x, n.y, n.z);
-
-#ifdef DEBUG
-  /* Draw a line in the direction of this face's normal. */
-  {
-    GLfloat ax = n.x > 0 ? n.x : -n.x;
-    GLfloat ay = n.y > 0 ? n.y : -n.y;
-    GLfloat az = n.z > 0 ? n.z : -n.z;
-    GLfloat mx = (x1 + x2 + x3) / 3;
-    GLfloat my = (y1 + y2 + y3) / 3;
-    GLfloat mz = (z1 + z2 + z3) / 3;
-    GLfloat xx, yy, zz;
-
-    GLfloat max = ax > ay ? ax : ay;
-    if (az > max) max = az;
-    max *= 2;
-    xx = n.x / max;
-    yy = n.y / max;
-    zz = n.z / max;
-
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(mx, my, mz);
-    glVertex3f(mx+xx, my+yy, mz+zz);
-    glEnd();
-  }
-#endif /* DEBUG */
-}
+static GLfloat normals[4][3];
 
 
 
@@ -209,10 +124,7 @@ triangle (GLfloat x1, GLfloat y1, GLfloat z1,
   if (wireframe_p)
     glBegin (GL_LINE_LOOP);
   else
-    {
-      do_normal (x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
-      glBegin (GL_TRIANGLES);
-    }
+    glBegin (GL_TRIANGLES);
   glVertex3f (x1, y1, z1);
   glVertex3f (x2, y2, z2);
   glVertex3f (x3, y3, z3);
@@ -220,26 +132,42 @@ triangle (GLfloat x1, GLfloat y1, GLfloat z1,
 }
 
 static void
-four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown)
+four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown, int which)
 {
   if (countdown <= 0)
     {
-      triangle (outer[0].x, outer[0].y, outer[0].z,
-                outer[1].x, outer[1].y, outer[1].z,
-                outer[2].x, outer[2].y, outer[2].z,
-                wireframe_p);
-      triangle (outer[0].x, outer[0].y, outer[0].z,
-                outer[3].x, outer[3].y, outer[3].z,
-                outer[1].x, outer[1].y, outer[1].z,
-                wireframe_p);
-      triangle (outer[0].x, outer[0].y, outer[0].z,
-                outer[2].x, outer[2].y, outer[2].z,
-                outer[3].x, outer[3].y, outer[3].z,
-                wireframe_p);
-      triangle (outer[1].x, outer[1].y, outer[1].z,
-                outer[3].x, outer[3].y, outer[3].z,
-                outer[2].x, outer[2].y, outer[2].z,
-                wireframe_p);
+      if (which == 0)
+        {
+          glNormal3f (normals[0][0], normals[0][1], normals[0][2]);
+          triangle (outer[0].x, outer[0].y, outer[0].z,
+                    outer[1].x, outer[1].y, outer[1].z,
+                    outer[2].x, outer[2].y, outer[2].z,
+                    wireframe_p);
+        }
+      else if (which == 1)
+        {
+          glNormal3f (normals[1][0], normals[1][1], normals[1][2]);
+          triangle (outer[0].x, outer[0].y, outer[0].z,
+                    outer[3].x, outer[3].y, outer[3].z,
+                    outer[1].x, outer[1].y, outer[1].z,
+                    wireframe_p);
+        }
+      else if (which == 2)
+        {
+          glNormal3f (normals[2][0], normals[2][1], normals[2][2]);
+          triangle (outer[0].x, outer[0].y, outer[0].z,
+                    outer[2].x, outer[2].y, outer[2].z,
+                    outer[3].x, outer[3].y, outer[3].z,
+                    wireframe_p);
+        }
+      else
+        {
+          glNormal3f (normals[3][0], normals[3][1], normals[3][2]);
+          triangle (outer[1].x, outer[1].y, outer[1].z,
+                    outer[3].x, outer[3].y, outer[3].z,
+                    outer[2].x, outer[2].y, outer[2].z,
+                    wireframe_p);
+        }
     }
   else
     {
@@ -282,36 +210,53 @@ four_tetras (GL_VECTOR *outer, Bool wireframe_p, int countdown)
       corner[1] = inner[M01];
       corner[2] = inner[M02];
       corner[3] = inner[M03];
-      four_tetras (corner, wireframe_p, countdown);
+      four_tetras (corner, wireframe_p, countdown, which);
 
       corner[0] = inner[M01];
       corner[1] = outer[1];
       corner[2] = inner[M12];
       corner[3] = inner[M13];
-      four_tetras (corner, wireframe_p, countdown);
+      four_tetras (corner, wireframe_p, countdown, which);
 
       corner[0] = inner[M02];
       corner[1] = inner[M12];
       corner[2] = outer[2];
       corner[3] = inner[M23];
-      four_tetras (corner, wireframe_p, countdown);
+      four_tetras (corner, wireframe_p, countdown, which);
 
       corner[0] = inner[M03];
       corner[1] = inner[M13];
       corner[2] = inner[M23];
       corner[3] = outer[3];
-      four_tetras (corner, wireframe_p, countdown);
+      four_tetras (corner, wireframe_p, countdown, which);
     }
 }
 
 
 static void
-compile_gasket(ModeInfo *mi)
+compile_gasket(ModeInfo *mi, int which)
 {
   Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
   GL_VECTOR   vertex[5];
+
+  normals[0][0] =  0;
+  normals[0][1] =  0;
+  normals[0][2] = -sqrt(2.0 / 3.0);
+
+  normals[1][0] =  0;
+  normals[1][1] = -sqrt(0.75);
+  normals[1][2] =  sqrt(2.0 / 3.0) / 3.0;
+
+  normals[2][0] =  sqrt (0.5);
+  normals[2][1] =  sqrt(0.75) / 2.0;
+  normals[2][2] =  normals[1][2];
+
+  normals[3][0] = -normals[2][0];
+  normals[3][1] =  normals[2][1];
+  normals[3][2] =  normals[1][2];
+
 
   /* define verticies */
   vertex[0].x =  0.5; 
@@ -336,7 +281,8 @@ compile_gasket(ModeInfo *mi)
   
   four_tetras (vertex, wireframe_p,
                (gp->current_depth < 0
-                ? -gp->current_depth : gp->current_depth));
+                ? -gp->current_depth : gp->current_depth),
+               which);
 }
 
 static void
@@ -344,11 +290,14 @@ draw(ModeInfo *mi)
 {
   Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
-  static int tick = 0;
+  static int tick = 999999;
   
   static GLfloat pos[4] = {-4.0, 3.0, 10.0, 1.0};
   static float white[]  = {1.0, 1.0, 1.0, 1.0};
-  static float color[]  = {0.0, 0.0, 0.0, 1.0};
+  static float color0[] = {0.0, 0.0, 0.0, 1.0};
+  static float color1[] = {0.0, 0.0, 0.0, 1.0};
+  static float color2[] = {0.0, 0.0, 0.0, 1.0};
+  static float color3[] = {0.0, 0.0, 0.0, 1.0};
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -358,13 +307,30 @@ draw(ModeInfo *mi)
 
       glLightfv(GL_LIGHT0, GL_POSITION,  pos);
 
-      color[0] = gp->colors[gp->ccolor].red   / 65536.0;
-      color[1] = gp->colors[gp->ccolor].green / 65536.0;
-      color[2] = gp->colors[gp->ccolor].blue  / 65536.0;
-      gp->ccolor++;
-      if (gp->ccolor >= gp->ncolors) gp->ccolor = 0;
+      color0[0] = gp->colors[gp->ccolor0].red   / 65536.0;
+      color0[1] = gp->colors[gp->ccolor0].green / 65536.0;
+      color0[2] = gp->colors[gp->ccolor0].blue  / 65536.0;
 
-      glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+      color1[0] = gp->colors[gp->ccolor1].red   / 65536.0;
+      color1[1] = gp->colors[gp->ccolor1].green / 65536.0;
+      color1[2] = gp->colors[gp->ccolor1].blue  / 65536.0;
+
+      color2[0] = gp->colors[gp->ccolor2].red   / 65536.0;
+      color2[1] = gp->colors[gp->ccolor2].green / 65536.0;
+      color2[2] = gp->colors[gp->ccolor2].blue  / 65536.0;
+
+      color3[0] = gp->colors[gp->ccolor3].red   / 65536.0;
+      color3[1] = gp->colors[gp->ccolor3].green / 65536.0;
+      color3[2] = gp->colors[gp->ccolor3].blue  / 65536.0;
+
+      gp->ccolor0++;
+      gp->ccolor1++;
+      gp->ccolor2++;
+      gp->ccolor3++;
+      if (gp->ccolor0 >= gp->ncolors) gp->ccolor0 = 0;
+      if (gp->ccolor1 >= gp->ncolors) gp->ccolor1 = 0;
+      if (gp->ccolor2 >= gp->ncolors) gp->ccolor2 = 0;
+      if (gp->ccolor3 >= gp->ncolors) gp->ccolor3 = 0;
 
       glShadeModel(GL_SMOOTH);
 
@@ -402,7 +368,15 @@ draw(ModeInfo *mi)
   }
 
   glScalef( 8.0, 8.0, 8.0 );
+
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color0);
+  glCallList(gp->gasket0);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color1);
   glCallList(gp->gasket1);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color2);
+  glCallList(gp->gasket2);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color3);
+  glCallList(gp->gasket3);
 
   glPopMatrix();
 
@@ -414,10 +388,19 @@ draw(ModeInfo *mi)
         gp->current_depth = -max_depth;
       gp->current_depth++;
 
+      /* We make four different lists so that each face of the tetrahedrons
+         can have a different color (all triangles facing in the same
+         direction have the same color, which is different from all
+         triangles facing in other directions.)
+       */
+      glDeleteLists (gp->gasket0, 1);
       glDeleteLists (gp->gasket1, 1);
-      glNewList (gp->gasket1, GL_COMPILE);
-      compile_gasket (mi);
-      glEndList();
+      glDeleteLists (gp->gasket2, 1);
+      glDeleteLists (gp->gasket3, 1);
+      glNewList (gp->gasket0, GL_COMPILE); compile_gasket (mi, 0); glEndList();
+      glNewList (gp->gasket1, GL_COMPILE); compile_gasket (mi, 1); glEndList();
+      glNewList (gp->gasket2, GL_COMPILE); compile_gasket (mi, 2); glEndList();
+      glNewList (gp->gasket3, GL_COMPILE); compile_gasket (mi, 3); glEndList();
 
     }
 }
@@ -450,11 +433,11 @@ pinit(ModeInfo *mi)
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
   /* draw the gasket */
+  gp->gasket0 = glGenLists(1);
   gp->gasket1 = glGenLists(1);
+  gp->gasket2 = glGenLists(1);
+  gp->gasket3 = glGenLists(1);
   gp->current_depth = 1;       /* start out at level 1, not 0 */
-  glNewList(gp->gasket1, GL_COMPILE);
-    compile_gasket(mi);
-  glEndList();
 }
 
 
@@ -566,6 +549,10 @@ init_gasket(ModeInfo *mi)
   make_smooth_colormap (0, 0, 0,
                         gp->colors, &gp->ncolors,
                         False, 0, False);
+  gp->ccolor0 = 0;
+  gp->ccolor1 = gp->ncolors * 0.25;
+  gp->ccolor2 = gp->ncolors * 0.5;
+  gp->ccolor3 = gp->ncolors * 0.75;
 
   if ((gp->glx_context = init_GL(mi)) != NULL)
   {
@@ -624,7 +611,10 @@ release_gasket(ModeInfo * mi)
 	/* Display lists MUST be freed while their glXContext is current. */
         glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 
+        if (glIsList(gp->gasket0)) glDeleteLists(gp->gasket0, 1);
         if (glIsList(gp->gasket1)) glDeleteLists(gp->gasket1, 1);
+        if (glIsList(gp->gasket2)) glDeleteLists(gp->gasket2, 1);
+        if (glIsList(gp->gasket3)) glDeleteLists(gp->gasket3, 1);
       }
     }
     (void) free((void *) gasket);

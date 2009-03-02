@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,6 +8,8 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * Alpha channel support by Eric Lassauge <lassauge@mail.dotcom.fr>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,6 +27,9 @@ extern char *progname;
 #include <X11/Xutil.h>
 #include <X11/xpm.h>
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
 static Bool
 bigendian (void)
 {
@@ -36,7 +41,7 @@ bigendian (void)
 
 /* Returns an XImage structure containing the bits of the given XPM image.
    This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
-   extra byte set to 0xFF.
+   extra byte set to either 0xFF or 0x00 (based on the XPM file's mask.)
 
    The Display and Visual arguments are used only for creating the XImage;
    no bits are pushed to the server.
@@ -54,15 +59,16 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
      out the RGB values of the pixels ourselves; and construct an XImage
      by hand.  Regardless of the depth of the visual we're using, this
      XImage will have 32 bits per pixel, 8 each per R, G, and B.  We put
-     0xFF in the fourth slot, as GL will interpret that as "alpha".
+     0xFF or 0x00 in the fourth (alpha) slot, depending on the file's mask.
    */
   XImage *ximage = 0;
   XpmImage xpm_image;
   XpmInfo xpm_info;
   int result;
+  int transparent_color_index = -1;
   int x, y, i;
   int bpl, wpl;
-  XColor colors[255];
+  XColor colors[256];
 
   memset (&xpm_image, 0, sizeof(xpm_image));
   memset (&xpm_info, 0, sizeof(xpm_info));
@@ -71,6 +77,13 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
     {
       fprintf(stderr, "%s: unable to parse xpm data (%d).\n", progname,
 	      result);
+      exit (1);
+    }
+
+  if (xpm_image.ncolors > countof(colors))
+    {
+      fprintf (stderr, "%s: too many colors (%d) in XPM.\n",
+               progname, xpm_image.ncolors);
       exit (1);
     }
 
@@ -84,12 +97,26 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
 
   /* Parse the colors in the XPM into RGB values. */
   for (i = 0; i < xpm_image.ncolors; i++)
-    if (!XParseColor(dpy, cmap, xpm_image.colorTable[i].c_color, &colors[i]))
-      {
-	fprintf(stderr, "%s: unparsable color: %s\n", progname,
-		xpm_image.colorTable[i].c_color);
-	exit(1);
-      }
+    {
+      const char *c = xpm_image.colorTable[i].c_color;
+      if (!c)
+        {
+          fprintf(stderr, "%s: bogus color table?  ($d)\n", progname, i);
+          exit (1);
+        }
+      else if (!strncasecmp (c, "None", 4))
+        {
+          transparent_color_index = i;
+          colors[transparent_color_index].red   = 0xFF;
+          colors[transparent_color_index].green = 0xFF;
+          colors[transparent_color_index].blue  = 0xFF;
+        }
+      else if (!XParseColor (dpy, cmap, c, &colors[i]))
+        {
+          fprintf(stderr, "%s: unparsable color: %s\n", progname, c);
+          exit (1);
+        }
+    }
 
   /* Translate the XpmImage to an RGB XImage. */
   {
@@ -115,11 +142,11 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
 	for (x = 0; x < xpm_image.width; x++)
 	  {
 	    XColor *c = &colors[iline[x]];
-	    /* pack it as RGBA */
-	    oline[x] = (((c->red   >> 8) << rpos) |
-			((c->green >> 8) << gpos) |
-			((c->blue  >> 8) << bpos) |
-			(0xFF            << apos));
+            int alpha = ((iline[x] == transparent_color_index) ? 0x00 : 0xFF);
+            oline[x] = (((c->red   >> 8) << rpos) |
+                        ((c->green >> 8) << gpos) |
+                        ((c->blue  >> 8) << bpos) |
+                        (alpha           << apos));
 	  }
       }
   }

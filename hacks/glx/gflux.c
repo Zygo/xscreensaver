@@ -54,9 +54,9 @@
 # define gflux_opts						xlockmore_opts
 #define DEFAULTS                        "*delay:		20000   \n" \
 										"*showFPS:      False   \n" \
+                                        "*mode:         light" "\n" \
                                         "*squares:      19      \n" \
 										"*resolution:   0       \n" \
-                                        "*draw:         2       \n" \
                                         "*flat:         0       \n" \
                                         "*speed:        0.05    \n" \
                                         "*rotationx:    0.01    \n" \
@@ -64,9 +64,9 @@
                                         "*rotationz:    0.1     \n" \
                                         "*waves:        3       \n" \
                                         "*waveChange:   50      \n" \
-                                        "*waveHeight:   1.0     \n" \
-                                        "*waveFreq:    3.0     \n" \
-                                        "*zoom:         1.0     \n" 
+                                        "*waveHeight:  0.8      \n" \
+                                        "*waveFreq:    3.0      \n" \
+                                        "*zoom:        1.0      \n" 
 
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -107,7 +107,10 @@
 
 #include <math.h>
 
-static enum {wire=0,solid,light,checker,textured} _draw; /* draw style */
+#include "grab-ximage.h"
+
+
+static enum {wire=0,solid,light,checker,textured,grab} _draw; /* draw style */
 static int _squares = 19;                                 /* grid size */
 static int _resolution = 4;                    /* wireframe resolution */
 static int _flat = 0;
@@ -129,7 +132,8 @@ static float _waveFreq = 3.0;
 static XrmOptionDescRec opts[] = {
     {"-squares", ".gflux.squares", XrmoptionSepArg, (caddr_t) NULL},
     {"-resolution", ".gflux.resolution", XrmoptionSepArg, (caddr_t) NULL},
-    {"-draw", ".gflux.draw", XrmoptionSepArg, (caddr_t) NULL},
+/*    {"-draw", ".gflux.draw", XrmoptionSepArg, (caddr_t) NULL},*/
+    {"-mode", ".gflux.mode", XrmoptionSepArg, (caddr_t) NULL},
     {"-flat", ".gflux.flat", XrmoptionSepArg, (caddr_t) NULL},
     {"-speed", ".gflux.speed", XrmoptionSepArg, (caddr_t) NULL},
     {"-rotationx", ".gflux.rotationx", XrmoptionSepArg, (caddr_t) NULL},
@@ -146,7 +150,7 @@ static XrmOptionDescRec opts[] = {
 static argtype vars[] = {
     {(caddr_t *) & _squares, "squares", "Squares", "19", t_Int},
     {(caddr_t *) & _resolution, "resolution", "Resolution", "4", t_Int},
-    {(caddr_t *) & _draw, "draw", "Draw", "2", t_Int},
+/*    {(caddr_t *) & _draw, "draw", "Draw", "2", t_Int},*/
     {(caddr_t *) & _flat, "flat", "Flat", "0", t_Int},
     {(caddr_t *) & _speed, "speed", "Speed", "0.05", t_Float},
     {(caddr_t *) & _rotationx, "rotationx", "Rotationx", "0.01", t_Float},
@@ -164,7 +168,7 @@ static OptionStruct desc[] =
 {
     {"-squares num", "size of grid in squares (19)"},
     {"-resolution num", "detail of lines making grid, wireframe only (4)"},
-    {"-draw num", "draw method to use: 0=wireframe 1=solid 2=lit (0)"},
+/*    {"-draw num", "draw method to use: 0=wireframe 1=solid 2=lit (0)"},*/
     {"-flat num", "shading method, not wireframe: 0=smooth 1=flat (0)"},
     {"-speed num", "speed of waves (0.05)"},
     {"-rotationx num", "speed of xrotation (0.01)"},
@@ -189,6 +193,7 @@ ModStruct   gflux_description =
 
 /* structure for holding the gflux data */
 typedef struct {
+    ModeInfo *modeinfo;
     int screen_width, screen_height;
     GLXContext *glx_context;
     Window window;
@@ -209,6 +214,8 @@ typedef struct {
 	GLubyte *image;
 #endif
     GLint texName;
+    GLfloat tex_xscale;
+    GLfloat tex_yscale;
     void (*drawFunc)(void);
 } gfluxstruct;
 static gfluxstruct *gflux = NULL;
@@ -217,6 +224,7 @@ static gfluxstruct *gflux = NULL;
 void initLighting(void);
 void initTexture(void);
 void loadTexture(void);
+void grabTexture(void);
 void createTexture(void);
 void displaySolid(void);            /* drawFunc implementations */
 void displayLight(void);
@@ -280,6 +288,10 @@ void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 {
   reshape_gflux(mi, width, height);
   glViewport( 0, 0, width, height ); 
+
+  gflux->tex_xscale = 1.0;  /* maybe changed later */
+  gflux->tex_yscale = 1.0;
+
   switch(_draw) {
     case solid :
       gflux->drawFunc = (displaySolid);
@@ -301,6 +313,13 @@ void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
       gflux->drawFunc = (displayTexture);
       glEnable(GL_DEPTH_TEST);
       loadTexture();
+      initTexture();
+      initLighting();
+    break;
+	case grab :
+      gflux->drawFunc = (displayTexture);
+      glEnable(GL_DEPTH_TEST);
+      grabTexture();
       initTexture();
       initLighting();
     break;
@@ -330,6 +349,26 @@ void init_gflux(ModeInfo * mi)
     }
     gp = &gflux[screen];
 
+    {
+      char *s = get_string_resource ("mode", "Mode");
+      if (!s || !*s)                       _draw = wire;
+      else if (!strcasecmp (s, "wire"))    _draw = wire;
+      else if (!strcasecmp (s, "solid"))   _draw = solid;
+      else if (!strcasecmp (s, "light"))   _draw = light;
+      else if (!strcasecmp (s, "checker")) _draw = checker;
+      else if (!strcasecmp (s, "stdin"))   _draw = textured;
+      else if (!strcasecmp (s, "grab"))    _draw = grab;
+      else
+        {
+          fprintf (stderr,
+                   "%s: mode must be one of: wire, solid, "
+                   "light, checker, or grab; not \"%s\"\n",
+                   progname, s);
+          exit (1);
+        }
+    }
+
+    gp->modeinfo = mi;
     gp->window = MI_WINDOW(mi);
     if ((gp->glx_context = init_GL(mi)) != NULL) {
         reshape_gflux(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
@@ -498,6 +537,7 @@ void createTexture(void)
 /* specifies image as texture */
 void initTexture(void)
 {
+    clear_gl_error();
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glGenTextures(1, &gflux->texName);
     glBindTexture(GL_TEXTURE_2D, gflux->texName);
@@ -505,13 +545,104 @@ void initTexture(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    check_gl_error("texture parameter");
+
+    /* Bail out if the texture is too large. */
+    {
+      GLint width;
+      glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
+                   gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+      glGetTexLevelParameteriv (GL_PROXY_TEXTURE_2D, 0,
+                                GL_TEXTURE_WIDTH, &width);
+      if (width <= 0)
+        {
+          glGetIntegerv (GL_MAX_TEXTURE_SIZE, &width);
+          fprintf (stderr,
+                   "%s: texture too large (%dx%d -- probable max %dx%d)\n",
+                   progname, gflux->imageWidth, gflux->imageHeight,
+                   width, width);
+          return;
+        }
+    }
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
             gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, gflux->image);
-
+    check_gl_error("texture creation");
 }
 
 #undef presult
 #endif
+
+
+void
+grabTexture(void)
+{
+  int real_width  = gflux->modeinfo->xgwa.width;
+  int real_height = gflux->modeinfo->xgwa.height;
+  XImage *ximage = screen_to_ximage (gflux->modeinfo->xgwa.screen,
+                                     gflux->window);
+
+  if (ximage->width > 1280 ||   /* that's too damned big... */
+      ximage->height > 1280)
+    {
+      Display *dpy = gflux->modeinfo->dpy;
+      Visual *v = gflux->modeinfo->xgwa.visual;
+      int size = (ximage->width < ximage->height ?
+                  ximage->width : ximage->height);
+      int real_size = (ximage->width < ximage->height ?
+                       real_width : real_height);
+      XImage *x2;
+      int x, y, xoff, yoff;
+
+      if (size > 1024) size = 1024;
+
+      x2 = XCreateImage (dpy, v, 32, ZPixmap, 0, 0, size, size, 32, 0);
+      xoff = (real_width  > size ? (random() % (real_width  - size)) : 0);
+      yoff = (real_height > size ? (random() % (real_height - size)) : 0);
+
+# if 0
+      fprintf(stderr, "%s: cropping texture from %dx%d to %dx%d @ %d,%d\n",
+              progname, ximage->width, ximage->height, x2->width, x2->height,
+              xoff, yoff);
+# endif
+      x2->data = ximage->data;  /* we can reuse the same array */
+      for (y = 0; y < x2->height; y++)
+        for (x = 0; x < x2->width; x++)
+          XPutPixel (x2, x, y, XGetPixel (ximage, x+xoff, y+yoff));
+
+      real_width = real_height = real_size;
+      ximage->data = 0;
+      XDestroyImage (ximage);
+      ximage = x2;
+    }
+
+  /* Add a border. */
+  {
+    unsigned long gray = 0xAAAAAAAAL;  /* so shoot me */
+    int i;
+    for (i = 0; i < real_height; i++)
+      {
+        XPutPixel (ximage, 0, i, gray);
+        XPutPixel (ximage, real_width-1, i, gray);
+      }
+    for (i = 0; i < real_width; i++)
+      {
+        XPutPixel (ximage, i, 0, gray);
+        XPutPixel (ximage, i, real_height-1, gray);
+      }
+  }
+
+  gflux->imageWidth  = ximage->width;
+  gflux->imageHeight = ximage->height;
+  gflux->image = ximage->data;
+
+  gflux->tex_xscale = ((GLfloat) real_width  / (GLfloat) ximage->width);
+  gflux->tex_yscale = ((GLfloat) real_height / (GLfloat) ximage->height);
+
+  ximage->data = 0;
+  XDestroyImage (ximage);
+}
+
 
 void initLighting(void)
 {
@@ -564,6 +695,9 @@ void displayTexture(void)
     double du = 2.0/((double)_squares);
     double dv = 2.0/((double)_squares);
 
+    double xs = gflux->tex_xscale;
+    double ys = gflux->tex_yscale;
+
 	glMatrixMode (GL_TEXTURE);
 	glLoadIdentity ();
 	glTranslatef(-1,-1,0);
@@ -577,8 +711,12 @@ void displayTexture(void)
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
+
+    clear_gl_error();
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glBindTexture(GL_TEXTURE_2D, gflux->texName);
+    check_gl_error("texture binding");
+
 	glColor3f(0.5,0.5,0.5);
  
     for(x=-1,u= 0;x<0.9999;x+=dx,u+=du) {
@@ -587,7 +725,7 @@ void displayTexture(void)
             z = getGrid(x,y,time);
         /*  genColour(z);
             glColor3fv(gflux->colour);
-        */  glTexCoord2f(u,v);
+        */  glTexCoord2f(u*xs,v*ys);
             glNormal3f(
                 getGrid(x+dx,y,time)-getGrid(x-dx,y,time),
                 getGrid(x,y+dy,time)-getGrid(x,y-dy,time),
@@ -598,7 +736,7 @@ void displayTexture(void)
             z = getGrid(x+dx,y,time);
         /*  genColour(z);
             glColor3fv(gflux->colour);
-        */  glTexCoord2f(u+du,v);
+        */  glTexCoord2f((u+du)*xs,v*ys);
             glNormal3f(
                 getGrid(x+dx+dx,y,time)-getGrid(x,y,time),
                 getGrid(x+dx,y+dy,time)-getGrid(x+dx,y-dy,time),

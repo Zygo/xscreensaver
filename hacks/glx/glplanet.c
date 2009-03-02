@@ -456,9 +456,9 @@ static void
 init_sun (ModeInfo * mi)
 {
   GLfloat light[4];
-  light[0] = -1;
-  light[1] = (int) (((random() % 3) & 0xFF) - 1);
-  light[2] = (int) (((random() % 3) & 0xFF) - 1);
+  light[0] = frand(2.0) - 1.0;
+  light[1] = frand(2.0) - 1.0;
+  light[2] = 1.0;
   light[3] = 0;
 
   glLightfv(GL_LIGHT0, GL_POSITION, light);

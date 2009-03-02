@@ -131,6 +131,59 @@ xscreensaver_window_p (Display *dpy, Window window)
 
 
 
+/* Whether the given window is:
+   - the real root window;
+   - the virtual root window;
+   - a direct child of the root window;
+   - a direct child of the window manager's decorations.
+ */
+Bool
+top_level_window_p (Screen *screen, Window window)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  Window root, parent, *kids;
+  Window vroot = VirtualRootWindowOfScreen(screen);
+  unsigned int nkids;
+
+  if (window == vroot)
+    return True;
+
+  if (!XQueryTree (dpy, window, &root, &parent, &kids, &nkids))
+    return False;
+
+  if (window == root)
+    return True;
+
+  /* If our direct parent is the root (or *a* root), then yes. */
+  if (parent == root || parent == vroot)
+    return True;
+  else
+    {
+      Atom type = None;
+      int format;
+      unsigned long nitems, bytesafter;
+      unsigned char *data;
+
+      /* If our direct parent has the WM_STATE property, then it is a
+         window manager decoration -- yes.
+      */
+      if (XGetWindowProperty (dpy, window,
+                              XInternAtom (dpy, "WM_STATE", True),
+                              0, 0, False, AnyPropertyType,
+                              &type, &format, &nitems, &bytesafter,
+                              (unsigned char **) &data)
+          == Success
+          && type != None)
+        return True;
+    }
+
+  /* Else, no.  We're deep in a tree somewhere.
+   */
+  return False;
+}
+
+
+
 static XErrorHandler old_ehandler = 0;
 static int
 BadWindow_ehandler (Display *dpy, XErrorEvent *error)
@@ -258,6 +311,16 @@ grab_screen_image (Screen *screen, Window window)
       describe_visual(stderr, screen, xgwa2.visual, False);
       fprintf (stderr, "\n");
     }
+
+
+  if (!root_p && !top_level_window_p (screen, window))
+    {
+      if (grab_verbose_p)
+        fprintf (stderr, "%s: not a top-level window: 0x%08lX: not grabbing\n",
+                 progname, (unsigned long) window);
+      return;
+    }
+
 
   if (!root_p)
     XSetWindowBackgroundPixmap (dpy, window, None);
@@ -470,24 +533,38 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
   /* Check to see if the server supports the extension, and bug out if not.
    */
   if (! XReadDisplayQueryExtension (dpy, &rd_event_base, &rd_error_base))
-    return False;
+    {
+      if (grab_verbose_p)
+        fprintf(stderr, "%s: no XReadDisplay extension\n", progname);
+      return False;
+    }
 
   /* If this isn't a visual we know how to handle, bug out.  We handle:
-      = TrueColor in depths 8, 12, 16, and 32;
+      = TrueColor in depths 8, 12, 15, 16, and 32;
       = PseudoColor and DirectColor in depths 8 and 12.
    */
   XGetWindowAttributes(dpy, window, &xgwa);
   class = visual_class (screen, xgwa.visual);
   if (class == TrueColor)
     {
-      if (xgwa.depth != 8  && xgwa.depth != 12 && xgwa.depth != 16 &&
-	  xgwa.depth != 24 && xgwa.depth != 32)
-	return False;
+      if (xgwa.depth != 8  && xgwa.depth != 12 && xgwa.depth != 15 &&
+          xgwa.depth != 16 && xgwa.depth != 24 && xgwa.depth != 32)
+        {
+          if (grab_verbose_p)
+            fprintf(stderr, "%s: TrueColor depth %d unsupported\n",
+                    progname, xgwa.depth);
+          return False;
+        }
     }
   else if (class == PseudoColor || class == DirectColor)
     {
       if (xgwa.depth != 8 && xgwa.depth != 12)
-	return False;
+        {
+          if (grab_verbose_p)
+            fprintf(stderr, "%s: Pseudo/DirectColor depth %d unsupported\n",
+                    progname, xgwa.depth);
+          return False;
+        }
       else
 	/* Allocate a TrueColor-like spread of colors for the image. */
 	remap_p = True;
@@ -500,9 +577,15 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
   image = XReadDisplay (dpy, window, xgwa.x, xgwa.y, xgwa.width, xgwa.height,
 			hints, &hints);
   if (!image)
-    return False;
+    {
+      if (grab_verbose_p)
+        fprintf(stderr, "%s: XReadDisplay() failed\n", progname);
+      return False;
+    }
   if (!image->data)
     {
+      if (grab_verbose_p)
+        fprintf(stderr, "%s: XReadDisplay() returned no data\n", progname);
       XDestroyImage(image);
       return False;
     }
@@ -543,7 +626,11 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
 				     xgwa.width, xgwa.height,
 				     8, 0);
       if (!image2)
-	return False;
+        {
+          if (grab_verbose_p)
+            fprintf(stderr, "%s: out of memory?\n", progname);
+          return False;
+        }
 
       if (grab_verbose_p)
         fprintf(stderr, "%s: converting from depth %d to depth %d\n",
@@ -565,8 +652,9 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
 	      pixel = ((r >> 5) | ((g >> 5) << 3) | ((b >> 6) << 6));
 	    else if (xgwa.depth == 12)
 	      pixel = ((r >> 4) | ((g >> 4) << 4) | ((b >> 4) << 8));
-	    else if (xgwa.depth == 16)
-	      pixel = ((r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10));
+	    else if (xgwa.depth == 16 || xgwa.depth == 15)
+              /* Gah! I don't understand why these are in the other order. */
+	      pixel = (((r >> 3) << 10) | ((g >> 3) << 5) | ((b >> 3)));
 	    else
 	      abort();
 

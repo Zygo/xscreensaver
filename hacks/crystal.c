@@ -588,6 +588,7 @@ draw_crystal(ModeInfo * mi)
 		crystalatom *atom0;
 
 		atom0 = &cryst->atom[i];
+
 		if (MI_IS_INSTALL(mi) && MI_NPIXELS(mi) > 2) {
 			XSetForeground(display, cryst->gc, cryst->colors[atom0->colour].pixel);
 		} else {
@@ -807,7 +808,9 @@ release_crystal(ModeInfo * mi)
 					free_colors(display, cryst->cmap, cryst->colors, cryst->ncolors);
 				if (cryst->colors)
 					(void) free((void *) cryst->colors);
+#if 0 /* #### wrong! -jwz */
 				XFreeColormap(display, cryst->cmap);
+#endif
 			}
 			if (cryst->gc != NULL)
 				XFreeGC(display, cryst->gc);
@@ -851,9 +854,13 @@ init_crystal(ModeInfo * mi)
 #endif
 			cryst->blackpixel = MI_BLACK_PIXEL(mi);
 			cryst->whitepixel = MI_WHITE_PIXEL(mi);
+#if 0 /* #### wrong! -jwz */
 			cryst->cmap = XCreateColormap(display, window,
 						   MI_VISUAL(mi), AllocNone);
 			XSetWindowColormap(display, window, cryst->cmap);
+#else
+            cryst->cmap = mi->xgwa.colormap;
+#endif
 			(void) XParseColor(display, cryst->cmap, "black", &color);
 			(void) XAllocColor(display, cryst->cmap, &color);
 			MI_BLACK_PIXEL(mi) = color.pixel;
@@ -1200,7 +1207,9 @@ init_crystal(ModeInfo * mi)
 				make_smooth_colormap(MI_DISPLAY(mi), MI_VISUAL(mi), cryst->cmap, cryst->colors, &cryst->ncolors,
 						     True, &cryst->cycle_p, True);
 		}
+#if 0 /* #### wrong! -jwz */
 		XInstallColormap(display, cryst->cmap);
+#endif
 		if (cryst->ncolors < 2) {
 			cryst->ncolors = 2;
 			cryst->no_colors = True;

@@ -779,7 +779,7 @@ char *defaults [] = {
   "*ticks:		   20",
   "*delay:		   50000",
   "*cursor:		   333",
-  "*program:		 " ZIPPY_PROGRAM,
+  "*program:		 " FORTUNE_PROGRAM,
   "*relaunch:		   5",
   0
 };

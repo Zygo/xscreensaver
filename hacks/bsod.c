@@ -1567,6 +1567,28 @@ char *defaults [] = {
 
 XrmOptionDescRec options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
+  { "-windows",		".doWindows",		XrmoptionNoArg,  "True"  },
+  { "-no-windows",	".doWindows",		XrmoptionNoArg,  "False" },
+  { "-nt",		".doNT",		XrmoptionNoArg,  "True"  },
+  { "-no-nt",		".doNT",		XrmoptionNoArg,  "False" },
+  { "-amiga",		".doAmiga",		XrmoptionNoArg,  "True"  },
+  { "-no-amiga",	".doAmiga",		XrmoptionNoArg,  "False" },
+  { "-mac",		".doMac",		XrmoptionNoArg,  "True"  },
+  { "-no-mac",		".doMac",		XrmoptionNoArg,  "False" },
+  { "-atari",		".doAtari",		XrmoptionNoArg,  "True"  },
+  { "-no-atari",	".doAtari",		XrmoptionNoArg,  "False" },
+  { "-macsbug",		".doMacsBug",		XrmoptionNoArg,  "True"  },
+  { "-no-macsbug",	".doMacsBug",		XrmoptionNoArg,  "False" },
+  { "-sco",		".doSCO",		XrmoptionNoArg,  "True"  },
+  { "-no-sco",		".doSCO",		XrmoptionNoArg,  "False" },
+  { "-bsd",		".doBSD",		XrmoptionNoArg,  "True"  },
+  { "-no-bsd",		".doBSD",		XrmoptionNoArg,  "False" },
+  { "-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "True"  },
+  { "-no-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "False" },
+  { "-blitdamage",	".doBlitDamage",	XrmoptionNoArg,  "True"  },
+  { "-no-blitdamage",	".doBlitDamage",	XrmoptionNoArg,  "False" },
+  { "-solaris",		".doSolaris",		XrmoptionNoArg,  "True"  },
+  { "-no-solaris",	".doSolaris",		XrmoptionNoArg,  "False" },
   { 0, 0, 0, 0 }
 };
 
@@ -1609,7 +1631,11 @@ screenhack (Display *dpy, Window window)
 	}
       loop++;
       if (loop > 100) j = -1;
-      if (loop > 200) exit(-1);
+      if (loop > 200)
+        {
+          fprintf (stderr, "%s: no display modes enabled?\n", progname);
+          exit(-1);
+        }
       if (!did) continue;
       XSync (dpy, False);
       j = i;

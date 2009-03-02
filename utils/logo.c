@@ -33,8 +33,8 @@
 #include <stdio.h>
 #include <X11/Xutil.h>
 
-#include "logo-50.xpm"
-#include "logo-180.xpm"
+#include "images/logo-50.xpm"
+#include "images/logo-180.xpm"
 
 static const char hex[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

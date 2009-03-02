@@ -50,7 +50,7 @@ char *progclass="Kumppa";
 char *defaults [] ={
 	".background:		black",
 	"*speed:		0.1",
-	"*delay:		0",
+	"*delay:		10000",
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
         /* leave this off by default, since it slows things down.  -- jwz. */
         "*useDBE:		False",

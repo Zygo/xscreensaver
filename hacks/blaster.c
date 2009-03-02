@@ -361,10 +361,10 @@ static void move_robots(void)
 										}
 										else {
 											robots[x].lasers[y].start_y = -robots[x].radius;
-											robots[x].lasers[y].end_y = robots[x].lasers[y].start_y + 7;
+											robots[x].lasers[y].end_y = robots[x].lasers[y].start_y - 7;
 										}
 										robots[x].lasers[y].start_x = (int)(robots[x].lasers[y].start_y * slope);;
-										robots[x].lasers[y].start_x = (int)(robots[x].lasers[y].end_y * slope);
+										robots[x].lasers[y].end_x = (int)(robots[x].lasers[y].end_y * slope);
 									}
 									robots[x].lasers[y].start_x = robots[x].lasers[y].start_x + robots[x].new_x;
 									robots[x].lasers[y].start_y = robots[x].lasers[y].start_y + robots[x].new_y;

@@ -111,8 +111,10 @@ OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
 		  yarandom.h erase.h xshm.h xdbe.h colorbars.h
-LOGOS		= logo-180.gif logo-180.xpm logo-50.gif logo-50.xpm \
-		  logo-big.gif logo.eps
+STAR		= *
+LOGOS		= images/$(STAR).xpm \
+		  images/$(STAR).gif \
+		  images/$(STAR).eps
 EXTRAS		= README Makefile.in ad2c
 VMSFILES	= compile_axp.com compile_decc.com vms-gtod.c vms-gtod.h \
 		  vms-strdup.c
@@ -265,8 +267,8 @@ xmu.o: ../config.h
 logo.o: $(srcdir)/utils.h
 logo.o: ../config.h
 logo.o: $(srcdir)/resources.h
-logo.o: $(srcdir)/logo-50.xpm
-logo.o: $(srcdir)/logo-180.xpm
+logo.o: $(srcdir)/images/logo-50.xpm
+logo.o: $(srcdir)/images/logo-180.xpm
 yarandom.o: ../config.h
 yarandom.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/utils.h

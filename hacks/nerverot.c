@@ -1,4 +1,4 @@
-/* nerverot, nervous rotation of random thingies, v1.3
+/* nerverot, nervous rotation of random thingies, v1.4
  * by Dan Bornstein, danfuzz@milk.com
  * Copyright (c) 2000-2001 Dan Bornstein. All rights reserved.
  *
@@ -162,7 +162,7 @@ static int itersTillNext;
 
 
 /*
- * blot setup stuff
+ * generic blot setup and manipulation
  */
 
 /* initialize a blot with the given coordinates and random display offsets */
@@ -231,6 +231,58 @@ static void randomlyReorderBlots (void)
     }
 }
 
+/* randomly rotate the blots around the origin */
+static void randomlyRotateBlots (void)
+{
+    int n;
+
+    /* random amounts to rotate about each axis */
+    FLOAT xRot = RAND_FLOAT_PM1 * M_PI;
+    FLOAT yRot = RAND_FLOAT_PM1 * M_PI;
+    FLOAT zRot = RAND_FLOAT_PM1 * M_PI;
+
+    /* rotation factors */
+    FLOAT sinX = sin (xRot);
+    FLOAT cosX = cos (xRot);
+    FLOAT sinY = sin (yRot);
+    FLOAT cosY = cos (yRot);
+    FLOAT sinZ = sin (zRot);
+    FLOAT cosZ = cos (zRot);
+
+    for (n = 0; n < blotCount; n++)
+    {
+	FLOAT x1 = blots[n].x;
+	FLOAT y1 = blots[n].y;
+	FLOAT z1 = blots[n].z;
+	FLOAT x2, y2, z2;
+
+	/* rotate on z axis */
+	x2 = x1 * cosZ - y1 * sinZ;
+	y2 = x1 * sinZ + y1 * cosZ;
+	z2 = z1;
+
+	/* rotate on x axis */
+	y1 = y2 * cosX - z2 * sinX;
+	z1 = y2 * sinX + z2 * cosX;
+	x1 = x2;
+
+	/* rotate on y axis */
+	z2 = z1 * cosY - x1 * sinY;
+	x2 = z1 * sinY + x1 * cosY;
+	y2 = y1;
+
+	blots[n].x = x2;
+	blots[n].y = y2;
+	blots[n].z = z2;
+    }
+}
+
+
+
+/*
+ * blot configurations
+ */
+
 /* set up the initial array of blots to be a at the edge of a sphere */
 static void setupBlotsSphere (void)
 {
@@ -265,8 +317,6 @@ static void setupBlotsSphere (void)
 	initBlot (&blots[n], x, y, z);
     }
 }
-
-
 
 /* set up the initial array of blots to be a simple cube */
 static void setupBlotsCube (void)
@@ -322,19 +372,25 @@ static void setupBlotsCube (void)
 
     scaleBlotsToRadius1 ();
     randomlyReorderBlots ();
+    randomlyRotateBlots ();
 }
-
-
 
 /* set up the initial array of blots to be a cylinder */
 static void setupBlotsCylinder (void)
 {
     int i, j, n;
-
-    /* derive blotsPerEdge from blotCount, but then do the reverse
-     * since roundoff may have changed blotCount */
-    int blotsPerEdge = requestedBlotCount / 32;
     FLOAT distBetween;
+
+    /* derive blotsPerEdge and blotsPerRing from blotCount, but then do the
+     * reverse since roundoff may have changed blotCount */
+    FLOAT reqRoot = sqrt ((FLOAT) requestedBlotCount);
+    int blotsPerRing = ceil (RAND_FLOAT_PM1 * reqRoot) / 2 + reqRoot;
+    int blotsPerEdge = requestedBlotCount / blotsPerRing;
+
+    if (blotsPerRing < 2)
+    {
+	blotsPerRing = 2;
+    }
 
     if (blotsPerEdge < 2)
     {
@@ -343,15 +399,15 @@ static void setupBlotsCylinder (void)
 
     distBetween = 2.0 / (blotsPerEdge - 1);
 
-    blotCount = blotsPerEdge * 32;
+    blotCount = blotsPerEdge * blotsPerRing;
     blots = calloc (sizeof (Blot), blotCount);
     n = 0;
 
     /* define the edges */
-    for (i = 0; i < 32; i++)
+    for (i = 0; i < blotsPerRing; i++)
     {
-	FLOAT x = sin (2 * M_PI / 32 * i);
-	FLOAT y = cos (2 * M_PI / 32 * i);
+	FLOAT x = sin (2 * M_PI / blotsPerRing * i);
+	FLOAT y = cos (2 * M_PI / blotsPerRing * i);
 	for (j = 0; j < blotsPerEdge; j++)
 	{
 	    initBlot (&blots[n], x, y, j * distBetween - 1);
@@ -361,9 +417,8 @@ static void setupBlotsCylinder (void)
 
     scaleBlotsToRadius1 ();
     randomlyReorderBlots ();
+    randomlyRotateBlots ();
 }
-
-
 
 /* set up the initial array of blots to be a squiggle */
 static void setupBlotsSquiggle (void)
@@ -426,8 +481,6 @@ static void setupBlotsSquiggle (void)
     randomlyReorderBlots ();
 }
 
-
-
 /* set up the initial array of blots to be near the corners of a
  * cube, distributed slightly */
 static void setupBlotsCubeCorners (void)
@@ -451,9 +504,8 @@ static void setupBlotsCubeCorners (void)
     }
 
     scaleBlotsToRadius1 ();
+    randomlyRotateBlots ();
 }
-
-
 
 /* set up the initial array of blots to be randomly distributed
  * on the surface of a tetrahedron */
@@ -511,9 +563,78 @@ static void setupBlotsTetrahedron (void)
 	    initBlot (&blots[n + c], x, y, z);
 	}
     }
+
+    randomlyRotateBlots ();
 }
 
+/* set up the initial array of blots to be an almost-evenly-distributed
+ * square sheet */
+static void setupBlotsSheet (void)
+{
+    int x, y;
 
+    int blotsPerDimension = floor (sqrt (requestedBlotCount));
+    FLOAT spaceBetween;
+
+    if (blotsPerDimension < 2)
+    {
+	blotsPerDimension = 2;
+    }
+
+    spaceBetween = 2.0 / (blotsPerDimension - 1);
+
+    blotCount = blotsPerDimension * blotsPerDimension;
+    blots = calloc (sizeof (Blot), blotCount);
+
+    for (x = 0; x < blotsPerDimension; x++)
+    {
+	for (y = 0; y < blotsPerDimension; y++)
+	{
+	    FLOAT x1 = x * spaceBetween - 1.0;
+	    FLOAT y1 = y * spaceBetween - 1.0;
+	    FLOAT z1 = 0.0;
+
+	    x1 += RAND_FLOAT_PM1 * spaceBetween / 3;
+	    y1 += RAND_FLOAT_PM1 * spaceBetween / 3;
+	    z1 += RAND_FLOAT_PM1 * spaceBetween / 2;
+
+	    initBlot (&blots[x + y * blotsPerDimension], x1, y1, z1);
+	}
+    }
+
+    scaleBlotsToRadius1 ();
+    randomlyReorderBlots ();
+    randomlyRotateBlots ();
+}
+
+/* set up the initial array of blots to be a swirlycone */
+static void setupBlotsSwirlyCone (void)
+{
+    FLOAT radSpace = 1.0 / (requestedBlotCount - 1);
+    FLOAT zSpace = radSpace * 2;
+    FLOAT rotAmt = RAND_FLOAT_PM1 * M_PI / 10;
+
+    int n;
+    FLOAT rot = 0.0;
+
+    blotCount = requestedBlotCount;
+    blots = calloc (sizeof (Blot), blotCount);
+
+    for (n = 0; n < blotCount; n++)
+    {
+	FLOAT radius = n * radSpace;
+	FLOAT x = cos (rot) * radius;
+	FLOAT y = sin (rot) * radius;
+	FLOAT z = n * zSpace - 1.0;
+
+	rot += rotAmt;
+	initBlot (&blots[n], x, y, z);
+    }
+
+    scaleBlotsToRadius1 ();
+    randomlyReorderBlots ();
+    randomlyRotateBlots ();
+}
 
 /* forward declaration for recursive use immediately below */
 static void setupBlots (void);
@@ -598,6 +719,10 @@ static void setupBlotsDuo (void)
 
 
 
+/*
+ * main blot setup
+ */
+
 /* free the blots, in preparation for a new shape */
 static void freeBlots (void)
 {
@@ -620,12 +745,10 @@ static void freeBlots (void)
     }
 }
 
-
-
 /* set up the initial arrays of blots */
 static void setupBlots (void)
 {
-    int which = RAND_FLOAT_01 * 8;
+    int which = RAND_FLOAT_01 * 11;
 
     freeBlots ();
 
@@ -650,13 +773,18 @@ static void setupBlots (void)
 	    setupBlotsTetrahedron ();
 	    break;
 	case 6:
+	    setupBlotsSheet ();
+	    break;
 	case 7:
+	    setupBlotsSwirlyCone ();
+	    break;
+	case 8:
+	case 9:
+	case 10:
 	    setupBlotsDuo ();
 	    break;
     }
 }
-
-
 
 /* set up the segments arrays */
 static void setupSegs (void)

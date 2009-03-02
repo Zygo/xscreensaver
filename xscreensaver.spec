@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		3.34
+%define	version		4.00
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -75,9 +75,7 @@ RPMOPTS=""
 
 CFLAGS="$RPM_OPT_FLAGS" \
  ./configure --prefix=%{x11_prefix} \
-             --enable-subdir=../lib/xscreensaver \
-             --with-zippy=/usr/games/fortune \
-             --without-setuid-hacks \
+             --with-setuid-hacks \
              $RPMOPTS
 
 make
@@ -126,6 +124,7 @@ list_files() {
   cd ../driver; list_files install-program install-scripts ) \
    > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
 ( cd hacks/glx ; list_files install ) \
+   | grep -v man1/xscreensaver-gl-helper \
    > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-gl
 
 
@@ -144,90 +143,6 @@ install -m 4755 driver/xscreensaver $RPM_BUILD_ROOT%{x11_prefix}/bin
 # Make sure all files are readable by all, and writable only by owner.
 #
 chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
-
-
-# This is a tricky part...
-#
-# xscreensaver installs several files that are also installed by the
-# "control-center" RPM.  The versions from xscreensaver are better,
-# and so should override control-center.  But, the way RPM works,
-# if the xscreensaver RPM contained those files, the end user would
-# have to "--force" to make the xscreensaver RPM install.  That's
-# not something people are used to doing, so that's Bad.
-#
-# So instead, we rename the files so that they don't conflict with
-# the control center.  Then we have a "%post" script that creates
-# symbolic links to our files.
-
-CCDIR=$RPM_BUILD_ROOT%{gnome_ccdir}
-PADIR=$RPM_BUILD_ROOT%{gnome_paneldir}
-CADIR=$RPM_BUILD_ROOT%{gnome_prefix}/bin
-DESKF=screensaver-properties.desktop
-CAPLT=screensaver-properties-capplet
-
-if [ -f $CCDIR/$DESKF ]; then
-  mv $CCDIR/$DESKF $CCDIR/x$DESKF
-  mv $PADIR/$DESKF $PADIR/x$DESKF
-  mv $CADIR/$CAPLT $CADIR/x$CAPLT
-fi
-
-%post
-# This part runs on the end user's system, when the RPM is installed.
-# (See comment above, at end of "%install" section.)
-
-verbose=0
-
-overwrite_links() {
-  dir="$1"
-  oname="$2"
-  nname="$3"
-
-  # only do this if the file we're making a link *to* exists
-  # (i.e., was present in this rpm.)
-  #
-  if [ -f "$dir/$nname" ]; then
-
-    # backup or delete the old version, if any.
-    #
-    existed=0
-    if [ -f "$dir/$oname" ]; then
-      existed=1
-      if [ -f "$dir/$oname.rpmsave" ]; then
-        rm -f "$dir/$oname"
-        if [ $verbose -gt 1 ]; then
-          echo "$dir/$oname.rpmsave already exists"  >&2
-        fi
-      else
-        mv "$dir/$oname" "$dir/$oname.rpmsave"
-        if [ $verbose -gt 1 ]; then
-          echo "saved $dir/$oname as $oname.rpmsave" >&2
-        fi
-      fi
-    fi
-
-    # install a relative symlink to the new name.
-    #
-    ln -s "$nname" "$dir/$oname"
-    if [ $verbose -ge 1 ]; then
-      if [ $existed = 1 ] ; then
-        echo "replaced $dir/$oname" >&2
-      else
-        echo "created $dir/$oname"  >&2
-      fi
-    fi
-  fi
-}
-
-CCDIR=%{gnome_ccdir}
-PADIR=%{gnome_paneldir}
-CADIR=%{gnome_prefix}/bin
-DESKF=screensaver-properties.desktop
-CAPLT=screensaver-properties-capplet
-
-overwrite_links $CCDIR $DESKF x$DESKF
-overwrite_links $PADIR $DESKF x$DESKF
-overwrite_links $CADIR $CAPLT x$CAPLT
-
 
 %clean
 if [ -d $RPM_BUILD_ROOT    ]; then rm -r $RPM_BUILD_ROOT    ; fi

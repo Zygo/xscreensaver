@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1992, 1996, 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992, 1996, 1998, 2001
+ *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -125,6 +126,8 @@ XrmOptionDescRec options [] = {
   { "-offset",		".offset",	XrmoptionSepArg, 0 },
   { "-xsymmetry",	".xsymmetry",	XrmoptionNoArg, "true" },
   { "-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "true" },
+  { "-no-xsymmetry",	".xsymmetry",	XrmoptionNoArg, "false" },
+  { "-no-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "false" },
   { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }

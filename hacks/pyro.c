@@ -105,6 +105,13 @@ launch (int xlim, int ylim, int g,
   p->fuse = ((((random () % 500) + 500) * abs (p->dy / g)) / 1000);
   p->primary = True;
 
+  /* cope with small windows -- those constants assume big windows. */
+  {
+    int div = 1000000 / ylim;
+    if (div > 1)
+      p->fuse /= div;
+  }
+
   if (! mono_p)
     {
       hsv_to_rgb (random () % 360, 1.0, 1.0,

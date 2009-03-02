@@ -1,6 +1,6 @@
 /*
  * spotlight - an xscreensaver module
- * Copyright (c) 1999 Rick Schultz <rick@skapunx.net>
+ * Copyright (c) 1999, 2001 Rick Schultz <rick@skapunx.net>
  *
  * loosely based on the BackSpace module "StefView" by Darcy Brockbank
  */
@@ -92,6 +92,10 @@ init_hack (Display *dpy, Window window)
   if (delay < 1) delay = 1;
   radius = get_integer_resource ("radius", "Integer");
   if (radius < 0) radius = 125;
+
+  /* Don't let the spotlight be bigger than 1/4 of the window */
+  if (radius > xgwa.width  / 4) radius = xgwa.width  / 4;
+  if (radius > xgwa.height / 4) radius = xgwa.height / 4;
 
   /* do the dance */
   gcv.function = GXcopy;

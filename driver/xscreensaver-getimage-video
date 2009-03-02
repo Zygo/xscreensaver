@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -52,12 +52,12 @@ my $sgi_bogosity = "$tmpfile-00000.rgb";
 
 my @programs = (
 
-  "bttvgrab -d q -Q -l 1 -o jpg -f $tmpfile",	# BTTV
+  "bttvgrab -d q -Q -l 1 -o ppm -f $tmpfile",	# BTTV
   "qcam > $tmpfile",				# Connectix Qcam
   "streamer -s 768x576 -o $tmpfile",		# XawTV
   "atitv snap $tmpfile",			# ATI video capture card
 
-  "vidtomem -f $tmpfile 2>- && mv $sgi_bogosity $tmpfile",  # Silicon Graphics
+  "vidtomem -f $tmpfile 2>&- && mv $sgi_bogosity $tmpfile",  # Silicon Graphics
 );
 
 

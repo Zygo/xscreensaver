@@ -659,6 +659,7 @@ xf86_gamma_fade (Display *dpy,
           if (!XF86VidModeGetGamma(dpy, screen, &info[screen].vmg))
             goto FAIL;
         }
+# ifdef HAVE_XF86VMODE_GAMMA_RAMP
       else if (ext_ok == 2)  /* have ramps */
         {
           if (!XF86VidModeGetGammaRampSize(dpy, screen, &info[screen].size))
@@ -682,6 +683,7 @@ xf86_gamma_fade (Display *dpy,
                                        info[screen].b))
             goto FAIL;
         }
+# endif /* HAVE_XF86VMODE_GAMMA_RAMP */
       else
         abort();
     }

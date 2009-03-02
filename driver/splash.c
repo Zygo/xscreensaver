@@ -100,11 +100,15 @@ static void destroy_splash_window (saver_info *si);
 static void unsplash_timer (XtPointer closure, XtIntervalId *id);
 
 static void do_demo (saver_info *si);
+#ifdef PREFS_BUTTON
 static void do_prefs (saver_info *si);
+#endif /* PREFS_BUTTON */
 static void do_help (saver_info *si);
 
 
 struct splash_dialog_data {
+
+  saver_screen_info *prompt_screen;
   XtIntervalId timer;
 
   Dimension width;
@@ -114,7 +118,9 @@ struct splash_dialog_data {
   char *body_label;
   char *body2_label;
   char *demo_label;
+#ifdef PREFS_BUTTON
   char *prefs_label;
+#endif /* PREFS_BUTTON */
   char *help_label;
 
   XFontStruct *heading_font;
@@ -135,7 +141,9 @@ struct splash_dialog_data {
 
   Dimension button_width, button_height;
   Dimension demo_button_x, demo_button_y;
+#ifdef PREFS_BUTTON
   Dimension prefs_button_x, prefs_button_y;
+#endif /* PREFS_BUTTON */
   Dimension help_button_x, help_button_y;
 
   Pixmap logo_pixmap;
@@ -153,8 +161,8 @@ make_splash_dialog (saver_info *si)
   XSetWindowAttributes attrs;
   unsigned long attrmask = 0;
   splash_dialog_data *sp;
-  Screen *screen = si->default_screen->screen;
-  Colormap cmap = DefaultColormapOfScreen (screen);
+  saver_screen_info *ssi;
+  Colormap cmap;
   char *f;
 
   if (si->sp_data)
@@ -163,7 +171,11 @@ make_splash_dialog (saver_info *si)
       si->prefs.splash_duration <= 0)
     return;
 
+  ssi = &si->screens[mouse_screen (si)];
+  cmap = DefaultColormapOfScreen (ssi->screen);
+
   sp = (splash_dialog_data *) calloc (1, sizeof(*sp));
+  sp->prompt_screen = ssi;
 
   sp->heading_label = get_string_resource ("splash.heading.label",
 					   "Dialog.Label.Label");
@@ -173,8 +185,10 @@ make_splash_dialog (saver_info *si)
 					 "Dialog.Label.Label");
   sp->demo_label = get_string_resource ("splash.demo.label",
 					"Dialog.Button.Label");
+#ifdef PREFS_BUTTON
   sp->prefs_label = get_string_resource ("splash.prefs.label",
 					"Dialog.Button.Label");
+#endif /* PREFS_BUTTON */
   sp->help_label = get_string_resource ("splash.help.label",
 					"Dialog.Button.Label");
 
@@ -185,7 +199,9 @@ make_splash_dialog (saver_info *si)
   if (!sp->body2_label)
     sp->body2_label = strdup("ERROR: REESOURCES NOT INSTALLED CORRECTLY");
   if (!sp->demo_label) sp->demo_label = strdup("ERROR");
+#ifdef PREFS_BUTTON
   if (!sp->prefs_label) sp->prefs_label = strdup("ERROR");
+#endif /* PREFS_BUTTON */
   if (!sp->help_label) sp->help_label = strdup("ERROR");
 
   /* Put the version number in the label. */
@@ -221,8 +237,8 @@ make_splash_dialog (saver_info *si)
   if (sp->foreground == sp->background)
     {
       /* Make sure the error messages show up. */
-      sp->foreground = BlackPixelOfScreen (screen);
-      sp->background = WhitePixelOfScreen (screen);
+      sp->foreground = BlackPixelOfScreen (ssi->screen);
+      sp->background = WhitePixelOfScreen (ssi->screen);
     }
 
   sp->button_foreground = get_pixel_resource ("splash.Button.foreground",
@@ -291,12 +307,17 @@ make_splash_dialog (saver_info *si)
       w2 = overall.width;
       h2 = ascent + descent;
 
+#ifdef PREFS_BUTTON
       /* Measure the Prefs button. */
       XTextExtents (sp->button_font,
 		    sp->prefs_label, strlen(sp->prefs_label),
 		    &direction, &ascent, &descent, &overall);
       w3 = overall.width;
       h3 = ascent + descent;
+#else  /* !PREFS_BUTTON */
+      w3 = 0;
+      h3 = 0;
+#endif /* !PREFS_BUTTON */
 
       /* Measure the Help button. */
       XTextExtents (sp->button_font,
@@ -308,13 +329,20 @@ make_splash_dialog (saver_info *si)
       w2 = MAX(w2, w3); w2 = MAX(w2, w4);
       h2 = MAX(h2, h3); h2 = MAX(h2, h4);
 
+      /* Add some horizontal padding inside the buttons. */
+      w2 += ascent;
+
       w2 += ((ascent + descent) / 2) + (sp->shadow_width * 2);
       h2 += ((ascent + descent) / 2) + (sp->shadow_width * 2);
 
       sp->button_width = w2;
       sp->button_height = h2;
 
+#ifdef PREFS_BUTTON
       w2 *= 3;
+#else  /* !PREFS_BUTTON */
+      w2 *= 2;
+#endif /* !PREFS_BUTTON */
 
       w2 += ((ascent + descent) * 2);  /* for space between buttons */
 
@@ -341,7 +369,23 @@ make_splash_dialog (saver_info *si)
 
   {
     int sx, sy, w, h;
-    get_screen_viewport (si->default_screen, &sx, &sy, &w, &h, False);
+    int mouse_x = 0, mouse_y = 0;
+
+    {
+      Window pointer_root, pointer_child;
+      int root_x, root_y, win_x, win_y;
+      unsigned int mask;
+      if (XQueryPointer (si->dpy,
+                         RootWindowOfScreen (ssi->screen),
+                         &pointer_root, &pointer_child,
+                         &root_x, &root_y, &win_x, &win_y, &mask))
+        {
+          mouse_x = root_x;
+          mouse_y = root_y;
+        }
+    }
+
+    get_screen_viewport (ssi, &sx, &sy, &w, &h, mouse_x, mouse_y, False);
     if (si->prefs.debug_p) w /= 2;
     x = sx + (((w + sp->width)  / 2) - sp->width);
     y = sy + (((h + sp->height) / 2) - sp->height);
@@ -353,10 +397,10 @@ make_splash_dialog (saver_info *si)
 
   si->splash_dialog =
     XCreateWindow (si->dpy,
-		   RootWindowOfScreen(screen),
+		   RootWindowOfScreen(ssi->screen),
 		   x, y, sp->width, sp->height, bw,
-		   DefaultDepthOfScreen (screen), InputOutput,
-		   DefaultVisualOfScreen(screen),
+		   DefaultDepthOfScreen (ssi->screen), InputOutput,
+		   DefaultVisualOfScreen(ssi->screen),
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->splash_dialog, sp->background);
 
@@ -387,6 +431,12 @@ draw_splash_window (saver_info *si)
   int hspacing, vspacing, height;
   int x1, x2, x3, y1, y2;
   int sw;
+
+#ifdef PREFS_BUTTON
+  int nbuttons = 3;
+#else  /* !PREFS_BUTTON */
+  int nbuttons = 2;
+#endif /* !PREFS_BUTTON */
 
   height = (sp->heading_font->ascent + sp->heading_font->descent +
 	    sp->body_font->ascent + sp->body_font->descent +
@@ -448,7 +498,7 @@ draw_splash_window (saver_info *si)
 	      / 2)
 	+ sp->button_font->ascent);
   hspacing = ((sp->width - x1 - (sp->shadow_width * 2) -
-	       sp->internal_border - (sp->button_width * 3))
+	       sp->internal_border - (sp->button_width * nbuttons))
 	      / 2);
 
   x2 = x1 + ((sp->button_width - string_width(sp->button_font, sp->demo_label))
@@ -460,6 +510,7 @@ draw_splash_window (saver_info *si)
   sp->demo_button_x = x1;
   sp->demo_button_y = y1;
   
+#ifdef PREFS_BUTTON
   x1 += hspacing + sp->button_width;
   x2 = x1 + ((sp->button_width - string_width(sp->button_font,sp->prefs_label))
 	     / 2);
@@ -469,8 +520,15 @@ draw_splash_window (saver_info *si)
 	       sp->prefs_label, strlen(sp->prefs_label));
   sp->prefs_button_x = x1;
   sp->prefs_button_y = y1;
+#endif /* PREFS_BUTTON */
 
+#ifdef PREFS_BUTTON
   x1 += hspacing + sp->button_width;
+#else  /* !PREFS_BUTTON */
+  x1 = (sp->width - sp->button_width -
+        sp->internal_border - (sp->shadow_width * 2));
+#endif /* !PREFS_BUTTON */
+
   x2 = x1 + ((sp->button_width - string_width(sp->button_font,sp->help_label))
 	     / 2);
   XFillRectangle (si->dpy, si->splash_dialog, gc2, x1, y1,
@@ -483,10 +541,10 @@ draw_splash_window (saver_info *si)
 
   /* The logo
    */
-  x1 = sp->shadow_width * 3;
-  y1 = sp->shadow_width * 3;
-  x2 = sp->logo_width - (sp->shadow_width * 6);
-  y2 = sp->logo_height - (sp->shadow_width * 6);
+  x1 = sp->shadow_width * 6;
+  y1 = sp->shadow_width * 6;
+  x2 = sp->logo_width - (sp->shadow_width * 12);
+  y2 = sp->logo_height - (sp->shadow_width * 12);
 
   if (sp->logo_pixmap)
     {
@@ -510,16 +568,18 @@ draw_splash_window (saver_info *si)
     }
 
   /* Solid border inside the logo box. */
+#if 0
   XSetForeground (si->dpy, gc1, sp->foreground);
   XDrawRectangle (si->dpy, si->splash_dialog, gc1, x1, y1, x2-1, y2-1);
+#endif
 
   /* The shadow around the logo
    */
   draw_shaded_rectangle (si->dpy, si->splash_dialog,
-			 sp->shadow_width * 2,
-			 sp->shadow_width * 2,
-			 sp->logo_width - (sp->shadow_width * 4),
-			 sp->logo_height - (sp->shadow_width * 4),
+			 sp->shadow_width * 4,
+			 sp->shadow_width * 4,
+			 sp->logo_width - (sp->shadow_width * 8),
+			 sp->logo_height - (sp->shadow_width * 8),
 			 sp->shadow_width,
 			 sp->shadow_bottom, sp->shadow_top);
 
@@ -551,11 +611,13 @@ update_splash_window (saver_info *si)
 			 sp->button_width, sp->button_height, sp->shadow_width,
 			 (pressed == 1 ? sp->shadow_bottom : sp->shadow_top),
 			 (pressed == 1 ? sp->shadow_top : sp->shadow_bottom));
+#ifdef PREFS_BUTTON
   draw_shaded_rectangle (si->dpy, si->splash_dialog,
 			 sp->prefs_button_x, sp->prefs_button_y,
 			 sp->button_width, sp->button_height, sp->shadow_width,
 			 (pressed == 2 ? sp->shadow_bottom : sp->shadow_top),
 			 (pressed == 2 ? sp->shadow_top : sp->shadow_bottom));
+#endif /* PREFS_BUTTON */
   draw_shaded_rectangle (si->dpy, si->splash_dialog,
 			 sp->help_button_x, sp->help_button_y,
 			 sp->button_width, sp->button_height, sp->shadow_width,
@@ -567,10 +629,10 @@ static void
 destroy_splash_window (saver_info *si)
 {
   splash_dialog_data *sp = si->sp_data;
-  Screen *screen = si->default_screen->screen;
-  Colormap cmap = DefaultColormapOfScreen (screen);
-  Pixel black = BlackPixelOfScreen (screen);
-  Pixel white = WhitePixelOfScreen (screen);
+  saver_screen_info *ssi = sp->prompt_screen;
+  Colormap cmap = DefaultColormapOfScreen (ssi->screen);
+  Pixel black = BlackPixelOfScreen (ssi->screen);
+  Pixel white = WhitePixelOfScreen (ssi->screen);
 
   if (sp->timer)
     XtRemoveTimeOut (sp->timer);
@@ -584,7 +646,9 @@ destroy_splash_window (saver_info *si)
   if (sp->heading_label) free (sp->heading_label);
   if (sp->body_label)    free (sp->body_label);
   if (sp->demo_label)    free (sp->demo_label);
+#ifdef PREFS_BUTTON
   if (sp->prefs_label)   free (sp->prefs_label);
+#endif /* PREFS_BUTTON */
   if (sp->help_label)    free (sp->help_label);
 
   if (sp->heading_font) XFreeFont (si->dpy, sp->heading_font);
@@ -638,11 +702,13 @@ handle_splash_event (saver_info *si, XEvent *event)
 	  event->xbutton.y < sp->demo_button_y + sp->button_height)
 	which = 1;
 
+#ifdef PREFS_BUTTON
       else if (event->xbutton.x >= sp->prefs_button_x &&
 	       event->xbutton.x < sp->prefs_button_x + sp->button_width &&
 	       event->xbutton.y >= sp->prefs_button_y &&
 	       event->xbutton.y < sp->prefs_button_y + sp->button_height)
 	which = 2;
+#endif /* PREFS_BUTTON */
 
       else if (event->xbutton.x >= sp->help_button_x &&
 	       event->xbutton.x < sp->help_button_x + sp->button_width &&
@@ -665,11 +731,19 @@ handle_splash_event (saver_info *si, XEvent *event)
 	      switch (which)
 		{
 		case 1: do_demo (si); break;
+#ifdef PREFS_BUTTON
 		case 2: do_prefs (si); break;
+#endif /* PREFS_BUTTON */
 		case 3: do_help (si); break;
 		default: abort();
 		}
 	    }
+          else if (which == 0 && sp->pressed == 0)
+            {
+              /* click and release on the window but not in a button:
+                 treat that as "dismiss the splash dialog." */
+	      destroy_splash_window (si);
+            }
 	  sp->pressed = 0;
 	  update_splash_window (si);
 	}
@@ -751,12 +825,14 @@ do_demo (saver_info *si)
   fork_and_exec (si, p->demo_command, "demo-mode");
 }
 
+#ifdef PREFS_BUTTON
 static void
 do_prefs (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
   fork_and_exec (si, p->prefs_command, "preferences");
 }
+#endif /* PREFS_BUTTON */
 
 static void
 do_help (saver_info *si)

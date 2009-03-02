@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<screensaver name="cosmos" _label="Cosmos">
+
+  <fullcommand arg="-root"/>
+
+  <_description>
+Draws fireworks and zooming, fading flares.  By Tom Campbell. 
+You can find it at &lt;http://www.mindspring.com/~campbell/cosmos/&gt;
+  </_description>
+</screensaver>

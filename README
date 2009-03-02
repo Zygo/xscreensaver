@@ -24,9 +24,6 @@ The most important hint is probably this:
 
 To build on VMS, see README.VMS.
 
-If you are upgrading from version 2.* to version 3.*, be sure to delete
-your ~/.xscreensaver file first, if you have one.
-
 If you think you've found a bug, please let me know!  No bug report is too
 small.  But first, please read the enclosed `README.debugging' file to find
 out what kind of information would be most helpful to include in your bug
@@ -39,9 +36,9 @@ You can try out xscreensaver like so:
 	xscreensaver &
 	xscreensaver-demo
 
-Note: unlike `xlock', xscreensaver has a client-server model: the
-`xscreensaver' process is a daemon that runs in the background; it is
-controlled by the foreground `xscreensaver-demo' program.
+The XScreenSaver suite of applications uses a client-server model:
+The `xscreensaver' program is a daemon that runs in the background;
+it is controlled by the foreground `xscreensaver-demo' program.
 
 xscreensaver has an extensive manual -- please read it!
 
@@ -71,6 +68,33 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.34:   * Redesigned `xscreensaver-demo' GUI.
+                      * Added three new modes of operation: `One Screen Saver',
+                        `Blank Screen', and `Don't Blank' (in addition to the
+                        historical `Random Screen Saver').
+                      * Configure now defaults to installing the hacks in
+                        <prefix>/lib/xscreensaver/ instead of <prefix>/bin/.
+                        (Most distros already did it this way.)
+                      * New GL hacks, `menger', `engine', `flipscreen3d'.
+                      * Made `sierpinski3d' be more colorful.
+                      * New versions of `xmatrix' and `nerverot'.
+                      * Fixed a bug in `starwars' that made the font be drawn
+                        with thin lines in -root mode.
+                      * Fixed a bad colormap bug in `crystal' that could make
+                        *subsequent* hacks malfunction!
+                      * Made `gflux' able to grab screen images (`-mode grab').
+                      * Updated `webcollage' for recent search engine changes.
+                      * Removed most command-line options to `xscreensaver':
+                        just edit the ~/.xscreensaver file instead.
+                      * Improved behavior on multi-screen and Xinerama systems:
+                        the mouse now stays on the screen where the user left
+                        it, and the password and splash dialogs always appear
+                        on the screen that has the mouse.
+                      * Made the splash dialog use more Gtk-like colors;
+                        made it have only two buttons, "Settings" and "Help".
+                      * Made `sonar' understand `.ssh/known_hosts2' format
+                        files, and be better about stripping out illegal 
+                        addresses.
 Changes since 3.33:   * Turned `memoryLimit' off by default, sigh.  Apparently
                         some versions of the GL libraries (appear to) allocate
                         hundreds of megs for every GL program, so `memoryLimit'
@@ -80,7 +104,7 @@ Changes since 3.33:   * Turned `memoryLimit' off by default, sigh.  Apparently
                       * New GL hack, `circuit'.
                       * Added `fuzz' mode to `decayscreen'.
                       * New version of `whirlygig'.
-                      * Added links to `glplanet' and `sphereEversion'.
+                      * Added links to `xplanet' and `sphereEversion'.
                       * Fixed rare race condition that could make `sonar' hang.
                       * Fixed potential crash in `speedmine'.
                       * Made `xscreensaver-demo' not crash when imageDirectory
@@ -890,3 +914,12 @@ Changes since 1.13:   * Added `orbit' option to `attraction' hack.
 Changes since 1.8:    * Added demo mode, and locking.
 		      * Added `maze' hack.
 		      * Added `norotate' option to `rocks' hack.
+Changes since 1.4:    * Works when run from XDM before anyone logs in.
+                      * Sped up `imsmap'.
+                      * Can use `xv' as a slideshow without using up colormap
+                        entries while the screen is not blanked.
+                      * Fixed a BadDrawable error in non-XIdle mode.
+                      * Added `blitspin' and `imsmap'.
+Changes since 1.0:    * Current list of included hacks is now: qix, helix,
+                        rorschach, attraction, greynetic, rocks, pyro,
+                        hopalong, and noseguy.

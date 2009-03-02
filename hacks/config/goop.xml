@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="goop" _label="Goop">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="12000"
+          convert="invert"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Blob Count" low="0" high="100" default="12"/>
+
+  <select id="mode">
+    <option id="transparent" _label="Transparent Blobs"/>
+    <option id="opaque"      _label="Opaque Blobs" arg-set="-non-transparent"/>
+    <option id="xor"         _label="XOR Blobs" arg-set="-xor"/>
+  </select>
+
+  <select id="color-mode">
+    <option id="additive" _label="Additive Colors (reflected light)"/>
+    <option id="subtractive" _label="Subtractive Colors (transmitted light)"
+            arg-set="-subtractive"/>
+  </select>
+
+  <number id="torque" type="slider" arg="-torque %"
+          _label="Rotational Speed" _low-label="Slow" _high-label="Fast"
+          low="0.0002" high="0.0500" default="0.0075"/>
+
+  <number id="elasticity" type="slider" arg="-elasticity %"
+          _label="Elasticity" _low-label="Low" _high-label="High"
+          low="0.1" high="5.0" default="1.8"/>
+
+  <number id="maxv" type="slider" arg="-max-velocity %"
+          _label="Speed Limit" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="3.0" default="1.2"/>
+
+  <_description>
+This draws set of animating, transparent, amoeba-like blobs.  The
+blobs change shape as they wander around the screen, and they are
+translucent, so you can see the lower blobs through the higher ones,
+and when one passes over another, their colors merge.  Written by
+Jamie Zawinski.  I got the idea for this from a cool mouse pad I
+have, which achieves the same kind of effect in real life by having
+several layers plastic with colored oil between them.  Written by
+Jamie Zawinski.
+  </_description>
+</screensaver>

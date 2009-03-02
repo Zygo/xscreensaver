@@ -186,7 +186,7 @@ XrmOptionDescRec options[] = {
   { "-pixwidth", ".pixwidth", XrmoptionSepArg, 0 },
   { "-pixheight", ".pixheight", XrmoptionSepArg, 0 },
   { "-pixspacex", ".pixspacex", XrmoptionSepArg, 0 },
-  { "-pixspacey", ".pixspacex", XrmoptionSepArg, 0 },
+  { "-pixspacey", ".pixspacey", XrmoptionSepArg, 0 },
   { "-lensoffsetx", ".lensoffsetx", XrmoptionSepArg, 0 },
   { "-lensoffsety", ".lensoffsety", XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }

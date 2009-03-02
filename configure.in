@@ -861,42 +861,90 @@ fi
 
 ###############################################################################
 #
-#       Handle the --enable-subdir option
+#       Handle the --with-hackdir option
 #
 ###############################################################################
 
-AC_ARG_ENABLE(subdir,[
+have_hackdir=yes
+with_hackdir_req=unspecified
+AC_ARG_WITH(hackdir,[
 Installation options:
 
-  --enable-subdir=DIR     Put the demo programs in a subdirectory of \`bindir',
-                          instead of putting them in bindir itself.  You can
-                          specify the name of the subdirectory.  For example,
-                          \`--exec-prefix=/usr/local --enable-subdir=demos'
-                          would put xscreensaver in /usr/local/bin/, and would
-                          put the demos in /usr/local/bin/demos/.  (If DIR
-                          begins with /, then bindir will not be prepended.)
-
-  --disable-subdir        Just put the demos in \`bindir' (this is the default.)
+  --with-hackdir=DIR      Where to install the hundreds of demo executables.
+                          Default: \`PREFIX/lib/xscreensaver/'
 ],
-  [enable_subdir="$enableval"],[enable_subdir=no])
-if test x"$enable_subdir" = xno; then
+  [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
+
+if test x"$with_hackdir" = xyes; then
+  HACKDIR='${exec_prefix}/lib/xscreensaver'
+elif test x"$with_hackdir" = xno; then
   HACKDIR='${bindir}'
-elif test x"$enable_subdir" = xyes -o x"$enable_subdir" = x ; then
-  echo "error: must be a subdirectory name: --enable-subdir=$enable_subdir"
-  exit 1
 else
   # there must be a better way than this...
-  if test -z "`echo $enable_subdir | sed 's@^/.*@@'`" ; then
+  if test -z "`echo $with_hackdir | sed 's@^/.*@@'`" ; then
     # absolute path
-    HACKDIR=$enable_subdir
+    HACKDIR=$with_hackdir
   else
     # relative path
-    HACKDIR='${bindir}/'$enable_subdir
+    HACKDIR="\${exec_prefix}$with_hackdir"
   fi
 fi
 
 # canonicalize slashes.
 HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
+
+# This option used to be called --enable-subdir; make sure that is no longer
+# used, since configure brain-damagedly ignores unknown --enable options.
+
+obsolete_enable=
+AC_ARG_ENABLE(subdir,,[obsolete_enable=yes])
+if test -n "$obsolete_enable"; then
+  echo "error: the --enable-subdir option has been replaced with"
+  echo "       the new --with-hackdir option; see \`configure --help'"
+  echo "       for more information."
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Handle the --with-configdir option
+#
+###############################################################################
+
+have_configdir=yes
+with_configdir_req=unspecified
+AC_ARG_WITH(configdir,
+[  --with-configdir=DIR    Where to install the data files that describe each
+                          of the display modes to the GUI.
+                          Default: \`GNOMEPREFIX/control-center/screensavers/'
+                          or \`PREFIX/lib/xscreensaver/config/', depending on
+                          whether GNOME is available.
+],
+  [with_configdir="$withval"; with_configdir_req="$withval"],
+  [with_configdir=yes])
+
+if test x"$with_configdir" = xyes; then
+  # filled in later...
+  HACK_CONF_DIR=''
+elif test x"$with_configdir" = xno; then
+  echo "error: must be yes, or a pathname: --with-configdir=$with_configdir"
+  exit 1
+else
+  # there must be a better way than this...
+  if test -z "`echo $with_configdir | sed 's@^/.*@@'`" ; then
+    # absolute path
+    CONFIGDIR=$with_configdir
+  else
+    # relative path
+    CONFIGDIR="\${exec_prefix}$with_configdir"
+  fi
+fi
+
+# canonicalize slashes.
+CONFIGDIR=`echo "${CONFIGDIR}" | sed 's@/$@@;s@//*@/@g'`
+
+
 
 
 ###############################################################################
@@ -1094,6 +1142,52 @@ if test "$with_dpms" = yes; then
 
 elif test "$with_dpms" != no; then
   echo "error: must be yes or no: --with-dpms-ext=$with_dpms"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XINERAMA server extension.
+#
+###############################################################################
+
+have_xinerama=no
+with_xinerama_req=unspecified
+AC_ARG_WITH(xinerama-ext,
+[  --with-xinerama-ext     Include support for the XINERAMA extension.],
+  [with_xinerama="$withval"; with_xinerama_req="$withval"],[with_xinerama=yes])
+
+HANDLE_X_PATH_ARG(with_xinerama, --with-xinerama-ext, XINERAMA)
+
+if test "$with_xinerama" = yes; then
+
+  # first check for Xinerama.h
+  AC_CHECK_X_HEADER(X11/extensions/Xinerama.h, [have_xinerama=yes])
+
+  # if that succeeded, then check for the XINERAMA code in the libraries
+  if test "$have_xinerama" = yes; then
+
+    # first look in -lXext
+    have_xinerama=no
+    AC_CHECK_X_LIB(Xext, XineramaQueryExtension, [have_xinerama=yes], [true],
+                  -lXext -lX11)
+
+    # if that failed, look in -lXinerama (this is where it is in XFree86 4.1.)
+    if test "$have_xinerama" = no; then
+      AC_CHECK_X_LIB(Xinerama, XineramaQueryExtension,
+                     [have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"],
+                     [true], -lXext -lX11)
+    fi
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xinerama" = yes; then
+    AC_DEFINE(HAVE_XINERAMA)
+  fi
+
+elif test "$with_xinerama" != no; then
+  echo "error: must be yes or no: --with-xinerama-ext=$with_xinerama"
   exit 1
 fi
 
@@ -1810,7 +1904,7 @@ if test "$with_gtk" = yes; then
   # Check for Gnome Capplet support.
   #
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-    gnome_config_libs="gtk capplet gnomeui"
+    gnome_config_libs="gtk capplet gnomeui xml"
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
       [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
@@ -1877,6 +1971,57 @@ if test "$have_gnome" = yes; then
   AC_CHECK_PROG(have_gnome_help, gnome-help-browser, yes, no)
 else
   have_gnome_help=no
+fi
+
+
+###############################################################################
+#
+#       Check for -lxml (if we have Gtk)
+#
+###############################################################################
+
+have_xml=no
+with_xml_req=unspecified
+AC_ARG_WITH(xml,
+[  --with-xml              The XML toolkit is needed for some parts of
+                          the Gtk interface.],
+[with_xml="$withval"; with_xml_req="$withval"],[with_xml=yes])
+
+HANDLE_X_PATH_ARG(with_xml, --with-xml, XML)
+
+if test "$with_xml" != yes -a "$with_xml" != no ; then
+  echo "error: must be yes or no: --with-xml=$with_xml"
+  exit 1
+fi
+
+if test "$have_gtk" != yes; then
+  # don't bother if no GTK
+  with_xml=no
+fi
+
+if test "$with_xml" = yes; then
+  have_xml=no
+
+  # the XML stuff is likely to be in GTK paths.
+  ac_save_X_CFLAGS="$X_CFLAGS"
+  ac_save_X_LIBS="$X_LIBS"
+  X_CFLAGS="$X_CFLAGS $ac_gtk_config_cflags"
+  X_LIBS="$X_LIBS $ac_gtk_config_libs"
+
+  AC_CHECK_X_HEADER(xmlIO.h, [have_xml=yes])
+
+  if test "$have_xml" = yes; then
+    # we have the header, now check for the library
+    have_xml=no
+    AC_CHECK_X_LIB(xml, xmlParseChunk,
+                   [have_xml=yes
+                    XML_LIBS="-lxml"
+                    AC_DEFINE(HAVE_XML)])
+  fi
+
+  X_CFLAGS="$ac_save_X_CFLAGS"
+  X_LIBS="$ac_save_X_LIBS"
+
 fi
 
 
@@ -2416,157 +2561,93 @@ fi
 #       Check for a program to generate random text.
 #
 #       Zippy is funnier than the idiocy generally spat out by `fortune',
-#       so try to find that, by invoking Emacs and asking it where its 
-#       libexec directory is ("yow" lives in there.)
+#       so first see if "fortune zippy" works.  Else, use plain "fortune".
 #
-#       If that doesn't work, see if fortune, zippy, or yow are on $PATH,
-#       and if so, use them.
-#
-#       If that doesn't work, look in /usr/games, and if it's there, use
-#       the full pathname.
+#       We used to dig around in Emacs to look for the "yow" program, but
+#       most people who have Emacs also have "fortune zippy", so nevermind.
 #
 ###############################################################################
 
-with_zippy_req=""
-AC_ARG_WITH(zippy,[
-  --with-zippy=PROGRAM    Some demos are able to run an external program and
+with_fortune_req=""
+AC_ARG_WITH(fortune,[
+  --with-fortune=PROGRAM  Some demos are able to run an external program and
                           display its text; this names the program to use by
                           default (though it can be overridden with X
-                          resources.)  If you don't specify this, the default
-                          is to use \"yow\" from the Emacs distribution (if you
-                          have it) or else to use \"fortune\".],
-  [with_zippy_req="$withval"; with_zippy="$withval"],[with_zippy=yes])
+                          resources.)  Default is \"/usr/games/fortune\".],
+  [with_fortune_req="$withval"; with_fortune="$withval"],[with_fortune=yes])
 
-if test "$with_zippy" = no || test "$with_zippy" = yes ; then
-  with_zippy=""
-  with_zippy_req=""
+if test "$with_fortune" = no || test "$with_fortune" = yes ; then
+  with_fortune=""
+  with_fortune_req=""
 fi
 
-if test -n "$with_zippy_req" ; then
-  ac_cv_zippy_program=""
-  case "$with_zippy_req" in
+if test -n "$with_fortune_req" ; then
+  ac_cv_fortune_program=""
+  case "$with_fortune_req" in
     /*)
-      AC_MSG_CHECKING([for $with_zippy_req])
-      if test -x "$with_zippy_req" ; then
+
+      set dummy $with_fortune_req ; fortune_tmp=$2
+      AC_MSG_CHECKING([for $fortune_tmp])
+      if test -x "$fortune_tmp" ; then
         AC_MSG_RESULT(yes)
       else
         AC_MSG_RESULT(no)
-        with_zippy=""
+        with_fortune=""
       fi
     ;;
     *)
+      set dummy $with_fortune_req ; fortune_tmp=$2
       # don't cache
-      unset ac_cv_path_zip2
-      AC_PATH_PROG(zip2, $with_zippy_req, [])
-      if test "$zip2" = ""; then
-        with_zippy=""
+      unset ac_cv_path_fortune_tmp
+      AC_PATH_PROG(fortune_tmp, $fortune_tmp, [])
+      if test -z "$fortune_tmp" ; then
+        with_fortune=""
       fi
     ;;
   esac
-  ac_cv_zippy_program="$with_zippy"
+  ac_cv_fortune_program="$with_fortune"
 
-elif test -n "$ac_cv_zippy_program"; then
-  AC_MSG_RESULT([checking for zippy... (cached) $ac_cv_zippy_program])
+elif test -n "$ac_cv_fortune_program"; then
+  AC_MSG_RESULT([checking for fortune... (cached) $ac_cv_fortune_program])
 fi
 
-if test ! -n "$ac_cv_zippy_program"; then
+unset ac_cv_path_fortune_tmp
+unset fortune_tmp
 
-  AC_CHECK_PROGS(emacs_exe, emacs)
-  AC_CHECK_PROGS(xemacs_exe, xemacs)
+if test -z "$ac_cv_fortune_program" ; then
 
-  ac_cv_zippy_program=""
-  eargs='-batch -q -nw --eval'
+  # first look for fortune in /usr/games/ (and use absolute path)
+  AC_PATH_PROGS(fortune_tmp, fortune,, "/usr/games")
 
-  if test -n "$emacs_exe" ; then
-    AC_MSG_CHECKING([for emacs yow])
-    #
-    # get emacs to tell us where the libexec directory is.
-    #
-    dir=`$emacs_exe $eargs '(princ (concat exec-directory "\n"))' \
-         2>/dev/null | tail -1`
-    dir=`echo "$dir" | sed 's@///*@/@g;s@/$@@'`
-    #
-    # try running libexec/yow and see if it exits without error.
-    #
-    if test x"$dir" != x -a -x "$dir/yow" ; then
-      if $dir/yow >&- 2>&- ; then
-        ac_cv_zippy_program="$dir/yow"
-        AC_MSG_RESULT($ac_cv_zippy_program)
-      else
-        AC_MSG_RESULT(no)
-      fi
-    fi
+  # if it's not there, look on $PATH (and don't use absolute path)
+  if test -z "$fortune_tmp" ; then
+     AC_CHECK_PROGS(fortune_tmp, fortune)
   fi
 
-  if test -z "$ac_cv_zippy_program" ; then
-    AC_MSG_CHECKING([for xemacs yow])
-    if test -n "$xemacs_exe" ; then
-      #
-      # get xemacs to tell us where the libexec directory is.
-      #
-      dir=`$xemacs_exe $eargs '(princ (concat exec-directory "\n"))' \
-           2>/dev/null | tail -1`
-      dir=`echo "$dir" | sed 's@///*@/@g;s@/$@@'`
-      #
-      # try running libexec/yow and see if it exits without error.
-      #
-      if test x"$dir" != x -a -x "$dir/yow" ; then
-        if $dir/yow >&- 2>&- ; then
-          ac_cv_zippy_program="$dir/yow"
-          AC_MSG_RESULT($ac_cv_zippy_program)
-        else
-          #
-          # in some xemacs installations, the pathname of the yow.lines file
-          # isn't hardcoded into the yow executable, and must be passed on 
-          # the command line.  See if it's in libexec/../etc/.
-
-          # M4 sucks!!
-          changequote(X,Y)
-          dir_up=`echo "$dir" | sed 's@/[^/]*$@@'`
-          changequote([,])
-
-          yowlines="$dir_up/etc/yow.lines"
-          if $dir/yow -f $yowlines >&- 2>&- ; then
-            ac_cv_zippy_program="$dir/yow -f $yowlines"
-            AC_MSG_RESULT($ac_cv_zippy_program)
-          else
-            #
-            # In newer XEmacs releases, yow.lines is in a different place,
-            # and the easiest way to get it is by calling the new function
-            # `locate-data-file'.
-            #
-            yowlines=`$xemacs_exe $eargs \
-              '(princ (concat (locate-data-file "yow.lines") "\n"))' \
-              2>/dev/null | tail -1`
-            if $dir/yow -f $yowlines >&- 2>&- ; then
-              ac_cv_zippy_program="$dir/yow -f $yowlines"
-              AC_MSG_RESULT($ac_cv_zippy_program)
-            else
-              AC_MSG_RESULT(no)
-            fi
-          fi
-        fi
-      fi
-    fi
+  # if we didn't find anything, then just assume /usr/games/
+  if test -z "$fortune_tmp" ; then
+     fortune_tmp="/usr/games/fortune"
   fi
 
-  # if that didn't work, try for some other programs...
-  if test -z "$ac_cv_zippy_program" ; then
-    fortune=''
-    AC_CHECK_PROGS(fortune, [fortune zippy yow])
-    # if that didn't work, try for those programs in /usr/games...
-    if test -z "$fortune" ; then
-      AC_PATH_PROGS(fortune, [fortune zippy yow], fortune,
-                    /usr/games:/usr/local/games:$PATH)
-    fi
+  ac_cv_fortune_program="$fortune_tmp"
+
+  # now check to see whether "fortune zippy" works.
+  #
+  fortune_tmp="$fortune_tmp zippy"
+  AC_MSG_CHECKING([for zippy quotes])
+  if ( $fortune_tmp >/dev/null 2>&1 ); then
+    ac_cv_fortune_program="$fortune_tmp"
+    AC_MSG_RESULT($fortune_tmp)
+  else
+    AC_MSG_RESULT(no)
   fi
+
 fi
 
-if test -z "$ac_cv_zippy_program" ; then
-  ac_cv_zippy_program=fortune
-fi
+unset ac_cv_path_fortune_tmp
+unset fortune_tmp
 
-AC_DEFINE_UNQUOTED(ZIPPY_PROGRAM, "$ac_cv_zippy_program")
+AC_DEFINE_UNQUOTED(FORTUNE_PROGRAM, "$ac_cv_fortune_program")
 
 
 ###############################################################################
@@ -2692,6 +2773,17 @@ else
 fi
 
 
+# Now that we know whether we have Gnome, we can decide where the XML
+# config files get installed.
+if test -z "$HACK_CONF_DIR" ; then
+  if test -n "$GNOME_DATADIR" ; then
+    HACK_CONF_DIR='${GNOME_DATADIR}/control-center/screensavers'
+  else
+    HACK_CONF_DIR='${prefix}/lib/xscreensaver/config'
+  fi
+fi
+
+
 ###############################################################################
 #
 #       Perform substitutions and write Makefiles.
@@ -2705,6 +2797,7 @@ AC_SUBST(ALL_DEMO_PROGRAMS)
 AC_SUBST(SAVER_LIBS)
 AC_SUBST(MOTIF_LIBS)
 AC_SUBST(GTK_LIBS)
+AC_SUBST(XML_LIBS)
 AC_SUBST(HACK_LIBS)
 AC_SUBST(XPM_LIBS)
 AC_SUBST(GL_LIBS)
@@ -2738,6 +2831,7 @@ AC_SUBST(GNOMEHELP_Y)
 AC_SUBST(GNOMEHELP_N)
 AC_SUBST(HACKDIR)
 AC_SUBST(GNOME_DATADIR)
+AC_SUBST(HACK_CONF_DIR)
 
 APPDEFAULTS=$ac_x_app_defaults
 AC_SUBST(APPDEFAULTS)
@@ -2838,6 +2932,10 @@ if test "$with_dpms_req" = yes -a "$have_dpms" = no ; then
   warn 'The DPMS extension was requested, but was not found.'
 fi
 
+if test "$with_xinerama_req" = yes -a "$have_xinerama" = no ; then
+  warn 'The Xinerama extension was requested, but was not found.'
+fi
+
 if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
   warn 'The XF86VMODE extension was requested, but was not found.'
 fi
@@ -2882,6 +2980,13 @@ if test "$with_gnome_req" = yes -a "$have_gnome" = no ; then
   warn2 'headers and/or libraries were not found.'
 fi
 
+if test "$with_xml_req" = yes -a "$have_xml" = no ; then
+  warn  'Use of the XML library was requested, but the necessary'
+  warn2 'headers and/or libraries were not found.'
+elif test "$have_gtk" = yes -a "$have_xml" = no ; then
+  warn  'GTK is being used, but the XML library was not found.'
+  warn2 'Some functionality will be disabled.'
+fi
 
 if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
 
@@ -3006,9 +3111,9 @@ if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
 fi
 
-if test -n "$with_zippy_req"; then
-  if test "$with_zippy_req" != "$ac_cv_zippy_program" ; then
-    warnL "$with_zippy_req was requested as the Zippy program,"
+if test -n "$with_fortune_req"; then
+  if test "$with_fortune_req" != "$ac_cv_fortune_program" ; then
+    warnL "$with_fortune_req was requested as the Fortune program,"
     warn2 "but was not found.  The default will be used instead."
   fi
 fi
@@ -3041,17 +3146,24 @@ eval HACKDIR=${HACKDIR}
 eval HACKDIR=${HACKDIR}
 eval HACKDIR=${HACKDIR}
 eval HACKDIR=${HACKDIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
+eval HACK_CONF_DIR=${HACK_CONF_DIR}
 
 # canonicalize slashes.
-bindir=`echo  "${bindir}"  | sed 's@/$@@;s@//*@/@g'`
-HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
+bindir=`echo  "${bindir}"              | sed 's@/$@@;s@//*@/@g'`
+HACKDIR=`echo "${HACKDIR}"             | sed 's@/$@@;s@//*@/@g'`
+HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
 
 
-# Sanity check the subdir
+# Sanity check the hackdir
 for bad_choice in xscreensaver xscreensaver-demo xscreensaver-command ; do
   if test "${HACKDIR}" = "${bindir}/${bad_choice}" ; then
     echo ""
-    AC_MSG_ERROR([\"--enable-subdir=${bindir}/${bad_choice}\" won't work.
+    AC_MSG_ERROR([\"--with-hackdir=${bindir}/${bad_choice}\" won't work.
                    There will be an executable installed with that name, so
                    that can't be the name of a directory as well.  Please
                    re-configure with a different directory name.])
@@ -3095,19 +3207,6 @@ if test \! -z "$rpmv" ; then
 fi
 
 
-# Warn about egregious GNOME bogosity.
-#
-#if (rpm -qv control-center) >&- 2>&- ; then
-#  warning=no
-#  warnL "The Gnome Control Center seems to be installed."
-#  echo  ""
-#  warn2 "Note that simply installing this version of xscreensaver"
-#  warn2 "will not cause GNOME to know about the newly-added display"
-#  warn2 "modes -- GNOME is just lame that way.  Instead of using the"
-#  warn2 "Control Center, try using the \`xscreensaver-demo' command."
-#fi
-
-
 if test "${bindir}" = "${HACKDIR}" ; then
   do_dir_warning=yes
 fi
@@ -3125,11 +3224,21 @@ if test "$do_dir_warning" = yes; then
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere"
   echo "      (for example, in a dedicated directory) you should re-run"
-  echo "      configure with the --enable-subdir=DIR option.  For more"
+  echo "      configure with the --with-hackdir=DIR option.  For more"
   echo "      information, run $0 --help."
   warning=yes
 fi
 
 if test "$warning" != no; then
   echo '' ; echo "$warnsep" ; echo ''
+fi
+
+if test "$do_dir_warning" = no; then
+  if test "$warning" = no; then
+    echo ''
+  fi
+  echo "User programs will be installed in ${bindir}/"
+  echo "Screen savers will be installed in ${HACKDIR}/"
+  echo "Configuration will be installed in ${HACK_CONF_DIR}/"
+  echo ''
 fi

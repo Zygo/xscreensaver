@@ -32,7 +32,6 @@ static const char sccsid[] = "@(#)mountain.c	4.04 97/07/28 xlockmore";
 # define mountain_opts xlockmore_opts
 # define DEFAULTS	"*delay: 0 \n"		\
 					"*count: 30 \n"		\
-					"*cycles: 100 \n"	\
 					"*ncolors: 64 \n"
 # define SMOOTH_COLORS
 #include "xlockmore.h"		/* in xscreensaver distribution */

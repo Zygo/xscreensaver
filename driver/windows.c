@@ -45,6 +45,10 @@
 # include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_XF86VMODE */
 
+#ifdef HAVE_XINERAMA
+# include <X11/extensions/Xinerama.h>
+#endif /* HAVE_XINERAMA */
+
 
 /* This file doesn't need the Xt headers, so stub these types out... */
 #undef XtPointer
@@ -69,7 +73,7 @@ Atom XA_SCREENSAVER_STATUS;
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
 static void maybe_transfer_grabs (saver_screen_info *ssi,
-                                  Window old_w, Window new_w);
+                                  Window old_w, Window new_w, int new_screen);
 
 #define ALL_POINTER_EVENTS \
 	(ButtonPressMask | ButtonReleaseMask | EnterWindowMask | \
@@ -98,7 +102,7 @@ grab_string(int status)
 }
 
 static int
-grab_kbd(saver_info *si, Window w)
+grab_kbd(saver_info *si, Window w, int screen_no)
 {
   saver_preferences *p = &si->prefs;
   int status = XGrabKeyboard (si->dpy, w, True,
@@ -107,28 +111,34 @@ grab_kbd(saver_info *si, Window w)
 			      GrabModeSync, GrabModeAsync,
 			      CurrentTime);
   if (status == GrabSuccess)
-    si->keyboard_grab_window = w;
+    {
+      si->keyboard_grab_window = w;
+      si->keyboard_grab_screen = screen_no;
+    }
 
   if (p->verbose_p)
-    fprintf(stderr, "%s: grabbing keyboard on 0x%x... %s.\n",
-	    blurb(), (unsigned long) w, grab_string(status));
+    fprintf(stderr, "%s: %d: grabbing keyboard on 0x%x... %s.\n",
+	    blurb(), screen_no, (unsigned long) w, grab_string(status));
   return status;
 }
 
 
 static int
-grab_mouse (saver_info *si, Window w, Cursor cursor)
+grab_mouse (saver_info *si, Window w, Cursor cursor, int screen_no)
 {
   saver_preferences *p = &si->prefs;
   int status = XGrabPointer (si->dpy, w, True, ALL_POINTER_EVENTS,
 			     GrabModeAsync, GrabModeAsync, w,
 			     cursor, CurrentTime);
   if (status == GrabSuccess)
-    si->mouse_grab_window = w;
+    {
+      si->mouse_grab_window = w;
+      si->mouse_grab_screen = screen_no;
+    }
 
   if (p->verbose_p)
-    fprintf(stderr, "%s: grabbing mouse on 0x%x... %s.\n",
-	    blurb(), (unsigned long) w, grab_string(status));
+    fprintf(stderr, "%s: %d: grabbing mouse on 0x%x... %s.\n",
+	    blurb(), screen_no, (unsigned long) w, grab_string(status));
   return status;
 }
 
@@ -139,8 +149,9 @@ ungrab_kbd(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabKeyboard(si->dpy, CurrentTime);
   if (p->verbose_p)
-    fprintf(stderr, "%s: ungrabbing keyboard (was 0x%x).\n", blurb(),
-	    (unsigned long) si->keyboard_grab_window);
+    fprintf(stderr, "%s: %d: ungrabbing keyboard (was 0x%x).\n",
+            blurb(), si->keyboard_grab_screen,
+            (unsigned long) si->keyboard_grab_window);
   si->keyboard_grab_window = 0;
 }
 
@@ -151,14 +162,16 @@ ungrab_mouse(saver_info *si)
   saver_preferences *p = &si->prefs;
   XUngrabPointer(si->dpy, CurrentTime);
   if (p->verbose_p)
-    fprintf(stderr, "%s: ungrabbing mouse (was 0x%x).\n", blurb(),
-	    (unsigned long) si->mouse_grab_window);
+    fprintf(stderr, "%s: %d: ungrabbing mouse (was 0x%x).\n",
+            blurb(), si->mouse_grab_screen,
+            (unsigned long) si->mouse_grab_window);
   si->mouse_grab_window = 0;
 }
 
 
 static Bool
-grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
+grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
+                         int screen_no)
 {
   Status mstatus, kstatus;
   int i;
@@ -167,7 +180,7 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
   for (i = 0; i < retries; i++)
     {
       XSync (si->dpy, False);
-      kstatus = grab_kbd (si, window);
+      kstatus = grab_kbd (si, window, screen_no);
       if (kstatus == GrabSuccess)
         break;
 
@@ -182,7 +195,7 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
   for (i = 0; i < retries; i++)
     {
       XSync (si->dpy, False);
-      mstatus = grab_mouse (si, window, cursor);
+      mstatus = grab_mouse (si, window, cursor, screen_no);
       if (mstatus == GrabSuccess)
         break;
 
@@ -207,12 +220,12 @@ ungrab_keyboard_and_mouse (saver_info *si)
 
 
 int
-move_mouse_grab (saver_info *si, Window to, Cursor cursor)
+move_mouse_grab (saver_info *si, Window to, Cursor cursor, int to_screen_no)
 {
   Window old = si->mouse_grab_window;
 
   if (old == 0)
-    return grab_mouse (si, to, cursor);
+    return grab_mouse (si, to, cursor, to_screen_no);
   else
     {
       saver_preferences *p = &si->prefs;
@@ -226,18 +239,18 @@ move_mouse_grab (saver_info *si, Window to, Cursor cursor)
         fprintf(stderr, "%s: grabbing server...\n", blurb());
 
       ungrab_mouse (si);
-      status = grab_mouse (si, to, cursor);
+      status = grab_mouse (si, to, cursor, to_screen_no);
 
       if (status != GrabSuccess)   /* Augh! */
         {
           sleep (1);               /* Note dramatic evil of sleeping
                                       with server grabbed. */
           XSync (si->dpy, False);
-          status = grab_mouse (si, to, cursor);
+          status = grab_mouse (si, to, cursor, to_screen_no);
         }
 
       if (status != GrabSuccess)   /* Augh!  Try to get the old one back... */
-        grab_mouse (si, to, cursor);
+        grab_mouse (si, old, cursor, to_screen_no);
 
       XUngrabServer (si->dpy);
       XSync (si->dpy, False);			/* ###### (danger over) */
@@ -836,6 +849,7 @@ void
 get_screen_viewport (saver_screen_info *ssi,
                      int *x_ret, int *y_ret,
                      int *w_ret, int *h_ret,
+                     int target_x, int target_y,
                      Bool verbose_p)
 {
   int w = WidthOfScreen (ssi->screen);
@@ -843,20 +857,68 @@ get_screen_viewport (saver_screen_info *ssi,
 
 #ifdef HAVE_XF86VMODE
   saver_info *si = ssi->global;
-  int screen_no = screen_number (ssi->screen);
-  int op, event, error;
+  int event, error;
   int dot;
   XF86VidModeModeLine ml;
   int x, y;
+  Bool xinerama_p;
+  Bool placement_only_p = (target_x != -1 && target_y != -1);
 
-  /* Check for Xinerama first, because the VidModeExtension is broken
-     when Xinerama is present.  Wheee!
-   */
+#ifdef HAVE_XINERAMA
+  xinerama_p = (XineramaQueryExtension (si->dpy, &event, &error) &&
+                XineramaIsActive (si->dpy));
+#else  /* !HAVE_XINERAMA */
+  /* Even if we don't have the client-side Xinerama lib, check to see if
+     the server supports Xinerama, so that we know to ignore the VidMode
+     extension -- otherwise a server crash could result.  Yay. */
+  xinerama_p = XQueryExtension (si->dpy, "XINERAMA", &error, &event, &error);
+  
+#endif /* !HAVE_XINERAMA */
 
-  if (!XQueryExtension (si->dpy, "XINERAMA", &op, &event, &error) &&
+#ifdef HAVE_XINERAMA
+  if (xinerama_p && placement_only_p)
+    {
+      int nscreens = 0;
+      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
+      if (xsi)
+        {
+          /* Find the screen that contains the mouse. */
+          int which = -1;
+          int i;
+          for (i = 0; i < nscreens; i++)
+            {
+              if (target_x >= xsi[i].x_org &&
+                  target_y >= xsi[i].y_org &&
+                  target_x < xsi[i].x_org + xsi[i].width &&
+                  target_y < xsi[i].y_org + xsi[i].height)
+                which = i;
+              if (verbose_p)
+                {
+                  fprintf (stderr, "%s: %d: xinerama vp: %dx%d+%d+%d",
+                           blurb(), i,
+                           xsi[which].width, xsi[which].height,
+                           xsi[i].x_org, xsi[i].y_org);
+                  if (which == i)
+                    fprintf (stderr, "; mouse at %d,%d",
+                             target_x, target_y);
+                  fprintf (stderr, ".\n");
+                }
+            }
+          if (which == -1) which = 0;  /* didn't find it?  Use the first. */
+          *x_ret = xsi[which].x_org;
+          *y_ret = xsi[which].y_org;
+          *w_ret = xsi[which].width;
+          *h_ret = xsi[which].height;
+          XFree (xsi);
+          return;
+        }
+    }
+#endif /* HAVE_XINERAMA */
+
+  if (!xinerama_p &&  /* Xinerama + VidMode = broken. */
       XF86VidModeQueryExtension (si->dpy, &event, &error) &&
-      XF86VidModeGetModeLine (si->dpy, screen_no, &dot, &ml) &&
-      XF86VidModeGetViewPort (si->dpy, screen_no, &x, &y))
+      XF86VidModeGetModeLine (si->dpy, ssi->number, &dot, &ml) &&
+      XF86VidModeGetViewPort (si->dpy, ssi->number, &x, &y))
     {
       char msg[512];
       *x_ret = x;
@@ -895,10 +957,10 @@ get_screen_viewport (saver_screen_info *ssi,
           *h_ret = h;
           return;
         }
-          
 
-      sprintf (msg, "%s: vp is %dx%d+%d+%d",
-               blurb(), *w_ret, *h_ret, *x_ret, *y_ret);
+      sprintf (msg, "%s: %d: vp is %dx%d+%d+%d",
+               blurb(), ssi->number,
+               *w_ret, *h_ret, *x_ret, *y_ret);
 
 
       /* Apparently, though the server stores the X position in increments of
@@ -1054,7 +1116,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   static Bool printed_visual_info = False;  /* only print the message once. */
   Window horked_window = 0;
 
-  get_screen_viewport (ssi, &x, &y, &width, &height,
+  get_screen_viewport (ssi, &x, &y, &width, &height, -1, -1,
                        (p->verbose_p && !si->screen_blanked_p));
 
   black.red = black.green = black.blue = 0;
@@ -1115,7 +1177,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     ;
   else if (ssi->current_visual == DefaultVisualOfScreen (ssi->screen))
     {
-      fprintf (stderr, "%s: using default visual ", blurb());
+      fprintf (stderr, "%s: %d: visual ", blurb(), ssi->number);
       describe_visual (stderr, ssi->screen, ssi->current_visual,
 		       install_cmap_p);
     }
@@ -1217,14 +1279,16 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
           fprintf (stderr,
             "%s: someone horked our saver window (0x%lx)!  Recreating it...\n",
                    blurb(), (unsigned long) horked_window);
-          maybe_transfer_grabs (ssi, horked_window, ssi->screensaver_window);
+          maybe_transfer_grabs (ssi, horked_window, ssi->screensaver_window,
+                                ssi->number);
           safe_XDestroyWindow (si->dpy, horked_window);
           horked_window = 0;
         }
 
       if (p->verbose_p)
-	fprintf (stderr, "%s: saver window is 0x%lx.\n",
-		 blurb(), (unsigned long) ssi->screensaver_window);
+	fprintf (stderr, "%s: %d: saver window is 0x%lx.\n",
+                 blurb(), ssi->number,
+                 (unsigned long) ssi->screensaver_window);
     }
 
   store_saver_id (ssi);       /* store window name and IDs */
@@ -1364,22 +1428,63 @@ raise_window (saver_info *si,
     }
 }
 
+
+int
+mouse_screen (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+
+  if (si->nscreens == 1)
+    return 0;
+  else
+    {
+      int i;
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          Window pointer_root, pointer_child;
+          int root_x, root_y, win_x, win_y;
+          unsigned int mask;
+          if (XQueryPointer (si->dpy,
+                             RootWindowOfScreen (ssi->screen),
+                             &pointer_root, &pointer_child,
+                             &root_x, &root_y, &win_x, &win_y, &mask))
+            {
+              if (p->verbose_p)
+                fprintf (stderr, "%s: mouse is on screen %d\n",
+                         blurb(), i, si->nscreens);
+              return i;
+            }
+        }
+
+      /* couldn't figure out where the mouse is?  Oh well. */
+      return 0;
+    }
+}
+
+
 Bool
 blank_screen (saver_info *si)
 {
   int i;
   Bool ok;
+  Window w;
+  int mscreen;
 
   /* Note: we do our grabs on the root window, not on the screensaver window.
      If we grabbed on the saver window, then the demo mode and lock dialog
      boxes wouldn't get any events.
+
+     By "the root window", we mean "the root window that contains the mouse."
+     We use to always grab the mouse on screen 0, but that has the effect of
+     moving the mouse to screen 0 from whichever screen it was on, on
+     multi-head systems.
    */
-  ok = grab_keyboard_and_mouse (si,
-                                /*si->screens[0].screensaver_window,*/
-                                RootWindowOfScreen(si->screens[0].screen),
-                                (si->demoing_p
-                                 ? 0
-                                 : si->screens[0].cursor));
+  mscreen = mouse_screen (si);
+  w = RootWindowOfScreen(si->screens[mscreen].screen);
+  ok = grab_keyboard_and_mouse (si, w,
+                                (si->demoing_p ? 0 : si->screens[0].cursor),
+                                mscreen);
 
 
   if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
@@ -1552,7 +1657,8 @@ unblank_screen (saver_info *si)
  */
 static void
 maybe_transfer_grabs (saver_screen_info *ssi,
-                      Window old_w, Window new_w)
+                      Window old_w, Window new_w,
+                      int new_screen_no)
 {
   saver_info *si = ssi->global;
 
@@ -1564,9 +1670,8 @@ maybe_transfer_grabs (saver_screen_info *ssi,
       XGrabServer (si->dpy);		/* ############ DANGER! */
       ungrab_mouse (si);
       grab_mouse (si, ssi->screensaver_window,
-                  (si->demoing_p
-                   ? 0
-                   : ssi->cursor));
+                  (si->demoing_p ? 0 : ssi->cursor),
+                  new_screen_no);
       XUngrabServer (si->dpy);
       XSync (si->dpy, False);		/* ###### (danger over) */
     }
@@ -1578,7 +1683,7 @@ maybe_transfer_grabs (saver_screen_info *ssi,
     {
       XGrabServer (si->dpy);		/* ############ DANGER! */
       ungrab_kbd(si);
-      grab_kbd(si, ssi->screensaver_window);
+      grab_kbd(si, ssi->screensaver_window, ssi->number);
       XUngrabServer (si->dpy);
       XSync (si->dpy, False);		/* ###### (danger over) */
     }
@@ -1647,10 +1752,10 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
       if (p->verbose_p)
 	{
-	  fprintf (stderr, "%s: switching to visual ", blurb());
+	  fprintf (stderr, "%s: %d: visual ", blurb(), ssi->number);
 	  describe_visual (stderr, ssi->screen, new_v, install_cmap_p);
 #if 0
-	  fprintf (stderr, "%s:                from ", blurb());
+	  fprintf (stderr, "%s:                  from ", blurb());
 	  describe_visual (stderr, ssi->screen, ssi->current_visual,
 			   was_installed_p);
 #endif
@@ -1675,14 +1780,14 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 			    ssi->screensaver_window, ssi->screensaver_window);
 
       /* Transfer any grabs from the old window to the new. */
-      maybe_transfer_grabs (ssi, old_w, ssi->screensaver_window);
+      maybe_transfer_grabs (ssi, old_w, ssi->screensaver_window, ssi->number);
 
       /* Now we can destroy the old window without horking our grabs. */
       XDestroyWindow (si->dpy, old_w);
 
       if (p->verbose_p)
-	fprintf (stderr, "%s: destroyed old saver window 0x%lx.\n",
-		 blurb(), (unsigned long) old_w);
+	fprintf (stderr, "%s: %d: destroyed old saver window 0x%lx.\n",
+		 blurb(), ssi->number, (unsigned long) old_w);
 
       if (old_c &&
 	  old_c != DefaultColormapOfScreen (ssi->screen) &&

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gears" _label="Gears">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="20" default="1"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Rotational Speed" _low-label="Slow" _high-label="Fast"
+          low="1" high="30" default="2"/>
+
+  <select id="style">
+   <option id="three"     _label="Three Gear System"/>
+   <option id="planetary" _label="Planetary Gear System" arg-set="-planetary"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This draws sets of turning, interlocking gears, rotating in three
+dimensions.  Another GL hack, by Danny Sung, Brian Paul, Ed Mackey,
+and Jamie Zawinski.
+  </_description>
+</screensaver>

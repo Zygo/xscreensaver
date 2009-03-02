@@ -18,6 +18,16 @@
 #include <X11/Intrinsic.h>
 #include <errno.h>
 
+#ifdef HAVE_XMU
+# ifndef VMS
+#  include <X11/Xmu/Error.h>
+# else /* VMS */
+#  include <Xmu/Error.h>
+# endif
+#else
+# include "xmu.h"
+#endif
+
 #include "yarandom.h"
 #include "grabscreen.h"
 #include "resources.h"
@@ -94,6 +104,18 @@ exec_error (char **av)
   exit (1);
 }
 
+static int
+x_ehandler (Display *dpy, XErrorEvent *error)
+{
+  fprintf (stderr, "\nX error in %s:\n", progname);
+  if (XmuPrintDefaultErrorMessage (dpy, error, stderr))
+    exit (-1);
+  else
+    fprintf (stderr, " (nonfatal.)\n");
+  return 0;
+}
+
+
 
 static void
 get_image (Screen *screen, Window window, Bool verbose_p)
@@ -106,9 +128,6 @@ get_image (Screen *screen, Window window, Bool verbose_p)
 
   enum { do_desk, do_video, do_image, do_bars } which = do_bars;
   int count = 0;
-  if (desk_p) count++;
-  if (video_p) count++;
-  if (image_p) count++;
 
   if (verbose_p)
     {
@@ -146,7 +165,17 @@ get_image (Screen *screen, Window window, Bool verbose_p)
      know it's not a security problem to expose desktop bits.)
    */
 
-  if (window != VirtualRootWindowOfScreen (screen))
+  if ((desk_p || video_p || image_p) &&
+      !top_level_window_p (screen, window))
+    {
+      desk_p  = False;
+      video_p = False;
+      image_p = False;
+      if (verbose_p)
+        fprintf (stderr, "%s: not a top-level window: using colorbars.\n",
+                 progname);
+    }
+  else if (window != VirtualRootWindowOfScreen (screen))
     {
       Bool changed_p = False;
       if (!desk_p) desk_p  = True,  changed_p = True;
@@ -157,6 +186,11 @@ get_image (Screen *screen, Window window, Bool verbose_p)
                  "%s: not running on root window: grabbing desktop.\n",
                  progname);
     }
+
+  count = 0;
+  if (desk_p)  count++;
+  if (video_p) count++;
+  if (image_p) count++;
 
   if (count == 0)
     which = do_bars;
@@ -306,6 +340,8 @@ main (int argc, char **argv)
   db = XtDatabase (dpy);
 
   XtGetApplicationNameAndClass (dpy, &s, &progclass);
+  XSetErrorHandler (x_ehandler);
+  XSync (dpy, False);
 
   /* half-assed way of avoiding buffer-overrun attacks. */
   if (strlen (progname) >= 100) progname[100] = 0;

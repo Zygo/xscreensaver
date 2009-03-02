@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1997, 1998, 2001
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -137,6 +137,7 @@ get_pixel_resource (char *res_name, char *res_class,
   XColor color;
   char *s = get_string_resource (res_name, res_class);
   char *s2;
+  Bool ok = True;
   if (!s) goto DEFAULT;
 
   for (s2 = s + strlen(s) - 1; s2 > s; s2--)
@@ -147,22 +148,42 @@ get_pixel_resource (char *res_name, char *res_class,
 
   if (! XParseColor (dpy, cmap, s, &color))
     {
-      fprintf (stderr, "%s: can't parse color %s\n", progname, s);
+      fprintf (stderr, "%s: can't parse color %s", progname, s);
+      ok = False;
       goto DEFAULT;
     }
   if (! XAllocColor (dpy, cmap, &color))
     {
-      fprintf (stderr, "%s: couldn't allocate color %s\n", progname, s);
+      fprintf (stderr, "%s: couldn't allocate color %s", progname, s);
+      ok = False;
       goto DEFAULT;
     }
   free (s);
   return color.pixel;
  DEFAULT:
   if (s) free (s);
-  return ((strlen(res_class) >= 10 &&
-	   !strcmp ("Background", res_class + strlen(res_class) - 10))
-	  ? BlackPixel (dpy, DefaultScreen (dpy))
-	  : WhitePixel (dpy, DefaultScreen (dpy)));
+
+  {
+    Bool black_p = (strlen(res_class) >= 10 &&
+                    !strcasecmp ("Background",
+                                 res_class + strlen(res_class) - 10));
+    if (!ok)
+      fprintf (stderr, ": using %s.\n", (black_p ? "black" : "white"));
+    color.flags = DoRed|DoGreen|DoBlue;
+    color.red = color.green = color.blue = (black_p ? 0 : 0xFFFF);
+    if (XAllocColor (dpy, cmap, &color))
+      return color.pixel;
+    else
+      {
+        fprintf (stderr, "%s: couldn't allocate %s either!\n", progname,
+                 (black_p ? "black" : "white"));
+        /* We can't use BlackPixel/WhitePixel here, because we don't know
+           what screen we're allocating on (only an issue when running inside
+           the xscreensaver daemon: for hacks, DefaultScreen is fine.)
+         */
+        return 0;
+      }
+  }
 }
 
 

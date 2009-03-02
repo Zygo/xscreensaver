@@ -261,6 +261,8 @@ static const char * const prefs[] = {
   "grabVideoFrames",
   "chooseRandomImages",
   "imageDirectory",
+  "mode",
+  "selected",
   "",
   "programs",
   "",
@@ -778,6 +780,13 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("chooseRandomImages")type =pref_bool, b = p->random_image_p;
       CHECK("imageDirectory")    type =pref_str,  s = p->image_directory;
 
+      CHECK("mode")             type = pref_str,
+                                s = (p->mode == ONE_HACK ? "one" :
+                                     p->mode == BLANK_ONLY ? "blank" :
+                                     p->mode == DONT_BLANK ? "off" :
+                                     "random");
+      CHECK("selected")         type = pref_int,  i = p->selected_hack;
+
       CHECK("programs")		type = pref_str,  s =    programs;
       CHECK("pointerPollTime")	type = pref_time, t = p->pointer_timeout;
       CHECK("windowCreationTimeout")type=pref_time,t= p->notice_events_timeout;
@@ -838,6 +847,9 @@ write_init_file (saver_preferences *p, const char *version_string,
 	  abort();
 	  break;
 	}
+
+      if (pr && !strcmp(pr, "mode")) fprintf(out, "\n");
+
       write_entry (out, pr, s);
     }
 
@@ -1068,6 +1080,18 @@ load_init_file (saver_preferences *p)
   if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
 
   get_screenhacks (p);
+
+  p->selected_hack = get_integer_resource ("selected", "Integer");
+  if (p->selected_hack < 0 || p->selected_hack >= p->screenhacks_count)
+    p->selected_hack = -1;
+
+  {
+    char *s = get_string_resource ("mode", "Mode");
+    if      (s && !strcasecmp (s, "one"))   p->mode = ONE_HACK;
+    else if (s && !strcasecmp (s, "blank")) p->mode = BLANK_ONLY;
+    else if (s && !strcasecmp (s, "off"))   p->mode = DONT_BLANK;
+    else                                    p->mode = RANDOM_HACKS;
+  }
 
   if (system_default_screenhack_count)  /* note: first_time is also true */
     {

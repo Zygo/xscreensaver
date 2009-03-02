@@ -84,8 +84,7 @@ static const char sccsid[] = "@(#)moebius.c	4.08 97/01/04 xlockmore";
 # define HACK_DRAW			draw_moebius
 # define HACK_RESHAPE		reshape_moebius
 # define moebius_opts		xlockmore_opts
-# define DEFAULTS			"*cycles:		1       \n"			\
-							"*delay:		20000   \n"			\
+# define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */

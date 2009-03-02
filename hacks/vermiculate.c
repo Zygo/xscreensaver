@@ -384,7 +384,10 @@ pickbank (void)
 	case ' ':
 	  bank[++bankt - 1] = thr;
 	  break;
-	case '1'...'9':
+	case '1': case '2': case '3':
+        case '4': case '5': case '6':
+        case '7': case '8': case '9':
+
 	  bank[++bankt - 1] = ch - '0';
 	  if (bank[bankt - 1] > threads)
 	    bankt--;
@@ -405,7 +408,10 @@ pickbank (void)
 	  ch = readkey ();
 	  switch (ch)
 	    {
-	    case '1'...tmodes:
+	    case '1': case '2': case '3':
+            case '4': case '5': case '6':
+            case '7': case '8': case '9':
+
 	      {
 		int c;
 		for (c = 1; c <= threads; c++)
@@ -820,7 +826,9 @@ vermiculate_main (void)
 			    ch = readkey ();
 			    switch (ch)
 			      {
-			      case '1'...tmodes:
+                              case '1': case '2': case '3':
+                              case '4': case '5': case '6':
+                              case '7': case '8': case '9':
 				thread[++threads - 1].tmode = ch - '0';
 				break;
 			      case 'R':
@@ -849,7 +857,9 @@ vermiculate_main (void)
 			  ch = readkey ();
 			  switch (ch)
 			    {
-			    case '1'...'9':
+                            case '1': case '2': case '3':
+                            case '4': case '5': case '6':
+                            case '7': case '8': case '9':
 /* Careful!  The following macro needs to be at the beginning of any
 block in which it's invoked, since it declares variables: */
 #define forallinbank(LDP) linedata *LDP; int bankc; \
@@ -884,7 +894,10 @@ block in which it's invoked, since it declares variables: */
 				{
 				  switch (ch)
 				    {
-				    case '0'...'9':
+                                    case '0':
+                                    case '1': case '2': case '3':
+                                    case '4': case '5': case '6':
+                                    case '7': case '8': case '9':
 				      L->tslen++;
 				      L->turnseq[L->tslen - 1] = ch - '0';
 				      if (oldch == '-')
@@ -924,7 +937,9 @@ block in which it's invoked, since it declares variables: */
 			      {
 				switch (ch)
 				  {
-				  case '1'...tmodes:
+                                  case '1': case '2': case '3':
+                                  case '4': case '5': case '6':
+                                  case '7': case '8': case '9':
 				    L->tmode = ch - '0';
 				    break;
 				  case 'R':
@@ -970,7 +985,9 @@ block in which it's invoked, since it declares variables: */
 			  {
 			    forallinbank (L) switch (ch)
 			      {
-			      case '1'...'9':
+                              case '1': case '2': case '3':
+                              case '4': case '5': case '6':
+                              case '7': case '8': case '9':
 				L->circturn = 10 - (ch - '0');
 				break;
 			      case 'R':
@@ -1032,7 +1049,9 @@ block in which it's invoked, since it declares variables: */
 		case '\33':
 		  halted = True;
 		  break;
-		case '1'...tmodes:
+                case '1': case '2': case '3':
+                case '4': case '5': case '6':
+                case '7': case '8': case '9':
 		  {
 		    int c;
 		    for (c = 1; c <= thrmax; c++)

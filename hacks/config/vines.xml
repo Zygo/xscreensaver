@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="vines" _label="Vines">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="250000" default="200000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <_description>
+This one generates a continuous sequence of small, curvy geometric
+patterns.  It scatters them around your screen until it fills up,
+then it clears the screen and starts over.  Written by Tracy Camp and
+David Hansen.
+  </_description>
+</screensaver>
