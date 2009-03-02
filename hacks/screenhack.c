@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998
  *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -61,6 +61,7 @@ static XrmOptionDescRec default_options [] = {
   { "-install",	".installColormap",	XrmoptionNoArg, "True" },
   { "-noinstall",".installColormap",	XrmoptionNoArg, "False" },
   { "-visual",	".visualID",		XrmoptionSepArg, 0 },
+  { "-window-id", ".windowID",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
@@ -70,6 +71,7 @@ static char *default_defaults[] = {
   "*mono:		false",
   "*installColormap:	false",
   "*visualID:		default",
+  "*windowID:		",
   0
 };
 
@@ -154,6 +156,7 @@ main (int argc, char **argv)
   Visual *visual;
   Colormap cmap;
   Bool root_p;
+  Window on_window = 0;
   XEvent event;
   Boolean dont_clear /*, dont_map */;
   char version[255];
@@ -219,7 +222,24 @@ main (int argc, char **argv)
     mono_p = True;
 
   root_p = get_boolean_resource ("root", "Boolean");
-  if (root_p)
+
+  {
+    char *s = get_string_resource ("windowID", "WindowID");
+    if (s && *s)
+      on_window = get_integer_resource ("windowID", "WindowID");
+    if (s) free (s);
+  }
+
+  if (on_window)
+    {
+      XWindowAttributes xgwa;
+      window = (Window) on_window;
+      XtDestroyWidget (toplevel);
+      XGetWindowAttributes (dpy, window, &xgwa);
+      cmap = xgwa.colormap;
+      visual = xgwa.visual;
+    }
+  else if (root_p)
     {
       XWindowAttributes xgwa;
       window = RootWindowOfScreen (XtScreen (toplevel));
@@ -314,7 +334,7 @@ main (int argc, char **argv)
       XClearWindow (dpy, window);
     }
 
-  if (!root_p)
+  if (!root_p && !on_window)
     /* wait for it to be mapped */
     XIfEvent (dpy, &event, MapNotify_event_p, (XPointer) window);
 

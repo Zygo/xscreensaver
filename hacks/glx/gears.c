@@ -26,8 +26,6 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
  * 13-Mar-97: Memory leak fix by Tom Schmidt <tschmidt@micron.com>
  * 1996: "written" by Danny Sung <dannys@ucla.edu>
  *       Based on 3-D gear wheels by Brian Paul which is in the public domain.
- *
- * Brian Paul
  */
 
 /*-
@@ -59,14 +57,14 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-ModeSpecOpt gears_opts = {
-  0, NULL, 0, NULL, NULL };
+ModeSpecOpt gears_opts =
+{0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
 ModStruct   gears_description =
 {"gears", "init_gears", "draw_gears", "release_gears",
  "draw_gears", "init_gears", NULL, &gears_opts,
- 1000, 1, 2, 1, 1.0, "",
+ 1000, 1, 2, 1, 4, 1.0, "",
  "Shows GL's gears", 0, NULL};
 
 #endif
@@ -276,7 +274,7 @@ static void
 draw(ModeInfo * mi)
 {
 	gearsstruct *gp = &gears[MI_SCREEN(mi)];
-	int         wire = MI_WIN_IS_WIREFRAME(mi);
+	int         wire = MI_IS_WIREFRAME(mi);
 
 	if (!wire) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -352,8 +350,8 @@ pinit(ModeInfo * mi)
 	{0.5, 0.5, 0.5, 1.0};
 	static GLfloat white[4] =
 	{1.0, 1.0, 1.0, 1.0};
-	int         wire = MI_WIN_IS_WIREFRAME(mi);
-	int         mono = MI_WIN_IS_MONO(mi);
+	int         wire = MI_IS_WIREFRAME(mi);
+	int         mono = MI_IS_MONO(mi);
 
 	if (!wire) {
 		glLightfv(GL_LIGHT0, GL_POSITION, pos);
@@ -368,7 +366,7 @@ pinit(ModeInfo * mi)
  * 2nd time mode is run it is Grayscale on PseudoColor.
  * The code below forces monochrome on TrueColor.
  */
-	if (MI_WIN_IS_MONO(mi)) {
+	if (MI_IS_MONO(mi)) {
 		red[0] = red[1] = red[2] = 1.0;
 		green[0] = green[1] = green[2] = 1.0;
 		blue[0] = blue[1] = blue[2] = 1.0;
@@ -450,7 +448,7 @@ init_gears(ModeInfo * mi)
 	gp->angle = NRAND(360);
 
 	if ((gp->glx_context = init_GL(mi)) != NULL) {
-		reshape(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
 		pinit(mi);
 	} else {
 		MI_CLEARWINDOW(mi);
@@ -464,7 +462,7 @@ draw_gears(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 	int         angle_incr = MI_CYCLES(mi) ? MI_CYCLES(mi) : 2;
-	int         rot_incr = MI_BATCHCOUNT(mi) ? MI_BATCHCOUNT(mi) : 1;
+	int         rot_incr = MI_COUNT(mi) ? MI_COUNT(mi) : 1;
 
 	if (!gp->glx_context)
 		return;

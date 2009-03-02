@@ -1,5 +1,6 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-1997 Jamie Zawinski <jwz@netscape.com>
+ * xscreensaver, Copyright (c) 1991-1997, 1998
+ *  Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -200,7 +201,7 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   if (p->verbose_p)
     printf ("%s: starting cycle_timer (%ld, %ld)\n",
 	    progname, how_long, si->cycle_id);
-#endif
+#endif /* DEBUG_TIMERS */
 }
 
 
@@ -237,7 +238,8 @@ reset_timers (saver_info *si)
   if (p->verbose_p)
     printf ("%s:   killing idle_timer    (%ld, %ld)\n",
 	    progname, p->timeout, si->timer_id);
-#endif
+#endif /* DEBUG_TIMERS */
+
   XtRemoveTimeOut (si->timer_id);
   si->timer_id = XtAppAddTimeOut (si->app, p->timeout, idle_timer,
 				  (XtPointer) si);
@@ -247,7 +249,7 @@ reset_timers (saver_info *si)
   if (p->verbose_p)
     printf ("%s:   restarting idle_timer (%ld, %ld)\n",
 	    progname, p->timeout, si->timer_id);
-#endif
+#endif /* DEBUG_TIMERS */
 
   si->last_activity_time = time ((time_t *) 0);
 }
@@ -301,7 +303,7 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
 	else
 	  printf ("%s: pointer moved at %s on screen %d.\n",
 		  progname, timestring(), i);
-#endif
+#endif /* DEBUG_TIMERS */
 
       si->last_activity_screen    = ssi;
       ssi->poll_mouse_last_root_x = root_x;
@@ -328,11 +330,12 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	  /* Wake up periodically to ask the server if we are idle. */
 	  si->timer_id = XtAppAddTimeOut (si->app, p->timeout, idle_timer,
 					  (XtPointer) si);
+
 #ifdef DEBUG_TIMERS
 	  if (p->verbose_p)
 	    printf ("%s: starting idle_timer (%ld, %ld)\n",
 		    progname, p->timeout, si->timer_id);
-#endif
+#endif /* DEBUG_TIMERS */
 	}
 
       if (!p->use_xidle_extension &&
@@ -438,7 +441,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	      printf ("%s: KeyPress seen on 0x%X at %s\n", progname,
 		      (unsigned int) event.xkey.window, timestring ());
 	  }
-#endif
+#endif /* DEBUG_TIMERS */
 
 	/* We got a user event */
 	if (!until_idle_p)
@@ -597,11 +600,13 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
       if (si->screen_blanked_p)
 	{
 	  Bool running_p = screenhack_running_p(si);
+
 #ifdef DEBUG_TIMERS
 	  if (si->prefs.verbose_p)
 	    printf ("%s: watchdog timer raising %sscreen.\n",
 		    progname, (running_p ? "" : "and clearing "));
-#endif
+#endif /* DEBUG_TIMERS */
+
 	  raise_window (si, True, True, running_p);
 	}
     }
@@ -628,6 +633,7 @@ reset_watchdog_timer (saver_info *si, Bool on_p)
       if (p->verbose_p)
 	printf ("%s: restarting watchdog_timer (%ld, %ld)\n",
 		progname, p->watchdog_timeout, si->watchdog_id);
-#endif
+#endif /* DEBUG_TIMERS */
+
     }
 }

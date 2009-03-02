@@ -74,6 +74,15 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_BATCHCOUNT(MI)	((MI)->batchcount)
 #define MI_SIZE(MI)		((MI)->size)
 
+#define MI_WIDTH(MI)		(MI_WIN_WIDTH((MI)))
+#define MI_HEIGHT(MI)		(MI_WIN_HEIGHT((MI)))
+#define MI_IS_ICONIC(MI)	(MI_WIN_IS_ICONIC((MI)))
+#define MI_IS_WIREFRAME(MI)	(MI_WIN_IS_WIREFRAME((MI)))
+#define MI_IS_MONO(MI)		(MI_WIN_IS_MONO((MI)))
+#define MI_COUNT(MI)		(MI_BATCHCOUNT((MI)))
+#define MI_BLACK_PIXEL(MI)	(MI_WIN_BLACK_PIXEL(MI))
+#define MI_WHITE_PIXEL(MI)	(MI_WIN_WHITE_PIXEL(MI))
+
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
 
 /* Some other utility macros.

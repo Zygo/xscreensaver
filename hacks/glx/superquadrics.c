@@ -119,13 +119,13 @@ static OptionStruct desc[] =
 };
 
 ModeSpecOpt superquadrics_opts =
-{1, opts, 1, vars, desc};
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   superquadrics_description =
 {"superquadrics", "init_superquadrics", "draw_superquadrics", "release_superquadrics",
  "refresh_superquadrics", "init_superquadrics", NULL, &superquadrics_opts,
- 1000, 25, 40, 1, 1.0, "",
+ 1000, 25, 40, 1, 4, 1.0, "",
  "Shows 3D mathematical shapes", 0, NULL};
 
 #endif
@@ -722,13 +722,13 @@ init_superquadrics(ModeInfo * mi)
 			return;
 	}
 	sp = &superquadrics[screen];
-	sp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
+	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
 
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
-		InitSuperquadrics(MI_WIN_IS_WIREFRAME(mi), 0,
-			    MI_BATCHCOUNT(mi), MI_CYCLES(mi), spinspeed, sp);
-		ReshapeSuperquadrics(MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		InitSuperquadrics(MI_IS_WIREFRAME(mi), 0,
+				  MI_COUNT(mi), MI_CYCLES(mi), spinspeed, sp);
+		ReshapeSuperquadrics(MI_WIDTH(mi), MI_HEIGHT(mi));
 
 		DisplaySuperquadrics(sp);
 		glFinish();

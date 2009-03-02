@@ -11,7 +11,7 @@ static const char sccsid[] = "@(#)buildlwo.c	4.02 97/04/20 xlockmore";
  * objects created in NewTek's Lightwave 3D.  The objects must
  * first be converted to C source with my converter "lw2ogl".
  * If other people are interested in this, I will put up a
- * web page for it at http://www.early.com/~emackey/lw2ogl/
+ * web page for it at http://www.netaxs.com/~emackey/lw2ogl/
  *
  * by Ed Mackey, 4/19/97
  *

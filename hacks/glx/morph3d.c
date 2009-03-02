@@ -22,8 +22,8 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
  * other special, indirect and consequential damages.
  *
  * The original code for this mode was written by Marcelo Fernandes Vianna 
- * (me...) and was inspired on a WindowsNT(R)'s screen saver. It was written 
- * from scratch and it was not based on any other source code. 
+ * (me...) and was inspired on a WindowsNT(R)'s screen saver (Flower Box).
+ * It was written from scratch and it was not based on any other source code. 
  * 
  * Porting it to xlock (the final objective of this code since the moment I 
  * decided to create it) was possible by comparing the original Mesa's gear 
@@ -86,7 +86,7 @@ ModeSpecOpt morph3d_opts =
 ModStruct   morph3d_description =
 {"morph3d", "init_morph3d", "draw_morph3d", "release_morph3d",
  "draw_morph3d", "change_morph3d", NULL, &morph3d_opts,
- 1000, 0, 1, 1, 1.0, "",
+ 1000, 0, 1, 1, 4, 1.0, "",
  "Shows GL morphing polyhedra", 0, NULL};
 
 #endif
@@ -285,7 +285,7 @@ static morph3dstruct *morph3d = NULL;
   GLfloat   AmpVr2=(Amp)/sqr((Edge)*cossec36_2);                                                                 \
                                                                                                                  \
   static    GLfloat x[6],y[6];                                                                                   \
-  static    arrayninit=1;                                                                                        \
+  static    int arrayninit=1;                                                                                    \
                                                                                                                  \
   if (arrayninit) {                                                                                              \
     for(Fi=0;Fi<6;Fi++) {                                                                                        \
@@ -768,7 +768,7 @@ pinit(ModeInfo * mi)
 			mp->Magnitude = 2.5;
 			break;
 	}
-	if (MI_WIN_IS_MONO(mi)) {
+	if (MI_IS_MONO(mi)) {
 		int         loop;
 
 		for (loop = 0; loop < 20; loop++)
@@ -793,8 +793,8 @@ init_morph3d(ModeInfo * mi)
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
-		mp->object = MI_BATCHCOUNT(mi);
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		mp->object = MI_COUNT(mi);
 		if (mp->object <= 0 || mp->object > 5)
 			mp->object = NRAND(5) + 1;
 		pinit(mi);
@@ -823,7 +823,7 @@ draw_morph3d(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-	if (!MI_WIN_IS_ICONIC(mi)) {
+	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);
 		glTranslatef(2.5 * mp->WindW / mp->WindH * sin(mp->step * 1.11), 2.5 * cos(mp->step * 1.25 * 1.11), 0);
 	} else {

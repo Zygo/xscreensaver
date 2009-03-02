@@ -301,8 +301,8 @@ struct screenhack_job {
 
 static struct screenhack_job *jobs = 0;
 
-#ifdef DEBUG
-static void
+/* for debugging -- nothing calls this, but it's useful to invoke from gdb. */
+void
 show_job_list (void)
 {
   struct screenhack_job *job;
@@ -317,7 +317,6 @@ show_job_list (void)
 	     job->name);
   fprintf (stderr, "\n");
 }
-#endif
 
 
 static void clean_job_list (void);
@@ -533,11 +532,9 @@ sigchld_handler (int sig)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
 
-#ifdef DEBUG
   if (si->prefs.debug_p)
     fprintf(stderr, "%s: got SIGCHLD%s\n", progname,
 	    (block_sigchld_handler ? " (blocked)" : ""));
-#endif /* DEBUG */
 
   if (block_sigchld_handler < 0)
     abort();
@@ -564,14 +561,16 @@ await_dying_children (saver_info *si)
 
       errno = 0;
       kid = waitpid (-1, &wait_status, WNOHANG|WUNTRACED);
-#ifdef DEBUG
+
       if (si->prefs.debug_p)
-	if (kid < 0 && errno)
-	  fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", progname,
-		   (long) kid, errno);
-      else
-	  fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", progname, (long) kid);
-#endif /* DEBUG */
+	{
+	  if (kid < 0 && errno)
+	    fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", progname,
+		     (long) kid, errno);
+	  else
+	    fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", progname,
+		     (long) kid);
+	}
 
       /* 0 means no more children to reap.
 	 -1 means error -- except "interrupted system call" isn't a "real"

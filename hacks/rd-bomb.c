@@ -371,7 +371,6 @@ screenhack (Display *dpy, Window win)
   char *p;
   int vdepth;
   int npix;
-  int *m = 0;
 #ifdef HAVE_XSHM_EXTENSION
   int use_shm = 0;
   XShmSegmentInfo shm_info;

@@ -108,8 +108,8 @@ static int  noants;
 
 static XrmOptionDescRec opts[] =
 {
-   {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "on"},
-  {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "off"},
+  {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "on"},
+ {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "off"},
 	{"-noants", ".moebius.noants", XrmoptionNoArg, (caddr_t) "on"},
 	{"+noants", ".moebius.noants", XrmoptionNoArg, (caddr_t) "off"}
 };
@@ -125,13 +125,13 @@ static OptionStruct desc[] =
 };
 
 ModeSpecOpt moebius_opts =
-{4, opts, 2, vars, desc};
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   moebius_description =
 {"moebius", "init_moebius", "draw_moebius", "release_moebius",
  "draw_moebius", "change_moebius", NULL, &moebius_opts,
- 1000, 1, 1, 1, 1.0, "",
+ 1000, 1, 1, 1, 4, 1.0, "",
  "Shows Moebius Strip II, an Escher-like GL scene with ants", 0, NULL};
 
 #endif
@@ -424,7 +424,7 @@ draw_moebius_strip(ModeInfo * mi)
 	GLfloat     cPhi, sPhi;
 	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
 	int         i, j;
-	int         mono = MI_WIN_IS_MONO(mi);
+	int         mono = MI_IS_MONO(mi);
 
 	float       Cx, Cy, Cz;
 
@@ -624,7 +624,7 @@ init_moebius(ModeInfo * mi)
 
 	if (moebius == NULL) {
 		if ((moebius = (moebiusstruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (moebiusstruct))) == NULL)
+					    sizeof (moebiusstruct))) == NULL)
 			return;
 	}
 	mp = &moebius[screen];
@@ -633,13 +633,13 @@ init_moebius(ModeInfo * mi)
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(3);
 		pinit();
 	} else {
-    MI_CLEARWINDOW(mi);
+		MI_CLEARWINDOW(mi);
 	}
 }
 
@@ -662,13 +662,13 @@ draw_moebius(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-	if (!MI_WIN_IS_ICONIC(mi)) {
+	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);
 	} else {
 		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
 	}
 
-  /* moebius */
+	/* moebius */
 	glRotatef(mp->step * 100, 1, 0, 0);
 	glRotatef(mp->step * 95, 0, 1, 0);
 	glRotatef(mp->step * 90, 0, 0, 1);

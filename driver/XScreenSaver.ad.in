@@ -4,7 +4,7 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 2.16
+!                              version 2.17
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://people.netscape.com/jwz/xscreensaver/
@@ -79,7 +79,7 @@
 		imsmap -root						\n\
 		slidescreen -root					\n\
 		decayscreen -root					\n\
-		puzzle -root						\n\
+		jigsaw -root						\n\
 		blitspin -root -grab					\n\
 		slip -root						\n\
 		hypercube -root						\n\
@@ -127,6 +127,7 @@
 		xjack -root						\n\
 		xlyap -root -random					\n\
 		cynosure -root						\n\
+		flow -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -154,7 +155,8 @@
 @GL_KLUDGE_2@	stairs -root					  	\n\
 @GL_KLUDGE_2@	pipes -root					  	\n\
 @GL_KLUDGE_2@	sproingies -root				  	\n\
-@GL_KLUDGE_2@	rubik -root					  	\n
+@GL_KLUDGE_2@	rubik -root					  	\n\
+@GL_KLUDGE_2@	atlantis -root					  	\n
  
 
 ! A few of the hacks require OpenGL, and will only be built if you have it.
@@ -232,7 +234,6 @@
 !
 !     xscreensaver-sgigl /usr/demos/bin/ep -S
 !     xscreensaver-sgigl /usr/demos/bin/bongo
-!     xscreensaver-sgigl /usr/demos/bin/atlantis
 !
 ! On Irix 6.3, things have moved, so you need to do it like this:
 !
@@ -240,10 +241,7 @@
 !
 ! You can also use the "ant" demo, but first you need to wrap a shell script
 ! around it that cds to its home directory, so that it can find its files;
-! and also pass it the -S argument, to prevent it from forking.  The "atlantis"
-! hack *almost* works; but since it doesn't have an option to prevent it from
-! forking, xscreensaver is unable to kill it, so when you come in the next
-! morning, you'll find dozens of "atlantis" processes still running.
+! and also pass it the -S argument, to prevent it from forking.
 !
 !
 ! Also, since these actually end up mapping their own windows instead of

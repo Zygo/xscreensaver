@@ -56,7 +56,7 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
  * mapping shuld work on PseudoColor, DirectColor, TrueColor using Mesa. Mono
  * is not officially supported for both OpenGL and Mesa, but seems to not crash
  * Mesa.
-z *
+ *
  * In real OpenGL, PseudoColor DO NOT support texture map (as far as I know).
  */
 
@@ -88,7 +88,7 @@ ModeSpecOpt stairs_opts =
 ModStruct   stairs_description =
 {"stairs", "init_stairs", "draw_stairs", "release_stairs",
  "draw_stairs", "change_stairs", NULL, &stairs_opts,
- 1000, 1, 1, 1, 1.0, "",
+ 1000, 1, 1, 1, 4, 1.0, "",
  "Shows Infinite Stairs, an Escher-like scene", 0, NULL};
 
 #endif
@@ -108,8 +108,8 @@ typedef struct {
 	GLint       WindH, WindW;
 	GLfloat     step;
 	Bool        direction;
-  int         AreObjectsDefined[1];
-	int     sphere_position;
+	int         AreObjectsDefined[1];
+	int         sphere_position;
 	GLXContext *glx_context;
 } stairsstruct;
 
@@ -149,6 +149,7 @@ static float MaterialGray6[] =
 {0.6, 0.6, 0.6, 1.0};
 static float MaterialGray8[] =
 {0.8, 0.8, 0.8, 1.0};
+
 #endif
 static float MaterialYellow[] =
 {0.7, 0.7, 0.0, 1.0};
@@ -157,42 +158,43 @@ static float MaterialWhite[] =
 
 static float positions[] =
 {
-  -2.5, 4.0, 0.0, /* First one is FUDGED :) */
-  -3.0, 3.25, 1.0,
-  -3.0, 4.4, 1.5,
-  -3.0, 3.05, 2.0,
-  -3.0, 4.2, 2.5,
+	-2.5, 4.0, 0.0,		/* First one is FUDGED :) */
+	-3.0, 3.25, 1.0,
+	-3.0, 4.4, 1.5,
+	-3.0, 3.05, 2.0,
+	-3.0, 4.2, 2.5,
 
-  -3.0, 2.85, 3.0,
-  -2.5, 4.0, 3.0,
-  -2.0, 2.75, 3.0,
-  -1.5, 3.9, 3.0,
-  -1.0, 2.65, 3.0,
-  -0.5, 3.8, 3.0,
-  0.0, 2.55, 3.0,
-  0.5, 3.7, 3.0,
-  1.0, 2.45, 3.0,
-  1.5, 3.6, 3.0,
-  2.0, 2.35, 3.0,
+	-3.0, 2.85, 3.0,
+	-2.5, 4.0, 3.0,
+	-2.0, 2.75, 3.0,
+	-1.5, 3.9, 3.0,
+	-1.0, 2.65, 3.0,
+	-0.5, 3.8, 3.0,
+	0.0, 2.55, 3.0,
+	0.5, 3.7, 3.0,
+	1.0, 2.45, 3.0,
+	1.5, 3.6, 3.0,
+	2.0, 2.35, 3.0,
 
-  2.0, 3.5, 2.5,
-  2.0, 2.25, 2.0,
-  2.0, 3.4, 1.5,
-  2.0, 2.15, 1.0,
-  2.0, 3.3, 0.5,
-  2.0, 2.05, 0.0,
-  2.0, 3.2, -0.5,
-  2.0, 1.95, -1.0,
-  2.0, 3.1, -1.5,
-  2.0, 1.85, -2.0,
+	2.0, 3.5, 2.5,
+	2.0, 2.25, 2.0,
+	2.0, 3.4, 1.5,
+	2.0, 2.15, 1.0,
+	2.0, 3.3, 0.5,
+	2.0, 2.05, 0.0,
+	2.0, 3.2, -0.5,
+	2.0, 1.95, -1.0,
+	2.0, 3.1, -1.5,
+	2.0, 1.85, -2.0,
 
-  1.5, 2.9, -2.0,
-  1.0, 1.65, -2.0,
-  0.5, 2.7, -2.0,
-  0.0, 1.55, -2.0,
-  -0.5, 2.5, -2.0,
-  -1.0, 1.45, -2.0,
+	1.5, 2.9, -2.0,
+	1.0, 1.65, -2.0,
+	0.5, 2.7, -2.0,
+	0.0, 1.55, -2.0,
+	-0.5, 2.5, -2.0,
+	-1.0, 1.45, -2.0,
 };
+
 #define NPOSITIONS ((sizeof positions) / (sizeof positions[0]))
 
 static stairsstruct *stairs = NULL;
@@ -216,120 +218,114 @@ mySphere(float radius)
 }
 
 static void
-draw_block(stairsstruct * sp, GLfloat width, GLfloat height, GLfloat thickness)
+draw_block(GLfloat width, GLfloat height, GLfloat thickness)
 {
-		glBegin(GL_QUADS);
-		glNormal3f(0, 0, 1);
-		glTexCoord2f(0, 0);
-		glVertex3f(-width, -height, thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(width, -height, thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(width, height, thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(-width, height, thickness);
-		glNormal3f(0, 0, -1);
-		glTexCoord2f(0, 0);
-		glVertex3f(-width, height, -thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(width, height, -thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(width, -height, -thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(-width, -height, -thickness);
-		glNormal3f(0, 1, 0);
-		glTexCoord2f(0, 0);
-		glVertex3f(-width, height, thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(width, height, thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(width, height, -thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(-width, height, -thickness);
-		glNormal3f(0, -1, 0);
-		glTexCoord2f(0, 0);
-		glVertex3f(-width, -height, -thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(width, -height, -thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(width, -height, thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(-width, -height, thickness);
-		glNormal3f(1, 0, 0);
-		glTexCoord2f(0, 0);
-		glVertex3f(width, -height, thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(width, -height, -thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(width, height, -thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(width, height, thickness);
-		glNormal3f(-1, 0, 0);
-		glTexCoord2f(0, 0);
-		glVertex3f(-width, height, thickness);
-		glTexCoord2f(1, 0);
-		glVertex3f(-width, height, -thickness);
-		glTexCoord2f(1, 1);
-		glVertex3f(-width, -height, -thickness);
-		glTexCoord2f(0, 1);
-		glVertex3f(-width, -height, thickness);
-		glEnd();
+	glBegin(GL_QUADS);
+	glNormal3f(0, 0, 1);
+	glTexCoord2f(0, 0);
+	glVertex3f(-width, -height, thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(width, -height, thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(width, height, thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(-width, height, thickness);
+	glNormal3f(0, 0, -1);
+	glTexCoord2f(0, 0);
+	glVertex3f(-width, height, -thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(width, height, -thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(width, -height, -thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(-width, -height, -thickness);
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(0, 0);
+	glVertex3f(-width, height, thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(width, height, thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(width, height, -thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(-width, height, -thickness);
+	glNormal3f(0, -1, 0);
+	glTexCoord2f(0, 0);
+	glVertex3f(-width, -height, -thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(width, -height, -thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(width, -height, thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(-width, -height, thickness);
+	glNormal3f(1, 0, 0);
+	glTexCoord2f(0, 0);
+	glVertex3f(width, -height, thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(width, -height, -thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(width, height, -thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(width, height, thickness);
+	glNormal3f(-1, 0, 0);
+	glTexCoord2f(0, 0);
+	glVertex3f(-width, height, thickness);
+	glTexCoord2f(1, 0);
+	glVertex3f(-width, height, -thickness);
+	glTexCoord2f(1, 1);
+	glVertex3f(-width, -height, -thickness);
+	glTexCoord2f(0, 1);
+	glVertex3f(-width, -height, thickness);
+	glEnd();
 }
 
 static void
-draw_degree(stairsstruct * sp, GLfloat w, GLfloat h , GLfloat t)
-{
-  draw_block(sp, w, h, t);
-}
-
-static void
-draw_stairs_internal(ModeInfo *mi)
+draw_stairs_internal(ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
-  GLfloat X;
-  
-  glPushMatrix();
-  glPushMatrix();
-  glTranslatef(-3.0, 0.1, 2.0);
-  for (X=0; X< 2; X++) {
-    draw_degree(sp, 0.5, 2.7+0.1*X, 0.5);
-    glTranslatef( 0.0, 0.1,-1.0);
-  }
-	glPopMatrix();
-  glTranslatef(-3.0, 0.0, 3.0);
-  glPushMatrix();
+	GLfloat     X;
 
-  for (X=0; X< 6; X++) {
-    draw_degree(sp, 0.5, 2.6-0.1*X, 0.5);
-    glTranslatef( 1.0,-0.1, 0.0);
-  }
-  glTranslatef(-1.0,-0.9,-1.0);
-  for (X=0; X< 5; X++) {
-    draw_degree(sp, 0.5, 3.0-0.1*X, 0.5);
-    glTranslatef( 0.0, 0.0,-1.0);
-  }
-  glTranslatef(-1.0,-1.1, 1.0);
-  for (X=0; X< 3; X++) {
-    draw_degree(sp, 0.5, 3.5-0.1*X, 0.5);
-    glTranslatef(-1.0,-0.1, 0.0);
-  }
+	glPushMatrix();
+	glPushMatrix();
+	glTranslatef(-3.0, 0.1, 2.0);
+	for (X = 0; X < 2; X++) {
+		draw_block(0.5, 2.7 + 0.1 * X, 0.5);
+		glTranslatef(0.0, 0.1, -1.0);
+	}
+	glPopMatrix();
+	glTranslatef(-3.0, 0.0, 3.0);
+	glPushMatrix();
+
+	for (X = 0; X < 6; X++) {
+		draw_block(0.5, 2.6 - 0.1 * X, 0.5);
+		glTranslatef(1.0, -0.1, 0.0);
+	}
+	glTranslatef(-1.0, -0.9, -1.0);
+	for (X = 0; X < 5; X++) {
+		draw_block(0.5, 3.0 - 0.1 * X, 0.5);
+		glTranslatef(0.0, 0.0, -1.0);
+	}
+	glTranslatef(-1.0, -1.1, 1.0);
+	for (X = 0; X < 3; X++) {
+		draw_block(0.5, 3.5 - 0.1 * X, 0.5);
+		glTranslatef(-1.0, -0.1, 0.0);
+	}
 	glPopMatrix();
 	glPopMatrix();
 
-  glPushMatrix();
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
+	glPushMatrix();
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
 
-  glTranslatef((GLfloat) positions[sp->sphere_position],
-       (GLfloat) positions[sp->sphere_position + 1],
-       (GLfloat) positions[sp->sphere_position + 2]);
-  if (sp->sphere_position == 0) /* FUDGE soo its not so obvious */
-     mySphere(0.48);
-   else
-     mySphere(0.5);
-  glPopMatrix();
-  sp->sphere_position += 3;
-  if (sp->sphere_position >= NPOSITIONS)
-    sp->sphere_position = 0;
+	glTranslatef((GLfloat) positions[sp->sphere_position],
+		     (GLfloat) positions[sp->sphere_position + 1],
+		     (GLfloat) positions[sp->sphere_position + 2]);
+	if (sp->sphere_position == 0)	/* FUDGE soo its not so obvious */
+		mySphere(0.48);
+	else
+		mySphere(0.5);
+	glPopMatrix();
+	sp->sphere_position += 3;
+	if (sp->sphere_position >= NPOSITIONS)
+		sp->sphere_position = 0;
 }
 
 static void
@@ -355,10 +351,8 @@ reshape(ModeInfo * mi, int width, int height)
 }
 
 static void
-pinit(ModeInfo * mi)
+pinit(void)
 {
-/*	stairsstruct *sp = &stairs[MI_SCREEN(mi)];*/
-
 	glClearDepth(1.0);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -377,7 +371,7 @@ pinit(ModeInfo * mi)
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialWhite);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialWhite);
 	glShadeModel(GL_FLAT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -409,18 +403,18 @@ init_stairs(ModeInfo * mi)
 	}
 	sp = &stairs[screen];
 	sp->step = 0.0;
-  sp->direction = LRAND() & 1;
+	sp->direction = LRAND() & 1;
 	sp->sphere_position = NRAND(NPOSITIONS / 3) * 3;
 
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(1);
-		pinit(mi);
+		pinit();
 	} else {
-    MI_CLEARWINDOW(mi);
+		MI_CLEARWINDOW(mi);
 	}
 }
 
@@ -443,20 +437,20 @@ draw_stairs(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-	if (!MI_WIN_IS_ICONIC(mi)) {
+	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * sp->WindH / sp->WindW, Scale4Window, Scale4Window);
 	} else {
 		glScalef(Scale4Iconic * sp->WindH / sp->WindW, Scale4Iconic, Scale4Iconic);
 	}
 
 	glRotatef(44.5, 1, 0, 0);
-  glRotatef(50 + ((sp->direction) ? 1 : -1 ) *
-     ((sp->step * 100 > 120) ? sp->step * 100 - 120 : 0), 0, 1, 0);
-  if (sp->step * 100 >= 360 + 120) {  /* stop showing secrets */
-    sp->step = 0;
-    sp->direction = LRAND() & 1;
-  }
-  draw_stairs_internal(mi);
+	glRotatef(50 + ((sp->direction) ? 1 : -1) *
+	       ((sp->step * 100 > 120) ? sp->step * 100 - 120 : 0), 0, 1, 0);
+	if (sp->step * 100 >= 360 + 120) {	/* stop showing secrets */
+		sp->step = 0;
+		sp->direction = LRAND() & 1;
+	}
+	draw_stairs_internal(mi);
 
 	glPopMatrix();
 
@@ -476,7 +470,7 @@ change_stairs(ModeInfo * mi)
 		return;
 
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
-	pinit(mi);
+	pinit();
 }
 
 void

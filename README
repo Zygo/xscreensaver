@@ -73,7 +73,7 @@ window, which are pointed at by the screensaver's default resource settings.
    hypercube	- 2d projection of a hypercube rotating on all four axes.
    slidescreen	- Divides the screen into a grid and plays a 16-puzzle on it.
    decayscreen	- A melting effect.
-   puzzle	- Turns the screen into a jigsaw puzzle and shuffles it.
+   jigsaw	- Turns the screen into a jigsaw puzzle and shuffles it.
    halo		- Random circular patterns.
    pyro		- Fireworks.  Looks a lot like the version in xlock.
    hopalong	- Fractals.  I snarfed this code from xlock.
@@ -122,6 +122,7 @@ window, which are pointed at by the screensaver's default resource settings.
    ant		- A cellular automaton.
    xjack	- Simulates a schizophrenic typist.
    xlyap	- Calculates and displays Lyapunov exponents.
+   flow		- More strange attractors.
    gears	- Draws interlocking rotating gears (GLX only.)
    morph3d	- Draws shiny shape-changing 3d forms (GLX only.)
    superquadrics - More shiny shape-changing 3d forms (GLX only.)
@@ -131,6 +132,7 @@ window, which are pointed at by the screensaver's default resource settings.
    stairs	- Draws Escher's infinite staircase (GLX only.)
    cage		- Draws Escher's impossible cage (GLX only.)
    moebius	- Draws Escher's Moebius Strip II (GLX only.)
+   atlantis	- Draws swimming mammals (GLX only.)
 
 All of these will pop up their own window unless given that -root option.
 See their man pages for more details.
@@ -163,13 +165,22 @@ http://people.netscape.com/jwz/xscreensaver/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 2.16:	Added a -window-id argument to most hacks, so that they
+			can draw on arbitrary externally-provided windows.
+			Synched with xlockmore 4.11a01.
+			Added `flow' hack.
+			Added `atlantis' GL hack.
+			Renamed `puzzle' hack to `jigsaw', since xlock already
+			had a different mode called `puzzle'.
+			Made it self-configure properly when Motif 2.1.0 is
+			being used (requires -lXp now, sigh...)
 Changes since 2.15:	Made `flag' able to do XPM images.
 			New look for the xscreensaver logo (`xroger').
 			Fixed compilation error on Suns with adjunct passwords.
 			Got multi-architecture builds working again.
 			Some configure tweaks for building on HPUX and Solaris.
 			Fixed bug in decayscreen.
-			Fixed typo i passwd.c.
+			Fixed typo in passwd.c.
 			Made `cynosure' not die when colormap is full.
 Changes since 2.14:	Added `cynosure' hack.
 			Added `moire2' hack.

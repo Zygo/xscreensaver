@@ -16,10 +16,10 @@
 
 #include <X11/Intrinsic.h>
 
-#ifdef DEBUG
-# include <X11/IntrinsicP.h>	/* just to get debug info for gdb... */
-# include <X11/ShellP.h>
-#endif
+/* We don't actually use any widget internals, but these are included
+   so that gdb will have debug info for the widgets... */
+#include <X11/IntrinsicP.h>
+#include <X11/ShellP.h>
 
 #ifdef HAVE_MOTIF
 # include <Xm/Xm.h>
@@ -492,13 +492,12 @@ pop_up_dialog_box (Widget dialog, Widget form, int where)
   XtSetArg (av [ac], XtNheight, &h); ac++;
   XtGetValues (form, av, ac);
 
-#ifdef DEBUG
+  /* for debugging -- don't ask */
   if (where >= 69)
     {
       where -= 69;
       sw = (sw * 7) / 12;
     }
-#endif
 
   switch (where)
     {
@@ -627,9 +626,8 @@ make_screenhack_dialog (saver_info *si)
 #endif /* HAVE_ATHENA */
 
   pop_up_dialog_box(demo_dialog, demo_form,
-#ifdef DEBUG
+		    /* for debugging -- don't ask */
 		    (si->prefs.debug_p ? 69 : 0) +
-#endif
 		    0);
 }
 
@@ -744,21 +742,20 @@ res_done_cb (Widget button, XtPointer client_data, XtPointer call_data)
   p->unfade_p = res.unfade;
   p->lock_p = res.lock_p;
 
-#ifdef DEBUG
   if (p->debug_p && p->verbose_p)
     fprintf (stderr, "%s: parameters changed:\n\
 	timeout: %d\n\tcycle:   %d\n\tlock:    %d\n\tpasswd:  %d\n\
 	fade:    %d\n\tfade:    %d\n\tverbose: %d\n\tinstall: %d\n\
 	fade:    %d\n\tunfade:  %d\n\tlock:    %d\n",
 	     progname, p->timeout, p->cycle, p->lock_timeout,
-# ifdef NO_LOCKING
+#ifdef NO_LOCKING
 	     0,
-# else
+#else
 	     p->passwd_timeout,
-# endif
+#endif
 	     p->fade_seconds, p->fade_ticks, p->verbose_p, p->install_cmap_p,
 	     p->fade_p, p->unfade_p, p->lock_p);
-#endif /* DEBUG */
+
 
 #if defined(HAVE_MIT_SAVER_EXTENSION) || defined(HAVE_SGI_SAVER_EXTENSION)
   if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
@@ -912,9 +909,8 @@ pop_resources_dialog (saver_info *si)
   set_toggle_button_state (lock_toggle, res.lock_p);
 
   pop_up_dialog_box (resources_dialog, resources_form,
-#ifdef DEBUG
+		     /* for debugging -- don't ask */
 		     (si->prefs.debug_p ? 69 : 0) +
-#endif
 		     1);
 }
 

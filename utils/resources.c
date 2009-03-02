@@ -84,12 +84,28 @@ get_integer_resource (char *res_name, char *res_class)
 {
   int val;
   char c, *s = get_string_resource (res_name, res_class);
+  char *ss = s;
   if (!s) return 0;
-  if (1 == sscanf (s, " %d %c", &val, &c))
+
+  while (*ss && *ss <= ' ') ss++;			/* skip whitespace */
+
+  if (ss[0] == '0' && (ss[1] == 'x' || ss[1] == 'X'))	/* 0x: parse as hex */
     {
-      free (s);
-      return val;
+      if (1 == sscanf (ss+2, "%x %c", &val, &c))
+	{
+	  free (s);
+	  return val;
+	}
     }
+  else							/* else parse as dec */
+    {
+      if (1 == sscanf (ss, "%d %c", &val, &c))
+	{
+	  free (s);
+	  return val;
+	}
+    }
+
   fprintf (stderr, "%s: %s must be an integer, not %s.\n",
 	   progname, res_name, s);
   free (s);

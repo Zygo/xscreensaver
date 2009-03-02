@@ -17,6 +17,7 @@ $ drift		:== $'mydir'drift
 $ fadeplot	:== $'mydir'fadeplot
 $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
+$ flow		:== $'mydir'flow
 $ forest	:== $'mydir'forest
 $ galaxy	:== $'mydir'galaxy
 $ goop		:== $'mydir'goop
@@ -28,6 +29,7 @@ $ hopalong	:== $'mydir'hopalong
 $ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
+$ jigsaw	:== $'mydir'jigsaw
 $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
 $ laser		:== $'mydir'laser
@@ -43,7 +45,6 @@ $ munch		:== $'mydir'munch
 $ noseguy	:== $'mydir'noseguy
 $ pedal		:== $'mydir'pedal
 $ penrose	:== $'mydir'penrose
-$ puzzle	:== $'mydir'puzzle
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
 $ rd-bomb	:== $'mydir'rd-bomb

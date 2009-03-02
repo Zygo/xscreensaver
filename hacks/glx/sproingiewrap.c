@@ -70,14 +70,14 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-ModeSpecOpt sproingies_opts = {
-  0, NULL, 0, NULL, NULL };
+ModeSpecOpt sproingies_opts =
+{0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
 ModStruct   sproingies_description =
 {"sproingies", "init_sproingies", "draw_sproingies", "release_sproingies",
  "refresh_sproingies", "init_sproingies", NULL, &sproingies_opts,
- 1000, 5, 0, 400, 1.0, "",
+ 1000, 5, 0, 400, 4, 1.0, "",
  "Shows Sproingies!  Nontoxic.  Safe for pets and small children", 0, NULL};
 
 #endif
@@ -130,7 +130,7 @@ init_sproingies(ModeInfo * mi)
 	int         screen = MI_SCREEN(mi);
 
 	int         cycles = MI_CYCLES(mi);
-	int         batchcount = MI_BATCHCOUNT(mi);
+	int         count = MI_COUNT(mi);
 	int         size = MI_SIZE(mi);
 
 	sproingiesstruct *sp;
@@ -143,17 +143,17 @@ init_sproingies(ModeInfo * mi)
 	}
 	sp = &sproingies[screen];
 
-	sp->mono = (MI_WIN_IS_MONO(mi) ? 1 : 0);
+	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
 	sp->window = window;
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
-		if ((cycles & 1) || MI_WIN_IS_WIREFRAME(mi))
+		if ((cycles & 1) || MI_IS_WIREFRAME(mi))
 			wfmode = 1;
 		grnd = (cycles >> 1);
 		if (grnd > 2)
 			grnd = 2;
 
-		mspr = batchcount;
+		mspr = count;
 		if (mspr > 100)
 			mspr = 100;
 
@@ -162,17 +162,17 @@ init_sproingies(ModeInfo * mi)
 
 		/* Viewport is specified size if size >= MINSIZE && size < screensize */
 		if (size == 0) {
-			w = MI_WIN_WIDTH(mi);
-			h = MI_WIN_HEIGHT(mi);
+			w = MI_WIDTH(mi);
+			h = MI_HEIGHT(mi);
 		} else if (size < MINSIZE) {
 			w = MINSIZE;
 			h = MINSIZE;
 		} else {
-			w = (size > MI_WIN_WIDTH(mi)) ? MI_WIN_WIDTH(mi) : size;
-			h = (size > MI_WIN_HEIGHT(mi)) ? MI_WIN_HEIGHT(mi) : size;
+			w = (size > MI_WIDTH(mi)) ? MI_WIDTH(mi) : size;
+			h = (size > MI_HEIGHT(mi)) ? MI_HEIGHT(mi) : size;
 		}
 
-		glViewport((MI_WIN_WIDTH(mi) - w) / 2, (MI_WIN_HEIGHT(mi) - h) / 2, w, h);
+		glViewport((MI_WIDTH(mi) - w) / 2, (MI_HEIGHT(mi) - h) / 2, w, h);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		gluPerspective(65.0, (GLfloat) w / (GLfloat) h, 0.1, 2000.0);	/* was 200000.0 */

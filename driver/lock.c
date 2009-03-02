@@ -597,9 +597,8 @@ pop_passwd_dialog (saver_info *si)
 			    passwd_form, 2);
 #else
   pop_up_dialog_box (passwd_dialog, passwd_form,
-#ifdef DEBUG
+		     /* for debugging -- don't ask */
 		     (si->prefs.debug_p ? 69 : 0) +
-#endif
 		     2);
   XtManageChild (passwd_form);
 #endif
@@ -619,14 +618,12 @@ pop_passwd_dialog (saver_info *si)
     roger(roger_label, 0, 0);
 #endif /* HAVE_ATHENA */
 
-#ifdef DEBUG
   if (!si->prefs.debug_p)
-#endif
-  XGrabServer (dpy);				/* ############ DANGER! */
+    XGrabServer (dpy);				/* ############ DANGER! */
 
   /* this call to ungrab used to be in main_loop() - see comment in
       xscreensaver.c around line 857. */
-  ungrab_keyboard_and_mouse (si->dpy);
+  ungrab_keyboard_and_mouse (si);
 
   while (passwd_state == pw_read)
     {

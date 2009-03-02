@@ -73,8 +73,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
 		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
-		  rotor.c ant.c xjack.c xlyap.c puzzle.c xscreensaver-sgigl.c \
-		  cynosure.c moire2.c 
+		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
+		  cynosure.c moire2.c flow.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -86,8 +86,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
 		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
-		  rotor.o ant.o xjack.o xlyap.o puzzle.o xscreensaver-sgigl.o \
-		  cynosure.o moire2.o
+		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
+		  cynosure.o moire2.o flow.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -96,7 +96,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
-		  ant xjack xlyap puzzle cynosure moire2
+		  ant xjack xlyap jigsaw cynosure moire2 flow
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -118,16 +118,16 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
-		  xjack.man xlyap.man puzzle.man
+		  xjack.man xlyap.man jigsaw.man
 STAR		= *
-EXTRAS		= README Makefile.in xlock.h .gdbinit \
+EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
 		  images/$(STAR).xbm \
 		  images/bubbles/$(STAR).pov \
 		  images/bubbles/$(STAR).xpm \
 		  images/noseguy/$(STAR).xbm \
 		  images/noseguy/$(STAR).xpm \
-		  images/puzzle/$(STAR).xbm  \
+		  images/jigsaw/$(STAR).xbm  \
 
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
@@ -416,8 +416,8 @@ xjack: $(HACK_OBJS) xjack.o
 xlyap: $(HACK_OBJS) xlyap.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) xlyap.o $(COL) $(HACK_LIBS)
 
-puzzle: $(HACK_OBJS) puzzle.o $(GRAB)
-	$(CC_HACK) -o $@ $(HACK_OBJS) puzzle.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+jigsaw: $(HACK_OBJS) jigsaw.o $(GRAB)
+	$(CC_HACK) -o $@ $(HACK_OBJS) jigsaw.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
 cynosure: $(HACK_OBJS) cynosure.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) cynosure.o $(COL) $(HACK_LIBS)
@@ -509,6 +509,9 @@ rotor:		rotor.o		$(XLOCK_OBJS)
 
 ant:		ant.o		$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+flow:		flow.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -1190,51 +1193,51 @@ xlyap.o: $(UTILS_SRC)/colors.h
 xlyap.o: $(UTILS_SRC)/grabscreen.h
 xlyap.o: $(UTILS_SRC)/visual.h
 xlyap.o: $(UTILS_SRC)/vroot.h
-puzzle.o: $(srcdir)/screenhack.h
-puzzle.o: ../config.h
-puzzle.o: $(UTILS_SRC)/yarandom.h
-puzzle.o: $(UTILS_SRC)/usleep.h
-puzzle.o: $(UTILS_SRC)/resources.h
-puzzle.o: $(UTILS_SRC)/hsv.h
-puzzle.o: $(UTILS_SRC)/colors.h
-puzzle.o: $(UTILS_SRC)/grabscreen.h
-puzzle.o: $(UTILS_SRC)/visual.h
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_n_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_ne_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_e_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_se_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_s_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_sw_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_w_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_nw_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_n_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_ne_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_e_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_se_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_s_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_sw_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_w_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_nw_h.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_n_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_ne_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_e_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_se_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_s_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_sw_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_w_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_a_nw_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_n_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_ne_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_e_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_se_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_s_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_sw_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_w_f.xbm
-puzzle.o: $(srcdir)/images/puzzle/puzzle_b_nw_f.xbm
+jigsaw.o: $(srcdir)/screenhack.h
+jigsaw.o: ../config.h
+jigsaw.o: $(UTILS_SRC)/yarandom.h
+jigsaw.o: $(UTILS_SRC)/usleep.h
+jigsaw.o: $(UTILS_SRC)/resources.h
+jigsaw.o: $(UTILS_SRC)/hsv.h
+jigsaw.o: $(UTILS_SRC)/colors.h
+jigsaw.o: $(UTILS_SRC)/grabscreen.h
+jigsaw.o: $(UTILS_SRC)/visual.h
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_n_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_ne_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_se_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_s_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_sw_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_w_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_nw_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_n_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_ne_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_e_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_se_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_s_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_sw_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_w_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_nw_h.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_n_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_ne_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_e_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_se_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_s_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_sw_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_w_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_a_nw_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_n_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_ne_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_e_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_se_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_s_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_sw_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_w_f.xbm
+jigsaw.o: $(srcdir)/images/jigsaw/jigsaw_b_nw_f.xbm
 xscreensaver-sgigl.o: $(UTILS_SRC)/vroot.h
 cynosure.o: $(srcdir)/screenhack.h
 cynosure.o: ../config.h
@@ -1254,4 +1257,16 @@ moire2.o: $(UTILS_SRC)/hsv.h
 moire2.o: $(UTILS_SRC)/colors.h
 moire2.o: $(UTILS_SRC)/grabscreen.h
 moire2.o: $(UTILS_SRC)/visual.h
+flow.o: $(srcdir)/xlockmore.h
+flow.o: ../config.h
+flow.o: $(srcdir)/xlockmoreI.h
+flow.o: $(srcdir)/screenhack.h
+flow.o: $(UTILS_SRC)/yarandom.h
+flow.o: $(UTILS_SRC)/usleep.h
+flow.o: $(UTILS_SRC)/resources.h
+flow.o: $(UTILS_SRC)/hsv.h
+flow.o: $(UTILS_SRC)/colors.h
+flow.o: $(UTILS_SRC)/grabscreen.h
+flow.o: $(UTILS_SRC)/visual.h
+flow.o: $(UTILS_SRC)/erase.h
 

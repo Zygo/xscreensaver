@@ -107,7 +107,7 @@ ModeSpecOpt cage_opts =
 ModStruct   cage_description =
 {"cage", "init_cage", "draw_cage", "release_cage",
  "draw_cage", "change_cage", NULL, &cage_opts,
- 1000, 1, 1, 1, 1.0, "",
+ 1000, 1, 1, 1, 1.0, 4, "",
  "Shows the Impossible Cage, an Escher-like GL scene", 0, NULL};
 
 #endif
@@ -338,7 +338,7 @@ pinit(void)
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 
-  /* cage */
+	/* cage */
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialWhite);
 	glShadeModel(GL_FLAT);
 	glDisable(GL_DEPTH_TEST);
@@ -366,7 +366,7 @@ init_cage(ModeInfo * mi)
 
 	if (cage == NULL) {
 		if ((cage = (cagestruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (cagestruct))) == NULL)
+					       sizeof (cagestruct))) == NULL)
 			return;
 	}
 	cp = &cage[screen];
@@ -374,13 +374,13 @@ init_cage(ModeInfo * mi)
 
 	if ((cp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(1);
 		pinit();
 	} else {
-    MI_CLEARWINDOW(mi);
+		MI_CLEARWINDOW(mi);
 	}
 }
 
@@ -403,13 +403,13 @@ draw_cage(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-	if (!MI_WIN_IS_ICONIC(mi)) {
+	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * cp->WindH / cp->WindW, Scale4Window, Scale4Window);
 	} else {
 		glScalef(Scale4Iconic * cp->WindH / cp->WindW, Scale4Iconic, Scale4Iconic);
 	}
 
-  /* cage */
+	/* cage */
 	glRotatef(cp->step * 100, 0, 0, 1);
 	glRotatef(25 + cos(cp->step * 5) * 6, 1, 0, 0);
 	glRotatef(204.5 - sin(cp->step * 5) * 8, 0, 1, 0);

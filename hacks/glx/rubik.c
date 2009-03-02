@@ -158,13 +158,13 @@ static OptionStruct desc[] =
 };
 
 ModeSpecOpt rubik_opts =
-{2, opts, 1, vars, desc};
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   rubik_description =
 {"rubik", "init_rubik", "draw_rubik", "release_rubik",
  "draw_rubik", "change_rubik", NULL, &rubik_opts,
- 1000, -30, 5, -6, 1.0, "",
+ 1000, -30, 5, -6, 4, 1.0, "",
  "Shows an auto-solving Rubik's Cube", 0, NULL};
 
 #endif
@@ -490,7 +490,7 @@ draw_cubit(ModeInfo * mi,
 	   int back, int front, int left, int right, int bottom, int top)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
-	int         mono = MI_WIN_IS_MONO(mi);
+	int         mono = MI_IS_MONO(mi);
 
 	if (!rp->AreObjectsDefined[ObjCubit]) {
 		glNewList(objects + ObjCubit, GL_COMPILE_AND_EXECUTE);
@@ -1558,7 +1558,7 @@ shuffle(ModeInfo * mi)
 			(void) fprintf(stderr,
 				       "Could not allocate memory for rubik row position info\n");
 	}
-	rp->storedmoves = MI_BATCHCOUNT(mi);
+	rp->storedmoves = MI_COUNT(mi);
 	if (rp->storedmoves < 0) {
 		if (rp->moves != NULL)
 			(void) free((void *) rp->moves);
@@ -1674,7 +1674,7 @@ init_rubik(ModeInfo * mi)
 
 	if ((rp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIN_WIDTH(mi), MI_WIN_HEIGHT(mi));
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		objects = glGenLists(1);
 		pinit(mi);
 	} else {
@@ -1701,7 +1701,7 @@ draw_rubik(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-	if (!MI_WIN_IS_ICONIC(mi)) {
+	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * rp->WindH / rp->WindW, Scale4Window, Scale4Window);
 	} else {
 		glScalef(Scale4Iconic * rp->WindH / rp->WindW, Scale4Iconic, Scale4Iconic);

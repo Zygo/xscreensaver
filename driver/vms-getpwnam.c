@@ -78,9 +78,6 @@ char *name;
    istatus = sys$getuai (0, 0, &VMSNAME, &ItemList, 0, 0, 0);
 
    if (!(istatus & 1)) {
-#ifdef DEBUG
-	lib$signal(istatus);
-#endif /* DEBUG */
 	fprintf (stderr, "getpwnam: unable to retrieve passwd entry for %s\n",
                  name);
 	fprintf (stderr, "getpwnam: vms error number is 0x%x\n", istatus);

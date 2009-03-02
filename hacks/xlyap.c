@@ -109,14 +109,22 @@ XrmOptionDescRec options [] = {
 
 #ifdef SIXTEEN_COLORS
 #define MAXPOINTS  128
+#ifdef BIGMEM
 #define MAXFRAMES 4
+#else
+#define MAXFRAMES 2
+#endif
 #define MAXCOLOR 16
 static int maxcolor=16, startcolor=0, color_offset=0, mincolindex=1;
 static int dwell=50, settle=25;
 static int width=128, height=128, xposition=128, yposition=128;
 #else
 #define MAXPOINTS  256
+#ifdef BIGMEM
 #define MAXFRAMES 8
+#else
+#define MAXFRAMES 2
+#endif
 #define MAXCOLOR 256
 static int maxcolor=256, startcolor=17, color_offset=96, mincolindex=33;
 static int dwell=100, settle=50;

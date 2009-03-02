@@ -18,6 +18,10 @@ if test -z "$GCC"; then
       AC_MSG_RESULT(AIX: adding -qlanglvl=ansi -qhalt=e)
       CC="$CC -qlanglvl=ansi -qhalt=e"
     ;;
+
+# NOTE:   for Digital, need to add -std1 to get ANSI, but I'm not sure
+#         yet what $host pattern we should be testing for...
+
     *)
       AC_MSG_RESULT(no idea)
     ;;
@@ -727,6 +731,19 @@ if test $have_lesstif = yes ; then
 			       # cross compiling?  Make an ass out of umption.
 			       [ac_cv_good_lesstif=yes])])
   good_lesstif=$ac_cv_good_lesstif
+fi
+
+
+# Some versions of Motif (2.1.0, at least) require -lXp, the "X Printing
+# Extension".   Why this extension isn't in -lXext with all the others,
+# I have no idea.
+#
+have_xp_ext=no
+if test $have_motif = yes ; then
+   have_xp_ext=no
+   AC_CHECK_X_LIB(Xp, XpQueryExtension,
+		  [have_xp_ext=yes; SAVER_LIBS="$SAVER_LIBS -lXp"],
+		  [], -lX11 -lXext -lm)
 fi
 
 

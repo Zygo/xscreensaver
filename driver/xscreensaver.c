@@ -108,7 +108,7 @@
  *       window exposed.
  *     - If you run your debugger under XEmacs, try M-ESC (x-grab-keyboard)
  *       to keep your emacs window alive even when xscreensaver has grabbed.
- *     - Go read the code related to -DDEBUG.
+ *     - Go read the code related to `debug_p'.
  *     - You probably can't set breakpoints in functions that are called on
  *       the other side of a call to fork() -- if your clients are dying 
  *       with signal 5, Trace/BPT Trap, you're losing in this way.
@@ -482,14 +482,12 @@ get_resources (saver_info *si)
 
   get_screenhacks (si);
 
-#ifdef DEBUG
   if (p->debug_p)
     {
       XSynchronize(si->dpy, True);
       p->verbose_p = True;
       p->initial_delay = 0;
     }
-#endif /* DEBUG */
 }
 
 
@@ -547,10 +545,10 @@ initialize_connection (saver_info *si, int argc, char **argv)
 
   if (argc == 2 && !strcmp (argv[1], "-help"))
     do_help (si);
-#ifdef DEBUG
+
   else if (argc == 2 && !strcmp (argv[1], "-debug"))
     si->prefs.debug_p = True;  /* no resource for this one, out of paranoia. */
-#endif /* DEBUG */
+
   else if (argc > 1)
     {
       fprintf (stderr, "%s: unknown option %s\n", progname, argv [1]);
@@ -863,7 +861,7 @@ main_loop (saver_info *si)
 		 just after the server is grabbed, closing this window
 		 entirely.
 	       */
-	      /* ungrab_keyboard_and_mouse (); */
+	      /* ungrab_keyboard_and_mouse (si); */
 
 	      {
 		saver_screen_info *ssi = si->default_screen;
@@ -881,7 +879,7 @@ main_loop (saver_info *si)
 		/* I think this grab is now redundant, but it shouldn't hurt.
 		 */
 		if (!si->demo_mode_p)
-		  grab_keyboard_and_mouse (si->dpy, ssi->screensaver_window,
+		  grab_keyboard_and_mouse (si, ssi->screensaver_window,
 					   ssi->cursor);
 	      }
 

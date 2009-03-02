@@ -55,15 +55,17 @@ UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/yarandom.o
 
-SRCS		= buildlwo.c cage.c gears.c moebius.c morph3d.c \
-		  pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c s1_4.c \
-		  s1_5.c s1_6.c s1_b.c sproingies.c sproingiewrap.c stairs.c \
-		  superquadrics.c xlock-gl.c
+SRCS		= atlantis.c buildlwo.c cage.c dolphin.c gears.c moebius.c \
+		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
+		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
+		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
+		  xlock-gl.c
 
-OBJS		= buildlwo.o cage.o gears.o moebius.o morph3d.o \
-		  pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o s1_4.o \
-		  s1_5.o s1_6.o s1_b.o sproingies.o sproingiewrap.o stairs.o \
-		  superquadrics.o xlock-gl.o
+OBJS		= atlantis.o buildlwo.o cage.o dolphin.o gears.o moebius.o \
+		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
+		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
+		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
+		  xlock-gl.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik
@@ -74,7 +76,7 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 
-HDRS		= buildlwo.h e_textures.h
+HDRS		= atlantis.h buildlwo.h e_textures.h
 MEN		= 
 EXTRAS		= README Makefile.in
 
@@ -194,6 +196,10 @@ screenhack-gl.o: $(HACK_SRC)/screenhack.c
 
 CC_HACK		= $(CC) $(LDFLAGS)
 
+atlantis:	atlantis.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) dolphin.o shark.o swim.o whale.o \
+				$(HACK_LIBS)
+
 cage:		cage.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
@@ -229,6 +235,18 @@ sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
 #
 # DO NOT DELETE: updated by make distdepend
 
+atlantis.o: $(HACK_SRC)/xlockmore.h
+atlantis.o: $(HACK_SRC)/../config.h
+atlantis.o: $(HACK_SRC)/xlockmoreI.h
+atlantis.o: $(HACK_SRC)/screenhack.h
+atlantis.o: $(UTILS_SRC)/yarandom.h
+atlantis.o: $(UTILS_SRC)/usleep.h
+atlantis.o: $(UTILS_SRC)/resources.h
+atlantis.o: $(UTILS_SRC)/hsv.h
+atlantis.o: $(UTILS_SRC)/colors.h
+atlantis.o: $(UTILS_SRC)/grabscreen.h
+atlantis.o: $(UTILS_SRC)/visual.h
+atlantis.o: $(srcdir)/atlantis.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: $(HACK_SRC)/xlockmore.h
 cage.o: $(HACK_SRC)/../config.h
@@ -242,6 +260,7 @@ cage.o: $(UTILS_SRC)/colors.h
 cage.o: $(UTILS_SRC)/grabscreen.h
 cage.o: $(UTILS_SRC)/visual.h
 cage.o: $(srcdir)/e_textures.h
+dolphin.o: $(srcdir)/atlantis.h
 gears.o: $(HACK_SRC)/xlockmore.h
 gears.o: $(HACK_SRC)/../config.h
 gears.o: $(HACK_SRC)/xlockmoreI.h
@@ -307,6 +326,7 @@ s1_4.o: $(srcdir)/buildlwo.h
 s1_5.o: $(srcdir)/buildlwo.h
 s1_6.o: $(srcdir)/buildlwo.h
 s1_b.o: $(srcdir)/buildlwo.h
+shark.o: $(srcdir)/atlantis.h
 sproingies.o: $(HACK_SRC)/xlockmoreI.h
 sproingies.o: $(HACK_SRC)/screenhack.h
 sproingies.o: $(HACK_SRC)/../config.h
@@ -352,6 +372,18 @@ superquadrics.o: $(UTILS_SRC)/hsv.h
 superquadrics.o: $(UTILS_SRC)/colors.h
 superquadrics.o: $(UTILS_SRC)/grabscreen.h
 superquadrics.o: $(UTILS_SRC)/visual.h
+swim.o: $(HACK_SRC)/xlockmoreI.h
+swim.o: $(HACK_SRC)/screenhack.h
+swim.o: $(HACK_SRC)/../config.h
+swim.o: $(UTILS_SRC)/yarandom.h
+swim.o: $(UTILS_SRC)/usleep.h
+swim.o: $(UTILS_SRC)/resources.h
+swim.o: $(UTILS_SRC)/hsv.h
+swim.o: $(UTILS_SRC)/colors.h
+swim.o: $(UTILS_SRC)/grabscreen.h
+swim.o: $(UTILS_SRC)/visual.h
+swim.o: $(srcdir)/atlantis.h
+whale.o: $(srcdir)/atlantis.h
 xlock-gl.o: $(HACK_SRC)/screenhack.h
 xlock-gl.o: $(HACK_SRC)/../config.h
 xlock-gl.o: $(UTILS_SRC)/yarandom.h

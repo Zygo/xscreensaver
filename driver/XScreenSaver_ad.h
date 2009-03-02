@@ -32,7 +32,7 @@
 		imsmap -root						\\n\
 		slidescreen -root					\\n\
 		decayscreen -root					\\n\
-		puzzle -root						\\n\
+		jigsaw -root						\\n\
 		blitspin -root -grab					\\n\
 		slip -root						\\n\
 		hypercube -root						\\n\
@@ -80,6 +80,7 @@
 		xjack -root						\\n\
 		xlyap -root -random					\\n\
 		cynosure -root						\\n\
+		flow -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -107,7 +108,8 @@
 		stairs -root					  	\\n\
 		pipes -root					  	\\n\
 		sproingies -root				  	\\n\
-		rubik -root					  	\\n",
+		rubik -root					  	\\n\
+		atlantis -root					  	\\n",
 " ",
 "*fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1",
 "*demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1",

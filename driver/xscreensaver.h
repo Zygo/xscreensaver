@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -268,8 +268,8 @@ extern void raise_window (saver_info *si,
 			    Bool dont_clear);
 extern void blank_screen (saver_info *si);
 extern void unblank_screen (saver_info *si);
-extern void grab_keyboard_and_mouse (Display *, Window, Cursor);
-extern void ungrab_keyboard_and_mouse (Display *dpy);
+extern void grab_keyboard_and_mouse (saver_info *si, Window, Cursor);
+extern void ungrab_keyboard_and_mouse (saver_info *si);
 
 /* =======================================================================
    locking
