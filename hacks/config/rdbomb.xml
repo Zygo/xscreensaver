@@ -10,7 +10,8 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="250000" default="20000"/>
+          low="0" high="250000" default="20000"
+          convert="invert"/>
 
   <number id="speed" type="slider" arg="-speed %"
            _label="Wander Speed" _low-label="Slow" _high-label="Fast"

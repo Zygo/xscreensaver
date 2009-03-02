@@ -20,7 +20,7 @@
  *    http://www.us.kernel.org/pub/linux/libs/pam/FAQ
  *
  *    PAM Application Developers' Guide:
- *    http://www.us.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam_appl.html
+ *    http://www.us.kernel.org/pub/linux/libs/pam/Linux-PAM-html/Linux-PAM_ADG.html
  *
  *    PAM Mailing list archives:
  *    http://www.linuxhq.com/lnxlists/linux-pam/
@@ -54,8 +54,11 @@ extern char *blurb(void);
 #include <security/pam_appl.h>
 #include <signal.h>
 #include <errno.h>
+#include <X11/Intrinsic.h>
 
 #include <sys/stat.h>
+
+#include "auth.h"
 
 extern sigset_t block_sigchld (void);
 extern void unblock_sigchld (void);
@@ -83,13 +86,9 @@ static int pam_conversation (int nmsgs,
                              struct pam_response **resp,
                              void *closure);
 
-struct pam_closure {
-  const char *user;
-  const char *typed_passwd;
-  Bool verbose_p;
-};
+void pam_try_unlock(saver_info *si, Bool verbose_p,
+	       Bool (*valid_p)(const char *typed_passwd, Bool verbose_p));
 
-Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
 
 #ifdef HAVE_PAM_FAIL_DELAY
@@ -170,45 +169,35 @@ Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
 static void *suns_pam_implementation_blows = 0;
 
 
-/* This can be called at any time, and says whether the typed password
-   belongs to either the logged in user (real uid, not effective); or
-   to root.
+/**
+ * This function is the PAM conversation driver. It conducts a full
+ * authentication round by invoking the GUI with various prompts.
  */
-Bool
-pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
+void
+pam_try_unlock(saver_info *si, Bool verbose_p,
+	       Bool (*valid_p)(const char *typed_passwd, Bool verbose_p))
 {
   const char *service = PAM_SERVICE_NAME;
   pam_handle_t *pamh = 0;
   int status = -1;
   struct pam_conv pc;
-  struct pam_closure c;
-  char *user = 0;
   sigset_t set;
   struct timespec timeout;
 
-  struct passwd *p = getpwuid (getuid ());
-  if (!p) return False;
-
-  user = strdup (p->pw_name);
-
-  c.user = user;
-  c.typed_passwd = typed_passwd;
-  c.verbose_p = verbose_p;
-
   pc.conv = &pam_conversation;
-  pc.appdata_ptr = (void *) &c;
+  pc.appdata_ptr = (void *) si;
 
   /* On SunOS 5.6, the `appdata_ptr' slot seems to be ignored, and the
      `closure' argument to pc.conv always comes in as random garbage. */
-  suns_pam_implementation_blows = (void *) &c;
+  suns_pam_implementation_blows = (void *) si;
 
 
   /* Initialize PAM.
    */
-  status = pam_start (service, c.user, &pc, &pamh);
+  status = pam_start (service, si->user, &pc, &pamh);
   if (verbose_p)
     fprintf (stderr, "%s: pam_start (\"%s\", \"%s\", ...) ==> %d (%s)\n",
-             blurb(), service, c.user,
+             blurb(), service, si->user,
              status, PAM_STRERROR (pamh, status));
   if (status != PAM_SUCCESS) goto DONE;
 
@@ -258,6 +247,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
              blurb(), status, PAM_STRERROR(pamh, status));
+
   if (status == PAM_SUCCESS)  /* Win! */
     {
       int status2;
@@ -272,6 +262,20 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
         fprintf (stderr, "%s:   pam_acct_mgmt (...) ==> %d (%s)\n",
                  blurb(), status2, PAM_STRERROR(pamh, status2));
 
+      /* HPUX for some reason likes to make PAM defines different from
+       * everyone else's. */
+#ifdef PAM_AUTHTOKEN_REQD
+      if (status2 == PAM_AUTHTOKEN_REQD)
+#else
+      if (status2 == PAM_NEW_AUTHTOK_REQD)
+#endif
+        {
+          status2 = pam_chauthtok (pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
+          if (verbose_p)
+            fprintf (stderr, "%s: pam_chauthtok (...) ==> %d (%s)\n",
+                     blurb(), status2, PAM_STRERROR(pamh, status2));
+        }
+
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
          failure and blunder along; it shouldn't matter.
@@ -285,36 +289,9 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
       if (verbose_p)
         fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
                  blurb(), status2, PAM_STRERROR(pamh, status2));
-      goto DONE;
     }
 
-#ifdef ALLOW_ROOT_PASSWD
-  /* If that didn't work, set the user to root, and try to authenticate again.
-   */
-  if (user) free (user);
-  user = strdup ("root");
-  c.user = user;
-  status = pam_set_item (pamh, PAM_USER, c.user);
-  if (verbose_p)
-    fprintf (stderr, "%s:   pam_set_item(p, PAM_USER, \"%s\") ==> %d (%s)\n",
-             blurb(), c.user, status, PAM_STRERROR(pamh, status));
-  if (status != PAM_SUCCESS) goto DONE;
-
-  PAM_NO_DELAY(pamh);
-
-  set = block_sigchld();
-  status = pam_authenticate (pamh, 0);
-  sigtimedwait(&set, NULL, &timeout);
-  unblock_sigchld();
-
-  if (verbose_p)
-    fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
-             blurb(), status, PAM_STRERROR(pamh, status));
-
-#endif /* ALLOW_ROOT_PASSWD */
-
  DONE:
-  if (user) free (user);
   if (pamh)
     {
       int status2 = pam_end (pamh, status);
@@ -324,7 +301,8 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
                  blurb(), status2,
                  (status2 == PAM_SUCCESS ? "Success" : "Failure"));
     }
-  return (status == PAM_SUCCESS ? True : False);
+
+  si->unlock_state = (status == PAM_SUCCESS) ? ul_success : ul_fail;
 }
 
 
@@ -393,83 +371,79 @@ pam_priv_init (int argc, char **argv, Bool verbose_p)
 }
 
 
-/* This is the function PAM calls to have a conversation with the user.
-   Really, this function should be the thing that pops up dialog boxes
-   as needed, and prompts for various strings.
-
-   But, for now, xscreensaver uses its normal password-prompting dialog
-   first, and then this function simply returns the result that has been
-   typed.
-
-   This means that if PAM was using a retina scanner for auth, xscreensaver
-   would prompt for a password; then pam_conversation() would be called
-   with a string like "Please look into the retina scanner".  The user
-   would never see this string, and the prompted-for password would be
-   ignored.
- */
 static int
 pam_conversation (int nmsgs,
-                  const struct pam_message **msg,
-                  struct pam_response **resp,
-                  void *closure)
+		  const struct pam_message **msg,
+		  struct pam_response **resp,
+		  void *vsaver_info)
 {
-  int replies = 0;
-  struct pam_response *reply = 0;
-  struct pam_closure *c = (struct pam_closure *) closure;
+  int i, ret = -1;
+  struct auth_message *messages = 0;
+  struct auth_response *authresp = 0;
+  struct pam_response *pam_responses;
+  saver_info *si = (saver_info *) vsaver_info;
 
   /* On SunOS 5.6, the `closure' argument always comes in as random garbage. */
-  c = (struct pam_closure *) suns_pam_implementation_blows;
+  si = (saver_info *) suns_pam_implementation_blows;
 
+  /* Converting the PAM prompts into the XScreenSaver native format.
+   * It was a design goal to collapse (INFO,PROMPT) pairs from PAM
+   * into a single call to the unlock_cb function. The unlock_cb function
+   * does that, but only if it is passed several prompts at a time. Most PAM
+   * modules only send a single prompt at a time, but because there is no way
+   * of telling whether there will be more prompts to follow, we can only ever
+   * pass along whatever was passed in here.
+   */
 
-  reply = (struct pam_response *) calloc (nmsgs, sizeof (*reply));
-  if (!reply) return PAM_CONV_ERR;
-	
-  for (replies = 0; replies < nmsgs; replies++)
+  messages = calloc(nmsgs, sizeof(struct auth_message));
+  pam_responses = calloc(nmsgs, sizeof(*pam_responses));
+  
+  if (!pam_responses || !messages)
+    goto end;
+
+  for (i = 0; i < nmsgs; ++i)
     {
-      switch (msg[replies]->msg_style)
-        {
-        case PAM_PROMPT_ECHO_ON:
-          reply[replies].resp_retcode = PAM_SUCCESS;
-          reply[replies].resp = strdup (c->user);	   /* freed by PAM */
-          if (c->verbose_p)
-            fprintf (stderr, "%s:     PAM ECHO_ON(\"%s\") ==> \"%s\"\n",
-                     blurb(), msg[replies]->msg,
-                     reply[replies].resp);
-          break;
-        case PAM_PROMPT_ECHO_OFF:
-          reply[replies].resp_retcode = PAM_SUCCESS;
-          reply[replies].resp = strdup (c->typed_passwd);   /* freed by PAM */
-          if (c->verbose_p)
-            fprintf (stderr, "%s:     PAM ECHO_OFF(\"%s\") ==> password\n",
-                     blurb(), msg[replies]->msg);
-          break;
-        case PAM_TEXT_INFO:
-          /* ignore it... */
-          reply[replies].resp_retcode = PAM_SUCCESS;
-          reply[replies].resp = 0;
-          if (c->verbose_p)
-            fprintf (stderr, "%s:     PAM TEXT_INFO(\"%s\") ==> ignored\n",
-                     blurb(), msg[replies]->msg);
-          break;
-        case PAM_ERROR_MSG:
-          /* ignore it... */
-          reply[replies].resp_retcode = PAM_SUCCESS;
-          reply[replies].resp = 0;
-          if (c->verbose_p)
-            fprintf (stderr, "%s:     PAM ERROR_MSG(\"%s\") ==> ignored\n",
-                     blurb(), msg[replies]->msg);
-          break;
-        default:
-          /* Must be an error of some sort... */
-          free (reply);
-          if (c->verbose_p)
-            fprintf (stderr, "%s:     PAM unknown %d(\"%s\") ==> ignored\n",
-                     blurb(), msg[replies]->msg_style, msg[replies]->msg);
-          return PAM_CONV_ERR;
-        }
+      messages[i].msg = msg[i]->msg;
+
+      /* Default fallback of PROMPT_ECHO */
+      messages[i].type = 
+	msg[i]->msg_style == PAM_PROMPT_ECHO_OFF
+	? AUTH_MSGTYPE_PROMPT_NOECHO
+	: msg[i]->msg_style == PAM_PROMPT_ECHO_ON
+	  ? AUTH_MSGTYPE_PROMPT_ECHO
+	  : msg[i]->msg_style == PAM_ERROR_MSG
+	    ? AUTH_MSGTYPE_ERROR
+	    : msg[i]->msg_style == PAM_TEXT_INFO
+	      ? AUTH_MSGTYPE_INFO
+	      : AUTH_MSGTYPE_PROMPT_ECHO;
     }
-  *resp = reply;
-  return PAM_SUCCESS;
+
+  ret = si->unlock_cb(nmsgs, messages, &authresp, si);
+
+  if (ret == 0)
+    {
+      for (i = 0; i < nmsgs; ++i)
+	pam_responses[i].resp = authresp[i].response;
+    }
+
+end:
+  if (messages)
+    free(messages);
+
+  if (authresp)
+    free(authresp);
+
+  if (ret == 0)
+    {
+      *resp = pam_responses;
+      return PAM_SUCCESS;
+    }
+
+  /* Failure only */
+    if (pam_responses)
+      free(pam_responses);
+
+    return PAM_CONV_ERR;
 }
 
 #endif /* NO_LOCKING -- whole file */

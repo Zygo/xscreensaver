@@ -24,6 +24,8 @@
     _label="Number of Colours" _low-label="2" _high-label="Many"
     low="2" high="255" default="200" />
 
+<!-- <boolean id="multi" _label="Multi-colored" arg-unset="-no-multi"/> -->
+  
   <_description>
 
 This one draws spinning, colliding iterated-function-system images.

@@ -115,10 +115,10 @@ NOLOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
 		  test-apm.c    test-fade.c test-xinerama.c test-vp.c   \
-	          test-randr.c  xdpyinfo.c
+	          test-randr.c  xdpyinfo.c  test-mlstring.c
 TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
 		  test-apm      test-fade   test-xinerama   test-vp     \
-		  test-randr    xdpyinfo
+		  test-randr    xdpyinfo    test-mlstring
 
 MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
@@ -179,9 +179,9 @@ GETIMG_OBJS	= $(GETIMG_OBJS_1) \
 		  $(XMU_OBJS)
 
 SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c exec.c \
-		  xset.c splash.c setuid.c stderr.c
+		  xset.c splash.c setuid.c stderr.c mlstring.c
 SAVER_OBJS_1	= xscreensaver.o windows.o timers.o subprocs.o exec.o \
-		  xset.o splash.o setuid.o stderr.o
+		  xset.o splash.o setuid.o stderr.o mlstring.o
 
 SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c dpms.c $(LOCK_SRCS) \
 		  $(SAVER_UTIL_SRCS) $(GL_SRCS) $(XMU_SRCS)
@@ -225,7 +225,7 @@ SCRIPTS		= $(SCRIPTS_1) @SCRIPTS_OSX@
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 		  xscreensaver.h prefs.h remote.h exec.h \
 		  demo-Gtk-widgets.h demo-Gtk-stubs.h demo-Gtk-support.h \
-		  demo-Gtk-conf.h
+		  demo-Gtk-conf.h auth.h mlstring.h types.h
 MEN_1		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-command.man \
 		  xscreensaver-text.man \
@@ -805,7 +805,7 @@ pdf2jpeg: $(PDF2JPEG_OBJS)
 
 
 TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PASSWD_OBJS) \
-	 subprocs.o setuid.o splash.o prefs.o \
+	 subprocs.o setuid.o splash.o prefs.o mlstring.o exec.o \
 	$(SAVER_UTIL_OBJS)
 test-passwd.o: XScreenSaver_ad.h
 
@@ -820,7 +820,7 @@ test-xdpms: test-xdpms.o
 	$(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
 test-xinerama: test-xinerama.o
-	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(LIBS) $(X_LIBS) $(SAVER_LIBS)\
+	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(LIBS) $(X_LIBS) $(SAVER_LIBS) \
 	$(X_PRE_LIBS) $(XINERAMA_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
 test-vp: test-vp.o
@@ -836,6 +836,10 @@ test-grab: test-grab.o
 
 test-apm: test-apm.o
 	$(CC) $(LDFLAGS) -o $@ test-apm.o $(SAVER_LIBS) -lapm
+
+test-mlstring.o: mlstring.c
+test-mlstring: test-mlstring.o
+	$(CC) -DTEST $(LDFLAGS) -o $@ test-mlstring.o $(SAVER_LIBS)
 
 TEST_FADE_OBJS = test-fade.o $(UTILS_SRC)/fade.o $(DEMO_UTIL_OBJS)
 test-fade: test-fade.o $(UTILS_BIN)/fade.o
@@ -858,6 +862,7 @@ xdpyinfo: xdpyinfo.o
 
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
@@ -865,6 +870,14 @@ demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
 demo-Gtk.o: $(srcdir)/prefs.h
 demo-Gtk.o: $(srcdir)/remote.h
+demo-Gtk.o: $(srcdir)/types.h
+demo-Gtk.o: $(UTILS_SRC)/images/logo-180.xpm
+demo-Gtk.o: $(UTILS_SRC)/images/logo-50.xpm
+demo-Gtk.o: $(UTILS_SRC)/resources.h
+demo-Gtk.o: $(UTILS_SRC)/usleep.h
+demo-Gtk.o: $(UTILS_SRC)/version.h
+demo-Gtk.o: $(UTILS_SRC)/visual.h
+demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk-support.o: ../config.h
 demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: ../config.h
@@ -875,39 +888,67 @@ demo-Xm.o: ../config.h
 demo-Xm-widgets.o: ../config.h
 dpms.o: ../config.h
 dpms.o: $(srcdir)/prefs.h
+dpms.o: $(srcdir)/types.h
 dpms.o: $(srcdir)/xscreensaver.h
 exec.o: ../config.h
 exec.o: $(srcdir)/exec.h
+lock.o: $(srcdir)/auth.h
 lock.o: ../config.h
+lock.o: $(srcdir)/mlstring.h
 lock.o: $(srcdir)/prefs.h
+lock.o: $(srcdir)/types.h
+lock.o: $(UTILS_SRC)/resources.h
 lock.o: $(srcdir)/xscreensaver.h
+mlstring.o: $(srcdir)/mlstring.h
+passwd.o: $(srcdir)/auth.h
 passwd.o: ../config.h
+passwd.o: $(srcdir)/types.h
 passwd-pwent.o: ../config.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h
+prefs.o: $(srcdir)/types.h
+prefs.o: $(UTILS_SRC)/resources.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
 setuid.o: ../config.h
 setuid.o: $(srcdir)/prefs.h
+setuid.o: $(srcdir)/types.h
 setuid.o: $(srcdir)/xscreensaver.h
 splash.o: ../config.h
 splash.o: $(srcdir)/prefs.h
+splash.o: $(srcdir)/types.h
+splash.o: $(UTILS_SRC)/resources.h
 splash.o: $(srcdir)/xscreensaver.h
 stderr.o: ../config.h
 stderr.o: $(srcdir)/prefs.h
+stderr.o: $(srcdir)/types.h
+stderr.o: $(UTILS_SRC)/resources.h
+stderr.o: $(UTILS_SRC)/visual.h
 stderr.o: $(srcdir)/xscreensaver.h
 subprocs.o: ../config.h
 subprocs.o: $(srcdir)/exec.h
 subprocs.o: $(srcdir)/prefs.h
+subprocs.o: $(srcdir)/types.h
+subprocs.o: $(UTILS_SRC)/visual.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
 subprocs.o: $(srcdir)/xscreensaver.h
 test-apm.o: ../config.h
 test-fade.o: ../config.h
 test-fade.o: $(srcdir)/prefs.h
+test-fade.o: $(srcdir)/types.h
+test-fade.o: $(UTILS_SRC)/fade.h
 test-fade.o: $(srcdir)/xscreensaver.h
 test-grab.o: ../config.h
+test-mlstring.o: $(srcdir)/mlstring.c
+test-mlstring.o: $(srcdir)/mlstring.h
 test-passwd.o: XScreenSaver_ad.h
+test-passwd.o: $(srcdir)/auth.h
 test-passwd.o: ../config.h
 test-passwd.o: $(srcdir)/prefs.h
+test-passwd.o: $(srcdir)/types.h
+test-passwd.o: $(UTILS_SRC)/resources.h
+test-passwd.o: $(UTILS_SRC)/version.h
+test-passwd.o: $(UTILS_SRC)/visual.h
 test-passwd.o: $(srcdir)/xscreensaver.h
 test-randr.o: ../config.h
 test-uid.o: ../config.h
@@ -916,20 +957,42 @@ test-xdpms.o: ../config.h
 test-xinerama.o: ../config.h
 timers.o: ../config.h
 timers.o: $(srcdir)/prefs.h
+timers.o: $(srcdir)/types.h
 timers.o: $(srcdir)/xscreensaver.h
 windows.o: ../config.h
 windows.o: $(srcdir)/prefs.h
+windows.o: $(srcdir)/types.h
+windows.o: $(UTILS_SRC)/fade.h
+windows.o: $(UTILS_SRC)/visual.h
 windows.o: $(srcdir)/xscreensaver.h
 xscreensaver-command.o: ../config.h
 xscreensaver-command.o: $(srcdir)/remote.h
+xscreensaver-command.o: $(UTILS_SRC)/version.h
 xscreensaver-getimage.o: ../config.h
 xscreensaver-getimage.o: XScreenSaver_ad.h
 xscreensaver-getimage.o: $(srcdir)/prefs.h
+xscreensaver-getimage.o: $(srcdir)/types.h
+xscreensaver-getimage.o: $(UTILS_SRC)/colorbars.h
+xscreensaver-getimage.o: $(UTILS_SRC)/grabscreen.h
+xscreensaver-getimage.o: $(UTILS_SRC)/resources.h
+xscreensaver-getimage.o: $(UTILS_SRC)/utils.h
+xscreensaver-getimage.o: $(UTILS_SRC)/version.h
+xscreensaver-getimage.o: $(UTILS_SRC)/visual.h
+xscreensaver-getimage.o: $(UTILS_SRC)/vroot.h
+xscreensaver-getimage.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: XScreenSaver_ad.h
+xscreensaver.o: $(srcdir)/auth.h
 xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: $(srcdir)/types.h
+xscreensaver.o: $(UTILS_SRC)/resources.h
+xscreensaver.o: $(UTILS_SRC)/usleep.h
+xscreensaver.o: $(UTILS_SRC)/version.h
+xscreensaver.o: $(UTILS_SRC)/visual.h
+xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
 xset.o: ../config.h
 xset.o: $(srcdir)/prefs.h
+xset.o: $(srcdir)/types.h
 xset.o: $(srcdir)/xscreensaver.h
 

@@ -98,6 +98,8 @@
 				AF7778F109B6604600EA3033 /* PBXTargetDependency */,
 				AF7778EF09B6604600EA3033 /* PBXTargetDependency */,
 				AF7778ED09B6604600EA3033 /* PBXTargetDependency */,
+				AFA33B8F0B0585A4002B0E7D /* PBXTargetDependency */,
+				AFA33BCF0B0587B2002B0E7D /* PBXTargetDependency */,
 				AF7778EB09B6604600EA3033 /* PBXTargetDependency */,
 				AF7778E909B6604600EA3033 /* PBXTargetDependency */,
 				AF7778E709B6604600EA3033 /* PBXTargetDependency */,
@@ -111,7 +113,7 @@
 				AF7778D709B6604500EA3033 /* PBXTargetDependency */,
 			);
 			name = "All Savers (XScreenSaver)";
-			productName = "All Savers";
+			productName = "All Savers (XScreenSaver)";
 		};
 		AF480D58098EED3D00FB32B8 /* All Savers (XLockmore) */ = {
 			isa = PBXAggregateTarget;
@@ -264,6 +266,20 @@
 			);
 			name = "All Savers";
 			productName = "All Savers";
+		};
+		AFA33C020B058E17002B0E7D /* webcollage */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = AFA33C070B058E67002B0E7D /* Build configuration list for PBXAggregateTarget "webcollage" */;
+			buildPhases = (
+				AFA33C010B058E17002B0E7D /* ShellScript */,
+			);
+			buildSettings = {
+				PRODUCT_NAME = webcollage;
+			};
+			dependencies = (
+			);
+			name = webcollage;
+			productName = webcollage;
 		};
 /* End PBXAggregateTarget section */
 
@@ -1174,6 +1190,16 @@
 		AF9D4E0409B5BC85006E59CF /* apple2.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2586F0988A468000655EE /* apple2.xml */; };
 		AF9D4E0609B5BC9D006E59CF /* apple2-main.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4E0509B5BC9D006E59CF /* apple2-main.c */; };
 		AF9D4E2209B63413006E59CF /* jwxyz-timers.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4E2109B63413006E59CF /* jwxyz-timers.m */; };
+		AFA339350B058505002B0E7D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFA339380B058505002B0E7D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFA339390B058505002B0E7D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFA3393A0B058505002B0E7D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFA33BAF0B0585F7002B0E7D /* webcollage-cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */; };
+		AFA33BB00B05860F002B0E7D /* webcollage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2592C0988A469000655EE /* webcollage.xml */; };
+		AFA33BD10B0587EE002B0E7D /* webcollage-helper-cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = AFA33BD00B0587EE002B0E7D /* webcollage-helper-cocoa.m */; };
+		AFA33BD20B058815002B0E7D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFA33BDD0B058A30002B0E7D /* webcollage-helper in Resources */ = {isa = PBXBuildFile; fileRef = AFA33BC70B058740002B0E7D /* webcollage-helper */; };
+		AFA33C0C0B058ED2002B0E7D /* webcollage in Resources */ = {isa = PBXBuildFile; fileRef = AFA33C0A0B058E6B002B0E7D /* webcollage */; };
 		AFA55866099324D800F3E977 /* minixpm.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA55864099324D800F3E977 /* minixpm.c */; };
 		AFA55867099324D800F3E977 /* minixpm.h in Headers */ = {isa = PBXBuildFile; fileRef = AFA55865099324D800F3E977 /* minixpm.h */; };
 		AFA55950099330B000F3E977 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -4109,6 +4135,41 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AFA339300B058505002B0E7D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFA33B8E0B0585A4002B0E7D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA3392E0B058505002B0E7D;
+			remoteInfo = WebCollage;
+		};
+		AFA33BCE0B0587B2002B0E7D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA33BC60B058740002B0E7D;
+			remoteInfo = "webcollage-helper";
+		};
+		AFA33BDB0B058952002B0E7D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA33BC60B058740002B0E7D;
+			remoteInfo = "webcollage-helper";
+		};
+		AFA33C030B058E3C002B0E7D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA33C020B058E17002B0E7D;
+			remoteInfo = webcollage;
+		};
 		AFA55948099330B000F3E977 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -5054,6 +5115,11 @@
 		AF9D4DFE09B5BB19006E59CF /* Apple2.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Apple2.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF9D4E0509B5BC9D006E59CF /* apple2-main.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "apple2-main.c"; path = "hacks/apple2-main.c"; sourceTree = "<group>"; };
 		AF9D4E2109B63413006E59CF /* jwxyz-timers.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = "jwxyz-timers.m"; path = "OSX/jwxyz-timers.m"; sourceTree = "<group>"; };
+		AFA339400B058505002B0E7D /* WebCollage.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WebCollage.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = "webcollage-cocoa.m"; path = "hacks/webcollage-cocoa.m"; sourceTree = "<group>"; };
+		AFA33BC70B058740002B0E7D /* webcollage-helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "webcollage-helper"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFA33BD00B0587EE002B0E7D /* webcollage-helper-cocoa.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = "webcollage-helper-cocoa.m"; path = "hacks/webcollage-helper-cocoa.m"; sourceTree = "<group>"; };
+		AFA33C0A0B058E6B002B0E7D /* webcollage */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = webcollage; path = hacks/webcollage; sourceTree = "<group>"; };
 		AFA55864099324D800F3E977 /* minixpm.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = minixpm.c; path = utils/minixpm.c; sourceTree = "<group>"; };
 		AFA55865099324D800F3E977 /* minixpm.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = minixpm.h; path = utils/minixpm.h; sourceTree = "<group>"; };
 		AFA5595A099330B000F3E977 /* Cage.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cage.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -5430,8 +5496,6 @@
 		AFC259320988A469000655EE /* xanalogtv.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xanalogtv.xml; sourceTree = "<group>"; };
 		AFC259330988A469000655EE /* xaos.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xaos.xml; sourceTree = "<group>"; };
 		AFC259340988A469000655EE /* xdaliclock.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xdaliclock.xml; sourceTree = "<group>"; };
-		AFC259350988A469000655EE /* xearth.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xearth.xml; sourceTree = "<group>"; };
-		AFC259360988A469000655EE /* xfishtank.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xfishtank.xml; sourceTree = "<group>"; };
 		AFC259370988A469000655EE /* xflame.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xflame.xml; sourceTree = "<group>"; };
 		AFC259380988A469000655EE /* xjack.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xjack.xml; sourceTree = "<group>"; };
 		AFC259390988A469000655EE /* xlyap.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = xlyap.xml; sourceTree = "<group>"; };
@@ -6770,6 +6834,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA339370B058505002B0E7D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA339380B058505002B0E7D /* libjwxyz.a in Frameworks */,
+				AFA339390B058505002B0E7D /* ScreenSaver.framework in Frameworks */,
+				AFA3393A0B058505002B0E7D /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFA33BC50B058740002B0E7D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA33BD20B058815002B0E7D /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFA5594F099330B000F3E977 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -8025,6 +8107,8 @@
 				AF34085709B80AB000F2CEC1 /* FontGlide.saver */,
 				AF998EEE0A083DB30051049D /* TopBlock.saver */,
 				AF48DF030A0C25E000F94CF9 /* GLSchool.saver */,
+				AFA339400B058505002B0E7D /* WebCollage.saver */,
+				AFA33BC70B058740002B0E7D /* webcollage-helper */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -8181,6 +8265,8 @@
 				AF480C29098E295D00FB32B8 /* halo.c */,
 				AFE1FD620981E40800F7970E /* rorschach.c */,
 				AF77789209B656C300EA3033 /* fontglide.c */,
+				AFA33C0A0B058E6B002B0E7D /* webcollage */,
+				AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */,
 			);
 			name = XScreenSaver;
 			sourceTree = "<group>";
@@ -8608,8 +8694,6 @@
 				AFC259320988A469000655EE /* xanalogtv.xml */,
 				AFC259330988A469000655EE /* xaos.xml */,
 				AFC259340988A469000655EE /* xdaliclock.xml */,
-				AFC259350988A469000655EE /* xearth.xml */,
-				AFC259360988A469000655EE /* xfishtank.xml */,
 				AFC259370988A469000655EE /* xflame.xml */,
 				AFC259380988A469000655EE /* xjack.xml */,
 				AFC259390988A469000655EE /* xlyap.xml */,
@@ -8648,6 +8732,7 @@
 				AFB5A0ED0981FF8B00871B16 /* usleep.c */,
 				AFB5A0EE0981FF8B00871B16 /* usleep.h */,
 				AFE1FD530981E3CB00F7970E /* erase.c */,
+				AFA33BD00B0587EE002B0E7D /* webcollage-helper-cocoa.m */,
 				AFE1FD540981E3CB00F7970E /* erase.h */,
 				AFA55A3E0993351F00F3E977 /* gllist.c */,
 				AFAD462209D5F4DA00AB5F95 /* grabclient.c */,
@@ -8773,7 +8858,7 @@
 				AF08399009930B6B00277BE9 /* PBXTargetDependency */,
 			);
 			name = Atlantis;
-			productName = Deco;
+			productName = Atlantis;
 			productReference = AF0839A209930B6B00277BE9 /* Atlantis.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -8832,7 +8917,7 @@
 				AF083A33099311D700277BE9 /* PBXTargetDependency */,
 			);
 			name = Atunnel;
-			productName = Deco;
+			productName = Atunnel;
 			productReference = AF083A48099311D700277BE9 /* Atunnel.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -8891,7 +8976,7 @@
 				AF476FB6099D154F001F091E /* PBXTargetDependency */,
 			);
 			name = Interference;
-			productName = Deco;
+			productName = Interference;
 			productReference = AF476FC6099D154F001F091E /* Interference.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -8950,7 +9035,7 @@
 				AF476FDB099D1686001F091E /* PBXTargetDependency */,
 			);
 			name = Truchet;
-			productName = Deco;
+			productName = Truchet;
 			productReference = AF476FEB099D1686001F091E /* Truchet.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9009,7 +9094,7 @@
 				AF47704D099D4385001F091E /* PBXTargetDependency */,
 			);
 			name = Deluxe;
-			productName = Deco;
+			productName = Deluxe;
 			productReference = AF47705C099D4385001F091E /* Deluxe.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9068,7 +9153,7 @@
 				AF47716A099D4786001F091E /* PBXTargetDependency */,
 			);
 			name = Compass;
-			productName = Deco;
+			productName = Compass;
 			productReference = AF477179099D4786001F091E /* Compass.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9127,7 +9212,7 @@
 				AF477180099D4803001F091E /* PBXTargetDependency */,
 			);
 			name = Wander;
-			productName = Deco;
+			productName = Wander;
 			productReference = AF47718F099D4803001F091E /* Wander.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9186,7 +9271,7 @@
 				AF4771A8099D4949001F091E /* PBXTargetDependency */,
 			);
 			name = T3D;
-			productName = Deco;
+			productName = T3D;
 			productReference = AF4771B7099D4949001F091E /* T3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9245,7 +9330,7 @@
 				AF4771DC099D4D9A001F091E /* PBXTargetDependency */,
 			);
 			name = CCurve;
-			productName = Deco;
+			productName = CCurve;
 			productReference = AF4771EB099D4D9A001F091E /* CCurve.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9304,7 +9389,7 @@
 				AF4771F3099D4E63001F091E /* PBXTargetDependency */,
 			);
 			name = NerveRot;
-			productName = Deco;
+			productName = NerveRot;
 			productReference = AF477202099D4E64001F091E /* NerveRot.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9363,7 +9448,7 @@
 				AF477209099D4EE8001F091E /* PBXTargetDependency */,
 			);
 			name = Whirlygig;
-			productName = Deco;
+			productName = Whirlygig;
 			productReference = AF477218099D4EE8001F091E /* Whirlygig.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9422,7 +9507,7 @@
 				AF47721F099D4F67001F091E /* PBXTargetDependency */,
 			);
 			name = Anemone;
-			productName = Deco;
+			productName = Anemone;
 			productReference = AF47722E099D4F67001F091E /* Anemone.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9481,7 +9566,7 @@
 				AF477254099D5717001F091E /* PBXTargetDependency */,
 			);
 			name = Halftone;
-			productName = Deco;
+			productName = Halftone;
 			productReference = AF477263099D5717001F091E /* Halftone.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9540,7 +9625,7 @@
 				AF47726C099D57B9001F091E /* PBXTargetDependency */,
 			);
 			name = PopSquares;
-			productName = Deco;
+			productName = PopSquares;
 			productReference = AF47727B099D57B9001F091E /* PopSquares.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9599,7 +9684,7 @@
 				AF477284099D5926001F091E /* PBXTargetDependency */,
 			);
 			name = Piecewise;
-			productName = Deco;
+			productName = Piecewise;
 			productReference = AF477293099D5926001F091E /* Piecewise.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9658,7 +9743,7 @@
 				AF477383099D65A1001F091E /* PBXTargetDependency */,
 			);
 			name = Wormhole;
-			productName = Deco;
+			productName = Wormhole;
 			productReference = AF477392099D65A1001F091E /* Wormhole.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9717,7 +9802,7 @@
 				AF47739B099D6648001F091E /* PBXTargetDependency */,
 			);
 			name = FuzzyFlakes;
-			productName = Deco;
+			productName = FuzzyFlakes;
 			productReference = AF4773AA099D6648001F091E /* FuzzyFlakes.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9776,7 +9861,7 @@
 				AF4773C2099D67B9001F091E /* PBXTargetDependency */,
 			);
 			name = Anemotaxis;
-			productName = Deco;
+			productName = Anemotaxis;
 			productReference = AF4773D1099D67B9001F091E /* Anemotaxis.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9835,7 +9920,7 @@
 				AF477402099D69E7001F091E /* PBXTargetDependency */,
 			);
 			name = Intermomentary;
-			productName = Deco;
+			productName = Intermomentary;
 			productReference = AF477412099D69E7001F091E /* Intermomentary.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9894,7 +9979,7 @@
 				AF477427099D7C70001F091E /* PBXTargetDependency */,
 			);
 			name = IFS;
-			productName = Deco;
+			productName = IFS;
 			productReference = AF477437099D7C70001F091E /* IFS.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -9953,7 +10038,7 @@
 				AF477443099D7D33001F091E /* PBXTargetDependency */,
 			);
 			name = XMatrix;
-			productName = Deco;
+			productName = XMatrix;
 			productReference = AF477452099D7D33001F091E /* XMatrix.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10012,7 +10097,7 @@
 				AF477484099D89E4001F091E /* PBXTargetDependency */,
 			);
 			name = Flame;
-			productName = Deco;
+			productName = Flame;
 			productReference = AF477493099D89E4001F091E /* Flame.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10071,7 +10156,7 @@
 				AF47749A099D8A74001F091E /* PBXTargetDependency */,
 			);
 			name = Kaleidescope;
-			productName = Deco;
+			productName = Kaleidescope;
 			productReference = AF4774A9099D8A74001F091E /* Kaleidescope.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10130,7 +10215,7 @@
 				AF4774B5099D8B5F001F091E /* PBXTargetDependency */,
 			);
 			name = LMorph;
-			productName = Deco;
+			productName = LMorph;
 			productReference = AF4774C4099D8B5F001F091E /* LMorph.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10189,7 +10274,7 @@
 				AF4774CF099D8BFF001F091E /* PBXTargetDependency */,
 			);
 			name = Maze;
-			productName = Deco;
+			productName = Maze;
 			productReference = AF4774DE099D8BFF001F091E /* Maze.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10248,7 +10333,7 @@
 				AF47755E099D9A1A001F091E /* PBXTargetDependency */,
 			);
 			name = Pedal;
-			productName = Deco;
+			productName = Pedal;
 			productReference = AF47756D099D9A1A001F091E /* Pedal.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10307,7 +10392,7 @@
 				AF477584099D9C28001F091E /* PBXTargetDependency */,
 			);
 			name = Pyro;
-			productName = Deco;
+			productName = Pyro;
 			productReference = AF477593099D9C28001F091E /* Pyro.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10366,7 +10451,7 @@
 				AF4775A0099D9CF7001F091E /* PBXTargetDependency */,
 			);
 			name = Starfish;
-			productName = Deco;
+			productName = Starfish;
 			productReference = AF4775AF099D9CF7001F091E /* Starfish.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10425,7 +10510,7 @@
 				AF4775D9099D9F69001F091E /* PBXTargetDependency */,
 			);
 			name = Coral;
-			productName = Deco;
+			productName = Coral;
 			productReference = AF4775E8099D9F69001F091E /* Coral.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10484,7 +10569,7 @@
 				AF4775F3099DA030001F091E /* PBXTargetDependency */,
 			);
 			name = Epicycle;
-			productName = Deco;
+			productName = Epicycle;
 			productReference = AF477602099DA030001F091E /* Epicycle.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10543,7 +10628,7 @@
 				AF477614099DA26C001F091E /* PBXTargetDependency */,
 			);
 			name = Kumppa;
-			productName = Deco;
+			productName = Kumppa;
 			productReference = AF477623099DA26C001F091E /* Kumppa.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10602,7 +10687,7 @@
 				AF477645099DA6D0001F091E /* PBXTargetDependency */,
 			);
 			name = Squiral;
-			productName = Deco;
+			productName = Squiral;
 			productReference = AF477654099DA6D0001F091E /* Squiral.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10661,7 +10746,7 @@
 				AF47765B099DA78E001F091E /* PBXTargetDependency */,
 			);
 			name = Critical;
-			productName = Deco;
+			productName = Critical;
 			productReference = AF47766A099DA78F001F091E /* Critical.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10720,7 +10805,7 @@
 				AF477671099DA849001F091E /* PBXTargetDependency */,
 			);
 			name = Petri;
-			productName = Deco;
+			productName = Petri;
 			productReference = AF477680099DA849001F091E /* Petri.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10779,7 +10864,7 @@
 				AF477690099DAA6F001F091E /* PBXTargetDependency */,
 			);
 			name = Blaster;
-			productName = Deco;
+			productName = Blaster;
 			productReference = AF47769F099DAA6F001F091E /* Blaster.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10838,7 +10923,7 @@
 				AF4776AB099DABDD001F091E /* PBXTargetDependency */,
 			);
 			name = XSpirograph;
-			productName = Deco;
+			productName = XSpirograph;
 			productReference = AF4776BA099DABDD001F091E /* XSpirograph.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10897,7 +10982,7 @@
 				AF4776C1099DAC8A001F091E /* PBXTargetDependency */,
 			);
 			name = XRaySwarm;
-			productName = Deco;
+			productName = XRaySwarm;
 			productReference = AF4776D0099DAC8A001F091E /* XRaySwarm.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -10956,7 +11041,7 @@
 				AF4776DC099DADDF001F091E /* PBXTargetDependency */,
 			);
 			name = WhirlWindWarp;
-			productName = Deco;
+			productName = WhirlWindWarp;
 			productReference = AF4776EB099DADDF001F091E /* WhirlWindWarp.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11015,7 +11100,7 @@
 				AF4776F2099DAE7A001F091E /* PBXTargetDependency */,
 			);
 			name = Vermiculate;
-			productName = Deco;
+			productName = Vermiculate;
 			productReference = AF477701099DAE7A001F091E /* Vermiculate.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11074,7 +11159,7 @@
 				AF47770E099DAF9F001F091E /* PBXTargetDependency */,
 			);
 			name = CloudLife;
-			productName = Deco;
+			productName = CloudLife;
 			productReference = AF47771D099DAF9F001F091E /* CloudLife.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11133,7 +11218,7 @@
 				AF477724099DB044001F091E /* PBXTargetDependency */,
 			);
 			name = Substrate;
-			productName = Deco;
+			productName = Substrate;
 			productReference = AF477733099DB044001F091E /* Substrate.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11192,7 +11277,7 @@
 				AF477753099DB61E001F091E /* PBXTargetDependency */,
 			);
 			name = Interaggregate;
-			productName = Deco;
+			productName = Interaggregate;
 			productReference = AF477762099DB61E001F091E /* Interaggregate.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11251,7 +11336,7 @@
 				AF477775099DB965001F091E /* PBXTargetDependency */,
 			);
 			name = Celtic;
-			productName = Deco;
+			productName = Celtic;
 			productReference = AF477784099DB965001F091E /* Celtic.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11310,7 +11395,7 @@
 				AF477791099DBA90001F091E /* PBXTargetDependency */,
 			);
 			name = FluidBalls;
-			productName = Deco;
+			productName = FluidBalls;
 			productReference = AF4777A0099DBA90001F091E /* FluidBalls.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11369,7 +11454,7 @@
 				AF4777D2099DC183001F091E /* PBXTargetDependency */,
 			);
 			name = BoxFit;
-			productName = Deco;
+			productName = BoxFit;
 			productReference = AF4777E1099DC183001F091E /* BoxFit.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11428,7 +11513,7 @@
 				AF4778AC099DDB79001F091E /* PBXTargetDependency */,
 			);
 			name = Penetrate;
-			productName = Deco;
+			productName = Penetrate;
 			productReference = AF4778BB099DDB79001F091E /* Penetrate.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11487,7 +11572,7 @@
 				AF4778C8099DDCAE001F091E /* PBXTargetDependency */,
 			);
 			name = XJack;
-			productName = Deco;
+			productName = XJack;
 			productReference = AF4778D7099DDCAE001F091E /* XJack.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11546,7 +11631,7 @@
 				AF4778E9099DDDC8001F091E /* PBXTargetDependency */,
 			);
 			name = Cynosure;
-			productName = Deco;
+			productName = Cynosure;
 			productReference = AF4778F8099DDDC8001F091E /* Cynosure.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11605,7 +11690,7 @@
 				AF47790A099DE379001F091E /* PBXTargetDependency */,
 			);
 			name = Flag;
-			productName = Deco;
+			productName = Flag;
 			productReference = AF477919099DE379001F091E /* Flag.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11664,7 +11749,7 @@
 				AF47792B099DE4C7001F091E /* PBXTargetDependency */,
 			);
 			name = Slip;
-			productName = Deco;
+			productName = Slip;
 			productReference = AF47793A099DE4C7001F091E /* Slip.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11748,7 +11833,7 @@
 				AF480C4A098E301400FB32B8 /* PBXTargetDependency */,
 			);
 			name = Helix;
-			productName = Deco;
+			productName = Helix;
 			productReference = AF480C58098E301400FB32B8 /* Helix.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11807,7 +11892,7 @@
 				AF480D73098EEDDE00FB32B8 /* PBXTargetDependency */,
 			);
 			name = Drift;
-			productName = Deco;
+			productName = Drift;
 			productReference = AF480D81098EEDDE00FB32B8 /* Drift.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11866,7 +11951,7 @@
 				AF4810EC09909FBA00FB32B8 /* PBXTargetDependency */,
 			);
 			name = DangerBall;
-			productName = Deco;
+			productName = DangerBall;
 			productReference = AF4810FB09909FBA00FB32B8 /* DangerBall.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11925,7 +12010,7 @@
 				AF4812510990CE2700FB32B8 /* PBXTargetDependency */,
 			);
 			name = Gears;
-			productName = Deco;
+			productName = Gears;
 			productReference = AF4812640990CE2700FB32B8 /* Gears.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -11984,7 +12069,7 @@
 				AF4812B40990D3D900FB32B8 /* PBXTargetDependency */,
 			);
 			name = Pipes;
-			productName = Deco;
+			productName = Pipes;
 			productReference = AF4812C60990D3D900FB32B8 /* Pipes.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12043,7 +12128,7 @@
 				AF48DEF00A0C25E000F94CF9 /* PBXTargetDependency */,
 			);
 			name = GLSchool;
-			productName = Deco;
+			productName = GLSchool;
 			productReference = AF48DF030A0C25E000F94CF9 /* GLSchool.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12102,7 +12187,7 @@
 				AF6423F3099FF9C2000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Extrusion;
-			productName = Deco;
+			productName = Extrusion;
 			productReference = AF642405099FF9C2000F4CD4 /* Extrusion.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12161,7 +12246,7 @@
 				AF6425CD09A18855000F4CD4 /* PBXTargetDependency */,
 			);
 			name = HyperCube;
-			productName = Deco;
+			productName = HyperCube;
 			productReference = AF6425DC09A18856000F4CD4 /* HyperCube.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12220,7 +12305,7 @@
 				AF6425ED09A189EC000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Qix;
-			productName = Deco;
+			productName = Qix;
 			productReference = AF6425FC09A189EC000F4CD4 /* Qix.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12279,7 +12364,7 @@
 				AF64261009A18D6C000F4CD4 /* PBXTargetDependency */,
 			);
 			name = HyperBall;
-			productName = Deco;
+			productName = HyperBall;
 			productReference = AF64261F09A18D6C000F4CD4 /* HyperBall.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12338,7 +12423,7 @@
 				AF64262D09A18F54000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Moire2;
-			productName = Deco;
+			productName = Moire2;
 			productReference = AF64263C09A18F54000F4CD4 /* Moire2.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12397,7 +12482,7 @@
 				AF64265009A19229000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Munch;
-			productName = Deco;
+			productName = Munch;
 			productReference = AF64265F09A19229000F4CD4 /* Munch.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12456,7 +12541,7 @@
 				AF64266609A192FB000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Mismunch;
-			productName = Deco;
+			productName = Mismunch;
 			productReference = AF64267509A192FB000F4CD4 /* Mismunch.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12515,7 +12600,7 @@
 				AF64267C09A194B0000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Goop;
-			productName = Deco;
+			productName = Goop;
 			productReference = AF64268B09A194B0000F4CD4 /* Goop.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12574,7 +12659,7 @@
 				AF6426F509A1C952000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Sonar;
-			productName = Deco;
+			productName = Sonar;
 			productReference = AF64270409A1C952000F4CD4 /* Sonar.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12633,7 +12718,7 @@
 				AF64277209A1D37A000F4CD4 /* PBXTargetDependency */,
 			);
 			name = SpeedMine;
-			productName = Deco;
+			productName = SpeedMine;
 			productReference = AF64278109A1D37A000F4CD4 /* SpeedMine.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12692,7 +12777,7 @@
 				AF6427A909A2DE36000F4CD4 /* PBXTargetDependency */,
 			);
 			name = Bubbles;
-			productName = Deco;
+			productName = Bubbles;
 			productReference = AF6427B809A2DE36000F4CD4 /* Bubbles.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12751,7 +12836,7 @@
 				AF7776E509B63ABF00EA3033 /* PBXTargetDependency */,
 			);
 			name = Phosphor;
-			productName = Deco;
+			productName = Phosphor;
 			productReference = AF7776F609B63ABF00EA3033 /* Phosphor.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12810,7 +12895,7 @@
 				AF77771B09B6416100EA3033 /* PBXTargetDependency */,
 			);
 			name = Pacman;
-			productName = Deco;
+			productName = Pacman;
 			productReference = AF77772A09B6416100EA3033 /* Pacman.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12869,7 +12954,7 @@
 				AF77773F09B6446500EA3033 /* PBXTargetDependency */,
 			);
 			name = FlipScreen3D;
-			productName = Deco;
+			productName = FlipScreen3D;
 			productReference = AF77775109B6446500EA3033 /* FlipScreen3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12928,7 +13013,7 @@
 				AF77777509B6497800EA3033 /* PBXTargetDependency */,
 			);
 			name = Gleidescope;
-			productName = Deco;
+			productName = Gleidescope;
 			productReference = AF34085609B80AB000F2CEC1 /* Gleidescope.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -12987,7 +13072,7 @@
 				AF77778F09B64A5200EA3033 /* PBXTargetDependency */,
 			);
 			name = MirrorBlob;
-			productName = Deco;
+			productName = MirrorBlob;
 			productReference = AF7777A209B64A5200EA3033 /* MirrorBlob.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13046,7 +13131,7 @@
 				AF7777A909B64B2600EA3033 /* PBXTargetDependency */,
 			);
 			name = StonerView;
-			productName = Deco;
+			productName = StonerView;
 			productReference = AF34085509B80AB000F2CEC1 /* StonerView.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13105,7 +13190,7 @@
 				AF7777D109B64C6B00EA3033 /* PBXTargetDependency */,
 			);
 			name = GLSlideshow;
-			productName = Deco;
+			productName = GLSlideshow;
 			productReference = AF7777E409B64C6B00EA3033 /* GLSlideshow.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13164,7 +13249,7 @@
 				AF7777EB09B64E3100EA3033 /* PBXTargetDependency */,
 			);
 			name = FlipText;
-			productName = Deco;
+			productName = FlipText;
 			productReference = AF7777FE09B64E3100EA3033 /* FlipText.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13223,7 +13308,7 @@
 				AF77781109B6504400EA3033 /* PBXTargetDependency */,
 			);
 			name = StarWars;
-			productName = Deco;
+			productName = StarWars;
 			productReference = AF34085409B80AAF00F2CEC1 /* StarWars.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13282,7 +13367,7 @@
 				AF77784509B6528100EA3033 /* PBXTargetDependency */,
 			);
 			name = Carousel;
-			productName = Deco;
+			productName = Carousel;
 			productReference = AF77785809B6528100EA3033 /* Carousel.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13341,7 +13426,7 @@
 				AF77786209B6536000EA3033 /* PBXTargetDependency */,
 			);
 			name = DNAlogo;
-			productName = Deco;
+			productName = DNAlogo;
 			productReference = AF77787409B6536000EA3033 /* DNAlogo.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13400,7 +13485,7 @@
 				AF77788009B6563500EA3033 /* PBXTargetDependency */,
 			);
 			name = FontGlide;
-			productName = Deco;
+			productName = FontGlide;
 			productReference = AF34085709B80AB000F2CEC1 /* FontGlide.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13459,7 +13544,7 @@
 				AF7778A609B659C800EA3033 /* PBXTargetDependency */,
 			);
 			name = BlitSpin;
-			productName = Deco;
+			productName = BlitSpin;
 			productReference = AF7778B509B659C800EA3033 /* BlitSpin.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13518,7 +13603,7 @@
 				AF794F65099748450059A8B0 /* PBXTargetDependency */,
 			);
 			name = Demon;
-			productName = Deco;
+			productName = Demon;
 			productReference = AF794F74099748450059A8B0 /* Demon.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13577,7 +13662,7 @@
 				AF794F8F09974A320059A8B0 /* PBXTargetDependency */,
 			);
 			name = Fiberlamp;
-			productName = Deco;
+			productName = Fiberlamp;
 			productReference = AF794F9E09974A320059A8B0 /* Fiberlamp.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13636,7 +13721,7 @@
 				AF794FCE09974FA60059A8B0 /* PBXTargetDependency */,
 			);
 			name = Loop;
-			productName = Deco;
+			productName = Loop;
 			productReference = AF794FDD09974FA60059A8B0 /* Loop.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13695,7 +13780,7 @@
 				AF97572E099C317000B05160 /* PBXTargetDependency */,
 			);
 			name = IMSMap;
-			productName = Deco;
+			productName = IMSMap;
 			productReference = AF97573D099C317000B05160 /* IMSMap.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13754,7 +13839,7 @@
 				AF975776099C374A00B05160 /* PBXTargetDependency */,
 			);
 			name = Moire;
-			productName = Deco;
+			productName = Moire;
 			productReference = AF975785099C374A00B05160 /* Moire.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13813,7 +13898,7 @@
 				AF9757C3099C3E6300B05160 /* PBXTargetDependency */,
 			);
 			name = RDbomb;
-			productName = Deco;
+			productName = RDbomb;
 			productReference = AF9757D2099C3E6300B05160 /* RDbomb.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13872,7 +13957,7 @@
 				AF975809099C41D500B05160 /* PBXTargetDependency */,
 			);
 			name = XFlame;
-			productName = Deco;
+			productName = XFlame;
 			productReference = AF975818099C41D500B05160 /* XFlame.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13931,7 +14016,7 @@
 				AF975866099C475900B05160 /* PBXTargetDependency */,
 			);
 			name = ShadeBobs;
-			productName = Deco;
+			productName = ShadeBobs;
 			productReference = AF975875099C475900B05160 /* ShadeBobs.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -13990,7 +14075,7 @@
 				AF975A37099C681F00B05160 /* PBXTargetDependency */,
 			);
 			name = MetaBalls;
-			productName = Deco;
+			productName = MetaBalls;
 			productReference = AF975A46099C681F00B05160 /* MetaBalls.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14049,7 +14134,7 @@
 				AF975A6D099C6AB200B05160 /* PBXTargetDependency */,
 			);
 			name = Eruption;
-			productName = Deco;
+			productName = Eruption;
 			productReference = AF975A7C099C6AB200B05160 /* Eruption.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14108,7 +14193,7 @@
 				AF975A87099C6BC300B05160 /* PBXTargetDependency */,
 			);
 			name = Barcode;
-			productName = Deco;
+			productName = Barcode;
 			productReference = AF975A96099C6BC300B05160 /* Barcode.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14167,7 +14252,7 @@
 				AF975AD8099C6EB100B05160 /* PBXTargetDependency */,
 			);
 			name = Fireworkx;
-			productName = Deco;
+			productName = Fireworkx;
 			productReference = AF975AE7099C6EB100B05160 /* Fireworkx.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14226,7 +14311,7 @@
 				AF975AFD099C6FE400B05160 /* PBXTargetDependency */,
 			);
 			name = MemScroller;
-			productName = Deco;
+			productName = MemScroller;
 			productReference = AF975B0C099C6FE400B05160 /* MemScroller.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14285,7 +14370,7 @@
 				AF975C13099C8C1500B05160 /* PBXTargetDependency */,
 			);
 			name = Halo;
-			productName = Deco;
+			productName = Halo;
 			productReference = AF975C22099C8C1500B05160 /* Halo.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14344,7 +14429,7 @@
 				AF975C3E099C8DCF00B05160 /* PBXTargetDependency */,
 			);
 			name = Greynetic;
-			productName = Deco;
+			productName = Greynetic;
 			productReference = AF975C4E099C8DCF00B05160 /* Greynetic.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14403,7 +14488,7 @@
 				AF975C5E099C8F3F00B05160 /* PBXTargetDependency */,
 			);
 			name = NoseGuy;
-			productName = Deco;
+			productName = NoseGuy;
 			productReference = AF975C6E099C8F3F00B05160 /* NoseGuy.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14462,7 +14547,7 @@
 				AF975D53099CA0F000B05160 /* PBXTargetDependency */,
 			);
 			name = Rocks;
-			productName = Deco;
+			productName = Rocks;
 			productReference = AF975D63099CA0F000B05160 /* Rocks.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14580,7 +14665,7 @@
 				AF48092A098C419000FB32B8 /* PBXTargetDependency */,
 			);
 			name = Rorschach;
-			productName = Deco;
+			productName = Rorschach;
 			productReference = AF9770400989D1E6001F8B92 /* Rorschach.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14639,7 +14724,7 @@
 				AF48092D098C41AE00FB32B8 /* PBXTargetDependency */,
 			);
 			name = Attraction;
-			productName = Deco;
+			productName = Attraction;
 			productReference = AF97707D0989D2F6001F8B92 /* Attraction.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14759,7 +14844,7 @@
 				AF998EDB0A083DB30051049D /* PBXTargetDependency */,
 			);
 			name = TopBlock;
-			productName = Deco;
+			productName = TopBlock;
 			productReference = AF998EEE0A083DB30051049D /* TopBlock.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14818,7 +14903,7 @@
 				AF9D466709B5109C006E59CF /* PBXTargetDependency */,
 			);
 			name = DecayScreen;
-			productName = Deco;
+			productName = DecayScreen;
 			productReference = AF9D467609B5109C006E59CF /* DecayScreen.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14877,7 +14962,7 @@
 				AF9D474509B5300A006E59CF /* PBXTargetDependency */,
 			);
 			name = SlideScreen;
-			productName = Deco;
+			productName = SlideScreen;
 			productReference = AF9D475409B5300A006E59CF /* SlideScreen.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14936,7 +15021,7 @@
 				AF9D476009B53166006E59CF /* PBXTargetDependency */,
 			);
 			name = Zoom;
-			productName = Deco;
+			productName = Zoom;
 			productReference = AF9D476F09B53166006E59CF /* Zoom.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -14995,7 +15080,7 @@
 				AF9D48DC09B53322006E59CF /* PBXTargetDependency */,
 			);
 			name = Bumps;
-			productName = Deco;
+			productName = Bumps;
 			productReference = AF9D48EB09B53322006E59CF /* Bumps.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15054,7 +15139,7 @@
 				AF9D48F509B535DA006E59CF /* PBXTargetDependency */,
 			);
 			name = Distort;
-			productName = Deco;
+			productName = Distort;
 			productReference = AF9D490409B535DA006E59CF /* Distort.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15113,7 +15198,7 @@
 				AF9D492C09B53CBA006E59CF /* PBXTargetDependency */,
 			);
 			name = Ripples;
-			productName = Deco;
+			productName = Ripples;
 			productReference = AF9D493B09B53CBA006E59CF /* Ripples.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15172,7 +15257,7 @@
 				AF9D495509B53FC9006E59CF /* PBXTargetDependency */,
 			);
 			name = RotZoomer;
-			productName = Deco;
+			productName = RotZoomer;
 			productReference = AF9D496409B53FC9006E59CF /* RotZoomer.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15231,7 +15316,7 @@
 				AF9D496D09B5411D006E59CF /* PBXTargetDependency */,
 			);
 			name = Twang;
-			productName = Deco;
+			productName = Twang;
 			productReference = AF9D497C09B5411D006E59CF /* Twang.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15290,7 +15375,7 @@
 				AF9D499809B544C2006E59CF /* PBXTargetDependency */,
 			);
 			name = Spotlight;
-			productName = Deco;
+			productName = Spotlight;
 			productReference = AF9D49A709B544C3006E59CF /* Spotlight.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15349,7 +15434,7 @@
 				AF9D4C2C09B59A49006E59CF /* PBXTargetDependency */,
 			);
 			name = Jigsaw;
-			productName = Deco;
+			productName = Jigsaw;
 			productReference = AF9D4C3B09B59A49006E59CF /* Jigsaw.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15408,7 +15493,7 @@
 				AF9D4C6A09B59F27006E59CF /* PBXTargetDependency */,
 			);
 			name = XLyap;
-			productName = Deco;
+			productName = XLyap;
 			productReference = AF9D4C7909B59F27006E59CF /* XLyap.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15467,7 +15552,7 @@
 				AF9D4CE809B5AA8E006E59CF /* PBXTargetDependency */,
 			);
 			name = Pong;
-			productName = Deco;
+			productName = Pong;
 			productReference = AF9D4CF709B5AA8E006E59CF /* Pong.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15526,7 +15611,7 @@
 				AF9D4D7F09B5B2DC006E59CF /* PBXTargetDependency */,
 			);
 			name = XAnalogTV;
-			productName = Deco;
+			productName = XAnalogTV;
 			productReference = AF9D4D8F09B5B2DC006E59CF /* XAnalogTV.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15585,7 +15670,7 @@
 				AF9D4DB009B5B71E006E59CF /* PBXTargetDependency */,
 			);
 			name = BSOD;
-			productName = Deco;
+			productName = BSOD;
 			productReference = AF9D4DC009B5B71E006E59CF /* BSOD.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15644,7 +15729,7 @@
 				AF9D4DED09B5BB19006E59CF /* PBXTargetDependency */,
 			);
 			name = Apple2;
-			productName = Deco;
+			productName = Apple2;
 			productReference = AF9D4DFE09B5BB19006E59CF /* Apple2.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15670,6 +15755,99 @@
 </plist>
 ";
 			productType = "com.apple.product-type.bundle";
+		};
+		AFA3392E0B058505002B0E7D /* WebCollage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFA3393D0B058505002B0E7D /* Build configuration list for PBXNativeTarget "WebCollage" */;
+			buildPhases = (
+				AFA339310B058505002B0E7D /* Resources */,
+				AFA339340B058505002B0E7D /* Sources */,
+				AFA339370B058505002B0E7D /* Frameworks */,
+				AFA3393B0B058505002B0E7D /* Rez */,
+				AFA3393C0B058505002B0E7D /* ShellScript */,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
+				INFOPLIST_FILE = "Deco-Info.plist";
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = Deco;
+				WRAPPER_EXTENSION = bundle;
+				ZERO_LINK = YES;
+			};
+			dependencies = (
+				AFA3392F0B058505002B0E7D /* PBXTargetDependency */,
+				AFA33BDC0B058952002B0E7D /* PBXTargetDependency */,
+				AFA33C040B058E3C002B0E7D /* PBXTargetDependency */,
+			);
+			name = WebCollage;
+			productName = WebCollage;
+			productReference = AFA339400B058505002B0E7D /* WebCollage.saver */;
+			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>Deco</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.yourcompany.Deco</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>CSResourcesFileMapped</key>
+	<string>yes</string>
+</dict>
+</plist>
+";
+			productType = "com.apple.product-type.bundle";
+		};
+		AFA33BC60B058740002B0E7D /* webcollage-helper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFA33BCB0B058754002B0E7D /* Build configuration list for PBXNativeTarget "webcollage-helper" */;
+			buildPhases = (
+				AFA33BC40B058740002B0E7D /* Sources */,
+				AFA33BC50B058740002B0E7D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "webcollage-helper";
+				ZERO_LINK = YES;
+			};
+			dependencies = (
+			);
+			name = "webcollage-helper";
+			productName = "webcollage-helper";
+			productReference = AFA33BC70B058740002B0E7D /* webcollage-helper */;
+			productType = "com.apple.product-type.tool";
 		};
 		AFA55946099330B000F3E977 /* Cage */ = {
 			isa = PBXNativeTarget;
@@ -15703,7 +15881,7 @@
 				AFA55947099330B000F3E977 /* PBXTargetDependency */,
 			);
 			name = Cage;
-			productName = Deco;
+			productName = Cage;
 			productReference = AFA5595A099330B000F3E977 /* Cage.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15762,7 +15940,7 @@
 				AFA5596E0993317900F3E977 /* PBXTargetDependency */,
 			);
 			name = Moebius;
-			productName = Deco;
+			productName = Moebius;
 			productReference = AFA5597F0993317900F3E977 /* Moebius.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15821,7 +15999,7 @@
 				AFA559930993322100F3E977 /* PBXTargetDependency */,
 			);
 			name = Superquadrics;
-			productName = Deco;
+			productName = Superquadrics;
 			productReference = AFA559A40993322100F3E977 /* Superquadrics.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15880,7 +16058,7 @@
 				AFA559B60993328000F3E977 /* PBXTargetDependency */,
 			);
 			name = Morph3D;
-			productName = Deco;
+			productName = Morph3D;
 			productReference = AFA559C70993328000F3E977 /* Morph3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15939,7 +16117,7 @@
 				AFA559D00993330600F3E977 /* PBXTargetDependency */,
 			);
 			name = Rubik;
-			productName = Deco;
+			productName = Rubik;
 			productReference = AFA559E10993330600F3E977 /* Rubik.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -15998,7 +16176,7 @@
 				AFA55A040993340300F3E977 /* PBXTargetDependency */,
 			);
 			name = Stairs;
-			productName = Deco;
+			productName = Stairs;
 			productReference = AFA55A150993340300F3E977 /* Stairs.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16057,7 +16235,7 @@
 				AFA55A21099334A000F3E977 /* PBXTargetDependency */,
 			);
 			name = Sproingies;
-			productName = Deco;
+			productName = Sproingies;
 			productReference = AFA55A32099334A000F3E977 /* Sproingies.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16116,7 +16294,7 @@
 				AFA55A7A0993364300F3E977 /* PBXTargetDependency */,
 			);
 			name = Lament;
-			productName = Deco;
+			productName = Lament;
 			productReference = AFA55A8B0993364300F3E977 /* Lament.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16175,7 +16353,7 @@
 				AFA55AD009933CEF00F3E977 /* PBXTargetDependency */,
 			);
 			name = Bubble3D;
-			productName = Deco;
+			productName = Bubble3D;
 			productReference = AFA55AE109933CEF00F3E977 /* Bubble3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16234,7 +16412,7 @@
 				AFA55B0A09933E0500F3E977 /* PBXTargetDependency */,
 			);
 			name = GLPlanet;
-			productName = Deco;
+			productName = GLPlanet;
 			productReference = AFA55B1E09933E0500F3E977 /* GLPlanet.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16293,7 +16471,7 @@
 				AFA55B2609933E8D00F3E977 /* PBXTargetDependency */,
 			);
 			name = Pulsar;
-			productName = Deco;
+			productName = Pulsar;
 			productReference = AFA55B3709933E8D00F3E977 /* Pulsar.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16352,7 +16530,7 @@
 				AFA55B7A09933F7200F3E977 /* PBXTargetDependency */,
 			);
 			name = Sierpinski3D;
-			productName = Deco;
+			productName = Sierpinski3D;
 			productReference = AFA55B8B09933F7200F3E977 /* Sierpinski3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16411,7 +16589,7 @@
 				AFA55B9209933FDA00F3E977 /* PBXTargetDependency */,
 			);
 			name = GFlux;
-			productName = Deco;
+			productName = GFlux;
 			productReference = AFA55BA309933FDA00F3E977 /* GFlux.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16470,7 +16648,7 @@
 				AFA55BAC099340CE00F3E977 /* PBXTargetDependency */,
 			);
 			name = Circuit;
-			productName = Deco;
+			productName = Circuit;
 			productReference = AFA55BBD099340CE00F3E977 /* Circuit.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16529,7 +16707,7 @@
 				AFA55BE50993429100F3E977 /* PBXTargetDependency */,
 			);
 			name = Menger;
-			productName = Deco;
+			productName = Menger;
 			productReference = AFA55BF60993429100F3E977 /* Menger.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16588,7 +16766,7 @@
 				AFA55C0F0993431300F3E977 /* PBXTargetDependency */,
 			);
 			name = Engine;
-			productName = Deco;
+			productName = Engine;
 			productReference = AFA55C200993431300F3E977 /* Engine.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16647,7 +16825,7 @@
 				AFA55C78099349A600F3E977 /* PBXTargetDependency */,
 			);
 			name = GLSnake;
-			productName = Deco;
+			productName = GLSnake;
 			productReference = AFA55C89099349A600F3E977 /* GLSnake.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16706,7 +16884,7 @@
 				AFA55CAA09934BB200F3E977 /* PBXTargetDependency */,
 			);
 			name = Boxed;
-			productName = Deco;
+			productName = Boxed;
 			productReference = AFA55CBB09934BB200F3E977 /* Boxed.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16765,7 +16943,7 @@
 				AFA55CCD09934CE400F3E977 /* PBXTargetDependency */,
 			);
 			name = GLForestFire;
-			productName = Deco;
+			productName = GLForestFire;
 			productReference = AFA55CDE09934CE400F3E977 /* GLForestFire.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16824,7 +17002,7 @@
 				AFA55D3D0993565300F3E977 /* PBXTargetDependency */,
 			);
 			name = SBalls;
-			productName = Deco;
+			productName = SBalls;
 			productReference = AFA55D4E0993565300F3E977 /* SBalls.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16883,7 +17061,7 @@
 				AFA55D630993584B00F3E977 /* PBXTargetDependency */,
 			);
 			name = Cubenetic;
-			productName = Deco;
+			productName = Cubenetic;
 			productReference = AFA55D740993584B00F3E977 /* Cubenetic.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -16942,7 +17120,7 @@
 				AFA55D80099358C400F3E977 /* PBXTargetDependency */,
 			);
 			name = Spheremonics;
-			productName = Deco;
+			productName = Spheremonics;
 			productReference = AFA55D91099358C400F3E977 /* Spheremonics.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17001,7 +17179,7 @@
 				AFA55DC909935D7000F3E977 /* PBXTargetDependency */,
 			);
 			name = Lavalite;
-			productName = Deco;
+			productName = Lavalite;
 			productReference = AFA55DDA09935D7000F3E977 /* Lavalite.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17060,7 +17238,7 @@
 				AFA55DF109935E4900F3E977 /* PBXTargetDependency */,
 			);
 			name = Queens;
-			productName = Deco;
+			productName = Queens;
 			productReference = AFA55E0309935E4900F3E977 /* Queens.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17119,7 +17297,7 @@
 				AFA55E0E09935EDC00F3E977 /* PBXTargetDependency */,
 			);
 			name = Endgame;
-			productName = Deco;
+			productName = Endgame;
 			productReference = AFA55E1F09935EDC00F3E977 /* Endgame.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17178,7 +17356,7 @@
 				AFA55E3009935F8E00F3E977 /* PBXTargetDependency */,
 			);
 			name = GLBlur;
-			productName = Deco;
+			productName = GLBlur;
 			productReference = AFA55E4209935F8E00F3E977 /* GLBlur.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17237,7 +17415,7 @@
 				AFA55E4F09935FF900F3E977 /* PBXTargetDependency */,
 			);
 			name = FlyingToasters;
-			productName = Deco;
+			productName = FlyingToasters;
 			productReference = AFA55E6009935FF900F3E977 /* FlyingToasters.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17296,7 +17474,7 @@
 				AFA55EC8099360E300F3E977 /* PBXTargetDependency */,
 			);
 			name = BouncingCow;
-			productName = Deco;
+			productName = BouncingCow;
 			productReference = AFA55EE3099360E300F3E977 /* BouncingCow.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17355,7 +17533,7 @@
 				AFA55F07099361B700F3E977 /* PBXTargetDependency */,
 			);
 			name = JigglyPuff;
-			productName = Deco;
+			productName = JigglyPuff;
 			productReference = AFA55F1E099361B700F3E977 /* JigglyPuff.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17414,7 +17592,7 @@
 				AFA55F2B0993622F00F3E977 /* PBXTargetDependency */,
 			);
 			name = Klein;
-			productName = Deco;
+			productName = Klein;
 			productReference = AFA55F3C0993622F00F3E977 /* Klein.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17473,7 +17651,7 @@
 				AFA55F430993629000F3E977 /* PBXTargetDependency */,
 			);
 			name = HyperTorus;
-			productName = Deco;
+			productName = HyperTorus;
 			productReference = AFA55F540993629000F3E977 /* HyperTorus.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17532,7 +17710,7 @@
 				AFA55F730993643600F3E977 /* PBXTargetDependency */,
 			);
 			name = GLMatrix;
-			productName = Deco;
+			productName = GLMatrix;
 			productReference = AFA55F840993643600F3E977 /* GLMatrix.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17591,7 +17769,7 @@
 				AFA55FD409936BFA00F3E977 /* PBXTargetDependency */,
 			);
 			name = CubeStorm;
-			productName = Deco;
+			productName = CubeStorm;
 			productReference = AFA55FE509936BFA00F3E977 /* CubeStorm.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17650,7 +17828,7 @@
 				AFA55FFA09936C6D00F3E977 /* PBXTargetDependency */,
 			);
 			name = GLKnots;
-			productName = Deco;
+			productName = GLKnots;
 			productReference = AFA5600B09936C6D00F3E977 /* GLKnots.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17709,7 +17887,7 @@
 				AFA5601509936CC800F3E977 /* PBXTargetDependency */,
 			);
 			name = BlockTube;
-			productName = Deco;
+			productName = BlockTube;
 			productReference = AFA5602609936CC800F3E977 /* BlockTube.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17768,7 +17946,7 @@
 				AFA5603309936D5100F3E977 /* PBXTargetDependency */,
 			);
 			name = FlipFlop;
-			productName = Deco;
+			productName = FlipFlop;
 			productReference = AFA5604409936D5100F3E977 /* FlipFlop.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17827,7 +18005,7 @@
 				AFA5604B09936E2100F3E977 /* PBXTargetDependency */,
 			);
 			name = AntInspect;
-			productName = Deco;
+			productName = AntInspect;
 			productReference = AFA5605C09936E2100F3E977 /* AntInspect.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17886,7 +18064,7 @@
 				AFA5606309936F3800F3E977 /* PBXTargetDependency */,
 			);
 			name = AntSpotlight;
-			productName = Deco;
+			productName = AntSpotlight;
 			productReference = AFA5607409936F3800F3E977 /* AntSpotlight.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -17945,7 +18123,7 @@
 				AFA560AF0993718D00F3E977 /* PBXTargetDependency */,
 			);
 			name = Polytopes;
-			productName = Deco;
+			productName = Polytopes;
 			productReference = AFA560C00993718D00F3E977 /* Polytopes.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18005,7 +18183,7 @@
 				AFA5611E0993791D00F3E977 /* PBXTargetDependency */,
 			);
 			name = Molecule;
-			productName = Deco;
+			productName = Molecule;
 			productReference = AFA5610F0993781600F3E977 /* Molecule.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18064,7 +18242,7 @@
 				AFA5615709937C0D00F3E977 /* PBXTargetDependency */,
 			);
 			name = BlinkBox;
-			productName = Deco;
+			productName = BlinkBox;
 			productReference = AFA5616A09937C0D00F3E977 /* BlinkBox.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18123,7 +18301,7 @@
 				AFA5617C09937CF100F3E977 /* PBXTargetDependency */,
 			);
 			name = Noof;
-			productName = Deco;
+			productName = Noof;
 			productReference = AFA5618D09937CF100F3E977 /* Noof.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18182,7 +18360,7 @@
 				AFA5619E09937D7E00F3E977 /* PBXTargetDependency */,
 			);
 			name = Polyhedra;
-			productName = Deco;
+			productName = Polyhedra;
 			productReference = AFA561AF09937D7E00F3E977 /* Polyhedra.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18241,7 +18419,7 @@
 				AFA562070993849F00F3E977 /* PBXTargetDependency */,
 			);
 			name = Providence;
-			productName = Deco;
+			productName = Providence;
 			productReference = AFA562190993849F00F3E977 /* Providence.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18300,7 +18478,7 @@
 				AFA562200993852500F3E977 /* PBXTargetDependency */,
 			);
 			name = Pinion;
-			productName = Deco;
+			productName = Pinion;
 			productReference = AFA562310993852500F3E977 /* Pinion.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18359,7 +18537,7 @@
 				AFA562C0099392C600F3E977 /* PBXTargetDependency */,
 			);
 			name = Boing;
-			productName = Deco;
+			productName = Boing;
 			productReference = AFA562D1099392C600F3E977 /* Boing.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18418,7 +18596,7 @@
 				AFA562DB099393C900F3E977 /* PBXTargetDependency */,
 			);
 			name = AntMaze;
-			productName = Deco;
+			productName = AntMaze;
 			productReference = AFA562EC099393C900F3E977 /* AntMaze.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18477,7 +18655,7 @@
 				AFA562F30993943B00F3E977 /* PBXTargetDependency */,
 			);
 			name = Tangram;
-			productName = Deco;
+			productName = Tangram;
 			productReference = AFA563040993943B00F3E977 /* Tangram.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18536,7 +18714,7 @@
 				AFA563140993951000F3E977 /* PBXTargetDependency */,
 			);
 			name = Crackberg;
-			productName = Deco;
+			productName = Crackberg;
 			productReference = AFA563260993951000F3E977 /* Crackberg.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18595,7 +18773,7 @@
 				AFA56332099395ED00F3E977 /* PBXTargetDependency */,
 			);
 			name = GLHanoi;
-			productName = Deco;
+			productName = GLHanoi;
 			productReference = AFA56343099395ED00F3E977 /* GLHanoi.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18654,7 +18832,7 @@
 				AFA56352099396C000F3E977 /* PBXTargetDependency */,
 			);
 			name = Cube21;
-			productName = Deco;
+			productName = Cube21;
 			productReference = AFA56363099396C000F3E977 /* Cube21.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18713,7 +18891,7 @@
 				AFA5637A099397B300F3E977 /* PBXTargetDependency */,
 			);
 			name = TimeTunnel;
-			productName = Deco;
+			productName = TimeTunnel;
 			productReference = AFA5638B099397B300F3E977 /* TimeTunnel.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18772,7 +18950,7 @@
 				AFA563A5099398BB00F3E977 /* PBXTargetDependency */,
 			);
 			name = Juggler3D;
-			productName = Deco;
+			productName = Juggler3D;
 			productReference = AFA563B6099398BB00F3E977 /* Juggler3D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18831,7 +19009,7 @@
 				AFD56DF20996A03800BA26F7 /* PBXTargetDependency */,
 			);
 			name = GLText;
-			productName = Deco;
+			productName = GLText;
 			productReference = AFD56E040996A03800BA26F7 /* GLText.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18890,7 +19068,7 @@
 				AFD56EAF0996A72600BA26F7 /* PBXTargetDependency */,
 			);
 			name = Braid;
-			productName = Deco;
+			productName = Braid;
 			productReference = AFD56EBE0996A72600BA26F7 /* Braid.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -18949,7 +19127,7 @@
 				AFD56EDB0996A95700BA26F7 /* PBXTargetDependency */,
 			);
 			name = Forest;
-			productName = Deco;
+			productName = Forest;
 			productReference = AFD56EEA0996A95700BA26F7 /* Forest.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19008,7 +19186,7 @@
 				AFD56F0C0996AAFA00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Vines;
-			productName = Deco;
+			productName = Vines;
 			productReference = AFD56F1B0996AAFA00BA26F7 /* Vines.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19067,7 +19245,7 @@
 				AFD56F240996AB8A00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Galaxy;
-			productName = Deco;
+			productName = Galaxy;
 			productReference = AFD56F330996AB8A00BA26F7 /* Galaxy.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19126,7 +19304,7 @@
 				AFD56F500996AEEE00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Grav;
-			productName = Deco;
+			productName = Grav;
 			productReference = AFD56F5F0996AEEE00BA26F7 /* Grav.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19185,7 +19363,7 @@
 				AFD56F6C0996B01600BA26F7 /* PBXTargetDependency */,
 			);
 			name = Hopalong;
-			productName = Deco;
+			productName = Hopalong;
 			productReference = AFD56F7B0996B01600BA26F7 /* Hopalong.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19244,7 +19422,7 @@
 				AFD56F8D0996B09400BA26F7 /* PBXTargetDependency */,
 			);
 			name = Laser;
-			productName = Deco;
+			productName = Laser;
 			productReference = AFD56F9C0996B09400BA26F7 /* Laser.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19303,7 +19481,7 @@
 				AFD56FA40996B10F00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Lightning;
-			productName = Deco;
+			productName = Lightning;
 			productReference = AFD56FB30996B10F00BA26F7 /* Lightning.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19362,7 +19540,7 @@
 				AFD56FBA0996B18F00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Lisa;
-			productName = Deco;
+			productName = Lisa;
 			productReference = AFD56FC90996B18F00BA26F7 /* Lisa.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19421,7 +19599,7 @@
 				AFD56FD00996B20900BA26F7 /* PBXTargetDependency */,
 			);
 			name = Lissie;
-			productName = Deco;
+			productName = Lissie;
 			productReference = AFD56FDF0996B20900BA26F7 /* Lissie.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19480,7 +19658,7 @@
 				AFD56FF90996B43800BA26F7 /* PBXTargetDependency */,
 			);
 			name = Penrose;
-			productName = Deco;
+			productName = Penrose;
 			productReference = AFD570080996B43800BA26F7 /* Penrose.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19539,7 +19717,7 @@
 				AFD570100996B4CC00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Sierpinski;
-			productName = Deco;
+			productName = Sierpinski;
 			productReference = AFD5701F0996B4CC00BA26F7 /* Sierpinski.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19598,7 +19776,7 @@
 				AFD570270996B56D00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Sphere;
-			productName = Deco;
+			productName = Sphere;
 			productReference = AFD570360996B56D00BA26F7 /* Sphere.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19657,7 +19835,7 @@
 				AFD570440996B61600BA26F7 /* PBXTargetDependency */,
 			);
 			name = Spiral;
-			productName = Deco;
+			productName = Spiral;
 			productReference = AFD570530996B61600BA26F7 /* Spiral.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19716,7 +19894,7 @@
 				AFD5705A0996B6A300BA26F7 /* PBXTargetDependency */,
 			);
 			name = FadePlot;
-			productName = Deco;
+			productName = FadePlot;
 			productReference = AFD570690996B6A300BA26F7 /* FadePlot.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19775,7 +19953,7 @@
 				AFD570700996B72700BA26F7 /* PBXTargetDependency */,
 			);
 			name = Mountain;
-			productName = Deco;
+			productName = Mountain;
 			productReference = AFD5707F0996B72800BA26F7 /* Mountain.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19834,7 +20012,7 @@
 				AFD570860996B80300BA26F7 /* PBXTargetDependency */,
 			);
 			name = Triangle;
-			productName = Deco;
+			productName = Triangle;
 			productReference = AFD570950996B80300BA26F7 /* Triangle.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19893,7 +20071,7 @@
 				AFD5709C0996B88E00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Worm;
-			productName = Deco;
+			productName = Worm;
 			productReference = AFD570AB0996B88E00BA26F7 /* Worm.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -19952,7 +20130,7 @@
 				AFD570B20996B93000BA26F7 /* PBXTargetDependency */,
 			);
 			name = Rotor;
-			productName = Deco;
+			productName = Rotor;
 			productReference = AFD570C10996B93000BA26F7 /* Rotor.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20011,7 +20189,7 @@
 				AFD570CA0996B9F800BA26F7 /* PBXTargetDependency */,
 			);
 			name = Ant;
-			productName = Deco;
+			productName = Ant;
 			productReference = AFD570D90996B9F800BA26F7 /* Ant.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20070,7 +20248,7 @@
 				AFD570EB0996BBBF00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Flow;
-			productName = Deco;
+			productName = Flow;
 			productReference = AFD570FA0996BBBF00BA26F7 /* Flow.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20129,7 +20307,7 @@
 				AFD571140996BE9300BA26F7 /* PBXTargetDependency */,
 			);
 			name = Discrete;
-			productName = Deco;
+			productName = Discrete;
 			productReference = AFD571230996BE9300BA26F7 /* Discrete.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20188,7 +20366,7 @@
 				AFD5712D0996BF2E00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Apollonian;
-			productName = Deco;
+			productName = Apollonian;
 			productReference = AFD5713C0996BF2E00BA26F7 /* Apollonian.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20247,7 +20425,7 @@
 				AFD571440996C01700BA26F7 /* PBXTargetDependency */,
 			);
 			name = Euler2D;
-			productName = Deco;
+			productName = Euler2D;
 			productReference = AFD571530996C01700BA26F7 /* Euler2D.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20306,7 +20484,7 @@
 				AFD5715A0996C0CE00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Thornbird;
-			productName = Deco;
+			productName = Thornbird;
 			productReference = AFD571690996C0CE00BA26F7 /* Thornbird.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20365,7 +20543,7 @@
 				AFD571B60996D9DC00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Juggle;
-			productName = Deco;
+			productName = Juggle;
 			productReference = AFD571C50996D9DC00BA26F7 /* Juggle.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20424,7 +20602,7 @@
 				AFD572230996E4A300BA26F7 /* PBXTargetDependency */,
 			);
 			name = Swirl;
-			productName = Deco;
+			productName = Swirl;
 			productReference = AFD572320996E4A300BA26F7 /* Swirl.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20483,7 +20661,7 @@
 				AFD5726E0996EE8500BA26F7 /* PBXTargetDependency */,
 			);
 			name = Polyominoes;
-			productName = Deco;
+			productName = Polyominoes;
 			productReference = AFD5727D0996EE8500BA26F7 /* Polyominoes.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20542,7 +20720,7 @@
 				AFD572A60996F99600BA26F7 /* PBXTargetDependency */,
 			);
 			name = Bouboule;
-			productName = Deco;
+			productName = Bouboule;
 			productReference = AFD572B50996F99600BA26F7 /* Bouboule.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20601,7 +20779,7 @@
 				AFD572C30996FC0F00BA26F7 /* PBXTargetDependency */,
 			);
 			name = Crystal;
-			productName = Deco;
+			productName = Crystal;
 			productReference = AFD572D20996FC0F00BA26F7 /* Crystal.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20660,7 +20838,7 @@
 				AFD572FA099701C000BA26F7 /* PBXTargetDependency */,
 			);
 			name = Julia;
-			productName = Deco;
+			productName = Julia;
 			productReference = AFD57309099701C000BA26F7 /* Julia.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20719,7 +20897,7 @@
 				AFD5735E0997411200BA26F7 /* PBXTargetDependency */,
 			);
 			name = Strange;
-			productName = Deco;
+			productName = Strange;
 			productReference = AFD5736D0997411200BA26F7 /* Strange.saver */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
@@ -20847,6 +21025,9 @@
 				AF9D496C09B5411D006E59CF /* Twang */,
 				AF4776F1099DAE7A001F091E /* Vermiculate */,
 				AF47717F099D4803001F091E /* Wander */,
+				AFA3392E0B058505002B0E7D /* WebCollage */,
+				AFA33C020B058E17002B0E7D /* webcollage */,
+				AFA33BC60B058740002B0E7D /* webcollage-helper */,
 				AF4776DB099DADDF001F091E /* WhirlWindWarp */,
 				AF477208099D4EE8001F091E /* Whirlygig */,
 				AF477382099D65A1001F091E /* Wormhole */,
@@ -21940,6 +22121,16 @@
 				AF9D4E0409B5BC85006E59CF /* apple2.xml in Resources */,
 				AF0FAF0C09CA6FF900EE1051 /* xscreensaver-text in Resources */,
 				AF0FAF1409CA712600EE1051 /* xscreensaver-getimage-file in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFA339310B058505002B0E7D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA33BB00B05860F002B0E7D /* webcollage.xml in Resources */,
+				AFA33BDD0B058A30002B0E7D /* webcollage-helper in Resources */,
+				AFA33C0C0B058ED2002B0E7D /* webcollage in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -23448,6 +23639,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA3393B0B058505002B0E7D /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFA55956099330B000F3E977 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -24078,6 +24276,32 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+		};
+		AFA3393C0B058505002B0E7D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+		};
+		AFA33C010B058E17002B0E7D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here\nexit 0";
 		};
 		AFA3D69209C03B5C00E4CFCA /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -27806,6 +28030,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA339340B058505002B0E7D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA339350B058505002B0E7D /* XScreenSaverSubclass.m in Sources */,
+				AFA33BAF0B0585F7002B0E7D /* webcollage-cocoa.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFA33BC40B058740002B0E7D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA33BD10B0587EE002B0E7D /* webcollage-helper-cocoa.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFA5594B099330B000F3E977 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -30226,6 +30467,31 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF9D4DEE09B5BB19006E59CF /* PBXContainerItemProxy */;
 		};
+		AFA3392F0B058505002B0E7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFA339300B058505002B0E7D /* PBXContainerItemProxy */;
+		};
+		AFA33B8F0B0585A4002B0E7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA3392E0B058505002B0E7D /* WebCollage */;
+			targetProxy = AFA33B8E0B0585A4002B0E7D /* PBXContainerItemProxy */;
+		};
+		AFA33BCF0B0587B2002B0E7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA33BC60B058740002B0E7D /* webcollage-helper */;
+			targetProxy = AFA33BCE0B0587B2002B0E7D /* PBXContainerItemProxy */;
+		};
+		AFA33BDC0B058952002B0E7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA33BC60B058740002B0E7D /* webcollage-helper */;
+			targetProxy = AFA33BDB0B058952002B0E7D /* PBXContainerItemProxy */;
+		};
+		AFA33C040B058E3C002B0E7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA33C020B058E17002B0E7D /* webcollage */;
+			targetProxy = AFA33C030B058E3C002B0E7D /* PBXContainerItemProxy */;
+		};
 		AFA55947099330B000F3E977 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -32345,6 +32611,82 @@
 		AF9D4DFD09B5BB19006E59CF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AFA3393E0B058505002B0E7D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		AFA3393F0B058505002B0E7D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		AFA33BCC0B058754002B0E7D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "webcollage-helper";
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		AFA33BCD0B058754002B0E7D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "webcollage-helper";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		AFA33C080B058E67002B0E7D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = webcollage;
+			};
+			name = Debug;
+		};
+		AFA33C090B058E67002B0E7D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				PRODUCT_NAME = webcollage;
+				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -35051,6 +35393,33 @@
 			buildConfigurations = (
 				AF9D4DFC09B5BB19006E59CF /* Debug */,
 				AF9D4DFD09B5BB19006E59CF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFA3393D0B058505002B0E7D /* Build configuration list for PBXNativeTarget "WebCollage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA3393E0B058505002B0E7D /* Debug */,
+				AFA3393F0B058505002B0E7D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFA33BCB0B058754002B0E7D /* Build configuration list for PBXNativeTarget "webcollage-helper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA33BCC0B058754002B0E7D /* Debug */,
+				AFA33BCD0B058754002B0E7D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFA33C070B058E67002B0E7D /* Build configuration list for PBXAggregateTarget "webcollage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA33C080B058E67002B0E7D /* Debug */,
+				AFA33C090B058E67002B0E7D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

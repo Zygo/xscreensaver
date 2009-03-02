@@ -18,7 +18,7 @@
 
   <hgroup>
     <boolean id="rotate" _label="Rotation" arg-unset="-no-rotate"/>
-    <boolean id="rotate" _label="Steering" arg-unset="-no-move"/>
+    <boolean id="steer" _label="Steering" arg-unset="-no-move"/>
   </hgroup>
   <boolean id="3d" _label="Do Red/Blue 3D separation" arg-set="-3d"/>
 

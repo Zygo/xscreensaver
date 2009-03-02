@@ -1,8 +1,8 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-zephyr - Lose your way wandering some height fields, and enjoy candy.
+crackberg - Lose your way wandering some height fields, and enjoy candy.
 .SH SYNOPSIS
-.B zephyr
+.B crackberg
 [\-root]
 [\-window]
 [\-install]
@@ -39,7 +39,7 @@ Decrease and increase manual speed, respectively.
 .B Spacebar
 Return to automatic control.
 .SH OPTIONS
-.I zephyr
+.I crackberg
 accepts the following options:
 .TP 8
 .B \-root

@@ -38,6 +38,15 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.01:   * Reworked PAM code to support fingerprint readers, etc.
+                      * Ported 'webcollage' to OSX.
+                      * Added OSX 10.2 and 10.3 kernel panics to `bsod'.
+                      * Fixed a Xinerama crash when changing the screen count.
+                      * New blobbier `mirrorblob'.
+                      * Minor updates to `lisa', `bsod', `ifs', `hypertorus',
+                        `polytopes', `circuit', `endgame', `crackberg',
+                        `flipflop', `flipscreen3d', `fliptext', and `carousel'.
+                      * Enabled multi-threaded OpenGL on OSX.
 Changes since 5.00:   * Backed out recent locale-related changes, since they
                         broke far more things than they fixed.
                       * Fail gracefully with ridiculously small window sizes.

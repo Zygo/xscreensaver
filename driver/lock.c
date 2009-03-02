@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,6 +25,8 @@
 #include <sys/time.h>
 #include "xscreensaver.h"
 #include "resources.h"
+#include "mlstring.h"
+#include "auth.h"
 
 #ifndef NO_LOCKING              /* (mostly) whole file */
 
@@ -74,18 +76,19 @@ vms_passwd_valid_p(char *pw, Bool verbose_p)
 
 #endif /* VMS */
 
+#define SAMPLE_INPUT "MMMMMMMMMMMM"
+
 
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 
-enum passwd_state { pw_read, pw_ok, pw_null, pw_fail, pw_cancel, pw_time };
+typedef struct info_dialog_data info_dialog_data;
 
 struct passwd_dialog_data {
 
   saver_screen_info *prompt_screen;
   int previous_mouse_x, previous_mouse_y;
 
-  enum passwd_state state;
   char typed_passwd [80];
   XtIntervalId timer;
   int i_beam;
@@ -96,16 +99,20 @@ struct passwd_dialog_data {
   Dimension height;
   Dimension border_width;
 
+  Bool echo_input;
   Bool show_stars_p; /* "I regret that I have but one asterisk for my country."
                         -- Nathan Hale, 1776. */
 
   char *heading_label;
   char *body_label;
   char *user_label;
-  char *passwd_label;
+  mlstring *info_label;
+  /* The entry field shall only be displayed if prompt_label is not NULL */
+  mlstring *prompt_label;
   char *date_label;
-  char *user_string;
   char *passwd_string;
+  Bool passwd_changed_p; /* Whether the user entry field needs redrawing */
+  char *unlock_label;
   char *login_label;
   char *uname_label;
 
@@ -130,14 +137,17 @@ struct passwd_dialog_data {
   Pixel button_foreground;
   Pixel button_background;
 
-  Dimension logo_width;
-  Dimension logo_height;
+  Dimension preferred_logo_width, logo_width;
+  Dimension preferred_logo_height, logo_height;
   Dimension thermo_width;
   Dimension internal_border;
   Dimension shadow_width;
 
   Dimension passwd_field_x, passwd_field_y;
   Dimension passwd_field_width, passwd_field_height;
+
+  Dimension unlock_button_x, unlock_button_y;
+  Dimension unlock_button_width, unlock_button_height;
 
   Dimension login_button_x, login_button_y;
   Dimension login_button_width, login_button_height;
@@ -151,11 +161,14 @@ struct passwd_dialog_data {
   unsigned long *logo_pixels;
 
   Cursor passwd_cursor;
+  Bool unlock_button_down_p;
   Bool login_button_down_p;
   Bool login_button_p;
   Bool login_button_enabled_p;
+  Bool button_state_changed_p; /* Refers to both buttons */
 
   Pixmap save_under;
+  Pixmap user_entry_pixmap;
 };
 
 static void draw_passwd_window (saver_info *si);
@@ -163,30 +176,31 @@ static void update_passwd_window (saver_info *si, const char *printed_passwd,
 				  float ratio);
 static void destroy_passwd_window (saver_info *si);
 static void undo_vp_motion (saver_info *si);
-static void handle_passwd_button (saver_info *si, XEvent *event);
+static void finished_typing_passwd (saver_info *si, passwd_dialog_data *pw);
+static void cleanup_passwd_window (saver_info *si);
+static void restore_background (saver_info *si);
 
+extern void xss_authenticate(saver_info *si, Bool verbose_p);
 
 static void
-make_passwd_window (saver_info *si)
+new_passwd_window (saver_info *si)
 {
-  struct passwd *p = getpwuid (getuid ());
-  XSetWindowAttributes attrs;
-  unsigned long attrmask = 0;
-  passwd_dialog_data *pw = (passwd_dialog_data *) calloc (1, sizeof(*pw));
+  passwd_dialog_data *pw;
   Screen *screen;
   Colormap cmap;
   char *f;
   saver_screen_info *ssi = &si->screens [mouse_screen (si)];
+
+  pw = (passwd_dialog_data *) calloc (1, sizeof(*pw));
+  if (!pw)
+    return;
 
   /* Display the button only if the "newLoginCommand" pref is non-null.
    */
   pw->login_button_p = (si->prefs.new_login_command &&
                         *si->prefs.new_login_command);
 
-  if (pw->login_button_p)
-    pw->passwd_cursor = XCreateFontCursor (si->dpy, XC_top_left_arrow);
-  else
-    pw->passwd_cursor = 0;
+  pw->passwd_cursor = XCreateFontCursor (si->dpy, XC_top_left_arrow);
 
   pw->prompt_screen = ssi;
   if (si->prefs.verbose_p)
@@ -195,8 +209,6 @@ make_passwd_window (saver_info *si)
 
   screen = pw->prompt_screen->screen;
   cmap = DefaultColormapOfScreen (screen);
-
-  pw->ratio = 1.0;
 
   pw->show_stars_p = get_boolean_resource(si->dpy, "passwd.asterisks", 
 					  "Boolean");
@@ -207,8 +219,8 @@ make_passwd_window (saver_info *si)
 					"Dialog.Label.Label");
   pw->user_label = get_string_resource (si->dpy, "passwd.user.label",
 					"Dialog.Label.Label");
-  pw->passwd_label = get_string_resource (si->dpy, "passwd.passwd.label",
-					  "Dialog.Label.Label");
+  pw->unlock_label = get_string_resource (si->dpy, "passwd.unlock.label",
+					  "Dialog.Button.Label");
   pw->login_label = get_string_resource (si->dpy, "passwd.login.label",
                                          "Dialog.Button.Label");
 
@@ -219,8 +231,8 @@ make_passwd_window (saver_info *si)
   if (!pw->body_label)
     pw->body_label = strdup("ERROR: RESOURCES NOT INSTALLED CORRECTLY");
   if (!pw->user_label) pw->user_label = strdup("ERROR");
-  if (!pw->passwd_label) pw->passwd_label = strdup("ERROR");
   if (!pw->date_label) pw->date_label = strdup("ERROR");
+  if (!pw->unlock_label) pw->unlock_label = strdup("ERROR (UNLOCK)");
   if (!pw->login_label) pw->login_label = strdup ("ERROR (LOGIN)") ;
 
   /* Put the version number in the label. */
@@ -254,7 +266,6 @@ make_passwd_window (saver_info *si)
   }
 # endif
 
-  pw->user_string = strdup (p && p->pw_name ? p->pw_name : "???");
   pw->passwd_string = strdup("");
 
   f = get_string_resource (si->dpy, "passwd.headingFont", "Dialog.Font");
@@ -333,10 +344,10 @@ make_passwd_window (saver_info *si)
 					  "passwd.bottomShadowColor",
 					  "Dialog.Background" );
 
-  pw->logo_width = get_integer_resource (si->dpy, "passwd.logo.width",
-					 "Dialog.Logo.Width");
-  pw->logo_height = get_integer_resource (si->dpy, "passwd.logo.height",
-					  "Dialog.Logo.Height");
+  pw->preferred_logo_width = get_integer_resource (si->dpy, "passwd.logo.width",
+						   "Dialog.Logo.Width");
+  pw->preferred_logo_height = get_integer_resource (si->dpy, "passwd.logo.height",
+						    "Dialog.Logo.Height");
   pw->thermo_width = get_integer_resource (si->dpy, "passwd.thermometer.width",
 					   "Dialog.Thermometer.Width");
   pw->internal_border = get_integer_resource (si->dpy, "passwd.internalBorderWidth",
@@ -344,134 +355,12 @@ make_passwd_window (saver_info *si)
   pw->shadow_width = get_integer_resource (si->dpy, "passwd.shadowThickness",
 					   "Dialog.ShadowThickness");
 
-  if (pw->logo_width == 0)  pw->logo_width = 150;
-  if (pw->logo_height == 0) pw->logo_height = 150;
+  if (pw->preferred_logo_width == 0)  pw->preferred_logo_width = 150;
+  if (pw->preferred_logo_height == 0) pw->preferred_logo_height = 150;
   if (pw->internal_border == 0) pw->internal_border = 15;
   if (pw->shadow_width == 0) pw->shadow_width = 4;
   if (pw->thermo_width == 0) pw->thermo_width = pw->shadow_width;
 
-  {
-    int direction, ascent, descent;
-    XCharStruct overall;
-
-    pw->width = 0;
-    pw->height = 0;
-
-    /* Measure the heading_label. */
-    XTextExtents (pw->heading_font,
-		  pw->heading_label, strlen(pw->heading_label),
-		  &direction, &ascent, &descent, &overall);
-    if (overall.width > pw->width) pw->width = overall.width;
-    pw->height += ascent + descent;
-
-    /* Measure the uname_label. */
-    if ((strlen(pw->uname_label)) && pw->show_uname_p)
-      {
-	XTextExtents (pw->uname_font,
-		      pw->uname_label, strlen(pw->uname_label),
-		      &direction, &ascent, &descent, &overall);
-	if (overall.width > pw->width) pw->width = overall.width;
-	pw->height += ascent + descent;
-      }
-
-    /* Measure the body_label. */
-    XTextExtents (pw->body_font,
-		  pw->body_label, strlen(pw->body_label),
-		  &direction, &ascent, &descent, &overall);
-    if (overall.width > pw->width) pw->width = overall.width;
-    pw->height += ascent + descent;
-
-    {
-      Dimension w2 = 0, w3 = 0, button_w = 0;
-      Dimension h2 = 0, h3 = 0, button_h = 0;
-      const char *passwd_string = "MMMMMMMMMMMM";
-
-      /* Measure the user_label. */
-      XTextExtents (pw->label_font,
-		    pw->user_label, strlen(pw->user_label),
-		    &direction, &ascent, &descent, &overall);
-      if (overall.width > w2)  w2 = overall.width;
-      h2 += ascent + descent;
-
-      /* Measure the passwd_label. */
-      XTextExtents (pw->label_font,
-		    pw->passwd_label, strlen(pw->passwd_label),
-		    &direction, &ascent, &descent, &overall);
-      if (overall.width > w2)  w2 = overall.width;
-      h2 += ascent + descent;
-
-      /* Measure the user_string. */
-      XTextExtents (pw->passwd_font,
-		    pw->user_string, strlen(pw->user_string),
-		    &direction, &ascent, &descent, &overall);
-      overall.width += (pw->shadow_width * 4);
-      ascent += (pw->shadow_width * 4);
-      if (overall.width > w3)  w3 = overall.width;
-      h3 += ascent + descent;
-
-      /* Measure the (maximally-sized, dummy) passwd_string. */
-      XTextExtents (pw->passwd_font,
-		    passwd_string, strlen(passwd_string),
-		    &direction, &ascent, &descent, &overall);
-      overall.width += (pw->shadow_width * 4);
-      ascent += (pw->shadow_width * 4);
-      if (overall.width > w3)  w3 = overall.width;
-      h3 += ascent + descent;
-
-      w2 = w2 + w3 + (pw->shadow_width * 2);
-      h2 = MAX (h2, h3);
-
-      pw->login_button_width = 0;
-      pw->login_button_height = 0;
-
-      if (pw->login_button_p)
-        {
-          pw->login_button_enabled_p = True;
-
-          /* Measure the "New Login" button */
-          XTextExtents (pw->button_font, pw->login_label,
-                        strlen (pw->login_label),
-                        &direction, &ascent, &descent, &overall);
-          button_w = overall.width;
-          button_h = ascent + descent;
-
-          /* Add some horizontal padding inside the buttons. */
-          button_w += ascent;
-
-          button_w += ((ascent + descent) / 2) + (pw->shadow_width * 2);
-          button_h += ((ascent + descent) / 2) + (pw->shadow_width * 2);
-
-          pw->login_button_width = button_w;
-          pw->login_button_height = button_h;
-
-          w2 = MAX (w2, button_w);
-          h2 += button_h * 1.5;
-        }
-
-      if (w2 > pw->width)  pw->width  = w2;
-      pw->height += h2;
-    }
-
-    pw->width  += (pw->internal_border * 2);
-    pw->height += (pw->internal_border * 4);
-
-    pw->width += pw->thermo_width + (pw->shadow_width * 3);
-
-    if (pw->logo_height > pw->height)
-      pw->height = pw->logo_height;
-    else if (pw->height > pw->logo_height)
-      pw->logo_height = pw->height;
-
-    pw->logo_width = pw->logo_height;
-
-    pw->width += pw->logo_width;
-  }
-
-  attrmask |= CWOverrideRedirect; attrs.override_redirect = True;
-
-  attrmask |= CWEventMask;
-  attrs.event_mask = (ExposureMask | KeyPressMask |
-                      ButtonPressMask | ButtonReleaseMask);
 
   /* We need to remember the mouse position and restore it afterward, or
      sometimes (perhaps only with Xinerama?) the mouse gets warped to
@@ -499,6 +388,233 @@ make_passwd_window (saver_info *si)
                blurb(), pw->prompt_screen->number);
   }
 
+  /* Before mapping the window, save a pixmap of the current screen.
+     When we lower the window, we
+     restore these bits.  This works, because the running screenhack
+     has already been sent SIGSTOP, so we know nothing else is drawing
+     right now! */
+  {
+    XGCValues gcv;
+    GC gc;
+    pw->save_under = XCreatePixmap (si->dpy,
+				    pw->prompt_screen->screensaver_window,
+				    pw->prompt_screen->width,
+				    pw->prompt_screen->height,
+				    pw->prompt_screen->current_depth);
+    gcv.function = GXcopy;
+    gc = XCreateGC (si->dpy, pw->save_under, GCFunction, &gcv);
+    XCopyArea (si->dpy, pw->prompt_screen->screensaver_window,
+	       pw->save_under, gc,
+	       0, 0,
+	       pw->prompt_screen->width, pw->prompt_screen->height,
+	       0, 0);
+    XFreeGC (si->dpy, gc);
+  }
+
+  si->pw_data = pw;
+}
+
+
+/**
+ * info_msg and prompt may be NULL.
+ */
+static void
+make_passwd_window (saver_info *si,
+		    const char *info_msg,
+		    const char *prompt,
+		    Bool echo)
+{
+  XSetWindowAttributes attrs;
+  unsigned long attrmask = 0;
+  passwd_dialog_data *pw;
+  Screen *screen;
+  Colormap cmap;
+  Dimension max_string_width_px;
+  saver_screen_info *ssi = &si->screens [mouse_screen (si)];
+
+  cleanup_passwd_window (si);
+
+  if (!si->pw_data)
+    new_passwd_window (si);
+
+  if (!(pw = si->pw_data))
+    return;
+
+  pw->ratio = 1.0;
+
+  pw->prompt_screen = ssi;
+  if (si->prefs.verbose_p)
+    fprintf (stderr, "%s: %d: creating password dialog.\n",
+             blurb(), pw->prompt_screen->number);
+
+  screen = pw->prompt_screen->screen;
+  cmap = DefaultColormapOfScreen (screen);
+
+  pw->echo_input = echo;
+
+  max_string_width_px = ssi->width
+      - pw->shadow_width * 4
+      - pw->border_width * 2
+      - pw->thermo_width
+      - pw->preferred_logo_width
+      - pw->internal_border * 2;
+  /* As the string wraps it makes the window taller which makes the logo wider
+   * which leaves less room for the text which makes the string wrap. Uh-oh, a
+   * loop. By wrapping at a bit less than the available width, there's some
+   * room for the dialog to grow without going off the edge of the screen. */
+  max_string_width_px *= 0.75;
+
+  pw->info_label = mlstring_new(info_msg ? info_msg : pw->body_label,
+				pw->label_font, max_string_width_px);
+
+  {
+    int direction, ascent, descent;
+    XCharStruct overall;
+
+    pw->width = 0;
+    pw->height = 0;
+
+    /* Measure the heading_label. */
+    XTextExtents (pw->heading_font,
+		  pw->heading_label, strlen(pw->heading_label),
+		  &direction, &ascent, &descent, &overall);
+    if (overall.width > pw->width) pw->width = overall.width;
+    pw->height += ascent + descent;
+
+    /* Measure the uname_label. */
+    if ((strlen(pw->uname_label)) && pw->show_uname_p)
+      {
+	XTextExtents (pw->uname_font,
+		      pw->uname_label, strlen(pw->uname_label),
+		      &direction, &ascent, &descent, &overall);
+	if (overall.width > pw->width) pw->width = overall.width;
+	pw->height += ascent + descent;
+      }
+
+    {
+      Dimension w2 = 0, w3 = 0, button_w = 0;
+      Dimension h2 = 0, h3 = 0, button_h = 0;
+      const char *passwd_string = SAMPLE_INPUT;
+
+      /* Measure the user_label. */
+      XTextExtents (pw->label_font,
+		    pw->user_label, strlen(pw->user_label),
+		    &direction, &ascent, &descent, &overall);
+      if (overall.width > w2)  w2 = overall.width;
+      h2 += ascent + descent;
+
+      /* Measure the info_label. */
+      if (pw->info_label->overall_width > pw->width) pw->width = pw->info_label->overall_width;
+	h2 += pw->info_label->overall_height;
+
+      /* Measure the user string. */
+      XTextExtents (pw->passwd_font,
+		    si->user, strlen(si->user),
+		    &direction, &ascent, &descent, &overall);
+      overall.width += (pw->shadow_width * 4);
+      ascent += (pw->shadow_width * 4);
+      if (overall.width > w3)  w3 = overall.width;
+      h3 += ascent + descent;
+
+      /* Measure the (dummy) passwd_string. */
+      if (prompt)
+	{
+	  XTextExtents (pw->passwd_font,
+			passwd_string, strlen(passwd_string),
+			&direction, &ascent, &descent, &overall);
+	  overall.width += (pw->shadow_width * 4);
+	  ascent += (pw->shadow_width * 4);
+	  if (overall.width > w3)  w3 = overall.width;
+	  h3 += ascent + descent;
+
+	  /* Measure the prompt_label. */
+	  max_string_width_px -= w3;
+	  pw->prompt_label = mlstring_new(prompt, pw->label_font, max_string_width_px);
+
+	  if (pw->prompt_label->overall_width > w2) w2 = pw->prompt_label->overall_width;
+
+	  h2 += pw->prompt_label->overall_height;
+
+	  w2 = w2 + w3 + (pw->shadow_width * 2);
+	  h2 = MAX (h2, h3);
+	}
+
+      /* The "Unlock" button. */
+      XTextExtents (pw->label_font,
+		    pw->unlock_label, strlen(pw->unlock_label),
+		    &direction, &ascent, &descent, &overall);
+      button_w = overall.width;
+      button_h = ascent + descent;
+
+      /* Add some horizontal padding inside the button. */
+      button_w += ascent;
+      
+      button_w += ((ascent + descent) / 2) + (pw->shadow_width * 2);
+      button_h += ((ascent + descent) / 2) + (pw->shadow_width * 2);
+
+      pw->unlock_button_width = button_w;
+      pw->unlock_button_height = button_h;
+
+      w2 = MAX (w2, button_w);
+      h2 += button_h * 1.5;
+
+      /* The "New Login" button */
+      pw->login_button_width = 0;
+      pw->login_button_height = 0;
+
+      if (pw->login_button_p)
+        {
+          pw->login_button_enabled_p = True;
+
+          /* Measure the "New Login" button */
+          XTextExtents (pw->button_font, pw->login_label,
+                        strlen (pw->login_label),
+                        &direction, &ascent, &descent, &overall);
+          button_w = overall.width;
+          button_h = ascent + descent;
+
+          /* Add some horizontal padding inside the buttons. */
+          button_w += ascent;
+
+          button_w += ((ascent + descent) / 2) + (pw->shadow_width * 2);
+          button_h += ((ascent + descent) / 2) + (pw->shadow_width * 2);
+
+          pw->login_button_width = button_w;
+          pw->login_button_height = button_h;
+
+	  if (button_h > pw->unlock_button_height)
+	    h2 += (button_h * 1.5 - pw->unlock_button_height * 1.5);
+
+	  /* Use (2 * shadow_width) spacing between the buttons. Another
+	     (2 * shadow_width) is required to account for button shadows. */
+	  w2 = MAX (w2, button_w + pw->unlock_button_width + (pw->shadow_width * 4));
+        }
+
+      if (w2 > pw->width)  pw->width  = w2;
+      pw->height += h2;
+    }
+
+    pw->width  += (pw->internal_border * 2);
+    pw->height += (pw->internal_border * 4);
+
+    pw->width += pw->thermo_width + (pw->shadow_width * 3);
+
+    if (pw->preferred_logo_height > pw->height)
+      pw->height = pw->logo_height = pw->preferred_logo_height;
+    else if (pw->height > pw->preferred_logo_height)
+      pw->logo_height = pw->height;
+
+    pw->logo_width = pw->logo_height;
+
+    pw->width += pw->logo_width;
+  }
+
+  attrmask |= CWOverrideRedirect; attrs.override_redirect = True;
+
+  attrmask |= CWEventMask;
+  attrs.event_mask = (ExposureMask | KeyPressMask |
+                      ButtonPressMask | ButtonReleaseMask);
+
   /* Figure out where on the desktop to place the window so that it will
      actually be visible; this takes into account virtual viewports as
      well as Xinerama. */
@@ -517,56 +633,48 @@ make_passwd_window (saver_info *si)
   pw->border_width = get_integer_resource (si->dpy, "passwd.borderWidth",
                                            "Dialog.BorderWidth");
 
-  si->passwd_dialog =
-    XCreateWindow (si->dpy,
-		   RootWindowOfScreen(screen),
-		   pw->x, pw->y, pw->width, pw->height, pw->border_width,
-		   DefaultDepthOfScreen (screen), InputOutput,
-		   DefaultVisualOfScreen(screen),
-		   attrmask, &attrs);
-  XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
+  /* Only create the window the first time around */
+  if (!si->passwd_dialog)
+    {
+      si->passwd_dialog =
+	XCreateWindow (si->dpy,
+		       RootWindowOfScreen(screen),
+		       pw->x, pw->y, pw->width, pw->height, pw->border_width,
+		       DefaultDepthOfScreen (screen), InputOutput,
+		       DefaultVisualOfScreen(screen),
+		       attrmask, &attrs);
+      XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
 
-  /* We use the default visual, not ssi->visual, so that the logo pixmap's
-     visual matches that of the si->passwd_dialog window. */
-  pw->logo_pixmap = xscreensaver_logo (ssi->screen,
-                                       /* ssi->current_visual, */
-                                       DefaultVisualOfScreen(screen),
-                                       si->passwd_dialog, cmap,
-                                       pw->background, 
-                                       &pw->logo_pixels, &pw->logo_npixels,
-                                       &pw->logo_clipmask, True);
+      /* We use the default visual, not ssi->visual, so that the logo pixmap's
+	 visual matches that of the si->passwd_dialog window. */
+      pw->logo_pixmap = xscreensaver_logo (ssi->screen,
+					   /* ssi->current_visual, */
+					   DefaultVisualOfScreen(screen),
+					   si->passwd_dialog, cmap,
+					   pw->background, 
+					   &pw->logo_pixels, &pw->logo_npixels,
+					   &pw->logo_clipmask, True);
+    }
+  else /* On successive prompts, just resize the window */
+    {
+      XWindowChanges wc;
+      unsigned int mask = CWX | CWY | CWWidth | CWHeight;
 
-  /* Before mapping the window, save the bits that are underneath the
-     rectangle the window will occlude.  When we lower the window, we
-     restore these bits.  This works, because the running screenhack
-     has already been sent SIGSTOP, so we know nothing else is drawing
-     right now! */
-  {
-    XGCValues gcv;
-    GC gc;
-    pw->save_under = XCreatePixmap (si->dpy,
-                                    pw->prompt_screen->screensaver_window,
-                                    pw->width + (pw->border_width*2) + 1,
-                                    pw->height + (pw->border_width*2) + 1,
-                                    pw->prompt_screen->current_depth);
-    gcv.function = GXcopy;
-    gc = XCreateGC (si->dpy, pw->save_under, GCFunction, &gcv);
-    XCopyArea (si->dpy, pw->prompt_screen->screensaver_window,
-               pw->save_under, gc,
-               pw->x - pw->border_width, pw->y - pw->border_width,
-               pw->width + (pw->border_width*2) + 1,
-               pw->height + (pw->border_width*2) + 1,
-               0, 0);
-    XFreeGC (si->dpy, gc);
-  }
+      wc.x = pw->x;
+      wc.y = pw->y;
+      wc.width = pw->width;
+      wc.height = pw->height;
+
+      XConfigureWindow (si->dpy, si->passwd_dialog, mask, &wc);
+    }
+
+  restore_background(si);
 
   XMapRaised (si->dpy, si->passwd_dialog);
   XSync (si->dpy, False);
 
   move_mouse_grab (si, si->passwd_dialog,
-                   (pw->passwd_cursor
-                    ? pw->passwd_cursor
-                    : pw->prompt_screen->cursor),
+                   pw->passwd_cursor,
                    pw->prompt_screen->number);
   undo_vp_motion (si);
 
@@ -575,7 +683,6 @@ make_passwd_window (saver_info *si)
   if (cmap)
     XInstallColormap (si->dpy, cmap);
   draw_passwd_window (si);
-  XSync (si->dpy, False);
 }
 
 
@@ -590,24 +697,30 @@ draw_passwd_window (saver_info *si)
   int sw;
   int tb_height;
 
+  /* Force redraw */
+  pw->passwd_changed_p = True;
+  pw->button_state_changed_p = True;
+
+  /* This height is the height of all the elements, not to be confused with
+   * the overall window height which is pw->height. It is used to compute
+   * the amount of spacing (padding) between elements. */
   height = (pw->heading_font->ascent + pw->heading_font->descent +
-            pw->body_font->ascent + pw->body_font->descent +
-            (2 * MAX ((pw->label_font->ascent + pw->label_font->descent),
-                      (pw->passwd_font->ascent + pw->passwd_font->descent +
-                       (pw->shadow_width * 4)))) +
+	    pw->info_label->overall_height +
+	    MAX (((pw->label_font->ascent + pw->label_font->descent) +
+		  (pw->prompt_label ? pw->prompt_label->overall_height : 0)),
+		 ((pw->passwd_font->ascent + pw->passwd_font->descent) +
+		  (pw->shadow_width * 2)) * (pw->prompt_label ? 2 : 1)) +
             pw->date_font->ascent + pw->date_font->descent);
 
   if ((strlen(pw->uname_label)) && pw->show_uname_p)
     height += (pw->uname_font->ascent + pw->uname_font->descent); /* for uname */
 
-  if (pw->login_button_p)
-    height += ((pw->button_font->ascent + pw->button_font->descent) * 2 +
-               2 * pw->shadow_width);
+  height += ((pw->button_font->ascent + pw->button_font->descent) * 2 +
+             2 * pw->shadow_width);
 
-  spacing = (((pw->height
-               - ((pw->login_button_p ? 4 : 2) * pw->shadow_width)
-               - pw->internal_border - height))
-             / 8);
+  spacing = ((pw->height - 2 * pw->shadow_width
+               - pw->internal_border - height)
+             / 10);
 
   if (spacing < 0) spacing = 0;
 
@@ -639,14 +752,13 @@ draw_passwd_window (saver_info *si)
 		   pw->uname_label, strlen(pw->uname_label));
     }
 
-  /* text below uname
+  /* the info_label (below uname)
    */
-  XSetFont (si->dpy, gc1, pw->body_font->fid);
-  y1 += spacing + pw->body_font->ascent + pw->body_font->descent;
-  sw = string_width (pw->body_font, pw->body_label);
-  x2 = (x1 + ((x3 - x1 - sw) / 2));
-  XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y1,
-	       pw->body_label, strlen(pw->body_label));
+  x2 = (x1 + ((x3 - x1 - pw->info_label->overall_width) / 2));
+  y1 += spacing + pw->info_label->font_height / 2;
+  mlstring_draw(si->dpy, si->passwd_dialog, gc1, pw->info_label,
+		x2, y1);
+  y1 += pw->info_label->overall_height;
 
 
   tb_height = (pw->passwd_font->ascent + pw->passwd_font->descent +
@@ -654,34 +766,32 @@ draw_passwd_window (saver_info *si)
 
   /* the "User:" prompt
    */
-  y1 += spacing;
   y2 = y1;
   XSetForeground (si->dpy, gc1, pw->foreground);
   XSetFont (si->dpy, gc1, pw->label_font->fid);
-  y1 += (spacing + tb_height);
+  y1 += (spacing + tb_height + pw->shadow_width);
   x2 = (x1 + pw->internal_border +
 	MAX(string_width (pw->label_font, pw->user_label),
-	    string_width (pw->label_font, pw->passwd_label)));
+	    pw->prompt_label ? pw->prompt_label->overall_width : 0));
   XDrawString (si->dpy, si->passwd_dialog, gc1,
 	       x2 - string_width (pw->label_font, pw->user_label),
 	       y1 - pw->passwd_font->descent,
 	       pw->user_label, strlen(pw->user_label));
 
-  /* the "Password:" prompt
+  /* the prompt_label prompt
    */
-  y1 += (spacing + tb_height);
-  XDrawString (si->dpy, si->passwd_dialog, gc1,
-	       x2 - string_width (pw->label_font, pw->passwd_label),
-	       y1 - pw->passwd_font->descent,
-	       pw->passwd_label, strlen(pw->passwd_label));
-
-
-  XSetForeground (si->dpy, gc2, pw->passwd_background);
+  if (pw->prompt_label)
+    {
+      y1 += tb_height - pw->label_font->ascent + pw->shadow_width;
+      mlstring_draw(si->dpy, si->passwd_dialog, gc1, pw->prompt_label,
+		    x2 - pw->prompt_label->overall_width, y1);
+    }
 
   /* the "user name" text field
    */
   y1 = y2;
   XSetForeground (si->dpy, gc1, pw->passwd_foreground);
+  XSetForeground (si->dpy, gc2, pw->passwd_background);
   XSetFont (si->dpy, gc1, pw->passwd_font->fid);
   y1 += (spacing + tb_height);
   x2 += (pw->shadow_width * 4);
@@ -698,15 +808,18 @@ draw_passwd_window (saver_info *si)
   XDrawString (si->dpy, si->passwd_dialog, gc1,
                x2,
                y1 - pw->passwd_font->descent,
-	       pw->user_string, strlen(pw->user_string));
+	       si->user, strlen(si->user));
 
-  /* the "password" text field
+  /* the password/prompt text field
    */
-  y1 += (spacing + tb_height);
+  if (pw->prompt_label)
+    {
+      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width * 2);
 
-  pw->passwd_field_x = x2 - pw->shadow_width;
-  pw->passwd_field_y = y1 - (pw->passwd_font->ascent +
-			     pw->passwd_font->descent);
+      pw->passwd_field_x = x2 - pw->shadow_width;
+      pw->passwd_field_y = y1 - (pw->passwd_font->ascent +
+				 pw->passwd_font->descent);
+    }
 
   /* The shadow around the text fields
    */
@@ -721,12 +834,14 @@ draw_passwd_window (saver_info *si)
 			 pw->shadow_width,
 			 pw->shadow_bottom, pw->shadow_top);
 
-  y1 += (spacing + pw->passwd_font->ascent + pw->passwd_font->descent +
-	 (pw->shadow_width * 4));
-  draw_shaded_rectangle (si->dpy, si->passwd_dialog,
-			 x1, y1, x2, y2,
-			 pw->shadow_width,
-			 pw->shadow_bottom, pw->shadow_top);
+  if (pw->prompt_label)
+    {
+      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width * 2);
+      draw_shaded_rectangle (si->dpy, si->passwd_dialog,
+			     x1, y1, x2, y2,
+			     pw->shadow_width,
+			     pw->shadow_bottom, pw->shadow_top);
+    }
 
 
   /* The date, below the text fields
@@ -747,33 +862,38 @@ draw_passwd_window (saver_info *si)
     XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y1, buf, strlen(buf));
   }
 
+  /* Set up the GCs for the "New Login" and "Unlock" buttons.
+   */
+  XSetForeground(si->dpy, gc1, pw->button_foreground);
+  XSetForeground(si->dpy, gc2, pw->button_background);
+  XSetFont(si->dpy, gc1, pw->button_font->fid);
+
+  /* The "Unlock" button */
+  x2 = pw->width - pw->internal_border - (pw->shadow_width * 2);
+
+  /* right aligned button */
+  x1 = x2 - pw->unlock_button_width;
+
+  /* Add half the difference between y1 and the internal edge.
+   * It actually looks better if the internal border is ignored. */
+  y1 += ((pw->height - MAX (pw->unlock_button_height, pw->login_button_height)
+	  - spacing - y1)
+         / 2);
+
+  pw->unlock_button_x = x1;
+  pw->unlock_button_y = y1;
+
   /* The "New Login" button
    */
   if (pw->login_button_p)
     {
-      XSetForeground (si->dpy, gc1, pw->button_foreground);
-      XSetForeground (si->dpy, gc2, pw->button_background);
-      XSetFont (si->dpy, gc1, pw->button_font->fid);
+      /* Using the same GC as for the Unlock button */
 
       sw = string_width (pw->button_font, pw->login_label);
 
-      x2 = pw->width - pw->internal_border - (pw->shadow_width * 2);
-
-      /* right aligned button */
-      /* x1 = x2 - pw->login_button_width;  */
-
-      /* centered button */
+      /* left aligned button */
       x1 = (pw->logo_width + pw->thermo_width + (pw->shadow_width * 3) +
-            pw->internal_border);
-      x1 = x1 + (x2 - x1 - pw->login_button_width) / 2;
-
-      y1 = (pw->height - pw->internal_border - pw->login_button_height +
-            spacing);
-      y2 = (y1 +
-            ((pw->login_button_height -
-              (pw->button_font->ascent + pw->button_font->descent))
-             / 2) +
-            pw->button_font->ascent);
+	    pw->internal_border);
 
       pw->login_button_x = x1;
       pw->login_button_y = y1;
@@ -864,6 +984,51 @@ draw_passwd_window (saver_info *si)
   update_passwd_window (si, pw->passwd_string, pw->ratio);
 }
 
+static void
+draw_button(Display *dpy,
+	    Drawable dialog,
+	    XFontStruct *font,
+	    unsigned long foreground, unsigned long background,
+	    char *label,
+	    int x, int y,
+	    int width, int height,
+	    int shadow_width,
+	    Pixel shadow_light, Pixel shadow_dark,
+	    Bool button_down)
+{
+  XGCValues gcv;
+  GC gc1, gc2;
+  int sw;
+  int label_x, label_y;
+
+  gcv.foreground = foreground;
+  gcv.font = font->fid;
+  gc1 = XCreateGC(dpy, dialog, GCForeground|GCFont, &gcv);
+  gcv.foreground = background;
+  gc2 = XCreateGC(dpy, dialog, GCForeground, &gcv);
+
+  XFillRectangle(dpy, dialog, gc2,
+		 x, y, width, height);
+
+  sw = string_width(font, label);
+
+  label_x = x + ((width - sw) / 2);
+  label_y = (y + (height - (font->ascent + font->descent)) / 2 + font->ascent);
+
+  if (button_down)
+    {
+      label_x += 2;
+      label_y += 2;
+    }
+
+  XDrawString(dpy, dialog, gc1, label_x, label_y, label, strlen(label));
+
+  XFreeGC(dpy, gc1);
+  XFreeGC(dpy, gc2);
+
+  draw_shaded_rectangle(dpy, dialog, x, y, width, height,
+			shadow_width, shadow_light, shadow_dark);
+}
 
 static void
 update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
@@ -888,42 +1053,72 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
       pw->passwd_string = s;
     }
 
-  /* the "password" text field
-   */
-  rects[0].x =  pw->passwd_field_x;
-  rects[0].y =  pw->passwd_field_y;
-  rects[0].width = pw->passwd_field_width;
-  rects[0].height = pw->passwd_field_height;
-
-  XFillRectangle (si->dpy, si->passwd_dialog, gc2,
-                  rects[0].x, rects[0].y, rects[0].width, rects[0].height);
-
-  XSetClipRectangles (si->dpy, gc1, 0, 0, rects, 1, Unsorted);
-
-  XDrawString (si->dpy, si->passwd_dialog, gc1,
-               rects[0].x + pw->shadow_width,
-               rects[0].y + pw->passwd_font->ascent,
-               pw->passwd_string, strlen(pw->passwd_string));
-
-  XSetClipMask (si->dpy, gc1, None);
-
-  /* The I-beam
-   */
-  if (pw->i_beam != 0)
+  if (pw->prompt_label)
     {
-      x = (rects[0].x + pw->shadow_width +
-	   string_width (pw->passwd_font, pw->passwd_string));
-      y = rects[0].y + pw->shadow_width;
 
-      if (x > rects[0].x + rects[0].width - 1)
-        x = rects[0].x + rects[0].width - 1;
-      XDrawLine (si->dpy, si->passwd_dialog, gc1, 
-		 x, y,
-                 x, y + pw->passwd_font->ascent + pw->passwd_font->descent-1);
+      /* the "password" text field
+       */
+      rects[0].x =  pw->passwd_field_x;
+      rects[0].y =  pw->passwd_field_y;
+      rects[0].width = pw->passwd_field_width;
+      rects[0].height = pw->passwd_field_height;
+
+      /* The user entry (password) field is double buffered.
+       * This avoids flickering, particularly in synchronous mode. */
+
+      if (pw->passwd_changed_p)
+        {
+	  pw->passwd_changed_p = False;
+
+	  if (pw->user_entry_pixmap)
+	    {
+	      XFreePixmap(si->dpy, pw->user_entry_pixmap);
+	      pw->user_entry_pixmap = 0;
+	    }
+
+	  pw->user_entry_pixmap = XCreatePixmap(si->dpy, si->passwd_dialog,
+	      rects[0].width, rects[0].height, pw->prompt_screen->current_depth);
+
+
+	  XFillRectangle (si->dpy, pw->user_entry_pixmap, gc2,
+			  0, 0, rects[0].width, rects[0].height);
+
+	  XDrawString (si->dpy, pw->user_entry_pixmap, gc1,
+		       pw->shadow_width,
+		       pw->passwd_font->ascent,
+		       pw->passwd_string, strlen(pw->passwd_string));
+
+	  /* Ensure the new pixmap gets copied to the window */
+	  pw->i_beam = 0;
+
+	}
+
+      /* The I-beam
+       */
+      if (pw->i_beam == 0)
+	{
+	  /* Make the I-beam disappear */
+	  XCopyArea(si->dpy, pw->user_entry_pixmap, si->passwd_dialog, gc2,
+		    0, 0, rects[0].width, rects[0].height,
+		    rects[0].x, rects[0].y);
+	}
+      else if (pw->i_beam == 1)
+	{
+	  /* Make the I-beam appear */
+	  x = (rects[0].x + pw->shadow_width +
+	       string_width (pw->passwd_font, pw->passwd_string));
+	  y = rects[0].y + pw->shadow_width;
+
+	  if (x > rects[0].x + rects[0].width - 1)
+	    x = rects[0].x + rects[0].width - 1;
+	  XDrawLine (si->dpy, si->passwd_dialog, gc1, 
+		     x, y,
+		     x, y + pw->passwd_font->ascent + pw->passwd_font->descent-1);
+	}
+
+      pw->i_beam = (pw->i_beam + 1) % 4;
+
     }
-
-  pw->i_beam = (pw->i_beam + 1) % 4;
-
 
   /* the thermometer
    */
@@ -943,48 +1138,108 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 		      MAX (0, pw->thermo_field_height - y - 2));
     }
 
-  /* The "New Login" button
-   */
-  if (pw->login_button_p)
+  if (pw->button_state_changed_p)
     {
-      int x2, y2, sw;
-      XSetFont (si->dpy, gc1, pw->button_font->fid);
-      XSetForeground (si->dpy, gc1,
-                      (pw->login_button_enabled_p
-                       ? pw->passwd_foreground
-                       : pw->shadow_bottom));
-      XSetForeground (si->dpy, gc2, pw->button_background);
+      pw->button_state_changed_p = False;
 
-      XFillRectangle (si->dpy, si->passwd_dialog, gc2,
-                      pw->login_button_x, pw->login_button_y,
-		      pw->login_button_width, pw->login_button_height);
+      /* The "Unlock" button
+       */
+      draw_button(si->dpy, si->passwd_dialog, pw->button_font,
+		  pw->button_foreground, pw->button_background,
+		  pw->unlock_label,
+		  pw->unlock_button_x, pw->unlock_button_y,
+		  pw->unlock_button_width, pw->unlock_button_height,
+		  pw->shadow_width,
+		  (pw->unlock_button_down_p ? pw->shadow_bottom : pw->shadow_top),
+		  (pw->unlock_button_down_p ? pw->shadow_top : pw->shadow_bottom),
+		  pw->unlock_button_down_p);
 
-      sw = string_width (pw->button_font, pw->login_label);
-      x2 = pw->login_button_x + ((pw->login_button_width - sw) / 2);
-      y2 = (pw->login_button_y +
-            ((pw->login_button_height -
-              (pw->button_font->ascent + pw->button_font->descent))
-             / 2) +
-            pw->button_font->ascent);
-
-      XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y2,
-	           pw->login_label, strlen(pw->login_label));
-
-      draw_shaded_rectangle (si->dpy, si->passwd_dialog,
-                             pw->login_button_x, pw->login_button_y, 
-                             pw->login_button_width, pw->login_button_height,
-                             pw->shadow_width,
-                             (pw->login_button_down_p
-                              ? pw->shadow_bottom
-                              : pw->shadow_top), 
-                             (pw->login_button_down_p
-                              ? pw->shadow_top
-                              : pw->shadow_bottom));
+      /* The "New Login" button
+       */
+      if (pw->login_button_p)
+	{
+	  draw_button(si->dpy, si->passwd_dialog, pw->button_font,
+		      (pw->login_button_enabled_p
+		       ? pw->passwd_foreground
+		       : pw->shadow_bottom),
+		      pw->button_background,
+		      pw->login_label,
+		      pw->login_button_x, pw->login_button_y,
+		      pw->login_button_width, pw->login_button_height,
+		      pw->shadow_width,
+		      (pw->login_button_down_p
+		       ? pw->shadow_bottom
+		       : pw->shadow_top),
+		      (pw->login_button_down_p
+		       ? pw->shadow_top
+		       : pw->shadow_bottom),
+		      pw->login_button_down_p);
+	}
     }
 
   XFreeGC (si->dpy, gc1);
   XFreeGC (si->dpy, gc2);
   XSync (si->dpy, False);
+}
+
+
+void
+restore_background (saver_info *si)
+{
+  passwd_dialog_data *pw = si->pw_data;
+  saver_screen_info *ssi = pw->prompt_screen;
+  XGCValues gcv;
+  GC gc;
+
+  gcv.function = GXcopy;
+
+  gc = XCreateGC (si->dpy, ssi->screensaver_window, GCFunction, &gcv);
+
+  XCopyArea (si->dpy, pw->save_under,
+	     ssi->screensaver_window, gc,
+	     0, 0,
+	     ssi->width, ssi->height,
+	     0, 0);
+
+  XFreeGC (si->dpy, gc);
+}
+
+
+/* Frees anything created by make_passwd_window */
+static void
+cleanup_passwd_window (saver_info *si)
+{
+  passwd_dialog_data *pw;
+
+  if (!(pw = si->pw_data))
+    return;
+
+  if (pw->info_label)
+    {
+      mlstring_free(pw->info_label);
+      pw->info_label = 0;
+    }
+
+  if (pw->prompt_label)
+    {
+      mlstring_free(pw->prompt_label);
+      pw->prompt_label = 0;
+    }
+
+  memset (pw->typed_passwd, 0, sizeof(pw->typed_passwd));
+  memset (pw->passwd_string, 0, strlen(pw->passwd_string));
+
+  if (pw->timer)
+    {
+      XtRemoveTimeOut (pw->timer);
+      pw->timer = 0;
+    }
+
+  if (pw->user_entry_pixmap)
+    {
+      XFreePixmap(si->dpy, pw->user_entry_pixmap);
+      pw->user_entry_pixmap = 0;
+    }
 }
 
 
@@ -999,11 +1254,18 @@ destroy_passwd_window (saver_info *si)
   Pixel white = WhitePixelOfScreen (ssi->screen);
   XEvent event;
 
-  memset (pw->typed_passwd, 0, sizeof(pw->typed_passwd));
-  memset (pw->passwd_string, 0, strlen(pw->passwd_string));
+  cleanup_passwd_window (si);
 
-  if (pw->timer)
-    XtRemoveTimeOut (pw->timer);
+  if (si->cached_passwd)
+    {
+      char *wipe = si->cached_passwd;
+
+      while (*wipe)
+	*wipe++ = '\0';
+
+      free(si->cached_passwd);
+      si->cached_passwd = NULL;
+    }
 
   move_mouse_grab (si, RootWindowOfScreen (ssi->screen),
                    ssi->cursor, ssi->number);
@@ -1020,7 +1282,6 @@ destroy_passwd_window (saver_info *si)
                 0, 0, 0, 0,
                 pw->previous_mouse_x, pw->previous_mouse_y);
 
-  XSync (si->dpy, False);
   while (XCheckMaskEvent (si->dpy, PointerMotionMask, &event))
     if (p->verbose_p)
       fprintf (stderr, "%s: discarding MotionNotify event.\n", blurb());
@@ -1033,28 +1294,17 @@ destroy_passwd_window (saver_info *si)
   
   if (pw->save_under)
     {
-      XGCValues gcv;
-      GC gc;
-      gcv.function = GXcopy;
-      gc = XCreateGC (si->dpy, ssi->screensaver_window, GCFunction, &gcv);
-      XCopyArea (si->dpy, pw->save_under,
-                 ssi->screensaver_window, gc,
-                 0, 0,
-                 pw->width + (pw->border_width*2) + 1,
-                 pw->height + (pw->border_width*2) + 1,
-                 pw->x - pw->border_width, pw->y - pw->border_width);
+      restore_background(si);
       XFreePixmap (si->dpy, pw->save_under);
       pw->save_under = 0;
-      XFreeGC (si->dpy, gc);
     }
 
   if (pw->heading_label) free (pw->heading_label);
   if (pw->body_label)    free (pw->body_label);
   if (pw->user_label)    free (pw->user_label);
-  if (pw->passwd_label)  free (pw->passwd_label);
   if (pw->date_label)    free (pw->date_label);
   if (pw->login_label)   free (pw->login_label);
-  if (pw->user_string)   free (pw->user_string);
+  if (pw->unlock_label)  free (pw->unlock_label);
   if (pw->passwd_string) free (pw->passwd_string);
   if (pw->uname_label)   free (pw->uname_label);
 
@@ -1320,13 +1570,13 @@ passwd_animate_timer (XtPointer closure, XtIntervalId *id)
   if (pw->ratio < 0)
     {
       pw->ratio = 0;
-      if (pw->state == pw_read)
-	pw->state = pw_time;
+      if (si->unlock_state == ul_read)
+	si->unlock_state = ul_time;
     }
 
   update_passwd_window (si, 0, pw->ratio);
 
-  if (pw->state == pw_read)
+  if (si->unlock_state == ul_read)
     pw->timer = XtAppAddTimeOut (si->app, tick, passwd_animate_timer,
 				 (XtPointer) si);
   else
@@ -1339,7 +1589,7 @@ passwd_animate_timer (XtPointer closure, XtIntervalId *id)
 static XComposeStatus *compose_status;
 
 static void
-handle_passwd_button (saver_info *si, XEvent *event)
+handle_login_button (saver_info *si, XEvent *event)
 {
   saver_preferences *p = &si->prefs;
   Bool mouse_in_box = False;
@@ -1379,9 +1629,43 @@ handle_passwd_button (saver_info *si, XEvent *event)
 
 
 static void
+handle_unlock_button (saver_info *si, XEvent *event)
+{
+  Bool mouse_in_box = False;
+  passwd_dialog_data *pw = si->pw_data;
+
+  mouse_in_box =
+    (event->xbutton.x >= pw->unlock_button_x &&
+     event->xbutton.x <= pw->unlock_button_x + pw->unlock_button_width &&
+     event->xbutton.y >= pw->unlock_button_y &&
+     event->xbutton.y <= pw->unlock_button_y + pw->unlock_button_height);
+
+  if (ButtonRelease == event->xany.type &&
+      pw->unlock_button_down_p &&
+      mouse_in_box)
+    finished_typing_passwd (si, pw);
+
+  pw->unlock_button_down_p = (mouse_in_box &&
+				ButtonRelease != event->xany.type);
+}
+
+
+static void
+finished_typing_passwd (saver_info *si, passwd_dialog_data *pw)
+{
+  if (si->unlock_state == ul_read)
+    {
+      update_passwd_window (si, "Checking...", pw->ratio);
+      XSync (si->dpy, False);
+
+      si->unlock_state = ul_finished;
+      update_passwd_window (si, "", pw->ratio);
+    }
+}
+
+static void
 handle_passwd_key (saver_info *si, XKeyEvent *event)
 {
-  saver_preferences *p = &si->prefs;
   passwd_dialog_data *pw = si->pw_data;
   int pw_size = sizeof (pw->typed_passwd) - 1;
   char *typed_passwd = pw->typed_passwd;
@@ -1393,6 +1677,8 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
   if (size != 1) return;
 
   s[1] = 0;
+
+  pw->passwd_changed_p = True;
 
   /* Add 10% to the time remaining every time a key is pressed. */
   pw->ratio += 0.1;
@@ -1412,20 +1698,11 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
       break;
 
     case '\012': case '\015':				/* Enter */
-      if (pw->state != pw_read)
-	;  /* already done? */
-      else if (typed_passwd[0] == 0)
-	pw->state = pw_null;
-      else
-        {
-          update_passwd_window (si, "Checking...", pw->ratio);
-          XSync (si->dpy, False);
-          if (passwd_valid_p (typed_passwd, p->verbose_p))
-            pw->state = pw_ok;
-          else
-            pw->state = pw_fail;
-          update_passwd_window (si, "", pw->ratio);
-        }
+      finished_typing_passwd(si, pw);
+      break;
+
+    case '\033':					/* Escape */
+      si->unlock_state = ul_cancel;
       break;
 
     default:
@@ -1451,7 +1728,19 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
       break;
     }
 
-  if (pw->show_stars_p)
+  if (pw->echo_input)
+    {
+      /* If the input is wider than the text box, only show the last portion.
+       * This simulates a horizontally scrolling text field. */
+      int chars_in_pwfield = (pw->passwd_field_width /
+			      pw->passwd_font->max_bounds.width);
+
+      if (strlen(typed_passwd) > chars_in_pwfield)
+	typed_passwd += (strlen(typed_passwd) - chars_in_pwfield);
+
+      update_passwd_window(si, typed_passwd, pw->ratio);
+    }
+  else if (pw->show_stars_p)
     {
       i = strlen(typed_passwd);
       stars = (char *) malloc(i+1);
@@ -1477,7 +1766,7 @@ passwd_event_loop (saver_info *si)
 
   passwd_animate_timer ((XtPointer) si, 0);
 
-  while (si->pw_data && si->pw_data->state == pw_read)
+  while (si->unlock_state == ul_read)
     {
       XtAppNextEvent (si->app, &event);
       if (event.xany.window == si->passwd_dialog && event.xany.type == Expose)
@@ -1487,51 +1776,54 @@ passwd_event_loop (saver_info *si)
           handle_passwd_key (si, &event.xkey);
           caps_p = (event.xkey.state & LockMask);
         }
-      else if ((event.xany.type == ButtonPress || 
-                event.xany.type == ButtonRelease) && 
-               si->pw_data->login_button_p)
-	handle_passwd_button (si, &event);
+      else if (event.xany.type == ButtonPress || 
+               event.xany.type == ButtonRelease)
+	{
+	  si->pw_data->button_state_changed_p = True;
+	  handle_unlock_button (si, &event);
+	  if (si->pw_data->login_button_p)
+	    handle_login_button (si, &event);
+	}
       else
 	XtDispatchEvent (&event);
     }
 
-  switch (si->pw_data->state)
+  switch (si->unlock_state)
     {
-    case pw_ok:   msg = 0; break;
-    case pw_null: msg = ""; break;
-    case pw_time: msg = "Timed out!"; break;
-    default:      msg = (caps_p ? "CapsLock?" : "Sorry!"); break;
+    case ul_cancel: msg = ""; break;
+    case ul_time: msg = "Timed out!"; break;
+    case ul_finished: msg = "Checking..."; break;
+    default: msg = 0; break;
     }
 
-  if (si->pw_data->state == pw_fail)
+  if (si->unlock_state == ul_fail)
     si->unlock_failures++;
 
   if (p->verbose_p)
-    switch (si->pw_data->state)
+    switch (si->unlock_state)
       {
-      case pw_ok:
-	fprintf (stderr, "%s: password correct.\n", blurb()); break;
-      case pw_fail:
-	fprintf (stderr, "%s: password incorrect!%s\n", blurb(),
+      case ul_fail:
+	fprintf (stderr, "%s: auth/input incorrect!%s\n", blurb(),
                  (caps_p ? "  (CapsLock)" : ""));
         break;
-      case pw_null:
-      case pw_cancel:
-	fprintf (stderr, "%s: password entry cancelled.\n", blurb()); break;
-      case pw_time:
-	fprintf (stderr, "%s: password entry timed out.\n", blurb()); break;
+      case ul_cancel:
+	fprintf (stderr, "%s: input cancelled.\n", blurb()); break;
+      case ul_time:
+	fprintf (stderr, "%s: input timed out.\n", blurb()); break;
+      case ul_finished:
+	fprintf (stderr, "%s: input finished.\n", blurb()); break;
       default: break;
       }
 
 #ifdef HAVE_SYSLOG
-  if (si->pw_data->state == pw_fail)
+  if (si->unlock_state == ul_fail)
     {
       /* If they typed a password (as opposed to just hitting return) and
 	 the password was invalid, log it.
       */
       struct passwd *pw = getpwuid (getuid ());
       char *d = DisplayString (si->dpy);
-      char *u = (pw->pw_name ? pw->pw_name : "???");
+      char *u = (pw && pw->pw_name ? pw->pw_name : "???");
       int opt = 0;
       int fac = 0;
 
@@ -1555,10 +1847,10 @@ passwd_event_loop (saver_info *si)
     }
 #endif /* HAVE_SYSLOG */
 
-  if (si->pw_data->state == pw_fail)
+  if (si->unlock_state == ul_fail)
     XBell (si->dpy, False);
 
-  if (si->pw_data->state == pw_ok && si->unlock_failures != 0)
+  if (si->unlock_state == ul_success && si->unlock_failures != 0)
     {
       if (si->unlock_failures == 1)
 	fprintf (real_stderr,
@@ -1598,6 +1890,8 @@ handle_typeahead (saver_info *si)
   if (!si->unlock_typeahead)
     return;
 
+  pw->passwd_changed_p = True;
+
   i = strlen (si->unlock_typeahead);
   if (i >= sizeof(pw->typed_passwd) - 1)
     i = sizeof(pw->typed_passwd) - 1;
@@ -1614,34 +1908,187 @@ handle_typeahead (saver_info *si)
 }
 
 
+/**
+ * Returns a copy of the input string with trailing whitespace removed.
+ * Whitespace is anything considered so by isspace().
+ * It is safe to call this with NULL, in which case NULL will be returned.
+ * The returned string (if not NULL) should be freed by the caller with free().
+ */
+static char *
+remove_trailing_whitespace(const char *str)
+{
+  size_t len;
+  char *newstr, *chr;
+
+  if (!str)
+    return NULL;
+
+  len = strlen(str);
+
+  newstr = malloc(len + 1);
+  (void) strcpy(newstr, str);
+
+  if (!newstr)
+    return NULL;
+
+  chr = newstr + len;
+  while (isspace(*--chr) && chr >= newstr)
+    *chr = '\0';
+
+  return newstr;
+}
+
+
+/*
+ * The authentication conversation function.
+ * Like a PAM conversation function, this accepts multiple messages in a single
+ * round. It then splits them into individual messages for display on the
+ * passwd dialog. A message sequence of info or error followed by a prompt will
+ * be reduced into a single dialog window.
+ *
+ * Returns 0 on success or -1 if some problem occurred (cancelled auth, OOM, ...)
+ */
+int
+gui_auth_conv(int num_msg,
+	  const struct auth_message auth_msgs[],
+	  struct auth_response **resp,
+	  saver_info *si)
+{
+  int i;
+  const char *info_msg, *prompt;
+  struct auth_response *responses;
+
+  if (!(responses = calloc(num_msg, sizeof(struct auth_response))))
+    goto fail;
+
+  for (i = 0; i < num_msg; ++i)
+    {
+      info_msg = prompt = NULL;
+
+      /* See if there is a following message that can be shown at the same
+       * time */
+      if (auth_msgs[i].type == AUTH_MSGTYPE_INFO
+	  && i+1 < num_msg
+	  && (   auth_msgs[i+1].type == AUTH_MSGTYPE_PROMPT_NOECHO
+	      || auth_msgs[i+1].type == AUTH_MSGTYPE_PROMPT_ECHO)
+	 )
+	{
+	  info_msg = auth_msgs[i].msg;
+	  prompt = auth_msgs[++i].msg;
+	}
+      else
+        {
+	  if (   auth_msgs[i].type == AUTH_MSGTYPE_INFO
+	      || auth_msgs[i].type == AUTH_MSGTYPE_ERROR)
+	    info_msg = auth_msgs[i].msg;
+	  else
+	    prompt = auth_msgs[i].msg;
+	}
+
+      {
+	char *info_msg_trimmed, *prompt_trimmed;
+
+        /* Trailing whitespace looks bad in a GUI */
+	info_msg_trimmed = remove_trailing_whitespace(info_msg);
+	prompt_trimmed = remove_trailing_whitespace(prompt);
+
+	make_passwd_window(si, info_msg_trimmed, prompt_trimmed,
+			   auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_ECHO
+			   ? True : False);
+
+	if (info_msg_trimmed)
+	  free(info_msg_trimmed);
+
+	if (prompt_trimmed)
+	  free(prompt_trimmed);
+      }
+
+      compose_status = calloc (1, sizeof (*compose_status));
+      if (!compose_status)
+	goto fail;
+
+      si->unlock_state = ul_read;
+
+      handle_typeahead (si);
+      passwd_event_loop (si);
+
+      if (si->unlock_state == ul_cancel)
+	goto fail;
+
+      responses[i].response = strdup(si->pw_data->typed_passwd);
+
+      /* Cache the first response to a PROMPT_NOECHO to save prompting for
+       * each auth mechanism. */
+      if (si->cached_passwd == NULL &&
+	  auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_NOECHO)
+	si->cached_passwd = strdup(responses[i].response);
+
+      free (compose_status);
+      compose_status = 0;
+    }
+
+  *resp = responses;
+
+  return (si->unlock_state == ul_finished) ? 0 : -1;
+
+fail:
+  if (compose_status)
+    free (compose_status);
+
+  if (responses)
+    {
+      for (i = 0; i < num_msg; ++i)
+	if (responses[i].response)
+	  free (responses[i].response);
+      free (responses);
+    }
+
+  return -1;
+}
+
+
+void
+auth_finished_cb (saver_info *si)
+{
+  if (si->unlock_state == ul_fail)
+    {
+      make_passwd_window (si, "Authentication failed!", NULL, True);
+      sleep (2); /* Not very nice, I know */
+
+      /* Swallow any keyboard or mouse events that were received while the
+       * dialog was up */
+      {
+	XEvent e;
+	long mask = (KeyPressMask | KeyReleaseMask |
+		     ButtonPressMask | ButtonReleaseMask);
+	while (XCheckMaskEvent (si->dpy, mask, &e))
+	  ;
+      }
+    }
+
+  destroy_passwd_window (si);
+}
+
+
 Bool
 unlock_p (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
-  Bool status;
+
+  if (!si->unlock_cb)
+    {
+      fprintf(stderr, "%s: Error: no unlock function specified!\n", blurb());
+      return False;
+    }
 
   raise_window (si, True, True, True);
 
   if (p->verbose_p)
     fprintf (stderr, "%s: prompting for password.\n", blurb());
 
-  if (si->pw_data || si->passwd_dialog)
-    destroy_passwd_window (si);
+  xss_authenticate(si, p->verbose_p);
 
-  make_passwd_window (si);
-
-  compose_status = calloc (1, sizeof (*compose_status));
-
-  handle_typeahead (si);
-  passwd_event_loop (si);
-
-  status = (si->pw_data->state == pw_ok);
-  destroy_passwd_window (si);
-
-  free (compose_status);
-  compose_status = 0;
-
-  return status;
+  return (si->unlock_state == ul_success);
 }
 
 

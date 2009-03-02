@@ -1,5 +1,5 @@
 /*
- * fliptext, Copyright (c) 2005-2006 Jamie Zawinski <jwz@jwz.org>
+ * fliptext, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -58,6 +58,15 @@
 #include "texfont.h"
 
 #ifdef USE_GL /* whole file */
+
+/* Should be in <GL/glext.h> */
+# ifndef  GL_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+# endif
+# ifndef  GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+# endif
+
 
 #define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
 #define DEF_LINES      "8"
@@ -925,15 +934,20 @@ init_fliptext (ModeInfo *mi)
       glEnable (GL_ALPHA_TEST);
       glEnable (GL_TEXTURE_2D);
 
-# ifdef GL_TEXTURE_MAX_ANISOTROPY_EXT
       /* "Anistropic filtering helps for quadrilateral-angled textures.
          A sharper image is accomplished by interpolating and filtering
          multiple samples from one or more mipmaps to better approximate
          very distorted textures.  This is the next level of filtering
          after trilinear filtering." */
-      glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16);
-      clear_gl_error();
-# endif
+      if (strstr ((char *) glGetString(GL_EXTENSIONS),
+                  "GL_EXT_texture_filter_anisotropic"))
+      {
+        GLfloat anisotropic = 0.0;
+        glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropic);
+        if (anisotropic >= 1.0)
+          glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                           anisotropic);
+      }
     }
   
   /* The default font is (by fiat) "18 points".

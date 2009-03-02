@@ -56,6 +56,8 @@
 #ifdef DO_XPM
 # include "images/amiga.xpm"
 # include "images/hmac.xpm"
+# include "images/osx_10_2.xpm"
+# include "images/osx_10_3.xpm"
 #endif
 #include "images/atari.xbm"
 #include "images/mac.xbm"
@@ -69,7 +71,7 @@ typedef enum { EOF=0,
                LEFT, CENTER, RIGHT, 
                LEFT_FULL, CENTER_FULL, RIGHT_FULL, 
                COLOR, INVERT, MOVETO, MARGINS,
-               CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, IMG,
+               CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, PIXMAP, IMG,
                PAUSE, CHAR_DELAY, LINE_DELAY,
                LOOP
 } bsod_event_type;
@@ -90,6 +92,8 @@ struct bsod_state {
   int top_margin, bottom_margin;	/* for text scrolling */
   Bool wrap_p;
   Bool scroll_p;
+
+  Pixmap pixmap;		/* Source image used by BSOD_PIXMAP */
 
   int x, y;			/* current text-drawing position */
   int current_left;		/* don't use this */
@@ -234,6 +238,13 @@ struct bsod_state {
   (bst)->queue[(bst)->pos].arg5 = (void *) ((long) (tox)); \
   (bst)->queue[(bst)->pos].arg6 = (void *) ((long) (toy)); \
   (bst)->pos++; \
+  } while (0)
+
+/* Copy a rect from bst->pixmap to the window.
+ */
+#define BSOD_PIXMAP(bst,srcx,srcy,w,h,tox,toy) do { \
+  BSOD_COPY(bst,srcx,srcy,w,h,tox,toy); \
+  (bst)->queue[(bst)->pos-1].type = PIXMAP; \
   } while (0)
 
 /* Load a random image (or the desktop) onto the window.
@@ -496,6 +507,7 @@ bsod_pop (struct bsod_state *bst)
       return 0;
     }
   case COPY:
+  case PIXMAP:
     {
       int srcx = (long) bst->queue[bst->pos].arg1;
       int srcy = (long) bst->queue[bst->pos].arg2;
@@ -503,7 +515,9 @@ bsod_pop (struct bsod_state *bst)
       int h    = (long) bst->queue[bst->pos].arg4;
       int tox  = (long) bst->queue[bst->pos].arg5;
       int toy  = (long) bst->queue[bst->pos].arg6;
-      XCopyArea (bst->dpy, bst->window, bst->window, bst->gc,
+      XCopyArea (bst->dpy, 
+                 (type == PIXMAP ? bst->pixmap : bst->window), 
+                 bst->window, bst->gc,
                  srcx, srcy, w, h, tox, toy);
       bst->pos++;
       return 0;
@@ -675,12 +689,14 @@ make_bsod_state (Display *dpy, Window window,
 
 
 static void
-free_bsod_state ( struct bsod_state *bst)
+free_bsod_state (struct bsod_state *bst)
 {
   int i;
 
   if (bst->free_cb)
     bst->free_cb (bst);
+  if (bst->pixmap)
+    XFreePixmap(bst->dpy, bst->pixmap);
 
   XFreeFont (bst->dpy, bst->font);
   XFreeGC (bst->dpy, bst->gc);
@@ -1487,7 +1503,7 @@ mac1 (Display *dpy, Window window)
    English, French, German, and Japanese overlayed transparently.
  */
 static struct bsod_state *
-macx (Display *dpy, Window window)
+macx_10_0 (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "macx", "MacX");
 
@@ -1555,6 +1571,62 @@ macx (Display *dpy, Window window)
     "panic: We are hanging here...\n");
 
   return bst;
+}
+
+
+# ifdef DO_XPM
+static struct bsod_state *
+macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "macx", "MacX");
+
+  Pixmap pixmap = 0;
+  int pix_w = 0, pix_h = 0;
+  int x, y;
+
+  pixmap = xpm_data_to_pixmap (dpy, window, 
+                               (char **) (v10_3_p ? osx_10_3 : osx_10_2),
+                               &pix_w, &pix_h, 0);
+  if (! pixmap) abort();
+
+#if 0
+  if (bst->xgwa.height > 600)	/* scale up the bitmap */
+    {
+      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+                              pixmap, pix_w, pix_h);
+      if (! pixmap) abort();
+      pix_w *= 2;
+      pix_h *= 2;
+    }
+#endif
+
+  BSOD_IMG (bst);
+  BSOD_PAUSE (bst, 2000000);
+
+  bst->pixmap = pixmap;
+
+  x = (bst->xgwa.width - pix_w) / 2;
+  y = ((bst->xgwa.height - pix_h) / 2);
+  BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, x, y);
+
+  return bst;
+}
+# endif /* DO_XPM */
+
+
+static struct bsod_state *
+macx (Display *dpy, Window window)
+{
+# ifdef DO_XPM
+  switch (random() % 3) {
+  case 0: return macx_10_0 (dpy, window);        break;
+  case 1: return macx_10_2 (dpy, window, False); break;
+  case 2: return macx_10_2 (dpy, window, True);  break;
+  default: abort();
+  }
+# else  /* !DO_XPM */
+  return macx_10_0 (dpy, window);
+# endif /* !DO_XPM */
 }
 
 
@@ -2212,15 +2284,14 @@ hppa_linux (Display *dpy, Window window)
     make_bsod_state (dpy, window, "hppalinux", "HPPALinux");
 
   int i = 0;
-  const char *sysname;
+  const char *release, *sysname, *gccversion, *version;
   long int linedelay = 0;
 
   __extension__
   struct { long int delay; const char *string; } linux_panic[] =
     {{ 0, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
           "\n\n\n\n\n\n\n\n\n\n\n\n\n" },
-     { 0, "Linux version 2.6.0-test11-pa2 (root@%s) "
-          "(gcc version 3.3.2 (Debian)) #2 Mon Dec 8 06:09:27 GMT 2003\n" },
+     { 0, "Linux version %s (root@%s) (gcc version %s) %s\n" },
      { 4000, "FP[0] enabled: Rev 1 Model 16\n" },
      { 10, "The 32-bit Kernel has started...\n" },
      { -1, "Determining PDC firmware type: System Map.\n" },
@@ -2290,7 +2361,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.85 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.88 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -2350,22 +2421,38 @@ hppa_linux (Display *dpy, Window window)
   bst->left_margin = bst->right_margin = 10;
   bst->top_margin = bst->bottom_margin = 10;
 
+  release = "2.6.0-test11-pa2";
   sysname = "hppa";
+  version = "#2 Mon Dec 8 06:09:27 GMT 2003";
 # ifdef HAVE_UNAME
   {
     struct utsname uts;
     char *s;
     if (uname (&uts) >= 0)
-      sysname = uts.nodename;
+      {
+	sysname = uts.nodename;
+	if (!strcmp (uts.sysname, "Linux"))
+	  {
+	    release = uts.release;
+	    version = uts.version;
+	  }
+      }
     s = strchr (sysname, '.');
     if (s) *s = 0;
   }
 # endif	/* !HAVE_UNAME */
 
+# if (defined (__GNUC__) && defined (__VERSION__))
+  gccversion = __VERSION__;
+# else /* !(defined (__GNUC__) && defined (__VERSION__)) */
+  gccversion = "3.3.2 (Debian)";
+# endif /* !(defined (__GNUC__) && defined (__VERSION__)) */
+
   /* Insert current host name into banner on line 2 */
   {
     char ss[1024];
-    sprintf (ss, linux_panic[1].string, sysname);
+    snprintf (ss, 1024, linux_panic[1].string, 
+	      release, sysname, gccversion, version);
     linux_panic[1].string = ss;
   }
 

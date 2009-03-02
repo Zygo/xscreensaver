@@ -34,6 +34,14 @@
 
 #ifdef USE_GL
 
+/* Should be in <GL/glext.h> */
+# ifndef  GL_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+# endif
+# ifndef  GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+# endif
+
 static int rotate;
 
 #define QW 12
@@ -99,15 +107,13 @@ typedef struct {
   Bool waiting_for_image_p;
   Bool first_image_p;
 
+  GLfloat anisotropic;
+
 } Screenflip;
 
 static Screenflip *screenflip = NULL;
 
 #include "grab-ximage.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265
-#endif
 
 static const GLfloat viewer[] = {0.0, 0.0, 15.0};
 
@@ -405,6 +411,10 @@ image_loaded_cb (const char *filename, XRectangle *geometry,
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    (c->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 
+  if (c->anisotropic >= 1.0)
+    glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                     c->anisotropic);
+
   c->waiting_for_image_p = False;
   c->first_image_p = False;
 }
@@ -468,6 +478,12 @@ ENTRYPOINT void init_screenflip(ModeInfo *mi)
      glCullFace(GL_BACK);
      glDisable(GL_LIGHTING);
    }
+
+ if (strstr ((char *) glGetString(GL_EXTENSIONS),
+             "GL_EXT_texture_filter_anisotropic"))
+   glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &c->anisotropic);
+ else
+   c->anisotropic = 0.0;
 
  glGenTextures(1, &c->texid);
 

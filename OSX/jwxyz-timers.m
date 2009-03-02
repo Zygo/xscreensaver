@@ -80,7 +80,7 @@ jwxyz_timer_retain (const void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
   data->refcount++;
-  LOGT(@"timer  0x%08X: retain %d\n", (unsigned int) data, data->refcount);
+  LOGT(@"timer  0x%08X: retain %d", (unsigned int) data, data->refcount);
   return arg;
 }
 
@@ -89,7 +89,7 @@ jwxyz_timer_release (const void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
   data->refcount--;
-  LOGT(@"timer  0x%08X: release %d\n", (unsigned int) data, data->refcount);
+  LOGT(@"timer  0x%08X: release %d", (unsigned int) data, data->refcount);
   if (data->refcount < 0) abort();
   if (data->refcount == 0) free (data);
 }
@@ -99,7 +99,7 @@ jwxyz_source_retain (const void *arg)
 {
   struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) arg;
   data->refcount++;
-  LOGI(@"source 0x%08X %2d: retain %d\n", (unsigned int) data, data->fd, 
+  LOGI(@"source 0x%08X %2d: retain %d", (unsigned int) data, data->fd, 
        data->refcount);
   return arg;
 }
@@ -109,7 +109,7 @@ jwxyz_source_release (const void *arg)
 {
   struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) arg;
   data->refcount--;
-  LOGI(@"source 0x%08X %2d: release %d\n", (unsigned int) data, data->fd,
+  LOGI(@"source 0x%08X %2d: release %d", (unsigned int) data, data->fd,
        data->refcount);
   if (data->refcount < 0) abort();
   if (data->refcount == 0) {
@@ -130,7 +130,7 @@ static void
 jwxyz_timer_cb (CFRunLoopTimerRef timer, void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
-  LOGT(@"timer  0x%08X: fire\n", (unsigned int) data, 0);
+  LOGT(@"timer  0x%08X: fire", (unsigned int) data, 0);
   data->cb (data->closure, &data);
 
   // Our caller (__CFRunLoopDoTimer) will now call CFRunLoopTimerInvalidate,
@@ -166,11 +166,11 @@ jwxyz_source_cb (CFSocketRef s, CFSocketCallBackType type,
   // So don't call data->cb if we're being fed a pack of lies.
   //
   if (! input_available_p (data->fd)) {
-    LOGI(@"source 0x%08X %2d: false alarm!\n", (unsigned int) data, data->fd, 0);
+    LOGI(@"source 0x%08X %2d: false alarm!", (unsigned int) data, data->fd, 0);
     return;
   }
 
-  LOGI(@"source 0x%08X %2d: fire\n", (unsigned int) data, data->fd, 0);
+  LOGI(@"source 0x%08X %2d: fire", (unsigned int) data, data->fd, 0);
 
   data->cb (data->closure, &data->fd, &data);
 }
@@ -187,7 +187,7 @@ XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
   data->cb = cb;
   data->closure = closure;
 
-  LOGT(@"timer  0x%08X: alloc %d\n", (unsigned int) data, msecs);
+  LOGT(@"timer  0x%08X: alloc %d", (unsigned int) data, msecs);
   
   CFRunLoopTimerContext ctx = { 0, };
   ctx.info    = data;
@@ -211,7 +211,7 @@ XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
 void
 XtRemoveTimeOut (XtIntervalId id)
 {
-  LOGT(@"timer  0x%08X: remove\n", (unsigned int) id, 0);
+  LOGT(@"timer  0x%08X: remove", (unsigned int) id, 0);
   if (id->refcount <= 0) abort();
   if (!id->cftimer) abort();
 
@@ -309,7 +309,7 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
   data->fd = fd;
   data->closure = closure;
 
-  LOGI(@"source 0x%08X %2d: alloc\n", (unsigned int) data, data->fd, 0);
+  LOGI(@"source 0x%08X %2d: alloc", (unsigned int) data, data->fd, 0);
 
 # ifdef USE_COCOA_SOURCES
 
@@ -346,7 +346,7 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
 void
 XtRemoveInput (XtInputId id)
 {
-  LOGI(@"source 0x%08X %2d: remove\n", (unsigned int) id, id->fd, 0);
+  LOGI(@"source 0x%08X %2d: remove", (unsigned int) id, id->fd, 0);
   if (id->refcount <= 0) abort();
 # ifdef USE_COCOA_SOURCES
   if (! id->cfsource) abort();

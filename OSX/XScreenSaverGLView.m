@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006, 2007 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,8 @@
 #import "XScreenSaverConfigSheet.h"
 #import "screenhackI.h"
 #import "xlockmoreI.h"
+
+#import <OpenGL/OpenGL.h>
 
 /* used by the OpenGL screen savers
  */
@@ -151,6 +153,17 @@ init_GL (ModeInfo *mi)
   GLint r = 1;
   aglSetInteger (ctx, AGL_SWAP_INTERVAL, &r);
 
+  // Enable multi-threading, if possible.  This runs most OpenGL commands
+  // and GPU management on a second CPU.
+  {
+    CGLContextObj cctx = CGLGetCurrentContext();
+#   define kCGLCEMPEngine 313  // #### new in MacOS 10.4.8 + XCode 2.4
+    CGLError err = CGLEnable (cctx, kCGLCEMPEngine);
+    if (err != kCGLNoError) {
+      NSLog (@"enabling multi-threaded OpenGL failed: %d", err);
+    }
+  }
+
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...
   static int blort = -1;
@@ -215,7 +228,7 @@ check_agl_error (const char *type)
     default:
       e = buf; sprintf (buf, "unknown AGL error %d", (int) i); break;
   }
-  NSLog (@"%s AGL error: %s\n", type, e);
+  NSLog (@"%s AGL error: %s", type, e);
   exit (1);
 }
 
@@ -246,6 +259,6 @@ check_gl_error (const char *type)
     default:
       e = buf; sprintf (buf, "unknown GL error %d", (int) i); break;
   }
-  NSLog (@"%s GL error: %s\n", type, e);
+  NSLog (@"%s GL error: %s", type, e);
   exit (1);
 }

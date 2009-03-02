@@ -135,8 +135,10 @@ ext_passwd_valid_p (const char *typed_passwd, int verbose_p)
     res = ext_run (pw->pw_name, typed_passwd, verbose_p);
   endpwent();
 
+#ifdef ALLOW_ROOT_PASSWD
   if (!res)
     res = ext_run ("root", typed_passwd, verbose_p);
+#endif /* ALLOW_ROOT_PASSWD */
 
   return res;
 }

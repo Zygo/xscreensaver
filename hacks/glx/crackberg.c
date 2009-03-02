@@ -18,7 +18,7 @@
 #define DEF_NSUBDIVS   "4"
 #define DEF_BORING     "False"
 #define DEF_CRACK      "True"
-#define DEF_NOWATER    "False"
+#define DEF_WATER      "True"
 #define DEF_FLAT       "True"
 #define DEF_COLOR      "plain"
 #define DEF_LIT        "True"
@@ -138,7 +138,7 @@ struct _cberg_state {
  ** */
 
 static unsigned int nsubdivs;
-static Bool crack, boring, nowater, flat, lit, letterbox;
+static Bool crack, boring, do_water, flat, lit, letterbox;
 static float visibility;
 static char *color;
 
@@ -149,8 +149,8 @@ static XrmOptionDescRec opts[] = {
   {"-boring",     ".boring",     XrmoptionNoArg,  "True"},
   {"-crack",      ".crack",      XrmoptionNoArg,  "True"},
   {"-no-crack",   ".crack",      XrmoptionNoArg,  "False"},
-  {"-water",      ".nowater",    XrmoptionNoArg,  "False"},
-  {"-no-water",   ".nowater",    XrmoptionNoArg,  "True"},
+  {"-water",      ".water",      XrmoptionNoArg,  "True"},
+  {"-no-water",   ".water",      XrmoptionNoArg,  "False"},
   {"-flat",       ".flat",       XrmoptionNoArg,  "True"},
   {"-no-flat",    ".flat",       XrmoptionNoArg,  "False"},
   {"-color",      ".color",      XrmoptionSepArg, 0},
@@ -164,7 +164,7 @@ static argtype vars[] = {
   {&nsubdivs,   "nsubdivs",   "nsubdivs",   DEF_NSUBDIVS,   t_Int},
   {&boring,     "boring",     "boring",     DEF_BORING,     t_Bool},
   {&crack,      "crack",      "crack",      DEF_CRACK,      t_Bool},
-  {&nowater,    "nowater",    "nowater",    DEF_NOWATER,    t_Bool},
+  {&do_water,   "water",      "water",      DEF_WATER,      t_Bool},
   {&flat,       "flat",       "flat",       DEF_FLAT,       t_Bool},
   {&color,      "color",      "color",      DEF_COLOR,      t_String},
   {&lit,        "lit",        "lit",        DEF_LIT,        t_Bool},
@@ -430,7 +430,7 @@ static inline void trile_draw_vertex(cberg_state *cberg, unsigned int ix,
 {
     glColor3d(0.0, 0.0, 0.0); /* don't ask. my card breaks otherwise. */
     
-    if (!nowater && zcur <= 0.0) {
+    if (do_water && zcur <= 0.0) {
         cberg->color->water(cberg, zcur); /* XXX use average-of-3 for color when flat?*/
         if (lit) glNormal3d(0.0,0.0,1.0);
         glVertex3d(x, y, 0.0); 

@@ -18,11 +18,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-extern char *blurb(void);
+#include <X11/Intrinsic.h>
+
+#include "auth.h"
+
+extern const char *blurb(void);
 extern void check_for_leaks (const char *where);
 
 
@@ -42,6 +47,8 @@ struct auth_methods {
   Bool (*init) (int argc, char **argv, Bool verbose_p);
   Bool (*priv_init) (int argc, char **argv, Bool verbose_p);
   Bool (*valid_p) (const char *typed_passwd, Bool verbose_p);
+  void (*try_unlock) (saver_info *si, Bool verbose_p,
+		      Bool (*valid_p)(const char *typed_passwd, Bool verbose_p));
   Bool initted_p;
   Bool priv_initted_p;
 };
@@ -53,7 +60,8 @@ extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
 #ifdef HAVE_PAM
 extern Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
-extern Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
+extern void pam_try_unlock (saver_info *si, Bool verbose_p,
+			    Bool (*valid_p)(const char *typed_passwd, Bool verbose_p));
 #endif
 #ifdef PASSWD_HELPER_PROGRAM
 extern Bool ext_priv_init (int argc, char **argv, Bool verbose_p);
@@ -73,19 +81,19 @@ Bool passwd_valid_p (const char *typed_passwd, Bool verbose_p);
    (It's all in the same file since the APIs are randomly nearly-identical.)
  */
 struct auth_methods methods[] = {
-# ifdef HAVE_KERBEROS
-  { "Kerberos",         kerberos_lock_init, 0, kerberos_passwd_valid_p,
+# ifdef HAVE_PAM
+  { "PAM",              0, pam_priv_init, 0, pam_try_unlock,
                         False, False },
 # endif
-# ifdef HAVE_PAM
-  { "PAM",              0, pam_priv_init, pam_passwd_valid_p, 
+# ifdef HAVE_KERBEROS
+  { "Kerberos",         kerberos_lock_init, 0, kerberos_passwd_valid_p, 0,
                         False, False },
 # endif
 # ifdef PASSWD_HELPER_PROGRAM
-  { "external",		0, ext_priv_init, ext_passwd_valid_p,
+  { "external",		0, ext_priv_init, ext_passwd_valid_p, 0,
   			False, False },
-#endif
-  { "normal",           pwent_lock_init, pwent_priv_init, pwent_passwd_valid_p,
+# endif
+  { "normal",           pwent_lock_init, pwent_priv_init, pwent_passwd_valid_p, 0,
                         False, False }
 };
 
@@ -138,18 +146,66 @@ lock_init (int argc, char **argv, Bool verbose_p)
 }
 
 
-Bool 
-passwd_valid_p (const char *typed_passwd, Bool verbose_p)
+/* A basic auth driver that simply prompts for a password then runs it through
+ * valid_p to determine whether the password is correct.
+ */
+static void
+try_unlock_password(saver_info *si,
+		   Bool verbose_p,
+		   Bool (*valid_p)(const char *typed_passwd, Bool verbose_p))
+{
+  struct auth_message message;
+  struct auth_response *response = NULL;
+
+  memset(&message, 0, sizeof(message));
+
+  /* Call the auth_conv function with "Password:", then feed
+   * the result into valid_p()
+   */
+  message.type = AUTH_MSGTYPE_PROMPT_NOECHO;
+  message.msg = "Password:";
+
+  si->unlock_cb(1, &message, &response, si);
+
+  if (!response)
+    return;
+
+  si->unlock_state = valid_p(response->response, verbose_p) ? ul_success : ul_fail;
+
+  if (response->response)
+    free(response->response);
+  free(response);
+}
+
+
+/**
+ * Runs through each authentication driver calling its try_unlock function.
+ * Called xss_authenticate() because AIX beat us to the name authenticate().
+ */
+void
+xss_authenticate(saver_info *si, Bool verbose_p)
 {
   int i, j;
+
   for (i = 0; i < countof(methods); i++)
     {
-      int ok_p = (methods[i].initted_p &&
-                  methods[i].valid_p (typed_passwd, verbose_p));
+      if (!methods[i].initted_p)
+        continue;
+
+      if (si->cached_passwd != NULL && methods[i].valid_p)
+	si->unlock_state = (methods[i].valid_p(si->cached_passwd, verbose_p) == True)
+	                   ? ul_success : ul_fail;
+      else if (methods[i].try_unlock != NULL)
+        methods[i].try_unlock(si, verbose_p, methods[i].valid_p);
+      else if (methods[i].valid_p)
+        try_unlock_password(si, verbose_p, methods[i].valid_p);
+      else /* Ze goggles, zey do nozing! */
+        fprintf(stderr, "%s: authentication method %s does nothing.\n",
+                blurb(), methods[i].name);
 
       check_for_leaks (methods[i].name);
 
-      if (ok_p)
+      if (si->unlock_state == ul_success)
         {
           /* If we successfully authenticated by method N, but attempting
              to authenticate by method N-1 failed, mention that (since if
@@ -160,19 +216,23 @@ passwd_valid_p (const char *typed_passwd, Bool verbose_p)
             {
               for (j = 0; j < i; j++)
                 if (methods[j].initted_p)
-                  fprintf (stderr,
-                           "%s: authentication via %s passwords failed.\n",
-                           blurb(), methods[j].name);
+                    fprintf (stderr,
+                             "%s: authentication via %s failed.\n",
+                             blurb(), methods[j].name);
               fprintf (stderr,
-                       "%s: authentication via %s passwords succeeded.\n",
+                       "%s: authentication via %s succeeded.\n",
                        blurb(), methods[i].name);
             }
-
-          return True;		/* Successfully authenticated! */
+          goto DONE;		/* Successfully authenticated! */
         }
     }
 
-  return False;			/* Authentication failure. */
+  if (verbose_p)
+    fprintf(stderr, "%s: All authentication mechanisms failed.\n", blurb());
+
+DONE:
+  if (si->auth_finished_cb)
+    si->auth_finished_cb (si);
 }
 
 #endif /* NO_LOCKING -- whole file */

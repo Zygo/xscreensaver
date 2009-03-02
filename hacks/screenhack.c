@@ -684,7 +684,7 @@ init_window (Display *dpy, Widget toplevel, const char *title)
   window = XtWindow (toplevel);
   XGetWindowAttributes (dpy, window, &xgwa);
   XSelectInput (dpy, window,
-                (xgwa.your_event_mask | KeyPressMask |
+                (xgwa.your_event_mask | KeyPressMask | KeyReleaseMask |
                  ButtonPressMask | ButtonReleaseMask));
   XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
                    PropModeReplace,

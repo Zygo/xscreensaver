@@ -59,7 +59,7 @@ switch_to_resource (NSString *cmdline_switch, const XrmOptionDescRec *opts,
   NSAssert(cmdline_switch, @"cmdline switch is null");
   if (! [cmdline_switch getCString:buf maxLength:sizeof(buf)
                           encoding:NSUTF8StringEncoding]) {
-    NSAssert1(0, @"unable to convert %@\n", cmdline_switch);
+    NSAssert1(0, @"unable to convert %@", cmdline_switch);
     abort();
   }
   char *s = strpbrk(buf, " \t\r\n");
@@ -76,12 +76,12 @@ switch_to_resource (NSString *cmdline_switch, const XrmOptionDescRec *opts,
 
       if (opts[0].argKind == XrmoptionNoArg) {
         if (tail && *tail)
-          NSAssert1 (0, @"expected no args to switch: \"%@\"\n",
+          NSAssert1 (0, @"expected no args to switch: \"%@\"",
                      cmdline_switch);
         ret = opts[0].value;
       } else {
         if (!tail || !*tail)
-          NSAssert1 (0, @"expected args to switch: \"%@\"\n",
+          NSAssert1 (0, @"expected args to switch: \"%@\"",
                      cmdline_switch);
         ret = tail;
       }
@@ -101,7 +101,7 @@ switch_to_resource (NSString *cmdline_switch, const XrmOptionDescRec *opts,
     opts++;
   }
   
-  NSAssert1 (0, @"\"%@\" not present in options\n", cmdline_switch);
+  NSAssert1 (0, @"\"%@\" not present in options", cmdline_switch);
   abort();
 }
 
@@ -130,7 +130,7 @@ bind_resource_to_preferences (NSUserDefaultsController *prefs,
   s = [s stringByPaddingToLength:18 withString:@" " startingAtIndex:0];
   s = [NSString stringWithFormat:@"%@ = \"%@\"", s, def];
   s = [s stringByPaddingToLength:28 withString:@" " startingAtIndex:0];
-  NSLog (@"%@ %@/%@\n", s, [def class], [control class]);
+  NSLog (@"%@ %@/%@", s, [def class], [control class]);
 # endif
 }
 
@@ -170,9 +170,9 @@ parse_attrs (NSMutableDictionary *dict, NSXMLNode *node)
     NSString *old = [dict objectForKey:key];
     
     if (! old) {
-      NSAssert2 (0, @"unknown attribute \"%@\" in \"%@\"\n", key, [node name]);
+      NSAssert2 (0, @"unknown attribute \"%@\" in \"%@\"", key, [node name]);
     } else if ([old length] != 0) {
-      NSAssert2 (0, @"duplicate %@: \"%@\", \"%@\"\n", old, val);
+      NSAssert2 (0, @"duplicate %@: \"%@\", \"%@\"", old, val);
     } else {
       [dict setValue:val forKey:key];
     }
@@ -272,15 +272,15 @@ make_checkbox (NSUserDefaultsController *prefs,
   NSString *arg_unset = [dict objectForKey:@"arg-unset"];
   
   if (!label) {
-    NSAssert1 (0, @"no _label in %@\n", [node name]);
+    NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
   if (!arg_set && !arg_unset) {
-    NSAssert1 (0, @"neither arg-set nor arg-unset provided in \"%@\"\n", 
+    NSAssert1 (0, @"neither arg-set nor arg-unset provided in \"%@\"", 
                label);
   }
   if (arg_set && arg_unset) {
-    NSAssert1 (0, @"only one of arg-set and arg-unset may be used in \"%@\"\n", 
+    NSAssert1 (0, @"only one of arg-set and arg-unset may be used in \"%@\"", 
                label);
   }
   
@@ -288,11 +288,11 @@ make_checkbox (NSUserDefaultsController *prefs,
   //
   if (arg_set && ([arg_set hasPrefix:@"-no-"] ||
                   [arg_set hasPrefix:@"--no-"]))
-    NSLog (@"arg-set should not be a \"no\" option in \"%@\": %@\n",
+    NSLog (@"arg-set should not be a \"no\" option in \"%@\": %@",
            label, arg_set);
   if (arg_unset && (![arg_unset hasPrefix:@"-no-"] &&
                     ![arg_unset hasPrefix:@"--no-"]))
-    NSLog(@"arg-unset should be a \"no\" option in \"%@\": %@\n",
+    NSLog(@"arg-unset should be a \"no\" option in \"%@\": %@",
           label, arg_unset);
     
   NSRect rect;
@@ -332,11 +332,11 @@ make_text_field (NSUserDefaultsController *prefs,
   NSString *arg   = [dict objectForKey:@"arg"];
 
   if (!label && !no_label_p) {
-    NSAssert1 (0, @"no _label in %@\n", [node name]);
+    NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
 
-  NSAssert1 (arg, @"no arg in %@\n", label);
+  NSAssert1 (arg, @"no arg in %@", label);
 
   NSRect rect;
   rect.origin.x = rect.origin.y = 0;    
@@ -387,11 +387,11 @@ make_file_selector (NSUserDefaultsController *prefs,
   NSString *arg   = [dict objectForKey:@"arg"];
 
   if (!label && !no_label_p) {
-    NSAssert1 (0, @"no _label in %@\n", [node name]);
+    NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
 
-  NSAssert1 (arg, @"no arg in %@\n", label);
+  NSAssert1 (arg, @"no arg in %@", label);
 
   NSRect rect;
   rect.origin.x = rect.origin.y = 0;    
@@ -586,19 +586,19 @@ make_number_selector (NSUserDefaultsController *prefs,
   NSString *def        = [dict objectForKey:@"default"];
   NSString *cvt        = [dict objectForKey:@"convert"];
   
-  NSAssert1 (arg,  @"no arg in %@\n", label);
-  NSAssert1 (type, @"no type in %@\n", label);
+  NSAssert1 (arg,  @"no arg in %@", label);
+  NSAssert1 (type, @"no type in %@", label);
 
   if (! low) {
-    NSAssert1 (0, @"no low in %@\n", [node name]);
+    NSAssert1 (0, @"no low in %@", [node name]);
     return;
   }
   if (! high) {
-    NSAssert1 (0, @"no high in %@\n", [node name]);
+    NSAssert1 (0, @"no high in %@", [node name]);
     return;
   }
   if (! def) {
-    NSAssert1 (0, @"no default in %@\n", [node name]);
+    NSAssert1 (0, @"no default in %@", [node name]);
     return;
   }
   if (cvt && ![cvt isEqualToString:@"invert"]) {
@@ -665,14 +665,14 @@ make_number_selector (NSUserDefaultsController *prefs,
   } else if ([type isEqualToString:@"spinbutton"]) {
 
     if (! label) {
-      NSAssert1 (0, @"no _label in spinbutton %@\n", [node name]);
+      NSAssert1 (0, @"no _label in spinbutton %@", [node name]);
       return;
     }
     NSAssert1 (!low_label,
-              @"low-label not allowed in spinbutton \"%@\"\n", [node name]);
+              @"low-label not allowed in spinbutton \"%@\"", [node name]);
     NSAssert1 (!high_label,
-               @"high-label not allowed in spinbutton \"%@\"\n", [node name]);
-    NSAssert1 (!cvt, @"convert not allowed in spinbutton \"%@\"\n",
+               @"high-label not allowed in spinbutton \"%@\"", [node name]);
+    NSAssert1 (!cvt, @"convert not allowed in spinbutton \"%@\"",
                [node name]);
     
     NSRect rect;
@@ -735,7 +735,7 @@ make_number_selector (NSUserDefaultsController *prefs,
     [txt release];
     
   } else {
-    NSAssert2 (0, @"unknown type \"%@\" in \"%@\"\n", type, label);
+    NSAssert2 (0, @"unknown type \"%@\" in \"%@\"", type, label);
   }
 }
 
@@ -775,7 +775,7 @@ make_option_menu (NSUserDefaultsController *prefs,
   int i, count = [children count];
 
   if (count <= 0) {
-    NSAssert1 (0, @"no menu items in \"%@\"\n", [node name]);
+    NSAssert1 (0, @"no menu items in \"%@\"", [node name]);
     return;
   }
 
@@ -822,7 +822,7 @@ make_option_menu (NSUserDefaultsController *prefs,
     NSString *arg_set = [dict2 objectForKey:@"arg-set"];
     
     if (!label) {
-      NSAssert1 (0, @"no _label in %@\n", [child name]);
+      NSAssert1 (0, @"no _label in %@", [child name]);
       return;
     }
 
@@ -836,7 +836,7 @@ make_option_menu (NSUserDefaultsController *prefs,
       NSAssert1 (this_val, @"this_val null for %@", arg_set);
       if (menu_key && ![menu_key isEqualToString:this_key])
         NSAssert3 (0,
-                   @"multiple resources in menu: \"%@\" vs \"%@\" = \"%@\"\n",
+                   @"multiple resources in menu: \"%@\" vs \"%@\" = \"%@\"",
                    menu_key, this_key, this_val);
       if (this_key)
         menu_key = this_key;
@@ -848,7 +848,7 @@ make_option_menu (NSUserDefaultsController *prefs,
 
     } else {
       // no arg-set -- only one menu item can be missing that.
-      NSAssert1 (!def_item, @"no arg-set in \"%@\"\n", label);
+      NSAssert1 (!def_item, @"no arg-set in \"%@\"", label);
       def_item = item;
     }
 
@@ -1397,7 +1397,7 @@ make_control (NSUserDefaultsController *prefs,
     make_image_controls (prefs, opts, parent, node);
 
   } else {
-    NSAssert1 (0, @"unknown tag: %@\n", name);
+    NSAssert1 (0, @"unknown tag: %@", name);
   }
 }
 
@@ -1432,11 +1432,11 @@ parse_xscreensaver_tag (NSXMLNode *node)
   NSString *label = [dict objectForKey:@"_label"];
     
   if (!label) {
-    NSAssert1 (0, @"no _label in %@\n", [node name]);
+    NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
   if (!name) {
-    NSAssert1 (0, @"no name in \"%@\"\n", label);
+    NSAssert1 (0, @"no name in \"%@\"", label);
     return;
   }
   
@@ -1709,7 +1709,7 @@ traverse_tree (NSUserDefaultsController *prefs,
   NSURL *furl = [NSURL fileURLWithPath:xml_file];
 
   if (!furl) {
-    NSAssert1 (0, @"can't URLify \"%@\"\n", xml_file);
+    NSAssert1 (0, @"can't URLify \"%@\"", xml_file);
     return nil;
   }
 
@@ -1728,7 +1728,7 @@ traverse_tree (NSUserDefaultsController *prefs,
 */
   if (!xmlDoc || err) {
     if (err)
-      NSAssert2 (0, @"XML Error: %@: %@\n",
+      NSAssert2 (0, @"XML Error: %@: %@",
                  xml_file, [err localizedDescription]);
     return nil;
   }

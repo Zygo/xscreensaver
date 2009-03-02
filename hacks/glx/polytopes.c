@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2005 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2007 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -22,6 +22,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
  * REVISION HISTORY:
  * C. Steger - 03/08/10: Initial version
  * C. Steger - 05/09/28: Added trackball support
+ * C. Steger - 07/01/23: Improved 4d trackball support
  */
 
 /*
@@ -2413,8 +2414,8 @@ static void rotateall(float al, float be, float de, float ze, float et,
   rotatewx(m,al);
   rotatewy(m,be);
   rotatewz(m,de);
-  rotatexy(m,ze);
   rotatexz(m,et);
+  rotatexy(m,ze);
   rotateyz(m,th);
 }
 
@@ -2458,11 +2459,11 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
   r12 = 2.0*(q[1]*q[2]+q[0]*q[3]);
   r22 = 1.0-2.0*(q[1]*q[1]+q[0]*q[0]);
 
-  ze = atan2(-r12,r22)*180.0/M_PI;
-  et = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
-  th = atan2(-r01,r00)*180.0/M_PI;
+  et = atan2(-r12,r22)*180.0/M_PI;
+  th = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  ze = atan2(-r01,r00)*180.0/M_PI;
 
-  rotateall(al,be,de,ze,et,th,m);
+  rotateall(al,be,de,ze,et,-th,m);
 }
 
 
@@ -2608,8 +2609,9 @@ static void cell_5(ModeInfo *mi)
   float v[NUM_VERT_5][4];
 
   project(mi,vert_5,v,NUM_VERT_5);
-  draw(mi,v,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,VERT_PER_FACE_5,
-       hp->edge_color_5,hp->face_color_5,hp->face_color_trans_5);
+  draw(mi,v,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,
+       VERT_PER_FACE_5,hp->edge_color_5,hp->face_color_5,
+       hp->face_color_trans_5);
 }
 
 
@@ -2620,8 +2622,9 @@ static void cell_8(ModeInfo *mi)
   float v[NUM_VERT_8][4];
 
   project(mi,vert_8,v,NUM_VERT_8);
-  draw(mi,v,edge_8,NUM_EDGE_8,(int *)face_8,NUM_FACE_8,VERT_PER_FACE_8,
-       hp->edge_color_8,hp->face_color_8,hp->face_color_trans_8);
+  draw(mi,v,edge_8,NUM_EDGE_8,(int *)face_8,NUM_FACE_8,
+       VERT_PER_FACE_8,hp->edge_color_8,hp->face_color_8,
+       hp->face_color_trans_8);
 }
 
 
@@ -2632,8 +2635,9 @@ static void cell_16(ModeInfo *mi)
   float v[NUM_VERT_16][4];
 
   project(mi,vert_16,v,NUM_VERT_16);
-  draw(mi,v,edge_16,NUM_EDGE_16,(int *)face_16,NUM_FACE_16,VERT_PER_FACE_16,
-       hp->edge_color_16,hp->face_color_16,hp->face_color_trans_16);
+  draw(mi,v,edge_16,NUM_EDGE_16,(int *)face_16,NUM_FACE_16,
+       VERT_PER_FACE_16,hp->edge_color_16,hp->face_color_16,
+       hp->face_color_trans_16);
 }
 
 
@@ -2644,8 +2648,9 @@ static void cell_24(ModeInfo *mi)
   float v[NUM_VERT_24][4];
 
   project(mi,vert_24,v,NUM_VERT_24);
-  draw(mi,v,edge_24,NUM_EDGE_24,(int *)face_24,NUM_FACE_24,VERT_PER_FACE_24,
-       hp->edge_color_24,hp->face_color_24,hp->face_color_trans_24);
+  draw(mi,v,edge_24,NUM_EDGE_24,(int *)face_24,NUM_FACE_24,
+       VERT_PER_FACE_24,hp->edge_color_24,hp->face_color_24,
+       hp->face_color_trans_24);
 }
 
 
@@ -2657,7 +2662,8 @@ static void cell_120(ModeInfo *mi)
 
   project(mi,vert_120,v,NUM_VERT_120);
   draw(mi,v,edge_120,NUM_EDGE_120,(int *)face_120,NUM_FACE_120,
-       VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,hp->face_color_trans_120);
+       VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,
+       hp->face_color_trans_120);
 }
 
 
@@ -2669,7 +2675,8 @@ static void cell_600(ModeInfo *mi)
 
   project(mi,vert_600,v,NUM_VERT_600);
   draw(mi,v,edge_600,NUM_EDGE_600,(int *)face_600,NUM_FACE_600,
-       VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,hp->face_color_trans_600);
+       VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,
+       hp->face_color_trans_600);
 }
 
 
@@ -2762,39 +2769,39 @@ static void set_colors(ModeInfo *mi)
   polytopesstruct *hp = &poly[MI_SCREEN(mi)];
   /* 5-cell. */
   colors(vert_5,edge_5,NUM_EDGE_5,(int *)face_5,NUM_FACE_5,
-         VERT_PER_FACE_5,hp->edge_color_5,hp->face_color_5,hp->face_color_trans_5,
-         0.5,MIN_EDGE_DEPTH_5,MAX_EDGE_DEPTH_5,MIN_FACE_DEPTH_5,
-         MAX_FACE_DEPTH_5);
+         VERT_PER_FACE_5,hp->edge_color_5,hp->face_color_5,
+         hp->face_color_trans_5,0.5,MIN_EDGE_DEPTH_5,
+         MAX_EDGE_DEPTH_5,MIN_FACE_DEPTH_5,MAX_FACE_DEPTH_5);
 
   /* 8-cell. */
   colors(vert_8,edge_8,NUM_EDGE_8,(int *)face_8,NUM_FACE_8,
-         VERT_PER_FACE_8,hp->edge_color_8,hp->face_color_8,hp->face_color_trans_8,
-         0.4,MIN_EDGE_DEPTH_8,MAX_EDGE_DEPTH_8,MIN_FACE_DEPTH_8,
-         MAX_FACE_DEPTH_8);
+         VERT_PER_FACE_8,hp->edge_color_8,hp->face_color_8,
+         hp->face_color_trans_8,0.4,MIN_EDGE_DEPTH_8,
+         MAX_EDGE_DEPTH_8,MIN_FACE_DEPTH_8,MAX_FACE_DEPTH_8);
 
   /* 16-cell. */
   colors(vert_16,edge_16,NUM_EDGE_16,(int *)face_16,NUM_FACE_16,
-         VERT_PER_FACE_16,hp->edge_color_16,hp->face_color_16,hp->face_color_trans_16,
-         0.25,MIN_EDGE_DEPTH_16,MAX_EDGE_DEPTH_16,MIN_FACE_DEPTH_16,
-         MAX_FACE_DEPTH_16);
+         VERT_PER_FACE_16,hp->edge_color_16,hp->face_color_16,
+         hp->face_color_trans_16,0.25,MIN_EDGE_DEPTH_16,
+         MAX_EDGE_DEPTH_16,MIN_FACE_DEPTH_16,MAX_FACE_DEPTH_16);
 
   /* 24-cell. */
   colors(vert_24,edge_24,NUM_EDGE_24,(int *)face_24,NUM_FACE_24,
-         VERT_PER_FACE_24,hp->edge_color_24,hp->face_color_24,hp->face_color_trans_24,
-         0.25,MIN_EDGE_DEPTH_24,MAX_EDGE_DEPTH_24,MIN_FACE_DEPTH_24,
-         MAX_FACE_DEPTH_24);
+         VERT_PER_FACE_24,hp->edge_color_24,hp->face_color_24,
+         hp->face_color_trans_24,0.25,MIN_EDGE_DEPTH_24,
+         MAX_EDGE_DEPTH_24,MIN_FACE_DEPTH_24,MAX_FACE_DEPTH_24);
 
   /* 120-cell. */
   colors(vert_120,edge_120,NUM_EDGE_120,(int *)face_120,NUM_FACE_120,
-         VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,hp->face_color_trans_120,
-         0.15,MIN_EDGE_DEPTH_120,MAX_EDGE_DEPTH_120,MIN_FACE_DEPTH_120,
-         MAX_FACE_DEPTH_120);
+         VERT_PER_FACE_120,hp->edge_color_120,hp->face_color_120,
+         hp->face_color_trans_120,0.15,MIN_EDGE_DEPTH_120,
+         MAX_EDGE_DEPTH_120,MIN_FACE_DEPTH_120,MAX_FACE_DEPTH_120);
 
   /* 600-cell. */
   colors(vert_600,edge_600,NUM_EDGE_600,(int *)face_600,NUM_FACE_600,
-         VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,hp->face_color_trans_600,
-         0.06,MIN_EDGE_DEPTH_600,MAX_EDGE_DEPTH_600,MIN_FACE_DEPTH_600,
-         MAX_FACE_DEPTH_600);
+         VERT_PER_FACE_600,hp->edge_color_600,hp->face_color_600,
+         hp->face_color_trans_600,0.06,MIN_EDGE_DEPTH_600,
+         MAX_EDGE_DEPTH_600,MIN_FACE_DEPTH_600,MAX_FACE_DEPTH_600);
 }
 
 

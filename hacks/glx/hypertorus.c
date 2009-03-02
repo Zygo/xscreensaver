@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2005 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2007 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -23,6 +23,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
  * C. Steger - 03/05/18: Initial version
  * C. Steger - 05/09/28: Added the spirals appearance mode
  *                       and trackball support
+ * C. Steger - 07/01/23: Improved 4d trackball support
  */
 
 /*
@@ -105,7 +106,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #define DTHETA                     2.1
 #define DTHETA_STR                "2.1"
 
-#define DEF_DISPLAY_MODE           DISP_SURFACE_STR   
+#define DEF_DISPLAY_MODE           DISP_TRANSPARENT_STR
 #define DEF_APPEARANCE             APPEARANCE_BANDS_STR
 #define DEF_COLORS                 COLORS_COLORWHEEL_STR
 #define DEF_3D_PROJECTION          DISP_3D_PERSPECTIVE_STR
@@ -403,8 +404,8 @@ static void rotateall(float al, float be, float de, float ze, float et,
   rotatewx(m,al);
   rotatewy(m,be);
   rotatewz(m,de);
-  rotatexy(m,ze);
   rotatexz(m,et);
+  rotatexy(m,ze);
   rotateyz(m,th);
 }
 
@@ -448,11 +449,11 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
   r12 = 2.0*(q[1]*q[2]+q[0]*q[3]);
   r22 = 1.0-2.0*(q[1]*q[1]+q[0]*q[0]);
 
-  ze = atan2(-r12,r22)*180.0/M_PI;
-  et = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
-  th = atan2(-r01,r00)*180.0/M_PI;
+  et = atan2(-r12,r22)*180.0/M_PI;
+  th = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  ze = atan2(-r01,r00)*180.0/M_PI;
 
-  rotateall(al,be,de,ze,et,th,m);
+  rotateall(al,be,de,ze,et,-th,m);
 }
 
 

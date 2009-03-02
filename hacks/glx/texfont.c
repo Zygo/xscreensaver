@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005, 2006 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -46,7 +46,7 @@ struct texture_font_data {
   int grid_mag;			/* 1,  2,  4, or 8 */
   int ntextures;		/* 1,  4, 16, or 64 (grid_mag ^ 2) */
 
-  GLuint texid[32];
+  GLuint texid[64];		/* must hold ntextures */
 };
 
 

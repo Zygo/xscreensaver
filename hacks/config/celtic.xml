@@ -9,7 +9,7 @@
           low="0" high="50000" default="10000"
           convert="invert"/>
 
-  <number id="delay" type="slider" arg="-delay2 %"
+  <number id="delay2" type="slider" arg="-delay2 %"
           _label="Pause" _low-label="Short" _high-label="Long"
           low="0" high="10" default="5"/>
 

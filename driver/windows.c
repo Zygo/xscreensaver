@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1602,9 +1602,21 @@ resize_screensaver_window (saver_info *si)
        */
       int nscreens;
       XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
-      if (nscreens != si->nscreens) abort();
+
+      if (nscreens != si->nscreens) {
+        /* Apparently some Xinerama implementations let you use a hot-key
+           to change the number of screens in use!  This is, of course,
+           documented nowhere.  Let's try to do something marginally less
+           bad than crashing.
+         */
+        fprintf (stderr, "%s: bad craziness: xinerama screen count changed "
+                 "from %d to %d!\n", blurb(), si->nscreens, nscreens);
+        if (nscreens > si->nscreens)
+          nscreens = si->nscreens;
+      }
+
       if (!xsi) abort();
-      for (i = 0; i < si->nscreens; i++)
+      for (i = 0; i < nscreens; i++)
         {
           saver_screen_info *ssi = &si->screens[i];
           if (p->verbose_p &&

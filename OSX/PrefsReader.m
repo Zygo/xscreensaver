@@ -66,7 +66,7 @@
     else
       nsval = [NSString stringWithCString:val encoding:NSUTF8StringEncoding];
       
-//    NSLog (@"default: \"%@\" = \"%@\" [%@]\n", nskey, nsval, [nsval class]);
+//    NSLog (@"default: \"%@\" = \"%@\" [%@]", nskey, nsval, [nsval class]);
     [dict setValue:nsval forKey:nskey];
     free (line);
     defs++;
@@ -177,7 +177,7 @@
 - (char *) getStringResource: (const char *) name
 {
   NSObject *o = [self getObjectResource:name];
-  //NSLog(@"%s = %@\n",name,o);
+  //NSLog(@"%s = %@",name,o);
   if (o == nil) {
     if (! (!strcmp(name, "eraseMode") || // erase.c
            // xlockmore.c reads all of these whether used or not...
@@ -190,7 +190,7 @@
            !strcmp(name, "titleFont") ||
            !strcmp(name, "background")
            ))
-      NSLog(@"warning: no preference \"%s\" [string]\n", name);
+      NSLog(@"warning: no preference \"%s\" [string]", name);
     return NULL;
   }
 #if 0
@@ -229,7 +229,7 @@
            !strcmp(name, "ncolors") ||
            !strcmp(name, "eraseSeconds")  // erase.c
            ))
-      NSLog(@"warning: no preference \"%s\" [float]\n", name);
+      NSLog(@"warning: no preference \"%s\" [float]", name);
     return 0.0;
   }
   if ([o isKindOfClass:[NSString class]]) {
@@ -255,7 +255,7 @@
   if (n == 0) return NO;
   else if (n == 1) return YES;
   else {
-    NSAssert2(0, @"%s = %d but should have been 0 or 1\n", name, n);
+    NSAssert2(0, @"%s = %d but should have been 0 or 1", name, n);
     abort();
   }
 }

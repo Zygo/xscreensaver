@@ -152,6 +152,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <netdb.h>	/* for gethostbyname() */
+#include <sys/types.h>
+#include <pwd.h>
 #ifdef HAVE_XMU
 # ifndef VMS
 #  include <X11/Xmu/Error.h>
@@ -176,6 +178,7 @@
 #include "resources.h"
 #include "visual.h"
 #include "usleep.h"
+#include "auth.h"
 
 saver_info *global_si_kludge = 0;	/* I hate C so much... */
 
@@ -1383,6 +1386,7 @@ main (int argc, char **argv)
   saver_info the_si;
   saver_info *si = &the_si;
   saver_preferences *p = &si->prefs;
+  struct passwd *spasswd;
   int i;
 
   memset(si, 0, sizeof(*si));
@@ -1397,6 +1401,21 @@ main (int argc, char **argv)
   set_version_string (si, &argc, argv);
   privileged_initialization (si, &argc, argv);
   hack_environment (si);
+
+  spasswd = getpwuid(getuid());
+  if (!spasswd)
+    {
+      fprintf(stderr, "Could not figure out who the current user is!\n");
+      fprintf(stderr, "spasswd is %x\n", (unsigned int) spasswd);
+      return 1;
+    }
+
+  si->user = strdup(spasswd->pw_name ? spasswd->pw_name : "(unknown)");
+
+# ifndef NO_LOCKING
+  si->unlock_cb = gui_auth_conv;
+  si->auth_finished_cb = auth_finished_cb;
+# endif /* !NO_LOCKING */
 
   shell = connect_to_server (si, &argc, argv);
   process_command_line (si, &argc, argv);

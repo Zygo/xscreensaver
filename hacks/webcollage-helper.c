@@ -10,6 +10,10 @@
  * implied warranty.
  */
 
+/* This is the GDK + JPEGlib implementation.  See webcollage-helper-cocoa.m
+   for the Cocoa implementation.
+ */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif

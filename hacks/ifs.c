@@ -26,6 +26,7 @@ a groovier colouring mode.
 
 This version by Chris Le Sueur <thefishface@gmail.com>, Feb 2005
 Many improvements by Robby Griffin <rmg@terc.edu>, Mar 2006
+Multi-coloured mode added by Jack Grahl <j.grahl@ucl.ac.uk>, Jan 2007
 */
 
 #include <assert.h>
@@ -75,6 +76,7 @@ struct state {
   int length;
   int mode;
   Bool recurse;
+  Bool multi;
   Bool translate, scale, rotate;
 };
 
@@ -98,6 +100,7 @@ static const char *ifs_defaults [] = {
   "*scale:		True",
   "*rotate:		True",
   "*recurse:		False",
+  "*multi:              True",
 # ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
   "*doubleBuffer:	False",
 #else
@@ -117,6 +120,8 @@ static XrmOptionDescRec ifs_options [] = {
   { "-no-rotate",	".rotate",	XrmoptionNoArg, "False" },
   { "-recurse",		".recurse",	XrmoptionNoArg, "True" },
   { "-iterate",		".recurse",	XrmoptionNoArg, "False" },
+  { "-multi",           ".multi",       XrmoptionNoArg, "True" },
+  { "-no-multi",        ".multi",       XrmoptionNoArg, "False" },
   { "-db",		".doubleBuffer",XrmoptionNoArg, "True" },
   { "-no-db",		".doubleBuffer",XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
@@ -205,7 +210,7 @@ CreateLens(struct state *st,
   else newlens->s = 0.5;
 
   newlens->tx = nx;
-  newlens->tx = ny;
+  newlens->ty = ny;
 
   lensmatrix(st, newlens);
 }
@@ -264,17 +269,23 @@ mutate(struct state *st, Lens *l)
 /* Calls itself <lensnum> times - with results from each lens/function.  *
  * After <length> calls to itself, it stops iterating and draws a point. */
 static void
-recurse(struct state *st, int x, int y, int length)
+recurse(struct state *st, int x, int y, int length, int p)
 {
   int i;
   Lens *l;
 
   if (length == 0) {
-    sp(st, x, y);
-  } else {
+    if (p == 0) 
+      sp(st, x, y);
+    else {
+      l = &st->lenses[p];
+      sp(st, STEPX(l, x, y), STEPY(l, x, y));
+    }
+  }
+  else {
     for (i = 0; i < st->lensnum; i++) {
       l = &st->lenses[i];
-      recurse(st, STEPX(l, x, y), STEPY(l, x, y), length - 1);
+      recurse(st, STEPX(l, x, y), STEPY(l, x, y), length - 1, p);
     }
   }
 }
@@ -283,7 +294,7 @@ recurse(struct state *st, int x, int y, int length)
  * iteration after the first 10.
  */
 static void
-iterate(struct state *st, int count)
+iterate(struct state *st, int count, int p)
 {
   int i;
   Lens *l;
@@ -303,7 +314,13 @@ iterate(struct state *st, int count)
 
   for ( ; i < count; i++) {
     STEP();
-    sp(st, x, y);
+    if (p == 0)
+      sp(st, x, y);
+    else
+      {
+	l = &st->lenses[p];
+	sp(st, STEPX(l, x, y), STEPY(l, x, y));
+      }
   }
 
 # undef STEP
@@ -321,6 +338,8 @@ ifs_draw (Display *dpy, Window window, void *closure)
   struct state *st = (struct state *) closure;
   int i;
   int xmin = st->xmin, xmax = st->xmax, ymin = st->ymin, ymax = st->ymax;
+  int partcolor, x, y;
+  
 
   /* erase whatever was drawn in the previous frame */
   if (xmin <= xmax && ymin <= ymax) {
@@ -335,17 +354,37 @@ ifs_draw (Display *dpy, Window window, void *closure)
 
   st->ccolour++;
   st->ccolour %= st->ncolours;
-  XSetForeground(st->dpy, st->gc, st->colours[st->ccolour].pixel);
 
   /* calculate and draw points for this frame */
-  memset(st->board, 0, st->widthb * st->height * sizeof(*st->board));
-  if (st->recurse)
-    recurse(st, st->width << 7, st->height << 7, st->length);
-  else
-    iterate(st, pow(st->lensnum, st->length));
-  if (st->npoints)
-    drawpoints(st);
-
+  x = st->width << 7;
+  y = st->height << 7;
+  
+  if (st->multi) {
+    for (i = 0; i < st->lensnum; i++) {  
+      partcolor = st->ccolour * (i+1);
+      partcolor %= st->ncolours;
+      XSetForeground(st->dpy, st->gc, st->colours[partcolor].pixel);
+      memset(st->board, 0, st->widthb * st->height * sizeof(*st->board));
+      if (st->recurse)   
+	recurse(st, x, y, st->length - 1, i);
+      else
+	iterate(st, pow(st->lensnum, st->length - 1), i);
+      if (st->npoints) 
+	drawpoints(st);
+    }
+  } 
+  else {
+    
+    XSetForeground(st->dpy, st->gc, st->colours[st->ccolour].pixel);
+    memset(st->board, 0, st->widthb * st->height * sizeof(*st->board));
+    if (st->recurse)
+      recurse(st, x, y, st->length, 0);
+    else
+      iterate(st, pow(st->lensnum, st->length), 0);
+    if (st->npoints)
+      drawpoints(st);
+  }
+  
   /* if we just drew into a buffer, copy the changed area (including
    * erased area) to screen */
   if (st->backbuffer != st->window
@@ -410,6 +449,7 @@ ifs_init (Display *d_arg, Window w_arg)
   st->scale     = get_boolean_resource(st->dpy, "scale", "Boolean");
   st->translate = get_boolean_resource(st->dpy, "translate", "Boolean");
   st->recurse = get_boolean_resource(st->dpy, "recurse", "Boolean");
+  st->multi = get_boolean_resource(st->dpy, "multi", "Boolean");
 
   st->lensnum = get_integer_resource(st->dpy, "lensnum", "Functions");
   if (st->lenses) free (st->lenses);
