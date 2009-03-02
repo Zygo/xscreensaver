@@ -72,6 +72,7 @@ $ ripples	:== $'mydir'ripples
 $ rocks		:== $'mydir'rocks
 $ rorschach	:== $'mydir'rorschach
 $ rotor		:== $'mydir'rotor
+$ rotzoomer	:== $'mydir'rotzoomer
 $ shadebobs	:== $'mydir'shadebobs
 $ sierpinski	:== $'mydir'sierpinski
 $ slidescreen	:== $'mydir'slidescreen

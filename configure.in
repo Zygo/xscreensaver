@@ -3023,7 +3023,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}."
   echo ""
-  echo "      The various graphics demos (100+ different executables) will"
+  echo "      The various graphics demos (120+ different executables) will"
   echo "      also be installed in ${HACKDIR}."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere"

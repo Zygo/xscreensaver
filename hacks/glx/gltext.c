@@ -20,17 +20,32 @@ extern XtAppContext app;
 #define sws_opts	xlockmore_opts
 
 #define DEF_TEXT        "(default)"
+#define DEF_SPIN        "XYZ"
+#define DEF_WANDER      "True"
 
-#define DEFAULTS	"*delay:	10000     \n" \
-			"*showFPS:      False     \n" \
-			"*wireframe:    False     \n" \
-			"*text:       " DEF_TEXT "\n"
+#define DEFAULTS	"*delay:	10000       \n" \
+			"*showFPS:      False       \n" \
+			"*wireframe:    False       \n" \
+			"*spin:       " DEF_SPIN   "\n" \
+			"*wander:     " DEF_WANDER "\n" \
+			"*text:       " DEF_TEXT   "\n"
+
+
+#define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
+
+#ifdef SMOOTH_TUBE
+# define TUBE_FACES  12   /* how densely to render tubes */
+#else
+# define TUBE_FACES  8
+#endif
+
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
+#include <ctype.h>
 
 #ifdef USE_GL /* whole file */
 
@@ -59,18 +74,29 @@ typedef struct {
   XColor *colors;
   int ccolor;
 
+  Bool spin_x, spin_y, spin_z;
+  char *text;
+
 } text_configuration;
 
 static text_configuration *tps = NULL;
 
-static char *text;
+static char *text_fmt;
+static char *do_spin;
+static Bool do_wander;
 
 static XrmOptionDescRec opts[] = {
-  { "-text",   ".text",   XrmoptionSepArg, 0 }
+  { "-text",   ".text",   XrmoptionSepArg, 0 },
+  { "-spin",   ".spin",   XrmoptionSepArg, 0 },
+  { "+spin",   ".spin",   XrmoptionNoArg, "" },
+  { "-wander", ".wander", XrmoptionNoArg, "True" },
+  { "+wander", ".wander", XrmoptionNoArg, "False" }
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &text, "text", "Text", DEF_TEXT, t_String},
+  {(caddr_t *) &text_fmt,  "text",   "Text",   DEF_TEXT,   t_String},
+  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -194,6 +220,65 @@ rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
 }
 
 
+static void
+parse_text (ModeInfo *mi)
+{
+  text_configuration *tp = &tps[MI_SCREEN(mi)];
+
+  if (tp->text) free (tp->text);
+
+  if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
+    {
+# ifdef HAVE_UNAME
+      struct utsname uts;
+
+      if (uname (&uts) < 0)
+        {
+          tp->text = strdup("uname() failed");
+        }
+      else
+        {
+          char *s;
+          if ((s = strchr(uts.nodename, '.')))
+            *s = 0;
+          tp->text = (char *) malloc(strlen(uts.nodename) +
+                                     strlen(uts.sysname) +
+                                     strlen(uts.version) +
+                                     strlen(uts.release) + 10);
+#  ifdef _AIX
+          sprintf(tp->text, "%s\n%s %s.%s",
+                  uts.nodename, uts.sysname, uts.version, uts.release);
+#  else  /* !_AIX */
+          sprintf(tp->text, "%s\n%s %s",
+                  uts.nodename, uts.sysname, uts.release);
+#  endif /* !_AIX */
+        }
+# else	/* !HAVE_UNAME */
+#  ifdef VMS
+      tp->text = strdup(getenv("SYS$NODE"));
+#  else
+      tp->text = strdup("*  *\n*  *  *\nxscreensaver\n*  *  *\n*  *");
+#  endif
+# endif	/* !HAVE_UNAME */
+    }
+  else if (!strchr (text_fmt, '%'))
+    {
+      tp->text = strdup (text_fmt);
+    }
+  else
+    {
+      time_t now = time ((time_t *) 0);
+      struct tm *tm = localtime (&now);
+      int L = strlen(text_fmt) + 100;
+      tp->text = (char *) malloc (L);
+      *tp->text = 0;
+      strftime (tp->text, L-1, text_fmt, tm);
+      if (!*tp->text)
+        sprintf (tp->text, "strftime error:\n%s", text_fmt);
+    }
+}
+
+
 void 
 init_text (ModeInfo *mi)
 {
@@ -232,51 +317,33 @@ init_text (ModeInfo *mi)
   tp->ddy = 0.00006 + frand(0.00003);
   tp->ddz = 0.00006 + frand(0.00003);
 
-  tp->ddx = 0.00001;
-  tp->ddy = 0.00001;
-  tp->ddz = 0.00001;
-
-  if (!text || !*text || !strcmp(text, "(default)"))
-    {
-# ifdef HAVE_UNAME
-      struct utsname uts;
-
-      if (uname (&uts) < 0)
-        {
-          text = strdup("uname() failed");
-        }
-      else
-        {
-          char *s;
-          if ((s = strchr(uts.nodename, '.')))
-            *s = 0;
-          text = (char *) malloc(strlen(uts.nodename) +
-                                 strlen(uts.sysname) +
-                                 strlen(uts.version) +
-                                 strlen(uts.release) + 10);
-#  ifdef _AIX
-          sprintf(text, "%s\n%s %s.%s",
-                  uts.nodename, uts.sysname, uts.version, uts.release);
-#  else  /* !_AIX */
-          sprintf(text, "%s\n%s %s",
-                  uts.nodename, uts.sysname, uts.release);
-#  endif /* !_AIX */
-        }
-# else	/* !HAVE_UNAME */
-#  ifdef VMS
-      text = strdup(getenv("SYS$NODE"));
-#  else
-      text = strdup("*  *\n*  *  *\nxscreensaver\n*  *  *\n*  *");
-#  endif
-# endif	/* !HAVE_UNAME */
-    }
-
 
   tp->ncolors = 255;
   tp->colors = (XColor *) calloc(tp->ncolors, sizeof(XColor));
   make_smooth_colormap (0, 0, 0,
                         tp->colors, &tp->ncolors,
                         False, 0, False);
+
+  parse_text (mi);
+
+  {
+    char *s = do_spin;
+    while (*s)
+      {
+        if      (*s == 'x' || *s == 'X') tp->spin_x = 1;
+        else if (*s == 'y' || *s == 'Y') tp->spin_y = 1;
+        else if (*s == 'z' || *s == 'Z') tp->spin_z = 1;
+        else
+          {
+            fprintf (stderr,
+         "%s: spin must contain only the characters X, Y, or Z (not \"%s\")\n",
+                     progname, do_spin);
+            exit (1);
+          }
+        s++;
+      }
+  }
+
 }
 
 
@@ -284,89 +351,98 @@ static void
 unit_tube (Bool wire)
 {
   int i;
-  GLfloat d3 = 0.2075;
+  int faces = TUBE_FACES;
+  GLfloat step = M_PI * 2 / faces;
+  GLfloat th;
+  int z = 0;
 
-  glPushMatrix();
-
-  if (!wire)
-    glShadeModel(GL_SMOOTH);
-
+  /* side walls
+   */
   glFrontFace(GL_CCW);
 
-  for (i = 0; i < 8; i++)
+# ifdef SMOOTH_TUBE
+  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
+# else
+  glBegin(wire ? GL_LINES : GL_QUADS);
+# endif
+
+  for (i = 0, th = 0; i <= faces; i++)
     {
-      glNormal3f(1, 0, 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
-      glVertex3f(0.5, 0.0, -d3); glVertex3f(0.5, 1.0, -d3);
-      glVertex3f(0.5, 1.0,  d3); glVertex3f(0.5, 0.0,  d3);
-      glEnd();
-      glRotatef(45, 0, 1, 0);
-    }
+      GLfloat x = cos (th);
+      GLfloat y = sin (th);
+      glNormal3f(x, 0, y);
+      glVertex3f(x, 0.0, y);
+      glVertex3f(x, 1.0, y);
+      th += step;
 
-  if (! wire)
+# ifndef SMOOTH_TUBE
+      x = cos (th);
+      y = sin (th);
+      glVertex3f(x, 1.0, y);
+      glVertex3f(x, 0.0, y);
+# endif
+    }
+  glEnd();
+
+  /* End caps
+   */
+  for (z = 0; z <= 1; z++)
     {
-      glNormal3f(0, -1, 0);
-      glBegin(GL_TRIANGLE_FAN);
-      glVertex3f(0, 0, 0);
-      glVertex3f(-d3,  0, -0.5); glVertex3f( d3,  0, -0.5);
-      glVertex3f( 0.5, 0, -d3);  glVertex3f( 0.5, 0,  d3);
-      glVertex3f( d3,  0,  0.5); glVertex3f(-d3,  0,  0.5);
-      glVertex3f(-0.5, 0,  d3);  glVertex3f(-0.5, 0, -d3);
-      glVertex3f(-d3,  0, -0.5); glVertex3f( d3,  0, -0.5);
-
-      glEnd();
-
-      glTranslatef(0, 1, 0);
-
-      glNormal3f(0, 1, 0);
-      glBegin(GL_TRIANGLE_FAN);
-      glVertex3f(0, 0, 0);
-      glVertex3f(-0.5, 0, -d3);  glVertex3f(-0.5, 0,  d3); 
-      glVertex3f(-d3,  0,  0.5); glVertex3f( d3,  0,  0.5); 
-      glVertex3f( 0.5, 0,  d3);  glVertex3f( 0.5, 0, -d3); 
-      glVertex3f( d3,  0, -0.5); glVertex3f(-d3,  0, -0.5); 
-      glVertex3f(-0.5, 0, -d3);  glVertex3f(-0.5, 0,  d3); 
+      glFrontFace(z == 0 ? GL_CCW : GL_CW);
+      glNormal3f(0, (z == 0 ? -1 : 1), 0);
+      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+      if (! wire) glVertex3f(0, z, 0);
+      for (i = 0, th = 0; i <= faces; i++)
+        {
+          GLfloat x = cos (th);
+          GLfloat y = sin (th);
+          glVertex3f(x, z, y);
+          th += step;
+        }
       glEnd();
     }
-
-  glPopMatrix();
 }
 
 
 static void
-tube (GLfloat x1, GLfloat y1, 
-      GLfloat x2, GLfloat y2,
-      GLfloat z,
-      GLfloat diameter,
+tube (GLfloat x1, GLfloat y1, GLfloat z1,
+      GLfloat x2, GLfloat y2, GLfloat z2,
+      GLfloat diameter, GLfloat cap_size,
       Bool wire)
 {
-  GLfloat length, rot;
+  GLfloat length, angle, a, b, c;
 
-  if (y1 == y2) y2 += 0.01;  /* waah... */
+  if (diameter <= 0) abort();
 
-  length = sqrt(((x2-x1)*(x2-x1)) +
-                ((y2-y1)*(y2-y1)));
+  a = (x2 - x1);
+  b = (y2 - y1);
+  c = (z2 - z1);
 
-  rot = (acos((x2-x1)/length)
-         / (M_PI / 180));
-
-  if (rot < 0 || rot > 180) abort();
-  if (y1 <= y2) rot = -rot;
-
-  rot = 180-rot;
-
-  if (diameter < 0) abort();
-  if (length < 0) abort();
+  length = sqrt (a*a + b*b + c*c);
+  angle = acos (a / length);
 
   glPushMatrix();
+  glTranslatef(x1, y1, z1);
+  glScalef (length, length, length);
 
-  glTranslatef(x1, y1, z);
-  glRotatef(rot+90, 0, 0, 1);
-  glTranslatef(0, -diameter/8, 0);
-  glScalef (diameter, length+diameter/4, diameter);
+  if (c == 0 && b == 0)
+    glRotatef (angle / (M_PI / 180), 0, 1, 0);
+  else
+    glRotatef (angle / (M_PI / 180), 0, -c, b);
+
+  glRotatef (-90, 0, 0, 1);
+  glScalef (diameter/length, 1, diameter/length);
+
+  /* extend the endpoints of the tube by the cap size in both directions */
+  if (cap_size != 0)
+    {
+      GLfloat c = cap_size/length;
+      glTranslatef (0, -c, 0);
+      glScalef (1, 1+c+c, 1);
+    }
+
   unit_tube (wire);
   glPopMatrix();
-  
 }
 
 
@@ -374,7 +450,7 @@ tube (GLfloat x1, GLfloat y1,
 static int
 fill_character (GLUTstrokeFont font, int c, Bool wire)
 {
-  int tube_width = 20;
+  GLfloat tube_width = 10;
 
   const StrokeCharRec *ch;
   const StrokeRec *stroke;
@@ -396,7 +472,11 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
              j > 0; j--, coord++)
           {
             if (j != stroke->num_coords)
-              tube (lx, ly, coord->x, coord->y, 0, tube_width, wire);
+              tube (lx, ly, 0,
+                    coord->x, coord->y, 0,
+                    tube_width,
+                    tube_width * 0.15,
+                    wire);
             lx = coord->x;
             ly = coord->y;
           }
@@ -462,25 +542,34 @@ fill_string (const char *string, Bool wire)
       {
         int line_w = 0;
         const char *s2;
+        const char *lstart = start;
+        const char *lend = s;
 
-        for (s2 = start; s2 < s; s2++)
+        /* strip off whitespace at beginning and end of line
+           (since we're centering.) */
+        while (lend > lstart && isspace(lend[-1]))
+          lend--;
+        while (lstart < lend && isspace(*lstart))
+          lstart++;
+
+        for (s2 = lstart; s2 < lend; s2++)
           line_w += glutStrokeWidth (GLUT_FONT, *s2);
 
         x = (-ow/2) + ((ow-line_w)/2);
-        while (start < s)
+        for (s2 = lstart; s2 < lend; s2++)
           {
             glPushMatrix();
             glTranslatef(x, y, 0);
-            off = fill_character (GLUT_FONT, *start, wire);
+            off = fill_character (GLUT_FONT, *s2, wire);
             x += off;
             glPopMatrix();
-            start++;
           }
+
         start = s+1;
 
         y -= line_height;
-        s++;
         if (*s == 0) break;
+        s++;
       }
     else
       s++;
@@ -501,6 +590,15 @@ draw_text (ModeInfo *mi)
   if (!tp->glx_context)
     return;
 
+  if (strchr (text_fmt, '%'))
+    {
+      static time_t last_update = -1;
+      time_t now = time ((time_t *) 0);
+      if (now != last_update) /* do it once a second */
+        parse_text (mi);
+      last_update = now;
+    }
+
   glShadeModel(GL_SMOOTH);
 
   glEnable(GL_DEPTH_TEST);
@@ -514,31 +612,39 @@ draw_text (ModeInfo *mi)
   glScalef(1.1, 1.1, 1.1);
 
   {
-    static int frame = 0;
     GLfloat x, y, z;
 
-#   define SINOID(SCALE,SIZE) \
-      ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-    x = SINOID(0.031, 9.0);
-    y = SINOID(0.023, 9.0);
-    z = SINOID(0.017, 9.0);
-    frame++;
-    glTranslatef(x, y, z);
+    if (do_wander)
+      {
+        static int frame = 0;
 
-    x = tp->rotx;
-    y = tp->roty;
-    z = tp->rotz;
-    if (x < 0) x = 1 - (x + 1);
-    if (y < 0) y = 1 - (y + 1);
-    if (z < 0) z = 1 - (z + 1);
+#       define SINOID(SCALE,SIZE) \
+        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
 
-    glRotatef(x * 360, 1.0, 0.0, 0.0);
-    glRotatef(y * 360, 0.0, 1.0, 0.0);
-    glRotatef(z * 360, 0.0, 0.0, 1.0);
+        x = SINOID(0.031, 9.0);
+        y = SINOID(0.023, 9.0);
+        z = SINOID(0.017, 9.0);
+        frame++;
+        glTranslatef(x, y, z);
+      }
 
-    rotate(&tp->rotx, &tp->dx, &tp->ddx, tp->d_max);
-    rotate(&tp->roty, &tp->dy, &tp->ddy, tp->d_max);
-    rotate(&tp->rotz, &tp->dz, &tp->ddz, tp->d_max);
+    if (tp->spin_x || tp->spin_y || tp->spin_z)
+      {
+        x = tp->rotx;
+        y = tp->roty;
+        z = tp->rotz;
+        if (x < 0) x = 1 - (x + 1);
+        if (y < 0) y = 1 - (y + 1);
+        if (z < 0) z = 1 - (z + 1);
+
+        if (tp->spin_x) glRotatef(x * 360, 1.0, 0.0, 0.0);
+        if (tp->spin_y) glRotatef(y * 360, 0.0, 1.0, 0.0);
+        if (tp->spin_z) glRotatef(z * 360, 0.0, 0.0, 1.0);
+
+        rotate(&tp->rotx, &tp->dx, &tp->ddx, tp->d_max);
+        rotate(&tp->roty, &tp->dy, &tp->ddy, tp->d_max);
+        rotate(&tp->rotz, &tp->dz, &tp->ddz, tp->d_max);
+      }
   }
 
   glColor4fv (white);
@@ -552,7 +658,8 @@ draw_text (ModeInfo *mi)
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
 
   glScalef(0.01, 0.01, 0.01);
-  fill_string(text, wire);
+
+  fill_string(tp->text, wire);
 
   glPopMatrix ();
 

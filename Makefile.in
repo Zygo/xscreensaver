@@ -13,10 +13,6 @@ TARFILES	= README README.VMS README.debugging INSTALL xscreensaver.lsm \
 		  config.sub makevms.com screenblank.txt \
 		  xscreensaver.lsm.sh xscreensaver.spec
 TAR		= tar
-COMPRESS	= gzip --verbose --best
-COMPRESS_EXT	= gz
-# COMPRESS	= compress
-# COMPRESS_EXT	= Z
 
 MAKE_SUBDIR = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
 
@@ -75,10 +71,9 @@ tar:
       | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
       ` ";								    \
     cd $$d ; done ;							    \
-  echo creating tar file $${NAME}.tar.$(COMPRESS_EXT)... ;		    \
-  $(TAR) -vchf -							    \
-    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `	    \
-   | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;			    \
+  echo creating tar file $${NAME}.tar.gz... ;				    \
+  GZIP="-9v" $(TAR) -vchzf $${NAME}.tar.gz				    \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
   rm $$NAME
 
 

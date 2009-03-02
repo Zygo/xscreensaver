@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -77,7 +77,6 @@ static XrmOptionDescRec default_options [] = {
   { "-install",	".installColormap",	XrmoptionNoArg, "True" },
   { "-noinstall",".installColormap",	XrmoptionNoArg, "False" },
   { "-visual",	".visualID",		XrmoptionSepArg, 0 },
-  { "-window-id", ".windowID",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
@@ -87,7 +86,6 @@ static char *default_defaults[] = {
   "*mono:		false",
   "*installColormap:	false",
   "*visualID:		default",
-  "*windowID:		",
   0
 };
 
@@ -276,9 +274,9 @@ pick_visual (Screen *screen)
 
 
 /* Notice when the user has requested a different visual or colormap
-   on a pre-existing window (e.g., "-root -visual truecolor" or
-   "-window-id 0x2c00001 -install") and complain, since when drawing
-   on an existing window, we have no choice about these things.
+   on a pre-existing window (e.g., "-root -visual truecolor") and 
+   complain, since when drawing on an existing window, we have no 
+   choice about these things.
  */
 static void
 visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
@@ -347,7 +345,6 @@ main (int argc, char **argv)
   Visual *visual;
   Colormap cmap;
   Bool root_p;
-  Window on_window = 0;
   XEvent event;
   Boolean dont_clear /*, dont_map */;
   char version[255];
@@ -441,24 +438,7 @@ main (int argc, char **argv)
 
   root_p = get_boolean_resource ("root", "Boolean");
 
-  {
-    char *s = get_string_resource ("windowID", "WindowID");
-    if (s && *s)
-      on_window = get_integer_resource ("windowID", "WindowID");
-    if (s) free (s);
-  }
-
-  if (on_window)
-    {
-      XWindowAttributes xgwa;
-      window = (Window) on_window;
-      XtDestroyWidget (toplevel);
-      XGetWindowAttributes (dpy, window, &xgwa);
-      cmap = xgwa.colormap;
-      visual = xgwa.visual;
-      visual_warning (screen, window, visual, cmap, True);
-    }
-  else if (root_p)
+  if (root_p)
     {
       XWindowAttributes xgwa;
       window = RootWindowOfScreen (XtScreen (toplevel));
@@ -569,7 +549,7 @@ main (int argc, char **argv)
       XClearWindow (dpy, window);
     }
 
-  if (!root_p && !on_window)
+  if (!root_p)
     /* wait for it to be mapped */
     XIfEvent (dpy, &event, MapNotify_event_p, (XPointer) window);
 

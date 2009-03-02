@@ -60,6 +60,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*count:		2       \n"			\
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
+	               	"*showFPS:      False   \n"		    \
 					"*fisheye:		True    \n"			\
 					"*tightturns:	False   \n"			\
 					"*rotatepipes:	True    \n"
@@ -113,11 +114,7 @@ ModeSpecOpt pipes_opts =
 #ifdef USE_MODULES
 ModStruct   pipes_description =
 {"pipes", "init_pipes", "draw_pipes", "release_pipes",
-#if defined( MESA ) && defined( SLOW )
  "draw_pipes",
-#else
- "change_pipes",
-#endif
  "change_pipes", NULL, &pipes_opts,
  1000, 2, 5, 500, 4, 1.0, "",
  "Shows a selfbuilding pipe system", 0, NULL};
@@ -145,9 +142,8 @@ ModStruct   pipes_description =
 /*************************************************************************/
 
 typedef struct {
-#if defined( MESA ) && defined( SLOW )
 	int         flip;
-#endif
+
 	GLint       WindH, WindW;
 	int         Cells[HCELLS][VCELLS][HCELLS];
 	int         usedcolors[DEFINEDCOLORS];
@@ -502,6 +498,8 @@ reshape_pipes(ModeInfo * mi, int width, int height)
 	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
 	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
 	glMatrixMode(GL_MODELVIEW);
+
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 static void
@@ -696,13 +694,6 @@ draw_pipes(ModeInfo * mi)
 	if (!pp->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(pp->glx_context));
-
-#if defined( MESA ) && defined( SLOW )
-	glDrawBuffer(GL_BACK);
-#else
-	glDrawBuffer(GL_FRONT);
-#endif
 	glPushMatrix();
 
 	glTranslatef(0.0, 0.0, fisheye ? -3.8 : -4.8);
@@ -733,9 +724,7 @@ draw_pipes(ModeInfo * mi)
 		glTranslatef((pp->PX - 16) / 3.0 * 4.0, (pp->PY - 12) / 3.0 * 4.0, (pp->PZ - 16) / 3.0 * 4.0);
 		/* Finish the system with another sphere */
 		mySphere(0.6);
-#if defined( MESA ) && defined( SLOW )
-		glXSwapBuffers(display, window);
-#endif
+
 		glPopMatrix();
 
 		/* If the maximum number of system was drawn, restart (clearing the screen), */
@@ -971,11 +960,9 @@ draw_pipes(ModeInfo * mi)
 
 	glFlush();
 
-#if defined( MESA ) && defined( SLOW )
-	pp->flip = !pp->flip;
-	if (pp->flip)
-		glXSwapBuffers(display, window);
-#endif
+    glXSwapBuffers(display, window);
+
+    if (mi->fps_p) do_fps (mi);
 }
 
 void

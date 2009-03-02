@@ -1,6 +1,6 @@
 /*
  * starwars, Copyright (c) 1998-2001 Jamie Zawinski <jwz@jwz.org> and
- * Claudio Matauoka <claudio@helllabs.org>
+ * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,6 +29,8 @@
  *           20010124 jwz       Rewrote large sections to add the ability to
  *                              run a subprocess, customization of the font
  *                              size and other parameters, etc.
+ *           20010224 jepler@mail.inetnebr.com  made the lines be anti-aliased,
+ *                              made the text fade to black at the end.
  */
 
 #include <X11/Intrinsic.h>
@@ -42,19 +44,26 @@ extern XtAppContext app;
 #define sws_opts	xlockmore_opts
 
 #define DEF_PROGRAM    ZIPPY_PROGRAM
-#define DEF_LINES      "500"
+#define DEF_LINES      "125"
 #define DEF_STEPS      "35"
 #define DEF_SPIN       "0.03"
 #define DEF_FONT_SIZE  "-1"
 #define DEF_COLUMNS    "-1"
 #define DEF_WRAP       "True"
 #define DEF_ALIGN      "Center"
+#define DEF_SMOOTH     "True"
+#define DEF_THICK      "True"
+#define DEF_FADE       "True"
 
 #define TAB_WIDTH        8
 
 #define BASE_FONT_SIZE    18 /* magic */
 #define BASE_FONT_COLUMNS 80 /* magic */
 
+#define MAX_THICK_LINES   25
+#define FONT_WEIGHT       14
+#define KEEP_ASPECT
+#undef DEBUG
 
 #define DEFAULTS	"*delay:	40000 \n"		     \
 			"*showFPS:      False \n"		     \
@@ -63,6 +72,9 @@ extern XtAppContext app;
 			"*lines:	" DEF_LINES		"\n" \
 			"*spin:		" DEF_SPIN		"\n" \
 			"*steps:	" DEF_STEPS		"\n" \
+                        "*smooth:       " DEF_SMOOTH            "\n" \
+                        "*thick:        " DEF_THICK             "\n" \
+                        "*fade:         " DEF_FADE              "\n" \
 			"*starwars.fontSize: " DEF_FONT_SIZE	"\n" \
 			"*starwars.columns:  " DEF_COLUMNS	"\n" \
 			"*starwars.lineWrap: " DEF_WRAP		"\n" \
@@ -101,6 +113,9 @@ typedef struct {
   double font_scale;
   double intra_line_scroll;
 
+  int line_pixel_height;
+  GLfloat line_thickness;
+
 } sws_configuration;
 
 
@@ -113,6 +128,9 @@ static float star_spin;
 static float font_size;
 static int target_columns;
 static int wrap_p;
+static int smooth_p;
+static int thick_p;
+static int fade_p;
 static char *alignment_str;
 static int alignment;
 
@@ -123,6 +141,12 @@ static XrmOptionDescRec opts[] = {
   {"-spin",      ".starwars.spin",     XrmoptionSepArg, (caddr_t) 0 },
   {"-size",	 ".starwars.fontSize", XrmoptionSepArg, (caddr_t) 0 },
   {"-columns",	 ".starwars.columns",  XrmoptionSepArg, (caddr_t) 0 },
+  {"-smooth",    ".starwars.smooth",   XrmoptionNoArg,  (caddr_t) "True" },
+  {"-no-smooth", ".starwars.smooth",   XrmoptionNoArg,  (caddr_t) "False" },
+  {"-thick",     ".starwars.thick",    XrmoptionNoArg,  (caddr_t) "True" },
+  {"-no-thick",  ".starwars.thick",    XrmoptionNoArg,  (caddr_t) "False" },
+  {"-fade",      ".starwars.fade",     XrmoptionNoArg,  (caddr_t) "True" },
+  {"-no-fade",   ".starwars.fade",     XrmoptionNoArg,  (caddr_t) "False" },
   {"-wrap",	 ".starwars.lineWrap", XrmoptionNoArg,  (caddr_t) "True" },
   {"-no-wrap",	 ".starwars.lineWrap", XrmoptionNoArg,  (caddr_t) "False" },
   {"-nowrap",	 ".starwars.lineWrap", XrmoptionNoArg,  (caddr_t) "False" },
@@ -140,6 +164,9 @@ static argtype vars[] = {
   {(caddr_t *) &target_columns, "columns", "Integer", DEF_COLUMNS, t_Int},
   {(caddr_t *) &wrap_p,         "lineWrap","Boolean", DEF_COLUMNS, t_Bool},
   {(caddr_t *) &alignment_str,  "alignment","Alignment",DEF_ALIGN, t_String},
+  {(caddr_t *) &smooth_p,       "smooth",  "Boolean", DEF_SMOOTH,  t_Bool},
+  {(caddr_t *) &thick_p,        "thick",   "Boolean", DEF_THICK,   t_Bool},
+  {(caddr_t *) &fade_p,         "fade",    "Boolean", DEF_FADE,    t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -151,6 +178,7 @@ ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
 static char *
 untabify (const char *string)
 {
+  const char *ostring = string;
   char *result = (char *) malloc ((strlen(string) * 8) + 1);
   char *out = result;
   int col = 0;
@@ -169,6 +197,11 @@ untabify (const char *string)
           *out++ = *string++;
           col = 0;
         }
+      else if (*string == '\010')    /* backspace */
+        {
+          if (string > ostring)
+            out--, string++;
+        }
       else
         {
           *out++ = *string++;
@@ -176,7 +209,28 @@ untabify (const char *string)
         }
     }
   *out = 0;
+
   return result;
+}
+
+static void
+strip (char *s, Bool leading, Bool trailing)
+{
+  int L = strlen(s);
+  if (trailing)
+    while (L > 0 && (s[L-1] == ' ' || s[L-1] == '\t'))
+      s[L--] = 0;
+  if (leading)
+    {
+      char *s2 = s;
+      while (*s2 == ' ' || *s2 == '\t')
+        s2++;
+      if (s == s2)
+        return;
+      while (*s2)
+        *s++ = *s2++;
+      *s = 0;
+    }
 }
 
 
@@ -316,6 +370,8 @@ get_more_lines (sws_configuration *sc)
           {
             char *t = sc->lines[sc->total_lines];
             char *ut = untabify (t);
+            strip (ut, (alignment == 0), 1); /* if centering, strip
+                                                leading whitespace too */
             sc->lines[sc->total_lines] = ut;
             free (t);
           }
@@ -355,45 +411,40 @@ draw_string (int x, int y, const char *s)
   if (!s || !*s) return;
   glPushMatrix ();
   glTranslatef (x, y, 0);
+
   while (*s)
     glutStrokeCharacter (GLUT_FONT, *s++);
   glPopMatrix ();
 }
 
 
-#if 0
+#ifdef DEBUG
 static void
 grid (double width, double height, double spacing, double z)
 {
   double x, y;
   for (y = 0; y <= height/2; y += spacing)
     {
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_LINES);
       glVertex3f(-width/2,  y, z);
       glVertex3f( width/2,  y, z);
-      glEnd();
-      glBegin(GL_LINE_LOOP);
       glVertex3f(-width/2, -y, z);
       glVertex3f( width/2, -y, z);
       glEnd();
     }
   for (x = 0; x <= width/2; x += spacing)
     {
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_LINES);
       glVertex3f( x, -height/2, z);
       glVertex3f( x,  height/2, z);
-      glEnd();
-      glBegin(GL_LINE_LOOP);
       glVertex3f(-x, -height/2, z);
       glVertex3f(-x,  height/2, z);
       glEnd();
     }
 
-  glBegin(GL_LINE_LOOP);
+  glBegin(GL_LINES);
   glVertex3f(-width, 0, z);
   glVertex3f( width, 0, z);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
   glVertex3f(0, -height, z);
   glVertex3f(0,  height, z);
   glEnd();
@@ -428,24 +479,21 @@ box (double width, double height, double depth)
   glEnd();
 
   glEnd();
-  glBegin(GL_LINE_LOOP);
+  glBegin(GL_LINES);
   glVertex3f(-width/2,   height/2,  depth/2);
   glVertex3f(-width/2,  -height/2, -depth/2);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
+
   glVertex3f( width/2,   height/2,  depth/2);
   glVertex3f( width/2,  -height/2, -depth/2);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
+
   glVertex3f(-width/2,  -height/2,  depth/2);
   glVertex3f(-width/2,   height/2, -depth/2);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
+
   glVertex3f( width/2,  -height/2,  depth/2);
   glVertex3f( width/2,   height/2, -depth/2);
   glEnd();
 }
-#endif /* 0 */
+#endif /* DEBUG */
 
 
 /* Window management, etc
@@ -454,29 +502,87 @@ void
 reshape_sws (ModeInfo *mi, int width, int height)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
-  static Bool stars_done = False;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
-  if (!stars_done)
-    {
-      int i;
-      int nstars = width * height / 320;
-      glDeleteLists (sc->star_list, 1);
-      sc->star_list = glGenLists (1);
-      glNewList (sc->star_list, GL_COMPILE);
-      glBegin (GL_POINTS);
-      for (i = 0; i < nstars; i++)
-        {
-          GLfloat c = 0.6 + 0.3 * random() / RAND_MAX;
-          glColor3f (c, c, c);
-          glVertex3f (2 * width  * (0.5 - 1.0 * random() / RAND_MAX),
-                      2 * height * (0.5 - 1.0 * random() / RAND_MAX),
-                      0.0);
-        }
-      glEnd ();
-      glEndList ();
-      stars_done = True;
-    }
+  /* Set up matrices for perspective text display
+   */
+  {
+    GLfloat desired_aspect = (GLfloat) 3/4;
+    int w = mi->xgwa.width;
+    int h = mi->xgwa.height;
+
+#ifdef KEEP_ASPECT
+    h = w * desired_aspect;
+#endif
+
+    glMatrixMode (GL_PROJECTION);
+    glViewport (0, 0, w, h);
+
+    glMatrixMode (GL_MODELVIEW);
+    glLoadIdentity ();
+    gluPerspective (80.0, 1/desired_aspect, 10, 500000);
+    gluLookAt (0.0, 0.0, 4600.0,
+               0.0, 0.0, 0.0,
+               0.0, 1.0, 0.0);
+    glRotatef (-60.0, 1.0, 0.0, 0.0);
+
+    /* The above gives us an arena where the bottom edge of the screen is
+       represented by the line (-2100,-3140,0) - ( 2100,-3140,0). */
+
+    /* Now let's move the origin to the front of the screen. */
+    glTranslatef (0.0, -3140, 0.0);
+
+    /* And then let's scale so that the bottom of the screen is 1.0 wide. */
+    glScalef (4200, 4200, 4200);
+  }
+
+
+  /* Construct stars (number of stars is dependent on size of screen) */
+  {
+    int i;
+    int nstars = width * height / 320;
+    glDeleteLists (sc->star_list, 1);
+    sc->star_list = glGenLists (1);
+    glNewList (sc->star_list, GL_COMPILE);
+    glBegin (GL_POINTS);
+    for (i = 0; i < nstars; i++)
+      {
+        GLfloat c = 0.6 + 0.3 * random() / RAND_MAX;
+        glColor3f (c, c, c);
+        glVertex3f (2 * width  * (0.5 - 1.0 * random() / RAND_MAX),
+                    2 * height * (0.5 - 1.0 * random() / RAND_MAX),
+                    0.0);
+      }
+    glEnd ();
+    glEndList ();
+  }
+
+
+  /* Compute the height in pixels of the line at the bottom of the screen. */
+  {
+    GLdouble mm[17], pm[17];
+    GLint vp[5];
+    GLfloat x = 0.5, y1 = 0, z = 0;
+    GLfloat y2 = sc->line_height;
+    GLdouble wx=-1, wy1=-1, wy2=-1, wz=-1;
+
+    glGetDoublev (GL_MODELVIEW_MATRIX, mm);
+    glGetDoublev (GL_PROJECTION_MATRIX, pm);
+    glGetIntegerv (GL_VIEWPORT, vp);
+    gluProject (x, y1, z, mm, pm, vp, &wx, &wy1, &wz);
+    gluProject (x, y2, z, mm, pm, vp, &wx, &wy2, &wz);
+    sc->line_pixel_height = (wy2 - wy1);
+    glLineWidth (1);
+  }
+
+  /* Compute the best looking line thickness for the bottom line.
+   */
+  if (!thick_p)
+    sc->line_thickness = 1.0;
+  else
+    sc->line_thickness = (GLfloat) sc->line_pixel_height / FONT_WEIGHT;
+
+  if (sc->line_thickness < 1.2)
+    sc->line_thickness = 1.0;
 }
 
 
@@ -487,10 +593,16 @@ gl_init (ModeInfo *mi)
 
   program = get_string_resource ("program", "Program");
 
-  glMatrixMode (GL_MODELVIEW);
-
   glDisable (GL_LIGHTING);
   glDisable (GL_DEPTH_TEST);
+
+  if (smooth_p) 
+    {
+      glEnable (GL_LINE_SMOOTH);
+      glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+      glEnable (GL_BLEND);
+    }
 
   sc->text_list = glGenLists (1);
   glNewList (sc->text_list, GL_COMPILE);
@@ -499,6 +611,8 @@ gl_init (ModeInfo *mi)
   sc->star_list = glGenLists (1);
   glNewList (sc->star_list, GL_COMPILE);
   glEndList ();
+
+  sc->line_thickness = 1.0;
 }
 
 
@@ -575,6 +689,32 @@ init_sws (ModeInfo *mi)
 }
 
 
+static void
+draw_stars (ModeInfo *mi)
+{
+  sws_configuration *sc = &scs[MI_SCREEN(mi)];
+
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  {
+    glLoadIdentity ();
+
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    {
+      glLoadIdentity ();
+      glOrtho (-0.5 * MI_WIDTH(mi),  0.5 * MI_WIDTH(mi),
+               -0.5 * MI_HEIGHT(mi), 0.5 * MI_HEIGHT(mi),
+               -100.0, 100.0);
+      glRotatef (sc->star_theta, 0.0, 0.0, 1.0);
+      glCallList (sc->star_list);
+    }
+    glPopMatrix ();
+  }
+  glMatrixMode (GL_PROJECTION);
+  glPopMatrix ();
+}
+
 void
 draw_sws (ModeInfo *mi)
 {
@@ -594,33 +734,20 @@ draw_sws (ModeInfo *mi)
 
   glClear (GL_COLOR_BUFFER_BIT);
 
+  draw_stars (mi);
+
+  glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
 
-  glMatrixMode (GL_PROJECTION);
-  glLoadIdentity ();
-  glOrtho (-0.5 * MI_WIDTH(mi),  0.5 * MI_WIDTH(mi),
-           -0.5 * MI_HEIGHT(mi), 0.5 * MI_HEIGHT(mi),
-           -100.0, 100.0);
-  glRotatef (sc->star_theta, 0.0, 0.0, 1.0);
-  glCallList (sc->star_list);
-
-  glLoadIdentity ();
-  gluPerspective (80.0, 4.0/3.0, 10, 500000);
-  glMatrixMode (GL_MODELVIEW);
-  gluLookAt (0.0, 0.0, 4600.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
-
-  glRotatef (-60.0, 1.0, 0.0, 0.0);
-
-  /* The above gives us an arena where the bottom edge of the screen is
-     represented by the line (-2100,-3140,0) - ( 2100,-3140,0). */
-
-  /* Now let's move the origin to the front of the screen. */
-  glTranslatef (0.0, -3140, 0.0);
-
-  /* And then let's scale so that the bottom of the screen is 1.0 wide. */
-  glScalef (4200, 4200, 4200);
+#ifdef DEBUG
+  glColor3f (0.4, 0.4, 0.4);
+  glLineWidth (1);
+  glTranslatef(0, 1, 0);
+  box (1, 1, 1);
+  glTranslatef(0, -1, 0);
+  box (1, 1, 1);
+  grid (1, 1, sc->line_height, 0);
+#endif /* DEBUG */
 
   /* Scroll to current position */
   glTranslatef (0.0, sc->intra_line_scroll, 0.0);
@@ -669,18 +796,44 @@ draw_sws (ModeInfo *mi)
                        * sc->line_height);
           double xoff = 0;
           char *line = sc->lines[i];
-#if 0
+#ifdef DEBUG
           char n[20];
           sprintf(n, "%d:", i);
           draw_string (x / sc->font_scale, y / sc->font_scale, n);
-#endif
+#endif /* DEBUG */
           if (!line || !*line)
             continue;
+
+          if (sc->line_thickness != 1)
+            {
+              int max_thick_lines = MAX_THICK_LINES;
+              GLfloat thinnest_line = 1.0;
+              GLfloat thickest_line = sc->line_thickness;
+              GLfloat range = thickest_line - thinnest_line;
+              GLfloat thickness;
+
+              int j = sc->total_lines - i - 1;
+
+              if (j > max_thick_lines)
+                thickness = thinnest_line;
+              else
+                thickness = (thinnest_line +
+                             (range * ((max_thick_lines - j) /
+                                       (GLfloat) max_thick_lines)));
+
+              glLineWidth (thickness);
+            }
 
           if (alignment >= 0)
             xoff = 1.0 - (glutStrokeLength(GLUT_FONT, line) * sc->font_scale);
           if (alignment == 0)
             xoff /= 2;
+
+          if (fade_p)
+            {
+              double factor = 1.0 * i / sc->total_lines;
+              glColor3f (factor, factor, 0.5 * factor);
+            }
 
           draw_string ((x + xoff) / sc->font_scale, y / sc->font_scale, line);
         }

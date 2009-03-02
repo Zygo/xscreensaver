@@ -2102,10 +2102,6 @@ init_lament(ModeInfo *mi)
   lc->ddy = 0.00006 + frand(0.00003);
   lc->ddz = 0.00006 + frand(0.00003);
 
-  lc->ddx = 0.00001;
-  lc->ddy = 0.00001;
-  lc->ddz = 0.00001;
-
   lc->type = LAMENT_BOX;
   lc->anim_pause = 300 + (random() % 100);
 

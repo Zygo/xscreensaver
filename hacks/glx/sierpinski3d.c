@@ -533,7 +533,6 @@ rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
 void
 init_gasket(ModeInfo *mi)
 {
-  Bool wireframe_p = MI_IS_WIREFRAME(mi);
   int           screen = MI_SCREEN(mi);
   gasketstruct *gp;
 
@@ -561,11 +560,6 @@ init_gasket(ModeInfo *mi)
   gp->ddx = 0.00006 + frand(0.00003);
   gp->ddy = 0.00006 + frand(0.00003);
   gp->ddz = 0.00006 + frand(0.00003);
-
-  gp->ddx = 0.00001;
-  gp->ddy = 0.00001;
-  gp->ddz = 0.00001;
-
 
   gp->ncolors = 255;
   gp->colors = (XColor *) calloc(gp->ncolors, sizeof(XColor));

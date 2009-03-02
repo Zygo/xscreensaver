@@ -88,6 +88,15 @@ ModStruct   gears_description =
 
 #endif
 
+#define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
+
+#ifdef SMOOTH_TUBE
+# define TUBE_FACES  20   /* how densely to render tubes */
+#else
+# define TUBE_FACES  6
+#endif
+
+
 typedef struct {
 
   GLfloat rotx, roty, rotz;	   /* current object rotation */
@@ -336,79 +345,112 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 }
 
 
-
 static void
-tube(GLfloat radius, GLfloat width, GLint facets, Bool wire)
+unit_tube (Bool wire)
 {
-  GLint i;
-  GLfloat da = 2.0 * M_PI / facets / 4.0;
+  int i;
+  int faces = TUBE_FACES;
+  GLfloat step = M_PI * 2 / faces;
+  GLfloat th;
+  int z = 0;
 
+  /* side walls
+   */
   glFrontFace(GL_CCW);
 
-  /* draw bottom of tube */
+# ifdef SMOOTH_TUBE
+  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
+# else
+  glBegin(wire ? GL_LINES : GL_QUADS);
+# endif
 
-  glShadeModel(GL_FLAT);
-  glNormal3f(0, 0, 1);
-  if (!wire)
+  for (i = 0, th = 0; i <= faces; i++)
     {
-      glBegin(GL_TRIANGLE_FAN);
-      glVertex3f(0, 0, width * 0.5);
-      for (i = 0; i <= facets; i++) {
-        GLfloat angle = i * 2.0 * M_PI / facets;
-        glVertex3f(radius * cos(angle), radius * sin(angle), width * 0.5);
-      }
-      glEnd();
+      GLfloat x = cos (th);
+      GLfloat y = sin (th);
+      glNormal3f(x, 0, y);
+      glVertex3f(x, 0.0, y);
+      glVertex3f(x, 1.0, y);
+      th += step;
+
+# ifndef SMOOTH_TUBE
+      x = cos (th);
+      y = sin (th);
+      glVertex3f(x, 1.0, y);
+      glVertex3f(x, 0.0, y);
+# endif
     }
+  glEnd();
 
-  /* draw top of tube */
-
-  glShadeModel(GL_FLAT);
-  glNormal3f(0, 0, -1);
-  glFrontFace(GL_CW);
-  if (!wire)
+  /* End caps
+   */
+  for (z = 0; z <= 1; z++)
     {
-      glBegin(GL_TRIANGLE_FAN);
-      glVertex3f(0, 0, -width * 0.5);
-      for (i = 0; i <= facets; i++) {
-        GLfloat angle = i * 2.0 * M_PI / facets;
-        glVertex3f(radius * cos(angle), radius * sin(angle), -width * 0.5);
-      }
+      glFrontFace(z == 0 ? GL_CCW : GL_CW);
+      glNormal3f(0, (z == 0 ? -1 : 1), 0);
+      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
+      if (! wire) glVertex3f(0, z, 0);
+      for (i = 0, th = 0; i <= faces; i++)
+        {
+          GLfloat x = cos (th);
+          GLfloat y = sin (th);
+          glVertex3f(x, z, y);
+          th += step;
+        }
       glEnd();
     }
-
-  /* draw side of tube */
-  glFrontFace(GL_CW);
-  glShadeModel(GL_SMOOTH);
-
-  if (!wire)
-    glBegin(GL_QUAD_STRIP);
-
-  for (i = 0; i <= facets; i++) {
-    GLfloat angle = i * 2.0 * M_PI / facets;
-    
-    if (wire)
-      glBegin(GL_LINES);
-
-    glNormal3f(cos(angle), sin(angle), 0.0);
-
-    glVertex3f(radius * cos(angle), radius * sin(angle), -width * 0.5);
-    glVertex3f(radius * cos(angle), radius * sin(angle), width * 0.5);
-
-    if (wire) {
-      glVertex3f(radius * cos(angle), radius * sin(angle), -width * 0.5);
-      glVertex3f(radius * cos(angle + 4 * da), radius * sin(angle + 4 * da), -width * 0.5);
-      glVertex3f(radius * cos(angle), radius * sin(angle), width * 0.5);
-      glVertex3f(radius * cos(angle + 4 * da), radius * sin(angle + 4 * da), width * 0.5);
-      glEnd();
-    }
-  }
-
-  if (!wire)
-    glEnd();
-
-  glFrontFace(GL_CCW);
 }
 
+
+static void
+tube (GLfloat x1, GLfloat y1, GLfloat z1,
+      GLfloat x2, GLfloat y2, GLfloat z2,
+      GLfloat diameter, GLfloat cap_size,
+      Bool wire)
+{
+  GLfloat length, angle, a, b, c;
+
+  if (diameter <= 0) abort();
+
+  a = (x2 - x1);
+  b = (y2 - y1);
+  c = (z2 - z1);
+
+  length = sqrt (a*a + b*b + c*c);
+  angle = acos (a / length);
+
+  glPushMatrix();
+  glTranslatef(x1, y1, z1);
+  glScalef (length, length, length);
+
+  if (c == 0 && b == 0)
+    glRotatef (angle / (M_PI / 180), 0, 1, 0);
+  else
+    glRotatef (angle / (M_PI / 180), 0, -c, b);
+
+  glRotatef (-90, 0, 0, 1);
+  glScalef (diameter/length, 1, diameter/length);
+
+  /* extend the endpoints of the tube by the cap size in both directions */
+  if (cap_size != 0)
+    {
+      GLfloat c = cap_size/length;
+      glTranslatef (0, -c, 0);
+      glScalef (1, 1+c+c, 1);
+    }
+
+  unit_tube (wire);
+  glPopMatrix();
+}
+
+
+static void
+ctube (GLfloat diameter, GLfloat width, Bool wire)
+{
+  tube (0, 0,  width/2,
+        0, 0, -width/2,
+        diameter, 0, wire);
+}
 
 static void
 arm(GLfloat length,
@@ -785,21 +827,22 @@ pinit(ModeInfo * mi)
       glPushMatrix();
       glTranslatef(7.0, 0, 0);
       glRotatef(90, 0, 1, 0);
-      tube(0.5, 0.5, 10, wire);   /* nub 1 */
+
+      ctube(0.5, 0.5, wire);   /* nub 1 */
       glPopMatrix();
 
       glPushMatrix();
       glRotatef(120, 0, 0, 1);
       glTranslatef(7.0, 0, 0);
       glRotatef(90, 0, 1, 0);
-      tube(0.5, 0.5, 10, wire);   /* nub 2 */
+      ctube(0.5, 0.5, wire);   /* nub 2 */
       glPopMatrix();
 
       glPushMatrix();
       glRotatef(240, 0, 0, 1);
       glTranslatef(7.0, 0, 0);
       glRotatef(90, 0, 1, 0);
-      tube(0.5, 0.5, 10, wire);   /* nub 3 */
+      ctube(0.5, 0.5, wire);   /* nub 3 */
       glPopMatrix();
 
 
@@ -822,34 +865,33 @@ pinit(ModeInfo * mi)
       }
 
       glTranslatef(0, 0, 1.5);
-
-      tube(0.5, 10, 15, wire);       /* center axle */
+      ctube(0.5, 10, wire);       /* center axle */
 
       glPushMatrix();
       glTranslatef(0.0, 4.2, -1);
-      tube(0.5, 3, 15, wire);       /* axle 1 */
+      ctube(0.5, 3, wire);       /* axle 1 */
       glTranslatef(0, 0, 1.8);
-      tube(0.7, 0.7, 15, wire);
+      ctube(0.7, 0.7, wire);
       glPopMatrix();
 
       glPushMatrix();
       glRotatef(120, 0.0, 0.0, 1.0);
       glTranslatef(0.0, 4.2, -1);
-      tube(0.5, 3, 15, wire);       /* axle 2 */
+      ctube(0.5, 3, wire);       /* axle 2 */
       glTranslatef(0, 0, 1.8);
-      tube(0.7, 0.7, 15, wire);
+      ctube(0.7, 0.7, wire);
       glPopMatrix();
 
       glPushMatrix();
       glRotatef(240, 0.0, 0.0, 1.0);
       glTranslatef(0.0, 4.2, -1);
-      tube(0.5, 3, 15, wire);       /* axle 3 */
+      ctube(0.5, 3, wire);       /* axle 3 */
       glTranslatef(0, 0, 1.8);
-      tube(0.7, 0.7, 15, wire);
+      ctube(0.7, 0.7, wire);
       glPopMatrix();
 
       glTranslatef(0, 0, 1.5);      /* center disk */
-      tube(1.5, 2, 20, wire);
+      ctube(1.5, 2, wire);
 
       glPushMatrix();
       glRotatef(270, 0, 0, 1);
@@ -982,10 +1024,6 @@ init_gears(ModeInfo * mi)
     gp->ddx = 0.00006 + frand(0.00003);
     gp->ddy = 0.00006 + frand(0.00003);
     gp->ddz = 0.00006 + frand(0.00003);
-
-    gp->ddx = 0.00001;
-    gp->ddy = 0.00001;
-    gp->ddz = 0.00001;
 
 	if ((gp->glx_context = init_GL(mi)) != NULL) {
 		reshape_gears(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

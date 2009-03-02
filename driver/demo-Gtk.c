@@ -1347,6 +1347,9 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
   gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "capture_button")),
                    p->capture_stderr_p);
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget (top, "splash_button")),
+                   p->splash_p);
 
   gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "dpms_button")),

@@ -64,7 +64,7 @@ Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing magic
 about these: they are just programs that draw on the root window.
 
-More than 100 such programs are included.  For details, see the xscreensaver
+More than 120 such programs are included.  For details, see the xscreensaver
 web page, or the enclosed manual pages.  There are also some helpful hints
 on customization in the xscreensaver app-defaults file (normally installed
 in /usr/lib/X11/app-defaults/XScreenSaver.)
@@ -74,6 +74,17 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.29:   * New hacks, `molecule' `dangerball', and `rotzoomer'.
+                      * New version of `gflux'.
+                      * Made `gltext' able to display the current time.
+                      * Fixed a floating-point-precision problem in `gltext'
+                        that sometimes caused horizontal lines to vanish.
+                      * Removed the `-window-id' option from the hacks:
+                        it never worked right, and was unnecessary.
+                      * Made the `starwars' hack use thicker lines, antialias
+                        the text, and fade out at the far edge instead of just
+                        dropping off.
+                      * Fixed an SHM segment leak in `moire'.
 Changes since 3.28:   * Better rendering of the new logo.
                       * New hack, `gltext'.
                       * Added `-planetary' option to `gears', to draw a

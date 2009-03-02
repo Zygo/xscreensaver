@@ -315,7 +315,7 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
                    "#######################################"
                    "#######################################\n\n");
           fprintf (real_stderr,
-   "    If at all possible, please re-run xscreensaver with the command\n"
+   "    If at all possible, please re-run xscreensaver with the command\n"
    "    line arguments `-sync -verbose -no-capture', and reproduce this\n"
    "    bug.  That will cause xscreensaver to dump a `core' file to the\n"
    "    current directory.  Please include the stack trace from that core\n"

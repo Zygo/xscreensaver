@@ -1,3 +1,16 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
 .TH XScreenSaver 1 "25-Jul-98" "X Version 11"
 .SH NAME
 gltext - draws text spinning around in 3D
@@ -6,6 +19,9 @@ gltext - draws text spinning around in 3D
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
 [\-text \fIstring\fP]
+[\-wander] [\-no-wander]
+[\-spin \fIaxes\fP]
+[\-no-spin]
 .SH DESCRIPTION
 The \fIgltext\fP program draws some text spinning around in 3D, using
 a font that appears to be made of solid tubes.  
@@ -29,11 +45,41 @@ or the id number (decimal or hex) of a specific visual.
 .B \-text \fIstring\fP
 The text to display.  This may contain newlines, but it shouldn't be
 very long.  The default is to display the machine name and OS version.
+
+This may also be a format string acceptable to
+.BR date (1)
+and
+.BR strftime (3) ,
+in which case, it will be updated once a second.  So to make this
+program display a spinning digital clock, you could do this:
+.EX
+gltext -text "%A%n%d %b %Y%n%l:%M:%S %p"
+.EE
+To include a literal `%', you must double it: `%%'.
+
+See the man page for
+.BR strftime (3)
+for more details.
 .TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.
 In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
 your GL performance.
+.TP 8
+.B \-wander
+Move the text around the screen.  This is the default.
+.TP 8
+.B \-no\-wander
+Keep the text centered on the screen.
+.TP 8
+.B \-spin
+Which axes around which the text should spin.  The default is "XYZ",
+meaning rotate it freely in space.  "\fB\-spin Z\fP" would rotate the
+text in the plane of the screen while not rotating it into or out
+of the screen; etc.
+.TP 8
+.B \-no\-spin
+Don't spin the text at all: the same as \fB\-spin ""\fP.
 .SH ENVIRONMENT
 .PP
 .TP 8

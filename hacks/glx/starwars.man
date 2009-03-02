@@ -27,6 +27,8 @@ starwars - draws a perspective text crawl, like at the beginning of the movie
 [\-spin \fIfloat\fP]
 [\-steps \fIinteger\fP]
 [\-delay \fIusecs\fP]
+[\-no-smooth]
+[\-no-thick]
 .SH DESCRIPTION
 The \fIstarwars\fP program runs another program to generate a stream of
 text, then animates that text receeding into the background at an angle,
@@ -100,7 +102,7 @@ The default is centered.
 .TP 8
 .B \-lines \fIinteger\fP
 How many lines should be allowed to be on the screen before they fall off
-the end.  The default is 500.
+the end.  The default is 125.
 .TP 8
 .B \-spin \fIfloat\fP
 The star field on the background slowly rotates.  This is how fast.
@@ -117,6 +119,15 @@ The delay between steps of the animation; default is 40000 (1/25th second.)
 Display a running tally of how many frames per second are being rendered.
 In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
 your GL performance.
+.TP 8
+.B \-no\-smooth
+Turn off anti-aliasing of the lines used to draw the font.
+This will make the text blockier, but may improve performance.
+.TP 8
+.B \-no\-thick
+Turn off use of thick lines for the characters that are close to the
+foreground.  This will make the text appear unnaturally skinny, but 
+may improve performance.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -130,7 +141,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 1998-2001 by Jamie Zawinski and Claudio Matauoka.
+Copyright \(co 1998-2001 by Jamie Zawinski and Claudio Matsuoka.
 Permission to use, copy, modify, distribute, and sell this software and
 its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

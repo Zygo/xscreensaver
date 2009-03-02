@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 2001
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -188,5 +188,43 @@ create_xshm_image (Display *dpy, Visual *visual,
 
   return image;
 }
+
+
+void
+destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
+{
+  Status status;
+
+  CATCH_X_ERROR(dpy);
+  status = XShmDetach (dpy, shm_info);
+  UNCATCH_X_ERROR(dpy);
+  if (shm_got_x_error)
+    status = False;
+  if (!status)
+    fprintf (stderr, "%s: XShmDetach failed!\n", progname);
+#ifdef DEBUG
+  else
+    fprintf (stderr, "%s: XShmDetach(dpy, shm_info) ==> True\n", progname);
+#endif
+
+  XDestroyImage (image);
+  XSync(dpy, False);
+
+  status = shmdt (shm_info->shmaddr);
+
+  if (status != 0)
+    {
+      char buf[1024];
+      sprintf (buf, "%s: shmdt(0x%x) failed", progname, shm_info->shmaddr);
+      perror(buf);
+    }
+#ifdef DEBUG
+  else
+    fprintf (stderr, "%s: shmdt(shm_info->shmaddr) ==> 0\n", progname);
+#endif
+
+  XSync(dpy, False);
+}
+
 
 #endif /* HAVE_XSHM_EXTENSION */

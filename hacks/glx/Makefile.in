@@ -76,7 +76,7 @@ SRCS		= xscreensaver-gl-helper.c \
 		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
 		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
 		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c \
-		  gltext.c
+		  gltext.c molecule.c dangerball.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -90,11 +90,12 @@ OBJS		= xscreensaver-gl-helper.o \
 		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
 		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
 		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
-		  gltext.o
+		  gltext.o molecule.o dangerball.o
 
 GL_EXES_1	= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
-		  sierpinski3d gflux stonerview starwars gltext
+		  sierpinski3d gflux stonerview starwars gltext molecule \
+		  dangerball
 UTIL_EXES	= xscreensaver-gl-helper
 GL_EXES		= $(UTIL_EXES) $(GL_EXES_1)
 GLE_EXES	= extrusion
@@ -110,7 +111,7 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h glut_roman.h
 GL_MEN		= gflux.man lament.man starwars.man gltext.man \
-		  xscreensaver-gl-helper.man
+		  molecule.man xscreensaver-gl-helper.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -192,7 +193,7 @@ uninstall-man:
 	done
 
 clean:
-	-rm -f *.o a.out core $(EXES)
+	-rm -f *.o a.out core $(EXES) molecules.h
 
 distclean: clean
 	-rm -f Makefile TAGS *~ "#"*
@@ -208,7 +209,7 @@ depend:
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend::
+distdepend:: molecules.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -222,7 +223,8 @@ distdepend::
 	      -e 's@ \.\./@ $$(HACK_SRC)/@g'				    \
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
-	      -e 's@ $$(HACK_SRC)/\(.*config.h\)@ ../\1@g' ;		    \
+	      -e 's@ $$(HACK_SRC)/\(.*config.h\)@ ../\1@g'		    \
+	      -e 's@ $$(srcdir)/\(.*molecules.h\)@ \1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv Makefile.in Makefile.in.bak &&				    \
@@ -346,12 +348,29 @@ GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o
 gltext:	$(GLT_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $(GLT_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
+dangerball:	dangerball.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
+
 # This one works differently (it's not xlock-like.)
 #
 STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
 	    $(UTILS_BIN)/yarandom.o
 stonerview:	$(STONER_OBJS)
 	$(CC_HACK) -o $@ $(STONER_OBJS) $(HACK_LIBS)
+
+molecules.h:
+	@tmp=molecules.h.$$$$ ;						\
+	rm -f $$tmp ;							\
+	echo "building molecules.h from $(HACK_SRC)/images/molecules/*.pdb" ; \
+	for f in $(HACK_SRC)/images/molecules/*.pdb ; do		\
+	  $(SHELL) $(UTILS_SRC)/ad2c < "$$f" |				\
+	    sed 's/",$$/\\n"/' >> $$tmp ;				\
+	  echo ',' >> $$tmp ;						\
+	done ;								\
+	mv $$tmp molecules.h
+
+molecule:	molecule.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -715,4 +734,31 @@ gltext.o: $(UTILS_SRC)/visual.h
 gltext.o: $(UTILS_SRC)/xshm.h
 gltext.o: $(srcdir)/glutstroke.h
 gltext.o: $(srcdir)/glut_roman.h
+molecule.o: $(HACK_SRC)/xlockmore.h
+molecule.o: ../../config.h
+molecule.o: $(HACK_SRC)/xlockmoreI.h
+molecule.o: $(HACK_SRC)/screenhack.h
+molecule.o: $(UTILS_SRC)/yarandom.h
+molecule.o: $(UTILS_SRC)/usleep.h
+molecule.o: $(UTILS_SRC)/resources.h
+molecule.o: $(UTILS_SRC)/hsv.h
+molecule.o: $(UTILS_SRC)/colors.h
+molecule.o: $(UTILS_SRC)/grabscreen.h
+molecule.o: $(UTILS_SRC)/visual.h
+molecule.o: $(UTILS_SRC)/xshm.h
+molecule.o: molecules.h
+dangerball.o: $(HACK_SRC)/xlockmore.h
+dangerball.o: ../../config.h
+dangerball.o: $(HACK_SRC)/xlockmoreI.h
+dangerball.o: $(HACK_SRC)/screenhack.h
+dangerball.o: $(UTILS_SRC)/yarandom.h
+dangerball.o: $(UTILS_SRC)/usleep.h
+dangerball.o: $(UTILS_SRC)/resources.h
+dangerball.o: $(UTILS_SRC)/hsv.h
+dangerball.o: $(UTILS_SRC)/colors.h
+dangerball.o: $(UTILS_SRC)/grabscreen.h
+dangerball.o: $(UTILS_SRC)/visual.h
+dangerball.o: $(UTILS_SRC)/xshm.h
+dangerball.o: $(srcdir)/glutstroke.h
+dangerball.o: $(srcdir)/glut_roman.h
 
