@@ -1,0 +1,155 @@
+
+                              XScreenSaver
+
+              a handy guide for creating useful bug reports
+
+                                --------
+
+    It's hard to imagine, but sometimes, xscreensaver has bugs.  This
+    document gives some hints for isolating them; the more information
+    you can give me about the problem, the better the odds that I'll be
+    able to fix it.  But, if you don't have time to go through these
+    steps, report the bug anyway -- even vague bug reports can be
+    better than no bug report at all.
+
+                                --------
+STEP ZERO:
+
+    What are you doing here?  Go read README, and then the man page.
+
+STEP ZERO, PART TWO:
+
+    Do you have the most recent version?  Go make sure.
+    http://www.jwz.org/xscreensaver/
+
+BUILDING:
+
+    If you get an error running the `configure' script, the first thing
+    you should try is deleting the `config.cache' file, and running again.
+    If that doesn't fix it, the information I'll need to see to make
+    sense of the problem is the following:
+
+        *  everything printed to stderr/stdout when you first ran
+           ./configure;
+
+        *  the contents of the `config.log' file.
+
+    Make sure you blow away the config.cache file before regenerating
+    this info, or else the `config.log' file will be mostly empty/useless.
+
+    Experience seems to show that the most common configure problem is
+    that sites have gcc installed, but installed improperly.  The
+    configure script will always try to use gcc in preference to another
+    compiler if gcc exists, so if gcc exists but is broken, it won't
+    work.  Your options are:
+
+        *  get someone to fix the gcc installation;
+
+        *  rearrange your $PATH so that the broken gcc is not on it;
+
+        *  or pass $CC in the environment, like so:
+               csh:  setenv CC cc ; ./configure
+               sh:   CC=cc ; ./configure
+
+    Before doing this, you'll need to nuke `config.cache'.
+
+    If you get errors about not being able to find Motif or Athena (the
+    Xm/ or Xaw/ header files), and you can't find them on your system,
+    then your system is horked and your vendor is lame.  Perhaps the
+    problem is that you don't have some kind of ``development option''
+    installed.  Xt/ and Xaw/ (Athena) are free and available on all
+    systems; Xm/ (Motif) is available on all commercial systems except
+    SunOS 4.x and some early releases of Solaris.  For Linux and other
+    free Unixes systems, a Motif clone is available from
+    http://www.lesstif.org/.
+
+RUNNING:
+
+    For runtime errors, it's important to keep in mind that there are
+    two parts to xscreensaver: there is the screensaver driver process
+    (the daemon that detects idleness, deals with locking, and launches
+    the demos); and there are the demos themselves (independent programs
+    that draw pretty pictures.)
+
+        *  Compile with `make CFLAGS=-g' (so that if you get a core
+	   dump, there will be debugging info in it.)
+
+        *  What platform are you running on?  What does the included
+           `./config.guess' shell script print?
+
+        *  Is the problem in the driver, or in the graphics hacks?
+
+        *  If the problem is in the driver, was the driver built using
+           Motif, Lesstif, or Athena?  Which version?
+
+        *  If the problem is in one (or more) of the hacks, which ones?
+           If you're not sure, try
+
+              xscreensaver-command -demo
+
+           to go through the list of them and see which work and which
+           don't.
+
+        *  Does the problem occur when running that hack by hand, in
+           its own window (i.e., when started with no command-line args)?
+
+        *  Does the problem occur when running that hack by hand, on
+           the root window (i.e., when started with the `-root' option)?
+
+        *  IMPORTANT: What visual are you using?  Send the output of
+           the `xdpyinfo' command.
+
+        *  Does the problem go away if you give the program a different
+           `-visual' argument?  (For example, `-visual pseudocolor' or
+           `-visual truecolor'.)
+
+        *  IMPORTANT: What exactly goes wrong?  No, I don't know what
+           you mean by "crash".  Does it print an "X Error" and exit?
+           Does it dump core?  Does it go into a loop?
+
+        *  If it dumps core, what does the core file say?  Run the
+           program under a debugger, and show me the stack trace.
+           (If you don't know how to do that, that's ok.)
+
+        *  If it gets an X error, where did it come from?  Run
+           xscreensaver with the `-sync' command-line option; if -sync
+           is used, then X errors will cause xscreensaver to dump a core
+           file.  Look at the core file with a debugger and show me the
+           stack trace: were in xscreensaver did that X error come from?
+
+    If the problem is with the xscreensaver process itself, or if you
+    can't figure out which demo is causing the problem, or if you can't
+    reproduce the problem in isolation, then you will need to turn on
+    and examine the debugging output of the driver process.
+
+        *  Start `xscreensaver' with the command-line arguments
+
+             -verbose -xrm '*captureStderr:false' -xrm '*captureStdout:false'
+
+           This will cause it to write a lot of debugging info to the
+           stdout and stderr of the xscreensaver process (the -verbose
+           argument turns on the diagnostics; the remaining arguments
+           prevent the data from being displayed on the screensaver
+           window as well.
+
+           You also might want to use the `-timestamp' option, which will
+           cause the xscreensaver messages to include the time at which
+           they were printed.
+
+        *  If the problem is intermittent, you might want to capture the
+           log information to a file and examine it later.  For example,
+           you could start it from your login script like this (csh syntax):
+
+             ( cd ~/src/xscreensaver/ ; \
+               xscreensaver -sync -verbose -timestamp \
+               -xrm '*captureStderr:false' -xrm '*captureStdout:false' \
+               >>&LOG & )
+
+        *  Hackers only: If you're feeling adventurous enough to run gdb
+           on the xscreensaver driver process itself, make sure you've
+           read the commentary at the top of xscreensaver.c.
+
+-----------------------------------------------------------------------------
+                                             http://www.jwz.org/xscreensaver/
+                                                 Jamie Zawinski <jwz@jwz.org>
+-----------------------------------------------------------------------------
