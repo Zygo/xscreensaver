@@ -78,7 +78,8 @@
 #   define PWTYPE   struct s_passwd *
 #   define PWPSLOT  pw_passwd
 #   define GETPW    getspwnam
-#   define crypt    bigcrypt
+
+#   define HAVE_BIGCRYPT
 
 #endif
 
@@ -176,7 +177,7 @@ get_encrypted_passwd(const char *user)
 	result = strdup(p->pw_passwd);
     }
 
-  /* The manual for passwd(4) says:
+  /* The manual for passwd(4) on HPUX 10.10 says:
 
 	  Password aging is put in effect for a particular user if his
 	  encrypted password in the password file is followed by a comma and
@@ -233,6 +234,32 @@ pwent_lock_init (int argc, char **argv, Bool verbose_p)
 }
 
 
+static Bool
+passwds_match_p (const char *cleartext, const char *ciphertext)
+{
+  char *s = 0;  /* note that on some systems, crypt() may return null */
+
+  s = (char *) crypt (cleartext, ciphertext);
+  if (s && !strcmp (s, ciphertext))
+    return True;
+
+#ifdef HAVE_BIGCRYPT
+  /* There seems to be no way to tell at runtime if an HP machine is in
+     "trusted" mode, and thereby, which of crypt() or bigcrypt() we should
+     be calling to compare passwords.  So call them both, and see which
+     one works. */
+
+  s = (char *) bigcrypt (cleartext, ciphertext);
+  if (s && !strcmp (s, ciphertext))
+    return True;
+
+#endif /* HAVE_BIGCRYPT */
+  
+  return False;
+}
+
+
+
 /* This can be called at any time, and says whether the typed password
    belongs to either the logged in user (real uid, not effective); or
    to root.
@@ -240,18 +267,14 @@ pwent_lock_init (int argc, char **argv, Bool verbose_p)
 Bool
 pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 {
-  char *s = 0;  /* note that on some systems, crypt() may return null */
-
   if (encrypted_user_passwd &&
-      (s = (char *) crypt (typed_passwd, encrypted_user_passwd)) &&
-      !strcmp (s, encrypted_user_passwd))
+      passwds_match_p (typed_passwd, encrypted_user_passwd))
     return True;
 
   /* do not allow root to have a null password. */
   else if (typed_passwd[0] &&
 	   encrypted_root_passwd &&
-	   (s = (char *) crypt (typed_passwd, encrypted_root_passwd)) &&
-	   !strcmp (s, encrypted_root_passwd))
+           passwds_match_p (typed_passwd, encrypted_root_passwd))
     return True;
 
   else

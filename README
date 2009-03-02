@@ -77,6 +77,12 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.03:   * Added an `xscreensaver.spec' file, to make it easier
+                        for other folks to generate RPMs.
+                      * Made the password code work on HPUX in the situation
+                        where: ``enhanced security'' is available; but not 
+                        used; but the user typed a password more than 8
+                        characters long anyway.  FTSOHPUX.
 Changes since 3.02:   * Made locking work when passwd aging is enabled.
                       * Added support for PAM (Pluggable Authentication
                         Modules.)  It is still turned off by default, though,

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "15-Nov-98 (3.03)" "X Version 11"
+.TH XScreenSaver 1 "16-Nov-98 (3.04)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -914,8 +914,9 @@ without first turning off \fI.Xauthority\fP-based access control, please
 let me know.
 .TP 8
 .B Passwords
-If you get an error message like ``couldn't get password of \fIuser\fP'' 
-then this probably means that you're on a system in which the
+If you get an error message at startup like ``couldn't get password
+of \fIuser\fP'' then this probably means that you're on a system in which 
+the
 .BR getpwent (3)
 library routine can only be effectively used by root.  If this is the case, 
 then \fIxscreensaver\fP must be installed as setuid to root in order for
@@ -933,6 +934,24 @@ is restarted.  So, after you change your password, you'll have to do
 xscreensaver-command -restart
 .EE
 to make \fIxscreensaver\fP notice.
+.TP 8
+.B PAM Passwords
+If your system uses PAM (Pluggable Authentication Modules), then in order
+for xscreensaver to use PAM properly, PAM must be told about xscreensaver.
+The xscreensaver installation process should update the PAM data (on Linux,
+by creating the file \fI/etc/pam.d/xscreensaver\fP for you, and on Solaris, 
+by telling you what lines to add to the \fI/etc/pam.conf\fP file.)  
+
+If the PAM configuration files do not know about xscreensaver, then 
+you \fImight\fP be in a situation where xscreensaver will refuse to ever
+unlock the screen.
+
+This is a design flaw in PAM (there is no way for a client to tell the
+difference between PAM responding ``I have never heard of your module,''
+and responding, ``you typed the wrong password.''  As far as I can tell,
+there is no way for xscreensaver to automatically work around this, or
+detect the problem in advance, so if you have PAM, make sure it is
+configured correctly!
 .TP 8
 .B Colormap lossage: TWM
 The \fBinstallColormap\fP option doesn't work very well with the

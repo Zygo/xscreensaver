@@ -179,11 +179,13 @@
 #undef HAVE_PAM
 
 /*  If PAM is being used, this is the name of the PAM service that xscreensaver
- *  will authenticate as.  It would be sensible to set this to "xscreensaver".
- *  However, since some systems already have a PAM service named "xlock" 
- *  defined, we might as well use that.
+ *  will authenticate as.  The default is "xscreensaver", which means that the
+ *  PAM library will look for an "xscreensaver" line in /etc/pam.conf, or (on
+ *  recent Linux systems) will look for a file called /etc/pam.d/xscreensaver.
+ *  Some systems might already have a PAM installation that is configured for
+ *  xlock, so setting this to "xlock" would also work in that case.
  */
-#define PAM_SERVICE_NAME "xlock"
+#define PAM_SERVICE_NAME "xscreensaver"
 
 /*  Define this if your system uses `shadow' passwords, that is, the passwords
  *  live in /etc/shadow instead of /etc/passwd, and one reads them with

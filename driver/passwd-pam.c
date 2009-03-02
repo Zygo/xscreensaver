@@ -59,6 +59,14 @@ struct pam_closure {
 };
 
 
+#ifdef HAVE_PAM_FAIL_DELAY
+   /* We handle delays ourself.*/
+   /* Don't set this to 0 (Linux bug workaround.) */
+# define PAM_NO_DELAY(pamh) pam_fail_delay ((pamh), 1)
+# else  /* !HAVE_PAM_FAIL_DELAY */
+# define PAM_NO_DELAY(pamh) /* */
+# endif /* !HAVE_PAM_FAIL_DELAY */
+
 /* PAM sucks in that there is no way to tell whether a particular service
    is configured at all.  That is, there is no way to tell the difference
    between "authentication of the FOO service is not allowed" and "the
@@ -141,10 +149,6 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
              status, pam_strerror (pamh, status));
   if (status != PAM_SUCCESS) goto DONE;
 
-# ifdef HAVE_PAM_FAIL_DELAY
-  pam_fail_delay (pamh, 0);	/* We handle delays ourself. */
-# endif /* HAVE_PAM_FAIL_DELAY */
-
   /* #### We should set PAM_TTY to the display we're using, but we
      don't have that handy from here.  So set it to :0.0, which is a
      good guess (and has the bonus of counting as a "secure tty" as
@@ -160,6 +164,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
   /* Try to authenticate as the current user.
    */
+  PAM_NO_DELAY(pamh);
   status = pam_authenticate (pamh, 0);
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
@@ -176,6 +181,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
              blurb(), c.user, status, pam_strerror(pamh, status));
   if (status != PAM_SUCCESS) goto DONE;
 
+  PAM_NO_DELAY(pamh);
   status = pam_authenticate (pamh, 0);
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",

@@ -55,6 +55,8 @@ X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 
 
 AD_DIR		= @APPDEFAULTS@
+PAM_DIR		= /etc/pam.d
+PAM_CONF	= /etc/pam.conf
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
@@ -224,8 +226,8 @@ install-pam:
 	@src="$(srcdir)/xscreensaver.pam" ;				\
 	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
 	   < ../config.h` ;						\
-	dir=/etc/pam.d ;						\
-	conf=/etc/pam.conf ;						\
+	dir="$(PAM_DIR)" ;						\
+	conf="$(PAM_CONF)" ;						\
 									\
 	if [ -d $$dir ] ; then						\
 	  echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\

@@ -11,7 +11,7 @@ TARFILES	= README README.VMS README.debugging INSTALL xscreensaver.lsm \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess \
 		  config.sub makevms.com screenblank.txt \
-		  xscreensaver.lsm.sh
+		  xscreensaver.lsm.sh xscreensaver.spec
 TAR		= tar
 COMPRESS	= gzip --verbose --best
 COMPRESS_EXT	= gz
@@ -39,6 +39,7 @@ uninstall-man:
 depend:
 	@$(MAKE_SUBDIR)
 distdepend:
+	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR)
 TAGS: tags
 tags:
@@ -151,6 +152,22 @@ bump-version::
   rm -f $$TMP;								    \
   echo "overwrote $$SRC"; 						    \
   ls -lFd $$SRC
+
+update_spec_version::
+	@S=$(srcdir)/xscreensaver.spec ;				    \
+	U=$(srcdir)/utils/version.h ;					    \
+	V=`sed -n 's/.*\([0-9][0-9]*\.[0-9]*\).*/\1/p' < $$U` ;		    \
+	echo -n "Updating version number in $$S to \"$$V\"... " ;	    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/^\(Version:[^0-9]*\)\(.*\)/\1$$V/"			    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T
 
 test-tar::
 	@								    \

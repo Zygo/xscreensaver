@@ -1,4 +1,4 @@
-..de EX		\"Begin example
+.de EX		\"Begin example
 .ne 5
 .if n .sp 1
 .if t .sp .5
@@ -15,7 +15,7 @@
 .SH NAME
 munch - munching squares screen hack
 .SH SYNOPSIS
-.B deco
+.B munch
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-xor] [\-noxor] [\-shift]

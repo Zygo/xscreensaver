@@ -127,7 +127,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
-		  xjack.man xlyap.man jigsaw.man epicycle.man
+		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
