@@ -1,0 +1,132 @@
+
+
+
+Kaleidescpe(1)                                     Kaleidescpe(1)
+
+
+NNAAMMEE
+       Kaleidescope - rotating line segments
+
+SSYYNNOOPPSSIISS
+       kkaalleeiiddeessccooppee  [-display  _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground
+       _c_o_l_o_r] [-background _c_o_l_o_r]  [-window]  [-root]  [-install]
+       [-visual  _v_i_s_u_a_l]  [-color_mode  _m_o_n_o  _|  _n_i_c_e  _|  _g_r_e_e_d_y]
+       [-nsegments  _i_n_t]  [-ntrails  _i_n_t]  [-local_rotation  _i_n_t]
+       [-global_rotation   _i_n_t]   [-delay  _u_s_e_c_s]  [-redmin  _i_n_t]
+       [-greenmin _i_n_t] [-bluemin _i_n_t]  [-redrange  _i_n_t]  [-green-
+       range _i_n_t] [-bluerange _i_n_t]
+
+DDEESSCCRRIIPPTTIIOONN
+       The  _k_a_l_e_i_d_e_s_c_o_p_e program draws line segments in a symmet-
+       ric pattern that evolves over time.
+
+OOPPTTIIOONNSS
+       _k_a_l_e_i_d_e_s_c_o_p_e accepts the following options:
+
+       --rroooott   Draw on the root window.
+
+       --ccoolloorr__mmooddee mmoonnoo || nniiccee || ggrreeeeddyy
+               Specify how kaleidescope uses  colors.  Mono  uses
+               just the default foreground and background colors.
+               Nice uses one color for each segment (specified by
+               nsegments).  Greedy uses (ntrails * nsegments) + 1
+               colors.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name  of a visual class, or the id number (decimal
+               or hex) of a specific visual.
+
+       --nnsseeggmmeennttss iinntteeggeerr
+               The number of segments to draw. Default is 7.
+
+       --nnttrraaiillss iinntteeggeerr
+               The number of trails to draw. Default is 100.
+
+       --llooccaall__rroottaattiioonn iinntteeggeerr
+               The rate at which  segments  rotate  around  their
+               center. Default is -59.
+
+       --gglloobbaall__rroottaattiioonn iinntteeggeerr
+               The  rate at which segments rotate around the cen-
+               ter of the window.  Default is 1.
+
+       --rreeddmmiinn,, --ggrreeeennmmiinn,, --bblluueemmiinn,, --rreeddrraannggee,, --ggrreeeennrraannggee,,
+               --bblluueerraannggee
+               All take an integer argument. When colors are ran-
+               domly chosen, they are chosen  from  the  interval
+
+
+
+X Version 11                14-Dec-95                           1
+
+
+
+
+
+Kaleidescpe(1)                                     Kaleidescpe(1)
+
+
+               min  to  min  plus  range. The minimums default to
+               30000. The ranges default to 20000.
+
+       --ddeellaayy mmiiccrroosseeccoonnddss
+               How much of a delay should be  introduced  between
+               steps  of  the  animation.   Default  is 20000, or
+               about 5 frames a second.
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), kkaalleeiiddeessccooppee(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1997 by Ron Tapia.  Permission to use, copy,
+       modify,  distribute,  and sell this software and its docu-
+       mentation for any purpose is hereby granted  without  fee,
+       provided  that  the  above  copyright notice appear in all
+       copies and that both that copyright notice and  this  per-
+       mission  notice  appear  in  supporting documentation.  No
+       representations are made about  the  suitability  of  this
+       software  for any purpose.  It is provided "as is" without
+       express or implied warranty.
+
+AAUUTTHHOORR
+       Ron Tapia <tapia@nmia.com>, 20-Mar-97.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                14-Dec-95                           2
+
+

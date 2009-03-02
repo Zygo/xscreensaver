@@ -1,0 +1,198 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       blitspin - rotate a bitmap in an interesting way
+
+SSYYNNOOPPSSIISS
+       bblliittssppiinn   [-display   _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]   [-foreground
+       _c_o_l_o_r]  [-background  _c_o_l_o_r]  [-window]  [-root]   [-mono]
+       [-install]  [-visual  _v_i_s_u_a_l]  [-bitmap  _f_i_l_e_n_a_m_e] [-delay
+       _u_s_e_c_s] [-delay2 _u_s_e_c_s]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _b_l_i_t_s_p_i_n program repeatedly rotates  a  bitmap  by  90
+       degrees by using logical operations: the bitmap is divided
+       into quadrants, and the quadrants are  shifted  clockwise.
+       Then  the  same  thing  is  done  again with progressively
+       smaller quadrants, except  that  all  sub-quadrants  of  a
+       given  size  are  rotated  in  parallel.   So  this  takes
+       OO((1166**lloogg22((NN)))) blits of size NxN, with the limitation  that
+       the  image must be square, and the size must be a power of
+       2.
+
+OOPPTTIIOONNSS
+       _b_l_i_t_s_p_i_n accepts the following options:
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If   on  a  color  display,  pretend  we're  on  a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name  of a visual class, or the id number (decimal
+               or hex) of a specific visual.
+
+       --bbiittmmaapp _f_i_l_e_n_a_m_e
+               The file name of a bitmap to rotate.  It need  not
+               be  square:  it will be padded with the background
+               color.  If unspecified or the string _(_d_e_f_a_u_l_t_),  a
+               builtin bitmap is used.
+
+               If support for the _X_P_M library was enabled at com-
+               pile-time, the specified file may be in _X_P_M format
+               as well as _X_B_M, and thus may be a color image.
+
+               The  **bbiittmmaappFFiilleePPaatthh  resource will be searched if
+               the bitmap name is not a fully-qualified pathname.
+
+       --ggrraabb--ssccrreeeenn
+               If  this option is specified, then the image which
+
+
+
+X Version 11                24-Nov-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               is spun will be grabbed from the  portion  of  the
+               screen  underlying  the  blitspin window.  (Or, it
+               may  come  from  an  external  video  source:  see
+               below.)
+
+
+       --ddeellaayy _m_i_c_r_o_s_e_c_o_n_d_s
+               How  long  to  delay between steps of the rotation
+               process, in microseconds.  Default is 500000, one-
+               half second.
+
+
+       --ddeellaayy22 _m_i_c_r_o_s_e_c_o_n_d_s
+               How long to delay between each 90-degree rotation,
+               in microseconds.  Default is 500000, one-half sec-
+               ond.   DDIISSPPLLAAYY to get the default host and display
+               number.
+
+RREESSOOUURRCCEESS
+       On some systems (currently, only SGIs), this program  can,
+       instead of grabbing a desktop image, grab a frame of video
+       from an external camera and manipulate that instead.   The
+       following resources control that.
+
+
+       ggrraabbVViiddeeooPPrroobbaabbiilliittyy (Float)
+               What portion of the time to grab video rather than
+               a screen image, between 0.0 and 1.0.  Defaults  to
+               0.5, or half the time.
+
+       vviiddeeooDDeevviiccee (Integer)
+               The  number  of  the default video input device to
+               check first.  If unspecified, the  default  camera
+               (from videopanel(1)) will be checked first.  After
+               that, all other available video input devices will
+               be checked in order.
+
+               The  first  one  which  produces a non-black image
+               will be used.  If all images are black, the others
+               will  be  re-checked  a few times before giving up
+               and falling back  to  simply  grabbing  a  desktop
+               image  (but note that this takes a few seconds, so
+               if you  don't  actually  have  any  video  sources
+               hooked  up,  you should consider turning off video
+               grabbing by setting ggrraabbVViiddeeooPPrroobbaabbiilliittyy to  0.0.)
+
+       vviiddeeooGGaaiinn (Float)
+               The amount by which to brighten the grabbed image.
+               This defaults to 2.2.
+
+EENNVVIIRROONNMMEENNTT
+       XXEENNVVIIRROONNMMEENNTT to get the name of a resource file that over-
+       rides  the global resources stored in the RESOURCE_MANAGER
+       property.
+
+
+
+X Version 11                24-Nov-97                           2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1992, 1993, 1997 by Jamie Zawinski.  Permis-
+       sion to use, copy, modify, distribute, and sell this soft-
+       ware and its  documentation  for  any  purpose  is  hereby
+       granted  without  fee,  provided  that the above copyright
+       notice appear in all copies and that both  that  copyright
+       notice  and  this  permission  notice appear in supporting
+       documentation.  No  representations  are  made  about  the
+       suitability  of this software for any purpose.  It is pro-
+       vided "as is" without express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 17-aug-92.
+
+       Based on SmallTalk code which appeared in the August  1981
+       issue of Byte magazine.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                24-Nov-97                           3
+
+

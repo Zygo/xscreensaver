@@ -1,0 +1,264 @@
+
+
+
+XLYAP(6X)                                               XLYAP(6X)
+
+
+NNAAMMEE
+       xlyap - display an array of Lyapunov exponents graphically
+
+SSYYNNOOPPSSIISS
+       _x_l_y_a_p [-BLps][-W width][-H height][-o filename][-a _n ] [-b
+               _n  ]  [-w  _n ] [-h _n ] [-i xstart] [-M _n ] [-R _p ]
+               [-S _n ] [-D _n ] [-F string][-f string][-r _n ]  [-O
+               _n ] [-C _n ] [-c _n ] [-m _n ] [-x xpos] [-y ypos]
+
+DDEESSCCRRIIPPTTIIOONN
+       _x_l_y_a_p  generates and graphically displays an array of Lya-
+       punov exponents for a  variety  of  iterated  periodically
+       forced non-linear maps of the unit interval.
+
+OOPPTTIIOONNSS
+       -random A  good  choice  for  use with xscreensaver: picks
+               random parameters from a built-in list.
+
+       -C _n    Specifies the minimum color index to be  used  for
+               negative exponents
+
+       -D _n    Specifies the "dwell" or number of iterations over
+               which to average in order to  calculate  the  Lya-
+               punov exponent. Default is 400.
+
+       -B      Causes  the  stop, go, spin and quit buttons to be
+               displayed.
+
+       -H _n    Specifies the height of  the  window.  Default  is
+               256.
+
+       -L      Indicates use log(x) + log(y) rather than log(xy).
+
+       -M _r    Specifies the real value to compare exponent  val-
+               ues  to  for  indexing  into  a  color  wheel. The
+               default value is 1.0.
+
+       -O _n    Specifies the minimum color index to be  used  for
+               positive exponents
+
+       -R _p    Specifies pseudo-random forcing with probability _p
+               of using parameter value 'a'.
+
+       -S _n    Specifies the "settle"  or  number  of  iterations
+               prior  to  the beginning of the calculation of the
+               Lyapunov exponent. Default is 200.
+
+       -W _n    Specifies the width of the window. Default is 256.
+
+       -a _r    Specifies  the  real  value  to use as the minimum
+               parameter value of the horizontal axis. Default is
+               3.0 for the logistic map.
+
+       -b _n    Specifies  the  real  value  to use as the minimum
+
+
+
+                                                                1
+
+
+
+
+
+XLYAP(6X)                                               XLYAP(6X)
+
+
+               parameter value of the vertical axis.  Default  is
+               3.0 for the logistic map.
+
+       -c _n    Selects  one of six different color wheels to use.
+               The default color wheel is a rainbow palette.
+
+       -F _1_0_1_0_1_0_1_0
+               Specifies the "Function" forcing function to  use.
+               The  example above would alternate between iterat-
+               ing the circle and logistic maps. An  argument  of
+               "-F  2323"  would alternate between left and right
+               logistic maps. The default is to only use the sin-
+               gle specified map (see the description of -m).
+
+       -f _a_b_b_a_b_a_a_b
+               Specifies the forcing function to use. The default
+               is to alternate between the "a" parameter and  the
+               "b" parameter.
+
+       -h _r    Specifies  the  real value to be used as the range
+               over which the vertical parameter values vary. The
+               default is 1.0.
+
+       -i _r    Specifies  the real value of the initial condition
+               to use. Default is 0.05.
+
+       -m _n    Selects between available non-linear maps  of  the
+               unit interval. A value of 0 specifies the logistic
+               map. A value of 1, the circle map. A value  of  2,
+               the  left-logistic. A value of 3, the right-logis-
+               tic.  A  value  of  4,  the  double-logistic.  The
+               default is 0, the logistic map.
+
+       -o _f_i_l_e_n_a_m_e
+               Specifies  the  output filename to be used. If the
+               -o option is given, this file  will  automatically
+               be  written  out at the completion of the drawing.
+               If it is not  specified,  a  default  filename  of
+               lyap.out  is  used  and only written if the 'f' or
+               'F' keys are pressed during a run. The  format  of
+               the  output  file  is  PPM  for  color and PGM for
+               monochrom. The parameters used  to  calculate  the
+               picture  are included as comments at the beginning
+               of the output file.
+
+       -p      Switches color indices for negative  and  positive
+               exponents. Generally, causes negative exponents to
+               be displayed in more detail  while  darkening  and
+               narrowing  the color range for positive exponents.
+               This can be toggled during runtime by pressing the
+               'p' key.
+
+       -r _n    Specifies  the  maximum  rgb  value  to  be  used.
+               Default is 35000.
+
+
+
+                                                                2
+
+
+
+
+
+XLYAP(6X)                                               XLYAP(6X)
+
+
+       -s _n    Specifies the length of the color wheel spin.
+
+       -u      Produces a usage message.
+
+       -v      Prints out the  various  values  to  be  used  and
+               exits.
+
+       -w _r    Specifies  the  real value to be used as the range
+               over which the horizontal parameter  values  vary.
+               The default is 1.0.
+
+       -x _n    Specifies  the  x  screen coordinate of the window
+               (default is 256).
+
+       -y _n    Specifies the y screen coordinate  of  the  window
+               (default is 256).
+
+
+
+NNOOTTEESS
+       During  display,  pressing  any mouse button allows you to
+       select the area to be investigated  with  the  mouse.  The
+       upper left hand corner of the desired area is the location
+       of the cursor when the button is pressed. The lower  right
+       hand  corner is specified by the cursor when the button is
+       released.
+
+
+       Use of the keys _b_B_e_E_f_F_k_K_j_J_m_n_r_R_s_S_w_W_x_X_q_Q indicates:
+
+          (<) Halve dwell value.
+          (>) Double dwell value.
+          ([) Halve settle value.
+          (]) Double settle value.
+          (B or b) Toggle button display on/off
+          (E or e) Recalculate the indices into the  color  wheel
+       using a different method
+          (F  or  f)  Save  current screen to ouput file (not yet
+       implemented)
+          (H or h or ?) Display brief help message
+          (i) Decrement the  interval  between  stripes  for  the
+       striped color map.
+          (I)  Increment  the  interval  between  stripes for the
+       striped color map.
+          (K) Decrease value exponents are  compared  against  by
+       0.05.
+          (J)  Increase  value  exponents are compared against by
+       0.05.
+          (M) Decrease value exponents are  compared  against  by
+       0.005.
+          (N)  Increase  value  exponents are compared against by
+       0.005.
+          (m) Increment the map index, changing  the  map  to  be
+       iterated.
+
+
+
+                                                                3
+
+
+
+
+
+XLYAP(6X)                                               XLYAP(6X)
+
+
+          (P or p) Toggle positive/negative exponent display.
+          (r) Redraw the window using previously calculated expo-
+       nents.
+          (R) Redraw the window using the newly set dwell  and/or
+       settle values.
+          (S) Spin the color wheel
+          (s)  Halve  the  length  of the spin and spin the color
+       wheel
+          (u) Go up to the window just prior to the  most  recent
+       zoom.
+          (U) Go all the way up to the original window.
+          (V or v) Display values of various parameters currently
+       in use
+          (W or w) Use next color map.
+          (X or x) Clear window
+          (Q or q) quit
+
+
+
+AAUUTTHHOORR
+               Ronald Joe Record
+            The Santa Cruz Operation
+                 P.O. Box 1900
+              Santa Cruz, CA 95061
+                   rr@sco.com
+
+
+
+AACCKKNNOOWWLLEEDDGGEEMMEENNTTSS
+       The algorithm was taken from the September 1991 Scientific
+       American  article  by  A.  K.  Dewdney who gives credit to
+       Mario Markus of the Max Planck Institute for its creation.
+       Additional  information  and  ideas  were gleaned from the
+       discussion on  alt.fractals  involving  Stephen  Hall,  Ed
+       Kubaitis, Dave Platt and Baback Moghaddam. Assistance with
+       colormaps and spinning color wheels and X was gleaned from
+       Hiram  Clawson.  Rubber  banding  code was adapted from an
+       existing Mandelbrot program written by Stacey Campbell.
+
+       Viciously  hacked  for  xscreensaver  by  Jamie  Zawinski,
+       20-Nov-97.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                4
+
+

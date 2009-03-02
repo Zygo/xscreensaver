@@ -1,0 +1,132 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       rocks - animation of flying through an asteroid field
+
+SSYYNNOOPPSSIISS
+       rroocckkss  [-display  _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n] [-foreground _c_o_l_o_r]
+       [-background _c_o_l_o_r] [-window] [-root] [-mono] [-ncolors _n]
+       [-install]   [-visual  _v_i_s_u_a_l]  [-count  _i_n_t_e_g_e_r]  [-delay
+       _u_s_e_c_s] [-speed _i_n_t_e_g_e_r] [-norotate] [-nomove] [-3d]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _r_o_c_k_s program draws an animation of an asteroid  field
+       moving  past  the observer (or vice versa).  Sometimes the
+       observer picks up spin on Z axis.
+
+OOPPTTIIOONNSS
+       _r_o_c_k_s accepts the following options:
+
+       --wwiinnddooww Draw on  a  newly-created  window.   This  is  the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   Make all the rocks the same color.
+
+       --nnccoolloorrss ccoolloorrss
+               How  many  different  colors  to  use.  Default 5.
+               Colors are chosen randomly.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name  of a visual class, or the id number (decimal
+               or hex) of a specific visual.
+
+       --ccoouunntt _i_n_t_e_g_e_r
+               Maximum number of rocks to draw on the  screen  at
+               once.  Default 100.
+
+       --ssppeeeedd _i_n_t_e_g_e_r
+               A measure of the speed with which the observer and
+               the rocks pass each other, from 1 to 100.  Default
+               100,  meaning  ``very fast.''  If you're on a slow
+               display connection  (the  animation  looks  jerky)
+               then   try  making  this  number  smaller,  and/or
+               decreasing the number of rocks.
+
+       --ddeellaayy _m_i_c_r_o_s_e_c_o_n_d_s
+               Number  of  microseconds  to  delay  between  each
+               frame.   Default  50000, meaning about 1/20th sec-
+               ond.  Compare and contrast with _-_s_p_e_e_d, above.
+
+
+
+
+
+X Version 11                13-aug-92                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --nnoorroottaattee
+               Don't rotate the observer; just  fly  through  the
+               field on the level.
+
+       --nnoommoovvee Don't  turn  the observer; just fly straight ahead
+               through the field.
+
+       --33dd     Do red/blue 3d separations: if  you  look  at  the
+               screen  with 3d glasses, the rocks will be _j_u_m_p_i_n_g
+               right _o_u_t at you.  Oooooh, scaaary!
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+BBUUGGSS
+       There should be an option  to  display  doppler  shift  (a
+       gravity rainbow.)
+
+       Speed of rotation should be settable.
+
+       Default  speed  of  rotation should be relative to forward
+       velocity.
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1992 by Jamie Zawinski.  Permission to  use,
+       copy,  modify,  distribute, and sell this software and its
+       documentation for any purpose is  hereby  granted  without
+       fee,  provided  that  the above copyright notice appear in
+       all copies and that both that copyright  notice  and  this
+       permission  notice appear in supporting documentation.  No
+       representations are made about  the  suitability  of  this
+       software  for any purpose.  It is provided "as is" without
+       express or implied warranty.
+
+AAUUTTHHOORR
+       Based on Lisp Machine  code  copyright  1988  John  Nguyen
+       <johnn@hx.lcs.mit.edu>.
+
+       Ported  to  C  and  X  by  Jamie  Zawinski  <jwz@jwz.org>,
+       13-aug-92.
+
+       Steering  code  by  Jeremie  Petit;  3D  code  by   theil-
+       ing@coli.uni-sb.de.
+
+
+
+
+
+
+X Version 11                13-aug-92                           2
+
+

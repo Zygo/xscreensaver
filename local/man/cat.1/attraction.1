@@ -1,0 +1,264 @@
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+NNAAMMEE
+       attraction - interactions of opposing forces
+
+SSYYNNOOPPSSIISS
+       aattttrraaccttiioonn   [-display  _h_o_s_t_:_d_i_s_p_l_a_y_._s_c_r_e_e_n]  [-foreground
+       _c_o_l_o_r]  [-background  _c_o_l_o_r]  [-window]  [-root]   [-mono]
+       [-install] [-visual _v_i_s_u_a_l] [-points _i_n_t] [-threshold _i_n_t]
+       [-mode balls | lines | polygons | splines | filled-splines
+       |  tails  ]  [-size  _i_n_t]  [-segments  _i_n_t] [-delay _u_s_e_c_s]
+       [-color-shift _i_n_t]  [-radius  _i_n_t]  [-vx  _i_n_t]  [-vy  _i_n_t]
+       [-glow]  [-noglow]  [-orbit]  [-viscosity  _f_l_o_a_t] [-mouse]
+       [-no-mouse] [-mouse-size]
+
+DDEESSCCRRIIPPTTIIOONN
+       The _a_t_t_r_a_c_t_i_o_n  program  has  several  visually  different
+       modes of operation, all of which are based on the interac-
+       tions of a set of control points which attract each  other
+       up  to  a  certain  distance, and then begin to repel each
+       other.  The attraction/repulsion is  proportional  to  the
+       distance between any two particles.
+
+OOPPTTIIOONNSS
+       _a_t_t_r_a_c_t_i_o_n accepts the following options:
+
+       --wwiinnddooww Draw  on  a  newly-created  window.   This  is the
+               default.
+
+       --rroooott   Draw on the root window.
+
+       --mmoonnoo   If  on  a  color  display,  pretend  we're  on   a
+               monochrome display.
+
+       --iinnssttaallll
+               Install a private colormap for the window.
+
+       --vviissuuaall _v_i_s_u_a_l
+               Specify which visual to use.  Legal values are the
+               name of a visual class, or the id number  (decimal
+               or hex) of a specific visual.
+
+       --ppooiinnttss iinntteeggeerr
+               How  many  control  points should be used, or 0 to
+               select the number randomly.  Default 0.  Between 3
+               and 15 works best.
+
+       --tthhrreesshhoolldd iinntteeggeerr
+               The  distance  (in  pixels)  from each particle at
+               which  the  attractive  force  becomes  repulsive.
+               Default 100.
+
+       --mmooddee bbaallllss || lliinneess || ppoollyyggoonnss || ttaaiillss || sspplliinneess || ffiilllleedd--
+               sspplliinneess
+               In _b_a_l_l_s mode (the default) the control points are
+               drawn as filled circles.  The larger  the  circle,
+
+
+
+X Version 11                14-Jun-97                           1
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               the more massive the particle.
+
+               In _l_i_n_e_s mode, the control points are connected by
+               straight lines; the effect is something like  _q_i_x.
+
+               In _p_o_l_y_g_o_n_s mode, the control points are connected
+               by straight lines, and filled in.   This  is  most
+               interesting in color.
+
+               In  _s_p_l_i_n_e_s  mode, a closed spline is interpolated
+               from the control points.
+
+               In _f_i_l_l_e_d_-_s_p_l_i_n_e_s mode, the splines are filled  in
+               instead of being outlines.  This is most interest-
+               ing in color.
+
+               In _t_a_i_l_s mode, the path which each  particle  fol-
+               lows  is  indicated  by  a  worm-like trail, whose
+               length is controlled by the _s_e_g_m_e_n_t_s parameter.
+
+       --ssiizzee iinntteeggeerr
+               The size of the balls in pixels, or 0, meaning  to
+               select  the sizes randomly (the default.)  If this
+               is specified, then all  balls  will  be  the  same
+               size.   This  option  has  an effect in all modes,
+               since the ``size'' of  the  balls  controls  their
+               mass.
+
+       --sseeggmmeennttss iinntteeggeerr
+               If  in  _l_i_n_e_s  or  _p_o_l_y_g_o_n_s mode, how many sets of
+               line segments or polygons should be drawn. Default
+               100.   This  has no effect in _b_a_l_l_s mode.  If _s_e_g_-
+               _m_e_n_t_s is 0, then no segments will ever  be  erased
+               (this is only useful in color.)
+
+       --ddeellaayy mmiiccrroosseeccoonnddss
+               How  much  of a delay should be introduced between
+               steps of the animation.  Default 10000,  or  about
+               0.01 seconds.
+
+       --ccoolloorr--sshhiifftt iinntt
+               If  on a color display, the color of the line seg-
+               ments or polygons will  cycle  through  the  color
+               map.   This specifies how many lines will be drawn
+               before a new color is chosen.  (When a small  num-
+               ber of colors are available, increasing this value
+               will  yield  smoother  transitions.)   Default  3.
+               This has no effect in _b_a_l_l_s mode.
+
+       --rraaddiiuuss The  size  in  pixels  of  the circle on which the
+               points are initially positioned.  The  default  is
+               slightly smaller than the size of the window.
+
+       --ggllooww   This  is consulted only in _b_a_l_l_s mode.  If this is
+
+
+
+X Version 11                14-Jun-97                           2
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+               specified, then the saturation of  the  colors  of
+               the  points  will  vary according to their current
+               acceleration.  This has the effect that the  balls
+               flare  brighter  when  they  are  reacting to each
+               other most strongly.
+
+               In _g_l_o_w mode, all of the balls will be  drawn  the
+               same (random) color, modulo the saturation shifts.
+               In non-glow mode, the balls will each be drawn  in
+               a random color that doesn't change.
+
+       --nnooggllooww Don't do ``glowing.''  This is the default.
+
+       --vvxx ppiixxeellss
+
+       --vvyy ppiixxeellss
+               Initial velocity of the balls.  This has no effect
+               in --oorrbbiitt mode.
+
+       --oorrbbiitt  Make the initial force on each ball be  tangential
+               to  the circle on which they are initially placed,
+               with the right velocity  to  hold  them  in  orbit
+               about  each other.  After a while, roundoff errors
+               will cause the orbit to decay.
+
+       --vvmmuulltt ffllooaatt
+               In orbit mode, the initial velocity of  the  balls
+               is  multiplied  by this; a number less than 1 will
+               make the balls pull closer together, and a  larger
+               number  will make them move apart.  The default is
+               0.9, meaning a slight inward pull.
+
+       --vviissccoossiittyy ffllooaatt
+               This sets the viscosity of the hypothetical  fluid
+               through which the control points move; the default
+               is 1, meaning no resistance.  Values higher than 1
+               aren't   interesting;   lower  values  cause  less
+               motion.
+
+               One interesting thing to try is
+
+                    attraction -viscosity 0.8 -points 75 \
+                      -mouse -geometry =500x500
+
+               Give it a few seconds to settle down into a stable
+               clump,  and then move the mouse through it to make
+               "waves".
+
+       --mmoouussee  This will cause the mouse to be considered a  con-
+               trol  point;  it  will  not  be drawn, but it will
+               influence the other points, so you  can  wave  the
+               mouse and influence the images being created.
+
+
+
+
+
+X Version 11                14-Jun-97                           3
+
+
+
+
+
+XScreenSaver(1)                                   XScreenSaver(1)
+
+
+       --nnoo--mmoouussee
+               Turns off --mmoouussee.
+
+       --mmoouussee--ssiizzee iinntteeggeerr
+               In  --mmoouussee  mode,  this sets the mass of the mouse
+               (analagously to the --ssiizzee parameter.)
+
+EENNVVIIRROONNMMEENNTT
+       DDIISSPPLLAAYY to get the default host and display number.
+
+       XXEENNVVIIRROONNMMEENNTT
+               to get the name of a resource file that  overrides
+               the  global  resources stored in the RESOURCE_MAN-
+               AGER property.
+
+SSEEEE AALLSSOO
+       XX(1), xxssccrreeeennssaavveerr(1)
+
+CCOOPPYYRRIIGGHHTT
+       Copyright (C) 1992, 1993, 1997 by Jamie Zawinski.  Permis-
+       sion to use, copy, modify, distribute, and sell this soft-
+       ware and its  documentation  for  any  purpose  is  hereby
+       granted  without  fee,  provided  that the above copyright
+       notice appear in all copies and that both  that  copyright
+       notice  and  this  permission  notice appear in supporting
+       documentation.  No  representations  are  made  about  the
+       suitability  of this software for any purpose.  It is pro-
+       vided "as is" without express or implied warranty.
+
+AAUUTTHHOORR
+       Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+       Viscosity and mouse support by Philip Edward Cutone,  III.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+X Version 11                14-Jun-97                           4
+
+
