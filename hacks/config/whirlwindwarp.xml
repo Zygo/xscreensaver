@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="whirlwindwarp" _label="WhirlwindWarp">
+
+  <command arg="-root"/>
+
+  <number id="points" type="slider" arg="-points %"
+          _label="Particles" _low-label="Few" _high-label="Many"
+          low="10" high="1000" default="400"/>
+
+  <number id="tails" type="slider" arg="-tails %"
+          _label="Trail Size" _low-label="Short" _high-label="Long"
+          low="1" high="200" default="10"/>
+
+  <_description>
+Floating stars are acted upon by a mixture of simple 2D
+forcefields.  The strength of each forcefield changes
+continuously, and it is also switched on and off at random.
+By Paul 'Joey' Clark.
+  </_description>
+</screensaver>

@@ -1,0 +1,13 @@
+#%PAM-1.0
+
+# Fedora Core 2:
+auth       required	pam_stack.so service=system-auth
+
+# Red Hat 7.3:
+#auth       required	/lib/security/pam_stack.so service=system-auth
+
+# SuSE 9.0: (along with "configure --with-passwd-helper" and "unix2_chkpwd")
+# auth     required       pam_unix2.so	nullok
+
+# Distant past:
+# auth       required	/lib/security/pam_pwdb.so shadow nullok

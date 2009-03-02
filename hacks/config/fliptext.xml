@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fliptext" _label="FlipText">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="10.0" default="1.0"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame Rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <select id="align">
+    <option id="left"   _label="Random Text Alignment"/>
+    <option id="left"   _label="Flush Left Text"  arg-set="-left"/>
+    <option id="center" _label="Centered Text"    arg-set="-center"/>
+    <option id="right"  _label="Flush Right Text" arg-set="-right"/>
+  </select>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Font Point Size" low="1" high="100" default="20"/>
+
+  <number id="columns" type="spinbutton" arg="-columns %"
+           _label="Text Columns" low="1" high="200" default="80"/>
+
+  <number id="lines" type="spinbutton" arg="-lines %"
+           _label="Text Lines" low="1" high="99" default="8"/>
+
+  <file id="program" _label="Text Program" arg="-program %"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws successive pages of text.  The lines flip in and out in
+a soothing 3D pattern.
+
+The text can be the output of a program or the contents of a file
+or URL, as configured on the "Advanced" tab of the main Screensaver
+Preferences window.
+
+Written by Jamie Zawinski.
+  </_description>
+</screensaver>
