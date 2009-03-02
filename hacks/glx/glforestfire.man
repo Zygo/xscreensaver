@@ -1,0 +1,132 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "03-Oct-01" "X Version 11"
+.SH NAME
+glforestfire - draws a GL animation of sprinkling fire-like 3D triangles
+.SH SYNOPSIS
+.B glforestfire
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
+[\-count \fInumber_of_particles\fP] 
+[\-trees \fInumber_of_trees\fP] 
+[\-size \fIviewport_size\fP] 
+[\-texture] [\-no-texture]
+[\-shadows] [\-no-shadows]
+[\-fog] [\-no-fog]
+[\-wireframe] [\-no-wireframe]
+[\-wander] [\-no-wander]
+[\-trackmouse] [\-no-trackmouse]
+[\-fps] [\-no-fps]
+.SH DESCRIPTION
+The \fIglforestfire\fP program draws an animation of sprinkling fire-like 3D triangles in
+a landscape filled with trees.
+.SH OPTIONS
+.I glforestfire
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
+.TP 8
+.B \-trees \fInumber_of_trees\fP\fP
+Specify how much trees are drawn in the landscape. 
+.TP 8
+.B \-count \fInumber_of_particles\fP\fP
+Specify how much fire particles are drawn. A very special case is 0
+wich means that you get
+.B rain
+!
+.TP 8
+.B \-size \fIviewport_size\fP\fP
+Viewport of GL scene is specified size if greater than 32 and less than screensize. Default value is 0, meaning full screensize.
+.TP 8
+.B \-texture
+Show a textured ground and the trees. This is the default.
+.TP 8
+.B \-no\-texture
+Disables texturing the landscape. This implies that no trees are drawn.
+.TP 8
+.B \-shadows
+Show a shadow for each particle on the ground. This is the default.
+.TP 8
+.B \-no\-shadows
+Disables the drawing of the shadows.
+.TP 8
+.B \-fog
+Show a fog in the distance.
+.TP 8
+.B \-no\-fog
+Disables the fog. This is the default.
+.TP 8
+.B \-wander
+Move the observer around the landscape. This is the default.
+.TP 8
+.B \-no\-wander
+Keep the fire centered on the screen.
+.TP 8
+.B \-trackmouse
+Let the mouse be a joystick to change the view of the landscape.
+This implies 
+.I \-no\-wander.
+.TP 8
+.B \-no\-trackmouse
+Disables mouse tracking. This is the default.
+.TP 8
+.B \-wire
+Draw a wireframe rendition of the fire: this will consist only of
+single-pixel lines for the triangles.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Eric Lassauge.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+The original code for this hack was written by David Bucciarelli 
+(tech.hmw@plus.it) and could be found in the demo package 
+of Mesa (Mesa-3.2/3Dfx/demos/). This hack is the result of the merge of
+two of the David's demos (fire and rain).
+
+.SH AUTHOR
+David Bucciarelli <tech.hmw@plus.it>
+Eric Lassauge <lassauge@mail.dotcom.fr>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lockward" _label="Lockward">
+
+  <command arg="-root" />
+
+  <boolean id="blink"
+           _label="Blinking effects"
+           arg-unset="-no-blink" />
+
+  <number id="rotateidle-min"
+          type="slider"
+          _label="Rotator idle time, minimum (ms)"
+          _low-label="500"
+          _high-label="10000"
+          low="500"
+          high="10000"
+          default="1000"
+          arg="-rotateidle-min %" />
+
+  <number id="rotateidle-max"
+          type="slider"
+          _label="Rotator idle time, maximum (ms)"
+          _low-label="500"
+          _high-label="10000"
+          low="500"
+          high="10000"
+          default="6000"
+          arg="-rotateidle-max %" />
+
+  <number id="blinkidle-min"
+          type="slider"
+          _label="Blink idle time, minimum (ms)"
+          _low-label="500"
+          _high-label="20000"
+          low="500"
+          high="20000"
+          default="1000"
+          arg="-blinkidle-min %" />
+
+  <number id="blinkidle-max"
+          type="slider"
+          _label="Blink idle time, maximum (ms)"
+          _low-label="500"
+          _high-label="20000"
+          low="500"
+          high="20000"
+          default="9000"
+          arg="-blinkidle-max %" />
+
+  <number id="blinkdwell-min"
+          type="slider"
+          _label="Blink dwell time, minimum (ms)"
+          _low-label="50"
+          _high-label="1500"
+          low="50"
+          high="1500"
+          default="100"
+          arg="-blinkdwell-min %" />
+
+  <number id="blinkdwell-max"
+          type="slider"
+          _label="Blink dwell time, maximum (ms)"
+          _low-label="50"
+          _high-label="1500"
+          low="50"
+          high="1500"
+          default="600"
+          arg="-blinkdwell-max %" />
+
+  <_description> 
+A translucent spinning, blinking thing.  Sort of a cross between the wards
+in an old combination lock and those old backlit information displays that
+animated and changed color via polarized light.
+
+Written by Leo L. Schwab; August, 2007.
+  </_description>
+</screensaver>

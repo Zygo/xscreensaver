@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="morph3d" _label="Morph3D">
+
+  <command arg="-root"/>
+
+  <select id="object">
+   <option id="random" _label="Random Object"/>
+   <option id="tetra"  _label="Tetrahedron"  arg-set="-count 1"/>
+   <option id="cube"   _label="Cube"         arg-set="-count 2"/>
+   <option id="octa"   _label="Octahedron"   arg-set="-count 3"/>
+   <option id="dodeca" _label="Dodecahedron" arg-set="-count 4"/>
+   <option id="icosa"  _label="Icosahedron"  arg-set="-count 5"/>
+  </select>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="40000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Platonic solids that turn inside out and get spikey.
+
+Written by Marcelo Vianna; 1997.
+  </_description>
+</screensaver>

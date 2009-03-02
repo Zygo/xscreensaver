@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fiberlamp" _label="Fiberlamp">
+
+  <command arg="-root"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Fibers" _low-label="Few" _high-label="Many"
+          low="10" high="500" default="500"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+          _label="Time between Knocks" _low-label="Short" _high-label="Long"
+          low="100" high="10000" default="10000"/>
+
+  <_description>
+Draws a groovy rotating fiber optic lamp.  
+
+Written by Tim Auckland; 2005.
+  </_description>
+</screensaver>

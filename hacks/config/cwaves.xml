@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cwaves" _label="CWaves">
+
+  <command arg="-root"/>
+
+<!--
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="30000" default="20000"
+          convert="invert"/>
+-->
+
+  <number id="waves" type="slider" arg="-waves %"
+          _label="Complexity" _low-label="Low" _high-label="High"
+          low="1" high="100" default="15"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Color Transitions" _low-label="Rough" _high-label="Smooth"
+            low="2" high="1000" default="600"/>
+
+  <_description>
+This generates a languidly-scrolling vertical field of sinusoidal colors.
+
+Written by Jamie Zawinski; 2007.
+  </_description>
+</screensaver>

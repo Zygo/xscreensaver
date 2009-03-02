@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="boxfit" _label="BoxFit">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="20000"
+          convert="invert"/>
+
+  <hgroup>
+   <number id="count" type="spinbutton" arg="-count %"
+           _label="Boxes" low="1" high="1000" default="50"/>
+
+   <number id="growby" type="spinbutton" arg="-growby %"
+           _label="Grow By" low="1" high="10" default="1"/>
+  </hgroup>
+
+  <hgroup>
+   <number id="spacing" type="spinbutton" arg="-spacing %"
+           _label="Spacing" low="1" high="10" default="1"/>
+
+   <number id="border" type="spinbutton" arg="-border %"
+           _label="Border" low="1" high="10" default="1"/>
+  </hgroup>
+
+  <select id="mode">
+    <option id="random"  _label="Boxes or Circles"/>
+    <option id="boxes"   _label="Boxes Only"   arg-set="-mode squares"/>
+    <option id="circles" _label="Circles Only" arg-set="-mode circles"/>
+  </select>
+
+  <select id="mode2">
+    <option id="gradient" _label="Color Gradient"/>
+    <option id="image"    _label="Grab Images" arg-set="-grab"/>
+  </select>
+
+  <xscreensaver-image />
+
+  <boolean id="peek" _label="Peek at underlying images" arg-set="-peek"/>
+
+  <_description>
+Packs the screen with growing squares or circles, colored according to a
+horizontal or vertical gradient, or according to the colors of the
+desktop or a loaded image file.  The objects grow until they touch,
+then stop.  When the screen is full, they shrink away and the process
+restarts.
+
+Written by Jamie Zawinski; 2005.
+  </_description>
+</screensaver>

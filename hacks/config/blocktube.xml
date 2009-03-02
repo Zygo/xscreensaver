@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="blocktube" _label="BlockTube">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+           low="0" high="50000" default="40000"
+          convert="invert"/>
+
+  <number id="holdtime" type="slider" arg="-holdtime %"
+          _label="Color Hold Time" _low-label="Short" _high-label="Long"
+          low="10" high="2000" default="1000"/>
+
+  <number id="changetime" type="slider" arg="-changetime %"
+          _label="Color Change Time" _low-label="Short" _high-label="Long"
+          low="10" high="1000" default="200"/>
+
+  <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a swirling, falling tunnel of reflective slabs. They fade from
+hue to hue.
+
+Written by Lars R. Damerow; 2003.
+  </_description>
+</screensaver>
