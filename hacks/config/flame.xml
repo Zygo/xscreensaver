@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flame" _label="Flame">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="50000"
+          convert="invert"/>
+
+  <number id="delay2" type="slider" arg="-delay2 %"
+          _label="Duration" _low-label="0 Seconds" _high-label="10 Seconds"
+          low="1000" high="10000000" default="2000000"/>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Number of Fractals" _low-label="Few" _high-label="Many"
+          low="1" high="250" default="25"/>
+
+  <number id="points" type="slider" arg="-points %"
+          _label="Complexity" _low-label="Low" _high-label="High"
+          low="100" high="80000" default="10000"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <_description>
+Another iterative fractal generator.  Written by Scott Draves.
+  </_description>
+</screensaver>

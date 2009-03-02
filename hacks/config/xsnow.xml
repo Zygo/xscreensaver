@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xsnow" _label="Xsnow">
+
+  <!-- #### -sc          <snowcolor>				-->
+  <!-- #### -tc          <tree color>				-->
+  <!-- #### -bg          <background color>			-->
+  <!-- #### -solidbg     (Performance improvement!)		-->
+  <!-- #### -slc         <sleigh color>				-->
+  <!-- #### -snowflakes  <numsnowflakes>			-->
+  <!-- #### -delay       <delay in milliseconds>		-->
+  <!-- #### -unsmooth						-->
+  <!-- #### -whirl       <whirlfactor>				-->
+  <!-- #### -nowind						-->
+  <!-- #### -windtimer   <secs between windy periods>		-->
+  <!-- #### -xspeed      <max xspeed snowflakes>		-->
+  <!-- #### -yspeed      <max yspeed snowflakes>		-->
+  <!-- #### -wsnowdepth  <max snow depth on windows>		-->
+  <!-- #### -offset      <shift snow down>			-->
+  <!-- #### -ssnowdepth  <max snow depth at bottom of display>	-->
+  <!-- #### -notrees						-->
+  <!-- #### -nosanta						-->
+  <!-- #### -norudolf						-->
+  <!-- #### -santa       <santa>				-->
+  <!-- #### -santaspeed  <santa_speed>				-->
+  <!-- #### -nokeepsnow						-->
+  <!-- #### -nokeepsnowonwindows				-->
+  <!-- #### -nokeepsnowonscreen					-->
+  <!-- #### -nonopopup						-->
+
+  <_description>
+Draws falling snow and the occasional tiny Santa.  By Rick Jansen.
+You can find it at &lt;http://www.euronet.nl/~rja/Xsnow/&gt;.
+  </_description>
+</screensaver>

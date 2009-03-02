@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="bubbles" _label="Bubbles">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="800"
+          convert="invert"/>
+
+  <boolean id="simple" _label="Draw circles instead of pixmap bubbles"
+           arg-set="-simple"/>
+
+  <boolean id="broken" _label="Don't hide bubbles when they pop"
+           arg-set="-broken"/>
+
+  <boolean id="3d" _label="Bubbles exist in three dimensions"
+           arg-set="-3D"/>
+
+  <select id="gravity">
+    <option id="rise"     _label="Bubbles Rise"  arg-set="-rise"/>
+    <option id="float"    _label="Bubbles Float"/>
+    <option id="drop"     _label="Bubbles Fall"  arg-set="-drop"/>
+  </select>
+
+  <boolean id="trails" _label="Leave Trails" arg-set="-trails"/>
+
+  <_description>
+This simulates the kind of bubble formation that happens when water
+boils:small bubbles appear, and as they get closer to each other,
+they combine to form larger bubbles, which eventually pop.  Written
+by James Macnicol.
+  </_description>
+</screensaver>

@@ -1,0 +1,41 @@
+command arg="--root 1"/>
+
+  <hgroup>
+    <string id="nick" _label="Nickname" arg="--nick %"/>
+    <string id="url" _label="URL" arg="--url %"/>
+  </hgroup>
+
+  <hgroup>
+
+    <number id="framerate" type="spinbutton" arg="--frame-rate %"
+            _label="Frame Rate" low="1" high="100" default="23"/>
+
+    <number id="nrepeats" type="spinbutton" arg="--nrepeats %"
+            _label="Repititions of each Sheep"
+            low="0" high="10" default="2"/>
+
+  </hgroup>
+
+  <hgroup>
+    <boolean id="hide" _label="Hide Sheep" arg-set="--display-anim 0" />
+    <boolean id="standalone" _label="Standalone" arg-set="--standalone 1" />
+  </hgroup>
+
+  <number id="maxmegs" type="spinbutton" arg="--max-megabytes %"
+          _label="Megabytes of Local Sheep Storage"
+          low="10" high="1000" default="200"/>
+
+  <_description>
+
+ElectricSheep is an xscreensaver module that displays mpeg video of an
+animated fractal flame.  In the background, it contributes render
+cycles to the next animation.  Periodically it uploades completed
+frames to the server, where they are compressed for distribution to all
+clients.
+
+This program is recommended only if you have a high bandwidth,
+always-on connection to the Internet.
+
+By Scott Draves.  You can find it at &lt;http://www.electricsheep.org/&gt;.
+  </_description>
+</screensaver>
