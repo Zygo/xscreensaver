@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glslideshow" _label="GLSlideshow">
+
+  <command arg="-root"/>
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Time until loading a new image:"
+          _low-label="10 Seconds" _high-label="5 Minutes"
+          low="10" high="300" default="30"/>
+
+  <number id="zoom" type="slider" arg="-zoom %"
+          _label="Always show at least this much of the image:"
+          _low-label="50%" _high-label="100%"
+          low="50" high="100" default="75"/>
+
+  <number id="pan" type="slider" arg="-pan %"
+          _label="Pan/Zoom Duration:"
+          _low-label="1 Second" _high-label="30 Seconds"
+          low="1" high="30" default="6"/>
+
+  <number id="fade" type="slider" arg="-fade %"
+          _label="Crossfade Duration:"
+          _low-label="None" _high-label="30 Seconds"
+          low="0" high="30" default="2"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame Rate:" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="titles" _label="Show Image Titles" arg-set="-titles"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Loads a random sequence of images and smoothly scans and zooms around
+in each, fading from pan to pan.  
+
+To tell it where to find the images to display, go to the "Advanced"
+tab on the Screensaver Preferences window.  Select "Choose Random
+Images", and enter your image directory in the text field right below
+that.
+
+(Note: not the the "Advanced" button at the bottom of this window:
+the tab at the top of the *other* window.)
+
+This program requires a good video card capable of supporting large
+textures.
+
+Written by Jamie Zawinski and Mike Oliphant.
+  </_description>
+</screensaver>

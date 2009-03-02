@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="imsmap" _label="IMSmap">
+
+  <command arg="-root"/>
+
+  <select id="mode">
+    <option id="random" _label="Random Mode"/>
+    <option id="h"      _label="Hue Gradients" arg-set="-mode h"/>
+    <option id="s"      _label="Saturation Gradients" arg-set="-mode s"/>
+    <option id="v"      _label="Brightness Gradients" arg-set="-mode v"/>
+  </select>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Density" _low-label="Sparse" _high-label="Dense"
+          low="1" high="7" default="7"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Duration" _low-label="1 Second" _high-label="1 Minute"
+          low="1" high="60" default="10"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="50"/>
+
+  <_description>
+This generates random cloud-like patterns.  It looks quite different
+in monochrome and color.  The basic idea is to take four points on
+the edge of the image, and assign each a random ``elevation''.  Then
+find the point between them, and give it a value which is the average
+of the other four, plus some small random offset. Then coloration is
+done based on elevation.
+
+The color selection is done by binding the elevation to either hue,
+saturation, or brightness, and assigning random values to the others.
+The ``brightness'' mode tends to yield cloudlike patterns, and the
+others tend to generate images that look like heat-maps or CAT-scans.
+Written by Juergen Nickelsen and Jamie Zawinski.
+  </_description>
+</screensaver>

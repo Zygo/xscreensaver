@@ -1,0 +1,184 @@
+#!/usr/bin/perl -w
+# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program attempts to grab an image of the desktop, and then load
+# it on to the root window using the "xscreensaver-getimage-file"
+# program.  Various frame-grabbing programs are known, and the first
+# one found is used.
+#
+# NOTE:  This script is only used on MacOS X / XDarwin systems, because
+#        on those systems, it's necessary to use the "screencapture"
+#        program to get an image of the desktop -- the usual X11
+#        mechanism for grabbing the screen doesn't work on OSX.
+#
+# The various xscreensaver hacks that manipulate images ("slidescreen",
+# "jigsaw", etc.) get the image to manipulate by running the
+# "xscreensaver-getimage" program.
+#
+# "xscreensaver-getimage" will invoke this program, depending on the
+# value of the "grabDesktopImages" setting in the ~/.xscreensaver file
+# (or in /usr/lib/X11/app-defaults/XScreenSaver).
+#
+# Created: 20-Oct-2003.
+
+require 5;
+use diagnostics;
+use strict;
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my @grabber   = ("screencapture", "-x");
+my @converter = ("pdf2jpeg");
+
+my $verbose = 0;
+my $use_stdout_p = 0;
+my $return_filename_p = 0;
+
+
+sub error {
+  ($_) = @_;
+  print STDERR "$progname: $_\n";
+  exit 1;
+}
+
+# returns the full path of the named program, or undef.
+#
+sub which {
+  my ($prog) = @_;
+  foreach (split (/:/, $ENV{PATH})) {
+    if (-x "$_/$prog") {
+      return $prog;
+    }
+  }
+  return undef;
+}
+
+sub check_path {
+  my $ok = 1;
+  foreach ($grabber[0], $converter[0]) {
+    if (! which ($_)) {
+      print STDERR "$progname: \"$_\" not found on \$PATH.\n";
+      $ok = 0;
+    }
+  }
+  exit (1) unless $ok;
+}
+
+
+sub grab_image {
+
+  check_path();
+
+  my $tmpdir = $ENV{TMPDIR};
+  $tmpdir = "/tmp" unless $tmpdir;
+
+  my $tmpfile = sprintf ("%s/xssgrab.%08x.pdf", $tmpdir, rand(0xffffffff));
+  my @cmd     = (@grabber, $tmpfile);
+
+  unlink $tmpfile;
+
+  print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
+    if ($verbose);
+  system (@cmd);
+
+  my @st = stat($tmpfile);
+  my $size = (@st ? $st[7] : 0);
+  if ($size <= 2048) {
+    unlink $tmpfile;
+    if ($size == 0) {
+      error "\"" . join(' ', @cmd) . "\" produced no data.";
+    } else {
+      error "\"" . join(' ', @cmd) . "\" produced only $size bytes.";
+    }
+  }
+
+  # Convert the PDF to a JPEG
+  {
+    my $jpgfile = $tmpfile;
+    $jpgfile =~ s/\.[^.]+$//;
+    $jpgfile .= ".jpg";
+
+    @cmd = (@converter, $tmpfile, $jpgfile);
+    push @cmd, "--verbose" if ($verbose);
+
+    print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
+      if ($verbose);
+    system (@cmd);
+    unlink $tmpfile;
+    $tmpfile = $jpgfile;
+  }
+
+  @st = stat($tmpfile);
+  $size = (@st ? $st[7] : 0);
+  if ($size <= 2048) {
+    unlink $tmpfile;
+    if ($size == 0) {
+      error "\"" . join(' ', @cmd) . "\" produced no data.";
+    } else {
+      error "\"" . join(' ', @cmd) . "\" produced only $size bytes.";
+    }
+  }
+
+  if ($return_filename_p) {
+    print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
+    print STDOUT "$tmpfile\n";
+
+  } elsif ($use_stdout_p) {
+    local *IN;
+    my $ppm = "";
+    my $reader = "djpeg $tmpfile";
+    $reader .= " 2>/dev/null" if ($verbose <= 1);
+    $reader .= " |";
+
+    open(IN, $reader) || error "reading $tmpfile: $!";
+    print STDERR "$progname: reading $tmpfile\n" if ($verbose > 1);
+    while (<IN>) { $ppm .= $_; }
+    close IN;
+    unlink $tmpfile;
+    print STDOUT $ppm;
+
+  } else {
+
+    @cmd = ("xscreensaver-getimage-file");
+    push @cmd, "--verbose" if ($verbose);
+    push @cmd, $tmpfile;
+
+    print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
+      if ($verbose);
+    system (@cmd);
+
+    unlink $tmpfile;
+  }
+}
+
+
+sub usage {
+  print STDERR "usage: $progname [--verbose] [--name | --stdout]\n";
+  exit 1;
+}
+
+sub main {
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif (m/^--?stdout$/) { $use_stdout_p = 1; }
+    elsif (m/^--?name$/)   { $return_filename_p = 1; }
+    elsif (m/^-./) { usage; }
+    else { usage; }
+  }
+
+  grab_image();
+}
+
+main;
+exit 0;
