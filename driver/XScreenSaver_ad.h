@@ -191,6 +191,7 @@
  	                	eruption -root				    \\n\
  	                	popsquares -root			    \\n\
  	                	barcode -root				    \\n\
+ 	                	piecewise -root				    \\n\
   color: 			bubbles -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
@@ -235,12 +236,14 @@
 	   GL:			glsnake -root				    \\n\
 	   GL:			boxed -root				    \\n\
 	   GL:			glforestfire -root			    \\n\
+-	   GL:			glforestfire -root -rain		    \\n\
 	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
 	   GL:			spheremonics -root			    \\n\
 	   GL:			lavalite -root				    \\n\
 	   GL:			queens -root				    \\n\
 	   GL:			endgame -root				    \\n\
+	   GL:			atunnel -root				    \\n\
 -	   GL:			glblur -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\

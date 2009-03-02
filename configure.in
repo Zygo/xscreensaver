@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2003 Jamie Zawinski.
 #
 
 AC_PREREQ(2.52)
@@ -135,6 +135,38 @@ AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
    else
      # The old way:
      CC="$CC -Wp,-lang-c89"
+   fi
+  fi
+])
+
+
+###############################################################################
+#
+#       Function to figure out how to turn off Objective C on MacOS X.
+#       (We have to do this to work around an Apple-specific gcc bug.)
+#
+###############################################################################
+
+AC_DEFUN(AC_GCC_ACCEPTS_NO_CPP_PRECOMP,
+ [if test -n "$GCC"; then
+   AC_CACHE_CHECK([whether gcc accepts -no-cpp-precomp],
+     ac_cv_gcc_accepts_no_cpp_precomp,
+    [if ( ( gcc -E -no-cpp-precomp - </dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_cpp_precomp=no
+     else
+       ac_cv_gcc_accepts_no_cpp_precomp=yes
+     fi])
+   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
+  fi
+])
+
+AC_DEFUN(AC_NO_OBJECTIVE_C,
+ [if test -n "$GCC"; then
+   AC_GCC_ACCEPTS_NO_CPP_PRECOMP
+   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
+     AC_MSG_RESULT(Disabling Objective C extensions in ANSI C code.)
+     CC="$CC -no-cpp-precomp"
    fi
   fi
 ])
@@ -590,6 +622,16 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
         # Some versions of Slowlaris Motif require -lgen.  But not all.  Why?
         AC_CHECK_LIB(gen, regcmp, [X_LIBS="$X_LIBS -lgen"])
       fi
+
+    ;;
+    *-darwin*)
+
+      # On MacOS X (10.x with "fink"), many things are under /sw/.
+      #
+      if test -d /sw/include ; then
+        X_CFLAGS="-I/sw/include $X_CFLAGS"
+        X_LIBS="-L/sw/lib $X_LIBS"
+      fi
     ;;
   esac])
 
@@ -743,6 +785,7 @@ AC_DEFUN(HANDLE_X_PATH_ARG, [
 AC_CANONICAL_HOST
 AC_PROG_CC_ANSI
 AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
+AC_NO_OBJECTIVE_C
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
@@ -1535,7 +1578,12 @@ if test "$enable_locking" = yes -a "$with_kerberos" = yes; then
   if test "$have_kerberos5" = yes ; then
     # from Matt Knopp <mhat@infocalypse.netlag.com>
     # (who got it from amu@mit.edu)
-    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcrypt -lcom_err"
+
+    PASSWD_LIBS="$PASSWD_LIBS -lkrb4 -ldes425 -lkrb5 -lk5crypto -lcom_err"
+
+    # jwz: MacOS X uses -lkrb5, but not -lcrypt
+    AC_CHECK_X_LIB(crypt, crypt, [PASSWD_LIBS="$PASSWD_LIBS -lcrypt"])
+
   elif test "$have_kerberos" = yes ; then
     # from Tim Showalter <tjs@psaux.com> for FreeBSD 4.2
     PASSWD_LIBS="$PASSWD_LIBS -lkrb -ldes -lcom_err"
@@ -2023,15 +2071,16 @@ if test "$with_gtk" = yes; then
       AC_CACHE_CHECK([Gtk version number], ac_cv_gtk_version_string,
                      [ac_cv_gtk_version_string=`$gtk_config --version`])
       ac_gtk_version_string=$ac_cv_gtk_version_string
+      parse_gtk_version_string
     fi
 
-    parse_gtk_version_string
-
-    if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
-    then
-      have_gtk=no
-      have_gnome=no
-      jurassic_gtk=yes
+    if test "$have_gtk" = yes; then
+      if test "$ac_gtk_version" = "unknown" || test "$ac_gtk_version" -lt 1002
+      then
+        have_gtk=no
+        have_gnome=no
+        jurassic_gtk=yes
+      fi
     fi
 
     if test "$have_gtk" = yes; then
@@ -2054,7 +2103,7 @@ if test "$with_gtk" = yes; then
       gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
       AC_MSG_CHECKING(for Gnome capplet includes)
       AC_CACHE_VAL(ac_cv_gnome_config_cflags,
-        [if ( $gnome_config --cflags $gnome_config_libs >/dev/null 2>&1 | \
+        [if ( $gnome_config --cflags $gnome_config_libs 2>&1 | \
               grep Unknown >/dev/null ) ; then
            ac_cv_gnome_config_cflags=''
          else
@@ -2072,7 +2121,7 @@ if test "$with_gtk" = yes; then
     if test "$have_gnome" = yes -a "$have_gtk" = yes; then
       AC_MSG_CHECKING(for Gnome capplet libs)
       AC_CACHE_VAL(ac_cv_gnome_config_libs,
-        [if ( $gnome_config --libs $gnome_config_libs >/dev/null 2>&1 |
+        [if ( $gnome_config --libs $gnome_config_libs 2>&1 |
               grep Unknown >/dev/null ) ; then
            ac_cv_gnome_config_libs=''
          else
@@ -2603,7 +2652,7 @@ EOF
          # M4 sucks!!
          changequote(X,Y)
           mglv=`echo "$mglv" | sed -n \
-             's/^configure: *\([0-9][0-9]*\) \([0-9].*\)$/\1.\2/p'`
+             's/^configure: *\([0-9][0-9]*\)  *\([0-9].*\)$/\1.\2/p'`
          changequote([,])
 
          rm -f conftest.$ac_ext
@@ -3834,6 +3883,11 @@ fi
 
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
+
+ # nobody cares about this; don't print the warning unless it was
+ # requested and not found, or halfway-found.
+ if test "$with_gle_req" = yes -o "$gle_halfassed" = yes ; then
+
   if test "$with_gle_req" = yes ; then
     noteL 'Use of the GLE (GL Extrusion) library was requested, but'
     warn2 'it was not found (though the OpenGL library was found, and'
@@ -3861,6 +3915,7 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
   warn2 'GLE library at <http://www.linas.org/gle/>.  For general'
   warn2 'OpenGL info, see <http://www.opengl.org/>.'
 
+ fi
 fi
 
 

@@ -1,11 +1,11 @@
 # xscreensaver fr.po
 # Copyright (C) 2002 Free Software Foundation, Inc.
 # maintainer: Christophe Merlet (RedFox) <redfox@eikonex.org>, 2002.
-# Eric Lassauge <lassauge@mail.dotcom.fr>, 2002.
-# http://lassauge.free.fr/
+# Eric Lassauge <lassauge@mail.dotcom.fr>, 2003.
+# http://lassauge.free.fr/xscreensaver/
 msgid ""
 msgstr ""
-"Project-Id-Version: xscreensaver 4.06\n"
+"Project-Id-Version: xscreensaver 4.07\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
 "PO-Revision-Date: 2002-03-18 09:47+0100\n"
 "Last-Translator: Eric Lassauge <lassauge@mail.dotcom.fr>\n"
@@ -34,7 +34,7 @@ msgstr "Erreur au chargement du fichier d'image: %s"
 
 #: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
 msgid "XScreenSaver"
-msgstr "Économiseur d'écran"
+msgstr "Économiseur d'écran XScreenSaver"
 
 #: driver/demo-Gtk-widgets.c:176
 msgid "_File"
@@ -64,7 +64,7 @@ msgstr "_Tue le démon"
 
 #: driver/demo-Gtk-widgets.c:231 driver/xscreensaver-demo.glade.h:71
 msgid "Tell the running XScreenSaver daemon to exit."
-msgstr "Demande au démon XScreenSave actif de se terminer."
+msgstr "Demande au démon XScreenSaver actif de se terminer."
 
 #: driver/demo-Gtk-widgets.c:235 driver/xscreensaver-demo.glade.h:98
 msgid "_Restart Daemon"
@@ -144,7 +144,8 @@ msgstr "Aperçu"
 msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
-msgstr "Démo du mode sélectionné en plein écran (cliquer pour revenir)."
+msgstr ""
+"Démo de l'économiseur sélectionné en plein écran (cliquer pour revenir)."
 
 #: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
@@ -152,11 +153,11 @@ msgstr "Paramètres..."
 
 #: driver/demo-Gtk-widgets.c:494 driver/xscreensaver-demo.glade.h:17
 msgid "Customization and explanation of the selected screen saver."
-msgstr "Personnalisation et explications pour le mode sélectionné."
+msgstr "Personnalisation et explications pour l'économiseur sélectionné."
 
 #: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
 msgid "Mode:"
-msgstr "Mode:"
+msgstr "Economiseur:"
 
 #: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
 msgid "Disable Screen Saver"
@@ -164,7 +165,7 @@ msgstr "Inhibe l'économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
 msgid "Blank Screen Only"
-msgstr "Ecran noir maintenant"
+msgstr "Ecran noir uniquement"
 
 #: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
 msgid "Only One Screen Saver"
@@ -172,11 +173,11 @@ msgstr "Seulement un économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
 msgid "Random Screen Saver"
-msgstr "Économiseur d'écran au hasard"
+msgstr "Économiseur d'écran aléatoire"
 
 #: driver/demo-Gtk-widgets.c:565 driver/xscreensaver-demo.glade.h:75
 msgid "Use"
-msgstr "Utilise"
+msgstr "Choisis"
 
 #: driver/demo-Gtk-widgets.c:585 driver/xscreensaver-demo.glade.h:63
 msgid "Screen Saver"
@@ -237,7 +238,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
 msgid "Display Subprocess Errors"
-msgstr "Afficher les erreurs des sous-processus"
+msgstr "Afficher les erreurs des économiseurs"
 
 #: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
 msgid ""
@@ -297,7 +298,7 @@ msgstr "Durée du fondu"
 
 #: driver/demo-Gtk-widgets.c:922 driver/xscreensaver-demo.glade.h:44
 msgid "How long it should take for the screen to fade in and out."
-msgstr "Combien doit durer les fondus avec le noir."
+msgstr "Combien de temps doivent durer les fondus avec le noir."
 
 #: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
 msgid "seconds"
@@ -344,8 +345,8 @@ msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
-"Les modes qui manipulent des images sont-ils autorisés à utiliser une image "
-"de votre bureau."
+"Les économiseurs qui manipulent des images sont-ils autorisés à utiliser une "
+"image de votre bureau."
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
@@ -356,8 +357,8 @@ msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
 msgstr ""
-"Les modes qui manipulent des images sont-ils autorisés à utiliser une image "
-"capturée sur le port d'entrée vidéo du système (s'il y en a un)."
+"Les économiseurs qui manipulent des images sont-ils autorisés à utiliser une "
+"image capturée sur le port d'entrée vidéo du système (s'il y en a un)."
 
 #: driver/demo-Gtk-widgets.c:1180 driver/xscreensaver-demo.glade.h:40
 msgid "Grab Video Frames"
@@ -368,12 +369,12 @@ msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
 msgstr ""
-"Les modes qui manipulent des images sont-ils autorisés à utiliser une image "
-"aléatoire depuis le disque dur."
+"Les économiseurs qui manipulent des images sont-ils autorisés à utiliser une "
+"image aléatoire depuis le disque dur."
 
 #: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
-msgstr "Choisir une image aléatoireb:"
+msgstr "Choisir une image aléatoirement: "
 
 #: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
 msgid "The directory from which images will be randomly chosen."
@@ -390,7 +391,7 @@ msgstr "Commande avancée"
 
 #: driver/demo-Gtk-widgets.c:1438 driver/xscreensaver-demo.glade.h:90
 msgid "XScreenSaver: Mode-Specific Settings"
-msgstr "XScreenSaver: paramètres spécifiques des modes"
+msgstr "XScreenSaver: paramètres spécifiques des économiseurs"
 
 #: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
 msgid "Settings"
@@ -464,7 +465,7 @@ msgid ""
 "it will be used, otherwise, this demo will not be run."
 msgstr ""
 "Le type de visuel X que le mode utilisera. Si ce visuel est disponible il "
-"sera utilisé, sinon le mode ne sera pas lancé."
+"sera utilisé, sinon l'économiseur ne sera pas lancé."
 
 #: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
@@ -472,7 +473,7 @@ msgstr "Ligne de commande:"
 
 #: driver/demo-Gtk-widgets.c:1641 driver/xscreensaver-demo.glade.h:31
 msgid "Documentation..."
-msgstr ""
+msgstr "Documentation ..."
 
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
@@ -488,7 +489,7 @@ msgstr "Editer directement la ligne de commande."
 
 #: driver/demo-Gtk-widgets.c:1684 driver/xscreensaver-demo.glade.h:67
 msgid "Standard <<"
-msgstr ""
+msgstr "Standard <<"
 
 #: driver/demo-Gtk-widgets.c:1692 driver/xscreensaver-demo.glade.h:6
 msgid "Back to the graphical configuration options."
@@ -505,7 +506,9 @@ msgstr "Annule"
 
 #: driver/demo-Gtk.c:511
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
-msgstr "Pour les mises à jour, voir «http://www.jwz.org/xscreensaver/»"
+msgstr ""
+"Pour les mises à jour, voir «http://www.jwz.org/xscreensaver/»\n"
+"Traductions par E. LASSAUGE «http://lassauge.free.fr/xscreensaver/»"
 
 #: driver/demo-Gtk.c:517
 #, c-format
@@ -1143,7 +1146,7 @@ msgstr "Eau claire"
 
 #: hacks/config/atlantis.xml.h:5
 msgid "Flat Background"
-msgstr "Arrière-plan plat"
+msgstr "Arrière-plan unis"
 
 #: hacks/config/atlantis.xml.h:6
 msgid "Gradient Background"
@@ -1273,7 +1276,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:4 hacks/config/t3d.xml.h:7
 #: hacks/config/twang.xml.h:5 hacks/config/wander.xml.h:8
 msgid "High"
-msgstr "Haute"
+msgstr "Haut(e)"
 
 #: hacks/config/attraction.xml.h:11
 msgid "Ignore Screen Edges"
@@ -1281,7 +1284,7 @@ msgstr "Ignore les bords de l'écran"
 
 #: hacks/config/attraction.xml.h:12
 msgid "Inward"
-msgstr ""
+msgstr "Vers l'intérieur"
 
 #: hacks/config/attraction.xml.h:14
 msgid ""
@@ -1329,28 +1332,27 @@ msgstr "Long"
 #: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:8
 #: hacks/config/twang.xml.h:7 hacks/config/wander.xml.h:11
 msgid "Low"
-msgstr "Basse"
+msgstr "Bas(se)"
 
 #: hacks/config/attraction.xml.h:20
 msgid "Orbital Mode"
-msgstr ""
+msgstr "Mode orbital"
 
 #: hacks/config/attraction.xml.h:21
 msgid "Outward"
-msgstr ""
+msgstr "Vers l'extérieur"
 
 #: hacks/config/attraction.xml.h:22
 msgid "Polygons"
-msgstr ""
+msgstr "Polygônes"
 
 #: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
 msgid "Radius"
 msgstr "Rayon"
 
 #: hacks/config/attraction.xml.h:24
-#, fuzzy
 msgid "Repulsion Threshold"
-msgstr "Réactivité"
+msgstr "Seuil de répulsion"
 
 #: hacks/config/attraction.xml.h:25 hacks/config/braid.xml.h:10
 #: hacks/config/cynosure.xml.h:8 hacks/config/drift.xml.h:11
@@ -1430,7 +1432,7 @@ msgstr ""
 
 #: hacks/config/blitspin.xml.h:6
 msgid "Grab Screen"
-msgstr ""
+msgstr "Acquisition de l'écran"
 
 #: hacks/config/blitspin.xml.h:8
 msgid ""
@@ -1472,7 +1474,7 @@ msgstr "Vitesse d'animation"
 
 #: hacks/config/boxed.xml.h:2
 msgid "Boxed"
-msgstr ""
+msgstr "Avec la boîte"
 
 #: hacks/config/boxed.xml.h:3
 msgid ""
@@ -1516,9 +1518,8 @@ msgid "Line Thickness"
 msgstr "Epaisseur des lignes"
 
 #: hacks/config/braid.xml.h:8
-#, fuzzy
 msgid "Max Rings"
-msgstr "Maximum de lignes"
+msgstr "Maximum de cercles"
 
 #: hacks/config/bsod.xml.h:1 hacks/config/molecule.xml.h:1
 #: hacks/config/vidwhacker.xml.h:1 hacks/config/webcollage.xml.h:1
@@ -1554,44 +1555,44 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:9
 msgid "Mac Bomb"
-msgstr ""
+msgstr "Bombe Mac"
 
 #: hacks/config/bsod.xml.h:10
 msgid "MacsBug"
-msgstr ""
+msgstr "MacsBug"
 
 #: hacks/config/bsod.xml.h:11
 msgid "NCD X Terminal"
-msgstr ""
+msgstr "Terminal X NCD"
 
 #: hacks/config/bsod.xml.h:12
 msgid "SCO"
-msgstr ""
+msgstr "SCO"
 
 #: hacks/config/bsod.xml.h:13
 msgid "Sad Mac"
-msgstr ""
+msgstr "Mac triste"
 
 #: hacks/config/bsod.xml.h:14
 msgid "Solaris"
-msgstr ""
+msgstr "Solaris"
 
 #: hacks/config/bsod.xml.h:15
 msgid "Sparc Linux"
-msgstr ""
+msgstr "Linux Sparc"
 
 #: hacks/config/bsod.xml.h:16
 #, fuzzy
 msgid "Windows"
-msgstr "Vent"
+msgstr "Windows NT"
 
 #: hacks/config/bsod.xml.h:17
 msgid "Windows 2000"
-msgstr ""
+msgstr "Windows 2000"
 
 #: hacks/config/bsod.xml.h:18
 msgid "Windows NT"
-msgstr ""
+msgstr "Windows NT"
 
 #: hacks/config/bubble3d.xml.h:1
 msgid "Bubble3D"
@@ -1699,25 +1700,24 @@ msgstr ""
 
 #: hacks/config/circuit.xml.h:1
 msgid "Animates a number of 3D electronic components. Written by Ben Buxton."
-msgstr ""
+msgstr "Anime des composants électroniques en 3D. Ecris par Ben buxton."
 
 #: hacks/config/circuit.xml.h:2
 msgid "Circuit"
-msgstr ""
+msgstr "Circuit"
 
 #: hacks/config/circuit.xml.h:3 hacks/config/gflux.xml.h:4
 #: hacks/config/pulsar.xml.h:2
 msgid "Directional Lighting"
-msgstr ""
+msgstr "Lumière directionnelle"
 
 #: hacks/config/circuit.xml.h:5
-#, fuzzy
 msgid "Flat Coloring"
-msgstr "Couleur des zones « mortes »"
+msgstr "Couleur à plat"
 
 #: hacks/config/circuit.xml.h:6
 msgid "Parts"
-msgstr ""
+msgstr "Eléments"
 
 #: hacks/config/circuit.xml.h:7 hacks/config/flipscreen3d.xml.h:4
 msgid "Rotate"
@@ -1740,7 +1740,7 @@ msgstr "Boussole"
 #: hacks/config/interference.xml.h:4 hacks/config/kumppa.xml.h:2
 #: hacks/config/nerverot.xml.h:6 hacks/config/pipes.xml.h:4
 msgid "Double Buffer"
-msgstr ""
+msgstr "Tampon double"
 
 #: hacks/config/compass.xml.h:6
 msgid ""
@@ -1873,9 +1873,8 @@ msgid "Display Solid Colors"
 msgstr "Affiche des couleurs unies"
 
 #: hacks/config/cubenetic.xml.h:4
-#, fuzzy
 msgid "Display Surface Patterns"
-msgstr "Afficher les parasites."
+msgstr "Afficher les patterns de surface."
 
 #: hacks/config/cubenetic.xml.h:5
 msgid "Display Wireframe"
@@ -2134,7 +2133,7 @@ msgstr "États"
 
 #: hacks/config/discrete.xml.h:1
 msgid "Discrete"
-msgstr "Discret"
+msgstr "Discrète"
 
 #: hacks/config/discrete.xml.h:5
 msgid ""
@@ -2144,11 +2143,11 @@ msgstr ""
 
 #: hacks/config/distort.xml.h:1
 msgid "Black Hole"
-msgstr ""
+msgstr "Trou noir"
 
 #: hacks/config/distort.xml.h:2
 msgid "Bounce"
-msgstr ""
+msgstr "Rebondis"
 
 #: hacks/config/distort.xml.h:3
 msgid "Distort"
@@ -2222,7 +2221,7 @@ msgstr "Lissajous"
 
 #: hacks/config/electricsheep.xml.h:1
 msgid "ElectricSheep"
-msgstr "Mouton électrique"
+msgstr ""
 
 #: hacks/config/electricsheep.xml.h:2
 msgid ""
@@ -2270,7 +2269,7 @@ msgstr ""
 
 #: hacks/config/euler2d.xml.h:10 hacks/config/whirlwindwarp.xml.h:5
 msgid "Particles"
-msgstr "Particules à l'écran"
+msgstr "Particules"
 
 #: hacks/config/euler2d.xml.h:11
 msgid "Power"
@@ -2348,7 +2347,7 @@ msgstr ""
 
 #: hacks/config/fadeplot.xml.h:3
 msgid "FadePlot"
-msgstr "Ruban"
+msgstr ""
 
 #: hacks/config/flag.xml.h:1
 msgid "Bitmap for Flag"
@@ -2391,7 +2390,7 @@ msgstr "Complexité"
 
 #: hacks/config/flame.xml.h:8
 msgid "Flame"
-msgstr "Xflame"
+msgstr "Flame"
 
 #: hacks/config/flame.xml.h:13
 msgid "Number of Fractals"
@@ -2556,7 +2555,7 @@ msgstr ""
 
 #: hacks/config/gears.xml.h:10
 msgid "Three Gear System"
-msgstr ""
+msgstr "Système à trois roues"
 
 #: hacks/config/gflux.xml.h:2
 msgid "Checkerboard"
@@ -2608,8 +2607,7 @@ msgid ""
 msgstr ""
 "Dessine l'animation d'un quasi-feu avec des triangles en 3D dans un paysage "
 "parsemé d'arbres. Nécessite une machine ayant un support matériel accéléré "
-"de OpenGHL pour les textures. Ecris par Eric Lassauge <lassauge@mail.dotcom."
-"fr>"
+"OpenGL pour les textures. Ecris par Eric Lassauge <lassauge@mail.dotcom.fr>"
 
 #: hacks/config/glforestfire.xml.h:5
 msgid "Fog"
@@ -3366,7 +3364,7 @@ msgstr "Dessine les atomes"
 
 #: hacks/config/molecule.xml.h:7 hacks/config/spheremonics.xml.h:2
 msgid "Draw Bounding Box"
-msgstr ""
+msgstr "Dessine la boîte englobante"
 
 #: hacks/config/molecule.xml.h:8
 msgid ""
@@ -3395,7 +3393,7 @@ msgstr ""
 
 #: hacks/config/morph3d.xml.h:4
 msgid "Morph3D"
-msgstr ""
+msgstr "Morph 3D"
 
 #: hacks/config/mountain.xml.h:3
 msgid ""
@@ -3569,7 +3567,7 @@ msgstr "La mort arrive"
 
 #: hacks/config/petri.xml.h:4
 msgid "Diamond"
-msgstr "Diamand"
+msgstr "Diamant"
 
 #: hacks/config/petri.xml.h:6
 msgid "Fertility"
@@ -3581,7 +3579,7 @@ msgstr ""
 
 #: hacks/config/petri.xml.h:13
 msgid "Maxium Rate of Death"
-msgstr ""
+msgstr "Vitesse maximale de décès"
 
 #: hacks/config/petri.xml.h:14
 msgid "Maxium Rate of Growth"
@@ -3631,7 +3629,6 @@ msgid ""
 msgstr ""
 
 #: hacks/config/phosphor.xml.h:1
-#, fuzzy
 msgid ""
 "Draws a simulation of an old terminal, with large pixels and long-sustain "
 "phosphor. It can run any program as a source of the text it displays. "
@@ -3715,7 +3712,7 @@ msgstr ""
 
 #: hacks/config/pulsar.xml.h:1
 msgid "Anti-alias Lines"
-msgstr ""
+msgstr "Lignes anti-aliasées"
 
 #: hacks/config/pulsar.xml.h:3
 msgid ""
@@ -3875,9 +3872,8 @@ msgid "Reaction/Difusion"
 msgstr "Réaction/Diffusion"
 
 #: hacks/config/rd-bomb.xml.h:16
-#, fuzzy
 msgid "Seed Radius"
-msgstr "Rayon"
+msgstr "Rayon de la racine"
 
 #: hacks/config/rd-bomb.xml.h:19 hacks/config/twang.xml.h:12
 msgid "Tile Size"
@@ -3943,9 +3939,8 @@ msgid "Rotation"
 msgstr "Rotation"
 
 #: hacks/config/rocks.xml.h:10
-#, fuzzy
 msgid "Steering"
-msgstr "Démarre"
+msgstr ""
 
 #: hacks/config/rocks.xml.h:11
 msgid ""
@@ -4048,6 +4043,9 @@ msgid ""
 "OpenGL, and a machine with fast hardware support for texture maps. Written "
 "by Eric Lassauge &lt;lassauge@mail.dotcom.fr&gt;."
 msgstr ""
+"Dessine l'animation de balles texturées qui tournent comme des folles en GL. "
+"Nécessite une machine ayant un support matériel accéléré OpenGL pour les "
+"textures. Ecris par Eric Lassauge <lassauge@mail.dotcom.fr>"
 
 #: hacks/config/sballs.xml.h:5
 msgid "Icosahedron"
@@ -4825,11 +4823,11 @@ msgstr "Temps réel"
 
 #: hacks/config/xearth.xml.h:20
 msgid "Shaded Image"
-msgstr ""
+msgstr "Image ombrée"
 
 #: hacks/config/xearth.xml.h:21
 msgid "Sharp"
-msgstr ""
+msgstr "Pointu"
 
 #: hacks/config/xearth.xml.h:23
 msgid "Spacing"
@@ -4932,7 +4930,7 @@ msgstr ""
 
 #: hacks/config/xmatrix.xml.h:2
 msgid "Binary Encoding"
-msgstr "Encodag binaire"
+msgstr "Encodage binaire"
 
 #: hacks/config/xmatrix.xml.h:3
 msgid "Expansion Algorithm"
@@ -5093,13 +5091,13 @@ msgstr ""
 #~ msgstr "Choisir _Aléatoirement une image:"
 
 #~ msgid "Display Subprocess _Errors"
-#~ msgstr "Afficher les _Erreurs des sous-processus"
+#~ msgstr "Afficher les _Erreurs des économiseurs"
 
 #~ msgid "Display _Splash Screen at Startup"
 #~ msgstr "Affiche l'écran _Splash au démarrage"
 
 #~ msgid "F_ade Duration"
-#~ msgstr "Durée de _Fondu"
+#~ msgstr "Durée du _Fondu"
 
 #~ msgid "Fade from Black When _Unblanking"
 #~ msgstr "Fondu depuis le noir lors de l'arrêt"
@@ -5114,10 +5112,17 @@ msgstr ""
 #~ msgstr "Acquérir des trames _vidéo"
 
 #~ msgid "How long after the screen blanks until a password will be required."
-#~ msgstr "Durée avant qu'un mot de passe soit nécessaire."
+#~ msgstr "Durée avant qu'un mot de passe soit nécessaire après l'activation."
 
 #~ msgid "How long before the screensaver activates."
 #~ msgstr "Durée avant que le l'économiseur d'écran s'active."
+
+#~ msgid ""
+#~ "How long each display mode should run before choosing a new one (in "
+#~ "Random mode.)"
+#~ msgstr ""
+#~ "Combien de temps chaque économiseur doit fonctionner avant le passage à "
+#~ "un autre (avec l'option Mode Aléatoire)."
 
 #~ msgid "How long until the monitor goes completely black."
 #~ msgstr "Durée avant que le moniteur passe au noir."
@@ -5145,6 +5150,13 @@ msgstr ""
 #~ msgid "Sus_pend After"
 #~ msgstr "Sus_pend après"
 
+#~ msgid ""
+#~ "Whether the image-manipulating modes should operate on images captured "
+#~ "from the system's video input (if there is one.)"
+#~ msgstr ""
+#~ "Les modes qui manipulent des images sont-ils autorisés à utiliser une "
+#~ "image capturée sur le port d'entrée vidéo du système (s'il y en a un)."
+
 #~ msgid "_Advanced"
 #~ msgstr "_Avancée"
 
@@ -5169,6 +5181,9 @@ msgstr ""
 #~ msgid "_Lock Screen After"
 #~ msgstr "_Blocage de l'écran après"
 
+#~ msgid "_Mode:"
+#~ msgstr "_Mode:"
+
 #~ msgid "_Off After"
 #~ msgstr "Coup_ure après"
 
@@ -5183,6 +5198,9 @@ msgstr ""
 
 #~ msgid "_Settings..."
 #~ msgstr "_Paramètres..."
+
+#~ msgid "_Standard <<"
+#~ msgstr "_Standard <<"
 
 #~ msgid "_Verbose Diagnostics"
 #~ msgstr "Diagnostiques _verbeux"
@@ -5205,14 +5223,104 @@ msgstr ""
 #~ msgid "Arms"
 #~ msgstr "Bras"
 
+#~ msgid "Rarely"
+#~ msgstr "Rarement"
+
 #~ msgid "Tentacles"
 #~ msgstr "Tentacules"
 
-#~ msgid "90 deg Rotation Speed"
+#~ msgid "Turn speed"
 #~ msgstr "Vitesse de rotation"
+
+#~ msgid "Draw Eyes"
+#~ msgstr "Affiche les yeux"
+
+#~ msgid ""
+#~ "Draws an animation of a textured tunnel in GL. Requires OpenGL, and a "
+#~ "machine with fast hardware support for texture maps. Written by Eric "
+#~ "Lassauge &lt;lassauge@mail.dotcom.fr&gt;."
+#~ msgstr ""
+#~ "Dessine l'animation d'un tunnel texturé en 3D quasi-hypnotique.Nécessite "
+#~ "une machine ayant un support matériel accéléré OpenGL pour les textures. "
+#~ "Ecris par Eric Lassauge <lassauge@mail.dotcom.fr>"
+
+#~ msgid "Use light"
+#~ msgstr "Utiliser les éclairages"
+
+#~ msgid "Barcode"
+#~ msgstr "Code barre"
+
+#~ msgid "90 deg Rotation Speed"
+#~ msgstr "Vitesse de rotation à 90°"
+
+#~ msgid "Linux"
+#~ msgstr "Linux"
+
+#~ msgid "MacOS X"
+#~ msgstr "MacOS X"
+
+#~ msgid "Windows 3.1"
+#~ msgstr "Windows 3.1"
+
+#~ msgid "Frame Rate"
+#~ msgstr "Vitesse d'affichage"
+
+#~ msgid "Hide Sheep"
+#~ msgstr "Cache le mouton"
+
+#~ msgid "Nickname"
+#~ msgstr "Pseudo"
+
+#~ msgid "Repititions of each Sheep"
+#~ msgstr "Répérition de chaque mouton"
+
+#~ msgid "Standalone"
+#~ msgstr "Autonome"
 
 #~ msgid "Endgame"
 #~ msgstr "Fin de partie"
+
+#~ msgid "Eruption"
+#~ msgstr "Eruption"
+
+#~ msgid "Heat"
+#~ msgstr "Chaleur"
+
+#~ msgid "Inferno"
+#~ msgstr "Enfer"
+
+#~ msgid "Little"
+#~ msgstr "Peu"
+
+#~ msgid "Negative"
+#~ msgstr "Négative"
+
+#~ msgid "Number of Particles"
+#~ msgstr "Nombre de particules"
+
+#~ msgid "Pleasant"
+#~ msgstr "Agréable"
+
+#~ msgid "Positive"
+#~ msgstr "Positive"
+
+#~ msgid "Classic"
+#~ msgstr "Classique"
+
+#~ msgid "Fire"
+#~ msgstr "Feux"
+
+#~ msgid "Insane"
+#~ msgstr "Fou"
+
+#~ msgid "Psychedelic"
+#~ msgstr "Psychédilique"
+
+#~ msgid "RGB"
+#~ msgstr "RVB"
+
+#~ msgid "Water"
+#~ msgstr "Eau"
 
 #~ msgid "Delay (Large = low cpu load)"
 #~ msgstr "Délai (élevé = peu de charge CPU)"
@@ -5253,6 +5361,9 @@ msgstr ""
 #~ msgid "Giant Lavalite"
 #~ msgstr "Lavalite géante"
 
+#~ msgid "LavaLite"
+#~ msgstr "Lavalite"
+
 #~ msgid "Max Blobs"
 #~ msgstr "Blobs max"
 
@@ -5265,6 +5376,33 @@ msgstr ""
 #~ msgid "Smooth"
 #~ msgstr "Lisse"
 
+#~ msgid "Big"
+#~ msgstr "Grand"
+
+#~ msgid "MetaBall Movement"
+#~ msgstr "Mouvement des métaballes"
+
+#~ msgid "MetaBall Radius"
+#~ msgstr "Rayon des métaballes"
+
+#~ msgid "MetaBalls"
+#~ msgstr "Métaballes"
+
+#~ msgid "Number of MetaBalls"
+#~ msgstr "Nombre de métaballes"
+
+#~ msgid "Border"
+#~ msgstr "Epaisseur de la bordure"
+
+#~ msgid "End color"
+#~ msgstr "Couleur de fin"
+
+#~ msgid "Start color"
+#~ msgstr "Couleur de début"
+
+#~ msgid "popsquares"
+#~ msgstr "Carrés pops"
+
 #~ msgid "Queens"
 #~ msgstr "Reines"
 
@@ -5273,6 +5411,24 @@ msgstr ""
 
 #~ msgid "90 deg"
 #~ msgstr "90°"
+
+#~ msgid "Leave a trail"
+#~ msgstr "Trainée"
+
+#~ msgid "Linear"
+#~ msgstr "Linéaire"
+
+#~ msgid "Lissajous"
+#~ msgstr "Lissajous"
+
+#~ msgid "Test"
+#~ msgstr "Teste"
+
+#~ msgid "Use Double Buffering"
+#~ msgstr "Utilise un tampon double"
+
+#~ msgid "Wrap the screen"
+#~ msgstr "Enveloppe l'écran"
 
 #~ msgid "Knock Knock"
 #~ msgstr "Toc toc"

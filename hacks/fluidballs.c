@@ -11,13 +11,17 @@
  * Ported to X11 and xscreensaver by jwz, 27-Feb-2002.
  *
  * http://astronomy.swin.edu.au/~pbourke/modelling/fluid/
+ *
+ * Some physics improvements by Steven Barker <steve@blckknght.org>
  */
 
-/* cjb notes
- *
- * Future ideas:
+/* Future ideas:
  * Specifying a distribution in the ball sizes (with a gamma curve, possibly).
  * Brownian motion, for that extra touch of realism.
+ *
+ * It would be nice to detect when there are more balls than fit in
+ * the window, and scale the number of balls back.  Useful for the
+ * xscreensaver-demo preview, which is often too tight by default.
  */
 
 #include <math.h>
@@ -60,7 +64,7 @@ typedef struct {
   float *r;		/* ball radiuses */
 
   float *m;		/* ball mass, precalculated */
-  float e;		/* coefficient of friction, I think? */
+  float e;		/* coeficient of elasticity */
   float max_radius;	/* largest radius of any ball */
 
   Bool random_sizes_p;  /* Whether balls should be various sizes up to max. */
@@ -312,7 +316,7 @@ init_balls (Display *dpy, Window window)
   state->accy = get_float_resource ("gravity", "Gravity");
   if (state->accy < -1.0 || state->accy > 1.0) state->accy = 0.01;
 
-  state->e = get_float_resource ("friction", "Friction");
+  state->e = get_float_resource ("elasticity", "Elacitcity");
   if (state->e < 0.2 || state->e > 1.0) state->e = 0.97;
 
   state->tc = get_float_resource ("timeScale", "TimeScale");
@@ -556,7 +560,7 @@ update_balls (b_state *state)
 {
   int a, b;
   float d, vxa, vya, vxb, vyb, dd, cdx, cdy;
-  float ma, mb, vela, velb, vela1, velb1;
+  float ma, mb, vca, vcb, dva, dvb;
   float dee2;
 
   check_window_moved (state);
@@ -580,71 +584,69 @@ update_balls (b_state *state)
     }
 
   /* For each ball, compute the influence of every other ball. */
-  for (a=1; a <= state->count; a++)
-    if (a != state->mouse_ball)
-      for (b=1; b <= state->count; b++)
-        if (a != b)
-          {
-            d = ((state->px[a] - state->px[b]) *
-                 (state->px[a] - state->px[b]) +
-                 (state->py[a] - state->py[b]) *
-                 (state->py[a] - state->py[b]));
-	    dee2 = (state->r[a] + state->r[b]) *
-	           (state->r[a] + state->r[b]);
-            if (d < dee2)
-              {
-                state->collision_count++;
-                d = sqrt(d);
-		dd = state->r[a] + state->r[b] - d;
-		/* A pair of balls that have already collided in this
-		 * current frame (and therefore touching each other)
-		 * should not have another collision calculated, hence
-		 * the fallthru if "dd ~= 0.0".
-		 */
-		if ((dd < -0.01) || (dd > 0.01))
-		  {
-                    cdx = (state->px[b] - state->px[a]) / d;
-                    cdy = (state->py[b] - state->py[a]) / d;
+  for (a=1; a <= state->count -  1; a++)
+    for (b=a + 1; b <= state->count; b++)
+      {
+         d = ((state->px[a] - state->px[b]) *
+              (state->px[a] - state->px[b]) +
+              (state->py[a] - state->py[b]) *
+              (state->py[a] - state->py[b]));
+         dee2 = (state->r[a] + state->r[b]) *
+                (state->r[a] + state->r[b]);
+         if (d < dee2)
+         {
+            state->collision_count++;
+            d = sqrt(d);
+            dd = state->r[a] + state->r[b] - d;
 
-		    /* Move each ball apart from the other by half the
-		     * 'collision' distance.
-		     */
-                    state->px[a] -= 0.5 * dd * cdx;
-                    state->py[a] -= 0.5 * dd * cdy;
-                    state->px[b] += 0.5 * dd * cdx;
-                    state->py[b] += 0.5 * dd * cdy;
+            cdx = (state->px[b] - state->px[a]) / d;
+            cdy = (state->py[b] - state->py[a]) / d;
 
-		    ma = state->m[a];
-		    mb = state->m[b];
-		    vxa = state->vx[a];
-		    vya = state->vy[a];
-		    vxb = state->vx[b];
-		    vyb = state->vy[b];
+            /* Move each ball apart from the other by half the
+             * 'collision' distance.
+             */
+            state->px[a] -= 0.5 * dd * cdx;
+            state->py[a] -= 0.5 * dd * cdy;
+            state->px[b] += 0.5 * dd * cdx;
+            state->py[b] += 0.5 * dd * cdy;
 
-		    vela = sqrt((vxa * vxa) + (vya * vya));
-		    velb = sqrt((vxb * vxb) + (vyb * vyb));
+            ma = state->m[a];
+            mb = state->m[b];
 
-		    vela1 = vela * ((ma - mb) / (ma + mb)) +
-		            velb * ((2 * mb) / (ma + mb));
-		    velb1 = vela * ((2 * ma) / (ma + mb)) +
-		            velb * ((mb - ma) / (ma + mb));
+            vxa = state->vx[a];
+            vya = state->vy[a];
+            vxb = state->vx[b];
+            vyb = state->vy[b];
 
-		    vela1 *= state->e; /* "air resistance" */
-		    velb1 *= state->e;
+            vca = vxa * cdx + vya * cdy; /* the component of each velocity */
+            vcb = vxb * cdx + vyb * cdy; /* along the axis of the collision */
+
+            /* elastic collison */
+            dva = (vca * (ma - mb) + vcb * 2 * mb) / (ma + mb) - vca;
+            dvb = (vcb * (mb - ma) + vca * 2 * ma) / (ma + mb) - vcb;
+
+            dva *= state->e; /* some energy lost to inelasticity */
+            dvb *= state->e;
+
 #if 0
-		    vela1 += (frand (50) - 25) / ma; /* brownian motion */
-		    velb1 += (frand (50) - 25) / mb;
+            dva += (frand (50) - 25) / ma;   /* q: why are elves so chaotic? */
+            dvb += (frand (50) - 25) / mb;   /* a: brownian motion. */
 #endif
-		    state->vx[a] = -cdx * vela1;
-		    state->vy[a] = -cdy * vela1;
-		    state->vx[b] = cdx * velb1;
-		    state->vy[b] = cdy * velb1;
-                  }
-              }
-          }
 
-  /* Force all balls to be on screen.
-   */
+            vxa += dva * cdx;
+            vya += dva * cdy;
+            vxb += dvb * cdx;
+            vyb += dvb * cdy;
+
+            state->vx[a] = vxa;
+            state->vy[a] = vya;
+            state->vx[b] = vxb;
+            state->vy[b] = vyb;
+         }
+      }
+
+   /* Force all balls to be on screen.
+    */
   for (a=1; a <= state->count; a++)
     {
       if (state->px[a] <= (state->xmin + state->r[a]))
@@ -743,7 +745,7 @@ char *defaults [] = {
   "*random:		True",
   "*gravity:		0.01",
   "*wind:		0.00",
-  "*friction:		0.8",
+  "*elasticity:		0.97",
   "*timeScale:		1.0",
   "*doFPS:		False",
   "*shake:		True",
@@ -763,7 +765,7 @@ XrmOptionDescRec options [] = {
   { "-count",		".count",	XrmoptionSepArg, 0 },
   { "-gravity",		".gravity",	XrmoptionSepArg, 0 },
   { "-wind",		".wind",	XrmoptionSepArg, 0 },
-  { "-friction",	".friction",	XrmoptionSepArg, 0 },
+  { "-elasticity",	".elasticity",	XrmoptionSepArg, 0 },
   { "-fps",		".doFPS",	XrmoptionNoArg, "True" },
   { "-no-fps",		".doFPS",	XrmoptionNoArg, "False" },
   { "-shake",		".shake",	XrmoptionNoArg, "True" },

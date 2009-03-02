@@ -213,7 +213,10 @@ setup_xpm_texture (ModeInfo *mi, char **xpm_data)
   clear_gl_error();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                image->width, image->height, 0,
-               GL_RGBA, GL_UNSIGNED_BYTE, image->data);
+               GL_RGBA,
+               /* GL_UNSIGNED_BYTE, */
+               GL_UNSIGNED_INT_8_8_8_8_REV,
+               image->data);
   sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
   check_gl_error(buf);
 
@@ -240,7 +243,10 @@ setup_file_texture (ModeInfo *mi, char *filename)
   clear_gl_error();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                image->width, image->height, 0,
-               GL_RGBA, GL_UNSIGNED_BYTE, image->data);
+               GL_RGBA,
+               /* GL_UNSIGNED_BYTE, */
+               GL_UNSIGNED_INT_8_8_8_8_REV,
+               image->data);
   sprintf (buf, "texture: %.100s (%dx%d)",
            filename, image->width, image->height);
   check_gl_error(buf);

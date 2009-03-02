@@ -289,9 +289,22 @@ launch_text_generator (sws_configuration *sc)
           }
       }
 #endif /* __linux__ */
+
+#ifdef __APPLE__   /* MacOS X + XDarwin */
+      {
+        static int done_once = 0;
+        if (!done_once)
+          {
+            struct stat st;
+            static char *cmd = "cat /usr/X11R6/README";
+            if (!stat (cmd+4, &st))
+              oprogram = cmd;
+          }
+      }
+#endif /* __APPLE__ */
     }
 
- program = (char *) malloc (strlen (oprogram) + 10);
+  program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
   strcat (program, " ) 2>&1");

@@ -22,38 +22,38 @@ default::
 	@$(MAKE_SUBDIR)
 all::
 	@$(MAKE_SUBDIR)
-install:
+install::
 	@$(MAKE_SUBDIR)
-install-program:
+install-program::
 	@$(MAKE_SUBDIR)
-install-man:
+install-man::
 	@$(MAKE_SUBDIR)
-install-strip:
+install-strip::
 	@$(MAKE_SUBDIR)
-uninstall:
+uninstall::
 	@$(MAKE_SUBDIR)
-uninstall-program:
+uninstall-program::
 	@$(MAKE_SUBDIR)
-uninstall-man:
+uninstall-man::
 	@$(MAKE_SUBDIR)
-depend:
+depend::
 	@$(MAKE_SUBDIR)
-distdepend:
+distdepend::
 	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR)
-TAGS: tags
-tags:
+TAGS:: tags
+tags::
 	@$(MAKE_SUBDIR)
-clean:
+clean::
 	@$(MAKE_SUBDIR)
-distclean: clean
+distclean:: clean
 	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
 	@$(MAKE_SUBDIR)
 
-dist: tar
+dist:: tar
 
 # This really makes me sick...
-tar:
+tar::
 	@								    \
   sh config.status ;							    \
   rm -f configure ;							    \

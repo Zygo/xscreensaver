@@ -56,8 +56,6 @@ static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 # define HACK_INIT		init_flurry
 # define HACK_DRAW		draw_flurry
 # define HACK_RESHAPE		reshape_flurry
-# define HACK_HANDLE_EVENT	flurry_handle_event
-# define EVENT_MASK		PointerMotionMask
 # define flurry_opts		xlockmore_opts
 # define DEFAULTS		"*showFPS:      False   \n" \
 				"*preset:	" DEF_PRESET "   \n"
@@ -65,9 +63,6 @@ static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 
 #ifdef USE_GL
-
-#include "rotator.h"
-#include "gltrackball.h"
 
 static char *preset_str;
 
@@ -103,7 +98,6 @@ ModStruct   flurry_description = {
 #endif
 
 #include <sys/time.h>
-#include <sys/sysctl.h>
 
 #include "flurry.h"
 
@@ -129,11 +123,13 @@ double TimeInSecondsSinceStart (void) {
     return currentTime() - gTimeCounter;
 }
 
+#if 0
 #ifdef __ppc__
 static int IsAltiVecAvailable(void)
 {
     return 0;
 }
+#endif
 #endif
 
 void delete_flurry_info(flurry_info_t *flurry)
@@ -158,7 +154,9 @@ flurry_info_t *new_flurry_info(global_info_t *global, int streams, ColorModes co
 
     flurry->flurryRandomSeed = RandFlt(0.0, 300.0);
 
-    flurry->fOldTime = TimeInSecondsSinceStart() + flurry->flurryRandomSeed;
+	flurry->fOldTime = 0;
+	flurry->fTime = TimeInSecondsSinceStart() + flurry->flurryRandomSeed;
+ 	flurry->fDeltaTime = flurry->fTime - flurry->fOldTime;
 
     flurry->numStreams = streams;
     flurry->streamExpansion = thickness;
@@ -216,6 +214,7 @@ void GLSetupRC(global_info_t *global)
     glEnableClientState(GL_VERTEX_ARRAY);	
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     
+#if 0
 #ifdef __ppc__
     global->optMode = OPT_MODE_SCALAR_FRSQRTE;
 
@@ -226,6 +225,7 @@ void GLSetupRC(global_info_t *global)
 #else
     global->optMode = OPT_MODE_SCALAR_BASE;
 #endif
+#endif /* 0 */
 }
 
 void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
@@ -263,6 +263,7 @@ void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
 	case OPT_MODE_SCALAR_BASE:
 	    UpdateSmoke_ScalarBase(global, flurry, flurry->s);
 	    break;
+#if 0
 #ifdef __ppc__
 	case OPT_MODE_SCALAR_FRSQRTE:
 	    UpdateSmoke_ScalarFrsqrte(global, flurry, flurry->s);
@@ -276,6 +277,8 @@ void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
 	    UpdateSmoke_VectorUnrolled(global, flurry, flurry->s);
 	    break;
 #endif
+#endif /* 0 */
+
 	default:
 	    break;
     }
@@ -287,17 +290,21 @@ void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
 
     switch(global->optMode) {
 	case OPT_MODE_SCALAR_BASE:
+#if 0
 #ifdef __ppc__
 	case OPT_MODE_SCALAR_FRSQRTE:
 #endif
+#endif /* 0 */
 	    DrawSmoke_Scalar(global, flurry, flurry->s, b);
 	    break;
+#if 0
 #ifdef __VEC__
 	case OPT_MODE_VECTOR_SIMPLE:
 	case OPT_MODE_VECTOR_UNROLLED:
 	    DrawSmoke_Vector(global, flurry, flurry->s, b);
 	    break;
 #endif
+#endif /* 0 */
 	default:
 	    break;
     }    
@@ -332,32 +339,6 @@ void reshape_flurry(ModeInfo *mi, int width, int height)
     GLResize(global, (float)width, (float)height);
 }
 
-Bool
-flurry_handle_event (ModeInfo *mi, XEvent *event)
-{
-    global_info_t *global = flurry_info + MI_SCREEN(mi);
-
-    if (event->xany.type == ButtonPress && event->xbutton.button & Button1) {
-	global->button_down_p = True;
-	gltrackball_start (global->trackball,
-		event->xbutton.x, event->xbutton.y,
-		MI_WIDTH (mi), MI_HEIGHT (mi));
-	return True;
-    }
-    else if (event->xany.type == ButtonRelease && event->xbutton.button & Button1) {
-	global->button_down_p = False;
-	return True;
-    }
-    else if (event->xany.type == MotionNotify && global->button_down_p) {
-	gltrackball_track (global->trackball,
-		event->xmotion.x, event->xmotion.y,
-		MI_WIDTH (mi), MI_HEIGHT (mi));
-	return True;
-    }
-
-    return False;
-}
-
 void
 init_flurry(ModeInfo * mi)
 {
@@ -385,9 +366,6 @@ init_flurry(ModeInfo * mi)
     global = &flurry_info[screen];
 
     global->window = MI_WINDOW(mi);
-
-    global->rot = make_rotator(1, 1, 1, 1, 0, True);
-    global->trackball = gltrackball_init();
 
     global->flurry = NULL;
 

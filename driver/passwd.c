@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -153,7 +153,7 @@ passwd_valid_p (const char *typed_passwd, Bool verbose_p)
                            "%s: authentication via %s passwords failed.\n",
                            blurb(), methods[j].name);
               fprintf (stderr,
-                       "%s: but authentication via %s passwords succeeded.\n",
+                       "%s: authentication via %s passwords succeeded.\n",
                        blurb(), methods[i].name);
             }
 

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.07
-!                              03-Feb-2003
+!                              version 4.08
+!                              18-Feb-2003
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -289,6 +289,7 @@
  	                	eruption -root				    \n\
  	                	popsquares -root			    \n\
  	                	barcode -root				    \n\
+ 	                	piecewise -root				    \n\
   color: 			bubbles -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
@@ -333,12 +334,14 @@
 @GL_KLUDGE@ GL:			glsnake -root				    \n\
 @GL_KLUDGE@ GL:			boxed -root				    \n\
 @GL_KLUDGE@ GL:			glforestfire -root			    \n\
+-	   GL:			glforestfire -root -rain		    \n\
 @GL_KLUDGE@ GL:			sballs -root				    \n\
 @GL_KLUDGE@ GL:			cubenetic -root				    \n\
 @GL_KLUDGE@ GL:			spheremonics -root			    \n\
 @GL_KLUDGE@ GL:			lavalite -root				    \n\
 @GL_KLUDGE@ GL:			queens -root				    \n\
 @GL_KLUDGE@ GL:			endgame -root				    \n\
+@GL_KLUDGE@ GL:			atunnel -root				    \n\
 -	   GL:			glblur -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\

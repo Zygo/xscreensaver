@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998, 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998, 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -140,7 +140,7 @@ main (int argc, char **argv)
 
   hack_uid (si);
 
-  if (! lock_init (argc, argv, si->prefs.verbose_p))
+  if (! lock_init (argc, argv, True))
     {
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
@@ -171,7 +171,6 @@ main (int argc, char **argv)
       XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
       load_init_file (&si->prefs);
-
     }
 
   p->verbose_p = True;

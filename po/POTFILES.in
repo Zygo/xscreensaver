@@ -1,4 +1,4 @@
-# Auto-generated: Mon Feb  3 04:06:28 PST 2003
+# Auto-generated: Tue Feb 18 22:47:48 PST 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -11,6 +11,7 @@ hacks/config/ant.xml
 hacks/config/apollonian.xml
 hacks/config/atlantis.xml
 hacks/config/attraction.xml
+hacks/config/atunnel.xml
 hacks/config/barcode.xml
 hacks/config/blaster.xml
 hacks/config/blitspin.xml
@@ -105,6 +106,7 @@ hacks/config/penetrate.xml
 hacks/config/penrose.xml
 hacks/config/petri.xml
 hacks/config/phosphor.xml
+hacks/config/piecewise.xml
 hacks/config/pipes.xml
 hacks/config/polyominoes.xml
 hacks/config/popsquares.xml

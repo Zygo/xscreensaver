@@ -1936,7 +1936,9 @@ gl_init(ModeInfo *mi)
           clear_gl_error();
 	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		       lc->texture->width, height, 0,
-		       GL_RGBA, GL_UNSIGNED_BYTE,
+		       GL_RGBA,
+                       /* GL_UNSIGNED_BYTE, */
+                       GL_UNSIGNED_INT_8_8_8_8_REV,
 		       (lc->texture->data +
 			(lc->texture->bytes_per_line * height * i)));
           check_gl_error("texture");

@@ -493,6 +493,37 @@ lock_initialization (saver_info *si, int *argc, char **argv)
       si->locking_disabled_p = True;
       si->nolock_reason = "running under GDM";
     }
+
+  /* If the server is XDarwin (MacOS X) then disable locking.
+     (X grabs only affect X programs, so you can use Command-Tab
+     to bring any other Mac program to the front, e.g., Terminal.)
+   */
+  if (!si->locking_disabled_p)
+    {
+      int op = 0, event = 0, error = 0;
+      Bool macos_p = False;
+
+#ifdef __APPLE__
+      /* Disable locking if *running* on Apple hardware, since we have no
+         reliable way to determine whether the server is running on MacOS.
+         Hopefully __APPLE__ means "MacOS" and not "Linux on Mac hardware"
+         but I'm not really sure about that.
+       */
+      macos_p = True;
+#endif
+
+      if (!macos_p)
+        /* This extension exists on the Apple X11 server, but not
+           on earlier versions of the XDarwin server. */
+        macos_p = XQueryExtension (si->dpy, "Apple-DRI", &op, &event, &error);
+
+      if (macos_p)
+        {
+          si->locking_disabled_p = True;
+          si->nolock_reason = "Cannot lock securely on MacOS X";
+        }
+    }
+
 #endif /* NO_LOCKING */
 }
 
@@ -688,11 +719,17 @@ print_banner (saver_info *si)
       fprintf (stderr, "%s: in process %lu.\n", blurb(),
 	       (unsigned long) getpid());
     }
+}
+
+static void
+print_lock_failure_banner (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
 
   /* If locking was not able to be initalized for some reason, explain why.
      (This has to be done after we've read the lock_p resource.)
    */
-  if (p->lock_p && si->locking_disabled_p)
+  if (si->locking_disabled_p)
     {
       p->lock_p = False;
       fprintf (stderr, "%s: locking is disabled (%s).\n", blurb(),
@@ -707,6 +744,7 @@ print_banner (saver_info *si)
 		 "\t See the manual for details.\n",
 		 blurb());
     }
+
 }
 
 
@@ -1250,6 +1288,7 @@ main (int argc, char **argv)
       exit (1);
 
   lock_initialization (si, &argc, argv);
+  print_lock_failure_banner (si);
 
   if (p->xsync_p) XSynchronize (si->dpy, True);
 
@@ -1892,6 +1931,8 @@ analyze_display (saver_info *si)
         False
 #     endif
    }, { "XINERAMA",                             "Xinerama",
+        True
+   }, { "Apple-DRI",                            "Apple-DRI (XDarwin)",
         True
    },
   };

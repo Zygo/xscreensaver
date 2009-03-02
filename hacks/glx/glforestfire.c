@@ -191,6 +191,7 @@ static XrmOptionDescRec opts[] = {
     {(char *) "-wander", (char *) ".fire.wander", XrmoptionNoArg, (caddr_t) "on"},
     {(char *) "+wander", (char *) ".fire.wander", XrmoptionNoArg, (caddr_t) "off"},
     {(char *) "-trees", (char *) ".fire.trees", XrmoptionSepArg, (caddr_t) NULL},
+    {(char *) "-rain", (char *) ".fire.count", XrmoptionNoArg, (caddr_t) "0"},
 
 };
 
@@ -338,8 +339,13 @@ static float gettimerain(void)
 {
 #if 0
   /* Oh yeah, *that's* portable!  WTF. */
+  /* 
+   * I really thought clock() was standard ... EL
+   * I found this on the net:
+   * The clock() function conforms to ISO/IEC 9899:1990 (``ISO C89'') 
+   * */
 
-  static clock_t told=0;
+  static clock_t told= (clock_t)0;
   clock_t tnew,ris;
 
   tnew=clock();
@@ -348,9 +354,9 @@ static float gettimerain(void)
 
   told=tnew;
 
-  return (ris/(float)CLOCKS_PER_SEC);
+  return (0.0125 + ris/(float)CLOCKS_PER_SEC);
 #else
-  return 0;
+  return 0.0150;
 #endif
 }
 
@@ -590,8 +596,11 @@ static void inittextures(ModeInfo * mi)
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		     fs->gtexture->width, fs->gtexture->height, 0,
-		     GL_RGBA, GL_UNSIGNED_BYTE, fs->gtexture->data);
+                 fs->gtexture->width, fs->gtexture->height, 0,
+                 GL_RGBA,
+                 /* GL_UNSIGNED_BYTE, */
+                 GL_UNSIGNED_INT_8_8_8_8_REV,
+                 fs->gtexture->data);
     check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -619,8 +628,11 @@ static void inittextures(ModeInfo * mi)
 
         clear_gl_error();
 	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		     	fs->ttexture->width, fs->ttexture->height, 0,
-		     	GL_RGBA, GL_UNSIGNED_BYTE, fs->ttexture->data);
+                     fs->ttexture->width, fs->ttexture->height, 0,
+                     GL_RGBA,
+                     /* GL_UNSIGNED_BYTE, */
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     fs->ttexture->data);
         check_gl_error("texture");
 
 	    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);

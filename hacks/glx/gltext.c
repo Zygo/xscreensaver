@@ -177,13 +177,16 @@ parse_text (ModeInfo *mi)
                                      strlen(uts.sysname) +
                                      strlen(uts.version) +
                                      strlen(uts.release) + 10);
-#  ifdef _AIX
+#  if defined(_AIX)
           sprintf(tp->text, "%s\n%s %s.%s",
                   uts.nodename, uts.sysname, uts.version, uts.release);
-#  else  /* !_AIX */
+#  elif defined(__APPLE__)  /* MacOS X + XDarwin */
+          sprintf(tp->text, "%s\n%s %s\n%s",
+                  uts.nodename, uts.sysname, uts.release, uts.machine);
+#  else
           sprintf(tp->text, "%s\n%s %s",
                   uts.nodename, uts.sysname, uts.release);
-#  endif /* !_AIX */
+#  endif /* special system types */
         }
 # else	/* !HAVE_UNAME */
 #  ifdef VMS
