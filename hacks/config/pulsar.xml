@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pulsar" _label="Pulsar">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+   <number id="quads" type="spinbutton" arg="-quads %"
+            _label="Quad Count" low="1" high="50" default="5"/>
+
+  <hgroup>
+   <vgroup>
+     <boolean id="light"     _label="Enable Lighting" arg-set="-light"/>
+     <boolean id="fog"       _label="Enable Fog" arg-set="-fog"/>
+     <boolean id="texture"   _label="Enable Texturing" arg-set="-texture"/>
+     <boolean id="mipmap" _label="Enable Texture Mipmaps" arg-set="-mipmap"/>
+   </vgroup>
+   <vgroup>
+     <boolean id="no-blend"  _label="Enable Blending" arg-unset="-no-blend"/>
+     <boolean id="antialias" _label="Anti-alias Lines" arg-set="-antialias"/>
+     <boolean id="texture_quality" _label="Enable Texture Filtering"
+                              arg-set="-texture_quality"/>
+     <boolean id="do_depth" _label="Enable Depth Buffer" arg-set="-do_depth"/>
+   </vgroup>
+ </hgroup>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws some intersecting planes, making use of alpha blending, fog,
+textures, and mipmaps.
+
+Written by David Konerding; 1999.
+  </_description>
+</screensaver>

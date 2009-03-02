@@ -1,0 +1,71 @@
+.TH XScreenSaver 1 "12-Jun-97" "X Version 11"
+.SH NAME
+halo - draw circular patterns
+.SH SYNOPSIS
+.B halo
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-count \fIint\fP] [\-delay \fIusecs\fP] [\-mode seuss | ramp | random ] [\-animate] [\-colors \fIinteger\fP] 
+.SH DESCRIPTION
+The \fIhalo\fP program draws cool patterns based on circles.
+.SH OPTIONS
+.I halo
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-count \fIinteger\fP
+How many circles to draw.  Default 0, meaning random.
+.TP 8
+.B \-mode "seuss | ramp | random"
+In \fIseuss\fP mode, alternating striped curves will be drawn.
+
+In \fIramp\fP mode, a color ramp will be drawn.
+
+\fIrandom\fP means pick the mode randomly.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 100000, or about 0.1 second.
+.TP 8
+.B \-colors \fIinteger\fP
+How many colors to use.  Default 100.
+.TP 8
+.B \-animate
+If specified, then the centerpoints of the circles will bounce around.
+Otherwise, the circles will be drawn once, erased, and a new set of
+circles will be drawn.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 6-jul-93.

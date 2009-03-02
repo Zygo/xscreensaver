@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cube21" _label="Cube 21">
+
+  <command arg="-root"/>
+
+  <number id="cubesize" type="slider" arg="-cubesize %"
+    _label="Cube size" _low-label="Small" _high-label="Large"
+    low="0.4" high="1.0" default="0.7"/>  
+
+  <number id="speed" type="slider" arg="-delay %"
+    _label="Global speed" _low-label="Slow" _high-label="Fast"
+    low="0" high="30000" default="20000" convert="invert"/>
+
+  <number id="rotspeed" type="slider" arg="-rotspeed %"
+    _label="Rotation" _low-label="Slow" _high-label="Fast"
+    low="1.0" high="10.0" default="3.0"/>
+
+  <number id="wanderspeed" type="slider" arg="-wanderspeed %"
+    _label="Wandering" _low-label="Slow" _high-label="Fast"
+    low="0.3" high="3.0" default="1.0"/>  
+
+  <number id="spinspeed" type="slider" arg="-spinspeed %"
+    _label="Spinning" _low-label="Slow" _high-label="Fast"
+    low="0.5" high="4.0" default="1.0"/>  
+
+  <number id="wait" type="slider" arg="-wait %"
+    _label="Delay in ending position" _low-label="Short" _high-label="Long"
+    low="10.0" high="100.0" default="40.0"/>
+
+  <select id="start">
+    <option id="cube"    _label="Start as cube" arg-set="-no-randomize"/>
+    <option id="shuffle" _label="Start as random shape"/>
+  </select>
+
+  <select id="colors">
+    <option id="white" _label="White"  arg-set="-colormode white"/>
+    <option id="one"   _label="Random color" arg-set="-colormode rnd"/>
+    <option id="se"    _label="Silver Edition" arg-set="-colormode se"/>
+    <option id="two"   _label="Two random colors" arg-set="-colormode two"/>
+    <option id="ce"    _label="Classic Edition" arg-set="-colormode ce"/>
+    <option id="six"   _label="Six random colors"/>
+  </select>
+  
+  <hgroup>
+  <boolean id="spin"    _label="Spin"                   arg-unset="-no-spin"/>
+  <boolean id="wander"  _label="Wander"                 arg-unset="-no-wander"/>
+  <boolean id="tex"     _label="Textured"               arg-unset="-no-texture"/>
+  </hgroup>
+  <hgroup>
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+  </hgroup>
+
+  <_description>
+Animates a Rubik-like puzzle known as Cube 21 or Square-1.
+The rotations are chosen randomly.
+
+Written by Vasek Potocek; 2005.
+  </_description>
+</screensaver>

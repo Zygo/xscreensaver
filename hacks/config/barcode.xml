@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="barcode" _label="Barcode">
+
+  <command arg="-root"/>
+
+  <select id="mode">
+    <option id="scroll"  _label="Scrolling Barcodes"/>
+    <option id="scroll"  _label="Barcode Grid"            arg-set="-mode grid"/>
+    <option id="clock12" _label="Barcode Clock (AM/PM)"   arg-set="-mode clock12"/>
+    <option id="clock24" _label="Barcode Clock (24 Hour)" arg-set="-mode clock24"/>
+  </select>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <_description>
+Draws a random sequence of colorful barcodes scrolling across your
+screen.  CONSUME!  
+
+Written by Dan Bornstein; 2003.
+  </_description>
+</screensaver>

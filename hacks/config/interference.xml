@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="interference" _label="Interference">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Number of Waves" low="0" high="20" default="3"/>
+
+  <number id="gridsize" type="spinbutton" arg="-gridsize %"
+          _label="Magnification" low="1" high="20" default="4"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Anim Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="30000"
+          convert="invert"/>
+
+  <number id="wspeed" type="slider" arg="-speed %"
+            _label="Wave Speed" _low-label="Slow" _high-label="Fast"
+            low="1" high="100" default="30"/>
+
+  <number id="radius" type="slider" arg="-radius %"
+            _label="Wave Size" _low-label="Small" _high-label="Large"
+            low="50" high="1500" default="800"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="128"/>
+
+  <number id="color_contrast" type="slider" arg="-color-shift %"
+          _label="Color Contrast" _low-label="Low" _high-label="High"
+           low="0" high="100" default="60"/>
+
+  <number id="hue" type="slider" arg="-hue %"
+          _label="Hue" _low-label="0" _high-label="360"
+           low="0" high="360" default="0"/>
+
+  <!-- #### -gray -->
+
+<!--  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/> -->
+
+  <_description>
+Color field based on computing decaying sinusoidal waves.
+
+Written by Hannu Mallat; 1998.
+  </_description>
+</screensaver>

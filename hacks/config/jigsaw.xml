@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="jigsaw" _label="Jigsaw">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="70000"
+          convert="invert"/>
+
+  <number id="delay2" type="slider" arg="-delay2 %"
+          _label="Solved Duration"
+          _low-label="0 Seconds" _high-label="1 Minute"
+          low="0" high="60" default="5"/>
+
+  <xscreensaver-image />
+
+  <_description>
+This grabs a screen image, carves it up into a jigsaw puzzle,
+shuffles it, and then solves the puzzle.  This works especially well
+when you feed it an external video signal instead of letting it grab
+the screen image (actually, I guess this is generally true...)  When
+it is grabbing a video image, it is sometimes pretty hard to guess
+what the image is going to look like once the puzzle is solved.
+
+Written by Jamie Zawinski; 1998.
+  </_description>
+</screensaver>

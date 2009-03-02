@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="mirrorblob" _label="MirrorBlob">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="hold_time" type="slider" arg="-hold_time %"
+          _label="Time until loading a new image:"
+          _low-label="10 Seconds" _high-label="5 Minutes"
+          low="10" high="300" default="30"/>
+
+  <number id="fade_speed" type="slider" arg="-fade_time %"
+          _label="Crossfade Duration:"
+          _low-label="None" _high-label="30 Seconds"
+          low="0" high="30" default="5"/>
+
+<!--
+  <number id="x_res" type="slider" arg="-x_res %"
+          _label="X Resolution" low="5" high="500" default="60"/>
+
+  <number id="y_res" type="slider" arg="-y_res %"
+          _label="Y Resolution" low="5" high="500" default="32"/>
+
+  <number id="field_points" type="slider" arg="-field_points %"
+          _label="Field Points" low="0" high="50" default="10"/>
+-->
+
+  <xscreensaver-image />
+
+  <select id="Calculation Method">
+    <option id="blobby"   _label="Blobby"/>
+    <option id="calm"     _label="Calm"           arg-set="-incremental 1"/>
+    <option id="freaky"   _label="Freaky"       arg-set="-incremental 3"/>
+    <option id="vfreaky"  _label="Very Freaky" arg-set="-incremental 2"/>
+  </select>
+
+  <boolean id="walls" _label="Enable Walls" arg-unset="-no-walls"/>
+  <boolean id="colour" _label="Enable Colouring" arg-set="-colour"/>
+  <boolean id="texture" _label="Enable Reflected Image" arg-unset="-no-texture"/>
+  <boolean id="offset_texture" _label="Offset Texture Coordinates" arg-set="-offset_texture"/>
+
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a wobbly blob that distorts the image behind it.
+
+Written by Jon Dowdall; 2003.
+  </_description>
+</screensaver>
