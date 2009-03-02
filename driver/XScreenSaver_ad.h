@@ -168,6 +168,7 @@
 - default-n:			vidwhacker -root			    \\n\
 									      \
 	   GL:			gears -root				    \\n\
+	   GL:	\"Gears (planetary)\" gears -root -planetary		    \\n\
 	   GL:			superquadrics -root			    \\n\
 	   GL:			morph3d -root				    \\n\
 	   GL:			cage -root				    \\n\
@@ -189,6 +190,7 @@
 	   GL:			gflux -root				    \\n\
 	   GL:			stonerview -root			    \\n\
 	   GL:			starwars -root				    \\n\
+	   GL:			gltext -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -219,12 +221,12 @@
 "*Dialog.Button.background:	#D0D0D0",
 "*Dialog.text.foreground:	#000000",
 "*Dialog.text.background:	#FFFFFF",
-"*Dialog.logo.foreground:	#FF0000",
-"*Dialog.logo.background:	#FFFFFF",
+"*passwd.thermometer.foreground:	#FF0000",
+"*passwd.thermometer.background:	#FFFFFF",
 "*Dialog.topShadowColor:		#E7E7E7",
 "*Dialog.bottomShadowColor:	#737373",
-"*Dialog.logo.width:		200",
-"*Dialog.logo.height:		200",
+"*Dialog.logo.width:		210",
+"*Dialog.logo.height:		210",
 "*Dialog.internalBorderWidth:	30",
 "*Dialog.borderWidth:		1",
 "*Dialog.shadowThickness:	4",
@@ -802,7 +804,8 @@ Simulates that pen-in-nested-plastic-gears toy from your childhood.     \
 By Rohit Singh.",
 "*hacks.nerverot.name: NerveRot",
 "*hacks.nerverot.documentation:                                          \
-Draws a rolling tube, composed of nervously vibrating squiggles.	\
+Draws different shapes composed of nervously vibrating squiggles,       \
+as if seen through a camera operated by a monkey on crack.              \
 By Dan Bornstein.",
 "*hacks.webcollage.name: WebCollage",
 "*hacks.webcollage.documentation:					\
@@ -839,9 +842,9 @@ boils:small bubbles appear, and as they get closer to each other,	\
 they combine to form larger bubbles, which eventually pop.  Written	\
 by James Macnicol.",
 "*hacks.gears.documentation:						\
-This draws a set of turning, interlocking gears, rotating in three	\
-dimensions.  Another GL hack, by Danny Sung, Brian Paul, and Ed		\
-Mackey.",
+This draws sets of turning, interlocking gears, rotating in three	\
+dimensions.  Another GL hack, by Danny Sung, Brian Paul, Ed Mackey,	\
+and Jamie Zawinski.",
 "*hacks.superquadrics.documentation:					\
 Ed Mackey reports that he wrote the first version of this program in	\
 BASIC on a Commodore 64 in 1987, as a 320x200 black and white		\
@@ -935,6 +938,10 @@ screensaver.",
 Draws a stream of text slowly scrolling into the distance at an      \
 angle, over a star field, like at the beginning of the movie of the  \
 same name.  Written by Jamie Zawinski and Claudio Matauoka.",
+"*hacks.gltext.name: GLText",
+"*hacks.gltext.documentation:                                         \
+Displays a few lines of text spinning around in a solid 3D font.     \
+Written by Jamie Zawinski.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\

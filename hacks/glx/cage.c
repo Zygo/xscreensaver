@@ -82,9 +82,11 @@ static const char sccsid[] = "@(#)cage.c	4.07 98/01/04 xlockmore";
 # define PROGCLASS			"Cage"
 # define HACK_INIT			init_cage
 # define HACK_DRAW			draw_cage
+# define HACK_RESHAPE			reshape_cage
 # define cage_opts			xlockmore_opts
 # define DEFAULTS			"*cycles:		1       \n"			\
 							"*delay:		20000   \n"			\
+							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -292,8 +294,8 @@ draw_impossiblecage(cagestruct * cp)
 	glPopMatrix();
 }
 
-static void
-reshape(ModeInfo * mi, int width, int height)
+void
+reshape_cage(ModeInfo * mi, int width, int height)
 {
 	cagestruct *cp = &cage[MI_SCREEN(mi)];
 
@@ -372,7 +374,7 @@ init_cage(ModeInfo * mi)
 
 	if ((cp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_cage(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(1);
@@ -417,6 +419,7 @@ draw_cage(ModeInfo * mi)
 
 	glPopMatrix();
 
+    if (mi->fps_p) do_fps (mi);
 	glFlush();
 
 	glXSwapBuffers(display, window);

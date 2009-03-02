@@ -112,14 +112,24 @@ AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
  [if test -n "$GCC"; then
    AC_GCC_ACCEPTS_STD
    AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
+   #
+   # The reason that // comments are banned from xscreensaver is that gcc is
+   # basically the only compiler in the world that supports them in C code.
+   # All other vendors support them only in their C++ compilers, not in their
+   # ANSI C compilers.  This means that it's a portability problem: every time
+   # these comments have snuck into the xscreensaver source code, I've gotten
+   # complaints about it the next day.  So we turn off support for them in gcc
+   # as well to prevent them from accidentially slipping in.
+   #
    if test "$ac_gcc_accepts_std" = yes ; then
      #
      # -std=c89 defines __STRICT_ANSI__, which we don't want.
      # (That appears to be the only additional preprocessor symbol
      # it defines, in addition to the syntax changes it makes.)
      #
-     # -std=gnu89 is no good, because // comments were a GNU
-     # extension before they were in the ANSI C 99 spec...
+     # -std=gnu89 is no good, because // comments were a GNU extension
+     # before they were in the ANSI C 99 spec...  (gcc 2.96 permits //
+     # with -std=gnu89 but not with -std=c89.)
      #
      CC="$CC -std=c89 -U__STRICT_ANSI__"
    else
@@ -295,7 +305,12 @@ AC_DEFUN(AC_CHECK_ICMP,
                    i.icmp_id = 0;
                    i.icmp_seq = 0;
                    si.sin_family = AF_INET;
-                   ip.ip_hl = 0;],
+                   #if defined(__DECC) || defined(_IP_VHL)
+                   ip.ip_vhl = 0;
+                   #else
+                   ip.ip_hl = 0;
+                   #endif
+                   ],
                   [ac_cv_have_icmp=yes],
                   [ac_cv_have_icmp=no])])
  if test "$ac_cv_have_icmp" = yes ; then

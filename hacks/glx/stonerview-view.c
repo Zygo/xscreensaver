@@ -125,6 +125,8 @@ int init_view(int *argc, char *argv[])
   XSizeHints hints;
   GLXContext glx_context = 0;
 
+  progname = argv[0];
+
   memset (&hints, 0, sizeof(hints));
 
   for (ix=1; ix<*argc; ix++)
@@ -359,6 +361,7 @@ void win_draw(void)
 {
   int ix;
   static GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
+  static GLfloat gray[] =  { 0.6, 0.6, 0.6, 1.0 };
 
   glDrawBuffer(GL_BACK);
 
@@ -370,29 +373,32 @@ void win_draw(void)
   glRotatef(view_roty, 0.0, 1.0, 0.0);
   glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
+  glShadeModel(GL_FLAT);
+
   for (ix=0; ix<NUM_ELS; ix++) {
     elem_t *el = &elist[ix];
 
-    glPushMatrix();
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
-                 (wireframe ? white : el->col));
-    glShadeModel(GL_FLAT);
-    glBegin(wireframe ? GL_LINE_LOOP : GL_QUADS);
-
     glNormal3f(0.0, 0.0, 1.0);
-    glVertex3f(el->pos[0] - el->vervec[0], el->pos[1] - el->vervec[1], 
-      el->pos[2]);
-    glVertex3f(el->pos[0] + el->vervec[1], el->pos[1] - el->vervec[0], 
-      el->pos[2]);
-    glVertex3f(el->pos[0] + el->vervec[0], el->pos[1] + el->vervec[1], 
-      el->pos[2]);
-    glVertex3f(el->pos[0] - el->vervec[1], el->pos[1] + el->vervec[0], 
-      el->pos[2]);
 
+    /* outline the square */
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (wireframe ? white : gray));
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(el->pos[0]-el->vervec[0], el->pos[1]-el->vervec[1], el->pos[2]);
+    glVertex3f(el->pos[0]+el->vervec[1], el->pos[1]-el->vervec[0], el->pos[2]);
+    glVertex3f(el->pos[0]+el->vervec[0], el->pos[1]+el->vervec[1], el->pos[2]);
+    glVertex3f(el->pos[0]-el->vervec[1], el->pos[1]+el->vervec[0], el->pos[2]);
     glEnd();
 
-    glPopMatrix();
+    if (wireframe) continue;
+
+    /* fill the square */
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, el->col);
+    glBegin(GL_QUADS);
+    glVertex3f(el->pos[0]-el->vervec[0], el->pos[1]-el->vervec[1], el->pos[2]);
+    glVertex3f(el->pos[0]+el->vervec[1], el->pos[1]-el->vervec[0], el->pos[2]);
+    glVertex3f(el->pos[0]+el->vervec[0], el->pos[1]+el->vervec[1], el->pos[2]);
+    glVertex3f(el->pos[0]-el->vervec[1], el->pos[1]+el->vervec[0], el->pos[2]);
+    glEnd();
   }
 
   glPopMatrix();

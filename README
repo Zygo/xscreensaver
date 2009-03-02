@@ -74,6 +74,22 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.28:   * Better rendering of the new logo.
+                      * New hack, `gltext'.
+                      * Added `-planetary' option to `gears', to draw a
+                        different kind of gear system.
+                      * Made motion and rotation be smoother in `gears',
+                        `glplanet', `moebius', `rubik', and `sierpinski3d'.
+                      * Improved coloration in `sierpinski3d'.
+                      * Made the GL hacks react to window size changes.
+                      * Made most of the GL hacks take a -fps option (like
+                        `pulsar' did), so you can use them to benchmark your
+                        3D hardware.
+                      * Fixed the previous fix to `sonar'.
+                      * Minor fix to `nerverot'.
+                        Made sonar able to ping hosts on DEC OSF1.
+                      * Eliminated a bogus "didn't get enough colors" warning
+                        in some of the hacks.
 Changes since 3.27:   * New logo for xscreensaver!
                       * New hacks, `starwars' and `stonerview'.
                       * Made the motion of the bouncing ball in `stairs' be a

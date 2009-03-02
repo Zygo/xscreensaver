@@ -38,6 +38,7 @@ extern XtAppContext app;
 #define PROGCLASS	"StarWars"
 #define HACK_INIT	init_sws
 #define HACK_DRAW	draw_sws
+#define HACK_RESHAPE	reshape_sws
 #define sws_opts	xlockmore_opts
 
 #define DEF_PROGRAM    ZIPPY_PROGRAM
@@ -56,6 +57,8 @@ extern XtAppContext app;
 
 
 #define DEFAULTS	"*delay:	40000 \n"		     \
+			"*showFPS:      False \n"		     \
+			"*fpsTop:       True \n"		     \
 			"*program:	" DEF_PROGRAM		"\n" \
 			"*lines:	" DEF_LINES		"\n" \
 			"*spin:		" DEF_SPIN		"\n" \
@@ -447,9 +450,10 @@ box (double width, double height, double depth)
 
 /* Window management, etc
  */
-static void
-reshape (sws_configuration *sc, int width, int height)
+void
+reshape_sws (ModeInfo *mi, int width, int height)
 {
+  sws_configuration *sc = &scs[MI_SCREEN(mi)];
   static Bool stars_done = False;
 
   glViewport (0, 0, (GLint) width, (GLint) height);
@@ -521,7 +525,7 @@ init_sws (ModeInfo *mi)
 
   if ((sc->glx_context = init_GL(mi)) != NULL) {
     gl_init(mi);
-    reshape(sc, MI_WIDTH(mi), MI_HEIGHT(mi));
+    reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
 
@@ -628,15 +632,6 @@ draw_sws (ModeInfo *mi)
 
   if (sc->intra_line_scroll >= sc->line_height)
     {
-      static time_t reshape_time = 0;
-      time_t now = time((time_t) 0);
-      if (reshape_time != now)  /* only poll for reshape once a second */
-        {
-          reshape_time = now;
-          XGetWindowAttributes (dpy, window, &mi->xgwa);
-          reshape(sc, MI_WIDTH(mi), MI_HEIGHT(mi));
-        }
-
       sc->intra_line_scroll = 0;
 
       /* Drop the oldest line off the end. */
@@ -695,6 +690,7 @@ draw_sws (ModeInfo *mi)
 
   glPopMatrix ();
 
+  if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(dpy, window);
 

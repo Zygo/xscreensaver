@@ -37,8 +37,11 @@
 # define PROGCLASS						"Screensaver"
 # define HACK_INIT						init_screensaver
 # define HACK_DRAW						draw_screensaver
+# define HACK_RESHAPE					reshape_screensaver
 # define screensaver_opts				xlockmore_opts
-#define	DEFAULTS                        "*light:			True	\n" \
+#define	DEFAULTS                        "*delay:			10000	\n" \
+										"*showFPS:      	False	\n" \
+										"*light:			True	\n" \
                                         "*wire:				False	\n" \
                                         "*texture:			False	\n" \
 										"*image:			BUILTIN	\n" \
@@ -666,6 +669,7 @@ void draw_screensaver(ModeInfo * mi)
       dd_lasty *= scale;
     }
 
+  if (mi->fps_p) do_fps (mi);
   glXSwapBuffers(display, window);
 }
 
@@ -697,8 +701,8 @@ void resetProjection(void) {
 }
 
 /* Standard reshape function */
-static void
-reshape(int width, int height)
+void
+reshape_screensaver(ModeInfo *mi, int width, int height)
 {
   global_width=width;
   global_height=height;
@@ -736,12 +740,13 @@ void chooseScreensaverExample(void) {
 }
 
 /* main OpenGL initialization routine */
-void initializeGL(GLsizei width, GLsizei height) 
+void
+initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
   int style;
   int mode;
 
-  reshape(width, height);
+  reshape_screensaver(mi, width, height);
   glViewport( 0, 0, width, height ); 
 
   glEnable(GL_DEPTH_TEST);
@@ -791,8 +796,8 @@ void init_screensaver(ModeInfo * mi)
 
   gp->window = MI_WINDOW(mi);
   if ((gp->glx_context = init_GL(mi)) != NULL) {
-	reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
-	initializeGL(MI_WIDTH(mi), MI_HEIGHT(mi));
+	reshape_screensaver(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+	initializeGL(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 	chooseScreensaverExample();
   } else {
 	MI_CLEARWINDOW(mi);

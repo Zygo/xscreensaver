@@ -114,7 +114,7 @@ GL_SRCS		= @SAVER_GL_SRCS@
 GL_OBJS		= @SAVER_GL_OBJS@
 GL_LIBS		= @SAVER_GL_LIBS@
 
-LOGO		= $(UTILS_SRC)/logo.xpm
+LOGO		= $(UTILS_SRC)/logo-50.xpm
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c
 DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
@@ -747,8 +747,9 @@ demo-Gtk.o: $(UTILS_SRC)/resources.h
 demo-Gtk.o: $(UTILS_SRC)/visual.h
 demo-Gtk.o: $(srcdir)/remote.h
 demo-Gtk.o: $(UTILS_SRC)/usleep.h
+demo-Gtk.o: $(UTILS_SRC)/logo-50.xpm
+demo-Gtk.o: $(UTILS_SRC)/logo-180.xpm
 demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
-demo-Gtk.o: $(UTILS_SRC)/logo.xpm
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk-widgets.o: ../config.h
 demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-stubs.h

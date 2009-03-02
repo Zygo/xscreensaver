@@ -77,16 +77,18 @@ static void
 complain (int wanted_colors, int got_colors,
 	  Bool wanted_writable, Bool got_writable)
 {
-  if (wanted_writable && !got_writable)
-    fprintf(stderr,
-	    "%s: wanted %d writable colors; got %d read-only colors.\n",
-	    progname, wanted_colors, got_colors);
-
-  else if (wanted_colors > (got_colors + 10))
+  if (got_colors > wanted_colors - 10)
     /* don't bother complaining if we're within ten pixels. */
-    fprintf(stderr, "%s: wanted %d%s colors; got %d.\n",
-	    progname, wanted_colors, (got_writable ? " writable" : ""),
-	    got_colors);
+    return;
+
+  if (wanted_writable && !got_writable)
+    fprintf (stderr,
+             "%s: wanted %d writable colors; got %d read-only colors.\n",
+             progname, wanted_colors, got_colors);
+  else
+    fprintf (stderr, "%s: wanted %d%s colors; got %d.\n",
+             progname, wanted_colors, (got_writable ? " writable" : ""),
+             got_colors);
 }
 
 
@@ -477,7 +479,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
   double v[MAXPOINTS];
   double total_s = 0;
   double total_v = 0;
-  Screen *screen = DefaultScreenOfDisplay(dpy); /* #### WRONG! */
+  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   if (*ncolorsP <= 0) return;
 
@@ -560,7 +562,7 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
 {
   int ncolors = *ncolorsP;
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
-  Screen *screen = DefaultScreenOfDisplay(dpy); /* #### WRONG! */
+  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   double S = ((double) (random() % 34) + 66) / 100.0;	/* range 66%-100% */
   double V = ((double) (random() % 34) + 66) / 100.0;	/* range 66%-100% */
@@ -606,7 +608,7 @@ make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
   int ncolors = *ncolorsP;
   int i;
-  Screen *screen = DefaultScreenOfDisplay(dpy); /* #### WRONG! */
+  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   if (*ncolorsP <= 0) return;
 

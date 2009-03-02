@@ -38,13 +38,15 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define PROGCLASS					"Sierpinski3D"
 # define HACK_INIT					init_gasket
 # define HACK_DRAW					draw_gasket
+# define HACK_RESHAPE				reshape_gasket
 # define gasket_opts				xlockmore_opts
-# define DEFAULTS	"*count:		1       \n"			\
-			"*cycles:		9999    \n"			\
-			"*delay:		20000   \n"			\
-			"*maxDepth:		5       \n"			\
-			"*speed:		150     \n"			\
-			"*wireframe:	False	\n"
+# define DEFAULTS					"*count:		1       \n"			\
+									"*cycles:		9999    \n"			\
+									"*delay:		20000   \n"			\
+									"*maxDepth:		5       \n"			\
+									"*speed:		150     \n"			\
+									"*showFPS:      False   \n"			\
+									"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -86,16 +88,21 @@ typedef struct{
 } GL_VECTOR;
 
 typedef struct {
-  GLfloat     view_rotx, view_roty, view_rotz;
-  GLfloat     light_colour[4];/* = {6.0, 6.0, 6.0, 1.0}; */
-  GLfloat     pos[3];/* = {0.0, 0.0, 0.0}; */
-  GLfloat     xinc,yinc,zinc;
+  GLfloat rotx, roty, rotz;	   /* current object rotation */
+  GLfloat dx, dy, dz;		   /* current rotational velocity */
+  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
+  GLfloat d_max;			   /* max velocity */
+
   GLfloat     angle;
   GLuint      gasket1;
   GLXContext *glx_context;
   Window      window;
 
   int current_depth;
+
+  int ncolors;
+  XColor *colors;
+  int ccolor;
 
 } gasketstruct;
 
@@ -335,40 +342,67 @@ compile_gasket(ModeInfo *mi)
 static void
 draw(ModeInfo *mi)
 {
+  Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
   static int tick = 0;
   
-  static float position0[] = {-0.5,  1.2, 0.5, 0.0};
-  static float ambient0[]  = {0.4, 0.6, 0.4, 1.0};
-  static float spec[]      = {0.7, 0.7, 0.7, 1.0};
+  static GLfloat pos[4] = {-4.0, 3.0, 10.0, 1.0};
+  static float white[]  = {1.0, 1.0, 1.0, 1.0};
+  static float color[]  = {0.0, 0.0, 0.0, 1.0};
 
-  glLightfv(GL_LIGHT0, GL_POSITION,  position0);
-  glLightfv(GL_LIGHT0, GL_AMBIENT,   ambient0);
-  glLightfv(GL_LIGHT0, GL_SPECULAR,  spec);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE,   gp->light_colour);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glShadeModel(GL_SMOOTH);
+  if (!wireframe_p)
+    {
+      glColor4fv (white);
 
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0, GL_POSITION,  pos);
+
+      color[0] = gp->colors[gp->ccolor].red   / 65536.0;
+      color[1] = gp->colors[gp->ccolor].green / 65536.0;
+      color[2] = gp->colors[gp->ccolor].blue  / 65536.0;
+      gp->ccolor++;
+      if (gp->ccolor >= gp->ncolors) gp->ccolor = 0;
+
+      glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+
+      glShadeModel(GL_SMOOTH);
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+    }
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_NORMALIZE);
   glEnable(GL_CULL_FACE);
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
   glPushMatrix();
-  glTranslatef( gp->pos[0], gp->pos[1], gp->pos[2] );  
 
-  glPushMatrix();
-  glRotatef(2*gp->angle, 1.0, 0.0, 0.0);
-  glRotatef(3*gp->angle, 0.0, 1.0, 0.0);
-  glRotatef(  gp->angle, 0.0, 0.0, 1.0);
+  {
+    static int frame = 0;
+    GLfloat x, y, z;
+
+#   define SINOID(SCALE,SIZE) \
+      ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
+    x = SINOID(0.0071, 8.0);
+    y = SINOID(0.0053, 6.0);
+    z = SINOID(0.0037, 15.0);
+    frame++;
+    glTranslatef(x, y, z);
+
+    x = gp->rotx;
+    y = gp->roty;
+    z = gp->rotz;
+    if (x < 0) x = 1 - (x + 1);
+    if (y < 0) y = 1 - (y + 1);
+    if (z < 0) z = 1 - (z + 1);
+    glRotatef(x * 360, 1.0, 0.0, 0.0);
+    glRotatef(y * 360, 0.0, 1.0, 0.0);
+    glRotatef(z * 360, 0.0, 0.0, 1.0);
+  }
+
   glScalef( 8.0, 8.0, 8.0 );
   glCallList(gp->gasket1);
-  
-  glPopMatrix();
 
   glPopMatrix();
 
@@ -385,17 +419,13 @@ draw(ModeInfo *mi)
       compile_gasket (mi);
       glEndList();
 
-      /* do the colour change */
-      gp->light_colour[0] = 3.0*SINF(gp->angle/20.0) + 4.0;
-      gp->light_colour[1] = 3.0*SINF(gp->angle/30.0) + 4.0;
-      gp->light_colour[2] = 3.0*SINF(gp->angle/60.0) + 4.0;
     }
 }
 
 
 /* new window size or exposure */
-static void
-reshape(int width, int height)
+void
+reshape_gasket(ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
@@ -411,9 +441,6 @@ reshape(int width, int height)
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -15.0);
   
-  /* The depth buffer will be cleared, if needed, before the
-  * next frame.  Right now we just want to black the screen.
-  */
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -422,16 +449,6 @@ pinit(ModeInfo *mi)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
-  gp->xinc = 0.1*(1.0*random()/RAND_MAX);
-  gp->yinc = 0.1*(1.0*random()/RAND_MAX);
-  gp->zinc = 0.1*(1.0*random()/RAND_MAX);
-  gp->light_colour[0] = 6.0;
-  gp->light_colour[1] = 6.0;
-  gp->light_colour[2] = 6.0;
-  gp->light_colour[3] = 1.0;
-  gp->pos[0] = 0.0;     
-  gp->pos[1] = 0.0;
-  gp->pos[2] = 0.0;    
   /* draw the gasket */
   gp->gasket1 = glGenLists(1);
   gp->current_depth = 1;       /* start out at level 1, not 0 */
@@ -440,9 +457,83 @@ pinit(ModeInfo *mi)
   glEndList();
 }
 
+
+
+/* lifted from lament.c */
+#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
+#define RANDSIGN() ((random() & 1) ? 1 : -1)
+
+static void
+rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
+{
+  double ppos = *pos;
+
+  /* tick position */
+  if (ppos < 0)
+    ppos = -(ppos + *v);
+  else
+    ppos += *v;
+
+  if (ppos > 1.0)
+    ppos -= 1.0;
+  else if (ppos < 0)
+    ppos += 1.0;
+
+  if (ppos < 0) abort();
+  if (ppos > 1.0) abort();
+  *pos = (*pos > 0 ? ppos : -ppos);
+
+  /* accelerate */
+  *v += *dv;
+
+  /* clamp velocity */
+  if (*v > max_v || *v < -max_v)
+    {
+      *dv = -*dv;
+    }
+  /* If it stops, start it going in the other direction. */
+  else if (*v < 0)
+    {
+      if (random() % 4)
+	{
+	  *v = 0;
+
+	  /* keep going in the same direction */
+	  if (random() % 2)
+	    *dv = 0;
+	  else if (*dv < 0)
+	    *dv = -*dv;
+	}
+      else
+	{
+	  /* reverse gears */
+	  *v = -*v;
+	  *dv = -*dv;
+	  *pos = -*pos;
+	}
+    }
+
+  /* Alter direction of rotational acceleration randomly. */
+  if (! (random() % 120))
+    *dv = -*dv;
+
+  /* Change acceleration very occasionally. */
+  if (! (random() % 200))
+    {
+      if (*dv == 0)
+	*dv = 0.00001;
+      else if (random() & 1)
+	*dv *= 1.2;
+      else
+	*dv *= 0.8;
+    }
+}
+
+
 void
 init_gasket(ModeInfo *mi)
 {
+  Bool wireframe_p = MI_IS_WIREFRAME(mi);
   int           screen = MI_SCREEN(mi);
   gasketstruct *gp;
 
@@ -455,14 +546,36 @@ init_gasket(ModeInfo *mi)
   gp = &gasket[screen];
 
   gp->window = MI_WINDOW(mi);
-  gp->view_rotx = NRAND(360);
-  gp->view_roty = NRAND(360);
-  gp->view_rotz = NRAND(360);
-  gp->angle = NRAND(360)/90.0;
+
+  gp->rotx = frand(1.0) * RANDSIGN();
+  gp->roty = frand(1.0) * RANDSIGN();
+  gp->rotz = frand(1.0) * RANDSIGN();
+
+  /* bell curve from 0-1.5 degrees, avg 0.75 */
+  gp->dx = (frand(1) + frand(1) + frand(1)) / (360*2);
+  gp->dy = (frand(1) + frand(1) + frand(1)) / (360*2);
+  gp->dz = (frand(1) + frand(1) + frand(1)) / (360*2);
+
+  gp->d_max = gp->dx * 2;
+
+  gp->ddx = 0.00006 + frand(0.00003);
+  gp->ddy = 0.00006 + frand(0.00003);
+  gp->ddz = 0.00006 + frand(0.00003);
+
+  gp->ddx = 0.00001;
+  gp->ddy = 0.00001;
+  gp->ddz = 0.00001;
+
+
+  gp->ncolors = 255;
+  gp->colors = (XColor *) calloc(gp->ncolors, sizeof(XColor));
+  make_smooth_colormap (0, 0, 0,
+                        gp->colors, &gp->ncolors,
+                        False, 0, False);
 
   if ((gp->glx_context = init_GL(mi)) != NULL)
   {
-    reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
+    reshape_gasket(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     pinit(mi);
   }
   else
@@ -478,7 +591,6 @@ draw_gasket(ModeInfo * mi)
   Display      *display = MI_DISPLAY(mi);
   Window        window = MI_WINDOW(mi);
   int           angle_incr = 1;
-  int           rot_incr = 1;/*MI_COUNT(mi) ? MI_COUNT(mi) : 1;*/
 
   if (!gp->glx_context) return;
 
@@ -492,16 +604,12 @@ draw_gasket(ModeInfo * mi)
 
   /* rotate */
   gp->angle = (int) (gp->angle + angle_incr) % 360;
-  if ( FABSF( gp->pos[0] ) > 8.0 ) gp->xinc = -1.0 * gp->xinc;
-  if ( FABSF( gp->pos[1] ) > 6.0 ) gp->yinc = -1.0 * gp->yinc;
-  if ( FABSF( gp->pos[2] ) >15.0 ) gp->zinc = -1.0 * gp->zinc;
-  gp->pos[0] += gp->xinc;
-  gp->pos[1] += gp->yinc;
-  gp->pos[2] += gp->zinc;    
-  gp->view_rotx = (int) (gp->view_rotx + rot_incr) % 360;
-  gp->view_roty = (int) (gp->view_roty +(rot_incr/2.0)) % 360;
-  gp->view_rotz = (int) (gp->view_rotz +(rot_incr/3.0)) % 360;
 
+  rotate(&gp->rotx, &gp->dx, &gp->ddx, gp->d_max);
+  rotate(&gp->roty, &gp->dy, &gp->ddy, gp->d_max);
+  rotate(&gp->rotz, &gp->dz, &gp->ddz, gp->d_max);
+
+  if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(display, window);
 }

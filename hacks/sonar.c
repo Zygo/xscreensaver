@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.18 $
+ * $Revision: 1.19 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -143,6 +143,18 @@
 #else
 # undef HAVE_PING
 #endif
+
+
+#ifdef HAVE_PING
+# if defined(__DECC) || defined(_IP_VHL)
+   /* This is how you do it on DEC C, and possibly some BSD systems. */
+#  define IP_HDRLEN(ip)   ((ip)->ip_vhl & 0x0F)
+# else
+   /* This is how you do it on everything else. */
+#  define IP_HDRLEN(ip)   ((ip)->ip_hl)
+# endif
+#endif /* HAVE_PING */
+
 
 /* Forward References */
 
@@ -1043,13 +1055,7 @@ getping(sonar_info *si, ping_info *pi)
 
 	gettimeofday(&now, (struct timezone *) 0);
 	ip = (struct ip *) packet;
-
-	iphdrlen = ip->ip_hl << 2;
-        /* On DEC OSF1 4.0, the preceeding line needs to be
-           iphdrlen = (ip->ip_vhl & 0x0F) << 2;
-           but I don't know how to do this portably.  -- jwz.
-         */
-
+        iphdrlen = IP_HDRLEN(ip) << 2;
 	icmph = (struct ICMP *) &packet[iphdrlen];
 
 	/* Was the packet a reply?? */
@@ -1645,7 +1651,7 @@ Sonar(sonar_info *si, Bogie *bl)
     /* Check for expired tagets and remove them from the visable list */
 
     prev = NULL;
-    for (bp = si->visable; bp != NULL; bp = bp->next) {
+    for (bp = si->visable; bp != NULL; bp = (bp ? bp->next : 0)) {
 
 	/*
 	 * Remove it from the visable list if it's expired or we have

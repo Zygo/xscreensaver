@@ -658,7 +658,6 @@ NextSproingieDisplay(int screen,int pause)
 	DisplaySproingies(screen,pause);
 }
 
-#if 0
 void
 ReshapeSproingies(int w, int h)
 {
@@ -669,8 +668,6 @@ ReshapeSproingies(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
-
-#endif
 
 void
 CleanupSproingies(int screen)

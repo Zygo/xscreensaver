@@ -134,8 +134,8 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 static int logo_x, logo_y;
 
 #ifdef XSCREENSAVER_LOGO
-# define logo_width  128
-# define logo_height 128
+# define logo_width  50
+# define logo_height 50
 #else
 # include  <X11/bitmaps/xlogo64>
 # define logo_width xlogo64_width
@@ -1128,17 +1128,23 @@ draw_maze_border (void)                         /* draw the maze outline */
       Window r;
       int x, y;
       unsigned int w, h, bw, d;
+
+      /* round up to grid size */
+      int ww = ((logo_width  / grid_width) + 1)  * grid_width;
+      int hh = ((logo_height / grid_height) + 1) * grid_height;
+
       XGetGeometry (dpy, logo_map, &r, &x, &y, &w, &h, &bw, &d);
       if (d == 1)
         XCopyPlane (dpy, logo_map, win, logo_gc,
                     0, 0, w, h,
-                    border_x + 3 + grid_width * logo_x,
-                    border_y + 3 + grid_height * logo_y, 1);
+                    border_x + 3 + grid_width  * logo_x + ((ww - w) / 2),
+                    border_y + 3 + grid_height * logo_y + ((hh - h) / 2),
+                    1);
       else
         XCopyArea (dpy, logo_map, win, logo_gc,
                    0, 0, w, h,
-                   border_x + 3 + grid_width * logo_x,
-                   border_y + 3 + grid_height * logo_y);
+                   border_x + 3 + grid_width  * logo_x + ((ww - w) / 2),
+                   border_y + 3 + grid_height * logo_y + ((hh - h) / 2));
     }
   draw_solid_square (start_x, start_y, WALL_TOP >> start_dir, tgc);
   draw_solid_square (end_x, end_y, WALL_TOP >> end_dir, tgc);
@@ -1605,10 +1611,6 @@ XrmOptionDescRec options[] = {
   { 0, 0, 0, 0 }
 };
 
-#ifdef XSCREENSAVER_LOGO
-extern void xscreensaver_logo (Display *,Drawable,Colormap, Bool next_frame_p);
-#endif
-
 void
 screenhack(Display *display, Window window)
 {
@@ -1690,12 +1692,11 @@ screenhack(Display *display, Window window)
   
 #ifdef XSCREENSAVER_LOGO
   {
-    int w, h;
-    /* round up to grid size */
-    w = ((logo_width  / grid_width) + 1)  * grid_width;
-    h = ((logo_height / grid_height) + 1) * grid_height;
-    logo_map = XCreatePixmap (dpy, win, w, h, xgwa.depth);
-    xscreensaver_logo (dpy, logo_map, xgwa.colormap, False);
+    unsigned long *pixels; /* ignored - unfreed */
+    int npixels;
+    logo_map = xscreensaver_logo (dpy, win, xgwa.colormap, bg,
+                                  &pixels, &npixels,
+                                  logo_width > 150);
   }
 #else
   if  (!(logo_map = XCreateBitmapFromData (dpy, win, logo_bits,

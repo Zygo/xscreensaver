@@ -483,6 +483,7 @@ static void setupBlotsDuo (void)
     if (blotCount >= origRequest)
     {
 	/* return immediately if this satisfies the original count request */
+	requestedBlotCount = origRequest;
 	return;
     }
 

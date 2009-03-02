@@ -70,6 +70,9 @@ extern Display *gdk_display;
 #include "remote.h"		/* for xscreensaver_command() */
 #include "usleep.h"
 
+#include "logo-50.xpm"
+#include "logo-180.xpm"
+
 #include "demo-Gtk-widgets.h"
 
 #include <stdio.h>
@@ -258,16 +261,19 @@ warning_dialog (GtkWidget *parent, const char *message,
       sprintf (name, "label%d", i++);
 
       {
-#if 0
-        char buf[255];
-#endif
         label = gtk_label_new (head);
-#if 0
-        sprintf (buf, "warning_dialog.%s.font", name);
-        GTK_WIDGET (label)->style = gtk_style_copy (GTK_WIDGET (label)->style);
-        GTK_WIDGET (label)->style->font =
-          gdk_font_load (get_string_resource (buf, "Dialog.Label.Font"));
-#endif
+
+        if (i == 1)
+          {
+            GTK_WIDGET (label)->style =
+              gtk_style_copy (GTK_WIDGET (label)->style);
+            GTK_WIDGET (label)->style->font =
+              gdk_font_load (get_string_resource("warning_dialog.headingFont",
+                                                 "Dialog.Font"));
+            gtk_widget_set_style (GTK_WIDGET (label),
+                                  GTK_WIDGET (label)->style);
+          }
+
         if (center <= 0)
           gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
         gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
@@ -425,20 +431,110 @@ paste_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 void
 about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  char buf [2048];
-  char *s = strdup (screensaver_id + 4);
-  char *s2;
+  char msg [2048];
+  char *vers = strdup (screensaver_id + 4);
+  char *s;
+  char copy[1024];
+  char *desc = "For updates, check http://www.jwz.org/xscreensaver/";
 
-  s2 = strchr (s, ',');
-  *s2 = 0;
-  s2 += 2;
+  s = strchr (vers, ',');
+  *s = 0;
+  s += 2;
 
-  sprintf (buf, "%s\n%s\n\n"
-           "For updates, check http://www.jwz.org/xscreensaver/",
-           s, s2);
-  free (s);
+  sprintf(copy, "Copyright \251 1991-2001 %s", s);
 
-  warning_dialog (GTK_WIDGET (menuitem), buf, False, 100);
+  sprintf (msg, "%s\n\n%s", copy, desc);
+
+  /* I can't make gnome_about_new() work here -- it starts dying in
+     gdk_imlib_get_visual() under gnome_about_new().  If this worked,
+     then this might be the thing to do:
+
+     #ifdef HAVE_CRAPPLET
+     {
+       const gchar *auth[] = { 0 };
+       GtkWidget *about = gnome_about_new (progclass, vers, "", auth, desc,
+                                           "xscreensaver.xpm");
+       gtk_widget_show (about);
+     }
+     #else / * GTK but not GNOME * /
+      ...
+   */
+  {
+    GdkColormap *colormap;
+    GdkPixmap *gdkpixmap;
+    GdkBitmap *mask;
+
+    GtkWidget *dialog = gtk_dialog_new ();
+    GtkWidget *hbox, *icon, *vbox, *label1, *label2, *hb, *ok;
+    GtkWidget *parent = GTK_WIDGET (menuitem);
+    while (parent->parent)
+      parent = parent->parent;
+
+    hbox = gtk_hbox_new (FALSE, 20);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
+                        hbox, TRUE, TRUE, 0);
+
+    colormap = gtk_widget_get_colormap (parent);
+    gdkpixmap =
+      gdk_pixmap_colormap_create_from_xpm_d (NULL, colormap, &mask, NULL,
+                                             (gchar **) logo_180_xpm);
+    icon = gtk_pixmap_new (gdkpixmap, mask);
+    gtk_misc_set_padding (GTK_MISC (icon), 10, 10);
+
+    gtk_box_pack_start (GTK_BOX (hbox), icon, FALSE, FALSE, 0);
+
+    vbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
+
+    label1 = gtk_label_new (vers);
+    gtk_box_pack_start (GTK_BOX (vbox), label1, TRUE, TRUE, 0);
+    gtk_label_set_justify (GTK_LABEL (label1), GTK_JUSTIFY_LEFT);
+    gtk_misc_set_alignment (GTK_MISC (label1), 0.0, 0.75);
+
+    GTK_WIDGET (label1)->style = gtk_style_copy (GTK_WIDGET (label1)->style);
+    GTK_WIDGET (label1)->style->font =
+      gdk_font_load (get_string_resource ("about.headingFont","Dialog.Font"));
+    gtk_widget_set_style (GTK_WIDGET (label1), GTK_WIDGET (label1)->style);
+
+    label2 = gtk_label_new (msg);
+    gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, 0);
+    gtk_label_set_justify (GTK_LABEL (label2), GTK_JUSTIFY_LEFT);
+    gtk_misc_set_alignment (GTK_MISC (label2), 0.0, 0.25);
+
+    GTK_WIDGET (label2)->style = gtk_style_copy (GTK_WIDGET (label2)->style);
+    GTK_WIDGET (label2)->style->font =
+      gdk_font_load (get_string_resource ("about.bodyFont","Dialog.Font"));
+    gtk_widget_set_style (GTK_WIDGET (label2), GTK_WIDGET (label2)->style);
+
+    hb = gtk_hbutton_box_new ();
+
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
+                        hb, TRUE, TRUE, 0);
+
+    ok = gtk_button_new_with_label ("OK");
+    gtk_container_add (GTK_CONTAINER (hb), ok);
+
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+    gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
+    gtk_window_set_title (GTK_WINDOW (dialog), progclass);
+
+    gtk_widget_show (hbox);
+    gtk_widget_show (icon);
+    gtk_widget_show (vbox);
+    gtk_widget_show (label1);
+    gtk_widget_show (label2);
+    gtk_widget_show (hb);
+    gtk_widget_show (ok);
+    gtk_widget_show (dialog);
+
+    gtk_signal_connect_object (GTK_OBJECT (ok), "clicked",
+                               GTK_SIGNAL_FUNC (warning_dialog_dismiss_cb),
+                               (gpointer) dialog);
+    gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
+                                  GTK_WIDGET (parent)->window);
+    gdk_window_show (GTK_WIDGET (dialog)->window);
+    gdk_window_raise (GTK_WIDGET (dialog)->window);
+  }
 }
 
 
@@ -1778,15 +1874,14 @@ maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
 /* Setting window manager icon
  */
 
-#include "logo.xpm"
-
 static void
 init_icon (GdkWindow *window)
 {
   GdkBitmap *mask = 0;
   GdkColor transp;
   GdkPixmap *pixmap =
-    gdk_pixmap_create_from_xpm_d (window, &mask, &transp, logo_xpm);
+    gdk_pixmap_create_from_xpm_d (window, &mask, &transp,
+                                  (gchar **) logo_50_xpm);
   if (pixmap)
     gdk_window_set_icon (window, 0, pixmap, mask);
 }

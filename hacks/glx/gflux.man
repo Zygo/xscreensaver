@@ -3,7 +3,13 @@
 gflux \- rippling surface graphics hack
 .SH SYNOPSIS
 .B gflux
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-squares \fInum\fP] [\-resolution \fInum\fP] [\-draw \fInum\fP] [\-flat \fInum\fP] [\-speed \fInum\fP] [\-rotationx \fInum\fP] [\-rotationy \fInum\fP] [\-rotationz \fInum\fP]  [\-waves \fInum\fP] [\-waveChange \fInum\fP] [\-waveHeight \fInum\fP] [\-waveFreq \fInum\fP] [\-zoom \fInum\fP]
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-squares \fInum\fP] [\-resolution \fInum\fP] [\-draw \fInum\fP]
+[\-flat \fInum\fP] [\-speed \fInum\fP]
+[\-rotationx \fInum\fP] [\-rotationy \fInum\fP] [\-rotationz \fInum\fP]
+[\-waves \fInum\fP] [\-waveChange \fInum\fP] [\-waveHeight \fInum\fP]
+[\-waveFreq \fInum\fP] [\-zoom \fInum\fP]
 .SH DESCRIPTION
 The \fIgflux\fP program draws a colourfull animated rippling square rotating in 3D space.
 .SH OPTIONS
@@ -55,6 +61,14 @@ Specifies the maximum frequency of ripples. default 3.0
 .TP 8
 .B \-zoom \fInum\fP\fP
 Specifies the size of the viewport. Smaller values fill the screen with rippling surface. default 1.0
+.TP 8
+.B \-delay \fImicroseconds\fP
+How long to pause between frames.  Default is 20000, or 0.02 second.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
 .SH ENVIRONMENT
 .PP
 .TP 8

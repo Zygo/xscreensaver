@@ -49,9 +49,13 @@ struct glb_config glb_config =
 #ifdef STANDALONE
 #define PROGCLASS "Bubble3D"
 #define HACK_INIT init_bubble3d
+#define HACK_RESHAPE reshape_bubble3d
 #define HACK_DRAW draw_bubble3d
 #define bubble3d_opts xlockmore_opts
-# define DEFAULTS ""
+
+# define DEFAULTS	"*delay:	10000   \n"	\
+			"*showFPS:      False   \n"
+
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -95,8 +99,8 @@ init(struct context *c)
 	c->draw_context = glb_draw_init();
 }
 
-static void
-reshape(int w, int h)
+void
+reshape_bubble3d(ModeInfo *mi, int w, int h)
 {
 	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 	glMatrixMode(GL_PROJECTION);
@@ -131,7 +135,7 @@ init_bubble3d(ModeInfo * mi)
 	c->glx_context = init_GL(mi);
 	if (c->glx_context != 0) {
 		init(c);
-		reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_bubble3d(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		do_display(c);
 		glFinish();
 		glXSwapBuffers(display, window);
@@ -155,6 +159,7 @@ draw_bubble3d(ModeInfo * mi)
 
 	do_display(c);
 
+        if (mi->fps_p) do_fps (mi);
 	glFinish();
 	glXSwapBuffers(display, window);
 }

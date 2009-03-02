@@ -64,9 +64,11 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 # define PROGCLASS			"Stairs"
 # define HACK_INIT			init_stairs
 # define HACK_DRAW			draw_stairs
+# define HACK_RESHAPE		reshape_stairs
 # define stairs_opts		xlockmore_opts
 # define DEFAULTS			"*cycles:		1       \n"			\
 							"*delay:		20000   \n"			\
+							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -414,8 +416,8 @@ draw_stairs_internal(ModeInfo * mi)
 		sp->sphere_position = 0;
 }
 
-static void
-reshape(ModeInfo * mi, int width, int height)
+void
+reshape_stairs(ModeInfo * mi, int width, int height)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 
@@ -495,7 +497,7 @@ init_stairs(ModeInfo * mi)
 
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_stairs(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(1);
@@ -541,6 +543,7 @@ draw_stairs(ModeInfo * mi)
 
 	glPopMatrix();
 
+    if (mi->fps_p) do_fps (mi);
 	glFlush();
 
 	glXSwapBuffers(display, window);

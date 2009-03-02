@@ -81,8 +81,10 @@
 #define PROGCLASS	"Lament"
 #define HACK_INIT	init_lament
 #define HACK_DRAW	draw_lament
+#define HACK_RESHAPE	reshape_lament
 #define lament_opts	xlockmore_opts
 #define DEFAULTS	"*delay:	10000   \n"	\
+			"*showFPS:      False   \n"     \
 			"*wireframe:	False	\n"	\
 			"*texture:	True	\n"
 #include "xlockmore.h"
@@ -1871,8 +1873,8 @@ rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
 /* Window management, etc
  */
 
-static void
-reshape(int width, int height)
+void
+reshape_lament(ModeInfo *mi, int width, int height)
 {
   int target_size = 180;
   int win_size = (width > height ? height : width);
@@ -2109,7 +2111,7 @@ init_lament(ModeInfo *mi)
 
   if ((lc->glx_context = init_GL(mi)) != NULL)
     {
-      reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
+      reshape_lament(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
       gl_init(mi);
     }
 
@@ -2122,7 +2124,6 @@ init_lament(ModeInfo *mi)
 void
 draw_lament(ModeInfo *mi)
 {
-  static int tick = 0;
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
@@ -2134,6 +2135,8 @@ draw_lament(ModeInfo *mi)
 
   glXMakeCurrent(dpy, window, *(lc->glx_context));
   draw(mi);
+  if (mi->fps_p) do_fps (mi);
+
   glFinish();
   glXSwapBuffers(dpy, window);
 
@@ -2148,12 +2151,6 @@ draw_lament(ModeInfo *mi)
     lc->anim_pause--;
   else
     animate(mi);
-
-  if (++tick > 500)
-    {
-      tick = 0;
-      reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
-    }
 }
 
 #endif /* USE_GL */
