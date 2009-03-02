@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="distort" _label="Distort">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="200000" default="20000"
+          convert="invert"/>
+
+  <!-- #### -speed [0] -->
+  <!-- #### -slow -->
+
+  <number id="radius" type="slider" arg="-radius %"
+          _label="Lens Size" _low-label="Small" _high-label="Large"
+          low="0" high="1000" default="0"/>
+
+  <number id="count" type="spinbutton" arg="-number %"
+          _label="Lens Count" low="0" high="10" default="0"/>
+
+  <select id="effect">
+   <option id="normal" _label="Normal"/>
+   <option id="swamp"  _label="Swamp Thing" arg-set="-effect swamp"/>
+   <option id="bounce" _label="Bounce"      arg-set="-effect bounce"/>
+  </select>
+
+  <hgroup>
+   <vgroup>
+    <boolean id="reflect" _label="Reflect"      arg-set="-reflect"/>
+    <boolean id="magnify" _label="Magnify"      arg-set="-magnify"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="blackhole" _label="Black Hole" arg-set="-blackhole"/>
+    <boolean id="vortex" _label="Vortex"        arg-set="-vortex"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-image />
+
+  <_description>
+Grabs an image of the screen, and then lets a transparent
+lens wander around the screen, magnifying whatever is underneath.
+
+Written by Jonas Munsin; 1998.
+  </_description>
+</screensaver>

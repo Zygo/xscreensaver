@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="whirlygig" _label="WhirlyGig">
+
+  <command arg="-root"/>
+
+  <number id="whirlies" type="spinbutton" arg="-whirlies %"
+          _label="Whirlies" low="1" high="50" default="40"/>
+
+  <number id="lines" type="spinbutton" arg="-nlines %"
+          _label="Lines" low="-1" high="50" default="-1"/>
+
+  <hgroup>
+    <number id="xspeed" type="spinbutton" arg="-xspeed %"
+            _label="Speed" low="0.0" high="10.0" default="1.0"/>
+    <number id="yspeed" type="spinbutton" arg="-yspeed %"
+            _label="x" low="0.0" high="10.0" default="1.0"/>
+  </hgroup>
+
+  <hgroup>
+    <number id="xamplitude" type="spinbutton" arg="-xamplitude %"
+            _label="Amplitude" low="0.0" high="10.0" default="1.0"/>
+    <number id="yamplitude" type="spinbutton" arg="-yamplitude %"
+            _label="x" low="0.0" high="10.0" default="1.0"/>
+  </hgroup>
+
+
+  <!-- #### -xmode [change] -->
+
+  <hgroup>
+   <select id="xmode">
+    <option id="random" _label="Random" />
+    <option id="spin" _label="Spin" arg-set="-xmode spin"/>
+    <option id="funky" _label="Funky" arg-set="-xmode funky"/>
+    <option id="circle" _label="Circle" arg-set="-xmode circle"/>
+    <option id="linear" _label="Linear" arg-set="-xmode linear"/>
+    <option id="test" _label="Test" arg-set="-xmode test"/>
+    <option id="fun" _label="Fun" arg-set="-xmode fun"/>
+    <option id="innie" _label="Innie" arg-set="-xmode innie"/>
+    <option id="lissajous" _label="Lissajous" arg-set="-xmode lissajous"/>
+   </select>
+
+   <select id="ymode">
+    <option id="randomy" _label="Random" />
+    <option id="spiny" _label="Spin" arg-set="-ymode spin"/>
+    <option id="funkyy" _label="Funky" arg-set="-ymode funky"/>
+    <option id="circley" _label="Circle" arg-set="-ymode circle"/>
+    <option id="lineary" _label="Linear" arg-set="-ymode linear"/>
+    <option id="testy" _label="Test" arg-set="-ymode test"/>
+    <option id="funy" _label="Fun" arg-set="-ymode fun"/>
+    <option id="inniey" _label="Innie" arg-set="-ymode innie"/>
+    <option id="lissajousy" _label="Lissajous" arg-set="-ymode lissajous"/>
+   </select>
+ </hgroup>
+
+  <!-- #### -speed [1] -->
+  <!-- #### -color_modifier [-1] -->
+  <!-- #### -start_time [-1] -->
+  <!-- #### -xoffset [1.0] -->
+  <!-- #### -yoffset [1.0] -->
+  <!-- #### -offset_period [1] -->
+
+  <hgroup>
+   <vgroup>
+    <boolean id="trail" _label="Leave a trail" arg-set="-trail 1"/>
+    <boolean id="explain" _label="Explain modes" arg-set="-explain"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="wrap" _label="Wrap the screen" arg-unset="-no-wrap"/>
+<!--    <boolean id="db" _label="Use Double Buffering" arg-unset="-no-db"/> -->
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Draws zooming chains of sinusoidal spots.
+
+Written by Ashton Trey Belew; 2001.
+  </_description>
+</screensaver>

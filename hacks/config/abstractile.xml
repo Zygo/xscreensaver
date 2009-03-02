@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="abstractile" _label="Abstractile">
+
+  <command arg="-root"/>
+
+  <number id="sleep" type="spinbutton" arg="-sleep %"
+            _label="Linger" low="0" high="60" default="2"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="5" default="3"/>
+
+  <select id="tile">
+    <option id="random" _label="Random"/>
+    <option id="random" _label="Flat"    arg-set="-tile flat"/>
+    <option id="random" _label="Thin"    arg-set="-tile thin"/>
+    <option id="random" _label="Outline" arg-set="-tile outline"/>
+    <option id="random" _label="Block"   arg-set="-tile block"/>
+    <option id="random" _label="Neon"    arg-set="-tile neon"/>
+    <option id="random" _label="Tiled"   arg-set="-tile tiled"/>
+  </select>
+
+  <_description>
+Generates mosaic patterns of interlocking tiles.  
+
+Written by Steve Sundstrom; 2004.
+  </_description>
+</screensaver>

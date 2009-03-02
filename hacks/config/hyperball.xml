@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hyperball" _label="Hyperball">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+<!--
+  <number id="z" type="slider" arg="-observer-z %"
+          _label="Zoom" _low-label="Near" _high-label="Far"
+          low="1.125" high="10.0" default="3.0"/>
+-->
+
+  <hgroup>
+    <vgroup>
+      <number id="xw" type="slider" arg="-xw %"
+              _label="XW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+      <number id="xy" type="slider" arg="-xy %"
+              _label="XY Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="3"/>
+      <number id="xz" type="slider" arg="-xz %"
+              _label="XZ Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="5"/>
+    </vgroup>
+    <vgroup>
+      <number id="yw" type="slider" arg="-yw %"
+              _label="YW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="10"/>
+      <number id="yz" type="slider" arg="-yz %"
+              _label="YZ Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+      <number id="zw" type="slider" arg="-zw %"
+              _label="ZW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+    </vgroup>
+  </hgroup>
+
+  <_description>
+Hyperball is to hypercube as dodecahedron is to cube: this displays
+a 2D projection of the sequence of 3D objects which are the projections
+of the 4D analog to the dodecahedron.  Technically, it is a "120 cell
+polytope".
+
+See also "polytopes" for a more general version of this using OpenGL.
+
+Written by Joe Keane; 2000.
+  </_description>
+</screensaver>

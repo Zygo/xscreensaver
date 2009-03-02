@@ -1,0 +1,15 @@
+/* Prefix header for all source files of the 'xscreensaver' project.
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif
+
+#include "jwxyz.h"
+
+#include <OpenGL/gl.h>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="compass" _label="Compass">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+<!--  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/> -->
+
+  <_description>
+This draws a compass, with all elements spinning about randomly, for
+that "lost and nauseous" feeling.
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>

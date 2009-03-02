@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="spiral" _label="Spiral">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="100" default="40"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Cycles" _low-label="Low" _high-label="High"
+          low="10" high="800" default="350"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="50000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <_description>
+Moving circular moire patterns.
+
+Written by Peter Schmitzberger; 1997.
+  </_description>
+</screensaver>
