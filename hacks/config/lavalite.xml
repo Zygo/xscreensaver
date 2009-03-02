@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lavalite" _label="LavaLite">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Activity" _low-label="Sparse" _high-label="Dense"
+          low="0.001" high="0.01" default="0.003"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Max Blobs" _low-label="1" _high-label="10"
+          low="1" high="10" default="3"/>
+
+  <number id="resolution" type="slider" arg="-resolution %"
+          _label="Resolution" _low-label="Low" _high-label="High"
+          low="10" high="120" default="40"/>
+
+  <boolean id="wander" _label="Wander" arg-set="-wander"/>
+
+  <select id="style">
+    <option id="classic" _label="Classic Lavalite" arg-set="-style classic"/>
+    <option id="giant"   _label="Giant Lavalite"   arg-set="-style giant"/>
+    <option id="cone"    _label="Cone Lavalite"    arg-set="-style cone"/>
+    <option id="rocket"  _label="Rocket Lavalite"  arg-set="-style rocket"/>
+    <option id="random"  _label="Random Lamp Style"/>
+  </select>
+
+  <select id="rotation">
+    <option id="no"  _label="Don't Rotate" arg-set="-no-spin"/>
+    <option id="x"   _label="Rotate around X axis"/>
+    <option id="y"   _label="Rotate around Y axis" arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis" arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="xyz" _label="Rotate around all three axes" arg-set="-spin XYZ"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"     _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid"    _label="Smooth"/>
+    <option id="solid"    _label="Faceted" arg-set="-no-smooth"/>
+  </select>
+
+  <_description>
+Draws a 3D Simulation a Lava Lite(r): odd-shaped blobs of a mysterious
+substance are heated, slowly rise to the top of the bottle, and then
+drop back down as they cool.  This program requires OpenGL and a fairly
+fast machine (both CPU and 3D performance.)  Written by Jamie Zawinski.
+
+"LAVA LITE(r) and the configuration of the LAVA(r) brand motion lamp are
+registered trademarks of Haggerty Enterprises, Inc.  The configuration
+of the globe and base of the motion lamp are registered trademarks of
+Haggerty Enterprises, Inc. in the U.S.A. and in other countries around
+the world."
+  </_description>
+</screensaver>

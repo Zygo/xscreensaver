@@ -25,7 +25,12 @@ extern char *progname;
 #if defined(HAVE_GDK_PIXBUF)
 
 # include <gdk-pixbuf/gdk-pixbuf.h>
-# include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+
+# ifdef HAVE_GTK2
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# else  /* !HAVE_GTK2 */
+#  include <gdk-pixbuf/gdk-pixbuf-xlib.h>
+# endif /* !HAVE_GTK2 */
 
 
 /* Returns an XImage structure containing the bits of the given XPM image.
@@ -47,16 +52,26 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 {
   GdkPixbuf *pb;
   static int initted = 0;
+#ifdef HAVE_GTK2
+  GError *gerr = NULL;
+#endif
 
   if (!initted)
     {
+#ifdef HAVE_GTK2
+      g_type_init ();
+#endif
       gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
       xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));
       initted = 1;
     }
 
   pb = (filename
+#ifdef HAVE_GTK2
+	? gdk_pixbuf_new_from_file (filename, &gerr)
+#else
         ? gdk_pixbuf_new_from_file (filename)
+#endif /* HAVE_GTK2 */
         : gdk_pixbuf_new_from_xpm_data ((const char **) xpm_data));
   if (pb)
     {
@@ -114,13 +129,18 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
             }
           row += stride;
         }
-      /* gdk_pixbuf_unref (pb);  -- #### does doing this free colors? */
+      gdk_pixbuf_unref (pb); /* #### does doing this free colors? */
 
       return image;
     }
   else if (filename)
     {
+#ifdef HAVE_GTK2
+      fprintf (stderr, "%s: %s\n", progname, gerr->message);
+      g_error_free (gerr);
+#else
       fprintf (stderr, "%s: unable to load %s\n", progname, filename);
+#endif /* HAVE_GTK2 */
       exit (1);
     }
   else

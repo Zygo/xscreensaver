@@ -293,10 +293,10 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
   if (window == RootWindowOfScreen (screen))
     strcpy (win, "root window");
   else
-    sprintf (win, "window 0x%x", (unsigned long) window);
+    sprintf (win, "window 0x%lx", (unsigned long) window);
 
   if (window_p)
-    sprintf (why, "-window-id 0x%x", (unsigned long) window);
+    sprintf (why, "-window-id 0x%lx", (unsigned long) window);
   else
     strcpy (why, "-root");
 
@@ -315,7 +315,7 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
         {
           fprintf (stderr, "%s: ignoring `-visual %s' because of `%s'.\n",
                    progname, visual_string, why);
-          fprintf (stderr, "%s: using %s's visual 0x%x.\n",
+          fprintf (stderr, "%s: using %s's visual 0x%lx.\n",
                    progname, win, XVisualIDFromVisual (visual));
         }
       free (visual_string);
@@ -327,7 +327,7 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
     {
       fprintf (stderr, "%s: ignoring `-install' because of `%s'.\n",
                progname, why);
-      fprintf (stderr, "%s: using %s's colormap 0x%x.\n",
+      fprintf (stderr, "%s: using %s's colormap 0x%lx.\n",
                progname, win, (unsigned long) cmap);
     }
 
@@ -502,12 +502,14 @@ main (int argc, char **argv)
       xgwa.your_event_mask |= KeyPressMask;
       XSelectInput (dpy, window, xgwa.your_event_mask);
 
-      /* Select ButtonPress events on the external window, if no other
-         app has already selected it (only one app can select ButtonPress
-         at a time: BadAccess results.)
+      /* Select ButtonPress and ButtonRelease events on the external window,
+         if no other app has already selected them (only one app can select
+         ButtonPress at a time: BadAccess results.)
        */
-      if (! (xgwa.all_event_masks & ButtonPressMask))
-        XSelectInput (dpy, window, xgwa.your_event_mask | ButtonPressMask);
+      if (! (xgwa.all_event_masks & (ButtonPressMask | ButtonReleaseMask)))
+        XSelectInput (dpy, window,
+                      (xgwa.your_event_mask |
+                       ButtonPressMask | ButtonReleaseMask));
     }
   else if (root_p)
     {
@@ -605,7 +607,8 @@ main (int argc, char **argv)
         XWindowAttributes xgwa;
         XGetWindowAttributes (dpy, window, &xgwa);
         XSelectInput (dpy, window,
-                      xgwa.your_event_mask | KeyPressMask | ButtonPressMask);
+                      (xgwa.your_event_mask | KeyPressMask |
+                       ButtonPressMask | ButtonReleaseMask));
         XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
                          PropModeReplace,
                          (unsigned char *) &XA_WM_DELETE_WINDOW, 1);

@@ -10,7 +10,7 @@
           convert="invert"/>
 
   <number id="move" type="slider" arg="-move %"
-          _label="Turn Side-to-Side" _low-label="0°" _high-label="90°"
+          _label="Turn Side-to-Side" _low-label="0 deg" _high-label="90 deg"
           low="0.0" high="3.0" default="2.0"/>
 
   <number id="wobble" type="slider" arg="-wobble %"

@@ -62,6 +62,8 @@ extern XtAppContext app;
 #define HACK_INIT	init_sponge
 #define HACK_DRAW	draw_sponge
 #define HACK_RESHAPE	reshape_sponge
+#define HACK_HANDLE_EVENT sponge_handle_event
+#define EVENT_MASK	PointerMotionMask
 #define sws_opts	xlockmore_opts
 
 #define DEF_SPIN        "True"
@@ -85,6 +87,8 @@ extern XtAppContext app;
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "rotator.h"
+#include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -111,12 +115,9 @@ typedef struct {
 
 typedef struct {
   GLXContext *glx_context;
-
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;		   /* max velocity */
-
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
   GLuint sponge_list0;            /* we store X, Y, and Z-facing surfaces */
   GLuint sponge_list1;            /* in their own lists, to make it easy  */
   GLuint sponge_list2;            /* to color them differently.           */
@@ -137,7 +138,7 @@ typedef struct {
 
 static sponge_configuration *sps = NULL;
 
-static char *do_spin;
+static Bool do_spin;
 static Bool do_wander;
 static int speed;
 static Bool do_optimize;
@@ -176,87 +177,15 @@ reshape_sponge (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
-  gluLookAt( 0.0, 0.0, 15.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -15.0);
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-/* lifted from lament.c */
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
 }
 
 
@@ -501,6 +430,40 @@ delete_redundant_faces (sponge_configuration *sp)
 }
 
 
+Bool
+sponge_handle_event (ModeInfo *mi, XEvent *event)
+{
+  sponge_configuration *sp = &sps[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      sp->button_down_p = True;
+      gltrackball_start (sp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      sp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           sp->button_down_p)
+    {
+      gltrackball_track (sp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+
 void 
 init_sponge (ModeInfo *mi)
 {
@@ -544,20 +507,17 @@ init_sponge (ModeInfo *mi)
       glEnable(GL_CULL_FACE);
     }
 
-  sp->rotx = frand(1.0) * RANDSIGN();
-  sp->roty = frand(1.0) * RANDSIGN();
-  sp->rotz = frand(1.0) * RANDSIGN();
-
-  /* bell curve from 0-3 degrees, avg 1.5 */
-  sp->dx = (frand(1) + frand(1) + frand(1)) / (360/2);
-  sp->dy = (frand(1) + frand(1) + frand(1)) / (360/2);
-  sp->dz = (frand(1) + frand(1) + frand(1)) / (360/2);
-
-  sp->d_max = sp->dx * 2;
-
-  sp->ddx = 0.00006 + frand(0.00003);
-  sp->ddy = 0.00006 + frand(0.00003);
-  sp->ddz = 0.00006 + frand(0.00003);
+  {
+    double spin_speed   = 1.0;
+    double wander_speed = 0.03;
+    sp->rot = make_rotator (do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            1.0,
+                            do_wander ? wander_speed : 0,
+                            True);
+    sp->trackball = gltrackball_init ();
+  }
 
   sp->ncolors = 128;
   sp->colors = (XColor *) calloc(sp->ncolors, sizeof(XColor));
@@ -627,39 +587,18 @@ draw_sponge (ModeInfo *mi)
   glScalef(1.1, 1.1, 1.1);
 
   {
-    GLfloat x, y, z;
+    double x, y, z;
+    get_position (sp->rot, &x, &y, &z, !sp->button_down_p);
+    glTranslatef((x - 0.5) * 8,
+                 (y - 0.5) * 6,
+                 (z - 0.5) * 15);
 
-    if (do_wander)
-      {
-        static int frame = 0;
+    gltrackball_rotate (sp->trackball);
 
-#       define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-
-        x = SINOID(0.0071, 8.0);
-        y = SINOID(0.0053, 6.0);
-        z = SINOID(0.0037, 15.0);
-        frame++;
-        glTranslatef(x, y, z);
-      }
-
-    if (do_spin)
-      {
-        x = sp->rotx;
-        y = sp->roty;
-        z = sp->rotz;
-        if (x < 0) x = 1 - (x + 1);
-        if (y < 0) y = 1 - (y + 1);
-        if (z < 0) z = 1 - (z + 1);
-
-        glRotatef(x * 360, 1.0, 0.0, 0.0);
-        glRotatef(y * 360, 0.0, 1.0, 0.0);
-        glRotatef(z * 360, 0.0, 0.0, 1.0);
-
-        rotate(&sp->rotx, &sp->dx, &sp->ddx, sp->d_max);
-        rotate(&sp->roty, &sp->dy, &sp->ddy, sp->d_max);
-        rotate(&sp->rotz, &sp->dz, &sp->ddz, sp->d_max);
-      }
+    get_rotation (sp->rot, &x, &y, &z, !sp->button_down_p);
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
   color0[0] = sp->colors[sp->ccolor0].red   / 65536.0;

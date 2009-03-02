@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -136,6 +136,12 @@ extern void HACK_DRAW(ModeInfo *);
 # define HACK_RESHAPE 0
 #endif
 
+#ifdef HACK_HANDLE_EVENT
+  extern Bool HACK_HANDLE_EVENT(ModeInfo *, XEvent *e);
+#else
+# define HACK_HANDLE_EVENT 0
+#endif
+
 
 /* Emit code for the entrypoint used by screenhack.c, and pass control
    down into xlockmore.c with the appropriate parameters.
@@ -171,9 +177,16 @@ void screenhack (Display *dpy, Window window)
 			False,
 #endif
 
+#ifdef EVENT_MASK
+			EVENT_MASK,
+#else
+			0,
+#endif
+
 			HACK_INIT,
 			HACK_DRAW,
 			HACK_RESHAPE,
+			HACK_HANDLE_EVENT,
 			HACK_FREE);
 }
 

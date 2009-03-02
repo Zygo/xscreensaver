@@ -1,0 +1,78 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+interference - decaying sinusoidal waves
+.SH SYNOPSIS
+.B interference
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-count \fInumber\fP]
+[\-gridsize \fInumber\fP]
+[\-delay \fInumber\fP]
+[\-speed \fInumber\fP]
+[\-radius \fInumber\fP]
+[\-ncolors \fInumber\fP]
+[\-color-shift \fInumber\fP]
+[\-no-db]
+.SH DESCRIPTION
+Another color-field hack, this one works by computing decaying sinusoidal
+waves, and allowing them to interfere with each other as their origins
+move.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-count \fInumber\fP
+Number of Waves.  0 - 20.  Default: 3.
+.TP 8
+.B \-gridsize \fInumber\fP
+Magnification.	1 - 20.  Default: 4.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
+.TP 8
+.B \-speed \fInumber\fP
+Wave Speed.  1 - 100.  Default: 30.
+.TP 8
+.B \-radius \fInumber\fP
+Wave Size.  50 - 1500.	Default: 800.
+.TP 8
+.B \-ncolors \fInumber\fP
+Number of Colors.  Default: 128.
+.TP 8
+.B \-color-shift \fInumber\fP
+Color Contrast.  0 - 100.  Default: 60.
+.TP 8
+.B \-db | \-no-db
+Whether to double buffer.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2002 by Hannu Mallat.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Hannu Mallat.

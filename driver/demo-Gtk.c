@@ -16,6 +16,8 @@
 
 #ifdef HAVE_GTK /* whole file */
 
+#include <xscreensaver-intl.h>
+
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
@@ -78,6 +80,18 @@
 
 #include <gdk/gdkx.h>
 
+#ifdef HAVE_GTK2
+#include <glade/glade-xml.h>
+#endif /* HAVE_GTK2 */
+
+#if defined(DEFAULT_ICONDIR) && !defined(GLADE_DIR)
+# define GLADE_DIR DEFAULT_ICONDIR
+#endif
+#if !defined(DEFAULT_ICONDIR) && defined(GLADE_DIR)
+# define DEFAULT_ICONDIR GLADE_DIR
+#endif
+
+
 #include "version.h"
 #include "prefs.h"
 #include "resources.h"		/* for parse_time() */
@@ -96,6 +110,13 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef HAVE_GTK2
+enum {
+  COL_ENABLED,
+  COL_NAME,
+  COL_LAST
+};
+#endif /* HAVE_GTK2 */
 
 /* from exec.c */
 extern void exec_command (const char *shell, const char *command, int nice);
@@ -121,6 +142,10 @@ typedef struct {
   GtkWidget *base_widget;	/* root of our hierarchy (for name lookups) */
   GtkWidget *popup_widget;	/* the "Settings" dialog */
   conf_data *cdata;		/* private data for per-hack configuration */
+
+#ifdef HAVE_GTK2
+  GladeXML *glade_ui;           /* Glade UI file */
+#endif /* HAVE_GTK2 */
 
   Bool debug_p;			/* whether to print diagnostics */
   Bool initializing_p;		/* flag for breaking recursion loops */
@@ -201,11 +226,32 @@ name_to_widget (state *s, const char *name)
   if (!name) abort();
   if (!*name) abort();
 
+#ifdef HAVE_GTK2
+  if (!s->glade_ui)
+    {
+      s->glade_ui = glade_xml_new (GLADE_DIR "/xscreensaver-demo.glade2",
+                                   NULL, NULL);
+      if (!s->glade_ui)
+	{
+	  fprintf (stderr,
+                   "%s: could not load glade file"
+                   " \"%s/xscreensaver-demo.glade2\"\n",
+                   blurb(), GLADE_DIR);
+          exit (-1);
+	}
+      glade_xml_signal_autoconnect (s->glade_ui);
+    }
+
+  w = glade_xml_get_widget (s->glade_ui, name);
+
+#else /* !HAVE_GTK2 */
+
   w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->base_widget),
                                          name);
   if (w) return w;
   w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->popup_widget),
                                          name);
+#endif /* HAVE_GTK2 */
   if (w) return w;
 
   fprintf (stderr, "%s: no widget \"%s\"\n", blurb(), name);
@@ -219,6 +265,10 @@ name_to_widget (state *s, const char *name)
 static void
 ensure_selected_item_visible (GtkWidget *widget)
 {
+#ifdef HAVE_GTK2
+
+#else /* !HAVE_GTK2 */
+
   GtkScrolledWindow *scroller = 0;
   GtkViewport *vp = 0;
   GtkList *list_widget = 0;
@@ -303,6 +353,7 @@ ensure_selected_item_visible (GtkWidget *widget)
 
       gtk_adjustment_set_value (adj, target);
     }
+#endif /* !HAVE_GTK2 */
 }
 
 static void
@@ -356,7 +407,11 @@ warning_dialog (GtkWidget *parent, const char *message,
 
       {
         label = gtk_label_new (head);
+#ifdef HAVE_GTK2
+	gtk_label_set_selectable (GTK_LABEL (label), TRUE);
+#endif /* HAVE_GTK2 */
 
+#ifndef HAVE_GTK2
         if (i == 1)
           {
             GTK_WIDGET (label)->style =
@@ -367,7 +422,7 @@ warning_dialog (GtkWidget *parent, const char *message,
             gtk_widget_set_style (GTK_WIDGET (label),
                                   GTK_WIDGET (label)->style);
           }
-
+#endif /* !HAVE_GTK2 */
         if (center <= 0)
           gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
         gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
@@ -392,6 +447,18 @@ warning_dialog (GtkWidget *parent, const char *message,
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
                       label, TRUE, TRUE, 0);
 
+#ifdef HAVE_GTK2
+  if (restart_button_p)
+    {
+      cancel = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+      gtk_container_add (GTK_CONTAINER (label), cancel);
+    }
+
+  ok = gtk_button_new_from_stock (GTK_STOCK_OK);
+  gtk_container_add (GTK_CONTAINER (label), ok);
+
+#else /* !HAVE_GTK2 */
+
   ok = gtk_button_new_with_label ("OK");
   gtk_container_add (GTK_CONTAINER (label), ok);
 
@@ -401,15 +468,22 @@ warning_dialog (GtkWidget *parent, const char *message,
       gtk_container_add (GTK_CONTAINER (label), cancel);
     }
 
+#endif /* !HAVE_GTK2 */
+
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   gtk_window_set_title (GTK_WINDOW (dialog), progclass);
+  GTK_WIDGET_SET_FLAGS (ok, GTK_CAN_DEFAULT);
   gtk_widget_show (ok);
+  gtk_widget_grab_focus (ok);
+
   if (cancel)
-    gtk_widget_show (cancel);
+    {
+      GTK_WIDGET_SET_FLAGS (cancel, GTK_CAN_DEFAULT); 
+      gtk_widget_show (cancel);
+    }
   gtk_widget_show (label);
   gtk_widget_show (dialog);
-/*  gtk_window_set_default (GTK_WINDOW (dialog), ok);*/
 
   if (restart_button_p)
     {
@@ -430,8 +504,12 @@ warning_dialog (GtkWidget *parent, const char *message,
   gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
                                 GTK_WIDGET (parent)->window);
 
+#ifdef HAVE_GTK2
+  gtk_window_present (GTK_WINDOW (dialog));
+#else  /* !HAVE_GTK2 */
   gdk_window_show (GTK_WIDGET (dialog)->window);
   gdk_window_raise (GTK_WIDGET (dialog)->window);
+#endif /* !HAVE_GTK2 */
 
   free (msg);
 }
@@ -514,7 +592,11 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   *s = 0;
   s += 2;
 
+#ifdef HAVE_GTK2
+  sprintf(copy, _("Copyright \xC2\xA9 1991-2002 %s"), s);
+#else  /* !HAVE_GTK2 */
   sprintf(copy, _("Copyright \251 1991-2002 %s"), s);
+#endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
 
@@ -564,27 +646,35 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
     gtk_label_set_justify (GTK_LABEL (label1), GTK_JUSTIFY_LEFT);
     gtk_misc_set_alignment (GTK_MISC (label1), 0.0, 0.75);
 
+#ifndef HAVE_GTK2
     GTK_WIDGET (label1)->style = gtk_style_copy (GTK_WIDGET (label1)->style);
     GTK_WIDGET (label1)->style->font =
       gdk_font_load (get_string_resource ("about.headingFont","Dialog.Font"));
     gtk_widget_set_style (GTK_WIDGET (label1), GTK_WIDGET (label1)->style);
+#endif /* HAVE_GTK2 */
 
     label2 = gtk_label_new (msg);
     gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, 0);
     gtk_label_set_justify (GTK_LABEL (label2), GTK_JUSTIFY_LEFT);
     gtk_misc_set_alignment (GTK_MISC (label2), 0.0, 0.25);
 
+#ifndef HAVE_GTK2
     GTK_WIDGET (label2)->style = gtk_style_copy (GTK_WIDGET (label2)->style);
     GTK_WIDGET (label2)->style->font =
       gdk_font_load (get_string_resource ("about.bodyFont","Dialog.Font"));
     gtk_widget_set_style (GTK_WIDGET (label2), GTK_WIDGET (label2)->style);
+#endif /* HAVE_GTK2 */
 
     hb = gtk_hbutton_box_new ();
 
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
                         hb, TRUE, TRUE, 0);
 
+#ifdef HAVE_GTK2
+    ok = gtk_button_new_from_stock (GTK_STOCK_OK);
+#else /* !HAVE_GTK2 */
     ok = gtk_button_new_with_label (_("OK"));
+#endif /* !HAVE_GTK2 */
     gtk_container_add (GTK_CONTAINER (hb), ok);
 
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
@@ -837,13 +927,26 @@ manual_cb (GtkButton *button, gpointer user_data)
 
 
 static void
-force_list_select_item (state *s, GtkList *list, int list_elt, Bool scroll_p)
+force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
 {
   GtkWidget *parent = name_to_widget (s, "scroller");
   Bool was = GTK_WIDGET_IS_SENSITIVE (parent);
+#ifdef HAVE_GTK2
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  GtkTreeSelection *selection;
+#endif /* HAVE_GTK2 */
 
   if (!was) gtk_widget_set_sensitive (parent, True);
+#ifdef HAVE_GTK2
+  model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  g_assert (model);
+  gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt);
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
+  gtk_tree_selection_select_iter (selection, &iter);
+#else  /* !HAVE_GTK2 */
   gtk_list_select_item (GTK_LIST (list), list_elt);
+#endif /* !HAVE_GTK2 */
   if (scroll_p) ensure_selected_item_visible (GTK_WIDGET (list));
   if (!was) gtk_widget_set_sensitive (parent, False);
 }
@@ -856,8 +959,7 @@ run_next_cb (GtkButton *button, gpointer user_data)
   saver_preferences *p = &s->prefs;
   Bool ops = s->preview_suppressed_p;
 
-  GtkList *list_widget =
-    GTK_LIST (name_to_widget (s, "list"));
+  GtkWidget *list_widget = name_to_widget (s, "list");
   int list_elt = selected_list_element (s);
 
   if (list_elt < 0)
@@ -871,7 +973,7 @@ run_next_cb (GtkButton *button, gpointer user_data)
   s->preview_suppressed_p = True;
 
   flush_dialog_changes_and_save (s);
-  force_list_select_item (s, GTK_LIST (list_widget), list_elt, True);
+  force_list_select_item (s, list_widget, list_elt, True);
   populate_demo_window (s, list_elt);
   run_hack (s, list_elt, False);
 
@@ -886,8 +988,7 @@ run_prev_cb (GtkButton *button, gpointer user_data)
   saver_preferences *p = &s->prefs;
   Bool ops = s->preview_suppressed_p;
 
-  GtkList *list_widget =
-    GTK_LIST (name_to_widget (s, "list"));
+  GtkWidget *list_widget = name_to_widget (s, "list");
   int list_elt = selected_list_element (s);
 
   if (list_elt < 0)
@@ -901,7 +1002,7 @@ run_prev_cb (GtkButton *button, gpointer user_data)
   s->preview_suppressed_p = True;
 
   flush_dialog_changes_and_save (s);
-  force_list_select_item (s, GTK_LIST (list_widget), list_elt, True);
+  force_list_select_item (s, list_widget, list_elt, True);
   populate_demo_window (s, list_elt);
   run_hack (s, list_elt, False);
 
@@ -1071,6 +1172,39 @@ normalize_directory (const char *path)
 }
 
 
+#ifdef HAVE_GTK2
+
+typedef struct {
+  state *s;
+  int i;
+  Bool *changed;
+} FlushForeachClosure;
+
+static gboolean
+flush_checkbox  (GtkTreeModel *model,
+		 GtkTreePath *path,
+		 GtkTreeIter *iter,
+		 gpointer data)
+{
+  FlushForeachClosure *closure = data;
+  gboolean checked;
+
+  gtk_tree_model_get (model, iter,
+		      COL_ENABLED, &checked,
+		      -1);
+
+  if (flush_changes (closure->s, closure->i,
+		     checked, 0, 0))
+    *closure->changed = True;
+  
+  closure->i++;
+
+  /* don't remove row */
+  return FALSE;
+}
+
+#endif /* HAVE_GTK2 */
+
 /* Flush out any changes made in the main dialog window (where changes
    take place immediately: clicking on a checkbox causes the init file
    to be written right away.)
@@ -1080,11 +1214,18 @@ flush_dialog_changes_and_save (state *s)
 {
   saver_preferences *p = &s->prefs;
   saver_preferences P2, *p2 = &P2;
+#ifdef HAVE_GTK2
+  GtkTreeView *list_widget = GTK_TREE_VIEW (name_to_widget (s, "list"));
+  GtkTreeModel *model = gtk_tree_view_get_model (list_widget);
+  FlushForeachClosure closure;
+#else /* !HAVE_GTK2 */
   GtkList *list_widget = GTK_LIST (name_to_widget (s, "list"));
   GList *kids = gtk_container_children (GTK_CONTAINER (list_widget));
+  int i;
+#endif /* !HAVE_GTK2 */
+
   Bool changed = False;
   GtkWidget *w;
-  int i;
 
   if (s->saving_p) return False;
   s->saving_p = True;
@@ -1093,6 +1234,14 @@ flush_dialog_changes_and_save (state *s)
 
   /* Flush any checkbox changes in the list down into the prefs struct.
    */
+#ifdef HAVE_GTK2
+  closure.s = s;
+  closure.changed = &changed;
+  closure.i = 0;
+  gtk_tree_model_foreach (model, flush_checkbox, &closure);
+
+#else /* !HAVE_GTK2 */
+
   for (i = 0; kids; kids = kids->next, i++)
     {
       GtkWidget *line = GTK_WIDGET (kids->data);
@@ -1105,7 +1254,7 @@ flush_dialog_changes_and_save (state *s)
       if (flush_changes (s, i, (checked ? 1 : 0), 0, 0))
         changed = True;
     }
-
+#endif /* ~HAVE_GTK2 */
 
   /* Flush the non-hack-specific settings down into the prefs struct.
    */
@@ -1334,8 +1483,6 @@ flush_popup_changes_and_save (state *s)
 }
 
 
-
-
 void
 pref_changed_cb (GtkWidget *widget, gpointer user_data)
 {
@@ -1348,6 +1495,12 @@ pref_changed_cb (GtkWidget *widget, gpointer user_data)
     }
 }
 
+gboolean
+pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+  pref_changed_cb (widget, user_data);
+  return FALSE;
+}
 
 /* Callback on menu items in the "mode" options menu.
  */
@@ -1356,7 +1509,7 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
 {
   state *s = (state *) user_data;
   saver_preferences *p = &s->prefs;
-  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+  GtkWidget *list = name_to_widget (s, "list");
   int list_elt;
 
   GList *menu_items = gtk_container_children (GTK_CONTAINER (widget->parent));
@@ -1418,6 +1571,52 @@ switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
     schedule_preview (s, 0);
 }
 
+#ifdef HAVE_GTK2
+static void
+list_activated_cb (GtkTreeView       *list,
+		   GtkTreePath       *path,
+		   GtkTreeViewColumn *column,
+		   gpointer           data)
+{
+  state *s = data;
+  char *str;
+  int list_elt;
+
+  g_return_if_fail (!gdk_pointer_is_grabbed ());
+
+  str = gtk_tree_path_to_string (path);
+  list_elt = strtol (str, NULL, 10);
+  g_free (str);
+
+  if (list_elt >= 0)
+    run_hack (s, list_elt, True);
+}
+
+static void
+list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
+{
+  state *s = (state *)data;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+  GtkTreePath *path;
+  char *str;
+  int list_elt;
+ 
+  if (!gtk_tree_selection_get_selected (selection, &model, &iter))
+    return;
+
+  path = gtk_tree_model_get_path (model, &iter);
+  str = gtk_tree_path_to_string (path);
+  list_elt = strtol (str, NULL, 10);
+
+  gtk_tree_path_free (path);
+  g_free (str);
+
+  populate_demo_window (s, list_elt);
+  flush_dialog_changes_and_save (s);
+}
+
+#else /* !HAVE_GTK2 */
 
 static time_t last_doubleclick_time = 0;   /* FMH!  This is to suppress the
                                               list_select_cb that comes in
@@ -1466,6 +1665,8 @@ list_unselect_cb (GtkList *list, GtkWidget *child, gpointer data)
   flush_dialog_changes_and_save (s);
 }
 
+#endif /* !HAVE_GTK2 */
+
 
 /* Called when the checkboxes that are in the left column of the
    scrolling list are clicked.  This both populates the right pane
@@ -1473,27 +1674,65 @@ list_unselect_cb (GtkList *list, GtkWidget *child, gpointer data)
    also syncs this checkbox with  the right pane Enabled checkbox.
  */
 static void
-list_checkbox_cb (GtkWidget *cb, gpointer data)
+list_checkbox_cb (
+#ifdef HAVE_GTK2
+		  GtkCellRendererToggle *toggle,
+		  gchar                 *path_string,
+#else  /* !HAVE_GTK2 */
+		  GtkWidget *cb,
+#endif /* !HAVE_GTK2 */
+		  gpointer               data)
 {
   state *s = (state *) data;
 
+#ifdef HAVE_GTK2
+  GtkScrolledWindow *scroller =
+    GTK_SCROLLED_WINDOW (name_to_widget (s, "scroller"));
+  GtkTreeView *list = GTK_TREE_VIEW (name_to_widget (s, "list"));
+  GtkTreeModel *model = gtk_tree_view_get_model (list);
+  GtkTreePath *path = gtk_tree_path_new_from_string (path_string);
+  GtkTreeIter iter;
+  gboolean active;
+#else /* !HAVE_GTK2 */
   GtkWidget *line_hbox = GTK_WIDGET (cb)->parent;
   GtkWidget *line = GTK_WIDGET (line_hbox)->parent;
 
   GtkList *list = GTK_LIST (GTK_WIDGET (line)->parent);
   GtkViewport *vp = GTK_VIEWPORT (GTK_WIDGET (list)->parent);
   GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
+#endif /* ~HAVE_GTK2 */
   GtkAdjustment *adj;
   double scroll_top;
 
-  int list_elt = gtk_list_child_position (list, line);
+  int list_elt;
+
+#ifdef HAVE_GTK2
+  if (!gtk_tree_model_get_iter (model, &iter, path))
+    {
+      g_warning ("bad path: %s", path_string);
+      return;
+    }
+  gtk_tree_path_free (path);
+
+  gtk_tree_model_get (model, &iter,
+		      COL_ENABLED, &active,
+		      -1);
+
+  gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+		      COL_ENABLED, !active,
+		      -1);
+
+  list_elt = strtol (path_string, NULL, 10);  
+#else  /* !HAVE_GTK2 */
+  list_elt = gtk_list_child_position (list, line);
+#endif /* !HAVE_GTK2 */
 
   /* remember previous scroll position of the top of the list */
   adj = gtk_scrolled_window_get_vadjustment (scroller);
   scroll_top = adj->value;
 
   flush_dialog_changes_and_save (s);
-  force_list_select_item (s, list, list_elt, False);
+  force_list_select_item (s, GTK_WIDGET (list), list_elt, False);
   populate_demo_window (s, list_elt);
   
   /* restore the previous scroll position of the top of the list.
@@ -1517,7 +1756,7 @@ store_image_directory (GtkWidget *button, gpointer user_data)
   GtkFileSelection *selector = fsd->widget;
   GtkWidget *top = s->toplevel_widget;
   saver_preferences *p = &s->prefs;
-  char *path = gtk_file_selection_get_filename (selector);
+  const char *path = gtk_file_selection_get_filename (selector);
 
   if (p->image_directory && !strcmp(p->image_directory, path))
     return;  /* no change */
@@ -1750,7 +1989,7 @@ scroll_to_current_hack (state *s)
   if (hack_number >= 0 && hack_number < p->screenhacks_count)
     {
       int list_elt = s->hack_number_to_list_elt[hack_number];
-      GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+      GtkWidget *list = name_to_widget (s, "list");
       force_list_select_item (s, list, list_elt, True);
       populate_demo_window (s, list_elt);
     }
@@ -1760,6 +1999,70 @@ scroll_to_current_hack (state *s)
 static void
 populate_hack_list (state *s)
 {
+#ifdef HAVE_GTK2
+  saver_preferences *p = &s->prefs;
+  GtkTreeView *list = GTK_TREE_VIEW (name_to_widget (s, "list"));
+  GtkListStore *model;
+  GtkTreeSelection *selection;
+  GtkCellRenderer *ren;
+  GtkTreeIter iter;
+  int i;
+
+  g_object_get (G_OBJECT (list),
+		"model", &model,
+		NULL);
+  if (!model)
+    {
+      model = gtk_list_store_new (COL_LAST, G_TYPE_BOOLEAN, G_TYPE_STRING);
+      g_object_set (G_OBJECT (list), "model", model, NULL);
+      g_object_unref (model);
+
+      ren = gtk_cell_renderer_toggle_new ();
+      gtk_tree_view_insert_column_with_attributes (list, COL_ENABLED,
+						   _("Use"), ren,
+						   "active", COL_ENABLED,
+						   NULL);
+
+      g_signal_connect (ren, "toggled",
+			G_CALLBACK (list_checkbox_cb),
+			s);
+
+      ren = gtk_cell_renderer_text_new ();
+      gtk_tree_view_insert_column_with_attributes (list, COL_NAME,
+						   _("Screen Saver"), ren,
+						   "text", COL_NAME,
+						   NULL);
+
+      g_signal_connect_after (list, "row_activated",
+			      G_CALLBACK (list_activated_cb),
+			      s);
+
+      selection = gtk_tree_view_get_selection (list);
+      g_signal_connect (selection, "changed",
+			G_CALLBACK (list_select_changed_cb),
+			s);
+
+    }
+
+  for (i = 0; i < p->screenhacks_count; i++)
+    {
+      screenhack *hack = p->screenhacks[s->list_elt_to_hack_number[i]];
+
+      char *pretty_name = (hack->name
+                           ? strdup (hack->name)
+                           : make_hack_name (hack->command));
+
+      gtk_list_store_append (model, &iter);
+      gtk_list_store_set (model, &iter,
+			  COL_ENABLED, hack->enabled_p,
+			  COL_NAME, pretty_name,
+			  -1);
+
+      free (pretty_name);
+    }
+
+#else /* !HAVE_GTK2 */
+
   saver_preferences *p = &s->prefs;
   GtkList *list = GTK_LIST (name_to_widget (s, "list"));
   int i;
@@ -1824,8 +2127,8 @@ populate_hack_list (state *s)
   gtk_signal_connect (GTK_OBJECT (list), "unselect_child",
                       GTK_SIGNAL_FUNC (list_unselect_cb),
                       (gpointer) s);
+#endif /* !HAVE_GTK2 */
 }
-
 
 static void
 update_list_sensitivity (state *s)
@@ -1835,21 +2138,31 @@ update_list_sensitivity (state *s)
   Bool checkable = (p->mode == RANDOM_HACKS);
   Bool blankable = (p->mode != DONT_BLANK);
 
+#ifndef HAVE_GTK2
   GtkWidget *head     = name_to_widget (s, "col_head_hbox");
   GtkWidget *use      = name_to_widget (s, "use_col_frame");
+#endif /* HAVE_GTK2 */
   GtkWidget *scroller = name_to_widget (s, "scroller");
   GtkWidget *buttons  = name_to_widget (s, "next_prev_hbox");
   GtkWidget *blanker  = name_to_widget (s, "blanking_table");
 
+#ifdef HAVE_GTK2
+  GtkTreeView *list      = GTK_TREE_VIEW (name_to_widget (s, "list"));
+  GtkTreeViewColumn *use = gtk_tree_view_get_column (list, COL_ENABLED);
+#else /* !HAVE_GTK2 */
   GtkList *list = GTK_LIST (name_to_widget (s, "list"));
   GList *kids   = gtk_container_children (GTK_CONTAINER (list));
 
   gtk_widget_set_sensitive (GTK_WIDGET (head),     sensitive);
+#endif /* !HAVE_GTK2 */
   gtk_widget_set_sensitive (GTK_WIDGET (scroller), sensitive);
   gtk_widget_set_sensitive (GTK_WIDGET (buttons),  sensitive);
 
   gtk_widget_set_sensitive (GTK_WIDGET (blanker),  blankable);
 
+#ifdef HAVE_GTK2
+  gtk_tree_view_column_set_visible (use, checkable);
+#else  /* !HAVE_GTK2 */
   if (checkable)
     gtk_widget_show (use);   /* the "Use" column header */
   else
@@ -1869,6 +2182,7 @@ update_list_sensitivity (state *s)
 
       kids = kids->next;
     }
+#endif /* !HAVE_GTK2 */
 }
 
 
@@ -1876,7 +2190,6 @@ static void
 populate_prefs_page (state *s)
 {
   saver_preferences *p = &s->prefs;
-  char str[100];
 
   /* The file supports timeouts of less than a minute, but the GUI does
      not, so throttle the values to be at least one minute (since "0" is
@@ -1889,12 +2202,10 @@ populate_prefs_page (state *s)
 # undef THROTTLE
 
 # define FMT_MINUTES(NAME,N) \
-    sprintf (str, "%d", (((N / 1000) + 59) / 60)); \
-    gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, (NAME))), str)
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (name_to_widget (s, (NAME))), (double)((N) + 59) / (60 * 1000))
 
 # define FMT_SECONDS(NAME,N) \
-    sprintf (str, "%d", ((N) / 1000)); \
-    gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, (NAME))), str)
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (name_to_widget (s, (NAME))), (double)((N) / 1000))
 
   FMT_MINUTES ("timeout_spinbutton",      p->timeout);
   FMT_MINUTES ("cycle_spinbutton",        p->cycle);
@@ -2086,6 +2397,7 @@ sensitize_demo_widgets (state *s, Bool sensitive_p)
 static void
 fix_text_entry_sizes (state *s)
 {
+#ifdef FIXME
   const char * const spinbuttons[] = {
     "timeout_spinbutton", "cycle_spinbutton", "lock_spinbutton",
     "dpms_standby_spinbutton", "dpms_suspend_spinbutton",
@@ -2139,10 +2451,11 @@ fix_text_entry_sizes (state *s)
     w = GTK_WIDGET (name_to_widget (s, "scroller"));
     gtk_widget_set_usize (w, -2, height);
   }
+#endif
 }
 
 
-
+#ifndef HAVE_GTK2
 
 /* Pixmaps for the up and down arrow buttons (yeah, this is sleazy...)
  */
@@ -2241,7 +2554,7 @@ map_prev_button_cb (GtkWidget *w, gpointer user_data)
   state *s = (state *) user_data;
   pixmapify_button (s, 0);
 }
-
+#endif /* !HAVE_GTK2 */
 
 
 /* Work around a Gtk bug that causes label widgets to wrap text too early.
@@ -2280,7 +2593,7 @@ eschew_gtk_lossage (GtkLabel *label)
   gtk_object_set_data (GTK_OBJECT (label), "gtk-aux-info", aux_info);
 
   gtk_signal_connect (GTK_OBJECT (label), "size_allocate",
-                      you_are_not_a_unique_or_beautiful_snowflake,
+                      GTK_SIGNAL_FUNC (you_are_not_a_unique_or_beautiful_snowflake),
                       0);
 
   gtk_widget_set_usize (GTK_WIDGET (label), -2, -2);
@@ -2465,7 +2778,7 @@ maybe_reload_init_file (state *s)
       const char *f = init_file_name();
       char *b;
       int list_elt;
-      GtkList *list;
+      GtkWidget *list;
 
       if (!f || !*f) return 0;
       b = (char *) malloc (strlen(f) + 1024);
@@ -2480,13 +2793,13 @@ maybe_reload_init_file (state *s)
       initialize_sort_map (s);
 
       list_elt = selected_list_element (s);
-      list = GTK_LIST (name_to_widget (s, "list"));
+      list = name_to_widget (s, "list");
       gtk_container_foreach (GTK_CONTAINER (list), widget_deleter, NULL);
       populate_hack_list (s);
       force_list_select_item (s, list, list_elt, True);
       populate_prefs_page (s);
       populate_demo_window (s, list_elt);
-      ensure_selected_item_visible (GTK_WIDGET (list));
+      ensure_selected_item_visible (list);
 
       status = 1;
     }
@@ -2535,6 +2848,16 @@ clear_preview_window (state *s)
   gdk_window_set_background (window, &p->style->bg[GTK_STATE_NORMAL]);
   gdk_window_clear (window);
 
+#ifdef HAVE_GTK2
+  {
+    GtkWidget *notebook;
+
+    notebook = name_to_widget (s, "preview_notebook");
+    gtk_notebook_set_page (GTK_NOTEBOOK (notebook),
+			   s->running_preview_error_p
+			   ? 1 : 0);
+  }
+#else /* !HAVE_GTK2 */
   if (s->running_preview_error_p)
     {
       const char * const lines[] = { N_("No Preview"), N_("Available") };
@@ -2554,11 +2877,9 @@ clear_preview_window (state *s)
           y += lh;
         }
     }
+#endif /* !HAVE_GTK2 */
 
   gdk_flush ();
-
-  /* Is there a GDK way of doing this? */
-  XSync (GDK_DISPLAY(), False);
 }
 
 
@@ -3405,6 +3726,36 @@ delayed_scroll_kludge (gpointer data)
   return FALSE;  /* do not re-execute timer */
 }
 
+#ifdef HAVE_GTK2
+
+GtkWidget *
+create_xscreensaver_demo (void)
+{
+  GtkWidget *nb;
+
+  nb = name_to_widget (global_state_kludge, "preview_notebook");
+  gtk_notebook_set_show_tabs (GTK_NOTEBOOK (nb), FALSE);
+
+  return name_to_widget (global_state_kludge, "xscreensaver_demo");
+}
+
+GtkWidget *
+create_xscreensaver_settings_dialog (void)
+{
+  GtkWidget *w, *box;
+
+  box = name_to_widget (global_state_kludge, "dialog_action_area");
+
+  w = name_to_widget (global_state_kludge, "adv_button");
+  gtk_button_box_set_child_secondary (GTK_BUTTON_BOX (box), w, TRUE);
+
+  w = name_to_widget (global_state_kludge, "std_button");
+  gtk_button_box_set_child_secondary (GTK_BUTTON_BOX (box), w, TRUE);
+
+  return name_to_widget (global_state_kludge, "xscreensaver_settings_dialog");
+}
+
+#endif /* HAVE_GTK2 */
 
 int
 main (int argc, char **argv)
@@ -3426,11 +3777,11 @@ main (int argc, char **argv)
   textdomain (GETTEXT_PACKAGE);
 
 # ifdef HAVE_GTK2
-  bindtextdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-# else /* ! HAVE_GTK2 */
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+# else  /* !HAVE_GTK2 */
   if (!setlocale (LC_ALL, ""))
     fprintf (stderr, "%s: locale not supported by C library\n", real_progname);
-# endif /* ! HAVE_GTK2 */
+# endif /* !HAVE_GTK2 */
 
 #endif /* ENABLE_NLS */
 
@@ -3464,11 +3815,13 @@ main (int argc, char **argv)
   }
 
 #ifdef DEFAULT_ICONDIR  /* from -D on compile line */
+# ifndef HAVE_GTK2
   {
     const char *dir = DEFAULT_ICONDIR;
     if (*dir) add_pixmap_directory (dir);
   }
-#endif
+# endif /* !HAVE_GTK2 */
+#endif /* DEFAULT_ICONDIR */
 
   /* This is gross, but Gtk understands --display and not -display...
    */
@@ -3484,19 +3837,18 @@ main (int argc, char **argv)
         (!strcmp(argv[i], "--crapplet") ||
          !strcmp(argv[i], "--capplet")))
       {
-# ifdef HAVE_CRAPPLET
+# if defined(HAVE_CRAPPLET) || defined(HAVE_GTK2)
         int j;
         crapplet_p = True;
         for (j = i; j < argc; j++)  /* remove it from the list */
           argv[j] = argv[j+1];
         argc--;
-
-# else  /* !HAVE_CRAPPLET */
+# else  /* !HAVE_CRAPPLET && !HAVE_GTK2 */
         fprintf (stderr, "%s: not compiled with --crapplet support\n",
                  real_progname);
         fprintf (stderr, "%s: %s\n", real_progname, usage);
         exit (1);
-# endif /* !HAVE_CRAPPLET */
+# endif /* !HAVE_CRAPPLET && !HAVE_GTK2 */
       }
   else if (argv[i] &&
            (!strcmp(argv[i], "--debug") ||
@@ -3746,13 +4098,14 @@ main (int argc, char **argv)
                       "map", GTK_SIGNAL_FUNC(map_popup_window_cb),
                       (gpointer) s);
 
+#ifndef HAVE_GTK2
   gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "prev")),
                       "map", GTK_SIGNAL_FUNC(map_prev_button_cb),
                       (gpointer) s);
   gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "next")),
                       "map", GTK_SIGNAL_FUNC(map_next_button_cb),
                       (gpointer) s);
-
+#endif /* !HAVE_GTK2 */
 
   /* Hook up callbacks to the items on the mode menu. */
   {

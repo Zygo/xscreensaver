@@ -10,7 +10,7 @@
           convert="invert"/>
 
   <number id="delay2" type="slider" arg="-delay2 %"
-          _label="90° Rotation Speed" _low-label="Slow" _high-label="Fast"
+          _label="90 deg Rotation Speed" _low-label="Slow" _high-label="Fast"
           low="1" high="800000" default="500000"
           convert="invert"/>
 

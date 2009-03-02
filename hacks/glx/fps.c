@@ -153,7 +153,7 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
             L2++;
             glCallLists (strlen(L2), GL_UNSIGNED_BYTE, L2);
             glRasterPos2f (x, y + (fps_ascent + fps_descent));
-            glCallLists (L2 - string, GL_UNSIGNED_BYTE, string);
+            glCallLists (L2 - string - 1, GL_UNSIGNED_BYTE, string);
           }
         else
           {
@@ -249,13 +249,13 @@ do_fps (ModeInfo *mi)
 
           strcat (msg, "\nPolys: ");
           if (p >= 1000000)
-            sprintf (msg + strlen(msg), "%d,%03d,%03d%s",
+            sprintf (msg + strlen(msg), "%lu,%03lu,%03lu%s",
                      (p / 1000000), ((p / 1000) % 1000), (p % 1000), s);
           else if (p >= 1000)
-            sprintf (msg + strlen(msg), "%d,%03d%s",
+            sprintf (msg + strlen(msg), "%lu,%03lu%s",
                      (p / 1000), (p % 1000), s);
           else
-            sprintf (msg + strlen(msg), "%d%s", p, s);
+            sprintf (msg + strlen(msg), "%lu%s", p, s);
         }
     }
 

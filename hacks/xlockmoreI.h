@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -108,9 +108,12 @@ extern void xlockmore_screenhack (Display *dpy, Window window,
 				  Bool want_uniform_colors,
 				  Bool want_smooth_colors,
 				  Bool want_bright_colors,
+                                  unsigned long event_mask,
 				  void (*hack_init) (ModeInfo *),
 				  void (*hack_draw) (ModeInfo *),
 				  void (*hack_reshape) (ModeInfo *, int, int),
+                                  Bool (*hack_handle_events) (ModeInfo *,
+                                                              XEvent *),
 				  void (*hack_free) (ModeInfo *));
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

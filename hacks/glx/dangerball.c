@@ -17,6 +17,8 @@ extern XtAppContext app;
 #define HACK_INIT	init_ball
 #define HACK_DRAW	draw_ball
 #define HACK_RESHAPE	reshape_ball
+#define HACK_HANDLE_EVENT ball_handle_event
+#define EVENT_MASK      PointerMotionMask
 #define sws_opts	xlockmore_opts
 
 #define DEF_SPIN        "True"
@@ -45,6 +47,8 @@ extern XtAppContext app;
 #include "colors.h"
 #include "sphere.h"
 #include "tube.h"
+#include "rotator.h"
+#include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -53,11 +57,9 @@ extern XtAppContext app;
 
 typedef struct {
   GLXContext *glx_context;
-
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;		   /* max velocity */
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
 
   GLuint ball_list;
   GLuint spike_list;
@@ -74,7 +76,7 @@ typedef struct {
 
 static ball_configuration *bps = NULL;
 
-static char *do_spin;
+static Bool do_spin;
 static GLfloat speed;
 static Bool do_wander;
 
@@ -106,87 +108,15 @@ reshape_ball (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
-  gluLookAt( 0.0, 0.0, 15.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -15.0);
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-}
-
-
-/* lifted from lament.c */
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
 }
 
 
@@ -234,6 +164,8 @@ draw_spikes (ModeInfo *mi)
       glScalef (diam, pos, diam);
       glCallList (bp->spike_list);
       glPopMatrix();
+
+      mi->polygon_count += (SPIKE_FACES + 1);
     }
 }
 
@@ -255,6 +187,39 @@ move_spikes (ModeInfo *mi)
       if (bp->pos >= 0)		/*  stop at end */
         randomize_spikes (mi);
     }
+}
+
+
+Bool
+ball_handle_event (ModeInfo *mi, XEvent *event)
+{
+  ball_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      bp->button_down_p = True;
+      gltrackball_start (bp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      bp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           bp->button_down_p)
+    {
+      gltrackball_track (bp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
 }
 
 
@@ -299,20 +264,19 @@ init_ball (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
-  bp->rotx = frand(1.0) * RANDSIGN();
-  bp->roty = frand(1.0) * RANDSIGN();
-  bp->rotz = frand(1.0) * RANDSIGN();
+  {
+    double spin_speed   = 10.0;
+    double wander_speed = 0.15;
+    double spin_accel   = 2.0;
 
-  /* bell curve from 0-6 degrees, avg 3 */
-  bp->dx = (frand(2) + frand(2) + frand(2)) / (360/2);
-  bp->dy = (frand(2) + frand(2) + frand(2)) / (360/2);
-  bp->dz = (frand(2) + frand(2) + frand(2)) / (360/2);
-
-  bp->d_max = bp->dx * 2;
-
-  bp->ddx = 0.00006 + frand(0.00003);
-  bp->ddy = 0.00006 + frand(0.00003);
-  bp->ddz = 0.00006 + frand(0.00003);
+    bp->rot = make_rotator (do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            do_spin ? spin_speed : 0,
+                            spin_accel,
+                            do_wander ? wander_speed : 0,
+                            True);
+    bp->trackball = gltrackball_init ();
+  }
 
   bp->ncolors = 128;
   bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
@@ -347,10 +311,6 @@ draw_ball (ModeInfo *mi)
   Window window = MI_WINDOW(mi);
   int c2;
 
-  /* #### I'm not getting specular reflections on the ball,
-          and I can't figure out why.
-   */
-
   static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
   static GLfloat scolor[4] = {0.0, 0.0, 0.0, 1.0};
   static GLfloat bspec[4]  = {1.0, 1.0, 1.0, 1.0};
@@ -374,39 +334,18 @@ draw_ball (ModeInfo *mi)
   glScalef(1.1, 1.1, 1.1);
 
   {
-    GLfloat x, y, z;
+    double x, y, z;
+    get_position (bp->rot, &x, &y, &z, !bp->button_down_p);
+    glTranslatef((x - 0.5) * 8,
+                 (y - 0.5) * 8,
+                 (z - 0.5) * 15);
 
-    if (do_wander)
-      {
-        static int frame = 0;
+    gltrackball_rotate (bp->trackball);
 
-#       define SINOID(SCALE,SIZE) \
-        ((((1 + sin((frame * (SCALE)) / 2 * M_PI)) / 2.0) * (SIZE)) - (SIZE)/2)
-
-        x = SINOID(0.051, 8.0);
-        y = SINOID(0.037, 8.0);
-        z = SINOID(0.131, 13.0);
-        frame++;
-        glTranslatef(x, y, z);
-      }
-
-    if (do_spin)
-      {
-        x = bp->rotx;
-        y = bp->roty;
-        z = bp->rotz;
-        if (x < 0) x = 1 - (x + 1);
-        if (y < 0) y = 1 - (y + 1);
-        if (z < 0) z = 1 - (z + 1);
-
-        glRotatef(x * 360, 1.0, 0.0, 0.0);
-        glRotatef(y * 360, 0.0, 1.0, 0.0);
-        glRotatef(z * 360, 0.0, 0.0, 1.0);
-
-        rotate(&bp->rotx, &bp->dx, &bp->ddx, bp->d_max);
-        rotate(&bp->roty, &bp->dy, &bp->ddy, bp->d_max);
-        rotate(&bp->rotz, &bp->dz, &bp->ddz, bp->d_max);
-      }
+    get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
+    glRotatef (x * 360, 1.0, 0.0, 0.0);
+    glRotatef (y * 360, 0.0, 1.0, 0.0);
+    glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
   bcolor[0] = bp->colors[bp->ccolor].red   / 65536.0;
@@ -421,6 +360,8 @@ draw_ball (ModeInfo *mi)
   bp->ccolor++;
   if (bp->ccolor >= bp->ncolors) bp->ccolor = 0;
 
+  mi->polygon_count = 0;
+
   glScalef (2.0, 2.0, 2.0);
 
   move_spikes (mi);
@@ -429,6 +370,7 @@ draw_ball (ModeInfo *mi)
   glMateriali  (GL_FRONT, GL_SHININESS,           bshiny);
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, bcolor);
   glCallList (bp->ball_list);
+  mi->polygon_count += (SPHERE_SLICES * SPHERE_STACKS);
 
   glMaterialfv (GL_FRONT, GL_SPECULAR,            sspec);
   glMaterialf  (GL_FRONT, GL_SHININESS,           sshiny);

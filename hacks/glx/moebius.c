@@ -88,6 +88,8 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 # define HACK_INIT			init_moebius
 # define HACK_DRAW			draw_moebius
 # define HACK_RESHAPE		reshape_moebius
+# define HACK_HANDLE_EVENT	moebius_handle_event
+# define EVENT_MASK			PointerMotionMask
 # define moebius_opts		xlockmore_opts
 # define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
@@ -103,6 +105,8 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 
 #include <GL/glu.h>
 #include "e_textures.h"
+#include "rotator.h"
+#include "gltrackball.h"
 
 #define DEF_SOLIDMOEBIUS  "False"
 #define DEF_NOANTS  "False"
@@ -161,12 +165,9 @@ typedef struct {
 	GLfloat     step;
 	GLfloat     ant_position;
 	GLXContext *glx_context;
-
-  GLfloat rotx, roty, rotz;	   /* current object rotation */
-  GLfloat dx, dy, dz;		   /* current rotational velocity */
-  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
-  GLfloat d_max;			   /* max velocity */
-
+    rotator    *rot;
+    trackball_state *trackball;
+    Bool        button_down_p;
 } moebiusstruct;
 
 static float front_shininess[] =
@@ -627,82 +628,6 @@ pinit(void)
 
 
 
-/* lifted from lament.c */
-#define RANDSIGN() ((LRAND() & 1) ? 1 : -1)
-#define FLOATRAND(a) (((double)LRAND() / (double)MAXRAND) * a)
-
-static void
-rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v, Bool verbose)
-{
-  double ppos = *pos;
-
-  /* tick position */
-  if (ppos < 0)
-    ppos = -(ppos + *v);
-  else
-    ppos += *v;
-
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if ((ppos < 0.0) || (ppos > 1.0)) {
-    if (verbose) {
-      (void) fprintf(stderr, "Weirdness in rotate()\n");
-      (void) fprintf(stderr, "ppos = %g\n", ppos);
-    }
-    return;
-  }
-
-  *pos = (*pos > 0 ? ppos : -ppos);
-
-  /* accelerate */
-  *v += *dv;
-
-  /* clamp velocity */
-  if (*v > max_v || *v < -max_v)
-    {
-      *dv = -*dv;
-    }
-  /* If it stops, start it going in the other direction. */
-  else if (*v < 0)
-    {
-      if (random() % 4)
-	{
-	  *v = 0;
-
-	  /* keep going in the same direction */
-	  if (random() % 2)
-	    *dv = 0;
-	  else if (*dv < 0)
-	    *dv = -*dv;
-	}
-      else
-	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
-	}
-    }
-
-  /* Alter direction of rotational acceleration randomly. */
-  if (! (random() % 120))
-    *dv = -*dv;
-
-  /* Change acceleration very occasionally. */
-  if (! (random() % 200))
-    {
-      if (*dv == 0)
-	*dv = 0.00001;
-      else if (random() & 1)
-	*dv *= 1.2;
-      else
-	*dv *= 0.8;
-    }
-}
-
 void
 release_moebius(ModeInfo * mi)
 {
@@ -712,6 +637,39 @@ release_moebius(ModeInfo * mi)
 	}
 	FreeAllGL(mi);
 }
+
+Bool
+moebius_handle_event (ModeInfo *mi, XEvent *event)
+{
+  moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      mp->button_down_p = True;
+      gltrackball_start (mp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      mp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           mp->button_down_p)
+    {
+      gltrackball_track (mp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
 
 void
 init_moebius(ModeInfo * mi)
@@ -727,24 +685,11 @@ init_moebius(ModeInfo * mi)
 	mp->step = NRAND(90);
 	mp->ant_position = NRAND(90);
 
-    mp->rotx = FLOATRAND(1.0) * RANDSIGN();
-    mp->roty = FLOATRAND(1.0) * RANDSIGN();
-    mp->rotz = FLOATRAND(1.0) * RANDSIGN();
-
-    /* bell curve from 0-1.5 degrees, avg 0.75 */
-    mp->dx = (FLOATRAND(1) + FLOATRAND(1) + FLOATRAND(1)) / (360*2);
-    mp->dy = (FLOATRAND(1) + FLOATRAND(1) + FLOATRAND(1)) / (360*2);
-    mp->dz = (FLOATRAND(1) + FLOATRAND(1) + FLOATRAND(1)) / (360*2);
-
-    mp->d_max = mp->dx * 2;
-
-    mp->ddx = 0.00006 + FLOATRAND(0.00003);
-    mp->ddy = 0.00006 + FLOATRAND(0.00003);
-    mp->ddz = 0.00006 + FLOATRAND(0.00003);
-
-    mp->ddx = 0.00001;
-    mp->ddy = 0.00001;
-    mp->ddz = 0.00001;
+    {
+      double rot_speed = 0.3;
+      mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
+      mp->trackball = gltrackball_init ();
+    }
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
@@ -781,6 +726,8 @@ draw_moebius(ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
+    gltrackball_rotate (mp->trackball);
+
 	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);
 	} else {
@@ -788,15 +735,11 @@ draw_moebius(ModeInfo * mi)
 	}
 
     {
-      GLfloat x = mp->rotx;
-      GLfloat y = mp->roty;
-      GLfloat z = mp->rotz;
-      if (x < 0) x = 1 - (x + 1);
-      if (y < 0) y = 1 - (y + 1);
-      if (z < 0) z = 1 - (z + 1);
-      glRotatef(x * 360, 1.0, 0.0, 0.0);
-      glRotatef(y * 360, 0.0, 1.0, 0.0);
-      glRotatef(z * 360, 0.0, 0.0, 1.0);
+      double x, y, z;
+      get_rotation (mp->rot, &x, &y, &z, !mp->button_down_p);
+      glRotatef (x * 360, 1.0, 0.0, 0.0);
+      glRotatef (y * 360, 0.0, 1.0, 0.0);
+      glRotatef (z * 360, 0.0, 0.0, 1.0);
     }
 
 	/* moebius */
@@ -806,10 +749,6 @@ draw_moebius(ModeInfo * mi)
 	}
 
 	glPopMatrix();
-
-    rotate(&mp->rotx, &mp->dx, &mp->ddx, mp->d_max, MI_IS_VERBOSE(mi));
-    rotate(&mp->roty, &mp->dy, &mp->ddy, mp->d_max, MI_IS_VERBOSE(mi));
-    rotate(&mp->rotz, &mp->dz, &mp->ddz, mp->d_max, MI_IS_VERBOSE(mi));
 
     if (MI_IS_FPS(mi)) do_fps (mi);
 	glFlush();

@@ -33,6 +33,31 @@ static int verbose_p = 0;
 static void add_jpeg_comment (struct jpeg_compress_struct *cinfo);
 static void write_pixbuf (GdkPixbuf *pb, const char *file);
 
+static GdkPixbuf *
+load_pixbuf (const char *file)
+{
+  GdkPixbuf *pb;
+#ifdef HAVE_GTK2
+  GError *err = NULL;
+
+  pb = gdk_pixbuf_new_from_file (file, &err);
+#else  /* !HAVE_GTK2 */
+  pb = gdk_pixbuf_new_from_file (file);
+#endif /* HAVE_GTK2 */
+
+  if (!pb)
+    {
+#ifdef HAVE_GTK2
+      fprintf (stderr, "%s: %s\n", progname, err->message);
+      g_error_free (err);
+#else  /* !HAVE_GTK2 */
+      fprintf (stderr, "%s: unable to load %s\n", progname, file);
+#endif /* !HAVE_GTK2 */
+      exit (1);
+    }
+
+  return pb;
+}
 
 static void
 paste (const char *paste_file,
@@ -48,20 +73,8 @@ paste (const char *paste_file,
   int paste_w, paste_h;
   int base_w, base_h;
 
-  paste_pb = gdk_pixbuf_new_from_file (paste_file);
-
-  if (!paste_pb)
-    {
-      fprintf (stderr, "%s: unable to load %s\n", progname, paste_file);
-      exit (1);
-    }
-
-  base_pb = gdk_pixbuf_new_from_file (base_file);
-  if (!base_pb)
-    {
-      fprintf (stderr, "%s: unable to load %s\n", progname, base_file);
-      exit (1);
-    }
+  paste_pb = load_pixbuf (paste_file);
+  base_pb  = load_pixbuf (base_file);
 
   paste_w = gdk_pixbuf_get_width (paste_pb);
   paste_h = gdk_pixbuf_get_height (paste_pb);
@@ -210,7 +223,7 @@ write_pixbuf (GdkPixbuf *pb, const char *file)
 
   if (channels != 3)
     {
-      fprintf (stderr, "%s: %d channels?\n", progname);
+      fprintf (stderr, "%s: %d channels?\n", progname, channels);
       exit (1);
     }
 
@@ -349,6 +362,10 @@ main (int argc, char **argv)
 
   if (w < 0) usage();
   if (h < 0) usage();
+
+#ifdef HAVE_GTK2
+  g_type_init ();
+#endif /* HAVE_GTK2 */
 
   paste (paste_file, base_file,
          from_scale, opacity,
