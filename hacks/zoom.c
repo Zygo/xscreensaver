@@ -100,6 +100,11 @@ static void init_hack(Display *dpy, Window window)
   window_gc = XCreateGC(dpy, window, gcflags, &gcv);
 
   grab_screen_image(xgwa.screen, window);
+
+  /* We might have needed this to grab the image, but if we leave this set
+     to GCSubwindowMode, then we'll *draw* right over subwindows too. */
+  XSetSubwindowMode (dpy, window_gc, ClipByChildren);
+
   if (lenses) {
     orig_map = NULL;
     pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);

@@ -96,7 +96,6 @@ $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap
 $ xmatrix	:== $'mydir'xmatrix
 $ xrayswarm	:== $'mydir'xrayswarm
-$ xroger	:== $'mydir'xroger
 $ xspirograph	:== $'mydir'xspirograph
 $ xsublim	:== $'mydir'xsublim
 $ xteevee	:== $'mydir'xteevee

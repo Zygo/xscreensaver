@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,7 +14,11 @@
    itself.
  */
 
-#define WHICH 0
+#define WHICH_PASS   100
+#define WHICH_SPLASH 101
+#define WHICH_TTY    102
+
+#define WHICH        WHICH_PASS
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -133,7 +137,7 @@ main (int argc, char **argv)
 
   progclass = "XScreenSaver";
 
-#if (WHICH != 2)
+#if (WHICH != WHICH_TTY)
   toplevel_shell = XtAppInitialize (&si->app, progclass, 0, 0,
 				    &argc, argv, fallback,
 				    0, 0);
@@ -162,7 +166,7 @@ main (int argc, char **argv)
 
   while (1)
     {
-#if WHICH == 0
+#if WHICH == WHICH_PASS
       if (unlock_p (si))
 	fprintf (stderr, "%s: password correct\n", progname);
       else
@@ -170,7 +174,7 @@ main (int argc, char **argv)
 
       XSync(si->dpy, False);
       sleep (3);
-#elif WHICH == 1
+#elif WHICH == WHICH_SPLASH
       {
 	XEvent event;
 	make_splash_dialog (si);
@@ -186,7 +190,7 @@ main (int argc, char **argv)
 	XSync (si->dpy, False);
 	sleep (1);
       }
-#elif WHICH == 2
+#elif WHICH == WHICH_TTY
       {
         char *pass;
         char buf[255];
@@ -204,6 +208,8 @@ main (int argc, char **argv)
         else
           printf ("%s: Wrong!\n", progname);
       }
+#else
+# error bogus WHICH value!
 #endif
     }
 }

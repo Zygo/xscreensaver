@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,7 +157,8 @@ make_splash_dialog (saver_info *si)
 
   if (si->sp_data)
     return;
-  if (si->prefs.splash_duration <= 0)
+  if (!si->prefs.splash_p ||
+      si->prefs.splash_duration <= 0)
     return;
 
   sp = (splash_dialog_data *) calloc (1, sizeof(*sp));
@@ -375,6 +376,22 @@ make_splash_dialog (saver_info *si)
   XSync (si->dpy, False);
 }
 
+void
+draw_logo (saver_info *si, Window win, int x, int y, int w, int h,
+           Bool first_time_p)
+{
+  Colormap cmap = DefaultColormapOfScreen (si->default_screen->screen);
+  Pixmap logo_map = XCreatePixmap (si->dpy, win, w, h, 
+                                   si->default_screen->current_depth);
+  XGCValues gcv;
+  GC gc = XCreateGC (si->dpy, win, 0, &gcv);
+  xscreensaver_logo (si->dpy, logo_map, cmap, !first_time_p);
+  XCopyArea (si->dpy, logo_map, win, gc, 0, 0, w, h, x, y);
+  XFreeGC (si->dpy, gc);
+  XFreePixmap (si->dpy, logo_map);
+}
+
+
 static void
 draw_splash_window (saver_info *si)
 {
@@ -488,10 +505,7 @@ draw_splash_window (saver_info *si)
   x2 = sp->logo_width - (sp->shadow_width * 6);
   y2 = sp->logo_height - (sp->shadow_width * 6);
 
-  XFillRectangle (si->dpy, si->splash_dialog, gc2, x1, y1, x2, y2);
-  skull (si->dpy, si->splash_dialog, gc1, gc2,
-	 x1 + sp->shadow_width, y1 + sp->shadow_width,
-	 x2 - (sp->shadow_width * 2), y2 - (sp->shadow_width * 2));
+  draw_logo (si, si->splash_dialog, x1, y1, x2, y2, True);
 
 
   /* The shadow around the logo

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Jan-2001 (3.27)" "X Version 11"
+.TH XScreenSaver 1 "02-Feb-2001 (3.28)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -136,19 +136,75 @@ this program, if it has one.
 This tab lets you change various settings used by the xscreensaver daemon
 itself, rather than its sub-programs.
 .TP 4
-.B Saver Timeout
+.B Blank After
 After the user has been idle this long, the \fIxscreensaver\fP daemon
 will blank the screen.
 .TP 4
-.B Cycle Timeout
+.B Cycle After
 After the screensaver has been running for this long, the currently
 running graphics demo will be killed, and a new one started.  
 If this is 0, then the graphics demo will never be changed:
 only one demo will run until the screensaver is deactivated by user 
 activity.
 .TP 4
-.B Verbose\ 
+.B Require Password
+Whether the screen saver should lock the screen when it activates.
+.TP 4
+.B Lock After
+If \fIRequire Password\fP is selected, this controls the length of 
+the ``grace period'' between when the screensaver activates, and when the
+screen becomes locked.  For example, if this is 0:05:00, 
+and \fIBlank After\fP is 0:10:00, then after 10 minutes, the screen 
+would blank.  If there was user  activity at 12 minutes, no password
+would be required to un-blank the screen.  But, if there was user activity
+at 15 minutes or later (that is, \fILock After\fP minutes after 
+activation) then a password would be required.  The default is 0, meaning
+that if locking is enabled, then a password will be required as soon as the 
+screen blanks.
+.TP 4
+.B Verbose Diagnostics
 Whether to print lots of debugging information.
+.TP 4
+.B Display Subprocess Errors
+If this is set, then if one of the graphics demos prints something to
+stdout or stderr, it will show up on the screen immediately (instead of
+being lost in a hidden terminal or file that you can't see.)
+
+If you change this option, it will only take effect the next time the
+xscreensaver daemon is restarted.  (All other settings take effect
+immediately.)
+.TP 4
+.B Display Splash Screen at Startup
+Normally when xscreensaver starts up, it briefly displays a splash dialog
+showing the version number, a \fIHelp\fP button, etc.  If this option is
+turned off, the splash screen will not be shown at all.
+.TP 4
+.B Power Management Enabled
+Whether the monitor should be powered down after a period of inactivity.
+
+If this option is grayed out, it means your X server does not support
+the XDPMS extension, and so control over the monitor's power state is
+not available.
+
+If you're using a laptop, don't be surprised if this has no effect:
+many laptops have monitor power-saving behavior built in at a very low
+level that is invisible to Unix and X.  On such systems, you can 
+typically only adjust the power-saving delays by changing settings 
+in the BIOS in some hardware-specific way.
+.TP 4
+.B Standby After
+If \fIPower Management Enabled\fP is selected, the monitor will go black
+after this much idle time.  (Graphics demos will stop running, also.)
+.TP 4
+.B Suspend After
+If \fIPower Management Enabled\fP is selected, the monitor will go
+into power-saving mode after this much idle time.  This duration should
+be greater than or equal to \fIStandby\fP.
+.TP 4
+.B Off After
+If \fIPower Management Enabled\fP is selected, the monitor will fully
+power down after this much idle time.  This duration should be greater
+than or equal to \fISuspend\fP.
 .TP 4
 .B Install Colormap
 Whether to install a private colormap while the screensaver is active, so
@@ -157,14 +213,14 @@ applies when the screen's default visual is being used, since non-default
 visuals get their own colormaps automatically.)  This can also be overridden
 on a per-demo basis.
 .TP 4
-.B Fade Colormap
+.B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  This only
 works on displays with writable colormaps, that is, if the screen's default
 visual is a PseudoColor visual.  A fade will also be done when
-switching graphics hacks (when the \fICycle Timeout\fP expires.)
+switching graphics hacks (when the \fICycle After\fP expires.)
 .TP 4
-.B Unfade Colormap
+.B Unfade From Black When Unblanking
 The complement to \fIFade Colormap\fP: if selected, then when the screensaver
 deactivates, the original contents of the screen will fade in from black
 instead of appearing immediately.  This only works on displays with writable
@@ -173,32 +229,6 @@ colormaps, and when \fIFade Colormap\fP is also selected.
 .B Fade Duration
 When fading or unfading are selected, this controls how long the fade will
 take.
-.TP 4
-.B Fade Ticks
-This controls how many times a second the colormap will be changed to 
-effect a fade.  Higher numbers yield smoother fades, but may make the
-fades take longer than the specified number of seconds, if your server
-isn't fast enough to keep up.
-.TP 4
-.B Require Password
-Whether the screen saver should lock the screen when it activates.
-.TP 4
-.B Lock Timeout
-If \fIRequire Password\fP is selected, this controls the length of 
-the ``grace period'' between when the screensaver activates, and when the
-screen becomes locked.  For example, if this is 0:05:00, 
-and \fISaver Timeout\fP is 0:10:00, then after 10 minutes, the screen 
-would blank.  If there was user  activity at 12 minutes, no password
-would be required to un-blank the screen.  But, if there was user activity
-at 15 minutes or later (that is, \fILock Timeout\fP minutes after 
-activation) then a password would be required.  The default is 0, meaning
-that if locking is enabled, then a password will be required as soon as the 
-screen blanks.
-.TP 4
-.B Password Timeout
-When the screensaver is prompting for a password, the prompt dialog box will
-stay on the screen for this long before giving up, and reverting to 
-screen-saving mode.
 .PP
 There are more settings than these available, but these are the most 
 commonly used ones; see the manual for
@@ -250,7 +280,7 @@ http://www.jwz.org/xscreensaver/
 .BR xscreensaver (1),
 .BR xscreensaver\-command (1)
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997, 1998, 1999
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

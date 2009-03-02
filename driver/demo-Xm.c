@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1999 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -900,48 +900,6 @@ format_time (char *buf, Time time)
 }
 
 
-static char *
-make_pretty_name (const char *shell_command)
-{
-  char *s = strdup (shell_command);
-  char *s2;
-  char res_name[255];
-
-  for (s2 = s; *s2; s2++)	/* truncate at first whitespace */
-    if (isspace (*s2))
-      {
-        *s2 = 0;
-        break;
-      }
-
-  s2 = strrchr (s, '/');	/* if pathname, take last component */
-  if (s2)
-    {
-      s2 = strdup (s2+1);
-      free (s);
-      s = s2;
-    }
-
-  if (strlen (s) > 50)		/* 51 is hereby defined as "unreasonable" */
-    s[50] = 0;
-
-  sprintf (res_name, "hacks.%s.name", s);		/* resource? */
-  s2 = get_string_resource (res_name, res_name);
-  if (s2)
-    return s2;
-
-  for (s2 = s; *s2; s2++)	/* if it has any capitals, return it */
-    if (*s2 >= 'A' && *s2 <= 'Z')
-      return s;
-
-  if (s[0] >= 'a' && s[0] <= 'z')			/* else cap it */
-    s[0] -= 'a'-'A';
-  if (s[0] == 'X' && s[1] >= 'a' && s[1] <= 'z')	/* (magic leading X) */
-    s[1] -= 'a'-'A';
-  return s;
-}
-
-
 /* Finds the number of the last hack to run, and makes that item be
    selected by default.
  */
@@ -996,7 +954,7 @@ populate_hack_list (Widget toplevel, prefs_pair *pair)
     {
       char *pretty_name = (h[0]->name
                            ? strdup (h[0]->name)
-                           : make_pretty_name (h[0]->command));
+                           : make_hack_name (h[0]->command));
 
       XmString xmstr = XmStringCreate (pretty_name, XmSTRING_DEFAULT_CHARSET);
       XmListAddItem (list, xmstr, 0);
@@ -1239,7 +1197,7 @@ get_hack_blurb (screenhack *hack)
   char *prog_name = strdup (hack->command);
   char *pretty_name = (hack->name
                        ? strdup (hack->name)
-                       : make_pretty_name (hack->command));
+                       : make_hack_name (hack->command));
   char doc_name[255], doc_class[255];
   char *s, *s2;
 
@@ -1343,7 +1301,7 @@ populate_demo_window (Widget toplevel, int which, prefs_pair *pair)
   char *pretty_name = (hack
                        ? (hack->name
                           ? strdup (hack->name)
-                          : make_pretty_name (hack->command))
+                          : make_hack_name (hack->command))
                        : 0);
   char *doc_string = hack ? get_hack_blurb (hack) : 0;
 

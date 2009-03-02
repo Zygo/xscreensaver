@@ -58,7 +58,6 @@
 				rorschach -root -offset 7		    \\n\
 				hopalong -root				    \\n\
 				greynetic -root				    \\n\
-				xroger -root				    \\n\
 				imsmap -root				    \\n\
 				slidescreen -root			    \\n\
 				decayscreen -root			    \\n\
@@ -188,6 +187,8 @@
 	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
 	   GL:			gflux -root				    \\n\
+	   GL:			stonerview -root			    \\n\
+	   GL:			starwars -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -392,10 +393,6 @@ Patrick Naughton.",
 "*hacks.greynetic.documentation:						\
 This draws random colored and stippled rectangles.  Written by Jamie	\
 Zawinski.",
-"*hacks.xroger.documentation:						\
-The XScreenSaver logo. Don't you hate it?  So do I.  Would you like	\
-to design a new logo for XScreenSaver?	If so, send jwz your		\
-submissions.",
 "*hacks.imsmap.name: IMSmap",
 "*hacks.imsmap.documentation:						\
 This generates random cloud-like patterns.  It looks quite different	\
@@ -927,7 +924,17 @@ lenses rather than just a simple zoom.  Written by James Macnicol.",
 Floating stars are acted upon by a mixture of simple 2D              \
 forcefields.  The strength of each forcefield changes                \
 continuously, and it is also switched on and off at random.          \
-By Paul 'Joey' Clark, ported from a QB program written for Ivor.",
+By Paul 'Joey' Clark.",
+"*hacks.stonerview.name: StonerView",
+"*hacks.stonerview.documentation:                                     \
+Chains of colorful squares dance around each other in complex spiral \
+patterns.  Written by Andrew Plotkin, based on SGI's `electropaint'  \
+screensaver.",
+"*hacks.starwars.name: StarWars",
+"*hacks.starwars.documentation:                                       \
+Draws a stream of text slowly scrolling into the distance at an      \
+angle, over a star field, like at the beginning of the movie of the  \
+same name.  Written by Jamie Zawinski and Claudio Matauoka.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\

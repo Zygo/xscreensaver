@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2000 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -342,7 +342,9 @@ extern int string_width (XFontStruct *font, char *s);
 
 extern void make_splash_dialog (saver_info *si);
 extern void handle_splash_event (saver_info *si, XEvent *e);
-extern void skull (Display *, Window, GC, GC, int, int, int, int);
+extern void xscreensaver_logo (Display *,Drawable,Colormap, Bool next_frame_p);
+extern void draw_logo (saver_info *si, Window, int x, int y, int w, int h,
+                       Bool first_time_p);
 
 
 /* =======================================================================

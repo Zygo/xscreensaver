@@ -538,18 +538,12 @@ draw_passwd_window (saver_info *si)
 
   /* the logo
    */
-  XSetForeground (si->dpy, gc1, pw->logo_foreground);
-  XSetForeground (si->dpy, gc2, pw->logo_background);
-
   x1 = pw->shadow_width * 3;
   y1 = pw->shadow_width * 3;
   x2 = pw->logo_width - (pw->shadow_width * 6);
   y2 = pw->logo_height - (pw->shadow_width * 6);
 
-  XFillRectangle (si->dpy, si->passwd_dialog, gc2, x1, y1, x2, y2);
-  skull (si->dpy, si->passwd_dialog, gc1, gc2,
-	 x1 + pw->shadow_width, y1 + pw->shadow_width,
-	 x2 - (pw->shadow_width * 2), y2 - (pw->shadow_width * 2));
+  draw_logo (si, si->passwd_dialog, x1, y1, x2, y2, True);
 
   /* The thermometer
    */
@@ -679,6 +673,18 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 		      pw->thermo_width-2,
 		      MAX (0, pw->thermo_field_height - y - 2));
     }
+
+  /* the logo
+   */
+  {
+    int x1, y1, x2, y2;
+    x1 = pw->shadow_width * 3;
+    y1 = pw->shadow_width * 3;
+    x2 = pw->logo_width - (pw->shadow_width * 6);
+    y2 = pw->logo_height - (pw->shadow_width * 6);
+
+    draw_logo (si, si->passwd_dialog, x1, y1, x2, y2, False);
+  }
 
   XFreeGC (si->dpy, gc1);
   XFreeGC (si->dpy, gc2);

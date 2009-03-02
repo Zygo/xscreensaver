@@ -73,7 +73,9 @@ SRCS		= xscreensaver-gl-helper.c \
 		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
-		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c gflux.c
+		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
+		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
+		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -84,13 +86,15 @@ OBJS		= xscreensaver-gl-helper.o \
 		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
-		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o gflux.o
+		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
+		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
+		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o
 
-UTIL_EXES	= xscreensaver-gl-helper
-GL_EXES		= $(UTIL_EXES) \
-		  cage gears moebius pipes sproingies stairs superquadrics \
+GL_EXES_1	= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
-		  sierpinski3d gflux
+		  sierpinski3d gflux stonerview starwars
+UTIL_EXES	= xscreensaver-gl-helper
+GL_EXES		= $(UTIL_EXES) $(GL_EXES_1)
 GLE_EXES	= extrusion
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
 EXES		= $(HACK_EXES)
@@ -101,8 +105,9 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/colors.o
 
-HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h
-GL_MEN		= lament.man xscreensaver-gl-helper.man gflux.man
+HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
+		  stonerview-move.h stonerview-osc.h glutstroke.h glut_roman.h
+GL_MEN		= gflux.man lament.man starwars.man xscreensaver-gl-helper.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -133,16 +138,18 @@ install-program:: $(HACK_EXES)
 
 # the xscreensaver-gl-helper program, in $bindir
 install-program:: $(HACK_EXES)
-	@if [ ! -d $(install_prefix)$(bindir) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			\
-	 fi ;								\
-	exes="$(UTIL_EXES)" ;						\
-	for program in $$exes; do					\
-	  echo $(INSTALL_PROGRAM) $$program				\
-	    $(install_prefix)$(bindir)/$$program ;			\
-	  $(INSTALL_PROGRAM) $$program					\
-	    $(install_prefix)$(bindir)/$$program ;			\
-	done
+	@if [ "$(HACK_EXES)" != "" ]; then				\
+	   if [ ! -d $(install_prefix)$(bindir) ]; then			\
+	     $(INSTALL_DIRS) $(install_prefix)$(bindir) ;		\
+	   fi ;								\
+	   exes="$(UTIL_EXES)" ;					\
+	   for program in $$exes; do					\
+	     echo $(INSTALL_PROGRAM) $$program				\
+	       $(install_prefix)$(bindir)/$$program ;			\
+	     $(INSTALL_PROGRAM) $$program				\
+	       $(install_prefix)$(bindir)/$$program ;			\
+	   done ;							\
+	 fi
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
@@ -159,7 +166,7 @@ install-man: $(MEN)
 
 # the hacks, in $HACKDIR
 uninstall-program::
-	@exes="$(HACK_EXES)" ;						\
+	@exes="$(GL_EXES_1) $(GLE_EXES)" ;				\
 	for program in $$exes; do					\
 	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
 	  rm -f $(install_prefix)$(HACKDIR)/$$program ;			\
@@ -174,7 +181,7 @@ uninstall-program::
 	done
 
 uninstall-man:
-	@men="$(MEN)" ;							\
+	@men="$(GL_MEN)" ;						\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  echo rm -f $(install_prefix)$(man1dir)/$$instname ;		\
@@ -327,6 +334,19 @@ sierpinski3d:	sierpinski3d.o	$(HACK_OBJS)
 
 gflux:		gflux.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
+
+SW_OBJS=starwars.o glut_stroke.o glut_swidth.o
+starwars:	$(SW_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(SW_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+
+# This one works differently (it's not xlock-like.)
+#
+STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
+	    $(UTILS_BIN)/yarandom.o
+stonerview:	$(STONER_OBJS)
+	$(CC_HACK) -o $@ $(STONER_OBJS) $(HACK_LIBS)
+
 
 ##############################################################################
 #
@@ -641,4 +661,38 @@ gflux.o: $(UTILS_SRC)/colors.h
 gflux.o: $(UTILS_SRC)/grabscreen.h
 gflux.o: $(UTILS_SRC)/visual.h
 gflux.o: $(UTILS_SRC)/xshm.h
+stonerview.o: ../../config.h
+stonerview.o: $(UTILS_SRC)/yarandom.h
+stonerview.o: $(srcdir)/stonerview-move.h
+stonerview-move.o: ../../config.h
+stonerview-move.o: $(UTILS_SRC)/yarandom.h
+stonerview-move.o: $(srcdir)/stonerview-osc.h
+stonerview-move.o: $(srcdir)/stonerview-move.h
+stonerview-osc.o: ../../config.h
+stonerview-osc.o: $(UTILS_SRC)/yarandom.h
+stonerview-osc.o: $(srcdir)/stonerview-osc.h
+stonerview-view.o: ../../config.h
+stonerview-view.o: $(UTILS_SRC)/vroot.h
+stonerview-view.o: $(UTILS_SRC)/version.h
+stonerview-view.o: $(UTILS_SRC)/yarandom.h
+stonerview-view.o: $(srcdir)/stonerview-osc.h
+stonerview-view.o: $(srcdir)/stonerview-move.h
+starwars.o: $(HACK_SRC)/xlockmore.h
+starwars.o: ../../config.h
+starwars.o: $(HACK_SRC)/xlockmoreI.h
+starwars.o: $(HACK_SRC)/screenhack.h
+starwars.o: $(UTILS_SRC)/yarandom.h
+starwars.o: $(UTILS_SRC)/usleep.h
+starwars.o: $(UTILS_SRC)/resources.h
+starwars.o: $(UTILS_SRC)/hsv.h
+starwars.o: $(UTILS_SRC)/colors.h
+starwars.o: $(UTILS_SRC)/grabscreen.h
+starwars.o: $(UTILS_SRC)/visual.h
+starwars.o: $(UTILS_SRC)/xshm.h
+starwars.o: $(srcdir)/glutstroke.h
+starwars.o: $(srcdir)/glut_roman.h
+glut_stroke.o: ../../config.h
+glut_stroke.o: $(srcdir)/glutstroke.h
+glut_swidth.o: ../../config.h
+glut_swidth.o: $(srcdir)/glutstroke.h
 

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Jan-2001 (3.27)" "X Version 11"
+.TH XScreenSaver 1 "02-Feb-2001 (3.28)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -1375,7 +1375,6 @@ http://www.jwz.org/xscreensaver/
 .BR xjack (1),
 .BR xlyap (1),
 .BR xmatrix (1),
-.BR xroger (1),
 .BR bongo (1),
 .BR ico (1),
 .BR xaos (1),
@@ -1390,7 +1389,7 @@ http://www.jwz.org/xscreensaver/
 .BR xv (1),
 .BR xwave (1).
 .SH COPYRIGHT
-Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that
@@ -1404,6 +1403,8 @@ to comp.sources.x on 13-Aug-1992.
 
 Please let me know if you find any bugs or make any improvements.
 .SH ACKNOWLEDGEMENTS
+Thanks to Angela Goodman for the XScreenSaver logo.
+
 Thanks to the many people who have contributed graphics demos to the package.
 
 Thanks to David Wojtowicz for implementing \fIlockTimeout\fP.

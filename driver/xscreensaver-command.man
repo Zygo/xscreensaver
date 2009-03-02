@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Jan-2001 (3.27)" "X Version 11"
+.TH XScreenSaver 1 "02-Feb-2001 (3.28)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -252,7 +252,7 @@ and related tools can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver (1)
 .BR xscreensaver\-demo (1)
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997, 1998, 1999
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

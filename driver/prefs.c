@@ -74,7 +74,8 @@ extern const char *blurb (void);
 
 static void get_screenhacks (saver_preferences *p);
 static char *format_command (const char *cmd, Bool wrap_p);
-
+static void merge_system_screenhacks (saver_preferences *p,
+                                      screenhack **system_list, int count);
 
 static char *
 chase_symlinks (const char *file)
@@ -203,7 +204,7 @@ static const char * const prefs[] = {
   "installColormap",
   "verbose",
   "timestamp",
-  "splash",			/* not saved -- same as "splashDuration: 0" */
+  "splash",
   "splashDuration",
   "demoCommand",
   "prefsCommand",
@@ -217,6 +218,10 @@ static const char * const prefs[] = {
   "captureStderr",
   "captureStdout",		/* not saved -- obsolete */
   "font",
+  "dpmsEnabled",
+  "dpmsStandby",
+  "dpmsSuspend",
+  "dpmsOff",
   "",
   "programs",
   "",
@@ -575,7 +580,6 @@ write_init_file (saver_preferences *p, const char *version_string,
    */
   char *visual_name;
   char *programs;
-  Bool capture_stderr_p;
   Bool overlay_stderr_p;
   char *stderr_font;
   FILE *out;
@@ -627,7 +631,6 @@ write_init_file (saver_preferences *p, const char *version_string,
   /* Kludge, since these aren't in the saver_preferences struct... */
   visual_name = get_string_resource ("visualID", "VisualID");
   programs = 0;
-  capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
   overlay_stderr_p = get_boolean_resource ("overlayStderr", "Boolean");
   stderr_font = get_string_resource ("font", "Font");
 
@@ -707,7 +710,7 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("installColormap")	type = pref_bool, b = p->install_cmap_p;
       CHECK("verbose")		type = pref_bool, b = p->verbose_p;
       CHECK("timestamp")	type = pref_bool, b = p->timestamp_p;
-      CHECK("splash")		continue;  /* don't save */
+      CHECK("splash")		type = pref_bool, b = p->splash_p;
       CHECK("splashDuration")	type = pref_time, t = p->splash_duration;
       CHECK("demoCommand")	type = pref_str,  s = p->demo_command;
       CHECK("prefsCommand")	type = pref_str,  s = p->prefs_command;
@@ -718,9 +721,13 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("unfade")		type = pref_bool, b = p->unfade_p;
       CHECK("fadeSeconds")	type = pref_time, t = p->fade_seconds;
       CHECK("fadeTicks")	type = pref_int,  i = p->fade_ticks;
-      CHECK("captureStderr")	type = pref_bool, b =    capture_stderr_p;
+      CHECK("captureStderr")	type = pref_bool, b = p->capture_stderr_p;
       CHECK("captureStdout")	continue;  /* don't save */
       CHECK("font")		type = pref_str,  s =    stderr_font;
+      CHECK("dpmsEnabled")	type = pref_bool, b = p->dpms_enabled_p;
+      CHECK("dpmsStandby")	type = pref_time, t = p->dpms_standby;
+      CHECK("dpmsSuspend")	type = pref_time, t = p->dpms_suspend;
+      CHECK("dpmsOff")		type = pref_time, t = p->dpms_off;
       CHECK("programs")		type = pref_str,  s =    programs;
       CHECK("pointerPollTime")	type = pref_time, t = p->pointer_timeout;
       CHECK("windowCreationTimeout")type=pref_time,t= p->notice_events_timeout;
@@ -835,6 +842,27 @@ write_init_file (saver_preferences *p, const char *version_string,
 /* Parsing the resource database
  */
 
+void
+free_screenhack (screenhack *hack)
+{
+  if (hack->visual) free (hack->visual);
+  if (hack->name) free (hack->name);
+  free (hack->command);
+  memset (hack, 0, sizeof(*hack));
+  free (hack);
+}
+
+static void
+free_screenhack_list (screenhack **list, int count)
+{
+  int i;
+  if (!list) return;
+  for (i = 0; i < count; i++)
+    if (list[i])
+      free_screenhack (list[i]);
+  free (list);
+}
+
 
 /* Populate `saver_preferences' with the contents of the resource database.
    Note that this may be called multiple times -- it is re-run each time
@@ -848,6 +876,24 @@ load_init_file (saver_preferences *p)
 {
   static Bool first_time = True;
   
+  screenhack **system_default_screenhacks = 0;
+  int system_default_screenhack_count = 0;
+
+  if (first_time)
+    {
+      /* Get the programs resource before the .xscreensaver file has been
+         parsed and merged into the resource database for the first time:
+         this is the value of *programs from the app-defaults file.
+         Then clear it out so that it will be parsed again later, after
+         the init file has been read.
+       */
+      get_screenhacks (p);
+      system_default_screenhacks = p->screenhacks;
+      system_default_screenhack_count = p->screenhacks_count;
+      p->screenhacks = 0;
+      p->screenhacks_count = 0;
+    }
+
   if (parse_init_file (p) != 0)		/* file might have gone away */
     if (!first_time) return;
 
@@ -864,6 +910,8 @@ load_init_file (saver_preferences *p)
   p->fade_ticks	    = get_integer_resource ("fadeTicks", "Integer");
   p->install_cmap_p = get_boolean_resource ("installColormap", "Boolean");
   p->nice_inferior  = get_integer_resource ("nice", "Nice");
+  p->splash_p       = get_boolean_resource ("splash", "Boolean");
+  p->capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
 
   p->initial_delay   = 1000 * get_seconds_resource ("initialDelay", "Time");
   p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");
@@ -874,6 +922,12 @@ load_init_file (saver_preferences *p)
   p->pointer_timeout = 1000 * get_seconds_resource ("pointerPollTime", "Time");
   p->notice_events_timeout = 1000*get_seconds_resource("windowCreationTimeout",
 						       "Time");
+
+  p->dpms_enabled_p  = get_boolean_resource ("dpmsEnabled", "Boolean");
+  p->dpms_standby    = 1000 * get_seconds_resource ("dpmsStandby", "Time");
+  p->dpms_suspend    = 1000 * get_seconds_resource ("dpmsSuspend", "Time");
+  p->dpms_off        = 1000 * get_seconds_resource ("dpmsOff",     "Time");
+
   p->shell = get_string_resource ("bourneShell", "BourneShell");
 
   p->demo_command = get_string_resource("demoCommand", "URL");
@@ -881,12 +935,14 @@ load_init_file (saver_preferences *p)
   p->help_url = get_string_resource("helpURL", "URL");
   p->load_url_command = get_string_resource("loadURL", "LoadURL");
 
+
+  /* If "*splash" is unset, default to true. */
   {
-    char *s;
-    if ((s = get_string_resource ("splash", "Boolean")))
-      if (!get_boolean_resource("splash", "Boolean"))
-	p->splash_duration = 0;
-    if (s) free (s);
+    char *s = get_string_resource ("splash", "Boolean");
+    if (s)
+      free (s);
+    else
+      p->splash_p = True;
   }
 
   p->use_xidle_extension = get_boolean_resource ("xidleExtension","Boolean");
@@ -908,11 +964,28 @@ load_init_file (saver_preferences *p)
     p->fade_p = False;
   if (! p->fade_p) p->unfade_p = False;
 
+  if (p->dpms_standby <= 0 || p->dpms_suspend <= 0 || p->dpms_off <= 0)
+    p->dpms_enabled_p = False;
+
+  if (p->dpms_standby <= 10000) p->dpms_standby = 10000;	 /* 10 secs */
+  if (p->dpms_suspend <= 10000) p->dpms_suspend = 10000;	 /* 10 secs */
+  if (p->dpms_off     <= 10000) p->dpms_off     = 10000;	 /* 10 secs */
+
   p->watchdog_timeout = p->cycle * 0.6;
   if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */
   if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
 
   get_screenhacks (p);
+
+  if (system_default_screenhack_count)  /* note: first_time is also true */
+    {
+      merge_system_screenhacks (p, system_default_screenhacks,
+                                system_default_screenhack_count);
+      free_screenhack_list (system_default_screenhacks,
+                            system_default_screenhack_count);
+      system_default_screenhacks = 0;
+      system_default_screenhack_count = 0;
+    }
 
   if (p->debug_p)
     {
@@ -922,6 +995,81 @@ load_init_file (saver_preferences *p)
       p->initial_delay = 0;
     }
 }
+
+
+/* If there are any hacks in the system-wide defaults that are not in
+   the ~/.xscreensaver file, add the new ones to the end of the list.
+   This does *not* actually save the file.
+ */
+static void
+merge_system_screenhacks (saver_preferences *p,
+                          screenhack **system_list, int system_count)
+{
+  /* Yeah yeah, this is an N^2 operation, but I don't have hashtables handy,
+     so fuck it. */
+
+  int made_space = 0;
+  int i;
+  for (i = 0; i < system_count; i++)
+    {
+      int j;
+      Bool matched_p = False;
+
+      for (j = 0; j < p->screenhacks_count; j++)
+        {
+          char *name;
+          if (!system_list[i]->name)
+            system_list[i]->name = make_hack_name (system_list[i]->command);
+
+          name = p->screenhacks[j]->name;
+          if (!name)
+            name = make_hack_name (p->screenhacks[j]->command);
+
+          matched_p = !strcasecmp (name, system_list[i]->name);
+
+          if (name != p->screenhacks[j]->name)
+            free (name);
+
+          if (matched_p)
+            break;
+        }
+
+      if (!matched_p)
+        {
+          /* We have an entry in the system-wide list that is not in the
+             user's .xscreensaver file.  Add it to the end.
+             Note that p->screenhacks is a single malloc block, not a
+             linked list, so we have to realloc it.
+           */
+          screenhack *oh = system_list[i];
+          screenhack *nh = (screenhack *) malloc (sizeof(screenhack));
+
+          if (made_space == 0)
+            {
+              made_space = 10;
+              p->screenhacks = (screenhack **)
+                realloc (p->screenhacks,
+                         (p->screenhacks_count + made_space) 
+                         * sizeof(screenhack));
+              if (!p->screenhacks) abort();
+            }
+
+          nh->enabled_p = oh->enabled_p;
+          nh->visual    = oh->visual  ? strdup(oh->visual)  : 0;
+          nh->name      = oh->name    ? strdup(oh->name)    : 0;
+          nh->command   = oh->command ? strdup(oh->command) : 0;
+
+          p->screenhacks[p->screenhacks_count++] = nh;
+          made_space--;
+
+#if 0
+          fprintf (stderr, "%s: noticed new hack: %s\n", blurb(),
+                   (nh->name ? nh->name : make_hack_name (nh->command)));
+#endif
+        }
+    }
+}
+
 
 
 /* Parsing the programs resource.
@@ -975,17 +1123,6 @@ parse_screenhack (const char *line)
 }
 
 
-void
-free_screenhack (screenhack *hack)
-{
-  if (hack->visual) free (hack->visual);
-  if (hack->name) free (hack->name);
-  free (hack->command);
-  memset (hack, 0, sizeof(*hack));
-  free (hack);
-}
-
-
 static char *
 format_command (const char *cmd, Bool wrap_p)
 {
@@ -1029,6 +1166,53 @@ format_command (const char *cmd, Bool wrap_p)
     *(--out) = 0;
 
   return cmd2;
+}
+
+
+/* Returns a new string describing the shell command.
+   This may be just the name of the program, capitalized.
+   It also may be something from the resource database (gotten
+   by looking for "hacks.XYZ.name", where XYZ is the program.)
+ */
+char *
+make_hack_name (const char *shell_command)
+{
+  char *s = strdup (shell_command);
+  char *s2;
+  char res_name[255];
+
+  for (s2 = s; *s2; s2++)	/* truncate at first whitespace */
+    if (isspace (*s2))
+      {
+        *s2 = 0;
+        break;
+      }
+
+  s2 = strrchr (s, '/');	/* if pathname, take last component */
+  if (s2)
+    {
+      s2 = strdup (s2+1);
+      free (s);
+      s = s2;
+    }
+
+  if (strlen (s) > 50)		/* 51 is hereby defined as "unreasonable" */
+    s[50] = 0;
+
+  sprintf (res_name, "hacks.%s.name", s);		/* resource? */
+  s2 = get_string_resource (res_name, res_name);
+  if (s2)
+    return s2;
+
+  for (s2 = s; *s2; s2++)	/* if it has any capitals, return it */
+    if (*s2 >= 'A' && *s2 <= 'Z')
+      return s;
+
+  if (s[0] >= 'a' && s[0] <= 'z')			/* else cap it */
+    s[0] -= 'a'-'A';
+  if (s[0] == 'X' && s[1] >= 'a' && s[1] <= 'z')	/* (magic leading X) */
+    s[1] -= 'a'-'A';
+  return s;
 }
 
 
@@ -1125,21 +1309,12 @@ get_screenhacks (saver_preferences *p)
 
   d = get_string_resource ("programs", "Programs");
 
-  if (p->screenhacks)
-    {
-      for (i = 0; i < p->screenhacks_count; i++)
-	if (p->screenhacks[i])
-	  free_screenhack (p->screenhacks[i]);
-      free(p->screenhacks);
-      p->screenhacks = 0;
-    }
+  free_screenhack_list (p->screenhacks, p->screenhacks_count);
+  p->screenhacks = 0;
+  p->screenhacks_count = 0;
 
   if (!d || !*d)
-    {
-      p->screenhacks_count = 0;
-      p->screenhacks = 0;
-      return;
-    }
+    return;
 
   size = strlen (d);
 

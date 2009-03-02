@@ -66,7 +66,7 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 # define HACK_DRAW			draw_stairs
 # define stairs_opts		xlockmore_opts
 # define DEFAULTS			"*cycles:		1       \n"			\
-							"*delay:		200000  \n"			\
+							"*delay:		20000   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -108,6 +108,7 @@ typedef struct {
 	Bool        direction;
 	int         AreObjectsDefined[1];
 	int         sphere_position;
+	int         sphere_tick;
 	GLXContext *glx_context;
 } stairsstruct;
 
@@ -194,6 +195,8 @@ static float positions[] =
 };
 
 #define NPOSITIONS ((sizeof positions) / (sizeof positions[0]))
+
+#define SPHERE_TICKS 8
 
 static stairsstruct *stairs = NULL;
 static GLuint objects;
@@ -313,15 +316,100 @@ draw_stairs_internal(ModeInfo * mi)
 	glPushMatrix();
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
 
-	glTranslatef((GLfloat) positions[sp->sphere_position],
-		     (GLfloat) positions[sp->sphere_position + 1],
-		     (GLfloat) positions[sp->sphere_position + 2]);
+    {
+      int pos  = sp->sphere_position;
+      int ppos = sp->sphere_position - 3;
+      int npos = sp->sphere_position + 3;
+      GLfloat spx, spy, spz;
+      GLfloat dx, dy, dz;
+      int div;
+
+      if (ppos < 0) ppos += NPOSITIONS;
+      if (npos >= NPOSITIONS) npos -= NPOSITIONS;
+
+      if (sp->sphere_tick < 0)
+        {
+          dx = positions[ppos]   - positions[pos];
+          dy = positions[ppos+1] - positions[pos+1];
+          dz = positions[ppos+2] - positions[pos+2];
+          div = SPHERE_TICKS + sp->sphere_tick;
+        }
+      else
+        {
+          dx = positions[npos]   - positions[pos];
+          dy = positions[npos+1] - positions[pos+1];
+          dz = positions[npos+2] - positions[ppos+2];
+          div = SPHERE_TICKS - sp->sphere_tick;
+        }
+        
+      spx = positions[pos];
+      spy = positions[pos+1];
+      spz = positions[pos+2];
+      if (div != 0)
+        {
+          spx += dx / div;
+          spy += dy / div;
+          spz += dz / div;
+        }
+
+
+      spy -= 0.5;   /* move the bottom of the ball closer to the stairs */
+
+
+#ifdef DEBUG
+      fprintf(stderr, "%3d %3d   %2.2f %2.2f %2.2f  %2.2f %2.2f %2.2f\n",
+              sp->sphere_position, sp->sphere_tick,
+              dx, dy, dz,
+              spx, spy, spz);
+
+      glBegin(GL_LINE_LOOP);   /* path 1 */
+      glVertex3f(positions[pos],  positions[pos+1],  positions[pos+2]);
+      glVertex3f(positions[npos], positions[npos+1], positions[npos+2]);
+      glEnd();
+
+      glBegin(GL_LINE_LOOP);   /* path 2 */
+      glVertex3f(positions[pos],  positions[pos+1],  positions[pos+2]);
+      glVertex3f(positions[ppos], positions[ppos+1], positions[ppos+2]);
+      glEnd();
+
+      glBegin(GL_LINE_LOOP);  /* base origin */
+      glVertex3f(positions[pos], positions[pos+1]-10, positions[pos+2]);
+      glVertex3f(positions[pos], positions[pos+1]+10, positions[pos+2]);
+      glEnd();
+
+      glBegin(GL_LINE_LOOP);  /* base origin */
+      glVertex3f(positions[pos]-10, positions[pos+1], positions[pos+2]);
+      glVertex3f(positions[pos]+10, positions[pos+1], positions[pos+2]);
+      glEnd();
+
+      glBegin(GL_LINE_LOOP);  /* base origin */
+      glVertex3f(positions[pos], positions[pos+1], positions[pos+2]-10);
+      glVertex3f(positions[pos], positions[pos+1], positions[pos+2]+10);
+      glEnd();
+#endif /* DEBUG */
+
+      glTranslatef(spx, spy, spz);
+
+#ifdef DEBUG  /* ball origin */
+      glBegin(GL_LINE_LOOP); glVertex3f(0,-2,0); glVertex3f(0,2,0); glEnd();
+      glBegin(GL_LINE_LOOP); glVertex3f(-2,0,0); glVertex3f(2,0,0); glEnd();
+      glBegin(GL_LINE_LOOP); glVertex3f(0,0,-2); glVertex3f(0,0,2); glEnd();
+#endif /* DEBUG */
+    }
+
 	if (sp->sphere_position == 0)	/* FUDGE soo its not so obvious */
 		mySphere(0.48);
 	else
 		mySphere(0.5);
 	glPopMatrix();
-	sp->sphere_position += 3;
+
+    if (++sp->sphere_tick >= SPHERE_TICKS-1)
+      {
+        sp->sphere_tick = -(SPHERE_TICKS-2);
+        sp->sphere_position += 3;
+        sp->sphere_position += 3;
+      }
+
 	if (sp->sphere_position >= NPOSITIONS)
 		sp->sphere_position = 0;
 }
@@ -403,6 +491,7 @@ init_stairs(ModeInfo * mi)
 	sp->step = 0.0;
 	sp->direction = LRAND() & 1;
 	sp->sphere_position = NRAND(NPOSITIONS / 3) * 3;
+	sp->sphere_tick = 0;
 
 	if ((sp->glx_context = init_GL(mi)) != NULL) {
 

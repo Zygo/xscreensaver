@@ -5,7 +5,7 @@
 static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
 #endif
 
-/* Copyright (c) 1993 Greg Bowering <greg@smug.student.adelaide.edu.au>
+/* Copyright (c) 1993 Greg Bowering <gb@pobox.com>
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -22,7 +22,7 @@ static const char sccsid[] = "@(#)grav.c	4.00 97/01/01 xlockmore";
  * Revision history:
  * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 11-Jul-94: color version
- * 06-Oct-93: by Greg Bowering <greg@smug.student.adelaide.edu.au>
+ * 06-Oct-93: by Greg Bowering <gb@pobox.com>
  */
 
 #ifdef STANDALONE

@@ -102,18 +102,19 @@ INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
 		  resources.c spline.c usleep.c visual.c visual-gl.c xmu.c \
-		  xroger.c yarandom.c erase.c sgivideo.c xshm.c xdbe.c
+		  logo.c yarandom.c erase.c sgivideo.c xshm.c xdbe.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o hsv.o overlay.o \
 		  resources.o spline.o usleep.o visual.o visual-gl.o xmu.o \
-		  xroger.o yarandom.o erase.o sgivideo.o xshm.o xdbe.o
+		  logo.o yarandom.o erase.o sgivideo.o xshm.o xdbe.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
 		  yarandom.h erase.h sgivideo.h xshm.h xdbe.h
+LOGOS		= logo.gif logo.xpm logo.eps
 EXTRAS		= README Makefile.in ad2c
 VMSFILES	= compile_axp.com compile_decc.com vms-gtod.c vms-gtod.h \
 		  vms-strdup.c
 
-TARFILES	= $(EXTRAS) $(VMSFILES) $(SRCS) $(HDRS)
+TARFILES	= $(EXTRAS) $(VMSFILES) $(SRCS) $(HDRS) $(LOGOS)
 
 
 default: all
@@ -254,9 +255,11 @@ visual-gl.o: $(srcdir)/utils.h
 visual-gl.o: ../config.h
 visual-gl.o: $(srcdir)/visual.h
 xmu.o: ../config.h
-xroger.o: $(srcdir)/utils.h
-xroger.o: ../config.h
-xroger.o: $(srcdir)/spline.h
+logo.o: $(srcdir)/utils.h
+logo.o: ../config.h
+logo.o: $(srcdir)/resources.h
+logo.o: $(srcdir)/yarandom.h
+logo.o: $(srcdir)/spline.h
 yarandom.o: ../config.h
 yarandom.o: $(srcdir)/yarandom.h
 erase.o: $(srcdir)/utils.h

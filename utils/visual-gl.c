@@ -42,19 +42,20 @@ get_gl_visual (Screen *screen)
 # define B GLX_BLUE_SIZE
 # define D GLX_DEPTH_SIZE
 # define I GLX_BUFFER_SIZE
+# define DB GLX_DOUBLEBUFFER
 
   int attrs[][20] = {
-   { GLX_RGBA, R, 8, G, 8, B, 8, D, 8, GLX_DOUBLEBUFFER, 0 }, /* rgb double */
-   { GLX_RGBA, R, 4, G, 4, B, 4, D, 4, GLX_DOUBLEBUFFER, 0 },
-   { GLX_RGBA, R, 2, G, 2, B, 2, D, 2, GLX_DOUBLEBUFFER, 0 },
-   { GLX_RGBA, R, 8, G, 8, B, 8, D, 8,                   0 }, /* rgb single */
-   { GLX_RGBA, R, 4, G, 4, B, 4, D, 4,                   0 },
-   { GLX_RGBA, R, 2, G, 2, B, 2, D, 2,                   0 },
-   { I, 8,                       D, 8, GLX_DOUBLEBUFFER, 0 }, /* cmap double */
-   { I, 4,                       D, 4, GLX_DOUBLEBUFFER, 0 },
-   { I, 8,                       D, 8,                   0 }, /* cmap single */
-   { I, 4,                       D, 4,                   0 },
-   { GLX_RGBA, R, 1, G, 1, B, 1, D, 1,                   0 }  /* monochrome */
+    { GLX_RGBA, R, 8, G, 8, B, 8, D, 8, DB, 0 }, /* rgb double */
+    { GLX_RGBA, R, 4, G, 4, B, 4, D, 4, DB, 0 },
+    { GLX_RGBA, R, 2, G, 2, B, 2, D, 2, DB, 0 },
+    { GLX_RGBA, R, 8, G, 8, B, 8, D, 8,     0 }, /* rgb single */
+    { GLX_RGBA, R, 4, G, 4, B, 4, D, 4,     0 },
+    { GLX_RGBA, R, 2, G, 2, B, 2, D, 2,     0 },
+    { I, 8,                       D, 8, DB, 0 }, /* cmap double */
+    { I, 4,                       D, 4, DB, 0 },
+    { I, 8,                       D, 8,     0 }, /* cmap single */
+    { I, 4,                       D, 4,     0 },
+    { GLX_RGBA, R, 1, G, 1, B, 1, D, 1,     0 }  /* monochrome */
   };
 
   int i;

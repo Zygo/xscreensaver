@@ -591,536 +591,973 @@ Mono
 
       <widget>
 	<class>GtkVBox</class>
-	<name>prefs_hbox</name>
+	<name>options_vbox</name>
 	<homogeneous>False</homogeneous>
 	<spacing>0</spacing>
 
 	<widget>
-	  <class>GtkFrame</class>
-	  <name>prefs_frame</name>
+	  <class>GtkTable</class>
+	  <name>options_table</name>
 	  <border_width>10</border_width>
-	  <label_xalign>0</label_xalign>
-	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <rows>2</rows>
+	  <columns>2</columns>
+	  <homogeneous>True</homogeneous>
+	  <row_spacing>2</row_spacing>
+	  <column_spacing>0</column_spacing>
 	  <child>
 	    <padding>0</padding>
-	    <expand>True</expand>
-	    <fill>True</fill>
+	    <expand>False</expand>
+	    <fill>False</fill>
 	  </child>
 
 	  <widget>
-	    <class>GtkTable</class>
-	    <name>prefs_table</name>
+	    <class>GtkFrame</class>
+	    <name>blanking_frame</name>
 	    <border_width>10</border_width>
-	    <rows>6</rows>
-	    <columns>3</columns>
-	    <homogeneous>False</homogeneous>
-	    <row_spacing>2</row_spacing>
-	    <column_spacing>10</column_spacing>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>timeout_text</name>
-	      <tooltip>How long until the screensaver activates.</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:28:10 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:34:26 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>0</top_attach>
-		<bottom_attach>1</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>cycle_text</name>
-	      <tooltip>How long each demo will be run before moving on to another.</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>1</top_attach>
-		<bottom_attach>2</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>fade_text</name>
-	      <tooltip>How long (in seconds) it should take for the screen to fade to black (8-bit displays only.)</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>2</top_attach>
-		<bottom_attach>3</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>ticks_text</name>
-	      <tooltip>How many steps are in the fade animation (8-bit displays only.)</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>3</top_attach>
-		<bottom_attach>4</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>lock_text</name>
-	      <tooltip>How long after the screensaver has activated until a password will be required (if  `Require Password' is also set.)</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>4</top_attach>
-		<bottom_attach>5</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkEntry</class>
-	      <name>pass_text</name>
-	      <tooltip>How long the password dialog will wait.</tooltip>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>activate</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:29:08 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>focus_out_event</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:35:58 GMT</last_modification_time>
-	      </signal>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>8</text_max_length>
-	      <text></text>
-	      <child>
-		<left_attach>1</left_attach>
-		<right_attach>2</right_attach>
-		<top_attach>5</top_attach>
-		<bottom_attach>6</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
-
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>timeout_label</name>
-	      <label>Saver Timeout:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
+	    <label>Blanking and Locking:</label>
+	    <label_xalign>0</label_xalign>
+	    <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	    <child>
+	      <left_attach>0</left_attach>
+	      <right_attach>1</right_attach>
+	      <top_attach>0</top_attach>
+	      <bottom_attach>1</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>0</top_attach>
-		<bottom_attach>1</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <xexpand>True</xexpand>
+	      <yexpand>True</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>True</yfill>
+	    </child>
 
 	    <widget>
-	      <class>GtkLabel</class>
-	      <name>cycle_label</name>
-	      <label>Cycle Timeout:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
+	      <class>GtkTable</class>
+	      <name>blanking_table</name>
+	      <border_width>10</border_width>
+	      <rows>5</rows>
+	      <columns>3</columns>
+	      <homogeneous>False</homogeneous>
+	      <row_spacing>2</row_spacing>
+	      <column_spacing>10</column_spacing>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>lock_text</name>
+		<tooltip>How long after the screen saver has activated until a password will be required (if  `Require Password' is also set.)</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>cycle_text</name>
+		<tooltip>How long each demo will be run before moving on to another.</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>timeout_text</name>
+		<tooltip>How long until the screen saver activates and begins running demos.</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:10 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:34:26 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>0</top_attach>
+		  <bottom_attach>1</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>timeout_label</name>
+		<label>Blank After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>0</top_attach>
+		  <bottom_attach>1</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>cycle_label</name>
+		<label>Cycle After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>lock_label</name>
+		<label>Lock After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>blanking_dummy</name>
+		<label></label>
+		<justify>GTK_JUSTIFY_LEFT</justify>
+		<wrap>False</wrap>
+		<xalign>0.5</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>2</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkHSeparator</class>
+		<name>blanking_hr</name>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>2</top_attach>
+		  <bottom_attach>3</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>True</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>lock_button_eventbox</name>
+		<tooltip>Whether a password should be required to unblank the screen.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>lock_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:31:53 GMT</last_modification_time>
+		  </signal>
+		  <label>Require Password</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkFrame</class>
+	    <name>dpms_frame</name>
+	    <border_width>10</border_width>
+	    <label>Display Power Management:</label>
+	    <label_xalign>0</label_xalign>
+	    <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	    <child>
+	      <left_attach>1</left_attach>
+	      <right_attach>2</right_attach>
+	      <top_attach>0</top_attach>
+	      <bottom_attach>1</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>1</top_attach>
-		<bottom_attach>2</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>True</yfill>
+	    </child>
 
 	    <widget>
-	      <class>GtkLabel</class>
-	      <name>fade_label</name>
-	      <label>Fade Duration:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
+	      <class>GtkTable</class>
+	      <name>dpms_table</name>
+	      <border_width>10</border_width>
+	      <rows>4</rows>
+	      <columns>3</columns>
+	      <homogeneous>False</homogeneous>
+	      <row_spacing>2</row_spacing>
+	      <column_spacing>10</column_spacing>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>dpms_off_text</name>
+		<tooltip>How long until the monitor powers down (if Power Management is enabled).</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>dpms_suspend_text</name>
+		<tooltip>How long until the monitor goes into power-saving mode (if Power Management is enabled).</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>2</top_attach>
+		  <bottom_attach>3</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>dpms_standby_text</name>
+		<tooltip>How long before the monitor goes completely black (if Power Management is enabled).</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>dpms_standby_label</name>
+		<label>Standby After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>dpms_off_label</name>
+		<label>Off After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>dpms_suspend_label</name>
+		<label>Suspend After:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>2</top_attach>
+		  <bottom_attach>3</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>dpms_dummy</name>
+		<label></label>
+		<justify>GTK_JUSTIFY_LEFT</justify>
+		<wrap>False</wrap>
+		<xalign>0.5</xalign>
+		<yalign>0.5</yalign>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<child>
+		  <left_attach>2</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>dpms_button_eventbox</name>
+		<tooltip>Whether the monitor should be powered down after a while.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>0</top_attach>
+		  <bottom_attach>1</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>dpms_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:33:01 GMT</last_modification_time>
+		  </signal>
+		  <label>Power Management Enabled</label>
+		  <active>True</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkFrame</class>
+	    <name>diag_frame</name>
+	    <border_width>10</border_width>
+	    <label>Diagnostics:</label>
+	    <label_xalign>0</label_xalign>
+	    <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	    <child>
+	      <left_attach>0</left_attach>
+	      <right_attach>1</right_attach>
+	      <top_attach>1</top_attach>
+	      <bottom_attach>2</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>2</top_attach>
-		<bottom_attach>3</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>True</yfill>
+	    </child>
 
 	    <widget>
-	      <class>GtkLabel</class>
-	      <name>ticks_label</name>
-	      <label>Fade Ticks:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
+	      <class>GtkTable</class>
+	      <name>diag_table</name>
+	      <border_width>10</border_width>
+	      <rows>3</rows>
+	      <columns>1</columns>
+	      <homogeneous>False</homogeneous>
+	      <row_spacing>2</row_spacing>
+	      <column_spacing>10</column_spacing>
+
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>verbose_button_eventbox</name>
+		<tooltip>Whether the daemon should print lots of debugging information.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>0</top_attach>
+		  <bottom_attach>1</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>verbose_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:25 GMT</last_modification_time>
+		  </signal>
+		  <label>Verbose Diagnostics</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
+
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>capture_button_eventbox</name>
+		<tooltip>Whether the stdout and stderr streams of graphics demos should be displayed on the xscreensaver window.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>capture_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:25 GMT</last_modification_time>
+		  </signal>
+		  <label>Display Subprocess Errors</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
+
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>splash_button_eventbox</name>
+		<tooltip>Whether the splash screen (with the version number and `Help' button) should be momentarily displayed when the daemon first starts up.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>2</top_attach>
+		  <bottom_attach>3</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>splash_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:39 GMT</last_modification_time>
+		  </signal>
+		  <label>Display Splash Screen at Startup</label>
+		  <active>True</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkFrame</class>
+	    <name>cmap_frame</name>
+	    <border_width>10</border_width>
+	    <label>Colormaps: (8-bit displays only)</label>
+	    <label_xalign>0</label_xalign>
+	    <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	    <child>
+	      <left_attach>1</left_attach>
+	      <right_attach>2</right_attach>
+	      <top_attach>1</top_attach>
+	      <bottom_attach>2</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>3</top_attach>
-		<bottom_attach>4</bottom_attach>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>True</yfill>
+	    </child>
+
+	    <widget>
+	      <class>GtkTable</class>
+	      <name>cmap_table</name>
+	      <border_width>10</border_width>
+	      <rows>5</rows>
+	      <columns>3</columns>
+	      <homogeneous>False</homogeneous>
+	      <row_spacing>2</row_spacing>
+	      <column_spacing>10</column_spacing>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<name>fade_text</name>
+		<tooltip>How long it should take for the screen to fade in and out.</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>activate</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:28:29 GMT</last_modification_time>
+		</signal>
+		<signal>
+		  <name>focus_out_event</name>
+		  <handler>pref_changed_cb</handler>
+		  <last_modification_time>Mon, 03 Apr 2000 02:35:28 GMT</last_modification_time>
+		</signal>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>8</text_max_length>
+		<text></text>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>False</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkLabel</class>
+		<name>cmap_dummy</name>
+		<label></label>
+		<justify>GTK_JUSTIFY_LEFT</justify>
+		<wrap>False</wrap>
+		<xalign>0.5</xalign>
+		<yalign>0.5</yalign>
 		<xpad>0</xpad>
 		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+		<child>
+		  <left_attach>2</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
 
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>lock_label</name>
-	      <label>Lock Timeout:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>4</top_attach>
-		<bottom_attach>5</bottom_attach>
+	      <widget>
+		<class>GtkLabel</class>
+		<name>fade_label</name>
+		<label>Fade Duration:</label>
+		<justify>GTK_JUSTIFY_RIGHT</justify>
+		<wrap>False</wrap>
+		<xalign>1</xalign>
+		<yalign>0.5</yalign>
 		<xpad>0</xpad>
 		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>1</right_attach>
+		  <top_attach>4</top_attach>
+		  <bottom_attach>5</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
 
-	    <widget>
-	      <class>GtkLabel</class>
-	      <name>pass_label</name>
-	      <label>Password Timeout:</label>
-	      <justify>GTK_JUSTIFY_RIGHT</justify>
-	      <wrap>False</wrap>
-	      <xalign>1</xalign>
-	      <yalign>0.5</yalign>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <child>
-		<left_attach>0</left_attach>
-		<right_attach>1</right_attach>
-		<top_attach>5</top_attach>
-		<bottom_attach>6</bottom_attach>
-		<xpad>0</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <widget>
+		<class>GtkHSeparator</class>
+		<name>cmap_hr</name>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>1</top_attach>
+		  <bottom_attach>2</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>True</xexpand>
+		  <yexpand>True</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+	      </widget>
 
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>verbose_button</name>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>toggled</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:31:53 GMT</last_modification_time>
-	      </signal>
-	      <label>Verbose</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>2</left_attach>
-		<right_attach>3</right_attach>
-		<top_attach>0</top_attach>
-		<bottom_attach>1</bottom_attach>
-		<xpad>10</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>install_button_eventbox</name>
+		<tooltip>Whether to install a private colormap when running in 8-bit mode on the default Visual.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>0</top_attach>
+		  <bottom_attach>1</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
 
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>install_button</name>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>toggled</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:32:25 GMT</last_modification_time>
-	      </signal>
-	      <label>Install Colormap</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>2</left_attach>
-		<right_attach>3</right_attach>
-		<top_attach>1</top_attach>
-		<bottom_attach>2</bottom_attach>
-		<xpad>10</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>install_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:25 GMT</last_modification_time>
+		  </signal>
+		  <label>Install Colormap</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
 
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>fade_button</name>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>toggled</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:32:39 GMT</last_modification_time>
-	      </signal>
-	      <label>Fade Colormap</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>2</left_attach>
-		<right_attach>3</right_attach>
-		<top_attach>2</top_attach>
-		<bottom_attach>3</bottom_attach>
-		<xpad>10</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>fade_button_eventbox</name>
+		<tooltip>Whether the screen should slowly fade to black when the screen saver activates.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>2</top_attach>
+		  <bottom_attach>3</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
 
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>unfade_button</name>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>toggled</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:32:51 GMT</last_modification_time>
-	      </signal>
-	      <label>Unfade Colormap</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>2</left_attach>
-		<right_attach>3</right_attach>
-		<top_attach>3</top_attach>
-		<bottom_attach>4</bottom_attach>
-		<xpad>10</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
-	    </widget>
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>fade_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:39 GMT</last_modification_time>
+		  </signal>
+		  <label>Fade To Black When Blanking</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
 
-	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>lock_button</name>
-	      <can_focus>True</can_focus>
-	      <signal>
-		<name>toggled</name>
-		<handler>pref_changed_cb</handler>
-		<last_modification_time>Mon, 03 Apr 2000 02:33:01 GMT</last_modification_time>
-	      </signal>
-	      <label>Require Password</label>
-	      <active>False</active>
-	      <draw_indicator>True</draw_indicator>
-	      <child>
-		<left_attach>2</left_attach>
-		<right_attach>3</right_attach>
-		<top_attach>4</top_attach>
-		<bottom_attach>5</bottom_attach>
-		<xpad>10</xpad>
-		<ypad>0</ypad>
-		<xexpand>False</xexpand>
-		<yexpand>False</yexpand>
-		<xshrink>False</xshrink>
-		<yshrink>False</yshrink>
-		<xfill>True</xfill>
-		<yfill>False</yfill>
-	      </child>
+	      <widget>
+		<class>GtkEventBox</class>
+		<name>unfade_button_eventbox</name>
+		<tooltip>Whether the screen should slowly fade in from black when the screen saver deactivates.</tooltip>
+		<child>
+		  <left_attach>0</left_attach>
+		  <right_attach>3</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>True</yfill>
+		</child>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>unfade_button</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>pref_changed_cb</handler>
+		    <last_modification_time>Mon, 03 Apr 2000 02:32:51 GMT</last_modification_time>
+		  </signal>
+		  <label>Fade From Black When Unblanking</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		</widget>
+	      </widget>
 	    </widget>
 	  </widget>
 	</widget>
@@ -1129,7 +1566,7 @@ Mono
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>prefs_tab</name>
+	<name>options_tab</name>
 	<label>Screensaver Options</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>

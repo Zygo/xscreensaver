@@ -483,7 +483,7 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   char *d = getenv ("DISPLAY");
   if (!d || !*d)
     {
-      const char ndpy[] = "DISPLAY=:0.0";
+      char ndpy[] = "DISPLAY=:0.0";
       /* if (si->prefs.verbose_p) */      /* sigh, too early to test this... */
         fprintf (stderr,
                  "%s: warning: $DISPLAY is not set: defaulting to \"%s\".\n",
@@ -897,6 +897,14 @@ maybe_reload_init_file (saver_info *si)
       /* If a server extension is in use, and p->timeout has changed,
 	 we need to inform the server of the new timeout. */
       disable_builtin_screensaver (si, False);
+
+      /* If the DPMS settings in the init file have changed,
+         change the settings on the server to match. */
+      sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+                                 p->dpms_standby / 1000,
+                                 p->dpms_suspend / 1000,
+                                 p->dpms_off / 1000,
+                                 False);
     }
 }
 
@@ -1143,7 +1151,14 @@ main (int argc, char **argv)
 
   select_events (si);
   init_sigchld ();
+
   disable_builtin_screensaver (si, True);
+  sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+                             p->dpms_standby / 1000,
+                             p->dpms_suspend / 1000,
+                             p->dpms_off / 1000,
+                             False);
+
   initialize_stderr (si);
 
   make_splash_dialog (si);
@@ -1155,6 +1170,42 @@ main (int argc, char **argv)
 
 /* Processing ClientMessage events.
  */
+
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  return 0;
+}
+
+/* Sometimes some systems send us ClientMessage events with bogus atoms in
+   them.  We only look up the atom names for printing warning messages,
+   so don't bomb out when it happens...
+ */
+static char *
+XGetAtomName_safe (Display *dpy, Atom atom)
+{
+  char *result;
+  XErrorHandler old_handler;
+  if (!atom) return 0;
+
+  XSync (dpy, False);
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+  result = XGetAtomName (dpy, atom);
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  if (result)
+    return result;
+  else
+    {
+      char buf[100];
+      sprintf (buf, "<<undefined atom 0x%04X>>", (unsigned long) atom);
+      return strdup (buf);
+    }
+}
+
 
 static void
 clientmessage_response (saver_info *si, Window w, Bool error,
@@ -1192,7 +1243,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
   if (event->xclient.message_type != XA_SCREENSAVER)
     {
       char *str;
-      str = XGetAtomName (si->dpy, event->xclient.message_type);
+      str = XGetAtomName_safe (si->dpy, event->xclient.message_type);
       fprintf (stderr, "%s: unrecognised ClientMessage type %s received\n",
 	       blurb(), (str ? str : "(null)"));
       if (str) XFree (str);
@@ -1539,7 +1590,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     {
       char buf [1024];
       char *str;
-      str = (type ? XGetAtomName(si->dpy, type) : 0);
+      str = XGetAtomName_safe (si->dpy, type);
 
       if (str)
 	{
